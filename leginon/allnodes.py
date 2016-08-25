@@ -184,6 +184,9 @@ noderegistry.registerNodeClass(PixelSizeCalibrator,classtype)
 from imagerotationcalibrator import ImageRotationCalibrator
 noderegistry.registerNodeClass(ImageRotationCalibrator,classtype)
 
+from imagescalecalibrator import ImageScaleAdditionCalibrator
+noderegistry.registerNodeClass(ImageScaleAdditionCalibrator,classtype)
+
 from dosecalibrator import DoseCalibrator
 noderegistry.registerNodeClass(DoseCalibrator,classtype)
 

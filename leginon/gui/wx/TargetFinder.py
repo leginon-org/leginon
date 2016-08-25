@@ -16,6 +16,7 @@ import leginon.gui.wx.Node
 import leginon.gui.wx.Settings
 import leginon.gui.wx.ToolBar
 import leginon.gui.wx.ImagePanelTools
+from leginon.gui.wx.Choice import Choice
 
 hide_incomplete = False
 
@@ -142,11 +143,24 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 						wx.ALIGN_CENTER_VERTICAL)
 		return sz
 
+	def createCheckMethodSizer(self):
+		checkmethods = self.node.getCheckMethods()
+		self.widgets['check method'] = Choice(self, -1, choices=checkmethods)
+		szcheckmethod = wx.GridBagSizer(5, 5)
+		szcheckmethod.Add(wx.StaticText(self, -1, '   Check from'),
+										(0, 0), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL)
+		szcheckmethod.Add(self.widgets['check method'],
+										(0, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL)
+		return szcheckmethod
+
 	def addSettings(self):
 		#self.widgets['wait for done'] = wx.CheckBox(self, -1,
 		#			'Wait for another node to process targets before marking them done')
 		self.widgets['user check'] = wx.CheckBox(self, -1,
 																	'Allow for user verification of selected targets')
+		checkmethodsz = self.createCheckMethodSizer()
 		self.widgets['queue'] = wx.CheckBox(self, -1,
 																							'Queue up targets')
 		self.widgets['queue drift'] = wx.CheckBox(self, -1, 'Declare drift when queue submitted')
@@ -158,18 +172,20 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz = wx.GridBagSizer(5, 5)
 		sz.Add(self.widgets['user check'], (0, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(checkmethodsz, (1, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
 		#sz.Add(self.widgets['wait for done'], (1, 0), (1, 1),
 		#				wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['queue'], (1, 0), (1, 1),
+		sz.Add(self.widgets['queue'], (2, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['queue drift'], (2, 0), (1, 1),
+		sz.Add(self.widgets['queue drift'], (3, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['sort target'], (3, 0), (1, 1),
+		sz.Add(self.widgets['sort target'], (4, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['multifocus'], (4, 0), (1, 1),
+		sz.Add(self.widgets['multifocus'], (5, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 		if not hide_incomplete:
-			sz.Add(self.widgets['allow append'], (5, 0), (1, 1),
+			sz.Add(self.widgets['allow append'], (6, 0), (1, 1),
 							wx.ALIGN_CENTER_VERTICAL)
 
 		return sz
@@ -179,6 +195,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		parent = self.panel
 		parent.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT_QUEUE, state)
 		evt.Skip()
+		self.node.onQueueCheckBox(state)
 
 if __name__ == '__main__':
 	class App(wx.App):

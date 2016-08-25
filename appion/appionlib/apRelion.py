@@ -1,14 +1,7 @@
 #python
 import os
-import math
-import numpy
-import shutil
-#pyami
-from pyami import mrc
+import subprocess
 #appionlib
-from appionlib.apCtf import ctfdb
-from appionlib import apDisplay
-from appionlib import apParam
 from appionlib import starFile
 
 def readStarFileDataBlock(starfile, datablock):
@@ -162,3 +155,95 @@ def sortRelionStarFileByParticleNumber(instarfile, outstarfile, datablock="data_
         for val in l:
                 loopDictNew.append(partdict[val])
         writeLoopDictToStarFile(loopDictNew, datablock, outstarfile)
+
+def getStarFileColumnLabels(starfile):
+	# returns array of labels, assuming they are in order
+	# and correspond to the data
+	labels=[]
+	for line in open(starfile):
+		l = line.strip().split()
+		if line[:4]=="_rln":
+			labels.append(l[0])
+			continue
+		if len(l) > 2:
+			return labels
+
+def getColumnFromRelionLine(line,col):
+	# return a specified column (starting with 0)
+	l = line.strip().split()
+	if (len(l)<col or l[:4]=="_rln" or l[0] in ['data_','loop_']):
+		return None
+	return l[col]
+	
+def getMrcParticleFilesFromStar(starfile):
+	# returns array of mrc files containing particles
+	# first get header info
+	mrclist = []
+	for p in getPartsFromStar(starfile):
+		micro = p.split('@')[1]
+		# Relion usually uses relative paths, check:
+		if micro[0]!="/":
+			micro = os.path.join(os.path.dirname(starfile),micro)
+		if micro not in mrclist: mrclist.append(micro)
+	return mrclist
+
+def getPartsFromStar(starfile):
+	# returns array of particles
+	labels = getStarFileColumnLabels(starfile)
+	namecol = labels.index('_rlnImageName')
+	partlist = []
+	for line in open(starfile):
+		p=getColumnFromRelionLine(line,namecol)
+		if p: partlist.append(p)
+	return partlist
+
+def writeRelionMicrographsStarHeader(outstarfile,ctfinfo=False):
+	labels = ["_rlnMicrographName",
+		"_rlnMagnification",
+		"_rlnDetectorPixelSize"]
+	if ctfinfo is True:
+		labels.extend(["_rlnCtfImage",
+		"_rlnDefocusU",
+		"_rlnDefocusV",
+		"_rlnDefocusAngle",
+		"_rlnVoltage",
+		"_rlnSphericalAberration",
+		"_rlnAmplitudeContrast",
+		"_rlnCtfFigureOfMerit"])
+	ofile = open(outstarfile,'w')
+	ofile.write("\ndata_images\n\nloop_\n")
+	ofile.write("\n".join("%s #%i"%(label,index+1) for index,label in enumerate(labels)))
+	ofile.write("\n")
+	ofile.close()
+
+def generateCtfFile(imgname,cs,kev,amp,mag,dstep,defU,defV,defAngle,cc):
+	f = open(imgname,'w')
+	f.write(" CS[mm], HT[kV], AmpCnst, XMAG, DStep[um]\n")
+	f.write(" %4.1f   %6.1f    %4.2f  %8.1f  %7.3f\n"%(cs,kev,amp,mag,dstep))
+	f.write("      DFMID1      DFMID2      ANGAST          CC\n")
+	f.write("   %9.2f   %9.2f    %8.2f    %8.5f  Final Values\n"%(defU,defV,defAngle,cc))
+	f.close()
+
+def extractParticles(starfile,rootname,boxsize,bin,bgradius,pixlimit,invert,nproc=1,logfile=None):
+	relionexe = "`which relion_preprocess"
+	if nproc > 1:
+		relionexe = "mpirun %s_mpi"%relionexe
+	relionexe+= "`"
+
+	relioncmd = "%s --o %s --mic_star %s"%(relionexe,rootname,starfile)
+	relioncmd+= " --coord_suffix .box --extract"
+	relioncmd+= " --extract_size %i"%boxsize
+	if bin is not None:
+		relioncmd+=" --scale %i"%(int(boxsize/bin))
+	relioncmd+= " --norm --bg_radius %i"%(bgradius)
+	if pixlimit is not None:
+		pixlimit=abs(pixlimit)
+		relioncmd+= " --white_dust %.1f --black_dust %.1f"%(pixlimit,pixlimit)
+	if invert is True:
+		relioncmd+= " --invert_contrast"
+	if logfile:
+		logf = open(logfile,'w')
+		logf.write(relioncmd)
+		logf.close()
+	subprocess.Popen(relioncmd, shell=True).wait()
+

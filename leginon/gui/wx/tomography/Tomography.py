@@ -86,7 +86,12 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 					wx.ALIGN_LEFT|wx.FIXED_MINSIZE)
 		label = wx.StaticText(self, -1, 'degree(s)')
 		tiltsz.Add(label, (0, 8), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		tilt_ordersz = self.createTiltOrderSelector()
+
 		tiltsbsz.Add(tiltsz, 0, wx.EXPAND|wx.ALL, 5)
+		tiltsbsz.Add(tilt_ordersz, 0, wx.EXPAND|wx.ALL, 5)
+
 		#expsz
 		self.widgets['dose'] = FloatEntry(self, -1, min=0.0,
 													allownone=False,
@@ -141,6 +146,16 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		sz.AddGrowableCol(0)
 		sz.AddGrowableCol(1)
 		return sz
+
+	def createTiltOrderSelector(self):
+		tilt_order_choices = self.getTiltOrderChoices()
+		self.widgets['tilt order'] = wx.Choice(self, -1, choices=tilt_order_choices)
+		sztilt_order = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Tilt order of the tilt direction groups:')
+		sztilt_order.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sztilt_order.Add(self.widgets['tilt order'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sztilt_order.AddGrowableCol(1)
+		return sztilt_order
 
 	def addTomoSettings(self):
 		tiltsb = wx.StaticBox(self, -1, 'Tilt')
@@ -197,13 +212,19 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 					wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		label = wx.StaticText(self, -1, 'degree(s)')
 		tiltsz.Add(label, (0, 8), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		# tilt order
+		tilt_ordersz = self.createTiltOrderSelector()
+		tiltsz.Add(tilt_ordersz, (1, 0), (1, 9), wx.EXPAND)
+
+		# addon tilts
 		addonsizer = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'List of Extra Tilts to Collect (in degrees)')
 		addonsizer.Add(label, (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
 		self.widgets['addon tilts'] = Entry(self, -1, chars=45, style=wx.ALIGN_RIGHT|wx.EXPAND)
 		addonsizer.Add(self.widgets['addon tilts'], (0,2), (1,7), wx.EXPAND)
 		addonsizer.AddGrowableCol(2)
-		tiltsz.Add(addonsizer, (1, 0), (1, 9), wx.EXPAND)
+		tiltsz.Add(addonsizer, (2, 0), (1, 9), wx.EXPAND)
 
 		tiltoptsz.Add(tiltsz, (1, 0), (2, 9), wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
 		equalslopesz = wx.GridBagSizer(0, 5)
@@ -472,6 +493,10 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 				mags = []
 			choices.extend( [str(int(m)) for m in mags])
 			return choices
+
+	def getTiltOrderChoices(self):
+		choices = ['sequential','alternate']
+		return choices
 
 class Panel(leginon.gui.wx.Acquisition.Panel):
 	settingsdialogclass = SettingsDialog

@@ -23,6 +23,7 @@ class Conditioner(node.Node):
 		'repeat time': 0,
 	})
 	eventinputs = node.Node.eventinputs + [event.FixConditionEvent]
+	eventoutputs = [event.IdleTimerPauseEvent, event.IdleTimerRestartEvent]
 
 	def __init__(self, *args, **kwargs):
 		node.Node.__init__(self, *args, **kwargs)
@@ -109,11 +110,20 @@ class Conditioner(node.Node):
 			return
 		self.player.play()
 		try:
+			evt1 = event.IdleTimerPauseEvent()
+			self.outputEvent(evt1, wait=False)
 			self._handleFixConditionEvent(evt)
-			self.confirmEvent(evt, status='ok')
+			status = 'ok'
 		except Exception, e:
 			self.logger.warning('handling exception %s' %(e,))
-			self.confirmEvent(evt, status='exception')
+			status='exception'
+		try:
+			evt2 = event.IdleTimerRestartEvent()
+			self.outputEvent(evt2, wait=False)
+		except Exception, e:
+			raise
+			self.logger.warning('handling exception for restarting idle timer %s' %(e,))
+		self.confirmEvent(evt, status=status)
 		self.setStatus('idle')
 
 	def _handleFixConditionEvent(self, evt):
@@ -131,7 +141,6 @@ class Conditioner(node.Node):
 				if diff.seconds < self.settings['repeat time']:
 					self.logger.info('bypass %s: only %d seconds since last' % (ctype,diff.seconds))
 					continue
-
 			self.fixCondition(ctype)
 			self.saveConditioningDone(crequest)
 
@@ -178,6 +187,9 @@ class Conditioner(node.Node):
 		for ctype in self.ctypes:
 			self.testprint('ctype %s' % ctype)
 			self.fixCondition(ctype)
+		evt = event.IdleTimerRestartEvent()
+		self.outputEvent(evt, wait=False)
+		self.setStatus('idle')
 
 class AutoNitrogenFiller(Conditioner):
 	panelclass = leginon.gui.wx.AutoFiller.Panel

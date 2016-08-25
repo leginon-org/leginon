@@ -15,7 +15,10 @@ class Fail(Exception):
 class Collection(object):
 	def __init__(self):
 		self.tilt_series = None
-		self.correlator = None
+		# Use two correlators to track positive and negative tilts independently
+		self.correlator = {}
+		self.correlator[0] = None
+		self.correlator[1] = None
 		self.instrument_state = None
 		self.theta = 0.0
 
@@ -98,7 +101,8 @@ class Collection(object):
 		if correlation_bin is None:
 			# use a non-dividable number and crop in the correlator
 			correlation_bin = int(math.ceil(minsize / 512.0))
-		self.correlator = leginon.tomography.tiltcorrelator.Correlator(self.node, self.theta, correlation_bin, lpf)
+		self.correlator[0] = leginon.tomography.tiltcorrelator.Correlator(self.node, self.theta, correlation_bin, lpf)
+		self.correlator[1] = leginon.tomography.tiltcorrelator.Correlator(self.node, self.theta, correlation_bin, lpf)
 		if self.settings['run buffer cycle']:
 			self.runBufferCycle()
 
@@ -106,6 +110,7 @@ class Collection(object):
 
 	def collect(self):
 		n = len(self.tilts)
+		self.node.logger.info('collect %d tilt groups' % n)
 
 		# TODO: move to tomography
 		if n != len(self.exposures):
@@ -117,29 +122,30 @@ class Collection(object):
 				s %= i + 1
 				raise RuntimeError(s)
 
-		if n == 0:
-			return
-		elif n == 1:
-			self.prediction.newTiltSeries()
+		# initialize prediction
+		self.prediction.newTiltSeries()
+		for g in range(n):
 			self.prediction.newTiltGroup()
-			self.loop(self.tilts[0], self.exposures[0], False)
-		elif n == 2:
-			# Loop through one set of tilts 
-			self.prediction.newTiltSeries()
-			self.prediction.newTiltGroup()
-			self.loop(self.tilts[0], self.exposures[0], False)
-			self.checkAbort()
-			# loop through the other set of tilts
-			self.node.initGoodPredictionInfo(tiltgroup=2)
-			self.prediction.newTiltGroup()
-			self.loop(self.tilts[1], self.exposures[1], True)
-		else:
-			raise RuntimeError('too many tilt angle groups')
+
+		# Collect according to tilt_index_sequence.
+		if self.tilt_order == 'sequential' and len(self.tilts) == 2:
+			self.sequentialLoop()
+		else:			
+			self.loop(self.tilts, self.exposures, self.tilt_index_sequence)
+
+	def sequentialLoop(self):
+		break1 = len(self.tilts[0])
+		self.loop(self.tilts, self.exposures, self.tilt_index_sequence[:break1])
+		if break1 < len(self.tilt_index_sequence):
+			self.initLoop2()
+			self.loop(self.tilts, self.exposures, self.tilt_index_sequence[break1:])
+		self.finalize()
 
 	def finalize(self):
 		self.tilt_series = None
 
-		self.correlator.reset()
+		self.correlator[0].reset()
+		self.correlator[1].reset()
 
 		self.restoreInstrumentState()
 		self.instrument_state = None
@@ -149,24 +155,25 @@ class Collection(object):
 
 		self.viewer.clearImages()
 
-	def loop(self, tilts, exposures, second_loop):
-		self.logger.info('Starting tilt collection (%d angles)...' % len(tilts))
+	def initLoop2(self):
+		self.restoreInstrumentState()
+		self.correlator[1].reset()
+		if self.settings['adjust for transform'] != "no":
+			self.logger.info('Adjust target for the second tilt group...')
+			try:
+				self.emtarget, status = self.node.adjusttarget(self.preset['name'], self.target, self.emtarget)
+			except Exception, e:
+				self.logger.error('Failed to adjust target: %s.' % e)
+				raise
+			if status == 'error':
+				self.finalize()
+		return
 
-		if second_loop:
-			self.restoreInstrumentState()
-			if self.settings['adjust for transform'] != "no":
-				self.logger.info('Adjust target for the second tilt group...')
-				try:
-					self.emtarget, status = self.node.adjusttarget(self.preset['name'], self.target, self.emtarget)
-				except Exception, e:
-					self.logger.error('Failed to adjust target: %s.' % e)
-					raise
-				if status == 'error':
-					self.finalize()
-					return
+	def loop(self, tilts, exposures, sequence):
+		self.logger.info('Starting tilt collection (%d angles)...' % len(sequence))
 		self.logger.info('Removing tilt backlash...')
 		try:
-			self.node.removeStageAlphaBacklash(tilts, self.preset['name'], self.target, self.emtarget)
+			self.node.removeStageAlphaBacklash(tilts, sequence, self.preset['name'], self.target, self.emtarget)
 		except Exception, e:
 			self.logger.error('Failed to remove backlash: %s.' % e)
 			self.finalize()
@@ -174,17 +181,20 @@ class Collection(object):
 
 		self.checkAbort()
 
-		if second_loop:
-			self.correlator.reset()
-
-		self._loop(tilts, exposures)
+		self._loop(tilts, exposures, sequence)
 		
 		self.logger.info('Collection loop completed.')
 
-	def _loop(self, tilts, exposures):
+	def _loop(self, tilts, exposures, sequence):
+		'''
+		Loop through sequence
+		'''
+		# tilts and exposures are grouped
+		# sequence is the 2 element tuple used to choose the tilt and the exposure
 		image_pixel_size = self.pixel_size*self.preset['binning']['x']
 
-		tilt0 = tilts[0]
+		seq0 = sequence[0]
+		tilt0 = tilts[seq0[0]][seq0[1]]
 		position0 = self.node.getPixelPosition('image shift')
 		defocus0 = self.node.getDefocus()
 
@@ -193,17 +203,27 @@ class Collection(object):
 		m = 'Initial defocus: %g meters.'
 		self.logger.info(m % defocus0)
 
+		if self.tilt_order == 'alternate' and len(tilts) > 1:
+			# duplicate the first tilt to the other tilt group
+			other_group = int(not seq0[0])
+			self.prediction.setCurrentTiltGroup(other_group)
+			self.prediction.addPosition(tilt0, position0)
+		self.prediction.setCurrentTiltGroup(seq0[0])
 		self.prediction.addPosition(tilt0, position0)
+
 
 		position = dict(position0)
 		defocus = defocus0
 
 		abort_loop = False
-		for i, tilt in enumerate(tilts):
+		for seq_index in range(len(sequence)):
 			self.checkAbort()
+			seq = sequence[seq_index]
+			tilt = tilts[seq[0]][seq[1]]
 
 			self.logger.info('Current tilt angle: %g degrees.' % math.degrees(tilt))
 			try:
+				self.prediction.setCurrentTiltGroup(seq[0])
 				predicted_position = self.prediction.predict(tilt)
 			except:
 				raise
@@ -213,10 +233,12 @@ class Collection(object):
 			predicted_shift['x'] = predicted_position['x'] - position['x']
 			predicted_shift['y'] = predicted_position['y'] - position['y']
 
+			# undo defocus from last tilt
 			predicted_shift['z'] = -defocus
+
 			defocus = defocus0 + predicted_position['z']*image_pixel_size
 			self.logger.info('defocus0: %g meters,sintilt: %g' % (defocus0,math.sin(tilt)))
-#			defocus = defocus0 + predicted_shift['x']*0.5*math.sin(tilt)*image_pixel_size
+			# apply new defocus
 			predicted_shift['z'] += defocus
 
 			try:
@@ -247,7 +269,7 @@ class Collection(object):
 
 			self.checkAbort()
 
-			exposure = exposures[i]
+			exposure = exposures[seq[0]][seq[1]]
 			m = 'Acquiring image (%g second exposure)...' % exposure
 			self.logger.info(m)
 			self.instrument.ccdcamera.ExposureTime = int(exposure*1000)
@@ -257,7 +279,7 @@ class Collection(object):
 			time.sleep(self.settings['tilt pause time'])
 
 			# TODO: error checking
-			channel = self.correlator.getChannel()
+			channel = self.correlator[seq[0]].getChannel()
 			image_data = self.node.acquireCorrectedCameraImageData(channel)
 			self.logger.info('Image acquired.')
 
@@ -270,7 +292,7 @@ class Collection(object):
 			image = image_data['image']
 
 			if image_mean < self.settings['mean threshold']:
-				if i < (self.settings['collection threshold']/100.0)*len(tilts):
+				if seq[1] < (self.settings['collection threshold']/100.0)*len(tilts):
 					self.logger.error('Image counts below threshold (mean of %.1f, threshold %.1f), aborting series...' % (image_mean, self.settings['mean threshold']))
 					self.finalize()
 					raise Abort
@@ -299,8 +321,9 @@ class Collection(object):
 
 			self.checkAbort()
 
+			# Move to next tilt while correlating to allow stage to settle
 			try:
-				next_tilt = tilts[i + 1]
+				next_tilt = tilts[sequence[seq_index+1][0]][sequence[seq_index+1][1]]
 				s = 'Tilting stage to next angle (%g degrees)...' % math.degrees(next_tilt)
 				self.logger.info(s)
 				stage_position = {'a': next_tilt}
@@ -314,7 +337,7 @@ class Collection(object):
 			#self.correlator.setTiltAxis(predicted_position['phi'])
 			while True:
 				try:
-					correlation_image = self.correlator.correlate(tilt_series_image_data, self.settings['use tilt'], channel=channel, wiener=False, taper=0)
+					correlation_image = self.correlator[seq[0]].correlate(tilt_series_image_data, self.settings['use tilt'], channel=channel, wiener=False, taper=0)
 					break
 				except Exception, e:
 					self.logger.warning('Retrying correlate image: %s.' % (e,))
@@ -322,9 +345,14 @@ class Collection(object):
 					self.checkAbort()
 					time.sleep(1.0)
 
-			correlation = self.correlator.getShift(False)
+			if seq_index == 0: 
+				if self.tilt_order == 'alternate':
+					other_group = int(not seq[0])
+					fake_corr_image = self.correlator[other_group].correlate(tilt_series_image_data, self.settings['use tilt'], channel=channel, wiener=False, taper=0)
+		
+			correlation = self.correlator[seq[0]].getShift(False)
 			if self.settings['use tilt']:
-				correlation = self.correlator.tiltShift(tilts[i],correlation)
+				correlation = self.correlator[seq[0]].tiltShift(tilt,correlation)
 
 			position = {
 				'x': predicted_position['x'] - correlation['x'],
@@ -345,11 +373,11 @@ class Collection(object):
 								  position['x']*image_pixel_size,
 								  position['y']*image_pixel_size))
 
-			raw_correlation = self.correlator.getShift(True)
+			raw_correlation = self.correlator[seq[0]].getShift(True)
 			s = (raw_correlation['x'], raw_correlation['y'])
 			self.viewer.setXC(correlation_image, s)
 			if self.settings['use tilt']:
-				raw_correlation = self.correlator.tiltShift(tilts[i],raw_correlation)
+				raw_correlation = self.correlator[seq[0]].tiltShift(tilt,raw_correlation)
 
 			self.checkAbort()
 
@@ -365,6 +393,7 @@ class Collection(object):
 				raw_correlation,
 				image_pixel_size,
 				tilt_series_image_data,
+				seq[0],
 				measured_defocus,
 				measured_fit,
 			)
@@ -378,7 +407,7 @@ class Collection(object):
 
 		self.viewer.clearImages()
 
-	def savePredictionInfo(self, predicted_position, predicted_shift, position, correlation, raw_correlation, image_pixel_size, image, measured_defocus=None, measured_fit=None):
+	def savePredictionInfo(self, predicted_position, predicted_shift, position, correlation, raw_correlation, image_pixel_size, image, prediction_tilt_group, measured_defocus=None, measured_fit=None):
 		initializer = {
 			'session': self.node.session,
 			'predicted position': predicted_position,
@@ -390,6 +419,7 @@ class Collection(object):
 			'image': image,
 			'measured defocus': measured_defocus,
 			'measured fit': measured_fit,
+			'tilt group': prediction_tilt_group,
 		}
 		tomo_prediction_data = leginon.leginondata.TomographyPredictionData(initializer=initializer)
 					

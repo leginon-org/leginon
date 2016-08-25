@@ -9,7 +9,7 @@ class UpdateLib:
 	def __init__(self,project_dbupgrade):
 		printMsg = True
 		self.project_dbupgrade = project_dbupgrade
-		self.checkout_branch = version.getSVNBranch('.')
+		self.checkout_branch = version.getGITBranch('.')
 		self.checkout_revision = self.getCheckOutRevision()
 		self.db_revision = self.getDatabaseRevision(printMsg)
 		self.db_branch = self.getDatabaseSVNBranch(printMsg)

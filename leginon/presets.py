@@ -31,7 +31,7 @@ import itertools
 idcounter = itertools.cycle(range(100))
 
 ## submodetransform
-SPECIAL_TRANSFORM = True
+SPECIAL_TRANSFORM = False
 
 class PresetChangeError(Exception):
 	pass
@@ -249,8 +249,9 @@ class PresetsManager(node.Node):
 		'disable stage for image shift': False,
 		'blank': False,
 		'smallsize': 1024,
+		'idle minute': 10.0,
 	}
-	eventinputs = node.Node.eventinputs + [event.ChangePresetEvent, event.MeasureDoseEvent, event.UpdatePresetEvent]
+	eventinputs = node.Node.eventinputs + [event.ChangePresetEvent, event.MeasureDoseEvent, event.UpdatePresetEvent, event.IdleTimerPauseEvent, event.IdleTimerRestartEvent]
 	eventoutputs = node.Node.eventoutputs + [event.PresetChangedEvent, event.PresetPublishEvent, event.DoseMeasuredEvent, event.MoveToTargetEvent]
 
 	def __init__(self, name, session, managerlocation, **kwargs):
@@ -290,13 +291,86 @@ class PresetsManager(node.Node):
 		# FIX ME temporary disable checkBremTilt workaround for Issue #4335
 		self.no_preset_set = False
 		self.recover_beamtilt = threading.Event()
+
+		# timeout thread
+		self.idleactive = False
+		self.idle_timer_pause_done = {}
+		self.idle_timer_paused = {}
+		self.startInstrumentUsageTracker()
+
 		self.addEventInput(event.ChangePresetEvent, self.changePreset)
 		self.addEventInput(event.MeasureDoseEvent, self.measureDose)
 		self.addEventInput(event.UpdatePresetEvent, self.handleUpdatePresetEvent)
+		self.addEventInput(event.IdleTimerPauseEvent, self.handleIdleTimerPauseEvent)
+		self.addEventInput(event.IdleTimerRestartEvent, self.handleIdleTimerRestartEvent)
 
 		## this will fill in UI with current session presets
 		self.getPresetsFromDB()
 		self.start()
+
+	def startInstrumentUsageTracker(self):
+		t = threading.Thread(target=self.usageTracker)
+		t.setDaemon(True)
+		t.start()
+
+	def isAnyIdleTimerPaused(self):
+		'''
+		Find all nodes that sent IdleTimerPauseEvent but not yet sending
+		IdleTimerRestartEvent.  Some node classes such as AutoN2Filler
+		takes a long time to return.
+		'''
+		any_paused = []
+		for key in self.idle_timer_paused.keys():
+			if self.idle_timer_paused[key] is True:
+				any_paused.append(key)
+		return any_paused
+
+	def usageTracker(self):
+		'''
+		this is run in a thread to watch for instrument last set or get time
+		'''
+		last_set_get_time = self.instrument.getLastSetGetTime()
+		while self.idleactive:
+			paused_fromnode = self.isAnyIdleTimerPaused()
+			for node in paused_fromnode:
+				# Some node classes such as AutoN2Filler do not set instrument
+				# but can take a long time to come back.
+				# These need to wait
+				self.idle_timer_pause_done[node].wait()
+				self.idle_timer_pause_done[node].clear()
+				self.idle_timer_paused[node] = False
+			## idletime before giving up
+			last_set_get_time = self.instrument.getLastSetGetTime()
+			if self.idleactive and time.time() - last_set_get_time > 60*self.settings['idle minute']:
+				self.instrumentIdleFinish()
+				# close valves, stop doing everything or quit
+			time.sleep(10)
+
+	def instrumentIdleFinish(self):
+		'''
+		Things to do when idle timer is timeout.
+		'''
+		if not self.idleactive:
+			return
+		self.instrument.tem.ColumnValvePosition = 'closed'
+		self.logger.warning('column valves closed')
+		#if self.settings['emission off']:
+		if False:
+			self.instrument.tem.Emission = False
+			self.logger.warning('emission switched off')
+		self.idleactive = False
+
+	def toggleInstrumentTimeout(self):
+		if self.idleactive:
+			self.idleactive = False
+			self.logger.info('Instrument timeout deactivated')
+		else:
+			# update first then start tracking
+			self.instrument.updateLastSetGetTime()
+			self.idleactive = True
+			self.logger.info('Instrument timeout activated')
+			self.startInstrumentUsageTracker()
+
 
 	def lock(self, n):
 		'''many nodes could be waiting for a lock.  It is undefined which
@@ -1504,14 +1578,14 @@ class PresetsManager(node.Node):
 				pixrow = pixelshift1['row'] * oldpreset['binning']['y']
 				pixcol = pixelshift1['col'] * oldpreset['binning']['x']
 				pixvect1 = numpy.array((pixrow, pixcol))
-				# image rotation
+				# image shift coil rotation
 				pixvect1 = self.imageRotationTransform(pixvect1,oldpreset,newpreset)
 				# extra rotation
 				if SPECIAL_TRANSFORM:
 					pixvect1 = self.specialTransform(pixvect1,new_tem,oldpreset['magnification'],newpreset['magnification'])
 				# magnification and camera (if camera is different)
 				# Transform pixelvect1 at magnification to new magnification according to image-shift matrix
-				# include a relative  image rotation to the transform
+				# include a relative  image rotation and scale addition to the transform
 				pixvect2 = self.calclients['image rotation'].pixelToPixel(old_tem,old_ccdcamera,new_tem, new_ccdcamera, ht,oldpreset['magnification'],newpreset['magnification'],pixvect1)
 				# transform to the binned pixelsift
 				pixelshift2 = {'row':pixvect2[0] / newpreset['binning']['y'],'col':pixvect2[1] / newpreset['binning']['x']}
@@ -2009,6 +2083,20 @@ class PresetsManager(node.Node):
 		self.logger.info('completed update to %s' % (presetname,))
 		self.confirmEvent(evt)
 	
+	def handleIdleTimerPauseEvent(self, evt):
+		node = evt['node']
+		self.idle_timer_paused[node] = True
+		self.idle_timer_pause_done[node] = threading.Event()
+		self.logger.info('%s requested idle timer pause' % (node,))
+
+	def handleIdleTimerRestartEvent(self, evt):
+		node = evt['node']
+		self.logger.info('%s requested idle timer restart' % (node,))
+		self.instrument.updateLastSetGetTime()
+		if node in self.isAnyIdleTimerPaused():
+			self.idle_timer_paused[node] = False
+			self.idle_timer_pause_done[node].set()
+
 	def isLensSeriesChange(self,mag1,mag2):
 		# This is used in specialTransform to restrict the magnifications at
 		# which the transform is applied
@@ -2042,10 +2130,8 @@ class PresetsManager(node.Node):
 		a = stage_axis_rotation - imageshift_axis_rotation
 		m = numpy.matrix([[math.cos(a),math.sin(a)],[-math.sin(a),math.cos(a)]])
 		rotated_vect = numpy.dot(pixvect,numpy.asarray(m))
-		self.logger.info('Adjust for image rotation: rotate %s to %s' % (pixvect, rotated_vect))
+		self.logger.info('Adjust for coil rotation: rotate %s to %s' % (pixvect, rotated_vect))
 		return rotated_vect
-
-		return pixvect
 
 	def checkBeamTiltChange(self):
 		current_beamtilt = self.instrument.tem.BeamTilt

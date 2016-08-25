@@ -145,6 +145,7 @@ var help = {
 		'tomoalignrunname' : 'Specifies the name associated with the tilt series alignment processing results unique to the specified tilt series and parameters.',
 		'tomoaligner' : 'Alignment can either be a single alignment run or a specific iteration of protomo refinement.  In general the last iteration should be selected',
 		'tomoalignmethod' : 'Alignment methods available',
+		'tomoleginonalign' : 'Using the tilt tracking result during Leginon data collection to align the tilt series. Shift-only',
 		'protomoref' : 'reference image number in sorted tilt order. Protomo extend alignment incrementally from such a image. Default is the zero degree tilt image or the reference of the last refinement iteration. In protomo parameter file, this is called "imgref"',
 		'protomocycle' : 'Multiple iterations of refinement is recommended for protomo projection alignment with decreasing sampling and increasing area of the image included',
 		'protomosample' : 'Sample every x pixels in the alignment. Non-integer is acceptable but should not be smaller than 1.  Larger values result in faster and more error-tolerable run but lack the accuracy of the lower values.  The default is a reasonable next value based on that of the preceeding iteration. Known as "alismp" in the protomo parameter file',

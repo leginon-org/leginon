@@ -1,0 +1,37 @@
+#
+# Makeconfig: config rules
+#
+# Copyright © 2012 Hanspeter Winkler
+#
+
+
+#
+# make rules
+#
+
+.PHONY: help all libs install clean distclean depend makedate newbuild
+
+help:
+	@ echo "usage: make [ all | libs | install | depend | clean | distclean ]"
+
+all libs install: Makeincs makedate $(OBJS)
+
+clean:
+	rm -f $(PRFX)config.h.out build.out Makeincs makedate.h
+	rm -f a.out core *.o *.a *.so *.so.* *.i *.s *.L *~ *# .#*
+
+distclean: clean
+	rm -f $(PRFX)config.h config.h Makedeps
+
+depend: newbuild Makeincs makedate
+	$(CC) $(CPPFLAGS) $(CFLAGS) -MM $(OBJS:.o=.c) >Makedeps
+
+newbuild:
+	../../make/newbuild.sh $(PRFX)
+
+makedate:
+	@ ../../make/getdate.sh >makedate.h
+
+Makeincs: $(INCS)
+	$(MAKE) -C ../../include DIR=$(CURDIR) $(INCS)
+	@ touch Makeincs

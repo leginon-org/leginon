@@ -1,0 +1,27 @@
+/*----------------------------------------------------------------------------*
+*
+*  tomomapconfig.h  -  configuration
+*
+*----------------------------------------------------------------------------*/
+
+#ifndef tomomapconfig_h_
+#define tomomapconfig_h_
+
+#include "tomomodulebase.h"
+
+
+/* build identification */
+
+MODULE-PRFX TOMOMAP
+"i3tomomap"
+"2.4"
+"Copyright © 2012 Hanspeter Winkler"
+
+
+/* module codes */
+
+#define TomomapModuleCode       ( TomoMapModuleBase | 0x0100 )
+#define TomobackprojModuleCode  ( TomoMapModuleBase | 0x0200 )
+
+
+#endif

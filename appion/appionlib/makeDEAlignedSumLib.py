@@ -238,7 +238,9 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 				time.sleep(10)
 				filelist = glob.glob(framepattern)
 		if len(filelist) < 1:
-			apDisplay.printError('frames not found with %s' % framepattern)
+			apDisplay.printWarning('frames not found with %s' % framepattern)
+			targetdict={}
+			return targetdict
 
 		print os.path.join(framespath, imgrootname + '*')
 		framesroot, framesextension = os.path.splitext(glob.glob(os.path.join(framespath, imgrootname + '*'))[0])
@@ -444,11 +446,12 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 		if self.params['stackid'] is not None:
 			self.params['boxes_fromfiles']=1
 		else:
+			pass
 			xstart=0+self.params['border']
 			ystart=0+self.params['border']
 			xend=imgdata['camera']['dimension']['y']-self.params['border']
 			yend=imgdata['camera']['dimension']['x']-self.params['border']
-			self.params['input_roi']='%d,%d,%d,%d' % (xstart,ystart,xend,yend)
+			#self.params['input_roi']='%d,%d,%d,%d' % (xstart,ystart,xend,yend)
 		if os.path.exists(targetdict['outpath']):
 			shutil.rmtree(targetdict['outpath'])
 		os.mkdir(targetdict['outpath'])
@@ -492,7 +495,6 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 			apDisplay.printWarning('queued job for %s failed' % imgdata['filename'])
 			return None
 
-		#particlelst=readDriftFiles()
 		correctedpath=os.path.join(self.params['queue_scratch'],imgdata['filename'],imgdata['filename'])
 		print os.path.join(correctedpath,'*translations_x*')
 		print glob.glob(os.path.join(correctedpath,'*translations_x*'))
@@ -516,25 +518,33 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 		outname = imgdata['filename'] + '-' + self.params['alignlabel'] + '.mrc'
 		outnamepath = os.path.join(targetdict['outpath'], outname)
 		if self.params['border'] != 0:
-			command = ['proc2d', innamepath, outnamepath]
-			header = mrc.readHeaderFromFile(innamepath)
-			origx = header['nx']
-			origy = header['ny']
-			newx = origx - self.params['border']
-			newy = origy - self.params['border']
-			command.append('clip=%d,%d' % (newx, newy))
-			print command
-			subprocess.call(command)
+			if len(self.params['input_roi']) > 1:
+				#this doesn't really work
+				origx=imgdata['camera']['dimension']['x']
+				origy=imgdata['camera']['dimension']['y']
+			else:
+				command = ['proc2d', innamepath, outnamepath]
+				header = mrc.readHeaderFromFile(innamepath)
+				origx = header['nx']
+				origy = header['ny']
+				newx = origx - self.params['border']
+				newy = origy - self.params['border']
+				command.append('clip=%d,%d' % (newx, newy))
+				print command
+				subprocess.call(command)			
 			command = ['proc2d', outnamepath, outnamepath]
-			if self.params['output_rotation'] !=0:
+			#if self.params['output_rotation'] !=0:
 				###TODO add rot to proc2dLib
-				command.append('rot=%d' % self.params['output_rotation'])
+			#	command.append('rot=%d' % self.params['output_rotation'])
 			command.append('clip=%d,%d' % (origx, origy))
 			command.append('edgenorm')
 			print command
 			subprocess.call(command)
 		newimg_array = mrc.read(outnamepath)
+		particlelst=readDriftFiles(xtranslation, ytranslation)
 		self.commitAlignedImageToDatabase(imgdata, newimg_array, alignlabel=self.params['alignlabel'])
+		self.commitFrameTrajectoryToDatabase(imgdata,particlelst,particle=None)
+
 		# return None since everything is committed within this function.
 		if self.params['hackcopy'] is True:
 			origpath = imgdata['session']['image path']
@@ -629,6 +639,15 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 			newimagedata.insert()
 			q = appiondata.ApDDAlignImagePairData(source=imgdata, result=newimagedata, ddstackrun=self.rundata)
 			q.insert()
+	def commitFrameTrajectoryToDatabase(self, imgdata,particlelst,particle=None):
+	    for particle in particlelst:
+		q=appiondata.ApFrameAlignTrajectory()
+		q['image']=imgdata
+		q['particle']=particle
+		q['ddstackrun']=self.rundata
+		q['xshift']=particle['x']
+		q['yshift']=particle['y']
+		q.insert()
 
 	def commitToDatabase(self, imgdata):
 		"""

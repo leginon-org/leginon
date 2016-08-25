@@ -31,6 +31,7 @@ class Tomography(leginon.acquisition.Acquisition):
 		'tilt max': 60.0,
 		'tilt start': 0.0,
 		'tilt step': 1.0,
+		'tilt order': 'alternate',
 		'equally sloped': False,
 		'equally sloped n': 8,
 		'xcf bin': 1,
@@ -78,38 +79,15 @@ class Tomography(leginon.acquisition.Acquisition):
 		self.exposure = leginon.tomography.exposure.Exposure()
 		self.prediction = leginon.tomography.prediction.Prediction()
 		self.loadPredictionInfo()
-		self.first_tilt_direction = 1
 
+		self.updateTilts()
 		self.start()
 
-	'''
-	def onPresetPublished(self, evt):
-		leginon.acquisition.Acquisition.onPresetPublished(self, evt)
-
-		preset = evt['data']
-
-		if preset is None or preset['name'] is None:
-			return
-
-		if preset['name'] not in self.settings['preset order']:
-			return
-
-		dose = preset['dose']
-		exposure_time = preset['exposure time']/1000.0
-
-		try:
-			self.exposure.update(dose=dose, exposure=exposure_time)
-		except leginon.tomography.exposure.LimitError, e:
-			s = 'Exposure time limit exceeded for preset \'%s\': %s.'
-			s %= (preset['name'], e)
-			self.logger.warning(s)
-
-	def setSettings(self, *args, **kwargs):
-		leginon.acquisition.Acquisition.setSettings(self, *args, **kwargs)
-		self.update()
-	'''
-
-	def update(self):
+	def updateTilts(self):
+		'''
+		Update tilt values for data collection from settings.
+		Should be done before updateExposures.
+		'''
 		try:
 			self.tilts.update(equally_sloped=self.settings['equally sloped'],
 							  min=math.radians(self.settings['tilt min']),
@@ -117,18 +95,23 @@ class Tomography(leginon.acquisition.Acquisition):
 							  start=math.radians(self.settings['tilt start']),
 							  step=math.radians(self.settings['tilt step']),
 							  n=self.settings['equally sloped n'],
-							  add_on=self.convertDegreeTiltsToRadianList(self.settings['addon tilts'],True))
+							  add_on=self.convertDegreeTiltsToRadianList(self.settings['addon tilts'],True), tilt_order=self.settings['tilt order'])
 		except ValueError, e:
 			self.logger.warning('Tilt parameters invalid: %s.' % e)
 		else:
 			n = sum([len(tilts) for tilts in self.tilts.getTilts()])
 			self.logger.info('%d tilt angle(s) for series.' % n)
 
+	def updateExposures(self):
+		'''
+		Update exposure values for data collection from settings
+		Should be done after updateTilts.
+		'''
+		tilts = self.tilts.getTilts()
+
 		total_dose = self.settings['dose']
 		exposure_min = self.settings['min exposure']
 		exposure_max = self.settings['max exposure']
-
-		tilts = self.tilts.getTilts()
 
 		dose = 0.0
 		exposure_time = 0.0
@@ -163,6 +146,13 @@ class Tomography(leginon.acquisition.Acquisition):
 				s = 'Exposure time range: %g to %g seconds.' % exposure_range
 				self.logger.info(s)
 
+	def update(self):
+		'''
+		Update values for data collection from settings
+		'''
+		self.updateTilts()
+		self.updateExposures()
+
 	def checkDose(self):
 		self.update()
 
@@ -171,6 +161,9 @@ class Tomography(leginon.acquisition.Acquisition):
 		return
 
 	def acquire(self, presetdata, emtarget=None, attempt=None, target=None):
+		'''
+		Tilt series data collection from emtarget.
+		'''
 		status = self.moveAndPreset(presetdata, emtarget)
 		if status == 'error':
 			self.logger.warning('Move failed. skipping acquisition at this target')
@@ -188,13 +181,13 @@ class Tomography(leginon.acquisition.Acquisition):
 		self.update()
 		tilts = self.tilts.getTilts()
 		exposures = self.exposure.getExposures()
-		# Find first tilt group direction 
-		tiltsum = sum(tilts[0])
-		if tiltsum < len(tilts[0])*tilts[0][0]:
-			self.first_tilt_direction = 2
-		else:
-			self.first_tilt_direction = 1
-		self.initGoodPredictionInfo(presetdata)
+		tilt_index_sequence = self.tilts.getIndexSequence()
+		target_adjust_points = self.tilts.getTargetAdjustIndices()
+
+		# based on tilt group
+		n_groups = len(tilts) 
+		for g in range(n_groups):
+			self.initGoodPredictionInfo(presetdata, g)
 
 		collect = leginon.tomography.collection.Collection()
 		collect.node = self
@@ -209,6 +202,10 @@ class Tomography(leginon.acquisition.Acquisition):
 		collect.player = self.player
 		collect.pixel_size = pixel_size
 		collect.tilts = tilts
+		collect.target_adjust_points = target_adjust_points
+		# FIX ME need to use settings
+		collect.tilt_order = self.settings['tilt order']
+		collect.tilt_index_sequence = tilt_index_sequence
 		collect.exposures = exposures
 		collect.prediction = self.prediction
 		collect.setStatus = self.setStatus
@@ -294,7 +291,11 @@ class Tomography(leginon.acquisition.Acquisition):
 	def resetTiltSeriesList(self):
 		self.logger.info('Clear Tilt Series and Model History')
 		self.prediction.resetTiltSeriesList()
-		self.initGoodPredictionInfo()
+		# FIX ME: need to do both tilt groups
+		self.update()
+		tilts = self.tilts.getTilts()
+		for g in range(len(tilts)):
+			self.initGoodPredictionInfo(tiltgroup=g)
 
 	def adjusttarget(self,preset_name,target,emtarget):
 		self.declareDrift('tilt')
@@ -306,8 +307,8 @@ class Tomography(leginon.acquisition.Acquisition):
 			self.logger.warning('Move failed. skipping acquisition at this adjusted target')
 		return emtarget, status
 
-	def removeStageAlphaBacklash(self, tilts, preset_name, target, emtarget):
-		if len(tilts) < 2:
+	def removeStageAlphaBacklash(self, tilts, sequence, preset_name, target, emtarget):
+		if len(sequence) < 2:
 			raise ValueError
 
 		## change to parent preset
@@ -329,11 +330,18 @@ class Tomography(leginon.acquisition.Acquisition):
 		delta = math.radians(5.0)
 		n = 5
 		increment = delta/n
-		if tilts[1] - tilts[0] > 0:
+		if not sequence:
+			self.logger.warning('Abort stage alpha backlash correction for lack of tilt sequence')
+			return
+		seq0 = sequence[0]
+		seq1 = sequence[1]
+		tilt0 = tilts[seq0[0]][seq0[1]]
+		tilt1 = tilts[seq1[0]][seq1[1]]
+		if tilt1 - tilt0 > 0:
 			sign = -1
 		else:
 			sign = 1
-		alpha = tilts[0] + sign*delta
+		alpha = tilt0 + sign*delta
 		self.instrument.tem.StagePosition = {'a': alpha}
 		time.sleep(1.0)
 		for i in range(n):
@@ -371,7 +379,8 @@ class Tomography(leginon.acquisition.Acquisition):
 			self.logger.info('adjusting imageshift after backlash: dx,dy = %s,%s' % (ishiftx,ishifty))
 			self.instrument.tem.ImageShift = newishift
 
-	def initGoodPredictionInfo(self,presetdata=None, tiltgroup=1):
+	def initGoodPredictionInfo(self,presetdata=None, tiltgroup=0):
+		# FIX ME: This can be simplified now that we define tilt group in prediction
 		if presetdata == None:
 			presets = self.settings['preset order']
 			try:
@@ -423,6 +432,7 @@ class Tomography(leginon.acquisition.Acquisition):
 				qpreset = leginon.leginondata.PresetData(tem=tem, ccdcamera=ccd, magnification=mag)
 				qimage = leginon.leginondata.AcquisitionImageData(preset=qpreset)
 				query_data = leginon.leginondata.TomographyPredictionData(image=qimage)
+				query_data['tilt group'] = tiltgroup
 				maxshift = 2.0e-8
 				raw_correlation_binning = 6
 				for n in (10, 100, 500, 1000):
@@ -443,7 +453,6 @@ class Tomography(leginon.acquisition.Acquisition):
 						cor = predictinfo['correlation']
 						dist = math.hypot(cor['x'],cor['y'])
 						if dist and dist <= model_error_limit:
-							if (self.first_tilt_direction == tiltgroup and a > self.settings['tilt start']) or (self.first_tilt_direction != tiltgroup and a < self.settings['tilt start']):
 								goodprediction = predictinfo
 								self.logger.info('good calibration found at %d x mag' % (mag,))
 								break
@@ -457,22 +466,19 @@ class Tomography(leginon.acquisition.Acquisition):
 		if goodprediction is None:
 			if self.settings['model mag'] == 'custom values':
 				# initialize phi, offset by tilt direction
-				if self.first_tilt_direction == 1:
-					offsetlist = [self.settings['offset'],self.settings['offset2']]
-					philist = [self.settings['phi'],self.settings['phi2']]
-					custom_z0 = self.settings['z0']*(1e-6)/presetimage_pixel_size
-				else:
-					offsetlist = [self.settings['offset2'],self.settings['offset']]
-					philist = [self.settings['phi2'],self.settings['phi']]
-					custom_z0 = self.settings['z02']*(1e-6)/presetimage_pixel_size
-				if tiltgroup == 2:
+				offsetlist = [self.settings['offset'],self.settings['offset2']]
+				philist = [self.settings['phi'],self.settings['phi2']]
+				if tiltgroup == 1:
+					# tilt toward negative
 					axis_offset = offsetlist[1]
 					phi = math.radians(philist[1])
-					custom_z0 = self.settings['z02']*(1e-6)/presetimage_pixel_size
+					custom_z0 = self.settings['z02']
 				else:
+					# tilt toward positive
 					axis_offset = offsetlist[0]
 					phi = math.radians(philist[0])
-					custom_z0 = self.settings['z0']*(1e-6)/presetimage_pixel_size
+					custom_z0 = self.settings['z0']
+				custom_z0 *= (1e-6)/presetimage_pixel_size
 				optical_axis = axis_offset*(1e-6)/presetimage_pixel_size
 				params = [phi, optical_axis, custom_z0]
 			else:
@@ -484,17 +490,23 @@ class Tomography(leginon.acquisition.Acquisition):
 		if not self.settings['use z0'] and self.settings['model mag'] != 'custom values':
 			params[2] = 0
 
-		self.prediction.parameters = params
+		# specify which tilt group to set value on
+		self.prediction.setCurrentTiltGroup(tiltgroup)
+		# set values in prediction
+		self.prediction.setParameters(tiltgroup,params)
+		self.prediction.setFixedParameters(tiltgroup,params)
 		self.prediction.image_pixel_size = presetimage_pixel_size
 		self.prediction.ucenter_limit = self.settings['z0 error']*(1e-6)
 		self.prediction.fixed_model = self.settings['fixed model']
-		self.prediction.phi0 = params[0]
-		self.prediction.offset0 = params[1]
-		self.prediction.z00 = params[2]
+		# need to specify tilt group
+
 		phi_degree = math.degrees(params[0])
 		offset_um = params[1]*presetimage_pixel_size/(1e-6)
 		z0_um = params[2]*presetimage_pixel_size/(1e-6)
-		self.logger.info('Initialize prediction parameters to (phi,offset,z0) = (%.2f deg, %.2f um, %.2f um)' % (phi_degree,offset_um,z0_um))
+
+		# tilt direction group string for display
+		s = ['positive','negative']
+		self.logger.info('Initialize %s tilt model to (phi,offset,z0) = (%.2f deg, %.2f um, %.2f um)' % (s[tiltgroup],phi_degree,offset_um,z0_um))
 		pixelshift={}
 		pixelshift['col'] = params[1]*math.cos(params[0])
 		# reverse y as in getPixelPosition
@@ -516,6 +528,9 @@ class Tomography(leginon.acquisition.Acquisition):
 			self.logger.info('calculated image shift to center tilt axis (x,y): (%.4e, %.4e)' % (shift0x,shift0y))
 
 	def loadPredictionInfo(self):
+		'''
+		Add previous tilt series data points in the session to Prediction class instance.
+		'''
 		initializer = {
 			'session': self.session,
 		}
@@ -523,13 +538,13 @@ class Tomography(leginon.acquisition.Acquisition):
 		results = self.research(query_data)
 		results.reverse()
 
-		keys = []
+		series_ids = []
 		settings = {}
 		positions = {}
 		image_pixel_sizes = {}
 		for result in results:
 			key = result.dbid
-			keys.append(key)
+			series_ids.append(key)
 			settings[key] = result
 			positions[key] = []
 			image_pixel_sizes[key] = []
@@ -541,21 +556,31 @@ class Tomography(leginon.acquisition.Acquisition):
 		results = self.research(query_data)
 		results.reverse()
 
+		# Load Prediction sorted by tilt series 
 		for result in results:
 			image = result.special_getitem('image', True, readimages=False)
 			tilt_series = image['tilt series']
 			image_pixel_sizes[tilt_series.dbid] = result['pixel size']
 			tilt = image['scope']['stage position']['a']
 			position = result['position']
-			positions[tilt_series.dbid].append((tilt, position))
+			group = result['tilt group']
+			positions[tilt_series.dbid].append((group, tilt, position))
 
-		for key in keys:
+		# series_ids are tilt series dbid
+		for key in series_ids:
 			self.prediction.image_pixel_size = image_pixel_sizes[key]
 			start = settings[key]['tilt start']
+			tmin = settings[key]['tilt min']
+			tmax = settings[key]['tilt max']
+
+			# add a tilt series to prediction
 			self.prediction.newTiltSeries()
-			for tilt, position in positions[key]:
-				if round(tilt, 3) == round(start, 3):
-					self.prediction.newTiltGroup()
+			# add a new tilt group in that tilt series
+			self.prediction.newTiltGroup()
+			self.prediction.newTiltGroup()
+			# add tilt angles and positions in the tilt group
+			for group, tilt, position in positions[key]:
+				self.prediction.setCurrentTiltGroup(group)
 				self.prediction.addPosition(tilt, position)
 
 		n_groups = len(self.prediction.tilt_series_list)
@@ -591,6 +616,7 @@ class Tomography(leginon.acquisition.Acquisition):
 		try:
 			leginon.acquisition.Acquisition.processTargetData(self, *args, **kwargs)
 		except Exception, e:
+			raise
 			self.logger.error('Failed to process the tomo target: %s' % e)
 
 	def measureDefocus(self):

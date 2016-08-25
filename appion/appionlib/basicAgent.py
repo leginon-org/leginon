@@ -16,7 +16,7 @@ class BasicAgent(object):
 
     def createProcessingHost(self, command, jobType):
         if not self.configFile:
-            raise ValueError ("Could not create processing host object, configuration file not defined") 
+            raise ValueError ("Could not create processing host object, configuration file is not defined") 
         
         configDict = apConfig.parseConfigFile(self.configFile)
 

@@ -195,13 +195,18 @@ class DriftManager(watcher.Watcher):
 			self.correlator.insertImage(numdata)
 
 			## do correlation
-			self.startTimer('drift correlate')
-			pc = self.correlator.phaseCorrelate()
-			self.stopTimer('drift correlate')
-			self.startTimer('drift peak')
-			peak = self.peakfinder.subpixelPeak(newimage=pc)
-			self.stopTimer('drift peak')
-			rows,cols = self.peak2shift(peak, pc.shape)
+			try:
+				self.startTimer('drift correlate')
+				pc = self.correlator.phaseCorrelate()
+				self.stopTimer('drift correlate')
+				self.startTimer('drift peak')
+				peak = self.peakfinder.subpixelPeak(newimage=pc)
+				self.stopTimer('drift peak')
+				rows,cols = self.peak2shift(peak, pc.shape)
+			except Exception, e:
+				self.logger.error(e)
+				self.logger.warning('Failed correlation and/or peak finding, Set to zero shift')
+				rows,cols = (0,0)
 			dist = math.hypot(rows,cols)
 
 			self.setImage(pc, 'Correlation')
@@ -296,8 +301,13 @@ class DriftManager(watcher.Watcher):
 		self.correlator.insertImage(numdata)
 
 		## do correlation
-		pc = self.correlator.phaseCorrelate()
-		peak = self.peakfinder.subpixelPeak(newimage=pc)
+		try:
+			pc = self.correlator.phaseCorrelate()
+			peak = self.peakfinder.subpixelPeak(newimage=pc)
+		except Exception, e:
+			self.logger.error(e)
+			self.logger.warning('Correlation/PeakFinding error, assume no shift')
+			peak = (0,0)
 		rows,cols = self.peak2shift(peak, pc.shape)
 		dist = math.hypot(rows,cols)
 

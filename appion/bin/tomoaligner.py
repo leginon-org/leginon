@@ -54,6 +54,8 @@ class protomoAligner(appionScript.AppionScript):
 			help="tilt series number in the session", metavar="int")
 		self.parser.add_option("--othertilt", dest="othertilt", type="int",
 			help="2nd tilt group series number if needed", metavar="int")
+		self.parser.add_option("--ddstack", dest="ddstack", type="int", default=0,
+			help="gain/dark corrected ddstack id used for dd frame integration")
 		self.alignmethods = ( "imod-shift", "protomo", "protomo2", "leginon" )
 		self.parser.add_option("--alignmethod", dest="alignmethod",
 			help="aligning method, e.g. --alignmethod=protomo or imod-shift", metavar="Method",
@@ -316,8 +318,9 @@ class protomoAligner(appionScript.AppionScript):
 		cycle = self.params['cycle']
 		alignmethod = self.params['alignmethod']
 		apDisplay.printMsg("getting imagelist")
-		imagelist = apTomo.getImageList(tiltdatalist)
-		tilts,ordered_imagelist,ordered_mrc_files,refimg = apTomo.orderImageList(imagelist)
+		ddstackrunid = self.params['ddstack']
+		imagelist = apTomo.getImageList(tiltdatalist, ddstackrunid)
+		tilts,ordered_imagelist,ordered_accumulated_doses,ordered_mrc_files,refimg = apTomo.orderImageList(imagelist)
 		
 		# This parameter is needed for protomo, but not protomo2
 		if self.params['refimg']:
@@ -333,7 +336,7 @@ class protomoAligner(appionScript.AppionScript):
 			pixelsize = apTomo.getTomoPixelSize(ordered_imagelist[refimg])
 			if pixelsize is None:
 				apDisplay.printError('Pixel Size not retrieved. Invalid tilt series for processing')
-
+			
 		imgshape = apTomo.getTomoImageShape(ordered_imagelist[refimg])
 		corr_bin = apTomo.getCorrelatorBinning(imgshape)
 		center = {'x':imgshape[1]/2,'y':imgshape[0]/2}

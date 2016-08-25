@@ -165,7 +165,6 @@ class ApProc2d(basicScript.BasicScript):
 		#header = self.readFileHeader(filename)
 		if filename.endswith('.mrc'):
 			pixeldict = mrc.readFilePixelSize(filename)
-			print pixeldict
 			if pixeldict['x'] == pixeldict['y'] and pixeldict['x'] == pixeldict['z']:
 				return pixeldict['x']
 			else:
@@ -318,7 +317,7 @@ class ApProc2d(basicScript.BasicScript):
 
 		self.message("Appending to existing file, %s"%(self.params['outfile']))
 		## dimensions for new particles must be the same as the old
-		if self.inheader['nx'] != existheader['nx'] or self.inheader['ny'] != existheader['ny']:
+		if self.inheader['nx']/self.params['bin'] != existheader['nx'] or self.inheader['ny']/self.params['bin'] != existheader['ny']:
 			apDisplay.printError("Dims for existing stack (%dx%d) is different from input stack (%dx%d)"
 				%(self.inheader['nx'], self.inheader['ny'], existheader['nx'], existheader['ny']))
 

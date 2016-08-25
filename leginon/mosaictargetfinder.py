@@ -70,6 +70,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 	})
 
 	eventoutputs = targetfinder.ClickTargetFinder.eventoutputs + [event.MosaicDoneEvent]
+	targetnames = ['acquisition','focus','preview','reference','done']
 	def __init__(self, id, session, managerlocation, **kwargs):
 		self.mosaicselectionmapping = {}
 		targetfinder.ClickTargetFinder.__init__(self, id, session, managerlocation, **kwargs)

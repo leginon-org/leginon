@@ -407,17 +407,23 @@ class Navigator(node.Node):
 		im1 = imagefun.crop_at(self.origimagedata['image'], location, limit, mode='constant', cval=0.0)
 		im2 = imagefun.crop_at(self.newimagedata['image'], 'center', limit)
 
-		pc = correlator.phase_correlate(im2, im1, zero=False)
-		pc = scipy.ndimage.gaussian_filter(pc,1)
-		subpixelpeak = self.peakfinder.subpixelPeak(newimage=pc, guess=(0.5,0.5), limit=limit)
-		res = self.peakfinder.getResults()
-		unsignedpixelpeak = res['unsigned pixel peak']
+		try:
+			pc = correlator.phase_correlate(im2, im1, zero=False)
+			pc = scipy.ndimage.gaussian_filter(pc,1)
+			subpixelpeak = self.peakfinder.subpixelPeak(newimage=pc, guess=(0.5,0.5), limit=limit)
+			res = self.peakfinder.getResults()
+			unsignedpixelpeak = res['unsigned pixel peak']
+		except Exception, e:
+			self.logger.warning(e)
+			self.logger.warning('Error in finding shift, assume no move error')
+			unsignedpixelpeak = (0,0)
+			subpixelpeak = (0,0)
+
 		peaktargets = [(unsignedpixelpeak[1], unsignedpixelpeak[0])]
 		r_error = subpixelpeak[0]
 		c_error = subpixelpeak[1]
 
 		self.setImage(pc, 'Correlation')
-		peaktargets = [(unsignedpixelpeak[1], unsignedpixelpeak[0])]
 		self.setTargets(peaktargets, 'Peak')
 
 		## calculate error distance

@@ -1,81 +1,191 @@
 #!/usr/bin/env python
 
 import os
+import time
+import numpy
+from appionlib import apDisplay
 
+####
+# This is a low-level file with NO database connections
+# Please keep it this way
+####
 
 class StackClass(object):
 	################################################
 	# Must be implemented in new Stack subClass
 	################################################
-	def readHeader(self):
-		# read the header information
-		#  or initialize empty stack
-		# required variables to set are below
-		self.boxsize = None
-		self.apix = None
-		self.originalNumberOfParticles = None
+	def _getNumberOfParticles(self):
 		raise NotImplementedError
-	def newFile(self):
-		# create new file to append to
+	def _getBoxSize(self):
 		raise NotImplementedError
-	def updatePixelSize(self):
-		# create new file to append to
-		raise NotImplementedError	
-	def readParticles(self, particleNumbers):
-		# read a list of particles into memory
+	def _getPixelSize(self):
 		raise NotImplementedError
-	def appendParticlesToFile(self, particleDataTree):
-		# takes a list of 2D numpy arrays
-		#  and wrtie them to a file
+
+	def _readParticlesFromFile(self, particleNumbers):
+		"""
+		read a list of particles into memory
+		particles numbers MUST start at 1
+		"""
 		raise NotImplementedError
-	def close(self):
-		# close out file
-		# write total particles to header, etc.
+	def _writeParticlesToFile(self, particleDataTree):
+		"""
+		input:
+			* list of 2D numpy arrays [(x,y), (x,y), ...]
+			* 3D numpy array, shape (numpart, xdim, ydim)
+		and write them to a new file
+		or overwrite them to an existing file
+		"""
+		raise NotImplementedError
+	def _appendParticlesToFile(self, particleDataTree):
+		"""
+		input:
+			* list of 2D numpy arrays [(x,y), (x,y), ...]
+			* 3D numpy array, shape (numpart, xdim, ydim)
+		and append them to an existing file
+		function assumes file already exists
+		"""
+		raise NotImplementedError
+	def _writePixelSizeToFile(self, apix):
+		"""
+		save a new pixel size to an existing file
+		"""
 		raise NotImplementedError
 
 	################################################
-	# These functions are general should not be copied to subClasses
+	# Reporter functions for the base class
 	################################################
-	def __init__(self, filename):
+	def getFileSize(self):
+		if not self.fileExists():
+			return 0
+		return int(os.stat(self.filename)[6])
+	def getNumberOfParticles(self):
+		if not self.fileExists():
+			return 0
+		return self._getNumberOfParticles()
+	def getBoxSize(self):
+		if not self.fileExists():
+			return None
+		return self._getBoxSize()
+	def getPixelSize(self):
+		if not self.fileExists():
+			return None
+		return self._getPixelSize()
+
+	################################################
+	# These functions are general should NOT have overrides in subClasses
+	################################################
+	def __init__(self, filename, debug=False):
 		self.filename = filename
-		self.readHeader()
+		self.debug = debug
 		self.particlesWritten = 0
 		self.particlesRead = 0
-		self.boxsize = None
-		self.apix = 1.0 # assume 1.0 apix unless specified
-		self.originalNumberOfParticles = 0
-		self.currentParticles = 0
 		self.readonly = False
-	def setPixelSize(self, apix):
-		self.apix = apix
-	def fileSize(self):
-		return int(os.stat(self.filename)[6])
+	def fileExists(self):
+		if not os.path.exists(self.filename):
+			return False
+		if int(os.stat(self.filename)[6]) < 128:
+			return False
+		return True
+	def validateParticles(self, particleDataTree):
+		firstparticle = particleDataTree[0]
+		if firstparticle.shape[0] != firstparticle.shape[1]:
+			raise NotImplementedError("Particles are not square")
+		if self.boxsize is None:
+			self.boxsize = firstparticle.shape[0]
+		elif firstparticle.shape[0] != self.boxsize:
+			raise ValueError("Particles boxsize different from stack")
+
+	def removeStack(self, warn=True):
+		"""
+		delete file, mostly for IMAGIC to override
+		"""
+		self._removeStack(self.filename, warn)
+	def _removeStack(self, filename, warn=True):
+		"""
+		delete file, mostly for IMAGIC to override
+		"""
+		if os.path.exists(filename):
+			if warn is True:
+				apDisplay.printWarning("removing stack file %s"%(filename))
+			time.sleep(0.01)
+			os.remove(filename)
+			time.sleep(0.01)
+		if os.path.exists(filename):
+			apDisplay.printError("stack file not removed %s"%(filename))
+		return
+
+
 	################################################
-	# Unique functions for this class
+	# Read / write functions called by apProc2d
+	# These functions are general should NOT have overrides in subClasses
 	################################################
+	def readParticlesFromFile(self, particleNumbers=None):
+		"""
+		read a list of particles into memory
+		"""
+		t0 = time.time()
+		if particleNumbers is None:
+			#set to all particles
+			numpart = self.getNumberOfParticles()
+			if numpart is None or numpart == 0:
+				apDisplay.printWarning("tried to read from empty stack file")
+				return []
+			particleNumbers = range(1, numpart+1)
+		if self.debug is True:
+			apDisplay.printMsg("going to read %d particles from file"%(len(particleNumbers)))
+		partdatalist = self._readParticlesFromFile(particleNumbers)
+		#convert to numpy array of shape (numpart, box, box)
+		partdataarray = numpy.array(partdatalist)
+		if self.debug is True:
+			apDisplay.printMsg("finished reading %d particles of boxsize %d x %d from file"
+				%(partdataarray.shape))
+			apDisplay.printMsg("finished writeParticlesToFile() in %s"
+				%(apDisplay.timeString(time.time()-t0)))
+		return partdataarray
 
+	def writeParticlesToFile(self, particleDataTree):
+		"""
+		input:
+			* list of 2D numpy arrays [(x,y), (x,y), ...]
+			* 3D numpy array, shape (numpart, xdim, ydim)
+		and write them to a new file
+		or overwrite them to an existing file
+		"""
+		t0 = time.time()
+		if self.debug is True:
+			print "over-writing %d particles to file"%(len(particleDataTree))
+		self._writeParticlesToFile(particleDataTree)
+		self.particlesWritten += len(particleDataTree)
+		if self.debug is True:
+			apDisplay.printMsg("finished writeParticlesToFile() in %s"
+				%(apDisplay.timeString(time.time()-t0)))
 
+	def appendParticlesToFile(self, particleDataTree):
+		"""
+		input:
+			* list of 2D numpy arrays [(x,y), (x,y), ...]
+			* 3D numpy array, shape (numpart, xdim, ydim)
+		and append them to an existing file
+		"""
+		t0 = time.time()
+		if self.debug is True:
+			print "appending %d particles to file"%(len(particleDataTree))
+		if not self.fileExists():
+			self._writeParticlesToFile(particleDataTree)
+		else:
+			self._appendParticlesToFile(particleDataTree)
+		self.particlesWritten += len(particleDataTree)
+		if self.debug is True:
+			apDisplay.printMsg("finished appendParticlesToFile() in %s"
+				%(apDisplay.timeString(time.time()-t0)))
 
-if __name__ == '__main__':
-	import numpy
-	# create a random stack of 4 particles with 16x16 dimensions
-	a = numpy.random.random((16,16,4))
-	# create new stack file
-	f1 = StackClass("temp.mrc")
-	# set the pixel size
-	f1.setPixelSize(1.0)
-	# save particles to file
-	f1.appendParticlesToFile(a)
-	# close stack
-	f1.close()
-	# open created stack
-	f2 = StackClass("temp.mrc")
-	# read particles in stack
-	b = f2.readParticles()
-	# create new particles from old ones
-	a = b*a
-	# append and save new particles to stack
-	f2.appendParticlesToFile(a)
-	# close new stack
-	f2.close()
+	def writePixelSizeToFile(self, apix):
+		"""
+		save a new pixel size to an existing file
+		"""
+		if apix is None:
+			raise ValueError("apix not defined")
+		if self.debug is True:
+			print "writing pixel size %.4f Angstroms to file"%(apix)
+		self._writePixelSizeToFile(apix)
 

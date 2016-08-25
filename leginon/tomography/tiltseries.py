@@ -35,6 +35,7 @@ class TiltSeries(object):
 			'tilt max': self.settings['tilt max'],
 			'tilt start': self.settings['tilt start'],
 			'tilt step': self.settings['tilt step'],
+			'tilt order': self.settings['tilt order'],
 			'number':	series_number,
 		}
 		tilt_series_data = self.dataclass(initializer=initializer)

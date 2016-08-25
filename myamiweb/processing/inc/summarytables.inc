@@ -443,10 +443,10 @@ function alignstacksummarytable($alignstackid, $mini=false, $showOptions=True) {
 		$stacktable.= "<table border='0'>\n";
 		$stacktable.= "<tr><td>\n";
 		if ($mini) {
-			$stacktable.= "<img src='loadimg.php?filename=$stackavg&h=60' height='60'><br/>\n";
+			$stacktable.= "<img src='loadimg.php?filename=$stackavg&s=60' height='60'><br/>\n";
 			$stacktable.= "<i>avg image</i>\n";
 		} else {
-			$stacktable.= "<img src='loadimg.php?filename=$stackavg&h=120' height='120'><br/>\n";
+			$stacktable.= "<img src='loadimg.php?filename=$stackavg&s=120' height='120'><br/>\n";
 			$stacktable.= "<i>averaged stack image</i>\n";
 		}
 		$stacktable.= "</td>\n";
@@ -456,7 +456,7 @@ function alignstacksummarytable($alignstackid, $mini=false, $showOptions=True) {
 			$stacktable.= "<a href='aligngraph.php?expId=$expId&alignid=$alignstackid&type=$type'>\n";
 			if ($mini && $numpart < 1000)
 				$stacktable.= "<img border='0' src='aligngraph.php?expId=$expId"
-					."&alignid=$alignstackid&h=60&type=$type' height='60'>\n";
+					."&alignid=$alignstackid&s=60&type=$type' height='60'>\n";
 			elseif ($numpart < 500)
 				$stacktable.= "<img border='0' src='aligngraph.php?expId=$expId"
 					."&alignid=$alignstackid&h=120&type=$type' height='120'>\n";
@@ -665,7 +665,7 @@ function stackInfoForRecipe($stackid) {
 	if (file_exists($stackavg)) {
 		$s.= "<tr>\n";
 		$s.= "<td rowspan='30' align='center' valign='top'>\n";
-		$s.= "<img src='loadimg.php?filename=$stackavg&h=60' height='60'>\n";
+		$s.= "<img src='loadimg.php?filename=$stackavg&s=60' height='60'>\n";
 		$s.= "</td>\n";
 	}
 	$s.= "<td>\n";
@@ -694,7 +694,7 @@ function alignInfoForRecipe($astackid) {
 	if (file_exists($stackavg)) {
 		$s.= "<tr>\n";
 		$s.= "<td rowspan='30' align='center' valign='top'>\n";
-		$s.= "<img src='loadimg.php?filename=$stackavg&h=60' height='60'>\n";
+		$s.= "<img src='loadimg.php?filename=$stackavg&s=60' height='60'>\n";
 		$s.= "</td>\n";
 	}
 	$s.= "<td>\n";
@@ -1045,7 +1045,12 @@ function modelsummarytable($modelid, $mini=false) {
 			$modeltable .= "<img src='loadimg.php?filename=$allpngs[0]&s=120' height='120' border='0'></a>\n";
 		}
 	}
-
+	$modelroot = substr($modeldata['name'], 0, -4);
+	$objfile = $modeldata['path']."/".$modelroot.".obj";
+	if (file_exists($objfile)) {
+		$modeltable .=  "<div style='text-align:center;'><a target='popup' href='webglObjViewer.php?expId=$expId&filename=$objfile'";
+		$modeltable .=  " onclick=\"window.open('webglObjViewer.php?expId=$expId&filename=$objfile', 'WebGL Obj Viewer', 'width=700,height=420'); return false\">View in 3D - WebGL</a></div>\n";
+	}
 	$modeltable .= "</td></tr>\n";
 	// show data
 	foreach($display_keys as $k=>$v) {

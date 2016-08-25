@@ -1382,6 +1382,23 @@ class ImageRotationCalibrationClient(ImageShiftCalibrationClient):
 		# This need to be set to image shift for other functions.
 		return 'image shift'
 
+	def retrieveLastImageScaleAdditions(self, tem, ccdcamera):
+		'''
+		get most recent calibrations at all mags
+		'''
+		caldatalist = self.researchImageScaleAddition(tem, ccdcamera, mag=None)
+		last = {}
+		for caldata in caldatalist:
+			try:
+				mag = caldata['magnification']
+				if mag not in last:
+					last[mag] = caldata
+			except NoCalibrationError:
+				pass
+			except:
+				raise RuntimeError('Failed retrieving last values')
+		return last.values()
+
 	def retrieveLastImageRotations(self, tem, ccdcamera):
 		'''
 		get most recent calibrations at all mags
@@ -1399,8 +1416,15 @@ class ImageRotationCalibrationClient(ImageShiftCalibrationClient):
 				raise RuntimeError('Failed retrieving last values')
 		return last.values()
 
+	def researchImageScaleAddition(self, tem, ccdcamera, mag=None, ht=None, probe=None):
+		queryinstance = leginondata.ImageScaleAdditionCalibrationData()
+		return self.researchCalibration(queryinstance, tem, ccdcamera, mag, ht, probe)
+
 	def researchImageRotation(self, tem, ccdcamera, mag=None, ht=None, probe=None):
 		queryinstance = leginondata.ImageRotationCalibrationData()
+		return self.researchCalibration(queryinstance, tem, ccdcamera, mag, ht, probe)
+
+	def researchCalibration(self, queryinstance, tem, ccdcamera, mag, ht, probe):
 		self.setDBInstruments(queryinstance,tem,ccdcamera)
 		if ht is None:
 			ht = self.instrument.tem.HighTension
@@ -1424,6 +1448,18 @@ class ImageRotationCalibrationClient(ImageShiftCalibrationClient):
 		else:
 			return []
 
+	def retrieveImageScaleAddition(self, tem, ccdcamera, mag, ht=None):
+		'''
+		finds the requested  using magnification
+		'''
+		caldatalist = self.researchImageScaleAddition(tem, ccdcamera, mag, ht)
+		if caldatalist:
+			caldata = caldatalist[0]
+			self.node.logger.info('image scale calibration dbid: %d' % caldata.dbid)
+			return caldata
+		else:
+			return []
+
 	def pixelToPixel(self, tem1, ccdcamera1, tem2, ccdcamera2, ht, mag1, mag2, p1):
 		'''
 		Using physical position as a global coordinate system, we can
@@ -1438,7 +1474,9 @@ class ImageRotationCalibrationClient(ImageShiftCalibrationClient):
 		# add an additional rotation in case the image shift axis is not consistent.
 		# This happens with high defocus.
 		physicalpos = self.rotatePosition(tem1,ccdcamera1,ht,mag1, physicalpos, False)
+		physicalpos = self.scalePosition(tem1,ccdcamera1,ht,mag1, physicalpos, False)
 		physicalpos = self.rotatePosition(tem2,ccdcamera2,ht,mag2, physicalpos, True)
+		physicalpos = self.scalePosition(tem2,ccdcamera2,ht,mag2, physicalpos, True)
 		p2 = self.positionToPixel(tem2,ccdcamera2, par, ht, mag2, physicalpos)
 		return p2
 
@@ -1455,7 +1493,22 @@ class ImageRotationCalibrationClient(ImageShiftCalibrationClient):
 		rotated_vect = numpy.dot(pixvect,numpy.asarray(m))
 		self.node.logger.info('Adjust for image rotation: rotate %s to %s' % (pixvect, rotated_vect))
 		return rotated_vect
-	
+
+	def scalePosition(self, tem, ccdcamera, ht, mag, pixvect, invert=False):
+		a = 0.0
+		try:
+			caldata = self.retrieveImageScaleAddition(tem,ccdcamera,mag,ht)
+			a = caldata['scale addition']
+		except:
+			self.node.logger.info('No calibration')
+		scale = 1.0 + a
+		if invert:
+			scale = 1.0 / scale
+		pixvect = numpy.array(pixvect)
+		scaled_vect = scale * pixvect
+		self.node.logger.info('Adjust for image scale: %.4f' % (scale))
+		return scaled_vect
+
 class BeamShiftCalibrationClient(SimpleMatrixCalibrationClient):
 	mover = False
 	def __init__(self, node):

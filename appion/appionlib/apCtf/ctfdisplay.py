@@ -168,7 +168,10 @@ class CtfDisplay(object):
 				print "StartIndexes", startIndexes
 				print "EndIndexes", endIndexes
 				print "MergeIndexes", mergeIndexes
-			minGap = numpy.diff(mergeIndexes).min()
+			try:
+				minGap = numpy.diff(mergeIndexes).min()
+			except:
+				return None,None,None,None
 			if minGap < 2:
 				apDisplay.printWarning("Section gap of 0 points was found, please see bug #3438")
 				numSections -= 1
@@ -326,6 +329,9 @@ class CtfDisplay(object):
 				%(numSections, noiseNumPoints, firstvalleyindex, len(raddata), noiseNumPoints/numSections), "cyan")
 
 		numSections, noiseStartIndexes, noiseEndIndexes, mergeIndexes = self.createSections(numSections, fvi, raddatasq, pixelrdata, valley)
+
+		if not numSections:
+			return None
 
 		###
 		### PART 2: BACKGROUND NOISE SUBTRACTION

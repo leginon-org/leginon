@@ -80,6 +80,7 @@ class SessionData(Data):
 			('comment', str),
 			('holder', GridHolderData),
 			('hidden', bool),
+			('remote passcode', str),
 		)
 	typemap = classmethod(typemap)
 
@@ -415,6 +416,14 @@ class ImageRotationCalibrationData(BeamProbeDependentCalibrationData):
 	def typemap(cls):
 		return BeamProbeDependentCalibrationData.typemap() + (
 			('rotation', float),
+			('comment', str),
+		)
+	typemap = classmethod(typemap)
+
+class ImageScaleAdditionCalibrationData(BeamProbeDependentCalibrationData):
+	def typemap(cls):
+		return BeamProbeDependentCalibrationData.typemap() + (
+			('scale addition', float),   #fraction above 1 as positive
 			('comment', str),
 		)
 	typemap = classmethod(typemap)
@@ -1267,7 +1276,7 @@ class AtlasTargetMakerSettingsData(SettingsData):
 class PresetsManagerSettingsData(SettingsData):
 	def typemap(cls):
 		return SettingsData.typemap() + (
-			('pause time', float),
+			('pause time', float), # seconds
 			('xy only', bool),
 			('stage always', bool),
 			('cycle', bool),
@@ -1277,6 +1286,7 @@ class PresetsManagerSettingsData(SettingsData):
 			('disable stage for image shift', bool),
 			('blank', bool),
 			('smallsize', int),
+			('idle minute', float), # minutes
 		)
 	typemap = classmethod(typemap)
 
@@ -1379,6 +1389,7 @@ class TargetFinderSettingsData(SettingsData):
 			('ignore images', bool),
 			('queue', bool),
 			('user check', bool),
+			('check method', str),
 			('queue drift', bool),
 			('sort target', bool),
 			('allow append', bool),
@@ -2110,6 +2121,7 @@ class TomographySettingsData(AcquisitionSettingsData):
 			('tilt max', float),
 			('tilt start', float),
 			('tilt step', float),
+			('tilt order', str),
 			('equally sloped', bool),
 			('equally sloped n', int),
 			('xcf bin', int),
@@ -2178,6 +2190,7 @@ class TomographyPredictionData(InSessionData):
 			('image', AcquisitionImageData),
 			('measured defocus', float),
 			('measured fit', float),
+			('tilt group', int),
 		)
 	typemap = classmethod(typemap)
 
@@ -2188,6 +2201,7 @@ class TiltSeriesData(InSessionData):
 			('tilt max', float),
 			('tilt start', float),
 			('tilt step', float),
+			('tilt order', str),
 			('number', int),
 		)
 	typemap = classmethod(typemap)
@@ -2588,6 +2602,15 @@ class DDinfoValueData(Data):
 			('camera', CameraEMData),
 			('infokey', DDinfoKeyData),
 			('infovalue', str),
+		)
+	typemap = classmethod(typemap)
+
+class DDTransferData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('image', AcquisitionImageData),
+			('framename', str),
+			('cameraparamsfile', str),
 		)
 	typemap = classmethod(typemap)
 
