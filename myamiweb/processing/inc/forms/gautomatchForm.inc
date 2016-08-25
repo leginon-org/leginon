@@ -11,8 +11,6 @@ require_once "mathParticleForm.inc";
 require_once "inc/particledata.inc";
 require_once "inc/processing.inc";
 require_once "gautomatchTemplateTable.inc";
-require_once "templatePickerForm.inc";
-require_once "templatePickerForm.inc";
 
 class GautomatchForm extends basicParticleForm
 
@@ -55,6 +53,7 @@ class GautomatchForm extends basicParticleForm
 		//Gautomatch settings
 
 		$params->addParam( "overlapmult", $overlapmult,"Overlap multiplier between particles" );
+		$params->addParam( "invert", $invert,"Invert contrast" );
 		$params->addParam( "pdiam",$pdiam,"Particle diameter. Only relevant for DoG picking.");
 		$params->addParam( "ac",$ac,"Amplitude contrast");
 	        $params->addParam( "minthresh", $minthresh, "Minimum threshold" );
