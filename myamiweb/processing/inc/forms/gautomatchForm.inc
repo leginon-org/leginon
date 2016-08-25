@@ -12,8 +12,9 @@ require_once "inc/particledata.inc";
 require_once "inc/processing.inc";
 require_once "gautomatchTemplateTable.inc";
 require_once "templatePickerForm.inc";
+require_once "templatePickerForm.inc";
 
-class GautomatchForm extends TemplatePickerForm
+class GautomatchForm extends basicParticleForm
 
 {
 
@@ -52,17 +53,16 @@ class GautomatchForm extends TemplatePickerForm
 		//findem settings
 
 		//Gautomatch settings
+
+		$params->addParam( "overlapmult", $overlapmult,"Overlap multiplier between particles" );
 		$params->addParam( "pdiam",$pdiam,"Particle diameter. Only relevant for DoG picking.");
 		$params->addParam( "ac",$ac,"Amplitude contrast");
 	        $params->addParam( "minthresh", $minthresh, "Minimum threshold" );
-		$params->addParam( "overlapmult",$overlapmult,"Maximum distance between particles, multiple of particle diameter.");
 		$params->addParam( "lp",$lp,"Low pass filter after ice/aggregate detection. (Angstrom)" );
 		$params->addParam( "hp",$hp,"High pass filter after ice/aggregate detection. (Angstrom)" );
 		$params->addParam( "do_pre_filter",$do_pre_filter,"Do pre filtering (not recommended)" );
 		$params->addParam( "pre_lp",$pre_lp,"Low pass filter before ice/aggregate detection. (Angstrom)" );
 		$params->addParam( "pre_hp",$pre_hp,"High pass filter before ice/aggregate detection. (Angstrom)" ); 
-//		$params->setParamValue('minthresh','0.2');
-		$params->addParam( "invert",$invert,"Invert template contrast" );
 		$params->addParam( "speed",$speed,"Speed level (0,1, 2, 3, 4), larger is faster but less accurate.");
 		$params->addParam( "boxsize",$boxsize,"Template box size in pixels. Will be calculated based on diameter and micrograph pixel size if left blank.");
 		$params->addParam( "lsigma_D",$lsigma_D,"Diameter for estimation of local sigma (Angstrom)" );
@@ -77,43 +77,67 @@ class GautomatchForm extends TemplatePickerForm
 	}
 
 
- public function generatePreForm() {
-                // get parent pre-form elements
-		$html  .= '<div id="notice">(Leave all templates unchecked to run Gautomatch as a DoG picker.)</div><br>';
-                $html  .= parent::generatePreForm();
-                // Select template in the pre-form
- #               $html .= $this->TemplateTable->generateForm($enable=true);
-                return $html;
+        protected function createTemplateTableForm() {
+                // Search for available templates
+                $projectId   = getProjectId();
+                if (is_numeric($projectId)) {
+                        $this->particle = new particledata();
+                        $this->availableTemplates = $this->particle->getTemplatesFromProject($projectId);
 
+
+
+                }
+
+                $this->TemplateTable = new TemplateSelectionTable($this->availableTemplates);
         }
 
-/*
+
+        public function generateForm() {
+                // default particle mask diameter depends on the template diameter
+                $params = $this->pDiameterTable->getFormParams();
+                $template_diam = (int) $this->TemplateTable->getTemplateDiameter();
+                if ( !$params->getParamValue('pdiam') && $template_diam )
+                        $params->setParamValue('pdiam', round(1.3* $template_diam) );
+                // get parent form elements
+                $html  .= parent::generateForm();
+                return $html;
+
+                }
+
+
         public function generateFormFooter() {
                 // show selected templates with the entry disabled
                 $html .= $this->TemplateTable->generateForm($enable=false);
 
                 $used_templates = $this->TemplateTable->getUsedTemplateIds();
                 // set multi thread according to number of templates;
-                $params = $this->getFormParams();
-                if ( count($used_templates) > 1 )
-
- #                       $params->setParamValue('thread_findem','on');
- #               $html .= $params->insertHiddenField( "thread_findem" );
                 return $html;
         }
 
-*/
+                                       
+        public function generatePreForm() {
+                // get parent pre-form elements
+		$html  .= '<div id="notice">(Leave all templates unchecked to run Gautomatch as a DoG picker.)</div><br>';
+                $html  .= parent::generatePreForm();
+                // Select template in the pre-form
+                $html .= $this->TemplateTable->generateForm($enable=true);
+                return $html;
+
+        }
+
+
 	public function generateAdditionalFormRight() 
 	{
 	
 	$params = $this->getFormParams();
-			
+	$newparams = $this->getFormParams();				
+	
+
 	
 	$html .= "<!--BEGIN Gautomatch Param -->\n";
 	$fieldSize = '5';
         $html .= "<b>Gautomatch parameters:</b><br /><br />\n";
 	$html .= $params->insertTextField( "pdiam", $fieldSize );
-//	$html .= $params->insertTextField( "ac", $fieldSize );
         $html .= $params->insertTextField( "minthresh", $fieldSize );
 	$html .= $params->insertTextField( "overlapmult", $fieldSize );
 	$html .= "<br />";
@@ -139,39 +163,22 @@ class GautomatchForm extends TemplatePickerForm
         $html .= $params->insertTextField( "pre_hp", $fieldSize );
 
 
-
 	return $html;
 	
 	}
         public function generateAdvancedTableRight() {}
         public function generateAdvancedFormRight() {}
         public function generateAdditionalFormRightHeader() {}
-	
-/*                $this->updateFormParams();
-                $params = $this->getFormParams();
-                $fieldSize = 5;
 
-	        $html .= "<b>Gautomatch Parameters:</b><br />\n";
-
-                $html.= $params->insertTextField( "ac", $fieldSize);
-
-                $html.= "<br/>\n";
-
-                $html.= parent::generateAdditionalFormRightHeader();
-                return $html;
-        }
-
-*/
+/*
  	public function buildCommand( $postArray )
 	{
 		$command = parent::buildCommand( $postArray );
 		$params = $this->getFormParams();
 
-//                $command = $this->removeCommandFlag( $command, "maxpeaks" );
-//		$command = $this->removeCommandFlag( $command, "planereg" );
-//		$command = $this->removeCommandFlag( $command, "peaktype" );
 		return $command;
 	}
+*/
  public function validate( $postArray ) {}
 
 }

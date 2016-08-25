@@ -7,6 +7,8 @@ import re
 import time
 import subprocess
 #appion
+from appionlib import appionLoop2
+from appionlib import basicScript
 from appionlib import particleLoop2
 from appionlib import apFindEM
 from appionlib import apFindEMG
@@ -65,16 +67,20 @@ class GautomatchLoop(apTemplateCorrelator.TemplateCorrelationLoop):
 	##################################################
 	### COMMON FUNCTIONS
 	##################################################
+
+#	def setupGlobalParserOptions(self):
+
+
 	def setupParserOptions(self):
 		self.parser.add_option("--template-list", "--template_list", dest="templateliststr",
 			help="Template Ids", metavar="#,#" )
 		self.parser.add_option("--range-list", "--range_list", dest="rangeliststr",
 			help="Start, end, and increment angles: e.g. 0,360,10x0,180,5", metavar="#,#,#x#,#,#")
 
-		self.parser.add_option("--lp", dest="lp",help="Low-pass filter to increase the contrast of raw micrographs, suggested range 20~50Å. This low-pass is after ice/aggregation detection.
-")
-		self.parser.add_option("--hp", dest="hp",help="High-pass filter to get rid of the global background of raw micrographs, suggested range 200~2000Å. This high-pass is after ice/aggregation detection.
-")
+#		self.parser.add_option("--pdiam",dest="pdiam",help="Diameter of particle;only relevant for DoG-type picking as template picking will use template particle diameter.")
+
+#		self.parser.add_option("--lp", dest="lp",help="Low-pass filter to increase the contrast of raw micrographs, suggested range 20~50 Angstroms. This low-pass is after ice/aggregation detection.")
+#		self.parser.add_option("--hp", dest="hp",help="High-pass filter to get rid of the global background of raw micrographs, suggested range 200~2000 Angstroms. This high-pass is after ice/aggregation detection.")
 		self.parser.add_option("--pre_lp", dest="pre_lp",help="The same as --lp, but before the ice/contamination detection, might be better in severely gradient ice. Does not matter to use both --lp and --pre_lp, but suggested to use much smaller --pre_lp for better ice/contamination detection.")
 		self.parser.add_option("--pre_hp", dest="pre_hp",help="The same as --hp, but before the ice/contamination detection, might be better in severely gradient ice. Otherwise, do not use --pre_hp or use a very big value")
 
@@ -82,10 +88,18 @@ class GautomatchLoop(apTemplateCorrelator.TemplateCorrelationLoop):
 		self.parser.add_option("--lsigma_D",dest="lsigma_D",help="Diameter for estimation of local sigma, in Angstroms.")
 		self.parser.add_option("--lsigma_cutoff",dest="lsigma_cutoff",help="Local sigma cutoff (relative value), 1.2~1.5 should be a good range; normally a value >1.2 will be ice, protein aggregation or contamination")
 
+
+		self.parser.add_option("--lave_D",dest="lave_D",help="Diameter for estimation of local average, in angstrom, 0.5~2.0X particle diameter suggested.")
 		self.parser.add_option("--boxsize",dest="boxsize",help="Box size, in pixel, NOT in angstrom; a suggested value will be automatically calculated by --diameter and --apixM")
 
 		self.parser.add_option("--min_dist",dest="min_dist",help="Maximum distance between particles in angstrom; 0.9~1.1X diameter; can be 0.3~0.5 for filament-like particle")
-		self.parser.add_option("--dont_invertT",dest="invert",help="Whether to invert template contrast. VERY IMPORTANT!!! By default, the program will invert the 'white' templates to 'black' before picking.")
+
+
+		self.parser.add_option("--minthresh",dest="minthresh",help="Cross-correlation cutoff, 0.2~0.4 normally; Try to select several typical micrographs to optimize this value.")
+
+		self.parser.add_option("--overlapmult",dest="overlapmult",help="Maximum distance between particles in angstrom; 0.9~1.1X diameter; can be 0.3~0.5 for filament-like particle.")
+
+		self.parser.add_option("--invert",dest="invert",default=False, action="store_true", help="Whether to invert template contrast. VERY IMPORTANT!!! By default, the program will invert the 'white' templates to 'black' before picking.")
 
 		### True / False options
 		self.parser.add_option("--use-mirrors", "--use_mirrors", dest="templatemirrors", default=False,
@@ -96,7 +110,7 @@ class GautomatchLoop(apTemplateCorrelator.TemplateCorrelationLoop):
 
 	##=======================
 	def checkConflicts(self):
-		if self.params['thresh'] is None:
+		if self.params['minthresh'] is None:
 			apDisplay.printError("threshold was not defined")
 
 		### Check if we have templates
@@ -217,7 +231,7 @@ class GautomatchLoop(apTemplateCorrelator.TemplateCorrelationLoop):
 				gautocmd += ('--diameter ' + str(templatedata['diam']) + ' ')
 				gautocmd += ('--T origTemplate'+str(templateidIndex[0]+1)+'.mrc ')
 
-			#	gautocmd += ('--apixT '+str(self.params['apix'])+' ')
+				gautocmd += ('--apixT '+str(self.params['apix'])+' ')
 				gautocmd += ('--apixT '+str(templatedata['apix'])+' ')
 				gautocmd += ('--min_dist '+str(self.params['overlapmult']*templatedata['diam']) + ' ')
 					
@@ -236,7 +250,7 @@ class GautomatchLoop(apTemplateCorrelator.TemplateCorrelationLoop):
 #		if self.params['templateliststr'] is not None:
 #			continue
 
-		gautocmd += ('--cc_cutoff ' + str(self.params['thresh']) + ' ')
+		gautocmd += ('--cc_cutoff ' + str(self.params['minthresh']) + ' ')
 		
 		fullinputfilepath = os.path.join(imgdata['session']['image path'], imgdata['filename']+'.mrc')
                 imgpath = os.path.join(self.params['rundir'], imgdata['filename']+".mrc")

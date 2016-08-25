@@ -16,7 +16,7 @@ class GpuJob(object):
 		self.jobid = 0
 		self.projectId = 0 
 		self.rundir =""	  
-		self.queue = ""
+		self.queue = "gpu"
 		self.launch_as_shell = False
 		if optList:
 			newOptList=self.setJobAttributes(optList)
