@@ -68,12 +68,17 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		self.shortname = apDisplay.short(imgdata['filename'])
 
 		if self.params['filetype']=="relion":
+			# generate "micrographs" directory to store linked files
+			linkdir = os.path.join(self.params['rundir'],"micrographs")
+			if not os.path.isdir(linkdir):
+				os.mkdir(linkdir)
+
 			# create symbolic link to original micrograph
-			linkfile = os.path.join(self.params['rundir'],imgdata['filename'])+".mrc"
+			linkfile = os.path.join(linkdir,imgdata['filename'])+".mrc"
 			os.symlink(self.getOriginalImagePath(imgdata),linkfile)
 
 			# get original micrograph & ctfimage
-			rel_line = "%s %s"%(imgdata['filename']+".mrc",imgdata['filename']+".ctf:mrc")
+			rel_line = "micrographs/%s micrographs/%s"%(imgdata['filename']+".mrc",imgdata['filename']+".ctf:mrc")
 
 			# get magnification, pixel size
 			dstep = imgdata['camera']['pixel size']['x']*1e6
@@ -100,7 +105,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 					rel_line+= "%13.6f"%(cc)
 
 					# Relion requires the CTF log file as well
-					ctflog = os.path.join(self.params['rundir'],imgdata['filename']+"_ctffind3.log")
+					ctflog = os.path.join(linkdir,imgdata['filename']+"_ctffind3.log")
 					apRelion.generateCtfFile(ctflog,cs,kev,amp,mag,dstep,defU,defV,defAngle,cc)
 				else:
 					apDisplay.printMsg('No CTF information in database, skipping image')
@@ -255,7 +260,10 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 	def boxParticlesFromImage(self, imgdata, partdatas, shiftdata):
 
 		### convert database particle data to coordinates and write boxfile
-		boxfile = os.path.join(self.params['rundir'], imgdata['filename']+".box")
+		if self.params['filetype'] == "relion":
+			boxfile = os.path.join(self.params['rundir'],"micrographs/%s.box"%(imgdata['filename']))
+		else:
+			boxfile = os.path.join(self.params['rundir'], imgdata['filename']+".box")
 		parttree, boxedpartdatas = apBoxer.processParticleData(imgdata, self.boxsize,
 			partdatas, shiftdata, boxfile, rotate=self.params['rotate'])
 
