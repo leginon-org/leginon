@@ -590,7 +590,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 		if self.settings['user check'] or autofailed:
 			while True:
 				self.oldblobs = self.panel.getTargetPositions('Blobs')
-				self.waitForUserCheck()
+				self.waitForInteraction(imdata)
 				ptargets = self.processPreviewTargets(imdata, targetlist)
 				newblobs = self.blobsChanged()
 				if newblobs:

@@ -606,7 +606,12 @@ class TransformManager(node.Node, TargetTransformer):
 		## do correlation
 		pc = self.correlator.phaseCorrelate()
 		pc = scipy.ndimage.gaussian_filter(pc,1)
-		peak = self.peakfinder.subpixelPeak(newimage=pc)
+		try:
+			peak = self.peakfinder.subpixelPeak(newimage=pc)
+		except Exception, e:
+			self.logger.warning(e)
+			self.logger.warning('Error in finding shift, assume no shift')
+			peak = (0,0)
 		rows,cols = self.peak2shift(peak, pc.shape)
 		dist = math.hypot(rows,cols)
 

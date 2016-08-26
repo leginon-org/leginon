@@ -255,6 +255,7 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 			return 'repeat'
 		except:
 			# any other exception
+			self.logger.warning('Error in measuring defocus/stig, set beam tilt back')
 			self.btcalclient.setBeamTilt(beamtilt0)
 			raise
 
@@ -375,7 +376,8 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 			z = self.stagetiltcalclient.measureZ(atilt, correlation_type=setting['correlation type'])
 			self.logger.info('Measured Z: %.4e' % z)
 			resultdata['defocus'] = z
-		except:
+		except Exception, e:
+			self.logger.error(e)
 			self.logger.error('Exception found during Stage tilt eucentric height measurement')
 			status = 'failed'
 		else:

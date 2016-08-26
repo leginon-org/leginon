@@ -16,6 +16,7 @@ import threading
 import node
 import targethandler
 import appclient
+import remoteserver
 from pyami import convolver, imagefun, mrc, numpil
 import numpy
 import pyami.quietscipy
@@ -46,6 +47,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		'wait for done': True,
 		'ignore images': False,
 		'user check': False,
+		'check method': 'local',
 		'queue drift': True,
 		'sort target': False,
 		'allow append': False,
@@ -56,7 +58,9 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 									+ targethandler.TargetWaitHandler.eventinputs
 	eventoutputs = imagewatcher.ImageWatcher.eventoutputs \
 									+ targethandler.TargetWaitHandler.eventoutputs
-	targetnames = ['acquisition','focus','preview','reference','done', 'meter']
+	targetnames = ['acquisition','focus','preview','reference','done']
+	checkmethods = ['local', 'remote']
+
 	def __init__(self, id, session, managerlocation, **kwargs):
 		imagewatcher.ImageWatcher.__init__(self, id, session, managerlocation,
 																				**kwargs)
@@ -79,6 +83,9 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		self.targetimagevector = (0,0)
 		self.targetbeamradius = 0
 		self.resetLastFocusedTargetList(None)
+		self.remote = remoteserver.RemoteServerMaster(self.logger, session, self)
+		self.remote.targets.setTargetNames(self.targetnames)
+		self.onQueueCheckBox(self.settings['queue'])
 
 	def handleApplicationEvent(self,evt):
 		'''
@@ -151,14 +158,79 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		'''
 		raise NotImplementedError()
 
+	def getCheckMethods(self):
+		return self.checkmethods
+
+	def waitForInteraction(self,imagedata=None):
+		'''
+		Wait for user interaction either locally or remotely.
+		'''
+		if self.settings['check method'] == 'remote':
+			self.waitForRemoteCheck(imagedata)
+		else:
+			# default
+			self.waitForUserCheck()
+		
 	def waitForUserCheck(self):
-			self.setStatus('user input')
-			self.twobeeps()
-			self.logger.info('Waiting for user to check targets...')
-			self.panel.submitTargets()
-			self.userpause.clear()
-			self.userpause.wait()
-			self.setStatus('processing')
+		'''
+		Local gui user target confirmation
+		'''
+		self.setStatus('user input')
+		self.twobeeps()
+		self.logger.info('Waiting for user to check targets...')
+		self.panel.submitTargets()
+		self.userpause.clear()
+		self.userpause.wait()
+		self.setStatus('processing')
+
+	def waitForRemoteCheck(self,imdata):
+		'''
+		Remote service target confirmation
+		'''
+		if imdata is None:
+			return
+		self.setStatus('user input')
+		self.twobeeps()
+		xytargets = self.getPanelTargets(imdata['image'].shape)
+		# put stuff in OutBox
+		self.remote.targets.setImage(imdata)
+		self.remote.targets.setOutTargets(xytargets)
+		# wait and get stuff from InBox
+		targetfile = self.remote.targets.getInTargetFilePath()
+		self.logger.info('Waiting for targets in data file %s' % targetfile)
+		self.setStatus('processing')
+		# targetxys are target coordinates in x, y grouped by targetnames
+		targetxys = self.remote.targets.getInTargets()
+		print 'remote targets',targetxys
+
+		self.displayRemoteTargetXYs(targetxys)
+		preview_targets = self.panel.getTargetPositions('preview')
+		if not preview_targets:
+			self.remote.targets.unsetImage(imdata)
+		self.setStatus('idle')
+
+	def getPanelTargets(self,imageshape):
+		'''
+		Get xy target positions for all target types on ImagePanel in
+		a dictionary.
+		'''
+		xytargets = {}
+		for typename in self.targetnames:
+			try:
+				xys = self.getTargetsFromPanel(typename, imageshape)
+				xytargets[typename] = xys
+			except ValueError:
+				pass
+			except:
+				raise
+		return xytargets
+
+	def displayRemoteTargetXYs(self,xys):
+		'''
+		Display all xytargets from remote target server on ImagePanel.
+		'''
+		for name in self.targetnames:
+			self.setTargets(xys[name], name, block=True)
 
 	def processPreviewTargets(self, imdata, targetlist):
 			preview_targets = self.panel.getTargetPositions('preview')
@@ -168,7 +240,25 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 				self.makeTargetListEvent(targetlist)
 				self.publish(targetlist, database=True, dbforce=True, pubevent=True)
 				self.waitForTargetListDone()
-			return preview_targets
+				status = True
+				if self.settings['check method'] == 'remote':
+					# change status fo False if failed
+					status = self.resetRemoteToListen()
+				self.logger.info('Preview targets processed. Go back to waiting')
+			return preview_targets and status
+
+	def resetRemoteToListen(self):
+		status = True
+		try:
+			# clear targetis set from the server
+			self.remote.targets.resetTargets()
+		except Exception, e:
+			# assumes no preview targets
+			self.logger.error(e)
+			status = False
+		if not status:
+			# clear all targets displayed so that target server can set them again
+			self.clearAllTargets()
 
 	def processImageListData(self, imagelistdata):
 		if 'images' not in imagelistdata or imagelistdata['images'] is None:
@@ -247,20 +337,32 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		else:
 			self.last_focused = self.focusing_targetlist
 
+	def getTargetsFromPanel(self, typename, imageshape):
+		'''
+		Get xy coordinates of the targets of a specified type from ImagePanel.
+		'''
+		imagetargets = self.panel.getTargetPositions(typename)
+		if typename == 'focus' and self.settings['multifocus'] is not True:
+			imagetargets = self.getCenterTargets(imagetargets, imageshape)
+		return imagetargets
+
 	#--------------------
 	def publishTargets(self, imagedata, typename, targetlist):
-		imagetargets = self.panel.getTargetPositions(typename)
+		'''
+		Publish specific type of targets on ImagePanel bound to an 
+		AcquisitionImageData and TargetListData
+		'''
+		imagearray = imagedata['image']
+		imageshape = imagearray.shape
+		imagetargets = self.getTargetsFromPanel(typename, imageshape)
 
 		if not imagetargets:
 			return
 		if self.settings['sort target']:
 			imagetargets = self.sortTargets(imagetargets)
-		imagearray = imagedata['image']
-		imageshape = imagearray.shape
+		# advance to next target number
 		lastnumber = self.lastTargetNumber(image=imagedata, session=self.session)
 		number = lastnumber + 1
-		if typename == 'focus' and self.settings['multifocus'] is not True:
-			imagetargets = self.getCenterTargets(imagetargets, imageshape)
 		for imagetarget in imagetargets:
 			column, row = imagetarget
 			drow = row - imageshape[0]/2
@@ -282,6 +384,9 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			return [imagetargets[deltas.index(min(deltas))],]
 
 	def displayPreviousTargets(self, targetlistdata):
+		'''
+		Display targets belongs to a TargetListData.
+		'''
 		targets = self.researchTargets(list=targetlistdata)
 		done = []
 		acq = []
@@ -371,6 +476,10 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 	def clearTargets(self,targettype):
 		self.setTargets([], targettype, block=False)
 
+	def clearAllTargets(self):
+		for name in self.targetnames:
+			self.clearTargets(name)
+
 	def isFromNewParentImage(self, imdata):
 		'''
 		Determine if the parent image of the given imdata is new. This is used to reset foc_counter for automated hole finders.
@@ -457,6 +566,17 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			# Set Length to 0 in case of any exception
 			return 0,0
 
+	def onQueueCheckBox(self, state):
+		'''
+		Start queue click tool tracking.
+		'''
+		if self.settings['check method'] == 'remote':
+			if state is True:
+				self.remote.toolbar.addClickTool('queue','publishQueue','process queue')
+			else:
+				if 'queue' in self.remote.toolbar.tools:
+					self.remote.toolbar.tools['queue'].deActivate()
+
 class ClickTargetFinder(TargetFinder):
 	targetnames = ['preview', 'reference', 'focus', 'acquisition']
 	panelclass = gui.wx.ClickTargetFinder.Panel
@@ -474,7 +594,7 @@ class ClickTargetFinder(TargetFinder):
 		# display image
 		self.setImage(imdata['image'], 'Image')
 		while True:
-			self.waitForUserCheck()
+			self.waitForInteraction(imdata)
 			if not self.processPreviewTargets(imdata, targetlist):
 				break
 		self.panel.targetsSubmitted()
@@ -485,6 +605,7 @@ class ClickTargetFinder(TargetFinder):
 				self.publishReferenceTarget(imdata)
 			else:
 				self.publishTargets(imdata, i, targetlist)
+		self.logger.info('all targets published')
 		self.setStatus('idle')
 
 	def publishReferenceTarget(self, image_data):
@@ -502,3 +623,4 @@ class ClickTargetFinder(TargetFinder):
 			self.logger.error('Submitting reference target failed')
 		else:
 			self.logger.info('Reference target submitted')
+

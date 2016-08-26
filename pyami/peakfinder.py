@@ -15,6 +15,7 @@ import numpy
 import quietscipy
 import scipy.ndimage as nd_image
 from scipy.linalg import lstsq as linear_least_squares
+import warnings
 
 class FindPeakError(Exception):
 	pass
@@ -139,11 +140,17 @@ class PeakFinder(object):
 			fit = linear_least_squares(dm, v)
 			coeffs = fit[0]
 			minsum = fit[1]
-			row0 = -coeffs[1] / 2.0 / coeffs[0]
-			col0 = -coeffs[3] / 2.0 / coeffs[2]
+			with warnings.catch_warnings():
+				# turn RuntimeWarning of bad coefficient to error to catch
+				warnings.simplefilter("error")
+
+				row0 = -coeffs[1] / 2.0 / coeffs[0]
+				col0 = -coeffs[3] / 2.0 / coeffs[2]
 		except ZeroDivisionError:
 			raise FindPeakError('peak least squares fit has zero coefficient')
 		except ValueError:
+			raise FindPeakError('peak least squares fit has bad coefficient')
+		except RuntimeWarning:
 			raise FindPeakError('peak least squares fit has bad coefficient')
 
 		## find peak value
