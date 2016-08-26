@@ -117,11 +117,12 @@ class FrameStackLoop(apDDLoop.DDStackLoop):
 		apFile.removeFile(self.dd.tempframestackpath)
 
 		if not self.isUseFrameAlignerFlat():
-			### make stack
+			### make stack named as self.dd.tempframestackpath
 			self.dd.makeCorrectedFrameStack(self.params['rawarea'])
 		else:
 			self.dd.makeRawFrameStackForOneStepCorrectAlign(self.params['rawarea'])
 
+		# place holder for alignment
 		self.otherProcessImage(imgdata)
 
 		# Clean up
@@ -137,6 +138,7 @@ class FrameStackLoop(apDDLoop.DDStackLoop):
 		return False
 
 	def setOtherProcessImageResultParams(self):
+		# place holder for alignment result path setting
 		pass
 
 	def otherProcessImage(self,imgdata):

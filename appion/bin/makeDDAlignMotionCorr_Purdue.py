@@ -14,7 +14,6 @@ class MotionCorrPurdueLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop):
 		self.parser.add_option("--flp", dest="flp", type="int", default=0,
 			help="Flip frames along Y axis. (0 = no flip, 1 = flip", metavar="INT")
 
-
 	def setFrameAligner(self):
 		self.framealigner = apDDFrameAligner.MotionCorr_Purdue()
 

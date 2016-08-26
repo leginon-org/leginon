@@ -53,10 +53,10 @@ class AlignStackLoop(apDDStackMaker.FrameStackLoop):
 		self.framealigner = apDDFrameAligner.DDFrameAligner()
 		exename = self.framealigner.getExecutableName()
 		alignexe = subprocess.Popen("which "+exename, shell=True, stdout=subprocess.PIPE).stdout.read().strip()
-	#		alignexe = "/emg/sw/script/motioncorr-master/bin/"+exename
-		print 'alignexe path is '+alignexe
 		if not os.path.isfile(alignexe):
 			apDisplay.printError('Correction program "%s" not available' % exename)
+		else:
+			apDisplay.printMsg('Correction program used: %s' % alignexe)
 
 	#=======================
 	def preLoopFunctions(self):

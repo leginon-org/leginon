@@ -78,10 +78,11 @@ class DDFrameAligner(object):
 		self.proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True)
 		(stdoutdata, stderrdata) = self.proc.communicate()
 
-		print stderrdata
 		# write log file
 		output = stdoutdata
 		self.writeLogFile(output)
+		# stream stderrdata even though it is likely empty due to piping to stdout
+		print stderrdata
 
 	def getValidAlignOptionMappings(self):
 		'''
@@ -94,7 +95,6 @@ class DDFrameAligner(object):
 		parammaps = self.getValidAlignOptionMappings()
 		for goodkey in parammaps.keys():
 			if goodkey in params.keys():
-#				print params, params[goodkey]
 				self.alignparams[parammaps[goodkey]] = params[goodkey]
 
 	def getFrameAlignOption(self,key):
@@ -127,7 +127,7 @@ class MotionCorr1(DDFrameAligner):
 			cmd += " -fdr %s" % dark_path
 		if norm_path:
 			cmd += " -fgr %s" % norm_path
-		gain_dark_cmd = cmd
+		self.gain_dark_cmd = cmd
 		apDisplay.printMsg('Gain Dark Command Option: %s' % cmd)
 
 	def makeFrameAlignmentCommand(self):
@@ -154,9 +154,10 @@ class MotionCorr1(DDFrameAligner):
 
 	def writeLogFile(self, outbuffer):
 		'''
-		MotionCorr1 is set to write log file by default
+		MotionCorr1 has its own log file. This just stream to appionlog
 		'''
-		self.apDisplay.printMsg('Log written to %s' % self.log)
+		print outbuffer
+		apDisplay.printMsg('Real alignment log written to %s' % self.logpath)
 
 class MotionCorr_Purdue(MotionCorr1):
 	executable = 'dosefgpu_driftcorr'
