@@ -90,7 +90,7 @@ set -e
   echo "#"
   echo "# Makedefs: definitions for python"
   echo "#"
-  ./aux/getincs.sh
+  ./auxillary/getincs.sh
   echo
   echo "EMAN2DIR = ${emandirmak}"
 ) >Makedefs
