@@ -107,6 +107,10 @@ class Exposure:
             s %= (dose_min, dose_max)
             raise LimitError(s)
 
+    def getExposureTimeLimits(self):
+        exposure_min, exposure_max = self.getExposureRange()
+        return 'Change the range of allowed exposure time to outside %.2f and %.2f seconds' % (exposure_min, exposure_max)
+        
     def getExposures(self):
         return list(self.exposures)
 

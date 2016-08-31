@@ -17,6 +17,9 @@ import leginon.tomography.prediction
 class CalibrationError(Exception):
 	pass
 
+class LimitError(Exception):
+    pass
+
 class Tomography(leginon.acquisition.Acquisition):
 	eventinputs = leginon.acquisition.Acquisition.eventinputs
 	eventoutputs = leginon.acquisition.Acquisition.eventoutputs + \
@@ -133,8 +136,11 @@ class Tomography(leginon.acquisition.Acquisition):
 								 exposure_min=exposure_min,
 								 exposure_max=exposure_max)
 		except leginon.tomography.exposure.LimitError, e:
-			self.logger.warning('Exposure time out of range: %s.' % e)
-			raise
+			self.logger.warning('Exposure dose out of range: %s.' % e)
+			self.logger.warning('Adjust total exposure dose Or')
+			msg = self.exposure.getExposureTimeLimits()
+			self.logger.warning(msg)
+			raise LimitError('Exposure limit error')
 		except leginon.tomography.exposure.Default, e:
 			self.logger.warning('Using preset exposure time: %s.' % e)
 		else:
@@ -154,7 +160,10 @@ class Tomography(leginon.acquisition.Acquisition):
 		self.updateExposures()
 
 	def checkDose(self):
-		self.update()
+		try:
+			self.update()
+		except LimitError:
+			pass
 
 	def acquireFilm(self, *args, **kwargs):
 		self.logger.error('Film acquisition not currently supported.')
@@ -178,7 +187,11 @@ class Tomography(leginon.acquisition.Acquisition):
 		self.logger.info('Pixel size: %g meters.' % pixel_size)
 
 		# TODO: error check
-		self.update()
+		try:
+			self.update()
+		except LimitError:
+			return 'failed'
+
 		tilts = self.tilts.getTilts()
 		exposures = self.exposure.getExposures()
 		tilt_index_sequence = self.tilts.getIndexSequence()
@@ -292,10 +305,13 @@ class Tomography(leginon.acquisition.Acquisition):
 		self.logger.info('Clear Tilt Series and Model History')
 		self.prediction.resetTiltSeriesList()
 		# FIX ME: need to do both tilt groups
-		self.update()
-		tilts = self.tilts.getTilts()
-		for g in range(len(tilts)):
-			self.initGoodPredictionInfo(tiltgroup=g)
+		try:
+			self.update()
+			tilts = self.tilts.getTilts()
+			for g in range(len(tilts)):
+				self.initGoodPredictionInfo(tiltgroup=g)
+		except LimitError:
+			pass
 
 	def adjusttarget(self,preset_name,target,emtarget):
 		self.declareDrift('tilt')

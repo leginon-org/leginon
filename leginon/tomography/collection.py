@@ -276,6 +276,7 @@ class Collection(object):
 
 			self.checkAbort()
 
+			self.logger.info('Pausing for %.1f seconds before starting acquiring' % self.settings['tilt pause time']) 
 			time.sleep(self.settings['tilt pause time'])
 
 			# TODO: error checking
