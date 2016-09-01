@@ -116,21 +116,31 @@ abstract class RefineJobs
 	{ 
 		// Get all preparred refines
 		$prepRefineRuns = $this->particle->getPreparedRefineJobs(false, false, false);
-		// echo $prepRefineRuns;
+		// print_r($prepRefineRuns);
 		// Get the number of prepared refines that have not yet been run
 		$refinejobs = array();
-		
+		$jobnames = array();
+	
 		// if we did not get an array from the database, exit.
 		if (!is_array($prepRefineRuns)) return $refinejobs; 
 		
 		
 		foreach ($prepRefineRuns as $refinejob) {
 			if ( !in_array( $refinejob['method'], $this->methods ) ) continue;
-			//echo $refinejob['method']." -- test <br/>\n";
-			$refinerun = $this->particle->getClusterJobByTypeAndPath($refinejob['method'], $refinejob['path']);
-			if (!$refinerun) {
+			// List only once
+			if ( in_array($refinejob['name'], $jobnames) ) continue;
+			//echo $refinejob['name']." -- test <br/>\n";
+			$refineruns = $this->particle->getClusterJobByTypeAndPath($refinejob['method'], $refinejob['path']);
+			if (!$refineruns) {
 				//echo $refinejob['method']." -- PASS <br/>\n";
 				$refinejobs[] = $refinejob;
+				$jobnames[] = $refinejob['name'];
+			} else {
+				// allow aborted refinerun to rerun
+				if ($refineruns[0]['status'] == 'A') {
+					$refinejobs[] = $refinejob;
+					$jobnames[] = $refinejob['name'];
+				}
 			}
 		}
 		//echo "<br/>RETURN<br/>";
