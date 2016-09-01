@@ -249,13 +249,12 @@ class RelionAlign2DForm extends BasicLayoutForm
 		$params = $this->getFormParams();
 		$nompi  = ($params->getParamValue('nompi') == 'on' ) ? true : false;
 		if (!$nompi) {
-			global $PROCESSING_HOSTS;
-			$maxmem = $PROCESSING_HOSTS[0]['memorymax'];
+			$phostinfo = $this->getProcessingHostInfo();
+			$maxmem = $phostinfo['memorymax'];
 			//$numnodes = $PROCESSING_HOSTS[0]['
 			$mpithreads = $params->getParamValue('mpithreads');
 			$mpimem = $params->getParamValue('mpimem');
 			$mpiprocs = $params->getParamValue('mpiprocs');
-			unset($PROCESSING_HOSTS);
 			if ($mpiprocs*$mpithreads*$mpimem > $maxmem) {
 				$msg .= "<B>Error:</B> Total MPI threads per node * MPI memory/thread is greater than max memory per node. "
 					."<br>( $mpiprocs procs/node * $mpithreads threads/proc * $mpimem Gb/thread = "

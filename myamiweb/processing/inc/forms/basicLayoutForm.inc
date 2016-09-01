@@ -434,7 +434,20 @@ class BasicLayoutForm extends BasicForm
 		$javaFunction = writeJavaPopupFunctions('appion');
 		$this->addJavaScript( $javaFunction );
 	}
-	
+
+	function getProcessingHostInfo()
+	{
+			// get ProcessingHost Information based on config.php
+			// This i used normally in validation or buildCommand step where changehost is
+			// the desired host
+			global $PROCESSING_HOSTS;
+			$hostname =  (!empty($_POST['changehost'])) ? $_POST['changehost']: $_POST['processinghost'];
+			foreach ($PROCESSING_HOSTS as $phost) {
+				if ( $phost['host'] == $hostname ) break;
+			}
+			unset($PROCESSING_HOSTS);
+			return $phost;
+	}	
 	// Override the validate function so that we can verify the appionLoopTable parameters
 	public function validate( $postArray )
 	{
