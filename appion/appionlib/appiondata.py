@@ -525,6 +525,7 @@ class ApStackData(Data):
 			('substackname', str),
 			('pixelsize', float),
 			('centered', bool),
+			('radial_averaged', bool),
 			('junksorted', bool),
 			('beamtilt_corrected', bool),
 			('mask', int),
