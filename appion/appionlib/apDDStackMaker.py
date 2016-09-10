@@ -108,6 +108,7 @@ class FrameStackLoop(apDDLoop.DDStackLoop):
 
 		# set other parameters
 		self.dd.setNewBinning(self.params['bin'])
+		self.nframes = self.dd.getNumberOfFrameSavedFromImageData(imgdata)
 
 		# place holder for alignment result path setting
 		self.setOtherProcessImageResultParams()

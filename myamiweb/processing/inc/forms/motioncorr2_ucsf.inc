@@ -13,7 +13,7 @@ class motioncorr2_ucsf extends MakeDDStackForm
 
 // Removed defergpu, alignoffset,alignccbox, nrw to make compatible with new motioncorr version
 {
-	function __construct(  $expId, $errorHTML='', $infoHTML='',$align=True,$bin=1, $nokeepstack=True, $ddstartframe=0, $ddnframe='',$alignlabel='a',$Group=1, $MaskCentrows=0.0, $MaskCentcols=0.0, $MaskSizerows=1.0, $MaskSizecols=1.0, $Patchrows=0, $Patchcols=0, $Iter=7,$Tol=0.5,$Bft=100.0,$FmRef=0,$FmDose='' )
+	function __construct(  $expId, $errorHTML='', $infoHTML='',$align=True,$bin=1, $nokeepstack=True, $ddstartframe=0, $ddnframe='',$alignlabel='a',$nrw=1, $MaskCentrow=0, $MaskCentcol=0, $MaskSizerows=1.0, $MaskSizecols=1.0, $Patchrows=0, $Patchcols=0, $Iter=7,$Tol=0.5,$Bft=100.0,$FmRef=0,$totaldose='', $doseweight=False )
 	{
 		parent::__construct($expId, $errorHTML, $infoHTML);
 		
@@ -46,8 +46,8 @@ class motioncorr2_ucsf extends MakeDDStackForm
 		$params->addParam( "ddstartframe", $ddstartframe, "start frame" );
 		$params->addParam( "ddnframe", $ddnframe, "total frames" );
 		$params->addParam( "MaskCent", $MaskCent,"" );
-		$params->addParam( "MaskCentrows", $MaskCentrows, "" );
-		$params->addParam( "MaskCentcols", $MaskCentcols, "Mask center coordinates" );
+		$params->addParam( "MaskCentrow", $MaskCentrow, "" );
+		$params->addParam( "MaskCentcol", $MaskCentcol, "Mask center coordinates" );
 		$params->addParam( "MaskSize", $MaskSize,"" );
 		$params->addParam( "MaskSizerows", $MaskSizerows, "");
 		$params->addParam( "MaskSizecols", $MaskSizecols, "Mask size");
@@ -57,7 +57,8 @@ class motioncorr2_ucsf extends MakeDDStackForm
 		$params->addParam( "Iter", $Iter, "Number of iterations to perform for alignment");
 		$params->addParam( "Tol", $Tol, "Alignment error tolerance (pixels).");
 		$params->addParam( "FmRef", $FmRef, "Reference frame which other frames are aligned to");
-#		$params->addParam( "FmDose", $FmDose,"Dose weighting in e/A^2");
+		$params->addParam( "doseweight", $doseweight, "Perform Dose Weighting" );
+		$params->addParam( "totaldose", $totaldose,"Total Dose used in dose weighting (e/A^2)","default uses database value");
 
 		
 		
@@ -66,8 +67,8 @@ class motioncorr2_ucsf extends MakeDDStackForm
 #		$params->addParam( "alignccbox", $alignccbox, "CC search boxsize in motioncorr" );
 		$params->addParam( "alignlabel", $alignlabel, "append label to aligned image" );
 
-#		Using 'Group' notation from motioncorrc2_ucsf instead of 'nrw' in motioncorr-Perdue
-		$params->addParam( "Group", $Group, "Number (1, 3, 5, ...) of frames in running average window");
+#		Using 'nrw' notation from motioncorrc2_ucsf instead of 'nrw' in motioncorr-Perdue
+		$params->addParam( "nrw", $nrw, "Number (1, 3, 5, ...) of frames in running average window");
 #		$params->addParam( "flp", $flp, "Flip frames along Y axis.; 0 = no flip, 1 = flip");
 		// Validations
 		$params->addValidation( "bin", "num" );
@@ -97,8 +98,8 @@ class motioncorr2_ucsf extends MakeDDStackForm
 		$html.= $params->insertTextFieldInRow( "Patchrows",$fieldSize );
 		$html.= $params->insertTextFieldInRow( "Patchcols",$fieldSize );
 		$html.= "<br/>\n";
-		$html.= $params->insertTextFieldInRow( "MaskCentrows",$fieldSize );
-		$html.= $params->insertTextFieldInRow( "MaskCentcols",$fieldSize );
+		$html.= $params->insertTextFieldInRow( "MaskCentrow",$fieldSize );
+		$html.= $params->insertTextFieldInRow( "MaskCentcol",$fieldSize );
 		$html.= "<br/>\n";
 		$html.= $params->insertTextFieldInRow( "MaskSizerows",$fieldSize );
 		$html.= $params->insertTextFieldInRow( "MaskSizecols",$fieldSize );
@@ -109,18 +110,21 @@ class motioncorr2_ucsf extends MakeDDStackForm
 	#	$html.= "<br/>\n";
 		$html.= $params->insertTextFieldInRow( "FmRef",$fieldSize );
 		$html.= "<br/>\n";
-#		$html.= $params->insertTextFieldInRow( "FmDose",$fieldSize );
-#		$html.= "<br/>\n";
 		$html.= $params->insertTextFieldInRow( "Bft", $fieldSize );
 		$html.= "<br/>\n";
 	#	$html.= $params->insertTextFieldInRow( "alignccbox",$fieldSize );
   	#	$html.= "<br/>\n";
-                $html.= $params->insertTextFieldinRow( "Group", $fieldSize );
+                $html.= $params->insertTextFieldinRow( "nrw", $fieldSize );
                 $html.= "<br/>\n";
 #               $html.= $params->insertTextFieldinRow( "flp", $fieldSize );
 		$html.= "<br/><br/>Frames used for sum image after alignment: <br/>\n";
 		$html.= $params->insertTextFieldInRow( "ddstartframe", $fieldSize );
 		$html.= $params->insertTextFieldInRow( "ddnframe", $fieldSize );
+		$html.= "<br/>\n";
+		$html.= "<br/>\n";
+		$html.= $params->insertCheckboxField( "doseweight" );
+		$html.= $params->insertTextFieldInRow( "totaldose",$fieldSize );
+		$html.= "<br/>\n";
 		
 		return $html;
 	}	
@@ -129,17 +133,16 @@ class motioncorr2_ucsf extends MakeDDStackForm
 	{
 
 		
-//		$msg = parent::validate( $postArray );
-		$msg = '';
+		$msg = parent::validate( $postArray );
 		$params = $this->getFormParams();
 		$align = $params->getParamValue('align');
 		if (!$align) return $msg;
-		$Group = $params->getParamValue('Group');
-		if ( $Group%2 == 0 )
+		$nrw = $params->getParamValue('nrw');
+		if ( $nrw%2 == 0 )
 		{
-			$msg .= "<B>Error:</B> testNumber of frames in running average window must be odd. Group = ".$Group."<br/>";
+			$msg .= "<B>Error:</B> testNumber of frames in running average window must be odd. nrw = ".$nrw."<br/>";
 		}
-		// Get recent image to check nframes against alignoffset and Group.
+		// Get recent image to check nframes against alignoffset and nrw.
 		$preset = $postArray['preset'];
 		$testfilename = $postArray['testfilename'];
 		$leginondata = new leginondata();
@@ -173,9 +176,13 @@ class motioncorr2_ucsf extends MakeDDStackForm
 // No alignoffset in motioncorrv2_ucsf, removing alignoffset check
 //				$alignoffset = $params->getParamValue('alignoffset');
 //				if ( $nframes / 2 < $alignoffset ) $msg .= "<B>Error</B> Align frame offset must be less than half of the number of frames saved.<br/>";
-//				if ( $Group > $nframes / 3 ) $msg .= "<B>Error</B> Number of frames in running average window should not be larger than 1/3 of number of frames saved.<br/>";
+//				if ( $nrw > $nframes / 3 ) $msg .= "<B>Error</B> Number of frames in running average window should not be larger than 1/3 of number of frames saved.<br/>";
 			}
 		}
+		$doseweight = $params->getParamValue('doseweight');
+		$totaldose = $params->getParamValue('totaldose');
+		if ($doseweight == false && $totaldose ) 
+			$msg .= "Total dose is irrelevant without dose weighting";
 		return $msg;
 	}
 

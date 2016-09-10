@@ -45,6 +45,12 @@ class DDFrameAligner(object):
 		'''
 		self.framestackpath = filepath
 
+	def setInputNumberOfFrames(self,nframes):
+		self.nframes = nframes
+
+	def getInputNumberOfFrames(self):
+		return self.nframes
+
 	def setAlignedSumPath(self, filepath):
 		self.aligned_sumpath = filepath
 
@@ -230,14 +236,14 @@ class MotionCorr2_UCSF(DDFrameAligner):
 			cmd += ' -Tol %.3f' % self.alignparams['Tol']
 
 		# patches
-		patchx = int(self.alignparams['Patch'].split(",")[0])
-		patchy = int(self.alignparams['Patch'].split(",")[1])
+		patchx = self.alignparams['Patchcols']
+		patchy = self.alignparams['Patchrows']
 		if patchx > 0 and patchy > 0:
-			cmd += ' -Patch %s %s ' % (patchx, patchy)
+			cmd += ' -Patch %d %d ' % (patchx, patchy)
 		elif patchx > 0 and patchy == 0:
-			cmd += ' -Patch %s %s ' % (patchx, 0)
+			cmd += ' -Patch %d %d ' % (patchx, 0)
 		elif patchx == 0 and patchy > 0:
-			cmd += ' -Patch %s %s ' % (0, patchy)
+			cmd += ' -Patch %d %d ' % (0, patchy)
 		else: 
 			pass
 
@@ -246,25 +252,25 @@ class MotionCorr2_UCSF(DDFrameAligner):
 			cmd += ' -Group %d' % self.alignparams['Group']
 
 		# masking
-		maskcentx = int(self.alignparams['MaskCent'].split(",")[0])
-		maskcenty = int(self.alignparams['MaskCent'].split(",")[1])
+		maskcentx = self.alignparams['MaskCentcol']
+		maskcenty = self.alignparams['MaskCentrow']
 		if maskcentx > 0 and maskcenty > 0:
-			cmd += ' -MaskCent %s %s ' % (maskcentx, maskcenty)
+			cmd += ' -MaskCent %d %d ' % (maskcentx, maskcenty)
 		elif maskcentx > 0 and maskcenty == 0:
-			cmd += ' -MaskCent %s %s ' % (maskcentx, 0)
+			cmd += ' -MaskCent %d %d ' % (maskcentx, 0)
 		elif maskcentx == 0 and maskcenty > 0:
-			cmd += ' -MaskCent %s %s ' % (0, maskcenty)
+			cmd += ' -MaskCent %d %d ' % (0, maskcenty)
 		else: 
 			pass
 
-		masksizex = int(self.alignparams['MaskSize'].split(",")[0])
-		masksizey = int(self.alignparams['MaskSize'].split(",")[1])
+		masksizex = self.alignparams['MaskSizecols']
+		masksizey = self.alignparams['MaskSizerows']
 		if masksizex > 0 and masksizey > 0:
-			cmd += ' -MaskSize %s %s ' % (masksizex, masksizey)
+			cmd += ' -MaskSize %.3f %.3f ' % (masksizex, masksizey)
 		elif masksizex > 0 and masksizey == 0:
-			cmd += ' -MaskSize %s %s ' % (masksizex, 0)
+			cmd += ' -MaskSize %.3f %.3f ' % (masksizex, 0)
 		elif masksizex == 0 and masksizey > 0:
-			cmd += ' -MaskSize %s %s ' % (0, masksizey)
+			cmd += ' -MaskSize %.3f %.3f ' % (0, masksizey)
 		else: 
 			pass
 
@@ -295,15 +301,16 @@ class MotionCorr2_UCSF(DDFrameAligner):
 			"bft":"Bft",
 			"apix":"PixSize",
 			"Iter":"Iter",
-			"Patch":"Patch",
-			"MaskCent":"MaskCent",
-			"MaskSize":"MaskSize",
+			"Patchrows":"Patchrows",
+			"Patchcols":"Patchcols",
+			"MaskCentrow":"MaskCentrow",
+			"MaskCentcol":"MaskCentcol",
+			"MaskSizerows":"MaskSizerows",
+			"MaskSizecols":"MaskSizecols",
 			"kV":"kV",
-			"FmDose":"FmDose",
 			"Tol":"Tol",
 			"kv":"kV",
-			"Trunc":"Trunc",
-			"Throw":"Throw",
+			"startframe":"Throw",
 			"Crop":"Crop",
 			"FmRef":"FmRef",
 			"doseweight":"doseweight",
@@ -320,6 +327,8 @@ class MotionCorr2_UCSF(DDFrameAligner):
 			
 	def setAlignedSumFrameList(self,framelist):
 		self.sumframelist = framelist
+		total_frames = self.getInputNumberOfFrames()
+		self.alignparams['Trunc'] = total_frames - self.sumframelist[-1] - 1
 		
 	def getAlignedSumFrameList(self):
 		return self.sumframelist

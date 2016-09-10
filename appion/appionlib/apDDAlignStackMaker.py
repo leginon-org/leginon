@@ -87,10 +87,11 @@ class AlignStackLoop(apDDStackMaker.FrameStackLoop):
 
 		if self.isAlign():
 			# set framelist
-			# ??? Why do this first (for DE camera ?
-			self.dd.setAlignedCameraEMData()
 			framelist = self.dd.getFrameListFromParams(self.params)
 			self.dd.setAlignedSumFrameList(framelist)
+			# AlignedCameraEMData needs framelist
+			self.dd.setAlignedCameraEMData()
+			self.framealigner.setInputNumberOfFrames(self.nframes)
 			self.framealigner.setAlignedSumFrameList(framelist)
 			# whether the sum can be don in framealigner depends on the framelist
 			self.framealigner.setIsUseFrameAlignerSum(self.isUseFrameAlignerSum())

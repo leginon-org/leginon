@@ -47,8 +47,8 @@ echo "</td></tr>\n";
 echo "<tr><td width='100' align='center'>\n";
 echo "  <img src='img/appionlogo.jpg' width='96'>\n";
 echo "</td><td>\n";
-echo "  <h3><a href='runAppionLoop.php?expId=$expId&form=motioncorr2_ucsf'>MotionCorr - Official</a></h3>\n";
-echo " <p>MotionCorr - Official is a poorly named drift correction program developed in Yifan Cheng's lab at UCSF by David Ayard. It is still in beta and subject to change."
+echo "  <h3><a href='runAppionLoop.php?expId=$expId&form=motioncorr2_ucsf'>MotionCorr2 - UCSF</a></h3>\n";
+echo " <p>MotionCorr2 - UCSF is the David Agard version of MotionCorr developed in Yifan Cheng's lab at UCSF. It is still in beta and subject to change."
         ."</p>\n";
 echo "</td></tr>\n";
 

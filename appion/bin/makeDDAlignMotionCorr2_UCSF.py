@@ -16,43 +16,32 @@ class MotionCorr2UCSFAlignStackLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop
 		self.parser.add_option("--FmRef", dest="FmRef",type="int",default=0,
 			help="Specify which frame to be the reference to which all other frames are aligned. Default 0 is aligned to the first frame, other values aligns to the central frame.", metavar="#")
 
-		self.parser.add_option("--Iter", dest="Iter",type="int",default=5,
+		self.parser.add_option("--Iter", dest="Iter",type="int",default=7,
 			help="Maximum iterations for iterative alignment, default is 7.")
 
                 self.parser.add_option("--Tol", dest="Tol",type="float",default=0.5,
                         help="Tolerance for iterative alignment, in pixels", metavar="#")
 
-		self.parser.add_option("--Patch",dest="Patch",metavar="#,#",type=str,default="0,0",
-			help="Number of patches to be used for patch based alignment. Default 0,0 corresponds to full frame alignment.")
+		self.parser.add_option("--Patchrows",dest="Patchrows",metavar="#",type=int,default="0",
+			help="Number of patches divides the y-axis to be used for patch based alignment. Default 0 corresponds to full frame alignment in the direction.")
 
-		self.parser.add_option("--MaskCent",dest="MaskCent",metavar="#,#",type=str,default="0,0",
-			help="Coordinates for center of subarea that will be used for alignment. Default 0,0 corresponds to center coordinate.")
+		self.parser.add_option("--Patchcols",dest="Patchcols",metavar="#",type=int,default="0",
+			help="Number of patches divides the x-axis to be used for patch based alignment. Default 0 corresponds to full frame alignment in the direction.")
 
-		self.parser.add_option("--MaskSize",dest="MaskSize",metavar="#,#",type=str,default="0,0",
-			help="The size of subarea that will be used for alignment, default 1.0 1.0 corresponding full size.")
+		self.parser.add_option("--MaskCentrow",dest="MaskCentrow",metavar="#",type=int,default="0",
+			help="Y Coordinates for center of subarea that will be used for alignment. Default 0 corresponds to center coordinate.")
 
-		self.parser.add_option("--Throw",dest="Throw",metavar="#",type=int,default=0,
-                        help="Throw initial number of frames")
+		self.parser.add_option("--MaskCentcol",dest="MaskCentcol",metavar="#",type=int,default="0",
+			help="X Coordinate for center of subarea that will be used for alignment. Default 0 corresponds to center coordinate.")
 
-		self.parser.add_option("--Trunc",dest="Trunc",metavar="#",type=int,default=0,
-                        help="Truncate last number of frames")
+		self.parser.add_option("--MaskSizecols",dest="MaskSizecols",metavar="#",type=float,default="1.0",
+			help="The X size of subarea that will be used for alignment, default 1.0 1.0 corresponding full size.")
+		self.parser.add_option("--MaskSizerows",dest="MaskSizerows",metavar="#",type=float,default="1.0",
+			help="The Y size of subarea that will be used for alignment, default 1.0 corresponding full size.")
 
 		self.parser.add_option("--Bft",dest="Bft",metavar="#",type=float,default=100,
                         help=" B-Factor for alignment, default 100.")
 
-
-
-
-
-		### making these into general options
-		self.parser.add_option("--do_doseweighting",dest="do_doseweighting",metavar="bool", default=True, 
-			action="store_true", help="do dose weighting on the frame stack, according to Tim / Niko's curves")
-
-
-		self.parser.add_option("--doseweight",dest="doseweight",metavar="float", 
-			help="Value for dose weighting the frame stack. Will use a specified doseweight value. If no value is specified, the value stored in the database will be used. If no value is stored in the database and do_doseweighting is checked, an error will be thrown.")
-#		self.parser.add_option("--FmDose",dest="FmDose",metavar="float",type=float,
-#                        help="Frame dose in e/A^2. If not specified, will get value from database")
 
 	#=======================
 	def checkConflicts(self):
@@ -79,7 +68,6 @@ class MotionCorr2UCSFAlignStackLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop
 		else:
 			self.framealigner.setTotalDose(apDatabase.getDoseFromImageData(self.dd.image))
 #		self.temp_aligned_dw_sumpath = 'temp%s.gpuid_%d_sum_DW.mrc' % (self.hostname, self.params['gpuid'])
-#		self.framealigner.setFmDose()
 
 	def organizeAlignedSum(self):
 		'''

@@ -46,9 +46,6 @@ class DDStackLoop(appionLoop2.AppionLoop):
 			action="store_true", help="dose weight the frame stack, according to Tim / Niko's curves")
 		self.parser.add_option("--totaldose",dest="totaldose",metavar="float",type=float,
                         help="total dose for the full movie stack in e/A^2. If not specified, will get value from database")
-#		self.parser.add_option("--FmDose",dest="FmDose",metavar="float",type=float,
-#                        help="Frame dose in e/A^2. If not specified, will get value from database")
-
 
 
 	def getUnAlignedImageIds(self,imageids):
