@@ -140,6 +140,14 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		TiltR: angular range for initial coarse search 
 		"""
 
+		if self.params['ctftilt'] is True:
+			imgshape = imgdata['image'].shape
+			modtest = 2 * self.params['bin']
+			# workaround ctftilt bug. Refs #3550
+			if imgshape[0] % modtest or imgshape[1] % modtest and self.params['fieldsize'] > 256:
+				apDisplay.printWarning("Image shape has non-zero modulo for %d. Reduce fieldsize to 256 to avoid Segmentation Fault in CTFTILT" % modtest)
+				self.params['fieldsize'] = 256
+
 		#get Defocus in Angstroms
 		self.ctfvalues = {}
 		if self.params['nominal'] is not None:
