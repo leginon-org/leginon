@@ -71,7 +71,7 @@ foreach ($ctfdatas as $ctfdata) {
 			$ctfdata['angle_astigmatism'],
 			$kev,
 			$cs,
-			$ctfdata['amplitude_contrast'] + $ctfdata['extra_phase_sift'] * (int) $relion,
+			$ctfdata['amplitude_contrast'] + $ctfdata['extra_phase_shift'] * (int) ((bool) $relion),
 			10000,
 			$pixelsize,
 			$ctfdata['confidence']
@@ -114,6 +114,7 @@ $expt_runname .= (empty($runId) ) ? '' : sprintf("-run%04d", $runId);
 if ($relion || $vlion) $downname = sprintf("micrographs_ctf-%s.star",$expt_runname);
 else $downname = sprintf("ctfdata-session%s.dat", $expt_runname);
 header("Content-Disposition: attachment; filename=$downname;");
+
 foreach ($data as $line) {
 	echo $line;
 }
