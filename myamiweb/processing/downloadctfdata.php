@@ -11,6 +11,7 @@ require_once "inc/processing.inc";
 $expId = $_GET['expId'];
 $runId = $_GET['runId'];
 $relion = $_GET['relion'];
+$vlion = $_GET['vlion'];
 $preset = $_GET['preset'];
 
 checkExptAccessPrivilege($expId,'data');
@@ -28,7 +29,7 @@ if(empty($runId))
 else
 	$ctfdatas = $appiondb->getCtfInfo($runId);
 
-if ($relion) {
+if ($relion || $vlion) {
 	$data[] = "\ndata_\n\nloop_\n";
 	$data[] = "_rlnMicrographName #1\n";
 	$data[] = "_rlnCtfImage #2\n";
@@ -42,6 +43,8 @@ if ($relion) {
 	$data[] = "_rlnDetectorPixelSize #10\n";
 	$data[] = "_rlnCtfFigureOfMerit #11\n";
 
+	if ($vlion)
+		$data[] = "_rlnPhaseShift #12\n";
 	# get image info for first image,
 	# assume same for all the rest
 	$imgid = $ctfdatas[0]['REF|leginondata|AcquisitionImageData|image'];
@@ -59,8 +62,8 @@ foreach ($ctfdatas as $ctfdata) {
 	if (!empty($preset))
 		$p = $leginon->getPresetFromImageId($imgid);
 		if ($preset != $p['name'] ) continue;
-	if ($relion) {
-		$data[]=sprintf("micrographs/%s.mrc micrographs/%s.ctf:mrc %.6f %.6f %.6f %.6f %.6f %.6f %.6f %.6f %.6f\n",
+	if ($relion || $vlion) {
+		$data_string=sprintf("micrographs/%s.mrc micrographs/%s.ctf:mrc %.6f %.6f %.6f %.6f %.6f %.6f %.6f %.6f %.6f",
 			$filename,
 			$filename,
 			$ctfdata['defocus1']*1e10,
@@ -73,6 +76,8 @@ foreach ($ctfdatas as $ctfdata) {
 			$pixelsize,
 			$ctfdata['confidence']
 			);
+		if ( $vlion ) $data_string .= sprintf(" %6f", $ctfdata['extra_phase_shift'] * 180.0/3.14159);
+		$data[] = $data_string."\n";
 	}
 	else {
 		$angtxt = str_pad(sprintf("%.3f",$ctfdata['angle_astigmatism']), 9, " ", STR_PAD_LEFT);
@@ -106,7 +111,7 @@ header("Content-Transfer-Encoding: binary");
 header("Content-Length: $size");
 $expt_runname = sprintf("%05d", $expId);
 $expt_runname .= (empty($runId) ) ? '' : sprintf("-run%04d", $runId);
-if ($relion) $downname = sprintf("micrographs_ctf-%s.star",$expt_runname);
+if ($relion || $vlion) $downname = sprintf("micrographs_ctf-%s.star",$expt_runname);
 else $downname = sprintf("ctfdata-session%s.dat", $expt_runname);
 header("Content-Disposition: attachment; filename=$downname;");
 foreach ($data as $line) {
