@@ -71,12 +71,12 @@ foreach ($ctfdatas as $ctfdata) {
 			$ctfdata['angle_astigmatism'],
 			$kev,
 			$cs,
-			$ctfdata['amplitude_contrast'],
+			$ctfdata['amplitude_contrast'] + $ctfdata['extra_phase_shift'] * (int) ((bool) $relion),
 			10000,
 			$pixelsize,
 			$ctfdata['confidence']
 			);
-		if ( $vlion ) $data_string .= sprintf(" %6f", $ctfdata['extra_phase_shift'] * 180.0/3.14159);
+		if ( $vlion ) $data_string .= sprintf(" %6f", $ctfdata['extra_phase_shift'] * 180.0/3.14159); #degrees
 		$data[] = $data_string."\n";
 	}
 	else {
@@ -114,6 +114,7 @@ $expt_runname .= (empty($runId) ) ? '' : sprintf("-run%04d", $runId);
 if ($relion || $vlion) $downname = sprintf("micrographs_ctf-%s.star",$expt_runname);
 else $downname = sprintf("ctfdata-session%s.dat", $expt_runname);
 header("Content-Disposition: attachment; filename=$downname;");
+
 foreach ($data as $line) {
 	echo $line;
 }
