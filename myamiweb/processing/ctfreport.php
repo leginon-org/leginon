@@ -139,6 +139,7 @@ if ($ctfrundatas) {
 			$fields = array('defocus1', 'defocus2', 
 				//'confidence', 'confidence_d', 
 				'angle_astigmatism', 'amplitude_contrast',  
+				'extra_phase_shift',
 				'confidence_30_10', 'confidence_5_peak',  
 				'resolution_80_percent', 'resolution_50_percent');
 			$stats = $ctf->getCTFStats($fields, $expId);
@@ -234,6 +235,11 @@ if ($ctfrundatas) {
 		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&xmin=-90&xmax=90&f=angle_astigmatism'>\n";
 		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
 			."w=800&h=600&hg=1&expId=$expId&s=1&xmin=-90&xmax=90&f=angle_astigmatism' alt='please wait...'></a>\n";
+	echo "</td></tr><tr><td>\n";
+		echo "<h3>Extra Phase Shift</h3>";
+		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&xmin=0&xmax=180&f=extra_phase_shift'>\n";
+		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
+			."w=800&h=600&hg=1&expId=$expId&s=1&xmin=-90&xmax=90&f=extra_phase_shift' alt='please wait...'></a>\n";
 	echo "</td></tr>";
 
 	$confidenceOpts=array();
@@ -345,6 +351,13 @@ if ($ctfrundatas) {
 	$ctfdownlink = "<h3>";
 	$ctfdownlink .= "<a href='downloadctfdata.php?expId=$expId&preset=$preset&runId=$runId&relion=True'>\n";
 	$ctfdownlink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download star file for RELION'>&nbsp;download star file for RELION\n";
+	$ctfdownlink .= "</a></h3>\n";
+	echo $ctfdownlink;
+
+	$ctfdownlink = "<h3>";
+	$ctfdownlink = "<h3>";
+	$ctfdownlink .= "<a href='downloadctfdata.php?expId=$expId&preset=$preset&runId=$runId&vlion=True'>\n";
+	$ctfdownlink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download star file for VLION'>&nbsp;download star file for VLION\n";
 	$ctfdownlink .= "</a></h3>\n";
 	echo $ctfdownlink;
 

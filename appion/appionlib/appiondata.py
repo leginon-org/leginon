@@ -428,6 +428,10 @@ class ApCtfFind4ParamsData(Data):
 			('cs', float),
 			('resmin', float),
 			('defstep', float),
+			('shift_phase', bool),
+			('min_phase_shift', float),
+			('max_phase_shift', float),
+			('phase_search_step', float),
 		)
 	typemap = classmethod(typemap)
 
@@ -460,6 +464,7 @@ class ApCtfData(Data):
 			('tilt_angle', float),  # from ctftilt
 			('tilt_axis_angle', float),  # from ctftilt
 			('mat_file', str),  # from ACE1
+			('extra_phase_shift', float), #phase plate phase shift addition (radians)
 		)
 	typemap = classmethod(typemap)
 

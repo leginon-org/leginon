@@ -2,12 +2,10 @@
 
 #pythonlib
 import os
-import re
-import sys
+import time
 import math
 import shutil
 #appion
-from appionlib import apFile
 from appionlib import apDisplay
 from appionlib import appiondata
 from appionlib.apCtf import ctfdisplay
@@ -54,6 +52,10 @@ def validateAndInsertCTFData(imgdata, ctfvalues, rundata, rundir, fftpath=None, 
 		if isinstance(ctfvalues[key], str) and ctfvalues[key].startswith(rundir):
 			ctfvalues[key] = ctfvalues[key].replace(rundir, "")
 
+	### default extra phase shift to 0.0
+	if 'extra_phase_shift' not in ctfvalues.keys() or ctfvalues['extra_phase_shift'] is None:
+		ctfvalues['extra_phase_shift'] = 0.0
+
 	### time to insert
 	ctfq = appiondata.ApCtfData()
 	ctfq['acerun'] = rundata
@@ -77,7 +79,10 @@ def validateAndInsertCTFData(imgdata, ctfvalues, rundata, rundir, fftpath=None, 
 #====================
 def runCTFdisplayTools(imgdata, ctfvalues, opimagedir, fftpath=None, fftfreq=None):
 	### RUN CTF DISPLAY TOOLS
+	t0 = time.time()
 	ctfdisplaydict = ctfdisplay.makeCtfImages(imgdata, ctfvalues, fftpath, fftfreq)
+	apDisplay.printColor("Full CTF display makeCtfImages routine complete in %s"
+		%(apDisplay.timeString(time.time()-t0)), "purple")
 	if ctfdisplaydict is None:
 		return ctfvalues
 	### save the classic images as well
@@ -117,8 +122,8 @@ def runCTFdisplayTools(imgdata, ctfvalues, opimagedir, fftpath=None, fftfreq=Non
 #====================
 def convertDefociToConvention(ctfvalues):
 	if debug is True:
-		apDisplay.printColor("Final params: def1: %.2e | def2: %.2e | angle: %.1f"%
-			(ctfvalues['defocus1'], ctfvalues['defocus2'], ctfvalues['angle_astigmatism']), "cyan")
+		apDisplay.printColor("Final params: def1: %.3f | def2: %.3f | angle: %.1f"%
+			(ctfvalues['defocus1']*1e6, ctfvalues['defocus2']*1e6, ctfvalues['angle_astigmatism']), "cyan")
 
 	# amplitude contrast must be btw 0.0 and 0.5
 	# sometimes we get a slightly negative number from ACE1, see bug #2003
@@ -151,8 +156,8 @@ def convertDefociToConvention(ctfvalues):
 		angle += 180
 
 	if debug is True:
-		apDisplay.printColor("Final params: def1: %.2e | def2: %.2e | angle: %.1f"%
-			(defocus1, defocus2, angle), "cyan")
+		apDisplay.printColor("Final params: def1: %.3f | def2: %.3f | angle: %.1f"%
+			(defocus1*1e6, defocus2*1e6, angle), "cyan")
 
 		perdiff = abs(defocus1-defocus2)/abs(defocus1+defocus2)
 		print ("Defocus Astig Percent Diff %.2f -- %.3e, %.3e"

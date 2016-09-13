@@ -11,9 +11,7 @@ from pyami import primefactor
 from appionlib import apDisplay
 from appionlib.apCtf import ctfpower
 from appionlib.apImage import imagefile
-from appionlib.apImage import imagestat
 from appionlib.apImage import imagefilter
-#from appionlib import lowess
 
 ###this file is not allowed to import any apCtf files - other than ctfpower
 
@@ -21,7 +19,7 @@ debug = False
 
 #===================
 def getCtfExtrema(focus=1.0e-6, mfreq=1.498e-04, cs=2e-2, 
-		volts=120000, ampconst=0.000, numzeros=3, zerotype="peaks"):
+		volts=120000, ampconst=0.000, extra_phase_shift=0.0, numzeros=3, zerotype="peaks"):
 	"""
 	mfreq - frequency in inverse meters = 1.0/(mpix * numcols)
 	"""
@@ -45,7 +43,7 @@ def getCtfExtrema(focus=1.0e-6, mfreq=1.498e-04, cs=2e-2,
 	if cs > 0:
 		a = 0.5*cs*math.pi*wavelength**3
 		b = -focus*math.pi*wavelength
-		c = -math.asin(ampconst)
+		c = -math.asin(ampconst) + extra_phase_shift
 		if debug is True:
 			print "quadradtic parameters %.3e, %.3e, %.3e"%(a,b,c)
 		#eq: sin^2 (a r^4 + b r^2 + c) = 0
@@ -117,7 +115,7 @@ def getFirstCTFzeroRadius(focus=-1.0e-6, pixelsize=1.0e-10, cs=2e-2,
 		print "High tension %.1f kV"%(volts*1e-3)
 
 	xfreq = 1.0/( (cols-1)*2.*pixelsize )
-	xorigin = cols/2. - 0.5
+	#xorigin = cols/2. - 0.5
 
 	wavelength = getTEMLambda(volts)
 
@@ -177,14 +175,14 @@ def getPowerSpectraPreBin(outerresolution, apix):
 	return prebin
 
 #============
-def defocusRatioToEllipseRatio(defocus1, defocus2, freq, cs, volts, ampcontrast):
+def defocusRatioToEllipseRatio(defocus1, defocus2, freq, cs, volts, ampcontrast, extra_phase_shift):
 	"""
 	apix and outerresolution must have same units (e.g., Anstroms or meters)
 	"""
 	radii1 = getCtfExtrema(defocus1, freq*1e10, 
-		cs, volts, ampcontrast, numzeros=1, zerotype="valleys")
+		cs, volts, ampcontrast, extra_phase_shift, numzeros=1, zerotype="valleys")
 	radii2 = getCtfExtrema(defocus2, freq*1e10, 
-		cs, volts, ampcontrast, numzeros=1, zerotype="valleys")
+		cs, volts, ampcontrast, extra_phase_shift, numzeros=1, zerotype="valleys")
 	if len(radii1) == 0 or len(radii2) == 0:
 		return None
 	ellipratio = radii1[0]/radii2[0]
@@ -199,12 +197,12 @@ def powerSpectraToOuterResolution(image, outerresolution, apix):
 	if debug is True:
 		print "Computing power spectra..."
 	fieldsize = ctfpower.getFieldSize(image.shape)
-	binning = max(image.shape)/fieldsize
+	#binning = max(image.shape)/fieldsize
 	#data = imagefun.power(image)
-	data, freq = ctfpower.power(image, apix, fieldsize)
+	fullpowerspec, freq = ctfpower.power(image, apix, fieldsize)
 	#data = numpy.exp(data)
-	data = data.astype(numpy.float64)
-	powerspec = trimPowerSpectraToOuterResolution(data, outerresolution, freq)
+	fullpowerspec = fullpowerspec.astype(numpy.float64)
+	powerspec = trimPowerSpectraToOuterResolution(fullpowerspec, outerresolution, freq)
 
 	return powerspec, freq
 
@@ -328,7 +326,6 @@ def rotationalAverage(image, ringwidth=3.0, innercutradius=None, full=False, med
 	if shape[0] < 32:
 		print radial
 
-	count = 0
 	if debug is True:
 		print "computing rotational average xdata..."
 	xdataint = numpy.unique(radial)
@@ -401,7 +398,7 @@ def unEllipticalAverage(xdata, ydata, ellipratio, ellipangle, shape):
 	"""
 	radial = getEllipticalDistanceArray(ellipratio, ellipangle, shape)
 	radial = radial/math.sqrt(ellipratio)
-	image = imagefun.fromRadialFunction(funcrad, shape, xdata=xdata, ydata=ydata)
+	#image = imagefun.fromRadialFunction(funcrad, shape, xdata=xdata, ydata=ydata)
 	def funcrc(r, c, radial, **kwargs):
 		rr = numpy.array(numpy.floor(r), dtype=numpy.int)
 		cc = numpy.array(numpy.floor(c), dtype=numpy.int)
@@ -481,7 +478,7 @@ def ellipticalAverage(image, ellipratio, ellipangle, ringwidth=2.0, innercutradi
 
 	if full is False:
 		### trims any edge artifacts from rotational average
-		outercutsize = (bigshape[0]/2-2)/ringwidth*math.sqrt(2)/2.
+		outercutsize = int((bigshape[0]/2-2)/ringwidth*math.sqrt(2)/2.)
 		if debug is True:
 			apDisplay.printColor("Num X points %d, Half image size %d, Outer cut size %d, Ringwidth %.2f, Percent trim %.1f"
 				%(xdataint.shape[0], bigshape[0]/2-2, outercutsize, ringwidth, 100.*outercutsize/float(xdataint.shape[0])), "yellow")
@@ -528,7 +525,7 @@ def ellipticalArray(image, ellipratio, ellipangle):
 	       True  -- rotational average out to corners of image
 	"""
 
-	bigshape = numpy.array(numpy.array(image.shape)*math.sqrt(2)/2., dtype=numpy.int)*2
+	#bigshape = numpy.array(numpy.array(image.shape)*math.sqrt(2)/2., dtype=numpy.int)*2
 	radial = getEllipticalDistanceArray(ellipratio, ellipangle, image.shape)
 	
 	xdata = numpy.ravel(radial)/math.sqrt(ellipratio)

@@ -57,10 +57,13 @@ def printCtfData(ctfvalue):
 		runname = ctfvalue['acerun']['name']
 		sys.stderr.write("[%s]   method: %s | runname %s\n"%
 		(apDisplay.colorString("CTF run", "blue"), method, runname))
-	sys.stderr.write("[%s] def1: %.2e | def2: %.2e | angle: %.1f | ampcontr %.2f | defratio %.3f\n"%
-		(apDisplay.colorString("CTF param", "blue"), ctfvalue['defocus1'], 
-		ctfvalue['defocus2'], ctfvalue['angle_astigmatism'], 
+	sys.stderr.write("[%s] def1: %.3f um | def2: %.3f um | angle: %.1f | ampcontr %.2f | defratio %.3f\n"%
+		(apDisplay.colorString("CTF param", "blue"), ctfvalue['defocus1']*1e6, 
+		ctfvalue['defocus2']*1e6, ctfvalue['angle_astigmatism'], 
 		ctfvalue['amplitude_contrast'], defocusratio))
+	if ctfvalue['extra_phase_shift'] is not None:
+		sys.stderr.write("[%s]   additional phase shift: %.1f degrees \n"%
+		(apDisplay.colorString("CTF param", "blue"), math.degrees(ctfvalue['extra_phase_shift'])))
 	if 'resolution_80_percent' in ctfvalue.keys() and ctfvalue['resolution_80_percent'] is not None:
 		sys.stderr.write("[%s] conf_30-10: %s | conf_5peak: %s | res_0.8: %.1fA | res_0.5 %.1fA\n"%
 			(apDisplay.colorString("CTF stats", "blue"), 
@@ -198,7 +201,7 @@ def getBestCtfValue(imgdata, sortType='res80', method=None, msg=True):
 		if sortvalue is None:
 			continue
 		if msg is True:
-			print "%.3f -- %s"%(sortvalue, ctfvalue['acerun']['name'])
+			print "%.5f -- %s"%(sortvalue, ctfvalue['acerun']['name'])
 		if sortvalue > bestsortvalue:
 			bestsortvalue = sortvalue
 			bestctfvalue = ctfvalue
@@ -245,7 +248,6 @@ def getBestTiltCtfValueForImage(imgdata):
 				if cross_correlation < ctfvalue['cross_correlation']:
 					cross_correlation = ctfvalue['cross_correlation']
 					bestctftiltvalue = ctfvalue
-
 	return bestctftiltvalue
 
 #=====================

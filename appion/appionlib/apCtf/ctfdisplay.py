@@ -73,7 +73,7 @@ class CtfDisplay(object):
 
 		### get all peak (not valley)
 		peak = ctftools.getCtfExtrema(meandefocus, self.trimfreq*1e10, self.cs, self.volts, 
-			self.ampcontrast, numzeros=250, zerotype="peak")
+			self.ampcontrast, self.extra_phase_shift, numzeros=250, zerotype="peak")
 		apDisplay.printMsg("Number of available peaks is %d"%(len(peak)))
 		if len(peak) < 6:
 			apDisplay.printWarning("Too few peaks to work with, probably bad defocus estimate")
@@ -82,7 +82,7 @@ class CtfDisplay(object):
 		peakradii = numpy.array(peak, dtype=numpy.float64)*self.trimfreq
 		### get all valley (not peak)
 		valley = ctftools.getCtfExtrema(meandefocus, self.trimfreq*1e10, self.cs, self.volts, 
-			self.ampcontrast, numzeros=250, zerotype="valley")
+			self.ampcontrast, self.extra_phase_shift, numzeros=250, zerotype="valley")
 		firstvalley = valley[0]
 		valleyradii = numpy.array(valley, dtype=numpy.float64)*self.trimfreq
 
@@ -247,11 +247,11 @@ class CtfDisplay(object):
 
 		### everything in mks units, because rdata is 1/A multiply be 1e10 to get 1/m
 		ctffitdata = genctf.generateCTF1d(raddata*1e10, focus=meandefocus, cs=self.cs,
-			volts=self.volts, ampconst=self.ampcontrast, failParams=False)
+			volts=self.volts, ampconst=self.ampcontrast, extra_phase_shift=self.extra_phase_shift, failParams=False)
 		#ctffitdata2 = genctf.generateCTF1dACE2(raddata*1e10, focus=meandefocus, cs=self.cs,
-		#	volts=self.volts, ampconst=self.ampcontrast, failParams=False)
+		#	volts=self.volts, ampconst=self.ampcontrast, extra_phase_shift=self.extra_phase_shift, failParams=False)
 		overctffitdata = genctf.generateCTF1d(raddata*1e10, focus=meandefocus, cs=self.cs,
-			volts=self.volts, ampconst=self.ampcontrast, failParams=False, overfocus=True)
+			volts=self.volts, ampconst=self.ampcontrast, extra_phase_shift=self.extra_phase_shift, failParams=False, overfocus=True)
 
 		ind30 = numpy.searchsorted(raddata, 1/30.)
 		ind10 = numpy.searchsorted(raddata, 1/10.)
@@ -674,9 +674,9 @@ class CtfDisplay(object):
 		numzeros = 13
 
 		radii1 = ctftools.getCtfExtrema(self.defocus1, self.scalefreq*1e10, 
-			self.cs, self.volts, self.ampcontrast, numzeros=numzeros, zerotype="valley")
+			self.cs, self.volts, self.ampcontrast, self.extra_phase_shift, numzeros=numzeros, zerotype="valley")
 		radii2 = ctftools.getCtfExtrema(self.defocus2, self.scalefreq*1e10, 
-			self.cs, self.volts, self.ampcontrast, numzeros=numzeros, zerotype="valley")
+			self.cs, self.volts, self.ampcontrast, self.extra_phase_shift, numzeros=numzeros, zerotype="valley")
 
 		#smallest of two defocii
 		firstpeak = radii2[0]
@@ -917,7 +917,7 @@ class CtfDisplay(object):
 		#elliptical ratio is ratio of zero locations NOT defocii
 		self.defocusratio = self.defocus2/self.defocus1
 		self.ellipratio = ctftools.defocusRatioToEllipseRatio(self.defocus1, self.defocus2, 
-			self.initfreq, self.cs, self.volts, self.ampcontrast)
+			self.initfreq, self.cs, self.volts, self.ampcontrast, self.extra_phase_shift)
 
 		# get angle within range -90 < angle <= 90
 		while self.angle > 90:
@@ -960,6 +960,13 @@ class CtfDisplay(object):
 		self.cs = ctfdata['cs']*1e-3
 		self.volts = imgdata['scope']['high tension']
 		self.ampcontrast = ctfdata['amplitude_contrast']
+
+		def to_float(val):
+			if val is None:
+				val = 0.0
+			return val
+		#back compatible for those without extra phase
+		self.extra_phase_shift = to_float(ctfdata['extra_phase_shift'])
 
 		### process power spectra
 		self.apix = apDatabase.getPixelSize(imgdata)
