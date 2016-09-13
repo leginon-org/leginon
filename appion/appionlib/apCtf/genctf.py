@@ -11,7 +11,7 @@ from appionlib.apCtf import ctftools
 debug = False
 
 #===================
-def generateCTF1d(radii=None, focus=1.0e-6, cs=2e-3, volts=120000, ampconst=0.07, 
+def generateCTF1d(radii=None, focus=1.0e-6, cs=2e-3, volts=120000, ampconst=0.07, extra_phase_shift=0.0, 
 		failParams=False, overfocus=False):
 	"""
 	calculates a CTF function based on the input details
@@ -29,7 +29,7 @@ def generateCTF1d(radii=None, focus=1.0e-6, cs=2e-3, volts=120000, ampconst=0.07
 		apDisplay.printColor("generateCTF radii: 1/%.2fA --> 1/%.2fA"%(1/radii[1]*1e10, 1/radii[-1]*1e10), "cyan")
 
 	t0 = time.time()
-	checkParams(focus1=focus, focus2=focus, cs=cs, volts=volts, ampconst=ampconst, failParams=failParams)
+	checkParams(focus1=focus, focus2=focus, cs=cs, volts=volts, ampconst=ampconst, extra_phase_shift=extra_phase_shift, failParams=failParams)
 
 	lamb = ctftools.getTEMLambda(volts)
 	s = radii
@@ -38,7 +38,7 @@ def generateCTF1d(radii=None, focus=1.0e-6, cs=2e-3, volts=120000, ampconst=0.07
 	if overfocus is True:
 		focus = -1.0*focus
 
-	gamma = -0.5*pi*cs*(lamb**3)*(s**4) + pi*focus*lamb*(s**2)
+	gamma = -0.5*pi*cs*(lamb**3)*(s**4) + pi*focus*lamb*(s**2) + extra_phase_shift
 
 	#if overfocus is True:
 	#	gamma = -1.0*gamma
@@ -91,7 +91,7 @@ def getDiffResForOverfocus(radii=None, cs=2e-3, volts=120000):
 	return diffres
 
 #===================
-def generateCTF1dACE2(radii=None, focus=1.0e-6, cs=2e-3, volts=120000, ampconst=0.07, failParams=False):
+def generateCTF1dACE2(radii=None, focus=1.0e-6, cs=2e-3, volts=120000, ampconst=0.07, extra_phase_shift=0.0, failParams=False):
 	"""
 	calculates a CTF function based on the input details
 
@@ -101,7 +101,7 @@ def generateCTF1dACE2(radii=None, focus=1.0e-6, cs=2e-3, volts=120000, ampconst=
 	if debug is True:
 		print "generateCTF1dFromRadii()"
 	t0 = time.time()
-	checkParams(focus1=focus, focus2=focus, cs=cs, volts=volts, ampconst=ampconst, failParams=failParams)
+	checkParams(focus1=focus, focus2=focus, cs=cs, volts=volts, ampconst=ampconst, extra_phase_shift=0.0, failParams=failParams)
 	minres = 1e10/radii.min()
 	maxres = 1e10/radii.max()
 	if debug is True:
@@ -119,7 +119,7 @@ def generateCTF1dACE2(radii=None, focus=1.0e-6, cs=2e-3, volts=120000, ampconst=
 
 	radiisq = radii**2
 
-	gamma = (x4 * radiisq**2) + (-focus * x2 * radiisq) + (x0)
+	gamma = (x4 * radiisq**2) + (-focus * x2 * radiisq) + (x0) + extra_phase_shift
 	#ctf = -1.0*numpy.cos(gamma) #WRONG
 	#ctf = -1.0*numpy.sin(gamma) #CORRECT
 	ctf = 1.0*numpy.sin(gamma) #MAYBE CORRECT
@@ -140,17 +140,18 @@ def generateCTF2dFromCtfData(ctfdata, apix, volts, fieldsize):
 	focus1 = ctfdata['defocus1']
 	focus2 = ctfdata['defocus2']
 	theta = ctfdata['angle_astigmatism']
+	extra_phase_shift = ctfdata['extra_phase_shift'] # radians
 	mpix = apix*1e-10
 	cs = ctfdata['cs']*1e-3
 	volts = volts
 	ampconst = ctfdata['amplitude_contrast']
 	shape = (fieldsize, fieldsize)
-	checkParams(focus1=focus1, focus2=focus2, cs=cs, volts=volts, ampconst=ampconst, failParams=True)
+	checkParams(focus1=focus1, focus2=focus2, cs=cs, volts=volts, ampconst=ampconst, extra_phase_shift=extra_phase_shift, failParams=True)
 	return generateCTF2d(focus1, focus2, theta, shape, mpix, cs, volts, ampconst)
 
 #===================
 def generateCTF2d(focus1=-1.0e-6, focus2=-1.0e-6, theta=0.0, 
-	shape=(256,256), pixelsize=1.0e-10, cs=2e-3, volts=120000, ampconst=0.000):
+	shape=(256,256), pixelsize=1.0e-10, cs=2e-3, volts=120000, ampconst=0.000, extra_phase_shift=0.0):
 	"""
 	calculates a CTF function based on the input details
 
@@ -194,7 +195,7 @@ def generateCTF2d(focus1=-1.0e-6, focus2=-1.0e-6, theta=0.0,
 		print "\n FOCUS"
 		imagestat.printImageInfo(localfocus*1e6)
 
-	gamma = -0.5*math.pi*cs*(wavelength**3)*(radiisq**2) + math.pi*localfocus*wavelength*(radiisq)
+	gamma = -0.5*math.pi*cs*(wavelength**3)*(radiisq**2) + math.pi*localfocus*wavelength*(radiisq) + extra_phase_shift
 	if debug is True:
 		print "\n GAMMA"
 		imagestat.printImageInfo(gamma)
@@ -334,7 +335,7 @@ def generateRadial2d(shape, xfreq, yfreq):
 
 #===================
 def checkParams(focus1=-1.0e-6, focus2=-1.0e-6, pixelsize=1.5e-10, 
-	cs=2e-3, volts=120000, ampconst=0.07, failParams=False):
+	cs=2e-3, volts=120000, ampconst=0.07, extra_phase_shift=0.0, failParams=False):
 	if debug is True:
 		print "  Defocus1 %.2f microns (underfocus is positive)"%(focus1*1e6)
 		if focus1 != focus2:

@@ -19,7 +19,7 @@ debug = False
 
 #===================
 def getCtfExtrema(focus=1.0e-6, mfreq=1.498e-04, cs=2e-2, 
-		volts=120000, ampconst=0.000, numzeros=3, zerotype="peaks"):
+		volts=120000, ampconst=0.000, extra_phase_shift=0.0, numzeros=3, zerotype="peaks"):
 	"""
 	mfreq - frequency in inverse meters = 1.0/(mpix * numcols)
 	"""
@@ -43,7 +43,7 @@ def getCtfExtrema(focus=1.0e-6, mfreq=1.498e-04, cs=2e-2,
 	if cs > 0:
 		a = 0.5*cs*math.pi*wavelength**3
 		b = -focus*math.pi*wavelength
-		c = -math.asin(ampconst)
+		c = -math.asin(ampconst) + extra_phase_shift
 		if debug is True:
 			print "quadradtic parameters %.3e, %.3e, %.3e"%(a,b,c)
 		#eq: sin^2 (a r^4 + b r^2 + c) = 0
@@ -175,14 +175,14 @@ def getPowerSpectraPreBin(outerresolution, apix):
 	return prebin
 
 #============
-def defocusRatioToEllipseRatio(defocus1, defocus2, freq, cs, volts, ampcontrast):
+def defocusRatioToEllipseRatio(defocus1, defocus2, freq, cs, volts, ampcontrast, extra_phase_shift):
 	"""
 	apix and outerresolution must have same units (e.g., Anstroms or meters)
 	"""
 	radii1 = getCtfExtrema(defocus1, freq*1e10, 
-		cs, volts, ampcontrast, numzeros=1, zerotype="valleys")
+		cs, volts, ampcontrast, extra_phase_shift, numzeros=1, zerotype="valleys")
 	radii2 = getCtfExtrema(defocus2, freq*1e10, 
-		cs, volts, ampcontrast, numzeros=1, zerotype="valleys")
+		cs, volts, ampcontrast, extra_phase_shift, numzeros=1, zerotype="valleys")
 	if len(radii1) == 0 or len(radii2) == 0:
 		return None
 	ellipratio = radii1[0]/radii2[0]

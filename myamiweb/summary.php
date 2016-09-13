@@ -438,6 +438,16 @@ if ($particle->hasCtfData($sessionId)) {
 	$bestctf = $particle->getBestStats($fields, $sessionId, $minconf);
 	
 	if ($bestctf) {
+		//phase shift progression
+		$phasegraph = '<a href="processing/phaseshiftgraph.php?expId='.$sessionId.'&hg=0'
+							.'&s=1'.$urlmconf.'">'
+							.'<img border="0" src="processing/phaseshiftgraph.php?w=300&s=1&expId='.$sessionId
+							.''.$urlmconf.'"></a>';
+		echo '</td></tr><tr><td>'."\n";
+		echo $phasegraph;
+		echo "<a href='processing/phaseshiftgraph.php?vd=1&s=1&hg=0&expId=$expId'>[data]</a>";
+		echo '</td></tr><tr><td>'."\n";
+
 		foreach($bestctf as $field=>$data) {
 			foreach($data as $k=>$v) {
 				$preset = $bestctf[$field][$k]['name'];
