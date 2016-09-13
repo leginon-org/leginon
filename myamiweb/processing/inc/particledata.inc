@@ -1044,7 +1044,18 @@ class particledata {
 		if ($r) return end($r);
 	}
 
+	function getPhaseShiftString($table_alias='c') {
+		//To be back compatible, extra_phase_shift is set to 0.0 if field not exists
+		$has_phase_shift = $this->mysql->FieldExists('ApCtfData','extra_phase_shift');
+		if ( $has_phase_shift ) {
+			$phase_shift_select = "c.`extra_phase_shift`, ";
+		} else {
+			$phase_shift_select = "'0.0' as `extra_phase_shift`, ";
+		}
+		return $phase_shift_select;
+	}
 	function getCtfInfoWithNominal($sessionId, $runId=false) {
+		$phase_shift_select = $this->getPhaseShiftString('c');
 		$q =	"select "
 			."c.`REF|leginondata|AcquisitionImageData|image`, "
 			."s.`defocus`, "
@@ -1053,7 +1064,7 @@ class particledata {
 			."c.`defocusinit`, "
 			."c.`amplitude_contrast`, "
 			."c.`angle_astigmatism`, "
-			."c.`extra_phase_shift`, "
+			.$phase_shift_select
 			."c.`noise1`, "
 			."c.`noise2`, "
 			."c.`noise3`, "
@@ -1083,6 +1094,7 @@ class particledata {
 	}
 
 	function getCtfInfo($runId) {
+		$phase_shift_select = $this->getPhaseShiftString('c');
 		$q =	"select "
 			."c.`REF|leginondata|AcquisitionImageData|image` as imageid, "
 			// ScopeEMData timestamp is not changed after DD frame alignment
@@ -1093,7 +1105,7 @@ class particledata {
 			."c.`defocusinit`, "
 			."c.`amplitude_contrast`, "
 			."c.`angle_astigmatism`, "
-			."c.`extra_phase_shift`, "
+			.$phase_shift_select
 			."c.`noise1`, "
 			."c.`noise2`, "
 			."c.`noise3`, "
@@ -1123,6 +1135,7 @@ class particledata {
 	}
 
 	function getCtfInfoFromImageId($imageId, $order=false, $method='', $acerunId='') {
+		$phase_shift_select = $this->getPhaseShiftString('c');
 		$q =	"select "
 			."c.`DEF_id`, "
 			."c.`REF|leginondata|AcquisitionImageData|image`, "
@@ -1132,7 +1145,7 @@ class particledata {
 			."c.`defocusinit`, "
 			."c.`amplitude_contrast`, "
 			."c.`angle_astigmatism`, "
-			."c.`extra_phase_shift`, "
+			.$phase_shift_select
 			."c.`tilt_angle`, "
 			."c.`tilt_axis_angle`, "
 			."c.`confidence` , "
@@ -1358,6 +1371,8 @@ class particledata {
 					. "stddev(ctfdata.`$field`) as `stddev` ";
 		}
 
+		$phase_shift_select = $this->getPhaseShiftString('c');
+
 		if (!is_array($selects))
 			return False;
 		$stats = array();
@@ -1374,7 +1389,7 @@ class particledata {
 				."			p.`name`, "
 				."			s.`defocus`, "
 				."			c.`defocus1`, c.`defocus2`, c.`defocusinit`, c.`angle_astigmatism`, "
-				."			c.`extra_phase_shift`, "
+				."			".$phase_shift_select
 				."			c.`confidence`,c.`confidence_d` , c.`cross_correlation` , "
 				."			(c.`defocus1`+c.`defocus2`)/2+s.`defocus` as difference "
 				."		from `ApCtfData` c "
