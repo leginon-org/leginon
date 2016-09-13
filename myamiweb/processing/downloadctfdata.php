@@ -50,7 +50,7 @@ if ($relion) {
 	$kev = $imginfo['high tension']/1000;
 	$cs = $leginon->getCsValueFromSession($expId);
 }
-else $data[] = "image #\tnominal_def\tdefocus_1\tdefocus_2\tangle_astig\tamp_cont\tres(0.8)\tres(0.5)\tconf(30/10)\tconf(5_peak)\tconf\timage_name\n";
+else $data[] = "image #\tnominal_def\tdefocus_1\tdefocus_2\tangle_astig\tamp_cont\textra_phase_shift\tres(0.8)\tres(0.5)\tconf(30/10)\tconf(5_peak)\tconf\timage_name\n";
 //echo "</br>\n";
 
 foreach ($ctfdatas as $ctfdata) {
@@ -76,13 +76,14 @@ foreach ($ctfdatas as $ctfdata) {
 	}
 	else {
 		$angtxt = str_pad(sprintf("%.3f",$ctfdata['angle_astigmatism']), 9, " ", STR_PAD_LEFT);
-		$data[] = sprintf("%d\t%.4e\t%.5e\t%.5e\t%s\t%.4f\t%.2f\t%.2f\t%.3f\t%.3f\t%.3f\t%s\n",
+		$data[] = sprintf("%d\t%.4e\t%.5e\t%.5e\t%s\t%.4f\t%.4f\t%.2f\t%.2f\t%.3f\t%.3f\t%.3f\t%s\n",
 			$ctfdata['REF|leginondata|AcquisitionImageData|image'],
 			$ctfdata['defocus'],
 			$ctfdata['defocus1'],
 			$ctfdata['defocus2'],
 			$angtxt,
 			$ctfdata['amplitude_contrast'],
+			$ctfdata['extra_phase_shift'],
 			$ctfdata['resolution_80_percent'],
 			$ctfdata['resolution_50_percent'],
 			$ctfdata['confidence_30_10'],

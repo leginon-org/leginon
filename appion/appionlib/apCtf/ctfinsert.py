@@ -52,6 +52,10 @@ def validateAndInsertCTFData(imgdata, ctfvalues, rundata, rundir, fftpath=None, 
 		if isinstance(ctfvalues[key], str) and ctfvalues[key].startswith(rundir):
 			ctfvalues[key] = ctfvalues[key].replace(rundir, "")
 
+	### default extra phase shift to 0.0
+	if 'extra_phase_shift' not in ctfvalues.keys() or ctfvalues['extra_phase_shift'] is None:
+		ctfvalues['extra_phase_shift'] = 0.0
+
 	### time to insert
 	ctfq = appiondata.ApCtfData()
 	ctfq['acerun'] = rundata

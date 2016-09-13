@@ -54,6 +54,9 @@ if (abs($ctfdata['defocus1'] - $ctfdata['defocus2']) > $epsilon) {
 	$keys[]='angle_astigmatism';
 }
 $keys[]='amplitude_contrast';
+if (abs($ctfdata['extra_phase_shift']) > 0.001) {
+	$keys[]='extra_phase_shift';
+}
 $keys[]='cs';
 // estimate quality
 $keys[]='resolution_80_percent';
@@ -74,6 +77,7 @@ $keymap = array(
 	"defocus2"  => "def2",
 	"confidence"  => "conf",
 	"angle_astigmatism"  => "&theta;<sub>astig</sub>",
+	"extra_phase_shift"  => "&phi;<sub>pp</sub>",
 	"cross_correlation"  => "cc",
 	"amplitude_contrast" => "amp&nbsp;con",
 	"confidence_30_10" => "conf&nbsp;(30/10)",
@@ -96,6 +100,8 @@ if ($ctfdata) {
 				$name = $k;
 			if (preg_match('%defocus%',$k))
 				echo " <b>$name:</b>&nbsp;",($leginondata->formatDefocus($v));
+			elseif (preg_match('%phase_shift%',$k))
+				echo " <b>$name:</b>&nbsp;".format_angle_degree($v*180/3.14159,2,2);
 			elseif ($v-floor($v)) 
 				echo " <b>$name:</b>&nbsp;".format_sci_number($v,2,2);
 			else
