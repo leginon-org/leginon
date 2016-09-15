@@ -41,9 +41,10 @@ def getCtfExtrema(focus=1.0e-6, mfreq=1.498e-04, cs=2e-2,
 	wavelength = getTEMLambda(volts)
 
 	if cs > 0:
+		# This defines -gamma, not gamma
 		a = 0.5*cs*math.pi*wavelength**3
 		b = -focus*math.pi*wavelength
-		c = -math.asin(ampconst) + extra_phase_shift
+		c = -math.asin(ampconst) - extra_phase_shift
 		if debug is True:
 			print "quadradtic parameters %.3e, %.3e, %.3e"%(a,b,c)
 		#eq: sin^2 (a r^4 + b r^2 + c) = 0
@@ -83,7 +84,7 @@ def getCtfExtrema(focus=1.0e-6, mfreq=1.498e-04, cs=2e-2,
 				print "radius of zero number %d is %d pixels"%(i+1, pixeldist)
 	elif cs == 0:
 		b = focus*math.pi*wavelength
-		c = math.asin(ampconst)
+		c = math.asin(ampconst) + extra_phase_shift
 		if debug is True:
 			print "quadradtic parameters %.3e, %.3e, %.3e"%(0.0,b,c)
 		#eq: sin^2 (b r^2 + c) = 0
@@ -107,7 +108,7 @@ def getCtfExtrema(focus=1.0e-6, mfreq=1.498e-04, cs=2e-2,
 
 #===================
 def getFirstCTFzeroRadius(focus=-1.0e-6, pixelsize=1.0e-10, cs=2e-2, 
-		volts=120000, ampconst=0.000, cols=2048):
+		volts=120000, ampconst=0.000, extra_phase_shift=0.000, cols=2048):
 	if debug is True:
 		print "defocus %.2f microns"%(focus*1e6)
 		print "pixelsize %.3f Angstroms"%(pixelsize*1e10)
@@ -121,7 +122,7 @@ def getFirstCTFzeroRadius(focus=-1.0e-6, pixelsize=1.0e-10, cs=2e-2,
 
 	a = 0.5*cs*math.pi*wavelength**3
 	b = focus*math.pi*wavelength
-	c = -math.asin(ampconst)
+	c = -math.asin(ampconst) + extra_phase_shift
 	if debug is True:
 		print "quadradtic parameters %.3e, %.3e, %.3e"%(a,b,c)
 	#eq: sin (a r^4 + b r^2 + c) = 0
