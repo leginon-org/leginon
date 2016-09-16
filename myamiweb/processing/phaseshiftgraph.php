@@ -32,15 +32,26 @@ $color = ($_GET['color']) ? $_GET['color'] : false;
 
 $ctf = new particledata();
 
+$pp_ctfruns = array();
 //If summary is true, get only the data with the best confidence
 if ($summary) {
 	$ctfinfo = $ctf->getBestCtfInfoByResolution($sessionId, $minimum);
+	// Parameters
+	$ctfrunparams = $ctf->getCTFParameterFields();
+	foreach($ctfrunparams as $params) {
+		if ( array_key_exists('shift_phase', $params) && $params['shift_phase'] )
+			$pp_ctfruns[] = $params['acerun'];
+	}
 } else {
 	$runId= ($_GET[rId]);
 	$ctfinfo = $ctf->getCtfInfo($runId);
+	$pp_ctfrunsp[] = $runId;
 }
 
+
 foreach($ctfinfo as $t) {
+	// Only show ones that shifts phases
+	if ( !in_array($t['REF|ApAceRunData|acerun'], $pp_ctfruns) ) continue;
 	if ($preset) {
 		$p = $leginondata->getPresetFromImageId($id);
 		if ($p['name']!=$preset) {
@@ -75,6 +86,7 @@ foreach($ctfinfo as $t) {
 	$ndata[]=array('unix_timestamp' => $t['unix_timestamp'], "$f"=>$value);
 }
 
+if ( empty($ndata) ) exit;	
 
 $display_x = 'unix_timestamp';
 $display_y = $f;
@@ -83,7 +95,8 @@ if ($histogram == true && $histaxis == 'x')
 	$axes = array($display_y,$display_x);
 $dbemgraph = new dbemgraph($ndata, $axes[0], $axes[1]);
 $dbemgraph->lineplot=true;
-$dbemgraph->title=$fieldname. ($preset) ? " for preset $preset":'';
+$titlename = "Phase Shift by Phase Plate over Time";
+$dbemgraph->title = ($preset) ? "$titlename for preset $preset": $titlename;
 $yunit = ' (degrees)';
 $dbemgraph->yaxistitle= $axes[1].$yunit;
 

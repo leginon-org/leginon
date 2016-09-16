@@ -16,9 +16,13 @@ $showmore = $_GET['showmore'] ? $_GET['showmore'] : '0';
 $projectId =getProjectId();
 $formAction=$_SERVER['PHP_SELF']."?expId=$expId&showmore=$showmore";
 
-$fieldarray = $ctf->getCTFParameterFields();
-foreach ($fieldarray as $k=>$v) {
-	$aceparamsfields[] = $k;
+$fieldarrays = $ctf->getCTFParameterFields($runId);
+$aceparamsfields = array();
+foreach ($fieldarrays as $fieldarray) {
+	foreach ($fieldarray as $k=>$v) {
+		if (in_array($k, $aceparamsfields)) continue;
+		$aceparamsfields[] = $k;
+	}
 }
 
 // *********************
