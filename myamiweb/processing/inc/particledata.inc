@@ -1281,7 +1281,7 @@ class particledata {
 		return $this->mysql->getSQLResult($q);
 	}
 
-	function getCTFParameterFields() {
+	function getCTFParameterFields($runId=false) {
 		$q = "SELECT *, path.`path` as path, acerun.`DEF_id` as acerun "
 			."FROM ApAceRunData AS acerun ";
 		foreach ($this->ace_method_map as $k=>$p) {
@@ -1291,12 +1291,11 @@ class particledata {
 			}
 		}
 		$q .= "LEFT JOIN ApPathData AS path "
-			."  ON (path.`DEF_id` = acerun.`REF|ApPathData|path`) "
-			." LIMIT 1; ";
+			."  ON (path.`DEF_id` = acerun.`REF|ApPathData|path`) ";
+		if ( $runId ) $q .= " where acerun.`DEF_id` = $runId ";
+		//$q .= " LIMIT 1; ";
 		//echo $q."<br/><br/>\n";
-		$r = $this->mysql->getSQLResult($q);
-		//echo print_r($r)."<br/><br/>\n";
-		return $r[0];
+		return $this->mysql->getSQLResult($q);
 	}
 
 	function getCTFStats($fields, $sessionId, $runId=false) {
