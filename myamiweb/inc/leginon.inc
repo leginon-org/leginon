@@ -633,7 +633,8 @@ class leginondata {
 				else
 					$q .=" and p.name = '$name' ";
 			}
-				$q .=" order by a.`DEF_id` DESC ";
+				// Order by ScopeEMData keeps derived images with the original
+				$q .=" order by a.`REF|ScopeEMData|scope` DESC, a.`DEF_id` DESC ";
 		}
 		$filenames = $this->mysql->getSQLResult($q);
 		return $filenames;
