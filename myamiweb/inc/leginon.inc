@@ -1359,7 +1359,7 @@ class leginondata {
 			.$parentselect
 			.$parentcoords
 			."a.`DEF_id` as imageId, "
-			."date_format(a.`DEF_timestamp`, '%Y-%d-%m %T') as `timestamp`,"
+			."date_format(scope.`DEF_timestamp`, '%Y-%d-%m %T') as `timestamp`,"
 			."a.`REF|SessionData|session` as `sessionId`,"
 			."a.`MRC|image` as filename, "
 			."p.`name` as `preset`, "
