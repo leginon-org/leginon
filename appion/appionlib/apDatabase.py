@@ -580,10 +580,11 @@ def getDoseFromImageData(imgdata):
 	''' returns dose, in electrons per Angstrom '''
 	try:
 		dose = imgdata['preset']['dose']
+		return dose / 1e20
 	except:
+		# fails either because no preset or no dose
 		apDisplay.printWarning("dose not available for this image, try another image")
 		return None
-	return dose / 1e20
 
 #================
 def getDimensionsFromImageData(imgdata):
