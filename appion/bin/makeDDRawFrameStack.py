@@ -103,7 +103,7 @@ class MakeFrameStackLoop(apDDLoop.DDStackLoop):
 		self.dd.setRunDir(self.params['rundir'])
 		self.dd.setTempDir(self.params['tempdir'])
 		self.dd.setRawFrameType(self.getFrameType())
-		self.dd.getUseFrameAlignerFlat(True)
+		self.dd.setUseGPUFlat(True)
 		self.dd.setSquareOutputShape(self.params['square'])
 		self.dd.setTrimingEdge(self.params['trim'])
 		self.dd.setDoseFDriftCorrOptions(self.params)
@@ -160,11 +160,11 @@ class MakeFrameStackLoop(apDDLoop.DDStackLoop):
 		apFile.removeFile(self.dd.framestackpath)
 		apFile.removeFile(self.dd.tempframestackpath)
 		if self.dd.hasBadPixels() or not self.params['align']:
-			self.dd.getUseFrameAlignerFlat(False)
+			self.dd.setUseGPUFlat(False)
 			### make stack
 			self.dd.makeCorrectedFrameStack(self.params['rawarea'])
 		else:
-			self.dd.getUseFrameAlignerFlat(True)
+			self.dd.setUseGPUFlat(True)
 			self.dd.makeRawFrameStackForOneStepCorrectAlign(self.params['rawarea'])
 		# Align
 		if self.params['align']:

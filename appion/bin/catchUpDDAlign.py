@@ -119,7 +119,7 @@ class CatchUpFrameAlignmentLoop(appionScript.AppionScript):
 
 		if not self.dd.hasBadPixels():
 			# use GPU to do flat field correction if no bad pixel/col/rows
-			self.dd.getUseFrameAlignerFlat(True)
+			self.dd.setUseGPUFlat(True)
 			self.dd.gainCorrectAndAlignFrameStack()
 		else:
 			self.dd.alignCorrectedFrameStack()
