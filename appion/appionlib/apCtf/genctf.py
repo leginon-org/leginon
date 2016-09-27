@@ -70,7 +70,7 @@ def getDiffResForOverfocus(radii=None, cs=2e-3, volts=120000):
 		apDisplay.printColor("getDiffRes radii: 1/%.2fA --> 1/%.2fA"%(1/radii[1]*1e10, 1/radii[-1]*1e10), "cyan")
 
 	t0 = time.time()
-	checkParams(focus1=1.0e-6, focus2=1.0e-6, cs=cs, volts=volts, ampconst=0.0, failParams=False)
+	checkParams(focus1=1.0e-6, focus2=1.0e-6, cs=cs, volts=volts, ampconst=0.0, extra_phase_shift=0.0, failParams=False)
 
 
 	lamb = ctftools.getTEMLambda(volts)
@@ -147,7 +147,7 @@ def generateCTF2dFromCtfData(ctfdata, apix, volts, fieldsize):
 	ampconst = ctfdata['amplitude_contrast']
 	shape = (fieldsize, fieldsize)
 	checkParams(focus1=focus1, focus2=focus2, cs=cs, volts=volts, ampconst=ampconst, extra_phase_shift=extra_phase_shift, failParams=True)
-	return generateCTF2d(focus1, focus2, theta, shape, mpix, cs, volts, ampconst)
+	return generateCTF2d(focus1, focus2, theta, shape, mpix, cs, volts, ampconst, extra_phase_shift)
 
 #===================
 def generateCTF2d(focus1=-1.0e-6, focus2=-1.0e-6, theta=0.0, 
@@ -345,6 +345,8 @@ def checkParams(focus1=-1.0e-6, focus2=-1.0e-6, pixelsize=1.5e-10,
 		print "  High tension %.1f kV"%(volts*1e-3)
 		print ("  Amp Contrast %.3f (shift %.1f degrees)"
 			%(ampconst, math.degrees(-math.asin(ampconst))))
+		print ("  Extra Phase Shift %.1f degrees"
+			% (extra_phase_shift, math.degrees(extra_phase_shift)))
 	if focus1*1e6 > 15.0 or focus1*1e6 < 0.1:
 		msg = "atypical defocus #1 value %.1f microns (underfocus is positve)"%(focus1*1e6)
 		if failParams is False:

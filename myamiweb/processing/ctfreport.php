@@ -354,14 +354,14 @@ if ($ctfrundatas) {
 
 	$ctfdownlink = "<h3>";
 	$ctfdownlink .= "<a href='downloadctfdata.php?expId=$expId&preset=$preset&runId=$runId&relion=True'>\n";
-	$ctfdownlink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download star file for RELION'>&nbsp;download star file for RELION\n";
+	$ctfdownlink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download star file for RELION 1.4'>&nbsp;download star file for RELION 1.4\n";
 	$ctfdownlink .= "</a></h3>\n";
 	echo $ctfdownlink;
 
 	$ctfdownlink = "<h3>";
 	$ctfdownlink = "<h3>";
 	$ctfdownlink .= "<a href='downloadctfdata.php?expId=$expId&preset=$preset&runId=$runId&vlion=True'>\n";
-	$ctfdownlink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download star file for VLION'>&nbsp;download star file for VLION\n";
+	$ctfdownlink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download star file for Relion 2.0 or VLION'>&nbsp;download star file for Relion 2.0 or VLION\n";
 	$ctfdownlink .= "</a></h3>\n";
 	echo $ctfdownlink;
 
