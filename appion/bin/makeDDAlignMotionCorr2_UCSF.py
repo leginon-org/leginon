@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+import os
+import shutil
 from appionlib import apDDMotionCorrMaker
 from appionlib import apDDFrameAligner
 from appionlib import apDDprocess
