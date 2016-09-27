@@ -256,6 +256,36 @@ class Corrector(imagewatcher.ImageWatcher):
 			delta = x - self.__mean
 			self.__mean = self.__mean + delta / self.__n
 
+	def needCalcNorm(self, type):
+			if type == 'bright':
+				return True
+			else:
+				try:
+					calc_on_dark = self.instrument.ccdcamera.getCalulateNormOnDark()
+					return calc_on_dark
+				except:
+					self.logger.warning('Camera host pyscope update recommended')
+					return True
+
+	def hasRecentDarkSaved(self, channel):
+		trip_value = 100 # seconds
+		dark = self.retrieveCorrectorImageFromSettings('dark', channel)
+		import datetime
+		if dark:
+			if dark.timestamp is None:
+				# dark image collected just now are in cache and has no timestamp.
+				# Query it from database since retrieveCorrectorImage will use cached if there.
+				dark = leginondata.DarkImageData().direct_query(dark.dbid)
+			# compare timestamps
+			return datetime.datetime.now() - dark.timestamp <= datetime.timedelta(seconds=trip_value)
+		return False
+
+	def requireRecentDarkOnBright(self):
+		if hasattr(self.instrument.ccdcamera, 'requireRecentDarkOnBright'):
+			return self.instrument.ccdcamera.requireRecentDarkOnBright()
+		self.logger.warning('Camera host pyscope update recommended')
+		return False
+
 	def acquireReference(self, type, channel):
 		try:
 			self.instrument.ccdcamera.Settings = self.settings['camera settings']
@@ -264,6 +294,10 @@ class Corrector(imagewatcher.ImageWatcher):
 				self.logger.info('Acquiring dark references...')
 			else:
 				typekey = 'bright'
+				if self.requireRecentDarkOnBright():
+					if not self.hasRecentDarkSaved(channel):
+						self.logger.error('Need recent Dark image before acquiring Bright Image')
+						return None
 				self.logger.info('Acquiring bright references...')
 		except Exception, e:
 			self.logger.error('Reference acquisition failed: %s' % (e,))
@@ -277,7 +311,7 @@ class Corrector(imagewatcher.ImageWatcher):
 			refimagedata = self.acquireSeriesMedian(n, type, channel)
 		refarray = refimagedata['image']
 
-		if refimagedata is not None:
+		if refimagedata is not None and self.needCalcNorm(type):
 			self.logger.info('Got reference image, calculating normalization')
 			self.calc_norm(refimagedata)
 

@@ -659,6 +659,12 @@ class TietzF416(Tietz):
 		binning = self.getBinning()
 		return binning['x']*binning['y']
 
+	def getCalulateNormOnDark(self):
+		return False
+
+	def requireRecentDarkOnBright(self):
+		return True
+
 class TietzF816(Tietz):
 	name = 'Tietz F816'
 	cameratypeattr = 'ctF816'
