@@ -118,7 +118,7 @@ def getSVNInfo(module_path=''):
 	return infodict
 
 def getTextVersion():
-	return 'pre3.3'
+	return 'beta'
 
 def getSVNVersion(module_path=''):
 	svninfo = getSVNInfo(module_path)

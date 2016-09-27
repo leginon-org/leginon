@@ -173,6 +173,18 @@ def fromRadialFunction(funcrad, shape, **kwargs):
 	result = numpy.fromfunction(funcrc, shape, **kwargs)
 	return result
 
+def fromPolarBinFunction(funcpolar, shape, **kwargs):
+	center_r = (shape[0] - 1)/2.0
+	center_c = (shape[1] - 1)/2.0
+	def funcrc(r, c, **kwargs):
+		rr = r - center_r
+		cc = c - center_c
+		rad = numpy.hypot(rr,cc)
+		phi = numpy.arctan2(rr,cc)
+		return funcpolar(rad, phi, **kwargs)
+	result = numpy.fromfunction(funcrc, shape, **kwargs)
+	return result
+
 def center_mask(a, mask_radius, copy=False):
 	if copy:
 		a = numpy.array(a)
@@ -642,3 +654,88 @@ def taper(im, boundary):
 		for i in range(1,boundary):
 			im[sign*i] = (im[sign*i]*0.1 + im[sign*i-sign]*0.9)
 			im[:,sign*i] = (im[:,sign*i]*0.1 + im[:,sign*i-sign]*0.9)
+
+def polarBin(input, nbins_r, nbins_t):
+	'''
+Polar binning of a real space image.  The polar transform is centered at
+the center of the image
+input: an image
+nbins_r: number of radial bins.
+nbins_t: the number of angular bins.
+Returns:  (bins, r_centers, t_centers)
+     where:
+          bins: result 2-D image with r on the first axis, t on the second axis
+          r_centers: The sequence of radial values represented in the bins
+          t_centers: The sequence of angular values represented in the bins
+	'''
+	## Full radial range (result will have empty bins):
+	r_min = 0.0
+	r_max = numpy.hypot(input.shape[0] / 2.0, input.shape[1] / 2.0)
+
+	r_bins,r_inc = numpy.linspace(r_min, r_max, num=nbins_r+1, retstep=True)
+	# excluding r_min
+	r_centers = r_bins[1:] - r_inc/2.0
+
+	## Full angular range from -pi to pi
+	t_min = -numpy.pi
+	t_max = numpy.pi
+	t_bins,t_inc = numpy.linspace(t_min, t_max, num=nbins_t+1, retstep=True)
+	t_centers = t_bins[1:] - t_inc/2.0
+
+	## Determine coordinates on center
+	indices = numpy.indices(input.shape)
+	center_row = int((input.shape[0]+1) / 2 ) # integer division intended
+	center_col = int((input.shape[1]+1) / 2 ) # integer division intended
+	indices[0][:] -= center_row
+	indices[:][1] -= center_col
+
+	## Determine r,theta polar coords of each row,column coord.
+	r_indices = numpy.hypot(*indices)
+	t_indices = numpy.arctan2(*indices)
+
+	## split up image into bins by radius and angle
+	r_labels = numpy.digitize(r_indices.flat, r_bins) - 1
+	r_labels.shape = r_indices.shape
+	t_labels = numpy.digitize(t_indices.flat, t_bins) - 1
+	t_labels.shape = t_indices.shape
+
+	## combine r_labels and t_labels into full set of labels:
+	rt_labels = nbins_t * r_labels + t_labels + 1
+
+	## calculate mean value of each bin
+	rt_bins = scipy.ndimage.mean(input, rt_labels, numpy.arange(nbins_r*nbins_t)+1)
+
+	## turn result into 2-D array
+	rt_bins = numpy.asarray(rt_bins)
+	rt_bins.shape = nbins_r, nbins_t
+	
+	# interpolate NaN in the array which came from bins with no item
+	for tbin in range(nbins_t):
+		rt = rt_bins[:,tbin]
+		nan_indices = numpy.where(numpy.isnan(rt))
+		if not nan_indices:
+			continue
+		ind = numpy.where(~numpy.isnan(rt))[0]
+		values = rt[ind]
+		for nan_ind in numpy.where(numpy.isnan(rt))[0]:
+			good_value = numpy.interp(nan_ind, ind, values, left=values[0], right=values[-1])
+			rt[nan_ind] = good_value
+		rt_bins[:,tbin] = rt
+	return rt_bins, r_centers, t_centers
+
+def radialAverageImage(a):
+	'''
+	Make radial average image of the same shape. Origin of the polar transform is
+	at the center of the image
+	'''
+	bins =  min(a.shape)
+	# doing one bin in angle
+	nbins_t = 1
+	pbin, r_center, t_center = polarBin(a, bins, nbins_t)
+	radial_avg = pbin[:,0]
+
+	def radial_value(rho, **kwargs):
+		return numpy.interp(rho, r_center, radial_avg, right=radial_avg[-1])
+
+	return fromRadialFunction(radial_value, a.shape) 
+
