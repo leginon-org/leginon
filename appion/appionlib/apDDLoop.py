@@ -24,8 +24,6 @@ class DDStackLoop(appionLoop2.AppionLoop):
 			help="ID for particle stack to restrict ddstack making(optional)", metavar="INT")
 		self.parser.add_option("--bin", dest="bin", type="int", default=1,
 			help="Binning factor relative to the dd stack (optional)", metavar="INT")
-		self.parser.add_option("--gpuid", dest="gpuid", type="int", default=0,
-			help="GPU device id used in gpu processing", metavar="INT")
 		self.parser.add_option("--ddstartframe", dest="startframe", type="int", default=0,
 			help="starting frame for summing the frames. The first frame is 0")
 		self.parser.add_option("--ddnframe", dest="nframe", type="int",
@@ -42,6 +40,13 @@ class DDStackLoop(appionLoop2.AppionLoop):
 			help="alignment B-factor in pix^2 in dosefgpu_driftcorr")
 		self.parser.add_option("--alignccbox", dest="pbx", type="int", default=128,
 			help="alignment CC search box size in dosefgpu_driftcorr")
+
+		# Dose weighting, based on Grant & Grigorieff eLife 2015
+		self.parser.add_option("--doseweight",dest="doseweight",metavar="bool", default=False,
+			action="store_true", help="dose weight the frame stack, according to Tim / Niko's curves")
+		self.parser.add_option("--totaldose",dest="totaldose",metavar="float",type=float,
+                        help="total dose for the full movie stack in e/A^2. If not specified, will get value from database")
+
 
 	def getUnAlignedImageIds(self,imageids):
 		'''
@@ -67,9 +72,14 @@ class DDStackLoop(appionLoop2.AppionLoop):
 	def processImage(self, imgdata):
 		# initialize aligned_imagedata as if not aligned
 		self.aligned_imagedata = None
+		self.aligned_dw_imagedata = None
 
 	def commitToDatabase(self,imgdata):
 		if self.aligned_imagedata != None:
 			apDisplay.printMsg('Uploading aligned image as %s' % self.aligned_imagedata['filename'])
 			q = appiondata.ApDDAlignImagePairData(source=imgdata,result=self.aligned_imagedata,ddstackrun=self.rundata)
+			q.insert()
+		if self.aligned_dw_imagedata != None:
+			apDisplay.printMsg('Uploading aligned image as %s' % self.aligned_dw_imagedata['filename'])
+			q = appiondata.ApDDAlignImagePairData(source=imgdata,result=self.aligned_dw_imagedata,ddstackrun=self.rundata)
 			q.insert()

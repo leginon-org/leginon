@@ -445,7 +445,7 @@ def centerParticles(stack, mask=None, maxshift=None):
 	return
 
 #===============
-def commitSubStack(params, newname=False, centered=False, oldstackparts=None, sorted=False, included=None):
+def commitSubStack(params, newname=False, centered=False, oldstackparts=None, sorted=False, radial_averaged=False, included=None):
 	"""
 	commit a substack to database
 
@@ -487,6 +487,8 @@ def commitSubStack(params, newname=False, centered=False, oldstackparts=None, so
 		stackq['beamtilt_corrected'] = params['correctbeamtilt']
 	if sorted is True:
 		stackq['junksorted'] = True
+	if radial_averaged is True:
+		stackq['radial_averaged'] = True
 	if centered is True:
 		stackq['centered'] = True
 		if 'mask' in params:

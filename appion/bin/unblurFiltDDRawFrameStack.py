@@ -75,7 +75,7 @@ class MakeFrameStackLoop(apDDLoop.DDStackLoop):
 		self.dd.setRunDir(self.params['rundir'])
 		self.dd.setTempDir(self.params['tempdir'])
 		self.dd.setRawFrameType(self.getFrameType())
-		self.dd.setUseGPUFlat(True)
+		self.dd.setUseFrameAlignerFlat(True)
 		self.dd.setSquareOutputShape(self.params['square'])
 		self.dd.setTrimingEdge(self.params['trim'])
 		self.dd.setDoseFDriftCorrOptions(self.params)
@@ -137,11 +137,11 @@ class MakeFrameStackLoop(apDDLoop.DDStackLoop):
 			return
 
 		if self.dd.hasBadPixels():
-			self.dd.setUseGPUFlat(False)
+			self.dd.setUseFrameAlignerFlat(False)
 			### make stack
 			self.dd.makeCorrectedFrameStack(self.params['rawarea'])
 		else:
-			self.dd.setUseGPUFlat(True)
+			self.dd.setUseFrameAlignerFlat(True)
 			self.dd.makeRawFrameStackForOneStepCorrectAlign(self.params['rawarea'])
 		# Align
 		# make a fake log so that catchUpDDAlign will know that frame stack is done
@@ -150,7 +150,7 @@ class MakeFrameStackLoop(apDDLoop.DDStackLoop):
 		f.write('Fake log to mark the unaligned frame stack as done\n')
 		f.close()
 		# Doing the alignment
-		if self.dd.getUseGPUFlat():
+		if self.dd.getUseFrameAlignerFlat():
 			self.dd.gainCorrectAndAlignFrameStack()
 		else:
 			self.dd.unblurFiltCorrectedFrameStack(self.params, imgdata)

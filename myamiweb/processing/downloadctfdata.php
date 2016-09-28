@@ -11,6 +11,7 @@ require_once "inc/processing.inc";
 $expId = $_GET['expId'];
 $runId = $_GET['runId'];
 $relion = $_GET['relion'];
+$vlion = $_GET['vlion'];
 $preset = $_GET['preset'];
 
 checkExptAccessPrivilege($expId,'data');
@@ -28,7 +29,7 @@ if(empty($runId))
 else
 	$ctfdatas = $appiondb->getCtfInfo($runId);
 
-if ($relion) {
+if ($relion || $vlion) {
 	$data[] = "\ndata_\n\nloop_\n";
 	$data[] = "_rlnMicrographName #1\n";
 	$data[] = "_rlnCtfImage #2\n";
@@ -42,6 +43,8 @@ if ($relion) {
 	$data[] = "_rlnDetectorPixelSize #10\n";
 	$data[] = "_rlnCtfFigureOfMerit #11\n";
 
+	if ($vlion)
+		$data[] = "_rlnPhaseShift #12\n";
 	# get image info for first image,
 	# assume same for all the rest
 	$imgid = $ctfdatas[0]['REF|leginondata|AcquisitionImageData|image'];
@@ -50,7 +53,7 @@ if ($relion) {
 	$kev = $imginfo['high tension']/1000;
 	$cs = $leginon->getCsValueFromSession($expId);
 }
-else $data[] = "image #\tnominal_def\tdefocus_1\tdefocus_2\tangle_astig\tamp_cont\tres(0.8)\tres(0.5)\tconf(30/10)\tconf(5_peak)\tconf\timage_name\n";
+else $data[] = "image #\tnominal_def\tdefocus_1\tdefocus_2\tangle_astig\tamp_cont\textra_phase_shift\tres(0.8)\tres(0.5)\tconf(30/10)\tconf(5_peak)\tconf\timage_name\n";
 //echo "</br>\n";
 
 foreach ($ctfdatas as $ctfdata) {
@@ -59,8 +62,8 @@ foreach ($ctfdatas as $ctfdata) {
 	if (!empty($preset))
 		$p = $leginon->getPresetFromImageId($imgid);
 		if ($preset != $p['name'] ) continue;
-	if ($relion) {
-		$data[]=sprintf("micrographs/%s.mrc micrographs/%s.ctf:mrc %.6f %.6f %.6f %.6f %.6f %.6f %.6f %.6f %.6f\n",
+	if ($relion || $vlion) {
+		$data_string=sprintf("micrographs/%s.mrc micrographs/%s.ctf:mrc %.6f %.6f %.6f %.6f %.6f %.6f %.6f %.6f %.6f",
 			$filename,
 			$filename,
 			$ctfdata['defocus1']*1e10,
@@ -68,21 +71,24 @@ foreach ($ctfdatas as $ctfdata) {
 			$ctfdata['angle_astigmatism'],
 			$kev,
 			$cs,
-			$ctfdata['amplitude_contrast'],
+			$ctfdata['amplitude_contrast'] + $ctfdata['extra_phase_shift'] * (int) ((bool) $relion),
 			10000,
 			$pixelsize,
 			$ctfdata['confidence']
 			);
+		if ( $vlion ) $data_string .= sprintf(" %6f", $ctfdata['extra_phase_shift'] * 180.0/3.14159); #degrees
+		$data[] = $data_string."\n";
 	}
 	else {
 		$angtxt = str_pad(sprintf("%.3f",$ctfdata['angle_astigmatism']), 9, " ", STR_PAD_LEFT);
-		$data[] = sprintf("%d\t%.4e\t%.5e\t%.5e\t%s\t%.4f\t%.2f\t%.2f\t%.3f\t%.3f\t%.3f\t%s\n",
+		$data[] = sprintf("%d\t%.4e\t%.5e\t%.5e\t%s\t%.4f\t%.4f\t%.2f\t%.2f\t%.3f\t%.3f\t%.3f\t%s\n",
 			$ctfdata['REF|leginondata|AcquisitionImageData|image'],
 			$ctfdata['defocus'],
 			$ctfdata['defocus1'],
 			$ctfdata['defocus2'],
 			$angtxt,
 			$ctfdata['amplitude_contrast'],
+			$ctfdata['extra_phase_shift'],
 			$ctfdata['resolution_80_percent'],
 			$ctfdata['resolution_50_percent'],
 			$ctfdata['confidence_30_10'],
@@ -105,9 +111,10 @@ header("Content-Transfer-Encoding: binary");
 header("Content-Length: $size");
 $expt_runname = sprintf("%05d", $expId);
 $expt_runname .= (empty($runId) ) ? '' : sprintf("-run%04d", $runId);
-if ($relion) $downname = sprintf("micrographs_ctf-%s.star",$expt_runname);
+if ($relion || $vlion) $downname = sprintf("micrographs_ctf-%s.star",$expt_runname);
 else $downname = sprintf("ctfdata-session%s.dat", $expt_runname);
 header("Content-Disposition: attachment; filename=$downname;");
+
 foreach ($data as $line) {
 	echo $line;
 }

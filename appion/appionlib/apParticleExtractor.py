@@ -374,10 +374,14 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 			self.is_dd_stack = True
 			self.is_dd = True
 		else:
-			if self.params['preset'] and '-a' in self.params['preset'] and (self.params['nframe'] or self.params['driftlimit'] > 0):
+			# using string search in preset name "-" to check IsDD. New preset name in session does not allow
+			# "-" as defined in presets.py
+			if self.params['preset'] and '-' in self.params['preset'] and (self.params['nframe'] or self.params['driftlimit'] > 0):
 				self.is_dd = True
 				self.is_dd_stack = True
-			elif self.params['mrcnames'] and self.params['mrcnames'].split(',')[0] and '-a' in self.params['mrcnames'].split(',')[0] and (self.params['nframe'] or self.params['driftlimit'] > 0):
+			# using string search "-" in filename.  This may be a problem if grid or session name
+			# contains "-"
+			elif self.params['mrcnames'] and self.params['mrcnames'].split(',')[0] and '-' in self.params['mrcnames'].split(',')[0] and (self.params['nframe'] or self.params['driftlimit'] > 0):
 				self.is_dd = True
 				self.is_dd_stack = True
 			elif self.params['nframe']:

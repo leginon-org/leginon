@@ -204,7 +204,11 @@ function stacksummarytable($stackid, $mini=false, $tiny=false, $showOptions=True
 		$stacktable.= "<img src='loadimg.php?filename=$stackavg&s=150&coff=1' height='150'><br/>\n";
 		$stacktable.= "<i>averaged stack image</i>\n";
 		if ($showOptions) {
-			if (!$centered) $stacktable.= "<br /><a href='centerStack.php?expId=$expId&sId=$stackid'>[Center Particles]</a>\n";
+			if (!$centered) {
+				$stacktable.= "<br /><a href='centerStack.php?expId=$expId&sId=$stackid'>[Center Particles]</a>\n";
+			} else {
+				$stacktable.= "<br /><a href='radialAverageStack.php?expId=$expId&sId=$stackid'>[Radial Average Particles]</a>\n";
+			}
 			//$stacktable.= "<br /><a href='runAppionLoop.php?form=learningStackCleaner&expId=$expId&stackId=$stackid'>[Learning Stack Cleaner]</a>\n";
 			$stacktable.= "<br /><a href='learningStackCleaner.php?expId=$expId&stackId=$stackid'>[Learning Stack Cleaner]</a>\n";
 			if (!$junksorted) $stacktable.= "<br /><a href='sortJunk.php?expId=$expId&sId=$stackid&junksort=1'>[Sort Junk]</a>\n";

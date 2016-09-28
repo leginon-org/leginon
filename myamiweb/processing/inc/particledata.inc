@@ -1044,7 +1044,18 @@ class particledata {
 		if ($r) return end($r);
 	}
 
+	function getPhaseShiftString($table_alias='c') {
+		//To be back compatible, extra_phase_shift is set to 0.0 if field not exists
+		$has_phase_shift = $this->mysql->FieldExists('ApCtfData','extra_phase_shift');
+		if ( $has_phase_shift ) {
+			$phase_shift_select = "c.`extra_phase_shift`, ";
+		} else {
+			$phase_shift_select = "'0.0' as `extra_phase_shift`, ";
+		}
+		return $phase_shift_select;
+	}
 	function getCtfInfoWithNominal($sessionId, $runId=false) {
+		$phase_shift_select = $this->getPhaseShiftString('c');
 		$q =	"select "
 			."c.`REF|leginondata|AcquisitionImageData|image`, "
 			."s.`defocus`, "
@@ -1053,6 +1064,7 @@ class particledata {
 			."c.`defocusinit`, "
 			."c.`amplitude_contrast`, "
 			."c.`angle_astigmatism`, "
+			.$phase_shift_select
 			."c.`noise1`, "
 			."c.`noise2`, "
 			."c.`noise3`, "
@@ -1082,14 +1094,18 @@ class particledata {
 	}
 
 	function getCtfInfo($runId) {
+		$phase_shift_select = $this->getPhaseShiftString('c');
 		$q =	"select "
-			."c.`REF|leginondata|AcquisitionImageData|image`, "
+			."c.`REF|leginondata|AcquisitionImageData|image` as imageid, "
+			// ScopeEMData timestamp is not changed after DD frame alignment
+			."unix_timestamp(s.`DEF_timestamp`) as unix_timestamp, "
 			."s.`defocus`, "
 			."c.`defocus1`, "
 			."c.`defocus2`, "
 			."c.`defocusinit`, "
 			."c.`amplitude_contrast`, "
 			."c.`angle_astigmatism`, "
+			.$phase_shift_select
 			."c.`noise1`, "
 			."c.`noise2`, "
 			."c.`noise3`, "
@@ -1119,6 +1135,7 @@ class particledata {
 	}
 
 	function getCtfInfoFromImageId($imageId, $order=false, $method='', $acerunId='') {
+		$phase_shift_select = $this->getPhaseShiftString('c');
 		$q =	"select "
 			."c.`DEF_id`, "
 			."c.`REF|leginondata|AcquisitionImageData|image`, "
@@ -1128,6 +1145,7 @@ class particledata {
 			."c.`defocusinit`, "
 			."c.`amplitude_contrast`, "
 			."c.`angle_astigmatism`, "
+			.$phase_shift_select
 			."c.`tilt_angle`, "
 			."c.`tilt_axis_angle`, "
 			."c.`confidence` , "
@@ -1226,7 +1244,8 @@ class particledata {
 			."		i.`DEF_id` AS imageid, "
 			."		p.`name`, "
 			."		s.`defocus`, "
-			."    unix_timestamp(i.`DEF_timestamp`) as unix_timestamp, "
+			// ScopeEMData timestamp is not changed after DD frame alignment
+			."    unix_timestamp(s.`DEF_timestamp`) as unix_timestamp, "
 			."		2*ABS(ctf.defocus1-ctf.defocus2)/(ctf.defocus1+ctf.defocus2) AS difference, "
 			."		ctf.* "
 			."	FROM `ApCtfData` AS ctf "
@@ -1262,7 +1281,7 @@ class particledata {
 		return $this->mysql->getSQLResult($q);
 	}
 
-	function getCTFParameterFields() {
+	function getCTFParameterFields($runId=false) {
 		$q = "SELECT *, path.`path` as path, acerun.`DEF_id` as acerun "
 			."FROM ApAceRunData AS acerun ";
 		foreach ($this->ace_method_map as $k=>$p) {
@@ -1272,12 +1291,11 @@ class particledata {
 			}
 		}
 		$q .= "LEFT JOIN ApPathData AS path "
-			."  ON (path.`DEF_id` = acerun.`REF|ApPathData|path`) "
-			." LIMIT 1; ";
+			."  ON (path.`DEF_id` = acerun.`REF|ApPathData|path`) ";
+		if ( $runId ) $q .= " where acerun.`DEF_id` = $runId ";
+		//$q .= " LIMIT 1; ";
 		//echo $q."<br/><br/>\n";
-		$r = $this->mysql->getSQLResult($q);
-		//echo print_r($r)."<br/><br/>\n";
-		return $r[0];
+		return $this->mysql->getSQLResult($q);
 	}
 
 	function getCTFStats($fields, $sessionId, $runId=false) {
@@ -1352,6 +1370,8 @@ class particledata {
 					. "stddev(ctfdata.`$field`) as `stddev` ";
 		}
 
+		$phase_shift_select = $this->getPhaseShiftString('c');
+
 		if (!is_array($selects))
 			return False;
 		$stats = array();
@@ -1368,6 +1388,7 @@ class particledata {
 				."			p.`name`, "
 				."			s.`defocus`, "
 				."			c.`defocus1`, c.`defocus2`, c.`defocusinit`, c.`angle_astigmatism`, "
+				."			".$phase_shift_select
 				."			c.`confidence`,c.`confidence_d` , c.`cross_correlation` , "
 				."			(c.`defocus1`+c.`defocus2`)/2+s.`defocus` as difference "
 				."		from `ApCtfData` c "

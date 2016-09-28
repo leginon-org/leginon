@@ -143,6 +143,7 @@ class GatanSocket(object):
 		else:
 			raise ValueError('need to specify a port to GatanSocket instance, or set environment variable SERIALEMCCD_PORT')
 		self.save_frames = False
+		self.num_grab_sum = 0
 		self.connect()
 
 		self.script_functions = [ 
@@ -306,14 +307,24 @@ class GatanSocket(object):
 		message_recv = Message(longargs=(0,)) # just return code
 		self.ExchangeMessages(message_send, message_recv)
 
+	def setNumGrabSum(self, earlyReturnFrameCount, earlyReturnRamGrabs):
+		# pack RamGrabs and earlyReturnFrameCount in one double
+		self.num_grab_sum = (2**16) * earlyReturnRamGrabs + earlyReturnFrameCount
+
+	def getNumGrabSum(self):
+		return self.num_grab_sum
+
 	@logwrap
-	def SetupFileSaving(self, rotationFlip, dirname, rootname, filePerImage, earlyReturnFrameCount=0):
+	def SetupFileSaving(self, rotationFlip, dirname, rootname, filePerImage, doEarlyReturn, earlyReturnFrameCount=0,earlyReturnRamGrabs=0):
 		pixelSize = 1.0
-		if self.save_frames and earlyReturnFrameCount > 0:
+		self.setNumGrabSum(earlyReturnFrameCount, earlyReturnRamGrabs)
+		if self.save_frames and doEarlyReturn:
 			# early return flag
 			flag = 128
+			numGrabSum = self.getNumGrabSum()
+			# set values to pass
 			longs = [enum_gs['GS_SetupFileSaving2'], rotationFlip, flag,]
-			dbls = [pixelSize,earlyReturnFrameCount,0.,0.,0.,]
+			dbls = [pixelSize,numGrabSum,0.,0.,0.,]
 		else:
 			longs = [enum_gs['GS_SetupFileSaving'], rotationFlip,]
 			dbls = [pixelSize,]

@@ -33,7 +33,7 @@ def findAstigmatism(fftarray, freq, defocus, resolution, ctfvalues, peakNum=1):
 
 	extrema = ctftools.getCtfExtrema(defocus, freq*1e10,
 		ctfvalues['cs'], ctfvalues['volts'], ctfvalues['amplitude_contrast'],
-		numzeros=peakNum*2+1, zerotype="all")
+		ctfvalues['extra_phase_shift'], numzeros=peakNum*2+1, zerotype="all")
 	if len(extrema) < 2*peakNum:
 		return None
 	minEdgeRadius = int(math.ceil(extrema[peakNum-1])) #first peak

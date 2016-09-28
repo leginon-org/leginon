@@ -13,7 +13,9 @@ FLIP = True
 ROTATE = 1 
 # raw frame base directory. Use '\' as path separator
 RAW_FRAME_DIR = D:\frames\
-# max number of frames to sum in order to return early
+# return camera call before file is saved
+DO_EARLY_RETURN = True
+# max number of frames to sum when return early
 EARLY_RETURN_FRAME_COUNT = 0
 
 ### Orius configuration if exists

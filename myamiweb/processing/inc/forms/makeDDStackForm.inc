@@ -12,7 +12,7 @@ require_once "basicLoopForm.inc";
 class MakeDDStackForm extends BasicLoopForm
 
 {
-	function __construct(  $expId, $errorHTML='', $infoHTML='',$align='', $defergpu='', $bin=1, $nokeepstack=True, $ddstartframe=0, $ddnframe='',$alignoffset=7,$alignbfactor=1000,$alignccbox=96,$alignlabel='a', $flp=0, $nrw=1 ) 
+	function __construct(  $expId, $errorHTML='', $infoHTML='',$align=True, $defergpu='', $bin=1, $nokeepstack='', $ddstartframe=0, $ddnframe='',$alignoffset=7,$alignbfactor=1000,$alignccbox=96,$alignlabel='a', $flp=0, $nrw=1 ) 
 	{
 		parent::__construct($expId, $errorHTML, $infoHTML);
 		
@@ -24,9 +24,9 @@ class MakeDDStackForm extends BasicLoopForm
 		$this->setJobType( 'makeddrawframestack' );
 		$this->setOutputDirectory( 'ddstack' );
 		$this->setBaseRunName( 'ddstack' );
-		$this->setTitle( 'makeDDRawFrameStack.py Launcher' );
+		$this->setTitle( 'makeDDAlignMotionCorr_Purdue.py Launcher' );
 		$this->setHeading( 'Create a Direct Detector Frame Stack' );
-		$this->setExeFile( 'makeDDRawFrameStack.py' );
+		$this->setExeFile( 'makeDDAlignMotionCorr_Purdue.py' );
 		$this->setGuideURL( "http://emg.nysbc.org/redmine/projects/appion/wiki/Appion_Processing" );
 		$this->setTestable( True ); // True to activate "test single image".
 		$this->setUseLegOutDir( False ); // The output directory will be created in the Appion run directory rather than Leginon.
@@ -149,7 +149,7 @@ class MakeDDStackForm extends BasicLoopForm
 
 		// if we are not testing an image, add the parellel flag
 		if ( !($postArray['testimage']=="on") ) {
-			$command.= " --parallel";
+			$command = $this->addCommandFlag($command, "parallel", "parallel", "on" );
 		}
 		
 		// remove params not needed in command

@@ -428,6 +428,10 @@ class ApCtfFind4ParamsData(Data):
 			('cs', float),
 			('resmin', float),
 			('defstep', float),
+			('shift_phase', bool),
+			('min_phase_shift', float),
+			('max_phase_shift', float),
+			('phase_search_step', float),
 		)
 	typemap = classmethod(typemap)
 
@@ -441,8 +445,8 @@ class ApCtfData(Data):
 			('amplitude_contrast', float),  # sqrt(1-A^2)sin + A*cos format
 			('defocus1', float),  # in negative meters for underfocus |def1| < |def2|
 			('defocus2', float),  # in negative meters for underfocus
-			('angle_astigmatism', float),  # in counter-clockwise degrees from x-axis
-			('ctffind4_resolution', float),  # in counter-clockwise degrees from x-axis			
+			('angle_astigmatism', float),  # in counter-clockwise degrees from x-axis (degrees)
+			('ctffind4_resolution', float),  # ctffind4 good fit resolution
 			('confidence', float),  # classic confidence
 			('confidence_d', float),  # classic confidence
 			('confidence_30_10', float),  # defined as confidence between 1/30 and 1/10 Angstroms
@@ -460,6 +464,7 @@ class ApCtfData(Data):
 			('tilt_angle', float),  # from ctftilt
 			('tilt_axis_angle', float),  # from ctftilt
 			('mat_file', str),  # from ACE1
+			('extra_phase_shift', float), #phase plate phase shift addition (radians)
 		)
 	typemap = classmethod(typemap)
 
@@ -525,6 +530,7 @@ class ApStackData(Data):
 			('substackname', str),
 			('pixelsize', float),
 			('centered', bool),
+			('radial_averaged', bool),
 			('junksorted', bool),
 			('beamtilt_corrected', bool),
 			('mask', int),

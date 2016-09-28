@@ -633,7 +633,8 @@ class leginondata {
 				else
 					$q .=" and p.name = '$name' ";
 			}
-				$q .=" order by a.`DEF_id` DESC ";
+				// Order by ScopeEMData keeps derived images with the original
+				$q .=" order by a.`REF|ScopeEMData|scope` DESC, a.`DEF_id` DESC ";
 		}
 		$filenames = $this->mysql->getSQLResult($q);
 		return $filenames;
@@ -1358,7 +1359,7 @@ class leginondata {
 			.$parentselect
 			.$parentcoords
 			."a.`DEF_id` as imageId, "
-			."date_format(a.`DEF_timestamp`, '%Y-%d-%m %T') as `timestamp`,"
+			."date_format(scope.`DEF_timestamp`, '%Y-%d-%m %T') as `timestamp`,"
 			."a.`REF|SessionData|session` as `sessionId`,"
 			."a.`MRC|image` as filename, "
 			."p.`name` as `preset`, "

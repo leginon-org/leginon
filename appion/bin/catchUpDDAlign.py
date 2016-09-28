@@ -119,9 +119,10 @@ class CatchUpFrameAlignmentLoop(appionScript.AppionScript):
 
 		if not self.dd.hasBadPixels():
 			# use GPU to do flat field correction if no bad pixel/col/rows
-			self.dd.setUseGPUFlat(True)
+			self.dd.setUseFrameAlignerFlat(True)
 			self.dd.gainCorrectAndAlignFrameStack()
 		else:
+			self.dd.setUseFrameAlignerFlat(False)
 			self.dd.alignCorrectedFrameStack()
 		if os.path.isfile(self.dd.aligned_stackpath):
 			if 'alignlabel' not in self.ddstack_script_params.keys() or not self.ddstack_script_params['alignlabel']:

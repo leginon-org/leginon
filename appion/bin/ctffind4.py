@@ -45,9 +45,17 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			help="Number of steps to search in grid", metavar="#")
 		self.parser.add_option("--dast", dest="dast", type="float", default=100.0,
 			help="dAst in microns is used to restrain the amount of astigmatism", metavar="#")
+		self.parser.add_option("--minphaseshift", "--min_phase_shift", dest="min_phase_shift", type="float", default=0.0,
+			help="Minimum phase shift by phase plate, in degrees", metavar="#")
+		self.parser.add_option("--maxphaseshift", "--max_phase_shift", dest="max_phase_shift", type="float", default=0.0,
+			help="Maximum phase shift by phase plate, in degrees", metavar="#")
+		self.parser.add_option("--phasestep", "--phase_search_step", dest="phase_search_step", type="float", default=10.0,
+			help="phase shift search step, in degrees", metavar="#")
 		## true/false
 		self.parser.add_option("--bestdb", "--best-database", dest="bestdb", default=False,
 			action="store_true", help="Use best amplitude contrast and astig difference from database")
+		self.parser.add_option("--phaseplate", "--phase_plate", dest="shift_phase", default=False,
+			action="store_true", help="Find additionalphase shift")
 
 	#======================
 	def checkConflicts(self):
@@ -115,6 +123,12 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		else:
 			return True
 
+	def getPhaseParamValue(self):
+		phaseparam = 'no'
+		if self.params['shift_phase']:
+			phaseparam = 'yes'
+		return phaseparam
+
 	#======================
 	def processImage(self, imgdata):
 		"""
@@ -136,7 +150,11 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		Find additional phase shift?                  [no] : 
 		"""
 		paramInputOrder = ['input', 'output', 'apix', 'kv', 'cs', 'ampcontrast', 'fieldsize',
-			'resmin', 'resmax', 'defmin', 'defmax', 'defstep', 'expect_astig', 'phase', 'newline',]
+			'resmin', 'resmax', 'defmin', 'defmax', 'defstep', 'expect_astig', 'phase',]
+		# finalize paramInputOrder
+		if self.params['shift_phase']:
+			paramInputOrder.extend(['min_phase_shift','max_phase_shift','phase_search_step'])
+		paramInputOrder.append('newline')
 
 		#get Defocus in Angstroms
 		self.ctfvalues = {}
@@ -200,9 +218,14 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			
 			'defstep': self.params['defstep']*10000., #round(defocus/32.0, 1),
 			'expect_astig': beststigdiff,
-			'phase': 'no', # this is a secondary amp contrast term for phase plates
+			# For phase plate
+			'phase': self.getPhaseParamValue(), # this is a secondary amp contrast term for phase plates
+			'min_phase_shift': math.radians(self.params['min_phase_shift']),
+			'max_phase_shift': math.radians(self.params['max_phase_shift']), 
+			'phase_search_step': math.radians(self.params['phase_search_step']),
 			'newline': '\n',
 		}
+
 		defrange = self.params['defstep'] * self.params['numstep'] * 1e4 ## do 25 steps in either direction # in angstrum
 		inputparams['defmin']= round(bestdef-defrange, 1) #in angstrom 
 		if inputparams['defmin'] < 0:
@@ -265,12 +288,13 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 				apDisplay.printWarning("Invalid content in %s"%(ctfproglog))
 				self.setBadImage(imgdata)
 				return
+
 			self.ctfvalues = {
 				'imagenum': int(float(bits[0])),
 				'defocus2':	float(bits[1])*1e-10,
 				'defocus1':	float(bits[2])*1e-10,
 				'angle_astigmatism':	float(bits[3])+90, # see bug #4047 for astig conversion
-				'extra_phase':	float(bits[4]),
+				'extra_phase_shift':	float(bits[4]), # radians
 				'amplitude_contrast': inputparams['ampcontrast'],
 				'cross_correlation':	float(bits[5]),
 				'ctffind4_resolution':	float(bits[6]),
@@ -302,7 +326,6 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 	#======================
 	def commitToDatabase(self, imgdata):
 		self.insertCtfRun(imgdata)
-		print 'ctfrun', self.ctfrun
 		ctfinsert.validateAndInsertCTFData(imgdata, self.ctfvalues, self.ctfrun, self.params['rundir'])
 
 	#======================
@@ -312,7 +335,9 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 
 		# first create an aceparam object
 		paramq = appiondata.ApCtfFind4ParamsData()
-		copyparamlist = ('ampcontrast','fieldsize','cs','bestdb','resmin','defstep',)
+		copyparamlist = ['ampcontrast','fieldsize','cs','bestdb','resmin','defstep','shift_phase']
+		if self.params['shift_phase']:
+			copyparamlist.extend(['min_phase_shift','max_phase_shift','phase_search_step'])
 		for p in copyparamlist:
 			if p in self.params:
 				paramq[p] = self.params[p]

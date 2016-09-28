@@ -61,6 +61,9 @@ def printCtfData(ctfvalue):
 		(apDisplay.colorString("CTF param", "blue"), ctfvalue['defocus1']*1e6, 
 		ctfvalue['defocus2']*1e6, ctfvalue['angle_astigmatism'], 
 		ctfvalue['amplitude_contrast'], defocusratio))
+	if ctfvalue['extra_phase_shift'] is not None:
+		sys.stderr.write("[%s]   additional phase shift: %.1f degrees \n"%
+		(apDisplay.colorString("CTF param", "blue"), math.degrees(ctfvalue['extra_phase_shift'])))
 	if 'resolution_80_percent' in ctfvalue.keys() and ctfvalue['resolution_80_percent'] is not None:
 		sys.stderr.write("[%s] conf_30-10: %s | conf_5peak: %s | res_0.8: %.1fA | res_0.5 %.1fA\n"%
 			(apDisplay.colorString("CTF stats", "blue"), 
@@ -245,7 +248,6 @@ def getBestTiltCtfValueForImage(imgdata):
 				if cross_correlation < ctfvalue['cross_correlation']:
 					cross_correlation = ctfvalue['cross_correlation']
 					bestctftiltvalue = ctfvalue
-
 	return bestctftiltvalue
 
 #=====================
