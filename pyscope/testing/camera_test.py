@@ -2,10 +2,17 @@
 from pyscope import simccdcamera2
 from pyami import mrc
 import time
-
-binning = 2
+'''
+This script is used to test camera acquisition time
+'''
+# Change the class initiated here to your camera
 c = simccdcamera2.SimCCDCamera()
+# Define test condition here
+exposure_time_ms = 1000
+binning = 2
 repeats = 2
+
+# No need to change below this line
 
 dim0 = c.getDimension()
 bin0 = c.getBinning()
@@ -24,3 +31,5 @@ for i in range(repeats):
 
 c.setBinning(bin0)
 c.setDimension(dim0)
+raw_input('press return key to quit')
+

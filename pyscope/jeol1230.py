@@ -18,9 +18,15 @@ Debug = False
 minimum_stage = {
 	'x': 5e-8,
 	'y': 5e-8,
-	'z': 5e-8,
+	'z': 4e-7,
 	'a': 0.004,
 	'b': 0.004,
+}
+
+backlash_stage = {
+	'x': 30e-6,
+	'y': 30e-6,
+	'z': 10e-6,
 }
 
 class MagnificationsUninitialized(Exception):
@@ -36,6 +42,7 @@ class Jeol1230(tem.TEM):
 		self.jeol1230lib = jeol1230lib.jeol1230lib()
 		self.magnifications = []
 		self.mainscreenscale = 1.0
+		self.last_alpha = self.getStagePosition()['a']
 
 	# define three high tension states
 	def getHighTensionStates(self):
@@ -304,30 +311,50 @@ class Jeol1230(tem.TEM):
  		'''
 		Set requested position dict in only one axis and ignore the rest.
 		'''
-		keys = position.keys()
+		movable_position = self.checkStagePosition(position)
+		keys = movable_position.keys()
 		if axis not in keys:
 			return
 		if axis == 'a':
-			self._setStageA(position)
+			self._setStageA(movable_position)
 		elif axis == 'z':
-			self._setStageZ(position)
+			self._setStageZ(movable_position)
 		else:
-			# BUG? This will move both x and y, even though axis is only one of them
-			self._setStageXThenY(position)
+			self._setStageXThenY(movable_position)
 
-	def _setStageZ(position):
+	def _setStageZ(self, position):
+		'''
+		Set Stage in z axis with backlash correction. This is for
+		internal call, and will always move.  Should check if the
+		move is too small before calling this.
+		'''
 		axis = 'z'
-		value = self.checkStagePosition(position)
-		rawvalue = value[axis]*1e6
+		# always need backlash correction or it is off by
+		# up to 2 um in display reading, even though the
+		# getStagePosition gets back that it has reached the z.
+		value_dict = position.copy() 
 		mode = 'fine'
+		prevalue = (value_dict[axis]-backlash_stage['z'])*1e6
+		self.jeol1230lib.setStagePosition(axis,prevalue,mode)
+		rawvalue = value_dict[axis]*1e6
 		self.jeol1230lib.setStagePosition(axis,rawvalue,mode)
 
-	def _setStageXThenY(position):
+	def _setStageXThenY(self, position):
+		value_dict = position.copy()
 		for axis in ('x','y'):
-			value = self.checkStagePosition(position)
-			rawvalue = value[axis]*1e6
-			mode = 'fine'
-			self.jeol1230lib.setStagePosition(axis,rawvalue,mode)
+			if axis not in value_dict.keys():
+				continue
+			# This gives 0.7 to 1.2 um reproducibility
+			# set to backlash position in coarse mode
+			# if no backlash correction, use coarse mode, too.
+			mode = 'coarse'
+			if self.correctedstage == True:
+				prevalue = (value_dict[axis] - backlash_stage[axis])*1e6
+				self.jeol1230lib.setStagePosition(axis,prevalue,mode)
+				# set to real position in fine mode
+				mode = 'fine'
+			rawvalue = value_dict[axis]*1e6
+			self.jeol1230lib.setStagePosition(axis,rawvalue,mode) # in micrometer
 
 	def _setStageA(self,position):
 		axis = 'a'
@@ -338,40 +365,39 @@ class Jeol1230(tem.TEM):
 		mode = 'fine'
 		self.jeol1230lib.setStagePosition(axis,rawvalue,mode)
 		self.confirmStagePosition(position,['a',])
+	
+	def forceTiltBack(self,position):
+		if 'a' in position.keys():
+			if abs(position['a']) < math.radians(0.5):
+				position['a'] = 0.0
+			return position
+		current_tilt = self.getStagePosition()['a']
+		if abs(current_tilt - self.last_alpha) < math.radians(1.99):
+			position['a'] = self.last_alpha
+		return position
 
 	# receive position in meter, angle in pi, backlash is 30 um
-	def setStagePosition(self, value):
+	def setStagePosition(self, position_dict):
+		# forceTiltBack changes the value, therefor it is better to work
+		# from a copy
+		value = position_dict.copy()
+		value = self.forceTiltBack(value)
 		value = self.checkStagePosition(value)
 		if not value:
 			return
 		if Debug == True:
 			print 'from jeol1230.py setStagePosition'
-		Backlash = 30e-6
 
-		prevalue = {'x': None, 'y': None, 'z': None, 'a': None}
 		for axis in ('x', 'y', 'z', 'a'):
 			if axis in value:
 				if axis == 'a':
+					print 'set alpha %.2f' % math.degrees(value['a'])
 					self._setStageA(value)
+					self.last_alpha = value['a']
 				elif axis == 'z':
-					prevalue[axis] = value[axis]*1e6
-					mode = 'fine'
-					self.jeol1230lib.setStagePosition(axis,prevalue[axis],mode)
+					self._setStageZ({'z':value['z']})
 				elif axis == 'x' or axis == 'y':
-					if self.correctedstage == False:
-						prevalue[axis] = value[axis]*1e6
-						mode = 'coarse'
-						self.jeol1230lib.setStagePosition(axis,prevalue[axis],mode)
-					else:
-						# This gives 0.7 to 1.2 um reproducibility
-						# set to backlash position in coarse mode
-						prevalue[axis] = (value[axis] - Backlash)*1e6
-						mode = 'coarse'
-						self.jeol1230lib.setStagePosition(axis,prevalue[axis],mode)
-						# set to real position in fine mode
-						prevalue[axis] = value[axis]*1e6
-						mode = 'fine'
-						self.jeol1230lib.setStagePosition(axis,prevalue[axis],mode)			# in micrometer
+					self._setStageXThenY({axis:value[axis]})
 				else:
 					return False
 		return True
@@ -956,4 +982,4 @@ class Jeol1230(tem.TEM):
 
 	def getBeamBlankedDuringCameraExchange(self):
 		# Keep it off because gun shutter is too slow.
-		return Falsee
+		return False

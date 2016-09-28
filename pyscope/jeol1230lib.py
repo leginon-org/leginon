@@ -12,9 +12,11 @@ from ctypes import *
 
 Debug = False
 
+NEUTRAL_OL=[37061, 25561] #olh,oll
 # constants for Jeol Hex value
+ZERO = NEUTRAL_OL[1]
 MAX = 65535
-# coarse-fine ratio for OL and OM
+# coarse-fine ratio for OL
 COARSE_SCALE = 32
 
 
@@ -23,7 +25,7 @@ class jeol1230lib(object):
 	
 	# initialize serial port communication, magnification and eucentric focus
 	def __init__(self):
-		self.ser = serial.Serial(port='COM1', baudrate=9600, bytesize=8, parity='N', stopbits=1, xonxoff = 0, timeout=10, rtscts=0)
+		self.ser = serial.Serial(port='COM1', baudrate=9600, bytesize=8, parity='N', stopbits=2, xonxoff = 0, timeout=10, rtscts=0)
 		self.lowMag = [50, 60, 80, 100, 120, 150, 200, 250, 300, 400, 500, 600, 800]
 		self.highMag = [1000, 1200, 1500, 2000, 2500, 3000, 4000, 5000, 6000, 8000, 10000, 12000, 15000, 20000, 25000, 30000, 40000, 50000, 60000, 80000, 100000, 120000, 150000, 200000, 250000, 300000, 400000, 500000]									# 28 SA mags
 		self.magnification = self.lowMag + self.highMag
@@ -259,6 +261,7 @@ class jeol1230lib(object):
 	def setMagnification(self, mag):
 		if Debug == True:
 			print 'from jeol1230lib.py setMagnification'
+
 		magRange = 40
 		for i in range(0,magRange):
 			if int(mag) <= self.magnification[i]:
@@ -543,18 +546,15 @@ class jeol1230lib(object):
 			time.sleep(self.wait_time)
 		return True
 
-	def toOLcOLf(self,ticks):
+	def toRelativeOLcOLf(self,ticks):
 		'''
-		relative value conversion only, works for both ol and om
+		relative value conversion only
 		'''
 		coarse_ticks = ticks / COARSE_SCALE
 		fine_ticks = ticks % COARSE_SCALE
 		return coarse_ticks, fine_ticks
 
-	def fromOLcOLf(self,OLc, OLf):
-		'''
-		Convert to current
-		'''
+	def fromAbsoluteOLcOLf(self,OLc, OLf):
 		return OLc * COARSE_SCALE + OLf
 
 	# get objective lens input raw values
@@ -587,23 +587,16 @@ class jeol1230lib(object):
 
 	# get objective lens currents
 	def getObjectiveCurrent(self):
-		'''
-		Get objective lens absolute current as a combination of
-		high gain (coarse) and low gain (fine) knobs
-		'''
 		oll,olh,oml,omh = self.getRawObjectiveInputs()
 		if self.getMagnification() >= 1000:
-			current = self.fromOLcOLf(olh, oll)
+			# use zero value to keep the value smaller
+			current = self.fromAbsoluteOLcOLf(olh, oll)
 		else:
-			current = self.fromOLcOLf(omh, oml)
+			current = omh + oml*1e5
 		return int(current)
 
 	# set obj len currents using relative values; direct lens control is bad
 	def setObjectiveCurrent(self,current):
-		'''
-		Set objective lens absolute current as a combination of
-		high gain (coarse) and low gain (fine) knobs.
-		'''
 		if Debug == True:
 			print 'from jeol1230lib.py setObjectiveCurrent'
 		# get current input values
@@ -612,25 +605,22 @@ class jeol1230lib(object):
 			code_1 = '9'
 			code_2 = '10'
 			low_gain_ticks = oll
-			high_gain_ticks = olh
 		else:
 			code_1 = '11'
 			code_2 = '12'
 			low_gain_ticks = oml
-			high_gain_ticks = omh
 		c_current = self.getObjectiveCurrent()
-		# The adjustment is relative
 		diff_current = current - c_current
-		h,l = self.toOLcOLf(int(diff_current))
-
-		# Change only low_gain_ticks if the new value can be
-		# in the middle range of the knob.
-		expected_new_low_gain_ticks = h*COARSE_SCALE+low_gain_ticks+l
-		if abs(expected_new_low_gain_ticks) < MAX*3/4 and abs(expected_new_low_gain_ticks) > MAX/4:
+		h,l = self.toRelativeOLcOLf(int(diff_current))
+		if Debug == True:
+			print 'current relative OLcOLf',h,l
+		expected_new_oll = h*COARSE_SCALE+oll+l
+		if abs(expected_new_oll) < MAX*3/4 and abs(expected_new_oll) > MAX/4:
+			# Only fine adjustment is needed. This gives more accurate result.
 			h = 0
 			l = diff_current
-
-		# The adjustment is relative
+		if Debug == True:
+			print 'set OLcOLf to',h,l
 		ss_l = '102' + '\t' + code_1 + '\t' + str(l) + '\r'
 		while True:
 			self.ser.flushInput()
