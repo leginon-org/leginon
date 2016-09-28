@@ -284,8 +284,8 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 		self.ctfestopts = ('ace2', 'ctffind')
 
 		### values
-		self.parser.add_option("--bin", dest="bin", type="int", default=1,
-			help="Bin the particles after extracting", metavar="#")
+		self.parser.add_option("--bin", dest="bin", type="float", default=1,
+			help="Bin the particles after extracting (can be float if making a RELION stack)", metavar="#")
 		self.parser.add_option("--ctfcutoff", dest="ctfcutoff", type="float",
 			help="CTF confidence cut off")
 		self.parser.add_option("--ctfres80min", dest="ctfres80min", type="float",
