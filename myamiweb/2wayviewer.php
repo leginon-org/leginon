@@ -89,6 +89,7 @@ $view1->setParam('aceruns',$aceruns);
 $view1->displayDDIcon(true);
 $view1->setSize(512);
 $view1->displayTag(true);
+$view1->displayComment(true); 
 $viewer->add($view1);
 
 $view2 = new view('Main View', 'v2');
@@ -100,6 +101,7 @@ $view2->displayDDIcon(true);
 $view2->setDataTypes($datatypes);
 $view2->selectDataType($preset);
 $view2->addMenuItems($playbackcontrol);
+$view2->displayComment(true); 
 $view2->setSize(512);
 $view2->setSpan(2,2);
 $viewer->add($view2);

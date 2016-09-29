@@ -104,6 +104,7 @@ $view2->setSize(512);
 $view2->setSpan(2,2);
 $view2->displayDeqIcon(true);
 $view2->displayDDIcon(true);
+$view2->displayComment(true); 
 $viewer->add($view2);
 
 $view3 = new view('View 3', 'v3');

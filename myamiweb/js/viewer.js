@@ -706,7 +706,7 @@ function newfile(view){
 		cif.document.location.replace(iflink)
 	}
 	if (cmt=eval("this."+view+"cmt")) {
-		cmtlink = jscommentscriptcur+"?id="+jsimgId+"&preset="+selpreset
+		cmtlink = jscommentscriptcur+"?session="+jsSessionId+"&id="+jsimgId+"&preset="+selpreset
 		cmt.document.location.replace(cmtlink)
 	}
 

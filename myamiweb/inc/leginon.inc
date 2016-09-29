@@ -512,6 +512,26 @@ class leginondata {
 		if ($result) return $result[0][comment];
 	}
 
+	function updateImageComment($sessionId, $imageId, $comment) {
+		// insert of update ImageComment
+		$table = 'ImageCommentData';
+		if ($imageId ) {
+			$q = "select * from ".$table." "
+				." where `REF|AcquisitionImageData|image`=".$imageId." ";
+			$r = $this->mysql->getSQLResult($q);
+			if ($comment) {
+					$data = array('comment'=>$comment);
+				if ($r) {
+					$this->mysql->SQLUpdate('ImageCommentData', $data, array('DEF_id'=>$r[0]['DEF_id']));
+				} else {
+					$data['REF|AcquisitionImageData|image'] = $imageId;
+					$data['REF|SessionData|session'] = $sessionId;
+					$this->mysql->SQLInsert($table, $data);
+				}
+			}
+		}
+	}
+
 	function getDatalabels($sessionId) {
 		$q="select distinct label FROM AcquisitionImageData a "
 			." where a.`REF|SessionData|session` = '$sessionId'";
