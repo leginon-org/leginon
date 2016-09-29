@@ -151,7 +151,8 @@ class project {
 				."FROM ".DB_PROJECT.".projects as projects "
 				."WHERE projects.`DEF_id` IN ($sharedProjectsQuery) "
 				."OR projects.`DEF_id` IN ($ownedProjectsQuery) "
-				."GROUP BY `DEF_id` ";
+				."GROUP BY `DEF_id` "
+				."ORDER by projects.`name` ";
 		$myprojects = $this->mysql->getSQLResult($q);
 		}
 		
