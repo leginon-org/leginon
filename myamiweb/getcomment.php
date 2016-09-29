@@ -67,7 +67,8 @@ if ($imageId) {
 	echo "<font style='font-size: 10px;'>";
 	$imagecommentv = $leginondata->getImageComment($imageId);
 	//Block unauthorized user
-	if ( hasExptAdminPrivilege($sessionId,$privilege_type='data') ) {
+	$allow_edit = hasExptAdminPrivilege($sessionId,$privilege_type='data');
+	if ( $allow_edit ) {
 		echo editImageCommentTable($sessionId, $imageId, $imagecommentv);
 	} else {
 		echo displayImageCommentTable($imagecommentv);
