@@ -1450,7 +1450,7 @@ class view {
 			$htmlframe .='<tr>'
 			.'<td style="vertical-align: bottom;">'
 			.'<iframe name="'.$this->name.'cmt" '
-	    .'src="'.$this->commentscript.'" '
+			.'src="'.$this->commentscript.'" '
 			.'frameborder="0" width="'.$this->size.'" height="30"'
 			.'marginheight="0" marginwidth="5"'
 			.'scrolling="auto" ></iframe>';
