@@ -9,7 +9,6 @@
 
 require_once 'inc/leginon.inc';
 
-$sessionId=$_GET['session'];
 $id=$_GET['id'];
 $preset=$_GET['preset'];
 
@@ -67,6 +66,8 @@ if ($imageId) {
 	echo "<font style='font-size: 10px;'>";
 	$imagecommentv = $leginondata->getImageComment($imageId);
 	//Block unauthorized user
+	$sessioninfo = $leginondata-> getSessionInfoFromImage($imageId);
+	$sessionId = $sessioninfo['sessionId'];
 	$allow_edit = hasExptAdminPrivilege($sessionId,$privilege_type='data');
 	if ( $allow_edit ) {
 		echo editImageCommentTable($sessionId, $imageId, $imagecommentv);
