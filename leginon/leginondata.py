@@ -950,6 +950,18 @@ class ZeroLossCheckData(InSessionData):
 		)
 	typemap = classmethod(typemap)
 
+class PhasePlateTestLogData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('tem', InstrumentData),
+			('test type', str),
+			('phase plate number', int),
+			('patch position', int),
+			('image', AcquisitionImageData),
+		)
+	typemap = classmethod(typemap)
+
+
 class MeasureDoseData(ReferenceRequestData):
 	pass
 
@@ -2421,6 +2433,21 @@ class PhasePlateAlignerSettingsData(ReferenceSettingsData):
 	def typemap(cls):
 		return ReferenceSettingsData.typemap() + (
 			('charge time', float),
+		)
+	typemap = classmethod(typemap)
+
+class PhasePlateTestImagerSettingsData(AcquisitionSettingsData):
+	def typemap(cls):
+		return AcquisitionSettingsData.typemap() + (
+			('phase plate number', int),
+		)
+	typemap = classmethod(typemap)
+
+class PhasePlateTesterSettingsData(PhasePlateTestImagerSettingsData):
+	def typemap(cls):
+		return PhasePlateTestImagerSettingsData.typemap() + (
+			('total positions', int),
+			('start position', int),
 		)
 	typemap = classmethod(typemap)
 

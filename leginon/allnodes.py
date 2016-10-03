@@ -111,6 +111,12 @@ noderegistry.registerNodeClass(SingleFocuser,classtype)
 from rctacquisition import RCTAcquisition
 noderegistry.registerNodeClass(RCTAcquisition,classtype)
 
+from phaseplatetester import PhasePlateTestImager
+noderegistry.registerNodeClass(PhasePlateTestImager,classtype)
+
+from phaseplatetester import PhasePlateTester
+noderegistry.registerNodeClass(PhasePlateTester,classtype)
+
 from tilttracker import TiltTracker
 noderegistry.registerNodeClass(TiltTracker,classtype)
 
