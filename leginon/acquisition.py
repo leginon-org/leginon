@@ -1208,6 +1208,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.logger.info('%s: %s' % (type, message))
 
 	def simulateTarget(self):
+		self.player.play()
 		self.setStatus('processing')
 		# no need to pause longer for simulateTarget
 		self.is_firstimage = False
