@@ -80,7 +80,7 @@ class MotionCorr2UCSFAlignStackLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop
 		if os.path.isfile(temp_aligned_sumpath):
 			if self.params['doseweight'] is True:
 				shutil.move(temp_aligned_dw_sumpath,self.dd.aligned_dw_sumpath)
-		super(MotionCorr2UCSFAlignStackLoop,self).organizeAlignedSum()
+		return super(MotionCorr2UCSFAlignStackLoop,self).organizeAlignedSum()
 
 	def organizeAlignedStack(self):
 		'''
