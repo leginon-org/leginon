@@ -422,6 +422,7 @@ class CtfDisplay(object):
 		normexprotdata = numpy.exp(rotdata) - numpy.exp(noisedata)
 
 		### CUT OUT ANY NEGATIVE VALUES FOR DISPLAY AND FITTING PURPOSES ONLY
+		maxval = normexprotdata.max()
 		minval = -1
 		mindata = ndimage.maximum_filter(normexprotdata, 2)
 		count = 0
@@ -431,8 +432,8 @@ class CtfDisplay(object):
 			minval = mindata.min()
 			if self.debug is True:
 				apDisplay.printMsg("Minimum value for normalization: %.3f"%(minval))
-		if minval < 0.1:
-			minval = 0.1
+		if minval < 0.01*maxval:
+			minval = 0.01*maxval
 		absnormexprotdata = numpy.where(normexprotdata<minval, minval, normexprotdata)
 		normlogrotdata = numpy.log(absnormexprotdata)
 		if self.debug is True:
@@ -473,8 +474,12 @@ class CtfDisplay(object):
 		fitpeakdata = ndimage.maximum_filter(fitpeakdata, 3)
 		# for some reason, CtfModel is really slow on numbers too high
 		maxvalue = fitpeakdata[fpi:].max()/10
+		# no need to do so if the value is already small
+		if maxvalue < 1.0:
+			maxvalue = 1.0
 		if self.debug is True:
 			print "max value", maxvalue
+		# make fitpeakdata smaller
 		fitpeakdata /= maxvalue
 		if numpy.any(numpy.isnan(fitpeakdata)): #note does not work with 'is True'
 			apDisplay.printError("Major Error Y-value of NaN")
@@ -504,6 +509,7 @@ class CtfDisplay(object):
 			if self.debug is True:
 				apDisplay.printMsg("finished in %s"%(apDisplay.timeString(time.time()-tfit)))
 			envelopDataList.append(envelopdata)
+		# restore fitpeakdata
 		fitpeakdata *= maxvalue
 
 		## merge data
