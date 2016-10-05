@@ -29,7 +29,6 @@ class BasicAgent(object):
             elif 'SGE' == processingHostType.upper():
                 processingHost = sgeHost.SGEHost(configDict)
             elif 'SLURM' == processingHostType.upper():
-                processingHost = slurmHost.SlurmHost(command, jobType, configDict)
                 processingHost = slurmHost.SlurmHost(configDict)
             else:
                 sys.stderr.write("Unknown processing host type, using default\n")
