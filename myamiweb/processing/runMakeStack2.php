@@ -856,6 +856,7 @@ function runMakestack() {
 	$ddstartframe = $_POST['ddstartframe'];
 	$ddnframe = $_POST['ddnframe'];
 	$forceInsert = ($_POST['forceInsert'])=='on' ? True : False;
+	$diameter = ($_POST['diameter']);
 	
 	if ($_POST['boxmaskcheck']=='on') {
 		$boxmask = $_POST['boxmask'].','.$_POST['boxlen'].','.$_POST['iboxmask'].','.$_POST['falloff'];
@@ -917,7 +918,9 @@ function runMakestack() {
 				createMakestackForm("<b>ERROR:</b> Scaled box size must be smaller than the original boxsize");
 			$bin=round($boxsize/$scaledbox,5);
 		}
-		$bgradius = round($boxsize/$_POST['apix']/2);
+		if (!is_numeric($diameter))
+			createMakestackForm("<b>ERROR:</b> Particle diameter must be an integer");
+		$bgradius = round($diameter/$_POST['apix']/2);
 	}
 	else {
 		if ($boxsize % $bin != 0)
