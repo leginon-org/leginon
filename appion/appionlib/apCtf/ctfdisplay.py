@@ -644,7 +644,9 @@ class CtfDisplay(object):
 		apDisplay.printColor("Resolution limit is %.2f at 0.8 and %.2f at 0.5"
 			%(self.res80, self.res50), "green")
 
-		if self.res80 < 6 and self.conf3010 < 0.3:
+		# This is not a good test. There are more and more images
+		# at low defocus from phase plate.  It should not crash the program.
+		if self.debug and self.res80 < 6 and self.conf3010 < 0.3:
 			print(numpy.around(confdata[:15],3))
 			apDisplay.printError("confendence below 0.3 and resolution better than 6A")
 
@@ -1221,17 +1223,21 @@ class CtfDisplay(object):
 			print "bestres %d Angstroms (max: %.3f)"%(bestres, maxres)
 			print "pixrad %d (max: %.3f)"%(pixrad, maxrad)
 		if pixrad > maxrad:
-			apDisplay.printError("Too big of outer radius to draw")
-		for i in numpy.arange(-4.0,4.01,0.01):
-			r = pixrad + i
-			blackxy = numpy.array((center[0]-r,center[1]-r,
-				center[0]+r,center[1]+r), dtype=numpy.float64)
-			draw.ellipse(tuple(blackxy), outline="black")
-		for i in numpy.arange(-1.50,1.51,0.01):
-			r = pixrad + i
-			whitexy = numpy.array((center[0]-r,center[1]-r,
-				center[0]+r,center[1]+r), dtype=numpy.float64)
-			draw.ellipse(tuple(whitexy), outline="#0BB5FF")
+			if self.debug is True:
+				apDisplay.printError("Too big of outer radius to draw")
+			else:
+				apDisplay.printWarning("Too big of outer radius to draw")
+		else:
+			for i in numpy.arange(-4.0,4.01,0.01):
+				r = pixrad + i
+				blackxy = numpy.array((center[0]-r,center[1]-r,
+					center[0]+r,center[1]+r), dtype=numpy.float64)
+				draw.ellipse(tuple(blackxy), outline="black")
+			for i in numpy.arange(-1.50,1.51,0.01):
+				r = pixrad + i
+				whitexy = numpy.array((center[0]-r,center[1]-r,
+					center[0]+r,center[1]+r), dtype=numpy.float64)
+				draw.ellipse(tuple(whitexy), outline="#0BB5FF")
 
 		#########
 		## setup font to add text
