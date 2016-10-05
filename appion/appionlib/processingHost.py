@@ -3,9 +3,6 @@ import shutil
 import sys
 import os
 import socket # For hostname
-import json
-import requests
-import pwd
 
 class ProcessingHost (object):
 	def __init__ (self):
@@ -52,12 +49,6 @@ class ProcessingHost (object):
 		for opt in confDict.keys():
 			if opt in options:
 				options[opt](confDict[opt])
-                
-                ## dcshrum@fsu.edu
-                # if this variable is present then we'll use job 
-                # headers that come from a web service as opposed to a custom class (ie slurmHost.py)
-                if 'destinationsURL' in confDict.keys():
-                    self.destinationsURL = confDict['destinationsURL'] 
 
 	##executeCommand (command)	  
 	#Takes a the command string, command, and runs it in a subshell.  Returns the
@@ -83,54 +74,6 @@ class ProcessingHost (object):
 		
 		#return what we get from stdout
 		return process.communicate()[0]
-        
-        def commandToWebservice (self, command):
-        
-            postArray = {   'command':command, 
-                        'username':pwd.getpwuid(os.getuid())[0],
-                        'jobType':self.jobType,
-                        'script':self.command
-            };
-         
-            r = requests.post(self.destinationsURL)
-            r = requests.post(self.destinationsURL, data=json.dumps(postArray))
-        
-            headerArray = json.loads(r.text)
-            return headerArray['customResponse']
-    
-        def headersFromWebSevice (self, jobObject=None):
-            if jobObject != None:
-                currentJob=jobObject
-            elif self.currentJob != None:
-                currentJob=self.currentJob
-            else:
-                raise UnboundLocalError ("Current Job not set")
-        
-            postArray = {   'command':'destinations', 
-                            'username':pwd.getpwuid(os.getuid())[0],
-                            'jobType':self.jobType,
-                            'script':self.command
-            };
-        
-            r = requests.post(self.destinationsURL)
-            r = requests.post(self.destinationsURL, data=json.dumps(postArray))
-        
-            headerArray = json.loads(r.text)
-
-            # scheduler options
-            headerText = headerArray['customResponse']['header'] + "\n";
-            for k, v in headerArray['customResponse']['options'].iteritems():
-                headerText = headerText + headerArray['customResponse']['prefix'] + " " + k + " " + v + "\n"    
-
-            # custom execs to run in the script before command and after scheduler options
-            # export things=stuff for example.
-            for customExec in headerArray['customResponse']['executables']:
-                headerText = headerText + customExec + "\n"
-
-            self.execCommand=headerArray['customResponse']['execCommand']
-            self.statusCommand=headerArray['customResponse']['statusCommand']
-            return headerText
-    
 								 
 	##createJobFile(jobFile, jobObject)
 	#Takes a file handle open for writing and optionally a job object from which it will
@@ -146,23 +89,14 @@ class ProcessingHost (object):
 		
 		#Generate the processing host specific headers for the job file
 		host      = socket.gethostname()
-                
-	        # dcshrum@fsu.edu
-                # I'm leaving my email so it's easy to locate my code :)
-                header = None
-                if (self.destinationsURL):
-                    header = self.headersFromWebSevice(currentJob)
-                else:         
-                    header = self.generateHeaders(currentJob)
-                    commandList = currentJob.getCommandList()
-                    
+		header    = self.generateHeaders(currentJob)
+		commandList = currentJob.getCommandList()		
 		try:
-                    jobFile.write(header)		   
-                    jobFile.write("\n# Target Host: " + host + "\n")
-                    jobFile.write("# This job file has been created for the %s processing host. \n# Changes may be required to run this on another host.\n\n" % (host))
-                    for line in commandList:
-                    	jobFile.write(line + '\n')
-                        
+			jobFile.write(header)		   
+			jobFile.write("\n# Target Host: " + host + "\n")
+			jobFile.write("# This job file has been created for the %s processing host. \n# Changes may be required to run this on another host.\n\n" % (host))
+			for line in commandList:
+				jobFile.write(line + '\n')
 		except IOError, e:
 			sys.stderr.write("Could not write to job file" + jobFile.name + ": " + str(e))
 			return False
@@ -174,7 +108,7 @@ class ProcessingHost (object):
 	#script file and executes the job on the processing host.  Returns a 
 	#numerical job ID or False if job execution failed.		 
 	def launchJob(self, jobObject):
-        	self.setCurrentJob(jobObject)  #Set the current job 
+		self.setCurrentJob(jobObject)  #Set the current job 
 				
 		outputDir= self.currentJob.getOutputDir()
 		#Expand ~ and ~user constructions in the output directory string
@@ -208,23 +142,15 @@ class ProcessingHost (object):
 		#Construct the command string to execute the job.		   
 		commandString = "cd " + outputDir + ";"	 
 		commandString = commandString + self.execCommand + " " + jobfileName
-                
-                
-                
-                # dcshrum@fsu.edu
-                jobID = None
-                if (self.destinationsURL):
-                    jobID = self.commandToWebservice(commandString)
-                else: 
-                    try:
-                        returnValue = self.executeCommand(commandString)
-                    except (OSError, ValueError), e:
-                        sys.stderr.write("Failed to execute job " + jobObject.getName() + ": " + str(e))
-                        return False
-        
-                #translate whatever is returned by executeCommand() to a JobID	   
-                jobID = self.translateOutput(returnValue)
-        	#return the translated output 
+		try:
+			returnValue=self.executeCommand(commandString)
+		except (OSError, ValueError), e:
+			sys.stderr.write("Failed to execute job " + jobObject.getName() + ": " + str(e))
+			return False
+	
+		#translate whatever is returned by executeCommand() to a JobID	   
+		jobID = self.translateOutput(returnValue)
+		#return the translated output 
 		return jobID
 	
 	#Beginning of access methods definitions.
