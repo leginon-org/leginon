@@ -13,13 +13,7 @@ require_once "inc/leginon.inc";
 require_once "inc/project.inc";
 require_once "inc/viewer.inc";
 require_once "inc/processing.inc";
-
-print "_POST:" . "<br>";
-var_dump($_POST);
-print "_GET:" . "<br>";
-var_dump($_GET);
-print "_SESSION:" . "<br>";
-var_dump($_SESSION);
+require_once "inc/forms/ddstackForm.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
@@ -42,12 +36,6 @@ function buildOutdir($sessioninfo,$tiltseriesnumber,$is_raptor) {
 
 function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $heading='Run Tilt Series Aligner') {
 	// check if coming directly from a session
-	//print "_POST:" . "<br>";
-	//var_dump($_POST);
-	//print "_GET:" . "<br>";
-	//var_dump($_GET);
-	//print "_SESSION:" . "<br>";
-	//var_dump($_SESSION);
 	$expId=$_GET['expId'];
 	if ($_GET['lastaId']) {
 		$lastalignerId = $_GET['lastaId'];
@@ -65,6 +53,8 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
 		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 	}
   
+	$ddstackform = new DDStackForm('','Apply to ddframe stack result images','ddstack.ddstack' );
+
 	echo"<FORM name='viewerform' method='POST' ACTION='$formAction'>\n";
 	$sessiondata=getSessionList($projectId,$expId);
 	$sessioninfo=$sessiondata['info'];
@@ -216,6 +206,10 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
 		$imageinfo = $leginondata->getImageInfo($tiltseriesinfos[0]['imageid']);
 		$imagesize = ($_POST['imagesize']) ? $_POST['imagesize'] : $imageinfo['dimx'];
 	}
+	echo "<br />\n";
+	echo "<br />\n";
+	echo $ddstackform->generateForm();
+	echo "<br />\n";
 	$outdir=buildOutdir($sessioninfo,$tiltseriesinfos[0]['number'],$raptorcheck);
 	echo "<input type='hidden' name='outdir' value='$outdir'>\n";
 	echo "<input type='hidden' name='imagesize' value='$imagesize'>\n";
@@ -726,6 +720,7 @@ function runTomoAligner() {
 	/* *******************
 	PART 3: Create program command
 	******************** */
+	$ddstackform = new DDStackForm('','Apply to ddframe stack result images','ddstack.ddstack' );
 	if ($alignmethod == 'raptor') {
 		$command = "tomoraptor.py ";
 	} else {
@@ -734,6 +729,7 @@ function runTomoAligner() {
 	$command.="--session=$sessionname ";
 	$command.="--projectid=$projectId ";
 	$command.="--runname=$runname ";
+	$command .= $ddstackform->buildCommand( $_POST );	
 	if (!$lastalignerId) {
 		$particle = new particledata();
 		$tiltseriesinfos = $particle ->getTiltSeriesInfo($tiltseriesId);

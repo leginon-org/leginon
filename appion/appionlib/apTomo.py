@@ -98,26 +98,53 @@ def getFilename(tiltserieslist):
 	seriesname += '+'.join(names)
 	return seriesname
 
-def getFirstImage(tiltseries):
+def getFirstImage(tiltseries, ddstackid=None):
 	tiltlist = [tiltseries,]
-	imagelist = getImageList(tiltlist)
+	imagelist = getImageList(tiltlist, ddstackid)
 	return imagelist[0]
 
-def getImageList(tiltserieslist):
+def getDDStackRunData(ddstackid):
+	if not ddstackid:
+		return None
+	return appiondata.ApDDStackRunData().direct_query(ddstackid)
+
+def getImageList(tiltserieslist, ddstackid=None):
+	'''
+	Get ImageList in the order of data collection based on ddstackdata if specified
+	'''
+	ddstackrundata = getDDStackRunData(ddstackid)
 	imagelist = []
+	# first run find the unaligned images in the order of the collection
 	for tiltseriesdata in tiltserieslist:
-		imquery = leginon.leginondata.AcquisitionImageData()
+		sessiondata = tiltseriesdata['session']
+		cquery = leginon.leginondata.CameraEMData(session=sessiondata)
+		cquery['align frames'] = False
+		imquery = leginon.leginondata.AcquisitionImageData(camera=cquery)
 		imquery['tilt series'] = tiltseriesdata
 		## query, but don't read image files yet, or else run out of memory
 		subimagelist = imquery.query(readimages=False)
 		## list is reverse chronological, so reverse it
 		subimagelist.reverse()
-		realist = []
 		imagelist.extend(subimagelist)
+	unaligned_realist = []
 	for imagedata in imagelist:
 		if imagedata['label'] != 'projection':
-			realist.append(imagedata)
-	return realist
+			unaligned_realist.append(imagedata)
+	if ddstackrundata is None:
+		apDisplay.printMsg('Loaded %d images starting from %s.mrc' % (len(unaligned_realist),unaligned_realist[0]['filename']))
+		return unaligned_realist
+
+	# find aligned images
+	aligned_list = []
+	apDisplay.printMsg('Searching for aligned images in ddstackid= %d'%(ddstackrundata.dbid,))
+	for image in unaligned_realist:
+		try:
+			pair = appiondata.ApDDAlignImagePairData(source=image,ddstackrun=ddstackrundata).query()[0]
+		except:
+			ValueError('no aligned image of %s from ddstack run id %d' % (apDisplay.short(image['filename']), ddstackrundata.dbid))
+		aligned_list.append(pair['result'])
+	apDisplay.printMsg('Loaded %d images starting from %s.mrc' % (len(aligned_list),aligned_list[0]['filename']))
+	return aligned_list
 
 def getImageDose(imagedata):
 	try:
@@ -133,7 +160,7 @@ def getAccumulatedDoses(imagelist):
 	cumarray = numpy.cumsum(dosearray)
 	return cumarray.tolist()
 
-def orderImageList(frame_tiltdata, non_frame_tiltdata, frame_aligned):
+def orderImageList(frame_tiltdata, non_frame_tiltdata=None, frame_aligned="True"):
 	'''This is complex because the two start tilt images are often sorted wrong if
 			just use alpha tilt.  Therefore, a fake alpha tilt value is created based
 			on the tilt image collected next in time
@@ -201,32 +228,44 @@ def orderImageList(frame_tiltdata, non_frame_tiltdata, frame_aligned):
 	if not testing:
 		return tiltkeys,ordered_imagelist,accumulated_dose_list,mrc_files,refimg
 	else:
+		# testing with half the data
 		print len(tiltkeys),refimg
 		cut = refimg-1
 		cut2 = len(tiltkeys) -refimg -1
 		cutlist = ordered_imagelist[cut:-cut2]
 		cuttilts = tiltkeys[cut:-cut2]
 		cutfiles = mrc_files[cut:-cut2]
+		cutdoses = accumulated_dose_list[cut:-cut2]
 		refimg = refimg - cut 
 		print len(cutlist),refimg
-		return cuttilts,cutlist,cutfiles,refimg
+		return cuttilts,cutlist,cutdoses,cutfiles,refimg
 
 def getCorrelatorBinning(imageshape):
-	origsize = max((imageshape[1],imageshape[0]))
-	max_newsize = 512
-	if origsize > max_newsize:
-		## new size can be bigger than origsize, no binning needed
-		bin = origsize / max_newsize
-		remain = origsize % max_newsize
-		while remain:
-			bin += 1
-			remain = origsize % bin
-			newsize = float(origsize) / bin
-		correlation_bin = bin
-	else:
-		correlation_bin = 1
-	return correlation_bin
+		minsize = min(imageshape)
+		if minsize > 512:
+			correlation_bin = calcBinning(minsize, 256, 512)
+		else:
+			correlation_bin = 1
+		if correlation_bin is None:
+			# use a non-dividable number and crop in the correlator
+			correlation_bin = int(math.ceil(minsize / 512.0))
+		return correlation_bin
 	
+def calcBinning(origsize, min_newsize, max_newsize):
+	## new size can be bigger than origsize, no binning needed
+	if max_newsize >= origsize:
+		return 1
+	## try to find binning that will make new image size <= newsize
+	bin = origsize / max_newsize
+	remain = origsize % max_newsize
+	while remain:
+		bin += 1
+		remain = origsize % bin
+		newsize = float(origsize) / bin
+		if newsize < min_newsize:
+			return None
+	return bin
+
 def writeTiltSeriesStack(stackdir,stackname,ordered_mrc_files,apix=1):
 		stackpath = os.path.join(stackdir, stackname)
 		apDisplay.printMsg('stack path: %s' % (stackpath,))
@@ -279,8 +318,14 @@ def alignZeroShiftImages(imagedata1,imagedata2,bin):
 		array1 = imagedata1['image']
 		array2 = imagedata2['image']
 		if bin != 1:
-			array1 = imagefun.bin(array1, bin)
-			array2 = imagefun.bin(array2, bin)
+			# To accomodate non-square, hard to bin K2 images,
+			# we crop the images to doable size first
+			s = array1.shape
+			minsize = min(s)
+			size = int(minsize / bin) # floored
+			f = map((lambda x: int((x-size*bin)/2)),s) #offsets
+			array1 = imagefun.bin(array1[f[0]:f[0]+size*bin,f[1]:f[1]+size*bin], bin)
+			array2 = imagefun.bin(array2[f[0]:f[0]+size*bin,f[1]:f[1]+size*bin], bin)
 		shift = simpleCorrelation(array1,array2)
 		peak = {'x':-shift[1]*bin,'y':shift[0]*bin}
 		
