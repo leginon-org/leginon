@@ -199,7 +199,7 @@ def checkParams(ctfvalues):
 	if absangle > 6.3:
 		confirm_degrees = True
 		radian_suspects = 0
-	elif not confirm_degrees and absangle > 0 and absangle < 1.571:
+	elif if self.debug and not confirm_degrees and absangle > 0 and absangle < 1.571:
 		msg = "suspicious angle astigmatism, may be in radians (%.4f)"%(absangle)
 		radian_suspects += 1
 		apDisplay.printWarning(msg)
