@@ -7,16 +7,17 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-require_once "mathParticleForm.inc";
 require_once "inc/particledata.inc";
 require_once "inc/processing.inc";
+require_once "basicParticleForm.inc";
 require_once "gautomatchTemplateTable.inc";
+require_once "templateTable.inc";
 
 class GautomatchForm extends basicParticleForm
 
 {
 
-	function __construct(  $expId, $errorHTML='', $infoHTML='',$ac=0.1,$minthresh=0.4,$invert=True,$lp=30,$hp=1000,$do_pre_filter=False,$pre_lp=8.0,$pre_hp=1000,$lsigma_D=200,$lsigma_cutoff=1.3,$lave_D=400,$speed=2,$overlapmult=1.0 ) 
+	function __construct(  $expId, $errorHTML='', $infoHTML='',$ac=0.1,$minthresh=0.4,$invert=True,$lp=30,$hp=1000,$do_pre_filter=False,$pre_lp=8.0,$pre_hp=1000,$lsigma_D=200,$lsigma_cutoff=1.3,$lave_D=400,$speed=2,$overlapmult=1.0,$ang_step=10 ) 
 	{
 		parent::__construct($expId, $errorHTML, $infoHTML);
 		
@@ -48,15 +49,12 @@ class GautomatchForm extends basicParticleForm
 		// The help section corresponds to the array key for these parameters found in help.js for popup help.
 		$params->setHelpSection( "gautomatch" );
 				
-		//findem settings
-
 		//Gautomatch settings
 
 		$params->addParam( "overlapmult", $overlapmult,"Overlap multiplier between particles" );
-		$params->addParam( "invert", $invert,"Invert contrast" );
-		$params->addParam( "pdiam",$pdiam,"Particle diameter. Only relevant for DoG picking.");
 		$params->addParam( "ac",$ac,"Amplitude contrast");
 	        $params->addParam( "minthresh", $minthresh, "Minimum threshold" );
+		$params->addParam( "ang_step", $ang_step, "Angular steps in template rotation" );
 		$params->addParam( "lp",$lp,"Low pass filter after ice/aggregate detection. (Angstrom)" );
 		$params->addParam( "hp",$hp,"High pass filter after ice/aggregate detection. (Angstrom)" );
 		$params->addParam( "do_pre_filter",$do_pre_filter,"Do pre filtering (not recommended)" );
@@ -67,14 +65,11 @@ class GautomatchForm extends basicParticleForm
 		$params->addParam( "lsigma_D",$lsigma_D,"Diameter for estimation of local sigma (Angstrom)" );
 		$params->addParam( "lsigma_cutoff",$lsigma_cutoff,"Local sigma cutoff (relative value)." );
 		$params->addParam( "lave_D",$lave_D,"Diameter for estimation of local average. (Angstrom)" );
-
 		
 		//template settings
 		$this->createTemplateTableForm();
-
 		// different defaults
 	}
-
 
         protected function createTemplateTableForm() {
                 // Search for available templates
@@ -83,13 +78,11 @@ class GautomatchForm extends basicParticleForm
                         $this->particle = new particledata();
                         $this->availableTemplates = $this->particle->getTemplatesFromProject($projectId);
 
-
-
                 }
 
                 $this->TemplateTable = new TemplateSelectionTable($this->availableTemplates);
+		
         }
-
 
         public function generateForm() {
                 // default particle mask diameter depends on the template diameter
@@ -99,29 +92,31 @@ class GautomatchForm extends basicParticleForm
                         $params->setParamValue('pdiam', round(1.3* $template_diam) );
                 // get parent form elements
                 $html  .= parent::generateForm();
-                return $html;
 
+                return $html;
                 }
 
 
         public function generateFormFooter() {
                 // show selected templates with the entry disabled
+		$html .="<script type='text/javascript' src = 'https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js'></script>";
                 $html .= $this->TemplateTable->generateForm($enable=false);
-
                 $used_templates = $this->TemplateTable->getUsedTemplateIds();
-                // set multi thread according to number of templates;
+
                 return $html;
         }
 
                                        
         public function generatePreForm() {
                 // get parent pre-form elements
-		$html  .= '<div id="notice">(Leave all templates unchecked to run Gautomatch as a DoG picker.)</div><br>';
+                $html  .= '<input type="checkbox" id="selectall" onclick="checkAll(this)"></input>';
+                $html  .= '<label id="selectallLabel" for="selectall">Select all templates</label>';
+		$html  .= '<br><br><div class="notice" style="color:red">Note: IGNORE starting angle, ending angle, and angular increment parameters. Input angular step on the next page.</div><br><div class="notice" style="color:red">Gautomatch works fast enough that starting and ending angle are irrelevant. These fields will be removed in the future. THANKS.</div>';
+
                 $html  .= parent::generatePreForm();
                 // Select template in the pre-form
                 $html .= $this->TemplateTable->generateForm($enable=true);
                 return $html;
-
         }
 
 
@@ -129,18 +124,18 @@ class GautomatchForm extends basicParticleForm
 	{
 	
 	$params = $this->getFormParams();
-	$newparams = $this->getFormParams();				
-	
-
+ 	$pDiamparams = $this->pDiameterTable->getFormParams();	
+	$imagecontrastparams = $this->imageContrastTable->getFormParams();
 	
 	$html .= "<!--BEGIN Gautomatch Param -->\n";
 	$fieldSize = '5';
         $html .= "<b>Gautomatch parameters:</b><br /><br />\n";
-	$html .= $params->insertTextField( "pdiam", $fieldSize );
+	$html .= $pDiamparams->insertTextField( "pdiam", $fieldSize );
         $html .= $params->insertTextField( "minthresh", $fieldSize );
 	$html .= $params->insertTextField( "overlapmult", $fieldSize );
+	$html .= $params->insertTextField( "ang_step", $fieldSize );
 	$html .= "<br />";
-	$html .= $params->insertCheckBoxField( "invert");
+	$html .= $imagecontrastparams->insertCheckBoxField( "invert" );
 
 	$html .= "<br />";
         $html .= "<b>Filter parameters:</b><br /><br />\n";
@@ -165,25 +160,37 @@ class GautomatchForm extends basicParticleForm
 	return $html;
 	
 	}
-        public function generateAdvancedTableRight() {}
-        public function generateAdvancedFormRight() {}
-        public function generateAdditionalFormRightHeader() {}
+#        public function generateAdvancedTableRight() {}
+#        public function generateAdvancedFormRight() {}
+#        public function generateAdditionalFormRightHeader() {}
 
-/*
+
  	public function buildCommand( $postArray )
 	{
 		$command = parent::buildCommand( $postArray );
 		$params = $this->getFormParams();
+                $command .= $this->TemplateTable->buildCommand( $postArray);
 
 		return $command;
 	}
-*/
- public function validate( $postArray ) {}
+
+	 public function validate( $postArray ) {
+		$msg = '';
+                $msg .= $this->TemplateTable->validate( $postArray );
+
+                return $msg;
+
+}
 
 }
 ?>
 
 <script type="text/javascript">
+
+$(document).ready(function() {
+    $.jQuery("#lappion.invert").prop('checked',true);
+});
+
 
 function checkAll(bx) {
   var cbs = document.getElementsByTagName('input');
