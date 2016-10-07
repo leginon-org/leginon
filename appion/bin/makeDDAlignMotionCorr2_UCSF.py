@@ -70,6 +70,13 @@ class MotionCorr2UCSFAlignStackLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop
 		else:
 			self.framealigner.setTotalDose(apDatabase.getDoseFromImageData(self.dd.image))
 #		self.temp_aligned_dw_sumpath = 'temp%s.gpuid_%d_sum_DW.mrc' % (self.hostname, self.params['gpuid'])
+		if not self.dd.hasBadPixels():
+			frame_flip, frame_rotate=self.dd.getImageFrameOrientation()
+			print 'flip','rotate', frame_flip, frame_rotate
+			self.dd.setUseFrameAlignerYFlip(frame_flip)
+			self.dd.setUseFrameAlignerRotate(frame_rotate)
+			self.framealigner.setGainYFlip(frame_flip)
+			self.framealigner.setGainRotate(frame_rotate)
 
 	def organizeAlignedSum(self):
 		'''
@@ -77,6 +84,16 @@ class MotionCorr2UCSFAlignStackLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop
 		'''
 		temp_aligned_sumpath = self.temp_aligned_sumpath
 		temp_aligned_dw_sumpath = self.temp_aligned_dw_sumpath
+		gain_flip, gain_rot = self.framealigner.getGainModification()
+		if gain_flip:
+			apDisplay.printMsg('Flipping the aligned sum back')
+			self.imageYFlip(temp_aligned_sumpath)
+			self.imageYFlip(temp_aligned_dw_sumpath)
+		if gain_rot:
+			apDisplay.printMsg('Rotating the aligned sum back')
+			self.imageRotate(temp_aligned_sumpath, gain_rotate)
+			self.imageRotate(temp_aligned_dw_sumpath, gain_rotate)
+		# dose weighted result handled here
 		if os.path.isfile(temp_aligned_sumpath):
 			if self.params['doseweight'] is True:
 				shutil.move(temp_aligned_dw_sumpath,self.dd.aligned_dw_sumpath)

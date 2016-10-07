@@ -280,6 +280,8 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		self.setDefaultImageForReference(0)
 		self.numRunningAverageFrames = 1
 		self.flipAlongYAxis = 0
+		self.use_frame_aligner_yflip = False
+		self.use_frame_aligner_rotate = 0
 
 		if debug:
 			self.log = open('newref.log','w')
@@ -317,6 +319,22 @@ class DDFrameProcessing(DirectDetectorProcessing):
 
 	def getUseFrameAlignerFlat(self):
 		return self.use_frame_aligner_flat
+
+	def setUseFrameAlignerRotate(self, rotate90):
+		self.use_frame_aligner_rotate = rotate90
+
+	def getUseFrameAlignerRotate(self):
+		# number of times to rotate by 90 degrees
+		return self.use_frame_aligner_rotate90
+
+	def setUseFrameAlignerYFlip(self, use_frame_aligner_yflip):
+		self.use_frame_aligner_yflip = use_frame_aligner_yflip
+
+	def getUseFrameAlignerYFlip(self):
+		return self.use_frame_aligner_yflip
+
+	def getUseFrameAlignerGeomModification(self):
+		return self.use_frame_aligner_yflip or self.use_frame_aligner_rotate
 
 	def setGPUid(self,gpuid):
 		self.gpuid = gpuid
@@ -958,7 +976,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		if not os.path.isfile(self.tempframestackpath) and os.path.isfile(rawframestack_path):
 			# frame flipping of the mrc ddstack
 			frame_flip, frame_rotate = self.getImageFrameOrientation()
-			if frame_flip or frame_rotate and not self.frame_modified:
+			if not self.getUseFrameAlignerGeomModification() and (frame_flip or frame_rotate and not self.frame_modified):
 				if frame_rotate:
 					apDisplay.printError("stack rotation not implemented")
 				if frame_flip:

@@ -3,9 +3,11 @@ import subprocess
 import os
 import socket
 import shutil
+import numpy
 
 #pyami
 from pyami import fileutil
+from pyami import mrc
 #appion
 from appionlib import apDisplay
 from appionlib import apDDStackMaker
@@ -115,6 +117,21 @@ class AlignStackLoop(apDDStackMaker.FrameStackLoop):
 
 	def isUseFrameAlignerSum(self):
 		return self.dd.isSumSubStackWithFrameAligner()
+
+	def imageYFlip(self, filepath):
+		if os.path.isfile(filepath):
+			a = mrc.read(filepath)
+			apDisplay.printMsg('flipping %s' % filepath)
+			a = numpy.flipud(a)
+			mrc.write(a, filepath)
+
+	def imageRotate(self, filepath, number):
+		if os.path.isfile(filepath):
+			a = mrc.read(filepath)
+			apDisplay.printWarning('Rotation direction not checked yet, report if wrong')
+			# This operation has not being checked, yet.
+			a = numpy.rot90(a, number)
+			mrc.write(a, filepath)
 
 	#=======================
 	def otherProcessImage(self, imgdata):

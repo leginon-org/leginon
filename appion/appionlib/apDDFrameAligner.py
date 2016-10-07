@@ -202,6 +202,15 @@ class MotionCorr2_UCSF(DDFrameAligner):
 	def setTotalDose(self, totaldose):
 		self.alignparams['totaldose'] = totaldose
 
+	def setGainYFlip(self, bool_value):
+		self.alignparams['FlipGain'] = int(bool_value)
+
+	def setGainRotate(self, int_value):
+		self.alignparams['RotGain'] = int_value
+
+	def getGainModification(self):
+		return self.alignparams['FlipGain'], self.alignparams['RotGain']
+
 	def setGainDarkCmd(self,norm_path,dark_path=None):
 		'''
 		If the program runs its own gain/dark correction, put in here the option
@@ -299,6 +308,10 @@ class MotionCorr2_UCSF(DDFrameAligner):
 		
 		# gain dark references
 		cmd += self.gain_dark_cmd
+
+		# gain gemetry modification
+		cmd += ' -FlipGain %d ' % self.alignparams['FlipGain']
+		cmd += ' -RotGain %d ' % self.alignparams['RotGain']
 
 		# GPU ID
 		cmd += ' -Gpu %d' % self.alignparams['Gpu']
