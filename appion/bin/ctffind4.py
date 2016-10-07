@@ -129,10 +129,20 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			phaseparam = 'yes'
 		return phaseparam
 
+	def getKnownAstigValue(self):
+		return 'no'
+
+	def getExhaustiveAstigSearchValue(self):
+		return 'no'
+
+	def getRestrainAstigValue(self):
+		return 'yes'
+
 	#======================
 	def processImage(self, imgdata):
 		"""
-		time ./ctffind3.exe << eof
+		Input and output matches ctffind 4.1.5
+		time ./ctffind4 << eof
 		Input image file name                  [input.mrc] : 15aug13neil2_14jul14d_05sq_012hl_02ed-a.mrc
 		Output diagnostic filename
 		[diagnostic_output.mrc]                            : 15aug13neil2_14jul14d_05sq_012hl_02ed-a-pow.mrc
@@ -146,14 +156,20 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		Minimum defocus                           [5000.0] : 
 		Maximum defocus                          [50000.0] : 
 		Defocus search step                        [500.0] : 
+		Do you know what astigmatism is present       [no] : 
+		Slower, more exhaustive search                [no] : 
+		Use a restraint on astigmatism               [yes] : 
 		Expected (tolerated) astigmatism           [100.0] : 
 		Find additional phase shift?                  [no] : 
+		Do you want to set expert options?            [no] : 
 		"""
 		paramInputOrder = ['input', 'output', 'apix', 'kv', 'cs', 'ampcontrast', 'fieldsize',
-			'resmin', 'resmax', 'defmin', 'defmax', 'defstep', 'expect_astig', 'phase',]
+			'resmin', 'resmax', 'defmin', 'defmax', 'defstep', 
+			'known_astig', 'exhaustive_astig_search','restrain_astig', 'expect_astig', 'phase',]
 		# finalize paramInputOrder
 		if self.params['shift_phase']:
 			paramInputOrder.extend(['min_phase_shift','max_phase_shift','phase_search_step'])
+		paramInputOrder.append('expert_opts')
 		paramInputOrder.append('newline')
 
 		#get Defocus in Angstroms
@@ -217,12 +233,16 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			'resmax': imageresmax,
 			
 			'defstep': self.params['defstep']*10000., #round(defocus/32.0, 1),
+			'known_astig': self.getKnownAstigValue(),
+			'exhaustive_astig_search': self.getExhaustiveAstigSearchValue(),
+			'restrain_astig': self.getRestrainAstigValue(),
 			'expect_astig': beststigdiff,
 			# For phase plate
 			'phase': self.getPhaseParamValue(), # this is a secondary amp contrast term for phase plates
 			'min_phase_shift': math.radians(self.params['min_phase_shift']),
 			'max_phase_shift': math.radians(self.params['max_phase_shift']), 
 			'phase_search_step': math.radians(self.params['phase_search_step']),
+			'expert_opts': 'no',
 			'newline': '\n',
 		}
 
@@ -297,7 +317,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 				'extra_phase_shift':	float(bits[4]), # radians
 				'amplitude_contrast': inputparams['ampcontrast'],
 				'cross_correlation':	float(bits[5]),
-				'ctffind4_resolution':	float(bits[6]),
+				'ctffind4_resolution':	self.convertCtffind4Resolution(bits[6]),
 				'defocusinit':	bestdef*1e-10,
 				'cs': self.params['cs'],
 				'volts': imgdata['scope']['high tension'],
@@ -322,6 +342,14 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		#apFile.removeFile(inputparams['input'])
 
 		return
+
+	def convertCtffind4Resolution(self,res_str):
+		res_float = float(res_str)
+		# ctffind4 output inf if not well fitted
+		if res_float == float('inf'):
+			# return a number as database can not take inf
+			return 100000.0
+		return res_float
 
 	#======================
 	def commitToDatabase(self, imgdata):
