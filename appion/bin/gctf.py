@@ -25,10 +25,10 @@ from appionlib.apCtf import ctfinsert
 #class gctfEstimateLoop(ctffind4.ctfEstimateLoop):
 class gctfEstimateLoop(appionLoop2.AppionLoop):
 	"""
-	appion Loop function that
-	CTFFIND 4 was written by Alexis Rohou.
-	It is a rewrite of CTFFIND 3, written by Nikolaus Grigorieff.
-	to estimate the CTF in images
+	appion Loop function that uses Gctf-v0.5
+	to estimate the CTF in images.
+	Please link your working executable to Gctf-v0.5 that can be found in your PATH environment
+	variable
 	"""
 
 	#======================
@@ -102,7 +102,7 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 	#======================
 	def getCtfProgPath(self):
 		
-		exename = "Gctf-v0.50_sm_30_cu5.0_x86_64"
+		exename = "Gctf-v0.50"
 		ctfprgmexe = subprocess.Popen("which "+exename, shell=True, stdout=subprocess.PIPE).stdout.read().strip()
 		if not os.path.isfile(ctfprgmexe):
 			ctfprgmexe = os.path.join(apParam.getAppionDirectory(), 'bin', exename)
