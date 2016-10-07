@@ -57,7 +57,7 @@ class motioncorr2_ucsf extends MakeDDStackForm
 		$params->addParam( "Iter", $Iter, "Number of iterations to perform for alignment");
 		$params->addParam( "Tol", $Tol, "Alignment error tolerance (pixels).");
 		$params->addParam( "FmRef", $FmRef, "Reference frame which other frames are aligned to");
-		$params->addParam( "doseweight", $doseweight, "Perform Dose Weighting" );
+		$params->addParam( "doseweight", $doseweight, "Also Perform Dose Weighting" );
 		$params->addParam( "totaldose", $totaldose,"Total Dose used in dose weighting (e/A^2)","default uses database value");
 
 		
