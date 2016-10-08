@@ -351,6 +351,7 @@ class ApAceRunData(Data):
 			('xmipp_ctf_params', ApXmippCtfParamsData),
 			('ace2_params', ApAce2ParamsData),
 			('ctffind4_params', ApCtfFind4ParamsData),
+			('transferred', bool),
 			('session', leginon.leginondata.SessionData),
 			('path', ApPathData),
 			('name', str),
