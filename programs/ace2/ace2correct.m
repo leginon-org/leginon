@@ -18,6 +18,7 @@ typedef struct CTFParamsSt {
 	
 	char img_path[1024];
 	char out_path[1024];
+	f64 phase_shift;   // PRB
 	f64 kv;
 	f64 cs;
 	f64 apix;
@@ -57,6 +58,7 @@ CTFParams newCTFParams() {
 	sprintf(c->img_path,"./");
 	sprintf(c->out_path,"./");
 	
+	c->phase_shift=0.00;   // PRB
 	c->kv = 120.0;
 	c->cs = 2.0;
 	c->apix = 1.55;
@@ -101,6 +103,7 @@ u32 parseACE2CTFFile( char path[], CTFParams c ) {
 		count += sscanf(line," Final Defocus: %le %le %le",&(c->defocus_x),&(c->defocus_y),&(c->astig_angle));
 		count += sscanf(line," Final Defocus (m,m,deg): %le %le %le",&(c->defocus_x),&(c->defocus_y),&(c->astig_angle));
 		count += sscanf(line," Amplitude Contrast: %le",&(c->amp_c));
+		count += sscanf(line," Gamma Phase Shift (radians): %le",&(c->phase_shift));
 		count += sscanf(line," Voltage: %le",&(c->kv));
 		count += sscanf(line," Voltage (kV): %le",&(c->kv));
 	 	count += sscanf(line," Spherical Aberration: %le",&(c->cs));
@@ -147,6 +150,7 @@ CTFParams parseACE2CorrectOptions( int argc, char **argv ) {
 		{ 9,	NULL,	"Apply the given CTF",						"apply", 		0 },
 		{ 10,	NULL,	"Set output path",							"out",			1 },
 		{ 11,   NULL,	"Override amplitude contrast",				"ampc",			1 },
+		{ 12,   NULL,	"Apply Phase Shift",				"phase_shift",			1 },//
 		{ 0,	NULL,	NULL,										NULL,			0 }
 	};
 	
@@ -232,6 +236,7 @@ void printFinalCTFParams( CTFParams p, char path[] ) {
 	fprintf(fp,"Astigmatism Angle (Degrees): %f\n",p->astig_angle);
 	fprintf(fp,"  major axis along x-axis is zero, counter-clockwise is +\n");
 	fprintf(fp,"Amplitude Contrast: %f\n",p->amp_c);
+	//fprintf(fp,"Phase Shift: %f\n",p->phase_shift);//PRB
 	
 	fclose(fp);
 	
@@ -263,6 +268,7 @@ int main (int argc, char **argv) {
 	f64 ac 	= ctfp->amp_c;
 	f64 apix = ctfp->apix;
 	f64 cs = ctfp->cs*1e-3;
+	f64 phase_shift =ctfp->phase_shift;// PRB
 	f64 kv = ctfp->kv;
 	
 	f32 t0 = CPUTIME;	
@@ -303,7 +309,9 @@ int main (int argc, char **argv) {
 	fprintf(stderr,"g2DCTF(%.1e,%.1e,%.1e,%d,%d,%.1e,%.1e,%.1e,%.1f)\n",
 		df2,df1,dfr,rows,cols,apix,cs,kv,ac);
 
-	ArrayP ctf = g2DCTF(df1,df2,dfr,rows,cols,apix,cs,kv,ac);
+	// ArrayP ctf = g2DCTF(df1,df2,dfr,rows,cols,apix,cs,kv,ac);
+	ArrayP ctf = g2DCTF(df1,df2,dfr,rows,cols,apix,cs,kv,ac,phase_shift);//PRB 09/30/16
+	
 	
 	fprintf(stderr,"\t\t\tDONE in %2.2f secs\n",CPUTIME-t1);
 	
@@ -321,13 +329,14 @@ int main (int argc, char **argv) {
 		for(i=0;i<size;i++) {
 			if ( cp[i] < 0.0 ) {
 				ip[i] = -ip[i];
+				;
 			}
 		}
 	}
 	if ( cty & CORRECT_WIENER ) {
 		fprintf(stderr,"Correcting image using wiener filter...");
 		#pragma omp for
-		for(i=0;i<size;i++) {
+		for(i=0;i<size;i++) {     
 			ip[i] = (ip[i]*cp[i])/(cp[i]*cp[i]+snr);
 		}
 	}
@@ -335,7 +344,9 @@ int main (int argc, char **argv) {
 		fprintf(stderr,"Applying the CTF for Dmitry...         ");
 		#pragma omp for
 		for(i=0;i<size;i++) {
-			ip[i] = ip[i]*cp[i];
+			ip[i] = ip[i]*cp[i];   
+
+
 		}
 	}
 	
