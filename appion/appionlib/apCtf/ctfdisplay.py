@@ -422,6 +422,7 @@ class CtfDisplay(object):
 		normexprotdata = numpy.exp(rotdata) - numpy.exp(noisedata)
 
 		### CUT OUT ANY NEGATIVE VALUES FOR DISPLAY AND FITTING PURPOSES ONLY
+		maxval = normexprotdata.max()
 		minval = -1
 		mindata = ndimage.maximum_filter(normexprotdata, 2)
 		count = 0
@@ -431,8 +432,8 @@ class CtfDisplay(object):
 			minval = mindata.min()
 			if self.debug is True:
 				apDisplay.printMsg("Minimum value for normalization: %.3f"%(minval))
-		if minval < 0.1:
-			minval = 0.1
+		if minval < 0.01*maxval:
+			minval = 0.01*maxval
 		absnormexprotdata = numpy.where(normexprotdata<minval, minval, normexprotdata)
 		normlogrotdata = numpy.log(absnormexprotdata)
 		if self.debug is True:
@@ -473,8 +474,12 @@ class CtfDisplay(object):
 		fitpeakdata = ndimage.maximum_filter(fitpeakdata, 3)
 		# for some reason, CtfModel is really slow on numbers too high
 		maxvalue = fitpeakdata[fpi:].max()/10
+		# no need to do so if the value is already small
+		if maxvalue < 1.0:
+			maxvalue = 1.0
 		if self.debug is True:
 			print "max value", maxvalue
+		# make fitpeakdata smaller
 		fitpeakdata /= maxvalue
 		if numpy.any(numpy.isnan(fitpeakdata)): #note does not work with 'is True'
 			apDisplay.printError("Major Error Y-value of NaN")
@@ -504,6 +509,7 @@ class CtfDisplay(object):
 			if self.debug is True:
 				apDisplay.printMsg("finished in %s"%(apDisplay.timeString(time.time()-tfit)))
 			envelopDataList.append(envelopdata)
+		# restore fitpeakdata
 		fitpeakdata *= maxvalue
 
 		## merge data
@@ -644,7 +650,9 @@ class CtfDisplay(object):
 		apDisplay.printColor("Resolution limit is %.2f at 0.8 and %.2f at 0.5"
 			%(self.res80, self.res50), "green")
 
-		if self.res80 < 6 and self.conf3010 < 0.3:
+		# This is not a good test. There are more and more images
+		# at low defocus from phase plate.  It should not crash the program.
+		if self.debug and self.res80 < 6 and self.conf3010 < 0.3:
 			print(numpy.around(confdata[:15],3))
 			apDisplay.printError("confendence below 0.3 and resolution better than 6A")
 
@@ -1221,17 +1229,21 @@ class CtfDisplay(object):
 			print "bestres %d Angstroms (max: %.3f)"%(bestres, maxres)
 			print "pixrad %d (max: %.3f)"%(pixrad, maxrad)
 		if pixrad > maxrad:
-			apDisplay.printError("Too big of outer radius to draw")
-		for i in numpy.arange(-4.0,4.01,0.01):
-			r = pixrad + i
-			blackxy = numpy.array((center[0]-r,center[1]-r,
-				center[0]+r,center[1]+r), dtype=numpy.float64)
-			draw.ellipse(tuple(blackxy), outline="black")
-		for i in numpy.arange(-1.50,1.51,0.01):
-			r = pixrad + i
-			whitexy = numpy.array((center[0]-r,center[1]-r,
-				center[0]+r,center[1]+r), dtype=numpy.float64)
-			draw.ellipse(tuple(whitexy), outline="#0BB5FF")
+			if self.debug is True:
+				apDisplay.printError("Too big of outer radius to draw")
+			else:
+				apDisplay.printWarning("Too big of outer radius to draw")
+		else:
+			for i in numpy.arange(-4.0,4.01,0.01):
+				r = pixrad + i
+				blackxy = numpy.array((center[0]-r,center[1]-r,
+					center[0]+r,center[1]+r), dtype=numpy.float64)
+				draw.ellipse(tuple(blackxy), outline="black")
+			for i in numpy.arange(-1.50,1.51,0.01):
+				r = pixrad + i
+				whitexy = numpy.array((center[0]-r,center[1]-r,
+					center[0]+r,center[1]+r), dtype=numpy.float64)
+				draw.ellipse(tuple(whitexy), outline="#0BB5FF")
 
 		#########
 		## setup font to add text

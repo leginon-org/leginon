@@ -202,7 +202,29 @@ class MotionCorr2_UCSF(DDFrameAligner):
 	def setTotalDose(self, totaldose):
 		self.alignparams['totaldose'] = totaldose
 
-	def makeFrameAlignmentCommand(self, gain_dark_cmd=''):
+	def setGainYFlip(self, bool_value):
+		self.alignparams['FlipGain'] = int(bool_value)
+
+	def setGainRotate(self, int_value):
+		self.alignparams['RotGain'] = int_value
+
+	def getGainModification(self):
+		return self.alignparams['FlipGain'], self.alignparams['RotGain']
+
+	def setGainDarkCmd(self,norm_path,dark_path=None):
+		'''
+		If the program runs its own gain/dark correction, put in here the option
+		string to add to the main command.
+		'''
+		cmd = ''
+		if dark_path:
+			apDisplay.printWarning('MotionCorr2 does not handle dark reference. Assumes zero')
+		if norm_path:
+			cmd += " -Gain %s" % norm_path
+		self.gain_dark_cmd = cmd
+		apDisplay.printMsg('Gain Dark Command Option: %s' % cmd)
+
+	def makeFrameAlignmentCommand(self):
 		'''
 		David Agard lab's gpu program for aligning frames using all defaults
 		Dark reference select is currently unavailable, therefore this version only works for images acquired from a K2 camera in counting mode
@@ -274,9 +296,9 @@ class MotionCorr2_UCSF(DDFrameAligner):
 		else: 
 			pass
 
-		self.alignparams['FmDose'] = self.alignparams['totaldose'] / self.alignparams['totalframes']
 		# exposure filtering
 		if self.alignparams['doseweight'] is True:
+			self.alignparams['FmDose'] = self.alignparams['totaldose'] / self.alignparams['totalframes']
 			cmd += ' -PixSize %.3f ' % (self.alignparams['PixSize'])
 			cmd += ' -kV %d ' % (self.alignparams['kV'])
 			cmd += ' -FmDose %.3f ' % (self.alignparams['FmDose'])
@@ -285,7 +307,11 @@ class MotionCorr2_UCSF(DDFrameAligner):
 #		cmd += ' Serial 1'
 		
 		# gain dark references
-		cmd += gain_dark_cmd
+		cmd += self.gain_dark_cmd
+
+		# gain gemetry modification
+		cmd += ' -FlipGain %d ' % self.alignparams['FlipGain']
+		cmd += ' -RotGain %d ' % self.alignparams['RotGain']
 
 		# GPU ID
 		cmd += ' -Gpu %d' % self.alignparams['Gpu']

@@ -7,14 +7,11 @@ import re
 import time
 import subprocess
 #appion
-from appionlib import appionLoop2
-from appionlib import basicScript
 from appionlib import particleLoop2
 from appionlib import apFindEM
 from appionlib import apFindEMG
 from appionlib import apDisplay
 from appionlib import apTemplate
-from appionlib import apTemplateCorrelator
 from appionlib import apDatabase
 from appionlib import appiondata
 from appionlib import apPeaks
@@ -22,10 +19,8 @@ from appionlib import apParam
 from appionlib import apImage
 
 
-class GautomatchLoop(apTemplateCorrelator.TemplateCorrelationLoop):
-#class GautomatchLoop(particleLoop2.ParticleLoop):
+class GautomatchLoop(particleLoop2.ParticleLoop):
 
-#class TemplateCorrelationLoop(particleLoop2.ParticleLoop):
 	##=======================
 	def checkPreviousTemplateRun(self):
 		### check if we have a previous selection run
@@ -36,6 +31,7 @@ class GautomatchLoop(apTemplateCorrelator.TemplateCorrelationLoop):
 		if not rundatas:
 			return True
 		rundata = rundatas[0]
+
 
 		### check if we have a previous template run
 		templaterunq = appiondata.ApTemplateRunData(selectionrun=rundata)
@@ -68,7 +64,6 @@ class GautomatchLoop(apTemplateCorrelator.TemplateCorrelationLoop):
 	### COMMON FUNCTIONS
 	##################################################
 
-#	def setupGlobalParserOptions(self):
 
 
 	def setupParserOptions(self):
@@ -77,10 +72,6 @@ class GautomatchLoop(apTemplateCorrelator.TemplateCorrelationLoop):
 		self.parser.add_option("--range-list", "--range_list", dest="rangeliststr",
 			help="Start, end, and increment angles: e.g. 0,360,10x0,180,5", metavar="#,#,#x#,#,#")
 
-#		self.parser.add_option("--pdiam",dest="pdiam",help="Diameter of particle;only relevant for DoG-type picking as template picking will use template particle diameter.")
-
-#		self.parser.add_option("--lp", dest="lp",help="Low-pass filter to increase the contrast of raw micrographs, suggested range 20~50 Angstroms. This low-pass is after ice/aggregation detection.")
-#		self.parser.add_option("--hp", dest="hp",help="High-pass filter to get rid of the global background of raw micrographs, suggested range 200~2000 Angstroms. This high-pass is after ice/aggregation detection.")
 		self.parser.add_option("--pre_lp", dest="pre_lp",help="The same as --lp, but before the ice/contamination detection, might be better in severely gradient ice. Does not matter to use both --lp and --pre_lp, but suggested to use much smaller --pre_lp for better ice/contamination detection.")
 		self.parser.add_option("--pre_hp", dest="pre_hp",help="The same as --hp, but before the ice/contamination detection, might be better in severely gradient ice. Otherwise, do not use --pre_hp or use a very big value")
 
@@ -95,24 +86,19 @@ class GautomatchLoop(apTemplateCorrelator.TemplateCorrelationLoop):
 		self.parser.add_option("--min_dist",dest="min_dist",help="Maximum distance between particles in angstrom; 0.9~1.1X diameter; can be 0.3~0.5 for filament-like particle")
 
 
-		self.parser.add_option("--minthresh",dest="minthresh",help="Cross-correlation cutoff, 0.2~0.4 normally; Try to select several typical micrographs to optimize this value.")
+		self.parser.add_option("--ang_step",dest="ang_step",default=10,type="int",help="Angular step between template rotations (presumably degrees).")
 
-		self.parser.add_option("--overlapmult",dest="overlapmult",help="Maximum distance between particles in angstrom; 0.9~1.1X diameter; can be 0.3~0.5 for filament-like particle.")
-
-		self.parser.add_option("--invert",dest="invert",default=False, action="store_true", help="Whether to invert template contrast. VERY IMPORTANT!!! By default, the program will invert the 'white' templates to 'black' before picking.")
-
-		### True / False options
-		self.parser.add_option("--use-mirrors", "--use_mirrors", dest="templatemirrors", default=False,
-			action="store_true", help="Use mirrors as additional templates")
 		self.parser.add_option("--do_pre_filter",dest="do_pre_filter",default=False,
 			action="store_true", help="Do pre filtering (not recommended)")
 		return
 
 	##=======================
 	def checkConflicts(self):
-		if self.params['minthresh'] is None:
+		if self.params['thresh'] is None:
 			apDisplay.printError("threshold was not defined")
 
+
+		self.peaktreelist = []
 		### Check if we have templates
 		if self.params['templateliststr'] is None:
 			apDisplay.printWarning("Template list was not specified, e.g. --template-list=34,56,12. If running Gautomatch without templates, continue. Otherwise kill job and select templates from the Gautomatch web form.")
@@ -125,8 +111,8 @@ class GautomatchLoop(apTemplateCorrelator.TemplateCorrelationLoop):
 			for tid in oldtemplateids:
 				templateid = abs(int(tid))
 				self.params['templateIds'].append(templateid)
-				if self.params['templatemirrors'] is True:
-					self.params['templateIds'].append(-1*templateid)
+	#			if self.params['templatemirrors'] is True:
+	#				self.params['templateIds'].append(-1*templateid)
 
 			### Check if we have ranges
 			if self.params['rangeliststr'] is None:
@@ -148,12 +134,12 @@ class GautomatchLoop(apTemplateCorrelator.TemplateCorrelationLoop):
 				self.params['endang'+str(i+1)]   = float(angs[1])
 				self.params['incrang'+str(i+1)]  = float(angs[2])
 				self.params['mirror'+str(i+1)]  = False
-				if self.params['templatemirrors'] is True:
-					i+=1
-					self.params['startang'+str(i+1)] = float(angs[0])
-					self.params['endang'+str(i+1)]   = float(angs[1])
-					self.params['incrang'+str(i+1)]  = float(angs[2])
-					self.params['mirror'+str(i+1)]  = True
+		#		if self.params['templatemirrors'] is True:
+		#			i+=1
+		#			self.params['startang'+str(i+1)] = float(angs[0])
+		#			self.params['endang'+str(i+1)]   = float(angs[1])
+		#			self.params['incrang'+str(i+1)]  = float(angs[2])
+		#			self.params['mirror'+str(i+1)]  = True
 				i+=1
 		return
 
@@ -161,8 +147,6 @@ class GautomatchLoop(apTemplateCorrelator.TemplateCorrelationLoop):
 	def preLoopFunctions(self):
 
 
-#                self.params['kV'] = imgdata['scope']['high tension']/1000.0
-#                self.params['cs'] = apInstrument.getCsValueFromSession(self.getSessionData())
 
 		if len(self.imgtree) > 0:
 			self.params['apix'] = apDatabase.getPixelSize(self.imgtree[0])
@@ -174,12 +158,6 @@ class GautomatchLoop(apTemplateCorrelator.TemplateCorrelationLoop):
 			apDisplay.printColor("Template list: "+str(self.params['templatelist']), "cyan")
 			self.checkPreviousTemplateRun()
 
-	def runTemplateCorrelator(self,imgdata):
-		if self.params['spectral'] is True:
-			ccmaplist = apFindEM.runSpectralFindEM(imgdata, self.params, thread=self.params['threadfindem'])
-		else:
-			ccmaplist = apFindEM.runFindEM(imgdata, self.params, thread=self.params['threadfindem'])
-		return ccmaplist
 
 	def findPeaks(self,imgdata,ccmaplist):
 		return apPeaks.findPeaks(imgdata, ccmaplist, self.params)
@@ -187,40 +165,43 @@ class GautomatchLoop(apTemplateCorrelator.TemplateCorrelationLoop):
 	##=======================
 	## Gautomatch
 
+
+#	def checkGlobalConflicts(self):
+#		pass
 	def runGautomatch(self,imgdata,templateid=''):
 
 		
 		t0 = time.time()
 
+	
+
 		gautopath = getGautomatchPath()
 
-		print 'Gautomatch params:'
-
 		## Build Command
-
                 fullinputfilepath = os.path.join(imgdata['session']['image path'], imgdata['filename']+'.mrc')
+
+		print 'imgdata type is ',(dir(imgdata))
+		print 'imgdata filename is ',imgdata['filename']
+	
                 imgpath = os.path.join(self.params['rundir'], imgdata['filename']+".mrc")
-
                 if not os.path.exists(imgpath):
-                        os.symlink(fullinputfilepath, imgpath)
+                       os.symlink(fullinputfilepath, imgpath)
 		
-
-
 		gautocmd = (gautopath + ' ')
-
 		gautocmd += ('--apixM ' + str(self.params['apix']) + ' ')
-		gautocmd += ('--ang_step ' + str(self.params['incrang1']) + ' ')
+		gautocmd += ('--ang_step ' + str(self.params['ang_step']) + ' ')
 		print 'PIXEL SIZE IS ',self.params['apix']	
 	
-		if templateid is not None:
+		if templateid != '':
 
-		 	templatedata = appiondata.ApTemplateImageData.direct_query(abs(templateid))
-			if not (templatedata):
-				apDisplay.printError("Template Id "+str(templateid)+" was not found in database.")
-			else:
-				print '********templatedata is ',templatedata
+			try: 
+				print 'templateid type is ',type(templateid)
+		 		templatedata = appiondata.ApTemplateImageData.direct_query(abs(templateid))
+			except:
+				apDisplay.printError("Template Id  was not found in database.")
 
-			if type(templateid) is int and templateid in self.params['templateIds']:
+
+			if templateid.__class__.__name__ == 'int' and templateid in self.params['templateIds']:
 				print 'templateid exists, and is ',templateid
 				print 'type is ',type(([i for i, j in enumerate(self.params['templateIds']) if j==templateid]))
 				templateidIndex = [i for i, j in enumerate(self.params['templateIds']) if j==templateid]
@@ -230,50 +211,33 @@ class GautomatchLoop(apTemplateCorrelator.TemplateCorrelationLoop):
 
 				gautocmd += ('--diameter ' + str(templatedata['diam']) + ' ')
 				gautocmd += ('--T origTemplate'+str(templateidIndex[0]+1)+'.mrc ')
-
 				gautocmd += ('--apixT '+str(self.params['apix'])+' ')
 				gautocmd += ('--apixT '+str(templatedata['apix'])+' ')
 				gautocmd += ('--min_dist '+str(self.params['overlapmult']*templatedata['diam']) + ' ')
 					
 
 		else:
-			gautocmd += ('--diameter ' +str(self.params['pdiam']) + ' ')
-                        gautocmd += ('--min_dist '+str(self.params['overlapmult']*templatedata['pdiam']) + ' ')
+			print 'overlapmult is ',self.params['overlapmult']
+			print 'overlapmult type is ',self.params['overlapmult'].__class__.__name__
+
+#		        particle diameter is stored in diam for particleLoop, not pdiam
+			gautocmd += ('--diameter ' +str(self.params['diam']) + ' ')
+                        gautocmd += ('--min_dist '+str(float(self.params['overlapmult'])*float(self.params['diam'])) + ' ')
 
 		if self.params['invert'] is True:
 			pass	
 		else:
 			gautocmd += '--dont_invertT 1 '
 			
+#		minthresh is stored as thresh in particleLoop
 
-
-#		if self.params['templateliststr'] is not None:
-#			continue
-
-		gautocmd += ('--cc_cutoff ' + str(self.params['minthresh']) + ' ')
+		gautocmd += ('--cc_cutoff ' + str(self.params['thresh']) + ' ')
 		
 		fullinputfilepath = os.path.join(imgdata['session']['image path'], imgdata['filename']+'.mrc')
                 imgpath = os.path.join(self.params['rundir'], imgdata['filename']+".mrc")
 
 		gautocmd += imgpath
-		for key in self.params:
-			print key,' : ', self.params[key]
-
-
 		gautopath = getGautomatchPath()
-		print 'Gauto path is ',gautopath	
-		print 'command is ',gautocmd
-
-		print 'vars are '
-
-		for name in vars().keys():
-			print(name)
-
-		for value in vars().values():
-			print value
-
-		print 'self.params is equal to ',self.params
-		print 'imgdata is ',imgdata
 		gautocmd += ' ; rm '+imgpath
                 gautoprogproc = subprocess.Popen(gautocmd, shell=True, stdin=subprocess.PIPE,)
                 apDisplay.printColor(gautocmd, "magenta")
@@ -284,43 +248,23 @@ class GautomatchLoop(apTemplateCorrelator.TemplateCorrelationLoop):
                 tdiff = time.time()-t0
                 apDisplay.printMsg("Gautomatch completed in "+apDisplay.timeString(tdiff))
 
-			
 
-	
-	
 	##=======================
-	def processImage(self, imgdata, filtarray):
+	def processImage(self, imgdata,filtarray):
 
 		if self.params['templateliststr'] is not None:
 			if abs(self.params['apix'] - self.params['templateapix']) > 0.01:
 				#rescale templates, apix has changed
 				apTemplate.getTemplates(self.params)
 
-
-		### RUN FindEM
-
-		### save filter image to .dwn.mrc
-		imgpath = os.path.join(self.params['rundir'], imgdata['filename']+".dwn.mrc")
-		apImage.arrayToMrc(filtarray, imgpath, msg=False)
-
-		### run FindEM
-		looptdiff = time.time()-self.proct0
-		self.proct0 = time.time()
-		proctdiff = time.time()-self.proct0
-		f = open("template_image_timing.dat", "a")
-		datstr = "%d\t%.5f\t%.5f\n"%(self.stats['count'], proctdiff, looptdiff)
-		f.write(datstr)
-		f.close()
-
-		### run Template Correlation program
-#		cclist = self.runTemplateCorrelator(imgdata)
-
-
 		### run Gautomatch program like dogPicker
                 if self.params['templateliststr'] is None:
 
-			self.runGautomatch(self,imgdata)
+			print 'DOGPICKER MODE'
+			print 'imgdata filename is ',imgdata['filename']
+			self.runGautomatch(imgdata,'')
 			peaktree = getPeaksFromBoxFile(self,imgdata['filename']+'_automatch.box')
+			self.peaktreelist.append(peaktree)
 			apPeaks.peakTreeToPikFile(peaktree, imgdata['filename'], 0, self.params['rundir'])
 			return peaktree
 
@@ -330,7 +274,7 @@ class GautomatchLoop(apTemplateCorrelator.TemplateCorrelationLoop):
 			print 'templateliststr is ',self.params['templateIds']
 
 			templateids = self.params['templateIds']
-
+			peaktreelist = []
 			for i in self.params['templateIds']:
 				print 'templateids type is ',type(templateids)
 				print 'templateids is ',templateids
@@ -342,6 +286,13 @@ class GautomatchLoop(apTemplateCorrelator.TemplateCorrelationLoop):
         	                peaktree = getPeaksFromBoxFile(self,imgdata['filename']+'_automatch.box')
                 	     #   apPeaks.peakTreeToPikFile(peaktree, imgdata['filename'], templateidIndex[0]+1, self.params['rundir'])
                 	        apPeaks.peakTreeToPikFile(peaktree, imgdata['filename'],i, self.params['rundir'])
+				peaktreelist.append(peaktree)
+			#self.params['doubles'] = True
+			apPeaks.mergePeakTrees(imgdata, peaktreelist, self.params, msg=True, pikfile=True)
+
+			print 'peaktreelist is ',peaktreelist
+			
+
                         return peaktree
 			
 			
@@ -351,8 +302,11 @@ class GautomatchLoop(apTemplateCorrelator.TemplateCorrelationLoop):
 		selectparamsq = appiondata.ApSelectionParamsData()
 		return selectparamsq
 
+
+	## loop
 	##=======================
-	def commitToDatabase(self, imgdata, rundata):
+	def commitToDatabase(self, imgdata,rundata):
+
 		#insert template rotation data
 		if "templateIds" in self.params:
 
@@ -401,11 +355,7 @@ def getPeaksFromBoxFile(self,boxfilename):
                 peakdict['ycoord']    = int(good[1])
                 peakdict['xcoord']    = int(good[0])
                 peakdict['correlation'] = float(good[4])
-
-
-#leave diameter as zero for now - CJN
-
-		peakdict['diameter'] = self.params['diam']
+		peakdict['diameter'] = float(self.params['diam'])
                 peakTree.append(peakdict)
         return peakTree
 

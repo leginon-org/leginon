@@ -21,6 +21,75 @@ class GautomatchTemplateSelectionTable extends TemplateSelectionTable
 	{
 		parent::__construct();
 	}
+
+
+ public function generateForm($enable=true)
+        {
+                $this->updateFormParams();
+                $params = $this->getFormParams();
+                
+                $fieldSize = 20;
+                
+                $html.=  "<!-- BEGIN Template Table Param -->\n";
+                $availableTemplates = $this->availableTemplates;
+                if ( !$enable ) {
+                        // template table params are disabled after selection
+                        $indices = $this->getUsedTemplateIndices();
+                        $html.= $this-> generateUsedTemplateForm($indices);
+                } else {
+                        $indices = range(1,count($availableTemplates));
+                }
+                if ($availableTemplates) {
+                        if ( $enable ) {
+                                $html .= "<CENTER>".$params->insertSubmitField( "viewerform", "Use These Templates" )."</CENTER>\n";
+                                $html.= "<br/>\n";
+                        }
+                        $javafunctions="<script type='text/javascript'>\n";
+                        $templatetable="<table class='tableborder' border='1' cellpadding='5'>\n";
+                        $numtemplates = count($availableTemplates);
+                        $i=1;
+                        foreach($indices as $index) {
+                                $templateinfo = $availableTemplates[$index-1];
+                                // arrange templates in 2 columns
+                                if ($i%2 == 1)
+                                        //first column
+                                        $templatetable.="<tr><td align='left'>\n";
+                                else
+                                        //second column
+                                        $templatetable.="<td align='left'>\n";
+                                $htmljava_array = $this->singleTemplate($templateinfo, $index, $enable);
+                                $templatetable.=$htmljava_array[0];
+                                $javafunctions.=$htmljava_array[1];
+                                $i++;
+                                if ($i%2 == 1)
+                                        $templatetable.="</td></tr>\n";
+                                else
+                                        $templatetable.="</td>\n";
+                        }
+                        $javafunctions.="</SCRIPT>\n";
+                        $templatetable.="</table>\n";
+                        if ( $enable )
+                                // at the end of template table
+
+                $html  .= '<div id="notice">(Leave all templates unchecked to run Gautomatch as a DoG picker.)</div><br>';
+
+                                $templatetable .= "<CENTER>".$params->insertSubmitField( "viewerform", "Use These Templates" )."</CENTER>\n";
+                } else {
+                                $html .= "No templates found; if you would like to run template-based picking upload template. <br/>\n";
+                                $html .= "<CENTER>".$params->insertSubmitField( "viewerform", "Use Dogpicker mode" )."</CENTER>\n";
+
+
+                }
+                $javafunctions.="<script src='../js/viewer.js'></script>\n";
+        
+                $html .= $templatetable;
+                $html .= $javafunctions;
+        
+                $html.= "<br/>\n";
+                $html.=  "<!-- END Template Table Param -->\n";
+                return $html;   
+        }       
+
 /*		
 		// Get the form parameters that have been created by the parent class
 		$params = $this->getFormParams();
@@ -120,7 +189,8 @@ class GautomatchTemplateSelectionTable extends TemplateSelectionTable
 				// at the end of template table
 				$templatetable .= "<CENTER>".$params->insertSubmitField( "viewerform", "Use These Templates" )."</CENTER>\n";
 		} else {
-			$html .= "<b>Project does not contain any templates.</b>\n";
+			$html .= "<b>PProject does not contain any templates.</b>\n";
+
 
 		}
 		$javafunctions.="<script src='../js/viewer.js'></script>\n";
@@ -280,8 +350,8 @@ class GautomatchTemplateSelectionTable extends TemplateSelectionTable
 
 	public function buildCommand($postArray) {
 		$params = $this->getFormParams();
-		$command .= parent::buildCommand($postArray);
-		
+		$command = parent::buildCommand($postArray);
+
 		$numTemplates = count( $this->availableTemplates );
 		//remove unwanted commands
 		foreach (range(0,$numTemplates-1) as $j ) {
@@ -299,11 +369,17 @@ class GautomatchTemplateSelectionTable extends TemplateSelectionTable
 */		
 	// Override the validate function so that we can verify the Template Correlator parameters
 
-//	public function validate( $postArray ) {}
-	// No need to override the buildCommand
+	public function validate( $postArray ) {
 	
-	// Non need to override the validate function
-	
+		$msg = parent::validate( $postArray );
+                $indices = $this->getUsedTemplateIndices();
+		var_dump($indices);
+                if ( count($indices) == 0 )
+                	$msg .= "Choose a template\n";
+
+                return $msg;
+}
 }
 
 ?>
+

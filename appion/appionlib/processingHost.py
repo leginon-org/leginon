@@ -84,7 +84,21 @@ class ProcessingHost (object):
 		
         #return what we get from stdout
         return process.communicate()[0]
-						
+				
+    def commandToWebservice (self, command):
+        
+        postArray = {   'command':command, 
+                        'username':pwd.getpwuid(os.getuid())[0],
+                        'jobType':self.jobType,
+                        'script':self.command
+        };
+         
+        r = requests.post(self.destinationsURL)
+        r = requests.post(self.destinationsURL, data=json.dumps(postArray))
+        
+        headerArray = json.loads(r.text)
+        return headerArray['customResponse']
+    
     def headersFromWebSevice (self, jobObject=None):
         if jobObject != None:
             currentJob=jobObject
@@ -196,14 +210,21 @@ class ProcessingHost (object):
         #Construct the command string to execute the job.		   
         commandString = "cd " + outputDir + ";"	 
         commandString = commandString + self.execCommand + " " + jobfileName
-        try:
-            returnValue = self.executeCommand(commandString)
-        except (OSError, ValueError), e:
-            sys.stderr.write("Failed to execute job " + jobObject.getName() + ": " + str(e))
-            return False
-	
-        #translate whatever is returned by executeCommand() to a JobID	   
-        jobID = self.translateOutput(returnValue)
+        
+        # dcshrum@fsu.edu
+        jobID = None
+        if (self.destinationsURL):
+            # header = self.headersFromWebSevice(currentJob)
+            jobID = self.commandToWebservice(commandString)
+        else: 
+            try:
+                returnValue = self.executeCommand(commandString)
+            except (OSError, ValueError), e:
+                sys.stderr.write("Failed to execute job " + jobObject.getName() + ": " + str(e))
+                return False
+            #translate whatever is returned by executeCommand() to a JobID	   
+            jobID = self.translateOutput(returnValue)
+            
         #return the translated output 
         return jobID
 	

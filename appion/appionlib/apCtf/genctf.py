@@ -146,7 +146,7 @@ def generateCTF2dFromCtfData(ctfdata, apix, volts, fieldsize):
 	volts = volts
 	ampconst = ctfdata['amplitude_contrast']
 	shape = (fieldsize, fieldsize)
-	checkParams(focus1=focus1, focus2=focus2, cs=cs, volts=volts, ampconst=ampconst, extra_phase_shift=extra_phase_shift, failParams=True)
+	checkParams(focus1=focus1, focus2=focus2, cs=cs, volts=volts, ampconst=ampconst, extra_phase_shift=extra_phase_shift, failParams=False)
 	return generateCTF2d(focus1, focus2, theta, shape, mpix, cs, volts, ampconst, extra_phase_shift)
 
 #===================
