@@ -236,7 +236,7 @@ void printFinalCTFParams( CTFParams p, char path[] ) {
 	fprintf(fp,"Astigmatism Angle (Degrees): %f\n",p->astig_angle);
 	fprintf(fp,"  major axis along x-axis is zero, counter-clockwise is +\n");
 	fprintf(fp,"Amplitude Contrast: %f\n",p->amp_c);
-	//fprintf(fp,"Phase Shift: %f\n",p->phase_shift);//PRB
+	fprintf(fp,"Additional Phase Shift (due to phase plate): %f\n",p->phase_shift);//PRB
 	
 	fclose(fp);
 	
