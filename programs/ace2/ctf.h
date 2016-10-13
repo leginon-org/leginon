@@ -66,10 +66,12 @@ ArrayP fitEnvelope( ArrayP fit_data );
 f64 getTEMLambda( f64 volts );
 f64 getTEMVoltage( f64 lambda );
 f64 ctf_calc( f64 c[], f64 x );
-void fit2DCTF( ArrayP image, f64 d1, f64 d2, f64 th, f64 apix, f64 kv, f64 cs, f64 ac );
+void fit2DCTF( ArrayP image, f64 d1, f64 d2, f64 th, f64 apix, f64 kv, f64 cs, f64 ac , f64 phase_shift  );
 f64 positionForPeak( f64 c[], u32 peak_pos );
 f64 defocusForPeak( f64 c[], f64 peak_pos, u32 peak_num );
+//ArrayP generate2DCTF( f64 df1, f64 df2, f64 theta, u32 rows, u32 cols, f64 apix, f64 cs, f64 kv, f64 ac , f64 phase_shift );
 ArrayP generate2DCTF( f64 df1, f64 df2, f64 theta, u32 rows, u32 cols, f64 apix, f64 cs, f64 kv, f64 ac );
-ArrayP g2DCTF( f64 df1, f64 df2, f64 theta, u32 rows, u32 cols, f64 apix, f64 cs, f64 kv, f64 ac );
+//ArrayP g2DCTF( f64 df1, f64 df2, f64 theta, u32 rows, u32 cols, f64 apix, f64 cs, f64 kv, f64 ac  );
+ArrayP g2DCTF( f64 df1, f64 df2, f64 theta, u32 rows, u32 cols, f64 apix, f64 cs, f64 kv, f64 ac , f64 phase_shift ); // PRB
 
 #endif
