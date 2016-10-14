@@ -347,7 +347,7 @@ class RelionMaxLikeScript(appionScript.AppionScript):
 		)
 
 		if self.params['usegpu'] is True:
-			relionopts += " --gpu 1 "
+			relionopts += " --gpu "
 		if self.params['flattensolvent'] is True:
 			relionopts += " --flatten_solvent "
 		if self.params['zero_mask'] is True:
