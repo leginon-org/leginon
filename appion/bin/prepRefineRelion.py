@@ -24,7 +24,7 @@ from appionlib.apCtf import ctfdb
 from leginon import leginondata
 
 ''' There are 4 things we want to ensure for stacks used with Relion:
-1. The particles must be white on a black background (this is not actually true according to Sjors)
+1. The particles is default to white on a black background (this is not actually absolutely required according to Sjors)
 2. The stack must be normalized (xmipp normalize is good for this)
 3. The stack must NOT be ctf-corrected (aka ctf-phaseFlipped)
 4. Relion prefers mrc stacks over Imagic and should be named .mrcs
@@ -82,6 +82,7 @@ class PrepRefineRelion(apPrepRefine.Prep3DRefinement):
 		# Determine what needs to be done to the stack
 		# Check for inversion, normalization and phaseFlipped
 		if not self.originalStackData.inverted:
+			# Relion wants white particle
 			self.invert = True		
 		if self.originalStackData.phaseFlipped:
 			self.un_ctf_correct = True		
@@ -102,6 +103,8 @@ class PrepRefineRelion(apPrepRefine.Prep3DRefinement):
 	#=====================
 	def setupParserOptions(self):
 		super(PrepRefineRelion,self).setupParserOptions()
+		self.relion_versionopts = ['1.4','2.0']
+
 		self.parser.add_option('--reconiterid', dest='reconiterid', type='int',
 			help="id for specific iteration from a refinement, used for retrieving particle orientations")
 		self.parser.add_option('--paramonly', dest='paramonly', default=False, action='store_true',
@@ -112,7 +115,10 @@ class PrepRefineRelion(apPrepRefine.Prep3DRefinement):
 		self.parser.add_option('--ctfmethod', dest='ctfmethod',
 			help="Only use ctf values coming from this method of estimation", metavar="TYPE",
 			type="choice", choices=self.ctfestopts)
-				
+		self.parser.add_option('--relion_version', dest='relion_version',
+			help="Only use ctf values coming from this method of estimation", metavar="TYPE",
+			type="choice", choices=self.relion_versionopts, default=self.relion_versionopts[0])
+
 	#=====================	
 	def checkPackageConflicts(self):
 		if len(self.modelids) != 1:
@@ -209,7 +215,7 @@ class PrepRefineRelion(apPrepRefine.Prep3DRefinement):
 		stackid           = self.originalStackData.stackid
 		reversetext       = '--reverse' if self.originalStackData.reverse else ''
 		defoctext         = '--defocpair' if self.originalStackData.defocpair else ''
-		inverttext        = '--no-invert' if not self.invert else ''  
+		inverttext        = '--invert' # Relion wants white particles since 1.4 version
 
 		# Build the makestack2 command
 		cmd = "makestack2.py "
@@ -251,7 +257,11 @@ class PrepRefineRelion(apPrepRefine.Prep3DRefinement):
 		bg_radius = math.floor((self.stack['boxsize'] / 2) - 1)
 		
 		relioncmd = "relion_preprocess "
-		relioncmd += " --o particles --norm --bg_radius %d "%(bg_radius)
+		if self.params['relion_version'] == '2.0':
+			relioncmd += " --operate_out particles"
+		else:
+			relioncmd += " --o particles"
+		relioncmd += " --norm --bg_radius %d "%(bg_radius)
 		relioncmd += " --white_dust -1 --black_dust -1 --operate_on %s "%(newstackimagicfile)
 		apParam.runCmd(relioncmd, package="Relion", verbose=True, showcmd=True)
 		self.stack['file'] = 'particles.mrcs'		
@@ -261,34 +271,35 @@ class PrepRefineRelion(apPrepRefine.Prep3DRefinement):
 		'''
 		The stack is remaked without ctf correction and inverted and normalized if needed
 		'''
+		# If we just want the frealign param file, skip this function
+		if self.params['paramonly'] is True:
+			return
+		
 		newstackroot = os.path.join(self.params['rundir'],os.path.basename(self.stack['file'])[:-4])
-		
-		#self.runRelionPreprocess( newstackroot )
-		
-		self.ImagicStackToMrcStack(self.stack['file'])
-		
-		self.stack['file'] = 'particles.mrcs'
-		return
-        #TODO: clean up everything below here once this relion preprocess is proven out
+				
+		if apParam.getExecPath('relion_preprocess'):
+			self.runRelionPreprocess( newstackroot )
+			return
+
+		if not self.un_ctf_correct:	
+			self.ImagicStackToMrcStack(self.stack['file'])
+			self.stack['file'] = 'particles.mrcs'
+			return
+    
+		#TODO: clean up everything below here once this relion preprocess is proven out
 		self.stackErrorCheck( self.stack['file'] )
 		
 		self.stack['phaseflipped']    = False
 		self.stack['format']          = 'relion' #TODO: Where is this used? 
 		
-		# If we just want the frealign param file, skip this function
-		if self.params['paramonly'] is True:
-			print 'newstackroot', newstackroot
-			return
-		
 		# If we just need to normalize, run xmipp_normalize
-#		if self.normalize and not self.un_ctf_correct:
-		if not self.un_ctf_correct:
+		if self.normalize and not self.un_ctf_correct:
 			apDisplay.printMsg("Normalizing stack for use with Relion")
 			extname,addformat = self.proc2dFormatConversion()
 			stackfilenamebits = self.stack['file'].split('.')
 			basestackname = stackfilenamebits[0]
 			outstack = os.path.join(self.params['rundir'], "%s.%s" % (basestackname, extname) )
-			#self.xmippNormStack(self.stack['file'], outstack)
+			self.xmippNormStack(self.stack['file'], outstack)
 			self.stack['file'] = outstack
 		
 		# If we don't need to un-ctf-correct, we are done
@@ -302,8 +313,6 @@ class PrepRefineRelion(apPrepRefine.Prep3DRefinement):
 		mrcsStack = newstackroot+'.mrcs' #TODO: why no dot here? Was adding double...
 		self.ImagicStackToMrcStack( imagicStack )
 		
-		apDisplay.printMsg("Renaming %s to %s " % (mrcStack, mrcsStack) )
-		os.rename(mrcStack, mrcsStack)		
 		self.stack['file'] = mrcsStack
 
 	#=====================		
@@ -326,7 +335,8 @@ class PrepRefineRelion(apPrepRefine.Prep3DRefinement):
 		lowpasstext       = setArgText( 'lowpass', ( self.params['lowpass'], self.originalStackData.lowpass ), False)
 		highpasstext      = setArgText( 'highpass', ( self.params['highpass'], self.originalStackData.highpass ), True)
 		partlimittext     = setArgText('partlimit',(numpart,),False)
-		xmipp_normtext    = setArgText('xmipp-normalize', (self.params['xmipp-norm'],), True)
+		# default norm-method to edgenorm since this is not from stack
+		xmipp_normtext    = 'edgenorm'
 		sessionid         = int(self.params['expid'])
 		sessiondata       = apDatabase.getSessionDataFromSessionId(sessionid)
 		sessionname       = sessiondata['name']
@@ -334,14 +344,14 @@ class PrepRefineRelion(apPrepRefine.Prep3DRefinement):
 		stackid           = self.originalStackData.stackid
 		reversetext       = '--reverse' if self.originalStackData.reverse else ''
 		defoctext         = '--defocpair' if self.originalStackData.defocpair else ''
-		inverttext        = '--no-invert' if not self.invert else ''  
+		inverttext        = '--invert' # Relion wants white particles 
 
 		# Build the makestack2 command
 		cmd = "makestack2.py "
 		cmd += (" --single=%s --fromstackid=%d %s %s %s %s %s %s "%
-			(os.path.basename(newstackimagicfile),selectionid,stackid,lowpasstext,
+			(os.path.basename(newstackimagicfile),stackid,lowpasstext,
 			highpasstext,partlimittext,reversetext,defoctext,inverttext))
-		cmd += (" --normalized %s --boxsize=%d --bin=%d "%
+		cmd += (" --normalize-method %s --boxsize=%d --bin=%d "%
 			(xmipp_normtext,unbinnedboxsize,bin))
 		cmd += (" --description='Relion refinestack based on %s(id=%d)' --projectid=%d "%
 			(stackpathname,stackid,projectid))
@@ -408,22 +418,34 @@ class PrepRefineRelion(apPrepRefine.Prep3DRefinement):
 		labels = ['_rlnImageName', '_rlnMicrographName',
 			'_rlnDefocusU', '_rlnDefocusV', '_rlnDefocusAngle', '_rlnVoltage',
 			'_rlnSphericalAberration', '_rlnAmplitudeContrast', 
+		]
+		if self.params['relion_version'] == '2.0':
+			labels.append('_rlnPhaseShift')
+		labels.extend([
+			'_rlnMagnification', '_rlnDetectorPixelSize',
 			'_rlnAngleRot', '_rlnAngleTilt', '_rlnAnglePsi', 
 			'_rlnOriginX', '_rlnOriginY',
-		]
+		])
 
 		valueSets = [] #list of strings for star file
 		partParamsList = self.getStackParticleParams()
 		stackPath = os.path.join(self.params['rundir'], mrcStackFile)
 		for partParams in partParamsList:
-			relionDataLine = ("%d@%s %d %.6f %.6f %.6f %d %.6f %.6f %.6f %.6f %.6f %.6f %.6f"
-				%( partParams['ptclnum'], stackPath, partParams['filmNum'],
-					partParams['defocus2'], partParams['defocus1'], partParams['angle_astigmatism'], 
-					partParams['kv'], self.params['cs'], partParams['amplitude_contrast'],
-					partParams['psi'], partParams['theta'], partParams['phi'],
-					partParams['shiftx'], partParams['shifty'], 					
-									
-				))
+			relionDataLine = ("%d@%s %d %.6f %.6f %.6f %d %.6f %.6f "
+					%( partParams['ptclnum'], stackPath, partParams['filmNum'],
+						partParams['defocus2'], partParams['defocus1'], partParams['angle_astigmatism'], 
+						partParams['kv'], self.params['cs'], partParams['amplitude_contrast'],
+					))
+			if self.params['relion_version'] == '2.0':
+				relionDataLine += "%.6f " % (math.degrees(partParams['extra_phase_shift']),)
+
+			relionDataLine += ("%d %.6f %.6f %.6f %.6f %.6f %.6f"
+					% (
+						10000, self.stack['apix'],
+						partParams['psi'], partParams['theta'], partParams['phi'],
+						partParams['shiftx'], partParams['shifty'], 					
+					))
+
 			valueSets.append(relionDataLine)
 		star = starFile.StarFile(starfile)
 		star.buildLoopFile( "data_", labels, valueSets )
@@ -433,21 +455,25 @@ class PrepRefineRelion(apPrepRefine.Prep3DRefinement):
 	def createStarFile(self, starfile, mrcStackFile):
 		'''
 		Create a file with the required constant strings in it
-   		''' 
-   		star = starFile.StarFile(starfile)
+   	''' 
+		star = starFile.StarFile(starfile)
 		labels = ['_rlnImageName', '_rlnMicrographName',
 			'_rlnDefocusU', '_rlnDefocusV', '_rlnDefocusAngle', '_rlnVoltage',
-			'_rlnSphericalAberration', '_rlnAmplitudeContrast', ]
-
+			'_rlnSphericalAberration', '_rlnAmplitudeContrast', 
+		]
+		if self.params['relion_version'] == '2.0':
+			labels.append('_rlnPhaseShift')
 		valueSets = [] #list of strings for star file
 		partParamsList = self.getStackParticleParams()
 		stackPath = os.path.join(self.params['rundir'], mrcStackFile)
 		for partParams in partParamsList:
-			relionDataLine = ("%d@%s %d %.6f %.6f %.6f %d %.6f %.6f"
+			relionDataLine = ("%d@%s %d %.6f %.6f %.6f %d %.6f %.6f "
 				%( partParams['ptclnum'], stackPath, partParams['filmNum'],
 					partParams['defocus2'], partParams['defocus1'], partParams['angle_astigmatism'], 
 					partParams['kv'], self.params['cs'], partParams['amplitude_contrast'],
 				))
+			if self.params['relion_version'] == '2.0':
+				relionDataLine += "%.6f " % (math.degrees(partParams['extra_phase_shift']),)
 			valueSets.append(relionDataLine)
 		star = starFile.StarFile(starfile)
 		star.buildLoopFile( "data_", labels, valueSets )
@@ -511,12 +537,14 @@ class PrepRefineRelion(apPrepRefine.Prep3DRefinement):
 				partParams['defocus2'] = abs(ctfdata['defocus2']*1e10)
 				partParams['angle_astigmatism'] = ctfdata['angle_astigmatism']
 				partParams['amplitude_contrast'] = ctfdata['amplitude_contrast']
+				partParams['extra_phase_shift'] = ctfdata['extra_phase_shift']
 			else:
 				apDisplay.printWarning("No ctf information for particle %d in image %d"%(count, imagedata.dbid))
 				partParams['defocus1'] = 0.1
 				partParams['defocus2'] = 0.1
 				partParams['angle_astigmatism'] = 0.0
 				partParams['amplitude_contrast'] = 0.07
+				partParams['extra_phase_shift'] = 0.0
 
 			if self.params['reconiterid'] is not None:
 				eulerDict = self.getStackParticleEulersForIteration(stackPart)
@@ -608,7 +636,7 @@ class PrepRefineRelion(apPrepRefine.Prep3DRefinement):
 		return filmNum
 
 	#=====================
-	def preProcessPreparations(self):
+	def otherPreparations(self):
 		"""
 		RELION needs an additional STAR file with CTF parameters
 		"""	
