@@ -96,7 +96,49 @@ echo " <p> this method builds a hierarchical classification of particles"
 								."It is a relatively fast method that aligns and classify the images at the same time. "
 										."The method starts by estimating a few classes that are further subdivided till the desired number of classes is reached. "
 												."Every time an image is compared to the class averages it is aligned before-hand."
+
+
+
+
 																."</p>\n";
+
+
+//echo "  <img src='img/align-smr.png' width='250'><br/>\n";
+echo "</td></tr>\n";
+
+/*
+ ** Relion 2D Reference Free Alignment
+*/
+if (!HIDE_GPU_FEATURE)
+{
+        echo "<tr><td width='100' align='center'>\n";
+        echo "  <img src='img/Relion_logo_v1_64x64.png' width='64'>\n";
+        echo "</td><td>\n";
+        $form = "relion2Align2DForm";
+        echo "  <h3><a href='runAppionLoop.php?expId=$expId&form=$form'>Relion 2.0 GPU-Powered 2D Maximum Likelihood Alignment</a></h3>\n";
+        echo " <p> this method is the most robust, but takes some time to complete."
+                ." It uses the "
+                ."<a href='http://www2.mrc-lmb.cam.ac.uk/relion/index.php/Calculate_2D_class_averages'>Relion Refine 2d</a>"
+                ."&nbsp;<img src='img/external.png'>"
+                ." program to perform alignments. "
+                ."</p><p>\n"
+                ."Like Xmipp Maximum Likelihood (from the same author), "
+                ."this method is unbiased and very thorough, but also the slowest of the methods (~days). "
+                ."While it produces excellent templates, it only does a course search (integer pixels shifts and large angle increments), "
+                ."so it is best to use ref-based alignment to get better alignment parameters"
+                ."</p><p>\n"
+                ."Note: does not upload alignment parameters to database. "
+                ."Thinks it is Xmipp Max Like run when finished eventhough upload will not work. "
+                ."</p>\n";
+
+
+        //echo "  <img src='img/align-smr.png' width='250'><br/>\n";
+        echo "</td></tr>\n";
+}
+
+
+
+
 //echo "  <img src='img/align-smr.png' width='250'><br/>\n";
 echo "</td></tr>\n";
 
@@ -129,6 +171,9 @@ if (!HIDE_FEATURE)
 	//echo "  <img src='img/align-smr.png' width='250'><br/>\n";
 	echo "</td></tr>\n";
 }
+
+
+
 
 if (!HIDE_IMAGIC) {
 	/*
