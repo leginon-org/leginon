@@ -189,6 +189,9 @@ class ScreenCurrentLoggerPublishEvent(PublishEvent):
 class PhasePlatePublishEvent(PublishEvent):
 	dataclass = leginondata.PhasePlateData
 
+class PhasePlateUsagePublishEvent(PublishEvent):
+	dataclass = leginondata.PhasePlateUsageData
+
 class FixAlignmentEvent(Event):
 	pass
 

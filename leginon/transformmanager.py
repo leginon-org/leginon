@@ -229,7 +229,8 @@ class TransformManager(node.Node, TargetTransformer):
 		'camera settings': cameraclient.default_settings,
 	}
 	eventinputs = node.Node.eventinputs + presets.PresetsClient.eventinputs \
-								+ [event.TransformTargetEvent] \
+								+ [event.TransformTargetEvent,
+										event.PhasePlateUsagePublishEvent,] \
 								+ navigator.NavigatorClient.eventinputs
 	eventoutputs = node.Node.eventoutputs + presets.PresetsClient.eventoutputs \
 								+ [event.TransformTargetDoneEvent] \
@@ -252,8 +253,10 @@ class TransformManager(node.Node, TargetTransformer):
 		self.presetsclient = presets.PresetsClient(self)
 		self.navclient = navigator.NavigatorClient(self)
 		self.target_to_transform = None
+		self.pp_used = None
 
 		self.addEventInput(event.TransformTargetEvent, self.handleTransformTargetEvent)
+		self.addEventInput(event.PhasePlateUsagePublishEvent, self.handlePhasePlateUsage)
 
 		self.registrations = {
 			'correlation': transformregistration.CorrelationRegistration(self),
@@ -461,6 +464,7 @@ class TransformManager(node.Node, TargetTransformer):
 		# rct filenaming becomes corrupted
 		imagedata = leginondata.AcquisitionImageData(initializer=imagedata, preset=currentpresetdata, label=self.name, target=targetdata, list=oldimage['list'], emtarget=emtarget, pixels=pixels, pixeltype=pixeltype,grid=oldimage['grid'],mover=oldimage['mover'],spotmap=oldimage['spotmap'])
 		version = self.recentImageVersion(oldimage)
+		imagedata['phase plate'] = self.pp_used
 		imagedata['version'] = version + 1
 		## set the 'filename' value
 		if imagedata['label'] == 'RCT':
@@ -497,6 +501,11 @@ class TransformManager(node.Node, TargetTransformer):
 				version = im['version']
 		return version
 
+	def handlePhasePlateUsage(self, ev):
+		pp_used = ev['data']
+		if pp_used:
+			self.pp_used = pp_used
+
 	def handleTransformTargetEvent(self, ev):
 		stagenow = self.instrument.tem.StagePosition
 		msg = 'handleTransformTargetEvent starting z %.6f' % stagenow['z']
@@ -529,6 +538,7 @@ class TransformManager(node.Node, TargetTransformer):
 		newimagedata['list'] = oldimagedata['list']
 		newimagedata['emtarget'] = oldimagedata['emtarget']
 		newimagedata['version'] = oldimagedata['version'] + 1
+		newimagedata['phase plate'] = self.pp_used
 		dim = newimagedata['camera']['dimension']
 		newimagedata['pixels'] = dim['x'] * dim['y']
 		newimagedata['pixeltype'] = str(newimagedata['image'].dtype)

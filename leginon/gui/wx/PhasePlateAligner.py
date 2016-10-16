@@ -2,10 +2,11 @@ import wx
 import threading
 
 from leginon.gui.wx.Choice import Choice
-from leginon.gui.wx.Entry import FloatEntry
+from leginon.gui.wx.Entry import FloatEntry, IntEntry
 import leginon.gui.wx.Node
 import leginon.gui.wx.Settings
 import leginon.gui.wx.ToolBar
+import leginon.gui.wx.Reference
 
 class SettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
@@ -23,6 +24,8 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		position = self.createPauseTimeEntry((position[0],0))
 		position = self.createIntervalTimeEntry((position[0],0))
 		position = self.createChargeTimeEntry((position[0],0))
+		position = self.createPhasePlateNumberEntry((position[0],0))
+		position = self.createInitialPositionEntry((position[0],0))
 
 		sbsz.Add(self.sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
@@ -72,16 +75,173 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.sz.Add(szpausetime, start_position, (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		return start_position[0]+1,start_position[1]+1
 
+	def createPhasePlateNumberEntry(self, start_position):
+		self.widgets['phase plate number'] = IntEntry(self, -1, min=1, allownone=False, chars=4, value='1')
+		szpp = wx.GridBagSizer(5, 5)
+		szpp.Add(wx.StaticText(self, -1, 'Current Phase Plate Slot:'), (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szpp.Add(self.widgets['phase plate number'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		self.sz.Add(szpp, start_position, (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		return start_position[0]+1,start_position[1]+1
+
+	def createInitialPositionEntry(self, start_position):
+		self.widgets['initial position'] = IntEntry(self, -1, min=1, allownone=False, chars=4, value='1')
+		szpp = wx.GridBagSizer(5, 5)
+		szpp.Add(wx.StaticText(self, -1, 'Current Phase Patch Position:'), (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szpp.Add(self.widgets['initial position'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		self.sz.Add(szpp, start_position, (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		return start_position[0]+1,start_position[1]+1
+
 class PhasePlateAlignerPanel(leginon.gui.wx.Reference.ReferencePanel):
+	def __init__(self, *args, **kwargs):
+		super(PhasePlateAlignerPanel,self).__init__(*args, **kwargs)
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_MOSAIC, 'atlasmaker', shortHelpString='Settings')
+
 	def _SettingsDialog(self,parent):
 		# This "private call" ensures that the class in this module is loaded
 		# instead of the one in module containing the parent class
 		return SettingsDialog(parent)
 	
+	def onSettingsTool(self, evt):
+		dialog = self._SettingsDialog(self)
+		if dialog.ShowModal() == wx.ID_OK:
+				self.node.uiSetSettings()
+		dialog.Destroy()
+
 	def onNodeInitialized(self):
 		super(PhasePlateAlignerPanel,self).onNodeInitialized()
+		self.toolbar.Bind(wx.EVT_TOOL, self.onPatchStateSettingsTool,
+											id=leginon.gui.wx.ToolBar.ID_MOSAIC)
 
 	def onTest(self, evt):
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, False)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, True)
 		threading.Thread(target=self.node.onTest).start()
+
+	def onPatchStateSettingsTool(self, evt):
+		dialog = PatchStateSettingsDialog(self)
+		dialog.ShowModal()
+		#if dialog.ShowModal() == wx.ID_OK:
+		#		self.node.uiSetSettings()
+		dialog.Destroy()
+
+class PatchStateSettingsDialog(leginon.gui.wx.Settings.Dialog):
+
+	def onSet(self,evt):
+		rasterpatchs = self.scr_dialog.getPatchGridValues()
+		args = (rasterpatchs,)
+		t = threading.Thread(target=self.node.guiSetPatchStates,args=args)
+		t.start()
+		super(PatchStateSettingsDialog,self).onSet(evt)
+
+	def initialize(self):
+		self.scr_dialog = PatchStateScrolledSettings(self,self.scrsize,False)
+		return self.scr_dialog
+
+class PatchStateScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
+	def initialize(self):
+		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
+
+		gridformat = self.node.getGridFormat()
+		szedit = self.addPatchGrid(gridformat)
+
+		szbutton = wx.GridBagSizer(7, 7)
+		self.bclear = wx.Button(self, -1, 'Clear')
+		szbutton.Add(self.bclear, (0, 0), (1, 1),
+									wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT)
+		szbutton.AddGrowableCol(0)
+
+		self.Bind(wx.EVT_BUTTON, self.onClearButton, self.bclear)
+
+		self.ball = wx.Button(self, -1, 'All')
+		szbutton.Add(self.ball, (0, 1), (1, 1),
+									wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		szbutton.AddGrowableCol(1)
+
+		self.Bind(wx.EVT_BUTTON, self.onAllButton, self.ball)
+		# settings sizer
+		sz = wx.GridBagSizer(5, 10)
+		#sz.Add(szoptions, (0, 0), (1, 2))
+		sz.Add(szedit, (1, 0), (10, 10))
+		sz.Add(szbutton, (11, 0), (1, 2))
+		return [sz]
+
+	def onAllButton(self, evt):
+		self.dialog.setNodeSettings()
+		args = (True,)
+		mythread = threading.Thread(target=self.node.setAllPatchStates,args=args)
+		mythread.start()
+		# wait for thread to finish before setting values
+		mythread.join()
+		self.setPatchGridValues()
+		
+	def onClearButton(self, evt):
+		self.dialog.setNodeSettings()
+		args = (False,)
+		t = threading.Thread(target=self.node.setAllPatchStates,args=args)
+		t.start()
+		# wait for thread to finish before setting values
+		t.join()
+		self.setPatchGridValues()
+
+	def addPatchGrid(self,gridformat):
+		'''
+		PatchGrid is an editable wx.grid.Grid displaying the patchs
+		registered at each gridformat raster cell.
+		'''
+		import wx.grid
+		self.grid = wx.grid.Grid(self, -1)
+		self.grid.SetDefaultColSize(40)
+		self.grid.CreateGrid(gridformat['rows'], gridformat['cols'])
+
+		attr = wx.grid.GridCellAttr()
+		attr.SetEditor(wx.grid.GridCellBoolEditor())
+		attr.SetRenderer(wx.grid.GridCellBoolRenderer())
+		for c in range(gridformat['cols']):
+			self.grid.SetColAttr(c, attr)
+
+		try:
+			# only available for newer wxpython
+			self.grid.HideColLabels()
+		except:
+			pass
+		self.setPatchGridValues()
+
+		return self.grid
+
+	def setPatchGridValues(self):
+		'''
+		Set values in the patchgrid based on current node values.
+		'''
+		# clear the grid first so that those are now blank
+		# would not left with the old value
+		self.grid.ClearGrid()
+		patchregister = self.node.guiGetPatchStates()
+		for key in patchregister:
+			r = key[0]
+			c = key[1]
+			self.grid.SetCellValue(r,c,patchregister[key])
+		self.grid.ForceRefresh()
+
+	def getPatchGridValues(self):
+		cols = self.grid.GetNumberCols()
+		rows = self.grid.GetNumberRows()
+		patchregister = {}
+		for c in range(cols):
+			for r in range(rows):
+				patchregister[(r,c)] = self.grid.GetCellValue(r,c)
+		return patchregister
+
+if __name__ == '__main__':
+	class App(wx.App):
+		def OnInit(self):
+			frame = wx.Frame(None, -1, 'Mosaic Section Target Finder Test')
+			dialog = PhasePlateAlignerPanel(frame)
+			frame.node = self
+			frame.Fit()
+			self.SetTopWindow(frame)
+			frame.Show()
+			return True
+
+	app = App(0)
+	app.MainLoop()
+
