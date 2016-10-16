@@ -24,12 +24,22 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		position = self.createPauseTimeEntry((position[0],0))
 		position = self.createIntervalTimeEntry((position[0],0))
 		position = self.createChargeTimeEntry((position[0],0))
-		position = self.createPhasePlateNumberEntry((position[0],0))
-		position = self.createInitialPositionEntry((position[0],0))
+
+		ppsb = wx.StaticBox(self, -1, 'Phase Plate Position')
+		ppsbsz = wx.StaticBoxSizer(ppsb, wx.VERTICAL)
+
+		ppsz = wx.GridBagSizer(5, 5)
+		
+		position = self.createPhasePlateNumberEntry((position[0],0), ppsz)
+		position = self.createInitialPositionEntry((position[0],0), ppsz)
+		position = self.createUpdatePositionEntry((position[0],0), ppsz)
 
 		sbsz.Add(self.sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
+		ppsbsz.Add(ppsz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
-		return [sbsz]
+		self.Bind(wx.EVT_BUTTON, self.onUpdatePositionButton, self.bupdate)
+
+		return [sbsz,ppsbsz]
 
 	def createMoveTypeChoice(self, start_position):
 		move_types = self.node.calibration_clients.keys()
@@ -75,21 +85,30 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.sz.Add(szpausetime, start_position, (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		return start_position[0]+1,start_position[1]+1
 
-	def createPhasePlateNumberEntry(self, start_position):
+	def createPhasePlateNumberEntry(self, start_position, sz):
 		self.widgets['phase plate number'] = IntEntry(self, -1, min=1, allownone=False, chars=4, value='1')
 		szpp = wx.GridBagSizer(5, 5)
 		szpp.Add(wx.StaticText(self, -1, 'Current Phase Plate Slot:'), (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szpp.Add(self.widgets['phase plate number'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		self.sz.Add(szpp, start_position, (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(szpp, start_position, (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		return start_position[0]+1,start_position[1]+1
 
-	def createInitialPositionEntry(self, start_position):
+	def createInitialPositionEntry(self, start_position, sz):
 		self.widgets['initial position'] = IntEntry(self, -1, min=1, allownone=False, chars=4, value='1')
 		szpp = wx.GridBagSizer(5, 5)
 		szpp.Add(wx.StaticText(self, -1, 'Current Phase Patch Position:'), (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szpp.Add(self.widgets['initial position'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		self.sz.Add(szpp, start_position, (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(szpp, start_position, (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		return start_position[0]+1,start_position[1]+1
+
+	def createUpdatePositionEntry(self, start_position, sz):
+		self.bupdate = wx.Button(self, wx.ID_APPLY, '&Update')
+		sz.Add(self.bupdate, start_position, (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		return start_position[0]+1,start_position[1]+1
+
+	def onUpdatePositionButton(self,evt):
+		self.dialog.setNodeSettings()
+		self.node.uiUpdatePosition()
 
 class PhasePlateAlignerPanel(leginon.gui.wx.Reference.ReferencePanel):
 	def __init__(self, *args, **kwargs):

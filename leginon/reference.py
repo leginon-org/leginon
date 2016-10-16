@@ -64,6 +64,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		self.panel.playerEvent(self.player.state())
 		self.lock = threading.RLock()
 		self.reference_target = None
+		self.preset_name = None
 
 		self.last_processed = None
 		self.last_processed = time.time()
@@ -207,7 +208,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 			self.panel.playerEvent('stop')
 			self.setStatus('idle')
 			self.logger.info('Done testing')
-		
+
 	def onPlayer(self, state):
 		infostr = ''
 		if state == 'pause':
@@ -217,6 +218,10 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		if infostr:
 			self.logger.info(infostr)
 		self.panel.playerEvent(state)
+
+	def uiResetTimer(self):
+		self.logger.info('Reset Request Process Timer')
+		self.last_processed = time.time()
 
 class AlignZeroLossPeak(Reference):
 	settingsclass = leginondata.AlignZLPSettingsData

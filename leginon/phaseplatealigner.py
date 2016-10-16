@@ -27,17 +27,25 @@ class PhasePlateAligner(reference.Reference):
 		self.current_position = 1 # base 1
 		self.start()
 
-	def uiSetSettings(self):
+	def uiUpdatePosition(self):
 		self.current_position = self.settings['initial position']
 		self.logPhasePlateUsage()
 
-	def onTest(self):
-		self.player.play()
+	def uiSetSettings(self):
+		pass
+		#if self.settings['bypass']:
+		#	self.publish(None, database=False, pubevent=True, pubeventclass=event.PhasePlateUsagePublishEvent)
+
+	def onTest(self, request_data=None):
+		if not self.preset_name:
+			self.logger.warning('Preset unknown. Will not charge phase plate after advancing')
+		super(PhasePlateAligner, self).onTest(request_data)
 
 	def execute(self, request_data=None):
 		self.setStatus('processing')
 		self.logger.info('handle request')
-		self.nextPhasePlate()		
+		self.nextPhasePlate()
+		self.chargePhasePlate()	
 		self.logger.info('done')
 		self.setStatus('idle')
 		return True
@@ -56,9 +64,12 @@ class PhasePlateAligner(reference.Reference):
 			self.logger.info('Position %d is bad. Try next one' % self.current_position)
 		# log phase plate patch in use
 		self.logPhasePlateUsage()
-		if self.settings['charge time']:
+
+	def chargePhasePlate(self):
+		# Need self.preset_name which is set by _processRequest
+		if self.settings['charge time'] and self.preset_name:
 			self.presets_client.toScope(self.preset_name)
-			self.logger.info('expose for %.1f second' % self.settings['charge time'])
+			self.logger.info('expose for %.1f second to charge up' % self.settings['charge time'])
 			self.instrument.tem.exposeSpecimenNotCamera(self.settings['charge time'])
 
 	def logPhasePlateUsage(self):
