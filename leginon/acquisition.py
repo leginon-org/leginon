@@ -166,7 +166,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 								+ [event.DriftMonitorResultEvent,
 										event.MakeTargetListEvent,
 										event.ImageProcessDoneEvent,
-										event.AcquisitionImagePublishEvent] \
+										event.AcquisitionImagePublishEvent,
+										event.PhasePlateUsagePublishEvent,
+									] \
 								+ presets.PresetsClient.eventinputs \
 								+ navigator.NavigatorClient.eventinputs
 	eventoutputs = targetwatcher.TargetWatcher.eventoutputs \
@@ -192,6 +194,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.addEventInput(event.DriftMonitorResultEvent, self.handleDriftResult)
 		self.addEventInput(event.ImageProcessDoneEvent, self.handleImageProcessDone)
 		self.addEventInput(event.MakeTargetListEvent, self.setGrid)
+		self.addEventInput(event.PhasePlateUsagePublishEvent, self.handlePhasePlateUsage)
 		self.driftdone = threading.Event()
 		self.driftimagedone = threading.Event()
 		self.instrument = instrument.Proxy(self.objectservice, self.session)
@@ -213,6 +216,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.received_image_drift = threading.Event()
 		self.requested_drift = None
 		self.grid = None
+		self.pp_used = None
 		self.acq_counter = itertools.cycle(range(0,5))
 		self.time0 = time.time()
 		self.times = []
@@ -283,6 +287,12 @@ class Acquisition(targetwatcher.TargetWatcher):
 		if imageid in self.doneevents:
 			self.doneevents[imageid]['status'] = status
 			self.doneevents[imageid]['received'].set()
+
+	def handlePhasePlateUsage(self, ev):
+		pp_used = ev['data']
+		if pp_used:
+			self.reportStatus('acquisition', 'Received phase plate patch assignment')
+			self.pp_used = pp_used
 
 	def processData(self, newdata):
 		if isinstance(newdata, leginondata.QueueData):
@@ -821,6 +831,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.logger.error('array not returned from camera')
 			return
 		imagedata = leginondata.AcquisitionImageData(initializer=imagedata, preset=presetdata, label=self.name, target=targetdata, list=self.imagelistdata, emtarget=emtarget, pixels=pixels, pixeltype=pixeltype)
+		imagedata['phase plate'] = self.pp_used
 		imagedata['version'] = 0
 		## store EMData to DB to prevent referencing errors
 		self.publish(imagedata['scope'], database=True)
@@ -1208,7 +1219,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.logger.info('%s: %s' % (type, message))
 
 	def simulateTarget(self):
-		self.player.play()
 		self.setStatus('processing')
 		# no need to pause longer for simulateTarget
 		self.is_firstimage = False
