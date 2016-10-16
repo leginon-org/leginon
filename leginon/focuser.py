@@ -77,7 +77,7 @@ class Focuser(singlefocuser.SingleFocuser):
 			self.corrected_stagez = []
 			self.current_focus_sequence_step = j
 			for i, target in enumerate(goodtargets):
-				print 'step', j,'len_focus',len(self.focus_sequence),'target',i
+				self.logger.debug('Step %d of target %d' % (j,i))
 				if j == len(self.focus_sequence)-1 and i == len(goodtargets)-1:
 					self.is_last_target_and_focus_step = True
 				self.goodnumber = i
