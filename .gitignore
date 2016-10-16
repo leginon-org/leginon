@@ -5,7 +5,7 @@
 config.php
 sinedon.cfg
 leginon.cfg
-instrument.cfg
+instruments.cfg
 dmsem.cfg
 jeol.cfg
 *.[oa]
