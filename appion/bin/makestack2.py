@@ -675,6 +675,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 				df1 = abs(bestctfvalue['defocus2'])
 				df2 = abs(bestctfvalue['defocus1'])
 				angast = bestctfvalue['angle_astigmatism'] + 90
+			phase = bestctfvalue['extra_phase_shift']
 			amp = bestctfvalue['amplitude_contrast']
 			kv = imgdata['scope']['high tension']/1000
 			cs = self.getCS(bestctfvalue)/1000
@@ -687,6 +688,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			# acecorrect definition is opposite to database
 			f.write("\tFinal Defocus (m,m,deg): %.6e %.6e %.6f\n"%(df1,df2,-angast))
 			f.write("\tAmplitude Contrast: %.6f\n"%amp)
+			f.write("\tGamma Phase Shift (radians): %.6f\n"%phase)
 			f.write("\tVoltage (kV): %.6f\n"%kv)
 			f.write("\tSpherical Aberration (mm): %.6e\n"%cs)
 			f.write("\tAngstroms per pixel: %.6e\n"%apix)

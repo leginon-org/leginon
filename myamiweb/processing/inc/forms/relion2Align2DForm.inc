@@ -10,14 +10,14 @@
 require_once "basicLayoutForm.inc"; //includes the BasicLayoutForm class that this class extends
 require_once "inc/particledata.inc"; // needed to look up symmetry values
 
-class RelionAlign2DForm extends BasicLayoutForm
+class Relion2Align2DForm extends BasicLayoutForm
 {
 	protected $stackIds;
 
 	// Set Default values in the constructor
 	function __construct( $expId, $extraHTML='', $stackId='', $clip='', $bin='1', $numpart='3000',
 		$lowpass='10', $highpass='1000', $numRef='3', $maxIter='30', $angStep='5', $tau='2', $partDiam='',
-		$flat='on', $zero_mask=False,$mpinodes='2',$mpiprocs='4',$mpithreads='1',$mpimem='4', $commit='on')
+		$flat='on', $zero_mask=False,$mpinodes='2',$mpiprocs='4',$mpithreads='1',$mpimem='4', $commit='on',$usegpu=True)
 	{
 		parent::__construct($expId, $extraHTML);
 
@@ -32,7 +32,7 @@ class RelionAlign2DForm extends BasicLayoutForm
 		$this->setBaseRunName( 'rmaxlike' ); // a unique number will be added to this to create the run name
 		$this->setTitle( 'Relion 2D Maximum Likelihood Alignment Launcher' ); // Shows up in the browser tab
 		$this->setHeading( 'Relion 2D Maximum Likelihood Alignment' ); // shows at the top of the processing page
-		$this->setExeFile( 'relionMaxlikeAlignment.py' ); // added to the command string
+		$this->setExeFile( 'relion2MaxlikeAlignment.py' ); // added to the command string
 		$this->setGuideURL( "http://emg.nysbc.org/redmine/projects/appion/wiki/Relion_2D_Alignment" );
 		$this->setTestable( False ); // True to activate "test single image".
 		$this->setUseLegOutDir( False ); // The output directory will be created in the Appion run directory rather than Leginon.
@@ -82,6 +82,7 @@ class RelionAlign2DForm extends BasicLayoutForm
 		$params->addParam( "mpiprocs", $mpiprocs, "MPI Processors" );
 		$params->addParam( "mpithreads", $mpithreads, "MPI Threads" );
 		$params->addParam( "mpimem", $mpimem, "Memory per MPI Thread (Gb)" );
+		$params->addParam( "usegpu", $usegpu, "Use GPU Acceleration" );
 
 		$params->addParam( "stack", $stackId, "Select a stack of particles to use" );
 		$params->addParam( "clip", $clip, "Unbinned Clip Diameter" );
@@ -183,6 +184,9 @@ class RelionAlign2DForm extends BasicLayoutForm
 		$html .= $params->insertTextField( "mpimem", $fieldSize, '', 'relion2DMaxlike.memoryperthread' );
 
 		$html .= "<br />";
+		$html .= $params->insertCheckBoxField( "usegpu");
+
+		$html .= "<br />";
 		$html .= $params->insertCheckboxField("nompi");
 
 		$html .= "<br />";
@@ -235,6 +239,7 @@ class RelionAlign2DForm extends BasicLayoutForm
 			$command = $this->removeCommandFlag( $command, "mpimem" );
 			$command = $this->removeCommandFlag( $command, "mpiprocs" );
 			$command = $this->removeCommandFlag( $command, "mpinodes" );
+			$command = $this->removeCommandFlag( $command, "usegpu" );
 #			$command.= " --nompi ";
 		}
 

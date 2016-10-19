@@ -69,6 +69,7 @@ class ReferencePanel(leginon.gui.wx.Node.Panel):
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SETTINGS, 'settings', shortHelpString='Settings')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PLAY, 'play', shortHelpString='Test')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ABORT, 'stop', shortHelpString='Abort')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_EXTRACT, 'clock', shortHelpString='Reset Timer')
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
 
 	def onNodeInitialized(self):
@@ -79,6 +80,8 @@ class ReferencePanel(leginon.gui.wx.Node.Panel):
 		self.Bind(leginon.gui.wx.Events.EVT_PLAYER, self.onPlayer)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onStopTool,
 											id=leginon.gui.wx.ToolBar.ID_ABORT)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onResetTimerTool,
+											id=leginon.gui.wx.ToolBar.ID_EXTRACT)
 
 	def onSettingsTool(self, evt):
 		dialog = self._SettingsDialog(self)
@@ -110,6 +113,9 @@ class ReferencePanel(leginon.gui.wx.Node.Panel):
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, True)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
 		self.node.player.stop()
+
+	def onResetTimerTool(self, evt):
+		threading.Thread(target=self.node.uiResetTimer).start()
 
 class MeasureDosePanel(ReferencePanel):
 	icon = 'dose'

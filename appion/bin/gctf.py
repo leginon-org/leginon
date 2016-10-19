@@ -64,8 +64,21 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 			help="DD stack ID", metavar="#")
 
 		self.parser.add_option("--mdef_aveN", dest="mdef_aveN", type="int",default=1,
-			help="Average number of moive frames for movie or particle stack CTF refinement")
+				help="Average number of moive frames for movie or particle stack CTF refinement")
 
+
+		self.parser.add_option("--max_phase_shift", dest="max_phase_shift", type="int",
+				help="Maximum value for phase search")
+
+
+		self.parser.add_option("--min_phase_shift", dest="min_phase_shift", type="int",
+				help="Min value for phase search")
+
+
+		self.parser.add_option("--phase_search_step", dest="phase_search_step", type="int",
+				help="Phase search step increment")
+
+	
 
 	#======================
 	def checkConflicts(self):
@@ -102,7 +115,7 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 	#======================
 	def getCtfProgPath(self):
 		
-		exename = "Gctf-v0.50"
+		exename = "gctfCurrent"
 		ctfprgmexe = subprocess.Popen("which "+exename, shell=True, stdout=subprocess.PIPE).stdout.read().strip()
 		if not os.path.isfile(ctfprgmexe):
 			ctfprgmexe = os.path.join(apParam.getAppionDirectory(), 'bin', exename)
@@ -156,7 +169,7 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 		Find additional phase shift?                  [no] : 
 		"""
 		paramInputOrder = [ 'output', 'apix', 'kv', 'cs', 'ac', 'boxsize', 'do_EPA','mdef_aveN',
-			'resL', 'resH', 'defS', 'astm','input']
+			'resL', 'resH', 'defS', 'astm','input','phase_shift_L','phase_shift_H','phase_shift_S']
 
 
 		
@@ -227,9 +240,12 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 			'defS': self.params['defstep']*10000, #round(defocus/32.0, 1),
 			'astm': beststigdiff,
 			'do_EPA' : self.params['do_EPA'],
-			'mdef_aveN' : self.params['mdef_aveN']
+			'mdef_aveN' : self.params['mdef_aveN'],
 #			'phase': 'no', # this is a secondary amp contrast term for phase plates
 #			'newline': '\n',
+			'phase_shift_H': self.params['max_phase_shift'],
+			'phase_shift_L': self.params['min_phase_shift'],
+			'phase_shift_S': self.params['phase_search_step']
 		}
 
 
@@ -348,7 +364,6 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 					'amplitude_contrast' : inputparams['ac'],
 					'cross_correlation' : float(bits[3]),
 					'do_EPA' : inputparams['do_EPA'],
-				
 					'defocusinit' : bestdef*1e-10,
 					'cs' : self.params['cs'],
 					'volts' : imgdata['scope']['high tension'],
