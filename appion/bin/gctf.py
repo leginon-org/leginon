@@ -25,9 +25,9 @@ from appionlib.apCtf import ctfinsert
 #class gctfEstimateLoop(ctffind4.ctfEstimateLoop):
 class gctfEstimateLoop(appionLoop2.AppionLoop):
 	"""
-	appion Loop function that uses Gctf-v0.5
+	appion Loop function that uses Gctf-v1.06
 	to estimate the CTF in images.
-	Please link your working executable to Gctf-v0.5 that can be found in your PATH environment
+	Please link your working executable to Gctf-v1.06 that can be found in your PATH environment
 	variable
 	"""
 
@@ -77,6 +77,9 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 
 		self.parser.add_option("--phase_search_step", dest="phase_search_step", type="int",
 				help="Phase search step increment")
+
+                self.parser.add_option("--phaseplate", "--phase_plate", dest="shift_phase", default=False,
+                        action="store_true", help="Find additional phase shift")
 
 	
 
@@ -168,11 +171,18 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 		Expected (tolerated) astigmatism           [100.0] : 
 		Find additional phase shift?                  [no] : 
 		"""
+#		paramInputOrder = [ 'output', 'apix', 'kv', 'cs', 'ac', 'boxsize', 'do_EPA','mdef_aveN',
+#			'resL', 'resH', 'defS', 'astm','input','phase_shift_L','phase_shift_H','phase_shift_S']
 		paramInputOrder = [ 'output', 'apix', 'kv', 'cs', 'ac', 'boxsize', 'do_EPA','mdef_aveN',
-			'resL', 'resH', 'defS', 'astm','input','phase_shift_L','phase_shift_H','phase_shift_S']
+			'resL', 'resH', 'defS', 'astm','input']
+                # finalize paramInputOrder
+                if self.params['shift_phase']:
+                        paramInputOrder.extend(['phase_shift_H','phase_shift_L','phase_shift_S'])
+#                paramInputOrder.append('expert_opts')
+#                paramInputOrder.append('newline')
 
 
-		
+		print 'paraminput order is ',paramInputOrder	
 		#get Defocus in Angstroms
 		self.ctfvalues = {}
 		if self.params['nominal'] is not None:
@@ -345,7 +355,7 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 		print 'ctfproglog = ',ctfproglog
 		apDisplay.printMsg("reading %s"%(ctfproglog))
 		logf = open(ctfproglog, "r")
-
+		print 'current path is ',os.getcwd()
 		for line in logf:
 			sline = line.strip()
                         if (re.match('Defocus_U',sline)):
@@ -355,21 +365,48 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 				bits = sline.split()
 				print sline
 				print 'bits are : '+bits[0]+' '+bits[1]+' '+bits[2]+' '+bits[3]
-				self.ctfvalues = {
 
-					'imagenum' : int(1),
-					'defocus2' : float(bits[0])*1e-10,
-					'defocus1' : float(bits[1])*1e-10,
-					'angle_astigmatism' : float(bits[2]),
-					'amplitude_contrast' : inputparams['ac'],
-					'cross_correlation' : float(bits[3]),
-					'do_EPA' : inputparams['do_EPA'],
-					'defocusinit' : bestdef*1e-10,
-					'cs' : self.params['cs'],
-					'volts' : imgdata['scope']['high tension'],
-					'confidence' : float(bits[3]),
-					'confidence_d' : round(math.sqrt(abs(float(bits[3]))), 5)
-				}
+				if len(bits) == 6:
+
+					self.ctfvalues = {
+
+						'imagenum' : int(1),
+						'defocus2' : float(bits[0])*1e-10,
+						'defocus1' : float(bits[1])*1e-10,
+						'angle_astigmatism' : float(bits[2]),
+						'amplitude_contrast' : inputparams['ac'],
+						'cross_correlation' : float(bits[3]),
+						'do_EPA' : inputparams['do_EPA'],
+						'defocusinit' : bestdef*1e-10,
+						'cs' : self.params['cs'],
+						'volts' : imgdata['scope']['high tension'],
+						'confidence' : float(bits[3]),
+						'confidence_d' : round(math.sqrt(abs(float(bits[3]))), 5),
+						'extra_phase_shift':  float(0)
+
+					}
+
+				elif len(bits) == 7:
+
+					self.ctfvalues = {
+
+						'imagenum' : int(1),
+						'defocus2' : float(bits[0])*1e-10,
+						'defocus1' : float(bits[1])*1e-10,
+						'angle_astigmatism' : float(bits[2]),
+						'amplitude_contrast' : inputparams['ac'],
+						'cross_correlation' : float(bits[4]),
+						'do_EPA' : inputparams['do_EPA'],
+						'defocusinit' : bestdef*1e-10,
+						'cs' : self.params['cs'],
+						'volts' : imgdata['scope']['high tension'],
+						'confidence' : float(bits[4]),
+						'confidence_d' : round(math.sqrt(abs(float(bits[4]))), 5),
+						'extra_phase_shift':  float(bits[3]), # radians
+
+					}
+
+				
 
 				print 'defocus2 = '+str(self.ctfvalues['defocus2'])
 				print 'defocus1 = '+str(self.ctfvalues['defocus1'])
@@ -382,23 +419,20 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 
 		if len(self.ctfvalues.keys()) == 0:
 			#
-			apDisplay.printError("CTFFIND4 program did not produce valid results in the log file")
-		print 'original = '+inputparams['orig']
-		print 'output = '+inputparams['output']
+			apDisplay.printError("GCTF program did not produce valid results in the log file")
 		sourcectffile = apDisplay.short(imgdata['filename'])+'.ctf'
-		print 'filename : '+imgdata['filename']
 		
-		print 'source file : '+sourcectffile
 		targetmrcfile = self.params['rundir']+'/'+imgdata['filename']
 		targetmrcfile = apDisplay.short(imgdata['filename'])
 		targetmrcfile = targetmrcfile + '-pow.mrc'
-		print 'targetmrcfile = '+targetmrcfile
-		print 'sourcectffile = '+sourcectffile
+
 		shutil.move(sourcectffile,targetmrcfile)
 		#convert powerspectra to JPEG
 		outputjpgbase = apDisplay.short(imgdata['filename'])+"-pow.jpg"
 		self.lastjpg = outputjpgbase
 		outputjpg = os.path.join(self.powerspecdir, self.lastjpg)
+
+		print 'Powerspec file is ',outputjpg
 		powspec = apImage.mrcToArray(inputparams['output'])
 		apImage.arrayToJpeg(powspec, outputjpg)
 		shutil.move(inputparams['output'], os.path.join(self.powerspecdir, inputparams['output']))
