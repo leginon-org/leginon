@@ -154,7 +154,7 @@ class Focuser(singlefocuser.SingleFocuser):
 		if not setting['switch']:
 			return
 		# average the results for current
-		print self.corrected_focus
+		#print self.corrected_focus
 		if setting['correction type'] == 'Defocus' and len(self.corrected_focus) > 0:
 			defocus0 = self.instrument.tem.Defocus
 			avg_focus = sum(self.corrected_focus) / len(self.corrected_focus)
@@ -195,14 +195,30 @@ class Focuser(singlefocuser.SingleFocuser):
 		elif melt_time:
 			self.startTimer('melt')
 			self.logger.info('Melting ice...')
+		
 			#### change to melt preset
 			meltpresetname = self.settings['melt preset']
 			self.conditionalMoveAndPreset(meltpresetname,emtarget)
 			self.logger.info('melt preset: %s' % (meltpresetname,))
-			self.startTimer('melt exposeSpecimen')
-			self.exposeSpecimen(melt_time)
-			self.stopTimer('melt exposeSpecimen')
-			self.stopTimer('melt')
+			beamtilt0 = self.instrument.tem.BeamTilt
+			beamtilt1 = beamtilt0.copy()
+			for d in (1,-1):
+				delta = self.getFocusBeamTilt()
+				beamtilt1['x']+ d* delta
+				self.instrument.tem.BeamTilt = beamtilt1
+				self.logger.info('Melt at %.4f beam tilt' % (delta,))
+				self.startTimer('melt exposeSpecimen')
+				self.exposeSpecimen(melt_time)
+				self.stopTimer('melt exposeSpecimen')
+				self.stopTimer('melt')
+			self.logger.info('returning to beam tilt %.5f' % (beamtilt0['x'],))
+			self.instrument.tem.BeamTilt = beamtilt0
+
+	def getFocusBeamTilt(self):
+		for setting in self.focus_sequence:
+			if setting['switch'] and setting['focus method']=='Beam Tilt':
+				return setting['tilt']
+		return 0.0
 
 	def acquire(self, presetdata, emtarget=None, attempt=None, target=None):
 		'''
