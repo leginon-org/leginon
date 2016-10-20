@@ -402,7 +402,7 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 						'volts' : imgdata['scope']['high tension'],
 						'confidence' : float(bits[4]),
 						'confidence_d' : round(math.sqrt(abs(float(bits[4]))), 5),
-						'extra_phase_shift':  float(bits[3]), # radians
+						'extra_phase_shift': round(math.radians(float(bits[3])),5), # radians
 
 					}
 
