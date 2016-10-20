@@ -77,6 +77,9 @@ class MotionCorr2UCSFAlignStackLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop
 			self.dd.setUseFrameAlignerRotate(frame_rotate)
 			self.framealigner.setGainYFlip(frame_flip)
 			self.framealigner.setGainRotate(frame_rotate)
+		else:
+			self.framealigner.setGainYFlip(False)
+			self.framealigner.setGainRotate(0)
 
 	def organizeAlignedSum(self):
 		'''
