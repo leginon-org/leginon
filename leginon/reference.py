@@ -164,6 +164,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 				self.logger.info(message % interval)
 				return
 
+		position0 = self.instrument.tem.StagePosition
 		try:
 			self.moveToTarget(preset_name)
 			self.declareDrift('stage')
@@ -177,8 +178,10 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 			self.execute(request_data)
 		except Exception, e:
 			self.logger.error('Error executing request, %s' % e)
+			self.instrument.tem.StagePosition = position0
 			return
 
+		self.instrument.tem.StagePosition = position0
 		self.last_processed = time.time()
 
 	def processRequest(self, request_data):
