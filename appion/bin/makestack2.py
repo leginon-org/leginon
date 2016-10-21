@@ -1143,7 +1143,8 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			self.params['falloff']=int(float(bxlist[3]))
 
 		# bin must be integer if not using Relion:
-		if (not (self.params['bin']).is_integer() and self.params['filetype'] != "relion"):
+		print self.params['bin']
+		if (not (float(self.params['bin'])).is_integer() and self.params['filetype'] != "relion"):
 			apDisplay.printError("Binning value must be integer unless generating Relion file")
 
 		# for Relion
