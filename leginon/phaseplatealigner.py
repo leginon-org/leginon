@@ -1,4 +1,5 @@
 import math
+import time
 from leginon import leginondata, reference, calibrationclient, cameraclient
 import event
 import gui.wx.PhasePlateAligner
@@ -64,6 +65,10 @@ class PhasePlateAligner(reference.Reference):
 			self.logger.info('Position %d is bad. Try next one' % self.current_position)
 		# log phase plate patch in use
 		self.logPhasePlateUsage()
+		pause_time = self.settings['pause time']
+		if pause_time is not None:
+			self.logger.info('Waiting for phase plate to settle for %.1f seconds' % pause_time)
+			time.sleep(pause_time)
 
 	def chargePhasePlate(self):
 		# Need self.preset_name which is set by _processRequest

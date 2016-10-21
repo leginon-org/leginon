@@ -13,8 +13,8 @@ class gctf extends BasicLoopForm
 	protected $alignedDDStackIds;
 
 
-	function __construct( $expId, $extraHTML='', $ampcontrast='0.07', $bestdb=true, $mdef_aveN='7', $do_EPA=true,	
-	$apcontinue='1', $fieldsize='1024', $dast='0.1',  $bestdb=true,$parallel=true, $do_basic_rotave='0', $overlap='0.5',$convsize='85', $do_Hres_ref='0', $defstep='0.1', $resmin='50',$resmax='4',$useDDStack=false, $ddstackid=false)
+	function __construct( $expId, $extraHTML='', $ampcontrast='0.07', $mdef_aveN='7', $do_EPA=true,	
+	$apcontinue='1', $fieldsize='1024', $dast='0.1',  $bestdb=true,$parallel=true, $do_basic_rotave='0', $overlap='0.5',$convsize='85', $do_Hres_ref='0', $defstep='0.1', $resmin='50',$resmax='4',$useDDStack=false, $ddstackid=false,$max_phase_shift='180',$min_phase_shift='0',$phase_search_step='1',$phaseplate=false)
 	{
 		parent::__construct($expId, $extraHTML);
 		
@@ -24,7 +24,7 @@ class gctf extends BasicLoopForm
 		$pubList = array('gctf');
 		$this->setPublications( $pubList );
 		$this->setJobType( 'gctf' );
-		$this->setOutputDirectory( 'gctf' );
+		$this->setOutputDirectory( 'ctf' );
 		$this->setBaseRunName( 'gctfrun' );
 		$this->setTitle( 'GCTF Launcher' );
 		$this->setHeading( 'GPU Accelerated CTF Estimation with GCTF' );
@@ -87,7 +87,14 @@ class gctf extends BasicLoopForm
 		$params->addParam( "gid", $gid, "GPU ID");
 		$params->addParam( "useDDStack",$useDDStack,"Use DD Stack");	
 		$params->addParam( "ddstackid", $ddstackid, "Select an aligned framestack");
-		// Validations
+
+
+		//Phase plate parameters
+		$params->addParam( "max_phase_shift", $max_phase_shift,"Maximum phase shift");
+		$params->addParam( "min_phase_shift", $min_phase_shift,"Minimum phase shift");
+		$params->addParam( "phase_search_step", $phase_search_step,"Phase search step");
+		$params->addParam( "phaseplate", $phaseplate,"Do phase search");
+		
 	}
 	
         public function generateAdditionalFormLeft()
@@ -167,7 +174,22 @@ class gctf extends BasicLoopForm
 		$html.= $params->insertTextField( "Href_resH", $fieldSize );
 		$html.= $params->insertTextField( "refine_local_astm", $fieldSize );
 */
-                $html .= "
+
+
+		$html .= "
+
+	    <br />
+
+            <H4>Phase Plate Parameters</H4>
+	    <hr />";
+                $html.= $params->insertCheckBoxField( "phaseplate");
+		$html.= "<br />";		
+                $html.= $params->insertTextField( "max_phase_shift", $fieldSize );
+                $html.= $params->insertTextField( "min_phase_shift", $fieldSize );
+                $html.= $params->insertTextField( "phase_search_step", $fieldSize );
+
+
+		$html .= "
             <br />
 
 
@@ -247,16 +269,26 @@ class gctf extends BasicLoopForm
 				{$command = $this->removeCommandFlag($command,$param['ddstackid']);
 				 $command = $this->removeCommandFlag($command,$param['useDDStack']);	
 				}
-	
 
-				else
-				{
-       //                         $command = $this->addCommandFlag( $command, $param['name'] );
-				}
-				
+				if (($param['name'] == 'phaseplate')&&($paramArray['phaseplate']['value'] == false )) {
+					$command = $this->removeCommandFlag($command,'max_phase_shift',$param['max_phase_shift']);
+					$command = $this->removeCommandFlag($command,'min_phase_shift',$param['min_phase_shift']);
+					$command = $this->removeCommandFlag($command,'phase_search_step',$param['phase_search_step']);
+	#				$command = $this->removeCommandFlag($command,'phaseplate',$param['phaseplate']);
+
+					}
+
+				else {
+		#			$command = $this->removeCommandFlag($command,'phaseplate',$param['phaseplate']);
+
+					}
+
                         }
                 }
+
                 return $command;
 	}
+
+	
 
 	}
