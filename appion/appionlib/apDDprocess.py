@@ -987,9 +987,10 @@ class DDFrameProcessing(DirectDetectorProcessing):
 					if self.getTrimingEdge() > 0:
 						a = self.trimArray(a)
 					mrc.write(a,self.tempframestackpath)
+					apDisplay.printMsg('flipped %s to %s.' % (rawframestack_path, self.tempframestackpath))
 			else:
 				os.symlink(rawframestack_path,self.tempframestackpath)
-			apDisplay.printMsg('link %s to %s.' % (rawframestack_path, self.tempframestackpath))
+				apDisplay.printMsg('link %s to %s.' % (rawframestack_path, self.tempframestackpath))
 		return self.tempframestackpath
 
 	def makeCorrectedFrameStack(self, use_full_raw_area=False):
@@ -1181,6 +1182,14 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		camdata = self.getAlignedCameraEMData()
 		new_array = mrc.read(self.aligned_dw_sumpath)
 		return apDBImage.makeAlignedImageData(self.image,camdata,new_array,alignlabel)
+
+	def getAlignBin(self):
+		alignbin = self.getNewBinning()
+		if alignbin > 1:
+			bintext = '_%dx' % (alignbin)
+		else:
+			bintext = ''
+		return bintext
 
 	def isReadyForAlignment(self):
 		'''

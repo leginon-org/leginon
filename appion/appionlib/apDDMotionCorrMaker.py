@@ -35,7 +35,8 @@ class MotionCorrAlignStackLoop(apDDAlignStackMaker.AlignStackLoop):
 	def setTempPaths(self):
 		# The alignment is done in tempdir (a local directory to reduce network traffic)
 		# logpth carries the name of the tempframestack
-		self.temp_logpath = self.dd.tempframestackpath[:-4]+'_Log.txt'
+		bintext = self.getAlignBin()
+		self.temp_logpath = self.dd.tempframestackpath[:-4]+bintext+'_Log.txt'
 		self.temp_aligned_sumpath = 'temp%s.gpuid_%d_sum.mrc' % (self.hostname, self.dd.gpuid)
 		self.temp_aligned_stackpath = 'temp%s.gpuid_%d_aligned_st.mrc' % (self.hostname, self.dd.gpuid)
 

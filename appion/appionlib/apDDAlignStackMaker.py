@@ -70,7 +70,8 @@ class AlignStackLoop(apDDStackMaker.FrameStackLoop):
 
 	def setTempPaths(self):
 		# The alignment is done in tempdir (a local directory to reduce network traffic)
-		self.temp_logpath = self.dd.tempframestackpath[:-4]+'_Log.txt'
+		bintext = self.getAlignBin()
+		self.temp_logpath = self.dd.tempframestackpath[:-4]+bintext+'_Log.txt'
 		self.temp_aligned_sumpath = 'temp%s_sum.mrc' % (self.hostname)
 		self.temp_aligned_stackpath = 'temp%s_aligned_st.mrc' % (self.hostname)
 
@@ -85,6 +86,7 @@ class AlignStackLoop(apDDStackMaker.FrameStackLoop):
 		self.framealigner.setInputFrameStackPath(self.dd.tempframestackpath)
 		self.framealigner.setAlignedSumPath(self.temp_aligned_sumpath)
 		self.framealigner.setAlignedStackPath(self.temp_aligned_stackpath)
+		# Log is stream to self.temp_logpath but will be convert or copied to self.log later
 		self.framealigner.setLogPath(self.temp_logpath)
 
 		if self.isAlign():
@@ -133,6 +135,14 @@ class AlignStackLoop(apDDStackMaker.FrameStackLoop):
 			a = numpy.rot90(a, number)
 			mrc.write(a, filepath)
 
+	def getAlignBin(self):
+		alignbin = self.rundata['params']['bin']
+		if alignbin > 1:
+			bintext = '_%dx' % (alignbin)
+		else:
+			bintext = ''
+		return bintext
+
 	#=======================
 	def otherProcessImage(self, imgdata):
 		# Align
@@ -169,7 +179,7 @@ class AlignStackLoop(apDDStackMaker.FrameStackLoop):
 			self.convertLogFile()
 			if self.dd.getKeepAlignedStack():
 				# bug in MotionCorr requires this
-				self.updateFrameStackHeaderImageStats(temp_aligned_stackpath)
+				self.dd.updateFrameStackHeaderImageStats(temp_aligned_stackpath)
 			if not self.isUseFrameAlignerSum():
 				# replace the sum with one corresponds with framelist
 				self.sumSubStackWithNumpy(temp_aligned_stackpath,temp_aligned_sumpath)
@@ -216,7 +226,7 @@ class AlignStackLoop(apDDStackMaker.FrameStackLoop):
 		'''
 		Standard LogFile is in XX form.
 		'''
-		if self.dd.tempdir != self.dd.rundir:
+		if self.temp_logpath != self.log:
 			# Move the Log to permanent location for display and inspection
 			if os.path.isfile(self.temp_logpath):
 				shutil.move(self.temp_logpath,self.log)

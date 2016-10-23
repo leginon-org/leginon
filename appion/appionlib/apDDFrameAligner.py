@@ -165,6 +165,10 @@ class MotionCorr1(DDFrameAligner):
 		print outbuffer
 		apDisplay.printMsg('Real alignment log written to %s' % self.logpath)
 
+	def setGPUid(self,gpuid):
+		p = {'gpuid':gpuid}
+		self.setFrameAlignOptions(p)
+
 class MotionCorr_Purdue(MotionCorr1):
 	executable = 'dosefgpu_driftcorr'
 	def getValidAlignOptionMappings(self):

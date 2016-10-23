@@ -2445,6 +2445,10 @@ class particledata {
 		$bin = ((int) $r['bin'] < 1) ? 1:(int) $r['bin'];
 		$bin_text = ($bin == 1) ? '':'_'.$bin.'x';
 		$source_image_name = $this->getImageNameFromId($r['source_imgid']);
+		// refs #4544 default log without bin_text
+		$default_align_log = $r['rundir'].'/'.$source_image_name.'_st_Log.txt';
+		if (file_exists ($default_align_log)) return $default_align_log;
+		// back compatibility older alignment still use the original binned log
 		$align_log = $r['rundir'].'/'.$source_image_name.'_st'.$bin_text.'_Log.txt';
 		return $align_log;
 	}
