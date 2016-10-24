@@ -72,8 +72,10 @@ class AlignStackLoop(apDDStackMaker.FrameStackLoop):
 		# The alignment is done in tempdir (a local directory to reduce network traffic)
 		bintext = self.getAlignBin()
 		self.temp_logpath = self.dd.tempframestackpath[:-4]+bintext+'_Log.txt'
-		self.temp_aligned_sumpath = 'temp%s_sum.mrc' % (self.hostname)
-		self.temp_aligned_stackpath = 'temp%s_aligned_st.mrc' % (self.hostname)
+		self.temp_aligned_sumpath = 'temp%s_%d_sum.mrc' % (self.hostname, self.dd.gpuid)
+		self.temp_aligned_stackpath = 'temp%s_%d_aligned_st.mrc' % (self.hostname, self.dd.gpuid)
+		apDisplay.printDebug( 'temp_aligned_sumpath= %s' % self.temp_aligned_sumpath)
+		apDisplay.printDebug('temp_aligned_stackpath= %s' % self.temp_aligned_stackpath)
 
 	def setOtherProcessImageResultParams(self):
 		'''
@@ -156,7 +158,9 @@ class AlignStackLoop(apDDStackMaker.FrameStackLoop):
 				return
 			
 			os.chdir(self.dd.tempdir)
+			# actual alignment
 			self.alignFrameStack()
+			# organize the results
 			self.is_ok = self.organizeAlignedSum()
 			if not self.is_ok:
 				os.chdir(self.dd.rundir)
@@ -197,15 +201,20 @@ class AlignStackLoop(apDDStackMaker.FrameStackLoop):
 		if os.path.isfile(self.dd.aligned_sumpath):
 			# Save the alignment result
 			self.aligned_imagedata = self.dd.makeAlignedImageData(alignlabel=self.params['alignlabel'])
+			apDisplay.printDebug( 'temp_aligned_stackpath= %s' % self.temp_aligned_stackpath)
+			apDisplay.printDebug('self.dd.aligned_stackpath= %s' % self.dd.aligned_stackpath)
+			apDisplay.printDebug('self.dd.framestackpath= %s' % self.dd.framestackpath)
+
 			if self.params['keepstack']:
 				if not os.path.isfile(self.temp_aligned_stackpath):
 					apDisplay.printWarning('No aligned stack generated as %s' % self.temp_aligned_stackpath)
 				else:
+					apDisplay.printMsg( 'moving temp aligned stack at the host to %s' % self.dd.aligned_stackpath)
 					shutil.move(self.temp_aligned_stackpath,self.dd.aligned_stackpath)
 			else:
 				if os.path.isfile(self.temp_aligned_stackpath):
 					apFile.removeFile(self.temp_aligned_stackpath)
-
+			
 			# replace the unaligned stack with aligned_stack
 			if os.path.isfile(self.dd.aligned_stackpath):
 				# aligned_stackpath exists either because keepstack is true

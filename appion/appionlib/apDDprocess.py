@@ -1150,6 +1150,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		header['amax'] = stats['max']+0
 		header['amean'] = stats['mean']+0
 		header['rms'] = stats['std']+0
+		header['mz'] = 1
 		mrc.update_file_header(stackpath, header)
 
 	def isSumSubStackWithFrameAligner(self):
@@ -1201,6 +1202,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			return False
 		# Unless the _Log.txt is made, even if faked, the frame stack is not completed
 		logpath = self.framestackpath[:-4]+'_Log.txt'
+
 		if not self.waitForPathExist(logpath,60):
 			apDisplay.printWarning('Stack making not finished, Skipping')
 			return False
