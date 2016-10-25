@@ -50,8 +50,11 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 		self.parser.add_option("--dast", dest="dast", type="float", default=1000.0,
 			help="dAst in microns is used to restrain the amount of astigmatism", metavar="#")
 	
-		self.parser.add_option("--do_EPA", dest="do_EPA",default=False,action="store_true",
-			help="Do equiphase averaging",metavar="#")
+		self.parser.add_option("--do_EPA", dest="do_EPA", default=False, action="store_true",
+			help="Do equiphase averaging")
+
+		self.parser.add_option("--do_Hres_ref", dest="do_Hres_ref", default=False, action="store_true",
+			help="Boost high resolution refinement")
 
 		self.parser.add_option("--bestdb", "--best-database", dest="bestdb", default=False,
 			action="store_true", help="Use best amplitude contrast and astig difference from database")
@@ -173,8 +176,8 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 		"""
 #		paramInputOrder = [ 'output', 'apix', 'kv', 'cs', 'ac', 'boxsize', 'do_EPA','mdef_aveN',
 #			'resL', 'resH', 'defS', 'astm','input','phase_shift_L','phase_shift_H','phase_shift_S']
-		paramInputOrder = [ 'output', 'apix', 'kv', 'cs', 'ac', 'boxsize', 'do_EPA','mdef_aveN',
-			'resL', 'resH', 'defS', 'astm','input']
+		paramInputOrder = [ 'output', 'apix', 'kv', 'cs', 'ac', 'boxsize', 'do_EPA', 'do_Hres_ref', 'do_mdef_refine', 'mdef_aveN',
+			'resL', 'resH', 'defL', 'defH', 'defS', 'astm','input']
                 # finalize paramInputOrder
                 if self.params['shift_phase']:
                         paramInputOrder.extend(['phase_shift_H','phase_shift_L','phase_shift_S'])
@@ -182,11 +185,9 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 #                paramInputOrder.append('newline')
 
 
-		print 'paraminput order is ',paramInputOrder	
 		#get Defocus in Angstroms
 		self.ctfvalues = {}
 		if self.params['nominal'] is not None:
-			print self.params['nominal']
 			nominal = abs(self.params['nominal']*1e4)
 			apDisplay.printWarning("overriding CTF value with user nominal value %.1f A"%(nominal))
 			ctfvalue = None
@@ -225,18 +226,14 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 		apix = apDatabase.getPixelSize(imgdata)
 		# inputparams defocii and astig are in Angstroms
 
-		
-                if self.params['do_EPA']:
-                        self.params['do_EPA'] ='1'
-                        print 'do_EPA is ',self.params['do_EPA']
-                else:
-                        self.params['do_EPA'] = '0'
-                        print 'do_EPA is ',self.params['do_EPA']
+		# may be gain/dark corrected movie that has been binned
+		origpath, binning = self.getOriginalPathAndBinning(imgdata)
 
-
+		# ddstack might be binned.
+		apix *= binning
 
 		inputparams = {
-	#		'orig': os.path.join(imgdata['session']['image path'], imgdata['filename']+".mrc"),
+			'orig': origpath,
 			'input': apDisplay.short(imgdata['filename'])+".mrc",
 			'output': apDisplay.short(imgdata['filename'])+"-pow.mrc",
 
@@ -250,7 +247,9 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 			'defS': self.params['defstep']*10000, #round(defocus/32.0, 1),
 			'astm': beststigdiff,
 			'do_EPA' : self.params['do_EPA'],
+			'do_Hres_ref' : self.params['do_Hres_ref'],
 			'mdef_aveN' : self.params['mdef_aveN'],
+			'do_mdef_refine' : 0,
 #			'phase': 'no', # this is a secondary amp contrast term for phase plates
 #			'newline': '\n',
 			'phase_shift_H': self.params['max_phase_shift'],
@@ -260,34 +259,16 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 
 
 	
-		if self.params['ddstackid'] is None:
-#		 self.params['ddstackid']
-#		 print 'self.params[''ddstackid''] is ',self.params['ddstackid']
-
-
-#		except NameError:
-                        origPath = os.path.join(imgdata['session']['image path'], imgdata['filename']+".mrc")
-                        inputparams['orig'] = origPath
-
-		else:
-                        self.dd = apDDprocess.DDStackProcessing()
-                        self.dd.setDDStackRun(self.params['ddstackid'])
-                        self.ddstackrun = self.dd.getDDStackRun()
-                        self.ddstackpath = self.ddstackrun['path']['path']
-                        print 'dd stack path',self.ddstackpath
-			print self.ddstackpath
-                        ddPath = os.path.join(self.ddstackpath,imgdata['filename']+"_st.mrc")
-			inputparams['orig'] = ddPath
 
 		defrange = self.params['defstep'] * self.params['numstep'] * 1e4 ## do 25 steps in either direction # in angstrum
-		inputparams['defmin']= round(bestdef-defrange, 1) #in angstrom 
-		if inputparams['defmin'] < 0:
+		inputparams['defL']= round(bestdef-defrange, 1) #in angstrom 
+		if inputparams['defL'] < 0:
 			apDisplay.printWarning("Defocus minimum is less than zero")
-			inputparams['defmin'] = inputparams['defS']
-		inputparams['defmax']= round(bestdef+defrange, 1) #in angstrom
+			inputparams['defL'] = inputparams['defS']
+		inputparams['defH']= round(bestdef+defrange, 1) #in angstrom
 		apDisplay.printColor("Defocus search range: %d A to %d A (%.2f to %.2f um)"
-			%(inputparams['defmin'], inputparams['defmax'], 
-			inputparams['defmin']*1e-4, inputparams['defmax']*1e-4), "cyan")
+			%(inputparams['defL'], inputparams['defH'], 
+			inputparams['defL']*1e-4, inputparams['defH']*1e-4), "cyan")
 
 		### secondary lock check right before it starts on the real part
 		if self.params['parallel'] and os.path.isfile(apDisplay.short(imgdata['filename'])+".mrc"):
@@ -322,15 +303,16 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 				gctfcommandstring = gctfcommandstring + (' '+str(inputparams[paramName])+' ')
 
 			elif paramName == 'output':
-				continue	
+				continue
+			elif type(inputparams[paramName]) == type(True):
+				gctfcommandstring += ' --'+str(paramName)
 			else:
 		#		ctfprogproc.stdin.write((' --'+str(paramName)+' '+str(inputparams[paramName])).strip("\n"))
 		#		apDisplay.printColor((' --'+str(paramName)+' '+str(inputparams[paramName])).strip("\n"),"magenta")
 				gctfcommandstring = gctfcommandstring + (' --'+str(paramName)+' '+str(inputparams[paramName])+' ')
 			
-		print 'gctfcommandstring is ',gctfcommandstring
-#		ctfprogproc.stdin.write(gctfcommandstring)
-#		apDisplay.printColor(gctfcommandstring,"magenta")
+		#		ctfprogproc.stdin.write(gctfcommandstring)
+		apDisplay.printColor(gctfcommandstring,"magenta")
 
 		ctfprogproc = subprocess.Popen(self.ctfprgmexe+gctfcommandstring, shell=True, stdin=subprocess.PIPE,)
                 apDisplay.printColor(self.ctfprgmexe+gctfcommandstring, "magenta")
@@ -357,8 +339,7 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 		print 'current path is ',os.getcwd()
 		for line in logf:
 			sline = line.strip()
-                        if (re.match('Defocus_U',sline)):
-				
+			if (re.match('Defocus_U',sline)):
 				sline = next(logf).strip()
 				bits = sline.split()
 
@@ -389,7 +370,7 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 						'imagenum' : int(1),
 						'defocus2' : float(bits[0])*1e-10,
 						'defocus1' : float(bits[1])*1e-10,
-						'angle_astigmatism' : float(bits[2]) + 90, # see bug #4047 for astig conversion
+						'angle_astigmatism' : float(bits[2]) + 90,  # see bug #4047 for astig conversion
 						'amplitude_contrast' : inputparams['ac'],
 						'cross_correlation' : float(bits[4]),
 						'do_EPA' : inputparams['do_EPA'],
@@ -442,6 +423,7 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 		import pprint
 
 		self.insertCtfRun(imgdata)
+	
 		pprint.pprint('***********insertCTFRUN**************')
 		pprint.pprint((imgdata))
 		pprint.pprint((self.ctfvalues))
@@ -495,6 +477,28 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 		runq.insert()
 		self.ctfrun = runq
 		return True
+
+	def getOriginalPathAndBinning(self,imgdata):
+		if self.params['ddstackid'] is None:
+			origPath = os.path.join(imgdata['session']['image path'], imgdata['filename']+".mrc")
+			binning = 1
+		else:
+			self.dd = apDDprocess.DDStackProcessing()
+			self.dd.setDDStackRun(self.params['ddstackid'])
+			self.dd.setImageData(imgdata)
+			self.ddstackrun = self.dd.getDDStackRun()
+			self.ddstackpath = self.ddstackrun['path']['path']
+			if not imgdata['camera']['align frames']:
+				# ddstack of the ddstack may be different from the source image
+				binning = self.ddstackrun['params']['bin']
+				source_imgdata = imgdata
+			else:
+				# but should be the same as the aligned image
+				binning = 1
+				pair = self.dd.getAlignImagePairData(self.ddstackrun,False)
+				source_imgdata = pair['source']
+			origPath = os.path.join(self.ddstackpath,source_imgdata['filename']+"_st.mrc")
+		return origPath, binning
 
 if __name__ == '__main__':
 	imgLoop = gctfEstimateLoop()
