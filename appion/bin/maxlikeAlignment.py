@@ -478,7 +478,11 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			nproc = nproc = apParam.getNumProcessors()
 		else:
 			nproc = self.params['nproc']
+	
 		mpirun = self.checkMPI()
+		if mpirun is None:
+			apDisplay.printError("There is no MPI installed")
+
 		self.estimateIterTime()
 		if nproc > 2 and mpirun is not None:
 			### use multi-processor
