@@ -597,6 +597,19 @@ class CtfDisplay(object):
 		self.conf3010 = scipy.stats.pearsonr(normpeakdata[ind30:ind10], ctffitdata[ind30:ind10])[0]
 		self.overconf3010 = scipy.stats.pearsonr(normpeakdata[ind30:ind10], overctffitdata[ind30:ind10])[0]
 		apDisplay.printColor("1/30A - 1/10A confidence is %.3f (overfocus %.3f)"%(self.conf3010, self.overconf3010), "green")
+		if math.isnan(self.conf3010):
+			if not self.debug:
+				apDisplay.printWarning("1/30A - 1/10A confidnece is nan, set to 0.0")
+				self.conf3010 = 0.0
+			else:
+				apDisplay.printError("1/30A - 1/10A confidnece is nan")
+		if math.isnan(self.overconf3010):
+			if not self.debug:
+				apDisplay.printWarning("1/30A - 1/10A overfocus confidnece is nan, set to 0.0")
+				self.overconf3010 = 0.0
+			else:
+				apDisplay.printError("1/30A - 1/10A overfocus confidnece is nan")
+		apDisplay.printColor("1/30A - 1/10A confidence is %.3f (overfocus %.3f)"%(self.conf3010, self.overconf3010), "green")
 		if self.overconf3010 > self.conf3010*1.1:
 			apDisplay.printWarning("Image is possibly over-focused")
 
