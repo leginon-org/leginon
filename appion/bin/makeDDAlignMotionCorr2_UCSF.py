@@ -44,6 +44,8 @@ class MotionCorr2UCSFAlignStackLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop
 		self.parser.add_option("--Bft",dest="Bft",metavar="#",type=float,default=100,
                         help=" B-Factor for alignment, default 100.")
 
+		self.parser.add_option("--force_cpu_flat", dest="force_cpu_flat", default=False,
+			action="store_true", help="Use cpu to make frame flat field corrrection")
 
 	#=======================
 	def checkConflicts(self):
@@ -70,7 +72,7 @@ class MotionCorr2UCSFAlignStackLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop
 		else:
 			self.framealigner.setTotalDose(apDatabase.getDoseFromImageData(self.dd.image))
 #		self.temp_aligned_dw_sumpath = 'temp%s.gpuid_%d_sum_DW.mrc' % (self.hostname, self.params['gpuid'])
-		if not self.dd.hasBadPixels():
+		if not self.dd.hasBadPixels() and not self.params['force_cpu_flat']:
 			frame_flip, frame_rotate=self.dd.getImageFrameOrientation()
 			print 'flip','rotate', frame_flip, frame_rotate
 			self.dd.setUseFrameAlignerYFlip(frame_flip)
@@ -78,6 +80,8 @@ class MotionCorr2UCSFAlignStackLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop
 			self.framealigner.setGainYFlip(frame_flip)
 			self.framealigner.setGainRotate(frame_rotate)
 		else:
+			self.dd.setUseFrameAlignerYFlip(False)
+			self.dd.setUseFrameAlignerRotate(0)
 			self.framealigner.setGainYFlip(False)
 			self.framealigner.setGainRotate(0)
 
