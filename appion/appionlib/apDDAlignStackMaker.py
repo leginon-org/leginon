@@ -72,8 +72,8 @@ class AlignStackLoop(apDDStackMaker.FrameStackLoop):
 		# The alignment is done in tempdir (a local directory to reduce network traffic)
 		bintext = self.getAlignBin()
 		self.temp_logpath = self.dd.tempframestackpath[:-4]+bintext+'_Log.txt'
-		self.temp_aligned_sumpath = 'temp%s_%d_sum.mrc' % (self.hostname, self.dd.gpuid)
-		self.temp_aligned_stackpath = 'temp%s_%d_aligned_st.mrc' % (self.hostname, self.dd.gpuid)
+		self.temp_aligned_sumpath = 'temp%s.gpuid_%d_sum.mrc' % (self.hostname, self.dd.gpuid)
+		self.temp_aligned_stackpath = 'temp%s.gpuid_%d_aligned_st.mrc' % (self.hostname, self.dd.gpuid)
 		apDisplay.printDebug( 'temp_aligned_sumpath= %s' % self.temp_aligned_sumpath)
 		apDisplay.printDebug('temp_aligned_stackpath= %s' % self.temp_aligned_stackpath)
 
@@ -138,7 +138,7 @@ class AlignStackLoop(apDDStackMaker.FrameStackLoop):
 			mrc.write(a, filepath)
 
 	def getAlignBin(self):
-		alignbin = self.rundata['params']['bin']
+		alignbin = self.params['bin']
 		if alignbin > 1:
 			bintext = '_%dx' % (alignbin)
 		else:

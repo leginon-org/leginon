@@ -37,8 +37,8 @@ class MotionCorrAlignStackLoop(apDDAlignStackMaker.AlignStackLoop):
 		# logpth carries the name of the tempframestack
 		bintext = self.getAlignBin()
 		self.temp_logpath = self.dd.tempframestackpath[:-4]+bintext+'_Log.txt'
-		self.temp_aligned_sumpath = 'temp%s_%d_sum.mrc' % (self.hostname, self.dd.gpuid)
-		self.temp_aligned_stackpath = 'temp%s_%d_aligned_st.mrc' % (self.hostname, self.dd.gpuid)
+		self.temp_aligned_sumpath = 'temp%s.gpuid_%d_sum.mrc' % (self.hostname, self.dd.gpuid)
+		self.temp_aligned_stackpath = 'temp%s.gpuid_%d_aligned_st.mrc' % (self.hostname, self.dd.gpuid)
 
 if __name__ == '__main__':
 	makeStack = MotionCorrAlignStackLoop()
