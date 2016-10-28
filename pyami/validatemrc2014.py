@@ -64,7 +64,7 @@ class MRC2014Check(object):
 		return self.header['nsymbt']
 
 	def getModeLength(self,mode):
-		lengths = [1,2,4,2,4,2,2,4]
+		lengths = [1,2,4,4,8,1,2,4]
 		if mode > len(lengths):
 			self.printError("mode error: Mode %d not defined" % (mode,0))
 		return lengths[mode]
@@ -146,9 +146,12 @@ class MRC2014Check(object):
 				else:
 					print ('Check as 3D volume stack....')
 
-	def getEndianess(self):
+	def getEndianness(self):
+		if not self.header['byteorder']:
+			self.printError('Machine stamp not defined')
+			return
 		try:
-			self.printInfo('Endianess: %s' % mrc.intbyteorder[self.header['byteorder']])
+			self.printInfo('Endianness: %s' % mrc.intbyteorder[self.header['byteorder']])
 		except:
 			self.printError('Machine stamp not defined properly')
 
@@ -174,6 +177,11 @@ class MRC2014Check(object):
 		self.printInfo(axis_order_string)
 
 	def getDimension(self):
+		slices_label = ''
+		slices_string = ''
+		if not (self.header['mx']>0 and self.header['my']>0 and self.header['mz']>0):
+			# can not calculate dimension
+			return
 		if self.header['mz']:
 			if not self.is2D:
 				slices_label = '(Z)Slices x '
@@ -198,7 +206,7 @@ class MRC2014Check(object):
 			self.printError('MX,MY,MZ must be larger than 0. Currently MX=%d, MY=%d, MZ=%d ' % (self.header['mx'],self.header['my'],self.header['mz']))
 
 	def getInfos(self):
-		self.getEndianess()
+		self.getEndianness()
 		self.getDataType()
 		self.getMapType()
 		self.getDimension()
