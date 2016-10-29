@@ -390,13 +390,18 @@ class MotionCorr2_UCSF(DDFrameAligner):
 				shifts.append([shx, shy])
 
 		### convert motioncorr2 output to motioncorr1 format
+		binning = 1.0
+		if 'FtBin' in self.alignparams.keys():
+			binning = self.alignparams['FtBin']
 		shifts_adjusted = []
 		midval = len(shifts)/2
 		midshx = shifts[midval][0]
 		midshy = shifts[midval][1]
 		for l in shifts:
-			shxa = l[0] - midshx
-			shya = l[1] - midshy
+			# convert to the convention used in motioncorr
+			# so that shift is in pixels of the aligned image.
+			shxa = -(l[0] - midshx) / binning
+			shya = -(l[1] - midshy) / binning
 			shifts_adjusted.append([shxa, shya])
 
 		### motioncorr1 format, needs conversion from motioncorr2 format
