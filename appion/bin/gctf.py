@@ -227,6 +227,7 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 		# inputparams defocii and astig are in Angstroms
 
 		# may be gain/dark corrected movie that has been binned
+		print 'here'
 		origpath, binning = self.getOriginalPathAndBinning(imgdata)
 
 		# ddstack might be binned.
@@ -416,14 +417,14 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 
 		return
 
-def getMovieAverageType(self):
-	'''
-	movie average type 0 is coherent (averaging F as a vector)
-	1 is incoherent (averaging |F| )
-	'''
-	#incoherent averaging (averaging |F|) makes sense when using movie to align
-	# since coherent average would be no different from working with sum image
-	return int(self.params['ddstackid'] is not None and self.params['ddstackid'] is not 0)
+	def getMovieAverageType(self):
+		'''
+		movie average type 0 is coherent (averaging F as a vector)
+		1 is incoherent (averaging |F| )
+		'''
+		#incoherent averaging (averaging |F|) makes sense when using movie to align
+		# since coherent average would be no different from working with sum image
+		return int(self.params['ddstackid'] is not None and self.params['ddstackid'] is not 0)
 
 	#======================
 	def commitToDatabase(self, imgdata):
