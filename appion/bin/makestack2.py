@@ -676,6 +676,9 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 				df2 = abs(bestctfvalue['defocus1'])
 				angast = bestctfvalue['angle_astigmatism'] + 90
 			phase = bestctfvalue['extra_phase_shift']
+			# refs #4556 convert None to number from old data
+			if phase is None:
+				phase = 0.0
 			amp = bestctfvalue['amplitude_contrast']
 			kv = imgdata['scope']['high tension']/1000
 			cs = self.getCS(bestctfvalue)/1000
