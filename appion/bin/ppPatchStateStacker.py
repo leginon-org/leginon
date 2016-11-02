@@ -126,7 +126,6 @@ class PhasePlateTestStacker(appionScript.AppionScript):
 		mrc.update_file_header(outputfile, headerdict)
 		print outputfile
 
-	def commitToDatabase(
 #=====================
 #=====================
 #=====================
