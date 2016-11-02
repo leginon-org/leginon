@@ -176,7 +176,7 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 		"""
 #		paramInputOrder = [ 'output', 'apix', 'kv', 'cs', 'ac', 'boxsize', 'do_EPA','mdef_aveN',
 #			'resL', 'resH', 'defS', 'astm','input','phase_shift_L','phase_shift_H','phase_shift_S']
-		paramInputOrder = [ 'output', 'apix', 'kv', 'cs', 'ac', 'boxsize', 'do_EPA', 'do_Hres_ref', 'do_mdef_refine', 'mdef_aveN',
+		paramInputOrder = [ 'output', 'apix', 'kv', 'cs', 'ac', 'boxsize', 'do_EPA', 'do_Hres_ref', 'mdef_ave_type', 'mdef_aveN',
 			'resL', 'resH', 'defL', 'defH', 'defS', 'astm','input']
                 # finalize paramInputOrder
                 if self.params['shift_phase']:
@@ -227,6 +227,7 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 		# inputparams defocii and astig are in Angstroms
 
 		# may be gain/dark corrected movie that has been binned
+		print 'here'
 		origpath, binning = self.getOriginalPathAndBinning(imgdata)
 
 		# ddstack might be binned.
@@ -249,9 +250,7 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 			'do_EPA' : self.params['do_EPA'],
 			'do_Hres_ref' : self.params['do_Hres_ref'],
 			'mdef_aveN' : self.params['mdef_aveN'],
-			'do_mdef_refine' : 0,
-#			'phase': 'no', # this is a secondary amp contrast term for phase plates
-#			'newline': '\n',
+			'mdef_ave_type' : self.getMovieAverageType(),
 			'phase_shift_H': self.params['max_phase_shift'],
 			'phase_shift_L': self.params['min_phase_shift'],
 			'phase_shift_S': self.params['phase_search_step']
@@ -417,6 +416,15 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 		#apFile.removeFile(inputparams['input'])
 
 		return
+
+	def getMovieAverageType(self):
+		'''
+		movie average type 0 is coherent (averaging F as a vector)
+		1 is incoherent (averaging |F| )
+		'''
+		#incoherent averaging (averaging |F|) makes sense when using movie to align
+		# since coherent average would be no different from working with sum image
+		return int(self.params['ddstackid'] is not None and self.params['ddstackid'] is not 0)
 
 	#======================
 	def commitToDatabase(self, imgdata):

@@ -352,6 +352,7 @@ class ApAceRunData(Data):
 			('ace2_params', ApAce2ParamsData),
 			('ctffind4_params', ApCtfFind4ParamsData),
 			('transferred', bool),
+			('transfer_params', ApAceTransferParamsData),
 			('session', leginon.leginondata.SessionData),
 			('path', ApPathData),
 			('name', str),
@@ -433,6 +434,16 @@ class ApCtfFind4ParamsData(Data):
 			('min_phase_shift', float),
 			('max_phase_shift', float),
 			('phase_search_step', float),
+		)
+	typemap = classmethod(typemap)
+
+class ApAceTransferParamsData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('frompreset', str),
+			('topreset', str),
+			('criteria', str),
+			('run', ApAceRunData),
 		)
 	typemap = classmethod(typemap)
 
