@@ -1163,6 +1163,7 @@ class particledata {
 			."c.`confidence_5_peak` , "
 			."c.`resolution_80_percent` , "
 			."c.`resolution_50_percent` , "
+			."c.`ctffind4_resolution` , "
 			."(c.`defocus1`+c.`defocus2`)/2+s.`defocus` as difference "
 			."from ApCtfData c "
 			."left join(ApAceRunData r, ApPathData p) "
@@ -1194,7 +1195,29 @@ class particledata {
 		//	$q .= " order by ".join(", ",$fields);
 		//}
 
-		return $this->mysql->getSQLResult($q);
+		$r = $this->mysql->getSQLResult($q);
+		if (is_array($r) && count($r) > 0 ) {
+			$newr = array();
+			foreach ($r as $info) {
+				$appion_confidence = $this->calculateCtfConfidenceScore($info);
+				$info['confidence_appion'] = $appion_confidence;
+				$newr[] = $info;
+			}
+			$r = $newr;
+		}
+		return $r;
+	}
+
+	function calculateCtfConfidenceScore($ctfinfo) {
+		// Same as appion/appionlib/apCtf/ctfdb.py calculateConfidenceScore
+		$max_confidence = -1.0;
+		if (!is_array($ctfinfo)) return;
+		foreach (array('confidence_30_10','confidence_5_peak','confidence','confidence_d') as $key ) {
+			if ( array_key_exists($key, $ctfinfo) && $max_confidence < $ctfinfo[$key]+0.0 ) {
+				$max_confidence = $ctfinfo[$key]+0.0;
+			}
+		}
+		return $max_confidence;
 	}
 
 	function getBestCtfInfoForSessionId($sessionId, $limit=false) {
