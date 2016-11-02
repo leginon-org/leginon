@@ -239,8 +239,6 @@ class Relion2Align2DForm extends BasicLayoutForm
 			$command = $this->removeCommandFlag( $command, "mpimem" );
 			$command = $this->removeCommandFlag( $command, "mpiprocs" );
 			$command = $this->removeCommandFlag( $command, "mpinodes" );
-			$command = $this->removeCommandFlag( $command, "usegpu" );
-#			$command.= " --nompi ";
 		}
 
 		return $command;
