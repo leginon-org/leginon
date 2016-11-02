@@ -1,8 +1,12 @@
 #python
 import os
 import subprocess
+import math
+import numpy
 #appionlib
 from appionlib import starFile
+#pyami
+from pyami import mrc
 
 def readStarFileDataBlock(starfile, datablock):
 	star = starFile.StarFile(starfile)
@@ -247,3 +251,26 @@ def extractParticles(starfile,rootname,boxsize,bin,bgradius,pixlimit,invert,npro
 		logf.close()
 	subprocess.Popen(relioncmd, shell=True).wait()
 
+def replaceNaNImageInStack(stackfile, outfile=None):
+	'''
+	Relion 2D classification sometimes give NaN array in reference
+	image stack where it should be zeros.  This function checks 
+	and replace them if needed.  See Issue #4396
+	'''
+	h = mrc.readHeaderFromFile(stackfile)
+	nz = h['nz']
+	badz = []
+	if not outfile:
+		outfile = stackfile
+	for i in range(nz):
+		a = mrc.read(stackfile, i)
+		if math.isnan(a[0,0]):
+			badz.append(i)
+	if badz:
+		a = mrc.read(stackfile)
+		zeros = numpy.zeros((a.shape[1],a.shape[2]))
+		for i in badz:
+			a[i,:,:] = zeros
+		mrc.write(a, outfile)
+		mrc.update_file_header(outfile, h)
+	return len(badz)

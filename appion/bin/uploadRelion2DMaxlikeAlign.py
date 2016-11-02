@@ -21,6 +21,7 @@ from appionlib import apProject
 from appionlib import apFourier
 from appionlib import appiondata
 from appionlib import apImagicFile
+from appionlib import apRelion
 #pyami
 from pyami import mrc
 
@@ -413,6 +414,12 @@ class UploadRelionMaxLikeScript(appionScript.AppionScript):
 		f.write(text+"\n\n")
 		f.close()
 
+	def replaceNaNImageInReferenceStack(self, runparams):
+		apDisplay.printMsg('Checking reference stack for NaN data....')
+		finalreffile = "part%s_it%03d_classes.mrcs"%(runparams['timestamp'], runparams['maxiter'])
+		number_of_replacement = apRelion.replaceNaNImageInStack(finalreffile)
+		apDisplay.printMsg('Replaced %d bad images in stack' % number_of_replacement)
+
 	#=====================
 	def alignReferences(self, runparams):
 		### align references
@@ -504,7 +511,10 @@ class UploadRelionMaxLikeScript(appionScript.AppionScript):
 		#import pprint
 		#pprint.pprint( runparams)
 
-		### align references
+		### refs #4396 Relion sometimes gives NaN image that it can not use for alignment
+		self.replaceNaNImageInReferenceStack(runparams)
+
+		### align references, output to rundir
 		self.alignReferences(runparams)
 
 		### read particles
