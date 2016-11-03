@@ -101,8 +101,10 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 
 	#======================
 	def getCtfProgPath(self):
-		
-		exename = "Gctf-v0.50_sm_30_cu5.0_x86_64"
+
+#		Use a symbolic link called "gctfCurrent" pointing to the Gctf version with the appropriate CUDA version,
+#		rather than a hardcoded gctf executable that could have the wrong cuda version.
+		exename = "gctfCurrent"
 		ctfprgmexe = subprocess.Popen("which "+exename, shell=True, stdout=subprocess.PIPE).stdout.read().strip()
 		if not os.path.isfile(ctfprgmexe):
 			ctfprgmexe = os.path.join(apParam.getAppionDirectory(), 'bin', exename)
