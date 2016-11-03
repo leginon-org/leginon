@@ -88,6 +88,23 @@ class particledata {
 		return array('x'=>$dx,'y'=>$dy);
 	}
 
+	function getPhasePlateInfoFromImageId($imageId) {
+		//if (!$this->mysql->SQLTableExists(DB_LEGINON.".PhasePlateUsageData")) return false;
+		$q = "SELECT "
+			."c.`phase plate number` pp_number, c.`patch position` patch_pos "
+			."FROM ".DB_LEGINON.".AcquisitionImageData as img "
+			."LEFT JOIN ".DB_LEGINON.".PhasePlateUsageData as c "
+			."on img.`REF|PhasePlateUsageData|phase plate`=c.`DEF_id` "
+			."WHERE "
+			."  img.`DEF_id` = '$imageId' "
+			."LIMIT 1 ";
+		//echo $q."<br/><br/>\n";
+		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/><br/>\n";
+		//echo "$filename<br/><br/>\n";
+		return $r[0];
+	}
+
 	function getSessionData ($sessionId) {
 		$q = "SELECT "
 			."s.* "
