@@ -61,8 +61,10 @@ $keys[]='cs';
 // estimate quality
 $keys[]='resolution_80_percent';
 $keys[]='resolution_50_percent';
-$keys[]='confidence_30_10';
-$keys[]='confidence_5_peak';
+$keys[]='confidence_appion';
+//$keys[]='confidence_30_10';
+//$keys[]='confidence_5_peak';
+$keys[]='ctffind4_resolution';
 if ($ctftype=='ctffind') 
 	$keys[]='cross_correlation';
 else 
@@ -75,15 +77,17 @@ $keymap = array(
 	"defocus"  => "nomDef",
 	"defocus1"  => "def1",
 	"defocus2"  => "def2",
-	"confidence"  => "conf",
+	"confidence"  => "conf&nbsp;(pkg)",
 	"angle_astigmatism"  => "&theta;<sub>astig</sub>",
 	"extra_phase_shift"  => "&phi;<sub>pp</sub>",
 	"cross_correlation"  => "cc",
 	"amplitude_contrast" => "amp&nbsp;con",
+	"confidence_appion" => "conf&nbsp;(appion)",
 	"confidence_30_10" => "conf&nbsp;(30/10)",
 	"confidence_5_peak" => "conf&nbsp;(5 peak)",
 	"resolution_80_percent" => "<br/>res&nbsp;(0.8)",
 	"resolution_50_percent" => "res&nbsp;(0.5)",
+	"ctffind4_resolution" => "res&nbsp;(pkg)",
 
 );
 
@@ -102,6 +106,8 @@ if ($ctfdata) {
 				echo " <b>$name:</b>&nbsp;",($leginondata->formatDefocus($v));
 			elseif (preg_match('%phase_shift%',$k))
 				echo " <b>$name:</b>&nbsp;".format_angle_degree($v*180/3.14159,2,2);
+			elseif (preg_match('%ctffind4_res%',$k))
+				echo " <b>$name:</b>&nbsp;".format_angstrom_number($v*1e-10,2,2);
 			elseif ($v-floor($v)) 
 				echo " <b>$name:</b>&nbsp;".format_sci_number($v,2,2);
 			else
