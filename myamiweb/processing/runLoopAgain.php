@@ -152,12 +152,19 @@ function createLoopAgainForm($extra=false, $title='Loop Again Launcher', $headin
 	// CHECK if parallel which allows same session same name runLoopAgain
 	$parallel = false;
 	$samesession = false;
+	$samerun = false;
+	$continue = false;
 	foreach ($params as $param) {
 		if ($param['name'] == 'parallel') $parallel = true;
 		if ($param['name'] == 'sessionname') {
 			//check if same session
 			if ( $sessionname == $param['value'] ) $samesession = true;
 		}
+		if ($param['runname'] == 'runname') {
+					//check if same session
+					if ( $runname == $param['value'] ) $samerun = true;
+		}
+		if ($param['continue'] == 'on') $continue = true;
 	}
 	
 
@@ -226,10 +233,15 @@ function createLoopAgainForm($extra=false, $title='Loop Again Launcher', $headin
 	echo "<input type='hidden' name='count' value='$count' />\n";
 
 	echo "<br/><br/>\n";
-	if ( $parallel || !$samesession)
+	if ( $parallel || !$samesession || !$samerun) {
 		echo getSubmitForm("Run Loop Program Again");
-	else
-		echo "<h2><font color='#993333'>Non-Parallel Loop within the same session can not be rerun</font></h2>";
+	} else {
+		if ( $continue != 'on' ) {
+			echo "<h2><font color='#993333'>Non-Parallel Loop within the same session should not be rerun under the same name</font></h2>";
+			echo "<h2><font color='#993333'>Unless it failed to commit anything<font></h2>";
+		}
+		echo getSubmitForm("Run Loop Program Again");
+	}
 	echo "<br/><br/>\n";
 	
 	echo appionRef();

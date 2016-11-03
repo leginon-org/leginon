@@ -47,17 +47,19 @@ if ($relion || $vlion) {
 		$data[] = "_rlnPhaseShift #12\n";
 	# get image info for first image,
 	# assume same for all the rest
-	$imgid = $ctfdatas[0]['REF|leginondata|AcquisitionImageData|image'];
+	$imgid = $ctfdatas[0]['imageid'];
 	$imginfo = $leginon->getImageInfo($imgid);
+	//getImageInfo pixelsize is pre-camera-binning
 	$pixelsize = $imginfo['pixelsize']*1e10;
+	$pixelsize *= $imginfo['binning'];
 	$kev = $imginfo['high tension']/1000;
 	$cs = $leginon->getCsValueFromSession($expId);
 }
-else $data[] = "image #\tnominal_def\tdefocus_1\tdefocus_2\tangle_astig\tamp_cont\textra_phase_shift\tres(0.8)\tres(0.5)\tconf(30/10)\tconf(5_peak)\tconf\timage_name\n";
+else $data[] = "image #\tnominal_def\tdefocus_1\tdefocus_2\tangle_astig\tamp_cont\textra_phase_shift\tres(0.8)\tres(0.5)\tres(pkg)\tconf(30/10)\tconf(5_peak)\tconf\tconf(appion)\timage_name\n";
 //echo "</br>\n";
 
 foreach ($ctfdatas as $ctfdata) {
-	$imgid = $ctfdata['REF|leginondata|AcquisitionImageData|image'];
+	$imgid = $ctfdata['imageid'];
 	$filename = $appiondb->getImageNameFromId($imgid);
 	if (!empty($preset))
 		$p = $leginon->getPresetFromImageId($imgid);
@@ -80,9 +82,10 @@ foreach ($ctfdatas as $ctfdata) {
 		$data[] = $data_string."\n";
 	}
 	else {
+		// regular appion download
 		$angtxt = str_pad(sprintf("%.3f",$ctfdata['angle_astigmatism']), 9, " ", STR_PAD_LEFT);
-		$data[] = sprintf("%d\t%.4e\t%.5e\t%.5e\t%s\t%.4f\t%.4f\t%.2f\t%.2f\t%.3f\t%.3f\t%.3f\t%s\n",
-			$ctfdata['REF|leginondata|AcquisitionImageData|image'],
+		$data[] = sprintf("%d\t%.4e\t%.5e\t%.5e\t%s\t%.4f\t%.4f\t%.2f\t%.2f\t%.2f\t%.3f\t%.3f\t%.3f\t%.3f\t%s\n",
+			$ctfdata['imageid'],
 			$ctfdata['defocus'],
 			$ctfdata['defocus1'],
 			$ctfdata['defocus2'],
@@ -91,9 +94,11 @@ foreach ($ctfdatas as $ctfdata) {
 			$ctfdata['extra_phase_shift'],
 			$ctfdata['resolution_80_percent'],
 			$ctfdata['resolution_50_percent'],
+			$ctfdata['ctffind4_resolution'],
 			$ctfdata['confidence_30_10'],
 			$ctfdata['confidence_5_peak'],
 			$ctfdata['confidence'],
+			$ctfdata['confidence_appion'],
 			$filename);
 	}
 }
