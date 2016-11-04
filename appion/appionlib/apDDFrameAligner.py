@@ -318,7 +318,7 @@ class MotionCorr2_UCSF(DDFrameAligner):
 		cmd += ' -RotGain %d ' % self.alignparams['RotGain']
 
 		# GPU ID
-		cmd += ' -Gpu %s' % self.alignparams['Gpu']
+		cmd += ' -Gpu %s' % self.alignparams['Gpu'].replace(","," ")
 
 		return cmd
 
