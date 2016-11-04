@@ -13,7 +13,7 @@ class motioncorr2_ucsf extends MakeDDStackForm
 
 // Removed defergpu, alignoffset,alignccbox, nrw to make compatible with new motioncorr version
 {
-	function __construct(  $expId, $errorHTML='', $infoHTML='',$align=True,$bin=1, $nokeepstack=True, $ddstartframe=0, $ddnframe='',$alignlabel='a',$nrw=1, $MaskCentrow=0, $MaskCentcol=0, $MaskSizerows=1.0, $MaskSizecols=1.0, $Patchrows=0, $Patchcols=0, $Iter=7,$Tol=0.5,$Bft=100.0,$FmRef=0,$totaldose='', $doseweight=False )
+	function __construct(  $expId, $errorHTML='', $infoHTML='',$align=True,$bin=1, $nokeepstack=True, $ddstartframe=0, $ddnframe='',$alignlabel='a',$nrw=1, $MaskCentrow=0, $MaskCentcol=0, $MaskSizerows=1.0, $MaskSizecols=1.0, $Patchrows=0, $Patchcols=0, $Iter=7,$Tol=0.5,$Bft=100.0,$FmRef=0,$totaldose='', $doseweight=False, $gpuids=0 )
 	{
 		parent::__construct($expId, $errorHTML, $infoHTML);
 		
@@ -41,6 +41,7 @@ class motioncorr2_ucsf extends MakeDDStackForm
 				
 		$params->addParam( "align", $align, "align" );
 #		$params->addParam( "defergpu", $defergpu, "defer gpu processing" );
+		$params->addParam( "gpuids", $gpuids, "GPU ids used (',' separated)");
 		$params->addParam( "bin", $bin, "binning" );
 		$params->addParam( "no_keepstack", $nokeepstack, "remove generated stack after uploading aligned sum image" );
 		$params->addParam( "ddstartframe", $ddstartframe, "start frame" );
@@ -83,14 +84,16 @@ class motioncorr2_ucsf extends MakeDDStackForm
 		$html .= "<b>Make DD stack params:</b><br />\n";
 		
 		$html.= $params->insertCheckboxField( "align" );
+		$html.= $params->insertTextFieldInRow( "alignlabel", $fieldSize );
+		$html.= "<br/>\n";
+		$html.= $params->insertTextFieldInRow( "gpuids", 2*$fieldSize );
+		$html.= "<br/>\n";
+		$html.= "<hr>\n";
 //		$html.= $params->insertCheckboxField( "defergpu" );
 //		$html.= $params->insertCheckboxField( "no_keepstack" );
 	
 		
-		$html.= "<br/>\n";
 		$html.= $params->insertTextFieldInRow( "bin", $fieldSize );
-		$html.= "<br/>\n";
-		$html.= $params->insertTextFieldInRow( "alignlabel", $fieldSize );
 		$html.= "<br/>\n";
 //		$html.= $params->insertTextFieldInRow( "alignoffset",$fieldSize );
 //		$html.= "<br/>\n";
