@@ -318,13 +318,13 @@ class MotionCorr2_UCSF(DDFrameAligner):
 		cmd += ' -RotGain %d ' % self.alignparams['RotGain']
 
 		# GPU ID
-		cmd += ' -Gpu %d' % self.alignparams['Gpu']
+		cmd += ' -Gpu %s' % self.alignparams['Gpu']
 
 		return cmd
 
 	def getValidAlignOptionMappings(self):
 		return {
-			'gpuid':'Gpu', 
+			'gpuids':'Gpu', 
 			'nrw':'Group', 
 			'flp':'flp', 
 			'bin':'FtBin', 

@@ -12,6 +12,8 @@ class MotionCorr2UCSFAlignStackLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop
 	def setupParserOptions(self):
 		super(MotionCorr2UCSFAlignStackLoop,self).setupParserOptions()
 
+		#self.parser.remove_option('gpuid')
+		self.parser.add_option("--gpuids", dest="gpuids", default='0')
 		self.parser.add_option("--nrw", dest="nrw", type="int", default=1,
 			help="Number (1, 3, 5, ...) of frames in running average window. 0 = disabled", metavar="INT")
 
@@ -54,6 +56,8 @@ class MotionCorr2UCSFAlignStackLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop
 		if self.params['keepstack'] is True:
 			apDisplay.printWarning('Frame stack saving not available to MotionCorr2 from UCSF')
 			self.params['keepstack'] = False
+		# use the first gpuids as gpuid in log
+		self.params['gpuid'] = int(self.params['gpuids'].split(',')[0].strip())
 
 	def setFrameAligner(self):
 		self.framealigner = apDDFrameAligner.MotionCorr2_UCSF()
