@@ -79,17 +79,17 @@ class DeleteHidden(appionLoop2.AppionLoop):
 					for alignimg in alignedimages:
 						ddframes = os.path.join(alignimg['ddstackrun']['path']['path'],imgdata['filename']+'*')
 						removefiles.extend(glob.glob(ddframes))
+						delFrameList+=1
 
-				for filename in removefiles:
-					if self.params['dryrun'] is False:
-						print "deleting: %s"%filename
-						if os.path.isdir(filename):
-							shutil.rmtree(filename)
-						elif os.path.isfile(filename):
-							os.remove(filename)
-					else:
-						print "dryrun - won't delete: %s"%filename			
-				delFrameList+=1
+			for filename in removefiles:
+				if self.params['dryrun'] is False:
+					print "deleting: %s"%filename
+					if os.path.isdir(filename):
+						shutil.rmtree(filename)
+					elif os.path.isfile(filename):
+						os.remove(filename)
+				else:
+					print "dryrun - won't delete: %s"%filename			
 
 		else:
 			apDisplay.printMsg('%s will be kept' % (imgdata['filename']))
