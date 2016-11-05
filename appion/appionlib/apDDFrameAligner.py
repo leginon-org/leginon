@@ -192,9 +192,9 @@ class MotionCorr_Purdue(MotionCorr1):
 			if self.getNewFlipAlongYAxis() == 0:
 				del self.alignparams['nrw']
 			
-class MotionCorr2_UCSF(DDFrameAligner):
+class MotionCor2_UCSF(DDFrameAligner):
 	def __init__(self):
-		self.executable = 'motioncorr2_ucsf'
+		self.executable = 'motioncor2'
 		DDFrameAligner.__init__(self)
 
 	def setKV(self, kv):
@@ -222,7 +222,7 @@ class MotionCorr2_UCSF(DDFrameAligner):
 		'''
 		cmd = ''
 		if dark_path:
-			apDisplay.printWarning('MotionCorr2 does not handle dark reference. Assumes zero')
+			apDisplay.printWarning('MotionCor2 does not handle dark reference. Assumes zero')
 		if norm_path:
 			cmd += " -Gain %s" % norm_path
 		self.gain_dark_cmd = cmd
@@ -239,7 +239,7 @@ class MotionCorr2_UCSF(DDFrameAligner):
 
 		# Construct the command line with defaults
 
-		cmd = 'motioncorr2_ucsf -InMrc %s -OutMrc %s' % (self.framestackpath, self.aligned_sumpath)
+		cmd = '%s -InMrc %s -OutMrc %s' % (self.executable, self.framestackpath, self.aligned_sumpath)
 
 		# binning
 		if self.alignparams['FtBin'] > 1:
@@ -366,11 +366,11 @@ class MotionCorr2_UCSF(DDFrameAligner):
 	def writeLogFile(self, outbuffer):
 		''' 
 		takes output log buffer from running frame aligner 
-		will write motioncorr2 log file and standard log file that is readable by appion image viewer (motioncorr1 format)
+		will write motioncor2 log file and standard log file that is readable by appion image viewer (motioncorr1 format)
 		'''
 
-		### motioncorr2 format
-		log2 = self.framestackpath[:-4]+'_Log.motioncorr2.txt'
+		### motioncor2 format
+		log2 = self.framestackpath[:-4]+'_Log.motioncor2.txt'
 		f = open(log2, "w")
 		f.write(outbuffer)
 		f.close()
@@ -380,7 +380,7 @@ class MotionCorr2_UCSF(DDFrameAligner):
 		outbuffer = f.readlines()
 		f.close()
 
-		### parse motioncorr2 output
+		### parse motioncor2 output
 		shifts = []
 		for l in outbuffer: 
 			m = re.match("...... Frame", l)

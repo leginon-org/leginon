@@ -7,10 +7,10 @@ from appionlib import apDDprocess
 from appionlib import apDatabase
 from appionlib import apDisplay
 
-class MotionCorr2UCSFAlignStackLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop):
+class MotionCor2UCSFAlignStackLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop):
 	#=======================
 	def setupParserOptions(self):
-		super(MotionCorr2UCSFAlignStackLoop,self).setupParserOptions()
+		super(MotionCor2UCSFAlignStackLoop,self).setupParserOptions()
 
 		#self.parser.remove_option('gpuid')
 		self.parser.add_option("--gpuids", dest="gpuids", default='0')
@@ -51,22 +51,22 @@ class MotionCorr2UCSFAlignStackLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop
 
 	#=======================
 	def checkConflicts(self):
-		super(MotionCorr2UCSFAlignStackLoop,self).checkConflicts()
+		super(MotionCor2UCSFAlignStackLoop,self).checkConflicts()
 		# does NOT keep stack by default
 		if self.params['keepstack'] is True:
-			apDisplay.printWarning('Frame stack saving not available to MotionCorr2 from UCSF')
+			apDisplay.printWarning('Frame stack saving not available to MotionCor2 from UCSF')
 			self.params['keepstack'] = False
 		# use the first gpuids as gpuid in log
 		self.params['gpuid'] = int(self.params['gpuids'].split(',')[0].strip())
 
 	def setFrameAligner(self):
-		self.framealigner = apDDFrameAligner.MotionCorr2_UCSF()
+		self.framealigner = apDDFrameAligner.MotionCor2_UCSF()
 
 	def setOtherProcessImageResultParams(self):
 		# The alignment is done in tempdir (a local directory to reduce network traffic)
 		# include both hostname and gpu to identify the temp output
 		#self.temp_aligned_sumpath = 'temp%s.gpuid_%d_sum.mrc' % (self.hostname, self.gpuid)
-		super(MotionCorr2UCSFAlignStackLoop,self).setOtherProcessImageResultParams()
+		super(MotionCor2UCSFAlignStackLoop,self).setOtherProcessImageResultParams()
 		self.temp_aligned_dw_sumpath = 'temp%s.gpuid_%d_sum_DW.mrc' % (self.hostname, self.gpuid)
 		#self.temp_aligned_stackpath = 'temp%s.gpuid_%d_aligned_st.mrc' % (self.hostname, self.gpuid)
 		self.framealigner.setKV(self.dd.getKVFromImage(self.dd.image))
@@ -108,7 +108,7 @@ class MotionCorr2UCSFAlignStackLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop
 		if os.path.isfile(temp_aligned_sumpath):
 			if self.params['doseweight'] is True:
 				shutil.move(temp_aligned_dw_sumpath,self.dd.aligned_dw_sumpath)
-		return super(MotionCorr2UCSFAlignStackLoop,self).organizeAlignedSum()
+		return super(MotionCor2UCSFAlignStackLoop,self).organizeAlignedSum()
 
 	def organizeAlignedStack(self):
 		'''
@@ -121,8 +121,8 @@ class MotionCorr2UCSFAlignStackLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop
 				self.params['align_dw_label'] = self.params['alignlabel']+"-DW"
 				self.aligned_dw_imagedata = self.dd.makeAlignedDWImageData(alignlabel=self.params['align_dw_label'])
 
-		super(MotionCorr2UCSFAlignStackLoop,self).organizeAlignedStack()
+		super(MotionCor2UCSFAlignStackLoop,self).organizeAlignedStack()
 
 if __name__ == '__main__':
-	makeStack = MotionCorr2UCSFAlignStackLoop()
+	makeStack = MotionCor2UCSFAlignStackLoop()
 	makeStack.run()
