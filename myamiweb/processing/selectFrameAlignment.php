@@ -36,6 +36,7 @@ echo "<tr><td width='100' align='center'>\n";
 echo "  <img src='img/appionlogo.jpg' width='96'>\n";
 echo "</td><td>\n";
 echo "  <h3><a href='runAppionLoop.php?expId=$expId&form=motioncor2_ucsf'>MotionCor2</a></h3>\n";
+echo " <p> GPU program </p>";
 echo " <p>MotionCor2 is an improved version of MotionCorr developed in David Agard lab at UCSF. The main new features are: (a) bad pixel correction from frames; (b) patch average support; (c) dose-weighted sum image output. The implementation here is based on the version released in August of 2016."
         ."</p>\n";
 echo "</td></tr>\n";
@@ -48,8 +49,22 @@ echo "<tr><td width='100' align='center'>\n";
 echo "  <img src='img/appionlogo.jpg' width='96'>\n";
 echo "</td><td>\n";
 echo "  <h3><a href='runAppionLoop.php?expId=$expId&form=MakeDDStackForm'>MotionCorr - Purdue</a></h3>\n";
+echo " <p> GPU program </p>";
 echo " <p>MotionCorr - Purdue is a drift correction program contributed by Wen Jiang that extended the original MotionCorr written by Xueming Li with running sum average and frame flipping. See the <a href='https://github.com/jianglab/motioncorr'>Github repository</a>&nbsp; and <a href='http://jiang.bio.purdue.edu/'>"
 	."Jiang lab website</a>&nbsp;<img src='img/external.png'> for more information. "
+	."</p>\n";
+echo "</td></tr>\n";
+
+/*
+** DE Frame Alignment
+*/
+
+echo "<tr><td width='100' align='center'>\n";
+echo "  <img src='img/DE.png' width='96'>\n";
+echo "</td><td>\n";
+echo "  <h3><a href='runAppionLoop.php?expId=$expId&form=makeDEAlignedSum'>Full frame alignment for Direct Electron Co. Camera</a></h3>\n";
+echo " <p> CPU program parallelized by multiple job submission</p>";
+echo " <p>Written by Benjamin Bammes for DE-12, DE-20, and DE-64.  Features include radiation damage compensation (similar to dose wighting) and frame/sum transformation. "
 	."</p>\n";
 echo "</td></tr>\n";
 

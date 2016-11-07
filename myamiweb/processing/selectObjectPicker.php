@@ -145,8 +145,8 @@ if (!HIDE_FEATURE)
 }
 
 // The signature feature is added with issue #368, however was not tested prior to 2.0 release.
-// It should be hidden until it can be tested at AMI. The HIDE_FEATURE flag can be set
-// in config.php in the myamiweb directory.
+// It is no longer supported
+/*
 if (!HIDE_FEATURE)
 {
 	echo "<tr><td width='100' align='center'>\n";
@@ -158,6 +158,7 @@ if (!HIDE_FEATURE)
 		."</p>\n";
 	echo "</td></tr>\n";
 }
+*/
 
 /*
 ** Tilt Pickers
