@@ -126,6 +126,12 @@ class PhasePlateAlignerPanel(leginon.gui.wx.Reference.ReferencePanel):
 				self.node.uiSetSettings()
 		dialog.Destroy()
 
+	def openSettingsDialog(self):
+		'''
+		Called from Leginon main to force this settings to open.
+		'''
+		self.onSettingsTool(None)
+
 	def onNodeInitialized(self):
 		super(PhasePlateAlignerPanel,self).onNodeInitialized()
 		self.toolbar.Bind(wx.EVT_TOOL, self.onPatchStateSettingsTool,
