@@ -303,6 +303,19 @@ $PUBLICATIONS['purduedriftcorr'] = array(
 'logo' => 'img/topbarbackgrnd.jpg',
 'pages' => '');
 
+$PUBLICATIONS['de_frame'] = array(
+'title' => 'Movie-Mode Processing program DE_process_frames.py',
+'year' => '2012-2015',
+'authorlist' => 'Benjamin Bammes',
+'journal' => "<a href=http://www.directelectron.com/products/software > Direct Electron website </a>",
+'volume' => ' 2.7.1',
+'issue' => '',
+'pmid' => '',
+'pmcid' => '',
+'doi' => '',
+'logo' => 'img/DE.png',
+'pages' => '');
+
 $PUBLICATIONS['isac'] = array(
 'title' => 'Iterative stable alignment and clustering of 2D transmission electron microscope images',
 'year' => '2012',
