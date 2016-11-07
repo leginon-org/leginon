@@ -1,0 +1,34 @@
+/*----------------------------------------------------------------------------*
+*
+*  imageioconfig.h  -  configuration
+*
+*----------------------------------------------------------------------------*/
+
+#ifndef imageioconfig_h_
+#define imageioconfig_h_
+
+#include "modulebase.h"
+
+
+/* build identification */
+
+MODULE-PRFX IMAGEIO
+"i3imageio"
+"2.4"
+"Copyright © 2012 Hanspeter Winkler"
+
+
+/* module codes */
+
+#define ImageioModuleCode       ( ImageioModuleBase | 0x0000 )
+#define ImageioExtraModuleCode  ( ImageioModuleBase | 0x0100 )
+#define FFFioModuleCode         ( ImageioModuleBase | 0x1000 )
+#define CCP4ioModuleCode        ( ImageioModuleBase | 0x1100 )
+#define TiffioModuleCode        ( ImageioModuleBase | 0x1200 )
+#define SpiderioModuleCode      ( ImageioModuleBase | 0x1300 )
+#define ImagicioModuleCode      ( ImageioModuleBase | 0x1400 )
+#define SuprimioModuleCode      ( ImageioModuleBase | 0x1500 )
+#define EMioModuleCode          ( ImageioModuleBase | 0x1600 )
+
+
+#endif

@@ -12,21 +12,21 @@ require_once "basicLoopForm.inc";
 class MakeDDStackForm extends BasicLoopForm
 
 {
-	function __construct(  $expId, $errorHTML='', $infoHTML='',$align='', $defergpu='', $bin=1, $nokeepstack='', $ddstartframe=0, $ddnframe='',$alignoffset=7,$alignbfactor=1000,$alignccbox=96,$alignlabel='a', $flp=0, $nrw=1 ) 
+	function __construct(  $expId, $errorHTML='', $infoHTML='',$align=True, $defergpu='', $bin=1, $nokeepstack='', $ddstartframe=0, $ddnframe='',$alignoffset=7,$alignbfactor=1000,$alignccbox=96,$alignlabel='a', $flp=0, $nrw=3, $gpuid=0 ) 
 	{
 		parent::__construct($expId, $errorHTML, $infoHTML);
 		
 		//------ Set Parameters for the parent class, BasicLoopForm (general Appion params) -----//
 		
 		// Set the publications to be references on the web pages
-		$pubList = array('appion');
+		$pubList = array('gpudriftcorr','purduedriftcorr','appion');
 		$this->setPublications( $pubList );
 		$this->setJobType( 'makeddrawframestack' );
 		$this->setOutputDirectory( 'ddstack' );
 		$this->setBaseRunName( 'ddstack' );
-		$this->setTitle( 'makeDDRawFrameStack.py Launcher' );
+		$this->setTitle( 'makeDDAlignMotionCorr_Purdue.py Launcher' );
 		$this->setHeading( 'Create a Direct Detector Frame Stack' );
-		$this->setExeFile( 'makeDDRawFrameStack.py' );
+		$this->setExeFile( 'makeDDAlignMotionCorr_Purdue.py' );
 		$this->setGuideURL( "http://emg.nysbc.org/redmine/projects/appion/wiki/Appion_Processing" );
 		$this->setTestable( True ); // True to activate "test single image".
 		$this->setUseLegOutDir( False ); // The output directory will be created in the Appion run directory rather than Leginon.
@@ -50,8 +50,10 @@ class MakeDDStackForm extends BasicLoopForm
 		$params->addParam( "alignlabel", $alignlabel, "append label to aligned image" );
 		$params->addParam( "nrw", $nrw, "Number (1, 3, 5, ...) of frames in running average window");
 		$params->addParam( "flp", $flp, "Flip frames along Y axis.; 0 = no flip, 1 = flip");
+		$params->addParam( "gpuid", $gpuid, "GPU id used");
 		// Validations
 		$params->addValidation( "bin", "num" );
+		$params->addValidation( "gpuid", "num" );
 	}
 		
 	public function generateAdditionalFormRight()
@@ -65,13 +67,15 @@ class MakeDDStackForm extends BasicLoopForm
 		
 		$html.= $params->insertCheckboxField( "align" );
 		$html.= $params->insertCheckboxField( "defergpu" );
+		$html.= $params->insertTextFieldInRow( "alignlabel", $fieldSize );
+		$html.= "<br/>\n";
 		$html.= $params->insertCheckboxField( "no_keepstack" );
+		$html.= $params->insertTextFieldInRow( "gpuid", $fieldSize );
+		$html.= "<hr>\n";
 	
 		
 		$html.= "<br/>\n";
 		$html.= $params->insertTextFieldInRow( "bin", $fieldSize );
-		$html.= "<br/>\n";
-		$html.= $params->insertTextFieldInRow( "alignlabel", $fieldSize );
 		$html.= "<br/>\n";
 		$html.= $params->insertTextFieldInRow( "alignoffset",$fieldSize );
 		$html.= "<br/>\n";
@@ -149,7 +153,7 @@ class MakeDDStackForm extends BasicLoopForm
 
 		// if we are not testing an image, add the parellel flag
 		if ( !($postArray['testimage']=="on") ) {
-			$command.= " --parallel";
+			$command = $this->addCommandFlag($command, "parallel", "parallel", "on" );
 		}
 		
 		// remove params not needed in command

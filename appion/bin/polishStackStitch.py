@@ -95,7 +95,7 @@ class stackPolisherScript(appionScript.AppionScript):
 	#=====================
 	def start(self):
 		self.polished_stack_filename = "polished.mrc"
-		#self.combine_polished_stacks()
+		self.combine_polished_stacks()
 		self.modifyPolishedMrcHeader()
 
 		# Clean up

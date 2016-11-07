@@ -311,6 +311,12 @@ This method returns that multiplier, M.  In the standard case, returns 1.0.
 	def getSystemGainDarkCorrected(self):
 		return False
 
+	def getCalulateNormOnDark(self):
+		return True
+
+	def requireRecentDarkOnBright(self):
+		return False
+
 	def getFrameFlip(self):
 		# flip before? rotation
 		return False

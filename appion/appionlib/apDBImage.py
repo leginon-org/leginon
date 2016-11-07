@@ -2,7 +2,7 @@
 import os
 from leginon import leginondata
 #appion
-from appionlib import apDatabase, apDisplay
+from appionlib import appiondata, apDatabase, apDisplay
 from leginon import correctorclient
 
 class ApCorrectorClient(correctorclient.CorrectorClient):
@@ -90,3 +90,17 @@ def makeAlignedImageData(old_imagedata,new_camdata,new_array,alignlabel='a'):
 		imagedata['image'] = new_array
 		imagedata['filename'] = makeUniqueImageFilename(imagedata,old_name,align_presetdata['name'])
 		return imagedata
+
+def getAlignedSiblings(fromimage):
+		'''
+		Get other aligned images from the same source as the input imagedata.
+		'''
+		pairs = appiondata.ApDDAlignImagePairData(result=fromimage).query(results=1)
+		if not pairs:
+			return []
+		# Should only have one but if more, take the most recent.
+		sourceimage = pairs[0]['source']
+		allpairs = appiondata.ApDDAlignImagePairData(source=sourceimage).query()
+		siblings = map((lambda x: x['result']), allpairs)
+		return siblings
+

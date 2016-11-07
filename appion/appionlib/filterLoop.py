@@ -73,16 +73,14 @@ class FilterLoop(appionLoop2.AppionLoop):
 		setup like this to override things
 		"""
 		self.filtimgpath = os.path.join(self.params['rundir'], imgdata['filename']+'.dwn.mrc')
-
 		if os.path.isfile(self.filtimgpath) and self.params['continue'] is True:
 			apDisplay.printMsg("reading filtered image from mrc file")
 			self.filtarray = apImage.mrcToArray(self.filtimgpath, msg=False)
 		else:
-			self.filtarray = apImage.preProcessImage(imgdata['image'], apix=self.params['apix'], params=self.params)
+			self.imgFilter.readParamsDict(self.params)
+			self.filtarray = self.imgFilter.processImage(imgdata['image'])
 			apImage.arrayToMrc(self.filtarray, self.filtimgpath)
-
 		peaktree = self.processImage(imgdata, self.filtarray)
-
 		return peaktree
 
 	#=====================
@@ -116,6 +114,7 @@ class FilterLoop(appionLoop2.AppionLoop):
 		put in any conflicting parameters
 		"""
 		self.proct0 = time.time()
+		self.imgFilter = apImage.ImageFilter()
 		appionLoop2.AppionLoop.checkGlobalConflicts(self)
 		return
 

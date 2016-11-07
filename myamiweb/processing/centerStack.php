@@ -111,7 +111,7 @@ function createCenterForm($extra=false, $title='centerParticleStack.py Launcher'
 	echo "<br/><br/>\n";
 
 	echo docpop('mask','Outer Mask Radius: ');
-	echo "<input type='text' name='mask' value='$mask' size='4'> (in pixels)<br />\n";
+	echo "<input type='text' name='mask' value='$mask' size='4'> (in pixels) defaults to maximum<br />\n";
 	echo "<br/>\n";
 
 	echo docpop('maxshift', 'Maximum Shift: ');

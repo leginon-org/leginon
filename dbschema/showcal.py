@@ -86,8 +86,7 @@ class ShowCalibrationQuery(object):
 	def printMatrixCalibrationQueries(self, mags):
 		for mag in mags:
 			# MatrixCarlibationData
-			#for matrix_type in ('stage position','image shift','defocus','beam shift'):
-			for matrix_type in ('defocus',):
+			for matrix_type in ('stage position','image shift','defocus','beam shift'):
 				q = leginondata.MatrixCalibrationData(ccdcamera=self.sourcecam,magnification=mag,type=matrix_type)
 				results = q.query(results=1)
 				if results:

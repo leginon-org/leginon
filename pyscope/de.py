@@ -381,6 +381,12 @@ class DD(DECameraBase):
 		'''
 		return FRAME_LR_FLIP
 
+	def getCalculateNormFromDark(self):
+		return False
+
+	def getRequireRecentDarkOnBright(self):
+		return True
+
 	def getFrameRotate(self):
 		'''
 		Frame Rotate direction is defined as x to -y rotation applied after up-down flip

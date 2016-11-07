@@ -37,7 +37,10 @@ list($ctfdata) = $ctf->getCtfInfoFromImageId($imgid, $order=False, $ctfmethod, $
 $aceparams = $ctf->getAceParams($ctfdata['acerunId']);
 
 // get the filename -- too many conventions...
+// package 2D graph may have been moved to graph 1 when there is no appion fitting successful.
 $basename = $ctfdata[$graph];
+if ($_GET['g'] == 3 && !$basename) $basename = $ctfdata["graph1"];
+
 if (!$basename) {
 	header('Content-type: '.$imagemime);
 	$blkimg = blankimage(256, 64, "CTF $graph not created");

@@ -1,0 +1,15 @@
+#
+# Makedefs: definitions for linux
+#
+# Copyright © 2012 Hanspeter Winkler
+#
+
+AR = ar
+AROPT = -crs
+
+INSTALL = install
+INSTALLOPT = -p
+
+MAKE = make
+
+SYSLIBS = $(THRLIBS) $(DYNLIBS) -lc -lm

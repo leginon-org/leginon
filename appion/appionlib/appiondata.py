@@ -351,6 +351,8 @@ class ApAceRunData(Data):
 			('xmipp_ctf_params', ApXmippCtfParamsData),
 			('ace2_params', ApAce2ParamsData),
 			('ctffind4_params', ApCtfFind4ParamsData),
+			('transferred', bool),
+			('transfer_params', ApAceTransferParamsData),
 			('session', leginon.leginondata.SessionData),
 			('path', ApPathData),
 			('name', str),
@@ -435,6 +437,16 @@ class ApCtfFind4ParamsData(Data):
 		)
 	typemap = classmethod(typemap)
 
+class ApAceTransferParamsData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('frompreset', str),
+			('topreset', str),
+			('criteria', str),
+			('run', ApAceRunData),
+		)
+	typemap = classmethod(typemap)
+
 class ApCtfData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
@@ -445,8 +457,8 @@ class ApCtfData(Data):
 			('amplitude_contrast', float),  # sqrt(1-A^2)sin + A*cos format
 			('defocus1', float),  # in negative meters for underfocus |def1| < |def2|
 			('defocus2', float),  # in negative meters for underfocus
-			('angle_astigmatism', float),  # in counter-clockwise degrees from x-axis
-			('ctffind4_resolution', float),  # in counter-clockwise degrees from x-axis			
+			('angle_astigmatism', float),  # in counter-clockwise degrees from x-axis (degrees)
+			('ctffind4_resolution', float),  # ctffind4 good fit resolution
 			('confidence', float),  # classic confidence
 			('confidence_d', float),  # classic confidence
 			('confidence_30_10', float),  # defined as confidence between 1/30 and 1/10 Angstroms
@@ -530,6 +542,7 @@ class ApStackData(Data):
 			('substackname', str),
 			('pixelsize', float),
 			('centered', bool),
+			('radial_averaged', bool),
 			('junksorted', bool),
 			('beamtilt_corrected', bool),
 			('mask', int),
@@ -747,6 +760,16 @@ class ApDEAlignerParamsData(Data):
 		)
 	typemap = classmethod(typemap)
 
+class ApFrameAlignTrajectory(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('image', leginon.leginondata.AcquisitionImageData),
+			('particle', ApStackParticleData ),
+			('ddstackrun', ApDDStackRunData ),
+			('xshift', int),
+			('yshift', int)
+			
+		)
 ### END Stack tables ###
 ### START alignment tables  ###
 

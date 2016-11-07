@@ -56,9 +56,10 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		"""
 		if self.params['reprocess'] is None:
 			return None
-		ctfvalue, conf = ctfdb.getBestCtfValueForImage(imgdata)
+		ctfvalue = ctfdb.getBestCtfByResolution(imgdata)
 		if ctfvalue is None:
 			return None
+		conf = ctfdb.calculateConfidenceScore(ctfvalue)
 		if conf > self.params['reprocess']:
 			return False
 		else:
@@ -117,7 +118,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		inputstr += ("sampling_rate=%.4f\n"%(apix))
 
 		### best defocus in negative Angstroms
-		ctfvalue, conf = ctfdb.getBestCtfValueForImage(imgdata, msg=True)
+		ctfvalue = ctfdb.getBestCtfByResolution(imgdata, msg=True)
 		if ctfvalue is None:
 			apDisplay.printWarning("Xmipp CTF as implemented in Appion requires an initial CTF estimate to process"
 				+"\nPlease run another CTF program first and try again on this image")

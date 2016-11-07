@@ -43,6 +43,7 @@ class UploadCL2DScript(appionScript.AppionScript):
 
 	#=====================
 	def getTimestamp(self):
+		timestamp = None
 		if self.params["jobid"] is not None:
 			jobdata = appiondata.ApCL2DRunData.direct_query(self.params["jobid"])
 			timestamp = jobdata['timestamp']
@@ -90,7 +91,6 @@ class UploadCL2DScript(appionScript.AppionScript):
 			for partnum in D[classref]:
 				stack.append(apImagicFile.readSingleParticleFromStack("alignedStack.hed",int(partnum)+1,msg=False))
 			apImagicFile.writeImagic(stack,"tmp.hed")
-
 			frcdata = apFourier.spectralSNRStack("tmp.hed", self.apix)
 			self.resdict[classref] = apFourier.getResolution(frcdata, self.apix, self.boxsize)
 		apFile.removeStack("tmp.hed")

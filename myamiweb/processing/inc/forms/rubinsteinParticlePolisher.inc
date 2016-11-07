@@ -79,7 +79,7 @@ class rubinsteinParticlePolisher extends BasicLayoutForm
 		$this->unalignedDDStackIds = $particle->getDDStackRunIdsUnAligned($expId);
 	
 		$params = $this->getFormParams();
-		
+		var_dump($params);
 		// The help section corresponds to the array key for these parameters found in help.js for popup help.
 		$params->setHelpSection( "appion" );
 				

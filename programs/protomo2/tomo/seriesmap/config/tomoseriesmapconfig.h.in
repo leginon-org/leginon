@@ -1,0 +1,26 @@
+/*----------------------------------------------------------------------------*
+*
+*  tomoseriesmapconfig.h  -  configuration
+*
+*----------------------------------------------------------------------------*/
+
+#ifndef tomoseriesmapconfig_h_
+#define tomoseriesmapconfig_h_
+
+#include "tomomodulebase.h"
+
+
+/* build identification */
+
+MODULE-PRFX TOMOSERIESMAP
+"i3tomoseriesmap"
+"2.4"
+"Copyright © 2012 Hanspeter Winkler"
+
+
+/* module codes */
+
+#define TomoseriesmapModuleCode  ( TomoSeriesmapModuleBase | 0x0100 )
+
+
+#endif

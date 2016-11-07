@@ -1,22 +1,14 @@
 #!/usr/bin/env python
 
 #pythonlib
-import os
-import sys
-import re
 import time
 #appion
-from appionlib import particleLoop2
-from appionlib import apImage
-from appionlib import apDisplay
-from appionlib import apDatabase
-from appionlib import appiondata
-from appionlib import apPeaks
-from appionlib import apParticle
 from appionlib import apDog
 from appionlib import apParam
-#legacy
-#import selexonFunctions  as sf1
+from appionlib import apPeaks
+from appionlib import apDisplay
+from appionlib import appiondata
+from appionlib import particleLoop2
 
 class dogPicker(particleLoop2.ParticleLoop):
 	#================
@@ -37,12 +29,13 @@ class dogPicker(particleLoop2.ParticleLoop):
 			apDisplay.printWarning("highpass filter value greater than zero; will ignore")
 		self.params['highpass'] = None
 		self.params['lowpass'] = None
-		#if self.params['kfactor'] is not None and self.params['numslices'] is not None:
-		#	apDisplay.printError("only one of 'kfactor' or 'numslices' can be defined")
 		if self.params['numslices'] is not None and self.params['numslices'] >= 15:
 			apDisplay.printError("too many slices defined by numslices, should be more like 2-6")
-		if self.params['sizerange'] is not None and self.params['sizerange'] >= 1.95*self.params['diam']:
-			apDisplay.printError("size range has be less than twice the diameter")
+		if self.params['diam'] < 1:
+			apDisplay.printError("difference of Gaussian; radius = 0")
+		if self.params['sizerange'] is not None and self.params['sizerange'] > 2*self.params['diam']-3:
+			apDisplay.printError("size range %d has be less than twice the diameter %d"
+				%(self.params['sizerange'], 2*self.params['diam']-3))
 		### get number of processors:
 		nproc = apParam.getNumProcessors()
 		if not self.params['nproc']:
@@ -54,18 +47,7 @@ class dogPicker(particleLoop2.ParticleLoop):
 
 	#================
 	def processImage(self, imgdata, filtarray):
-		imgarray = imgdata['image']
-
-		looptdiff = time.time()-self.proct0
-		self.proct0 = time.time()
 		dogarrays = apDog.diffOfGaussParam(filtarray, self.params)
-		proctdiff = time.time()-self.proct0
-		f = open("dog_image_timing.dat", "a")
-		datstr = "%d\t%.5f\t%.5f\n"%(self.stats['count'], proctdiff, looptdiff)
-		f.write(datstr)
-		f.close()
-
-		apDisplay.printMsg("finished DoG filter")
 		peaktree  = apPeaks.findPeaks(imgdata, dogarrays, self.params, maptype="dogmap")
 		return peaktree
 

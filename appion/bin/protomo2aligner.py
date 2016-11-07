@@ -70,6 +70,15 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		
 		self.parser.add_option('--translimit', dest='translimit', default=999999, type='float', metavar='float', help='Discard alignment and keep original geometric parameters if translational shift, in pixels, exceeds specified value, e.g. --translimit=50') 
 		
+		self.parser.add_option("--negative_recon", dest="negative_recon", type="float",  default="-90",
+			help="Tilt angle, in degrees, below which all images will be removed, e.g. --negative_recon=-45", metavar="float")
+		
+		self.parser.add_option("--positive_recon", dest="positive_recon", type="float",  default="90",
+			help="Tilt angle, in degrees, above which all images will be removed, e.g. --positive_recon=45", metavar="float")
+		
+		self.parser.add_option("--starting_tlt_file", dest="starting_tlt_file", default="Coarse",
+			help="Begin refinement with coarse alignment results or initial alignment (ie. from the microscope)?, e.g. --starting_tlt_file=Coarse",)
+		
 		self.parser.add_option("--region_x", dest="region_x", default=512, type="int",
 			help="Pixels in x to use for region matching, e.g. --region=1024", metavar="int")
 		
@@ -706,7 +715,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		self.parser.add_option("--my_tlt", dest="my_tlt",  default="False",
 			help="Allows for manual tilt-series setup")
 		
-		self.parser.add_option("--make_searchable", dest="make_searchable",  default="False",
+		self.parser.add_option("--make_searchable", dest="make_searchable",  default="True",
 			help="Hidden option. Places a .tiltseries.XXXX file in the rundir so that it will be found by Batch Summary webpages.")
 		
 		#File path returns and extra information for database
@@ -1227,7 +1236,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		originaltilt=rundir+'/original.tlt'
 		
 		if (self.params['make_searchable'] == "True"):
-			os.system('touch %s/.tiltseries.%04d' % (rundir, self.params['tiltseries']))  #Internal tracker for what has been batch processed through alignments
+			os.system('touch %s/.tiltseries.%04d' % (rundir, int(self.params['tiltseries'])))  #Internal tracker for what has been batch processed through alignments
 		
 		###Do queries, make tlt file, CTF correct (optional), dose compensate (optional), remove highly shifted images (optional), and remove high tilt images (optional) if first run from Appion/Leginon database
 		if (self.params['coarse'] == 'True' and self.params['my_tlt'] == 'False'):
@@ -1270,11 +1279,19 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		else: #Refinement. Just get maxtilt for param file
 			rawimagecount, maxtilt=self.excludeImages(tiltfilename_full, f)  #Remove images from .tlt file if user requests
 			self.params['maxtilt'] = maxtilt
+			if self.params['starting_tlt_file'] == "Initial":
+				apDisplay.printMsg("Using Initial alignment from the microscope as starting .tlt file for Refinement by copying original.tlt to %s." % tiltfilename)
+				os.system("cp %s %s" % (originaltilt, tiltfilename_full))
 		
 		self.params['cos_alpha']=np.cos(self.params['maxtilt']*np.pi/180)
 		
 		###convert angstroms to pixels
 		r1_lp, r2_lp, r3_lp, r4_lp, r5_lp, self.params['r1_body'], self.params['r2_body'], self.params['r3_body'], self.params['r4_body'], self.params['r5_body'] = self.angstromsToProtomo(coarse=self.params['coarse'])
+		
+		###remove high tilt angles if requested
+		if (self.params['positive_recon'] < 90) or (self.params['negative_recon'] > -90):
+			removed_images, mintilt, maxtilt = apProTomo2Aligner.removeHighTiltsFromTiltFile(tiltfilename_full, self.params['negative_recon'], self.params['positive_recon'])
+			apDisplay.printMsg("High tilt images %s have been removed by request" % removed_images)
 		
 		###create param file
 		param_out=seriesname+'.param'
@@ -1328,12 +1345,16 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		if self.params['coarse'] == 'True':
 			name='coarse_'+seriesname
 			
+			#Initializing starting window size to be fourier transform friendly in case the values inputted by the user are not
+			new_region_x=apProTomo2Aligner.nextLargestSize(int(self.params['region_x']/self.params['sampling'])+1)
+			new_region_y=apProTomo2Aligner.nextLargestSize(int(self.params['region_y']/self.params['sampling'])+1)
+			newsize = "{ %s %s }" % (new_region_x, new_region_y)
+			series.setparam("window.size", newsize)
+			
 			#Align and restart alignment if failed
 			retry=0
 			brk=None
 			end=0
-			new_region_x=int(self.params['region_x']/self.params['sampling'])   #Just initializing
-			new_region_y=int(self.params['region_y']/self.params['sampling'])   #Just initializing
 			while (min(new_region_x,new_region_y) != 20 and end == 0):
 				try:
 					if (brk != None):
@@ -1593,12 +1614,16 @@ class ProTomo2Aligner(basicScript.BasicScript):
 					f.write("No parameters were switched for Iteration #%s\n" % (n+1))
 					apDisplay.printMsg("No parameters were switched for Iteration #%s\n" % (n+1))
 				
+				#Initializing starting window size to be fourier transform friendly in case the values inputted by the user are not
+				new_region_x=apProTomo2Aligner.nextLargestSize(int(region_x/sampling)+1)
+				new_region_y=apProTomo2Aligner.nextLargestSize(int(region_y/sampling)+1)
+				newsize = "{ %s %s }" % (new_region_x, new_region_y)
+				series.setparam("window.size", newsize)
+				
 				#Align and restart alignment if failed
 				retry=0
 				brk=None
 				end=0
-				new_region_x=int(region_x/sampling)   #Just initializing
-				new_region_y=int(region_y/sampling)   #Just initializing
 				while (min(new_region_x,new_region_y) != 20 and end == 0):
 					try:
 						if (brk != None):

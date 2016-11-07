@@ -32,7 +32,7 @@ class subStackScript(appionScript.AppionScript):
 			help="Number of files into which the stack will be split")
 		
 		self.parser.add_option("--random", dest="random", type="int",
-            help="Number of random particles into the stack")
+			help="Number of random particles into the stack")
 
 		self.parser.add_option("--exclude", dest="exclude",
 			help="EMAN style classes to EXCLUDE in the new stack (0,5,8)", metavar="0,1,...")

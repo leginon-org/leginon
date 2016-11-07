@@ -5,6 +5,7 @@ from appionlib import starFile
 from appionlib import apDisplay
 from appionlib import apStack
 from appionlib.apCtf import ctfdb
+from appionlib import apDefocalPairs
 import sys
 import os
 
@@ -21,7 +22,8 @@ class MakeStarForStack(appionScript.AppionScript):
 	def setupParserOptions(self):
 		self.parser.add_option("-s", "--stackid", dest="stackid", type="int", help="Stack database id", metavar="ID#")
 		self.parser.add_option("-o", dest="outstar", type="str", help="Output star file name")
-		
+		self.parser.add_option("--siblingCTF", dest="siblingCTF", default=None, type="str", help="Use CTF estimation from sibling image. Specify the preset name to use, e.g. --siblingCTF=ex")
+				
 	def checkConflicts(self):
 		pass
 	
@@ -62,7 +64,14 @@ class MakeStarForStack(appionScript.AppionScript):
 			partParams['kv'] = imagedata['scope']['high tension']/1000.0
 			partParams['cs'] =imagedata['scope']['tem']['cs']*1000
 			### get CTF data from image			
-			ctfdata = ctfdb.getBestCtfValue(imagedata, msg=False, sortType='maxconf')
+			if self.params['siblingCTF'] is None:
+				ctfdata = ctfdb.getBestCtfValue(imagedata, msg=False)
+			else:
+				siblingdata=apDefocalPairs.getParticularSiblingByPreset(imagedata,self.params['siblingCTF'])
+				if siblingdata is None:
+					apDisplay.printError('Sibling image for %s not found' % (imagedata['filename']))
+				else:
+					ctfdata = ctfdb.getBestCtfValue(siblingdata, msg=False)
 			if ctfdata is not None:
 				# use defocus & astigmatism values
 				partParams['defocus1'] = abs(ctfdata['defocus1']*1e10)

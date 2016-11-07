@@ -673,6 +673,10 @@ class RefineCTF(appionLoop2.AppionLoop):
 			"FMIN :: defRatio=%.5f <a=%.3f , d=%.2e == %.2fA (iter %d)"
 				%(ellipRatio**2, -math.degrees(ellipAlpha), defocus, avgres, self.fminCount),
 			"cyan")
+
+		self.datalog.write("%.8f\t%.8f\t%.8f\n"
+			%(ellipRatio, -math.degrees(ellipAlpha), avgres))
+
 		return avgres
 
 	#====================================
@@ -694,10 +698,16 @@ class RefineCTF(appionLoop2.AppionLoop):
 		self.lowerbound = lowerbound
 		self.upperbound = upperbound
 
+		### log file
+		datafile = self.shortname+"-data.csv"
+		self.datalog = open(datafile, "w")
+
 		### create function self.refineMinFunc that would return res80+res50
 		x0 = [ellipRatio, ellipAlpha]
 		maxfun = self.params['refineIter']
 		results = scipy.optimize.fmin(self.refineMinFunc, x0=x0, maxfun=maxfun)
+		self.datalog.close()
+
 
 		ellipRatio, ellipAlpha = results
 		apDisplay.printColor("BEST FROM FMIN :: defRatio=%.3f < a=%.2f"
@@ -758,6 +768,7 @@ class RefineCTF(appionLoop2.AppionLoop):
 
 		### print message
 		bestDbValues = ctfdb.getBestCtfByResolution(imgdata)
+		self.shortname = apDisplay.short(imgdata['filename'])
 		if bestDbValues is None:
 			apDisplay.printColor("SKIPPING: No CTF values for image %s"
 				%(apDisplay.short(imgdata['filename'])), "red")

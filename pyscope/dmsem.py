@@ -359,6 +359,7 @@ class GatanUltraScan(DMSEM):
 	binning_limits = [1,2,4,8]
 	binmethod = 'exact'
 
+
 class GatanK2Base(DMSEM):
 	name = 'GatanK2Base'
 	try:
@@ -372,6 +373,14 @@ class GatanK2Base(DMSEM):
 	binning_limits = [1,2,4,8]
 	binmethod = 'floor'
 	filePerImage = False
+
+	k2_max_ram_for_stack_gb = 12 # maximal ram for ram grabs
+
+	def __init__(self):
+		super(GatanK2Base, self).__init__()
+		# set default return frame count.
+		self.setEarlyReturnFrameCount(None)
+
 	def custom_setup(self):
 		#self.camera.SetShutterNormallyClosed(self.cameraid,self.bblankerid)
 		if self.ed_mode != 'base':
@@ -442,6 +451,8 @@ class GatanK2Base(DMSEM):
 		the integrated image returned to Leginon
 		'''
 		if self.isDoseFracOn():
+                        # This makes it always take the value in dmsem.cfg
+                        self.setEarlyReturnFrameCount(None)
 			frames_name = time.strftime('%Y%m%d_%H%M%S', time.localtime())
 			self.frames_name = frames_name + '%02d' % (self.idcounter.next(),)
 		else:
@@ -466,12 +477,38 @@ class GatanK2Base(DMSEM):
 			'dirname': path,
 			'rootname': fileroot,
 			'filePerImage': self.filePerImage,
+			'doEarlyReturn': self.getDoEarlyReturn(),
 			'earlyReturnFrameCount': self.getEarlyReturnFrameCount(),
+			'earlyReturnRamGrabs': self.getEarlyReturnRamGrabs(),
 		}
 		return params
 
+	def getEarlyReturnRamGrabs(self):
+		if not self.getDoEarlyReturn() or not self.isDM231orUp():
+			return 0
+		# For DM2.3.1 and up, need to grab frames in ram before return
+		nframes = self.getNumberOfFrames()
+		maxMemory = self.k2_max_ram_for_stack_gb * (1024**3)
+		pixels = self.dimension['x']*self.dimension['y']*self.binning['x']*self.binning['y']
+		max_ram_frames = maxMemory // pixels
+		# Grab up to the maximal ram available for the purpose.
+		# The rest will need to be dumped to disk before another image is taken.
+		return min(nframes, max_ram_frames)
+			
 	def getEarlyReturnFrameCount(self):
-		return self.getDmsemConfig('k2','early_return_frame_count')
+		return self.early_return_frame_count
+
+	def setEarlyReturnFrameCount(self, value=None):
+		nframes = self.getNumberOfFrames()
+		if type(value) is type(1):
+			# Mainly for testing
+			self.early_return_frame_count = min([value, nframes])
+		else:
+			# Read from dmsem.cfg
+			self.early_return_frame_count = min([self.getDmsemConfig('k2','early_return_frame_count'), nframes])
+
+	def getDoEarlyReturn(self):
+		return self.getDmsemConfig('k2','do_early_return')
 
 	def setAlignFrames(self, value):
 		self.align_frames = bool(value)

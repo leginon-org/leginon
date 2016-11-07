@@ -14,7 +14,39 @@ from appionlib import basicScript
 from appionlib import apImagicFile
 from appionlib.apImage import imagenorm
 from appionlib.apImage import imagefilter
+from appionlib.apImage import imageprocess
 from optparse import OptionParser
+
+##TODO merge image processing with imageprocess code
+
+### Works
+# read from MRC image/stack
+# read from HED/IMG stack
+# write to MRC image
+# write to MRC stack		
+# write to HED/IMG stack
+# append to MRC stack
+# append to HED/IMG stack
+# filter images
+# implement binning
+# implement normalization
+
+### needs more testing
+# write pixelsize to new MRC file
+# get apix from MRC header
+# implement proc2d --average
+# implement proc2d --list feature
+
+### TODO
+# read from SPIDER stack
+# read from SPIDER image
+# read from EMAN2/HDF stack		
+# write to SPIDER image
+# write to SPIDER stack
+# write to EMAN2/HDF stack
+# get apix from HED/IMG header
+# implement proc2d --rotavg
+# implement proc2d --clip
 
 """
 Usage:
@@ -63,6 +95,8 @@ class ApProc2d(basicScript.BasicScript):
 			metavar='FLOAT', help='High pass filter to provided resolution. In Angstroms. ')
 		self.parser.add_option("--pixlimit", dest="pixlimit", type="float",
 			help="Limit pixel values to within <pixlimit> standard deviations", metavar="FLOAT")
+		self.parser.add_option("--clip", dest="clip", type="int",
+			help="Clip to boxsize, --clip=32 (assumes square)", metavar="INT")
 		self.parser.add_option('--apix', dest='apix', type=float,
 			metavar='FLOAT', help='High pass filter to provided resolution. In Angstroms. ')
 		self.parser.add_option('--bin', dest='bin', type=int,
@@ -90,6 +124,8 @@ class ApProc2d(basicScript.BasicScript):
 		self.parser.add_option('--rampnorm', dest='normalizemethod',
 			help="Set normalization method to rampnorm",
 			action='store_const', const='rampnorm', )
+		self.parser.add_option('--xflip', dest='xflip', help="Mirror images across x",
+			action='store_true', default=False, )
 
 	#=====================
 	#=====================
@@ -129,7 +165,6 @@ class ApProc2d(basicScript.BasicScript):
 		#header = self.readFileHeader(filename)
 		if filename.endswith('.mrc'):
 			pixeldict = mrc.readFilePixelSize(filename)
-			print pixeldict
 			if pixeldict['x'] == pixeldict['y'] and pixeldict['x'] == pixeldict['z']:
 				return pixeldict['x']
 			else:
@@ -282,7 +317,7 @@ class ApProc2d(basicScript.BasicScript):
 
 		self.message("Appending to existing file, %s"%(self.params['outfile']))
 		## dimensions for new particles must be the same as the old
-		if self.inheader['nx'] != existheader['nx'] or self.inheader['ny'] != existheader['ny']:
+		if self.inheader['nx']/self.params['bin'] != existheader['nx'] or self.inheader['ny']/self.params['bin'] != existheader['ny']:
 			apDisplay.printError("Dims for existing stack (%dx%d) is different from input stack (%dx%d)"
 				%(self.inheader['nx'], self.inheader['ny'], existheader['nx'], existheader['ny']))
 
@@ -354,36 +389,6 @@ class ApProc2d(basicScript.BasicScript):
 	#=====================
 	#=====================
 	def start(self):
-
-		### Works
-		# read from MRC image/stack
-		# read from HED/IMG stack
-		# write to MRC image
-		# write to MRC stack		
-		# write to HED/IMG stack
-		# append to MRC stack
-		# append to HED/IMG stack
-		# filter images
-		# implement binning
-		# implement normalization
-
-		### needs more testing
-		# write pixelsize to new MRC file
-		# get apix from MRC header
-		# implement proc2d --average
-		# implement proc2d --list feature
-
-		### TODO
-		# read from SPIDER stack
-		# read from SPIDER image
-		# read from EMAN2/HDF stack		
-		# write to SPIDER image
-		# write to SPIDER stack
-		# write to EMAN2/HDF stack
-		# get apix from HED/IMG header
-		# implement proc2d --rotavg
-		# implement proc2d --clip
-
 		# determine numParticles to add
 		if self.params['last'] is None:
 			self.params['last'] = self.inputNumParticles - 1 #stacks start at 0
@@ -428,20 +433,21 @@ class ApProc2d(basicScript.BasicScript):
 				particle = imagefilter.lowPassFilter(particle, apix=self.params['apix'], radius=self.params['lowpass'])
 			if self.params['highpass']:
 				self.message("highpass: %s"%(self.params['highpass']))
-				particle = imagefilter.highPassFilter2(particle, self.params['highpass'], apix=self.params['apix'])
+				particle = imagefilter.tanhHighPassFilter(particle, self.params['highpass'], apix=self.params['apix'])
 			### unless specified, invert the images
 			if self.params['inverted'] is True:
 				self.message("inverted: %s"%(self.params['inverted']))
 				particle = -1.0 * particle
+
 			### clipping
-			"""
-			if particle.shape != boxshape:
-				if boxsize <= particle.shape[0] and boxsize <= particle.shape[1]:
-					particle = imagefilter.frame_cut(particle, boxshape)
-				else:
-					apDisplay.printError("particle shape (%dx%d) is smaller than boxsize (%d)"
-						%(particle.shape[0], particle.shape[1], boxsize))
-			"""
+			if self.params['clip'] is not None:
+				clipshape = (self.params['clip'],self.params['clip'])
+				if particle.shape != clipshape:
+					if self.params['clip'] <= particle.shape[0] and self.params['clip'] <= particle.shape[1]:
+						particle = imagefilter.frame_cut(particle, clipshape)
+					else:
+						apDisplay.printError("particle shape (%dx%d) is smaller than requested clip size (%d)"
+							%(particle.shape[0], particle.shape[1], self.params['clip']))
 
 			### step 3: normalize particles
 			#self.normoptions = ('none', 'boxnorm', 'edgenorm', 'rampnorm', 'parabolic') #normalizemethod

@@ -162,7 +162,7 @@ if (!HIDE_FEATURE)
 /*
 ** Tilt Pickers
 */
-$maxangle = $particle->getMaxTiltAngle($sessionId);
+$maxangle = $particle->getMaxTiltAngle($expId);
 if ($maxangle > 5) {
 	echo "<tr><td width='100' align='center'>\n";
 	echo "  <img src='img/appionlogo.jpg' height='100'>\n";

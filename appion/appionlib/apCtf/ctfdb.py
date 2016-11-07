@@ -147,7 +147,7 @@ def getBestCtfValueForImage(imgdata, ctfavg=True, msg=True, method=None):
 
 #=====================
 def getSortValueFromCtfQuery(ctfvalue, sortType):
-	#self.sortoptions = ('res80', 'res50', 'resplus', 'maxconf', 'conf3010', 'conf5peak')
+	#self.sortoptions = ('res80', 'res50', 'resplus', 'rePkg', 'maxconf', 'conf3010', 'conf5peak')
 	# in order to make the highest value the best value, we will take the inverse of the resolution
 	try:
 		if sortType == 'res80':
@@ -156,6 +156,8 @@ def getSortValueFromCtfQuery(ctfvalue, sortType):
 			return 1.0/ctfvalue['resolution_50_percent']
 		elif sortType == 'resplus':
 			return 1.0/(ctfvalue['resolution_80_percent']+ctfvalue['resolution_50_percent'])
+		elif sortType == 'resPkg':
+			return 1.0/ctfvalue['ctffind4_resolution']
 		elif sortType == 'maxconf':
 			return calculateConfidenceScore(ctfvalue)
 		elif sortType == 'conf3010':

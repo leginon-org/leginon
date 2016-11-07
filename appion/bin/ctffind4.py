@@ -16,6 +16,7 @@ from appionlib import apDatabase
 from appionlib import appiondata
 from appionlib import appionLoop2
 from appionlib import apInstrument
+from appionlib import apDDprocess
 from appionlib.apCtf import ctfdb
 from appionlib.apCtf import ctfinsert
 
@@ -51,6 +52,12 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			help="Maximum phase shift by phase plate, in degrees", metavar="#")
 		self.parser.add_option("--phasestep", "--phase_search_step", dest="phase_search_step", type="float", default=10.0,
 			help="phase shift search step, in degrees", metavar="#")
+		self.parser.add_option("--ddstackid", dest="ddstackid",type="int",
+			help="DD stack ID", metavar="#")
+		self.parser.add_option("--num_frame_avg", dest="num_frame_avg", type="int",default=7,
+				help="Average number of moive frames for movie stack CTF refinement")
+
+
 		## true/false
 		self.parser.add_option("--bestdb", "--best-database", dest="bestdb", default=False,
 			action="store_true", help="Use best amplitude contrast and astig difference from database")
@@ -69,6 +76,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			apDisplay.printError("Please keep the defstep between 0.0001 & 2 microns")
 		### set cs value
 		self.params['cs'] = apInstrument.getCsValueFromSession(self.getSessionData())
+		self.params['is_movie'] = bool(self.params['ddstackid'])
 		return
 
 
@@ -124,8 +132,11 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			return True
 
 	def getPhaseParamValue(self):
+			return self.getYesNoParamValue('shift_phase')
+
+	def getYesNoParamValue(self, key):
 		phaseparam = 'no'
-		if self.params['shift_phase']:
+		if self.params[key]:
 			phaseparam = 'yes'
 		return phaseparam
 
@@ -163,9 +174,12 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		Find additional phase shift?                  [no] : 
 		Do you want to set expert options?            [no] : 
 		"""
-		paramInputOrder = ['input', 'output', 'apix', 'kv', 'cs', 'ampcontrast', 'fieldsize',
+		paramInputOrder = ['input',]
+		if self.params['ddstackid']:
+			paramInputOrder.extend(['is_movie','num_frame_avg'])
+		paramInputOrder.extend( ['output', 'apix', 'kv', 'cs', 'ampcontrast', 'fieldsize',
 			'resmin', 'resmax', 'defmin', 'defmax', 'defstep', 
-			'known_astig', 'exhaustive_astig_search','restrain_astig', 'expect_astig', 'phase',]
+			'known_astig', 'exhaustive_astig_search','restrain_astig', 'expect_astig', 'phase',])
 		# finalize paramInputOrder
 		if self.params['shift_phase']:
 			paramInputOrder.extend(['min_phase_shift','max_phase_shift','phase_search_step'])
@@ -218,9 +232,15 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 
 		# dstep is the physical detector pixel size
 		apix = apDatabase.getPixelSize(imgdata)
+
+		# may be gain/dark corrected movie that has been binned
+		origpath, binning = self.getOriginalPathAndBinning(imgdata)
+		# ddstack might be binned.
+		apix *= binning
+
 		# inputparams defocii and astig are in Angstroms
 		inputparams = {
-			'orig': os.path.join(imgdata['session']['image path'], imgdata['filename']+".mrc"),
+			'orig': origpath,
 			'input': apDisplay.short(imgdata['filename'])+".mrc",
 			'output': apDisplay.short(imgdata['filename'])+"-pow.mrc",
 
@@ -244,6 +264,9 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			'phase_search_step': math.radians(self.params['phase_search_step']),
 			'expert_opts': 'no',
 			'newline': '\n',
+			# For movie
+			'is_movie': self.getYesNoParamValue('is_movie'),
+			'num_frame_avg': self.params['num_frame_avg'],
 		}
 
 		defrange = self.params['defstep'] * self.params['numstep'] * 1e4 ## do 25 steps in either direction # in angstrum
@@ -400,6 +423,28 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		runq.insert()
 		self.ctfrun = runq
 		return True
+
+	def getOriginalPathAndBinning(self,imgdata):
+		if self.params['ddstackid'] is None:
+			origPath = os.path.join(imgdata['session']['image path'], imgdata['filename']+".mrc")
+			binning = 1
+		else:
+			self.dd = apDDprocess.DDStackProcessing()
+			self.dd.setDDStackRun(self.params['ddstackid'])
+			self.dd.setImageData(imgdata)
+			self.ddstackrun = self.dd.getDDStackRun()
+			self.ddstackpath = self.ddstackrun['path']['path']
+			if not imgdata['camera']['align frames']:
+				# ddstack of the ddstack may be different from the source image
+				binning = self.ddstackrun['params']['bin']
+				source_imgdata = imgdata
+			else:
+				# but should be the same as the aligned image
+				binning = 1
+				pair = self.dd.getAlignImagePairData(self.ddstackrun,False)
+				source_imgdata = pair['source']
+			origPath = os.path.join(self.ddstackpath,source_imgdata['filename']+"_st.mrc")
+		return origPath, binning
 
 if __name__ == '__main__':
 	imgLoop = ctfEstimateLoop()

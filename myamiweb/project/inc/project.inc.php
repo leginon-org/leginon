@@ -418,7 +418,7 @@ class project {
 			$q = "DELETE FROM projectowners "
 				."WHERE `REF|leginondata|UserData|user` = ".$userId." "
 				."and `REF|projects|project`= ".$projectId." ";
-			#$this->mysql->SQLQuery($q, true);
+			$this->mysql->SQLQuery($q, true);
 		}
 		return true;
 	}

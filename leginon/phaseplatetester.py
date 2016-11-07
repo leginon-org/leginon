@@ -41,7 +41,7 @@ class PhasePlateTestImager(acquisition.Acquisition):
 			self.logger.error('No imagedata to log and publish stats')
 			return
 		# associate image with phase plate patch
-		logdata = leginondata.PhasePlateTestLogData()
+		logdata = leginondata.PhasePlateTestLogData(session=self.session)
 		logdata['tem'] = imagedata['scope']['tem']
 		logdata['test type'] = self.test_type 
 		logdata['phase plate number'] = self.settings['phase plate number']

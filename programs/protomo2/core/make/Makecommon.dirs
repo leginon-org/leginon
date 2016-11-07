@@ -1,0 +1,33 @@
+#
+# Makecommon.dirs: common rules for subdirectories
+#
+# Copyright © 2012 Hanspeter Winkler
+#
+
+
+#
+# make rules
+#
+
+.PHONY: help all libs install clean distclean depend makedate
+
+help:
+	@ echo "usage: make [ all | libs | install | depend | clean | distclean ]"
+
+all libs install: Makeincs makedate $(OBJS) $(EXTRAOBJS)
+
+clean:
+	rm -f Makeincs makedate.h *.o *.a *.so *.so.* $(EXTRACLEAN) a.out core *.i *.s *.L *~ *# .#*
+
+distclean: clean
+	rm -f Makedeps
+
+depend: Makeincs makedate
+	$(CC) $(CPPFLAGS) $(CFLAGS) -MM $(OBJS:.o=.c) >Makedeps
+
+makedate:
+	@ ../../make/getdate.sh >makedate.h
+
+Makeincs: $(INCS)
+	$(MAKE) -C ../../include DIR=$(CURDIR) $(INCS)
+	@ touch Makeincs

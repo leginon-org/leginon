@@ -21,6 +21,7 @@ from appionlib import apProject
 from appionlib import apFourier
 from appionlib import appiondata
 from appionlib import apImagicFile
+from appionlib import apRelion
 #pyami
 from pyami import mrc
 
@@ -229,7 +230,7 @@ class UploadRelionMaxLikeScript(appionScript.AppionScript):
 		return maxjobdata[0]
 
 	#=====================
-	def insertRunIntoDatabase(self, alignimagicfile, runparams):
+	def insertRunIntoDatabase(self, alignref_imagicfile, alignimagicfile, runparams):
 		apDisplay.printMsg("Inserting MaxLike Run into DB")
 
 		### setup alignment run
@@ -260,7 +261,7 @@ class UploadRelionMaxLikeScript(appionScript.AppionScript):
 		alignstackq = appiondata.ApAlignStackData()
 		alignstackq['imagicfile'] = alignimagicfile
 		alignstackq['avgmrcfile'] = "average.mrc"
-		alignstackq['refstackfile'] = "part"+self.params['timestamp']+"_average.hed"
+		alignstackq['refstackfile'] = alignref_imagicfile
 		alignstackq['iteration'] = self.lastiter
 		alignstackq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		alignstackq['alignrun'] = alignrunq
@@ -413,6 +414,12 @@ class UploadRelionMaxLikeScript(appionScript.AppionScript):
 		f.write(text+"\n\n")
 		f.close()
 
+	def replaceNaNImageInReferenceStack(self, runparams):
+		apDisplay.printMsg('Checking reference stack for NaN data....')
+		finalreffile = "part%s_it%03d_classes.mrcs"%(runparams['timestamp'], runparams['maxiter'])
+		number_of_replacement = apRelion.replaceNaNImageInStack(finalreffile)
+		apDisplay.printMsg('Replaced %d bad images in stack' % number_of_replacement)
+
 	#=====================
 	def alignReferences(self, runparams):
 		### align references
@@ -495,6 +502,9 @@ class UploadRelionMaxLikeScript(appionScript.AppionScript):
 
 	#=====================
 	def start(self):
+		# initialize variables
+		self.resdict = {}
+
 		### load parameters
 		runparams = self.readRunParameters()
 		apDisplay.printColor("going to directory %s"%(runparams['rundir']), "green")
@@ -504,29 +514,39 @@ class UploadRelionMaxLikeScript(appionScript.AppionScript):
 		#import pprint
 		#pprint.pprint( runparams)
 
-		### align references
+		### refs #4396 Relion sometimes gives NaN image that it can not use for alignment
+		self.replaceNaNImageInReferenceStack(runparams)
+
+		### align references, output to rundir
 		self.alignReferences(runparams)
 
-		### read particles
+		### organize refinement results into folders
 		if self.params['sort'] is True:
 			self.sortFolder()
+
+		# create aligned reference stack
 		reflist = self.readRefStarFile()
-		partlist = self.readPartStarFile(reflist)
-		#self.writePartDocFile(partlist)
+		alignref_imagicfile = "part"+self.params['timestamp']+"_average.hed"
+		temp_imagicfile = self.createAlignedStacks(reflist, runparams['localstack'])
+		shutil.move(temp_imagicfile,alignref_imagicfile)
 
 		### create aligned stacks
+		partlist = self.readPartStarFile(reflist)
+		#self.writePartDocFile(partlist)
 		alignimagicfile = self.createAlignedStacks(partlist, runparams['localstack'])
 
 		#create average image for web
 		apStack.averageStack(alignimagicfile, msg=False)
 
 		### calculate resolution for each reference
-		apix = apStack.getStackPixelSizeFromStackId(runparams['stackid'])*runparams['bin']
-		self.calcResolution(partlist, alignimagicfile, apix)
-		self.createAlignedReferenceStack(runparams)
+		### The way the function average particles in each class
+		### without weighting causes Issue #4566.
+		#apix = apStack.getStackPixelSizeFromStackId(runparams['stackid'])*runparams['bin']
+		#self.calcResolution(partlist, alignimagicfile, apix)
+		#self.createAlignedReferenceStack(runparams)
 
 		### insert into databse
-		self.insertRunIntoDatabase(alignimagicfile, runparams)
+		self.insertRunIntoDatabase(alignref_imagicfile, alignimagicfile, runparams)
 		self.insertParticlesIntoDatabase(runparams['stackid'], partlist)
 
 		apFile.removeStack(runparams['localstack'], warn=False)

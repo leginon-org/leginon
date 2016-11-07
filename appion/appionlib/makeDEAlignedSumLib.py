@@ -61,6 +61,7 @@ def readDriftFiles(xshift_filename,yshift_filename):
 def makePtclDriftImage(imagearray,particlelst,outname='particledrift.png',driftscalefactor=50,imagebinning=2):
 	from matplotlib import pyplot
 	imagearray=imagefun.bin2(imagearray,imagebinning)
+	#need to add pyplot.hold(False)
 	ax=pyplot.axes(frameon=False)
 	ax.imshow(imagearray,cmap='gray')
 
@@ -78,16 +79,19 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 		configuration_options = deProcessFrames.ConfigurationOptions()
 		options_list = configuration_options.get_options_list()
 		sections = options_list.keys()
+		self.de_options=[]
 		for section in sections:
 			for option in options_list[section]:
+				fulloption='%s_%s' % (section, option['name'])
+				self.de_options.append(fulloption)
 				if section == 'gainreference' or section == 'darkreference':
 					if option['name'] in ('filename', 'framecount'):
 						continue
 				if section == 'boxes':
 					if option['name'] in ('fromlist', 'fromonefile', 'fromfiles', 'boxsize', 'minimum'):
 						continue
-				if section == 'input' and option['name'] == 'framecount':
-					continue
+				#if section == 'input' and option['name'] == 'framecount':
+				#	continue
 				if section == 'radiationdamage':
 					if option['name'] in ('voltage'):
 						continue
@@ -97,7 +101,7 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 					metavar = 'INT'
 				elif option['type'] == float:
 					metavar = 'FLOAT'
-				self.parser.add_option('--%s_%s' % (section, option['name']), type=option['type'], metavar=metavar, help=option['help'], default=option['default'])
+				self.parser.add_option(('--%s' % (fulloption)), type=option['type'], metavar=metavar, help=option['help'], default=option['default'])
 
 		self.parser.add_option('--bad_cols', dest='bad_cols', default='', help= "Bad columns in Leginon orientation")
 		self.parser.add_option('--bad_rows', dest='bad_rows', default='', help= "Bad rows in Leginon orientation")
@@ -111,6 +115,7 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 		self.parser.add_option("--output_rotation", dest="output_rotation", type='int', default=0, help="Rotate output particles by the specified angle", metavar="INT")
 		self.parser.add_option("--make_summary_image", dest="make_summary_image", action='store_true', default=False, help="Make summary image with particle trajectories", metavar="INT")
 		self.parser.add_option("--override_bad_pixs", dest="override_bad_pixs", action='store_true', default=False, help="Override bad pixels from database", metavar="INT")
+		self.parser.add_option("--post_counting_gain", dest="post_counting_gain", default=None , help="Skip normal gain correction and instead use post counting gain", metavar="INT")
 
 	#=======================
 	def checkConflicts(self):
@@ -182,6 +187,7 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 			apDisplay.printWarning("Reference is based on %s" % self.refdata['filename'])
 		else:
 			self.refdata = imgdata
+		
 		try: 
 			brightrefpath=self.refdata['bright']['session']['image path']
 			brightrefname=self.refdata['bright']['filename']+'.mrc'
@@ -199,6 +205,13 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 			apDisplay.printWarning("Warning, dark reference not found. Frames will not be gain corrected.")
 			darkrefname=None
 			darkref=None
+			
+		###Overwrite the above if counting was used
+		if self.params['post_counting_gain'] is not None:
+			brightref=self.params['post_counting_gain']
+			brightrefname=os.path.split(brightref)[-1]
+			darkref=None
+			darkrefname=None
 			
 		apDisplay.printMsg('Finding frames for %s' % imgdata['filename'])
 
@@ -225,7 +238,9 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 				time.sleep(10)
 				filelist = glob.glob(framepattern)
 		if len(filelist) < 1:
-			apDisplay.printError('frames not found with %s' % framepattern)
+			apDisplay.printWarning('frames not found with %s' % framepattern)
+			targetdict={}
+			return targetdict
 
 		print os.path.join(framespath, imgrootname + '*')
 		framesroot, framesextension = os.path.splitext(glob.glob(os.path.join(framespath, imgrootname + '*'))[0])
@@ -242,31 +257,37 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 			targetdict['darkref'] = darkref
 			targetdict['framespathname'] = framespathname
 			targetdict['outpath'] = self.params['rundir']
-		elif handlefiles == 'copy':
-			if self.params['skipgain'] is False and brightref is not None and darkref is not None:
-				shutil.copy(brightref, scratchdir)
-				shutil.copy(darkref, scratchdir)
-				targetdict['brightref'] = os.path.join(scratchdir, brightrefname)
-				targetdict['darkref'] = os.path.join(scratchdir, darkrefname)
-			try:
-				if framesextension == '.frames':
-					shutil.copytree(framespathname, os.path.join(scratchdir, framesname))
-				elif framesextension == '.mrc':
-					newpath=os.path.join(scratchdir,framesname)
-					os.mkdir(newpath)
-					shutil.copy(framespathname, newpath)
-			except:
-				apDisplay.printWarning('there was a problem copying the frames for %s' % imgdata['filename'])
+		elif handlefiles == 'copy' or handlefiles == 'link':
+			####handle gains
+			if self.params['skipgain'] is False:
+				####handle brights
+				if brightref is not None:
+					if handlefiles == 'copy':
+						shutil.copy(brightref, scratchdir)
+					elif handlefiles == 'link':
+						os.symlink(brightref, os.path.join(scratchdir, brightrefname))
+					targetdict['brightref'] = os.path.join(scratchdir, brightrefname)
+				#####handle darks
+				if darkref is not None and self.params['post_counting_gain'] is None:
+					if handlefiles == 'copy':
+						shutil.copy(darkref, scratchdir)
+					elif handlefiles == 'link':
+						os.symlink(darkref, os.path.join(scratchdir, darkrefname))
+					targetdict['darkref'] = os.path.join(scratchdir, darkrefname)
+			####handle frames
+			if handlefiles=='copy':
+				try:
+					if framesextension == '.frames':
+						shutil.copytree(framespathname, os.path.join(scratchdir, framesname))
+					elif framesextension == '.mrc':
+						newpath=os.path.join(scratchdir,framesname)
+						os.mkdir(newpath)
+						shutil.copy(framespathname, newpath)
+				except:
+					apDisplay.printWarning('there was a problem copying the frames for %s' % imgdata['filename'])
+			elif handlefiles=='link':
+				os.symlink(framespathname, os.path.join(scratchdir, framesname))
 
-			targetdict['framespathname'] = os.path.join(scratchdir, framesname)
-			targetdict['outpath'] = os.path.join(scratchdir, imgdata['filename'])
-		elif handlefiles == 'link':
-			if self.params['skipgain'] is False and brightref is not None and darkref is not None:
-				os.symlink(brightref, os.path.join(scratchdir, brightrefname))
-				os.symlink(darkref, os.path.join(scratchdir, darkrefname))
-				targetdict['brightref'] = os.path.join(scratchdir, brightrefname)
-				targetdict['darkref'] = os.path.join(scratchdir, darkrefname)
-			os.symlink(framespathname, os.path.join(scratchdir, framesname))
 			targetdict['framespathname'] = os.path.join(scratchdir, framesname)
 			targetdict['outpath'] = os.path.join(scratchdir, imgdata['filename'])
 			
@@ -399,13 +420,18 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 
 		#set appion specific options
 		#flatfield references
-		if self.params['skipgain'] is not True and targetdict['brightref'] is not None and targetdict['darkref'] is not None:
-			self.params['gainreference_filename'] = targetdict['brightref']
-			brightnframes = imgdata['bright']['camera']['nframes']
-			self.params['gainreference_framecount'] = brightnframes
-			self.params['darkreference_filename'] = targetdict['darkref']
-			darknframes = imgdata['dark']['camera']['nframes']
-			self.params['darkreference_framecount'] = darknframes
+		if self.params['skipgain'] is not True:
+			if 'brightref' in targetdict:
+				self.params['gainreference_filename'] = targetdict['brightref']
+				brightnframes = imgdata['bright']['camera']['nframes']
+				if self.params['post_counting_gain'] is not None:
+					self.params['gainreference_framecount'] = 1
+				else:
+					self.params['gainreference_framecount'] = brightnframes
+			if 'darkref' in targetdict:
+				self.params['darkreference_filename'] = targetdict['darkref']
+				darknframes = imgdata['dark']['camera']['nframes']
+				self.params['darkreference_framecount'] = darknframes
 		
 		if self.params['override_bad_pixs'] is False:
 			apDisplay.printMsg('Using bad pixels from database')
@@ -413,12 +439,19 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 		else:
 			apDisplay.printMsg('Using bad pixels from command line')
 			
-		self.params['input_framecount'] = nframes
+		#self.params['input_framecount'] = nframes
 		self.params['output_invert'] = 0
 		self.params['radiationdamage_apix'] = apix
 		self.params['radiationdamage_voltage'] = kev
 		if self.params['stackid'] is not None:
 			self.params['boxes_fromfiles']=1
+		else:
+			pass
+			xstart=0+self.params['border']
+			ystart=0+self.params['border']
+			xend=imgdata['camera']['dimension']['y']-self.params['border']
+			yend=imgdata['camera']['dimension']['x']-self.params['border']
+			#self.params['input_roi']='%d,%d,%d,%d' % (xstart,ystart,xend,yend)
 		if os.path.exists(targetdict['outpath']):
 			shutil.rmtree(targetdict['outpath'])
 		os.mkdir(targetdict['outpath'])
@@ -427,7 +460,10 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 		keys.sort()
 		for key in keys:
 			param = self.params[key]
-			if param == None or param == '' or key == 'description':
+			#print key, key in self.de_options
+			if param == None or param == '': 
+				pass
+			elif (key in self.de_options) is False:
 				pass
 			else:
 				option = '--%s=%s' % (key, param)
@@ -459,7 +495,6 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 			apDisplay.printWarning('queued job for %s failed' % imgdata['filename'])
 			return None
 
-		#particlelst=readDriftFiles()
 		correctedpath=os.path.join(self.params['queue_scratch'],imgdata['filename'],imgdata['filename'])
 		print os.path.join(correctedpath,'*translations_x*')
 		print glob.glob(os.path.join(correctedpath,'*translations_x*'))
@@ -476,26 +511,40 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 		
 		
 		if self.params['stackid'] is not None:
+			if self.params['handlefiles'] == 'copy':
+				apDisplay.printWarning('Erasing frames from scratch directory %s ' % (targetdict['framespathname']))
+				shutil.rmtree(targetdict['framespathname'])
 			return None
 		outname = imgdata['filename'] + '-' + self.params['alignlabel'] + '.mrc'
 		outnamepath = os.path.join(targetdict['outpath'], outname)
 		if self.params['border'] != 0:
-			command = ['proc2d', innamepath, outnamepath]
-			header = mrc.readHeaderFromFile(innamepath)
-			origx = header['nx']
-			origy = header['ny']
-			newx = origx - self.params['border']
-			newy = origy - self.params['border']
-			command.append('clip=%d,%d' % (newx, newy))
-			print command
-			subprocess.call(command)
+			if len(self.params['input_roi']) > 1:
+				#this doesn't really work
+				origx=imgdata['camera']['dimension']['x']
+				origy=imgdata['camera']['dimension']['y']
+			else:
+				command = ['proc2d', innamepath, outnamepath]
+				header = mrc.readHeaderFromFile(innamepath)
+				origx = header['nx']
+				origy = header['ny']
+				newx = origx - self.params['border']
+				newy = origy - self.params['border']
+				command.append('clip=%d,%d' % (newx, newy))
+				print command
+				subprocess.call(command)			
 			command = ['proc2d', outnamepath, outnamepath]
+			#if self.params['output_rotation'] !=0:
+				###TODO add rot to proc2dLib
+			#	command.append('rot=%d' % self.params['output_rotation'])
 			command.append('clip=%d,%d' % (origx, origy))
 			command.append('edgenorm')
 			print command
 			subprocess.call(command)
 		newimg_array = mrc.read(outnamepath)
+		particlelst=readDriftFiles(xtranslation, ytranslation)
 		self.commitAlignedImageToDatabase(imgdata, newimg_array, alignlabel=self.params['alignlabel'])
+		self.commitFrameTrajectoryToDatabase(imgdata,particlelst,particle=None)
+
 		# return None since everything is committed within this function.
 		if self.params['hackcopy'] is True:
 			origpath = imgdata['session']['image path']
@@ -539,7 +588,9 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 				parentimage=particledict['key']
 				correctedpath=os.path.join(self.params['queue_scratch'],parentimage,parentimage)
 				if os.path.exists(correctedpath):				
-					correctedparticle=glob.glob(os.path.join(correctedpath,('%s.*.region_%03d.*' % (parentimage,particledict['index']))))
+					### sibling images are an issue. The below should work but haven't tested extensively 
+					#correctedparticle=glob.glob(os.path.join(correctedpath,('%s.*.region_%03d.*' % (parentimage,particledict['index']))))
+					correctedparticle=glob.glob(os.path.join(correctedpath,('*.region_%03d.*' % (particledict['index']))))
 					#proc2d.setValue('infile', correctedparticle[0])
 					###TODO proc2dLib reads files in opposite direction of proc2d. Need to add xflip to proc2dLib
 					command=['proc2d',correctedparticle[0], newstackname]
@@ -588,6 +639,15 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 			newimagedata.insert()
 			q = appiondata.ApDDAlignImagePairData(source=imgdata, result=newimagedata, ddstackrun=self.rundata)
 			q.insert()
+	def commitFrameTrajectoryToDatabase(self, imgdata,particlelst,particle=None):
+	    for particle in particlelst:
+		q=appiondata.ApFrameAlignTrajectory()
+		q['image']=imgdata
+		q['particle']=particle
+		q['ddstackrun']=self.rundata
+		q['xshift']=particle['x']
+		q['yshift']=particle['y']
+		q.insert()
 
 	def commitToDatabase(self, imgdata):
 		"""

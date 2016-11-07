@@ -7,14 +7,16 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 require_once "basicLoopForm.inc";
+require_once "ddstackSelectTable.inc";
+require_once "dbDefocusTable.inc";
 
 class gctf extends BasicLoopForm
 {
 	protected $alignedDDStackIds;
 
 
-	function __construct( $expId, $extraHTML='', $ampcontrast='0.07', $bestdb=true, $mdef_aveN='7', $do_EPA=true,	
-	$apcontinue='1', $fieldsize='1024', $dast='0.1',  $bestdb=true,$parallel=true, $do_basic_rotave='0', $overlap='0.5',$convsize='85', $do_Hres_ref='0', $defstep='0.1', $resmin='50',$resmax='4',$useDDStack=false, $ddstackid=false)
+	function __construct( $expId, $extraHTML='', $ampcontrast='0.07', $mdef_aveN='7', $do_EPA=true,	
+	$apcontinue='1', $fieldsize='1024', $dast='0.1',  $bestdb=true, $nominal='', $parallel=true, $do_basic_rotave='0', $overlap='0.5',$convsize='85', $do_Hres_ref='0', $defstep='0.1', $resmin='50',$resmax='4',$useDDStack=false, $ddstackid=false,$max_phase_shift='180',$min_phase_shift='0',$phase_search_step='1',$phaseplate=false)
 	{
 		parent::__construct($expId, $extraHTML);
 		
@@ -24,7 +26,7 @@ class gctf extends BasicLoopForm
 		$pubList = array('gctf');
 		$this->setPublications( $pubList );
 		$this->setJobType( 'gctf' );
-		$this->setOutputDirectory( 'gctf' );
+		$this->setOutputDirectory( 'ctf' );
 		$this->setBaseRunName( 'gctfrun' );
 		$this->setTitle( 'GCTF Launcher' );
 		$this->setHeading( 'GPU Accelerated CTF Estimation with GCTF' );
@@ -33,19 +35,27 @@ class gctf extends BasicLoopForm
 		$this->setTestable( False ); // True to activate "test single image".
 		$this->setUseLegOutDir( False ); // The output directory will be created in the Appion run directory rather than Leginon.
 		$this->setShowDesc( False ); // Flag to hide the description field of the run parameters.
+
+		//Other forms to include	
+		$this->ddStackSelectTable = new DDStackSelectTable($expId, $useDDStack, $ddstackid);
+		$this->dbDefocusTable = new dbDefocusTable($expId, $bestdb, $nominal);
+
 		//------ Set Parameters specific to the program that requires this new form -----//
-
-                $particle = new particledata();
-                $this->alignedDDStackIds = $particle->getDDStackRunIdsAlign($expId);
-
 		$params = $this->getFormParams();
 		
 		// The help section corresponds to the array key for these parameters found in help.js for popup help, $ddstackid=false.
 		$params->setHelpSection( "gctf" );
 				
+		//Appion parameters
+		$params->addParam( "bestdb", $bestdb, "Use best values from Database" );
+		$params->addParam( "nominal", $nominal, "Override Nominal Value (in &mu;m)" );
+		// Gctf parameters
 		$params->addParam( "ampcontrast", $ampcontrast, "Amplitude contrast" );
+		$params->addValidation("ampcontrast", "float");
 		$params->addParam( "defstep", $defstep, "Step of defocus value, in &mu;m" );
+		$params->addValidation("defstep", "float");
 		$params->addParam( "dast", $dast, "Estimated astigmation in &mu;m" );
+		$params->addValidation("dast", "float");
 		$params->addParam( "bestdb", $bestdb, "Use best values from database" );
 		$params->addParam( "nominal", $nominal, "Override Nominal Value ( in &mu;m)" );
 
@@ -53,6 +63,7 @@ class gctf extends BasicLoopForm
 		$params->addParam( "resmin", $resmin, "Lowest resolution for search, in &Aring;");
 		$params->addParam( "resmax", $resmax, "Highest resolution for search, in &Aring;");
 		$params->addParam( "fieldsize", $fieldsize, "FFT boxsize");
+		$params->addValidation("fieldsize", "num");
 		$params->addParam( "do_basic_rotave", $do_basic_rotave, "Rotational averaging");
 		$params->addParam( "do_EPA", $do_EPA, "Equiphase averaging"); 
 		$params->addParam( "overlap", $overlap, "Overlapping factor");
@@ -85,40 +96,26 @@ class gctf extends BasicLoopForm
 		$params->addParam( "plot_res_ring", $plot_res_ring, "Plot an estimated resolution ring on the final .ctf diagnosis file.");
 		$params->addParam( "output_time", $output_time, "Include process time measurements in output");
 		$params->addParam( "gid", $gid, "GPU ID");
-		$params->addParam( "useDDStack",$useDDStack,"Use DD Stack");	
-		$params->addParam( "ddstackid", $ddstackid, "Select an aligned framestack");
-		// Validations
+
+
+		//Phase plate parameters
+		$params->addParam( "max_phase_shift", $max_phase_shift,"Maximum phase shift");
+		$params->addParam( "min_phase_shift", $min_phase_shift,"Minimum phase shift");
+		$params->addParam( "phase_search_step", $phase_search_step,"Phase search step");
+		$params->addParam( "phaseplate", $phaseplate,"Do phase search");
+		
 	}
 	
-        public function generateAdditionalFormLeft()
-        {
+	public function generateAdditionalFormLeft()
+	{
+		$this->updateFormParams();
+		$params = $this->getFormParams();
 
-		
-                $this->updateFormParams();
-                $params = $this->getFormParams();
+		$html .=$this->ddStackSelectTable->generateForm();
 
-		$html.=$params->insertCheckboxField("useDDStack");
-                if(!$this->alignedDDStackIds) {
-                        $html.= "<font color='red'><B>No aligned ddstacks for this session</B></FONT>\n";
-                } else{
-                        $onchange = "switchDefaults(this.value)";
-                        $particle = new particledata();
-//			$ddoptions[0] = 'Select DD stack';
-                        for($i=0;$i<count($this->alignedDDStackIds);$i++)
-                        {
-                                $ddoptions[$this->alignedDDStackIds[$i]['stackid']] = $this->alignedDDStackIds[$i]['runname'];
-                        //      echo $ddoptions[$i];
-                        }
-
-                        $html .= $params->insertStackedSelectField("ddstackid",$ddoptions,'','',$onchange);
-                }
-
-                $html .= "<br />";
-//                $html .= $params->insertCheckboxField("commit");
-
-		 $html.= parent::generateAdditionalFormLeft();
-                return $html;
-        }
+		$html.= parent::generateAdditionalFormLeft();
+		return $html;
+	}
 
 
 
@@ -136,7 +133,13 @@ class gctf extends BasicLoopForm
 	    <hr />";
 			
 		$html.= $params->insertTextField( "ampcontrast", $fieldSize );
-	        $html .= "
+		$html .= "
+	    <br />
+	    <H4>Appion Parameters</H4>
+	    <hr />";
+		$html .=$this->dbDefocusTable->generateForm();
+
+		$html .= "
 	    <br />
 	    <H4>Additional Parameters</H4>
 	    <hr />";
@@ -149,14 +152,14 @@ class gctf extends BasicLoopForm
 		$html.= $params->insertTextField( "resmin", $fieldSize );
 		$html.= $params->insertTextField( "resmax", $fieldSize );
 		$html.= $params->insertTextField( "fieldsize", $fieldSize );
-                $html.= $params->insertTextField( "dast", $fieldSize );
+		$html.= $params->insertTextField( "dast", $fieldSize );
 		$html.= $params->insertTextField( "mdef_aveN",$fieldSize);
 		$html.= $params->insertCheckBoxField( "do_EPA");
 /*
-	        $html .= "
-            <br />
-            <H4>Additional Advanced Parameters</H4>
-            <hr />";
+		$html .= "
+	    <br />
+	    <H4>Additional Advanced Parameters</H4>
+	    <hr />";
 /*
 
 		$html.= $params->insertTextField( "do_basic_rotave", $fieldSize );
@@ -167,26 +170,41 @@ class gctf extends BasicLoopForm
 		$html.= $params->insertTextField( "Href_resH", $fieldSize );
 		$html.= $params->insertTextField( "refine_local_astm", $fieldSize );
 */
-                $html .= "
-            <br />
 
 
-            <H4>Tilt Refinement Parameters</H4>
-            <hr />";
+		$html .= "
+
+	    <br />
+
+	    <H4>Phase Plate Parameters</H4>
+	    <hr />";
+		$html.= $params->insertCheckBoxField( "phaseplate");
+		$html.= "<br />";		
+		$html.= $params->insertTextField( "max_phase_shift", $fieldSize );
+		$html.= $params->insertTextField( "min_phase_shift", $fieldSize );
+		$html.= $params->insertTextField( "phase_search_step", $fieldSize );
+
+
+		$html .= "
+	    <br />
+
+
+	    <H4>Tilt Refinement Parameters</H4>
+	    <hr />";
 		$html.= $params->insertTextField( "refine_tilt", $fieldSize );
 		$html.= $params->insertTextField( "init_tilt_ang", $fieldSize );
 		$html.= $params->insertTextField( "init_tilt_err", $fieldSize );
 /*
-                $html .= "
-            <br />
-            <H4>Correction and Validation Parameters (Recommended)</H4>
-            <hr />";
+		$html .= "
+	    <br />
+	    <H4>Correction and Validation Parameters (Recommended)</H4>
+	    <hr />";
 		$html.= $params->insertTextField( "do_phase_flip", $fieldSize );
 		$html.= $params->insertTextField( "do_validation", $fieldSize );
-	                $html .= "
-            <br />
-            <H4>I/O Parameters</H4>
-            <hr />";
+			$html .= "
+	    <br />
+	    <H4>I/O Parameters</H4>
+	    <hr />";
 
 		$html.= $params->insertTextField( "boxsuffix", $fieldSize );
 		$html.= $params->insertTextField( "ctfstar", $fieldSize );
@@ -199,64 +217,51 @@ class gctf extends BasicLoopForm
 
 		return $html;
 	}	
-/*
+
 	public function validate($postArray )
 	{
-		echo 'this is a test<br><br>';
-		 $msg = parent::validate( $postArray );
-                $params = $this->getFormParams();
-		$useDDStackCheck = $params->getParamValue("useDDStack");
-		$ddstackid = $params->getParamValue("ddstackid");
-		 if($useDDStackCheck=='on')
-		{
-		$msg = var_dump($this->formParams);
-	//	($this->formParams->useDDStack['value']='off');
-		}
-		else{}
-		$this->updateFormParams();
+		$msg = parent::validate( $postArray );
+		$msg .= $this->ddStackSelectTable->validate( $postArray);
+		$msg .= $this->dbDefocusTable->validate( $postArray);
 	return $msg;
 	}
-*/
-
 
 	 public function buildCommand( $postArray )
-        {
+	{
 
 		$command = parent::buildCommand( $postArray );
-                $this->formParams->getPostedValues( $postArray );
-                $paramArray = $this->formParams->getParamArray();
-                // If the form does purely composite and does not define any params of its own,
-                // the param array will be null.
+		$command .= $this->dbDefocusTable->buildCommand( $postArray);
+		$command .= $this->ddStackSelectTable->buildCommand( $postArray);
+
+		$this->formParams->getPostedValues( $postArray );
+		$paramArray = $this->formParams->getParamArray();
+		// If the form does purely composite and does not define any params of its own,
+		// the param array will be null.
 		
 #		$command = 'gctf.py ';
-                if ( $paramArray ) {
-                        foreach ( $paramArray as $key=>$param ) {
+		if ( $paramArray ) {
+			foreach ( $paramArray as $key=>$param ) {
 				
-				if(($param['name'] == 'ddstackid')&&($paramArray['useDDStack']['value']=='on'))
-				{
-				$particle = new particledata();
-				
-				$command = $this->removeCommandFlag($command,'useDDStack',$param['useDDStack']);
-				}
-				elseif(($param['name'] == 'ddstackid')&&($paramArray['useDDStack']['value']==null))
-				{
-				$command = $this->removeCommandFlag($command,'ddstackid',$param['ddstackid']);
-				$command = $this->removeCommandFlag($command,'useDDStack',$param['useDDStack']);
-				}
-				elseif(($param['name'] == 'useDDStack')&&($param['ddstackid']==''))
-				{$command = $this->removeCommandFlag($command,$param['ddstackid']);
-				 $command = $this->removeCommandFlag($command,$param['useDDStack']);	
-				}
-	
 
-				else
-				{
-       //                         $command = $this->addCommandFlag( $command, $param['name'] );
-				}
-				
-                        }
-                }
-                return $command;
+				if (($param['name'] == 'phaseplate')&&($paramArray['phaseplate']['value'] == false )) {
+					$command = $this->removeCommandFlag($command,'max_phase_shift',$param['max_phase_shift']);
+					$command = $this->removeCommandFlag($command,'min_phase_shift',$param['min_phase_shift']);
+					$command = $this->removeCommandFlag($command,'phase_search_step',$param['phase_search_step']);
+	#				$command = $this->removeCommandFlag($command,'phaseplate',$param['phaseplate']);
+
+					}
+
+				else {
+		#			$command = $this->removeCommandFlag($command,'phaseplate',$param['phaseplate']);
+
+					}
+
+			}
+		}
+
+		return $command;
 	}
+
+	
 
 	}

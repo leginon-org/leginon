@@ -88,6 +88,23 @@ class particledata {
 		return array('x'=>$dx,'y'=>$dy);
 	}
 
+	function getPhasePlateInfoFromImageId($imageId) {
+		//if (!$this->mysql->SQLTableExists(DB_LEGINON.".PhasePlateUsageData")) return false;
+		$q = "SELECT "
+			."c.`phase plate number` pp_number, c.`patch position` patch_pos "
+			."FROM ".DB_LEGINON.".AcquisitionImageData as img "
+			."LEFT JOIN ".DB_LEGINON.".PhasePlateUsageData as c "
+			."on img.`REF|PhasePlateUsageData|phase plate`=c.`DEF_id` "
+			."WHERE "
+			."  img.`DEF_id` = '$imageId' "
+			."LIMIT 1 ";
+		//echo $q."<br/><br/>\n";
+		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/><br/>\n";
+		//echo "$filename<br/><br/>\n";
+		return $r[0];
+	}
+
 	function getSessionData ($sessionId) {
 		$q = "SELECT "
 			."s.* "
@@ -126,8 +143,9 @@ class particledata {
 		$results = $r[0];
 		// seems weird to have hard coded confidence check
 		$q = "SELECT COUNT(DISTINCT `REF|leginondata|AcquisitionImageData|image`) as i "
+			.$this->getAppionConfidenceScoreSelect('ApCtfData')." "
 			."FROM `ApCtfData` "
-			."WHERE (`confidence`>=0.8 OR `confidence_d`>=0.8)";
+			."WHERE (confidence_appion >=0.8)";
 		$r = $this->mysql->getSQLResult($q);
 		$results['conf']=$r[0]['i'];
 		$q = "SELECT COUNT(DISTINCT `REF|leginondata|SessionData|session`) as i "
@@ -1077,6 +1095,7 @@ class particledata {
 			."c.`uppercutoff`, "
 			."c.`confidence` , "
 			."c.`confidence_d` , "
+			.$this->getAppionConfidenceScoreSelect('c')." , "
 			."c.`snr` , "
 			."c.`graph1` , "
 			."c.`graph2` , "
@@ -1094,6 +1113,7 @@ class particledata {
 	}
 
 	function getCtfInfo($runId) {
+		// ctf info of all images in a run without sorting
 		$phase_shift_select = $this->getPhaseShiftString('c');
 		$q =	"select "
 			."c.`REF|leginondata|AcquisitionImageData|image` as imageid, "
@@ -1121,7 +1141,9 @@ class particledata {
 			."c.`confidence_5_peak` , "
 			."c.`resolution_80_percent` , "
 			."c.`resolution_50_percent` , "
+			."c.`ctffind4_resolution` , "
 			."c.`confidence_d` , "
+			.$this->getAppionConfidenceScoreSelect('c')." , "
 			."c.`snr` , "
 			."c.`graph1` , "
 			."c.`graph2` "
@@ -1151,6 +1173,7 @@ class particledata {
 			."c.`confidence` , "
 			."c.`confidence_d` , "
 			."c.`cross_correlation` , "
+			.$this->getAppionConfidenceScoreSelect('c')." , "
 			."c.`snr` , "
 			."r.`DEF_id` as acerunId , "
 			."r.`name` as runname , "
@@ -1163,6 +1186,7 @@ class particledata {
 			."c.`confidence_5_peak` , "
 			."c.`resolution_80_percent` , "
 			."c.`resolution_50_percent` , "
+			."c.`ctffind4_resolution` , "
 			."(c.`defocus1`+c.`defocus2`)/2+s.`defocus` as difference "
 			."from ApCtfData c "
 			."left join(ApAceRunData r, ApPathData p) "
@@ -1181,61 +1205,40 @@ class particledata {
 				$q .= "AND r. `REF|$p[0]|$p[1]` IS NOT NULL ";
 			}
 		}
+
+		// Ordering Results
+		if ($order) {
+			$fields = $order['fields'];
+			$q .= " order by ".join(", ",$fields);
+		} else {
+			$q .= $this->getBestCTFOrder('c');
+		}
+		$r = $this->mysql->getSQLResult($q);
+		return $r;
+	}
+
+	function getBestCTFOrder($ctftable_alias='c') {
 		// First order by res80. If some entries of res80 are null, they will be sorted as 999 and end up at the end of the list.
 		// Then sort by res50. If there was a tie from res80, the tie is broken with res50.
 		// Res80 and res50 are only set for newer versions of Appion. For runs that were mase with older versions, we still want to sort by
 		// cross_correlation (ctffind) and confidence (ace1 and ace2). After sorting by resolution, old runs should all be tied with 999, so the
-		// final sort will sort by whichever is not null, the ctffind correlation or the Ace conf.
-		$q .= "	ORDER BY coalesce(resolution_80_percent,999) ASC ";
-		$q .= " , coalesce(resolution_50_percent,999) ASC, coalesce(c.`cross_correlation`,(c.`confidence`*c.`confidence_d`),999) DESC  ";
-		
-		//if ($order) {
-		//	$fields = $order['fields'];
-		//	$q .= " order by ".join(", ",$fields);
-		//}
-
-		return $this->mysql->getSQLResult($q);
+		// final sort will sort by whichever is not null, the ctffind correlation or the Appion overall conf.
+		$c = (empty($ctftable_alias)) ? '':$ctftable_alias.'.';
+		$q .= "	ORDER BY coalesce(".$c."resolution_80_percent,999) ASC ";
+		$q .= " , coalesce(".$c."resolution_50_percent,999) ASC ";
+		$q .= " , coalesce(".$c."`cross_correlation`, confidence_appion, 0.0) DESC ";
+		return $q;
 	}
 
-	function getBestCtfInfoForSessionId($sessionId, $limit=false) {
-		// this has been replaced by getBestCtfInfoByResolution() below
-		//echo "<b>getBestCtfInfoForSessionId FUNCTION DISABLED</b><br/><br/>\n";
-		//return array();
-		$q = "select  ctfdata.* "
-			."from "
-			."	( "
-			."	select  "
-			."		i.`filename`, "
-			."		i.`DEF_id` AS imageid, "
-			."		p.`name`, "
-			."		s.`defocus`, "
-			."    unix_timestamp(i.`DEF_timestamp`) as unix_timestamp, "
-			."		2*ABS(c.defocus1-c.defocus2)/(c.defocus1+c.defocus2) AS difference, "
-			."		c.* "
-			."	from `ApCtfData` c "
-			."	left join ".DB_LEGINON.".`AcquisitionImageData` i on (i.`DEF_id` = c.`REF|leginondata|AcquisitionImageData|image`) "
-			."	left join ".DB_LEGINON.".`PresetData` p on (p.DEF_id = i.`REF|PresetData|preset`) "
-			."	left join ".DB_LEGINON.".`ScopeEMData` s on (i.`REF|ScopeEMData|scope` = s.`DEF_id`) "
-			."	where "
-			."	c.`REF|leginondata|AcquisitionImageData|image` in  "
-			."	( "
-			."		select a.`DEF_id` from ".DB_LEGINON.".`AcquisitionImageData` a  "
-			."		where a.`REF|SessionData|session`='$sessionId'  "
-			."	AND  "
-			."  ABS(s.`SUBD|stage position|a`) < 0.9  "
-			."		)  "
-			." order by (greatest(COALESCE(confidence,0),COALESCE(confidence_d,0),COALESCE(cross_correlation,0))) DESC "
-			."	) ctfdata ";
-		// if $limit is specified, report only values with confidences > $limit
-		if ($limit) {
-			$q .= " where ctfdata.confidence > $limit || ctfdata.confidence_d > $limit ";
-		}
-		$q .= " GROUP BY ctfdata.imageid ORDER BY ctfdata.unix_timestamp ";
-		//echo $q."<br/><br/>\n";
-		return $this->mysql->getSQLResult($q);
+	function getAppionConfidenceScoreSelect($ctftable_alias='c') {
+		$c = $ctftable_alias;
+		$q = "greatest(coalesce(".$c.".confidence, 0), coalesce(".$c.".confidence_d,0), coalesce(".$c.".confidence_30_10,0), coalesce(".$c.".confidence_5_peak,0)) as confidence_appion ";
+		return $q;
 	}
 
 	function getBestCtfInfoByResolution($sessionId, $limit=false) {
+		// This is used in download, report and aceimage display.
+		// This should be the standard. 
 		$q = "SELECT  ctfdata.* "
 			."FROM "
 			."	( "
@@ -1247,6 +1250,7 @@ class particledata {
 			// ScopeEMData timestamp is not changed after DD frame alignment
 			."    unix_timestamp(s.`DEF_timestamp`) as unix_timestamp, "
 			."		2*ABS(ctf.defocus1-ctf.defocus2)/(ctf.defocus1+ctf.defocus2) AS difference, "
+			.$this->getAppionConfidenceScoreSelect('ctf').", "
 			."		ctf.* "
 			."	FROM `ApCtfData` AS ctf "
 			."	LEFT JOIN ".DB_LEGINON.".`AcquisitionImageData` AS i ON (i.`DEF_id` = ctf.`REF|leginondata|AcquisitionImageData|image`) "
@@ -1269,12 +1273,11 @@ class particledata {
 			// Res80 and res50 are only set for newer versions of Appion. For runs that were mase with older versions, we still want to sort by
 			// cross_correlation (ctffind) and confidence (ace1 and ace2). After sorting by resolution, old runs should all be tied with 999, so the
 			// final sort will sort by whichever is not null, the ctffind correlation or the Ace conf.
-			."		ORDER BY coalesce(resolution_80_percent,999) ASC "
-			." , coalesce(resolution_50_percent,999) ASC, coalesce(ctf.`cross_correlation`,(ctf.`confidence`*ctf.`confidence_d`),999) DESC  "
+			.$this->getBestCTFOrder('ctf')
 			."	) ctfdata ";
 		// if $limit is specified, report only values with confidences > $limit
 		if ($limit) {
-			$q .= " WHERE ctfdata.confidence > $limit || ctfdata.confidence_d > $limit ";
+			$q .= " WHERE confidence_appion > $limit ";
 		}
 		$q .= " GROUP BY ctfdata.imageid ORDER BY ctfdata.unix_timestamp ";
 		//echo $q."<br/><br/>\n";
@@ -1390,6 +1393,7 @@ class particledata {
 				."			c.`defocus1`, c.`defocus2`, c.`defocusinit`, c.`angle_astigmatism`, "
 				."			".$phase_shift_select
 				."			c.`confidence`,c.`confidence_d` , c.`cross_correlation` , "
+				.$this->getAppionConfidenceScoreSelect('c').", "
 				."			(c.`defocus1`+c.`defocus2`)/2+s.`defocus` as difference "
 				."		from `ApCtfData` c "
 				."		left join ".DB_LEGINON.".`AcquisitionImageData` i on (i.DEF_id=c.`REF|leginondata|AcquisitionImageData|image`) "
@@ -1402,13 +1406,13 @@ class particledata {
 				."			where a.`REF|SessionData|session`='$sessionId'  "
 				."			)  "
 				."       AND c.resolution_50_percent IS NOT NULL AND c.resolution_80_percent IS NOT NULL "
-				."			ORDER BY (c.resolution_50_percent+c.resolution_80_percent) ASC  "
+				."			".$this->getBestCTFOrder('c')
 				."		) allctfdata "
 				."	group by allctfdata.`REF|leginondata|AcquisitionImageData|image` "
 				."	) ctfdata ";
 				// if $limit is specified, report only values with confidences > $limit
 				if ($limit){
-					$q .= " where sqrt(ctfdata.confidence * ctfdata.confidence_d) > $limit ";
+					$q .= " where ctfdata.confidence_appion > $limit ";
 				}
 				$q .= " group by ctfdata.name; ";
 				//echo $q;
@@ -2445,6 +2449,10 @@ class particledata {
 		$bin = ((int) $r['bin'] < 1) ? 1:(int) $r['bin'];
 		$bin_text = ($bin == 1) ? '':'_'.$bin.'x';
 		$source_image_name = $this->getImageNameFromId($r['source_imgid']);
+		// refs #4544 default log without bin_text
+		$default_align_log = $r['rundir'].'/'.$source_image_name.'_st_Log.txt';
+		if (file_exists ($default_align_log)) return $default_align_log;
+		// back compatibility older alignment still use the original binned log
 		$align_log = $r['rundir'].'/'.$source_image_name.'_st'.$bin_text.'_Log.txt';
 		return $align_log;
 	}
@@ -6209,6 +6217,10 @@ function displayCTFstats($stats, $display_keys) {
 				$html .= "<td><span class='datafield0'>".$kh."</span></td>";
 			}
 			$html .= "</th>\n";
+		}
+		if ( !is_array($data) || count($data) < 1) {
+			$html .= "</table>\n";
+			return $html;
 		}
 		$html .= "<tr>\n";
 		$html .= "<td rowspan='".(count($data)+1)."'><span class='datafield0'>".$field."</span></td>\n";

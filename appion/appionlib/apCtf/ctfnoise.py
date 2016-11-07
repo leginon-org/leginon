@@ -25,7 +25,7 @@ class CtfNoise(object):
 		run a minimization
 		"""
 
-		refinefitparams = scipy.optimize.fmin_cobyla( self.modelFitFun, initfitparams, 
+		refinefitparams = scipy.optimize.fmin_cobyla( self.modelFitFun, initfitparams,
 			args=(xdata, ctfdata, noiseModel), cons=[contraintFunction,],
 			consargs=(xdata, ctfdata, noiseModel), iprint=0, maxfun=maxfun)
 
@@ -46,7 +46,7 @@ class CtfNoise(object):
 		"""
 		Function to model ctf noise using: A + B*x^2
 		"""
-		fitx = ( fitparams[0] 
+		fitx = ( fitparams[0]
 			+ fitparams[1]*numpy.power(xdata, 2.0)
 		)
 		return fitx
@@ -56,8 +56,8 @@ class CtfNoise(object):
 		"""
 		Function to model ctf noise using: A + B*x
 		"""
-		fitx = ( fitparams[0] 
-			+ fitparams[1]*xdata 
+		fitx = ( fitparams[0]
+			+ fitparams[1]*xdata
 		)
 		return fitx
 
@@ -66,8 +66,8 @@ class CtfNoise(object):
 		"""
 		Function to model ctf noise using: A + B*sqrt(x)
 		"""
-		fitx = ( fitparams[0] 
-			+ fitparams[1]*numpy.sqrt(xdata) 
+		fitx = ( fitparams[0]
+			+ fitparams[1]*numpy.sqrt(xdata)
 		)
 		return fitx
 
@@ -76,9 +76,9 @@ class CtfNoise(object):
 		"""
 		Function to model ctf noise using: A + B*sqrt(x) + C*x
 		"""
-		fitx = ( fitparams[0] 
-			+ fitparams[1]*numpy.sqrt(xdata) 
-			+ fitparams[2]*xdata 
+		fitx = ( fitparams[0]
+			+ fitparams[1]*numpy.sqrt(xdata)
+			+ fitparams[2]*xdata
 		)
 		return fitx
 
@@ -87,9 +87,9 @@ class CtfNoise(object):
 		"""
 		Function to model ctf noise
 		"""
-		fitx = ( fitparams[0] 
-			+ fitparams[1]*numpy.sqrt(xdata) 
-			+ fitparams[2]*xdata 
+		fitx = ( fitparams[0]
+			+ fitparams[1]*numpy.sqrt(xdata)
+			+ fitparams[2]*xdata
 			+ fitparams[3]*numpy.power(xdata, 2.0)
 			+ fitparams[4]*numpy.power(xdata, 3.0)
 		)
@@ -163,10 +163,13 @@ class CtfNoise(object):
 			return None, None
 		if self.debug is True:
 			print "poly fit: sqrt(x),y = ", z
+		if numpy.any(numpy.isnan(z)):
+			print "NaN in fit result"
+			return None,None
 
 		initfitparams = [z[2], z[1], z[0]]
 
-		nosqfitparams = self.runMinimization(xdata, ctfdata, initfitparams, 
+		nosqfitparams = self.runMinimization(xdata, ctfdata, initfitparams,
 			self.noiseModelNoSquare, contraintFunction, maxfun)
 
 		### add square term back in
@@ -183,10 +186,12 @@ class CtfNoise(object):
 		z = numpy.polyfit(xdata, ctfdata, 1)
 		if self.debug is True:
 			print "poly fit: x,y = ", z
-
+		if numpy.any(numpy.isnan(z)):
+			print "NaN in fit result"
+			return None,None
 		initfitparams = [z[1], z[0]]
 
-		linearfitparams = self.runMinimization(xdata, ctfdata, initfitparams, 
+		linearfitparams = self.runMinimization(xdata, ctfdata, initfitparams,
 			self.noiseModelOnlyLinear, contraintFunction, maxfun)
 
 		### add square root and square terms back in
@@ -203,9 +208,12 @@ class CtfNoise(object):
 		z = numpy.polyfit(numpy.sqrt(xdata), ctfdata, 1)
 		if self.debug is True:
 			print "poly fit: sqrt(x),y = ", z
+		if numpy.any(numpy.isnan(z)):
+			print "NaN in fit result"
+			return None,None
 		initfitparams = [z[1], z[0]]
 
-		sqrtfitparams = self.runMinimization(xdata, ctfdata, initfitparams, 
+		sqrtfitparams = self.runMinimization(xdata, ctfdata, initfitparams,
 			self.noiseModelOnlySqrt, contraintFunction, maxfun)
 
 		### add linear and square terms back in
@@ -222,9 +230,12 @@ class CtfNoise(object):
 		z = numpy.polyfit(numpy.power(xdata, 2), ctfdata, 1)
 		if self.debug is True:
 			print "poly fit: x**2,y = ", z
+		if numpy.any(numpy.isnan(z)):
+			print "NaN in fit result"
+			return None,None
 		initfitparams = [z[1], z[0]]
 
-		bfactfitparams = self.runMinimization(xdata, ctfdata, initfitparams, 
+		bfactfitparams = self.runMinimization(xdata, ctfdata, initfitparams,
 			self.noiseModelBFactor, contraintFunction, maxfun)
 
 		### add linear and square terms back in
@@ -241,9 +252,12 @@ class CtfNoise(object):
 		z = numpy.polyfit(xdata, ctfdata, 3)
 		if self.debug is True:
 			print "poly fit: sqrt(x),y = ", z
+		if numpy.any(numpy.isnan(z)):
+			print "NaN in fit result"
+			return None,None
 		initfitparams = [z[3], 0.0, z[2], z[1], z[0]]
 
-		fullfitparams = self.runMinimization(xdata, ctfdata, initfitparams, 
+		fullfitparams = self.runMinimization(xdata, ctfdata, initfitparams,
 			self.noiseModel, contraintFunction, maxfun)
 
 		### check the fit
@@ -270,9 +284,11 @@ class CtfNoise(object):
 		firstlinearfitparams, firstlinearvalue = self.fitLinear(
 			xdata[:cutoff], ctfdata[:cutoff], contraintFunction, maxfun)
 		### fit last two fifths
-		if self.debug is True: print "fit2"		
+		if self.debug is True: print "fit2"
 		lastlinearfitparams, lastlinearvalue = self.fitLinear(
 			xdata[-cutoff:], ctfdata[-cutoff:], contraintFunction, maxfun)
+		if firstlinearfitparams is None or lastlinearfitparams is None:
+			return None,None
 
 		xmin = xdata[0]
 		xmax = xdata[len(xdata)-1]
@@ -307,6 +323,8 @@ class CtfNoise(object):
 		### fit last two fifths
 		lastlinearfitparams, lastlinearvalue = self.fitLinear(
 			xdata[-cutoff:], ctfdata[-cutoff:], contraintFunction, maxfun)
+		if firstlinearfitparams is None or lastlinearfitparams is None:
+			return None,None
 
 		## maxima: f[x] := (x-xmin)^2*(m1*x+b1) + (x-xmax)^2*(m2*x+b2);
 		## expand(f[x]);
@@ -354,6 +372,8 @@ class CtfNoise(object):
 		### fit last two fifths
 		lastlinearfitparams, lastlinearvalue = self.fitLinear(
 			xdata[-cutoff:], ctfdata[-cutoff:], contraintFunction, maxfun)
+		if firstlinearfitparams is None or midlinearfitparams is None or lastlinearfitparams is None:
+			return None,None
 
 		## maxima: f[x] := (x-xmin)^2*(m1*x+b1) + (x-xmid)^2*(m2*x+b2) + (x-xmax)^2*(m3*x+b3);
 		## expand(f[x]);
@@ -412,13 +432,13 @@ class CtfNoise(object):
 		fitparamslist.append(fitparams)
 
 		for cutoffper in numpy.arange(0.1, 0.99, 0.1):
-			fitparams, value = self.fitTwoSlopeFunction(xdata, ctfdata, 
+			fitparams, value = self.fitTwoSlopeFunction(xdata, ctfdata,
 				contraintFunction, cutoffper=cutoffper)
 			if fitparams is None:
 				continue
 			namelist.append("two slope %d"%(cutoffper*100))
 			valuelist.append(value)
-			fitparamslist.append(fitparams)		
+			fitparamslist.append(fitparams)
 
 		## does a bad job
 		fitparams, value = self.fitTwoSlopeSquareFunction(xdata, ctfdata, contraintFunction, cutoffper=1/5.)
@@ -522,6 +542,15 @@ class CtfNoise(object):
 			apDisplay.printColor("CTF limits %.1f A -->> %.1fA"
 				%(1./xdata.min(), 1./xdata.max()), "cyan")
 
+		if numpy.any(numpy.isnan(xdata)): #note does not work with 'is True'
+			nancount = numpy.isnan(xdata).sum()
+			apDisplay.printError("Major Error: %d of %d X-values are NaN"%(nancount, len(xdata)))
+		if self.debug is True:
+			print "ctfdata=", ctfdata[:10]
+		if numpy.any(numpy.isnan(ctfdata)): #note does not work with 'is True'
+			nancount = numpy.isnan(ctfdata).sum()
+			apDisplay.printError("Major Error: %d of %d CTF Y-values are NaN"%(nancount, len(ctfdata)))
+
 		if contraint == "above":
 			if self.debug is True:
 				print "constrained above function"
@@ -532,7 +561,7 @@ class CtfNoise(object):
 			#firstmax = filterctfdata[0:250].max()
 			#filterctfdata = numpy.where(filterctfdata>firstmax, firstmax, filterctfdata)
 			#filterctfdata = self.upwardLeftMonotonicFilter(ctfdata)
-			filterctfdata = ctfdata
+			filterctfdata = numpy.copy(ctfdata)
 		else:
 			if self.debug is True:
 				print "constrained below function"
@@ -543,10 +572,15 @@ class CtfNoise(object):
 			#firstmin = filterctfdata[0:250].min()
 			#filterctfdata = numpy.where(filterctfdata>firstmin, firstmin, filterctfdata)
 			#filterctfdata = self.downwardRightMonotonicFilter(ctfdata)
-			filterctfdata = ctfdata
+			filterctfdata = numpy.copy(ctfdata)
+		if self.debug is True:
+			print "filterctfdata=", filterctfdata[:10]
+			print "nan test", filterctfdata[0] == filterctfdata[1]
+		if numpy.any(numpy.isnan(filterctfdata)):
+			apDisplay.printError("Major Error CTF Y-value of NaN")
 
 		### run the initial minimizations
-		namelist, valuelist, fitparamslist = self.getAllInitialParameters(xdata, 
+		namelist, valuelist, fitparamslist = self.getAllInitialParameters(xdata,
 			filterctfdata, contraintFunction)
 
 		### figure out which initial fit was best
@@ -595,17 +629,17 @@ class CtfNoise(object):
 		### run the full minimization
 		rhobeg = (numpy.where(numpy.abs(midfitparams)<1e-20, 1e20, numpy.abs(midfitparams))).min()/1e7
 		if self.debug: print "RHO begin", rhobeg
-		fitparams = scipy.optimize.fmin_cobyla( self.modelFitFun, midfitparams, 
+		fitparams = scipy.optimize.fmin_cobyla( self.modelFitFun, midfitparams,
 			args=(xdata, ctfdata), cons=[contraintFunction,],
-			consargs=(xdata, ctfdata), rhobeg=rhobeg, rhoend=rhobeg/1e4, iprint=0, maxfun=1e8)
-		if self.debug is True: 
+			consargs=(xdata, ctfdata), rhobeg=rhobeg, rhoend=rhobeg/1e4, iprint=0, maxfun=1e6)
+		if self.debug is True:
 			print ( "final parameters (%.4e, %.4e, %.4e, %.4e, %.4e)"
 				%(fitparams[0], fitparams[1], fitparams[2], fitparams[3], fitparams[4]))
 		finalvalue = self.modelFitFun(fitparams, xdata, ctfdata)
-		if self.debug is True: 
+		if self.debug is True:
 			print "final function value %.10f"%(finalvalue)
 		#writeDatFile("finalvalue.dat", fitparams, xdata, ctfdata)
-		
+
 		if finalvalue <= midvalue:
 			if self.debug is True:
 				apDisplay.printColor("Final value is better", "green")
@@ -661,7 +695,7 @@ def peakExtender(raddata, rotdata, extrema, extrematype="below"):
 	extrematype - type of extrema, must be either below or above
 
 	this program looks at the CTF data using the "known" location of the extrema
-	extracts their extreme values 
+	extracts their extreme values
 	and does a linear interpolation between the extreme points
 	"""
 	t0 = time.time()
@@ -686,6 +720,8 @@ def peakExtender(raddata, rotdata, extrema, extrematype="below"):
 		nexteindex = extremeindices[i+1]
 		eindex1 = int(round(eindex - abs(preveindex-eindex)/2.0))
 		eindex2 = int(round(eindex + abs(nexteindex-eindex)/2.0))
+		if abs(eindex2 - eindex1) < 2:
+			continue
 
 		values = rotdata[eindex1:eindex2]
 		if extrematype is "below":
@@ -701,7 +737,7 @@ def peakExtender(raddata, rotdata, extrema, extrematype="below"):
 		#not enough indices
 		if extrematype is "below":
 			return numpy.zeros(raddata.shape)
-		elif extrematype is "above":		
+		elif extrematype is "above":
 			return numpy.ones(raddata.shape)
 
 	func = scipy.interpolate.interp1d(xdata, ydata, kind='linear')

@@ -37,7 +37,8 @@ echo "<form name='templateform' method='post' action='$formAction'>\n";
 $particle = new particledata();
 
 // --- Get 3d Density Data
-$allDensityRuns = $particle->get3dDensitysFromSession($sessionId, false);
+$showhidden = ($_POST['showHidden'] == 'show hidden') ? true: false;
+$allDensityRuns = $particle->get3dDensitysFromSession($sessionId, $showhidden);
 // --- Only show models
 if ($allDensityRuns) {
 	$densityRuns=array();
@@ -59,10 +60,19 @@ if ($densityRuns) {
 	foreach ($densityRuns as $densityrun) {
 		$densityid = $densityrun['DEF_id'];
 
+		if ($_POST['showHidden'] == 1 && $densityrun['hidden'] == 1) {
+			$html .= "<td>$densityrun[DEF_id]\n";
+			$html.= " <input class='edit' type='submit' name='unhideItem".$densityid."' value='unhide'>\n";
+			$html .= "</td>\n";
+			continue;	
+		}
+
 		// update description
 		if ($_POST['updateDesc'.$densityid]) {
 			updateDescription('Ap3dDensityData', $densityid, $_POST['newdescription'.$densityid]);
 			$densityrun['description']=$_POST['newdescription'.$densityid];
+			$html.= "<br/><font color='#cc0000'>HIDDEN</font>\n";
+			$html.= " <input class='edit' type='submit' name='unhideItem".$densityid."' value='unhide'>\n";
 		}
 
 		if ($_POST['hideItem'.$densityid] == 'hide') {
@@ -78,7 +88,7 @@ if ($densityRuns) {
 
 		# def id
 		$html .= "<td>$densityrun[DEF_id]\n";
-		if ($rctrun['hidden'] == 1) {
+		if ($rctrun['hidden'] == 1 || $densityrun['hidden'] == 1) {
 			$html.= "<br/><font color='#cc0000'>HIDDEN</font>\n";
 			$html.= " <input class='edit' type='submit' name='unhideItem".$densityid."' value='unhide'>\n";
 		} else $html .= "<br/><input class='edit' type='submit' name='hideItem".$densityid."' value='hide'>\n";
@@ -143,7 +153,11 @@ if ($densityRuns) {
 } else {
 	echo "no 3d density volume information available";
 }
-
+//Hide hidden
+$html = " <input class='edit' type='submit' name='showHidden' value='";
+$html.= ($_POST['showHidden'] == 'show hidden' ) ? 'hide hidden': 'show hidden';
+$html .= "'>\n";
+echo $html;
 
 processing_footer();
 ?>

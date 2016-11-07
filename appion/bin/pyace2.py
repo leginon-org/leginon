@@ -76,6 +76,7 @@ class Ace2Loop(appionLoop2.AppionLoop):
 		if ctfvalue is None:
 			return True
 
+		conf = ctfdb.calculateConfidenceScore(ctfvalue)
 		if conf > self.params['reprocess']:
 			# small, unbinned images can give same defocus values for 1 & 2:
 			if self.params['bin'] == 1 or ctfvalue['defocus1'] != ctfvalue['defocus2']:

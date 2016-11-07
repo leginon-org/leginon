@@ -65,7 +65,7 @@ class TemplatePickerForm extends MathParticleForm
 		$math_params->setParamValue('maxthresh','5');
 	}
 
-	private function createTemplateTableForm() {		
+	protected function createTemplateTableForm() {		
 		// Search for available templates
 		$projectId   = getProjectId();
 		if (is_numeric($projectId)) {
@@ -95,7 +95,7 @@ class TemplatePickerForm extends MathParticleForm
 		$params = $this->pDiameterTable->getFormParams();
 		$template_diam = (int) $this->TemplateTable->getTemplateDiameter();
 		if ( !$params->getParamValue('pdiam') && $template_diam )
-			$params->setParamValue('pdiam', 1.3* $template_diam );
+			$params->setParamValue('pdiam', round(1.3* $template_diam) );
 		// get parent form elements
 		$html  .= parent::generateForm();
 		return $html;
@@ -172,8 +172,19 @@ class TemplatePickerForm extends MathParticleForm
 
 <script type="text/javascript">
 
+var selectall = document.getElementById('selectall');
+var cbs = document.getElementsByTagName('input');
+
+if (cbs.length) {
+	selectall.style.display = 'none';
+	}
+else {
+	selectall.style.display = 'block';
+     }
+
 function checkAll(bx) {
   var cbs = document.getElementsByTagName('input');
+
   for(var i=0; i < cbs.length; i++) {
     if(cbs[i].type == 'checkbox') {
       cbs[i].checked = bx.checked;

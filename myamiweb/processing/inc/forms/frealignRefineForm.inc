@@ -72,7 +72,7 @@ class FrealignRefineForm extends BasicRefineForm
 		$html .=  $paramSet->insertCheckboxField( "ffilt" );
 		$html .=  $paramSet->insertCheckboxField( "fbfact" );
 		$html .=  $paramSet->insertCheckboxField( "pbc" );
-		$html .=  $paramSet->insertTextField( "hp", $shortSize, "(in &Aring;ngstroms; default 2*Nyquist)" );
+		$html .=  $paramSet->insertTextField( "hp", $shortSize, "(in &Aring;ngstroms)" );
 		$html .=  $paramSet->insertTextField( "lp", $shortSize, "(in &Aring;ngstroms)" );
 		$html .=  $paramSet->insertTextField( "wgh", $shortSize, "(percent)");
 		$html .=  $paramSet->insertTextField( "mw", $shortSize, "(in kD)" );
@@ -157,8 +157,8 @@ class FrealignRefineForm extends BasicRefineForm
 		$pbc  				= '100';
 		$itmax 				= '10';
 		$ipmax				= '0';
-		$hp 				= '10';
-		$lp 				= '300';
+		$hp 				= '300';
+		$lp 				= '10';
 		$reconstackid		= '';
 		$fmag				= ''; 
 		$fdef				= ''; 

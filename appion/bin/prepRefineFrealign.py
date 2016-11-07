@@ -40,6 +40,10 @@ class FrealignPrep3DRefinement(apPrepRefine.Prep3DRefinement):
 			help="only create parameter file")
 		self.parser.add_option('--ctftilt', dest='ctftilt', default=False, action='store_true',
 			help="Use ctftilt values")
+		self.versions = ('9.11','8')
+		self.parser.add_option('--program_version', dest='program_version',
+			help="Frealign version to run", metavar="TYPE",
+			type="choice", default=self.versions[0], choices=self.versions)
 
 	def setRefineMethod(self):
 		self.refinemethod = 'frealignrecon'
@@ -251,7 +255,14 @@ makestack2.py --single=%s --fromstackid=%d %s %s %s %s %s --no-invert %s --boxsi
 		if 'reconiterid' not in self.params.keys() or self.params['reconiterid'] == 0:
 			self.params['reconiterid'] = None
 		paramfile = 'params.000.par'
+		# frealign 8 style paramfile
 		apFrealign.generateParticleParams(self.params,self.model['data'],paramfile)
+		if float(self.params['program_version']) >= 9.059:
+			apDisplay.printMsg('coverting to Frealign 9.06+ format')
+			tmpfile = '8'+paramfile
+			shutil.copyfile(paramfile,tmpfile)
+			# This will overwrite paramfile in frealign 9.06+ format
+			apFrealign.frealign8_to_frealign9(tmpfile, paramfile, self.stack['apix'])
 		self.addToFilesToSend(paramfile)
 
 #=====================

@@ -134,114 +134,59 @@ if (is_numeric($expId)) {
 	$dresults=array();
 	$mresults=array();
 
-	$tdone = count($subclusterjobs['templatecorrelator']['done']);
+	$pickrunscomplete = 0;
+	$pickrunscomplete += count($subclusterjobs['templatecorrelator']['done']);
+	$pickrunscomplete += count($subclusterjobs['dogpicker']['done']);
+	$pickrunscomplete += count($subclusterjobs['signature']['done']);
+	$pickrunscomplete += count($subclusterjobs['manualpicker']['done']);
+	$pickrunscomplete += count($subclusterjobs['contourpicker']['done']);
+	$pickrunscomplete += count($subclusterjobs['tiltalign']['done']);
+	if ($prtlruns > $pickrunscomplete) $pickrunscomplete = $prtlruns;
+
 	$trun = count($subclusterjobs['templatecorrelator']['running']);
 	$tq = count($subclusterjobs['templatecorrelator']['queued']);
-
-	$ddone = count($subclusterjobs['dogpicker']['done']);
 	$drun = count($subclusterjobs['dogpicker']['running']);
 	$dq = count($subclusterjobs['dogpicker']['queued']);
-
-	$sdone = count($subclusterjobs['signature']['done']);
 	$srun = count($subclusterjobs['signature']['running']);
 	$sq = count($subclusterjobs['signature']['queued']);
-	
-	$mdone = count($subclusterjobs['manualpicker']['done']);
 	$mrun = count($subclusterjobs['manualpicker']['running']);
 	$mq = count($subclusterjobs['manualpicker']['queued']);
-
-	$cdone = count($subclusterjobs['contourpicker']['done']);
 	$crun = count($subclusterjobs['contourpicker']['running']);
 	$cq = count($subclusterjobs['contourpicker']['queued']);
-
-	$tiltdone = count($subclusterjobs['tiltalign']['done']);
 	$tiltrun = count($subclusterjobs['tiltalign']['running']);
 	$tiltqueue = count($subclusterjobs['tiltalign']['queued']);
 
-	$tresults[] = ($tdone==0) ? "" : "<a href='prtlreport.php?expId=$sessionId'>$tdone complete</a>";
-	$tresults[] = ($trun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=templatecorrelator'>$trun running</a>";
-	$tresults[] = ($tq==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=templatecorrelator'>$tq queued</a>";
-
-	$dresults[] = ($ddone==0) ? "" : "<a href='prtlreport.php?expId=$sessionId'>$ddone complete</a>";
-	$dresults[] = ($drun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=dogpicker'>$drun running</a>";
-	$dresults[] = ($dq==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=dogpicker'>$dq queued</a>";
-
-	$sresults[] = ($sdone==0) ? "" : "<a href='prtlreport.php?expId=$sessionId'>$sdone complete</a>";
-	$sresults[] = ($srun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=signature'>$srun running</a>";
-	$sresults[] = ($sq==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=signature'>$sq queued</a>";
-
-	$mresults[] = ($mdone==0) ? "" : "<a href='prtlreport.php?expId=$sessionId'>$mdone complete</a>";
-	$mresults[] = ($mrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=manualpicker'>$mrun running</a>";
-	$mresults[] = ($mq==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=manualpicker'>$mq queued</a>";
-
-	$cresults[] = ($cdone==0) ? "" : "<a href='tracereport.php?expId=$sessionId'>$cdone complete</a>";
-	$cresults[] = ($crun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=contourpicker'>$crun running</a>";
-	$cresults[] = ($cq==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=manualpicker'>$cq queued</a>";
-
-	$tiltresults[] = ($tiltdone==0) ? "" : "<a href='prtlreport.php?expId=$sessionId'>$tiltdone complete</a>";
-	$tiltresults[] = ($tiltrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=tiltalign'>$tiltrun running</a>";
-	$tiltresults[] = ($tiltqueue==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=tiltalign'>$tiltqueue queued</a>";
+	$pickresults[] = ($trun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=templatecorrelator'>$trun running</a>";
+	$pickresults[] = ($tq==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=templatecorrelator'>$tq queued</a>";
+	$pickresults[] = ($drun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=dogpicker'>$drun running</a>";
+	$pickresults[] = ($dq==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=dogpicker'>$dq queued</a>";
+	$pickresults[] = ($srun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=signature'>$srun running</a>";
+	$pickresults[] = ($sq==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=signature'>$sq queued</a>";
+	$pickresults[] = ($mrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=manualpicker'>$mrun running</a>";
+	$pickresults[] = ($mq==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=manualpicker'>$mq queued</a>";
+	$pickresults[] = ($crun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=contourpicker'>$crun running</a>";
+	$pickresults[] = ($cq==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=contourpicker'>$cq queued</a>";
+	$pickresults[] = ($tiltrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=tiltalign'>$tiltrun running</a>";
+	$pickresults[] = ($tiltqueue==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=tiltalign'>$tiltqueue queued</a>";
 
 	// in case weren't submitted by web:
-	$totruns = $tdone+$trun+$tq+$ddone+$drun+$dq+$mdone+$mrun+$mq+$cdone+$crun+$cq;
-	if ($prtlruns > $totruns) $totruns = $prtlruns;
 	if ($looprundatas = $particle->getLoopProgramRuns()) {
 		$loopruns=count($looprundatas);
 	}
 
-
 	$result = ($prtlruns==0) ? "" :
 		"<a href='prtlreport.php?expId=$sessionId'>$prtlruns</a>\n";
 
-	$dogpickform = "DogPickerForm";
 	$nrun=array();
 
 	$nrun[] = array(
-		'name'=>"<a href='runAppionLoop.php?expId=$sessionId&form=$dogpickform'>Dog Picking</a>",
-		'result'=>$dresults,
+		'name'=>"<a href='selectObjectPicker.php?expId=$sessionId'>Select Particle Picker...</a>",
+		'result'=>"<a href='prtlreport.php?expId=$sessionId'>$pickrunscomplete complete</a>",
 	);
-
-	$templatepickform = "TemplatePickerForm";
-	$nrun[] = array(
-		'name'=>"<a href='runAppionLoop.php?expId=$sessionId&form=$templatepickform'>Template Picking</a>",
-		'result'=>$tresults,
-	);
-
-	$nrun[] = array(
-		'name'=>"<a href='runManualPicker.php?expId=$sessionId'>Manual Picking</a>",
-		'result'=>$mresults,
-	);
-
-	if (!HIDE_FEATURE)
-	{
-		$nrun[] = array(
-			'name'=>"<a href='runContourPicker.php?expId=$sessionId'>Object Tracing</a>",
-			'result'=>$cresults,
-		);
-	}
-
-	// The signature feature is added with issue #368, however was not tested prior to 2.0 release.
-	// It should be hidden until it can be tested at AMI. The HIDE_FEATURE flag can be set
-	// in config.php in the myamiweb directory.
-	if (!HIDE_FEATURE)
-	{
-		$nrun[] = array(
-			'name'=>"<a href='runSignature.php?expId=$sessionId'>Signature</a>",
-			'result'=>$sresults,
-		);
-	}
 
 	if ($loopruns > 0) {
 		$nrun[] = array(
 			'name'=>"<a href='runLoopAgain.php?expId=$sessionId'>Repeat an image loop run</a>",
-		);
-	}
-	$maxangle = $particle->getMaxTiltAngle($sessionId);
-	if ($maxangle > 5) {
-		$nrun[] ="<a href='runTiltAligner.php?expId=$sessionId'>Align and Edit Tilt Pairs</a>";
-		$nrun[] = array(
-			'name'=>"<a href='runTiltAutoAligner.php?expId=$sessionId'>Auto Align Tilt Pairs</a>",
-			'result'=>$tiltresults,
 		);
 	}
 
@@ -310,10 +255,10 @@ if (is_numeric($expId)) {
 	$ctfresults[] = ($ctfqueue==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId'>$ctfqueue queued</a>";
 
 	$nruns[] = array(
-		'name'=>"<a href='selectCtfEstimate.php?expId=$sessionId'>Estimate the CTF</a>",
+		'name'=>"<a href='selectCtfEstimate.php?expId=$sessionId'>Estimate the CTF...</a>",
 		'result'=>$ctfresults,
 	);
-	
+
 	if ($loopruns > 0) {
 		$nruns[] = array(
 			'name'=>"<a href='runLoopAgain.php?expId=$sessionId'>Repeat an image loop run</a>",
@@ -383,48 +328,29 @@ if (is_numeric($expId)) {
 			$aligndone = count($alignstackids);
 		}
 		$alignrun = count($subclusterjobs['partalign']['running']);
-		if ($maxlikejobs=$particle->getFinishedMaxLikeJobs($projectId)) {
-			$nmaxlikejobs = count($maxlikejobs);
-		}
-		
-		// ISAC runs
-		$isacJobs = new AlignJobs($expId);
-		// run isac stats
-		$isacQueue		= $isacJobs->countRunRefineQueue();
-		$isacRun		= $isacJobs->countRunRefineRun();
-		$isacReadyUpload  = $isacJobs->countRefinesReadyToUpload();
-		
-		$alignrun = $alignrun + $isacRun;
-		
-		// number of jobs to upload
-		$nalignupload = $isacReadyUpload + $nmaxlikejobs;
-		
-		if ($cl2djobs=$particle->getFinishedCL2DJobs($projectId)) {
-			$ncl2djobs = count($cl2djobs);
-		}	
-		if ($simplejobs=$particle->getFinishedSIMPLEClusteringJobs($projectId)) {
-			$nsimplejobs = count($simplejobs);
-		}	
-	
 		$alignqueue = count($subclusterjobs['partalign']['queued']);
-		$alignqueue = $alignqueue + $isacQueue;
 
 		$alignresults[] = ($aligndone==0) ? "" : "<a href='alignlist.php?expId=$sessionId'>$alignruns complete</a>";
 		$alignresults[] = ($alignrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=partalign'>$alignrun running</a>";
-		$alignresults[] = ($nalignupload==0) ? "" : "<a href='checkAlignJobs.php?expId=$sessionId'>$nalignupload ready to upload</a>";
-		$alignresults[] = ($nmaxlikejobs==0) ? "" : "<a href='runUploadMaxLike.php?expId=$sessionId'>$nmaxlikejobs maxlike ready to upload</a>";
-//		$alignresults[] = ($ncl2djobs==0) ? "" : "<a href='runUploadCL2D.php?expId=$sessionId'>$ncl2djobs ready to upload</a>";
 		$alignresults[] = ($alignqueue==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=partalign'>$alignqueue queued</a>";
 
 		$nruns=array();
 
 		$nruns[] = array(
-			'name'=>"<a href='selectParticleAlignment.php?expId=$sessionId'>Run Alignment</a>",
+			'name'=>"<a href='selectParticleAlignment.php?expId=$sessionId'>Select Particle Alignment...</a>",
 			'result'=>$alignresults,
 		);
-	
+
+		if ($simplejobs=$particle->getFinishedSIMPLEClusteringJobs($projectId)) {
+			$nsimplejobs = count($simplejobs);
+		}
+
+		if ($cl2djobs=$particle->getFinishedCL2DJobs($projectId)) {
+			$ncl2djobs = count($cl2djobs);
+		}
+
 		// an exception is made to CL2D & SIMPLE, because it is treated as an alignment & clustering procedure
-		if ($aligndone > 0 || $ncl2djobs > 0 || $nsimplejobs > 0) {  
+		if ($aligndone > 0 || $ncl2djobs > 0 || $nsimplejobs > 0) {
 			// alignment analysis
 			$analysisresults=array();
 			if ($analysisruns=$particle->getAnalysisRuns($expId, $projectId)) {
@@ -436,7 +362,7 @@ if (is_numeric($expId)) {
 			$analysisresults[] = ($analysisrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=alignanalysis'>$analysisrun running</a>";
 			$analysisresults[] = ($analysisqueue==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=alignanalysis'>$analysisqueue queued</a>";
 			$nruns[] = array(
-				'name'=>"<a href='selectFeatureAnalysis.php?expId=$sessionId'>Run Feature Analysis</a>",
+				'name'=>"<a href='selectFeatureAnalysis.php?expId=$sessionId'>Run Feature Analysis...</a>",
 				'result'=>$analysisresults,
 			);
 
@@ -452,13 +378,13 @@ if (is_numeric($expId)) {
 			$clusterresults[] = ($clusterrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=partcluster'>$clusterrun running</a>";
 			$clusterresults[] = ($clusterqueue==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=partcluster'>$clusterqueue queued</a>";
 			$nruns[] = array(
-				'name'=>"<a href='analysislist.php?expId=$sessionId'>Run Particle Clustering</a>",
+				'name'=>"<a href='analysislist.php?expId=$sessionId'>Run Particle Clustering...</a>",
 				'result'=>$clusterresults,
 			);
 //			}
 			// Fix Me: This should be move to after particle alignment
 			$nruns[] = "<a href='selectLocalClassificationType.php?expId=$sessionId'>Run MaskItOn</a>";
-	
+
 		}
 		// ===================================================================
 		// template stacks (class averages & forward projections)
@@ -568,7 +494,7 @@ if (is_numeric($expId)) {
 			);
 		}
 	}
-	
+
 
 	if ( (array)$nruns ) {
 		$data[] = array(
@@ -584,11 +510,11 @@ if (is_numeric($expId)) {
 	if ($stackruns > 0) {
 		$action = "Refine Reconstruction";
 		$nruns=array();
-				
+
 		// Single Model Refinement stats
-		
+
 		$refineJobsSM 		= new RefineJobsSingleModel($expId);
-		
+
 		// prep recon stats
 		$prepRefineQueue	= $refineJobsSM->countPrepRefineQueue();
 		$prepRefineRun		= $refineJobsSM->countPrepRefineRun();
@@ -596,7 +522,7 @@ if (is_numeric($expId)) {
 		$runRefineResults[] = ($prepRefineQueue>0) ? "<a href='checkRefineJobs.php?expId=$sessionId&type=single'>$prepRefineQueue preps queued</a>" : "";
 		$runRefineResults[] = ($prepRefineRun>0) ? "<a href='listAppionJobs.php?expId=$sessionId'>$prepRefineRun preps running</a>" : "";
 		$runRefineResults[] = ($prepRefineDone>0) ? "<a href='selectPreparedRecon.php?expId=$sessionId&type=single'>$prepRefineDone jobs ready to run</a>" : "";
-		
+
 		// run recon stats
 		$refineQueue		= $refineJobsSM->countRunRefineQueue();
 		$refineRun			= $refineJobsSM->countRunRefineRun();
@@ -604,7 +530,7 @@ if (is_numeric($expId)) {
 		$runRefineResults[] = ($refineQueue>0) ? "<a href='checkRefineJobs.php?expId=$sessionId&type=single'>$refineQueue jobs queued</a>" : "";
 		$runRefineResults[] = ($refineRun>0) ? "<a href='listAppionJobs.php?expId=$sessionId'>$refineRun jobs running</a>" : "";
 		$runRefineResults[] = ($refineReadyUpload>0) ? "<a href='checkRefineJobs.php?expId=$sessionId&type=single'>$refineReadyUpload ready for upload</a>" : "";
-		
+
 		// upload recon stats
 		$uploadQueue		= $refineJobsSM->countUploadRefineQueue();
 		$uploadRun			= $refineJobsSM->countUploadRefineRun();
@@ -612,17 +538,17 @@ if (is_numeric($expId)) {
 		$runRefineResults[] = ($uploadQueue>0) ? "<a href='checkRefineJobs.php?expId=$sessionId&type=single'>$uploadQueue uploads queued</a>" : "";
 		$runRefineResults[] = ($uploadRun>0) ? "<a href='listAppionJobs.php?expId=$sessionId'>$uploadRun uploads running</a>" : "";
 		$runRefineResults[] = ($refinesComplete>0) ? "<a href='reconsummary.php?expId=$sessionId'>$refinesComplete complete</a>" : "";
-		
+
 		// insert menu
 		$nruns[] = array(
-			'name'=>"<a href='selectRefinementType.php?expId=$sessionId'>Run Single-Model Refinement</a>",
+			'name'=>"<a href='selectRefinementType.php?expId=$sessionId'>Run Single-Model Refinement...</a>",
 			'result'=> $runRefineResults,
 		);
-		
+
 		// Multi Model Refinement stats
-		
+
 		$refineJobsMM = new RefineJobsMultiModel($expId);
-		
+
 		// prep recon stats
 		$prepRefineMMQueue		= $refineJobsMM->countPrepRefineQueue();
 		$prepRefineMMRun		= $refineJobsMM->countPrepRefineRun();
@@ -630,7 +556,7 @@ if (is_numeric($expId)) {
 		$runMultiRefineResults[] = ($prepRefineMMQueue>0) ? "<a href='checkRefineJobs.php?expId=$sessionId&type=multi'>$prepRefineMMQueue preps queued</a>" : "";
 		$runMultiRefineResults[] = ($prepRefineMMRun>0) ? "<a href='listAppionJobs.php?expId=$sessionId'>$prepRefineMMRun preps running</a>" : "";
 		$runMultiRefineResults[] = ($prepRefineMMDone>0) ? "<a href='selectPreparedRecon.php?expId=$sessionId&type=multi'>$prepRefineMMDone jobs ready to run</a>" : "";
-		
+
 		// run recon stats
 		$refineMMQueue			= $refineJobsMM->countRunRefineQueue();
 		$refineMMRun			= $refineJobsMM->countRunRefineRun();
@@ -638,7 +564,7 @@ if (is_numeric($expId)) {
 		$runMultiRefineResults[] = ($refineMMQueue>0) ? "<a href='checkRefineJobs.php?expId=$sessionId&type=multi'>$refineMMQueue jobs queued</a>" : "";
 		$runMultiRefineResults[] = ($refineMMRun>0) ? "<a href='listAppionJobs.php?expId=$sessionId'>$refineMMRun jobs running</a>" : "";
 		$runMultiRefineResults[] = ($refineReadyUploadMM>0) ? "<a href='checkRefineJobs.php?expId=$sessionId&type=multi'>$refineReadyUploadMM ready for upload</a>" : "";
-		
+
 		// upload recon stats
 		$uploadQueueMM			= $refineJobsMM->countUploadRefineQueue();
 		$uploadRunMM			= $refineJobsMM->countUploadRefineRun();
@@ -646,10 +572,10 @@ if (is_numeric($expId)) {
 		$runMultiRefineResults[] = ($uploadQueueMM>0) ? "<a href='checkRefineJobs.php?expId=$sessionId&type=multi'>$uploadQueueMM uploads queued</a>" : "";
 		$runMultiRefineResults[] = ($uploadRunMM>0) ? "<a href='listAppionJobs.php?expId=$sessionId'>$uploadRunMM uploads running</a>" : "";
 		$runMultiRefineResults[] = ($refinesCompleteMM>0) ? "<a href='reconsummarymulti.php?expId=$sessionId'>$refinesCompleteMM complete</a>" : "";
-		
+
 		// Insert Menu
 		$nruns[] = array(
-			'name'=>"<a href='selectMultiModelRefine.php?expId=$sessionId'>Run Multi-Model Refinement</a>",
+			'name'=>"<a href='selectMultiModelRefine.php?expId=$sessionId'>Run Multi-Model Refinement...</a>",
 			'result'=> $runMultiRefineResults,
 		);
 
@@ -724,7 +650,7 @@ if (is_numeric($expId)) {
 		$taresults[] = ($tadone==0) ? "" : "<a href='tomoalignrunsummary.php?expId=$sessionId'>$tadone complete</a>";
 		$taresults[] = ($tarun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=tomoaligner'>$tarun running</a>";
 		$taresults[] = ($taq==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=tomoaligner'>$taq queued</a>";
-		
+
 		// get full tomogram making stats:
 		$tmresults=array();
 		$tmdone = $fulltomoruns - $etomo_sample;
@@ -804,7 +730,7 @@ if (is_numeric($expId)) {
 		$ddresults[] = ($ddq==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=makeddrawframestack'>$ddq queued</a>";
 
 		$ddStackform = "MakeDDStackForm";
-		
+
 		$rppresults = array();
 		$rppdone = count($subclusterjobs['particlepolishing']['done']);
 		$rpprun = count($subclusterjobs['particlepolishing']['running']);
@@ -816,9 +742,12 @@ if (is_numeric($expId)) {
 
 
 		$nruns=array();
+		// append (array_push) to nruns
 		$nruns[] = array(
 //			'name'=>"<a href='runMakeDDRawFrameStack.php?expId=$sessionId'>Create frame stack</a>",
-			'name'=>"<a href='runAppionLoop.php?expId=$sessionId&form=$ddStackform'>Create frame stack</a>",
+//			'name'=>"<a href='runAppionLoop.php?expId=$sessionId&form=$ddStackform'>Create frame stack</a>",
+                        'name'=>"<a href='selectFrameAlignment.php?expId=$sessionId'>Select Frame Alignment</a>",
+
 		'result'=>$ddresults,
 		);
 		$nruns[] = array(
@@ -832,15 +761,23 @@ if (is_numeric($expId)) {
 		$nruns[] = array(
 			'name'=>"<a href='runAppionLoop.php?expId=$sessionId&form=$rppform'>Launch Particle Polishing</a>",
 			'result'=>$rppresults,
-
 		);
-	
+
+		$nruns[] = array(
+			'name'=>"<a href='runAppionLoop.php?expId=$sessionId&form=makeDEPerParticle'>Launch DE Per Particle Alignment</a>",
+			'result'=>$rppresults,
+		);
+		
+		$nruns[] = array(
+			'name'=>"<a href='runAppionLoop.php?expId=$sessionId&form=launchFrameTransfer'>Launch Frame Transfer</a>",
+		);
+		
 		$data[] = array(
 			'action' => array($action, $celloption),
 			'newrun' => array($nruns, $celloption),
 		);
 	}
-	
+
 	// upload model & template tools
 	$action = "Import tools";
 
@@ -875,6 +812,10 @@ if (is_numeric($expId)) {
 		'result'=>$result,
 	);
 
+	$nruns[] = array(
+		'name'=>"<a href='runAppionLoop.php?expId=$sessionId&form=UploadCtf'>Upload CTF</a>",
+	);
+	
 	$nruns[] = array(
 		'name'=>"<a href='uploadstack.php?expId=$sessionId'>Upload stack</a>",
 	);
@@ -929,13 +870,13 @@ if (is_numeric($expId)) {
 	$result = ($maskruns==0) ? "" :
 			"<a href='maskreport.php?expId=$sessionId'>$maskruns</a>";
 	$nruns=array();
-	
+
 	// Automated Masking
 	$results=array();
 	$cruddone = count($subclusterjobs['maskmaker']['done']);
 	$crudrun = count($subclusterjobs['maskmaker']['running']);
 	$crudqueued = count($subclusterjobs['maskmaker']['queued']);
-	
+
 	// We can get an inflated count for done if the same job was run more than once.
 	// Not sure yet if $maskruns is for all methods of mask making or just this one...
 	if ( $maskruns < $cruddone )  {
@@ -944,11 +885,11 @@ if (is_numeric($expId)) {
 
 	$results[] = ($cruddone==0) ? "" : "<a href='maskreport.php?expId=$sessionId'>$cruddone complete</a>";
 	$results[] = ($crudrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=maskmaker'>$crudrun running</a>";
-	$results[] = ($crudqueued==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=maskmaker'>$crudqueued queued</a>";		
-	
+	$results[] = ($crudqueued==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=maskmaker'>$crudqueued queued</a>";
+
 	$nrun = "<a href='manualMaskMaker.php?expId=$sessionId'>Run Manual Masking</a>";
 	$nruns[] = $nrun;
-	
+
 	$nruns[] = array(
 		'name'=>"<a href='selectMaskingType.php?expId=$sessionId'>Run Automated Masking</a>",
 		'result'=>$results,
@@ -987,9 +928,21 @@ if (is_numeric($expId)) {
 			'action' => array($action, $celloption),
 			'result' => array($totsynresult),
 			'newrun' => array($nruns, $celloption),
-		);		
+		);
 	}
+
+	// Clean Data
+	$action = "Clean Up";
+	$nruns=array();
+	$nruns[] = array(
+		'name'=>"<a href='runAppionLoop.php?expId=$sessionId&form=deleteHidden'>Remove Hidden Images</a>",
+		);
 	
+	$data[] = array(
+		'action' => array($action, $celloption),
+		'newrun' => array($nruns, $celloption),
+	);
+
 	// Automated Software Testing
 
 	// $TEST_SESSIONS is defined in config.php. It is an array containing the session name
@@ -1001,39 +954,39 @@ if (is_numeric($expId)) {
 	} else {
 		$bTestSession = False;
 	}
-	
+
 	if ( !HIDE_TEST_TOOLS && $bTestSession ){
 		// Add a menu header
 		$action = "Testing Tools";
-		
+
 		// Find number of complete, running and queued jobs
 		$results=array();
-	
+
 		$done = count($subclusterjobs['testsuite']['done']);
 		$running = count($subclusterjobs['testsuite']['running']);
 		$queued = count($subclusterjobs['testsuite']['queued']);
-		
+
 		$results[] = ($done==0) ? "" : "<a href='testsuitereport.php?expId=$sessionId'>$done complete</a>";
 		$results[] = ($running==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=testsuite'>$running running</a>";
 		$results[] = ($queued==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=testsuite'>$queued queued</a>";
-		
+
 		// Add a menu option
 		$nruns = array();
 		$nruns[] = array(
 			'name' => "<a href='runTestScript.php?expId=$sessionId'>Run Test Script</a>",
 			'result' => $results,
 		);
-		
+
 		$data[] = array(
 			'action' => array($action, $celloption),
 			'result' => array(),
 			'newrun' => array($nruns, $celloption),
 		);
-		
-	
+
+
 	}
-	
-	
+
+
 } elseif (is_numeric($projectId)) {
 	$action = "Upload images";
 	$nruns[] = array(

@@ -1,0 +1,63 @@
+#
+# Makecommon: common rules
+#
+# Copyright © 2012 Hanspeter Winkler
+#
+
+
+LIBDIR = ../lib
+
+LIBNAME = lib$(LIBPRFX)$(PRFX)
+
+LIBNAMESO = $(LIBNAME).so.$(LIBMAJOR)
+
+LIBNAMEFULL = $(LIBNAMESO).$(LIBMINOR)
+
+LIB = $(LIBDIR)/$(LIBNAME).a
+
+ifdef SO
+  LIBSO = $(LIBDIR)/$(LIBNAMEFULL)
+endif
+
+
+#
+# make rules
+#
+
+.PHONY: help all libs install clean distclean depend
+.PHONY: $(DIRS) $(EXTRADIRS)
+
+help:
+	@ echo "usage: make [ all | libs | install | depend | clean | distclean ]"
+
+all libs install: $(LIB) $(LIBSO) $(EXTRADIRS)
+
+depend: $(DIRS) $(EXTRADIRS)
+
+clean distclean: $(DIRS) $(EXTRADIRS)
+
+
+#
+# descend into subdirectories
+#
+
+$(DIRS):
+	$(MAKE) -C $@ $(MAKECMDGOALS)
+
+$(EXTRADIRS):
+	$(MAKE) -C $@ $(MAKECMDGOALS)
+
+
+#
+# make libraries
+#
+
+$(LIB): $(DIRS)
+	$(AR) $(AROPT) $@ $(DIRS:=/*.o)
+
+$(LIBSO): $(LIB)
+	$(SO) $(SOOPT) $(SONAME)$(LIBNAMESO) -o $@ $(SOOPTOBJ) $< $(SOOPTEND) $(SOLIBS)
+	$(STRIP) $(STRIPOPT) $@
+	rm -f $(LIBDIR)/$(LIBNAMESO) $(LIBDIR/$(LIBNAME).so
+	ln -s $(LIBNAMEFULL) $(LIBDIR)/$(LIBNAMESO)
+	ln -s $(LIBNAMEFULL) $(LIBDIR)/$(LIBNAME).so

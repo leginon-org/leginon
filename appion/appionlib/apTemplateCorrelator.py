@@ -152,6 +152,7 @@ class TemplateCorrelationLoop(particleLoop2.ParticleLoop):
 
 	##=======================
 	def processImage(self, imgdata, filtarray):
+
 		if abs(self.params['apix'] - self.params['templateapix']) > 0.01:
 			#rescale templates, apix has changed
 			apTemplate.getTemplates(self.params)
@@ -187,6 +188,7 @@ class TemplateCorrelationLoop(particleLoop2.ParticleLoop):
 	##=======================
 	def commitToDatabase(self, imgdata, rundata):
 		#insert template rotation data
+
 		for i, templateid in enumerate(self.params['templateIds']):
 			templaterunq = appiondata.ApTemplateRunData()
 			templaterunq['selectionrun'] = rundata

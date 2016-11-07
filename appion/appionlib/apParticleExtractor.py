@@ -284,8 +284,8 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 		self.ctfestopts = ('ace2', 'ctffind')
 
 		### values
-		self.parser.add_option("--bin", dest="bin", type="int", default=1,
-			help="Bin the particles after extracting", metavar="#")
+		self.parser.add_option("--bin", dest="bin", type="float", default=1,
+			help="Bin the particles after extracting (can be float if making a RELION stack)", metavar="#")
 		self.parser.add_option("--ctfcutoff", dest="ctfcutoff", type="float",
 			help="CTF confidence cut off")
 		self.parser.add_option("--ctfres80min", dest="ctfres80min", type="float",
@@ -340,6 +340,8 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 			action="store_true", help="Do not delete CTF corrected MRC files when finishing")
 		self.parser.add_option("--usedownmrc", dest="usedownmrc", default=False,
 			action="store_true", help="Use existing *.down.mrc in processing")
+		self.parser.add_option("--no-ctf", dest="noctf", default=False,
+			action="store_true", help="Don't consider any CTF information")
 
 		### option based
 		self.parser.add_option("--ctfmethod", dest="ctfmethod",
@@ -451,9 +453,10 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 		# check to see if image is rejected by other criteria
 		if self.rejectImage(imgdata) is False:
 			return False
-		# check CTF parameters for image and skip if criteria is not met
-		if self.checkCtfParams(imgdata) is False:
-			return False
+		if self.params['noctf'] is not True:
+			# check CTF parameters for image and skip if criteria is not met
+			if self.checkCtfParams(imgdata) is False:
+				return False
 		return None
 
 	#=======================

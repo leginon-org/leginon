@@ -290,6 +290,19 @@ $PUBLICATIONS['gpudriftcorr'] = array(
 'logo' => 'img/topbarbackgrnd.jpg',
 'pages' => '584-590');
 
+$PUBLICATIONS['purduedriftcorr'] = array(
+'title' => 'Motion correction for moview recorded using direct electron detectors',
+'year' => '2015',
+'authorlist' => 'Wen Jiang',
+'journal' => "<a href=https://github.com/jianglab/motioncorr > https://github.com/jianglab/motioncorr </a>",
+'volume' => '',
+'issue' => '',
+'pmid' => '',
+'pmcid' => '',
+'doi' => '',
+'logo' => 'img/topbarbackgrnd.jpg',
+'pages' => '');
+
 $PUBLICATIONS['isac'] = array(
 'title' => 'Iterative stable alignment and clustering of 2D transmission electron microscope images',
 'year' => '2012',
@@ -325,6 +338,58 @@ $PUBLICATIONS['imodctf'] = array(
 'pmid' => '19732834',
 'pmcid' => '',
 'doi' => 'doi:10.1016/j.jsb.2009.08.016',
+'logo' => '',
+'pages' => '');
+
+$PUBLICATIONS['dose_comp'] = array(
+'title' => 'Measuring the optimal exposure for single particle cryo-EM using a 2.6 Å reconstruction of rotavirus VP6',
+'year' => '2015',
+'authorlist' => 'Timothy Grant, Nikolaus Grigorieff',
+'journal' => 'eLife',
+'volume' => '',
+'issue' => '',
+'pmid' => '26023829',
+'pmcid' => '',
+'doi' => 'doi:10.7554/eLife.06980',
+'logo' => '',
+'pages' => '');
+
+$PUBLICATIONS['appion-protomo'] = array(
+'title' => 'Automated batch fiducial-less tilt-series alignment in Appion using Protomo',
+'year' => '2015',
+'authorlist' => 'Alex J. Noble, Scott M. Stagg',
+'journal' => 'J Struct Biol.',
+'volume' => '',
+'issue' => '',
+'pmid' => '26455557',
+'pmcid' => '',
+'doi' => 'doi:10.1016/j.jsb.2015.10.003',
+'logo' => '',
+'pages' => '');
+
+$PUBLICATIONS['tomo3d1'] = array(
+'title' => 'Fast tomographic reconstruction on multicore computers',
+'year' => '2011',
+'authorlist' => 'J.I. Agulleiro, J.J. Fernandez',
+'journal' => 'Bioinformatics',
+'volume' => '',
+'issue' => '',
+'pmid' => '21172911',
+'pmcid' => '',
+'doi' => 'doi:10.1093/bioinformatics/btq692',
+'logo' => '',
+'pages' => '');
+
+$PUBLICATIONS['tomo3d2'] = array(
+'title' => 'Tomo3D 2.0 - Exploitation of Advanced Vector eXtensions (AVX) for 3D reconstruction',
+'year' => '2015',
+'authorlist' => 'J.I. Agulleiro, J.J. Fernandez',
+'journal' => 'J Struct Biol.',
+'volume' => '',
+'issue' => '',
+'pmid' => '25528570',
+'pmcid' => '',
+'doi' => 'doi:10.1016/j.jsb.2014.11.009',
 'logo' => '',
 'pages' => '');
 

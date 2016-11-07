@@ -29,7 +29,7 @@ $height=$_GET['h'];
 $xmin = ($_GET['xmin']) ? $_GET['xmin'] : false;
 $xmax = ($_GET['xmax']) ? $_GET['xmax'] : false;
 $color = ($_GET['color']) ? $_GET['color'] : false;
-
+$pp = ($_GET['pp']) ? $_GET['pp'] : false; // phase plate test summary
 $ctf = new particledata();
 
 //If summary is true, get only the data with the best confidence
@@ -73,6 +73,10 @@ foreach($ctfinfo as $t) {
 		continue;
 
 	$imageid = $t['imageid'];
+	if ($pp ) {
+		$ppinfo = $ctf->getPhasePlateInfoFromImageId($imageid);
+		if ($ppinfo && $ppinfo['pp_number'] != $pp ) continue;
+	}
 	$data[$imageid] = $value;
 	$where[] = "DEF_id=".$id;
 	$ndata[]=array('unix_timestamp' => $t['unix_timestamp'], "$f"=>$value);

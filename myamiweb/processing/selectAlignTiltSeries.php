@@ -80,14 +80,15 @@ echo "</td></tr>\n";
 ** Old software
 */
 
-//echo "<tr><td width='100' align='center'>\n";
-//		echo "  <img src='img/other_software.png' width='125'>\n";
-//echo "</td><td>\n";
-//echo "  <h3><a href='runTomoAligner.php?expId=$expId'>Other Software Packages</a></h3>\n";
-//echo " <p>Here you will find older and unmaintained software packages for aligning tilt-series, "
-//	."including Leginon alignment, Protomo 1 refinement, and Imod shift-only alignment. "
-//	."</p>\n";
-//echo "</td></tr>\n";
+echo "<tr><td width='100' align='center'>\n";
+		echo "  <img src='img/other_software.png' width='125'>\n";
+echo "</td><td>\n";
+echo "  <h3><a href='runTomoAligner.php?expId=$expId'>Other Software Packages</a></h3>\n";
+echo " <p>Here you will find older implementations for aligning tilt-series, "
+	."including Leginon alignment, and Imod shift-only alignment. "
+	."These are only good for rough and quick alignment"
+	."</p>\n";
+echo "</td></tr>\n";
 
 
 

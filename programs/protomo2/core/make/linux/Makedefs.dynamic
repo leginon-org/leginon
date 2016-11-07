@@ -1,0 +1,18 @@
+#
+# Makedefs: definitions for linux dynamic linking
+#
+# Copyright © 2012 Hanspeter Winkler
+#
+
+LD = ld
+LDOPT =
+LDLIBOPT =
+LDSYSOPT =
+
+SO = $(CC)
+SOOPT = -shared
+SONAME = -Wl,-soname,
+SOOPTOBJ = -Wl,--whole-archive
+SOOPTEND = -Wl,--no-whole-archive
+
+DYNLIBS = -ldl

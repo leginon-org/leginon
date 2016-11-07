@@ -90,7 +90,7 @@ class GautomatchTemplateSelectionTable extends TemplateSelectionTable
                 return $html;   
         }       
 
-/*
+/*		
 		// Get the form parameters that have been created by the parent class
 		$params = $this->getFormParams();
 		
