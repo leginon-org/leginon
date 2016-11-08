@@ -242,6 +242,11 @@ class gctf extends BasicLoopForm
 		if ( $paramArray ) {
 			foreach ( $paramArray as $key=>$param ) {
 				
+				if (($param['name'] == 'bestdb')&&($paramArray['bestdb']['value'] == true )) {
+                                        $command = $this->removeCommandFlag($command,'bestdb',$param['bestdb']);
+					$command .= "--bestdb ";
+					}
+			
 
 				if (($param['name'] == 'phaseplate')&&($paramArray['phaseplate']['value'] == false )) {
 					$command = $this->removeCommandFlag($command,'max_phase_shift',$param['max_phase_shift']);
