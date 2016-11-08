@@ -513,6 +513,8 @@ function alignstacksummarytable($alignstackid, $mini=false, $showOptions=True) {
 	if ($stackdata['refstackfile'] && file_exists($refstack))
 		$display_keys['reference stack'] = "<a target='stackview' HREF='viewstack.php?"
 			."file=$refstack&expId=$expId&ps=$mpix&alignId=$alignstackid&refs=1'>".$stackdata['refstackfile']."</a>\n";
+		if (count(explode('rmaxlike',$stackdata['runname'])) > 1)
+			$display_keys['replace reference stack made before Nov, 2016'] = "<a HREF='runAppionLoop.php?expId=$expId&form=replaceRelion2DRefs&astack=$alignstackid'> click here </a>\n";
 	// if toplogy run, show links to last node file
 	if ($stackdata['REF|ApTopolRepRunData|topreprun']) {
 		$nodefiles = glob($stackdata['path']."/classes*.hed");

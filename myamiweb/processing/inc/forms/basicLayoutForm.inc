@@ -102,6 +102,13 @@ class BasicLayoutForm extends BasicForm
 
 	public function generateAdditionalFormLeft() {return False;}
 
+	public function generateRunForm(	$defrunname='', $outdir='', $description='', $showDesc=false)
+	{
+			// Add the Run Parameters Form
+			$runParamsForm = new RunParametersForm( $runname=$defrunname, $outdir=$outdir, $description='', $showDesc );
+			return $runParamsForm->generateForm();
+	}
+			
 	public function generateFormFooter() {return False;}
 
 	private function generateFormHeader()
@@ -213,8 +220,7 @@ class BasicLayoutForm extends BasicForm
 			$html.= $remoteParamsForm->generateForm();
 		} else {
 			// Add the Run Parameters Form
-			$runParamsForm = new RunParametersForm( $runname=$defrunname, $outdir=$outdir, $description='', $showDesc );
-			$html .= $runParamsForm->generateForm();
+			$html .= $this->generateRunForm( $runname=$defrunname, $outdir=$outdir, $description='', $showDesc );
 		}
 		
 		$html .= $this->generateAdditionalFormLeft();		
@@ -278,7 +284,7 @@ class BasicLayoutForm extends BasicForm
 
 		return $html;
 	}	
-	
+
 	function addJavaScript( $javaFunctions ) 
 	{
 		$this->javaFunctions .= $javaFunctions;
