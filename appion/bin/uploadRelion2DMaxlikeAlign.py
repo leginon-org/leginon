@@ -434,7 +434,14 @@ class UploadRelionMaxLikeScript(appionScript.AppionScript):
 		# create aligned reference stack
 		reflist = self.readRefStarFile()
 		alignref_imagicfile = "part"+self.params['timestamp']+"_average.hed"
-		temp_imagicfile = self.createAlignedStack(reflist, runparams['localstack'])
+	
+		# convert unaligned refstack from mrc to imagic format
+		unaligned_refstack_mrc = os.path.join('iter%03d' % self.lastiter,'part%s_it%03d_classes.mrcs' % (self.params['timestamp'], self.lastiter))
+		unaligned_refstack_imagic = 'part%s_it%03d_classes.hed' % (self.params['timestamp'], self.lastiter)
+		stackarray = mrc.read(unaligned_refstack_mrc)
+		apImagicFile.writeImagic(stackarray, unaligned_refstack_imagic)
+		# createAlignedStack
+		temp_imagicfile = apStackFile.createAlignedStack(reflist, unaligned_refstack_imagic,'temp_aligned_ref')
 		apFile.moveStack(temp_imagicfile,alignref_imagicfile)
 
 		### create aligned stacks
