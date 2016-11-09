@@ -588,7 +588,7 @@ function showOrSubmitCommand($command, $headinfo, $jobtype, $nproc, $testimg=Fal
 	*/
 	$expId=$_GET['expId'];
 	// uploadimage jobtype need to be handled differently since it has none of these
-	if ($jobtype != 'uploadimage' && $jobtype != 'etomorecon') {
+	if ($jobtype != 'uploadimage' && $jobtype != 'etomorecon' && $jobtype !='repair') {
 		// get required inputs
 		if (!is_numeric($expId) || $expId == 0) 
 			return "<B>ERROR:</B> undefined expId";
