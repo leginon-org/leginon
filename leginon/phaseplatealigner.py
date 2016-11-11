@@ -1,5 +1,6 @@
 import math
 import time
+import threading
 from leginon import leginondata, reference, calibrationclient, cameraclient
 import event
 import gui.wx.PhasePlateAligner
@@ -25,6 +26,7 @@ class PhasePlateAligner(reference.Reference):
 			watch = []
 		kwargs['watchfor'] = watch + [event.PhasePlatePublishEvent]
 		reference.Reference.__init__(self, *args, **kwargs)
+		self.userpause = threading.Event()
 		self.current_position = 1 # base 1
 		self.position_updated = False
 		self.start()
@@ -33,6 +35,7 @@ class PhasePlateAligner(reference.Reference):
 		self.current_position = self.settings['initial position']
 		self.logPhasePlateUsage()
 		self.position_updated = True
+		self.userpause.set()
 
 	def uiSetSettings(self):
 		pass
@@ -49,6 +52,7 @@ class PhasePlateAligner(reference.Reference):
 		# Forcing the user to update phase plate patch position
 		# when this is first reached.
 			self.openUISettings()
+			print 'ui set', self.position_updated
 		self.setStatus('processing')
 		self.logger.info('handle request')
 		self.nextPhasePlate()
@@ -58,7 +62,13 @@ class PhasePlateAligner(reference.Reference):
 		return True
 
 	def openUISettings(self):
+		self.setStatus('user input')
+		self.twobeeps()
+		self.logger.info('Waiting for user to check targets...')
+		self.userpause.clear()
 		self.panel.openSettingsDialog()
+		self.userpause.wait()
+		self.setStatus('processing')
 		
 	def nextPhasePlate(self):
 		self.setStatus('processing')
