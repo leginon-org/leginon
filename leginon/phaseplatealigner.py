@@ -1,5 +1,6 @@
 import math
 import time
+import threading
 from leginon import leginondata, reference, calibrationclient, cameraclient
 import event
 import gui.wx.PhasePlateAligner
@@ -10,6 +11,7 @@ class PhasePlateAligner(reference.Reference):
 	settingsclass = leginondata.PhasePlateAlignerSettingsData
 	defaultsettings = reference.Reference.defaultsettings
 	defaultsettings.update({
+		'settle time': 60.0,
 		'charge time': 2.0,
 		'phase plate number': 1,
 		'initial position': 1,
@@ -25,14 +27,22 @@ class PhasePlateAligner(reference.Reference):
 			watch = []
 		kwargs['watchfor'] = watch + [event.PhasePlatePublishEvent]
 		reference.Reference.__init__(self, *args, **kwargs)
+		self.userpause = threading.Event()
 		self.current_position = 1 # base 1
 		self.position_updated = False
 		self.start()
 
+	def _processRequest(self, request_data):
+		if self.position_updated:
+			return super(PhasePlateAligner,self)._processRequest(request_data)
+		else:
+			self.logger.error('Phase plate number and patch position must be confirmed before using this')
+			return
 	def uiUpdatePosition(self):
 		self.current_position = self.settings['initial position']
 		self.logPhasePlateUsage()
 		self.position_updated = True
+		self.userpause.set()
 
 	def uiSetSettings(self):
 		pass
@@ -45,10 +55,6 @@ class PhasePlateAligner(reference.Reference):
 		super(PhasePlateAligner, self).onTest(request_data)
 
 	def execute(self, request_data=None):
-		while not self.position_updated:
-		# Forcing the user to update phase plate patch position
-		# when this is first reached.
-			self.openUISettings()
 		self.setStatus('processing')
 		self.logger.info('handle request')
 		self.nextPhasePlate()
@@ -57,9 +63,6 @@ class PhasePlateAligner(reference.Reference):
 		self.setStatus('idle')
 		return True
 
-	def openUISettings(self):
-		self.panel.openSettingsDialog()
-		
 	def nextPhasePlate(self):
 		self.setStatus('processing')
 		while True:
@@ -74,7 +77,7 @@ class PhasePlateAligner(reference.Reference):
 			self.logger.info('Position %d is bad. Try next one' % self.current_position)
 		# log phase plate patch in use
 		self.logPhasePlateUsage()
-		pause_time = self.settings['pause time']
+		pause_time = self.settings['settle time']
 		if pause_time is not None:
 			self.logger.info('Waiting for phase plate to settle for %.1f seconds' % pause_time)
 			time.sleep(pause_time)
