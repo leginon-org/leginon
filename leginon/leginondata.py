@@ -2453,6 +2453,7 @@ class PhasePlateAlignerSettingsData(ReferenceSettingsData):
 			('phase plate number', int),
 			('total positions', int),
 			('initial position', int),
+			('settle time', float),
 			('charge time', float),
 		)
 	typemap = classmethod(typemap)

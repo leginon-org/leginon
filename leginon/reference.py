@@ -173,6 +173,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 			return
 
 		if pause_time is not None:
+			self.logger.info('Pausing %.1f second before execution' % (pause_time,))
 			time.sleep(pause_time)
 		try:
 			self.execute(request_data)

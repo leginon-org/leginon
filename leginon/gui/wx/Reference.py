@@ -48,7 +48,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		return start_position[0]+1,start_position[1]+1
 
 	def createIntervalTimeEntry(self, start_position):
-		self.widgets['interval time'] = FloatEntry(self, -1, min=0.0, allownone=False, chars=4, value='0.0')
+		self.widgets['interval time'] = FloatEntry(self, -1, min=0.0, allownone=False, chars=8, value='0.0')
 		szintervaltime = wx.GridBagSizer(5, 5)
 		szintervaltime.Add(wx.StaticText(self, -1, 'If request performed less than'), (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szintervaltime.Add(self.widgets['interval time'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
