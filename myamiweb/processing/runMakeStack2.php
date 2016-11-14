@@ -162,6 +162,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		'res80'=>'Resolution 0.8 criteria',
 		'res50'=>'Resolution 0.5 criteria',
 		'resplus'=>'Sum of Res 0.5 + Res 0.8',
+		'resPkg'=>'Software Resolution Estimate',
 		'maxconf'=>'Maximum confidence value',
 		'conf3010'=>'Confidence btw 1/30A and 1/10A',
 		'conf5peak'=>'5 peaks confidence',
@@ -613,7 +614,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 			echo "and <input type='text' name='ctfres80max' value='$ctfres80max' size='4' $ctfresdisable>";
 			echo "&nbsp; <i>(in &Aring;ngstroms)</i>\n";
 		echo "<br/>\n";
-		echo "&nbsp;&nbsp;Resolution range at 0.5 criteria: <br/>";
+		echo "&nbsp;&nbsp;Resolution range at 0.5 or software package criteria: <br/>";
 			echo "between <input type='text' name='ctfres50min' value='$ctfres50min' size='4' $ctfresdisable>";
 			echo "and <input type='text' name='ctfres50max' value='$ctfres50max' size='4' $ctfresdisable>";
 			echo "&nbsp; <i>(in &Aring;ngstroms)</i>\n";
