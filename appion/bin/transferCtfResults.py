@@ -19,6 +19,7 @@ class TransferCtfResults(appionScript.AppionScript):
 		"""
 		standard appionScript
 		"""
+		self.sortoptions = ('res80', 'res50', 'resplus', 'resPkg', 'maxconf', 'conf3010', 'conf5peak', 'crosscorr')
 		### strings
 		self.parser.add_option("--session", "--sessionname", dest="sessionname",
 			help="Session name", metavar="NAME")
@@ -29,8 +30,9 @@ class TransferCtfResults(appionScript.AppionScript):
 		self.parser.add_option("--frompreset", "--frompreset", dest="frompreset",
 			help="Name of Preset to transfer to", metavar="NAME")
 
-		self.parser.add_option("--sort", "--sort", dest="sorttype", default="res80",
-			help="bestdb ctf sort criteria", metavar="NAME")
+		self.parser.add_option("--sort", dest="sorttype",
+			help="bestdb CTF sorting method", metavar="TYPE",
+			type="choice", choices=self.sortoptions, default="res80" )
 
 		### int
 		self.parser.add_option("--ctfrunid", dest="ctfrunid", type="int",
@@ -72,7 +74,14 @@ class TransferCtfResults(appionScript.AppionScript):
 		# go through images
 		images = apDatabase.getImagesFromDB(self.params['sessionname'], self.params['frompreset'])
 		for imgdata in images:
-			# Transfer only on non-rejected images
+			siblings = apDBImage.getAlignedSiblings(imgdata)
+			to_imgdata = self.selectImageAtPreset(self.params['preset'], siblings)
+			if not to_imgdata:
+				apDisplay.printWarning('No corresponding image for %s with preset %s' % (apDisplay.short(imgdata['filename']),self.params['preset']))
+				continue
+			# Transfer viewer status regardless
+			self.transferViewerStatus(imgdata,to_imgdata)
+			# Transfer CTF only on non-rejected images
 			if apDatabase.getImgCompleteStatus(imgdata) == False:
 				apDisplay.printWarning('Skip hidden %s' % apDisplay.short(imgdata['filename']))
 				continue
@@ -81,13 +90,7 @@ class TransferCtfResults(appionScript.AppionScript):
 				apDisplay.printWarning('No CTF result for %s' % apDisplay.short(imgdata['filename']))
 				continue
 			#
-			siblings = apDBImage.getAlignedSiblings(imgdata)
-			to_imgdata = self.selectImageAtPreset(self.params['preset'], siblings)
-			if not to_imgdata:
-				apDisplay.printWarning('No corresponding image for %s with preset %s' % (apDisplay.short(imgdata['filename']),self.params['preset']))
-				continue
 			if self.params['commit']:
-				self.transferViewerStatus(imgdata,to_imgdata)
 				self.commitToDatabase(ctfdata,to_imgdata)
 
 	#=====================
