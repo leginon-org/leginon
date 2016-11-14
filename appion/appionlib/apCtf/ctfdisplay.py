@@ -1397,8 +1397,8 @@ class CtfDisplay(object):
 		corarray /= corarray.sum()
 		mincontribution = corarray.mean() - 1.5*corarray.std()
 		### NOTE: worried that this introduces too much confirmation bias
-		#if self.debug is True:
-		print "mincontribution: %.4f"%(mincontribution,)
+		if self.debug is True:
+			print "mincontribution: %.4f"%(mincontribution,)
 		goodpsdlist = []
 		for i in range(len(psdlist)):
 			#if self.debug is True:
