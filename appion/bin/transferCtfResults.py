@@ -134,7 +134,7 @@ class TransferCtfResults(appionScript.AppionScript):
 			q['criteria'] = 'bestdb '+self.params['sorttype']
 		if self.params['ctfrunid']:
 			q['criteria'] = 'runid'
-			q['run'] = appiondata.ApAceRunData().direct_query()
+			q['run'] = appiondata.ApAceRunData().direct_query(self.params['ctfrunid'])
 		newrun = appiondata.ApAceRunData(transfer_params=q)
 		newrun['name'] = self.params['runname']
 		newrun['path'] = appiondata.ApPathData(path=self.params['rundir'])
