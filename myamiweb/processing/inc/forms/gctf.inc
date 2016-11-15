@@ -46,9 +46,6 @@ class gctf extends BasicLoopForm
 		// The help section corresponds to the array key for these parameters found in help.js for popup help, $ddstackid=false.
 		$params->setHelpSection( "gctf" );
 				
-		//Appion parameters
-		$params->addParam( "bestdb", $bestdb, "Use best values from Database" );
-		$params->addParam( "nominal", $nominal, "Override Nominal Value (in &mu;m)" );
 		// Gctf parameters
 		$params->addParam( "ampcontrast", $ampcontrast, "Amplitude contrast" );
 		$params->addValidation("ampcontrast", "float");

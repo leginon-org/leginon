@@ -6,7 +6,7 @@ import time
 from pyami import mem
 from appionlib import apDisplay
 from appionlib.StackClass import mrcClass
-#from appionlib.StackClass import hdfClass
+from appionlib.StackClass import hdfClass
 from appionlib.StackClass import imagicClass
 
 ####
