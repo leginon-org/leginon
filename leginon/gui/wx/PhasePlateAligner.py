@@ -166,6 +166,7 @@ class PatchStateScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
 		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 
+		szppt = self.addPhasePlateNumber()
 		gridformat = self.node.getGridFormat()
 		szedit = self.addPatchGrid(gridformat)
 
@@ -185,7 +186,7 @@ class PatchStateScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.Bind(wx.EVT_BUTTON, self.onAllButton, self.ball)
 		# settings sizer
 		sz = wx.GridBagSizer(5, 10)
-		#sz.Add(szoptions, (0, 0), (1, 2))
+		sz.Add(szpp, (0, 0), (1, 10))
 		sz.Add(szedit, (1, 0), (10, 10))
 		sz.Add(szbutton, (11, 0), (1, 2))
 		return [sz]
@@ -207,6 +208,16 @@ class PatchStateScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		# wait for thread to finish before setting values
 		t.join()
 		self.setPatchGridValues()
+
+	def addPhasePlateNumber(self):
+		pp_number = self.node.guiGetPhasePlateNumber()
+		text = ' %d' % (pp_number,)
+		label = wx.StaticText(self, -1, 'Phase Plate Slot')
+		self.labvalue = wx.StaticText(self, -1, text)
+		sz = wx.GridBagSizer(5, 5)
+		sz.Add(label, (0,0), (1,1))
+		sz.Add(self.labvalue, (0,1), (1,1))
+		return sz
 
 	def addPatchGrid(self,gridformat):
 		'''
