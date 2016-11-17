@@ -259,6 +259,12 @@ if (is_numeric($expId)) {
 		'result'=>$ctfresults,
 	);
 
+	if ( $ctfruns > 0 ) {
+		$nruns[] = array(
+			'name'=>"<a href='runAppionLoop.php?expId=$sessionId&form=transferCTF'>Transfer results to another preset</a>",
+		);
+	}
+
 	if ($loopruns > 0) {
 		$nruns[] = array(
 			'name'=>"<a href='runLoopAgain.php?expId=$sessionId'>Repeat an image loop run</a>",
