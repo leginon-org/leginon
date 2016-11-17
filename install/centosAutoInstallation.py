@@ -1029,7 +1029,7 @@ endif
 			{
 				# Python fs
 				'targzFileName':'fs-0.4.0.tar.gz',
-				'fileLocation':'https://pyfilesystem.googlecode.com/files/',
+				'fileLocation':'https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/pyfilesystem/',
 				'unpackDirName':'fs-0.4.0',
 			}
 		]
@@ -1293,7 +1293,7 @@ endif
 		
 
 		self.yumUpdate()
-		self.yumInstall(['subversion'])
+		self.yumInstall(['git'])
 		self.getMyami()
 		
 		result = self.setupJobServer()
