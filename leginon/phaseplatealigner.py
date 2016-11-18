@@ -127,6 +127,9 @@ class PhasePlateAligner(reference.Reference):
 		# might be reused
 		newq.insert(force=True)
 
+	def guiGetPhasePlateNumber(self):
+		return self.settings['phase plate number']
+
 	def guiGetPatchStates(self,state=False):
 		wxgrid_format = self.getGridFormat()
 		cols = wxgrid_format['cols']
