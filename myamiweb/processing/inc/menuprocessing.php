@@ -261,7 +261,7 @@ if (is_numeric($expId)) {
 
 	if ( $ctfruns > 0 ) {
 		$nruns[] = array(
-			'name'=>"<a href='runAppionLoop.php?expId=$sessionId&form=transferCTF'>Transfer results to another preset</a>",
+			'name'=>"<a href='runAppionLoop.php?expId=$sessionId&form=transferCtf'>Transfer results to another preset</a>",
 		);
 	}
 
