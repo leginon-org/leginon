@@ -1,23 +1,23 @@
 import math
 import time
 import threading
-from leginon import leginondata, reference, calibrationclient, cameraclient
+from leginon import leginondata, referencetimer, calibrationclient, cameraclient
 import event
 import gui.wx.PhasePlateAligner
 from pyami import arraystats
 
-class PhasePlateAligner(reference.Reference):
+class PhasePlateAligner(referencetimer.ReferenceTimer):
 	# relay measure does events
 	settingsclass = leginondata.PhasePlateAlignerSettingsData
-	defaultsettings = reference.Reference.defaultsettings
+	defaultsettings = referencetimer.ReferenceTimer.defaultsettings
 	defaultsettings.update({
 		'settle time': 60.0,
 		'charge time': 2.0,
 		'phase plate number': 1,
 		'initial position': 1,
 	})
-	eventinputs = reference.Reference.eventinputs + [event.PhasePlatePublishEvent]
-	eventoutputs = reference.Reference.eventoutputs + [event.PhasePlateUsagePublishEvent]
+	eventinputs = referencetimer.ReferenceTimer.eventinputs + [event.PhasePlatePublishEvent]
+	eventoutputs = referencetimer.ReferenceTimer.eventoutputs + [event.PhasePlateUsagePublishEvent]
 	panelclass = gui.wx.PhasePlateAligner.PhasePlateAlignerPanel
 	requestdata = leginondata.PhasePlateData
 	def __init__(self, *args, **kwargs):
@@ -26,7 +26,7 @@ class PhasePlateAligner(reference.Reference):
 		except KeyError:
 			watch = []
 		kwargs['watchfor'] = watch + [event.PhasePlatePublishEvent]
-		reference.Reference.__init__(self, *args, **kwargs)
+		referencetimer.ReferenceTimer.__init__(self, *args, **kwargs)
 		self.userpause = threading.Event()
 		self.current_position = 1 # base 1
 		self.position_updated = False

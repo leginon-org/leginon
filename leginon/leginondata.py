@@ -2407,13 +2407,19 @@ class ReferenceSettingsData(SettingsData):
 			('bypass', bool),
 			('move type', str),
 			('pause time', float),
+		)
+	typemap = classmethod(typemap)
+
+class ReferenceTimerSettingsData(ReferenceSettingsData):
+	def typemap(cls):
+		return ReferenceSettingsData.typemap() + (
 			('interval time', float),
 		)
 	typemap = classmethod(typemap)
 
-class PresetAdjusterSettingsData(ReferenceSettingsData):
+class PresetAdjusterSettingsData(ReferenceTimerSettingsData):
 	def typemap(cls):
-		return ReferenceSettingsData.typemap() + (
+		return ReferenceTimerSettingsData.typemap() + (
 			('override preset', bool),
 			('instruments', dict),
 			('camera settings', CameraSettingsData),
@@ -2422,14 +2428,14 @@ class PresetAdjusterSettingsData(ReferenceSettingsData):
 		)
 	typemap = classmethod(typemap)
 
-class BeamFixerSettingsData(ReferenceSettingsData):
+class BeamFixerSettingsData(ReferenceTimerSettingsData):
 	def typemap(cls):
 		return PresetAdjusterSettingsData.typemap() + (
 			('shift step', float),
 		)
 	typemap = classmethod(typemap)
 
-class ExposureFixerSettingsData(ReferenceSettingsData):
+class ExposureFixerSettingsData(ReferenceTimerSettingsData):
 	def typemap(cls):
 		return PresetAdjusterSettingsData.typemap() + (
 			('required dose', float),
@@ -2439,17 +2445,17 @@ class ExposureFixerSettingsData(ReferenceSettingsData):
 		)
 	typemap = classmethod(typemap)
 
-class AlignZLPSettingsData(ReferenceSettingsData):
+class AlignZLPSettingsData(ReferenceTimerSettingsData):
 	def typemap(cls):
-		return ReferenceSettingsData.typemap() + (
+		return ReferenceTimerSettingsData.typemap() + (
 			('check preset', str),
 			('threshold', float),
 		)
 	typemap = classmethod(typemap)
 
-class PhasePlateAlignerSettingsData(ReferenceSettingsData):
+class PhasePlateAlignerSettingsData(ReferenceTimerSettingsData):
 	def typemap(cls):
-		return ReferenceSettingsData.typemap() + (
+		return ReferenceTimerSettingsData.typemap() + (
 			('phase plate number', int),
 			('total positions', int),
 			('initial position', int),
@@ -2475,9 +2481,9 @@ class PhasePlateTesterSettingsData(PhasePlateTestImagerSettingsData):
 		)
 	typemap = classmethod(typemap)
 
-class ScreenCurrentLoggerSettingsData(ReferenceSettingsData):
+class ScreenCurrentLoggerSettingsData(ReferenceTimerSettingsData):
 	def typemap(cls):
-		return ReferenceSettingsData.typemap()
+		return ReferenceTimerSettingsData.typemap()
 	typemap = classmethod(typemap)
 
 
