@@ -173,7 +173,7 @@ class MotionCorr_Purdue(MotionCorr1):
 	executable = 'dosefgpu_driftcorr'
 	def getValidAlignOptionMappings(self):
 		opts = super(MotionCorr_Purdue,self).getValidAlignOptionMappings()
-		opts.update({'nrw':'nrw', 'flp':'flp' })
+		opts.update({'nrw':'nrw', 'flp':'flp','bft':'bft' })
 		return opts
 
 	def modifyNumRunningAverageFrames(self):
@@ -246,8 +246,8 @@ class MotionCor2_UCSF(DDFrameAligner):
 			cmd += ' -FtBin %d ' % self.alignparams['FtBin']
 
 		# bfactor
-		if self.alignparams['Bft'] > 0:
-			cmd += ' -Bft %d ' % self.alignparams['Bft']
+		if self.alignparams['bft'] > 0:
+			cmd += ' -Bft %d ' % self.alignparams['bft']
 
 		# frame truncation
 		if self.alignparams['Throw'] > 0:
@@ -328,7 +328,7 @@ class MotionCor2_UCSF(DDFrameAligner):
 			'nrw':'Group', 
 			'flp':'flp', 
 			'bin':'FtBin', 
-			"bft":"Bft",
+			"Bft":"bft",
 			"apix":"PixSize",
 			"Iter":"Iter",
 			"Patchrows":"Patchrows",
