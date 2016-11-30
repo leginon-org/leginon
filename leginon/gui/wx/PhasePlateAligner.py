@@ -6,25 +6,32 @@ from leginon.gui.wx.Entry import FloatEntry, IntEntry
 import leginon.gui.wx.Node
 import leginon.gui.wx.Settings
 import leginon.gui.wx.ToolBar
-import leginon.gui.wx.ReferenceTimer
+import leginon.gui.wx.ReferenceCounter
 
-class SettingsDialog(leginon.gui.wx.ReferenceTimer.SettingsDialog):
+class SettingsDialog(leginon.gui.wx.ReferenceCounter.SettingsDialog):
 	def initialize(self):
 		return ScrolledSettings(self,self.scrsize,False)
 
-class ScrolledSettings(leginon.gui.wx.ReferenceTimer.ScrolledSettings):
+class ScrolledSettings(leginon.gui.wx.ReferenceCounter.ScrolledSettings):
 	def initialize(self):
+		# Reference Target Box Sizer
 		sb = wx.StaticBox(self, -1, 'Reference Target')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
-
 		self.sz = wx.GridBagSizer(5, 5)
-
 		position = self.createBypassCheckBox((0, 0))
 		position = self.createMoveTypeChoice((position[0],0))
-		position = self.createPauseTimeEntry((position[0],0))
-		position = self.createIntervalTimeEntry((position[0],0))
+		# pause time after stage move to the position is not shown in gui
+		# to avoid confusion.
+		position = self.createIntervalCountEntry((position[0],0))
+
+		# Phase Plate Timing Box Sizer
+		timingsb = wx.StaticBox(self, -1, 'Phase Plate Settling and Charging')
+		timingsbsz = wx.StaticBoxSizer(timingsb, wx.VERTICAL)
+		self.sz1 = wx.GridBagSizer(5, 5)
+		position = self.createSettleTimeEntry((0,0))
 		position = self.createChargeTimeEntry((position[0],0))
 
+		# Phase Plate Position Box Sizer
 		ppsb = wx.StaticBox(self, -1, 'Phase Plate Position')
 		ppsbsz = wx.StaticBoxSizer(ppsb, wx.VERTICAL)
 
@@ -35,11 +42,21 @@ class ScrolledSettings(leginon.gui.wx.ReferenceTimer.ScrolledSettings):
 		position = self.createUpdatePositionEntry((position[0],0), ppsz)
 
 		sbsz.Add(self.sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
+		timingsbsz.Add(self.sz1, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 		ppsbsz.Add(ppsz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
 		self.Bind(wx.EVT_BUTTON, self.onUpdatePositionButton, self.bupdate)
 
-		return [sbsz,ppsbsz]
+		return [sbsz,timingsbsz,ppsbsz]
+
+	def createSettleTimeEntry(self, start_position):
+		self.widgets['settle time'] = FloatEntry(self, -1, min=0.0, allownone=False, chars=4, value='3.0')
+		szpausetime = wx.GridBagSizer(5, 5)
+		szpausetime.Add(wx.StaticText(self, -1, 'Wait for'), (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szpausetime.Add(self.widgets['settle time'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		szpausetime.Add(wx.StaticText(self, -1, 'seconds for phase plate patch to settle'), (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.sz1.Add(szpausetime, start_position, (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		return start_position[0]+1,start_position[1]+1
 
 	def createChargeTimeEntry(self, start_position):
 		self.widgets['charge time'] = FloatEntry(self, -1, min=0.0, allownone=False, chars=4, value='3.0')
@@ -47,7 +64,7 @@ class ScrolledSettings(leginon.gui.wx.ReferenceTimer.ScrolledSettings):
 		szpausetime.Add(wx.StaticText(self, -1, 'Expose for'), (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szpausetime.Add(self.widgets['charge time'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		szpausetime.Add(wx.StaticText(self, -1, 'seconds to charge up carbon film phase plate'), (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.sz.Add(szpausetime, start_position, (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.sz1.Add(szpausetime, start_position, (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		return start_position[0]+1,start_position[1]+1
 
 	def createPhasePlateNumberEntry(self, start_position, sz):
@@ -75,7 +92,7 @@ class ScrolledSettings(leginon.gui.wx.ReferenceTimer.ScrolledSettings):
 		self.dialog.setNodeSettings()
 		self.node.uiUpdatePosition()
 
-class PhasePlateAlignerPanel(leginon.gui.wx.ReferenceTimer.ReferenceTimerPanel):
+class PhasePlateAlignerPanel(leginon.gui.wx.ReferenceCounter.ReferenceCounterPanel):
 	def __init__(self, *args, **kwargs):
 		super(PhasePlateAlignerPanel,self).__init__(*args, **kwargs)
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_MOSAIC, 'atlasmaker', shortHelpString='Patch State Mapping')

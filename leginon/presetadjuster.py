@@ -39,8 +39,8 @@ class PresetAdjuster(referencetimer.ReferenceTimer):
 		self.beamsize_client = calibrationclient.BeamSizeCalibrationClient(self)
 		self.start()
 
-	def processData(self, incoming_data):
-		referencetimer.ReferenceTimer.processData(self, incoming_data)
+	def _processData(self, incoming_data):
+		referencetimer.ReferenceTimer._processData(self, incoming_data)
 		if issubclass(incoming_data.__class__, leginondata.FixBeamData):
 			newdata = incoming_data.toDict()
 			newdata['preset'] = self.settings['correction presets'][0]

@@ -2417,6 +2417,13 @@ class ReferenceTimerSettingsData(ReferenceSettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class ReferenceCounterSettingsData(ReferenceSettingsData):
+	def typemap(cls):
+		return ReferenceSettingsData.typemap() + (
+			('interval count', int),
+		)
+	typemap = classmethod(typemap)
+
 class PresetAdjusterSettingsData(ReferenceTimerSettingsData):
 	def typemap(cls):
 		return ReferenceTimerSettingsData.typemap() + (
@@ -2455,7 +2462,7 @@ class AlignZLPSettingsData(ReferenceTimerSettingsData):
 
 class PhasePlateAlignerSettingsData(ReferenceTimerSettingsData):
 	def typemap(cls):
-		return ReferenceTimerSettingsData.typemap() + (
+		return ReferenceCounterSettingsData.typemap() + (
 			('phase plate number', int),
 			('total positions', int),
 			('initial position', int),
