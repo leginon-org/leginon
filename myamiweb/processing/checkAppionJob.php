@@ -217,12 +217,20 @@ function convertToColors($j) {
 	foreach ($j as $i) {
 		//$i = removebackspace($i);
 		$i = trim($i);
+		$i = preg_replace("%\033\[(0;)?31m%","<font style='color:red'>", $i);
+		$i = preg_replace("%\033\[(0;)?32m%","<font style='color:lime'>", $i);
+		$i = preg_replace("%\033\[(0;)?33m%","<font style='color:yellow'>", $i);
+		$i = preg_replace("%\033\[(0;)?34m%","<font style='color:blue'>", $i);
+		$i = preg_replace("%\033\[(0;)?35m%","<font style='color:magenta'>", $i);
+		$i = preg_replace("%\033\[(0;)?36m%","<font style='color:cyan'>", $i);
+		$i = preg_replace("%\033\[(0;)?37m%","<font style='color:silver'>", $i);
 		$i = preg_replace("%\033\[(1;)?31m%","<font style='color:red'>", $i);
-		$i = preg_replace("%\033\[(1;)?32m%","<font style='color:green'>", $i);
+		$i = preg_replace("%\033\[(1;)?32m%","<font style='color:lime'>", $i);
 		$i = preg_replace("%\033\[(1;)?33m%","<font style='color:yellow'>", $i);
 		$i = preg_replace("%\033\[(1;)?34m%","<font style='color:blue'>", $i);
 		$i = preg_replace("%\033\[(1;)?35m%","<font style='color:magenta'>", $i);
 		$i = preg_replace("%\033\[(1;)?36m%","<font style='color:cyan'>", $i);
+		$i = preg_replace("%\033\[(1;)?37m%","<font style='color:white'>", $i);
 		$i = preg_replace("%\033\[(1;)?0m%","</font>", $i);
 		$line .= "$i ";
 		// make sure line doesn't get too long:
