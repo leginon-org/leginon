@@ -129,7 +129,8 @@ function checkJobs($showjob=False,$showall=False,$extra=False) {
 				echo "Show last <input type='text' name='tail' size='4' value='$tail'> lines of log file<br />\n";
 				echo "<input type='submit' name='checkjob' value='Update Status'><br />\n";
 				echo "$logfile:</td></tr>\n";
-				echo "<tr><td bgcolor='#000000'>\n";
+				//Issue #4614 Display background in grey as a workaround of bad color assignment
+				echo "<tr><td bgcolor='#808080'>\n";
 				echo "<pre>\n";
 				echo "<font color='white' size='-1'>\n";
 				foreach ($statinfo as $l) {
