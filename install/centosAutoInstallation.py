@@ -17,7 +17,7 @@ class CentosInstallation(object):
 		# need to change to branch when release
 		#self.svnCmd = "svn co http://emg.nysbc.org/svn/myami/branches/myami-redux " + self.svnMyamiDir
 		
-		self.svnCmd = "svn co http://emg.nysbc.org/svn/myami/branches/myami-3.2 " + self.svnMyamiDir
+                self.svnCmd = "git clone -b myami-beta http://emg.nysbc.org/git/myami " + self.svnMyamiDir
 		# redhat release related values
 		self.redhatRelease = '6.8' # currently used to decide the name of the epel download.
 		self.torqueLibPath = '/var/lib/torque/'
