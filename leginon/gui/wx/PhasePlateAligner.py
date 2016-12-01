@@ -137,7 +137,7 @@ class PatchStateScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
 		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 
-		szppt = self.addPhasePlateNumber()
+		szpp = self.addPhasePlateNumber()
 		gridformat = self.node.getGridFormat()
 		szedit = self.addPatchGrid(gridformat)
 
