@@ -1385,6 +1385,9 @@ class Krios(Tecnai):
 		'''
 		pass
 
+class Arctica(Krios):
+	name = 'Arctica'
+
 class EFKrios(Krios):
 	name = 'EF-Krios'
 

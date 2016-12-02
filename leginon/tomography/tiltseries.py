@@ -69,6 +69,8 @@ class TiltSeries(object):
 		tilt_series_image_data.attachPixelSize()
 
 		self.node.publish(tilt_series_image_data, database=True)
+		# publish image event for image count
+		self.node.publish(tilt_series_image_data, pubevent=True)
 		self.node.publishStats(tilt_series_image_data)
 
 		self.image_counter += 1

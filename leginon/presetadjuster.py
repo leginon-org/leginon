@@ -1,4 +1,4 @@
-# $Source: /ami/sw/cvsroot/pyleginon/reference.py,v $
+# $Source: /ami/sw/cvsroot/pyleginon/referencetimer.py,v $
 # $Revision: 1.7 $
 # $Name: not supported by cvs2svn $
 # $Date: 2006-10-13 04:13:07 $
@@ -6,18 +6,18 @@
 # $State: Exp $
 # $Locker:  $
 import math
-from leginon import leginondata, reference, calibrationclient, cameraclient
+from leginon import leginondata, referencetimer, calibrationclient, cameraclient
 import event
 import gui.wx.BeamFixer
 from pyami import arraystats
 
-class PresetAdjuster(reference.Reference):
+class PresetAdjuster(referencetimer.ReferenceTimer):
 	# relay measure does events
-	eventinputs = reference.Reference.eventinputs + [event.FixBeamEvent]
-	eventoutputs = reference.Reference.eventoutputs + [event.UpdatePresetEvent]
+	eventinputs = referencetimer.ReferenceTimer.eventinputs + [event.FixBeamEvent]
+	eventoutputs = referencetimer.ReferenceTimer.eventoutputs + [event.UpdatePresetEvent]
 	panelclass = gui.wx.BeamFixer.BeamFixerPanel
 	settingsclass = leginondata.PresetAdjusterSettingsData
-	defaultsettings = reference.Reference.defaultsettings
+	defaultsettings = referencetimer.ReferenceTimer.defaultsettings
 	defaultsettings.update({
 		'override preset': False,
 		'instruments': {'tem':None, 'ccdcamera':None},
@@ -35,12 +35,12 @@ class PresetAdjuster(reference.Reference):
 		except KeyError:
 			watch = []
 		kwargs['watchfor'] = watch + [event.FixBeamEvent]
-		reference.Reference.__init__(self, *args, **kwargs)
+		referencetimer.ReferenceTimer.__init__(self, *args, **kwargs)
 		self.beamsize_client = calibrationclient.BeamSizeCalibrationClient(self)
 		self.start()
 
-	def processData(self, incoming_data):
-		reference.Reference.processData(self, incoming_data)
+	def _processData(self, incoming_data):
+		referencetimer.ReferenceTimer._processData(self, incoming_data)
 		if issubclass(incoming_data.__class__, leginondata.FixBeamData):
 			newdata = incoming_data.toDict()
 			newdata['preset'] = self.settings['correction presets'][0]

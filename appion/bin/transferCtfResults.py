@@ -49,7 +49,12 @@ class TransferCtfResults(appionScript.AppionScript):
 		if self.params['ctfrunid'] is None and self.params['bestdb'] is False:
 			apDisplay.printError("Please provide either a ctfrun or use best ctf in db to transfer")
 		if self.params['sessionname'] is None:
-			apDisplay.printError("Please provide a Session name, e.g., --session=09feb12b")
+			if self.params['expid']:
+				# onInit has not been run yet. There is no self.sessiondata to use here
+				sessiondata = apDatabase.getSessionDataFromSessionId(self.params['expid'])
+				self.params['sessionname'] = sessiondata['name']
+			else:
+				apDisplay.printError("Please provide a Session name, e.g., --session=09feb12b")
 		if self.params['projectid'] is None:
 			apDisplay.printError("Please provide a Project database ID, e.g., --projectid=42")
 		#if self.params['description'] is None:
@@ -140,7 +145,9 @@ class TransferCtfResults(appionScript.AppionScript):
 			q['run'] = appiondata.ApAceRunData().direct_query(self.params['ctfrunid'])
 		newrun = appiondata.ApAceRunData(transfer_params=q)
 		newrun['name'] = self.params['runname']
+		newrun['session'] = self.sessiondata
 		newrun['path'] = appiondata.ApPathData(path=self.params['rundir'])
+		newrun['hidden'] = False
 		newrun.insert()
 		
 		return newrun

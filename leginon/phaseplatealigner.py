@@ -1,36 +1,36 @@
 import math
 import time
 import threading
-from leginon import leginondata, reference, calibrationclient, cameraclient
+from leginon import leginondata, referencecounter, calibrationclient, cameraclient
 import event
 import gui.wx.PhasePlateAligner
 from pyami import arraystats
 
-class PhasePlateAligner(reference.Reference):
+class PhasePlateAligner(referencecounter.ReferenceCounter):
 	# relay measure does events
 	settingsclass = leginondata.PhasePlateAlignerSettingsData
-	defaultsettings = reference.Reference.defaultsettings
+	defaultsettings = referencecounter.ReferenceCounter.defaultsettings
 	defaultsettings.update({
 		'settle time': 60.0,
 		'charge time': 2.0,
 		'phase plate number': 1,
 		'initial position': 1,
 	})
-	eventinputs = reference.Reference.eventinputs + [event.PhasePlatePublishEvent]
-	eventoutputs = reference.Reference.eventoutputs + [event.PhasePlateUsagePublishEvent]
+	eventinputs = referencecounter.ReferenceCounter.eventinputs + [event.PhasePlatePublishEvent]
+	eventoutputs = referencecounter.ReferenceCounter.eventoutputs + [event.PhasePlateUsagePublishEvent]
 	panelclass = gui.wx.PhasePlateAligner.PhasePlateAlignerPanel
 	requestdata = leginondata.PhasePlateData
 	def __init__(self, *args, **kwargs):
-		try:
-			watch = kwargs['watchfor']
-		except KeyError:
-			watch = []
-		kwargs['watchfor'] = watch + [event.PhasePlatePublishEvent]
-		reference.Reference.__init__(self, *args, **kwargs)
+		referencecounter.ReferenceCounter.__init__(self, *args, **kwargs)
 		self.userpause = threading.Event()
 		self.current_position = 1 # base 1
 		self.position_updated = False
 		self.start()
+
+	def addWatchFor(self,kwargs):
+		watch = super(PhasePlateAligner,self).addWatchFor(kwargs)
+		# watch for preset published by Acquisition node
+		return watch + [event.PhasePlatePublishEvent]
 
 	def _processRequest(self, request_data):
 		if self.position_updated:
@@ -38,6 +38,7 @@ class PhasePlateAligner(reference.Reference):
 		else:
 			self.logger.error('Phase plate number and patch position must be confirmed before using this')
 			return
+
 	def uiUpdatePosition(self):
 		self.current_position = self.settings['initial position']
 		self.logPhasePlateUsage()
@@ -126,6 +127,9 @@ class PhasePlateAligner(reference.Reference):
 		newq['bad'] = is_bad
 		# might be reused
 		newq.insert(force=True)
+
+	def guiGetPhasePlateNumber(self):
+		return self.settings['phase plate number']
 
 	def guiGetPatchStates(self,state=False):
 		wxgrid_format = self.getGridFormat()

@@ -6,25 +6,32 @@ from leginon.gui.wx.Entry import FloatEntry, IntEntry
 import leginon.gui.wx.Node
 import leginon.gui.wx.Settings
 import leginon.gui.wx.ToolBar
-import leginon.gui.wx.Reference
+import leginon.gui.wx.ReferenceCounter
 
-class SettingsDialog(leginon.gui.wx.Settings.Dialog):
+class SettingsDialog(leginon.gui.wx.ReferenceCounter.SettingsDialog):
 	def initialize(self):
 		return ScrolledSettings(self,self.scrsize,False)
 
-class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
+class ScrolledSettings(leginon.gui.wx.ReferenceCounter.ScrolledSettings):
 	def initialize(self):
+		# Reference Target Box Sizer
 		sb = wx.StaticBox(self, -1, 'Reference Target')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
-
 		self.sz = wx.GridBagSizer(5, 5)
-
 		position = self.createBypassCheckBox((0, 0))
 		position = self.createMoveTypeChoice((position[0],0))
-		position = self.createPauseTimeEntry((position[0],0))
-		position = self.createIntervalTimeEntry((position[0],0))
+		# pause time after stage move to the position is not shown in gui
+		# to avoid confusion.
+		position = self.createIntervalCountEntry((position[0],0))
+
+		# Phase Plate Timing Box Sizer
+		timingsb = wx.StaticBox(self, -1, 'Phase Plate Settling and Charging')
+		timingsbsz = wx.StaticBoxSizer(timingsb, wx.VERTICAL)
+		self.sz1 = wx.GridBagSizer(5, 5)
+		position = self.createSettleTimeEntry((0,0))
 		position = self.createChargeTimeEntry((position[0],0))
 
+		# Phase Plate Position Box Sizer
 		ppsb = wx.StaticBox(self, -1, 'Phase Plate Position')
 		ppsbsz = wx.StaticBoxSizer(ppsb, wx.VERTICAL)
 
@@ -35,45 +42,20 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		position = self.createUpdatePositionEntry((position[0],0), ppsz)
 
 		sbsz.Add(self.sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
+		timingsbsz.Add(self.sz1, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 		ppsbsz.Add(ppsz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
 		self.Bind(wx.EVT_BUTTON, self.onUpdatePositionButton, self.bupdate)
 
-		return [sbsz,ppsbsz]
+		return [sbsz,timingsbsz,ppsbsz]
 
-	def createMoveTypeChoice(self, start_position):
-		move_types = self.node.calibration_clients.keys()
-		move_types.sort()
-		self.widgets['move type'] = Choice(self, -1, choices=move_types)
-		szmovetype = wx.GridBagSizer(5, 5)
-		szmovetype.Add(wx.StaticText(self, -1, 'Use'), (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szmovetype.Add(self.widgets['move type'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szmovetype.Add(wx.StaticText(self, -1, 'to move to the reference target'), (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.sz.Add(szmovetype, start_position, (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		return start_position[0]+1,start_position[1]+1
-
-	def createPauseTimeEntry(self, start_position):
-		self.widgets['pause time'] = FloatEntry(self, -1, min=0.0, allownone=False, chars=4, value='0.0')
+	def createSettleTimeEntry(self, start_position):
+		self.widgets['settle time'] = FloatEntry(self, -1, min=0.0, allownone=False, chars=4, value='3.0')
 		szpausetime = wx.GridBagSizer(5, 5)
-		szpausetime.Add(wx.StaticText(self, -1, 'Wait'), (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szpausetime.Add(self.widgets['pause time'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		szpausetime.Add(wx.StaticText(self, -1, 'seconds before performing request'), (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.sz.Add(szpausetime, start_position, (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		return start_position[0]+1,start_position[1]+1
-
-	def createIntervalTimeEntry(self, start_position):
-		self.widgets['interval time'] = FloatEntry(self, -1, min=0.0, allownone=False, chars=4, value='0.0')
-		szintervaltime = wx.GridBagSizer(5, 5)
-		szintervaltime.Add(wx.StaticText(self, -1, 'If request performed less than'), (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szintervaltime.Add(self.widgets['interval time'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		szintervaltime.Add(wx.StaticText(self, -1, 'seconds ago, ignore request'), (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-
-		self.sz.Add(szintervaltime, start_position, (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		return start_position[0]+1,start_position[1]+1
-
-	def createBypassCheckBox(self,start_position):
-		self.widgets['bypass'] = wx.CheckBox(self, -1, 'Bypass Conditioner')
-		self.sz.Add(self.widgets['bypass'], start_position, (1, 2), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT)
+		szpausetime.Add(wx.StaticText(self, -1, 'Wait for'), (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szpausetime.Add(self.widgets['settle time'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		szpausetime.Add(wx.StaticText(self, -1, 'seconds for phase plate patch to settle'), (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.sz1.Add(szpausetime, start_position, (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		return start_position[0]+1,start_position[1]+1
 
 	def createChargeTimeEntry(self, start_position):
@@ -82,7 +64,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		szpausetime.Add(wx.StaticText(self, -1, 'Expose for'), (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szpausetime.Add(self.widgets['charge time'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		szpausetime.Add(wx.StaticText(self, -1, 'seconds to charge up carbon film phase plate'), (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.sz.Add(szpausetime, start_position, (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.sz1.Add(szpausetime, start_position, (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		return start_position[0]+1,start_position[1]+1
 
 	def createPhasePlateNumberEntry(self, start_position, sz):
@@ -110,7 +92,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.dialog.setNodeSettings()
 		self.node.uiUpdatePosition()
 
-class PhasePlateAlignerPanel(leginon.gui.wx.Reference.ReferencePanel):
+class PhasePlateAlignerPanel(leginon.gui.wx.ReferenceCounter.ReferenceCounterPanel):
 	def __init__(self, *args, **kwargs):
 		super(PhasePlateAlignerPanel,self).__init__(*args, **kwargs)
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_MOSAIC, 'atlasmaker', shortHelpString='Patch State Mapping')
@@ -119,12 +101,6 @@ class PhasePlateAlignerPanel(leginon.gui.wx.Reference.ReferencePanel):
 		# This "private call" ensures that the class in this module is loaded
 		# instead of the one in module containing the parent class
 		return SettingsDialog(parent)
-	
-	def onSettingsTool(self, evt):
-		dialog = self._SettingsDialog(self)
-		if dialog.ShowModal() == wx.ID_OK:
-				self.node.uiSetSettings()
-		dialog.Destroy()
 
 	def openSettingsDialog(self):
 		'''
@@ -136,11 +112,6 @@ class PhasePlateAlignerPanel(leginon.gui.wx.Reference.ReferencePanel):
 		super(PhasePlateAlignerPanel,self).onNodeInitialized()
 		self.toolbar.Bind(wx.EVT_TOOL, self.onPatchStateSettingsTool,
 											id=leginon.gui.wx.ToolBar.ID_MOSAIC)
-
-	def onTest(self, evt):
-		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, False)
-		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, True)
-		threading.Thread(target=self.node.onTest).start()
 
 	def onPatchStateSettingsTool(self, evt):
 		dialog = PatchStateSettingsDialog(self)
@@ -166,6 +137,7 @@ class PatchStateScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
 		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 
+		szpp = self.addPhasePlateNumber()
 		gridformat = self.node.getGridFormat()
 		szedit = self.addPatchGrid(gridformat)
 
@@ -185,7 +157,7 @@ class PatchStateScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.Bind(wx.EVT_BUTTON, self.onAllButton, self.ball)
 		# settings sizer
 		sz = wx.GridBagSizer(5, 10)
-		#sz.Add(szoptions, (0, 0), (1, 2))
+		sz.Add(szpp, (0, 0), (1, 10))
 		sz.Add(szedit, (1, 0), (10, 10))
 		sz.Add(szbutton, (11, 0), (1, 2))
 		return [sz]
@@ -207,6 +179,16 @@ class PatchStateScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		# wait for thread to finish before setting values
 		t.join()
 		self.setPatchGridValues()
+
+	def addPhasePlateNumber(self):
+		pp_number = self.node.guiGetPhasePlateNumber()
+		text = ' %d' % (pp_number,)
+		label = wx.StaticText(self, -1, 'Phase Plate Slot')
+		self.labvalue = wx.StaticText(self, -1, text)
+		sz = wx.GridBagSizer(5, 5)
+		sz.Add(label, (0,0), (1,1))
+		sz.Add(self.labvalue, (0,1), (1,1))
+		return sz
 
 	def addPatchGrid(self,gridformat):
 		'''

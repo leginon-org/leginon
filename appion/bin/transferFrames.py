@@ -17,13 +17,28 @@ def transfer(src, dst, delete=True):
 	after copying.
 	'''
 	
-	cmdroot = 'rsync -rlptD'
+	cmdroot = 'rsync -thvD --progress '
 	if delete is True:
 		cmdroot+=' --remove-sent-files '
 	cmd='%s %s %s' % (cmdroot, src, dst)
 	print cmd
 	p = subprocess.Popen(cmd, shell=True)
 	p.wait()
+
+def checkdestpath(imgdata,destination):
+	try:
+		session=imgdata['session']['name']
+	except:
+		print imgdata
+	destfolder=os.path.join(destination,session,'rawdata')
+	print destfolder
+	if os.path.exists(destfolder):
+		return destfolder
+	else:
+		print "Making output directory",destfolder
+		os.makedirs(destfolder)
+		return destfolder
+
 	
 class TransferFrames(appionLoop2.AppionLoop):
 	#=====================
@@ -46,6 +61,7 @@ class TransferFrames(appionLoop2.AppionLoop):
 		else:
 			sessiondata=apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
 			outpath=sessiondata['frame path']
+		apDisplay.printMsg("Output path is" % (outpath))
 		if os.path.exists(outpath):
 			apDisplay.printMsg("Outpath %s already exists" % outpath)
 		else:

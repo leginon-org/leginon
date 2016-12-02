@@ -1,13 +1,13 @@
 import time
-from leginon import leginondata, reference
+from leginon import leginondata, referencetimer
 import event
 import gui.wx.ScreenCurrentLogger
 
-class ScreenCurrentLogger(reference.Reference):
+class ScreenCurrentLogger(referencetimer.ReferenceTimer):
 	# relay measure does events
 	settingsclass = leginondata.ScreenCurrentLoggerSettingsData
-	defaultsettings = reference.Reference.defaultsettings
-	eventinputs = reference.Reference.eventinputs + [event.ScreenCurrentLoggerPublishEvent]
+	defaultsettings = referencetimer.ReferenceTimer.defaultsettings
+	eventinputs = referencetimer.ReferenceTimer.eventinputs + [event.ScreenCurrentLoggerPublishEvent]
 	panelclass = gui.wx.ScreenCurrentLogger.ScreenCurrentLoggerPanel
 	requestdata = leginondata.ScreenCurrentLoggerData
 	def __init__(self, *args, **kwargs):
@@ -16,7 +16,7 @@ class ScreenCurrentLogger(reference.Reference):
 		except KeyError:
 			watch = []
 		kwargs['watchfor'] = watch + [event.ScreenCurrentLoggerPublishEvent]
-		reference.Reference.__init__(self, *args, **kwargs)
+		referencetimer.ReferenceTimer.__init__(self, *args, **kwargs)
 
 		self.start()
 
