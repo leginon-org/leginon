@@ -15,9 +15,7 @@ class CentosInstallation(object):
 
 	def setReleaseDependantValues(self):
 		# need to change to branch when release
-		#self.svnCmd = "svn co http://emg.nysbc.org/svn/myami/branches/myami-redux " + self.svnMyamiDir
-		
-		self.svnCmd = "svn co http://emg.nysbc.org/svn/myami/branches/myami-3.2 " + self.svnMyamiDir
+		self.gitCmd = "git clone -b trunk http://emg.nysbc.org/git/myami " + self.gitMyamiDir
 		# redhat release related values
 		self.redhatRelease = '6.8' # currently used to decide the name of the epel download.
 		self.torqueLibPath = '/var/lib/torque/'
@@ -281,7 +279,7 @@ class CentosInstallation(object):
 	def setupWebServer(self):
 		self.writeToLog("--- Start install Web Server")
 		#myamiweb yum packages
-		packagelist = ['php-pecl-ssh2','mod_ssl', 'fftw3-devel','svn','python-imaging','python-devel','mod_python','scipy','httpd', 'libssh2-devel', 'php', 'php-mysql', 'phpMyAdmin.noarch', 'php-devel', 'php-gd', ]
+		packagelist = ['php-pecl-ssh2','mod_ssl', 'fftw3-devel','git','python-imaging','python-devel','mod_python','scipy','httpd', 'libssh2-devel', 'php', 'php-mysql', 'phpMyAdmin.noarch', 'php-devel', 'php-gd', ]
 		self.yumInstall(packagelist)
 		self.runCommand("easy_install fs PyFFTW3")
 
@@ -318,7 +316,7 @@ class CentosInstallation(object):
                         time.sleep(1.0)
 
 		# run database setup script.
-		cmd = os.path.join(self.svnMyamiDir, 'install/newDBsetup.php -L %s -P %s -H %s -U %s -E %s' % (self.leginonDB, self.projectDB, self.dbHost, self.dbUser, self.adminEmail))
+		cmd = os.path.join(self.gitMyamiDir, 'install/newDBsetup.php -L %s -P %s -H %s -U %s -E %s' % (self.leginonDB, self.projectDB, self.dbHost, self.dbUser, self.adminEmail))
 		cmd = 'php ' + cmd
 
 		self.runCommand(cmd)
@@ -336,7 +334,7 @@ class CentosInstallation(object):
 		self.processServerExtraPythonPackageInstall()
  
 		# install all the myami python packages except appion.
-		os.chdir(self.svnMyamiDir)
+		os.chdir(self.gitMyamiDir)
 		self.runCommand('./pysetup.sh install')
 
 		# install the appion python packages
@@ -346,7 +344,7 @@ class CentosInstallation(object):
 		pyprefix = self.runCommand('python -c "import sys;print sys.prefix"')
 		pyprefix = pyprefix.strip()
 		apbin = os.path.join(pyprefix, 'bin', 'appion')
-		os.chdir(self.svnMyamiDir + 'appion')
+		os.chdir(self.gitMyamiDir + 'appion')
 		self.runCommand('python setup.py install --install-scripts=%s' % (apbin,))
 		
 		# add a custom search path to appion.sh and appion.csh in profile.d
@@ -750,7 +748,7 @@ fi
 setenv I3LIB ${I3ROOT}/lib/linux/x86-64
 setenv PATH ${PATH}:${I3ROOT}/bin/linux/x86-64
 setenv I3LEGACY "/usr/local/i3-0.9.6"
-setenv PATH ${PATH}:/usr/local/i3-0.9.6/bin/linux/x86_64
+setenv PATH ${PATH}:/usr/local/i3-0.9.6/bin/linux/x86-64
 setenv PATH ${PATH}:${I3ROOT}/lib/linux/x86-64
 
 if ($?LD_LIBRARY_PATH) then
@@ -853,9 +851,9 @@ endif
 		self.yumInstall(packagelist)
 	
 	def setupLeginonCfg(self):
-		# The template config file is in the svn download loacation. The last place the leginon.cfg
+		# The template config file is in the git download location. The last place the leginon.cfg
 		# file is looked for is /etc/myami, which makes it the most global config file location.
-		configTemplateFile	= os.path.join(self.svnMyamiDir, "leginon", "leginon.cfg.template")
+		configTemplateFile	= os.path.join(self.gitMyamiDir, "leginon", "leginon.cfg.template")
 		configOutFile 		= "leginon.cfg"
 		configDest 		= "/etc/myami"
 		
@@ -882,7 +880,7 @@ endif
 
 
 	def setupSinedonCfg(self, sinedonDir):
-		inf = open(self.svnMyamiDir + 'sinedon/examples/sinedon.cfg', 'r')
+		inf = open(self.gitMyamiDir + 'sinedon/examples/sinedon.cfg', 'r')
 		outf = open('/etc/myami/sinedon.cfg', 'w')
 
 		for line in inf:
@@ -997,7 +995,7 @@ endif
 		if os.path.isfile('/etc/php.d/mrc.ini'):
 			return
 
-		phpmrcdir = os.path.join(self.svnMyamiDir, "programs/php_mrc")
+		phpmrcdir = os.path.join(self.gitMyamiDir, "programs/php_mrc")
 		os.chdir(phpmrcdir)
 		self.runCommand("phpize")
 		self.runCommand("./configure")
@@ -1031,7 +1029,7 @@ endif
 			{
 				# Python fs
 				'targzFileName':'fs-0.4.0.tar.gz',
-                                'fileLocation':'https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/pyfilesystem/',
+				'fileLocation':'https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/pyfilesystem/',
 				'unpackDirName':'fs-0.4.0',
 			}
 		]
@@ -1049,7 +1047,7 @@ endif
 	def editReduxConfig(self):
 		
 		# The redux log should go to /var/log
-		copyFrom  = self.svnMyamiDir + "redux/redux.cfg.template"
+		copyFrom  = self.gitMyamiDir + "redux/redux.cfg.template"
 		copyTo    = "/etc/myami/redux.cfg"
 		inf       = open(copyFrom, 'r')
 		outf      = open(copyTo, 'w')
@@ -1107,9 +1105,9 @@ endif
 		return nproc
 		
 	def installMyamiWeb(self):
-		svnMyamiwebDir = os.path.join(self.svnMyamiDir, "myamiweb")
+		gitMyamiwebDir = os.path.join(self.gitMyamiDir, "myamiweb")
 		centosWebDir = "/var/www/html"
-		self.runCommand("cp -rf %s %s" % (svnMyamiwebDir, centosWebDir))
+		self.runCommand("cp -rf %s %s" % (gitMyamiwebDir, centosWebDir))
 
 	def editMyamiWebConfig(self):
 	
@@ -1160,14 +1158,14 @@ endif
 		logfile.close()
 			
 	def getMyami(self):
-		#TODO: handle "svn: is already a working copy for a different URL" case
+		#TODO: handle "git: is already a working copy for a different URL" case
 
 
                 if os.path.exists('/tmp/myami/'):
 
                         shutil.rmtree('/tmp/myami/')
 
-		self.runCommand(self.svnCmd)
+		self.runCommand(self.gitCmd)
 
 	def getDefaultValues(self):
 
@@ -1254,7 +1252,7 @@ endif
 	def run(self):
 		self.currentDir = os.getcwd()
 		self.logFilename = 'installation.log'
-		self.svnMyamiDir = '/tmp/myami/'
+		self.gitMyamiDir = '/tmp/myami/'
 		self.enableLogin = 'false'
 		self.dbHost = 'localhost'
 		self.dbUser = 'root'
@@ -1295,7 +1293,7 @@ endif
 		
 
 		self.yumUpdate()
-		self.yumInstall(['subversion'])
+		self.yumInstall(['git'])
 		self.getMyami()
 		
 		result = self.setupJobServer()
@@ -1334,7 +1332,7 @@ endif
 		# Start the Torque server
 		self.runCommand("/etc/init.d/pbs_server start")
 				
-		setupURL = "http://localhost/myamiweb/setup/autoInstallSetup.php?password=" + self.serverRootPass + "&myamidir=" + self.svnMyamiDir + "&uploadsample=" + "%d" % int(self.doDownloadSampleImages)
+		setupURL = "http://localhost/myamiweb/setup/autoInstallSetup.php?password=" + self.serverRootPass + "&myamidir=" + self.gitMyamiDir + "&uploadsample=" + "%d" % int(self.doDownloadSampleImages)
 		setupOpened = None
 		try:
 			setupOpened = webbrowser.open_new(setupURL)
