@@ -71,7 +71,9 @@ class AlignZeroLossPeak(ReferenceTimer):
 
 	def moveAndExecute(self, request_data):
 		check_preset_name = self.settings['check preset']
+		self.logger.info('Check preset is, %s' % check_preset_name)
 		self.checkpreset = self.presets_client.getPresetFromDB(check_preset_name)
+		self.logger.info('Check preset is, %s' % self.checkpreset['name'])
 		preset_name = request_data['preset']
 		pause_time = self.settings['pause time']
 		try:
@@ -88,7 +90,10 @@ class AlignZeroLossPeak(ReferenceTimer):
 			except Exception, e:
 				self.logger.error('Error moving to target, %s' % e)
 				return
+			if pause_time is not None:
+				time.sleep(pause_time)
 			need_align = self.checkShift()
+			# align is done with the preset from the request
 			self.moveToTarget(preset_name)
 			
 		else:
@@ -114,8 +119,8 @@ class AlignZeroLossPeak(ReferenceTimer):
 			before_shift = ccd_camera.getInternalEnergyShift()
 			m = 'Energy filter internal shift: %g.' % before_shift
 			self.logger.info(m)
-		except AttributeError:
-			m = 'Energy filter methods are not available on this instrument.'
+		except AttributeError, e:
+			m = 'Energy filter methods are not available %s' % e
 			self.logger.warning(m)
 		except Exception, e:
 			s = 'Energy internal shift query failed: %s.'
