@@ -8,6 +8,7 @@ import tem
 import time
 import sys
 import subprocess
+import os
 
 try:
 	import nidaq
@@ -1352,7 +1353,7 @@ class Tecnai(tem.TEM):
 
 	def getRefrigerantLevel(self,id=0):
 		'''
-		Get current refrigerant level. Only works on Krios. id 0 is the
+		Get current refrigerant level. Only works on Krios and Artica. id 0 is the
 		autoloader, 1 is the column.
 		'''
 		return self.tecnai.TemperatureControl.RefrigerantLevel(id)
@@ -1385,11 +1386,31 @@ class Krios(Tecnai):
 		'''
 		pass
 
-class Arctica(Krios):
-	name = 'Arctica'
+class Halo(Tecnai):
+	'''
+	Titan Halo has Titan 3 condensor system but side-entry holder.
+	'''
+	name = 'Halo'
+	def normalizeProjectionForMagnificationChange(self, new_mag_index):
+		'''
+		Overwrite projection lens normalization to do nothing
+		even if it is advisable to use normalization on the instrument.
+		This is done because Titan does not have submode 2 See Issue #3986
+		'''
+		pass
+
+	def getRefrigerantLevel(self,id=0):
+		'''
+		No autofiller, always filled.
+		'''
+		return 100, 100
 
 class EFKrios(Krios):
 	name = 'EF-Krios'
+
+class Arctica(Tecnai):
+	name = 'Arctica'
+	use_normalization = True
 
 class Talos(Tecnai):
 	name = 'Talos'
