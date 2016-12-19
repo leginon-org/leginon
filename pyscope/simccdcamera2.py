@@ -203,6 +203,7 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 		self.energy_filter_width = float(value)
 
 	def alignEnergyFilterZeroLossPeak(self):
+		time.sleep(1.0)
 		pass
 
 	def getPixelSize(self):
