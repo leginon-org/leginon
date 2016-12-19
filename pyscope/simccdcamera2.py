@@ -528,6 +528,14 @@ class SimK2CountingCamera(SimFrameCamera):
 		self.binning_limits = [1,2,4,8]
 		self.binmethod = 'floor'
 
+	def getFrameFlip(self):
+		# flip before? rotation
+		return False
+
+	def getFrameRotate(self):
+		# rotation in multiple of 90 degrees
+		return 0
+
 class SimK2SuperResCamera(SimFrameCamera):
 	name = 'SimK2SuperResCamera'
 	def __init__(self):
