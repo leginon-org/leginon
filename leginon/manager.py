@@ -146,6 +146,7 @@ class Manager(node.Node):
 		t.start()
 
 		for client in clients:
+			self.getPrimaryPort(client)
 			try:
 				self.addLauncher(client, 55555)
 			except Exception, e:
@@ -153,6 +154,13 @@ class Manager(node.Node):
 
 		if prevapp:
 			threading.Thread(target=self.launchPreviousApp).start()
+
+	def getPrimaryPort(self, hostname):
+		r = leginondata.ClientPortData(hostname=hostname).query()
+		if not r:
+			return 55555
+		else:
+			return r[0]['primary port']
 
 	def getSessionByName(self, name):
 		qsession = leginondata.SessionData(name=name)

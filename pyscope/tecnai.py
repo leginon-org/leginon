@@ -8,6 +8,7 @@ import tem
 import time
 import sys
 import subprocess
+import os
 
 try:
 	import nidaq

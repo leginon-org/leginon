@@ -1241,6 +1241,16 @@ class SettingsData(InSessionData):
 		)
 	typemap = classmethod(typemap)
 
+class ClientPortData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('hostname', str),
+			('primary port', int),
+			('send port start', int),
+			('send port end', int),
+		)
+	typemap = classmethod(typemap)
+	
 class ConnectToClientsData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
