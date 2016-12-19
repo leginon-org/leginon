@@ -3,6 +3,7 @@ import time
 import threading
 from leginon import leginondata, referencecounter, calibrationclient, cameraclient
 import event
+import node
 import gui.wx.PhasePlateAligner
 from pyami import arraystats
 
@@ -17,7 +18,7 @@ class PhasePlateAligner(referencecounter.ReferenceCounter):
 		'initial position': 1,
 	})
 	eventinputs = referencecounter.ReferenceCounter.eventinputs + [event.PhasePlatePublishEvent]
-	eventoutputs = referencecounter.ReferenceCounter.eventoutputs + [event.PhasePlateUsagePublishEvent]
+	eventoutputs = referencecounter.ReferenceCounter.eventoutputs + [event.PhasePlateUsagePublishEvent, event.FixAlignmentEvent]
 	panelclass = gui.wx.PhasePlateAligner.PhasePlateAlignerPanel
 	requestdata = leginondata.PhasePlateData
 	def __init__(self, *args, **kwargs):
@@ -58,11 +59,25 @@ class PhasePlateAligner(referencecounter.ReferenceCounter):
 	def execute(self, request_data=None):
 		self.setStatus('processing')
 		self.logger.info('handle request')
+		self.alignOthers()
 		self.nextPhasePlate()
 		self.chargePhasePlate()	
 		self.logger.info('done')
 		self.setStatus('idle')
 		return True
+
+	def alignOthers(self):
+		# Do some alignment fix that also uses the same target and preset
+		evt = event.FixAlignmentEvent()
+		try:
+			self.logger.info('Sent Fix Alignment Event')
+			status = self.outputEvent(evt, wait=True)
+		except node.ConfirmationNoBinding, e:
+			# OK if not bound
+			self.logger.warning(e)
+			pass
+		except Exception, e:
+			self.logger.error(e)
 
 	def nextPhasePlate(self):
 		self.setStatus('processing')
