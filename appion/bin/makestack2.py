@@ -156,7 +156,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 	def removeBoxOutOfImage(self, imgdata, partdatas, shiftdata):
 		# if using a helical step, particles will be filled between picks,
 		# so don't want to throw picks out right now
-		if self.params['helicalstep'] is not None:
+		if self.params['helicalstep'] is not None or self.params['checkInside'] is False:
 			return partdatas
 		else:
 			return super(Makestack2Loop, self).removeBoxOutOfImage(imgdata, partdatas, shiftdata)
@@ -265,7 +265,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		else:
 			boxfile = os.path.join(self.params['rundir'], imgdata['filename']+".box")
 		parttree, boxedpartdatas = apBoxer.processParticleData(imgdata, self.boxsize,
-			partdatas, shiftdata, boxfile, rotate=self.params['rotate'])
+			partdatas, shiftdata, boxfile, rotate=self.params['rotate'], checkInside=self.params['checkInside'])
 
 		### boxfile created, can return if that's all we need
 		if self.params['boxfiles']: return None,None,None
@@ -1088,6 +1088,8 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			action="store_true", help="Align filaments vertically in a single interpolation")
 		self.parser.add_option("--debug", dest="debug", default=False,
 			action="store_true", help="Debug mode, print more to command line")
+		self.parser.add_option("--no-insideCheck", dest="checkInside", default=True,
+			action="store_false", help="don't check if boxed particle is entirely within micrograph")
 
 		### choice
 		self.parser.add_option("--flip-type", dest="fliptype",
