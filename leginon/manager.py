@@ -146,9 +146,9 @@ class Manager(node.Node):
 		t.start()
 
 		for client in clients:
-			self.getPrimaryPort(client)
+			port = self.getPrimaryPort(client)
 			try:
-				self.addLauncher(client, 55555)
+				self.addLauncher(client, port)
 			except Exception, e:
 				self.logger.warning('Failed to add launcher: %s' % e)
 
