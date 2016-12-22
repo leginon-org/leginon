@@ -1043,7 +1043,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		super(Makestack2Loop, self).setupParserOptions()
 
 		self.flipoptions = ('emanimage', 'emanpart', 'emantilt', 'spiderimage', 'ace2image', 'ace2imagephase')
-		self.sortoptions = ('res80', 'res50', 'resplus', 'maxconf', 'conf3010', 'conf5peak', 'crosscorr')
+		self.sortoptions = ('res80', 'res50', 'resplus', 'resPkg', 'maxconf', 'conf3010', 'conf5peak', 'crosscorr')
 		self.normoptions = ('none', 'boxnorm', 'edgenorm', 'rampnorm', 'parabolic') #normalizemethod
 		self.ftoptions = ('imagic','relion') # output file types
 

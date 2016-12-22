@@ -40,6 +40,9 @@ class makeDEAlignedSum extends BasicLoopForm
 		$wrapper = ($wrapper) ? $wrapper: getAppionWrapper();
 
 		// The help section corresponds to the array key for these parameters found in help.js for popup help.
+		// Set the publications to be references on the web pages
+		$pubList = array('de_frame','appion');
+		$this->setPublications( $pubList );
 		// Job Type should be unique to Appion. Used in the database to determine the type of job being run.
 		$this->setJobType( 'dealignedframes' ); 
 		// The name of the folder that all runs of this job type will be stored in.

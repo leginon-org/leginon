@@ -18,13 +18,13 @@ from leginon import ddinfo
 #appion
 from appionlib import appionPBS
 from appionlib import apDisplay
-from appionlib import apDDprocess
 from appionlib import apDatabase
 from appionlib import apFile
 from appionlib import apStack
 from appionlib import appiondata
 from appionlib import apBoxer
 from appionlib import proc2dLib
+
 import deProcessFrames
 from appionlib import apDBImage
 
@@ -134,10 +134,6 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 
 	#=======================
 	def preLoopFunctions(self):
-		self.dd = apDDprocess.initializeDDFrameprocess(self.params['sessionname'], self.params['wait'])
-		self.dd.setRunDir(self.params['rundir'])
-		self.dd.setRawFrameType(self.getFrameType())
-		self.dd.setDoseFDriftCorrOptions(self.params)
 		self.exposurerate_is_default = self.params['radiationdamage_exposurerate'] == 1.0
 		self.imageids = []
 		# Optimize AppionLoop wait time for this since the processing now takes longer than
@@ -297,13 +293,12 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 			shiftdata={'scale':1,'shiftx':0,'shifty':0}
 			boxpath=os.path.join(scratchdir,framesname+'.box')
 			apBoxer.processParticleData(imgdata,boxsize,particledata,shiftdata,boxpath)
-			print boxsize,boxpath
+			apDisplay.printMsg('Boxing at size %d to %s' % ( boxsize,boxpath ))
 		return targetdict
 
 	def calculateListDifference(self, list1, list2):
-		from sets import Set
-		set1 = Set(list1)
-		set2 = Set(list2)
+		set1 = set(list1)
+		set2 = set(list2)
 		list_diff = list(set1.difference(set2))
 		list_diff.sort()
 		return list_diff
@@ -398,13 +393,6 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 			apDisplay.printWarning('%s skipped for no-frame-saved\n ' % imgdata['filename'])
 			return
 
-#		### set processing image
-#		try:
-#			self.dd.setImageData(imgdata)
-#		except Exception as e:
-#			apDisplay.printWarning(e.args[0])
-#			return
-
 		# Set up the alignment
 		kev = imgdata['scope']['high tension'] / 1000
 		apix = apDatabase.getPixelSize(imgdata)
@@ -490,7 +478,6 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 		"""
 		try:
 			innamepath = glob.glob(os.path.join(targetdict['outpath'], '*.mrc'))[0]
-			print innamepath
 		except IndexError:
 			apDisplay.printWarning('queued job for %s failed' % imgdata['filename'])
 			return None
@@ -543,6 +530,7 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 		newimg_array = mrc.read(outnamepath)
 		particlelst=readDriftFiles(xtranslation, ytranslation)
 		self.commitAlignedImageToDatabase(imgdata, newimg_array, alignlabel=self.params['alignlabel'])
+		self.writeMotionCorrStyleLog(imgdata, particlelst)
 		self.commitFrameTrajectoryToDatabase(imgdata,particlelst,particle=None)
 
 		# return None since everything is committed within this function.
@@ -596,7 +584,13 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 					command=['proc2d',correctedparticle[0], newstackname]
 					if self.params['output_rotation'] !=0:
 						###TODO add rot to proc2dLib
-						command.append('rot=%d' % self.params['output_rotation'])
+						### formerly used eman for rotation, but that produced artifacts. Now using numpy tools
+						#command.append('rot=%d' % self.params['output_rotation'])
+						apDisplay.printMsg("Rotating particle in place by %d" %(self.params['output_rotation']))
+						a=mrc.read(correctedparticle[0])
+						k=self.params['output_rotation']/90
+						a=numpy.rot90(a,k=k)
+						mrc.write(a,correctedparticle[0])
 					
 					apDisplay.printMsg( "adding %s" % correctedparticle[0])
 					subprocess.call(command)
@@ -639,15 +633,16 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 			newimagedata.insert()
 			q = appiondata.ApDDAlignImagePairData(source=imgdata, result=newimagedata, ddstackrun=self.rundata)
 			q.insert()
-	def commitFrameTrajectoryToDatabase(self, imgdata,particlelst,particle=None):
-	    for particle in particlelst:
-		q=appiondata.ApFrameAlignTrajectory()
-		q['image']=imgdata
-		q['particle']=particle
-		q['ddstackrun']=self.rundata
-		q['xshift']=particle['x']
-		q['yshift']=particle['y']
-		q.insert()
+
+	def commitFrameTrajectoryToDatabase(self, imgdata, particlelst,particle=None):
+		for xy in particlelst:
+			q=appiondata.ApFrameAlignTrajectory()
+			q['image']=imgdata
+			q['particle']=particle
+			q['ddstackrun']=self.rundata
+			q['xshift']=list(xy['x'])
+			q['yshift']=list(xy['y'])
+			q.insert()
 
 	def commitToDatabase(self, imgdata):
 		"""
@@ -655,6 +650,61 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 		"""
 		pass
 
+	def writeMotionCorrStyleLog(self, imgdata, particlelst, binning=1):
+		"""
+		Write standard log file that myamiweb use to show drift.
+		"""
+		totalparts = len(particlelst)
+		if totalparts == 0:
+			return
+		totalframes = len(particlelst[0]['x'])
+		if totalframes == 0:
+			return
+		shxa = {}
+		shya = {}
+		shifts_adjusted = []
+		# transform
+		ysign = 1
+		if imgdata['camera']['frame flip']:
+			ysign = -1
+		rotate = imgdata['camera']['frame rotate']
+		# shift relative to the middle frame
+		for shifts in particlelst:
+			midval = totalframes/2
+			midshx = shifts['x'][midval]
+			midshy = shifts['y'][midval]
+			for l in range(totalframes):
+				if l not in shxa.keys():
+					shxa[l]=0.0
+				if l not in shya.keys():
+					shya[l]=0.0
+				# convert to the convention used in motioncorr
+				# so that shift is in pixels of the aligned image.
+				xx = -(shifts['x'][l] - midshx) / binning
+				yy = ysign*(shifts['y'][l] - midshy) / binning
+				if rotate==1:
+					shxa[l] += yy
+					shya[l] -= xx
+				elif rotate==2:
+					shxa[l] -= xx
+					shya[l] -= yy
+				elif rotate==3:
+					shxa[l] += yy
+					shya[l] -= xx
+				elif rotate==0:
+					shxa[l] += xx
+					shya[l] += yy
+		# average the particle shifts		
+		for l in range(totalframes):
+			shifts_adjusted.append([shxa[l]/totalparts, shya[l]/totalparts])
+
+		### motioncorr1 format
+		log = imgdata['filename']+'_st_Log.txt'
+		f = open(log,"w")
+		f.write("Sum Frame #%.3d - #%.3d (Reference Frame #%.3d):\n" % (0, totalframes, totalframes/2))
+		for i in range(totalframes):
+			f.write("......Add Frame #%.3d with xy shift: %.5f %.5f\n" % (i, shifts_adjusted[i][0], shifts_adjusted[i][1]))
+		f.close()
 
 if __name__ == '__main__':
 	makeSum = MakeAlignedSumLoop()

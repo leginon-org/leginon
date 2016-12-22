@@ -37,20 +37,6 @@ echo "<br/>\n";
 echo "<table border='1' class='tableborder' width='640'>\n";
 
 /*
-** CTFFIND and CTFTILT
-*/
-
-echo "<tr><td width='100' align='center'>\n";
-echo "  <img src='img/grigorieff_sq_logo.png' width='96'>\n";
-echo "</td><td>\n";
-echo "  <h3><a href='runCtfEstimate.php?expId=$expId'>CTFFIND v3</a></h3>\n";
-echo " <p>CTFFIND uses a robust grid search algorithm to find the optimal "
-	."CTF parameters. Please see the <a href='http://grigoriefflab.janelia.org/ctf'> "
-	."Grigorieff lab website</a>&nbsp;<img src='img/external.png'> for more information. "
-	."</p>\n";
-echo "</td></tr>\n";
-
-/*
 ** CTFFIND4
 */
 
@@ -89,7 +75,7 @@ else {}
 */
 
 echo "<tr><td width='100' align='center'>\n";
-echo "  <img src='img/appionlogo.jpg' width='64'>\n";
+echo "  <img src='img/appionlogo.jpg' width='96'>\n";
 echo "</td><td>\n";
 echo "  <h3><a href='runAce2.php?expId=$expId'>ACE 2</a></h3>\n";
 echo " <p> ACE 2 is an unpublished re-implementation of ACE1, but written in objective-C "
@@ -105,7 +91,7 @@ echo "</td></tr>\n";
 if (!HIDE_MATLAB)
 {
 	echo "<tr><td width='100' align='center'>\n";
-	echo "  <img src='img/appionlogo.jpg' width='64'>\n";
+	echo "  <img src='img/appionlogo.jpg' width='96'>\n";
 	echo "</td><td>\n";
 	echo "  <h3><a href='runPyAce.php?expId=$expId'>ACE 1</a></h3>\n";
 	echo " <p> ACE1 is the original edge detection program for finding the CTF "
@@ -117,6 +103,20 @@ if (!HIDE_MATLAB)
 		."</p>\n";
 	echo "</td></tr>\n";
 }
+
+/*
+** CTFFIND and CTFTILT
+*/
+
+echo "<tr><td width='100' align='center'>\n";
+echo "  <img src='img/grigorieff_sq_logo.png' width='96'>\n";
+echo "</td><td>\n";
+echo "  <h3><a href='runCtfEstimate.php?expId=$expId'>CTFFIND v3</a></h3>\n";
+echo " <p>CTFFIND uses a robust grid search algorithm to find the optimal "
+	."CTF parameters. Please see the <a href='http://grigoriefflab.janelia.org/ctf'> "
+	."Grigorieff lab website</a>&nbsp;<img src='img/external.png'> for more information. "
+	."</p>\n";
+echo "</td></tr>\n";
 
 
 /*

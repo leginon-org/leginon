@@ -46,9 +46,6 @@ class gctf extends BasicLoopForm
 		// The help section corresponds to the array key for these parameters found in help.js for popup help, $ddstackid=false.
 		$params->setHelpSection( "gctf" );
 				
-		//Appion parameters
-		$params->addParam( "bestdb", $bestdb, "Use best values from Database" );
-		$params->addParam( "nominal", $nominal, "Override Nominal Value (in &mu;m)" );
 		// Gctf parameters
 		$params->addParam( "ampcontrast", $ampcontrast, "Amplitude contrast" );
 		$params->addValidation("ampcontrast", "float");
@@ -56,8 +53,6 @@ class gctf extends BasicLoopForm
 		$params->addValidation("defstep", "float");
 		$params->addParam( "dast", $dast, "Estimated astigmation in &mu;m" );
 		$params->addValidation("dast", "float");
-		$params->addParam( "bestdb", $bestdb, "Use best values from database" );
-		$params->addParam( "nominal", $nominal, "Override Nominal Value ( in &mu;m)" );
 
 		$params->addParam( "bfactor", $bfactor, "Bfactor");
 		$params->addParam( "resmin", $resmin, "Lowest resolution for search, in &Aring;");
@@ -241,8 +236,6 @@ class gctf extends BasicLoopForm
 #		$command = 'gctf.py ';
 		if ( $paramArray ) {
 			foreach ( $paramArray as $key=>$param ) {
-				
-
 				if (($param['name'] == 'phaseplate')&&($paramArray['phaseplate']['value'] == false )) {
 					$command = $this->removeCommandFlag($command,'max_phase_shift',$param['max_phase_shift']);
 					$command = $this->removeCommandFlag($command,'min_phase_shift',$param['min_phase_shift']);

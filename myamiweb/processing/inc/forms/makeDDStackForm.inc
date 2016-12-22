@@ -12,14 +12,14 @@ require_once "basicLoopForm.inc";
 class MakeDDStackForm extends BasicLoopForm
 
 {
-	function __construct(  $expId, $errorHTML='', $infoHTML='',$align=True, $defergpu='', $bin=1, $nokeepstack='', $ddstartframe=0, $ddnframe='',$alignoffset=7,$alignbfactor=1000,$alignccbox=96,$alignlabel='a', $flp=0, $nrw=1, $gpuid=0 ) 
+	function __construct(  $expId, $errorHTML='', $infoHTML='',$align=True, $defergpu='', $bin=1, $nokeepstack='', $ddstartframe=0, $ddnframe='',$alignoffset=7,$alignbfactor=1000,$alignccbox=96,$alignlabel='a', $flp=0, $nrw=3, $gpuid=0 ) 
 	{
 		parent::__construct($expId, $errorHTML, $infoHTML);
 		
 		//------ Set Parameters for the parent class, BasicLoopForm (general Appion params) -----//
 		
 		// Set the publications to be references on the web pages
-		$pubList = array('appion');
+		$pubList = array('gpudriftcorr','purduedriftcorr','appion');
 		$this->setPublications( $pubList );
 		$this->setJobType( 'makeddrawframestack' );
 		$this->setOutputDirectory( 'ddstack' );

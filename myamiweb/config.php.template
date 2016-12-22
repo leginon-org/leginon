@@ -143,9 +143,6 @@ define('HIDE_MATLAB', false);
 // --- hide processing tools still under development. --- //
 define('HIDE_FEATURE', true);
 
-// --- hide gpu tools. --- //
-define('HIDE_GPU_FEATURE', false);
-
 // --- hide processing tools requiring GPU - this is a temporary fix
 // --  processingHost should be modified in the future ---//
 

@@ -209,10 +209,13 @@ noderegistry.registerNodeClass(ClickTargetTransformer,classtype)
 from driftmanager import DriftManager
 noderegistry.registerNodeClass(DriftManager,classtype)
 
-from reference import AlignZeroLossPeak
+from referencetimer import ReferenceTimer
+noderegistry.registerNodeClass(ReferenceTimer,classtype)
+
+from referencetimer import AlignZeroLossPeak
 noderegistry.registerNodeClass(AlignZeroLossPeak,classtype)
 
-from reference import MeasureDose
+from referencetimer import MeasureDose
 noderegistry.registerNodeClass(MeasureDose,classtype)
 
 from EM import EM

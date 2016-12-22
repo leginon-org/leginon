@@ -259,6 +259,12 @@ if (is_numeric($expId)) {
 		'result'=>$ctfresults,
 	);
 
+	if ( $ctfruns > 0 ) {
+		$nruns[] = array(
+			'name'=>"<a href='runAppionLoop.php?expId=$sessionId&form=transferCtf'>Transfer results to another preset</a>",
+		);
+	}
+
 	if ($loopruns > 0) {
 		$nruns[] = array(
 			'name'=>"<a href='runLoopAgain.php?expId=$sessionId'>Repeat an image loop run</a>",
@@ -744,30 +750,18 @@ if (is_numeric($expId)) {
 		$nruns=array();
 		// append (array_push) to nruns
 		$nruns[] = array(
-//			'name'=>"<a href='runMakeDDRawFrameStack.php?expId=$sessionId'>Create frame stack</a>",
-//			'name'=>"<a href='runAppionLoop.php?expId=$sessionId&form=$ddStackform'>Create frame stack</a>",
-                        'name'=>"<a href='selectFrameAlignment.php?expId=$sessionId'>Select Frame Alignment</a>",
-
-		'result'=>$ddresults,
+      'name'=>"<a href='selectFrameAlignment.php?expId=$sessionId'>Select Frame Alignment</a>",
+		  'result'=>$ddresults,
 		);
 		$nruns[] = array(
 			'name'=>"<a href='runCatchupDDAlign.php?expId=$sessionId'>Launch Alignment Catchup</a>",
 		);
-		$nruns[] = array(
-			'name'=>"<a href='runAppionLoop.php?expId=$sessionId&form=makeDEAlignedSum'>Launch DE Frame Alignment</a>",
-
-		);
 
 		$nruns[] = array(
-			'name'=>"<a href='runAppionLoop.php?expId=$sessionId&form=$rppform'>Launch Particle Polishing</a>",
+      'name'=>"<a href='selectDDPerParticleAlignment.php?expId=$sessionId'>Select Per Particle Alignment</a>",
 			'result'=>$rppresults,
 		);
 
-		$nruns[] = array(
-			'name'=>"<a href='runAppionLoop.php?expId=$sessionId&form=makeDEPerParticle'>Launch DE Per Particle Alignment</a>",
-			'result'=>$rppresults,
-		);
-		
 		$nruns[] = array(
 			'name'=>"<a href='runAppionLoop.php?expId=$sessionId&form=launchFrameTransfer'>Launch Frame Transfer</a>",
 		);

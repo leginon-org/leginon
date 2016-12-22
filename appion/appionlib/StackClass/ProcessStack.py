@@ -6,7 +6,8 @@ import time
 from pyami import mem
 from appionlib import apDisplay
 from appionlib.StackClass import mrcClass
-from appionlib.StackClass import hdfClass
+# Issue #4581 disable import until problem solved and module is used for something.
+#from appionlib.StackClass import hdfClass
 from appionlib.StackClass import imagicClass
 
 ####
@@ -26,6 +27,7 @@ def createStackClass(filename, msg=False):
 		if msg is True: print "ImagicClass"
 		return imagicClass.ImagicClass(filename)
 	elif extension == '.hdf':
+		apDisplay.printError('HdfClass is not imported due to issue #4581')
 		if msg is True: print "HdfClass"
 		return hdfClass.HdfClass(filename)
 	elif extension == '.spi':

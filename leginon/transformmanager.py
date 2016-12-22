@@ -225,7 +225,7 @@ class TransformManager(node.Node, TargetTransformer):
 		'registration': 'correlation',
 		'threshold': 3e-10,
 		'pause time': 2.5,
-		'min mag': 300,
+		'min mag': 140,
 		'camera settings': cameraclient.default_settings,
 	}
 	eventinputs = node.Node.eventinputs + presets.PresetsClient.eventinputs \

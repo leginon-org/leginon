@@ -154,7 +154,30 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 		defocus = -(abs(ctfvalue['defocus1'])+abs(ctfvalue['defocus2']))/2
 		return defocus, ctfvalue['amplitude_contrast']
 
-	#=======================
+	def checkCtfRes50Params(self, ctfvalue, shortname):
+		'''
+		This can either be appion resolution_50_percent or ctffind4_resolution determined by ctfsorttype
+		'''
+		# ctffind4 resolution estimation is approximately equivalent to resolution_50_percent.
+		# gtf equal phase resolution usually gives higher resolution estimate than ctffind4 result although
+		# saved in the same field of ctfvalue.
+		if self.params['ctfsorttype'] == 'resPkg':
+			inspectkey = 'ctffind4_resolution'
+		else:
+			inspectkey = 'resolution_50_percent'
+		if not inspectkey in ctfvalue.keys() or ctfvalue[inspectkey] is None:
+			apDisplay.printColor("%s: no 0.5 resolution found"%(shortname), "cyan")
+			return False
+		if self.params['ctfres50max'] and ctfvalue[inspectkey] > self.params['ctfres50max']:
+			apDisplay.printColor("%s is above resolution threshold %.2f > %.2f"
+				%(shortname, ctfvalue[inspectkey], self.params['ctfres50max']), "cyan")
+			return False
+		if self.params['ctfres50min'] and ctfvalue[inspectkey] < self.params['ctfres50min']:
+			apDisplay.printColor("%s is below resolution threshold %.2f > %.2f"
+				%(shortname, ctfvalue[inspectkey], self.params['ctfres50min']), "cyan")
+			return False
+
+#=======================
 	def checkCtfParams(self, imgdata):
 		shortname = apDisplay.short(imgdata['filename'])
 		ctfvalue = self.getBestCtfValue(imgdata)
@@ -185,16 +208,7 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 
 		### check resolution requirement for CTF fit at 0.5 threshold
 		if self.params['ctfres50min'] is not None or self.params['ctfres50max'] is not None:
-			if not 'resolution_50_percent' in ctfvalue.keys() or ctfvalue['resolution_50_percent'] is None:
-				apDisplay.printColor("%s: no 0.5 resolution found"%(shortname), "cyan")
-				return False
-			if self.params['ctfres50max'] and ctfvalue['resolution_50_percent'] > self.params['ctfres50max']:
-				apDisplay.printColor("%s is above resolution threshold %.2f > %.2f"
-					%(shortname, ctfvalue['resolution_50_percent'], self.params['ctfres50max']), "cyan")
-				return False
-			if self.params['ctfres50min'] and ctfvalue['resolution_50_percent'] < self.params['ctfres50min']:
-				apDisplay.printColor("%s is below resolution threshold %.2f > %.2f"
-					%(shortname, ctfvalue['resolution_50_percent'], self.params['ctfres50min']), "cyan")
+			if self.checkCtfRes50Params(ctfvalue, shortname) is False:
 				return False
 
 		if self.params['mindefocus'] is not None or self.params['maxdefocus'] is not None:

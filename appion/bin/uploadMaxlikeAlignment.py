@@ -370,7 +370,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 			### insert
 			if self.params['commit'] is True:
 				inserted += 1
-				alignpartq.insert()
+				alignpartq.insert(force=True)
 
 		apDisplay.printColor("\ninserted "+str(inserted)+" of "+str(count)+" particles into the database in "
 			+apDisplay.timeString(time.time()-t0), "cyan")

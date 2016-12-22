@@ -173,7 +173,7 @@ class MotionCorr_Purdue(MotionCorr1):
 	executable = 'dosefgpu_driftcorr'
 	def getValidAlignOptionMappings(self):
 		opts = super(MotionCorr_Purdue,self).getValidAlignOptionMappings()
-		opts.update({'nrw':'nrw', 'flp':'flp' })
+		opts.update({'nrw':'nrw', 'flp':'flp','bft':'bft' })
 		return opts
 
 	def modifyNumRunningAverageFrames(self):
@@ -192,9 +192,9 @@ class MotionCorr_Purdue(MotionCorr1):
 			if self.getNewFlipAlongYAxis() == 0:
 				del self.alignparams['nrw']
 			
-class MotionCorr2_UCSF(DDFrameAligner):
+class MotionCor2_UCSF(DDFrameAligner):
 	def __init__(self):
-		self.executable = 'motioncorr2_ucsf'
+		self.executable = 'motioncor2'
 		DDFrameAligner.__init__(self)
 
 	def setKV(self, kv):
@@ -222,7 +222,7 @@ class MotionCorr2_UCSF(DDFrameAligner):
 		'''
 		cmd = ''
 		if dark_path:
-			apDisplay.printWarning('MotionCorr2 does not handle dark reference. Assumes zero')
+			apDisplay.printWarning('MotionCor2 does not handle dark reference. Assumes zero')
 		if norm_path:
 			cmd += " -Gain %s" % norm_path
 		self.gain_dark_cmd = cmd
@@ -239,15 +239,15 @@ class MotionCorr2_UCSF(DDFrameAligner):
 
 		# Construct the command line with defaults
 
-		cmd = 'motioncorr2_ucsf -InMrc %s -OutMrc %s' % (self.framestackpath, self.aligned_sumpath)
+		cmd = '%s -InMrc %s -OutMrc %s' % (self.executable, self.framestackpath, self.aligned_sumpath)
 
 		# binning
 		if self.alignparams['FtBin'] > 1:
 			cmd += ' -FtBin %d ' % self.alignparams['FtBin']
 
 		# bfactor
-		if self.alignparams['Bft'] > 0:
-			cmd += ' -Bft %d ' % self.alignparams['Bft']
+		if self.alignparams['bft'] > 0:
+			cmd += ' -Bft %d ' % self.alignparams['bft']
 
 		# frame truncation
 		if self.alignparams['Throw'] > 0:
@@ -318,7 +318,7 @@ class MotionCorr2_UCSF(DDFrameAligner):
 		cmd += ' -RotGain %d ' % self.alignparams['RotGain']
 
 		# GPU ID
-		cmd += ' -Gpu %s' % self.alignparams['Gpu']
+		cmd += ' -Gpu %s' % self.alignparams['Gpu'].replace(","," ")
 
 		return cmd
 
@@ -328,7 +328,7 @@ class MotionCorr2_UCSF(DDFrameAligner):
 			'nrw':'Group', 
 			'flp':'flp', 
 			'bin':'FtBin', 
-			"bft":"Bft",
+			"Bft":"bft",
 			"apix":"PixSize",
 			"Iter":"Iter",
 			"Patchrows":"Patchrows",
@@ -366,11 +366,11 @@ class MotionCorr2_UCSF(DDFrameAligner):
 	def writeLogFile(self, outbuffer):
 		''' 
 		takes output log buffer from running frame aligner 
-		will write motioncorr2 log file and standard log file that is readable by appion image viewer (motioncorr1 format)
+		will write motioncor2 log file and standard log file that is readable by appion image viewer (motioncorr1 format)
 		'''
 
-		### motioncorr2 format
-		log2 = self.framestackpath[:-4]+'_Log.motioncorr2.txt'
+		### motioncor2 format
+		log2 = self.framestackpath[:-4]+'_Log.motioncor2.txt'
 		f = open(log2, "w")
 		f.write(outbuffer)
 		f.close()
@@ -380,7 +380,7 @@ class MotionCorr2_UCSF(DDFrameAligner):
 		outbuffer = f.readlines()
 		f.close()
 
-		### parse motioncorr2 output
+		### parse motioncor2 output
 		shifts = []
 		for l in outbuffer: 
 			m = re.match("...... Frame", l)

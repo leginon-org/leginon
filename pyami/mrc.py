@@ -325,14 +325,19 @@ def parseHeader(headerbytes):
 		type = field[1]
 		if type == 'string':
 			length = field[2]
-			# remove trailing zeros(1) to make the string more readable
 			full_string = headerbytes[pos:pos+length]
-			first_zeros = full_string.find(zeros(1))
-			newheader[name] = ''
-			if first_zeros > 0:
-				newheader[name] = full_string[:first_zeros]
-			elif first_zeros < 0:
-				newheader[name] = full_string
+			newheader[name] = full_string
+			# refs #4547 need to keep trailing zeros in other strings such as
+			# machine stamp to keep it from scrambled when written.
+			if 'label' in name:
+				# remove trailing zeros(1) to make the label string more readable
+				full_string = headerbytes[pos:pos+length]
+				first_zeros = full_string.find(zeros(1))
+				newheader[name] = ''
+				if first_zeros > 0:
+					newheader[name] = full_string[:first_zeros]
+				elif first_zeros < 0:
+					newheader[name] = full_string
 		else:
 			length = 4
 			word = pos/4

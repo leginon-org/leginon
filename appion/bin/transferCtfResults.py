@@ -19,6 +19,7 @@ class TransferCtfResults(appionScript.AppionScript):
 		"""
 		standard appionScript
 		"""
+		self.sortoptions = ('res80', 'res50', 'resplus', 'resPkg', 'maxconf', 'conf3010', 'conf5peak', 'crosscorr')
 		### strings
 		self.parser.add_option("--session", "--sessionname", dest="sessionname",
 			help="Session name", metavar="NAME")
@@ -29,8 +30,9 @@ class TransferCtfResults(appionScript.AppionScript):
 		self.parser.add_option("--frompreset", "--frompreset", dest="frompreset",
 			help="Name of Preset to transfer to", metavar="NAME")
 
-		self.parser.add_option("--sort", "--sort", dest="sorttype", default="res80",
-			help="bestdb ctf sort criteria", metavar="NAME")
+		self.parser.add_option("--sort", dest="sorttype",
+			help="bestdb CTF sorting method", metavar="TYPE",
+			type="choice", choices=self.sortoptions, default="res80" )
 
 		### int
 		self.parser.add_option("--ctfrunid", dest="ctfrunid", type="int",
@@ -47,7 +49,12 @@ class TransferCtfResults(appionScript.AppionScript):
 		if self.params['ctfrunid'] is None and self.params['bestdb'] is False:
 			apDisplay.printError("Please provide either a ctfrun or use best ctf in db to transfer")
 		if self.params['sessionname'] is None:
-			apDisplay.printError("Please provide a Session name, e.g., --session=09feb12b")
+			if self.params['expid']:
+				# onInit has not been run yet. There is no self.sessiondata to use here
+				sessiondata = apDatabase.getSessionDataFromSessionId(self.params['expid'])
+				self.params['sessionname'] = sessiondata['name']
+			else:
+				apDisplay.printError("Please provide a Session name, e.g., --session=09feb12b")
 		if self.params['projectid'] is None:
 			apDisplay.printError("Please provide a Project database ID, e.g., --projectid=42")
 		#if self.params['description'] is None:
@@ -72,7 +79,14 @@ class TransferCtfResults(appionScript.AppionScript):
 		# go through images
 		images = apDatabase.getImagesFromDB(self.params['sessionname'], self.params['frompreset'])
 		for imgdata in images:
-			# Transfer only on non-rejected images
+			siblings = apDBImage.getAlignedSiblings(imgdata)
+			to_imgdata = self.selectImageAtPreset(self.params['preset'], siblings)
+			if not to_imgdata:
+				apDisplay.printWarning('No corresponding image for %s with preset %s' % (apDisplay.short(imgdata['filename']),self.params['preset']))
+				continue
+			# Transfer viewer status regardless
+			self.transferViewerStatus(imgdata,to_imgdata)
+			# Transfer CTF only on non-rejected images
 			if apDatabase.getImgCompleteStatus(imgdata) == False:
 				apDisplay.printWarning('Skip hidden %s' % apDisplay.short(imgdata['filename']))
 				continue
@@ -81,13 +95,7 @@ class TransferCtfResults(appionScript.AppionScript):
 				apDisplay.printWarning('No CTF result for %s' % apDisplay.short(imgdata['filename']))
 				continue
 			#
-			siblings = apDBImage.getAlignedSiblings(imgdata)
-			to_imgdata = self.selectImageAtPreset(self.params['preset'], siblings)
-			if not to_imgdata:
-				apDisplay.printWarning('No corresponding image for %s with preset %s' % (apDisplay.short(imgdata['filename']),self.params['preset']))
-				continue
 			if self.params['commit']:
-				self.transferViewerStatus(imgdata,to_imgdata)
 				self.commitToDatabase(ctfdata,to_imgdata)
 
 	#=====================
@@ -134,10 +142,12 @@ class TransferCtfResults(appionScript.AppionScript):
 			q['criteria'] = 'bestdb '+self.params['sorttype']
 		if self.params['ctfrunid']:
 			q['criteria'] = 'runid'
-			q['run'] = appiondata.ApAceRunData().direct_query()
+			q['run'] = appiondata.ApAceRunData().direct_query(self.params['ctfrunid'])
 		newrun = appiondata.ApAceRunData(transfer_params=q)
 		newrun['name'] = self.params['runname']
+		newrun['session'] = self.sessiondata
 		newrun['path'] = appiondata.ApPathData(path=self.params['rundir'])
+		newrun['hidden'] = False
 		newrun.insert()
 		
 		return newrun

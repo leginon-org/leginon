@@ -13,7 +13,7 @@ require_once "dbDefocusTable.inc";
 class CtfFind4 extends BasicLoopForm
 {
 	function __construct( $expId, $extraHTML='', $ampcontrast='0.07', $fieldsize='1024',
-								$resmin='50', $resmax='10', $defstep='0.1', $numstep='25', $dast='0.05', $bestdb=true, $nominal='', $parallel=true, $useDDStack=false, $ddstackid=false, $phase_plate=false, $min_phase_shift=10, $max_phase_shift=170, $phase_search_step=10) 
+								$resmin='50', $resmax='4', $defstep='0.1', $numstep='25', $dast='0.05', $bestdb=true, $nominal='', $parallel=true, $useDDStack=false, $ddstackid=false, $phase_plate=false, $min_phase_shift=10, $max_phase_shift=170, $phase_search_step=10) 
 	{
 		parent::__construct($expId, $extraHTML);
 		

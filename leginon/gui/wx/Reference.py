@@ -21,11 +21,17 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		position = self.createBypassCheckBox((0, 0))
 		position = self.createMoveTypeChoice((position[0],0))
 		position = self.createPauseTimeEntry((position[0],0))
-		position = self.createIntervalTimeEntry((position[0],0))
+		position = self.createIntervalEntry((position[0],0))
 
 		sbsz.Add(self.sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
 		return [sbsz]
+
+	def createIntervalEntry(self, position):
+		'''
+		Defined in subclasses
+		'''
+		return position
 
 	def createMoveTypeChoice(self, start_position):
 		move_types = self.node.calibration_clients.keys()
@@ -47,16 +53,6 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.sz.Add(szpausetime, start_position, (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		return start_position[0]+1,start_position[1]+1
 
-	def createIntervalTimeEntry(self, start_position):
-		self.widgets['interval time'] = FloatEntry(self, -1, min=0.0, allownone=False, chars=4, value='0.0')
-		szintervaltime = wx.GridBagSizer(5, 5)
-		szintervaltime.Add(wx.StaticText(self, -1, 'If request performed less than'), (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szintervaltime.Add(self.widgets['interval time'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		szintervaltime.Add(wx.StaticText(self, -1, 'seconds ago, ignore request'), (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-
-		self.sz.Add(szintervaltime, start_position, (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		return start_position[0]+1,start_position[1]+1
-
 	def createBypassCheckBox(self,start_position):
 		self.widgets['bypass'] = wx.CheckBox(self, -1, 'Bypass Conditioner')
 		self.sz.Add(self.widgets['bypass'], start_position, (1, 2), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT)
@@ -69,7 +65,6 @@ class ReferencePanel(leginon.gui.wx.Node.Panel):
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SETTINGS, 'settings', shortHelpString='Settings')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PLAY, 'play', shortHelpString='Test')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ABORT, 'stop', shortHelpString='Abort')
-		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_EXTRACT, 'clock', shortHelpString='Reset Timer')
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
 
 	def onNodeInitialized(self):
@@ -80,8 +75,6 @@ class ReferencePanel(leginon.gui.wx.Node.Panel):
 		self.Bind(leginon.gui.wx.Events.EVT_PLAYER, self.onPlayer)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onStopTool,
 											id=leginon.gui.wx.ToolBar.ID_ABORT)
-		self.toolbar.Bind(wx.EVT_TOOL, self.onResetTimerTool,
-											id=leginon.gui.wx.ToolBar.ID_EXTRACT)
 
 	def onSettingsTool(self, evt):
 		dialog = self._SettingsDialog(self)
@@ -113,10 +106,4 @@ class ReferencePanel(leginon.gui.wx.Node.Panel):
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, True)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
 		self.node.player.stop()
-
-	def onResetTimerTool(self, evt):
-		threading.Thread(target=self.node.uiResetTimer).start()
-
-class MeasureDosePanel(ReferencePanel):
-	icon = 'dose'
 

@@ -539,10 +539,14 @@ class AppionScript(basicScript.BasicScript):
 			return True # exists before locking
 		
 	def unlockParallel(self,dbid):
+		lockfile = '%s%d' % (self.lockname,dbid)
 		try:
-			os.remove('%s%d' % (self.lockname,dbid))
+			os.remove(lockfile)
 		except:
-			apDisplay.printError('Parallel unlock failed')
+			# refs #4595 delay error exit a bit and checking if the file exists
+			time.sleep(0.2)
+			if os.path.isfile(lockfile):
+				apDisplay.printError('Parallel unlock failed')
 		
 	#=====================
 	

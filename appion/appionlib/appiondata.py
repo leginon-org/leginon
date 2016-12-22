@@ -766,8 +766,8 @@ class ApFrameAlignTrajectory(Data):
 			('image', leginon.leginondata.AcquisitionImageData),
 			('particle', ApStackParticleData ),
 			('ddstackrun', ApDDStackRunData ),
-			('xshift', int),
-			('yshift', int)
+			('xshift', list),
+			('yshift', list)
 			
 		)
 ### END Stack tables ###

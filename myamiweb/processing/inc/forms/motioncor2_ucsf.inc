@@ -9,11 +9,11 @@
 
 require_once "basicLoopForm.inc";
 require_once "makeDDStackForm.inc";
-class motioncorr2_ucsf extends MakeDDStackForm
+class motioncor2_ucsf extends MakeDDStackForm
 
-// Removed defergpu, alignoffset,alignccbox, nrw to make compatible with new motioncorr version
+// Removed defergpu, alignoffset,alignccbox, nrw to make compatible with motioncor2 version
 {
-	function __construct(  $expId, $errorHTML='', $infoHTML='',$align=True,$bin=1, $nokeepstack=True, $ddstartframe=0, $ddnframe='',$alignlabel='a',$nrw=1, $MaskCentrow=0, $MaskCentcol=0, $MaskSizerows=1.0, $MaskSizecols=1.0, $Patchrows=0, $Patchcols=0, $Iter=7,$Tol=0.5,$Bft=100.0,$FmRef=0,$totaldose='', $doseweight=False, $gpuids=0 )
+	function __construct(  $expId, $errorHTML='', $infoHTML='',$align=True,$bin=1, $nokeepstack=True, $ddstartframe=0, $ddnframe='',$alignlabel='a',$nrw=1, $MaskCentrow=0, $MaskCentcol=0, $MaskSizerows=1.0, $MaskSizecols=1.0, $Patchrows=5, $Patchcols=5, $Iter=7,$Tol=0.5,$Bft=100.0,$FmRef=0,$totaldose='', $doseweight=true, $gpuids=0 )
 	{
 		parent::__construct($expId, $errorHTML, $infoHTML);
 		
@@ -25,9 +25,9 @@ class motioncorr2_ucsf extends MakeDDStackForm
 		$this->setJobType( 'makeddrawframestack' );
 		$this->setOutputDirectory( 'ddstack' );
 		$this->setBaseRunName( 'ddstack' );
-		$this->setTitle( 'makeDDAlignMotionCorr2_UCSF Launcher' );
-		$this->setHeading( 'Create a Direct Detector Frame Stack with MotionCorrv2 - Official' );
-		$this->setExeFile( 'makeDDAlignMotionCorr2_UCSF.py' );
+		$this->setTitle( 'makeDDAlignMotionCor2 Launcher' );
+		$this->setHeading( 'Create a Direct Detector Aligned Frame Stack with MotionCor2' );
+		$this->setExeFile( 'makeDDAlignMotionCor2_UCSF.py' );
 		$this->setGuideURL( "http://emg.nysbc.org/redmine/projects/appion/wiki/Appion_Processing" );
 		$this->setTestable( True ); // True to activate "test single image".
 		$this->setUseLegOutDir( False ); // The output directory will be created in the Appion run directory rather than Leginon.
@@ -65,10 +65,10 @@ class motioncorr2_ucsf extends MakeDDStackForm
 		
 #		$params->addParam( "alignoffset", $alignoffset, "frame offset" );dd
 		$params->addParam( "Bft", $Bft, "B Factor in A^2" );
-#		$params->addParam( "alignccbox", $alignccbox, "CC search boxsize in motioncorr" );
+#		$params->addParam( "alignccbox", $alignccbox, "CC search boxsize in motioncor2" );
 		$params->addParam( "alignlabel", $alignlabel, "append label to aligned image" );
 
-#		Using 'nrw' notation from motioncorrc2_ucsf instead of 'nrw' in motioncorr-Perdue
+#		Using 'nrw' notation from motioncor2_ucsf instead of 'nrw' in motioncorr-Purdue
 		$params->addParam( "nrw", $nrw, "Number (1, 3, 5, ...) of frames in running average window");
 #		$params->addParam( "flp", $flp, "Flip frames along Y axis.; 0 = no flip, 1 = flip");
 		// Validations
@@ -141,10 +141,13 @@ class motioncorr2_ucsf extends MakeDDStackForm
 		$align = $params->getParamValue('align');
 		if (!$align) return $msg;
 		$nrw = $params->getParamValue('nrw');
-		if ( $nrw%2 == 0 )
+		if ($nrw != 1 )
+			$msg .= "<B>Error:</B> Grouping more than 1 will reduce alignment accuracy in the first few frames. This is not allowed for now".$nrw."<br/>";
+		/*if ( $nrw%2 == 0 )
 		{
 			$msg .= "<B>Error:</B> testNumber of frames in running average window must be odd. nrw = ".$nrw."<br/>";
 		}
+		*/
 		// Get recent image to check nframes against alignoffset and nrw.
 		$preset = $postArray['preset'];
 		$testfilename = $postArray['testfilename'];
@@ -161,7 +164,7 @@ class motioncorr2_ucsf extends MakeDDStackForm
 			// preset
 			$images = $leginondata->getFilenames($this->expId, $preset);
 			if ( !is_array($images ) || empty($images) ) {
-				$msg .= "<B>Error:</B> no image not found in preset";
+				$msg .= "<B>Error:</B> no image found in preset";
 			} else {
 				$imageId = $images[0]['id'];
 			}
@@ -176,7 +179,7 @@ class motioncorr2_ucsf extends MakeDDStackForm
 					$msg .= "<B>Error</B> Last image of the specified preset does not have frames saved. Can not validate. Try again later.";
 				}
 			} else {
-// No alignoffset in motioncorrv2_ucsf, removing alignoffset check
+// No alignoffset in motioncor2_ucsf, removing alignoffset check
 //				$alignoffset = $params->getParamValue('alignoffset');
 //				if ( $nframes / 2 < $alignoffset ) $msg .= "<B>Error</B> Align frame offset must be less than half of the number of frames saved.<br/>";
 //				if ( $nrw > $nframes / 3 ) $msg .= "<B>Error</B> Number of frames in running average window should not be larger than 1/3 of number of frames saved.<br/>";

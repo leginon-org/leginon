@@ -1,5 +1,6 @@
 #python
 import os
+import re
 import subprocess
 import math
 import numpy
@@ -274,3 +275,37 @@ def replaceNaNImageInStack(stackfile, outfile=None):
 		mrc.write(a, outfile)
 		mrc.update_file_header(outfile, h)
 	return len(badz)
+
+def adjustPartDict(relionpartdict, reflist):
+	'''
+	For the particle defined in relionpartdict, adjust its shift/rotation 
+	parameters by the shift/rotation parameters in reflist at its assigned
+	class.
+	'''
+	refnum = int(relionpartdict['_rlnClassNumber'])
+	refdict = reflist[refnum-1]
+	#APPION uses shift, mirror, clockwise rotate system for 2D alignment
+	#In order for Appion to get the parameters right, we have to do the mirror operation first.
+	particleNumber = int(re.sub("\@.*$", "", relionpartdict['_rlnImageName']))
+	xshift = 1.0*float(relionpartdict['_rlnOriginX'])+refdict['xshift']
+	yshift = -1.0*float(relionpartdict['_rlnOriginY'])+refdict['yshift']
+	inplane = wrap360(float(relionpartdict['_rlnAnglePsi'])+refdict['inplane'])
+	newpartdict = {
+		'partnum': particleNumber,
+		'xshift': xshift,
+		'yshift': yshift,
+		'inplane': inplane,
+		'refnum': refnum,
+		'mirror': True, #not available in RELION, but must be True to correct alignments
+		'spread': float(relionpartdict['_rlnMaxValueProbDistribution']), #check for better
+	}
+	if particleNumber < 10:
+		print "%03d -- %.1f -- %s"%(particleNumber, newpartdict['inplane'], relionpartdict['_rlnAnglePsi'])
+	return newpartdict
+
+def wrap360(theta):
+	f = theta % 360
+	if f > 180:
+		f = f - 360.0
+	return f
+

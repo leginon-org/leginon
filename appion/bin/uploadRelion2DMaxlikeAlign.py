@@ -14,6 +14,7 @@ from appionlib import apFile
 from appionlib import apEMAN
 from appionlib import apParam
 from appionlib import apStack
+from appionlib import apStackFile
 from appionlib import apImage
 from appionlib import starFile
 from appionlib import apDisplay
@@ -123,6 +124,9 @@ class UploadRelionMaxLikeScript(appionScript.AppionScript):
 		apDisplay.printMsg("Sorted "+str(refsort)+" reference files")
 		return
 
+	def adjustPartDict(self, relionpartdict, reflist):
+		return apRelion.adjustPartDict(relionpartdict, reflist)
+
 	#=====================
 	def readRefStarFile(self):
 		reflist = []
@@ -130,6 +134,7 @@ class UploadRelionMaxLikeScript(appionScript.AppionScript):
 		inputfile = "ref%s_final_data.star"%(self.params['timestamp'])
 		lastiterfile = "ref%s_it%03d_data.star"%(self.params['timestamp'], self.lastiter)
 		if not os.path.isfile(lastiterfile):
+			# may be in refalign after file sorting but did not upload properly
 			lastiterfile = os.path.join("refalign", lastiterfile)
 		shutil.copy(lastiterfile, inputfile)
 
@@ -172,35 +177,6 @@ class UploadRelionMaxLikeScript(appionScript.AppionScript):
 			apDisplay.printError("Did not find any particles in star file: "+inputfile)
 		return partlist
 
-	#=====================
-	def adjustPartDict(self, relionpartdict, reflist):
-		refnum = int(relionpartdict['_rlnClassNumber'])
-		refdict = reflist[refnum-1]
-		#APPION uses shift, mirror, clockwise rotate system for 2D alignment
-		#In order for Appion to get the parameters right, we have to do the mirror operation first.
-		particleNumber = int(re.sub("\@.*$", "", relionpartdict['_rlnImageName']))
-		xshift = 1.0*float(relionpartdict['_rlnOriginX'])+refdict['xshift']
-		yshift = -1.0*float(relionpartdict['_rlnOriginY'])+refdict['yshift']
-		inplane = self.wrap360(float(relionpartdict['_rlnAnglePsi'])+refdict['inplane'])
-		newpartdict = {
-			'partnum': particleNumber,
-			'xshift': xshift,
-			'yshift': yshift,
-			'inplane': inplane,
-			'refnum': refnum,
-			'mirror': True, #not available in RELION, but must be True to correct alignments
-			'spread': float(relionpartdict['_rlnMaxValueProbDistribution']), #check for better
-		}
-		if particleNumber < 10:
-			print "%03d -- %.1f -- %s"%(particleNumber, newpartdict['inplane'], relionpartdict['_rlnAnglePsi'])
-		return newpartdict
-
-	#=====================
-	def wrap360(self, theta):
-		f = theta % 360
-		if f > 180:
-			f = f - 360.0
-		return f
 
 	#=====================
 	def readRunParameters(self):
@@ -230,7 +206,7 @@ class UploadRelionMaxLikeScript(appionScript.AppionScript):
 		return maxjobdata[0]
 
 	#=====================
-	def insertRunIntoDatabase(self, alignimagicfile, runparams):
+	def insertRunIntoDatabase(self, alignref_imagicfile, alignimagicfile, runparams):
 		apDisplay.printMsg("Inserting MaxLike Run into DB")
 
 		### setup alignment run
@@ -261,7 +237,7 @@ class UploadRelionMaxLikeScript(appionScript.AppionScript):
 		alignstackq = appiondata.ApAlignStackData()
 		alignstackq['imagicfile'] = alignimagicfile
 		alignstackq['avgmrcfile'] = "average.mrc"
-		alignstackq['refstackfile'] = "part"+self.params['timestamp']+"_average.hed"
+		alignstackq['refstackfile'] = alignref_imagicfile
 		alignstackq['iteration'] = self.lastiter
 		alignstackq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		alignstackq['alignrun'] = alignrunq
@@ -335,77 +311,8 @@ class UploadRelionMaxLikeScript(appionScript.AppionScript):
 
 		return
 
-	#=====================
-	def createAlignedStacks(self, partlist, origstackfile):
-		partperiter = min(4096,apImagicFile.getPartSegmentLimit(origstackfile))
-		numpart = len(partlist)
-		if numpart < partperiter:
-			partperiter = numpart
-
-		t0 = time.time()
-		imgnum = 0
-		stacklist = []
-		apDisplay.printMsg("rotating and shifting particles at "+time.asctime())
-		while imgnum < len(partlist):
-			index = imgnum % partperiter
-			if imgnum % 100 == 0:
-				sys.stderr.write(".")
-			if index == 0:
-				### deal with large stacks
-				if imgnum > 0:
-					sys.stderr.write("\n")
-					stackname = "alignstack%d.hed"%(imgnum)
-					apDisplay.printMsg("writing aligned particles to file "+stackname)
-					stacklist.append(stackname)
-					apFile.removeStack(stackname, warn=False)
-					apImagicFile.writeImagic(alignstack, stackname, msg=False)
-					perpart = (time.time()-t0)/imgnum
-					apDisplay.printColor("particle %d of %d :: %s per part :: %s remain"%
-						(imgnum+1, numpart, apDisplay.timeString(perpart),
-						apDisplay.timeString(perpart*(numpart-imgnum))), "blue")
-				alignstack = []
-				imagesdict = apImagicFile.readImagic(origstackfile, first=imgnum+1,
-					last=imgnum+partperiter, msg=False)
-
-			### align particles
-			partimg = imagesdict['images'][index]
-			partdict = partlist[imgnum]
-			partnum = imgnum+1
-			if partdict['partnum'] != partnum:
-				apDisplay.printError("particle shifting "+str(partnum)+" != "+str(partdict['partnum']))
-			xyshift = (partdict['xshift'], partdict['yshift'])
-			alignpartimg = apImage.xmippTransform(partimg, rot=partdict['inplane'],
-				shift=xyshift, mirror=partdict['mirror'])
-			alignstack.append(alignpartimg)
-			imgnum += 1
-
-		### write remaining particle to file
-		sys.stderr.write("\n")
-		stackname = "alignstack%d.hed"%(imgnum)
-		apDisplay.printMsg("writing aligned particles to file "+stackname)
-		stacklist.append(stackname)
-		apImagicFile.writeImagic(alignstack, stackname, msg=False)
-
-		### merge stacks
-		alignimagicfile = "alignstack.hed"
-		apFile.removeStack(alignimagicfile, warn=False)
-		apImagicFile.mergeStacks(stacklist, alignimagicfile)
-		#for stackname in stacklist:
-		#	emancmd = "proc2d %s %s"%(stackname, alignimagicfile)
-		#	apEMAN.executeEmanCmd(emancmd, verbose=False)
-		filepart = apFile.numImagesInStack(alignimagicfile)
-		if filepart != numpart:
-			apDisplay.printError("number aligned particles (%d) not equal number expected particles (%d)"%
-				(filepart, numpart))
-		for stackname in stacklist:
-			apFile.removeStack(stackname, warn=False)
-
-		### summarize
-		apDisplay.printMsg("rotated and shifted %d particles in %s"
-			%(imgnum, apDisplay.timeString(time.time()-t0)))
-
-		return alignimagicfile
-
+	def createAlignedStack(self, partlist, origstackfile):
+		return apStackFile.createAlignedStack(partlist, origstackfile)
 
 	#=====================
 	def writeRelionLog(self, text):
@@ -502,6 +409,9 @@ class UploadRelionMaxLikeScript(appionScript.AppionScript):
 
 	#=====================
 	def start(self):
+		# initialize variables
+		self.resdict = {}
+
 		### load parameters
 		runparams = self.readRunParameters()
 		apDisplay.printColor("going to directory %s"%(runparams['rundir']), "green")
@@ -517,26 +427,40 @@ class UploadRelionMaxLikeScript(appionScript.AppionScript):
 		### align references, output to rundir
 		self.alignReferences(runparams)
 
-		### read particles
+		### organize refinement results into folders
 		if self.params['sort'] is True:
 			self.sortFolder()
+
+		# create aligned reference stack
 		reflist = self.readRefStarFile()
-		partlist = self.readPartStarFile(reflist)
-		#self.writePartDocFile(partlist)
+		alignref_imagicfile = "part"+self.params['timestamp']+"_average.hed"
+	
+		# convert unaligned refstack from mrc to imagic format
+		unaligned_refstack_mrc = os.path.join('iter%03d' % self.lastiter,'part%s_it%03d_classes.mrcs' % (self.params['timestamp'], self.lastiter))
+		unaligned_refstack_imagic = 'part%s_it%03d_classes.hed' % (self.params['timestamp'], self.lastiter)
+		stackarray = mrc.read(unaligned_refstack_mrc)
+		apImagicFile.writeImagic(stackarray, unaligned_refstack_imagic)
+		# createAlignedStack
+		temp_imagicfile = apStackFile.createAlignedStack(reflist, unaligned_refstack_imagic,'temp_aligned_ref')
+		apFile.moveStack(temp_imagicfile,alignref_imagicfile)
 
 		### create aligned stacks
-		alignimagicfile = self.createAlignedStacks(partlist, runparams['localstack'])
+		partlist = self.readPartStarFile(reflist)
+		#self.writePartDocFile(partlist)
+		alignimagicfile = self.createAlignedStack(partlist, runparams['localstack'])
 
 		#create average image for web
 		apStack.averageStack(alignimagicfile, msg=False)
 
 		### calculate resolution for each reference
-		apix = apStack.getStackPixelSizeFromStackId(runparams['stackid'])*runparams['bin']
-		self.calcResolution(partlist, alignimagicfile, apix)
-		self.createAlignedReferenceStack(runparams)
+		### The way the function average particles in each class
+		### without weighting causes Issue #4566.
+		#apix = apStack.getStackPixelSizeFromStackId(runparams['stackid'])*runparams['bin']
+		#self.calcResolution(partlist, alignimagicfile, apix)
+		#self.createAlignedReferenceStack(runparams)
 
 		### insert into databse
-		self.insertRunIntoDatabase(alignimagicfile, runparams)
+		self.insertRunIntoDatabase(alignref_imagicfile, alignimagicfile, runparams)
 		self.insertParticlesIntoDatabase(runparams['stackid'], partlist)
 
 		apFile.removeStack(runparams['localstack'], warn=False)
