@@ -3,9 +3,10 @@ import threading
 
 from leginon.gui.wx.Choice import Choice
 from leginon.gui.wx.Entry import FloatEntry
-import leginon.gui.wx.Node
+import leginon.gui.wx.ReferenceTimer
 import leginon.gui.wx.Settings
 import leginon.gui.wx.ToolBar
+
 
 class SettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
@@ -62,7 +63,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.sz.Add(self.widgets['bypass'], start_position, (1, 2), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT)
 		return start_position[0]+1,start_position[1]+1
 
-class ScreenCurrentLoggerPanel(leginon.gui.wx.Reference.ReferencePanel):
+class ScreenCurrentLoggerPanel(leginon.gui.wx.ReferenceTimer.ReferenceTimerPanel):
 	def _SettingsDialog(self,parent):
 		# This "private call" ensures that the class in this module is loaded
 		# instead of the one in module containing the parent class

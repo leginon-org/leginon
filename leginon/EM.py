@@ -174,6 +174,10 @@ class EM(node.Node):
 		instrumentdata['hostname'] = instance.getHostname()
 
 		instrumentdata['cs'] = instance.getCs()
+		if 'Sim' in tem_name or 'Appion' in tem_name:
+			instrumentdata['hidden'] = True
+		else:
+			instrumentdata['hidden'] = False
 		magnificationsdata = leginondata.MagnificationsData()
 		magnificationsdata['instrument'] = instrumentdata
 		magnificationsdata['magnifications'] = instance.getMagnifications()

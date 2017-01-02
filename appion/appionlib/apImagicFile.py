@@ -23,9 +23,8 @@ from scipy import ndimage
 # Please keep it this way
 ####
 
-#maximum allowed stack size in gigabytes (GB)
-memorylimit = 3.9
-bytelimit = memorylimit*(1024**3)
+# allow to use half of the free memory
+bytelimit = mem.free()*1024 / 2
 
 #===============
 def compareHeader(hfile1, hfile2, numround=1):
@@ -143,11 +142,11 @@ def readImagic(filename, first=1, last=None, msg=True):
 	headerfilename=root + ".hed"
 	datafilename=root + ".img"
 
-	### check file size, no more than 2 GB is possible
+	### check file size, no more than bytelimit is possible
 	### it takes double memory on machine to read stack
 	filesize = apFile.fileSize(datafilename)
 	if first is None and last is None and filesize > bytelimit:
-		apDisplay.printError("Stack is too large to read %s"%(apDisplay.bytes(filesize)))
+		apDisplay.printError("Stack is too large to read %s into %s "%(apDisplay.bytes(filesize), apDisplay.bytes(bytelimit)))
 
 	### read stack header
 
@@ -164,8 +163,8 @@ def readImagic(filename, first=1, last=None, msg=True):
 	if partbytes*numpart > filesize:
 		apDisplay.printError("requested particle %d from stack of length %d"%(last, filesize/partbytes))
 	if partbytes*numpart > bytelimit:
-		apDisplay.printError("Stack is too large to read %d particles, requesting %s"
-			%(numpart, apDisplay.bytes(partbytes*numpart)))
+		apDisplay.printError("Stack is too large to read %d particles, requesting %s from %s limit"
+			%(numpart, apDisplay.bytes(partbytes*numpart), apDisplay.bytes(bytelimit)))
 
 	### read stack images
 	images = readImagicData(datafilename, headerdict, first, numpart)
@@ -290,7 +289,10 @@ def writeImagic(array, filename, msg=True):
 
 	#this is required, IMAGIC only support 32bit
 	array = numpy.asarray(array, dtype=numpy.float32)
+	print 'before flip', array[-1,0,0],array[-1,-1,0]
 	array = numpy.fliplr(array) #FIXME: should we continue to flip the array
+	# 3D array fliplr is equal to up-down flip at each image in the image stack
+	print 'after flip', array[-1,0,0],array[-1,-1,0]
 
 	t0 = time.time()
 	if msg is True:
