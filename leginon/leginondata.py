@@ -1435,6 +1435,7 @@ class TargetFinderSettingsData(SettingsData):
 			('allow append', bool),
 			('multifocus', bool),
 			('skip', bool),
+			('allow no focus', bool),
 		)
 	typemap = classmethod(typemap)
 
