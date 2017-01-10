@@ -3,7 +3,7 @@ import numpy
 
 # local
 from redux.pipe import Pipe
-from redux.pipe import shape_converter, int_converter
+from redux.pipe import shape_converter
 import pyami.arraystats
 
 def validate_padvalue(value):
@@ -19,7 +19,7 @@ class Pad(Pipe):
 	def run(self, input, padshape, padpos, padvalue):
 		# make sure shape is same dimensions as input image
 		if len(padshape) != len(input.shape):
-			raise ValueError('mismatch in number of dimensions: %s -> %s' % (input.shape, shape))
+			raise ValueError('mismatch in number of dimensions: %s -> %s' % (input.shape, padshape))
 
 		if padvalue is None:
 			padvalue = pyami.arraystats.mean(input)
