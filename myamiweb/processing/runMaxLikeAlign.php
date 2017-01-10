@@ -77,7 +77,11 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 			var numpart = document.viewerform.numpart.value;
 			var boxsize = document.viewerform.clipdiam.value;
 			var numpix = Math.pow(boxsize/document.viewerform.bin.value, 2);
-			var calctime = (numpart/1000.0) * document.viewerform.numref.value * numpix * secperiter / document.viewerform.angle.value / (document.viewerform.nproc.value - 1);
+			var angle = document.viewerform.angle.value;
+			var nproc = document.viewerform.nproc.value;
+			var numref = document.viewerform.numref.value;
+
+			var calctime = (numpart/1000.0) * numref * numpix * secperiter / angle / nproc;
 			if (document.viewerform.mirror.checked) {
 				calctime = calctime*2.0;
 			}
