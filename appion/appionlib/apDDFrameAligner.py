@@ -408,8 +408,8 @@ class MotionCor2_UCSF(DDFrameAligner):
 		log = self.framestackpath[:-4]+'_Log.txt'
                 f = open(log,"w")
 		f.write("Sum Frame #%.3d - #%.3d (Reference Frame #%.3d):\n" % (0, self.alignparams['totalframes'], self.alignparams['totalframes']/2))
-		for i in range(self.alignparams['totalframes']):
-	                f.write("......Add Frame #%.3d with xy shift: %.5f %.5f\n" % (i, shifts_adjusted[i][0], shifts_adjusted[i][1]))
+		for i in range(self.alignparams['totalframes']-self.alignparams['Throw']):
+	                f.write("......Add Frame #%.3d with xy shift: %.5f %.5f\n" % (i+self.alignparams['Throw'], shifts_adjusted[i][0], shifts_adjusted[i][1]))
                 f.close()
 		
 
