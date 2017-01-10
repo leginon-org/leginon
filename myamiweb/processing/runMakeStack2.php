@@ -313,6 +313,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		echo "<option value='$key' $selected>$text</option>";
 	}
 	echo "</select><br/>\n";
+	echo "<br/>\n";
 
 	echo "<b>Density modifications:</b><br/>";
 
@@ -324,6 +325,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	echo "<input type='radio' name='stackinvert' value='no' $invertnocheck>\n";
 	echo docpop('stackinvert','Stain - do NOT change particle density');
 	echo " (particles are already white)";
+	echo "<br/>\n";
 	echo "<br/>\n";
 
 	//
