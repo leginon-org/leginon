@@ -32,7 +32,6 @@ class GautomatchLoop(particleLoop2.ParticleLoop):
 			return True
 		rundata = rundatas[0]
 
-
 		### check if we have a previous template run
 		templaterunq = appiondata.ApTemplateRunData(selectionrun=rundata)
 		templatedatas = templaterunq.query()
@@ -178,14 +177,14 @@ class GautomatchLoop(particleLoop2.ParticleLoop):
 		gautopath = getGautomatchPath()
 
 		## Build Command
-                fullinputfilepath = os.path.join(imgdata['session']['image path'], imgdata['filename']+'.mrc')
+		fullinputfilepath = os.path.join(imgdata['session']['image path'], imgdata['filename']+'.mrc')
 
 		print 'imgdata type is ',(dir(imgdata))
 		print 'imgdata filename is ',imgdata['filename']
 	
-                imgpath = os.path.join(self.params['rundir'], imgdata['filename']+".mrc")
-                if not os.path.exists(imgpath):
-                       os.symlink(fullinputfilepath, imgpath)
+		imgpath = os.path.join(self.params['rundir'], imgdata['filename']+".mrc")
+		if not os.path.exists(imgpath):
+		       os.symlink(fullinputfilepath, imgpath)
 		
 		gautocmd = (gautopath + ' ')
 		gautocmd += ('--apixM ' + str(self.params['apix']) + ' ')
@@ -196,7 +195,7 @@ class GautomatchLoop(particleLoop2.ParticleLoop):
 
 			try: 
 				print 'templateid type is ',type(templateid)
-		 		templatedata = appiondata.ApTemplateImageData.direct_query(abs(templateid))
+				templatedata = appiondata.ApTemplateImageData.direct_query(abs(templateid))
 			except:
 				apDisplay.printError("Template Id  was not found in database.")
 
@@ -220,9 +219,9 @@ class GautomatchLoop(particleLoop2.ParticleLoop):
 			print 'overlapmult is ',self.params['overlapmult']
 			print 'overlapmult type is ',self.params['overlapmult'].__class__.__name__
 
-#		        particle diameter is stored in diam for particleLoop, not pdiam
+#			particle diameter is stored in diam for particleLoop, not pdiam
 			gautocmd += ('--diameter ' +str(self.params['diam']) + ' ')
-                        gautocmd += ('--min_dist '+str(float(self.params['overlapmult'])*float(self.params['diam'])) + ' ')
+			gautocmd += ('--min_dist '+str(float(self.params['overlapmult'])*float(self.params['diam'])) + ' ')
 
 		if self.params['invert'] is True:
 			pass	
@@ -234,19 +233,19 @@ class GautomatchLoop(particleLoop2.ParticleLoop):
 		gautocmd += ('--cc_cutoff ' + str(self.params['thresh']) + ' ')
 		
 		fullinputfilepath = os.path.join(imgdata['session']['image path'], imgdata['filename']+'.mrc')
-                imgpath = os.path.join(self.params['rundir'], imgdata['filename']+".mrc")
+		imgpath = os.path.join(self.params['rundir'], imgdata['filename']+".mrc")
 
 		gautocmd += imgpath
 		gautopath = getGautomatchPath()
 		gautocmd += ' ; rm '+imgpath
-                gautoprogproc = subprocess.Popen(gautocmd, shell=True, stdin=subprocess.PIPE,)
-                apDisplay.printColor(gautocmd, "magenta")
-                gautoprogproc.stdin.write(gautocmd)
-                apDisplay.printColor(gautocmd,"magenta")
+		gautoprogproc = subprocess.Popen(gautocmd, shell=True, stdin=subprocess.PIPE,)
+		apDisplay.printColor(gautocmd, "magenta")
+		gautoprogproc.stdin.write(gautocmd)
+		apDisplay.printColor(gautocmd,"magenta")
 
-                gautoprogproc.communicate()
-                tdiff = time.time()-t0
-                apDisplay.printMsg("Gautomatch completed in "+apDisplay.timeString(tdiff))
+		gautoprogproc.communicate()
+		tdiff = time.time()-t0
+		apDisplay.printMsg("Gautomatch completed in "+apDisplay.timeString(tdiff))
 
 
 	##=======================
@@ -258,7 +257,7 @@ class GautomatchLoop(particleLoop2.ParticleLoop):
 				apTemplate.getTemplates(self.params)
 
 		### run Gautomatch program like dogPicker
-                if self.params['templateliststr'] is None:
+		if self.params['templateliststr'] is None:
 
 			print 'DOGPICKER MODE'
 			print 'imgdata filename is ',imgdata['filename']
@@ -282,10 +281,10 @@ class GautomatchLoop(particleLoop2.ParticleLoop):
 				print 'i is ',i
 				templateidIndex = [k for k, j in enumerate(self.params['templateIds']) if j==i]
 				print 'templateidIndex is ',templateidIndex
-			        self.runGautomatch(imgdata,i)
-        	                peaktree = getPeaksFromBoxFile(self,imgdata['filename']+'_automatch.box')
-                	     #   apPeaks.peakTreeToPikFile(peaktree, imgdata['filename'], templateidIndex[0]+1, self.params['rundir'])
-                	        apPeaks.peakTreeToPikFile(peaktree, imgdata['filename'],i, self.params['rundir'])
+				self.runGautomatch(imgdata,i)
+				peaktree = getPeaksFromBoxFile(self,imgdata['filename']+'_automatch.box')
+				#apPeaks.peakTreeToPikFile(peaktree, imgdata['filename'], templateidIndex[0]+1, self.params['rundir'])
+				apPeaks.peakTreeToPikFile(peaktree, imgdata['filename'],i, self.params['rundir'])
 				peaktreelist.append(peaktree)
 			#self.params['doubles'] = True
 			apPeaks.mergePeakTrees(imgdata, peaktreelist, self.params, msg=True, pikfile=True)
@@ -293,7 +292,7 @@ class GautomatchLoop(particleLoop2.ParticleLoop):
 			print 'peaktreelist is ',peaktreelist
 			
 
-                        return peaktree
+			return peaktree
 			
 			
 			
@@ -341,21 +340,21 @@ def getGautomatchPath():
 
 
 def getPeaksFromBoxFile(self,boxfilename):
-        peakTree = []
-        f = open(boxfilename,'r')
+	peakTree = []
+	f = open(boxfilename,'r')
 	print 'boxfilename is ',boxfilename
-        lines = f.readlines()
-        for line in lines:
-                good = []
+	lines = f.readlines()
+	for line in lines:
+		good = []
 		bits = re.split(r'[ \t]+',line)
-                for bit in bits:
-                        if len(bit):
-                                good.append(bit)
-                peakdict = apFindEMG.initializePeakDict()
-                peakdict['ycoord']    = int(good[1])
-                peakdict['xcoord']    = int(good[0])
-                peakdict['correlation'] = float(good[4])
+		for bit in bits:
+			if len(bit):
+				good.append(bit)
+		peakdict = apFindEMG.initializePeakDict()
+		peakdict['ycoord']    = int(good[1])
+		peakdict['xcoord']    = int(good[0])
+		peakdict['correlation'] = float(good[4])
 		peakdict['diameter'] = float(self.params['diam'])
-                peakTree.append(peakdict)
-        return peakTree
+		peakTree.append(peakdict)
+	return peakTree
 
