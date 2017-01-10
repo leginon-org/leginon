@@ -169,8 +169,9 @@ class Pipe(object):
 	def help_string(cls):
 		f = cStringIO.StringIO()
 		f.write('%s\n' % (cls.__name__,))
-		if pipe_class.switch_arg:
-			f.write('  %s\n' % (cls.switch_arg,))
+		#pipe_class not defined
+		#if pipe_class.switch_arg:
+		#	f.write('  %s\n' % (cls.switch_arg,))
 		if cls.required_args:
 			for arg in cls.required_args:
 				f.write('  %s\n' % (arg,))
