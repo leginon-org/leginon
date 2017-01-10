@@ -537,19 +537,6 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 
 		echo "<br/><br/>";
 
-		//
-		// STARTING ADVANCED CTF SECTION
-		//
-		// Only hide advanced parameters if there is not an advanced user logged in.
-		// Modify user profile to set to an advanced user. 
-		// NOTE: this assumes the Appion user name and the username that is used to log in to the processing page are the same.
-		// We may want to change that someday.
-		if ( !$_SESSION['advanced_user'] ) {
-			echo "<a id='Advanced_Ctf_Options_toggle' href='javascript:toggle(\"Advanced_Ctf_Options\");' style='color:blue'>";
-			echo "Show Advanced CTF Options</a><br/>\n";
-			echo "<div id='Advanced_Ctf_Options' style='display: none'>\n";
-		}
-
 		// select correction method
 		echo "<div id='ctfcorrectmethdiv'>\n";
 		echo docpop('ctfcorrectmeth','CTF Correction Method');
@@ -566,6 +553,19 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		echo "<br/><br/>";
 		echo "</div>\n";
 		//echo "</td></tr><tr><td>\n\n";
+		
+		//
+		// STARTING ADVANCED CTF SECTION
+		//
+		// Only hide advanced parameters if there is not an advanced user logged in.
+		// Modify user profile to set to an advanced user. 
+		// NOTE: this assumes the Appion user name and the username that is used to log in to the processing page are the same.
+		// We may want to change that someday.
+		if ( !$_SESSION['advanced_user'] ) {
+			echo "<a id='Advanced_Ctf_Options_toggle' href='javascript:toggle(\"Advanced_Ctf_Options\");' style='color:blue'>";
+			echo "Show Advanced CTF Options</a><br/>\n";
+			echo "<div id='Advanced_Ctf_Options' style='display: none'>\n";
+		}
 
 		// select cutoff types method
 		echo docpop('ctfsort','CTF Sorting Method');
