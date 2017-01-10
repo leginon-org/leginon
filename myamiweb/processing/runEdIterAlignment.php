@@ -148,6 +148,11 @@ function createAlignmentForm($extra=false, $title='edIterAlign.py Launcher', $he
 	// set max last ring radius
 	$javascript .= "	var bestbin = Math.floor(stackArray[2]/100);\n";
 	$javascript .= "	var radius = Math.floor(stackArray[2]/3*bestbin);\n";
+	//number of references is the square root of the number of particles divided by 10
+	$javascript .= "	var bestref = Math.floor(Math.log(stackArray[3])/2)*2;\n";
+	$javascript .= "	if (bestref < 2) {\n";
+	$javascript .= "		var bestref = 2 ;}\n";
+	$javascript .= "	document.viewerform.numref.value = bestref;\n";
 	$javascript .= "	document.viewerform.bin.value = bestbin;\n";
 	$javascript .= "	document.viewerform.radius.value = radius;\n";
 	// set particle & mask radius and lp

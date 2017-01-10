@@ -16,7 +16,7 @@ class Xmipp3CL2DAlign extends BasicLayoutForm
 	
 	// Set Default values in the constructor
 	function __construct( $expId, $extraHTML='',$stackId='', $clip='', $bin='1', $numpart='3000', 
-		$lowpass='10', $highpass='2000', $num_ref='20', $max_iter='15', $img2imgdist='correlation', 
+		$lowpass='10', $highpass='2000', $numref='20', $max_iter='15', $img2imgdist='correlation', 
 		$img2clusterdist='minimum', $commit='on') 
 	{
 		parent::__construct($expId, $extraHTML);
@@ -55,6 +55,11 @@ class Xmipp3CL2DAlign extends BasicLayoutForm
 		$javascript .= "	if (bestbin < 1) {\n";
 		$javascript .= "		var bestbin = 1 ;}\n";
 		$javascript .= "	document.viewerform.bin.value = bestbin;\n";
+		//number of references is the natural log of the number of particles
+		$javascript .= "	var bestref = Math.floor(Math.log(stackArray[3])/2)*2;\n";
+		$javascript .= "	if (bestref < 2) {\n";
+		$javascript .= "		var bestref = 2 ;}\n";
+		$javascript .= "	document.viewerform.numref.value = bestref;\n";
 		// set particle & mask radius and lp
 		$javascript .= "}\n";
 		$javascript .= "
@@ -89,7 +94,7 @@ class Xmipp3CL2DAlign extends BasicLayoutForm
 		$params->addParam( "numpart", $numpart, "Number of particles" );
 		$params->addParam( "lowpass", $lowpass, "Low Pass Filter Radius" );
 		$params->addParam( "highpass", $highpass, "High Pass Filter Radius" );
-		$params->addParam( "num_ref", $num_ref, "Number of references" );
+		$params->addParam( "numref", $numref, "Number of references" );
 		$params->addParam( "max-iter", $max_iter, "Maximum number of iterations" );
 		$params->addParam( "img2imgdist", $img2imgdist, "Image to Image Distance" );
 		$params->addParam( "img2clusterdist", $img2clusterdist, "Image to Cluster Distance" );
@@ -133,7 +138,7 @@ class Xmipp3CL2DAlign extends BasicLayoutForm
 	    <H4>Job Parameters</H4>
 	    <hr />";
 
-		$html.= $params->insertTextField( "num_ref", $fieldSize,'','appion.numrefcl2d' );
+		$html.= $params->insertTextField( "numref", $fieldSize,'','appion.numrefcl2d' );
 		$html.= $params->insertTextField( "max-iter", $fieldSize,'','appion.xmippmaxiter' );	
 
 		$html.= "<I>Image to Image Distance:</I><br />\n";
@@ -187,11 +192,11 @@ class Xmipp3CL2DAlign extends BasicLayoutForm
 		$command = $this->removeCommandFlag( $command, "stack" );
 		$command = $this->addCommandFlag( $command, "stack", "stack", $stackid );
 		
-		// num_ref should be num-ref, but dashes don't work 
+		// numref should be num-ref, but dashes don't work 
 		// well in the php/javascript world, so change it here.
-		$command = $this->removeCommandFlag( $command, "num_ref" );
-		$num_ref = $params->getParamValue( "num_ref" );
-		$command.= " --num-ref=".$num_ref." ";
+		$command = $this->removeCommandFlag( $command, "numref" );
+		$numref = $params->getParamValue( "numref" );
+		$command.= " --num-ref=".$numref." ";
 		
 		// same with numpart
 		$command = $this->removeCommandFlag( $command, "numpart" );

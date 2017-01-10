@@ -58,6 +58,12 @@ class RelionAlign2DForm extends BasicLayoutForm
 		$javascript .= "	if (bestbin < 1) {\n";
 		$javascript .= "		var bestbin = 1 ;}\n";
 		$javascript .= "	document.viewerform.bin.value = bestbin;\n";
+		//number of references is the natural log of the number of particles
+		$javascript .= "	var bestref = Math.floor(Math.log(stackArray[3])/2)*2;\n";
+		$javascript .= "	if (bestref < 2) {\n";
+		$javascript .= "		var bestref = 2 ;}\n";
+		$javascript .= "	document.viewerform.numref.value = bestref;\n";
+
 		// set particle & mask radius and lp
 		$javascript .= "}\n";
 		$javascript .= "</script>\n";
