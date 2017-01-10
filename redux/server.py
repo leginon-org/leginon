@@ -1,11 +1,9 @@
 #!/usr/bin/env python
 
-import SocketServer
-import logging
-import time
 import sys
+import time
 import traceback
-
+import SocketServer
 import redux.reduxlog
 
 ### set up logging
@@ -63,8 +61,6 @@ def start_server(host, port):
 	server.serve_forever()
 
 def test_request():
-	import sys
-	import time
 	request = sys.argv[2]
 	kwargs = redux.utility.request_to_kwargs(request)
 	t0 = time.time()

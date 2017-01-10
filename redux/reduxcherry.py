@@ -23,7 +23,7 @@ class ReduxRoot(object):
 	'''
 	def default(self, *args, **kwargs):
 		pipes = args[:-1]
-		outfilename = args[-1]
+		#outfilename = args[-1] #not used
 		pipes = [(pipe,pipe) for pipe in pipes]
 		
 		#return str(pipes) + '...' + str(kwargs)
