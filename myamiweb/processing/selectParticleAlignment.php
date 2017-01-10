@@ -154,7 +154,7 @@ echo " <p> this method is the most robust, but takes some time to complete."
 	." program to perform alignments. "
 	."</p><p>\n"
 	."Like Xmipp Maximum Likelihood (from the same author), "
-	."this method is unbiased and very thorough, but also the slowest of the methods (~days). "
+	."this method is unbiased and very thorough, but it is also one of the slower methods (~days). "
 	."While it produces excellent templates, it only does a course search (integer pixels shifts and large angle increments), "
 	."so it is best to use ref-based alignment to get better alignment parameters"
 	."</p>\n";
@@ -187,16 +187,25 @@ if (!HIDE_IMAGIC) {
  ** Iterative Stable Alignment and Clustering (ISAC)
 */
 
+
+if (!HIDE_FEATURE)
+{
 echo "<tr><td width='100' align='center'>\n";
 echo "  <h2>ISAC</h2>\n";
-echo "</td><td>\n";
-//echo "  <h3><a href='runISAC.php?expId=$expId'>Iterative Stable Alignment and Clustering (ISAC)</a></h3>\n";
-$form = "IsacForm";
-echo "  <h3><a href='runAppionLoop.php?expId=$expId&form=$form'>Iterative Stable Alignment and Clustering (ISAC)</a></h3>\n";
-echo " <p>Initial version. More information about ISAC is available from:"
+	echo "</td><td>\n";
+	//echo "  <h3><a href='runISAC.php?expId=$expId'>Iterative Stable Alignment and Clustering (ISAC)</a></h3>\n";
+	$form = "IsacForm";
+	echo "  <h3><a href='runAppionLoop.php?expId=$expId&form=$form'>Iterative Stable Alignment and Clustering (ISAC)</a></h3>\n";
+	echo " <p>Initial version. More information about ISAC is available from:"
 		." <a href='http://sparx-em.org/sparxwiki/sxisac'>sxisac - SPARX</a>"
+		."</p><p>\n"
+		."ISAC produces great class averages for common lines or trying to tease out small conformational states,"
+		."but it is by far the slowest alignment (~weeks) and requires lots of parallelization "
+		."</p><p>\n"
+		."Note: job launching is not quite ready, though uploader works great."
 		."</p>\n";
-echo "</td></tr>\n";
+	echo "</td></tr>\n";
+}
 
 /*
 ** Topology representing network alignment
