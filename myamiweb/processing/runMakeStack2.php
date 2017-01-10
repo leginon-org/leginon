@@ -537,14 +537,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		echo "</div>\n";
 		echo "</td></tr><tr><td>\n\n";
 
-		// confidence cutoff
-		echo"<input type='checkbox' name='aceconf' onclick='enablectf(this)' $ctfcheck>\n";
-		echo docpop('aceconf','CTF Confidence Cutoff');
-		echo "<br />\n";
-		echo "Use Values Above:<input type='text' name='ctf' $ctfdisable value='$ctfval' size='4'>
-		(between 0.0 - 1.0)\n";
 
-		echo "<br/><br/>";
 
 		// select correction method
 		echo "<div id='ctfcorrectmethdiv'>\n";
@@ -562,7 +555,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		echo "<br/><br/>";
 		echo "</div>\n";
 		//echo "</td></tr><tr><td>\n\n";
-		
+
 		//
 		// STARTING ADVANCED CTF SECTION
 		//
@@ -570,12 +563,39 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		// Modify user profile to set to an advanced user. 
 		// NOTE: this assumes the Appion user name and the username that is used to log in to the processing page are the same.
 		// We may want to change that someday.
+
 		if ( !$_SESSION['advanced_user'] ) {
 			echo "<a id='Advanced_Ctf_Options_toggle' href='javascript:toggle(\"Advanced_Ctf_Options\");' style='color:blue'>";
 			echo "Show Advanced CTF Options</a><br/>\n";
 			echo "<div id='Advanced_Ctf_Options' style='display: none'>\n";
 		}
+		echo "<br/>";
 
+		// resolution cutoff
+		echo"<input type='checkbox' name='ctfres' onclick='enablectfres(this)' $ctfrescheck>\n";
+		echo docpop('ctfres','CTF Resolution Cutoff');
+		echo "<br/>\n";
+		echo "&nbsp; Resolution range at 0.8 criteria: <ul style='line-height:80%;margin:0'>";
+			echo "<li> lower limit: ";
+			echo " <input type='text' name='ctfres80min' value='$ctfres80min' size='4' $ctfresdisable>";
+			echo "&nbsp; <i>(e.g. 3, in &Aring;ngstroms)</i>";
+			echo "</li>\n";
+			echo "<li> upper limit: ";
+			echo " <input type='text' name='ctfres80max' value='$ctfres80max' size='4' $ctfresdisable>";
+			echo "&nbsp; <i>(e.g. 10, in &Aring;ngstroms)</i>\n";
+			echo "</li>\n";
+		echo "</ul>\n";
+		echo "&nbsp; Resolution range at 0.5 or software package criteria: <ul style='line-height:80%;margin:0'>";
+			echo "<li> lower limit: ";
+			echo " <input type='text' name='ctfres50min' value='$ctfres50min' size='4' $ctfresdisable>";
+			echo "&nbsp; <i>(e.g. 2, in &Aring;ngstroms)</i>";
+			echo "</li>\n";
+			echo "<li> upper limit: ";
+			echo " <input type='text' name='ctfres50max' value='$ctfres50max' size='4' $ctfresdisable>";
+			echo "&nbsp; <i>(e.g. 8, in &Aring;ngstroms)</i>\n";
+			echo "</li>\n";
+		echo "</ul><br/>\n";
+		
 		// select cutoff types method
 		echo docpop('ctfsort','CTF Sorting Method');
 		echo "<br/>\n";
@@ -614,19 +634,12 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		echo "<br/>";
 		//echo "</td></tr><tr><td>\n\n";
 
-		// resolution cutoff
-		echo"<input type='checkbox' name='ctfres' onclick='enablectfres(this)' $ctfrescheck>\n";
-		echo docpop('ctfres','CTF Resolution Cutoff');
+		// confidence cutoff
+		echo"<input type='checkbox' name='aceconf' onclick='enablectf(this)' $ctfcheck>\n";
+		echo docpop('aceconf','CTF Confidence Cutoff');
 		echo "<br />\n";
-		echo "&nbsp;&nbsp;Resolution range at 0.8 criteria: <br/>";
-			echo "between <input type='text' name='ctfres80min' value='$ctfres80min' size='4' $ctfresdisable>";
-			echo "and <input type='text' name='ctfres80max' value='$ctfres80max' size='4' $ctfresdisable>";
-			echo "&nbsp; <i>(in &Aring;ngstroms)</i>\n";
-		echo "<br/>\n";
-		echo "&nbsp;&nbsp;Resolution range at 0.5 or software package criteria: <br/>";
-			echo "between <input type='text' name='ctfres50min' value='$ctfres50min' size='4' $ctfresdisable>";
-			echo "and <input type='text' name='ctfres50max' value='$ctfres50max' size='4' $ctfresdisable>";
-			echo "&nbsp; <i>(in &Aring;ngstroms)</i>\n";
+		echo "Use Values Above:<input type='text' name='ctf' $ctfdisable value='$ctfval' size='4'>
+		(between 0.0 - 1.0)\n";
 
 		echo "<br/><br/>";
 		//echo "</td></tr><tr><td>\n\n";
