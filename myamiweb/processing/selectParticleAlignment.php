@@ -157,6 +157,10 @@ echo " <p> this method is the most robust, but takes some time to complete."
 	."this method is unbiased and very thorough, but it is also one of the slower methods (~days). "
 	."While it produces excellent templates, it only does a course search (integer pixels shifts and large angle increments), "
 	."so it is best to use ref-based alignment to get better alignment parameters"
+	."</p><p>\n"
+	."RELION ML alignment typically takes longer than Xmipp ML alignment. While the first iteration will take the same time, "
+	."later iterations typically take longer in the RELION than Xmipp, which adds to the total run time. Second, RELION will "
+	."always run for specified iterations, whereas Xmipp will stop when the class averages stop changing."
 	."</p>\n";
 
 //echo "  <img src='img/align-smr.png' width='250'><br/>\n";
