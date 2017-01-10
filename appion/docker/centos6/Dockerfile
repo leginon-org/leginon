@@ -84,7 +84,7 @@ RUN python ./setup.py install
 RUN mkdir /etc/fftw
 RUN python /emg/sw/myami/pyami/fft/fftwsetup.py 2 4096 4096 && mv -v ~/fftw3-wisdom-* /etc/fftw/wisdom
 RUN cp -v /emg/sw/myami/redux/init.d/reduxd /etc/init.d/reduxd
-COPY findem64.exe /emg/sw/myami/appion/bin/
+COPY findem-docker-centos6/findem64.exe /emg/sw/myami/appion/bin/
 WORKDIR /emg/sw/myami/
 
 #FIXME: mpirun does not run as root
@@ -158,8 +158,8 @@ COPY startup.sh /emg/sw/startup.sh
 #RUN pip install bsddb3 ipython PyOpenGL
 
 ### copy the image data
-COPY MRC/06jul12a/groel_template1.mrc /emg/data/leginon/06jul12a/templates/
-COPY MRC/06jul12a/groel_template2.mrc /emg/data/leginon/06jul12a/templates/
+COPY findem-docker-centos6/groel_template1.mrc /emg/data/leginon/06jul12a/templates/
+COPY findem-docker-centos6/groel_template2.mrc /emg/data/leginon/06jul12a/templates/
 COPY MRC/06jul12a/06jul12a_15gr_28sq_04hl_02em.mrc /emg/data/leginon/06jul12a/rawdata/
 COPY MRC/06jul12a/06jul12a_15gr_28sq_11hl_03em.mrc /emg/data/leginon/06jul12a/rawdata/
 COPY MRC/06jul12a/06jul12a_15gr_28sq_23hl_02em.mrc /emg/data/leginon/06jul12a/rawdata/
