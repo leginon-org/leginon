@@ -34,6 +34,9 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		self.parser.add_option("-s", "--stack", dest="stackid", type="int",
 			help="Stack database id", metavar="ID#")
 
+		self.parser.add_option("--nompi", dest='usempi', default=True,
+			action="store_false", help="Disable MPI and run on single host")
+
 		self.parser.add_option("--clip", dest="clipsize", type="int",
 			help="Clip size in pixels (reduced box size)", metavar="#")
 		self.parser.add_option("--lowpass", "--lp", dest="lowpass", type="int",
@@ -226,6 +229,8 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 
 	#=====================
 	def checkMPI(self):
+		if self.params['usempi'] is False:
+			return None
 		mpiexe = apParam.getExecPath("mpirun")
 		if mpiexe is None:
 			return None
@@ -478,13 +483,13 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			nproc = nproc = apParam.getNumProcessors()
 		else:
 			nproc = self.params['nproc']
-	
-		mpirun = self.checkMPI()
-		if mpirun is None:
-			apDisplay.printError("There is no MPI installed")
 
 		self.estimateIterTime()
-		if nproc > 2 and mpirun is not None:
+		if self.params['usempi'] is True and nproc > 2:
+			mpirun = self.checkMPI()
+			if mpirun is None:
+				apDisplay.printError("There is no MPI installed")
+
 			### use multi-processor
 			apDisplay.printColor("Using "+str(nproc)+" processors!", "green")
 			xmippexe = apParam.getExecPath("xmipp_mpi_ml_align2d", die=True)
