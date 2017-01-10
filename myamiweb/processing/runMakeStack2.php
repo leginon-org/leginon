@@ -130,7 +130,9 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	$selexcheck = ($_POST['partcutoff']=='on') ? 'CHECKED' : '';
 	$selexdisable = ($_POST['partcutoff']=='on') ? '' : 'DISABLED';
 	// density check (checked by default)
-	$invcheck = ($_POST['stackinv']=='on' || !$_POST['process']) ? 'CHECKED' : '';
+	$invertyescheck = ($_POST['stackinvert']=='yes' || !$_POST['process']) ? 'CHECKED' : '';
+	$invertnocheck = ($_POST['stackinvert']=='yes' || !$_POST['process']) ? '' : 'CHECKED';
+
 	$overridecheck = ($_POST['override']=='on') ? 'CHECKED' : '';
 	// defocus pair check
 	$defocpaircheck = ($_POST['stackdfpair']=='on') ? 'checked' : '';
@@ -198,7 +200,6 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 			document.viewerform.ctfres50min.disabled=true;
 		}
 	}
-
 
 	function toggleboxmask() {
 		if (document.getElementById('boxmaskopts').style.display == 'none' || document.getElementById('boxmaskopts').style.display == '') {
@@ -315,8 +316,14 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 
 	echo "<b>Density modifications:</b><br/>";
 
-	echo "<input type='checkbox' name='stackinv' $invcheck>\n";
-	echo docpop('stackinv','Invert image density');
+	echo "<input type='radio' name='stackinvert' value='yes' $invertyescheck>\n";
+	echo docpop('stackinvert','Vitreous ice - invert the particle density');
+	echo "(convert black particles to white)";
+	echo "<br/>\n";
+
+	echo "<input type='radio' name='stackinvert' value='no' $invertnocheck>\n";
+	echo docpop('stackinvert','Stain - do NOT change particle density');
+	echo " (particles are already white)";
 	echo "<br/>\n";
 
 	//
@@ -839,7 +846,7 @@ function runMakestack() {
 	$description = $_POST['description'];
 	$filetype = $_POST['filetype'];
 	
-	$invert = ($_POST['stackinv']=='on') ? True : False;
+	$invert = ($_POST['stackinvert']=='yes') ? True : False;
 	$normalizemethod = $_POST['normalizemethod'];
 	$noctf = $_POST['noctf'];
 	$ctfcorrect = ($_POST['ctfcorrect']=='on') ? 'ctfcorrect' : '';
