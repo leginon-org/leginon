@@ -31,7 +31,7 @@ RUN yum -y update && yum -y install tigervnc-server xterm xsetroot fluxbox fbpan
 #RUN yum -y update && yum -y install mozilla-adblockplus firefox dbus && yum -y clean all
 #RUN dbus-uuidgen > /var/lib/dbus/machine-id
 RUN pip install --upgrade pip
-RUN pip install joblib pyfftw3 fs scikit-learn==0.14
+RUN pip install joblib pyfftw3 fs==0.5.4 scikit-learn==0.14
 RUN python -c 'from sklearn import svm'
 
 RUN updatedb
