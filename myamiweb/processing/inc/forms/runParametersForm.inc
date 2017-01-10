@@ -47,7 +47,7 @@ class RunParametersForm extends BasicForm
 		$html.= "<br/>\n";
 		$html.= $params->insertStackedTextField( "outdir", 56 );
 		$html.= "<br/>\n";
-		$html.= $params->insertTextArea( "description");
+		$html.= $params->insertTextArea( "description", $cols=3, $rows=50);
 		$html.= closeRoundBorder();
 			
 		$html.= "<br/>\n";
