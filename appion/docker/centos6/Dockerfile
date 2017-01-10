@@ -22,7 +22,7 @@ RUN yum -y update && yum -y install \
  php-devel gd-devel re2c fftw3-devel php-gd \
  xorg-x11-server-Xvfb netpbm-progs qiv python-requests \
  libssh2-devel mlocate nano elinks file \
- python-configparser h5py git \
+ python-configparser h5py git pyflakes \
  numactl compat-libgfortran && yum -y clean all
 #removed phpMyAdmin
 ### Trying to do VNC
