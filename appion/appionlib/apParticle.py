@@ -252,24 +252,20 @@ def insertParticlePeaks(peaktree, imgdata, runname, msg=False):
 		if 'template' in peakdict and peakdict['template'] is not None:
 			particlesq['template'] = appiondata.ApTemplateImageData.direct_query(peakdict['template'])
 
-		for key in 'correlation','peakmoment','peakstddev','peakarea', 'label':
-			if key in peakdict and peakdict[key] is not None:
-				if isinstance(peakdict[key], float):
-					### limit decimals
-					particlesq[key] = round(peakdict[key], 6)
-				else:
-					particlesq[key] = peakdict[key]
+		for key in 'correlation','peakmoment','peakstddev','peakarea','label':
+			if isinstance(peakdict.get(key,None) , float):
+				### limit decimals
+				particlesq[key] = round(peakdict[key], 6)
+			else:
+				particlesq[key] = peakdict.get(key, None)
 		### must be integers
 		particlesq['xcoord'] = int(round(peakdict['xcoord']))
 		particlesq['ycoord'] = int(round(peakdict['ycoord']))
-		if 'angle' in peakdict:
-			particlesq['angle'] = peakdict['angle']
-		if 'helixnum' in peakdict:
-			particlesq['helixnum'] = peakdict['helixnum']
-		if 'helicalstep' in peakdict:
-			particlesq['helicalstep'] = peakdict['helicalstep']
+		particlesq['angle'] = peakdict.get('angle', None)
+		particlesq['helixnum'] = peakdict.get('helixnum', None)
+		#particlesq['helicalstep'] = peakdict.get('helicalstep', None) #no entry in appiondata.py
 		if 'diameter' in peakdict and peakdict['diameter'] is not None:
-				peakdict['diameter'] = round(peakdict['diameter'], 6)
+			peakdict['diameter'] = round(peakdict['diameter'], 6)
 
 		if 'peakarea' in peakdict and peakdict['peakarea'] is not None and peakdict['peakarea'] > 0:
 			peakhasarea = True
