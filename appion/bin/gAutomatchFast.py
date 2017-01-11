@@ -6,8 +6,8 @@ import numpy
 import subprocess
 #appion
 from appionlib import apParam
+from appionlib import starFile
 from appionlib import apDisplay
-from appionlib import apFindEMG
 from appionlib import apTemplate
 from appionlib import appiondata
 from appionlib import apDatabase
@@ -46,8 +46,9 @@ class gAutomatch(appionLoop2.AppionLoop):
 			help="Speed level (0, 1, 2, 3, 4), larger is faster but less accurate.")
 
 		### Advanced options, according to gautomatch documentation
-		self.parser.add_option("--min_dist", dest="min_dist", type="float",
-			help="Maximum distance between particles in angstrom; 0.9~1.1X diameter; can be 0.3~0.5 for filament-like particle")
+		self.parser.add_option("--overlapmult", dest="overlapmult", type="float",
+			help="overlapmult: Maximum distance between particles in angstrom; 0.9~1.1X diameter; "
+				+"can be 0.3~0.5 for filament-like particle")
 		self.parser.add_option("--thresh", "--minthresh", dest="thresh", type="float",
 			help="Cross-correlation cutoff, 0.2-0.4 normally; "
 			+"Try to select several typical micrographs to optimize this value.", metavar="FLOAT")
@@ -87,7 +88,7 @@ class gAutomatch(appionLoop2.AppionLoop):
 
 
 		### insert params for manual picking
-		self.insertGautomatchRunParams()
+		self.rundata = self.insertGautomatchRunParams()
 
 		return
 
@@ -103,7 +104,7 @@ class gAutomatch(appionLoop2.AppionLoop):
 			templatedata = appiondata.ApTemplateImageData.direct_query(templateid)
 			if not (templatedata):
 				apDisplay.printError("Template Id "+str(templateid)+" was not found in database.")
-			pixelsizes.append(round(templatedata['apix'],3))
+			pixelsizes.append(int(templatedata['apix']*1000))
 
 			### pass 2: get min boxsize
 			origtemplatepath = os.path.join(templatedata['path']['path'], templatedata['templatename'])
@@ -117,17 +118,18 @@ class gAutomatch(appionLoop2.AppionLoop):
 
 		apDisplay.printMsg("List of pixel sizes: "+str(pixelsizes))
 		### determine pixel size
-		if max(pixelsizes) - min(pixelsizes) > 0.02:
+		if max(pixelsizes) - min(pixelsizes) > 20:
 			rescaleTemplates = True
 			self.templateApix = self.params['apix']
 		else:
 			rescaleTemplates = False
 			mostcommon_apix = max(set(pixelsizes), key=pixelsizes.count)
-			self.templateApix = mostcommon_apix
+			self.templateApix = mostcommon_apix/1000.
 
 		### pass 3: make into a stack
 		templatearraylist = []
 		for templateid in self.params['templateIds']:
+			templatedata = appiondata.ApTemplateImageData.direct_query(templateid)
 			#COPY THE FILE OVER
 			origtemplatepath = os.path.join(templatedata['path']['path'], templatedata['templatename'])
 			templatearray = mrc.read(origtemplatepath)
@@ -150,28 +152,34 @@ class gAutomatch(appionLoop2.AppionLoop):
 
 		### write template stack
 		templateMrcStack = os.path.join(self.params['rundir'], "templates.mrcs")
-		templatestackarray = numpy.arraytemplatearraylist
+		templatestackarray = numpy.array(templatearraylist)
 		mrc.write(templatestackarray, templateMrcStack)
 		return templateMrcStack
 
 	### ==================================
-	def preLoopFunctions(self, imgdata):
+	def preLoopFunctions(self):
 		self.params['apix'] = apDatabase.getPixelSize(self.imgtree[0])
 		self.templateMrcStack = self.makeTemplateMrcStack()
 
 	### ==================================
 	def processImage(self, imgdata):
 		### do all the work...
-		cmd = self.getGautomatchCommand(imgdata)
-		proc = subprocess.Popen(cmd, shell=True)
-		proc.communicate()
+		starname = imgdata['filename']+'_automatch.star'
+		if not os.path.isfile(starname):
+			# only run when there are no results
+			gautocmd = self.getGautomatchCommand(imgdata)
+			apDisplay.printColor("Running Gautomatch", "purple")
+			print gautocmd
+			proc = subprocess.Popen(gautocmd, shell=True)
+			proc.communicate()
 
-		peaktree = self.processGautomatchResults(imgdata)
-
+		self.peaktree = self.processGautomatchResults(imgdata)
 		apDisplay.printMsg("%d particles for image %s"
-			%(len(peaktree), apDisplay.short(imgdata['filename'])))
-		if self.params['commit'] is True:
-			apParticle.insertParticlePeaks(peaktree, imgdata, self.params['runname'], msg=True)
+			%(len(self.peaktree), apDisplay.short(imgdata['filename'])))
+
+	### ==================================
+	def commitToDatabase(self, imgdata):
+		apParticle.insertParticlePeaks(self.peaktree, imgdata, self.params['runname'], msg=True)
 		return
 
 	#=====================
@@ -188,50 +196,87 @@ class gAutomatch(appionLoop2.AppionLoop):
 	def getGautomatchCommand(self, imgdata):
 		exe = self.getGautomatchPath()
 		gautocmd = exe
-
 		gautocmd += " --apixM %.3f "%(self.params['apix'])
 		gautocmd += " --diameter %d "%(self.params['diam'])
 		gautocmd += " --T %s "%(self.templateMrcStack)
 		gautocmd += " --apixT %.3f "%(self.templateApix)
-
 		gautocmd += " --ang_step %d "%(self.params['ang_step'])
 		gautocmd += " --speed %d "%(self.params['speed'])
-
-		if self.params['min_dist'] is not None:
-			gautocmd += " --min_dist %d "%(self.params['min_dist'])
-
+		if self.params['overlapmult'] is not None:
+			gautocmd += " --min_dist %d "%(self.params['overlapmult']*self.params['diam'])
 		if self.params['thresh'] is not None:
 			gautocmd += " --cc_cutoff %.2f "%(self.params['thresh'])
-
 		if self.params['lsigma_cutoff'] is not None:
 			gautocmd += " --lsigma_cutoff %.2f "%(self.params['lsigma_cutoff'])
-
 		if self.params['lsigma_D'] is not None:
 			gautocmd += " --lsigma_D %d "%(self.params['lsigma_D'])
-
 		if self.params['lave_D'] is not None:
 			gautocmd += " --lave_D %d "%(self.params['lave_D'])
-
 		gautocmd += " --lp %.1f "%(self.params['lowpass'])
 		gautocmd += " --hp %d "%(self.params['highpass'])
-
 		if self.params['invert'] is False:
 			## backward system: templates are auto inverted, flag says to not invert them.
-			gautocmd += " --dont_invertT "
-		return
+			gautocmd += " --dont_invertT 1 "
+		## add the image
+		origimgpath = os.path.join(imgdata['session']['image path'], imgdata['filename']+'.mrc')
+		runimgpath = os.path.join(self.params['rundir'], imgdata['filename']+'.mrc')
+		if not os.path.exists(runimgpath):
+			os.symlink(origimgpath, runimgpath)
+		gautocmd += " %s "%(runimgpath)
+		gautocmd = gautocmd.replace("  ", " ")
+		return gautocmd
 
 
 	### ==================================
 	def processGautomatchResults(self, imgdata):
-		peaktree = apFindEMG.getPeaksFromBoxFile(self, imgdata['filename']+'_automatch.box')
+		starname = imgdata['filename']+'_automatch.star'
+		if not os.path.isfile(starname):
+			apDisplay.printError("Gautomatch did not run")
+		peaktree = self.GautomatchStarFile(imgdata, starname)
+		if peaktree is None:
+			apDisplay.printError("Gautomatch did not run")
 		##FIXME
 		return peaktree
+
+	### ==================================
+	def GautomatchStarFile(self, imgdata, starname):
+		### preload db entries for templates
+		templatedatalist = []
+		for templateid in self.params['templateIds']:
+			templatedata = appiondata.ApTemplateImageData.direct_query(templateid)
+			templatedatalist.append(templatedata)
+
+		### read file
+		star = starFile.StarFile(starname)
+		star.read()
+		dataBlock = star.getDataBlock("data_")
+		loopDict  = dataBlock.getLoopDict() # returns a list with a dictionary for each line in the loop
+
+		### create peak tree
+		peaktree = []
+		for i, item in enumerate(loopDict):
+			#see appiondata.ApParticleData() for documentation...
+			peakdict = {'peakarea':1,'peakstddev':1,'peakmoment':1,
+				'angle': float(item['_rlnAnglePsi']),
+				'xcoord': int(item['_rlnCoordinateX']),
+				'ycoord': int(item['_rlnCoordinateY']),
+				'correlation': float(item['_rlnAutopickFigureOfMerit']),
+				'selectionrun': self.rundata,
+				'image': imgdata,
+				'diameter': self.params['diam'],
+				'label': "template%02d"%(int(item['_rlnClassNumber'])),
+			}
+			templatenum = int(item['_rlnClassNumber'])-1
+			peakdict['template'] = templatedatalist[templatenum]
+			peaktree.append(peakdict)
+		return peaktree
+
 
 	#===========================
 	def insertGautomatchRunParams(self):
 		runq = appiondata.ApSelectionRunData()
 		runq['name'] = self.params['runname']
-		runq['session'] = self.sessiondata
+		runq['session'] = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
 		runq['description'] = self.params['description']
 		runq['program'] = 'gautomatch' #lower case
 		runq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
@@ -245,7 +290,7 @@ class gAutomatch(appionLoop2.AppionLoop):
 		selectparams['manual_thresh'] = self.params['thresh']
 		selectparams['lp_filt'] = self.params['lowpass']
 		selectparams['hp_filt'] = self.params['highpass']
-		selectparams['overlapmult'] = self.params['min_dist']
+		selectparams['overlapmult'] = self.params['overlapmult']
 		selectparams['invert'] = self.params['invert']
 
 		runq['params'] = selectparams
@@ -253,14 +298,13 @@ class gAutomatch(appionLoop2.AppionLoop):
 		if self.params['commit'] is True:
 			apDisplay.printColor("Inserting gautomatch selection run into database", "green")
 			runq.insert()
-
 		return runq
 
 
 
 if __name__ == '__main__':
 	gautomatch = gAutomatch()
-	gautomatch.start()
+	gautomatch.run()
 	gautomatch.close()
 
 
