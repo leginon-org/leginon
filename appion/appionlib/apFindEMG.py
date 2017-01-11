@@ -239,7 +239,7 @@ def getPeaksFromBoxFile(imgmapname):
 		tline = sline.replace("\t", " ")
 		rline = re.sub("  *", " ", tline)
 		bits = line.split(' ')
-		peakdict = {'peakarea':1,'peakstddev':1,'peakmoment':1}
+		peakdict = {'peakarea':1,'peakstddev':1,'peakmoment':1,}
 		xboxsize = int(bit[2])
 		yboxsize = int(bit[3])
 		#WARNING: box files provide coordiates to corner of box not particle center
