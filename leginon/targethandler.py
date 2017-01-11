@@ -140,9 +140,12 @@ class TargetHandler(object):
 	def queueIdleFinish(self):
 		if not self.queueidleactive:
 			return
-		self.instrument.tem.ColumnValvePosition = 'closed'
-		print 'column valves closed and exiting leginon'
-		self.logger.warning('column valves closed')
+		try:
+			self.instrument.tem.ColumnValvePosition = 'closed'
+			self.logger.warning('column valves closed')
+		except:
+			# This fails when tem is not available, likely after Leginon is half closed.
+			pass
 		if self.settings['emission off']:
 			self.instrument.tem.Emission = False
 			self.logger.warning('emission switched off')

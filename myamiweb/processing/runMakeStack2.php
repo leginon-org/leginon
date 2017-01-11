@@ -130,7 +130,9 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	$selexcheck = ($_POST['partcutoff']=='on') ? 'CHECKED' : '';
 	$selexdisable = ($_POST['partcutoff']=='on') ? '' : 'DISABLED';
 	// density check (checked by default)
-	$invcheck = ($_POST['stackinv']=='on' || !$_POST['process']) ? 'CHECKED' : '';
+	$invertyescheck = ($_POST['stackinvert']=='yes' || !$_POST['process']) ? 'CHECKED' : '';
+	$invertnocheck = ($_POST['stackinvert']=='yes' || !$_POST['process']) ? '' : 'CHECKED';
+
 	$overridecheck = ($_POST['override']=='on') ? 'CHECKED' : '';
 	// defocus pair check
 	$defocpaircheck = ($_POST['stackdfpair']=='on') ? 'checked' : '';
@@ -198,7 +200,6 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 			document.viewerform.ctfres50min.disabled=true;
 		}
 	}
-
 
 	function toggleboxmask() {
 		if (document.getElementById('boxmaskopts').style.display == 'none' || document.getElementById('boxmaskopts').style.display == '') {
@@ -312,11 +313,19 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		echo "<option value='$key' $selected>$text</option>";
 	}
 	echo "</select><br/>\n";
+	echo "<br/>\n";
 
 	echo "<b>Density modifications:</b><br/>";
 
-	echo "<input type='checkbox' name='stackinv' $invcheck>\n";
-	echo docpop('stackinv','Invert image density');
+	echo "<input type='radio' name='stackinvert' value='yes' $invertyescheck>\n";
+	echo docpop('stackinvert','Vitreous ice - invert the particle density');
+	echo "(convert black particles to white)";
+	echo "<br/>\n";
+
+	echo "<input type='radio' name='stackinvert' value='no' $invertnocheck>\n";
+	echo docpop('stackinvert','Stain - do NOT change particle density');
+	echo " (particles are already white)";
+	echo "<br/>\n";
 	echo "<br/>\n";
 
 	//
@@ -528,27 +537,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		echo "</div>\n";
 		echo "</td></tr><tr><td>\n\n";
 
-		// confidence cutoff
-		echo"<input type='checkbox' name='aceconf' onclick='enablectf(this)' $ctfcheck>\n";
-		echo docpop('aceconf','CTF Confidence Cutoff');
-		echo "<br />\n";
-		echo "Use Values Above:<input type='text' name='ctf' $ctfdisable value='$ctfval' size='4'>
-		(between 0.0 - 1.0)\n";
 
-		echo "<br/><br/>";
-
-		//
-		// STARTING ADVANCED CTF SECTION
-		//
-		// Only hide advanced parameters if there is not an advanced user logged in.
-		// Modify user profile to set to an advanced user. 
-		// NOTE: this assumes the Appion user name and the username that is used to log in to the processing page are the same.
-		// We may want to change that someday.
-		if ( !$_SESSION['advanced_user'] ) {
-			echo "<a id='Advanced_Ctf_Options_toggle' href='javascript:toggle(\"Advanced_Ctf_Options\");' style='color:blue'>";
-			echo "Show Advanced CTF Options</a><br/>\n";
-			echo "<div id='Advanced_Ctf_Options' style='display: none'>\n";
-		}
 
 		// select correction method
 		echo "<div id='ctfcorrectmethdiv'>\n";
@@ -567,6 +556,46 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		echo "</div>\n";
 		//echo "</td></tr><tr><td>\n\n";
 
+		//
+		// STARTING ADVANCED CTF SECTION
+		//
+		// Only hide advanced parameters if there is not an advanced user logged in.
+		// Modify user profile to set to an advanced user. 
+		// NOTE: this assumes the Appion user name and the username that is used to log in to the processing page are the same.
+		// We may want to change that someday.
+
+		if ( !$_SESSION['advanced_user'] ) {
+			echo "<a id='Advanced_Ctf_Options_toggle' href='javascript:toggle(\"Advanced_Ctf_Options\");' style='color:blue'>";
+			echo "Show Advanced CTF Options</a><br/>\n";
+			echo "<div id='Advanced_Ctf_Options' style='display: none'>\n";
+		}
+		echo "<br/>";
+
+		// resolution cutoff
+		echo"<input type='checkbox' name='ctfres' onclick='enablectfres(this)' $ctfrescheck>\n";
+		echo docpop('ctfres','CTF Resolution Cutoff');
+		echo "<br/>\n";
+		echo "&nbsp; Resolution range at 0.8 criteria: <ul style='line-height:80%;margin:0'>";
+			echo "<li> lower limit: ";
+			echo " <input type='text' name='ctfres80min' value='$ctfres80min' size='4' $ctfresdisable>";
+			echo "&nbsp; <i>(e.g. 3, in &Aring;ngstroms)</i>";
+			echo "</li>\n";
+			echo "<li> upper limit: ";
+			echo " <input type='text' name='ctfres80max' value='$ctfres80max' size='4' $ctfresdisable>";
+			echo "&nbsp; <i>(e.g. 10, in &Aring;ngstroms)</i>\n";
+			echo "</li>\n";
+		echo "</ul>\n";
+		echo "&nbsp; Resolution range at 0.5 or software package criteria: <ul style='line-height:80%;margin:0'>";
+			echo "<li> lower limit: ";
+			echo " <input type='text' name='ctfres50min' value='$ctfres50min' size='4' $ctfresdisable>";
+			echo "&nbsp; <i>(e.g. 2, in &Aring;ngstroms)</i>";
+			echo "</li>\n";
+			echo "<li> upper limit: ";
+			echo " <input type='text' name='ctfres50max' value='$ctfres50max' size='4' $ctfresdisable>";
+			echo "&nbsp; <i>(e.g. 8, in &Aring;ngstroms)</i>\n";
+			echo "</li>\n";
+		echo "</ul><br/>\n";
+		
 		// select cutoff types method
 		echo docpop('ctfsort','CTF Sorting Method');
 		echo "<br/>\n";
@@ -605,19 +634,12 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		echo "<br/>";
 		//echo "</td></tr><tr><td>\n\n";
 
-		// resolution cutoff
-		echo"<input type='checkbox' name='ctfres' onclick='enablectfres(this)' $ctfrescheck>\n";
-		echo docpop('ctfres','CTF Resolution Cutoff');
+		// confidence cutoff
+		echo"<input type='checkbox' name='aceconf' onclick='enablectf(this)' $ctfcheck>\n";
+		echo docpop('aceconf','CTF Confidence Cutoff');
 		echo "<br />\n";
-		echo "&nbsp;&nbsp;Resolution range at 0.8 criteria: <br/>";
-			echo "between <input type='text' name='ctfres80min' value='$ctfres80min' size='4' $ctfresdisable>";
-			echo "and <input type='text' name='ctfres80max' value='$ctfres80max' size='4' $ctfresdisable>";
-			echo "&nbsp; <i>(in &Aring;ngstroms)</i>\n";
-		echo "<br/>\n";
-		echo "&nbsp;&nbsp;Resolution range at 0.5 or software package criteria: <br/>";
-			echo "between <input type='text' name='ctfres50min' value='$ctfres50min' size='4' $ctfresdisable>";
-			echo "and <input type='text' name='ctfres50max' value='$ctfres50max' size='4' $ctfresdisable>";
-			echo "&nbsp; <i>(in &Aring;ngstroms)</i>\n";
+		echo "Use Values Above:<input type='text' name='ctf' $ctfdisable value='$ctfval' size='4'>
+		(between 0.0 - 1.0)\n";
 
 		echo "<br/><br/>";
 		//echo "</td></tr><tr><td>\n\n";
@@ -839,7 +861,7 @@ function runMakestack() {
 	$description = $_POST['description'];
 	$filetype = $_POST['filetype'];
 	
-	$invert = ($_POST['stackinv']=='on') ? True : False;
+	$invert = ($_POST['stackinvert']=='yes') ? True : False;
 	$normalizemethod = $_POST['normalizemethod'];
 	$noctf = $_POST['noctf'];
 	$ctfcorrect = ($_POST['ctfcorrect']=='on') ? 'ctfcorrect' : '';

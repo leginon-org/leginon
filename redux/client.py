@@ -41,7 +41,6 @@ class NetworkClient(Client):
 
 class SimpleClient(Client):
 	def __init__(self, *args, **kwargs):
-		import redux.pipeline
 		Client.__init__(self, *args, **kwargs)
 	def process_request(self, request):
 		kwargs = utility.request_to_kwargs(request)

@@ -7,10 +7,8 @@ gobject.threads_init()
 import gst
 import gtk
 
-import numpygst
 import numpy
-
-import scipy.ndimage
+import numpygst
 
 class NewElement(gst.Element):
 	""" A basic, buffer forwarding gstreamer element """
@@ -81,7 +79,6 @@ class NewElement(gst.Element):
 		#b = a.copy()
 		## ndimage does not like fields
 		print 'AAA', a.dtype, len(a.data), a.strides
-		import numpy
 		av = a.view(numpy.uint8)
 		print 'BBB'
 		av.shape = a.shape + (-1,)

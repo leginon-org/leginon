@@ -299,7 +299,8 @@ function login_header($title="", $javascript="", $onload="",$athome=false) {
 		} else {
 			if (!preg_match('%'.BASE_URL.'login.php%', $_SERVER['PHP_SELF']))
 				echo '<a class="header" href="'.BASE_URL.'login.php?'.$url.'">[Login]</a>';
-			echo '<a class="header" href="register.php?'.$url.'">[register]</a>';
+			# register is no longer used
+			//echo '<a class="header" href="register.php?'.$url.'">[register]</a>';
 		}
 	}
 

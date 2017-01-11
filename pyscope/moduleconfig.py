@@ -3,15 +3,16 @@ import copy
 import sys
 import ConfigParser
 import os
-import pyscope
+import imp
 import pyami.fileutil
 
 class ModuleConfigParser(object):
-	def __init__(self,filename):
+	def __init__(self,filename,package='pyscope'):
 		self.configparser = ConfigParser.SafeConfigParser()
 		self.configured = {}
 		self.config_filename = filename
 		self.configfiles = None
+		self.package = package
 
 
 	def newHierarchyDict(self,keys,value):
@@ -93,7 +94,8 @@ class ModuleConfigParser(object):
 	def parse(self):
 		print "parsing %s...." % self.config_filename
 		# use the path of this module
-		modpath = pyscope.__path__
+		modinfo = imp.find_module(self.package)
+		modpath = modinfo[1]
 
 		# read instruments.cfg
 		confdirs = pyami.fileutil.get_config_dirs()
