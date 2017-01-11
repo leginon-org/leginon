@@ -396,5 +396,22 @@ class Label():
     def toString(self):
         outString = self.name + "\t" + self.value + "\t" + self.comment
         return outString
-        
-        
+
+
+#################################################################
+#
+# EXAMPLES
+#
+#################################################################
+"""
+Example of reading an existing star file:
+import starFile
+star = starFile.StarFile("path/to/starfile")
+star.read()
+dataBlock = star.getDataBlock("dataBlockName")
+loopDict  = dataBlock.getLoopDict() # returns a list with a dictionary for each line in the loop
+labelDict = dataBlock.getLabelDict() # returns labels occuring outside a loop in a data block
+header    = star.getHeader() # returns any header comments as a string
+"""
+
+
