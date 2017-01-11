@@ -16,7 +16,7 @@ class TemplateSelectionTable extends BasicForm
 {
 	protected $availableTemplate;			// an array of templateinfo availble in the project
 
-	function __construct( $availableTemplates=array() )
+	function __construct( $availableTemplates=array(), $angles=true )
 	{
 		parent::__construct();
 		
@@ -27,13 +27,16 @@ class TemplateSelectionTable extends BasicForm
 		$params->setHelpSection( "appion" );
 
 		$this->particle = new particledata;
+		$this->angles = $angles;
 
 		// assign private variable
 		$this->availableTemplates = $availableTemplates;
 
 		// add parameters
 		$params->addParam( "template_list", $templatelistv, "Template list" );
-		$params->addParam( "range_list", $rangelistv, "Rotation search range for each template" );
+		if ($this->angles == true) {
+			$params->addParam( "range_list", $rangelistv, "Rotation search range for each template" );
+		}
 
 		$numtemplates = count($this->availableTemplates);
 		for ($i = 1; $i <= $numtemplates; $i++) {
@@ -42,7 +45,7 @@ class TemplateSelectionTable extends BasicForm
 
 	}
 			
-	private function	addSingleTemplateParams($templateinfo, $i)
+	private function addSingleTemplateParams($templateinfo, $i)
 	{
 		$params = $this->getFormParams();
 
@@ -66,7 +69,7 @@ class TemplateSelectionTable extends BasicForm
 		}
 		$this->updateFormParams();
 	}
-		
+
 	public function generateForm($enable=true)
 	{
 		$this->updateFormParams();
@@ -182,13 +185,15 @@ class TemplateSelectionTable extends BasicForm
 			$templatetable.="<br/>\n";
 			$templatetable.="<br/>\n";
 
-			$fieldSize = 3;
-			$templatetable.="<b>Rotation values</b><br/>";
-			$templatetable.="<i>(leave blank for no rotation)</i>:<br>\n";
-			$templatetable.= $params->insertTextField( $checkboxname.'strt', $fieldSize,"" );	
-			$templatetable.= $params->insertTextField( $checkboxname.'end', $fieldSize,"" );	
-			$templatetable.= $params->insertTextField( $checkboxname.'incr', $fieldSize,"" );	
-			$templatetable.="<br/>\n";
+			if ($this->angles == true) {
+				$fieldSize = 3;
+				$templatetable.="<b>Rotation values</b><br/>";
+				$templatetable.="<i>(leave blank for no rotation)</i>:<br>\n";
+				$templatetable.= $params->insertTextField( $checkboxname.'strt', $fieldSize,"" );	
+				$templatetable.= $params->insertTextField( $checkboxname.'end', $fieldSize,"" );	
+				$templatetable.= $params->insertTextField( $checkboxname.'incr', $fieldSize,"" );	
+				$templatetable.="<br/>\n";
+			}
 			$templatetable.="<table width='200'><tr><td>\n";
 			$templatetable.="<b>Description:</b>&nbsp;<font size='-2'>$templateinfo[description]</font>\n";
 			$templatetable.="</td></tr></table>\n";
@@ -246,9 +251,10 @@ class TemplateSelectionTable extends BasicForm
 		//set value and then added as hidden field
 		$params->setParamValue("template_list",$templateliststr);
 		$html .= $params->insertHiddenField( "template_list" );
-
-		$params->setParamValue("range_list",$rangeliststr);
-		$html .= $params->insertHiddenField( "range_list" );
+		if ($this->angles == true) {
+			$params->setParamValue("range_list",$rangeliststr);
+			$html .= $params->insertHiddenField( "range_list" );
+		}
 		return $html;
 	}
 
