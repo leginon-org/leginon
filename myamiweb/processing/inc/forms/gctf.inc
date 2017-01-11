@@ -16,7 +16,7 @@ class gctf extends BasicLoopForm
 
 
 	function __construct( $expId, $extraHTML='', $ampcontrast='0.07', $mdef_aveN='7', $do_EPA=true,	
-	$apcontinue='1', $fieldsize='1024', $dast='0.1',  $bestdb=true, $nominal='', $parallel=true, $do_basic_rotave='0', $overlap='0.5',$convsize='85', $do_Hres_ref='0', $defstep='0.1', $resmin='50',$resmax='4',$useDDStack=false, $ddstackid=false,$max_phase_shift='180',$min_phase_shift='0',$phase_search_step='1',$phaseplate=false)
+	$apcontinue='1', $fieldsize='1024', $dast='0.1',  $bestdb=true, $nominal='', $parallel=true, $do_basic_rotave='0', $overlap='0.5',$convsize='85', $do_Hres_ref='0', $defstep='0.1', $resmin='50',$resmax='4',$useDDStack=false, $ddstackid=false,$max_phase_shift='180',$min_phase_shift='0',$phase_search_step='1',$phaseplate=false, $speedmode='fastmode')
 	{
 		parent::__construct($expId, $extraHTML);
 		
@@ -91,7 +91,7 @@ class gctf extends BasicLoopForm
 		$params->addParam( "plot_res_ring", $plot_res_ring, "Plot an estimated resolution ring on the final .ctf diagnosis file.");
 		$params->addParam( "output_time", $output_time, "Include process time measurements in output");
 		$params->addParam( "gid", $gid, "GPU ID");
-
+		$params->addParam( "speedmode", $speedmode, "Do not create images" );
 
 		//Phase plate parameters
 		$params->addParam( "max_phase_shift", $max_phase_shift,"Maximum phase shift");
@@ -134,8 +134,13 @@ class gctf extends BasicLoopForm
 	    <hr />";
 		$html .=$this->dbDefocusTable->generateForm();
 
+
+	   $html.= "<p>Processing Speed: <br/>\n";
+		$html.= $params->insertRadioField("speedmode", "fastmode", "Fast: Do not create CTF summary images","");	
+		$html.= $params->insertRadioField("speedmode", "slowmode", "Slow: Create CTF summary images","");	
+		$html.= "</p>";
+
 		$html .= "
-	    <br />
 	    <H4>Additional Parameters</H4>
 	    <hr />";
 
@@ -232,29 +237,24 @@ class gctf extends BasicLoopForm
 		$paramArray = $this->formParams->getParamArray();
 		// If the form does purely composite and does not define any params of its own,
 		// the param array will be null.
-		
-#		$command = 'gctf.py ';
+
 		if ( $paramArray ) {
 			foreach ( $paramArray as $key=>$param ) {
 				if (($param['name'] == 'phaseplate')&&($paramArray['phaseplate']['value'] == false )) {
 					$command = $this->removeCommandFlag($command,'max_phase_shift',$param['max_phase_shift']);
 					$command = $this->removeCommandFlag($command,'min_phase_shift',$param['min_phase_shift']);
 					$command = $this->removeCommandFlag($command,'phase_search_step',$param['phase_search_step']);
-	#				$command = $this->removeCommandFlag($command,'phaseplate',$param['phaseplate']);
-
-					}
-
-				else {
-		#			$command = $this->removeCommandFlag($command,'phaseplate',$param['phaseplate']);
-
-					}
-
+				}
 			}
 		}
+
+		$command = $this->removeCommandFlag($command, 'speedmode');
+		$params = $this->getFormParams();
+		$speedmode = $params->getParamValue( "speedmode" );
+		$command .= " --".$speedmode." ";
 
 		return $command;
 	}
 
-	
 
 	}
