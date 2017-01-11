@@ -68,6 +68,7 @@ def getTemplates(params):
 		scalefactor = templatedata['apix'] / params['apix']
 		if abs(scalefactor - 1.0) > 0.01:
 			apDisplay.printMsg("rescaling template "+str(index)+": "+str(templatedata['apix'])+"->"+str(params['apix']))
+		## this step adjusts boxsize as well
 		templatearray = scaleTemplate(templatearray, scalefactor)
 		apImage.arrayToMrc(templatearray, scaletemplatepath, msg=False)
 		#bin and filter
