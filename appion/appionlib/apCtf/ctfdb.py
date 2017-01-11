@@ -29,7 +29,7 @@ def getNumCtfRunsFromSession(sessionname):
 
 #=====================
 def getCtfMethod(ctfvalue):
-	if not 'acerun' in ctfvalue:
+	if ctfvalue.get('acerun', None) is None:
 		return None
 	if ctfvalue['acerun']['aceparams'] is not None:
 		return "ace1"
@@ -54,7 +54,7 @@ def printCtfData(ctfvalue):
 	method = getCtfMethod(ctfvalue)
 	if 'acerun' in ctfvalue:
 		method = getCtfMethod(ctfvalue)
-		runname = ctfvalue['acerun']['name']
+		runname = ctfvalue['acerun'].get('name','????')
 		sys.stderr.write("[%s]   method: %s | runname %s\n"%
 		(apDisplay.colorString("CTF run", "blue"), method, runname))
 	sys.stderr.write("[%s] def1: %.3f um | def2: %.3f um | angle: %.1f | ampcontr %.2f | defratio %.3f\n"%
