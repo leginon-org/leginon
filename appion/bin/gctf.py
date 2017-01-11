@@ -56,6 +56,11 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 		self.parser.add_option("--do_Hres_ref", dest="do_Hres_ref", default=False, action="store_true",
 			help="Boost high resolution refinement")
 
+		self.parser.add_option("--fastmode", dest="fastmode", default=True,
+			action="store_true", help="Fast mode: do not create CTF display images")
+		self.parser.add_option("--slowmode", dest="fastmode", default=True,
+			action="store_false", help="Slow mode: create CTF display images")
+
 		self.parser.add_option("--bestdb", "--best-database", dest="bestdb", default=False,
 			action="store_true", help="Use best amplitude contrast and astig difference from database")
 
@@ -73,19 +78,14 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 		self.parser.add_option("--max_phase_shift", dest="max_phase_shift", type="int",
 				help="Maximum value for phase search")
 
-
 		self.parser.add_option("--min_phase_shift", dest="min_phase_shift", type="int",
 				help="Min value for phase search")
-
-
 		self.parser.add_option("--phase_search_step", dest="phase_search_step", type="int",
 				help="Phase search step increment")
-
-                self.parser.add_option("--phaseplate", "--phase_plate", dest="shift_phase", default=False,
-                        action="store_true", help="Find additional phase shift")
+		self.parser.add_option("--phaseplate", "--phase_plate", dest="shift_phase", default=False,
+			action="store_true", help="Find additional phase shift")
 
 	
-
 	#======================
 	def checkConflicts(self):
 		if self.params['resmin'] > 50.0:
@@ -158,31 +158,31 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 	def processImage(self, imgdata):
 		"""
 		time ./ctffind3.exe << eof
-		Input image file name                  [input.mrc] : 15aug13neil2_14jul14d_05sq_012hl_02ed-a.mrc
+		Input image file name		  [input.mrc] : 15aug13neil2_14jul14d_05sq_012hl_02ed-a.mrc
 		Output diagnostic filename
-		[diagnostic_output.mrc]                            : 15aug13neil2_14jul14d_05sq_012hl_02ed-a-pow.mrc
-		Pixel size                                   [1.0] : 2.7
-		Acceleration voltage                       [300.0] : 300 
-		Spherical aberration                         [2.7] : 2.7
-		Amplitude contrast                          [0.07] : 0.07
-		Size of power spectrum to compute            [512] : 512
-		Minimum resolution                          [30.0] : 20
-		Maximum resolution                           [5.0] : 5
-		Minimum defocus                           [5000.0] : 
-		Maximum defocus                          [50000.0] : 
-		Defocus search step                        [500.0] : 
-		Expected (tolerated) astigmatism           [100.0] : 
-		Find additional phase shift?                  [no] : 
+		[diagnostic_output.mrc]			    : 15aug13neil2_14jul14d_05sq_012hl_02ed-a-pow.mrc
+		Pixel size				   [1.0] : 2.7
+		Acceleration voltage		       [300.0] : 300 
+		Spherical aberration			 [2.7] : 2.7
+		Amplitude contrast			  [0.07] : 0.07
+		Size of power spectrum to compute	    [512] : 512
+		Minimum resolution			  [30.0] : 20
+		Maximum resolution			   [5.0] : 5
+		Minimum defocus			   [5000.0] : 
+		Maximum defocus			  [50000.0] : 
+		Defocus search step			[500.0] : 
+		Expected (tolerated) astigmatism	   [100.0] : 
+		Find additional phase shift?		  [no] : 
 		"""
 #		paramInputOrder = [ 'output', 'apix', 'kv', 'cs', 'ac', 'boxsize', 'do_EPA','mdef_aveN',
 #			'resL', 'resH', 'defS', 'astm','input','phase_shift_L','phase_shift_H','phase_shift_S']
 		paramInputOrder = [ 'output', 'apix', 'kv', 'cs', 'ac', 'boxsize', 'do_EPA', 'do_Hres_ref', 'mdef_ave_type', 'mdef_aveN',
 			'resL', 'resH', 'defL', 'defH', 'defS', 'astm','input']
-                # finalize paramInputOrder
-                if self.params['shift_phase']:
-                        paramInputOrder.extend(['phase_shift_H','phase_shift_L','phase_shift_S'])
-#                paramInputOrder.append('expert_opts')
-#                paramInputOrder.append('newline')
+		# finalize paramInputOrder
+		if self.params['shift_phase']:
+			paramInputOrder.extend(['phase_shift_H','phase_shift_L','phase_shift_S'])
+#      paramInputOrder.append('expert_opts')
+#      paramInputOrder.append('newline')
 
 
 		#get Defocus in Angstroms
@@ -314,7 +314,7 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 		apDisplay.printColor(gctfcommandstring,"magenta")
 
 		ctfprogproc = subprocess.Popen(self.ctfprgmexe+gctfcommandstring, shell=True, stdin=subprocess.PIPE,)
-                apDisplay.printColor(self.ctfprgmexe+gctfcommandstring, "magenta")
+		apDisplay.printColor(self.ctfprgmexe+gctfcommandstring, "magenta")
 		ctfprogproc.stdin.write(gctfcommandstring)
 		apDisplay.printColor(gctfcommandstring,"magenta")
 
@@ -341,48 +341,33 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 			if (re.match('Defocus_U',sline)):
 				sline = next(logf).strip()
 				bits = sline.split()
-
+				### common values
+				self.ctfvalues = {
+					'imagenum' : int(1),
+					'defocus2' : float(bits[0])*1e-10,
+					'defocus1' : float(bits[1])*1e-10,
+					'angle_astigmatism' : float(bits[2]) + 90,  # see bug #4047 for astig conversion
+					'amplitude_contrast' : inputparams['ac'],
+					'do_EPA' : inputparams['do_EPA'],
+					'defocusinit' : bestdef*1e-10,
+					'cs' : self.params['cs'],
+					'volts' : imgdata['scope']['high tension'],
+				}
+				## bit len specific values
 				if len(bits) == 6:
-
-					self.ctfvalues = {
-
-						'imagenum' : int(1),
-						'defocus2' : float(bits[0])*1e-10,
-						'defocus1' : float(bits[1])*1e-10,
-						'angle_astigmatism' : float(bits[2]) + 90,  # see bug #4047 for astig conversion
-						'amplitude_contrast' : inputparams['ac'],
+					self.ctfvalues.update({
 						'cross_correlation' : float(bits[3]),
-						'do_EPA' : inputparams['do_EPA'],
-						'defocusinit' : bestdef*1e-10,
-						'cs' : self.params['cs'],
-						'volts' : imgdata['scope']['high tension'],
 						'confidence' : float(bits[3]),
 						'confidence_d' : round(math.sqrt(abs(float(bits[3]))), 5),
-						'extra_phase_shift':  float(0)
-
-					}
-
+						'extra_phase_shift': float(0)
+					})
 				elif len(bits) == 7:
-
-					self.ctfvalues = {
-
-						'imagenum' : int(1),
-						'defocus2' : float(bits[0])*1e-10,
-						'defocus1' : float(bits[1])*1e-10,
-						'angle_astigmatism' : float(bits[2]) + 90,  # see bug #4047 for astig conversion
-						'amplitude_contrast' : inputparams['ac'],
+					self.ctfvalues.update({
 						'cross_correlation' : float(bits[4]),
-						'do_EPA' : inputparams['do_EPA'],
-						'defocusinit' : bestdef*1e-10,
-						'cs' : self.params['cs'],
-						'volts' : imgdata['scope']['high tension'],
 						'confidence' : float(bits[4]),
 						'confidence_d' : round(math.sqrt(abs(float(bits[4]))), 5),
 						'extra_phase_shift': round(math.radians(float(bits[3])),5), # radians
-
-					}
-
-				
+					})
 
 				print 'defocus2 = '+str(self.ctfvalues['defocus2'])
 				print 'defocus1 = '+str(self.ctfvalues['defocus1'])
@@ -394,7 +379,6 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 				#print 'ctffind4_resolution = '+self.ctfvalues['ctffind4_resolution']
 
 		if len(self.ctfvalues.keys()) == 0:
-			#
 			apDisplay.printError("GCTF program did not produce valid results in the log file")
 		sourcectffile = apDisplay.short(imgdata['filename'])+'.ctf'
 		
@@ -411,10 +395,8 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 		powspec = apImage.mrcToArray(inputparams['output'])
 		apImage.arrayToJpeg(powspec, outputjpg)
 		shutil.move(inputparams['output'], os.path.join(self.powerspecdir, inputparams['output']))
-		self.ctfvalues['graph1'] = outputjpg
-
-		#apFile.removeFile(inputparams['input'])
-
+		self.ctfvalues['graph1'] = os.path.join(os.path.basename(self.powerspecdir), outputjpgbase)
+		self.ctfvalues['graph3'] = os.path.join(os.path.basename(self.powerspecdir), outputjpgbase)
 		return
 
 	def getMovieAverageType(self):
@@ -428,18 +410,19 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 
 	#======================
 	def commitToDatabase(self, imgdata):
-		import pprint
-
 		self.insertCtfRun(imgdata)
-	
-		pprint.pprint('***********insertCTFRUN**************')
-		pprint.pprint((imgdata))
-		pprint.pprint((self.ctfvalues))
-		pprint.pprint((self.ctfrun))
-		pprint.pprint((self.params['rundir']))
-
-	
-		ctfinsert.validateAndInsertCTFData(imgdata, self.ctfvalues, self.ctfrun, self.params['rundir'])
+		### time to insert
+		if self.params['fastmode'] is True:
+			### overtride the ctf insert processing steps
+			ctfq = appiondata.ApCtfData()
+			for key in ctfq.keys():
+				ctfq[key] = self.ctfvalues.get(key, None)
+			ctfq['acerun'] = self.ctfrun
+			ctfq['image'] = imgdata
+			ctfdb.printCtfData(ctfq)
+			ctfq.insert()
+		else:
+			ctfinsert.validateAndInsertCTFData(imgdata, self.ctfvalues, self.ctfrun, self.params['rundir'])
 
 	#======================
 	def insertCtfRun(self, imgdata):
@@ -453,8 +436,6 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 			if p in self.params:
 				paramq[p] = self.params[p]
 
-
-			
 		# create an acerun object
 		runq = appiondata.ApAceRunData()
 		runq['name'] = self.params['runname']
