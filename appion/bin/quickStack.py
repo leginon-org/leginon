@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os
+import re
 import sys
 import time
 import numpy
@@ -11,6 +12,7 @@ from appionlib import apStack
 from appionlib import apDatabase
 from appionlib import apParticle
 from appionlib import starFile
+from appionlib.StackClass import stackTools
 
 import sinedon
 
@@ -20,6 +22,16 @@ def makeStack(starfile):
 	dataBlock = star.getDataBlock("data_images")
 	loopDict  = dataBlock.getLoopDict()
 	print "Found %d particles"%(len(loopDict))
+	coordinates = []
+	micrograph = loopDict[0]['_rlnMicrographName']
+	micrograph = re.sub("[0-9]*@", "", micrograph)
+	stackfile = loopDict[0]['_rlnImageName']
+	boxsize = int(loopDict[0]['_appBoxSize'])
+	for partdict in loopDict:
+		x = int(partdict['_rlnCoordinateX'])
+		y = int(partdict['_rlnCoordinateY'])
+		coordinates.append((x,y))
+	stackTools.boxParticlesFromFile(micrograph, stackfile, coordinates, boxsize)
 	return
 
 def start_process():
@@ -34,28 +46,17 @@ class QuickStack(appionScript.AppionScript):
 			help="Particle Selction ID", metavar="#")
 		self.parser.add_option("--preset", dest="preset",
 			help="Preset Name", metavar="#")
-
+		self.parser.add_option("--boxsize", dest="boxsize", type="int",
+			help="Particle Boxsize", metavar="#")
+		
 	#=====================
 	def checkConflicts(self):
 		if self.params['expid'] is None:
 			apDisplay.printError("Please provide a session id, e.g. --expid=15")
 		if self.params['selectid'] is None:
 			apDisplay.printError("Please provide a Particle Selction id, e.g. --selectid=15")
-
-	#==========AppionScript):
-	#=====================
-	def setupParserOptions(self):
-		self.parser.add_option("--selectid", dest="selectid", type="int",
-			help="Particle Selction ID", metavar="#")
-		self.parser.add_option("--preset", dest="preset",
-			help="Preset Name", metavar="#")
-
-	#=====================
-	def checkConflicts(self):
-		if self.params['expid'] is None:
-			apDisplay.printError("Please provide a session id, e.g. --expid=15")
-		if self.params['selectid'] is None:
-			apDisplay.printError("Please provide a Particle Selction id, e.g. --selectid=15")
+		if self.params['boxsize'] is None:
+			apDisplay.printError("Please provide a Box size id, e.g. --boxsize=128")
 
 	#================================
 	def start(self):
@@ -86,12 +87,13 @@ class QuickStack(appionScript.AppionScript):
 		micrograph = os.path.join(imgdata['session']['image path'], imgdata['filename']+'.mrc')
 
 		particles = apParticle.getParticles(imgdata, self.params['selectid'])
-		labels = ["_rlnCoordinateX", "_rlnCoordinateY", "_rlnImageName", "_rlnMicrographName"]
+		labels = ["_rlnCoordinateX", "_rlnCoordinateY", "_rlnImageName", "_rlnMicrographName", '_appBoxSize']
 		count = 0
 		valueSets = []
 		for part in particles:
 			count += 1
-			valueString = "%d %d %05d@%s %s"%(part['xcoord'], part['ycoord'], count, stackfile, micrograph)
+			valueString = ("%d %d %05d@%s %s %d"
+				%(part['xcoord'], part['ycoord'], count, stackfile, micrograph, self.params['boxsize']))
 			valueSets.append(valueString)
 		star = starFile.StarFile(starfile)
 		star.buildLoopFile( "data_images", labels, valueSets )
