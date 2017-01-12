@@ -10,18 +10,15 @@ import numpy
 import sinedon.directq
 from pyami import mrc
 from pyami import mem
-from pyami import imagic
 from appionlib import apDatabase
 from appionlib import apParticle
 from appionlib import apEMAN
 from appionlib import apDisplay
 from appionlib import appiondata
 from appionlib import apFile
-from appionlib import apParam
 from appionlib import apScriptLog
-from appionlib import proc2dLib
-from appionlib import apImagicFile
 from appionlib.apCtf import ctftools
+from appionlib.StackClass import stackTools
 
 debug = False
 
@@ -50,12 +47,7 @@ def makeNewStack(oldstack, newstack, listfile=None, remove=False, bad=False):
 	apDisplay.printMsg("creating a new stack\n\t"+newstack+
 		"\nfrom the oldstack\n\t"+oldstack+"\n")
 
-	a = proc2dLib.RunProc2d()
-	a.setValue('infile',oldstack)
-	a.setValue('outfile',newstack)
-	if listfile is not None:
-		a.setValue('list',listfile)
-	a.run()
+	stackTools.createSubStack(oldstack, newstack, listfile, msg=True)
 
 	if bad is True and listfile is not None:
 		### run only if num bad particles < num good particles
@@ -79,7 +71,6 @@ def getVirtualStackParticlesFromId(stackid, msg=True):
 	returns oldstackid, filename, particle list
 	"""
 
-	t0 = time.time()
 	if msg is True:
 		apDisplay.printMsg("Querying original particles from stackid="+str(stackid))
 
@@ -140,7 +131,6 @@ def getStackParticlesFromId(stackid, msg=True):
 
 #===============
 def getNumberStackParticlesFromId(stackid, msg=True):
-	t0 = time.time()
 	stackdata = appiondata.ApStackData.direct_query(stackid)
 	stackpath = os.path.join(stackdata['path']['path'], stackdata['name'])
 	numpart = apFile.numImagesInStack(stackpath)
@@ -150,7 +140,6 @@ def getNumberStackParticlesFromId(stackid, msg=True):
 def getImageIdsFromStack(stackid, msg=True):
 	if stackid < 1:
 		return []
-	t0 = time.time()
 	stackdata = appiondata.ApStackData.direct_query(stackid)
 	stackq=appiondata.ApStackParticleData()
 	stackq['stack'] = stackdata
@@ -200,10 +189,6 @@ def getOnlyStackData(stackid, msg=True):
 	stackdata = appiondata.ApStackData.direct_query(stackid)
 	if not stackdata:
 		apDisplay.printError("Stack ID: "+str(stackid)+" does not exist in the database")
-	stackpath = os.path.join(stackdata['path']['path'], stackdata['name'])
-	# stack file is not checked in case it is archieved away
-	#if not os.path.isfile(stackpath):
-	#	apDisplay.printError("Could not find stack file: "+stackpath)
 	if msg is True:
 		sys.stderr.write("Old stack info: ")
 		apDisplay.printColor("'"+stackdata['description']+"'","cyan")
@@ -320,49 +305,9 @@ def getStackIdFromRecon(reconrunid, msg=True):
 #===============
 def averageStack(stack="start.hed", outfile="average.mrc", partlist=None, msg=True):
 	"""
-	only works with IMAGIC
-	
 	partlist starts at 1
 	"""
-	if msg is True:
-		apDisplay.printMsg("averaging stack for summary web page")
-	stackfile = os.path.abspath(stack)
-	if not os.path.isfile(stackfile):
-		apDisplay.printWarning("could not create stack average, average.mrc")
-		return False
-	avgStack = AverageStack(msg)
-	avgStack.start(stackfile, partlist)
-	if outfile is not None:
-		avgmrc = os.path.join(os.path.dirname(stackfile), outfile)
-		avgStack.save(avgmrc)
-	avgstack = avgStack.getdata()
-	return avgstack
-
-#======================
-#======================
-#======================
-#======================
-class AverageStack(apImagicFile.processStack):
-	#===============
-	def preLoop(self):
-		self.average = numpy.zeros((self.boxsize,self.boxsize))
-		#override self.partlist to get a subset
-		self.count = 0
-
-	#===============
-	def processStack(self, stackarray):
-		if isinstance(stackarray, list):
-			stackarray = numpy.array(stackarray)
-		self.index += stackarray.shape[0]
-		self.average += stackarray.sum(0)
-
-	#===============
-	def save(self, avgfile):
-		mrc.write(self.average/self.index, avgfile)
-
-	#===============
-	def getdata(self):
-		return self.average/self.index
+	return stackTools.averageStack(stack, outfile, partlist, msg)
 
 #======================
 def getParticleContrastFromStackId(stackId):
@@ -525,7 +470,6 @@ def commitSubStack(params, newname=False, centered=False, oldstackparts=None, so
 		f.close()
 		listfilelines.sort()
 
-	total = len(listfilelines)
 	apDisplay.printMsg("Completed in "+apDisplay.timeString(time.time()-t0)+"\n")
 
 	## index old stack particles by number
@@ -882,24 +826,24 @@ def getStackParticleFromParticleId(particleid, stackid, noDie=False):
 	return stackpnum[0]
 
 #===============
-def getImageParticles(imagedata,stackid,noDie=True):
+def getImageParticles(imagedata, stackid, noDie=True):
 	"""
 	Provided a Stack Id & imagedata, to find particles
 	"""
 	particleq = appiondata.ApParticleData(image=imagedata)
 
-	stackpdata = appiondata.ApStackParticleData()
-	stackpdata['particle'] = particleq
-	stackpdata['stack'] = appiondata.ApStackData.direct_query(stackid)
-	stackps = stackpdata.query()
+	stackpartq = appiondata.ApStackParticleData()
+	stackpartq['particle'] = particleq
+	stackpartq['stack'] = appiondata.ApStackData.direct_query(stackid)
+	stackpartdata = stackpartq.query()
 	particles = []
-	if not stackps:
+	if not stackpartdata:
 		if noDie is True:
-			return particles,None
-		apDisplay.printError("partnum="+str(particleid)+" was not found in stackid="+str(stackid))
-	for stackp in stackps:
-		particles.append(stackp['particle'])
-	return particles,stackps
+			return particles, None
+		apDisplay.printError("no stack particles were found for stackid=%d and image"%(stackid))
+	for stackpart in stackpartdata:
+		particles.append(stackpart['particle'])
+	return particles,stackpartdata
 
 #===============
 def findSubStackConditionData(stackdata):
