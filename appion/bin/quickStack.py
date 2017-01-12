@@ -24,14 +24,14 @@ def makeStack(starfile):
 	print "Found %d particles"%(len(loopDict))
 	coordinates = []
 	micrograph = loopDict[0]['_rlnMicrographName']
-	micrograph = re.sub("[0-9]*@", "", micrograph)
 	stackfile = loopDict[0]['_rlnImageName']
+	stackfile = re.sub("^[0-9]+@", "", stackfile)
 	boxsize = int(loopDict[0]['_appBoxSize'])
 	for partdict in loopDict:
 		x = int(partdict['_rlnCoordinateX'])
 		y = int(partdict['_rlnCoordinateY'])
 		coordinates.append((x,y))
-	stackTools.boxParticlesFromFile(micrograph, stackfile, coordinates, boxsize)
+	stackTools.boxParticlesFromFile(micrograph, stackfile, boxsize, coordinates)
 	return
 
 def start_process():
@@ -68,9 +68,8 @@ class QuickStack(appionScript.AppionScript):
 			sys.stderr.write(".")
 			starfile = self.writeStarFile(imgdata)
 			starlist.append(starfile)
-		print ""
 		del self.imgtree
-		nproc = 6
+		nproc = 2
 		t0 = time.time()
 		print "nproc %d"%(nproc)
 		p = multiprocessing.Pool(processes=nproc, initializer=start_process)

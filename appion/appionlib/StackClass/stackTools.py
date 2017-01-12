@@ -30,6 +30,34 @@ def getPixelSize(filename):
 ########################################
 ########################################
 ########################################
+def boxParticlesFromFile(mrcfile, stackfile, boxsize, coordinates):
+	"""
+	reads mrc and writes a stackfile
+	boxsize = integer
+	coordinates is 20x2 numpy array
+		e.g., coordinates[0] = [2030, 1065]
+	"""
+	print "Making a stack %s -> %s"%(mrcfile, stackfile)
+	imgarray = mrc.read(mrcfile)
+	boxedparticles = []
+	for x,y in coordinates:
+		x1 = x-boxsize/2
+		x2 = x+boxsize/2
+		y1 = y-boxsize/2
+		y2 = y+boxsize/2
+		if x1 < 0 or y1 < 0:
+			continue
+		if x2 >= imgarray.shape[1] or y2 >= imgarray.shape[0]:
+			continue
+		boxpart = imgarray[y1:y2,x1:x2] #numpy arrays are rows,cols --> y,x not x,y
+		boxedparticles.append(boxpart)
+	stackClass = ProcessStack.createStackClass(stackfile)
+	stackClass.appendParticlesToFile(boxedparticles)
+	return
+
+########################################
+########################################
+########################################
 #===============
 def createSubStack(instack="start.hdf", outstack="average.mrcs", partlist=None, msg=False):
 	"""
