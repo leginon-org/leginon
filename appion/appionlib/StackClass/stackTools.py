@@ -30,6 +30,83 @@ def getPixelSize(filename):
 ########################################
 ########################################
 ########################################
+def boxParticlesFromFile(mrcfile, stackfile, boxsize, coordinates):
+	"""
+	reads mrc and writes a stackfile
+	boxsize = integer
+	coordinates is 20x2 numpy array
+		e.g., coordinates[0] = [2030, 1065]
+	"""
+	print "Making a stack %s -> %s"%(mrcfile, stackfile)
+	imgarray = mrc.read(mrcfile)
+	boxedparticles = []
+	for x,y in coordinates:
+		x1 = x-boxsize/2
+		x2 = x+boxsize/2
+		y1 = y-boxsize/2
+		y2 = y+boxsize/2
+		if x1 < 0 or y1 < 0:
+			continue
+		if x2 >= imgarray.shape[1] or y2 >= imgarray.shape[0]:
+			continue
+		boxpart = imgarray[y1:y2,x1:x2] #numpy arrays are rows,cols --> y,x not x,y
+		boxedparticles.append(boxpart)
+	stackClass = ProcessStack.createStackClass(stackfile)
+	stackClass.appendParticlesToFile(boxedparticles)
+	return
+
+########################################
+########################################
+########################################
+#===============
+def createSubStack(instack="start.hdf", outstack="average.mrcs", partlist=None, msg=False):
+	"""
+	does not work with IMAGIC, yet
+	partlist starts at 1
+	"""
+	if msg is True:
+		apDisplay.printMsg("creating sub-stack from large stack")
+	instack = os.path.abspath(instack)
+	outstack = os.path.abspath(outstack)
+
+	if not os.path.isfile(instack):
+		apDisplay.printWarning("could not find input file")
+		return False
+	if os.path.isfile(outstack):
+		apDisplay.printWarning("output file already exists")
+		return False
+
+	subStack = SubStack(msg)
+	subStack.outstack = outstack
+	subStack.start(instack, partlist)
+	if not os.path.isfile(outstack):
+		apDisplay.printWarning("output file creation failed")
+		return False
+	return True
+
+#=======================
+class SubStack(ProcessStack.ProcessStack):
+	#===============
+	def preLoop(self):
+		#override self.partlist to get a subset
+		self.count = 0
+		if self.outstack is None:
+			apDisplay.printWarning("output file not defined")
+		self.outStackClass = self.StackClassFromFile(self.outstack)
+
+	#===============
+	def processStack(self, stackarray):
+		self.outStackClass.appendParticlesToFile(stackarray)
+		self.index += len(stackarray) #you must have this line in your loop
+
+	#===============
+	def postLoop(self):
+		return
+
+########################################
+########################################
+########################################
+
 #===============
 def averageStack(stackfile="start.hdf", outfile="average.mrc", partlist=None, msg=False):
 	"""
@@ -37,10 +114,10 @@ def averageStack(stackfile="start.hdf", outfile="average.mrc", partlist=None, ms
 	partlist starts at 1
 	"""
 	if msg is True:
-		apDisplay.printMsg("averaging stack for summary web page")
+		apDisplay.printMsg("averaging stack")
 	stackfile = os.path.abspath(stackfile)
 	if not os.path.isfile(stackfile):
-		apDisplay.printWarning("could not create stack average, average.mrc")
+		apDisplay.printWarning("could not create stack average")
 		return False
 	avgStack = AverageStack(msg)
 	avgStack.start(stackfile, partlist)
@@ -76,6 +153,7 @@ def averageStackList(stacklist, outfile="average.mrc", partlist=None, msg=False)
 	if outfile is not None:
 		mrc.write(average, outfile)
 	return average
+
 
 #=======================
 class AverageStack(ProcessStack.ProcessStack):

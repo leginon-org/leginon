@@ -19,7 +19,7 @@ class FilterTable extends BasicForm
 	$planeregv='on' )
 	{
 		parent::__construct();
-		
+
 		// Get the form parameters that have been created by the parent class
 		$params = $this->getFormParams();
 		
@@ -42,7 +42,7 @@ class FilterTable extends BasicForm
 		//keepall is not set in gui
 	}
 			
-	public function generateForm()
+	public function generateForm($showfilters)
 	{
 		$this->updateFormParams();
 		$params = $this->getFormParams();
@@ -57,8 +57,12 @@ class FilterTable extends BasicForm
 
 		// Filter
 		$html.= "<B>Filter Values:</B><br />\n";
-		$html.= $params->insertTextField( "lpval", $fieldSize,"(in &Aring;ngstroms; 0 = off)" );	
-		$html.= $params->insertTextField( "hpval", $fieldSize,"(in &Aring;ngstroms; 0 = off)" );	
+		if ($showfilters) {
+			$html.= $params->insertTextField( "lpval", $fieldSize,"(in &Aring;ngstroms; 0 = off)" );
+			$html.= $params->insertTextField( "hpval", $fieldSize,"(in &Aring;ngstroms; 0 = off)" );
+		} else {
+			$html.= "<font size='-2'>dog picker cannot use low or high pass filters</font><br/>\n";
+		}
 		$html.= $params->insertTextField( "medianval", $fieldSize,"(in pixels; 0= off)" );	
 		$html.= $params->insertTextField( "pixlimit", $fieldSize,"(in Standard Deviations; 0 = off)" );	
 		$html.= $params->insertCheckboxField( "planereg" );
@@ -275,14 +279,14 @@ class SimpleParticleTable extends FilterTable
 		$params->addParam( "defocpair", $defocpairv, "Calculate shifts for defocal pairs" );
 	}
 			
-	public function generateForm( )
+	public function generateForm($showfilters)
 	{
 		$this->updateFormParams();
 		$params = $this->getFormParams();
 		
 		$fieldSize = 5;
 		
-		$html.= parent::generateForm();
+		$html.= parent::generateForm($showfilters);
 
 		$html.=  "<!-- BEGIN Simple Particle Param -->\n";
 		$html.= "<B>Defocal pairs:</B><br />\n";

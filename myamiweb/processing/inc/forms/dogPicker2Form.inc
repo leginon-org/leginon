@@ -14,6 +14,7 @@ class DogPicker2Form extends MathParticleForm
 	function __construct(  $expId, $errorHTML='', $infoHTML='', $kfactorv=1.2, $numslicesv='',$sizerangev='',$invertv="on" ) 
 	{
 		parent::__construct($expId, $errorHTML, $infoHTML);
+		$this->showfilters=false; //override to not display lowpass and highpass fields
 		$this->imageContrastTable = new DogPickerImageContrastTable($invertv);
 		
 		//------ Set Parameters for the parent class, BasicLoopForm (general Appion params) -----//

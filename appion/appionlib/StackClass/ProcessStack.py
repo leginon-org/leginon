@@ -8,6 +8,7 @@ from appionlib import apDisplay
 from appionlib.StackClass import mrcClass
 # Issue #4581 disable import until problem solved and module is used for something.
 #from appionlib.StackClass import hdfClass
+#Neil I moved the import to the HDF read part, so it will only be used when needed
 from appionlib.StackClass import imagicClass
 
 ####
@@ -29,6 +30,7 @@ def createStackClass(filename, msg=False):
 	elif extension == '.hdf':
 		apDisplay.printError('HdfClass is not imported due to issue #4581')
 		if msg is True: print "HdfClass"
+		from appionlib.StackClass import hdfClass
 		return hdfClass.HdfClass(filename)
 	elif extension == '.spi':
 		if msg is True: print "SpiderClass"
@@ -60,11 +62,15 @@ class ProcessStack(object):
 			apDisplay.printMsg("processStack: "+msg)
 
 	#===============
+	def StackClassFromFile(self, stackfile):
+		return createStackClass(stackfile)
+
+	#===============
 	def initValues(self, stackfile, numrequest=None):
 		### check for stack
 		if not os.path.isfile(stackfile):
 			apDisplay.printError("stackfile does not exist: "+stackfile)
-		self.stackClass = createStackClass(stackfile)
+		self.stackClass = self.StackClassFromFile(stackfile)
 
 		### amount of free memory on machine (converted to bytes)
 		self.freememory = mem.free()*1024
@@ -79,7 +85,7 @@ class ProcessStack(object):
 		self.maxpartinmem = self.freememory/self.memperpart
 		self.message("Max particles in memory: %d"%(self.maxpartinmem))
 		### number particles to fit into memory
-		self.partallowed = int(self.maxpartinmem/10.0)
+		self.partallowed = int(self.maxpartinmem/20.0)
 		self.message("Particles allowed in memory: %d"%(self.partallowed))
 		### number particles in stack
 		numpart = self.stackClass.getNumberOfParticles()

@@ -14,8 +14,9 @@ from appionlib import basicScript
 from appionlib import apImagicFile
 from appionlib.apImage import imagenorm
 from appionlib.apImage import imagefilter
-from appionlib.apImage import imageprocess
 from optparse import OptionParser
+
+### This is OLD (has memory issues) and needs to be written to use StackClass
 
 ##TODO merge image processing with imageprocess code
 
@@ -74,6 +75,7 @@ class RunProc2d(object):
 		self.approc2d.params[name] = value
 
 	def run(self):
+		apDisplay.printWarning("Using old apProc2dlib which is known to have out of memory issues")
 		self.approc2d.checkConflicts()
 		self.approc2d.start()
 		#self.approc2d.close()
