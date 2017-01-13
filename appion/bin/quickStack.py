@@ -22,15 +22,20 @@ def makeStack(starfile):
 	dataBlock = star.getDataBlock("data_images")
 	loopDict  = dataBlock.getLoopDict()
 	print "Found %d particles"%(len(loopDict))
-	coordinates = []
+	if len(loopDict) == 0:
+		return
+
 	micrograph = loopDict[0]['_rlnMicrographName']
 	stackfile = loopDict[0]['_rlnImageName']
-	stackfile = re.sub("^[0-9]+@", "", stackfile)
 	boxsize = int(loopDict[0]['_appBoxSize'])
+
+	coordinates = []
 	for partdict in loopDict:
 		x = int(partdict['_rlnCoordinateX'])
 		y = int(partdict['_rlnCoordinateY'])
 		coordinates.append((x,y))
+	if len(coordinates) == 0:
+		return
 	stackTools.boxParticlesFromFile(micrograph, stackfile, boxsize, coordinates)
 	return
 
@@ -63,13 +68,16 @@ class QuickStack(appionScript.AppionScript):
 		self.params['sessionname'] = apDatabase.getSessionDataFromSessionId(self.params['expid'])['name']
 		self.imgtree = apDatabase.getImagesFromDB(self.params['sessionname'], self.params['preset'])
 		starlist = []
+		apDisplay.printMsg("Writing star files")
 		for imgdata in self.imgtree:
 			imgfile = os.path.join(imgdata['session']['image path'], imgdata['filename']+'.mrc')
 			sys.stderr.write(".")
 			starfile = self.writeStarFile(imgdata)
+			if starfile is None:
+				continue
 			starlist.append(starfile)
 		del self.imgtree
-		nproc = 2
+		nproc = self.params['nproc']
 		t0 = time.time()
 		print "nproc %d"%(nproc)
 		p = multiprocessing.Pool(processes=nproc, initializer=start_process)
@@ -81,19 +89,22 @@ class QuickStack(appionScript.AppionScript):
 
 	#================================
 	def writeStarFile(self, imgdata):
-		starfile = imgdata['filename']+".star"
-		stackfile = imgdata['filename']+".particles.mrcs"
+		starfile = apDisplay.short(imgdata['filename'])+".star"
+		stackfile = apDisplay.short(imgdata['filename'])+".picks.mrcs"
 		micrograph = os.path.join(imgdata['session']['image path'], imgdata['filename']+'.mrc')
 
 		particles = apParticle.getParticles(imgdata, self.params['selectid'])
-		labels = ["_rlnCoordinateX", "_rlnCoordinateY", "_rlnImageName", "_rlnMicrographName", '_appBoxSize']
+		labels = ["_rlnCoordinateX", "_rlnCoordinateY", "_rlnParticleCount", 
+			"_rlnImageName",  "_rlnMicrographName", '_appBoxSize']
 		count = 0
 		valueSets = []
 		for part in particles:
 			count += 1
-			valueString = ("%d %d %05d@%s %s %d"
+			valueString = ("%d %d %05d %s %s %d"
 				%(part['xcoord'], part['ycoord'], count, stackfile, micrograph, self.params['boxsize']))
 			valueSets.append(valueString)
+		if count == 0:
+			return None
 		star = starFile.StarFile(starfile)
 		star.buildLoopFile( "data_images", labels, valueSets )
 		star.write()
