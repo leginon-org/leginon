@@ -1278,7 +1278,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			# insert framelist
 			q = appiondata.ApStackImageFrameListData(stack=self.stackdata, image=imgdata, frames=self.framelist)
 			q.insert(force=self.params['forceInsert'])
-		#t0 = time.time()
+		t0 = time.time()
 		### loop over the particles and insert
 		for i in range(len(self.boxedpartdatas)):
 			partdata = self.boxedpartdatas[i]
@@ -1311,7 +1311,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 
 			if self.params['commit'] is True:
 				stpartq.insert(force=self.params['forceInsert'])
-		#self.insertdbtimes.append(time.time()-t0)
+		self.insertdbtimes.append(time.time()-t0)
 
 	#=======================
 	def loopCleanUp(self, imgdata):
