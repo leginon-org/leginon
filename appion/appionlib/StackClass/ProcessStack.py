@@ -59,7 +59,7 @@ class ProcessStack(object):
 	#===============
 	def message(self, msg):
 		if self.msg is True:
-			apDisplay.printMsg("processStack: "+msg)
+			apDisplay.printMsg("ProcessStack2: "+msg)
 
 	#===============
 	def StackClassFromFile(self, stackfile):

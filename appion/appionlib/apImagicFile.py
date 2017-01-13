@@ -901,7 +901,7 @@ class processStack(object):
 	#===============
 	def message(self, msg):
 		if self.msg is True:
-			apDisplay.printMsg("processStack: "+msg)
+			apDisplay.printMsg("processStack1: "+msg)
 
 	#===============
 	def initValues(self, stackfile, numrequest=None):
