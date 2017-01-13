@@ -154,7 +154,6 @@ def averageStackList(stacklist, outfile="average.mrc", partlist=None, msg=False)
 		mrc.write(average, outfile)
 	return average
 
-
 #=======================
 class AverageStack(ProcessStack.ProcessStack):
 	#===============
