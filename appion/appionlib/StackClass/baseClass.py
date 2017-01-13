@@ -21,12 +21,22 @@ class StackClass(object):
 	def _getPixelSize(self):
 		raise NotImplementedError
 
-	def _readParticlesFromFile(self, particleNumbers):
+	def _readParticleListFromFile(self, particleNumbers):
 		"""
 		read a list of particles into memory
 		particles numbers MUST start at 1
 		"""
 		raise NotImplementedError
+
+	def _readParticleChunkFromFile(self, first, last):
+		"""
+		read a fixed range of particles into memory
+		particles numbers MUST start at 1
+		"""
+		particleNumbers = range(first, last+1)
+		apDisplay.printWarning("readParticleChunkFromFile NotImplementedError")
+		return self._readParticleListFromFile(particleNumbers)
+
 	def _writeParticlesToFile(self, particleDataTree):
 		"""
 		input:
@@ -74,12 +84,13 @@ class StackClass(object):
 	################################################
 	# These functions are general should NOT have overrides in subClasses
 	################################################
-	def __init__(self, filename, debug=False):
+	def __init__(self, filename, debug=True):
 		self.filename = filename
 		self.debug = debug
 		self.particlesWritten = 0
 		self.particlesRead = 0
 		self.readonly = False
+		self.headerdict = None
 	def fileExists(self):
 		if not os.path.exists(self.filename):
 			return False
@@ -119,27 +130,37 @@ class StackClass(object):
 	# Read / write functions called by apProc2d
 	# These functions are general should NOT have overrides in subClasses
 	################################################
-	def readParticlesFromFile(self, particleNumbers=None):
+	def readParticlesFromFile(self, particleNumbers=None, first=None, last=None):
 		"""
 		read a list of particles into memory
+		particles numbers MUST start at 1
 		"""
 		t0 = time.time()
-		if particleNumbers is None:
+		if particleNumbers is not None:
+			if self.debug is True:
+				apDisplay.printMsg("going to read %d particles from file"%(len(particleNumbers)))
+				apDisplay.printMsg("readParticlesListFromFile %d to %d"%(particleNumbers[0], particleNumbers[-1]))
+			partdatalist = self._readParticleListFromFile(particleNumbers)
+		else:
+			if first is None:
+				first = 1
 			#set to all particles
 			numpart = self.getNumberOfParticles()
 			if numpart is None or numpart == 0:
 				apDisplay.printWarning("tried to read from empty stack file")
 				return []
-			particleNumbers = range(1, numpart+1)
-		if self.debug is True:
-			apDisplay.printMsg("going to read %d particles from file"%(len(particleNumbers)))
-		partdatalist = self._readParticlesFromFile(particleNumbers)
+			if last is None or last > numpart+1:
+				last = numpart
+			if self.debug is True:
+				apDisplay.printMsg("readParticleChunkFromFile %d to %d"%(first, last))
+			partdatalist = self._readParticleChunkFromFile(first, last)
+
 		#convert to numpy array of shape (numpart, box, box)
 		partdataarray = numpy.array(partdatalist)
 		if self.debug is True:
 			apDisplay.printMsg("finished reading %d particles of boxsize %d x %d from file"
 				%(partdataarray.shape))
-			apDisplay.printMsg("finished writeParticlesToFile() in %s"
+			apDisplay.printMsg("finished readParticlesFromFile() in %s"
 				%(apDisplay.timeString(time.time()-t0)))
 		return partdataarray
 
