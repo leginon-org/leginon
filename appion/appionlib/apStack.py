@@ -31,6 +31,8 @@ debug = False
 def makeNewStack(oldstack, newstack, listfile=None, remove=False, bad=False):
 	"""
 	selects particular particles from a stack
+
+	this is essentially subStack
 	"""
 	if not os.path.isfile(oldstack):
 		apDisplay.printWarning("could not find old stack: "+oldstack)
