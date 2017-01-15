@@ -23,7 +23,7 @@ class MrcClass(baseClass.StackClass):
 		pixeldict = mrc.readFilePixelSize(self.filename)
 		return pixeldict['x']
 
-	def _readParticlesFromFile(self, particleNumbers):
+	def _readParticleListFromFile(self, particleNumbers):
 		"""
 		read a list of particles into memory
 		particles numbers MUST start at 1

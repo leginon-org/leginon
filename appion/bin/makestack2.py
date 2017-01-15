@@ -363,15 +363,15 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 				apDisplay.printError("Standard deviation == 0 for particle %d in image %s"%(i,self.shortname))
 
 			### skew and kurtosis
-			partravel = numpy.ravel(partarray)
-			skew = float(stats.skew(partravel))
-			kurtosis = float(stats.kurtosis(partravel))
+			#partravel = numpy.ravel(partarray)
+			#skew = float(stats.skew(partravel))
+			#kurtosis = float(stats.kurtosis(partravel))
 
 			### edge and center stats
-			edgemean = float(ndimage.mean(partarray, self.edgemap, 1.0))
-			edgestdev = float(ndimage.standard_deviation(partarray, self.edgemap, 1.0))
-			centermean = float(ndimage.mean(partarray, self.edgemap, 0.0))
-			centerstdev = float(ndimage.standard_deviation(partarray, self.edgemap, 0.0))
+			#edgemean = float(ndimage.mean(partarray, self.edgemap, 1.0))
+			#edgestdev = float(ndimage.standard_deviation(partarray, self.edgemap, 1.0))
+			#centermean = float(ndimage.mean(partarray, self.edgemap, 0.0))
+			#centerstdev = float(ndimage.standard_deviation(partarray, self.edgemap, 0.0))
 			#self.summedParticles += partarray
 
 			### take abs of all means, because ctf whole image may become negative
@@ -379,14 +379,14 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 				'partdata': partdata,
 				'mean': abs(float(partarray.mean())),
 				'stdev': stdev,
-				'min': float(partarray.min()),
-				'max': float(partarray.max()),
-				'skew': skew,
-				'kurtosis': kurtosis,
-				'edgemean': abs(edgemean),
-				'edgestdev': edgestdev,
-				'centermean': abs(centermean),
-				'centerstdev': centerstdev,
+				#'min': float(partarray.min()),
+				#'max': float(partarray.max()),
+				#'skew': skew,
+				#'kurtosis': kurtosis,
+				#'edgemean': abs(edgemean),
+				#'edgestdev': edgestdev,
+				#'centermean': abs(centermean),
+				#'centerstdev': centerstdev,
 			}
 			### show stats for first particle
 			"""
@@ -1279,7 +1279,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			# insert framelist
 			q = appiondata.ApStackImageFrameListData(stack=self.stackdata, image=imgdata, frames=self.framelist)
 			q.insert(force=self.params['forceInsert'])
-		#t0 = time.time()
+		t0 = time.time()
 		### loop over the particles and insert
 		for i in range(len(self.boxedpartdatas)):
 			partdata = self.boxedpartdatas[i]
@@ -1301,18 +1301,17 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			if partmeandict is not None:
 				stpartq['mean'] = round(partmeandict['mean'],8)
 				stpartq['stdev'] = round(partmeandict['stdev'],8)
-				stpartq['min'] = round(partmeandict['min'],4)
-				stpartq['max'] = round(partmeandict['max'],4)
-				stpartq['skew'] = round(partmeandict['skew'],4)
-				stpartq['kurtosis'] = round(partmeandict['kurtosis'],4)
-				stpartq['edgemean'] = round(partmeandict['edgemean'],4)
-				stpartq['edgestdev'] = round(partmeandict['edgestdev'],4)
-				stpartq['centermean'] = round(partmeandict['centermean'],4)
-				stpartq['centerstdev'] = round(partmeandict['centerstdev'],4)
-
+				#stpartq['min'] = round(partmeandict['min'],4)
+				#stpartq['max'] = round(partmeandict['max'],4)
+				#stpartq['skew'] = round(partmeandict['skew'],4)
+				#stpartq['kurtosis'] = round(partmeandict['kurtosis'],4)
+				#stpartq['edgemean'] = round(partmeandict['edgemean'],4)
+				#stpartq['edgestdev'] = round(partmeandict['edgestdev'],4)
+				#stpartq['centermean'] = round(partmeandict['centermean'],4)
+				#stpartq['centerstdev'] = round(partmeandict['centerstdev'],4)
 			if self.params['commit'] is True:
 				stpartq.insert(force=self.params['forceInsert'])
-		#self.insertdbtimes.append(time.time()-t0)
+		self.insertdbtimes.append(time.time()-t0)
 
 	#=======================
 	def loopCleanUp(self, imgdata):

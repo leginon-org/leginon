@@ -234,6 +234,9 @@ def readIndexFromHeader(headerfilename, indexnum, numparts=100):
 
 #===============
 def readImagicData(datafilename, headerdict, firstpart=1, numpart=1):
+	"""
+	particle numbering starts at 1
+	"""
 	### calculate number of bytes in particle image
 	partbytes = 4*headerdict['rows']*headerdict['lines']
 
@@ -901,7 +904,7 @@ class processStack(object):
 	#===============
 	def message(self, msg):
 		if self.msg is True:
-			apDisplay.printMsg("processStack: "+msg)
+			apDisplay.printMsg("processStack1: "+msg)
 
 	#===============
 	def initValues(self, stackfile, numrequest=None):
