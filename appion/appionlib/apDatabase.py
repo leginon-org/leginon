@@ -62,7 +62,7 @@ def getImagesFromDB(session, preset):
 	if preset != 'manual':
 		sessionq = leginon.leginondata.SessionData(name=session)
 		sessiondata = sessionq.query(results=1)[0]
-		presetq = leginon.leginondata.PresetData(name=preset)
+		presetq = leginon.leginondata.PresetData()
 		presetq['name'] = preset
 		presetq['session'] = sessiondata
 		presetdata = presetq.query(results=1)[0]
