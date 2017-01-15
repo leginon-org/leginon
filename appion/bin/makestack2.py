@@ -102,6 +102,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 
 					# get ctfestimation fig of merit (CC)
 					cc = ctfdata['cross_correlation']
+					if cc is None: cc = 0
 					rel_line+= "%13.6f"%(cc)
 
 					# Relion requires the CTF log file as well
