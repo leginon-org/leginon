@@ -2479,6 +2479,8 @@ class PhasePlateAlignerSettingsData(ReferenceTimerSettingsData):
 			('initial position', int),
 			('settle time', float),
 			('charge time', float),
+			('tilt charge time', float),
+			('tilt charge angle', float),
 		)
 	typemap = classmethod(typemap)
 
