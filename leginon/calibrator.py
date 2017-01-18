@@ -92,7 +92,7 @@ class Calibrator(node.Node):
 			self.panel.acquisitionDone()
 			return
 		try:
-			imagedata = self.acquireCorrectedCameraImageData()
+			imagedata = self.acquireCorrectedCameraImageData(force_no_frames=True)
 		except Exception, e:
 			self.logger.exception('Acquisition failed: %s' % e)
 			self.panel.acquisitionDone()

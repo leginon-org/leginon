@@ -121,7 +121,7 @@ class CalibrationClient(object):
 		time.sleep(settle)
 		self.node.stopTimer('calclient acquire pause')
 
-		imagedata = self.node.acquireCorrectedCameraImageData(corchannel)
+		imagedata = self.node.acquireCorrectedCameraImageData(corchannel, force_no_frames=True)
 		if correct_tilt:
 			self.correctTilt(imagedata)
 		newscope = imagedata['scope']
@@ -1789,7 +1789,7 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 			self.node.logger.info('acquiring tilt=0 degrees')
 			self.instrument.setData(state0)
 			time.sleep(0.5)
-			imagedata0 = self.node.acquireCorrectedCameraImageData()
+			imagedata0 = self.node.acquireCorrectedCameraImageData(force_no_frames=True)
 			im0 = imagedata0['image']
 			self.displayImage(im0)
 		else:
@@ -1800,7 +1800,7 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 		self.node.logger.info('acquiring tilt=%s degrees' % (tilt1deg))
 		self.instrument.setData(state1)
 		time.sleep(0.5)
-		imagedata1 = self.node.acquireCorrectedCameraImageData()
+		imagedata1 = self.node.acquireCorrectedCameraImageData(force_no_frames=True)
 		self.stagetiltcorrector.undo_tilt(imagedata1)
 		im1 = imagedata1['image']
 		self.displayImage(im1)
@@ -1854,7 +1854,7 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 			self.node.logger.info('acquiring tilt=0 degrees')
 			self.instrument.setData(state0)
 			time.sleep(0.5)
-			imagedata0 = self.node.acquireCorrectedCameraImageData()
+			imagedata0 = self.node.acquireCorrectedCameraImageData(force_no_frames=True)
 			im0 = imagedata0['image']
 			self.displayImage(im0)
 		else:
@@ -1871,7 +1871,7 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 		self.node.logger.info('acquiring tilt=%s degrees' % (tilt1deg))
 		self.instrument.setData(state1)
 		time.sleep(0.5)
-		imagedata1 = self.node.acquireCorrectedCameraImageData()
+		imagedata1 = self.node.acquireCorrectedCameraImageData(force_no_frames=True)
 		self.stagetiltcorrector.undo_tilt(imagedata1)
 		im1 = imagedata1['image']
 		self.displayImage(im1)

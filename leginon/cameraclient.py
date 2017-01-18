@@ -174,12 +174,17 @@ class CameraClient(object):
 		while t1.isAlive() or t2.isAlive() or t3.isAlive():
 			time.sleep(0.5)
 
-	def acquireCameraImageData(self, scopeclass=leginondata.ScopeEMData, allow_retracted=False, type='normal'):
+	def acquireCameraImageData(self, scopeclass=leginondata.ScopeEMData, allow_retracted=False, type='normal', force_no_frames=False):
 		'''Acquire a raw image from the currently configured CCD camera'''
 		self.prepareToAcquire(allow_retracted,exposure_type=type)
+		if force_no_frames:
+			try:
+				self.instrument.ccdcamera.SaveRawFrames = False
+			except TypeError:
+				# some camera does not have this attribute
+				pass
 		## set type to normal or dark
 		self.instrument.ccdcamera.ExposureType = type
-
 		imagedata = leginondata.CameraImageData()
 		imagedata['session'] = self.session
 

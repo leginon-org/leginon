@@ -422,7 +422,7 @@ class ManualAcquisition(node.Node):
 		self.instrument.ccdcamera.Settings = tmpcam
 
 		# acquire image
-		imagedata = self.acquireCorrectedCameraImageData()
+		imagedata = self.acquireCorrectedCameraImageData(force_no_frames=True)
 
 		# display
 		self.logger.info('Displaying dose image...')
@@ -506,9 +506,9 @@ class ManualAcquisition(node.Node):
 			self.instrument.ccdcamera.Settings = camdata1
 			try:
 				if correction:
-					imagedata = self.acquireCorrectedCameraImageData()
+					imagedata = self.acquireCorrectedCameraImageData(force_no_frames=True)
 				else:
-					imagedata = self.acquireCameraImageData()
+					imagedata = self.acquireCameraImageData(force_no_frames=True)
 				imarray = imagedata['image']
 			except:
 				raise

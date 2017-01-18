@@ -101,9 +101,9 @@ class ManualFocusChecker(acquisition.Acquisition):
 		correction = self.settings['correct image']
 		self.manualchecklock.acquire()
 		if correction:
-			imdata = self.acquireCorrectedCameraImageData()
+			imdata = self.acquireCorrectedCameraImageData(force_no_frames=True)
 		else:
-			imdata = self.acquireCameraImageData()
+			imdata = self.acquireCameraImageData(force_no_frames=True)
 		imarray = imdata['image']
 		self.manualchecklock.release()
 		pow = imagefun.power(imarray, self.maskradius)
