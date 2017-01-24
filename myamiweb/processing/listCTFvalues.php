@@ -1,7 +1,7 @@
 <?php
 /**
  *      For terms of the license agreement
- *      see  http://ami.scripps.edu/software/leginon-license
+ *      see  http://leginon.org
  */
 
 # specify a directory that the web server can write to

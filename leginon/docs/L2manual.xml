@@ -8,7 +8,7 @@
     <abstract>
       <para>Leginon II is designed in a modular architecture where nodes can be connected through abstract events. This gives Leginon II the flexibility of application customization at multiple levels. Leginon II interacts with a MySQL database that is dynamically created and updated per session. The database stores the images and other relevant information that Leginon II needs. Because nodes can be launched from different machines, Leginon II's applications can inherently use distributed memory systems. The following diagram depicts a simple application called "simple application" that runs nodes on two different machines with the aliases "local" and "scope." </para>
       <para></para>
-      <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/simple_application.jpg" format="JPEG"/></para>
+      <para><graphic fileref="http://emg.nysbc.org/software/leginon/images/simple_application.jpg" format="JPEG"/></para>
     </abstract>
   </chapter>
   <chapter>
@@ -533,15 +533,15 @@ memory_limit = 256M      ; Maximum amount of memory a script may consume (8MB)</
           </listitem>
           <listitem>
             <para> Enter User, Instrument (microscope), and Session Name (new experiment) in the Manager Setup.</para>
-            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/manager_setup.jpg" format="JPEG"/></para>
+            <para><graphic fileref="http://emg.nysbc.org/software/leginon/images/manager_setup.jpg" format="JPEG"/></para>
             <para>Click Start.</para>
             <para></para>
             <para>Note: Ignore the warning message that may appear (see image). If the warning will not clear by pressing the OK button, just ignore it.</para>
-            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/ignorewarningui.jpg" format="JPEG"/></para>
+            <para><graphic fileref="http://emg.nysbc.org/software/leginon/images/ignorewarningui.jpg" format="JPEG"/></para>
           </listitem>
           <listitem>
             <para> Click on the Manager tab in the User Interface.</para>
-            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/sim_app_beginui.jpg" format="JPEG"/></para>
+            <para><graphic fileref="http://emg.nysbc.org/software/leginon/images/sim_app_beginui.jpg" format="JPEG"/></para>
           </listitem>
           <listitem>
             <para> Launch the Application Editor node.</para>
@@ -557,13 +557,13 @@ memory_limit = 256M      ; Maximum amount of memory a script may consume (8MB)</
                 </listitem>
                 <listitem>
                   <para> Click Launch to launch (start) the Application Editor node.</para>
-                  <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/add_appeditor.jpg" format="JPEG"/></para>
+                  <para><graphic fileref="http://emg.nysbc.org/software/leginon/images/add_appeditor.jpg" format="JPEG"/></para>
                 </listitem>
               </itemizedlist></para>
           </listitem>
           <listitem>
             <para> Go to the Application Editor tab under the "app" tab.</para>
-            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/apped_blank.jpg" format="JPEG"/></para>
+            <para><graphic fileref="http://emg.nysbc.org/software/leginon/images/apped_blank.jpg" format="JPEG"/></para>
           </listitem>
           <listitem>
             <para> Name the application.</para>
@@ -576,7 +576,7 @@ memory_limit = 256M      ; Maximum amount of memory a script may consume (8MB)</
                 </listitem>
                 <listitem>
                   <para> Enter a name in the text box that pops-up and press OK.</para>
-                  <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/apped_rename.jpg" format="JPEG"/></para>
+                  <para><graphic fileref="http://emg.nysbc.org/software/leginon/images/apped_rename.jpg" format="JPEG"/></para>
                 </listitem>
               </itemizedlist></para>
           </listitem>
@@ -591,7 +591,7 @@ memory_limit = 256M      ; Maximum amount of memory a script may consume (8MB)</
                 </listitem>
                 <listitem>
                   <para> Enter a descriptive name for the launcher. For example, for the launcher that will operate on the microscope, name it "scope."</para>
-                  <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/apped_addlaunch.jpg" format="JPEG"/></para>
+                  <para><graphic fileref="http://emg.nysbc.org/software/leginon/images/apped_addlaunch.jpg" format="JPEG"/></para>
                 </listitem>
                 <listitem>
                   <para> Click Add.</para>
@@ -618,7 +618,7 @@ memory_limit = 256M      ; Maximum amount of memory a script may consume (8MB)</
                 </listitem>
                 <listitem>
                   <para> Click Add.</para>
-                  <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/apped_addnode.jpg" format="JPEG"/></para>
+                  <para><graphic fileref="http://emg.nysbc.org/software/leginon/images/apped_addnode.jpg" format="JPEG"/></para>
                 </listitem>
               </itemizedlist></para>
           </listitem>
@@ -640,7 +640,7 @@ memory_limit = 256M      ; Maximum amount of memory a script may consume (8MB)</
                 </listitem>
                 <listitem>
                   <para> Left click on the top far right red box in the "psm" node. A line should now connect "acq" and "psm" with the "ChangePresetEvent" enclosed in a box in the path of the connecting line. This line indicates that these two nodes have been bound through the ChangePresetEvent.</para>
-                  <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/apped_binding.jpg" format="JPEG"/></para>
+                  <para><graphic fileref="http://emg.nysbc.org/software/leginon/images/apped_binding.jpg" format="JPEG"/></para>
                 </listitem>
                 <listitem>
                   <para> To delete a binding, right click on the line or event that binds the two nodes. Select Delete.</para>
@@ -933,7 +933,7 @@ memory_limit = 256M      ; Maximum amount of memory a script may consume (8MB)</
             </table>
             <para></para>
             <para>These bindings are diagramed below:</para>
-            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/create_run.jpg" format="JPEG"/></para>
+            <para><graphic fileref="http://emg.nysbc.org/software/leginon/images/create_run.jpg" format="JPEG"/></para>
             <para></para>
           </listitem>
           <listitem>
@@ -1010,31 +1010,31 @@ memory_limit = 256M      ; Maximum amount of memory a script may consume (8MB)</
           </listitem>
           <listitem>
             <para> Enter User, Instrument (microscope), and Session Name (new experiment) in the Manager Setup.</para>
-            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/manager_setup.jpg" format="JPEG"/></para>
+            <para><graphic fileref="http://emg.nysbc.org/software/leginon/images/manager_setup.jpg" format="JPEG"/></para>
             <para>Click Start.</para>
             <para></para>
             <para>Note: Ignore the warning message that may appear (see image). If the warning will not clear by pressing the OK button, just ignore it.</para>
-            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/ignorewarningui.jpg" format="JPEG"/></para>
+            <para><graphic fileref="http://emg.nysbc.org/software/leginon/images/ignorewarningui.jpg" format="JPEG"/></para>
           </listitem>
           <listitem>
             <para> Click on the Manager tab in the User Interface.<anchor id="sim_app_step3"/></para>
-            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/sim_app_beginui.jpg" format="JPEG"/></para>
+            <para><graphic fileref="http://emg.nysbc.org/software/leginon/images/sim_app_beginui.jpg" format="JPEG"/></para>
           </listitem>
           <listitem>
             <para> Click on the Application tab within the Manager tab and choose "simple application" from the Application pull-down list.</para>
-            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/sim_app_preloadapp.jpg" format="JPEG"/></para>
+            <para><graphic fileref="http://emg.nysbc.org/software/leginon/images/sim_app_preloadapp.jpg" format="JPEG"/></para>
           </listitem>
           <listitem>
             <para> Click Load and choose "tecnai2" (or the name of your microscope) under the scope pull-down list.</para>
-            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/sim_app_loadapp.jpg" format="JPEG"/></para>
+            <para><graphic fileref="http://emg.nysbc.org/software/leginon/images/sim_app_loadapp.jpg" format="JPEG"/></para>
           </listitem>
           <listitem>
             <para> Click Launch. The application called "simple application" will launch and the nodes within the application will appear with the approprite bindings.</para>
-            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/sim_app_launchapp.jpg" format="JPEG"/></para>
+            <para><graphic fileref="http://emg.nysbc.org/software/leginon/images/sim_app_launchapp.jpg" format="JPEG"/></para>
           </listitem>
           <listitem>
             <para> Open the Presets Manager tab under the tab labeled "sim application psm."</para>
-            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/sim_app_loadpresets.jpg" format="JPEG"/></para>
+            <para><graphic fileref="http://emg.nysbc.org/software/leginon/images/sim_app_loadpresets.jpg" format="JPEG"/></para>
           </listitem>
           <listitem>
             <para> Select the session 03aug27c and click Import (in the Presets Manager).</para>
@@ -1047,18 +1047,18 @@ memory_limit = 256M      ; Maximum amount of memory a script may consume (8MB)</
           </listitem>
           <listitem>
             <para> Under the Acquisition tab in "simple application simple_acq," select a "corrected" Acquisition Type.</para>
-            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/sim_app_chsimacqsettings.jpg" format="JPEG"/></para>
+            <para><graphic fileref="http://emg.nysbc.org/software/leginon/images/sim_app_chsimacqsettings.jpg" format="JPEG"/></para>
           </listitem>
           <listitem>
             <para> Click Refresh, highlight the square preset (in the Presets Sequence section), and send it over to the right box with the "&gt;" button.</para>
           </listitem>
           <listitem>
             <para> Click Acquire under the Simple Acquisition tab in "simple application simple_acq."</para>
-            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/sim_app_acqsimacq.jpg" format="JPEG"/></para>
+            <para><graphic fileref="http://emg.nysbc.org/software/leginon/images/sim_app_acqsimacq.jpg" format="JPEG"/></para>
           </listitem>
           <listitem>
             <para> Go to the Acquisition tab in "simple application simple_acq" and view the acquired image.</para>
-            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/sim_app_acqdisplay.jpg" format="JPEG"/></para>
+            <para><graphic fileref="http://emg.nysbc.org/software/leginon/images/sim_app_acqdisplay.jpg" format="JPEG"/></para>
           </listitem>
         </orderedlist></para>
     </section>
@@ -1119,15 +1119,15 @@ memory_limit = 256M      ; Maximum amount of memory a script may consume (8MB)</
           </listitem>
           <listitem>
             <para> Enter User, Instrument (microscope), and Session Name (new experiment) in the Manager Setup.</para>
-            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/manager_setup.jpg" format="JPEG"/></para>
+            <para><graphic fileref="http://emg.nysbc.org/software/leginon/images/manager_setup.jpg" format="JPEG"/></para>
             <para>Click Start.</para>
             <para></para>
             <para>Note: Ignore the warning message that may appear (see image). If the warning will not clear by pressing the OK button, just ignore it.</para>
-            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/ignorewarningui.jpg" format="JPEG"/></para>
+            <para><graphic fileref="http://emg.nysbc.org/software/leginon/images/ignorewarningui.jpg" format="JPEG"/></para>
           </listitem>
           <listitem>
             <para> Launch the application called "cal" the same way the "simple application" was launched earlier (refer to <link linkend="sim_app_step3">simple application: step 3</link>). </para>
-            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/sim_app_launchapp.jpg" format="JPEG"/></para>
+            <para><graphic fileref="http://emg.nysbc.org/software/leginon/images/sim_app_launchapp.jpg" format="JPEG"/></para>
           </listitem>
         </orderedlist></para>
     </section>
@@ -1136,7 +1136,7 @@ memory_limit = 256M      ; Maximum amount of memory a script may consume (8MB)</
       <para><orderedlist>
           <listitem>
             <para> Enter the magnification and the corresponding pixel size in meters/pixel. Click Apply and Store to enter these values into the database.</para>
-            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/cal_app_pxcal.jpg" format="JPEG"/></para>
+            <para><graphic fileref="http://emg.nysbc.org/software/leginon/images/cal_app_pxcal.jpg" format="JPEG"/></para>
           </listitem>
           <listitem>
             <para> Repeat the above step for all the magnifications that will be used, e.g. 38x, 1100x, 6500x, 50kx, 62kx, 80kx, and 100kx.</para>
@@ -1162,7 +1162,7 @@ memory_limit = 256M      ; Maximum amount of memory a script may consume (8MB)</
           </listitem>
           <listitem>
             <para> Press the Set button. The y image dimension, y bin size, and both x and y offsets will be updated if the corresponding check boxes are enabled.</para>
-            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/cal_app_cor.jpg" format="JPEG"/></para>
+            <para><graphic fileref="http://emg.nysbc.org/software/leginon/images/cal_app_cor.jpg" format="JPEG"/></para>
           </listitem>
           <listitem>
             <para> Check that the beam at the microscope is centered on the main viewing screen.</para>
@@ -1207,7 +1207,7 @@ memory_limit = 256M      ; Maximum amount of memory a script may consume (8MB)</
       <para><orderedlist>
           <listitem>
             <para> Go to the Matrix Calibrator tab under the "cal mcal" tab.</para>
-            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/cal_app_immcal.jpg" format="JPEG"/></para>
+            <para><graphic fileref="http://emg.nysbc.org/software/leginon/images/cal_app_immcal.jpg" format="JPEG"/></para>
           </listitem>
           <listitem>
             <para> Select "image shift" as the Parameter.</para>
@@ -1229,7 +1229,7 @@ memory_limit = 256M      ; Maximum amount of memory a script may consume (8MB)</
       <para><orderedlist continuation="restarts" inheritnum="ignore">
           <listitem>
             <para> Go to the Matrix Calibrator tab under the "cal mcal" tab.</para>
-            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/cal_app_beammcal.jpg" format="JPEG"/></para>
+            <para><graphic fileref="http://emg.nysbc.org/software/leginon/images/cal_app_beammcal.jpg" format="JPEG"/></para>
           </listitem>
           <listitem>
             <para> Select "beam shift" as the Parameter.</para>
@@ -1251,7 +1251,7 @@ memory_limit = 256M      ; Maximum amount of memory a script may consume (8MB)</
       <para><orderedlist continuation="restarts" inheritnum="ignore">
           <listitem>
             <para> Go to the Matrix Calibrator tab under the "cal mcal" tab.</para>
-            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/cal_app_stagemcal.jpg" format="JPEG"/></para>
+            <para><graphic fileref="http://emg.nysbc.org/software/leginon/images/cal_app_stagemcal.jpg" format="JPEG"/></para>
           </listitem>
           <listitem>
             <para> Select "stage position" as the Parameter.</para>
@@ -1273,7 +1273,7 @@ memory_limit = 256M      ; Maximum amount of memory a script may consume (8MB)</
       <para><orderedlist continuation="restarts" inheritnum="ignore">
           <listitem>
             <para> Go to the Beam Tilt Calibrator tab under the "cal btcal" tab.</para>
-            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/cal_app_btcal.jpg" format="JPEG"/></para>
+            <para><graphic fileref="http://emg.nysbc.org/software/leginon/images/cal_app_btcal.jpg" format="JPEG"/></para>
           </listitem>
           <listitem>
             <para> Click Calibrate in the Defocus section.</para>
@@ -1286,7 +1286,7 @@ memory_limit = 256M      ; Maximum amount of memory a script may consume (8MB)</
           </listitem>
           <listitem>
             <para> Go to the Image Viewer tab under that tab labeled "cal imv." Enable the Do Power check box and click Acquire. The image and its FFT should appear below. If there are not any rings present in the FFT, then the Beam Tilt Defocus calibration worked. If there are rings in the FFT, then steps 1-5 need to be repeated. A well aligned microscope will help greatly at this point.</para>
-            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/cal_app_imv.jpg" format="JPEG"/></para>
+            <para><graphic fileref="http://emg.nysbc.org/software/leginon/images/cal_app_imv.jpg" format="JPEG"/></para>
           </listitem>
         </orderedlist></para>
     </section>
@@ -1296,7 +1296,7 @@ memory_limit = 256M      ; Maximum amount of memory a script may consume (8MB)</
       <para><orderedlist continuation="restarts" inheritnum="ignore">
           <listitem>
             <para> Go to the Beam Tilt Calibrator tab under the "cal btcal" tab.</para>
-            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/cal_app_btcal.jpg" format="JPEG"/></para>
+            <para><graphic fileref="http://emg.nysbc.org/software/leginon/images/cal_app_btcal.jpg" format="JPEG"/></para>
           </listitem>
           <listitem>
             <para> Change the Stigmator Delta to 0.2.</para>
@@ -1331,7 +1331,7 @@ memory_limit = 256M      ; Maximum amount of memory a script may consume (8MB)</
             <listitem>
               <para> Click Import in the Import section. The pull-down menu in the Selection section will update with a list of the presets that were used for the Session called 03aug27c.</para>
               <para></para>
-              <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/cal_app_psm.jpg" format="JPEG"/></para>
+              <para><graphic fileref="http://emg.nysbc.org/software/leginon/images/cal_app_psm.jpg" format="JPEG"/></para>
             </listitem>
           </orderedlist></para>
       </section>
@@ -1397,8 +1397,8 @@ memory_limit = 256M      ; Maximum amount of memory a script may consume (8MB)</
           <listitem>
             <para> Click Set to send microscope and camera configuration parameters that have been changed in the user interface.</para>
             <para></para>
-            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/cal_app_emmicrotop.jpg" format="JPEG"/></para>
-            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/cal_app_emmicrobottom.jpg" format="JPEG"/></para>
+            <para><graphic fileref="http://emg.nysbc.org/software/leginon/images/cal_app_emmicrotop.jpg" format="JPEG"/></para>
+            <para><graphic fileref="http://emg.nysbc.org/software/leginon/images/cal_app_emmicrobottom.jpg" format="JPEG"/></para>
           </listitem>
         </itemizedlist>
       </section>
@@ -1412,7 +1412,7 @@ memory_limit = 256M      ; Maximum amount of memory a script may consume (8MB)</
           <listitem>
             <para> Click Set to send microscope and camera configuration parameters that have been changed in the user interface.</para>
             <para></para>
-            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/cal_app_emcam.jpg" format="JPEG"/></para>
+            <para><graphic fileref="http://emg.nysbc.org/software/leginon/images/cal_app_emcam.jpg" format="JPEG"/></para>
           </listitem>
         </itemizedlist>
       </section>
@@ -1447,15 +1447,15 @@ memory_limit = 256M      ; Maximum amount of memory a script may consume (8MB)</
           </listitem>
           <listitem>
             <para> Enter User, Instrument (microscope), and Session Name (new experiment) in the Manager Setup.</para>
-            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/manager_setup.jpg" format="JPEG"/></para>
+            <para><graphic fileref="http://emg.nysbc.org/software/leginon/images/manager_setup.jpg" format="JPEG"/></para>
             <para>Click Start.</para>
             <para></para>
             <para>Note: Ignore the warning message that may appear (see image). If the warning will not clear by pressing the OK button, just ignore it.</para>
-            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/ignorewarningui.jpg" format="JPEG"/></para>
+            <para><graphic fileref="http://emg.nysbc.org/software/leginon/images/ignorewarningui.jpg" format="JPEG"/></para>
           </listitem>
           <listitem>
             <para> Launch the application called "run" the same way the "simple application" was launched earlier (refer to <link linkend="sim_app_step3">simple application: step 3</link>). </para>
-            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/run_app_launch.jpg" format="JPEG"/></para>
+            <para><graphic fileref="http://emg.nysbc.org/software/leginon/images/run_app_launch.jpg" format="JPEG"/></para>
           </listitem>
         </orderedlist></para>
     </section>
@@ -1467,7 +1467,7 @@ memory_limit = 256M      ; Maximum amount of memory a script may consume (8MB)</
           </listitem>
           <listitem>
             <para> Send the square preset and check that the beam is centered.</para>
-            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/run_app_psm.jpg" format="JPEG"/></para>
+            <para><graphic fileref="http://emg.nysbc.org/software/leginon/images/run_app_psm.jpg" format="JPEG"/></para>
           </listitem>
         </itemizedlist></para>
     </section>
@@ -1491,7 +1491,7 @@ memory_limit = 256M      ; Maximum amount of memory a script may consume (8MB)</
             </listitem>
             <listitem>
               <para> Click the Display Image check box to the disabled (unchecked) position. This greatly improves the speed at which Leginon II operates if the images are 4096x4096.</para>
-              <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/run_app_expacq.jpg" format="JPEG"/></para>
+              <para><graphic fileref="http://emg.nysbc.org/software/leginon/images/run_app_expacq.jpg" format="JPEG"/></para>
             </listitem>
           </orderedlist></para>
       </section>
@@ -1512,7 +1512,7 @@ memory_limit = 256M      ; Maximum amount of memory a script may consume (8MB)</
             </listitem>
             <listitem>
               <para> Check that the Beam Tilt in the Focuser tab is set to 0.01 (to the beam tilt value that was used in the Beam Tilt Defocus calibration).</para>
-              <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/run_app_focacq.jpg" format="JPEG"/></para>
+              <para><graphic fileref="http://emg.nysbc.org/software/leginon/images/run_app_focacq.jpg" format="JPEG"/></para>
             </listitem>
             <listitem>
               <para> The Drift Timeout value controls how long drift will be checked during the focusing if drift has not fallen below the predefined threshold.</para>
@@ -1533,7 +1533,7 @@ memory_limit = 256M      ; Maximum amount of memory a script may consume (8MB)</
             </listitem>
             <listitem>
               <para> Choose corrected as the Acquisition Type in the Settings section. This will cause corrected images to be acquired rather than raw uncorrected ones.</para>
-              <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/run_app_hacq.jpg" format="JPEG"/></para>
+              <para><graphic fileref="http://emg.nysbc.org/software/leginon/images/run_app_hacq.jpg" format="JPEG"/></para>
             </listitem>
           </orderedlist></para>
       </section>
@@ -1551,7 +1551,7 @@ memory_limit = 256M      ; Maximum amount of memory a script may consume (8MB)</
             </listitem>
             <listitem>
               <para> Choose corrected as the Acquisition Type in the Settings section. This will cause corrected images to be acquired rather than raw uncorrected ones.</para>
-              <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/run_app_sqacq.jpg" format="JPEG"/></para>
+              <para><graphic fileref="http://emg.nysbc.org/software/leginon/images/run_app_sqacq.jpg" format="JPEG"/></para>
             </listitem>
           </orderedlist></para>
       </section>
@@ -1569,7 +1569,7 @@ memory_limit = 256M      ; Maximum amount of memory a script may consume (8MB)</
             </listitem>
             <listitem>
               <para> Choose corrected as the Acquisition Type in the Settings section. This will cause corrected images to be acquired rather than raw uncorrected ones.</para>
-              <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/run_app_gacq.jpg" format="JPEG"/></para>
+              <para><graphic fileref="http://emg.nysbc.org/software/leginon/images/run_app_gacq.jpg" format="JPEG"/></para>
             </listitem>
           </orderedlist></para>
       </section>
@@ -1592,7 +1592,7 @@ memory_limit = 256M      ; Maximum amount of memory a script may consume (8MB)</
               </itemizedlist><itemizedlist>
                 <listitem>
                   <para> 49, 25, 9, and 1 are other Maximum Target options. Smaller numbers mean less time is spent acquiring an atlas, but less of the grid area is covered.</para>
-                  <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/run_app_spr.jpg" format="JPEG"/></para>
+                  <para><graphic fileref="http://emg.nysbc.org/software/leginon/images/run_app_spr.jpg" format="JPEG"/></para>
                 </listitem>
               </itemizedlist></para>
           </listitem>
@@ -1616,7 +1616,7 @@ memory_limit = 256M      ; Maximum amount of memory a script may consume (8MB)</
               </itemizedlist><itemizedlist>
                 <listitem>
                   <para> The ruler button will allow distances to be measured on the image.</para>
-                  <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/run_app_gtargclick.jpg" format="JPEG"/></para>
+                  <para><graphic fileref="http://emg.nysbc.org/software/leginon/images/run_app_gtargclick.jpg" format="JPEG"/></para>
                 </listitem>
               </itemizedlist></para>
           </listitem>
@@ -1627,22 +1627,22 @@ memory_limit = 256M      ; Maximum amount of memory a script may consume (8MB)</
       <para><orderedlist continuation="restarts" inheritnum="ignore">
           <listitem>
             <para> In the Click Target Finder tab in the grid Click Target Finder node labeled "run g_targ_click," click the button with the red cross hairs and choose Imaging Target in the pull-down list.</para>
-            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/run_app_tgtargclickcrosshair.jpg" format="JPEG"/></para>
+            <para><graphic fileref="http://emg.nysbc.org/software/leginon/images/run_app_tgtargclickcrosshair.jpg" format="JPEG"/></para>
           </listitem>
           <listitem>
             <para> Click on target squares in the Atlas that will be imaged.</para>
           </listitem>
           <listitem>
             <para> Click Submit Targets.</para>
-            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/run_app_tgtargclick.jpg" format="JPEG"/></para>
+            <para><graphic fileref="http://emg.nysbc.org/software/leginon/images/run_app_tgtargclick.jpg" format="JPEG"/></para>
           </listitem>
           <listitem>
             <para> Go the the Acquisition tab under the square Acquisition node labeled "run sq_acq" to watch the images of squares that were targeted.</para>
-            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/run_app_tsqacq.jpg" format="JPEG"/></para>
+            <para><graphic fileref="http://emg.nysbc.org/software/leginon/images/run_app_tsqacq.jpg" format="JPEG"/></para>
           </listitem>
           <listitem>
             <para> Go to the Click Target Finder tab in the square Click Target Finder node labeled "run sq_targ_clk" and press Advance Image.</para>
-            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/run_app_sqtargclick.jpg" format="JPEG"/></para>
+            <para><graphic fileref="http://emg.nysbc.org/software/leginon/images/run_app_sqtargclick.jpg" format="JPEG"/></para>
           </listitem>
         </orderedlist></para>
     </section>
@@ -1651,22 +1651,22 @@ memory_limit = 256M      ; Maximum amount of memory a script may consume (8MB)</
       <para><orderedlist continuation="restarts" inheritnum="ignore">
           <listitem>
             <para> In the Click Target Finder tab in the square Click Target Finder node labeled "run sq_targ_click," click the button with the red cross hairs and choose Imaging Target in the pull-down list.</para>
-            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/run_app_tgtargclickcrosshair.jpg" format="JPEG"/></para>
+            <para><graphic fileref="http://emg.nysbc.org/software/leginon/images/run_app_tgtargclickcrosshair.jpg" format="JPEG"/></para>
           </listitem>
           <listitem>
             <para> Click on target holes in the image of the square.</para>
           </listitem>
           <listitem>
             <para> Click Submit Targets.</para>
-            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/run_app_tsqtargclick.jpg" format="JPEG"/></para>
+            <para><graphic fileref="http://emg.nysbc.org/software/leginon/images/run_app_tsqtargclick.jpg" format="JPEG"/></para>
           </listitem>
           <listitem>
             <para> Go the the Acquisition tab under the hole Acquisition node labeled "run h_acq" to watch the images of holes that were targeted.</para>
-            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/run_app_thacq.jpg" format="JPEG"/></para>
+            <para><graphic fileref="http://emg.nysbc.org/software/leginon/images/run_app_thacq.jpg" format="JPEG"/></para>
           </listitem>
           <listitem>
             <para> Go to the Click Target Finder tab in the hole Click Target Finder node labeled "run h_targ_clk" and press Advance Image.</para>
-            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/run_app_htargclick.jpg" format="JPEG"/></para>
+            <para><graphic fileref="http://emg.nysbc.org/software/leginon/images/run_app_htargclick.jpg" format="JPEG"/></para>
           </listitem>
         </orderedlist></para>
     </section>
@@ -1675,21 +1675,21 @@ memory_limit = 256M      ; Maximum amount of memory a script may consume (8MB)</
       <para><orderedlist continuation="restarts" inheritnum="ignore">
           <listitem>
             <para> In the Click Target Finder tab in the hole Click Target Finder node labeled "run h_targ_click," click the button with the red cross hairs and choose Imaging Target in the pull-down list.</para>
-            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/run_app_tgtargclickcrosshair.jpg" format="JPEG"/></para>
+            <para><graphic fileref="http://emg.nysbc.org/software/leginon/images/run_app_tgtargclickcrosshair.jpg" format="JPEG"/></para>
           </listitem>
           <listitem>
             <para> Click on (high magnification) exposure targets in the image of the hole.</para>
           </listitem>
           <listitem>
             <para> Choose Focus Target in the pull-down list. The red cross hair will change to a blue cross hair.</para>
-            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/run_app_thtargclickcrosshairblue.jpg" format="JPEG"/></para>
+            <para><graphic fileref="http://emg.nysbc.org/software/leginon/images/run_app_thtargclickcrosshairblue.jpg" format="JPEG"/></para>
           </listitem>
           <listitem>
             <para> Click on focus targets in the image.</para>
           </listitem>
           <listitem>
             <para> Click Submit Targets.</para>
-            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/run_app_thtargclick.jpg" format="JPEG"/></para>
+            <para><graphic fileref="http://emg.nysbc.org/software/leginon/images/run_app_thtargclick.jpg" format="JPEG"/></para>
           </listitem>
           <listitem>
             <para> The focus images will appear in the focus Acquisition node labeled "run foc." The exposure images will not be displayed in the exposure Acquisition node unless the Display Image check box is enabled. It is not recommended that the exposure acquisition node check box be enabled because it will slow down Leginon II.</para>
