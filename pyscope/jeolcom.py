@@ -1614,7 +1614,8 @@ class Jeol(tem.TEM):
 		'''
 		return timed fill params from jeol.cfg.
 		'''
+		# the values are in minutes
 		n2fill_starts = self.getJeolConfig('n2filler','fill_starts')
-		n2fill_time = self.getJeolConfig('n2filler','fill_time_minute')
-		ahead_minute = self.getJeolConfig('n2filler','myclock_ahead_minute')
+		n2fill_time = self.getJeolConfig('n2filler','fill_time')
+		ahead_minute = self.getJeolConfig('n2filler','myclock_ahead')
 		return n2fill_starts, n2fill_time, ahead_minute
