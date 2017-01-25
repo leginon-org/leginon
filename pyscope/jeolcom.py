@@ -1602,17 +1602,11 @@ class Jeol(tem.TEM):
 		# Keep it off because gun shutter is too slow.
 		return False
 
-	def getRefrigerantLevel(self,id=0):
-		'''
-		return refrigerant level nitrogen filler.  For JEOL scope,
-		the filling is done at fixed time.  This returns 100 % filled
-		if outside the fill time and disregard the id.
-		'''
-		return super(Jeol,self).getRefrigerantLevel(id)
 
 	def getTimedN2FillParams(self):
 		'''
 		return timed fill params from jeol.cfg.
+		For JEOL scope, the filling is done at fixed time.
 		'''
 		# the values are in minutes
 		n2fill_starts = self.getJeolConfig('n2filler','fill_starts')
