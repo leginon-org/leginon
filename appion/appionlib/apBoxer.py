@@ -28,7 +28,7 @@ def checkBoxInImage(imgdims,start_x,start_y,boxsize):
 		and  (start_y > 0 and start_y+boxsize <= imgdims['y']) )
 
 ##=================
-def processParticleData(imgdata, boxsize, partdatas, shiftdata, boxfile, rotate=False):
+def processParticleData(imgdata, boxsize, partdatas, shiftdata, boxfile, checkInside,rotate=False):
 	"""
 	for a list of partdicts from database, apply shift
 	to get a new list with x, y, angle information
