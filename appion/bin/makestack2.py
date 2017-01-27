@@ -125,10 +125,17 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		### run batchboxer
 		self.boxedpartdatas, self.imgstackfile, self.partmeantree = self.boxParticlesFromImage(imgdata, partdatas, shiftdata)
 
+		### return boxfile only particle count
+		if self.params['boxfiles']:
+			self.stats['lastpeaks'] = 0
+			apDisplay.printMsg( '%d boxes so far' % self.boxfile_p_count )
+			# accumulated boxfile_p_count is the particle count for boxfiles only option
+			return self.boxfile_p_count
+
 		## if generating a relion stack, we will extract later
 		if self.params['filetype']=="relion": return len(self.boxedpartdatas)
 
-		if self.boxedpartdatas is None or self.params['boxfiles']:
+		if self.boxedpartdatas is None:
 			self.stats['lastpeaks'] = 0
 			apDisplay.printWarning("no particles were boxed from "+self.shortname+"\n")
 			self.badprocess = True
@@ -269,7 +276,9 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			partdatas, shiftdata, boxfile, rotate=self.params['rotate'], checkInside=self.params['checkInside'])
 
 		### boxfile created, can return if that's all we need
-		if self.params['boxfiles']: return None,None,None
+		if self.params['boxfiles']:
+			self.boxfile_p_count += len(partdatas)
+			return None,None,None
 
 		### relion box files will be extracted later
 		if self.params['filetype']=="relion":
@@ -1198,6 +1207,9 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 
 	#=======================
 	def checkRequireCtf(self):
+		# refs #4726
+		if self.params['boxfiles']:
+			return False
 		return super(Makestack2Loop,self).checkRequireCtf() or self.params['phaseflipped']
 
 	#=======================
@@ -1213,9 +1225,14 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		## for relion, add relion header
 		if self.params['filetype']=="relion":
 			apRelion.writeRelionMicrographsStarHeader(self.mstarfile)
+		## for boxfile only option to count particles included
+		self.boxfile_p_count = 0
 
 	#=======================
 	def postLoopFunctions(self):
+		# refs #4725
+		if self.params['boxfiles']:
+			return
 		# now we have all box files, generate relion stack
 		if self.params['filetype'] == "relion":
 			logfile = os.path.join(self.params['rundir'], "relionExtract-"+self.timestamp+".cmd")

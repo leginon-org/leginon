@@ -14,6 +14,8 @@ class PhasePlateAligner(referencecounter.ReferenceCounter):
 	defaultsettings.update({
 		'settle time': 60.0,
 		'charge time': 2.0,
+		'tilt charge time': 2.0,
+		'tilt charge angle': 0.01,
 		'phase plate number': 1,
 		'initial position': 1,
 	})
@@ -104,6 +106,21 @@ class PhasePlateAligner(referencecounter.ReferenceCounter):
 			self.presets_client.toScope(self.preset_name)
 			self.logger.info('expose for %.1f second to charge up' % self.settings['charge time'])
 			self.instrument.tem.exposeSpecimenNotCamera(self.settings['charge time'])
+
+		# Charge also tilted
+		if self.settings['tilt charge time'] and self.preset_name and self.settings['tilt charge angle']:
+			self.presets_client.toScope(self.preset_name)
+			bt0 = self.instrument.tem.BeamTilt
+			bt1 = {'x':bt0['x']+self.settings['tilt charge angle'], 'y':bt0['y']}
+			bt2 = {'x':bt0['x']-self.settings['tilt charge angle'], 'y':bt0['y']}
+			try:
+				self.instrument.tem.BeamTilt = bt1
+				self.instrument.tem.exposeSpecimenNotCamera(self.settings['tilt charge time'])
+				self.instrument.tem.BeamTilt = bt2
+				self.instrument.tem.exposeSpecimenNotCamera(self.settings['tilt charge time'])
+			except:
+				pass
+			self.instrument.tem.BeamTilt = bt0
 
 	def logPhasePlateUsage(self):
 		tem = self.instrument.getTEMData()

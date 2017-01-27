@@ -1,7 +1,7 @@
-# The Leginon software is Copyright 2003
-# The Scripps Research Institute, La Jolla, CA
+# The Leginon software is Copyright under
+# Apache License, Version 2.0
 # For terms of the license agreement
-# see  http://ami.scripps.edu/software/leginon-license
+# see  http://leginon.org
 #
 # $Source: /ami/sw/cvsroot/pyleginon/presets.py,v $
 # $Revision: 1.270 $
@@ -1469,7 +1469,7 @@ class PresetsManager(node.Node):
 			self.logger.error(errstr % 'unable to set camera parameters')
 			return
 		try:
-			imagedata = self.acquireCorrectedCameraImageData()
+			imagedata = self.acquireCorrectedCameraImageData(force_no_frames=True)
 		except:
 			self.logger.error(errstr % 'unable to acquire corrected image data')
 			return
@@ -2003,7 +2003,7 @@ class PresetsManager(node.Node):
 		self.instrument.ccdcamera.ExposureTime = temp_exptime
 		self.logger.info('Beam image using temporary exposure time: %.1f' % (float(temp_exptime),))
 		# acquire image
-		self.beamimagedata = self.acquireCorrectedCameraImageData()
+		self.beamimagedata = self.acquireCorrectedCameraImageData(force_no_frames=True)
 		im = self.beamimagedata['image']
 		self.panel.setBeamImage(im)
 		# display info

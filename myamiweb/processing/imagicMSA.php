@@ -1,9 +1,9 @@
 <?php
 /**
  *      The Leginon software is Copyright 2007
- *      The Scripps Research Institute, La Jolla, CA
+ *      Apache License, Version 2.0
  *      For terms of the license agreement
- *      see  http://ami.scripps.edu/software/leginon-license
+ *      see  http://leginon.org
  *
  *      Create an IMAGIC Reclassification Job initiating a 3d0 model generation
  */

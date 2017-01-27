@@ -2,9 +2,9 @@
 
 /**
  *	The Leginon software is Copyright 2006
- *	The Scripps Research Institute, La Jolla, CA
+ *	Apache License, Version 2.0
  *	For terms of the license agreement see
- *	@licence http://ami.scripps.edu/software/leginon-license
+ *	@licence http://leginon.org
  */
 /**
  *	Query definition to access all leginon data

@@ -1,9 +1,9 @@
 #
 # COPYRIGHT:
-#       The Leginon software is Copyright 2003
-#       The Scripps Research Institute, La Jolla, CA
+#       The Leginon software is Copyright under
+#       Apache License, Version 2.0
 #       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
+#       see  http://leginon.org
 #
 import node
 from leginon import leginondata
@@ -140,7 +140,7 @@ class GonModeler(calibrator.Calibrator):
 			self.corchannel = 1
 
 		## acquire image
-		newimagedata = self.acquireCorrectedCameraImageData(self.corchannel)
+		newimagedata = self.acquireCorrectedCameraImageData(self.corchannel, force_no_frames=True)
 
 		newnumimage = newimagedata['image']
 		self.setImage(newnumimage, 'Image')
