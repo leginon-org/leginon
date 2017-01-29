@@ -96,6 +96,17 @@ class AppionLoopTable extends PresetTable
 		$html.= $params->insertCheckboxField( "nowait" );
 		$html.= "<hr/>\n";
 
+		// 5 degrees is the cutoff for the accuracy of the goniometer when it is set to zero.
+		if ($this->maxtiltangle > 5) {
+			$tiltOptions = array( 'all'=>'all tilt angles', 'notilt'=>'zero tilt angles only','hightilt'=>'large tilt angles only', 
+								'lowtilt'=>'small tilt angles only', 'minustilt'=>'negative tilt angles only', 'plustilt'=>'positive tilt angles only');
+			
+			$html.= $params->insertSelectField( "tiltangle", $tiltOptions );
+			$html.= "<hr/>\n";
+		} else {
+			$html.= "<input type='hidden' name='tiltangle' value='all'>\n";
+		}
+	
 		//
 		// STARTING ADVANCED SECTION
 		//
@@ -103,16 +114,6 @@ class AppionLoopTable extends PresetTable
 			$html.= "<a id='Advanced_Loop_Options_toggle' href='javascript:toggle(\"Advanced_Loop_Options\");' style='color:blue'>";
 			$html.= "Show Advanced Options</a><br/>\n";
 			$html.= "<div id='Advanced_Loop_Options' style='display: none'>\n";
-		}
-	
-		// 5 degrees is the cutoff for the accuracy of the goniometer when it is set to zero.
-		if ($this->maxtiltangle > 5) {
-			$tiltOptions = array( 'all'=>'all tilt angles', 'notilt'=>'zero tilt angles only','hightilt'=>'large tilt angles only', 
-								'lowtilt'=>'small tilt angles only', 'minustilt'=>'negative tilt angles only', 'plustilt'=>'positive tilt angles only');
-			
-			$html.= $params->insertSelectField( "tiltangle", $tiltOptions );
-		} else {
-			$html.= "<input type='hidden' name='tiltangle' value='all'>\n";
 		}
 	
 		$html.= $params->insertTextField( "limit", $fieldSize );	
