@@ -47,7 +47,9 @@ def makeNewStack(oldstack, newstack, listfile=None, remove=False, bad=False):
 	apDisplay.printMsg("creating a new stack\n\t"+newstack+
 		"\nfrom the oldstack\n\t"+oldstack+"\n")
 
-	stackTools.createSubStack(oldstack, newstack, listfile, msg=True)
+	partlist = emanLstFileToPartList(listfile)
+
+	stackTools.createSubStack(oldstack, newstack, partlist, msg=True)
 
 	if bad is True and listfile is not None:
 		### run only if num bad particles < num good particles
@@ -56,11 +58,28 @@ def makeNewStack(oldstack, newstack, listfile=None, remove=False, bad=False):
 		if newstacknumpart > oldstacknumpart/2:
 			### create bad.hed stack with all bad particles
 			badstack = os.path.join(os.path.dirname(newstack), "bad.hed")
-			emancmd = "proc2d %s %s exclude=%s"%(oldstack, badstack, listfile)
-			apEMAN.executeEmanCmd(emancmd, verbose=True)
+			badlist = list(set(range(1, oldstacknumpart+1)) - set(partlist))
+			stackTools.createSubStack(oldstack, badstack, badlist, msg=True)
 		else:
 			apDisplay.printMsg("Rejecting more particles than keeping, not creating a bad stack")
 	return
+
+
+#===============
+def emanLstFileToPartList(listfile):
+	f = open(listfile, "r")
+	partlist = []
+	for line in f:
+		sline = line.strip()
+		partnum = None
+		try:
+			#eman starts at 0, appion starts at 1
+			partnum = int(sline) + 1
+		except ValueError:
+			pass
+		if partnum is not None:
+			partlist.append(partnum)
+	return partlist
 
 #===============
 def getVirtualStackParticlesFromId(stackid, msg=True):
