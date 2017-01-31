@@ -635,6 +635,8 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 			q.insert()
 
 	def commitFrameTrajectoryToDatabase(self, imgdata, particlelst,particle=None):
+		if self.params['commit'] is False:
+			return
 		for xy in particlelst:
 			q=appiondata.ApFrameAlignTrajectory()
 			q['image']=imgdata
