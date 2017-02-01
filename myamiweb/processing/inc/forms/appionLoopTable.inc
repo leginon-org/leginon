@@ -172,9 +172,10 @@ class AppionLoopTable extends PresetTable
 
 		$testimage 		= $params->getParamValue('testimage');
 		$testfilename 	= $params->getParamValue('testfilename');
-
-		if ( $testimage )	{
+		if ( $testimage == 'on' )	{
+			# refs #4741 to keep it not commited
 			$commit  		= false;
+			$command = $this->removeCommandFlag( $command, 'commit' );
 		}	else {
 			$commit  		= ($params->getParamValue('commit') == 'on' ) ? true : false;
 		}
