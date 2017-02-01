@@ -293,7 +293,7 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 			shiftdata={'scale':1,'shiftx':0,'shifty':0}
 			boxpath=os.path.join(scratchdir,framesname+'.box')
 			apBoxer.processParticleData(imgdata,boxsize,particledata,shiftdata,boxpath)
-			apDisplay.printMsg('Boxing at size %d to %s') % ( boxsize,boxpath )
+			apDisplay.printMsg('Boxing at size %d to %s' % ( boxsize,boxpath ))
 		return targetdict
 
 	def calculateListDifference(self, list1, list2):
@@ -584,7 +584,13 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 					command=['proc2d',correctedparticle[0], newstackname]
 					if self.params['output_rotation'] !=0:
 						###TODO add rot to proc2dLib
-						command.append('rot=%d' % self.params['output_rotation'])
+						### formerly used eman for rotation, but that produced artifacts. Now using numpy tools
+						#command.append('rot=%d' % self.params['output_rotation'])
+						apDisplay.printMsg("Rotating particle in place by %d" %(self.params['output_rotation']))
+						a=mrc.read(correctedparticle[0])
+						k=self.params['output_rotation']/90
+						a=numpy.rot90(a,k=k)
+						mrc.write(a,correctedparticle[0])
 					
 					apDisplay.printMsg( "adding %s" % correctedparticle[0])
 					subprocess.call(command)
@@ -629,6 +635,8 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 			q.insert()
 
 	def commitFrameTrajectoryToDatabase(self, imgdata, particlelst,particle=None):
+		if self.params['commit'] is False:
+			return
 		for xy in particlelst:
 			q=appiondata.ApFrameAlignTrajectory()
 			q['image']=imgdata

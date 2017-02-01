@@ -236,7 +236,7 @@ require_once('../inc/formValidator.php');
 
 		<br />
 		<h3>Enter outgoing email subject line:</h3>
-		<p>example: The Scripps Research Institute</p>
+		<p>example: New York Structural Biology Center</p>
 		<div id="error"><?php if($errMsg['email_title']) echo $errMsg['email_title']; ?></div>
 		<input type="text" size=50 name="email_title" 
 			<?php 

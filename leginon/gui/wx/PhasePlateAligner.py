@@ -30,6 +30,7 @@ class ScrolledSettings(leginon.gui.wx.ReferenceCounter.ScrolledSettings):
 		self.sz1 = wx.GridBagSizer(5, 5)
 		position = self.createSettleTimeEntry((0,0))
 		position = self.createChargeTimeEntry((position[0],0))
+		position = self.createTiltChargeTimeEntry((position[0],0))
 
 		# Phase Plate Position Box Sizer
 		ppsb = wx.StaticBox(self, -1, 'Phase Plate Position')
@@ -64,6 +65,18 @@ class ScrolledSettings(leginon.gui.wx.ReferenceCounter.ScrolledSettings):
 		szpausetime.Add(wx.StaticText(self, -1, 'Expose for'), (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szpausetime.Add(self.widgets['charge time'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		szpausetime.Add(wx.StaticText(self, -1, 'seconds to charge up carbon film phase plate'), (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.sz1.Add(szpausetime, start_position, (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		return start_position[0]+1,start_position[1]+1
+
+	def createTiltChargeTimeEntry(self, start_position):
+		self.widgets['tilt charge angle'] = FloatEntry(self, -1, min=0.0, allownone=False, chars=5, value='0.01')
+		self.widgets['tilt charge time'] = FloatEntry(self, -1, min=0.0, allownone=False, chars=4, value='3.0')
+		szpausetime = wx.GridBagSizer(5, 5)
+		szpausetime.Add(wx.StaticText(self, -1, 'Beam tilt by +/-'), (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szpausetime.Add(self.widgets['tilt charge angle'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		szpausetime.Add(wx.StaticText(self, -1, 'radians and expose for'), (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szpausetime.Add(self.widgets['tilt charge time'], (0, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		szpausetime.Add(wx.StaticText(self, -1, 'seconds to charge up beam tilt focusing position'), (0, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.sz1.Add(szpausetime, start_position, (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		return start_position[0]+1,start_position[1]+1
 

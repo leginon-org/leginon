@@ -2,10 +2,10 @@
 
 #
 # COPYRIGHT:
-#       The Leginon software is Copyright 2003
-#       The Scripps Research Institute, La Jolla, CA
+#       The Leginon software is Copyright under
+#       Apache License, Version 2.0
 #       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
+#       see  http://leginon.org
 #
 
 from leginon import leginondata
@@ -416,6 +416,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 
 	def bypass(self):
 		self.setTargets([], 'Blobs', block=True)
+		self.setTargets([], 'Lattice', block=True)
 		self.setTargets([], 'acquisition', block=True)
 		self.setTargets([], 'focus', block=True)
 		self.setTargets([], 'preview', block=True)

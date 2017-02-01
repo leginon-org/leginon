@@ -190,7 +190,7 @@ class AlignZeroLossPeak(ReferenceTimer):
 		if not ccd_camera.EnergyFiltered:
 			self.logger.warning('No energy filter on this instrument.')
 			return False
-		imagedata = self.acquireCorrectedCameraImageData()
+		imagedata = self.acquireCorrectedCameraImageData(force_no_frames=True)
 		image = imagedata['image']
 		stageposition = imagedata['scope']['stage position']
 		lastresetq = leginondata.ZeroLossCheckData(session=self.session, preset=self.checkpreset)
@@ -223,7 +223,7 @@ class AlignZeroLossPeak(ReferenceTimer):
 			self.logger.error('Error moving to target, %s' % e)
 			return
 		self.logger.info('reset zero-loss check data')
-		imagedata = self.acquireCorrectedCameraImageData()
+		imagedata = self.acquireCorrectedCameraImageData(force_no_frames=True)
 		stageposition = imagedata['scope']['stage position']
 		image = imagedata['image']
 		self.publishZeroLossCheck(image)

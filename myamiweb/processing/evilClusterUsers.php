@@ -7,7 +7,7 @@ require_once "inc/viewer.inc";
 require_once "inc/project.inc";
 require_once "inc/summarytables.inc";
 
-$CLUSTER_HOSTNAME = "garibaldi.scripps.edu";
+$CLUSTER_HOSTNAME = "your_cluster.your_school.edu";
 main();
 
 /* ***********************************
@@ -26,7 +26,7 @@ function searchScripps($searchstr, $eviluser) {
 	);
 
 	$context = stream_context_create($context_options);
-	$fp = fopen('http://www.scripps.edu/directory/index.php', 'r', false, $context);
+	$fp = fopen('http://www.'.$CLUSTER_HOSTNAME/directory/index.php', 'r', false, $context);
 	$rawdata = '';
 	while (!feof($fp)) {
 		$buffer = fgets($fp, 1024);
@@ -48,7 +48,7 @@ function searchScripps($searchstr, $eviluser) {
 		if (substr($rawopen, 0, 36) != "<a href=\"index.php?operation=view&r=")
 			continue;
 		preg_match("/^<a href=\"(index.php\?operation=view\&r=[0-9]*)/", $rawopen, $matches);
-		$faceurl = "http://www.scripps.edu/directory/".$matches[1];
+		$faceurl = "http://www.your_school.edu/directory/".$matches[1];
 		break;
 		//echo $faceurl."<br/>\n";
 	}
@@ -61,7 +61,7 @@ function searchScripps($searchstr, $eviluser) {
 		if (!preg_match("/^<tr><td align/", $buffer))
 			continue;
 		if (preg_match("/<img src=\"(hr_photos\/Pic.*\.JPG)\"/", $buffer, $matches)) {
-			$imageurl = "http://www.scripps.edu/directory/".$matches[1];
+			$imageurl = "http://www.your_school.edu/directory/".$matches[1];
 			//echo $imageurl."<br/>\n";
 		}
 		if (preg_match("/Title :.*valign=top>(.*)<\/td><\/tr>/", $buffer, $matches)) {
@@ -178,7 +178,7 @@ function formatUser($eviluser, $fullname, $usage, $userinfo) {
 	}
 	$userstring .= "Name: ".$fullname."<br/>\n";
 	$userstring .= "Title: ".$userinfo['title']."<br/>\n";
-	$userstring .= "Email: $eviluser@scripps.edu<br/>\n";
+	$userstring .= "Email: $eviluser@your_school.edu<br/>\n";
 	$userstring .= "Tasks: ".$usage['runtasks']." running (".$usage['queuetasks']." more queued)<br/>\n";
 	$userstring .= "</td></tr></table>\n";
 	return $userstring;

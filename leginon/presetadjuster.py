@@ -70,11 +70,14 @@ class PresetAdjuster(referencetimer.ReferenceTimer):
 		return self._acquire()
 
 	def _acquire(self):
+		was_save_frames = self.instrument.ccdcamera.SaveRawFrames
 		try:
-			imagedata = self.acquireCorrectedCameraImageData()
+			imagedata = self.acquireCorrectedCameraImageData(force_no_frames=True)
 		except:
 			self.logger.error('unable to get corrected image')
+			self.instrument.ccdcamera.SaveRawFrames = was_save_frame
 			return
+		self.instrument.ccdcamera.SaveRawFrames = was_save_frame
 		return imagedata
 
 	def execute(self, request_data=None):

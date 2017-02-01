@@ -1,7 +1,7 @@
-# The Leginon software is Copyright 2004
-# The Scripps Research Institute, La Jolla, CA
+# The Leginon software is Copyright under
+# Apache License, Version 2.0
 # For terms of the license agreement
-# see http://ami.scripps.edu/software/leginon-license
+# see http://leginon.org
 #
 # $Source: /ami/sw/cvsroot/pyleginon/navigator.py,v $
 # $Revision: 1.130 $
@@ -130,6 +130,7 @@ class Navigator(node.Node):
 		final_imageshift = ev['final image shift']
 		use_target_z = ev['use target z']
 		self.logger.info('handling %s request from %s' % (movetype, nodename,))
+		# This is the parent image
 		imagedata = targetdata['image']
 		self.newImage(imagedata)
 		preset = imagedata['preset']
@@ -283,9 +284,13 @@ class Navigator(node.Node):
 		deltay = distance * numpy.sin(rangle)
 		tmpx = origx + deltax
 		tmpy = origy + deltay
+		self.logger.info('moving away...')
 		self.instrument.tem.StagePosition = {'x': tmpx, 'y': tmpy}
+		self.logger.info('settling...')
 		time.sleep(2)
+		self.logger.info('moving back...')
 		self.instrument.tem.StagePosition = {'x': origx, 'y': origy}
+		self.logger.info('settling...')
 		time.sleep(2)
 		self.acquireImage()
 
@@ -305,13 +310,16 @@ class Navigator(node.Node):
 			deltay = distance * numpy.sin(rangle)
 			tmpx = origx + deltax
 			tmpy = origy + deltay
+			self.logger.info('moving away...')
 			self.instrument.tem.StagePosition = {'x': tmpx, 'y': tmpy}
+			self.logger.info('settling...')
 			time.sleep(2)
+			self.logger.info('moving back...')
 			self.instrument.tem.StagePosition = {'x': origx, 'y': origy}
+			self.logger.info('settling...')
 			time.sleep(2)
 			self.reacquireImage()
 			r,c,dist = self.checkMoveError()
-			self.logger.info('move error: pixels: %s, %s, %.3em,' % (r,c,dist,))
 			repdata = leginondata.StageReproducibilityData()
 			repdata['session'] = self.session
 			repdata['label'] = label
@@ -349,26 +357,26 @@ class Navigator(node.Node):
 			if self.outofbounds(target, shape):
 				self.logger.info('target out of bounds, so cannot check error')
 				self.setStatus('idle')
+				# Why reacquire if it can not check error ?
 				self.reacquireImage()
 				return 'error'
 			if self.settings['cycle each']:
 				self.cycleToPreset(preset)
 			self.reacquireImage()
 			r,c,dist = self.checkMoveError()
-			self.logger.info('move error: pixels: %s, %s, %.3em,' % (r,c,dist,))
 
 			if precision:
 				self.logger.info('checking that move error is less than %.3e' % (precision,))
 				while dist > precision:
 					time.sleep(0.2)
 					self._move(r, c, movetype)
+					self.logger.info('settling...')
 					time.sleep(2.0)
 					if self.settings['cycle each']:
 						self.cycleToPreset(preset)
 					self.reacquireImage()
 					lastdist = dist
 					r,c,dist = self.checkMoveError()
-					self.logger.info('move error: pixels: %s, %s, %.3em,' % (r,c,dist,))
 					if dist > lastdist:
 						self.logger.info('error got worse')
 						if dist > accept_precision:
@@ -400,6 +408,7 @@ class Navigator(node.Node):
 		#maxerror = self.settings['max error']
 		#limit = (int(maxerror*2), int(maxerror*2))
 
+		self.logger.info('Checking move error...')
 		oldshape = self.oldimagedata['image'].shape
 		limit = oldshape
 		location = oldshape[0]/2.0-0.5+self.origmove[0], oldshape[1]/2.0-0.5+self.origmove[1]
@@ -439,6 +448,7 @@ class Navigator(node.Node):
 		cpix = c_error * cbin
 		pixdist = math.hypot(rpix,cpix)
 		distance = pixdist * pixelsize
+		self.logger.info('move error: pixels: %s, %s, %.3em,' % (r_error,c_error,distance,))
 
 		return r_error, c_error, distance
 
@@ -526,10 +536,11 @@ class Navigator(node.Node):
 			self.instrument.ccdcamera.SaveRawFrames = False
 		except:
 			pass
+		self.logger.info('Pausing before acquire...')
 		time.sleep(self.settings['pause time'])
 		try:
 			self.logger.info('Acquiring...')
-			imagedata = self.acquireCorrectedCameraImageData(channel=channel)
+			imagedata = self.acquireCorrectedCameraImageData(channel=channel,force_no_frames=True)
 			self.logger.info('Acquired')
 		except:
 			self.logger.error('unable to get corrected image')

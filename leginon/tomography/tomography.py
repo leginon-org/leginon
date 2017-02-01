@@ -216,7 +216,7 @@ class Tomography(leginon.acquisition.Acquisition):
 		collect.pixel_size = pixel_size
 		collect.tilts = tilts
 		collect.target_adjust_points = target_adjust_points
-		# FIX ME need to use settings
+		# use settings
 		collect.tilt_order = self.settings['tilt order']
 		collect.tilt_index_sequence = tilt_index_sequence
 		collect.exposures = exposures
@@ -304,10 +304,10 @@ class Tomography(leginon.acquisition.Acquisition):
 	def resetTiltSeriesList(self):
 		self.logger.info('Clear Tilt Series and Model History')
 		self.prediction.resetTiltSeriesList()
-		# FIX ME: need to do both tilt groups
 		try:
 			self.update()
 			tilts = self.tilts.getTilts()
+			# need to do both tilt groups
 			for g in range(len(tilts)):
 				self.initGoodPredictionInfo(tiltgroup=g)
 		except LimitError:
@@ -478,7 +478,7 @@ class Tomography(leginon.acquisition.Acquisition):
 						break
 		
 		if self.settings['model mag'] == 'custom values':
-			goodprediction is None
+			goodprediction = None
 		if goodprediction is None:
 			if self.settings['model mag'] == 'custom values':
 				# initialize phi, offset by tilt direction
