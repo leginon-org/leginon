@@ -301,7 +301,7 @@ class MotionCor2_UCSF(DDFrameAligner):
 			pass
 
 		# exposure filtering
-		if self.alignparams['doseweight'] is True:
+		if self.alignparams['doseweight'] is True and self.alignparams['totaldose']:
 			self.alignparams['FmDose'] = self.alignparams['totaldose'] / self.alignparams['totalframes']
 			cmd += ' -PixSize %.3f ' % (self.alignparams['PixSize'])
 			cmd += ' -kV %d ' % (self.alignparams['kV'])
