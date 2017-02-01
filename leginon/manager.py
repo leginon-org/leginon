@@ -2,10 +2,10 @@
 
 #
 # COPYRIGHT:
-#	   The Leginon software is Copyright 2003
-#	   The Scripps Research Institute, La Jolla, CA
+#	   The Leginon software is Copyright under
+#	   Apache License, Version 2.0
 #	   For terms of the license agreement
-#	   see  http://ami.scripps.edu/software/leginon-license
+#	   see  http://leginon.org
 #
 
 import application
@@ -146,13 +146,21 @@ class Manager(node.Node):
 		t.start()
 
 		for client in clients:
+			port = self.getPrimaryPort(client)
 			try:
-				self.addLauncher(client, 55555)
+				self.addLauncher(client, port)
 			except Exception, e:
 				self.logger.warning('Failed to add launcher: %s' % e)
 
 		if prevapp:
 			threading.Thread(target=self.launchPreviousApp).start()
+
+	def getPrimaryPort(self, hostname):
+		r = leginondata.ClientPortData(hostname=hostname).query()
+		if not r:
+			return 55555
+		else:
+			return r[0]['primary port']
 
 	def getSessionByName(self, name):
 		qsession = leginondata.SessionData(name=name)

@@ -8,6 +8,7 @@ from appionlib import apDisplay
 from appionlib.StackClass import mrcClass
 # Issue #4581 disable import until problem solved and module is used for something.
 #from appionlib.StackClass import hdfClass
+#Neil I moved the import to the HDF read part, so it will only be used when needed
 from appionlib.StackClass import imagicClass
 
 ####
@@ -29,6 +30,7 @@ def createStackClass(filename, msg=False):
 	elif extension == '.hdf':
 		apDisplay.printError('HdfClass is not imported due to issue #4581')
 		if msg is True: print "HdfClass"
+		from appionlib.StackClass import hdfClass
 		return hdfClass.HdfClass(filename)
 	elif extension == '.spi':
 		if msg is True: print "SpiderClass"
@@ -57,14 +59,18 @@ class ProcessStack(object):
 	#===============
 	def message(self, msg):
 		if self.msg is True:
-			apDisplay.printMsg("processStack: "+msg)
+			apDisplay.printMsg("ProcessStack2: "+msg)
+
+	#===============
+	def StackClassFromFile(self, stackfile):
+		return createStackClass(stackfile)
 
 	#===============
 	def initValues(self, stackfile, numrequest=None):
 		### check for stack
 		if not os.path.isfile(stackfile):
 			apDisplay.printError("stackfile does not exist: "+stackfile)
-		self.stackClass = createStackClass(stackfile)
+		self.stackClass = self.StackClassFromFile(stackfile)
 
 		### amount of free memory on machine (converted to bytes)
 		self.freememory = mem.free()*1024
@@ -79,7 +85,11 @@ class ProcessStack(object):
 		self.maxpartinmem = self.freememory/self.memperpart
 		self.message("Max particles in memory: %d"%(self.maxpartinmem))
 		### number particles to fit into memory
-		self.partallowed = int(self.maxpartinmem/10.0)
+		self.partallowed = int(self.maxpartinmem/20.0)
+		### FIXME: this severly affect performance and it is probably network dependent
+		### at SEMC it is better to have smaller fragments, but this may be different
+		if self.partallowed > 1000:
+			self.partallowed = 1000 #int(math.sqrt(self.partallowed))
 		self.message("Particles allowed in memory: %d"%(self.partallowed))
 		### number particles in stack
 		numpart = self.stackClass.getNumberOfParticles()
@@ -119,7 +129,9 @@ class ProcessStack(object):
 		while self.index < self.numpart and first <= self.numpart:
 			### print message
 			if self.index > 10:
-				esttime = (time.time()-t0)/float(self.index+1)*float(self.numpart-self.index)
+				#self.message("partnum through %d of %d, %s time so far"
+				#	%(last, self.numpart, apDisplay.timeString((time.time()-t0))))
+				esttime = (time.time()-t0)/float(first)*float(self.numpart-first)
 				self.message("partnum %d to %d of %d, %s remain"
 					%(first, last, self.numpart, apDisplay.timeString(esttime)))
 			else:
@@ -127,15 +139,11 @@ class ProcessStack(object):
 					%(first, last, self.numpart))
 
 			### read images
-			if partlist is None:
-				localpartlist = range(first, last+1)
-				stackarray = self.stackClass.readParticlesFromFile(localpartlist)
+			if partlist is not None:
+				stackarray = self.stackClass.readParticlesFromFile(partlist)
 			else:
-				#print first, last
-				sublist = partlist[first-1:last]
-				#print sublist
-				self.message("actual partnum %d to %d"%(sublist[0], sublist[-1]))
-				stackarray = self.stackClass.readParticlesFromFile(sublist)
+				#self.message("actual partnum %d to %d"%(first-1, last))
+				stackarray = self.stackClass.readParticlesFromFile(first=first, last=last)
 
 			### process images
 			self.processStack(stackarray)

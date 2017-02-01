@@ -39,8 +39,8 @@ class PresetAdjuster(referencetimer.ReferenceTimer):
 		self.beamsize_client = calibrationclient.BeamSizeCalibrationClient(self)
 		self.start()
 
-	def processData(self, incoming_data):
-		referencetimer.ReferenceTimer.processData(self, incoming_data)
+	def _processData(self, incoming_data):
+		referencetimer.ReferenceTimer._processData(self, incoming_data)
 		if issubclass(incoming_data.__class__, leginondata.FixBeamData):
 			newdata = incoming_data.toDict()
 			newdata['preset'] = self.settings['correction presets'][0]
@@ -70,11 +70,14 @@ class PresetAdjuster(referencetimer.ReferenceTimer):
 		return self._acquire()
 
 	def _acquire(self):
+		was_save_frames = self.instrument.ccdcamera.SaveRawFrames
 		try:
-			imagedata = self.acquireCorrectedCameraImageData()
+			imagedata = self.acquireCorrectedCameraImageData(force_no_frames=True)
 		except:
 			self.logger.error('unable to get corrected image')
+			self.instrument.ccdcamera.SaveRawFrames = was_save_frame
 			return
+		self.instrument.ccdcamera.SaveRawFrames = was_save_frame
 		return imagedata
 
 	def execute(self, request_data=None):

@@ -1,8 +1,8 @@
 # COPYRIGHT:
-# The Leginon software is Copyright 2003
-# The Scripps Research Institute, La Jolla, CA
+# The Leginon software is Copyright under
+# Apache License, Version 2.0
 # For terms of the license agreement
-# see http://ami.scripps.edu/software/leginon-license
+# see http://leginon.org
 
 import numpy
 import newdict

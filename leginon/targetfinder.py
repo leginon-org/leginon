@@ -1,9 +1,9 @@
 #
 # COPYRIGHT:
-#       The Leginon software is Copyright 2003
-#       The Scripps Research Institute, La Jolla, CA
+#       The Leginon software is Copyright under
+#       Apache License, Version 2.0
 #       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
+#       see  http://leginon.org
 #
 
 import calibrationclient
@@ -52,6 +52,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		'sort target': False,
 		'allow append': False,
 		'multifocus': False,
+		'allow no focus': False,
 	}
 	eventinputs = imagewatcher.ImageWatcher.eventinputs \
 									+ [event.AcquisitionImagePublishEvent] \
@@ -86,6 +87,8 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		self.remote = remoteserver.RemoteServerMaster(self.logger, session, self)
 		self.remote.targets.setTargetNames(self.targetnames)
 		self.onQueueCheckBox(self.settings['queue'])
+		# assumes needing focus. Overwritten by subclasses
+		self.foc_activated = True
 
 	def handleApplicationEvent(self,evt):
 		'''
@@ -165,18 +168,33 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		'''
 		Wait for user interaction either locally or remotely.
 		'''
-		if self.settings['check method'] == 'remote':
-			self.waitForRemoteCheck(imagedata)
-		else:
-			# default
-			self.waitForUserCheck()
+		valid_selection = False
+		while not valid_selection:
+			if self.settings['check method'] == 'remote':
+				self.waitForRemoteCheck(imagedata)
+			else:
+				# default
+				self.waitForUserCheck()
+			if not self.settings['allow no focus']:
+				has_aqu = self.hasTargetTypeOnPanel('acquisition')
+				has_foc = self.hasTargetTypeOnPanel('focus')
+				if not has_aqu or has_foc:
+					valid_selection = True
+				else:
+					self.logger.error('Must have a focus target')
+			else:
+				break
+
+	def hasTargetTypeOnPanel(self, typename):
+		targets = self.panel.getTargetPositions(typename)
+		return len(targets) > 0
 		
 	def waitForUserCheck(self):
 		'''
 		Local gui user target confirmation
 		'''
 		self.setStatus('user input')
-		self.twobeeps()
+		self.beep()
 		self.logger.info('Waiting for user to check targets...')
 		self.panel.submitTargets()
 		self.userpause.clear()

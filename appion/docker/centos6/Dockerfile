@@ -22,7 +22,7 @@ RUN yum -y update && yum -y install \
  php-devel gd-devel re2c fftw3-devel php-gd \
  xorg-x11-server-Xvfb netpbm-progs qiv python-requests \
  libssh2-devel mlocate nano elinks file \
- python-configparser h5py git \
+ python-configparser h5py git pyflakes \
  numactl compat-libgfortran && yum -y clean all
 #removed phpMyAdmin
 ### Trying to do VNC
@@ -31,7 +31,7 @@ RUN yum -y update && yum -y install tigervnc-server xterm xsetroot fluxbox fbpan
 #RUN yum -y update && yum -y install mozilla-adblockplus firefox dbus && yum -y clean all
 #RUN dbus-uuidgen > /var/lib/dbus/machine-id
 RUN pip install --upgrade pip
-RUN pip install joblib pyfftw3 fs scikit-learn==0.14
+RUN pip install joblib pyfftw3 fs==0.5.4 scikit-learn==0.14
 RUN python -c 'from sklearn import svm'
 
 RUN updatedb
@@ -84,7 +84,7 @@ RUN python ./setup.py install
 RUN mkdir /etc/fftw
 RUN python /emg/sw/myami/pyami/fft/fftwsetup.py 2 4096 4096 && mv -v ~/fftw3-wisdom-* /etc/fftw/wisdom
 RUN cp -v /emg/sw/myami/redux/init.d/reduxd /etc/init.d/reduxd
-COPY findem64.exe /emg/sw/myami/appion/bin/
+COPY findem-docker-centos6/findem64.exe /emg/sw/myami/appion/bin/
 WORKDIR /emg/sw/myami/
 
 #FIXME: mpirun does not run as root
@@ -158,8 +158,8 @@ COPY startup.sh /emg/sw/startup.sh
 #RUN pip install bsddb3 ipython PyOpenGL
 
 ### copy the image data
-COPY MRC/06jul12a/groel_template1.mrc /emg/data/leginon/06jul12a/templates/
-COPY MRC/06jul12a/groel_template2.mrc /emg/data/leginon/06jul12a/templates/
+COPY findem-docker-centos6/groel_template1.mrc /emg/data/leginon/06jul12a/templates/
+COPY findem-docker-centos6/groel_template2.mrc /emg/data/leginon/06jul12a/templates/
 COPY MRC/06jul12a/06jul12a_15gr_28sq_04hl_02em.mrc /emg/data/leginon/06jul12a/rawdata/
 COPY MRC/06jul12a/06jul12a_15gr_28sq_11hl_03em.mrc /emg/data/leginon/06jul12a/rawdata/
 COPY MRC/06jul12a/06jul12a_15gr_28sq_23hl_02em.mrc /emg/data/leginon/06jul12a/rawdata/

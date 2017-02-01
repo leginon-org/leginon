@@ -42,7 +42,7 @@ class ImagicClass(baseClass.StackClass):
 	def _getPixelSize(self):
 		raise NotImplementedError
 
-	def _readParticlesFromFile(self, particleNumbers):
+	def _readParticleListFromFile(self, particleNumbers):
 		"""
 		read a list of particles numbers into memory
 		particles numbers MUST start at 1
@@ -52,6 +52,17 @@ class ImagicClass(baseClass.StackClass):
 			a = apImagicFile.readSingleParticleFromStack(self.filename, partnum=partnum, msg=self.debug)
 			partdatalist.append(a)
 		return partdatalist
+
+	def _readParticleChunkFromFile(self, first, last):
+		"""
+		read a fixed range of particles into memory
+		particles numbers MUST start at 1
+		"""
+		if self.headerdict is None:
+			self.headerdict = apImagicFile.readImagicHeader(self.getHedFile())
+		numpart = last - first + 1
+		images = apImagicFile.readImagicData(self.getImgFile(), self.headerdict, first, numpart)
+		return images
 
 	def _writeParticlesToFile(self, particleDataTree):
 		"""

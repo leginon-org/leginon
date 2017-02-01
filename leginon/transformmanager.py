@@ -2,10 +2,10 @@
 
 #
 # COPYRIGHT:
-#       The Leginon software is Copyright 2003
-#       The Scripps Research Institute, La Jolla, CA
+#       The Leginon software is Copyright under
+#       Apache License, Version 2.0
 #       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
+#       see  http://leginon.org
 #
 
 import node
@@ -225,7 +225,7 @@ class TransformManager(node.Node, TargetTransformer):
 		'registration': 'correlation',
 		'threshold': 3e-10,
 		'pause time': 2.5,
-		'min mag': 300,
+		'min mag': 140,
 		'camera settings': cameraclient.default_settings,
 	}
 	eventinputs = node.Node.eventinputs + presets.PresetsClient.eventinputs \

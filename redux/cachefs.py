@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 
+import os
 import fs.osfs
 import collections
-import itertools
-import os
 import threading
 
 debug = True
 def debug(s):
 	if debug:
+		import sys
 		sys.stderr.write(s)
 		sys.stderr.write('\n')
 

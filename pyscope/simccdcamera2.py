@@ -203,6 +203,7 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 		self.energy_filter_width = float(value)
 
 	def alignEnergyFilterZeroLossPeak(self):
+		time.sleep(1.0)
 		pass
 
 	def getPixelSize(self):
@@ -527,6 +528,14 @@ class SimK2CountingCamera(SimFrameCamera):
 		super(SimK2CountingCamera,self).__init__()
 		self.binning_limits = [1,2,4,8]
 		self.binmethod = 'floor'
+
+	def getFrameFlip(self):
+		# flip before? rotation
+		return False
+
+	def getFrameRotate(self):
+		# rotation in multiple of 90 degrees
+		return 0
 
 class SimK2SuperResCamera(SimFrameCamera):
 	name = 'SimK2SuperResCamera'

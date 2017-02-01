@@ -2,10 +2,10 @@
 
 #
 # COPYRIGHT:
-#       The Leginon software is Copyright 2003
-#       The Scripps Research Institute, La Jolla, CA
+#       The Leginon software is Copyright under
+#       Apache License, Version 2.0
 #       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
+#       see  http://leginon.org
 #
 
 from leginon import leginondata
@@ -135,7 +135,7 @@ class Corrector(imagewatcher.ImageWatcher):
 			self.instrument.ccdcamera.Settings = self.settings['camera settings']
 			self.stopTimer('set cam')
 			self.startTimer('get image')
-			image = self.acquireCameraImageData()['image']
+			image = self.acquireCameraImageData(force_no_frames=True)['image']
 			self.stopTimer('get image')
 		except Exception, e:
                         raise
@@ -154,7 +154,7 @@ class Corrector(imagewatcher.ImageWatcher):
 			self.startTimer('set ccd')
 			self.instrument.ccdcamera.Settings = self.settings['camera settings']
 			self.stopTimer('set ccd')
-			imagedata = self.acquireCorrectedCameraImageData(channel)
+			imagedata = self.acquireCorrectedCameraImageData(channel, force_no_frames=True)
 			image = imagedata['image']
 			self.maskimg = numpy.zeros(image.shape)
 			self.displayImage(image)
@@ -191,7 +191,7 @@ class Corrector(imagewatcher.ImageWatcher):
 		series = []
 		for i in range(n):
 			self.logger.info('Acquiring reference image (%s of %s)' % (i+1, n))
-			image = self.acquireCameraImageData()['image']
+			image = self.acquireCameraImageData(force_no_frames=True)['image']
 			series.append(image)
 		return series
 
@@ -203,7 +203,7 @@ class Corrector(imagewatcher.ImageWatcher):
 		for i in range(n):
 			self.logger.info('Acquiring reference image (%s of %s)' % (i+1, n))
 			try:
-				imagedata = self.acquireCameraImageData(type=exposuretype)
+				imagedata = self.acquireCameraImageData(type=exposuretype, force_no_frames=True)
 			except Exception, e:
 				self.logger.error('Error acquiring image: %s' % e)
 				raise
@@ -230,7 +230,7 @@ class Corrector(imagewatcher.ImageWatcher):
 		for i in range(n):
 			self.logger.info('Acquiring reference image (%s of %s)' % (i+1, n))
 			try:
-				imagedata = self.acquireCameraImageData(type=exposuretype)
+				imagedata = self.acquireCameraImageData(type=exposuretype, force_no_frames=True)
 			except Exception, e:
 				self.logger.error('Error acquiring image: %s' % e)
 				raise
@@ -386,7 +386,7 @@ class Corrector(imagewatcher.ImageWatcher):
 
 		raise NotImplementedError('need to work out the details of configuring the camera here')
 
-		im = self.acquireCameraImageData()['image']
+		im = self.acquireCameraImageData(force_no_frames=True)['image']
 		mean = darkmean = arraystats.mean(im)
 		self.displayImage(im)
 		self.logger.info('Dark reference mean: %s' % str(darkmean))
@@ -401,7 +401,7 @@ class Corrector(imagewatcher.ImageWatcher):
 		for i in range(tries):
 			config = { 'exposure time': trial_exp }
 			raise NotImplementedError('need to work out the details of configuring the camera here')
-			im = self.acquireCameraImageData()['image']
+			im = self.acquireCameraImageData(force_no_frames=True)['image']
 			mean = arraystats.mean(im)
 			self.displayImage(im)
 			self.logger.info('Image mean: %s' % str(mean))

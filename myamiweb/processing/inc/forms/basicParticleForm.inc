@@ -1,10 +1,10 @@
 <?php
 
 /**
- *	The Leginon software is Copyright 2003 
- *	The Scripps Research Institute, La Jolla, CA
+ *	The Leginon software is Copyright under 
+ *	Apache License, Version 2.0
  *	For terms of the license agreement
- *	see  http://ami.scripps.edu/software/leginon-license
+ *	see  http://leginon.org
  */
 
 //--------------------------------------------------------------------------------------
@@ -20,10 +20,10 @@ class BasicParticleForm extends BasicLoopForm
 	function __construct( $expId, $errorHTML='', $infoHTML='' ) 
 	{
 		parent::__construct($expId, $errorHTML, $infoHTML );
-		$this->particleTable = new SimpleParticleTable;	
+		$this->particleTable = new SimpleParticleTable();
 		$this->pDiameterTable = new ParticleDiameterTable();
 		$this->imageContrastTable = new ImageContrastTable();
-
+		$this->showfilters=true;
 		// You can change the default of the parameters for the imbeded table in the child functions.
 
 	}
@@ -52,7 +52,7 @@ class BasicParticleForm extends BasicLoopForm
 		// Add the Particle Loop Form
 		//$particleTable = SimpleParticleTable();
 		
-		$html .= $this->particleTable->generateForm();
+		$html .= $this->particleTable->generateForm($this->showfilters);
 		$html .= $this->imageContrastTable->generateForm();
 	
 		return $html;

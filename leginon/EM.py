@@ -1,9 +1,9 @@
 #
 # COPYRIGHT:
-#       The Leginon software is Copyright 2003
-#       The Scripps Research Institute, La Jolla, CA
+#       The Leginon software is Copyright under
+#       Apache License, Version 2.0
 #       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
+#       see  http://leginon.org
 #
 
 from leginon import leginondata
@@ -174,6 +174,10 @@ class EM(node.Node):
 		instrumentdata['hostname'] = instance.getHostname()
 
 		instrumentdata['cs'] = instance.getCs()
+		if 'Sim' in tem_name or 'Appion' in tem_name:
+			instrumentdata['hidden'] = True
+		else:
+			instrumentdata['hidden'] = False
 		magnificationsdata = leginondata.MagnificationsData()
 		magnificationsdata['instrument'] = instrumentdata
 		magnificationsdata['magnifications'] = instance.getMagnifications()

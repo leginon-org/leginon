@@ -39,11 +39,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 	requestdata = None
 
 	def __init__(self, *args, **kwargs):
-		try:
-			watch = kwargs['watchfor']
-		except KeyError:
-			watch = []
-		kwargs['watchfor'] = watch + [event.ReferenceTargetPublishEvent]
+		kwargs['watchfor'] = self.addWatchFor(kwargs)
 		watcher.Watcher.__init__(self, *args, **kwargs)
 		targethandler.TargetHandler.__init__(self)
 
@@ -72,13 +68,26 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 			print 'isReference'
 			self.start()
 
+	def addWatchFor(self,kwargs):
+		try:
+			watch = kwargs['watchfor']
+		except KeyError:
+			watch = []
+		return watch + [event.ReferenceTargetPublishEvent]
+
 	def processData(self, incoming_data):
+		'''
+		Process Watcher watchfor data. Return immediately if bypass
+		'''
+		if self.settings['bypass']:
+			return False
+		self._processData(incoming_data)
+
+	def _processData(self, incoming_data):
 		'''
 		Preocess ReferenceTargetData and more.  Subclass should set
 		self.requestdata
 		'''
-		if self.settings['bypass']:
-			return
 		if isinstance(incoming_data, leginondata.ReferenceTargetData):
 			self.processReferenceTarget(incoming_data)
 		if self.requestdata and isinstance(incoming_data, self.requestdata):

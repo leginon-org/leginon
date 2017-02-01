@@ -3,9 +3,9 @@
 if (substr_count($_SERVER['HTTP_ACCEPT_ENCODING'], 'gzip')) ob_start("ob_gzhandler"); else ob_start();
 /**
  *      The Leginon software is Copyright 2007
- *      The Scripps Research Institute, La Jolla, CA
+ *      Apache License, Version 2.0
  *      For terms of the license agreement
- *      see  http://ami.scripps.edu/software/leginon-license
+ *      see  http://leginon.org
  *
  *      Create an Eman Job for submission to a cluster
  */

@@ -1,10 +1,10 @@
 <?php
 
 /**
- *	The Leginon software is Copyright 2003
- *	The Scripps Research Institute, La Jolla, CA
+ *	The Leginon software is Copyright under
+ *	Apache License, Version 2.0
  *	For terms of the license agreement
- *	see  http://ami.scripps.edu/software/leginon-license
+ *	see  http://leginon.org
  */
 
 require_once "basicLayoutForm.inc"; //includes the BasicLayoutForm class that this class extends
@@ -58,6 +58,11 @@ class Relion2Align2DForm extends BasicLayoutForm
 		$javascript .= "	if (bestbin < 1) {\n";
 		$javascript .= "		var bestbin = 1 ;}\n";
 		$javascript .= "	document.viewerform.bin.value = bestbin;\n";
+		//number of references is the natural log of the number of particles
+		$javascript .= "	var bestref = Math.floor(Math.log(stackArray[3])/2)*2;\n";
+		$javascript .= "	if (bestref < 2) {\n";
+		$javascript .= "		var bestref = 2 ;}\n";
+		$javascript .= "	document.viewerform.numref.value = bestref;\n";
 		// set particle & mask radius and lp
 		$javascript .= "}\n";
 		$javascript .= "</script>\n";

@@ -1,36 +1,39 @@
 import math
 import time
 import threading
-from leginon import leginondata, referencetimer, calibrationclient, cameraclient
+from leginon import leginondata, referencecounter, calibrationclient, cameraclient
 import event
+import node
 import gui.wx.PhasePlateAligner
 from pyami import arraystats
 
-class PhasePlateAligner(referencetimer.ReferenceTimer):
+class PhasePlateAligner(referencecounter.ReferenceCounter):
 	# relay measure does events
 	settingsclass = leginondata.PhasePlateAlignerSettingsData
-	defaultsettings = referencetimer.ReferenceTimer.defaultsettings
+	defaultsettings = referencecounter.ReferenceCounter.defaultsettings
 	defaultsettings.update({
 		'settle time': 60.0,
 		'charge time': 2.0,
+		'tilt charge time': 2.0,
+		'tilt charge angle': 0.01,
 		'phase plate number': 1,
 		'initial position': 1,
 	})
-	eventinputs = referencetimer.ReferenceTimer.eventinputs + [event.PhasePlatePublishEvent]
-	eventoutputs = referencetimer.ReferenceTimer.eventoutputs + [event.PhasePlateUsagePublishEvent]
+	eventinputs = referencecounter.ReferenceCounter.eventinputs + [event.PhasePlatePublishEvent]
+	eventoutputs = referencecounter.ReferenceCounter.eventoutputs + [event.PhasePlateUsagePublishEvent, event.FixAlignmentEvent]
 	panelclass = gui.wx.PhasePlateAligner.PhasePlateAlignerPanel
 	requestdata = leginondata.PhasePlateData
 	def __init__(self, *args, **kwargs):
-		try:
-			watch = kwargs['watchfor']
-		except KeyError:
-			watch = []
-		kwargs['watchfor'] = watch + [event.PhasePlatePublishEvent]
-		referencetimer.ReferenceTimer.__init__(self, *args, **kwargs)
+		referencecounter.ReferenceCounter.__init__(self, *args, **kwargs)
 		self.userpause = threading.Event()
 		self.current_position = 1 # base 1
 		self.position_updated = False
 		self.start()
+
+	def addWatchFor(self,kwargs):
+		watch = super(PhasePlateAligner,self).addWatchFor(kwargs)
+		# watch for preset published by Acquisition node
+		return watch + [event.PhasePlatePublishEvent]
 
 	def _processRequest(self, request_data):
 		if self.position_updated:
@@ -38,6 +41,7 @@ class PhasePlateAligner(referencetimer.ReferenceTimer):
 		else:
 			self.logger.error('Phase plate number and patch position must be confirmed before using this')
 			return
+
 	def uiUpdatePosition(self):
 		self.current_position = self.settings['initial position']
 		self.logPhasePlateUsage()
@@ -57,11 +61,25 @@ class PhasePlateAligner(referencetimer.ReferenceTimer):
 	def execute(self, request_data=None):
 		self.setStatus('processing')
 		self.logger.info('handle request')
+		self.alignOthers()
 		self.nextPhasePlate()
 		self.chargePhasePlate()	
 		self.logger.info('done')
 		self.setStatus('idle')
 		return True
+
+	def alignOthers(self):
+		# Do some alignment fix that also uses the same target and preset
+		evt = event.FixAlignmentEvent()
+		try:
+			self.logger.info('Sent Fix Alignment Event')
+			status = self.outputEvent(evt, wait=True)
+		except node.ConfirmationNoBinding, e:
+			# OK if not bound
+			self.logger.warning(e)
+			pass
+		except Exception, e:
+			self.logger.error(e)
 
 	def nextPhasePlate(self):
 		self.setStatus('processing')
@@ -88,6 +106,21 @@ class PhasePlateAligner(referencetimer.ReferenceTimer):
 			self.presets_client.toScope(self.preset_name)
 			self.logger.info('expose for %.1f second to charge up' % self.settings['charge time'])
 			self.instrument.tem.exposeSpecimenNotCamera(self.settings['charge time'])
+
+		# Charge also tilted
+		if self.settings['tilt charge time'] and self.preset_name and self.settings['tilt charge angle']:
+			self.presets_client.toScope(self.preset_name)
+			bt0 = self.instrument.tem.BeamTilt
+			bt1 = {'x':bt0['x']+self.settings['tilt charge angle'], 'y':bt0['y']}
+			bt2 = {'x':bt0['x']-self.settings['tilt charge angle'], 'y':bt0['y']}
+			try:
+				self.instrument.tem.BeamTilt = bt1
+				self.instrument.tem.exposeSpecimenNotCamera(self.settings['tilt charge time'])
+				self.instrument.tem.BeamTilt = bt2
+				self.instrument.tem.exposeSpecimenNotCamera(self.settings['tilt charge time'])
+			except:
+				pass
+			self.instrument.tem.BeamTilt = bt0
 
 	def logPhasePlateUsage(self):
 		tem = self.instrument.getTEMData()

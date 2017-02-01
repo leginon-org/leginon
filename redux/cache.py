@@ -109,7 +109,3 @@ class Cache(pyami.resultcache.ResultCache):
 		parts = filter(None, parts)
 		path = os.path.join(*parts)
 		return path
-
-
-if __name__ == '__main__':
-	test_disk_cache_manager()

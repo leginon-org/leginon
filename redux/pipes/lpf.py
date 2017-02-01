@@ -1,6 +1,3 @@
-# myami
-import pyami.imagefun
-
 # local
 from redux.pipe import Pipe
 

@@ -1,8 +1,8 @@
 # COPYRIGHT:
-# The Leginon software is Copyright 2003
-# The Scripps Research Institute, La Jolla, CA
+# The Leginon software is Copyright under
+# Apache License, Version 2.0
 # For terms of the license agreement
-# see http://ami.scripps.edu/software/leginon-license
+# see http://leginon.org
 
 import leginonconfig
 import sinedon.newdict
@@ -1241,6 +1241,16 @@ class SettingsData(InSessionData):
 		)
 	typemap = classmethod(typemap)
 
+class ClientPortData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('hostname', str),
+			('primary port', int),
+			('send port start', int),
+			('send port end', int),
+		)
+	typemap = classmethod(typemap)
+	
 class ConnectToClientsData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
@@ -1425,6 +1435,7 @@ class TargetFinderSettingsData(SettingsData):
 			('allow append', bool),
 			('multifocus', bool),
 			('skip', bool),
+			('allow no focus', bool),
 		)
 	typemap = classmethod(typemap)
 
@@ -2417,6 +2428,13 @@ class ReferenceTimerSettingsData(ReferenceSettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class ReferenceCounterSettingsData(ReferenceSettingsData):
+	def typemap(cls):
+		return ReferenceSettingsData.typemap() + (
+			('interval count', int),
+		)
+	typemap = classmethod(typemap)
+
 class PresetAdjusterSettingsData(ReferenceTimerSettingsData):
 	def typemap(cls):
 		return ReferenceTimerSettingsData.typemap() + (
@@ -2455,12 +2473,14 @@ class AlignZLPSettingsData(ReferenceTimerSettingsData):
 
 class PhasePlateAlignerSettingsData(ReferenceTimerSettingsData):
 	def typemap(cls):
-		return ReferenceTimerSettingsData.typemap() + (
+		return ReferenceCounterSettingsData.typemap() + (
 			('phase plate number', int),
 			('total positions', int),
 			('initial position', int),
 			('settle time', float),
 			('charge time', float),
+			('tilt charge time', float),
+			('tilt charge angle', float),
 		)
 	typemap = classmethod(typemap)
 

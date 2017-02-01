@@ -1,7 +1,7 @@
-# The Leginon software is Copyright 2004
-# The Scripps Research Institute, La Jolla, CA
+# The Leginon software is Copyright under
+# Apache License, Version 2.0
 # For terms of the license agreement
-# see http://ami.scripps.edu/software/leginon-license
+# see http://leginon.org
 #
 
 import sys
@@ -805,7 +805,9 @@ class SetupWizard(wx.wizard.Wizard):
 																							directory)
 			self.session['holder'] = holderdata
 			self.session['remote passcode'] = self.generatePassCode()
-			self.publish(self.session, database=True)
+			#Issue #4634 use insert method so that self.session becomes sinedon
+			#query result after this first insert.
+			self.session.insert()
 			projectid = self.projectpage.getSelectedProjectId()
 			project_experiment = self.setup.linkSessionProject(self.session['name'], projectid)
 			self.publish(project_experiment, database=True)

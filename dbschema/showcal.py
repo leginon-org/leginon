@@ -8,10 +8,6 @@ from leginon import leginondata
 	Usage: showcal.py source_database_hostname source_camera_hosthame camera_name
 '''
 pixelsize_scale = 1
-# Tem, Cam and session ids to put in the insertion query
-temid=19
-camid=20
-sessionid=147
 
 def convertStringToSQL(value):
 	if value is None:
@@ -22,6 +18,7 @@ def convertStringToSQL(value):
 class ShowCalibrationQuery(object):
 	def __init__(self,params):
 		self.validateInput(params)
+		self.inputNewDBInfo()
 
 	def validateInput(self, params):
 		if len(params) != 4:
@@ -31,6 +28,18 @@ class ShowCalibrationQuery(object):
 		if params[1] != database_hostname:
 			raise ValueError('leginondata in sinedon.cfg not set to %s' % params[1])
 		self.sourcecam = self.getSourceCameraInstrumentData(params[2],params[3])
+
+	def inputNewDBInfo(self):
+		'''
+		Tem, Cam and session ids to put in the insertion query.  This means that a session must
+		be created first on the same instrument in the new db before this script is run.
+		'''
+		answer = raw_input("You need to create a session with the new database where these calibrations\n are inserted into.\n Press Y/y if ready.")
+		if answer not in ('Y','y'):
+			self.close(1)
+		self.new_temid = int(raw_input('TEM instrument Id ?'))
+		self.new_camid = int(raw_input('Digital Camera instrument Id ?'))
+		self.new_sessionid = int(raw_input('Session Id ?'))
 
 	def getSourceCameraInstrumentData(self, from_hostname,from_camname):
 		results = leginondata.InstrumentData(hostname=from_hostname,name=from_camname).query(results=1)
@@ -53,6 +62,7 @@ class ShowCalibrationQuery(object):
 	def getMags(self):
 		onecaldata = leginondata.MatrixCalibrationData(ccdcamera=self.sourcecam).query(results=1)[0]
 		temdata = onecaldata['tem']
+		print temdata.dbid, temdata
 		magsdata = leginondata.MagnificationsData(instrument=temdata).query(results=1)[0]
 		return magsdata['magnifications']
 
@@ -62,7 +72,7 @@ class ShowCalibrationQuery(object):
 			results = leginondata.PixelSizeCalibrationData(ccdcamera=self.sourcecam,magnification=mag).query(results=1)
 			if results:
 				newdata = leginondata.PixelSizeCalibrationData(initializer=results[0])
-				insertq = "insert into `PixelSizeCalibrationData` (`REF|SessionData|session`,magnification,pixelsize,comment,`REF|InstrumentData|tem`,`REF|InstrumentData|ccdcamera`) values (%d,%d,%e,'%s',%d,%d);" % (sessionid,newdata['magnification'],newdata['pixelsize'],newdata['comment'],temid,camid)
+				insertq = "insert into `PixelSizeCalibrationData` (`REF|SessionData|session`,magnification,pixelsize,comment,`REF|InstrumentData|tem`,`REF|InstrumentData|ccdcamera`) values (%d,%d,%e,'%s',%d,%d);" % (self.new_sessionid,newdata['magnification'],newdata['pixelsize'],newdata['comment'],self.new_temid,self.new_camid)
 				self.printQuery(insertq)
 
 	def printStageModelCalibrationQueries(self, mags):
@@ -71,7 +81,7 @@ class ShowCalibrationQuery(object):
 			results = leginondata.StageModelCalibrationData(ccdcamera=self.sourcecam,axis=axis).query(results=1)
 			if results:
 				newdata = leginondata.StageModelCalibrationData(initializer=results[0])
-				insertq = "insert into `StageModelCalibrationData` (`REF|SessionData|session`,`axis`,`period`,`ARRAY|a|1_1`,`ARRAY|b|1_1`,`label`,`REF|InstrumentData|tem`,`REF|InstrumentData|ccdcamera`) values (%d,'%s',%e,%e,%e,'%s',%d,%d);" % (sessionid,newdata['axis'],newdata['period'],newdata['a'][0][0],newdata['b'][0][0],newdata['label'],temid,camid)
+				insertq = "insert into `StageModelCalibrationData` (`REF|SessionData|session`,`axis`,`period`,`ARRAY|a|1_1`,`ARRAY|b|1_1`,`label`,`REF|InstrumentData|tem`,`REF|InstrumentData|ccdcamera`) values (%d,'%s',%e,%e,%e,'%s',%d,%d);" % (self.new_sessionid,newdata['axis'],newdata['period'],newdata['a'][0][0],newdata['b'][0][0],newdata['label'],self.new_temid,self.new_camid)
 				self.printQuery(insertq)
 
 			for mag in mags:
@@ -79,20 +89,20 @@ class ShowCalibrationQuery(object):
 				results = q.query(results=1)
 				if results:
 					newdata = results[0]
-					insertq = "insert into `StageModelMagCalibrationData` (`REF|SessionData|session`,`angle`,`axis`,`mean`,`high tension`,`label`,`REF|instrumentData|tem`,`REF|InstrumentData|ccdcamera`,`magnification`) values (%d,%e,'%s',%e,%d,'%s',%d,%d,%d);" % (sessionid,newdata['angle'], newdata['axis'],newdata['mean'],newdata['high tension'],newdata['label'],temid,camid,mag)
+					insertq = "insert into `StageModelMagCalibrationData` (`REF|SessionData|session`,`angle`,`axis`,`mean`,`high tension`,`label`,`REF|instrumentData|tem`,`REF|InstrumentData|ccdcamera`,`magnification`) values (%d,%e,'%s',%e,%d,'%s',%d,%d,%d);" % (self.new_sessionid,newdata['angle'], newdata['axis'],newdata['mean'],newdata['high tension'],newdata['label'],self.new_temid,self.new_camid,mag)
 					self.printQuery(insertq)
 
 
-	def printMatrixCalibrationQueries(self, mags):
+	def printMatrixCalibrationQueries(self, mags, probe):
 		for mag in mags:
 			# MatrixCarlibationData
 			for matrix_type in ('stage position','image shift','defocus','beam shift'):
-				q = leginondata.MatrixCalibrationData(ccdcamera=self.sourcecam,magnification=mag,type=matrix_type)
+				q = leginondata.MatrixCalibrationData(ccdcamera=self.sourcecam,magnification=mag,type=matrix_type, probe=probe)
 				results = q.query(results=1)
 				if results:
 					caldata = results[0]
 					newdata = leginondata.MatrixCalibrationData(initializer=caldata)
-					q = "insert into `MatrixCalibrationData` (`REF|SessionData|session`, `type`,`magnification`, `ARRAY|matrix|1_1`,`ARRAY|matrix|1_2`,`ARRAY|matrix|2_1` , `ARRAY|matrix|2_2` , `REF|InstrumentData|tem` , `REF|InstrumentData|ccdcamera`,`high tension`,`probe`) values (%d,'%s',%d,%e,%e,%e,%e,%d,%d,%d,%s);" % (sessionid,newdata['type'],newdata['magnification'],newdata['matrix'][0][0],newdata['matrix'][0][1],newdata['matrix'][1][0],newdata['matrix'][1][1],temid,camid,newdata['high tension'],convertStringToSQL(newdata['probe']))
+					q = "insert into `MatrixCalibrationData` (`REF|SessionData|session`, `type`,`magnification`, `ARRAY|matrix|1_1`,`ARRAY|matrix|1_2`,`ARRAY|matrix|2_1` , `ARRAY|matrix|2_2` , `REF|InstrumentData|tem` , `REF|InstrumentData|ccdcamera`,`high tension`,`probe`) values (%d,'%s',%d,%e,%e,%e,%e,%d,%d,%d,%s);" % (self.new_sessionid,newdata['type'],newdata['magnification'],newdata['matrix'][0][0],newdata['matrix'][0][1],newdata['matrix'][1][0],newdata['matrix'][1][1],self.new_temid,self.new_camid,newdata['high tension'],convertStringToSQL(newdata['probe']))
 					self.printQuery(q)
 
 	def run(self):
@@ -101,13 +111,15 @@ class ShowCalibrationQuery(object):
 		#print mags
 		self.printPixelSizeCalibrationQueries(mags)
 		self.printStageModelCalibrationQueries(mags)
-		self.printMatrixCalibrationQueries(mags)
+		for p in ('micro','nano'):
+			self.printMatrixCalibrationQueries(mags,p)
 
 		raw_input('hit enter when ready to quit')
 
 	def close(self, status):
 		if status:
 			print "Exit with Error"
+			sys.exit(1)
 
 if __name__=='__main__':
 	app = ShowCalibrationQuery(sys.argv)

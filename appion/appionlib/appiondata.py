@@ -1,8 +1,8 @@
 # COPYRIGHT:
-# The Leginon software is Copyright 2003
-# The Scripps Research Institute, La Jolla, CA
+# The Appion software is Copyright under
+# Apache License, Version 2.0
 # For terms of the license agreement
-# see http://ami.scripps.edu/software/leginon-license
+# see  http://appion.org
 
 import sinedon.data
 import leginon.leginondata
@@ -128,6 +128,7 @@ class ApSelectionRunData(Data):
 			('path', ApPathData),
 			('session', leginon.leginondata.SessionData),
 			('description', str),
+			('program', str),
 			('params', ApSelectionParamsData),
 			('dogparams', ApDogParamsData),
 			('manparams', ApManualParamsData),

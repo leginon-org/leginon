@@ -58,13 +58,17 @@ def getImagesFromDB(session, preset):
 	"""
 	returns list of image names from DB
 	"""
+	t0 = time.time()
 	apDisplay.printMsg("Querying database for preset '"+preset+"' images from session '"+session+"' ... ")
 	if preset != 'manual':
 		sessionq = leginon.leginondata.SessionData(name=session)
-		presetq=leginon.leginondata.PresetData(name=preset)
+		sessiondata = sessionq.query(results=1)[0]
+		presetq = leginon.leginondata.PresetData()
+		presetq['name'] = preset
+		presetq['session'] = sessiondata
 		imgquery = leginon.leginondata.AcquisitionImageData()
 		imgquery['preset']  = presetq
-		imgquery['session'] = sessionq
+		imgquery['session'] = sessiondata
 		imgtree = imgquery.query(readimages=False)
 	else:
 		allimgtree = getAllImagesFromDB(session)
@@ -79,6 +83,8 @@ def getImagesFromDB(session, preset):
 	"""
 	#for img in imgtree:
 		#img.holdimages=False
+	apDisplay.printMsg("%d images recevied in %s"
+		%(len(imgtree), apDisplay.timeString(time.time()-t0)))
 	return imgtree
 
 #================

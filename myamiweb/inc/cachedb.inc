@@ -1,10 +1,10 @@
 <?php
 
 /**
- *	The Leginon software is Copyright 2003
- *	The Scripps Research Institute, La Jolla, CA
+ *	The Leginon software is Copyright under
+ *	Apache License, Version 2.0
  *	For terms of the license agreement see
- *	@licence http://ami.scripps.edu/software/leginon-license
+ *	@licence http://leginon.org
  *	@version $Revision: 1.84 $
  *	@version $Id: cache.inc,v 1.84 2008-02-05 18:16:12 dfellman Exp $
  */

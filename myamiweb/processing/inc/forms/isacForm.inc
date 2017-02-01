@@ -1,10 +1,10 @@
 <?php
 
 /**
- *	The Leginon software is Copyright 2003 
- *	The Scripps Research Institute, La Jolla, CA
+ *	The Leginon software is Copyright under 
+ *	Apache License, Version 2.0
  *	For terms of the license agreement
- *	see  http://ami.scripps.edu/software/leginon-license
+ *	see  http://leginon.org
  */
 
 require_once "basicLayoutForm.inc"; //includes the BasicLayoutForm class that this class extends
@@ -36,7 +36,7 @@ class IsacForm extends BasicLayoutForm
 		$this->setTitle( 'ISAC Launcher' ); // Shows up in the browser tab
 		$this->setHeading( 'Iterative Stable Alignment and Clustering (ISAC)' ); // shows at the top of the processing page
 		$this->setExeFile( 'runJob.py' ); // added to the command string
-		$this->setGuideURL( "http://http://ami.scripps.edu/redmine/projects/appion/wiki/ISAC_Iterative_Stable_Alignment_and_Clustering" );
+		$this->setGuideURL( "http://http://emg.nysbc.org/redmine/projects/appion/wiki/ISAC_Iterative_Stable_Alignment_and_Clustering" );
 		$this->setTestable( False ); // True to activate "test single image".
 		$this->setUseLegOutDir( False ); // The output directory will be created in the Appion run directory rather than Leginon.
 		$this->setShowDesc( True ); // Flag to hide the description field of the run parameters.

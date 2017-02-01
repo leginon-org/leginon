@@ -1,10 +1,10 @@
 <?php
 
 /**
- *	The Leginon software is Copyright 2003 
- *	The Scripps Research Institute, La Jolla, CA
+ *	The Leginon software is Copyright under 
+ *	Apache License, Version 2.0
  *	For terms of the license agreement see
- *	@licence http://ami.scripps.edu/software/leginon-license
+ *	@licence http://leginon.org
  *	@version $Revision: 1.84 $
  *	@version $Id: leginon.inc,v 1.84 2008-02-05 18:16:12 dfellman Exp $
  */
@@ -1834,7 +1834,7 @@ class leginondata {
 		$dump =  '<!--' . $crlf
 			.  '-' . $crlf
 			.  '- Default Table XML-Dump' . $crlf
-			.  '- http://ami.scripps.edu/ ' . $crlf
+			.  '- http://emg.nysbc.org/ ' . $crlf
 			.  '-' . $crlf
 			.  '- Tables: ' . $crlf;
 
@@ -1869,7 +1869,7 @@ class leginondata {
 		$dump =  '<!--' . $crlf
 			.  '-' . $crlf
 			.  '- Calibrations XML-Dump' . $crlf
-			.  '- http://ami.scripps.edu/ ' . $crlf
+			.  '- http://emg.nysbc.org/ ' . $crlf
 			.  '-' . $crlf
 			.  '- Scope:' . $scopeinfo['name'].$crlf
 			.  '- Camera:' . $camerainfo['name']. $crlf
@@ -1939,7 +1939,7 @@ class leginondata {
 		$getdefinition="mysql->getSQLTableDefinition";
 		$getdata="mysql->getSQLTableContent";
 		$dump      =  '# Leginon Application-SQL-Dump' . $crlf
-                           .  '# http://ami.scripps.edu/ ' . $crlf
+                           .  '# http://emg.nysbc.org/ ' . $crlf
                            .  '#' . $crlf
                            .  '# Application : ' . $name . $crlf
                            .  '# Version     : ' . $version . $crlf
@@ -1952,7 +1952,7 @@ class leginondata {
 		$dump =  '<!--' . $crlf
                              .  '-' . $crlf
                              .  '- Application XML-Dump' . $crlf
-                             .  '- http://ami.scripps.edu/ ' . $crlf
+                             .  '- http://emg.nysbc.org/ ' . $crlf
                              .  '-' . $crlf
                              .  '- Application :' . $name . $crlf
                              .  '- Version     :' . $version . $crlf

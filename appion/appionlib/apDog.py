@@ -157,6 +157,13 @@ def estimateKfactorIncrement(r0, dr, N):
 	k = powk**(2.0/N)
 	return k
 
+def pixelDiameterToSigmaValues(pixdiam, k=1.01):
+	Ek = math.sqrt( (k**2 - 1.0) / (2.0 * k**2 * math.log(k)) )
+	sigma1 = Ek * pixdiam
+	sigma2 = k * sigma1
+	print "Sigma 1:", sigma1
+	print "Sigma 2:", sigma2
+	
 
 
 

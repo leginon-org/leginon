@@ -56,7 +56,7 @@ class AlignZeroLossPeak(ReferenceTimer):
 		'check preset': '',
 		'threshold': 0.0,
 	}
-	eventinputs = ReferenceTimer.eventinputs + [event.AlignZeroLossPeakPublishEvent]
+	eventinputs = ReferenceTimer.eventinputs + [event.AlignZeroLossPeakPublishEvent, event.FixAlignmentEvent]
 	panelclass = gui.wx.AlignZLP.AlignZeroLossPeakPanel
 	requestdata = leginondata.AlignZeroLossPeakData
 
@@ -67,11 +67,24 @@ class AlignZeroLossPeak(ReferenceTimer):
 			watch = []
 		kwargs['watchfor'] = watch + [event.AlignZeroLossPeakPublishEvent]
 		ReferenceTimer.__init__(self, *args, **kwargs)
+		self.addEventInput(event.FixAlignmentEvent, self.handleFixAlignmentEvent)
 		self.start()
 
-	def moveAndExecute(self, request_data):
+	def handleFixAlignmentEvent(self, evt):
+		self.logger.info('handling request to execute alignment in place')
+		self.setStatus('processing')
+		self.panel.playerEvent('play')
+		status = self.alignZLP(None)
+		self.confirmEvent(evt, status=status)
+		self.setStatus('idle')
+		self.panel.playerEvent('stop')
+
+	def setCheckPreset(self):
 		check_preset_name = self.settings['check preset']
 		self.checkpreset = self.presets_client.getPresetFromDB(check_preset_name)
+		self.logger.info('Check preset is %s' % self.checkpreset['name'])
+
+	def moveAndExecute(self, request_data):
 		preset_name = request_data['preset']
 		pause_time = self.settings['pause time']
 		try:
@@ -80,15 +93,19 @@ class AlignZeroLossPeak(ReferenceTimer):
 			self.logger.error('Error moving to target, %s' % e)
 			return
 
+		# set check preset and send to scope
 		if pause_time is not None:
 			time.sleep(pause_time)
 		if self.settings['threshold'] >= 0.1:
 			try:
-				self.moveToTarget(check_preset_name)
+				self.moveToTarget(self.settings['check preset'])
 			except Exception, e:
 				self.logger.error('Error moving to target, %s' % e)
 				return
+			if pause_time is not None:
+				time.sleep(pause_time)
 			need_align = self.checkShift()
+			# align is done with the preset from the request
 			self.moveToTarget(preset_name)
 			
 		else:
@@ -99,32 +116,20 @@ class AlignZeroLossPeak(ReferenceTimer):
 			except Exception, e:
 				self.logger.error('Error executing request, %s' % e)
 				return
+			if self.settings['threshold'] >= 0.1:
+				self.resetZeroLossCheck()
+
 	
-	def execute(self, request_data=None):
-		ccd_camera = self.instrument.ccdcamera
+	def alignZLP(self, ccd_camera=None):
+		if not ccd_camera:
+			ccd_camera = self.instrument.ccdcamera
 		if not ccd_camera.EnergyFiltered:
 			self.logger.warning('No energy filter on this instrument.')
 			return
-		before_shift = None
-		after_shift = None
 		try:
 			if not ccd_camera.EnergyFilter:
 				self.logger.warning('Energy filtering is not enabled.')
-				return
-			before_shift = ccd_camera.getInternalEnergyShift()
-			m = 'Energy filter internal shift: %g.' % before_shift
-			self.logger.info(m)
-		except AttributeError:
-			m = 'Energy filter methods are not available on this instrument.'
-			self.logger.warning(m)
-		except Exception, e:
-			s = 'Energy internal shift query failed: %s.'
-			self.logger.error(s % e)
-
-		try:
-			if not ccd_camera.EnergyFilter:
-				self.logger.warning('Energy filtering is not enabled.')
-				return
+				return 'bypass'
 			ccd_camera.alignEnergyFilterZeroLossPeak()
 			m = 'Energy filter zero loss peak aligned.'
 			self.logger.info(m)
@@ -135,31 +140,57 @@ class AlignZeroLossPeak(ReferenceTimer):
 			s = 'Energy filter align zero loss peak failed: %s.'
 			self.logger.error(s % e)
 
+	def getShift(self,ccd_camera):
+		shift = None
+		# Can not find any reference to this function in recent code. Disabled.
+		return shift
 		try:
-			if not ccd_camera.EnergyFilter:
-				self.logger.warning('Energy filtering is not enabled.')
-				return
-			after_shift = ccd_camera.getInternalEnergyShift()
-			m = 'Energy filter internal shift: %g.' % after_shift
+			shift = ccd_camera.getInternalEnergyShift()
+			m = 'Energy filter internal shift: %g.' % shift
 			self.logger.info(m)
-		except AttributeError:
-			m = 'Energy filter methods are not available on this instrument.'
+		except AttributeError, e:
+			m = 'Energy filter method not available %s' % e
 			self.logger.warning(m)
 		except Exception, e:
 			s = 'Energy internal shift query failed: %s.'
 			self.logger.error(s % e)
+		return shift
+
+	def execute(self, request_data=None):
+		'''
+		Execute without moving. Used in testing and handling the
+		request after moving and set preset.
+		'''
+		ccd_camera = self.instrument.ccdcamera
+		try:
+			if not ccd_camera.EnergyFiltered:
+				self.logger.warning('No energy filter on this instrument.')
+				return
+			if not ccd_camera.EnergyFilter:
+				self.logger.warning('Energy filtering is not enabled.')
+				return
+		except AttributeError:
+			m = 'Energy filter methods are not available on this instrument.'
+			self.logger.warning(m)
+		except Exception, e:
+			s = 'EnergyFilter query failed: %s.'
+			self.logger.error(s % e)
+
+		before_shift = self.getShift(ccd_camera)
+		self.alignZLP(ccd_camera)
+		after_shift = self.getShift(ccd_camera)
 
 		shift_data = leginondata.InternalEnergyShiftData(session=self.session, before=before_shift, after=after_shift)
 		self.publish(shift_data, database=True, dbforce=True)
-		if self.settings['threshold'] >= 0.1:
-			self.resetZeroLossCheck()
+		return 'ok'
 
 	def checkShift(self):
+		self.setCheckPreset()
 		ccd_camera = self.instrument.ccdcamera
 		if not ccd_camera.EnergyFiltered:
 			self.logger.warning('No energy filter on this instrument.')
 			return False
-		imagedata = self.acquireCorrectedCameraImageData()
+		imagedata = self.acquireCorrectedCameraImageData(force_no_frames=True)
 		image = imagedata['image']
 		stageposition = imagedata['scope']['stage position']
 		lastresetq = leginondata.ZeroLossCheckData(session=self.session, preset=self.checkpreset)
@@ -192,7 +223,7 @@ class AlignZeroLossPeak(ReferenceTimer):
 			self.logger.error('Error moving to target, %s' % e)
 			return
 		self.logger.info('reset zero-loss check data')
-		imagedata = self.acquireCorrectedCameraImageData()
+		imagedata = self.acquireCorrectedCameraImageData(force_no_frames=True)
 		stageposition = imagedata['scope']['stage position']
 		image = imagedata['image']
 		self.publishZeroLossCheck(image)

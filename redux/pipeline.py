@@ -109,7 +109,7 @@ class Pipeline(object):
 
 	def process(self, **kwargs):
 		if 'help' in kwargs and kwargs['help']:
-			return help_string()
+			return self.help_string()
 
 		# use cache if config file enabled it, unless request
 		# disables it

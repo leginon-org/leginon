@@ -1,10 +1,10 @@
 <?php
 
 /**
- *	The Leginon software is Copyright 2003 
- *	The Scripps Research Institute, La Jolla, CA
+ *	The Leginon software is Copyright under 
+ *	Apache License, Version 2.0
  *	For terms of the license agreement
- *	see  http://ami.scripps.edu/software/leginon-license
+ *	see  http://leginon.org
  */
 
 require_once "mathParticleForm.inc";
@@ -14,6 +14,7 @@ class DogPicker2Form extends MathParticleForm
 	function __construct(  $expId, $errorHTML='', $infoHTML='', $kfactorv=1.2, $numslicesv='',$sizerangev='',$invertv="on" ) 
 	{
 		parent::__construct($expId, $errorHTML, $infoHTML);
+		$this->showfilters=false; //override to not display lowpass and highpass fields
 		$this->imageContrastTable = new DogPickerImageContrastTable($invertv);
 		
 		//------ Set Parameters for the parent class, BasicLoopForm (general Appion params) -----//

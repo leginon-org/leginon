@@ -102,6 +102,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 
 					# get ctfestimation fig of merit (CC)
 					cc = ctfdata['cross_correlation']
+					if cc is None: cc = 0
 					rel_line+= "%13.6f"%(cc)
 
 					# Relion requires the CTF log file as well
@@ -124,10 +125,17 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		### run batchboxer
 		self.boxedpartdatas, self.imgstackfile, self.partmeantree = self.boxParticlesFromImage(imgdata, partdatas, shiftdata)
 
+		### return boxfile only particle count
+		if self.params['boxfiles']:
+			self.stats['lastpeaks'] = 0
+			apDisplay.printMsg( '%d boxes so far' % self.boxfile_p_count )
+			# accumulated boxfile_p_count is the particle count for boxfiles only option
+			return self.boxfile_p_count
+
 		## if generating a relion stack, we will extract later
 		if self.params['filetype']=="relion": return len(self.boxedpartdatas)
 
-		if self.boxedpartdatas is None or self.params['boxfiles']:
+		if self.boxedpartdatas is None:
 			self.stats['lastpeaks'] = 0
 			apDisplay.printWarning("no particles were boxed from "+self.shortname+"\n")
 			self.badprocess = True
@@ -156,7 +164,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 	def removeBoxOutOfImage(self, imgdata, partdatas, shiftdata):
 		# if using a helical step, particles will be filled between picks,
 		# so don't want to throw picks out right now
-		if self.params['helicalstep'] is not None:
+		if self.params['helicalstep'] is not None or self.params['checkInside'] is False:
 			return partdatas
 		else:
 			return super(Makestack2Loop, self).removeBoxOutOfImage(imgdata, partdatas, shiftdata)
@@ -265,10 +273,12 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		else:
 			boxfile = os.path.join(self.params['rundir'], imgdata['filename']+".box")
 		parttree, boxedpartdatas = apBoxer.processParticleData(imgdata, self.boxsize,
-			partdatas, shiftdata, boxfile, rotate=self.params['rotate'])
+			partdatas, shiftdata, boxfile, rotate=self.params['rotate'], checkInside=self.params['checkInside'])
 
 		### boxfile created, can return if that's all we need
-		if self.params['boxfiles']: return None,None,None
+		if self.params['boxfiles']:
+			self.boxfile_p_count += len(partdatas)
+			return None,None,None
 
 		### relion box files will be extracted later
 		if self.params['filetype']=="relion":
@@ -362,15 +372,15 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 				apDisplay.printError("Standard deviation == 0 for particle %d in image %s"%(i,self.shortname))
 
 			### skew and kurtosis
-			partravel = numpy.ravel(partarray)
-			skew = float(stats.skew(partravel))
-			kurtosis = float(stats.kurtosis(partravel))
+			#partravel = numpy.ravel(partarray)
+			#skew = float(stats.skew(partravel))
+			#kurtosis = float(stats.kurtosis(partravel))
 
 			### edge and center stats
-			edgemean = float(ndimage.mean(partarray, self.edgemap, 1.0))
-			edgestdev = float(ndimage.standard_deviation(partarray, self.edgemap, 1.0))
-			centermean = float(ndimage.mean(partarray, self.edgemap, 0.0))
-			centerstdev = float(ndimage.standard_deviation(partarray, self.edgemap, 0.0))
+			#edgemean = float(ndimage.mean(partarray, self.edgemap, 1.0))
+			#edgestdev = float(ndimage.standard_deviation(partarray, self.edgemap, 1.0))
+			#centermean = float(ndimage.mean(partarray, self.edgemap, 0.0))
+			#centerstdev = float(ndimage.standard_deviation(partarray, self.edgemap, 0.0))
 			#self.summedParticles += partarray
 
 			### take abs of all means, because ctf whole image may become negative
@@ -378,14 +388,14 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 				'partdata': partdata,
 				'mean': abs(float(partarray.mean())),
 				'stdev': stdev,
-				'min': float(partarray.min()),
-				'max': float(partarray.max()),
-				'skew': skew,
-				'kurtosis': kurtosis,
-				'edgemean': abs(edgemean),
-				'edgestdev': edgestdev,
-				'centermean': abs(centermean),
-				'centerstdev': centerstdev,
+				#'min': float(partarray.min()),
+				#'max': float(partarray.max()),
+				#'skew': skew,
+				#'kurtosis': kurtosis,
+				#'edgemean': abs(edgemean),
+				#'edgestdev': edgestdev,
+				#'centermean': abs(centermean),
+				#'centerstdev': centerstdev,
 			}
 			### show stats for first particle
 			"""
@@ -1088,6 +1098,8 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			action="store_true", help="Align filaments vertically in a single interpolation")
 		self.parser.add_option("--debug", dest="debug", default=False,
 			action="store_true", help="Debug mode, print more to command line")
+		self.parser.add_option("--no-insideCheck", dest="checkInside", default=True,
+			action="store_false", help="don't check if boxed particle is entirely within micrograph")
 
 		### choice
 		self.parser.add_option("--flip-type", dest="fliptype",
@@ -1195,6 +1207,9 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 
 	#=======================
 	def checkRequireCtf(self):
+		# refs #4726
+		if self.params['boxfiles']:
+			return False
 		return super(Makestack2Loop,self).checkRequireCtf() or self.params['phaseflipped']
 
 	#=======================
@@ -1210,9 +1225,14 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		## for relion, add relion header
 		if self.params['filetype']=="relion":
 			apRelion.writeRelionMicrographsStarHeader(self.mstarfile)
+		## for boxfile only option to count particles included
+		self.boxfile_p_count = 0
 
 	#=======================
 	def postLoopFunctions(self):
+		# refs #4725
+		if self.params['boxfiles']:
+			return
 		# now we have all box files, generate relion stack
 		if self.params['filetype'] == "relion":
 			logfile = os.path.join(self.params['rundir'], "relionExtract-"+self.timestamp+".cmd")
@@ -1276,7 +1296,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			# insert framelist
 			q = appiondata.ApStackImageFrameListData(stack=self.stackdata, image=imgdata, frames=self.framelist)
 			q.insert(force=self.params['forceInsert'])
-		#t0 = time.time()
+		t0 = time.time()
 		### loop over the particles and insert
 		for i in range(len(self.boxedpartdatas)):
 			partdata = self.boxedpartdatas[i]
@@ -1298,18 +1318,17 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			if partmeandict is not None:
 				stpartq['mean'] = round(partmeandict['mean'],8)
 				stpartq['stdev'] = round(partmeandict['stdev'],8)
-				stpartq['min'] = round(partmeandict['min'],4)
-				stpartq['max'] = round(partmeandict['max'],4)
-				stpartq['skew'] = round(partmeandict['skew'],4)
-				stpartq['kurtosis'] = round(partmeandict['kurtosis'],4)
-				stpartq['edgemean'] = round(partmeandict['edgemean'],4)
-				stpartq['edgestdev'] = round(partmeandict['edgestdev'],4)
-				stpartq['centermean'] = round(partmeandict['centermean'],4)
-				stpartq['centerstdev'] = round(partmeandict['centerstdev'],4)
-
+				#stpartq['min'] = round(partmeandict['min'],4)
+				#stpartq['max'] = round(partmeandict['max'],4)
+				#stpartq['skew'] = round(partmeandict['skew'],4)
+				#stpartq['kurtosis'] = round(partmeandict['kurtosis'],4)
+				#stpartq['edgemean'] = round(partmeandict['edgemean'],4)
+				#stpartq['edgestdev'] = round(partmeandict['edgestdev'],4)
+				#stpartq['centermean'] = round(partmeandict['centermean'],4)
+				#stpartq['centerstdev'] = round(partmeandict['centerstdev'],4)
 			if self.params['commit'] is True:
 				stpartq.insert(force=self.params['forceInsert'])
-		#self.insertdbtimes.append(time.time()-t0)
+		self.insertdbtimes.append(time.time()-t0)
 
 	#=======================
 	def loopCleanUp(self, imgdata):
