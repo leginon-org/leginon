@@ -416,6 +416,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 
 	def bypass(self):
 		self.setTargets([], 'Blobs', block=True)
+		self.setTargets([], 'Lattice', block=True)
 		self.setTargets([], 'acquisition', block=True)
 		self.setTargets([], 'focus', block=True)
 		self.setTargets([], 'preview', block=True)
