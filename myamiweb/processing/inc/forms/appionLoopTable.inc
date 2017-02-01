@@ -170,15 +170,21 @@ class AppionLoopTable extends PresetTable
 		$command = parent::buildCommand( $postArray );
 		$params = $this->getFormParams();
 
-		$commit  		= ($params->getParamValue('commit') == 'on' ) ? true : false;
+		$testimage 		= $params->getParamValue('testimage');
+		$testfilename 	= $params->getParamValue('testfilename');
+		if ( $testimage == 'on' )	{
+			# refs #4741 to keep it not commited
+			$commit  		= false;
+			$command = $this->removeCommandFlag( $command, 'commit' );
+		}	else {
+			$commit  		= ($params->getParamValue('commit') == 'on' ) ? true : false;
+		}
 		$nowait  		= ($params->getParamValue('nowait') == "on" ) ? false : true;
 		$shuffle 		= ($params->getParamValue('imgorder') == "shuffle" ) ? true : false;
 		$reverse 		= ($params->getParamValue('imgorder') == "reverse" ) ? true : false;
 		$apcontinue 	= $params->getParamValue('apcontinue');	
 		$tiltangle  	= $params->getParamValue('tiltangle');
 		$checkimage 	= $params->getParamValue('checkimage');
-		$testimage 		= $params->getParamValue('testimage');
-		$testfilename 	= $params->getParamValue('testfilename');
 		
 		$command = $this->removeCommandFlag( $command, 'nowait' );
 		$command = $this->removeCommandFlag( $command, 'imgorder' );

@@ -61,7 +61,7 @@ class TransferFrames(appionLoop2.AppionLoop):
 		else:
 			sessiondata=apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
 			outpath=sessiondata['frame path']
-		apDisplay.printMsg("Output path is" % (outpath))
+		apDisplay.printMsg("Output path is %s" % (outpath))
 		if os.path.exists(outpath):
 			apDisplay.printMsg("Outpath %s already exists" % outpath)
 		else:
@@ -85,6 +85,7 @@ class TransferFrames(appionLoop2.AppionLoop):
 					if ext.startswith('.mrc'):
 						destext='.frames.mrc'
 					elif ext == '.txt':
+						continue
 						destext='.txt'
 					elif ext == '.tif':
 						destext='.tif'

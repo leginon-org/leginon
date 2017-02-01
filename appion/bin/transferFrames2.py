@@ -114,6 +114,11 @@ if __name__ == '__main__':
 		print 'Transferring %s to %s' % (filestotransfer[0], destnamepath)
 		if options.dryrun is False:
 			transfer(filestotransfer[0],destnamepath)
+			if os.path.exists(destnamepath):
+				print "Transfer successful"
+			else:
+				print "%s %s not transferred properly\nExiting" % (filestotransfer[0],destnamepath)
+				sys.exit()
 		print "\n\n"
 		
 	print 'Done!'

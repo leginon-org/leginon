@@ -589,7 +589,7 @@ def getDoseFromImageData(imgdata):
 		return dose / 1e20
 	except:
 		# fails either because no preset or no dose
-		apDisplay.printWarning("dose not available for this image, try another image")
+		apDisplay.printWarning("dose not available for this image")
 		return None
 
 #================
