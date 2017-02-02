@@ -44,17 +44,9 @@ class GatanK2Processing(apDDprocess.DDFrameProcessing):
 		rawframename = imagedata['camera']['frames name'].split('\\')[-1]
 		if not rawframename:
 			apDisplay.printWarning('No Raw Frame Saved for %s' % imagedata['filename'])
-		if imagedata['session']['frame path']:
-			# 3.0+ version
-			rawframe_basepath = imagedata['session']['frame path']
-			print 'rawframe_basepath',rawframe_basepath
-		else:
-			# pre-3.0
-			# raw frames are saved in a subdirctory of image path
-			imagepath = imagedata['session']['image path']
-			rawframe_basepath = ddinfo.getRawFrameSessionPathFromSessionPath(imagepath)
+		session_frame_path = self.getSessionFramePathFromImage(imagedata)
 		# frame stackfile is image filename plus '.frames.mrc'
-		rawframedir = os.path.join(rawframe_basepath,'%s.frames.mrc' % imagedata['filename'])
+		rawframedir = os.path.join(session_frame_path,'%s.frames.mrc' % imagedata['filename'])
 		if not self.waitForPathExist(rawframedir,30):
 			apDisplay.printError('Raw Frame Dir %s does not exist.' % rawframedir)
 		return rawframedir
