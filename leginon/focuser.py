@@ -201,10 +201,11 @@ class Focuser(singlefocuser.SingleFocuser):
 			self.conditionalMoveAndPreset(meltpresetname,emtarget)
 			self.logger.info('melt preset: %s' % (meltpresetname,))
 			beamtilt0 = self.instrument.tem.BeamTilt
-			beamtilt1 = beamtilt0.copy()
-			for d in (1,-1):
+			beamtilt_rotation = self.btcalclient.getTiltRotation()
+			# The tilt is in +x and +y direction,
+			for d in self.beamtilt_directions:
 				delta = self.getFocusBeamTilt()
-				beamtilt1['x']+ d* delta
+				beamtilt1 = self.btcalcalient.modifyBeamTilt(beamtilt0,delta, d, beamtilt_rotation)
 				self.instrument.tem.BeamTilt = beamtilt1
 				self.logger.info('Melt at %.4f beam tilt' % (delta,))
 				self.startTimer('melt exposeSpecimen')
