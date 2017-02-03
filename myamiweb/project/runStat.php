@@ -433,6 +433,7 @@ $totalCTF = $aceRun + $ace2Run + $ctfindRun;
 		<td colspan=2><h3>Leginon Statistics Across Institutions:</h3></td>
 	</tr>
 	<tr>
+		<td>
 		<table border="1"  cellpadding="5" cellspacing="0" width="100%">
 			<tr><td><b>Institution</b></td><td><b># Projects</b></td><td><b># Sessions</b></td></tr>
 			
@@ -451,6 +452,7 @@ GROUP BY userdetails.`institution`";
 	?>
 
 		</table>
+		</td>
 	</tr>
 	<tr>
 		<td colspan=2><h3>Appion Statistics:</h3></td>
