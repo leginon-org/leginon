@@ -1373,6 +1373,9 @@ class leginondata {
 			."cp.`REF|InstrumentData|ccdcamera` = ppi.`REF|InstrumentData|ccdcamera` "
 			."and ppi.`DEF_timestamp` < parent.`DEF_timestamp` ) ";
 		}
+
+		$ppselect = ($this->mysql->SQLTableExists('PhasePlateUsageData')) ? 
+				"a.`REF|PhasePlateUsageData|phase plate` as pp_usageId, " : "";
 		// Main query
 		$q = "select "
 			.$gridselect
@@ -1382,6 +1385,7 @@ class leginondata {
 			."date_format(scope.`DEF_timestamp`, '%Y-%d-%m %T') as `timestamp`,"
 			."a.`REF|SessionData|session` as `sessionId`,"
 			."a.`MRC|image` as filename, "
+			.$ppselect
 			."p.`name` as `preset`, "
 			."isc.`name` as `scope`, "
 			."ic.`name` as `camera`, "
@@ -1417,6 +1421,14 @@ class leginondata {
 		$Rimageinfo = $this->mysql->SQLQuery($q);
 		$imageinfo = mysql_fetch_array($Rimageinfo,MYSQL_ASSOC);
 		return $imageinfo;
+	}
+
+	function getPhasePlateInfo($pp_usageId) {
+		if ($this->mysql->isTable('PhasePlateUsageData') && $pp_usageId) {
+			$q = "select * from PhasePlateUsageData where `DEF_id`=".$pp_usageId." ";
+			list($r) = $this->mysql->getSQLResult($q);
+			return $r;
+		}
 	}
 
 	function getGridId($imgId) {
