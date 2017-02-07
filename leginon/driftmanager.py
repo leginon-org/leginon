@@ -32,6 +32,7 @@ class DriftManager(watcher.Watcher):
 		'pause time': 2.5,
 		'timeout': 30,
 		'camera settings': cameraclient.default_settings,
+		'beam tilt': 0.0,
 	}
 	eventinputs = watcher.Watcher.eventinputs + [event.DriftMonitorRequestEvent, event.PresetChangedEvent]
 	eventoutputs = watcher.Watcher.eventoutputs + [event.DriftMonitorResultEvent, event.ChangePresetEvent, event.PresetLockEvent, event.PresetUnlockEvent, event.AcquisitionImagePublishEvent]
@@ -88,6 +89,13 @@ class DriftManager(watcher.Watcher):
 			target = None
 			threshold = None
 
+		# tilt the beam if requested
+		if self.settings['beam tilt'] is not None and self.settings['beam tilt'] > 1e-6:
+			bt0 = self.instrument.tem.BeamTilt
+			bt1 = {'x':bt0['x']+self.settings['beam tilt']}
+			self.logger.info('Tilt Beam by %.4f radians' % self.settings['beam tilt'])
+			self.instrument.tem.BeamTilt = bt1
+
 		## acquire images, measure drift
 		self.abortevent.clear()
 		# extra pause to wait for image shift to stabilize
@@ -95,6 +103,11 @@ class DriftManager(watcher.Watcher):
 		time.sleep(self.settings['pause time']/2.0)	
 		self.logger.info('paused before loop')
 		status,final,im = self.acquireLoop(target, threshold=threshold)
+		# tilt the beam back if requested
+		if self.settings['beam tilt'] is not None and self.settings['beam tilt'] > 1e-6:
+			self.instrument.tem.BeamTilt = bt0
+			self.logger.info('Tilt Beam back')
+
 		if status in ('drifted', 'timeout'):
 			## declare drift above threshold
 			self.declareDrift('threshold')
