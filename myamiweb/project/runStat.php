@@ -436,8 +436,6 @@ $totalCTF = $aceRun + $ace2Run + $ctfindRun;
 		<td>
 		<table border="1"  cellpadding="5" cellspacing="0" width="100%">
 			<tr><td><b>Institution</b></td><td><b># Projects</b></td><td><b># Sessions</b></td></tr>
-			
-
 	<?php
 	if(isset($_GET['dateFrom']) and isset($_GET['dateTo'])){
 		$dateFrom = date('Y-m-d', strtotime($_GET['dateFrom']));
@@ -481,11 +479,46 @@ $totalCTF = $aceRun + $ace2Run + $ctfindRun;
 		</form>
 	</td
 	</tr>'
-	?>
-
-		</table>
+	?>		</table>
 		</td>
 	</tr>
+	<tr>
+		<td colspan=2><h3>Number of Images Acquired by Machine:</h3></td>
+	</tr>
+	<tr>
+		<td>
+		<table border="1"  cellpadding="5" cellspacing="0" width="100%">
+			<tr><td><b>TEM</b></td><td><b>Camera</b></td><td><b>Hostname</b></td><td><b># Images</b></td></tr>
+			<?php
+			mysql_select_db(DB_LEGINON);
+			$q = "SELECT B.tem, B.camera, A.hostname, A.image_count
+				FROM (
+				SELECT i.hostname, c.image_count, cid
+				FROM InstrumentData i
+				LEFT JOIN (
+				SELECT `REF|InstrumentData|ccdcamera` AS cid, count( * ) AS image_count
+				FROM `CameraEMData`
+				WHERE `align frames` =0
+				GROUP BY `REF|InstrumentData|ccdcamera`
+				)c ON i.`DEF_id` = c.cid
+				WHERE c.image_count IS NOT NULL
+				) AS A
+				JOIN (
+				SELECT i1.`name` tem, i2.`name` camera, i1.`hostname` , i2.`DEF_id`
+				FROM `PixelSizeCalibrationData` p
+				JOIN `InstrumentData` i1 ON p.`REF|InstrumentData|tem` = i1.`DEF_id`
+				JOIN `InstrumentData` i2 ON p.`REF|InstrumentData|ccdcamera` = i2.`DEF_id`
+				GROUP BY `REF|InstrumentData|ccdcamera`
+				) AS B ON B.DEF_id = A.cid";
+			$r = mysql_query($q) or die("Query error: " . mysql_error());
+			while ($row =  mysql_fetch_row($r))
+			{
+				echo "<tr><td>$row[0]</td><td>$row[1]</td><td>$row[2]</td><td>$row[3]</td></tr>";
+			}
+	?>		</table>
+			</td>
+		</tr>	
+	
 	<tr>
 		<td colspan=2><h3>Appion Statistics:</h3></td>
 	</tr>
