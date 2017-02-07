@@ -953,6 +953,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 	def parkAtHighMag(self):
 		# wait for at least for 30 seconds
+		self.logger.info('wait 30 seconds before parking')
 		time.sleep(max(self.settings['pause time'],30))
 		# send a preset at the highest magnification to keep the lens warm
 		park_presetname = self.presetsclient.getHighestMagPresetName()
