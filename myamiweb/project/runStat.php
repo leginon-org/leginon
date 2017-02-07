@@ -439,16 +439,48 @@ $totalCTF = $aceRun + $ace2Run + $ctfindRun;
 			
 
 	<?php
-	$q = "SELECT userdetails.`institution`, count( DISTINCT projectexperiments.`REF|projects|project` ), count( DISTINCT projectexperiments.`REF|leginondata|SessionData|session` )
-FROM projectexperiments
-LEFT JOIN projectowners ON projectowners.`REF|projects|project` = projectexperiments.`REF|projects|project`
-LEFT JOIN userdetails ON userdetails.`REF|leginondata|UserData|user` = projectowners.`REF|leginondata|UserData|user`
-GROUP BY userdetails.`institution`";
-	$r = mysql_query($q) or die("Query error: " . mysql_error());
+	if(isset($_GET['dateFrom']) and isset($_GET['dateTo'])){
+		$dateFrom = date('Y-m-d', strtotime($_GET['dateFrom']));
+		$dateTo = date('Y-m-d', strtotime($_GET['dateTo']));
+		$q = "SELECT userdetails.`institution`, count( DISTINCT projectexperiments.`REF|projects|project` ), count( DISTINCT projectexperiments.`REF|leginondata|SessionData|session` )
+	FROM projectexperiments
+	LEFT JOIN projectowners ON projectowners.`REF|projects|project` = projectexperiments.`REF|projects|project`
+	LEFT JOIN userdetails ON userdetails.`REF|leginondata|UserData|user` = projectowners.`REF|leginondata|UserData|user`
+	WHERE (projectexperiments.`DEF_timestamp` BETWEEN '$dateFrom' and '$dateTo')
+		GROUP BY userdetails.`institution`";
+		$r = mysql_query($q) or die("Query error: " . mysql_error());
+	}
+	else{
+		$q = "SELECT userdetails.`institution`, count( DISTINCT projectexperiments.`REF|projects|project` ), count( DISTINCT projectexperiments.`REF|leginondata|SessionData|session` )
+	FROM projectexperiments
+	LEFT JOIN projectowners ON projectowners.`REF|projects|project` = projectexperiments.`REF|projects|project`
+	LEFT JOIN userdetails ON userdetails.`REF|leginondata|UserData|user` = projectowners.`REF|leginondata|UserData|user`
+	GROUP BY userdetails.`institution`";
+		$r = mysql_query($q) or die("Query error: " . mysql_error());
+		$date_q = "SELECT DATE_FORMAT(MIN(projectexperiments.`DEF_timestamp`), '%Y-%m-%d') AS date1,
+       				DATE_FORMAT(MAX(projectexperiments.`DEF_timestamp`), '%Y-%m-%d') AS date2
+					FROM projectexperiments";
+		
+		$date_r = mysql_query($date_q) or die("Query error: " . mysql_error());
+		$row = mysql_fetch_row($date_r);
+		$dateFrom = $row[0];
+		$dateTo = $row[1];
+	}
 	while ($totalProjectWithSessionsByInstitution =  mysql_fetch_row($r))
 	{
 		echo "<tr><td>$totalProjectWithSessionsByInstitution[0]</td><td>$totalProjectWithSessionsByInstitution[1]</td><td>$totalProjectWithSessionsByInstitution[2]</td></tr>"; 
 	}
+	echo '<tr>
+	<td colspan=3>
+		<form action="runStat.php">
+		From:
+		<input type="date" name="dateFrom" value='.$dateFrom.'>
+		To:
+		<input type="date" name="dateTo" value='.$dateTo.'>
+		<input type="submit">
+		</form>
+	</td
+	</tr>'
 	?>
 
 		</table>
