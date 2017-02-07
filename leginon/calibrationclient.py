@@ -649,15 +649,16 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		return {'x':bt[0], 'y':bt[1]}
 
 	def modifyBeamTilt(self, bt0, tilt_value, tilt_direction, rotation=0.0):
+		print 'bt0',bt0
 		d_map = {'x':0,'y':1}
 		t1 = tilt_direction
 		bt1 = dict(bt0)
 		bt1['x'] += tilt_value * t1[d_map['x']] * math.cos(rotation)
-		bt1['y'] += tilt_value * t1[d_map['y']] * math.cos(rotation)
+		bt1['y'] += tilt_value * t1[d_map['y']] * math.sin(rotation)
 		print bt1
 		return bt1
 
-	def setBeamTiltDirections(self,directions=[(0,0),(1,0)]:
+	def setBeamTiltDirections(self,directions=[(0,0),(1,0)]):
 		self.beamtilt_directions = directions
 
 	def measureDefocusStig(self, tilt_value, stig=True, correct_tilt=False, correlation_type=None, settle=0.5, image0=None, tilt_directions=[(0,0),(1,0)]):
@@ -814,7 +815,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		'''
 		Beam Tilt Rotation in radians to line up with the phase plate.
 		'''
-		angle = 0.1
+		angle = 0.0
 		if abs(angle) > 0.002:
 			self.node.logger.info('Rotate the beam tilt by %.1f degrees' % math.degrees(angle))
 		return angle
@@ -832,7 +833,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		try:
 			# set up to measure states
 			beam_tilt = self.instrument.tem.BeamTilt
-			beam_tilts = (dict(beam_tilt), dict(beam_tilt))
+			beam_tilts = [dict(beam_tilt), dict(beam_tilt)]
 			beam_tilts[0] = self.modifyBeamTilt(beam_tilt, tilt_value, t1, rotation)
 			beam_tilts[1] = self.modifyBeamTilt(beam_tilt, tilt_value, t2, rotation)
 

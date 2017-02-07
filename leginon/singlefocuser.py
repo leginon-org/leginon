@@ -19,7 +19,7 @@ import copy
 import gui.wx.Focuser
 import player
 
-BEAMTILT_DIRECTIONS = [(1,1),(-1,1)]
+BEAMTILT_DIRECTIONS = [(-1,0),(1,0)]
 
 class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 	panelclass = gui.wx.Focuser.Panel
