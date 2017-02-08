@@ -1993,18 +1993,12 @@ class particledata {
 		return $r;
 	}
 
-	function getMaxTiltAngle ($sessionId,$presetname='') {
-		//Issue #4730 handling mixed tomography and untilted data collection with different preset names
-		$pjoin = ($presetname) ? "LEFT JOIN ".DB_LEGINON.".`PresetData` AS p ON p.`DEF_id`=im.`REF|PresetData|preset` ": '';
-		$pwhere = ($presetname) ? ' and p.name like "'.$presetname.'" ': '';
+	function getMaxTiltAngle ($sessionId) {
 		$q = "SELECT MAX(ABS(s.`SUBD|stage position|a`))*180.0/PI() AS angle "
 			."FROM ".DB_LEGINON.".`AcquisitionImageData` AS im "
-			.$pjoin
 			."LEFT JOIN ".DB_LEGINON.".`ScopeEMData` AS s "
 			."ON s.`DEF_id` = im.`REF|ScopeEMData|scope` "
-			."WHERE im.`REF|SessionData|session` = '$sessionId' "
-			.$pwhere
-			." ";
+			."WHERE im.`REF|SessionData|session` = '$sessionId' ";
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0]['angle'];
 	}

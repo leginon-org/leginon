@@ -19,7 +19,7 @@ import copy
 import gui.wx.Focuser
 import player
 
-BEAMTILT_DIRECTIONS = [(-1,0),(1,0)]
+DOUBLE_TILT_FOCUS = True
 
 class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 	panelclass = gui.wx.Focuser.Panel
@@ -79,7 +79,6 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 		self.imageshiftcalclient = calibrationclient.ImageShiftCalibrationClient(self)
 		self.euclient = calibrationclient.EucentricFocusClient(self)
 		self.focus_sequence = self.researchFocusSequence()
-		self.beamtilt_directions = BEAMTILT_DIRECTIONS
 
 	def validatePresets(self):
 		### check normal manualfocuschecker presets
@@ -204,12 +203,10 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 			lastdrift = driftresult['final']
 			lastdriftimage = self.driftimage
 			self.setImage(lastdriftimage['image'], 'Image')
-
-			if self.beamtilt_directions[0][0]==0 and self.beamtilt_directions[0][1]==0:
-				# untilted
+			if not DOUBLE_TILT_FOCUS:
 				self.logger.info('use final drift image in focuser')
 			else:
-				self.logger.info('tilt %s to measure defocus' % self.beamtilt_directions)
+				self.logger.info('tilt minus and then plus to measure defocus')
 		else:
 			lastdrift = None
 			lastdriftimage = None
@@ -244,7 +241,7 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 			# increased settle time from 0.25 to 0.5 for Falcon protector
 			settletime = self.settings['beam tilt settle time']
 			### FIX ME temporarily switch off tilt correction because the calculation may be wrong Issue #3030
-			correction = self.btcalclient.measureDefocusStig(btilt, correct_tilt=False, correlation_type=setting['correlation type'], stig=setting['stig correction'], settle=settletime, image0=lastdriftimage, tilt_directions=self.beamtilt_directions)
+			correction = self.btcalclient.measureDefocusStig(btilt, correct_tilt=False, correlation_type=setting['correlation type'], stig=setting['stig correction'], settle=settletime, image0=lastdriftimage, double_tilt=DOUBLE_TILT_FOCUS)
 		except calibrationclient.Abort:
 			self.btcalclient.setBeamTilt(beamtilt0)
 			self.logger.info('Measurement of defocus and stig. has been aborted')

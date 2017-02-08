@@ -32,7 +32,7 @@ def initializeDDFrameprocess(sessionname,wait_flag=False):
 		apDisplay.printError('Can not determine DD camera type. Did you save frames?')
 	if 'GatanK2' in dcamdata['name']:
 		from appionlib import apK2process
-		return apK2process.GatanK2Processing(wait_flag)
+		return apK2process.GatanK2ProcessingV2(wait_flag)
 	elif 'DE' in dcamdata['name']:
 		from appionlib import apDEprocess
 		return apDEprocess.DEProcessing(wait_flag)
@@ -41,7 +41,7 @@ def initializeDDFrameprocess(sessionname,wait_flag=False):
 		return apFalconProcess.FalconProcessing(wait_flag)
 	elif 'Appion' in dcamdata['name']:
 		from appionlib import apAppionCamProcess
-		return apAppionCamProcess.AppionCamFrameProcessing(wait_flag)
+		return apAppionCamProcess.AppionCamFrameProcessingv2(wait_flag)
 	elif 'Sim' in dcamdata['name']:
 		from appionlib import apSimFrameProcess
 		return apSimFrameProcess.SimFrameProcessing(wait_flag)
@@ -100,6 +100,7 @@ class DirectDetectorProcessing(object):
 			source_imagedata = result['source']
 			imagename = source_imagedata['filename']
 		self.tempframestackpath = os.path.join(self.tempdir,imagename+'_st.mrc')
+		print 'tempframestackpath is ',self.tempframestackpath
 		self.framestackpath = os.path.join(self.rundir,imagename+'_st.mrc')
 		
 	def getFrameStackPath(self,temp=False):
@@ -127,7 +128,6 @@ class DirectDetectorProcessing(object):
 		return self.rundir
 
 	def getNumberOfFrameSaved(self):
-#		return 2
 		return self.getNumberOfFrameSavedFromImageData(self.image)
 
 	def getNumberOfFrameSavedFromImageData(self,imagedata):
@@ -220,7 +220,7 @@ class DirectDetectorProcessing(object):
 				stills.append(i)
 		return stills
 
-	def getFrameListFromParams(self,params):
+	def getFrameList(self,params):
 		'''
 		Get list of frames
 		'''
@@ -268,7 +268,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		self.use_full_raw_area = False
 		self.use_bias = False
 		self.use_GS = False
-		self.use_frame_aligner_flat = False
+		self.use_gpu_flat = False
 		self.gpuid = 0
 		self.keep_stack = True
 		self.save_aligned_stack = True
@@ -278,11 +278,18 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		self.setUseAlternativeChannelReference(False)
 		self.setCycleReferenceChannels(False)
 		self.setDefaultImageForReference(0)
-		self.numRunningAverageFrames = 1
 		self.flipAlongYAxis = 0
-		self.use_frame_aligner_yflip = False
-		self.use_frame_aligner_rotate = 0
 
+#		MotioncorrV2 Parameters
+		self.Group = 1
+		self.numRunningAverageFrames = self.Group
+		self.Patch = (1,1)
+		self.MaskSize = (1,1)
+		self.MaskCent = (0,0)
+		self.Iter = 7
+		self.Tol = 0.5
+		self.FmDose = 0
+		
 		if debug:
 			self.log = open('newref.log','w')
 			self.scalefile = open('darkscale.log','w')
@@ -296,11 +303,9 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		if debug:
 			apDisplay.printMsg('%s' % (self.image['filename']))
 			apDisplay.printMsg('%s' % ( self.framestackpath))
-		# These are only used if alignment of the frames are made
+		# These two are only used if alignment of the frames are made
 		self.aligned_sumpath = os.path.join(self.rundir,self.image['filename']+'_c.mrc')
-		self.aligned_dw_sumpath = os.path.join(self.rundir,self.image['filename']+'_c-DW.mrc')
 		self.aligned_stackpath = os.path.join(self.rundir,self.framestackpath[:-4]+'_c'+self.framestackpath[-4:])
-		self.aligned_log = self.framestackpath[:-4]+'_Log.txt'
 
 	def getDefaultDimension(self):
 		return self.dimension
@@ -314,27 +319,11 @@ class DDFrameProcessing(DirectDetectorProcessing):
 	def getScaledBrightArray(self,nframe):
 		return self.scaleRefImage('bright',nframe)
 
-	def setUseFrameAlignerFlat(self,use_frame_aligner_flat):
-		self.use_frame_aligner_flat = use_frame_aligner_flat
+	def setUseGPUFlat(self,use_gpu_flat):
+		self.use_gpu_flat = use_gpu_flat
 
-	def getUseFrameAlignerFlat(self):
-		return self.use_frame_aligner_flat
-
-	def setUseFrameAlignerRotate(self, rotate90):
-		self.use_frame_aligner_rotate = rotate90
-
-	def getUseFrameAlignerRotate(self):
-		# number of times to rotate by 90 degrees
-		return self.use_frame_aligner_rotate90
-
-	def setUseFrameAlignerYFlip(self, use_frame_aligner_yflip):
-		self.use_frame_aligner_yflip = use_frame_aligner_yflip
-
-	def getUseFrameAlignerYFlip(self):
-		return self.use_frame_aligner_yflip
-
-	def getUseFrameAlignerGeomModification(self):
-		return self.use_frame_aligner_yflip or self.use_frame_aligner_rotate
+	def getUseGPUFlat(self):
+		return self.use_gpu_flat
 
 	def setGPUid(self,gpuid):
 		self.gpuid = gpuid
@@ -350,6 +339,10 @@ class DDFrameProcessing(DirectDetectorProcessing):
 
 	def getFrameNameFromNumber(self,frame_number):
 		raise NotImplementedError()
+
+	def OldgetSingleFrameDarkArray(self):
+		# work around for the bug in DE server between 11sep07 and 11nov22
+		return self.getRefImageData('dark')['image']
 
 	def getRawFramesName(self):
 		return self.framesname
@@ -395,16 +388,12 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			# raw frames are saved in a subdirctory of image path pre-3.0
 			imagepath = imagedata['session']['image path']
 			rawframe_basepath = ddinfo.getRawFrameSessionPathFromSessionPath(imagepath)
-		rawframedir = os.path.join(rawframe_basepath,'%s.frames' % imagedata['filename'])
+		rawframedir = os.path.join(rawframe_basepath,'%s.frames.mrc' % imagedata['filename'])
 		if not self.waitForPathExist(rawframedir,self.rawtransfer_wait):
 			apDisplay.printError('Raw Frame Dir %s does not exist.' % rawframedir)
 		self.getFrameNamePattern(rawframedir)
 		return rawframedir
 
-	def getKVFromImage(self, imagedata):
-		kv = imagedata['scope']['high tension']/1000.0
-		return kv
-	
 	def setCycleReferenceChannels(self, value=False):
 		self.cycle_ref_channels = value
 
@@ -430,6 +419,19 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			waitmin += sleep_time / 60.0
 			apDisplay.printMsg('Waited for %.1f min so far' % waitmin)
 		return True
+
+	def OldgetRawFrameDirFromImage(self,imagedata):
+		# works between 11sep07 and 11nov22
+		# strip off DOS path in rawframe directory name 
+		rawframename = imagedata['camera']['frames name'].split('\\')[-1]
+		if not rawframename:
+			apDisplay.printWarning('No Raw Frame Saved for %s' % imagedata['filename'])
+		# raw frames are saved in a subdirctory of image path
+		imagepath = imagedata['session']['image path']
+		rawframedir = os.path.join(imagepath,'rawframes',rawframename)
+		if not os.path.exists(rawframedir):
+			apDisplay.printError('Raw Frame Directory %s does not exist' % rawframedir)
+		return rawframedir
 
 	def getCorrectedImageData(self):
 		'''
@@ -924,7 +926,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			return array
 		cdata = self.getAlignedCameraEMData()
 		if not cdata:
-			# Only bin the image if not for alignment with framealigner program
+			# Only bin the image if not for alignment with dosefgpu_driftcorr program
 			additional_binning = self.getNewBinning()
 			return imagefun.bin(array,additional_binning)
 		else:
@@ -976,7 +978,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		if not os.path.isfile(self.tempframestackpath) and os.path.isfile(rawframestack_path):
 			# frame flipping of the mrc ddstack
 			frame_flip, frame_rotate = self.getImageFrameOrientation()
-			if not self.getUseFrameAlignerGeomModification() and (frame_flip or frame_rotate and not self.frame_modified):
+			if frame_flip or frame_rotate and not self.frame_modified:
 				if frame_rotate:
 					apDisplay.printError("stack rotation not implemented")
 				if frame_flip:
@@ -987,17 +989,22 @@ class DDFrameProcessing(DirectDetectorProcessing):
 					if self.getTrimingEdge() > 0:
 						a = self.trimArray(a)
 					mrc.write(a,self.tempframestackpath)
-					apDisplay.printMsg('flipped %s to %s.' % (rawframestack_path, self.tempframestackpath))
 			else:
 				os.symlink(rawframestack_path,self.tempframestackpath)
-				apDisplay.printMsg('link %s to %s.' % (rawframestack_path, self.tempframestackpath))
+			apDisplay.printMsg('link %s to %s.' % (rawframestack_path, self.tempframestackpath))
 		return self.tempframestackpath
 
 	def makeCorrectedFrameStack(self, use_full_raw_area=False):
 		return self.makeCorrectedFrameStack_cpu(use_full_raw_area)
 
-	def makeDarkNormMrcs(self):
+	def makeDosefgpuGainCorrectionParams(self):
 		self.setupDarkNormMrcs(False)
+		cmd = ''
+		if self.dark_path:
+			cmd += " -fdr %s" % self.dark_path
+		if self.norm_path:
+			cmd += " -Gain %s" % self.norm_path
+		return cmd
 
 	def setupDarkNormMrcs(self, use_full_raw_area=False):
 		'''
@@ -1029,18 +1036,12 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			normdata = self.getRefImageData('norm')
 			if normdata['bright']:
 				apDisplay.printWarning('From Bright Reference %s' % (normdata['bright']['filename'],))
-			if self.use_frame_aligner_flat:
+			if self.use_gpu_flat:
 				normarray = normdata['image']
 				self.norm_path = os.path.join(frameprocess_dir,'norm-%s-%d.mrc' % (self.hostname,self.gpuid))
 				apDisplay.printWarning('Save Norm Reference %s to %s' % (normdata['filename'],self.norm_path))
 				mrc.write(normarray,self.norm_path)
 	
-	def getNormRefMrcPath(self):
-		return self.norm_path
-
-	def getDarkRefMrcPath(self):
-		return self.dark_path
-
 
 	def makeCorrectedFrameStack_cpu(self, use_full_raw_area=False):
 		'''
@@ -1080,13 +1081,31 @@ class DDFrameProcessing(DirectDetectorProcessing):
 	def getNewBinning(self):
 		return self.stack_binning
 
+
+
+	def setNewNumRunningAverageFrames(self,numFrames):
+		'''
+		Number of frames to include in running average of dosef_driftcorr
+		'''
+		self.numRunningAverageFrames = numFrames
+
+	def setNewFlipAlongYAxis(self,logical_value):
+		'''
+		Flip frames along Y axis during drift correction
+		'''
+		self.flipAlongYAxis = logical_value
+
+
+	def getNewNumRunningAverageFrames(self):
+		return self.numRunningAverageFrames
+
+	def getNewFlipAlongYAxis(self):
+		return self.flipAlongYAxis
+
 	def setKeepStack(self,is_keepstack):
 			self.keep_stack = is_keepstack
 			if is_keepstack:
 				self.save_aligned_stack = True
-
-	def getKeepAlignedStack(self):
-		self.save_aligned_stack
 
 	def getImageCameraEMData(self):
 		return leginondata.CameraEMData(initializer=self.image['camera'])
@@ -1131,7 +1150,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		
 	def getAlignedSumFrameList(self):
 		return self.sumframelist
-	
+		
 	def updateFrameStackHeaderImageStats(self,stackpath):
 		'''
 		This function update the header of dosefgpu_driftcorr corrected stack file without array stats.
@@ -1150,12 +1169,11 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		header['amax'] = stats['max']+0
 		header['amean'] = stats['mean']+0
 		header['rms'] = stats['std']+0
-		header['mz'] = 1
 		mrc.update_file_header(stackpath, header)
 
-	def isSumSubStackWithFrameAligner(self):
+	def isSumSubStackWithDosefgpu(self):
 		'''
-		This funciton decides whether framealigner will be used for
+		This funciton decides whether dosefgpu_driftcorr will be used for
 		summing up ddstack.  Dosefgpu_driftcorr can only handle
 		consecutive frame sum.
 		'''
@@ -1168,6 +1186,116 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		self.save_aligned_stack=True
 		return False
 
+	def setDoseFDriftCorrOptions(self,params):
+
+#		Parameter options for motioncorr2-ucsf
+
+#		paramkeys = ['bft','fod','pbx']
+		paramkeys = ['Bft','Tol','Iter','FmDose', 'Patchrows','Patchcols','MaskSizerows','MaskSizecols','MaskCentrows','MaskCentcols','FmRef']
+		for goodkey in paramkeys:
+			if goodkey in params.keys():
+				self.alignparams[goodkey] = params[goodkey]
+
+	def addDoseFDriftCorrOptions(self):
+		cmd = ''
+		for key in self.alignparams.keys():
+
+			if key is 'Patchrows':
+				cmd += '-Patch %s %s ' %(str(self.alignparams['Patchrows']),str(self.alignparams['Patchcols']))
+			elif key is 'Patchcols':
+				continue
+
+			elif key is 'MaskCentrows':
+				cmd+= '-MaskCent %s %s ' %(str(self.alignparams['MaskCentrows']),str(self.alignparams['MaskCentcols']))
+			elif key is 'MaskCentcols':
+				continue
+
+			elif key is 'MaskSizerows':
+				cmd+= '-MaskSize %s %s ' %(str(self.alignparams['MaskSizerows']),str(self.alignparams['MaskSizecols']))
+			elif key is 'MaskCentcols':
+				continue
+
+			else:
+				cmd += ' -%s %s ' % (key,str(self.alignparams[key]))
+
+		return cmd
+
+	def gainCorrectAndAlignFrameStack(self):
+		cmd = self.makeDosefgpuGainCorrectionParams()
+		self.alignCorrectedFrameStack(gain_dark_cmd=cmd)
+
+	def alignCorrectedFrameStack(self, gain_dark_cmd=''):
+		'''
+		David Agard lab's gpu program for aligning frames using all defaults
+		Dark reference select is currently unavailable, therefore this version only works for images acquired from a K2 camera in counting mode
+		'''
+		# The alignment is done in tempdir (a local directory to reduce network traffic)
+		os.chdir(self.tempdir)
+		# include both hostname and gpu to identify the temp output
+		temp_aligned_sumpath = 'temp%s.%d_sum.mrc' % (self.hostname,self.gpuid)
+		temp_aligned_stackpath = 'temp%s.%d_aligned_st.mrc' % (self.hostname,self.gpuid)
+		temp_log = self.tempframestackpath[:-4]+'_Log.txt'
+
+		# Construct the command line with defaults
+
+
+#		cmd = 'dosefgpu_driftcorr %s -Gpu %d -fcs %s -dsp 0' % (self.tempframestackpath,self.gpuid,temp_aligned_sumpath)
+		cmd = 'motioncorr2_ucsf -InMrc %s -Gpu %d -OutMrc %s' % (self.tempframestackpath,self.gpuid, temp_aligned_sumpath)
+		#cmd = '/emg/sw/script/motioncorr-master/bin/'+cmd
+		# Options
+		cmd += self.addDoseFDriftCorrOptions()
+
+		# moving average window and y-axis flip
+		if self.getNewNumRunningAverageFrames() > 1:
+			cmd += ' -Group %d ' % (self.getNewNumRunningAverageFrames()) 
+		
+#		if self.getNewFlipAlongYAxis() == 1:
+#			cmd += ' -flp %d' % (self.getNewFlipAlongYAxis()) 
+
+
+		# binning
+		cmd += ' -FtBin %d' % (self.getNewBinning())
+		# gain dark references
+		cmd += gain_dark_cmd
+		print 'cmd is = ',cmd
+		is_sum_with_dosefgpu =  self.isSumSubStackWithDosefgpu()
+		if is_sum_with_dosefgpu:
+			cmd += ' -Throw %d -Trunc %d' % (min(self.sumframelist),max(self.sumframelist))
+		else:
+			# minimal sum since it needs to be redone by numpy
+			cmd += ' -Throw %d -Trunc %d' % (0,1)
+#		if self.save_aligned_stack:
+#			cmd += ' -ssc 1 -fct %s' % (temp_aligned_stackpath)
+			cmd += ' -ssc 1 -OutMrc %s' % (temp_aligned_stackpath)
+		apDisplay.printMsg('Running: %s'% cmd)
+		self.proc = subprocess.Popen(cmd, shell=True)
+		self.proc.wait()
+
+		if os.path.isfile(temp_aligned_sumpath):
+			# successful alignment
+			if self.save_aligned_stack:
+				self.updateFrameStackHeaderImageStats(temp_aligned_stackpath)
+			if self.tempdir != self.rundir:
+				if os.path.isfile(temp_log):
+					shutil.move(temp_log,self.framestackpath[:-4]+'_Log.txt')
+					apDisplay.printMsg('Copying result for %s from %s to %s' % (self.image['filename'],self.tempdir,self.rundir))
+			if not is_sum_with_dosefgpu:
+				self.sumSubStackWithNumpy(temp_aligned_stackpath,temp_aligned_sumpath)
+			shutil.move(temp_aligned_sumpath,self.aligned_sumpath)
+			if self.keep_stack:
+				shutil.move(temp_aligned_stackpath,self.aligned_stackpath)
+			else:
+				apFile.removeFile(temp_aligned_stackpath)
+				apFile.removeFile(self.aligned_stackpath)
+		else:
+			if self.tempdir != self.rundir:
+				# Move the Log to permanent location for future inspection
+				if os.path.isfile(temp_log):
+					shutil.move(self.tempframestackpath[:-4]+'_Log.txt',self.framestackpath[:-4]+'_Log.txt')
+			apDisplay.printWarning('dosefgpu_driftcorr FAILED: \n%s not created.' % os.path.basename(temp_aligned_sumpath))
+			#apDisplay.printError('If this happens consistently on an image, hide it in myamiweb viewer and continue with others' )
+		os.chdir(self.rundir)
+
 	def makeAlignedImageData(self,alignlabel='a'):
 		'''
 		Prepare ImageData to be uploaded after alignment
@@ -1175,22 +1303,6 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		camdata = self.getAlignedCameraEMData()
 		new_array = mrc.read(self.aligned_sumpath)
 		return apDBImage.makeAlignedImageData(self.image,camdata,new_array,alignlabel)
-
-	def makeAlignedDWImageData(self,alignlabel='a-DW'):
-		'''
-		Prepare ImageData to be uploaded after alignment
-		'''
-		camdata = self.getAlignedCameraEMData()
-		new_array = mrc.read(self.aligned_dw_sumpath)
-		return apDBImage.makeAlignedImageData(self.image,camdata,new_array,alignlabel)
-
-	def getAlignBin(self):
-		alignbin = self.getNewBinning()
-		if alignbin > 1:
-			bintext = '_%dx' % (alignbin)
-		else:
-			bintext = ''
-		return bintext
 
 	def isReadyForAlignment(self):
 		'''
@@ -1202,7 +1314,6 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			return False
 		# Unless the _Log.txt is made, even if faked, the frame stack is not completed
 		logpath = self.framestackpath[:-4]+'_Log.txt'
-
 		if not self.waitForPathExist(logpath,60):
 			apDisplay.printWarning('Stack making not finished, Skipping')
 			return False

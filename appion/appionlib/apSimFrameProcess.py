@@ -38,7 +38,7 @@ class SimFrameProcessing(apDDprocess.DDFrameProcessing):
 		Uploaded raw frames are saved as image stack for feeding into gpu program.
 		RawFrameDir here is actually the filename with mrc extension.
 		'''
-		rawframe_basepath = self.getSessionFramePathFromImage(imagedata)
+		rawframe_basepath = imagedata['session']['frame path']
 		# frame stackfile is image filename plus '.frames.mrc'
 		rawframedir = os.path.join(rawframe_basepath,'%s.frames.mrc' % imagedata['filename'])
 		if not self.waitForPathExist(rawframedir,30):
@@ -59,6 +59,7 @@ class SimFrameProcessing(apDDprocess.DDFrameProcessing):
 			bin = {'x':1,'y':1}
 			offset = {'x':0,'y':0}
 			dimension = self.getDefaultDimension()
+		print dimension
 		crop_end = {'x': offset['x']+dimension['x']*bin['x'], 'y':offset['y']+dimension['y']*bin['y']}
 		apDisplay.printMsg('Frame path: %s' %  rawframe_path)
 		waitmin = 0

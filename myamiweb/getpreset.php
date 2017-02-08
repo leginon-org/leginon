@@ -94,14 +94,6 @@ if ($imgId) {
 		echo $str_tilt;
 		echo "&nbsp;<img src='imgangle.php?a=".$angle."'>";
 	}
-	//Phase Plate
-	if ($imageinfo['pp_usageId']) {
-		$ppinfo = $leginondata->getPhasePlateInfo($imageinfo['pp_usageId']);
-		$str_pp = " <b> pp:</b> ".$ppinfo['phase plate number'].'-'.$ppinfo['patch position'];
-		echo $str_pp;
-	}
-	// Next Line
-	// Filename
 	echo " <font size='-2'>";
 	if ($viewfilename)
 		echo " <br/>".$filename['filename'];

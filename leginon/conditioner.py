@@ -115,7 +115,7 @@ class Conditioner(node.Node):
 			self._handleFixConditionEvent(evt)
 			status = 'ok'
 		except Exception, e:
-			self.logger.info('handling exception %s' %(e,))
+			self.logger.warning('handling exception %s' %(e,))
 			status='exception'
 		try:
 			evt2 = event.IdleTimerRestartEvent()

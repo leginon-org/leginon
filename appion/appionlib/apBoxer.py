@@ -62,7 +62,7 @@ def processParticleData(imgdata, boxsize, partdatas, shiftdata, boxfile, rotate=
 
 		### xcoord is the upper left area corner of the particle box
 		start_x,start_y = getBoxStartPosition(imgdata,halfbox,partdata, shiftdata)
-		if checkInside is False or checkBoxInImage(imgdims,start_x,start_y,boxsize):
+		if checkBoxInImage(imgdims,start_x,start_y,boxsize) or checkInside is False:
 			partdict = {
 				'x_coord': start_x,
 				'y_coord': start_y,

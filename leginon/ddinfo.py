@@ -46,16 +46,6 @@ def saveAllPreviousToDatabase():
 				print 'saving:', infoname
 				saveImageDDinfoToDatabase(imagedata, infoname)
 
-def getUseBufferFromImage(imagedata):
-	'''
-	Buffer server is used if BufferHostData is defined for the camera
-	and not disabled.
-	'''
-	r = leginondata.BufferHostData(ccdcamera=imagedata['camera']['ccdcamera']).query(results=1)
-	if not r:
-		return False
-	return not r[0]['disabled']
-
 def saveSessionDDinfoToDatabase(sessiondata):
 	qcam = leginondata.CameraEMData(session=sessiondata)
 	qcam['save frames'] = True
@@ -93,70 +83,14 @@ def getRawFrameSessionPathFromSessionPath(session_path):
 	rawframe_sessionpath = legjoin + framedir + legsplit[-1]
 	return rawframe_sessionpath
 
-def getBufferFrameSessionPathFromImage(imdata):
-	'''
-	Find the buffer host frame path defined by the session. The path has
-	similar format as SessionData frame path, i.e., this is the directory
-	containing all image movies.
-	'''
-	dcamera = imdata['camera']['ccdcamera']
-	session = imdata['session']
-	session_path = session['image path']
-	# get buffer host name and base path
-	r = leginondata.BufferHostData(ccdcamera=dcamera, disabled=False).query(results=1)
-	if not r:
-		return False
-	host = r[0]
-	# query
-	r = leginondata.BufferFramePathData(session=session,host=host).query(results=1)
-	if r:
-		return r[0]['buffer frame path']
-	# new record
-	# leginon is a required directory
-	legdir = 'leginon'
-	legsplit = session_path.split(legdir)
-	if len(legsplit) <= 1:
-		return False
-	# by using os.path.join, '/' need to be removed in legsplit[-1]
-	session_part = legsplit[-1][1:]
-	buffer_framepath = os.path.join(host['buffer base path'],session_part)
-
-	q = leginondata.BufferFramePathData(session=session,host=host)
-	q['buffer frame path'] = buffer_framepath
-	q.insert()
-	return buffer_framepath
-
-def getRawFrameTypeFromSession(sessiondata):
-	'''
-	Use sessiondata to find the raw frame type.
-	'''
-	r = leginondata.BufferFramePathData(session=sessiondata).query(results=1)
-	if  r:
-		ftype = checkRawFrameTypeInPath(r[0]['buffer frame path'])
-	if not r or ftype is False:
-		ftype = checkRawFrameTypeInPath(sessiondata['frame path'])
-	return ftype
-
 def getRawFrameType(session_path):
 	'''
 	Determine Frame Type from either session image path or session frame path.
 	'''
 	rawframe_basepath = getRawFrameSessionPathFromSessionPath(session_path)
-	return checkRawFrameTypeInPath(rawframe_basepath)
-
-def checkRawFrameTypeInPath(image_frame_path):
-	'''
-	Use the content of the path to determine the fram types.
-	False means unknown due to missing path, path not a directory or
-	missing content to determine the type.
-	'''
-	if not os.path.isdir(image_frame_path):
-		return False
-	entries = os.listdir(image_frame_path)
-	if not entries:
-		return False
+	entries = os.listdir(rawframe_basepath)
 	for path in entries:
-		if 'frame' in path and os.path.isdir(os.path.join(image_frame_path,path)):
+		if 'frame' in path and os.path.isdir(os.path.join(rawframe_basepath,path)):
 			return 'singles'
 	return 'stack'
 

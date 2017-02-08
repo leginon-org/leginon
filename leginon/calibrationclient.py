@@ -589,8 +589,6 @@ class MatrixCalibrationClient(CalibrationClient):
 class BeamTiltCalibrationClient(MatrixCalibrationClient):
 	def __init__(self, node):
 		MatrixCalibrationClient.__init__(self, node)
-		self.other_axis = {'x':'y','y':'x'}
-		self.beamtilt_directions = [(0,0),(1,0)]
 
 	def getBeamTilt(self):
 		try:
@@ -648,21 +646,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		bt = self.solveEq10_t(fmatrix, defocus1, defocus2, d)
 		return {'x':bt[0], 'y':bt[1]}
 
-	def modifyBeamTilt(self, bt0, tilt_value, tilt_direction, rotation=0.0):
-		print 'bt0',bt0
-		d_map = {'x':0,'y':1}
-		t1 = tilt_direction
-		bt1 = dict(bt0)
-		bt1['x'] += tilt_value * t1[d_map['x']] * math.cos(rotation)
-		bt1['y'] += tilt_value * t1[d_map['y']] * math.sin(rotation)
-		print bt1
-		return bt1
-
-	def setBeamTiltDirections(self,directions=[(0,0),(1,0)]):
-		self.beamtilt_directions = directions
-
-	def measureDefocusStig(self, tilt_value, stig=True, correct_tilt=False, correlation_type=None, settle=0.5, image0=None, tilt_directions=[(0,0),(1,0)]):
-
+	def measureDefocusStig(self, tilt_value, stig=True, correct_tilt=False, correlation_type=None, settle=0.5, image0=None, double_tilt=False):
 		self.abortevent.clear()
 		tem = self.instrument.getTEMData()
 		cam = self.instrument.getCCDCameraData()
@@ -672,38 +656,40 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		# Focuser node that calls this need to know the type of error
 		fmatrix = self.retrieveMatrix(tem, cam, 'defocus', ht, mag)
 
-		all_tilt_directions = [tilt_directions,]
 		## only do stig if stig matrices exist
 		amatrix = bmatrix = None
 		if stig:
-			orthogonal_tilt_directions = map((lambda x: (x[1]*-1,x[0]*1)),tilt_directions)
+			tiltaxes = ('x','y')
 			try:
 				amatrix = self.retrieveMatrix(tem, cam, 'stigx', ht, mag)
 				bmatrix = self.retrieveMatrix(tem, cam, 'stigy', ht, mag)
-				all_tilt_directions.append(orthogonal_tilt_directions)
 			except NoMatrixCalibrationError:
 				stig = False
+				tiltaxes = ('x',)
+		else:
+			tiltaxes = ('x',)
+
 		tiltcenter = self.getBeamTilt()
 
 		### need two tilt displacement measurements to get stig
 		shifts = []
 		tilts = []
 		self.checkAbort()
-		for index, tds in enumerate(all_tilt_directions):
-			t1 = tds[0]
-			t2 = tds[1]
-			tilt_scale = tilt_value * math.hypot(t1[0]-t2[0],t1[1]-t2[1])
-			rotation = self.getTiltRotation()
-			# first tilt
-			bt1 = self.modifyBeamTilt(tiltcenter, tilt_value, t1, rotation)
-			# second tilt
-			bt2 = self.modifyBeamTilt(tiltcenter, tilt_value, t2, rotation)
+		for tiltaxis in tiltaxes:
+			bt1 = dict(tiltcenter)
+			if double_tilt:
+				bt1[tiltaxis] -= tilt_value
+				tilt_scale = 2*tilt_value
+			else:
+				tilt_scale = tilt_value
+			bt2 = dict(tiltcenter)
+			bt2[tiltaxis] += tilt_value
 			state1 = leginondata.ScopeEMData()
 			state1['beam tilt'] = bt1
 			state2 = leginondata.ScopeEMData()
 			state2['beam tilt'] = bt2
 			
-			if image0 is None or t1[0] != 0 or t1[1] != 0:
+			if image0 is None or double_tilt:
 				# double tilt needs new image0 for each axis
 				image0 = self.acquireImage(state1, settle=settle, correct_tilt=correct_tilt, corchannel=0)
 
@@ -715,7 +701,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			pixshift = shiftinfo['pixel shift']
 
 			shifts.append( (pixshift['row'], pixshift['col']) )
-			if index == 0:
+			if tiltaxis == 'x':
 				tilts.append( (tilt_scale, 0) )
 			else:
 				tilts.append( (0, tilt_scale) )
@@ -730,6 +716,94 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		self.checkAbort()
 
 		sol = self.solveEq10(fmatrix, amatrix, bmatrix, tilts, shifts)
+		return sol
+
+	def OLDmeasureDefocusStig(self, tilt_value, publish_images=False, drift_threshold=None, stig=True, target=None, correct_tilt=False, correlation_type=None, settle=0.5):
+		self.abortevent.clear()
+		tem = self.instrument.getTEMData()
+		cam = self.instrument.getCCDCameraData()
+		ht = self.instrument.tem.HighTension
+		mag = self.instrument.tem.Magnification
+		try:
+			fmatrix = self.retrieveMatrix(tem, cam, 'defocus', ht, mag)
+		except NoMatrixCalibrationError:
+				raise RuntimeError('missing calibration matrix')
+		if stig:
+			try:
+				amatrix = self.retrieveMatrix(tem, cam, 'stigx', ht, mag)
+				bmatrix = self.retrieveMatrix(tem, cam, 'stigy', ht, mag)
+			except NoMatrixCalibrationError:
+				stig = False
+
+		tiltcenter = self.getBeamTilt()
+		#self.node.logger.info('Tilt center: x = %g, y = %g.' % (tiltcenter['x'], tiltcenter['y']))
+
+		### need two tilt displacement measurements
+		### easiest is one on each tilt axis
+		shifts = {}
+		tilts = {}
+		self.checkAbort()
+		nodrift = False
+		lastdrift = None
+		for tiltaxis in ('x','y'):
+			bt1 = dict(tiltcenter)
+			bt1[tiltaxis] -= tilt_value
+			bt2 = dict(tiltcenter)
+			bt2[tiltaxis] += tilt_value
+			state1 = leginondata.ScopeEMData()
+			state2 = leginondata.ScopeEMData()
+			state1['beam tilt'] = bt1
+			state2['beam tilt'] = bt2
+			## if no drift on 'x' axis, then assume we don't 
+			## need to check on 'y' axis
+			if nodrift:
+				drift_threshold = None
+			try:
+				shiftinfo = self.measureStateShift(state1, state2, publish_images, settle=settle, drift_threshold=drift_threshold, target=target, correct_tilt=correct_tilt, correlation_type=correlation_type)
+			except Abort:
+				break
+			except Drifting:
+				## return to original beam tilt
+				self.instrument.tem.BeamTilt = tiltcenter
+				#self.node.logger.info('Returned to tilt center: x = %g, y = %g.' % (tiltcenter['x'], tiltcenter['y']))
+
+				raise
+			nodrift = True
+			if shiftinfo['driftdata'] is not None:
+				lastdrift = shiftinfo['driftdata']
+
+			pixshift = shiftinfo['pixel shift']
+
+			shifts[tiltaxis] = (pixshift['row'], pixshift['col'])
+			if tiltaxis == 'x':
+				tilts[tiltaxis] = (2*tilt_value, 0)
+			else:
+				tilts[tiltaxis] = (0, 2*tilt_value)
+			try:
+				self.checkAbort()
+			except Abort:
+				break
+
+		## return to original beam tilt
+		self.instrument.tem.BeamTilt = tiltcenter
+		#self.node.logger.info('Returned to tilt center: x = %g, y = %g.' % (tiltcenter['x'], tiltcenter['y']))
+
+		self.checkAbort()
+
+		#self.node.logger.info('Tilts %s, shifts %s' % (tilts, shifts))
+
+		d1 = shifts['x']
+		t1 = tilts['x']
+		d2 = shifts['y']
+		t2 = tilts['y']
+		if stig:
+			sol = self.solveEq10(fmatrix,amatrix,bmatrix,d1,t1,d2,t2)
+			#self.node.logger.info('Defocus: %g, stig.: (%g, %g), min. = %g' % (sol['defocus'], sol['stigx'], sol['stigy'], sol['min']))
+		else:
+			sol = self.solveEq10_nostig(fmatrix,d1,t1,d2,t2)
+			#self.node.logger.info('Defocus: %g, stig.: (not measured), min. = %g' % (sol['defocus'], sol['min']))
+
+		sol['lastdrift'] = lastdrift
 		return sol
 
 	def solveEq10(self, F, A, B, tilts, shifts):
@@ -811,31 +885,20 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		except ZeroDivisionError:
 			raise ValueError('invalid measurement, scale is zero')
 
-	def getTiltRotation(self):
-		'''
-		Beam Tilt Rotation in radians to line up with the phase plate.
-		'''
-		angle = 0.0
-		if abs(angle) > 0.002:
-			self.node.logger.info('Rotate the beam tilt by %.1f degrees' % math.degrees(angle))
-		return angle
-
 	def measureDisplacements(self, tilt_axis, tilt_value, states, **kwargs):
 		'''
 		This measures the displacements that go into eq. (11)
 		Each call of this function acquires four images
 		and returns two shift displacements.
 		'''
+
 		# try/finally to be sure we return to original beam tilt
-		rotation = self.getTiltRotation()
-		t1 = self.beamtilt_directions[0]
-		t2 = self.beamtilt_directions[1]
 		try:
 			# set up to measure states
 			beam_tilt = self.instrument.tem.BeamTilt
-			beam_tilts = [dict(beam_tilt), dict(beam_tilt)]
-			beam_tilts[0] = self.modifyBeamTilt(beam_tilt, tilt_value, t1, rotation)
-			beam_tilts[1] = self.modifyBeamTilt(beam_tilt, tilt_value, t2, rotation)
+			beam_tilts = (dict(beam_tilt), dict(beam_tilt))
+			beam_tilts[0][tilt_axis] += tilt_value
+			beam_tilts[1][tilt_axis] -= tilt_value
 
 			pixel_shifts = []
 			m = 'Beam tilt measurement (%d of '
