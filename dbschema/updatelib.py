@@ -1,9 +1,9 @@
-#!/usr/bin/env python
-import time
 import os
-import xml.dom.minidom as dom
+import time
+from pyami import gitlib
 from leginon import version
 from leginon import projectdata
+import xml.dom.minidom as dom
 
 class UpdateLib:
 	def __init__(self,project_dbupgrade):
