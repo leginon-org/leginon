@@ -220,6 +220,21 @@ class RawTransfer(object):
 
 		self.cleanUp(src,method)
 
+	def getSessionFramePath(self, imdata):
+		image_path = imdata['session']['image path']
+		frames_path = imdata['session']['frame path']
+
+		# use buffer frame path
+		# buffer server has access to both permanent and buffer frame path.
+		# Must be specific here.
+		if leginon.ddinfo.getUseBufferFromImage(imdata):
+			frames_path = leginon.ddinfo.getBufferFrameSessionPathFromImage(imdata)
+
+		# back compatible to sessions without frame path in database
+		if image_path and not frames_path and sys.platform != 'win32':
+			frames_path = leginon.ddinfo.getRawFrameSessionPathFromSessionPath(image_path)
+		return frames_path
+
 	def run_once(self,parent_src_path,cam_host,dest_head,method):
 		global next_time_start
 		global time_expire
@@ -265,12 +280,7 @@ class RawTransfer(object):
 			if imdata is None:
 				continue
 			image_path = imdata['session']['image path']
-			frames_path = imdata['session']['frame path']
-
-			# back compatible to sessions without frame path in database
-			if image_path and not frames_path and sys.platform != 'win32':
-				frames_path = leginon.ddinfo.getRawFrameSessionPathFromSessionPath(image_path)
-
+			frames_path = self.getSessionFramePath(imdata)
 			# only process destination frames_path starting with chosen head
 			if sys.platform != 'win32' and not frames_path.startswith(dest_head):
 				print "frames_path = %s"%frames_path

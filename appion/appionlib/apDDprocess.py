@@ -376,10 +376,24 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		if not self.rawframetype:
 			if self.image:
 				# Do this only on the first image
-				self.setRawFrameType(ddinfo.getRawFrameType(self.image['session']['frame path']))
+				self.setRawFrameType(ddinfo.getRawFrameType(self.getSessionFramePathFromImage(self.image)))
 			else:
 				apDisplay.printError('RawFrameType not set')
 		return self.rawframetype
+
+	def getSessionFramePathFromImage(self, imagedata):
+		# getBufferFrameSessionPathFromImage creates the path if host is
+		# defined in database.  It is only False if the BufferHostData is
+		# not defined for the camera or set to disabled.
+		session_frame_path = ddinfo.getBufferFrameSessionPathFromImage(imagedata)
+		if session_frame_path is False:
+			if imagedata['session']['frame path']:
+				 session_frame_path = imagedata['session']['frame path']
+			else:
+				# raw frames are saved in a subdirctory of image path pre-3.0
+				imagepath = imagedata['session']['image path']
+				session_frame_path = ddinfo.getRawFrameSessionPathFromSessionPath(imagepath)
+		return session_frame_path
 
 	def getFrameNamePattern(self,framedir):
 		pass
@@ -389,13 +403,9 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		rawframename = imagedata['camera']['frames name'].split('\\')[-1]
 		if not rawframename:
 			apDisplay.printWarning('No Raw Frame Saved for %s' % imagedata['filename'])
-		if imagedata['session']['frame path']:
-			 rawframe_basepath = imagedata['session']['frame path']
-		else:
-			# raw frames are saved in a subdirctory of image path pre-3.0
-			imagepath = imagedata['session']['image path']
-			rawframe_basepath = ddinfo.getRawFrameSessionPathFromSessionPath(imagepath)
-		rawframedir = os.path.join(rawframe_basepath,'%s.frames' % imagedata['filename'])
+		session_frame_path = self.getSessionFramePathFromImage(imagedata)
+
+		rawframedir = os.path.join(session_frame_path,'%s.frames' % imagedata['filename'])
 		if not self.waitForPathExist(rawframedir,self.rawtransfer_wait):
 			apDisplay.printError('Raw Frame Dir %s does not exist.' % rawframedir)
 		self.getFrameNamePattern(rawframedir)

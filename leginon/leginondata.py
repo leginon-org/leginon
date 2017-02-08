@@ -2720,3 +2720,21 @@ class ProjectionSubModeMappingData(Data):
 		)
 	typemap = classmethod(typemap)
 
+class BufferHostData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('ccdcamera', InstrumentData),
+			('buffer hostname', str),
+			('buffer base path', str),
+			('disabled', bool),
+		)
+	typemap = classmethod(typemap)
+
+class BufferFramePathData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('host', BufferHostData),
+			('buffer frame path', str),
+		)
+	typemap = classmethod(typemap)
+
