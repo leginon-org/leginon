@@ -6,7 +6,7 @@ import subprocess
 library for working with git
 """
 
-def getNumberOfGitCommitOnBranch():
+def getCurrentCommitCount():
 	cmd = "git rev-list --count HEAD"
 	proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
 	stdout, stderr = proc.communicate()
@@ -21,14 +21,14 @@ def getCurrentBranch():
 	result = stdout.strip()
 	return result
 
-def getGitVersion():
+def getVersion():
 	cmd = "git --version | cut -d' ' -f3-"
 	proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
 	stdout, stderr = proc.communicate()
 	result = stdout.strip()
 	return result
 
-def getCurrentGitTags():
+def getCurrentTags():
 	cmd = "git tag --merged"
 	proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
 	stdout, stderr = proc.communicate()
@@ -50,9 +50,9 @@ def getMostRecentCommitTime():
 	return result
 
 if __name__ == '__main__':
-	print "getNumberOfGitCommitOnBranch()", getNumberOfGitCommitOnBranch()
+	print "getCurrentCommitCount()", getCurrentCommitCount()
 	print "getCurrentBranch()", getCurrentBranch()
-	print "getGitVersion()", getGitVersion()
-	print "getCurrentGitTags()", getCurrentGitTags()
+	print "getVersion()", getVersion()
+	print "getCurrentTags()", getCurrentTags()
 	print "getMostRecentCommitID()", getMostRecentCommitID()
 	print "getMostRecentCommitTime()", getMostRecentCommitTime()
