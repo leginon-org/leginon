@@ -1,23 +1,63 @@
 #!/usr/bin/env python
 import time
-from sinedon import dbupgrade, dbconfig
+import string
 import updatelib
+from sinedon import dbupgrade, dbconfig
 
 class SchemaUpdate(object):
-	'''
-		Base Class for database schema upgrade.  Please name the supclass as
-		SchemaUpdatexxxxx where xxxxx is the svn revision number.  See
-		schema-r14891.py as an example
-	'''
+	#######################################################################
+	#
+	# Functions to include in every schema update sub-class 
+	#
+	#######################################################################
 
-	def __init__(self,backup=False):
+	def setFlags(self):
+		"""
+		define LeginonDB upgrade in this function
+		"""
+		raise NotImplementedError
+		# can this schema update be run more than once and not break anything
+		self.isRepeatable = False 
+		# what is the number associated with this update, use 'git rev-list --count HEAD'
+		self.revisionNumber = -1
+		#what is the git tag name
+		self.gitTagName = 'schema1'
+		#flags for what databases are updated and which ones are not
+		self.modifyAppionDB = False
+		self.modifyLeginonDB = False
+		self.modifyProjectDB = False
+
+	def upgradeAppionDB(self):
+		"""
+		define AppionDB upgrade in this function
+		"""
+		raise NotImplementedError
+
+	def upgradeLeginonDB(self):
+		"""
+		define LeginonDB upgrade in this function
+		"""
+		raise NotImplementedError
+
+	def upgradeProjectDB(self):
+		"""
+		define ProjectDB upgrade in this function
+		"""
+		raise NotImplementedError
+
+	#######################################################################
+	#
+	# Functions exclusive to the base class
+	#
+	#######################################################################
+
+	def __init__(self, backup=False):
+		self.setFlags()
 		self.project_dbupgrade = dbupgrade.DBUpgradeTools('projectdata', drop=True)
 		self.leginon_dbupgrade = dbupgrade.DBUpgradeTools('leginondata', drop=True)
 		self.updatelib = updatelib.UpdateLib(self.project_dbupgrade)
 		self.selected_revision = self.getSchemaRevision()
 		self.backup = backup
-		self.valid_upgrade = ['leginon','project','appion']
-		self.required_upgrade = self.valid_upgrade
 		self.excluded_appiondbs = []
 		self.setForceUpdate(False)
 
@@ -29,24 +69,10 @@ class SchemaUpdate(object):
 			return True
 		return False
 
-	def setRequiredUpgrade(self,input):
-		list = []
-		if type(input) == type([]):
-			list = input
-		else:
-			list.append(input)
-		for item in list:
-			try:
-				self.valid_upgrade.index(item)
-			except:
-				raise
-		self.required_upgrade = list
-
 	def getSchemaRevision(self):
-		name = self.__class__.__name__
-		digits = name.strip('SchemaUpdate')
-		if digits.isdigit():
-			return int(digits)
+		if self.revisionNumber > 0:
+			return self.revisionNumber
+		raise ValueError("script revision number is invalid")
 
 	def getAppionDatabases(self,project_dbupgrade):
 		"""
@@ -68,23 +94,18 @@ class SchemaUpdate(object):
 		#random.shuffle(appiondblist)
 		return appiondblist
 
-	def upgradeLeginonDB(self):
-		'''
-			define LeginonDB upgrade in this function
-		'''
-		pass
-
-	def upgradeProjectDB(self):
-		'''
-			define ProjectDB upgrade in this function
-		'''
-		pass
-
-	def upgradeAppionDB(self):
-		'''
-			define ProjectDB upgrade in this function
-		'''
-		pass
+	#=====================
+	def makeTimestamp(self):
+		datestamp = time.strftime("%y%b%d").lower()
+		hourstamp = string.lowercase[(time.localtime()[3])%26]
+		if hourstamp == "x":
+			### SPIDER does not like x's
+			hourstamp = "z"
+		#mins = time.localtime()[3]*12 + time.localtime()[4]
+		#minstamp = string.lowercase[mins%26]
+		minstamp = "%02d"%(time.localtime()[4])
+		timestamp = datestamp+hourstamp+minstamp
+		return timestamp
 
 	def appionbackup(self,appiondblist):
 		appiondb_unique_list = list(set(appiondblist))
@@ -94,12 +115,13 @@ class SchemaUpdate(object):
 				time.sleep(1)
 				continue
 			appion_dbupgrade = dbupgrade.DBUpgradeTools('appiondata', appiondbname, drop=True)
-			appion_dbupgrade.backupDatabase("%s.sql" % (appiondbname), data=True)
+			backupfile = "%s-%s.sql" % (appiondbname, self.makeTimestamp())
+			appion_dbupgrade.backupDatabase(backupfile, data=True)
 
 	def commitUpdate(self):
-		'''
+		"""
 		Log that this update has been completed and therefore can not be repeated.
-		'''
+		"""
 		if not self.force:
 			self.updatelib.updateDatabaseReset(self.updatelib.db_revision)
 			self.updatelib.updateDatabaseRevision(self.selected_revision)
@@ -119,21 +141,21 @@ class SchemaUpdate(object):
 		revision_in_database = self.updatelib.getDatabaseRevision()
 		if self.updatelib.needUpdate(checkout_revision,self.selected_revision,self.force) == 'now':
 			try:
-				if 'leginon' in self.required_upgrade:
+				if self.modifyLeginonDB is True:
 					# leginon part
 					print divider
 					if self.backup:
-						self.leginon_dbupgrade.backupDatabase("leginondb.sql", data=True)
+						self.leginon_dbupgrade.backupDatabase("leginondb"+self.makeTimestamp()+".sql", data=True)
 					print "\033[35mUpgrading %s\033[0m" % (self.leginon_dbupgrade.getDatabaseName())
 					self.upgradeLeginonDB()
-				if 'project' in self.required_upgrade:
+				if self.modifyProjectDB is True:
 					# project part
 					print divider
 					if self.backup:
-						self.leginon_dbupgrade.backupDatabase("leginondb.sql", data=True)
+						self.leginon_dbupgrade.backupDatabase("projectdb"+self.makeTimestamp()+".sql", data=True)
 					print "\033[35mUpgrading %s\033[0m" % (self.project_dbupgrade.getDatabaseName())
 					self.upgradeProjectDB()
-				if 'appion' in self.required_upgrade:
+				if self.modifyAppionDB is True:
 					# appion part
 					print divider
 					appiondblist = self.getAppionDatabases(self.project_dbupgrade)
