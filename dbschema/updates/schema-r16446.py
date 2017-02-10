@@ -1,9 +1,9 @@
 #!/usr/bin/env python
-import schemabase
+import baseSchemaClass
 from appionlib import appiondata, apDisplay
 import sys,os
 
-class SchemaUpdate16446(schemabase.SchemaUpdate):
+class SchemaUpdate16446(baseSchemaClass.SchemaUpdate):
 	'''
 	This will cp excluded imageid list from ApFullTomogramRunData to ApFullTomogramData
 	'''

@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-import schemabase
+import baseSchemaClass
 from leginon import leginondata, ddinfo
 
-class SchemaUpdate17813(schemabase.SchemaUpdate):
+class SchemaUpdate17813(baseSchemaClass.SchemaUpdate):
 	'''
 	This schema adds trash status to ViewerImageStatus.  This is supposed to be for r17797 but wasn't made 
 	until r17812 was made.  So we will call the module 17813

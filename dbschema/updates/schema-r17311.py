@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-import schemabase
+import baseSchemaClass
 from appionlib import appiondata, apDisplay
 
-class SchemaUpdate17311(schemabase.SchemaUpdate):
+class SchemaUpdate17311(baseSchemaClass.SchemaUpdate):
 	'''
 	This will add a 'phaseflipped' field to appion.ApRefineStackData to allow querys on old refine stacks
 	In general, eman and xmipp stacks are phaseflipped and Frealign stacks are not. 

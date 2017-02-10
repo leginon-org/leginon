@@ -1,13 +1,25 @@
 #!/usr/bin/env python
-import schemabase
-from leginon import leginondata
 
-class SchemaUpdate18034(schemabase.SchemaUpdate):
-	'''
+import baseSchemaClass
+
+class SchemaUpdate(baseSchemaClass.SchemaUpdate):
+	"""
 	This schema change hidden column in SessionData to allow null
-  because sinedon requires it.
-	'''
-
+	because sinedon requires it.
+	"""
+	
+	def setFlags(self):
+		# can this schema update be run more than once and not break anything
+		self.isRepeatable = False 
+		# what is the number associated with this update, use 'git rev-list --count HEAD'
+		self.schemaNumber = 18034
+		#what is the git tag name
+		self.schemaTagName = 'schema18034'
+		#flags for what databases are updated and which ones are not
+		self.modifyAppionDB = False
+		self.modifyLeginonDB = True
+		self.modifyProjectDB = False
+	
 	def upgradeLeginonDB(self):
 		if not self.leginon_dbupgrade.tableExists('SessionData'):
 			return
@@ -22,7 +34,5 @@ class SchemaUpdate18034(schemabase.SchemaUpdate):
 				self.leginon_dbupgrade.executeCustomSQL(q)
 
 if __name__ == "__main__":
-	update = SchemaUpdate18034()
-	# update only leginon database
-	update.setRequiredUpgrade('leginon')
+	update = SchemaUpdate()
 	update.run()

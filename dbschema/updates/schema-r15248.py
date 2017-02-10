@@ -1,11 +1,11 @@
 #!/usr/bin/env python
-import schemabase
+import baseSchemaClass
 import leginon.leginondata
 import leginon.projectdata
 from appionlib import apParticle
 from appionlib import appiondata
 
-class SchemaUpdate15248(schemabase.SchemaUpdate):
+class SchemaUpdate15248(baseSchemaClass.SchemaUpdate):
 	'''
 	This will update ApContourData to give ApSelectionRunData reference
 	'''

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-import schemabase
+import baseSchemaClass
 
-class SchemaUpdate15961(schemabase.SchemaUpdate):
+class SchemaUpdate15961(baseSchemaClass.SchemaUpdate):
 	'''
 	This will add badAlign field to old apProtomoRefinementParamsData
 	'''

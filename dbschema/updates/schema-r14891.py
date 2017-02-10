@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-import schemabase
+import baseSchemaClass
 
-class SchemaUpdate14891(schemabase.SchemaUpdate):
+class SchemaUpdate14891(baseSchemaClass.SchemaUpdate):
 
 # This will update leginon databases that were installed prior to r14897.
 # This script is going to fix the timestamp problem on LaunchedApplicationData table.

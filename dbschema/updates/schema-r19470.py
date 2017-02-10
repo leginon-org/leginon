@@ -1,30 +1,58 @@
 #!/usr/bin/env python
-import schemabase
+
+import baseSchemaClass
 from sinedon import directq
 from leginon import leginondata
 
-class SchemaUpdate19470(schemabase.SchemaUpdate):
+class SchemaUpdate(baseSchemaClass.SchemaUpdate):
 	'''
 	This schema change fixes coordinates for template saved as list, not tuple bug
 	in json settings data import. Issue #3893
 	'''
 
+	#######################################################################
+	#
+	# Functions to include in every schema update sub-class 
+	#
+	#######################################################################
+
+	def setFlags(self):
+		# can this schema update be run more than once and not break anything
+		self.isRepeatable = False 
+		# should this schema update be run again whenever the branch is upgraded, i.e., 3.1 -> 3.2
+		self.reRunOnBranchUpgrade = False
+		# what is the number associated with this update, use 'git rev-list --count HEAD'
+		self.schemaNumber = 19470
+		# minimum myami version
+		self.minimumMyamiVersion = 3.2
+		#what is the git tag name
+		self.schemaTagName = 'schema19470'
+		#flags for what databases are updated and which ones are not
+		self.modifyAppionDB = False
+		self.modifyLeginonDB = True
+		self.modifyProjectDB = False
+
 	def upgradeLeginonDB(self):
 		self.searchmap = {
-				'JAHCFinderSettingsData':('acquisition template', 'focus template'),
+			'JAHCFinderSettingsData':('acquisition template', 'focus template'),
 		}
-
 		for class_name in self.searchmap.keys():
 			if not self.leginon_dbupgrade.tableExists(class_name):
 				continue
 		
 			alldbids = set([])
-			for field_key in ('acquisition template', 'focus template'):
+			for field_key in self.searchmap.get(class_name, []):
 				pattern_dbids = self.getPatternDBIDs(class_name, field_key)
 				alldbids = alldbids.union(pattern_dbids)
 			alldbids = list(alldbids)
 			alldbids.sort()
 			self. correctData(class_name, alldbids)
+
+	#######################################################################
+	#
+	# Custom functions
+	#
+	#######################################################################
 
 	def getPatternDBIDs(self, class_name, key):
 		if not self.leginon_dbupgrade.columnExists(class_name, 'SEQ|%s' % key):
@@ -46,7 +74,5 @@ class SchemaUpdate19470(schemabase.SchemaUpdate):
 			c2.insert(force=True)
 
 if __name__ == "__main__":
-	update = SchemaUpdate19470()
-	# update only leginon database
-	update.setRequiredUpgrade('leginon')
+	update = SchemaUpdate()
 	update.run()

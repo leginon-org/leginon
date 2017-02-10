@@ -1,9 +1,9 @@
 #!/usr/bin/env python
-import schemabase
+import baseSchemaClass
 import leginon.leginondata
 import leginon.projectdata
 
-class SchemaUpdate15526(schemabase.SchemaUpdate):
+class SchemaUpdate15526(baseSchemaClass.SchemaUpdate):
     '''
     This will add a new table to the Project database for keeping track of system statistics: dataStatusReport
     '''

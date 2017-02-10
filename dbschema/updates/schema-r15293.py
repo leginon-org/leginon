@@ -1,11 +1,11 @@
 #!/usr/bin/env python
-import schemabase
+import baseSchemaClass
 import leginon.leginondata
 import leginon.projectdata
 from appionlib import apParticle
 from appionlib import appiondata
 
-class SchemaUpdate15293(schemabase.SchemaUpdate):
+class SchemaUpdate15293(baseSchemaClass.SchemaUpdate):
 	'''
 	This will update several appionTables
 	'''

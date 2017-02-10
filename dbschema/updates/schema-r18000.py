@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-import schemabase
+import baseSchemaClass
 from leginon import leginondata
 
-class SchemaUpdate18000(schemabase.SchemaUpdate):
+class SchemaUpdate18000(baseSchemaClass.SchemaUpdate):
 	'''
 	This schema hides applications from leginon if its TransformManager is not bound to its Navigator.  It is associated with r17932 but not made until after r17982 schema change.
 	'''

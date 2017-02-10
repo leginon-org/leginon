@@ -1,9 +1,9 @@
 #!/usr/bin/env python
-import schemabase
+import baseSchemaClass
 import leginon.leginondata
 import sys,os
 
-class SchemaUpdate16607(schemabase.SchemaUpdate):
+class SchemaUpdate16607(baseSchemaClass.SchemaUpdate):
 	'''
 	This will copy first preset order in focuser settings to manual focus preset
 	'''

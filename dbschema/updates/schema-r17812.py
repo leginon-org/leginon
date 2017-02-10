@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-import schemabase
+import baseSchemaClass
 from leginon import leginondata, ddinfo
 
-class SchemaUpdate17812(schemabase.SchemaUpdate):
+class SchemaUpdate17812(baseSchemaClass.SchemaUpdate):
 	'''
 	This schema correct adjust for transform from no to one in Centered Square
 	'''

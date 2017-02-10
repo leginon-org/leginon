@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-import schemabase
+import baseSchemaClass
 
-class SchemaUpdate17035(schemabase.SchemaUpdate):
+class SchemaUpdate17035(baseSchemaClass.SchemaUpdate):
 	'''
 	This will add fields to appion.ApCtfData to allow myamiweb query on old estimation 
 	'''

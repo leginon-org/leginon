@@ -1,9 +1,9 @@
 #!/usr/bin/env python
-import schemabase
+import baseSchemaClass
 import leginon.leginondata
 import leginon.projectdata
 
-class SchemaUpdate15069(schemabase.SchemaUpdate):
+class SchemaUpdate15069(baseSchemaClass.SchemaUpdate):
 	'''
 	This will update project database to create privilege level of banned user
 	and add such a group in leginon database

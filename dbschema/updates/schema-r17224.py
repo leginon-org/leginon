@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-import schemabase
+import baseSchemaClass
 from leginon import leginondata
 
-class SchemaUpdate17224(schemabase.SchemaUpdate):
+class SchemaUpdate17224(baseSchemaClass.SchemaUpdate):
 	'''
 	This schema update only applies to full-sized DE-12 raw frame saved data
 	'''

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-import schemabase
+import baseSchemaClass
 
-class SchemaUpdate17111(schemabase.SchemaUpdate):
+class SchemaUpdate17111(baseSchemaClass.SchemaUpdate):
 	'''
 	This will add boolean 'advanced' field to leginon.UserData to indicate if a user is an advanced user 
 	'''

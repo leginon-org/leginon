@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-import schemabase
+import baseSchemaClass
 from leginon import leginondata, ddinfo
 
-class SchemaUpdate17916(schemabase.SchemaUpdate):
+class SchemaUpdate17916(baseSchemaClass.SchemaUpdate):
 	'''
 	This schema adds probe as a field in related calibration so that we can add nanoprobe, too. 
 	'''

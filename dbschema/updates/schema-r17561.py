@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-import schemabase
+import baseSchemaClass
 from leginon import leginondata
 
-class SchemaUpdate17561(schemabase.SchemaUpdate):
+class SchemaUpdate17561(baseSchemaClass.SchemaUpdate):
 	'''
 	This schema update converts frame rate to frame time if present
 	'''

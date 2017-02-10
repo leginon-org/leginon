@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
-import sys
-from sinedon import dbupgrade, dbconfig
+from sinedon import dbupgrade
 from leginon import projectdata, leginondata
 
 # This will update databases that were installed prior to r12857.

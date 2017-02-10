@@ -1,9 +1,9 @@
 #!/usr/bin/env python
-import schemabase
+import baseSchemaClass
 from appionlib import appiondata
 import sys,os
 
-class SchemaUpdate16412(schemabase.SchemaUpdate):
+class SchemaUpdate16412(baseSchemaClass.SchemaUpdate):
 	'''
 	This will scale contour point coordinates to original image size
 	'''

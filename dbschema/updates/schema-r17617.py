@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-import schemabase
+import baseSchemaClass
 from leginon import leginondata, ddinfo
 
-class SchemaUpdate17617(schemabase.SchemaUpdate):
+class SchemaUpdate17617(baseSchemaClass.SchemaUpdate):
 	'''
 	This schema update frame path
 	'''

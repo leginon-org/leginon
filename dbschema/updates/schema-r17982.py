@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 import datetime
-import schemabase
+import baseSchemaClass
 from appionlib import appiondata
 from leginon import projectdata
 
-class SchemaUpdate17982(schemabase.SchemaUpdate):
+class SchemaUpdate17982(baseSchemaClass.SchemaUpdate):
 	'''
 	This change the sign of angle_astigmatism to +x to +y as positive
 	'''

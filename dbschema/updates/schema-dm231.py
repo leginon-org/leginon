@@ -1,10 +1,10 @@
 #!/usr/bin/env python
-import schemabase
+import baseSchemaClass
 from leginon import leginondata
 
 VALID_CAMERA_NAMES = ['GatanK2Linear','GatanK2Counting','GatanK2Super','SimFalconFrameCamera',]
 
-class SchemaUpdateDM231(schemabase.SchemaUpdate):
+class SchemaUpdateDM231(baseSchemaClass.SchemaUpdate):
 	'''
 	This schema change assigns frame rotation and flip to
 	GatanK2 CameraEMData that were acquired with DM 2.31 but without

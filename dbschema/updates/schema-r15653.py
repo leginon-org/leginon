@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 import sys
-import schemabase
+import baseSchemaClass
 import leginon.leginondata
 
-class SchemaUpdate15653(schemabase.SchemaUpdate):
+class SchemaUpdate15653(baseSchemaClass.SchemaUpdate):
 	'''
   This will enter in leginondb the Cs value for all tems that
 	have been used for saved images.

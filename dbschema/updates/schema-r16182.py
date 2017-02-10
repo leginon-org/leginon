@@ -1,9 +1,9 @@
 #!/usr/bin/env python
-import schemabase
+import baseSchemaClass
 import leginon.leginondata
 import sys,os
 
-class SchemaUpdate16182(schemabase.SchemaUpdate):
+class SchemaUpdate16182(baseSchemaClass.SchemaUpdate):
 	'''
 	This will change DD raw frame directories to the new format
 	'''
