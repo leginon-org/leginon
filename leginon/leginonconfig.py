@@ -8,7 +8,7 @@
 
 import errno
 import os
-import configparser
+import leginonconfigparser
 import sys
 import inspect
 
@@ -60,18 +60,18 @@ def mkdirs(newdir):
 class LeginonConfigError(Exception):
 	pass
 
-configparser = configparser.configparser
+leginonconfigparser = leginonconfigparser.leginonconfigparser
 
 # drive mapping
-if configparser.has_section('Drive Mapping'):
-	drives = configparser.options('Drive Mapping')
+if leginonconfigparser.has_section('Drive Mapping'):
+	drives = leginonconfigparser.options('Drive Mapping')
 	for drive in drives:
 		drivepath = drive.upper() + ':'
-		pathmapping[drivepath] = configparser.get('Drive Mapping', drive)
+		pathmapping[drivepath] = leginonconfigparser.get('Drive Mapping', drive)
 
 # image path
-if configparser.has_section('Images'):
-	IMAGE_PATH = configparser.get('Images', 'path')
+if leginonconfigparser.has_section('Images'):
+	IMAGE_PATH = leginonconfigparser.get('Images', 'path')
 else:
 	sys.stderr.write('Warning:  You have not configured Images path in leginon.cfg!  Using current directory.\n')
 	IMAGE_PATH = os.path.abspath(os.curdir)
@@ -86,20 +86,20 @@ if not os.access(mapped_path, os.W_OK):
 
 # project
 try:
-	default_project = configparser.get('Project', 'default')
+	default_project = leginonconfigparser.get('Project', 'default')
 except:
 	default_project = None
 
 # user
 try:
-	USERNAME = configparser.get('User', 'fullname')
+	USERNAME = leginonconfigparser.get('User', 'fullname')
 except:
 	USERNAME = ''
 
 try:
-	emailhost = configparser.get('Email', 'host')
-	emailuser = configparser.get('Email', 'user')
-	emailfrom = configparser.get('Email', 'from')
-	emailto = configparser.get('Email', 'to')
+	emailhost = leginonconfigparser.get('Email', 'host')
+	emailuser = leginonconfigparser.get('Email', 'user')
+	emailfrom = leginonconfigparser.get('Email', 'from')
+	emailto = leginonconfigparser.get('Email', 'to')
 except:
 	emailhost = emailuser = emailfrom = emailto = None
