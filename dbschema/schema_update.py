@@ -1,27 +1,32 @@
 #!/usr/bin/env python
-import time
-from sinedon import dbupgrade, dbconfig
-from leginon import projectdata, leginondata
-import updatelib
+
 import os
+import sys
+import updatelib
+from sinedon import dbupgrade
+from leginon import projectdata
 
 project_dbupgrade = dbupgrade.DBUpgradeTools('projectdata', drop=True)
 
 if __name__ == "__main__":
+	sq = projectdata.schemaupdates()
+	sdata = sq.query(results=1)
+	print sdata[0]
+	sys.exit(1)
 	updatelib_inst = updatelib.UpdateLib(project_dbupgrade)
-	checkout_revision = updatelib_inst.getCheckOutRevision()
-	schema_revisions = updatelib_inst.getBranchUpdateRevisionSequence()
+	commit_count = updatelib_inst.getCommitCount()
+	schema_number_list = updatelib_inst.getBranchUpdateSequence()
 	revision_in_database = updatelib_inst.getDatabaseRevision(True)
 	update_list = []
 	# get a list of needed schema update
-	for selected_revision in schema_revisions:
-		need_update = updatelib_inst.needUpdate(checkout_revision,selected_revision)
-		schema_pythonfile = "schema-r%d.py" % (selected_revision)
+	for schema_number in schema_number_list:
+		need_update = updatelib_inst.needUpdate(commit_count,schema_number)
+		schema_pythonfile = "schema-r%d.py" % (schema_number)
 		if need_update and os.path.exists(schema_pythonfile):
 			update_list.append("python %s" % (schema_pythonfile))
 	# log the package revision at the end of successful updates
 	# revision 1000000000 is a dummy for unknown head revision
-	if revision_in_database < 1000000000 and checkout_revision > revision_in_database:
+	if revision_in_database < 1000000000 and commit_count > revision_in_database:
 		update_list.append("python log_package_revision.py")
 
 	# print out the results

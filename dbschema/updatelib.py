@@ -1,5 +1,4 @@
 import os
-import time
 from pyami import gitlib
 from leginon import version
 from leginon import projectdata
@@ -9,48 +8,52 @@ class UpdateLib:
 	def __init__(self,project_dbupgrade):
 		printMsg = True
 		self.project_dbupgrade = project_dbupgrade
-		self.checkout_branch = version.getGITBranch('.')
-		self.checkout_revision = self.getCheckOutRevision()
+		self.branch_name = gitlib.getCurrentBranch()
+		print "Branch name '%s'"%(self.branch_name)
+		self.commit_count = self.getCommitCount()
 		self.db_revision = self.getDatabaseRevision(printMsg)
-		self.db_branch = self.getDatabaseSVNBranch(printMsg)
+		self.db_branch = self.getDatabaseBranch(printMsg)
 
-	def getUpdateRevisionSequence(self,svn_branch):
+	def getUpdateRevisionSequence(self, branch_name):
 		'''
 		Update revision sequence according to branch input.
 		Please update the revision sequence in this function when
 		new schema update script is added.
 		'''
 		has_appiondbs = self.checkProcessingDB()
-		if svn_branch == 'trunk':
+		### this seems so clunky, can we do this better
+		if branch_name == 'trunk':
 			schema_revisions = [12857,13713,14077,14891,15069,15497,15526,15653,16182,16607,17035,17111,17224,17561,17562,17617,17812,17813,17916,18000,18034,19470]
 			appion_only_revisions = [15248,15251,15293,15961,16412,16446,17035,17311,17982]
-
-		elif svn_branch == 'myami-3.2':
+		elif branch_name == 'myami-3.3':
 			schema_revisions = [12857,13713,14077,14891,15069,15497,15526,15653,16182,16607,17035,17111,17224,17561,17562,17617,17812,17813,17916,18000,18034,19470]
 			appion_only_revisions = [15248,15251,15293,15961,16412,16446,17035,17311,17982]
-		elif svn_branch == 'myami-3.1':
+		elif branch_name == 'myami-3.2':
+			schema_revisions = [12857,13713,14077,14891,15069,15497,15526,15653,16182,16607,17035,17111,17224,17561,17562,17617,17812,17813,17916,18000,18034,19470]
+			appion_only_revisions = [15248,15251,15293,15961,16412,16446,17035,17311,17982]
+		elif branch_name == 'myami-3.1':
 			schema_revisions = [12857,13713,14077,14891,15069,15497,15526,15653,16182,16607,17035,17111,17224,17561,17562,17617,17812,17813,17916,18000,18034]
 			appion_only_revisions = [15248,15251,15293,15961,16412,16446,17035,17311,17982]
-		elif svn_branch == 'myami-3.0':
+		elif branch_name == 'myami-3.0':
 			schema_revisions = [12857,13713,14077,14891,15069,15497,15526,15653,16182,16607,17035,17111,17224,17561,17562,17617,17812,17813,17916,18000,18034]
 			appion_only_revisions = [15248,15251,15293,15961,16412,16446,17035,17311,17982]
-		elif svn_branch == 'myami-2.2':
+		elif branch_name == 'myami-2.2':
 			schema_revisions = [12857,13713,14077,14891,15069,15497,15526,15653,16182,16607]
 			appion_only_revisions = [15248,15251,15293,15961,16412,16446]
-		elif svn_branch == 'myami-2.1':
+		elif branch_name == 'myami-2.1':
 			schema_revisions = [12857,13713,14077,14891]
 			appion_only_revisions = [15293]
-		elif svn_branch == 'myami-2.0':
+		elif branch_name == 'myami-2.0':
 			schema_revisions = [12857,13713,14077,14380]
 			appion_only_revisions = [15293]
 		else:
-			raise "Unknown svn branch"
+			raise ValueError("Unknown branch name %s"%(branch_name))
 		if has_appiondbs:
 			schema_revisions.extend(appion_only_revisions)
 			schema_revisions.sort()
 		return schema_revisions
 
-	def getBranchResetRevision(self,svn_branch):
+	def getBranchResetRevision(self,branch_name):
 		'''
 		branch_reset_revision refers to the schemaupdate revision
 		after which it may have new update if updating to newer branches.
@@ -60,39 +63,40 @@ class UpdateLib:
 		'''
 		branch_reset_revision = self.db_revision
 		if not self.getDatabaseReset():
-			if svn_branch == 'trunk':
+			if branch_name == 'trunk':
 				branch_reset_revision = 18034
-			elif svn_branch == 'myami-3.2':
+			elif branch_name == 'myami-3.3':
 				branch_reset_revision = 18034
-			elif svn_branch == 'myami-3.1':
+			elif branch_name == 'myami-3.2':
 				branch_reset_revision = 18034
-			elif svn_branch == 'myami-3.0':
+			elif branch_name == 'myami-3.1':
+				branch_reset_revision = 18034
+			elif branch_name == 'myami-3.0':
 				branch_reset_revision = 17973
-			elif svn_branch == 'myami-2.2':
+			elif branch_name == 'myami-2.2':
 				branch_reset_revision = 16607
-			elif svn_branch == 'myami-2.1':
+			elif branch_name == 'myami-2.1':
 				if self.db_revision >= 15293:
 					branch_reset_revision = 14891
-			elif svn_branch == 'myami-2.0':
+			elif branch_name == 'myami-2.0':
 				# schema-r14380 in myami-2.0 and schema-r14891 in later are equivalent
 				branch_reset_revision = 14891
 			else:
-				raise "Unknown svn branch"
+				raise ValueError("Unknown branch name")
 		return branch_reset_revision
 
 	def getPackageVersion(self):
 		'''
 		This function outputs the string to put in database as
-		the version of myami package.  It uses getSVNBranch gives branch
-		name from either svn or text and strip off myami- if from a branch
+		the version of myami package.  It uses gitlib Branch gives branch
 		'''
-		svn_branch = version.getSVNBranch('.')
-		if svn_branch == 'trunk':
-			version_log = svn_branch
-		elif 'myami-' in svn_branch:
-			version_log = svn_branch.split('-')[-1]
+		branch = gitlib.getCurrentBranch()
+		if branch == 'trunk':
+			version_log = branch
+		elif 'myami-' in branch:
+			version_log = branch.split('-')[-1]
 		else:
-			raise "Unknown svn branch"
+			raise ValueError("Unknown git branch name")
 		return version_log
 
 	def checkProcessingDB(self):
@@ -101,14 +105,14 @@ class UpdateLib:
 			return True
 		return False
 
-	def getBranchUpdateRevisionSequence(self):
+	def getBranchUpdateSequence(self):
 		'''
 		This function obtains update revision sequence according
 		to db and checkout branch and revision changes.
 		'''
-		checkout_update_sequence = self.getUpdateRevisionSequence(self.checkout_branch)
+		checkout_update_sequence = self.getUpdateRevisionSequence(self.branch_name)
 		db_update_sequence = self.getUpdateRevisionSequence(self.db_branch)
-		if self.checkout_branch == self.db_branch:
+		if self.branch_name == self.db_branch:
 			return checkout_update_sequence
 		else:
 			for revision in db_update_sequence:
@@ -116,12 +120,12 @@ class UpdateLib:
 					del checkout_update_sequence[checkout_update_sequence.index(revision)]
 			return checkout_update_sequence
 
-	def getCheckOutRevision(self,module_path='.'):
+	def getCommitCount(self,module_path='.'):
 		try:
 			# Only svn checkout have integer revision number
-			svn_revision = int(version.getVersion(module_path))
-			print '\033[36mSVN checkout revision is %s\033[0m' % svn_revision
-			return svn_revision
+			commit_count = int(gitlib.getCurrentCommitCount())
+			print '\033[36mCommit count is %s\033[0m' % commit_count
+			return commit_count
 		except:
 			release_revision = self.getReleaseRevisionFromXML(module_path)
 			if release_revision:
@@ -131,22 +135,22 @@ class UpdateLib:
 				# For unknown releases, assume head revision
 				return 1000000000
 
-	def getDatabaseSVNBranch(self,printMsg=False):
+	def getDatabaseBranch(self,printMsg=False):
 		### get revision from database
 		selectq = " SELECT value FROM `install` WHERE `key`='version'"
 		values = self.project_dbupgrade.returnCustomSQL(selectq)
 		versiontext = values[0][0]
 		versionlist = versiontext.split('.')
 		if len(versionlist) > 1:
-			svn_branch = 'myami-'+'.'.join(versionlist[:2])
+			branch_name = 'myami-'+'.'.join(versionlist[:2])
 		else:
 			# trunk
-			svn_branch = versionlist[0]
-		return svn_branch
+			branch_name = versionlist[0]
+		return branch_name
 
 	def getDatabaseRevisionByBranch(self,printMsg=False):
 		branch_reset_revision = self.getBranchResetRevision(self.db_branch)
-		if self.db_branch == self.checkout_branch:
+		if self.db_branch == self.branch_name:
 			return self.db_revision
 		else:
 			return min(self.db_revision,branch_reset_revision)
@@ -169,7 +173,7 @@ class UpdateLib:
 					# early myami-2.0 database has no revision record
 					revision = 14077
 			else:
-				raise "Unknown version log in database. Can not proceed"
+				raise ValueError("Unknown version log in database, cannot proceed")
 		if printMsg:
 			print '\033[36mDatabase recorded revision is %s\033[0m' % revision
 		return revision
@@ -184,7 +188,7 @@ class UpdateLib:
 		if checkout_revision <= revision_in_database:
 			print '\033[35mDatabase revision log up to date, Nothing to do\033[0m'
 			return False
-		schema_revisions = self.getBranchUpdateRevisionSequence()
+		schema_revisions = self.getBranchUpdateSequence()
 		schema_revisions.sort()
 		schema_revisions.reverse()
 		minimal_revision_in_database = revision_in_database
@@ -208,7 +212,7 @@ class UpdateLib:
 		if force:
 			return 'now'
 		revision_in_database = self.getDatabaseRevisionByBranch()
-		schema_revisions = self.getBranchUpdateRevisionSequence()
+		schema_revisions = self.getBranchUpdateSequence()
 		try:
 			index = schema_revisions.index(selected_revision)
 		except:
@@ -246,7 +250,8 @@ class UpdateLib:
 		except:
 			raise ValueError('unable to parse XML file "%s"' % xmlfilepath)
 		defaulttables = xmlapp.getElementsByTagName('defaulttables')[0]
-		data = defaulttables.getElementsByTagName('data')[0]
+		### data is not used
+		#data = defaulttables.getElementsByTagName('data')[0]
 		sqltables = defaulttables.getElementsByTagName('sqltable')
 		for node in sqltables:
 			if node.attributes['name'].value == 'install':
