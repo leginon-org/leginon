@@ -50,6 +50,7 @@ class Tecnai(tem.TEM):
 	def __init__(self):
 		tem.TEM.__init__(self)
 		self.projection_submodes = {1:'LM',2:'Mi',3:'SA',4:'Mh',5:'LAD',6:'D'}
+		self.gridloader_slot_states = {0:'unknown', 1:'occupied', 2:'empty', 3:'error'}
 		self.special_submode_mags = {}
 		#self.special_submode_mags = {380:('EFTEM',3)}
 		self.projection_submode_map = self.special_submode_mags.copy()
@@ -1363,6 +1364,45 @@ class Tecnai(tem.TEM):
 			subprocess.call(AUTOIT_EXE_PATH)
 		else:
 			pass
+
+	def hasGridLoader(self):
+		try:
+			return self.tecnai.AutoLoader.AutoLoaderAvailable
+		except:
+			return False
+
+	def _loadCartridge(self, number):
+		state = self.tecnai.AutoLoader.LoadCartridge(number)
+		if state != 0:
+			raise RunTimeError()
+
+	def _unloadCartridge(self):
+		state = self.tecnai.AutoLoader.UnloadCartridge()
+		if state != 0:
+			raise RunTimeError()
+
+	def getGridLoaderNumberOfSlots(self):
+		if self.hasGridLoader():
+			return self.tecnai.AutoLoader.NumberOfCassetteSlots
+		else:
+			return 0
+
+	def getGridLoaderSlotState(self, number)
+		if not self.hasGridLoader():
+			return self.gridloader_slot_states[0]
+		else:
+			status = self.tecnai.AutoLoader.SlotStatus(number)
+			state = self.gridloader_slot_states[status]
+			
+	def getGridLoaderInventory(self):
+		if not self.grid_inventory and self.hasGridLoader():
+			stats = self.getAllGridSlotStates()
+
+	def performGridLoaderInventory(self):	
+		""" need to find return states
+				0 - no error, but also could be no action taken.
+		"""
+		return self.tecnai.PerformCassetteInventory()
 
 class Krios(Tecnai):
 	name = 'Krios'

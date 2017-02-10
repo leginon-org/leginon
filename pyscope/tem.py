@@ -97,6 +97,7 @@ class TEM(baseinstrument.BaseInstrument):
 		self.config_name = config.getNameByClass(self.__class__)
 		self.cs = config.getConfigured()[self.config_name]['cs']
 		self.projection_submode_map = {}
+		self.grid_inventory = {}
 
 	def getCs(self):
 		return self.cs
@@ -226,3 +227,62 @@ class TEM(baseinstrument.BaseInstrument):
 	def isAutoFillerBusy(self):
 		is_busy = self.isTimedFilling()
 		return is_busy
+
+	def hasGridLoader(self):
+		return False
+
+	def getGridLoaderNumberOfSlots(self):
+		return 1
+
+	def getGridLoaderSlotState(self, number):
+		return 'empty'
+
+	def loadGridCartridge(self, number):
+		if not self.hasGridLoader():
+			return
+		if number not in range(1,self.getGridLoaderNumberOfSlots()):
+			return
+		if self.getGridLoaderSlotState(number) != 'occupied':
+			raise ValueError('Grid %d is not occupied' % number)
+		# now load
+		try:
+			self._loadCartridge(number)
+		except RuntimeError, e:
+			raise RuntimeError('Grid Loading failed')
+
+	def unloadGridCartridge(self):
+		if not self.hasGridLoader():
+			return
+		
+		has_empty = False
+		for number in range(1,self.getGridLoaderNumberOfSlots()):
+			if self.getGridLoaderSlotState(number) == 'empty':
+				has_empty = True
+				break
+		if not has_empty:
+			raise ValueError('No empty slot to unload')
+		# now unload
+		try:
+			self._unloadCartridge()
+		except RuntimeError, e:
+			raise RuntimeError('Grid Loading failed')
+
+	def _loadCartridge(self, number):
+		raise NotImplementedError()
+
+	def _unloadCartridge(self):
+		raise NotImplementedError()
+
+	def getGridLoaderInventory(self):
+		return self.grid_inventory
+
+	def getAllGridSlotStates(self):
+		if not self.hasGridLoader():
+			return {}
+		nslots = self.getGridLoaderNumberOfSlots()
+		for i in range(nslots):
+			n = i + 1
+			state = self.getGridLoaderSlotState(n)
+			self.grid_inventory[n] = state
+		return self.grid_inventory
+
