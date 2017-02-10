@@ -1387,16 +1387,18 @@ class Tecnai(tem.TEM):
 		else:
 			return 0
 
-	def getGridLoaderSlotState(self, number)
+	def getGridLoaderSlotState(self, number):
 		if not self.hasGridLoader():
 			return self.gridloader_slot_states[0]
 		else:
 			status = self.tecnai.AutoLoader.SlotStatus(number)
 			state = self.gridloader_slot_states[status]
-			
+		return state
+
 	def getGridLoaderInventory(self):
 		if not self.grid_inventory and self.hasGridLoader():
-			stats = self.getAllGridSlotStates()
+			self.getAllGridSlotStates()
+		return self.grid_inventory
 
 	def performGridLoaderInventory(self):	
 		""" need to find return states
