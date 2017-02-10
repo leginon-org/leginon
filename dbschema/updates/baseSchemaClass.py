@@ -33,6 +33,8 @@ class SchemaUpdate(object):
 		self.schemaNumber = -1
 		#what is the git tag name
 		self.schemaTagName = 'schema1'
+		#git tag <tag name> <commit id>
+		#git tag schema1 9fceb02
 		#flags for what databases are updated and which ones are not
 		self.modifyAppionDB = False
 		self.modifyLeginonDB = False

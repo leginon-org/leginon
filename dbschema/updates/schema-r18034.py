@@ -15,6 +15,8 @@ class SchemaUpdate(baseSchemaClass.SchemaUpdate):
 		self.schemaNumber = 18034
 		#what is the git tag name
 		self.schemaTagName = 'schema18034'
+		#git tag <tag name> <commit id>
+		#git tag schema1 9fceb02
 		#flags for what databases are updated and which ones are not
 		self.modifyAppionDB = False
 		self.modifyLeginonDB = True
