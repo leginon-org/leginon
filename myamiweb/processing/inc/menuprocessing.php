@@ -134,15 +134,6 @@ if (is_numeric($expId)) {
 	$dresults=array();
 	$mresults=array();
 
-	$pickrunscomplete = 0;
-	$pickrunscomplete += count($subclusterjobs['templatecorrelator']['done']);
-	$pickrunscomplete += count($subclusterjobs['dogpicker']['done']);
-	$pickrunscomplete += count($subclusterjobs['signature']['done']);
-	$pickrunscomplete += count($subclusterjobs['manualpicker']['done']);
-	$pickrunscomplete += count($subclusterjobs['contourpicker']['done']);
-	$pickrunscomplete += count($subclusterjobs['tiltalign']['done']);
-	if ($prtlruns > $pickrunscomplete) $pickrunscomplete = $prtlruns;
-
 	$trun = count($subclusterjobs['templatecorrelator']['running']);
 	$tq = count($subclusterjobs['templatecorrelator']['queued']);
 	$drun = count($subclusterjobs['dogpicker']['running']);
@@ -181,7 +172,7 @@ if (is_numeric($expId)) {
 
 	$nrun[] = array(
 		'name'=>"<a href='selectObjectPicker.php?expId=$sessionId'>Select Particle Picker...</a>",
-		'result'=>"<a href='prtlreport.php?expId=$sessionId'>$pickrunscomplete complete</a>",
+		'result'=>($prtlruns==0) ? "" : "<a href='prtlreport.php?expId=$sessionId'>$prtlruns complete</a>",
 	);
 
 	if ($loopruns > 0) {

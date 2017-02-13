@@ -85,6 +85,7 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 	$dflist = ($_POST['dflist']) ? $_POST['dflist'] : "";
 	$az = ($_POST['az']) ? $_POST['az'] : "";
 	$tiltlist = ($_POST['tiltlist']) ? $_POST['tiltlist'] : "";
+	$doselist = ($_POST['doselist']) ? $_POST['doselist'] : "";
 	$invert_check = ($_POST['invert_check']=='on') ? 'checked' : '';
 	$default_cs = ($from_existing_session) ? $leginondata->getCsValueFromSession($expId):'2.0';
 	$cs = ($_POST['cs']) ? $_POST['cs'] : $default_cs;
@@ -241,6 +242,10 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 			$keyinput_tilt = $html_elements->justifiedInputTableRow
 					('tiltlist','tilt angle list (degrees):','tiltlist',$tiltlist,30);
 		}
+		if ($utypeval == 'tiltseries') {
+			$keyinput_dose = $html_elements->justifiedInputTableRow
+					('doselist','dose list (e-/Å^2):','doselist',$doselist,30);
+		}
 
 		$close_keyinput = "</table>\n";
 		$close_keyinput .= closeRoundBorder();
@@ -294,6 +299,7 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 		echo $keyinput_def;
 		echo $keyinput_az;
 		echo $keyinput_tilt;
+		echo $keyinput_dose;
 		echo $close_keyinput;
 	}
 	echo "			</tr></td>\n";
@@ -325,6 +331,7 @@ function runUploadImage() {
 	$cs = $_POST['cs'];
 	$imagegroup = $_POST['imagegroup']+0;
 	$uploadtype = $_POST['uploadtype'];
+	$doselist = $_POST['doselist'];
 	$tiltlist = $_POST['tiltlist'];
 	$outdir = $_POST['outdir'];
 
@@ -433,6 +440,9 @@ function runUploadImage() {
 			$tiltanglearray = explode(',',trim($tiltlist));
 			if (count($tiltanglearray) != $imagegroup)
 				createUploadImageForm($errormsg."Specify matched image-per-group and tilt-angle list");
+			$dosearray = explode(',',trim($doselist));
+			if (count($dosearray) != $imagegroup)
+				createUploadImageForm($errormsg."Specify matched image-per-group and dose list");
 			$rtiltarray = array();
 			foreach($tiltanglearray as $ta)
 				$rtiltarray[] = sprintf('%.5f', $ta * 3.14159 / 180.0);
@@ -475,6 +485,8 @@ function runUploadImage() {
 			$command.="--azimuth=$az ";
 			if ($uploadtype == 'tiltseries')
 				$command.="--angle-list=".implode(',',$tiltanglearray)." ";
+			if ($uploadtype == 'tiltseries')
+				$command.="--dose-list=".implode(',',$dosearray)." ";
 		}
 		$command.="--mag=$mag ";
 		$command.="--kv=$kv ";
@@ -486,7 +498,7 @@ function runUploadImage() {
 		$bf = file($batch);
 		foreach ($bf as $line) {
 			$items = explode("\t",$line);
-			if (count($items)!=7  && (count($items)!=8 && $imagegroup > 1)) {
+			if (count($items)!=7  && (count($items)!=8 && count($items)!=9 && $imagegroup > 1)) {
 				$badbatch = true;
 				break;
 			}
