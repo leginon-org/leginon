@@ -650,13 +650,20 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 
 	def modifyBeamTilt(self, bt0, tilt_value, tilt_direction, rotation=0.0):
 		print 'bt0',bt0
-		d_map = {'x':0,'y':1}
-		t1 = tilt_direction
 		bt1 = dict(bt0)
-		bt1['x'] += tilt_value * t1[d_map['x']] * math.cos(rotation)
-		bt1['y'] += tilt_value * t1[d_map['y']] * math.sin(rotation)
+		bt_delta = self.calculateBeamTiltDeltaXY(tilt_direction, tilt_value, rotation)
+		bt1['x'] += bt_delta['x']
+		bt1['y'] += bt_delta['y']
 		print bt1
 		return bt1
+
+	def calculateBeamTiltDeltaXY(self, tilt_direction, scale, rotation):
+		bt = {}
+		d_map = {'x':0,'y':1}
+		t1 = tilt_direction
+		bt['x'] = scale * (t1[d_map['x']]*math.cos(rotation)-t1[d_map['y']]*math.sin(rotation))
+		bt['y'] = scale * (t1[d_map['x']]*math.sin(rotation)+t1[d_map['y']]*math.cos(rotation))
+		return bt
 
 	def setBeamTiltDirections(self,directions=[(0,0),(1,0)]):
 		self.beamtilt_directions = directions
@@ -690,13 +697,16 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		tilts = []
 		self.checkAbort()
 		for index, tds in enumerate(all_tilt_directions):
+			# there are two tilts to do
 			t1 = tds[0]
 			t2 = tds[1]
 			tilt_scale = tilt_value * math.hypot(t1[0]-t2[0],t1[1]-t2[1])
 			rotation = self.getTiltRotation()
 			# first tilt
+			bt_delta1 = self.calculateBeamTiltDeltaXY(t1, tilt_value, rotation)
 			bt1 = self.modifyBeamTilt(tiltcenter, tilt_value, t1, rotation)
 			# second tilt
+			bt_delta2 = self.calculateBeamTiltDeltaXY(t2, tilt_value, rotation)
 			bt2 = self.modifyBeamTilt(tiltcenter, tilt_value, t2, rotation)
 			state1 = leginondata.ScopeEMData()
 			state1['beam tilt'] = bt1
@@ -715,10 +725,9 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			pixshift = shiftinfo['pixel shift']
 
 			shifts.append( (pixshift['row'], pixshift['col']) )
-			if index == 0:
-				tilts.append( (tilt_scale, 0) )
-			else:
-				tilts.append( (0, tilt_scale) )
+			delta_delta = (bt_delta2['x']-bt_delta1['x'],bt_delta2['y']-bt_delta1['y'])
+			print 'tilt delta', delta_delta
+			tilts.append( delta_delta )
 			try:
 				self.checkAbort()
 			except Abort:
@@ -815,7 +824,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		'''
 		Beam Tilt Rotation in radians to line up with the phase plate.
 		'''
-		angle = 0.0
+		angle = 0
 		if abs(angle) > 0.002:
 			self.node.logger.info('Rotate the beam tilt by %.1f degrees' % math.degrees(angle))
 		return angle
@@ -827,15 +836,12 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		and returns two shift displacements.
 		'''
 		# try/finally to be sure we return to original beam tilt
-		rotation = self.getTiltRotation()
-		t1 = self.beamtilt_directions[0]
-		t2 = self.beamtilt_directions[1]
 		try:
 			# set up to measure states
 			beam_tilt = self.instrument.tem.BeamTilt
-			beam_tilts = [dict(beam_tilt), dict(beam_tilt)]
-			beam_tilts[0] = self.modifyBeamTilt(beam_tilt, tilt_value, t1, rotation)
-			beam_tilts[1] = self.modifyBeamTilt(beam_tilt, tilt_value, t2, rotation)
+			beam_tilts = (dict(beam_tilt), dict(beam_tilt))
+			beam_tilts[0][tilt_axis] += tilt_value
+			beam_tilts[1][tilt_axis] -= tilt_value
 
 			pixel_shifts = []
 			m = 'Beam tilt measurement (%d of '
