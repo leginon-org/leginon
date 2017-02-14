@@ -1380,6 +1380,7 @@ class DriftManagerSettingsData(SettingsData):
 		return SettingsData.typemap() + (
 			('threshold', float),
 			('pause time', float),
+			('beam tilt', float),
 			('camera settings', CameraSettingsData),
 			('timeout', int),
 		)
