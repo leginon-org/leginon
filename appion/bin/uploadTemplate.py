@@ -43,6 +43,8 @@ class uploadTemplateScript(appionScript.AppionScript):
 			help="ID for particle clustering (optional)", metavar="INT")
 		self.parser.add_option("--stackid", dest="stackid", type="int",
 			help="ID for particle stack (optional)", metavar="INT")
+		self.parser.add_option("--force", dest="force_insert", default=False,
+			help="Force insertion even if the same template exists already")
 
 		### img number list
 		self.parser.add_option("--imgnums", dest="imgnums",

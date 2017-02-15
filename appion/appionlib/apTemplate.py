@@ -213,7 +213,7 @@ def insertTemplateImage(params):
 		templateq2=appiondata.ApTemplateImageData()
 		templateq2['md5sum']=md5sum
 		templateId = templateq2.query(results=1)
-		if templateId:
+		if not params['force_insert'] and templateId:
 			apDisplay.printWarning("template with the same check sum already exists in database.\nNot reinserting")
 			continue
 
