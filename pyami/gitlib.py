@@ -86,7 +86,7 @@ def getCommitIDfromTag(tagname):
 	result = stdout.strip()
 	if len(result) != 40:
 		return None
-	return result.split()
+	return result
 
 def getMostRecentCommitID():
 	#cmd = "git log --pretty=oneline -n 1 | cut -d' ' -f1"
@@ -115,3 +115,8 @@ if __name__ == '__main__':
 	print "getMostRecentCommitID()", getMostRecentCommitID()
 	print "getMostRecentCommitTime()", getMostRecentCommitTime()
 	print "isCommitInCurrentBranch('5a14f0b7')", isCommitInCurrentBranch('5a14f0b7')
+	taglist = getAllTags()
+	for tagname in taglist:
+		commitid = getCommitIDfromTag(tagname)
+		result = isCommitInCurrentBranch(commitid)
+		print tagname, result

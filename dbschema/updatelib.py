@@ -14,6 +14,15 @@ class UpdateLib:
 		self.db_revision = self.getDatabaseRevision(printMsg)
 		self.db_branch = self.getDatabaseBranch(printMsg)
 
+	def getAvailableTagsForBranch(self):
+		tag_list = gitlib.getAvailableTagsForBranch()
+		tag_number_list = []
+		for tag in tag_list:
+			if tag.startswith("schema"):
+				tagnum = int(tag[6:])
+				tag_number_list.append(tagnum)
+		return tag_number_list
+
 	def getUpdateRevisionSequence(self, branch_name):
 		'''
 		Update revision sequence according to branch input.

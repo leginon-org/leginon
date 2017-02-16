@@ -11,11 +11,14 @@ project_dbupgrade = dbupgrade.DBUpgradeTools('projectdata', drop=True)
 if __name__ == "__main__":
 	sq = projectdata.schemaupdates()
 	sdata = sq.query(results=1)
-	print sdata[0]
-	sys.exit(1)
+	if sdata:
+		print sdata[0]
 	updatelib_inst = updatelib.UpdateLib(project_dbupgrade)
 	commit_count = updatelib_inst.getCommitCount()
-	schema_number_list = updatelib_inst.getBranchUpdateSequence()
+	#schema_number_list = updatelib_inst.getBranchUpdateSequence()
+	schema_number_list = updatelib_inst.getAvailableTagsForBranch()
+	sys.exit(1)
+
 	revision_in_database = updatelib_inst.getDatabaseRevision(True)
 	update_list = []
 	# get a list of needed schema update
