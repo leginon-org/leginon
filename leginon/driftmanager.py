@@ -32,7 +32,6 @@ class DriftManager(watcher.Watcher):
 		'pause time': 2.5,
 		'timeout': 30,
 		'camera settings': cameraclient.default_settings,
-		'beam tilt': 0.0,
 	}
 	eventinputs = watcher.Watcher.eventinputs + [event.DriftMonitorRequestEvent, event.PresetChangedEvent]
 	eventoutputs = watcher.Watcher.eventoutputs + [event.DriftMonitorResultEvent, event.ChangePresetEvent, event.PresetLockEvent, event.PresetUnlockEvent, event.AcquisitionImagePublishEvent]
@@ -77,23 +76,27 @@ class DriftManager(watcher.Watcher):
 	def monitorDrift(self, driftdata=None):
 		self.setStatus('processing')
 		self.logger.info('DriftManager monitoring drift...')
+		target = None
+		threshold = None
+		beamtilt_delta = {'x':0.0,'y':0.0}
+		need_tilt = False
+
 		if driftdata is not None:
 			## use driftdata to set up scope and camera
 			pname = driftdata['presetname']
 			emtarget = driftdata['emtarget']
 			threshold = driftdata['threshold']
 			target = emtarget['target']
+			beamtilt_delta = driftdata['beamtilt']
 			self.presetsclient.toScope(pname, emtarget)
 			presetdata = self.presetsclient.getCurrentPreset()
-		else:
-			target = None
-			threshold = None
 
 		# tilt the beam if requested
-		if self.settings['beam tilt'] is not None and self.settings['beam tilt'] > 1e-6:
+		need_tilt = beamtilt_delta and (abs(beamtilt_delta['x']) > 1e-6 or abs(beamtilt_delta['y'])) > 1e-6
+		if need_tilt:
 			bt0 = self.instrument.tem.BeamTilt
-			bt1 = {'x':bt0['x']+self.settings['beam tilt']}
-			self.logger.info('Tilt Beam by %.4f radians' % self.settings['beam tilt'])
+			bt1 = {'x':bt0['x']+beamtilt_delta['x'], 'y':bt0['y']+beamtilt_delta['y']}
+			self.logger.info('Tilt beam by (x,y)=(%.2f,%.2f) mrad' % (beamtilt_delta['x'],beamtilt_delta['y']))
 			self.instrument.tem.BeamTilt = bt1
 
 		## acquire images, measure drift
@@ -104,7 +107,7 @@ class DriftManager(watcher.Watcher):
 		self.logger.info('paused before loop')
 		status,final,im = self.acquireLoop(target, threshold=threshold)
 		# tilt the beam back if requested
-		if self.settings['beam tilt'] is not None and self.settings['beam tilt'] > 1e-6:
+		if need_tilt:
 			self.instrument.tem.BeamTilt = bt0
 			self.logger.info('Tilt Beam back')
 

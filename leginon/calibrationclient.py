@@ -590,7 +590,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 	def __init__(self, node):
 		MatrixCalibrationClient.__init__(self, node)
 		self.other_axis = {'x':'y','y':'x'}
-		self.beamtilt_directions = [(0,0),(1,0)]
+		self.default_beamtilt_directions = [(0,0),(1,0)]
 
 	def getBeamTilt(self):
 		try:
@@ -648,27 +648,70 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		bt = self.solveEq10_t(fmatrix, defocus1, defocus2, d)
 		return {'x':bt[0], 'y':bt[1]}
 
-	def modifyBeamTilt(self, bt0, tilt_value, tilt_direction, rotation=0.0):
+	def modifyBeamTilt(self, bt0, bt_delta):
 		print 'bt0',bt0
 		bt1 = dict(bt0)
-		bt_delta = self.calculateBeamTiltDeltaXY(tilt_direction, tilt_value, rotation)
 		bt1['x'] += bt_delta['x']
 		bt1['y'] += bt_delta['y']
 		print bt1
 		return bt1
 
-	def calculateBeamTiltDeltaXY(self, tilt_direction, scale, rotation):
-		bt = {}
-		d_map = {'x':0,'y':1}
-		t1 = tilt_direction
-		bt['x'] = scale * (t1[d_map['x']]*math.cos(rotation)-t1[d_map['y']]*math.sin(rotation))
-		bt['y'] = scale * (t1[d_map['x']]*math.sin(rotation)+t1[d_map['y']]*math.cos(rotation))
+	def getFirstBeamTiltDeltaXY(self, scale, on_phase_plate = False):
+		btilts = self.getBeamTiltDeltaPair(scale, on_phase_plate)
+		return btilts[0]
+
+	def getBeamTiltDeltaPair(self, scale, on_phase_plate = False):
+		print 'getBeamTiltDeltaPair', scale, on_phase_plate
+		# Default values
+		btilt1 = self.calculateBeamTiltDeltaXY(self.default_beamtilt_directions[0], scale,0)
+		btilt2 = self.calculateBeamTiltDeltaXY(self.default_beamtilt_directions[1], scale,0)
+		if not on_phase_plate:
+			# use default
+			return [btilt1,btilt2]
+		btilts = self.getPhasePlateBeamTilts(scale)
+		if not btilts:
+			# failed to get valid btilts, use default
+			return [btilt1,btilt2]
+		else:
+			return btilts
+
+	def getPhasePlateBeamTilts(self, scale):
+		rotation = self.getPhasePlateBeamTiltRotation()
+		tem = self.instrument.getTEMData()
+		ppbeamtilt_vectors = self.retrievePhasePlateBeamTiltVectors(tem)
+		btilts = []
+		if ppbeamtilt_vectors is not None:
+			for bt in ppbeamtilt_vectors:
+				print 'PP Beamtilt vector', bt
+				btilts.append(self.calculateBeamTiltDeltaXY(bt, scale,rotation))
+		# returns empty list if no calibration
+		return btilts
+
+	def getPhasePlateBeamTiltRotation(self):
+		tem = self.instrument.getTEMData()
+		rotation = self.retrievePhasePlateBeamTiltRotation(tem)
+		return rotation
+
+	def calculateBeamTiltDeltaXY(self, tilt_tuple, scale, rotation):
+		"""
+		Rotate and Scale the tilt_dict containing x,y beam tilt
+		"""
+		tilt_dict = {'x':tilt_tuple[0],'y':tilt_tuple[1]}
+		bt = self.rotateXY0(tilt_dict,rotation)
+		bt['x'] *= scale
+		bt['y'] *= scale
 		return bt
 
-	def setBeamTiltDirections(self,directions=[(0,0),(1,0)]):
-		self.beamtilt_directions = directions
+	def rotateXY0(self, xy, rotation):
+		'''
+		rotate around {'x':0,'y':0}
+		'''
+		bt = {}
+		bt['x'] = xy['x']*math.cos(rotation)-xy['y']*math.sin(rotation)
+		bt['y'] = xy['x']*math.sin(rotation)+xy['y']*math.cos(rotation)
+		return bt
 
-	def measureDefocusStig(self, tilt_value, stig=True, correct_tilt=False, correlation_type=None, settle=0.5, image0=None, tilt_directions=[(0,0),(1,0)]):
+	def measureDefocusStig(self, tilt_value, stig=True, correct_tilt=False, correlation_type=None, settle=0.5, image0=None, on_phase_plate=False):
 
 		self.abortevent.clear()
 		tem = self.instrument.getTEMData()
@@ -679,15 +722,16 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		# Focuser node that calls this need to know the type of error
 		fmatrix = self.retrieveMatrix(tem, cam, 'defocus', ht, mag)
 
-		all_tilt_directions = [tilt_directions,]
+		tilt_deltas = self.getBeamTiltDeltaPair(tilt_value, on_phase_plate)
+		all_tilt_deltas = [tilt_deltas,]
 		## only do stig if stig matrices exist
 		amatrix = bmatrix = None
 		if stig:
-			orthogonal_tilt_directions = map((lambda x: (x[1]*-1,x[0]*1)),tilt_directions)
+			orthogonal_tilt_deltas = map((lambda x: self.rotateXY0(x, rotation)),tilt_deltas)
 			try:
 				amatrix = self.retrieveMatrix(tem, cam, 'stigx', ht, mag)
 				bmatrix = self.retrieveMatrix(tem, cam, 'stigy', ht, mag)
-				all_tilt_directions.append(orthogonal_tilt_directions)
+				all_tilt_deltas.append(orthogonal_tilt_directions)
 			except NoMatrixCalibrationError:
 				stig = False
 		tiltcenter = self.getBeamTilt()
@@ -696,28 +740,28 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		shifts = []
 		tilts = []
 		self.checkAbort()
-		for index, tds in enumerate(all_tilt_directions):
-			# there are two tilts to do
-			t1 = tds[0]
-			t2 = tds[1]
-			tilt_scale = tilt_value * math.hypot(t1[0]-t2[0],t1[1]-t2[1])
-			rotation = self.getTiltRotation()
+		for index, tds in enumerate(all_tilt_deltas):
 			# first tilt
-			bt_delta1 = self.calculateBeamTiltDeltaXY(t1, tilt_value, rotation)
-			bt1 = self.modifyBeamTilt(tiltcenter, tilt_value, t1, rotation)
+			bt_delta1 = tds[0]
+			print 'tds', tds
+			bt1 = self.modifyBeamTilt(tiltcenter, bt_delta1)
 			# second tilt
-			bt_delta2 = self.calculateBeamTiltDeltaXY(t2, tilt_value, rotation)
-			bt2 = self.modifyBeamTilt(tiltcenter, tilt_value, t2, rotation)
+			bt_delta2 = tds[1]
+			bt2 = self.modifyBeamTilt(tiltcenter, bt_delta2)
 			state1 = leginondata.ScopeEMData()
 			state1['beam tilt'] = bt1
 			state2 = leginondata.ScopeEMData()
 			state2['beam tilt'] = bt2
 			
-			if image0 is None or t1[0] != 0 or t1[1] != 0:
+			if image0 is None or abs(bt_delta1['x']) > 1e-5 or bt_delta1['y'] > 1e-5:
 				# double tilt needs new image0 for each axis
+				self.node.logger.info('Tilt beam by (x,y)=(%.2f,%.2f) mrad and acquire image' % (bt_delta1['x']*1000,bt_delta1['y']*1000))
 				image0 = self.acquireImage(state1, settle=settle, correct_tilt=correct_tilt, corchannel=0)
+			else:
+				self.node.logger.info('Use final drift image for autofocusing')
 
 			try:
+				self.node.logger.info('Tilt beam by (x,y)=(%.2f,%.2f) mrad and acquire image' % (bt_delta2['x']*1000,bt_delta2['y']*1000))
 				shiftinfo = self.measureScopeChange(image0, state2, settle=settle, correct_tilt=correct_tilt, correlation_type=correlation_type)
 			except Abort:
 				break
@@ -734,6 +778,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 				break
 
 		## return to original beam tilt
+		self.node.logger.info('Tilt beam back to (x,y)=(%.5f, %.5f)' % (tiltcenter['x'],tiltcenter['y']))
 		self.instrument.tem.BeamTilt = tiltcenter
 
 		self.checkAbort()
@@ -819,15 +864,6 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			return shift/(2*(parameters[1] - parameters[0])*beam_tilt)
 		except ZeroDivisionError:
 			raise ValueError('invalid measurement, scale is zero')
-
-	def getTiltRotation(self):
-		'''
-		Beam Tilt Rotation in radians to line up with the phase plate.
-		'''
-		angle = 0
-		if abs(angle) > 0.002:
-			self.node.logger.info('Rotate the beam tilt by %.1f degrees' % math.degrees(angle))
-		return angle
 
 	def measureDisplacements(self, tilt_axis, tilt_value, states, **kwargs):
 		'''
@@ -1107,7 +1143,46 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			self.node.logger.error('Unable to get rotation center: %s' % e)
 		else:
 			self.node.logger.info('Saved instrument rotation center')
+
+	def storePhasePlateBeamTiltRotation(self, tem, cam, beamtilt_delta):
+		caldata = leginondata.PPBeamTiltRotationData()
+		caldata['session'] = self.node.session
+		# techcnically this does not depend on cam, but is recorded nonetheless.
+		self.setDBInstruments(caldata,tem,cam)
+		caldata['angle'] = angle
+		self.node.publish(caldata, database=True, dbforce=True)
 	
+	def retrievePhasePlateBeamTiltRotation(self, tem):
+		rc = leginondata.PPBeamTiltRotationData()
+		rc['tem'] = tem
+		results = self.node.research(datainstance=rc, results=1)
+		if results:
+			return results[0]['angle']
+		else:
+			return 0.0
+
+	def storePhasePlateBeamTiltVectors(self, tem, cam, beamtilt_vectors):
+		"""
+		beamtilt_vectors is a list of two beam tilt directions before phase plate
+		beam tilt rotation is applied.
+		For example, [(-1,0),(0,1)]
+		"""
+		caldata = leginondata.PPBeamVectorsData()
+		caldata['session'] = self.node.session
+		# techcnically this does not depend on cam, but is recorded nonetheless.
+		self.setDBInstruments(caldata,tem,cam)
+		caldata['vectors'] = tuple(beamtilt_vectors)
+		self.node.publish(caldata, database=True, dbforce=True)
+
+	def retrievePhasePlateBeamTiltVectors(self, tem):
+		rc = leginondata.PPBeamTiltVectorsData()
+		rc['tem'] = tem
+		results = self.node.research(datainstance=rc, results=1)
+		if results:
+			return results[0]['vectors']
+		else:
+			return None
+
 class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 	mover = True
 	def __init__(self, node):

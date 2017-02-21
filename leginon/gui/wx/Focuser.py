@@ -183,6 +183,7 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		newrow,newcol = self.createMeltTimeEntry((newrow,0))
 		newrow,newcol = self.createAcquireFinalCheckBox((newrow,0))
 		newrow,newcol = self.createBeamTiltSettleTimeEntry((newrow,0))
+		newrow,newcol = self.createOnPhasePlateCheckBox((newrow,0))
 
 
 		sbsz.Add(self.szmain, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 5)
@@ -247,6 +248,15 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		total_length = (1,2)
 		self.szmain.Add(label, start_position, (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.szmain.Add(melt_sizer, (start_position[0],start_position[1]+1), (1, 1), wx.ALIGN_CENTER)
+		return start_position[0]+total_length[0],start_position[1]+total_length[1]
+
+	def createOnPhasePlateCheckBox(self,start_position):
+		self.widgets['on phase plate'] = \
+				wx.CheckBox(self, -1, 'Use Special Beam Tilts for Phase Plate')
+
+		total_length = (1,2)
+		self.szmain.Add(self.widgets['on phase plate'], start_position, (1, 2),
+				  wx.ALIGN_CENTER)
 		return start_position[0]+total_length[0],start_position[1]+total_length[1]
 	
 class MeasureTiltAxisDialog(wx.Dialog):

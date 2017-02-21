@@ -19,7 +19,6 @@ import copy
 import gui.wx.Focuser
 import player
 
-BEAMTILT_DIRECTIONS = [(-1,0),(1,0)]
 
 class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 	panelclass = gui.wx.Focuser.Panel
@@ -33,6 +32,7 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 		'acquire final': True,
         'process target type': 'focus',
 		'beam tilt settle time': 0.25,
+		'on phase plate': False,
 	})
 
 	eventinputs = manualfocuschecker.ManualFocusChecker.eventinputs
@@ -79,7 +79,6 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 		self.imageshiftcalclient = calibrationclient.ImageShiftCalibrationClient(self)
 		self.euclient = calibrationclient.EucentricFocusClient(self)
 		self.focus_sequence = self.researchFocusSequence()
-		self.beamtilt_directions = BEAMTILT_DIRECTIONS
 
 	def validatePresets(self):
 		### check normal manualfocuschecker presets
@@ -184,16 +183,19 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 	def autoFocus(self, setting, emtarget, resultdata):
 		presetname = setting['preset name']
 		stiglens = 'objective'
-		## need btilt, pub, driftthresh
+		## beam tilt scale
 		btilt = setting['tilt']
-
+		# relative beam tilt dict
+		print 'getFirstBeamTIlt', setting
+		btilt1dict = 	self.btcalclient.getFirstBeamTiltDeltaXY(btilt,self.settings['on phase plate'])
+		print btilt1dict
 		### Drift check
 		if setting['check drift']:
 			driftthresh = setting['drift threshold']
 			# move first if needed
 			# TO DO: figure out how drift monitor behaves in RCT if doing this
 			self.conditionalMoveAndPreset(presetname, emtarget)
-			driftresult = self.checkDrift(presetname, emtarget, driftthresh)
+			driftresult = self.checkDrift(presetname, emtarget, driftthresh, btilt1dict)
 			if setting['recheck drift'] and driftresult['status'] == 'drifted':
 				# See Issue #3990
 				self.logger.info('Drift was detected so target will be repeated')
@@ -205,11 +207,7 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 			lastdriftimage = self.driftimage
 			self.setImage(lastdriftimage['image'], 'Image')
 
-			if self.beamtilt_directions[0][0]==0 and self.beamtilt_directions[0][1]==0:
-				# untilted
-				self.logger.info('use final drift image in focuser')
-			else:
-				self.logger.info('tilt %s to measure defocus' % self.beamtilt_directions)
+			self.logger.info('use final drift image in focuser')
 		else:
 			lastdrift = None
 			lastdriftimage = None
@@ -244,7 +242,7 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 			# increased settle time from 0.25 to 0.5 for Falcon protector
 			settletime = self.settings['beam tilt settle time']
 			### FIX ME temporarily switch off tilt correction because the calculation may be wrong Issue #3030
-			correction = self.btcalclient.measureDefocusStig(btilt, correct_tilt=False, correlation_type=setting['correlation type'], stig=setting['stig correction'], settle=settletime, image0=lastdriftimage, tilt_directions=self.beamtilt_directions)
+			correction = self.btcalclient.measureDefocusStig(btilt, correct_tilt=False, correlation_type=setting['correlation type'], stig=setting['stig correction'], settle=settletime, image0=lastdriftimage, on_phase_plate=self.settings['on phase plate'])
 		except calibrationclient.Abort:
 			self.btcalclient.setBeamTilt(beamtilt0)
 			self.logger.info('Measurement of defocus and stig. has been aborted')
@@ -257,6 +255,7 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 			self.beep()
 			return 'repeat'
 		except:
+			raise
 			# any other exception
 			self.logger.warning('Error in measuring defocus/stig, set beam tilt back')
 			self.btcalclient.setBeamTilt(beamtilt0)
