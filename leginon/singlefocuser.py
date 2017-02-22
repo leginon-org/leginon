@@ -186,14 +186,12 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 		## beam tilt scale
 		btilt = setting['tilt']
 		# relative beam tilt dict
-		print 'getFirstBeamTIlt', setting
 		btilt1dict = 	self.btcalclient.getFirstBeamTiltDeltaXY(btilt,self.settings['on phase plate'])
-		print btilt1dict
 		### Drift check
 		if setting['check drift']:
 			driftthresh = setting['drift threshold']
 			# move first if needed
-			# TO DO: figure out how drift monitor behaves in RCT if doing this
+			# TODO: figure out how drift monitor behaves in RCT if doing this
 			self.conditionalMoveAndPreset(presetname, emtarget)
 			driftresult = self.checkDrift(presetname, emtarget, driftthresh, btilt1dict)
 			if setting['recheck drift'] and driftresult['status'] == 'drifted':
@@ -244,22 +242,20 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 			### FIX ME temporarily switch off tilt correction because the calculation may be wrong Issue #3030
 			correction = self.btcalclient.measureDefocusStig(btilt, correct_tilt=False, correlation_type=setting['correlation type'], stig=setting['stig correction'], settle=settletime, image0=lastdriftimage, on_phase_plate=self.settings['on phase plate'])
 		except calibrationclient.Abort:
-			self.btcalclient.setBeamTilt(beamtilt0)
 			self.logger.info('Measurement of defocus and stig. has been aborted')
 			return 'aborted'
 		except calibrationclient.NoMatrixCalibrationError, e:
-			self.btcalclient.setBeamTilt(beamtilt0)
 			self.player.pause()
 			self.logger.error('Measurement failed without calibration: %s' % e)
 			self.logger.info('Calibrate and then continue...')
 			self.beep()
 			return 'repeat'
 		except:
-			raise
 			# any other exception
-			self.logger.warning('Error in measuring defocus/stig, set beam tilt back')
+			self.logger.warning('Error in measuring defocus/stig')
+		finally:
+			self.logger.info('Set beam tilt back')
 			self.btcalclient.setBeamTilt(beamtilt0)
-			raise
 
 		if setting['stig correction'] and correction['stigx'] and correction['stigy']:
 			sx = '%.3f' % correction['stigx']
@@ -458,7 +454,6 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 		self.publish(resultdata, database=True, dbforce=True)
 		stagenow = self.instrument.tem.StagePosition
 		self.logger.debug('z after step %s %.2f um' % (setting['name'], stagenow['z']*1e6))
-
 		return status
 
 	def conditionalMoveAndPreset(self,target_presetname, emtarget):
@@ -472,6 +467,77 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 			self.moveAndPreset(presetdata, emtarget)
 			self.new_acquire = False
 			return
+
+	def getFirstFocusSequenceBeamTiltDeltas(self):
+		'''
+		Get the beamtilt delta pair of the first active focus sequence step.
+		'''
+		btilt_deltas = None
+		for setting in self.focus_sequence:
+			if setting['switch'] and setting['focus method']=='Beam Tilt':
+				btilt_scale = setting['tilt']
+				btilt_deltas = self.btcalclient.getBeamTiltDeltaPair(btilt_scale, self.settings['on phase plate'])
+				break
+		return btilt_deltas
+
+	def _melt(self, melt_time):
+		self.startTimer('melt exposeSpecimen')
+		self.exposeSpecimen(melt_time)
+		self.stopTimer('melt exposeSpecimen')
+
+	def meltIce(self):
+		'''
+		Beam Tilt and melt.  The melt preset and emtarget must be set before this call.
+		'''
+		melt_time = self.settings['melt time']
+		beamtilt0 = self.btcalclient.getBeamTilt()
+		tilt_melt = False
+		try:
+			if self.settings['on phase plate']:
+				# Tilt and melt to both directions
+				# Since this call is not in a focus sequence step, it needs to
+				# use the beam tilt of the first step that uses beam tilt.
+				beamtilt_deltas = self.getFirstFocusSequenceBeamTiltDeltas()
+				if beamtilt_deltas is None:
+					# no focus sequence step uses beam tilt
+					self._melt(melt_time)
+				else:
+					for beamtilt_delta in beamtilt_deltas:
+						beamtilt1 = self.btcalclient.modifyBeamTilt(beamtilt0,beamtilt_delta)
+						tilt_melt = True
+						self.btcalclient.setBeamTilt(beamtilt1)
+						time.sleep(self.settings['beam tilt settle time'])
+						self.logger.info('Tilt beam by (x,y)=(%.2f,%.2f) mrad' % (beamtilt_delta['x']*1000,beamtilt_delta['y']*1000))
+						self._melt(melt_time)
+			else:
+				# No tilting, default behavior
+				self._melt(melt_time)
+		finally:
+			if tilt_melt:
+				self.logger.info('Tilt beam back')
+				self.btcalclient.setBeamTilt(beamtilt0)
+				time.sleep(self.settings['beam tilt settle time'])
+			self.stopTimer('melt')
+
+	def setEMtargetAndMeltIce(self,emtarget=None,attempt=None):
+		'''
+		Set to EMTarget and then melt the ice.
+		Need to melt only once per target, even though
+		this method may be called multiple times on the same
+		target.
+		'''
+		melt_time = self.settings['melt time']
+		if melt_time and attempt > 1:
+			self.logger.info('Target attempt %s, not melting' % (attempt,))
+		elif melt_time:
+			self.startTimer('melt')
+			self.logger.info('Melting ice...')
+		
+			#### change to melt preset
+			meltpresetname = self.settings['melt preset']
+			self.conditionalMoveAndPreset(meltpresetname,emtarget)
+			self.logger.info('melt preset: %s' % (meltpresetname,))
+			self.meltIce()
 
 	def acquire(self, presetdata, emtarget=None, attempt=None, target=None):
 		'''
@@ -487,25 +553,7 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 		else:
 			self.deltaz = emtarget['delta z']
 
-		## Need to melt only once per target, even though
-		## this method may be called multiple times on the same
-		## target.
-		melt_time = self.settings['melt time']
-		if melt_time and attempt > 1:
-			self.logger.info('Target attempt %s, not melting' % (attempt,))
-		elif melt_time:
-			self.startTimer('melt')
-			self.logger.info('Melting ice...')
-
-			#### change to melt preset
-			meltpresetname = self.settings['melt preset']
-			self.conditionalMoveAndPreset(meltpresetname,emtarget)
-			self.logger.info('melt preset: %s' % (meltpresetname,))
-
-			self.startTimer('melt exposeSpecimen')
-			self.exposeSpecimen(melt_time)
-			self.stopTimer('melt exposeSpecimen')
-			self.stopTimer('melt')
+		self.setEMtargetAndMeltIce(emtarget, attempt)
 
 		status = 'unknown'
 

@@ -185,36 +185,6 @@ class Focuser(singlefocuser.SingleFocuser):
 			self.reportTargetStatus(target, 'done')
 		self.delayed_targets = []
 
-	def meltIce(self,emtarget=None,attempt=None):
-		## Need to melt only once per target, even though
-		## this method may be called multiple times on the same
-		## target.
-		melt_time = self.settings['melt time']
-		if melt_time and attempt > 1:
-			self.logger.info('Target attempt %s, not melting' % (attempt,))
-		elif melt_time:
-			self.startTimer('melt')
-			self.logger.info('Melting ice...')
-		
-			#### change to melt preset
-			meltpresetname = self.settings['melt preset']
-			self.conditionalMoveAndPreset(meltpresetname,emtarget)
-			self.logger.info('melt preset: %s' % (meltpresetname,))
-			beamtilt0 = self.instrument.tem.BeamTilt
-			beamtilt_rotation = self.btcalclient.getTiltRotation()
-			# The tilt is in +x and +y direction,
-			for d in self.beamtilt_directions:
-				delta = self.getFocusBeamTilt()
-				beamtilt1 = self.btcalclient.modifyBeamTilt(beamtilt0,delta, d, beamtilt_rotation)
-				self.instrument.tem.BeamTilt = beamtilt1
-				self.logger.info('Melt at %.4f beam tilt' % (delta,))
-				self.startTimer('melt exposeSpecimen')
-				self.exposeSpecimen(melt_time)
-				self.stopTimer('melt exposeSpecimen')
-				self.stopTimer('melt')
-			self.logger.info('returning to beam tilt %.5f' % (beamtilt0['x'],))
-			self.instrument.tem.BeamTilt = beamtilt0
-
 	def getFocusBeamTilt(self):
 		for setting in self.focus_sequence:
 			if setting['switch'] and setting['focus method']=='Beam Tilt':
@@ -237,7 +207,7 @@ class Focuser(singlefocuser.SingleFocuser):
 
 		# melt only on the first focus sequence
 		if self.current_focus_sequence_step == 0:
-			self.meltIce(emtarget,attempt)
+			self.setEMtargetAndMeltIce(emtarget, attempt)
 
 		status = 'unknown'
 

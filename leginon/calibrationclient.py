@@ -35,13 +35,17 @@ class Abort(Exception):
 class NoPixelSizeError(Exception):
 	pass
 
-class NoMatrixCalibrationError(Exception):
+class NoCalibrationError(Exception):
 	def __init__(self, *args, **kwargs):
 		if 'state' in kwargs:
 			self.state = kwargs['state']
 		else:
 			self.state = None
 		Exception.__init__(self, *args)
+
+class NoMatrixCalibrationError(NoCalibrationError):
+	def __init__(self, *args, **kwargs):
+		super(NoMatrixCalibrationError,self).__init__(*args, **kwargs)	
 
 class NoSensitivityError(Exception):
 	pass
@@ -590,7 +594,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 	def __init__(self, node):
 		MatrixCalibrationClient.__init__(self, node)
 		self.other_axis = {'x':'y','y':'x'}
-		self.default_beamtilt_directions = [(0,0),(1,0)]
+		self.default_beamtilt_vectors = [(0,0),(1,0)]
 
 	def getBeamTilt(self):
 		try:
@@ -649,11 +653,9 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		return {'x':bt[0], 'y':bt[1]}
 
 	def modifyBeamTilt(self, bt0, bt_delta):
-		print 'bt0',bt0
 		bt1 = dict(bt0)
 		bt1['x'] += bt_delta['x']
 		bt1['y'] += bt_delta['y']
-		print bt1
 		return bt1
 
 	def getFirstBeamTiltDeltaXY(self, scale, on_phase_plate = False):
@@ -661,10 +663,14 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		return btilts[0]
 
 	def getBeamTiltDeltaPair(self, scale, on_phase_plate = False):
-		print 'getBeamTiltDeltaPair', scale, on_phase_plate
+		"""
+		Get a list of two beam tilt delta dictionary in radians.
+		This may be the default values or the one saved in the database.
+		i.e. [{'x':-0.01,'y':0},{'x':0.01,'y':0}]
+		"""
 		# Default values
-		btilt1 = self.calculateBeamTiltDeltaXY(self.default_beamtilt_directions[0], scale,0)
-		btilt2 = self.calculateBeamTiltDeltaXY(self.default_beamtilt_directions[1], scale,0)
+		btilt1 = self.calculateBeamTiltDeltaXY(self.default_beamtilt_vectors[0], scale,0)
+		btilt2 = self.calculateBeamTiltDeltaXY(self.default_beamtilt_vectors[1], scale,0)
 		if not on_phase_plate:
 			# use default
 			return [btilt1,btilt2]
@@ -676,21 +682,19 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			return btilts
 
 	def getPhasePlateBeamTilts(self, scale):
-		rotation = self.getPhasePlateBeamTiltRotation()
+		"""
+		Get from database a list of two special beam tilt delta dictionary in radians.
+		i.e. [{'x':-0.01,'y':0},{'x':0.01,'y':0}]
+		"""
 		tem = self.instrument.getTEMData()
+		rotation = self.retrievePhasePlateBeamTiltRotation(tem)
 		ppbeamtilt_vectors = self.retrievePhasePlateBeamTiltVectors(tem)
+		# NoCalibrationError is raised at this point if no vectors
 		btilts = []
 		if ppbeamtilt_vectors is not None:
 			for bt in ppbeamtilt_vectors:
-				print 'PP Beamtilt vector', bt
 				btilts.append(self.calculateBeamTiltDeltaXY(bt, scale,rotation))
-		# returns empty list if no calibration
 		return btilts
-
-	def getPhasePlateBeamTiltRotation(self):
-		tem = self.instrument.getTEMData()
-		rotation = self.retrievePhasePlateBeamTiltRotation(tem)
-		return rotation
 
 	def calculateBeamTiltDeltaXY(self, tilt_tuple, scale, rotation):
 		"""
@@ -727,11 +731,13 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		## only do stig if stig matrices exist
 		amatrix = bmatrix = None
 		if stig:
-			orthogonal_tilt_deltas = map((lambda x: self.rotateXY0(x, rotation)),tilt_deltas)
+			rotation_90deg = math.pi/2
+			orthogonal_tilt_deltas = map((lambda x: self.rotateXY0(x, rotation_90deg)),tilt_deltas)
 			try:
 				amatrix = self.retrieveMatrix(tem, cam, 'stigx', ht, mag)
 				bmatrix = self.retrieveMatrix(tem, cam, 'stigy', ht, mag)
-				all_tilt_deltas.append(orthogonal_tilt_directions)
+				# do not append if Error is raised.
+				all_tilt_deltas.append(orthogonal_tilt_deltas)
 			except NoMatrixCalibrationError:
 				stig = False
 		tiltcenter = self.getBeamTilt()
@@ -743,7 +749,6 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		for index, tds in enumerate(all_tilt_deltas):
 			# first tilt
 			bt_delta1 = tds[0]
-			print 'tds', tds
 			bt1 = self.modifyBeamTilt(tiltcenter, bt_delta1)
 			# second tilt
 			bt_delta2 = tds[1]
@@ -770,7 +775,6 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 
 			shifts.append( (pixshift['row'], pixshift['col']) )
 			delta_delta = (bt_delta2['x']-bt_delta1['x'],bt_delta2['y']-bt_delta1['y'])
-			print 'tilt delta', delta_delta
 			tilts.append( delta_delta )
 			try:
 				self.checkAbort()
@@ -1181,7 +1185,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		if results:
 			return results[0]['vectors']
 		else:
-			return None
+			raise NoCalibrationError('Phase Plate Beam Tilt Vectors not defined')
 
 class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 	mover = True
