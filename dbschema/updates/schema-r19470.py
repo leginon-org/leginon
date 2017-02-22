@@ -23,6 +23,8 @@ class SchemaUpdate(baseSchemaClass.SchemaUpdate):
 		self.reRunOnBranchUpgrade = False
 		# what is the number associated with this update, use 'git rev-list --count HEAD'
 		self.schemaNumber = 19470
+		# minimum update required (set to previous schema update number)
+		self.minSchemaNumberRequired = 18034
 		# minimum myami version
 		self.minimumMyamiVersion = 3.2
 		#what is the git tag name

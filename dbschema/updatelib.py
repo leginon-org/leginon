@@ -5,14 +5,55 @@ from leginon import projectdata
 import xml.dom.minidom as dom
 
 class UpdateLib:
-	def __init__(self,project_dbupgrade):
-		printMsg = True
+	def __init__(self, project_dbupgrade):
+		msg = True
 		self.project_dbupgrade = project_dbupgrade
 		self.branch_name = gitlib.getCurrentBranch()
-		print "Branch name '%s'"%(self.branch_name)
-		self.commit_count = self.getCommitCount()
-		self.db_revision = self.getDatabaseRevision(printMsg)
-		self.db_branch = self.getDatabaseBranch(printMsg)
+		if msg is True:
+			print "Branch name '%s'"%(self.branch_name)
+		self.commit_count = self.getCommitCount(msg=msg)
+		self.db_revision = self.getDatabaseRevision(msg=msg)
+		self.db_branch = self.getDatabaseBranch(msg=msg)
+
+	def checkSchemaInDatabase(self):
+		squery = projectdata.schemaupdates()
+		sdata = squery.query(results=1)
+		if sdata and len(sdata) > 0:
+			idlist = []
+			for s in sdata:
+				idlist.append(s['schemaid'])
+			print idlist
+			return True
+		# perform upgrade
+		self.subversionSchemaUpgrade()
+
+	def subversionSchemaUpgrade(self):
+		print "update schema table in database from legacy version"
+		last_revision = self.getDatabaseRevision(msg=False)
+		db_branch = self.getDatabaseBranch(msg=False)
+		if db_branch != self.branch_name:
+			print "new branch: reset revision"
+			last_revision = self.getBranchResetRevision(self.branch_name)
+		if last_revision == 0:
+			print "first ever update: reset revision"
+			last_revision = self.getBranchResetRevision(self.branch_name)
+		tag_number_list = self.getAvailableTagsForBranch()
+		for tag_number in tag_number_list:
+			if tag_number < last_revision:
+				print "putting schema update %d into database"%(tag_number)
+				self.legacyAddUpdateToSchemaTable(tag_number)
+
+	def legacyAddUpdateToSchemaTable(self, schema_number):
+		updateq = projectdata.schemaupdates()
+		updateq['schemaid'] = schema_number
+		schema_tag = "schema%d"%(schema_number)
+		updateq['schematag'] = schema_tag
+		updateq['schemacommitid'] = gitlib.getCommitIDfromTag(schema_tag)
+		updateq['branch'] = gitlib.getCurrentBranch()
+		updateq['commitcount'] = gitlib.getCurrentCommitCount()
+		updateq['gitversion'] = gitlib.getVersion()
+		updateq['recentcommitid'] = gitlib.getMostRecentCommitID()
+		updateq.insert(force=True)
 
 	def getAvailableTagsForBranch(self):
 		tag_list = gitlib.getAvailableTagsForBranch()
@@ -129,22 +170,24 @@ class UpdateLib:
 					del checkout_update_sequence[checkout_update_sequence.index(revision)]
 			return checkout_update_sequence
 
-	def getCommitCount(self,module_path='.'):
+	def getCommitCount(self, module_path='.', msg=False):
 		try:
 			# Only svn checkout have integer revision number
 			commit_count = int(gitlib.getCurrentCommitCount())
-			print '\033[36mCommit count is %s\033[0m' % commit_count
+			if msg is True:
+				print '\033[36mCommit count is %s\033[0m' % commit_count
 			return commit_count
 		except:
 			release_revision = self.getReleaseRevisionFromXML(module_path)
 			if release_revision:
-				print '\033[36mRelease revision is %s\033[0m' % release_revision
+				if msg is True:
+					print '\033[36mRelease revision is %s\033[0m' % release_revision
 				return release_revision
 			else:
 				# For unknown releases, assume head revision
 				return 1000000000
 
-	def getDatabaseBranch(self,printMsg=False):
+	def getDatabaseBranch(self, msg=False):
 		### get revision from database
 		selectq = " SELECT value FROM `install` WHERE `key`='version'"
 		values = self.project_dbupgrade.returnCustomSQL(selectq)
@@ -157,14 +200,23 @@ class UpdateLib:
 			branch_name = versionlist[0]
 		return branch_name
 
-	def getDatabaseRevisionByBranch(self,printMsg=False):
-		branch_reset_revision = self.getBranchResetRevision(self.db_branch)
-		if self.db_branch == self.branch_name:
-			return self.db_revision
-		else:
-			return min(self.db_revision,branch_reset_revision)
+	def getDatabaseRevision(self, msg=False):
+		##check if git update has ever been done
+		schemaquery = projectdata.schemaupdates()
+		schemadatas = schemaquery.query()
+		if len(schemadatas) == 0:
+			#git update has never been applied
+			print "getDatabaseRevisionOLD()"
+			return self.getDatabaseRevisionOLD()
+		maxSchemaNumber = -1
+		for data in schemadatas:
+			schemaid = data['schemaid']
+			maxSchemaNumber = max(maxSchemaNumber, schemaid)
+		if msg:
+			print '\033[36mDatabase recorded revision is %s\033[0m' % maxSchemaNumber
+		return maxSchemaNumber
 
-	def getDatabaseRevision(self,printMsg=False):
+	def getDatabaseRevisionOLD(self, msg=False):
 		### get revision from database
 		selectq = " SELECT value FROM `install` WHERE `key`='revision'"
 		values = self.project_dbupgrade.returnCustomSQL(selectq)
@@ -183,8 +235,6 @@ class UpdateLib:
 					revision = 14077
 			else:
 				raise ValueError("Unknown version log in database, cannot proceed")
-		if printMsg:
-			print '\033[36mDatabase recorded revision is %s\033[0m' % revision
 		return revision
 
 	def allowVersionLog(self,checkout_revision):
@@ -211,36 +261,37 @@ class UpdateLib:
 			print '\033[35mYou must successfully run schema-r%d.py first\033[0m' % (minimal_revision_in_database)
 			return False
 
-	def needUpdate(self,checkout_revision,selected_revision,force=False):
-		''' 
-			database update of the schema at selected_revision is 
-			performed only if the checkout_revision
-			is newer than the selected_revision and that previous
-			update was made successfully as recorded in the database
-		'''
+	def getDatabaseRevisionByBranch(self,msg=False):
+		branch_reset_revision = self.getBranchResetRevision(self.db_branch)
+		if self.db_branch == self.branch_name:
+			return self.db_revision
+		else:
+			return min(self.db_revision,branch_reset_revision)
+
+	def needUpdate(self, schema_number, force=False):
 		if force:
-			return 'now'
-		revision_in_database = self.getDatabaseRevisionByBranch()
-		schema_revisions = self.getBranchUpdateSequence()
-		try:
-			index = schema_revisions.index(selected_revision)
-		except:
+			return True
+
+		##check if update has ever been done
+		schemaquery = projectdata.schemaupdates()
+		schemaquery['schemaid'] = schema_number
+		schemadata = schemaquery.query()
+		if len(schemadata) == 0:
+			#this update has never been applied
+			return True
+
+		##check if update has ever been done to this branch
+		schemaquery = projectdata.schemaupdates()
+		schemaquery['schemaid'] = schema_number
+		schemaquery['branch'] = self.branch_name
+		schemadata = schemaquery.query()
+		if len(schemadata) > 0:
+			#this update has already been applied
 			return False
-		if index > 0:
-			minimal_revision_in_database = schema_revisions[index-1]
-		else:
-			minimal_revision_in_database = 0
-		if checkout_revision >= selected_revision:
-			if revision_in_database < selected_revision:
-				if minimal_revision_in_database == 0 or revision_in_database >= minimal_revision_in_database:
-					return 'now'
-				else:
-					print '\033[35mYou must successfully run schema-r%d.py first\033[0m' % (minimal_revision_in_database)
-					return 'later'
-			else:
-				print "\033[35mAlready Up to Date for schema r%d\033[0m" % (selected_revision)
-		else:
-			print "\033[35mCode not yet at r%d\033[0m" % (selected_revision)
+
+		#update has been done, but not on this branch
+		raise NotImplementedError
+
 		return False
 
 	def getReleaseRevisionFromXML(self,module_path='.'):
@@ -278,7 +329,7 @@ class UpdateLib:
 		selectq = " SELECT * FROM `install` WHERE `key`='revision'"
 		values = self.project_dbupgrade.returnCustomSQL(selectq)
 		if values:
-			self.project_dbupgrade.updateColumn("install", "value", "'%d'" % (current_revision), 
+			self.project_dbupgrade.updateColumn("install", "value", "'%d'" % (current_revision),
 				"install.key = 'revision'",timestamp=False)
 		else:
 			insertq = "INSERT INTO `install` (`key`, `value`) VALUES ('revision', %d)"% (current_revision)
@@ -289,7 +340,7 @@ class UpdateLib:
 		selectq = " SELECT * FROM `install` WHERE `key`='version'"
 		values = self.project_dbupgrade.returnCustomSQL(selectq)
 		if values:
-			self.project_dbupgrade.updateColumn("install", "value", "'%s'" % (current_version), 
+			self.project_dbupgrade.updateColumn("install", "value", "'%s'" % (current_version),
 				"install.key = 'version'",timestamp=False)
 
 	def getDatabaseReset(self):
@@ -303,7 +354,7 @@ class UpdateLib:
 
 	def deleteDatabaseReset(self):
 		if self.getDatabaseReset():
-			self.project_dbupgrade.updateColumn("install", "value", "'0'", 
+			self.project_dbupgrade.updateColumn("install", "value", "'0'",
 					"install.key = 'resetfrom'",timestamp=False)
 
 	def updateDatabaseReset(self,reset_from_revision):
@@ -312,7 +363,7 @@ class UpdateLib:
 		values = self.project_dbupgrade.returnCustomSQL(selectq)
 		if values:
 			if int(values[0][1]) == 0:
-				self.project_dbupgrade.updateColumn("install", "value", "'%d'" % (reset_from_revision), 
+				self.project_dbupgrade.updateColumn("install", "value", "'%d'" % (reset_from_revision),
 					"install.key = 'resetfrom'",timestamp=False)
 		else:
 			insertq = "INSERT INTO `install` (`key`, `value`) VALUES ('resetfrom', %d)"% (reset_from_revision)

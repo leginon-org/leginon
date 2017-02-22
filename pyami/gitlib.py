@@ -44,7 +44,8 @@ def getAvailableTagsForBranch():
 	proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	stdout, stderr = proc.communicate()
 	if len(stderr) > 0:
-		raise NotImplementedError
+		print "Warning: git version is possibly too old. Trying getAvailableTagsForBranchOLDGit()"
+		return getAvailableTagsForBranchOLDGit()
 	result = stdout.strip()
 	return result.split()
 

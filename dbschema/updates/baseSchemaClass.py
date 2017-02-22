@@ -9,12 +9,14 @@ import updatelib
 
 from pyami import gitlib
 from sinedon import dbupgrade
+dbupgrade.messaging['custom'] = False
+
 from leginon import projectdata
 
 class SchemaUpdate(object):
 	#######################################################################
 	#
-	# Functions to include in every schema update sub-class 
+	# Functions to include in every schema update sub-class
 	#
 	#######################################################################
 
@@ -31,6 +33,8 @@ class SchemaUpdate(object):
 		self.minimumMyamiVersion = -1
 		# what is the number associated with this update, use 'git rev-list --count HEAD'
 		self.schemaNumber = -1
+		# minimum update required (set to previous schema update number)
+		self.minSchemaNumberRequired = 1e10
 		#what is the git tag name
 		self.schemaTagName = 'schema1'
 		#git tag <tag name> <commit id>
@@ -71,6 +75,11 @@ class SchemaUpdate(object):
 		self.leginon_dbupgrade = dbupgrade.DBUpgradeTools('leginondata', drop=True)
 		self.updatelib = updatelib.UpdateLib(self.project_dbupgrade)
 		self.backup = backup
+		self.schema_pythonfile = "schema-r%s.py"%(str(self.schemaNumber))
+		subclassfile = os.path.basename(sys.modules[self.__module__].__file__)
+		if subclassfile != self.schema_pythonfile:
+			raise IOError("filename of schema tag '%s' must be '%s' NOT '%s'"
+				%(self.schemaNumber, self.schema_pythonfile, subclassfile))
 		self.excluded_appiondbs = []
 		self.setForceUpdate(False)
 
@@ -199,13 +208,15 @@ class SchemaUpdate(object):
 
 	def run(self):
 		commit_count = self.updatelib.getCommitCount()
-		if self.updatelib.needUpdate(commit_count, self.schemaNumber, self.force) == 'now':
-			try:
-				self.runUpdates()
-			except:
-				raise RuntimeError("\033[31mUpdate failed\033[0m")
-			print "\033[35mSuccessful Update\033[0m"
-			self.commitUpdate()
+		#check if other updates should be run first
+		if self.updatelib.getDatabaseRevision() < self.minSchemaNumberRequired:
+			raise RuntimeError("\033[31mPlease run other prior updates first\033[0m")
+		if self.updatelib.needUpdate(self.schemaNumber, self.force) is False:
+			print ("\033[31mUpdate not needed\033[0m")
+			sys.exit(0)
+		self.runUpdates()
+		print "\033[35mSuccessful Update\033[0m"
+		self.commitUpdate()
 
 if __name__ == "__main__":
 	update = SchemaUpdate(backup=False)
