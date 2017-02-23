@@ -37,7 +37,9 @@ for myport in range(49152,65536):
 
 db.addBinding(myhostname, event.SetManagerEvent, printData)
 
-print 'ACCEPTING CONNECTIONS AT:  %s:%s' % (myhostname, myport)
+print '---------------------'
+print 'ACCEPTING CONNECTIONS AT:  %s:%s address %s' % (myhostname, myport, socket.gethostbyname(myhostname))
+print '---------------------'
 
 raw_input('hit enter to kill')
 db.exit()
