@@ -25,6 +25,7 @@ session_start();
 $rundir=$_GET['rundir'];
 $tiltseries=$_GET['tiltseries'];
 
+$defocus_gif_files = glob("$rundir/tiltseries".$tiltseries."/defocus_estimation/*/*/diagnostic.gif");
 $ctf_gif_files = glob("$rundir/tiltseries".$tiltseries."/media/ctf_correction/s*.gif");
 $dose_gif_files = glob("$rundir/tiltseries".$tiltseries."/media/dose_compensation/s*.gif");
 $corrpeak_gif_files = glob("$rundir/tiltseries".$tiltseries."/media/correlations/c*.gif");
@@ -37,6 +38,7 @@ $rec_gif_files = glob("$rundir/tiltseries".$tiltseries."/media/reconstructions/c
 $rec_vid_files = glob("$rundir/tiltseries".$tiltseries."/media/reconstructions/c*.{mp4,ogv,webm}",GLOB_BRACE);
 
 // Display Coarse Alignment Summary
+$defocus_gif = "loadimg.php?rawgif=1&filename=".$defocus_gif_files[0];
 $ctfplot_gif = "loadimg.php?rawgif=1&filename=".$ctf_gif_files[0];
 $ctfdefocus_gif = "loadimg.php?rawgif=1&filename=".$ctf_gif_files[1];
 $dose_gif = "loadimg.php?rawgif=1&filename=".$dose_gif_files[0];
@@ -83,6 +85,30 @@ if (isset($corrpeak_gif_files[0])) {
 	$html .= '<p align="right"><a href="'.$download_corrpeak_mp4.'">Download Video</a></p><hr />';
 } else {
 	$html .= "<center><b>Depiction Correlation Peak Video for Coarse Alignment either failed to generate or is still processing</b></center>";
+}
+
+if (isset($defocus_gif_files[0])) {
+	$html .= "
+<center><H4>Defocus Estimation</H4></center>
+<br />";
+	$html .= '<table id="" class="display" cellspacing="0" border="1" align="center">';
+	$html .= "<tr>";
+	$html .= '<th><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[2].'" alt="defocus_gif2" width="225" /></th>';
+	$html .= '<th><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[6].'" alt="defocus_gif6" width="325" /></th>';
+	$html .= '<th><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[10].'" alt="defocus_gif10" width="420" /></th>';
+	$html .= "</tr><tr>";
+	$html .= '<th><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[0].'" alt="defocus_gif0" width="225" /></th>';
+	$html .= '<th><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[4].'" alt="defocus_gif4" width="325" /></th>';
+	$html .= '<th><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[8].'" alt="defocus_gif8" width="420" /></th>';
+	$html .= "</tr><tr>";
+	$html .= '<th><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[1].'" alt="defocus_gif1" width="225" /></th>';
+	$html .= '<th><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[5].'" alt="defocus_gif5" width="325" /></th>';
+	$html .= '<th><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[9].'" alt="defocus_gif9" width="420" /></th>';
+	$html .= "</tr><tr>";
+	$html .= '<th><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[3].'" alt="defocus_gif3" width="225" /></th>';
+	$html .= '<th><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[7].'" alt="defocus_gif7" width="325" /></th>';
+	$html .= '<th><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[11].'" alt="defocus_gif11" width="420" /></th>';
+	$html .= '</tr><tr></table><br><hr />';
 }
 
 $html.='<br /><script type="text/javascript">

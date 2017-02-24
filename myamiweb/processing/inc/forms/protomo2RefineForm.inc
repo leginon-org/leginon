@@ -36,11 +36,11 @@ class Protomo2RefineForm extends BasicLayoutForm
 	$r3_hp_diam_x='450',$r4_hp_diam_x='550', $r5_hp_diam_x='', $r1_hp_diam_y='250', $r2_hp_diam_y='350', $r3_hp_diam_y='450', $r4_hp_diam_y='550',
 	$r5_hp_diam_y='', $r1_hp_apod_x='75', $r2_hp_apod_x='100', $r3_hp_apod_x='150', $r4_hp_apod_x='200', $r5_hp_apod_x='', $r1_hp_apod_y='75',
 	$r2_hp_apod_y='100', $r3_hp_apod_y='150', $r4_hp_apod_y='200', $r5_hp_apod_y='', $r1_iters='15', $r2_iters='10', $r3_iters='5',
-	$r4_iters='5', $r5_iters='0', $param='', $binning='true', $preprocessing='true', $select_images='', $exclude_images='', $border='100',
-	$clip_low='3.5', $clip_high='3.5', $thr_low='', $thr_high='', $gradient='true', $r1_corr_mode='mcf', $r2_corr_mode='mcf', $r3_corr_mode='mcf',
+	$r4_iters='5', $r5_iters='0', $param='', $binning='true', $preprocessing='true', $select_images='', $exclude_images_by_angle='', $exclude_images_by_angle_accuracy='0.05',
+	$border='100', $clip_low='3.5', $clip_high='3.5', $thr_low='', $thr_high='', $gradient='true', $r1_corr_mode='mcf', $r2_corr_mode='mcf', $r3_corr_mode='mcf',
 	$r4_corr_mode='mcf', $r5_corr_mode='', $gradient_switch='', $iter_gradient='', $iter_gradient_switch='', $filter='median', $r1_kernel_x='',
 	$r2_kernel_x='', $r3_kernel_x='', $r4_kernel_x='', $r5_kernel_x='', $r1_kernel_y='', $r2_kernel_y='',$r3_kernel_y='', $r4_kernel_y='',
-	$r5_kernel_y='', $grow='0', $window_area='0.95', $mask_width_x='', $mask_width_y='', $do_estimation='false',
+	$r5_kernel_y='', $grow='0', $window_area='0.95', $mask_width_x='', $mask_width_y='', $tilt_azimuth='', $do_estimation='false',
 	$norotations='false', $max_correction='', $correlation_size_x='160', $correlation_size_y='160', $r1_peak_search_radius_x='300',
 	$r2_peak_search_radius_x='300', $r3_peak_search_radius_x='300', $r4_peak_search_radius_x='300', $r5_peak_search_radius_x='300',
 	$r1_peak_search_radius_y='300', $r2_peak_search_radius_y='300', $r3_peak_search_radius_y='300', $r4_peak_search_radius_y='300',
@@ -48,7 +48,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 	$elevation_switch='', $rotation='true', $rotation_switch='', $scale='false', $scale_switch='', $logging='true', $loglevel='2', $slab='true',
 	$map_size_x='512', $map_size_y='512', $filename_prefix='', $image_file_type='', $cachedir='cache', $protomo_outdir='out', $tilt_clip='',
 	$create_reconstruction='true', $show_window_size='true', $create_tilt_video='true', $keep_recons='false', $video_type='', $restart_cycle='',
-	$parallel='', $negative='', $positive='', $starting_tlt_file='')
+	$parallel='', $negative='', $positive='', $starting_tlt_file='', $defocus_save='', $restart_from_run='', $restart_from_iteration='')
 	{
 		parent::__construct($expId, $extraHTML);
 		//print "_POST:" . "<br>";
@@ -62,6 +62,8 @@ class Protomo2RefineForm extends BasicLayoutForm
 		
 		//Initialize Express/Basic/Advanced Settings
 		if (!isset($_POST['settings'])) {$_POST['settings']=1;}
+		if ($_GET['basic'] == 1) {$_POST['settings']=2;}
+		if ($_GET['advanced'] == 1) {$_POST['settings']=3;}
 		
 		$settings=array("Express", "Basic", "Advanced");
 
@@ -82,8 +84,11 @@ class Protomo2RefineForm extends BasicLayoutForm
 		
 		//Initialize presets
 		if (!isset($_POST['preset_size'])) {$_POST['preset_size']=1;}
+		if(isset($_GET['preset_size']) && !empty($_GET['preset_size'])) {$_POST['preset_size']=$_GET['preset_size'];}
 		if (!isset($_POST['preset_search'])) {$_POST['preset_search']=1;}
+		if(isset($_GET['preset_search']) && !empty($_GET['preset_search'])) {$_POST['preset_search']=$_GET['preset_search'];}
 		if (!isset($_POST['preset_type'])) {$_POST['preset_type']=1;}
+		if(isset($_GET['preset_type']) && !empty($_GET['preset_type'])) {$_POST['preset_type']=$_GET['preset_type'];}
 		if ($_POST['preset_size'] == 9) {$_POST['preset_size']=1;} //The dotted line divider
 		if ($_POST['preset_size'] == 17) {$_POST['preset_size']=1;} //The dotted line divider
 		
@@ -124,11 +129,12 @@ class Protomo2RefineForm extends BasicLayoutForm
 		global $imageinfo;
 		$_POST['runname']=$_SESSION['runname'];
 		$_POST['outdir']=$_SESSION['outdir'];
-		if ($imageinfo['dimx'] < 2049 or $imageinfo['dimy'] < 2049){
-			$_POST['map_sampling'] = $map_sampling='4';
-		}else{
-			$_POST['map_sampling'] = $map_sampling='8';
-		}
+		//if ($imageinfo['dimx'] < 2049 or $imageinfo['dimy'] < 2049){
+		//	$_POST['map_sampling'] = $map_sampling='4';
+		//}else{
+		//	$_POST['map_sampling'] = $map_sampling='8';
+		//}
+		$_POST['map_sampling'] = $map_sampling='8';
 		
 		if ($_POST['settings'] == 1 or $_POST['settings'] == 2)  //Express or Basic Settings
 		{
@@ -716,15 +722,15 @@ class Protomo2RefineForm extends BasicLayoutForm
 			
 			
 			//Refinement Type Presets
-			if ($_POST['preset_type'] == 1)  //Generic refinement
+			if ($_POST['preset_type'] == 1 or $_GET['preset_type'] == 1)  //Generic refinement
 			{
-				$_POST['r1_iters'] = $r1_iters = '15';
+				$_POST['r1_iters'] = $r1_iters = '10';
 				$_POST['r2_iters'] = $r2_iters = '10';
 				$_POST['r3_iters'] = $r3_iters = '5';
-				$_POST['r4_iters'] = $r4_iters = '5';
+				$_POST['r4_iters'] = $r4_iters = '10';
 				$_POST['r5_iters'] = $r5_iters = '0';
 				$_POST['elevation_switch'] = $elevation_switch='';
-				$_POST['scale_switch'] = $scale_switch='';
+				$_POST['scale_switch'] = $scale_switch='31';
 				$_POST['rotation_switch'] = $rotation_switch='';
 				$_POST['azimuth_switch'] = $azimuth_switch='';
 				$_POST['orientation_switch'] = $orientation_switch='';
@@ -765,30 +771,30 @@ class Protomo2RefineForm extends BasicLayoutForm
 				$_POST['r3_iters'] = $r3_iters = '20';
 				$_POST['r4_iters'] = $r4_iters = '20';
 				$_POST['r5_iters'] = $r5_iters = '0';
-				$_POST['elevation_switch'] = $elevation_switch='76';
+				$_POST['elevation_switch'] = $elevation_switch='';
 				$_POST['scale_switch'] = $scale_switch='71';
 				$_POST['rotation_switch'] = $rotation_switch='';
 				$_POST['azimuth_switch'] = $azimuth_switch='';
 				$_POST['orientation_switch'] = $orientation_switch='';
 			}
 			
-			if ($_POST['preset_type'] == 5)  //Exhaustive refinement
+			if ($_POST['preset_type'] == 5 or $_GET['preset_type'] == 5)  //Exhaustive refinement
 			{
 				$_POST['r1_iters'] = $r1_iters = '20';
 				$_POST['r2_iters'] = $r2_iters = '20';
 				$_POST['r3_iters'] = $r3_iters = '20';
 				$_POST['r4_iters'] = $r4_iters = '40';
 				$_POST['r5_iters'] = $r5_iters = '20';
-				$_POST['elevation_switch'] = $elevation_switch='91';
+				$_POST['elevation_switch'] = $elevation_switch='';
 				$_POST['scale_switch'] = $scale_switch='81';
-				$_POST['rotation_switch'] = $rotation_switch='101';
-				$_POST['azimuth_switch'] = $azimuth_switch='101';
-				$_POST['orientation_switch'] = $orientation_switch='101';
+				$_POST['rotation_switch'] = $rotation_switch='';
+				$_POST['azimuth_switch'] = $azimuth_switch='';
+				$_POST['orientation_switch'] = $orientation_switch='';
 				
 			}
 			
 		}
-		
+
 		//These parameters don't change with Presets
 		
 		$map_size_x = intval($imageinfo['dimx']/$map_sampling);
@@ -803,6 +809,32 @@ class Protomo2RefineForm extends BasicLayoutForm
 		$_SESSION['dimx'] = $imageinfo['dimx'];
 		$_SESSION['dimy'] = $imageinfo['dimy'];
 		$_POST['pixelsize'] = $imageinfo['pixelsize']*pow(10,10);
+		$_POST['r1_sampling'] = 8; $_POST['r2_sampling'] = 4; $_POST['r3_sampling'] = 2; $_POST['r4_sampling'] = 1; $_POST['r5_sampling'] = 1;
+		
+		// Shift rounds to the left
+		if (intval($_GET['shift_left']) > 0 or intval($_SESSION['shift_left']) > 0)
+		{
+			if ($_POST['process'] != "Just Show Command") {
+				for ($i = 1; $i <= intval($_GET['shift_left']); $i++) {
+					if ($_POST['r2_iters'] != 0) {$_POST['r1_iters'] = $r1_iters = $_POST['r2_iters'];} $_POST['r2_iters'] = $r2_iters = $_POST['r3_iters']; $_POST['r3_iters'] = $r3_iters = $_POST['r4_iters']; $_POST['r4_iters'] = $r4_iters = $_POST['r5_iters']; $_POST['r5_iters'] = $r5_iters = 0;
+					$_POST['r1_sampling'] = $r1_sampling = $_POST['r2_sampling']; $_POST['r2_sampling'] = $r2_sampling = $_POST['r3_sampling']; $_POST['r3_sampling'] = $r3_sampling = $_POST['r4_sampling']; $_POST['r4_sampling'] = $r4_sampling = $_POST['r5_sampling']; $_POST['r5_sampling'] = $r5_sampling = 1;
+					$_POST['r1_mask_width_x'] = $r1_mask_width_x = $_POST['r2_mask_width_x']; $_POST['r2_mask_width_x'] = $r2_mask_width_x = $_POST['r3_mask_width_x']; $_POST['r3_mask_width_x'] = $r3_mask_width_x = $_POST['r4_mask_width_x']; $_POST['r4_mask_width_x'] = $r4_mask_width_x = $_POST['r5_mask_width_x'];
+					$_POST['r1_mask_width_y'] = $r1_mask_width_y = $_POST['r2_mask_width_y']; $_POST['r2_mask_width_y'] = $r2_mask_width_y = $_POST['r3_mask_width_y']; $_POST['r3_mask_width_y'] = $r3_mask_width_y = $_POST['r4_mask_width_y']; $_POST['r4_mask_width_y'] = $r4_mask_width_y = $_POST['r5_mask_width_y'];
+					$_POST['r1_highpass_apod_x'] = $r1_highpass_apod_x = $_POST['r2_highpass_apod_x']; $_POST['r2_highpass_apod_x'] = $r2_highpass_apod_x = $_POST['r3_highpass_apod_x']; $_POST['r3_highpass_apod_x'] = $r3_highpass_apod_x = $_POST['r4_highpass_apod_x']; $_POST['r4_highpass_apod_x'] = $r4_highpass_apod_x = $_POST['r5_highpass_apod_x'];
+					$_POST['r1_highpass_apod_y'] = $r1_highpass_apod_y = $_POST['r2_highpass_apod_y']; $_POST['r2_highpass_apod_y'] = $r2_highpass_apod_y = $_POST['r3_highpass_apod_y']; $_POST['r3_highpass_apod_y'] = $r3_highpass_apod_y = $_POST['r4_highpass_apod_y']; $_POST['r4_highpass_apod_y'] = $r4_highpass_apod_y = $_POST['r5_highpass_apod_y'];
+					$_POST['r1_lowpass_diameter_x'] = $r1_lowpass_diameter_x = $_POST['r2_lowpass_diameter_x']; $_POST['r2_lowpass_diameter_x'] = $r2_lowpass_diameter_x = $_POST['r3_lowpass_diameter_x']; $_POST['r3_lowpass_diameter_x'] = $r3_lowpass_diameter_x = $_POST['r4_lowpass_diameter_x']; $_POST['r4_lowpass_diameter_x'] = $r4_lowpass_diameter_x = $_POST['r5_lowpass_diameter_x'];
+					$_POST['r1_lowpass_diameter_y'] = $r1_lowpass_diameter_y = $_POST['r2_lowpass_diameter_y']; $_POST['r2_lowpass_diameter_y'] = $r2_lowpass_diameter_y = $_POST['r3_lowpass_diameter_y']; $_POST['r3_lowpass_diameter_y'] = $r3_lowpass_diameter_y = $_POST['r4_lowpass_diameter_y']; $_POST['r4_lowpass_diameter_y'] = $r4_lowpass_diameter_y = $_POST['r5_lowpass_diameter_y'];
+					$_POST['r1_lowpass_apod_x'] = $r1_lowpass_apod_x = $_POST['r2_lowpass_apod_x']; $_POST['r2_lowpass_apod_x'] = $r2_lowpass_apod_x = $_POST['r3_lowpass_apod_x']; $_POST['r3_lowpass_apod_x'] = $r3_lowpass_apod_x = $_POST['r4_lowpass_apod_x']; $_POST['r4_lowpass_apod_x'] = $r4_lowpass_apod_x = $_POST['r5_lowpass_apod_x'];
+					$_POST['r1_lowpass_apod_y'] = $r1_lowpass_apod_y = $_POST['r2_lowpass_apod_y']; $_POST['r2_lowpass_apod_y'] = $r2_lowpass_apod_y = $_POST['r3_lowpass_apod_y']; $_POST['r3_lowpass_apod_y'] = $r3_lowpass_apod_y = $_POST['r4_lowpass_apod_y']; $_POST['r4_lowpass_apod_y'] = $r4_lowpass_apod_y = $_POST['r5_lowpass_apod_y'];
+				}
+				$_SESSION['shift_left'] = $_GET['shift_left'];
+			} else {
+				for ($i = 1; $i <= intval($_SESSION['shift_left']); $i++) {
+					$_POST['r1_sampling'] = $r1_sampling = $_POST['r2_sampling']; $_POST['r2_sampling'] = $r2_sampling = $_POST['r3_sampling']; $_POST['r3_sampling'] = $r3_sampling = $_POST['r4_sampling']; $_POST['r4_sampling'] = $r4_sampling = $_POST['r5_sampling']; $_POST['r5_sampling'] = $r5_sampling = 1;
+				}
+			}
+		}
+		
 		//------ Set Parameters for the parent class, BasicLoopForm (general Appion params) -----//
 		
 		// Set the publications to be references on the web pages
@@ -921,7 +953,10 @@ class Protomo2RefineForm extends BasicLayoutForm
 		$params->addParam( "binning", $binning, "Raw Image Binning" );
 		$params->addParam( "preprocessing", $preprocessing, "Raw Image Preprocessing" );
 		$params->addParam( "select_images", $select_images, "Select Specific Images" );
-		$params->addParam( "exclude_images", $exclude_images, "Exclude Specific Images" );
+		$params->addParam( "tilt_azimuth", $tilt_azimuth, "Override Tilt Azimuth" );
+		//$params->addParam( "exclude_images", $exclude_images, "Exclude Specific Images" );
+		$params->addParam( "exclude_images_by_angle", $exclude_images_by_angle, "Exclude Images by Tilt Angles │ " );
+		$params->addParam( "exclude_images_by_angle_accuracy", $exclude_images_by_angle_accuracy, "Accuracy" );
 		$params->addParam( "border", $border, "Border Width for Exclusion" );
 		$params->addParam( "clip_low", $clip_low, "Lower Clip (in SDs)" );
 		$params->addParam( "clip_high", $clip_high, "Upper Clip (in SDs)" );
@@ -985,6 +1020,9 @@ class Protomo2RefineForm extends BasicLayoutForm
 		$params->addParam( "tilt_clip", $tilt_clip, "Clip Tilt-Series Video Pixel Values" );
 		$params->addParam( "video_type", $video_type, "Video Type" );
 		$params->addParam( "restart_cycle", $restart_cycle, "Restart Refinement at Iteration" );
+		$params->addParam( "defocus_save", $defocus_save, "Save Defocus Value" );
+		$params->addParam( "restart_from_run", $restart_from_run, "Restart Refinement from Run at the " );
+		$params->addParam( "restart_from_iteration", $restart_from_iteration, "Iteration" );
 		
 		// Validations
 		if ($_POST['settings'] == 2 or $_POST['settings'] == 3)  //Basic or Advanced Settings
@@ -1048,7 +1086,8 @@ class Protomo2RefineForm extends BasicLayoutForm
 			    <br />
 			    <H4>General Parameters ".docpop('genparam_info2', '(Info)')."</H4>
 			    <hr />";
-				
+				$shift_left = $_GET['shift_left'] + 1;
+				$html .= "<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2RefineForm&shift_left=".$shift_left."&basic=1&preset_size=".$_POST['preset_size']."&preset_search=".$_POST['preset_search']."&preset_type=".$_POST['preset_type']."'><b><font size='3'>←</font>Shift Rounds Left</b></a><br>";
 				$html.= $params->insertTextFieldInRow( "r1_iters", $fieldSize2 ).'│ ';
 				$html.= $params->insertTextFieldInRow( "r2_iters", $fieldSize2 ).'│ ';
 				$html.= $params->insertTextFieldInRow( "r3_iters", $fieldSize2 ).'│ ';
@@ -1059,6 +1098,15 @@ class Protomo2RefineForm extends BasicLayoutForm
 				$html.= $params->insertTextFieldInRow( "r3_sampling", $fieldSize2 ).'│ ';
 				$html.= $params->insertTextFieldInRow( "r4_sampling", $fieldSize2 ).'│ ';
 				$html.= $params->insertTextField( "r5_sampling", $fieldSize2 );
+				$html.= $params->insertTextFieldInRow( "negative", $fieldSize ).'│ ';
+				$html.= $params->insertTextField( "positive", $fieldSize );
+				$html.= $params->insertTextFieldInRow( "exclude_images_by_angle", $fieldSize );
+				$html.= $params->insertTextField( "exclude_images_by_angle_accuracy", $fieldSize );
+				$html.= '<select name="starting_tlt_file" style="width:111px">';
+				$html.= '<option value="Coarse_Iter_1">Coarse Iter 1</option>';
+				$html.= '<option selected value="Coarse_Iter_2">Coarse Iter 2</option>';
+				$html.= '<option value="Initial">Initial</option>';
+				$html.= '</select>'; $html.= docpop('protomo_starting_tlt_file', ' Begin with Coarse Alignment Results or Initial Alignment?').'<br>';
 				$html.= '<select name="parallel" style="width:51px">';
 				$html.= '<option selected value="True">true</option>';
 				$html.= '<option value="False">false</option>';
@@ -1254,7 +1302,8 @@ class Protomo2RefineForm extends BasicLayoutForm
 			    <br />
 			    <H4>General Parameters ".docpop('genparam_info2', '(Info)')."</H4>
 			    <hr />";
-				
+				$shift_left = $_GET['shift_left'] + 1;
+				$html .= "<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2RefineForm&shift_left=".$shift_left."&advanced=1&preset_size=".$_POST['preset_size']."&preset_search=".$_POST['preset_search']."&preset_type=".$_POST['preset_type']."'><b><font size='3'>←</font>Shift Rounds Left</b></a><br>";
 				$html.= $params->insertTextFieldInRow( "r1_iters", $fieldSize2 ).'│ ';
 				$html.= $params->insertTextFieldInRow( "r2_iters", $fieldSize2 ).'│ ';
 				$html.= $params->insertTextFieldInRow( "r3_iters", $fieldSize2 ).'│ ';
@@ -1268,11 +1317,15 @@ class Protomo2RefineForm extends BasicLayoutForm
 				//$html.= $params->insertTextField( "select_images", $fieldSize );
 				$html.= $params->insertTextFieldInRow( "negative", $fieldSize ).'│ ';
 				$html.= $params->insertTextField( "positive", $fieldSize );
-				$html.= '<select name="starting_tlt_file" style="width:66px">';
-				$html.= '<option selected value="Coarse">Coarse</option>';
+				$html.= $params->insertTextFieldInRow( "exclude_images_by_angle", $fieldSize );
+				$html.= $params->insertTextField( "exclude_images_by_angle_accuracy", $fieldSize );
+				$html.= '<select name="starting_tlt_file" style="width:111px">';
+				$html.= '<option value="Coarse_Iter_1">Coarse Iter 1</option>';
+				$html.= '<option selected value="Coarse_Iter_2">Coarse Iter 2</option>';
 				$html.= '<option value="Initial">Initial</option>';
 				$html.= '</select>'; $html.= docpop('protomo_starting_tlt_file', ' Begin with Coarse Alignment Results or Initial Alignment?').'<br>';
-				$html.= $params->insertTextField( "exclude_images", $fieldSize );
+				$html.= $params->insertTextField( "tilt_azimuth", $fieldSize );
+				//$html.= $params->insertTextField( "exclude_images", $fieldSize );
 				$html.= '<select name="parallel" style="width:66px">';
 				$html.= '<option selected value="True">true</option>';
 				$html.= '<option value="False">false</option>';
@@ -1283,6 +1336,9 @@ class Protomo2RefineForm extends BasicLayoutForm
 				$html.= '</select>'; $html.= docpop('protomo_logging', ' Logging').'<br>';
 				$html.= $params->insertTextField( "loglevel", $fieldSize );
 				//$html.= $params->insertTextField( "restart_cycle", $fieldSize );
+				$html.= $params->insertTextField( "defocus_save", $fieldSize );
+				$html.= $params->insertTextFieldInRow( "restart_from_run", $fieldSize );
+				$html.= $params->insertTextField( "restart_from_iteration", $fieldSize );
 				
 				$html .= "
 			    <br />
@@ -1581,12 +1637,10 @@ class Protomo2RefineForm extends BasicLayoutForm
 		return $command." ";
 	}
 	
-	// Override the default ShowReference function because the user needs to be re-directed
+	// Use form footer to re-direct user
 	// to the next step of the Protomo workflow.
-	public function showReference( $postArray )
+	public function generateFormFooter()
 	{
-		$html = parent::showReference( $postArray );
-		
 		global $tiltseries;
 		global $sessionname;
 		global $imageinfo;
@@ -1608,6 +1662,8 @@ class Protomo2RefineForm extends BasicLayoutForm
 		{
 			$html .= "<br></br>
 			<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2RefineSummary'><b><center>[Click here to <font size='4'>View Refinement Results</font> after protomo2aligner.py has been run] <font size='5'>→</font></center></b></a>";
+			$html .= "
+			<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2BatchSummary&refine=1'><b><center>[Click here to <font size='4'>View Batch Refinement Results</font>] <font size='5'>→</font></center></b></a><br>";
 		}
 		
 		return $html;

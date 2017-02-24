@@ -15,6 +15,9 @@ require_once "inc/leginon.inc";
 ini_set('session.gc_maxlifetime', 604800);
 session_set_cookie_params(604800);
 
+$page = $_SERVER['REQUEST_URI'];
+header("Refresh: 300; URL=$page");
+
 session_start();
 $sessionname=$_SESSION['sessionname'];
 $outdir=$_SESSION['outdir'];
@@ -65,7 +68,7 @@ class Protomo2BatchSummary extends BasicLayoutForm
 		
 		global $outdir;
 		global $refine;
-		$tilts = glob("$outdir/*/.tiltseries*");
+		$tilts = glob("$outdir/tiltseries*/.tiltseries*");
 		$qalist=array();
 		foreach(array_keys($tilts) as $paramName)
 			$qalist[]=pathinfo($tilts["$paramName"], PATHINFO_EXTENSION);
@@ -185,12 +188,9 @@ class Protomo2BatchSummary extends BasicLayoutForm
 		return $html;
 	}	
 	
-	// Override the default ShowReference function because the user needs to be re-directed
-	// to the next step of the Protomo workflow.
-	public function showReference( $postArray )
+	// Use form footer to set $_SESSION variables
+	public function generateFormFooter( $postArray )
 	{
-		$html = parent::showReference( $postArray );
-		
 		global $sessionname;
 		global $runname;
 		global $outdir;
