@@ -241,6 +241,7 @@ class DriftMonitorRequestData(InSessionData):
 			('emtarget', EMTargetData),
 			('presetname', str),
 			('threshold', float),
+			('beamtilt', dict),
 		)
 	typemap = classmethod(typemap)
 
@@ -371,6 +372,20 @@ class BeamSizeCalibrationData(CalibrationData):
 			('c2 size', int),
 			('focused beam', float),
 			('scale', float),
+		)
+	typemap = classmethod(typemap)
+
+class PPBeamTiltRotationData(CalibrationData):
+	def typemap(cls):
+		return CalibrationData.typemap() + (
+			('angle', float),		# radians
+		)
+	typemap = classmethod(typemap)
+
+class PPBeamTiltVectorsData(CalibrationData):
+	def typemap(cls):
+		return CalibrationData.typemap() + (
+			('vectors', tuple),		# pair of vectors, such as [(-1,0),(0,1)]
 		)
 	typemap = classmethod(typemap)
 
@@ -1889,6 +1904,7 @@ class SingleFocuserSettingsData(AcquisitionSettingsData):
 			('acquire final', bool),
 			('manual focus preset', str),
 			('beam tilt settle time', float),
+			('on phase plate', bool),
 		)
 	typemap = classmethod(typemap)
 

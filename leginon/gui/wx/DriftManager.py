@@ -112,15 +112,6 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		label = wx.StaticText(self, -1, 'minutes')
 		sztimeout.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		#beam tilt
-		self.widgets['beam tilt'] = FloatEntry(self, -1, min=0.0, chars=4)
-		szbt = wx.GridBagSizer(5, 5)
-		label = wx.StaticText(self, -1, 'Tilt beam by')
-		szbt.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szbt.Add(self.widgets['beam tilt'], (0, 1), (1, 1),
-										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		label = wx.StaticText(self, -1, 'radians during monitoring')
-		szbt.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		# testing in the node
 		sbtest = wx.StaticBox(self, -1, 'Drift Monitor Testing')
@@ -148,7 +139,6 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz = wx.GridBagSizer(5, 10)
 		sz.Add(szpause, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(sztimeout, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(szbt, (2, 0), (1, 1), wx.ALIGN_TOP)
 		sz.Add(sbsztest, (0, 1), (3, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALL,15)
 		return sz
 

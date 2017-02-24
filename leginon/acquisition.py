@@ -1203,11 +1203,11 @@ class Acquisition(targetwatcher.TargetWatcher):
 		presetnames = self.presetsclient.getPresetNames()
 		return presetnames
 
-	def checkDrift(self, presetname, emtarget, threshold):
+	def checkDrift(self, presetname, emtarget, threshold, apply_beamtilt = {'x':0.0,'y':0.0}):
 		'''
 		request DriftManager to monitor drift
 		'''
-		driftdata = leginondata.DriftMonitorRequestData(session=self.session, presetname=presetname, emtarget=emtarget, threshold=threshold)
+		driftdata = leginondata.DriftMonitorRequestData(session=self.session, presetname=presetname, emtarget=emtarget, threshold=threshold, beamtilt=apply_beamtilt)
 		self.driftdone.clear()
 		self.driftimagedone.clear()
 		self.publish(driftdata, pubevent=True, database=True, dbforce=True)
