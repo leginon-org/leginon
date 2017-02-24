@@ -28,6 +28,7 @@ class PhasePlateAligner(referencecounter.ReferenceCounter):
 		self.userpause = threading.Event()
 		self.current_position = 1 # base 1
 		self.position_updated = False
+		self.btcalclient = calibrationclient.BeamTiltCalibrationClient(self)
 		self.start()
 
 	def addWatchFor(self,kwargs):
@@ -111,15 +112,24 @@ class PhasePlateAligner(referencecounter.ReferenceCounter):
 		if self.settings['tilt charge time'] and self.preset_name and self.settings['tilt charge angle']:
 			self.presets_client.toScope(self.preset_name)
 			bt0 = self.instrument.tem.BeamTilt
-			bt1 = {'x':bt0['x']+self.settings['tilt charge angle'], 'y':bt0['y']}
-			bt2 = {'x':bt0['x']-self.settings['tilt charge angle'], 'y':bt0['y']}
+			btilt_scale = self.settings['tilt charge angle']
+			# Beam Till Delta will be based on database PPBeamTiltRotationData
+			# and PPBeamTiltVectorData calibration.
+			btilt_deltas = self.btcalclient.getBeamTiltDeltaPair(btilt_scale, True)
+			if len(btilt_deltas) != 2:
+				raise
+			bt1 = self.btcalclient.modifyBeamTilt(bt0,btilt_deltas[0])
+			bt2 = self.btcalclient.modifyBeamTilt(bt0,btilt_deltas[1])
 			try:
+				self.logger.info('tilt and expose for %.1f second to charge up' % self.settings['tilt charge time'])
 				self.instrument.tem.BeamTilt = bt1
 				self.instrument.tem.exposeSpecimenNotCamera(self.settings['tilt charge time'])
+				self.logger.info('tilt and expose for %.1f second to charge up' % self.settings['tilt charge time'])
 				self.instrument.tem.BeamTilt = bt2
 				self.instrument.tem.exposeSpecimenNotCamera(self.settings['tilt charge time'])
 			except:
 				pass
+			self.logger.info('tilt back')
 			self.instrument.tem.BeamTilt = bt0
 
 	def logPhasePlateUsage(self):
