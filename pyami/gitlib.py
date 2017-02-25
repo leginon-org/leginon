@@ -19,7 +19,7 @@ def getCurrentCommitCount():
 
 def getCurrentCommitCountOLDGit():
 	cmd = "git rev-list HEAD | wc -l"
-	proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+	proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	stdout, stderr = proc.communicate()
 	result = stdout.strip()
 	number = int(result)
@@ -27,14 +27,14 @@ def getCurrentCommitCountOLDGit():
 
 def getCurrentBranch():
 	cmd = "git branch | grep '\*' | cut -d' ' -f2-"
-	proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+	proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	stdout, stderr = proc.communicate()
 	result = stdout.strip()
 	return result
 
 def getVersion():
 	cmd = "git --version | cut -d' ' -f3-"
-	proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+	proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	stdout, stderr = proc.communicate()
 	result = stdout.strip()
 	return result
@@ -61,7 +61,7 @@ def getAvailableTagsForBranchOLDGit():
 
 def getAllTags():
 	cmd = "git tag"
-	proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+	proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	stdout, stderr = proc.communicate()
 	result = stdout.strip()
 	return result.split()
@@ -73,7 +73,7 @@ def isCommitInCurrentBranch(commitid):
 	"""
 	currentcommitid = getMostRecentCommitID()
 	cmd = "git merge-base %s %s"%(commitid, currentcommitid)
-	proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+	proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	stdout, stderr = proc.communicate()
 	result = stdout.strip()
 	if result[:len(commitid)] == commitid:
@@ -82,7 +82,7 @@ def isCommitInCurrentBranch(commitid):
 
 def getCommitIDfromTag(tagname):
 	cmd = "git rev-list -n 1 '%s'"%(tagname)
-	proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+	proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	stdout, stderr = proc.communicate()
 	result = stdout.strip()
 	if len(result) != 40:
@@ -92,14 +92,14 @@ def getCommitIDfromTag(tagname):
 def getMostRecentCommitID():
 	#cmd = "git log --pretty=oneline -n 1 | cut -d' ' -f1"
 	cmd = "git rev-parse HEAD"
-	proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+	proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	stdout, stderr = proc.communicate()
 	result = stdout.strip()
 	return result
 
 def getMostRecentCommitTime():
 	cmd = "git log --format='%cd' -n 1"
-	proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+	proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	stdout, stderr = proc.communicate()
 	result = stdout.strip()
 	return result
