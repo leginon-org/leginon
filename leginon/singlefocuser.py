@@ -370,6 +370,7 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 		self.conditionalMoveAndPreset(presetname,emtarget)
 		target = emtarget['target']
 		orig_a = self.instrument.tem.StagePosition['a']
+		self.logger.info('Current stage alpha is %.1f degrees' % (math.degrees(orig_a),))
 		try:
 			z = self.stagetiltcalclient.measureZ(atilt, correlation_type=setting['correlation type'])
 			self.logger.info('Measured Z: %.4e' % z)
@@ -382,8 +383,10 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 			status = 'ok'
 		finally:
 			# always set alpha back Issue #4294
-			self.logger.info('Return stage alpha to %.1f degrees' % (math.degrees(orig_a),))
+			self.logger.info('Returning stage alpha to %.1f degrees' % (math.degrees(orig_a),))
 			self.instrument.tem.StagePosition = {'a':orig_a}
+			new_stage = self.instrument.tem.StagePosition
+			self.logger.info('Returned stage alpha is  %.1f degrees' % (math.degrees(new_stage['a']),))
 
 		return status
 
