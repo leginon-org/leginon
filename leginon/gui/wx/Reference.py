@@ -22,6 +22,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		position = self.createMoveTypeChoice((position[0],0))
 		position = self.createPauseTimeEntry((position[0],0))
 		position = self.createIntervalEntry((position[0],0))
+		position = self.createReturnSettleTimeEntry((position[0],0))
 
 		sbsz.Add(self.sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
@@ -50,6 +51,15 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		szpausetime.Add(wx.StaticText(self, -1, 'Wait'), (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szpausetime.Add(self.widgets['pause time'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		szpausetime.Add(wx.StaticText(self, -1, 'seconds before performing request'), (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.sz.Add(szpausetime, start_position, (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		return start_position[0]+1,start_position[1]+1
+
+	def createReturnSettleTimeEntry(self, start_position):
+		self.widgets['return settle time'] = FloatEntry(self, -1, min=0.0, allownone=False, chars=4, value='0.0')
+		szpausetime = wx.GridBagSizer(5, 5)
+		szpausetime.Add(wx.StaticText(self, -1, 'Wait'), (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szpausetime.Add(self.widgets['return settle time'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		szpausetime.Add(wx.StaticText(self, -1, 'seconds to settle the stage after returning to the starting position'), (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.sz.Add(szpausetime, start_position, (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		return start_position[0]+1,start_position[1]+1
 
