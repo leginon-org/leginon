@@ -34,7 +34,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		'bypass': True,
 		'move type': 'stage position',
 		'pause time': 3.0,
-		'interval time': 0.0,
+		'return settle time': 2.5,
 	}
 	requestdata = None
 
@@ -152,8 +152,10 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		em_target_data = self.getEMTargetData(preset_name)
 
 		self.publish(em_target_data, database=True)
-
+		self.logger.info('Move to reference target')
 		self.presets_client.toScope(preset_name, em_target_data)
+		p = self.instrument.tem.StagePosition
+		self.logger.info('Reference target position x: %.2f um, y:%.2f um' % (p['x']*1e6,p['y']*1e6))
 		preset = self.presets_client.getCurrentPreset()
 		if preset['name'] != preset_name:
 			message = 'failed to set preset \'%s\'' % preset_name
@@ -161,13 +163,9 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 
 	def _processRequest(self, request_data):
 		# This is the function that would be different between Timer and Counter
-		interval_time = self.settings['interval time']
-		if interval_time is not None and self.last_processed is not None:
-			interval = time.time() - self.last_processed
-			if interval < interval_time:
-				message = '%d second(s) since last request, ignoring request'
-				self.logger.info(message % interval)
-				return
+		# See subclass ReferenceTimer and ReferenceCounter for implementation
+		message = 'always process request'
+		self.logger.info(message)
 		self.moveAndExecute(request_data)
 		self.last_processed = time.time()
 
@@ -191,10 +189,17 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 			self.execute(request_data)
 		except Exception, e:
 			self.logger.error('Error executing request, %s' % e)
+		finally:
+			self.logger.info('Returning to the original position....')
 			self.instrument.tem.StagePosition = position0
+			self.pauseBeforeReturn()
 			return
 
-		self.instrument.tem.StagePosition = position0
+	def pauseBeforeReturn(self):
+		pause_time = self.settings['return settle time']
+		if pause_time is not None:
+			self.logger.info('Settling the stage for %.1f second' % (pause_time,))
+			time.sleep(pause_time)
 
 	def processRequest(self, request_data):
 		self.reference_target = self.getReferenceTarget()
@@ -217,6 +222,35 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		self.logger.info('Testing...')
 		self.setStatus('processing')
 		self.player.play()
+
+		preset_name = None
+		self.reference_target = self.getReferenceTarget()
+		if self.reference_target:
+			if not request_data:
+				preset = self.presets_client.getCurrentPreset()
+				if preset:
+					preset_name = preset['name']
+					self.logger.info('Use current preset %s to test' % preset_name)
+			else:
+				if 'preset' not in request_data.keys():
+					self.logger.error('Bad request data')
+					return
+				preset_name = request_data['preset']
+			if preset_name:
+				try:
+					self.moveToTarget(preset_name)
+					self.declareDrift('stage')
+				except Exception, e:
+					self.logger.error('Error moving to target, %s' % e)
+					return
+			self.preset_name = preset_name
+		else:
+			self.logger.warning('No reference target')
+			self.logger.info('Use current preset and position for testing')
+		pause_time = self.settings['pause time']
+		if pause_time is not None:
+			self.logger.info('Pausing %.1f second before execution' % (pause_time,))
+			time.sleep(pause_time)
 		try:
 			self.execute(request_data)
 		finally:
