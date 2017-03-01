@@ -378,6 +378,7 @@ class BeamSizeCalibrationData(CalibrationData):
 class PPBeamTiltRotationData(CalibrationData):
 	def typemap(cls):
 		return CalibrationData.typemap() + (
+			('probe', str),
 			('angle', float),		# radians
 		)
 	typemap = classmethod(typemap)
@@ -385,6 +386,7 @@ class PPBeamTiltRotationData(CalibrationData):
 class PPBeamTiltVectorsData(CalibrationData):
 	def typemap(cls):
 		return CalibrationData.typemap() + (
+			('probe', str),
 			('vectors', tuple),		# pair of vectors, such as [(-1,0),(0,1)]
 		)
 	typemap = classmethod(typemap)
@@ -2435,6 +2437,7 @@ class ReferenceSettingsData(SettingsData):
 			('bypass', bool),
 			('move type', str),
 			('pause time', float),
+			('return settle time', float),
 		)
 	typemap = classmethod(typemap)
 
