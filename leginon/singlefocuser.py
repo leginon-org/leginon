@@ -380,9 +380,10 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 			status = 'failed'
 		else:
 			status = 'ok'
-		# always set alpha back Issue #4294
-		self.logger.info('Return stage alpha to %.1f degrees' % (math.degrees(orig_a),))
-		self.instrument.tem.StagePosition = {'a':orig_a}
+		finally:
+			# always set alpha back Issue #4294
+			self.logger.info('Return stage alpha to %.1f degrees' % (math.degrees(orig_a),))
+			self.instrument.tem.StagePosition = {'a':orig_a}
 
 		return status
 
