@@ -1148,39 +1148,54 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		else:
 			self.node.logger.info('Saved instrument rotation center')
 
-	def storePhasePlateBeamTiltRotation(self, tem, cam, beamtilt_delta):
+	def storePhasePlateBeamTiltRotation(self, tem, cam, angle, probe=None):
 		caldata = leginondata.PPBeamTiltRotationData()
 		caldata['session'] = self.node.session
 		# techcnically this does not depend on cam, but is recorded nonetheless.
 		self.setDBInstruments(caldata,tem,cam)
+		if probe is None:
+			probe = self.instrument.tem.ProbeMode
+		caldata['probe'] = probe
 		caldata['angle'] = angle
-		self.node.publish(caldata, database=True, dbforce=True)
+		caldata.insert(force=True)
 	
-	def retrievePhasePlateBeamTiltRotation(self, tem):
+	def retrievePhasePlateBeamTiltRotation(self, tem, probe=None):
 		rc = leginondata.PPBeamTiltRotationData()
 		rc['tem'] = tem
+		if probe is None:
+			# get probe mode of the current tem
+			probe = self.instrument.tem.ProbeMode
+		rc['probe'] = probe
 		results = self.node.research(datainstance=rc, results=1)
 		if results:
 			return results[0]['angle']
 		else:
 			return 0.0
 
-	def storePhasePlateBeamTiltVectors(self, tem, cam, beamtilt_vectors):
+	def storePhasePlateBeamTiltVectors(self, tem, cam, beamtilt_vectors, probe=None):
 		"""
 		beamtilt_vectors is a list of two beam tilt directions before phase plate
 		beam tilt rotation is applied.
 		For example, [(-1,0),(0,1)]
 		"""
-		caldata = leginondata.PPBeamVectorsData()
+		caldata = leginondata.PPBeamTiltVectorsData()
 		caldata['session'] = self.node.session
 		# techcnically this does not depend on cam, but is recorded nonetheless.
 		self.setDBInstruments(caldata,tem,cam)
+		if probe is None:
+			# get probe mode of the current tem
+			probe = self.instrument.tem.ProbeMode
+		caldata['probe'] = probe
 		caldata['vectors'] = tuple(beamtilt_vectors)
-		self.node.publish(caldata, database=True, dbforce=True)
+		caldata.insert(force=True)
 
-	def retrievePhasePlateBeamTiltVectors(self, tem):
+	def retrievePhasePlateBeamTiltVectors(self, tem, probe=None):
 		rc = leginondata.PPBeamTiltVectorsData()
 		rc['tem'] = tem
+		if probe is None:
+			# get probe mode of the current tem
+			probe = self.instrument.tem.ProbeMode
+		rc['probe'] = probe
 		results = self.node.research(datainstance=rc, results=1)
 		if results:
 			return results[0]['vectors']
