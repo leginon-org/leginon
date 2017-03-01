@@ -55,17 +55,15 @@ class PhasePlateAligner(referencecounter.ReferenceCounter):
 		#	self.publish(None, database=False, pubevent=True, pubeventclass=event.PhasePlateUsagePublishEvent)
 
 	def onTest(self, request_data=None):
-		if not self.preset_name:
-			self.logger.warning('Preset unknown. Will not charge phase plate after advancing')
 		super(PhasePlateAligner, self).onTest(request_data)
+		if not self.preset_name:
+			self.logger.warning('Preset unknown. phase plate was not charged after advancing')
 
 	def execute(self, request_data=None):
 		self.setStatus('processing')
-		self.logger.info('handle request')
 		self.alignOthers()
 		self.nextPhasePlate()
 		self.chargePhasePlate()	
-		self.logger.info('done')
 		self.setStatus('idle')
 		return True
 
@@ -95,7 +93,8 @@ class PhasePlateAligner(referencecounter.ReferenceCounter):
 				break
 			self.logger.info('Position %d is bad. Try next one' % self.current_position)
 		# log phase plate patch in use
-		self.logPhasePlateUsage()
+		if self.position_updated:
+			self.logPhasePlateUsage()
 		pause_time = self.settings['settle time']
 		if pause_time is not None:
 			self.logger.info('Waiting for phase plate to settle for %.1f seconds' % pause_time)
@@ -110,7 +109,6 @@ class PhasePlateAligner(referencecounter.ReferenceCounter):
 
 		# Charge also tilted
 		if self.settings['tilt charge time'] and self.preset_name and self.settings['tilt charge angle']:
-			self.presets_client.toScope(self.preset_name)
 			bt0 = self.instrument.tem.BeamTilt
 			btilt_scale = self.settings['tilt charge angle']
 			# Beam Till Delta will be based on database PPBeamTiltRotationData
@@ -123,9 +121,11 @@ class PhasePlateAligner(referencecounter.ReferenceCounter):
 			try:
 				self.logger.info('tilt and expose for %.1f second to charge up' % self.settings['tilt charge time'])
 				self.instrument.tem.BeamTilt = bt1
+				time.sleep(1)
 				self.instrument.tem.exposeSpecimenNotCamera(self.settings['tilt charge time'])
 				self.logger.info('tilt and expose for %.1f second to charge up' % self.settings['tilt charge time'])
 				self.instrument.tem.BeamTilt = bt2
+				time.sleep(1)
 				self.instrument.tem.exposeSpecimenNotCamera(self.settings['tilt charge time'])
 			except:
 				pass
