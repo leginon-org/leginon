@@ -289,6 +289,18 @@ class UpdateLib:
 			#this update has already been applied
 			return False
 
+		## hack for python 2.6, yuck
+		module_name = "schema-r%s"%(str(schema_number))
+		my_module = getattr(__import__("updates", fromlist=[module_name]), module_name)
+		try:
+			my_class = my_module.SchemaUpdate()
+		except AttributeError:
+			# this module needs updating
+			return False
+		if my_class.reRunOnBranchUpgrade is False:
+			print "reRunOnBranchUpgrade"
+			return False
+
 		#update has been done, but not on this branch
 		raise NotImplementedError
 
