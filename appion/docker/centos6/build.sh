@@ -21,6 +21,6 @@ wget -nc -c 'http://emg.nysbc.org/redmine/attachments/download/7182/findem-docke
 #wget -nc -c 'http://emg.nysbc.org/redmine/attachments/download/638/spidersmall.18.10.tar.gz'
 #wget -nc -c 'http://emg.nysbc.org/redmine/attachments/download/636/Xmipp-2.4-src.tar.gz'
 cd $curdir
-tar zxvf findem-docker-centos6.tgz
+tar zxvf TGZ/findem-docker-centos6.tgz
 
 docker build -t vosslab/appion .
