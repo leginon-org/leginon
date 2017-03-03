@@ -9,6 +9,7 @@ import time
 import sys
 import subprocess
 import os
+import datetime
 
 try:
 	import nidaq
@@ -42,6 +43,9 @@ minimum_stage = {
 	'a': 6e-5,
 	'b': 6e-5,
 }
+
+# print stage position set if have error for debuging
+PRINT_STAGE_DEBUG = True
 
 class MagnificationsUninitialized(Exception):
 	pass
@@ -167,6 +171,7 @@ class Tecnai(tem.TEM):
 					prevalue[axis] = value[axis] - delta
 			if prevalue:
 				self._setStagePosition(prevalue)
+				time.sleep(0.2)
 		return self._setStagePosition(value)
 
 	def setStageSpeed(self, value):
@@ -772,22 +777,24 @@ class Tecnai(tem.TEM):
 			return
 		try:
 			self.tecnai.Stage.Goto(pos, axes)
-		except com_module.COMError, (hr, msg, exc, arg):
-			#print 'Stage.Goto failed with error %d: %s' % (hr, msg)
-			if exc is None:
-				raise ValueError('no extended error information, assuming stage limit was hit')
-			else:
-				wcode, source, text, helpFile, helpId, scode = exc
-				if winerror.SUCCEEDED(wcode) and text is None:
-					raise ValueError('no extended error information, assuming stage limit was hit')
-				else:
-					raise RuntimeError(text)
+		except com_module.COMError, e:
+			if PRINT_STAGE_DEBUG:
+				print datetime.datetime.now()
+				print 'COMError in going to %s' % (position,)
+			try:
+				# used to parse e into (hr, msg, exc, arg)
+				# but Issue 4794 got 'need more than 3 values to unpack' error'.
+				# simplify the error handling so that it can be raised with messge.
+				msg = e[1]
+				raise ValueError('Stage.Goto failed: %s' % (msg,))
+			except:
+				raise ValueError('COMError in _setStagePosition: %s' % (e,))
+		except:
+			if PRINT_STAGE_DEBUG:
+				print datetime.datetime.now()
+				print 'Other error in going to %s' % (position,)
+			raise RuntimeError('_setStagePosition Unknown error')
 
-#		for key in position:
-#			while abs(getattr(self.tecnai.Stage.Position, key.upper())
-#								- getattr(pos, key.upper())) > tolerance:
-#				time.sleep(polltime)
-	
 	def getLowDoseStates(self):
 		return ['on', 'off', 'disabled']
 
@@ -797,17 +804,11 @@ class Tecnai(tem.TEM):
 				return 'on'
 			else:
 				return 'off'
-		except com_module.COMError, (hr, msg, exc, arg):
-			if exc is None:
-				# No extended error information, assuming low dose is disabled
-				return 'disabled'
-			else:
-				wcode, source, text, helpFile, helpId, scode = exc
-				if winerror.SUCCEEDED(wcode) and text is None:
-					# No extended error information, assuming low dose is disabled
-					return 'disabled'
-				else:
-					raise RuntimeError(text)
+		except com_module.COMError, e:
+			# No extended error information, assuming low dose is disabled
+			return 'disabled'
+		except:
+			raise RuntimeError('low dose error')
  
 	def setLowDose(self, ld):
 		try:
@@ -820,17 +821,11 @@ class Tecnai(tem.TEM):
 					self.lowdose.LowDoseActive = self.tem_constants.IsOn
 			else:
 				raise ValueError
-		except com_module.COMError, (hr, msg, exc, arg):
-			if exc is None:
-				# No extended error information, assuming low dose is disenabled
-				raise RuntimeError('Low dose is not enabled')
-			else:
-				wcode, source, text, helpFile, helpId, scode = exc
-				if winerror.SUCCEEDED(wcode) and text is None:
-					# No extended error information, assuming low dose is disenabled
-					raise RuntimeError('Low dose is not enabled')
-				else:
-					raise RuntimerError(text)
+		except com_module.COMError, e:
+			# No extended error information, assuming low dose is disenabled
+			raise RuntimeError('Low dose is not enabled')
+		except:
+			raise RuntimerError('Unknown error')
 
 	def getLowDoseModes(self):
 		return ['exposure', 'focus1', 'focus2', 'search', 'unknown', 'disabled']
@@ -847,17 +842,11 @@ class Tecnai(tem.TEM):
 				return 'search'
 			else:
 				return 'unknown'
-		except com_module.COMError, (hr, msg, exc, arg):
-			if exc is None:
-				# No extended error information, assuming low dose is disenabled
-				return 'disabled'
-			else:
-				wcode, source, text, helpFile, helpId, scode = exc
-				if winerror.SUCCEEDED(wcode) and text is None:
-					# No extended error information, assuming low dose is disenabled
-					return 'disabled'
-				else:
-					raise RuntimerError(text)
+		except com_module.COMError, e:
+			# No extended error information, assuming low dose is disenabled
+			raise RuntimeError('Low dose is not enabled')
+		except:
+			raise RuntimerError('Unknown error')
 		
 	def setLowDoseMode(self, mode):
 		try:
@@ -871,17 +860,11 @@ class Tecnai(tem.TEM):
 				self.lowdose.LowDoseState = self.tem_constants.eSearch
 			else:
 				raise ValueError
-		except com_module.COMError, (hr, msg, exc, arg):
-			if exc is None:
-				# No extended error information, assuming low dose is disenabled
-				raise RuntimeError('Low dose is not enabled')
-			else:
-				wcode, source, text, helpFile, helpId, scode = exc
-				if winerror.SUCCEEDED(wcode) and text is None:
-					# No extended error information, assuming low dose is disenabled
-					raise RuntimeError('Low dose is not enabled')
-				else:
-					raise RuntimerError(text)
+		except com_module.COMError, e:
+			# No extended error information, assuming low dose is disenabled
+			raise RuntimeError('Low dose is not enabled')
+		except:
+			raise RuntimerError('Unknown error')
 	
 	def getDiffractionMode(self):
 		if self.tecnai.Projection.Mode == self.tem_constants.pmImaging:
@@ -1287,15 +1270,11 @@ class Tecnai(tem.TEM):
 	def runBufferCycle(self):
 		try:
 			self.tecnai.Vacuum.RunBufferCycle()
-		except com_module.COMError, (hr, msg, exc, arg):
-			if exc is None:
-				raise RuntimeError('no extended error information')
-			else:
-				wcode, source, text, helpFile, helpId, scode = exc
-				if winerror.SUCCEEDED(wcode) and text is None:
-					raise RuntimeError('no extended error information')
-				else:
-					raise RuntimeError(text)
+		except com_module.COMError, e:
+			# No extended error information, assuming low dose is disenabled
+			raise RuntimeError('runBufferCycle COMError: no extended error information')
+		except:
+			raise RuntimerError('runBufferCycle Unknown error')
 
 	def setEmission(self, value):
 		self.tom.Gun.Emission = value
@@ -1417,7 +1396,7 @@ class Krios(Tecnai):
 
 	def setStagePosition(self, value):
 		if KRIOS_ADD_STAGE_BACKLASH:
-			return super(setStagePosition,self).setStagePosition(value)
+			return super(Krios,self).setStagePosition(value)
 		else:
 			# Some Krios compustage works better without preposition
 			value = self.checkStagePosition(value)
