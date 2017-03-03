@@ -23,6 +23,7 @@ class ScrolledSettings(leginon.gui.wx.ReferenceCounter.ScrolledSettings):
 		# pause time after stage move to the position is not shown in gui
 		# to avoid confusion.
 		position = self.createIntervalCountEntry((position[0],0))
+		position = self.createReturnSettleTimeEntry((position[0],0))
 
 		# Phase Plate Timing Box Sizer
 		timingsb = wx.StaticBox(self, -1, 'Phase Plate Settling and Charging')

@@ -8,13 +8,14 @@ class Default(Exception):
 
 class Exposure:
     def __init__(self, total_dose=0.0, tilts=[], dose=0.0, exposure=0.0,
-                       exposure_min=None, exposure_max=None):
+                       exposure_min=None, exposure_max=None, fixed_exposure=False):
         self.total_dose = total_dose
         self.tilts = tilts
         self.dose = dose
         self.exposure = exposure
         self.exposure_min = exposure_min
         self.exposure_max = exposure_max
+        self.fixed_exposure = fixed_exposure
         self.updateScale()
         try:
             self.updateExposures()
@@ -30,6 +31,7 @@ class Exposure:
             'exposure',
             'exposure_min',
             'exposure_max',
+            'fixed_exposure',
         ]
 
         for attr in attrs:
@@ -86,6 +88,9 @@ class Exposure:
         if not self.exposures or self.dose <= 0 or self.exposure <= 0:
             return
 
+        if self.fixed_exposure:
+            return
+
         exposures = []
         for e in self.exposures:
             exposures += e
@@ -118,6 +123,11 @@ class Exposure:
         default = ''
         exposure = self.exposure
         self.exposures = []
+        # keep the exposure value
+        if self.fixed_exposure:
+          for scales in self.scales:
+              self.exposures.append(map((lambda x: exposure), scales))
+          raise Default('%.2f s' % exposure)
 
         if self.total_dose <= 0:
             default = 'total dose is zero'

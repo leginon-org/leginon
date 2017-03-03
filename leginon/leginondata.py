@@ -2215,6 +2215,7 @@ class TomographySettingsData(AcquisitionSettingsData):
 			('fit data points', int),
 			('use z0', bool),
 			('addon tilts', str),
+			('use preset exposure', bool),
 		)
 	typemap = classmethod(typemap)
 
