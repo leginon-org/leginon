@@ -27,6 +27,8 @@ except ImportError:
 # Location of next phase plate AutoIt executable
 AUTOIT_EXE_PATH = "C:\\Program Files\\AutoIt3\\nextphaseplate.exe"
 
+# Newer Krios stage needs backlash.
+KRIOS_ADD_STAGE_BACKLASH = False
 # This scale convert beam tilt readout in radian to 
 # Tecnai or TEM Scripting Illumination.RotationCenter value
 # Depending on the version,  this may be 1.0 or closer to 6
@@ -1411,14 +1413,17 @@ class Krios(Tecnai):
 	use_normalization = True
 	def __init__(self):
 		Tecnai.__init__(self)
-		self.correctedstage = False
+		self.correctedstage = KRIOS_ADD_STAGE_BACKLASH
 
 	def setStagePosition(self, value):
-		# Krios Compustage works better without preposition
-		value = self.checkStagePosition(value)
-		if not value:
-			return
-		return self._setStagePosition(value)
+		if KRIOS_ADD_STAGE_BACKLASH:
+			return super(setStagePosition,self).setStagePosition(value)
+		else:
+			# Some Krios compustage works better without preposition
+			value = self.checkStagePosition(value)
+			if not value:
+				return
+			return self._setStagePosition(value)
 
 	def normalizeProjectionForMagnificationChange(self, new_mag_index):
 		'''
