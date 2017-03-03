@@ -25,7 +25,7 @@ class Collection(object):
 	def saveInstrumentState(self):
 		self.instrument_state = self.instrument.getData(leginon.leginondata.ScopeEMData)
 		a_state = self.instrument_state['stage position']['a']
-		if abs(a_state - self.tilts[0]) > math.radians(1):
+		if abs(a_state - self.tilts[0][0]) > math.radians(1):
 			self.logger.error('instrument state saved to %.1f degrees. The last tilt did not return properly.' % math.degrees(a_state))
 
 	def restoreInstrumentState(self):
