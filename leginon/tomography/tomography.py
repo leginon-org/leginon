@@ -136,7 +136,7 @@ class Tomography(leginon.acquisition.Acquisition):
 								 exposure=exposure_time,
 								 exposure_min=exposure_min,
 								 exposure_max=exposure_max,
-								 fix_exposure=self.settings['use preset exposure'],)
+								 fixed_exposure=self.settings['use preset exposure'],)
 		except leginon.tomography.exposure.LimitError, e:
 			self.logger.warning('Exposure dose out of range: %s.' % e)
 			self.logger.warning('Adjust total exposure dose Or')

@@ -8,7 +8,7 @@ class Default(Exception):
 
 class Exposure:
     def __init__(self, total_dose=0.0, tilts=[], dose=0.0, exposure=0.0,
-                       exposure_min=None, exposure_max=None, fixed_exposure=True):
+                       exposure_min=None, exposure_max=None, fixed_exposure=False):
         self.total_dose = total_dose
         self.tilts = tilts
         self.dose = dose
