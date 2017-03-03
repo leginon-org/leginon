@@ -1,3 +1,4 @@
+
 # 3rd party
 import scipy.stats
 import numpy
@@ -60,27 +61,35 @@ class Scale(Pipe):
 		scalemax = mean + max * std
 		return self.linearscale(input, scalemin, scalemax)
 
-	def scale_cdf(self, input, min, max, small):
+	def scale_cdf(self, input, minp, maxp, small):
 		if small:
 			tempinput = redux.pipes.shape.Shape.run(input, small)
 		else:
 			tempinput = input
-		bins = 1000
-		try:
-			cumfreq, lower, width, x = pyami.weakattr.get(tempinput, 'cumfreq')
-		except:
-			cumfreq, lower, width, x = scipy.stats.cumfreq(tempinput, bins)
-			pyami.weakattr.set(tempinput, 'cumfreq', (cumfreq, lower, width, x))
-		cumfreq = cumfreq / tempinput.size
-		pmin = True
-		for j in range(bins):
-			if pmin and cumfreq[j] >= min:
-				pmin = False
-				minval = j
-			elif cumfreq[j] >= max:
-				maxval = j
-				break
-		scalemin = lower + (minval+0.5) * width
-		scalemax = lower + (maxval+0.5) * width
-		return self.linearscale(input, scalemin, scalemax)
-
+		#bins = 1000
+		#try:
+		#	cumfreq, lower, width, x = pyami.weakattr.get(tempinput, 'cumfreq')
+		#except:
+		#	cumfreq, lower, width, x = scipy.stats.cumfreq(tempinput, bins)
+		#	pyami.weakattr.set(tempinput, 'cumfreq', (cumfreq, lower, width, x))
+		#cumfreq = cumfreq / tempinput.size
+		#pmin = True
+		#for j in range(bins):
+		#	if pmin and cumfreq[j] >= min:
+		#		pmin = False
+		#		minval = j
+		#	elif cumfreq[j] >= max:
+		#		maxval = j
+		#		break
+		vals = numpy.sort(tempinput.flat)
+		if minp < 1:
+			minp = minp*(vals.size-1)
+		if maxp < 1:
+			maxp = maxp*(vals.size-1)
+		omin = vals[minp]
+		omax = vals[maxp]
+		return self.linearscale(tempinput, omin, omax)
+		#scalemin = lower + (minval+0.5) * width
+		#scalemax = lower + (maxval+0.5) * width
+		#return self.linearscale(input, scalemin, scalemax)
+		

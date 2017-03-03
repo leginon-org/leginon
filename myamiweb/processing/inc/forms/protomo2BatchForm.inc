@@ -49,11 +49,14 @@ class Protomo2BatchForm extends BasicLayoutForm
 	$r3_kernel_x='5', $r4_kernel_x='5', $r5_kernel_x='5', $r6_kernel_x='', $r7_kernel_x='', $r8_kernel_x='', $r1_kernel_y='5', $r2_kernel_y='5', $r3_kernel_y='5',
 	$r4_kernel_y='5', $r5_kernel_y='5', $r6_kernel_y='', $r7_kernel_y='', $r8_kernel_y='', $r1_corr_mode='mcf', $r2_corr_mode='mcf', $r3_corr_mode='mcf',
 	$r4_corr_mode='mcf', $r5_corr_mode='pcf', $r6_corr_mode='', $r7_corr_mode='', $r8_corr_mode='', $negative='', $positive='', 
-	$orientation='true', $orientation_switch='', $azimuth='true', $azimuth_switch='', $elevation='false',
+	$orientation='true', $orientation_switch='', $azimuth='true', $azimuth_switch='', $elevation='false', $tilt_azimuth='',
 	$elevation_switch='', $rotation='true', $rotation_switch='', $scale='false', $scale_switch='', $screening_start='1',
 	$recon_map_sampling='2', $recon_map_size_x='2048', $recon_map_size_y='2048', $recon_thickness='1500', $recon_iter='',$recon_iter_presets='',
-	$auto_convergence='0.015', $auto_convergence_iters='5', $auto_ctf_correct='', $ctf_correct='', $amp_contrast='0.07', $iWidth='20', $DefocusTol='200',
-	$map_sampling='8', $tilt_clip='', $show_window_size='', $pixelsize='', $video_type='', $dose_presets='', $dose_a='', $dose_b='', $dose_c='', $frame_aligned='')
+	$auto_convergence='0.015', $auto_convergence_iters='5', $auto_ctf_correct='', $ctf_correct='', $amp_contrast_ctf='0.07', $iWidth='20', $DefocusTol='200',
+	$map_sampling='8', $tilt_clip='', $show_window_size='', $pixelsize='', $video_type='', $dose_presets='', $dose_a='', $dose_b='', $dose_c='', $frame_aligned='',
+	$defocus_estimate='', $defocus_min='', $defocus_max='', $defocus_difference='0.2', $amp_contrast_defocus='0.07', $res_min='10000', $res_max='10',
+	$defocus_tlt='', $defocus_tlt_iteration='', $picking_gpu_or_cpu='', $template_location='', $estimated_particles='200', $distance_from_edges='25',
+	$junk_tolerance='7')
 	{
 		parent::__construct($expId, $extraHTML);
 		//print "_POST:" . "<br>";
@@ -78,14 +81,16 @@ class Protomo2BatchForm extends BasicLayoutForm
 		if (!isset($_POST['laststep'])) {$_POST['laststep']=3;}
 		//Check for impossible setting
 		if ($_POST['firststep'] > $_POST['laststep']) {$_POST['laststep']=$_POST['firststep'];}
-		if ($_POST['firststep'] == 5 or $_POST['firststep'] == 9 or $_POST['laststep'] == 5 or $_POST['laststep'] == 9) {$_POST['firststep']=1; $_POST['laststep']=3;}
-		if (($_POST['firststep'] == 1 or $_POST['firststep'] == 2 or $_POST['firststep'] == 3 or $_POST['firststep'] == 4) and ($_POST['laststep'] == 6 or $_POST['laststep'] == 7 or $_POST['laststep'] == 8 or $_POST['laststep'] == 10)) {$_POST['laststep']=4;}
+		if ($_POST['firststep'] == 5 or $_POST['firststep'] == 11 or $_POST['laststep'] == 5 or $_POST['laststep'] == 11) {$_POST['firststep']=1; $_POST['laststep']=3;}
+		if (($_POST['firststep'] == 1 or $_POST['firststep'] == 2 or $_POST['firststep'] == 3 or $_POST['firststep'] == 4) and ($_POST['laststep'] == 6 or $_POST['laststep'] == 7 or $_POST['laststep'] == 8 or $_POST['laststep'] == 9 or $_POST['laststep'] == 10 or $_POST['laststep'] == 12)) {$_POST['laststep']=4;}
 		if ($_POST['firststep'] == 6){$_POST['laststep']=6;}
 		if ($_POST['firststep'] == 7){$_POST['laststep']=7;}
 		if ($_POST['firststep'] == 8){$_POST['laststep']=8;}
+		if ($_POST['firststep'] == 9){$_POST['laststep']=9;}
 		if ($_POST['firststep'] == 10){$_POST['laststep']=10;}
+		if ($_POST['firststep'] == 12){$_POST['laststep']=12;}
 		
-		$steps=array("File Preparation", "Coarse Alignment", "Refinement", "Reconstruction", "----------------", "Screening Mode", "CTF Correction", "Dose Compensation", "----------------", "Fully Automated");
+		$steps=array("File Preparation", "Coarse Alignment", "Refinement", "Reconstruction", "----------------", "Screening Mode", "Defocus Estimation", "CTF Correction", "Dose Compensation", "3D Template Picking", "----------------", "Fully Automated");
 		$html .= "<br>
 			<b><center>Number of tilt-series available to process for session $sessionname: <font size='5'>$numtiltseries</font></center></b>";
 		
@@ -122,8 +127,7 @@ class Protomo2BatchForm extends BasicLayoutForm
 		
 		//Preset pulldown menus
 		$size_presets=array("Generic", "10 nm objects(s) - Steep lowpass", "25 nm objects(s) - Steep lowpass", "50 nm objects(s) - Steep lowpass", "100 nm objects(s) - Steep lowpass", "250 nm objects(s) - Steep lowpass", "500 nm objects(s) - Steep lowpass", "1000 nm objects(s) - Steep lowpass", "------------------", "10 nm objects(s) - Decreasing lowpass", "25 nm objects(s) - Decreasing lowpass", "50 nm objects(s) - Decreasing lowpass", "100 nm objects(s) - Decreasing lowpass", "250 nm objects(s) - Decreasing lowpass", "500 nm objects(s) - Decreasing lowpass", "1000 nm objects(s) - Decreasing lowpass", "------------------", "10 nm objects(s) - Constant lowpass", "25 nm objects(s) - Constant lowpass", "50 nm objects(s) - Constant lowpass", "100 nm objects(s) - Constant lowpass", "250 nm objects(s) - Constant lowpass", "500 nm objects(s) - Constant lowpass", "1000 nm objects(s) - Constant lowpass");
-		$search_presets=array("Generic", "Tiny search (10%)", "Small search (25%)", "Medium search (50%)", "Large search (75%)", "Full search (90%)");
-		$type_presets=array("Generic", "Quick refinement", "Modest refinement", "Full refinement", "Exhaustive refinement");
+		$search_presets=array("Generic", "Tiny search (10%)", "Small search (25%)", "Med-Sm search (40%)", "Medium search (50%)", "Med-Lg search (60%)", "Large search (75%)", "Full search (90%)");		$type_presets=array("Generic", "Quick refinement", "Modest refinement", "Full refinement", "Exhaustive refinement");
 		$html2.= '<select name="preset_size" onchange=submit() style="width:150px">';
 		for ($i = 1; $i < count($size_presets)+1; $i++) {
 			$html2.= '<option ';
@@ -165,12 +169,14 @@ class Protomo2BatchForm extends BasicLayoutForm
 		$_POST['runname']=$_SESSION['runname'];
 		$_POST['outdir']=$_SESSION['outdir'];
 		$sessionname=$_SESSION['sessionname'];
+		$defocus_min = $imageinfo['defocus']*pow(10,6)*-0.8;
+		$defocus_max = $imageinfo['defocus']*pow(10,6)*-1.2;
+		$res_max = round($imageinfo['pixelsize']*4*pow(10,10),1);
 		
 		$coarse_param_file=$_SESSION['outdir'].'/'.$_SESSION['runname'].'/ready_for_batch/coarse_series'.sprintf('%04d',$_SESSION['tiltseries']).'.param';
 		$refine_param_file=$_SESSION['outdir'].'/'.$_SESSION['runname'].'/ready_for_batch/refine_series'.sprintf('%04d',$_SESSION['tiltseries']).'.param';
 		$recon_param_file=$_SESSION['outdir'].'/'.$_SESSION['runname'].'/ready_for_batch/recon_series'.sprintf('%04d',$_SESSION['tiltseries']).'.param';
 		$link_recons=$_SESSION['outdir'].'/'.'batch_tiltseries_out/';
-		
 		
 		$_POST['tilt_clip'] = $tilt_clip='true';
 		$_POST['show_window_size'] = $show_window_size='true';
@@ -268,7 +274,27 @@ class Protomo2BatchForm extends BasicLayoutForm
 				$_POST['r1_highpass_apod_y'] = $_POST['r2_highpass_apod_y'] = $_POST['r3_highpass_apod_y'] = $_POST['r4_highpass_apod_y'] = $_POST['r5_highpass_apod_y'] = $r1_hp_apod_y = $r2_hp_apod_y = $r3_hp_apod_y = $r4_hp_apod_y = $r5_hp_apod_y = round($r1_hp_diam_y/2);
 			}
 			
-			if ($_POST['preset_search'] == 4)  //Medium 50%
+			if ($_POST['preset_search'] == 4)  //Medium-Small 40%
+			{
+				$_POST['r1_region_x'] = $_POST['r2_region_x'] = $_POST['r3_region_x'] = $_POST['r4_region_x'] = $_POST['r5_region_x'] = $r1_region_x = $r2_region_x = $r3_region_x = $r4_region_x = $r5_region_x = intval($imageinfo['dimx']*0.4);
+				$_POST['r1_region_y'] = $_POST['r2_region_y'] = $_POST['r3_region_y'] = $_POST['r4_region_y'] = $_POST['r5_region_y'] = $r1_region_y = $r2_region_y = $r3_region_y = $r4_region_y = $r5_region_y = intval($imageinfo['dimy']*0.4);
+				$Nx1=$r1_region_x/$r1_sampling;$Ny1=$r1_region_y/$r1_sampling;
+				$Nx2=$r2_region_x/$r2_sampling;$Ny2=$r2_region_y/$r2_sampling;
+				$Nx3=$r3_region_x/$r3_sampling;$Ny3=$r3_region_y/$r3_sampling;
+				$Nx4=$r4_region_x/$r4_sampling;$Ny4=$r4_region_y/$r4_sampling;
+				$Nx5=$r5_region_x/$r5_sampling;$Ny5=$r5_region_y/$r5_sampling;
+				$_POST['r1_mask_width_x'] = $r1_mask_width_x = intval($Nx1-2.5*$r1_mask_apod_x);$_POST['r1_mask_width_y'] = $r1_mask_width_y = intval($Ny1-2.5*$r1_mask_apod_y);
+				$_POST['r2_mask_width_x'] = $r2_mask_width_x = intval($Nx2-2.5*$r2_mask_apod_x);$_POST['r2_mask_width_y'] = $r2_mask_width_y = intval($Ny2-2.5*$r2_mask_apod_y);
+				$_POST['r3_mask_width_x'] = $r3_mask_width_x = intval($Nx3-2.5*$r3_mask_apod_x);$_POST['r3_mask_width_y'] = $r3_mask_width_y = intval($Ny3-2.5*$r3_mask_apod_y);
+				$_POST['r4_mask_width_x'] = $r4_mask_width_x = intval($Nx4-2.5*$r4_mask_apod_x);$_POST['r4_mask_width_y'] = $r4_mask_width_y = intval($Ny4-2.5*$r4_mask_apod_y);
+				$_POST['r5_mask_width_x'] = $r5_mask_width_x = intval($Nx5-2.5*$r5_mask_apod_x);$_POST['r5_mask_width_y'] = $r5_mask_width_y = intval($Ny5-2.5*$r5_mask_apod_y);
+				$_POST['r1_highpass_diameter_x'] = $_POST['r2_highpass_diameter_x'] = $_POST['r3_highpass_diameter_x'] = $_POST['r4_highpass_diameter_x'] = $_POST['r5_highpass_diameter_x'] = $r1_hp_diam_x = $r2_hp_diam_x = $r3_hp_diam_x = $r4_hp_diam_x = $r5_hp_diam_x = round($imageinfo['pixelsize']*pow(10,10)*min($r1_region_x, $r1_region_y));
+				$_POST['r1_highpass_diameter_y'] = $_POST['r2_highpass_diameter_y'] = $_POST['r3_highpass_diameter_y'] = $_POST['r4_highpass_diameter_y'] = $_POST['r5_highpass_diameter_y'] = $r1_hp_diam_y = $r2_hp_diam_y = $r3_hp_diam_y = $r4_hp_diam_y = $r5_hp_diam_y = round($imageinfo['pixelsize']*pow(10,10)*min($r1_region_x, $r1_region_y));
+				$_POST['r1_highpass_apod_x'] = $_POST['r2_highpass_apod_x'] = $_POST['r3_highpass_apod_x'] = $_POST['r4_highpass_apod_x'] = $_POST['r5_highpass_apod_x'] = $r1_hp_apod_x = $r2_hp_apod_x = $r3_hp_apod_x = $r4_hp_apod_x = $r5_hp_apod_x = round($r1_hp_diam_x/2);
+				$_POST['r1_highpass_apod_y'] = $_POST['r2_highpass_apod_y'] = $_POST['r3_highpass_apod_y'] = $_POST['r4_highpass_apod_y'] = $_POST['r5_highpass_apod_y'] = $r1_hp_apod_y = $r2_hp_apod_y = $r3_hp_apod_y = $r4_hp_apod_y = $r5_hp_apod_y = round($r1_hp_diam_y/2);
+			}
+			
+			if ($_POST['preset_search'] == 5)  //Medium 50%
 			{
 				$_POST['r1_region_x'] = $_POST['r2_region_x'] = $_POST['r3_region_x'] = $_POST['r4_region_x'] = $_POST['r5_region_x'] = $r1_region_x = $r2_region_x = $r3_region_x = $r4_region_x = $r5_region_x = intval($imageinfo['dimx']*0.5);
 				$_POST['r1_region_y'] = $_POST['r2_region_y'] = $_POST['r3_region_y'] = $_POST['r4_region_y'] = $_POST['r5_region_y'] = $r1_region_y = $r2_region_y = $r3_region_y = $r4_region_y = $r5_region_y = intval($imageinfo['dimy']*0.5);
@@ -288,7 +314,27 @@ class Protomo2BatchForm extends BasicLayoutForm
 				$_POST['r1_highpass_apod_y'] = $_POST['r2_highpass_apod_y'] = $_POST['r3_highpass_apod_y'] = $_POST['r4_highpass_apod_y'] = $_POST['r5_highpass_apod_y'] = $r1_hp_apod_y = $r2_hp_apod_y = $r3_hp_apod_y = $r4_hp_apod_y = $r5_hp_apod_y = round($r1_hp_diam_y/2);
 			}
 			
-			if ($_POST['preset_search'] == 5)  //Large 75%
+			if ($_POST['preset_search'] == 6)  //Medium-Large 60%
+			{
+				$_POST['r1_region_x'] = $_POST['r2_region_x'] = $_POST['r3_region_x'] = $_POST['r4_region_x'] = $_POST['r5_region_x'] = $r1_region_x = $r2_region_x = $r3_region_x = $r4_region_x = $r5_region_x = intval($imageinfo['dimx']*0.6);
+				$_POST['r1_region_y'] = $_POST['r2_region_y'] = $_POST['r3_region_y'] = $_POST['r4_region_y'] = $_POST['r5_region_y'] = $r1_region_y = $r2_region_y = $r3_region_y = $r4_region_y = $r5_region_y = intval($imageinfo['dimy']*0.6);
+				$Nx1=$r1_region_x/$r1_sampling;$Ny1=$r1_region_y/$r1_sampling;
+				$Nx2=$r2_region_x/$r2_sampling;$Ny2=$r2_region_y/$r2_sampling;
+				$Nx3=$r3_region_x/$r3_sampling;$Ny3=$r3_region_y/$r3_sampling;
+				$Nx4=$r4_region_x/$r4_sampling;$Ny4=$r4_region_y/$r4_sampling;
+				$Nx5=$r5_region_x/$r5_sampling;$Ny5=$r5_region_y/$r5_sampling;
+				$_POST['r1_mask_width_x'] = $r1_mask_width_x = intval($Nx1-2.5*$r1_mask_apod_x);$_POST['r1_mask_width_y'] = $r1_mask_width_y = intval($Ny1-2.5*$r1_mask_apod_y);
+				$_POST['r2_mask_width_x'] = $r2_mask_width_x = intval($Nx2-2.5*$r2_mask_apod_x);$_POST['r2_mask_width_y'] = $r2_mask_width_y = intval($Ny2-2.5*$r2_mask_apod_y);
+				$_POST['r3_mask_width_x'] = $r3_mask_width_x = intval($Nx3-2.5*$r3_mask_apod_x);$_POST['r3_mask_width_y'] = $r3_mask_width_y = intval($Ny3-2.5*$r3_mask_apod_y);
+				$_POST['r4_mask_width_x'] = $r4_mask_width_x = intval($Nx4-2.5*$r4_mask_apod_x);$_POST['r4_mask_width_y'] = $r4_mask_width_y = intval($Ny4-2.5*$r4_mask_apod_y);
+				$_POST['r5_mask_width_x'] = $r5_mask_width_x = intval($Nx5-2.5*$r5_mask_apod_x);$_POST['r5_mask_width_y'] = $r5_mask_width_y = intval($Ny5-2.5*$r5_mask_apod_y);
+				$_POST['r1_highpass_diameter_x'] = $_POST['r2_highpass_diameter_x'] = $_POST['r3_highpass_diameter_x'] = $_POST['r4_highpass_diameter_x'] = $_POST['r5_highpass_diameter_x'] = $r1_hp_diam_x = $r2_hp_diam_x = $r3_hp_diam_x = $r4_hp_diam_x = $r5_hp_diam_x = round($imageinfo['pixelsize']*pow(10,10)*min($r1_region_x, $r1_region_y));
+				$_POST['r1_highpass_diameter_y'] = $_POST['r2_highpass_diameter_y'] = $_POST['r3_highpass_diameter_y'] = $_POST['r4_highpass_diameter_y'] = $_POST['r5_highpass_diameter_y'] = $r1_hp_diam_y = $r2_hp_diam_y = $r3_hp_diam_y = $r4_hp_diam_y = $r5_hp_diam_y = round($imageinfo['pixelsize']*pow(10,10)*min($r1_region_x, $r1_region_y));
+				$_POST['r1_highpass_apod_x'] = $_POST['r2_highpass_apod_x'] = $_POST['r3_highpass_apod_x'] = $_POST['r4_highpass_apod_x'] = $_POST['r5_highpass_apod_x'] = $r1_hp_apod_x = $r2_hp_apod_x = $r3_hp_apod_x = $r4_hp_apod_x = $r5_hp_apod_x = round($r1_hp_diam_x/2);
+				$_POST['r1_highpass_apod_y'] = $_POST['r2_highpass_apod_y'] = $_POST['r3_highpass_apod_y'] = $_POST['r4_highpass_apod_y'] = $_POST['r5_highpass_apod_y'] = $r1_hp_apod_y = $r2_hp_apod_y = $r3_hp_apod_y = $r4_hp_apod_y = $r5_hp_apod_y = round($r1_hp_diam_y/2);
+			}
+			
+			if ($_POST['preset_search'] == 7)  //Large 75%
 			{
 				$_POST['r1_region_x'] = $_POST['r2_region_x'] = $_POST['r3_region_x'] = $_POST['r4_region_x'] = $_POST['r5_region_x'] = $r1_region_x = $r2_region_x = $r3_region_x = $r4_region_x = $r5_region_x = intval($imageinfo['dimx']*0.75);
 				$_POST['r1_region_y'] = $_POST['r2_region_y'] = $_POST['r3_region_y'] = $_POST['r4_region_y'] = $_POST['r5_region_y'] = $r1_region_y = $r2_region_y = $r3_region_y = $r4_region_y = $r5_region_y = intval($imageinfo['dimy']*0.75);
@@ -308,7 +354,7 @@ class Protomo2BatchForm extends BasicLayoutForm
 				$_POST['r1_highpass_apod_y'] = $_POST['r2_highpass_apod_y'] = $_POST['r3_highpass_apod_y'] = $_POST['r4_highpass_apod_y'] = $_POST['r5_highpass_apod_y'] = $r1_hp_apod_y = $r2_hp_apod_y = $r3_hp_apod_y = $r4_hp_apod_y = $r5_hp_apod_y = round($r1_hp_diam_y/2);
 			}
 			
-			if ($_POST['preset_search'] == 6)  //Full 90%
+			if ($_POST['preset_search'] == 8)  //Full 90%
 			{
 				$_POST['r1_region_x'] = $_POST['r2_region_x'] = $_POST['r3_region_x'] = $_POST['r4_region_x'] = $_POST['r5_region_x'] = $r1_region_x = $r2_region_x = $r3_region_x = $r4_region_x = $r5_region_x = intval($imageinfo['dimx']*0.9);
 				$_POST['r1_region_y'] = $_POST['r2_region_y'] = $_POST['r3_region_y'] = $_POST['r4_region_y'] = $_POST['r5_region_y'] = $r1_region_y = $r2_region_y = $r3_region_y = $r4_region_y = $r5_region_y = intval($imageinfo['dimy']*0.9);
@@ -771,7 +817,7 @@ class Protomo2BatchForm extends BasicLayoutForm
 		}
 		
 		#Auto Refine Presets
-		if ($_POST['firststep'] == 10 and $_POST['process'] != "Just Show Command"){
+		if ($_POST['firststep'] == 12 and $_POST['process'] != "Just Show Command"){
 			$_POST['r1_iters'] = $r1_iters = '20';
 			$_POST['r2_iters'] = $r2_iters = '20';
 			$_POST['r3_iters'] = $r3_iters = '20';
@@ -1479,7 +1525,7 @@ class Protomo2BatchForm extends BasicLayoutForm
 		//------ Set Parameters for the parent class, BasicLoopForm (general Appion params) -----//
 		
 		// Set the publications to be references on the web pages
-		$pubList = array('appion-protomo', 'protomo','imodctf', 'dose_comp');
+		$pubList = array('appion-protomo', 'protomo','imodctf', 'tomoctf', 'dose_comp');
 		$this->setPublications( $pubList );
 		$this->setJobType( 'protomo' );
 		$this->setOutputDirectory( 'protomo_alignments' );
@@ -1515,6 +1561,7 @@ class Protomo2BatchForm extends BasicLayoutForm
 		$params->addParam( "laststep", $laststep, "Last Step" );
 		$params->addParam( "shift_limit", $shift_limit, "Shift Limit" );
 		$params->addParam( "angle_limit", $angle_limit, "Angle Limit" );
+		$params->addParam( "tilt_azimuth", $tilt_azimuth, "Override Tilt Azimuth" );
 		$params->addParam( "r1_region_x", $r1_region_x, "R1" );
 		$params->addParam( "r2_region_x", $r2_region_x, "R2" );
 		$params->addParam( "r3_region_x", $r3_region_x, "R3" );
@@ -1708,9 +1755,18 @@ class Protomo2BatchForm extends BasicLayoutForm
 		$params->addParam( "r8_iters", $r8_iters, "R8 │ Alignment Iterations" );
 		$params->addParam( "auto_convergence", $auto_convergence, "Convergence Criteria" );
 		$params->addParam( "auto_convergence_iters", $auto_convergence_iters, "Further Iterations After Convergence" );
+		$params->addParam( "defocus_estimate", $defocus_estimate, "Defocus Estimate" );
+		$params->addParam( "defocus_min", $defocus_min, "Minimum Defocus" );
+		$params->addParam( "defocus_max", $defocus_max, "Maximum Defocus" );
+		$params->addParam( "defocus_difference", $defocus_difference, "Defocus Difference" );
+		$params->addParam( "amp_contrast_defocus", $amp_contrast_defocus, "Amplitude Contrast" );
+		$params->addParam( "res_min", $res_min, "Lowest Resolution for Fitting" );
+		$params->addParam( "res_max", $res_max, "Highest Resolution for Fitting" );
+		$params->addParam( "defocus_tlt", $defocus_tlt, "Iteration for Tilt-Azimuth" );
+		$params->addParam( "defocus_tlt_iteration", $defocus_tlt_iteration, "Iteration Number" );
 		$params->addParam( "ctf_correct", $ctf_correct, "Correct for CTF" );
 		$params->addParam( "auto_ctf_correct", $auto_ctf_correct, "Correct for CTF" );
-		$params->addParam( "amp_contrast", $amp_contrast, "Amplitude Contrast" );
+		$params->addParam( "amp_contrast_ctf", $amp_contrast_ctf, "Amplitude Contrast" );
 		$params->addParam( "iWidth", $iWidth, "Interpolation Width" );
 		$params->addParam( "DefocusTol", $DefocusTol, "Defocus Tolerance" );
 		$params->addParam( "all_tilt_videos", $all_tilt_videos, "Create Tilt-Series Videos" );
@@ -1718,7 +1774,10 @@ class Protomo2BatchForm extends BasicLayoutForm
 		$params->addParam( "map_sampling", $map_sampling, "Sampling for Depiction" );
 		$params->addParam( "video_type", $video_type, "Video Type" );
 		$params->addParam( "screening_start", $screening_start, "First Tilt-Series to Process" );
-		
+		$params->addParam( "template_location", $template_location, "Template Location" );
+		$params->addParam( "estimated_particles", $estimated_particles, "Estimated Number of Particles in Each Tomogram" );
+		$params->addParam( "distance_from_edges", $distance_from_edges, "Minimum Distance from Edges" );
+		$params->addParam( "junk_tolerance", $junk_tolerance, "Junk Tolerance" );
 	}
 		
 	// Generate a form for the parameters that are specific to this program (not Appion params)
@@ -1756,13 +1815,14 @@ class Protomo2BatchForm extends BasicLayoutForm
 			$html.= '</select>'; $html.= docpop('protomo_frame_aligned', ' Use Frame Aligned Images').'<br>';
 			$html.= $params->insertTextFieldInRow( "shift_limit", $fieldSize ).'│ ';
 			$html.= $params->insertTextField( "angle_limit", $fieldSize );
-			$html.= '<br><select name="ctf_correct" style="width:66px">';
-			$html.= '<option value="True">True</option>';
-			$html.= '<option selected value="False">False</option>';
-			$html.= '</select>'; $html.= docpop('ctf_correct', ' Correct for CTF').'<br>';
-			$html.= $params->insertTextFieldInRow( "amp_contrast", $fieldSize ).'| ';
-			$html.= $params->insertTextFieldInRow( "iWidth", $fieldSize ).'| ';
-			$html.= $params->insertTextField( "DefocusTol", $fieldSize );
+			$html.= $params->insertTextField( "tilt_azimuth", $fieldSize );
+			//$html.= '<br><select name="ctf_correct" style="width:66px">';
+			//$html.= '<option value="True">True</option>';
+			//$html.= '<option selected value="False">False</option>';
+			//$html.= '</select>'; $html.= docpop('ctf_correct', ' Correct for CTF').'<br>';
+			//$html.= $params->insertTextFieldInRow( "amp_contrast_ctf", $fieldSize ).'| ';
+			//$html.= $params->insertTextFieldInRow( "iWidth", $fieldSize ).'| ';
+			//$html.= $params->insertTextField( "DefocusTol", $fieldSize );
 		}
 		if ($_POST['firststep'] <= 2 and $_POST['laststep'] >= 2)
 		{
@@ -1988,11 +2048,33 @@ class Protomo2BatchForm extends BasicLayoutForm
 			$html.= $params->insertTextField( "screening_start", $fieldSize );
 			$html.= $params->insertTextFieldInRow( "shift_limit", $fieldSize ).'│ ';
 			$html.= $params->insertTextField( "angle_limit", $fieldSize );
+			$html.= $params->insertTextField( "tilt_azimuth", $fieldSize );
 			$html.= $params->insertTextField( "coarse_param_file", $fieldSize3 );
 			
 		}
 		
 		if ($_POST['firststep'] == 7 and $_POST['laststep'] == 7)
+		{
+			$html .= "
+		<br />
+		<H3>Defocus Estimation Parameters ".docpop('defocus_info2', '(Info)')."</H3>
+		<hr />";
+			$html.= $params->insertTextFieldInRow( "defocus_min", $fieldSize ).'│ ';
+			$html.= $params->insertTextField( "defocus_max", $fieldSize );
+			$html.= $params->insertTextField( "defocus_difference", $fieldSize );
+			$html.= $params->insertTextField( "amp_contrast_defocus", $fieldSize );
+			$html.= $params->insertTextFieldInRow( "res_max", $fieldSize ).'│ ';
+			$html.= $params->insertTextField( "res_min", $fieldSize );
+			$html.= '<select name="defocus_tlt" style="width:140px">';
+			$html.= '<option value="best">Best</option>';
+			$html.= '<option selected value="best_bin1or2">Best w/ bin=1or2</option>';
+			$html.= '<option value="original">Original</option>';
+			$html.= '<option value="iteration">Iteration</option>';
+			$html.= '</select>'; $html.= docpop('defocus_tlt', ' Iteration to Extract Tilt-Azimuth').'| ';
+			$html.= $params->insertTextField( "defocus_tlt_iteration", $fieldSize );
+		}
+		
+		if ($_POST['firststep'] == 8 and $_POST['laststep'] == 8)
 		{
 			$html .= "
 		<br />
@@ -2002,13 +2084,13 @@ class Protomo2BatchForm extends BasicLayoutForm
 			$html.= '<option selected value="True">True</option>';
 			$html.= '<option value="False">False</option>';
 			$html.= '</select>'; $html.= docpop('protomo_frame_aligned', ' Use Frame Aligned Images').'<br>';
-			$html.= $params->insertTextField( "amp_contrast", $fieldSize );
+			$html.= $params->insertTextField( "amp_contrast_ctf", $fieldSize );
 			$html.= $params->insertTextField( "iWidth", $fieldSize );
 			$html.= $params->insertTextField( "DefocusTol", $fieldSize );
 			
 		}
 		
-		if ($_POST['firststep'] == 8 and $_POST['laststep'] == 8)
+		if ($_POST['firststep'] == 9 and $_POST['laststep'] == 9)
 		{
 			$html .= "
 		<br />
@@ -2034,6 +2116,22 @@ class Protomo2BatchForm extends BasicLayoutForm
 		{
 			$html .= "
 		<br />
+		<H3>3D Template Picking Parameters ".docpop('3D_picking_info', '(Info)')."</H3>
+		<hr />";
+			$html.= '<br><select name="picking_gpu_or_cpu" style="width:66px">';
+			$html.= '<option selected value="GPU">GPU</option>';
+			$html.= '<option value="CPU">CPU</option>';
+			$html.= '</select>'; $html.= docpop('protomo_picking_gpu_or_cpu', ' Use GPU or CPU').'<br>';
+			$html.= $params->insertTextField( "template_location", $fieldSize3 );
+			$html.= $params->insertTextField( "estimated_particles", $fieldSize );
+			$html.= $params->insertTextField( "distance_from_edges", $fieldSize );
+			$html.= $params->insertTextField( "junk_tolerance", $fieldSize );
+		}
+		
+		if ($_POST['firststep'] == 12 and $_POST['laststep'] == 12)
+		{
+			$html .= "
+		<br />
 		<H3>Fully Automated Parameters ".docpop('auto_info', '(Info)')."</H3>
 		<hr />";
 			$html.=$html2.'<br><br>';  //Preset Parameters
@@ -2046,11 +2144,12 @@ class Protomo2BatchForm extends BasicLayoutForm
 			$html.= '</select>'; $html.= docpop('protomo_frame_aligned', ' Use Frame Aligned Images').'<br>';
 			$html.= $params->insertTextFieldInRow( "shift_limit", $fieldSize ).'│ ';
 			$html.= $params->insertTextField( "angle_limit", $fieldSize );
+			$html.= $params->insertTextField( "tilt_azimuth", $fieldSize );
 			$html.= '<select name="auto_ctf_correct" style="width:66px">';
 			$html.= '<option selected value="True">True</option>';
 			$html.= '<option value="False">False</option>';
 			$html.= '</select>'; $html.= docpop('auto_ctf_correct', ' Correct for CTF').'<br>';
-			$html.= $params->insertTextFieldInRow( "amp_contrast", $fieldSize ).'| ';
+			$html.= $params->insertTextFieldInRow( "amp_contrast_ctf", $fieldSize ).'| ';
 			$html.= $params->insertTextFieldInRow( "iWidth", $fieldSize ).'| ';
 			$html.= $params->insertTextField( "DefocusTol", $fieldSize ).'<br>';
 			$html.= $params->insertTextFieldInRow( "r1_iters", $fieldSize2 ).'│ ';
@@ -2267,7 +2366,7 @@ class Protomo2BatchForm extends BasicLayoutForm
 			$html.= '<option value="dbl">dbl</option>';
 			$html.= '</select>'; $html.= docpop('protomo_r8_corr_mode', ' R8 | Correlation Mode').'<br>';
 			$html.= "</div><br>";
-	    	$html.= $params->insertTextField( "recon_map_sampling", $fieldSize );
+	    		$html.= $params->insertTextField( "recon_map_sampling", $fieldSize );
 			$html.= $params->insertTextField( "recon_map_size_x", $fieldSize );
 			$html.= $params->insertTextField( "recon_map_size_y", $fieldSize );
 			$html.= $params->insertTextField( "recon_thickness", $fieldSize );
@@ -2293,15 +2392,15 @@ class Protomo2BatchForm extends BasicLayoutForm
 			
 		}
 		
-		if ($_POST['firststep'] == 2 or $_POST['firststep'] == 3 or $_POST['firststep'] == 6  or $_POST['firststep'] == 10 or $_POST['laststep'] == 2 or $_POST['laststep'] == 3 or $_POST['laststep'] == 6 or $_POST['laststep'] == 10 or (($_POST['firststep'] == 1 or $_POST['firststep'] == 2 or $_POST['firststep'] == 3) and $_POST['laststep'] == 4))
+		if ($_POST['firststep'] == 2 or $_POST['firststep'] == 3 or $_POST['firststep'] == 6  or $_POST['firststep'] == 12 or $_POST['laststep'] == 2 or $_POST['laststep'] == 3 or $_POST['laststep'] == 6 or $_POST['laststep'] == 12 or (($_POST['firststep'] == 1 or $_POST['firststep'] == 2 or $_POST['firststep'] == 3) and $_POST['laststep'] == 4))
 		{
 			$html .= "
 		<br />
 		<H4>Depiction Parameters ".docpop('depictionparam_info', '(Info)')."</H4>
 		<hr />";
 			$html.= '<select name="all_tilt_videos" style="width:66px">';
-			$html.= '<option value="true">true</option>';
-			$html.= '<option selected value="false">false</option>';
+			$html.= '<option selected value="true">true</option>';
+			$html.= '<option value="false">false</option>';
 			$html.= '</select>'; $html.= docpop('protomo_create_tiltvids', ' Create Tilt-Series Videos').'<br>';
 			$html.= '<select name="all_recon_videos" style="width:66px">';
 			$html.= '<option selected value="true">true</option>';
@@ -2362,9 +2461,11 @@ class Protomo2BatchForm extends BasicLayoutForm
 		if ($_POST['firststep'] == 3 and $_POST['laststep'] == 3) {$command.="--prep_files=False --coarse_align=False --refine=True --reconstruct=False ";}
 		if ($_POST['firststep'] == 3 and $_POST['laststep'] == 4) {$command.="--prep_files=False --coarse_align=False --refine=True --reconstruct=True ";}
 		if ($_POST['firststep'] == 4 and $_POST['laststep'] == 4) {$command.="--prep_files=False --coarse_align=False --refine=False --reconstruct=True ";}
-		if ($_POST['firststep'] == 7) {$command.="--prep_files=False --coarse_align=False --refine=False --reconstruct=False --ctf_correct=True ";}
-		if ($_POST['firststep'] == 8) {$command.="--prep_files=False --coarse_align=False --refine=False --reconstruct=False ";}
-		if ($_POST['firststep'] == 10) {$command.="--automation=True --auto_prep=True --auto_coarse_align=True --auto_refine=True --auto_recon=True --recon_iter_presets=BestBin1or2 --sampling=8 ";}
+		if ($_POST['firststep'] == 7) {$command.="--prep_files=False --coarse_align=False --refine=False --reconstruct=False --defocus_estimate=True ";}
+		if ($_POST['firststep'] == 8) {$command.="--prep_files=False --coarse_align=False --refine=False --reconstruct=False --ctf_correct=True ";}
+		if ($_POST['firststep'] == 9) {$command.="--prep_files=False --coarse_align=False --refine=False --reconstruct=False ";}
+		if ($_POST['firststep'] == 10) {$command.="--prep_files=False --coarse_align=False --refine=False --reconstruct=False --particle_picking=True ";}
+		if ($_POST['firststep'] == 12) {$command.="--automation=True --auto_prep=True --auto_coarse_align=True --auto_refine=True --auto_recon=True --recon_iter_presets=BestBin1or2 --sampling=8 ";}
 		
 		$image_file_type=$_SESSION['image_file_type'];
 		$pixelsize=$_POST['pixelsize'];
@@ -2378,12 +2479,10 @@ class Protomo2BatchForm extends BasicLayoutForm
 		return $command." ";
 	}	
 	
-	// Override the default ShowReference function because the user needs to be re-directed
+	// Use form footer to re-direct user
 	// to the next step of the Protomo workflow.
-	public function showReference( $postArray )
+	public function generateFormFooter()
 	{
-		$html = parent::showReference( $postArray );
-		
 		global $sessionname;
 		global $imageinfo;
 		global $numtiltseries;

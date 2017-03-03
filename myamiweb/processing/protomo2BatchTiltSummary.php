@@ -1,10 +1,10 @@
 <?php
 
 /**
- *	The Leginon software is Copyright under 
- *	Apache License, Version 2.0
+ *	The Leginon software is Copyright 2003 
+ *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement
- *	see  http://leginon.org
+ *	see  http://ami.scripps.edu/software/leginon-license
  */
 
 require_once dirname(__FILE__).'/../config.php';
@@ -19,6 +19,9 @@ require_once "inc/particledata.inc";
 ini_set('session.gc_maxlifetime', 604800);
 session_set_cookie_params(604800);
 
+$page = $_SERVER['REQUEST_URI'];
+header("Refresh: 300; URL=$page");
+
 session_start();
 $sessionname=$_SESSION['sessionname'];
 $outdir=$_SESSION['outdir'];
@@ -27,6 +30,7 @@ $imageinfo=$_SESSION['imageinfo'];
 $rundir=$_GET['rundir'];
 $tiltseries=$_GET['tiltseries'];
 
+$defocus_gif_files = glob("$rundir/tiltseries".$tiltseries."/defocus_estimation/*/*/diagnostic.gif");
 $ctf_gif_files = glob("$rundir/tiltseries".$tiltseries."/media/ctf_correction/s*.gif");
 $dose_gif_files = glob("$rundir/tiltseries".$tiltseries."/media/dose_compensation/s*.gif");
 $corrpeak_gif_files = glob("$rundir/tiltseries".$tiltseries."/media/correlations/s*.gif");
@@ -35,6 +39,7 @@ $qa_gif_file = "$rundir/tiltseries".$tiltseries."/media/quality_assessment/serie
 $azimuth_gif_file = "$rundir/tiltseries".$tiltseries."/media/angle_refinement/series".sprintf('%04d',$tiltseries)."_azimuth.gif";
 $orientation_gif_file = "$rundir/tiltseries".$tiltseries."/media/angle_refinement/series".sprintf('%04d',$tiltseries)."_orientation.gif";
 $elevation_gif_file = "$rundir/tiltseries".$tiltseries."/media/angle_refinement/series".sprintf('%04d',$tiltseries)."_elevation.gif";
+$defocus_gif = "loadimg.php?rawgif=1&filename=".$defocus_gif_files[0];
 $ctfplot_gif = "loadimg.php?rawgif=1&filename=".$ctf_gif_files[0];
 $ctfdefocus_gif = "loadimg.php?rawgif=1&filename=".$ctf_gif_files[1];
 $dose_gif = "loadimg.php?rawgif=1&filename=".$dose_gif_files[0];
@@ -58,6 +63,30 @@ $html .= '<td><center><a href="protomo2QualityAssessmentPlots.php?outdir='.$rund
 $html .= '<td><center><a href="protomo2QualityAssessmentPlots.php?outdir='.$rundir.'&runname='.$runname.'&tiltseries='.ltrim($tiltseries, '0').'" target="_blank"><img src="'.$orientation_gif.'" alt="theta" width="275" />'."</a></center></td></tr>";
 $html .= '<td><center><a href="protomo2QualityAssessmentPlots.php?outdir='.$rundir.'&runname='.$runname.'&tiltseries='.ltrim($tiltseries, '0').'" target="_blank"><img src="'.$elevation_gif.'" alt="elevation" width="275" />'."</a></center></td></tr>";
 $html .= '</tr></td></table>';
+
+if (isset($defocus_gif_files[0])) {
+	$html .= "
+<center><H4>Defocus Estimation</H4></center>
+<br />";
+	$html .= '<table id="" class="display" cellspacing="0" border="1" align="center">';
+	$html .= "<tr>";
+	$html .= '<th><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[2].'" alt="defocus_gif2" width="225" /></th>';
+	$html .= '<th><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[6].'" alt="defocus_gif6" width="325" /></th>';
+	$html .= '<th><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[10].'" alt="defocus_gif10" width="420" /></th>';
+	$html .= "</tr><tr>";
+	$html .= '<th><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[0].'" alt="defocus_gif0" width="225" /></th>';
+	$html .= '<th><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[4].'" alt="defocus_gif4" width="325" /></th>';
+	$html .= '<th><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[8].'" alt="defocus_gif8" width="420" /></th>';
+	$html .= "</tr><tr>";
+	$html .= '<th><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[1].'" alt="defocus_gif1" width="225" /></th>';
+	$html .= '<th><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[5].'" alt="defocus_gif5" width="325" /></th>';
+	$html .= '<th><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[9].'" alt="defocus_gif9" width="420" /></th>';
+	$html .= "</tr><tr>";
+	$html .= '<th><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[3].'" alt="defocus_gif3" width="225" /></th>';
+	$html .= '<th><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[7].'" alt="defocus_gif7" width="325" /></th>';
+	$html .= '<th><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[11].'" alt="defocus_gif11" width="420" /></th>';
+	$html .= '</tr><tr></table><br>';
+}
 
 if (isset($ctf_gif_files[0])) {
 		$html .= "

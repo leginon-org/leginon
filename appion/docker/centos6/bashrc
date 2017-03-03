@@ -33,4 +33,4 @@ export HISTFILESIZE=200000
 
 alias dsort="du -sk * | sort -n | tail -50"
 alias ddir="du -sk */ | sort -n | tail -n 50"
-
+alias ls="ls --color=auto"

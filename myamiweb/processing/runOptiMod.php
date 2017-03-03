@@ -473,8 +473,8 @@ function runOptiMod() {
 		createOptiModForm("<B>ERROR:</B> Enter the number of volumes that you wish to create using Angular Reconstitution");
 	if ($immethod == 'eman' && !$images_per_volume)
 		createOptiModForm("<B>ERROR:</B> Enter the number images within each volumes for EMAN cross-common lines");
-	if ($nproc > 1)
-		createOptiModForm("<B>ERROR:</B> Cannot currently use more than 1 processor in parallel mode");
+	#if ($nproc > 1)
+	#	createOptiModForm("<B>ERROR:</B> Cannot currently use more than 1 processor in parallel mode");
 
 	/* *******************
 	PART 3: Create program command
@@ -530,7 +530,7 @@ function runOptiMod() {
 	******************** */
 
 	// submit command
-	$errors = showOrSubmitCommand($command, $headinfo, 'optimod', $nproc);
+	$errors = showOrSubmitCommand($command, $headinfo, 'optimod', $nproc, False, 1, $nproc);
 
 	// if error display them
 	if ($errors)

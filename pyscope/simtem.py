@@ -98,6 +98,7 @@ class SimTEM(tem.TEM):
 		self.energy_filter_width = 0.0
 
 		self.resetRefrigerant()
+		self.loaded_slot_number = None
 
 	def resetRefrigerant(self):
 		self.level0 = 100.0
@@ -400,6 +401,28 @@ class SimTEM(tem.TEM):
 
 	def exposeSpecimenNotCamera(self,seconds):
 		time.sleep(seconds)
+
+	def hasGridLoader(self):
+		return True
+
+	def getGridLoaderNumberOfSlots(self):
+		return 2
+
+	def getGridLoaderSlotState(self, number):
+		if self.loaded_slot_number == number:
+			return 'empty'
+		else:
+			return 'occupied'
+
+
+	def _loadCartridge(self, number):
+		self.loaded_slot_number = number
+
+	def _unloadCartridge(self):
+		self.loaded_slot_number = None
+
+	def getGridLoaderInventory(self):
+		self.getAllGridSlotStates()
 
 class SimTEM300(SimTEM):
 	name = 'SimTEM300'

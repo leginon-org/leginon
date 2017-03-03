@@ -1021,7 +1021,7 @@ function runMakestack() {
 
 	// check the tilt situation
 	$particle = new particledata();
-	$maxang = $particle->getMaxTiltAngle($expId);
+	$maxang = $particle->getMaxTiltAngle($expId,$_POST['preset']);
 	if ($maxang > 5) {
 		$tiltangle = $_POST['tiltangle'];
 		if ($_POST['ctfcorrect']=='on' && $_POST['ctfcorrecttype']!='emantilt' && !($tiltangle=='notilt' || $tiltangle=='lowtilt')) {

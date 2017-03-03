@@ -53,8 +53,8 @@ def parseOptions():
 		help= 'Microscope voltage in keV, e.g. --voltage=300')
 	parser.add_option('--cs', dest='cs', type="float",
 		help= 'Microscope spherical abberation, e.g. --cs=2.7')
-	parser.add_option('--amp_contrast', dest='amp_contrast', type="float", default=0.07,
-		help= 'Amplitude contrast, e.g. --amp_contrast=0.07')
+	parser.add_option('--amp_contrast_ctf', dest='amp_contrast_ctf', type="float", default=0.07,
+		help= 'Amplitude contrast, e.g. --amp_contrast_ctf=0.07')
 	parser.add_option('--rundir', dest='rundir',
 		help= 'Base run directory where all tiltseriesXXXX folders will be made, e.g. /path/to/protomodir/')
 	parser.add_option('--tiltseriesranges', dest='tiltseriesranges', default="1-999999",
@@ -97,6 +97,8 @@ def parseOptions():
 		help='Percentage of image size, above which shifts with higher shifts will be discarded for all images, e.g. --shift_limit=50')
 	parser.add_option('--angle_limit', dest='angle_limit', type='float', metavar='float', default=40,
 		help='Only remove images from the tilt file greater than abs(angle_limit), e.g. --angle_limit=35')
+	parser.add_option("--tilt_azimuth", dest="tilt_azimuth",  type="float",
+		help='Override the tilt-azimuth as recorded in the database. Applied before alignment, e.g. --tilt_azimuth="-57"')
 	parser.add_option('--dimx', dest='dimx', type='int', metavar='int',
 		help='Dimension (x) of micrographs, e.g. --dimx=4096')
 	parser.add_option('--dimy', dest='dimy', type='int', metavar='int',
@@ -566,6 +568,24 @@ def parseOptions():
 		help="Protomo Screening Mode to be run during data collection. This mode will continually query leginon database for tilt-series number N+1. When tilt-series N+1 shows up, tilt-series N will be processed through coarse alignment, producing normal depiction videos. Screening mode is configured to parallelize video production just like is done in protomo2aligner.py. The coarse_param_file option must be set., e.g. --screening_mode=True")
 	parser.add_option("--screening_start", dest="screening_start",  default=1,
 		help="Which tilt-series number will screening mode begin on?, e.g. --screening_start=10")
+	parser.add_option('--defocus_estimate', dest='defocus_estimate', default="False",
+		help='Estimate defocus of the untilted plane using TomoCTF?, e.g. --defocus_estimate=True')
+	parser.add_option('--defocus_min', dest='defocus_min', type="float", default=0,
+		help='Initial defocus for search, in micrometers, e.g. --defocus_min=2.1')
+	parser.add_option('--defocus_max', dest='defocus_max', type="float", default=0,
+		help='Maximum defocus for search, in micrometers, e.g. --defocus_max=4.2')
+	parser.add_option('--defocus_difference', dest='defocus_difference', type="float",  default=0.2,
+		help='Defocus difference for strip extraction, in micrometers, e.g. --defocus_difference=0.5')
+	parser.add_option('--defocus_tlt', dest='defocus_tlt', default='best_bin1or2',
+		help='How should the tilt-azimuth be determined for defocus estimation? Options: original, best, best_bin1or2, or iteration, e.g. --defocus_tlt=best')
+	parser.add_option('--defocus_tlt_iteration', dest='defocus_tlt_iteration', type="int",  default=0,
+		help='Refinement iteration from which the tilt-azimuth will be extracted from for use in defocus estimation, e.g. --defocus_tlt_iteration=16')
+	parser.add_option('--amp_contrast_defocus', dest='amp_contrast_defocus', type="float", default=0.07,
+		help='Amplitude contrast used with defocus estimation, e.g. --amp_contrast_defocus=0.07')
+	parser.add_option('--res_min', dest='res_min', type="float", default=10000,
+		help='Lowest resolution information, in angstroms, to use to fit the signal falloff before defocus estimation, e.g. --res_min=200')
+	parser.add_option('--res_max', dest='res_max', type="float", default=10,
+		help='Highest resolution information, in angstroms, to use to fit the signal falloff before defocus estimation, e.g. --res_max=5')
 	parser.add_option("--ctf_correct", dest="ctf_correct",  default="False",
 		help="CTF correct images using ctf correction runs from Appion, e.g. --ctf_correct=True")
 	parser.add_option("--dose_presets", dest="dose_presets",  default="False",
@@ -625,6 +645,10 @@ def variableSetup(rundir, tiltseriesnumber, prep):
 	tiltfilename = seriesname+'.tlt'
 	tiltfilename_full=tiltdir+'/'+tiltfilename
 	raw_path = os.path.join(tiltdir,'raw')
+	if isinstance(options.tilt_azimuth,float):
+		tilt_azimuth = options.tilt_azimuth
+	else:
+		tilt_azimuth = None
 	if (prep is "True"):
 		os.system("mkdir -p %s" % tiltdir)
 		rawimagecount=0
@@ -650,7 +674,7 @@ def variableSetup(rundir, tiltseriesnumber, prep):
 			except: #Image is not in the .tlt file
 				pass
 	
-	return tiltdirname, tiltdir, seriesnumber, seriesname, tiltfilename, tiltfilename_full, raw_path, tiltstart, rawimagecount, maxtilt
+	return tiltdirname, tiltdir, seriesnumber, seriesname, tiltfilename, tiltfilename_full, raw_path, tiltstart, rawimagecount, maxtilt, tilt_azimuth
 
 
 def editParamFile(tiltdir, param_full, raw_path):
@@ -727,12 +751,17 @@ def protomoPrep(log_file, tiltseriesnumber, prep_options):
 	Creates tilt-series directory, links raw images, creates series*.tlt file,
 	and optionally creates an initial tilt-series video.
 	"""
-	tiltdirname,tiltdir,seriesnumber,seriesname,tiltfilename,tiltfilename_full,raw_path,tiltstart,rawimagecount,maxtilt = variableSetup(prep_options.rundir, tiltseriesnumber, prep="True")
+	tiltdirname,tiltdir,seriesnumber,seriesname,tiltfilename,tiltfilename_full,raw_path,tiltstart,rawimagecount,maxtilt,tilt_azimuth = variableSetup(prep_options.rundir, tiltseriesnumber, prep="True")
 	f = open(log_file,'a')
 	
 	apDisplay.printMsg('Preparing Tilt-Series #%s Images and .tlt File...' % tiltseriesnumber)
 	f.write('Preparing Tilt-Series #%s Images and .tlt File...\n' % tiltseriesnumber)
+	
 	tilts,accumulated_dose_list,new_ordered_imagelist,maxtilt = apProTomo2Prep.prepareTiltFile(prep_options.sessionname, seriesname, tiltfilename_full, tiltseriesnumber, raw_path, prep_options.frame_aligned, link=False, coarse="True")
+	
+	#Backup original tilt file
+	originaltilt=tiltdir+'/original.tlt'
+	shutil.copy(tiltfilename_full,originaltilt)
 	
 	cmd="awk '/FILE /{print}' %s | wc -l" % (tiltfilename_full)  #rawimagecount is zero before this
 	proc=subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
@@ -743,6 +772,10 @@ def protomoPrep(log_file, tiltseriesnumber, prep_options):
 		apDisplay.printMsg("Creating initial tilt-series video...")
 		f.write("Creating initial tilt-series video...\n")
 		apProTomo2Aligner.makeTiltSeriesVideos(seriesname, 0, tiltfilename_full, rawimagecount, tiltdir, raw_path, prep_options.pixelsize, prep_options.map_sampling, prep_options.image_file_type, prep_options.video_type, "true", prep_options.parallel, "Initial")
+	
+	if tilt_azimuth is not None:
+		apDisplay.printMsg("Changing tilt azimuth to %s" % tilt_azimuth)
+		apProTomo2Aligner.changeTiltAzimuth(tiltfilename_full, tilt_azimuth)
 	
 	#Removing highly shifted images
 	bad_images, bad_kept_images=apProTomo2Aligner.removeHighlyShiftedImages(tiltfilename_full, prep_options.dimx, prep_options.dimy, prep_options.shift_limit, prep_options.angle_limit)
@@ -770,7 +803,7 @@ def protomoCoarseAlign(log_file, tiltseriesnumber, coarse_options):
 	Correlation peak video is made.
 	Depiction videos are made if requested.
 	"""
-	tiltdirname,tiltdir,seriesnumber,seriesname,tiltfilename,tiltfilename_full,raw_path,tiltstart,rawimagecount,maxtilt = variableSetup(coarse_options.rundir, tiltseriesnumber, prep="False")
+	tiltdirname,tiltdir,seriesnumber,seriesname,tiltfilename,tiltfilename_full,raw_path,tiltstart,rawimagecount,maxtilt,tilt_azimuth = variableSetup(coarse_options.rundir, tiltseriesnumber, prep="False")
 	f = open(log_file,'a')
 	os.chdir(tiltdir)
 	cos_alpha=np.cos(maxtilt*np.pi/180)
@@ -871,7 +904,7 @@ def protomoRefine(log_file, tiltseriesnumber, refine_options):
 	Quality assessment statistics and images are made.
 	Depiction videos are made if requested.
 	"""
-	tiltdirname,tiltdir,seriesnumber,seriesname,tiltfilename,tiltfilename_full,raw_path,tiltstart,rawimagecount,maxtilt = variableSetup(refine_options.rundir, tiltseriesnumber, prep="False")
+	tiltdirname,tiltdir,seriesnumber,seriesname,tiltfilename,tiltfilename_full,raw_path,tiltstart,rawimagecount,maxtilt,tilt_azimuth = variableSetup(refine_options.rundir, tiltseriesnumber, prep="False")
 	os.system('touch %s/.tiltseries.%04d' % (tiltdir, tiltseriesnumber))  #Internal tracker for what has been processed through alignment
 	f = open(log_file,'a')
 	os.chdir(tiltdir)
@@ -1221,7 +1254,7 @@ def protomoReconstruct(log_file, tiltseriesnumber, recon_options):
 	from and whether to exclude any very high tilts.
 	Options are given for filtering.
 	"""
-	tiltdirname,tiltdir,seriesnumber,seriesname,tiltfilename,tiltfilename_full,raw_path,tiltstart,rawimagecount,maxtilt = variableSetup(recon_options.rundir, tiltseriesnumber, prep="False")
+	tiltdirname,tiltdir,seriesnumber,seriesname,tiltfilename,tiltfilename_full,raw_path,tiltstart,rawimagecount,maxtilt,tilt_azimuth = variableSetup(recon_options.rundir, tiltseriesnumber, prep="False")
 	f = open(log_file,'a')
 	os.chdir(tiltdir)
 	
@@ -1434,13 +1467,60 @@ def protomoReconstruct(log_file, tiltseriesnumber, recon_options):
 	f.close()
 
 
-def ctfCorrect(tiltseriesnumber, ctf_options):
+def defocusEstimaion(tiltseriesnumber, defocus_options):
+	"""
+	This estimates defocus of the untiltsed tilt-seried plane using TomoCTF multiple times using varying parameters.
+	An image of the estimated and fit power spectra is made for each estimation.
+	"""
+	tiltdirname,tiltdir,seriesnumber,seriesname,tiltfilename,tiltfilename_full,raw_path,tiltstart,rawimagecount,maxtilt,tilt_azimuth = variableSetup(defocus_options.rundir, tiltseriesnumber, prep="False")
+	os.chdir(tiltdir)
+	if defocus_options.defocus_tlt == 'original':
+		apDisplay.printMsg("Using the tilt-azimuth found in the original tlt file (as recorded in the database) for Tilt-Series #%s." % tiltseriesnumber)
+	elif defocus_options.defocus_tlt == 'best_bin1or2':
+		try:
+			best_bin1or2=glob.glob('best_bin1or2*')
+			best_bin1or2=int(os.path.splitext(best_bin1or2[0])[1][1:])-1
+			best_bin1or2_iteration="%03d" % best_bin1or2
+			tiltfilename=seriesname.split()[0]+best_bin1or2_iteration+'.tlt'
+			apDisplay.printMsg("Using the tilt-azimuth found in the tlt file from the best binned by 1 or 2 iteration (#%d) for Tilt-Series #%s." % ((best_bin1or2+1), tiltseriesnumber))
+		except IndexError:
+			apDisplay.printWarning("Best w/ bin 1 or 2 iteration not found. Reverting to original tlt file...")
+			apDisplay.printMsg("Using the tilt-azimuth found in the original tlt file (as recorded in the database) for Tilt-Series #%s." % tiltseriesnumber)
+			defocus_options.defocus_tlt = 'original'
+			tiltfilename = 'original.tlt'
+	elif defocus_options.defocus_tlt == 'best':
+		try:
+			best=glob.glob('best*')
+			best=int(os.path.splitext(best[0])[1][1:])-1
+			best_iteration="%03d" % best
+			tiltfilename=seriesname.split()[0]+best_iteration+'.tlt'
+			apDisplay.printMsg("Using the tilt-azimuth found in the tlt file from the best iteration (#%d) for Tilt-Series #%s." % ((best+1), tiltseriesnumber))
+		except IndexError:
+			apDisplay.printWarning("Best iteration not found. Reverting to original tlt file...")
+			apDisplay.printMsg("Using the tilt-azimuth found in the original tlt file (as recorded in the database) for Tilt-Series #%s." % tiltseriesnumber)
+			defocus_options.defocus_tlt = 'original'
+			tiltfilename = 'original.tlt'
+	elif (defocus_options.defocus_tlt == 'iteration' and isinstance(defocus_options.defocus_tlt_iteration,int)):
+		try:
+			iteration=defocus_options.defocus_tlt_iteration-1
+			iteration="%03d" % iteration
+			tiltfilename=seriesname.split()[0]+iteration+'.tlt'
+			apDisplay.printMsg("Using the tilt-azimuth found in the tlt file from iteration #%d for Tilt-Series #%s." % (defocus_options.defocus_tlt_iteration, tiltseriesnumber))
+		except IndexError:
+			apDisplay.printWarning("Requested iteration %d not found. Reverting to original tlt file..." % defocus_options.defocus_tlt_iteration)
+			apDisplay.printMsg("Using the tilt-azimuth found in the original tlt file (as recorded in the database) for Tilt-Series #%s." % tiltseriesnumber)
+			defocus_options.defocus_tlt = 'original'
+			tiltfilename = 'original.tlt'
+	apProTomo2Prep.defocusEstimate(seriesname, tiltdir, defocus_options.projectid, defocus_options.sessionname, defocus_options.procs, tiltseriesnumber, tiltfilename, 'True', defocus_options.pixelsize, -90, 90, defocus_options.amp_contrast_defocus, defocus_options.res_min, defocus_options.res_max, 0, defocus_options.defocus_difference, defocus_options.defocus_min, defocus_options.defocus_max, defocus_save=0)
+
+
+def imodCtfCorrect(tiltseriesnumber, ctf_options):
 	"""
 	This corrects for ctf using ctfphaseflip. A defocus plot and a CTF plot are made.
 	"""
-	tiltdirname,tiltdir,seriesnumber,seriesname,tiltfilename,tiltfilename_full,raw_path,tiltstart,rawimagecount,maxtilt = variableSetup(ctf_options.rundir, tiltseriesnumber, prep="False")
+	tiltdirname,tiltdir,seriesnumber,seriesname,tiltfilename,tiltfilename_full,raw_path,tiltstart,rawimagecount,maxtilt,tilt_azimuth = variableSetup(ctf_options.rundir, tiltseriesnumber, prep="False")
 	os.chdir(tiltdir)
-	apProTomo2Prep.ctfCorrect(seriesname, tiltdir, ctf_options.projectid, ctf_options.sessionname, tiltseriesnumber, tiltfilename_full, ctf_options.frame_aligned, ctf_options.pixelsize, ctf_options.DefocusTol, ctf_options.iWidth, ctf_options.amp_contrast)
+	apProTomo2Prep.imodCtfCorrect(seriesname, tiltdir, ctf_options.projectid, ctf_options.sessionname, tiltseriesnumber, tiltfilename_full, ctf_options.frame_aligned, ctf_options.pixelsize, ctf_options.DefocusTol, ctf_options.iWidth, ctf_options.amp_contrast_ctf)
 
 
 def doseCompensate(tiltseriesnumber, dose_options):
@@ -1448,7 +1528,7 @@ def doseCompensate(tiltseriesnumber, dose_options):
 	This compensates for dose using equation (3) from Grant & Grigorieff, 2015.
 	A dose plot and a dose compensation plot are made.
 	"""
-	tiltdirname,tiltdir,seriesnumber,seriesname,tiltfilename,tiltfilename_full,raw_path,tiltstart,rawimagecount,maxtilt = variableSetup(dose_options.rundir, tiltseriesnumber, prep="False")
+	tiltdirname,tiltdir,seriesnumber,seriesname,tiltfilename,tiltfilename_full,raw_path,tiltstart,rawimagecount,maxtilt,tilt_azimuth = variableSetup(dose_options.rundir, tiltseriesnumber, prep="False")
 	os.chdir(tiltdir)
 	apProTomo2Prep.doseCompensate(seriesname, tiltdir, dose_options.sessionname, tiltseriesnumber, dose_options.frame_aligned, raw_path, dose_options.pixelsize, dose_options.dose_presets, dose_options.dose_a, dose_options.dose_b, dose_options.dose_c)
 
@@ -1463,7 +1543,7 @@ def protomoAutoRefine(log_file, tiltseriesnumber, auto_refine_options):
 	Quality assessment statistics and images are made.
 	Depiction videos are made if requested.
 	"""
-	tiltdirname,tiltdir,seriesnumber,seriesname,tiltfilename,tiltfilename_full,raw_path,tiltstart,rawimagecount,maxtilt = variableSetup(auto_refine_options.rundir, tiltseriesnumber, prep="False")
+	tiltdirname,tiltdir,seriesnumber,seriesname,tiltfilename,tiltfilename_full,raw_path,tiltstart,rawimagecount,maxtilt,tilt_azimuth = variableSetup(auto_refine_options.rundir, tiltseriesnumber, prep="False")
 	f = open(log_file,'a')
 	os.chdir(tiltdir)
 	cos_alpha=np.cos(maxtilt*np.pi/180)
@@ -2116,7 +2196,7 @@ def protomoScreening(log_file, tiltseriesnumber, screening_options):
 	These are explicit for parallelization reasons.
 	"""
 	#Prep
-	tiltdirname,tiltdir,seriesnumber,seriesname,tiltfilename,tiltfilename_full,raw_path,tiltstart,rawimagecount,maxtilt = variableSetup(screening_options.rundir, tiltseriesnumber, prep="True")
+	tiltdirname,tiltdir,seriesnumber,seriesname,tiltfilename,tiltfilename_full,raw_path,tiltstart,rawimagecount,maxtilt,tilt_azimuth = variableSetup(screening_options.rundir, tiltseriesnumber, prep="True")
 	f = open(log_file,'a')
 	
 	apDisplay.printMsg('Preparing Tilt-Series #%s Images and .tlt File...' % tiltseriesnumber)
@@ -2135,6 +2215,10 @@ def protomoScreening(log_file, tiltseriesnumber, screening_options):
 	jobs1.append(mp.Process(target=apProTomo2Aligner.makeTiltSeriesVideos, args=(seriesname, 0, tiltfilename_full, rawimagecount, tiltdir, raw_path, screening_options.pixelsize, screening_options.map_sampling, screening_options.image_file_type, screening_options.video_type, "true", "True", "Initial",)))
 	for job in jobs1:
 		job.start()
+	
+	if tilt_azimuth is not None:
+		apDisplay.printMsg("Changing tilt azimuth to %s" % tilt_azimuth)
+		apProTomo2Aligner.changeTiltAzimuth(tiltfilename_full, tilt_azimuth)
 	
 	#Removing highly shifted images
 	bad_images, bad_kept_images=apProTomo2Aligner.removeHighlyShiftedImages(tiltfilename_full, screening_options.dimx, screening_options.dimy, screening_options.shift_limit, screening_options.angle_limit)
@@ -2158,7 +2242,7 @@ def protomoScreening(log_file, tiltseriesnumber, screening_options):
 	f.write("Finished Preparing Files and Directories for Tilt-Series #%s.\n" % (tiltseriesnumber))
 	
 	#Coarse Alignment
-	tiltdirname,tiltdir,seriesnumber,seriesname,tiltfilename,tiltfilename_full,raw_path,tiltstart,rawimagecount,maxtilt = variableSetup(screening_options.rundir, tiltseriesnumber, prep="False")
+	tiltdirname,tiltdir,seriesnumber,seriesname,tiltfilename,tiltfilename_full,raw_path,tiltstart,rawimagecount,maxtilt,tilt_azimuth = variableSetup(screening_options.rundir, tiltseriesnumber, prep="False")
 	cos_alpha=np.cos(maxtilt*np.pi/180)
 	name='coarse_'+seriesname
 	coarse_param_full=tiltdir+'/'+name+'.param'
@@ -2409,8 +2493,24 @@ if __name__ == '__main__':
 				[p.join() for p in mp.active_children()]
 		
 		[p.join() for p in mp.active_children()]
+		
+		apProTomo2Aligner.printTips("CTF")
+		
 		apDisplay.printMsg("CTF Correction Finished for Tilt-Series %s!" % options.tiltseriesranges)
 		log.write("CTF Correction Finished for Tilt-Series %s!\n" % options.tiltseriesranges)
+	
+	
+	#Defocus Estimation
+	if (options.defocus_estimate != "False" and options.automation == "False"):
+		apDisplay.printMsg("Performing Defocus Estimation")
+		log.write("Performing Defocus Estimation\n")
+		for i in tiltseriesranges: #aproTomo2Prep.defocusEstimate is parallelized per-tilt-series
+			defocusEstimaion(i, options)
+		
+		apProTomo2Aligner.printTips("Defocus")
+		
+		apDisplay.printMsg("Defocus Estimation Finished for Tilt-Series %s!" % options.tiltseriesranges)
+		log.write("Defocus Estimation Finished for Tilt-Series %s!\n" % options.tiltseriesranges)
 	
 	
 	#Dose Compensation
@@ -2577,11 +2677,11 @@ if __name__ == '__main__':
 	
 	time_end = time.strftime("%Yyr%mm%dd-%Hhr%Mm%Ss")
 	apDisplay.printMsg('Did everything blow up and now you\'re yelling at your computer screen?')
-	apDisplay.printMsg('If so, kindly email Alex at ajn10d@fsu.edu and include this log file.')
-	apDisplay.printMsg('If everything worked beautifully and you publish it, please use the appropriate citations listed on the Appion webpage!')
+	apDisplay.printMsg('If so, kindly email Alex at anoble@nysbc.org and include this log file.')
+	apDisplay.printMsg('If everything worked beautifully and you publish it, please use the appropriate citations listed on the Appion webpage! You can also print out all citations by typing: protomo2aligner.py --citations')
 	log.write('Did everything blow up and now you\'re yelling at your computer screen?\n')
-	log.write('If so, kindly email Alex at ajn10d@fsu.edu and include this log file.\n')
-	log.write('If everything worked beautifully and you publish it, please use the appropriate citations listed on the Appion webpage!\n')
+	log.write('If so, kindly email Alex at anoble@nysbc.org and include this log file.\n')
+	log.write('If everything worked beautifully and you publish it, please use the appropriate citations listed on the Appion webpage! You can also print out all citations by typing: protomo2aligner.py --citations\n')
 	print "\n"
 	apDisplay.printMsg("Closing log file %s\n" % log_file)
 	log.write("\nEnd time: %s" % time_end)

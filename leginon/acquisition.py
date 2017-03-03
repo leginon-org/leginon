@@ -953,6 +953,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 	def parkAtHighMag(self):
 		# wait for at least for 30 seconds
+		self.logger.info('wait 30 seconds before parking')
 		time.sleep(max(self.settings['pause time'],30))
 		# send a preset at the highest magnification to keep the lens warm
 		park_presetname = self.presetsclient.getHighestMagPresetName()
@@ -1202,11 +1203,11 @@ class Acquisition(targetwatcher.TargetWatcher):
 		presetnames = self.presetsclient.getPresetNames()
 		return presetnames
 
-	def checkDrift(self, presetname, emtarget, threshold):
+	def checkDrift(self, presetname, emtarget, threshold, apply_beamtilt = {'x':0.0,'y':0.0}):
 		'''
 		request DriftManager to monitor drift
 		'''
-		driftdata = leginondata.DriftMonitorRequestData(session=self.session, presetname=presetname, emtarget=emtarget, threshold=threshold)
+		driftdata = leginondata.DriftMonitorRequestData(session=self.session, presetname=presetname, emtarget=emtarget, threshold=threshold, beamtilt=apply_beamtilt)
 		self.driftdone.clear()
 		self.driftimagedone.clear()
 		self.publish(driftdata, pubevent=True, database=True, dbforce=True)

@@ -132,6 +132,7 @@ class Proxy(object):
 				cs = 2.0e-3
 			instrumentdata['cs'] = cs
 			dbinstrumentdata = instrumentdata
+			dbinstrumentdata['hidden'] = False
 			dbinstrumentdata.insert()
 		return dbinstrumentdata
 
@@ -187,6 +188,7 @@ class Proxy(object):
 			dbinstrumentdata = results[0]
 		else:
 			dbinstrumentdata = instrumentdata
+			dbinstrumentdata['hidden'] = False
 			dbinstrumentdata.insert()
 		return dbinstrumentdata
 

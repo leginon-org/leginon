@@ -13,6 +13,7 @@ from appionlib import apImod
 from appionlib import apDisplay
 from appionlib import appiondata
 from appionlib.apImage import imagenorm
+import multiprocessing as mp
 
 def parseTilt(tiltfile):
 	f=open(tiltfile)
@@ -90,7 +91,53 @@ def linkImageFiles(imgtree,rawdir):
 			os.symlink(os.path.join(imgpath,imagedata['filename']+'.mrc'),linkedpath)
 	return filenamelist
 
-def getImageFiles(imgtree, rawdir, link, copy):
+def getImageFiles2(imgtree, rawdir, link, copy):
+	#This parallel version apparently overloads the database???
+	def getImage(imagedata, rawdir, link, copy):
+		imgpath=imagedata['session']['image path']
+		presetname=imagedata['preset']['name']
+		imgprefix=presetname+imagedata['filename'].split(presetname)[-1]
+		imgname=imgprefix+'.mrc'
+		destpath = os.path.join(rawdir,imgname)
+		imgfullpath = os.path.join(imgpath,imagedata['filename']+'.mrc')
+
+		if link == "True":
+			#create symlinks to files
+			if os.path.islink(destpath):
+				os.remove(destpath)
+			if not os.path.isfile(destpath):
+				os.symlink(imgfullpath,destpath)
+		elif copy == "True":
+			#shutil.copy(imgfullpath,destpath)	
+			
+			#Y-flip raw images, normalize them, and convert them to float32 because Protomo
+			image=mrc.read(imgfullpath)
+			#image=numpy.flipud(image)
+			image=numpy.float32(image)
+			image=imagenorm.normStdev(image)
+			#image=numpy.rot90(image)
+			mrc.write(image,destpath)
+		#else: just return values
+	#set up names
+	filenamelist = []
+	newimgtree=[]
+	for imagedata in imgtree:
+		presetname=imagedata['preset']['name']
+		imgprefix=presetname+imagedata['filename'].split(presetname)[-1]
+		imgname=imgprefix+'.mrc'
+		filenamelist.append(imgprefix)
+		destpath = os.path.join(rawdir,imgname)
+		newimgtree.append(destpath)
+	procs=min(mp.cpu_count(),2)
+	for imagedata, j in zip(imgtree, range(1,len(imgtree)+1)):
+		p = mp.Process(target=getImage, args=(imagedata, rawdir, link, copy,))
+		p.start()
+		if (j % procs == 0) and (j != 0):
+			[p.join() for p in mp.active_children()]
+	[p.join() for p in mp.active_children()]
+	return filenamelist, newimgtree
+
+def getImageFiles(imgtree, rawdir, link, copy): #Backup for above multiprocessing version
 	#This function should replace linkImageFiles in all calls (i.e. in tomoaligner.py and everywhere else)
 	filenamelist = []
 	newimgtree=[]
@@ -112,13 +159,14 @@ def getImageFiles(imgtree, rawdir, link, copy):
 			if not os.path.isfile(destpath):
 				os.symlink(imgfullpath,destpath)
 		elif copy == "True":
-			shutil.copy(imgfullpath,destpath)	
+			#shutil.copy(imgfullpath,destpath)	
 			
 			#Y-flip raw images, normalize them, and convert them to float32 because Protomo
-			image=mrc.read(destpath)
-			image=numpy.flipud(image)
+			image=mrc.read(imgfullpath)
+			#image=numpy.flipud(image)
 			image=imagenorm.normStdev(image)
 			image=numpy.float32(image)
+			#image=numpy.rot90(image)
 			mrc.write(image,destpath)
 		#else: just return values
 	return filenamelist, newimgtree
