@@ -50,7 +50,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		szpausetime = wx.GridBagSizer(5, 5)
 		szpausetime.Add(wx.StaticText(self, -1, 'Wait'), (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szpausetime.Add(self.widgets['pause time'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		szpausetime.Add(wx.StaticText(self, -1, 'seconds before performing request'), (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szpausetime.Add(wx.StaticText(self, -1, 'seconds before performing request at the reference target'), (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.sz.Add(szpausetime, start_position, (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		return start_position[0]+1,start_position[1]+1
 
