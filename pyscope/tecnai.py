@@ -25,11 +25,16 @@ try:
 except ImportError:
 	pass
 
+DEBUG = False
 # Location of next phase plate AutoIt executable
 AUTOIT_EXE_PATH = "C:\\Program Files\\AutoIt3\\nextphaseplate.exe"
 
 # Newer Krios stage needs backlash.
 KRIOS_ADD_STAGE_BACKLASH = True
+
+# Falcon protector causes certain delays
+HAS_FALCON_PROTECTOR = True
+
 # This scale convert beam tilt readout in radian to 
 # Tecnai or TEM Scripting Illumination.RotationCenter value
 # Depending on the version,  this may be 1.0 or closer to 6
@@ -347,6 +352,23 @@ class Tecnai(tem.TEM):
 			raise SystemError
 		
 	def setBeamBlank(self, bb):
+		self._setBeamBlank(bb)
+		# Falcon protector delays the response of the blanker and 
+		# cause it to be out of sync
+		if HAS_FALCON_PROTECTOR:
+			i = 0
+			time.sleep(0.5)
+			if self.getBeamBlank() != bb:
+				if i < 10:
+					time.sleep(0.5)
+					if DEBUG:
+						print 'retry BeamBlank operation'
+					self._setBeamBlank(bb)
+					i += 1
+				else:
+					raise SystemError
+
+	def _setBeamBlank(self, bb):
 		if bb == 'off' :
 			self.tecnai.Illumination.BeamBlanked = 0
 		elif bb == 'on':
