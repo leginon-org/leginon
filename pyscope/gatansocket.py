@@ -489,6 +489,18 @@ class GatanSocket(object):
 		result = self.ExecuteScript(command_line,select_camera,recv_dblargs_init=recv_dblargs_init)
 		return result.array['dblargs'][0]
 
+	def ExecuteCameraObjectFunction(self,function_name, cameraid=0, recv_longargs_init=(0,), recv_dblargs_init=(0.0,), recv_longarray_init=[]):
+		'''
+		Execute DM script function that requires camera object as input.
+		'''
+		if not self.hasScriptFunction(function_name):
+			# unsuccessful
+			return False
+		fullcommand = "Object manager = CM_GetCameraManager();\n Oject cameraList = CM_GetCameras(manager);\n Object camera = ObjectAt(cameraList,%d);\n " % (cameraid)
+		fullcommand += "%s(camera);\n" % (function_name)
+		result = ExecuteScript(fullcommand, select_camera=cameraid, recv_longargs_init=, recv_dblargs_init, recv_longarray_init) 
+		return result
+
 	def ExecuteScript(self,command_line, select_camera=0, recv_longargs_init=(0,), recv_dblargs_init=(0.0,), recv_longarray_init=[]):
 		funcCode = enum_gs['GS_ExecuteScript']
 		cmd_str = command_line + '\0'
