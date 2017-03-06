@@ -11,7 +11,6 @@
 # $State: Exp $
 # $Locker:  $
 
-import logging
 import os
 import threading
 import wx
@@ -21,7 +20,7 @@ from leginon import manager
 from leginon.gui.wx import About
 from leginon.gui.wx import ApplicationEditor
 from leginon.gui.wx import Launcher
-from leginon.gui.wx import Logging
+from leginon.gui.wx import LeginonLogging
 from leginon.gui.wx import ToolBar
 from leginon.gui.wx import SetupWizard
 
@@ -399,7 +398,7 @@ class Frame(wx.Frame):
 		dialog.Destroy()
 
 	def onMenuLogging(self, evt):
-		dialog = Logging.LoggingConfigurationDialog(self)
+		dialog = LeginonLogging.LoggingConfigurationDialog(self)
 		dialog.ShowModal()
 		dialog.Destroy()
 

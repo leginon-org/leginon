@@ -77,7 +77,7 @@ class Manager(node.Node):
 
 		## need a special DataBinder
 		name = DataBinder.__name__
-		databinderlogger = gui.wx.Logging.getNodeChildLogger(name, self)
+		databinderlogger = gui.wx.LeginonLogging.getNodeChildLogger(name, self)
 		mydatabinder = DataBinder(self, databinderlogger, tcpport=tcpport)
 		node.Node.__init__(self, self.name, session, otherdatabinder=mydatabinder,
 												**kwargs)
