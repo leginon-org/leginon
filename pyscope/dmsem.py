@@ -563,7 +563,7 @@ class GatanK2Base(DMSEM):
 		return 0
 
 	def updateHardwareDarkReference(self):
-		r = self.camera.updateK2HardwareDarkReference(self.cameraid)
+		r = self.camera.UpdateK2HardwareDarkReference(self.cameraid)
 		if r > 0:
 			# has error
 			return True

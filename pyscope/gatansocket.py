@@ -356,7 +356,7 @@ class GatanSocket(object):
 		
 	def UpdateK2HardwareDarkReference(self, cameraid):
 		function_name = 'K2_updateHardwareDarkReference'
-		return self.ExecuteSendCameraObjectionFunction(self, function_name, cameraid)
+		return self.ExecuteSendCameraObjectionFunction(function_name, cameraid)
 
 	def GetEnergyFilter(self):
 		if 'GetEnergyFilter' not in self.filter_functions.keys():
@@ -474,7 +474,7 @@ class GatanSocket(object):
 
 	def ExecuteSendCameraObjectionFunction(self, function_name, camera_id=0):
 		# first longargs is error code. Error if > 0
-		return self.ExecuteGetLongCameraObjectDunction(function_name, camera_id)
+		return self.ExecuteGetLongCameraObjectFunction(function_name, camera_id)
 
 	def ExecuteGetLongCameraObjectFunction(self,function_name, camera_id=0):
 		'''
