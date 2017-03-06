@@ -354,6 +354,10 @@ class GatanSocket(object):
 		message_recv = Message(longargs=(0,))
 		self.ExchangeMessages(message_send, message_recv)
 		
+	def UpdateK2HardwareDarkReference(self, cameraid):
+		function_name = 'K2_updateHardwareDarkReference'
+		return self.ExecuteSendCameraObjectionFunction(self, function_name, cameraid)
+
 	def GetEnergyFilter(self):
 		if 'GetEnergyFilter' not in self.filter_functions.keys():
 			return -1.0
@@ -468,6 +472,42 @@ class GatanSocket(object):
 				received += len_recv
 		return imArray
 
+	def ExecuteSendCameraObjectionFunction(self, function_name, camera_id=0):
+		# first longargs is error code. Error if > 0
+		return self.ExecuteGetLongCameraObjectDunction(function_name, camera_id)
+
+	def ExecuteGetLongCameraObjectFunction(self,function_name, camera_id=0):
+		'''
+		Execute DM script function that requires camera object as input and output one long integer.
+		'''
+		recv_longargs_init = (0,)
+		result = self.ExecuteCameraObjectFunction(function_name, camera_id, recv_longargs_init=recv_longargs_init)
+		if result is False:
+			return 1
+		return result.array['longargs'][0]
+
+	def ExecuteGetDoubleCameraObjectFunction(self,function_name, camera_id=0):
+		'''
+		Execute DM script function that requires camera object as input and output double floating point number.
+		'''
+		recv_dblargs_init = (0,)
+		result = self.ExecuteCameraObjectFunction(function_name, camera_id, recv_dblargs_init=recv_dblargs_init)
+		if result is False:
+			return -999.0
+		return result.array['dblargs'][0]
+
+	def ExecuteCameraObjectFunction(self,function_name, camera_id=0, recv_longargs_init=(0,), recv_dblargs_init=(0.0,), recv_longarray_init=[]):
+		'''
+		Execute DM script function that requires camera object as input.
+		'''
+		if not self.hasScriptFunction(function_name):
+			# unsuccessful
+			return False
+		fullcommand = "Object manager = CM_GetCameraManager();\n Object cameraList = CM_GetCameras(manager);\n Object camera = ObjectAt(cameraList,%d);\n " % (camera_id)
+		fullcommand += "%s(camera);\n" % (function_name)
+		result = self.ExecuteScript(fullcommand, select_camera=camera_id, recv_longargs_init=, recv_dblargs_init, recv_longarray_init) 
+		return result
+
 	def ExecuteSendScript(self, command_line, select_camera=0):
 		recv_longargs_init = (0,)
 		result = self.ExecuteScript(command_line,select_camera,recv_longargs_init)
@@ -488,18 +528,6 @@ class GatanSocket(object):
 		recv_dblargs_init = (0.0,)
 		result = self.ExecuteScript(command_line,select_camera,recv_dblargs_init=recv_dblargs_init)
 		return result.array['dblargs'][0]
-
-	def ExecuteCameraObjectFunction(self,function_name, cameraid=0, recv_longargs_init=(0,), recv_dblargs_init=(0.0,), recv_longarray_init=[]):
-		'''
-		Execute DM script function that requires camera object as input.
-		'''
-		if not self.hasScriptFunction(function_name):
-			# unsuccessful
-			return False
-		fullcommand = "Object manager = CM_GetCameraManager();\n Oject cameraList = CM_GetCameras(manager);\n Object camera = ObjectAt(cameraList,%d);\n " % (cameraid)
-		fullcommand += "%s(camera);\n" % (function_name)
-		result = ExecuteScript(fullcommand, select_camera=cameraid, recv_longargs_init=, recv_dblargs_init, recv_longarray_init) 
-		return result
 
 	def ExecuteScript(self,command_line, select_camera=0, recv_longargs_init=(0,), recv_dblargs_init=(0.0,), recv_longarray_init=[]):
 		funcCode = enum_gs['GS_ExecuteScript']

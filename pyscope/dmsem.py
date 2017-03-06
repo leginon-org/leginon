@@ -562,6 +562,13 @@ class GatanK2Base(DMSEM):
 		'''
 		return 0
 
+	def updateHardwareDarkReference(self):
+		r = self.camera.updateK2HardwareDarkReference(self.cameraid)
+		if r > 0:
+			# has error
+			return True
+		return False
+
 class GatanK2Linear(GatanK2Base):
 	name = 'GatanK2Linear'
 	ed_mode = 'linear'
