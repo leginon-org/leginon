@@ -505,7 +505,7 @@ class GatanSocket(object):
 			return False
 		fullcommand = "Object manager = CM_GetCameraManager();\n Object cameraList = CM_GetCameras(manager);\n Object camera = ObjectAt(cameraList,%d);\n " % (camera_id)
 		fullcommand += "%s(camera);\n" % (function_name)
-		result = self.ExecuteScript(fullcommand, select_camera=camera_id, recv_longargs_init, recv_dblargs_init, recv_longarray_init) 
+		result = self.ExecuteScript(fullcommand, camera_id, recv_longargs_init, recv_dblargs_init, recv_longarray_init) 
 		return result
 
 	def ExecuteSendScript(self, command_line, select_camera=0):
