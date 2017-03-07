@@ -62,6 +62,7 @@ RUN ln -sv /emg/sw/myami/myamiweb /var/www/html/myamiweb
 ### Myami setup
 COPY sinedon.cfg /etc/myami/sinedon.cfg
 COPY leginon.cfg /etc/myami/leginon.cfg
+COPY instruments.cfg /etc/myami/instruments.cfg
 COPY appion.cfg /etc/myami/appion.cfg
 COPY redux.cfg /etc/myami/redux.cfg
 COPY config.php /emg/sw/myami/myamiweb/config.php
