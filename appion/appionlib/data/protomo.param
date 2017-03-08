@@ -112,6 +112,7 @@ tiltseries {
 
    peaksearch {
      radius: { AP_peak_search_radius_x, AP_peak_search_radius_y }
+     cmdiameter: { 0.0, 0.0 } (* AP_optional_cmdiameter *)
    }
 
  }

@@ -962,7 +962,7 @@ def doseCompensate(seriesname, rundir, sessionname, tiltseriesnumber, frame_alig
 		tilts, ordered_imagelist, accumulated_dose_list, ordered_mrc_files, refimg = apTomo.orderImageList(frame_tiltdata, non_frame_tiltdata, frame_aligned="False")
 		if (dose_presets == "Light"):
 			dose_a = 0.245
-			dose_b = -1.6
+			dose_b = -1.8
 			dose_c = 12
 		elif (dose_presets == "Moderate"):
 			dose_a = 0.245

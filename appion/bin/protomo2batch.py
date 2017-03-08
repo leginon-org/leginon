@@ -2392,20 +2392,23 @@ if __name__ == '__main__':
 		[p.join() for p in mp.active_children()]
 		log = open(log_file,'a')
 		
-		if (options.ctf_correct == "True"):
-			apDisplay.printMsg("Performing CTF Correction")
-			log.write("Performing CTF Correction\n")
+		if (options.dose_presets != "False"):
+			apDisplay.printMsg("Performing Dose Compensation")
+			log.write("Performing Dose Compensation\n")
 			for i, j in zip(tiltseriesranges, range(1,len(tiltseriesranges)+1)):
-				p = mp.Process(target=ctfCorrect, args=(i, options,))
+				p = mp.Process(target=doseCompensate, args=(i, options,))
 				p.start()
 				
 				if (j % options.procs == 0) and (j != 0):
 					[p.join() for p in mp.active_children()]
-			
 			[p.join() for p in mp.active_children()]
-			apDisplay.printMsg("CTF Correction Finished for Tilt-Series %s!" % options.tiltseriesranges)
-			log.write("CTF Correction Finished for Tilt-Series %s!\n" % options.tiltseriesranges)
+			apDisplay.printMsg("Dose Compensation Finished for Tilt-Series %s!" % options.tiltseriesranges)
+			log.write("Dose Compensation Finished for Tilt-Series %s!\n" % options.tiltseriesranges)
+		
 		[p.join() for p in mp.active_children()]
+		
+		apProTomo2Aligner.printTips("None")
+		
 		apDisplay.printMsg("Files and Directories Prepared for Tilt-Series %s!" % options.tiltseriesranges)
 		log.write("Files and Directories Prepared for Tilt-Series %s!" % options.tiltseriesranges)
 	
@@ -2422,6 +2425,9 @@ if __name__ == '__main__':
 				[p.join() for p in mp.active_children()]
 		
 		[p.join() for p in mp.active_children()]
+		
+		apProTomo2Aligner.printTips("Alignment")
+		
 		log = open(log_file,'a')
 		apDisplay.printMsg("Coarse Alignments Finished for Tilt-Series %s!" % options.tiltseriesranges)
 		log.write("Coarse Alignments Finished for Tilt-Series %s!\n" % options.tiltseriesranges)
@@ -2440,6 +2446,9 @@ if __name__ == '__main__':
 				[p.join() for p in mp.active_children()]
 		
 		[p.join() for p in mp.active_children()]
+		
+		apProTomo2Aligner.printTips("Alignment")
+		
 		log = open(log_file,'a')
 		apDisplay.printMsg("Refinements Finished for Tilt-Series %s!" % options.tiltseriesranges)
 		log.write("Refinements Finished for Tilt-Series %s!\n" % options.tiltseriesranges)
@@ -2472,6 +2481,9 @@ if __name__ == '__main__':
 				[p.join() for p in mp.active_children()]
 		
 		[p.join() for p in mp.active_children()]
+		
+		apProTomo2Aligner.printTips("Reconstruction")
+		
 		log = open(log_file,'a')
 		apDisplay.printMsg("Reconstructions Finished for Tilt-Series %s!" % options.tiltseriesranges)
 		log.write("Reconstructions Finished for Tilt-Series %s!\n" % options.tiltseriesranges)
@@ -2525,6 +2537,9 @@ if __name__ == '__main__':
 				[p.join() for p in mp.active_children()]
 		
 		[p.join() for p in mp.active_children()]
+		
+		apProTomo2Aligner.printTips("None")
+		
 		apDisplay.printMsg("Dose Compensation Finished for Tilt-Series %s!" % options.tiltseriesranges)
 		log.write("Dose Compensation Finished for Tilt-Series %s!\n" % options.tiltseriesranges)
 	

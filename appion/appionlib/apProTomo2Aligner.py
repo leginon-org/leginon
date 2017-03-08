@@ -46,8 +46,9 @@ def printTips(tip_type):
 	choices.append("Info: Protomo alignment speed is proportional to the number of tilt images, the search area, and the inverse squared of the binning.")
 	choices.append("Info: To print a full list of citations, just type protomo2aligner.py --citations")
 	choices.append("Info: Sometimes horizontal black bars show up in the videos. Don't worry, your images are ok.")
+	choices.append("Info: Your tilt-series runs will show up on a summary webpage under 'Align Tilt-Series' on the left side of the webpages for easy reference.")
 	choices.append("Tip: Use Run names 'tiltseries####' in order to see your tilt-series alignments on the Batch Summary webpages.")
-	choices.append("Tip: Each microscope + holder will have a unique tilt azimuth. To determine this value, collect a tilt-series of high SNR objects without ice contamination and run Appion-Protomo refinement for 50-100 iterations at binned by 8, followed by 5-10 iterations at binned by 4, 2, then 1. If the alignment converged (CCMS values and correction factors are all very low), then the tilt azimuth has likely been estimated properly. You may wish to check the opposite tilt azimuth (plus or minus 180 degrees) to see if it aligns better or worse. Use the resulting value as input into all tilt-series alignment for this microscope + holder combination by inputing it into the 'Override Tilt Azimuth' parameter in Appion-Protomo.")
+	choices.append("Tip: Each microscope + holder will have a unique tilt azimuth. To determine this value, collect a tilt-series of high SNR objects without ice contamination and run Appion-Protomo refinement for 50-100 iterations at binned by 8, followed by 5-10 iterations at binned by 4, 2, then 1. If the alignment converged (CCMS values and correction factors are all very low), then the tilt azimuth has likely been estimated properly. You may wish to check the opposite tilt azimuth (plus or minus 180 degrees) to see if it aligns better or worse. Use the resulting value as input into all tilt-series alignment for this microscope + holder combination by inputting the value into the tilt-series collection software tilt axis model (+-90  degrees possibly), or inputting it into the 'Override Tilt Azimuth' parameter in Appion-Protomo. Collecting and processing a medium-magnification tilt-series may be the easiest method for determining tilt azimuth.")
 	choices.append("Tip: Hovering your mouse over parameter text and other text on the Appion-Protomo webpages gives you access to a large part of the Protomo documentation along with helpful suggestions and descriptions.")
 	choices.append("Tip: Batch Align Tilt-Series is particularly useful for initial tilt-series screening. After a large tilt-series collection, run one tilt-series through the Align Tilt-Series Coarse Alignment, then use the resulting coarse_series####.param file as input into Batch Coarse Alignment. Then on the Batch Coarse Alignment Summary webpage, you can easily browse through each tilt-series to identify which are ready for Refinement.")
 	choices.append("Tip: For samples with sizes of about 1 micron or lower, we see best results with the 10nm or 25nm object(s) - Steep lowpass Preset Parameter. Don't forget to adjust the Thickness parameter appropriately after changing the the presets!")
@@ -60,7 +61,7 @@ def printTips(tip_type):
 	choices.append("Tip: For running on clusters, use interactive job submission (qsub -I, msub -I, etc. depending on the submission system). This will allow you to watch the alignment and possibly catch errors.")
 	choices.append("Tip: For running on clusters, consider installing Screen on a stable login node. This will allow you to run Appion-Protomo alignments in convenient virtual terminals without fear of losing your connection or accidentally closing your terminal window.")
 	choices.append("ProTip: To start an Appion-Protomo Refinement manually from scratch, place a properly formatted series####.tlt file in a directory and the corresponding mrc tilt images in a 'raw' subdirectory, then run an Appion-Protomo Refinement.")
-	choices.append("ProTip: If attempts at Coarse Alignment fail, you can revert to manual coarse alignment. In an Appion-Protomo directory, remove all *.i3t files, remove series####.tlt, and type 'tomoalign-gui -tlt coarse_series####.tlt coarse_series####.param', manually align all tilt images, then save. Next type 'python'. Inside Python type 'import protomo;p=protomo.param('coarse_series####.param');s=protomo.series(p);s.geom(0).write('series####.tlt')'. Then run Appion-Protomo Refinement as usual.")
+	choices.append("ProTip: It is possible to manually align outside of the Coarse Alignment step (normally done through Coarse Alignment General Parameters). To do so, in an Appion-Protomo directory, remove all *.i3t files, remove series####.tlt, and type 'tomoalign-gui -tlt coarse_series####.tlt coarse_series####.param', manually align all tilt images, then save. Next type 'python'. Inside Python type 'import protomo;p=protomo.param('coarse_series####.param');s=protomo.series(p);s.geom(0).write('series####.tlt')'. Then run Appion-Protomo Refinement as usual.")
 	
 	if tip_type == "Alignment": #Alignment tips
 		choices.append("Info: Protomo alignment assumes that the angles between tilt images are fixed; ie. tilt angles are never refined.")
@@ -75,7 +76,9 @@ def printTips(tip_type):
 		choices.append("Tip: Dose compensation is based on a fit to experimental data of proteins in cryo from Grant and Grigorieff, 2015 (Moderate uses values from the paper). As a result, dose compensation with Moderate may not be accurate for your sample. The amount of dose compensation can be adjusted as you determine is appropriate.")
 		choices.append("Tip: The alignment thickness is the estimated height in the z-direction of the objects of interest in the tomogram. This is a critical parameter and should be within 50% of the actual value.")
 		choices.append("Tip: The correlation peak video should have a bright dot in the center of each frame, indicating that there is signal for alignment and that the alignment has not failed.")
-		choices.append("Tip: A tilt-series that has an asymmetric positive-to-negative tilt range, e.g. [-45:60], will likely refine with a slightly different tilt azimuth compared to a symmetric tilt-series. For extreme cases such as a halt tilt-series, e.g. [0:60], the tilt azimuth will very likely refine incorrectly. For either of these cases you may wish to assign the known tilt azimuth for the microscope+holder combination and turn off tilt azimuth refinement (Refinemnet Advanced settings).")
+		choices.append("Tip: A tilt-series that has an asymmetric positive-to-negative tilt range, e.g. [-45:60], will likely refine with a slightly different tilt azimuth compared to a symmetric tilt-series. For extreme cases such as a halt tilt-series, e.g. [0:60], the tilt azimuth will very likely refine incorrectly. For either of these cases you may wish to assign the known tilt azimuth for the microscope+holder combination and turn off tilt azimuth refinement (Refinement Advanced settings).")
+		choices.append("Tip: If there are grossly misaligned tilt images after Coarse Alignment that you wish to recover rather than discard, re-run the Coarse Alignment and choose 'Manual then Coarse' in the General Parameters.")
+		choices.append("Tip: Consider turning on the optional Center of Mass Peak Search option during Refinement. By turning on this option, Protomo will identify the 'center of mass' of intensity values in the correlation peak by searching in an ellipse centered on the highest intensity pixel found during peak search. This allows for sub-pixel precision and may increase or decrease the accuracy of an alignment.")
 	elif tip_type == "Reconstruction": #Reconstruction tips
 		choices.append("Tip: You can make a reconstruction while a tilt-series is still aligning.")
 		choices.append("Tip: Be aware that the location of objects from different iterations may change.")
@@ -89,7 +92,7 @@ def printTips(tip_type):
 	elif tip_type == "Defocus": #Defocus estimation tips
 		choices.append("Tip: Defocus estimation with TomoCTF relies on useful SNR. If the signal is not clearly visible in the images, try increasing the Minimum Resolution for Fitting. Conversely, if the signal is clearly visible out to the last ring, you may wish to decrease the Minimum Resolution for Fitting.")
 		choices.append("Tip: Defocus estimation can be performed in two ways from within Appion-Protomo: 1) With TomoCTF, which estimates the defocus of the untilted plane by tiling, or 2) with integrated Appion full-image defocus estimation packages.")
-		choises.append("Tip: When estimating defocus with TomoCTF, the angular range of tilt images used can be restricted. This is particularly useful if high tilt images are highly shifted or if some images contain substantial contamination.")
+		choices.append("Tip: When estimating defocus with TomoCTF, the angular range of tilt images used can be restricted. This is particularly useful if high tilt images are highly shifted or if some images contain substantial contamination.")
 	elif tip_type == "CTF": #CTF correction tips
 		choices.append("Tip: Phases are flipped in a strip-based method when CTF correcting using TomoCTF or IMOD's ctfphaseflip. TomoCTF also allows for amplitude correction. It is recommended that conservative values be used for amplitude correction (default values) so that high frequency noise is not amplified.")
 		choices.append("Tip: CTF correction should be at least as accurate as the number of matched Thon rings observed. If thon rings match out to the highest resolution used for estimation, CTF correction might still be accurate for higher resolution phase flips.")
@@ -1516,6 +1519,8 @@ def makeTiltSeriesVideos(seriesname, iteration, tiltfilename, rawimagecount, run
 				tiltimage = os.path.join(vid_path,"coarse_tilt%04d.png" % (j))
 			elif align_step == "Coarse2":
 				tiltimage = os.path.join(vid_path,"coarse2_tilt%04d.png" % (j))
+			elif align_step == "Manual":
+				tiltimage = os.path.join(vid_path,"manual_tilt%04d.png" % (j))
 			else: #align_step == "Refinement"
 				tiltimage = os.path.join(vid_path,"tilt%04d.png" % (j))
 			os.system("mkdir -p %s 2>/dev/null" % (vid_path))
@@ -1543,7 +1548,7 @@ def makeTiltSeriesVideos(seriesname, iteration, tiltfilename, rawimagecount, run
 			pass
 	
 	try: #If anything fails, it's likely that something isn't in the path
-		if (parallel=="True" and align_step=="Coarse") or (parallel=="True" and align_step=="Coarse2"):
+		if (parallel=="True" and align_step=="Coarse") or (parallel=="True" and align_step=="Coarse2") or (parallel=="True" and align_step=="Manual"):
 			procs=min(5,mp.cpu_count()-1)
 		elif parallel=="True":
 			procs=max(mp.cpu_count()-1,2)
@@ -1594,6 +1599,13 @@ def makeTiltSeriesVideos(seriesname, iteration, tiltfilename, rawimagecount, run
 			webm='coarse_'+seriesname+'_iter2.webm'
 			png='coarse2_*.png'
 			pngff='coarse2_tilt%04d.png'
+		elif align_step == "Manual":
+			gif='manual_'+seriesname+'.gif'
+			ogv='manual_'+seriesname+'.ogv'
+			mp4='manual_'+seriesname+'.mp4'
+			webm='manual_'+seriesname+'.webm'
+			png='manual_*.png'
+			pngff='manual_tilt%04d.png'
 		else: #align_step == "Refinement"
 			gif=seriesname+iteration+'.gif'
 			ogv=seriesname+iteration+'.ogv'
@@ -1627,6 +1639,8 @@ def makeTiltSeriesVideos(seriesname, iteration, tiltfilename, rawimagecount, run
 			apDisplay.printMsg("Done creating coarse tilt-series video!")
 		elif align_step == "Coarse2":
 			apDisplay.printMsg("Done creating coarse iteration 2 tilt-series video!")
+		elif align_step == "Manual":
+			apDisplay.printMsg("Done creating manual alignment tilt-series video!")
 		else: #align_step == "Refinement"
 			apDisplay.printMsg("Done creating tilt-series video!")
 		
@@ -1676,13 +1690,20 @@ def makeReconstructionVideos(seriesname, iteration, rundir, rx, ry, show_window_
 	
 	try: #If anything fails, it's likely that something isn't in the path
 		os.system("mkdir -p %s/media/reconstructions 2>/dev/null" % rundir)
-		if align_step == "Coarse" or align_step == "Coarse2":
+		if (align_step == "Coarse") or (align_step == "Coarse2"):
 			img=seriesname+'00_bck.img'
 			mrcf=seriesname+'.mrc'
 			gif=seriesname+'.gif'
 			ogv=seriesname+'.ogv'
 			mp4=seriesname+'.mp4'
 			webm=seriesname+'.webm'
+		elif align_step == "Manual":
+			img='manual'+seriesname[6:]+'.img'
+			mrcf='manual'+seriesname[6:]+'.mrc'
+			gif='manual'+seriesname[6:]+'.gif'
+			ogv='manual'+seriesname[6:]+'.ogv'
+			mp4='manual'+seriesname[6:]+'.mp4'
+			webm='manual'+seriesname[6:]+'.webm'
 		else: #align_step == "Refinement"
 			img=seriesname+iteration+'_bck.img'
 			mrcf=seriesname+iteration+'_bck.mrc'
