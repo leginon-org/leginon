@@ -2494,12 +2494,10 @@ class Protomo2BatchForm extends BasicLayoutForm
 		return $command." ";
 	}	
 	
-	// Override the default ShowReference function because the user needs to be re-directed
+	// Use form footer to redirect user
 	// to the next step of the Protomo workflow.
-	public function showReference( $postArray )
+	public function gererateFormFooter()
 	{
-		$html = parent::showReference( $postArray );
-		
 		global $sessionname;
 		global $imageinfo;
 		global $numtiltseries;
