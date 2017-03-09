@@ -5,12 +5,12 @@
 #  -v /Users/vosslab/emg/data:/emg/data \
 #  -v /Users/vosslab/myami/pyami:/emg/sw/myami/pyami \
 
+#  --cap-add SYS_ADMIN --security-opt seccomp:unconfined \
+#  --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro \
+#  -e 'container=docker' \
+#  --tmpfs /run --tmpfs /run/lock \
 
 docker run -d -t \
-  --cap-add SYS_ADMIN --security-opt seccomp:unconfined \
-  --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro \
-  -e 'container=docker' \
-  --tmpfs /run --tmpfs /run/lock \
   -v $HOME/myami:/emg/sw/myami \
   -w /emg/sw/myami/appion \
   -p 80:80 -p 5901:5901 -p 3306:3306 \
