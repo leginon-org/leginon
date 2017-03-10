@@ -38,7 +38,7 @@ RUN dnf -y upgrade && dnf -y install tigervnc-server xterm xsetroot xfwm4 xfce4-
 #RUN dnf -y upgrade && dnf -y install mozilla-adblockplus firefox dbus && dnf -y clean all
 RUN dbus-uuidgen > /var/lib/dbus/machine-id
 RUN pip install --upgrade pip
-RUN pip install joblib pyfftw3 fs scikit-learn
+RUN pip install joblib pyfftw3 fs==0.5.4 scikit-learn
 RUN python -c 'from sklearn import svm' # test for function
 
 RUN updatedb
