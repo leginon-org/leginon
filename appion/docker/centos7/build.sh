@@ -17,10 +17,10 @@ wget -nc -c 'http://emg.nysbc.org/redmine/attachments/download/4483/ctffind-4.0.
 wget -nc -c 'http://emg.nysbc.org/redmine/attachments/download/5600/eman2_centos6_docker.tgz'
 wget -nc -c 'http://emg.nysbc.org/redmine/attachments/download/5034/xmipp_centos6_docker.tgz'
 wget -nc -c 'http://emg.nysbc.org/redmine/attachments/download/5166/relion-1.4.tgz'
-wget -nc -c 'http://emg.nysbc.org/redmine/attachments/download/7182/findem-docker-centos6.tgz'
+wget -nc -c 'http://emg.nysbc.org/redmine/attachments/download/7489/findem-docker-centos7.tgz'
 #wget -nc -c 'http://emg.nysbc.org/redmine/attachments/download/638/spidersmall.18.10.tar.gz'
 #wget -nc -c 'http://emg.nysbc.org/redmine/attachments/download/636/Xmipp-2.4-src.tar.gz'
 cd $curdir
-tar zxvf TGZ/findem-docker-centos6.tgz
+tar zxvf TGZ/findem-docker-centos7.tgz
 
 docker build -t vosslab/appion-centos7 .

@@ -42,7 +42,7 @@ maxlikeAlignment.py \
  --num-ref=3 --clip=96 --bin=2 --angle-interval=5 --max-iter=10 \
  --fast --fast-mode=wide --mirror --savemem --commit --converge=slow \
  --rundir=/emg/data/appion/06jul12a/align/maxlike1 --runname=maxlike1 \
- --projectid=1 --expid=1 --jobtype=partalign
+ --projectid=1 --expid=1 --jobtype=partalign --nompi
 
 uploadMaxlikeAlignment.py \
  --rundir=/emg/data/appion/06jul12a/align/maxlike1 \

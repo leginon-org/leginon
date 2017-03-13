@@ -31,10 +31,7 @@ RUN dnf -y upgrade && dnf -y install \
 
 RUN sed -i.bak 's/max_allowed_packet = [0-9]*M/max_allowed_packet = 24M/' /etc/nanorc
 
-
-### Trying to do VNC
-RUN dnf -y upgrade && dnf -y install tigervnc-server xterm xsetroot xfwm4 xfce4-session \
- && dnf -y clean all
+## Appion specific installs
 #RUN dnf -y upgrade && dnf -y install mozilla-adblockplus firefox dbus && dnf -y clean all
 RUN dbus-uuidgen > /var/lib/dbus/machine-id
 RUN pip install --upgrade pip
@@ -130,6 +127,17 @@ RUN ln -sv /emg/sw/grigorieff/ctffind3/ctffind3_mp.exe /emg/sw/grigorieff/bin/ct
 RUN chmod 777 /emg/sw/grigorieff/ctffind3/ctffind3_mp.exe 
 RUN chmod 777 /emg/sw/grigorieff/bin/ctffind4
 
+### Trying to do VNC
+#RUN dnf -y upgrade && dnf -y install  \
+# ftp://ftp.pbone.net/mirror/ftp.scientificlinux.org/linux/scientific/6.5/x86_64/os/Packages/xorg-x11-twm-1.0.3-5.1.el6.x86_64.rpm \
+# && dnf -y clean all
+RUN dnf -y upgrade && dnf -y install \
+ tigervnc-server xterm xsetroot fluxbox \
+ xorg-x11-xinit xorg-x11-font-utils xorg-x11-fonts-Type1 xorg-x11-xauth  \
+ libX11-common libX11 dbus-x11 xorg-x11-server-utils xorg-x11-xkb-utils \
+ xorg-x11-fonts-75dpi xorg-x11-fonts-100dpi xorg-x11-fonts-misc \
+ && dnf -y clean all
+
 ### Change to local user
 #RUN mkdir -p /home/appionuser
 RUN useradd -d /home/appionuser -g 100 -p 'Phys-554' -s /bin/bash appionuser && echo 'appionuser' && usermod -aG wheel appionuser
@@ -139,11 +147,14 @@ RUN chown -R appionuser:users /home/appionuser
 ENV HOME /home/appionuser
 WORKDIR /home/appionuser
 RUN mkdir -p .vnc
+RUN touch .Xauthority
 RUN chmod 777 .vnc
 RUN echo Phys-554 | vncpasswd -f > .vnc/passwd
 RUN chmod 600 .vnc/passwd
 RUN ls .vnc/
 COPY xstartup .vnc/xstartup
+RUN mkdir -p .config/fbpanel
+COPY fbpanel-default .config/fbpanel/default
 RUN ls .vnc/
 USER root
 RUN chown -R appionuser:users /home/appionuser
