@@ -36,13 +36,13 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 	$corr_mode='mcf', $iters='', $param='', $binning='true', $preprocessing='true', $select_images='', $exclude_images_by_angle='', $exclude_images_by_angle_accuracy='0.05',
 	$tilt_azimuth='', $border='100',$clip_low='3.5', $clip_high='3.5', $thr_low='', $thr_high='', $gradient='true', $iter_gradient='false', $filter='median', $kernel_x='', $kernel_y='',
 	$grow='0', $window_area='0.95', $mask_apod_x='', $mask_apod_y='', $mask_width_x='', $mask_width_y='', $dimx='', $dimy='',$correlation_size_x='192',
-	$correlation_size_y='192', $peak_search_radius_x='300', $peak_search_radius_y='300', $logging='true', $loglevel='2', $slab='true', $map_size_x='512',
+	$correlation_size_y='192', $peak_search_radius_x='1000', $peak_search_radius_y='1000', $logging='true', $loglevel='2', $slab='true', $map_size_x='512',
 	$map_size_y='512', $filename_prefix='', $image_file_type='', $cachedir='cache', $protomo_outdir='out', $grid_limit='2.0', $grid_step='0.1',
 	$create_reconstruction='true', $show_window_size='true', $create_tilt_video='true', $keep_recons='false', $region_x='512', $video_type='',
 	$shift_limit='30' , $angle_limit='40', $parallel='', $ctf_correct='', $amp_contrast_ctf='0.07', $iWidth='20', $DefocusTol='200',
 	$dose_presets='', $dose_a='', $dose_b='', $dose_c='', $frame_aligned='', $negative='', $positive='', $defocus_min='', $defocus_max='',
 	$defocus_estimate='', $defocus_difference='0.2', $defocus_ang_negative='', $defocus_ang_positive='', $amp_contrast_defocus='0.07',
-	$res_min='10000', $res_max='10', $defocus_save='', $coarse_iterate='')
+	$res_min='10000', $res_max='10', $defocus_save='', $further_alignment='')
 	{
 		parent::__construct($expId, $extraHTML);
 		//print "_POST:" . "<br>";
@@ -347,7 +347,7 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 				$_POST['lowpass_diameter_y'] = $lp_diam_y = min(round(pow(10,10)*$imageinfo['pixelsize']*75), round(0.75*$hp_diam_x));
 				$_POST['lowpass_apod_x'] = $lp_apod_x = 2.5*$lp_diam_x;
 				$_POST['lowpass_apod_y'] = $lp_apod_y = 2.5*$lp_diam_y;
-				$_POST['thickness'] = $thickness = 1500;
+				$_POST['thickness'] = $thickness = 1000;
 			}
 			
 			if ($_POST['preset_size'] == 2)  //Size 10 nm
@@ -446,7 +446,15 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		$this->setPublications( $pubList );
 		$this->setJobType( 'protomo' );
 		$this->setOutputDirectory( 'protomo_alignments' );
-		$this->setBaseRunName( 'protomorun' );
+		if ($_POST['process'] != "Just Show Command"){
+			if (isset($tiltseriesinfos[0]['number'])){
+				$num = sprintf('%04d', $tiltseriesinfos[0]['number']);
+				$_POST['runname'] = 'tiltseries'.$num;
+			}else{
+				$_POST['runname'] = 'FIRST_SELECT_A_TILT-SERIES_BELOW';
+			}
+		}
+		#$this->setBaseRunName( $protomorunname );
 		$this->setTitle( 'Protomo Coarse Alignment Launcher' );
 		$this->setHeading( 'Protomo Coarse Alignment' );
 		$this->setExeFile( 'protomo2aligner.py' );
@@ -545,7 +553,7 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		$params->addParam( "res_min", $res_min, "Lowest Resolution for Fitting" );
 		$params->addParam( "res_max", $res_max, "Highest Resolution for Fitting" );
 		$params->addParam( "defocus_save", $defocus_save, "Save Defocus Value" );
-		$params->addParam( "coarse_iterate", $coarse_iterate, "Iterate Coarse Alignment Once" );
+		$params->addParam( "further_alignment", $further_alignment, "Iterate Coarse Alignment Once (w/ Manual Alignment)" );
 		
 		// Validations
 		if ($_POST['settings'] == 2 or $_POST['settings'] == 3)  //Basic or Advanced Settings
@@ -576,8 +584,8 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		{
 			global $html;
 			$html .= "<br></br>
-			<b><center>[Choose a Tilt-Series to align to proceed]</center></b><br>
-			<b><center>[For manual tilt-series setup <a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2CoarseAlignForm&manual=1'>Click here</a>]</center></b><br>
+			<b><center>[Choose a Tilt-Series to align to proceed]</center></b><br><hr><br>
+			<!--<b><center>[For manual tilt-series setup <a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2CoarseAlignForm&manual=1'>Click here</a>]</center></b><br>-->
 			<b><center>[To upload a SerialEM-collected tilt-series, run the following command:</b><br><br>
 			protomo2aligner.py --serialem_stack=[stack path] --serialem_mdoc=[mdoc path] --voltage=[in keV]<br><br>
 			<b>and then follow the insturctions after running the command.]</center></b><br>";
@@ -634,9 +642,9 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 					<hr />";
 					
 					$html.= '<select name="dose_presets" style="width:66px">';
-					$html.= '<option selected value="False">None</option>';
+					$html.= '<option value="False">None</option>';
 					$html.= '<option value="Light">Light</option>';
-					$html.= '<option value="Moderate">Moderate</option>';
+					$html.= '<option selected value="Moderate">Moderate</option>';
 					$html.= '<option value="Heavy">Heavy</option>';
 					$html.= '</select>'; $html.= docpop('dose_presets', ' Dose Compensation Type').'<br>';
 				}
@@ -660,10 +668,11 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 				$html.= '<option selected value="True">true</option>';
 				$html.= '<option value="False">false</option>';
 				$html.= '</select>'; $html.= docpop('protomo_parallel', ' Parallelize Non-Protomo Processes').'<br>';
-				$html.= '<select name="coarse_iterate" style="width:66px">';
-				$html.= '<option value="True">true</option>';
-				$html.= '<option selected value="False">false</option>';
-				$html.= '</select>'; $html.= docpop('protomo_coarse_iterate', ' Iterate Coarse Alignment Once').'<br>';
+				$html.= '<select name="further_alignment" style="width:66px">';
+				$html.= '<option value="Manual_then_Coarse">Manual then Coarse</option>';
+				$html.= '<option value="Coarse">Coarse</option>';
+				$html.= '<option selected value="None">None</option>';
+				$html.= '</select>'; $html.= docpop('protomo_further_alignment', ' Iterate Coarse Alignment Once (w/ Manual Alignment)').'<br>';
 				
 				$html .= "
 			    <br />
@@ -781,9 +790,9 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 					<hr />";
 					
 					$html.= '<select name="dose_presets" style="width:66px">';
-					$html.= '<option selected value="False">None</option>';
+					$html.= '<option value="False">None</option>';
 					$html.= '<option value="Light">Light</option>';
-					$html.= '<option value="Moderate">Moderate</option>';
+					$html.= '<option selected value="Moderate">Moderate</option>';
 					$html.= '<option value="Heavy">Heavy</option>';
 					$html.= '<option value="Custom">Custom</option>';
 					$html.= '</select>'; $html.= docpop('dose_presets', ' Dose Compensation Type').'<br>';
@@ -822,10 +831,11 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 				$html.= '<option value="false">false</option>';
 				$html.= '</select>'; $html.= docpop('protomo_logging', ' Logging').'<br>';
 				$html.= $params->insertTextField( "loglevel", $fieldSize );
-				$html.= '<select name="coarse_iterate" style="width:66px">';
-				$html.= '<option value="True">true</option>';
-				$html.= '<option selected value="False">false</option>';
-				$html.= '</select>'; $html.= docpop('protomo_coarse_iterate', ' Iterate Coarse Alignment Once').'<br>';
+				$html.= '<select name="further_alignment" style="width:66px">';
+				$html.= '<option value="Manual_then_Coarse">Manual then Coarse</option>';
+				$html.= '<option value="Coarse">Coarse</option>';
+				$html.= '<option selected value="None">None</option>';
+				$html.= '</select>'; $html.= docpop('protomo_further_alignment', ' Iterate Coarse Alignment Once (w/ Manual Alignment)').'<br>';
 				
 				$html .= "
 				<br />

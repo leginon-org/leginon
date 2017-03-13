@@ -6,7 +6,7 @@
  *	For terms of the license agreement
  *	see  http://leginon.org
  */
-ini_set('display_errors', '0');     # don't show any errors...
+
 error_reporting(E_ALL | E_STRICT);
 
 require_once "basicLayoutForm.inc";
@@ -393,7 +393,7 @@ class Protomo2BatchForm extends BasicLayoutForm
 				$_POST['r3_lowpass_apod_y'] = $r3_lp_apod_y = round(2.5*$r3_lp_diam_y);
 				$_POST['r4_lowpass_apod_y'] = $r4_lp_apod_y = round(2.5*$r4_lp_diam_y);
 				$_POST['r5_lowpass_apod_y'] = $r5_lp_apod_y = round(2.5*$r5_lp_diam_y);
-				$_POST['thickness'] = $thickness = 1500;
+				$_POST['thickness'] = $thickness = 1000;
 			}
 			
 			if ($_POST['preset_size'] == 2)  //Size 10 nm - Steep lowpass
@@ -745,13 +745,13 @@ class Protomo2BatchForm extends BasicLayoutForm
 			//Refinement Type Presets
 			if ($_POST['preset_type'] == 1)  //Generic refinement
 			{
-				$_POST['r1_iters'] = $r1_iters = '15';
+				$_POST['r1_iters'] = $r1_iters = '10';
 				$_POST['r2_iters'] = $r2_iters = '10';
 				$_POST['r3_iters'] = $r3_iters = '5';
-				$_POST['r4_iters'] = $r4_iters = '5';
+				$_POST['r4_iters'] = $r4_iters = '10';
 				$_POST['r5_iters'] = $r5_iters = '0';
 				$_POST['elevation_switch'] = $elevation_switch='';
-				$_POST['scale_switch'] = $scale_switch='';
+				$_POST['scale_switch'] = $scale_switch='31';
 				$_POST['rotation_switch'] = $rotation_switch='';
 				$_POST['azimuth_switch'] = $azimuth_switch='';
 				$_POST['orientation_switch'] = $orientation_switch='';
@@ -792,7 +792,7 @@ class Protomo2BatchForm extends BasicLayoutForm
 				$_POST['r3_iters'] = $r3_iters = '20';
 				$_POST['r4_iters'] = $r4_iters = '20';
 				$_POST['r5_iters'] = $r5_iters = '0';
-				$_POST['elevation_switch'] = $elevation_switch='76';
+				$_POST['elevation_switch'] = $elevation_switch='';
 				$_POST['scale_switch'] = $scale_switch='71';
 				$_POST['rotation_switch'] = $rotation_switch='';
 				$_POST['azimuth_switch'] = $azimuth_switch='';
@@ -806,11 +806,11 @@ class Protomo2BatchForm extends BasicLayoutForm
 				$_POST['r3_iters'] = $r3_iters = '20';
 				$_POST['r4_iters'] = $r4_iters = '40';
 				$_POST['r5_iters'] = $r5_iters = '20';
-				$_POST['elevation_switch'] = $elevation_switch='91';
+				$_POST['elevation_switch'] = $elevation_switch='';
 				$_POST['scale_switch'] = $scale_switch='81';
-				$_POST['rotation_switch'] = $rotation_switch='101';
-				$_POST['azimuth_switch'] = $azimuth_switch='101';
-				$_POST['orientation_switch'] = $orientation_switch='101';
+				$_POST['rotation_switch'] = $rotation_switch='';
+				$_POST['azimuth_switch'] = $azimuth_switch='';
+				$_POST['orientation_switch'] = $orientation_switch='';
 				
 			}
 			
@@ -1040,7 +1040,7 @@ class Protomo2BatchForm extends BasicLayoutForm
 				$_POST['r6_lowpass_apod_y'] = $r6_lp_apod_y = round(2.5*$r6_lp_diam_y);
 				$_POST['r7_lowpass_apod_y'] = $r7_lp_apod_y = round(2.5*$r7_lp_diam_y);
 				$_POST['r8_lowpass_apod_y'] = $r8_lp_apod_y = round(2.5*$r8_lp_diam_y);
-				$_POST['thickness'] = $_POST['recon_thickness'] = $thickness = $recon_thickness = 1500;
+				$_POST['thickness'] = $_POST['recon_thickness'] = $thickness = $recon_thickness = 1000;
 			}
 			
 			if ($_POST['preset_size'] == 2)  //Size 10 nm - Steep lowpass
@@ -1816,6 +1816,21 @@ class Protomo2BatchForm extends BasicLayoutForm
 			$html.= $params->insertTextFieldInRow( "shift_limit", $fieldSize ).'│ ';
 			$html.= $params->insertTextField( "angle_limit", $fieldSize );
 			$html.= $params->insertTextField( "tilt_azimuth", $fieldSize );
+			$html .= "
+		<br />
+		<H3>Dose Compensation Parameters ".docpop('dose_info', '(Info)')."</H3>
+		<hr />";
+			$html.= '</select>'; $html.= docpop('protomo_frame_aligned', ' Use Frame Aligned Images').'<br>';
+			$html.= '<select name="dose_presets" style="width:87px">';
+			$html.= '<option selected value="False">None</option>';
+			$html.= '<option value="Light">Light</option>';
+			$html.= '<option value="Moderate">Moderate</option>';
+			$html.= '<option value="Heavy">Heavy</option>';
+			$html.= '<option value="Custom">Custom</option>';
+			$html.= '</select>'; $html.= docpop('dose_presets', ' Dose Compensation Type').'<br>';
+			$html.= $params->insertTextFieldInRow( "dose_a", $fieldSize ).'│ ';
+			$html.= $params->insertTextFieldInRow( "dose_b", $fieldSize ).'│ ';
+			$html.= $params->insertTextField( "dose_c", $fieldSize );
 			//$html.= '<br><select name="ctf_correct" style="width:66px">';
 			//$html.= '<option value="True">True</option>';
 			//$html.= '<option selected value="False">False</option>';
@@ -2479,9 +2494,9 @@ class Protomo2BatchForm extends BasicLayoutForm
 		return $command." ";
 	}	
 	
-	// Use form footer to re-direct user
+	// Use form footer to redirect user
 	// to the next step of the Protomo workflow.
-	public function generateFormFooter()
+	public function gererateFormFooter()
 	{
 		global $sessionname;
 		global $imageinfo;

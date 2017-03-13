@@ -18,6 +18,9 @@ require_once "inc/project.inc";
 require_once "inc/appionloop.inc";
 require_once "inc/particledata.inc";
 
+$page = $_SERVER['REQUEST_URI'];
+header("Refresh: 300; URL=$page");
+
 $outdir=$_GET['outdir'];
 $runname=$_GET['runname'];
 $tiltseries=$_GET['tiltseries'];

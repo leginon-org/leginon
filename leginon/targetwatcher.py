@@ -301,7 +301,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 	def park(self):
 		self.logger.info('parking...')
 		self.instrument.tem.ColumnValvePosition = 'closed'
-		self.instrument.tem.StagePosition = {'x': 0, 'y': 0, 'a': 0}
+		self.instrument.tem.StagePosition = {'x': 0, 'y': 0}
 		self.logger.warning('column valves closed and stage reset')
 
 	def waitForRejects(self):

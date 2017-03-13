@@ -307,6 +307,12 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 		os.system('cp %s %s' % (tilt_out_full, recon_tilt_out_full))
 		os.system('cp %s %s' % (param_out_full,recon_param_out_full))
 		
+		if (self.params['defocus_save_recon'] != 0 and isinstance(self.params['defocus_save_recon'],float)):
+			defocusdir = '%s/defocus_estimation/' % self.params['rundir']
+			os.system("mkdir %s;rm %sdefocus_*" % (defocusdir, defocusdir))
+			os.system("touch %sdefocus_%f" % (defocusdir, self.params['defocus_save_recon']))
+			apDisplay.printMsg("Defocus value %f saved to disk." % self.params['defocus_save_recon'])
+		
 		if (self.params['reconstruction_actions'] == 2 or self.params['reconstruction_actions'] == 3 or self.params['reconstruction_actions'] == 4):
 			original_raw = os.path.join(raw_path,'original')
 			if os.path.isdir(original_raw):
@@ -320,10 +326,6 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 		if (self.params['ctf_correct'] == 2):
 			apProTomo2Prep.imodCtfCorrect(seriesname, self.params['rundir'], self.params['projectid'], self.params['sessionname'], int(self.params['tiltseries']), recon_tilt_out_full, self.params['frame_aligned'], self.params['pixelsize'], self.params['DefocusTol'], self.params['iWidth'], self.params['amp_contrast_ctf'])
 		elif (self.params['ctf_correct'] == 1):
-			if (self.params['defocus_save_recon'] != 0 and isinstance(self.params['defocus_save_recon'],float)):
-				defocusdir = '%s/defocus_estimation/' % self.params['rundir']
-				os.system("mkdir %s;rm %sdefocus_*" % (defocusdir, defocusdir))
-				os.system("touch %sdefocus_%f" % (defocusdir, self.params['defocus_save_recon']))
 			apProTomo2Prep.tomoCtfCorrect(seriesname, self.params['rundir'], self.params['projectid'], self.params['sessionname'], int(self.params['tiltseries']), recon_tilt_out_full, 'True', self.params['pixelsize'], self.params['amp_contrast_ctf'], self.params['amp_correct'], self.params['amp_correct_w1'], self.params['amp_correct_w2'], self.params['defocus_difference'])
 		#Dose Compensation
 		if (self.params['dose_presets'] != 'False'):
@@ -467,8 +469,8 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 			os.system(cmd2)
 			
 			img=seriesname+'00_bck.img'
-			mrcf=self.params['sessionname']+'_'+seriesname+'_ite'+it+'_dim'+dim+'_ang'+ang+'_thick'+str(int(self.params['recon_thickness']))+'_bck'+dose_comp+'.bin'+str(self.params['recon_map_sampling'])+lp+'_protomo.mrc'
-			mrcfn=self.params['sessionname']+'_'+seriesname+'_ite'+it+'_dim'+dim+'_ang'+ang+'_thick'+str(int(self.params['recon_thickness']))+'_bck'+dose_comp+'.bin'+str(self.params['recon_map_sampling'])+lp+'_protomo.norm.mrc'
+			mrcf=self.params['sessionname']+'_'+seriesname+'_ite'+it+'_dim'+dim+'_ang'+ang+'_thick'+str(int(self.params['recon_thickness']))+'_pxlsz'+str(self.params['pixelsize'])+'_bck'+dose_comp+'.bin'+str(self.params['recon_map_sampling'])+lp+'_protomo.mrc'
+			mrcfn=self.params['sessionname']+'_'+seriesname+'_ite'+it+'_dim'+dim+'_ang'+ang+'_thick'+str(int(self.params['recon_thickness']))+'_pxlsz'+str(self.params['pixelsize'])+'_bck'+dose_comp+'.bin'+str(self.params['recon_map_sampling'])+lp+'_protomo.norm.mrc'
 			img_full=recon_out_dir+'/'+img
 			mrc_full=recon_out_dir+'/'+mrcf
 			mrcn_full=recon_out_dir+'/'+mrcfn
@@ -646,7 +648,7 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 						for i in range(len(mrc_list)):
 							binned_stack[i,:,:] = imagefilter.binImg(stack[i,:,:], bin=self.params['recon_map_sampling'])
 					stack_name1 = self.params['sessionname']+'_'+seriesname+'_stack_ite'+it+'_bin%s' % self.params['recon_map_sampling']
-					stack_name2 = dose_comp+'.mrcs'
+					stack_name2 = '_pxlsz'+str(self.params['pixelsize'])+dose_comp+'.mrcs'
 					stack_path = os.path.join(stack_dir_full,stack_name1+stack_name2)
 				else:
 					scaling = 1/self.params['recon_map_sampling']
@@ -655,7 +657,7 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 					for i in range(len(mrc_list)):
 						binned_stack[i,:,:] = apProTomo2Aligner.scaleByZoomInterpolation(stack[i,:,:], scaling, clip_image=True)
 					stack_name1 = self.params['sessionname']+'_'+seriesname+'_stack_ite'+it+'_bin%s' % self.params['recon_map_sampling']
-					stack_name2 = dose_comp+'.mrcs'
+					stack_name2 = '_pxlsz'+str(self.params['pixelsize'])+dose_comp+'.mrcs'
 					stack_path = os.path.join(stack_dir_full,stack_name1+stack_name2)
 				
 				mrc.write(binned_stack, stack_path)
@@ -663,7 +665,7 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 		# Tomo3D Reconstruction by WBP
 		if self.params['reconstruction_method'] == 2:
 			z = int(math.ceil(z / 2.) * 2) # Rounds up the thickness to the nearest even number
-			mrcf = self.params['sessionname']+'_'+seriesname+'_ite'+it+'_ang'+ang+'_thick'+str(int(self.params['recon_thickness']))+dose_comp+'.bin'+str(self.params['recon_map_sampling'])+'_tomo3dWBP.mrc'
+			mrcf = self.params['sessionname']+'_'+seriesname+'_ite'+it+'_ang'+ang+'_thick'+str(int(self.params['recon_thickness']))+'_pxlsz'+str(self.params['pixelsize'])+dose_comp+'.bin'+str(self.params['recon_map_sampling'])+'_tomo3dWBP.mrc'
 			mrc_full = recon_dir + mrcf
 			os.system('rm -r %s 2>/dev/null' % mrc_full)
 			cmd = 'tomo3d -a %s -i %s -t %s -v 2 -z %s %s -o %s' % (tiltlist, stack_path, procs, z, self.params['tomo3d_options'], mrc_full)
@@ -671,7 +673,7 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 		# Tomo3D Reconstruction by SIRT
 		elif self.params['reconstruction_method'] == 3:
 			z = int(math.ceil(z / 2.) * 2) # Rounds up the thickness to the nearest even number
-			mrcf = self.params['sessionname']+'_'+seriesname+'_ite'+it+'_ang'+ang+'_thick'+str(int(self.params['recon_thickness']))+dose_comp+'.bin'+str(self.params['recon_map_sampling'])+'_tomo3dSIRT_'+str(self.params['tomo3d_sirt_iters'])+'_iters.mrc'
+			mrcf = self.params['sessionname']+'_'+seriesname+'_ite'+it+'_ang'+ang+'_thick'+str(int(self.params['recon_thickness']))+'_pxlsz'+str(self.params['pixelsize'])+dose_comp+'.bin'+str(self.params['recon_map_sampling'])+'_tomo3dSIRT_'+str(self.params['tomo3d_sirt_iters'])+'_iters.mrc'
 			mrc_full = recon_dir + mrcf
 			os.system('rm -r %s 2>/dev/null' % mrc_full)
 			cmd = 'tomo3d -a %s -i %s -t %s -v 2 -z %s -S -l %s %s -o %s' % (tiltlist, stack_path, procs, z, self.params['tomo3d_sirt_iters'], self.params['tomo3d_options'], mrc_full)

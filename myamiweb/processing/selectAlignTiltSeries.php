@@ -46,7 +46,7 @@ echo "<table border='1' class='tableborder' width='640'>\n";
 */
 
 echo "<tr><td width='100' align='center'>\n";
-echo "  <img src='img/protomo.png' width='120'>\n";
+echo "  <a href='runAppionLoop.php?expId=$expId&form=Protomo2CoarseAlignForm'><img src='img/protomo.png' width='120'>\n";
 echo "</td><td>\n";
 echo "  <h3><a href='runAppionLoop.php?expId=$expId&form=Protomo2CoarseAlignForm'>Protomo 2.4.1</a></h3>\n";
 echo " <p> Protomo is a software package used in electron tomography for marker-free alignment and weighted back-"

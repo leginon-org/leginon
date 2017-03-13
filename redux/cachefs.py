@@ -104,8 +104,10 @@ class CacheFS(fs.osfs.OSFS):
 	def __init__(self, cachedir, maxsize):
 		fs.osfs.OSFS.__init__(self, cachedir)
 		self.constrainer = Constrainer(maxsize, self.remove)
-
-		files = list(self.walkfiles())
+		try:
+			files = list(self.walkfiles())
+		except AttributeError:
+			files = list(self.walk.files())
 
 		fileatimes = [(f,self.getinfo(f)['accessed_time']) for f in files]
 		fileatimes.sort(cmp2)

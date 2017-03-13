@@ -41,7 +41,6 @@ $sessions=$sessiondata['sessions'];
 
 $particle = new particledata();
 
-
 if (is_numeric($expId)) {
 	// sort out submitted job information
 	if ($clusterjobs = $particle->getJobIdsFromSession($expId)) {
@@ -638,16 +637,29 @@ if (is_numeric($expId)) {
 		$utresults[] = ($utrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=uploadtomo'>$utrun running</a>";
 		$utresults[] = ($utq==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=uploadtomo'>$utq queued</a>";
 
-		// get tilt series alignement stats:
-		$taresults=array();
-		$tadone = count($subclusterjobs['tomoaligner']['done']);
-		$tadone = count($particle->getTomoAlignmentRunsFromSession($sessionId, False));
-		$tarun = count($subclusterjobs['tomoaligner']['running']);
-		$taq = count($subclusterjobs['tomoaligner']['queued']);
-		$taresults[] = ($tadone==0) ? "" : "<a href='tomoalignrunsummary.php?expId=$sessionId'>$tadone complete</a>";
-		$taresults[] = ($tarun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=tomoaligner'>$tarun running</a>";
-		$taresults[] = ($taq==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=tomoaligner'>$taq queued</a>";
+		// get tilt series alignment stats:
 
+		$projectId   = getProjectId();
+		$sessiondata = getSessionList( $projectId, $sessionId );
+		$sessioninfo = $sessiondata['info'];
+		if (!empty($sessioninfo)) {
+			$sessionname = $sessioninfo['Name'];
+			$sessionpath = $sessioninfo['Image path'];
+			$sessionpath = getBaseAppionPath($sessioninfo);
+			$sessionpath = $sessionpath.'/protomo_alignments';
+		}
+		if (isset($_GET['outdir'])) {
+			$sessionpath = $_GET['outdir'];
+		} elseif (isset($_POST['outdir'])) {
+			$sessionpath = $_POST['outdir'];
+		}
+		
+		$tiltseries_runs = glob("$sessionpath/*/series[0-9][0-9][0-9][0-9].tlt");
+		$tadone = count($tiltseries_runs);
+		if ($tadone > 0){
+			$taresults[] = "<a href='protomoalignrunsummary.php?expId=$sessionId&outdir=$sessionpath'>$tadone runs processing or finished</a>";
+		}
+		
 		// get full tomogram making stats:
 		$tmresults=array();
 		$tmdone = $fulltomoruns - $etomo_sample;

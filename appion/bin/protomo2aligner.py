@@ -11,6 +11,7 @@ import sys
 import glob
 import time
 import shutil
+import socket
 import subprocess
 import numpy as np
 import multiprocessing as mp
@@ -69,8 +70,6 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		self.parser.add_option('--shift_limit', dest='shift_limit', type='float', metavar='float', help='Percentage of image size, above which shifts with higher shifts will be discarded for all images, e.g. --shift_limit=50') 
 		
 		self.parser.add_option('--angle_limit', dest='angle_limit', type='float', metavar='float', help='Only remove images from the tilt file greater than abs(angle_limit), e.g. --angle_limit=35') 
-		
-		self.parser.add_option('--translimit', dest='translimit', default=999999, type='float', metavar='float', help='Discard alignment and keep original geometric parameters if translational shift, in pixels, exceeds specified value, e.g. --translimit=50') 
 		
 		self.parser.add_option("--negative_recon", dest="negative_recon", type="float",  default="-90",
 			help="Tilt angle, in degrees, below which all images will be removed, e.g. --negative_recon=-45", metavar="float")
@@ -488,12 +487,57 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		self.parser.add_option("--r5_peak_search_radius_y", dest="r5_peak_search_radius_y",  type="float",  default="100",
 			help="Defines peak search region, e.g. --r5_peak_search_radius_y=19.0", metavar="float")
 		
-		#self.parser.add_option("--cmdiameter_x", dest="cmdiameter_x",  type="float",
-		#	help="Size of region for center of mass calculation, e.g. --cmdiameter_x=19.0", metavar="float")
+		self.parser.add_option("--translimit", dest="translimit",  type="float",  default=999999999,
+			help="Discard alignment and keep original geometric parameters if translational shift, in pixels, exceeds specified value, e.g. --translimit=19.0", metavar="float")
+		
+		self.parser.add_option("--r1_cmdiameter_x", dest="r1_cmdiameter_x",  type="float",  default="100",
+			help="Size of region for center of mass calculation, e.g. --r1_cmdiameter_x=19.0", metavar="float")
 
-		#self.parser.add_option("--cmdiameter_y", dest="cmdiameter_y",  type="float",,
-		#	help="Size of region for center of mass calculation, e.g. --cmdiameter_y=19.0", metavar="float")
+		self.parser.add_option("--r2_cmdiameter_x", dest="r2_cmdiameter_x",  type="float",  default="100",
+			help="Size of region for center of mass calculation, e.g. --r2_cmdiameter_x=19.0", metavar="float")
 
+		self.parser.add_option("--r3_cmdiameter_x", dest="r3_cmdiameter_x",  type="float",  default="100",
+			help="Size of region for center of mass calculation, e.g. --r3_cmdiameter_x=19.0", metavar="float")
+
+		self.parser.add_option("--r4_cmdiameter_x", dest="r4_cmdiameter_x",  type="float",  default="100",
+			help="Size of region for center of mass calculation, e.g. --r4_cmdiameter_x=19.0", metavar="float")
+
+		self.parser.add_option("--r5_cmdiameter_x", dest="r5_cmdiameter_x",  type="float",  default="100",
+			help="Size of region for center of mass calculation, e.g. --r5_cmdiameter_x=19.0", metavar="float")
+
+		self.parser.add_option("--cmdiameter_y", dest="cmdiameter_y",  type="float",  default="100",
+			help="Size of region for center of mass calculation, e.g. --cmdiameter_y=19.0", metavar="float")
+		
+		self.parser.add_option("--r1_cmdiameter_y", dest="r1_cmdiameter_y",  type="float",  default="100",
+			help="Size of region for center of mass calculation, e.g. --r1_cmdiameter_y=19.0", metavar="float")
+		
+		self.parser.add_option("--r2_cmdiameter_y", dest="r2_cmdiameter_y",  type="float",  default="100",
+			help="Size of region for center of mass calculation, e.g. --r2_cmdiameter_y=19.0", metavar="float")
+		
+		self.parser.add_option("--r3_cmdiameter_y", dest="r3_cmdiameter_y",  type="float",  default="100",
+			help="Size of region for center of mass calculation, e.g. --r3_cmdiameter_y=19.0", metavar="float")
+		
+		self.parser.add_option("--r4_cmdiameter_y", dest="r4_cmdiameter_y",  type="float",  default="100",
+			help="Size of region for center of mass calculation, e.g. --r4_cmdiameter_y=19.0", metavar="float")
+		
+		self.parser.add_option("--r5_cmdiameter_y", dest="r5_cmdiameter_y",  type="float",  default="100",
+			help="Size of region for center of mass calculation, e.g. --r5_cmdiameter_y=19.0", metavar="float")
+		
+		self.parser.add_option("--r1_cmdiameter", dest="r1_cmdiameter",
+			help="Size of region for center of mass calculation switch, e.g. --r1_cmdiameter=false",)
+		
+		self.parser.add_option("--r2_cmdiameter", dest="r2_cmdiameter",
+			help="Size of region for center of mass calculation switch, e.g. --r2_cmdiameter=19.0",)
+		
+		self.parser.add_option("--r3_cmdiameter", dest="r3_cmdiameter",
+			help="Size of region for center of mass calculation switch, e.g. --r3_cmdiameter=19.0",)
+		
+		self.parser.add_option("--r4_cmdiameter", dest="r4_cmdiameter",
+			help="Size of region for center of mass calculation switch, e.g. --r4_cmdiameter=19.0",)
+		
+		self.parser.add_option("--r5_cmdiameter", dest="r5_cmdiameter",
+			help="Size of region for center of mass calculation switch, e.g. --r5_cmdiameter=19.0",)
+		
 		self.parser.add_option("--slab", dest="slab", default="true",
 			help="Adjust back-projection body size for a slab-like specimen, e.g. --slab=false")
 
@@ -660,8 +704,8 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		self.parser.add_option("--coarse", dest="coarse",  default=False,
 			help="To perform an initial coarse alignment, set to 'True'. Requires gridsearch, corr, and mask options, e.g. --coarse=True")
 		
-		self.parser.add_option("--coarse_iterate", dest="coarse_iterate",  default=False,
-			help="Iterate Coarse Alignment once?, e.g. --coarse_iterate=True")
+		self.parser.add_option("--further_alignment", dest="further_alignment",  default=False,
+			help="Iterate Coarse Alignment once or Manually align followed by a 2nd Coarse Alignment?, e.g. --further_alignment=Coarse")
 		
 		self.parser.add_option("--gridsearch_limit", dest="gridsearch_limit",  type="float",  default=2.0,
 			help="Protomo2.4 only: Gridseach +-angle limit for coarse alignment. To do a translational alignment only set to 1 and set gridsearch_limit to 0, e.g. --gridsearch_limit=2.0", metavar="float")
@@ -779,6 +823,9 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		
 		self.parser.add_option("--manual_alignment", dest="manual_alignment",  default="False",
 			help="Interactive manual alignment.")
+		
+		self.parser.add_option("--manual_alignment_finished", dest="manual_alignment_finished",  default="False",
+			help="Internal option.")
 		
 		self.parser.add_option("--make_searchable", dest="make_searchable",  default="True",
 			help="Hidden option. Places a .tiltseries.XXXX file in the rundir so that it will be found by Batch Summary webpages.")
@@ -1132,6 +1179,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		r1_lp=r2_lp=r3_lp=r4_lp=r5_lp=0
 		r1_lp=(self.params['lowpass_diameter_x']+self.params['lowpass_diameter_y'])/2
 		self.params['thickness'] = self.params['thickness']/self.params['pixelsize']
+		self.params['translimit'] = self.params['translimit']/self.params['pixelsize']
 		self.params['lowpass_diameter_x'] = 2*self.params['pixelsize']*self.params['sampling']/self.params['lowpass_diameter_x']
 		self.params['lowpass_diameter_y'] = 2*self.params['pixelsize']*self.params['sampling']/self.params['lowpass_diameter_y']
 		self.params['highpass_diameter_x'] = 2*self.params['pixelsize']*self.params['sampling']/self.params['highpass_diameter_x']
@@ -1299,6 +1347,9 @@ class ProTomo2Aligner(basicScript.BasicScript):
 	def start(self):
 	
 		###setup
+		input_command = os.path.basename(sys.argv[0])
+		for arg in range(len(sys.argv[1:])):
+			input_command += ' ' + sys.argv[arg+1]
 		if self.params['citations']:
 			apProTomo2Aligner.printCitations()
 			sys.exit()
@@ -1323,8 +1374,8 @@ class ProTomo2Aligner(basicScript.BasicScript):
 			os.chdir(rundir)
 		self.params['cachedir']=rundir+'/'+self.params['cachedir']
 		self.params['protomo_outdir']=rundir+'/'+self.params['protomo_outdir']
-		shutil.copy('%s/protomo2aligner.log' % cwd, "%s/protomo2aligner_%s.log" % (rundir, time_start))
-		f = open("%s/protomo2aligner_%s.log" % (rundir, time_start),'a');f.write("\n")
+		#shutil.copy('%s/protomo2aligner.log' % cwd, "%s/protomo2aligner_%s.log" % (rundir, time_start))
+		f = open("%s/protomo2aligner_%s.log" % (rundir, time_start),'w');f.write(input_command);f.write("\n\n");f.write(socket.gethostname());f.write("\n")
 		f.write('Start time: %s\n' % time_start)
 		f.write('Description: %s\n' % self.params['description'])
 		apDisplay.printMsg("Writing to log %s/protomo2aligner_%s.log" % (rundir, time_start))
@@ -1352,6 +1403,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				apDisplay.printMsg("Restarting Refinement from %s Iteration %d..." % (os.path.basename(restart_path), self.params['restart_from_iteration']))
 				os.system('cp %s %s/%s' % (restart_tlt_file, rundir, tiltfilename))
 				os.system('cp -r %s %s' % (os.path.join(restart_path,'raw'), rundir))
+				os.system('cp -r %s %s 2>/dev/null' % (os.path.join(restart_path,'media','dose_compensation'), os.path.join(rundir,'media')))
 				os.system('touch %s/restarted_from_%s_iteration_%d' % (rundir, os.path.basename(restart_path), self.params['restart_from_iteration']))
 			else:
 				f.write('Restart Refinement Iteration not found! Aborting Refinement!\n')
@@ -1417,30 +1469,38 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		else: #Refinement. Just get maxtilt for param file
 			rawimagecount, maxtilt=self.excludeImages(tiltfilename_full, f)  #Remove images from .tlt file if user requests
 			self.params['maxtilt'] = maxtilt
-			if self.params['starting_tlt_file'] == "Initial":
-				apDisplay.printMsg("Using Initial alignment from the microscope as starting .tlt file for Refinement by copying original.tlt to %s." % tiltfilename)
-				f.write("Using Initial alignment from the microscope as starting .tlt file for Refinement by copying original.tlt to %s." % tiltfilename)
-				os.system("cp %s %s" % (originaltilt, tiltfilename_full))
-			elif self.params['starting_tlt_file'] == "Coarse_Iter_1":
-				apDisplay.printMsg("Using Coarse alignment iteration 1 for Refinement by copying %s to %s." % ('coarse_'+tiltfilename, tiltfilename))
-				f.write("Using Coarse alignment iteration 1 for Refinement by copying %s to %s." % ('coarse_'+tiltfilename, tiltfilename))
-				os.system("cp %s %s" % (rundir+'/coarse_'+tiltfilename, tiltfilename_full))
-			elif self.params['starting_tlt_file'] == "Coarse_Iter_2":
-				try:
-					shutil.copy("%s" % (rundir+'/coarse_'+seriesname+'_iter2.tlt'), tiltfilename_full)
-					apDisplay.printMsg("Using Coarse alignment iteration 2 for Refinement by copying %s to %s." % ('coarse_'+seriesname+'_iter2.tlt', tiltfilename))
-					f.write("Using Coarse alignment iteration 2 for Refinement by copying %s to %s." % ('coarse_'+seriesname+'_iter2.tlt', tiltfilename))
-				except:
-					apDisplay.printWarning("%s not found, using %s instead..." % ('coarse_'+seriesname+'_iter2.tlt', 'coarse_'+tiltfilename))
-					f.write("%s not found, using %s instead..." % ('coarse_'+seriesname+'_iter2.tlt', 'coarse_'+tiltfilename))
+			if (self.params['restart_from_run'] == '' and self.params['restart_from_iteration'] == 0):
+				if self.params['starting_tlt_file'] == "Initial":
+					apDisplay.printMsg("Using Initial alignment from the microscope as starting .tlt file for Refinement by copying original.tlt to %s." % tiltfilename)
+					f.write("Using Initial alignment from the microscope as starting .tlt file for Refinement by copying original.tlt to %s." % tiltfilename)
+					os.system("cp %s %s" % (originaltilt, tiltfilename_full))
+				elif self.params['starting_tlt_file'] == "Manual":
+					apDisplay.printMsg("Using Manual alignment for Refinement by copying %s to %s." % ('manual_'+seriesname+'.tlt', tiltfilename))
+					f.write("Using Manual alignment for Refinement by copying %s to %s." % ('manual_'+seriesname+'.tlt', tiltfilename))
+					os.system("cp %s %s" % ('manual_'+seriesname+'.tlt', tiltfilename_full))
+				elif self.params['starting_tlt_file'] == "Coarse_Iter_1":
 					apDisplay.printMsg("Using Coarse alignment iteration 1 for Refinement by copying %s to %s." % ('coarse_'+tiltfilename, tiltfilename))
 					f.write("Using Coarse alignment iteration 1 for Refinement by copying %s to %s." % ('coarse_'+tiltfilename, tiltfilename))
-					os.system("cp %s %s" % (rundir+'/coarse_'+tiltfilename, tiltfilename_full))
-			else:
-				apDisplay.printError("starting_tlt_file request should be Initial, Coarse_Iter_1, or Coarse_Iter_2")
-				sys.exit()
+				elif self.params['starting_tlt_file'] == "My_tlt_file":
+					apDisplay.printMsg("Using user-provided tlt file %s for Refinement." % tiltfilename)
+					f.write("Using user-provided tlt file %s for Refinement." % tiltfilename)
+				elif self.params['starting_tlt_file'] == "Coarse_Iter_2":
+					try:
+						shutil.copy("%s" % (rundir+'/coarse_'+seriesname+'_iter2.tlt'), tiltfilename_full)
+						apDisplay.printMsg("Using Coarse alignment iteration 2 for Refinement by copying %s to %s." % ('coarse_'+seriesname+'_iter2.tlt', tiltfilename))
+						f.write("Using Coarse alignment iteration 2 for Refinement by copying %s to %s." % ('coarse_'+seriesname+'_iter2.tlt', tiltfilename))
+					except:
+						apDisplay.printWarning("%s not found, using %s instead..." % ('coarse_'+seriesname+'_iter2.tlt', 'coarse_'+tiltfilename))
+						f.write("%s not found, using %s instead..." % ('coarse_'+seriesname+'_iter2.tlt', 'coarse_'+tiltfilename))
+						apDisplay.printMsg("Using Coarse alignment iteration 1 for Refinement by copying %s to %s." % ('coarse_'+tiltfilename, tiltfilename))
+						f.write("Using Coarse alignment iteration 1 for Refinement by copying %s to %s." % ('coarse_'+tiltfilename, tiltfilename))
+						os.system("cp %s %s" % (rundir+'/coarse_'+tiltfilename, tiltfilename_full))
+				else:
+					apDisplay.printError("starting_tlt_file request should be Initial, Coarse_Iter_1, or Coarse_Iter_2")
+					sys.exit()
 			if (self.params['defocus_save'] != 0 and isinstance(self.params['defocus_save'],float)): #Can only save defocus during refinement (or reconstruction)
 				apProTomo2Prep.defocusEstimate(seriesname, rundir, self.params['projectid'], self.params['sessionname'], self.params['parallel'], int(self.params['tiltseries']), tiltfilename, self.params['frame_aligned'], self.params['pixelsize'], self.params['defocus_ang_negative'], self.params['defocus_ang_positive'], self.params['amp_contrast_defocus'], self.params['res_min'], self.params['res_max'], self.params['defocus'], self.params['defocus_difference'], self.params['defocus_min'], self.params['defocus_max'], self.params['defocus_save'])
+			rawimagecount, maxtilt=self.excludeImages(tiltfilename_full, f)  #Remove images from .tlt file if user requests
 		
 		self.params['cos_alpha']=np.cos(self.params['maxtilt']*np.pi/180)
 		
@@ -1481,7 +1541,14 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		#create series object and use presence of i3t to determine if protomo has been run once already
 		
 		if self.params['coarse'] == 'True':
+			#For multiprocessing
 			jobs1=[]
+			jobs2=[]
+			jobs3=[]
+			jobs4=[]
+			jobs5=[]
+			jobs6=[]
+			
 			if self.params['create_tilt_video'] == "true":
 				apDisplay.printMsg("Creating initial tilt-series video in the background...")
 				f.write('Creating initial tilt-series video in the background...\n')
@@ -1500,7 +1567,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 			else:
 				coarse_seriesgeom=protomo.geom(tiltfilename_full)
 				series=protomo.series(coarse_seriesparam,coarse_seriesgeom)
-		else:
+		elif self.params['coarse'] == 'False':
 			i3tfile=rundir+'/'+seriesname+'.i3t'
 			if os.path.exists(i3tfile):
 				series=protomo.series(seriesparam)
@@ -1601,9 +1668,6 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				apDisplay.printMsg("Creating Depiction Videos in Parallel...")
 				f.write('Creating Depiction Videos in Parallel...\n')
 			
-			# For multiprocessing
-			jobs2=[]
-			
 			# Make correlation peak videos for depiction
 			self.params['corr_peak_gif']='media/correlations/'+seriesname+'00_cor.gif';self.params['corr_peak_ogv']='media/correlations/'+seriesname+'00_cor.ogv';self.params['corr_peak_mp4']='media/correlations/'+seriesname+'00_cor.mp4';self.params['corr_peak_webm']='media/correlations/'+seriesname+'00_cor.webm'
 			jobs2.append(mp.Process(target=apProTomo2Aligner.makeCorrPeakVideos, args=(name, 0, rundir, self.params['protomo_outdir'], self.params['video_type'], "Coarse",)))
@@ -1651,29 +1715,71 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				lp=round(r1_lp, 1)
 				thickness=int(round(self.params['pixelsize']*self.params['thickness']))
 				self.params['recon_gif']='media/reconstructions/'+seriesname+'.gif';self.params['recon_ogv']='media/reconstructions/'+seriesname+'.ogv';self.params['recon_mp4']='media/reconstructions/'+seriesname+'.mp4';self.params['recon_webm']='media/reconstructions/'+seriesname+'.webm';
-				apProTomo2Aligner.makeReconstructionVideos(name, 0, rundir, self.params[rx], self.params[ry], self.params['show_window_size'], self.params['protomo_outdir'], self.params['pixelsize'], self.params['sampling'], self.params['map_sampling'], lp, thickness, self.params['video_type'], self.params['keep_recons'], self.params['parallel'], align_step="Coarse")
+				jobs3.append(mp.Process(target=apProTomo2Aligner.makeReconstructionVideos, args=(name, 0, rundir, self.params[rx], self.params[ry], self.params['show_window_size'], self.params['protomo_outdir'], self.params['pixelsize'], self.params['sampling'], self.params['map_sampling'], lp, thickness, self.params['video_type'], self.params['keep_recons'], self.params['parallel'], "Coarse")))
+				for job in jobs3:
+					job.start()
 			else:
 				apDisplay.printMsg("Skipping reconstruction depiction\n")
 				f.write('Skipping reconstruction depiction\n')
 			
-			# Join processes
-			for job in jobs1:
-				job.join()
-			for job in jobs2:
-				job.join()
+			if self.params['further_alignment'] == 'Manual_then_Coarse':
+				print ""
+				apDisplay.printMsg("\033[1mAlign images manually (to within ~5% accuracy), Save, & Quit.\033[0m")
+				apDisplay.printMsg("\033[1mQuick Manual Alignment instructions:\033[0m")
+				apDisplay.printMsg("\033[1m    1) View > image, Actions > Show movie. Identify an image in the center of the overall shift range.\033[0m")
+				apDisplay.printMsg("\033[1m    2) View > overlay. Set the image in 1) to the reference.\033[0m")
+				apDisplay.printMsg("\033[1m    3) First try Actions > Align all. Then 'show movie' again. If it aligned, then File > Save, File > Quit.\033[0m")
+				apDisplay.printMsg("\033[1m    4) If 3) failed, then manually align each nearest-neighbor images by dragging and pressing 'A' to align.\033[0m")
+				apDisplay.printMsg("\033[1mNote: If you get a popup error, then use the Reset button to reset the current image, or Actions > revert to reset all images.\033[0m")
+				print ""
+				f.write("Align images manually (to within ~5% accuracy), Save, & Quit.")
+				manualparam = '%s/manual_%s.param' % (rundir, seriesname)
+				manual_x_size = int(0.65*self.params['dimx'])
+				manual_y_size = int(0.65*self.params['dimy'])
+				os.system('cp %s %s' % (coarse_param_out_full, manualparam))
+				os.system("sed -i '/AP sampling/c\ S = 4' %s" % manualparam)
+				os.system("sed -i '/AP orig window/c\ W = { %d, %d }' %s" % (manual_x_size, manual_y_size, manualparam))
+				os.system("sed -i '/preprocessing/c\ preprocessing: false' %s" % manualparam)
+				os.system("sed -i '/AP width1/c\     width: { %d, %d }' %s" % (manual_x_size, manual_y_size, manualparam))
+				os.system("sed -i '/AP width2/c\     width: { %d, %d }' %s" % (int(manual_x_size*0.5), int(manual_y_size*0.5), manualparam))
+				process = subprocess.Popen(["tomoalign-gui", "-tlt", "%s.tlt" % seriesname, "%s" % manualparam], stdout=subprocess.PIPE)
+				stdout, stderr = process.communicate()
+				
+				manualparam=protomo.param(manualparam)
+				manualseries=protomo.series(manualparam)
+				manualtilt='manual_'+seriesname+'.tlt'
+				manualseries.geom(0).write(manualtilt)
+				apDisplay.printMsg("Creating Manual Alignment tilt-series video...")
+				f.write('Creating Manual Alignment tilt-series video...\n')
+				jobs4.append(mp.Process(target=apProTomo2Aligner.makeTiltSeriesVideos, args=(seriesname, 0, manualtilt, rawimagecount, rundir, raw_path, self.params['pixelsize'], self.params['map_sampling'], self.params['image_file_type'], self.params['video_type'], self.params['tilt_clip'], self.params['parallel'], "Manual",)))
+				for job in jobs4:
+					job.start()
+				series.mapfile('out/manual_%s.img' % seriesname)
+				if self.params['create_reconstruction'] == "true":
+					apDisplay.printMsg("Generating Coarse Alignment reconstruction...")
+					f.write('Generating Coarse Alignment reconstruction...\n')
+					jobs5.append(mp.Process(target=apProTomo2Aligner.makeReconstructionVideos, args=(name, 0, rundir, self.params[rx], self.params[ry], 'false', self.params['protomo_outdir'], self.params['pixelsize'], self.params['sampling'], self.params['map_sampling'], lp, thickness, self.params['video_type'], self.params['keep_recons'], self.params['parallel'], "Manual")))
+					for job in jobs5:
+						job.start()
+				else:
+					apDisplay.printMsg("Skipping reconstruction depiction\n")
+					f.write('Skipping reconstruction depiction\n')
 			
 			cleanup="cp coarse*.* coarse_out; rm *.corr %s; mv %s.tlt coarse_out/initial_%s.tlt; cp %s.tlt %s.tlt" % (seriesname+'.param', seriesname, seriesname, name, seriesname)
 			os.system(cleanup)
 			
-			if self.params['coarse_iterate'] == 'True':
+			if (self.params['further_alignment'] == 'Coarse' or self.params['further_alignment'] == 'Manual_then_Coarse'):
 				name = 'coarse_'+seriesname+'_iter2'
 				coarse_seriesparam2 = name+'.param'
-				iter1_tiltfilename = 'coarse_'+seriesname+'.tlt'
+				if self.params['further_alignment'] == 'Manual_then_Coarse':
+					previous_tiltfilename = manualtilt
+				else:
+					previous_tiltfilename = 'coarse_'+seriesname+'.tlt'
 				tiltfilename = name + '.tlt'
 				tiltfilename_full = rundir + '/' + tiltfilename
 				os.system("cp %s %s" % ('coarse_'+seriesname+'.param', coarse_seriesparam2))
 				coarse_seriesparam=protomo.param(coarse_seriesparam2)
-				coarse_seriesgeom=protomo.geom(iter1_tiltfilename)
+				coarse_seriesgeom=protomo.geom(previous_tiltfilename)
 				series=protomo.series(coarse_seriesparam,coarse_seriesgeom)
 				
 				#Initializing starting window size to be fourier transform friendly in case the values inputted by the user are not
@@ -1759,11 +1865,8 @@ class ProTomo2Aligner(basicScript.BasicScript):
 					apDisplay.printMsg("Creating Depiction Videos in Parallel...")
 					f.write('Creating Depiction Videos in Parallel...\n')
 				
-				# For multiprocessing
-				jobs2=[]
-				
 				# Make correlation peak videos for depiction
-				jobs2.append(mp.Process(target=apProTomo2Aligner.makeCorrPeakVideos, args=(name, 0, rundir, self.params['protomo_outdir'], self.params['video_type'], "Coarse2",)))
+				jobs6.append(mp.Process(target=apProTomo2Aligner.makeCorrPeakVideos, args=(name, 0, rundir, self.params['protomo_outdir'], self.params['video_type'], "Coarse2",)))
 				if self.params['parallel'] != "True":
 					[p.join() for p in mp.active_children()]
 				# Make tiltseries video for depiction
@@ -1771,7 +1874,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 					apDisplay.printMsg("Creating Coarse Alignment iteration 2 tilt-series video...")
 					f.write('Creating Coarse Alignment iteration 2 tilt-series video...\n')
 					self.params['tiltseries_gif']='media/tiltseries/'+'coarse_'+seriesname+'.gif';self.params['tiltseries_ogv']='media/tiltseries/'+'coarse_'+seriesname+'.gif';self.params['tiltseries_mp4']='media/tiltseries/'+'coarse_'+seriesname+'.mp4';self.params['tiltseries_webm']='media/tiltseries/'+'coarse_'+seriesname+'.webm';
-					jobs2.append(mp.Process(target=apProTomo2Aligner.makeTiltSeriesVideos, args=(seriesname, 0, tiltfile, rawimagecount, rundir, raw_path, self.params['pixelsize'], self.params['map_sampling'], self.params['image_file_type'], self.params['video_type'], self.params['tilt_clip'], self.params['parallel'], "Coarse2",)))
+					jobs6.append(mp.Process(target=apProTomo2Aligner.makeTiltSeriesVideos, args=(seriesname, 0, tiltfile, rawimagecount, rundir, raw_path, self.params['pixelsize'], self.params['map_sampling'], self.params['image_file_type'], self.params['video_type'], self.params['tilt_clip'], self.params['parallel'], "Coarse2",)))
 					if self.params['parallel'] != "True":
 						[p.join() for p in mp.active_children()]
 				else:
@@ -1779,7 +1882,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 					f.write('Skipping tilt-series depiction\n')
 					
 				# Send off processes in the background
-				for job in jobs2:
+				for job in jobs6:
 					job.start()
 				
 				# Generate intermediate reconstructions and videos for depiction
@@ -1798,12 +1901,22 @@ class ProTomo2Aligner(basicScript.BasicScript):
 					apDisplay.printMsg("Skipping reconstruction depiction\n")
 					f.write('Skipping reconstruction depiction\n')
 				
-				# Join processes
-				for job in jobs2:
-					job.join()
-				
 				cleanup="cp coarse*iter2.* coarse_out; rm *.corr; cp %s.tlt %s.tlt" % (name, seriesname)
 				os.system(cleanup)
+			
+			# Join processes
+			for job in jobs1:
+				job.join()
+			for job in jobs2:
+				job.join()
+			for job in jobs3:
+				job.join()
+			for job in jobs4:
+				job.join()
+			for job in jobs5:
+				job.join()
+			for job in jobs6:
+				job.join()
 			
 			if final_retry > 0:
 				if bad_images:
@@ -1870,8 +1983,8 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				self.params['cycle'] = n+1  #Iterations in Protomo start at 0
 				if (n+1 == start+1):
 					r=1  #Round number
-					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s\n" % (n+1,r))
-					f.write('\nBeginning Refinement Iteration #%s, Round #%s\n' % (n+1,r))
+					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s of Tilt-Series #%s\n" % (n+1,r,self.params['tiltseries']))
+					f.write('\nBeginning Refinement Iteration #%s, Round #%s of Tilt-Series #%s\n' % (n+1,r,self.params['tiltseries']))
 					apDisplay.printMsg("lowpass = %s Angstroms\n" % r1_lp)
 					f.write("lowpass = %s Angstroms\n" % r1_lp)
 					region_x=self.params['r1_region_x']
@@ -1885,8 +1998,8 @@ class ProTomo2Aligner(basicScript.BasicScript):
 						series.setparam(val,round1[val])
 				elif (n+1 == start+self.params['r1_iters']+1):
 					r=2
-					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s\n" % (n+1,r))
-					f.write('\nBeginning Refinement Iteration #%s, Round #%s\n' % (n+1,r))
+					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s of Tilt-Series #%s\n" % (n+1,r,self.params['tiltseries']))
+					f.write('\nBeginning Refinement Iteration #%s, Round #%s of Tilt-Series #%s\n' % (n+1,r,self.params['tiltseries']))
 					apDisplay.printMsg("lowpass = %s angstroms\n" % r2_lp)
 					f.write("lowpass = %s angstroms\n" % r2_lp)
 					region_x=self.params['r2_region_x']
@@ -1900,8 +2013,8 @@ class ProTomo2Aligner(basicScript.BasicScript):
 						series.setparam(val,round2[val])
 				elif (n+1 == start+self.params['r1_iters']+self.params['r2_iters']+1):
 					r=3
-					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s\n" % (n+1,r))
-					f.write('\nBeginning Refinement Iteration #%s, Round #%s\n' % (n+1,r))
+					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s of Tilt-Series #%s\n" % (n+1,r,self.params['tiltseries']))
+					f.write('\nBeginning Refinement Iteration #%s, Round #%s of Tilt-Series #%s\n' % (n+1,r,self.params['tiltseries']))
 					apDisplay.printMsg("lowpass = %s angstroms\n" % r3_lp)
 					f.write("lowpass = %s angstroms\n" % r3_lp)
 					region_x=self.params['r3_region_x']
@@ -1915,8 +2028,8 @@ class ProTomo2Aligner(basicScript.BasicScript):
 						series.setparam(val,round3[val])
 				elif (n+1 == start+self.params['r1_iters']+self.params['r2_iters']+self.params['r3_iters']+1):
 					r=4
-					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s\n" % (n+1,r))
-					f.write('\nBeginning Refinement Iteration #%s, Round #%s\n' % (n+1,r))
+					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s of Tilt-Series #%s\n" % (n+1,r,self.params['tiltseries']))
+					f.write('\nBeginning Refinement Iteration #%s, Round #%s of Tilt-Series #%s\n' % (n+1,r,self.params['tiltseries']))
 					apDisplay.printMsg("lowpass = %s angstroms\n" % r4_lp)
 					f.write("lowpass = %s angstroms\n" % r4_lp)
 					region_x=self.params['r4_region_x']
@@ -1930,8 +2043,8 @@ class ProTomo2Aligner(basicScript.BasicScript):
 						series.setparam(val,round4[val])
 				elif (n+1 == start+self.params['r1_iters']+self.params['r2_iters']+self.params['r3_iters']+self.params['r4_iters']+1):
 					r=5
-					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s\n" % (n+1,r))
-					f.write('\nBeginning Refinement Iteration #%s, Round #%s\n' % (n+1,r))
+					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s of Tilt-Series #%s\n" % (n+1,r,self.params['tiltseries']))
+					f.write('\nBeginning Refinement Iteration #%s, Round #%s of Tilt-Series #%s\n' % (n+1,r,self.params['tiltseries']))
 					apDisplay.printMsg("lowpass = %s angstroms\n" % r5_lp)
 					f.write("lowpass = %s angstroms\n" % r5_lp)
 					region_x=self.params['r5_region_x']
@@ -1944,10 +2057,10 @@ class ProTomo2Aligner(basicScript.BasicScript):
 						apDisplay.printMsg("%s = %s" % (val,round5[val]))
 						series.setparam(val,round5[val])
 				else:
-					f.write("\nNo Round parameters changed for Iteration #%s\n" % (n+1))
-					apDisplay.printMsg("No Round parameters changed for Iteration #%s\n" % (n+1))
-					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s\n" % (n+1,r))
-					f.write('\nBeginning Refinement Iteration #%s, Round #%s\n' % (n+1,r))
+					f.write("\nNo Round parameters changed for Iteration #%s of Tilt-Series #%s\n" % (n+1,self.params['tiltseries']))
+					apDisplay.printMsg("No Round parameters changed for Iteration #%s of Tilt-Series #%s\n" % (n+1,self.params['tiltseries']))
+					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s of Tilt-Series #%s\n" % (n+1,r,self.params['tiltseries']))
+					f.write('\nBeginning Refinement Iteration #%s, Round #%s of Tilt-Series #%s\n' % (n+1,r,self.params['tiltseries']))
 				
 				#change parameters depending on switches
 				toggle=0
@@ -2177,6 +2290,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 					thickness=int(round(self.params['pixelsize']*self.params['thickness']))
 					self.params['recon_gif']='media/reconstructions/'+seriesname+itt+'.gif';self.params['recon_ogv']='media/reconstructions/'+seriesname+itt+'.ogv';self.params['recon_mp4']='media/reconstructions/'+seriesname+itt+'.mp4';self.params['recon_webm']='media/reconstructions/'+seriesname+itt+'.webm';
 					apProTomo2Aligner.makeReconstructionVideos(name, itt, rundir, self.params[rx], self.params[ry], self.params['show_window_size'], self.params['protomo_outdir'], self.params['pixelsize'], sampling, self.params['map_sampling'], lp, thickness, self.params['video_type'], self.params['keep_recons'], self.params['parallel'], align_step="Refinement")
+					#jobs.append(mp.Process(target=apProTomo2Aligner.makeReconstructionVideos, args=(name, itt, rundir, self.params[rx], self.params[ry], self.params['show_window_size'], self.params['protomo_outdir'], self.params['pixelsize'], sampling, self.params['map_sampling'], lp, thickness, self.params['video_type'], self.params['keep_recons'], self.params['parallel'], "Refinement")))
 					
 				else:
 					apDisplay.printMsg("Skipping reconstruction depiction\n")

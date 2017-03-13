@@ -1163,6 +1163,9 @@ class HoleFinderPrefsData(InSessionData):
 			('template-diameter', int),
 			('file-diameter', int),
 			('template-filename', str),
+			('dog-diameter', int),
+			('dog-invert', bool),
+			('dog-k-factor', float),
 		)
 	typemap = classmethod(typemap)
 
@@ -1577,6 +1580,15 @@ class JAHCFinderSettingsData(HoleFinderSettingsData):
 			('template invert', bool),
 			('template image min', float),
 			('lattice extend', str),
+		)
+	typemap = classmethod(typemap)
+
+class DoGFinderSettingsData(HoleFinderSettingsData):
+	def typemap(cls):
+		return HoleFinderSettingsData.typemap() + (
+			('dog diameter', int),
+			('dog invert', bool),
+			('dog k-factor', float),
 		)
 	typemap = classmethod(typemap)
 

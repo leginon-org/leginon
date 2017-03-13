@@ -81,6 +81,8 @@ class Protomo2RefineSummary extends BasicLayoutForm
 		$dose_gif_files = glob("$outdir/$runname/media/dose_compensation/s*.gif");
 		$corrpeak_gif_files = glob("$outdir/$runname/media/correlations/s*.gif");
 		$corrpeak_vid_files = glob("$outdir/$runname/media/correlations/s*.{mp4,ogv,webm}",GLOB_BRACE);
+		$recon_files = glob("$outdir/$runname/recons_*/*.mrc",GLOB_BRACE);
+		$stack_files = glob("$outdir/$runname/stack*/*.mrcs",GLOB_BRACE);
 		$qa_gif_file = "$outdir/$runname/media/quality_assessment/series".sprintf('%04d',$tiltseries)."_quality_assessment.gif";
 		$azimuth_gif_file = "$outdir/$runname/media/angle_refinement/series".sprintf('%04d',$tiltseries)."_azimuth.gif";
 		$orientation_gif_file = "$outdir/$runname/media/angle_refinement/series".sprintf('%04d',$tiltseries)."_orientation.gif";
@@ -245,6 +247,29 @@ class Protomo2RefineSummary extends BasicLayoutForm
 		}
 		$html .= '</tr><tr></table><br>';
 		
+		if (count($recon_files) > 0) {
+			$html .= "
+			<hr />
+			<center><H4><b>Available Reconstructions</b></H4></center>
+			<hr />";
+			foreach ($recon_files as $item) {
+				$html .= '<br>'.$item;
+			}
+			$html .= '<br><br>';
+		}
+		
+		if (count($stack_files) > 0) {
+			$html .= "
+			<hr />
+			<center><H4><b>Available Tilt-Series Stacks</b></H4></center>
+			<hr />";
+			
+			foreach ($stack_files as $item) {
+				$html .= '<br>'.$item;
+			}
+			$html .= '<br>';
+		}
+
 		// Only display link to next step in tomo processing if at least one iteration is complete
 		if (max(count($corrpeak_gif_files),count($corrpeak_vid_files)) < 1)
 		{

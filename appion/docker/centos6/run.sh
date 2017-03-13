@@ -5,9 +5,9 @@
 #  -v /Users/vosslab/emg/data:/emg/data \
 #  -v /Users/vosslab/myami/pyami:/emg/sw/myami/pyami \
 
+#  -v $HOME/myami:/emg/sw/myami \
 
 docker run -d -t \
-  -v /Users/vosslab/myami:/emg/sw/myami \
   -w /emg/sw/myami/appion \
   -p 80:80 -p 5901:5901 -p 3306:3306 \
   vosslab/appion

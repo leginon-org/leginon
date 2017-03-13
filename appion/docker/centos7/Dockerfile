@@ -5,34 +5,38 @@ MAINTAINER Neil Voss <vossman77@yahoo.com>
 #No package compat-gcc-34-g77 available.
 #No package re2c available.
 #No package compat-libgfortran available.
+#No package mod_python qiv available.
 
 ### install epel
 RUN yum -y install epel-release
 RUN yum -y install dnf
-RUN dnf -y upgrade && dnf -y install wget epel-release sudo passwd rsync && dnf -y clean all
-#RUN wget 'https://dl.fedoraproject.org/pub/epel/epel-release-latest-6.noarch.rpm'
-#RUN dnf -y localinstall epel-release-latest-6.noarch.rpm
+RUN dnf -y upgrade \
+  && dnf -y install wget epel-release sudo passwd rsync tar openssh-clients && dnf -y clean all
+
 ### install software
 RUN dnf -y upgrade && dnf -y install \
  python-tools python-devel python-matplotlib \
- subversion ImageMagick gnuplot \
- wxPython numpy scipy python-imaging \
+ ImageMagick grace gnuplot bash-completion colordiff \
+ wxPython numpy scipy python-imaging python2-pip  \
  gcc-gfortran \
- gcc-objc fftw3-devel gsl-devel \
- mariadb mariadb-server MySQL-python \
- httpd php php-mysql phpMyAdmin mod_ssl php-pecl-ssh2 \
- gcc-c++ openmpi-devel libtiff-devel \
+ gcc-objc fftw3-devel gsl-devel boost148-python PyQt4 \
+ mariadb mariadb-server MySQL-python  ftgl \
+ httpd php php-mysql mod_ssl php-pecl-ssh2 \
+ gcc-c++ libtiff-devel PyOpenGL python-argparse \
  php-devel gd-devel fftw3-devel php-gd \
- xorg-x11-server-Xvfb netpbm-progs \
+ xorg-x11-server-Xvfb netpbm-progs python-requests \
  libssh2-devel mlocate nano elinks file \
+ python-configparser h5py git pyflakes \
  numactl && dnf -y clean all
-### Trying to do VNC
-#RUN dnf -y upgrade && dnf -y install tigervnc-server xterm xsetroot fluxbox fbpanel && dnf -y clean all
-RUN dnf -y upgrade && dnf -y install tigervnc-server xterm xsetroot xfwm4 xfce4-session \
- && dnf -y clean all
+
+RUN sed -i.bak 's/max_allowed_packet = [0-9]*M/max_allowed_packet = 24M/' /etc/nanorc
+
+## Appion specific installs
 #RUN dnf -y upgrade && dnf -y install mozilla-adblockplus firefox dbus && dnf -y clean all
 RUN dbus-uuidgen > /var/lib/dbus/machine-id
-RUN easy_install joblib pyfftw3 fs milk #FIXME check to see if in dnf
+RUN pip install --upgrade pip
+RUN pip install joblib pyfftw3 fs==0.5.4 scikit-learn
+RUN python -c 'from sklearn import svm' # test for function
 
 RUN updatedb
 
@@ -43,71 +47,96 @@ RUN chmod 777 -R /emg  && echo 'chmod 777'
 
 ### Apache setup
 COPY php.ini /etc/php.ini
-COPY httpd.conf /etc/httpd/conf/httpd.conf
+#COPY httpd.conf /etc/httpd/conf/httpd.conf
 COPY info.php /var/www/html/info.php
 RUN chmod 444 /var/www/html/info.php && echo 'chmod info.php'
 EXPOSE 80
 
 ### MariaDB setup
-#RUN find /usr/share/mysql/ -type f
-#RUN ls -d /usr/share/*/
-#RUN cp -fv /usr/share/mysql/my-huge.cnf /etc/my.cnf
-#RUN svn co http://emg.nysbc.org/svn/myami/branches/myami-3.2/ /emg/sw/myami/
-RUN svn co http://emg.nysbc.org/svn/myami/trunk/ /emg/sw/myami/
-RUN ln -sv /emg/sw/myami/myamiweb /var/www/html/ami
-RUN ln -sv /emg/sw/myami/myamiweb /var/www/html/myamiweb
+RUN cp -fv /usr/share/mysql/my-huge.cnf /etc/my.cnf
+RUN sed -i.bak 's/max_allowed_packet = [0-9]*M/max_allowed_packet = 24M/' /etc/my.cnf
+RUN mysql_install_db --user=mysql --ldata=/var/lib/mysql/
 #EXPOSE 3306
 
 ### Myami setup
+RUN git clone http://emg.nysbc.org/git/myami.git /emg/sw/myami/
+RUN ln -sv /emg/sw/myami/myamiweb /var/www/html/ami
+RUN ln -sv /emg/sw/myami/myamiweb /var/www/html/myamiweb
+
 COPY sinedon.cfg /etc/myami/sinedon.cfg
 COPY leginon.cfg /etc/myami/leginon.cfg
+COPY instruments.cfg /etc/myami/instruments.cfg
 COPY appion.cfg /etc/myami/appion.cfg
 COPY redux.cfg /etc/myami/redux.cfg
 COPY config.php /emg/sw/myami/myamiweb/config.php
 COPY docker.sql /emg/sw/docker.sql
+COPY particledata.dat /emg/sw/particledata.dat
 RUN mkdir -p /var/cache/myami/redux/ && chmod 777 /var/cache/myami/redux/
 RUN ln -sv /emg/sw/myami/appion/appionlib /usr/lib64/python2.7/site-packages/
-WORKDIR /emg/sw/myami/
-RUN ./pysetup.sh install
+RUN ln -sv /emg/sw/myami/redux/bin/reduxd /usr/bin/ && chmod 755 /usr/bin/reduxd
+RUN for i in pyami imageviewer leginon pyscope sinedon redux; \
+	do ln -sv /emg/sw/myami/$i /usr/lib64/python2.7/site-packages/; done
+
+### Compile radermacher, libcv, numextension, and redux
+WORKDIR /emg/sw/myami/modules/radermacher
+RUN python ./setup.py install
+WORKDIR /emg/sw/myami/modules/libcv
+RUN python ./setup.py install
+WORKDIR /emg/sw/myami/modules/numextension
+RUN python ./setup.py install
+WORKDIR /emg/sw/myami/redux
+RUN python ./setup.py install
+
 RUN mkdir /etc/fftw
-RUN python /usr/lib/python2.7/site-packages/pyami/fft/fftwsetup.py 2 4096 4096 && mv -v  ~/fftw3-wisdom-* /etc/fftw/wisdom
+RUN python /emg/sw/myami/pyami/fft/fftwsetup.py 2 4096 4096 && mv -v ~/fftw3-wisdom-* /etc/fftw/wisdom
 RUN cp -v /emg/sw/myami/redux/init.d/reduxd /etc/init.d/reduxd
+COPY findem-docker-centos6/findem64.exe /emg/sw/myami/appion/bin/
+WORKDIR /emg/sw/myami/
 
 #ADD Xmipp-2.4-src.tar.gz /emg/sw
-#RUN mv -v /emg/sw/Xmipp-2.4-src /emg/sw/xmipp 
+#RUN mv -v /emg/sw/Xmipp-2.4-src /emg/sw/xmipp
 #WORKDIR /emg/sw/xmipp
 #ENV MPIPATH /usr/lib64/openmpi
 #ENV PATH /bin:/usr/bin:/sbin:/usr/sbin:/usr/lib64/openmpi/bin
 #RUN ./scons.configure MPI_LIBDIR=/usr/lib64/openmpi/lib  MPI_LIB=mpi  MPI_INCLUDE=/usr/include/openmpi-x86_64
 #RUN ./scons.compile
 #FIXME: mpirun does not run as root
+ADD TGZ/xmipp_centos6_docker.tgz /emg/sw
 
-ADD eman-linux-x86_64-cluster-1.9.tar.gz /emg/sw
+### EMAN 1
+ADD TGZ/eman-linux-x86_64-cluster-1.9.tar.gz /emg/sw
 RUN mv -v /emg/sw/EMAN /emg/sw/eman1
-RUN ls /emg/sw/eman1/lib/
-RUN ln -sv /emg/sw/eman1/lib/libpyEM.so.ucs4.py2.6 /emg/sw/eman1/lib/libpyEM.so #FIXME
+RUN ln -sv /emg/sw/eman1/lib/libpyEM.so.ucs4.py2.6 /emg/sw/eman1/lib/libpyEM.so #FIX ME
 
-ADD spidersmall.13.00.tgz /emg/sw
+### EMAN 2
+### http://emg.nysbc.org/redmine/projects/appion/wiki/Install_EMAN2
+ADD TGZ/eman2_centos6_docker.tgz /emg/sw/
+
+### RELION
+ADD TGZ/relion-1.4.tgz /emg/sw/
+
+ADD TGZ/spidersmall.13.00.tgz /emg/sw
 #RUN ln -sv /emg/sw/spider/bin/spider_linux_mp_opt64 /emg/sw/spider/bin/spider
 
 RUN mkdir -p /emg/sw/grigorieff/bin
-ADD ctf_140609.tar.gz /emg/sw/grigorieff/
-ADD ctffind-4.0.16-linux64.tar.gz /emg/sw/grigorieff/
+ADD TGZ/ctf_140609.tar.gz /emg/sw/grigorieff/
+ADD TGZ/ctffind-4.0.16-linux64.tar.gz /emg/sw/grigorieff/
 RUN mv -v /emg/sw/grigorieff/ctf /emg/sw/grigorieff/ctffind3
 RUN mv -v /emg/sw/grigorieff/ctffind /emg/sw/grigorieff/bin/ctffind4
 RUN ln -sv /emg/sw/grigorieff/ctffind3/ctffind3_mp.exe /emg/sw/grigorieff/bin/ctffind64.exe
 RUN chmod 777 /emg/sw/grigorieff/ctffind3/ctffind3_mp.exe 
 RUN chmod 777 /emg/sw/grigorieff/bin/ctffind4
 
-### software
-COPY 06jul12a_00015gr_00028sq_00004hl_00002en.mrc /emg/data/leginon/06jul12a/rawdata/
-COPY 06jul12a_00015gr_00028sq_00023hl_00002en.mrc /emg/data/leginon/06jul12a/rawdata/
-COPY 06jul12a_00015gr_00028sq_00023hl_00004en.mrc /emg/data/leginon/06jul12a/rawdata/
-COPY 06jul12a_00022gr_00013sq_00002hl_00004en.mrc /emg/data/leginon/06jul12a/rawdata/
-COPY 06jul12a_00022gr_00013sq_00003hl_00005en.mrc /emg/data/leginon/06jul12a/rawdata/
-COPY 06jul12a_00022gr_00037sq_00025hl_00004en.mrc /emg/data/leginon/06jul12a/rawdata/
-COPY 06jul12a_00022gr_00037sq_00025hl_00005en.mrc /emg/data/leginon/06jul12a/rawdata/
-COPY 06jul12a_00035gr_00063sq_00012hl_00004en.mrc /emg/data/leginon/06jul12a/rawdata/
+### Trying to do VNC
+#RUN dnf -y upgrade && dnf -y install  \
+# ftp://ftp.pbone.net/mirror/ftp.scientificlinux.org/linux/scientific/6.5/x86_64/os/Packages/xorg-x11-twm-1.0.3-5.1.el6.x86_64.rpm \
+# && dnf -y clean all
+RUN dnf -y upgrade && dnf -y install \
+ tigervnc-server xterm xsetroot fluxbox \
+ xorg-x11-xinit xorg-x11-font-utils xorg-x11-fonts-Type1 xorg-x11-xauth  \
+ libX11-common libX11 dbus-x11 xorg-x11-server-utils xorg-x11-xkb-utils \
+ xorg-x11-fonts-75dpi xorg-x11-fonts-100dpi xorg-x11-fonts-misc \
+ && dnf -y clean all
 
 ### Change to local user
 #RUN mkdir -p /home/appionuser
@@ -118,6 +147,7 @@ RUN chown -R appionuser:users /home/appionuser
 ENV HOME /home/appionuser
 WORKDIR /home/appionuser
 RUN mkdir -p .vnc
+RUN touch .Xauthority
 RUN chmod 777 .vnc
 RUN echo Phys-554 | vncpasswd -f > .vnc/passwd
 RUN chmod 600 .vnc/passwd
@@ -132,11 +162,30 @@ RUN chown -R appionuser:users /home/appionuser
 RUN chmod 700 .vnc/xstartup
 EXPOSE 5901
 
-#ADD mysql.tgz /var/lib/mysql/
 COPY bashrc /etc/bashrc
 #RUN mkdir -p /home/appionuser/.mozilla/firefox/yvn3wpn8.default
 #COPY profiles.ini  /home/appionuser/.mozilla/firefox/
 COPY startup.sh /emg/sw/startup.sh
+
+### copy the image data
+COPY findem-docker-centos6/groel_template1.mrc /emg/data/leginon/06jul12a/templates/
+COPY findem-docker-centos6/groel_template2.mrc /emg/data/leginon/06jul12a/templates/
+COPY MRC/06jul12a/06jul12a_15gr_28sq_04hl_02em.mrc /emg/data/leginon/06jul12a/rawdata/
+COPY MRC/06jul12a/06jul12a_15gr_28sq_11hl_03em.mrc /emg/data/leginon/06jul12a/rawdata/
+COPY MRC/06jul12a/06jul12a_15gr_28sq_23hl_02em.mrc /emg/data/leginon/06jul12a/rawdata/
+COPY MRC/06jul12a/06jul12a_15gr_28sq_23hl_04em.mrc /emg/data/leginon/06jul12a/rawdata/
+COPY MRC/06jul12a/06jul12a_22gr_13sq_02hl_04em.mrc /emg/data/leginon/06jul12a/rawdata/
+COPY MRC/06jul12a/06jul12a_22gr_13sq_03hl_05em.mrc /emg/data/leginon/06jul12a/rawdata/
+COPY MRC/06jul12a/06jul12a_22gr_37sq_05hl_02em.mrc /emg/data/leginon/06jul12a/rawdata/
+COPY MRC/06jul12a/06jul12a_22gr_37sq_05hl_05em.mrc /emg/data/leginon/06jul12a/rawdata/
+COPY MRC/06jul12a/06jul12a_22gr_37sq_25hl_04em.mrc /emg/data/leginon/06jul12a/rawdata/
+COPY MRC/06jul12a/06jul12a_22gr_37sq_25hl_05em.mrc /emg/data/leginon/06jul12a/rawdata/
+COPY MRC/06jul12a/06jul12a_27gr_65sq_09hl_05em.mrc /emg/data/leginon/06jul12a/rawdata/
+COPY MRC/06jul12a/06jul12a_35gr_63sq_12hl_04em.mrc /emg/data/leginon/06jul12a/rawdata/
+
+### just double check that this directory is missing
+RUN rm -fvr /emg/data/appion
+
 RUN updatedb
 
 CMD /emg/sw/startup.sh

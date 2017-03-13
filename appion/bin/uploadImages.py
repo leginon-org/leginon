@@ -43,6 +43,8 @@ class UploadImages(appionScript.AppionScript):
 
 		self.parser.add_option("--angle-list", dest="angleliststr",
 			help="List of angles in radians to apply to tilt series", metavar="#,#,#")
+		self.parser.add_option("--dose-list", dest="doseliststr",
+			help="List of doses in e-/A^2 to apply to tilt series", metavar="#,#,#")
 		self.parser.add_option("--defocus-list", dest="defocusliststr",
 			help="List of defoci in meters to apply to defocal series", metavar="#,#,#")
 		self.parser.add_option("--defocus", dest="defocus", type="float",
@@ -79,13 +81,13 @@ class UploadImages(appionScript.AppionScript):
 		if self.params['mpix'] is None:
 			apDisplay.printError("Please provide a pixel size (in meters), e.g., --pixelsize=1.3e-10")
 
-		### series only valid with non-normal uplaods
+		### series only valid with non-normal uploads
 		if self.params['seriessize'] is None and self.params['uploadtype'] != "normal":
 			apDisplay.printError("If using tilt or defocal series, please provide --images-per-series")
 		if self.params['seriessize'] > 1 and self.params['uploadtype'] == "normal":
 			apDisplay.printError("If using normal mode, do NOT provide --images-per-series")
 
-		### angleliststr only valid with tiltseries uplaods
+		### angleliststr only valid with tiltseries uploads
 		if self.params['angleliststr'] is None and self.params['uploadtype'] == "tiltseries":
 			apDisplay.printError("If using tilt series, please provide --angle-list")
 		if self.params['angleliststr'] is not None and self.params['uploadtype'] != "tiltseries":
@@ -94,8 +96,15 @@ class UploadImages(appionScript.AppionScript):
 			self.anglelist = self.convertStringToList(self.params['angleliststr'])
 			if len(self.anglelist) != self.params['seriessize']:
 				apDisplay.printError("'images-per-tilt-series' and 'angle-list' have different lengths")
+		### doseliststr only valid with tiltseries uploads
+		if self.params['doseliststr'] is not None and self.params['uploadtype'] != "tiltseries":
+			apDisplay.printError("If not using tilt series, do NOT provide --dose-list")
+		if self.params['doseliststr'] is not None:
+			self.doselist = self.convertStringToList(self.params['doseliststr'])
+			if len(self.doselist) != self.params['seriessize']:
+				apDisplay.printError("'images-per-tilt-series' and 'dose-list' have different lengths")
 
-		### defocusliststr only valid with non-normal uplaods
+		### defocusliststr only valid with non-normal uploads
 		if self.params['defocus'] is not None and self.params['defocusliststr'] is not None:
 			apDisplay.printError("Please provide only one of --defocus or --defocus-list")
 		if self.params['defocus'] is None and self.params['defocusliststr'] is None:
@@ -348,6 +357,17 @@ class UploadImages(appionScript.AppionScript):
 		return 0.0
 
 	#=====================
+	def getDose(self, numinseries):
+		"""
+		get dose from list, if no list return empty
+
+		Note: numinseries starts at 1
+		"""
+		if self.params['doseliststr'] is not None:
+			return self.doselist[numinseries-1]
+		return
+
+	#=====================
 	def getImageDefocus(self, numinseries):
 		"""
 		get defocus from list, if no list return 'defocus' variable
@@ -395,6 +415,11 @@ class UploadImages(appionScript.AppionScript):
 		presetdata['tem'] = self.temdata
 		presetdata['ccdcamera'] = self.camdata
 		presetdata['magnification'] = self.params['magnification']
+		try:
+			self.params['doseliststr']
+			presetdata['dose'] = self.getDose(numinseries)*(10**20)
+		except:
+			pass
 
 		presetname = 'upload'
 		# defocal series have different preset for each member
@@ -497,6 +522,17 @@ class UploadImages(appionScript.AppionScript):
 	def copyFrames(self,source,destination):
 		apFile.safeCopy(source, destination)
 		
+	def unstack(self,mrc_stack):
+		apDisplay.printMsg("Unstacking mrc stack. A temporary extraction directory will be made using the stack name prefix.")
+		prefix = os.path.splitext(os.path.basename(mrc_stack))[0]
+		stack_path = os.path.dirname(os.path.abspath(mrc_stack))
+		temp_image_dir = "%s/%s_tmp" % (stack_path, prefix)
+		os.system('mkdir %s 2>/dev/null' % temp_image_dir)
+		stack = mrc.read(mrc_stack)
+		for tilt_image in range(1,len(stack)+1):
+			mrc.write(stack[tilt_image-1],"%s/%s_%04d.mrc" % (temp_image_dir, prefix, tilt_image))
+		return temp_image_dir
+		
 	def prepareImageForUpload(self,origfilepath,newframepath=None,nframes=1):	
 		### In order to obey the rule of first save image then insert 
 		### database record, image need to be read as numpy array, not copied
@@ -565,7 +601,11 @@ class UploadImages(appionScript.AppionScript):
 			# self.dims is only defined with normimg is present
 			self.uploadRefImage('norm', self.params['normimg'])
 			self.uploadRefImage('dark', self.params['darkimg'])
-		mrclist = self.getImagesInDirectory(self.params['imagedir'])
+		if os.path.isfile(self.params['imagedir']):
+			temp_image_dir = self.unstack(self.params['imagedir'])
+			mrclist = self.getImagesInDirectory(temp_image_dir)
+		else:
+			mrclist = self.getImagesInDirectory(self.params['imagedir'])
 
 		for i in range(min(len(mrclist),6)):
 			print mrclist[i]
@@ -613,6 +653,9 @@ class UploadImages(appionScript.AppionScript):
 				%(len(mrclist)-count, len(mrclist), apDisplay.timeString(esttime)))
 			### counting
 			count += 1
+		
+		if os.path.isfile(self.params['imagedir']):
+			shutil.rmtree(temp_image_dir)
 
 #=====================
 #=====================
