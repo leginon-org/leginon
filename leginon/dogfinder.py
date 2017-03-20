@@ -19,6 +19,7 @@ import ice
 import version
 import targetfinder
 import jahcfinderback
+import voronoiWrapper
 from leginon import leginondata
 import gui.wx.DoGFinder
 from pyami import imagefun
@@ -48,7 +49,7 @@ class DoGFinder(targetfinder.TargetFinder):
 		'ice min mean': 0.0,
 		'ice max mean': 0.6,
 		'ice max std': 0.2,
-		'focus hole': 'Off',
+		'focus hole': 'Central Voronoi',
 		'target template': False,
 		'focus template': [(0, 0)],
 		'acquisition template': [(0, 0)],
@@ -89,12 +90,10 @@ class DoGFinder(targetfinder.TargetFinder):
 			'Final': {},
 		}
 
-		self.focustypes = ['Off', 'Any Hole', 'Good Hole', 'Center']
+		self.focustypes = ['Off', 'Central Voronoi', 'Good Voronoi', 'Any Hole', 'Good Hole', 'Center', ]
 		self.userpause = threading.Event()
-
 		self.foc_counter = itertools.count()
 		self.foc_activated = False
-
 		self.start()
 
 	def readImage(self, filename):
@@ -304,14 +303,6 @@ class DoGFinder(targetfinder.TargetFinder):
 		goodholes = self.holes
 		centers = self.blobCenters(goodholes)
 		allcenters = self.blobCenters(self.blobs)
-		"""
-		#requires scipy 0.12 (April 2013); CentOS 6 only has scipy 0.7.2 (April 2010);
-		from scipy.spatial import Voronoi, voronoi_plot_2d
-		vor = Voronoi(centers)
-		import matplotlib.pyplot as plt
-		voronoi_plot_2d(vor)
-		plt.show()
-		"""
 
 		# activate if counter is at a multiple of interval
 		interval = self.settings['focus interval']
@@ -330,6 +321,12 @@ class DoGFinder(targetfinder.TargetFinder):
 				if len(allcenters) < 2:
 					self.logger.info('need more than one hole if you want to focus on one of them')
 					centers = []
+				elif onehole == 'Central Voronoi':
+					fpoint = self.centralVoronoiFocus(allcenters)
+					focus_points.append(fpoint)
+				elif onehole == 'Good Voronoi':
+					fpoint = self.goodVoronoiFocus(allcenters)
+					focus_points.append(fpoint)
 				elif onehole == 'Center':
 					focus_points.append(self.centerCarbon(allcenters))
 				elif onehole == 'Any Hole':
@@ -363,6 +360,57 @@ class DoGFinder(targetfinder.TargetFinder):
 		if type(self.currentimagedata) == type(leginondata.AcquisitionImageData()):
 			hfprefs = self.storeHoleFinderPrefsData(self.currentimagedata)
 			self.storeHoleStatsData(hfprefs)
+
+	def calc_focus_stats(self, focus_points):
+		im = self.original
+		r = self.settings['lattice hole radius']
+		focus_spots= []
+		self.icecalc.set_i0(self.settings['lattice zero thickness'])
+		for coord in focus_points:
+			focus_stats = self.get_hole_stats(im, coord, r)
+			if focus_stats is None:
+				continue
+			focus_spot = {'coord': coord}
+			focus_spot['hole_stat_radius'] = r
+			focus_spot['hole_n'] = focus_stats['n']
+			focus_spot['hole_mean'] = focus_stats['mean']
+			focus_spot['hole_std'] = focus_stats['std']
+			mean = float(focus_stats['mean'])
+			focus_spot['thickness-mean'] = self.icecalc.get_thickness(mean)
+			std = float(focus_stats['std'])
+			focus_spot['thickness-stdev'] = self.icecalc.get_stdev_thickness(std, mean)
+			focus_spots.append(focus_spot)
+		return focus_spots
+
+	def goodVoronoiFocus(self, target_points):
+		focus_points = voronoiWrapper.pointsToVoronoiPoints(target_points)
+		self.setTargets(focus_points, 'Voronoi')
+		focus_spots = self.calc_focus_stats(focus_points)
+		import pprint
+		pprint.pprint(focus_spots)
+		raise NotImplementedError
+
+		middle_point = self.centralPoint(focus_points)
+		return middle_point
+
+	def centralVoronoiFocus(self, target_points):
+		focus_points = voronoiWrapper.pointsToVoronoiPoints(target_points)
+		self.setTargets(focus_points, 'Voronoi')
+		middle_point = self.centralPoint(focus_points)
+		return middle_point
+
+	def centralPoint(self, points):
+		numpypoints = numpy.array(points)
+		xavg = (numpypoints[:,0]).mean()
+		yavg = (numpypoints[:,1]).mean()
+		a = numpy.array((xavg, yavg))
+		mindist = 1e10
+		for p in points:
+			dist = numpy.power(a - p, 2).mean()
+			if dist < mindist:
+				minpoint = p
+				mindist = dist
+		return minpoint
 
 	def centerCarbon(self, points):
 		temppoints = points
@@ -433,7 +481,7 @@ class DoGFinder(targetfinder.TargetFinder):
 		return closest_point
 
 	def offsetFocus(self, point):
-			return point[0]+self.settings['focus offset col'],point[1]+self.settings['focus offset row']
+		return point[0]+self.settings['focus offset col'],point[1]+self.settings['focus offset row']
 
 	def bypass(self):
 		self.setTargets([], 'Blobs', block=True)
