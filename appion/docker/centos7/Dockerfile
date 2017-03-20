@@ -90,7 +90,7 @@ RUN python ./setup.py install
 RUN mkdir /etc/fftw
 RUN python /emg/sw/myami/pyami/fft/fftwsetup.py 2 4096 4096 && mv -v ~/fftw3-wisdom-* /etc/fftw/wisdom
 RUN cp -v /emg/sw/myami/redux/init.d/reduxd /etc/init.d/reduxd
-COPY findem-docker-centos6/findem64.exe /emg/sw/myami/appion/bin/
+COPY findem-docker-centos7/findem64.exe /emg/sw/myami/appion/bin/
 WORKDIR /emg/sw/myami/
 
 #ADD Xmipp-2.4-src.tar.gz /emg/sw
@@ -168,8 +168,8 @@ COPY bashrc /etc/bashrc
 COPY startup.sh /emg/sw/startup.sh
 
 ### copy the image data
-COPY findem-docker-centos6/groel_template1.mrc /emg/data/leginon/06jul12a/templates/
-COPY findem-docker-centos6/groel_template2.mrc /emg/data/leginon/06jul12a/templates/
+COPY findem-docker-centos7/groel_template1.mrc /emg/data/leginon/06jul12a/templates/
+COPY findem-docker-centos7/groel_template2.mrc /emg/data/leginon/06jul12a/templates/
 COPY MRC/06jul12a/06jul12a_15gr_28sq_04hl_02em.mrc /emg/data/leginon/06jul12a/rawdata/
 COPY MRC/06jul12a/06jul12a_15gr_28sq_11hl_03em.mrc /emg/data/leginon/06jul12a/rawdata/
 COPY MRC/06jul12a/06jul12a_15gr_28sq_23hl_02em.mrc /emg/data/leginon/06jul12a/rawdata/
@@ -182,6 +182,7 @@ COPY MRC/06jul12a/06jul12a_22gr_37sq_25hl_04em.mrc /emg/data/leginon/06jul12a/ra
 COPY MRC/06jul12a/06jul12a_22gr_37sq_25hl_05em.mrc /emg/data/leginon/06jul12a/rawdata/
 COPY MRC/06jul12a/06jul12a_27gr_65sq_09hl_05em.mrc /emg/data/leginon/06jul12a/rawdata/
 COPY MRC/06jul12a/06jul12a_35gr_63sq_12hl_04em.mrc /emg/data/leginon/06jul12a/rawdata/
+RUN chown -R appionuser:users /emg/data
 
 ### just double check that this directory is missing
 RUN rm -fvr /emg/data/appion

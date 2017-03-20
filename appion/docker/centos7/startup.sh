@@ -4,7 +4,7 @@
 nohup /usr/bin/mysqld_safe &
 echo 'mysqld' >> /var/log/startup.log
 rm -fr /tmp/.X* && \
-  /usr/sbin/runuser -l appionuser -c 'vncserver -autokill :1 -name vnc -geometry 1200x800' \
+  /usr/sbin/runuser -l appionuser -c 'vncserver -autokill :1 -name vnc -geometry 1200x1000' \
   && echo 'vncserver' >> /var/log/startup.log
 updatedb && echo 'updatedb' >> /var/log/startup.log
 nohup /usr/sbin/apachectl -DFOREGROUND &
@@ -17,5 +17,4 @@ fi
 
 #need a command that does not end to keep container alive
 tail -f /home/appionuser/.vnc/*:1.log
-tail -f /var/log/messages
 for i in {00..99}; do sleep 10; echo $i; done
