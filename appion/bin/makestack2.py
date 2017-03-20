@@ -67,10 +67,6 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 	def processParticles(self, imgdata, partdatas, shiftdata):
 		self.shortname = apDisplay.short(imgdata['filename'])
 
-		boxdir = os.path.join(self.params['rundir'], "boxfiles")
-		if not os.path.isdir(boxdir):
-			os.mkdir(boxdir)
-
 		if self.params['filetype']=="relion":
 			# generate "micrographs" directory to store linked files
 			linkdir = os.path.join(self.params['rundir'],"micrographs")
@@ -1224,6 +1220,11 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 	#=======================
 	def preLoopFunctions(self):
 		super(Makestack2Loop, self).preLoopFunctions()
+
+		boxdir = os.path.join(self.params['rundir'], "boxfiles")
+		if not os.path.isdir(boxdir):
+			os.mkdir(boxdir)
+	
 		### create an edge map for edge statistics
 		box = self.boxsize
 		self.boxedpartdatas = None
