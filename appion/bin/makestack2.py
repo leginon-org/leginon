@@ -67,6 +67,10 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 	def processParticles(self, imgdata, partdatas, shiftdata):
 		self.shortname = apDisplay.short(imgdata['filename'])
 
+		boxdir = os.path.join(self.params['rundir'], "boxfiles")
+		if not os.path.isdir(boxdir):
+			os.mkdir(boxdir)
+
 		if self.params['filetype']=="relion":
 			# generate "micrographs" directory to store linked files
 			linkdir = os.path.join(self.params['rundir'],"micrographs")
@@ -269,14 +273,19 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 
 		### convert database particle data to coordinates and write boxfile
 		if self.params['filetype'] == "relion":
-			boxfile = os.path.join(self.params['rundir'],"micrographs/%s.box"%(imgdata['filename']))
+			boxfile = os.path.join(self.params['rundir'], "micrographs", "%s.box"%(imgdata['filename']))
 		else:
-			boxfile = os.path.join(self.params['rundir'], imgdata['filename']+".box")
+			boxfile = os.path.join(self.params['rundir'], "boxfiles", imgdata['filename']+".box")
 		parttree, boxedpartdatas = apBoxer.processParticleData(imgdata, self.boxsize,
 			partdatas, shiftdata, boxfile, rotate=self.params['rotate'], checkInside=self.params['checkInside'])
 
 		### boxfile created, can return if that's all we need
 		if self.params['boxfiles']:
+			if not os.path.isfile(boxfile):
+				apDisplay.printError("box file was requested but not created")
+			else:
+				apDisplay.printMsg("box coordinates written to file %s"
+					%(os.path.basename(boxfile)))
 			self.boxfile_p_count += len(partdatas)
 			return None,None,None
 
