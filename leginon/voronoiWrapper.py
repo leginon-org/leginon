@@ -24,7 +24,10 @@ def pointsToVoronoiPoints(points, filter=False):
 		vertices = vor.vertices
 	return vertices
 
-def filterPoints(points, voronoi_points):
+def filterVoronoiPoints(points, voronoi_points):
+	"""
+	removes Voronoi points outside range of initial points
+	"""
 	numpypoints = numpy.array(points)
 	xmin = (numpypoints[:,0]).min()
 	xmax = (numpypoints[:,0]).max()

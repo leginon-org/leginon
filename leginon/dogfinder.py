@@ -265,7 +265,7 @@ class DoGFinder(targetfinder.TargetFinder):
 		holes = self.holes
 		goodholes = []
 		self.icecalc.set_i0(i0)
-		thinknesses = []
+		thicknesses = []
 		stdevthicks = []
 		for hole in holes:
 			if 'hole_mean' not in hole.stats:
@@ -275,7 +275,7 @@ class DoGFinder(targetfinder.TargetFinder):
 			std = hole.stats['hole_std']
 			tm = self.icecalc.get_thickness(mean)
 			hole.stats['thickness-mean'] = tm
-			thinknesses.append(tm)
+			thicknesses.append(tm)
 			ts = self.icecalc.get_stdev_thickness(std, mean)
 			stdevthicks.append(ts)
 			hole.stats['thickness-stdev'] = ts
@@ -284,8 +284,8 @@ class DoGFinder(targetfinder.TargetFinder):
 				hole.stats['good'] = True
 			else:
 				hole.stats['good'] = False
-		self.logger.info('thinkness-mean: %.3f +/- %.3f'%(numpy.mean(thinknesses), numpy.std(thinknesses)))
-		self.logger.info('thinkness-stdev: %.3f +/- %.3f'%(numpy.mean(stdevthicks), numpy.std(stdevthicks)))
+		self.logger.info('hole thinkness-mean: %.3f +/- %.3f'%(numpy.mean(thicknesses), numpy.std(thicknesses)))
+		self.logger.info('hole thinkness-stdev: %.3f +/- %.3f'%(numpy.mean(stdevthicks), numpy.std(stdevthicks)))
 		self.logger.info('%d of %d blobs are good holes'%(len(goodholes), len(self.blobs)))
 		self.holes = goodholes
 
@@ -363,7 +363,7 @@ class DoGFinder(targetfinder.TargetFinder):
 
 	def calc_focus_stats(self, focus_points):
 		im = self.original
-		r = self.settings['lattice hole radius']
+		r = self.settings['focus stats radius']
 		focus_spots= []
 		self.icecalc.set_i0(self.settings['lattice zero thickness'])
 		for coord in focus_points:
@@ -384,26 +384,56 @@ class DoGFinder(targetfinder.TargetFinder):
 
 	def goodVoronoiFocus(self, target_points):
 		focus_points = voronoiWrapper.pointsToVoronoiPoints(target_points)
+		focus_points = voronoiWrapper.filterVoronoiPoints(target_points, focus_points)
 		self.setTargets(focus_points, 'Voronoi')
 		focus_spots = self.calc_focus_stats(focus_points)
-		import pprint
-		pprint.pprint(focus_spots)
-		raise NotImplementedError
+		if len(focus_spots) < 1:
+			self.logger.error('failed to find any focus spots')
+			return None
 
-		middle_point = self.centralPoint(focus_points)
+		tmin = self.settings['focus min mean thickness']
+		tmax = self.settings['focus max mean thickness']
+		tstd = self.settings['focus max stdev thickness']
+		good_focus_points = []
+		thicknesses = []
+		stdevthicks = []
+		for focus_spot in focus_spots:
+			if 'hole_mean' not in focus_spot:
+				## no mean was calculated
+				continue
+			tm = focus_spot['thickness-mean']
+			ts = focus_spot['thickness-stdev']
+			thicknesses.append(tm)
+			stdevthicks.append(ts)
+			if (tmin <= tm <= tmax) and (ts < tstd):
+				good_focus_points.append(focus_spot['coord'])
+
+		self.logger.info('focus thinkness-mean: %.3f +/- %.3f'%(numpy.mean(thicknesses), numpy.std(thicknesses)))
+		self.logger.info('focus thinkness-stdev: %.3f +/- %.3f'%(numpy.mean(stdevthicks), numpy.std(stdevthicks)))
+		self.logger.info('%d of %d Voronoi points are good focus spots'%(len(good_focus_points), len(focus_points)))
+
+		if len(good_focus_points) < 1:
+			self.logger.warning('failed to find any good focus spots, using central spot')
+			middle_point = self.centralPoint(focus_points)
+			return middle_point
+
+		middle_point = self.centralPoint(good_focus_points)
 		return middle_point
 
 	def centralVoronoiFocus(self, target_points):
 		focus_points = voronoiWrapper.pointsToVoronoiPoints(target_points)
+		focus_points = voronoiWrapper.filterVoronoiPoints(target_points, focus_points)
 		self.setTargets(focus_points, 'Voronoi')
 		middle_point = self.centralPoint(focus_points)
 		return middle_point
 
 	def centralPoint(self, points):
 		numpypoints = numpy.array(points)
+		print numpypoints.shape
 		xavg = (numpypoints[:,0]).mean()
 		yavg = (numpypoints[:,1]).mean()
 		a = numpy.array((xavg, yavg))
+		print a
 		mindist = 1e10
 		for p in points:
 			dist = numpy.power(a - p, 2).mean()
@@ -434,47 +464,27 @@ class DoGFinder(targetfinder.TargetFinder):
 		return centercarbon
 
 	def centroid(self, points):
-		## find centroid
-		cx = cy = 0.0
-		for point in points:
-			cx += point[0]
-			cy += point[1]
-		cx /= len(points)
-		cy /= len(points)
+		numpypoints = numpy.array(points)
+		cx = (numpypoints[:,0]).mean()
+		cy = (numpypoints[:,1]).mean()
 		return cx,cy
 
 	def focus_on_hole(self, good, all, apply_offset=False):
-		cx,cy = self.centroid(all)
-
 		## make a list of the bad holes
-		bad = []
-		for point in all:
-			if point not in good:
-				bad.append(point)
+		allset = set(all)
+		goodset = set(good)
+		badset = allset - goodset
+		bad = list(badset)
 
 		## if there are bad holes, use one
 		if bad:
-			point = bad[0]
-			closest_dist = math.hypot(point[0]-cx, point[1]-cy)
-			closest_point = point
-			for point in bad:
-				dist = math.hypot(point[0]-cx, point[1]-cy)
-				if dist < closest_dist:
-					closest_dist = dist
-					closest_point = point
+			closest_point = self.centralPoint(bad)
 			if apply_offset:
 				closest_point = self.offsetFocus(closest_point)
 			return closest_point
 
 		## now use a good hole for focus
-		point = good[0]
-		closest_dist = math.hypot(point[0]-cx,point[1]-cy)
-		closest_point = point
-		for point in good:
-			dist = math.hypot(point[0]-cx,point[1]-cy)
-			if dist < closest_dist:
-				closest_dist = dist
-				closest_point = point
+		closest_point = self.centralPoint(good)
 		good.remove(closest_point)
 		if apply_offset:
 			closest_point = self.offsetFocus(closest_point)
