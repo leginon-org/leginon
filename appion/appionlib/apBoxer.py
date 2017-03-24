@@ -16,10 +16,10 @@ from appionlib import apDisplay
 from appionlib.apImage import imagefilter	#image clipping
 
 ##=================
-def getBoxStartPosition(imgdata,halfbox,partdata, shiftdata):
+def getBoxStartPosition(halfbox, partdata, shiftdata):
 	### xcoord is the upper left area corner of the particle box
 	start_x = int(round( shiftdata['scale']*(partdata['xcoord'] - shiftdata['shiftx']) - halfbox ))
-	start_y = int(round( shiftdata['scale']*(partdata['ycoord'] - shiftdata['shifty']) - halfbox ))	
+	start_y = int(round( shiftdata['scale']*(partdata['ycoord'] - shiftdata['shifty']) - halfbox ))
 	return start_x,start_y
 
 ##=================
@@ -32,7 +32,7 @@ def processParticleData(imgdata, boxsize, partdatas, shiftdata, boxfile, rotate=
 	"""
 	for a list of partdicts from database, apply shift
 	to get a new list with x, y, angle information
-	
+
 	replaces writeParticlesToBoxfile()
 	"""
 	imgdims={}
@@ -44,7 +44,7 @@ def processParticleData(imgdata, boxsize, partdatas, shiftdata, boxfile, rotate=
 		halfbox = int(1.5*boxsize/2)
 	else:
 		halfbox = boxsize/2
-	
+
 	parttree = []
 	boxedpartdatas = []
 	eliminated = 0
@@ -61,8 +61,8 @@ def processParticleData(imgdata, boxsize, partdatas, shiftdata, boxfile, rotate=
 			continue
 
 		### xcoord is the upper left area corner of the particle box
-		start_x,start_y = getBoxStartPosition(imgdata,halfbox,partdata, shiftdata)
-		if checkInside is False or checkBoxInImage(imgdims,start_x,start_y,boxsize):
+		start_x, start_y = getBoxStartPosition(halfbox, partdata, shiftdata)
+		if checkInside is False or checkBoxInImage(imgdims, start_x, start_y, boxsize):
 			partdict = {
 				'x_coord': start_x,
 				'y_coord': start_y,
@@ -70,11 +70,11 @@ def processParticleData(imgdata, boxsize, partdatas, shiftdata, boxfile, rotate=
 			}
 			parttree.append(partdict)
 			boxedpartdatas.append(partdata)
-			f.write("%d\t%d\t%d\t%d\t-3\n"%(start_x,start_y,boxsize,boxsize))
+			f.write("%d\t%d\t%d\t%d\t-3\n"%(start_x, start_y, boxsize, boxsize))
 		else:
 			eliminated += 1
 	f.close()
-	
+
 	if eliminated > 0:
 		apDisplay.printMsg(str(eliminated)+" particle(s) eliminated because they were out of bounds")
 	if user > 0:
@@ -130,7 +130,7 @@ def boxerRotate(imgfile, parttree, outstack, boxsize, pixlimit=None):
 	imgarray = mrc.read(imgfile)
 	imgarray = imagefilter.pixelLimitFilter(imgarray, pixlimit)
 	bigboxedparticles = boxerMemory(imgarray, parttree, bigboxsize)
-	
+
 	boxedparticles = []
 	boxshape = (boxsize,boxsize)
 	apDisplay.printMsg("Rotating particles...")
