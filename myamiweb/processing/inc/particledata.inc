@@ -1960,7 +1960,8 @@ class particledata {
 	}
 
 	function getParticles ($runId) {
-		$q="select p.DEF_id, p.xcoord, p.ycoord, p.correlation, p.`REF|leginondata|AcquisitionImageData|image`, a.`filename` "
+		$q="select p.DEF_id, p.xcoord, p.ycoord, p.correlation, "
+			."p.`REF|leginondata|AcquisitionImageData|image`, a.`filename`, p.helixnum "
 			."from ApParticleData p "
 			."left join ".DB_LEGINON.".`AcquisitionImageData` a "
 			."on p.`REF|leginondata|AcquisitionImageData|image` = a.`DEF_id` "
