@@ -8,6 +8,7 @@ import shutil
 from appionlib import apDisplay
 from appionlib import apRelion
 from pyami import mrc
+from pyami import fileutil
 
 ####
 # This is a low-level file with NO database connections
@@ -255,6 +256,55 @@ def replaceUniqueLinePatternInTxtFile(filepath,search_string,new_linetext):
 def getMrcFileShape(mrcpath):
 	header = mrc.readHeaderFromFile(mrcpath)
 	return header['shape']
+
+def rsync(from_path, to_dir, remove_sent=False, delay=0):
+	'''
+	perform rsync with from_path and to under to_dir.
+	Can impose a delay before execution.
+	'''
+	if not to_dir:
+		return
+	cmd = makeRsyncCommand(from_path, to_dir, remove_sent)
+	print cmd
+	time.sleep(delay)
+	proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+	(output, error) = proc.communicate()
+
+def makeRsyncCommand(from_path, to_dir, remove_sent=False):
+	#rsync command handles both file and directory
+	remove_sent_text = ''
+	if remove_sent:
+		# remove-sent-files flag
+		remove_sent_text = '--remove-sent-files '
+	cmd = 'rsync -av %s%s %s' % (remove_sent_text, from_path, to_dir)
+	return cmd
+
+def compress_and_rsync(from_path, to_dir, remove_sent=False, delay=0):
+	'''
+	compress file at from_path to be put under to_dir. from_path can be
+	a directory and this will compress files in there to a subdirectory of
+	the same basename.
+	'''
+	time.sleep(delay)
+
+	if os.path.isdir(from_path):
+		basename = os.path.basename(from_path)
+		wild_card = '/*'
+		#bzip2 command need to modify from_path to allow directory
+		bzip2_from_path = from_path+wild_card
+		rsync_from_path = from_path
+	else:
+		bzip2_from_path = from_path
+		rsync_from_path = from_path+'.bz2'
+	# bzip2 only compresses file, not directory
+	cmd = 'bzip2 %s' % (bzip2_from_path)
+	if to_dir:
+		rsync_cmd = makeRsyncCommand(rsync_from_path, to_dir, remove_sent)
+		cmd += '; '+rsync_cmd	
+	print cmd
+	proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+	(output, error) = proc.communicate()
+
 ####
 # This is a low-level file with NO database connections
 # Please keep it this way

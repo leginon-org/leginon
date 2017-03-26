@@ -6,6 +6,7 @@ import sys
 import math
 import shutil
 import subprocess
+import multiprocessing as mp
 #pyami
 from pyami import fileutil
 #leginon
@@ -32,6 +33,8 @@ class FrameStackLoop(apDDLoop.DDStackLoop):
 			action="store_true", help="Output square images")
 		self.parser.add_option("--no-cyclechannels", dest="cyclechannels", default=True,
 			action="store_false", help="Use only one reference channel for gain/dark correction")
+		self.parser.add_option("--compress", dest="compress", default=False,
+			action="store_true", help="Compress raw frames after stack making")
 		# String
 		# Integer
 		self.parser.add_option("--refimgid", dest="refimgid", type="int",
@@ -112,6 +115,7 @@ class FrameStackLoop(apDDLoop.DDStackLoop):
 		apFile.removeFile(self.dd.framestackpath)
 		apFile.removeFile(self.dd.tempframestackpath)
 
+		'''
 		if not self.isUseFrameAlignerFlat():
 			### make stack named as self.dd.tempframestackpath
 			self.dd.makeCorrectedFrameStack(self.params['rawarea'])
@@ -125,6 +129,49 @@ class FrameStackLoop(apDDLoop.DDStackLoop):
 		if not self.params['keepstack']:
 			apFile.removeFile(self.dd.framestackpath)
 		self.otherCleanUp(imgdata)
+		'''
+		# Compress the raw frames
+		self.postProcessOriginalFrames(imgdata)
+		self.postProcessReferences(imgdata)
+
+	def postProcessReferences(self, imgdata):
+		if ddinfo.getUseBufferFromImage(imgdata):
+			head_dir = self.dd.getBufferFrameSessionPathFromImage(imdata)
+			ref_dir = os.path.join(head_dir, 'references')
+			to_dir = imgdata['session']['frame path']
+			# Do not remove sent file since there will be updates nor delay running.
+			j = mp.Process(target=apFile.rsync, args=[ref_dir, to_dir, False, 0])
+			j.start()
+		return
+
+	def postProcessOriginalFrames(self, imgdata):
+		delay = 300
+		to_dir = None
+		raw_frame_path = self.dd.getRawFrameDir()
+		head_dir = os.path.split(raw_frame_dir)[0]
+		if not self.params['compress']:
+			# just rsync from buffer
+			if ddinfo.getUseBufferFromImage(imgdata):
+				j = mp.Process(target=apFile.rsync, args=[raw_frame_path, to_dir, True, delay])
+				j.start()
+			return
+		# compress before rsync
+		if ddinfo.getUseBufferFromImage(imgdata):
+			to_dir = imgdata['session']['frame path']
+			# make permanent frame path
+			try:
+				fileutil.mkdirs(to_dir)
+			except:
+				apDisplay.printWarning('Error making destination %s' % to_dir)
+				to_dir = None
+
+		if 'Falcon' in self.dd.__class__.__name__:
+			apDisplay.printMsg('Falcon does not compress well. skip compression')
+			j = mp.Process(target=apFile.rsync, args=[raw_frame_path, to_dir, True, delay])
+		else:
+			j = mp.Process(target=apFile.compress_and_rsync, args=[raw_frame_path, to_dir, True, delay])
+		j.start()
+		apDisplay.printColor('Sent multiprocess job','green')
 
 	def isAlign(self):
 		return False
