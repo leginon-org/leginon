@@ -4,7 +4,7 @@
 nohup /usr/bin/mysqld_safe &
 echo 'mysqld' >> /var/log/startup.log
 rm -fr /tmp/.X* && \
-  /usr/sbin/runuser -l appionuser -c 'vncserver -autokill :1 -name vnc -geometry 1200x1000' \
+  /usr/sbin/runuser -l appionuser -c 'vncserver -autokill :1 -name vnc -geometry 1440x900' \
   && echo 'vncserver' >> /var/log/startup.log
 updatedb && echo 'updatedb' >> /var/log/startup.log
 nohup /usr/sbin/apachectl -DFOREGROUND &
