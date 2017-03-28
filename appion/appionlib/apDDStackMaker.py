@@ -67,7 +67,7 @@ class FrameStackLoop(apDDLoop.DDStackLoop):
 		# keepstack is resolved for various cases in conflict check.  There should be no ambiguity by now
 		self.dd.setKeepStack(self.params['keepstack'])
 		self.dd.setCycleReferenceChannels(self.params['cyclechannels'])
-
+		self.first_image = True
 	
 		if self.params['refimgid']:
 			self.dd.setDefaultImageForReference(self.params['refimgid'])
@@ -115,7 +115,6 @@ class FrameStackLoop(apDDLoop.DDStackLoop):
 		apFile.removeFile(self.dd.framestackpath)
 		apFile.removeFile(self.dd.tempframestackpath)
 
-		'''
 		if not self.isUseFrameAlignerFlat():
 			### make stack named as self.dd.tempframestackpath
 			self.dd.makeCorrectedFrameStack(self.params['rawarea'])
@@ -129,14 +128,15 @@ class FrameStackLoop(apDDLoop.DDStackLoop):
 		if not self.params['keepstack']:
 			apFile.removeFile(self.dd.framestackpath)
 		self.otherCleanUp(imgdata)
-		'''
+
 		# Compress the raw frames
-		self.postProcessOriginalFrames(imgdata)
-		self.postProcessReferences(imgdata)
+		if self.params['commit']:
+			self.postProcessOriginalFrames(imgdata)
+			self.postProcessReferences(imgdata)
 
 	def postProcessReferences(self, imgdata):
 		if ddinfo.getUseBufferFromImage(imgdata):
-			head_dir = self.dd.getBufferFrameSessionPathFromImage(imdata)
+			head_dir = self.dd.getSessionFramePathFromImage(imgdata)
 			ref_dir = os.path.join(head_dir, 'references')
 			to_dir = imgdata['session']['frame path']
 			# Do not remove sent file since there will be updates nor delay running.
@@ -145,19 +145,22 @@ class FrameStackLoop(apDDLoop.DDStackLoop):
 		return
 
 	def postProcessOriginalFrames(self, imgdata):
-		delay = 300
-		to_dir = None
+		if self.first_image:
+			delay = 30
+		else:
+			delay = 5
 		raw_frame_path = self.dd.getRawFrameDir()
-		head_dir = os.path.split(raw_frame_dir)[0]
+		head_dir = os.path.split(raw_frame_path)[0]
+		to_dir = imgdata['session']['frame path']
 		if not self.params['compress']:
 			# just rsync from buffer
 			if ddinfo.getUseBufferFromImage(imgdata):
 				j = mp.Process(target=apFile.rsync, args=[raw_frame_path, to_dir, True, delay])
 				j.start()
 			return
+
 		# compress before rsync
 		if ddinfo.getUseBufferFromImage(imgdata):
-			to_dir = imgdata['session']['frame path']
 			# make permanent frame path
 			try:
 				fileutil.mkdirs(to_dir)
@@ -166,8 +169,9 @@ class FrameStackLoop(apDDLoop.DDStackLoop):
 				to_dir = None
 
 		if 'Falcon' in self.dd.__class__.__name__:
-			apDisplay.printMsg('Falcon does not compress well. skip compression')
-			j = mp.Process(target=apFile.rsync, args=[raw_frame_path, to_dir, True, delay])
+			if ddinfo.getUseBufferFromImage(imgdata):
+				apDisplay.printMsg('Falcon does not compress well. skip compression')
+				j = mp.Process(target=apFile.rsync, args=[raw_frame_path, to_dir, True, delay])
 		else:
 			j = mp.Process(target=apFile.compress_and_rsync, args=[raw_frame_path, to_dir, True, delay])
 		j.start()
