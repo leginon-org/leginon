@@ -39,7 +39,11 @@ class UploadParticles(appionScript.AppionScript):
 
 		# get list of input images, since wildcards are supported
 		if self.params['filename'] is None:
-			apDisplay.printError("Please enter the file name of Appion picked particle file")
+			apDisplay.printError("Please enter the filename of Appion picked particle file")
+
+		self.params['filename'] = os.path.abspath(self.params['filename'])
+		if not os.path.exists(self.params['filename']):
+			apDisplay.printError("Could not find Appion picked particle file, please provide full path")
 
 		if self.params['sessionname'] is None:
 			apDisplay.printError("Please enter Name of session to upload to, e.g., --session=09dec07a")
@@ -51,7 +55,6 @@ class UploadParticles(appionScript.AppionScript):
 
 	#===========================
 	def insertManualParams(self):
-
 		runq = appiondata.ApSelectionRunData()
 		runq['name'] = self.params['runname']
 		runq['session'] = self.sessiondata
@@ -78,35 +81,48 @@ class UploadParticles(appionScript.AppionScript):
 		count = 0
 		imgfilename2peaklist = {}
 		apDisplay.printMsg("Reading input file")
+		helixnum = None
+		linecount = 0
 		for line in f:
-
+			linecount += 1
 			### format: x <tab> y <tab> filename
 			sline = line.strip()
 			cols = sline.split('\t')
 
-			### must have 3 columns
-			if len(cols) == 4:
+			### must have at least 3 columns
+			if len(cols) == 5:
+				partid, xcoord, ycoord, helixnum, filename = cols
+			elif len(cols) == 4:
 				partid, xcoord, ycoord, filename = cols
 			elif len(cols) == 3:
 				xcoord, ycoord, filename = cols
 			else:
+				sys.stderr.write("!")
 				continue
 
 			### check to make sure our x,y are integers, if not skip to next line in file
 			try:
 				xcoord = int(xcoord)
 				ycoord = int(ycoord)
-			except:
+			except ValueError:
+				sys.stderr.write("!")
 				continue
 
+			if helixnum is not None:
+				try:
+					helixnum = int(helixnum)
+				except ValueError:
+					helixnum = None
+
 			### create new list for new files
-			if not filename in imgfilename2peaklist.keys():
+			if imgfilename2peaklist.get(filename, None) is None:
 				imgfilename2peaklist[filename] = []
 
 			peakdict = {
 				'diameter': self.params['diam'],
 				'xcoord': xcoord,
 				'ycoord': ycoord,
+				'helixnum': helixnum,
 				'peakarea': 10,
 			}
 			count += 1
@@ -116,6 +132,7 @@ class UploadParticles(appionScript.AppionScript):
 			imgfilename2peaklist[filename].append(peakdict)
 		sys.stderr.write("done\n")
 		f.close()
+		apDisplay.printMsg("Read %d lines from input file"%(linecount))
 		apDisplay.printColor("Found %d particles in %d images"%
 			(count, len(imgfilename2peaklist.keys())), "cyan")
 
@@ -132,7 +149,7 @@ class UploadParticles(appionScript.AppionScript):
 		apDisplay.printMsg("Getting image data from database")
 		imgtree = apDatabase.getSpecificImagesFromDB(imglist, self.sessiondata)
 		if imgtree[0]['session']['name'] != self.sessiondata['name']:
-			apDisplay.printError("Session and Image do not match "+imgtree[0]['filename'])	
+			apDisplay.printError("Session and Image do not match "+imgtree[0]['filename'])
 
 		### insert params for manual picking
 		rundata = self.insertManualParams()
@@ -141,7 +158,7 @@ class UploadParticles(appionScript.AppionScript):
 		for imgdata in imgtree:
 			### check session
 			if imgdata['session']['name'] != self.sessiondata['name']:
-				apDisplay.printError("Session and Image do not match "+imgdata['filename'])	
+				apDisplay.printError("Session and Image do not match "+imgdata['filename'])
 
 			peaktree = imgfilename2peaklist[imgdata['filename']]
 			apDisplay.printMsg("%d particles for image %s"
