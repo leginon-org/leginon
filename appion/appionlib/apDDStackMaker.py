@@ -147,6 +147,7 @@ class FrameStackLoop(apDDLoop.DDStackLoop):
 	def postProcessOriginalFrames(self, imgdata):
 		if self.first_image:
 			delay = 30
+			self.first_image = False
 		else:
 			delay = 5
 		raw_frame_path = self.dd.getRawFrameDir()
