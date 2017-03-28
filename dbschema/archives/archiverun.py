@@ -12,7 +12,7 @@ class ArchiveRun(object):
 		#self.setDatabases()
 		#self.setDbCopySinedonPath()
 		self.autoSet()
-		self.normal_dbschema_path = os.path.join(os.path.split(self.normal_sinedon_path)[0],'dbschema')
+		self.normal_dbschema_path = os.path.join(os.path.split(self.normal_sinedon_path)[0],'dbschema','archives')
 
 	def autoSet(self):
 		# configuration

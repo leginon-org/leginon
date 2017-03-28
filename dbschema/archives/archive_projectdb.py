@@ -248,6 +248,16 @@ class ProjectArchiver(Archiver):
 		q = 'select * from install where 1;'
 		results = directq.complexMysqlQuery('projectdata',q)
 
+		# create install table since it is not sinedon.Data
+		q = "show tables like 'install';"
+		imported_results = directq.complexMysqlQuery('importdata',q)
+		if not imported_results:
+			q = """CREATE TABLE  `install` (
+ `key` TEXT CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL ,
+ `value` TEXT CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL
+) TYPE = MYISAM ;"""
+			imported_results = directq.complexMysqlQuery('importdata',q)
+
 		q = 'select * from install where 1;'
 		imported_results = directq.complexMysqlQuery('importdata',q)
 
