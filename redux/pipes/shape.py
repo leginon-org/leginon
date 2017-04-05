@@ -103,10 +103,6 @@ class Shape(Pipe):
 					output = pyami.imagefun.bin(output, binfactors[0], binfactors[1])
 					break
 
-
-
-
-
 		return output
 
 	def make_dirname(self):
