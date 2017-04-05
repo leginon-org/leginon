@@ -264,6 +264,7 @@ def rsync(from_path, to_dir, remove_sent=False, delay=0):
 	'''
 	if not to_dir:
 		return
+	fileutil.mkdirs(to_dir)
 	cmd = makeRsyncCommand(from_path, to_dir, remove_sent)
 	print cmd
 	time.sleep(delay)
