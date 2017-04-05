@@ -105,7 +105,7 @@ def makeImage(inshape, noiselevel=1):
 	raccoon_rgb = scipy.misc.face()
 	raccoon_gray = numpy.mean(raccoon_rgb, 2)
 	zoomfactors = numpy.array(inshape)/numpy.array(raccoon_gray.shape, dtype=float)
-	raccoon_scaled = scipy.ndimage.zoom(raccoon_gray, zoomfactors, order=1)
+	raccoon_scaled = scipy.ndimage.zoom(raccoon_gray, zoomfactors, order=3)
 	raccoon_scaled = raccoon_scaled - raccoon_scaled.min()
 	raccoon = raccoon_scaled / raccoon_scaled.max()
 	im = numpy.random.random(inshape)*noiselevel + raccoon
