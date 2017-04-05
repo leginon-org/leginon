@@ -106,17 +106,19 @@ def makeImage(inshape, noiselevel=1):
 	raccoon_gray = numpy.mean(raccoon_rgb, 2)
 	zoomfactors = numpy.array(inshape)/numpy.array(raccoon_gray.shape, dtype=float)
 	raccoon_scaled = scipy.ndimage.zoom(raccoon_gray, zoomfactors, order=3)
-	raccoon_scaled = raccoon_scaled - raccoon_scaled.min()
-	raccoon = raccoon_scaled / raccoon_scaled.max()
-	im = numpy.random.random(inshape)*noiselevel + raccoon
+	raccoon_scaled = raccoon_scaled - raccoon_scaled.mean()
+	raccoon = raccoon_scaled / raccoon_scaled.std()
+	im = numpy.random.normal(0,1,inshape)*noiselevel + raccoon
 	return im
 
 if __name__ == '__main__':
 	inshape = (5763, 7684)
 	finalshape = (512,512)
+	noiselevel = 1
+
 	final = makeImage(finalshape, 0)
 	#inshape = (1326, 1768)
-	im = makeImage(inshape, 7)
+	im = makeImage(inshape, noiselevel)
 
 	cca = numpy.zeros((4,2))
 	timea = numpy.zeros((4,2))
