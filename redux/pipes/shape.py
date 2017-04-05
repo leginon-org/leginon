@@ -66,9 +66,6 @@ class Shape(Pipe):
 
 		output = input
 
-		### non-integer scaling (zoom) should happen before binning to reduce noise
-		### non-integer scaling (zoom) should happen after binning to increase speed
-
 		"""
 		Neil: based on my tests: zoom first then bin at order =1 is fastest
 		  and had the best results
@@ -90,13 +87,6 @@ class Shape(Pipe):
 		3		2,455.46		310.77
 		"""
 
-		## run bin if any bin factors not 1
-		if binfactors:
-			for binfactor in binfactors:
-				if binfactor != 1:
-					output = pyami.imagefun.bin(output, binfactors[0], binfactors[1])
-					break
-
 		## run zoom if any zoom factors not 1.0
 		if zoomfactors:
 			for zoomfactor in zoomfactors:
@@ -105,6 +95,15 @@ class Shape(Pipe):
 					## bilinear is faster and works better with noisy images
 					output = scipy.ndimage.zoom(output, zoomfactors, order=1)
 					break
+
+		## run bin if any bin factors not 1
+		if binfactors:
+			for binfactor in binfactors:
+				if binfactor != 1:
+					output = pyami.imagefun.bin(output, binfactors[0], binfactors[1])
+					break
+
+
 
 
 
