@@ -156,7 +156,7 @@ class FrameStackLoop(apDDLoop.DDStackLoop):
 		if not self.params['compress']:
 			# just rsync from buffer
 			if ddinfo.getUseBufferFromImage(imgdata):
-				j = mp.Process(target=apFile.rsync, args=[raw_frame_path, to_dir, True, delay])
+				j = mp.Process(target=apFile.rsync, args=[raw_frame_path, to_dir, False, delay])
 				j.start()
 			return
 
