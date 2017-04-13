@@ -20,7 +20,7 @@ RUN dnf -y upgrade && dnf -y install \
  wxPython numpy scipy python-imaging python2-pip  \
  gcc-gfortran \
  gcc-objc fftw3-devel gsl-devel boost148-python PyQt4 \
- mariadb mariadb-server MySQL-python  ftgl \
+ mariadb mariadb-server MySQL-python ftgl \
  httpd php php-mysql mod_ssl php-pecl-ssh2 \
  gcc-c++ libtiff-devel PyOpenGL python-argparse \
  php-devel gd-devel fftw3-devel php-gd \
