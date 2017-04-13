@@ -54,4 +54,10 @@ relionMaxlikeAlignment.py --bin=2 --lowpass=10 --highpass=1000 --max-iter=10 \
  --runname=maxlike2 --rundir=/emg/data/appion/06jul12a/align/maxlike2 \
  --projectid=1 --expid=1 --jobtype=partalign --nompi
 
+relionMaxlikeAlignment.py --bin=3 --lowpass=10 --highpass=1000 --max-iter=10 \
+ --commit  --stack=${stacknum} --num-ref=9 --nproc=2 \
+ --description='relion 2d' --angStep=11 --clip=48 --partDiam=170 \
+ --runname=maxlike2 --rundir=/emg/data/appion/06jul12a/align/maxlike2 \
+ --projectid=1 --expid=1 --jobtype=partalign --nompi
+
 uploadRelion2DMaxlikeAlign.py --no-sort
