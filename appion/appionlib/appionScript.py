@@ -367,7 +367,10 @@ class AppionScript(basicScript.BasicScript):
 			action="store_false", help="Do not commit processing run to database")
 
 		self.parser.add_option("--expid", "--expId", dest="expid", type="int",
-			help="Session id associated with processing run, e.g. --expId=7159", metavar="#")
+			help="Session id associated with processing run, e.g. --expid=7159", metavar="#")
+		## probably should add this, but may break other things
+		#self.parser.add_option("-s", "--session", "--sessionname", dest="sessionname",
+		#	help="Session name associated with processing run, e.g. --sessionname=18aug26b", metavar="#")
 		self.parser.add_option("--nproc", dest="nproc", type="int",
 			help="Number of processor to use", metavar="#")
 
