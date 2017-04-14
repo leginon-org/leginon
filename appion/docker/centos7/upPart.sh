@@ -61,3 +61,31 @@ relionMaxlikeAlignment.py --bin=3 --lowpass=10 --highpass=1000 --max-iter=10 \
  --projectid=1 --expid=1 --jobtype=partalign --nompi
 
 uploadRelion2DMaxlikeAlign.py --no-sort
+
+uploadImages.py -n 17apr12a --mpix 0.963e-10 --cs 2.2 --kv 120 --mag 51000 \
+--defocus -0.8e-6 --type=normal -p 1 \
+--image-dir=/emg/sw/myami/appion/docker/centos7/17apr12a \
+--description='test'
+
+rsync -vrtPh \
+ 172.21.7.133:/lyra/data01/leginon/toimport/09sep20a-Pickwei_good_CTF/ \
+ ~/myami/appion/docker/centos7/09sep20a-Pickwei_good_CTF/
+
+imageloader.py \
+  --projectid=2 --session=09sep20a --cs=2 \
+  --dir=/emg/sw/myami/appion/docker/centos7/09sep20a-Pickwei_good_CTF/ \
+  --filetype=mrc --apix=1.63 --binx=1 --biny=1 --df=-1.5 --mag=50000 \
+  --kv=120 --description='Perfect CTF data, no visible particles' \
+  --jobtype=uploadimage
+
+rsync -vrtPh \
+ 172.21.7.133:/lyra/data01/leginon/13aug08set9/rawdata/*.mrc \
+ ~/myami/appion/docker/centos7/13aug08set9/
+
+imageloader.py \
+  --projectid=1 --session=13aug08set9 --cs=2.26 \
+  --dir=/emg/sw/myami/appion/docker/centos7/13aug08set9/ --filetype=mrc \
+  --apix=1.525 --binx=1 --biny=1 --df=-2 --mag=50000 --kv=300 \
+  --description='Simulated Data -- 300kV -- J.Frank/ H. Liao' \
+  --jobtype=uploadimage
+
