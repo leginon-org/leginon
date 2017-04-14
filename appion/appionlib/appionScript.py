@@ -371,7 +371,6 @@ class AppionScript(basicScript.BasicScript):
 			help="Job Type of processing run, e.g., partalign", metavar="X")
 
 
-
 	#=====================
 	def checkGlobalConflicts(self):
 		"""
@@ -383,7 +382,9 @@ class AppionScript(basicScript.BasicScript):
 			apDisplay.printError("enter a project id, e.g. --projectid=159")
 		if self.maxnproc is not None and self.params['nproc'] is not None:
 			if self.params['nproc'] > self.maxnproc:
-				apDisplay.printWarning('You have specify --nproc=%d.\n  However,we know from experience larger than %d processors in this script can cause problem.\n  We have therefore changed --nproc to %d for you.' % (self.params['nproc'],self.maxnproc,self.maxnproc))
+				apDisplay.printWarning("You have specify --nproc=%d.\n  However,we know from experience larger "
+					+"than %d processors in this script can cause problem.\n  We have therefore changed "
+					+"--nproc to %d for you." % (self.params['nproc'],self.maxnproc,self.maxnproc))
 				self.params['nproc'] = self.maxnproc
 
 	#######################################################
@@ -537,7 +538,7 @@ class AppionScript(basicScript.BasicScript):
 			fileutil.open_if_not_exists('%s%d' % (self.lockname,dbid)).close()
 		except OSError:
 			return True # exists before locking
-		
+
 	def unlockParallel(self,dbid):
 		lockfile = '%s%d' % (self.lockname,dbid)
 		try:
@@ -547,9 +548,9 @@ class AppionScript(basicScript.BasicScript):
 			time.sleep(0.2)
 			if os.path.isfile(lockfile):
 				apDisplay.printError('Parallel unlock failed')
-		
+
 	#=====================
-	
+
 class TestScript(AppionScript):
 	def setupParserOptions(self):
 		apDisplay.printMsg("Parser options")
