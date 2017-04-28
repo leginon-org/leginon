@@ -134,8 +134,15 @@ class FrameStackLoop(apDDLoop.DDStackLoop):
 			self.postProcessOriginalFrames(imgdata)
 			self.postProcessReferences(imgdata)
 
+	def	getUseBufferFromImage(self, imgdata):
+		db_use_buffer = ddinfo.getUseBufferFromImage(imgdata)
+		if db_use_buffer is True or self.dd.getAllAlignImagePairData(None,imgdata):
+			return False
+		else:
+			return db_use_buffer
+
 	def postProcessReferences(self, imgdata):
-		if ddinfo.getUseBufferFromImage(imgdata):
+		if self.getUseBufferFromImage(imgdata):
 			head_dir = self.dd.getSessionFramePathFromImage(imgdata)
 			ref_dir = os.path.join(head_dir, 'references')
 			to_dir = imgdata['session']['frame path']
@@ -155,13 +162,13 @@ class FrameStackLoop(apDDLoop.DDStackLoop):
 		to_dir = imgdata['session']['frame path']
 		if not self.params['compress']:
 			# just rsync from buffer
-			if ddinfo.getUseBufferFromImage(imgdata):
+			if self.getUseBufferFromImage(imgdata):
 				j = mp.Process(target=apFile.rsync, args=[raw_frame_path, to_dir, False, delay])
 				j.start()
 			return
 
 		# compress before rsync
-		if ddinfo.getUseBufferFromImage(imgdata):
+		if self.getUseBufferFromImage(imgdata):
 			# make permanent frame path
 			try:
 				fileutil.mkdirs(to_dir)
@@ -170,7 +177,7 @@ class FrameStackLoop(apDDLoop.DDStackLoop):
 				to_dir = None
 
 		if 'Falcon' in self.dd.__class__.__name__:
-			if ddinfo.getUseBufferFromImage(imgdata):
+			if self.getUseBufferFromImage(imgdata):
 				apDisplay.printMsg('Falcon does not compress well. skip compression')
 				j = mp.Process(target=apFile.rsync, args=[raw_frame_path, to_dir, False, delay])
 		else:

@@ -381,11 +381,20 @@ class DDFrameProcessing(DirectDetectorProcessing):
 				apDisplay.printError('RawFrameType not set')
 		return self.rawframetype
 
+	def getBufferFrameSessionPathFromImage(self, imagedata):
+		session_frame_path = ddinfo.getBufferFrameSessionPathFromImage(imagedata)
+		if session_frame_path is False or self.getAllAlignImagePairData(None,query_source=True):
+			# Transfer to permanent location is automatic
+			apDisplay.printWarning('Alignment already run. frames moved from buffer')
+			return False
+		else:
+			return session_frame_path
+
 	def getSessionFramePathFromImage(self, imagedata):
 		# getBufferFrameSessionPathFromImage creates the path if host is
 		# defined in database.  It is only False if the BufferHostData is
 		# not defined for the camera or set to disabled.
-		session_frame_path = ddinfo.getBufferFrameSessionPathFromImage(imagedata)
+		session_frame_path = self.getBufferFrameSessionPathFromImage(imagedata)
 		if session_frame_path is False:
 			if imagedata['session']['frame path']:
 				 session_frame_path = imagedata['session']['frame path']

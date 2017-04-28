@@ -2388,7 +2388,7 @@ class particledata {
 	
 	function getDDStackRunData($ddRunId) 
 	{
-		return getRunData($partRunId, "ApDDStackRunData" );
+		return getRunData($ddRunId, "ApDDStackRunData" );
 	}
 
 	function getRecentAlignedImage($imgid)
