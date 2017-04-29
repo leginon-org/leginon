@@ -80,6 +80,13 @@ class DogPickerForm extends MathParticleForm
 		if ( $numslices != "" && $numslices < 2 )
 		{
 			$msg .= "<B>Error:</B> numslices must be more than 1 for multisize picking";
+			$sizerange = $params->getParamValue('sizerange');
+			if($sizerange < 1.0) 
+				$msg .= "<B>Error:</B> sizerange must be more than 1.0";
+		} else {
+			$kfactor = $params->getParamValue('kfactor');
+			if ($kfactor < 1.00001 || $kfactor > 5.0) 
+				$msg .= "<B>Error:</B> K-factor must between 1.00001 and 5.0";
 		}
 		return $msg;
 	}
