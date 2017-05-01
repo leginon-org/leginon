@@ -92,6 +92,7 @@ for ($i = $start; $i < $start+$limit; $i++) {
 		if ($preset != 'en' and $preset != 'enn')
 			continue;
 		$timings = $leginondata->getTiming($session['id'], $preset);
+		if (count($timings) < 100) continue;
 		$data = array(); 
 		global $combinedData;
 		foreach ($timings as $time) {
