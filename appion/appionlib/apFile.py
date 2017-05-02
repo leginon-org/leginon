@@ -298,7 +298,7 @@ def compress_and_rsync(from_path, to_dir, remove_sent=False, delay=0):
 		bzip2_from_path = from_path
 		rsync_from_path = from_path+'.bz2'
 	# bzip2 only compresses file, not directory
-	cmd = 'bzip2 %s' % (bzip2_from_path)
+	cmd = 'pbzip2 -k -p1 %s' % (bzip2_from_path)
 	if to_dir:
 		rsync_cmd = makeRsyncCommand(rsync_from_path, to_dir, remove_sent)
 		cmd += '; '+rsync_cmd	
