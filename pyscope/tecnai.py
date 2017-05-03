@@ -10,6 +10,7 @@ import sys
 import subprocess
 import os
 import datetime
+import math
 
 try:
 	import nidaq
@@ -752,10 +753,23 @@ class Tecnai(tem.TEM):
 				pass
 		return value
 
+	def waitForStageReady(self,timeout=5):
+		t0 = time.time()
+		trials = 0
+		while self.tecnai.Stage.Status in (2,3,4):
+			trials += 1
+			if time.time()-t0 > timeout:
+				raise RunTimeError('stage is not going to ready status in %d seconds' % (int(timeout)))
+		if PRINT_STAGE_DEBUG and trials > 0:
+			print datetime.datetime.now()
+			donetime = time.time() - t0
+			print 'took extra %.1f seconds to get to ready status' % (donetime)
+
 	def _setStagePosition(self, position, relative = 'absolute'):
 #		tolerance = 1.0e-4
 #		polltime = 0.01
 
+		self.waitForStageReady()
 		if relative == 'relative':
 			for key in position:
 				position[key] += getattr(self.tecnai.Stage.Position, key.upper())
@@ -785,7 +799,7 @@ class Tecnai(tem.TEM):
 				# used to parse e into (hr, msg, exc, arg)
 				# but Issue 4794 got 'need more than 3 values to unpack' error'.
 				# simplify the error handling so that it can be raised with messge.
-				msg = e[1]
+				msg = e.text
 				raise ValueError('Stage.Goto failed: %s' % (msg,))
 			except:
 				raise ValueError('COMError in _setStagePosition: %s' % (e,))
@@ -794,6 +808,7 @@ class Tecnai(tem.TEM):
 				print datetime.datetime.now()
 				print 'Other error in going to %s' % (position,)
 			raise RuntimeError('_setStagePosition Unknown error')
+		self.waitForStageReady()
 
 	def getLowDoseStates(self):
 		return ['on', 'off', 'disabled']
