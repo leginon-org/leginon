@@ -83,9 +83,11 @@ class Scale(Pipe):
 		#		break
 		vals = numpy.sort(tempinput.flat)
 		if minp < 1:
-			minp = minp*(vals.size-1)
+			# convert to index
+			minp = int(minp*(vals.size-1))
 		if maxp < 1:
-			maxp = maxp*(vals.size-1)
+			# convert to index
+			maxp = int(maxp*(vals.size-1))
 		omin = vals[minp]
 		omax = vals[maxp]
 		return self.linearscale(tempinput, omin, omax)

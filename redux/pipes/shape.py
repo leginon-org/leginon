@@ -39,7 +39,8 @@ class Shape(Pipe):
 				binfactors.append(1)
 				continue
 			else:
-				binfactors.append(input.shape[i] / shape[i])
+				## added int() to avoid future python 3 problems
+				binfactors.append(int(input.shape[i] / shape[i]))
 
 			# bin <1 not allowed (when output bigger than input)
 			if binfactors[i] == 0:
@@ -65,18 +66,41 @@ class Shape(Pipe):
 
 		output = input
 
-		## run bin if any bin factors not 1
-		if binfactors:
-			for binfactor in binfactors:
-				if binfactor != 1:
-					output = pyami.imagefun.bin(output, binfactors[0], binfactors[1])
-					break
+		"""
+		Neil: based on my tests: zoom first then bin at order =1 is fastest
+		  and had the best results
+
+		Correlation Coefficient
+		(bigger is better)
+		order	zoom first	binning first
+		0		0.78			0.79
+		1		0.88			0.89
+		2		0.83			0.83
+		3		0.83			0.83
+
+		Run Time in milliseconds
+		(smaller is better)
+		order	zoom first	binning first
+		0		60.47			164.60
+		1		96.07			203.35
+		2		2,364.70		299.81
+		3		2,455.46		310.77
+		"""
 
 		## run zoom if any zoom factors not 1.0
 		if zoomfactors:
 			for zoomfactor in zoomfactors:
 				if zoomfactor != 1.0:
-					output = scipy.ndimage.zoom(output, zoomfactors)
+					## use bilinear interpolation, rather than bicubic;
+					## bilinear is faster and works better with noisy images
+					output = scipy.ndimage.zoom(output, zoomfactors, order=1)
+					break
+
+		## run bin if any bin factors not 1
+		if binfactors:
+			for binfactor in binfactors:
+				if binfactor != 1:
+					output = pyami.imagefun.bin(output, binfactors[0], binfactors[1])
 					break
 
 		return output
@@ -85,4 +109,5 @@ class Shape(Pipe):
 		dims = map(str, self.kwargs['shape'])
 		dims = 'x'.join(dims)
 		self._dirname = dims
+
 

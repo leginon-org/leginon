@@ -9,6 +9,7 @@ angle
 import sys
 import math
 import numpy
+import random
 from pyami import mrc
 from scipy import ndimage	#rotation function
 from appionlib import apImagicFile	#write imagic stacks
@@ -16,10 +17,10 @@ from appionlib import apDisplay
 from appionlib.apImage import imagefilter	#image clipping
 
 ##=================
-def getBoxStartPosition(imgdata,halfbox,partdata, shiftdata):
+def getBoxStartPosition(halfbox, partdata, shiftdata):
 	### xcoord is the upper left area corner of the particle box
 	start_x = int(round( shiftdata['scale']*(partdata['xcoord'] - shiftdata['shiftx']) - halfbox ))
-	start_y = int(round( shiftdata['scale']*(partdata['ycoord'] - shiftdata['shifty']) - halfbox ))	
+	start_y = int(round( shiftdata['scale']*(partdata['ycoord'] - shiftdata['shifty']) - halfbox ))
 	return start_x,start_y
 
 ##=================
@@ -32,7 +33,7 @@ def processParticleData(imgdata, boxsize, partdatas, shiftdata, boxfile, rotate=
 	"""
 	for a list of partdicts from database, apply shift
 	to get a new list with x, y, angle information
-	
+
 	replaces writeParticlesToBoxfile()
 	"""
 	imgdims={}
@@ -44,37 +45,73 @@ def processParticleData(imgdata, boxsize, partdatas, shiftdata, boxfile, rotate=
 		halfbox = int(1.5*boxsize/2)
 	else:
 		halfbox = boxsize/2
-	
+
 	parttree = []
 	boxedpartdatas = []
 	eliminated = 0
 	user = 0
 	noangle = 0
 
+	helixmode = False
+	for i in range(3):
+		partdata = random.choice(partdatas)
+		if partdata.get('helixnum', 0) > 0:
+			helixmode = True
+			break
+
 	### normal single particle
 	f = open(boxfile, 'w')
 	for i in range(len(partdatas)):
 		partdata = partdatas[i]
+
 		### require particle with rotation
 		if rotate is True and partdata['angle'] is None:
 			noangle += 1
 			continue
 
 		### xcoord is the upper left area corner of the particle box
-		start_x,start_y = getBoxStartPosition(imgdata,halfbox,partdata, shiftdata)
-		if checkInside is False or checkBoxInImage(imgdims,start_x,start_y,boxsize):
-			partdict = {
-				'x_coord': start_x,
-				'y_coord': start_y,
-				'angle': partdata['angle'],
-			}
-			parttree.append(partdict)
-			boxedpartdatas.append(partdata)
-			f.write("%d\t%d\t%d\t%d\t-3\n"%(start_x,start_y,boxsize,boxsize))
+		start_x, start_y = getBoxStartPosition(halfbox, partdata, shiftdata)
+		if checkInside is False:
+			checkStatus = True
 		else:
+			checkStatus = checkBoxInImage(imgdims, start_x, start_y, boxsize)
+
+		if checkStatus is False:
 			eliminated += 1
+			continue
+
+		#write box information to file
+		if helixmode is True:
+			if i+1 >= len(partdatas):
+				continue
+			endhelix = partdatas[i+1]
+			if endhelix['helixnum'] != partdata['helixnum']:
+				continue
+			new_start_x, new_start_y = getBoxStartPosition(halfbox, endhelix, shiftdata)
+			if checkInside is False:
+				checkStatus = True
+			else:
+				checkStatus = checkBoxInImage(imgdims, new_start_x, new_start_y, boxsize)
+				if checkStatus is False:
+					eliminated += 1
+					continue
+			#write box information to file, helix mode
+			f.write("%d\t%d\t%d\t%d\t-1\n"%(start_x, start_y, boxsize, boxsize))
+			f.write("%d\t%d\t%d\t%d\t-2\n"%(new_start_x, new_start_y, boxsize, boxsize))
+		else:
+			#write box information to file, normal
+			f.write("%d\t%d\t%d\t%d\t-3\n"%(start_x, start_y, boxsize, boxsize))
+		partdict = {
+			'x_coord': start_x,
+			'y_coord': start_y,
+			'angle': partdata['angle'],
+		}
+		parttree.append(partdict)
+		boxedpartdatas.append(partdata)
+
+
 	f.close()
-	
+
 	if eliminated > 0:
 		apDisplay.printMsg(str(eliminated)+" particle(s) eliminated because they were out of bounds")
 	if user > 0:
@@ -130,7 +167,7 @@ def boxerRotate(imgfile, parttree, outstack, boxsize, pixlimit=None):
 	imgarray = mrc.read(imgfile)
 	imgarray = imagefilter.pixelLimitFilter(imgarray, pixlimit)
 	bigboxedparticles = boxerMemory(imgarray, parttree, bigboxsize)
-	
+
 	boxedparticles = []
 	boxshape = (boxsize,boxsize)
 	apDisplay.printMsg("Rotating particles...")

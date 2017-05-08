@@ -7,31 +7,30 @@ MAINTAINER Neil Voss <vossman77@yahoo.com>
 ### install epel
 RUN yum -y update && \
   yum -y install wget epel-release sudo passwd rsync tar openssh-clients && yum -y clean all
-#RUN wget 'https://dl.fedoraproject.org/pub/epel/epel-release-latest-6.noarch.rpm'
-#RUN yum -y localinstall epel-release-latest-6.noarch.rpm
+
 ### install software
 RUN yum -y update && yum -y install \
  python-tools python-devel python-matplotlib \
- ImageMagick grace gnuplot \
+ ImageMagick grace gnuplot bash-completion colordiff \
  wxPython numpy scipy python-imaging python-pip \
- gcc-gfortran compat-gcc-34-g77 libgfortran.x86_64 \
+ gcc-gfortran compat-gcc-34-g77 re2c libgfortran compat-libgfortran  \
  gcc-objc fftw3-devel gsl-devel boost148-python PyQt4 \
  mysql mysql-server MySQL-python mod_python ftgl \
  httpd php php-mysql  mod_ssl php-pecl-ssh2 \
  gcc-c++ libtiff-devel PyOpenGL python-argparse \
- php-devel gd-devel re2c fftw3-devel php-gd \
+ php-devel gd-devel  fftw3-devel php-gd \
  xorg-x11-server-Xvfb netpbm-progs qiv python-requests \
  libssh2-devel mlocate nano elinks file \
  python-configparser h5py git pyflakes \
- numactl compat-libgfortran && yum -y clean all
-#removed phpMyAdmin
+ numactl && yum -y clean all
+
 ### Trying to do VNC
 RUN yum -y update && yum -y install tigervnc-server xterm xsetroot fluxbox fbpanel && yum -y clean all
 ### Firefox
 #RUN yum -y update && yum -y install mozilla-adblockplus firefox dbus && yum -y clean all
 #RUN dbus-uuidgen > /var/lib/dbus/machine-id
 RUN pip install --upgrade pip
-RUN pip install joblib pyfftw3 fs==0.5.4 scikit-learn==0.14
+RUN pip install joblib==0.10.3 pyfftw3 fs==0.5.4 scikit-learn==0.14
 RUN python -c 'from sklearn import svm'
 
 RUN updatedb
@@ -51,18 +50,15 @@ EXPOSE 80
 ### MySQL setup
 RUN cp -fv /usr/share/mysql/my-huge.cnf /etc/my.cnf
 RUN sed -i.bak 's/max_allowed_packet = [0-9]*M/max_allowed_packet = 24M/' /etc/my.cnf
-#RUN svn checkout http://emg.nysbc.org/svn/myami/branches/myami-3.2/ /emg/sw/myami/
-#RUN svn checkout http://emg.nysbc.org/svn/myami/trunk/ /emg/sw/myami/
-#RUN svn checkout -r 19651 http://emg.nysbc.org/svn/myami/trunk/ /emg/sw/myami/
-RUN git clone http://emg.nysbc.org/git/myami.git /emg/sw/myami/
-RUN ln -sv /emg/sw/myami/myamiweb /var/www/html/ami
-RUN ln -sv /emg/sw/myami/myamiweb /var/www/html/myamiweb
 #EXPOSE 3306
 
 ### Myami setup
+RUN git clone http://emg.nysbc.org/git/myami.git /emg/sw/myami/
+RUN ln -sv /emg/sw/myami/myamiweb /var/www/html/ami
+RUN ln -sv /emg/sw/myami/myamiweb /var/www/html/myamiweb
 COPY sinedon.cfg /etc/myami/sinedon.cfg
 COPY leginon.cfg /etc/myami/leginon.cfg
-COPY instruments.cfg /etc/myami/instruments.cfg
+COPY instruments.cfg /etc/myami/instruments.cfg 
 COPY appion.cfg /etc/myami/appion.cfg
 COPY redux.cfg /etc/myami/redux.cfg
 COPY config.php /emg/sw/myami/myamiweb/config.php
@@ -71,8 +67,10 @@ COPY particledata.dat /emg/sw/particledata.dat
 RUN mkdir -p /var/cache/myami/redux/ && chmod 777 /var/cache/myami/redux/
 RUN ln -sv /emg/sw/myami/appion/appionlib /usr/lib64/python2.6/site-packages/
 RUN ln -sv /emg/sw/myami/redux/bin/reduxd /usr/bin/ && chmod 755 /usr/bin/reduxd
-RUN for i in pyami imageviewer leginon pyscope sinedon redux; do ln -sv /emg/sw/myami/$i /usr/lib64/python2.6/site-packages/; done
-#TODO compile radermacher libcv and numextension
+RUN for i in pyami imageviewer leginon pyscope sinedon redux; \
+	do ln -sv /emg/sw/myami/$i /usr/lib64/python2.6/site-packages/; done
+
+### Compile radermacher, libcv, numextension, and redux
 WORKDIR /emg/sw/myami/modules/radermacher
 RUN python ./setup.py install
 WORKDIR /emg/sw/myami/modules/libcv
@@ -81,7 +79,7 @@ WORKDIR /emg/sw/myami/modules/numextension
 RUN python ./setup.py install
 WORKDIR /emg/sw/myami/redux
 RUN python ./setup.py install
-#RUN ./pysetup.sh install #disabled, because does not allow overriding via docker run
+
 RUN mkdir /etc/fftw
 RUN python /emg/sw/myami/pyami/fft/fftwsetup.py 2 4096 4096 && mv -v ~/fftw3-wisdom-* /etc/fftw/wisdom
 RUN cp -v /emg/sw/myami/redux/init.d/reduxd /etc/init.d/reduxd

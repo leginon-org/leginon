@@ -336,6 +336,36 @@ class SessionArchiver(Archiver):
 
 		return source_cameradata, source_temdata, high_tension
 
+	def getAllSourceInstruments(self):
+		'''
+		Use detination instruments to find relevanet source instruments.
+		This should be run after images are imported.
+		'''
+		sinedon.setConfig('leginondata', db=self.destination_dbname)
+		results = leginondata.InstrumentData().query()
+		tem_maps = []
+		cam_maps = []
+		for r in results:
+			if r['cs'] is not None:
+				tem_maps.append((r['hostname'],r['name']))
+			else:
+				cam_maps.append((r['hostname'],r['name']))
+		# Now research in the source
+		sinedon.setConfig('leginondata', db=self.source_dbname)
+		tems = []
+		cams = []
+		for t in tem_maps:
+			q = leginondata.InstrumentData(hostname=t[0],name=t[1])
+			r = self.research(q,True)
+			if r:
+				tems.append(r)
+		for c in cam_maps:
+			q = leginondata.InstrumentData(hostname=c[0],name=c[1])
+			r = self.research(q,True)
+			if r:
+				cams.append(r)
+		return tems, cams
+
 	def importGainReferences(self):
 		print "Importing GainReferences...."
 		q = leginondata.AcquisitionImageData(session=self.getSourceSession())
@@ -641,11 +671,11 @@ class SessionArchiver(Archiver):
 				for node_name in (allalias[classname]):
 					try:
 						results = self.researchSettings(settingsname,name=node_name)
+						self.publish(results)
 					except:
 						if classname not in self.bad_settings_class:
 							print 'ERROR: %s class node %s settings query failed' % (classname,node_name)
 							self.bad_settings_class.append(classname)
-					self.publish(results)
 		# FocusSequence and FocusSettings needs a different importing method
 		self.importFocusSequenceSettings(allalias)
 
@@ -730,6 +760,7 @@ class SessionArchiver(Archiver):
 		'''
 		self.importSession()
 		source_cam, source_tem,high_tension = self.importInstrument()
+		self.high_tension = high_tension
 		self.importGainReferences()
 		self.importBrightImages()
 		if self.is_upload:
@@ -770,6 +801,16 @@ class SessionArchiver(Archiver):
 		self.importIceThickness()
 		self.importTomographyPrediction()
 
+	def runStep4(self):
+		'''
+		Import calibrations for other cameras used in the session.
+		'''
+		all_source_tems, all_source_cams = self.getAllSourceInstruments()
+		for source_tem in all_source_tems:
+			for source_cam in all_source_cams:
+				print source_tem['name'],source_cam['name'], self.high_tension
+				self.importCalibrations(source_cam,source_tem,self.high_tension)
+
 	def run(self):
 		source_session = self.getSourceSession()
 		print "****Session %s ****" % (source_session['name'])
@@ -780,6 +821,8 @@ class SessionArchiver(Archiver):
 				self.runStep2()
 				if self.isStatusGood():
 					self.runStep3()
+				if self.isStatusGood():
+					self.runStep4()
 		self.reset()
 		print ''
 

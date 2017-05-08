@@ -68,6 +68,7 @@ if __name__ == '__main__':
 	darkq['camera']=camq
 	print "querying dark images"
 	darkdata=darkq.query(results=totalimages)
+	print len(darkdata), "dark images found"
 	darkdata.reverse()
 	darkd=getGainInfo(darkdata,totalimages)
 	
@@ -75,6 +76,7 @@ if __name__ == '__main__':
 	brightq['camera']=camq
 	print "querying bright images"
 	brightdata=brightq.query(results=totalimages)
+	print len(brightdata), "bright images found"
 	brightdata.reverse()
 	brightd=getGainInfo(brightdata,totalimages)
 
