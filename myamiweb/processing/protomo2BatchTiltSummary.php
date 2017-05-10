@@ -30,11 +30,8 @@ $imageinfo=$_SESSION['imageinfo'];
 $rundir=$_GET['rundir'];
 $tiltseries=$_GET['tiltseries'];
 
-<<<<<<< Updated upstream
-=======
 processing_header("Batch Protomo Tilt-Series Alignment and Reconstruction Summary","Batch Protomo Tilt-Series Alignment Alignment Summary", $javascript);
 
->>>>>>> Stashed changes
 $defocus_gif_files = glob("$rundir/tiltseries".$tiltseries."/defocus_estimation/*/*/diagnostic.gif");
 $ctf_gif_files = glob("$rundir/tiltseries".$tiltseries."/media/ctf_correction/s*.gif");
 $dose_gif_files = glob("$rundir/tiltseries".$tiltseries."/media/dose_compensation/s*.gif");

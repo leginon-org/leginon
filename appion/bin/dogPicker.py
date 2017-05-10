@@ -2,6 +2,7 @@
 
 #pythonlib
 import time
+import math
 #appion
 from appionlib import apDog
 from appionlib import apParam
@@ -43,6 +44,9 @@ class dogPicker(particleLoop2.ParticleLoop):
 		elif nproc < self.params['nproc']:
 			apDisplay.printWarning("Limiting number of processors to the %i that are available"%nproc)
 			self.params['nproc'] = nproc
+		if self.params['kfactor'] == 0.0 or math.log(self.params['kfactor']) == math.log(1.0000000):
+			apDisplay.printError("kfactor must neither exactly be 1 nor 0")
+
 		return
 
 	#================

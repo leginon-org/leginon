@@ -69,7 +69,7 @@ trial = 1;
 while (trial <3) 
   % Load Microscope Parameters 
 
-  load(strcat(tempdir,'scopeparams.mat'));
+  load(strcat(tempdir,'scopeparams.mat')); 
   V = V*1e3; 
   Cs = Cs*1e-3; 
   Ca = Ca; 
@@ -174,19 +174,20 @@ while (trial <3)
     fprintf('\n%s %s',filename,...
 	'Could not process micrograph: Hyperbolic distortion');
     fclose(outid); 
-     h1=figure('Visible','off');
-     load(strcat(tempdir,'k1'));  
-     load(strcat(tempdir,'k2')); 
-     imshow(log(imfftabs),[])
-     
-     hold on; 
-     quiver('v6',imwidth/2,imwidth/2,-sqrt(1/k1)*sin(pi*ang/180),-sqrt(1/k1)*cos(pi*ang/180)); 
-     quiver('v6',imwidth/2,imwidth/2,sqrt(1/k1)*sin(pi*ang/180),sqrt(1/k1)*cos(pi*ang/180)); 
-     quiver('v6',imwidth/2,imwidth/2,sqrt(1/k2)*sin(pi*(ang+90)/180),sqrt(1/k2)*cos(pi*(ang+90)/180)); 
-     quiver('v6',imwidth/2,imwidth/2, -sqrt(1/k2)*sin(pi*(ang+90)/180),-sqrt(1/k2)*cos(pi*(ang+90)/180)); 
-  
-     print(strcat('-f',num2str(h1)),'-dpng','-r75',strcat(tempdir,'im1.png'));  
-     print(strcat('-f',num2str(h1)),'-dpng','-r75',strcat(tempdir,'im2.png'));  
+%      h1=figure('Visible','off');
+%      axes('Visible','off');
+%      load(strcat(tempdir,'k1'));  
+%      load(strcat(tempdir,'k2')); 
+%      imshow(log(imfftabs),[]);
+%      
+%      hold on; 
+%      quiver('v6',imwidth/2,imwidth/2,-sqrt(1/k1)*sin(pi*ang/180),-sqrt(1/k1)*cos(pi*ang/180)); 
+%      quiver('v6',imwidth/2,imwidth/2,sqrt(1/k1)*sin(pi*ang/180),sqrt(1/k1)*cos(pi*ang/180)); 
+%      quiver('v6',imwidth/2,imwidth/2,sqrt(1/k2)*sin(pi*(ang+90)/180),sqrt(1/k2)*cos(pi*(ang+90)/180)); 
+%      quiver('v6',imwidth/2,imwidth/2, -sqrt(1/k2)*sin(pi*(ang+90)/180),-sqrt(1/k2)*cos(pi*(ang+90)/180)); 
+%   
+%      print('-dpng','-r75',strcat(tempdir,'im1.png'));  
+%      print('-dpng','-r75',strcat(tempdir,'im2.png'));  
      ctfparams(1:18) = -1;
     return; 
     
@@ -205,12 +206,22 @@ while (trial <3)
   
   %START:  Determining the lower cuttoff 
   
-  load(strcat(tempdir,'k1')); 
-  load(strcat(tempdir,'k2')); 
-  x = round(max(sqrt([1/k1 1/k2])));
+  %load(strcat(tempdir,'k1')); 
+  %load(strcat(tempdir,'k2')); 
+  %x = round(max(sqrt([1/k1 1/k2])));
   
-  
+  dforig=4e-6;
   lambda = getlambda(V); 
+  syms cutfreq
+  mygamma = 2*pi*(0.25*Cs*lambda^3*cutfreq^4 - 0.5*dforig*lambda*cutfreq^2);
+  myca=0.07;
+  myeqn= sqrt(1-(myca^2))*sin(mygamma)+myca*cos(mygamma)==0;
+  S=vpasolve(myeqn, cutfreq, [1.0000e+08 10.000e+08]);
+  mycutfreq1=min(S(S>0));
+  mycutfreq=double(mycutfreq1);
+  xtemp1=mycutfreq;
+  xtemp1 = round(xtemp1*freqfactor);
+  x=xtemp1;
   
   xtemp = sqrt((-abs(dforig)*lambda+sqrt(dforig^2*lambda^2+2*Cs*lambda^3))...
       /(Cs*lambda^3)); 
@@ -238,19 +249,20 @@ while (trial <3)
     fprintf('\n%s %s', filename,...
 	'Could not process micrograph:Low SNR '); 
     fclose(outid); 
-    h1=figure('Visible','off');
-    load(strcat(tempdir,'k1')) 
-    load(strcat(tempdir,'k2'))
-    imshow(log(imfftabs),[])
-    
-    hold on; 
-    quiver('v6',imwidth/2,imwidth/2,-sqrt(1/k1)*sin(pi*ang/180),-sqrt(1/k1)*cos(pi*ang/180)); 
-    quiver('v6',imwidth/2,imwidth/2,sqrt(1/k1)*sin(pi*ang/180),sqrt(1/k1)*cos(pi*ang/180)); 
-    quiver('v6',imwidth/2,imwidth/2,sqrt(1/k2)*sin(pi*(ang+90)/180),sqrt(1/k2)*cos(pi*(ang+90)/180)); 
-    quiver('v6',imwidth/2,imwidth/2, -sqrt(1/k2)*sin(pi*(ang+90)/180),-sqrt(1/k2)*cos(pi*(ang+90)/180)); 
-    
-    print(strcat('-f',num2str(h1)),'-dpng','-r75',strcat(tempdir,'im1.png'));  
-    print(strcat('-f',num2str(h1)),'-dpng','-r75',strcat(tempdir,'im2.png'));  
+%     h1=figure('Visible','off');
+%     axes('Visible','off');
+%     load(strcat(tempdir,'k1')); 
+%     load(strcat(tempdir,'k2'));
+%     imshow(log(imfftabs),[]);
+%     
+%     hold on; 
+%     quiver('v6',imwidth/2,imwidth/2,-sqrt(1/k1)*sin(pi*ang/180),-sqrt(1/k1)*cos(pi*ang/180)); 
+%     quiver('v6',imwidth/2,imwidth/2,sqrt(1/k1)*sin(pi*ang/180),sqrt(1/k1)*cos(pi*ang/180)); 
+%     quiver('v6',imwidth/2,imwidth/2,sqrt(1/k2)*sin(pi*(ang+90)/180),sqrt(1/k2)*cos(pi*(ang+90)/180)); 
+%     quiver('v6',imwidth/2,imwidth/2, -sqrt(1/k2)*sin(pi*(ang+90)/180),-sqrt(1/k2)*cos(pi*(ang+90)/180)); 
+%     
+%     print('-dpng','-r75',strcat(tempdir,'im1.png'));  
+%     print('-dpng','-r75',strcat(tempdir,'im2.png'));  
     ctfparams(1:18) = -1;
     return; 
   end 
@@ -292,7 +304,7 @@ while (trial <3)
   
   b1 = log(pgram1); 
   
-   options1 = optimset('TolFun',1e-4,'MaxFunEvals',...
+   options1 = optimoptions('fmincon', 'Algorithm', 'sqp', 'TolFun',1e-4,'MaxFunEvals',...
       30,'MaxIter',1000,'Display','off'); 
   [optparams1,fun1,eflag1,out1] = fmincon(@objnoise,[0 0 0 0]', A1,b1,...
       [],[],[],[1e6 0 0 0],[],options1,A1,b1);
@@ -303,19 +315,20 @@ while (trial <3)
     fprintf('\n%s %s', filename,...
 	'Could not process micrograph:Unreliable noise fit'); 
     fclose(outid); 
-    h1=figure('Visible','off');
-    load(strcat(tempdir,'k1')) 
-    load(strcat(tempdir,'k2'))
-    imshow(log(imfftabs),[])
-    
-    hold on; 
-    quiver('v6',imwidth/2,imwidth/2,-sqrt(1/k1)*sin(pi*ang/180),-sqrt(1/k1)*cos(pi*ang/180)); 
-    quiver('v6',imwidth/2,imwidth/2,sqrt(1/k1)*sin(pi*ang/180),sqrt(1/k1)*cos(pi*ang/180)); 
-    quiver('v6',imwidth/2,imwidth/2,sqrt(1/k2)*sin(pi*(ang+90)/180),sqrt(1/k2)*cos(pi*(ang+90)/180)); 
-    quiver('v6',imwidth/2,imwidth/2, -sqrt(1/k2)*sin(pi*(ang+90)/180),-sqrt(1/k2)*cos(pi*(ang+90)/180)); 
-    
-    print(strcat('-f',num2str(h1)),'-dpng','-r75',strcat(tempdir,'im1.png'));  
-    print(strcat('-f',num2str(h1)),'-dpng','-r75',strcat(tempdir,'im2.png'));  
+%     h1=figure('Visible','off');
+%     axes('Visible','off');
+%     load(strcat(tempdir,'k1')); 
+%     load(strcat(tempdir,'k2'));
+%     imshow(log(imfftabs),[]);
+%     
+%     hold on; 
+%     quiver('v6',imwidth/2,imwidth/2,-sqrt(1/k1)*sin(pi*ang/180),-sqrt(1/k1)*cos(pi*ang/180)); 
+%     quiver('v6',imwidth/2,imwidth/2,sqrt(1/k1)*sin(pi*ang/180),sqrt(1/k1)*cos(pi*ang/180)); 
+%     quiver('v6',imwidth/2,imwidth/2,sqrt(1/k2)*sin(pi*(ang+90)/180),sqrt(1/k2)*cos(pi*(ang+90)/180)); 
+%     quiver('v6',imwidth/2,imwidth/2, -sqrt(1/k2)*sin(pi*(ang+90)/180),-sqrt(1/k2)*cos(pi*(ang+90)/180)); 
+%     
+%     print('-dpng','-r75',strcat(tempdir,'im1.png'));  
+%     print('-dpng','-r75',strcat(tempdir,'im2.png'));  
       
     ctfparams(1:18) = -1; 
     return
@@ -361,7 +374,7 @@ while (trial <3)
     
   A2 = [ones(upcut,1) sqrt(s(1:upcut)) s(1:upcut) s(1:upcut).^2 ];
   b2 = log(ctfenv(1:upcut) -min(ctfenv(1:upcut))+1); 
-  options2 = optimset('TolFun',1e-4,'MaxFunEvals',30,...
+  options2 = optimoptions('fmincon', 'Algorithm', 'sqp', 'TolFun',1e-4,'MaxFunEvals',30,...
       'MaxIter',1000,'Display','off'); 
   [optparams2,fun2,eflag2,out2] = fmincon(@objenv,[max(b2)   0  0 0]',...
       -A2, -b2,[],[],[],[1e6 0 0 0],[],options2,A2,b2);
@@ -375,19 +388,20 @@ while (trial <3)
     fprintf('\n%s %s', filename,...
 	'Could not process micrograph :Unreliable envelope fit'); 
     fclose(outid);
-    h1=figure('Visible','off');
-    load(strcat(tempdir,'k1')) 
-    load(strcat(tempdir,'k2'))
-    imshow(log(imfftabs),[])
-    
-    hold on; 
-    quiver('v6',imwidth/2,imwidth/2,-sqrt(1/k1)*sin(pi*ang/180),-sqrt(1/k1)*cos(pi*ang/180)); 
-    quiver('v6',imwidth/2,imwidth/2,sqrt(1/k1)*sin(pi*ang/180),sqrt(1/k1)*cos(pi*ang/180)); 
-    quiver('v6',imwidth/2,imwidth/2,sqrt(1/k2)*sin(pi*(ang+90)/180),sqrt(1/k2)*cos(pi*(ang+90)/180)); 
-    quiver('v6',imwidth/2,imwidth/2, -sqrt(1/k2)*sin(pi*(ang+90)/180),-sqrt(1/k2)*cos(pi*(ang+90)/180)); 
-  
-    print(strcat('-f',num2str(h1)),'-dpng','-r75',strcat(tempdir,'im1.png'));  
-    print(strcat('-f',num2str(h1)),'-dpng','-r75',strcat(tempdir,'im2.png'));  
+%     h1=figure('Visible','off');
+%     axes('Visible','off');
+%     load(strcat(tempdir,'k1')); 
+%     load(strcat(tempdir,'k2'));
+%     imshow(log(imfftabs),[]);
+%     
+%     hold on; 
+%     quiver('v6',imwidth/2,imwidth/2,-sqrt(1/k1)*sin(pi*ang/180),-sqrt(1/k1)*cos(pi*ang/180)); 
+%     quiver('v6',imwidth/2,imwidth/2,sqrt(1/k1)*sin(pi*ang/180),sqrt(1/k1)*cos(pi*ang/180)); 
+%     quiver('v6',imwidth/2,imwidth/2,sqrt(1/k2)*sin(pi*(ang+90)/180),sqrt(1/k2)*cos(pi*(ang+90)/180)); 
+%     quiver('v6',imwidth/2,imwidth/2, -sqrt(1/k2)*sin(pi*(ang+90)/180),-sqrt(1/k2)*cos(pi*(ang+90)/180)); 
+%   
+%     print('-dpng','-r75',strcat(tempdir,'im1.png'));  
+%     print('-dpng','-r75',strcat(tempdir,'im2.png'));  
     
     ctfparams(1:18) = -1;
     return
@@ -466,7 +480,9 @@ while (trial <3)
 	%scut = sqrt(2.0/(zinit*lambda));
 	%indcut = find(snew>scut); 
 	%snew1 = snew(1:indcut(1)); 
-	Ainit = 0.0; % Setting the initial Amplitude contrast to 0. 
+    %Reza's hack
+	Ainit = 0.0; % Setting the initial Amplitude contrast to 0.  
+    %Ainit = 0.07;
 	gmmainit = getgamma(snew,zinit,Cs,lambda); 
 	ctfinit = getctf(gmmainit,Ainit); 
 	% End : Robust initial estimate of defocus 
@@ -477,18 +493,24 @@ while (trial <3)
 	
 	%ctffiltnew1 = ctffiltnew(1:indcut(1)); 
 	%ctffilt1 = ctffilt(1:indcut(1)); 
-	defocusoptions = optimset('TolX',1e-10,'MaxIter',30,'MaxFunEvals',1000,'Display','off');
+	defocusoptions = optimoptions('fmincon', 'Algorithm', 'sqp', 'TolX',1e-10,'MaxIter',30,'MaxFunEvals',1000,'Display','off');
    
     if strcmp(medium,'carbon')
-
+        %Reza's hack
         [param,fun3,eflag3,out3] = fmincon(@defocusobj,[zinit Ainit],[],[],...
             [],[],[0.0 0.0],[10e-6 0.2],[],...
             defocusoptions,ctffiltnew,snew,V,Cs);
+         %[param,fun3,eflag3,out3] = fmincon(@defocusobj,[zinit],[],[],...
+          %  [],[],[0.0],[10e-6],[],...
+           % defocusoptions,ctffiltnew,snew,V,Cs);
     else
       
       [param,fun3,eflag3,out3] = fmincon(@defocusobj,[zinit Ainit],[],[],...
-	  [],[],[zinit- 0.1*1e-6 0.0],[zinit+0.1*1e-6 0.2],[],...
-	  defocusoptions,ctffiltnew,snew,V,Cs); 
+          [],[],[(zinit-0.1)*1e-6 0.0],[(zinit+0.1)*1e-6 0.2],[],...
+          defocusoptions,ctffiltnew,snew,V,Cs); 
+     % [param,fun3,eflag3,out3] = fmincon(@defocusobj,[zinit],[],[],...
+	 %[],[],[zinit- 0.1*1e-6],[zinit+0.1*1e-6],[],...
+	  %defocusoptions,ctffiltnew,snew,V,Cs);
     end 
 	
 
@@ -500,31 +522,34 @@ while (trial <3)
 	  fprintf('\n%s %s', filename,...
 	      'Could not process micrograph:Unreliable defocus fit'); 
 	  fclose(outid); 
-	  h1=figure('Visible','off');
-	  load(strcat(tempdir,'k1')) 
-	  load(strcat(tempdir,'k2'))
-	  imshow(log(imfftabs),[])
-	  
-	  hold on; 
-	  quiver('v6',imwidth/2,imwidth/2,-sqrt(1/k1)*sin(pi*ang/180),...
-	      -sqrt(1/k1)*cos(pi*ang/180)); 
-	  quiver('v6',imwidth/2,imwidth/2,sqrt(1/k1)*sin(pi*ang/180),...
-	      sqrt(1/k1)*cos(pi*ang/180)); 
-	  quiver('v6',imwidth/2,imwidth/2,sqrt(1/k2)*sin(pi*(ang+90)/180),...
-	      sqrt(1/k2)*cos(pi*(ang+90)/180)); 
-	  quiver('v6',imwidth/2,imwidth/2, -sqrt(1/k2)*sin(pi*(ang+90)/180),...
-	      -sqrt(1/k2)*cos(pi*(ang+90)/180)); 
-	  
-      print(strcat('-f',num2str(h1)),'-dpng','-r75',strcat(tempdir,'im1.png'));  
-      print(strcat('-f',num2str(h1)),'-dpng','-r75',strcat(tempdir,'im2.png'));  
+% 	  h1=figure('Visible','off');
+%       axes('Visible','off');
+% 	  load(strcat(tempdir,'k1')); 
+% 	  load(strcat(tempdir,'k2'));
+% 	  imshow(log(imfftabs),[]);
+% 	  
+% 	  hold on; 
+% 	  quiver('v6',imwidth/2,imwidth/2,-sqrt(1/k1)*sin(pi*ang/180),...
+% 	      -sqrt(1/k1)*cos(pi*ang/180)); 
+% 	  quiver('v6',imwidth/2,imwidth/2,sqrt(1/k1)*sin(pi*ang/180),...
+% 	      sqrt(1/k1)*cos(pi*ang/180)); 
+% 	  quiver('v6',imwidth/2,imwidth/2,sqrt(1/k2)*sin(pi*(ang+90)/180),...
+% 	      sqrt(1/k2)*cos(pi*(ang+90)/180)); 
+% 	  quiver('v6',imwidth/2,imwidth/2, -sqrt(1/k2)*sin(pi*(ang+90)/180),...
+% 	      -sqrt(1/k2)*cos(pi*(ang+90)/180)); 
+% 	  
+%       print('-dpng','-r75',strcat(tempdir,'im1.png'));  
+%       print('-dpng','-r75',strcat(tempdir,'im2.png'));  
           
 	  ctfparams(1:18) = -1; 
 	  return
   
     end 
-	
-      	zfinal = param(1); 
+	       %Reza's hack
+    zfinal = param(1); 
 	Afinal = param(2); 
+    %zfinal=param(3);
+    %Afinal=0.07;
 	gmmafinal = getgamma(snew,zfinal,Cs,lambda);
 	ctffinal = getctf(gmmafinal,Afinal);
 
@@ -586,19 +611,20 @@ else
   fprintf(outid,'\n%s %s', filename,'Could not process micrograph'); 
   fprintf('\n%s %s', filename,'Could not process micrograph'); 
   fclose(outid);
-  h1=figure('Visible','off');
-     load(strcat(tempdir,'k1')) 
-     load(strcat(tempdir,'k2'))
-     imshow(log(imfftabs),[])
-     
-     hold on; 
-     quiver('v6',imwidth/2,imwidth/2,-sqrt(1/k1)*sin(pi*ang/180),-sqrt(1/k1)*cos(pi*ang/180)); 
-     quiver('v6',imwidth/2,imwidth/2,sqrt(1/k1)*sin(pi*ang/180),sqrt(1/k1)*cos(pi*ang/180)); 
-     quiver('v6',imwidth/2,imwidth/2,sqrt(1/k2)*sin(pi*(ang+90)/180),sqrt(1/k2)*cos(pi*(ang+90)/180)); 
-     quiver('v6',imwidth/2,imwidth/2, -sqrt(1/k2)*sin(pi*(ang+90)/180),-sqrt(1/k2)*cos(pi*(ang+90)/180)); 
-  
-     print(strcat('-f',num2str(h1)),'-dpng','-r75',strcat(tempdir,'im1.png'));  
-     print(strcat('-f',num2str(h1)),'-dpng','-r75',strcat(tempdir,'im2.png'));  
+%   h1=figure('Visible','off');
+%   axes('Visible','off');
+%      load(strcat(tempdir,'k1')); 
+%      load(strcat(tempdir,'k2'));
+%      imshow(log(imfftabs),[]);
+%      
+%      hold on; 
+%      quiver('v6',imwidth/2,imwidth/2,-sqrt(1/k1)*sin(pi*ang/180),-sqrt(1/k1)*cos(pi*ang/180)); 
+%      quiver('v6',imwidth/2,imwidth/2,sqrt(1/k1)*sin(pi*ang/180),sqrt(1/k1)*cos(pi*ang/180)); 
+%      quiver('v6',imwidth/2,imwidth/2,sqrt(1/k2)*sin(pi*(ang+90)/180),sqrt(1/k2)*cos(pi*(ang+90)/180)); 
+%      quiver('v6',imwidth/2,imwidth/2, -sqrt(1/k2)*sin(pi*(ang+90)/180),-sqrt(1/k2)*cos(pi*(ang+90)/180)); 
+%   
+%      print('-dpng','-r75',strcat(tempdir,'im1.png'));  
+%      print('-dpng','-r75',strcat(tempdir,'im2.png'));  
      
      ctfparams(1:18) = -1; 
   return
@@ -613,22 +639,22 @@ if(display & length(ind)>0 )
   
   endoff = 0; 
   
-  load(strcat(tempdir,'k1')) 
-  load(strcat(tempdir,'k2'))
-  load(strcat(tempdir,'indx')) 
-  load(strcat(tempdir,'indy'))  
-  
-  h1 = figure('Visible','off'); 
-  
-  imshow(log(imfftabs),[])
-  hold on;
-  quiver('v6',imwidth/2,imwidth/2,-sqrt(1/k1)*sin(pi*ang/180),-sqrt(1/k1)*cos(pi*ang/180)); 
-  quiver('v6',imwidth/2,imwidth/2,sqrt(1/k1)*sin(pi*ang/180),sqrt(1/k1)*cos(pi*ang/180)); 
-  quiver('v6',imwidth/2,imwidth/2,sqrt(1/k2)*sin(pi*(ang+90)/180),sqrt(1/k2)*cos(pi*(ang+90)/180)); 
-  quiver('v6',imwidth/2,imwidth/2, -sqrt(1/k2)*sin(pi*(ang+90)/180),-sqrt(1/k2)*cos(pi*(ang+90)/180)); 
-  plot(inlx,inly,'*','Markersize',1);
-  title('Edge detection and ellipse fit','Fontsize',12,'Fontweight','b'); 
-  print(strcat('-f',num2str(h1)),'-dpng','-r75',strcat(tempdir,'im1.png'));  
+%   load(strcat(tempdir,'k1')); 
+%   load(strcat(tempdir,'k2'));
+%   load(strcat(tempdir,'indx')); 
+%   load(strcat(tempdir,'indy'));  
+%   
+   h1 = figure('Visible','off'); 
+   axes('Visible','off');
+%   imshow(log(imfftabs),[]);
+%   hold on;
+%   quiver('v6',imwidth/2,imwidth/2,-sqrt(1/k1)*sin(pi*ang/180),-sqrt(1/k1)*cos(pi*ang/180)); 
+%   quiver('v6',imwidth/2,imwidth/2,sqrt(1/k1)*sin(pi*ang/180),sqrt(1/k1)*cos(pi*ang/180)); 
+%   quiver('v6',imwidth/2,imwidth/2,sqrt(1/k2)*sin(pi*(ang+90)/180),sqrt(1/k2)*cos(pi*(ang+90)/180)); 
+%   quiver('v6',imwidth/2,imwidth/2, -sqrt(1/k2)*sin(pi*(ang+90)/180),-sqrt(1/k2)*cos(pi*(ang+90)/180)); 
+%   plot(inlx,inly,'*','Markersize',1);
+%   title('Edge detection and ellipse fit','Fontsize',12,'Fontweight','b'); 
+%   print('-dpng','-r75',strcat(tempdir,'im1.png'));  
   clf; 
   fntsz = 8;
   fntwt = 'b';
@@ -659,9 +685,9 @@ if(display & length(ind)>0 )
   %title('CTF*ENV + NOISE'); 
   
   if(singlefigure)
-    subplot(3,2,2)
+    subplot(3,2,2);
   else 
-    figure
+    figure;
   end 
   plot(snew,pgram.^2,'b');
   hold on
@@ -677,9 +703,9 @@ if(display & length(ind)>0 )
   
   
   if(singlefigure)
-    subplot(3,2,3) 
+    subplot(3,2,3); 
   else 
-    figure
+    figure;
   end 
   plot(snew,env,'g--'); 
   hold on; 
@@ -693,9 +719,9 @@ if(display & length(ind)>0 )
   %title('CTF*ENV'); 
   
   if(singlefigure)
-    subplot(3,2,4) 
+    subplot(3,2,4); 
   else 
-    figure 
+    figure; 
   end 
   plot(snew,ctf,'b');
   ylabel('CTF^2','fontsize',fntsz,'fontweight',fntwt); 
@@ -708,9 +734,9 @@ if(display & length(ind)>0 )
   %title('CTF')
   
   if(singlefigure)
-    subplot(3,2,5) 
+    subplot(3,2,5); 
   else 
-    figure
+    figure;
   end 
   
   %plot(snew((length(h)-1)/2+1:end-(length(h)-1)/2-endoff),ctffilt,'b'); 
@@ -728,9 +754,9 @@ if(display & length(ind)>0 )
   set(hfig,'fontsize',fntsz); 
   
   if(singlefigure)
-    subplot(3,2,6) 
+    subplot(3,2,6); 
   else 
-    figure
+    figure;
   end 
   
   plot(snew,ctffilt,'b'); 
@@ -745,7 +771,7 @@ if(display & length(ind)>0 )
   set(hfig,'fontsize',fntsz); 
   axis tight
 
-  print(strcat('-f',num2str(h1)),'-dpng','-r100',strcat(tempdir,'im2.png')); 
+  print('-dpng','-r100',strcat(tempdir,'im2.png')); 
   
 
 end  
