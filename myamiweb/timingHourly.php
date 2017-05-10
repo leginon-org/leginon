@@ -89,7 +89,7 @@ for ($i = $start; $i < $start+$limit; $i++) {
 	foreach ($presets as $preset) {
 		if (!$preset)
 			continue;
-		if ($preset != 'en' and $preset != 'enn')
+		if ($preset != 'en' and $preset != 'enn' and $preset != 'esn')
 			continue;
 		$timings = $leginondata->getTiming($session['id'], $preset);
 		if (count($timings) < 100) continue;
