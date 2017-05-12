@@ -39,7 +39,8 @@ class BeamTiltRotationCalibrator(object):
 				print 'Set TEM to %s mode' % self.tem1.name
 				break
 		if self.tem1 is None:
-			sys.exit()
+			print 'TEM not set.', self.tem1
+			self.finish()
 
 		print self.tem1.getProbeMode()
 		# fake node to host calibrationclient
@@ -102,8 +103,10 @@ Hit "Enter" or "Return" key to stop it when the beam is on the edge again, point
 			print math.degrees(angle)
 			bt1 = self.modifyBeamTilt(self.bt0, bt_delta)
 			self.tem1.setBeamTilt(bt1)
-			time.sleep(0.05)
+			time.sleep(0.5)
 		print 'final angle', math.degrees(angle)
+		print 'pause 10 seconds before continue....'
+		time.sleep(10)
 		self.tem1.setBeamTilt(self.bt0)
 		return angle
 

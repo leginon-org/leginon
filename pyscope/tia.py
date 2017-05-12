@@ -479,3 +479,37 @@ class TIA_Ceta(TIA):
 	def getPixelSize(self):
 		return {'x': 1.4e-5, 'y': 1.4e-5}
 
+class TIA_Falcon3(TIA_Falcon):
+	name = 'Falcon'
+	camera_name = 'BM-Falcon'
+	binning_limits = [1,2,4]
+
+	def setFullCameraSetup(self):
+		# workaround to offset image problem
+		no_crop = {'x':0,'y':0}
+		self.setOffset(no_crop)
+		camsize = self.getCameraSize()
+		binning = self.getBinning()
+		full_dim = {'x': camsize['x']/binning['x'],'y':camsize['y']/binning['y']}
+		original_dim = self.getDimension()
+		self.setDimension(full_dim)
+		return original_dim
+
+	def _getImage(self):
+		crop = self.getOffset()
+		original_dimension = self.setFullCameraSetup()
+		image = super(TIA_,self)._getImage()
+		if not image:
+			return image
+		# workaround to offset image problem
+		self.setOffset(crop)
+		self.setDimension(original_dimension)
+		startx = self.getOffset()['x']
+		starty = self.getOffset()['y']
+		if startx != 0 or starty != 0:
+			endx = self.dimension['x'] + startx
+			endy = self.dimension['y'] + starty
+			image = image[starty:endy,startx:endx]
+		print 'modified shape',image.shape
+		return image
+
