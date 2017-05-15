@@ -1432,7 +1432,8 @@ class Krios(Tecnai):
 					prevalue[axis] = value[axis] - delta
 			# alpha tilt backlash only in one direction
 			alpha_delta_degrees = 3.0
-			for axis in ('a'):
+			if 'a' in value.keys():
+					axis = 'a'
 					prevalue[axis] = value[axis] - alpha_delta_degrees*3.14159/180.0
 			if prevalue:
 				self._setStagePosition(prevalue)
