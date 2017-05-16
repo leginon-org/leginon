@@ -20,10 +20,10 @@ def convertStringToSQL(value):
 
 class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 	def __init__(self,params):
-		cam_hostname, camera_name = self.validateInput(params)
+		tem_name, cam_hostname, camera_name = self.validateInput(params)
 		super(CalibrationJsonLoader,self).__init__(leginondata)
 		self.cameradata = self.getCameraInstrumentData(cam_hostname,camera_name)
-		self.temdata = self.getTemInstrumentData()
+		self.temdata = self.getTemInstrumentData(tem_name)
 		self.setSessionData()
 
 	def insertAllData(self):
@@ -52,8 +52,8 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 		if not os.path.exists(params[2]):
 			raise ValueError('can not find %s to import' % params[2])
 		self.jsonfile = params[2]
-		cam_host, cameraname = self.jsonfile.split('.json')[0].split('+')
-		return cam_host, cameraname
+		temname, cam_host, cameraname = self.jsonfile.split('.json')[0].split('+')
+		return temname, cam_host, cameraname
 
 	def getCameraInstrumentData(self, hostname,camname):
 		results = leginondata.InstrumentData(hostname=hostname,name=camname).query(results=1)
@@ -69,8 +69,9 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 		cam = results[0]
 		return cam
 
-	def getTemInstrumentData(self):
-		r = leginondata.PixelSizeCalibrationData(ccdcamera=self.cameradata).query(results=1)
+	def getTemInstrumentData(self, tem_name):
+		temq = leginondata.InstrumentData(name=tem_name)
+		r = leginondata.PixelSizeCalibrationData(tem=temq, ccdcamera=self.cameradata).query(results=1)
 		if r:
 			return r[0]['tem']
 		else:

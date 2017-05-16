@@ -50,13 +50,24 @@ class CalibrationJsonMaker(jsonfun.DataJsonMaker):
 		'''
 		Get the most recent TEM connected to the camera that has PixelSizeCalibration
 		'''
-		try:
-			onecaldata = leginondata.PixelSizeCalibrationData(ccdcamera=sourcecam).query(results=1)[0]
-			temdata = onecaldata['tem']
-		except:
+		allcaldata = leginondata.PixelSizeCalibrationData(ccdcamera=sourcecam).query()
+		if not allcaldata:
 			raise ValueError('no tem linked with the camera')
-		print "Using tem id=%d on %s named %s" % (temdata.dbid, temdata['hostname'], temdata['name'])
-		return temdata
+		temids = []
+		for c in allcaldata:
+			if c['tem'].dbid not in temids:
+				temids.append(c['tem'].dbid)
+		for id in temids:
+			tem = leginondata.InstrumentData().direct_query(id)
+			answer = raw_input('Gather calibration associated with tem  %s on host %s ? (Y/y or N/n)' % (tem['name'], tem['hostname']))
+			if answer.lower() in 'y':
+				temdata = tem
+				break
+		try:		
+			print "Using tem id=%d on %s named %s" % (temdata.dbid, temdata['hostname'], temdata['name'])
+			return temdata
+		except:
+			raise ValueError('no tem selected with the camera')
 
 	def getMags(self):
 		magsdata = leginondata.MagnificationsData(instrument=self.tem).query(results=1)[0]
@@ -90,9 +101,9 @@ class CalibrationJsonMaker(jsonfun.DataJsonMaker):
 			# MatrixCarlibationData
 			for matrix_type in ('stage position','image shift','defocus','beam shift'):
 				# stage position is not probe dependent
-				if matrix_type != 'stage position' and probe is None:
+				if matrix_type == 'defocus' and probe is None:
 					continue
-				if matrix_type == 'stage position' and probe is not None:
+				if matrix_type != 'defocus' and probe is not None:
 					continue
 				q = leginondata.MatrixCalibrationData(tem=self.tem, ccdcamera=self.cam,magnification=mag,type=matrix_type, probe=probe)
 				results = q.query(results=1)
@@ -108,7 +119,7 @@ class CalibrationJsonMaker(jsonfun.DataJsonMaker):
 		self.printStageModelCalibrationQueries(mags)
 		for p in (None,'micro','nano'):
 			self.printMatrixCalibrationQueries(mags,p)
-		json_filename = '%s+%s.json' % (self.cam['hostname'],self.cam['name'])
+		json_filename = '%s+%s+%s.json' % (self.tem['name'],self.cam['hostname'],self.cam['name'])
 		self.writeJsonFile(json_filename)
 
 	def close(self, status=0):
