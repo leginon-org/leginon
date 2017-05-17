@@ -66,7 +66,7 @@ if (isset($azimuth_gif_files)) {
 }
 
 $html .= "
-	<H4><center><b>Grid Orientation (Theta) Plot</b></center></H4>";
+	<H4><center><b>Grid Orientation Plot</b></center></H4>";
         
 if (isset($orientation_gif_file)) {
 	$html .= '<center><img src="'.$orientation_gif.'" alt="theta" /></center>
