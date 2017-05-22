@@ -18,7 +18,7 @@ RUN yum -y update && yum -y install \
  mysql mysql-server MySQL-python mod_python ftgl \
  httpd php php-mysql  mod_ssl php-pecl-ssh2 \
  gcc-c++ libtiff-devel PyOpenGL python-argparse \
- php-devel gd-devel  fftw3-devel php-gd \
+ php-devel gd-devel  fftw3-devel php-gd opencv-python \
  xorg-x11-server-Xvfb netpbm-progs qiv python-requests \
  libssh2-devel mlocate nano elinks file \
  python-configparser h5py git pyflakes \
