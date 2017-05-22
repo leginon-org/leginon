@@ -300,11 +300,8 @@ if (is_numeric($expId)) {
 
 		$nruns=array();
 		$nruns[] = array(
-			'name'=>"<a href='runMakeStack2.php?expId=$sessionId'>Stack creation</a>",
+			'name'=>"<a href='stackTools.php?expId=$sessionId'>Stack Creation...</a>",
 			'result'=>$sresults,
-		);
-		$nruns[] = array(
-			'name'=>"<a href='moreStackTools.php?expId=$sessionId'>more stack tools</a>",
 		);
 
 		$data[] = array(
