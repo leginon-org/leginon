@@ -451,8 +451,8 @@ class GatanK2Base(DMSEM):
 		the integrated image returned to Leginon
 		'''
 		if self.isDoseFracOn():
-                        # This makes it always take the value in dmsem.cfg
-                        self.setEarlyReturnFrameCount(None)
+			# This makes it always take the value in dmsem.cfg
+			self.setEarlyReturnFrameCount(None)
 			frames_name = time.strftime('%Y%m%d_%H%M%S', time.localtime())
 			self.frames_name = frames_name + '%02d' % (self.idcounter.next(),)
 		else:
