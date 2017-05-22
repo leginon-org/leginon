@@ -18,7 +18,7 @@ RUN dnf -y upgrade && dnf -y install \
  python-tools python-devel python-matplotlib \
  ImageMagick grace gnuplot bash-completion colordiff \
  wxPython numpy scipy python-imaging python2-pip  \
- gcc-gfortran \
+ gcc-gfortran opencv-python \
  gcc-objc fftw3-devel gsl-devel boost148-python PyQt4 \
  mariadb mariadb-server MySQL-python ftgl \
  httpd php php-mysql mod_ssl php-pecl-ssh2 \
