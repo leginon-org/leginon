@@ -27,6 +27,7 @@ if (privilege('groups') > 3 )
 	$link->addlink('admin.php','Administration','', 'admin');
 if (privilege('projects') >= 2 ) 
 	$link->addlink('project','Project DB','', 'project');
+    $link->addlink('https://login.nimgs.com/redmine/projects/particle-sizinh/wiki','Redmine Wiki','', '');
 if (privilege('users') >= 2 && privilege('groups') <= 3) 
 	$link->addlink('admin.php','Miscellaneous','', 'admin');
 
