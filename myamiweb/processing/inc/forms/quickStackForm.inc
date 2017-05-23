@@ -177,8 +177,8 @@ class QuickStackForm extends BasicLayoutForm
 
 		$html .= "<hr/><h4>Stack format:</h4>\n";
 
-		$html.= $params->insertRadioField("mode", "relion", "Relion only &ndash; MRC stacks file, faster, no database", "");
-		$html.= $params->insertRadioField("mode", "appion", "Appion only &ndash; IMAGIC stack file, upload to database", "");
+		$html.= $params->insertRadioField("mode", "relion", "Relion only &ndash; MRC stacks, star file with CTF info, faster, no database", "");
+		$html.= $params->insertRadioField("mode", "appion", "Appion only &ndash; IMAGIC stack file, no CTF, upload data to database", "");
 		$html.= $params->insertRadioField("mode", "both", "Both &ndash; create both MRC and IMAGIC stack, uses more file space","");
 
 		/*
