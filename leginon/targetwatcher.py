@@ -154,9 +154,22 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 				state1['stage position'] = {'a':parentimage['scope']['stage position']['a']}
 				self.instrument.setData(state1)
 			# start conditioner
-			self.setStatus('waiting')
-			self.fixCondition()
-			self.setStatus('processing')
+			condition_status = 'repeat'
+			while condition_status == 'repeat':
+				try:
+					self.setStatus('waiting')
+					self.fixCondition()
+					self.setStatus('processing')
+					condition_status = 'success'
+				except PauseRepeatException, e:
+					self.player.pause()
+					self.logger.error(str(e) + '... Fix it, then press play to repeat target')
+					condition_status = 'repeat'
+				except Exception, e:
+					self.logger.error('Conditioning failed. Continue without it')
+					condition_status = 'abort'
+				self.beep()
+
 			# This is only for beamfixer now and it does not need preset_name
 			preset_name = None
 			original_position = self.instrument.tem.getStagePosition()

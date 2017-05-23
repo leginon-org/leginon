@@ -64,6 +64,10 @@ class BasicLoopForm extends BasicLayoutForm
 		$displayAdvanced = $_SESSION['advanced_user'];
 		$html .= $appionLoopTable->generateForm( $displayAdvanced=$displayAdvanced );
 
+		if ( false ) {
+			$remoteParamsForm = new RemoteJobParamsForm($defrunname, $outdir,'', $showDesc );
+			$html.= $remoteParamsForm->generateForm();
+		}
 		return $html;
 	}
 	

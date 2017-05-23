@@ -457,7 +457,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 		If called with targetdata=None, this simulates what occurs at
 		a target (going to presets, acquiring images, etc.)
 		'''
-		self.preTargetSetup()
+		# need to validate presets before preTargetSetup because they need
+		# to use preset, too, even though not the same target.
 		try:
 			self.validatePresets()
 		except InvalidPresetsSequence, e:
@@ -471,6 +472,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.logger.error(str(e))
 			raise
 
+		self.preTargetSetup()
+		# process target begins
 		presetnames = self.settings['preset order']
 		ret = 'ok'
 		self.onTarget = False
@@ -1317,17 +1320,27 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.logger.error(e)
 
 	def fixCondition(self):
-		# This is done before any rejected targets
+		# This is done before any targets are rejected and processed in the targetlist.
+		# First part is for conditions to be fixed don't involve presets,
+		# such as buffer cycling or nitrogen filler
 		evt = event.FixConditionEvent()
 		try:
+			self.logger.info('Condition fixing before processing a target')
 			status = self.outputEvent(evt, wait=True)
 		except node.ConfirmationNoBinding, e:
 			self.logger.debug(e)
 		except Exception, e:
 			self.logger.error(e)
-		# Phase Plate stuff
+
+		# Second part: Preset-required tuning before rejected targets.
+		try:
+			self.validatePresets()
+		except InvalidPresetsSequence:
+			self.logger.error('Configure at least one preset in the settings for this node.')
+			self.player.pause()
+			self.setStatus('user input')
 		preset_name = self.settings['preset order'][-1]
-		self.logger.info('Condition fixing before processing a target')
+		# Phase Plate stuff
 		self.tunePhasePlate(preset_name)
 
 	def getMoveTypes(self):

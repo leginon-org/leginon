@@ -98,7 +98,10 @@ class Corrector(imagewatcher.ImageWatcher):
 			self.logger.info('screen %s failed (may be unsupported)' % state)
 
 	def acquireDark(self, channels):
+		self.updateCameraDarkCurrentReference()
+		return
 		cameraname = self.instrument.getCCDCameraName()
+		self.logger.info('update hardware dark reference')
 		if cameraname == 'DE12':
 			self.changeScreenPosition('down')
 		for channel in channels:
@@ -298,6 +301,9 @@ class Corrector(imagewatcher.ImageWatcher):
 					if not self.hasRecentDarkSaved(channel):
 						self.logger.error('Need recent Dark image before acquiring Bright Image')
 						return None
+				if self.requireRecentDarkCurrentReferenceOnBright():
+					if not self.hasRecentDarkCurrentReferenceSaved(3600):
+						self.updateCameraDarkCurrentReference(warning=True)
 				self.logger.info('Acquiring bright references...')
 		except Exception, e:
 			self.logger.error('Reference acquisition failed: %s' % (e,))

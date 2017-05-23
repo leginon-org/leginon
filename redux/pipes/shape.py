@@ -75,4 +75,11 @@ class Shape(Pipe):
 		dims = 'x'.join(dims)
 		self._dirname = dims
 
-
+if __name__ == "__main__":
+	outputshape = (512,512)
+	s = Shape(shape=outputshape,is_rgb=True)
+	inputshape = (3710,3838)
+	import numpy
+	a = numpy.ones(inputshape)
+	r = s.run(a,outputshape)
+	print r.shape
