@@ -55,7 +55,7 @@ class Shape(Pipe):
 			if ybin < 1: ybin = 1
 			newshape = (request_shape[0]*xbin, request_shape[0]*ybin)
 			outputimg = imresize(outputimg, newshape)
-			outputimg = pyami.imagefun.bin(outputimg, xbin, ybin)
+			outputimg = pyami.imagefun.bin(outputimg, ybin, xbin)
 		elif len(request_shape) == len(input.shape):
 			#Standard gray scale not 2D
 			outputimg = imresize(outputimg, request_shape)
