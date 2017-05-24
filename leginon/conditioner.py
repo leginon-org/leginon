@@ -238,7 +238,8 @@ class AutoNitrogenFiller(Conditioner):
 			self.startNitrogenFilling()
 			force_fill = True
 		if force_fill:
-			self.runCameraDarkCurrentReferenceUpdate()
+			# not getting DarkCurrent yet
+			#self.runCameraDarkCurrentReferenceUpdate()
 			filler_status = self.monitorRefillWithIsBusy()
 			if filler_status is None:
 				self.monitorRefill(check_column,check_loader)

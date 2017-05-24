@@ -98,10 +98,7 @@ class Corrector(imagewatcher.ImageWatcher):
 			self.logger.info('screen %s failed (may be unsupported)' % state)
 
 	def acquireDark(self, channels):
-		self.updateCameraDarkCurrentReference()
-		return
 		cameraname = self.instrument.getCCDCameraName()
-		self.logger.info('update hardware dark reference')
 		if cameraname == 'DE12':
 			self.changeScreenPosition('down')
 		for channel in channels:

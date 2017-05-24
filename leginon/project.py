@@ -30,7 +30,6 @@ class ProjectData:
 			raise NotConnectedError('no project database')
 		if not dbparams['host']:
 			raise NotConnectedError('no hostname for project database')
-		print dbparams
 		try:
 			self.db = sqldict.SQLDict(**dbparams)
 		except Exception, e:
