@@ -146,8 +146,8 @@ class RasterFinder(targetfinder.TargetFinder):
 
 		radians = math.pi * self.settings['raster angle'] / 180.0
 		if self.settings['raster center on image']:
-			x0 = imageshape[0]/2.0
-			y0 = imageshape[1]/2.0
+			x0 = imageshape[1]/2.0
+			y0 = imageshape[0]/2.0
 		else:
 			x0 = float(self.settings['raster center x'])
 			y0 = float(self.settings['raster center y'])
@@ -167,8 +167,8 @@ class RasterFinder(targetfinder.TargetFinder):
 				yrot = yshft * numpy.cos(radians) + xshft * numpy.sin(radians)
 				x = int(xrot + x0)
 				y = int(yrot + y0)
-				if x < 0 or x >= imageshape[0]: continue
-				if y < 0 or y >= imageshape[1]: continue
+				if x < 0 or x >= imageshape[1]: continue
+				if y < 0 or y >= imageshape[0]: continue
 				points.append( (x,y) )
 
 		#old stuff
@@ -202,7 +202,7 @@ class RasterFinder(targetfinder.TargetFinder):
 				cc = int(cc + ccenter)
 				if rr < 0 or rr >= imageshape[0]: continue
 				if cc < 0 or cc >= imageshape[1]: continue
-				points.append((int(rr),int(cc)))
+				points.append((int(cc),int(rr)))
 
 		self.setTargets(self.transpose_points(points), 'Raster')
 		self.rasterpoints = points
