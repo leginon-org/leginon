@@ -451,8 +451,8 @@ class GatanK2Base(DMSEM):
 		the integrated image returned to Leginon
 		'''
 		if self.isDoseFracOn():
-                        # This makes it always take the value in dmsem.cfg
-                        self.setEarlyReturnFrameCount(None)
+			# This makes it always take the value in dmsem.cfg
+			self.setEarlyReturnFrameCount(None)
 			frames_name = time.strftime('%Y%m%d_%H%M%S', time.localtime())
 			self.frames_name = frames_name + '%02d' % (self.idcounter.next(),)
 		else:
@@ -561,6 +561,13 @@ class GatanK2Base(DMSEM):
 		Frame Rotate direction is defined as x to -y rotation applied after up-down flip
 		'''
 		return 0
+
+	def updateDarkCurrentReference(self):
+		r = self.camera.UpdateK2HardwareDarkReference(self.cameraid)
+		if r > 0:
+			# has error
+			return True
+		return False
 
 class GatanK2Linear(GatanK2Base):
 	name = 'GatanK2Linear'

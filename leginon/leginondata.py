@@ -63,6 +63,13 @@ class MainScreenScaleData(Data):
 		)
 	typemap = classmethod(typemap)
 
+class DigitalCameraData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('ccdcamera', InstrumentData),
+		)
+	typemap = classmethod(typemap)
+
 class ReferenceSessionData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
@@ -1163,6 +1170,9 @@ class HoleFinderPrefsData(InSessionData):
 			('template-diameter', int),
 			('file-diameter', int),
 			('template-filename', str),
+			('dog-diameter', int),
+			('dog-invert', bool),
+			('dog-k-factor', float),
 		)
 	typemap = classmethod(typemap)
 
@@ -1577,6 +1587,15 @@ class JAHCFinderSettingsData(HoleFinderSettingsData):
 			('template invert', bool),
 			('template image min', float),
 			('lattice extend', str),
+		)
+	typemap = classmethod(typemap)
+
+class DoGFinderSettingsData(HoleFinderSettingsData):
+	def typemap(cls):
+		return HoleFinderSettingsData.typemap() + (
+			('dog diameter', int),
+			('dog invert', bool),
+			('dog k-factor', float),
 		)
 	typemap = classmethod(typemap)
 
@@ -2741,10 +2760,9 @@ class ProjectionSubModeMappingData(Data):
 		)
 	typemap = classmethod(typemap)
 
-class BufferHostData(Data):
+class BufferHostData(DigitalCameraData):
 	def typemap(cls):
-		return Data.typemap() + (
-			('ccdcamera', InstrumentData),
+		return DigitalCameraData.typemap() + (
 			('buffer hostname', str),
 			('buffer base path', str),
 			('disabled', bool),
@@ -2759,3 +2777,12 @@ class BufferFramePathData(InSessionData):
 		)
 	typemap = classmethod(typemap)
 
+class CameraDarkCurrentUpdatedData(Data):
+	'''
+	Log camera software update of dark current reference.
+	'''
+	def typemap(cls):
+		return Data.typemap() + (
+			('hostname', str),
+		)
+	typemap = classmethod(typemap)

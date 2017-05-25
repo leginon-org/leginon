@@ -16,7 +16,7 @@ rawtype = numpy.uint32
 frametype = numpy.uint8
 idcounter = itertools.cycle(range(100))
 
-has_energy_filter = False
+has_energy_filter = True
 
 class SimCCDCamera(ccdcamera.CCDCamera):
 	name = 'SimCCDCamera'
@@ -35,8 +35,8 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 		self.exposure_time = 0.2
 		self.exposure_type = 'normal'
 
-		self.energy_filter = False
-		self.energy_filter_width = 0.0
+		self.energy_filter = True
+		self.energy_filter_width = 20.0
 
 		self.views = ('square', 'empty')
 		self.view = 'square'
@@ -405,7 +405,15 @@ class SimFrameCamera(SimCCDCamera):
 
 	def getUseFrames(self):
 		return self.useframes
+
+	def requireRecentDarkCurrentReferenceOnBright(self):
+		return False
 	
+	def updateDarkCurrentReference(self):
+		print 'Fake Dark Current Reference update'
+		# no error
+		return False
+
 class SimFalconFrameCamera(SimFrameCamera):
 	name = 'SimFalconFrameCamera'
 	def __init__(self):

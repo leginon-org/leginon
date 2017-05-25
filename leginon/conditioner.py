@@ -231,19 +231,39 @@ class AutoNitrogenFiller(Conditioner):
 		force_fill = False
 		if check_column and column_level <= self.settings['column fill start']:
 			self.logger.info('Runing autofiller for column')
-			self.instrument.tem.runAutoFiller()
+			self.startNitrogenFilling()
 			force_fill = True
 		elif check_loader and loader_level <= self.settings['loader fill start']:
 			self.logger.info('Runing autofiller for loader')
-			self.instrument.tem.runAutoFiller()
+			self.startNitrogenFilling()
 			force_fill = True
 		if force_fill:
+			# not getting DarkCurrent yet
+			#self.runCameraDarkCurrentReferenceUpdate()
 			filler_status = self.monitorRefillWithIsBusy()
 			if filler_status is None:
 				self.monitorRefill(check_column,check_loader)
 			return True
 		return False
 
+	def startNitrogenFilling(self):
+		self.instrument.tem.runAutoFiller()
+
+	def runCameraDarkCurrentReferenceUpdate(self):
+		camnames = self.instrument.getCCDCameraNames()
+		orig_cam_name = self.instrument.getCCDCameraName()
+		need_update = False
+		for name in camnames:
+			self.instrument.setCCDCamera(name)
+			if self.requireRecentDarkCurrentReferenceOnBright():
+				need_update = True
+				print name
+				break
+		if need_update:
+			print name
+			self.updateCameraDarkCurrentReference()
+		self.instrument.setCCDCamera(orig_cam_name)
+		
 	def monitorRefillWithIsBusy(self):
 		'''
 		Wait until autofiller not busy if can be monitored by function in tem.

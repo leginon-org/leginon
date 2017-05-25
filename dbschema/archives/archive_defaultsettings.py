@@ -5,7 +5,7 @@ from sinedon import dbconfig
 from leginon import leginondata
 from leginon import projectdata
 from leginon import correctorclient
-from dbschema import archive_leginondb
+from dbschema.archives import archive_leginondb
 import time
 
 # set direct_query values

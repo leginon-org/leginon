@@ -324,3 +324,7 @@ This method returns that multiplier, M.  In the standard case, returns 1.0.
 	def getFrameRotate(self):
 		# rotation in multiple of 90 degrees
 		return 0
+
+	def requireRecentDarkCurrentReferenceOnBright(self):
+		return False
+	

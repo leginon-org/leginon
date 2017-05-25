@@ -591,7 +591,7 @@ class ParticleBoxLoop(ParticleExtractLoop):
 		imgdims = imgdata['camera']['dimension']
 		newpartdatas = []
 		for partdata in partdatas:
-			start_x,start_y = apBoxer.getBoxStartPosition(imgdata,self.half_box,partdata, shiftdata)
+			start_x,start_y = apBoxer.getBoxStartPosition(self.half_box, partdata, shiftdata)
 			if apBoxer.checkBoxInImage(imgdims,start_x,start_y,self.boxsize):
 				newpartdatas.append(partdata)
 		return newpartdatas

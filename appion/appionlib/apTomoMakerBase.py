@@ -101,7 +101,7 @@ class TomoMaker(appionScript.AppionScript):
 		self.imgcenter = {'x':self.imgshape[1]/2,'y':self.imgshape[0]/2}
 
 	def setupTiltSeries(self):
-		tilts,self.ordered_imagelist,ordered_mrc_files,refindex = apTomo.orderImageList(self.orig_imagelist)
+		tilts,self.ordered_imagelist,accumulated_doselist,ordered_mrc_files,refindex = apTomo.orderImageList(self.orig_imagelist)
 		self.seriesname = apTomo.getFilename(self.tiltdatalist)
 		stackdir = self.params['tiltseriesdir']
 		stackname = self.seriesname+".st"

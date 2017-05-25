@@ -10,6 +10,7 @@ import sys
 import subprocess
 import os
 import datetime
+import math
 
 try:
 	import nidaq
@@ -774,10 +775,23 @@ class Tecnai(tem.TEM):
 				pass
 		return value
 
+	def waitForStageReady(self,timeout=5):
+		t0 = time.time()
+		trials = 0
+		while self.tecnai.Stage.Status in (2,3,4):
+			trials += 1
+			if time.time()-t0 > timeout:
+				raise RuntimeError('stage is not going to ready status in %d seconds' % (int(timeout)))
+		if PRINT_STAGE_DEBUG and trials > 0:
+			print datetime.datetime.now()
+			donetime = time.time() - t0
+			print 'took extra %.1f seconds to get to ready status' % (donetime)
+
 	def _setStagePosition(self, position, relative = 'absolute'):
 #		tolerance = 1.0e-4
 #		polltime = 0.01
 
+		self.waitForStageReady()
 		if relative == 'relative':
 			for key in position:
 				position[key] += getattr(self.tecnai.Stage.Position, key.upper())
@@ -807,7 +821,7 @@ class Tecnai(tem.TEM):
 				# used to parse e into (hr, msg, exc, arg)
 				# but Issue 4794 got 'need more than 3 values to unpack' error'.
 				# simplify the error handling so that it can be raised with messge.
-				msg = e[1]
+				msg = e.text
 				raise ValueError('Stage.Goto failed: %s' % (msg,))
 			except:
 				raise ValueError('COMError in _setStagePosition: %s' % (e,))
@@ -816,6 +830,7 @@ class Tecnai(tem.TEM):
 				print datetime.datetime.now()
 				print 'Other error in going to %s' % (position,)
 			raise RuntimeError('_setStagePosition Unknown error')
+		self.waitForStageReady()
 
 	def getLowDoseStates(self):
 		return ['on', 'off', 'disabled']
@@ -1377,12 +1392,12 @@ class Tecnai(tem.TEM):
 	def _loadCartridge(self, number):
 		state = self.tecnai.AutoLoader.LoadCartridge(number)
 		if state != 0:
-			raise RunTimeError()
+			raise RuntimeError()
 
 	def _unloadCartridge(self):
 		state = self.tecnai.AutoLoader.UnloadCartridge()
 		if state != 0:
-			raise RunTimeError()
+			raise RuntimeError()
 
 	def getGridLoaderNumberOfSlots(self):
 		if self.hasGridLoader():
@@ -1423,6 +1438,29 @@ class Krios(Tecnai):
 		This is done because Titan does not have submode 2 See Issue #3986
 		'''
 		pass
+
+	def setStagePosition(self, value):
+		# pre-position x and y (maybe others later)
+		value = self.checkStagePosition(value)
+		if not value:
+			return
+		if self.correctedstage:
+			delta = 2e-6
+			stagenow = self.getStagePosition()
+			# calculate pre-position
+			prevalue = {}
+			for axis in ('x','y','z'):
+				if axis in value:
+					prevalue[axis] = value[axis] - delta
+			# alpha tilt backlash only in one direction
+			alpha_delta_degrees = 3.0
+			if 'a' in value.keys():
+					axis = 'a'
+					prevalue[axis] = value[axis] - alpha_delta_degrees*3.14159/180.0
+			if prevalue:
+				self._setStagePosition(prevalue)
+				time.sleep(0.2)
+		return self._setStagePosition(value)
 
 class Halo(Tecnai):
 	'''

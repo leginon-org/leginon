@@ -99,7 +99,7 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 		for setting in self.focus_sequence:
 			presetname = setting['preset name']
 			settingname = setting['name']
-			if presetname not in availablepresets:
+			if setting['switch'] and presetname not in availablepresets:
 				raise acquisition.InvalidPresetsSequence('bad preset %s in focus sequence %s' % (presetname, settingname))
 
 	def researchFocusSequence(self):
@@ -384,11 +384,27 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 		finally:
 			# always set alpha back Issue #4294
 			self.logger.info('Returning stage alpha to %.1f degrees' % (math.degrees(orig_a),))
-			self.instrument.tem.StagePosition = {'a':orig_a}
+			self.forceSetStagePosition = {'a':orig_a}
 			new_stage = self.instrument.tem.StagePosition
 			self.logger.info('Returned stage alpha is  %.1f degrees' % (math.degrees(new_stage['a']),))
 
 		return status
+
+	def forceSetStagePosition(self, pos):
+		succeed = False
+		trials = 0
+		while not succeed and trials < 3:
+			try:
+				self.instrument.tem.StagePosition = pos
+				e = None
+			except Exception, e:
+				time.sleep(5)
+				self.logger.warning('Failed to move to %s. Retry' % (pos,))
+				succeed = False
+				tryials += 1
+		if trials >= 3:
+				self.logger.error('Failed to move to %s after %d trials' % (pos, trials))
+				self.logger.error('Final error: %s' % (e,))
 
 	def noMeasure(self, *args, **kwargs):
 		self.logger.info('no measurement selected')

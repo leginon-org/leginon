@@ -78,7 +78,11 @@ class SettingsJsonLoader(DataJsonLoader):
 				q['session'] = session
 			if 'template filename' in q.keys():
 				q['template filename'] = ''
-			q.insert()
+			# need to be the administrator default
+			if 'isdefault' in q.keys():
+				q['isdefault'] = True
+			# force to become the current default settings
+			q.insert(force=True)
 
 	def run(self):
 		self.readJsonFile(self.jsonfile)

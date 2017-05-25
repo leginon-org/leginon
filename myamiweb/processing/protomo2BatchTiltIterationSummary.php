@@ -60,7 +60,7 @@ $rec_webm = "loadvid.php?filename=".$rec_vid_files[2];
 $download_rec_mp4 = "downloadvid.php?filename=".$rec_vid_files[0];
 
 $html .= "
-	<center><H3><b>Tilt-Series #".ltrim($tiltseries, '0')."<br>Refinement Iteration #$iter</b></H3></center>
+	<center><H2><b>Tilt-Series #".ltrim($tiltseries, '0')."<br><font size=3>(tiltseries$tiltseries)</font><br>Refinement Iteration #$iter</b></H2></center>
 	<hr />";
 $html .= "
 	<H4><center><b>Correlation Peak</b></center></H4>";
@@ -117,7 +117,7 @@ if (isset($tilt_gif_files[0])) {
 }
 
 $html .= "
-	<H4><center><b>Preliminary Reconstruction</b></center></H4>";
+	<H4><center><b>Reconstruction (Protomo WBP)</b></center></H4>";
         
 if (isset($rec_gif_files[0])) {
 	$html .= '<center><img src="'.$rec_gif.'" alt="correlations" /></center>';

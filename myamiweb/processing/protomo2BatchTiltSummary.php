@@ -30,11 +30,15 @@ $imageinfo=$_SESSION['imageinfo'];
 $rundir=$_GET['rundir'];
 $tiltseries=$_GET['tiltseries'];
 
+processing_header("Batch Protomo Tilt-Series Alignment and Reconstruction Summary","Batch Protomo Tilt-Series Alignment Alignment Summary", $javascript);
+
 $defocus_gif_files = glob("$rundir/tiltseries".$tiltseries."/defocus_estimation/*/*/diagnostic.gif");
 $ctf_gif_files = glob("$rundir/tiltseries".$tiltseries."/media/ctf_correction/s*.gif");
 $dose_gif_files = glob("$rundir/tiltseries".$tiltseries."/media/dose_compensation/s*.gif");
 $corrpeak_gif_files = glob("$rundir/tiltseries".$tiltseries."/media/correlations/s*.gif");
 $corrpeak_vid_files = glob("$rundir/tiltseries".$tiltseries."/media/correlations/s*.{mp4,ogv,webm}",GLOB_BRACE);
+$recon_files = glob("$rundir/tiltseries".$tiltseries."/recons_*/*.mrc",GLOB_BRACE);
+$stack_files = glob("$rundir/tiltseries".$tiltseries."/stack*/*.mrcs",GLOB_BRACE);
 $qa_gif_file = "$rundir/tiltseries".$tiltseries."/media/quality_assessment/series".$tiltseries."_quality_assessment.gif";
 $azimuth_gif_file = "$rundir/tiltseries".$tiltseries."/media/angle_refinement/series".sprintf('%04d',$tiltseries)."_azimuth.gif";
 $orientation_gif_file = "$rundir/tiltseries".$tiltseries."/media/angle_refinement/series".sprintf('%04d',$tiltseries)."_orientation.gif";
@@ -188,8 +192,33 @@ elseif (count($corrpeak_vid_files) > 0)
 }
 $html .= '</tr><tr></table></center><br>';
 
+if (count($recon_files) > 0) {
+	$html .= "
+	<hr />
+	<center><H4><b>Available Reconstructions</b></H4></center>
+	<hr />";
+	
+	foreach ($recon_files as $item) {
+		$html .= '<br>'.$item;
+	}
+	$html .= '<br><br>';
+
+}
+
+if (count($stack_files) > 0) {
+	$html .= "
+	<hr />
+	<center><H4><b>Available Tilt-Series Stacks</b></H4></center>
+	<hr />";
+	
+	foreach ($stack_files as $item) {
+		$html .= '<br>'.$item;
+	}
+
+}
 
 echo $html
+
 ?>
 </body>
 </html>

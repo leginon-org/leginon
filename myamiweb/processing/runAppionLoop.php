@@ -80,7 +80,8 @@ function runAppionLoop() {
 	/* *************************
 	PART 4: Show or Run Command
 	***************************** */
-	$headinfo = $form->showReference(); 
+	$headinfo = $form->showReference();
+	$headinfo.= $form->generateFormFooter();
 	$headinfo.= $copyCommand;
 	$headinfo.= "<br />";
 	$jobType  = $form->getJobType();

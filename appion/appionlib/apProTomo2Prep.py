@@ -134,7 +134,7 @@ def prepareTiltFile(sessionname, seriesname, tiltfilename, tiltseriesnumber, raw
 	
 	sessiondata = apDatabase.getSessionDataFromSessionName(sessionname)
 	tiltseriesdata = apDatabase.getTiltSeriesDataFromTiltNumAndSessionId(tiltseriesnumber,sessiondata)
-	tiltdata = apTomo.getImageList([tiltseriesdata])
+	tiltdata = apTomo.getImageList([tiltseriesdata], ddstackid=None, appion_protomo=True)
 	apDisplay.printMsg("getting imagelist")
 	
 	frame_tiltdata, non_frame_tiltdata = frameOrNonFrameTiltdata(tiltdata)
@@ -351,7 +351,7 @@ def determineTomoctfDirection(rundir, stack_path, tilt_angles_path, defocus, cs,
 	f.write("384\n")
 	f.write("%f %f %f %d %f\n" % (cs, voltage, amp_contrast, 10000, pixelsize))
 	f.write("0.5 100000 %f\n" % (pixelsize*4))
-	f.write("%f %f 500\n" % (defocus*0.8, defocus*1.2))
+	f.write("%f %f 500\n" % (defocus*0.8*10000, defocus*1.2*10000))
 	f.write("eof\n")
 	f.close()
 	
@@ -382,11 +382,13 @@ def determineTomoctfDirection(rundir, stack_path, tilt_angles_path, defocus, cs,
 		p.start()
 	[p.join() for p in mp.active_children()]
 	
+	os.system('rm %s/diagnostic.mrc "%s/diagnostic_negative.mrc' % (rundir,rundir))
+	
 	if ('NOT' in open('%s/tomoctfgrad_negative.log' % rundir).read()) and not ('NOT' in open('%s/tomoctfgrad.log' % rundir).read()):
 		apDisplay.printMsg('The stack is oriented as per TomoCTF defocus gradient requrements.')
 	elif ('NOT' in open('%s/tomoctfgrad.log' % rundir).read()) and not ('NOT' in open('%s/tomoctfgrad_negative.log' % rundir).read()):
 		apDisplay.printMsg('The stack is not oriented as per TomoCTF defocus gradient requrements. Tilt angles will be multiplied by -1.')
-		os.system('mv %s %s' % (tilt_angles_path,negative_tilt_angles_path))
+		os.system('mv %s %s' % (negative_tilt_angles_path, tilt_angles_path))
 	else:
 		apDisplay.printWarning('Defocus gradient could not be determined. Using tilt angles as in database.')
 	
@@ -455,7 +457,7 @@ def defocusEstimate(seriesname, rundir, projectid, sessionname, procs, tiltserie
 		sinedon.setConfig('appiondata', db=project)
 		sessiondata = apDatabase.getSessionDataFromSessionName(sessionname)
 		tiltseriesdata = apDatabase.getTiltSeriesDataFromTiltNumAndSessionId(tiltseriesnumber,sessiondata)
-		tiltdata = apTomo.getImageList([tiltseriesdata])
+		tiltdata = apTomo.getImageList([tiltseriesdata], ddstackid=None, appion_protomo=True)
 		
 		frame_tiltdata, non_frame_tiltdata = frameOrNonFrameTiltdata(tiltdata)
 		tilts,ordered_imagelist,accumulated_dose_list,ordered_mrc_files,refimg = apTomo.orderImageList(frame_tiltdata, non_frame_tiltdata, frame_aligned=frame_aligned_images)
@@ -534,6 +536,7 @@ def defocusEstimate(seriesname, rundir, projectid, sessionname, procs, tiltserie
 					[p.join() for p in mp.active_children()]
 		[p.join() for p in mp.active_children()]
 		
+		def_avg=0
 		for ctf_min in [0,0.33,0.67,1]:
 			try:
 				tomoctf_rundir256="%s/256/%s" % (defocusdir, ctf_min)
@@ -566,9 +569,11 @@ def defocusEstimate(seriesname, rundir, projectid, sessionname, procs, tiltserie
 				os.system(cmd256)
 				os.system(cmd384)
 				os.system(cmd512)
+				def_avg = def_avg+def256+def384+def512
 			except IOError:
 				apDisplay.printWarning("Intermediate files during defocus estimation were not created properly...")
-		
+		def_avg = round((def_avg/12),2)
+		os.system("rm %sdefocus_*; touch %sdefocus_%f" % (defocusdir, defocusdir, def_avg))
 		os.system('rm %s %s/[2,3,5]*/*/stack*mrcs %s/[2,3,5]*/*/slice*' % (stack_path, defocusdir, defocusdir))
 
 
@@ -599,7 +604,7 @@ def imodCtfCorrect(seriesname, rundir, projectid, sessionname, tiltseriesnumber,
 		sinedon.setConfig('appiondata', db=project)
 		sessiondata = apDatabase.getSessionDataFromSessionName(sessionname)
 		tiltseriesdata = apDatabase.getTiltSeriesDataFromTiltNumAndSessionId(tiltseriesnumber,sessiondata)
-		tiltdata = apTomo.getImageList([tiltseriesdata])
+		tiltdata = apTomo.getImageList([tiltseriesdata], ddstackid=None, appion_protomo=True)
 		
 		frame_tiltdata, non_frame_tiltdata = frameOrNonFrameTiltdata(tiltdata)
 		tilts,ordered_imagelist,accumulated_dose_list,ordered_mrc_files,refimg = apTomo.orderImageList(frame_tiltdata, non_frame_tiltdata, frame_aligned=frame_aligned_images)
@@ -807,7 +812,7 @@ def tomoCtfCorrect(seriesname, rundir, projectid, sessionname, tiltseriesnumber,
 	sinedon.setConfig('appiondata', db=project)
 	sessiondata = apDatabase.getSessionDataFromSessionName(sessionname)
 	tiltseriesdata = apDatabase.getTiltSeriesDataFromTiltNumAndSessionId(tiltseriesnumber,sessiondata)
-	tiltdata = apTomo.getImageList([tiltseriesdata])
+	tiltdata = apTomo.getImageList([tiltseriesdata], ddstackid=None, appion_protomo=True)
 	
 	frame_tiltdata, non_frame_tiltdata = frameOrNonFrameTiltdata(tiltdata)
 	tilts,ordered_imagelist,accumulated_dose_list,ordered_mrc_files,refimg = apTomo.orderImageList(frame_tiltdata, non_frame_tiltdata, frame_aligned="True")
@@ -956,14 +961,14 @@ def doseCompensate(seriesname, rundir, sessionname, tiltseriesnumber, frame_alig
 	if len(glob.glob(intermediate_stack_dir+'*.mrcs')) > 0:
 		sessiondata = apDatabase.getSessionDataFromSessionName(sessionname)
 		tiltseriesdata = apDatabase.getTiltSeriesDataFromTiltNumAndSessionId(tiltseriesnumber,sessiondata)
-		tiltdata = apTomo.getImageList([tiltseriesdata])
+		tiltdata = apTomo.getImageList([tiltseriesdata], ddstackid=None, appion_protomo=True)
 		
 		frame_tiltdata, non_frame_tiltdata = frameOrNonFrameTiltdata(tiltdata)
 		tilts, ordered_imagelist, accumulated_dose_list, ordered_mrc_files, refimg = apTomo.orderImageList(frame_tiltdata, non_frame_tiltdata, frame_aligned="False")
 		if (dose_presets == "Light"):
 			dose_a = 0.245
-			dose_b = -1.6
-			dose_c = 12
+			dose_b = -1.8
+			dose_c = 12.0
 		elif (dose_presets == "Moderate"):
 			dose_a = 0.245
 			dose_b = -1.665
@@ -971,11 +976,14 @@ def doseCompensate(seriesname, rundir, sessionname, tiltseriesnumber, frame_alig
 		elif (dose_presets == "Heavy"):
 			dose_a = 0.245
 			dose_b = -1.4
-			dose_c = 2
+			dose_c = 2.0
 		stack_file = glob.glob(intermediate_stack_dir+'*.mrcs')[0]
 		stack = mrc.read(stack_file)
-		stack_file_dose_comped = stackpath.replace('.mrcs','_dose_comp_a=%f_b=%f_c=%f.mrcs' % (dose_a, dose_b, dose_c))
-		apDisplay.printMsg('Dose compensating all tilt images with a=%s, b=%s, and c=%s...' % (dose_a, dose_b, dose_c))
+		dose_a_str = ('%f' % dose_a).rstrip('0')
+		dose_b_str = ('%f' % dose_b).rstrip('0')
+		dose_c_str = ('%f' % dose_c).rstrip('0')
+		stack_file_dose_comped = stackpath.replace('.mrcs','_dose_comp_a=%f_b=%f_c=%f.mrcs' % (dose_a_str, dose_b_str, dose_c_str))
+		apDisplay.printMsg('Dose compensating all tilt images with a=%s, b=%s, and c=%s...' % (dose_a_str, dose_b_str, dose_c_str))
 		stack_path=os.path.join(rundir,'stack')
 		os.system('mkdir %s 2>/dev/null' % stack_path)
 		
@@ -990,7 +998,7 @@ def doseCompensate(seriesname, rundir, sessionname, tiltseriesnumber, frame_alig
 			new_stack.append(im)
 		mrc.write(np.asarray(new_stack), stack_file_dose_comped)
 		os.system('rm %s' % stack_file)
-		os.system("touch %s/dose_comp_a%f_b%f_c%f" % (raw_path,dose_a,dose_b,dose_c))
+		os.system("touch %s/dose_comp_a%s_b%s_c%s" % (raw_path,dose_a_str, dose_b_str, dose_c_str))
 		apDisplay.printMsg("Dose compensation finished for tilt-series #%s!" % tiltseriesnumber)
 		
 	else:
@@ -998,7 +1006,7 @@ def doseCompensate(seriesname, rundir, sessionname, tiltseriesnumber, frame_alig
 		if len(dose_file) == 0:
 			sessiondata = apDatabase.getSessionDataFromSessionName(sessionname)
 			tiltseriesdata = apDatabase.getTiltSeriesDataFromTiltNumAndSessionId(tiltseriesnumber,sessiondata)
-			tiltdata = apTomo.getImageList([tiltseriesdata])
+			tiltdata = apTomo.getImageList([tiltseriesdata], ddstackid=None, appion_protomo=True)
 			
 			frame_tiltdata, non_frame_tiltdata = frameOrNonFrameTiltdata(tiltdata)
 			tilts, ordered_imagelist, accumulated_dose_list, ordered_mrc_files, refimg = apTomo.orderImageList(frame_tiltdata, non_frame_tiltdata, frame_aligned="False")
@@ -1007,7 +1015,7 @@ def doseCompensate(seriesname, rundir, sessionname, tiltseriesnumber, frame_alig
 			newfilenames, new_ordered_imagelist = apProTomo.getImageFiles(ordered_imagelist, raw_path, link=False, copy=False)
 			if (dose_presets == "Light"):
 				dose_a = 0.245
-				dose_b = -1.6
+				dose_b = -1.8
 				dose_c = 12
 			elif (dose_presets == "Moderate"):
 				dose_a = 0.245
@@ -1018,15 +1026,21 @@ def doseCompensate(seriesname, rundir, sessionname, tiltseriesnumber, frame_alig
 				dose_b = -1.4
 				dose_c = 2
 			if dose_compensate == "True":
-				apDisplay.printMsg('Dose compensating all tilt images with a=%s, b=%s, and c=%s...' % (dose_a, dose_b, dose_c))
+				dose_a_str = ('%f' % dose_a).rstrip('0')
+				dose_b_str = ('%f' % dose_b).rstrip('0')
+				dose_c_str = ('%f' % dose_c).rstrip('0')
+				apDisplay.printMsg('Dose compensating all tilt images with a=%s, b=%s, and c=%s...' % (dose_a_str, dose_b_str, dose_c_str))
 			else:
-				apDisplay.printMsg('Creating dose compensation list with a=%s, b=%s, and c=%s...' % (dose_a, dose_b, dose_c))
+				apDisplay.printMsg('Creating dose compensation list with a=%s, b=%s, and c=%s...' % (dose_a_str, dose_b_str, dose_c_str))
 				stack_path=os.path.join(rundir,'stack')
 				os.system('mkdir %s 2>/dev/null' % stack_path)
 				dose_lp_file = open(os.path.join(stack_path,'full_dose_lp_list.txt'), 'w')
 			
 			for image, j in zip(new_ordered_imagelist, range(len(new_ordered_imagelist))):
-				lowpass = float(np.real(complex(dose_a/(accumulated_dose_list[j] - dose_c))**(1/dose_b)))  #equation (3) from Grant & Grigorieff, 2015
+				if accumulated_dose_list[j] == dose_c: #No divide by zero
+					lowpass = float(np.real(complex(dose_a/(accumulated_dose_list[j] - dose_c + 0.01))**(1/dose_b)))  #equation (3) from Grant & Grigorieff, 2015 with an extra term to avoid divide by zero
+				else:
+					lowpass = float(np.real(complex(dose_a/(accumulated_dose_list[j] - dose_c))**(1/dose_b)))  #equation (3) from Grant & Grigorieff, 2015
 				if lowpass < 0.0:
 					lowpass = 0.0
 				if dose_compensate == "True":
@@ -1042,7 +1056,7 @@ def doseCompensate(seriesname, rundir, sessionname, tiltseriesnumber, frame_alig
 				dose_lp_file.close()
 			
 			if dose_compensate == "True":
-				os.system("touch %s/dose_comp_a%f_b%f_c%f" % (raw_path,dose_a,dose_b,dose_c))
+				os.system("touch %s/dose_comp_a%s_b%s_c%s" % (raw_path,dose_a_str,dose_b_str,dose_c_str))
 				apDisplay.printMsg("Dose compensation finished for tilt-series #%s!" % tiltseriesnumber)
 			else:
 				apDisplay.printMsg("Dose compensation list created")

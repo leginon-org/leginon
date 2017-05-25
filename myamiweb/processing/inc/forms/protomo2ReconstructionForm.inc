@@ -16,7 +16,13 @@ ini_set('session.gc_maxlifetime', 604800);
 session_set_cookie_params(604800);
 
 session_start();
-if (isset($_GET['tiltseries'])) {  //If user is coming from batch
+if (isset($_GET['runname'])) {  //If user is coming from main summary
+	$tiltseries=$_GET['tiltseries'];
+	$outdir=$_GET['outdir'];
+	$runname=$_GET['runname'];
+	$_POST['runname']=$_GET['runname'];
+	$_SESSION['runname']=$_GET['runname'];
+}elseif (isset($_GET['tiltseries'])) {  //If user is coming from batch
 	$tiltseries=ltrim($_GET['tiltseries'], '0');
 	$outdir=$_GET['rundir'];
 	$runname='tiltseries'.$_GET['tiltseries'];
@@ -67,7 +73,8 @@ class Protomo2ReconstructionForm extends BasicLayoutForm
 	$recon_lp_diam_y='15', $ctf_correct='', $amp_contrast_ctf='0.07', $iWidth='20', $DefocusTol='200', $dose_presets='', $dose_a='',
 	$dose_b='', $dose_c='', $link_recon='', $frame_aligned='', $reconstruction_method='', $tomo3d_procs='all', $tomo3d_options='',
 	$tomo3d_sirt_iters='30', $exclude_images_by_angle='', $stack_procs='all', $bin_type='', $amp_correct='', $amp_correct_w1='0.67', $amp_correct_w2='0.33',
-	$defocus_difference='250', $defocus_save_recon='')
+	$defocus_difference='250', $defocus_save_recon='', $pick_tomogram='', $dog_particle_diam='', $dog_diam_variance='5', $dog_max_picks='',
+	$dog_junk_tolerance='5', $dog_lowpass_type='proc3d')
 	{
 		parent::__construct($expId, $extraHTML);
 		//print "_POST:" . "<br>";
@@ -168,7 +175,11 @@ class Protomo2ReconstructionForm extends BasicLayoutForm
 		$params->addParam( "recon_iter", $recon_iter, "Refinement Iteration used to generate Reconstruction" );
 		$params->addParam( "reconstruction_actions", $reconstruction_actions, "Reconstruction Actions" );
 		$params->addParam( "reconstruction_method", $reconstruction_method, "Reconstruction Method" );
-		$params->addParam( "recon_map_sampling", $recon_map_sampling, "Reconstruction Sampling" );
+		if ($_POST['reconstruction_method'] == 4){
+			$params->addParam( "recon_map_sampling", $recon_map_sampling, "Stack Sampling" );
+		} else {
+			$params->addParam( "recon_map_sampling", $recon_map_sampling, "Reconstruction Sampling" );
+		}
 		$params->addParam( "bin_type", $bin_type, "Sampling Method" );
 		$params->addParam( "recon_map_size_x", $recon_map_size_x, "Reconstruction Size (x)" );
 		$params->addParam( "recon_map_size_y", $recon_map_size_y, "Reconstruction Size (y)" );
@@ -181,7 +192,13 @@ class Protomo2ReconstructionForm extends BasicLayoutForm
 		$params->addParam( "amp_correct_w1", $amp_correct_w1, "w1" );
 		$params->addParam( "amp_correct_w2", $amp_correct_w2, "w2" );
 		$params->addParam( "defocus_difference", $defocus_difference, "Defocus Difference for Strips" );
-		$params->addParam( "defocus_save_recon", $defocus_save_recon, "Save and Use Defocus" );
+		$params->addParam( "defocus_save_recon", $defocus_save_recon, "Save (and use) Defocus" );
+		$params->addParam( "pick_tomogram", $pick_tomogram, "Tomogram Picking Method" );
+		$params->addParam( "dog_particle_diam", $dog_particle_diam, "Particle Diameter" );
+		$params->addParam( "dog_diam_variance", $dog_diam_variance, "Percent Diameter Variance" );
+		$params->addParam( "dog_max_picks", $dog_max_picks, "Maximum Number of Picks" );
+		$params->addParam( "dog_junk_tolerance", $dog_junk_tolerance, "Junk Tolerance" );
+		$params->addParam( "dog_lowpass_type", $dog_lowpass_type, "Type of Lowpass used for DoG" );
 		
 		// Validations
 		$params->addValidation( "recon_iter", "req" );
@@ -238,7 +255,6 @@ class Protomo2ReconstructionForm extends BasicLayoutForm
 				$html.= '</select>'; $html.= docpop('amp_correct', ' Amplitude Correct').'│ ';
 				$html.= $params->insertTextFieldInRow( "amp_correct_w1", $fieldSize ).'│ ';
 				$html.= $params->insertTextField( "amp_correct_w2", $fieldSize );
-				$html.= $params->insertTextField( "defocus_save_recon", $fieldSize );
 				
 			} elseif ($_POST['ctf_correct'] == 2) {
 				$html.= '<select name="frame_aligned" style="width:66px">';
@@ -297,7 +313,11 @@ class Protomo2ReconstructionForm extends BasicLayoutForm
 				$html.= '<option value="'.$i.'">'.$i.'</option>';
 			}
 		}
-		$html.= '</select>'; $html.= docpop('protomo_recon_iter', ' Refinement Iteration used to generate Reconstruction<br>');
+		if ($_POST['reconstruction_method'] == 4){
+			$html.= '</select>'; $html.= docpop('protomo_recon_iter', ' Refinement Iteration used to generate Stack<br>');
+		} else {
+			$html.= '</select>'; $html.= docpop('protomo_recon_iter', ' Refinement Iteration used to generate Reconstruction<br>');
+		}
 		if ($_POST['reconstruction_method'] == 1){
 			$html.= $params->insertTextField( "recon_map_sampling", $fieldSize );
 			$html.= $params->insertTextField( "recon_map_size_x", $fieldSize );
@@ -325,6 +345,7 @@ class Protomo2ReconstructionForm extends BasicLayoutForm
 		$html.= $params->insertTextField( "exclude_images_by_angle", $fieldSize );
 		$html.= $params->insertTextFieldInRow( "negative_recon", $fieldSize ).'│ ';
 		$html.= $params->insertTextField( "positive_recon", $fieldSize );
+		$html.= $params->insertTextField( "defocus_save_recon", $fieldSize );
 		if ($_POST['reconstruction_method'] == 1){
 			$html.= '<select name="recon_lowpass" style="width:100px">';
 			$html.= '<option value="True">True</option>';
@@ -343,6 +364,30 @@ class Protomo2ReconstructionForm extends BasicLayoutForm
 			$html.= $params->insertTextField( "link_recon", $fieldSize2 );
 		}
 		
+		$html .= "
+			<br />
+			<H4>Pick Tomogram ".docpop('tomo_picker_info', '(Info)')."</H4>
+			<hr />";
+			if (!isset($_POST['pick_tomogram'])) {$_POST['pick_tomogram']=2;}
+			$pick_tomogram=array("3D DoG Picking", "None");
+			$html.= '<br><select name="pick_tomogram" onchange=submit() style="width:120px">';
+			for ($i = 1; $i < count($pick_tomogram)+1; $i++) {
+				$html.= '<option ';
+				if ($i == $_POST['pick_tomogram']) {
+					$html.= 'selected ';
+				}
+				$html.= 'value="'.$i.'">'.$pick_tomogram[$i-1].'</option>';
+			}
+			$html.= '</select>'; $html.= docpop('pick_tomogram', ' Tomogram Picking Method').'<br>';
+			if ($_POST['pick_tomogram'] == 1) {
+				$html.= $params->insertTextFieldInRow( "dog_particle_diam", $fieldSize ).' +- ';
+				$html.= $params->insertTextField( "dog_diam_variance", $fieldSize );
+				$html.= $params->insertTextField( "dog_max_picks", $fieldSize );
+				$html.= $params->insertTextField( "dog_junk_tolerance", $fieldSize );
+				$html.= '<select name="dog_lowpass_type" style="width:66px">';
+				$html.= '<option selected value="proc3d">proc3d</option>';
+				$html.= '</select>'; $html.= docpop('dog_lowpass_type', ' Type of Lowpass used for DoG');
+			}
 		$html .= "<hr />";
 		
 		global $outdir;

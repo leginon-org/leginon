@@ -46,8 +46,10 @@ def printTips(tip_type):
 	choices.append("Info: Protomo alignment speed is proportional to the number of tilt images, the search area, and the inverse squared of the binning.")
 	choices.append("Info: To print a full list of citations, just type protomo2aligner.py --citations")
 	choices.append("Info: Sometimes horizontal black bars show up in the videos. Don't worry, your images are ok.")
+	choices.append("Info: Your tilt-series runs will show up on a summary webpage under 'Align Tilt-Series' on the left side of the webpages for easy reference.")
 	choices.append("Tip: Use Run names 'tiltseries####' in order to see your tilt-series alignments on the Batch Summary webpages.")
-	choices.append("Tip: Each microscope + holder will have a unique tilt azimuth. To determine this value, collect a tilt-series of high SNR objects without ice contamination and run Appion-Protomo refinement for 50-100 iterations at binned by 8, followed by 5-10 iterations at binned by 4, 2, then 1. If the alignment converged (CCMS values and correction factors are all very low), then the tilt azimuth has likely been estimated properly. You may wish to check the opposite tilt azimuth (plus or minus 180 degrees) to see if it aligns better or worse. Use the resulting value as input into all tilt-series alignment for this microscope + holder combination by inputing it into the 'Override Tilt Azimuth' parameter in Appion-Protomo.")
+	choices.append("Tip: Aligned tilt-series videos should always be checked for individual tilt images that aligned poorly before proceeding to reconstruction.")
+	choices.append("Tip: Each microscope + holder will have a unique tilt azimuth. To determine this value, collect a tilt-series of high SNR objects without ice contamination and run Appion-Protomo refinement for 50-100 iterations at binned by 8, followed by 5-10 iterations at binned by 4, 2, then 1. If the alignment converged (CCMS values and correction factors are all very low), then the tilt azimuth has likely been estimated properly. You may wish to check the opposite tilt azimuth (plus or minus 180 degrees) to see if it aligns better or worse. Use the resulting value as input into all tilt-series alignment for this microscope + holder combination by inputting the value into the tilt-series collection software tilt axis model (+-90  degrees possibly), or inputting it into the 'Override Tilt Azimuth' parameter in Appion-Protomo. Collecting and processing a medium-magnification tilt-series may be the easiest method for determining tilt azimuth.")
 	choices.append("Tip: Hovering your mouse over parameter text and other text on the Appion-Protomo webpages gives you access to a large part of the Protomo documentation along with helpful suggestions and descriptions.")
 	choices.append("Tip: Batch Align Tilt-Series is particularly useful for initial tilt-series screening. After a large tilt-series collection, run one tilt-series through the Align Tilt-Series Coarse Alignment, then use the resulting coarse_series####.param file as input into Batch Coarse Alignment. Then on the Batch Coarse Alignment Summary webpage, you can easily browse through each tilt-series to identify which are ready for Refinement.")
 	choices.append("Tip: For samples with sizes of about 1 micron or lower, we see best results with the 10nm or 25nm object(s) - Steep lowpass Preset Parameter. Don't forget to adjust the Thickness parameter appropriately after changing the the presets!")
@@ -60,11 +62,12 @@ def printTips(tip_type):
 	choices.append("Tip: For running on clusters, use interactive job submission (qsub -I, msub -I, etc. depending on the submission system). This will allow you to watch the alignment and possibly catch errors.")
 	choices.append("Tip: For running on clusters, consider installing Screen on a stable login node. This will allow you to run Appion-Protomo alignments in convenient virtual terminals without fear of losing your connection or accidentally closing your terminal window.")
 	choices.append("ProTip: To start an Appion-Protomo Refinement manually from scratch, place a properly formatted series####.tlt file in a directory and the corresponding mrc tilt images in a 'raw' subdirectory, then run an Appion-Protomo Refinement.")
-	choices.append("ProTip: If attempts at Coarse Alignment fail, you can revert to manual coarse alignment. In an Appion-Protomo directory, remove all *.i3t files, remove series####.tlt, and type 'tomoalign-gui -tlt coarse_series####.tlt coarse_series####.param', manually align all tilt images, then save. Next type 'python'. Inside Python type 'import protomo;p=protomo.param('coarse_series####.param');s=protomo.series(p);s.geom(0).write('series####.tlt')'. Then run Appion-Protomo Refinement as usual.")
+	choices.append("ProTip: It is possible to manually align outside of the Coarse Alignment step (normally done through Coarse Alignment General Parameters). To do so, in an Appion-Protomo directory, remove all *.i3t files, remove series####.tlt, and type 'tomoalign-gui -tlt coarse_series####.tlt coarse_series####.param', manually align all tilt images, then save. Next type 'python'. Inside Python type 'import protomo;p=protomo.param('coarse_series####.param');s=protomo.series(p);s.geom(0).write('series####.tlt')'. Then run Appion-Protomo Refinement as usual.")
 	
 	if tip_type == "Alignment": #Alignment tips
 		choices.append("Info: Protomo alignment assumes that the angles between tilt images are fixed; ie. tilt angles are never refined.")
 		choices.append("Info: Protomo scaling refinement is isotropic; ie. images are scaled equivalently in all directions.")
+		choices.append("Info: The first three images are aligned to each other by direct correlation (no preliminary back-projection). Sometimes these images don't actually align well.")
 		choices.append("Tip: Aligned tilt-series videos should be checked first if an alignment fails. Remove offending tilt images by cutting off high tilts or by identifying individual images based on tilt angle.")
 		choices.append("Tip: Coarse alignment can be run twice in a row by setting 'Iterate Coarse Alignment Once' to true. Refinement depends on a decent starting point, so this may be useful. Always remove bad tilt angles.")
 		choices.append("Tip: A high quality refinement should have correction factors for x, y, and scaling below 1% with no jumps larger than 0.5%, correction factors for rotation between -1 and 1 degree with no jumps larger than 0.5 degrees. Reducing the angular range or removing specific images that fail in this regard may improve the overall resolution of the resulting reconstruction.")
@@ -75,7 +78,10 @@ def printTips(tip_type):
 		choices.append("Tip: Dose compensation is based on a fit to experimental data of proteins in cryo from Grant and Grigorieff, 2015 (Moderate uses values from the paper). As a result, dose compensation with Moderate may not be accurate for your sample. The amount of dose compensation can be adjusted as you determine is appropriate.")
 		choices.append("Tip: The alignment thickness is the estimated height in the z-direction of the objects of interest in the tomogram. This is a critical parameter and should be within 50% of the actual value.")
 		choices.append("Tip: The correlation peak video should have a bright dot in the center of each frame, indicating that there is signal for alignment and that the alignment has not failed.")
-		choices.append("Tip: A tilt-series that has an asymmetric positive-to-negative tilt range, e.g. [-45:60], will likely refine with a slightly different tilt azimuth compared to a symmetric tilt-series. For extreme cases such as a halt tilt-series, e.g. [0:60], the tilt azimuth will very likely refine incorrectly. For either of these cases you may wish to assign the known tilt azimuth for the microscope+holder combination and turn off tilt azimuth refinement (Refinemnet Advanced settings).")
+		choices.append("Tip: A tilt-series that has an asymmetric positive-to-negative tilt range, e.g. [-45:60], will likely refine with a slightly different tilt azimuth compared to a symmetric tilt-series. For extreme cases such as a halt tilt-series, e.g. [0:60], the tilt azimuth will very likely refine incorrectly. For either of these cases you may wish to assign the known tilt azimuth for the microscope+holder combination and turn off tilt azimuth refinement (Refinement Advanced settings).")
+		choices.append("Tip: If there are grossly misaligned tilt images after Coarse Alignment that you wish to recover rather than discard, re-run the Coarse Alignment and choose 'Manual then Coarse' in the General Parameters.")
+		choices.append("Tip: Consider turning on the optional Center of Mass Peak Search option during Refinement. By turning on this option, Protomo will identify the 'center of mass' of intensity values in the correlation peak by searching in an ellipse centered on the highest intensity pixel found during peak search. This allows for sub-pixel precision and may increase or decrease the accuracy of an alignment.")
+		choices.append("Tip: On the Protomo Refinement webpage you can enter in multiple Thickness values as comma-separated float values. This will generate a command that will run N refinements in different directories, where N is the number of thicknesses requested. Be careful not to overload the machine you are running on!")
 	elif tip_type == "Reconstruction": #Reconstruction tips
 		choices.append("Tip: You can make a reconstruction while a tilt-series is still aligning.")
 		choices.append("Tip: Be aware that the location of objects from different iterations may change.")
@@ -89,7 +95,7 @@ def printTips(tip_type):
 	elif tip_type == "Defocus": #Defocus estimation tips
 		choices.append("Tip: Defocus estimation with TomoCTF relies on useful SNR. If the signal is not clearly visible in the images, try increasing the Minimum Resolution for Fitting. Conversely, if the signal is clearly visible out to the last ring, you may wish to decrease the Minimum Resolution for Fitting.")
 		choices.append("Tip: Defocus estimation can be performed in two ways from within Appion-Protomo: 1) With TomoCTF, which estimates the defocus of the untilted plane by tiling, or 2) with integrated Appion full-image defocus estimation packages.")
-		choises.append("Tip: When estimating defocus with TomoCTF, the angular range of tilt images used can be restricted. This is particularly useful if high tilt images are highly shifted or if some images contain substantial contamination.")
+		choices.append("Tip: When estimating defocus with TomoCTF, the angular range of tilt images used can be restricted. This is particularly useful if high tilt images are highly shifted or if some images contain substantial contamination.")
 	elif tip_type == "CTF": #CTF correction tips
 		choices.append("Tip: Phases are flipped in a strip-based method when CTF correcting using TomoCTF or IMOD's ctfphaseflip. TomoCTF also allows for amplitude correction. It is recommended that conservative values be used for amplitude correction (default values) so that high frequency noise is not amplified.")
 		choices.append("Tip: CTF correction should be at least as accurate as the number of matched Thon rings observed. If thon rings match out to the highest resolution used for estimation, CTF correction might still be accurate for higher resolution phase flips.")
@@ -546,6 +552,24 @@ def scaleByZoomInterpolation(image, scale, pad_constant='mean', order=5, clip_im
 	#else: scale == 1
 	
 	return image
+
+
+def chechAzimuthStability(current_iteration_tiltfile, initial_tiltfile, azimuth_max_deviation):
+	'''
+	This checks the tilt azimuth in the .tlt file and returns whether it is within +-azimuth_max_deviation and how much it deviates.
+	'''
+	command1="grep 'AZIMUTH' %s | awk '{print $3}'" % (initial_tiltfile)
+	proc=subprocess.Popen(command1, stdout=subprocess.PIPE, shell=True)
+	(initial_azimuth, err) = proc.communicate()
+	initial_azimuth=float(initial_azimuth)
+	command2="grep 'AZIMUTH' %s | awk '{print $3}'" % (current_iteration_tiltfile)
+	proc=subprocess.Popen(command2, stdout=subprocess.PIPE, shell=True)
+	(current_azimuth, err) = proc.communicate()
+	current_azimuth=float(current_azimuth)
+	if (abs(initial_azimuth-current_azimuth) > azimuth_max_deviation):
+		return False, abs(initial_azimuth-current_azimuth), initial_azimuth
+	else:
+		return True, abs(initial_azimuth-current_azimuth), initial_azimuth
 
 
 def changeTiltAzimuth(tiltfile, new_azimuth):
@@ -1044,6 +1068,9 @@ def makeQualityAssessmentImage(tiltseriesnumber, sessionname, seriesname, rundir
 	Adds best and worst iteration to qa text file.
 	Returns best iteration number and CCMS_sum value.
 	'''
+	# Remove font cache because this can cause pyplot saving errors due to Latex or something
+	fontcachefile = os.path.join(matplotlib.get_configdir(),'fontList.cache')
+	os.system('rm %s 2>/dev/null' % fontcachefile)
 	def line_prepender(filename, line):
 		with open(filename, 'r+') as f:
 			content = f.read()
@@ -1223,6 +1250,123 @@ def checkCCMSValues(seriesname, rundir, iteration, threshold):
 		return True
 	else:
 		return False
+
+
+def alignmentAccuracyAndStabilityReport(CCMS_sum, rawimagecount, name, n):
+	'''
+	Reports back the alignment quality, confidence, and tilt model stability.
+	'''
+	def readTiltFile(tiltfile):
+		cmd1="awk '/AZIMUTH /{print $3}' %s" % tiltfile
+		proc=subprocess.Popen(cmd1, stdout=subprocess.PIPE, shell=True)
+		(azimuth, err) = proc.communicate()
+		azimuth=float(azimuth)
+		cmd2="awk '/PSI /{print $2}' %s" % tiltfile
+		proc=subprocess.Popen(cmd2, stdout=subprocess.PIPE, shell=True)
+		(psi, err) = proc.communicate()
+		psi=float(psi)
+		cmd3="awk '/THETA /{print $2}' %s" % tiltfile
+		proc=subprocess.Popen(cmd3, stdout=subprocess.PIPE, shell=True)
+		(theta, err) = proc.communicate()
+		theta=float(theta)
+		cmd4="awk '/PHI /{print $2}' %s" % tiltfile
+		proc=subprocess.Popen(cmd4, stdout=subprocess.PIPE, shell=True)
+		(phi, err) = proc.communicate()
+		phi=float(phi)
+		cmd5="awk '/ELEVATION /{print $3}' %s" % tiltfile
+		proc=subprocess.Popen(cmd5, stdout=subprocess.PIPE, shell=True)
+		(elevation, err) = proc.communicate()
+		try:
+			elevation=float(elevation)
+		except:
+			elevation=0
+		
+		return azimuth, psi, theta, phi, elevation
+	
+	def determineStability(azimuth, psi, theta, phi, elevation, azimuth1, psi1, theta1, phi1, elevation1, azimuth2, psi2, theta2, phi2, elevation2, azimuth3, psi3, theta3, phi3, elevation3):
+		azimuth_stability = abs(azimuth - azimuth1) + abs(azimuth - azimuth2) + abs(azimuth - azimuth3)
+		psi_stability = abs(psi - psi1) + abs(psi - psi2) + abs(psi - psi3)
+		theta_stability = abs(theta - theta1) + abs(theta - theta2) + abs(theta - theta3)
+		phi_stability = abs(phi - phi1) + abs(phi - phi2) + abs(phi - phi3)
+		elevation_stability = abs(elevation - elevation1) + abs(elevation - elevation2) + abs(elevation - elevation3)
+		
+		tilt_model_stability = (azimuth_stability + psi_stability + theta_stability + phi_stability + elevation_stability)/3
+		
+		if tilt_model_stability < 1:
+			alignment_stability = "\033[92m\033[1mRock Solid!\033[0m"
+		elif tilt_model_stability < 1.5:
+			alignment_stability = "\033[92mVery Stable\033[0m"
+		elif tilt_model_stability < 2:
+			alignment_stability = "Stable"
+		else:
+			alignment_stability = "\033[31mUnstable\033[0m"
+		
+		return alignment_stability
+	
+	it="%03d" % (n)
+	basename='%s%s' % (name,it)
+	tiltfile=basename+'.tlt'
+	corrfile=basename+'.corr'
+	if CCMS_sum < 0.0025:
+		alignment_quality = "\033[92m\033[1mSuspiciously Perfect...\033[0m"
+		alignment_quality2 = "Suspiciously Perfect..."
+	elif CCMS_sum < 0.005:
+		alignment_quality = "\033[92m\033[1mPerfection!\033[0m"
+		alignment_quality2 = "Perfection!"
+	elif CCMS_sum < 0.0075:
+		alignment_quality = "\033[92m\033[1mExcellent\033[0m"
+		alignment_quality2 = "Excellent"
+	elif CCMS_sum < 0.0125:
+		alignment_quality = "\033[92mVery Good\033[0m"
+		alignment_quality2 = "Very Good"
+	elif CCMS_sum < 0.02:
+		alignment_quality = "\033[92mGood\033[0m"
+		alignment_quality2 = "Good"
+	elif CCMS_sum < 0.03:
+		alignment_quality = "Okay"
+		alignment_quality2 = "Okay"
+	else:
+		if n+1 == 1:
+			alignment_quality = "\033[31mBad\033[0m - 1st iteration is always bad because the geometry has not yet been estimated"
+			alignment_quality2 = "Bad - 1st iteration is always bad because the geometry has not yet been estimated"
+		else:
+			alignment_quality = "\033[31mBad\033[0m"
+			alignment_quality2 = "Bad"
+	
+	try:
+		cmd="cat %s|wc -l" % (corrfile)
+		proc=subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+		(corrfile_length, err) = proc.communicate()
+		corrfile_length=int(corrfile_length)
+		print rawimagecount-1, corrfile_length
+		if rawimagecount-1 == corrfile_length:
+			alignment_quality_confidence = 100
+		else:
+			alignment_quality_confidence = corrfile_length/(rawimagecount-1)
+	except:
+		apDisplay.printWarning("Check your alignment output, something went wrong...")
+		alignment_quality_confidence = 0
+	
+	if n+1 > 3: #Check alignment stability only after at least 3 iterations have gone through
+		azimuth, psi, theta, phi, elevation = readTiltFile(tiltfile)
+		it1="%03d" % (n-1)
+		basename1='%s%s' % (name,it1)
+		tiltfile1=basename1+'.tlt'
+		azimuth1, psi1, theta1, phi1, elevation1 = readTiltFile(tiltfile1)
+		it2="%03d" % (n-1)
+		basename2='%s%s' % (name,it2)
+		tiltfile2=basename2+'.tlt'
+		azimuth2, psi2, theta2, phi2, elevation2 = readTiltFile(tiltfile2)
+		it3="%03d" % (n-1)
+		basename3='%s%s' % (name,it3)
+		tiltfile3=basename3+'.tlt'
+		azimuth3, psi3, theta3, phi3, elevation3 = readTiltFile(tiltfile3)
+		
+		alignment_stability = determineStability(azimuth, psi, theta, phi, elevation, azimuth1, psi1, theta1, phi1, elevation1, azimuth2, psi2, theta2, phi2, elevation2, azimuth3, psi3, theta3, phi3, elevation3)
+	else:
+		alignment_stability = "wait"
+	
+	return alignment_quality, alignment_quality2, alignment_quality_confidence, alignment_stability
 
 
 def makeCorrPlotImages(seriesname, iteration, rundir, corrfile):
@@ -1516,6 +1660,8 @@ def makeTiltSeriesVideos(seriesname, iteration, tiltfilename, rawimagecount, run
 				tiltimage = os.path.join(vid_path,"coarse_tilt%04d.png" % (j))
 			elif align_step == "Coarse2":
 				tiltimage = os.path.join(vid_path,"coarse2_tilt%04d.png" % (j))
+			elif align_step == "Manual":
+				tiltimage = os.path.join(vid_path,"manual_tilt%04d.png" % (j))
 			else: #align_step == "Refinement"
 				tiltimage = os.path.join(vid_path,"tilt%04d.png" % (j))
 			os.system("mkdir -p %s 2>/dev/null" % (vid_path))
@@ -1530,8 +1676,12 @@ def makeTiltSeriesVideos(seriesname, iteration, tiltfilename, rawimagecount, run
 				image.rotate(rotation).save(tiltimage)
 			
 			#Add scalebar
-			scalesize=2500/(pixelsize * map_sampling)    #250nm scaled by sampling
-			command = "convert -gravity South -background white -splice 0x20 -strokewidth 0 -stroke black -strokewidth 5 -draw \"line %s,%s,5,%s\" -gravity SouthWest -pointsize 13 -fill black -strokewidth 0  -draw \"translate 50,0 text 0,0 '250 nm'\" %s %s" % (scalesize, dimy/map_sampling+3, dimy/map_sampling+3, tiltimage, tiltimage)
+			if pixelsize < 10:
+				scalesize=2500/(pixelsize * map_sampling)    #250nm scaled by sampling
+				command = "convert -gravity South -background white -splice 0x20 -strokewidth 0 -stroke black -strokewidth 5 -draw \"line %s,%s,5,%s\" -gravity SouthWest -pointsize 13 -fill black -strokewidth 0  -draw \"translate 50,0 text 0,0 '250 nm'\" %s %s" % (scalesize, dimy/map_sampling+3, dimy/map_sampling+3, tiltimage, tiltimage)
+			else:
+				scalesize=25000/(pixelsize * map_sampling)    #2.5um scaled by sampling
+				command = "convert -gravity South -background white -splice 0x20 -strokewidth 0 -stroke black -strokewidth 5 -draw \"line %s,%s,5,%s\" -gravity SouthWest -pointsize 13 -fill black -strokewidth 0  -draw \"translate 50,0 text 0,0 '2.5 um'\" %s %s" % (scalesize, dimy/map_sampling+3, dimy/map_sampling+3, tiltimage, tiltimage)
 			os.system(command)
 			
 			#Add frame numbers and tilt angles
@@ -1543,7 +1693,7 @@ def makeTiltSeriesVideos(seriesname, iteration, tiltfilename, rawimagecount, run
 			pass
 	
 	try: #If anything fails, it's likely that something isn't in the path
-		if (parallel=="True" and align_step=="Coarse") or (parallel=="True" and align_step=="Coarse2"):
+		if (parallel=="True" and align_step=="Coarse") or (parallel=="True" and align_step=="Coarse2") or (parallel=="True" and align_step=="Manual"):
 			procs=min(5,mp.cpu_count()-1)
 		elif parallel=="True":
 			procs=max(mp.cpu_count()-1,2)
@@ -1594,6 +1744,13 @@ def makeTiltSeriesVideos(seriesname, iteration, tiltfilename, rawimagecount, run
 			webm='coarse_'+seriesname+'_iter2.webm'
 			png='coarse2_*.png'
 			pngff='coarse2_tilt%04d.png'
+		elif align_step == "Manual":
+			gif='manual_'+seriesname+'.gif'
+			ogv='manual_'+seriesname+'.ogv'
+			mp4='manual_'+seriesname+'.mp4'
+			webm='manual_'+seriesname+'.webm'
+			png='manual_*.png'
+			pngff='manual_tilt%04d.png'
 		else: #align_step == "Refinement"
 			gif=seriesname+iteration+'.gif'
 			ogv=seriesname+iteration+'.ogv'
@@ -1627,6 +1784,8 @@ def makeTiltSeriesVideos(seriesname, iteration, tiltfilename, rawimagecount, run
 			apDisplay.printMsg("Done creating coarse tilt-series video!")
 		elif align_step == "Coarse2":
 			apDisplay.printMsg("Done creating coarse iteration 2 tilt-series video!")
+		elif align_step == "Manual":
+			apDisplay.printMsg("Done creating manual alignment tilt-series video!")
 		else: #align_step == "Refinement"
 			apDisplay.printMsg("Done creating tilt-series video!")
 		
@@ -1668,21 +1827,32 @@ def makeReconstructionVideos(seriesname, iteration, rundir, rx, ry, show_window_
 			im.save(slice)
 		
 		#Add scalebar
-		scalesize=2500/(pixelsize * map_sampling)    #250nm scaled by sampling
-		cmd = "convert -gravity South -background white -splice 0x20 -strokewidth 0 -stroke black -strokewidth 5 -draw \"line %s,%s,5,%s\" -gravity SouthWest -pointsize 13 -fill black -strokewidth 0  -draw \"translate 50,0 text 0,0 '250 nm'\" %s %s;" % (scalesize, dimy+3, dimy+3, slice, slice)
+		if pixelsize < 10:
+			scalesize=2500/(pixelsize * map_sampling)    #250nm scaled by sampling
+			cmd = "convert -gravity South -background white -splice 0x20 -strokewidth 0 -stroke black -strokewidth 5 -draw \"line %s,%s,5,%s\" -gravity SouthWest -pointsize 13 -fill black -strokewidth 0  -draw \"translate 50,0 text 0,0 '250 nm'\" %s %s;" % (scalesize, dimy+3, dimy+3, slice, slice)
+		else:
+			scalesize=25000/(pixelsize * map_sampling)    #2.5um scaled by sampling
+			cmd = "convert -gravity South -background white -splice 0x20 -strokewidth 0 -stroke black -strokewidth 5 -draw \"line %s,%s,5,%s\" -gravity SouthWest -pointsize 13 -fill black -strokewidth 0  -draw \"translate 50,0 text 0,0 '2.5 nm'\" %s %s;" % (scalesize, dimy+3, dimy+3, slice, slice)
 		#Add frame numbers
 		cmd += "convert -gravity South -annotate 0 'Z-Slice: %s/%s' -gravity SouthEast -annotate 0 'bin=%s, lp=%s, thick=%s' %s %s" % (i+1, slices+1, map_sampling, lowpass, thickness, slice, slice)
 		os.system(cmd)
 	
 	try: #If anything fails, it's likely that something isn't in the path
 		os.system("mkdir -p %s/media/reconstructions 2>/dev/null" % rundir)
-		if align_step == "Coarse" or align_step == "Coarse2":
+		if (align_step == "Coarse") or (align_step == "Coarse2"):
 			img=seriesname+'00_bck.img'
 			mrcf=seriesname+'.mrc'
 			gif=seriesname+'.gif'
 			ogv=seriesname+'.ogv'
 			mp4=seriesname+'.mp4'
 			webm=seriesname+'.webm'
+		elif align_step == "Manual":
+			img='manual'+seriesname[6:]+'.img'
+			mrcf='manual'+seriesname[6:]+'.mrc'
+			gif='manual'+seriesname[6:]+'.gif'
+			ogv='manual'+seriesname[6:]+'.ogv'
+			mp4='manual'+seriesname[6:]+'.mp4'
+			webm='manual'+seriesname[6:]+'.webm'
 		else: #align_step == "Refinement"
 			img=seriesname+iteration+'_bck.img'
 			mrcf=seriesname+iteration+'_bck.mrc'
@@ -1916,7 +2086,7 @@ def makeDosePlots(rundir, seriesname, tilts, accumulated_dose_list, dose_a, dose
 		apDisplay.printWarning("Dose plots could not be generated. Make sure pylab is in your $PATH\n")
 
 
-def makeAngleRefinementPlots(rundir, seriesname):
+def makeAngleRefinementPlots(rundir, seriesname, initial_tiltfile, azimuth_max_deviation, azimuth_stability_check):
 	'''
 	Creates a plot of the tilt azimuth, a plot of only orientation angles,
 	and a plot of the tilt elevation (see Protomo user guide or doi:10.1016/j.ultramic.2005.07.007)
@@ -1941,6 +2111,13 @@ def makeAngleRefinementPlots(rundir, seriesname):
 		thetas=[]
 		phis=[]
 		elevations=[]
+		if azimuth_stability_check == 'True':
+			cmd="awk '/AZIMUTH /{print $3}' %s" % initial_tiltfile
+			proc=subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+			(start_azimuth, err) = proc.communicate()
+			start_azimuth=float(start_azimuth)
+			min_azimuth=[]
+			max_azimuth=[]
 		for tiltfile in tiltfiles:
 			cmd1="awk '/AZIMUTH /{print $3}' %s" % tiltfile
 			proc=subprocess.Popen(cmd1, stdout=subprocess.PIPE, shell=True)
@@ -1948,6 +2125,10 @@ def makeAngleRefinementPlots(rundir, seriesname):
 			azimuth=float(azimuth)
 			azimuths.append(azimuth)
 			
+			if azimuth_stability_check == 'True':
+				min_azimuth.append(start_azimuth - azimuth_max_deviation)
+				max_azimuth.append(start_azimuth + azimuth_max_deviation)
+				
 			cmd2="awk '/PSI /{print $2}' %s" % tiltfile
 			proc=subprocess.Popen(cmd2, stdout=subprocess.PIPE, shell=True)
 			(psi, err) = proc.communicate()
@@ -1988,6 +2169,9 @@ def makeAngleRefinementPlots(rundir, seriesname):
 			i+=1
 		
 		pylab.plot(iters, azimuths)
+		if azimuth_stability_check == 'True':
+			pylab.plot(iters, min_azimuth, 'k', linestyle='--')
+			pylab.plot(iters, max_azimuth, 'k', linestyle='--')
 		pylab.rcParams["axes.titlesize"] = 12
 		pylab.xlabel("Iteration")
 		pylab.ylabel("Azimuth (degrees)")

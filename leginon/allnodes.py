@@ -138,6 +138,9 @@ noderegistry.registerNodeClass(SampleTargetFilter,classtype)
 from jahcfinder import JAHCFinder
 noderegistry.registerNodeClass(JAHCFinder,classtype)
 
+from dogfinder import DoGFinder
+noderegistry.registerNodeClass(DoGFinder,classtype)
+
 from atlastargetmaker import AtlasTargetMaker
 noderegistry.registerNodeClass(AtlasTargetMaker,classtype)
 

@@ -43,12 +43,16 @@ class Protomo2RefineForm extends BasicLayoutForm
 	$r5_kernel_y='', $grow='0', $window_area='0.95', $mask_width_x='', $mask_width_y='', $tilt_azimuth='', $do_estimation='false',
 	$norotations='false', $max_correction='', $correlation_size_x='160', $correlation_size_y='160', $r1_peak_search_radius_x='300',
 	$r2_peak_search_radius_x='300', $r3_peak_search_radius_x='300', $r4_peak_search_radius_x='300', $r5_peak_search_radius_x='300',
-	$r1_peak_search_radius_y='300', $r2_peak_search_radius_y='300', $r3_peak_search_radius_y='300', $r4_peak_search_radius_y='300',
-	$r5_peak_search_radius_y='300', $orientation='true', $orientation_switch='', $azimuth='true', $azimuth_switch='', $elevation='false',
+	$r1_peak_search_radius_y='300', $r2_peak_search_radius_y='300', $r3_peak_search_radius_y='300', $r4_peak_search_radius_y='300', $r5_peak_search_radius_y='300',
+	$r1_cmdiameter_x='12.5', $r2_cmdiameter_x='25', $r3_cmdiameter_x='50', $r4_cmdiameter_x='100', $r5_cmdiameter_x='100',
+	$r1_cmdiameter_y='12.5', $r2_cmdiameter_y='25', $r3_cmdiameter_y='50', $r4_cmdiameter_y='100', $r5_cmdiameter_y='100',
+	$r1_cmdiameter='false', $r2_cmdiameter='false', $r3_cmdiameter='false', $r4_cmdiameter='false', $r5_cmdiameter='false',
+	$translimit='1000', $orientation='true', $orientation_switch='', $azimuth='true', $azimuth_switch='', $elevation='false',
 	$elevation_switch='', $rotation='true', $rotation_switch='', $scale='false', $scale_switch='', $logging='true', $loglevel='2', $slab='true',
 	$map_size_x='512', $map_size_y='512', $filename_prefix='', $image_file_type='', $cachedir='cache', $protomo_outdir='out', $tilt_clip='',
 	$create_reconstruction='true', $show_window_size='true', $create_tilt_video='true', $keep_recons='false', $video_type='', $restart_cycle='',
-	$parallel='', $negative='', $positive='', $starting_tlt_file='', $defocus_save='', $restart_from_run='', $restart_from_iteration='')
+	$parallel='', $negative='', $positive='', $starting_tlt_file='', $defocus_save='', $restart_from_run='', $restart_from_iteration='',
+	$azimuth_stability_check='False', $azimuth_max_deviation='3')
 	{
 		parent::__construct($expId, $extraHTML);
 		//print "_POST:" . "<br>";
@@ -178,6 +182,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 			//Area Matching Parameters
 			$_POST['do_estimation'] = $do_estimation='false';
 			$_POST['norotations'] = $norotations='false';
+			$_POST['translimit'] = intval(max($imageinfo['dimx'],$imageinfo['dimy'])*0.25);
 			//Depiction Parameters
 			$_POST['correlation_size_x'] = $correlation_size_x='160';
 			$_POST['correlation_size_y'] = $correlation_size_y='160';
@@ -357,11 +362,11 @@ class Protomo2RefineForm extends BasicLayoutForm
 			//Size Presets
 			if ($_POST['preset_size'] == 1)  //Generic
 			{
-				$_POST['r1_lowpass_diameter_x'] = $_POST['r1_lowpass_diameter_y'] = $r1_lp_diam_x = $r1_lp_diam_y = min(175, round(0.75*$r1_hp_diam_x));
-				$_POST['r2_lowpass_diameter_x'] = $_POST['r2_lowpass_diameter_y'] = $r2_lp_diam_x = $r2_lp_diam_y = min(150, round(0.75*$r1_hp_diam_x));
-				$_POST['r3_lowpass_diameter_x'] = $_POST['r3_lowpass_diameter_y'] = $r3_lp_diam_x = $r3_lp_diam_y = min(125, round(0.75*$r1_hp_diam_x));
-				$_POST['r4_lowpass_diameter_x'] = $_POST['r4_lowpass_diameter_y'] = $r4_lp_diam_x = $r4_lp_diam_y = min(100, round(0.75*$r1_hp_diam_x));
-				$_POST['r5_lowpass_diameter_x'] = $_POST['r5_lowpass_diameter_y'] = $r5_lp_diam_x = $r5_lp_diam_y = min(75, round(0.75*$r1_hp_diam_x));
+				$_POST['r1_lowpass_diameter_x'] = $_POST['r1_lowpass_diameter_y'] = $r1_lp_diam_x = $r1_lp_diam_y = min(100, round(0.75*$r1_hp_diam_x));
+				$_POST['r2_lowpass_diameter_x'] = $_POST['r2_lowpass_diameter_y'] = $r2_lp_diam_x = $r2_lp_diam_y = min(75, round(0.75*$r1_hp_diam_x));
+				$_POST['r3_lowpass_diameter_x'] = $_POST['r3_lowpass_diameter_y'] = $r3_lp_diam_x = $r3_lp_diam_y = min(50, round(0.75*$r1_hp_diam_x));
+				$_POST['r4_lowpass_diameter_x'] = $_POST['r4_lowpass_diameter_y'] = $r4_lp_diam_x = $r4_lp_diam_y = min(25, round(0.75*$r1_hp_diam_x));
+				$_POST['r5_lowpass_diameter_x'] = $_POST['r5_lowpass_diameter_y'] = $r5_lp_diam_x = $r5_lp_diam_y = min(10, round(0.75*$r1_hp_diam_x));
 				$_POST['r1_lowpass_apod_x'] = $r1_lp_apod_x = round(2.5*$r1_lp_diam_x);
 				$_POST['r2_lowpass_apod_x'] = $r2_lp_apod_x = round(2.5*$r2_lp_diam_x);
 				$_POST['r3_lowpass_apod_x'] = $r3_lp_apod_x = round(2.5*$r3_lp_diam_x);
@@ -372,7 +377,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 				$_POST['r3_lowpass_apod_y'] = $r3_lp_apod_y = round(2.5*$r3_lp_diam_y);
 				$_POST['r4_lowpass_apod_y'] = $r4_lp_apod_y = round(2.5*$r4_lp_diam_y);
 				$_POST['r5_lowpass_apod_y'] = $r5_lp_apod_y = round(2.5*$r5_lp_diam_y);
-				$_POST['thickness'] = $thickness = 1500;
+				$_POST['thickness'] = $thickness = 1000;
 			}
 			
 			if ($_POST['preset_size'] == 2)  //Size 10 nm - Steep lowpass
@@ -810,6 +815,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 		$_SESSION['dimy'] = $imageinfo['dimy'];
 		$_POST['pixelsize'] = $imageinfo['pixelsize']*pow(10,10);
 		$_POST['r1_sampling'] = 8; $_POST['r2_sampling'] = 4; $_POST['r3_sampling'] = 2; $_POST['r4_sampling'] = 1; $_POST['r5_sampling'] = 1;
+		$_POST['translimit'] = intval(max($imageinfo['dimx'],$imageinfo['dimy'])*0.25);
 		
 		// Shift rounds to the left
 		if (intval($_GET['shift_left']) > 0 or intval($_SESSION['shift_left']) > 0)
@@ -859,7 +865,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 				
 		$params->addParam( "tiltseries", $tiltseries, "Tilt-Series #" );
 		$params->addParam( "parallel", $parallel, "Parallelize Non-Protomo Processes" );
-		$params->addParam( "starting_tlt_file", $starting_tlt_file, "Begin with Coarse Alignment Results or Initial Alignment?" );
+		$params->addParam( "starting_tlt_file", $starting_tlt_file, "Begin with Coarse Alignment Results, Manual Alignment, or Initial Alignment?" );
 		$params->addParam( "negative", $negative, "<strong>–</strong> Angle Limit" );
 		$params->addParam( "positive", $positive, "<strong>+</strong> Angle Limit" );
 		$params->addParam( "r1_region_x", $r1_region_x, "R1" );
@@ -878,7 +884,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 		$params->addParam( "r4_sampling", $r4_sampling, "R4" );
 		$params->addParam( "r5_sampling", $r5_sampling, "R5 │ Sampling" );
 		$params->addParam( "map_sampling", $map_sampling, "Sampling for Depiction" );
-		$params->addParam( "thickness", $thickness, "Thickness (<strong>Critical Parameter</strong>)" );
+		$params->addParam( "thickness", $thickness, "Thickness(es) (<strong>Critical Parameter</strong>)" );
 		$params->addParam( "r1_mask_width_x", $r1_mask_width_x, "R1" );
 		$params->addParam( "r2_mask_width_x", $r2_mask_width_x, "R2" );
 		$params->addParam( "r3_mask_width_x", $r3_mask_width_x, "R3" );
@@ -954,8 +960,10 @@ class Protomo2RefineForm extends BasicLayoutForm
 		$params->addParam( "preprocessing", $preprocessing, "Raw Image Preprocessing" );
 		$params->addParam( "select_images", $select_images, "Select Specific Images" );
 		$params->addParam( "tilt_azimuth", $tilt_azimuth, "Override Tilt Azimuth" );
+		$params->addParam( "azimuth_stability_check", $azimuth_stability_check, "Check Azimuth Stability" );
+		$params->addParam( "azimuth_max_deviation", $azimuth_max_deviation, "Maximum Deviation Allowed" );
 		//$params->addParam( "exclude_images", $exclude_images, "Exclude Specific Images" );
-		$params->addParam( "exclude_images_by_angle", $exclude_images_by_angle, "Exclude Images by Tilt Angles │ " );
+		$params->addParam( "exclude_images_by_angle", $exclude_images_by_angle, "Exclude Images by Tilt Angles" );
 		$params->addParam( "exclude_images_by_angle_accuracy", $exclude_images_by_angle_accuracy, "Accuracy" );
 		$params->addParam( "border", $border, "Border Width for Exclusion" );
 		$params->addParam( "clip_low", $clip_low, "Lower Clip (in SDs)" );
@@ -994,6 +1002,22 @@ class Protomo2RefineForm extends BasicLayoutForm
 		$params->addParam( "r3_peak_search_radius_y", $r3_peak_search_radius_y, "R3" );
 		$params->addParam( "r4_peak_search_radius_y", $r4_peak_search_radius_y, "R4" );
 		$params->addParam( "r5_peak_search_radius_y", $r5_peak_search_radius_y, "R5 │ Peak Search Radius (y)" );
+		$params->addParam( "r1_cmdiameter_x", $r1_cmdiameter_x, "R1" );
+		$params->addParam( "r2_cmdiameter_x", $r2_cmdiameter_x, "R2" );
+		$params->addParam( "r3_cmdiameter_x", $r3_cmdiameter_x, "R3" );
+		$params->addParam( "r4_cmdiameter_x", $r4_cmdiameter_x, "R4" );
+		$params->addParam( "r5_cmdiameter_x", $r5_cmdiameter_x, "R5 │ Center of Mass Radius (x)" );
+		$params->addParam( "r1_cmdiameter_y", $r1_cmdiameter_y, "R1" );
+		$params->addParam( "r2_cmdiameter_y", $r2_cmdiameter_y, "R2" );
+		$params->addParam( "r3_cmdiameter_y", $r3_cmdiameter_y, "R3" );
+		$params->addParam( "r4_cmdiameter_y", $r4_cmdiameter_y, "R4" );
+		$params->addParam( "r5_cmdiameter_y", $r5_cmdiameter_y, "R5 │ Center of Mass Radius (y)" );
+		$params->addParam( "r1_cmdiameter", $r1_cmdiameter, "R1" );
+		$params->addParam( "r2_cmdiameter", $r2_cmdiameter, "R2" );
+		$params->addParam( "r3_cmdiameter", $r3_cmdiameter, "R3" );
+		$params->addParam( "r4_cmdiameter", $r4_cmdiameter, "R4" );
+		$params->addParam( "r5_cmdiameter", $r5_cmdiameter, "R5 │ Center of Mass Refinement" );
+		$params->addParam( "translimit", $translimit, "Translational Limit" );
 		$params->addParam( "orientation", $orientation, "Include Orientation Angles in Refinement" );
 		$params->addParam( "orientation_switch", $orientation_switch, "Switch at Iteration" );
 		$params->addParam( "azimuth", $azimuth, "Include Tilt Azimuth in Refinement" );
@@ -1032,7 +1056,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 			$params->addValidation( "r1_region_y", "req" );
 			$params->addValidation( "r1_region_y", "num" );
 			$params->addValidation( "thickness", "req" );
-			$params->addValidation( "thickness", "num" );
+			//$params->addValidation( "thickness", "num" );
 			$params->addValidation( "r1_iters", "req" );
 			$params->addValidation( "r1_iters", "num" );
 		}
@@ -1076,6 +1100,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 			
 			$fieldSize = 5;
 			$fieldSize2 = 3;
+			$fieldSize3 = 10;
 			
 			if ($_POST['settings'] == 1 or $_POST['settings'] == 2)  //Express or Basic Settings
 			{
@@ -1100,13 +1125,16 @@ class Protomo2RefineForm extends BasicLayoutForm
 				$html.= $params->insertTextField( "r5_sampling", $fieldSize2 );
 				$html.= $params->insertTextFieldInRow( "negative", $fieldSize ).'│ ';
 				$html.= $params->insertTextField( "positive", $fieldSize );
-				$html.= $params->insertTextFieldInRow( "exclude_images_by_angle", $fieldSize );
+				$html.= $params->insertTextFieldInRow( "exclude_images_by_angle", $fieldSize ).'│ ';
 				$html.= $params->insertTextField( "exclude_images_by_angle_accuracy", $fieldSize );
 				$html.= '<select name="starting_tlt_file" style="width:111px">';
 				$html.= '<option value="Coarse_Iter_1">Coarse Iter 1</option>';
 				$html.= '<option selected value="Coarse_Iter_2">Coarse Iter 2</option>';
+				$html.= '<option value="Manual">Manual</option>';
+				$html.= '<option value="MoreManual">More Manual</option>';
 				$html.= '<option value="Initial">Initial</option>';
-				$html.= '</select>'; $html.= docpop('protomo_starting_tlt_file', ' Begin with Coarse Alignment Results or Initial Alignment?').'<br>';
+				$html.= '<option value="My_tlt_file">My tlt file</option>';
+				$html.= '</select>'; $html.= docpop('protomo_starting_tlt_file', ' Begin with Coarse Alignment Results, Manual Alignment, or Initial Alignment?').'<br>';
 				$html.= '<select name="parallel" style="width:51px">';
 				$html.= '<option selected value="True">true</option>';
 				$html.= '<option value="False">false</option>';
@@ -1231,6 +1259,26 @@ class Protomo2RefineForm extends BasicLayoutForm
 				$html.= $params->insertTextFieldInRow( "r3_peak_search_radius_y", $fieldSize2 ).'│ ';
 				$html.= $params->insertTextFieldInRow( "r4_peak_search_radius_y", $fieldSize2 ).'│ ';
 				$html.= $params->insertTextField( "r5_peak_search_radius_y", $fieldSize2 );
+				$html.= '<select name="r1_cmdiameter" style="width:51px">';
+				$html.= '<option value="true">true</option>';
+				$html.= '<option selected value="false">false</option>';
+				$html.= '</select>'; $html.= docpop('protomo_r1_cmdiameter', ' R1').'│ ';
+				$html.= '<select name="r2_cmdiameter" style="width:51px">';
+				$html.= '<option value="true">true</option>';
+				$html.= '<option selected value="false">false</option>';
+				$html.= '</select>'; $html.= docpop('protomo_r2_cmdiameter', ' R2').'│ ';
+				$html.= '<select name="r3_cmdiameter" style="width:51px">';
+				$html.= '<option value="true">true</option>';
+				$html.= '<option selected value="false">false</option>';
+				$html.= '</select>'; $html.= docpop('protomo_r3_cmdiameter', ' R3').'│ ';
+				$html.= '<select name="r4_cmdiameter" style="width:51px">';
+				$html.= '<option value="true">true</option>';
+				$html.= '<option selected value="false">false</option>';
+				$html.= '</select>'; $html.= docpop('protomo_r4_cmdiameter', ' R4').'│ ';
+				$html.= '<select name="r5_cmdiameter" style="width:51px">';
+				$html.= '<option value="true">true</option>';
+				$html.= '<option selected value="false">false</option>';
+				$html.= '</select>'; $html.= docpop('protomo_r5_cmdiameter', ' R5 | Center of Mass Refinement').'<br>';
 				
 				$html .= "
 			    <br />
@@ -1317,14 +1365,22 @@ class Protomo2RefineForm extends BasicLayoutForm
 				//$html.= $params->insertTextField( "select_images", $fieldSize );
 				$html.= $params->insertTextFieldInRow( "negative", $fieldSize ).'│ ';
 				$html.= $params->insertTextField( "positive", $fieldSize );
-				$html.= $params->insertTextFieldInRow( "exclude_images_by_angle", $fieldSize );
+				$html.= $params->insertTextFieldInRow( "exclude_images_by_angle", $fieldSize ).'│ ';
 				$html.= $params->insertTextField( "exclude_images_by_angle_accuracy", $fieldSize );
 				$html.= '<select name="starting_tlt_file" style="width:111px">';
 				$html.= '<option value="Coarse_Iter_1">Coarse Iter 1</option>';
 				$html.= '<option selected value="Coarse_Iter_2">Coarse Iter 2</option>';
+				$html.= '<option value="Manual">Manual</option>';
+				$html.= '<option value="MoreManual">More Manual</option>';
 				$html.= '<option value="Initial">Initial</option>';
+				$html.= '<option value="My_tlt_file">My tlt file</option>';
 				$html.= '</select>'; $html.= docpop('protomo_starting_tlt_file', ' Begin with Coarse Alignment Results or Initial Alignment?').'<br>';
 				$html.= $params->insertTextField( "tilt_azimuth", $fieldSize );
+				$html.= '<select name="azimuth_stability_check" style="width:66px">';
+				$html.= '<option value="True">True</option>';
+				$html.= '<option selected value="False">False</option>';
+				$html.= '</select>'; $html.= docpop('protomo_azimuth_stability_check', ' Check Azimuth Stability').' | ';
+				$html.= $params->insertTextField( "azimuth_max_deviation", $fieldSize );
 				//$html.= $params->insertTextField( "exclude_images", $fieldSize );
 				$html.= '<select name="parallel" style="width:66px">';
 				$html.= '<option selected value="True">true</option>';
@@ -1337,7 +1393,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 				$html.= $params->insertTextField( "loglevel", $fieldSize );
 				//$html.= $params->insertTextField( "restart_cycle", $fieldSize );
 				$html.= $params->insertTextField( "defocus_save", $fieldSize );
-				$html.= $params->insertTextFieldInRow( "restart_from_run", $fieldSize );
+				$html.= $params->insertTextFieldInRow( "restart_from_run", $fieldSize3 );
 				$html.= $params->insertTextField( "restart_from_iteration", $fieldSize );
 				
 				$html .= "
@@ -1509,6 +1565,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 				$html.= $params->insertTextFieldInRow( "r3_peak_search_radius_y", $fieldSize2 ).'│ ';
 				$html.= $params->insertTextFieldInRow( "r4_peak_search_radius_y", $fieldSize2 ).'│ ';
 				$html.= $params->insertTextField( "r5_peak_search_radius_y", $fieldSize2 );
+				$html.= $params->insertTextField( "translimit", $fieldSize );
 				
 				$html .= "
 			    <br />
@@ -1631,6 +1688,11 @@ class Protomo2RefineForm extends BasicLayoutForm
 		$command.="--dimy=$dimy ";
 		if ($_SESSION['manual'] != 1) {$command.="--image_file_type=$image_file_type ";}
 		$command.="--coarse=False ";
+		if (!is_numeric($_POST['thickness']) && strpos($_POST['thickness'], ".") == false){
+			print gettype($_POST['thickness']);
+			$command = str_replace("protomo2aligner.py","protomo2multirefine.py",$command);
+			$command = str_replace("--thickness=","--thicknesses=",$command);
+		}
 		
 		//Replace default presets with user-defined presets
 		
@@ -1658,7 +1720,11 @@ class Protomo2RefineForm extends BasicLayoutForm
 		$_SESSION['preset_type'] = $_POST['preset_type'];
 
 		// Only display link to next step in tomo processing if on completed Command page
-		if (isset($_POST['r1_region_x']) AND isset($_POST['r1_region_y']) AND isset($_POST['thickness']) AND isset($_SESSION['iters']) AND isset($_POST['process']))
+	if (!is_numeric($_POST['thickness']) && strpos($_POST['thickness'], ".") == false)
+	{
+			$html .= "<br></br>
+				<b><center>[This command runs multiple refinements with the different requested thicknesses.<br>To access a particular refinement run, return back to 'Align Tilt-Series' on the left and input the appropriate runname.]</center></b><br>";
+	}elseif (isset($_POST['r1_region_x']) AND isset($_POST['r1_region_y']) AND isset($_POST['thickness']) AND isset($_SESSION['iters']) AND isset($_POST['process']))
 		{
 			$html .= "<br></br>
 			<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2RefineSummary'><b><center>[Click here to <font size='4'>View Refinement Results</font> after protomo2aligner.py has been run] <font size='5'>→</font></center></b></a>";

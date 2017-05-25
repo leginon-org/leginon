@@ -214,3 +214,28 @@ class CameraClient(object):
 
 		self.readout_done_event.set()
 		return imagedata
+
+	def requireRecentDarkCurrentReferenceOnBright(self):
+		# deactivated for now until tested.
+		return False
+		# select camera before calling this function
+		if hasattr(self.instrument.ccdcamera, 'requireRecentDarkCurrentReferenceOnBright'):
+			return self.instrument.ccdcamera.requireRecentDarkCurrentReferenceOnBright()
+		return False
+
+	def updateCameraDarkCurrentReference(self, warning=True):
+		if not self.requireRecentDarkCurrentReferenceOnBright():
+			if warning:
+				self.logger.warning('Camera does not require dark current reference')
+			return
+		try:
+			self.logger.info('Updating hardware dark current reference')
+			self.instrument.ccdcamera.updateDarkCurrentReference()
+			self.logDarkCurrentReferenceUpdated()
+		except:
+			raise
+
+	def logDarkCurrentReferenceUpdated(self):
+		ccdcameradata = self.instrument.getCCDCameraData()
+		q = leginondata.CameraDarkCurrentUpdatedData(hostname=ccdcameradata['hostname'])
+		q.insert(force=True)

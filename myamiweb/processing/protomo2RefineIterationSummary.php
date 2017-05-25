@@ -53,7 +53,7 @@ $rec_webm = "loadvid.php?filename=".$rec_vid_files[2];
 $download_rec_mp4 = "downloadvid.php?filename=".$rec_vid_files[0];
 
 $html .= "
-	<center><H3><b>Refinement Iteration #$iter</b></H3></center>
+	<center><H3><b>Tilt-Series #$tiltseries<br><font size=3>($runname)</font><br>Refinement Iteration #$iter</b></H3></center>
 	<hr />";
 $html .= "
 	<H4><center><b>Correlation Peak</b></center></H4>";
@@ -100,7 +100,7 @@ if (isset($tilt_gif_files[0])) {
         $html .= '<center><video id="tiltVideos" controls autoplay loop>
                   <source src="'.$tilt_mp4.'" type="video/mp4" loop>'.'<br />
                   <source src="'.$tilt_webm.'" type="video/webm" loop>'.'<br />
-                  <source src="'.$tilt_ogv.'" type="video/ogg" loop>z'.'<br />
+                  <source src="'.$tilt_ogv.'" type="video/ogg" loop>'.'<br />
                   HTML5 video is not supported by your browser.
                   </video></center>';
         //$html .= '<center>'.docpop('tiltimageinfo_coarse', 'Image Info').'</center>';
@@ -110,7 +110,7 @@ if (isset($tilt_gif_files[0])) {
 }
 
 $html .= "
-	<H4><center><b>Preliminary Reconstruction</b></center></H4>";
+	<H4><center><b>Reconstruction (Protomo WBP)</b></center></H4>";
         
 if (isset($rec_gif_files[0])) {
 	$html .= '<center><img src="'.$rec_gif.'" alt="correlations" /></center>';
@@ -124,6 +124,9 @@ if (isset($rec_gif_files[0])) {
                   </video></center>';
         //$html .= '<center>'.docpop('reconimageinfo_coarse', 'Image Info').'</center>';
         $html .= '<p align="right"><a href="'.$download_rec_mp4.'">Download Video</a></p>';
+		$html .= "<br><br><b><center>[If you wish to manually align from the this alignment iteration, run the following command:</b><br><br>
+			/usr/bin/python `which protomo2manualaligner.py` --rundir=$outdir/$runname/ --tiltseries=$tiltseries --iteration=$iter<br><br>
+			<b>and then use the 'Restart Refinement from Run' option and input iteration: MoreManual]</center></b><br>";
 } else {
         $html .= "<center><b>Depiction Reconstruction Video for Refinement Iteration ".$iter." either failed to generate, is still processing, or wasn't requested.</b></center>";
 }
