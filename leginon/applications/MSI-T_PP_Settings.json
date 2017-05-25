@@ -214,70 +214,59 @@
     }
   },
   {
-    "JAHCFinderSettingsData":{
-      "lattice tolerance":0.1,
-      "blobs max":300,
+    "RasterFinderSettingsData":{
+      "raster limit":1,
       "sort target":false,
-      "file diameter":168,
-      "lattice spacing":150.0,
-      "focus template thickness":false,
       "skip":false,
-      "edge threshold":100.0,
-      "blobs min size":10,
-      "threshold":3.0,
-      "threshold method":"Threshold = mean + A * stdev",
-      "edge log sigma":1.4,
-      "target template":false,
+      "ice box size":15.0,
+      "focus convolve":true,
+      "raster symmetric":true,
       "queue drift":true,
-      "template image min":null,
-      "focus max mean thickness":0.5,
+      "raster center on image":true,
+      "queue":false,
       "ignore images":false,
-      "lattice hole radius":15.0,
-      "focus offset col":0,
-      "template filename":"/Users/acheng/myami/leginon/holetemplate.mrc",
-      "edge absolute":false,
-      "ice min mean":0.05,
-      "edge log size":9,
-      "focus template":[
-        [
-          0,
-          0
-        ]
-      ],
-      "edge":true,
-      "ice max mean":0.2,
-      "template type":"cross",
-      "focus offset row":0,
+      "acquisition convolve":true,
+      "ice thickness":100.0,
+      "ice min mean":-5.0,
+      "ice max mean":5.0,
+      "raster center y":0,
+      "raster preset":"hl",
+      "raster limit asymm":null,
       "allow append":false,
       "allow no focus":false,
-      "focus stats radius":10,
-      "focus hole":"Off",
-      "template diameter":40,
+      "publish polygon":false,
+      "acquisition constant template":[],
+      "raster movetype":"stage position",
+      "focus constant template":[],
       "user check":true,
-      "edge type":"sobel",
-      "focus min mean thickness":0.05,
-      "blobs border":20,
-      "template rings":null,
+      "raster spacing asymm":null,
+      "focus one":false,
       "isdefault":false,
       "check method":"local",
-      "lattice extend":"off",
-      "focus max stdev thickness":0.5,
+      "select polygon":false,
       "name":"PP Exposure Targeting",
-      "acquisition template":[
+      "image filename":"",
+      "focus interval":1,
+      "ice max std":5.0,
+      "focus convolve template":[
+        [
+          200,
+          0
+        ]
+      ],
+      "raster overlap":0.0,
+      "raster center x":0,
+      "wait for done":true,
+      "acquisition convolve template":[
         [
           0,
           0
         ]
       ],
-      "image filename":"",
-      "focus interval":1,
-      "ice max std":0.2,
-      "lattice zero thickness":1000.0,
-      "blobs max size":1000,
-      "queue":false,
-      "wait for done":true,
-      "multifocus":true,
-      "template invert":false
+      "raster spacing":100,
+      "multifocus":false,
+      "ice min std":0.0,
+      "raster angle":0.0
     }
   },
   {

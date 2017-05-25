@@ -1040,7 +1040,7 @@
     <sqltable name="NodeSpecData" >
         <field name="DEF_id" >2955</field>
         <field name="DEF_timestamp" >2017-05-24 14:48:16</field>
-        <field name="class string" >JAHCFinder</field>
+        <field name="class string" >RasterFinder</field>
         <field name="alias" >PP Exposure Targeting</field>
         <field name="launcher alias" >main</field>
         <field name="SEQ|dependencies" >[]</field>
