@@ -16,13 +16,14 @@ try:
 except ImportError:
 	#scipy.misc.imresize changes the image range and fails on FFT
 	#import scipy.misc
-	import scipy.ndimage.interpolation
 	opencv = False
+import scipy.ndimage.interpolation
 
 def imresize(outputimg, request_shape):
-	if opencv is True:
+	if opencv is True and len(request_shape) == 2:
 		#this is 3x-5x faster than scipy
-		outputimg = cv2.resize(outputimg, request_shape, interpolation=cv2.INTER_LINEAR)
+		height, width = request_shape
+		outputimg = cv2.resize(outputimg, (width,height), interpolation=cv2.INTER_LINEAR)
 	else:
 		#using float64 to avoid rounding errors
 		zoomfactors = (
@@ -53,16 +54,16 @@ class Shape(Pipe):
 			if xbin < 1: xbin = 1
 			ybin = int(math.floor(input.shape[1]/float(request_shape[1])))
 			if ybin < 1: ybin = 1
-			newshape = (request_shape[0]*xbin, request_shape[0]*ybin)
+			newshape = (request_shape[0]*xbin, request_shape[1]*ybin)
 			outputimg = imresize(outputimg, newshape)
-			outputimg = pyami.imagefun.bin(outputimg, ybin, xbin)
+			outputimg = pyami.imagefun.bin(outputimg, xbin, ybin)
 		elif len(request_shape) == len(input.shape):
 			#Standard gray scale not 2D
 			outputimg = imresize(outputimg, request_shape)
-		elif len(request_shape) + 1 == len(input.shape):
+		elif len(request_shape) + 1 == len(input.shape) and input.shape[-1] == 3:
 			#RGB is Type
 			newshape = list(request_shape)
-			newshape.append(1)
+			newshape.append(3)
 			outputimg = imresize(outputimg, newshape)
 		else:
 			#how did we get here?
