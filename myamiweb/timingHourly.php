@@ -114,7 +114,8 @@ echo "</table>";
 
 $combinedArray = array_count_values($combinedData);
 $average = array_sum($combinedArray) / count($combinedArray);
-echo "<p>Combined Average: ".round($average).'<br>Max: '.max($combinedArray).'<br>Min: '.min($combinedArray)."</p>";
+echo "<p>Combined statistics below is a result of combining number of all high magnification images (preset en or enn) across all sessions per hour (3600 seconds) of data collection.</p>
+		<p>Combined Average: ".round($average).'<br>Combined Max: '.max($combinedArray).'<br>Combined Min: '.min($combinedArray)."</p>";
 
 
 echo "<ul class='page'>";
