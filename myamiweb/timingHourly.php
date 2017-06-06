@@ -51,8 +51,6 @@ if (privilege('groups') < 3 ){
 	exit;
 }
 ?>
-
-
 <br>
 <div id="content">
 <h1>Image Collection Timing Statistics</h1>
@@ -60,57 +58,155 @@ if (privilege('groups') < 3 ){
 <p>The following table lists how many high magnification images (preset en or enn) do we collect per hour (on average and max and min). </p>
  
 <table>
-  <tr>
-    <th>Session ID</th>
-    <th>Preset</th>
-    <th>Average</th>
-    <th>Max</th>
-    <th>Min</th>
-  </tr>
-  
+<tr>
+
 <?php
 
 if (isset($_GET["page"])) { $page  = $_GET["page"]; } else { $page=1; };
-if (isset($_GET["limit"])) { $page  = $_GET["limit"]; } else { $limit=50; };
+if (isset($_GET["limit"])) { $page  = $_GET["limit"]; } else { $limit=20; };
+$scopes = $leginondata->getScopesForSelection();
+
+
+$krios1ScopeID = 44;
+$krios2ScopeID = 77;
+$krios3ScopeID = 84;
 
 $start = ($page - 1) * $limit;
-$scopes = $leginondata->getScopesForSelection();
-$scopeId = (empty($scopeId)) ? false:$scopeId;
 $combinedData = array();
-$sessions = $leginondata->getSessions('description', false, '', $scopeId);
+$krios1Sessions = $leginondata->getSessions('description', false, '', $krios1ScopeID);
+$krios2Sessions = $leginondata->getSessions('description', false, '', $krios2ScopeID);
+$krios3Sessions = $leginondata->getSessions('description', false, '', $krios3ScopeID);
 
-$sessionsCount = count($sessions);
-$total_pages = ceil( $sessionsCount/ $limit);
-for ($i = $start; $i < $start+$limit; $i++) {
-	$session = $sessions[$i];
+$krios1SessionsCount = count($krios1Sessions);
+$krios2SessionsCount = count($krios2Sessions);
+$krios3SessionsCount = count($krios3Sessions);
 
-	$presets = $leginondata->getDataTypes($session['id']);
-	$presets = array_reverse($presets);
-	foreach ($presets as $preset) {
-		if (!$preset)
-			continue;
-		if ($preset != 'en' and $preset != 'enn' and $preset != 'esn')
-			continue;
-		$timings = $leginondata->getTiming($session['id'], $preset);
-		if (count($timings) < 100) continue;
-		$data = array(); 
-		global $combinedData;
-		foreach ($timings as $time) {
-			$data[] = intval($time['unix_timestamp']/3600);
-			$combinedData[] = intval($time['unix_timestamp']/3600);
-		} 
-		$array = array_count_values($data);
-		$average = array_sum($array) / count($array);
-		echo "<tr><td>".$session['name_org']."</td>";
-		echo "<td>".$preset."</td>";
-		echo "<td>".round($average)."</td>";
-		echo "<td>".max($array)."</td>";
-		echo "<td>".min($array)."</td></tr>";
-	}
+$maxSessionsCount = max($krios1SessionsCount, $krios2SessionsCount, $krios2SessionsCount);
+
+$total_pages = ceil($maxSessionsCount/$limit);
+
+if ($start+$limit < $krios1SessionsCount){
+	echo "<th>Krios 1</th><table>
+	<tr>
+	<th>Session ID</th>
+	<th>Preset</th>
+	<th>#Images</th>
+	<th>Average</th>
+	<th>Max</th>
+	<th>Min</th>
+	</tr>";
+	for ($i = $start; $i < $start+$limit; $i++) {
+		$session = $krios1Sessions[$i];
 	
+		$presets = $leginondata->getDataTypes($session['id']);
+		$presets = array_reverse($presets);
+		foreach ($presets as $preset) {
+			if (!$preset)
+				continue;
+			if ($preset != 'en' and $preset != 'enn' and $preset != 'esn')
+				continue;
+			$timings = $leginondata->getTiming($session['id'], $preset);
+			//if (count($timings) < 100) continue;
+			$data = array(); 
+			global $combinedData;
+			foreach ($timings as $time) {
+				$data[] = intval($time['unix_timestamp']/3600);
+				$combinedData[] = intval($time['unix_timestamp']/3600);
+			} 
+			$array = array_count_values($data);
+			$average = array_sum($array) / count($array);
+			echo "<tr><td>".$session['name_org']."</td>";
+			echo "<td>".$preset."</td>";
+			echo "<td>".count($timings)."</td>";
+			echo "<td>".round($average)."</td>";
+			echo "<td>".max($array)."</td>";
+			echo "<td>".min($array)."</td></tr>";
+		}		
+	}
+	echo "</table>";
 }
+if ($start+$limit < $krios2SessionsCount){
+	echo "<th>Krios 2</th><table>
+	<tr>
+	<th>Session ID</th>
+	<th>Preset</th>
+	<th>#Images</th>
+	<th>Average</th>
+	<th>Max</th>
+	<th>Min</th>
+	</tr>";
+	for ($i = $start; $i < $start+$limit; $i++) {
+		$session = $krios2Sessions[$i];
 
-echo "</table>";
+		$presets = $leginondata->getDataTypes($session['id']);
+		$presets = array_reverse($presets);
+		foreach ($presets as $preset) {
+			if (!$preset)
+				continue;
+				if ($preset != 'en' and $preset != 'enn' and $preset != 'esn')
+					continue;
+					$timings = $leginondata->getTiming($session['id'], $preset);
+					//if (count($timings) < 100) continue;
+					$data = array();
+					global $combinedData;
+					foreach ($timings as $time) {
+						$data[] = intval($time['unix_timestamp']/3600);
+						$combinedData[] = intval($time['unix_timestamp']/3600);
+					}
+					$array = array_count_values($data);
+					$average = array_sum($array) / count($array);
+					echo "<tr><td>".$session['name_org']."</td>";
+					echo "<td>".$preset."</td>";
+					echo "<td>".count($timings)."</td>";
+					echo "<td>".round($average)."</td>";
+					echo "<td>".max($array)."</td>";
+					echo "<td>".min($array)."</td></tr>";
+		}
+	}
+	echo "</table>";
+}
+if ($start+$limit < $krios3SessionsCount){
+	echo "<th>Krios 3</th><table>
+	<tr>
+	<th>Session ID</th>
+	<th>Preset</th>
+	<th>#Images</th>
+	<th>Average</th>
+	<th>Max</th>
+	<th>Min</th>
+	</tr>";
+	for ($i = $start; $i < $start+$limit; $i++) {
+		$session = $krios3Sessions[$i];
+
+		$presets = $leginondata->getDataTypes($session['id']);
+		$presets = array_reverse($presets);
+		foreach ($presets as $preset) {
+			if (!$preset)
+				continue;
+				if ($preset != 'en' and $preset != 'enn' and $preset != 'esn')
+					continue;
+					$timings = $leginondata->getTiming($session['id'], $preset);
+					//if (count($timings) < 100) continue;
+					$data = array();
+					global $combinedData;
+					foreach ($timings as $time) {
+						$data[] = intval($time['unix_timestamp']/3600);
+						$combinedData[] = intval($time['unix_timestamp']/3600);
+					}
+					$array = array_count_values($data);
+					$average = array_sum($array) / count($array);
+					echo "<tr><td>".$session['name_org']."</td>";
+					echo "<td>".$preset."</td>";
+					echo "<td>".count($timings)."</td>";
+					echo "<td>".round($average)."</td>";
+					echo "<td>".max($array)."</td>";
+					echo "<td>".min($array)."</td></tr>";
+		}
+	}
+	echo "</table>";
+}
+echo "</tr>
+	</table>";
 
 $combinedArray = array_count_values($combinedData);
 $average = array_sum($combinedArray) / count($combinedArray);
