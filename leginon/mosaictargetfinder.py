@@ -279,7 +279,10 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		for type in ('acquisition','focus'):
 			targets[type] = []
 			for id, targetlists in self.targetmap.items():
-				targetlist = targetlists[type]
+				if type not in targetlists.keys():
+					targetlist = []
+				else:
+					targetlist = targetlists[type]
 				for targetdata in targetlist:
 					tile = self.tilemap[id]
 					#tilepos = self.mosaic.getTilePosition(tile)
