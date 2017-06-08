@@ -44,7 +44,7 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 
 	def validateInput(self, params):
 		if len(params) != 3:
-			print "Usage import_leginon_cal.py database_hostname camera_cal_json_file"
+			print "Usage import_leginon_presets.py database_hostname camera_cal_json_file"
 			self.close(1)
 		database_hostname = leginondata.sinedon.getConfig('leginondata')['host']
 		if params[1] != database_hostname:
@@ -52,7 +52,7 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 		if not os.path.exists(params[2]):
 			raise ValueError('can not find %s to import' % params[2])
 		self.jsonfile = params[2]
-		digicam_key = self.jsonfile.split('cal_')[-1].split('.json')[0]
+		digicam_key = self.jsonfile.split('preset_')[-1].split('.json')[0]
 		temname, cam_host, cameraname = digicam_key.split('+')
 		return temname, cam_host, cameraname
 
@@ -95,10 +95,11 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 		if r:
 			self.session = r[0]
 		else:
-			q['name']='calimport'
-			q['comment'] = 'import calibrations from json'
+			q['name']='presetimport'
+			q['comment'] = 'import presets from json'
 			r.insert()
 			self.session = r
+		print 'Using Session %s to import' % self.session['name']
 
 	def printQuery(self, q):
 		print q
