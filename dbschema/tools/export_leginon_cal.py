@@ -111,15 +111,32 @@ class CalibrationJsonMaker(jsonfun.DataJsonMaker):
 					print 'Matrix', matrix_type, probe, mag
 					self.publish(results)
 
+	def printCameraSensitivityQueries(self):
+		#CameraSensitivity
+		results = leginondata.CameraSensitivityCalibrationData(ccdcamera=self.cam).query(results=1)
+		if results:
+			print 'Adding Camera Sensitivity'
+			self.publish(results)
+
+	def printEucentricFocusQueries(self, mags, probe):
+		# EucentricFocus in both micro and nano probe mode
+		for mag in mags:
+			results = leginondata.EucentricFocusData(tem=self.tem, magnification=mag, probe=probe).query(results=1)
+			if results:
+				print 'Adding Eucentric Focus for %d mag and %s probe' % (mag, probe)
+				self.publish(results)
+
 	def run(self):
 		mags = self.getMags()
 		#print self.cam.dbid
 		#print mags
 		self.printPixelSizeCalibrationQueries(mags)
+		self.printCameraSensitivityQueries()
 		self.printStageModelCalibrationQueries(mags)
 		for p in (None,'micro','nano'):
 			self.printMatrixCalibrationQueries(mags,p)
-		json_filename = '%s+%s+%s.json' % (self.tem['name'],self.cam['hostname'],self.cam['name'])
+			self.printEucentricFocusQueries(mags,p)
+		json_filename = 'cal_%s+%s+%s.json' % (self.tem['name'],self.cam['hostname'],self.cam['name'])
 		self.writeJsonFile(json_filename)
 
 	def close(self, status=0):
