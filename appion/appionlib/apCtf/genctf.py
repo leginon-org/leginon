@@ -231,6 +231,8 @@ class Angular(object):
 			self.center = (-0.5, -0.5)
 		# function
 		self.flip = flip
+		# fix for numpy 1.12 or newer
+		shape = numpy.array(shape, dtype=numpy.uint16)
 		self.angular = numpy.fromfunction(self.arctan, shape, dtype=numpy.float64)
 
 	def arctan(self, y, x):
@@ -298,15 +300,17 @@ class Radial(object):
 			self.center = (-0.5, -0.5)
 		self.xfreqsq = xfreq**2
 		self.yfreqsq = yfreq**2
+		# fix for numpy 1.12 or newer
+		shape = numpy.array(shape, dtype=numpy.uint16)
 		# function
 		self.radial = numpy.fromfunction(self.distance, shape, dtype=numpy.float64)
 
 	def distance(self, y, x):
-		distance = (
+		dist = (
 			(x - self.center[1])**2 * self.xfreqsq 
 			+ (y - self.center[0])**2 * self.yfreqsq
 		)
-		return distance
+		return dist
 
 #===================
 def generateRadial2d(shape, xfreq, yfreq):
@@ -345,7 +349,7 @@ def checkParams(focus1=-1.0e-6, focus2=-1.0e-6, pixelsize=1.5e-10,
 		print "  High tension %.1f kV"%(volts*1e-3)
 		print ("  Amp Contrast %.3f (shift %.1f degrees)"
 			%(ampconst, math.degrees(-math.asin(ampconst))))
-		print ("  Extra Phase Shift %.1f degrees"
+		print ("  Extra Phase Shift %.1f radians / %.1f degrees"
 			% (extra_phase_shift, math.degrees(extra_phase_shift)))
 	if focus1*1e6 > 15.0 or focus1*1e6 < 0.1:
 		msg = "atypical defocus #1 value %.1f microns (underfocus is positve)"%(focus1*1e6)
