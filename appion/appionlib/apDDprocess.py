@@ -59,6 +59,7 @@ class DirectDetectorProcessing(object):
 		self.sumframelist = None
 		self.altchannel_cycler = itertools.cycle([False,True])
 		self.frame_modified = False
+		self.setForcedFrameSessionPath(None)
 
 	def setImageId(self,imageid):
 		from leginon import leginondata
@@ -390,7 +391,16 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		else:
 			return session_frame_path
 
+	def getForcedFrameSessionPath(self):
+		return self.forced_frame_session_path
+
+	def setForcedFrameSessionPath(self, path):
+		self.forced_frame_session_path = path
+
 	def getSessionFramePathFromImage(self, imagedata):
+		# Forcing a particular path
+		if self.getForcedFrameSessionPath():
+			return self.getForcedFrameSessionPath()
 		# getBufferFrameSessionPathFromImage creates the path if host is
 		# defined in database.  It is only False if the BufferHostData is
 		# not defined for the camera or set to disabled.
@@ -414,6 +424,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			apDisplay.printWarning('No Raw Frame Saved for %s' % imagedata['filename'])
 		session_frame_path = self.getSessionFramePathFromImage(imagedata)
 
+		# single frame directory is image filename plus '.frames'
 		rawframedir = os.path.join(session_frame_path,'%s.frames' % imagedata['filename'])
 		if not self.waitForPathExist(rawframedir,self.rawtransfer_wait):
 			apDisplay.printError('Raw Frame Dir %s does not exist.' % rawframedir)

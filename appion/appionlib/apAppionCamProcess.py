@@ -37,12 +37,18 @@ class AppionCamFrameProcessing(apDDprocess.DDFrameProcessing):
 	def getUsedFramesFromImageData(self,imagedata):
 		return range(self.getNumberOfFrameSavedFromImageData(imagedata))
 
+	def getSessionFramePathFromImage(self, imagedata):
+		# Forcing a particular path
+		if self.getForcedFrameSessionPath():
+			return self.getForcedFrameSessionPath()
+		return imagedata['session']['frame path']
+
 	def getRawFrameDirFromImage(self,imagedata):
 		'''
 		Uploaded raw frames are saved as image stack for feeding into gpu program.
 		RawFrameDir here is actually the filename with mrc extension.
 		'''
-		rawframe_basepath = imagedata['session']['frame path']
+		rawframe_basepath = self.getSessionFramePathFromImage(imagedata)
 		# frame stackfile is image filename plus '.frames.mrc'
 		rawframedir = os.path.join(rawframe_basepath,'%s.frames.mrc' % imagedata['filename'])
 		if not self.waitForPathExist(rawframedir,30):
