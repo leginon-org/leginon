@@ -36,6 +36,8 @@ class FrameStackLoop(apDDLoop.DDStackLoop):
 		self.parser.add_option("--compress", dest="compress", default=False,
 			action="store_true", help="Compress raw frames after stack making")
 		# String
+		self.parser.add_option("--framepath", dest="framepath",
+			help="Force Session Frame Path to this", metavar="PATH")
 		# Integer
 		self.parser.add_option("--refimgid", dest="refimgid", type="int",
 			help="Specify a corrected image to do gain/dark correction with", metavar="INT")
@@ -69,6 +71,9 @@ class FrameStackLoop(apDDLoop.DDStackLoop):
 		self.dd.setCycleReferenceChannels(self.params['cyclechannels'])
 		self.first_image = True
 	
+		# specification that is not default
+		if self.params['framepath']:
+			self.dd.setForcedFrameSessionPath(self.params['framepath'])
 		if self.params['refimgid']:
 			self.dd.setDefaultImageForReference(self.params['refimgid'])
 		self.imageids = []
