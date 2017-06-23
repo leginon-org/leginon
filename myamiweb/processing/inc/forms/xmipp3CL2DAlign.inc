@@ -50,11 +50,8 @@ class Xmipp3CL2DAlign extends BasicLayoutForm
 		$javascript .= "	stackArray[3] = stackArray[3].replace(/\,/g,'');\n";
 		$javascript .= "	document.viewerform.numpart.value = stackArray[3];\n";
 		$javascript .= "	document.viewerform.clip.value = stackArray[2];\n";
-		// set max last ring radius
-		$javascript .= "	var bestbin = Math.floor(stackArray[2]/64);\n";
-		$javascript .= "	if (bestbin < 1) {\n";
-		$javascript .= "		var bestbin = 1 ;}\n";
-		$javascript .= "	document.viewerform.bin.value = bestbin;\n";
+		// set binning to 1
+		$javascript .= "	document.viewerform.bin.value = 1;\n";
 		//number of references is the natural log of the number of particles
 		$javascript .= "	var bestref = Math.floor(Math.log(stackArray[3])/2)*2;\n";
 		$javascript .= "	if (bestref < 2) {\n";
@@ -260,6 +257,13 @@ class Xmipp3CL2DAlign extends BasicLayoutForm
 			// Clip size too big
 			$msg .= "<B>Error:</B> Clipping diameter ($clip pixels)"
 			." must be less than  or equal to the stack boxsize ($boxsz pixels)";
+		}
+		
+		$bin = $params->getParamValue( "bin" );
+		
+		if ($clip %$bin != 0 ) {
+			$msg .= "<B>Error:</B> Clipping diameter ($clip pixels)"
+			." can not be binned by ($bin pixels)";
 		}
 		
 		return $msg;
