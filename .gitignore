@@ -15,3 +15,8 @@ jeol.cfg
 .DS_Store
 *.dat
 *.old
+#Eclipse project files
+.project
+.pydevproject
+
+
