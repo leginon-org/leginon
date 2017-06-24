@@ -26,13 +26,7 @@ def parse():
 	# read instruments.cfg
 	confdirs = pyami.fileutil.get_config_dirs()
 	filenames = [os.path.join(confdir, 'instruments.cfg') for confdir in confdirs]
-	one_exists = False
-	for filename in filenames:
-		if os.path.exists(filename):
-			one_exists = True
-	if not one_exists:
-		print 'please configure at least one of these:  %s' % (filenames,)
-		sys.exit()
+	pyami.fileutil.check_exist_one_file(filenames)
 	try:
 		configfiles = configparser.read(filenames)
 	except:
