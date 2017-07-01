@@ -215,6 +215,7 @@ class AutoNitrogenFiller(Conditioner):
 	def _fixCondition(self, condition_type):
 		self.setStatus('processing')
 		self.logger.info('handle fix condition request')
+		# calling monitorRefillWithIsBusy first to make sure it is not already refilling
 		self.monitorRefillWithIsBusy()
 		refilled = self.refillRefrigerantLevel()
 		if refilled:
@@ -225,21 +226,30 @@ class AutoNitrogenFiller(Conditioner):
 		self.player.stop()
 
 	def refillRefrigerantLevel(self):
+		'''
+		Check refrigerant levels and refill if necessary
+		'''
 		loader_level,column_level = self.getRefrigerantLevels()
 		check_loader = self.settings['autofiller mode'] in ['both cold','column RT, loader cold']
 		check_column = self.settings['autofiller mode'] in ['both cold','column cold, loader RT']
 		force_fill = False
 		if check_column and column_level <= self.settings['column fill start']:
 			self.logger.info('Runing autofiller for column')
-			self.startNitrogenFilling()
 			force_fill = True
 		elif check_loader and loader_level <= self.settings['loader fill start']:
 			self.logger.info('Runing autofiller for loader')
-			self.startNitrogenFilling()
 			force_fill = True
+		self.logger.debug('force_fill_state is %s' % (force_fill,))
 		if force_fill:
-			# not getting DarkCurrent yet
-			#self.runCameraDarkCurrentReferenceUpdate()
+			# Do refill and dark current reference update at the same time.
+			self.logger.info('Start refilling autofiller thread')
+			time.sleep(0.1)
+			t1 = threading.Thread(target=self.startNitrogenFilling)
+			t1.start()
+			# Dark Current Reference Update if needed 
+			self.runCameraDarkCurrentReferenceUpdate()
+			t1.join()
+
 			filler_status = self.monitorRefillWithIsBusy()
 			if filler_status is None:
 				self.monitorRefill(check_column,check_loader)
@@ -251,18 +261,16 @@ class AutoNitrogenFiller(Conditioner):
 
 	def runCameraDarkCurrentReferenceUpdate(self):
 		camnames = self.instrument.getCCDCameraNames()
-		orig_cam_name = self.instrument.getCCDCameraName()
 		need_update = False
 		for name in camnames:
+			self.logger.debug('set camera to %s to check dark current reference requirement' % name)
 			self.instrument.setCCDCamera(name)
 			if self.requireRecentDarkCurrentReferenceOnBright():
 				need_update = True
-				print name
+				self.logger.info('%s requires dark current reference. Processing...' % name)
 				break
 		if need_update:
-			print name
 			self.updateCameraDarkCurrentReference()
-		self.instrument.setCCDCamera(orig_cam_name)
 		
 	def monitorRefillWithIsBusy(self):
 		'''
@@ -290,6 +298,9 @@ class AutoNitrogenFiller(Conditioner):
 		return isbusy
 
 	def monitorRefill(self,check_column,check_loader):
+		'''
+		Old refill monitoring before isAutoFillerBusy is implemented in TEM Scripting.
+		'''
 		sleeptime = 3
 		significance = 0.1
 		column_filled = False

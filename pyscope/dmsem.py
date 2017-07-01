@@ -569,6 +569,9 @@ class GatanK2Base(DMSEM):
 			return True
 		return False
 
+	def requireRecentDarkCurrentReferenceOnBright(self):
+		return True
+
 class GatanK2Linear(GatanK2Base):
 	name = 'GatanK2Linear'
 	ed_mode = 'linear'

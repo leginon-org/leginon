@@ -216,8 +216,6 @@ class CameraClient(object):
 		return imagedata
 
 	def requireRecentDarkCurrentReferenceOnBright(self):
-		# deactivated for now until tested.
-		return False
 		# select camera before calling this function
 		if hasattr(self.instrument.ccdcamera, 'requireRecentDarkCurrentReferenceOnBright'):
 			return self.instrument.ccdcamera.requireRecentDarkCurrentReferenceOnBright()
