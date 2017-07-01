@@ -832,6 +832,9 @@ class Tecnai(tem.TEM):
 			raise RuntimeError('_setStagePosition Unknown error')
 		self.waitForStageReady()
 
+	def setDirectStagePosition(self,value):
+		self._setStagePosition(value)
+
 	def getLowDoseStates(self):
 		return ['on', 'off', 'disabled']
 
@@ -1424,6 +1427,12 @@ class Tecnai(tem.TEM):
 		"""
 		return self.tecnai.PerformCassetteInventory()
 
+	def getIsEFtem(self):
+		flag = self.tecnai.Projection.LensProgram
+		if flag == 2:
+			return True
+		return False
+
 class Krios(Tecnai):
 	name = 'Krios'
 	use_normalization = True
@@ -1440,6 +1449,9 @@ class Krios(Tecnai):
 		pass
 
 	def setStagePosition(self, value):
+		'''
+		Krios setStagePosition
+		'''
 		# pre-position x and y (maybe others later)
 		value = self.checkStagePosition(value)
 		if not value:

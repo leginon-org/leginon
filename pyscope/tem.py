@@ -286,3 +286,10 @@ class TEM(baseinstrument.BaseInstrument):
 			self.grid_inventory[n] = state
 		return self.grid_inventory
 
+	def setDirectStagePosition(self,value):
+		'''
+		set stage position without correction or checking
+		for move size.
+		'''
+		# equivalent to normal movement by default
+		self.setStagePosition(value)
