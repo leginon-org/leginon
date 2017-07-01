@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+import sys
 import subprocess
 
 """
@@ -7,6 +7,9 @@ library for working with git
 """
 
 def getCurrentCommitCount():
+	if sys.platform == 'win32':
+		# fake return.  No easy way to get git version
+		return 100000
 	cmd = "git rev-list --count HEAD"
 	proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	stdout, stderr = proc.communicate()
