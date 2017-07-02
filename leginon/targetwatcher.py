@@ -147,12 +147,17 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 
 			# initialize is_first-image
 			self.is_firstimage = True
+			original_position = self.instrument.tem.getStagePosition()
 			#tilt the stage first
 			if self.settings['use parent tilt']:
 				state1 = leginondata.ScopeEMData()
 				parentimage = newdata.special_getitem('image', True, readimages=False)
 				state1['stage position'] = {'a':parentimage['scope']['stage position']['a']}
 				self.instrument.setData(state1)
+				parent_tilt = state1['stage position']['a']
+				original_position['a'] = parent_tilt
+			else:
+				parent_tilt = original_position['a']
 			# start conditioner
 			condition_status = 'repeat'
 			while condition_status == 'repeat':
@@ -172,7 +177,6 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 
 			# This is only for beamfixer now and it does not need preset_name
 			preset_name = None
-			original_position = self.instrument.tem.getStagePosition()
 			if self.settings['wait for reference']:
 				self.setStatus('waiting')
 				self.processReferenceTarget()
@@ -225,6 +229,8 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		#####################################################################
 
 		# process the good ones
+		if self.settings['use parent tilt']:
+			self.instrument.tem.setDirectStagePosition({'a':parent_tilt})
 		targetliststatus = 'success'
 		self.processGoodTargets(goodtargets)
 
