@@ -32,9 +32,11 @@ AUTOIT_EXE_PATH = "C:\\Program Files\\AutoIt3\\nextphaseplate.exe"
 
 # Newer Krios stage needs backlash.
 KRIOS_ADD_STAGE_BACKLASH = True
+KRIOS_ADD_STAGE_ALPHA_BACKLASH = False
 
 # Falcon protector causes certain delays
 HAS_FALCON_PROTECTOR = True
+
 
 # This scale convert beam tilt readout in radian to 
 # Tecnai or TEM Scripting Illumination.RotationCenter value
@@ -294,10 +296,10 @@ class Tecnai(tem.TEM):
 			raise RuntimeError('unknown high tension state')
 
 	def getHighTension(self):
-		return float(self.tecnai.Gun.HTValue)
+		return int(round(float(self.tecnai.Gun.HTValue)))
 	
 	def setHighTension(self, ht):
-		self.tecnai.Gun.HTValue = ht
+		self.tecnai.Gun.HTValue = float(ht)
 	
 	def getIntensity(self):
 		intensity = getattr(self.tecnai.Illumination, self.intensity_prop)
@@ -1439,6 +1441,7 @@ class Krios(Tecnai):
 	def __init__(self):
 		Tecnai.__init__(self)
 		self.correctedstage = KRIOS_ADD_STAGE_BACKLASH
+		self.corrected_alpha_stage = KRIOS_ADD_STAGE_ALPHA_BACKLASH
 
 	def normalizeProjectionForMagnificationChange(self, new_mag_index):
 		'''
@@ -1466,7 +1469,7 @@ class Krios(Tecnai):
 					prevalue[axis] = value[axis] - delta
 			# alpha tilt backlash only in one direction
 			alpha_delta_degrees = 3.0
-			if 'a' in value.keys():
+			if 'a' in value.keys() and self.corrected_alpha_stage:
 					axis = 'a'
 					prevalue[axis] = value[axis] - alpha_delta_degrees*3.14159/180.0
 			if prevalue:
