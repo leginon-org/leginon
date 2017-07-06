@@ -54,7 +54,7 @@ def makeNewStack(oldstack, newstack, partlist=None, remove=False, bad=False):
 
 	stackTools.createSubStack(oldstack, newstack, partlist, msg=True)
 
-	if bad is True and listfile is not None:
+	if bad is True and partlist is not None:
 		### run only if num bad particles < num good particles
 		newstacknumpart = apFile.numImagesInStack(newstack)
 		oldstacknumpart = apFile.numImagesInStack(oldstack)
