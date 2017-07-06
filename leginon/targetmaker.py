@@ -60,6 +60,7 @@ class MosaicTargetMaker(TargetMaker):
 		'max size': 16384,
 		'mosaic center': 'stage center',
 		'ignore request': False,
+		'alpha tilt': 0.0,
 	}
 	eventinputs = TargetMaker.eventinputs + [event.MakeTargetListEvent]
 	def __init__(self, id, session, managerlocation, **kwargs):
@@ -132,6 +133,14 @@ class MosaicTargetMaker(TargetMaker):
 			raise AtlasError('unable to access camera')
 		self.logger.debug('Get current instrument state completed')
 		return scope, camera
+
+	def setAlpha(self, alpha_degrees):
+		'''
+		TEM is already set by now.
+		'''
+		self.logger.info('Set stage tilt to %.2f degrees' % alpha_degrees)
+		alpha_radians = math.radians(alpha_degrees)
+		self.instrument.tem.setDirectStagePosition({'a':alpha_radians})
 
 	def getAlpha(self, scope):
 		try:
@@ -210,6 +219,8 @@ class MosaicTargetMaker(TargetMaker):
 		self.logger.info('Creating atlas targets...')
 		radius, overlap = self.validateSettings(evt)
 		scope, camera = self.getState()
+		if self.settings['alpha tilt'] is not None:
+			self.setAlpha(self.settings['alpha tilt'])
 		alpha = self.getAlpha(scope)
 		preset = self.getPreset()
 		if self.settings['mosaic center'] == 'stage center':

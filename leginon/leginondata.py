@@ -1327,6 +1327,7 @@ class MosaicTargetMakerSettingsData(SettingsData):
 			('max size', int),
 			('mosaic center', str),
 			('ignore request', bool),
+			('alpha tilt', float),
 		)
 	typemap = classmethod(typemap)
 
