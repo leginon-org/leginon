@@ -2,6 +2,7 @@
 
 #builtin
 import os
+import sys
 import time
 #appion
 from appionlib import appionScript
@@ -133,7 +134,7 @@ class EqualViews(appionScript.AppionScript):
 		keeplist.sort()
 		print "Keeping %d of %d particles"%(len(keeplist), len(partlist))
 
-		#write to temporary keepfile
+		#need to set keepfile for commitSubStack
 		self.params['keepfile'] = os.path.join(self.params['rundir'], "equalviews.lst")
 		f = open(self.params['keepfile'], "w")
 		for partnum in keeplist:
@@ -145,7 +146,7 @@ class EqualViews(appionScript.AppionScript):
 
 		oldstack = os.path.join(oldstackdata['path']['path'], oldstackdata['name'])
 		newstack = os.path.join(self.params['rundir'], "start.hed")
-		apStack.makeNewStack(oldstack, newstack, keeplist, remove=True, bad=True)
+		apStack.makeNewStack(oldstack, newstack, listfile=self.params['keepfile'], remove=True, bad=True)
 		if not os.path.isfile(newstack):
 			apDisplay.printError("No stack was created")
 		self.params['stackid'] = oldstackdata.dbid #need to set stackid for commitSubStack

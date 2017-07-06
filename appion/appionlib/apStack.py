@@ -47,14 +47,13 @@ def makeNewStack(oldstack, newstack, partlist=None, remove=False, bad=False):
 	apDisplay.printMsg("creating a new stack\n\t"+newstack+
 		"\nfrom the oldstack\n\t"+oldstack+"\n")
 
+	listfile = partlist
 	if isinstance(partlist, str) and os.path.exists(partlist):
-		listfile = partlist
-		#note: eman particle list files start at 0, appion particle lists start at 1
 		partlist = emanLstFileToPartList(listfile)
 
 	stackTools.createSubStack(oldstack, newstack, partlist, msg=True)
 
-	if bad is True and partlist is not None:
+	if bad is True and listfile is not None:
 		### run only if num bad particles < num good particles
 		newstacknumpart = apFile.numImagesInStack(newstack)
 		oldstacknumpart = apFile.numImagesInStack(oldstack)
