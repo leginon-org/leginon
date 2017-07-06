@@ -15,6 +15,7 @@ import targethandler
 import node
 import player
 import time
+import math
 
 class PauseRepeatException(Exception):
 	'''Raised within processTargetData method if the target should be
@@ -152,10 +153,14 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			if self.settings['use parent tilt']:
 				state1 = leginondata.ScopeEMData()
 				parentimage = newdata.special_getitem('image', True, readimages=False)
-				state1['stage position'] = {'a':parentimage['scope']['stage position']['a']}
-				self.instrument.setData(state1)
-				parent_tilt = state1['stage position']['a']
-				original_position['a'] = parent_tilt
+				if parentimage :
+					state1['stage position'] = {'a':parentimage['scope']['stage position']['a']}
+					self.instrument.setData(state1)
+					parent_tilt = state1['stage position']['a']
+					original_position['a'] = parent_tilt
+					self.logger.info('Found parent image stage tilt at %.2 degrees and use it.' % (parent_tilt*180.0/math.pi))
+				else:
+					parent_tilt = original_position['a']
 			else:
 				parent_tilt = original_position['a']
 			# start conditioner
