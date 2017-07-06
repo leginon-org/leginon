@@ -132,6 +132,11 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			self.logger.info('%d target(s) will be rejected based on type' % len(rejects))
 		#if ignored:
 		#	self.logger.info('%d target(s) will be ignored' % len(ignored))
+		# There may not be good targets but only rejected
+		# or reference targets causing parent_tilt undefined.
+		# define it now regardless.
+		original_position = self.instrument.tem.getStagePosition()
+		parent_tilt = original_position['a']
 		if goodtargets:
 			# pause and abort check before reference and rejected targets are sent away
 			if self.player.state() == 'pause':
@@ -148,7 +153,6 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 
 			# initialize is_first-image
 			self.is_firstimage = True
-			original_position = self.instrument.tem.getStagePosition()
 			#tilt the stage first
 			if self.settings['use parent tilt']:
 				state1 = leginondata.ScopeEMData()
@@ -158,11 +162,9 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 					self.instrument.setData(state1)
 					parent_tilt = state1['stage position']['a']
 					original_position['a'] = parent_tilt
-					self.logger.info('Found parent image stage tilt at %.2 degrees and use it.' % (parent_tilt*180.0/math.pi))
+					self.logger.info('Found parent image stage tilt at %.2f degrees and use it.' % (parent_tilt*180.0/math.pi))
 				else:
 					parent_tilt = original_position['a']
-			else:
-				parent_tilt = original_position['a']
 			# start conditioner
 			condition_status = 'repeat'
 			while condition_status == 'repeat':
@@ -234,7 +236,8 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		#####################################################################
 
 		# process the good ones
-		if self.settings['use parent tilt']:
+		if self.settings['use parent tilt'] and goodtargets:
+			self.logger.info('Tilting to %.2f degrees.' % (parent_tilt*180.0/math.pi))
 			self.instrument.tem.setDirectStagePosition({'a':parent_tilt})
 		targetliststatus = 'success'
 		self.processGoodTargets(goodtargets)
