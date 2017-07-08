@@ -19,6 +19,12 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 
 		self.sz = wx.GridBagSizer(5, 5)
 
+		self.insertSizersToSZ()
+		sbsz.Add(self.sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
+
+		return [sbsz]
+
+	def insertSizersToSZ(self):
 		position = self.createBypassCheckBox((0, 0))
 		position = self.createSubTitleSizer((position[0],0),'Moving to Target')
 		position = self.createMoveTypeChoice((position[0],0))
@@ -29,10 +35,6 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		position = self.createPauseTimeEntry((position[0],0))
 		position = self.createIntervalEntry((position[0],0))
 		position = self.createReturnSettleTimeEntry((position[0],0))
-
-		sbsz.Add(self.sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
-
-		return [sbsz]
 
 	def createIntervalEntry(self, position):
 		'''
