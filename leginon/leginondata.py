@@ -2459,6 +2459,9 @@ class ReferenceSettingsData(SettingsData):
 			('move type', str),
 			('pause time', float),
 			('return settle time', float),
+			('mover', str),
+			('move precision', float),
+			('accept precision', float),
 		)
 	typemap = classmethod(typemap)
 

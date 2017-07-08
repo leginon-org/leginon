@@ -358,4 +358,41 @@
       "repeat time":1800
     }
   }
+  {
+    "PhasePlateAlignerSettingsData":{
+      "interval count":20,
+      "name":"Phase Plate",
+      "accept precision":1e-06,
+      "charge time":30.0,
+      "phase plate number":1,
+      "pause time":5.0,
+      "return settle time":30.0,
+      "initial position":1,
+      "tilt charge time":5.0,
+      "bypass":false,
+      "tilt charge angle":0.01,
+      "mover":"presets manager",
+      "settle time":90.0,
+      "move type":"stage position",
+      "move precision":5e-07,
+      "isdefault":true,
+      "total positions":76
+    }
+  }
+  {
+    "AlignZLPSettingsData":{
+      "name":"Align ZLP",
+      "accept precision":1e-06,
+      "interval time":3600.0,
+      "pause time":3.0,
+      "return settle time":30.0,
+      "check preset":"fa",
+      "bypass":false,
+      "threshold":0.0,
+      "mover":"navigator",
+      "move type":"stage position",
+      "move precision":5e-07,
+      "isdefault":true
+    }
+  }
 ]
