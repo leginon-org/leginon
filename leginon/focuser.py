@@ -40,7 +40,7 @@ class Focuser(singlefocuser.SingleFocuser):
 		if currentpreset is None:
 			try:
 				self.validatePresets()
-			except InvalidPresetsSequence:
+			except acquisition.InvalidPresetsSequence:
 				self.logger.error('Configure at least one preset in the settings for this node.')
 				self.setStatus('idle')
 				return

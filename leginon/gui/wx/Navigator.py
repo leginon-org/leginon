@@ -148,7 +148,6 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 
 	def onSendPresetTool(self,evt):
 		presetname = self.preset_choices.GetStringSelection()
-		print 'sending %s' % presetname
 		self._acquisitionEnable(False)
 		args = (presetname,)
 		threading.Thread(target=self.node.uiSendPreset,args=args).start()

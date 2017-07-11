@@ -298,6 +298,9 @@ class Corrector(imagewatcher.ImageWatcher):
 					if not self.hasRecentDarkSaved(channel):
 						self.logger.error('Need recent Dark image before acquiring Bright Image')
 						return None
+				if self.requireRecentDarkCurrentReferenceOnBright():
+					if not self.hasRecentDarkCurrentReferenceSaved(3600):
+						self.updateCameraDarkCurrentReference(warning=True)
 				self.logger.info('Acquiring bright references...')
 		except Exception, e:
 			self.logger.error('Reference acquisition failed: %s' % (e,))

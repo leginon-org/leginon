@@ -71,7 +71,7 @@ class PhasePlateAligner(referencecounter.ReferenceCounter):
 		# Do some alignment fix that also uses the same target and preset
 		evt = event.FixAlignmentEvent()
 		try:
-			self.logger.info('Sent Fix Alignment Event')
+			self.logger.info('Send Fix Alignment Event')
 			status = self.outputEvent(evt, wait=True)
 		except node.ConfirmationNoBinding, e:
 			# OK if not bound
@@ -79,6 +79,8 @@ class PhasePlateAligner(referencecounter.ReferenceCounter):
 			pass
 		except Exception, e:
 			self.logger.error(e)
+		finally:
+			self.logger.info('Done Fix Alignment Event')
 
 	def nextPhasePlate(self):
 		self.setStatus('processing')

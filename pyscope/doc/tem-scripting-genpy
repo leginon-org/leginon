@@ -443,6 +443,7 @@ class AutoLoader(DispatchBaseClass):
 
 	def LoadCartridge(self, fromSlot=defaultNamedNotOptArg):
 		"""Load cartridge from a cassette"""
+		"""Will unload other loaded cartridge first and not return until all done"""
 		return self._oleobj_.InvokeTypes(1, LCID, 1, (24, 0), ((3, 1),),fromSlot
 			)
 
@@ -453,6 +454,7 @@ class AutoLoader(DispatchBaseClass):
 	# The method SlotStatus is actually a property, but must be used as a method to correctly pass the arguments
 	def SlotStatus(self, slot=defaultNamedNotOptArg):
 		"""Slot status"""
+		"""Will give status 2 while loading as well as loaded or empty upon inventory check"""
 		return self._oleobj_.InvokeTypes(12, LCID, 2, (3, 0), ((3, 1),),slot
 			)
 

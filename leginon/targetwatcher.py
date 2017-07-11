@@ -15,6 +15,7 @@ import targethandler
 import node
 import player
 import time
+import math
 
 class PauseRepeatException(Exception):
 	'''Raised within processTargetData method if the target should be
@@ -131,6 +132,11 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			self.logger.info('%d target(s) will be rejected based on type' % len(rejects))
 		#if ignored:
 		#	self.logger.info('%d target(s) will be ignored' % len(ignored))
+		# There may not be good targets but only rejected
+		# or reference targets causing parent_tilt undefined.
+		# define it now regardless.
+		original_position = self.instrument.tem.getStagePosition()
+		parent_tilt = original_position['a']
 		if goodtargets:
 			# pause and abort check before reference and rejected targets are sent away
 			if self.player.state() == 'pause':
@@ -151,15 +157,33 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			if self.settings['use parent tilt']:
 				state1 = leginondata.ScopeEMData()
 				parentimage = newdata.special_getitem('image', True, readimages=False)
-				state1['stage position'] = {'a':parentimage['scope']['stage position']['a']}
-				self.instrument.setData(state1)
+				if parentimage :
+					state1['stage position'] = {'a':parentimage['scope']['stage position']['a']}
+					self.instrument.setData(state1)
+					parent_tilt = state1['stage position']['a']
+					original_position['a'] = parent_tilt
+					self.logger.info('Found parent image stage tilt at %.2f degrees and use it.' % (parent_tilt*180.0/math.pi))
+				else:
+					parent_tilt = original_position['a']
 			# start conditioner
-			self.setStatus('waiting')
-			self.fixCondition()
-			self.setStatus('processing')
+			condition_status = 'repeat'
+			while condition_status == 'repeat':
+				try:
+					self.setStatus('waiting')
+					self.fixCondition()
+					self.setStatus('processing')
+					condition_status = 'success'
+				except PauseRepeatException, e:
+					self.player.pause()
+					self.logger.error(str(e) + '... Fix it, then press play to repeat target')
+					condition_status = 'repeat'
+				except Exception, e:
+					self.logger.error('Conditioning failed. Continue without it')
+					condition_status = 'abort'
+				self.beep()
+
 			# This is only for beamfixer now and it does not need preset_name
 			preset_name = None
-			original_position = self.instrument.tem.getStagePosition()
 			if self.settings['wait for reference']:
 				self.setStatus('waiting')
 				self.processReferenceTarget()
@@ -212,6 +236,9 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		#####################################################################
 
 		# process the good ones
+		if self.settings['use parent tilt'] and goodtargets:
+			self.logger.info('Tilting to %.2f degrees.' % (parent_tilt*180.0/math.pi))
+			self.instrument.tem.setDirectStagePosition({'a':parent_tilt})
 		targetliststatus = 'success'
 		self.processGoodTargets(goodtargets)
 
