@@ -1029,7 +1029,7 @@ endif
 			{
 				# Python fs
 				'targzFileName':'fs-0.4.0.tar.gz',
-				'fileLocation':'https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/pyfilesystem/',
+				'fileLocation':'https://pypi.python.org/packages/08/c3/9a6e3c7bd2755e3383c84388c1e01113bddafa8008a0aa4af64996ab4470/',
 				'unpackDirName':'fs-0.4.0',
 			}
 		]
