@@ -120,7 +120,7 @@
         <field name="DEF_id" >50</field>
         <field name="DEF_timestamp" >2017-07-11 10:06:15</field>
         <field name="name" >J-MSI-Stitch-T2 (3.3)</field>
-        <field name="version" >0</field>
+        <field name="version" >2</field>
         <field name="hide" >0</field>
     </sqltable>
   <!-- BindingSpecData -->
@@ -128,7 +128,7 @@
         <field name="DEF_id" >3057</field>
         <field name="DEF_timestamp" >2017-07-11 10:06:15</field>
         <field name="event class string" >QueuePublishEvent</field>
-        <field name="from node alias" >J Hole Centering</field>
+        <field name="from node alias" >J Hole Targeting</field>
         <field name="to node alias" >Better Hole</field>
         <field name="REF|ApplicationData|application" >50</field>
     </sqltable>
@@ -136,7 +136,7 @@
         <field name="DEF_id" >3058</field>
         <field name="DEF_timestamp" >2017-07-11 10:06:15</field>
         <field name="event class string" >ImageTargetListPublishEvent</field>
-        <field name="from node alias" >J Hole Centering</field>
+        <field name="from node alias" >J Hole Targeting</field>
         <field name="to node alias" >Better Hole</field>
         <field name="REF|ApplicationData|application" >50</field>
     </sqltable>
@@ -144,7 +144,7 @@
         <field name="DEF_id" >3059</field>
         <field name="DEF_timestamp" >2017-07-11 10:06:15</field>
         <field name="event class string" >ImageProcessDoneEvent</field>
-        <field name="from node alias" >J Hole Centering</field>
+        <field name="from node alias" >J Hole Targeting</field>
         <field name="to node alias" >Rough Hole</field>
         <field name="REF|ApplicationData|application" >50</field>
     </sqltable>
@@ -161,7 +161,7 @@
         <field name="DEF_timestamp" >2017-07-11 10:06:15</field>
         <field name="event class string" >TargetListDoneEvent</field>
         <field name="from node alias" >Better Hole</field>
-        <field name="to node alias" >J Hole Centering</field>
+        <field name="to node alias" >J Hole Targeting</field>
         <field name="REF|ApplicationData|application" >50</field>
     </sqltable>
     <sqltable name="BindingSpecData" >
@@ -361,7 +361,7 @@
         <field name="DEF_timestamp" >2017-07-11 10:06:15</field>
         <field name="event class string" >AcquisitionImagePublishEvent</field>
         <field name="from node alias" >J Square</field>
-        <field name="to node alias" >J Stitch Hole Targeting</field>
+        <field name="to node alias" >J Square Stitch</field>
         <field name="REF|ApplicationData|application" >50</field>
     </sqltable>
     <sqltable name="BindingSpecData" >
@@ -408,7 +408,7 @@
         <field name="DEF_id" >3092</field>
         <field name="DEF_timestamp" >2017-07-11 10:06:15</field>
         <field name="event class string" >ImageTargetListPublishEvent</field>
-        <field name="from node alias" >J Stitch Hole Targeting</field>
+        <field name="from node alias" >J Square Stitch</field>
         <field name="to node alias" >Rough Hole</field>
         <field name="REF|ApplicationData|application" >50</field>
     </sqltable>
@@ -416,7 +416,7 @@
         <field name="DEF_id" >3093</field>
         <field name="DEF_timestamp" >2017-07-11 10:06:15</field>
         <field name="event class string" >ImageProcessDoneEvent</field>
-        <field name="from node alias" >J Stitch Hole Targeting</field>
+        <field name="from node alias" >J Square Stitch</field>
         <field name="to node alias" >J Square</field>
         <field name="REF|ApplicationData|application" >50</field>
     </sqltable>
@@ -424,7 +424,7 @@
         <field name="DEF_id" >3094</field>
         <field name="DEF_timestamp" >2017-07-11 10:06:15</field>
         <field name="event class string" >QueuePublishEvent</field>
-        <field name="from node alias" >J Stitch Hole Targeting</field>
+        <field name="from node alias" >J Square Stitch</field>
         <field name="to node alias" >Rough Hole</field>
         <field name="REF|ApplicationData|application" >50</field>
     </sqltable>
@@ -641,7 +641,7 @@
         <field name="DEF_timestamp" >2017-07-11 10:06:15</field>
         <field name="event class string" >AcquisitionImagePublishEvent</field>
         <field name="from node alias" >Rough Hole</field>
-        <field name="to node alias" >J Hole Centering</field>
+        <field name="to node alias" >J Hole Targeting</field>
         <field name="REF|ApplicationData|application" >50</field>
     </sqltable>
     <sqltable name="BindingSpecData" >
@@ -673,7 +673,7 @@
         <field name="DEF_timestamp" >2017-07-11 10:06:15</field>
         <field name="event class string" >TargetListDoneEvent</field>
         <field name="from node alias" >Rough Hole</field>
-        <field name="to node alias" >J Stitch Hole Targeting</field>
+        <field name="to node alias" >J Square Stitch</field>
         <field name="REF|ApplicationData|application" >50</field>
     </sqltable>
     <sqltable name="BindingSpecData" >
@@ -866,8 +866,8 @@
     <sqltable name="NodeSpecData" >
         <field name="DEF_id" >918</field>
         <field name="DEF_timestamp" >2017-07-11 10:06:15</field>
-        <field name="class string" >JAHCFinder</field>
-        <field name="alias" >J Hole Centering</field>
+        <field name="class string" >MosaicQuiltFinder</field>
+        <field name="alias" >J Hole Targeting</field>
         <field name="launcher alias" >main</field>
         <field name="SEQ|dependencies" >[]</field>
         <field name="REF|ApplicationData|application" >50</field>
@@ -957,7 +957,7 @@
         <field name="DEF_id" >928</field>
         <field name="DEF_timestamp" >2017-07-11 10:06:15</field>
         <field name="class string" >StitchTargetFinder</field>
-        <field name="alias" >J Stitch Hole Targeting</field>
+        <field name="alias" >J Square Stitch</field>
         <field name="launcher alias" >main</field>
         <field name="SEQ|dependencies" >[]</field>
         <field name="REF|ApplicationData|application" >50</field>
