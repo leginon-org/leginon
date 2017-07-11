@@ -72,9 +72,9 @@ class subStackScript(appionScript.AppionScript):
 				calcY = slope*stackpart['mean']+intercept
 				if (calcY >= stackpart['stdev'] and self.params['keepabove'] is not True) or \
 					(calcY <= stackpart['stdev'] and self.params['keepabove'] is True):
-					partnum = stackpart['particleNumber']
+					partnum = int(stackpart['particleNumber'])
 					#eman numbering starting at zero
-					f.write('%d\n' % partnum-1)
+					f.write('%d\n'%(partnum-1))
 					#appion numbering starting at one
 					keeplist.append(partnum)
 					numparticles+=1
