@@ -129,7 +129,7 @@ class Tecnai(tem.TEM):
 	def findPresureProps(self):
 		self.pressure_prop = {}
 		gauge_map = {}
-		gauges_to_try = {'column':['PPc1','P4','IGP1'],'buffer':['PIRbf','P1'],'projection':['CCGp','P3']}
+		gauges_to_try = {'column':['IPGco','PPc1','P4','IGP1'],'buffer':['PIRbf','P1'],'projection':['CCGp','P3']}
 		gauges_obj = self.tecnai.Vacuum.Gauges
 		for i in range(gauges_obj.Count):
 			g = gauges_obj.Item(i)
@@ -1199,6 +1199,7 @@ class Tecnai(tem.TEM):
 			return 'unknown'
 
 	def getGaugePressure(self,location):
+		# value in pascal unit
 		if location not in self.pressure_prop.keys():
 			raise KeyError
 		if self.pressure_prop[location] is None:
@@ -1482,6 +1483,7 @@ class Halo(Tecnai):
 	Titan Halo has Titan 3 condensor system but side-entry holder.
 	'''
 	name = 'Halo'
+	use_normalization = True
 	def normalizeProjectionForMagnificationChange(self, new_mag_index):
 		'''
 		Overwrite projection lens normalization to do nothing
@@ -1498,6 +1500,8 @@ class Halo(Tecnai):
 
 class EFKrios(Krios):
 	name = 'EF-Krios'
+	use_normalization = True
+	projection_lens_program = 'EFTEM'
 
 class Arctica(Tecnai):
 	name = 'Arctica'

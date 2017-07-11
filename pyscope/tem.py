@@ -92,6 +92,7 @@ class TEM(baseinstrument.BaseInstrument):
 		{'name': 'EnergyFilter', 'type': 'property'},
 		{'name': 'EnergyFilterWidth', 'type': 'property'},
 	)
+	projection_lens_program = 'TEM'
 	def __init__(self):
 		baseinstrument.BaseInstrument.__init__(self)
 		self.config_name = config.getNameByClass(self.__class__)
@@ -293,3 +294,15 @@ class TEM(baseinstrument.BaseInstrument):
 		'''
 		# equivalent to normal movement by default
 		self.setStagePosition(value)
+
+	def getDiffractionMode(self):
+		# valid values: imaging or diffraction
+		return 'imaging'
+
+	def setDiffractionMode(self):
+		raise NotImplementedError()
+
+	def getVacuumStatus(self):
+		# valid values: ready, off, busy, unknown
+		return 'ready'
+

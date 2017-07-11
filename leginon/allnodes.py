@@ -275,3 +275,6 @@ noderegistry.registerNodeClass(Navigator,classtype)
 from imageassessor import ImageAssessor
 noderegistry.registerNodeClass(ImageAssessor,classtype)
 
+from temcontroller import TEMController
+noderegistry.registerNodeClass(TEMController,classtype)
+

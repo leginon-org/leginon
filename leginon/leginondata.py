@@ -2710,6 +2710,12 @@ class AutoFillerSettingsData(ConditionerSettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class TEMControllerSettingsData(SettingsData):
+	def typemap(cls):
+		return SettingsData.typemap() + (
+		)
+	typemap = classmethod(typemap)
+
 class DDinfoKeyData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
