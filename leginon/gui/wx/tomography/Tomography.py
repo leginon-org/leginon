@@ -514,6 +514,8 @@ class Panel(leginon.gui.wx.Acquisition.Panel):
 	def __init__(self, *args, **kwargs):
 		leginon.gui.wx.Acquisition.Panel.__init__(self, *args, **kwargs)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_BROWSE_IMAGES, False)
+		self.toolbar.InsertTool(5, leginon.gui.wx.ToolBar.ID_ABORT_ONE_TARGET,
+						'stopone', shortHelpString='Abort single tilt series')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_CHECK_DOSE,
 							 'dose',
 							 shortHelpString='Check dose')
@@ -534,6 +536,9 @@ class Panel(leginon.gui.wx.Acquisition.Panel):
 		self.toolbar.Bind(wx.EVT_TOOL,
 						  self.onCheckDose,
 						  id=leginon.gui.wx.ToolBar.ID_CHECK_DOSE)
+		self.toolbar.Bind(wx.EVT_TOOL,
+						  self.onStopTargetTool,
+						  id=leginon.gui.wx.ToolBar.ID_ABORT_ONE_TARGET)
 
 	def onCheckDose(self, evt):
 		threading.Thread(target=self.node.checkDose).start()

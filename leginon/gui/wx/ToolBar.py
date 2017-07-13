@@ -77,6 +77,7 @@ ID_RESET_Z = 10059
 ID_RESET_ALPHA = 10060
 ID_SEND_PRESET = 10061
 ID_GET_PRESET = 10062
+ID_ABORT_ONE_TARGET = 10063
 
 class ToolBar(wx.ToolBar):
 	def __init__(self, parent):

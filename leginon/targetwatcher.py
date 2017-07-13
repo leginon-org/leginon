@@ -333,6 +333,10 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 				if state in ('stop', 'stopqueue'):
 					self.logger.info('Aborted')
 					break
+				if state in ('stoptarget',):
+					self.logger.info('Aborted this target. continue to next')
+					self.reportTargetStatus(adjustedtarget, 'aborted')
+					self.player.play()
 
 				# end of target repeat loop
 			# next target is not a first-image
@@ -402,9 +406,12 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			infostr += 'Pausing...'
 		elif state == 'stop':
 			infostr += 'Aborting...'
+		elif state == 'stoptarget':
+			infostr += 'Aborting single target...'
 		if infostr:
 			self.logger.info(infostr)
 		self.panel.playerEvent(state)
+
 	def processReferenceTarget(self,presetname):
 		raise NotImplementedError()
 	
