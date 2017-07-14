@@ -69,6 +69,31 @@ class TEMController(node.Node):
 		loc = {'a':0.0}
 		self._toScope('reset alpha',loc)
 
+	def onCloseColumnValve(self):
+		self.setStatus('processing')
+		self.safeCloseColumnValve()
+		self.panel.onSetTEMParamDone()
+		self.setStatus('idle')
+
+	def safeCloseColumnValve(self):
+		# check current preset matches microscope
+		if self.isCurrentPresetSet():
+			try:
+				self.logger.info('Closing column valve....')
+				self.instrument.tem.setColumnValvePosition('closed')
+			except:
+				self.logger.error('Failed to close column valve')
+				raise
+		time.sleep(0.5)
+		self.isColumnValveInState('closed')
+
+	def isColumnValveInState(self,desired_state='open'):
+		current_state = self.instrument.tem.getColumnValvePosition()
+		if self.instrument.tem.getColumnValvePosition() == desired_state:
+			self.logger.info('Column valve is %s' % desired_state)
+		else:
+			self.logger.error('Column valve is %s' % current_state)
+
 	def onOpenColumnValve(self):
 		self.setStatus('processing')
 		self.safeOpenColumnValve()
@@ -84,14 +109,13 @@ class TEMController(node.Node):
 				if self.isVacuumReady():
 					# open column valve
 					try:
+						self.logger.info('Opening column valve....')
 						self.instrument.tem.setColumnValvePosition('open')
 					except:
 						self.logger.error('Failed to open column valve')
 						raise
-		if self.instrument.tem.getColumnValvePosition() == 'open':
-			self.logger.info('Column valve is opened')
-		else:
-			self.logger.error('Column valve is closed')
+		time.sleep(0.5)
+		self.isColumnValveInState('open')
 
 	def isTEMinImagingMode(self):
 		self.logger.info('Checking image mode....')

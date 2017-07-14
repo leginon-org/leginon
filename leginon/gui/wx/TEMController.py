@@ -17,7 +17,7 @@ import leginon.gui.wx.ToolBar
 import leginon.gui.wx.Instrument
 
 class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin):
-	icon = 'navigator'
+	icon = 'remote'
 	def __init__(self, *args, **kwargs):
 		leginon.gui.wx.Node.Panel.__init__(self, *args, **kwargs)
 		leginon.gui.wx.Instrument.SelectionMixin.__init__(self)
@@ -26,9 +26,12 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 													'settings',
 													shortHelpString='Settings')
 		self.toolbar.AddSeparator()
-		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ACQUIRE,
-													'acquire',
-													shortHelpString='Acquire')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_LIGHT_ON,
+													'light_on',
+													shortHelpString='Open Column Valves')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_LIGHT_OFF,
+													'light_off',
+													shortHelpString='Close Column Valves')
 		self.toolbar.AddSeparator()
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_RESET_XY, 'xy',
 													shortHelpString='Reset stage X,Y to 0,0')
@@ -57,8 +60,10 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 											id=leginon.gui.wx.ToolBar.ID_SEND_PRESET)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
 											id=leginon.gui.wx.ToolBar.ID_SETTINGS)
-		self.toolbar.Bind(wx.EVT_TOOL, self.onAcquireTool,
-											id=leginon.gui.wx.ToolBar.ID_ACQUIRE)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onLightOnTool,
+											id=leginon.gui.wx.ToolBar.ID_LIGHT_ON)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onLightOffTool,
+											id=leginon.gui.wx.ToolBar.ID_LIGHT_OFF)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onResetXY,
 											id=leginon.gui.wx.ToolBar.ID_RESET_XY)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onResetZ,
@@ -101,15 +106,15 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 	def onSendPresetTool(self,evt):
 		presetname = self.preset_choices.GetStringSelection()
 		args = (presetname,)
-		self._acquisitionEnable(False)
+		self._lightonEnable(False)
 		threading.Thread(target=self.node.uiSendPreset,args=args).start()
 
 	def onSendPresetDone(self):
-		self._acquisitionEnable(True)
+		self._lightonEnable(True)
 
 	def onSetTEMParamDone(self):
 		self.displayPressures()
-		self._acquisitionEnable(True)
+		self._lightonEnable(True)
 
 	def onRefreshDisplay(self,evt):
 		self.displayPressures()
@@ -121,11 +126,19 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		self.sz_pressure.set(pressures)
 		self.szmain.Layout()
 
-	def _acquisitionEnable(self, enable):
-		self.toolbar.Enable(enable)
+	def _lightonEnable(self, enable):
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_LIGHT_ON, enable)
 
-	def onAcquisitionDone(self, evt):
-		self._acquisitionEnable(True)
+	def _lightoffEnable(self, enable):
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_LIGHT_OFF, enable)
+
+	def onLightOnDone(self, evt):
+		self._lightonEnable(True)
+		self._lightoffEnable(True)
+
+	def onLightOffDone(self, evt):
+		self._lightoffEnable(True)
+		self._lightonEnable(True)
 
 	def onResetXY(self, evt):
 		self.node.onResetXY()
@@ -141,9 +154,15 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		dialog.ShowModal()
 		dialog.Destroy()
 
-	def onAcquireTool(self, evt):
-		self._acquisitionEnable(False)
+	def onLightOnTool(self, evt):
+		self._lightonEnable(False)
+		self._lightoffEnable(True)
 		threading.Thread(target=self.node.onOpenColumnValve).start()
+
+	def onLightOffTool(self, evt):
+		self._lightonEnable(True)
+		self._lightoffEnable(False)
+		threading.Thread(target=self.node.onCloseColumnValve).start()
 
 class SettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
