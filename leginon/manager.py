@@ -867,7 +867,7 @@ class Manager(node.Node):
 
 	def sortNodes(self, nodeclasses=[]):
 		allclassnames = noderegistry.getNodeClassNames()
-		classtypes = ['Priority', 'Pipeline', 'Calibrations', 'Utility']
+		classtypes = ['Priority', 'Pipeline', 'Calibrations', 'Utility', 'Finale']
 		sortclasses = {}
 		for classtype in classtypes:
 			sortclasses[classtype] = []
