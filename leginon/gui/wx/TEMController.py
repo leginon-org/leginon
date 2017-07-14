@@ -110,11 +110,16 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		threading.Thread(target=self.node.uiSendPreset,args=args).start()
 
 	def onSendPresetDone(self):
-		self._lightonEnable(True)
+		# Enable both tools for now since we are not refreshing it when the
+		# node is selected.
+		self.enableAll(True)
+
+	def enableAll(self, state):
+		self._lightonEnable(state)
+		self._lightoffEnable(state)
 
 	def onSetTEMParamDone(self):
 		self.displayPressures()
-		self._lightonEnable(True)
 
 	def onRefreshDisplay(self,evt):
 		self.displayPressures()
@@ -132,13 +137,9 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 	def _lightoffEnable(self, enable):
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_LIGHT_OFF, enable)
 
-	def onLightOnDone(self, evt):
-		self._lightonEnable(True)
-		self._lightoffEnable(True)
-
-	def onLightOffDone(self, evt):
-		self._lightoffEnable(True)
-		self._lightonEnable(True)
+	def onIsLightOn(self,status):
+		self._lightonEnable(not status)
+		self._lightoffEnable(status)
 
 	def onResetXY(self, evt):
 		self.node.onResetXY()
@@ -210,7 +211,7 @@ class TEMParameters(wx.StaticBoxSizer):
 	def set(self, values):
 		for name in self.order:
 			try:
-				label = '%5.4f' % (values[name])
+				label = '%6.4e' % (values[name])
 				self.sts[name].SetLabel(label)
 				unitkey = '%s unit' % name
 				self.sts[unitkey].SetLabel(self.unit)
