@@ -69,6 +69,44 @@ class TEMController(node.Node):
 		loc = {'a':0.0}
 		self._toScope('reset alpha',loc)
 
+	def onCloseColumnValve(self):
+		self.setStatus('processing')
+		self.safeCloseColumnValve()
+		self.panel.onSetTEMParamDone()
+		self.setStatus('idle')
+
+	def safeCloseColumnValve(self):
+		# no preset probably means no instrument set.
+		# the scope can be in any state. Better not allowed
+		if not self.hasCurrentPreset():
+			self.panel.enableAll(False)
+			return
+		# check current preset matches microscope
+		if self.isCurrentPresetSet():
+			if self.isColumnValveInState('close', False):
+				self.logger.info('Column valve already closed')
+				self.panel.onIsLightOn(False)
+				return
+			try:
+				self.logger.info('Closing column valve....')
+				self.instrument.tem.setColumnValvePosition('closed')
+			except:
+				self.logger.error('Failed to close column valve')
+				raise
+			time.sleep(0.5)
+			self.panel.onIsLightOn(not self.isColumnValveInState('closed'))
+
+	def isColumnValveInState(self,desired_state='open', display_log=True):
+		current_state = self.instrument.tem.getColumnValvePosition()
+		if self.instrument.tem.getColumnValvePosition() == desired_state:
+			if display_log:
+				self.logger.info('Column valve is %s' % desired_state)
+			return True
+		else:
+			if display_log:
+				self.logger.error('Column valve is %s' % current_state)
+			return False
+
 	def onOpenColumnValve(self):
 		self.setStatus('processing')
 		self.safeOpenColumnValve()
@@ -76,22 +114,30 @@ class TEMController(node.Node):
 		self.setStatus('idle')
 
 	def safeOpenColumnValve(self):
+		# no preset probably means no instrument set.
+		# the scope can be in any state. Better not allowed
+		if not self.hasCurrentPreset():
+			self.panel.enableAll(False)
+			return
 		# check basic instrument mode
 		if self.isTEMinImagingMode():
+			if self.isColumnValveInState('open', False):
+				self.logger.info('Column valve already opened')
+				self.panel.onIsLightOn(True)
+				return
 			# check current preset matches microscope
 			if self.isCurrentPresetSet():
 				# check column vacuum
 				if self.isVacuumReady():
 					# open column valve
 					try:
+						self.logger.info('Opening column valve....')
 						self.instrument.tem.setColumnValvePosition('open')
 					except:
 						self.logger.error('Failed to open column valve')
 						raise
-		if self.instrument.tem.getColumnValvePosition() == 'open':
-			self.logger.info('Column valve is opened')
-		else:
-			self.logger.error('Column valve is closed')
+				time.sleep(0.5)
+				self.panel.onIsLightOn(self.isColumnValveInState('open'))
 
 	def isTEMinImagingMode(self):
 		self.logger.info('Checking image mode....')
@@ -104,15 +150,19 @@ class TEMController(node.Node):
 			return False
 		return True
 
-	def isCurrentPresetSet(self):
+	def hasCurrentPreset(self):
 		self.logger.info('Checking preset....')
 		preset = self.presetsclient.getCurrentPreset()
 		if preset:
 			preset_name = preset['name']
 			self.logger.info('Current preset on record is %s' % (preset_name,))
+			return True
 		else:
 			self.logger.error('No current preset. Please send a preset first')
 			return False
+
+	def isCurrentPresetSet(self):
+		preset = self.presetsclient.getCurrentPreset()
 		preset_temid = preset['tem'].dbid
 		scope_tem = self.instrument.getTEMData()
 		if not scope_tem:

@@ -434,6 +434,6 @@ class Collection(object):
 		if self.player.state() == 'pause':
 			self.setStatus('user input')
 		state = self.player.wait()
-		if state in ('stop', 'stopqueue'):
+		if state in ('stop', 'stopqueue', 'stoptarget'):
 			self.finalize()
 			raise Abort

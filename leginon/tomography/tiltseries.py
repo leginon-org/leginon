@@ -56,6 +56,7 @@ class TiltSeries(object):
 		tilt_series_image_data['label'] = self.node.name
 		tilt_series_image_data['target'] = self.target
 		tilt_series_image_data['emtarget'] = self.emtarget
+		tilt_series_image_data['phase plate'] = self.node.pp_used
 		# TODO: put in seperate data
 		#tilt_series_image_data['shift'] = None
 		tilt_series_image_data['tilt series'] = self.tilt_series_data

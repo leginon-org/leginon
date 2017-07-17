@@ -81,17 +81,30 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		'''use the z position of the target list parent image'''
 		imageref = targetlistdata.special_getitem('image', dereference=False)
 		imageid = imageref.dbid
-		imagedata = self.researchDBID(leginondata.AcquisitionImageData, imageid, readimages=False)
+		# This is the version 0 of the parent when the imagetargetlist was created.
+		imagedata0 = self.researchDBID(leginondata.AcquisitionImageData, imageid, readimages=False)
 
+		targetlist_imagedata = imagedata0
 		# look for a more recent version of this image
-		target = imagedata['target']
-		imquery = leginondata.AcquisitionImageData(target=target)
-		allversions = imquery.query(readimages=False)
-		imagedata = allversions[0]
-
-		scope = imagedata['scope']
-		z = scope['stage position']['z']
-		tem = scope['tem']
+		target = imagedata0['target']
+		if target:
+			#this will go very wrong if the image comes from no target
+			imquery = leginondata.AcquisitionImageData(target=target)
+			allversions = imquery.query(readimages=False)
+			self.logger.info('%d versions found from parent target id %d' % (len(allversions), target.dbid))
+			imagedata = allversions[0]
+		else:
+			imagedata = imagedata0
+		try:
+			scope = imagedata['scope']
+			z = scope['stage position']['z']
+			tem = scope['tem']
+		except:
+			self.logger.warning('Error retrieving z from most recent parent from targetlist of image id=%d' % imagedata0.dbid)
+			scope = imagedata0['scope']
+			z = scope['stage position']['z']
+			tem = scope['tem']
+			imagedata = imagedata0
 		filename = imagedata['filename']
 		self.logger.info('returning %s to z=%.4e of parent image %s' % (tem['name'], z, filename,))
 		self.instrument.setTEM(tem['name'])
@@ -320,6 +333,10 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 				if state in ('stop', 'stopqueue'):
 					self.logger.info('Aborted')
 					break
+				if state in ('stoptarget',):
+					self.logger.info('Aborted this target. continue to next')
+					self.reportTargetStatus(adjustedtarget, 'aborted')
+					self.player.play()
 
 				# end of target repeat loop
 			# next target is not a first-image
@@ -389,9 +406,12 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			infostr += 'Pausing...'
 		elif state == 'stop':
 			infostr += 'Aborting...'
+		elif state == 'stoptarget':
+			infostr += 'Aborting single target...'
 		if infostr:
 			self.logger.info(infostr)
 		self.panel.playerEvent(state)
+
 	def processReferenceTarget(self,presetname):
 		raise NotImplementedError()
 	
