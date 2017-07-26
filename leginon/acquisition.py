@@ -328,14 +328,14 @@ class Acquisition(targetwatcher.TargetWatcher):
 			if presetname not in availablepresets:
 				raise InvalidPresetsSequence('bad preset %s in presets order' % (presetname,))
 
-	def makeTransformTarget(self, target, offset):
+	def makeOffsetTarget(self, target, offset):
 		newtarget = leginondata.AcquisitionImageTargetData(initializer=target)
 		# Fix here about version
 		newtarget['delta row'] = target['delta row'] + offset['y']
 		newtarget['delta column'] = target['delta column'] + offset['x']
 		newtarget['fromtarget'] = target
 		newtarget.insert(force=True)
-		self.logger.info('target adjusted by (%.1f,%.1f) (column, row)' % (offset['x'],offset['y']))
+		self.logger.info('target offset by (%.1f,%.1f) (column, row)' % (offset['x'],offset['y']))
 		return newtarget
 
 	def avoidTargetAdjustment(self,target_to_adjust,recent_target):
@@ -489,7 +489,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 				self.logger.info('target adjusted by (%.1f,%.1f) (column, row)' % (targetdata['delta column']-targetonimage[0],targetdata['delta row']-targetonimage[1]))
 			offset = {'x':self.settings['target offset col'],'y':self.settings['target offset row']}
 			if offset['x'] or offset['y']:
-				targetdata = self.makeTransformTarget(targetdata,offset)
+				targetdata = self.makeOffsetTarget(targetdata,offset)
 
 			# set stage z first before move
 			z = self.moveToLastFocusedStageZ(targetdata)
@@ -575,6 +575,18 @@ class Acquisition(targetwatcher.TargetWatcher):
 			targetdeltarow = targetdata['delta row']
 			targetdeltacolumn = targetdata['delta column']
 			origscope = targetdata['scope']
+			# printing parent scope parameters for debugging
+			if targetdata['image']:
+				parentscope = targetdata['image']['scope']
+			else:
+				parentscope = None
+			if hasattr(origscope,'dbid'):
+				self.logger.info('Using ScopeEMData  id %d for emscope calculation' % origscope.dbid)
+			if hasattr(parentscope,'dbid'):
+				self.logger.info('Parent ScopeEMData id %d' % parentscope.dbid)
+				self.logger.info('target parent image stage position (%.2f, %.2f) um' % (parentscope['stage position']['x']*1e6, parentscope['stage position']['y']*1e6)) 
+			self.logger.info('origscope stage position (%.2f, %.2f) um' % (origscope['stage position']['x']*1e6, origscope['stage position']['y']*1e6)) 
+			# Initialize targetscope
 			targetscope = leginondata.ScopeEMData(initializer=origscope)
 			## copy these because they are dictionaries that could
 			## otherwise be shared (although transform() should be
@@ -1289,6 +1301,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.setImage(numpy.asarray(imagedata['image'], numpy.float32), 'Image')
 
 	def processReferenceTarget(self):
+		# This happens after fixCondition
 		refq = leginondata.ReferenceTargetData(session=self.session)
 		results = refq.query(results=1, readimages=False)
 		if not results:
@@ -1309,6 +1322,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.logger.error(e)
 
 	def fixAlignment(self):
+		# This happens after processReferenceTarget
+		# start alignment manager.  May replace reference in the future
 		evt = event.FixAlignmentEvent()
 		try:
 			original_position = self.instrument.tem.getStagePosition()
