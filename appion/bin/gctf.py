@@ -433,7 +433,7 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 		paramq = appiondata.ApCtfFind4ParamsData()
 		copyparamlist = ['ampcontrast','fieldsize','cs','bestdb','resmin','defstep','shift_phase']
 		if self.params['shift_phase']:
-			copyparamlist.extend(['min_phase_shift','max_phase_shift','phase_search_step’])
+			copyparamlist.extend(['min_phase_shift','max_phase_shift','phase_search_step'])
 			copyparamlist = ('ampcontrast','fieldsize','cs','bestdb','resmin','defstep')
 		for p in copyparamlist:
 			if p in self.params:
