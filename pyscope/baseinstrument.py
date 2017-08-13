@@ -6,6 +6,7 @@ class BaseInstrument(object):
 	capabilities = (
 		{'name': 'SystemTime', 'type': 'property'},
 	)
+	debug = False
 
 	def __init__(self):
 		pass
@@ -29,3 +30,6 @@ class BaseInstrument(object):
 				implemented.append(found)
 		return implemented
 
+	def debug_print(self,message):
+		if self.debug:
+			print 'DEBUG: %s' % (message,)
