@@ -15,6 +15,7 @@ from appionlib import apProject
 #leginon
 from appionlib import appionScript
 from pyami import mem
+from pyami import fileutil
 
 class AppionTiltSeriesLoop(appionScript.AppionScript):
 	#=====================
