@@ -870,7 +870,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			### step 4: decimate/bin particles if specified
 			### binning is last, so we maintain most detail and do not have to deal with binned apix
 			if self.params['bin'] > 1:
-				particle = imagefun.bin2(particle, self.params['bin'])
+				particle = imagefun.bin2(particle, int(self.params['bin']))
 
 			#from scipy.misc import toimage
 			#toimage(particle).show()
@@ -1230,7 +1230,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		self.boxedpartdatas = None
 		### use a radius one pixel less than the boxsize
 		self.edgemap = imagefun.filled_circle((box, box), box/2.0-1.0)
-		binbox = self.boxsize/self.params['bin']
+		binbox = int(self.boxsize/self.params['bin'])
 		self.summedParticles = numpy.zeros((binbox, binbox))
 		## for relion, add relion header
 		if self.params['filetype']=="relion":

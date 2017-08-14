@@ -624,6 +624,7 @@ class Tomography(leginon.acquisition.Acquisition):
 	
 	def processTargetData(self, *args, **kwargs):
 		self.setStatus('waiting')
+		# unlike acquisition, tomography condition need to be fixed per target.
 		self.fixCondition()
 		self.setStatus('processing')
 		preset_name = self.settings['preset order'][-1]

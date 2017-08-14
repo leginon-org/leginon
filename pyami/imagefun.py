@@ -125,7 +125,7 @@ def clip_power(pow,thresh=3):
 
 def filled_sphere(shape, radius, center=None):
 	"""
-	creates a spherical mask of defined radius and center 
+	creates a spherical mask of defined radius and center
 	in an array of the provided shape
 	with value of 0 inside the sphere and 1 outside the sphere
 	"""
@@ -144,7 +144,7 @@ def filled_sphere(shape, radius, center=None):
 
 def filled_circle(shape, radius=None, center=None):
 	"""
-	creates a circle mask of defined radius and center 
+	creates a circle mask of defined radius and center
 	in an array of the provided shape
 	with value of 0 inside the circle and 1 outside the circle
 	"""
@@ -270,7 +270,7 @@ def near_center(shape, blobs, n):
 	'''
 	filter out no more than n blobs that are closest to image center
 	'''
-	
+
 	# create distance mapping
 	imcenter = shape[0]/2, shape[1]/2
 	distmap = {}
@@ -453,7 +453,6 @@ def bin2m(a, factor):
 	oldshape = a.shape
 	newshape = numpy.asarray(oldshape)/factor
 	tmpshape = (newshape[0], factor, newshape[1], factor)
-	f = factor * factor
 	binned = stats.median(stats.median(numpy.reshape(a, tmpshape), 1), 2)
 	return binned
 
@@ -463,11 +462,31 @@ def bin2f(a, factor):
 	'''
 	fft = ffteng.transform(a)
 	fft = numpy.fft.fftshift(fft)
-	half = fft.shape[0]/2
 	xstart = int( fft.shape[0]/2 * (1 - 1.0/factor))
 	xend   = int( fft.shape[0]/2 * (1 + 1.0/factor))
 	ystart = int( fft.shape[1]/2 * (1 - 1.0/factor))
 	yend   = int( fft.shape[1]/2 * (1 + 1.0/factor))
+	#print ("%d:%d  ,  %d:%d\n"%(xstart,xend,ystart,yend,))
+	cutfft = fft[xstart:xend, ystart:yend]
+	cutfft = numpy.fft.fftshift(cutfft)
+	#print cutfft.shape, fft.shape
+	binned = ffteng.itransform(cutfft)/float(factor**2)
+	return binned
+
+def fourier_scale(a, boxsize):
+	'''
+	Scaling in Fourier space
+	'''
+	fft = ffteng.transform(a)
+	fft = numpy.fft.fftshift(fft)
+	initboxsize = max(a.shape)
+	if initboxsize == boxsize:
+		return a
+	factor = initboxsize/float(boxsize)
+	xstart = int( fft.shape[0]/2 - boxsize/2 )
+	xend   = int( fft.shape[0]/2 + boxsize/2 )
+	ystart = int( fft.shape[1]/2 - boxsize/2 )
+	yend   = int( fft.shape[1]/2 + boxsize/2 )
 	#print ("%d:%d  ,  %d:%d\n"%(xstart,xend,ystart,yend,))
 	cutfft = fft[xstart:xend, ystart:yend]
 	cutfft = numpy.fft.fftshift(cutfft)
@@ -708,7 +727,7 @@ Returns:  (bins, r_centers, t_centers)
 	## turn result into 2-D array
 	rt_bins = numpy.asarray(rt_bins)
 	rt_bins.shape = nbins_r, nbins_t
-	
+
 	# interpolate NaN in the array which came from bins with no item
 	for tbin in range(nbins_t):
 		rt = rt_bins[:,tbin]
@@ -737,5 +756,5 @@ def radialAverageImage(a):
 	def radial_value(rho, **kwargs):
 		return numpy.interp(rho, r_center, radial_avg, right=radial_avg[-1])
 
-	return fromRadialFunction(radial_value, a.shape) 
+	return fromRadialFunction(radial_value, a.shape)
 

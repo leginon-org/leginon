@@ -20,9 +20,6 @@ class ScreenCurrentLogger(referencetimer.ReferenceTimer):
 
 		self.start()
 
-	def onTest(self):
-		self.player.play()
-
 	def execute(self, request_data=None):
 		self.setStatus('processing')
 		self.logger.info('handle request')

@@ -92,6 +92,7 @@ class TEM(baseinstrument.BaseInstrument):
 		{'name': 'EnergyFilter', 'type': 'property'},
 		{'name': 'EnergyFilterWidth', 'type': 'property'},
 	)
+	projection_lens_program = 'TEM'
 	def __init__(self):
 		baseinstrument.BaseInstrument.__init__(self)
 		self.config_name = config.getNameByClass(self.__class__)
@@ -285,4 +286,23 @@ class TEM(baseinstrument.BaseInstrument):
 			state = self.getGridLoaderSlotState(n)
 			self.grid_inventory[n] = state
 		return self.grid_inventory
+
+	def setDirectStagePosition(self,value):
+		'''
+		set stage position without correction or checking
+		for move size.
+		'''
+		# equivalent to normal movement by default
+		self.setStagePosition(value)
+
+	def getDiffractionMode(self):
+		# valid values: imaging or diffraction
+		return 'imaging'
+
+	def setDiffractionMode(self):
+		raise NotImplementedError()
+
+	def getVacuumStatus(self):
+		# valid values: ready, off, busy, unknown
+		return 'ready'
 

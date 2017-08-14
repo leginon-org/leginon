@@ -63,6 +63,13 @@ class MainScreenScaleData(Data):
 		)
 	typemap = classmethod(typemap)
 
+class DigitalCameraData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('ccdcamera', InstrumentData),
+		)
+	typemap = classmethod(typemap)
+
 class ReferenceSessionData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
@@ -1320,6 +1327,7 @@ class MosaicTargetMakerSettingsData(SettingsData):
 			('max size', int),
 			('mosaic center', str),
 			('ignore request', bool),
+			('alpha tilt', float),
 		)
 	typemap = classmethod(typemap)
 
@@ -2451,6 +2459,9 @@ class ReferenceSettingsData(SettingsData):
 			('move type', str),
 			('pause time', float),
 			('return settle time', float),
+			('mover', str),
+			('move precision', float),
+			('accept precision', float),
 		)
 	typemap = classmethod(typemap)
 
@@ -2699,6 +2710,12 @@ class AutoFillerSettingsData(ConditionerSettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class TEMControllerSettingsData(SettingsData):
+	def typemap(cls):
+		return SettingsData.typemap() + (
+		)
+	typemap = classmethod(typemap)
+
 class DDinfoKeyData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
@@ -2753,10 +2770,9 @@ class ProjectionSubModeMappingData(Data):
 		)
 	typemap = classmethod(typemap)
 
-class BufferHostData(Data):
+class BufferHostData(DigitalCameraData):
 	def typemap(cls):
-		return Data.typemap() + (
-			('ccdcamera', InstrumentData),
+		return DigitalCameraData.typemap() + (
 			('buffer hostname', str),
 			('buffer base path', str),
 			('disabled', bool),
@@ -2771,3 +2787,12 @@ class BufferFramePathData(InSessionData):
 		)
 	typemap = classmethod(typemap)
 
+class CameraDarkCurrentUpdatedData(Data):
+	'''
+	Log camera software update of dark current reference.
+	'''
+	def typemap(cls):
+		return Data.typemap() + (
+			('hostname', str),
+		)
+	typemap = classmethod(typemap)

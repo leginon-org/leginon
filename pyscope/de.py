@@ -402,3 +402,8 @@ class DE20(DD):
 		psize = 6.4e-6
 		return {'x': psize, 'y': psize}
 
+class DE64(DD):
+	name = 'DE64'
+	def getPixelSize(self):
+		psize = 6.5e-6
+		return {'x': psize, 'y': psize}

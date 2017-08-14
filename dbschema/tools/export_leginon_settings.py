@@ -72,12 +72,16 @@ class SettingsJsonMaker(DataJsonMaker):
 		super(SettingsJsonMaker,self).__init__()
 		self.setSession(sessionname)
 		self.bad_settings_class = []
+		self.setNodeNamePrefix(None)
 
 	def setSession(self,sessionname):
 		r = leginondata.SessionData(name=sessionname).query()
 		if not r:
 			raise ValueError('Session name %s not found' % sessionname)
 		self.session = r[0]
+
+	def setNodeNamePrefix(self,nodename=None):
+		self.node_name_prefix = nodename
 
 	def getSession(self):
 		'''
@@ -117,15 +121,19 @@ class SettingsJsonMaker(DataJsonMaker):
 			if r2:
 				return r2
 
-	def importFocusSequenceSettings(self, allalias):
-		print 'importing Focus Sequence Settings....'
+	def exportFocusSequenceSettings(self, allalias):
+		print 'exporting Focus Sequence Settings....'
 		if 'Focuser' not in allalias.keys():
 			return
 		sequence_names = []
 		focuser_aliases = allalias['Focuser']
 		focuser_aliases.sort()
 		for node_name in (focuser_aliases):
+			if self.node_name_prefix and not node_name.startswith(self.node_name_prefix):
+				continue
 			results = self.researchSettings('FocusSequenceData',node_name=node_name)
+			if not results:
+				continue
 			self.publish(results)
 			for r in results:
 				sequence = r['sequence']
@@ -138,12 +146,13 @@ class SettingsJsonMaker(DataJsonMaker):
 				results = self.researchSettings('FocusSettingData',node_name=node_name,name=seq_name)
 				self.publish(results)
 
-	def importSettingsByClassAndAlias(self,allalias):
+	def exportSettingsByClassAndAlias(self,allalias):
 		unusual_settingsnames = {
-				'AlignZeroLossPeak':None,
+				'AlignZeroLossPeak': 'AlignZLPSettingsData',
 				'MeasureDose':None,
 				'IntensityCalibrator':None,
 				'AutoNitrogenFiller':'AutoFillerSettingsData',
+				'BufferCycler':'BufferCyclerSettingsData',
 				'EM':None,
 				'FileNames':'ImageProcessorSettingsData',
 		}
@@ -159,7 +168,10 @@ class SettingsJsonMaker(DataJsonMaker):
 				print 'importing %s Settings....' % (classname,)
 				# allalias[classname] may have duplicates
 				for node_name in (set(allalias[classname])):
+					if self.node_name_prefix and not node_name.startswith(self.node_name_prefix):
+						continue
 					try:
+						print '...node name: %s' % (node_name)
 						results = self.researchSettings(settingsname,name=node_name)
 					except:
 						if classname not in self.bad_settings_class:
@@ -167,9 +179,9 @@ class SettingsJsonMaker(DataJsonMaker):
 							self.bad_settings_class.append(classname)
 					self.publish(results)
 		# FocusSequence and FocusSettings needs a different importing method
-		self.importFocusSequenceSettings(allalias)
+		self.exportFocusSequenceSettings(allalias)
 
-	def importSettings(self,appname=None):
+	def exportSettings(self,appname=None):
 		'''
 		Import Settings based on launched applications of the session
 		'''
@@ -190,25 +202,35 @@ class SettingsJsonMaker(DataJsonMaker):
 				if r['alias'] not in allalias[r['class string']]:
 					# only keep the first of the multiple settings in the session
 					allalias[r['class string']].append(r['alias'])
-		# import settings
-		self.importSettingsByClassAndAlias(allalias)
+		# export settings
+		self.exportSettingsByClassAndAlias(allalias)
 
 	def run(self, appname=None):
 		source_session = self.getSession()
-		print "****Session %s ****" % (source_session['name'])
-		self.importSettings(appname)
-		self.writeJsonFile()
-		print ''
+		session_name = source_session['name']
+		print "****Session %s ****" % (session_name)
+		self.exportSettings(appname)
+		if appname:
+			jsonfilename = '%s+%s.json' % (session_name,appname)
+		else:
+			jsonfilename = '%s.json' % (session_name)
+		self.writeJsonFile(jsonfilename)
+		print 'saved to %s' % (jsonfilename)
 
 if __name__ == '__main__':
 	import sys
 	if len(sys.argv) < 2:
-		print "Usage: python export_leginon_settings.py <sessionname> <optional partial application name"
+		print "Usage: python export_leginon_settings.py <sessionname> <optional partial application name> <optional node name prefix>"
 		sys.exit()
 	sessionname = sys.argv[1]
-	if len(sys.argv) == 3:
+	if len(sys.argv) >= 3:
 		appname = sys.argv[2]
 	else:
 		appname = None
+	if len(sys.argv) >= 4:
+		nodename = sys.argv[3]
+	else:
+		nodename = None
 	app = SettingsJsonMaker(sessionname)
+	app.setNodeNamePrefix(nodename)
 	app.run(appname)

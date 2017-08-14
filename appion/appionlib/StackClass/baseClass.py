@@ -34,7 +34,7 @@ class StackClass(object):
 		particles numbers MUST start at 1
 		"""
 		particleNumbers = range(first, last+1)
-		apDisplay.printWarning("readParticleChunkFromFile NotImplementedError")
+		#apDisplay.printWarning("no readParticleChunkFromFile; using backup method for this StackClass")
 		return self._readParticleListFromFile(particleNumbers)
 
 	def _writeParticlesToFile(self, particleDataTree):
@@ -84,7 +84,7 @@ class StackClass(object):
 	################################################
 	# These functions are general should NOT have overrides in subClasses
 	################################################
-	def __init__(self, filename, debug=True):
+	def __init__(self, filename, debug=False):
 		self.filename = filename
 		self.debug = debug
 		self.particlesWritten = 0

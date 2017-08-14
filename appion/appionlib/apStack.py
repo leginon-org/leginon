@@ -28,7 +28,7 @@ debug = False
 ####
 
 #===============
-def makeNewStack(oldstack, newstack, listfile=None, remove=False, bad=False):
+def makeNewStack(oldstack, newstack, partlist=None, remove=False, bad=False):
 	"""
 	selects particular particles from a stack
 
@@ -47,11 +47,14 @@ def makeNewStack(oldstack, newstack, listfile=None, remove=False, bad=False):
 	apDisplay.printMsg("creating a new stack\n\t"+newstack+
 		"\nfrom the oldstack\n\t"+oldstack+"\n")
 
-	partlist = emanLstFileToPartList(listfile)
+	if isinstance(partlist, str) and os.path.exists(partlist):
+		listfile = partlist
+		#note: eman particle list files start at 0, appion particle lists start at 1
+		partlist = emanLstFileToPartList(listfile)
 
 	stackTools.createSubStack(oldstack, newstack, partlist, msg=True)
 
-	if bad is True and listfile is not None:
+	if bad is True and partlist is not None:
 		### run only if num bad particles < num good particles
 		newstacknumpart = apFile.numImagesInStack(newstack)
 		oldstacknumpart = apFile.numImagesInStack(oldstack)
@@ -63,7 +66,6 @@ def makeNewStack(oldstack, newstack, listfile=None, remove=False, bad=False):
 		else:
 			apDisplay.printMsg("Rejecting more particles than keeping, not creating a bad stack")
 	return
-
 
 #===============
 def emanLstFileToPartList(listfile):
@@ -127,7 +129,6 @@ def checkDefocPairFromStackId(stackId):
 	# returns True if stack was made with defocal pairs
 	runsindata = getRunsInStack(stackId)
 	return runsindata[0]['stackRun']['stackParams']['defocpair']
-
 
 #===============
 def getStackParticlesFromId(stackid, msg=True):
@@ -577,6 +578,36 @@ def commitSubStack(params, newname=False, centered=False, oldstackparts=None, so
 
 	apDisplay.printMsg("finished")
 	return
+
+def stackPartListToSQLInsertString(stackpartlist, stackid, stackrunid):
+	"""
+	Creates an insert command MySQL using stack particle values
+	
+	designed to have a faster insert into the database
+	insert all particles from one micrograph in one step
+	
+	each dict in the stackpartlist, must contain partnum, mean, and stdev
+	"""
+	sqlstring = ( "INSERT INTO ApStackParticleData ("
+	 + "`REF|ApStackData|stack`, "
+	 + "`REF|ApStackRunData|stackRun`, "
+	 + "`REF|ApParticleData|particle`, "
+	 + "particleNumber, mean, stdev ) VALUES \n" )
+	count = 0
+	#INSERT INTO tbl_name (a,b,c) VALUES(1,2,3),(4,5,6),(7,8,9);
+	for stackpartvals in stackpartlist:
+		if count > 0:
+			sqlstring += ", "
+		count += 1
+		valuestr = "( %d, %d"%(stackid, stackrunid)
+		valuestr += ", %d"%(stackpartvals['particleid'])
+		valuestr += ", %d"%(stackpartvals['particlenum'])
+		valuestr += ", %.8f"%(stackpartvals['mean'])
+		valuestr += ", %.8f"%(stackpartvals['stdev'])
+		valuestr += ")"
+		sqlstring += valuestr
+	sqlstring += ";"
+	return sqlstring
 
 #===============
 def commitMaskedStack(params, oldstackparts, newname=False):

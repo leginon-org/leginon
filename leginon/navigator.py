@@ -441,7 +441,11 @@ class Navigator(node.Node):
 		mag = scope['magnification']
 		tem = scope['tem']
 		ccdcamera = camera['ccdcamera']
-		pixelsize = self.pcal.retrievePixelSize(tem, ccdcamera, mag)
+		try:
+			pixelsize = self.pcal.retrievePixelSize(tem, ccdcamera, mag)
+		except:
+			self.logger.error('Pixel size unknown, assume no error')
+			return 0, 0, 0.0
 		cbin = camera['binning']['x']
 		rbin = camera['binning']['y']
 		rpix = r_error * rbin

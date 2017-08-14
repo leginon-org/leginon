@@ -24,7 +24,11 @@ class TargetHandler(object):
 
 	def handleTransformTargetDoneEvent(self, evt):
 		self.transformedtarget = evt['target']
-		self.logger.info('got back a transformed target')
+		if hasattr(self.transformedtarget,'dbid'):
+			dbidtext = '%d' % self.transformedtarget.dbid
+		else:
+			dbidtext = 'None'
+		self.logger.info('got back a transformed target with id= %s' % dbidtext)
 		self.transformtargetevent.set()
 
 	def requestTransformTarget(self, targetdata):

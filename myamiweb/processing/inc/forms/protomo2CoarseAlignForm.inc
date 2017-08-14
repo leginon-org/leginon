@@ -447,9 +447,12 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		$this->setJobType( 'protomo' );
 		$this->setOutputDirectory( 'protomo_alignments' );
 		if ($_POST['process'] != "Just Show Command"){
-			if (isset($tiltseriesinfos[0]['number'])){
+			if (isset($tiltseriesinfos[0]['number']) and (($_POST['runname'] == 'FIRST_SELECT_A_TILT-SERIES_BELOW') or ($tiltseriesinfos[0]['number'] != $_SESSION['internal_num']))){
 				$num = sprintf('%04d', $tiltseriesinfos[0]['number']);
+				$_SESSION['internal_num'] = $tiltseriesinfos[0]['number'];
 				$_POST['runname'] = 'tiltseries'.$num;
+			}elseif (isset($tiltseriesinfos[0]['number']) and ($_POST['runname'] != 'FIRST_SELECT_A_TILT-SERIES_BELOW')){
+				//nothing
 			}else{
 				$_POST['runname'] = 'FIRST_SELECT_A_TILT-SERIES_BELOW';
 			}
@@ -1025,6 +1028,8 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 				<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2RefineSummary'><b><center>[or Click here to <font size='4'>Go Directly to the Refinement Results</font>] <font size='5'>→</font></center></b></a>";
 				$html .= "
 				<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2BatchSummary&refine=1'><b><center>[Click here to <font size='4'>View Batch Refinement Results</font>] <font size='5'>→</font></center></b></a><br>";
+				$html .= "<br>
+				<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2ReconstructionForm'><b><center>[or Click here to <font size='4'>Go Directly to the Reconstruction Page</font>] <font size='5'>→</font></center></b></a><br>";
 			}
 		}
 		

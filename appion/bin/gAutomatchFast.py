@@ -184,7 +184,7 @@ class gAutomatch(appionLoop2.AppionLoop):
 
 	#=====================
 	def getGautomatchPath(self):
-		exename = 'Gautomatch-v0.53_sm_20_cu7.5_x86_64'
+		exename = 'gautomatch'
 		gautopath = os.path.join(apParam.getAppionDirectory(), 'bin', exename)
 		if not os.path.isfile(gautopath):
 			gautopath = subprocess.Popen("which "+exename, shell=True, stdout=subprocess.PIPE).stdout.read().strip()

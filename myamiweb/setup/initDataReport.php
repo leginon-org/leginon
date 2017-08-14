@@ -23,6 +23,8 @@ require_once("../inc/mysql.inc");
 					  'firstname' => 'Appion-Leginon',
 					  'lastname' => 'Administrator',
 					  'email' => $_POST['email'], 
+					  'noleginon' => 0,
+					  'advanced' => 1,
 					  'REF|GroupData|group' => 1);
 		
 		$anonymousAccount = array('username' => 'anonymous', 
@@ -30,6 +32,8 @@ require_once("../inc/mysql.inc");
 					  'firstname' => 'Public',
 					  'lastname' => 'User',
 					  'email' => $_POST['email'], 
+					  'noleginon' => 1,
+					  'advanced' => 0,
 					  'REF|GroupData|group' => 4);
 		
 		$mysqld = new mysql(DB_HOST, DB_USER, DB_PASS);

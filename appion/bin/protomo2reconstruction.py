@@ -20,12 +20,13 @@ from appionlib import basicScript
 from appionlib import apDisplay
 from appionlib import apProTomo2Aligner
 from appionlib import apProTomo2Prep
+from appionlib import apTomoPicker
 from appionlib.apImage import imagefilter
 
 try:
 	import protomo
 except:
-	apDisplay.printError("Protomo did not get imported. Exitting.")
+	apDisplay.printWarning("Protomo did not get imported. Protomo reconstruction will break if used.")
 
 # Required for cleanup at end
 cwd=os.getcwd()
@@ -88,7 +89,7 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 			help="Actions and order of actions to perform. 1: Reconstruct, 2: CTF correct then reconstruct, 3: Dose compensate then reconstruct, 4: CTF correct then dose compensate then reconstruct, e.g. --reconstruction_actions=2", metavar="int")
 
 		self.parser.add_option("--reconstruction_method", dest="reconstruction_method",  type="int",
-			help="Software to use for reconstructon. 1: Protomo WBP, 2: Tomo3D WBP, 3: Tomo3D SIRT, e.g. --reconstruction_method=2", metavar="int")
+			help="Software to use for reconstructon. 1: Protomo WBP, 2: Tomo3D WBP, 3: Tomo3D SIRT, 4: Stack only e.g. --reconstruction_method=2", metavar="int")
 
 		self.parser.add_option("--recon_map_size_x", dest="recon_map_size_x",  type="int",  default="2048",
 			help="Size of the reconstructed tomogram in the X direction, e.g. --recon_map_size_x=256", metavar="int")
@@ -162,7 +163,25 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 		self.parser.add_option("--defocus_difference", dest="defocus_difference", type="float",  default=250,
 			help="Defocus difference used for strip extraction e.g. --defocus_difference=0.5")
 		
+		self.parser.add_option("--pick_tomogram", dest="pick_tomogram", type="int", default=False,
+			help="Pick the resulting tomogram? Options are: 1 = dogpicker, e.g. --pick_tomogram=1")
 		
+		self.parser.add_option("--dog_particle_diam", dest="dog_particle_diam", type="float",
+			help="Particle diameter to use for DoG lowpassing, in angstroms, +-dog_diam_variance% e.g. --dog_particle_diam=100")
+		
+		self.parser.add_option("--dog_diam_variance", dest="dog_diam_variance", type="float",
+			help="How much the expected particle varies in diameter, in angstroms. Used when making two lowpass filtered tomograms for DoG picking e.g. --dog_diam_variance=20")
+		
+		self.parser.add_option("--dog_max_picks", dest="dog_max_picks", type="int",  default=500,
+			help="Defocus difference used for strip extraction e.g. --dog_max_picks=0.5")
+		
+		self.parser.add_option("--dog_junk_tolerance", dest="dog_junk_tolerance", type="float",
+			help="Defocus difference used for strip extraction e.g. --dog_junk_tolerance=0.5")
+		
+		self.parser.add_option("--dog_lowpass_type", dest="dog_lowpass_type", default='proc3d',
+			help="Defocus difference used for strip extraction e.g. --dog_lowpass_type=0.5")
+		
+	
 	#=====================
 	def checkConflicts(self):
 		pass
@@ -309,7 +328,7 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 		
 		if (self.params['defocus_save_recon'] != 0 and isinstance(self.params['defocus_save_recon'],float)):
 			defocusdir = '%s/defocus_estimation/' % self.params['rundir']
-			os.system("mkdir %s;rm %sdefocus_*" % (defocusdir, defocusdir))
+			os.system("mkdir %s 2>/dev/null;rm %sdefocus_*" % (defocusdir, defocusdir))
 			os.system("touch %sdefocus_%f" % (defocusdir, self.params['defocus_save_recon']))
 			apDisplay.printMsg("Defocus value %f saved to disk." % self.params['defocus_save_recon'])
 		
@@ -599,7 +618,9 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 						stack = np.zeros((len(mrc_list),rotated_dimy,rotated_dimx))
 						for i in range(len(mrc_list)):
 							stack[i,:,:] = mrc.read(mrc_list[i])
-				stack_path = os.path.join(stack_dir_full,self.params['sessionname']+'_'+seriesname+'_stack_ite'+it+'.mrcs')
+				stack_name1 = self.params['sessionname']+'_'+seriesname+'_stack_ite'+it+'_bin1'
+				stack_name2 = '_pxlsz'+str(self.params['pixelsize'])+dose_comp+'.mrcs'
+				stack_path = os.path.join(stack_dir_full,stack_name1+stack_name2)
 				
 				mrc.write(stack,stack_path)
 				
@@ -692,6 +713,18 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 				apDisplay.printMsg("IMOD function \'trimvol\' not found, trying using pyami. If the file is large and your RAM is small this might not end well...")
 				mrc.write(np.rot90(mrc.read(mrc_full)),mrc_full)
 		
+		# DoG picker
+		if (self.params['reconstruction_method'] == 1 or self.params['reconstruction_method'] == 2 or self.params['reconstruction_method'] == 3) and (self.params['pick_tomogram'] == 1):
+			picker_dir = os.path.join(self.params['rundir'],'dog_picker')
+			os.system('mkdir %s 2>/dev/null' % picker_dir)
+			try:
+				tomogram_full_path = mrcn_full
+			except:
+				tomogram_full_path = mrc_full
+			os.system('ln %s %s 2>/dev/null' % (tomogram_full_path, picker_dir))
+			apTomoPicker.dogPicker3D(picker_dir, tomogram_full_path, self.params['dog_particle_diam'], self.params['dog_diam_variance'], self.params['dog_max_picks'], self.params['dog_junk_tolerance'], self.params['dog_lowpass_type'], self.params['pixelsize'], self.params['recon_map_sampling'])
+		
+		# Make external stack dose compensation and binning scripts
 		if self.params['reconstruction_method'] == 4 and self.params['dose_presets'] != "False":
 			#os.system('rm -r %s' % recon_dir)
 			#Create a list of tilts, accumulated dose, and lowpass to be applied for the requested stack
@@ -896,8 +929,11 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 		print "\n%s\n" % (os.path.join(self.params['rundir'],'SPT'))
 		
 		apDisplay.printMsg('Did everything blow up and now you\'re yelling at your computer screen?')
-		apDisplay.printMsg('If so, kindly email Alex at anoble@nysbc.org and include this log file.')
-		apDisplay.printMsg('If everything worked beautifully and you publish it, please use the appropriate citations listed on the Appion webpage! You can also print out all citations by typing: protomo2aligner.py --citations')
+		apDisplay.printMsg('If so, kindly email Alex at anoble@nysbc.org explaining the issue and include this log file.')
+		apDisplay.printMsg('If everything worked beautifully and you publish, please use the appropriate citations listed on the Appion webpage! You can also print out all citations by typing: protomo2aligner.py --citations')
+		f.write('Did everything blow up and now you\'re yelling at your computer screen?\n')
+		f.write('If so, kindly email Alex at anoble@nysbc.org explaining the issue and include this log file.\n')
+		f.write('If everything worked beautifully and you publish, please use the appropriate citations listed on the Appion webpage! You can also print out all citations by typing: protomo2aligner.py --citations\n')
 		print "\n"
 		
 		apProTomo2Aligner.printTips("Reconstruction")

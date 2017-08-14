@@ -259,7 +259,7 @@ class AppionPBS(appionLoop2.AppionLoop):
 			f.write('#SBATCH -N 1\n')
 			f.write('#SBATCH -n %d\n' % (self.params['queue_ppn']))
 			f.write('#SBATCH -t %d:00:00\n' % (self.params['walltime']))
-			f.write('#SBATCH --mem-per-cpu=%dG\n\n' % (self.params['queue_memory'])) # in gigabytes
+			f.write('#SBATCH --mem=%dG\n\n' % (self.params['queue_memory'])) # in gigabytes
 		else:
 			apDisplay.printError('Queue style %s not supported' % (self.params['queue_style']))
 			

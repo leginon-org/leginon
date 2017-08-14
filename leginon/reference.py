@@ -8,11 +8,14 @@
 
 import threading
 import time
+import numpy
 from leginon import leginondata
 import calibrationclient
 import event
+import appclient
 import instrument
 import presets
+import navigator
 import targethandler
 import watcher
 import player
@@ -26,13 +29,18 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 	settingsclass = leginondata.ReferenceSettingsData
 	eventinputs = watcher.Watcher.eventinputs + \
 				  presets.PresetsClient.eventinputs + \
-				  [event.ReferenceTargetPublishEvent]
+				  [event.ReferenceTargetPublishEvent] + \
+				  navigator.NavigatorClient.eventinputs
 	eventoutputs = watcher.Watcher.eventoutputs + \
-					presets.PresetsClient.eventoutputs
+					presets.PresetsClient.eventoutputs \
+					+ navigator.NavigatorClient.eventoutputs
 
 	defaultsettings = {
 		'bypass': True,
 		'move type': 'stage position',
+		'mover': 'presets manager',
+		'move precision': 5e-7,
+		'accept precision': 1e-6,
 		'pause time': 3.0,
 		'return settle time': 2.5,
 	}
@@ -54,12 +62,14 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		}
 
 		self.presets_client = presets.PresetsClient(self)
+		self.navclient = navigator.NavigatorClient(self)
 
 		self.player = player.Player(callback=self.onPlayer)
 		self.panel.playerEvent(self.player.state())
 		self.lock = threading.RLock()
 		self.reference_target = None
 		self.preset_name = None
+		self.navigator_bound = False
 
 		self.last_processed = None
 
@@ -67,6 +77,14 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		if self.__class__ == Reference:
 			print 'isReference'
 			self.start()
+
+	def handleApplicationEvent(self,evt):
+		'''
+		Find a class or its subclass instance bound
+		to this node upon application loading.
+		'''
+		app = evt['application']
+		self.navigator_bound = appclient.getNextNodeThruBinding(app,self.name,'MoveToTargetEvent','Navigator')
 
 	def addWatchFor(self,kwargs):
 		try:
@@ -103,7 +121,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 
 	def getEMTargetData(self,check_preset_name=None):
 		'''
-		Setup EMTargetData using self.reference_target
+		Setup EMTargetData needed by presets manager using self.reference_target
 		'''
 		target_data = self.reference_target
 		if target_data is None:
@@ -145,6 +163,12 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 
 		return em_target_data
 
+	def makeFakeTarget(self):
+		targetdata = leginondata.AcquisitionImageTargetData()
+		for k in self.reference_target.keys():
+			targetdata[k] = self.reference_target[k]
+		return targetdata
+
 	def moveToTarget(self, preset_name):
 		'''
 		Set Preset and EMTarget to scope
@@ -153,7 +177,23 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 
 		self.publish(em_target_data, database=True)
 		self.logger.info('Move to reference target')
-		self.presets_client.toScope(preset_name, em_target_data)
+		if self.settings['mover'] == 'presets manager':
+			self.presets_client.toScope(preset_name, em_target_data)
+		else:
+			if not self.navigator_bound:
+				self.logger.warning('Navigator not bound with MoveToTargetEvent. Use presets manager instead')
+				self.presets_client.toScope(preset_name, em_target_data)
+			else:
+				# Move with navigator
+				precision = self.settings['move precision']
+				accept_precision = self.settings['accept precision']
+				fake_target = self.makeFakeTarget()
+				status = self.navclient.moveToTarget(fake_target, 'stage position', precision, accept_precision, final_imageshift=False, use_current_z=True)
+				if status == 'error':
+					message = 'iterative move failed'
+					raise MoveError(message)
+				self.presets_client.toScope(preset_name)
+		# check results
 		p = self.instrument.tem.StagePosition
 		self.logger.info('Reference target position x: %.2f um, y:%.2f um' % (p['x']*1e6,p['y']*1e6))
 		preset = self.presets_client.getCurrentPreset()
@@ -170,8 +210,12 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		self.last_processed = time.time()
 
 	def moveAndExecute(self, request_data):
+		'''
+		move to reference target, set to the preset in request_data
+		and execute.  Request_data must exist
+		'''
 		pause_time = self.settings['pause time']
-
+		# Moving part
 		preset_name = request_data['preset']
 		self.preset_name = preset_name
 		position0 = self.instrument.tem.StagePosition
@@ -180,8 +224,11 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 			self.declareDrift('stage')
 		except Exception, e:
 			self.logger.error('Error moving to target, %s' % e)
+			self.logger.info('Returning to the original position without execution')
+			self.instrument.tem.StagePosition = position0
+			self.pauseBeforeReturn()
 			return
-
+		# Execution part
 		if pause_time is not None:
 			self.logger.info('Pausing %.1f second before execution' % (pause_time,))
 			time.sleep(pause_time)
@@ -216,21 +263,45 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		self.logger.info('Done processing reference target request')
 
 	def execute(self, request_data):
+		'''
+		Subclass should overwrite this.
+		'''
 		pass
 
+	def onMakeReference(self, request_data=None):
+		self.logger.info('Acquiring image as parent of the reference target...')
+		self.setStatus('processing')
+		self.player.play()
+		try:
+			self.setReferenceTarget()
+		except:
+			self.logger.error('can not set reference target at current position')
+			raise
+		finally:
+			self.panel.playerEvent('stop')
+			self.setStatus('idle')
+			self.logger.info('Done setting reference target')
+
 	def onTest(self, request_data=None):
+		'''
+		Testing with or without reference target.
+		'''
+		# This is different from moveAndExecute
 		self.logger.info('Testing...')
 		self.setStatus('processing')
 		self.player.play()
 
 		preset_name = None
 		self.reference_target = self.getReferenceTarget()
+		# move to reference target with preset
 		if self.reference_target:
 			if not request_data:
 				preset = self.presets_client.getCurrentPreset()
 				if preset:
 					preset_name = preset['name']
 					self.logger.info('Use current preset %s to test' % preset_name)
+				else:
+					self.logger.warning('No current preset. Will not move to reference target')
 			else:
 				if 'preset' not in request_data.keys():
 					self.logger.error('Bad request data')
@@ -243,10 +314,13 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 				except Exception, e:
 					self.logger.error('Error moving to target, %s' % e)
 					return
+			else:
+				self.logger.info('Use current position and instrument state for testing')
+
 			self.preset_name = preset_name
 		else:
 			self.logger.warning('No reference target')
-			self.logger.info('Use current preset and position for testing')
+			self.logger.info('Use current position for testing')
 		pause_time = self.settings['pause time']
 		if pause_time is not None:
 			self.logger.info('Pausing %.1f second before execution' % (pause_time,))
@@ -257,6 +331,76 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 			self.panel.playerEvent('stop')
 			self.setStatus('idle')
 			self.logger.info('Done testing')
+
+	def getImageFilename(self,imagedata):
+		'''
+		Set image filename by timestamp because the image
+		does not come from a target list.
+		'''
+		if imagedata['filename'] is not None:
+			return
+		parts = []
+		parts.append(self.session['name'])
+		nodename = self.name.lower()
+		nodename = '-'.join(nodename.split(' '))
+		parts.append(nodename)
+		time_name = time.strftime('%Y%m%d_%H%M%S', time.localtime())
+		parts.append(time_name)
+		# join them
+		filename = '_'.join(parts)
+		return filename
+
+	def setReferenceTarget(self):
+		'''
+		Set Reference target at current stage position with an image acquired
+		with current preset as the parent.
+		This makes it possible to use navigator move to iteratively move the
+		reference target.
+		'''
+		# acquire an image with current preset
+		preset = self.presets_client.getCurrentPreset()
+		if preset:
+			preset_name = preset['name']
+			self.logger.info('Use current preset %s to make reference parent image and target' % preset_name)
+		else:
+			self.logger.error('Send a preset to scope/camera first.')
+			raise RuntimeError('No preset')
+		emtarget = leginondata.EMTargetData(preset=preset,movetype='stage position')
+		emtarget['image shift'] = preset['image shift']
+		emtarget['beam shift'] = preset['beam shift']
+		emtarget['stage position'] = self.instrument.tem.StagePosition
+		imagedata = self.acquireCorrectedCameraImageData(force_no_frames=True)
+		## convert CameraImageData to AcquisitionImageData
+		dim = imagedata['camera']['dimension']
+		pixels = dim['x'] * dim['y']
+		try:
+			pixeltype = str(imagedata['image'].dtype)
+		except:
+			self.logger.error('array not returned from camera')
+			raise RuntimeError('Parent image for reference target failed to be acquired')
+		filename = self.getImageFilename(imagedata)
+		imagedata = leginondata.AcquisitionImageData(initializer=imagedata, preset=preset, label=self.name, emtarget=emtarget, pixels=pixels, pixeltype=pixeltype, filename=filename)
+		# make reference target on the image
+		drow, dcol = (0,0)
+		targetdata = self.newReferenceTarget(imagedata, drow, dcol)
+		try:
+			self.publish(targetdata, database=True)
+			image_array = imagedata['image']
+			self.setImage(numpy.asarray(image_array, numpy.float32), 'Image')
+		except:
+			raise RuntimeError('Failed to publish reference target')
+
+	def newReferenceTarget(self, image_data, drow, dcol):
+		target_data = leginondata.ReferenceTargetData()
+		target_data['image'] = image_data
+		target_data['scope'] = image_data['scope']
+		target_data['camera'] = image_data['camera']
+		target_data['preset'] = image_data['preset']
+		target_data['grid'] = image_data['grid']
+		target_data['delta row'] = drow
+		target_data['delta column'] = dcol
+		target_data['session'] = self.session
+		return target_data
 
 	def onPlayer(self, state):
 		infostr = ''

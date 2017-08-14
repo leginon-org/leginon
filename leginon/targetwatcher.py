@@ -15,6 +15,7 @@ import targethandler
 import node
 import player
 import time
+import math
 
 class PauseRepeatException(Exception):
 	'''Raised within processTargetData method if the target should be
@@ -80,17 +81,30 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		'''use the z position of the target list parent image'''
 		imageref = targetlistdata.special_getitem('image', dereference=False)
 		imageid = imageref.dbid
-		imagedata = self.researchDBID(leginondata.AcquisitionImageData, imageid, readimages=False)
+		# This is the version 0 of the parent when the imagetargetlist was created.
+		imagedata0 = self.researchDBID(leginondata.AcquisitionImageData, imageid, readimages=False)
 
+		targetlist_imagedata = imagedata0
 		# look for a more recent version of this image
-		target = imagedata['target']
-		imquery = leginondata.AcquisitionImageData(target=target)
-		allversions = imquery.query(readimages=False)
-		imagedata = allversions[0]
-
-		scope = imagedata['scope']
-		z = scope['stage position']['z']
-		tem = scope['tem']
+		target = imagedata0['target']
+		if target:
+			#this will go very wrong if the image comes from no target
+			imquery = leginondata.AcquisitionImageData(target=target)
+			allversions = imquery.query(readimages=False)
+			self.logger.info('%d versions found from parent target id %d' % (len(allversions), target.dbid))
+			imagedata = allversions[0]
+		else:
+			imagedata = imagedata0
+		try:
+			scope = imagedata['scope']
+			z = scope['stage position']['z']
+			tem = scope['tem']
+		except:
+			self.logger.warning('Error retrieving z from most recent parent from targetlist of image id=%d' % imagedata0.dbid)
+			scope = imagedata0['scope']
+			z = scope['stage position']['z']
+			tem = scope['tem']
+			imagedata = imagedata0
 		filename = imagedata['filename']
 		self.logger.info('returning %s to z=%.4e of parent image %s' % (tem['name'], z, filename,))
 		self.instrument.setTEM(tem['name'])
@@ -131,6 +145,11 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			self.logger.info('%d target(s) will be rejected based on type' % len(rejects))
 		#if ignored:
 		#	self.logger.info('%d target(s) will be ignored' % len(ignored))
+		# There may not be good targets but only rejected
+		# or reference targets causing parent_tilt undefined.
+		# define it now regardless.
+		original_position = self.instrument.tem.getStagePosition()
+		parent_tilt = original_position['a']
 		if goodtargets:
 			# pause and abort check before reference and rejected targets are sent away
 			if self.player.state() == 'pause':
@@ -151,15 +170,33 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			if self.settings['use parent tilt']:
 				state1 = leginondata.ScopeEMData()
 				parentimage = newdata.special_getitem('image', True, readimages=False)
-				state1['stage position'] = {'a':parentimage['scope']['stage position']['a']}
-				self.instrument.setData(state1)
+				if parentimage :
+					state1['stage position'] = {'a':parentimage['scope']['stage position']['a']}
+					self.instrument.setData(state1)
+					parent_tilt = state1['stage position']['a']
+					original_position['a'] = parent_tilt
+					self.logger.info('Found parent image stage tilt at %.2f degrees and use it.' % (parent_tilt*180.0/math.pi))
+				else:
+					parent_tilt = original_position['a']
 			# start conditioner
-			self.setStatus('waiting')
-			self.fixCondition()
-			self.setStatus('processing')
-			# This is only for beamfixer now and it does not need preset_name
-			preset_name = None
-			original_position = self.instrument.tem.getStagePosition()
+			condition_status = 'repeat'
+			while condition_status == 'repeat':
+				try:
+					self.setStatus('waiting')
+					self.fixCondition()
+					self.setStatus('processing')
+					condition_status = 'success'
+				except PauseRepeatException, e:
+					self.player.pause()
+					self.logger.error(str(e) + '... Fix it, then press play to repeat target')
+					condition_status = 'repeat'
+				except Exception, e:
+					self.logger.error('Conditioning failed. Continue without it')
+					condition_status = 'abort'
+				self.beep()
+
+			# processReference.  FIX ME, when it comes back, need to move more
+			# accurately than just send the position.
 			if self.settings['wait for reference']:
 				self.setStatus('waiting')
 				self.processReferenceTarget()
@@ -212,6 +249,9 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		#####################################################################
 
 		# process the good ones
+		if self.settings['use parent tilt'] and goodtargets:
+			self.logger.info('Tilting to %.2f degrees.' % (parent_tilt*180.0/math.pi))
+			self.instrument.tem.setDirectStagePosition({'a':parent_tilt})
 		targetliststatus = 'success'
 		self.processGoodTargets(goodtargets)
 
@@ -253,6 +293,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 				# now have processTargetData work on it
 				self.startTimer('processTargetData')
 				try:
+					self.logger.info('Processing target id %d' % adjustedtarget.dbid)
 					process_status = self.processTargetData(adjustedtarget, attempt=attempt)
 				except PauseRestartException, e:
 					self.player.pause()
@@ -293,6 +334,10 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 				if state in ('stop', 'stopqueue'):
 					self.logger.info('Aborted')
 					break
+				if state in ('stoptarget',):
+					self.logger.info('Aborted this target. continue to next')
+					self.reportTargetStatus(adjustedtarget, 'aborted')
+					self.player.play()
 
 				# end of target repeat loop
 			# next target is not a first-image
@@ -362,9 +407,12 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			infostr += 'Pausing...'
 		elif state == 'stop':
 			infostr += 'Aborting...'
+		elif state == 'stoptarget':
+			infostr += 'Aborting single target...'
 		if infostr:
 			self.logger.info(infostr)
 		self.panel.playerEvent(state)
+
 	def processReferenceTarget(self,presetname):
 		raise NotImplementedError()
 	

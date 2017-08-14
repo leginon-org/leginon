@@ -26,11 +26,18 @@ try:
 except ImportError:
 	pass
 
+DEBUG = False
 # Location of next phase plate AutoIt executable
 AUTOIT_EXE_PATH = "C:\\Program Files\\AutoIt3\\nextphaseplate.exe"
 
 # Newer Krios stage needs backlash.
 KRIOS_ADD_STAGE_BACKLASH = True
+KRIOS_ADD_STAGE_ALPHA_BACKLASH = False
+
+# Falcon protector causes certain delays
+HAS_FALCON_PROTECTOR = True
+
+
 # This scale convert beam tilt readout in radian to 
 # Tecnai or TEM Scripting Illumination.RotationCenter value
 # Depending on the version,  this may be 1.0 or closer to 6
@@ -122,7 +129,7 @@ class Tecnai(tem.TEM):
 	def findPresureProps(self):
 		self.pressure_prop = {}
 		gauge_map = {}
-		gauges_to_try = {'column':['PPc1','P4','IGP1'],'buffer':['PIRbf','P1'],'projection':['CCGp','P3']}
+		gauges_to_try = {'column':['IPGco','PPc1','P4','IGP1'],'buffer':['PIRbf','P1'],'projection':['CCGp','P3']}
 		gauges_obj = self.tecnai.Vacuum.Gauges
 		for i in range(gauges_obj.Count):
 			g = gauges_obj.Item(i)
@@ -289,10 +296,10 @@ class Tecnai(tem.TEM):
 			raise RuntimeError('unknown high tension state')
 
 	def getHighTension(self):
-		return float(self.tecnai.Gun.HTValue)
+		return int(round(float(self.tecnai.Gun.HTValue)))
 	
 	def setHighTension(self, ht):
-		self.tecnai.Gun.HTValue = ht
+		self.tecnai.Gun.HTValue = float(ht)
 	
 	def getIntensity(self):
 		intensity = getattr(self.tecnai.Illumination, self.intensity_prop)
@@ -348,6 +355,23 @@ class Tecnai(tem.TEM):
 			raise SystemError
 		
 	def setBeamBlank(self, bb):
+		self._setBeamBlank(bb)
+		# Falcon protector delays the response of the blanker and 
+		# cause it to be out of sync
+		if HAS_FALCON_PROTECTOR:
+			i = 0
+			time.sleep(0.5)
+			if self.getBeamBlank() != bb:
+				if i < 10:
+					time.sleep(0.5)
+					if DEBUG:
+						print 'retry BeamBlank operation'
+					self._setBeamBlank(bb)
+					i += 1
+				else:
+					raise SystemError
+
+	def _setBeamBlank(self, bb):
 		if bb == 'off' :
 			self.tecnai.Illumination.BeamBlanked = 0
 		elif bb == 'on':
@@ -810,6 +834,9 @@ class Tecnai(tem.TEM):
 			raise RuntimeError('_setStagePosition Unknown error')
 		self.waitForStageReady()
 
+	def setDirectStagePosition(self,value):
+		self._setStagePosition(value)
+
 	def getLowDoseStates(self):
 		return ['on', 'off', 'disabled']
 
@@ -1172,6 +1199,7 @@ class Tecnai(tem.TEM):
 			return 'unknown'
 
 	def getGaugePressure(self,location):
+		# value in pascal unit
 		if location not in self.pressure_prop.keys():
 			raise KeyError
 		if self.pressure_prop[location] is None:
@@ -1373,6 +1401,9 @@ class Tecnai(tem.TEM):
 			raise RuntimeError()
 
 	def _unloadCartridge(self):
+		'''
+		FIX ME: Can we specify which slot to unload to ?
+		'''
 		state = self.tecnai.AutoLoader.UnloadCartridge()
 		if state != 0:
 			raise RuntimeError()
@@ -1384,6 +1415,7 @@ class Tecnai(tem.TEM):
 			return 0
 
 	def getGridLoaderSlotState(self, number):
+		# base 1
 		if not self.hasGridLoader():
 			return self.gridloader_slot_states[0]
 		else:
@@ -1402,12 +1434,19 @@ class Tecnai(tem.TEM):
 		"""
 		return self.tecnai.PerformCassetteInventory()
 
+	def getIsEFtem(self):
+		flag = self.tecnai.Projection.LensProgram
+		if flag == 2:
+			return True
+		return False
+
 class Krios(Tecnai):
 	name = 'Krios'
 	use_normalization = True
 	def __init__(self):
 		Tecnai.__init__(self)
 		self.correctedstage = KRIOS_ADD_STAGE_BACKLASH
+		self.corrected_alpha_stage = KRIOS_ADD_STAGE_ALPHA_BACKLASH
 
 	def normalizeProjectionForMagnificationChange(self, new_mag_index):
 		'''
@@ -1418,6 +1457,9 @@ class Krios(Tecnai):
 		pass
 
 	def setStagePosition(self, value):
+		'''
+		Krios setStagePosition
+		'''
 		# pre-position x and y (maybe others later)
 		value = self.checkStagePosition(value)
 		if not value:
@@ -1432,7 +1474,8 @@ class Krios(Tecnai):
 					prevalue[axis] = value[axis] - delta
 			# alpha tilt backlash only in one direction
 			alpha_delta_degrees = 3.0
-			for axis in ('a'):
+			if 'a' in value.keys() and self.corrected_alpha_stage:
+					axis = 'a'
 					prevalue[axis] = value[axis] - alpha_delta_degrees*3.14159/180.0
 			if prevalue:
 				self._setStagePosition(prevalue)
@@ -1444,6 +1487,7 @@ class Halo(Tecnai):
 	Titan Halo has Titan 3 condensor system but side-entry holder.
 	'''
 	name = 'Halo'
+	use_normalization = True
 	def normalizeProjectionForMagnificationChange(self, new_mag_index):
 		'''
 		Overwrite projection lens normalization to do nothing
@@ -1460,6 +1504,8 @@ class Halo(Tecnai):
 
 class EFKrios(Krios):
 	name = 'EF-Krios'
+	use_normalization = True
+	projection_lens_program = 'EFTEM'
 
 class Arctica(Tecnai):
 	name = 'Arctica'

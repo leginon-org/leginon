@@ -82,5 +82,19 @@ def open_if_not_exists(filename):
 	f = os.fdopen(fd, 'r+')
 	return f
 
+def check_exist_one_file(filenames):
+	one_exists = False
+	for filename in filenames:
+		if os.path.exists(filename):
+			one_exists = True
+	if not one_exists:
+		msg = 'please configure at least one of these:  %s' % (filenames,)
+		if sys.platform == 'win32':
+			print msg
+			raw_input('hit return key to exit')
+			sys.exit()
+		else:
+			raise IOError(msg)
+
 if __name__ == '__main__':
 	print getMyFilename()

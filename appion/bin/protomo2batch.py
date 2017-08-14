@@ -1476,6 +1476,7 @@ def defocusEstimaion(tiltseriesnumber, defocus_options):
 	os.chdir(tiltdir)
 	if defocus_options.defocus_tlt == 'original':
 		apDisplay.printMsg("Using the tilt-azimuth found in the original tlt file (as recorded in the database) for Tilt-Series #%s." % tiltseriesnumber)
+		tiltfilename = 'original.tlt'
 	elif defocus_options.defocus_tlt == 'best_bin1or2':
 		try:
 			best_bin1or2=glob.glob('best_bin1or2*')
@@ -1484,10 +1485,18 @@ def defocusEstimaion(tiltseriesnumber, defocus_options):
 			tiltfilename=seriesname.split()[0]+best_bin1or2_iteration+'.tlt'
 			apDisplay.printMsg("Using the tilt-azimuth found in the tlt file from the best binned by 1 or 2 iteration (#%d) for Tilt-Series #%s." % ((best_bin1or2+1), tiltseriesnumber))
 		except IndexError:
-			apDisplay.printWarning("Best w/ bin 1 or 2 iteration not found. Reverting to original tlt file...")
-			apDisplay.printMsg("Using the tilt-azimuth found in the original tlt file (as recorded in the database) for Tilt-Series #%s." % tiltseriesnumber)
-			defocus_options.defocus_tlt = 'original'
-			tiltfilename = 'original.tlt'
+			apDisplay.printWarning("Best w/ bin 1 or 2 iteration not found. Reverting to best tlt file...")
+			try:
+				best=glob.glob('best*')
+				best=int(os.path.splitext(best[0])[1][1:])-1
+				best_iteration="%03d" % best
+				tiltfilename=seriesname.split()[0]+best_iteration+'.tlt'
+				apDisplay.printMsg("Using the tilt-azimuth found in the tlt file from the best iteration (#%d) for Tilt-Series #%s." % ((best+1), tiltseriesnumber))
+			except IndexError:
+				apDisplay.printWarning("Best iteration not found. Reverting to original tlt file...")
+				apDisplay.printMsg("Using the tilt-azimuth found in the original tlt file (as recorded in the database) for Tilt-Series #%s." % tiltseriesnumber)
+				defocus_options.defocus_tlt = 'original'
+				tiltfilename = 'original.tlt'
 	elif defocus_options.defocus_tlt == 'best':
 		try:
 			best=glob.glob('best*')
@@ -2692,11 +2701,11 @@ if __name__ == '__main__':
 	
 	time_end = time.strftime("%Yyr%mm%dd-%Hhr%Mm%Ss")
 	apDisplay.printMsg('Did everything blow up and now you\'re yelling at your computer screen?')
-	apDisplay.printMsg('If so, kindly email Alex at anoble@nysbc.org and include this log file.')
-	apDisplay.printMsg('If everything worked beautifully and you publish it, please use the appropriate citations listed on the Appion webpage! You can also print out all citations by typing: protomo2aligner.py --citations')
+	apDisplay.printMsg('If so, kindly email Alex at anoble@nysbc.org explaining the issue and include this log file.')
+	apDisplay.printMsg('If everything worked beautifully and you publish, please use the appropriate citations listed on the Appion webpage! You can also print out all citations by typing: protomo2aligner.py --citations')
 	log.write('Did everything blow up and now you\'re yelling at your computer screen?\n')
-	log.write('If so, kindly email Alex at anoble@nysbc.org and include this log file.\n')
-	log.write('If everything worked beautifully and you publish it, please use the appropriate citations listed on the Appion webpage! You can also print out all citations by typing: protomo2aligner.py --citations\n')
+	log.write('If so, kindly email Alex at anoble@nysbc.org explaining the issue and include this log file.\n')
+	log.write('If everything worked beautifully and you publish, please use the appropriate citations listed on the Appion webpage! You can also print out all citations by typing: protomo2aligner.py --citations\n')
 	print "\n"
 	apDisplay.printMsg("Closing log file %s\n" % log_file)
 	log.write("\nEnd time: %s" % time_end)

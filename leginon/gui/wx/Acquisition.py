@@ -526,6 +526,13 @@ class Panel(leginon.gui.wx.Node.Panel):
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT_QUEUE, False)
 		self.node.player.pause()
 
+	def onStopTargetTool(self, evt):
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT_QUEUE, False)
+		self.node.player.stoptarget()
+
 	def onStopTool(self, evt):
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, False)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, False)
@@ -551,15 +558,23 @@ class Panel(leginon.gui.wx.Node.Panel):
 			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, False) 
 			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, True)
 			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT_QUEUE, True)
+		elif evt.state == 'stoptarget':
+			# case for stop one target
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, True)
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, True) 
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT_QUEUE, True)
 		elif evt.state == 'stop':
+			# case for stop one target list
 			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, True)
 			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, True) 
 			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
 			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT_QUEUE, True)
 		elif evt.state == 'stopqueue':
+			# case for stop all target lists in queue
 			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, True)
 			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, True) 
-			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, True)
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
 			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT_QUEUE, False)
 
 	def onBrowseImagesTool(self, evt):

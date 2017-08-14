@@ -607,22 +607,26 @@ class CL2D(appionScript.AppionScript):
  		if self.params['classical']:
  			xmippopts += " --classicalMultiref"		
  
- 
  		### use multi-processor command
  		apDisplay.printColor("Using "+str(self.params['nproc'])+" processors!", "green")
  		xmippexe = apParam.getExecPath(self.execFile, die=True)
  		mpiruncmd = self.mpirun+" -np "+str(self.params['nproc'])+" "+xmippexe+" "+xmippopts
  		self.writeXmippLog(mpiruncmd)
  		apParam.runCmd(mpiruncmd, package="Xmipp 3", verbose=True, showcmd=True, logfile="xmipp.std")
+ 		
  		self.params['runtime'] = time.time() - aligntime
  		apDisplay.printMsg("Alignment time: "+apDisplay.timeString(self.params['runtime']))
- 
+  	
  		### post-processing
  		# Create a stack for the class averages at each level
  		Nlevels=glob.glob("level_*")
  		for level in Nlevels:
  			digits = level.split("_")[1]
- 			apParam.runCmd("xmipp_image_convert -i "+level+"/part"+self.params['timestamp']+"*xmd -o part"
+ 			xmipp_sort = apParam.getExecPath("xmipp_image_sort", die=True)
+ 			mpiruncmd = self.mpirun+" -np "+str(self.params['nproc'])+" "+xmipp_sort +" -i "+\
+ 			 			level+"/part"+self.params['timestamp']+"*xmd --oroot "+ level+"/part"+self.params['timestamp']+"sorted"
+ 			apParam.runCmd(mpiruncmd, package="Xmipp 3", verbose=True, showcmd=True, logfile="xmipp.std")
+ 			apParam.runCmd("xmipp_image_convert -i "+level+"/part"+self.params['timestamp']+"sorted*xmd -o part"
  						+self.params['timestamp']+"_level_"+digits+"_.hed", package="Xmipp 3", verbose=True)
  			
  		if self.params['align']:

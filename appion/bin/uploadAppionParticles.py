@@ -88,7 +88,6 @@ class UploadParticles(appionScript.AppionScript):
 			### format: x <tab> y <tab> filename
 			sline = line.strip()
 			cols = sline.split('\t')
-
 			### must have at least 3 columns
 			if len(cols) == 5:
 				partid, xcoord, ycoord, helixnum, filename = cols
@@ -102,8 +101,8 @@ class UploadParticles(appionScript.AppionScript):
 
 			### check to make sure our x,y are integers, if not skip to next line in file
 			try:
-				xcoord = int(xcoord)
-				ycoord = int(ycoord)
+				xcoord = int(float(xcoord))
+				ycoord = int(float(ycoord))
 			except ValueError:
 				sys.stderr.write("!")
 				continue

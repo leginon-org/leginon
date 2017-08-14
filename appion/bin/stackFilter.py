@@ -2,8 +2,6 @@
 
 #python
 import os
-import shutil
-import sys
 #appion
 from appionlib import appionScript
 from appionlib import apStack
@@ -26,7 +24,7 @@ class subStackScript(appionScript.AppionScript):
 			help="maximum Y value")
 		self.parser.add_option("--keep-above", dest="keepabove", default=False,
 			action="store_true", help="keep particles above instead of below")
-		
+
 	#=====================
 	def checkConflicts(self):
 		if self.params['stackid'] is None:
@@ -37,7 +35,7 @@ class subStackScript(appionScript.AppionScript):
 			apDisplay.printError("new stack name was not defined")
 		if self.params['minx'] is None or self.params['miny'] is None or self.params['maxx'] is None or self.params['maxy'] is None:
 			apDisplay.printError("Please define all minx, miny, maxx, maxy")
-			
+
 	#=====================
 	def setRunDir(self):
 		stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
@@ -48,44 +46,47 @@ class subStackScript(appionScript.AppionScript):
 	#=====================
 	def start(self):
 		stackparts = apStack.getStackParticlesFromId(self.params['stackid'])
-		
+
 		stackdata = apStack.getOnlyStackData(self.params['stackid'])
 		newname = stackdata['name']
-		
+
 		oldstack = os.path.join(stackdata['path']['path'], stackdata['name'])
 		newstack = os.path.join(self.params['rundir'], newname)
 
-		# calculate slop and intercept from the four points given	
+		# calculate slop and intercept from the four points given
 		slope = (self.params['maxy'] - self.params['miny']) / (self.params['maxx'] - self.params['minx'])
 		intercept = self.params['miny'] - (slope*self.params['minx'])
-		
+
 #		print slope
 #		print intercept
-		
+
 		numparticles = 0
-		
+
 		self.params['keepfile'] = os.path.join(self.params['rundir'], "keepfile-"+self.timestamp+".list")
 		f=open(self.params['keepfile'],'w')
-		
+		keeplist = []
 		for stackpart in stackparts:
 			#print str(stackpart['particleNumber'])+","+ str(stackpart['mean'])+","+str(stackpart['stdev'])
 			if stackpart['mean'] > self.params['minx'] and stackpart['mean'] < self.params['maxx']:
 				#print str(stackpart['particleNumber'])+","+ str(stackpart['mean'])+","+str(stackpart['stdev'])
-				calcY = slope*stackpart['mean']+intercept 
+				calcY = slope*stackpart['mean']+intercept
 				if (calcY >= stackpart['stdev'] and self.params['keepabove'] is not True) or \
 					(calcY <= stackpart['stdev'] and self.params['keepabove'] is True):
-					emanpartnum = stackpart['particleNumber']-1
-					f.write('%i\n' % emanpartnum)
+					partnum = int(stackpart['particleNumber'])
+					#eman numbering starting at zero
+					f.write('%d\n'%(partnum-1))
+					#appion numbering starting at one
+					keeplist.append(partnum)
 					numparticles+=1
-					
+
 		f.close()
 		self.params['description'] +=(
-				(" ... %d particle substack of stackid %d" 
+				(" ... %d particle substack of stackid %d"
 				 % (numparticles, self.params['stackid']))
 			)
 
 		#create the new sub stack
-		apStack.makeNewStack(oldstack, newstack, self.params['keepfile'], bad=True)
+		apStack.makeNewStack(oldstack, newstack, keeplist, bad=True)
 		if not os.path.isfile(newstack):
 			apDisplay.printError("No stack was created")
 		apStack.commitSubStack(self.params, newname, oldstackparts=stackparts)
