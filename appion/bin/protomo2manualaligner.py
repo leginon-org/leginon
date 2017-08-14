@@ -38,6 +38,12 @@ class ProTomo2ManualAligner(basicScript.BasicScript):
 		self.parser.add_option('-R', '--rundir', dest='rundir', help="Path of run directory")
 		
 		self.parser.add_option('--iteration', dest='iteration', help="Iteration to run manual alignment on. Either an integer > 0, 'Coarse', or 'Original'.")
+
+		self.parser.add_option("--image_fraction", dest="image_fraction", type="float",  default="0.65",
+			help="Central fraction of the tilt images that will be samples for manual alignment, e.g. --image_fraction=0.5", metavar="float")
+		
+		self.parser.add_option("--sampling", dest="sampling", type="int",  default="4",
+			help="Tilt image sampling factor for manual alignment, e.g. --image_fraction=8", metavar="int")
 		
 		self.parser.add_option("--citations", dest="citations", action='store_true', help="Print citations list and exit.")
 		
@@ -117,10 +123,10 @@ class ProTomo2ManualAligner(basicScript.BasicScript):
 		random_mrc=mrc.read(image_list[1])
 		dimx=len(random_mrc[0])
 		dimy=len(random_mrc[1])
-		manual_x_size = apProTomo2Aligner.nextLargestSize(int(0.65*dimx)+1)
-		manual_y_size = apProTomo2Aligner.nextLargestSize(int(0.65*dimy)+1)
+		manual_x_size = apProTomo2Aligner.nextLargestSize(int(self.params['image_fraction']*dimx)+1)
+		manual_y_size = apProTomo2Aligner.nextLargestSize(int(self.params['image_fraction']*dimy)+1)
 		os.system('cp %s %s' % (paramfilename_full, manualparam))
-		os.system("sed -i '/AP sampling/c\ S = 4' %s" % manualparam)
+		os.system("sed -i '/AP sampling/c\ S = %d' %s" % (self.params['sampling'], manualparam))
 		os.system("sed -i '/AP orig window/c\ W = { %d, %d }' %s" % (manual_x_size, manual_y_size, manualparam))
 		os.system("sed -i '/preprocessing/c\ preprocessing: false' %s" % manualparam)
 		os.system("sed -i '/width/c\     width: { %d, %d }' %s" % (manual_x_size, manual_y_size, manualparam))
@@ -140,11 +146,9 @@ class ProTomo2ManualAligner(basicScript.BasicScript):
 		apProTomo2Aligner.printTips("Alignment")
 		
 		apDisplay.printMsg('Did everything blow up and now you\'re yelling at your computer screen?')
-<<<<<<< HEAD
 		apDisplay.printMsg('If so, kindly email Alex at anoble@nysbc.org and include this log file.')
-=======
 		apDisplay.printMsg('If so, kindly email Alex at anoble@nysbc.org explaining the issue and include this log file.')
->>>>>>> c72a4fabafee24e37ab291805391ed2edf26ee21
+		apDisplay.printMsg('If so, kindly email Alex at anoble@nysbc.org explaining the issue and include this log file.')
 		apDisplay.printMsg('If everything worked beautifully and you publish, please use the appropriate citations listed on the Appion webpage! You can also print out all citations by typing: protomo2manualaligner.py --citations')
 		
 		

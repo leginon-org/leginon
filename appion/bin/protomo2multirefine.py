@@ -723,7 +723,7 @@ def parseOptions():
 	parser.add_option("--restart_from_run", dest="restart_from_run",  default='',
 		help="Run name (if in same Output directory) or full path (if not in same Output directory) of previously Refined Appion-Protomo run from which you wish to restart the Refinement using the current, new Run name and/or Output directory e.g. --restart_from_run=tiltseries0002")
 	
-	parser.add_option("--restart_from_iteration", dest="restart_from_iteration",  type="int",  default=0,
+	parser.add_option("--restart_from_iteration", dest="restart_from_iteration",  default=0,
 		help="Refinement iteration of specified previously Refined Appion-Protomo run from which you would like to restart the Refinement, e.g. --restart_from_iteration=2", metavar="int")
 	
 	parser.add_option("--link", dest="link",  default="False",
@@ -856,47 +856,20 @@ if __name__ == '__main__':
 		restart_seriesname = seriesname + restart_seriesnumber
 		restart_tlt_file = restart_path + '/' + restart_seriesname + '.tlt'
 		if os.path.exists(restart_tlt_file):
-<<<<<<< HEAD
-			apDisplay.printMsg("Restarting Refinement from %s Iteration %d..." % (os.path.basename(restart_path), options.restart_from_iteration))
-			os.system('cp %s %s' % (restart_tlt_file, tiltfilename_full))
-			os.system('cp -r %s %s' % (os.path.join(restart_path,'raw'), rundir))
-			os.system('cp -r %s %s 2>/dev/null' % (os.path.join(restart_path,'media','dose_compensation'), os.path.join(rundir,'media')))
-=======
 			apDisplay.printMsg("Restarting Refinement from %s Iteration %d" % (os.path.basename(restart_path), options.restart_from_iteration))
 			os.system('mkdir %s; cp %s %s' % (rundir, restart_tlt_file, tiltfilename_full))
 			os.system('mkdir -p %s/raw/original/; ln %s/* %s/raw/ 2>/dev/null; ln %s/original/* %s/raw/original/' % (rundir, os.path.join(restart_path,'raw'), rundir, os.path.join(restart_path,'raw'), rundir))
 			os.system('cp -r %s %s 2>/dev/null' % (os.path.join(restart_path,'media','dose_compensation'), os.path.join(rundir,'media')))
 			os.system('mkdir %s/defocus_estimation/; cp -r %s/defocus_estimation/* %s/defocus_estimation/ 2>/dev/null' % (rundir, restart_path, rundir))
->>>>>>> c72a4fabafee24e37ab291805391ed2edf26ee21
+			apDisplay.printMsg("Restarting Refinement from %s Iteration %d" % (os.path.basename(restart_path), options.restart_from_iteration))
+			os.system('mkdir %s; cp %s %s' % (rundir, restart_tlt_file, tiltfilename_full))
+			os.system('mkdir -p %s/raw/original/; ln %s/* %s/raw/ 2>/dev/null; ln %s/original/* %s/raw/original/' % (rundir, os.path.join(restart_path,'raw'), rundir, os.path.join(restart_path,'raw'), rundir))
+			os.system('cp -r %s %s 2>/dev/null' % (os.path.join(restart_path,'media','dose_compensation'), os.path.join(rundir,'media')))
+			os.system('mkdir %s/defocus_estimation/; cp -r %s/defocus_estimation/* %s/defocus_estimation/ 2>/dev/null' % (rundir, restart_path, rundir))
 			os.system('touch %s/restarted_from_%s_iteration_%d' % (rundir, os.path.basename(restart_path), options.restart_from_iteration))
 		else:
 			apDisplay.printError("Restart Refinement Iteration not found! Aborting Refinement!")
 			sys.exit()
-<<<<<<< HEAD
-	
-	#Different starting tilt files
-	if options.starting_tlt_file == "Coarse_Iter_1":
-		coarse1_tlt_file = 'coarse_'+seriesname+'.tlt'
-		coarse1_tlt_filefull = rundir+'/'+coarse1_tlt_file
-		os.system('cp %s %s' % (coarse1_tlt_filefull, tiltfilename_full))
-	elif options.starting_tlt_file == "Coarse_Iter_2":
-		coarse2_tlt_file = 'coarse_'+seriesname+'_iter2.tlt'
-		coarse2_tlt_filefull = rundir+'/'+coarse2_tlt_file
-		os.system('cp %s %s' % (coarse2_tlt_filefull, tiltfilename_full))
-	elif options.starting_tlt_file == "Manual":
-		manual_tlt_file = 'manual_'+seriesname+'.tlt'
-		manual_tlt_filefull = rundir+'/'+manual_tlt_file
-		os.system('cp %s %s' % (manual_tlt_filefull, tiltfilename_full))
-	elif options.starting_tlt_file == "More_Manual":
-		manual_tlt_file = 'more_manual_'+seriesname+'.tlt'
-		manual_tlt_filefull = rundir+'/'+manual_tlt_file
-		os.system('cp %s %s' % (manual_tlt_filefull, tiltfilename_full))
-	elif options.starting_tlt_file == "Initial":
-		original_tlt_file = rundir+'/'+'original.tlt'
-		os.system('cp %s %s' % (original_tlt_file, tiltfilename_full))
-	else:
-		pass
-=======
 	else:
 		#Different starting tilt files
 		if options.starting_tlt_file == "Coarse_Iter_1":
@@ -911,8 +884,12 @@ if __name__ == '__main__':
 			manual_tlt_file = 'manual_'+seriesname+'.tlt'
 			manual_tlt_filefull = rundir+'/'+manual_tlt_file
 			os.system('cp %s %s' % (manual_tlt_filefull, tiltfilename_full))
-		elif options.starting_tlt_file == "More_Manual":
+		elif (options.starting_tlt_file == "More_Manual") or (options.starting_tlt_file == "MoreManual"):
 			manual_tlt_file = 'more_manual_'+seriesname+'.tlt'
+			if not os.path.isfile(manual_tlt_file):
+				apDisplay.printWarning("%s file not found," % manual_tlt_file)
+				manual_tlt_file = 'more_manual_coarse_'+seriesname+'.tlt'
+				apDisplay.printWarning("Switching to %s" % manual_tlt_file)
 			manual_tlt_filefull = rundir+'/'+manual_tlt_file
 			os.system('cp %s %s' % (manual_tlt_filefull, tiltfilename_full))
 		elif options.starting_tlt_file == "Initial":
@@ -920,7 +897,6 @@ if __name__ == '__main__':
 			os.system('cp %s %s' % (original_tlt_file, tiltfilename_full))
 		else:
 			pass
->>>>>>> c72a4fabafee24e37ab291805391ed2edf26ee21
 	
 	#Generate new individual commands
 	thicknesses = options.thicknesses.split(',')
@@ -942,8 +918,6 @@ if __name__ == '__main__':
 				elif key == 'description':
 					new_description = "\"%s\"" % options.__dict__[key]
 					input_command += '--description=%s ' % new_description
-<<<<<<< HEAD
-=======
 				elif key == 'restart_from_run':
 					pass
 				elif key == 'restart_from_iteration':
@@ -953,7 +927,6 @@ if __name__ == '__main__':
 						input_command += '--starting_tlt_file=My_tlt_file '
 					else:
 						input_command += '--%s=%s ' % (key, options.__dict__[key])
->>>>>>> c72a4fabafee24e37ab291805391ed2edf26ee21
 				else:
 					input_command += '--%s=%s ' % (key, options.__dict__[key])
 		alignment_commands.append(input_command)
@@ -961,13 +934,8 @@ if __name__ == '__main__':
 	#Set up new directories
 	apDisplay.printMsg("Setting up directories for runs with differing thicknesses...")
 	for new_rundir in new_rundirs:
-<<<<<<< HEAD
-		os.system('mkdir -p %s/raw/original/ 2>/dev/null; ln %s/raw/original/* %s/raw/original/ 2>/dev/null; cp %s/raw/* %s/raw/ 2>/dev/null; cp %s %s/%s; ln %s/restarted_from_* %s 2>/dev/null; mkdir %s/defocus_estimation/; cp -r %s/defocus_estimation/* %s/defocus_estimation/' % (new_rundir, rundir, new_rundir, rundir, new_rundir, tiltfilename_full, new_rundir, tiltfilename, rundir, new_rundir, new_rundir, rundir, new_rundir))
-	
-=======
 		os.system('mkdir -p %s/raw/original/ 2>/dev/null; ln %s/raw/original/* %s/raw/original/ 2>/dev/null; cp %s/raw/* %s/raw/ 2>/dev/null; cp %s %s/%s; ln %s/restarted_from_* %s 2>/dev/null; mkdir %s/defocus_estimation/; cp -r %s/defocus_estimation/* %s/defocus_estimation/ 2>/dev/null' % (new_rundir, rundir, new_rundir, rundir, new_rundir, tiltfilename_full, new_rundir, tiltfilename, rundir, new_rundir, new_rundir, rundir, new_rundir))
 		
->>>>>>> c72a4fabafee24e37ab291805391ed2edf26ee21
 	#If restart is also requested, delete the dummy directory
 	if (options.restart_from_run != '' and options.restart_from_iteration > 0):
 		if os.path.exists(options.restart_from_run):
@@ -977,11 +945,8 @@ if __name__ == '__main__':
 		else:
 			apDisplay.printError("It's logically impossible to reach this statement.")
 			sys.exit()
-<<<<<<< HEAD
 		os.system("ls %s" % restart_path)
-=======
 		os.system('rm -rf %s' % rundir)
->>>>>>> c72a4fabafee24e37ab291805391ed2edf26ee21
 	
 	#Run refinements
 	apDisplay.printMsg("\033[1m|------------------------------------------------|\033[0m")

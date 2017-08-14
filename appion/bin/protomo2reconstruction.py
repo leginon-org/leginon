@@ -931,9 +931,6 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 		apDisplay.printMsg('Did everything blow up and now you\'re yelling at your computer screen?')
 		apDisplay.printMsg('If so, kindly email Alex at anoble@nysbc.org explaining the issue and include this log file.')
 		apDisplay.printMsg('If everything worked beautifully and you publish, please use the appropriate citations listed on the Appion webpage! You can also print out all citations by typing: protomo2aligner.py --citations')
-		f.write('Did everything blow up and now you\'re yelling at your computer screen?\n')
-		f.write('If so, kindly email Alex at anoble@nysbc.org explaining the issue and include this log file.\n')
-		f.write('If everything worked beautifully and you publish, please use the appropriate citations listed on the Appion webpage! You can also print out all citations by typing: protomo2aligner.py --citations\n')
 		print "\n"
 		
 		apProTomo2Aligner.printTips("Reconstruction")

@@ -482,7 +482,7 @@ class Protomo2CoarseAlignSummary extends BasicLayoutForm
 			$html .= "<br></br>
 				<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2CoarseAlignForm'><b><center><font size='5'>←</font> [Click here to go back to <font size='4'>Coarse Alignment</font>]</center></b></a>";
 			$html .= "<br></br><b><center>[If you wish to manually align the (1st) Coarse Alignment, run the following command:</b><br><br>
-				/usr/bin/python `which protomo2manualaligner.py` --rundir=$outdir/$runname/ --tiltseries=$tiltseries --iteration=Coarse<br><br>
+				/usr/bin/python `which protomo2manualaligner.py` --rundir=$outdir/$runname/ --tiltseries=$tiltseries --iteration=Coarse --sampling=4 --image_fraction=0.65<br><br>
 				<b>and then choose 'More Manual' as the starting tilt file in Refinement.]</center></b><br>";
 		}
 		
