@@ -24,7 +24,8 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 	"""
 	appion Loop function that
 	CTFFIND 4 was written by Alexis Rohou.
-	It is a rewrite of CTFFIND 3, written by Nikolaus Grigorieff.
+	Appion is Compatible with CTFFIND version 4.1.5
+	http://emg.nysbc.org/redmine/projects/appion/wiki/Package_executable_alias_name_in_Appion
 	to estimate the CTF in images
 	"""
 
