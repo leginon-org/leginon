@@ -35,7 +35,7 @@ RUN sed -i.bak 's/max_allowed_packet = [0-9]*M/max_allowed_packet = 24M/' /etc/n
 #RUN dnf -y upgrade && dnf -y install mozilla-adblockplus firefox dbus && dnf -y clean all
 RUN dbus-uuidgen > /var/lib/dbus/machine-id
 RUN pip install --upgrade pip
-RUN pip install joblib pyfftw3 fs==0.5.4 scikit-learn
+RUN pip install joblib pyfftw3 fs==0.5.4 scikit-learn==0.18.2
 RUN python -c 'from sklearn import svm' # test for function
 
 RUN updatedb
