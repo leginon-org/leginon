@@ -10,13 +10,12 @@ import cPickle
 import glob
 #appion
 from appionlib import apDisplay
-from appionlib import apDatabase
 from appionlib import apImage
 from appionlib import apParam
-from appionlib import apProject
 from appionlib import fileScript
 #leginon
 from pyami import mem, mrc
+from pyami import fileutil
 
 class FileImageData(dict):
 	pass
@@ -758,7 +757,7 @@ class FileLoop(fileScript.FileScript):
 			if count % 10 == 0:
 				sys.stderr.write(".")
 			skip, reason = self.skipTestOnImage(imgdata)
-			imgname = imgdata['filename']
+			#imgname = imgdata['filename']
 			if skip is True:
 				if reason == 'reproc':
 					reproccount += 1
