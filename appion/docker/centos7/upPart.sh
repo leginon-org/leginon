@@ -15,7 +15,7 @@ dogPicker.py \
   --no-rejects --no-wait --continue --pdiam=150 --lpval=0 --hpval=0 \
   --medianval=2 --pixlimit=4 --binval=4 --planereg --invert --minthresh=0.35 \
   --maxthresh=2.5 --maxpeaks=1500 --peaktype=centerofmass --maxsize=1.0 \
-  --overlapmult=1.5 --expid=1 --jobtype=dogpicker
+  --overlapmult=1.5 --expid=1 --jobtype=dogpicker --parallel
 
 selectionId=1 #manually picked
 selectionId=2 #dogPicker
