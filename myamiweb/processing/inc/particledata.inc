@@ -1182,6 +1182,7 @@ class particledata {
 			."c.`graph2` , "
 			."c.`graph3` , "
 			."c.`graph4` , "
+			."c.`localplot` , "
 			."c.`confidence_30_10` , "
 			."c.`confidence_5_peak` , "
 			."c.`resolution_80_percent` , "
