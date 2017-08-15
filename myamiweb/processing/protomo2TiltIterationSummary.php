@@ -134,15 +134,7 @@ if (isset($rec_gif_files[0])) {
         $html .= "<center><b>Depiction Reconstruction Video for Refinement Iteration ".$iter." either failed to generate, is still processing, or wasn't requested.</b></center>";
 }
 
-<<<<<<< Updated upstream
-<<<<<<< HEAD
-$html .= '<a href="runAppionLoop.php?expId='.$_GET['expId'].'&form=Protomo2ReconstructionForm&rundir='.$outdir.'&runname='.$runname.'&iter='.$iter.'&tiltseries='.$tiltseries.'" target="_blank"><b><center>[Click here to <font size="4">Reconstruct</font> from this iteration] →</center></b></a><br><br>';
-=======
 //$html .= '<a href="runAppionLoop.php?expId='.$_GET['expId'].'&form=Protomo2ReconstructionForm&rundir='.$outdir.'&runname='.$runname.'&iter='.$iter.'&tiltseries='.$tiltseries.'" target="_blank"><b><center>[Click here to <font size="4">Reconstruct</font> from this iteration] →</center></b></a><br><br>';
->>>>>>> c72a4fabafee24e37ab291805391ed2edf26ee21
-=======
-//$html .= '<a href="runAppionLoop.php?expId='.$_GET['expId'].'&form=Protomo2ReconstructionForm&rundir='.$outdir.'&runname='.$runname.'&iter='.$iter.'&tiltseries='.$tiltseries.'" target="_blank"><b><center>[Click here to <font size="4">Reconstruct</font> from this iteration] →</center></b></a><br><br>';
->>>>>>> Stashed changes
 $html .= "<b><center>[If you wish to manually align from the this alignment iteration, run the following command:</b><br><br>
 	/usr/bin/python `which protomo2manualaligner.py` --rundir=$outdir/$runname/ --tiltseries=$tiltseries --iteration=$iter<br><br>
 	<b>and then use the 'Restart Refinement from Run' option and input as iteration: MoreManual]</center></b><br>";
