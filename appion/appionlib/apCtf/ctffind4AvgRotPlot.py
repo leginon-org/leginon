@@ -141,7 +141,7 @@ def createPlot(avgrotfile):
 	#pyplot.plot(xdatasq, datasets[5], label='unsure')
 	pyplot.xlim(xmin=xdatasq[0], xmax=1/maxResolutionToShow**2)
 	pyplot.ylim(ymin=-0.1, ymax=1.1)
-	pyplot.legend(alpha=0.5)
+	pyplot.legend()
 
 	setPyPlotXLabels(xdatasq, maxloc=1/maxResolutionToShow**2, square=True)
 	pyplot.savefig(output, format="png", dpi=300, orientation='landscape', pad_inches=0.0)
