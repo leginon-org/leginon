@@ -19,6 +19,7 @@ from appionlib import apInstrument
 from appionlib import apDDprocess
 from appionlib.apCtf import ctfdb
 from appionlib.apCtf import ctfinsert
+from appionlib.apCtf import ctffind4AvgRotPlot
 
 class ctfEstimateLoop(appionLoop2.AppionLoop):
 	"""
@@ -64,7 +65,9 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			action="store_true", help="Use best amplitude contrast and astig difference from database")
 		self.parser.add_option("--phaseplate", "--phase_plate", dest="shift_phase", default=False,
 			action="store_true", help="Find additionalphase shift")
-
+		self.parser.add_option("--exhaust", "--exhaustive-search", dest="exhaustiveSearch", default=False,
+			action="store_true", help="Conduct an exhaustive search of the astigmatism of the CTF")
+		
 	#======================
 	def checkConflicts(self):
 		if self.params['resmin'] > 50.0:
@@ -133,7 +136,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			return True
 
 	def getPhaseParamValue(self):
-			return self.getYesNoParamValue('shift_phase')
+		return self.getYesNoParamValue('shift_phase')
 
 	def getYesNoParamValue(self, key):
 		phaseparam = 'no'
@@ -145,6 +148,8 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		return 'no'
 
 	def getExhaustiveAstigSearchValue(self):
+		if self.params['exhaustiveSearch'] is True:
+			return 'yes'
 		return 'no'
 
 	def getRestrainAstigValue(self):
@@ -363,6 +368,12 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		shutil.move(inputparams['output'], os.path.join(self.powerspecdir, inputparams['output']))
 		self.ctfvalues['graph1'] = outputjpg
 
+		##convert avgrot file to a PNG
+		avgrotfile = apDisplay.short(imgdata['filename'])+"-pow_avrot.txt"
+		outputpng = ctffind4AvgRotPlot.createPlot(avgrotfile)
+		shutil.move(outputpng, os.path.join(self.powerspecdir, outputpng))
+		self.ctfvalues['graph2'] = outputpng
+		
 		#apFile.removeFile(inputparams['input'])
 
 		return
