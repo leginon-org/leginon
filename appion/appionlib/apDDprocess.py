@@ -194,15 +194,8 @@ class DirectDetectorProcessing(object):
 			apDisplay.printWarning('No alignment log file %s found for thresholding drift' % logfile)
 			return False
 		positions = ddinfo.readPositionsFromAlignLog(logfile)
-		# place holder for first frame shift duplication
-		shifts = [None,]
-		for p in range(len(positions)-1):
-			shift = math.hypot(positions[p][0]-positions[p+1][0],positions[p][1]-positions[p+1][1])
-			shifts.append(shift)
+		shifts = ddinfo.calculateFrameShifts(positions)
 		apDisplay.printDebug('Got %d shifts' % (len(shifts)-1))
-		# duplicate first and last shift for the end points
-		shifts.append(shifts[-1])
-		shifts[0] = shifts[1]
 		return shifts
 
 	def getStillFrames(self,threshold):
