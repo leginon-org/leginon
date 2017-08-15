@@ -435,6 +435,7 @@ class ApCtfFind4ParamsData(Data):
 			('min_phase_shift', float),
 			('max_phase_shift', float),
 			('phase_search_step', float),
+			('local_refine', bool),
 		)
 	typemap = classmethod(typemap)
 
@@ -472,6 +473,8 @@ class ApCtfData(Data):
 			('graph2', str),  # 1d plot showing fit
 			('graph3', str),  # raw native powerspectra from software 
 			('graph4', str),  # raw native 1d plot from software 
+			('localplot', str), # 2D plot for local CTF estimation
+			('localCTFstarfile', str), # local CTF output file
 			('ctfvalues_file', str),  # used for ace2correct
 			('cross_correlation', float),  # direct from ctffind/ctftilt
 			('tilt_angle', float),  # from ctftilt
