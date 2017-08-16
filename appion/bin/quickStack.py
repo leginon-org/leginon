@@ -53,6 +53,8 @@ def makeStack(starfile):
 	#this creates a new file
 	usedparticles = stackTools.boxParticlesFromFile(micrograph, stackfile,
 			initboxsize, finalboxsize, coordinates, invert)
+	if usedparticles is None:
+		return
 
 	numpart = stackTools.getNumberOfParticles(stackfile)
 	if numpart != len(usedparticles):
