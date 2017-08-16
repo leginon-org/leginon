@@ -467,7 +467,6 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 		y1 = yy[~matrix.mask]
 		newarr = matrix[~matrix.mask]
 
-
 		GD1 = griddata((x1,y1),newarr.ravel(),(xx,yy),method='cubic')
 
 		plt.imshow(GD1, extent=(0, imgx, 0, imgy),interpolation='nearest', cmap=cm.plasma)
@@ -499,18 +498,6 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 
 	#======================
 	def generateRasterStarFile(self,fbase,dimx,dimy,spacing):
-		# find center of image
-		stx = dimx/2
-		sty = dimy/2
-		
-		# find upper left corner
-		while stx>=0:
-			stx-=spacing
-		while sty>=0:
-			sty-=spacing
-		stx+=spacing
-		sty+=spacing
-
 		# raster star file header
 		f = open(fbase+"_raster.star",'w')
 		f.write("data_images\n\nloop_\n\n")
@@ -518,9 +505,16 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 		f.write("_rlnCoordinateY #2\n")
 		f.write("_rlnMicrographName #3\n") 
 
-		for i in range(stx,dimx,spacing):
-			for j in range(sty,dimy,spacing):
-				f.write("%12.6f %12.6f %s.mrc\n"%(i,j,fbase))
+		numspx=int(math.ceil(dimx/float(spacing)))
+		numspy=int(math.ceil(dimy/float(spacing)))
+
+		for i in range(numspx+1):
+			for j in range(numspy+1):
+				xval = (dimx*i/numspx)
+				yval = (dimy*j/numspy)
+				if xval > 0: xval-=1
+				if yval > 0: yval-=1
+				f.write("%12.6f %12.6f %s.mrc\n"%(xval,yval,fbase))
 		f.close()
 
 	#======================
