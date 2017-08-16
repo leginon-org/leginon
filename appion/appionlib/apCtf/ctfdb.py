@@ -200,9 +200,14 @@ def getBestCtfValue(imgdata, sortType='res80', method=None, msg=True):
 			if method != imgmethod:
 				continue
 		sortvalue = getSortValueFromCtfQuery(ctfvalue, sortType)
+
+		# if nothing found, try for maxconf
 		if sortvalue is None:
-			continue
+			sortvalue = getSortValueFromCtfQuery(ctfvalue,'maxconf')
+			if sortvalue is None:
+				continue
 		if msg is True:
+
 			print "%.5f -- %s"%(sortvalue, ctfvalue['acerun']['name'])
 		if sortvalue > bestsortvalue:
 			bestsortvalue = sortvalue
