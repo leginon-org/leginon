@@ -1,6 +1,6 @@
-FROM centos:6
+FROM centos:centos6.6
 MAINTAINER Neil Voss <vossman77@yahoo.com>
-#FIXME: CentOS 6.7 broken
+#FIXME: CentOS 6.8 broken
 
 ### TODO install phpMyAdmin, submit jobs from the web
 
@@ -22,6 +22,7 @@ RUN yum -y update && yum -y install \
  xorg-x11-server-Xvfb netpbm-progs qiv python-requests \
  libssh2-devel mlocate nano elinks file \
  python-configparser h5py git pyflakes \
+ gtkglext-libs pangox-compat libpng12 \
  numactl && yum -y clean all
 
 ### Trying to do VNC
@@ -112,6 +113,19 @@ RUN chmod 777 /emg/sw/grigorieff/ctffind3/ctffind3_mp.exe
 RUN chmod 777 /emg/sw/grigorieff/ctffind4/ctffind-4.1.5
 RUN ln -sv /emg/sw/grigorieff/ctffind4/ctffind-4.1.5 /emg/sw/grigorieff/bin/ctffind4
 RUN ln -sv /emg/sw/grigorieff/ctffind3/ctffind3_mp.exe /emg/sw/grigorieff/bin/ctffind64.exe
+
+### PROTOMO
+ADD TGZ/protomo2-centos6-docker.tgz /emg/sw/
+ADD TGZ/ffmpeg-git-64bit-static.tar.xz /emg/sw/
+#this is hacky, but it is only protomo
+RUN ln -sv /usr/lib64/libtiff.so.5 /usr/lib64/libtiff.so.4
+RUN ln -sv /usr/lib64/libtiff.so.5 /usr/lib64/libtiff.so.3
+RUN ln -sv /usr/lib64/libhdf5.so.8 /usr/lib64/libhdf5.so.6
+RUN ln -sv /emg/sw/protomo2/lib/libblas.so.1.0.0 /emg/sw/protomo2/lib/libblas.so.1
+RUN ln -sv /emg/sw/protomo2/lib/liblapack.so.1.0.0 /emg/sw/protomo2/lib/liblapack.so.1
+RUN ln -sv /emg/sw/protomo2/lib/libdierckx.so.1.0.0 /emg/sw/protomo2/lib/libdierckx.so.1
+
+
 
 ### Change to local user
 #RUN mkdir -p /home/appionuser

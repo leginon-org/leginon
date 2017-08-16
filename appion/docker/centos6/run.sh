@@ -10,7 +10,7 @@
 docker run -d -t \
   -w /emg/sw/myami/appion \
   -p 80:80 -p 5901:5901 -p 3306:3306 \
-  vosslab/appion
+  vosslab/appion_centos6
 #  vosslab/artemia3
 
 

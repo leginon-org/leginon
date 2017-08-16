@@ -1,11 +1,5 @@
 FROM centos:7
-MAINTAINER Neil Voss <vossman77@yahoo.com>
-
-#No package grace available.
-#No package compat-gcc-34-g77 available.
-#No package re2c available.
-#No package compat-libgfortran available.
-#No package mod_python qiv available.
+MAINTAINER Neil Voss <vossman77@gmail.com>
 
 ### install epel
 RUN yum -y install epel-release
@@ -126,6 +120,10 @@ RUN chmod 777 /emg/sw/grigorieff/ctffind3/ctffind3_mp.exe
 RUN chmod 777 /emg/sw/grigorieff/ctffind4/ctffind-4.1.5
 RUN ln -sv /emg/sw/grigorieff/ctffind4/ctffind-4.1.5 /emg/sw/grigorieff/bin/ctffind4
 RUN ln -sv /emg/sw/grigorieff/ctffind3/ctffind3_mp.exe /emg/sw/grigorieff/bin/ctffind64.exe
+
+### PROTOMO
+ADD TGZ/protomo2-centos6-docker.tgz /emg/sw/
+ADD TGZ/ffmpeg-git-64bit-static.tar.xz /emg/sw/
 
 ### Trying to do VNC
 #RUN dnf -y upgrade && dnf -y install  \

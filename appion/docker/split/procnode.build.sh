@@ -2,12 +2,6 @@
 
 curdir=$(pwd)
 
-mkdir MRC
-cd MRC/
-wget -nc -c 'http://emg.nysbc.org/redmine/attachments/download/5975/06jul12a-mini.tgz'
-tar zxvf 06jul12a-mini.tgz
-cd $curdir
-
 mkdir TGZ
 cd TGZ/
 wget -nc -c 'http://emg.nysbc.org/redmine/attachments/download/631/eman-linux-x86_64-cluster-1.9.tar.gz'
@@ -18,11 +12,7 @@ wget -nc -c 'http://emg.nysbc.org/redmine/attachments/download/5600/eman2_centos
 wget -nc -c 'http://emg.nysbc.org/redmine/attachments/download/5034/xmipp_centos6_docker.tgz'
 wget -nc -c 'http://emg.nysbc.org/redmine/attachments/download/5166/relion-1.4.tgz'
 wget -nc -c 'http://emg.nysbc.org/redmine/attachments/download/7489/findem-docker-centos7.tgz'
-wget -nc -c 'http://emg.nysbc.org/redmine/attachments/download/8373/protomo2-centos6-docker.tgz'
-wget -nc -c 'https://johnvansickle.com/ffmpeg/builds/ffmpeg-git-64bit-static.tar.xz'
-#wget -nc -c 'http://emg.nysbc.org/redmine/attachments/download/638/spidersmall.18.10.tar.gz'
-#wget -nc -c 'http://emg.nysbc.org/redmine/attachments/download/636/Xmipp-2.4-src.tar.gz'
 cd $curdir
 tar zxvf TGZ/findem-docker-centos7.tgz
 
-docker build -t vosslab/appion_centos7 -f appion_centos7.Dockerfile .
+docker build -t myami_procnode - < procnode.Dockerfile

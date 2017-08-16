@@ -284,7 +284,8 @@ class QuickStack(appionScript.AppionScript):
 		else:
 			stackq['description'] = "quick stack completed on "+time.asctime()
 		stackq['hidden'] = False
-		stackq['pixelsize'] = round(self.apix*downscalefactor*1e-10, 4)
+		stackq['pixelsize'] = round(self.apix*downscalefactor, 4)*1e-10
+
 		stackq['boxsize'] = self.params['finalboxsize']
 
 		self.stackdata = stackq
