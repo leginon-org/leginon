@@ -17,9 +17,10 @@ def setPyPlotXLabels(xdata, maxloc, square=True):
 	minloc = xdata.min()
 	if maxloc is None:
 		maxloc = xdata.max()
-	xstd = xdata.std()/2.
+	xstd = xdata.std()/4.
 	pyplot.xlim(xmin=minloc, xmax=maxloc)
 	locs, labels = pyplot.xticks()
+
 	if square is True:
 		if 'subplot2grid' in dir(pyplot):
 			units = r'$\AA^2$'
@@ -30,6 +31,7 @@ def setPyPlotXLabels(xdata, maxloc, square=True):
 			units = r'$\AA$'
 		else:
 			units = 'A'
+
 
 	### assumes that x values are 1/Angstroms^2, which give the best plot
 	newlocs = []
@@ -134,13 +136,19 @@ def createPlot(avgrotfile):
 	xdatasq = xdata**2
 	maxResolutionToShow = 3.5
 
+	quarterpoints = int(len(datasets[2])/4)
+	scaleFactor = 0.5/datasets[2][quarterpoints:].max()
+	if scaleFactor < 1:
+		scaleFactor = 1
+
 	#pyplot.plot(xdatasq, datasets[1], label='Amplitude Spectra')
-	pyplot.plot(xdatasq, datasets[2]*3, label='Power Spectra', alpha=0.7)
+	pyplot.plot(xdatasq, datasets[2]*scaleFactor, label='Power Spectra', alpha=0.7)
 	pyplot.plot(xdatasq, datasets[3], label='CTF Model')
 	pyplot.plot(xdatasq, datasets[4], label='Quality of Fit')
 	#pyplot.plot(xdatasq, datasets[5], label='unsure')
 	pyplot.xlim(xmin=xdatasq[0], xmax=1/maxResolutionToShow**2)
 	pyplot.ylim(ymin=-0.1, ymax=1.1)
+	pyplot.grid(True, linestyle=':', )
 	pyplot.legend()
 
 	setPyPlotXLabels(xdatasq, maxloc=1/maxResolutionToShow**2, square=True)
