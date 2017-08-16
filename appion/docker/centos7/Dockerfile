@@ -1,11 +1,6 @@
 FROM centos:7
-MAINTAINER Neil Voss <vossman77@yahoo.com>
+MAINTAINER Neil Voss <vossman77@gmail.com>
 
-#No package grace available.
-#No package compat-gcc-34-g77 available.
-#No package re2c available.
-#No package compat-libgfortran available.
-#No package mod_python qiv available.
 
 ### install epel
 RUN yum -y install epel-release
