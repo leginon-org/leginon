@@ -59,13 +59,19 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 			help="Number of steps to search in grid", metavar="#")
 		self.parser.add_option("--dast", dest="dast", type="float", default=1000.0,
 			help="dAst in microns is used to restrain the amount of astigmatism", metavar="#")
-		self.parser.add_option("--raster", dest="raster", type="int", default=200,
+		self.parser.add_option("--local_raster", dest="raster", type="int", default=200,
 			help="spacing for GCTF local estimation", metavar="#")
+		self.parser.add_option("--local_radius", dest="local_radius", type="int", default=1024,
+			help="Radius for local refinement, no weighting beyond radius", metavar="#")
+		self.parser.add_option("--local_boxsize", dest="local_boxsize", type="int", default=512,
+			help="Boxsize used for local refinement", metavar="#")
+		self.parser.add_option("--local_overlap", dest="local_overlap", type="float", default=0.5,
+			help="Overlap factor for grid box sampling", metavar="#")
 	
 		self.parser.add_option("--do_EPA", dest="do_EPA", default=False, action="store_true",
 			help="Do equiphase averaging")
 
-		self.parser.add_option("--local_refine", dest="local_refine", default=False, action="store_true",
+		self.parser.add_option("--do_local_refine", dest="local_refine", default=False, action="store_true",
 			help="Perform local CTF estimation")
 		self.parser.add_option("--do_Hres_ref", dest="do_Hres_ref", default=False, action="store_true",
 			help="Boost high resolution refinement")
@@ -197,7 +203,7 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 			paramInputOrder.extend(['phase_shift_H','phase_shift_L','phase_shift_S'])
 		# add local CTF estimation
 		if self.params['local_refine']:
-			paramInputOrder.extend(['do_local_refine','boxsuffix'])
+			paramInputOrder.extend(['do_local_refine','boxsuffix','local_radius','local_boxsize','local_overlap'])
 			rasterfilename = apDisplay.short(imgdata['filename'])+"_raster.star"
 			dimx = imgdata['camera']['dimension']['x']
 			dimy = imgdata['camera']['dimension']['y']
@@ -276,6 +282,9 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 			'phase_shift_L': self.params['min_phase_shift'],
 			'phase_shift_S': self.params['phase_search_step'],
 			'do_local_refine': self.params['local_refine'],
+			'local_radius': self.params['local_radius'],
+			'local_boxsize': self.params['local_boxsize'],
+			'local_overlap': self.params['local_overlap'],
 			'boxsuffix': "_raster.star",
 		}
 
@@ -476,6 +485,7 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 
 		pngfile = os.path.join(self.powerspecdir,fbase+"_localDF.png")
 		plt.savefig(pngfile,bbox_inches='tight',pad_inches=0)
+		plt.close()
 
 	#======================
 	def getMovieAverageType(self):
