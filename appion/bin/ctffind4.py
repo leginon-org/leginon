@@ -48,9 +48,9 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			help="Number of steps to search in grid", metavar="#")
 		self.parser.add_option("--dast", dest="dast", type="float", default=100.0,
 			help="dAst in microns is used to restrain the amount of astigmatism", metavar="#")
-		self.parser.add_option("--minphaseshift", "--min_phase_shift", dest="min_phase_shift", type="float", default=0.0,
+		self.parser.add_option("--minphaseshift", "--min_phase_shift", dest="min_phase_shift", type="float", default=10.0,
 			help="Minimum phase shift by phase plate, in degrees", metavar="#")
-		self.parser.add_option("--maxphaseshift", "--max_phase_shift", dest="max_phase_shift", type="float", default=0.0,
+		self.parser.add_option("--maxphaseshift", "--max_phase_shift", dest="max_phase_shift", type="float", default=170.0,
 			help="Maximum phase shift by phase plate, in degrees", metavar="#")
 		self.parser.add_option("--phasestep", "--phase_search_step", dest="phase_search_step", type="float", default=10.0,
 			help="phase shift search step, in degrees", metavar="#")
