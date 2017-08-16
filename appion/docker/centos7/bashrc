@@ -17,6 +17,10 @@ export XMIPPDIR=/emg/sw/xmipp
 export MPIPATH=/usr/lib64/openmpi
 export GRIGPATH=/emg/sw/grigorieff
 
+#protomo
+export I3ROOT=/emg/sw/protomo2/i3
+export PROTOMO2PATH=/emg/sw/protomo2
+
 export SPIDERDIR=/emg/sw/spider
 export SPBIN_DIR=${SPIDERDIR}/bin/
 export SPPROC_DIR=${SPIDERDIR}/proc/
@@ -24,8 +28,10 @@ export SPMAN_DIR=${SPIDERDIR}/man/
 
 export PATH=/usr/bin:/bin:${APPIONPATH}/bin:${LEGINONPATH}:${EMANDIR}/bin:${XMIPPDIR}/bin:${SPIDERDIR}/bin:
 export PATH=${PATH}:${GRIGPATH}/bin:${MPIPATH}/bin:${EMAN2DIR}/bin:${RELIONDIR}/bin
-export PYTHONPATH=${EMANDIR}/lib:${EMAN2DIR}/lib:${EMAN2DIR}/bin
-export LD_LIBRARY_PATH=${EMANDIR}/lib:${XMIPPDIR}/lib:${MPIPATH}/lib:${EMAN2DIR}/lib:${RELIONDIR}/lib
+export PATH=${PATH}:${I3ROOT}/bin:${PROTOMO2PATH}/bin
+export PYTHONPATH=${EMANDIR}/lib:${EMAN2DIR}/lib:${EMAN2DIR}/bin:${PROTOMO2PATH}/lib
+export LD_LIBRARY_PATH=${EMANDIR}/lib:${XMIPPDIR}/lib:${MPIPATH}/lib:${EMAN2DIR}/lib
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${RELIONDIR}/lib:${PROTOMO2PATH}/lib
 
 export EDITOR=nano
 export TERM=xterm
