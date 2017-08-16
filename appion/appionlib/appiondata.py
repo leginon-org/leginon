@@ -2274,3 +2274,25 @@ class ApHelicalCoordData(Data):
 			('initialang', float),
 		)
 	typemap = classmethod(typemap)
+
+class ApSEMData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('image', leginon.leginondata.AcquisitionImageData),
+			('date', str),
+			('hv', float),
+			('beam', str),
+			('hfw', float),
+			('aperture_diameter', float),
+			('beam_current', float),
+			('dynamic_focus_is_on', str),
+			('stage_ta', float),
+			('tilt_correction_angle', float),
+			('dwell_time', float),
+			('pixel_width', float),
+			('integrate', str),
+			('working_distance', float),
+			('resolution_x', int),
+			('resolution_y', int),
+		)
+	typemap = classmethod(typemap)
