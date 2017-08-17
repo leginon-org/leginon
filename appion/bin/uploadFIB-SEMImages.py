@@ -38,6 +38,8 @@ class UploadSEMImages(appionScript.AppionScript):
 		self.parser.add_option("--leginon-output-dir", dest="leginondir",
 			help="Leginon output directory, e.g., --leginon-output-dir=/data/leginon",
 			metavar="DIR")
+		self.parser.add_option("--session-name", dest="sessionname",
+			help="Session name, e.g., 17aug06a. If provided append images to this session.")
 		
 	def checkConflicts(self):
 		if self.params['description'] is None:
@@ -71,6 +73,7 @@ class UploadSEMImages(appionScript.AppionScript):
 
 	def getUnusedSessionName(self):
 		### get standard appion time stamp, e.g., 10jun30
+            
 		sessionq = leginon.leginondata.SessionData()
 		sessionq['name'] = self.params['runname']
 		sessiondatas = sessionq.query(results=1)
@@ -90,29 +93,37 @@ class UploadSEMImages(appionScript.AppionScript):
 		return sessionname
 
 	#=====================
-	def createNewSession(self):
-		apDisplay.printColor("Creating a new session", "cyan")
-
-		### get user data
+	def getSession(self):
+        
 		userdata = self.getUserData()
-
-		sessionq = leginon.leginondata.SessionData()
-		sessionq['name'] = self.params['sessionname']
-		sessionq['image path'] = self.leginonimagedir
-		sessionq['comment'] = self.params['description']
-		sessionq['user'] = userdata
-		sessionq['hidden'] = False
-
+		sessionq = None
+		if self.params['sessionname']:
+			session = leginon.leginondata.SessionData(name=self.params['sessionname'])
+			sessionq = session.query() 
+			if sessionq:
+				apDisplay.printColor("Found session" + self.params['sessionname'], "cyan")
+				sessionq = sessionq[0]
+				
+		if not sessionq:
+			apDisplay.printColor("Creating a new session", "cyan")
+			sessionq = leginon.leginondata.SessionData()
+			sessionq['name'] = self.params['sessionname']
+			sessionq['image path'] = self.leginonimagedir
+			sessionq['comment'] = self.params['description']
+			sessionq['user'] = userdata
+			sessionq['hidden'] = False
+			apDisplay.printColor("Created new session %s" % (self.params['sessionname']), "cyan")
+			
 		projectdata = leginon.projectdata.projects.direct_query(self.params['projectid'])
-
+		
 		projectexpq = leginon.projectdata.projectexperiments()
 		projectexpq['project'] = projectdata
 		projectexpq['session'] = sessionq
 		if self.params['commit'] is True:
 			projectexpq.insert()
-
+		
 		self.sessiondata = sessionq
-		apDisplay.printColor("Created new session %s"%(self.params['sessionname']), "cyan")
+		
 		return
 
 	#=====================
@@ -152,7 +163,6 @@ class UploadSEMImages(appionScript.AppionScript):
 		scopedata['session'] = self.sessiondata
 		scopedata['magnification'] = numpy.interp(self.SEM_Data['HFW'],HFW, e_beam_mag)
 		scopedata['high tension'] = self.SEM_Data['HV']
-
 		
 		### setup camera data
 		presetdata = leginon.leginondata.PresetData()
@@ -160,8 +170,6 @@ class UploadSEMImages(appionScript.AppionScript):
 		presetname = 'upload'
 
 		presetdata['name'] = presetname
-
-
 
 		### setup camera data
 		cameradata = leginon.leginondata.CameraEMData()
@@ -231,7 +239,7 @@ class UploadSEMImages(appionScript.AppionScript):
 		Initialization of variables
 		"""
 		self.getAppionInstruments()
-		self.createNewSession()
+		self.getSession()
 
 	def newImagePath(self, mrcfile):
 		extension = os.path.splitext(mrcfile)[1]
@@ -272,16 +280,16 @@ class UploadSEMImages(appionScript.AppionScript):
 		You decide what happens here!
 		"""
 		self.startInit()
-
 		tif_list = self.getImagesInDirectory(self.params['imagedir'])
-
 		count = 1
 		t0 = time.time()
 		for tif_file in tif_list:
 			if not os.path.isfile(tif_file):
 				continue
-			
 			newimagepath = self.newImagePath(tif_file)
+			if os.path.exists(newimagepath):
+				apDisplay.printMsg("Path exists: skipping "+newimagepath)
+				continue
 			imagearray = self.prepareImageForUpload(tif_file)
 			cmd = ['tif2mrc',tif_file, newimagepath]
 			p = subprocess.Popen(cmd)
@@ -300,7 +308,6 @@ class UploadSEMImages(appionScript.AppionScript):
 				%(len(tif_list)-count, len(tif_list), apDisplay.timeString(esttime)))
 			### counting
 			count += 1
-		
 
 #=====================
 #=====================
