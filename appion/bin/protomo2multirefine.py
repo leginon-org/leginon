@@ -813,6 +813,12 @@ def parseOptions():
 	parser.add_option("--manual_alignment_finished", dest="manual_alignment_finished",  default="False",
 		help="Internal option.")
 	
+	parser.add_option("--change_refimg", dest="change_refimg",  default="False",
+		help="Change the Protomo Reference image? e.g. --change_refimg=True")
+	
+	parser.add_option("--desired_ref_tilt_angle", dest="desired_ref_tilt_angle",  type="float",  default=0,
+		help="Change the Protomo Reference image to be the image closest to this tilt angle, e.g. --desired_ref_tilt_angle=17")
+	
 	parser.add_option("--make_searchable", dest="make_searchable",  default="True",
 		help="Hidden option. Places a .tiltseries.XXXX file in the rundir so that it will be found by Batch Summary webpages.")
 	

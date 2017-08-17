@@ -57,7 +57,7 @@ class Protomo2BatchForm extends BasicLayoutForm
 	$map_sampling='8', $tilt_clip='', $show_window_size='', $pixelsize='', $video_type='', $dose_presets='', $dose_a='', $dose_b='', $dose_c='', $frame_aligned='',
 	$defocus_estimate='', $defocus_min='', $defocus_max='', $defocus_difference='0.2', $amp_contrast_defocus='0.07', $res_min='10000', $res_max='10',
 	$defocus_tlt='', $defocus_tlt_iteration='', $picking_gpu_or_cpu='', $template_location='', $estimated_particles='200', $distance_from_edges='25',
-	$junk_tolerance='7')
+	$junk_tolerance='7', $change_refimg='', $desired_ref_tilt_angle=0)
 	{
 		parent::__construct($expId, $extraHTML);
 		//print "_POST:" . "<br>";
@@ -1566,6 +1566,8 @@ class Protomo2BatchForm extends BasicLayoutForm
 			$params->addParam( "shift_limit", $shift_limit, "Shift Limit" );
 			$params->addParam( "angle_limit", $angle_limit, "Angle Limit" );
 			$params->addParam( "tilt_azimuth", $tilt_azimuth, "Override Tilt Azimuth" );
+			$params->addParam( "change_refimg", $change_refimg, "Change Reference Image to Tilt Angle Closest to " );
+			$params->addParam( "desired_ref_tilt_angle", $desired_ref_tilt_angle, "degrees" );
 			$params->addParam( "r1_region_x", $r1_region_x, "R1" );
 			$params->addParam( "r2_region_x", $r2_region_x, "R2" );
 			$params->addParam( "r3_region_x", $r3_region_x, "R3" );
@@ -1830,6 +1832,11 @@ class Protomo2BatchForm extends BasicLayoutForm
 			$html.= $params->insertTextFieldInRow( "shift_limit", $fieldSize ).'│ ';
 			$html.= $params->insertTextField( "angle_limit", $fieldSize );
 			$html.= $params->insertTextField( "tilt_azimuth", $fieldSize );
+			$html.= '<select name="change_refimg" style="width:66px">';
+			$html.= '<option selected value="True">True</option>';
+			$html.= '<option value="False">False</option>';
+			$html.= '</select>'; $html.= docpop('protomo_change_refimg', ' Change Reference Image to Tilt Angle Closest to ');
+			$html.= $params->insertTextField( "desired_ref_tilt_angle", $fieldSize );
 			$html .= "
 		<br />
 		<H3>Dose Compensation Parameters ".docpop('dose_info', '(Info)')."</H3>

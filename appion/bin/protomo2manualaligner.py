@@ -45,6 +45,9 @@ class ProTomo2ManualAligner(basicScript.BasicScript):
 		self.parser.add_option("--sampling", dest="sampling", type="int",  default="4",
 			help="Tilt image sampling factor for manual alignment, e.g. --image_fraction=8", metavar="int")
 		
+		self.parser.add_option("--center_all_images", dest="center_all_images",  default="False",
+			help="Re-center all images. Used when there is significant overshifting either by Leginon or Protomo, e.g. --center_all_images=True")
+		
 		self.parser.add_option("--citations", dest="citations", action='store_true', help="Print citations list and exit.")
 		
 	
@@ -105,6 +108,25 @@ class ProTomo2ManualAligner(basicScript.BasicScript):
 		paramfilename=seriesname+'.param'
 		paramfilename_full=self.params['rundir']+'/'+paramfilename
 		
+		#Print out Protomo IMAGE == TILT ANGLE pairs
+		cmd1="awk '/ORIGIN /{print}' %s | wc -l" % (tiltfilename_full)
+		proc=subprocess.Popen(cmd1, stdout=subprocess.PIPE, shell=True)
+		(numimages, err) = proc.communicate()
+		numimages=int(numimages)
+		cmd2="awk '/IMAGE /{print $2}' %s | head -n +1" % (tiltfilename_full)
+		proc=subprocess.Popen(cmd2, stdout=subprocess.PIPE, shell=True)
+		(tiltstart, err) = proc.communicate()
+		tiltstart=int(tiltstart)
+		for i in range(tiltstart-1,tiltstart+numimages+100):
+			try: #If the image isn't in the .tlt file, skip it
+				cmd="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/TILT/) print $(j+2)}'" % (i+1, tiltfilename_full)
+				proc=subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+				(tilt_angle, err) = proc.communicate()
+				if tilt_angle:
+					print "Protomo Image #%d is %s degrees" % (i+1, tilt_angle.rstrip('\r\n'))
+			except:
+				pass
+		
 		print ""
 		apDisplay.printMsg("\033[1mAlign images manually (to within ~5% accuracy), Save, & Quit.\033[0m")
 		apDisplay.printMsg("\033[1mQuick Manual Alignment instructions:\033[0m")
@@ -121,10 +143,16 @@ class ProTomo2ManualAligner(basicScript.BasicScript):
 		raw_dir_mrcs = self.params['rundir']+'/raw/*mrc'
 		image_list=glob.glob(raw_dir_mrcs)
 		random_mrc=mrc.read(image_list[1])
-		dimx=len(random_mrc[0])
-		dimy=len(random_mrc[1])
+		dimy, dimx = random_mrc.shape
 		manual_x_size = apProTomo2Aligner.nextLargestSize(int(self.params['image_fraction']*dimx)+1)
 		manual_y_size = apProTomo2Aligner.nextLargestSize(int(self.params['image_fraction']*dimy)+1)
+		
+		if self.params['center_all_images'] == "True":
+			temp_tlt_file = os.path.join(os.path.dirname(tiltfilename_full),'manual_centered.tlt')
+			os.system('cp %s %s' % (tiltfilename_full, temp_tlt_file))
+			tiltfilename_full = temp_tlt_file
+			apProTomo2Aligner.centerAllImages(tiltfilename_full, dimx, dimy)
+		
 		os.system('cp %s %s' % (paramfilename_full, manualparam))
 		os.system("sed -i '/AP sampling/c\ S = %d' %s" % (self.params['sampling'], manualparam))
 		os.system("sed -i '/AP orig window/c\ W = { %d, %d }' %s" % (manual_x_size, manual_y_size, manualparam))
@@ -142,12 +170,12 @@ class ProTomo2ManualAligner(basicScript.BasicScript):
 		
 		#cleanup
 		os.system('rm -rf %s' % self.params['rundir']+'/cache/')
+		if self.params['center_all_images'] == "True":
+			os.system('rm -rf %s' % tiltfilename_full)
 		
 		apProTomo2Aligner.printTips("Alignment")
 		
 		apDisplay.printMsg('Did everything blow up and now you\'re yelling at your computer screen?')
-		apDisplay.printMsg('If so, kindly email Alex at anoble@nysbc.org and include this log file.')
-		apDisplay.printMsg('If so, kindly email Alex at anoble@nysbc.org explaining the issue and include this log file.')
 		apDisplay.printMsg('If so, kindly email Alex at anoble@nysbc.org explaining the issue and include this log file.')
 		apDisplay.printMsg('If everything worked beautifully and you publish, please use the appropriate citations listed on the Appion webpage! You can also print out all citations by typing: protomo2manualaligner.py --citations')
 		

@@ -404,6 +404,10 @@ if (isset($rec_gif_files[0]) and isset($rec_gif_files[1]) and isset($manual_rec_
 	$html .= "<center><b>Depiction Reconstruction Video for Coarse Alignment either failed to generate, is still processing, or wasn't requested</b></center>";
 }
 
+$html .= "<br></br><b><center>[If you wish to manually align the (1st) Coarse Alignment, run the following command:</b><br><br>
+				/usr/bin/python `which protomo2manualaligner.py` --rundir=$outdir/$runname/ --tiltseries=$tiltseries --iteration=Coarse --center_all_images=False --sampling=4 --image_fraction=0.65<br><br>
+				<b>and then choose 'More Manual' as the starting tilt file in Refinement.]</b><br><br>
+				<b>You may wish to change the cneter_all_images, sampling, or image_fraction options.</center></b><br>";
 
 echo $html
 ?>
