@@ -465,15 +465,17 @@ class HoleFinder(object):
 			hole.stats['hole_mean'] = holestats['mean']
 			hole.stats['hole_std'] = holestats['std']
 
-	def configure_ice(self, i0=None, tmin=None, tmax=None, tstd=None):
+	def configure_ice(self, i0=None, tmin=None, tmax=None, tstdmax=None, tstdmin=None):
 		if i0 is not None:
 			self.ice_config['i0'] = i0
 		if tmin is not None:
 			self.ice_config['tmin'] = tmin
 		if tmax is not None:
 			self.ice_config['tmax'] = tmax
-		if tstd is not None:
-			self.ice_config['tstd'] = tstd
+		if tstdmax is not None:
+			self.ice_config['tstdmax'] = tstdmax
+		if tstdmin is not None:
+			self.ice_config['tstdmin'] = tstdmin
 
 	def calc_ice(self, i0=None, tmin=None, tmax=None):
 		if self.__results['holes'] is None:
@@ -484,7 +486,8 @@ class HoleFinder(object):
 		i0 = self.ice_config['i0']
 		tmin = self.ice_config['tmin']
 		tmax = self.ice_config['tmax']
-		tstd = self.ice_config['tstd']
+		tstdmax = self.ice_config['tstdmax']
+		tstdmin = self.ice_config['tstdmin']
 		self.icecalc.set_i0(i0)
 		for hole in holes:
 			if 'hole_mean' not in hole.stats:
@@ -496,7 +499,7 @@ class HoleFinder(object):
 			hole.stats['thickness-mean'] = tm
 			ts = self.icecalc.get_stdev_thickness(std, mean)
 			hole.stats['thickness-stdev'] = ts
-			if (tmin <= tm <= tmax) and (ts < tstd):
+			if (tmin <= tm <= tmax) and (tstdmin <= ts < tstdmax):
 				holes2.append(hole)
 				hole.stats['good'] = True
 			else:
