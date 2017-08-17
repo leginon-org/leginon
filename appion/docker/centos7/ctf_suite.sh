@@ -17,13 +17,14 @@ wget -nc -c \
 	-O phaseplate1/phaseplate1.mrc
 uploadImages.py -C -n phaseplate1 -d 'Baker Lab Phase Plate Image' -p 1 \
  --mag=50001 --type=normal --image-dir=`pwd`/phaseplate1/ \
- --mpix=1.2e-10 --kv=200 --cs=2.7 --defocus=-1.0e-6
+ --mpix=1.2e-10 --kv=200 --cs=2.7 --defocus=-2.2e-6
 echo "--------------------------------------------"
 
 ctffind4.py --ampcontrast=0.07 --fieldsize=1024 --resmin=50 --resmax=3.5 \
-	--defstep=0.02 --numstep=50 --dast=0.05  --runname=ctffind4run1 \
+	--defstep=0.002 --numstep=2 --dast=0.03  --runname=ctffind4run1 \
 	--rundir=/emg/data/appion/phaseplate1/ctf/ctffind4run1 --preset=upload \
 	--commit --projectid=1 --session=phaseplate1 --no-wait \
+	--minphaseshift=80 --maxphaseshift=90 --phasestep=5 \
 	--no-rejects --continue --jobtype=ctfestimate --exhaust --phaseplate
 echo "--------------------------------------------"
 
