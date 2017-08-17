@@ -18,7 +18,7 @@ wget -nc -c 'http://emg.nysbc.org/redmine/attachments/download/5600/eman2_centos
 wget -nc -c 'http://emg.nysbc.org/redmine/attachments/download/5034/xmipp_centos6_docker.tgz'
 wget -nc -c 'http://emg.nysbc.org/redmine/attachments/download/5166/relion-1.4.tgz'
 wget -nc -c 'http://emg.nysbc.org/redmine/attachments/download/7489/findem-docker-centos7.tgz'
-wget -nc -c 'http://emg.nysbc.org/redmine/attachments/download/8373/protomo2-centos6-docker.tgz'
+wget -nc -c 'http://emg.nysbc.org/redmine/attachments/download/8380/protomo2-centos7-docker.tgz'
 wget -nc -c 'https://johnvansickle.com/ffmpeg/builds/ffmpeg-git-64bit-static.tar.xz'
 #wget -nc -c 'http://emg.nysbc.org/redmine/attachments/download/638/spidersmall.18.10.tar.gz'
 #wget -nc -c 'http://emg.nysbc.org/redmine/attachments/download/636/Xmipp-2.4-src.tar.gz'
