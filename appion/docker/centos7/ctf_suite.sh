@@ -11,49 +11,41 @@ cd /emg/sw/myami/appion/docker/centos7/
 mkdir CTF/
 cd CTF/
 
+mkdir 17jul27d/
+wget -nc -c \
+  'http://emg.nysbc.org/redmine/attachments/download/8372/17jul27d_b_00018gr_00004sq_v02_00008hl16_00002edhiii-a.mrc' \
+  -O 17jul27d/17jul27d-02ed.mrc
+wget -nc -c \
+  'http://emg.nysbc.org/redmine/attachments/download/8370/17jul27d_b_00018gr_00004sq_v02_00004hl16_00005edhiii-a.mrc' \
+  -O 17jul27d/17jul27d-05ed.mrc
+wget -nc -c \
+  'http://emg.nysbc.org/redmine/attachments/download/8363/17jul27d_b_00018gr_00005sq_v01_00008hl16_00007edhiii-a.mrc' \
+  -O 17jul27d/17jul27d-07ed.mrc
+wget -nc -c \
+  'http://emg.nysbc.org/redmine/attachments/download/8371/17jul27d_b_00018gr_00004sq_v02_00004hl16_00009edhiii-a.mrc' \
+  -O 17jul27d/17jul27d-09ed.mrc
+wget -nc -c \
+  'http://emg.nysbc.org/redmine/attachments/download/8369/17jul27d_b_00018gr_00004sq_v01_00002hl16_00011edhiii-a.mrc' \
+  -O 17jul27d/17jul27d-11ed.mrc
+uploadImages.py -C -n 17jul27d -d 'Gabe Close-to-Focus Fail Image' -p 1 \
+ --mag=50002 --type=normal --image-dir=`pwd`/17jul27d/ \
+ --mpix=0.56e-10 --kv=200 --cs=2.7 --defocus=-0.51e-6
+echo "--------------------------------------------"
+
+ctffind4.py --ampcontrast=0.07 --fieldsize=1024 --resmin=50 --resmax=3.5 \
+	--defstep=0.02 --numstep=50 --dast=0.05  --runname=ctffind4run1 \
+	--rundir=/emg/data/appion/17jul27d/ctf/ctffind4run1 --preset=upload \
+	--commit --projectid=1 --session=17jul27d --no-wait \
+	--no-rejects --continue --jobtype=ctfestimate
+echo "--------------------------------------------"
+
 mkdir phaseplate1/
 wget -nc -c \
 	'http://emg.nysbc.org/redmine/attachments/download/7808/Baker_CTFDisplay_fail_example_image.mrc' \
 	-O phaseplate1/phaseplate1.mrc
 uploadImages.py -C -n phaseplate1 -d 'Baker Lab Phase Plate Image' -p 1 \
  --mag=50001 --type=normal --image-dir=`pwd`/phaseplate1/ \
- --mpix=1.2e-10 --kv=200 --cs=2.7 --defocus=-1.0e-6
-echo "--------------------------------------------"
-
-ctffind4.py --ampcontrast=0.07 --fieldsize=1024 --resmin=50 --resmax=3.5 \
-	--defstep=0.02 --numstep=50 --dast=0.05  --runname=ctffind4run1 \
-	--rundir=/emg/data/appion/phaseplate1/ctf/ctffind4run1 --preset=upload \
-	--commit --projectid=1 --session=phaseplate1 --no-wait \
-	--no-rejects --continue --jobtype=ctfestimate --exhaust --phaseplate
-echo "--------------------------------------------"
-
-exit
-
-mkdir 17jul27d/
-wget -nc -c \
-  'http://emg.nysbc.org/redmine/attachments/download/8363/17jul27d_b_00018gr_00005sq_v01_00008hl16_00007edhiii-a.mrc' \
-  -O 17jul27d/17jul27d-07ed.mrc
-wget -nc -c \
-  'http://emg.nysbc.org/redmine/attachments/download/8367/17jul27d_00019hl16_00003edhiii-a.mrc' \
-  -O 17jul27d/17jul27d-03ed.mrc
-wget -nc -c \
-  'http://emg.nysbc.org/redmine/attachments/download/8368/17jul27d_00019hl16_00013edhiii-a.mrc' \
-  -O 17jul27d/17jul27d-13ed.mrc
-wget -nc -c \
-  'http://emg.nysbc.org/redmine/attachments/download/8369/17jul27d_b_00018gr_00004sq_v01_00002hl16_00011edhiii-a.mrc' \
-  -O 17jul27d/17jul27d-11ed.mrc
-wget -nc -c \
-  'http://emg.nysbc.org/redmine/attachments/download/8370/17jul27d_b_00018gr_00004sq_v02_00004hl16_00005edhiii-a.mrc' \
-  -O 17jul27d/17jul27d-05ed.mrc
-wget -nc -c \
-  'http://emg.nysbc.org/redmine/attachments/download/8371/17jul27d_b_00018gr_00004sq_v02_00004hl16_00009edhiii-a.mrc' \
-  -O 17jul27d/17jul27d-09ed.mrc
-wget -nc -c \
-  'http://emg.nysbc.org/redmine/attachments/download/8372/17jul27d_b_00018gr_00004sq_v02_00008hl16_00002edhiii-a.mrc' \
-  -O 17jul27d/17jul27d-02ed.mrc
-uploadImages.py -C -n 17jul27d -d 'Gabe Close-to-Focus Fail Image' -p 1 \
- --mag=50002 --type=normal --image-dir=`pwd`/17jul27d/ \
- --mpix=0.56e-10 --kv=200 --cs=2.7 --defocus=-0.51e-6
+ --mpix=1.2e-10 --kv=200 --cs=2.7 --defocus=-2.2e-6
 echo "--------------------------------------------"
 
 mkdir 15aug31/

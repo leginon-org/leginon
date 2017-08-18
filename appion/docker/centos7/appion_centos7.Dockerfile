@@ -21,6 +21,7 @@ RUN dnf -y upgrade && dnf -y install \
  xorg-x11-server-Xvfb netpbm-progs python-requests \
  libssh2-devel mlocate nano elinks file \
  python-configparser h5py git pyflakes \
+ gtkglext-libs pangox-compat `#protomo specific pkgs` \
  numactl && dnf -y clean all
 
 RUN sed -i.bak 's/max_allowed_packet = [0-9]*M/max_allowed_packet = 24M/' /etc/nanorc
@@ -122,7 +123,7 @@ RUN ln -sv /emg/sw/grigorieff/ctffind4/ctffind-4.1.5 /emg/sw/grigorieff/bin/ctff
 RUN ln -sv /emg/sw/grigorieff/ctffind3/ctffind3_mp.exe /emg/sw/grigorieff/bin/ctffind64.exe
 
 ### PROTOMO
-ADD TGZ/protomo2-centos6-docker.tgz /emg/sw/
+ADD TGZ/protomo2-centos7-docker.tgz /emg/sw/
 ADD TGZ/ffmpeg-git-64bit-static.tar.xz /emg/sw/
 
 ### Trying to do VNC

@@ -206,8 +206,11 @@ class TEMController(node.Node):
 		Slot name refers to the position on grid loader
 		Grid name refers to the identity grid preparation. 
 		'''
-		total_grids = self.instrument.tem.GridLoaderNumberOfSlots
-		return map((lambda x:x+1),range(total_grids))[1:]
+		try:
+			total_grids = self.instrument.tem.getGridLoaderNumberOfSlots()
+			return map((lambda x:x+1),range(total_grids))[1:]
+		except:
+			return []
 
 	def getGridSlotNames(self):
 		return self.grid_slot_names

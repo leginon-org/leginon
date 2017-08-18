@@ -77,7 +77,8 @@ def getCtfExtrema(focus=1.0e-6, mfreq=1.498e-04, cs=2e-2,
 				rad2 = math.sqrt(radsq2)
 				pixeldist = rad2/mfreq
 			else:
-				print "ERROR"
+				print "ERROR with radsq1 or radsq2, one is negative or they are equal"
+				print "%.8f and %.8f"%(radsq1, radsq2)
 				continue
 			distances.append(pixeldist)
 			if debug is True:
@@ -325,11 +326,12 @@ def rotationalAverage(image, ringwidth=3.0, innercutradius=None, full=False, med
 	radial = radial/ringwidth
 	radial = numpy.array(radial, dtype=numpy.int32)
 	if shape[0] < 32:
-		print radial
+		print "radial =", radial
 
 	if debug is True:
 		print "computing rotational average xdata..."
 	xdataint = numpy.unique(radial)
+
 	if full is False:
 		### trims any edge artifacts from rotational average
 		outercutsize = int((shape[0]/2-2)/ringwidth)
@@ -359,6 +361,11 @@ def rotationalAverage(image, ringwidth=3.0, innercutradius=None, full=False, med
 	if debug is True:
 		print "computing rotational average ydata..."
 	ydata = numpy.array(scipy.ndimage.mean(data, radial, xdataint))
+
+	if len(ydata) == 0:
+		print "ydata", ydata
+		apDisplay.printError("Major Error: nothing returned for rotational average, ydata, dying now")
+	
 	xdata = numpy.array(xdataint, dtype=numpy.float64)*ringwidth
 
 	if debug is True:
@@ -443,6 +450,7 @@ def getEllipticalDistanceArray(ellipratio, ellipangle, shape):
 
 	return radial
 
+
 #============
 def ellipticalAverage(image, ellipratio, ellipangle, ringwidth=2.0, innercutradius=None, full=False):
 	"""
@@ -496,16 +504,33 @@ def ellipticalAverage(image, ellipratio, ellipangle, ringwidth=2.0, innercutradi
 	
 	### remove
 	data = image.copy()
+	if numpy.any(numpy.isnan(data)):
+		print data
+		apDisplay.printError("Major Error (NaN) in elliptical average, data")
 
 	if debug is True:
 		print "computing elliptical average ydata..."
 	ydata = numpy.array(scipy.ndimage.mean(data, radial, xdataint))
-	### WHAT ARE YOU DOING WITH THE SQRT ellipratio???
+	if len(ydata) == 0:
+		print "ydata", ydata
+		apDisplay.printWarning("Major Error: nothing returned for elliptical average, xdata")
+		return None, None
+
+
+	### WHAT ARE YOU DOING WITH THE SQRT ellipratio??? It just works
 	xdata = numpy.array(xdataint, dtype=numpy.float64)*ringwidth/math.sqrt(ellipratio)
+
+	if numpy.any(numpy.isnan(xdata)):  #note does not work with 'is True'
+		print xdata
+		apDisplay.printError("Major Error (NaN) in elliptical average, xdata")
+	if numpy.any(numpy.isnan(ydata)):  #note does not work with 'is True'
+		print ydata
+		apDisplay.printError("Major Error (NaN) in elliptical average, ydata")
 
 	if debug is True:
 		print "... finish elliptical average"
 		apDisplay.printMsg("  expected size of elliptical average: %d"%(bigshape[0]/2))
+		print xdata
 		apDisplay.printMsg("actual max size of elliptical average: %d"%(xdata.max())) 
 
 	return xdata, ydata

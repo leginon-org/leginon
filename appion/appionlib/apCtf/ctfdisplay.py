@@ -218,14 +218,29 @@ class CtfDisplay(object):
 		if self.ellipratio is None:
 			return None
 		if self.debug is True:
-			apDisplay.printMsg("performing elliptical average, please wait")
+			apDisplay.printMsg("getting Ctf Extrema")
 		firstpeak = ctftools.getCtfExtrema(meandefocus, self.trimfreq*1e10, self.cs, self.volts,
 			self.ampcontrast, self.extra_phase_shift, numzeros=1, zerotype="peak")[0]
-		pixelrdata, rotdata = ctftools.ellipticalAverage(zdata2d, self.ellipratio, self.angle,
-			self.ringwidth, firstpeak, full=True)
-		if numpy.any(numpy.isnan(rotdata)):  #note does not work with 'is True'
-			print ("rotdata.min()=%.2f"%(rotdata.min()))
-			apDisplay.printError("Major Error (NaN) in elliptical average, rotdata")
+
+
+		if self.debug is True:
+			apDisplay.printMsg("performing equiphase average, please wait")
+		#pixelrdata, rotdata = ctftools.rotationalAverage(zdata2d,
+		#	self.ringwidth, firstpeak, full=True)
+		if meandefocus > 0.7e-6:
+			pixelrdata, rotdata = ctftools.ellipticalAverage(zdata2d, self.ellipratio, self.angle,
+				self.ringwidth, firstpeak, full=True)
+		else:
+			pixelsize =  self.trimapix*1e-10
+			pixelrdata, rotdata = genctf.equiPhaseAverage(zdata2d, self.ellipratio,
+				self.defocus1, self.defocus2, self.angle, pixelsize,
+				self.cs, self.volts, self.ampcontrast, self.extra_phase_shift,
+				self.ringwidth, firstpeak, full=True)
+
+		if pixelrdata is None:
+			apDisplay.printWarning("Ellipitcal Average failed, using Rotational Average")
+			pixelrdata, rotdata = ctftools.rotationalAverage(zdata2d,
+				self.ringwidth, firstpeak, full=True)
 		#tail filter
 		#changed to full=True in March 2016 for close to focus estimates and to push for more resolution
 		raddata = pixelrdata*self.trimfreq
