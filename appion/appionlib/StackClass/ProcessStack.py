@@ -106,6 +106,7 @@ class ProcessStack(object):
 			self.stepsize = self.numpart
 		self.message("Particle loop num chunks: %d"%(numchucks))
 		self.message("Particle loop step size: %d"%(self.stepsize))
+		self.initFunctions()
 
 	#===============
 	def start(self, stackfile, partlist=None):
@@ -174,6 +175,10 @@ class ProcessStack(object):
 	########################################
 	# CUSTOMIZED FUNCTIONS
 	########################################
+
+	#===============
+	def initFunctions(self):
+		return
 
 	#===============
 	def preLoop(self):
