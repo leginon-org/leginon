@@ -55,6 +55,7 @@ class ProcessStack(object):
 	def __init__(self, msg=True):
 		self.msg = msg
 		self.numpart = None
+		self.initFunctions()
 
 	#===============
 	def message(self, msg):
@@ -174,6 +175,10 @@ class ProcessStack(object):
 	########################################
 	# CUSTOMIZED FUNCTIONS
 	########################################
+
+	#===============
+	def initFunctions(self):
+		return
 
 	#===============
 	def preLoop(self):
