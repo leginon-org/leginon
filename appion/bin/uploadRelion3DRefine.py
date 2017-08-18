@@ -368,9 +368,9 @@ class UploadRelion3DRefine(reconUploader.generalReconUploader):
 		preset_used,micrograph_dimensions,defocusU,defocusV,astig,coordX,coordY,anglePsi,angleRot,angleTilt,maxProb = self.Read03_rundatastar(particle_diameter)
 		
 		## Copy over the maps and logs for display
-		self.Read04_maps(pixelsize) ## Possible to calculate FSC ourselves. Could implement that later. For now just using Relion's output
+		self.Read04_maps(pixelsize)
 		self.Read05_bild()
-		self.Read06_logs()
+		#self.Read06_logs()
 		
 		## Obtain best CTF values for the preset (All images)
 		BestAppiondefocus1,BestAppiondefocus2 = self.GetBestCTFValues(preset_used)
