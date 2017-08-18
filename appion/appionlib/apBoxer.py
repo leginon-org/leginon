@@ -13,7 +13,10 @@ import random
 import time
 from pyami import mrc
 from scipy import ndimage	#rotation function
-from scipy.interpolate import griddata
+try:
+	from scipy.interpolate import griddata
+except:
+	pass
 from appionlib import apRelion
 from appionlib import apImagicFile	#write imagic stacks
 from appionlib import apDisplay
@@ -84,8 +87,10 @@ def writeParticlesToStar(imgdata, boxsize, partdatas, shiftdata, boxfile, ctfdat
 			x1 = xx[~matDu.mask]
 			y1 = yy[~matDu.mask]
 			newDu = matDu[~matDu.mask]
-			gridDu = griddata((x1,y1),newDu.ravel(),(xx,yy),method='cubic')
-
+			try: 
+				gridDu = griddata((x1,y1),newDu.ravel(),(xx,yy),method='cubic')
+			except:
+				apDisplay.printError("Cannot estimate local CTF without griddata")
 			x1 = xx[~matDv.mask]
 			y1 = yy[~matDv.mask]
 			newDv = matDv[~matDv.mask]
