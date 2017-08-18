@@ -10,7 +10,7 @@ import numpy
 import random
 import matplotlib
 from multiprocessing import Process
-matplotlib.use('WXAgg')
+#matplotlib.use('WXAgg')
 #matplotlib.use('gtk')
 from matplotlib import pyplot
 from PIL import Image
@@ -2279,7 +2279,7 @@ class CTFApp(wx.App):
 
 		boxsize = min(128, min(imagedata.shape)/10)
 
-		boxfilter = ndimage.uniform_filter(imagedata, 128)
+		boxfilter = ndimage.uniform_filter(imagedata, boxsize)
 
 		pixelrdata, raddata, PSDarray = self.getOneDProfile(full=True)
 		imagestat.printImageInfo(PSDarray)
