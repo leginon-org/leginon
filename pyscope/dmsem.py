@@ -190,7 +190,26 @@ class DMSEM(ccdcamera.CCDCamera):
 		# required for non-K2 cameras
 		self.camera.SetReadMode(-1)
 
+	def midNightDelay(self):
+		delay_start = getDmsemConfig('timing','delay_start_minutes_before_midnight')
+		delay_length = getDmsemConfig('timing','delay_length_minutes')
+		ctime = time.strftime("%H:%M:%S")
+		h,m,s = map((lambda x: int(x)),ctime.split(':'))
+		if h < 12:
+			h += 12
+		else:
+			h -= 12
+		second_since_noon = (h*60+m)*60+s
+		delay_start_time = (12*60-delay_start)*60
+		delay_end_time = (12*60-delay_start+delay_length)*60
+		if second_since_noon > delay_end_time or second_since_noon < delay_start_time:
+			return
+		sleeptime = delay_end_time - second_since_noon
+		print 'Sleeping', sleeptime
+		time.sleep(sleeptime)
+
 	def _getImage(self):
+		self.midNightDelay()
 		self.camera.SelectCamera(self.cameraid)
 		self.custom_setup()
 		acqparams = self.calculateAcquireParams()

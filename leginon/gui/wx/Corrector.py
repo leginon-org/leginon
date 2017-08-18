@@ -409,8 +409,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.widgets['combine'] = Choice(self, -1, choices=['median', 'average'])
 		self.widgets['store series'] = wx.CheckBox(self, -1, 'Save all images')
 
-		# FIX ME Issue #5092
-		self.widgets['camera settings'] = leginon.gui.wx.Camera.CameraPanel(self, hide_frames=False)
+		self.widgets['camera settings'] = leginon.gui.wx.Camera.CameraPanel(self, hide_frames=True)
 		self.widgets['camera settings'].setGeometryLimits({'size':self.node.instrument.camerasize,'binnings':self.node.instrument.camerabinnings,'binmethod':self.node.instrument.camerabinmethod})
 		#self.widgets['clip min'] = FloatEntry(self, -1, chars=6)
 		#self.widgets['clip max'] = FloatEntry(self, -1, chars=6)

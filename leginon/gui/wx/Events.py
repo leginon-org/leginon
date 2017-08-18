@@ -103,6 +103,11 @@ eventFactory('Remove CCDCamera', attributes=['name'], command=True)
 eventFactory('Set CCDCamera', attributes=['name'], command=True)
 eventFactory('Set CCDCameras', attributes=['names'], command=True)
 eventFactory('CCDCamera Change', attributes=['name'], command=True)
+# MCV events
+eventFactory('Get Display Pressure', attributes=['unit','values']) 
+eventFactory('Get Display Grid Loader Slot States', attributes=['values']) 
+
+
 
 PlayerEventType = wx.NewEventType()
 SetImageEventType = wx.NewEventType()

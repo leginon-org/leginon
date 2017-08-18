@@ -99,6 +99,7 @@ class SimTEM(tem.TEM):
 
 		self.resetRefrigerant()
 		self.loaded_slot_number = None
+		self.is_init = True
 
 	def resetRefrigerant(self):
 		self.level0 = 100.0
@@ -406,14 +407,19 @@ class SimTEM(tem.TEM):
 		return True
 
 	def getGridLoaderNumberOfSlots(self):
-		return 2
+		if not self.hasGridLoader():
+			return 0
+		return 4
 
 	def getGridLoaderSlotState(self, number):
 		if self.loaded_slot_number == number:
-			return 'empty'
+			state = 'empty'
+		elif self.loaded_slot_number is None and number == 1 and self.is_init is True:
+			self.is_init = False
+			state = 'empty'
 		else:
-			return 'occupied'
-
+			state = 'occupied'
+		return state
 
 	def _loadCartridge(self, number):
 		self.loaded_slot_number = number

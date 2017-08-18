@@ -195,8 +195,8 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 					condition_status = 'abort'
 				self.beep()
 
-			# This is only for beamfixer now and it does not need preset_name
-			preset_name = None
+			# processReference.  FIX ME, when it comes back, need to move more
+			# accurately than just send the position.
 			if self.settings['wait for reference']:
 				self.setStatus('waiting')
 				self.processReferenceTarget()
@@ -293,6 +293,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 				# now have processTargetData work on it
 				self.startTimer('processTargetData')
 				try:
+					self.logger.info('Processing target id %d' % adjustedtarget.dbid)
 					process_status = self.processTargetData(adjustedtarget, attempt=attempt)
 				except PauseRestartException, e:
 					self.player.pause()
