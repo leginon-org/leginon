@@ -43,12 +43,12 @@ class JAHCFinder(targetfinder.TargetFinder):
 		'template diameter': 40,
 		'template filename': default_template,
 		'file diameter': 168,
+		'template image min':0.0,
 		'template invert': False,
 		'template type': 'cross',
 		'template lpf': {
 			'sigma': 1.0,
 		},
-		'template threshold':0.0,
 		'threshold': 3.0,
 		'threshold method': "Threshold = mean + A * stdev",
 		'blobs border': 20,
