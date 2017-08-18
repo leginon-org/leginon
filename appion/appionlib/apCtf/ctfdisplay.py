@@ -227,13 +227,15 @@ class CtfDisplay(object):
 			apDisplay.printMsg("performing equiphase average, please wait")
 		#pixelrdata, rotdata = ctftools.rotationalAverage(zdata2d,
 		#	self.ringwidth, firstpeak, full=True)
-		#pixelrdata, rotdata = ctftools.ellipticalAverage(zdata2d, self.ellipratio, self.angle,
-		#	self.ringwidth, firstpeak, full=True)
-		pixelsize =  self.trimapix*1e-10
-		pixelrdata, rotdata = genctf.equiPhaseAverage(zdata2d, self.ellipratio,
-			self.defocus1, self.defocus2, self.angle, pixelsize,
-			self.cs, self.volts, self.ampcontrast, self.extra_phase_shift,
-			self.ringwidth, firstpeak, full=True)
+		if meandefocus > 0.7e-6:
+			pixelrdata, rotdata = ctftools.ellipticalAverage(zdata2d, self.ellipratio, self.angle,
+				self.ringwidth, firstpeak, full=True)
+		else:
+			pixelsize =  self.trimapix*1e-10
+			pixelrdata, rotdata = genctf.equiPhaseAverage(zdata2d, self.ellipratio,
+				self.defocus1, self.defocus2, self.angle, pixelsize,
+				self.cs, self.volts, self.ampcontrast, self.extra_phase_shift,
+				self.ringwidth, firstpeak, full=True)
 
 		if pixelrdata is None:
 			apDisplay.printWarning("Ellipitcal Average failed, using Rotational Average")
