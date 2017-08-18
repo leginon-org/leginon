@@ -14,7 +14,10 @@ use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import numpy as np
-from scipy.interpolate import griddata
+try:
+	from scipy.interpolate import griddata
+except:
+	pass
 
 #appion
 from appionlib import apFile
@@ -467,7 +470,10 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 		y1 = yy[~matrix.mask]
 		newarr = matrix[~matrix.mask]
 
-		GD1 = griddata((x1,y1),newarr.ravel(),(xx,yy),method='cubic')
+		try:
+			GD1 = griddata((x1,y1),newarr.ravel(),(xx,yy),method='cubic')
+		except:
+			apDisplay.printError("SciPy 0.9 or greater required to generate LocalCTF iamge")
 		# rotate & flip to match MRC display
 		GD1 = np.flipud(np.rot90(GD1))
 
