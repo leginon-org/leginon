@@ -55,6 +55,7 @@ class ProcessStack(object):
 	def __init__(self, msg=True):
 		self.msg = msg
 		self.numpart = None
+		self.initFunctions()
 
 	#===============
 	def message(self, msg):
@@ -106,7 +107,6 @@ class ProcessStack(object):
 			self.stepsize = self.numpart
 		self.message("Particle loop num chunks: %d"%(numchucks))
 		self.message("Particle loop step size: %d"%(self.stepsize))
-		self.initFunctions()
 
 	#===============
 	def start(self, stackfile, partlist=None):
