@@ -6,6 +6,7 @@ import math
 import numpy
 #appionlib
 from appionlib import starFile
+from appionlib import apInstrument
 #pyami
 from pyami import mrc
 
@@ -156,10 +157,10 @@ def sortRelionStarFileByParticleNumber(instarfile, outstarfile, datablock="data_
 	l.sort()
 
 	# write sorted star file
-        loopDictNew = []
-        for val in l:
-                loopDictNew.append(partdict[val])
-        writeLoopDictToStarFile(loopDictNew, datablock, outstarfile)
+	loopDictNew = []
+	for val in l:
+		loopDictNew.append(partdict[val])
+	writeLoopDictToStarFile(loopDictNew, datablock, outstarfile)
 
 def getStarFileColumnLabels(starfile):
 	# returns array of labels, assuming they are in order
@@ -202,6 +203,13 @@ def getPartsFromStar(starfile):
 		if p: partlist.append(p)
 	return partlist
 
+def writeRelionStarHeader(labels, outstarfile):
+	ofile = open(outstarfile,'w')
+	ofile.write("\ndata_images\n\nloop_\n")
+	ofile.write("\n".join("%s #%i"%(label,index+1) for index,label in enumerate(labels)))
+	ofile.write("\n")
+	ofile.close()
+
 def writeRelionMicrographsStarHeader(outstarfile,ctfinfo=False):
 	labels = ["_rlnMicrographName",
 		"_rlnMagnification",
@@ -215,28 +223,51 @@ def writeRelionMicrographsStarHeader(outstarfile,ctfinfo=False):
 		"_rlnSphericalAberration",
 		"_rlnAmplitudeContrast",
 		"_rlnCtfFigureOfMerit"])
-	ofile = open(outstarfile,'w')
-	ofile.write("\ndata_images\n\nloop_\n")
-	ofile.write("\n".join("%s #%i"%(label,index+1) for index,label in enumerate(labels)))
-	ofile.write("\n")
-	ofile.close()
+	writeRelionStarHeader(labels, outstarfile)
 
+def formatCtfForRelion(imgdata,ctfdata,apix):
+	"""
+	returns array with ctf values required for RELION CTF
+	we can't import apDatabase, so supply apix in Angstroms
+	"""
+	c={}
+
+	#magnification, pixel size
+	c['dstep'] = imgdata['camera']['pixel size']['x']*1e6
+	c['mag'] = c['dstep']/apix*1e4
+
+	# defoci & angle of astig
+	c['defU'] = ctfdata['defocus1']*1.0e10
+	c['defV'] = ctfdata['defocus2']*1.0e10
+	c['defAngle'] = ctfdata['angle_astigmatism']
+
+	# get kev, CS, ampcontrast
+	c['kev'] = imgdata['scope']['high tension']/1000.0
+	c['cs'] = apInstrument.getCS(ctfdata)
+	c['amp'] = ctfdata['amplitude_contrast']
+
+	# get ctfestimation fig of merit (CC)
+	c['cc'] = ctfdata['cross_correlation']
+	if c['cc'] is None: c['cc'] = 0
+
+	return c
+	
 def generateCtfFile(imgname,cs,kev,amp,mag,dstep,defU,defV,defAngle,cc):
 	f = open(imgname,'w')
 	f.write(" CS[mm], HT[kV], AmpCnst, XMAG, DStep[um]\n")
 	f.write(" %4.1f   %6.1f    %4.2f  %8.1f  %7.3f\n"%(cs,kev,amp,mag,dstep))
-	f.write("      DFMID1      DFMID2      ANGAST          CC\n")
+	f.write("      DFMID1      DFMID2      ANGAST	  CC\n")
 	f.write("   %9.2f   %9.2f    %8.2f    %8.5f  Final Values\n"%(defU,defV,defAngle,cc))
 	f.close()
 
-def extractParticles(starfile,rootname,boxsize,bin,bgradius,pixlimit,invert,nproc=1,logfile=None):
+def extractParticles(starfile,rootname,boxsize,bin,bgradius,pixlimit,invert,ext,nproc=1,logfile=None):
 	relionexe = "`which relion_preprocess"
 	if nproc > 1:
 		relionexe = "mpirun %s_mpi"%relionexe
 	relionexe+= "`"
 
 	relioncmd = "%s --o %s --mic_star %s"%(relionexe,rootname,starfile)
-	relioncmd+= " --coord_suffix .box --extract"
+	relioncmd+= " --coord_suffix %s --extract"%(ext)
 	relioncmd+= " --extract_size %i"%boxsize
 	if bin is not None:
 		relioncmd+=" --scale %i"%(int(boxsize/bin))
