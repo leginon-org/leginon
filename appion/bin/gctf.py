@@ -468,8 +468,10 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 		newarr = matrix[~matrix.mask]
 
 		GD1 = griddata((x1,y1),newarr.ravel(),(xx,yy),method='cubic')
+		# rotate & flip to match MRC display
+		GD1 = np.flipud(np.rot90(GD1))
 
-		plt.imshow(GD1, extent=(0, imgx, 0, imgy),interpolation='nearest', cmap=cm.plasma)
+		plt.imshow(GD1, extent=(0, imgx, 0, imgy),cmap=cm.plasma)
 		# colorbar on right
 #		plt.colorbar()
 
