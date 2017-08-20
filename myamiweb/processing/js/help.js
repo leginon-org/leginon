@@ -96,6 +96,7 @@ var help = {
 		'stacklim' : 'Makestack will continue processing micrographs and checking the stack size.  Once the number of particles matches or exceeds this limit, it will stop processing images.  Since all particles from a micrograph are added to the stack before checking, the final stack rarely has exactly the number of particles specified by the limit.  Leave blank to process all the micrographs.',
 		'maskrad' : 'Radius of external mask (in &Aring;ngstr&ouml;ms)',
 		'force' : 'Insert new entries without checking if corresponding data already exists',
+		'localCTF' : 'Per-particle CTF values will be assigned',
 		// CTF find
 		'medium' : 'Choose Carbon if most of your image includes carbon, choose Ice if most of your image does not include carbon.',
 

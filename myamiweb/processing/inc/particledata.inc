@@ -983,6 +983,22 @@ class particledata {
 		return $d;
 	}
 
+	function hasLocalCtfData($sessionId) {
+		$d = ($this->getLastLocalCtfRun($sessionId)) ? true : false;
+		return $d;
+	}
+
+	function getLastLocalCtfRun($sessionId) {
+		$q = "select max(acerun.DEF_id) as runId "
+			."from ApAceRunData AS acerun "
+			."LEFT JOIN ApCtfFind4ParamsData AS params "
+			."ON (acerun.`REF|ApCtfFind4ParamsData|ctffind4_params` = params.DEF_id) "
+			."WHERE acerun.`REF|leginondata|SessionData|session`='$sessionId' "
+			."AND params.local_refine=1";
+		list($r) = $this->mysql->getSQLResult($q);
+		return $r['runId'];
+	}
+
 	function getLastCtfRun($sessionId) {
 		$q = "select max(DEF_id) as runId "
 			."from `ApAceRunData` where `REF|leginondata|SessionData|session`='$sessionId'";
