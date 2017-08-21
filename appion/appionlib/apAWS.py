@@ -63,20 +63,18 @@ def s3_to_ebs(IP,keypair,bucketname,dironebs,rclonepath,keyid,secretid,region,nu
 #=========================
 def rclone_to_s3(indir,numfiles,region,keyid,secretid,rclonename,bucketname,awspath,project,rclonelist,outdir):
 	if subprocess.Popen('uname',shell=True, stdout=subprocess.PIPE).stdout.read().strip() == 'Linux':
-		print('awspath is %s'%(awspath))
 		rclonepath='%s/rclone' %(awspath)
 	if subprocess.Popen('uname',shell=True, stdout=subprocess.PIPE).stdout.read().strip() == 'Darwin':
 		rclonepath='%s/rclone_mac'%(awspath)
-	print('outdir is %s'%(outdir))
 	#Write .rclone.conf
 	if os.path.exists('%s/.rclone.conf' %(outdir)):
 		os.remove('%s/.rclone.conf' %(outdir))
-        print 'REGION IS '+region
+        print ('Region = %s\n'%(region))
         print ('[rclonename]\n')
         print ('type = s3\n')
         print ('env_auth = false\n')
         print ('access_key_id = %s\n' %(keyid))
-        print ('secret_access_key = %s\n' %(secretid))
+	print ('secret_access_key = %s\n' %(secretid[:5]+'****************************************'))
         print ('region = %s\n' %(region))
 
 	r1=open('%s/.rclone.conf' %(outdir),'w')
@@ -197,7 +195,6 @@ def getCMDrefine(rlncmd):
 		#Since appions command comes with this formatting: 234.0\xc2\xa0
 	outbasename=rlncmd.split()[outcounter]
 	outdir=rlncmd.split()[outcounter].split('/')
-	print('outdir is %s'%(outdir))
 	del outdir[-1]
 	outdir='/'.join(outdir)
 	if itercounter > 0:
@@ -363,7 +360,12 @@ def getSelectParticleDir(selectdir):
 	return 'Extract/%s' %(jobname)
 
 #==============================
-def relion_refine_mpi(in_cmd,instancetype=''):
+def relion_refine_mpi(in_cmd,numParticles,partxdim,instancetype=''):
+
+	assert type(instancetype) == str
+	assert type(numParticles) == int
+	assert type(partxdim) == int
+
 	print("Instance type is: ",instancetype)
 	#Set entry
 	otherPartDir=''
@@ -476,15 +478,15 @@ def relion_refine_mpi(in_cmd,instancetype=''):
 		#if partstarname.split('.')[-1] != 'mrcs':
 		#	writeToLog('Error: input stack must have .mrcs extension. Exiting','%s/run.err' %(outdir))
 		#	sys.exit()
-		if os.path.exists('%s/handler.txt' %(outdir)):
-			os.remove('%s/handler.txt' %(outdir))
-		cmd='relion_image_handler --i %s --stats > %s/handler.txt' %(partstarname,outdir)
-		subprocess.Popen(cmd,shell=True).wait()
-                numParticles=int(linecache.getline('%s/handler.txt' %(outdir),1).split('=')[1].split('x')[3].split(';')[0])
-		partxdim=int(linecache.getline('%s/handler.txt' %(outdir),1).split('=')[1].split('x')[0].strip())
+		#if os.path.exists('%s/handler.txt' %(outdir)):
+		#	os.remove('%s/handler.txt' %(outdir))
+		#cmd='relion_image_handler --i %s --stats > %s/handler.txt' %(partstarname,outdir)
+		#subprocess.Popen(cmd,shell=True).wait()
+		#numParticles=int(linecache.getline('%s/handler.txt' %(outdir),1).split('=')[1].split('x')[3].split(';')[0])
+		#partxdim=int(linecache.getline('%s/handler.txt' %(outdir),1).split('=')[1].split('x')[0].strip())
 		
-		print("numParticles calculated by relion is",numParticles)
-		print("partxdim calculated by relion is",partxdim)
+		print("numParticles is",numParticles)
+		print("partxdim calculated is",partxdim)
 		ctf=False
 		angpix=False
 		rlncounter=1
@@ -649,14 +651,10 @@ def relion_refine_mpi(in_cmd,instancetype=''):
         	#Create EBS volume
         	if os.path.exists('%s/awsebs.log' %(outdir)) :
                 	os.remove('%s/awsebs.log' %(outdir))
-		print('awsdir is',awsdir)
-		print('outdir is',outdir)
         	cmd='%s/create_volume.py %i %sa "rln-aws-tmp-%s-%s"'%(awsdir,int(sizeneeded),awsregion,teamname,particledir)+'> %s/awsebs.log' %(outdir)
-		print('cmd is ',cmd)
         	subprocess.Popen(cmd,shell=True).wait()
 
         	#Get volID from logfile
-		print('outdir is',outdir)
         	volID=linecache.getline('%s/awsebs.log' %(outdir),5).split('ID: ')[-1].split()[0]
 
 	#Restore volume, returning with it volID for later steps

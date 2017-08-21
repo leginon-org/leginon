@@ -17,7 +17,7 @@ class Relion2Align2D_AWS_Form extends BasicLayoutForm
 	// Set Default values in the constructor
 	function __construct( $expId, $extraHTML='', $stackId='', $clip='', $bin='1', $numpart='3000',
 		$lowpass='10', $highpass='1000', $numRef='3', $maxIter='30', $angStep='5', $tau='2', $partDiam='',
-		$flat='on', $zero_mask=False, $commit='on',$instancetype='none')
+		$flat='on', $zero_mask=False, $commit='on',$instancetype='none',$preread_images=True)
 	{
 		parent::__construct($expId, $extraHTML);
 
@@ -98,6 +98,8 @@ class Relion2Align2D_AWS_Form extends BasicLayoutForm
 		$params->addParam( "commit", $commit, "Commit to Database" );
 		$params->addParam( "correctnorm",$correctnorm,"Perform normalization error correction");
 		$params->addParam( "instancetype",$instancetype,"Amazon GPU instance type");
+		$params->addParam( "preread_images",$preread_images,"Pre-read images into SSD cache");
+
 		// Validations
 		$params->addValidation( "numpart", "minval=4" );
 
@@ -167,6 +169,7 @@ class Relion2Align2D_AWS_Form extends BasicLayoutForm
 		$html .= $params->insertCheckboxField("flat",'','relion2DMaxlike.flattensolvent');
 		$html .= $params->insertCheckboxField("zero_mask",'','relion2DMaxlike.zeromasking');
 		$html .= $params->insertCheckboxField("correctnorm",'','relion2DMaxlike.correctnorm');
+		$html .= $params->insertCheckboxField("preread_images",'','relion2DMaxlike.preread_images');
 		$html .= $params->insertCheckboxField("commit");
 
 		// When loading this page the first time, use the switchDefaults javascript function to set

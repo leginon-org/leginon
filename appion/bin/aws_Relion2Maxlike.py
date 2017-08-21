@@ -127,6 +127,7 @@ class RelionMaxLikeScript(appionScript.AppionScript):
 				apDisplay.printError("requested clipsize is too big %d > %d"
 					%(self.params['clipsize'],self.clipsize))
 			self.clipsize = self.params['clipsize']
+		
 		if self.params['numpart'] is None:
 			self.params['numpart'] = apFile.numImagesInStack(stackfile)
 
@@ -335,9 +336,6 @@ class RelionMaxLikeScript(appionScript.AppionScript):
 		#run proc2d
 		a.run()
 
-		print('numpart is ',self.params['numpart'])
-		print('apFile.numImagesinstack is',self.params['localstack'])
-		print('skipping numImageInStack check with .mrcs')
 		#if self.params['numpart'] != apFile.numImagesInStack(self.params['localstack']):
 		#	apDisplay.printError("Missing particles in stack")
 
@@ -370,27 +368,19 @@ class RelionMaxLikeScript(appionScript.AppionScript):
 			relionopts += " --preread_images "
 
 		if self.params['usempi'] is True:
-			#relionexe = apParam.getExecPath("relion_refine_mpi", die=True)
 			relionexe = "relion_refine_mpi"
 			relionopts += " --j %d "%(self.params['mpithreads'])
-#			relionopts += " --memory_per_thread %d "%(self.params['mpimem'])
-			print 'mpinodes is equal to '+str(self.params['mpinodes'])
 			### find number of processors
 			nproc = self.params['mpiprocs'] * self.params['mpinodes']
-			print 'mpiprocs = '+str(self.params['mpiprocs'])
-			print 'mpinodes = '+str(self.params['mpinodes'])
-			apDisplay.printColor("Using "+str(nproc)+" processors!", "green")
 			runcmd = self.mpirun+" -np "+str(nproc)+" "+relionexe+" "+relionopts
-			print('runcmd is',runcmd)
 		else:
 			relionexe = apParam.getExecPath("relion_refine", die=True)
 			runcmd = relionexe+" "+relionopts
-		#self.estimateIterTime(nprocs)
-
+		#relionexe = "relion_refine_mpi"
+		#runcmd = relionexe+" "
 		self.writeRelionLog(runcmd)
 
-		#apParam.runCmd(runcmd, package="RELION", verbose=True, showcmd=True)
-		apAWS.relion_refine_mpi(runcmd,instancetype=self.params['instancetype'])
+		apAWS.relion_refine_mpi(runcmd,self.params['numpart'],self.clipsize,self.params['instancetype'])
 		aligntime = time.time() - aligntime
 		apDisplay.printMsg("Alignment time: "+apDisplay.timeString(aligntime))
 
