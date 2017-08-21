@@ -983,6 +983,22 @@ class particledata {
 		return $d;
 	}
 
+	function hasLocalCtfData($sessionId) {
+		$d = ($this->getLastLocalCtfRun($sessionId)) ? true : false;
+		return $d;
+	}
+
+	function getLastLocalCtfRun($sessionId) {
+		$q = "select max(acerun.DEF_id) as runId "
+			."from ApAceRunData AS acerun "
+			."LEFT JOIN ApCtfFind4ParamsData AS params "
+			."ON (acerun.`REF|ApCtfFind4ParamsData|ctffind4_params` = params.DEF_id) "
+			."WHERE acerun.`REF|leginondata|SessionData|session`='$sessionId' "
+			."AND params.local_refine=1";
+		list($r) = $this->mysql->getSQLResult($q);
+		return $r['runId'];
+	}
+
 	function getLastCtfRun($sessionId) {
 		$q = "select max(DEF_id) as runId "
 			."from `ApAceRunData` where `REF|leginondata|SessionData|session`='$sessionId'";
@@ -1158,6 +1174,7 @@ class particledata {
 
 	function getCtfInfoFromImageId($imageId, $order=false, $method='', $acerunId='') {
 		$phase_shift_select = $this->getPhaseShiftString('c');
+		$local_plot_select = ($this->mysql->FieldExists('ApCtf','local_plot')) ? "c.local_plot, ": "";
 		$q =	"select "
 			."c.`DEF_id`, "
 			."c.`REF|leginondata|AcquisitionImageData|image`, "
@@ -1182,6 +1199,7 @@ class particledata {
 			."c.`graph2` , "
 			."c.`graph3` , "
 			."c.`graph4` , "
+			.$local_plot_select
 			."c.`confidence_30_10` , "
 			."c.`confidence_5_peak` , "
 			."c.`resolution_80_percent` , "

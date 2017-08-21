@@ -833,6 +833,15 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		self.parser.add_option("--manual_alignment_finished", dest="manual_alignment_finished",  default="False",
 			help="Internal option.")
 		
+		self.parser.add_option("--center_all_images", dest="center_all_images",  default="False",
+			help="Re-center all images. Used when there is significant overshifting either by Leginon or Protomo, e.g. --center_all_images=True")
+		
+		self.parser.add_option("--change_refimg", dest="change_refimg",  default="False",
+			help="Change the Protomo Reference image? e.g. --change_refimg=True")
+		
+		self.parser.add_option("--desired_ref_tilt_angle", dest="desired_ref_tilt_angle",  type="float",  default=0,
+			help="Change the Protomo Reference image to be the image closest to this tilt angle, e.g. --desired_ref_tilt_angle=17")
+		
 		self.parser.add_option("--make_searchable", dest="make_searchable",  default="True",
 			help="Hidden option. Places a .tiltseries.XXXX file in the rundir so that it will be found by Batch Summary webpages.")
 		
@@ -1527,6 +1536,12 @@ class ProTomo2Aligner(basicScript.BasicScript):
 			if (self.params['defocus_save'] != 0 and isinstance(self.params['defocus_save'],float)): #Can only save defocus during refinement (or reconstruction)
 				apProTomo2Prep.defocusEstimate(seriesname, rundir, self.params['projectid'], self.params['sessionname'], self.params['parallel'], int(self.params['tiltseries']), tiltfilename, self.params['frame_aligned'], self.params['pixelsize'], self.params['defocus_ang_negative'], self.params['defocus_ang_positive'], self.params['amp_contrast_defocus'], self.params['res_min'], self.params['res_max'], self.params['defocus'], self.params['defocus_difference'], self.params['defocus_min'], self.params['defocus_max'], self.params['defocus_save'])
 			rawimagecount, maxtilt=self.excludeImages(tiltfilename_full, f)  #Remove images from .tlt file if user requests
+		
+		if self.params['change_refimg'] == "True":
+			apProTomo2Aligner.changeReferenceImage(tiltfilename_full, self.params['desired_ref_tilt_angle'])
+		
+		if self.params['center_all_images'] == "True":
+			apProTomo2Aligner.centerAllImages(tiltfilename_full, self.params['dimx'], self.params['dimy'])
 		
 		self.params['cos_alpha']=np.cos(self.params['maxtilt']*np.pi/180)
 		

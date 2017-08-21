@@ -723,7 +723,7 @@ def parseOptions():
 	parser.add_option("--restart_from_run", dest="restart_from_run",  default='',
 		help="Run name (if in same Output directory) or full path (if not in same Output directory) of previously Refined Appion-Protomo run from which you wish to restart the Refinement using the current, new Run name and/or Output directory e.g. --restart_from_run=tiltseries0002")
 	
-	parser.add_option("--restart_from_iteration", dest="restart_from_iteration",  type="int",  default=0,
+	parser.add_option("--restart_from_iteration", dest="restart_from_iteration",  default=0,
 		help="Refinement iteration of specified previously Refined Appion-Protomo run from which you would like to restart the Refinement, e.g. --restart_from_iteration=2", metavar="int")
 	
 	parser.add_option("--link", dest="link",  default="False",
@@ -813,6 +813,12 @@ def parseOptions():
 	parser.add_option("--manual_alignment_finished", dest="manual_alignment_finished",  default="False",
 		help="Internal option.")
 	
+	parser.add_option("--change_refimg", dest="change_refimg",  default="False",
+		help="Change the Protomo Reference image? e.g. --change_refimg=True")
+	
+	parser.add_option("--desired_ref_tilt_angle", dest="desired_ref_tilt_angle",  type="float",  default=0,
+		help="Change the Protomo Reference image to be the image closest to this tilt angle, e.g. --desired_ref_tilt_angle=17")
+	
 	parser.add_option("--make_searchable", dest="make_searchable",  default="True",
 		help="Hidden option. Places a .tiltseries.XXXX file in the rundir so that it will be found by Batch Summary webpages.")
 	
@@ -861,6 +867,11 @@ if __name__ == '__main__':
 			os.system('mkdir -p %s/raw/original/; ln %s/* %s/raw/ 2>/dev/null; ln %s/original/* %s/raw/original/' % (rundir, os.path.join(restart_path,'raw'), rundir, os.path.join(restart_path,'raw'), rundir))
 			os.system('cp -r %s %s 2>/dev/null' % (os.path.join(restart_path,'media','dose_compensation'), os.path.join(rundir,'media')))
 			os.system('mkdir %s/defocus_estimation/; cp -r %s/defocus_estimation/* %s/defocus_estimation/ 2>/dev/null' % (rundir, restart_path, rundir))
+			apDisplay.printMsg("Restarting Refinement from %s Iteration %d" % (os.path.basename(restart_path), options.restart_from_iteration))
+			os.system('mkdir %s; cp %s %s' % (rundir, restart_tlt_file, tiltfilename_full))
+			os.system('mkdir -p %s/raw/original/; ln %s/* %s/raw/ 2>/dev/null; ln %s/original/* %s/raw/original/' % (rundir, os.path.join(restart_path,'raw'), rundir, os.path.join(restart_path,'raw'), rundir))
+			os.system('cp -r %s %s 2>/dev/null' % (os.path.join(restart_path,'media','dose_compensation'), os.path.join(rundir,'media')))
+			os.system('mkdir %s/defocus_estimation/; cp -r %s/defocus_estimation/* %s/defocus_estimation/ 2>/dev/null' % (rundir, restart_path, rundir))
 			os.system('touch %s/restarted_from_%s_iteration_%d' % (rundir, os.path.basename(restart_path), options.restart_from_iteration))
 		else:
 			apDisplay.printError("Restart Refinement Iteration not found! Aborting Refinement!")
@@ -879,8 +890,12 @@ if __name__ == '__main__':
 			manual_tlt_file = 'manual_'+seriesname+'.tlt'
 			manual_tlt_filefull = rundir+'/'+manual_tlt_file
 			os.system('cp %s %s' % (manual_tlt_filefull, tiltfilename_full))
-		elif options.starting_tlt_file == "More_Manual":
+		elif (options.starting_tlt_file == "More_Manual") or (options.starting_tlt_file == "MoreManual"):
 			manual_tlt_file = 'more_manual_'+seriesname+'.tlt'
+			if not os.path.isfile(manual_tlt_file):
+				apDisplay.printWarning("%s file not found," % manual_tlt_file)
+				manual_tlt_file = 'more_manual_coarse_'+seriesname+'.tlt'
+				apDisplay.printWarning("Switching to %s" % manual_tlt_file)
 			manual_tlt_filefull = rundir+'/'+manual_tlt_file
 			os.system('cp %s %s' % (manual_tlt_filefull, tiltfilename_full))
 		elif options.starting_tlt_file == "Initial":
@@ -936,6 +951,7 @@ if __name__ == '__main__':
 		else:
 			apDisplay.printError("It's logically impossible to reach this statement.")
 			sys.exit()
+		os.system("ls %s" % restart_path)
 		os.system('rm -rf %s' % rundir)
 	
 	#Run refinements

@@ -43,12 +43,12 @@ class JAHCFinder(targetfinder.TargetFinder):
 		'template diameter': 40,
 		'template filename': default_template,
 		'file diameter': 168,
+		'template image min':0.0,
 		'template invert': False,
 		'template type': 'cross',
 		'template lpf': {
 			'sigma': 1.0,
 		},
-		'template threshold':0.0,
 		'threshold': 3.0,
 		'threshold method': "Threshold = mean + A * stdev",
 		'blobs border': 20,
@@ -63,6 +63,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 		'ice min mean': 0.05,
 		'ice max mean': 0.2,
 		'ice max std': 0.2,
+		'ice min std': 0.0,
 		'focus hole': 'Off',
 		'target template': False,
 		'focus template': [(0, 0)],
@@ -277,8 +278,10 @@ class JAHCFinder(targetfinder.TargetFinder):
 		i0 = self.settings['lattice zero thickness']
 		tmin = self.settings['ice min mean']
 		tmax = self.settings['ice max mean']
-		tstd = self.settings['ice max std']
-		self.hf.configure_ice(i0=i0,tmin=tmin,tmax=tmax,tstd=tstd)
+		tstdmax = self.settings['ice max std']
+		tstdmin = self.settings['ice min std']
+		print tstdmax, tstdmin
+		self.hf.configure_ice(i0=i0,tmin=tmin,tmax=tmax,tstdmax=tstdmax, tstdmin=tstdmin)
 		try:
 			self.hf.calc_ice()
 		except Exception, e:
@@ -464,7 +467,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 					rad = self.settings['focus stats radius']
 					tmin = self.settings['focus min mean thickness']
 					tmax = self.settings['focus max mean thickness']
-					tstd = self.settings['focus max stdev thickness']
+					tstdmax = self.settings['focus max stdev thickness']
 					coord = target[1], target[0]
 					stats = self.hf.get_hole_stats(self.hf['original'], coord, rad)
 					if stats is None:
@@ -473,7 +476,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 					tm = self.icecalc.get_thickness(stats['mean'])
 					ts = self.icecalc.get_stdev_thickness(stats['std'], stats['mean'])
 					self.logger.info('template point %s stats:  mean: %s, stdev: %s' % (vect, tm, ts))
-					if (tmin <= tm <= tmax) and (ts < tstd):
+					if (tmin <= tm <= tmax) and (ts < tstdmax):
 						self.logger.info('template point %s passed thickness test' % (vect,))
 						newtargets['focus'].append(target)
 						break
@@ -537,6 +540,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 			'ice-min-thickness': self.settings['ice min mean'],
 			'ice-max-thickness': self.settings['ice max mean'],
 			'ice-max-stdev': self.settings['ice max std'],
+			'ice-min-stdev': self.settings['ice min std'],
 			'template-on': self.settings['target template'],
 			'template-focus': self.settings['focus template'],
 			'template-acquisition': self.settings['acquisition template'],

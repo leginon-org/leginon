@@ -574,9 +574,15 @@ if (is_numeric($expId)) {
 
 		// This seems to cause terrible things to happen every now and then. Not sure why, but it is not really needed
 		// so it is commented out for now.
+	
 //		$nruns[] = array(
 //			'name'=>"<a href='evilClusterUsers.php?expId=$sessionId'>Evil Cluster Users</a>",
 //		);
+
+		$nruns[] = array(
+			'name'=>"<a href='uploadRelion3DRefine.php?expId=$sessionId'>Upload Relion 3D Refine</a>",
+		);
+
 		$data[] = array(
 			'action' => array($action, $celloption),
 			'result' => array(),

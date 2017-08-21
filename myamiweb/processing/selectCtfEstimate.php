@@ -71,6 +71,38 @@ echo "</td></tr>\n";
 else {}
 
 /*
+** CTFFIND and CTFTILT
+*/
+
+echo "<tr><td width='100' align='center'>\n";
+echo "  <img src='img/grigorieff_sq_logo.png' width='96'>\n";
+echo "</td><td>\n";
+echo "  <h3><a href='runCtfEstimate.php?expId=$expId'>CTFFIND v3</a></h3>\n";
+echo " <p>CTFFIND uses a robust grid search algorithm to find the optimal "
+	."CTF parameters. Please see the <a href='http://grigoriefflab.janelia.org/ctf'> "
+	."Grigorieff lab website</a>&nbsp;<img src='img/external.png'> for more information. "
+	."</p>\n";
+echo "</td></tr>\n";
+
+/*
+** Simple CTF Refine
+*/
+
+echo "<tr><td width='100' align='center'>\n";
+echo "  <img src='img/CTF_Refine_Logo.png' width='96'>\n";
+echo "</td><td>\n";
+echo "  <h3><a href='runSimpleCtfRefine.php?expId=$expId'>Simple CTF Refine</a></h3>\n";
+$simplexUrl = "http://en.wikipedia.org/wiki/Simplex_algorithm";
+echo " <p>Basically a CTFFIND3 program that refine the CTF parameters<br/>"
+	." Just creates several 2D CTF image and cross-correlates with the Power Spectra.<br/>"
+	."Uses the <a href='$simplexUrl'>simplex algorithm</a> to refine the 2d parameters of the CTF "
+	." (i.e., the angle astigmatism and amount of astigmatism) and then keeps "
+	."  the value with the highest CTF resolution "
+	."</p>\n";
+echo "</td></tr>\n";
+
+
+/*
 ** ACE 2
 */
 
@@ -105,21 +137,6 @@ if (!HIDE_MATLAB)
 }
 
 /*
-** CTFFIND and CTFTILT
-*/
-
-echo "<tr><td width='100' align='center'>\n";
-echo "  <img src='img/grigorieff_sq_logo.png' width='96'>\n";
-echo "</td><td>\n";
-echo "  <h3><a href='runCtfEstimate.php?expId=$expId'>CTFFIND v3</a></h3>\n";
-echo " <p>CTFFIND uses a robust grid search algorithm to find the optimal "
-	."CTF parameters. Please see the <a href='http://grigoriefflab.janelia.org/ctf'> "
-	."Grigorieff lab website</a>&nbsp;<img src='img/external.png'> for more information. "
-	."</p>\n";
-echo "</td></tr>\n";
-
-
-/*
 ** Phasor CTF
 */
 
@@ -142,7 +159,8 @@ echo "  <img src='img/CTF_Refine_Logo.png' width='96'>\n";
 echo "</td><td>\n";
 echo "  <h3><a href='runCtfRefine.php?expId=$expId'>CTF Refine</a></h3>\n";
 $simplexUrl = "http://en.wikipedia.org/wiki/Simplex_algorithm";
-echo " <p>Uses the <a href='$simplexUrl'>simplex algorithm</a> to refine the 2d parameters of the CTF "
+echo " <p> There is a lot going on in the program and it can be very slow or crash <br/>"
+	."Uses the <a href='$simplexUrl'>simplex algorithm</a> to refine the 2d parameters of the CTF "
 	." (i.e., the angle astigmatism and amount of astigmatism) and then keeps "
 	."  the value with the highest CTF resolution "
 	."</p>\n";

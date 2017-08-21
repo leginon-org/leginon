@@ -1401,6 +1401,9 @@ class Tecnai(tem.TEM):
 			raise RuntimeError()
 
 	def _unloadCartridge(self):
+		'''
+		FIX ME: Can we specify which slot to unload to ?
+		'''
 		state = self.tecnai.AutoLoader.UnloadCartridge()
 		if state != 0:
 			raise RuntimeError()
@@ -1412,6 +1415,7 @@ class Tecnai(tem.TEM):
 			return 0
 
 	def getGridLoaderSlotState(self, number):
+		# base 1
 		if not self.hasGridLoader():
 			return self.gridloader_slot_states[0]
 		else:

@@ -38,6 +38,9 @@ class TEMController(node.Node):
 																				self.panel)
 		self.presetsclient = presets.PresetsClient(self)
 
+		self.grid_slot_numbers = self.researchLoadableGridSlots()
+		self.grid_slot_names = map((lambda x:'%d' % (x,)),self.grid_slot_numbers)
+		self.loaded_grid_slot = None
 		self.start()
 
 	def _toScope(self,name, stagedict):
@@ -55,7 +58,7 @@ class TEMController(node.Node):
 		self.setStatus('processing')
 		self.presetsclient.toScope(presetname)
 		self.setStatus('idle')
-		self.panel.onSendPresetDone()
+		self.panel.sendPresetDone()
 
 	def onResetXY(self):
 		loc = {'x':0.0,'y':0.0}
@@ -69,10 +72,10 @@ class TEMController(node.Node):
 		loc = {'a':0.0}
 		self._toScope('reset alpha',loc)
 
-	def onCloseColumnValve(self):
+	def uiCloseColumnValve(self):
 		self.setStatus('processing')
 		self.safeCloseColumnValve()
-		self.panel.onSetTEMParamDone()
+		self.panel.setTEMParamDone()
 		self.setStatus('idle')
 
 	def safeCloseColumnValve(self):
@@ -85,7 +88,7 @@ class TEMController(node.Node):
 		if self.isCurrentPresetSet():
 			if self.isColumnValveInState('close', False):
 				self.logger.info('Column valve already closed')
-				self.panel.onIsLightOn(False)
+				self.panel.setIsLightOn(False)
 				return
 			try:
 				self.logger.info('Closing column valve....')
@@ -94,7 +97,7 @@ class TEMController(node.Node):
 				self.logger.error('Failed to close column valve')
 				raise
 			time.sleep(0.5)
-			self.panel.onIsLightOn(not self.isColumnValveInState('closed'))
+			self.panel.setIsLightOn(not self.isColumnValveInState('closed'))
 
 	def isColumnValveInState(self,desired_state='open', display_log=True):
 		current_state = self.instrument.tem.getColumnValvePosition()
@@ -107,10 +110,10 @@ class TEMController(node.Node):
 				self.logger.error('Column valve is %s' % current_state)
 			return False
 
-	def onOpenColumnValve(self):
+	def uiOpenColumnValve(self):
 		self.setStatus('processing')
 		self.safeOpenColumnValve()
-		self.panel.onSetTEMParamDone()
+		self.panel.setTEMParamDone()
 		self.setStatus('idle')
 
 	def safeOpenColumnValve(self):
@@ -123,7 +126,7 @@ class TEMController(node.Node):
 		if self.isTEMinImagingMode():
 			if self.isColumnValveInState('open', False):
 				self.logger.info('Column valve already opened')
-				self.panel.onIsLightOn(True)
+				self.panel.setIsLightOn(True)
 				return
 			# check current preset matches microscope
 			if self.isCurrentPresetSet():
@@ -137,7 +140,7 @@ class TEMController(node.Node):
 						self.logger.error('Failed to open column valve')
 						raise
 				time.sleep(0.5)
-				self.panel.onIsLightOn(self.isColumnValveInState('open'))
+				self.panel.setIsLightOn(self.isColumnValveInState('open'))
 
 	def isTEMinImagingMode(self):
 		self.logger.info('Checking image mode....')
@@ -196,6 +199,141 @@ class TEMController(node.Node):
 		pressures['projection'] = self.instrument.tem.ProjectionChamberPressure
 		pressures['buffer tank'] = self.instrument.tem.BufferTankPressure
 		return pressures
+
+	def researchLoadableGridSlots(self):
+		'''
+		place holder for future cartridges by project restriction.
+		Slot name refers to the position on grid loader
+		Grid name refers to the identity grid preparation. 
+		'''
+		try:
+			total_grids = self.instrument.tem.getGridLoaderNumberOfSlots()
+			return map((lambda x:x+1),range(total_grids))[1:]
+		except:
+			return []
+
+	def getGridSlotNames(self):
+		return self.grid_slot_names
+
+	def getCurrentGridSlot(self):
+		return self.loaded_grid_slot
+
+	def getAllSlotState(self):
+		states = {}
+		for slot_number in self.grid_slot_numbers:
+			state = self.instrument.tem.getGridLoaderSlotState(slot_number)
+			states[slot_number] = state
+		return states
+
+	def getGridSlotStatesToDisplay(self):
+		try:
+			number_states = self.getAllSlotState()
+			name_states = {}
+			for key in number_states:
+				name_key = '%d' % key
+				name_states[name_key] = number_states[key]
+		except:
+			return {}
+		return name_states
+
+	def findFirstEmptySlotName(self):
+		try:
+			total_slots = self.instrument.tem.getGridLoaderNumberOfSlots()
+		except AttributeError:
+			self.logger.error('Send a preset to set instrument state first')
+			return None
+		empty_slot_invalid = False
+		for s in range(total_slots):
+			slot_number = s + 1
+			state = self.instrument.tem.getGridLoaderSlotState(slot_number)
+			if state == 'empty':
+				slot_name = '%d' % (slot_number,)
+				# add empty slot to available list so that unloaded grid can go back in.
+				if slot_name not in self.grid_slot_names:
+					empty_slot_invalid = True
+					continue
+				else:
+					return slot_name
+		if empty_slot_invalid:
+			self.logger.error('Empty slot exists but not valid for the project')
+		return None
+
+	def unloadGrid(self):
+		if not self.instrument.tem.hasGridLoader():
+			self.logger.error('TEM has no auto grid loader')
+			return
+		# Must have empty slot in range
+		empty_slot_name = self.findFirstEmptySlotName()
+		if empty_slot_name is None:
+			self.logger.error('No empty slot on grid loader. Can not unload.')
+			self.panel.setTEMParamDone()
+			return
+		empty_slot_number = int(empty_slot_name)
+		is_success = False
+		try:
+			self.logger.info('UnLoading grid from column')
+			self.instrument.tem.unloadGridCartridge()
+			state = self.instrument.tem.getGridLoaderSlotState(empty_slot_number)
+			if state == 'occupied':
+				is_success = True
+		except Exception, e:
+			self.logger.error(e)
+		if is_success == True:
+			self.loaded_grid_slot = None
+		self.logger.info('Done unLoading grid from column')
+		self.panel.setTEMParamDone()
+
+	def loadGrid(self, slot_name):
+		if slot_name not in self.grid_slot_names:
+			self.logger.error('Selected slot is not valid for this project')
+			return
+		try:
+			slot_number = int(slot_name)
+		except:
+			self.logger.error('Slot not selected')
+			return
+		if not self.instrument.tem.hasGridLoader():
+			self.logger.error('TEM has no auto grid loader')
+			return
+
+		state = 'unknown'
+		try:
+			state = self.instrument.tem.getGridLoaderSlotState(slot_number)
+		except Exception, e:
+			self.logger.error(e)
+		# Just set this grid as loaded grid if it is an empty slot
+		# Grid can not be unloaded if we don't set it here.
+		if state == 'empty':
+			if self.loaded_grid_slot is None:
+				self.logger.info('Unknown loaded grid. Set loaded grid to empty slot %s' % slot_name)
+				self.loaded_grid_slot = slot_number
+			elif self.loaded_grid_slot == slot_number:
+				self.logger.info('Grid from slot is loaded. Nothing to do')
+			else:
+				self.logger.warning('Detected empty slot. Can not load.')
+			self.panel.setTEMParamDone()
+			return
+		if state != 'occupied':
+			self.logger.warning('Invalid grid slot state. Can not load.')
+			self.panel.setTEMParamDone()
+			return
+		return _loadGrid(slot_number)
+
+	def _loadGrid(self, slot_number):
+		# Loading occupied grid.
+		self.logger.info('Loading grid from slot %d' % (slot_number,))
+		is_success = False
+		try:
+			self.instrument.tem.loadGridCartridge(slot_number)
+			state = self.instrument.tem.getGridLoaderSlotState(slot_number)
+			if state == 'empty':
+				is_success = True
+		except Exception, e:
+			self.logger.error(e)
+		if is_success == True:
+			self.loaded_grid_slot = slot_number
+			self.logger.info('Grid Loaded from slot %d' % (slot_number,))
+		self.panel.setTEMParamDone()
 
 if __name__ == '__main__':
 	id = ('navigator',)

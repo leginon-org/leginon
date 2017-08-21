@@ -35,6 +35,8 @@ class FrameStackLoop(apDDLoop.DDStackLoop):
 			action="store_false", help="Use only one reference channel for gain/dark correction")
 		self.parser.add_option("--compress", dest="compress", default=False,
 			action="store_true", help="Compress raw frames after stack making")
+		self.parser.add_option("--override_db", dest="override_db", default=False,
+			action="store_true", help="Override database for bad rows, columns, and image flips")
 		# String
 		self.parser.add_option("--framepath", dest="framepath",
 			help="Force Session Frame Path to this", metavar="PATH")
@@ -44,6 +46,14 @@ class FrameStackLoop(apDDLoop.DDStackLoop):
 
 		self.parser.add_option("--trim", dest="trim", type="int", default=0,
 			help="Trim edge off after frame stack gain/dark correction", metavar="INT")
+		
+	### add options here
+		self.parser.add_option('--clip', dest='clip', default=None, type='int', help= "Clip 'clip' pixels from the raw frames and pad back out with the mean.")
+		self.parser.add_option('--bad_cols', dest='bad_cols', default='', help= "Bad columns in raw frames")
+		self.parser.add_option('--bad_rows', dest='bad_rows', default='', help= "Bad rows in raw frames")
+		self.parser.add_option("--flipgain", dest="flipgain", default=False,
+			action="store_true", help="Flip dark and bright top to bottom before correcting frames")
+
 
 	#=======================
 	def checkConflicts(self):
@@ -69,8 +79,14 @@ class FrameStackLoop(apDDLoop.DDStackLoop):
 		# keepstack is resolved for various cases in conflict check.  There should be no ambiguity by now
 		self.dd.setKeepStack(self.params['keepstack'])
 		self.dd.setCycleReferenceChannels(self.params['cyclechannels'])
+		self.dd.clip=self.params['clip']
 		self.first_image = True
-	
+		if self.params['override_db'] is True:
+			self.dd.override_db = True
+			self.dd.badcols = [int(n) for n in self.params['bad_cols'].split(',')]
+			self.dd.badrows = [int(n) for n in self.params['bad_rows'].split(',')]
+			self.dd.flipgain = self.params['flipgain']
+			
 		# specification that is not default
 		if self.params['framepath']:
 			self.dd.setForcedFrameSessionPath(self.params['framepath'])

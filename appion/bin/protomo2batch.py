@@ -624,6 +624,11 @@ def parseOptions():
 		help="Parallelize while you parallelize (parallelizes image and video production). This could break your machine.")
 	parser.add_option("--frame_aligned", dest="frame_aligned",  default="True",
 		help="Use frame-aligned images instead of naively summed images, if present.")
+	parser.add_option("--change_refimg", dest="change_refimg",  default="False",
+		help="Change the Protomo Reference image? e.g. --change_refimg=True")
+	parser.add_option("--desired_ref_tilt_angle", dest="desired_ref_tilt_angle",  type="float",  default=0,
+		help="Change the Protomo Reference image to be the image closest to this tilt angle, e.g. --desired_ref_tilt_angle=17")
+	
 	
 	options, args=parser.parse_args()
 	
@@ -815,6 +820,9 @@ def protomoCoarseAlign(log_file, tiltseriesnumber, coarse_options):
 	thickness=int(round(orig_thickness*coarse_options.pixelsize))
 	lp=round(2*coarse_options.pixelsize*sampling/orig_lp,2)
 	editParamFile(tiltdir, coarse_param_full, raw_path)
+	if self.params['change_refimg'] == "True":
+		apProTomo2Aligner.changeReferenceImage(tiltfilename_full, self.params['desired_ref_tilt_angle'])
+	
 	apDisplay.printMsg('Starting Protomo Coarse Alignment')
 	f.write('Starting Protomo Coarse Alignment\n')
 	coarse_seriesparam=protomo.param(coarse_param_full)

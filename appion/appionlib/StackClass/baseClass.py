@@ -191,6 +191,9 @@ class StackClass(object):
 		t0 = time.time()
 		if self.debug is True:
 			print "appending %d particles to file"%(len(particleDataTree))
+		if len(particleDataTree) == 0:
+			apDisplay.printWarning("cannot append zero particles to a file")
+			return None
 		if not self.fileExists():
 			self._writeParticlesToFile(particleDataTree)
 		else:

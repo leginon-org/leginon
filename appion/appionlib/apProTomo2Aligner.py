@@ -82,6 +82,7 @@ def printTips(tip_type):
 		choices.append("Tip: If there are grossly misaligned tilt images after Coarse Alignment that you wish to recover rather than discard, re-run the Coarse Alignment and choose 'Manual then Coarse' in the General Parameters.")
 		choices.append("Tip: Consider turning on the optional Center of Mass Peak Search option during Refinement. By turning on this option, Protomo will identify the 'center of mass' of intensity values in the correlation peak by searching in an ellipse centered on the highest intensity pixel found during peak search. This allows for sub-pixel precision and may increase or decrease the accuracy of an alignment.")
 		choices.append("Tip: On the Protomo Refinement webpage you can enter in multiple Thickness values as comma-separated float values. This will generate a command that will run N refinements in different directories, where N is the number of thicknesses requested. Be careful not to overload the machine you are running on!")
+		choices.append("Tip: An apparent ad-hoc way to determine the correct alignment thickness is to view the reconstruction - the objects of interest should be centered in the z-direction for the optimal alignment thickness. Alignment thicknesses that differ from this optimal value will be off-center.")
 	elif tip_type == "Reconstruction": #Reconstruction tips
 		choices.append("Tip: You can make a reconstruction while a tilt-series is still aligning.")
 		choices.append("Tip: Be aware that the location of objects from different iterations may change.")
@@ -517,6 +518,72 @@ def nextLargestSize(limit):
 					good.append(n)
 					break
 	return int(good[-1])
+
+
+def centerAllImages(tiltfilename_full, dim_x, dim_y):
+	'''
+	This will center all images in the provided Protomo .tlt file based on the provided image dimensions.
+	'''
+	apDisplay.printMsg("Centering all images...")
+	new_x=dim_x/2
+	new_y=dim_y/2
+	new_x="%.3f" % new_x
+	new_y="%.3f" % new_y
+	
+	with open(tiltfilename_full) as f:
+		lines = f.readlines()
+	f=open(tiltfilename_full,'w')
+	
+	for line in lines:
+		if ('IMAGE' in line) and ('ORIGIN' in line):
+			strings=line.split()
+			for i in range(len(strings)):
+				if strings[i] == 'ORIGIN':
+					old_x=strings[i+2]
+					old_y=strings[i+3]
+			f.write(line.replace(old_x,new_x).replace(old_y,new_y))
+		else:
+			f.write(line)
+	f.close()
+	
+	return
+
+
+def changeReferenceImage(tiltfilename_full, desired_ref_tilt_angle):
+	'''
+	Change the Protomo reference image to be the one closest to desired_ref_tilt_angle.
+	'''
+	cmd1="awk '/ORIGIN /{print}' %s | wc -l" % (tiltfilename_full)
+	proc=subprocess.Popen(cmd1, stdout=subprocess.PIPE, shell=True)
+	(numimages, err) = proc.communicate()
+	numimages=int(numimages)
+	cmd2="awk '/IMAGE /{print $2}' %s | head -n +1" % (tiltfilename_full)
+	proc=subprocess.Popen(cmd2, stdout=subprocess.PIPE, shell=True)
+	(tiltstart, err) = proc.communicate()
+	tiltstart=int(tiltstart)
+	closest_angle=99999
+	closest_angle_refimg=99999
+	for i in range(tiltstart-1,tiltstart+numimages+100):
+		try: #If the image isn't in the .tlt file, skip it
+			cmd="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/TILT/) print $(j+2)}'" % (i+1, tiltfilename_full)
+			proc=subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+			(tilt_angle, err) = proc.communicate()
+			tilt_angle=float(tilt_angle)
+			if abs(tilt_angle-desired_ref_tilt_angle) < abs(closest_angle-desired_ref_tilt_angle):
+				closest_angle=tilt_angle
+				closest_angle_refimg=i+1
+		except:
+			pass
+	
+	apDisplay.printMsg("Reference image changed to Image #%d (%.3f degrees), which is closest to %.3f degrees." % (closest_angle_refimg, closest_angle, desired_ref_tilt_angle))
+	cmd1="grep -n 'REFERENCE' %s | awk '{print $1}' | sed 's/://'" % (tiltfilename_full)
+	proc=subprocess.Popen(cmd1, stdout=subprocess.PIPE, shell=True)
+	(refimgline, err) = proc.communicate()
+	refimgline=int(refimgline)
+	cmd2="sed -i \"%ss/.*/   REFERENCE IMAGE %d/\" %s" % (refimgline, closest_angle_refimg, tiltfilename_full)
+	os.system(cmd2)
+		
+	return
 
 
 def scaleByZoomInterpolation(image, scale, pad_constant='mean', order=5, clip_image=False):

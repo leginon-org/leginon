@@ -11,7 +11,6 @@ from appionlib import apParam
 from appionlib import apDisplay
 from appionlib import apDatabase
 from appionlib import appiondata
-
 ####
 # This is a database connections file with no file functions
 # Please keep it this way
@@ -39,6 +38,9 @@ def getCtfMethod(ctfvalue):
 		return "ctffind"
 	elif ctfvalue['acerun']['xmipp_ctf_params'] is not None:
 		return "xmipp_ctf"
+	elif ctfvalue['acerun']['ctffind4_params'] is not None:
+		if ctfvalue['acerun']['ctffind4_params']['local_refine'] == 1:
+			return "localctf"
 	return "unknown"
 
 #=====================
@@ -177,10 +179,29 @@ def getBestCtfValue(imgdata, sortType='res80', method=None, msg=True):
 	"""
 	takes an image and get the best ctfvalues for that image
 	"""
+	imglist = []
+
+	### find sister images for frame alignment
+	### this slows things down, but gets around the transfer, and needed for local CTF
+	if imgdata['filename'].endswith('-a') or imgdata['filename'].endswith('-a-DW'):
+		alignpairdata = appiondata.ApDDAlignImagePairData(result=imgdata).query()[0]
+		srcimgdata = alignpairdata['source']
+		imglist.append(srcimgdata)
+
+		# get any aligned frames associated with original
+		alignedimages = appiondata.ApDDAlignImagePairData(source=srcimgdata).query()
+		for alignimg in alignedimages:
+			imglist.append(alignimg['result'])
+	else:
+		imglist = [imgdata]
+
 	### get all ctf values
-	ctfq = appiondata.ApCtfData()
-	ctfq['image'] = imgdata
-	ctfvalues = ctfq.query()
+	ctfvalues = []
+	for img in imglist:
+		ctfq = appiondata.ApCtfData()
+		ctfq['image'] = img
+		ctfvalues.extend(ctfq.query())
+
 	imgname = apDisplay.short(imgdata['filename'])
 
 	if msg is True:
@@ -200,9 +221,14 @@ def getBestCtfValue(imgdata, sortType='res80', method=None, msg=True):
 			if method != imgmethod:
 				continue
 		sortvalue = getSortValueFromCtfQuery(ctfvalue, sortType)
+
+		# if nothing found, try for maxconf
 		if sortvalue is None:
-			continue
+			sortvalue = getSortValueFromCtfQuery(ctfvalue,'maxconf')
+			if sortvalue is None:
+				continue
 		if msg is True:
+
 			print "%.5f -- %s"%(sortvalue, ctfvalue['acerun']['name'])
 		if sortvalue > bestsortvalue:
 			bestsortvalue = sortvalue

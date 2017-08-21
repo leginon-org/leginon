@@ -1031,6 +1031,9 @@ def doseCompensate(seriesname, rundir, sessionname, tiltseriesnumber, frame_alig
 				dose_c_str = ('%f' % dose_c).rstrip('0')
 				apDisplay.printMsg('Dose compensating all tilt images with a=%s, b=%s, and c=%s...' % (dose_a_str, dose_b_str, dose_c_str))
 			else:
+				dose_a_str = ('%f' % dose_a).rstrip('0')
+				dose_b_str = ('%f' % dose_b).rstrip('0')
+				dose_c_str = ('%f' % dose_c).rstrip('0')
 				apDisplay.printMsg('Creating dose compensation list with a=%s, b=%s, and c=%s...' % (dose_a_str, dose_b_str, dose_c_str))
 				stack_path=os.path.join(rundir,'stack')
 				os.system('mkdir %s 2>/dev/null' % stack_path)

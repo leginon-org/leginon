@@ -96,6 +96,7 @@ var help = {
 		'stacklim' : 'Makestack will continue processing micrographs and checking the stack size.  Once the number of particles matches or exceeds this limit, it will stop processing images.  Since all particles from a micrograph are added to the stack before checking, the final stack rarely has exactly the number of particles specified by the limit.  Leave blank to process all the micrographs.',
 		'maskrad' : 'Radius of external mask (in &Aring;ngstr&ouml;ms)',
 		'force' : 'Insert new entries without checking if corresponding data already exists',
+		'localCTF' : 'Per-particle CTF values will be assigned',
 		// CTF find
 		'medium' : 'Choose Carbon if most of your image includes carbon, choose Ice if most of your image does not include carbon.',
 
@@ -405,7 +406,9 @@ var help = {
 		'protomo_pixelsize' : 'Pixelsize, in angstroms/pixel, of the tilt images in your \'raw\' directory (type: float).',
 		'protomo_parallel' : 'Parallelize depiction image and video generation.<br><br>If you encounter memory errors, try switching this to False. If you encounter libgomp errors, try switching this to False (type: True/False).',
 		'protomo_frame_aligned' : 'Use frame-aligned images instead of naively summed images, if present. If True, the last frame aligned tilt image will be used (type: True/False).',
+		'protomo_center_all_images' : 'Center all images.<br><br>Sometimes Leginon does not record the proper image shifts. If there is a large shift in some of the tilt images, try changing this to True (type: True/False).',
 		'protomo_binning' : 'Enable/disable binning of raw images (type: true/false).',
+		'protomo_change_refimg' : 'Protomo works best when the reference image for alignment is the image either half-way between the highest andd lowest tilt angle, or the 0 degree image. If the tilt-series was collected with Leginon with a non-zero starting angle, then the default reference image is not the 0 degree image. You usially want to change it to be the 0 degree image. The same may also be true for images uploaded to Leginon. (type: True/False).',
 		'protomo_preprocessing' : 'Enable/disable preprocessing of raw image files. Setting this to false turns off all of the options under Preprocessing Parameters (type: true/false).',
 		'protomo_gradient' : 'Enable/disable linear gradient subtraction for preprocessing masks (type: true/false).',
 		'protomo_iter_gradient' : 'Iterate gradient subtraction once (type: true/false).',
@@ -819,6 +822,7 @@ var help = {
 		'exclude_images' : 'Exclude images from the tilt-series. Eg. 1-7,50-60. Only use numbers, commas, and hyphens (no spaces). Images are not renumbered after removal. You cannot exclude the image closest to 0°; ie. the alignment reference image.<br><br>Note: The image number corresponds to the IMAGE number in the .tlt file (type: int selection).',
 		'exclude_images_by_angle' : 'Exclude images from the tilt-series given their tilt angles in degrees. Seperate angles by commas. If an angle you provide is not accurate to within the given Accuracy, then that angle will be ignored. Use angles provided on the bottom-right corner of the tilt-series videos.<br><br>It is important to remove any divergent tilt images prior to refinement. You may also wish to remove particularly poor tilt images before reconstruction. If your tilt-series was collected bidirectionally, there may be more than one zero degree image - you may wish to remove the second one for weighting purposes during alignment and reconstruction. (type: comma-seperated floats).',
 		'exclude_images_by_angle_accuracy' : 'Accuracy of the requested angles versus the angles recorded in the database, in degrees (type: float > 0).',
+		'desired_ref_tilt_angle' : 'Enter the tilt angle, in degrees, you would like to use as the reference image for Protomo alignment. This will choose the image closest to this value (type: float).',
 		'border' : 'Width of area at the image edge to exclude from image statistics, in pixels. This option is used to ensure that the borders of the raw images that include artifacts from the camera are excluded (type: int > 0).',		
 		'clip_low' : 'Lower threshold specified as a multiple of the standard deviation of the pixel density values per Raw Image. This option clips very low pixel values potentially caused by dead pixels (type: float).',
 		'clip_high' : 'Upper threshold specified as a multiple of the standard deviation of the pixel density values per Raw Image. This option clips very high pixel values potentially caused by x-rays or other high energy interactions with the camera (type: float).',

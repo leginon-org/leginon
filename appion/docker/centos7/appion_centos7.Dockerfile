@@ -1,11 +1,5 @@
 FROM centos:7
-MAINTAINER Neil Voss <vossman77@yahoo.com>
-
-#No package grace available.
-#No package compat-gcc-34-g77 available.
-#No package re2c available.
-#No package compat-libgfortran available.
-#No package mod_python qiv available.
+MAINTAINER Neil Voss <vossman77@gmail.com>
 
 ### install epel
 RUN yum -y install epel-release
@@ -27,6 +21,7 @@ RUN dnf -y upgrade && dnf -y install \
  xorg-x11-server-Xvfb netpbm-progs python-requests \
  libssh2-devel mlocate nano elinks file \
  python-configparser h5py git pyflakes \
+ gtkglext-libs pangox-compat `#protomo specific pkgs` \
  numactl && dnf -y clean all
 
 RUN sed -i.bak 's/max_allowed_packet = [0-9]*M/max_allowed_packet = 24M/' /etc/nanorc
@@ -35,7 +30,7 @@ RUN sed -i.bak 's/max_allowed_packet = [0-9]*M/max_allowed_packet = 24M/' /etc/n
 #RUN dnf -y upgrade && dnf -y install mozilla-adblockplus firefox dbus && dnf -y clean all
 RUN dbus-uuidgen > /var/lib/dbus/machine-id
 RUN pip install --upgrade pip
-RUN pip install joblib pyfftw3 fs==0.5.4 scikit-learn
+RUN pip install joblib pyfftw3 fs==0.5.4 scikit-learn==0.18.2
 RUN python -c 'from sklearn import svm' # test for function
 
 RUN updatedb
@@ -120,12 +115,16 @@ ADD TGZ/spidersmall.13.00.tgz /emg/sw
 
 RUN mkdir -p /emg/sw/grigorieff/bin
 ADD TGZ/ctf_140609.tar.gz /emg/sw/grigorieff/
-ADD TGZ/ctffind-4.0.16-linux64.tar.gz /emg/sw/grigorieff/
+ADD TGZ/ctffind-4.1.5.tgz /emg/sw/grigorieff/
 RUN mv -v /emg/sw/grigorieff/ctf /emg/sw/grigorieff/ctffind3
-RUN mv -v /emg/sw/grigorieff/ctffind /emg/sw/grigorieff/bin/ctffind4
-RUN ln -sv /emg/sw/grigorieff/ctffind3/ctffind3_mp.exe /emg/sw/grigorieff/bin/ctffind64.exe
 RUN chmod 777 /emg/sw/grigorieff/ctffind3/ctffind3_mp.exe 
-RUN chmod 777 /emg/sw/grigorieff/bin/ctffind4
+RUN chmod 777 /emg/sw/grigorieff/ctffind4/ctffind-4.1.5
+RUN ln -sv /emg/sw/grigorieff/ctffind4/ctffind-4.1.5 /emg/sw/grigorieff/bin/ctffind4
+RUN ln -sv /emg/sw/grigorieff/ctffind3/ctffind3_mp.exe /emg/sw/grigorieff/bin/ctffind64.exe
+
+### PROTOMO
+ADD TGZ/protomo2-centos7-docker.tgz /emg/sw/
+ADD TGZ/ffmpeg-git-64bit-static.tar.xz /emg/sw/
 
 ### Trying to do VNC
 #RUN dnf -y upgrade && dnf -y install  \

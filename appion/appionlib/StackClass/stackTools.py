@@ -57,10 +57,13 @@ def boxParticlesFromFile(mrcfile, stackfile, initboxsize, finalboxsize, coordina
 			finalboxpart = -1.0 * finalboxpart
 		usedparticles.append(partnum)
 		boxedparticles.append(finalboxpart)
-	stackClass = ProcessStack.createStackClass(stackfile)
-	stackClass.appendParticlesToFile(boxedparticles)
 	apDisplay.printMsg("Boxed %d of %d particles from %s"
 		%(len(boxedparticles), len(coordinates), apDisplay.short(mrcfile)))
+	if len(boxedparticles) == 0:
+		return None
+	stackClass = ProcessStack.createStackClass(stackfile)
+	stackClass.appendParticlesToFile(boxedparticles)
+
 	return usedparticles
 
 ########################################

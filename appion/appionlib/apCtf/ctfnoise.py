@@ -602,9 +602,9 @@ class CtfNoise(object):
 		constrainval = contraintFunction(fitparamslist[minvalindex], xdata, filterctfdata)
 		valuelist = numpy.array(valuelist)
 		if contraint == "below":
-			minconval = -1e-2
+			minconval = -1e-3
 		elif contraint == "above":
-			minconval = -1e-2
+			minconval = -1e-3
 		else:
 			minconval = -1e-3
 		while constrainval < minconval and valuelist.min() < 1e6:

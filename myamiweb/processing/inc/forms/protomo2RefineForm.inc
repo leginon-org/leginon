@@ -52,7 +52,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 	$map_size_x='512', $map_size_y='512', $filename_prefix='', $image_file_type='', $cachedir='cache', $protomo_outdir='out', $tilt_clip='',
 	$create_reconstruction='true', $show_window_size='true', $create_tilt_video='true', $keep_recons='false', $video_type='', $restart_cycle='',
 	$parallel='', $negative='', $positive='', $starting_tlt_file='', $defocus_save='', $restart_from_run='', $restart_from_iteration='',
-	$azimuth_stability_check='False', $azimuth_max_deviation='3')
+	$azimuth_stability_check='False', $azimuth_max_deviation='3', $change_refimg='True', $desired_ref_tilt_angle=0)
 	{
 		parent::__construct($expId, $extraHTML);
 		//print "_POST:" . "<br>";
@@ -1044,6 +1044,8 @@ class Protomo2RefineForm extends BasicLayoutForm
 		$params->addParam( "tilt_clip", $tilt_clip, "Clip Tilt-Series Video Pixel Values" );
 		$params->addParam( "video_type", $video_type, "Video Type" );
 		$params->addParam( "restart_cycle", $restart_cycle, "Restart Refinement at Iteration" );
+		$params->addParam( "change_refimg", $change_refimg, "Change Reference Image to Tilt Angle Closest to " );
+		$params->addParam( "desired_ref_tilt_angle", $desired_ref_tilt_angle, "degrees" );
 		$params->addParam( "defocus_save", $defocus_save, "Save Defocus Value" );
 		$params->addParam( "restart_from_run", $restart_from_run, "Restart Refinement from Run at the " );
 		$params->addParam( "restart_from_iteration", $restart_from_iteration, "Iteration" );
@@ -1367,6 +1369,11 @@ class Protomo2RefineForm extends BasicLayoutForm
 				$html.= $params->insertTextField( "positive", $fieldSize );
 				$html.= $params->insertTextFieldInRow( "exclude_images_by_angle", $fieldSize ).'│ ';
 				$html.= $params->insertTextField( "exclude_images_by_angle_accuracy", $fieldSize );
+				$html.= '<select name="change_refimg" style="width:66px">';
+				$html.= '<option value="True">True</option>';
+				$html.= '<option selected value="False">False</option>';
+				$html.= '</select>'; $html.= docpop('protomo_change_refimg', ' Change Reference Image to Tilt Angle Closest to ');
+				$html.= $params->insertTextField( "desired_ref_tilt_angle", $fieldSize );
 				$html.= '<select name="starting_tlt_file" style="width:111px">';
 				$html.= '<option value="Coarse_Iter_1">Coarse Iter 1</option>';
 				$html.= '<option selected value="Coarse_Iter_2">Coarse Iter 2</option>';

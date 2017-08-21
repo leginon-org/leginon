@@ -100,12 +100,14 @@ class MotionCor2UCSFAlignStackLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop)
 		'''
 		temp_aligned_sumpath = self.temp_aligned_sumpath
 		temp_aligned_dw_sumpath = self.temp_aligned_dw_sumpath
-		gain_flip, gain_rot = self.framealigner.getGainModification()
+		gain_flip, gain_rotate = self.framealigner.getGainModification()
+		print "\n\n\ngain_flip", gain_flip
+		print "\n\n\ngain_rotate", gain_rotate
 		if gain_flip:
 			apDisplay.printMsg('Flipping the aligned sum back')
 			self.imageYFlip(temp_aligned_sumpath)
 			self.imageYFlip(temp_aligned_dw_sumpath)
-		if gain_rot:
+		if gain_rotate:
 			apDisplay.printMsg('Rotating the aligned sum back')
 			self.imageRotate(temp_aligned_sumpath, gain_rotate)
 			self.imageRotate(temp_aligned_dw_sumpath, gain_rotate)

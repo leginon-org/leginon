@@ -6,15 +6,22 @@ added features like helical boxing at an
 angle
 """
 
-import sys
+import os,sys
 import math
 import numpy
 import random
+import time
 from pyami import mrc
 from scipy import ndimage	#rotation function
+try:
+	from scipy.interpolate import griddata
+except:
+	pass
+from appionlib import apRelion
 from appionlib import apImagicFile	#write imagic stacks
 from appionlib import apDisplay
 from appionlib.apImage import imagefilter	#image clipping
+from appionlib import apDatabase
 
 ##=================
 def getBoxStartPosition(halfbox, partdata, shiftdata):
@@ -27,6 +34,124 @@ def getBoxStartPosition(halfbox, partdata, shiftdata):
 def checkBoxInImage(imgdims,start_x,start_y,boxsize):
 	return ( (start_x > 0 and start_x+boxsize <= imgdims['x'])
 		and  (start_y > 0 and start_y+boxsize <= imgdims['y']) )
+
+##=================
+def writeParticlesToStar(imgdata, boxsize, partdatas, shiftdata, boxfile, ctfdata=None, localCTF=False):
+	"""
+	for a list of partdicts from database,
+	generate a Star file for particle extraction
+	"""
+	imgdims = {}
+	imgdims['x'] = imgdata['image'].shape[1]
+	imgdims['y'] = imgdata['image'].shape[0]
+
+	parttree = []
+	boxedpartdatas = []
+	eliminated = 0
+	user = 0
+
+	gridDu=None
+	
+	# for local ctf estimation:
+	if ctfdata is not None:
+		if ctfdata['localCTFstarfile'] is not None and localCTF is True:
+			t0 = time.time()
+			apDisplay.printMsg("Determining local CTF values...")
+
+			localctf = os.path.join(ctfdata['acerun']['path']['path'],ctfdata['localCTFstarfile'])
+			matDu = [[numpy.nan for y in range(imgdims['y'])] for x in range(imgdims['x'])]	
+			matDv = [[numpy.nan for y in range(imgdims['y'])] for x in range(imgdims['x'])]	
+			labels = apRelion.getStarFileColumnLabels(localctf)
+			for line in open(localctf):
+				l = line.strip().split()
+				if len(l)<3: continue
+				x = int(float(l[labels.index("_rlnCoordinateX")]))
+				y = int(float(l[labels.index("_rlnCoordinateY")]))
+				du = float(l[labels.index("_rlnDefocusU")])
+				dv = float(l[labels.index("_rlnDefocusV")])
+				da = float(l[labels.index("_rlnDefocusAngle")])
+				matDu[x][y]=du
+				matDv[x][y]=dv
+
+			# assume only 1 angle of astigmatism
+			matDu = numpy.asarray(matDu)
+			matDv = numpy.asarray(matDv)
+		
+			x = numpy.arange(0,matDu.shape[1])
+			y = numpy.arange(0,matDu.shape[0])
+			xx,yy = numpy.meshgrid(x,y)
+
+			matDu = numpy.ma.masked_invalid(matDu)
+			matDv = numpy.ma.masked_invalid(matDv)
+
+			x1 = xx[~matDu.mask]
+			y1 = yy[~matDu.mask]
+			newDu = matDu[~matDu.mask]
+			try: 
+				gridDu = griddata((x1,y1),newDu.ravel(),(xx,yy),method='cubic')
+			except:
+				apDisplay.printError("Cannot estimate local CTF without griddata")
+			x1 = xx[~matDv.mask]
+			y1 = yy[~matDv.mask]
+			newDv = matDv[~matDv.mask]
+			gridDv = griddata((x1,y1),newDv.ravel(),(xx,yy),method='cubic')
+			apDisplay.printColor("Time to estimate local CTF:\t"+apDisplay.timeString(time.time()-t0),"green")
+
+	labels = ['_rlnMicrographName',
+		'_rlnCoordinateX',
+		'_rlnCoordinateY']
+	if ctfdata: labels.extend([
+		'_rlnVoltage',
+		'_rlnDefocusU',
+		'_rlnDefocusV',
+		'_rlnDefocusAngle',
+		'_rlnSphericalAberration',
+		'_rlnDetectorPixelSize',
+		'_rlnMagnification',
+		'_rlnAmplitudeContrast',
+		'_rlnCtfFigureOfMerit',
+#		'_rlnAutopickFigureOfMerit'
+#		'_rlnPhaseShift'
+	])
+	apRelion.writeRelionStarHeader(labels,boxfile)
+	apix = apDatabase.getPixelSize(imgdata)
+	c = apRelion.formatCtfForRelion(imgdata,ctfdata,apix)
+	f = open(boxfile, 'a')
+	for i in range(len(partdatas)):
+		partdata = partdatas[i]
+		xcoord = partdata['xcoord']
+		ycoord = partdata['ycoord']
+		if gridDu is not None:
+			du = gridDu[xcoord][ycoord]
+			dv = gridDv[xcoord][ycoord]
+		else:
+			du = c['defU']
+			dv = c['defV']
+			da = c['defAngle']
+		f.write("micrographs/%s "%(imgdata['filename']+".mrc"))
+		f.write("%12.6f %12.6f "%(xcoord,ycoord))
+		if ctfdata:
+			if gridDu is not None:
+				du = gridDu[xcoord][ycoord]
+				dv = gridDv[xcoord][ycoord]
+			else:
+				du = c['defU']
+				dv = c['defV']
+				da = c['defAngle']
+			f.write("%12.6f %12.6f %12.6f %12.6f "%(c['kev'],du,dv,da))
+			f.write("%12.6f %12.6f %12.6f %12.6f %12.6f "%(c['cs'],c['dstep'],c['mag'],c['amp'],c['cc']))
+		f.write("\n")
+
+		partdict = {
+			'x_coord': xcoord,
+			'y_coord': ycoord,
+			'angle': partdata['angle'],
+		}
+		parttree.append(partdict)
+		boxedpartdatas.append(partdata)
+
+	f.close()
+	return parttree, boxedpartdatas
 
 ##=================
 def processParticleData(imgdata, boxsize, partdatas, shiftdata, boxfile, rotate=False, checkInside=True):

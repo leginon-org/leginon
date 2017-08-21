@@ -1,0 +1,29 @@
+version: "2"
+
+services:
+  myami_web:
+    image: myami_debug
+    ports:
+      - "80:80"
+    links:
+      - myami_reduxd
+      - myami_mysql
+    volumes:
+      - /:/localDisk
+  myami_mysql:
+    image: mysql_debug
+    ports:
+      - "3306:3306"
+    volumes:
+      - /:/localDisk
+  myami_reduxd:
+    image: reduxd_debug
+    ports:
+      - "55123:55123"
+    volumes:
+      - /:/localDisk
+      - /dockerfiles/myamiweb/logs:/var/log
+  myami_procnode:
+    image: myami_procnode
+    volumes:
+      - /:/localDisk

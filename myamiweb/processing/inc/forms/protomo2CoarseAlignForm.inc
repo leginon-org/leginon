@@ -42,7 +42,7 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 	$shift_limit='30' , $angle_limit='40', $parallel='', $ctf_correct='', $amp_contrast_ctf='0.07', $iWidth='20', $DefocusTol='200',
 	$dose_presets='', $dose_a='', $dose_b='', $dose_c='', $frame_aligned='', $negative='', $positive='', $defocus_min='', $defocus_max='',
 	$defocus_estimate='', $defocus_difference='0.2', $defocus_ang_negative='', $defocus_ang_positive='', $amp_contrast_defocus='0.07',
-	$res_min='10000', $res_max='10', $defocus_save='', $further_alignment='')
+	$res_min='10000', $res_max='10', $defocus_save='', $further_alignment='', $center_all_images='False', $change_refimg='True', $desired_ref_tilt_angle=0)
 	{
 		parent::__construct($expId, $extraHTML);
 		//print "_POST:" . "<br>";
@@ -555,6 +555,9 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		$params->addParam( "amp_contrast_defocus", $amp_contrast_defocus, "Amplitude Contrast" );
 		$params->addParam( "res_min", $res_min, "Lowest Resolution for Fitting" );
 		$params->addParam( "res_max", $res_max, "Highest Resolution for Fitting" );
+		$params->addParam( "center_all_images", $center_all_images, "Center All Images" );
+		$params->addParam( "change_refimg", $change_refimg, "Change Reference Image to Tilt Angle Closest to " );
+		$params->addParam( "desired_ref_tilt_angle", $desired_ref_tilt_angle, "degrees" );
 		$params->addParam( "defocus_save", $defocus_save, "Save Defocus Value" );
 		$params->addParam( "further_alignment", $further_alignment, "Iterate Coarse Alignment Once (w/ Manual Alignment)" );
 		
@@ -825,6 +828,15 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 				$html.= $params->insertTextField( "exclude_images_by_angle_accuracy", $fieldSize );
 				$html.= $params->insertTextFieldInRow( "shift_limit", $fieldSize ).'│ ';
 				$html.= $params->insertTextField( "angle_limit", $fieldSize );
+				$html.= '<select name="change_refimg" style="width:66px">';
+				$html.= '<option selected value="True">True</option>';
+				$html.= '<option value="False">False</option>';
+				$html.= '</select>'; $html.= docpop('protomo_change_refimg', ' Change Reference Image to Tilt Angle Closest to ');
+				$html.= $params->insertTextField( "desired_ref_tilt_angle", $fieldSize );
+				$html.= '<select name="center_all_images" style="width:66px">';
+				$html.= '<option value="True">True</option>';
+				$html.= '<option selected value="False">False</option>';
+				$html.= '</select>'; $html.= docpop('protomo_center_all_images', ' Center All Images').'<br>';
 				$html.= '<select name="parallel" style="width:66px">';
 				$html.= '<option selected value="True">true</option>';
 				$html.= '<option value="False">false</option>';
