@@ -1174,6 +1174,7 @@ class particledata {
 
 	function getCtfInfoFromImageId($imageId, $order=false, $method='', $acerunId='') {
 		$phase_shift_select = $this->getPhaseShiftString('c');
+		$local_plot_select = ($this->mysql->FieldExists('ApCtf','local_plot')) ? "c.local_plot, ": "";
 		$q =	"select "
 			."c.`DEF_id`, "
 			."c.`REF|leginondata|AcquisitionImageData|image`, "
@@ -1198,7 +1199,7 @@ class particledata {
 			."c.`graph2` , "
 			."c.`graph3` , "
 			."c.`graph4` , "
-			."c.`localplot` , "
+			.$local_plot_select
 			."c.`confidence_30_10` , "
 			."c.`confidence_5_peak` , "
 			."c.`resolution_80_percent` , "
