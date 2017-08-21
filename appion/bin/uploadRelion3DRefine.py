@@ -9,6 +9,8 @@ import math
 import subprocess
 import shutil
 import scipy
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 #appion
 from appionlib import appionScript
