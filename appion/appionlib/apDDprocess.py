@@ -279,6 +279,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		self.flipAlongYAxis = 0
 		self.use_frame_aligner_yflip = False
 		self.use_frame_aligner_rotate = 0
+		self.override_db = False
 
 		if debug:
 			self.log = open('newref.log','w')

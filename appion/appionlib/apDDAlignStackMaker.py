@@ -112,7 +112,7 @@ class AlignStackLoop(apDDStackMaker.FrameStackLoop):
 		return self.params['align']
 
 	def isUseFrameAlignerFlat(self):
-		if self.dd.hasBadPixels() or not self.isAlign() or self.dd.correct_dark_gain is True:
+		if self.dd.hasBadPixels() or not self.isAlign():
 			self.dd.setUseFrameAlignerFlat(False)
 			return False
 		else:
