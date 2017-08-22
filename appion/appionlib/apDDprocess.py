@@ -867,6 +867,9 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			plan, plandata = self.c_client.retrieveCorrectorPlan(self.camerainfo)
 		return plan
 
+	def hasNonZeroDark(self):
+		return True
+
 	def hasBadPixels(self):
 		# set camerainfo so to find corretor plan
 		self.setCameraInfo(1,self.use_full_raw_area)

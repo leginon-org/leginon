@@ -21,6 +21,9 @@ class DEProcessing(apDDprocess.DDFrameProcessing):
 		self.setDefaultDimension(4096,3072)
 		self.correct_dark_gain = True
 		
+	def hasNonZeroDark(self):
+		return True
+
 	def getNumberOfFrameSavedFromImageData(self,imagedata):
 		# DE nframes is the true base frame numbers saved
 		return imagedata['camera']['nframes']

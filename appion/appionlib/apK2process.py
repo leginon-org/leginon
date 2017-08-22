@@ -24,6 +24,9 @@ class GatanK2Processing(apDDprocess.DDFrameProcessing):
 		number_of_frames = max(1,int(imagedata['camera']['exposure time'] / imagedata['camera']['frame time']))
 		return number_of_frames
 
+	def hasNonZeroDark(self):
+		return False
+
 	def getFrameNameFromNumber(self,frame_number):
 		return 'frame_%03d.mrc' % (frame_number+1)
 
