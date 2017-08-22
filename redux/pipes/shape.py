@@ -1,5 +1,6 @@
 # 3rd party
-import scipy.ndimage
+import math
+import numpy
 
 # myami
 import pyami.imagefun
@@ -8,81 +9,78 @@ import pyami.imagefun
 from redux.pipe import Pipe
 from redux.pipe import shape_converter
 
+#opencv is faster than scipy, but may not be installed
+try:
+	import cv2
+	opencv = True
+except ImportError:
+	#scipy.misc.imresize changes the image range and fails on FFT
+	#import scipy.misc
+	opencv = False
+import scipy.ndimage.interpolation
+
+def imresize(outputimg, request_shape):
+	if opencv is True and len(request_shape) == 2:
+		#this is 3x-5x faster than scipy
+		height, width = request_shape
+		outputimg = cv2.resize(outputimg, (width,height), interpolation=cv2.INTER_LINEAR)
+	else:
+		#using float64 to avoid rounding errors
+		zoomfactors = (
+			numpy.array(request_shape, dtype=numpy.float64) /
+			numpy.array(outputimg.shape, dtype=numpy.float64) )
+		outputimg = scipy.ndimage.interpolation.zoom(outputimg, zoomfactors, order=1, mode='wrap')
+	return outputimg
+
 class Shape(Pipe):
 	required_args = {'shape': shape_converter}
 
 	@classmethod
 	def run(cls, input, shape):
+		request_shape = shape
 
 		# that was easy
-		if input.shape == shape:
+		if input.shape == request_shape:
 			return input
+
+		outputimg = input.copy()
 
 		# make sure shape is same dimensions as input image
 		# rgb input image would have one extra dimension
-		if len(shape) != len(input.shape):
-			if len(shape) +1 != len(input.shape):
-				raise ValueError('mismatch in number of dimensions: %s -> %s' % (input.shape, shape))
-			else:
-				is_rgb=True
+		if len(request_shape) == len(input.shape) == 2:
+			#Standard gray scale 2D image
+			#get maxbinning in each dimension
+			xbin = int(math.floor(input.shape[0]/float(request_shape[0])))
+			if xbin < 1: xbin = 1
+			ybin = int(math.floor(input.shape[1]/float(request_shape[1])))
+			if ybin < 1: ybin = 1
+			newshape = (request_shape[0]*xbin, request_shape[1]*ybin)
+			outputimg = imresize(outputimg, newshape)
+			outputimg = pyami.imagefun.bin(outputimg, xbin, ybin)
+		elif len(request_shape) == len(input.shape):
+			#Standard gray scale not 2D
+			outputimg = imresize(outputimg, request_shape)
+		elif len(request_shape) + 1 == len(input.shape) and input.shape[-1] == 3:
+			#RGB is Type
+			newshape = list(request_shape)
+			newshape.append(3)
+			outputimg = imresize(outputimg, newshape)
 		else:
-			is_rgb=False
+			#how did we get here?
+			raise ValueError('mismatch in number of dimensions: %s -> %s' % (input.shape, request_shape))
 
-		# determine whether to use imagefun.bin or scipy.ndimage.zoom
-		binfactors = []
-		zoomfactors = []
-		for i in range(len(shape)):
-			zoomfactors.append(float(shape[i])/float(input.shape[i]))
-
-			## for rgb, binning not implemented
-			if is_rgb:
-				binfactors.append(1)
-				continue
-			else:
-				binfactors.append(input.shape[i] / shape[i])
-
-			# bin <1 not allowed (when output bigger than input)
-			if binfactors[i] == 0:
-				binfactors[i] = 1
-
-			# check original shape is divisible by new shape
-			if input.shape[i] % shape[i]:
-				# binning alone will not work, try initial bin, then interp
-				start = binfactors[i]
-				for trybin in range(start, 0, -1):
-					if input.shape[i] % trybin:
-						continue
-					binfactors[i] = trybin
-					zoomfactors[i] *= binfactors[i]
-					break
-			else:
-				# just use bin
-				zoomfactors[i] = 1.0
-
-		## don't zoom 3rd axis of rgb image
-		if is_rgb:
-			zoomfactors.append(1.0)
-
-		output = input
-
-		## run bin if any bin factors not 1
-		if binfactors:
-			for binfactor in binfactors:
-				if binfactor != 1:
-					output = pyami.imagefun.bin(output, binfactors[0], binfactors[1])
-					break
-
-		## run zoom if any zoom factors not 1.0
-		if zoomfactors:
-			for zoomfactor in zoomfactors:
-				if zoomfactor != 1.0:
-					output = scipy.ndimage.zoom(output, zoomfactors)
-					break
-
-		return output
+		return outputimg
 
 	def make_dirname(self):
 		dims = map(str, self.kwargs['shape'])
 		dims = 'x'.join(dims)
 		self._dirname = dims
 
+if __name__ == "__main__":
+	outputshape = (512,512)
+	s = Shape(shape=outputshape,is_rgb=True)
+	inputshape = (3710,3838)
+	import numpy
+	a = numpy.ones(inputshape)
+	r = s.run(a,outputshape)
+	print r.shape
