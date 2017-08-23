@@ -66,6 +66,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	$stackruninfos = $particle->getStackIds($sessionId, True);
 	$nohidestackruninfos = $particle->getStackIds($sessionId, False);
 	$stackruns = ($stackruninfos) ? count($stackruninfos):0;
+	$hasLocalCtf = $particle->hasLocalCtfData($sessionId);
 
 	$sessiondata=getSessionList($projectId,$sessionId);
 	$sessioninfo=$sessiondata['info'];
@@ -138,6 +139,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	$defocpaircheck = ($_POST['stackdfpair']=='on') ? 'checked' : '';
 	$ddnframe = $_POST['ddnframe'];
 	$ddstartframe = $_POST['ddstartframe'];
+	$localCTF = ($_POST['localCTF']=='on') ? 'CHECKED' : '';
 	$forceInsert = ($_POST['forceInsert']=='on' || (!isset($_POST['forceInsert']) && !$_POST) ) ? 'CHECKED' : '';
 	$pixlimitv = ($_POST['pixlimit']) ? $_POST['pixlimit'] : '0';
 
@@ -277,8 +279,12 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		document.getElementById('scaledboxdiv').style.display = shown ? 'none' : 'block';
 		document.getElementById('bin').value = shown ? 2 : '';
 		document.getElementById('pixlimit').value = shown ? 0 : 4.5;
-		document.viewerform.ctfcorrect.checked = shown ? true : false;
+		document.viewerform.ctfcorrect.checked = shown ? true : false;";
+	if ($hasLocalCtf) $javascript.= "
+		document.getElementById('localCTFdiv').style.display = shown ? 'none' : 'block';";
+	$javascript.="
 	}\n";
+
 	if ($filetypeval=='relion') $javascript .= "document.addEventListener('DOMContentLoaded', function() {showRelionOptions('relion')},false);\n";
 	$javascript .= "</script>\n";
 	$javascript .= writeJavaPopupFunctions('appion');
@@ -506,11 +512,9 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	
 	$diameterval = ($_POST['diameter']) ? $_POST['diameter'] : $partdiam;
 	echo "<div id='diameterdiv' style='display: none;'>\n";
-	echo "<br/>\n";
 	echo "<input type='text' name='diameter' value='$diameterval' size='4'>\n";
 	echo docpop('stackdiameter','Particle Diameter');
 	echo "(in Angstroms)\n";
-	echo "<br/>\n";
 	echo "</div>\n";
 
 	echo "<br/>\n";
@@ -518,6 +522,14 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	echo docpop('pixlimit',' Pixel Limit');
 	echo "<font size=-2><I>(in Standard Deviations; 0 = off)</I></font><br />\n";
 	echo "<br/>\n";
+
+	if ($hasLocalCtf) {
+		echo "<div id='localCTFdiv' style='display: none;'>\n";
+		echo "<input type='checkbox' name='localCTF' $localCTF>\n";
+		echo docpop('localCTF','Per-Particle CTF');
+		echo "</div>\n";
+		echo "<br/>\n";
+	}
 
 	echo "<input type='checkbox' name='forceInsert' $forceInsert>\n";
 	echo docpop('force','Fast Insert');
@@ -878,6 +890,7 @@ function runMakestack() {
 	$ctffindonly = ($_POST['ctffindonly'])=='on' ? True : False;
 	$ddstartframe = $_POST['ddstartframe'];
 	$ddnframe = $_POST['ddnframe'];
+	$localCTF = ($_POST['localCTF'])=='on' ? True : False;
 	$forceInsert = ($_POST['forceInsert'])=='on' ? True : False;
 	$diameter = ($_POST['diameter']);
 	
@@ -1110,6 +1123,7 @@ function runMakestack() {
 	if ($ddnframe) $command.=" --ddnframe=$ddnframe ";
 	if ($ctfrunID) $command.="--ctfrunid=$ctfrunID ";
 	if ($forceInsert) $command.="--forceInsert ";
+	if ($localCTF) $command.="--localCTF ";
 	
 	$apcommand = parseAppionLoopParams($_POST);
 	if ($apcommand[0] == "<") {
