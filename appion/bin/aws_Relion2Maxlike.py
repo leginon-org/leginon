@@ -99,8 +99,6 @@ class RelionMaxLikeScript(appionScript.AppionScript):
 		if self.params['stackid'] is None:
 			apDisplay.printError("stack id was not defined")
 		self.projectid = apProject.getProjectIdFromStackId(self.params['stackid'])
-		if self.params['description'] is None:
-			apDisplay.printError("run description was not defined")
 		if self.params['numrefs'] is None:
 			apDisplay.printError("a number of classes was not provided")
 		if self.params['runname'] is None:

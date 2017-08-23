@@ -17,7 +17,7 @@ class Relion2Align2D_AWS_Form extends BasicLayoutForm
 	// Set Default values in the constructor
 	function __construct( $expId, $extraHTML='', $stackId='', $clip='', $bin='1', $numpart='3000',
 		$lowpass='10', $highpass='1000', $numRef='3', $maxIter='30', $angStep='5', $tau='2', $partDiam='',
-		$flat='on', $zero_mask=False, $commit='on',$instancetype='none',$preread_images=True)
+		$flat='on', $zero_mask=False, $commit='on',$instancetype='none',$preread_images=False)
 	{
 		parent::__construct($expId, $extraHTML);
 
@@ -98,7 +98,8 @@ class Relion2Align2D_AWS_Form extends BasicLayoutForm
 		$params->addParam( "commit", $commit, "Commit to Database" );
 		$params->addParam( "correctnorm",$correctnorm,"Perform normalization error correction");
 		$params->addParam( "instancetype",$instancetype,"Amazon GPU instance type");
-		$params->addParam( "preread_images",$preread_images,"Pre-read images into SSD cache");
+		$params->addParam( "preread_images",$preread_images,"Pre-read images into memory");
+
 
 		// Validations
 		$params->addValidation( "numpart", "minval=4" );
@@ -276,12 +277,12 @@ class Relion2Align2D_AWS_Form extends BasicLayoutForm
 
 		$instancetype = $params->getParamValue('instancetype');
 		if ($instancetype == 'none') {
-			$msg .= "<B>Error:</B> No instance type selected";
+			$msg .= "<B>Error:</B> No instance type selected.";
 		}
-		$description = $params->getParamValue('description');
-		if ($description = '') {
-			$msg .="<B>Error:</B> Enter a job description.";
-		}
+		#$description = $params->getParamValue('description');
+		#if ($description == '') {
+		#	$msg .="<B>Error:</B> Enter a job description.";
+		#}
 		return $msg;
 	}
 }
