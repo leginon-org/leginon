@@ -84,14 +84,9 @@ def rclone_to_s3(indir,numfiles,region,keyid,secretid,rclonename,bucketname,awsp
 	r1.write('access_key_id = %s\n' %(keyid))
 	r1.write('secret_access_key = %s\n' %(secretid))
 	r1.write('region = %s\n' %(region))
+	r1.write('endpoint = \n')
 
 	if region == 'us-east-1':
-		#r1.write('endpoint = s3.amazonaws.com\n')
-		r1.write('endpoint = \n')
-	else:
-		r1.write('endpoint = \n')
-
-	if region == 'us-east-1' or region == 'us-east-1a' or region == 'us-east-1b':
 		r1.write('location_constraint = \n')
 		print('location_constraint = \n')
 	else:
@@ -360,11 +355,9 @@ def getSelectParticleDir(selectdir):
 	return 'Extract/%s' %(jobname)
 
 #==============================
-def relion_refine_mpi(in_cmd,numParticles,partxdim,instancetype=''):
+def relion_refine_mpi(in_cmd,instancetype=''):
 
 	assert type(instancetype) == str
-	assert type(numParticles) == int
-	assert type(partxdim) == int
 
 	print("Instance type is: ",instancetype)
 	#Set entry
@@ -478,12 +471,12 @@ def relion_refine_mpi(in_cmd,numParticles,partxdim,instancetype=''):
 		#if partstarname.split('.')[-1] != 'mrcs':
 		#	writeToLog('Error: input stack must have .mrcs extension. Exiting','%s/run.err' %(outdir))
 		#	sys.exit()
-		#if os.path.exists('%s/handler.txt' %(outdir)):
-		#	os.remove('%s/handler.txt' %(outdir))
-		#cmd='relion_image_handler --i %s --stats > %s/handler.txt' %(partstarname,outdir)
-		#subprocess.Popen(cmd,shell=True).wait()
-		#numParticles=int(linecache.getline('%s/handler.txt' %(outdir),1).split('=')[1].split('x')[3].split(';')[0])
-		#partxdim=int(linecache.getline('%s/handler.txt' %(outdir),1).split('=')[1].split('x')[0].strip())
+		if os.path.exists('%s/handler.txt' %(outdir)):
+			os.remove('%s/handler.txt' %(outdir))
+		cmd='relion_image_handler --i %s --stats > %s/handler.txt' %(partstarname,outdir)
+		subprocess.Popen(cmd,shell=True).wait()
+		numParticles=int(linecache.getline('%s/handler.txt' %(outdir),1).split('=')[1].split('x')[3].split(';')[0])
+		partxdim=int(linecache.getline('%s/handler.txt' %(outdir),1).split('=')[1].split('x')[0].strip())
 		
 		print("numParticles is",numParticles)
 		print("partxdim calculated is",partxdim)
@@ -558,6 +551,10 @@ def relion_refine_mpi(in_cmd,numParticles,partxdim,instancetype=''):
 			if autoref != -1: #3D refinement
 				instance='p2.8xlarge'
 			instance='p2.xlarge'
+	elif instancetype not in ['p2.xlarge','p2.8xlarge','p2.16xlarge']:
+		writeToLog("Error, invalid instance type. Must be p2.xlarge, p2.8xlarge, or p2.16xlarge.")
+		sys.exit()
+
 	else:
 		instance = instancetype
 	print("Using %s instance type."%instancetype)

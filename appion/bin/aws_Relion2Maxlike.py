@@ -380,7 +380,7 @@ class RelionMaxLikeScript(appionScript.AppionScript):
 		#runcmd = relionexe+" "
 		self.writeRelionLog(runcmd)
 
-		apAWS.relion_refine_mpi(runcmd,self.params['numpart'],self.clipsize,self.params['instancetype'])
+		apAWS.relion_refine_mpi(runcmd,instancetype=self.params['instancetype'])
 		aligntime = time.time() - aligntime
 		apDisplay.printMsg("Alignment time: "+apDisplay.timeString(aligntime))
 
