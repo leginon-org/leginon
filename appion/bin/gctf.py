@@ -13,6 +13,7 @@ from matplotlib import use
 use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
+from matplotlib.colors import LinearSegmentedColormap
 import numpy as np
 try:
 	from scipy.interpolate import griddata
@@ -477,7 +478,15 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 		# rotate & flip to match MRC display
 		GD1 = np.flipud(np.rot90(GD1))
 
-		plt.imshow(GD1, extent=(0, imgx, 0, imgy),cmap=cm.plasma)
+		# use plasma color map if available:
+		try:
+			plt.imshow(GD1, extent=(0, imgx, 0, imgy),cmap=cm.plasma)
+		# else generate similar colormap
+		except:
+			cdict = {'red': ((0.0, 0.0504, 0.0504),(0.5, 0.7945, 0.7945),(1.0, 0.9400, 0.9400)),'green': ((0.0,0.0298, 0.0298),(0.5,0.2758, 0.2758),(1.0,0.9752, 0.9752)),'blue': ((0.0, 0.5280, 0.5280),(0.5, 0.4731, 0.4731),(1.0, 0.1313, 0.1313))}
+			plasma1 = LinearSegmentedColormap('BlueRed1', cdict)
+			plt.imshow(GD1, extent=(0, dimx, 0, dimy), cmap=plasma1)
+
 		# colorbar on right
 #		plt.colorbar()
 
