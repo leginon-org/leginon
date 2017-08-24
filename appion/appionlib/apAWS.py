@@ -690,18 +690,24 @@ def relion_refine_mpi(in_cmd,instancetype=''):
                 mpi=17
                 numfiles=90
 		cost=14.40
-	if instance == 't2.xlarge':
-		gpu=' '
-		j='--j 2'
+	if instance == 'g3.4xlarge':
+		gpu='--gpu '
+		j='--j 2 '
+		mpi=2
+		numfiles=8
+		cost=1.14
+	if instance == 'g3.8xlarge':
+		gpu='--gpu '
+		j='--j 2 '
+		mpi=3
+		numfiles=50
+		cost=2.28
+	if instance == 'g3.16xlarge':
+		gpu='--gpu '
+		j='--j 3 '
 		mpi=5
-		numfiles=8
-		cost=0.188
-	if instance == 't2.2xlarge':
-		gpu=' '
-		j='--j 2'
-		mpi=9
-		numfiles=8
-		cost=0.188
+		numfiles=90
+		cost=4.56
 	
 	env.host_string='ubuntu@%s' %(userIP)
         env.key_filename = '%s' %(keypair)

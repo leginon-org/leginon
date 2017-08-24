@@ -136,7 +136,9 @@ class Relion2Align2D_AWS_Form extends BasicLayoutForm
 			"none"=> "Select instance type",
 			"p2.xlarge" => "p2.xlarge (1 GPU, $0.90/hour)",
 			"p2.8xlarge" => "p2.8xlarge (8 GPU's,$7.20/hour)",
-			"p2.16xlarge" => "p2.16xlarge (16 GPU's, $14.40/hour)" );
+			"p2.16xlarge" => "p2.16xlarge (16 GPU's, $14.40/hour)",
+	       		"g3.8xlarge" => "g3.8xlarge (2 GPU's, $2.28/hour, recommended over p2.8x)",
+			"g3.16xlarge" => "g3.16xlarge (4 GPU's, $4.56/hour, recommended over p2.16x)");
 
 			$html .= $params->insertStackedSelectField( "instancetype", $instanceoptions,'','',$onchange );
 
