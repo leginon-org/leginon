@@ -291,7 +291,7 @@ if (is_numeric($expId)) {
 
 		// for each stack running, decrement complete stacks
 		// since they are counted twice
-		$sresults[] = ($totstack==0) ? "" : "<a href='stackhierarchy.php?expId=$sessionId'>".($stackruns)." complete</a>";
+		$sresults[] = ($totstack==0) ? "" : "<a href='stackhierarchy.php?expId=$sessionId'>".($totstack)." complete</a>";
 		$sresults[] = ($srun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=makestack'>$srun running</a>";
 		$sresults[] = ($sq==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=makestack'>$sq queued</a>";
 
@@ -300,11 +300,8 @@ if (is_numeric($expId)) {
 
 		$nruns=array();
 		$nruns[] = array(
-			'name'=>"<a href='runMakeStack2.php?expId=$sessionId'>Stack creation</a>",
+			'name'=>"<a href='stackTools.php?expId=$sessionId'>Stack Creation...</a>",
 			'result'=>$sresults,
-		);
-		$nruns[] = array(
-			'name'=>"<a href='moreStackTools.php?expId=$sessionId'>more stack tools</a>",
 		);
 
 		$data[] = array(
@@ -577,9 +574,15 @@ if (is_numeric($expId)) {
 
 		// This seems to cause terrible things to happen every now and then. Not sure why, but it is not really needed
 		// so it is commented out for now.
+	
 //		$nruns[] = array(
 //			'name'=>"<a href='evilClusterUsers.php?expId=$sessionId'>Evil Cluster Users</a>",
 //		);
+
+		$nruns[] = array(
+			'name'=>"<a href='uploadRelion3DRefine.php?expId=$sessionId'>Upload Relion 3D Refine</a>",
+		);
+
 		$data[] = array(
 			'action' => array($action, $celloption),
 			'result' => array(),
@@ -615,9 +618,9 @@ if (is_numeric($expId)) {
 		);
 	}
 
-	// display the tomography menu only if there are tilt serieses
+	// display the tomography menu only if there are tilt series
 	if ($tiltruns > 0) {
-		$action = "Tomography";
+		$action = "Tomography (Protomo2)";
 
 		// get tomography auto reconstruction stats:
 		$tarresults=array();
@@ -687,16 +690,76 @@ if (is_numeric($expId)) {
 
 		$nruns=array();
 		$nruns[] = array(
-			'name'=>"<a href='runTomoAutoRecon.php?expId=$sessionId'>Auto align+reconstruction</a>",
-			'result'=>$tarresults,
-		);
-		$nruns[] = array(
 			'name'=>"<a href='selectAlignTiltSeries.php?expId=$sessionId'>Align Tilt-Series</a>",
 			'result'=>$taresults,
 		);
 		$nruns[] = array(
 			'name'=>"<a href='selectBatchAlignTiltSeries.php?expId=$sessionId'>Batch Align Tilt-Series</a>",
 			'result'=>$taresults,
+		);
+		$nruns[] = array(
+			'name'=>"<a href='selectMoreTiltSeriesProcessing.php?expId=$sessionId''>More Tilt-Series Processing</a>",
+		);
+		
+
+		$data[] = array(
+			'action' => array($action, $celloption),
+			'result' => array($totresult),
+			'newrun' => array($nruns, $celloption),
+		);
+	}
+
+	// display the tomography menu only if there are tilt series
+	if ($tiltruns > 0) {
+		$action = "Tomography(non-Protomo2)";
+
+		// get tomography auto reconstruction stats:
+		$tarresults=array();
+		$tardone = count($subclusterjobs['tomoautorecon']['done']);
+		$tarrun = count($subclusterjobs['tomoautorecon']['running']);
+		$tarq = count($subclusterjobs['tomoautorecon']['queued']);
+		$tarresults[] = ($tardone==0) ? "" : "<a href='tomosummary.php?expId=$sessionId'>$tardone complete</a>";
+		$tarresults[] = ($tarrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=tomoautorecon'>$tarrun running</a>";
+		$tarresults[] = ($tarq==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=tomoautorecon'>$tarq queued</a>";
+
+		// get tomogram upload stats:
+		$utresults=array();
+		$utdone = count($subclusterjobs['uploadtomo']['done']);
+		$utrun = count($subclusterjobs['uploadtomo']['running']);
+		$utq = count($subclusterjobs['uploadtomo']['queued']);
+		$utresults[] = ($utdone==0) ? "" : "<a href='tomosummary.php?expId=$sessionId'>$utdone complete</a>";
+		$utresults[] = ($utrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=uploadtomo'>$utrun running</a>";
+		$utresults[] = ($utq==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=uploadtomo'>$utq queued</a>";
+
+		// get full tomogram making stats:
+		$tmresults=array();
+		$tmdone = $fulltomoruns - $etomo_sample;
+		$tmrun = count($subclusterjobs['tomomaker']['running']);
+		$tmq = count($subclusterjobs['tomomaker']['queued']);
+		$tmresults[] = ($tmdone==0) ? "" : "<a href='tomosummary.php?expId=$sessionId'>$tmdone complete</a>";
+		$tmresults[] = ($tmrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=tomomaker'>$tmrun running</a>";
+		$tmresults[] = ($tmq==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=tomomaker'>$tmq queued</a>";
+		$tmresults[] = ($etomo_sample==0) ? "" : "<a href='runETomoMaker.php?expId=$sessionId'>$etomo_sample ready for eTomo</a>";
+		// get subtomogram making stats:
+		$stresults=array();
+		$stdone = $tomoruns;
+		$strun = count($subclusterjobs['subtomomaker']['running']);
+		$stq = count($subclusterjobs['subtomomaker']['queued']);
+		$stresults[] = ($stdone==0) ? "" : "<a href='tomosummary.php?expId=$sessionId'>$stdone complete</a>";
+		$stresults[] = ($strun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=uploadtomo'>$strun running</a>";
+		$stresults[] = ($stq==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=uploadtomo'>$stq queued</a>";
+
+		// tomograms being created and completed
+		$tottomo = $tmdone+$tmrun+$tmq;
+
+		$tottomo = ($tottomo > $tomoruns+$fulltomoruns) ? $tottomo : $tomoruns+$fulltomoruns;
+		$totresult = ($tottomo==0) ? "" :
+			"<a href='tomosummary.php?expId=$sessionId'>$fulltomoruns/$tomoruns</a>";
+
+		$nruns=array();
+		$nruns[] = array(
+			'name'=>"<a href='runTomoAutoRecon.php?expId=$sessionId'>Auto align+reconstruction</a>",
+			'result'=>$tarresults,
 		);
 		$nruns[] = array(
 			'name'=>"<a href='runTomoMaker.php?expId=$sessionId'>Create full tomogram</a>",
