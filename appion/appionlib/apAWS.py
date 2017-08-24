@@ -551,8 +551,8 @@ def relion_refine_mpi(in_cmd,instancetype=''):
 			if autoref != -1: #3D refinement
 				instance='p2.8xlarge'
 			instance='p2.xlarge'
-	elif instancetype not in ['p2.xlarge','p2.8xlarge','p2.16xlarge']:
-		writeToLog("Error, invalid instance type. Must be p2.xlarge, p2.8xlarge, or p2.16xlarge.")
+	elif instancetype not in ['p2.xlarge','p2.8xlarge','p2.16xlarge','g3.8xlarge','g3.16xlarge']:
+		writeToLog("Error, invalid instance type. Must be p2.xlarge, p2.8xlarge, p2.16xlarge, g3.8xlarge, or g3.16xlarge.",'%s/run.out' %(outdir))
 		sys.exit()
 
 	else:

@@ -95,7 +95,7 @@ class RelionMaxLikeScript(appionScript.AppionScript):
 	#=====================
 	def checkConflicts(self):
 		if self.params['instancetype'] is None:
-			apDisplay.printError("No AWS instance specified. Choose from 'p2.xlarge (1 GPU, $0.90/hour), p2.8xlarge (8 GPU's, $7.20/hour), p2.16xlarge (16 GPU's, $14.4/hour).")
+			apDisplay.printError("No AWS instance specified. Choose from p2.xlarge (1 GPU, $0.90/hour), p2.8xlarge (8 GPU's, $7.20/hour), p2.16xlarge (16 GPU's, $14.4/hour), g3.8xlarge (2 GPU's, $2.28/hour), g3.16xlarge (4 GPU's, $4.56/hour).")
 		if self.params['stackid'] is None:
 			apDisplay.printError("stack id was not defined")
 		self.projectid = apProject.getProjectIdFromStackId(self.params['stackid'])
