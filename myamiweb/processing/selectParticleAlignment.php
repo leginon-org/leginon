@@ -106,6 +106,22 @@ echo " <p> this method builds a hierarchical classification of particles"
 //echo "  <img src='img/align-smr.png' width='250'><br/>\n";
 echo "</td></tr>\n";
 
+if (!HIDE_AWS_FEATURE)
+{
+/*
+ ** Relion 2.0 2D Reference Free Alignment with AWS
+*/
+        echo "<tr><td width='100' align='center'>\n";
+        echo "  <img src='img/Relion_logo_v1_64x64.png' width='64'>\n";
+        echo "</td><td>\n";
+        $form = "Relion2Align2D_AWS_Form";
+	echo "  <h3><a href='runAppionLoop.php?expId=$expId&form=$form'>Relion 2.0 GPU-Powered 2D Maximum Likelihood Alignment in AWS</a></h3>\n";
+	echo " <p> This package uses the AWS interface package from <a href='https://github.com/cianfrocco-lab/cryoem-cloud-tools'>Cianfrocco Lab</a> to launch GPU and CPU Relion jobs on AWS cloud instances. It otherwise uses the same underlying algorithms as Relion 2.</p>\n";
+
+
+        //echo "  <img src='img/align-smr.png' width='250'><br/>\n";
+        echo "</td></tr>\n";
+}
 /*
  ** Relion 2.0 2D Reference Free Alignment for GPU
 */
