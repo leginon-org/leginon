@@ -183,7 +183,7 @@ def getBestCtfValue(imgdata, sortType='res80', method=None, msg=True):
 
 	### find sister images for frame alignment
 	### this slows things down, but gets around the transfer, and needed for local CTF
-	if imgdata['filename'].endswith('-a') or imgdata['filename'].endswith('-a-DW'):
+	if (imgdata['filename'].endswith('-a') or imgdata['filename'].endswith('-a-DW')) and imgdata['camera']['align frames']:
 		alignpairdata = appiondata.ApDDAlignImagePairData(result=imgdata).query()[0]
 		srcimgdata = alignpairdata['source']
 		imglist.append(srcimgdata)
