@@ -247,8 +247,17 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 
 		imageresmax = self.params['resmax']
 		if ctfvalue is not None and self.params['bestdb'] is True:
-			### set res max from resolution_80_percent
-			gmean = (ctfvalue['resolution_80_percent']*ctfvalue['resolution_50_percent']*self.params['resmax'])**(1/3.)
+			try:
+				### set res max from resolution_80_percent
+				gmean = (ctfvalue['resolution_80_percent']*ctfvalue['resolution_50_percent']*self.params['resmax'])**(1/3.)
+			except:
+				#Issue 5168 gctf fast mode or other ctfplot failure mesn no typical values.
+				if ctfvalue['ctffind4_resolution']:
+					apDisplay.printColor('Failed to get Appion ctf resolution values. Use package value', "purple")
+					gmean = ctfvalue['ctffind4_resolution']
+				else:
+					apDisplay.printWarning('Unknown validataion, accept it anyway')
+					gmean = 100.0
 			if gmean < self.params['resmin']*0.9:
 				# replace only if valid Issue #3291
 				imageresmax = round(gmean,2)
