@@ -7,8 +7,19 @@ import numpy
 #appionlib
 from appionlib import starFile
 from appionlib import apInstrument
+from appionlib import apParam
 #pyami
 from pyami import mrc
+
+def getRelionVersion():
+	## no obvious version output info, so tricky
+	# first see if relion is loaded:
+	if apParam.getExecPath("relion",die=True) is not None:
+		# now see if there exists a relion 2.0 function:
+		if apParam.getExecPath("relion_helix_toolbox",die=False) is not None:
+			return 2.0
+		else:
+			return 1.4
 
 def readStarFileDataBlock(starfile, datablock):
 	star = starFile.StarFile(starfile)
@@ -261,12 +272,19 @@ def generateCtfFile(imgname,cs,kev,amp,mag,dstep,defU,defV,defAngle,cc):
 	f.close()
 
 def extractParticles(starfile,rootname,boxsize,bin,bgradius,pixlimit,invert,ext,nproc=1,logfile=None):
+	relion_version = getRelionVersion()
+
 	relionexe = "`which relion_preprocess"
 	if nproc > 1:
 		relionexe = "mpirun %s_mpi"%relionexe
 	relionexe+= "`"
 
-	relioncmd = "%s --o %s --mic_star %s"%(relionexe,rootname,starfile)
+	relioncmd = "%s"%relionexe
+	if relion_version < 2:
+		relioncmd+= " --o %s --mic_star %s"%(rootname,starfile)
+	else:
+		relioncmd+= " --part_star %s.star --i %s"%(rootname,starfile)
+		relioncmd+= " --coord_dir %s"%(os.path.abspath("."))
 	relioncmd+= " --coord_suffix %s --extract"%(ext)
 	relioncmd+= " --extract_size %i"%boxsize
 	if bin is not None:

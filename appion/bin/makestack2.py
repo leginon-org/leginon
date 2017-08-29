@@ -97,6 +97,10 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 						ctflog = os.path.join(linkdir,imgdata['filename']+"_ctffind3.log")
 						apRelion.generateCtfFile(ctflog,c['cs'],c['kev'],c['amp'],c['mag'],
 							c['dstep'],c['defU'],c['defV'],c['defAngle'],c['cc'])
+					else:
+						dstep = imgdata['camera']['pixel size']['x']*1e6
+						mag = dstep/self.params['apix']*1e4
+						rel_line+= "%13.6f%13.6f"%(mag,dstep)
 				else:
 					apDisplay.printMsg('No CTF information in database, skipping image')
 					return None
@@ -1173,6 +1177,9 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 
 		# for Relion
 		if self.params['filetype'] == "relion":
+			# make sure Relion is loaded:
+			apRelion.getRelionVersion()
+
 			if self.params['bgradius'] is None:
 				apDisplay.printError("Relion requires a bgradius value")
 			if self.params['bgradius']*2 > self.params['boxsize']:
