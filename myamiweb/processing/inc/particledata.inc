@@ -55,6 +55,16 @@ class particledata {
 		return $path;
 	}
 
+	function getSEMDataFromId ($imageId) {
+		$q = "SELECT * "
+			."FROM ApSEMData"
+			." WHERE "
+			."`REF|leginondata|AcquisitionImageData|image` = '$imageId' "
+			."LIMIT 1 ";
+			$r = $this->mysql->getSQLResult($q);
+			return $r[0];
+	}
+	
 	function getImageNameFromId ($imageId) {
 		$q = "SELECT "
 			."img.filename "
