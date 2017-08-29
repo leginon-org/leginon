@@ -501,7 +501,7 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 
 		# contour lines
 		X,Y = np.meshgrid(x,y)
-		CS = plt.contour(X,Y[::-1],GD1,15,linewidths=0.5, colors='k')
+		CS = plt.contour(X,Y[::-1],GD1,15,linewidths=0.5, colors='k',extent=(0, dimx, 0, dimy))
 		plt.clabel(CS, fontsize=9, inline=1)
 
 		# hide x & y axis tickmarks
