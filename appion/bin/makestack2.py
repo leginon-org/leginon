@@ -8,6 +8,7 @@ import time
 import copy
 import numpy
 import subprocess
+import shutil
 from scipy import stats
 from scipy import ndimage
 
@@ -81,6 +82,9 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 
 			# get original micrograph & ctfimage
 			rel_line = "micrographs/%s "%(imgdata['filename']+".mrc")
+			dstep = imgdata['camera']['pixel size']['x']*1e6
+			mag = dstep/self.params['apix']*1e4
+			rel_line+= "%13.6f%13.6f"%(mag,dstep)
 
 			# get CTF information
 			if self.params['noctf'] is not True:
@@ -97,17 +101,9 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 						ctflog = os.path.join(linkdir,imgdata['filename']+"_ctffind3.log")
 						apRelion.generateCtfFile(ctflog,c['cs'],c['kev'],c['amp'],c['mag'],
 							c['dstep'],c['defU'],c['defV'],c['defAngle'],c['cc'])
-					else:
-						dstep = imgdata['camera']['pixel size']['x']*1e6
-						mag = dstep/self.params['apix']*1e4
-						rel_line+= "%13.6f%13.6f"%(mag,dstep)
 				else:
 					apDisplay.printMsg('No CTF information in database, skipping image')
 					return None
-			else:
-				dstep = imgdata['camera']['pixel size']['x']*1e6
-				mag = dstep/self.params['apix']*1e4
-				rel_line+= "%13.6f%13.6f"%(mag,dstep)
 
 			# add the micrograph line to the micrograph star file
 			fout = open(self.mstarfile,'a')
@@ -1263,6 +1259,44 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			bgradius = int(self.params['bgradius']/self.params['bin'])
 			rootname = os.path.basename(os.path.splitext(self.params['single'])[0])
 			apRelion.extractParticles(self.mstarfile,rootname,self.boxsize,self.params['bin'],bgradius,self.params['pixlimit'],self.params['inverted'],self.boxextension,apParam.getNumProcessors(),logfile)
+			if not os.path.isfile(rootname+".star"):
+				apDisplay.printError("Check your relion job, '%s.star' doesn't exist"%(rootname))
+
+			# make sure scaled pixel size is correct in output star file:
+			# get the first available mag and detector pixel size
+			labels = apRelion.getStarFileColumnLabels(rootname+".star")
+			for line in open(rootname+".star"):
+				l = line.strip().split()
+				if len(l)<3: continue
+				dpixsize = float(l[labels.index("_rlnDetectorPixelSize")])
+				mag = float(l[labels.index("_rlnMagnification")])
+				apix = dpixsize/mag*1e4
+				break
+
+			# if the scaled pixels size isn't write, rewrite star file
+			sc_apix = self.params['apix']*self.params['bin']
+			# only check to 2 decimal points
+			if round(apix,2) != round(sc_apix,2):
+				apDisplay.printWarning("Star file doesn't contain the scaled pixel size")
+				apDisplay.printMsg("Replacing current pixel size of %.2f with scaled pixel size of %.2f..."%(apix,sc_apix))
+				shutil.move(rootname+".star",rootname+".backup.star")
+
+				f = open(rootname+".star",'w')
+				for line in open(rootname+".backup.star"):
+					l = line.strip().split()
+					if len(l)<3:
+						f.write(line)
+						continue
+					for i in range(len(labels)):
+						if labels[i] in ("_rlnMicrographName","_rlnImageName"):
+							if i>0: f.write(" ")
+							f.write(l[i])
+						elif labels[i] == "_rlnDetectorPixelSize":
+							f.write("%13.6f"%(float(l[i])*self.params['bin']))
+						else: f.write("%13s"%l[i])
+					f.write("\n")
+				f.close()
+				os.remove(rootname+".backup.star")
 
 		### Delete CTF corrected images
 		if self.params['keepall'] is False:
