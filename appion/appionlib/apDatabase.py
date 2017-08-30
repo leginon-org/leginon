@@ -31,8 +31,8 @@ def getSpecificImagesFromDB(imglist, sessiondata=None, msg=True):
 		print "Querying database for "+str(len(imglist))+" specific images ... "
 	imgtree=[]
 	for imgname in imglist:
-		if imgname[-4:] == ".mrc" or imgname[-4:] == ".box" or imgname[-4:] == ".pos":
-			imgname = imgname[:-4]
+		if os.path.splitext(imgname)[-1] in [".mrc",".box",".pos",".star"]:
+			imgname = os.path.splitext(imgname)[0]
 		if '/' in imgname:
 			imgname = os.path.basename(imgname)
 		if sessiondata is not None:
