@@ -2,10 +2,10 @@
 
 #
 # COPYRIGHT:
-#       The Leginon software is Copyright 2003
-#       The Scripps Research Institute, La Jolla, CA
+#       The Leginon software is Copyright under
+#       Apache License, Version 2.0
 #       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
+#       see  http://leginon.org
 #
 
 from leginon import leginondata
@@ -644,3 +644,21 @@ class CorrectorClient(cameraclient.CameraClient):
 		f = '%s_%s_%02d_%s_%s_%s' % (sessionname, timestamp, nextid, shapestr, type, channel)
 		return f
 
+	def hasRecentDarkCurrentReferenceSaved(self, trip_value=21600, ccdcamera=None):
+		'''
+		Check if dark current reference is recently updated.
+		Default is 6 hours but should be set to smaller number when bright images
+		are about to be acquired.
+		'''
+		import datetime
+		if not ccdcamera:
+			ccdcamera = self.instrument.getCCDCameraData()
+		print ccdcamera
+		camera_host = ccdcamera['hostname']
+		# query by hostname since different modes of camera is count as different cameras
+		darks = leginondata.CameraDarkCurrentUpdatedData(hostname=camera_host).query(results=1)
+		if darks:
+			dark = darks[0]
+			# compare timestamps
+			return datetime.datetime.now() - dark.timestamp <= datetime.timedelta(seconds=trip_value)
+		return False

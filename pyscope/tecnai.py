@@ -1,14 +1,16 @@
 # COPYRIGHT:
-# The Leginon software is Copyright 2003
-# The Scripps Research Institute, La Jolla, CA
+# The Leginon software is Copyright under
+# Apache License, Version 2.0
 # For terms of the license agreement
-# see http://ami.scripps.edu/software/leginon-license
+# see http://leginon.org
 
 import tem
 import time
 import sys
 import subprocess
 import os
+import datetime
+import math
 
 try:
 	import nidaq
@@ -24,8 +26,17 @@ try:
 except ImportError:
 	pass
 
+DEBUG = False
 # Location of next phase plate AutoIt executable
 AUTOIT_EXE_PATH = "C:\\Program Files\\AutoIt3\\nextphaseplate.exe"
+
+# Newer Krios stage needs backlash.
+KRIOS_ADD_STAGE_BACKLASH = True
+KRIOS_ADD_STAGE_ALPHA_BACKLASH = False
+
+# Falcon protector causes certain delays
+HAS_FALCON_PROTECTOR = True
+
 
 # This scale convert beam tilt readout in radian to 
 # Tecnai or TEM Scripting Illumination.RotationCenter value
@@ -41,6 +52,9 @@ minimum_stage = {
 	'b': 6e-5,
 }
 
+# print stage position set if have error for debuging
+PRINT_STAGE_DEBUG = True
+
 class MagnificationsUninitialized(Exception):
 	pass
 
@@ -50,6 +64,7 @@ class Tecnai(tem.TEM):
 	def __init__(self):
 		tem.TEM.__init__(self)
 		self.projection_submodes = {1:'LM',2:'Mi',3:'SA',4:'Mh',5:'LAD',6:'D'}
+		self.gridloader_slot_states = {0:'unknown', 1:'occupied', 2:'empty', 3:'error'}
 		self.special_submode_mags = {}
 		#self.special_submode_mags = {380:('EFTEM',3)}
 		self.projection_submode_map = self.special_submode_mags.copy()
@@ -114,7 +129,7 @@ class Tecnai(tem.TEM):
 	def findPresureProps(self):
 		self.pressure_prop = {}
 		gauge_map = {}
-		gauges_to_try = {'column':['PPc1','P4','IGP1'],'buffer':['PIRbf','P1'],'projection':['CCGp','P3']}
+		gauges_to_try = {'column':['IPGco','PPc1','P4','IGP1'],'buffer':['PIRbf','P1'],'projection':['CCGp','P3']}
 		gauges_obj = self.tecnai.Vacuum.Gauges
 		for i in range(gauges_obj.Count):
 			g = gauges_obj.Item(i)
@@ -164,6 +179,7 @@ class Tecnai(tem.TEM):
 					prevalue[axis] = value[axis] - delta
 			if prevalue:
 				self._setStagePosition(prevalue)
+				time.sleep(0.2)
 		return self._setStagePosition(value)
 
 	def setStageSpeed(self, value):
@@ -280,10 +296,10 @@ class Tecnai(tem.TEM):
 			raise RuntimeError('unknown high tension state')
 
 	def getHighTension(self):
-		return float(self.tecnai.Gun.HTValue)
+		return int(round(float(self.tecnai.Gun.HTValue)))
 	
 	def setHighTension(self, ht):
-		self.tecnai.Gun.HTValue = ht
+		self.tecnai.Gun.HTValue = float(ht)
 	
 	def getIntensity(self):
 		intensity = getattr(self.tecnai.Illumination, self.intensity_prop)
@@ -339,6 +355,23 @@ class Tecnai(tem.TEM):
 			raise SystemError
 		
 	def setBeamBlank(self, bb):
+		self._setBeamBlank(bb)
+		# Falcon protector delays the response of the blanker and 
+		# cause it to be out of sync
+		if HAS_FALCON_PROTECTOR:
+			i = 0
+			time.sleep(0.5)
+			if self.getBeamBlank() != bb:
+				if i < 10:
+					time.sleep(0.5)
+					if DEBUG:
+						print 'retry BeamBlank operation'
+					self._setBeamBlank(bb)
+					i += 1
+				else:
+					raise SystemError
+
+	def _setBeamBlank(self, bb):
 		if bb == 'off' :
 			self.tecnai.Illumination.BeamBlanked = 0
 		elif bb == 'on':
@@ -744,10 +777,23 @@ class Tecnai(tem.TEM):
 				pass
 		return value
 
+	def waitForStageReady(self,timeout=5):
+		t0 = time.time()
+		trials = 0
+		while self.tecnai.Stage.Status in (2,3,4):
+			trials += 1
+			if time.time()-t0 > timeout:
+				raise RuntimeError('stage is not going to ready status in %d seconds' % (int(timeout)))
+		if PRINT_STAGE_DEBUG and trials > 0:
+			print datetime.datetime.now()
+			donetime = time.time() - t0
+			print 'took extra %.1f seconds to get to ready status' % (donetime)
+
 	def _setStagePosition(self, position, relative = 'absolute'):
 #		tolerance = 1.0e-4
 #		polltime = 0.01
 
+		self.waitForStageReady()
 		if relative == 'relative':
 			for key in position:
 				position[key] += getattr(self.tecnai.Stage.Position, key.upper())
@@ -769,22 +815,28 @@ class Tecnai(tem.TEM):
 			return
 		try:
 			self.tecnai.Stage.Goto(pos, axes)
-		except com_module.COMError, (hr, msg, exc, arg):
-			#print 'Stage.Goto failed with error %d: %s' % (hr, msg)
-			if exc is None:
-				raise ValueError('no extended error information, assuming stage limit was hit')
-			else:
-				wcode, source, text, helpFile, helpId, scode = exc
-				if winerror.SUCCEEDED(wcode) and text is None:
-					raise ValueError('no extended error information, assuming stage limit was hit')
-				else:
-					raise RuntimeError(text)
+		except com_module.COMError, e:
+			if PRINT_STAGE_DEBUG:
+				print datetime.datetime.now()
+				print 'COMError in going to %s' % (position,)
+			try:
+				# used to parse e into (hr, msg, exc, arg)
+				# but Issue 4794 got 'need more than 3 values to unpack' error'.
+				# simplify the error handling so that it can be raised with messge.
+				msg = e.text
+				raise ValueError('Stage.Goto failed: %s' % (msg,))
+			except:
+				raise ValueError('COMError in _setStagePosition: %s' % (e,))
+		except:
+			if PRINT_STAGE_DEBUG:
+				print datetime.datetime.now()
+				print 'Other error in going to %s' % (position,)
+			raise RuntimeError('_setStagePosition Unknown error')
+		self.waitForStageReady()
 
-#		for key in position:
-#			while abs(getattr(self.tecnai.Stage.Position, key.upper())
-#								- getattr(pos, key.upper())) > tolerance:
-#				time.sleep(polltime)
-	
+	def setDirectStagePosition(self,value):
+		self._setStagePosition(value)
+
 	def getLowDoseStates(self):
 		return ['on', 'off', 'disabled']
 
@@ -794,17 +846,11 @@ class Tecnai(tem.TEM):
 				return 'on'
 			else:
 				return 'off'
-		except com_module.COMError, (hr, msg, exc, arg):
-			if exc is None:
-				# No extended error information, assuming low dose is disabled
-				return 'disabled'
-			else:
-				wcode, source, text, helpFile, helpId, scode = exc
-				if winerror.SUCCEEDED(wcode) and text is None:
-					# No extended error information, assuming low dose is disabled
-					return 'disabled'
-				else:
-					raise RuntimeError(text)
+		except com_module.COMError, e:
+			# No extended error information, assuming low dose is disabled
+			return 'disabled'
+		except:
+			raise RuntimeError('low dose error')
  
 	def setLowDose(self, ld):
 		try:
@@ -817,17 +863,11 @@ class Tecnai(tem.TEM):
 					self.lowdose.LowDoseActive = self.tem_constants.IsOn
 			else:
 				raise ValueError
-		except com_module.COMError, (hr, msg, exc, arg):
-			if exc is None:
-				# No extended error information, assuming low dose is disenabled
-				raise RuntimeError('Low dose is not enabled')
-			else:
-				wcode, source, text, helpFile, helpId, scode = exc
-				if winerror.SUCCEEDED(wcode) and text is None:
-					# No extended error information, assuming low dose is disenabled
-					raise RuntimeError('Low dose is not enabled')
-				else:
-					raise RuntimerError(text)
+		except com_module.COMError, e:
+			# No extended error information, assuming low dose is disenabled
+			raise RuntimeError('Low dose is not enabled')
+		except:
+			raise RuntimerError('Unknown error')
 
 	def getLowDoseModes(self):
 		return ['exposure', 'focus1', 'focus2', 'search', 'unknown', 'disabled']
@@ -844,17 +884,11 @@ class Tecnai(tem.TEM):
 				return 'search'
 			else:
 				return 'unknown'
-		except com_module.COMError, (hr, msg, exc, arg):
-			if exc is None:
-				# No extended error information, assuming low dose is disenabled
-				return 'disabled'
-			else:
-				wcode, source, text, helpFile, helpId, scode = exc
-				if winerror.SUCCEEDED(wcode) and text is None:
-					# No extended error information, assuming low dose is disenabled
-					return 'disabled'
-				else:
-					raise RuntimerError(text)
+		except com_module.COMError, e:
+			# No extended error information, assuming low dose is disenabled
+			raise RuntimeError('Low dose is not enabled')
+		except:
+			raise RuntimerError('Unknown error')
 		
 	def setLowDoseMode(self, mode):
 		try:
@@ -868,17 +902,11 @@ class Tecnai(tem.TEM):
 				self.lowdose.LowDoseState = self.tem_constants.eSearch
 			else:
 				raise ValueError
-		except com_module.COMError, (hr, msg, exc, arg):
-			if exc is None:
-				# No extended error information, assuming low dose is disenabled
-				raise RuntimeError('Low dose is not enabled')
-			else:
-				wcode, source, text, helpFile, helpId, scode = exc
-				if winerror.SUCCEEDED(wcode) and text is None:
-					# No extended error information, assuming low dose is disenabled
-					raise RuntimeError('Low dose is not enabled')
-				else:
-					raise RuntimerError(text)
+		except com_module.COMError, e:
+			# No extended error information, assuming low dose is disenabled
+			raise RuntimeError('Low dose is not enabled')
+		except:
+			raise RuntimerError('Unknown error')
 	
 	def getDiffractionMode(self):
 		if self.tecnai.Projection.Mode == self.tem_constants.pmImaging:
@@ -1171,6 +1199,7 @@ class Tecnai(tem.TEM):
 			return 'unknown'
 
 	def getGaugePressure(self,location):
+		# value in pascal unit
 		if location not in self.pressure_prop.keys():
 			raise KeyError
 		if self.pressure_prop[location] is None:
@@ -1284,15 +1313,11 @@ class Tecnai(tem.TEM):
 	def runBufferCycle(self):
 		try:
 			self.tecnai.Vacuum.RunBufferCycle()
-		except com_module.COMError, (hr, msg, exc, arg):
-			if exc is None:
-				raise RuntimeError('no extended error information')
-			else:
-				wcode, source, text, helpFile, helpId, scode = exc
-				if winerror.SUCCEEDED(wcode) and text is None:
-					raise RuntimeError('no extended error information')
-				else:
-					raise RuntimeError(text)
+		except com_module.COMError, e:
+			# No extended error information, assuming low dose is disenabled
+			raise RuntimeError('runBufferCycle COMError: no extended error information')
+		except:
+			raise RuntimerError('runBufferCycle Unknown error')
 
 	def setEmission(self, value):
 		self.tom.Gun.Emission = value
@@ -1364,19 +1389,64 @@ class Tecnai(tem.TEM):
 		else:
 			pass
 
+	def hasGridLoader(self):
+		try:
+			return self.tecnai.AutoLoader.AutoLoaderAvailable
+		except:
+			return False
+
+	def _loadCartridge(self, number):
+		state = self.tecnai.AutoLoader.LoadCartridge(number)
+		if state != 0:
+			raise RuntimeError()
+
+	def _unloadCartridge(self):
+		'''
+		FIX ME: Can we specify which slot to unload to ?
+		'''
+		state = self.tecnai.AutoLoader.UnloadCartridge()
+		if state != 0:
+			raise RuntimeError()
+
+	def getGridLoaderNumberOfSlots(self):
+		if self.hasGridLoader():
+			return self.tecnai.AutoLoader.NumberOfCassetteSlots
+		else:
+			return 0
+
+	def getGridLoaderSlotState(self, number):
+		# base 1
+		if not self.hasGridLoader():
+			return self.gridloader_slot_states[0]
+		else:
+			status = self.tecnai.AutoLoader.SlotStatus(number)
+			state = self.gridloader_slot_states[status]
+		return state
+
+	def getGridLoaderInventory(self):
+		if not self.grid_inventory and self.hasGridLoader():
+			self.getAllGridSlotStates()
+		return self.grid_inventory
+
+	def performGridLoaderInventory(self):	
+		""" need to find return states
+				0 - no error, but also could be no action taken.
+		"""
+		return self.tecnai.PerformCassetteInventory()
+
+	def getIsEFtem(self):
+		flag = self.tecnai.Projection.LensProgram
+		if flag == 2:
+			return True
+		return False
+
 class Krios(Tecnai):
 	name = 'Krios'
 	use_normalization = True
 	def __init__(self):
 		Tecnai.__init__(self)
-		self.correctedstage = False
-
-	def setStagePosition(self, value):
-		# Krios Compustage works better without preposition
-		value = self.checkStagePosition(value)
-		if not value:
-			return
-		return self._setStagePosition(value)
+		self.correctedstage = KRIOS_ADD_STAGE_BACKLASH
+		self.corrected_alpha_stage = KRIOS_ADD_STAGE_ALPHA_BACKLASH
 
 	def normalizeProjectionForMagnificationChange(self, new_mag_index):
 		'''
@@ -1386,11 +1456,38 @@ class Krios(Tecnai):
 		'''
 		pass
 
+	def setStagePosition(self, value):
+		'''
+		Krios setStagePosition
+		'''
+		# pre-position x and y (maybe others later)
+		value = self.checkStagePosition(value)
+		if not value:
+			return
+		if self.correctedstage:
+			delta = 2e-6
+			stagenow = self.getStagePosition()
+			# calculate pre-position
+			prevalue = {}
+			for axis in ('x','y','z'):
+				if axis in value:
+					prevalue[axis] = value[axis] - delta
+			# alpha tilt backlash only in one direction
+			alpha_delta_degrees = 3.0
+			if 'a' in value.keys() and self.corrected_alpha_stage:
+					axis = 'a'
+					prevalue[axis] = value[axis] - alpha_delta_degrees*3.14159/180.0
+			if prevalue:
+				self._setStagePosition(prevalue)
+				time.sleep(0.2)
+		return self._setStagePosition(value)
+
 class Halo(Tecnai):
 	'''
 	Titan Halo has Titan 3 condensor system but side-entry holder.
 	'''
 	name = 'Halo'
+	use_normalization = True
 	def normalizeProjectionForMagnificationChange(self, new_mag_index):
 		'''
 		Overwrite projection lens normalization to do nothing
@@ -1407,6 +1504,8 @@ class Halo(Tecnai):
 
 class EFKrios(Krios):
 	name = 'EF-Krios'
+	use_normalization = True
+	projection_lens_program = 'EFTEM'
 
 class Arctica(Tecnai):
 	name = 'Arctica'

@@ -406,6 +406,19 @@ $PUBLICATIONS['tomo3d2'] = array(
 'logo' => '',
 'pages' => '');
 
+$PUBLICATIONS['tomoctf'] = array(
+'title' => 'CTF Determination and Correction in Electron Cryotomography',
+'year' => '2006',
+'authorlist' => 'J.J. Fernandez, S. Li, R.A. Crowther ',
+'journal' => 'Ultramicroscopy',
+'volume' => '106',
+'issue' => '7',
+'pmid' => '16616422',
+'pmcid' => '',
+'doi' => 'doi:10.1016/j.ultramic.2006.02.004',
+'logo' => '',
+'pages' => '587-596');
+
 $PUBLICATIONS['rpp'] = array(
 'title' => 'Alignment of cryo-EM movies of individual particles by optimization of image translations.',
 'year' => '2015',

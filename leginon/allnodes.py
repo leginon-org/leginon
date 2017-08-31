@@ -138,6 +138,9 @@ noderegistry.registerNodeClass(SampleTargetFilter,classtype)
 from jahcfinder import JAHCFinder
 noderegistry.registerNodeClass(JAHCFinder,classtype)
 
+from dogfinder import DoGFinder
+noderegistry.registerNodeClass(DoGFinder,classtype)
+
 from atlastargetmaker import AtlasTargetMaker
 noderegistry.registerNodeClass(AtlasTargetMaker,classtype)
 
@@ -266,9 +269,16 @@ noderegistry.registerNodeClass(ManualImageLoader,classtype)
 from clickmaskmaker import ClickMaskMaker
 noderegistry.registerNodeClass(ClickMaskMaker,classtype)
 
-from navigator import Navigator
-noderegistry.registerNodeClass(Navigator,classtype)
-
 from imageassessor import ImageAssessor
 noderegistry.registerNodeClass(ImageAssessor,classtype)
+
+from temcontroller import TEMController
+noderegistry.registerNodeClass(TEMController,classtype)
+
+##############################
+# Finale
+##############################
+classtype = 'Finale'
+from navigator import Navigator
+noderegistry.registerNodeClass(Navigator,classtype)
 

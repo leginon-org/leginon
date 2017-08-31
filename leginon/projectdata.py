@@ -76,3 +76,20 @@ class shareexperiments(Data):
 			('experiment', leginon.leginondata.SessionData),
 		)
 	typemap = classmethod(typemap)
+
+class schemaupdates(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('schematag', str),
+			('schemaid', int),
+			('schemacommitid', str),
+			('branch', str),
+			('commitcount', int),
+			('gitversion', str),
+			('recentcommitid', str),
+			('modifyappiondb', bool),
+			('modifyleginondb', bool),
+			('modifyprojectdb', bool),
+		)
+	typemap = classmethod(typemap)
+

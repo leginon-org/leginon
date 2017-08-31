@@ -48,14 +48,13 @@ class ReferenceTimer(reference.Reference):
 class AlignZeroLossPeak(ReferenceTimer):
 	settingsclass = leginondata.AlignZLPSettingsData
 	# defaultsettings are not the same as the parent class.  Therefore redefined.
-	defaultsettings = {
-		'bypass': True,
-		'move type': 'stage position',
-		'pause time': 3.0,
-		'interval time': 900.0,
+	defaultsettings = reference.Reference.defaultsettings
+	defaultsettings.update (
+		{'interval time': 900.0,
 		'check preset': '',
 		'threshold': 0.0,
-	}
+		}
+	)
 	eventinputs = ReferenceTimer.eventinputs + [event.AlignZeroLossPeakPublishEvent, event.FixAlignmentEvent]
 	panelclass = gui.wx.AlignZLP.AlignZeroLossPeakPanel
 	requestdata = leginondata.AlignZeroLossPeakData
@@ -71,7 +70,14 @@ class AlignZeroLossPeak(ReferenceTimer):
 		self.start()
 
 	def handleFixAlignmentEvent(self, evt):
+		# called from another Reference Class to execute after target move
+		# but before execution.
 		self.logger.info('handling request to execute alignment in place')
+		if self.settings['bypass']:
+			self.logger.info('Bypass alignment fixing')
+			status = 'bypass'
+			self.confirmEvent(evt, status=status)
+			return
 		self.setStatus('processing')
 		self.panel.playerEvent('play')
 		status = self.alignZLP(None)
@@ -190,7 +196,7 @@ class AlignZeroLossPeak(ReferenceTimer):
 		if not ccd_camera.EnergyFiltered:
 			self.logger.warning('No energy filter on this instrument.')
 			return False
-		imagedata = self.acquireCorrectedCameraImageData()
+		imagedata = self.acquireCorrectedCameraImageData(force_no_frames=True)
 		image = imagedata['image']
 		stageposition = imagedata['scope']['stage position']
 		lastresetq = leginondata.ZeroLossCheckData(session=self.session, preset=self.checkpreset)
@@ -223,18 +229,17 @@ class AlignZeroLossPeak(ReferenceTimer):
 			self.logger.error('Error moving to target, %s' % e)
 			return
 		self.logger.info('reset zero-loss check data')
-		imagedata = self.acquireCorrectedCameraImageData()
+		imagedata = self.acquireCorrectedCameraImageData(force_no_frames=True)
 		stageposition = imagedata['scope']['stage position']
 		image = imagedata['image']
 		self.publishZeroLossCheck(image)
 
 class MeasureDose(ReferenceTimer):
-	defaultsettings = {
-		'move type': 'stage position',
-		'pause time': 3.0,
-		'interval time': 900.0,
-		'bypass': True,
-	}
+	defaultsettings = reference.Reference.defaultsettings
+	defaultsettings.update (
+		{'interval time': 900.0,
+		}
+	)
 	# relay measure does events
 	eventinputs = ReferenceTimer.eventinputs + [event.MeasureDosePublishEvent]
 	eventoutputs = ReferenceTimer.eventoutputs

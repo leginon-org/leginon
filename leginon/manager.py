@@ -2,10 +2,10 @@
 
 #
 # COPYRIGHT:
-#	   The Leginon software is Copyright 2003
-#	   The Scripps Research Institute, La Jolla, CA
+#	   The Leginon software is Copyright under
+#	   Apache License, Version 2.0
 #	   For terms of the license agreement
-#	   see  http://ami.scripps.edu/software/leginon-license
+#	   see  http://leginon.org
 #
 
 import application
@@ -77,7 +77,7 @@ class Manager(node.Node):
 
 		## need a special DataBinder
 		name = DataBinder.__name__
-		databinderlogger = gui.wx.Logging.getNodeChildLogger(name, self)
+		databinderlogger = gui.wx.LeginonLogging.getNodeChildLogger(name, self)
 		mydatabinder = DataBinder(self, databinderlogger, tcpport=tcpport)
 		node.Node.__init__(self, self.name, session, otherdatabinder=mydatabinder,
 												**kwargs)
@@ -867,7 +867,7 @@ class Manager(node.Node):
 
 	def sortNodes(self, nodeclasses=[]):
 		allclassnames = noderegistry.getNodeClassNames()
-		classtypes = ['Priority', 'Pipeline', 'Calibrations', 'Utility']
+		classtypes = ['Priority', 'Pipeline', 'Calibrations', 'Utility', 'Finale']
 		sortclasses = {}
 		for classtype in classtypes:
 			sortclasses[classtype] = []

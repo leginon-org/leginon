@@ -1601,3 +1601,15 @@ class Jeol(tem.TEM):
 	def getBeamBlankedDuringCameraExchange(self):
 		# Keep it off because gun shutter is too slow.
 		return False
+
+
+	def getTimedN2FillParams(self):
+		'''
+		return timed fill params from jeol.cfg.
+		For JEOL scope, the filling is done at fixed time.
+		'''
+		# the values are in minutes
+		n2fill_starts = self.getJeolConfig('n2filler','fill_starts')
+		n2fill_time = self.getJeolConfig('n2filler','fill_time')
+		ahead_minute = self.getJeolConfig('n2filler','myclock_ahead')
+		return n2fill_starts, n2fill_time, ahead_minute

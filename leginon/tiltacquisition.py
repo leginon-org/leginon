@@ -1,10 +1,11 @@
 #
 # COPYRIGHT:
-#	   The Leginon software is Copyright 2003
-#	   The Scripps Research Institute, La Jolla, CA
+#	   The Leginon software is Copyright under
+#	   Apache License, Version 2.0
 #	   For terms of the license agreement
-#	   see  http://ami.scripps.edu/software/leginon-license
+#	   see  http://leginon.org
 #
+
 import math
 import acquisition
 import leginondata
@@ -27,6 +28,7 @@ class TiltAcquisition(acquisition.Acquisition):
 		acquisition.Acquisition.__init__(self, id, session, managerlocation, **kwargs)
 		self.tiltindex = 0
 		self.tilts = (0,0.5,1)
+		self.logger.Error('This is a legacy class.  Will be deplicated. Use TiltAlternator instead')
 
 	def getParentTilt(self,targetdata):
 		if targetdata['image']:
@@ -55,7 +57,7 @@ class TiltAcquisition(acquisition.Acquisition):
 			super(TiltAcquisition, self).processTargetData(targetdata, attempt)
 		else:
 			# process as normal
-			super(TiltAlternater, self).processTargetData(targetdata, attempt)
+			super(TiltAcquisition, self).processTargetData(targetdata, attempt)
 		self.tiltindex += 1
 
 	def waitForRejects(self):

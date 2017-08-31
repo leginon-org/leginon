@@ -284,7 +284,7 @@ class RefineCTF(appionLoop2.AppionLoop):
 			volts=self.ctfvalues['volts'], ampconst=self.ctfvalues['amplitude_contrast'], failParams=False)
 
 		peaks = ctftools.getCtfExtrema(defocus, self.freq*1e10, self.ctfvalues['cs'], 
-			self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'], numzeros=25, zerotype="peak")
+			self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'], 0, numzeros=25, zerotype="peak")
 
 		### get the confidence
 		confraddata, confdata = ctfres.getCorrelationProfile(raddata, PSD, ctffitdata, peaks, self.freq)
@@ -328,7 +328,7 @@ class RefineCTF(appionLoop2.AppionLoop):
 			confraddatasq = confraddata**2
 			peakradii = ctftools.getCtfExtrema(defocus, self.freq*1e10,
 				self.ctfvalues['cs'], self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'],
-				numzeros=2, zerotype="peaks")
+				0, numzeros=2, zerotype="peaks")
 			firstpeak = peakradii[0]
 
 			from matplotlib import pyplot
@@ -368,7 +368,7 @@ class RefineCTF(appionLoop2.AppionLoop):
 		# skip the center
 		valleys = ctftools.getCtfExtrema(defocus, self.freq*1e10,
 			self.ctfvalues['cs'], self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'],
-			numzeros=250, zerotype="valleys")
+			0, numzeros=250, zerotype="valleys")
 		firstvalley = valleys[0]
 		valleyradii = numpy.array(valleys, dtype=numpy.float64)*self.freq
 		firstvalleyindex = numpy.searchsorted(raddata, self.freq*firstvalley)
@@ -430,7 +430,7 @@ class RefineCTF(appionLoop2.AppionLoop):
 		# high pass filter the center
 		peaks = ctftools.getCtfExtrema(defocus, self.freq*1e10,
 			self.ctfvalues['cs'], self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'],
-			numzeros=250, zerotype="peaks")
+			0, numzeros=250, zerotype="peaks")
 		firstpeak = peaks[0]
 		peakradii = numpy.array(peaks, dtype=numpy.float64)*self.freq
 
@@ -785,9 +785,9 @@ class RefineCTF(appionLoop2.AppionLoop):
 		self.ctfvalues['amplitude_contrast'] = bestDbValues['amplitude_contrast']
 
 		lowerrad1 = ctftools.getCtfExtrema(bestDbValues['defocus1'], self.mfreq, self.cs, self.volts, 
-			self.ctfvalues['amplitude_contrast'], 1, "valley")
+			self.ctfvalues['amplitude_contrast'], 0, 1, "valley")
 		lowerrad2 = ctftools.getCtfExtrema(bestDbValues['defocus2'], self.mfreq, self.cs, self.volts, 
-			self.ctfvalues['amplitude_contrast'], 1, "valley")
+			self.ctfvalues['amplitude_contrast'], 0, 1, "valley")
 		meanRad = (lowerrad1[0] + lowerrad2[0])/2.0
 
 		self.ellipseParams = {

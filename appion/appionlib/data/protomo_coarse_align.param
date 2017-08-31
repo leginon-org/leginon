@@ -62,7 +62,7 @@ tiltseries {
 
    mask {
      apodization: { APc_mask_apod_x, APc_mask_apod_y }
-     width: { APc_mask_width_x, APc_mask_width_y }
+     width: { APc_mask_width_x, APc_mask_width_y }  (* AP width1 *)
    }
 
    lowpass {
@@ -101,7 +101,7 @@ tiltseries {
    
    mask {
      apodization: { APc_mask_apod_x, APc_mask_apod_y }
-     width: { APc_mask_width_x, APc_mask_width_y }
+     width: { APc_mask_width_x, APc_mask_width_y }  (* AP width2 *)
    }
 
    correlation {

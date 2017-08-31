@@ -1,10 +1,10 @@
 <?php
 
 /**
- *	The Leginon software is Copyright 2003 
- *	The Scripps Research Institute, La Jolla, CA
+ *	The Leginon software is Copyright under 
+ *	Apache License, Version 2.0
  *	For terms of the license agreement
- *	see  http://ami.scripps.edu/software/leginon-license
+ *	see  http://leginon.org
  */
 ini_set('display_errors', '0');     # don't show any errors...
 error_reporting(E_ALL | E_STRICT);
@@ -17,6 +17,9 @@ require_once "inc/viewer.inc";
 require_once "inc/project.inc";
 require_once "inc/appionloop.inc";
 require_once "inc/particledata.inc";
+
+$page = $_SERVER['REQUEST_URI'];
+header("Refresh: 300; URL=$page");
 
 $outdir=$_GET['outdir'];
 $runname=$_GET['runname'];
@@ -63,7 +66,7 @@ if (isset($azimuth_gif_files)) {
 }
 
 $html .= "
-	<H4><center><b>Grid Orientation (Theta) Plot</b></center></H4>";
+	<H4><center><b>Grid Orientation Plot</b></center></H4>";
         
 if (isset($orientation_gif_file)) {
 	$html .= '<center><img src="'.$orientation_gif.'" alt="theta" /></center>

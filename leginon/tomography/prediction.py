@@ -130,7 +130,6 @@ class Prediction(object):
 	def getCurrentTiltGroupIndex(self):
 		tilt_series = self.getCurrentTiltSeries()
 		g = tilt_series.getCurrentTiltGroupIndex()
-		debug_print('current tilt group:%d' % g)
 		return g
 
 	def addPosition(self, tilt, position):
@@ -189,7 +188,7 @@ class Prediction(object):
 		debug_print(' ')
 		debug_print('Predicting %.2f' % math.degrees(tilt))
 
-		n_start_fit = 3 
+		n_start_fit = self.fitdata 
 		tilt_series = self.getCurrentTiltSeries()
 		tilt_group = self.getCurrentTiltGroup()
 		current_group_index = self.getCurrentTiltGroupIndex()
@@ -204,12 +203,14 @@ class Prediction(object):
 		debug_print('tilts are: %s' % tilt_group.tilts)
 		if n_tilts < 1:
 			raise RuntimeError
-		elif n_tilts < 2 and not parameters[-1] == 0.0 and not self.fixed_model:
+		elif n_tilts < n_start_fit and not parameters[-1] == 0.0 and not self.fixed_model:
+			debug_print('set to input value since no fit, yet')
 			# one tilt : set to the input value
 			# x, y, z unchanged
 			x, y = tilt_group.xs[-1], tilt_group.ys[-1]
 			z = 0.0
 		elif n_tilts < n_start_fit:
+			debug_print('set use input model as prediction')
 			# number of tilts not enough to calculate modeled position.
 			# calculate real z correction with current parameters
 			x0 = tilt_group.xs[0]
@@ -349,6 +350,11 @@ class Prediction(object):
 		return r2
 
 	def acceptableindices(self,list,min,max,datalimit):
+		'''
+		Return indices for a list only item values in the range of min and max.
+		When there are fewer items that pass the criteria than datalimit, try
+		to include more at the end of the list
+		'''
 		array = scipy.array(list)
 		larger = scipy.where(array >= min)
 		smaller = scipy.where(array <= max)
@@ -389,7 +395,9 @@ class Prediction(object):
 			debug_print('leastSquareModel: series number %d' % (s,))
 			tilt_group = tilt_series.tilt_groups[current_group_index]
 			if len(tilt_group.tilts) == 0  or len(tilt_group.xs) != len(tilt_group.tilts) or len(tilt_group.ys) != len(tilt_group.tilts):
-				break
+				# invalid tilt_group, skip
+				debug_print('skipped: series number %d with %d tilts' % (s,len(tilt_group.tilts)))
+				continue
 			debug_print('leastSquareModel use tilt_group index %d' % (current_group_index,))
 			parameters.extend([0])
 			
@@ -419,7 +427,11 @@ class Prediction(object):
 			if cos_tilts.size < 1:
 				args_list.pop()
 				parameters.pop()
-
+				debug_print('popped: series number %d' % (s,))
+			else:
+				debug_print('%d tilts are included for fitting from series %d' % (len(goodtilts),s))
+		# There should be at least one tilt series (current one) left at this point
+		debug_print('%d tilt series left for fitting' % len(args_list))
 		args = (args_list,)
 		kwargs = {
 			'args': args,

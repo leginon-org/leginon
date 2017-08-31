@@ -3,6 +3,7 @@
 #python
 import os
 import sys
+import math
 #appion
 from appionlib import apDisplay
 from appionlib import apDatabase
@@ -65,7 +66,6 @@ class UploadCTF(appionScript.AppionScript):
 			self.ctfrun = runq
 		return True
 
-
 	#===========================
 	def start(self):
 		if self.params['sessionname'] is not None:
@@ -87,15 +87,18 @@ class UploadCTF(appionScript.AppionScript):
 				#skip first line
 				continue
 			cols = sline.split('\t')
-			### must have exactly 12 columns
-			if len(cols) == 12:
-				imgid, nominal, def1, def2, angle, ampcont, res8, res5, conf30, conf5, conf, imgname = cols
+			### must have exactly 15 columns
+			if len(cols) == 15:
+				imgid, nominal, def1, def2, angle, ampcont, extra_phase_shift, res8, res5, res_pkg, conf30, conf5, conf, conf_appion, imgname = cols
 			else:
 				print "skipping line"
 				continue
 			imgid = int(imgid)
-			imgdata = apDatabase.getImageDataFromSpecificImageId(imgid)
-			if imgdata is None or imgdata['filename'] != imgname:
+			if imgid:
+				imgdata = apDatabase.getImageDataFromSpecificImageId(imgid)
+				if imgdata is None or imgdata['filename'] != imgname:
+					imgdata = apDatabase.getSpecificImagesFromDB([imgname,], self.sessiondata)[0]
+			else:
 				imgdata = apDatabase.getSpecificImagesFromDB([imgname,], self.sessiondata)[0]
 
 			if imgdata is None:
@@ -112,12 +115,18 @@ class UploadCTF(appionScript.AppionScript):
 				'defocus1':	float(def1),
 				'angle_astigmatism':	float(angle),
 				'amplitude_contrast': float(ampcont),
-				'ctffind4_resolution':	float(res8),
+				'extra_phase_shift': float(extra_phase_shift),
+				'ctffind4_resolution':	float(res_pkg),
 				'defocusinit':	float(nominal),
 				'cs': self.params['cs'],
 				'volts': imgdata['scope']['high tension'],
-				'confidence': float(conf30),
-				'confidence_d': float(conf5)
+				# This is a problem if a result is downloaded from myamiweb which
+				# does give cross_correlation value and then uploaded.
+				# cross_correlation from ctffind will be replaced by appion confidence.
+				# No way to get around this without global change.  Leave as is.
+				'cross_correlation':	float(conf),
+				'confidence': float(conf),
+				'confidence_d': round(math.sqrt(abs(float(conf))), 5)
 			}
 
 			self.insertCtfRun(imgdata)

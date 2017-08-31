@@ -1,10 +1,10 @@
 <?php
 
 /**
- *	The Leginon software is Copyright 2003 
- *	The Scripps Research Institute, La Jolla, CA
+ *	The Leginon software is Copyright under 
+ *	Apache License, Version 2.0
  *	For terms of the license agreement
- *	see  http://ami.scripps.edu/software/leginon-license
+ *	see  http://leginon.org
  */
 
 require_once "mathParticleForm.inc";
@@ -15,10 +15,11 @@ class DogPickerForm extends MathParticleForm
 	function __construct(  $expId, $errorHTML='', $infoHTML='', $kfactorv=1.2, $numslicesv='',$sizerangev='',$invertv="on" ) 
 	{
 		parent::__construct($expId, $errorHTML, $infoHTML);
+		$this->showfilters=false; //override to not display lowpass and highpass fields
 		$this->imageContrastTable = new DogPickerImageContrastTable($invertv);
-		
+
 		//------ Set Parameters for the parent class, BasicLoopForm (general Appion params) -----//
-		
+
 		// Set the publications to be references on the web pages
 		$pubList = array('dog');
 		$this->setLogoImagePath( 'img/dogpicker.jpg' );
@@ -33,13 +34,13 @@ class DogPickerForm extends MathParticleForm
 		$this->setTestable( True ); // True to activate "test single image".
 		$this->setUseLegOutDir( False ); // The output directory will be created in the Appion run directory rather than Leginon.
 		$this->setShowDesc( False ); // Flag to hide the description field of the run parameters.
-		
+
 		//------ Set Parameters specific to the program that requires this new form -----//
 		$params = $this->getFormParams();
-		
+
 		// The help section corresponds to the array key for these parameters found in help.js for popup help.
 		$params->setHelpSection( "appion" );
-				
+
 		//Advanced parameters
 
 		//Single slice
@@ -47,7 +48,6 @@ class DogPickerForm extends MathParticleForm
 		//Multiple slices
 		$params->addParam( "numslices", $numslicesv, "Number of Slices" );
 		$params->addParam( "sizerange", $sizerangev, "Size Range" );
-
 		// Validations
 		//$params->addValidation( "numpart", "req" );
 	}
@@ -80,6 +80,13 @@ class DogPickerForm extends MathParticleForm
 		if ( $numslices != "" && $numslices < 2 )
 		{
 			$msg .= "<B>Error:</B> numslices must be more than 1 for multisize picking";
+			$sizerange = $params->getParamValue('sizerange');
+			if($sizerange < 1.0) 
+				$msg .= "<B>Error:</B> sizerange must be more than 1.0";
+		} else {
+			$kfactor = $params->getParamValue('kfactor');
+			if ($kfactor < 1.00001 || $kfactor > 5.0) 
+				$msg .= "<B>Error:</B> K-factor must between 1.00001 and 5.0";
 		}
 		return $msg;
 	}

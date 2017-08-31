@@ -1,8 +1,8 @@
 # COPYRIGHT:
-# The Leginon software is Copyright 2003
-# The Scripps Research Institute, La Jolla, CA
+# The Appion software is Copyright under
+# Apache License, Version 2.0
 # For terms of the license agreement
-# see http://ami.scripps.edu/software/leginon-license
+# see  http://appion.org
 
 import sinedon.data
 import leginon.leginondata
@@ -128,6 +128,7 @@ class ApSelectionRunData(Data):
 			('path', ApPathData),
 			('session', leginon.leginondata.SessionData),
 			('description', str),
+			('program', str),
 			('params', ApSelectionParamsData),
 			('dogparams', ApDogParamsData),
 			('manparams', ApManualParamsData),
@@ -434,6 +435,7 @@ class ApCtfFind4ParamsData(Data):
 			('min_phase_shift', float),
 			('max_phase_shift', float),
 			('phase_search_step', float),
+			('local_refine', bool),
 		)
 	typemap = classmethod(typemap)
 
@@ -471,6 +473,8 @@ class ApCtfData(Data):
 			('graph2', str),  # 1d plot showing fit
 			('graph3', str),  # raw native powerspectra from software 
 			('graph4', str),  # raw native 1d plot from software 
+			('localplot', str), # 2D plot for local CTF estimation
+			('localCTFstarfile', str), # local CTF output file
 			('ctfvalues_file', str),  # used for ace2correct
 			('cross_correlation', float),  # direct from ctffind/ctftilt
 			('tilt_angle', float),  # from ctftilt
@@ -2271,5 +2275,27 @@ class ApHelicalCoordData(Data):
 			('xcoord', float),
 			('ycoord', float),
 			('initialang', float),
+		)
+	typemap = classmethod(typemap)
+
+class ApSEMData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('image', leginon.leginondata.AcquisitionImageData),
+			('date', str),
+			('hv', float),
+			('beam', str),
+			('hfw', float),
+			('aperture_diameter', float),
+			('beam_current', float),
+			('dynamic_focus_is_on', str),
+			('stage_ta', float),
+			('tilt_correction_angle', float),
+			('dwell_time', float),
+			('pixel_width', float),
+			('integrate', str),
+			('working_distance', float),
+			('resolution_x', int),
+			('resolution_y', int),
 		)
 	typemap = classmethod(typemap)

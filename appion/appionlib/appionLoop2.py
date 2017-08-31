@@ -16,6 +16,7 @@ from appionlib import apProject
 from appionlib import appionScript
 #leginon
 from pyami import mem
+from pyami import fileutil
 
 class AppionLoop(appionScript.AppionScript):
 	#=====================
@@ -425,6 +426,9 @@ class AppionLoop(appionScript.AppionScript):
 		"""
 		reads or creates a done dictionary
 		"""
+		#Lock DoneDict file
+		self._lockDoneDict()
+
 		self.donedictfile = os.path.join(self.params['rundir'] , self.functionname+".donedict")
 		if os.path.isfile(self.donedictfile) and self.params['continue'] == True:
 			### unpickle previously done dictionary
@@ -436,6 +440,8 @@ class AppionLoop(appionScript.AppionScript):
 				if self.donedict['commit'] == self.params['commit']:
 					### all is well
 					apDisplay.printMsg("Found "+str(len(self.donedict))+" done dictionary entries")
+					#Unlock DoneDict file
+					self._unlockDoneDict()
 					return
 				elif self.donedict['commit'] is True and self.params['commit'] is not True:
 					### die
@@ -455,6 +461,38 @@ class AppionLoop(appionScript.AppionScript):
 		f = open(self.donedictfile, 'w', 0666)
 		cPickle.dump(self.donedict, f)
 		f.close()
+
+		#Unlock DoneDict file
+		self._unlockDoneDict()
+
+		return
+
+	#=====================
+	def _lockDoneDict(self):
+		#Lock DoneDict file
+		locallock = False
+		totaltime = 0
+		while(not locallock):
+			try:
+				fileutil.open_if_not_exists('%s%s' % (self.lockname,"donedict")).close()
+				locallock = True
+			except OSError:
+				#file is locked
+				apDisplay.printMsg("waiting for donedict to become unlocked")
+				totaltime += 0.1
+				time.sleep(0.1)
+				if totaltime > 10:
+					self._unlockDoneDict()
+					apDisplay.printError('Parallel lock failed')
+		return
+
+	#=====================
+	def _unlockDoneDict(self):
+		#Unlock DoneDict file
+		try:
+			os.remove('%s%s' % (self.lockname,"donedict"))
+		except OSError:
+			apDisplay.printError('Parallel unlock failed')
 		return
 
 	#=====================
@@ -462,15 +500,24 @@ class AppionLoop(appionScript.AppionScript):
 		"""
 		reloads done dictionary
 		"""
+		#Lock DoneDict file
+		self._lockDoneDict()
+
 		f = open(self.donedictfile,'r')
 		self.donedict = cPickle.load(f)
 		f.close()
+
+		#Unlock DoneDict file
+		self._unlockDoneDict()
 
 	#=====================
 	def _writeDoneDict(self, imgname=None):
 		"""
 		write finished image (imgname) to done dictionary
 		"""
+		#Lock DoneDict file
+		self._lockDoneDict()
+
 		### reload donedict from file just in case two runs are running
 		f = open(self.donedictfile,'r')
 		self.donedict = cPickle.load(f)
@@ -485,6 +532,9 @@ class AppionLoop(appionScript.AppionScript):
 		f = open(self.donedictfile, 'w', 0666)
 		cPickle.dump(self.donedict, f)
 		f.close()
+
+		#Unlock DoneDict file
+		self._unlockDoneDict()
 
 	#=====================
 	def _getAllImages(self):

@@ -3,7 +3,6 @@
 import os
 from appionlib import apStack
 from appionlib import apDisplay
-from appionlib import proc2dLib
 from appionlib import apStackMeanPlot
 
 def generateMissingStack(stackid):
@@ -18,18 +17,13 @@ def generateMissingStack(stackid):
 	# check if stack file already exists
 	if os.path.isfile(fname):
 		apDisplay.printError("file: '%s' already exists"%fname)
- 
-	vstackdata = apStack.getVirtualStackParticlesFromId(stackid)
-	plist = [int(p['particleNumber'])-1 for p in vstackdata['particles']]
 
-	a = proc2dLib.RunProc2d()
-	a.setValue('infile',vstackdata['filename'])
-	a.setValue('outfile',fname)
-	a.setValue('list',plist)
-	a.setValue('apix',apStack.getStackPixelSizeFromStackId(stackid))
+	vstackdata = apStack.getVirtualStackParticlesFromId(stackid)
+	#appion numbering starts at 1
+	plist = [int(p['particleNumber']) for p in vstackdata['particles']]
 
 	apDisplay.printMsg("generating stack: '%s' with %i particles"%(fname,len(plist)))
-	a.run()
+	apStack.makeNewStack(vstackdata['filename'], fname, plist)
 
 	outavg = os.path.join(stackpath, "average.mrc")
 	if not os.path.isfile(outavg):

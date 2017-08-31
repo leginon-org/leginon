@@ -24,6 +24,9 @@ class Collection(object):
 
 	def saveInstrumentState(self):
 		self.instrument_state = self.instrument.getData(leginon.leginondata.ScopeEMData)
+		a_state = self.instrument_state['stage position']['a']
+		if abs(a_state - self.tilts[0][0]) > math.radians(1):
+			self.logger.error('instrument state saved to %.1f degrees. The last tilt did not return properly.' % math.degrees(a_state))
 
 	def restoreInstrumentState(self):
 		keys = ['stage position', 'defocus', 'image shift', 'magnification']
@@ -164,6 +167,7 @@ class Collection(object):
 				self.emtarget, status = self.node.adjusttarget(self.preset['name'], self.target, self.emtarget)
 			except Exception, e:
 				self.logger.error('Failed to adjust target: %s.' % e)
+				self.finalize()
 				raise
 			if status == 'error':
 				self.finalize()
@@ -430,6 +434,6 @@ class Collection(object):
 		if self.player.state() == 'pause':
 			self.setStatus('user input')
 		state = self.player.wait()
-		if state in ('stop', 'stopqueue'):
+		if state in ('stop', 'stopqueue', 'stoptarget'):
 			self.finalize()
 			raise Abort

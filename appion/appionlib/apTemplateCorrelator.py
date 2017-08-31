@@ -2,8 +2,6 @@
 
 #pythonlib
 import os
-import sys
-import re
 import time
 #appion
 from appionlib import particleLoop2
@@ -15,7 +13,10 @@ from appionlib import appiondata
 from appionlib import apPeaks
 from appionlib import apParam
 from appionlib import apImage
+#pyami
+from pyami import primefactor
 
+safe_dimensions=[2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768]
 
 class TemplateCorrelationLoop(particleLoop2.ParticleLoop):
 	##=======================
@@ -23,7 +24,7 @@ class TemplateCorrelationLoop(particleLoop2.ParticleLoop):
 		### check if we have a previous selection run
 		selectrunq = appiondata.ApSelectionRunData()
 		selectrunq['name'] = self.params['runname']
-		selectrunq['session'] = sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
+		selectrunq['session'] = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
 		rundatas = selectrunq.query(results=1)
 		if not rundatas:
 			return True
@@ -161,7 +162,26 @@ class TemplateCorrelationLoop(particleLoop2.ParticleLoop):
 
 		### save filter image to .dwn.mrc
 		imgpath = os.path.join(self.params['rundir'], imgdata['filename']+".dwn.mrc")
-		apImage.arrayToMrc(filtarray, imgpath, msg=False)
+
+		### findem cannot handle images with primefactors greater than 30
+		if filtarray.shape[0] not in safe_dimensions or filtarray.shape[1] not in safe_dimensions:
+			newshape = []
+			for dim in filtarray.shape:
+				newdim = dim-1
+				#double check that newdim is even
+				if newdim % 2 != 0:
+					newdim -= 1
+				while max(primefactor.prime_factors(newdim)) > 30:
+					newdim -= 2
+				if dim == newdim:
+					print primefactor.prime_factors(newdim)
+					apDisplay.printMsg("trimming image from %d to %d in one dimension for findem"%(dim, newdim))
+				newshape.append(newdim)
+			if filtarray.shape != tuple(newshape):
+				apDisplay.printMsg("trimming image from %dx%d to %dx%d for findem"
+					%(filtarray.shape[0], filtarray.shape[1], newshape[0], newshape[1],))
+				filtarray = apImage.imagefilter.frame_cut(filtarray, newshape)
+			apImage.imagefile.arrayToMrc(filtarray, imgpath, msg=False)
 
 		### run FindEM
 		looptdiff = time.time()-self.proct0

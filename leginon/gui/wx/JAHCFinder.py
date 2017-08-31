@@ -1,7 +1,7 @@
-# The Leginon software is Copyright 2004
-# The Scripps Research Institute, La Jolla, CA
+# The Leginon software is Copyright under
+# Apache License, Version 2.0
 # For terms of the license agreement
-# see http://ami.scripps.edu/software/leginon-license
+# see http://leginon.org
 #
 
 import wx
@@ -371,6 +371,7 @@ class FinalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.widgets['ice min mean'] = FloatEntry(self, -1, chars=6)
 		self.widgets['ice max mean'] = FloatEntry(self, -1, chars=6)
 		self.widgets['ice max std'] = FloatEntry(self, -1, chars=6)
+		self.widgets['ice min std'] = FloatEntry(self, -1, chars=6)
 		self.widgets['focus hole'] = Choice(self, -1, choices=self.node.focustypes)
 		self.widgets['target template'] = wx.CheckBox(self, -1,
 			'Use target template')
@@ -394,15 +395,19 @@ class FinalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		szice.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szice.Add(self.widgets['ice max mean'], (1, 1), (1, 1),
 										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
-		label = wx.StaticText(self, -1, 'Max. stdev.:')
+		label = wx.StaticText(self, -1, 'Min. stdev.:')
 		szice.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szice.Add(self.widgets['ice max std'], (2, 1), (1, 1),
+		szice.Add(self.widgets['ice min std'], (2, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		label = wx.StaticText(self, -1, 'Max. stdev.:')
+		szice.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szice.Add(self.widgets['ice max std'], (3, 1), (1, 1),
 										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		label = wx.StaticText(self, -1, 'Focus hole selection:')
-		szice.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szice.Add(self.widgets['focus hole'], (3, 1), (1, 1),
+		szice.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szice.Add(self.widgets['focus hole'], (4, 1), (1, 1),
 										wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		szice.Add(self.createFocusOffsetSizer(), (4,0), (1,2),
+		szice.Add(self.createFocusOffsetSizer(), (5,0), (1,2),
 										wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 		szice.AddGrowableCol(1)
 

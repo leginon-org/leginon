@@ -1,10 +1,10 @@
 <?php
 
 /**
- *	The Leginon software is Copyright 2003 
- *	The Scripps Research Institute, La Jolla, CA
+ *	The Leginon software is Copyright under 
+ *	Apache License, Version 2.0
  *	For terms of the license agreement
- *	see  http://ami.scripps.edu/software/leginon-license
+ *	see  http://leginon.org
  */
 require_once "basicLoopForm.inc";
 require_once "ddstackSelectTable.inc";
@@ -15,8 +15,8 @@ class gctf extends BasicLoopForm
 	protected $alignedDDStackIds;
 
 
-	function __construct( $expId, $extraHTML='', $ampcontrast='0.07', $mdef_aveN='7', $do_EPA=true,	
-	$apcontinue='1', $fieldsize='1024', $dast='0.1',  $bestdb=true, $nominal='', $parallel=true, $do_basic_rotave='0', $overlap='0.5',$convsize='85', $do_Hres_ref='0', $defstep='0.1', $resmin='50',$resmax='4',$useDDStack=false, $ddstackid=false,$max_phase_shift='180',$min_phase_shift='0',$phase_search_step='1',$phaseplate=false)
+	function __construct( $expId, $extraHTML='', $ampcontrast='0.07', $mdef_aveN='7', $do_EPA=true,$do_local_refine=false, $local_raster='200', $local_radius='1024', $local_boxsize='512', $local_overlap='0.5',
+	$apcontinue='1', $fieldsize='1024', $dast='0.1',  $bestdb=true, $nominal='', $parallel=true, $do_basic_rotave='0', $overlap='0.5',$convsize='85', $do_Hres_ref='0', $defstep='0.1', $resmin='50',$resmax='4',$useDDStack=false, $ddstackid=false,$max_phase_shift='180',$min_phase_shift='0',$phase_search_step='1',$phaseplate=false, $speedmode='fastmode')
 	{
 		parent::__construct($expId, $extraHTML);
 		
@@ -71,10 +71,12 @@ class gctf extends BasicLoopForm
 		$params->addParam( "mdef_fit", $mdef_fit, "Linear fitting defocus changes in Z-direction");
 		$params->addParam( "mdef_ave_type", $mdef_ave_type, "Averaging type");
 		$params->addParam( "do_local_refine", $do_local_refine, "Do local refinement");
-		$params->addParam( "local_radius", $local_radius, "Radius for local refinement");
+		$params->addParam( "local_raster", $local_raster, "Raster spacing"); 
+		$params->addValidation("local_raster", "num");
+		$params->addParam( "local_radius", $local_radius, "Local Radius (no weighting beyond radius)");
 		$params->addParam( "local_boxtype", $local_boxtype, "Local refinement box type");
-		$params->addParam( "local_boxsize", $local_boxsize, "Local refinement boxsize");
-		$params->addParam( "local_overlap", $local_overlap, "Local refinement overlapping factor");
+		$params->addParam( "local_boxsize", $local_boxsize, "Local Box Size");
+		$params->addParam( "local_overlap", $local_overlap, "Local overlap factor for sampling");
 		$params->addParam( "local_resL", $local_resL, "Low resolution limit for local CTF");
 		$params->addParam( "local_resH", $local_resH, "High resolution limit for local CTF");
 		$params->addParam( "refine_local_astm", $refine_local_astm, "Local refinement astigmation");
@@ -91,7 +93,7 @@ class gctf extends BasicLoopForm
 		$params->addParam( "plot_res_ring", $plot_res_ring, "Plot an estimated resolution ring on the final .ctf diagnosis file.");
 		$params->addParam( "output_time", $output_time, "Include process time measurements in output");
 		$params->addParam( "gid", $gid, "GPU ID");
-
+		$params->addParam( "speedmode", $speedmode, "Do not create images" );
 
 		//Phase plate parameters
 		$params->addParam( "max_phase_shift", $max_phase_shift,"Maximum phase shift");
@@ -134,8 +136,13 @@ class gctf extends BasicLoopForm
 	    <hr />";
 		$html .=$this->dbDefocusTable->generateForm();
 
+
+	   $html.= "<p>Processing Speed: <br/>\n";
+		$html.= $params->insertRadioField("speedmode", "fastmode", "Fast: Do not create CTF summary images","");	
+		$html.= $params->insertRadioField("speedmode", "slowmode", "Slow: Create CTF summary images","");	
+		$html.= "</p>";
+
 		$html .= "
-	    <br />
 	    <H4>Additional Parameters</H4>
 	    <hr />";
 
@@ -166,6 +173,19 @@ class gctf extends BasicLoopForm
 		$html.= $params->insertTextField( "refine_local_astm", $fieldSize );
 */
 
+
+		$html .= "
+
+	    <br />
+
+	    <H4>Local CTF Estimation Parameters</H4>
+	    <hr />";
+
+		$html.= $params->insertCheckBoxField( "do_local_refine");
+		$html.= $params->insertTextField( "local_raster", $fieldSize);
+		$html.= $params->insertTextField( "local_radius", $fieldSize);
+		$html.= $params->insertTextField( "local_boxsize", $fieldSize);
+		$html.= $params->insertTextField( "local_overlap", $fieldSize);
 
 		$html .= "
 
@@ -232,29 +252,30 @@ class gctf extends BasicLoopForm
 		$paramArray = $this->formParams->getParamArray();
 		// If the form does purely composite and does not define any params of its own,
 		// the param array will be null.
-		
-#		$command = 'gctf.py ';
+
 		if ( $paramArray ) {
 			foreach ( $paramArray as $key=>$param ) {
 				if (($param['name'] == 'phaseplate')&&($paramArray['phaseplate']['value'] == false )) {
 					$command = $this->removeCommandFlag($command,'max_phase_shift',$param['max_phase_shift']);
 					$command = $this->removeCommandFlag($command,'min_phase_shift',$param['min_phase_shift']);
 					$command = $this->removeCommandFlag($command,'phase_search_step',$param['phase_search_step']);
-	#				$command = $this->removeCommandFlag($command,'phaseplate',$param['phaseplate']);
-
-					}
-
-				else {
-		#			$command = $this->removeCommandFlag($command,'phaseplate',$param['phaseplate']);
-
-					}
-
+				}
+				if (($param['name'] == 'do_local_refine')&&($paramArray['do_local_refine']['value'] == false )) {
+					$command = $this->removeCommandFlag($command,'local_raster',$param['local_raster']);
+					$command = $this->removeCommandFlag($command,'local_radius',$param['local_radius']);
+					$command = $this->removeCommandFlag($command,'local_boxsize',$param['local_boxsize']);
+					$command = $this->removeCommandFlag($command,'local_overlap',$param['local_overlap']);
+				}
 			}
 		}
+
+		$command = $this->removeCommandFlag($command, 'speedmode');
+		$params = $this->getFormParams();
+		$speedmode = $params->getParamValue( "speedmode" );
+		$command .= " --".$speedmode." ";
 
 		return $command;
 	}
 
-	
 
 	}

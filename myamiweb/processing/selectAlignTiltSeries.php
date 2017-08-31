@@ -1,11 +1,10 @@
 <?php
 /**
- *	The Leginon software is Copyright 2003 
- *	The Scripps Research Institute, La Jolla, CA
+ *	The Leginon software is Copyright under 
+ *	Apache License, Version 2.0
  *	For terms of the license agreement
- *	see  http://ami.scripps.edu/software/leginon-license
+ *	see  http://leginon.org
  *
- *	Simple viewer to view a image using mrcmodule
  */
 
 require_once "inc/particledata.inc";
@@ -46,7 +45,7 @@ echo "<table border='1' class='tableborder' width='640'>\n";
 */
 
 echo "<tr><td width='100' align='center'>\n";
-echo "  <img src='img/protomo.png' width='120'>\n";
+echo "  <a href='runAppionLoop.php?expId=$expId&form=Protomo2CoarseAlignForm'><img src='img/protomo.png' width='120'>\n";
 echo "</td><td>\n";
 echo "  <h3><a href='runAppionLoop.php?expId=$expId&form=Protomo2CoarseAlignForm'>Protomo 2.4.1</a></h3>\n";
 echo " <p> Protomo is a software package used in electron tomography for marker-free alignment and weighted back-"
@@ -58,7 +57,9 @@ echo " <p> Protomo is a software package used in electron tomography for marker-
 	."parameters that produce acceptable results on the entire tilt-series session using 'Batch Align Tilt-Series' "
 	."from the left menu.<br><br>"
     ."In addition to Protomo WBP, the user can also choose to reconstruct tomograms with Tomo3D WBP and Tomo3D SIRT.<br><br>"
-    ."A set of video tutorials guiding you through the entire process is available in the User Guide at the top-right.";
+    ."A set of video tutorials guiding you through the entire process is available in the User Guide at the top-right."
+	."<br/><br/>The <a href='https://www.ncbi.nlm.nih.gov/pubmed/26455557' target='_blank'> original research article is here</a>."
+	."</p>\n";
 echo "</td></tr>\n";
 
 /*
@@ -80,15 +81,15 @@ echo "</td></tr>\n";
 ** Old software
 */
 
-echo "<tr><td width='100' align='center'>\n";
-		echo "  <img src='img/other_software.png' width='125'>\n";
-echo "</td><td>\n";
-echo "  <h3><a href='runTomoAligner.php?expId=$expId'>Other Software Packages</a></h3>\n";
-echo " <p>Here you will find older implementations for aligning tilt-series, "
-	."including Leginon alignment, and Imod shift-only alignment. "
-	."These are only good for rough and quick alignment"
-	."</p>\n";
-echo "</td></tr>\n";
+//echo "<tr><td width='100' align='center'>\n";
+//		echo "  <img src='img/other_software.png' width='125'>\n";
+//echo "</td><td>\n";
+//echo "  <h3><a href='runTomoAligner.php?expId=$expId'>Other Software Packages</a></h3>\n";
+//echo " <p>Here you will find older implementations for aligning tilt-series, "
+//	."including Leginon alignment, and Imod shift-only alignment. "
+//	."These are only good for rough and quick alignment"
+//	."</p>\n";
+//echo "</td></tr>\n";
 
 
 

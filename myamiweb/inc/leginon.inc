@@ -1,10 +1,10 @@
 <?php
 
 /**
- *	The Leginon software is Copyright 2003 
- *	The Scripps Research Institute, La Jolla, CA
+ *	The Leginon software is Copyright under 
+ *	Apache License, Version 2.0
  *	For terms of the license agreement see
- *	@licence http://ami.scripps.edu/software/leginon-license
+ *	@licence http://leginon.org
  *	@version $Revision: 1.84 $
  *	@version $Id: leginon.inc,v 1.84 2008-02-05 18:16:12 dfellman Exp $
  */
@@ -1373,6 +1373,9 @@ class leginondata {
 			."cp.`REF|InstrumentData|ccdcamera` = ppi.`REF|InstrumentData|ccdcamera` "
 			."and ppi.`DEF_timestamp` < parent.`DEF_timestamp` ) ";
 		}
+
+		$ppselect = ($this->mysql->SQLTableExists('PhasePlateUsageData')) ? 
+				"a.`REF|PhasePlateUsageData|phase plate` as pp_usageId, " : "";
 		// Main query
 		$q = "select "
 			.$gridselect
@@ -1382,6 +1385,7 @@ class leginondata {
 			."date_format(scope.`DEF_timestamp`, '%Y-%d-%m %T') as `timestamp`,"
 			."a.`REF|SessionData|session` as `sessionId`,"
 			."a.`MRC|image` as filename, "
+			.$ppselect
 			."p.`name` as `preset`, "
 			."isc.`name` as `scope`, "
 			."ic.`name` as `camera`, "
@@ -1417,6 +1421,14 @@ class leginondata {
 		$Rimageinfo = $this->mysql->SQLQuery($q);
 		$imageinfo = mysql_fetch_array($Rimageinfo,MYSQL_ASSOC);
 		return $imageinfo;
+	}
+
+	function getPhasePlateInfo($pp_usageId) {
+		if ($this->mysql->isTable('PhasePlateUsageData') && $pp_usageId) {
+			$q = "select * from PhasePlateUsageData where `DEF_id`=".$pp_usageId." ";
+			list($r) = $this->mysql->getSQLResult($q);
+			return $r;
+		}
 	}
 
 	function getGridId($imgId) {
@@ -1834,7 +1846,7 @@ class leginondata {
 		$dump =  '<!--' . $crlf
 			.  '-' . $crlf
 			.  '- Default Table XML-Dump' . $crlf
-			.  '- http://ami.scripps.edu/ ' . $crlf
+			.  '- http://emg.nysbc.org/ ' . $crlf
 			.  '-' . $crlf
 			.  '- Tables: ' . $crlf;
 
@@ -1869,7 +1881,7 @@ class leginondata {
 		$dump =  '<!--' . $crlf
 			.  '-' . $crlf
 			.  '- Calibrations XML-Dump' . $crlf
-			.  '- http://ami.scripps.edu/ ' . $crlf
+			.  '- http://emg.nysbc.org/ ' . $crlf
 			.  '-' . $crlf
 			.  '- Scope:' . $scopeinfo['name'].$crlf
 			.  '- Camera:' . $camerainfo['name']. $crlf
@@ -1939,7 +1951,7 @@ class leginondata {
 		$getdefinition="mysql->getSQLTableDefinition";
 		$getdata="mysql->getSQLTableContent";
 		$dump      =  '# Leginon Application-SQL-Dump' . $crlf
-                           .  '# http://ami.scripps.edu/ ' . $crlf
+                           .  '# http://emg.nysbc.org/ ' . $crlf
                            .  '#' . $crlf
                            .  '# Application : ' . $name . $crlf
                            .  '# Version     : ' . $version . $crlf
@@ -1952,7 +1964,7 @@ class leginondata {
 		$dump =  '<!--' . $crlf
                              .  '-' . $crlf
                              .  '- Application XML-Dump' . $crlf
-                             .  '- http://ami.scripps.edu/ ' . $crlf
+                             .  '- http://emg.nysbc.org/ ' . $crlf
                              .  '-' . $crlf
                              .  '- Application :' . $name . $crlf
                              .  '- Version     :' . $version . $crlf

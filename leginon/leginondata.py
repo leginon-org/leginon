@@ -1,8 +1,8 @@
 # COPYRIGHT:
-# The Leginon software is Copyright 2003
-# The Scripps Research Institute, La Jolla, CA
+# The Leginon software is Copyright under
+# Apache License, Version 2.0
 # For terms of the license agreement
-# see http://ami.scripps.edu/software/leginon-license
+# see http://leginon.org
 
 import leginonconfig
 import sinedon.newdict
@@ -60,6 +60,13 @@ class MainScreenScaleData(Data):
 		return Data.typemap() + (
 			('instrument', InstrumentData),
 			('scale', float),
+		)
+	typemap = classmethod(typemap)
+
+class DigitalCameraData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('ccdcamera', InstrumentData),
 		)
 	typemap = classmethod(typemap)
 
@@ -241,6 +248,7 @@ class DriftMonitorRequestData(InSessionData):
 			('emtarget', EMTargetData),
 			('presetname', str),
 			('threshold', float),
+			('beamtilt', dict),
 		)
 	typemap = classmethod(typemap)
 
@@ -371,6 +379,22 @@ class BeamSizeCalibrationData(CalibrationData):
 			('c2 size', int),
 			('focused beam', float),
 			('scale', float),
+		)
+	typemap = classmethod(typemap)
+
+class PPBeamTiltRotationData(CalibrationData):
+	def typemap(cls):
+		return CalibrationData.typemap() + (
+			('probe', str),
+			('angle', float),		# radians
+		)
+	typemap = classmethod(typemap)
+
+class PPBeamTiltVectorsData(CalibrationData):
+	def typemap(cls):
+		return CalibrationData.typemap() + (
+			('probe', str),
+			('vectors', tuple),		# pair of vectors, such as [(-1,0),(0,1)]
 		)
 	typemap = classmethod(typemap)
 
@@ -1140,12 +1164,16 @@ class HoleFinderPrefsData(InSessionData):
 			('ice-min-thickness', float),
 			('ice-max-thickness', float),
 			('ice-max-stdev', float),
+			('ice-min-stdev', float),
 			('template-on', bool),
 			('template-focus', tuple),
 			('template-acquisition', tuple),
 			('template-diameter', int),
 			('file-diameter', int),
 			('template-filename', str),
+			('dog-diameter', int),
+			('dog-invert', bool),
+			('dog-k-factor', float),
 		)
 	typemap = classmethod(typemap)
 
@@ -1300,6 +1328,7 @@ class MosaicTargetMakerSettingsData(SettingsData):
 			('max size', int),
 			('mosaic center', str),
 			('ignore request', bool),
+			('alpha tilt', float),
 		)
 	typemap = classmethod(typemap)
 
@@ -1380,6 +1409,7 @@ class DriftManagerSettingsData(SettingsData):
 		return SettingsData.typemap() + (
 			('threshold', float),
 			('pause time', float),
+			('beam tilt', float),
 			('camera settings', CameraSettingsData),
 			('timeout', int),
 		)
@@ -1435,6 +1465,7 @@ class TargetFinderSettingsData(SettingsData):
 			('allow append', bool),
 			('multifocus', bool),
 			('skip', bool),
+			('allow no focus', bool),
 		)
 	typemap = classmethod(typemap)
 
@@ -1506,6 +1537,7 @@ class HoleFinderSettingsData(TargetFinderSettingsData):
 			('ice min mean', float),
 			('ice max mean', float),
 			('ice max std', float),
+			('ice min std', float),
 			('focus hole', str),
 			('target template', bool),
 			('focus template', list),
@@ -1558,6 +1590,15 @@ class JAHCFinderSettingsData(HoleFinderSettingsData):
 			('template invert', bool),
 			('template image min', float),
 			('lattice extend', str),
+		)
+	typemap = classmethod(typemap)
+
+class DoGFinderSettingsData(HoleFinderSettingsData):
+	def typemap(cls):
+		return HoleFinderSettingsData.typemap() + (
+			('dog diameter', int),
+			('dog invert', bool),
+			('dog k-factor', float),
 		)
 	typemap = classmethod(typemap)
 
@@ -1887,6 +1928,7 @@ class SingleFocuserSettingsData(AcquisitionSettingsData):
 			('acquire final', bool),
 			('manual focus preset', str),
 			('beam tilt settle time', float),
+			('on phase plate', bool),
 		)
 	typemap = classmethod(typemap)
 
@@ -2195,6 +2237,7 @@ class TomographySettingsData(AcquisitionSettingsData):
 			('fit data points', int),
 			('use z0', bool),
 			('addon tilts', str),
+			('use preset exposure', bool),
 		)
 	typemap = classmethod(typemap)
 
@@ -2417,6 +2460,10 @@ class ReferenceSettingsData(SettingsData):
 			('bypass', bool),
 			('move type', str),
 			('pause time', float),
+			('return settle time', float),
+			('mover', str),
+			('move precision', float),
+			('accept precision', float),
 		)
 	typemap = classmethod(typemap)
 
@@ -2478,6 +2525,8 @@ class PhasePlateAlignerSettingsData(ReferenceTimerSettingsData):
 			('initial position', int),
 			('settle time', float),
 			('charge time', float),
+			('tilt charge time', float),
+			('tilt charge angle', float),
 		)
 	typemap = classmethod(typemap)
 
@@ -2663,6 +2712,12 @@ class AutoFillerSettingsData(ConditionerSettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class TEMControllerSettingsData(SettingsData):
+	def typemap(cls):
+		return SettingsData.typemap() + (
+		)
+	typemap = classmethod(typemap)
+
 class DDinfoKeyData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
@@ -2717,3 +2772,29 @@ class ProjectionSubModeMappingData(Data):
 		)
 	typemap = classmethod(typemap)
 
+class BufferHostData(DigitalCameraData):
+	def typemap(cls):
+		return DigitalCameraData.typemap() + (
+			('buffer hostname', str),
+			('buffer base path', str),
+			('disabled', bool),
+		)
+	typemap = classmethod(typemap)
+
+class BufferFramePathData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('host', BufferHostData),
+			('buffer frame path', str),
+		)
+	typemap = classmethod(typemap)
+
+class CameraDarkCurrentUpdatedData(Data):
+	'''
+	Log camera software update of dark current reference.
+	'''
+	def typemap(cls):
+		return Data.typemap() + (
+			('hostname', str),
+		)
+	typemap = classmethod(typemap)

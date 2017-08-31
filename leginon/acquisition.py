@@ -1,9 +1,9 @@
 #
 # COPYRIGHT:
-#       The Leginon software is Copyright 2003-2012
-#       The Scripps Research Institute, La Jolla, CA
+#       The Leginon software is Copyright under
+#       Apache License, Version 2.0
 #       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
+#       see  http://leginon.org
 #
 '''
 Acquisition node is a TargetWatcher, so it receives either an ImageTargetData
@@ -328,14 +328,14 @@ class Acquisition(targetwatcher.TargetWatcher):
 			if presetname not in availablepresets:
 				raise InvalidPresetsSequence('bad preset %s in presets order' % (presetname,))
 
-	def makeTransformTarget(self, target, offset):
+	def makeOffsetTarget(self, target, offset):
 		newtarget = leginondata.AcquisitionImageTargetData(initializer=target)
 		# Fix here about version
 		newtarget['delta row'] = target['delta row'] + offset['y']
 		newtarget['delta column'] = target['delta column'] + offset['x']
 		newtarget['fromtarget'] = target
 		newtarget.insert(force=True)
-		self.logger.info('target adjusted by (%.1f,%.1f) (column, row)' % (offset['x'],offset['y']))
+		self.logger.info('target offset by (%.1f,%.1f) (column, row)' % (offset['x'],offset['y']))
 		return newtarget
 
 	def avoidTargetAdjustment(self,target_to_adjust,recent_target):
@@ -457,7 +457,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 		If called with targetdata=None, this simulates what occurs at
 		a target (going to presets, acquiring images, etc.)
 		'''
-		self.preTargetSetup()
+		# need to validate presets before preTargetSetup because they need
+		# to use preset, too, even though not the same target.
 		try:
 			self.validatePresets()
 		except InvalidPresetsSequence, e:
@@ -471,6 +472,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.logger.error(str(e))
 			raise
 
+		self.preTargetSetup()
+		# process target begins
 		presetnames = self.settings['preset order']
 		ret = 'ok'
 		self.onTarget = False
@@ -486,7 +489,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 				self.logger.info('target adjusted by (%.1f,%.1f) (column, row)' % (targetdata['delta column']-targetonimage[0],targetdata['delta row']-targetonimage[1]))
 			offset = {'x':self.settings['target offset col'],'y':self.settings['target offset row']}
 			if offset['x'] or offset['y']:
-				targetdata = self.makeTransformTarget(targetdata,offset)
+				targetdata = self.makeOffsetTarget(targetdata,offset)
 
 			# set stage z first before move
 			z = self.moveToLastFocusedStageZ(targetdata)
@@ -572,6 +575,18 @@ class Acquisition(targetwatcher.TargetWatcher):
 			targetdeltarow = targetdata['delta row']
 			targetdeltacolumn = targetdata['delta column']
 			origscope = targetdata['scope']
+			# printing parent scope parameters for debugging
+			if targetdata['image']:
+				parentscope = targetdata['image']['scope']
+			else:
+				parentscope = None
+			if hasattr(origscope,'dbid'):
+				self.logger.info('Using ScopeEMData  id %d for emscope calculation' % origscope.dbid)
+			if hasattr(parentscope,'dbid'):
+				self.logger.info('Parent ScopeEMData id %d' % parentscope.dbid)
+				self.logger.info('target parent image stage position (%.2f, %.2f) um' % (parentscope['stage position']['x']*1e6, parentscope['stage position']['y']*1e6)) 
+			self.logger.info('origscope stage position (%.2f, %.2f) um' % (origscope['stage position']['x']*1e6, origscope['stage position']['y']*1e6)) 
+			# Initialize targetscope
 			targetscope = leginondata.ScopeEMData(initializer=origscope)
 			## copy these because they are dictionaries that could
 			## otherwise be shared (although transform() should be
@@ -953,6 +968,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 	def parkAtHighMag(self):
 		# wait for at least for 30 seconds
+		self.logger.info('wait 30 seconds before parking')
 		time.sleep(max(self.settings['pause time'],30))
 		# send a preset at the highest magnification to keep the lens warm
 		park_presetname = self.presetsclient.getHighestMagPresetName()
@@ -1202,11 +1218,11 @@ class Acquisition(targetwatcher.TargetWatcher):
 		presetnames = self.presetsclient.getPresetNames()
 		return presetnames
 
-	def checkDrift(self, presetname, emtarget, threshold):
+	def checkDrift(self, presetname, emtarget, threshold, apply_beamtilt = {'x':0.0,'y':0.0}):
 		'''
 		request DriftManager to monitor drift
 		'''
-		driftdata = leginondata.DriftMonitorRequestData(session=self.session, presetname=presetname, emtarget=emtarget, threshold=threshold)
+		driftdata = leginondata.DriftMonitorRequestData(session=self.session, presetname=presetname, emtarget=emtarget, threshold=threshold, beamtilt=apply_beamtilt)
 		self.driftdone.clear()
 		self.driftimagedone.clear()
 		self.publish(driftdata, pubevent=True, database=True, dbforce=True)
@@ -1285,6 +1301,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.setImage(numpy.asarray(imagedata['image'], numpy.float32), 'Image')
 
 	def processReferenceTarget(self):
+		# This happens after fixCondition
 		refq = leginondata.ReferenceTargetData(session=self.session)
 		results = refq.query(results=1, readimages=False)
 		if not results:
@@ -1305,6 +1322,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.logger.error(e)
 
 	def fixAlignment(self):
+		# This happens after processReferenceTarget
+		# start alignment manager.  May replace reference in the future
 		evt = event.FixAlignmentEvent()
 		try:
 			original_position = self.instrument.tem.getStagePosition()
@@ -1316,17 +1335,27 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.logger.error(e)
 
 	def fixCondition(self):
-		# This is done before any rejected targets
+		# This is done before any targets are rejected and processed in the targetlist.
+		# First part is for conditions to be fixed don't involve presets,
+		# such as buffer cycling or nitrogen filler
 		evt = event.FixConditionEvent()
 		try:
+			self.logger.info('Condition fixing before processing a target')
 			status = self.outputEvent(evt, wait=True)
 		except node.ConfirmationNoBinding, e:
 			self.logger.debug(e)
 		except Exception, e:
 			self.logger.error(e)
-		# Phase Plate stuff
+
+		# Second part: Preset-required tuning before rejected targets.
+		try:
+			self.validatePresets()
+		except InvalidPresetsSequence:
+			self.logger.error('Configure at least one preset in the settings for this node.')
+			self.player.pause()
+			self.setStatus('user input')
 		preset_name = self.settings['preset order'][-1]
-		self.logger.info('Condition fixing before processing a target')
+		# Phase Plate stuff
 		self.tunePhasePlate(preset_name)
 
 	def getMoveTypes(self):

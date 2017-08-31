@@ -12,23 +12,10 @@ class BeamFixerPanel(leginon.gui.wx.ReferenceTimer.ReferenceTimerPanel, leginon.
 	def __init__(self, *args, **kwargs):
 		leginon.gui.wx.ReferenceTimer.ReferenceTimerPanel.__init__(self, *args, **kwargs)
 		leginon.gui.wx.Instrument.SelectionMixin.__init__(self)
-		self.addImagePanel()
-		self.szmain.AddGrowableRow(1)
-		self.szmain.AddGrowableCol(0)
-		self.SetSizer(self.szmain)
-		self.SetAutoLayout(True)
-		self.SetupScrolling()
 
 	def onNodeInitialized(self):
 		leginon.gui.wx.ReferenceTimer.ReferenceTimerPanel.onNodeInitialized(self)
 		leginon.gui.wx.Instrument.SelectionMixin.onNodeInitialized(self)
-
-	def addImagePanel(self):
-		# image
-		self.imagepanel = self.imagepanelclass(self, -1)
-		self.imagepanel.addTypeTool('Image', display=True)
-		self.imagepanel.selectiontool.setDisplayed('Image', True)
-		self.szmain.Add(self.imagepanel, (1, 0), (1, 1), wx.EXPAND|wx.ALL, 3)
 
 	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self)
@@ -37,7 +24,7 @@ class BeamFixerPanel(leginon.gui.wx.ReferenceTimer.ReferenceTimerPanel, leginon.
 
 class SettingsDialog(leginon.gui.wx.ReferenceTimer.SettingsDialog):
 	def initialize(self):
-		return ScrolledSettings(self,self.scrsize,False)
+		return ScrolledSettings(self,self.scrsize,True)
 
 class ScrolledSettings(leginon.gui.wx.ReferenceTimer.ScrolledSettings):
 	def initialize(self):

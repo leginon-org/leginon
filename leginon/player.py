@@ -32,6 +32,16 @@ class _Player(threading._Verbose):
 		finally:
 			self.__cond.release()
 
+	def stoptarget(self):
+		self.__cond.acquire()
+		try:
+			self.__flag = 'stoptarget'
+			self.__cond.notifyAll()
+			if callable(self.__callback):
+				self.__callback(self.__flag)
+		finally:
+			self.__cond.release()
+
 	def stop(self):
 		self.__cond.acquire()
 		try:

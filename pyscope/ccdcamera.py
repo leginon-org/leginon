@@ -1,7 +1,7 @@
-# The Leginon software is Copyright 2004
-# The Scripps Research Institute, La Jolla, CA
+# The Leginon software is Copyright under
+# Apache License, Version 2.0
 # For terms of the license agreement
-# see http://ami.scripps.edu/software/leginon-license
+# see http://leginon.org
 #
 
 import time
@@ -324,3 +324,7 @@ This method returns that multiplier, M.  In the standard case, returns 1.0.
 	def getFrameRotate(self):
 		# rotation in multiple of 90 degrees
 		return 0
+
+	def requireRecentDarkCurrentReferenceOnBright(self):
+		return False
+	

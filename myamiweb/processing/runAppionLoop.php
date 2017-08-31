@@ -1,9 +1,9 @@
 <?php
 /**
- *	The Leginon software is Copyright 2003 
- *	The Scripps Research Institute, La Jolla, CA
+ *	The Leginon software is Copyright under 
+ *	Apache License, Version 2.0
  *	For terms of the license agreement
- *	see  http://ami.scripps.edu/software/leginon-license
+ *	see  http://leginon.org
  *
  */
 require_once "inc/particledata.inc";
@@ -80,7 +80,8 @@ function runAppionLoop() {
 	/* *************************
 	PART 4: Show or Run Command
 	***************************** */
-	$headinfo = $form->showReference(); 
+	$headinfo = $form->showReference();
+	$headinfo.= $form->generateFormFooter();
 	$headinfo.= $copyCommand;
 	$headinfo.= "<br />";
 	$jobType  = $form->getJobType();

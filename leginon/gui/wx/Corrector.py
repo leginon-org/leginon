@@ -1,7 +1,7 @@
-# The Leginon software is Copyright 2004
-# The Scripps Research Institute, La Jolla, CA
+# The Leginon software is Copyright under
+# Apache License, Version 2.0
 # For terms of the license agreement
-# see http://ami.scripps.edu/software/leginon-license
+# see http://leginon.org
 #
 # $Source: /ami/sw/cvsroot/pyleginon/leginon.gui.wx/Corrector.py,v $
 # $Revision: 1.56 $
@@ -409,7 +409,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.widgets['combine'] = Choice(self, -1, choices=['median', 'average'])
 		self.widgets['store series'] = wx.CheckBox(self, -1, 'Save all images')
 
-		self.widgets['camera settings'] = leginon.gui.wx.Camera.CameraPanel(self)
+		self.widgets['camera settings'] = leginon.gui.wx.Camera.CameraPanel(self, hide_frames=True)
 		self.widgets['camera settings'].setGeometryLimits({'size':self.node.instrument.camerasize,'binnings':self.node.instrument.camerabinnings,'binmethod':self.node.instrument.camerabinmethod})
 		#self.widgets['clip min'] = FloatEntry(self, -1, chars=6)
 		#self.widgets['clip max'] = FloatEntry(self, -1, chars=6)

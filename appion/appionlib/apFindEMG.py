@@ -223,30 +223,32 @@ def findPeaks(imgdict, maplist, params,pikfile=True):
 
 	return peaktree
 
-def initializePeakDict():
-	peakdict = {}
-	keys = ['ycoord','xcoord','correlation','peakarea','peakstddev','peakmoment']
-	for key in keys:
-		peakdict[key] = 1
-	return peakdict
-
+#===========================
 def getPeaksFromBoxFile(imgmapname):
+	"""
+	read coordinates from an EMAN1 box file
+		http://blake.bcm.edu/emanwiki/Eman2OtherFiles
+		http://xmipp.cnb.csic.es/twiki/bin/view/Xmipp/Import_box_v31
+	creates list of dictionaries
+	"""
 	peakTree = []
 	boxfilename = getBoxFileName(imgmapname)
 	f = open(boxfilename,'r')
-	lines = f.readlines()
-	for line in lines:
-		good = []
+	for line in f:
+		sline = line.strip()
+		tline = sline.replace("\t", " ")
+		rline = re.sub("  *", " ", tline)
 		bits = line.split(' ')
-		for bit in bits:
-			if len(bit):
-				good.append(bit)
-		peakdict = initializePeakDict()
-		peakdict['ycoord']    = int(good[1])
-		peakdict['xcoord']    = int(good[0])
-		peakdict['correlation'] = float(good[4])
+		peakdict = {'peakarea':1,'peakstddev':1,'peakmoment':1,}
+		xboxsize = int(bit[2])
+		yboxsize = int(bit[3])
+		#WARNING: box files provide coordiates to corner of box not particle center
+		peakdict['xcoord']    = int(bit[0]) + xboxsize/2
+		peakdict['ycoord']    = int(bit[1]) + yboxsize/2
+		peakdict['correlation'] = float(good[4]) #this is NOT standard, should be -3
 		peakTree.append(peakdict)
 	return peakTree
+
 
 def fakeOutput(imgname,ccmapfile,params):
 	a = apImage.mrcToArray(imgname)

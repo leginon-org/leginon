@@ -108,50 +108,71 @@ def getDDStackRunData(ddstackid):
 		return None
 	return appiondata.ApDDStackRunData().direct_query(ddstackid)
 
-def getImageList(tiltserieslist, ddstackid=None):
+def getImageList(tiltserieslist, ddstackid=None, appion_protomo=False):
 	'''
 	Get ImageList in the order of data collection based on ddstackdata if specified
 	'''
-	ddstackrundata = getDDStackRunData(ddstackid)
 	imagelist = []
-	# first run find the unaligned images in the order of the collection
-	for tiltseriesdata in tiltserieslist:
-		sessiondata = tiltseriesdata['session']
-		cquery = leginon.leginondata.CameraEMData(session=sessiondata)
-		cquery['align frames'] = False
-		imquery = leginon.leginondata.AcquisitionImageData(camera=cquery)
-		imquery['tilt series'] = tiltseriesdata
-		## query, but don't read image files yet, or else run out of memory
-		subimagelist = imquery.query(readimages=False)
-		## list is reverse chronological, so reverse it
-		subimagelist.reverse()
-		imagelist.extend(subimagelist)
-	unaligned_realist = []
-	for imagedata in imagelist:
-		if imagedata['label'] != 'projection':
-			unaligned_realist.append(imagedata)
-	if ddstackrundata is None:
-		apDisplay.printMsg('Loaded %d images starting from %s.mrc' % (len(unaligned_realist),unaligned_realist[0]['filename']))
-		return unaligned_realist
-
-	# find aligned images
-	aligned_list = []
-	apDisplay.printMsg('Searching for aligned images in ddstackid= %d'%(ddstackrundata.dbid,))
-	for image in unaligned_realist:
-		try:
-			pair = appiondata.ApDDAlignImagePairData(source=image,ddstackrun=ddstackrundata).query()[0]
-		except:
-			ValueError('no aligned image of %s from ddstack run id %d' % (apDisplay.short(image['filename']), ddstackrundata.dbid))
-		aligned_list.append(pair['result'])
-	apDisplay.printMsg('Loaded %d images starting from %s.mrc' % (len(aligned_list),aligned_list[0]['filename']))
-	return aligned_list
+	if appion_protomo:
+		for tiltseriesdata in tiltserieslist:
+			imquery = leginon.leginondata.AcquisitionImageData()
+			imquery['tilt series'] = tiltseriesdata
+			## query, but don't read image files yet, or else run out of memory
+			subimagelist = imquery.query(readimages=False)
+			## list is reverse chronological, so reverse it
+			subimagelist.reverse()
+			realist = []
+			imagelist.extend(subimagelist)
+		for imagedata in imagelist:
+			if imagedata['label'] != 'projection':
+				realist.append(imagedata)
+		return realist
+	else:
+		ddstackrundata = getDDStackRunData(ddstackid)
+		# first run find the unaligned images in the order of the collection
+		for tiltseriesdata in tiltserieslist:
+			sessiondata = tiltseriesdata['session']
+			cquery = leginon.leginondata.CameraEMData(session=sessiondata)
+			cquery['align frames'] = False
+			imquery = leginon.leginondata.AcquisitionImageData(camera=cquery)
+			imquery['tilt series'] = tiltseriesdata
+			## query, but don't read image files yet, or else run out of memory
+			subimagelist = imquery.query(readimages=False)
+			## list is reverse chronological, so reverse it
+			subimagelist.reverse()
+			imagelist.extend(subimagelist)
+		unaligned_realist = []
+		for imagedata in imagelist:
+			if imagedata['label'] != 'projection':
+				unaligned_realist.append(imagedata)
+		if ddstackrundata is None:
+			apDisplay.printMsg('Loaded %d images starting from %s.mrc' % (len(unaligned_realist),unaligned_realist[0]['filename']))
+			return unaligned_realist
+	
+		# find aligned images
+		aligned_list = []
+		apDisplay.printMsg('Searching for aligned images in ddstackid= %d'%(ddstackrundata.dbid,))
+		for image in unaligned_realist:
+			try:
+				pair = appiondata.ApDDAlignImagePairData(source=image,ddstackrun=ddstackrundata).query()[0]
+			except:
+				ValueError('no aligned image of %s from ddstack run id %d' % (apDisplay.short(image['filename']), ddstackrundata.dbid))
+			aligned_list.append(pair['result'])
+		apDisplay.printMsg('Loaded %d images starting from %s.mrc' % (len(aligned_list),aligned_list[0]['filename']))
+		return aligned_list
 
 def getImageDose(imagedata):
 	try:
 		dose = imagedata['preset']['dose']*(10**-20)*imagedata['camera']['exposure time']/imagedata['preset']['exposure time']
 	except:
-		apDisplay.printWarning("Dose not found in database for image %s. Setting dose to 1 Angstrom/pixel" % imagedata['filename'])
-		dose=1
+		try:
+			dose = imagedata['preset']['dose']*(10**-20)
+			if dose == 0:
+				apDisplay.printWarning("Dose was 0 in the database for image %s. Setting dose to 1 e-/A^2" % imagedata['filename'])
+				dose=1
+		except:
+			apDisplay.printWarning("Dose not found in the database for image %s. Setting dose to 1 e-/A^2" % imagedata['filename'])
+			dose=1
 	return dose
 
 def getAccumulatedDoses(imagelist):
@@ -332,6 +353,24 @@ def alignZeroShiftImages(imagedata1,imagedata2,bin):
 	# x (row) shift on image coordinate is of opposite sign
 	return {'shiftx':-peak['x'], 'shifty':peak['y']}
 
+def alignImages(imagedata1,imagedata2):
+	"""Align neighboring images in a tilt series"""
+	# phase correlation
+	array1 = imagedata1['image']
+	array2 = imagedata2['image']
+	# To accomodate non-square, hard to FFT images, we crop the images to doable size first
+	s = array1.shape
+	minsize = min(s)
+	size = int(minsize)
+	f = map((lambda x: int((x-size)/2)),s) #offsets
+	array1 = imagefun.bin(array1[f[0]:f[0]+size,f[1]:f[1]+size], 1)
+	array2 = imagefun.bin(array2[f[0]:f[0]+size,f[1]:f[1]+size], 1)
+	shift = simpleCorrelation(array1,array2)
+	peak = {'x':-shift[1],'y':shift[0]}
+	
+	# x (row) shift on image coordinate is of opposite sign
+	return {'shiftx':-peak['x'], 'shifty':peak['y']}
+
 def peak2shift(peak, shape):
 	#copied from tomography tiltcorrelator
 	shift = list(peak)
@@ -349,8 +388,17 @@ def shiftHalfSeries(zeroshift,globalshifts, refimg):
 		globalshifts[i]['y']=shift['y']+zeroshift['shifty']
 	return globalshifts
 
-def getGlobalShift(ordered_imagelist, corr_bin, refimg, yflip=False):
+def getGlobalShift(ordered_imagelist, corr_bin, refimg):
 	apDisplay.printMsg("getting global shift values")
+	globalshifts = []
+	for i, imagedata in enumerate(ordered_imagelist):
+		globalshifts.append(getPredictionPeakForImage(imagedata))
+	zeroshift = alignZeroShiftImages(ordered_imagelist[refimg],ordered_imagelist[refimg-1],corr_bin)
+	globalshifts = shiftHalfSeries(zeroshift, globalshifts, refimg)
+	return globalshifts
+		
+def getGlobalShifts(ordered_imagelist, corr_bin, refimg):
+	apDisplay.printMsg("getting global shift values for all images")
 	globalshifts = []
 	for i, imagedata in enumerate(ordered_imagelist):
 		globalshifts.append(getPredictionPeakForImage(imagedata))
@@ -502,7 +550,11 @@ def getAverageAzimuthFromSeries(imgtree):
 	
 	###Azimuth is determined from phi. In protomo tilt axis is measured from x where phi is from y
 	###Note there is a mirror between how Leginon reads images vs how protomo does
-	azimuth = -(90-((phi1+phi2)/2))   # Made negative because now images are y-flipped because Protomo
+	try:
+		azimuth = -(90-((phi1+phi2)/2))   # Made negative because now images are y-flipped because Protomo
+	except:  #Phi was not recorded
+		apDisplay.printWarning("Azimuth was not recorded. Setting azimuth to -90 degrees, relative to the x-axis.")
+		azimuth = -90
 	apDisplay.printMsg(("Azimuth is %f (relative to y-flipped images)" % azimuth))
 	return azimuth
 

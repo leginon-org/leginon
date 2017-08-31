@@ -1,7 +1,7 @@
-# The Leginon software is Copyright 2004
-# The Scripps Research Institute, La Jolla, CA
+# The Leginon software is Copyright under
+# Apache License, Version 2.0
 # For terms of the license agreement
-# see http://ami.scripps.edu/software/leginon-license
+# see http://leginon.org
 #
 
 import sys
@@ -378,6 +378,7 @@ class SessionNamePage(WizardPage):
 		holders = leginon.leginondata.GridHolderData()
 		holders = holders.query()
 		holders = [holder['name'] for holder in holders]
+		holders.sort()
 		self.holderctrl = wx.ComboBox(self, -1, choices=holders, style=wx.CB_DROPDOWN)
 		self.holderctrl.SetValue('Unknown Holder')
 		sizer.Add(wx.StaticText(self, -1, 'Choose holder from list or enter new one:'), (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)

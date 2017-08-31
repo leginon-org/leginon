@@ -1,9 +1,9 @@
 <?php
 /**
- *      The Leginon software is Copyright 2003 
- *      The Scripps Research Institute, La Jolla, CA
+ *      The Leginon software is Copyright under 
+ *      Apache License, Version 2.0
  *      For terms of the license agreement
- *      see  http://ami.scripps.edu/software/leginon-license
+ *      see  http://leginon.org
  *
  *      Simple viewer to view a image using mrcmodule
  *
@@ -57,6 +57,11 @@ function createCL2DAlignForm($extra=false, $title='runXmippCL2D.py Launcher', $h
 	$javascript .= "	if (bestbin < 1) {\n";
 	$javascript .= "		var bestbin = 1 ;}\n";
 	$javascript .= "	document.viewerform.bin.value = bestbin;\n";
+	//number of references is the square root of the number of particles divided by 10
+	$javascript .= "	var bestref = Math.floor(Math.log(stackArray[3])/2)*2;\n";
+	$javascript .= "	if (bestref < 2) {\n";
+	$javascript .= "		var bestref = 2 ;}\n";
+	$javascript .= "	document.viewerform.numref.value = bestref;\n";
 	// set particle & mask radius and lp
 	$javascript .= "}\n";
 	$javascript .= "

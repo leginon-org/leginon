@@ -8,8 +8,10 @@
 from __future__ import division
 import os
 import sys
+import glob
 import math
 import time
+import scipy.ndimage
 import subprocess
 import numpy as np
 import multiprocessing as mp
@@ -18,12 +20,13 @@ from appionlib import basicScript
 from appionlib import apDisplay
 from appionlib import apProTomo2Aligner
 from appionlib import apProTomo2Prep
+from appionlib import apTomoPicker
 from appionlib.apImage import imagefilter
 
 try:
 	import protomo
 except:
-	apDisplay.printError("Protomo did not get imported. Exitting.")
+	apDisplay.printWarning("Protomo did not get imported. Protomo reconstruction will break if used.")
 
 # Required for cleanup at end
 cwd=os.getcwd()
@@ -61,12 +64,18 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 		self.parser.add_option("--exclude_images", dest="exclude_images",  default="999999",
 			help='Select specific images in the tilt-series, e.g. --exclude_images="1,2,5-7"')
 		
+		self.parser.add_option("--exclude_images_by_angle", dest="exclude_images_by_angle",  default="",
+			help='Select specific tilt angles in the tilt-series to remove. Accuracy must be within +-0.5 degrees, e.g. --exclude_images_by_angle="-37.5, 4.2, 27"')
+		
 		self.parser.add_option("--negative_recon", dest="negative_recon", type="float",  default="-90",
 			help="Tilt angle, in degrees, below which all images will be removed, e.g. --negative_recon=-45", metavar="float")
 		
 		self.parser.add_option("--positive_recon", dest="positive_recon", type="float",  default="90",
 			help="Tilt angle, in degrees, above which all images will be removed, e.g. --positive_recon=45", metavar="float")
 		
+		self.parser.add_option("--stack_procs", dest="stack_procs", default=1,
+			help="Number of cores to use in stack creation, e.g. --stack_procs=24")
+
 		self.parser.add_option("--tomo3d_procs", dest="tomo3d_procs", default=1,
 			help="Number of cores to use in Tomo3D, e.g. --tomo3d_procs=24")
 
@@ -76,8 +85,11 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 		self.parser.add_option("--tomo3d_sirt_iters", dest="tomo3d_sirt_iters",  type="int",
 			help="Number of Tomo3D SIRT iterations, e.g. --tomo3d_sirt_iters=20", metavar="int")
 
+		self.parser.add_option("--reconstruction_actions", dest="reconstruction_actions",  type="int",
+			help="Actions and order of actions to perform. 1: Reconstruct, 2: CTF correct then reconstruct, 3: Dose compensate then reconstruct, 4: CTF correct then dose compensate then reconstruct, e.g. --reconstruction_actions=2", metavar="int")
+
 		self.parser.add_option("--reconstruction_method", dest="reconstruction_method",  type="int",
-			help="Software to use for reconstructon. 1: Protomo WBP, 2: Tomo3D WBP, 3: Tomo3D SIRT, e.g. --reconstruction_method=2", metavar="int")
+			help="Software to use for reconstructon. 1: Protomo WBP, 2: Tomo3D WBP, 3: Tomo3D SIRT, 4: Stack only e.g. --reconstruction_method=2", metavar="int")
 
 		self.parser.add_option("--recon_map_size_x", dest="recon_map_size_x",  type="int",  default="2048",
 			help="Size of the reconstructed tomogram in the X direction, e.g. --recon_map_size_x=256", metavar="int")
@@ -106,8 +118,8 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 		self.parser.add_option("--link_recon", dest="link_recon",  default="",
 			help="Path to link reconstruction, e.g. --link_recon=/full/path/")
 		
-		self.parser.add_option("--ctf_correct", dest="ctf_correct",  default="False",
-			help="CTF correct images before dose compensation and before coarse alignment?, e.g. --ctf_correct=True")
+		self.parser.add_option("--ctf_correct", dest="ctf_correct", type="int", default=3,
+			help="CTF correct images before dose compensation and before coarse alignment? 1: TomoCTF, 2: IMOD's ctfphaseflip, 3: None, e.g. --ctf_correct=2")
 		
 		self.parser.add_option('--DefocusTol', dest='DefocusTol', type="int", default=200,
 			help='Defocus tolerance in nanometers that limits the width of the strips, e.g. --DefocusTol=200')
@@ -115,8 +127,11 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 		self.parser.add_option('--iWidth', dest='iWidth', type="int", default=20,
 			help='The distance in pixels between the center lines of two consecutive strips, e.g. --iWidth=20')
 		
-		self.parser.add_option('--amp_contrast', dest='amp_contrast', type="float", default=0.07,
-			help='Amplitude contrast, e.g. --amp_contrast=0.07')
+		self.parser.add_option('--amp_contrast_ctf', dest='amp_contrast_ctf', type="float", default=0.07,
+			help='Amplitude contrast, e.g. --amp_contrast_ctf=0.07')
+		
+		self.parser.add_option('--defocus_save_recon', dest='defocus_save_recon', type="float", default=0,
+			help='Save and use this defocus for TomoCTF correction, e.g. --defocus_save_recon=3000')
 		
 		self.parser.add_option("--dose_presets", dest="dose_presets",  default="False",
 			help="Dose compensate using equation given by Grant & Grigorieff, 2015, e.g. --dose_presets=Moderate")
@@ -133,6 +148,40 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 		self.parser.add_option("--frame_aligned", dest="frame_aligned",  default="True",
 			help="Use frame-aligned images instead of naively summed images, if present.")
 		
+		self.parser.add_option("--bin_type", dest="bin_type",  default="",
+			help="Bin by sum or by interpolation, set by: bin_type=sum, otherwise interpolation will be used.")
+		
+		self.parser.add_option("--amp_correct", dest="amp_correct",  default="off",
+			help="Amplitude correct? e.g. --amp_correct=on")
+		
+		self.parser.add_option("--amp_correct_w1", dest="amp_correct_w1", type="float",  default=0.66,
+			help="Wiener filter paramater e.g. --amp_correct_w1=0.5")
+		
+		self.parser.add_option("--amp_correct_w2", dest="amp_correct_w2", type="float",  default=0.33,
+			help="Wiener filter paramater e.g. --amp_correct_w2=0.25")
+		
+		self.parser.add_option("--defocus_difference", dest="defocus_difference", type="float",  default=250,
+			help="Defocus difference used for strip extraction e.g. --defocus_difference=0.5")
+		
+		self.parser.add_option("--pick_tomogram", dest="pick_tomogram", type="int", default=False,
+			help="Pick the resulting tomogram? Options are: 1 = dogpicker, e.g. --pick_tomogram=1")
+		
+		self.parser.add_option("--dog_particle_diam", dest="dog_particle_diam", type="float",
+			help="Particle diameter to use for DoG lowpassing, in angstroms, +-dog_diam_variance% e.g. --dog_particle_diam=100")
+		
+		self.parser.add_option("--dog_diam_variance", dest="dog_diam_variance", type="float",
+			help="How much the expected particle varies in diameter, in angstroms. Used when making two lowpass filtered tomograms for DoG picking e.g. --dog_diam_variance=20")
+		
+		self.parser.add_option("--dog_max_picks", dest="dog_max_picks", type="int",  default=500,
+			help="Defocus difference used for strip extraction e.g. --dog_max_picks=0.5")
+		
+		self.parser.add_option("--dog_junk_tolerance", dest="dog_junk_tolerance", type="float",
+			help="Defocus difference used for strip extraction e.g. --dog_junk_tolerance=0.5")
+		
+		self.parser.add_option("--dog_lowpass_type", dest="dog_lowpass_type", default='proc3d',
+			help="Defocus difference used for strip extraction e.g. --dog_lowpass_type=0.5")
+		
+	
 	#=====================
 	def checkConflicts(self):
 		pass
@@ -155,9 +204,10 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 		"""
 		return
 	
-	def rotateAndTranslateImage(self, i, tiltfilename, rundir, recon_dir, mrc_list, tilt_list):
+	def rotateAndTranslateAndMaybeScaleImage(self, i, tiltfilename, rundir, recon_dir, tilt_list):
 		"""
-		Rotates and tanslates a single image.
+		Rotates and tanslates a single image from Protomo orientation to IMOD orientation.
+		Scales images if .tlt file specifies scaling.
 		"""
 		try:
 			#Get information from tlt file. This needs to versatile for differently formatted .tlt files, so awk it is.
@@ -184,10 +234,8 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 			proc=subprocess.Popen(cmd6, stdout=subprocess.PIPE, shell=True)
 			(azimuth, err) = proc.communicate()
 			azimuth=float(azimuth)
-			tilt_list.append(tilt_angle)
 			mrcf=os.path.join(rundir,'raw',filename+'.mrc')
 			mrcf_out=os.path.join(recon_dir,'tomo3d',filename+'.mrc')
-			mrc_list.append(mrcf_out)
 			image=mrc.read(mrcf)
 			dimx=len(image[0])
 			dimy=len(image)
@@ -215,26 +263,37 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 					image[k]=0
 			# dont shift if originy = dimy/2
 			
+			#Scale image if .tlt file has scaling
+			try:
+				if 'SCALE' in open(tiltfilename).read():
+					cmd7="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/SCALE/) print $(j+1)}'" % (i, tiltfilename)
+					proc=subprocess.Popen(cmd7, stdout=subprocess.PIPE, shell=True)
+					(scale, err) = proc.communicate()
+					scale=float(scale)
+					apDisplay.printMsg("Scaling image #%s (%s) by %f..." % (i, filename, scale))
+					image = apProTomo2Aligner.scaleByZoomInterpolation(image, scale, pad_constant='mean', order=5)
+			except: #reference image doesn't have scale
+				pass
+			
 			#Write temp mrc before rotation
-			mrc.write(image,mrcf_out)
+			#mrc.write(image,mrcf_out)
 			
 			#Rotate image
 			rot = -90 - azimuth - rotation
-			command1='proc2d %s %s clip=%d,%d >/dev/null' % (mrcf_out, mrcf_out, max(dimx,dimy), max(dimx,dimy))
-			command2='proc2d %s %s clip=%d,%d rot=%s >/dev/null' % (mrcf_out, mrcf_out, dimy, dimx, rot)
-			os.system(command1)
-			os.system(command2)
+			image=scipy.ndimage.interpolation.rotate(image, -rot, order=5)
+			mrc.write(image,mrcf_out)
+			#command1='proc2d %s %s clip=%d,%d >/dev/null' % (mrcf_out, mrcf_out, max(dimx,dimy), max(dimx,dimy))
+			#command2='proc2d %s %s clip=%d,%d rot=%s >/dev/null' % (mrcf_out, mrcf_out, dimy, dimx, rot)
+			#command2='proc2d %s %s rot=%s >/dev/null' % (mrcf_out, mrcf_out, rot)
+			#os.system(command1)
+			#os.system(command2)
 			
-			return dimx,dimy
+			return
 		except:
-			return 0,0
+			return
 	
 	#=====================
 	def start(self):
-		if (self.params['tomo3d_procs'] == "all"):
-			self.params['tomo3d_procs'] = mp.cpu_count()
-		else:
-			self.params['tomo3d_procs'] = int(self.params['tomo3d_procs'])
 		z = int(round(self.params['recon_thickness']/(self.params['pixelsize']*self.params['recon_map_sampling'])))
 		it="%03d" % (self.params['recon_iter'])
 		itt="%03d" % (self.params['recon_iter']-1)
@@ -257,7 +316,7 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 		elif self.params['reconstruction_method'] == 4:
 			recon_dir=self.params['rundir']+'/stack_temp/'
 		else:
-			apDisplay.printMsg("Error: Must choose reconstruction_method to be either 1, 2, 3, or 4.")
+			apDisplay.printError("Error: Must choose reconstruction_method to be either 1, 2, 3, or 4.")
 			sys.exit()
 		os.system('mkdir %s 2>/dev/null' % recon_dir)
 		recon_param_out_full=recon_dir+'/'+param_out
@@ -267,18 +326,61 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 		os.system('cp %s %s' % (tilt_out_full, recon_tilt_out_full))
 		os.system('cp %s %s' % (param_out_full,recon_param_out_full))
 		
-		#CTF Correction
-		if (self.params['ctf_correct'] == 'True'):
-			apProTomo2Prep.ctfCorrect(seriesname, self.params['rundir'], self.params['projectid'], self.params['sessionname'], int(self.params['tiltseries']), recon_tilt_out_full, self.params['frame_aligned'], self.params['pixelsize'], self.params['DefocusTol'], self.params['iWidth'], self.params['amp_contrast'])
+		if (self.params['defocus_save_recon'] != 0 and isinstance(self.params['defocus_save_recon'],float)):
+			defocusdir = '%s/defocus_estimation/' % self.params['rundir']
+			os.system("mkdir %s 2>/dev/null;rm %sdefocus_*" % (defocusdir, defocusdir))
+			os.system("touch %sdefocus_%f" % (defocusdir, self.params['defocus_save_recon']))
+			apDisplay.printMsg("Defocus value %f saved to disk." % self.params['defocus_save_recon'])
 		
+		if (self.params['reconstruction_actions'] == 2 or self.params['reconstruction_actions'] == 3 or self.params['reconstruction_actions'] == 4):
+			original_raw = os.path.join(raw_path,'original')
+			if os.path.isdir(original_raw):
+				apDisplay.printMsg("Copying original tilt images...")
+				os.system('cp %s/* %s;rm %s/dose* %s/ctf_* 2>/dev/null' % (original_raw, raw_path, raw_path, raw_path))
+			else:
+				apDisplay.printMsg("Backing up original tilt images...")
+				os.system('mkdir %s;mv %s/*mrc %s;cp %s/*mrc %s;rm %s/dose* 2>/dev/null' % (original_raw,raw_path,original_raw,original_raw,raw_path,raw_path))
+		
+		#CTF Correction
+		if (self.params['ctf_correct'] == 2):
+			apProTomo2Prep.imodCtfCorrect(seriesname, self.params['rundir'], self.params['projectid'], self.params['sessionname'], int(self.params['tiltseries']), recon_tilt_out_full, self.params['frame_aligned'], self.params['pixelsize'], self.params['DefocusTol'], self.params['iWidth'], self.params['amp_contrast_ctf'])
+		elif (self.params['ctf_correct'] == 1):
+			apProTomo2Prep.tomoCtfCorrect(seriesname, self.params['rundir'], self.params['projectid'], self.params['sessionname'], int(self.params['tiltseries']), recon_tilt_out_full, 'True', self.params['pixelsize'], self.params['amp_contrast_ctf'], self.params['amp_correct'], self.params['amp_correct_w1'], self.params['amp_correct_w2'], self.params['defocus_difference'])
 		#Dose Compensation
 		if (self.params['dose_presets'] != 'False'):
 			if self.params['reconstruction_method'] == 4:
 				apProTomo2Prep.doseCompensate(seriesname, self.params['rundir'], self.params['sessionname'], int(self.params['tiltseries']), self.params['frame_aligned'], raw_path, self.params['pixelsize'], self.params['dose_presets'], self.params['dose_a'], self.params['dose_b'], self.params['dose_c'], dose_compensate="False")
+				dose_comp = ''
 			else:
 				apProTomo2Prep.doseCompensate(seriesname, self.params['rundir'], self.params['sessionname'], int(self.params['tiltseries']), self.params['frame_aligned'], raw_path, self.params['pixelsize'], self.params['dose_presets'], self.params['dose_a'], self.params['dose_b'], self.params['dose_c'])
+				dose_comp = '.'+os.path.basename(glob.glob(raw_path+'/dose*')[0])
+		else:
+			try:
+				dose_comp = '.'+os.path.basename(glob.glob(raw_path+'/dose*')[0])
+			except:
+				dose_comp = ''
 		
-		# Remove specific images if user requests
+		# Add user-requested tilt angle removal to exclude_images list
+		if self.params['exclude_images_by_angle'] != '':
+			remove_tilt_angles=self.params['exclude_images_by_angle'].split(',')
+			remove_image_by_tilt_angle=[]
+			with open(recon_tilt_out_full,'r') as f:
+				for line in f:
+					if 'TILT ANGLE' in line:
+						tilt_angle=float(line.split()[[i for i,x in enumerate(line.split()) if x == 'ANGLE'][0]+1])
+						for angle in remove_tilt_angles:
+							if ((float(angle) + 0.05) > tilt_angle) and ((float(angle) - 0.05) < tilt_angle):
+								remove_image_by_tilt_angle.append(line.split()[[i for i,x in enumerate(line.split()) if x == 'IMAGE'][0]+1])
+								if angle in remove_tilt_angles: remove_tilt_angles.remove(angle)
+			if len(remove_tilt_angles) > 0:
+				for tilt in remove_tilt_angles:
+					apDisplay.printWarning("Tilt angle %s was not found in the .tlt file and thus was not removed." % tilt)
+				apDisplay.printWarning("Removal of tilt images by tilt angles requires angles accurate to +-0.05 degrees.")
+			for imagenumber in remove_image_by_tilt_angle:
+				apProTomo2Aligner.removeImageFromTiltFile(recon_tilt_out_full, imagenumber, remove_refimg="True")
+			apDisplay.printMsg("Images %s have been removed from the .tlt file by user request" % remove_image_by_tilt_angle)
+		
+		# Remove specific images
 		if (self.params['exclude_images'] != "999999"):
 			self.params['exclude_images'] = apProTomo2Aligner.hyphen_range(self.params['exclude_images'])
 			for imagenumber in self.params['exclude_images']:
@@ -302,11 +404,11 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 		images=int(images) - len(self.params['exclude_images'])
 		if (self.params['positive_recon'] < 90) or (self.params['negative_recon'] > -90):
 			removed_images, mintilt, maxtilt = apProTomo2Aligner.removeHighTiltsFromTiltFile(recon_tilt_out_full, self.params['negative_recon'], self.params['positive_recon'])
-			apDisplay.printMsg("Images %s have been removed before reconstruction by weighted back-projection" % removed_images)
+			apDisplay.printMsg("Images %s have been removed before stack creation/reconstruction" % removed_images)
 		else:
 			mintilt=0
 			maxtilt=0
-			for i in range(tiltstart-1,tiltstart+numimages):
+			for i in range(tiltstart-1,tiltstart+numimages+100):
 				try: #If the image isn't in the .tlt file, skip it
 					cmd="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/TILT/) print $(j+2)}'" % (i+1, recon_tilt_out_full)
 					proc=subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
@@ -386,8 +488,8 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 			os.system(cmd2)
 			
 			img=seriesname+'00_bck.img'
-			mrcf=seriesname+'_ite'+it+'_dim'+dim+'_ang'+ang+'_bck.bin'+str(self.params['recon_map_sampling'])+lp+'_protomo.mrc'
-			mrcfn=seriesname+'_ite'+it+'_dim'+dim+'_ang'+ang+'_bck.bin'+str(self.params['recon_map_sampling'])+lp+'_protomo.norm.mrc'
+			mrcf=self.params['sessionname']+'_'+seriesname+'_ite'+it+'_dim'+dim+'_ang'+ang+'_thick'+str(int(self.params['recon_thickness']))+'_pxlsz'+str(self.params['pixelsize'])+'_bck'+dose_comp+'.bin'+str(self.params['recon_map_sampling'])+lp+'_protomo.mrc'
+			mrcfn=self.params['sessionname']+'_'+seriesname+'_ite'+it+'_dim'+dim+'_ang'+ang+'_thick'+str(int(self.params['recon_thickness']))+'_pxlsz'+str(self.params['pixelsize'])+'_bck'+dose_comp+'.bin'+str(self.params['recon_map_sampling'])+lp+'_protomo.norm.mrc'
 			img_full=recon_out_dir+'/'+img
 			mrc_full=recon_out_dir+'/'+mrcf
 			mrcn_full=recon_out_dir+'/'+mrcfn
@@ -396,7 +498,7 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 			batchdir=self.params['rundir']+'/'+'ready_for_batch'
 			coarse_param_full=self.params['rundir']+'/coarse_out/'+'coarse_'+param_out
 			recon_param='recon_'+param_out
-			command="mkdir %s 2>/dev/null; cp %s %s; cp %s %s; cp %s %s/%s; rm -r %s %s %s*i3t %s/cache %s/out %s 2>/dev/null" % (batchdir, coarse_param_full, batchdir, refine_param_full, batchdir, param_out_full, batchdir, recon_param, img_full, mrc_full, recon_dir, recon_dir, recon_dir, stack_dir_full)
+			command="mkdir %s 2>/dev/null; cp %s %s; cp %s %s; cp %s %s/%s; rm -r %s %s %s*i3t %s/cache %s/out 2>/dev/null" % (batchdir, coarse_param_full, batchdir, refine_param_full, batchdir, param_out_full, batchdir, recon_param, img_full, mrc_full, recon_dir, recon_dir, recon_dir)
 			os.system(command)
 			
 			# Create reconstruction
@@ -440,65 +542,169 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 			
 			os.system("rm %s/cache/%s* %s/*i3t" % (recon_dir, seriesname, recon_dir))
 		
-		# Tomo3D Setup
-		elif self.params['reconstruction_method'] == 2 or self.params['reconstruction_method'] == 3 or self.params['reconstruction_method'] == 4:
-			apDisplay.printMsg("Translating images and rotating them with proc2d for Tomo3D/IMOD convention...")
-			os.system('mkdir %s 2>/dev/null' % stack_dir_full)
-			tomo3d_dir = os.path.join(recon_dir,'tomo3d')
-			try:
-				os.mkdir(os.path.join(tomo3d_dir))
-			except OSError:
-				pass
+		# Stack and Tomo3D Setup
+		elif (self.params['reconstruction_method'] == 2 or self.params['reconstruction_method'] == 3 or self.params['reconstruction_method'] == 4):
 			
-			mrc_list=[]
-			tilt_list=[]
-			dimx=0
-			dimy=0
-			for i in range(tiltstart,numimages+tiltstart+1):
-				dx,dy = self.rotateAndTranslateImage(i, recon_tilt_out_full, self.params['rundir'], recon_dir, mrc_list, tilt_list)
-				dimx=max(dx,dimx)
-				dimy=max(dy,dimy)
-			stack = np.zeros((len(mrc_list),dimx,dimy))
-			for i in range(len(mrc_list)):
-				stack[i,:,:] = mrc.read(mrc_list[i])
-			stack_path = os.path.join(stack_dir_full,'stack_ite'+it+'.mrcs')
-			mrc.write(stack,stack_path)
-			
-			tiltlist = os.path.join(stack_dir_full,'tiltlist.txt')
-			f=open(tiltlist,'w')
-			for tilt in tilt_list:
-				f.write('%f\n' % tilt)
-			f.close()
-			
-			os.system('rm -rf %s' % tomo3d_dir)
-			
+			if (self.params['tomo3d_procs'] > self.params['stack_procs'] or self.params['stack_procs'] == "all"):
+				if (self.params['tomo3d_procs'] == "all" or self.params['stack_procs'] == "all"):
+					procs = mp.cpu_count()
+				else:
+					procs = max(int(self.params['tomo3d_procs']),int(self.params['stack_procs']))
+			else:
+				if (self.params['stack_procs'] == "all"):
+					procs = mp.cpu_count()
+				else:
+					procs = int(self.params['stack_procs'])
+			if (self.params['reconstruction_actions'] == 1 or self.params['reconstruction_actions'] == 3):
+				apDisplay.printMsg("Translating images and rotating them with proc2d for Tomo3D/IMOD convention...")
+				os.system('mkdir %s 2>/dev/null' % stack_dir_full)
+				tomo3d_dir = os.path.join(recon_dir,'tomo3d')
+				try:
+					os.mkdir(os.path.join(tomo3d_dir))
+				except OSError:
+					pass
+				
+				mrc_list=[]
+				tilt_list=[]
+				dimy,dimx = mrc.read(os.path.join(raw_path,os.listdir(raw_path)[0])).shape
+				# dimx=0
+				# dimy=0
+				# for i in range(tiltstart,numimages+tiltstart+1):
+				# 	dx,dy = self.rotateAndTranslateAndMaybeScaleImage(i, recon_tilt_out_full, self.params['rundir'], recon_dir, mrc_list, tilt_list)
+				# 	dimx=max(dx,dimx)
+				# 	dimy=max(dy,dimy)
+				for i, j in zip(range(tiltstart,numimages+tiltstart+102), range(numimages+101)):
+					p = mp.Process(target=self.rotateAndTranslateAndMaybeScaleImage, args=(i, recon_tilt_out_full, self.params['rundir'], recon_dir, tilt_list,))
+					p.start()
+					
+					if (j % procs == 0) and (j != 0):
+						[p.join() for p in mp.active_children()]
+				[p.join() for p in mp.active_children()]
+				
+				for i in range(tiltstart,numimages+tiltstart+102):
+					try:
+						cmd1="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/FILE/) print $(j+1)}' | tr '\n' ' ' | sed 's/ //g'" % (i, recon_tilt_out_full)
+						proc=subprocess.Popen(cmd1, stdout=subprocess.PIPE, shell=True)
+						(filename, err) = proc.communicate()
+						cmd2="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/TILT/) print $(j+2)}'" % (i, recon_tilt_out_full)
+						proc=subprocess.Popen(cmd2, stdout=subprocess.PIPE, shell=True)
+						(tilt_angle, err) = proc.communicate()
+						tilt_angle=float(tilt_angle)
+						if filename != '':
+							mrcf_out=os.path.join(recon_dir,'tomo3d',filename+'.mrc')
+							mrc_list.append(mrcf_out)
+							tilt_list.append(tilt_angle)
+					except: #missing image in .tlt file
+						pass
+				
+				stack = np.zeros((len(mrc_list),dimx,dimy))
+				#stack = np.zeros((len(mrc_list),max(dimx,dimy),max(dimx,dimy)))
+				try:
+					for i in range(len(mrc_list)):
+						stack[i,:,:] = mrc.read(mrc_list[i])
+				except:
+					try:
+						stack = np.zeros((len(mrc_list),dimy,dimx))
+						for i in range(len(mrc_list)):
+							stack[i,:,:] = mrc.read(mrc_list[i])
+					except:
+						rotated_dimy,rotated_dimx = 0,0
+						for image in [os.path.abspath(f) for f in glob.glob(os.path.join(recon_dir, 'tomo3d','*'))]:
+							rotated_image_shape = mrc.read(image).shape
+							rotated_dimy = max(rotated_dimy, rotated_image_shape[0])
+							rotated_dimx = max(rotated_dimx, rotated_image_shape[1])
+						for image in [os.path.abspath(f) for f in glob.glob(os.path.join(recon_dir, 'tomo3d','*'))]:
+							os.system("proc2d %s %s clip=%d,%d >/dev/null" % (image, image, rotated_dimx, rotated_dimy))
+						stack = np.zeros((len(mrc_list),rotated_dimy,rotated_dimx))
+						for i in range(len(mrc_list)):
+							stack[i,:,:] = mrc.read(mrc_list[i])
+				stack_name1 = self.params['sessionname']+'_'+seriesname+'_stack_ite'+it+'_bin1'
+				stack_name2 = '_pxlsz'+str(self.params['pixelsize'])+dose_comp+'.mrcs'
+				stack_path = os.path.join(stack_dir_full,stack_name1+stack_name2)
+				
+				mrc.write(stack,stack_path)
+				
+				tiltlist = os.path.join(stack_dir_full,'tiltlist.txt')
+				f=open(tiltlist,'w')
+				for tilt in tilt_list:
+					f.write('%f\n' % tilt)
+				f.close()
+				
+				os.system('rm -rf %s' % tomo3d_dir)
+			elif (self.params['reconstruction_actions'] == 2 or self.params['reconstruction_actions'] == 4):
+				intermediate_stack_dir = self.params['rundir'] + '/stack/intermediate/'
+				stack = mrc.read(glob.glob(intermediate_stack_dir+'*.mrcs')[0])
+				if ('SCALE' in open(recon_tilt_out_full).read()):
+					scaled_stack = np.zeros(stack.shape)
+					for i in len(stack):
+						try:
+							cmd="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/SCALE/) print $(j+1)}'" % (i+1, recon_tilt_out_full)
+							proc=subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+							(scale, err) = proc.communicate()
+							scale=float(scale)
+							scaled_stack[i,:,:] = apProTomo2Aligner.scaleByZoomInterpolation(stack[i,:,:], scale, pad_constant='mean', order=5)
+						except: #reference image doesn't have scale
+							scaled_stack[i,:,:] = stack[i,:,:]
+					stack = scaled_stack
+				
 			if self.params['recon_map_sampling'] > 1:
 				apDisplay.printMsg("Binning stack...")
-				binned_stack = np.zeros((len(mrc_list),int(round(dimx/self.params['recon_map_sampling'])),int(round(dimy/self.params['recon_map_sampling']))))
-				for i in range(len(mrc_list)):
-					binned_stack[i,:,:] = imagefilter.binImg(stack[i,:,:], bin=self.params['recon_map_sampling'])
-				stack_path = os.path.join(stack_dir_full,'stack_ite'+it+'_bin%s.mrcs' % self.params['recon_map_sampling'])
+				#Check if images are evenly divisible by sampling (imagefilter.binImg will clip them if not)
+				if self.params['bin_type'] == 'sum':
+					shape = np.asarray(stack[0].shape)
+					bin2 = self.params['recon_map_sampling'] * 2
+					remain = shape % bin2
+					if remain.any():
+						new_dimx = round(int(shape[0]/bin2)*bin2/self.params['recon_map_sampling'])
+						new_dimy = round(int(shape[1]/bin2)*bin2/self.params['recon_map_sampling'])
+					else:
+						new_dimx = int(round(dimx/self.params['recon_map_sampling']))
+						new_dimy = int(round(dimy/self.params['recon_map_sampling']))
+					binned_stack = np.zeros((len(mrc_list),new_dimx,new_dimy))
+					try:
+						for i in range(len(mrc_list)):
+							binned_stack[i,:,:] = imagefilter.binImg(stack[i,:,:], bin=self.params['recon_map_sampling'])
+					except:
+						binned_stack = np.zeros((len(mrc_list),new_dimy,new_dimx))
+						for i in range(len(mrc_list)):
+							binned_stack[i,:,:] = imagefilter.binImg(stack[i,:,:], bin=self.params['recon_map_sampling'])
+					stack_name1 = self.params['sessionname']+'_'+seriesname+'_stack_ite'+it+'_bin%s' % self.params['recon_map_sampling']
+					stack_name2 = '_pxlsz'+str(self.params['pixelsize'])+dose_comp+'.mrcs'
+					stack_path = os.path.join(stack_dir_full,stack_name1+stack_name2)
+				else:
+					scaling = 1/self.params['recon_map_sampling']
+					new_dimy,new_dimx = apProTomo2Aligner.scaleByZoomInterpolation(stack[0], scaling, order=1, clip_image=True).shape
+					binned_stack = np.zeros((len(mrc_list),new_dimy,new_dimx))
+					for i in range(len(mrc_list)):
+						binned_stack[i,:,:] = apProTomo2Aligner.scaleByZoomInterpolation(stack[i,:,:], scaling, clip_image=True)
+					stack_name1 = self.params['sessionname']+'_'+seriesname+'_stack_ite'+it+'_bin%s' % self.params['recon_map_sampling']
+					stack_name2 = '_pxlsz'+str(self.params['pixelsize'])+dose_comp+'.mrcs'
+					stack_path = os.path.join(stack_dir_full,stack_name1+stack_name2)
+				
 				mrc.write(binned_stack, stack_path)
 		
 		# Tomo3D Reconstruction by WBP
 		if self.params['reconstruction_method'] == 2:
 			z = int(math.ceil(z / 2.) * 2) # Rounds up the thickness to the nearest even number
-			mrcf = seriesname+'_ite'+it+'_ang'+ang+'.bin'+str(self.params['recon_map_sampling'])+'_tomo3dWBP.mrc'
+			mrcf = self.params['sessionname']+'_'+seriesname+'_ite'+it+'_ang'+ang+'_thick'+str(int(self.params['recon_thickness']))+'_pxlsz'+str(self.params['pixelsize'])+dose_comp+'.bin'+str(self.params['recon_map_sampling'])+'_tomo3dWBP.mrc'
 			mrc_full = recon_dir + mrcf
 			os.system('rm -r %s 2>/dev/null' % mrc_full)
-			cmd = 'tomo3d -a %s -i %s -t %s -v 2 -z %s %s -o %s' % (tiltlist, stack_path, self.params['tomo3d_procs'], z, self.params['tomo3d_options'], mrc_full)
+			cmd = 'tomo3d -a %s -i %s -t %s -v 2 -z %s %s -o %s' % (tiltlist, stack_path, procs, z, self.params['tomo3d_options'], mrc_full)
 		
 		# Tomo3D Reconstruction by SIRT
 		elif self.params['reconstruction_method'] == 3:
 			z = int(math.ceil(z / 2.) * 2) # Rounds up the thickness to the nearest even number
-			mrcf = seriesname+'_ite'+it+'_ang'+ang+'.bin'+str(self.params['recon_map_sampling'])+'_tomo3dSIRT_'+str(self.params['tomo3d_sirt_iters'])+'_iters.mrc'
+			mrcf = self.params['sessionname']+'_'+seriesname+'_ite'+it+'_ang'+ang+'_thick'+str(int(self.params['recon_thickness']))+'_pxlsz'+str(self.params['pixelsize'])+dose_comp+'.bin'+str(self.params['recon_map_sampling'])+'_tomo3dSIRT_'+str(self.params['tomo3d_sirt_iters'])+'_iters.mrc'
 			mrc_full = recon_dir + mrcf
 			os.system('rm -r %s 2>/dev/null' % mrc_full)
-			cmd = 'tomo3d -a %s -i %s -t %s -v 2 -z %s -S -l %s %s -o %s' % (tiltlist, stack_path, self.params['tomo3d_procs'], z, self.params['tomo3d_sirt_iters'], self.params['tomo3d_options'], mrc_full)
+			cmd = 'tomo3d -a %s -i %s -t %s -v 2 -z %s -S -l %s %s -o %s' % (tiltlist, stack_path, procs, z, self.params['tomo3d_sirt_iters'], self.params['tomo3d_options'], mrc_full)
 		
 		if self.params['reconstruction_method'] == 2 or self.params['reconstruction_method'] == 3:
 			print cmd
-			os.system(cmd)
+			#os.system(cmd)
+			proc=subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+			(out, err) = proc.communicate()
+			print out, err
 			print "Rotating reconstruction..."
 			try:
 				os.system('trimvol -rx %s %s' % (mrc_full, mrc_full))
@@ -507,6 +713,18 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 				apDisplay.printMsg("IMOD function \'trimvol\' not found, trying using pyami. If the file is large and your RAM is small this might not end well...")
 				mrc.write(np.rot90(mrc.read(mrc_full)),mrc_full)
 		
+		# DoG picker
+		if (self.params['reconstruction_method'] == 1 or self.params['reconstruction_method'] == 2 or self.params['reconstruction_method'] == 3) and (self.params['pick_tomogram'] == 1):
+			picker_dir = os.path.join(self.params['rundir'],'dog_picker')
+			os.system('mkdir %s 2>/dev/null' % picker_dir)
+			try:
+				tomogram_full_path = mrcn_full
+			except:
+				tomogram_full_path = mrc_full
+			os.system('ln %s %s 2>/dev/null' % (tomogram_full_path, picker_dir))
+			apTomoPicker.dogPicker3D(picker_dir, tomogram_full_path, self.params['dog_particle_diam'], self.params['dog_diam_variance'], self.params['dog_max_picks'], self.params['dog_junk_tolerance'], self.params['dog_lowpass_type'], self.params['pixelsize'], self.params['recon_map_sampling'])
+		
+		# Make external stack dose compensation and binning scripts
 		if self.params['reconstruction_method'] == 4 and self.params['dose_presets'] != "False":
 			#os.system('rm -r %s' % recon_dir)
 			#Create a list of tilts, accumulated dose, and lowpass to be applied for the requested stack
@@ -544,22 +762,29 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 			
 			#Create a small python script that, when executed on a stack, will bin the stack
 			f=open(os.path.join(self.params['rundir'],'stack','stack_binning.py'),'w')
-			f.write("#!/usr/bin/env python")
-			f.write("# Usage: ./stack_binning.py <stack.mrcs> <binning factor>")
-			f.write("import os, sys, numpy as np")
-			f.write("from pyami import mrc")
-			f.write("from appionlib.apImage import imagefilter")
-			f.write("stack = mrc.read(sys.argv[1])")
-			f.write("sampling = int(sys.argv[2])")
-			f.write("dimx = len(stack[0])")
-			f.write("dimy = len(stack[0][0])")
-			f.write("new_dimx = int(round(dimx/sampling))")
-			f.write("new_dimy = int(round(dimy/sampling))")
-			f.write("binned_stack = np.zeros((len(stack),new_dimx,new_dimy))")
-			f.write("for i in range(len(stack)):")
-			f.write("	binned_stack[i,:,:] = imagefilter.binImg(stack[i,:,:], bin=sampling)")
-			f.write("stack_file = '%s_bin%s.mrcs' % (os.path.splitext(sys.argv[1])[0], sampling)")
-			f.write("mrc.write(binned_stack, stack_file)")
+			f.write("#!/usr/bin/env python\n")
+			f.write("# Usage: ./stack_binning.py <stack.mrcs> <binning factor>\n")
+			f.write("import os, sys, numpy as np\n")
+			f.write("from pyami import mrc\n")
+			f.write("from appionlib.apImage import imagefilter\n")
+			f.write("stack = mrc.read(sys.argv[1])\n")
+			f.write("sampling = int(sys.argv[2])\n")
+			f.write("dimx = len(stack[0])\n")
+			f.write("dimy = len(stack[0][0])\n")
+			f.write("shape = np.asarray(stack[0].shape)\n")
+			f.write("bin2 = sampling * 2\n")
+			f.write("remain = shape % bin2\n")
+			f.write("if remain.any():\n")
+			f.write("	new_dimx = round(int(shape[0]/bin2)*bin2/sampling)\n")
+			f.write("	new_dimy = round(int(shape[1]/bin2)*bin2/sampling)\n")
+			f.write("else:\n")
+			f.write("	new_dimx = int(round(dimx/sampling))\n")
+			f.write("	new_dimy = int(round(dimy/sampling))\n")
+			f.write("binned_stack = np.zeros((len(stack),new_dimx,new_dimy))\n")
+			f.write("for i in range(len(stack)):\n")
+			f.write("	binned_stack[i,:,:] = imagefilter.binImg(stack[i,:,:], bin=sampling)\n")
+			f.write("stack_file = '%s_bin%s.mrcs' % (os.path.splitext(sys.argv[1])[0], sampling)\n")
+			f.write("mrc.write(binned_stack, stack_file)\n")
 			f.close()
 			apDisplay.printMsg("Stack binning script created: stack_binning.py")
 			os.system("chmod +x %s" % os.path.join(self.params['rundir'],'stack','stack_binning.py'))
@@ -578,8 +803,12 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 		f.write("from appionlib.apImage import imagefilter\n")
 		f.write("filelist=glob.glob('particle_*.em')\n")
 		f.write("def createFourierMask(i):\n")
-		f.write("	fname = 'particle_%05d' % i\n")
-		f.write("	mname = 'pfmask_%05d' % i\n")
+		f.write("	if os.path.isfile(os.path.join(os.getcwd(),'particle_%05d.em') % i) is True:\n")
+		f.write("		fname = 'particle_%05d' % i\n")
+		f.write("		mname = 'pfmask_%05d' % i\n")
+		f.write("	else:\n")
+		f.write("		fname = 'particle_%06d' % i\n")
+		f.write("		mname = 'pfmask_%06d' % i\n")
 		f.write("	if os.path.isfile(os.path.join(os.getcwd(),mname+'.em')) is False:\n")
 		f.write("		os.system('e2proc3d.py %s.em %s.mrc' % (fname, fname))\n")
 		f.write("		f = mrc.read('%s.mrc' % fname)\n")
@@ -594,7 +823,11 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 		f.write("		ft2[high] = 1\n")
 		f.write("		mrc.write(ft2,'%s.mrc' % mname)\n")
 		f.write("		os.system('e2proc3d.py %s.mrc %s.em;rm %s.mrc %s.mrc' % (mname, mname, mname, fname))\n")
-		f.write("for i in range(1,len(filelist)+1):\n")
+		f.write("last_particle=glob.glob('particle_*.em')\n")
+		f.write("last_particle.sort()\n")
+		f.write("last_particle=last_particle[-1]\n")
+		f.write("last_particle=int(last_particle.split('_')[1].split('.')[0])\n")
+		f.write("for i in range(1,last_particle+1):\n")
 		f.write("	p = mp.Process(target=createFourierMask, args=(i,))\n")
 		f.write("	p.start()\n")
 		f.write("	if (i % int(sys.argv[2]) == 0) and (i != 0):\n")
@@ -671,12 +904,14 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 				except:
 					pass
 			
-			apDisplay.printMsg("Reconstruction can be found in this directory:")
 			if ((self.params['link_recon'] == None) or (self.params['link_recon'] == "") or (len(self.params['link_recon']) < 1) and (self.params['reconstruction_method'] == 1)):
+				apDisplay.printMsg("Reconstruction can be found in this directory:")
 				print "\n%s\n" % (recon_out_dir)
 			elif ((self.params['link_recon'] == None) or (self.params['link_recon'] == "") or (len(self.params['link_recon']) < 1) and (self.params['reconstruction_method'] == 2 or self.params['reconstruction_method'] == 3)):
+				apDisplay.printMsg("Reconstruction can be found in this directory:")
 				print "\n%s\n" % (recon_dir)
 			else:
+				apDisplay.printMsg("Stack(s) can be found in this directory:")
 				print "\n%s\n" % (self.params['link_recon'])
 		except:
 			apDisplay.printMsg("Reconstruction can be found in this directory:")
@@ -692,6 +927,13 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 		
 		apDisplay.printMsg("Two scripts for creating per-particle or per-tomogram custom fourier wedges for single particle tomography can be found in:")
 		print "\n%s\n" % (os.path.join(self.params['rundir'],'SPT'))
+		
+		apDisplay.printMsg('Did everything blow up and now you\'re yelling at your computer screen?')
+		apDisplay.printMsg('If so, kindly email Alex at anoble@nysbc.org explaining the issue and include this log file.')
+		apDisplay.printMsg('If everything worked beautifully and you publish, please use the appropriate citations listed on the Appion webpage! You can also print out all citations by typing: protomo2aligner.py --citations')
+		print "\n"
+		
+		apProTomo2Aligner.printTips("Reconstruction")
 		
 
 #=====================

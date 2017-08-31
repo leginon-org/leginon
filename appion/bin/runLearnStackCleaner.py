@@ -5,7 +5,7 @@ import wx
 import learningStackCleaner
 from appionlib import apStack
 from appionlib import apDisplay
-from appionlib import proc2dLib
+from appionlib.StackClass import stackTools
 from appionlib import appionScript
 from appionlib import apStackMeanPlot
 
@@ -57,23 +57,22 @@ class LearningStackCleaner(appionScript.AppionScript):
 
 		localstack = os.path.join(self.params['rundir'], self.timestamp+".hed")
 
-		a = proc2dLib.RunProc2d()
-		a.setValue('infile',  stackfile)
-		a.setValue('outfile', localstack)
 		if virtualdata is not None:
+			apDisplay.printMsg("creating vitural stack")
 			vparts = virtualdata['particles']
 			plist = [int(p['particleNumber'])-1 for p in vparts]
-			a.setValue('list',plist)
-		#run proc2d
-		a.run()
+			stackTools.createSubStack(stackfile, localstack, plist, msg=True)
+		else:
+			localstack = stackfile
 
+		apDisplay.printMsg("running app")
 		self.app = wx.App()
-		self.data = learningStackCleaner.DataClass(stackfile=stackfile)
+		self.data = learningStackCleaner.DataClass(stackfile=localstack)
 		self.main = learningStackCleaner.MainWindow(self.data)
 		self.main.Show()
 		self.app.MainLoop()
 		## end app
-		
+
 		## finish assigning particles
 		self.data.assignRemainingTargets()
 
@@ -92,11 +91,14 @@ class LearningStackCleaner(appionScript.AppionScript):
 		numpart = len(particleAssignments)
 		self.params['keepfile'] = 'emankeepfile.lst'
 		keepf = open(self.params['keepfile'], 'w')
+		keeplist = []
 		for partnum in range(numpart):
 			if particleAssignments.get(partnum, 0) == 1:
 				includecount += 1
 				#eman numbering starting at zero
 				keepf.write('%d\n'%(partnum-1))
+				#appion numbering starting at one
+				keeplist.append(partnum)
 		keepf.close()
 		apDisplay.printMsg("Including %d of %d particles"%(includecount, numpart))
 
@@ -111,11 +113,11 @@ class LearningStackCleaner(appionScript.AppionScript):
 
 		#get number of particles
 		self.params['description'] += (
-			(" ... cleaned %d particle substack of stackid %d" 
+			(" ... cleaned %d particle substack of stackid %d"
 			 %(includecount, self.params['stackid']))
 		)
 		#create the new sub stack
-		apStack.makeNewStack(oldstack, newstack, self.params['keepfile'], bad=True)
+		apStack.makeNewStack(oldstack, newstack, keeplist, bad=True)
 
 		if not os.path.isfile(newstack):
 			apDisplay.printError("No stack was created")
@@ -124,7 +126,7 @@ class LearningStackCleaner(appionScript.AppionScript):
 		if self.params['commit'] is True:
 			apStack.commitSubStack(self.params, newname, sorted=False)
 			newstackid = apStack.getStackIdFromPath(newstack)
-	
+
 			apDisplay.printMsg("creating Stack Mean Plot montage for stackid")
 			apStackMeanPlot.makeStackMeanPlot(newstackid)
 

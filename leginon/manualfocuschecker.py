@@ -1,9 +1,9 @@
 #
 # COPYRIGHT:
-#	   The Leginon software is Copyright 2003
-#	   The Scripps Research Institute, La Jolla, CA
+#	   The Leginon software is Copyright under
+#	   Apache License, Version 2.0
 #	   For terms of the license agreement
-#	   see  http://ami.scripps.edu/software/leginon-license
+#	   see  http://leginon.org
 #
 import acquisition
 import node, leginondata
@@ -101,9 +101,9 @@ class ManualFocusChecker(acquisition.Acquisition):
 		correction = self.settings['correct image']
 		self.manualchecklock.acquire()
 		if correction:
-			imdata = self.acquireCorrectedCameraImageData()
+			imdata = self.acquireCorrectedCameraImageData(force_no_frames=True)
 		else:
-			imdata = self.acquireCameraImageData()
+			imdata = self.acquireCameraImageData(force_no_frames=True)
 		imarray = imdata['image']
 		self.manualchecklock.release()
 		pow = imagefun.power(imarray, self.maskradius)

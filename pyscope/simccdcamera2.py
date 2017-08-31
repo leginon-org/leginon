@@ -10,13 +10,14 @@ from pyami import mrc
 import itertools
 from pyscope import falconframe
 
+DEBUG = False
 FRAME_DIR = '.'
 
 rawtype = numpy.uint32
 frametype = numpy.uint8
 idcounter = itertools.cycle(range(100))
 
-has_energy_filter = False
+has_energy_filter = True
 
 class SimCCDCamera(ccdcamera.CCDCamera):
 	name = 'SimCCDCamera'
@@ -26,6 +27,7 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 	def __init__(self):
 		self.unsupported = []
 		super(SimCCDCamera,self).__init__()
+		self.debug = DEBUG
 		self.pixel_size = {'x': 2.5e-5, 'y': 2.5e-5}
 		self.exposure_types = ['normal', 'dark', 'bias']
 
@@ -35,8 +37,8 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 		self.exposure_time = 0.2
 		self.exposure_type = 'normal'
 
-		self.energy_filter = False
-		self.energy_filter_width = 0.0
+		self.energy_filter = True
+		self.energy_filter_width = 20.0
 
 		self.views = ('square', 'empty')
 		self.view = 'square'
@@ -226,7 +228,6 @@ class SimFrameCamera(SimCCDCamera):
 		noise = numpy.random.normal(0.0, 2.0, shape)
 		bias = bias + noise
 		bias = numpy.asarray(bias, rawtype)
-		#print 'BIAS', bias
 		return bias
 
 	def _simDark(self, shape, exptime):
@@ -237,7 +238,7 @@ class SimFrameCamera(SimCCDCamera):
 		dark = numpy.resize(dark, shape)
 		dark = dark + self._simBias(shape)
 		dark = numpy.asarray(dark, rawtype)
-		#print 'DARK', dark
+		self.debug_print( 'DARK %s' % (dark,))
 		return dark
 
 	def _simExposure(self, shape, exptime):
@@ -250,14 +251,14 @@ class SimFrameCamera(SimCCDCamera):
 		exposure = exposure + noise
 		final = self._simDark(shape, exptime) + exposure
 		final = numpy.asarray(final, rawtype)
-		#print 'EXP', final
+		self.debug_print( 'EXP %s' % (final,))
 		return final
 
 	def _simNormal(self, shape, exptime):
 		# return image:  transparency * (dark + bias + exposure)
 		final = self._simExposure(shape, exptime) * self._simSample(shape)
 		final = numpy.asarray(final, rawtype)
-		#print 'NORMAL', final
+		self.debug_print( 'NORMAL %s' % (final,))
 		return final
 
 	def _simSample(self, shape):
@@ -269,7 +270,6 @@ class SimFrameCamera(SimCCDCamera):
 			column_offset = random.randint(-shape[1]/8, shape[1]/8) + shape[0]/4
 			transparency[row_offset:row_offset+shape[0]/2,
 					column_offset:column_offset+shape[1]/2] = 0.7
-		#print 'VIEW', transparency
 		return transparency
 
 	def convertToInt8(self,array):
@@ -318,7 +318,7 @@ class SimFrameCamera(SimCCDCamera):
 			useframes = range(nframes)
 		self.useframes = useframes
 
-		print 'SAVERAWFRAMES', self.save_frames
+		self.debug_print( 'SAVERAWFRAMES %s' % (self.save_frames,))
 		if self.save_frames:
 			self.rawframesname = time.strftime('frames_%Y%m%d_%H%M%S')
 			self.rawframesname += '_%02d' % (idcounter.next(),)
@@ -341,13 +341,13 @@ class SimFrameCamera(SimCCDCamera):
 			mrcname = '.mrc'
 			fname = os.path.join(FRAME_DIR,self.rawframesname + mrcname)
 			if self.save_frames:
-				print 'SAVE', i
+				self.debug_print('SAVE %d' %i)
 				if i == 0:
 					mrc.write(frame, fname)
 				else:
 					mrc.append(frame, fname)
 			if i in self.useframes:
-				print 'SUM', i
+				self.debug_print('PRINT %d' %i)
 				sum += frame
 
 		return sum
@@ -405,7 +405,15 @@ class SimFrameCamera(SimCCDCamera):
 
 	def getUseFrames(self):
 		return self.useframes
+
+	def requireRecentDarkCurrentReferenceOnBright(self):
+		return False
 	
+	def updateDarkCurrentReference(self):
+		self.debug_print('Fake Dark Current Reference update')
+		# no error
+		return False
+
 class SimFalconFrameCamera(SimFrameCamera):
 	name = 'SimFalconFrameCamera'
 	def __init__(self):

@@ -1,20 +1,19 @@
-# The Leginon software is Copyright 2004
-# The Scripps Research Institute, La Jolla, CA
+# The Leginon software is Copyright under
+# Apache License, Version 2.0
 # For terms of the license agreement
-# see http://ami.scripps.edu/software/leginon-license
+# see http://leginon.org
 #
 
-import logging
 import threading
 import wx
 import wx.lib.scrolledpanel
 import sys
 
 import leginon.launcher
-import leginon.gui.wx.Logging
 import leginon.gui.wx.Events
 import leginon.gui.wx.ToolBar
 import leginon.gui.wx.Selector
+import leginon.gui.wx.LeginonLogging
 
 CreateNodeEventType = wx.NewEventType()
 DestroyNodeEventType = wx.NewEventType()
@@ -113,7 +112,7 @@ class Frame(wx.Frame):
 		self.Close()
 
 	def onMenuLogging(self, evt):
-		dialog = leginon.gui.wx.Logging.LoggingConfigurationDialog(self)
+		dialog = leginon.gui.wx.LeginonLogging.LoggingConfigurationDialog(self)
 		dialog.ShowModal()
 		dialog.Destroy()
 

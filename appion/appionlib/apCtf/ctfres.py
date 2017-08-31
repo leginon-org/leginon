@@ -205,17 +205,20 @@ def getResolutionFromConf(raddata, confs, limit=0.5):
 	if confs.max() < limit:
 		apDisplay.printWarning("Res calc failed: All conf values below desired limit %.2f"
 			%(limit))
-		saveConfData(confs, "maxbelow")
+		if debug is True:
+			saveConfData(confs, "maxbelow")
 		return None
 	if confs[:3].max() < limit:
 		apDisplay.printWarning("Res calc failed: Initial conf below desired limit %.2f"
 			%(limit))
-		saveConfData(confs, "median")
+		if debug is True:
+			saveConfData(confs, "median")
 		return None
 	if confs[:10].min() < 0.0:
 		print(numpy.around(confs[:15],3))
 		apDisplay.printWarning("Res calc: Negative values in first 10 values")
-		saveConfData(confs, "negative")
+		if debug is True:
+			saveConfData(confs, "negative")
 		#return None
 	if numpy.any(numpy.isnan(confs)):  #note does not work with 'is True'
 		apDisplay.printWarning("Res calc failed: All values NaN")

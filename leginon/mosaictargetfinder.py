@@ -1,9 +1,9 @@
 #
 # COPYRIGHT:
-#       The Leginon software is Copyright 2003
-#       The Scripps Research Institute, La Jolla, CA
+#       The Leginon software is Copyright under
+#       Apache License, Version 2.0
 #       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
+#       see  http://leginon.org
 #
 
 import calibrationclient
@@ -279,7 +279,10 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		for type in ('acquisition','focus'):
 			targets[type] = []
 			for id, targetlists in self.targetmap.items():
-				targetlist = targetlists[type]
+				if type not in targetlists.keys():
+					targetlist = []
+				else:
+					targetlist = targetlists[type]
 				for targetdata in targetlist:
 					tile = self.tilemap[id]
 					#tilepos = self.mosaic.getTilePosition(tile)

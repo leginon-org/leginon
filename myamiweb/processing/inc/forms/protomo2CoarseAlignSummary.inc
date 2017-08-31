@@ -1,10 +1,10 @@
 <?php
 
 /**
- *	The Leginon software is Copyright 2003 
- *	The Scripps Research Institute, La Jolla, CA
+ *	The Leginon software is Copyright under 
+ *	Apache License, Version 2.0
  *	For terms of the license agreement
- *	see  http://ami.scripps.edu/software/leginon-license
+ *	see  http://leginon.org
  */
 ini_set('display_errors', '0');     # don't show any errors...
 error_reporting(E_ALL | E_STRICT);
@@ -14,6 +14,9 @@ require_once "inc/leginon.inc";
 
 ini_set('session.gc_maxlifetime', 604800);
 session_set_cookie_params(604800);
+
+$page = $_SERVER['REQUEST_URI'];
+header("Refresh: 300; URL=$page");
 
 session_start();
 $tiltseries=$_SESSION['tiltseries'];
@@ -67,19 +70,26 @@ class Protomo2CoarseAlignSummary extends BasicLayoutForm
 		
 		global $outdir;
 		global $runname;
+		global $tiltseries;
 		
+		$defocus_gif_files = glob("$outdir/$runname/defocus_estimation/*/*/diagnostic.gif");
 		$ctf_gif_files = glob("$outdir/$runname/media/ctf_correction/s*.gif");
 		$dose_gif_files = glob("$outdir/$runname/media/dose_compensation/s*.gif");
 		$corrpeak_gif_files = glob("$outdir/$runname/media/correlations/c*.gif");
 		$corrpeak_vid_files = glob("$outdir/$runname/media/correlations/c*.{mp4,ogv,webm}",GLOB_BRACE);
 		$initial_tilt_gif_files = glob("$outdir/$runname/media/tiltseries/i*.gif");
 		$initial_tilt_vid_files = glob("$outdir/$runname/media/tiltseries/i*.{mp4,ogv,webm}",GLOB_BRACE);
+		$manual_tilt_gif_files = glob("$outdir/$runname/media/tiltseries/m*.gif");
+		$manual_tilt_vid_files = glob("$outdir/$runname/media/tiltseries/m*.{mp4,ogv,webm}",GLOB_BRACE);
 		$tilt_gif_files = glob("$outdir/$runname/media/tiltseries/c*.gif");
 		$tilt_vid_files = glob("$outdir/$runname/media/tiltseries/c*.{mp4,ogv,webm}",GLOB_BRACE);
+		$manual_rec_gif_files = glob("$outdir/$runname/media/reconstructions/m*.gif");
+		$manual_rec_vid_files = glob("$outdir/$runname/media/reconstructions/m*.{mp4,ogv,webm}",GLOB_BRACE);
 		$rec_gif_files = glob("$outdir/$runname/media/reconstructions/c*.gif");
 		$rec_vid_files = glob("$outdir/$runname/media/reconstructions/c*.{mp4,ogv,webm}",GLOB_BRACE);
 		
 		// Display Coarse Alignment Summary
+		$defocus_gif = "loadimg.php?rawgif=1&filename=".$defocus_gif_files[0];
 		$ctfplot_gif = "loadimg.php?rawgif=1&filename=".$ctf_gif_files[0];
 		$ctfdefocus_gif = "loadimg.php?rawgif=1&filename=".$ctf_gif_files[1];
 		$dose_gif = "loadimg.php?rawgif=1&filename=".$dose_gif_files[0];
@@ -88,22 +98,73 @@ class Protomo2CoarseAlignSummary extends BasicLayoutForm
 		$corrpeak_mp4 = "loadvid.php?filename=".$corrpeak_vid_files[0];
 		$corrpeak_ogv = "loadvid.php?filename=".$corrpeak_vid_files[1];
 		$corrpeak_webm = "loadvid.php?filename=".$corrpeak_vid_files[2];
+		$corrpeak2_gif = "loadimg.php?rawgif=1&filename=".$corrpeak_gif_files[1];
+		$corrpeak2_mp4 = "loadvid.php?filename=".$corrpeak_vid_files[3];
+		$corrpeak2_ogv = "loadvid.php?filename=".$corrpeak_vid_files[4];
+		$corrpeak2_webm = "loadvid.php?filename=".$corrpeak_vid_files[5];
 		$download_corrpeak_mp4 = "downloadvid.php?filename=".$corrpeak_vid_files[0];
+		$download_corrpeak2_mp4 = "downloadvid.php?filename=".$corrpeak_vid_files[3];
 		$initial_tilt_gif = "loadimg.php?rawgif=1&filename=".$initial_tilt_gif_files[0];
 		$initial_tilt_mp4 = "loadvid.php?filename=".$initial_tilt_vid_files[0];
 		$initial_tilt_ogv = "loadvid.php?filename=".$initial_tilt_vid_files[1];
 		$initial_tilt_webm = "loadvid.php?filename=".$initial_tilt_vid_files[2];
 		$download_initial_tilt_mp4 = "downloadvid.php?filename=".$initial_tilt_vid_files[0];
+		$manual_tilt_gif = "loadimg.php?rawgif=1&filename=".$manual_tilt_gif_files[0];
+		$manual_tilt_mp4 = "loadvid.php?filename=".$manual_tilt_vid_files[0];
+		$manual_tilt_ogv = "loadvid.php?filename=".$manual_tilt_vid_files[1];
+		$manual_tilt_webm = "loadvid.php?filename=".$manual_tilt_vid_files[2];
+		$download_manual_tilt_mp4 = "downloadvid.php?filename=".$manual_tilt_vid_files[0];
 		$tilt_gif = "loadimg.php?rawgif=1&filename=".$tilt_gif_files[0];
 		$tilt_mp4 = "loadvid.php?filename=".$tilt_vid_files[0];
 		$tilt_ogv = "loadvid.php?filename=".$tilt_vid_files[1];
 		$tilt_webm = "loadvid.php?filename=".$tilt_vid_files[2];
+		$tilt2_gif = "loadimg.php?rawgif=1&filename=".$tilt_gif_files[1];
+		$tilt2_mp4 = "loadvid.php?filename=".$tilt_vid_files[3];
+		$tilt2_ogv = "loadvid.php?filename=".$tilt_vid_files[4];
+		$tilt2_webm = "loadvid.php?filename=".$tilt_vid_files[5];
 		$download_tilt_mp4 = "downloadvid.php?filename=".$tilt_vid_files[0];
+		$download_tilt2_mp4 = "downloadvid.php?filename=".$tilt_vid_files[3];
 		$rec_gif = "loadimg.php?rawgif=1&filename=".$rec_gif_files[0];
 		$rec_mp4 = "loadvid.php?filename=".$rec_vid_files[0];
 		$rec_ogv = "loadvid.php?filename=".$rec_vid_files[1];
 		$rec_webm = "loadvid.php?filename=".$rec_vid_files[2];
+		$rec2_gif = "loadimg.php?rawgif=1&filename=".$rec_gif_files[1];
+		$rec2_mp4 = "loadvid.php?filename=".$rec_vid_files[3];
+		$rec2_ogv = "loadvid.php?filename=".$rec_vid_files[4];
+		$rec2_webm = "loadvid.php?filename=".$rec_vid_files[5];
 		$download_rec_mp4 = "downloadvid.php?filename=".$rec_vid_files[0];
+		$download_rec2_mp4 = "downloadvid.php?filename=".$rec_vid_files[3];
+		$manual_rec_gif = "loadimg.php?rawgif=1&filename=".$manual_rec_gif_files[0];
+		$manual_rec_mp4 = "loadvid.php?filename=".$manual_rec_vid_files[0];
+		$manual_rec_ogv = "loadvid.php?filename=".$manual_rec_vid_files[1];
+		$manual_rec_webm = "loadvid.php?filename=".$manual_rec_vid_files[2];
+		$download_manual_rec_mp4 = "downloadvid.php?filename=".$manual_rec_vid_files[0];
+		
+		if (isset($defocus_gif_files[0])) {
+			$html .= "
+		<br />	
+		<center><H4>Defocus Estimation</H4></center>
+		<br />";
+			$html .= '<table id="" class="display" cellspacing="0" border="1" align="center">';
+			$html .= "<tr>";
+			$html .= '<th><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[2].'" alt="defocus_gif2" width="225" /></th>';
+			$html .= '<th><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[6].'" alt="defocus_gif6" width="325" /></th>';
+			$html .= '<th><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[10].'" alt="defocus_gif10" width="420" /></th>';
+			$html .= "</tr><tr>";
+			$html .= '<th><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[0].'" alt="defocus_gif0" width="225" /></th>';
+			$html .= '<th><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[4].'" alt="defocus_gif4" width="325" /></th>';
+			$html .= '<th><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[8].'" alt="defocus_gif8" width="420" /></th>';
+			$html .= "</tr><tr>";
+			$html .= '<th><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[1].'" alt="defocus_gif1" width="225" /></th>';
+			$html .= '<th><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[5].'" alt="defocus_gif5" width="325" /></th>';
+			$html .= '<th><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[9].'" alt="defocus_gif9" width="420" /></th>';
+			$html .= "</tr><tr>";
+			$html .= '<th><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[3].'" alt="defocus_gif3" width="225" /></th>';
+			$html .= '<th><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[7].'" alt="defocus_gif7" width="325" /></th>';
+			$html .= '<th><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[11].'" alt="defocus_gif11" width="420" /></th>';
+			$html .= '</tr><tr></table><br>';
+			$html .= '<center>'.docpop('defocus_estimate_info', 'Image Info').'</center><br><hr />';
+		}
 		
 		if (isset($ctf_gif_files[0])) {
 			$html .= "
@@ -133,10 +194,32 @@ class Protomo2CoarseAlignSummary extends BasicLayoutForm
 	<br />
 	<center><H4>Tilt-Series Correlation Peaks</H4></center>
 	<br />";
-		if (isset($corrpeak_gif_files[0])) {
+		if (isset($corrpeak_gif_files[0]) and isset($corrpeak_gif_files[1])) {
+			$html .= '<center><b>Iteration 1 &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp Iteration 2</b></center>'.//lol
+			          '<center><img src="'.$corrpeak_gif.'" alt="correlations" /> <img src="'.$corrpeak2_gif.'" alt="correlations2" />'."<br /></center>";
+			$html .= '<center>'.docpop('corrimageinfo_coarse', 'Image Info').'</center>';
+			$html .= '<p align="right"><a href="'.$download_corrpeak_mp4.'">Download Iteration 1 Video</a></p>';
+			$html .= '<p align="right"><a href="'.$download_corrpeak2_mp4.'">Download Iteration 2 Video</a></p><br /><br /><hr />';
+		} elseif (isset($corrpeak_gif_files[0])) {
 			$html .= '<center><img src="'.$corrpeak_gif.'" alt="correlations" />'."<br /></center>";
 			$html .= '<center>'.docpop('corrimageinfo_coarse', 'Image Info').'</center>';
 			$html .= '<p align="right"><a href="'.$download_corrpeak_mp4.'">Download Video</a></p><br /><br /><hr />';
+		} elseif (isset($corrpeak_vid_files[0]) and isset($corrpeak_vid_files[3])){
+			$html .= '<center><video id="corrpeakVideos" autoplay loop>
+				  <source src="'.$corrpeak_mp4.'" type="video/mp4" loop>'.'<br />
+				  <source src="'.$corrpeak_webm.'" type="video/webm" loop>'.'<br />
+				  <source src="'.$corrpeak_ogv.'" type="video/ogg" loop>'.'<br />
+				  HTML5 video is not supported by your browser.
+				  </video></center>';
+			$html .= '<center><video id="corrpeakVideos2" autoplay loop>
+				  <source src="'.$corrpeak2_mp4.'" type="video/mp4" loop>'.'<br />
+				  <source src="'.$corrpeak2_webm.'" type="video/webm" loop>'.'<br />
+				  <source src="'.$corrpeak2_ogv.'" type="video/ogg" loop>'.'<br />
+				  HTML5 video is not supported by your browser.
+				  </video></center>';
+			$html .= '<center>'.docpop('corrimageinfo_coarse', 'Image Info').'</center>';
+			$html .= '<p align="right"><a href="'.$download_corrpeak_mp4.'">Download Iteration 1 Video</a></p>';
+			$html .= '<p align="right"><a href="'.$download_corrpeak2_mp4.'">Download Iteration 2 Video</a></p><hr />';
 		} elseif (isset($corrpeak_vid_files[0])){
 			$html .= '<center><video id="corrpeakVideos" autoplay loop>
 				  <source src="'.$corrpeak_mp4.'" type="video/mp4" loop>'.'<br />
@@ -164,8 +247,8 @@ class Protomo2CoarseAlignSummary extends BasicLayoutForm
 		}
 		</script>
 		
-		<center><input type="button" style="width:150px;height:30px;" onclick="return toggleMe(\'para1\')" value="View Initial Tilt-Series"></center><br>
-		<div id="para1" style="display:none">';
+		<center><input type="button" style="width:160px;height:30px;" onclick="return toggleMe(\'para2\')" value="View Initial Tilt-Series"></center><br>
+		<div id="para2" style="display:none">';
 		$html .= "
 	<center><H4>Tilt-Series Before Coarse Alignment</H4></center>
 	<br />";
@@ -190,10 +273,88 @@ class Protomo2CoarseAlignSummary extends BasicLayoutForm
 		$html .= "
 	<hr /><br /><center><H4>Tilt-Series After Coarse Alignment</H4></center>
 	<br />";
-		if (isset($tilt_gif_files[0])) {
+		if (isset($tilt_gif_files[0]) and isset($tilt_gif_files[1]) and isset($manual_tilt_gif_files[0])) {
+			$html .= '<center><img src="'.$tilt_gif.'" alt="tiltseries" /> <img src="'.$manual_tilt_gif.'" alt="manualtiltseries" /> <img src="'.$tilt2_gif.'" alt="tiltseries2" />'."<br /></center>";
+			$html .= '<center>'.docpop('tiltimageinfo_coarse', 'Image Info').'</center>';
+			$html .= '<p align="right"><a href="'.$download_tilt_mp4.'">Download Iteration 1 Video</a></p><br /><br />';
+			$html .= '<p align="right"><a href="'.$download_manual_tilt_mp4.'">Download Manual Alignment Video</a></p><br /><br />';
+			$html .= '<p align="right"><a href="'.$download_tilt2_mp4.'">Download Iteration 2 Video</a></p><br /><br /><hr />';
+		} elseif (isset($tilt_gif_files[0]) and isset($manual_tilt_gif_files[0])) {
+			$html .= '<center><img src="'.$tilt_gif.'" alt="tiltseries" /> <img src="'.$manual_tilt_gif.'" alt="manualtiltseries" />'."<br /></center>";
+			$html .= '<center>'.docpop('tiltimageinfo_coarse', 'Image Info').'</center>';
+			$html .= '<p align="right"><a href="'.$download_tilt_mp4.'">Download Iteration 1 Video</a></p><br /><br />';
+			$html .= '<p align="right"><a href="'.$download_manual_tilt_mp4.'">Download Manual Alignment Video</a></p><br /><br />';
+		} elseif (isset($tilt_gif_files[0]) and isset($tilt_gif_files[1])) {
+			$html .= '<center><img src="'.$tilt_gif.'" alt="tiltseries" /> <img src="'.$tilt2_gif.'" alt="tiltseries2" />'."<br /></center>";
+			$html .= '<center>'.docpop('tiltimageinfo_coarse', 'Image Info').'</center>';
+			$html .= '<p align="right"><a href="'.$download_tilt_mp4.'">Download Iteration 1 Video</a></p><br /><br />';
+			$html .= '<p align="right"><a href="'.$download_tilt2_mp4.'">Download Iteration 2 Video</a></p><br /><br /><hr />';
+		} elseif (isset($tilt_gif_files[0])) {
 			$html .= '<center><img src="'.$tilt_gif.'" alt="tiltseries" />'."<br /></center>";
 			$html .= '<center>'.docpop('tiltimageinfo_coarse', 'Image Info').'</center>';
 			$html .= '<p align="right"><a href="'.$download_tilt_mp4.'">Download Video</a></p><br /><br /><hr />';
+		} elseif (isset($tilt_vid_files[0]) and isset($tilt_vid_files[3]) and isset($manual_tilt_vid_files[0])){
+			$html .= '<center><b>Iteration 1</b></center>
+				  <center><video id="tiltVideos" controls autoplay loop>
+				  <source src="'.$tilt_mp4.'" type="video/mp4" loop>'.'<br />
+				  <source src="'.$tilt_webm.'" type="video/webm" loop>'.'<br />
+				  <source src="'.$tilt_ogv.'" type="video/ogg" loop>'.'<br />
+				  HTML5 video is not supported by your browser.
+				  </video></center>';
+			$html .= '<center><b>Manual</b></center>
+				  <center><video id="manualTiltVideos" controls autoplay loop>
+				  <source src="'.$manual_tilt_mp4.'" type="video/mp4" loop>'.'<br />
+				  <source src="'.$manual_tilt_webm.'" type="video/webm" loop>'.'<br />
+				  <source src="'.$manual_tilt_ogv.'" type="video/ogg" loop>'.'<br />
+				  HTML5 video is not supported by your browser.
+				  </video></center>';
+			$html .= '<center><b>Iteration 2</b></center>
+				  <center><video id="tiltVideos2" controls autoplay loop>
+				  <source src="'.$tilt2_mp4.'" type="video/mp4" loop>'.'<br />
+				  <source src="'.$tilt2_webm.'" type="video/webm" loop>'.'<br />
+				  <source src="'.$tilt2_ogv.'" type="video/ogg" loop>'.'<br />
+				  HTML5 video is not supported by your browser.
+				  </video></center>';
+			$html .= '<center>'.docpop('tiltimageinfo_coarse', 'Image Info').'</center>';
+			$html .= '<p align="right"><a href="'.$download_tilt_mp4.'">Download Iteration 1 Video</a></p>';
+			$html .= '<p align="right"><a href="'.$download_manual_tilt_mp4.'">Download Manual Alignment Video</a></p>';
+			$html .= '<p align="right"><a href="'.$download_tilt2_mp4.'">Download Iteration 2 Video</a></p><hr />';
+		} elseif (isset($tilt_vid_files[0]) and isset($manual_tilt_vid_files[0])){
+			$html .= '<center><b>Iteration 1</b></center>
+				  <center><video id="tiltVideos" controls autoplay loop>
+				  <source src="'.$tilt_mp4.'" type="video/mp4" loop>'.'<br />
+				  <source src="'.$tilt_webm.'" type="video/webm" loop>'.'<br />
+				  <source src="'.$tilt_ogv.'" type="video/ogg" loop>'.'<br />
+				  HTML5 video is not supported by your browser.
+				  </video></center>';
+			$html .= '<center><b>Manual</b></center>
+				  <center><video id="manualTiltVideos" controls autoplay loop>
+				  <source src="'.$manual_tilt_mp4.'" type="video/mp4" loop>'.'<br />
+				  <source src="'.$manual_tilt_webm.'" type="video/webm" loop>'.'<br />
+				  <source src="'.$manual_tilt_ogv.'" type="video/ogg" loop>'.'<br />
+				  HTML5 video is not supported by your browser.
+				  </video></center>';
+			$html .= '<center>'.docpop('tiltimageinfo_coarse', 'Image Info').'</center>';
+			$html .= '<p align="right"><a href="'.$download_tilt_mp4.'">Download Iteration 1 Video</a></p>';
+			$html .= '<p align="right"><a href="'.$download_manual_tilt_mp4.'">Download Manual Alignment Video</a></p>';
+		} elseif (isset($tilt_vid_files[0]) and isset($tilt_vid_files[3])){
+			$html .= '<center><b>Iteration 1</b></center>
+				  <center><video id="tiltVideos" controls autoplay loop>
+				  <source src="'.$tilt_mp4.'" type="video/mp4" loop>'.'<br />
+				  <source src="'.$tilt_webm.'" type="video/webm" loop>'.'<br />
+				  <source src="'.$tilt_ogv.'" type="video/ogg" loop>'.'<br />
+				  HTML5 video is not supported by your browser.
+				  </video></center>';
+			$html .= '<center><b>Iteration 2</b></center>
+				  <center><video id="tiltVideos2" controls autoplay loop>
+				  <source src="'.$tilt2_mp4.'" type="video/mp4" loop>'.'<br />
+				  <source src="'.$tilt2_webm.'" type="video/webm" loop>'.'<br />
+				  <source src="'.$tilt2_ogv.'" type="video/ogg" loop>'.'<br />
+				  HTML5 video is not supported by your browser.
+				  </video></center>';
+			$html .= '<center>'.docpop('tiltimageinfo_coarse', 'Image Info').'</center>';
+			$html .= '<p align="right"><a href="'.$download_tilt_mp4.'">Download Iteration 1 Video</a></p>';
+			$html .= '<p align="right"><a href="'.$download_tilt2_mp4.'">Download Iteration 2 Video</a></p><hr />';
 		} elseif (isset($tilt_vid_files[0])){
 			$html .= '<center><video id="tiltVideos" controls autoplay loop>
 				  <source src="'.$tilt_mp4.'" type="video/mp4" loop>'.'<br />
@@ -206,14 +367,93 @@ class Protomo2CoarseAlignSummary extends BasicLayoutForm
 		} else {
 			$html .= "<center><b>Depiction Tilt-Series Video for Coarse Alignment either failed to generate, is still processing, or wasn't requested</b></center>";
 		}
+		
 		$html .= "
 	<br />
 	<center><H4>Tilt-Series Reconstruction After Coarse Alignment</H4></center>
 	<br />";
-		if (isset($rec_gif_files[0])) {
+		if (isset($rec_gif_files[0]) and isset($rec_gif_files[1]) and isset($manual_rec_gif_files[1])) {
+			$html .= '<center><img src="'.$rec_gif.'" alt="reconstruction" /> <img src="'.$manual_rec_gif.'" alt="manualreconstruction" /> <img src="'.$rec2_gif.'" alt="reconstruction2" />'."<br /></center>";
+			$html .= '<center>'.docpop('reconimageinfo_coarse', 'Image Info').'<br /><br /></center>';
+			$html .= '<p align="right"><a href="'.$download_rec_mp4.'">Download Iteration 1 Video</a></p><br /><br />';
+			$html .= '<p align="right"><a href="'.$download_manual_rec_mp4.'">Download Manual Alignment Video</a></p><br /><br />';
+			$html .= '<p align="right"><a href="'.$download_rec2_mp4.'">Download Iteration 2 Video</a></p><br /><br /><hr />';
+		} elseif (isset($rec_gif_files[0]) and isset($manual_rec_gif_files[1])) {
+			$html .= '<center><img src="'.$rec_gif.'" alt="reconstruction" /> <img src="'.$manual_rec_gif.'" alt="manualreconstruction" />'."<br /></center>";
+			$html .= '<center>'.docpop('reconimageinfo_coarse', 'Image Info').'<br /><br /></center>';
+			$html .= '<p align="right"><a href="'.$download_rec_mp4.'">Download Iteration 1 Video</a></p><br /><br />';
+			$html .= '<p align="right"><a href="'.$download_manual_rec_mp4.'">Download Manual Alignment Video</a></p><br /><br /><hr />';
+		} elseif (isset($rec_gif_files[0]) and isset($rec_gif_files[1])) {
+			$html .= '<center><img src="'.$rec_gif.'" alt="reconstruction" /> <img src="'.$rec2_gif.'" alt="reconstruction2" />'."<br /></center>";
+			$html .= '<center>'.docpop('reconimageinfo_coarse', 'Image Info').'<br /><br /></center>';
+			$html .= '<p align="right"><a href="'.$download_rec_mp4.'">Download Iteration 1 Video</a></p><br /><br />';
+			$html .= '<p align="right"><a href="'.$download_rec2_mp4.'">Download Iteration 2 Video</a></p><br /><br /><hr />';
+		} elseif (isset($rec_gif_files[0])) {
 			$html .= '<center><img src="'.$rec_gif.'" alt="reconstruction" />'."<br /></center>";
 			$html .= '<center>'.docpop('reconimageinfo_coarse', 'Image Info').'<br /><br /></center>';
 			$html .= '<p align="right"><a href="'.$download_rec_mp4.'">Download Video</a></p><br /><br /><hr />';
+		} elseif (isset($rec_vid_files[0]) and isset($rec_vid_files[3]) and isset($manual_rec_vid_files[0])){
+			$html .= '<center><b>Iteration 1</b></center>
+				  <center><video id="reconVideos" controls autoplay loop>
+				  <source src="'.$rec_mp4.'" type="video/mp4" loop>'.'<br />
+				  <source src="'.$rec_webm.'" type="video/webm" loop>'.'<br />
+				  <source src="'.$rec_ogv.'" type="video/ogg" loop>'.'<br />
+				  HTML5 video is not supported by your browser.
+				  </video></center>';
+			$html .= '<center><b>Manual</b></center>
+				  <center><video id="manualreconVideos" controls autoplay loop>
+				  <source src="'.$rec2_mp4.'" type="video/mp4" loop>'.'<br />
+				  <source src="'.$rec2_webm.'" type="video/webm" loop>'.'<br />
+				  <source src="'.$rec2_ogv.'" type="video/ogg" loop>'.'<br />
+				  HTML5 video is not supported by your browser.
+				  </video></center>';
+			$html .= '<center><b>Iteration 2</b></center>
+				  <center><video id="reconVideos2" controls autoplay loop>
+				  <source src="'.$rec2_mp4.'" type="video/mp4" loop>'.'<br />
+				  <source src="'.$rec2_webm.'" type="video/webm" loop>'.'<br />
+				  <source src="'.$rec2_ogv.'" type="video/ogg" loop>'.'<br />
+				  HTML5 video is not supported by your browser.
+				  </video></center>';
+			$html .= '<center>'.docpop('reconimageinfo_coarse', 'Image Info').'</center>';
+			$html .= '<p align="right"><a href="'.$download_rec_mp4.'">Download Iteration 1 Video</a></p>';
+			$html .= '<p align="right"><a href="'.$download_manual_rec_mp4.'">Download Manual Alignment Video</a></p>';
+			$html .= '<p align="right"><a href="'.$download_rec2_mp4.'">Download Iteration 2 Video</a></p><hr />';
+		} elseif (isset($rec_vid_files[0]) and isset($manual_rec_vid_files[0])){
+			$html .= '<center><b>Iteration 1</b></center>
+				  <center><video id="reconVideos" controls autoplay loop>
+				  <source src="'.$rec_mp4.'" type="video/mp4" loop>'.'<br />
+				  <source src="'.$rec_webm.'" type="video/webm" loop>'.'<br />
+				  <source src="'.$rec_ogv.'" type="video/ogg" loop>'.'<br />
+				  HTML5 video is not supported by your browser.
+				  </video></center>';
+			$html .= '<center><b>Manual</b></center>
+				  <center><video id="manualreconVideos" controls autoplay loop>
+				  <source src="'.$rec2_mp4.'" type="video/mp4" loop>'.'<br />
+				  <source src="'.$rec2_webm.'" type="video/webm" loop>'.'<br />
+				  <source src="'.$rec2_ogv.'" type="video/ogg" loop>'.'<br />
+				  HTML5 video is not supported by your browser.
+				  </video></center>';
+			$html .= '<center>'.docpop('reconimageinfo_coarse', 'Image Info').'</center>';
+			$html .= '<p align="right"><a href="'.$download_rec_mp4.'">Download Iteration 1 Video</a></p>';
+			$html .= '<p align="right"><a href="'.$download_manual_rec_mp4.'">Download Manual Alignment Video</a></p><hr />';
+		} elseif (isset($rec_vid_files[0]) and isset($rec_vid_files[3])){
+			$html .= '<center><b>Iteration 1</b></center>
+				  <center><video id="reconVideos" controls autoplay loop>
+				  <source src="'.$rec_mp4.'" type="video/mp4" loop>'.'<br />
+				  <source src="'.$rec_webm.'" type="video/webm" loop>'.'<br />
+				  <source src="'.$rec_ogv.'" type="video/ogg" loop>'.'<br />
+				  HTML5 video is not supported by your browser.
+				  </video></center>';
+			$html .= '<center><b>Iteration 2</b></center>
+				  <center><video id="reconVideos2" controls autoplay loop>
+				  <source src="'.$rec2_mp4.'" type="video/mp4" loop>'.'<br />
+				  <source src="'.$rec2_webm.'" type="video/webm" loop>'.'<br />
+				  <source src="'.$rec2_ogv.'" type="video/ogg" loop>'.'<br />
+				  HTML5 video is not supported by your browser.
+				  </video></center>';
+			$html .= '<center>'.docpop('reconimageinfo_coarse', 'Image Info').'</center>';
+			$html .= '<p align="right"><a href="'.$download_rec_mp4.'">Download Iteration 1 Video</a></p>';
+			$html .= '<p align="right"><a href="'.$download_rec2_mp4.'">Download Iteration 2 Video</a></p><hr />';
 		} elseif (isset($rec_vid_files[0])){
 			$html .= '<center><video id="reconVideos" controls autoplay loop>
 				  <source src="'.$rec_mp4.'" type="video/mp4" loop>'.'<br />
@@ -234,22 +474,24 @@ class Protomo2CoarseAlignSummary extends BasicLayoutForm
 				<b><center>[Refresh this page after Coarse Alignment completes]</center><br></b>";
 			$html .= "<br></br>
 				<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2CoarseAlignForm'><b><center><font size='5'>←</font> [Click here to go back to <font size='4'>Coarse Alignment</font>]</center></b></a>";
+			$html .= "<br></br><br></br>
+				<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2RefineForm'><b><center>[Click here to continue onto <font size='4'>Refinement</font> ONLY if you know what you're doing!] <font size='5'>→</font></center></b></a>";
 		} else {
 			$html .= "<br></br>
 				<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2RefineForm'><b><center>[Click here to continue onto <font size='4'>Refinement</font> if the Coarse Alignment results are satisfactory] <font size='5'>→</font></center></b></a>";
 			$html .= "<br></br>
 				<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2CoarseAlignForm'><b><center><font size='5'>←</font> [Click here to go back to <font size='4'>Coarse Alignment</font>]</center></b></a>";
+			$html .= "<br></br><b><center>[If you wish to manually align the (1st) Coarse Alignment, run the following command:</b><br><br>
+				/usr/bin/python `which protomo2manualaligner.py` --rundir=$outdir/$runname/ --tiltseries=$tiltseries --iteration=Coarse --center_all_images=False --sampling=4 --image_fraction=0.65<br><br>
+				<b>and then choose 'More Manual' as the starting tilt file in Refinement.]</center></b><br>";
 		}
 		
 		return $html;
 	}	
 	
-	// Override the default ShowReference function because the user needs to be re-directed
-	// to the next step of the Protomo workflow.
-	public function showReference( $postArray )
+	// Use form footer to set $_SESSION variables
+	public function generateFormFooter()
 	{
-		$html = parent::showReference( $postArray );
-		
 		global $tiltseries;
 		global $sessionname;
 		global $runname;

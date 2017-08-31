@@ -97,17 +97,19 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 													allownone=False,
 													chars=7,
 													value='200.0')
-		expsz = wx.GridBagSizer(5, 10)
+		self.expsz = wx.GridBagSizer(5, 10)
+		pos = self.createUsePresetExposureCheckBox('expsz', (0,0))
 		label = wx.StaticText(self, -1, 'Total dose')
-		expsz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		expsz.Add(self.widgets['dose'], (0, 1), (1, 1),
+		self.expsz.Add(label, (pos[0], 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.expsz.Add(self.widgets['dose'], (pos[0], 1), (1, 1),
 					wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.FIXED_MINSIZE)
 		label = wx.StaticText(self, -1, 'e-/A^2')
-		expsz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		self.expsz.Add(label, (pos[0], 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 
-		expsz.AddGrowableCol(0)
-		expsz.AddGrowableRow(0)
-		expsbsz.Add(expsz, 1, wx.EXPAND|wx.ALL, 5)
+		self.expsz.AddGrowableCol(0)
+		self.expsz.AddGrowableRow(0)
+		self.expsz.AddGrowableRow(1)
+		expsbsz.Add(self.expsz, 1, wx.EXPAND|wx.ALL, 5)
 		#misc
 		self.widgets['integer'] = wx.CheckBox(self, -1, 'Scale by')
 		self.widgets['intscale'] = FloatEntry(self, -1, min=0.0,
@@ -146,6 +148,15 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		sz.AddGrowableCol(0)
 		sz.AddGrowableCol(1)
 		return sz
+
+	def createUsePresetExposureCheckBox(self, sz_name, start_position):
+		self.widgets['use preset exposure'] = \
+				wx.CheckBox(self, -1, 'Always use preset exposure time')
+		total_length = (1,2)
+		sz = getattr(self,sz_name)
+		sz.Add(self.widgets['use preset exposure'], start_position, (1, 2),
+				  wx.ALIGN_CENTER)
+		return start_position[0]+total_length[0],start_position[1]+total_length[1]
 
 	def createTiltOrderSelector(self):
 		tilt_order_choices = self.getTiltOrderChoices()
@@ -503,6 +514,8 @@ class Panel(leginon.gui.wx.Acquisition.Panel):
 	def __init__(self, *args, **kwargs):
 		leginon.gui.wx.Acquisition.Panel.__init__(self, *args, **kwargs)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_BROWSE_IMAGES, False)
+		self.toolbar.InsertTool(5, leginon.gui.wx.ToolBar.ID_ABORT_ONE_TARGET,
+						'stopone', shortHelpString='Abort single tilt series')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_CHECK_DOSE,
 							 'dose',
 							 shortHelpString='Check dose')
@@ -523,6 +536,9 @@ class Panel(leginon.gui.wx.Acquisition.Panel):
 		self.toolbar.Bind(wx.EVT_TOOL,
 						  self.onCheckDose,
 						  id=leginon.gui.wx.ToolBar.ID_CHECK_DOSE)
+		self.toolbar.Bind(wx.EVT_TOOL,
+						  self.onStopTargetTool,
+						  id=leginon.gui.wx.ToolBar.ID_ABORT_ONE_TARGET)
 
 	def onCheckDose(self, evt):
 		threading.Thread(target=self.node.checkDose).start()

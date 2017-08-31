@@ -68,6 +68,7 @@ def getTemplates(params):
 		scalefactor = templatedata['apix'] / params['apix']
 		if abs(scalefactor - 1.0) > 0.01:
 			apDisplay.printMsg("rescaling template "+str(index)+": "+str(templatedata['apix'])+"->"+str(params['apix']))
+		## this step adjusts boxsize as well
 		templatearray = scaleTemplate(templatearray, scalefactor)
 		apImage.arrayToMrc(templatearray, scaletemplatepath, msg=False)
 		#bin and filter
@@ -212,7 +213,7 @@ def insertTemplateImage(params):
 		templateq2=appiondata.ApTemplateImageData()
 		templateq2['md5sum']=md5sum
 		templateId = templateq2.query(results=1)
-		if templateId:
+		if not params['force_insert'] and templateId:
 			apDisplay.printWarning("template with the same check sum already exists in database.\nNot reinserting")
 			continue
 

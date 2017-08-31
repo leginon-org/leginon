@@ -1,7 +1,7 @@
-# The Leginon software is Copyright 2004
-# The Scripps Research Institute, La Jolla, CA
+# The Leginon software is Copyright under
+# Apache License, Version 2.0
 # For terms of the license agreement
-# see http://ami.scripps.edu/software/leginon-license
+# see http://leginon.org
 #
 # $Source: /ami/sw/cvsroot/pyleginon/leginon.gui.wx/TargetFinder.py,v $
 # $Revision: 1.19 $
@@ -166,7 +166,8 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.widgets['queue drift'] = wx.CheckBox(self, -1, 'Declare drift when queue submitted')
 		self.widgets['sort target'] = wx.CheckBox(self, -1, 'Sort targets by shortest path')
 		self.widgets['allow append'] = wx.CheckBox(self, -1, 'Allow target finding on old images')
-		self.widgets['multifocus'] = wx.CheckBox(self, -1, 'Use all focus targetis for averaging')
+		self.widgets['multifocus'] = wx.CheckBox(self, -1, 'Use all focus targets for averaging')
+		self.widgets['allow no focus'] = wx.CheckBox(self, -1, 'Do not require focus targets in user varification')
 		self.Bind(wx.EVT_CHECKBOX, self.onQueueCheckbox, self.widgets['queue'])
 
 		sz = wx.GridBagSizer(5, 5)
@@ -184,8 +185,10 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 						wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['multifocus'], (5, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['allow no focus'], (6, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
 		if not hide_incomplete:
-			sz.Add(self.widgets['allow append'], (6, 0), (1, 1),
+			sz.Add(self.widgets['allow append'], (7, 0), (1, 1),
 							wx.ALIGN_CENTER_VERTICAL)
 
 		return sz

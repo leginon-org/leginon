@@ -1,7 +1,7 @@
-# The Leginon software is Copyright 2004
-# The Scripps Research Institute, La Jolla, CA
+# The Leginon software is Copyright under
+# Apache License, Version 2.0
 # For terms of the license agreement
-# see http://ami.scripps.edu/software/leginon-license
+# see http://leginon.org
 #
 # $Source: /ami/sw/cvsroot/pyleginon/instrument.py,v $
 # $Revision: 1.38 $
@@ -132,6 +132,7 @@ class Proxy(object):
 				cs = 2.0e-3
 			instrumentdata['cs'] = cs
 			dbinstrumentdata = instrumentdata
+			dbinstrumentdata['hidden'] = False
 			dbinstrumentdata.insert()
 		return dbinstrumentdata
 
@@ -187,6 +188,7 @@ class Proxy(object):
 			dbinstrumentdata = results[0]
 		else:
 			dbinstrumentdata = instrumentdata
+			dbinstrumentdata['hidden'] = False
 			dbinstrumentdata.insert()
 		return dbinstrumentdata
 

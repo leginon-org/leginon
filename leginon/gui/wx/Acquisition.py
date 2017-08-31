@@ -1,7 +1,7 @@
-# The Leginon software is Copyright 2004
-# The Scripps Research Institute, La Jolla, CA
+# The Leginon software is Copyright under
+# Apache License, Version 2.0
 # For terms of the license agreement
-# see http://ami.scripps.edu/software/leginon-license
+# see http://leginon.org
 #
 
 import wx
@@ -526,6 +526,13 @@ class Panel(leginon.gui.wx.Node.Panel):
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT_QUEUE, False)
 		self.node.player.pause()
 
+	def onStopTargetTool(self, evt):
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT_QUEUE, False)
+		self.node.player.stoptarget()
+
 	def onStopTool(self, evt):
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, False)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, False)
@@ -551,15 +558,23 @@ class Panel(leginon.gui.wx.Node.Panel):
 			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, False) 
 			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, True)
 			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT_QUEUE, True)
+		elif evt.state == 'stoptarget':
+			# case for stop one target
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, True)
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, True) 
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT_QUEUE, True)
 		elif evt.state == 'stop':
+			# case for stop one target list
 			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, True)
 			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, True) 
 			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
 			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT_QUEUE, True)
 		elif evt.state == 'stopqueue':
+			# case for stop all target lists in queue
 			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, True)
 			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, True) 
-			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, True)
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
 			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT_QUEUE, False)
 
 	def onBrowseImagesTool(self, evt):

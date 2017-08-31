@@ -1,9 +1,9 @@
 #
 # COPYRIGHT:
-#       The Leginon software is Copyright 2003
-#       The Scripps Research Institute, La Jolla, CA
+#       The Leginon software is Copyright under
+#       Apache License, Version 2.0
 #       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
+#       see  http://leginon.org
 #
 #
 
@@ -14,7 +14,7 @@ import datatransport
 import event
 import threading
 import gui.wx.Events
-import gui.wx.Logging
+import gui.wx.LeginonLogging as Logging
 import gui.wx.Node
 import copy
 import socket
@@ -78,7 +78,7 @@ class Node(correctorclient.CorrectorClient):
 
 		if otherdatabinder is None:
 			name = DataBinder.__name__
-			databinderlogger = gui.wx.Logging.getNodeChildLogger(name, self)
+			databinderlogger = Logging.getNodeChildLogger(name, self)
 			self.databinder = DataBinder(self, databinderlogger, tcpport=tcpport)
 		else:
 			self.databinder = otherdatabinder
@@ -204,9 +204,9 @@ class Node(correctorclient.CorrectorClient):
 	def initializeLogger(self):
 		if hasattr(self, 'logger'):
 			return
-		self.logger = gui.wx.Logging.getNodeLogger(self)
+		self.logger = Logging.getNodeLogger(self)
 		clientname = datatransport.Client.__name__
-		self.clientlogger = gui.wx.Logging.getNodeChildLogger(clientname, self)
+		self.clientlogger = Logging.getNodeChildLogger(clientname, self)
 
 	def logToDB(self, record):
 		'''insertes a logger record into the DB'''

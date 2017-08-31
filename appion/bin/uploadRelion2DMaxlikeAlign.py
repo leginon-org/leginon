@@ -37,7 +37,6 @@ class UploadRelionMaxLikeScript(appionScript.AppionScript):
 			help="Maximum likelihood jobid", metavar="#")
 		self.parser.add_option("-t", "--timestamp", dest="timestamp",
 			help="Timestamp of files, e.g. 08nov02b35", metavar="CODE")
-
 		self.parser.add_option("--no-sort", dest="sort", default=True,
 			action="store_false", help="Do not sort files into nice folders")
 
@@ -124,6 +123,7 @@ class UploadRelionMaxLikeScript(appionScript.AppionScript):
 		apDisplay.printMsg("Sorted "+str(refsort)+" reference files")
 		return
 
+	#=====================
 	def adjustPartDict(self, relionpartdict, reflist):
 		return apRelion.adjustPartDict(relionpartdict, reflist)
 
@@ -164,19 +164,19 @@ class UploadRelionMaxLikeScript(appionScript.AppionScript):
 
 		starData = starFile.StarFile(inputfile)
 		starData.read()
-		#print starData.getHeader()
 		dataBlock = starData.getDataBlock('data_images')
 		particleTree = dataBlock.getLoopDict()
-		#for i in range(10):
-		#	print particleTree[i]
+		self.class_count = {}
 		for relionpartdict in particleTree:
 			partdict = self.adjustPartDict(relionpartdict, reflist)
+			refnum = partdict['refnum']
+			self.class_count[refnum] = self.class_count.get(refnum, 0) + 1
 			partlist.append(partdict)
 		apDisplay.printMsg("read rotation and shift parameters for "+str(len(partlist))+" particles")
+		apDisplay.printMsg("Class counts: %s"%(str(self.class_count)))
 		if len(partlist) < 1:
 			apDisplay.printError("Did not find any particles in star file: "+inputfile)
 		return partlist
-
 
 	#=====================
 	def readRunParameters(self):
@@ -311,7 +311,9 @@ class UploadRelionMaxLikeScript(appionScript.AppionScript):
 
 		return
 
+	#=====================
 	def createAlignedStack(self, partlist, origstackfile):
+		### this is redundant...
 		return apStackFile.createAlignedStack(partlist, origstackfile)
 
 	#=====================
@@ -321,6 +323,7 @@ class UploadRelionMaxLikeScript(appionScript.AppionScript):
 		f.write(text+"\n\n")
 		f.close()
 
+	#=====================
 	def replaceNaNImageInReferenceStack(self, runparams):
 		apDisplay.printMsg('Checking reference stack for NaN data....')
 		finalreffile = "part%s_it%03d_classes.mrcs"%(runparams['timestamp'], runparams['maxiter'])
@@ -434,20 +437,33 @@ class UploadRelionMaxLikeScript(appionScript.AppionScript):
 		# create aligned reference stack
 		reflist = self.readRefStarFile()
 		alignref_imagicfile = "part"+self.params['timestamp']+"_average.hed"
-	
-		# convert unaligned refstack from mrc to imagic format
-		unaligned_refstack_mrc = os.path.join('iter%03d' % self.lastiter,'part%s_it%03d_classes.mrcs' % (self.params['timestamp'], self.lastiter))
-		unaligned_refstack_imagic = 'part%s_it%03d_classes.hed' % (self.params['timestamp'], self.lastiter)
-		stackarray = mrc.read(unaligned_refstack_mrc)
-		apImagicFile.writeImagic(stackarray, unaligned_refstack_imagic)
-		# createAlignedStack
-		temp_imagicfile = apStackFile.createAlignedStack(reflist, unaligned_refstack_imagic,'temp_aligned_ref')
-		apFile.moveStack(temp_imagicfile,alignref_imagicfile)
 
 		### create aligned stacks
 		partlist = self.readPartStarFile(reflist)
 		#self.writePartDocFile(partlist)
 		alignimagicfile = self.createAlignedStack(partlist, runparams['localstack'])
+
+		# convert unaligned weighted refstack from mrc to imagic format
+		unaligned_refstack_mrc = os.path.join('iter%03d' % self.lastiter,'part%s_it%03d_classes.mrcs' % (self.params['timestamp'], self.lastiter))
+		unaligned_refstack_imagic = 'part%s_it%03d_classes.hed' % (self.params['timestamp'], self.lastiter)
+		## hopefully this reference stack is not too big to cause memory error
+		stackarray = mrc.read(unaligned_refstack_mrc)
+		## blank out empty classes
+		print stackarray.shape
+		blank_classes = []
+		for refnum in range(len(stackarray)):
+			if self.class_count.get(refnum, 0) == 0:
+				blank_classes.append(refnum)
+				stackarray[refnum,:,:] = 0
+		if len(blank_classes) > 0:
+			apDisplay.printWarning("%d of %d classes were empty and set to black: %s"
+				%(len(blank_classes), len(stackarray), str(blank_classes)))
+		apImagicFile.writeImagic(stackarray, unaligned_refstack_imagic)
+
+		# createAlignedStack
+		temp_imagicfile = apStackFile.createAlignedStack(reflist, unaligned_refstack_imagic, 'temp_aligned_ref')
+		apFile.moveStack(temp_imagicfile, alignref_imagicfile)
+		#sys.exit(1)
 
 		#create average image for web
 		apStack.averageStack(alignimagicfile, msg=False)

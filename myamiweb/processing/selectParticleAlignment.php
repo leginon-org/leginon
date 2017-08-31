@@ -1,9 +1,9 @@
 <?php
 /**
- *	The Leginon software is Copyright 2003 
- *	The Scripps Research Institute, La Jolla, CA
+ *	The Leginon software is Copyright under 
+ *	Apache License, Version 2.0
  *	For terms of the license agreement
- *	see  http://ami.scripps.edu/software/leginon-license
+ *	see  http://leginon.org
  *
  *	Simple viewer to view a image using mrcmodule
  */
@@ -68,13 +68,13 @@ echo "  <h3><a href='runCL2DAlign.php?expId=$expId'>Xmipp 2 Clustering 2D Alignm
 echo " <p> this method builds a hierarchical classification of particles"
 		." It uses the "
 		."<a href='http://xmipp.cnb.csic.es/twiki/bin/view/Xmipp/ClassAverages'>Xmipp 2 cl2d</a>"
-				."&nbsp;<img src='img/external.png'>"
-						." program to perform alignments. "
-								."It is a relatively fast method that aligns and classify the images at the same time. "
-										."The method starts by estimating a few classes that are further subdivided till the desired number of classes is reached. "
-												."Every time an image is compared to the class averages it is aligned before-hand. <b> NOTE: in Xmipp 2.4 the alignment "
-														."parameters are not saved in the database, and therefore this method cannot be used for RCT / OTR reconstructions.</b>"
-																."</p>\n";
+		."&nbsp;<img src='img/external.png'>"
+		." program to perform alignments. "
+		."It is a relatively fast method that aligns and classify the images at the same time. "
+		."The method starts by estimating a few classes that are further subdivided till the desired number of classes is reached. "
+		."Every time an image is compared to the class averages it is aligned before-hand. <b> NOTE: in Xmipp 2.4 the alignment "
+		."parameters are not saved in the database, and therefore this method cannot be used for RCT / OTR reconstructions.</b>"
+		."</p>\n";
 //echo "  <img src='img/align-smr.png' width='250'><br/>\n";
 echo "</td></tr>\n";
 
@@ -106,8 +106,24 @@ echo " <p> this method builds a hierarchical classification of particles"
 //echo "  <img src='img/align-smr.png' width='250'><br/>\n";
 echo "</td></tr>\n";
 
+if (!HIDE_AWS_FEATURE)
+{
 /*
- ** Relion 2D Reference Free Alignment
+ ** Relion 2.0 2D Reference Free Alignment with AWS
+*/
+        echo "<tr><td width='100' align='center'>\n";
+        echo "  <img src='img/Relion_logo_v1_64x64.png' width='64'>\n";
+        echo "</td><td>\n";
+        $form = "Relion2Align2D_AWS_Form";
+	echo "  <h3><a href='runAppionLoop.php?expId=$expId&form=$form'>Relion 2.0 GPU-Powered 2D Maximum Likelihood Alignment in AWS</a></h3>\n";
+	echo " <p> This package uses the AWS interface package from <a href='https://github.com/cianfrocco-lab/cryoem-cloud-tools'>Cianfrocco Lab</a> to launch GPU and CPU Relion jobs on AWS cloud instances. It otherwise uses the same underlying algorithms as Relion 2.</p>\n";
+
+
+        //echo "  <img src='img/align-smr.png' width='250'><br/>\n";
+        echo "</td></tr>\n";
+}
+/*
+ ** Relion 2.0 2D Reference Free Alignment for GPU
 */
 if (!HIDE_GPU_FEATURE)
 {
@@ -126,9 +142,6 @@ if (!HIDE_GPU_FEATURE)
                 ."this method is unbiased and very thorough, but also the slowest of the methods (~days). "
                 ."While it produces excellent templates, it only does a course search (integer pixels shifts and large angle increments), "
                 ."so it is best to use ref-based alignment to get better alignment parameters"
-                ."</p><p>\n"
-                ."Note: does not upload alignment parameters to database. "
-                ."Thinks it is Xmipp Max Like run when finished eventhough upload will not work. "
                 ."</p>\n";
 
 
@@ -145,32 +158,30 @@ echo "</td></tr>\n";
 /*
  ** Relion 2D Reference Free Alignment
 */
-if (!HIDE_FEATURE)
-{
-	echo "<tr><td width='100' align='center'>\n";
-	echo "  <img src='img/Relion_logo_v1_64x64.png' width='64'>\n";
-	echo "</td><td>\n";
-	$form = "relionAlign2DForm";
-	echo "  <h3><a href='runAppionLoop.php?expId=$expId&form=$form'>Relion 2D Maximum Likelihood Alignment</a></h3>\n";
-	echo " <p> this method is the most robust, but takes some time to complete."
-		." It uses the "
-		."<a href='http://www2.mrc-lmb.cam.ac.uk/relion/index.php/Calculate_2D_class_averages'>Relion Refine 2d</a>"
-		."&nbsp;<img src='img/external.png'>"
-		." program to perform alignments. "
-		."</p><p>\n"
-		."Like Xmipp Maximum Likelihood (from the same author), "
-		."this method is unbiased and very thorough, but also the slowest of the methods (~days). "
-		."While it produces excellent templates, it only does a course search (integer pixels shifts and large angle increments), "
-		."so it is best to use ref-based alignment to get better alignment parameters"
-		."</p><p>\n"
-		."Note: does not upload alignment parameters to database. "
-		."Thinks it is Xmipp Max Like run when finished eventhough upload will not work. "
-		."</p>\n";
-		
-		
-	//echo "  <img src='img/align-smr.png' width='250'><br/>\n";
-	echo "</td></tr>\n";
-}
+echo "<tr><td width='100' align='center'>\n";
+echo "  <img src='img/Relion_logo_v1_64x64.png' width='64'>\n";
+echo "</td><td>\n";
+$form = "relionAlign2DForm";
+echo "  <h3><a href='runAppionLoop.php?expId=$expId&form=$form'>Relion 2D Maximum Likelihood Alignment</a></h3>\n";
+echo " <p> this method is the most robust, but takes some time to complete."
+	." It uses the "
+	."<a href='http://www2.mrc-lmb.cam.ac.uk/relion/index.php/Calculate_2D_class_averages'>Relion Refine 2d</a>"
+	."&nbsp;<img src='img/external.png'>"
+	." program to perform alignments. "
+	."</p><p>\n"
+	."Like Xmipp Maximum Likelihood (from the same author), "
+	."this method is unbiased and very thorough, but it is also one of the slower methods (~days). "
+	."While it produces excellent templates, it only does a course search (integer pixels shifts and large angle increments), "
+	."so it is best to use ref-based alignment to get better alignment parameters"
+	."</p><p>\n"
+	."RELION ML alignment typically takes longer than Xmipp ML alignment. While the first iteration will take the same time, "
+	."later iterations typically take longer in the RELION than Xmipp, which adds to the total run time. Second, RELION will "
+	."always run for specified iterations, whereas Xmipp will stop when the class averages stop changing."
+	."</p>\n";
+
+//echo "  <img src='img/align-smr.png' width='250'><br/>\n";
+echo "</td></tr>\n";
+
 
 
 
@@ -196,16 +207,25 @@ if (!HIDE_IMAGIC) {
  ** Iterative Stable Alignment and Clustering (ISAC)
 */
 
+
+if (!HIDE_FEATURE)
+{
 echo "<tr><td width='100' align='center'>\n";
 echo "  <h2>ISAC</h2>\n";
-echo "</td><td>\n";
-//echo "  <h3><a href='runISAC.php?expId=$expId'>Iterative Stable Alignment and Clustering (ISAC)</a></h3>\n";
-$form = "IsacForm";
-echo "  <h3><a href='runAppionLoop.php?expId=$expId&form=$form'>Iterative Stable Alignment and Clustering (ISAC)</a></h3>\n";
-echo " <p>Initial version. More information about ISAC is available from:"
+	echo "</td><td>\n";
+	//echo "  <h3><a href='runISAC.php?expId=$expId'>Iterative Stable Alignment and Clustering (ISAC)</a></h3>\n";
+	$form = "IsacForm";
+	echo "  <h3><a href='runAppionLoop.php?expId=$expId&form=$form'>Iterative Stable Alignment and Clustering (ISAC)</a></h3>\n";
+	echo " <p>Initial version. More information about ISAC is available from:"
 		." <a href='http://sparx-em.org/sparxwiki/sxisac'>sxisac - SPARX</a>"
+		."</p><p>\n"
+		."ISAC produces great class averages for common lines or trying to tease out small conformational states,"
+		."but it is by far the slowest alignment (~weeks) and requires lots of parallelization "
+		."</p><p>\n"
+		."Note: job launching is not quite ready, though uploader works great."
 		."</p>\n";
-echo "</td></tr>\n";
+	echo "</td></tr>\n";
+}
 
 /*
 ** Topology representing network alignment

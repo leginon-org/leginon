@@ -1,10 +1,10 @@
 <?php
 
 /**
- *	The Leginon software is Copyright 2003
- *	The Scripps Research Institute, La Jolla, CA
+ *	The Leginon software is Copyright under
+ *	Apache License, Version 2.0
  *	For terms of the license agreement
- *	see  http://ami.scripps.edu/software/leginon-license
+ *	see  http://leginon.org
  */
 
 require_once "basicLayoutForm.inc"; //includes the BasicLayoutForm class that this class extends
@@ -50,7 +50,6 @@ class RelionAlign2DForm extends BasicLayoutForm
 		$javascript .= "	stackArray[3] = stackArray[3].replace(/\,/g,'');\n";
 		$javascript .= "	document.viewerform.numpart.value = stackArray[3];\n";
 		$javascript .= "	document.viewerform.clip.value = stackArray[2];\n";
-		$javascript .= "	document.viewerform.numRef.value = Math.ceil(Math.sqrt(stackArray[3])/10+1);\n";
 		$javascript .= "	document.viewerform.partDiam.value = Math.floor(document.viewerform.clip.value*stackArray[1]*2/6)*2;\n";
 
 		// set binning
@@ -58,10 +57,49 @@ class RelionAlign2DForm extends BasicLayoutForm
 		$javascript .= "	if (bestbin < 1) {\n";
 		$javascript .= "		var bestbin = 1 ;}\n";
 		$javascript .= "	document.viewerform.bin.value = bestbin;\n";
+		//number of references is the natural log of the number of particles
+		$javascript .= "	var bestref = Math.floor(Math.log(stackArray[3])/2)*2;\n";
+		$javascript .= "	if (bestref < 2) {\n";
+		$javascript .= "		var bestref = 2 ;}\n";
+		$javascript .= "	document.viewerform.numRef.value = bestref;\n";
+
 		// set particle & mask radius and lp
 		$javascript .= "}\n";
 		$javascript .= "</script>\n";
+		
+		$javascript .= "
+			<script>
+			function estimatetime() {
+				var secperiter = 0.12037;
+				var numpart = document.viewerform.numpart.value;
+				var boxsize = document.viewerform.clip.value;
+				var maxiter = document.viewerform.maxIter.value;
+				var angle = document.viewerform.angStep.value;
+				var nproc = document.viewerform.mpinodes.value
+					* document.viewerform.mpiprocs.value
+					* document.viewerform.mpithreads.value ;
+				var numref = document.viewerform.numRef.value;
+				
+				var numpix = Math.pow(boxsize/document.viewerform.bin.value, 2);
+				
+				var calctime = (numpart/1000.0) * numref * numpix * maxiter * secperiter / angle / nproc;
+				if (calctime < 70) {
+					var time = Math.round(calctime*100.0)/100.0
+					document.viewerform.timeestimate.value = time.toString()+' seconds';
+				} else if (calctime < 3700) {
+					var time = Math.round(calctime*0.6)/100.0
+					document.viewerform.timeestimate.value = time.toString()+' minutes';
+				} else if (calctime < 3700*24) {
+					var time = Math.round(calctime/36.0)/100.0
+					document.viewerform.timeestimate.value = time.toString()+' hours';
+				} else {
+					var time = Math.round(calctime/36.0/24.0)/100.0
+					document.viewerform.timeestimate.value = time.toString()+' days';
+				}
+			}\n";
+		$javascript .= "</script>\n";
 
+		
 		$this->addJavaScript( $javascript );
 
 		//------ Set Parameters specific to the program that requires this new form -----//
@@ -78,21 +116,21 @@ class RelionAlign2DForm extends BasicLayoutForm
 		// addParam( "key", default_value, "Label that appears in GUI")
 
 		$params->addParam( "nompi", $nompi, "Disable MPI (single workstation mode)" );
-		$params->addParam( "mpinodes", $mpinodes, "MPI Nodes" );
-		$params->addParam( "mpiprocs", $mpiprocs, "MPI Processors" );
-		$params->addParam( "mpithreads", $mpithreads, "MPI Threads" );
+		$params->addParam( "mpinodes", $mpinodes, "MPI Nodes", "onChange='estimatetime()'" );
+		$params->addParam( "mpiprocs", $mpiprocs, "MPI Processors", "onChange='estimatetime()'" );
+		$params->addParam( "mpithreads", $mpithreads, "MPI Threads", "onChange='estimatetime()'" );
 		$params->addParam( "mpimem", $mpimem, "Memory per MPI Thread (Gb)" );
 
-		$params->addParam( "stack", $stackId, "Select a stack of particles to use" );
-		$params->addParam( "clip", $clip, "Unbinned Clip Diameter" );
-		$params->addParam( "bin", $bin, "Particle Binning" );
+		$params->addParam( "stack", $stackId, "Select a stack of particles to use", "onChange='estimatetime()'" );
+		$params->addParam( "clip", $clip, "Unbinned Clip Diameter", "onChange='estimatetime()'" );
+		$params->addParam( "bin", $bin, "Particle Binning", "onChange='estimatetime()'" );
 		$params->addParam( "numpart", $numpart, "Number of Particles" );
 		$params->addParam( "lowpass", $lowpass, "Low Pass Filter Radius" );
 		$params->addParam( "highpass", $highpass, "High Pass Filter Radius" );
 		$params->addParam( "partDiam", $partDiam, "Particle Diameter" );
-		$params->addParam( "numRef", $numRef, "Number of References" );
-		$params->addParam( "maxIter", $maxIter, "Maximum Number of Iterations" );
-		$params->addParam( "angStep", $angStep, "In-plane Rotation Angle Interval" );
+		$params->addParam( "numRef", $numRef, "Number of References", "onChange='estimatetime()'" );
+		$params->addParam( "maxIter", $maxIter, "Maximum Number of Iterations", "onChange='estimatetime()'" );
+		$params->addParam( "angStep", $angStep, "In-plane Rotation Angle Interval", "onChange='estimatetime()'" );
 		$params->addParam( "tau", $tau, "Regularisation parameter" );
 		$params->addParam( "flat", $flat, "Flatten Solvent on References " );
 		$params->addParam( "zero_mask", $zero_mask, "Zero Masking");
@@ -127,7 +165,6 @@ class RelionAlign2DForm extends BasicLayoutForm
 			$html .= $params->insertStackedSelectField( "stack", $options,'', '', $onchange );
 		}
 
-
 		$html .= "
 		<br />
 		<H4>Data limiting numbers</H4>
@@ -160,6 +197,11 @@ class RelionAlign2DForm extends BasicLayoutForm
 		$html .= $params->insertCheckboxField("zero_mask",'','relion2DMaxlike.zeromasking');
 		$html .= $params->insertCheckboxField("correctnorm",'','relion2DMaxlike.correctnorm');
 
+		$html .=  "	<hr />\n";
+		$html .=  "Time estimate: ";
+		$html .=  "<INPUT TYPE='text' NAME='timeestimate' SIZE='16' disabled'>\n";
+		$html .=  "<br/>\n";
+		
 		// When loading this page the first time, use the switchDefaults javascript function to set
 		// form parameters based on the currently selected stack.
 		if (!$_POST['process']) {

@@ -1,7 +1,7 @@
-# The Leginon software is Copyright 2004-2012
-# The Scripps Research Institute, La Jolla, CA
+# The Leginon software is Copyright under-2012
+# Apache License, Version 2.0
 # For terms of the license agreement
-# see http://ami.scripps.edu/software/leginon-license
+# see http://leginon.org
 #
 # $Source: /ami/sw/cvsroot/pyleginon/__init__.py,v $
 # $Revision: 1.2 $

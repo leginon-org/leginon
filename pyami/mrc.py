@@ -589,34 +589,53 @@ def extendedHeader(tilt):
 	return newheader
 
 def stack(inputfiles, tilts, outputfile):
+	'''
+	Stack single 2D image files into stack. if tilts is None, it
+	creates MRCO stack. Otherwise, tilts is a list of tilt and must
+	match the number of inputfiles. The tilt values are put into extended
+	header in IMOD style.
+	'''
 	# read first image to use as main header
 	firstheader = readHeaderFromFile(inputfiles[0])
-	newheader = mainStackHeader(firstheader, len(tilts))
+	newheader = mainStackHeader(firstheader, len(inputfiles))
 
 	# mrc2014 convention
-	newheader['mz'] = 1
+	if not newheader['mz']:
+		# In case mz is not defined
+		newheader['mz'] = newheader['nz']
 	newheader['zlen'] = newheader['zlen'] * newheader['mz'] / newheader['nz']
 
 	# write main header
-	headerbytes = makeHeaderData(newheader, header_fields=header_fields_stack)
+	if tilts:
+		headerbytes = makeHeaderData(newheader, header_fields=header_fields_stack)
+	else:
+		# no extended header
+		newheader['nsymbt']=0
+		newheader['exttype'] = 'MRCO'
+		headerbytes = makeHeaderData(newheader, header_fields=header_fields)
 	f = open(outputfile, 'wb')
 	f.write(headerbytes)
 
-	# write zeros for all extended headers
-	extended_length = len(tilts) * 88
-	f.write(zeros(extended_length))
+	if tilts:
+		# write zeros for all extended headers
+		extended_length = len(tilts) * 88
+		f.write(zeros(extended_length))
 
-	# write extended headers and data
-	extheaderpos = 1024
-	for inputfile, tilt in zip(inputfiles, tilts):
-		data = read(inputfile)
+		# write extended headers and data
+		extheaderpos = 1024
+		for inputfile, tilt in zip(inputfiles, tilts):
+			data = read(inputfile)
 
-		f.seek(extheaderpos)
-		extheaderpos += 88
-		newheader = extendedHeader(tilt)
-		headerbytes = makeHeaderData(newheader, header_fields=header_fields_extended)
-		f.write(headerbytes)
-		appendArray(data, f)
+			f.seek(extheaderpos)
+			extheaderpos += 88
+			newheader = extendedHeader(tilt)
+			headerbytes = makeHeaderData(newheader, header_fields=header_fields_extended)
+			f.write(headerbytes)
+			appendArray(data, f)
+	else:
+		for inputfile in inputfiles:
+			data = read(inputfile)
+			appendArray(data, f)
 	f.close()
 
 def appendArray(a, f):

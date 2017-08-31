@@ -11,7 +11,7 @@ pi = numpy.pi
 try:
 	import libcv
 	#print "libcv found"
-except:
+except ImportError:
 	#print "libcv not found"
 	pass
 

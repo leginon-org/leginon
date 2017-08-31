@@ -1,9 +1,9 @@
 <?php
 /**
- *  The Leginon software is Copyright 2003 
- *  The Scripps Research Institute, La Jolla, CA
+ *  The Leginon software is Copyright under 
+ *  Apache License, Version 2.0
  *  For terms of the license agreement
- *  see  http://ami.scripps.edu/software/leginon-license
+ *  see  http://leginon.org
  *
  *	summary tables for common appion objects
  */
@@ -1052,10 +1052,9 @@ function modelsummarytable($modelid, $mini=false) {
 		}
 	}
 	$modelroot = substr($modeldata['name'], 0, -4);
-	$objfile = $modeldata['path']."/".$modelroot.".obj";
-	if (file_exists($objfile)) {
-		$modeltable .=  "<div style='text-align:center;'><a target='popup' href='webglObjViewer.php?expId=$expId&filename=$objfile'";
-		$modeltable .=  " onclick=\"window.open('webglObjViewer.php?expId=$expId&filename=$objfile', 'WebGL Obj Viewer', 'width=700,height=420'); return false\">View in 3D - WebGL</a></div>\n";
+	$mrcfile = $modeldata['path']."/".$modelroot.".mrc";
+	if (file_exists($mrcfile)) {
+	    $modeltable .=  "<div style='text-align:center;'><a target='_blank' href='../ngl/webapp.php?expId=$expId&filename=$mrcfile'>View in NGL Viewer</a></div>\n";
 	}
 	$modeltable .= "</td></tr>\n";
 	// show data

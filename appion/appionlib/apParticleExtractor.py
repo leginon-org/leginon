@@ -381,6 +381,7 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 		if self.params['maskassess'] is not None and not self.params['checkmask']:
 			apDisplay.printMsg("running mask assess")
 			self.params['checkmask'] = True
+		if self.params['localCTF']: self.params['ctfmethod']='localctf'
 
 	def checkIsDD(self):
 		apDisplay.printWarning('Checking for dd')
@@ -467,7 +468,7 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 		# check to see if image is rejected by other criteria
 		if self.rejectImage(imgdata) is False:
 			return False
-		if self.params['noctf'] is not True:
+		if not self.params['boxfiles'] and self.params['noctf'] is not True:
 			# check CTF parameters for image and skip if criteria is not met
 			if self.checkCtfParams(imgdata) is False:
 				return False
@@ -591,7 +592,7 @@ class ParticleBoxLoop(ParticleExtractLoop):
 		imgdims = imgdata['camera']['dimension']
 		newpartdatas = []
 		for partdata in partdatas:
-			start_x,start_y = apBoxer.getBoxStartPosition(imgdata,self.half_box,partdata, shiftdata)
+			start_x,start_y = apBoxer.getBoxStartPosition(self.half_box, partdata, shiftdata)
 			if apBoxer.checkBoxInImage(imgdims,start_x,start_y,self.boxsize):
 				newpartdatas.append(partdata)
 		return newpartdatas

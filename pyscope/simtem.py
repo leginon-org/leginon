@@ -1,8 +1,8 @@
 # COPYRIGHT:
-# The Leginon software is Copyright 2003
-# The Scripps Research Institute, La Jolla, CA
+# The Leginon software is Copyright under
+# Apache License, Version 2.0
 # For terms of the license agreement
-# see http://ami.scripps.edu/software/leginon-license
+# see http://leginon.org
 
 import copy
 import math
@@ -98,6 +98,8 @@ class SimTEM(tem.TEM):
 		self.energy_filter_width = 0.0
 
 		self.resetRefrigerant()
+		self.loaded_slot_number = None
+		self.is_init = True
 
 	def resetRefrigerant(self):
 		self.level0 = 100.0
@@ -400,6 +402,33 @@ class SimTEM(tem.TEM):
 
 	def exposeSpecimenNotCamera(self,seconds):
 		time.sleep(seconds)
+
+	def hasGridLoader(self):
+		return True
+
+	def getGridLoaderNumberOfSlots(self):
+		if not self.hasGridLoader():
+			return 0
+		return 4
+
+	def getGridLoaderSlotState(self, number):
+		if self.loaded_slot_number == number:
+			state = 'empty'
+		elif self.loaded_slot_number is None and number == 1 and self.is_init is True:
+			self.is_init = False
+			state = 'empty'
+		else:
+			state = 'occupied'
+		return state
+
+	def _loadCartridge(self, number):
+		self.loaded_slot_number = number
+
+	def _unloadCartridge(self):
+		self.loaded_slot_number = None
+
+	def getGridLoaderInventory(self):
+		self.getAllGridSlotStates()
 
 class SimTEM300(SimTEM):
 	name = 'SimTEM300'

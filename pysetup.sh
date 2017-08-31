@@ -1,5 +1,5 @@
 #!/bin/bash
-
+#
 #
 # if no args given, print help
 #
@@ -34,12 +34,12 @@ logfile=$myamidir/pysetup.log
 # clutter up /usr/bin/
 #
 packages=(
-	imageviewer
-	leginon
 	pyami
-	pyscope
 	sinedon
 	redux
+	imageviewer
+	leginon
+	pyscope
 	modules/radermacher
 	modules/libcv
 	modules/numextension

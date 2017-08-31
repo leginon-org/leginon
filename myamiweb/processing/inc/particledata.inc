@@ -1,10 +1,10 @@
 <?php
 
 /**
- *	The Leginon software is Copyright 2003
- *	The Scripps Research Institute, La Jolla, CA
+ *	The Leginon software is Copyright under
+ *	Apache License, Version 2.0
  *	For terms of the license agreement
- *	see	http://ami.scripps.edu/software/leginon-license
+ *	see	http://leginon.org
  */
 
 // if the config file is not exist, redirect to setup wizard.
@@ -55,6 +55,16 @@ class particledata {
 		return $path;
 	}
 
+	function getSEMDataFromId ($imageId) {
+		$q = "SELECT * "
+			."FROM ApSEMData"
+			." WHERE "
+			."`REF|leginondata|AcquisitionImageData|image` = '$imageId' "
+			."LIMIT 1 ";
+			$r = $this->mysql->getSQLResult($q);
+			return $r[0];
+	}
+	
 	function getImageNameFromId ($imageId) {
 		$q = "SELECT "
 			."img.filename "
@@ -983,6 +993,22 @@ class particledata {
 		return $d;
 	}
 
+	function hasLocalCtfData($sessionId) {
+		$d = ($this->getLastLocalCtfRun($sessionId)) ? true : false;
+		return $d;
+	}
+
+	function getLastLocalCtfRun($sessionId) {
+		$q = "select max(acerun.DEF_id) as runId "
+			."from ApAceRunData AS acerun "
+			."LEFT JOIN ApCtfFind4ParamsData AS params "
+			."ON (acerun.`REF|ApCtfFind4ParamsData|ctffind4_params` = params.DEF_id) "
+			."WHERE acerun.`REF|leginondata|SessionData|session`='$sessionId' "
+			."AND params.local_refine=1";
+		list($r) = $this->mysql->getSQLResult($q);
+		return $r['runId'];
+	}
+
 	function getLastCtfRun($sessionId) {
 		$q = "select max(DEF_id) as runId "
 			."from `ApAceRunData` where `REF|leginondata|SessionData|session`='$sessionId'";
@@ -1158,6 +1184,7 @@ class particledata {
 
 	function getCtfInfoFromImageId($imageId, $order=false, $method='', $acerunId='') {
 		$phase_shift_select = $this->getPhaseShiftString('c');
+		$local_plot_select = ($this->mysql->FieldExists('ApCtfData','localplot')) ? "c.localplot, ": "";
 		$q =	"select "
 			."c.`DEF_id`, "
 			."c.`REF|leginondata|AcquisitionImageData|image`, "
@@ -1182,6 +1209,7 @@ class particledata {
 			."c.`graph2` , "
 			."c.`graph3` , "
 			."c.`graph4` , "
+			.$local_plot_select
 			."c.`confidence_30_10` , "
 			."c.`confidence_5_peak` , "
 			."c.`resolution_80_percent` , "
@@ -1993,12 +2021,18 @@ class particledata {
 		return $r;
 	}
 
-	function getMaxTiltAngle ($sessionId) {
+	function getMaxTiltAngle ($sessionId,$presetname='') {
+		//Issue #4730 handling mixed tomography and untilted data collection with different preset names
+		$pjoin = ($presetname) ? "LEFT JOIN ".DB_LEGINON.".`PresetData` AS p ON p.`DEF_id`=im.`REF|PresetData|preset` ": '';
+		$pwhere = ($presetname) ? ' and p.name like "'.$presetname.'" ': '';
 		$q = "SELECT MAX(ABS(s.`SUBD|stage position|a`))*180.0/PI() AS angle "
 			."FROM ".DB_LEGINON.".`AcquisitionImageData` AS im "
+			.$pjoin
 			."LEFT JOIN ".DB_LEGINON.".`ScopeEMData` AS s "
 			."ON s.`DEF_id` = im.`REF|ScopeEMData|scope` "
-			."WHERE im.`REF|SessionData|session` = '$sessionId' ";
+			."WHERE im.`REF|SessionData|session` = '$sessionId' "
+			.$pwhere
+			." ";
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0]['angle'];
 	}
@@ -2017,7 +2051,8 @@ class particledata {
 	}
 
 	function getParticles ($runId) {
-		$q="select p.DEF_id, p.xcoord, p.ycoord, p.correlation, p.`REF|leginondata|AcquisitionImageData|image`, a.`filename` "
+		$q="select p.DEF_id, p.xcoord, p.ycoord, p.correlation, "
+			."p.`REF|leginondata|AcquisitionImageData|image`, a.`filename`, p.helixnum "
 			."from ApParticleData p "
 			."left join ".DB_LEGINON.".`AcquisitionImageData` a "
 			."on p.`REF|leginondata|AcquisitionImageData|image` = a.`DEF_id` "
@@ -2381,7 +2416,7 @@ class particledata {
 	
 	function getDDStackRunData($ddRunId) 
 	{
-		return getRunData($partRunId, "ApDDStackRunData" );
+		return getRunData($ddRunId, "ApDDStackRunData" );
 	}
 
 	function getRecentAlignedImage($imgid)

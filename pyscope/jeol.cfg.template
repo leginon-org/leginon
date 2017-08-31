@@ -19,6 +19,16 @@ LM1_MAG_MAX = 200
 #normalize by set to this lowmag mag each time changing from mag1 to lowmag
 LOWMAG_NORMALIZATION_MAG = 200
 
+[n2filler]
+# simple nitrogen filler timer
+# set sequence of FILL_STARTS (in minutes since midnight)
+# set MY_CLOCK_AHEAD to -5 if the filler and this clock are synced but
+#   you want Leginon to pause 5 minutes before each FILL_STARTS.
+# set FILL_TIME to the duration (in minutes) of the Leginon pause.
+FILL_STARTS = 0, 720
+FILL_TIME = 20
+MYCLOCK_AHEAD = 0
+
 [eos]
 # electron optics class.  The later mode will be used if a mag is found in more than one modes
 USE_MODES = lowmag, mag1

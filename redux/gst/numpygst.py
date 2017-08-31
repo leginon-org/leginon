@@ -7,7 +7,6 @@ between gst elements.
 
 import numpy
 import gst
-import sys
 import operator
 
 # this is not an official mime type, I just made it up
@@ -145,7 +144,7 @@ def gst_buffer_from_ndarray(ndarray):
 	buffer_endianness = 'big'
 	mask_type = '>i4'
 
-	nfields = len(dtype.fields)
+	#nfields = len(dtype.fields) #unsued
 	channels = filter(dtype.fields.__contains__, ('red','green','blue','alpha'))
 
 	## only going to deal with 8 bit channels

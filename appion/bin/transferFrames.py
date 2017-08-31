@@ -5,6 +5,7 @@ import sys
 import glob
 import shutil
 import subprocess
+import time
 from appionlib import apDisplay
 from appionlib import appionLoop2
 from appionlib import apDatabase
@@ -61,7 +62,7 @@ class TransferFrames(appionLoop2.AppionLoop):
 		else:
 			sessiondata=apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
 			outpath=sessiondata['frame path']
-		apDisplay.printMsg("Output path is" % (outpath))
+		apDisplay.printMsg("Output path is %s" % (outpath))
 		if os.path.exists(outpath):
 			apDisplay.printMsg("Outpath %s already exists" % outpath)
 		else:
@@ -85,6 +86,7 @@ class TransferFrames(appionLoop2.AppionLoop):
 					if ext.startswith('.mrc'):
 						destext='.frames.mrc'
 					elif ext == '.txt':
+						continue
 						destext='.txt'
 					elif ext == '.tif':
 						destext='.tif'
@@ -100,6 +102,15 @@ class TransferFrames(appionLoop2.AppionLoop):
 					apDisplay.printMsg('transferring %s to %s' % (filename,destnamepath))
 					if self.params['dryrun'] is False:
 						transfer(filename,destnamepath,delete=(not self.params['no-delete']))
+						count=0
+						while not os.path.exists(destnamepath):
+							apDisplay.printWarning('Attempt at frame transfer failed. Trying again in 5 seconds')
+							time.sleep(5)
+							transfer(filename,destnamepath,delete=(not self.params['no-delete']))
+							count+=1
+							if count > 15:
+								apDisplay.printWarning('Frame transfer failed 15 attempts. Giving up.')
+								break
 					else:
 						self.badprocess=True
 

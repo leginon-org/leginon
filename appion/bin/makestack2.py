@@ -8,6 +8,7 @@ import time
 import copy
 import numpy
 import subprocess
+import shutil
 from scipy import stats
 from scipy import ndimage
 
@@ -28,6 +29,7 @@ from appionlib import apBoxer
 from appionlib import apImagicFile
 from appionlib import apStackMeanPlot
 from appionlib import apParticleExtractor
+from appionlib import apInstrument
 from appionlib.apCtf import ctfdb
 from appionlib.apSpider import filters
 from appionlib.apImage import imagenorm
@@ -67,6 +69,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 	def processParticles(self, imgdata, partdatas, shiftdata):
 		self.shortname = apDisplay.short(imgdata['filename'])
 
+		ctfdata = None
 		if self.params['filetype']=="relion":
 			# generate "micrographs" directory to store linked files
 			linkdir = os.path.join(self.params['rundir'],"micrographs")
@@ -78,35 +81,26 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			os.symlink(self.getOriginalImagePath(imgdata),linkfile)
 
 			# get original micrograph & ctfimage
-			rel_line = "micrographs/%s micrographs/%s"%(imgdata['filename']+".mrc",imgdata['filename']+".ctf:mrc")
-
-			# get magnification, pixel size
+			rel_line = "micrographs/%s "%(imgdata['filename']+".mrc")
 			dstep = imgdata['camera']['pixel size']['x']*1e6
 			mag = dstep/self.params['apix']*1e4
-			rel_line+= "%13.6f%13.5f"%(mag,dstep)
+			rel_line+= "%13.6f%13.6f"%(mag,dstep)
 
 			# get CTF information
 			if self.params['noctf'] is not True:
 				ctfdata = self.getBestCtfValue(imgdata)
 				if ctfdata:
-					defU = ctfdata['defocus1']*1.0e10
-					defV = ctfdata['defocus2']*1.0e10
-					defAngle = ctfdata['angle_astigmatism']
-					rel_line+= "%13.6f%13.6f%13.6f"%(defU,defV,defAngle)
-
-					# get kev, CS, ampcontrast
-					kev = imgdata['scope']['high tension']/1000.0
-					cs = self.getCS(ctfdata)
-					amp = ctfdata['amplitude_contrast']
-					rel_line+= "%13.6f%13.6f%13.6f"%(kev,cs,amp)
-
-					# get ctfestimation fig of merit (CC)
-					cc = ctfdata['cross_correlation']
-					rel_line+= "%13.6f"%(cc)
-
-					# Relion requires the CTF log file as well
-					ctflog = os.path.join(linkdir,imgdata['filename']+"_ctffind3.log")
-					apRelion.generateCtfFile(ctflog,cs,kev,amp,mag,dstep,defU,defV,defAngle,cc)
+					# if CTF is written to micrographs.star, localCTF values not taken
+					if self.params['localCTF'] is not True:
+						rel_line+= "micrographs/%s "%(imgdata['filename']+".ctf:mrc")
+						c = apRelion.formatCtfForRelion(imgdata,ctfdata,self.params['apix'])
+						rel_line+= "%13.6f%13.6f%13.6f"%(c['defU'],c['defV'],c['defAngle'])
+						rel_line+= "%13.6f%13.6f%13.6f%13.6f"%(c['kev'],c['cs'],c['amp'],c['cc'])
+	
+						# Relion requires the CTF log file as well
+						ctflog = os.path.join(linkdir,imgdata['filename']+"_ctffind3.log")
+						apRelion.generateCtfFile(ctflog,c['cs'],c['kev'],c['amp'],c['mag'],
+							c['dstep'],c['defU'],c['defV'],c['defAngle'],c['cc'])
 				else:
 					apDisplay.printMsg('No CTF information in database, skipping image')
 					return None
@@ -122,12 +116,19 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			partdatas = self.fillWithHelicalStep(partdatas, self.params['apix'])
 
 		### run batchboxer
-		self.boxedpartdatas, self.imgstackfile, self.partmeantree = self.boxParticlesFromImage(imgdata, partdatas, shiftdata)
+		self.boxedpartdatas, self.imgstackfile, self.partmeantree = self.boxParticlesFromImage(imgdata, partdatas, shiftdata, ctfdata)
+
+		### return boxfile only particle count
+		if self.params['boxfiles']:
+			self.stats['lastpeaks'] = 0
+			apDisplay.printMsg( '%d boxes so far' % self.boxfile_p_count )
+			# accumulated boxfile_p_count is the particle count for boxfiles only option
+			return self.boxfile_p_count
 
 		## if generating a relion stack, we will extract later
 		if self.params['filetype']=="relion": return len(self.boxedpartdatas)
 
-		if self.boxedpartdatas is None or self.params['boxfiles']:
+		if self.boxedpartdatas is None:
 			self.stats['lastpeaks'] = 0
 			apDisplay.printWarning("no particles were boxed from "+self.shortname+"\n")
 			self.badprocess = True
@@ -156,7 +157,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 	def removeBoxOutOfImage(self, imgdata, partdatas, shiftdata):
 		# if using a helical step, particles will be filled between picks,
 		# so don't want to throw picks out right now
-		if self.params['helicalstep'] is not None:
+		if self.params['helicalstep'] is not None or self.params['checkInside'] is False:
 			return partdatas
 		else:
 			return super(Makestack2Loop, self).removeBoxOutOfImage(imgdata, partdatas, shiftdata)
@@ -257,18 +258,34 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		return imgpath
 
 	#=======================
-	def boxParticlesFromImage(self, imgdata, partdatas, shiftdata):
+	def boxParticlesFromImage(self, imgdata, partdatas, shiftdata, ctfdata=None):
 
 		### convert database particle data to coordinates and write boxfile
+		self.boxextension = ".box"
 		if self.params['filetype'] == "relion":
-			boxfile = os.path.join(self.params['rundir'],"micrographs/%s.box"%(imgdata['filename']))
+			boxfile = os.path.join(self.params['rundir'], "micrographs", "%s.box"%(imgdata['filename']))
 		else:
-			boxfile = os.path.join(self.params['rundir'], imgdata['filename']+".box")
-		parttree, boxedpartdatas = apBoxer.processParticleData(imgdata, self.boxsize,
-			partdatas, shiftdata, boxfile, rotate=self.params['rotate'])
+			boxfile = os.path.join(self.params['rundir'], "boxfiles", imgdata['filename']+".box")
+
+		# this needs to be worked out eventually. Local CTF assignment will only work for Relion
+		if self.params['localCTF'] and self.params['filetype'] == "relion":
+			boxfile = os.path.join(self.params['rundir'], "micrographs", "%s.star"%(imgdata['filename']))
+			parttree, boxedpartdatas = apBoxer.writeParticlesToStar(imgdata, self.boxsize,
+				partdatas, shiftdata, boxfile, ctfdata,self.params['localCTF'])
+			self.boxextension = ".star"
+		else:
+			parttree, boxedpartdatas = apBoxer.processParticleData(imgdata, self.boxsize,
+				partdatas, shiftdata, boxfile, rotate=self.params['rotate'], checkInside=self.params['checkInside'])
 
 		### boxfile created, can return if that's all we need
-		if self.params['boxfiles']: return None,None,None
+		if self.params['boxfiles']:
+			if not os.path.isfile(boxfile):
+				apDisplay.printError("box file was requested but not created")
+			else:
+				apDisplay.printMsg("box coordinates written to file %s"
+					%(os.path.basename(boxfile)))
+			self.boxfile_p_count += len(partdatas)
+			return None,None,None
 
 		### relion box files will be extracted later
 		if self.params['filetype']=="relion":
@@ -362,15 +379,15 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 				apDisplay.printError("Standard deviation == 0 for particle %d in image %s"%(i,self.shortname))
 
 			### skew and kurtosis
-			partravel = numpy.ravel(partarray)
-			skew = float(stats.skew(partravel))
-			kurtosis = float(stats.kurtosis(partravel))
+			#partravel = numpy.ravel(partarray)
+			#skew = float(stats.skew(partravel))
+			#kurtosis = float(stats.kurtosis(partravel))
 
 			### edge and center stats
-			edgemean = float(ndimage.mean(partarray, self.edgemap, 1.0))
-			edgestdev = float(ndimage.standard_deviation(partarray, self.edgemap, 1.0))
-			centermean = float(ndimage.mean(partarray, self.edgemap, 0.0))
-			centerstdev = float(ndimage.standard_deviation(partarray, self.edgemap, 0.0))
+			#edgemean = float(ndimage.mean(partarray, self.edgemap, 1.0))
+			#edgestdev = float(ndimage.standard_deviation(partarray, self.edgemap, 1.0))
+			#centermean = float(ndimage.mean(partarray, self.edgemap, 0.0))
+			#centerstdev = float(ndimage.standard_deviation(partarray, self.edgemap, 0.0))
 			#self.summedParticles += partarray
 
 			### take abs of all means, because ctf whole image may become negative
@@ -378,14 +395,14 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 				'partdata': partdata,
 				'mean': abs(float(partarray.mean())),
 				'stdev': stdev,
-				'min': float(partarray.min()),
-				'max': float(partarray.max()),
-				'skew': skew,
-				'kurtosis': kurtosis,
-				'edgemean': abs(edgemean),
-				'edgestdev': edgestdev,
-				'centermean': abs(centermean),
-				'centerstdev': centerstdev,
+				#'min': float(partarray.min()),
+				#'max': float(partarray.max()),
+				#'skew': skew,
+				#'kurtosis': kurtosis,
+				#'edgemean': abs(edgemean),
+				#'edgestdev': edgestdev,
+				#'centermean': abs(centermean),
+				#'centerstdev': centerstdev,
 			}
 			### show stats for first particle
 			"""
@@ -501,7 +518,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			voltage = (imgdata['scope']['high tension'])/1000
 
 		# find cs
-		cs = self.getCS(ctfvalue)
+		cs = apInstrument.getCS(ctfvalue)
 
 		imagicdata = apImagicFile.readImagic(imgstackfile, msg=False)
 		ctfpartstack = []
@@ -563,7 +580,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		#ampconst = ctfdata['amplitude_contrast'] ### we could use this too
 
 		# find cs
-		cs = self.getCS(ctfdata)
+		cs = apInstrument.getCS(ctfdata)
 
 		"""
 		// from EMAN1 source code: EMAN/src/eman/libEM/EMTypes.h
@@ -617,7 +634,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		#ampconst = ctfdata['amplitude_contrast'] ### we could use this too
 
 		# find cs
-		cs = self.getCS(ctfdata)
+		cs = apInstrument.getCS(ctfdata)
 
 		parmstr = ("parm=%f,200,1,%.3f,0,17.4,9,1.53,%i,%.1f,%f" %(defocus, ampconst, voltage, cs, apix))
 		emancmd = ("applyctf %s %s %s setparm flipphase" % (inimgpath, outimgpath, parmstr))
@@ -681,7 +698,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 				phase = 0.0
 			amp = bestctfvalue['amplitude_contrast']
 			kv = imgdata['scope']['high tension']/1000
-			cs = self.getCS(bestctfvalue)/1000
+			cs = apInstrument.getCS(bestctfvalue)/1000
 			conf = ctfdb.calculateConfidenceScore(bestctfvalue)
 
 			if os.path.isfile(ctfvaluesfile):
@@ -778,7 +795,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		imgsize=imgdata['camera']['dimension']['y']
 
 		# find cs
-		cs = self.getCS(bestctfvalue)
+		cs = apInstrument.getCS(bestctfvalue)
 
 		# convert image to spider ###proc2d
 		emancmd="proc2d %s %s spidersingle"%(inimgpath,spi_imgpath)
@@ -855,7 +872,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			### step 4: decimate/bin particles if specified
 			### binning is last, so we maintain most detail and do not have to deal with binned apix
 			if self.params['bin'] > 1:
-				particle = imagefun.bin2(particle, self.params['bin'])
+				particle = imagefun.bin2(particle, int(self.params['bin']))
 
 			#from scipy.misc import toimage
 			#toimage(particle).show()
@@ -1088,6 +1105,10 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			action="store_true", help="Align filaments vertically in a single interpolation")
 		self.parser.add_option("--debug", dest="debug", default=False,
 			action="store_true", help="Debug mode, print more to command line")
+		self.parser.add_option("--no-insideCheck", dest="checkInside", default=True,
+			action="store_false", help="don't check if boxed particle is entirely within micrograph")
+		self.parser.add_option("--localCTF", dest="localCTF", default=False,
+			action="store_true", help="use local CTF information for particles")
 
 		### choice
 		self.parser.add_option("--flip-type", dest="fliptype",
@@ -1152,6 +1173,9 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 
 		# for Relion
 		if self.params['filetype'] == "relion":
+			# make sure Relion is loaded:
+			apRelion.getRelionVersion()
+
 			if self.params['bgradius'] is None:
 				apDisplay.printError("Relion requires a bgradius value")
 			if self.params['bgradius']*2 > self.params['boxsize']:
@@ -1195,30 +1219,84 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 
 	#=======================
 	def checkRequireCtf(self):
+		# refs #4726
+		if self.params['boxfiles']:
+			return False
 		return super(Makestack2Loop,self).checkRequireCtf() or self.params['phaseflipped']
 
 	#=======================
 	def preLoopFunctions(self):
 		super(Makestack2Loop, self).preLoopFunctions()
+
+		boxdir = os.path.join(self.params['rundir'], "boxfiles")
+		if not os.path.isdir(boxdir):
+			os.mkdir(boxdir)
+	
 		### create an edge map for edge statistics
 		box = self.boxsize
 		self.boxedpartdatas = None
 		### use a radius one pixel less than the boxsize
 		self.edgemap = imagefun.filled_circle((box, box), box/2.0-1.0)
-		binbox = self.boxsize/self.params['bin']
+		binbox = int(self.boxsize/self.params['bin'])
 		self.summedParticles = numpy.zeros((binbox, binbox))
 		## for relion, add relion header
 		if self.params['filetype']=="relion":
-			apRelion.writeRelionMicrographsStarHeader(self.mstarfile)
+			doCTF = True
+			if self.params['noctf'] or self.params['localCTF']:
+				doCTF = False
+			apRelion.writeRelionMicrographsStarHeader(self.mstarfile,doCTF)
+		## for boxfile only option to count particles included
+		self.boxfile_p_count = 0
 
 	#=======================
 	def postLoopFunctions(self):
+		# refs #4725
+		if self.params['boxfiles']:
+			return
 		# now we have all box files, generate relion stack
 		if self.params['filetype'] == "relion":
 			logfile = os.path.join(self.params['rundir'], "relionExtract-"+self.timestamp+".cmd")
 			bgradius = int(self.params['bgradius']/self.params['bin'])
 			rootname = os.path.basename(os.path.splitext(self.params['single'])[0])
-			apRelion.extractParticles(self.mstarfile,rootname,self.boxsize,self.params['bin'],bgradius,self.params['pixlimit'],self.params['inverted'],apParam.getNumProcessors(),logfile)
+			apRelion.extractParticles(self.mstarfile,rootname,self.boxsize,self.params['bin'],bgradius,self.params['pixlimit'],self.params['inverted'],self.boxextension,apParam.getNumProcessors(),logfile)
+			if not os.path.isfile(rootname+".star"):
+				apDisplay.printError("Check your relion job, '%s.star' doesn't exist"%(rootname))
+
+			# make sure scaled pixel size is correct in output star file:
+			# get the first available mag and detector pixel size
+			labels = apRelion.getStarFileColumnLabels(rootname+".star")
+			for line in open(rootname+".star"):
+				l = line.strip().split()
+				if len(l)<3: continue
+				dpixsize = float(l[labels.index("_rlnDetectorPixelSize")])
+				mag = float(l[labels.index("_rlnMagnification")])
+				apix = dpixsize/mag*1e4
+				break
+
+			# if the scaled pixels size isn't write, rewrite star file
+			sc_apix = self.params['apix']*self.params['bin']
+			# only check to 2 decimal points
+			if round(apix,2) != round(sc_apix,2):
+				apDisplay.printWarning("Star file doesn't contain the scaled pixel size")
+				apDisplay.printMsg("Replacing current pixel size of %.2f with scaled pixel size of %.2f..."%(apix,sc_apix))
+				shutil.move(rootname+".star",rootname+".backup.star")
+
+				f = open(rootname+".star",'w')
+				for line in open(rootname+".backup.star"):
+					l = line.strip().split()
+					if len(l)<3:
+						f.write(line)
+						continue
+					for i in range(len(labels)):
+						if labels[i] in ("_rlnMicrographName","_rlnImageName"):
+							if i>0: f.write(" ")
+							f.write(l[i])
+						elif labels[i] == "_rlnDetectorPixelSize":
+							f.write("%13.6f"%(float(l[i])*self.params['bin']))
+						else: f.write("%13s"%l[i])
+					f.write("\n")
+				f.close()
+				os.remove(rootname+".backup.star")
 
 		### Delete CTF corrected images
 		if self.params['keepall'] is False:
@@ -1276,7 +1354,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			# insert framelist
 			q = appiondata.ApStackImageFrameListData(stack=self.stackdata, image=imgdata, frames=self.framelist)
 			q.insert(force=self.params['forceInsert'])
-		#t0 = time.time()
+		t0 = time.time()
 		### loop over the particles and insert
 		for i in range(len(self.boxedpartdatas)):
 			partdata = self.boxedpartdatas[i]
@@ -1298,18 +1376,17 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			if partmeandict is not None:
 				stpartq['mean'] = round(partmeandict['mean'],8)
 				stpartq['stdev'] = round(partmeandict['stdev'],8)
-				stpartq['min'] = round(partmeandict['min'],4)
-				stpartq['max'] = round(partmeandict['max'],4)
-				stpartq['skew'] = round(partmeandict['skew'],4)
-				stpartq['kurtosis'] = round(partmeandict['kurtosis'],4)
-				stpartq['edgemean'] = round(partmeandict['edgemean'],4)
-				stpartq['edgestdev'] = round(partmeandict['edgestdev'],4)
-				stpartq['centermean'] = round(partmeandict['centermean'],4)
-				stpartq['centerstdev'] = round(partmeandict['centerstdev'],4)
-
+				#stpartq['min'] = round(partmeandict['min'],4)
+				#stpartq['max'] = round(partmeandict['max'],4)
+				#stpartq['skew'] = round(partmeandict['skew'],4)
+				#stpartq['kurtosis'] = round(partmeandict['kurtosis'],4)
+				#stpartq['edgemean'] = round(partmeandict['edgemean'],4)
+				#stpartq['edgestdev'] = round(partmeandict['edgestdev'],4)
+				#stpartq['centermean'] = round(partmeandict['centermean'],4)
+				#stpartq['centerstdev'] = round(partmeandict['centerstdev'],4)
 			if self.params['commit'] is True:
 				stpartq.insert(force=self.params['forceInsert'])
-		#self.insertdbtimes.append(time.time()-t0)
+		self.insertdbtimes.append(time.time()-t0)
 
 	#=======================
 	def loopCleanUp(self, imgdata):

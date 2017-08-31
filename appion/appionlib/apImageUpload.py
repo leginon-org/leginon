@@ -717,9 +717,12 @@ class ImageLoader(appionLoop2.AppionLoop):
 		cameradata['nframes'] = nframes
 		cameradata['frame time'] = 100
 		cameradata['exposure time'] = cameradata['frame time'] * nframes
-		# sensor pixel size in meter is required for frealign preparation Bug #4088
-		sensor_pixelsize = self.params['mag'] * self.params['apix'] * 1e-10
-		cameradata['pixel size'] = {'x':sensor_pixelsize,'y':sensor_pixelsize}
+		try: #this try breaks batch tilt-series upload
+			# sensor pixel size in meter is required for frealign preparation Bug #4088
+			sensor_pixelsize = self.params['mag'] * self.params['apix'] * 1e-10
+			cameradata['pixel size'] = {'x':sensor_pixelsize,'y':sensor_pixelsize}
+		except:
+			pass
 		return cameradata
 
 	#=====================

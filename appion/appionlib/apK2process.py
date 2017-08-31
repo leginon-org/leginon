@@ -6,7 +6,6 @@ import datetime
 from pyami import mrc,imagefun
 from leginon import leginondata,ddinfo
 from appionlib import apDDprocess,apDisplay
-from appionlib import apDDprocessv2
 
 # testing options
 save_jpg = False
@@ -24,6 +23,9 @@ class GatanK2Processing(apDDprocess.DDFrameProcessing):
 		# avoid 0 for dark image scaling and frame list creation
 		number_of_frames = max(1,int(imagedata['camera']['exposure time'] / imagedata['camera']['frame time']))
 		return number_of_frames
+
+	def hasNonZeroDark(self):
+		return False
 
 	def getFrameNameFromNumber(self,frame_number):
 		return 'frame_%03d.mrc' % (frame_number+1)
@@ -44,17 +46,9 @@ class GatanK2Processing(apDDprocess.DDFrameProcessing):
 		rawframename = imagedata['camera']['frames name'].split('\\')[-1]
 		if not rawframename:
 			apDisplay.printWarning('No Raw Frame Saved for %s' % imagedata['filename'])
-		if imagedata['session']['frame path']:
-			# 3.0+ version
-			rawframe_basepath = imagedata['session']['frame path']
-			print 'rawframe_basepath',rawframe_basepath
-		else:
-			# pre-3.0
-			# raw frames are saved in a subdirctory of image path
-			imagepath = imagedata['session']['image path']
-			rawframe_basepath = ddinfo.getRawFrameSessionPathFromSessionPath(imagepath)
+		session_frame_path = self.getSessionFramePathFromImage(imagedata)
 		# frame stackfile is image filename plus '.frames.mrc'
-		rawframedir = os.path.join(rawframe_basepath,'%s.frames.mrc' % imagedata['filename'])
+		rawframedir = os.path.join(session_frame_path,'%s.frames.mrc' % imagedata['filename'])
 		if not self.waitForPathExist(rawframedir,30):
 			apDisplay.printError('Raw Frame Dir %s does not exist.' % rawframedir)
 		return rawframedir
@@ -180,22 +174,3 @@ if __name__ == '__main__':
         framelist = range(start_frame,start_frame+nframe)
         corrected = dd.correctFrameImage(framelist)
         mrc.write(corrected,'corrected_frame%d_%d.mrc' % (start_frame,nframe))
-
-
-class GatanK2ProcessingV2(apDDprocessv2.DDFrameProcessing):
-
-        def __init__(self,wait_for_new=False):
-                super(GatanK2ProcessingV2,self).__init__(wait_for_new)
-                self.setDefaultDimension(3710,3838)
-                self.correct_dark_gain = True
-                self.correct_frame_mask = False
-
-
-if __name__ == '__main__':
-	dd = GatanK2Processing()
-	dd.setImageId(1640790)
-	start_frame = 0
-	nframe = 5
-	framelist = range(start_frame,start_frame+nframe)
-	corrected = dd.correctFrameImage(framelist)
-	mrc.write(corrected,'corrected_frame%d_%d.mrc' % (start_frame,nframe))

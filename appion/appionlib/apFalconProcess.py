@@ -19,6 +19,9 @@ class FalconProcessing(apDDprocess.DDFrameProcessing):
 		self.setDefaultDimension(4096,4096)
 		self.correct_dark_gain = False
 		
+	def hasNonZeroDark(self):
+		return False
+
 	def getNumberOfFrameSavedFromImageData(self,imagedata):
 		# Falcon nframes is the number of frame bins
 		return imagedata['camera']['nframes']
