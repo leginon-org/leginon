@@ -125,7 +125,7 @@ def clip_power(pow,thresh=3):
 
 def filled_sphere(shape, radius, center=None):
 	"""
-	creates a spherical mask of defined radius and center 
+	creates a spherical mask of defined radius and center
 	in an array of the provided shape
 	with value of 0 inside the sphere and 1 outside the sphere
 	"""
@@ -144,7 +144,7 @@ def filled_sphere(shape, radius, center=None):
 
 def filled_circle(shape, radius=None, center=None):
 	"""
-	creates a circle mask of defined radius and center 
+	creates a circle mask of defined radius and center
 	in an array of the provided shape
 	with value of 0 inside the circle and 1 outside the circle
 	"""
@@ -270,7 +270,7 @@ def near_center(shape, blobs, n):
 	'''
 	filter out no more than n blobs that are closest to image center
 	'''
-	
+
 	# create distance mapping
 	imcenter = shape[0]/2, shape[1]/2
 	distmap = {}
@@ -453,7 +453,6 @@ def bin2m(a, factor):
 	oldshape = a.shape
 	newshape = numpy.asarray(oldshape)/factor
 	tmpshape = (newshape[0], factor, newshape[1], factor)
-	f = factor * factor
 	binned = stats.median(stats.median(numpy.reshape(a, tmpshape), 1), 2)
 	return binned
 
@@ -463,11 +462,31 @@ def bin2f(a, factor):
 	'''
 	fft = ffteng.transform(a)
 	fft = numpy.fft.fftshift(fft)
-	half = fft.shape[0]/2
 	xstart = int( fft.shape[0]/2 * (1 - 1.0/factor))
 	xend   = int( fft.shape[0]/2 * (1 + 1.0/factor))
 	ystart = int( fft.shape[1]/2 * (1 - 1.0/factor))
 	yend   = int( fft.shape[1]/2 * (1 + 1.0/factor))
+	#print ("%d:%d  ,  %d:%d\n"%(xstart,xend,ystart,yend,))
+	cutfft = fft[xstart:xend, ystart:yend]
+	cutfft = numpy.fft.fftshift(cutfft)
+	#print cutfft.shape, fft.shape
+	binned = ffteng.itransform(cutfft)/float(factor**2)
+	return binned
+
+def fourier_scale(a, boxsize):
+	'''
+	Scaling in Fourier space
+	'''
+	fft = ffteng.transform(a)
+	fft = numpy.fft.fftshift(fft)
+	initboxsize = max(a.shape)
+	if initboxsize == boxsize:
+		return a
+	factor = initboxsize/float(boxsize)
+	xstart = int( fft.shape[0]/2 - boxsize/2 )
+	xend   = int( fft.shape[0]/2 + boxsize/2 )
+	ystart = int( fft.shape[1]/2 - boxsize/2 )
+	yend   = int( fft.shape[1]/2 + boxsize/2 )
 	#print ("%d:%d  ,  %d:%d\n"%(xstart,xend,ystart,yend,))
 	cutfft = fft[xstart:xend, ystart:yend]
 	cutfft = numpy.fft.fftshift(cutfft)
@@ -708,7 +727,7 @@ Returns:  (bins, r_centers, t_centers)
 	## turn result into 2-D array
 	rt_bins = numpy.asarray(rt_bins)
 	rt_bins.shape = nbins_r, nbins_t
-	
+
 	# interpolate NaN in the array which came from bins with no item
 	for tbin in range(nbins_t):
 		rt = rt_bins[:,tbin]
@@ -737,5 +756,113 @@ def radialAverageImage(a):
 	def radial_value(rho, **kwargs):
 		return numpy.interp(rho, r_center, radial_avg, right=radial_avg[-1])
 
-	return fromRadialFunction(radial_value, a.shape) 
+	return fromRadialFunction(radial_value, a.shape)
+
+def flipImageTopBottom(imagearray):
+	return numpy.flipud(imagearray)
+
+def flipImageLeftRight(imagearray):
+	return numpy.fliplr(imagearray)
+
+def rotateImage90Degrees(imagearray,ntimes=1):
+	'''
+	Rotation without interpolation. Rotation is clockwise.
+	'''
+	return numpy.rot90(imagearray,ntimes)
+
+def clipImage(imagearray,npixels):
+	'''
+	Clips a given image from the center by npixels and returns a new clipped array with new dimensions
+	'''
+	return imagearray[npixels:-npixels,npixels:-npixels]
+
+def padImage(imagearray, npixels):
+	'''
+	Pads a given image by npixels and returns a new padded array with new dimensions. The new pixels are given the mean value of imagearray.
+	'''
+	#Note this can be done more efficiently in  numpy 1.10 and greater with numpy.fill or numpy.full
+	newshape=[n+(2*npixels) for n in imagearray.shape]
+	newarray=numpy.ones(newshape,dtype=imagearray.dtype)
+	#mean=imagearray.mean()
+	#### There is a bug in numpy 1.6 where mean doesn't work for 8K images. Instead using edge mean for now
+	stats=edgeStats(imagearray)
+	mean=stats['mean']
+	newarray=newarray*mean
+	newarray[npixels:-npixels,npixels:-npixels]=imagearray
+	return newarray
+
+def clipAndPadImage(imagearray,npixels):
+	'''
+	Clips an image by npixels and pads it back out to its original dimensions substituting the pixels at the edges with the mean
+	'''
+	newarray=clipImage(imagearray,npixels)
+	newarray=padImage(newarray,npixels)
+	return newarray
+
+def edgeStats(imagearray):
+	'''
+	Returns the mean and standard deviation for the edge pixels of imagearray
+	'''
+	edgepix=numpy.append(imagearray[0,0:],imagearray[-1,0:])
+	edgepix=numpy.append(edgepix,imagearray[0:,0])
+	edgepix=numpy.append(edgepix,imagearray[0:,-1])
+	#print edgepix
+	mean=edgepix.mean()
+	std=edgepix.std()
+	return {'mean':mean,'std':std}
+
+###############################################
+# functions for correcting raw images
+###############################################
+
+def normalizeImageArray(rawarray, darkarray, normarray, darkscale=1, badrowlist=None, badcolumnlist=None):
+	if darkscale is not 1:
+		darkarray=darkarray/darkscale
+	diff = rawarray - darkarray
+	r = diff * normarray
+	## remove nan and inf
+	r = numpy.where(numpy.isfinite(r), r, 0)
+	if badrowlist is not None or badcolumnlist is not None:
+		r = replaceBadRowsAndColumns(r,badrowlist,badcolumnlist)
+	return r
+
+def normalizeFromDarkAndBright(rawarray, darkarray, brightarray, scale=1, badrowlist=None, badcolumnlist=None, clip=None):
+	if scale is not 1:
+		darkarray=darkarray/scale
+		brightarray=brightarray/scale
+	bminusd=(brightarray-darkarray)
+	m=bminusd.mean()
+	gain=m/bminusd
+	correctedarray=(rawarray-darkarray)*gain
+	## remove nan and inf
+	correctedarray = numpy.where(numpy.isfinite(correctedarray), correctedarray, 0)
+	if badrowlist is not None or badcolumnlist is not None:
+		correctedarray = replaceBadRowsAndColumns(correctedarray,badrowlist,badcolumnlist)
+	if clip is not None:
+		correctedarray = clipAndPadImage(correctedarray,clip)
+	return correctedarray
+
+def replaceBadRowsAndColumns(imagearray,badrowlist=[], badcolumnlist=[]):
+	def _getGoodNeighbors(badindividual, badlist, maxallowed):
+		for n in badlist:
+			lowerneighbor=n-1
+			higherneighbor=n+1
+			while lowerneighbor in badlist:
+				lowerneighbor -=1
+			while higherneighbor in badlist:
+				higherneighbor +=1
+			if lowerneighbor <= 0 :
+				lowerneighbor=higherneighbor
+			if higherneighbor <= maxallowed:
+				higherneighbor=lowerneighbor
+		return (lowerneighbor,higherneighbor)
+	for badrow in badrowlist:
+		lowerneighbor,higherneighbor=_getGoodNeighbors(badrow,badrowlist,imagearray.shape[1])
+		newrow=(imagearray[lowerneighbor,:] + imagearray[higherneighbor,:])/2
+		imagearray[badrow,:]=newrow
+	for badcol in badcolumnlist:
+		lowerneighbor,higherneighbor=_getGoodNeighbors(badcol,badcolumnlist,imagearray.shape[0])
+		newcol=(imagearray[:,lowerneighbor] + imagearray[:,higherneighbor])/2
+		imagearray[:,badcol]=newcol
+	return imagearray
 
