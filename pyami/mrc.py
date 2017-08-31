@@ -640,7 +640,7 @@ def appendArray(a, f):
 		end = start + items_per_write
 		b[start:end].tofile(f)
 
-def substackFromMRCStack(mrcstack, outfile, listfile):
+def substackFromMRCStack(mrcstack, outfile, listfile, excludeList=False):
 	'''
 	f=/path/to/stack.mrc, list=EMAN-style list, numbering starts with 0, writes output mrc stack
 	'''
@@ -656,18 +656,29 @@ def substackFromMRCStack(mrcstack, outfile, listfile):
 	npart = header['shape'][0]
 	print npart
 
+	# decide whether included or excluded
+	if excludeList is True:
+		### arrange list
+		included = []
+		for j in range(npart):
+			if j not in locs:
+				included.append(j)
+	else:
+		included = locs
+
 	# read each individual particle and append to new mrc
 	i = 0
-	for loc in locs:
+	for include in included:
 		if i == 0:
-			a = read(mrcstack, zslice=loc)
+			a = read(mrcstack, zslice=include)
 			write(a, outfile)
 		else:
-			a = read(mrcstack, zslice=loc)
+			a = read(mrcstack, zslice=include)
 			append(a, outfile)
 		if i % 1000 == 0:
 			print "written %d images to stack" % i
 		i+=1
+
 
 def invert(in_mrc, out_mrc):
 	'''
