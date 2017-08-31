@@ -1000,13 +1000,13 @@ function runMakestack() {
 	// check the tilt situation
 	$particle = new particledata();
 	$maxang = $particle->getMaxTiltAngle($expId);
-	if ($maxang > 5) {
-		$tiltangle = $_POST['tiltangle'];
-		if ($_POST['ctfcorrect']=='on' && $_POST['ctfcorrecttype']!='emantilt' && !($tiltangle=='notilt' || $tiltangle=='lowtilt')) {
-			createMakestackForm("CTF correct does not work on tilted images: $tiltangle ");
-			exit;
-		}
-	}
+#	if ($maxang > 5) {
+#		$tiltangle = $_POST['tiltangle'];
+#		if ($_POST['ctfcorrect']=='on' && $_POST['ctfcorrecttype']!='emantilt' && !($tiltangle=='notilt' || $tiltangle=='lowtilt')) {
+#			createMakestackForm("CTF correct does not work on tilted images: $tiltangle ");
+#			exit;
+#		}
+#	}
 
 	// limit the number of particles
 	$partlimit=$_POST['partlimit'];

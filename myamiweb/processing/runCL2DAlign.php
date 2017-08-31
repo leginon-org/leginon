@@ -104,7 +104,7 @@ function createCL2DAlignForm($extra=false, $title='runXmippCL2D.py Launcher', $h
 	$numref = ($_POST['numref']) ? $_POST['numref'] : '20';
 	$nproc = ($_POST['nproc']) ? $_POST['nproc'] : '4';
 	$clipdiam = ($_POST['clipdiam']) ? $_POST['clipdiam'] : '';
-	$maxiter = ($_POST['maxiter']) ? $_POST['maxiter'] : '15';
+	$maxiter = ($_POST['maxiter']) ? $_POST['maxiter'] : '3';
 	$image2imagedistanceval = ($_POST['image2imagedistance']) ? $_POST['image2imagedistance'] : 'correlation';
 	$image2clusterdistanceval = ($_POST['image2clusterdistance']) ? $_POST['image2clusterdistance'] : 'minimum';
 //	$dontAlign = ($_POST['dontAlign']=='on' || !$_POST['dontAlign']) ? 'unchecked' : '';
