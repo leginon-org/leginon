@@ -179,6 +179,19 @@ def readPositionsFromAlignLog(filename):
 		positions.append((position_x,position_y))
 	return positions
 
+def calculateFrameShiftFromPositions(positions,running=1):
+	# place holder for running first frame shift duplication
+	offset = int((running-1)/2)
+	shifts = offset*[None,]
+	for p in range(len(positions)-1):
+		shift = math.hypot(positions[p][0]-positions[p+1][0],positions[p][1]-positions[p+1][1])
+		shifts.append(shift)
+	# duplicate first and last shift for the end points if running
+	for i in range(offset):
+		shifts.append(shifts[-1])
+		shifts[i] = shifts[offset]
+	return shifts
+
 def printDriftStats(filenamepattern, apix):
 
 	filelist = glob.glob(filenamepattern+'_st_Log.txt')
@@ -188,12 +201,9 @@ def printDriftStats(filenamepattern, apix):
 	allshifts = []
 	imgdata = leginondata.AcquisitionImageData(filename=filelist[0].split('_st_Log.txt')[0]).query()[0]
 	fps = 1000.0 / imgdata['camera']['frame time']
-	for file in filelist:
-		positions = readPositionsFromAlignLog(file)
-		positions.insert(0,positions[0])
-		shifts = []
-		for i in range(len(positions)-1):
-			shifts.append(math.hypot(positions[i+1][0] - positions[i][0], positions[i+1][1] - positions[i][1]))
+	for filepath in filelist:
+		positions = readPositionsFromAlignLog(filepath)
+		shifts = calculateFrameShiftFromPositions(positions,running=1)
 		allshifts.append(shifts)
 
 	import numpy

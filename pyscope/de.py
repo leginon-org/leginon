@@ -407,3 +407,10 @@ class DE64(DD):
 	def getPixelSize(self):
 		psize = 6.5e-6
 		return {'x': psize, 'y': psize}
+	def getFrameRotate(self):
+		'''
+		Frame Rotate direction is defined as x to -y rotation applied after up-down flip
+		Scott said this should be zero when FRAME_ROTATE is defined as zero in DE MicroManager.
+		'''
+		return FRAME_ROTATE
+
