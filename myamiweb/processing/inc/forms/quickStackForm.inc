@@ -97,7 +97,7 @@ class QuickStackForm extends BasicLayoutForm
 		// addParam( "key", default_value, "Label that appears in GUI")
 
 		$req = "<font color='red'><b>**</b></font>";
-		
+
 		$params->addParam( "selectid", $selectid, "Select a Particle Run", "onChange='binningCheck()'" );
 		$params->addParam( "init-boxsize", $initboxsize, "$req Initial Micrograph Boxsize", "onChange='binningCheck()'" );
 		$params->addParam( "final-boxsize", $finalboxsize, "$req Final Reduced Particle Boxsize", "onChange='binningCheck()'" );
@@ -216,6 +216,8 @@ class QuickStackForm extends BasicLayoutForm
 		$selectid = $params->getParamValue( "selectid" );
 		//$command = $this->removeCommandFlag( $command, "stack" );
 		//$command = $this->addCommandFlag( $command, "stack", "stack", $stackid );
+		$command = $this->removeCommandFlag( $command, "override" );
+
 
 		// Set the clip diameter
 		$bin  = $params->getParamValue( "bin" );
