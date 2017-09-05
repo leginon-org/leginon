@@ -100,7 +100,7 @@ class UploadRelion3DRefine(reconUploader.generalReconUploader):
 		return pixelsize,current_resolution
 		
 	#======================================================	
-	def Read03_rundatastar(self,particle_diameter):
+	def Read03_rundatastar(self,particle_diameter,pixelsize):
 		#relion_directory = os.path.dirname(self.params['starfile'])
 		
 		## Extract information from run_data.star
@@ -109,7 +109,7 @@ class UploadRelion3DRefine(reconUploader.generalReconUploader):
 		else:
 			shutil.copy(self.params['starfile'],self.params['rundir'])
 			Input03_StarFile = os.path.join(self.params['rundir'],"run_data.star")
-			preset_used,micrograph_dimensions,defocusU,defocusV,astig,coordX,coordY,anglePsi,angleRot,angleTilt,maxProb = self.readPartStarFile(Input03_StarFile,particle_diameter)
+			preset_used,micrograph_dimensions,defocusU,defocusV,astig,coordX,coordY,anglePsi,angleRot,angleTilt,maxProb = self.readPartStarFile(Input03_StarFile,particle_diameter,pixelsize)
 		
 		return preset_used,micrograph_dimensions,defocusU,defocusV,astig,coordX,coordY,anglePsi,angleRot,angleTilt,maxProb
 
@@ -158,7 +158,7 @@ class UploadRelion3DRefine(reconUploader.generalReconUploader):
 				apDisplay.printError("Do not have permissions to read the run.err and run.out files. Change file permissions.")
 
 	#======================================================
-	def readPartStarFile(self, inputfile, particle_diameter):
+	def readPartStarFile(self, inputfile, particle_diameter, pixelsize):
 		starData = starFile.StarFile(inputfile)
 		starData.read()
 		
@@ -191,6 +191,8 @@ class UploadRelion3DRefine(reconUploader.generalReconUploader):
 		angleRot = []
 		angleTilt = []
 		maxProb = []
+		# scaling factor for recentering
+		scalefactor = None
 		
 		for particle in particleTree:
 			micrograph = (os.path.splitext(os.path.basename(particle['_rlnMicrographName']))[0])
@@ -208,11 +210,14 @@ class UploadRelion3DRefine(reconUploader.generalReconUploader):
 			angleTilt.append(float(particle['_rlnAngleTilt']))
 			maxProb.append(float(particle['_rlnMaxValueProbDistribution']))
 			
-			if (self.params['recenter'] == "True"):
+			if (self.params['recenter'] is True):
+				if not scalefactor:
+					orig_apix = apDatabase.getPixelSize(apDatabase.getImageData(micrograph))
+					scalefactor = pixelsize/orig_apix
 				peakdict = {
 					'diameter': particle_diameter,
-					'xcoord': float(particle['_rlnCoordinateX']) + float(particle['_rlnOriginX']),
-					'ycoord': float(particle['_rlnCoordinateY']) + float(particle['_rlnOriginY']),
+					'xcoord': float(particle['_rlnCoordinateX']) - (scalefactor*float(particle['_rlnOriginX'])),
+					'ycoord': float(particle['_rlnCoordinateY']) - (scalefactor*float(particle['_rlnOriginY'])),
 					'peakarea': 10,
 				}
 			else:
@@ -354,6 +359,8 @@ class UploadRelion3DRefine(reconUploader.generalReconUploader):
 	#======================================================
 	def start(self):
 		## Get diameter from run.job
+		if self.params['recenter'] is True:
+			apDisplay.printMsg("Recentering particles")
 		apDisplay.printMsg("01: Reading run.job")
 		particle_diameter,particle_symmetry = self.Read01_runjob()
 		
@@ -367,7 +374,7 @@ class UploadRelion3DRefine(reconUploader.generalReconUploader):
 		
 		## Insert particles from refinement as manual pick run
 		apDisplay.printMsg("04: Reading run_data.star")
-		preset_used,micrograph_dimensions,defocusU,defocusV,astig,coordX,coordY,anglePsi,angleRot,angleTilt,maxProb = self.Read03_rundatastar(particle_diameter)
+		preset_used,micrograph_dimensions,defocusU,defocusV,astig,coordX,coordY,anglePsi,angleRot,angleTilt,maxProb = self.Read03_rundatastar(particle_diameter,pixelsize)
 		
 		## Copy over the maps and logs for display
 		self.Read04_maps(pixelsize)
