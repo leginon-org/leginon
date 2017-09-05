@@ -39,12 +39,12 @@ class DDResults(object):
 		imagename = source_imagedata['filename']
 		self.framestackpath =  os.path.join(self.rundir,imagename+'_st.mrc')
 		self.logfile = self.framestackpath[:-4]+'_Log.txt'
-		if not os.path.isfile(self.logfile):
-			raise ValueError('No align log file found')
 		return self.logfile
 
 	def getPixelShiftsBetweenFrames(self):
 		logfile = self.getAlignLogPath()
+		if not os.path.isfile(self.logfile):
+			raise ValueError('No align log file found')
 		nframes = self.image['camera']['nframes']
 		positions = ddinfo.readPositionsFromAlignLog(logfile)
 		running = nframes - len(positions)+1
