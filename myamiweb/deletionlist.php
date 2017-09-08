@@ -20,7 +20,7 @@ $filearray = $leginondata->getDeletionList(1);
 foreach ($filearray as $file) {
 	echo $file['filepath'];
 	$filecount += 1;
-	?><br><?
+	?><br><?php
 }
 if ($filecount == 0) 
 	echo 'NONE';
@@ -48,7 +48,7 @@ foreach ($filearray as $file) {
 		$filecount += 1;
 		?>
 		<br>
-		<?
+		<?php
 	}
 }
 if ($filecount > 0) {
@@ -56,7 +56,7 @@ if ($filecount > 0) {
 </td></tr>
 <tr><td>
 	<input type="submit" name="markasdeleted" value = "<?echo $status?>" >
-<?
+<?php
 } else {
 echo 'NONE';
 }

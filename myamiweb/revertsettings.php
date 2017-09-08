@@ -103,7 +103,7 @@ if ($_POST) {
 } else {
 ?>
 <form method="POST" action="<?php $_SERVER['PHP_SELF']?>" >
-<?
+<?php
 	$q = "select u.`DEF_id` as userId, u.* "
 			.",u.username "
 			.",concat(u.firstname,' ',u.lastname) as `full name` "
@@ -119,7 +119,7 @@ if ($_POST) {
 	if ($is_admin) {
 ?>
 		<select name="userId">
-<?
+<?php
 			echo "<option value='default' > -- select user -- </option>";
 			foreach($users as $user) {
 				if ($user['username'] == 'administrator') {
@@ -140,7 +140,7 @@ if ($_POST) {
 		<br/>
 		<br/>
 		<select name="sessionId">
-<?
+<?php
 			echo "<option value='default' > -- select a session if you want to revert to it -- </option>";
 			foreach($sessions as $session) {
 				if (!is_numeric($session['id'])) continue;
@@ -156,7 +156,7 @@ if ($_POST) {
 		<br/>
 		<br/>
 		<input type="submit" name="def" value="Revert Node Settings" >
-<?
+<?php
 
 // Administrator revert to the original
 		if (privilege('users') > 3) {
@@ -166,7 +166,7 @@ if ($_POST) {
 			<input type="hidden" name="adminId" value= "<? echo $admin_user['userId'] ?>" >
 			<input type="submit" name="orig" value="Revert to Original" >
 		
-<?
+<?php
 		}
 	} else {
 		echo "No valid user for this operation";
@@ -174,6 +174,6 @@ if ($_POST) {
 </form>
 <? } ?>
 </div>
-<?
+<?php
 admin_footer();
 ?>

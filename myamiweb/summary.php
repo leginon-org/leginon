@@ -289,7 +289,7 @@ $icethicknesspresets = $leginondata->getIceThicknessPresets($expId);
 	
 ?>
 </tr>
-<?
+<?php
 $imageshiftpresets = $leginondata->getImageShiftPresets($expId);
 echo "<tr>";
 echo "<td colspan='2'>";
@@ -338,7 +338,7 @@ if (!empty($imageshiftpresets)) {
 	
 ?>
 </tr>
-<?
+<?php
 $defocusresults = $leginondata->getFocusResultData($expId, 'both','all','ok');
 	echo "<tr>";
 	echo "<td colspan='2'>";

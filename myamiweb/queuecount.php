@@ -88,11 +88,11 @@ if (!$selected_sessionId) {
 	<tr><td> <?php if (!$selected_sessionId) echo 'Session '.$sessionSelector; ?></td>
 	</tr>
 	<tr>
-<?
+<?php
 // --- Get nodes with queue
 $qtypes = $leginondata->getQueueTypes($sessionId);
 if (!$qtypes) {
-	?><td><h4>No queuing in this session</h4></td><?
+	?><td><h4>No queuing in this session</h4></td><?php
 } else {
 	arsort($qtypes);
 	// Change details to true to see acquisition and focus separately for debuging

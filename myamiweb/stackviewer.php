@@ -101,7 +101,7 @@ function setImage() {
 <body>
 <form name="myf" method="POST" action="<?=$_SERVER['PHP_SELF']?>">
 <select name="file" size="5" onChange="setImage()">
-<?
+<?php
 foreach($filenames as $f) {
 	$s = ($f==$filename) ? "selected" : "";
 	echo "<option value='".$f."' $s >".$f."</option>\n";
@@ -109,7 +109,7 @@ foreach($filenames as $f) {
 ?>
 </select>
 </form>
-<?
+<?php
 echo "stack: $file_hed";
 echo "<br \>";
 echo "#images: $n_images";

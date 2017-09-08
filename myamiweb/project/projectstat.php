@@ -29,7 +29,7 @@ $enableimage=($_POST['enableimage']) ? true : false;
 <td valign=top >
 <table border=0>
 <tr><th>Projects Status</th><th>Nb Experiments</th>
-<?
+<?php
 if ($enableimage) {
 	echo "<th>Nb Images</th>";
 }
@@ -90,6 +90,6 @@ if ($enableimage) {
 </tr>
 </table>
 </form>
-<?
+<?php
 project_footer();
 ?>

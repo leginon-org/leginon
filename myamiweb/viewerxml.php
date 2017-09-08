@@ -1,4 +1,4 @@
-<?
+<?php
 /**
  *	The Leginon software is Copyright under 
  *	Apache License, Version 2.0
@@ -48,7 +48,7 @@ echo '<a class="header" href="'.BASE_URL.'test/checkwebserver.php"> [Troubleshoo
 
 ?>
 <a class="header" target="xmldata" href="test/viewerdata.xml">View XML data &raquo;</a>
-<?
+<?php
 $viewer->display();
 login_footer();
 ?>

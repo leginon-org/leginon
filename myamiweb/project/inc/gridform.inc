@@ -100,13 +100,13 @@
       </td>
       <td>
 	
-<?
+<?php
 $gridboxes = $gridboxdata->getGridBoxes();
 ?>
 <input type="hidden" name="gridId" value="<?=$gridId?>">
 <select size="1" name="currentgridbox" onchange="onChangeGridBoxType()">
 <option value="none">-- none --</option>
-<?
+<?php
 $selectedgridboxId = ($_POST['currentgridbox']) ? $_POST['currentgridbox'] : $boxId;
 foreach ($gridboxes as $gridbox) {
     $s = ($gridbox['gridboxId']==$selectedgridboxId) ? 'selected' : '';
@@ -119,7 +119,7 @@ foreach ($gridboxes as $gridbox) {
 <? } ?>
   </table>
 </form>
-<?
+<?php
 
 if ($gridId) {
 	$gridboxId=$selectedgridboxId;
@@ -128,7 +128,7 @@ if ($gridId) {
 ?>
 		<h4> Click at the position where you want the grid to be stored </h4>
 		<p> No need to click on the update button </p>
-<?
+<?php
 	}
 	switch ($gridboxinfo['boxtypeId']) {
 		case '1':

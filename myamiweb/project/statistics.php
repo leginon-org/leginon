@@ -1,4 +1,4 @@
-<?
+<?php
 require_once('inc/project.inc.php');
 require_once('inc/experiment.inc.php');
 
@@ -110,7 +110,7 @@ Data Size
 </h3>
 <table class="tableborder" bgcolor="#FFFFFF" border="0" cellpadding="10" cellspacing="0">
 <tr>
-<?
+<?php
 foreach ($experiments as $k=>$v) {
 echo "<td>";
 $title="";
@@ -163,7 +163,7 @@ echo "</td>";
 MySQL Database Size
 </h3>
 
-<?
+<?php
        echo '    <table border="0">' . "\n"
        . '        <tr>' . "\n"
        . '            <th>' . "\n"
@@ -292,5 +292,5 @@ MySQL Database Size
 <br />
 <a href="../totalimagegraph.php?type=s&vd=1">[data]</a><br />
 <img src="../totalimagegraph.php?type=s">
-<?
+<?php
 project_footer();

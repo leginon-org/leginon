@@ -34,7 +34,7 @@ require_once "inc/project.inc";
 <table cellpadding="0" cellspacing="0">
 <tr valign="top">
 <td>
-<?
+<?php
 //----Define what to display in array $p
 $p[]='gridId';
 $p[]='mag';

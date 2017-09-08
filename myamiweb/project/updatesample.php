@@ -118,11 +118,11 @@ project_header("Sample $title");
 <font color=red>*</font>
 <font face="Arial, Helvetica, sans-serif" size="2">: required fields</font>
 </p>
-<?
+<?php
 require_once "inc/aform.php";
 ?>
 <link href="css/aform.css" rel="stylesheet" type="text/css" />
-<?
+<?php
 $form=new form();
 $form->setPrefix("sa");
 $form->action=$_SERVER['REQUEST_URI'];

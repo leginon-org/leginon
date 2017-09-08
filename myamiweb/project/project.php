@@ -56,7 +56,7 @@ project_header($title);
 ?>
 <form method="POST" name="projectform" action="<?=$_SERVER['PHP_SELF'] ?>">
 <input type="hidden" name="projectId" value="">
-<?
+<?php
 if (privilege('projects') > 3) {
 	echo "<a class='header' href='updateproject.php'>Add a new project</a>";
 	$columns=array('edit'=>'');

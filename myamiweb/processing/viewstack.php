@@ -393,7 +393,7 @@ function showHelicalInfo() {
 </script>
 </head>
 <body onload='load()'>
-<?
+<?php
 $printfilename = ($virtualfilename) ? $virtualfilename : $file_hed;
 echo "stack: $printfilename";
 echo "<br \>";
@@ -421,7 +421,7 @@ quality: <select id="quality">
 info:<input type="checkbox" checked id="info" >
 scale bar:<input type="checkbox" id="scalebar" >
 <input id="loadbutton" type="button" alt="Load" value="Load" onclick="load();">
-<?
+<?php
 
 
 //Buttons for inclusion

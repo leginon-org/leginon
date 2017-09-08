@@ -1,4 +1,4 @@
-<?
+<?php
 require_once("inc/project.inc.php");
 require_once("inc/leginon.inc");
 require_once("inc/share.inc.php");
@@ -15,7 +15,7 @@ $is_admin = checkProjectAdminPrivilege($projectId);
 
 <form method="POST" name="projectform" action="<?=$_SERVER['REQUEST_URI'] ?>">
 <input type="hidden" name="projectId" value="">
-<?
+<?php
 if ($is_admin) {
 // --- add something for admin only
 }
@@ -23,7 +23,7 @@ if ($is_admin) {
 <h3>Selected Project</h3>
 
 <table class="tableborder" border="1" valign="top">
-<?
+<?php
 	$info = $project->getProjectInfo($projectId);
 	$keys_to_display = array('Name');
 	foreach ($info as $k=>$v) {
@@ -41,14 +41,14 @@ if ($is_admin) {
 ?>
 </table>
 <h3>Select an owner to add to this project:</h3>
-<?
+<?php
 	if ($is_admin) {
 ?>
 <p>
 <img src="img/info.png"> Users with no password set won't be listed; go
 to <a class="header" href="<? echo BASE_URL.'user.php'; ?>">[user]</a> to update user's profile.
 </p>
-<?
+<?php
 	};
 	$db = $project->mysql;
 	$userId = $_POST['userId'];
@@ -72,7 +72,7 @@ to <a class="header" href="<? echo BASE_URL.'user.php'; ?>">[user]</a> to update
 	$bt_add= "<input class='bt1' type='submit' name='bt' value='add'>";
 	?>
 	<select name="userId">
-	<?
+	<?php
 		echo "<option value='default' > -- select user -- </option>";
 		foreach($users as $user) {
 			$s = ($user['userId']==$_POST['userId']) ? "selected" : "";
@@ -87,7 +87,7 @@ to <a class="header" href="<? echo BASE_URL.'user.php'; ?>">[user]</a> to update
 		}
 	?>
 	</select>
-	<?
+	<?php
 	echo $bt_add;
 	if ($ln=$_GET['ln']) {
 		echo "<a class=\"header\" href=\"$ln\"> Back to project list</a>";
@@ -128,6 +128,6 @@ to <a class="header" href="<? echo BASE_URL.'user.php'; ?>">[user]</a> to update
 	
 ?>
 </form>
-<?
+<?php
 project_footer();
 ?>

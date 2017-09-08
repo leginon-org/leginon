@@ -18,7 +18,7 @@ $userId = $login_check[1];
 login_header("My Preferences");
 ?>
 <h3>My Profile</h3>
-<?
+<?php
 $haspass = $dbemauth->hasPassword($username);
 if ($_POST) {
 	if ($_POST['submit']=='update') {
@@ -291,7 +291,7 @@ View my experiment only
 	</tr>
 	<tr>
 	<td>
-<?
+<?php
 if ($mycommentpref) {
 	echo '<select name="commentId" size="5" >';
 	foreach ($mycommentpref as $pref) {
@@ -347,7 +347,7 @@ echo '
 		<tr>
 		<td>
 
-<?
+<?php
 echo 'Add Sessions to comment type <b>"'.$commentinfo['name'].'"</b><br>';
 echo '<select style="width: 500" name="sessionId" size="5" >';
 foreach ($sessions as $session) {
@@ -384,7 +384,7 @@ echo '</select>';
 </tr>
 </table>
 </form>
-<?
+<?php
 login_footer();
 
 function add_cat($name) {

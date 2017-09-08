@@ -13,7 +13,7 @@ if ($gridId) {
 </head>
 <body>
 
-<?
+<?php
 $selectedgridId=$gridId;
 $grid = new grid();
 $gridinfo = $grid->getGridInfo($selectedgridId);
@@ -101,11 +101,11 @@ if (is_array($gridinfo)) {
 </tr>
 <tr>
 <td colspan="3">
-<?
+<?php
 $gridboxdata = new gridbox();
 $gridboxinfo = $gridboxdata->getGridBoxInfo($gridinfo['boxId']);
 if ($gridinfo['boxId']) {
-?><h3>Grid Box: <?=$gridboxinfo['gridboxlabel']?></h3><?
+?><h3>Grid Box: <?=$gridboxinfo['gridboxlabel']?></h3><?php
 
 switch ($gridboxinfo['boxtypeId']) {
 	case '1':
@@ -128,6 +128,6 @@ switch ($gridboxinfo['boxtypeId']) {
 </table>
 </body>
 </html>
-<?
+<?php
 }
 ?>

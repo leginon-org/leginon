@@ -105,11 +105,11 @@ project_header("Grid $title");
 <font color=red>*</font>
 <font face="Arial, Helvetica, sans-serif" size="2">: required fields</font>
 </p>
-<?
+<?php
 require_once "inc/aform.php";
 ?>
 <link href="css/aform.css" rel="stylesheet" type="text/css" />
-<?
+<?php
 $grids=array(
 	'N'=>"Negative Stain",
 	'V'=>"Vitreous Ice"

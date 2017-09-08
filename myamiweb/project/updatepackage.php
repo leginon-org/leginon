@@ -112,7 +112,7 @@ project_header("Package $title");
 <font face="Arial, Helvetica, sans-serif" size="2">: required fields</font>
 </p>
 <link href="css/aform.css" rel="stylesheet" type="text/css" />
-<?
+<?php
 
 $form=new form();
 $form->action=$_SERVER['REQUEST_URI'];

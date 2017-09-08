@@ -123,7 +123,7 @@ if($tiltSeriesId != NULL) {
 		$state = ($deletestatus== 'marked') ? 'Remove from Deletion List' : 'Mark for Deletion';
 		?>
 		<input type="submit" name="action" value="<?=$state?>">
-		<?
+		<?php
 	} 
 	echo '</td></tr></table>';
 	echo '</td></tr>';

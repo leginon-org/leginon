@@ -1,4 +1,4 @@
-<?
+<?php
 require_once "inc/project.inc.php";
 require_once "inc/gridbox.inc.php";
 require_once "inc/grid.inc.php";
@@ -276,7 +276,7 @@ i.e: <a class="header" href="grids.txt">grids.txt</a>
 <pre>
 <?=file_get_contents("grids.txt");?>
 </pre>
-<?
+<?php
 }
 project_footer();
 ?>

@@ -49,7 +49,7 @@ if (!empty($_POST)) {
 </form>
 </fieldset>
 
-<?
+<?php
 login_footer();
 
 ?>

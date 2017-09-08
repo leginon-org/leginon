@@ -124,7 +124,7 @@
 	<td colspan="2">
 	<fieldset>
 	<legend><b>Group:</b></legend>
-<?
+<?php
 if ($login_is_groupadmin) {
 ?>
 	<select size="1" name="group" > 
@@ -134,7 +134,7 @@ if ($login_is_groupadmin) {
 		}
 	?>
 	</select>
-<?
+<?php
 } else {
 	echo $groupname;
 }

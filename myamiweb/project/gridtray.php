@@ -88,7 +88,7 @@ project_header("Grid Tray", "init()");
 <tr>
 <td valign=top>
 <select size="10" name="currentgrid" onchange="onChangeGrid()">
-<?
+<?php
 foreach ($grids as $grid) {
     $s = ($grid['gridId']==$selectedgridId) ? 'selected' : '';
 		$id=$grid['gridId'];
@@ -99,7 +99,7 @@ foreach ($grids as $grid) {
 </select>
 </td>
 <td valign=top >
-<?
+<?php
 $gridinfo = $griddata->getGridInfo($selectedgridId);
 $menu = array(
 	'new'=>'updategrid.php',
@@ -139,7 +139,7 @@ if ($gridinfo['boxId']) {
 <tr>
 <td valign=top>
 <select size="10" name="currentgridbox" onchange="onChangeGridBox()">
-<?
+<?php
 $selectedgridId=(empty($selectedgridId)) ? $grids[0]['gridId'] : $selectedgridId;
 foreach ($gridboxes as $gridbox) {
     if ($gridbox['gridboxId']==$selectedgridboxId)
@@ -152,7 +152,7 @@ foreach ($gridboxes as $gridbox) {
 </select>
 </td>
 <td valign=top >
-<?
+<?php
 	$menu = array(
 		'new'=>'updategridbox.php',
 		'edit'=>'updategridbox.php?gridboxId='.$selectedgridboxId,
@@ -206,7 +206,7 @@ switch ($gridboxinfo['boxtypeId']) {
 </tr>
 </table>
 </form>
-<?
+<?php
 project_footer();
 ?>
 
