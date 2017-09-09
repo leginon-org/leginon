@@ -127,7 +127,7 @@ if ($gridinfo['boxId']) {
 ?>Grid Box: <a class="header" href="?<?=build_get_args($spid_arg, $gid_arg, 'gbid='.$gridinfo['boxId'])?>"><?=$gridboxinfo['gridboxlabel']?></a>
 <br>
 
-<? } ?>
+<?php } ?>
 
 </td>
 </tr>

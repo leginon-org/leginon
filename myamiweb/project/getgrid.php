@@ -120,7 +120,7 @@ switch ($gridboxinfo['boxtypeId']) {
 }
 ?>
 <img alt="gridbox" src="drawgridbox.php?gbt=<?=$gridboxinfo['boxtypeId']?>&amp;<?=$link?>size=tiny&amp;gl=<?=$gridinfo['boxId']?>&amp;gid=<?=$gridId?>" border="0">
-<? } ?>
+<?php } ?>
 
 </td>
 </tr>

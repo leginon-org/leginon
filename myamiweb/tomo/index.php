@@ -132,13 +132,13 @@ if($tiltSeriesId != NULL) {
 	<tr><td><?php echo $images[0]; ?></td></tr>
 	<tr><td><?php echo $images[1]; ?></td></tr>
 	<tr><td><?php echo $images[2]; ?></td></tr>
-<? 
+<?php
 if ($showmodel) {
 ?>
 	<tr><td><?php echo $images[3]; ?></td></tr>
 	<tr><td><?php echo $images[4]; ?></td></tr>
 	<tr><td><?php echo $images[5]; ?></td></tr>
-<? } ?>
+<?php } ?>
 <!--- <tr><td><?php echo $images[6]; ?></td></tr> --->
 <?php
 if($tiltSeriesId != NULL) {

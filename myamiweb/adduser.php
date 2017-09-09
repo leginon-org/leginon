@@ -110,9 +110,9 @@ $advancedval = ($userinfo['advanced'] == 1) ? "CHECKED":"";
 		<label for="mypass2">confirm:</label><br />
 	</td>
 	<td>
-		<? if ($checkpass) { ?>
+		<?php if ($checkpass) { ?>
 		<input type="checkbox" name="chpass"><font color="red">Change Password</font><br />
-		<? } ?>
+		<?php } ?>
 		<input class="field" type="password" value="" name="mypass1" size="15" ><br />
 		<input class="field" type="password" value="" name="mypass2" size="15" ><br />
 	</td>

@@ -90,7 +90,7 @@ if ($_POST['orig']) {
 function init() {
 }
 </script>
-<h3><? echo $title ?></h3>
+<h3><?php echo $title ?></h3>
 <div align="center">
 <?php
 $code_string = '';
@@ -163,7 +163,7 @@ if ($_POST) {
 ?>
 			<h3>            OR
 			<h3>Revert the administrator's Node Settings to the original installation values.</h3>
-			<input type="hidden" name="adminId" value= "<? echo $admin_user['userId'] ?>" >
+			<input type="hidden" name="adminId" value= "<?php echo $admin_user['userId'] ?>" >
 			<input type="submit" name="orig" value="Revert to Original" >
 		
 <?php
@@ -172,7 +172,7 @@ if ($_POST) {
 		echo "No valid user for this operation";
 	} ?>
 </form>
-<? } ?>
+<?php } ?>
 </div>
 <?php
 admin_footer();

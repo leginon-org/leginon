@@ -52,12 +52,12 @@ function printResult($qresult,$qtype='',$ttype='') {
 	$estsecond = (int) floor($esttime%60);
 ?>
 	<td>
-		<p> <h3> <? echo $qtype ?> </h3></p>
-		<p> total <?php echo $ttype ?> targets in queue <? echo $pretext.$totalNew ?> </p>
-		<p> <h4> unprocessed queue= <? echo $totalActive  ?></h4></p>
-		<p> avg time so far = <? echo (int)($avgtime) ?> s</p>
+		<p> <h3> <?php echo $qtype ?> </h3></p>
+		<p> total <?php echo $ttype ?> targets in queue <?php echo $pretext.$totalNew ?> </p>
+		<p> <h4> unprocessed queue= <?php echo $totalActive  ?></h4></p>
+		<p> avg time so far = <?php echo (int)($avgtime) ?> s</p>
 		<p> <h4> estimated time for the remaining targets  = 
-	<? 
+	<?php
 	if ($estday > 0)
 		echo "$estday days, $esthour hours\n";
 	elseif ($esthour > 0)
@@ -67,7 +67,7 @@ function printResult($qresult,$qtype='',$ttype='') {
 	?> <h4></p>
 	</td>
 	</tr><tr>
-<? return;
+<?php return;
 	}
 // --- Set sessionId
 $selected_sessionId = ($_GET['expId']);

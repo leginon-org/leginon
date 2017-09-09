@@ -186,32 +186,32 @@ $memoryLimitFont      = ($memoryLimit      != $memoryLimitRec)      ? $errorColo
 	</tr>
 	<tr>
 		<td>error_reporting</td>
-		<td><? echo "<font color='".$errorReportingFont."'>".$errorReportingText."</font>"; ?></td>
+		<td><?php echo "<font color='".$errorReportingFont."'>".$errorReportingText."</font>"; ?></td>
 		<td>E_ALL & ~E_NOTICE & ~E_WARNING & ~E_DEPRECATED</td>
 	</tr>
 	<tr>
 		<td>display_errors</td>
-		<td><? echo "<font color='".$displayErrorsFont."'>".$displayErrors."</font>"; ?></td>
+		<td><?php echo "<font color='".$displayErrorsFont."'>".$displayErrors."</font>"; ?></td>
 		<td>On</td>
 	</tr>
 		<td>register_argc_argv</td>
-		<td><? echo "<font color='".$registerArgcArgvFont."'>".$registerArgcArgv."</font>"; ?></td>
+		<td><?php echo "<font color='".$registerArgcArgvFont."'>".$registerArgcArgv."</font>"; ?></td>
 		<td>On</td>
 	</tr>
 		<td>short_open_tag</td>
-		<td><? echo "<font color='".$shortOpenTagFont."'>".$shortOpenTag."</font>"; ?></td>
+		<td><?php echo "<font color='".$shortOpenTagFont."'>".$shortOpenTag."</font>"; ?></td>
 		<td>On</td>
 	</tr>
 		<td>max_execution_time</td>
-		<td><? echo "<font color='".$maxExeTimeFont."'>".$maxExeTime."</font>"; ?></td>
+		<td><?php echo "<font color='".$maxExeTimeFont."'>".$maxExeTime."</font>"; ?></td>
 		<td>300</td>
 	</tr>
 		<td>max_input_time</td>
-		<td><? echo "<font color='".$maxInputTimeFont."'>".$maxInputTime."</font>"; ?></td>
+		<td><?php echo "<font color='".$maxInputTimeFont."'>".$maxInputTime."</font>"; ?></td>
 		<td>300</td>
 	</tr>
 		<td>memory_limit</td>
-		<td><? echo "<font color='".$memoryLimitFont."'>".$memoryLimit."</font>"; ?></td>
+		<td><?php echo "<font color='".$memoryLimitFont."'>".$memoryLimit."</font>"; ?></td>
 		<td>256M (minimum)</td>
 	</tr>
 </table>

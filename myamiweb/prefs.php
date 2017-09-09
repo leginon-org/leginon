@@ -68,11 +68,11 @@ $advancedval = ($userinfo['advanced'] == 1) ? "CHECKED":"";
 		<label for="mypass2">confirm:</label><br />
 	</td>
 	<td>
-		<? if (!$haspass) { ?>
+		<?php if (!$haspass) { ?>
 		<font color="red">no password set</font><br />
-		<? } else if ($checkpass) { ?>
+		<?php } else if ($checkpass) { ?>
 		<input type="checkbox" name="chpass"><font color="red">Change Password</font><br />
-		<? } ?>
+		<?php } ?>
 		<input class="field" type="password" value="" name="mypass1" size="15" ><br />
 		<input class="field" type="password" value="" name="mypass2" size="15" ><br />
 	</td>
@@ -194,7 +194,7 @@ exit();
 
 ?>
 <h3>My Preferences</h3>
-<? if (!$username)
+<?php if (!$username)
 	exit;
 
 $comment_pref = new ViewerPreference;
@@ -251,7 +251,7 @@ $viewmyexp_ck = ($mypref['viewmyexp']=='Y') ? 'checked' : '';
 <table border=0>
 <tr valign=top>
 	<td>
-<?  echo divtitle("Main Page"); ?>
+<?php  echo divtitle("Main Page"); ?>
 	</td>
 </tr>
 <tr>
@@ -262,7 +262,7 @@ View Stats:
 </tr>
 <tr valign=top>
 	<td>
-<?  echo divtitle("Viewer"); ?>
+<?php  echo divtitle("Viewer"); ?>
 View comment
 <input class="bt1" type="checkbox" <?=$viewcomment_ck?> value='Y' name="viewcomment" ><br>
 View my experiment only 
@@ -273,7 +273,7 @@ View my experiment only
 </tr>
 <tr valign=top>
 	<td>
-<?  echo divtitle("Comment Setup"); ?>
+<?php  echo divtitle("Comment Setup"); ?>
 	</td>
 </tr>
 <tr>
@@ -313,7 +313,7 @@ echo '
 </table>
 	</td>
 	<td>
-<? if ($commentId) { ?>
+<?php if ($commentId) { ?>
 <table>
 	<tr>
 	<td colspan="2">
@@ -324,7 +324,7 @@ Category for <b>"<?=$commentinfo['name']?>"</b> (i.e. : A, Good, Ok):<br>
 	</tr>
 	<tr>
 	<td>
-<? if ($mycategory) { 
+<?php if ($mycategory) {
 echo '<select name="categoryId" size="5" >';
 foreach ($mycategory as $category) {
 	echo "<option value='".$category['id']."' >".$category['name']."</option>\n";
@@ -376,7 +376,7 @@ echo '</select>';
 		</td>
 		</tr>
 	</table>
-<? } ?>
+<?php } ?>
 	</td>
 	</tr>
 </table>

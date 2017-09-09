@@ -257,13 +257,13 @@ function createForm() {
 						<tr>
 							<td>total target list =
 							</td>
-							<td> <? echo count($imagetls); ?>
+							<td> <?php echo count($imagetls); ?>
 							</td>
 						</tr>
 						<tr>
 							<td>total dequeued image target list =
 							</td>
-							<td> <? echo count($dqimagetls); ?>
+							<td> <?php echo count($dqimagetls); ?>
 							</td>
 						</tr>
 					</table>

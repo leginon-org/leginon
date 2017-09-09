@@ -14,11 +14,11 @@
 		<label for="mypass2">confirm:</label><br />
 	</td>
 	<td>
-		<? if ($nopass) { ?>
+		<?php if ($nopass) { ?>
 		<font color="red">no password set</font><br />
-		<? } else if ($checkpass) { ?>
+		<?php } else if ($checkpass) { ?>
 		<font color="red">check to change</font>:<input type="checkbox" name="chpass"><br />
-		<? } ?>
+		<?php } ?>
 		<input class="field" type="password" value=".<?$password?>." name="mypass1" size="15" ><br />
 		<input class="field" type="password" value="" name="mypass2" size="15" ><br />
 	</td>

@@ -87,7 +87,7 @@
         <input type="submit" value="<?=$action?>" name="submitgrid">
       </td>
     </tr>
-<? if ($gridId) { ?>
+<?php if ($gridId) { ?>
 		<tr>
 			<td colspan=2>
 				<hr/>
@@ -116,7 +116,7 @@ foreach ($gridboxes as $gridbox) {
 </select>
       </td>
     </tr>
-<? } ?>
+<?php } ?>
   </table>
 </form>
 <?php
