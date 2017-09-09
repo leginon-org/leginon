@@ -54,7 +54,7 @@ foreach ((array)$projects as $k=>$proj) {
 }
 project_header($title);
 ?>
-<form method="POST" name="projectform" action="<?=$_SERVER['PHP_SELF'] ?>">
+<form method="POST" name="projectform" action="<?php $_SERVER['PHP_SELF'] ?>">
 <input type="hidden" name="projectId" value="">
 <?php
 if (privilege('projects') > 3) {

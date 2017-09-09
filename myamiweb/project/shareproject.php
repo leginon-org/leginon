@@ -13,7 +13,7 @@ checkProjectAccessPrivilege($projectId);
 $is_admin = checkProjectAdminPrivilege($projectId);
 ?>
 
-<form method="POST" name="projectform" action="<?=$_SERVER['REQUEST_URI'] ?>">
+<form method="POST" name="projectform" action="<?php $_SERVER['REQUEST_URI'] ?>">
 <input type="hidden" name="projectId" value="">
 <?php
 if ($is_admin) {

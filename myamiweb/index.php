@@ -42,7 +42,7 @@ login_header(PROJECT_TITLE,'','',true);
 	function preSearch()
 	{
 		var q = $F('query');
-		var url = '<?=$baseurl?>getsessioninfo.php';
+		var url = '<?php $baseurl?>getsessioninfo.php';
 		var pars = 'q=' + q;
 		$('result').innerHTML = "Searching...";
 		var myAjax = new Ajax.Request( url, { method: 'get', parameters: pars, onComplete: showResponse });

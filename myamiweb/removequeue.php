@@ -226,7 +226,7 @@ function createForm() {
 	?>
 <html>
 	<head>
-		<title><?=$title; ?> queue remover</title>
+		<title><?php $title; ?> queue remover</title>
 		<link rel="stylesheet" type="text/css" href="css/viewer.css"> 
 		<STYLE type="text/css">
 			 DIV.comment_section { text-align: justify; 

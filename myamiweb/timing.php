@@ -26,7 +26,7 @@ $timings = $leginondata->getTiming($sessionId, $preset);
 ?>
 <html>
 <head>
-<title>Timing Statistics for session <?=$title; ?></title>
+<title>Timing Statistics for session <?php $title; ?></title>
 <link rel="stylesheet" type="text/css" href="css/viewer.css"> 
 </head>
 
@@ -37,14 +37,14 @@ $timings = $leginondata->getTiming($sessionId, $preset);
   <a class="header" HREF="index.php">&lt;index&gt;</a>
  </td>
  <td>
-  <a class="header" HREF="3wviewer.php?sessionId=<?=$sessionId; ?>">&lt;view <?=$title; ?>&gt;</a>
+  <a class="header" HREF="3wviewer.php?sessionId=<?php $sessionId; ?>">&lt;view <?php $title; ?>&gt;</a>
  </td>
 </tr>
 </table>
 <table border="0" cellpadding=10>
 <tr valign="top">
 	<td colspan="2">
-	<?=divtitle("Timing Statistics for session $title "); ?>
+	<?php divtitle("Timing Statistics for session $title "); ?>
 	</td>
 </tr>
 <?php
@@ -61,14 +61,14 @@ foreach ($presets as $preset) {
 ?>
 <tr>
 <td>
-<a href="timingstatsgraph.php?hg=1&vdata=1&Id=<?=$sessionId; ?>&preset=<?=$preset; ?>">[data]</a>
-<a href="timingstatsgraph.php?hg=1&vs=1&Id=<?=$sessionId; ?>&preset=<?=$preset; ?>">[sql]</a><br>
-<a href="timingstatsgraph.php?hg=1&Id=<?=$sessionId; ?>&preset=<?=$preset; ?>"><img border="0" src="timingstatsgraph.php?w=300&hg=1&Id=<?=$sessionId; ?>&preset=<?=$preset; ?>"></a>
+<a href="timingstatsgraph.php?hg=1&vdata=1&Id=<?php $sessionId; ?>&preset=<?php $preset; ?>">[data]</a>
+<a href="timingstatsgraph.php?hg=1&vs=1&Id=<?php $sessionId; ?>&preset=<?php $preset; ?>">[sql]</a><br>
+<a href="timingstatsgraph.php?hg=1&Id=<?php $sessionId; ?>&preset=<?php $preset; ?>"><img border="0" src="timingstatsgraph.php?w=300&hg=1&Id=<?php $sessionId; ?>&preset=<?php $preset; ?>"></a>
 </td>
 <td>
-<a href="timingstatsgraph.php?vdata=1&Id=<?=$sessionId; ?>&preset=<?=$preset; ?>">[data]</a>
-<a href="timingstatsgraph.php?vs=1&Id=<?=$sessionId; ?>&preset=<?=$preset; ?>">[sql]</a><br>
-<a href="timingstatsgraph.php?Id=<?=$sessionId; ?>&preset=<?=$preset; ?>"><img border="0" src="timingstatsgraph.php?w=300&Id=<?=$sessionId; ?>&preset=<?=$preset; ?>"></a>
+<a href="timingstatsgraph.php?vdata=1&Id=<?php $sessionId; ?>&preset=<?php $preset; ?>">[data]</a>
+<a href="timingstatsgraph.php?vs=1&Id=<?php $sessionId; ?>&preset=<?php $preset; ?>">[sql]</a><br>
+<a href="timingstatsgraph.php?Id=<?php $sessionId; ?>&preset=<?php $preset; ?>"><img border="0" src="timingstatsgraph.php?w=300&Id=<?php $sessionId; ?>&preset=<?php $preset; ?>"></a>
 </td>
 </tr>
 <?php } ?>

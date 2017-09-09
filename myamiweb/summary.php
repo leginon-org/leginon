@@ -71,7 +71,7 @@ function init() {
 	<?php echo divtitle("Summary of $title Experiment"); ?>
 	</td>
 </tr>
-	<?=($currentproject) ? '<tr><td><span class="datafield0">Project: </span>'.$proj_link.'</td></tr>' :'' ?>
+	<?php ($currentproject) ? '<tr><td><span class="datafield0">Project: </span>'.$proj_link.'</td></tr>' :'' ?>
 <tr valign="top">
 	<td>
 <?php

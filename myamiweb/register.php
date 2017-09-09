@@ -30,7 +30,7 @@ if ($_POST) {
 ?>
 <p>
 You have been registered (still pending). We have sent an email to <b>
-<?=$email; ?></b> and have recorded the following information :</font>
+<?php $email; ?></b> and have recorded the following information :</font>
 </p>
 
   <table width="100%" border="0" cellspacing="0" cellpadding="0" bgcolor="#3333FF">
@@ -86,7 +86,7 @@ if ($displayform) {
 		<label for="username"><font color="red">*</font>Username: </label>
 	</td>
 	<td>
-		<input class="field" type="text" value="<?=$username?>" name="username" id="username">
+		<input class="field" type="text" value="<?php $username?>" name="username" id="username">
 	</td>
 </tr>
 <tr>
@@ -94,13 +94,13 @@ if ($displayform) {
 		<label for="firstname"><font color="red">*</font>First Name: </label>
 	</td>
 	<td>
-		<input class="field" type="text" value="<?=$firstname?>" name="firstname" id="firstname" size="15" >
+		<input class="field" type="text" value="<?php $firstname?>" name="firstname" id="firstname" size="15" >
 	</td>
 	<td>
 		<label for="lastname"><font color="red">*</font>Last Name: </label>
 	</td>
 	<td>
-		<input class="field" type="text" value="<?=$lastname?>" name="lastname" id="lastname" size="15" >
+		<input class="field" type="text" value="<?php $lastname?>" name="lastname" id="lastname" size="15" >
 	</td>
 </tr>
 <tr>
@@ -108,7 +108,7 @@ if ($displayform) {
 		<label for="email"><font color="red">*</font>Email: </label>
 	</td>
 	<td>
-		<input class="field" type="text" value="<?=$email?>" name="email" id="email">
+		<input class="field" type="text" value="<?php $email?>" name="email" id="email">
 	</td>
 </tr>
 <tr>

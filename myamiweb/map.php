@@ -88,19 +88,19 @@ MAP: <?php echo $filename; ?>
 <script language="javascript" src="js/cross.js"></script>
 <script language="javascript" src="js/scale.js"></script>
 <script>
-var filename="<?=$filename; ?>"
-var pixsize ="<?=$display_pixelsize; ?>"
-var fftflag="<?=$fftflag; ?>"
+var filename="<?php $filename; ?>"
+var pixsize ="<?php $display_pixelsize; ?>"
+var fftflag="<?php $fftflag; ?>"
 
-var jssize=<?=$imgwidth; ?>
+var jssize=<?php $imgwidth; ?>
 
-var jsimgheight=<?=$imgheight; ?>
+var jsimgheight=<?php $imgheight; ?>
 
-var jsmapwidth=<?=$imgmapwidth; ?>
+var jsmapwidth=<?php $imgmapwidth; ?>
 
-var jsmapheight=<?=$imgmapheight; ?>
+var jsmapheight=<?php $imgmapheight; ?>
 
-var ratio=<?=$ratio; ?>
+var ratio=<?php $ratio; ?>
 
 var mx=0
 var my=0
@@ -400,13 +400,13 @@ function getDistance() {
 		style="z-index:2; position:absolute; left:0px; top:0px; background-color:rgb(0,0,0); border: 1px solid #000000;" > 
 	<div
 		id="divarea"
-		style="z-index:99;position:absolute;visibility:hidden;width:0px; height:0px;border:1px dashed <?=$areacolor?>;cursor:move;background-color:transparent)"
+		style="z-index:99;position:absolute;visibility:hidden;width:0px; height:0px;border:1px dashed <?php $areacolor?>;cursor:move;background-color:transparent)"
 		onmousedown	= "areamousedown(event)"
 		onmouseup		= "areamouseup(event)"
 		onmousemove = "areamousemove(event)"
 		onmouseout	= "areamouseup(event)"
 	></div>
-	<div id="imgmap" style="position:relative; height:<?=$imgmapheight?>px; width:<?=$imgmapwidth?>px; background:url('<?=$imgmapsrc?>')"
+	<div id="imgmap" style="position:relative; height:<?php $imgmapheight?>px; width:<?php $imgmapwidth?>px; background:url('<?php $imgmapsrc?>')"
 		onmousemove = "areamousemove(event)"
 		onmousedown	= "imgmapmousedown(event)" ></div>
 	<div	id="divcoord"
@@ -424,7 +424,7 @@ function getDistance() {
 </div>
 </div>
 <div id="divimg" style="z-index:1; position:absolute; width:100%; height:100%; overflow:auto;cursor:crosshair; ">
-<div id="img" style="position:absolute; top:0px; left:0px; width:<?=$imgwidth;?>px; height:<?=$imgheight;?>; background:url('<?php echo $imgsrc; ?>')"
+<div id="img" style="position:absolute; top:0px; left:0px; width:<?php $imgwidth;?>px; height:<?php $imgheight;?>; background:url('<?php echo $imgsrc; ?>')"
 	onmousemove	=	"imgmousemove(event)";
 	onmousedown	=	"imgmousedown(event)";
 	onmouseup		=	"imgmouseup(event)";

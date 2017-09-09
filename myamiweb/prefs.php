@@ -50,8 +50,8 @@ $action="update";
 $checkpass=true;
 $advancedval = ($userinfo['advanced'] == 1) ? "CHECKED":"";
 ?>
-<form name="userform" action="<?=$_SERVER['PHP_SELF'] ?>" method="POST">
-  <input type="hidden" name="userId" value="<?=$userId?>">
+<form name="userform" action="<?php $_SERVER['PHP_SELF'] ?>" method="POST">
+  <input type="hidden" name="userId" value="<?php $userId?>">
   <table border=0 cellspacing=0 cellpadding=2>
 	<tr>
 	<td>
@@ -63,7 +63,7 @@ $advancedval = ($userinfo['advanced'] == 1) ? "CHECKED":"";
 		<b><?php echo $userinfo['name']; ?></b><br />
 	</td>
 	<td>
-		<?=($checkpass) ? "<br />" : "" ?>
+		<?php ($checkpass) ? "<br />" : "" ?>
 		<label for="mypass1">Password:</label><br />
 		<label for="mypass2">confirm:</label><br />
 	</td>
@@ -176,13 +176,13 @@ $advancedval = ($userinfo['advanced'] == 1) ? "CHECKED":"";
 	</tr>
 	<tr>
 	<td>
-		<input type="checkbox" name="advanced" <?=$advancedval?> >
+		<input type="checkbox" name="advanced" <?php $advancedval?> >
 		<label for="advanced">Always show advanced options</label><br />
 	</td>
 	</tr>	
 	<tr>
 	<td>
-		<input type="submit" value="<?=$action?>" name="submit">
+		<input type="submit" value="<?php $action?>" name="submit">
 	</td>
 	</tr>
   </table>
@@ -247,7 +247,7 @@ $viewstat_ck = ($mypref['viewstat']=='Y') ? 'checked' : '';
 $viewcomment_ck = ($mypref['viewcomment']=='Y') ? 'checked' : '';
 $viewmyexp_ck = ($mypref['viewmyexp']=='Y') ? 'checked' : '';
 ?>
-<form method="POST" action="<?=$_SERVER['REQUEST_URI']?>" name="pref">
+<form method="POST" action="<?php $_SERVER['REQUEST_URI']?>" name="pref">
 <table border=0>
 <tr valign=top>
 	<td>
@@ -257,16 +257,16 @@ $viewmyexp_ck = ($mypref['viewmyexp']=='Y') ? 'checked' : '';
 <tr>
 	<td>
 View Stats:
-<input class="bt1" type="checkbox" <?=$viewstat_ck?> value='Y' name="viewstat" >
+<input class="bt1" type="checkbox" <?php $viewstat_ck?> value='Y' name="viewstat" >
 	</td>
 </tr>
 <tr valign=top>
 	<td>
 <?php  echo divtitle("Viewer"); ?>
 View comment
-<input class="bt1" type="checkbox" <?=$viewcomment_ck?> value='Y' name="viewcomment" ><br>
+<input class="bt1" type="checkbox" <?php $viewcomment_ck?> value='Y' name="viewcomment" ><br>
 View my experiment only 
-<input class="bt1" type="checkbox" <?=$viewmyexp_ck?> value='Y' name="myexponly" ><br>
+<input class="bt1" type="checkbox" <?php $viewmyexp_ck?> value='Y' name="myexponly" ><br>
 <br>
 <input class="bt1" type="submit" name="v" value="save">
 	</td>
@@ -317,7 +317,7 @@ echo '
 <table>
 	<tr>
 	<td colspan="2">
-Category for <b>"<?=$commentinfo['name']?>"</b> (i.e. : A, Good, Ok):<br>
+Category for <b>"<?php $commentinfo['name']?>"</b> (i.e. : A, Good, Ok):<br>
 <input class='field' type='text' size='15' name='cat_lbl'>
 <input class="bt1" type="submit" name="c" value="Add">
 	</td>

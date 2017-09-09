@@ -106,7 +106,7 @@ $newnumberstr=$package->format_number($curpackage['number']);
 project_header("Package $title");
 ?>
 
-<a href="<?=$_GET['ln'];?>">[ &laquo; back ]</a>
+<a href="<?php $_GET['ln'];?>">[ &laquo; back ]</a>
 <p>
 <font color=red>*</font>
 <font face="Arial, Helvetica, sans-serif" size="2">: required fields</font>

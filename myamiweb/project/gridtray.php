@@ -78,12 +78,12 @@ project_header("Grid Tray", "init()");
 </script>
 <form method="POST" name="dataform" action="<?php echo $_SERVER['PHP_SELF']; ?>">
 
-<?=divtitle('Upload Grids')?>
+<?php divtitle('Upload Grids')?>
 <p>
 <a class="header" href="uploadgrid.php">upload grids / tray</a>
 </p>
-<?=divtitle('Grids')?>
-<input type="hidden" name="objsel" value="<?=$objsel?>">
+<?php divtitle('Grids')?>
+<input type="hidden" name="objsel" value="<?php $objsel?>">
 <table border="0" >
 <tr>
 <td valign=top>
@@ -124,7 +124,7 @@ if (is_array($gridinfo)) {
 $gridboxdata = new gridbox();
 $gridboxinfo = $gridboxdata->getGridBoxInfo($gridinfo['boxId']);
 if ($gridinfo['boxId']) {
-?>Grid Box: <a class="header" href="?<?=build_get_args($spid_arg, $gid_arg, 'gbid='.$gridinfo['boxId'])?>"><?=$gridboxinfo['gridboxlabel']?></a>
+?>Grid Box: <a class="header" href="?<?php build_get_args($spid_arg, $gid_arg, 'gbid='.$gridinfo['boxId'])?>"><?php $gridboxinfo['gridboxlabel']?></a>
 <br>
 
 <?php } ?>
@@ -133,7 +133,7 @@ if ($gridinfo['boxId']) {
 </tr>
 </table>
 
-<?=divtitle('Grid Boxes')?>
+<?php divtitle('Grid Boxes')?>
 <input type="hidden" name="gridboxId" value="">
 <table border="0" >
 <tr>
