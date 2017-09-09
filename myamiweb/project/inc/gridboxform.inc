@@ -1,4 +1,4 @@
-<form name="gridboxform" action="<?= $PHP_SELF ?>" method="POST">
+<form name="gridboxform" action="<?php $PHP_SELF ?>" method="POST">
   <input type="hidden" name="gridboxId" value="<?=$gridboxId?>">
   <table border="0" cellspacing="0" cellpadding="0" >
     <tr> 
