@@ -579,9 +579,22 @@ if (is_numeric($expId)) {
 //			'name'=>"<a href='evilClusterUsers.php?expId=$sessionId'>Evil Cluster Users</a>",
 //		);
 
+
+		// --- Get Relion3DRefine Data
+		if ($relion3dRefineIds = $particle->getRunIdsFilter($sessionId,'ApSelectionRunData','program','relion',True)) {
+			$totalRelion3dRefineRuns=count($relion3dRefineIds);
+		}
+		if ($relion3dRefineIds = $particle->getRunIdsFilter($sessionId,'ApSelectionRunData','program','relion',False)){
+			$relion3dRefineRuns=count($relion3dRefineIds);
+		}
+
+		        $form = "uploadRelion3DRefineForm";
+		//                echo "  <h3><a href='runAppionLoop.php?expId=$expId&form=$form'>
 		$nruns[] = array(
-			'name'=>"<a href='uploadRelion3DRefine.php?expId=$sessionId'>Upload Relion 3D Refine</a>",
+			'name'=>"<a href='runAppionLoop.php?expId=$sessionId&form=$form'>Upload Relion 3D Refine</a>",
+			'result'=>($relion3dRefineRuns==0) ? "" : "<a href='relion3drefinelistreport.php?expId=$sessionId'>$relion3dRefineRuns complete</a>",
 		);
+
 
 		$data[] = array(
 			'action' => array($action, $celloption),

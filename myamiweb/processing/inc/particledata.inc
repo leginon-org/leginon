@@ -1184,7 +1184,7 @@ class particledata {
 
 	function getCtfInfoFromImageId($imageId, $order=false, $method='', $acerunId='') {
 		$phase_shift_select = $this->getPhaseShiftString('c');
-		$local_plot_select = ($this->mysql->FieldExists('ApCtf','local_plot')) ? "c.local_plot, ": "";
+		$local_plot_select = ($this->mysql->FieldExists('ApCtfData','localplot')) ? "c.localplot, ": "";
 		$q =	"select "
 			."c.`DEF_id`, "
 			."c.`REF|leginondata|AcquisitionImageData|image`, "
@@ -2520,6 +2520,7 @@ class particledata {
 	}
 
 	function getRunIds($sessionId, $table, $showHidden=False) 
+
 	{
 		$q = "SELECT r.*, p.path "
 			."FROM `".$table."` AS r "
@@ -2533,12 +2534,30 @@ class particledata {
 		//echo print_r($r)."<br/>\n";
 		return $r;
 	}
-	
+
+	// Filter Run ID's against a field and field value, 
+	function getRunIdsFilter($sessionId,$table,$field,$filtervalue,$showHidden=False)
+	{
+		$q = "SELECT r.*, p.path "
+			."FROM `".$table."` AS r "
+			."LEFT JOIN ApPathData AS p "
+			."ON (r.`REF|ApPathData|path` = p.`DEF_id`) "
+			."WHERE r.`REF|leginondata|SessionData|session` = '$sessionId' "
+			."AND r.`".$field."` = '$filtervalue' ";
+		if (!$showHidden) $q.= " AND (r.`hidden` IS NULL OR r.`hidden` = 0) ";
+		$q.= "ORDER BY r.`DEF_id` DESC ";
+		//echo $q."<br/>\n";
+		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/>\n";
+		return $r;
+	}
+
+
 	function getParticleRunIds($sessionId,$showHidden=False) 
 	{
 		return $this->getRunIds($sessionId, "ApSelectionRunData", $showHidden);
 	}
-	
+
 	function getDDStackRunIds($sessionId,$showHidden=False) 
 	{
 		return $this->getRunIds($sessionId, "ApDDStackRunData", $showHidden);
