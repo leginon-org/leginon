@@ -252,6 +252,7 @@ class UploadRelion3DRefine(reconUploader.generalReconUploader):
 		runq['name'] = self.params['runname']
 		runq['session'] = self.sessiondata
 		runq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
+		runq['program'] = 'relion'
 		rundatas = runq.query(results=1)
 		if rundatas and rundatas[0]['params']['diam'] != particle_diameter:
 			apDisplay.printError("upload diameter not the same as last run")

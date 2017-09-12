@@ -14,10 +14,9 @@ $particle = new particledata();
 list($runparams) = $particle->getSelectionParams($runId);
 $templateparams = $particle->getTemplateRunParams($runId);
 
-//processing_header("Particle run report","Particle report for $runparams[name]");
 processing_header("Relion 3D Refine Report","Relion 3D Refine Report for $runparams[name]");
 
-echo pickingsummarytable($runId);
+//echo pickingsummarytable($runId);
 
 $particlestats = $particle->getStats($runId);
 echo "<table cellspacing='1' cellpadding='2'><tr><td><span class='datafield0'>Total particles for $runparams[name]: </span></td><td>$particlestats[totparticles]</td></tr></table>\n";
