@@ -82,6 +82,11 @@ def targetPoints(targets):
 #====================
 #====================
 class RCTAcquisition(acquisition.Acquisition):
+	'''
+	Node class that tracks targets and acquire corresponding pair
+	of images at different tilts.  It acquires all images at one tilt
+	before moving to the next tilt.
+	'''
 	panelclass = gui.wx.RCTAcquisition.Panel
 	settingsclass = leginondata.RCTAcquisitionSettingsData
 	defaultsettings = acquisition.Acquisition.defaultsettings
@@ -115,6 +120,15 @@ class RCTAcquisition(acquisition.Acquisition):
 	def setImageFilename(self, imagedata):
 		setImageFilename(imagedata, tiltnumber=self.tiltnumber)
 		imagedata['tilt series'] = self.tiltseries
+
+	def getIsResetTiltInList(self):
+		'''
+		Determine whether to reset tilt before the first target is processed.
+		Subclasses like RCT and TiltListAlternator
+		'''
+		if self.settings['use parent tilt']:
+			self.warning('RCT is not compatible with "use parent image tilt".') 
+		return False
 
 	#====================
 	def processTargetList(self, tilt0targetlist):
@@ -408,9 +422,9 @@ class RCTAcquisition(acquisition.Acquisition):
 					
 				check = self.checkCVResult(result, is_small_tilt_diff)
 				if check is False:
-					self.logger.warning("CV transform failed: redoing tilt %.2f"%(tilt,))
+					tilt_degrees = math.degrees(tilt)
 					### redo this tilt; becomes an infinite loop if the image goes black
-					self.logger.warning("openCV failed: redoing tilt %.2f"%(tilt,))
+					self.logger.warning("CV transform failed: redoing tilt %.2f"%(tilt_degrees,))
 					if retries:
 						i -= 1
 						retries -= 1

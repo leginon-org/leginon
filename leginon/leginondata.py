@@ -1965,6 +1965,14 @@ class TiltAlternaterSettingsData(AcquisitionSettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class TiltListAlternaterSettingsData(AcquisitionSettingsData):
+	def typemap(cls):
+		return AcquisitionSettingsData.typemap() + (
+			('tilts', str),
+			('use tilts', bool),
+		)
+	typemap = classmethod(typemap)
+
 class MoveAcquisitionSettingsData(AcquisitionSettingsData):
 	def typemap(cls):
 		return AcquisitionSettingsData.typemap() + (

@@ -11,6 +11,11 @@ import leginondata
 import gui.wx.TiltAlternater
 
 class TiltAlternater(acquisition.Acquisition):
+	'''
+	Node class that set stage tilt angle according to a list at
+	each target it received in the target list.  Optionally return
+	to the tilt of the parent image at the end of processing.
+	'''
 	panelclass = gui.wx.TiltAlternater.Panel
 	settingsclass = leginondata.TiltAlternaterSettingsData
 	defaultsettings = acquisition.Acquisition.defaultsettings
@@ -41,6 +46,7 @@ class TiltAlternater(acquisition.Acquisition):
 	def processTargetList(self, newdata):
 		self.tilts = self.convertDegreeTiltsToRadianList(self.settings['tilts'])
 		super(TiltAlternater, self).processTargetList(newdata)
+		# at the end restored to parent tilt
 		if self.settings['use tilts'] and len(self.tilts) > 0:
 			parent_tilt = self.getParentTilt(newdata)
 			self.instrument.tem.setStagePosition({'a':parent_tilt})

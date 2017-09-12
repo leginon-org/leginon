@@ -165,6 +165,9 @@ noderegistry.registerNodeClass(MoveAcquisition,classtype)
 from tiltacquisition import TiltAcquisition
 noderegistry.registerNodeClass(TiltAcquisition,classtype)
 
+from tiltlistalternater import TiltListAlternater
+noderegistry.registerNodeClass(TiltListAlternater,classtype)
+
 from tiltalternater import TiltAlternater
 noderegistry.registerNodeClass(TiltAlternater,classtype)
 
