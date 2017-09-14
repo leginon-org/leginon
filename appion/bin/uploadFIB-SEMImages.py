@@ -23,14 +23,14 @@ exec(cmd)
 
 fei_tag=34682 # this tag ID contains all the FEI header information in ascii format
 keys=(
-      ("Date",""),("HV","V"),("Beam",""),("HFW","m"),("ApertureDiameter","m"),("BeamCurrent","A"),
-      ("DynamicFocusIsOn",""),("StageTa","radians"),("TiltCorrectionAngle","radians"),("Dwelltime","s"),
-      ("PixelWidth","m"),("FrameTime","s"),("Integrate",""),("WorkingDistance","m"),("ResolutionX","pixels"),
-      ("ResolutionY","pixels"))
+	  ("Date",""),("HV","V"),("Beam",""),("HFW","m"),("ApertureDiameter","m"),("BeamCurrent","A"),
+	  ("DynamicFocusIsOn",""),("StageTa","radians"),("TiltCorrectionAngle","radians"),("Dwelltime","s"),
+	  ("PixelWidth","m"),("FrameTime","s"),("Integrate",""),("WorkingDistance","m"),("ResolutionX","pixels"),
+	  ("ResolutionY","pixels"))
 
 #these numbers were taken from SEMC Helios by Ed Emg on 8/15/2017
 e_beam_mag=[4973, 5000, 9947, 10000, 29840, 30000, 100000, 149200, 600000] #x mag
-HFW       =[30,   29.8, 15,   14.9,  5,     4.97,  1.49,   1,      0.249 ]  #Horizontal Field of View in microns
+HFW	   =[30,   29.8, 15,   14.9,  5,	 4.97,  1.49,   1,	  0.249 ]  #Horizontal Field of View in microns
 class UploadSEMImages(appionScript.AppionScript):
 	def setupParserOptions(self):	
 		self.parser.add_option("--image-dir", dest="imagedir",
@@ -40,6 +40,8 @@ class UploadSEMImages(appionScript.AppionScript):
 			metavar="DIR")
 		self.parser.add_option("--session-name", dest="sessionname",
 			help="Session name, e.g., 17aug06a. If provided append images to this session.")
+		self.parser.add_option("--z-slice", dest="z_slice",
+			help="Section slice width (z width) in nm")
 		
 	def checkConflicts(self):
 		if self.params['description'] is None:
@@ -61,6 +63,8 @@ class UploadSEMImages(appionScript.AppionScript):
 				apDisplay.printError("Please provide a leginon output directory, "
 					+"e.g., --leginon-output-dir=/data/leginon")
 		self.leginonimagedir = os.path.join(self.params['leginondir'], self.params['sessionname'], 'rawdata')
+		if self.params['z_slice'] is None:
+			self.params['z_slice'] = ""
 
 	def getUserData(self):
 		username = apParam.getUsername()
@@ -73,7 +77,7 @@ class UploadSEMImages(appionScript.AppionScript):
 
 	def getUnusedSessionName(self):
 		### get standard appion time stamp, e.g., 10jun30
-            
+			
 		sessionq = leginon.leginondata.SessionData()
 		sessionq['name'] = self.params['runname']
 		sessiondatas = sessionq.query(results=1)
@@ -94,7 +98,7 @@ class UploadSEMImages(appionScript.AppionScript):
 
 	#=====================
 	def getSession(self):
-        
+		
 		userdata = self.getUserData()
 		sessionq = None
 		if self.params['sessionname']:
@@ -208,21 +212,21 @@ class UploadSEMImages(appionScript.AppionScript):
 		for key in keys:
 		   match=re.search(re.escape(key[0]) + r"=(.*)\r\n",header)
 		   if key[1] != 'radians' :
-		      #import pdb;pdb.set_trace()
-		      scientific=re.search(r'(\d+\.?\d*)e-(\d+)',match.group(1))
-		      if scientific: #outputs 'engineering' notation rather than scientific: assumes exponents negative and numbers positive
-		         mantissa=float(scientific.group(1))
-		         ordinate=int(scientific.group(2))
-		         toeven3 = (3- (ordinate %3)) %3
-		         ordinate += toeven3
-		         mantissa *= 10**toeven3
-		         ordinate /= 3
-		         self.SEM_Data[key[0]] = mantissa
-		      else: #decimals: no conversion needed
-		         self.SEM_Data[key[0]] = match.group(1)
+			  #import pdb;pdb.set_trace()
+			  scientific=re.search(r'(\d+\.?\d*)e-(\d+)',match.group(1))
+			  if scientific: #outputs 'engineering' notation rather than scientific: assumes exponents negative and numbers positive
+				 mantissa=float(scientific.group(1))
+				 ordinate=int(scientific.group(2))
+				 toeven3 = (3- (ordinate %3)) %3
+				 ordinate += toeven3
+				 mantissa *= 10**toeven3
+				 ordinate /= 3
+				 self.SEM_Data[key[0]] = mantissa
+			  else: #decimals: no conversion needed
+				 self.SEM_Data[key[0]] = match.group(1)
 		   elif match.group(1): #angle measurement: output in degrees if there is an angle listed
-		      degrees = 180.0 * float(match.group(1)) / pi
-		      self.SEM_Data[key[0]]  = degrees
+			  degrees = 180.0 * float(match.group(1)) / pi
+			  self.SEM_Data[key[0]]  = degrees
 		
 		# output corrected y pixel size if image was taken using defocus gradient
 		df=re.search(r"DynamicFocusIsOn=yes\r\n",header)
@@ -270,6 +274,7 @@ class UploadSEMImages(appionScript.AppionScript):
 		SEMData['working_distance'] = float(self.SEM_Data['WorkingDistance'])
 		SEMData['resolution_x'] = int(self.SEM_Data['ResolutionX'])
 		SEMData['resolution_y'] = int(self.SEM_Data['ResolutionY'])
+		SEMData['z_slice'] = self.params['z_slice']
 		
 		if self.params['commit'] is True:
 			SEMData.insert()
@@ -315,4 +320,3 @@ if __name__ == '__main__':
 	upimages = UploadSEMImages()
 	upimages.start()
 	upimages.close()
-
