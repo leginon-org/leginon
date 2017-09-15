@@ -87,20 +87,20 @@ MAP: <?php echo $filename; ?>
 <script language="javascript" src="js/draglayer.js"></script>
 <script language="javascript" src="js/cross.js"></script>
 <script language="javascript" src="js/scale.js"></script>
-<script>
-var filename="<?php $filename; ?>"
-var pixsize ="<?php $display_pixelsize; ?>"
-var fftflag="<?php $fftflag; ?>"
+<script type="text/javascript">
+var filename= "<?php echo $filename; ?>"
+var pixsize = <?php echo $display_pixelsize; ?>;
+var fftflag= <?php echo $fftflag; ?>
 
-var jssize=<?php $imgwidth; ?>
+var jssize= <?php echo $imgwidth; ?>
 
-var jsimgheight=<?php $imgheight; ?>
+var jsimgheight=<?php echo $imgheight; ?>
 
-var jsmapwidth=<?php $imgmapwidth; ?>
+var jsmapwidth=<?php echo $imgmapwidth; ?>
 
-var jsmapheight=<?php $imgmapheight; ?>
+var jsmapheight=<?php echo $imgmapheight; ?>
 
-var ratio=<?php $ratio; ?>
+var ratio=<?php echo $ratio; ?>
 
 var mx=0
 var my=0
@@ -400,13 +400,13 @@ function getDistance() {
 		style="z-index:2; position:absolute; left:0px; top:0px; background-color:rgb(0,0,0); border: 1px solid #000000;" > 
 	<div
 		id="divarea"
-		style="z-index:99;position:absolute;visibility:hidden;width:0px; height:0px;border:1px dashed <?php $areacolor?>;cursor:move;background-color:transparent)"
+		style="z-index:99;position:absolute;visibility:hidden;width:0px; height:0px;border:1px dashed <?php echo $areacolor?>;cursor:move;background-color:transparent)"
 		onmousedown	= "areamousedown(event)"
 		onmouseup		= "areamouseup(event)"
 		onmousemove = "areamousemove(event)"
 		onmouseout	= "areamouseup(event)"
 	></div>
-	<div id="imgmap" style="position:relative; height:<?php $imgmapheight?>px; width:<?php $imgmapwidth?>px; background:url('<?php $imgmapsrc?>')"
+	<div id="imgmap" style="position:relative; height:<?php echo $imgmapheight?>px; width:<?php echo $imgmapwidth?>px; background:url('<?php echo $imgmapsrc?>')"
 		onmousemove = "areamousemove(event)"
 		onmousedown	= "imgmapmousedown(event)" ></div>
 	<div	id="divcoord"
@@ -424,7 +424,7 @@ function getDistance() {
 </div>
 </div>
 <div id="divimg" style="z-index:1; position:absolute; width:100%; height:100%; overflow:auto;cursor:crosshair; ">
-<div id="img" style="position:absolute; top:0px; left:0px; width:<?php $imgwidth;?>px; height:<?php $imgheight;?>; background:url('<?php echo $imgsrc; ?>')"
+<div id="img" style="position:absolute; top:0px; left:0px; width:<?php echo $imgwidth;?>px; height:<?php echo $imgheight;?>; background:url('<?php echo $imgsrc; ?>')"
 	onmousemove	=	"imgmousemove(event)";
 	onmousedown	=	"imgmousedown(event)";
 	onmouseup		=	"imgmouseup(event)";
