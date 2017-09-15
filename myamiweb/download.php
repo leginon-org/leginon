@@ -11,6 +11,9 @@ $newimage = $leginondata->findImage($imgId, $preset);
 $imgId = $newimage['id'];
 $imageinfo = $leginondata->getImageInfo($imgId);
 $sessionId = $imageinfo['sessionId'];
+if (!$sessionId) {
+	$sessionId = $leginondata->getSessionInfoFromImage($imgId);
+}
 $path = $leginondata->getImagePath($sessionId);
 
 //Block unauthorized user
