@@ -489,18 +489,18 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 		# use plasma color map if available:
 		try:
 			plt.imshow(GD1, extent=(0, imgx, 0, imgy),cmap=cm.plasma)
+			line_color = 'k'
 		# else generate similar colormap
 		except:
-		#	cdict = {'red': ((0.0, 0.0504, 0.0504),(0.5, 0.7945, 0.7945),(1.0, 0.9400, 0.9400)),'green': ((0.0,0.0298, 0.0298),(0.5,0.2758, 0.2758),(1.0,0.9752, 0.9752)),'blue': ((0.0, 0.5280, 0.5280),(0.5, 0.4731, 0.4731),(1.0, 0.1313, 0.1313))}
-		#	plasma1 = LinearSegmentedColormap('BlueRed1', cdict)
-			plt.imshow(GD1, extent=(0, imgx, 0, imgy), cmap=cm.hot)
+			plt.imshow(GD1, extent=(0, imx, 0, imy), cmap=cm.hot)
+			line_color = '#009999'
 
 		# colorbar on right
 #		plt.colorbar()
 
 		# contour lines
 		X,Y = np.meshgrid(x,y)
-		CS = plt.contour(X,Y[::-1],GD1,15,linewidths=0.5, colors='k',extent=(0, imgx, 0, imgy))
+		CS = plt.contour(X,Y[::-1],GD1,15,linewidths=0.5, colors=line_color)
 		plt.clabel(CS, fontsize=9, inline=1)
 
 		# hide x & y axis tickmarks
