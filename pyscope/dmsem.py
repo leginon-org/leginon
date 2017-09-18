@@ -77,9 +77,13 @@ class DMSEM(ccdcamera.CCDCamera):
 		return object.__getattribute__(self, attr_name)
 
 	def getDmsemConfig(self,optionname,itemname=None):
+		if optionname not in configs.keys():
+			return None
 		if itemname is None:
 			return configs[optionname]
 		else:
+			if itemname not in configs[optionname]:
+				return None
 			return configs[optionname][itemname]
 
 	def getOffset(self):
@@ -191,8 +195,11 @@ class DMSEM(ccdcamera.CCDCamera):
 		self.camera.SetReadMode(-1)
 
 	def midNightDelay(self):
-		delay_start = getDmsemConfig('timing','delay_start_minutes_before_midnight')
-		delay_length = getDmsemConfig('timing','delay_length_minutes')
+		delay_start = self.getDmsemConfig('timing','delay_start_minutes_before_midnight')
+		delay_length = self.getDmsemConfig('timing','delay_length_minutes')
+		if delay_start is None or delay_length is None or delay_length < 1:
+			# timing not defined or length is zero
+			return
 		ctime = time.strftime("%H:%M:%S")
 		h,m,s = map((lambda x: int(x)),ctime.split(':'))
 		if h < 12:
@@ -205,7 +212,7 @@ class DMSEM(ccdcamera.CCDCamera):
 		if second_since_noon > delay_end_time or second_since_noon < delay_start_time:
 			return
 		sleeptime = delay_end_time - second_since_noon
-		print 'Sleeping', sleeptime
+		print 'Sleeping started at %s for %d seconds' % (ctime, int(sleeptime))
 		time.sleep(sleeptime)
 
 	def _getImage(self):
