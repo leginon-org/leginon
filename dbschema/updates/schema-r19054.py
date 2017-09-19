@@ -28,7 +28,7 @@ class SchemaUpdate(baseSchemaClass.SchemaUpdate):
 		# minimum myami version
 		self.minimumMyamiVersion = 3.2
 		#what is the git tag name
-		self.schemaTagName = 'schema19607'
+		self.schemaTagName = 'schema19054'
 		#git tag <tag name> <commit id>
 		#git tag schema1 9fceb02
 		#flags for what databases are updated and which ones are not
