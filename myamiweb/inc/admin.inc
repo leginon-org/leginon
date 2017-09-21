@@ -179,10 +179,10 @@ function makeSettingsCode($dest_user_id,$latest_timestamp=false,$session_user_id
 	//Tables
 	if ($show_tables) {
 		foreach ($extratables as $table) {
-			echo $table?></br><?;
+			echo $table?></br><?php ;
 		}
 		foreach (array_keys($nodenames) as $table) {
-			echo $table?></br><?;
+			echo $table?></br><?php ;
 		}
 	}
 	//Default values

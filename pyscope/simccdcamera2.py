@@ -12,7 +12,7 @@ from pyscope import falconframe
 
 DEBUG = False
 FRAME_DIR = '.'
-
+START_TIME = 11*60+16
 rawtype = numpy.uint32
 frametype = numpy.uint8
 idcounter = itertools.cycle(range(100))
@@ -286,6 +286,7 @@ class SimFrameCamera(SimCCDCamera):
 		pass
 
 	def _getImage(self):
+		self._midNightDelay(-(START_TIME),0,0)
 		self.custom_setup()
 		if not self.validateGeometry():
 			raise ValueError('invalid image geometry')

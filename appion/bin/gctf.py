@@ -16,8 +16,10 @@ import matplotlib.cm as cm
 import numpy as np
 try:
 	from scipy.interpolate import griddata
+	HAS_GRIDDATA=True
 except:
-	pass
+	import scipy.ndimage as ndimage
+	HAS_GRIDDATA=False
 
 #appion
 from appionlib import apFile
@@ -454,10 +456,19 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 
 	#======================
 	def generateLocalCTFmap(self,fbase,dimx,dimy):
+		starpath = os.path.join(fbase+"_local.star")
+		labels = apRelion.getStarFileColumnLabels(starpath)
 		imgx = 512
 		imgy = 512
+		if HAS_GRIDDATA:
+			map_array = self.makeMapArrayWithGriddata(starpath,labels,imgx,imgy,dimx,dimy)
+		else:
+			map_array = self.makeMapArrayWithZoom(starpath,labels,imgx,imgy,dimx,dimy)
+		# The map array should be in the same orientation as the array in AcquisitionImageData['image'] 
+		self.plotGridContour(map_array,fbase)
+
+	def makeMapArrayWithGriddata(self,starpath, labels, imgx, imgy, dimx,dimy):
 		matrix = [[np.nan for x in range(imgx)] for y in range(imgy)]
-		labels = apRelion.getStarFileColumnLabels(fbase+"_local.star")
 		for line in open(fbase+"_local.star"):
 			l = line.strip().split()
 			if len(l)<3: continue
@@ -482,24 +493,90 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 		try:
 			GD1 = griddata((x1,y1),newarr.ravel(),(xx,yy),method='cubic')
 		except:
-			apDisplay.printError("SciPy 0.9 or greater required to generate LocalCTF iamge")
+			apDisplay.printError("Failed to generate griddata")
 		# rotate & flip to match MRC display
 		GD1 = np.flipud(np.rot90(GD1))
+		return GD1
 
+	def makeMapArrayWithZoom(self,starpath,labels,imgx,imgy,dimx,dimy):
+		'''
+		Make map array using ndimage.interpolation.zoom
+		since scipy version before 0.9 does not have griddata function.
+		'''
+		# read as a tight matrix with (row,col) orientation
+		matrix = self.readDefocusArray(starpath,labels)
+		totalx = matrix.shape[1]
+		totaly = matrix.shape[0]
+		# zoom ration is different in x and y to give final image at best aspect ratio
+		# relative to the original image
+		# final map x dimension will be imgx
+		ratiox = float(imgx)/totalx
+		ratioy = float(imgx)*dimy/dimx/totaly
+		# interpolation by zoom
+		GD1 = ndimage.interpolation.zoom(matrix, (ratioy,ratiox), order=3) 
+		apDisplay.printMsg('local map displayed in %d, %d (x,y)' % (GD1.shape[1],GD1.shape[0]))
+		return GD1
+
+	def readDefocusArray(self, starpath,labels):
+		'''
+		Read defocus array from starpath without interpolation.
+		The returned array is defocus in microns with data y axis flipped
+		'''
+		xlist = []
+		ylist = []
+		dflist = []
+		for line in open(starpath):
+			l = line.strip().split()
+			if len(l)<3: continue
+			x = float(l[labels.index("_rlnCoordinateX")])
+			y = float(l[labels.index("_rlnCoordinateY")])
+			du = float(l[labels.index("_rlnDefocusU")])*10e-5
+			dv = float(l[labels.index("_rlnDefocusV")])*10e-5
+			df = (du+dv)/2
+			dflist.append(df)
+			xlist.append(x)
+			ylist.append(y)
+		# There maybe gap unaccounted for if a whole row or column is missing.
+		xset = set(xlist)
+		yset = set(ylist)
+		sorted_x = sorted(xset)
+		sorted_y = sorted(yset)
+		xsize = len(xset)
+		ysize = len(yset)
+		apDisplay.printMsg('Total of %d defocii read from %d columns and %d rows' % (len(dflist),xsize, ysize))
+		if xsize*ysize == len(dflist):
+			matrix = np.array(dflist)
+			matrix = np.reshape(matrix,(ysize,xsize))
+			return matrix
+		elif xsize*ysize > len(dflist):
+			matrix = [[np.nan for x in range(xsize)] for y in range(ysize)]
+			for i in range(len(dflist)):
+				xi = sorted_x.index(xlist[i])
+				yi = sorted_y.index(ylist[i])
+				matrix[xi][yi] = dflist[i]
+			matrix = np.asarray(matrix)
+			matrix = np.ma.masked_invalid(matrix)
+			return matrix	
+		else:
+			apDisplay.printError('There are more defocus value than the grid')
+
+	def plotGridContour(self,GD1,fbase):
+		imgx = GD1.shape[1]
+		imgy = GD1.shape[0]
 		# use plasma color map if available:
 		try:
 			plt.imshow(GD1, extent=(0, imgx, 0, imgy),cmap=cm.plasma)
 			line_color = 'k'
 		# else generate similar colormap
 		except:
-			plt.imshow(GD1, extent=(0, imx, 0, imy), cmap=cm.hot)
+			plt.imshow(GD1, extent=(0, imgx, 0, imgy), cmap=cm.hot)
 			line_color = '#009999'
 
 		# colorbar on right
 #		plt.colorbar()
 
 		# contour lines
-		X,Y = np.meshgrid(x,y)
+		X,Y = np.meshgrid(range(GD1.shape[1]),range(GD1.shape[0]))
 		CS = plt.contour(X,Y[::-1],GD1,15,linewidths=0.5, colors=line_color)
 		plt.clabel(CS, fontsize=9, inline=1)
 

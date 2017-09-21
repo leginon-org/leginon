@@ -165,6 +165,7 @@ import pyami.mrc
 import os
 import dbconfig
 import cPickle
+import time
 from pyami import weakattr
 
 class SQLDict(object):
@@ -184,7 +185,7 @@ class SQLDict(object):
 		"""
 		if 'port' in kwargs:
 			kwargs['port'] = int(kwargs['port'])
-		
+		self.kwargs = kwargs
 		try:
 			self.db = sqldb.connect(**kwargs)
 			self.connected = True
@@ -195,8 +196,22 @@ class SQLDict(object):
 			raise
 
 	def ping(self):
-		if self.db.stat() == 'MySQL server has gone away':
-			self.db = sqldb.connect(**self.db.kwargs)
+		try:
+			if self.db.stat() == 'MySQL server has gone away':
+				self.db = sqldb.connect(**self.db.kwargs)
+		except (MySQLdb.ProgrammingError, MySQLdb.OperationalError), e:
+			# self.db.stat function gives error when connection is not available.
+			errno = e.args[0]
+			## some version of mysqlpython parses the exception differently
+			if not isinstance(errno, int):
+				errno = errno.args[0]
+			## 2006:  MySQL server has gone away
+			if errno in (2006,):
+				ctime = time.strftime("%H:%M:%S")
+				print "reconnecting at %s after MySQL server has gone away error" % (ctime,)
+				self.db = sqldb.connect(**self.kwargs)
+			else:
+				raise
 
 	def connect_kwargs(self):
 		return self.db.kwargs
