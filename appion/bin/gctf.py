@@ -469,7 +469,7 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 
 	def makeMapArrayWithGriddata(self,starpath, labels, imgx, imgy, dimx,dimy):
 		matrix = [[np.nan for x in range(imgx)] for y in range(imgy)]
-		for line in open(fbase+"_local.star"):
+		for line in open(starpath):
 			l = line.strip().split()
 			if len(l)<3: continue
 			x = int(float(l[labels.index("_rlnCoordinateX")])*imgx/dimx)
