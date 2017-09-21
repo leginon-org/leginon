@@ -35,10 +35,14 @@ class ImageRejector2(appionScript.AppionScript):
 			type="choice", choices=self.sortoptions, default="res80" )
 
 		### int
+		self.parser.add_option("--iceradius", dest="ice_radius", type="int", default=396,
+			help="Radius in pixels on ctffind4 2d graph where the ice crystal is found", metavar="#")
 		self.parser.add_option("--ctfrunid", dest="ctfrunid", type="int",
 			help="Ctf run to be transferred", metavar="#")
 
 		### true / false
+		self.parser.add_option("--testrun", dest="testrun", default=False,
+			action="store_true", help="Print the filenames instead of hiding them")
 		self.parser.add_option("--bestdb", dest="bestdb", default=False,
 			action="store_true", help="transfer best ctf")
 
@@ -47,11 +51,17 @@ class ImageRejector2(appionScript.AppionScript):
 			help="Hide images with sorting method below this resolution in Angstroms", metavar="#")
 		self.parser.add_option("--driftmax", dest="driftmax", type="float", default=None,
 			help="Hide images with largest drift per frame above this value in Angstroms", metavar="#")
+		self.parser.add_option("--icemin", dest="icemin", type="float", default=None,
+			help="Hide images with intensity in expected resolution this much times standard deviation of the backgound", metavar="#")
 
 
 	#=====================
 	def checkConflicts(self):
 		### check for requirement
+		if self.params['icemin'] is None and self.params['resmin'] is None and self.params['driftmax'] is None:
+			apDisplay.printError('No rejection criteria set')
+		if self.params['icemin'] is not None and self.params['resmin'] is None:
+			apDisplay.printError('Must reject by ctf fit resolution as well if request ice crystal to be rejected')
 		if self.params['ctfrunid'] is None and self.params['bestdb'] is False:
 			apDisplay.printError("Please provide either a ctfrun or use best ctf in db to transfer")
 		if self.params['sessionname'] is None:
@@ -81,11 +91,13 @@ class ImageRejector2(appionScript.AppionScript):
 	def start(self):
 		# go through images
 		images = apDatabase.getImagesFromDB(self.params['sessionname'], self.params['preset'])
-		for imgdata in images[-2:]:
+		if images:
+			self.apix = apDatabase.getPixelSize(images[0])
+		for imgdata in images:
 			apDisplay.printMsg('Checking %s' % imgdata['filename'])
 			if self.params['driftmax']:
 				self.hideDriftImage(imgdata)
-			if 'resmin' in self.params.keys():
+			if self.params['resmin'] is not None:
 				self.hideBadCtfImage(imgdata)
 
 	def hideDriftImage(self, imgdata):
@@ -110,17 +122,21 @@ class ImageRejector2(appionScript.AppionScript):
 		except Exception, e:
 			raise
 		ctfrun = ctfdata['acerun']
+		if not ctfdata['acerun'] or not ctfdata['graph3']:
+			return
 		pow_graph_path = os.path.join(ctfrun['path']['path'],'opimages',ctfdata['graph3'])
-		if self.hasIceCrystal(pow_graph_path):
+		if self.params['icemin'] and self.hasIceCrystal(pow_graph_path):
 			apDisplay.printWarning('Found Ice Crystal Pattern')
 			return self.hideImage(imgdata)
 		
-	def hasIceCrystal(self,graph_path, ice_pixel_radius=394):
-		print graph_path
+	def hasIceCrystal(self,graph_path):
 		imgarray = numpil.read(graph_path)
+
+		ice_pixel_radius = self.params['ice_radius']
 
 		# 20 bins roughly isolate the ice ring
 		rbin=20
+		min_std = 1.0
 		nr = int(math.sqrt(2)*256//rbin)
 		icer = int(ice_pixel_radius//(rbin*2))
 		qr_bins = self.calculateQuarterRadialProfile(imgarray, nr,icer)
@@ -128,9 +144,9 @@ class ImageRejector2(appionScript.AppionScript):
 		before_std = qr_bins[icer-3:icer-1].std()
 		at = qr_bins[icer]
 		after = qr_bins[icer+2]
-		after_std = qr_bins[icer+1:icer+3].std()
-		print before_std, at, after_std
-		return at-(before+after)/2 > 5* max((before_std,after_std))
+		after_std = qr_bins[icer+2:icer+4].std()
+		print before_std, at-(before+after)/2, after_std
+		return at-(before+after)/2 > self.params['icemin']* max((before_std,after_std,min_std))
 
 	def calculateQuarterRadialProfile(self, imgarray, nr, icer):
 		nt = 4
@@ -151,11 +167,13 @@ class ImageRejector2(appionScript.AppionScript):
 		return False
 
 	def hideImage(self, image):
-		print 'Will need to hide %s' % (image['filename'])
-		return
+		if self.params['testrun']:
+			print 'Will need to hide %s' % (image['filename'])
+			return
 		status = apDatabase.getImgViewerStatus(image)
 		if status is False:
 			# already hidden or trashed
+			print 'already hidden'
 			return
 		apDatabase.setImgViewerStatus(image, False)
 
