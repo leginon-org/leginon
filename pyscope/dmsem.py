@@ -197,23 +197,8 @@ class DMSEM(ccdcamera.CCDCamera):
 	def midNightDelay(self):
 		delay_start = self.getDmsemConfig('timing','delay_start_minutes_before_midnight')
 		delay_length = self.getDmsemConfig('timing','delay_length_minutes')
-		if delay_start is None or delay_length is None or delay_length < 1:
-			# timing not defined or length is zero
-			return
-		ctime = time.strftime("%H:%M:%S")
-		h,m,s = map((lambda x: int(x)),ctime.split(':'))
-		if h < 12:
-			h += 12
-		else:
-			h -= 12
-		second_since_noon = (h*60+m)*60+s
-		delay_start_time = (12*60-delay_start)*60
-		delay_end_time = (12*60-delay_start+delay_length)*60
-		if second_since_noon > delay_end_time or second_since_noon < delay_start_time:
-			return
-		sleeptime = delay_end_time - second_since_noon
-		print 'Sleeping started at %s for %d seconds' % (ctime, int(sleeptime))
-		time.sleep(sleeptime)
+		# Check and insert the camera every 0.5 minutes
+		self._midNightDelay(delay_start, delay_length, force_insert=0.5)
 
 	def _getImage(self):
 		self.midNightDelay()
