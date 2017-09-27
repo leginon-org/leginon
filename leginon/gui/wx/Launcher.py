@@ -169,6 +169,7 @@ class ListCtrlPanel(wx.Panel):
 			self.Layout()
 
 	def removePanel(self, panel):
+		p = None
 		for text, p in self.panelmap.items():
 			if p is panel:
 				break
