@@ -8,38 +8,56 @@ import sys
 from optparse import OptionParser
 from slackclient import SlackClient
 
+#Using slackclient 1.0.0 for now until we upgrade to python2.7 (at least). The latest version, 1.0.9, does not work.
 
-
-class slack_interface:
+# class to manage leginon and appion interactions with slack.
+class slack_interface(SlackClient):
 	def __init__(self):
 
 		slackconfig = slackconfigparser.getSlackData()
 		
 		self.slack_token = slackconfig['slack_token']
-		self.virtualenv_path = slackconfig['virtualenv_path']+"activate.csh"
-
+		if slackconfig['virtualenv_path']:
+			self.virtualenv_path = slackconfig['virtualenv_path']+"activate.csh"
+			print("Virtualenv path: ",self.virtualenv_path)
 
 		#self.slack_token = os.environ["SLACK_TOKEN"]
 		#self.virtualenv_path = os.environ["SLACK_ENV"]+"activate.csh"
 
 		self.client = SlackClient(self.slack_token)
 
+	# send a message to a certain channel. Optional checkchannel flag will check if the channel exists, and create it if not.
+	# if checkchannel is false and a channel does not exist, slack will return an error.
+	def send_message(self,slackchannel,message,checkchannel=True):
 
-	def send_message(self,slackchannel,message):
 		#print("Token: ",self.slack_token)
 		#print("Channel: ",slackchannel)
+
+		if checkchannel is True:
+			if slackchannel in self.getChannelNames():
+				return self.client.api_call(
+						"chat.postMessage",
+						channel=slackchannel,
+						text=message)
+			else:
+				self.client.api_call('channels.create',name=slackchannel,validate=True)
+				print( 'Channel '+slackchannel+' does not exist; creating channel.')
+
 		return self.client.api_call(
 				"chat.postMessage",
 				channel=slackchannel,
-				text=message)
+				text=message)	
 
+	# get the normalized names of all the channels in the slack workspace.
+	def getChannelNames(self):
+		channels = self.client.api_call('channels.list')
+		names = []
+		for channel in channels['channels']:
+			        names.append(channel['name_normalized'])
+		return names
 
 if __name__ == "__main__":
 	client = slack_interface()
-	#print(client.slack_token)
-	#print(client.virtualenv_path)
-	#print(client.client)
-	#print(client.client.api_call("api.test"))
 
 	parser = OptionParser(usage="usage: slack_interface.py [options]", version="0.1")
 	parser.add_option("-c","--channel",action="store",type="string",dest="channel")
@@ -47,26 +65,13 @@ if __name__ == "__main__":
 	(options, args) = parser.parse_args()
 
 	if options.channel and options.message:
-		if options.channel[0] == "#":
-			slackchannel = options.channel
-		else:
-			slackchannel = "#"+options.channel
-
+		slackchannel = options.channel
 		message = options.message
-
-
-		#print(options)
-		#if len(sys.argv[1:]) == 0:
-		#	parser.print_help()
-		#else:
-		#        a = client.send_message(slackchannel,message)
-		#	print(a)
-		a = client.send_message(slackchannel,message)
-		print(a)
+		sc = client.send_message(slackchannel,message)
+		print(sc)
 
 
 	else:
-		#len(sys.argv[1:]) == 0:
 		parser.print_help()
 
 
