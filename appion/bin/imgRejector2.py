@@ -10,6 +10,7 @@ from appionlib import apDatabase
 from appionlib import appiondata
 from appionlib import apDBImage
 from appionlib import apFile
+from appionlib import apScriptLog
 from appionlib import apDDResult
 from appionlib.apCtf import ctfdb
 #pyami
@@ -31,8 +32,8 @@ class ImageRejector2(appionScript.AppionScript):
 			help="Name of Preset to check", metavar="NAME")
 
 		self.parser.add_option("--sort", dest="sorttype",
-			help="bestdb CTF sorting method", metavar="TYPE",
-			type="choice", choices=self.sortoptions, default="res80" )
+			help="bestdb CTF sorting method, Default to use fit resolution from the software package", metavar="TYPE",
+			type="choice", choices=self.sortoptions, default="resPkg" )
 
 		### int
 		self.parser.add_option("--iceradius", dest="ice_radius", type="int", default=396,
@@ -58,12 +59,14 @@ class ImageRejector2(appionScript.AppionScript):
 	#=====================
 	def checkConflicts(self):
 		### check for requirement
+		if not self.params['preset']:
+			apDisplay.printError('Must specify preset')
 		if self.params['icemin'] is None and self.params['resmin'] is None and self.params['driftmax'] is None:
 			apDisplay.printError('No rejection criteria set')
 		if self.params['icemin'] is not None and self.params['resmin'] is None:
-			apDisplay.printError('Must reject by ctf fit resolution as well if request ice crystal to be rejected')
-		if self.params['ctfrunid'] is None and self.params['bestdb'] is False:
-			apDisplay.printError("Please provide either a ctfrun or use best ctf in db to transfer")
+			apDisplay.printError('Must reject also by ctf fit resolution as well if request ice crystal to be rejected')
+		if self.params['resmin'] and self.params['ctfrunid'] is None and self.params['bestdb'] is False:
+			apDisplay.printError("Please provide either a ctfrun or use best ctf in db to evaluate")
 		if self.params['sessionname'] is None:
 			if self.params['expid']:
 				# onInit has not been run yet. There is no self.sessiondata to use here
@@ -81,6 +84,7 @@ class ImageRejector2(appionScript.AppionScript):
 		"""
 		self.sessiondata = self.getSessionData()
 		self.rundata = None
+		self.isCtffind4_dict = {}
 		return
 
 	#=====================
@@ -94,11 +98,14 @@ class ImageRejector2(appionScript.AppionScript):
 		if images:
 			self.apix = apDatabase.getPixelSize(images[0])
 		for imgdata in images:
+			apDisplay.printMsg('______________________')
 			apDisplay.printMsg('Checking %s' % imgdata['filename'])
 			if self.params['driftmax']:
 				self.hideDriftImage(imgdata)
 			if self.params['resmin'] is not None:
-				self.hideBadCtfImage(imgdata)
+				is_hidden = self.hideBadCtfImage(imgdata)
+				if not is_hidden and self.params['icemin']:
+					self.hideIceCrystalImage(imgdata)
 
 	def hideDriftImage(self, imgdata):
 		ddresults = apDDResult.DDResults(imgdata)
@@ -109,27 +116,78 @@ class ImageRejector2(appionScript.AppionScript):
 			apDisplay.printWarning('No alignment log file %s found for thresholding drift' % logfile)
 			return False
 		if self.params['driftmax'] < max(shifts):
-			self.hideImage(imgdata)
+			return self.hideImage(imgdata)
 
 	def hideBadCtfImage(self, imgdata):
 		ctfdata = self.getFromCtfData(imgdata)
+		self.ctfdata = ctfdata
 		if not ctfdata:
 			apDisplay.printWarning('No CTF result for %s' % apDisplay.short(imgdata['filename']))
-			return
+			return False
 		try:
 			if self.isOutsideCTFRes(ctfdata, self.params['sorttype'],self.params['resmin']):
 				return self.hideImage(imgdata)
 		except Exception, e:
 			raise
+
+	def hideIceCrystalImage(self, imgdata):
+		ctfdata = self.ctfdata
 		ctfrun = ctfdata['acerun']
 		if not ctfdata['acerun'] or not ctfdata['graph3']:
-			return
-		pow_graph_path = os.path.join(ctfrun['path']['path'],'opimages',ctfdata['graph3'])
-		if self.params['icemin'] and self.hasIceCrystal(pow_graph_path):
+			return False
+		pow_graph_path = self.getPowerGraphPath(imgdata, ctfdata)
+		if self.hasIceCrystal(pow_graph_path):
 			apDisplay.printWarning('Found Ice Crystal Pattern')
 			return self.hideImage(imgdata)
-		
+
+	def isCtfFind4Run(self, ctfrun):
+		'''
+		Check if the ctfrun is from ctffind4 through ScriptLog.
+		'''
+		# This is needed because ctffind4 and gctf uses the same
+		# ApCtfFind4ParamsData
+		if not ctfrun.dbid:
+			return False
+		if ctfrun.dbid in self.isCtffind4_dict.keys():
+			return self.isCtffind4_dict[ctfrun.dbid]
+		program_run = apScriptLog.getScriptProgramRunFromRunname(ctfrun['name'],ctfrun['path'])
+		isCtffind4 = program_run and 'ctffind4' in program_run['progname']['name']
+		self.isCtffind4_dict[ctfrun.dbid] = isCtffind4
+		return isCtffind4
+
+	def getPowerGraphPath(self, imgdata, ctfdata):
+		if ctfdata:
+			ctfrun = ctfdata['acerun']
+			is_ctffind4 = self.isCtfFind4Run(ctfrun)
+			# Only ctffind4 graph is good enough for quick evaluation
+			if is_ctffind4:
+				pow_graph_path = os.path.join(ctfrun['path']['path'],'opimages',ctfdata['graph3'])
+				self.graph_size = 1024
+				return pow_graph_path
+		apDisplay.printWarning('Not a CTFFind4 result. Making power spectrum image')
+		return self.makePowerGraphFromImage(imgdata)
+
+	def makePowerGraphFromImage(self, imgdata):
+		pow_graph_path = './tmp_pow.jpg'
+		a = imgdata['image']
+		ashape_min = min(a.shape)
+		pow_array = imagefun.power(a[:ashape_min,:ashape_min])
+		# calculate ice radius on the graph
+		self.params['ice_radius'] = self.calculateIceCrystalRadius(ashape_min)
+		numpil.write(pow_array,pow_graph_path,'JPEG')
+		self.graph_size = ashape_min
+		return pow_graph_path
+
+	def calculateIceCrystalRadius(self, size):
+		rec_apix = self.apix * size
+		ice_radius_rec_pix = (1/3.8)/(1/rec_apix)
+		return ice_radius_rec_pix
+
 	def hasIceCrystal(self,graph_path):
+		'''
+		Detemine if there is significant ice crystal diffraction
+		ring in the power spectrum graph.
+		'''
 		imgarray = numpil.read(graph_path)
 
 		ice_pixel_radius = self.params['ice_radius']
@@ -137,18 +195,21 @@ class ImageRejector2(appionScript.AppionScript):
 		# 20 bins roughly isolate the ice ring
 		rbin=20
 		min_std = 1.0
-		nr = int(math.sqrt(2)*256//rbin)
-		icer = int(ice_pixel_radius//(rbin*2))
-		qr_bins = self.calculateQuarterRadialProfile(imgarray, nr,icer)
+		# polar average goes to the full diagonal length
+		max_radius = math.sqrt(2)*self.graph_size/2.0
+		icer = int(rbin*ice_pixel_radius/(max_radius))
+		qr_bins = self.calculateQuarterRadialProfile(imgarray, rbin,icer)
 		before = qr_bins[icer-2]
 		before_std = qr_bins[icer-3:icer-1].std()
 		at = qr_bins[icer]
 		after = qr_bins[icer+2]
 		after_std = qr_bins[icer+2:icer+4].std()
-		print before_std, at-(before+after)/2, after_std
+		apDisplay.printMsg('Std deviation intensity around ice crystal resolution are: %.3f and %.3f' % (before_std, after_std))
+		apDisplay.printMsg('Ice crystal resolution mean intensity above background: %.3f' % (at-(before+after)/2))
 		return at-(before+after)/2 > self.params['icemin']* max((before_std,after_std,min_std))
 
 	def calculateQuarterRadialProfile(self, imgarray, nr, icer):
+		# Use only one quarter for simplicity
 		nt = 4
 		rt_bins, r_centers, t_centers = imagefun.polarBin(imgarray,nr,nt)
 		return rt_bins[:,2]
@@ -167,15 +228,21 @@ class ImageRejector2(appionScript.AppionScript):
 		return False
 
 	def hideImage(self, image):
+		'''
+		Hide if not hidden.  Returns True if it is now hidden so
+		that further validation can be skipped.  testrun will
+		always return False so that everything is checked.
+		'''
 		if self.params['testrun']:
 			print 'Will need to hide %s' % (image['filename'])
-			return
+			return False
 		status = apDatabase.getImgViewerStatus(image)
 		if status is False:
 			# already hidden or trashed
 			print 'already hidden'
-			return
+			return True
 		apDatabase.setImgViewerStatus(image, False)
+		return True
 
 	def commitToDatabase(self,old_ctfdata, to_imgdata):
 		pass
