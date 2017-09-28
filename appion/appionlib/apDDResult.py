@@ -19,6 +19,16 @@ class DDResults(object):
 			raise ValueError('Not an aligned image')
 		apProject.setDBfromProjectId(apProject.getProjectIdFromImageData(self.image))
 
+	def getAlignSiblings(self):
+		pairdata = self.getAlignImagePairData()
+		siblings = [pairdata['source'],]
+		ddrun = pairdata['ddstackrun']
+		q = appiondata.ApDDAlignImagePairData(ddstackrun=ddrun,source=pairdata['source'])
+		results = q.query()
+		for r in results:
+			siblings.append(r['result'])
+		return siblings
+
 	def getAlignImagePairData(self):
 		'''
 		This returns DD AlignImagePairData if exists, returns False if not.
@@ -26,7 +36,6 @@ class DDResults(object):
 		'''
 		q = appiondata.ApDDAlignImagePairData(result=self.image)
 		results = q.query()
-		print results
 		if results:
 			return results[0]
 		else:
