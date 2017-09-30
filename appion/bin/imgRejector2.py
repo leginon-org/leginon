@@ -29,7 +29,7 @@ class ImageRejector2(appionScript.AppionScript):
 			help="Session name", metavar="NAME")
 
 		self.parser.add_option("--preset", "--presetname", dest="preset",
-			help="Name of Preset to check", metavar="NAME")
+			help="Name of Preset used for evaluation", metavar="NAME")
 
 		self.parser.add_option("--sort", dest="sorttype",
 			help="bestdb CTF sorting method, Default to use fit resolution from the software package", metavar="TYPE",
@@ -37,15 +37,17 @@ class ImageRejector2(appionScript.AppionScript):
 
 		### int
 		self.parser.add_option("--iceradius", dest="ice_radius", type="int", default=396,
-			help="Radius in pixels on ctffind4 2d graph where the ice crystal is found", metavar="#")
+			help="Radius in pixels on ctffind4 2d graph where the ice crystal is found. Not needed if not a ctffind4 run.", metavar="#")
 		self.parser.add_option("--ctfrunid", dest="ctfrunid", type="int",
-			help="Ctf run to be transferred", metavar="#")
+			help="Specific Ctf run to be evaluated", metavar="#")
 
 		### true / false
 		self.parser.add_option("--testrun", dest="testrun", default=False,
-			action="store_true", help="Print the filenames instead of hiding them")
+			action="store_true", help="Print the results instead of hiding them")
 		self.parser.add_option("--bestdb", dest="bestdb", default=False,
 			action="store_true", help="transfer best ctf")
+		self.parser.add_option("--hideall", dest="hideall", default=False,
+			action="store_true", help="Hide all source and results of DD frame alignment related to this preset")
 
 		### float
 		self.parser.add_option("--resmin", dest="resmin", type="float", default=None,
@@ -116,6 +118,7 @@ class ImageRejector2(appionScript.AppionScript):
 			apDisplay.printWarning('No alignment log file %s found for thresholding drift' % logfile)
 			return False
 		if self.params['driftmax'] < max(shifts):
+			apDisplay.printMsg('Maximal frame drift %.2f Angstroms is too much' % (shift,))
 			return self.hideImage(imgdata)
 
 	def hideBadCtfImage(self, imgdata):
@@ -224,10 +227,29 @@ class ImageRejector2(appionScript.AppionScript):
 		else:
 			raise ValueError('handling method for sort type %s not defined' % (sorttype,))
 		if resmin and resmin < ctf_res:
+			apDisplay.printMsg('CTF fitted resolution failed validation at %.2f' % (ctf_res,))
 			return True
 		return False
 
+	def getAllDDAlignSiblings(self, imgdata):
+		try:
+			ddresults = apDDResult.DDResults(imgdata)
+			return ddresults.getAlignSiblings()
+		except:
+			return [imgdata,]
+
 	def hideImage(self, image):
+		if self.params['hideall']:
+			allimages = self.getAllDDAlignSiblings(image)
+		else:
+			allimages = [image,]
+		all_true = True
+		for img in allimages:
+			is_hidden = self._hideImage(img)
+			all_true = all_true and is_hidden
+		return all_true
+
+	def _hideImage(self, image):
 		'''
 		Hide if not hidden.  Returns True if it is now hidden so
 		that further validation can be skipped.  testrun will
@@ -239,7 +261,7 @@ class ImageRejector2(appionScript.AppionScript):
 		status = apDatabase.getImgViewerStatus(image)
 		if status is False:
 			# already hidden or trashed
-			print 'already hidden'
+			apDisplay.printMsg('%s is already hidden' % (image['filename']))
 			return True
 		apDatabase.setImgViewerStatus(image, False)
 		return True
