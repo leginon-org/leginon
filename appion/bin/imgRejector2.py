@@ -95,6 +95,8 @@ class ImageRejector2(appionScript.AppionScript):
 
 	#=====================
 	def start(self):
+		# default ic radius in pixels
+		self.ice_radius = self.params['ice_radius']
 		# go through images
 		images = apDatabase.getImagesFromDB(self.params['sessionname'], self.params['preset'])
 		if images:
@@ -118,7 +120,7 @@ class ImageRejector2(appionScript.AppionScript):
 			apDisplay.printWarning('No alignment log file %s found for thresholding drift' % logfile)
 			return False
 		if self.params['driftmax'] < max(shifts):
-			apDisplay.printMsg('Maximal frame drift %.2f Angstroms is too much' % (shift,))
+			apDisplay.printMsg('Maximal frame drift %.2f Angstroms is too much' % (max(shifts),))
 			return self.hideImage(imgdata)
 
 	def hideBadCtfImage(self, imgdata):
@@ -135,9 +137,9 @@ class ImageRejector2(appionScript.AppionScript):
 
 	def hideIceCrystalImage(self, imgdata):
 		ctfdata = self.ctfdata
-		ctfrun = ctfdata['acerun']
-		if not ctfdata['acerun'] or not ctfdata['graph3']:
+		if not ctfdata or not ctfdata['acerun']:
 			return False
+		ctfrun = ctfdata['acerun']
 		pow_graph_path = self.getPowerGraphPath(imgdata, ctfdata)
 		if self.hasIceCrystal(pow_graph_path):
 			apDisplay.printWarning('Found Ice Crystal Pattern')
@@ -159,15 +161,29 @@ class ImageRejector2(appionScript.AppionScript):
 		return isCtffind4
 
 	def getPowerGraphPath(self, imgdata, ctfdata):
+		ctfrun_msg = ''
 		if ctfdata:
 			ctfrun = ctfdata['acerun']
 			is_ctffind4 = self.isCtfFind4Run(ctfrun)
 			# Only ctffind4 graph is good enough for quick evaluation
 			if is_ctffind4:
-				pow_graph_path = os.path.join(ctfrun['path']['path'],'opimages',ctfdata['graph3'])
-				self.graph_size = 1024
-				return pow_graph_path
-		apDisplay.printWarning('Not a CTFFind4 result. Making power spectrum image')
+				if ctfdata['graph3']:
+					pow_graph_path = os.path.join(ctfrun['path']['path'],'opimages',ctfdata['graph3'])
+					try:
+						fs=open(pow_graph_path)
+						fs.close()
+						self.graph_size = 1024
+						self.ice_radius = self.params['ice_radius']
+						return pow_graph_path
+					except:
+						ctfrun_msg = 'CTFFind4 graph not readable.'
+				else:
+					ctfrun_msg = 'CTFFind4 graph not ready.'
+			else:
+				ctfrun_msg = 'Not a CTFFind4 run. Graph not analyzable'
+		else:
+			ctfrun_msg = 'No CTF estimation graph.'
+		apDisplay.printWarning(ctfrun_msg+' Making power spectrum image')
 		return self.makePowerGraphFromImage(imgdata)
 
 	def makePowerGraphFromImage(self, imgdata):
@@ -176,7 +192,7 @@ class ImageRejector2(appionScript.AppionScript):
 		ashape_min = min(a.shape)
 		pow_array = imagefun.power(a[:ashape_min,:ashape_min])
 		# calculate ice radius on the graph
-		self.params['ice_radius'] = self.calculateIceCrystalRadius(ashape_min)
+		self.ice_radius = self.calculateIceCrystalRadius(ashape_min)
 		numpil.write(pow_array,pow_graph_path,'JPEG')
 		self.graph_size = ashape_min
 		return pow_graph_path
@@ -193,7 +209,7 @@ class ImageRejector2(appionScript.AppionScript):
 		'''
 		imgarray = numpil.read(graph_path)
 
-		ice_pixel_radius = self.params['ice_radius']
+		ice_pixel_radius = self.ice_radius
 
 		# 20 bins roughly isolate the ice ring
 		rbin=20
