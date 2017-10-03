@@ -226,9 +226,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		if good_targets:
 			# Things to do before reject targets are published.
 			# pause and abort check before reference and rejected targets are sent away
-			if self.player.state() == 'pause':
-				self.setStatus('user input')
-			state = self.player.wait()
+			state = self.pauseCheck('paused before reject targets are published')
 			self.setStatus('processing')
 			if state in ('stop', 'stopqueue'):
 				targetliststatus = 'aborted'
@@ -315,6 +313,22 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		'''
 		return self.settings['use parent tilt']
 
+	def pauseCheck(self, msg):
+		'''
+		Check if need pause.  During pause z might change from
+		other nodes.  Restore the z when resume.
+		'''
+		if self.player.state() == 'pause':
+			self.logger.info(msg)
+			self.setStatus('user input')
+			self.z_now = self.instrument.tem.getStagePosition()['z']
+		else:
+			self.z_now = None
+		state = self.player.wait()
+		if self.z_now is not None:
+			self.instrument.tem.StagePosition={'z':self.z_now}
+		return state
+
 	def processGoodTargets(self, good_targets):
 		for i, target in enumerate(good_targets):
 			# target adjustment may have changed the tilt.
@@ -326,7 +340,9 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			self.logger.debug('target %s status %s' % (i, target['status'],))
 			# ...
 			if self.player.state() == 'pause':
+				self.logger.info('paused after resetTiltInList')
 				self.setStatus('user input')
+				# FIX ME: if player does not wait, why should it pause ?
 			state = self.clearBeamPath()
 			self.setStatus('processing')
 			# abort
@@ -387,9 +403,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 					self.reportTargetStatus(adjustedtarget, 'aborted')
 
 				# pause check after a good target processing
-				if self.player.state() == 'pause':
-					self.setStatus('user input')
-				state = self.player.wait()
+				state =  self.pauseCheck('paused after processTargetData')
 				self.setStatus('processing')
 				if state in ('stop', 'stopqueue'):
 					self.logger.info('Aborted')

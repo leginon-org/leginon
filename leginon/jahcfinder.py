@@ -280,7 +280,6 @@ class JAHCFinder(targetfinder.TargetFinder):
 		tmax = self.settings['ice max mean']
 		tstdmax = self.settings['ice max std']
 		tstdmin = self.settings['ice min std']
-		print tstdmax, tstdmin
 		self.hf.configure_ice(i0=i0,tmin=tmin,tmax=tmax,tstdmax=tstdmax, tstdmin=tstdmin)
 		try:
 			self.hf.calc_ice()

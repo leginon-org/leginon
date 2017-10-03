@@ -168,6 +168,12 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		'''
 		Wait for user interaction either locally or remotely.
 		'''
+		# Rule about z height retention to the target selected
+		# when z height is changed during interaction:
+		# If the target will be in a queue, the z will be the z of the parent image.
+		# If the target will not be in a queue, the z will be the value it happens
+		# to be at the time of its processing, i.e., afected by z adjustment during
+		# and after the interaction.
 		valid_selection = False
 		while not valid_selection:
 			if self.settings['check method'] == 'remote':

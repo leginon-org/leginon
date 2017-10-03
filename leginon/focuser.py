@@ -140,9 +140,7 @@ class Focuser(singlefocuser.SingleFocuser):
 						self.reportTargetStatus(adjustedtarget, 'aborted')
 
 					# pause check after a good target processing
-					if self.player.state() == 'pause':
-						self.setStatus('user input')
-					state = self.player.wait()
+					state =  self.pauseCheck('paused after processTargetData')
 					self.setStatus('processing')
 					if state in ('stop', 'stopqueue'):
 						self.logger.info('Aborted')
