@@ -27,7 +27,7 @@ if ($particle->hasParticleData($expId)) {
 	//$display_keys = array ( 'totparticles', 'numimgs', 'min', 'max', 'avg', 'stddev', 'img');
 	$display_keys = array ( 'preset','totparticles', 'numimgs', 'min', 'max', 'avg', 'stddev');
 	//$selectionruns=$particle->getParticleRunIds($expId);
-	$selectionruns=$particle->getRunIdsFilter($expId,'ApSelectionRunData','program','relion2.1',False);
+	$selectionruns=$particle->getRunIdsFilter($expId,'ApSelectionRunData','program','relion',False);
 	foreach ($selectionruns as $selectionrun) {
 		//print_r($selectionrun);
 		$selectionid = $selectionrun['DEF_id'];
