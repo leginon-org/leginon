@@ -76,7 +76,8 @@ class Cache(pyami.resultcache.ResultCache):
 			return
 		resultfilename = self.result_filename(pipeline)
 		path = os.path.dirname(resultfilename)
-		self.diskcache.makedir(path, recursive=True, allow_recreate=True)
+		if not os.path.exists(path):
+			os.makedirs(path)
 		f = self.diskcache.open(resultfilename, 'wb')
 		final_pipe.put_result(f, result)
 		f.close()
