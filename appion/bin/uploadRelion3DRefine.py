@@ -236,7 +236,7 @@ class UploadRelion3DRefine(reconUploader.generalReconUploader):
 		
 		if self.params['noinsert'] is False:
 			apDisplay.printMsg("Insert particle picks")
-			for micrograph in micrographs:
+			for micrograph in micrographs[0:3]:
 				imagedata = (apDatabase.getImageData(micrograph))
 				if imagedata['session']['name'] != self.sessiondata['name']:
 					apDisplay.printError("Session and Image do not match "+imgtree[0]['filename'])	
@@ -296,7 +296,7 @@ class UploadRelion3DRefine(reconUploader.generalReconUploader):
 		#plt.axis([40, 160, 0, 0.03])
 		plt.grid(True)
 
-		plt.savefig(os.path.join(self.params['rundir'],name + ".png"))
+		plt.savefig(os.path.join(self.params['rundir'],name + ".jpg"))
 		plt.close()
 
 	#======================================================
@@ -311,7 +311,7 @@ class UploadRelion3DRefine(reconUploader.generalReconUploader):
 		#plt.axis([40, 160, 0, 0.03])
 		plt.grid(True)
 
-		plt.savefig(os.path.join(self.params['rundir'],name + ".png"))
+		plt.savefig(os.path.join(self.params['rundir'],name + ".jpg"))
 		plt.close()
 
 	#======================================================
@@ -340,7 +340,7 @@ class UploadRelion3DRefine(reconUploader.generalReconUploader):
 		plt.xticks([0,1,2,3,4,5,6,7,8],labels,rotation=45,size=6)
 		plt.yticks([0,1,2,3,4,5,6,7,8],labels,size=6)
 		plt.colorbar(ax)
-		plt.savefig(os.path.join(self.params['rundir'],"SpearmanCorrelation.png"))
+		plt.savefig(os.path.join(self.params['rundir'],"SpearmanCorrelation.jpg"))
 		plt.show()
 		plt.close()
 		
@@ -353,7 +353,7 @@ class UploadRelion3DRefine(reconUploader.generalReconUploader):
 		plt.xticks([0,1,2,3,4,5,6,7,8],labels,rotation=45,size=6)
 		plt.yticks([0,1,2,3,4,5,6,7,8],labels,size=6)
 		plt.colorbar(ax)
-		plt.savefig(os.path.join(self.params['rundir'],"PearsonCorrelation.png"))
+		plt.savefig(os.path.join(self.params['rundir'],"PearsonCorrelation.jpg"))
 		plt.show()
 		plt.close()
 		

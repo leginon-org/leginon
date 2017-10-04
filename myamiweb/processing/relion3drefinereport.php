@@ -28,19 +28,21 @@ echo $runparams[path];
 	echo "<table cellspacing='1' cellpadding='2'><tr><td>";
 
 	$imgwidth="75%";
-		//echo '<a href="loadimg.php?rawgif=1&filename='.$runparams[path].'/PearsonCorrelation.gif"/>';
-		//echo "<a href='loadimg.php?&filename=".$runparams[path]."/PearsonCorrelation.png'/>";
-		echo '<img border="0" style="width:'.$imgwidth.';" src="loadimg.php?rawgif=1&filename='.$runparams[path].'/PearsonCorrelation.gif"/>';
+		//echo '<a href="loadimg.php?rawjpg=1&filename='.$runparams[path].'/PearsonCorrelation.jpg"/>';
+		//echo "<a href='loadimg.php?&filename=".$runparams[path]."/PearsonCorrelation.jpg'/>";
+
+		echo '<img border="0" style="width:'.$imgwidth.';" src="loadimg.php?&filename='.$runparams[path].'/PearsonCorrelation.jpg">';
+		//echo '<img border="0" style="width:'.$imgwidth.';" src="loadimg.php?rawgif=1&filename='.$runparams[path].'/PearsonCorrelation.gif">';
 		echo '</td><td>';
-		echo '<img border="0" style="width:'.$imgwidth.';" src="loadimg.php?rawgif=1&filename='.$runparams[path].'/SpearmanCorrelation.gif"/>';
+		echo '<img border="0" style="width:'.$imgwidth.';" src="loadimg.php?rawgif=1&filename='.$runparams[path].'/SpearmanCorrelation.jpg"/>';
 		echo '</td></tr>';
 		echo '<tr><td>';
-		echo '<img border="0" style="width:'.$imgwidth.';" src="loadimg.php?rawgif=1&filename='.$runparams[path].'/DefocusV.gif"/>';
+		echo '<img border="0" style="width:'.$imgwidth.';" src="loadimg.php?rawgif=1&filename='.$runparams[path].'/DefocusV.jpg"/>';
 		echo '</td><td>';
-		echo '<img border="0" style="width:'.$imgwidth.';" src="loadimg.php?rawgif=1&filename='.$runparams[path].'/DefocusU.gif"/>';
+		echo '<img border="0" style="width:'.$imgwidth.';" src="loadimg.php?rawgif=1&filename='.$runparams[path].'/DefocusU.jpg"/>';
 		echo '</td></tr>';
 		echo '<tr><td>';
-		echo '<img border="0" style="width:'.$imgwidth.';" src="loadimg.php?rawgif=1&filename='.$runparams[path].'/XYcoordinates.gif"/>';
+		echo '<img border="0" style="width:'.$imgwidth.';" src="loadimg.php?rawgif=1&filename='.$runparams[path].'/XYcoordinates.jpg"/>';
 		echo '<tr><td>';
 
 		//echo "<a href='particlePositionGraph.php?expId=$expId&rId=$runId&haxis=ycoord&hg=1'>";
