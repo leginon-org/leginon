@@ -92,7 +92,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 				if ctfdata:
 					# if CTF is written to micrographs.star, localCTF values not taken
 					if self.params['localCTF'] is not True:
-						rel_line+= "micrographs/%s "%(imgdata['filename']+".ctf:mrc")
+						rel_line+= " micrographs/%s "%(imgdata['filename']+".ctf:mrc")
 						c = apRelion.formatCtfForRelion(imgdata,ctfdata,self.params['apix'])
 						rel_line+= "%13.6f%13.6f%13.6f"%(c['defU'],c['defV'],c['defAngle'])
 						rel_line+= "%13.6f%13.6f%13.6f%13.6f"%(c['kev'],c['cs'],c['amp'],c['cc'])
