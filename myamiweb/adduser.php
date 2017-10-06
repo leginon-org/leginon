@@ -225,13 +225,13 @@ $advancedval = ($userinfo['advanced'] == 1) ? "CHECKED":"";
 	</tr>
 	<tr>
 	<td>
-		<input type="checkbox" name="advanced" <?php $advancedval?> >
+		<input type="checkbox" name="advanced" <?php echo $advancedval; ?> >
 		<label for="advanced">Always show advanced options</label><br />
 	</td>
 	</tr>
 	<tr>
 	<td>
-		<input type="submit" value="<?php $action?>" name="submit">
+		<input type="submit" value="<?php echo $action; ?>" name="submit">
 	</td>
 	</tr>
   </table>
