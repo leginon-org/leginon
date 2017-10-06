@@ -71,8 +71,8 @@ $noleginonval = ($userinfo['noleginon'] == 1) ? "CHECKED":"";
 $advancedval = ($userinfo['advanced'] == 1) ? "CHECKED":"";
 
 ?>
-<form name="userform" action="<?php $_SERVER['PHP_SELF'] ?>?userId=<?php $userId?>" method="POST">
-  <input type="hidden" name="userId" value="<?php $userId?>">
+<form name="userform" action="<?php $_SERVER['PHP_SELF'] ?>?userId=<?php echo $userId; ?>" method="POST">
+  <input type="hidden" name="userId" value="<?php echo $userId; ?>">
   <table border=0 cellspacing=0 cellpadding=2>
 	<tr>
 	<td>
