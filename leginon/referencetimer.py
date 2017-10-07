@@ -38,9 +38,15 @@ class ReferenceTimer(reference.Reference):
 				self.logger.info(message % interval)
 				return
 		self.moveAndExecute(request_data)
-		self.last_processed = time.time()
+
+	def onTest(self):
+		super(ReferenceTimer,self).onTest()
 
 	def uiResetTimer(self):
+		self.resetProcess()
+
+	def resetProcess(self):
+		# reset timer
 		self.logger.info('Reset Request Process Timer')
 		self.last_processed = time.time()
 
@@ -91,40 +97,49 @@ class AlignZeroLossPeak(ReferenceTimer):
 		self.logger.info('Check preset is %s' % self.checkpreset['name'])
 
 	def moveAndExecute(self, request_data):
+		'''
+		This function in AlignZeroLossPeak only execute if a threshold is exceeded
+		in the image mean acquired from check preset.
+		'''
 		preset_name = request_data['preset']
 		pause_time = self.settings['pause time']
-		try:
-			self.moveToTarget(preset_name)
-		except Exception, e:
-			self.logger.error('Error moving to target, %s' % e)
-			return
-
-		# set check preset and send to scope
+		position0 = self.instrument.tem.StagePosition
 		if pause_time is not None:
+			self.logger.info('waiting for %.2f seconds' % (pause_time))
 			time.sleep(pause_time)
 		if self.settings['threshold'] >= 0.1:
+			self.logger.info('Checking energy shift....')
 			try:
 				self.moveToTarget(self.settings['check preset'])
 			except Exception, e:
 				self.logger.error('Error moving to target, %s' % e)
+				self.moveBack(position0)
 				return
 			if pause_time is not None:
 				time.sleep(pause_time)
 			need_align = self.checkShift()
-			# align is done with the preset from the request
-			self.moveToTarget(preset_name)
-			
 		else:
+			# if threshold is zero, always execute
 			need_align = True
+		# set check preset and send to scope
+		# whether need_align or not always reset timer once the shift is checked.
+		self.resetProcess()
+
 		if need_align:
+			# now ready to do it.
 			try:
 				self.execute(request_data)
 			except Exception, e:
 				self.logger.error('Error executing request, %s' % e)
+				self.moveBack(position0)
 				return
+			# got here if successful
 			if self.settings['threshold'] >= 0.1:
+				# need to record current zero loss intensity if checking shift, 
 				self.resetZeroLossCheck()
-
+		else:
+			self.presets_client.toScope(preset_name)
+		self.moveBack(position0)
 	
 	def alignZLP(self, ccd_camera=None):
 		if not ccd_camera:
@@ -136,6 +151,7 @@ class AlignZeroLossPeak(ReferenceTimer):
 			if not ccd_camera.EnergyFilter:
 				self.logger.warning('Energy filtering is not enabled.')
 				return 'bypass'
+			self.positionCamera(camera_name=ccd_camera['name'])
 			ccd_camera.alignEnergyFilterZeroLossPeak()
 			m = 'Energy filter zero loss peak aligned.'
 			self.logger.info(m)
@@ -206,10 +222,13 @@ class AlignZeroLossPeak(ReferenceTimer):
 			self.publishZeroLossCheck(image)
 		else:
 			if result:
+				self.logger.info('Image standard deviation changed from %.2f to %.2f' % (result[0]['std'], image.std()))
 				# compare the standard deviation with that from last alignment
+				# standard deviation goes up when the slit is interfering it.
 				if result[0]['std'] * self.settings['threshold'] > image.std():
-					self.logger.info('Energe filter slit has not shifted significantly')
+					self.logger.info('Energy filter slit has not shifted significantly')
 					return False
+		self.logger.info('Need energy filter slit alignment')
 		return True
 
 	def publishZeroLossCheck(self,image):
