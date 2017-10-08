@@ -186,6 +186,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		em_target_data = self.getEMTargetData(preset_name)
 
 		self.publish(em_target_data, database=True)
+		self.setStageZAlpha(self.reference_target)
 		if self.settings['mover'] == 'presets manager':
 			self.presets_client.toScope(preset_name, em_target_data)
 		else:
@@ -205,11 +206,25 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		self.at_reference_target = True
 		# check results
 		p = self.instrument.tem.StagePosition
-		self.logger.info('Reference target position x: %.2f um, y:%.2f um' % (p['x']*1e6,p['y']*1e6))
+		self.logger.info('Reference target position x: %.1f um, y:%.1f um, z:%.1f um' % (p['x']*1e6,p['y']*1e6,p['z']))
 		preset = self.presets_client.getCurrentPreset()
 		if preset['name'] != preset_name:
 			message = 'failed to set preset \'%s\'' % preset_name
 			raise MoveError(message)
+
+	def setStageZAlpha(self,target_data):
+		try:
+			parent = target_data['image']
+			z = parent['scope']['stage position']['z']
+			alpha = parent['scope']['stage position']['a']
+			p = {'z':z}
+			a0 = self.instrument.tem.StagePosition['a']
+			# Do not set alpha unless very different
+			if abs(a0-alpha) > 0.1:
+				p['a'] = alpha
+			self.instrument.tem.StagePosition = p
+		except:
+			raise
 
 	def _processRequest(self, request_data):
 		# This is the function that would be different between Timer and Counter
@@ -313,10 +328,11 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 			self._testRun()
 		except Exception, e:
 			self.logger.error(e.message)
+			raise
 		finally:
 			self.panel.playerEvent('stop')
 			self.setStatus('idle')
-			self.logger.info('Done setting reference target')
+			self.logger.info('Done testing')
 
 	def _testRun(self):
 		preset_name = None
@@ -331,6 +347,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		# move to reference target with preset
 		self.reference_target = self.getReferenceTarget()
 		if self.reference_target:
+			self.logger.info('Use reference target for testing')
 			request_data = {'preset':preset['name']}
 			self.moveAndExecute(request_data)
 		else:
