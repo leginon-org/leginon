@@ -410,8 +410,6 @@ class UploadRelion3DRefine(reconUploader.generalReconUploader):
 		self.calculateCorrelation(defocusU,defocusV,astig,coordX,coordY,anglePsi,angleRot,angleTilt,maxProb)
 
 		## Plot FSC Curve
-		print("os.path.join(self.params['rundir'],'eman.fsc') is")
-		print(os.path.join(self.params['rundir'],"eman.fsc"))
 		if not os.path.isfile(os.path.join(self.params['rundir'],"eman.fsc")):
 			apDisplay.printMsg("eman.fsc file does not exists; self.Read04_maps() may not have completed properly.")
 
