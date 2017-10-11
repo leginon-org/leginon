@@ -1,4 +1,12 @@
 <?php
+require_once "../config.php";
+require_once '../inc/login.inc';
+
+if (! $dbemauth->is_logged()) {
+	$redirect=$_SERVER['REQUEST_URI'];
+	redirect(BASE_URL.'login.php?ln='.$redirect);
+}
+
 $filename=$_GET['filename'];
 
 if (empty($filename)) {

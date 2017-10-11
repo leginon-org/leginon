@@ -70,6 +70,8 @@ class DMSEM(ccdcamera.CCDCamera):
 		self.readout_delay_ms = 0
 		self.align_frames = False
 		self.align_filter = 'None'
+		raw_frame_dir = self.getDmsemConfig('k2','raw_frame_dir')
+		self.info_print('Frames are saved to %s' % (raw_frame_dir,))
 
 	def __getattribute__(self, attr_name):
 		if attr_name in object.__getattribute__(self, 'unsupported'):
@@ -85,6 +87,16 @@ class DMSEM(ccdcamera.CCDCamera):
 			if itemname not in configs[optionname]:
 				return None
 			return configs[optionname][itemname]
+
+	def info_print(self, msg):
+		v = self.getDmsemConfig('logger', 'verbosity')
+		if v is None or v > 0:
+			print msg
+
+	def debug_print(self, msg):
+		v = self.getDmsemConfig('logger', 'verbosity')
+		if v is not None and v > 1:
+			print msg
 
 	def getOffset(self):
 		return dict(self.offset)
@@ -187,7 +199,7 @@ class DMSEM(ccdcamera.CCDCamera):
 			'exposure': self.getRealExposureTime(),
 			'shutterDelay': shutter_delay,
 		}
-		print 'DM acqire shape (%d, %d)' % (height,width)
+		self.debug_print('DM acqire shape (%d, %d)' % (height,width))
 		return acqparams
 
 	def custom_setup(self):
@@ -197,23 +209,8 @@ class DMSEM(ccdcamera.CCDCamera):
 	def midNightDelay(self):
 		delay_start = self.getDmsemConfig('timing','delay_start_minutes_before_midnight')
 		delay_length = self.getDmsemConfig('timing','delay_length_minutes')
-		if delay_start is None or delay_length is None or delay_length < 1:
-			# timing not defined or length is zero
-			return
-		ctime = time.strftime("%H:%M:%S")
-		h,m,s = map((lambda x: int(x)),ctime.split(':'))
-		if h < 12:
-			h += 12
-		else:
-			h -= 12
-		second_since_noon = (h*60+m)*60+s
-		delay_start_time = (12*60-delay_start)*60
-		delay_end_time = (12*60-delay_start+delay_length)*60
-		if second_since_noon > delay_end_time or second_since_noon < delay_start_time:
-			return
-		sleeptime = delay_end_time - second_since_noon
-		print 'Sleeping started at %s for %d seconds' % (ctime, int(sleeptime))
-		time.sleep(sleeptime)
+		# Check and insert the camera every 0.5 minutes
+		self._midNightDelay(delay_start, delay_length, force_insert=0.5)
 
 	def _getImage(self):
 		self.midNightDelay()
@@ -229,7 +226,7 @@ class DMSEM(ccdcamera.CCDCamera):
 		if self.getExposureType() == 'dark':
 			self.modifyDarkImage(image)
 		# workaround dose fractionation image rotate-flip not applied problem
-		print 'received shape',image.shape
+		self.debug_print('received shape %s' %(image.shape,))
 		if self.save_frames or self.align_frames:
 			if not self.isDM231orUp():
 				k2_rotate = self.getDmsemConfig('k2','rotate')
@@ -245,7 +242,7 @@ class DMSEM(ccdcamera.CCDCamera):
 			endx = self.dimension['x'] + startx
 			endy = self.dimension['y'] + starty
 			image = image[starty:endy,startx:endx]
-		print 'modified shape',image.shape
+		self.debug_print('modified shape %s' % (image.shape,))
 
 		if self.dm_processing == 'gain normalized' and self.ed_mode in ('counting','super resolution'):
 			image = numpy.asarray(image, dtype=numpy.float32)
@@ -414,7 +411,7 @@ class GatanK2Base(DMSEM):
 			self.camera.SetK2Parameters(**k2params)
 			fileparams = self.calculateFileSavingParams()
 			if fileparams['rootname'] != 'dummy':
-				print 'FILESAVING', fileparams['dirname'],fileparams['rootname']
+				self.debug_print('FILESAVING %s %s' % (fileparams['dirname'],fileparams['rootname']))
 			self.camera.SetupFileSaving(**fileparams)
 
 	def getFrameTime(self):

@@ -78,17 +78,17 @@ project_header("Grid Tray", "init()");
 </script>
 <form method="POST" name="dataform" action="<?php echo $_SERVER['PHP_SELF']; ?>">
 
-<?=divtitle('Upload Grids')?>
+<?php divtitle('Upload Grids')?>
 <p>
 <a class="header" href="uploadgrid.php">upload grids / tray</a>
 </p>
-<?=divtitle('Grids')?>
-<input type="hidden" name="objsel" value="<?=$objsel?>">
+<?php divtitle('Grids')?>
+<input type="hidden" name="objsel" value="<?php $objsel?>">
 <table border="0" >
 <tr>
 <td valign=top>
 <select size="10" name="currentgrid" onchange="onChangeGrid()">
-<?
+<?php
 foreach ($grids as $grid) {
     $s = ($grid['gridId']==$selectedgridId) ? 'selected' : '';
 		$id=$grid['gridId'];
@@ -99,7 +99,7 @@ foreach ($grids as $grid) {
 </select>
 </td>
 <td valign=top >
-<?
+<?php
 $gridinfo = $griddata->getGridInfo($selectedgridId);
 $menu = array(
 	'new'=>'updategrid.php',
@@ -124,22 +124,22 @@ if (is_array($gridinfo)) {
 $gridboxdata = new gridbox();
 $gridboxinfo = $gridboxdata->getGridBoxInfo($gridinfo['boxId']);
 if ($gridinfo['boxId']) {
-?>Grid Box: <a class="header" href="?<?=build_get_args($spid_arg, $gid_arg, 'gbid='.$gridinfo['boxId'])?>"><?=$gridboxinfo['gridboxlabel']?></a>
+?>Grid Box: <a class="header" href="?<?php build_get_args($spid_arg, $gid_arg, 'gbid='.$gridinfo['boxId'])?>"><?php $gridboxinfo['gridboxlabel']?></a>
 <br>
 
-<? } ?>
+<?php } ?>
 
 </td>
 </tr>
 </table>
 
-<?=divtitle('Grid Boxes')?>
+<?php divtitle('Grid Boxes')?>
 <input type="hidden" name="gridboxId" value="">
 <table border="0" >
 <tr>
 <td valign=top>
 <select size="10" name="currentgridbox" onchange="onChangeGridBox()">
-<?
+<?php
 $selectedgridId=(empty($selectedgridId)) ? $grids[0]['gridId'] : $selectedgridId;
 foreach ($gridboxes as $gridbox) {
     if ($gridbox['gridboxId']==$selectedgridboxId)
@@ -152,7 +152,7 @@ foreach ($gridboxes as $gridbox) {
 </select>
 </td>
 <td valign=top >
-<?
+<?php
 	$menu = array(
 		'new'=>'updategridbox.php',
 		'edit'=>'updategridbox.php?gridboxId='.$selectedgridboxId,
@@ -206,7 +206,7 @@ switch ($gridboxinfo['boxtypeId']) {
 </tr>
 </table>
 </form>
-<?
+<?php
 project_footer();
 ?>
 

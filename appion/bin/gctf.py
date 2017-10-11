@@ -7,6 +7,20 @@ import math
 import time
 import shutil
 import subprocess
+
+#to generate 2D map from local refine
+from matplotlib import use
+use('Agg')
+import matplotlib.pyplot as plt
+import matplotlib.cm as cm
+import numpy as np
+try:
+	from scipy.interpolate import griddata
+	HAS_GRIDDATA=True
+except:
+	import scipy.ndimage as ndimage
+	HAS_GRIDDATA=False
+
 #appion
 from appionlib import apFile
 from appionlib import apImage
@@ -19,6 +33,7 @@ from appionlib import appiondata
 from appionlib import apInstrument
 from appionlib.apCtf import ctfdb
 from appionlib.apCtf import ctfinsert
+from appionlib import apRelion
 
 #from appionlib import ctffind4
 
@@ -49,10 +64,20 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 			help="Number of steps to search in grid", metavar="#")
 		self.parser.add_option("--dast", dest="dast", type="float", default=1000.0,
 			help="dAst in microns is used to restrain the amount of astigmatism", metavar="#")
+		self.parser.add_option("--local_raster", dest="raster", type="int", default=200,
+			help="spacing for GCTF local estimation", metavar="#")
+		self.parser.add_option("--local_radius", dest="local_radius", type="int", default=1024,
+			help="Radius for local refinement, no weighting beyond radius", metavar="#")
+		self.parser.add_option("--local_boxsize", dest="local_boxsize", type="int", default=512,
+			help="Boxsize used for local refinement", metavar="#")
+		self.parser.add_option("--local_overlap", dest="local_overlap", type="float", default=0.5,
+			help="Overlap factor for grid box sampling", metavar="#")
 	
 		self.parser.add_option("--do_EPA", dest="do_EPA", default=False, action="store_true",
 			help="Do equiphase averaging")
 
+		self.parser.add_option("--do_local_refine", dest="local_refine", default=False, action="store_true",
+			help="Perform local CTF estimation")
 		self.parser.add_option("--do_Hres_ref", dest="do_Hres_ref", default=False, action="store_true",
 			help="Boost high resolution refinement")
 
@@ -181,6 +206,14 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 		# finalize paramInputOrder
 		if self.params['shift_phase']:
 			paramInputOrder.extend(['phase_shift_H','phase_shift_L','phase_shift_S'])
+		# add local CTF estimation
+		if self.params['local_refine']:
+			paramInputOrder.extend(['do_local_refine','boxsuffix','local_radius','local_boxsize','local_overlap'])
+			rasterfilename = apDisplay.short(imgdata['filename'])+"_raster.star"
+			dimx = imgdata['camera']['dimension']['x']
+			dimy = imgdata['camera']['dimension']['y']
+			self.generateRasterStarFile(apDisplay.short(imgdata['filename']),dimx,dimy,self.params['raster'])
+
 #      paramInputOrder.append('expert_opts')
 #      paramInputOrder.append('newline')
 
@@ -215,8 +248,17 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 
 		imageresmax = self.params['resmax']
 		if ctfvalue is not None and self.params['bestdb'] is True:
-			### set res max from resolution_80_percent
-			gmean = (ctfvalue['resolution_80_percent']*ctfvalue['resolution_50_percent']*self.params['resmax'])**(1/3.)
+			try:
+				### set res max from resolution_80_percent
+				gmean = (ctfvalue['resolution_80_percent']*ctfvalue['resolution_50_percent']*self.params['resmax'])**(1/3.)
+			except:
+				#Issue 5168 gctf fast mode or other ctfplot failure mesn no typical values.
+				if ctfvalue['ctffind4_resolution']:
+					apDisplay.printColor('Failed to get Appion ctf resolution values. Use package value', "purple")
+					gmean = ctfvalue['ctffind4_resolution']
+				else:
+					apDisplay.printWarning('Unknown validataion, accept it anyway')
+					gmean = 100.0
 			if gmean < self.params['resmin']*0.9:
 				# replace only if valid Issue #3291
 				imageresmax = round(gmean,2)
@@ -227,7 +269,6 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 		# inputparams defocii and astig are in Angstroms
 
 		# may be gain/dark corrected movie that has been binned
-		print 'here'
 		origpath, binning = self.getOriginalPathAndBinning(imgdata)
 
 		# ddstack might be binned.
@@ -253,7 +294,12 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 			'mdef_ave_type' : self.getMovieAverageType(),
 			'phase_shift_H': self.params['max_phase_shift'],
 			'phase_shift_L': self.params['min_phase_shift'],
-			'phase_shift_S': self.params['phase_search_step']
+			'phase_shift_S': self.params['phase_search_step'],
+			'do_local_refine': self.params['local_refine'],
+			'local_radius': self.params['local_radius'],
+			'local_boxsize': self.params['local_boxsize'],
+			'local_overlap': self.params['local_overlap'],
+			'boxsuffix': "_raster.star",
 		}
 
 
@@ -327,15 +373,18 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 		### cannot run ctffind_plot_results.sh on CentOS 6
 		# This script requires gnuplot version >= 4.6, but you have version 4.2
 
+		# remove raster star file, it is redundant
+#		if os.path.isfile(rasterfilename):
+#			apFile.removeFile(rasterfilename)
+
 		### parse ctf estimation output
 		self.ctfvalues = {}
 		#ctfproglog = apDisplay.short(imgdata['filename'])+"-pow.txt"		
 		ctfproglog = apDisplay.short(imgdata['filename'])+"_gctf.log"		
 
-		print 'ctfproglog = ',ctfproglog
 		apDisplay.printMsg("reading %s"%(ctfproglog))
 		logf = open(ctfproglog, "r")
-		print 'current path is ',os.getcwd()
+		apDisplay.printMsg('current path is %s'%(os.getcwd()))
 		for line in logf:
 			sline = line.strip()
 			if (re.match('Defocus_U',sline)):
@@ -352,6 +401,7 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 					'defocusinit' : bestdef*1e-10,
 					'cs' : self.params['cs'],
 					'volts' : imgdata['scope']['high tension'],
+					'do_local_refine' : inputparams['do_local_refine'],
 				}
 				## bit len specific values
 				if len(bits) == 6:
@@ -369,9 +419,9 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 						'extra_phase_shift': round(math.radians(float(bits[3])),5), # radians
 					})
 
-				print 'defocus2 = '+str(self.ctfvalues['defocus2'])
-				print 'defocus1 = '+str(self.ctfvalues['defocus1'])
-				print 'angle_astigmatism = '+str(self.ctfvalues['angle_astigmatism'])
+				apDisplay.printMsg('defocus2 = '+str(self.ctfvalues['defocus2']))
+				apDisplay.printMsg('defocus1 = '+str(self.ctfvalues['defocus1']))
+				apDisplay.printMsg('angle_astigmatism = '+str(self.ctfvalues['angle_astigmatism']))
 	
 			if sline.startswith('Resolution'):
 				bits = sline.split()
@@ -397,8 +447,148 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 		shutil.move(inputparams['output'], os.path.join(self.powerspecdir, inputparams['output']))
 		self.ctfvalues['graph1'] = os.path.join(os.path.basename(self.powerspecdir), outputjpgbase)
 		self.ctfvalues['graph3'] = os.path.join(os.path.basename(self.powerspecdir), outputjpgbase)
+		# generate colored display if local CTF estimation
+		if self.params['local_refine']:
+			self.generateLocalCTFmap(apDisplay.short(imgdata['filename']),dimx,dimy)
+			self.ctfvalues['localplot'] = apDisplay.short(imgdata['filename'])+"_localDF.png"
+			self.ctfvalues['localCTFstarfile'] = apDisplay.short(imgdata['filename'])+"_local.star"
 		return
 
+	#======================
+	def generateLocalCTFmap(self,fbase,dimx,dimy):
+		starpath = os.path.join(fbase+"_local.star")
+		labels = apRelion.getStarFileColumnLabels(starpath)
+		imgx = 512
+		imgy = 512
+		if HAS_GRIDDATA:
+			map_array = self.makeMapArrayWithGriddata(starpath,labels,imgx,imgy,dimx,dimy)
+		else:
+			map_array = self.makeMapArrayWithZoom(starpath,labels,imgx,imgy,dimx,dimy)
+		# The map array should be in the same orientation as the array in AcquisitionImageData['image'] 
+		self.plotGridContour(map_array,fbase)
+
+	def makeMapArrayWithGriddata(self,starpath, labels, imgx, imgy, dimx,dimy):
+		matrix = [[np.nan for x in range(imgx)] for y in range(imgy)]
+		for line in open(starpath):
+			l = line.strip().split()
+			if len(l)<3: continue
+			x = int(float(l[labels.index("_rlnCoordinateX")])*imgx/dimx)
+			y = int(float(l[labels.index("_rlnCoordinateY")])*imgy/dimy)
+			du = float(l[labels.index("_rlnDefocusU")])*10e-5
+			dv = float(l[labels.index("_rlnDefocusV")])*10e-5
+			df = (du+dv)/2
+			matrix[x][y] = df
+
+		matrix = np.asarray(matrix)
+
+		x = np.arange(0,matrix.shape[1])
+		y = np.arange(0,matrix.shape[0])
+		matrix = np.ma.masked_invalid(matrix)
+		xx,yy = np.meshgrid(x,y)
+
+		x1 = xx[~matrix.mask]
+		y1 = yy[~matrix.mask]
+		newarr = matrix[~matrix.mask]
+
+		try:
+			GD1 = griddata((x1,y1),newarr.ravel(),(xx,yy),method='cubic')
+		except:
+			apDisplay.printError("Failed to generate griddata")
+		# rotate & flip to match MRC display
+		GD1 = np.flipud(np.rot90(GD1))
+		return GD1
+
+	def makeMapArrayWithZoom(self,starpath,labels,imgx,imgy,dimx,dimy):
+		'''
+		Make map array using ndimage.interpolation.zoom
+		since scipy version before 0.9 does not have griddata function.
+		'''
+		# read as a tight matrix with (row,col) orientation
+		matrix = self.readDefocusArray(starpath,labels)
+		totalx = matrix.shape[1]
+		totaly = matrix.shape[0]
+		# zoom ration is different in x and y to give final image at best aspect ratio
+		# relative to the original image
+		# final map x dimension will be imgx
+		ratiox = float(imgx)/totalx
+		ratioy = float(imgx)*dimy/dimx/totaly
+		# interpolation by zoom
+		GD1 = ndimage.interpolation.zoom(matrix, (ratioy,ratiox), order=3) 
+		apDisplay.printMsg('local map displayed in %d, %d (x,y)' % (GD1.shape[1],GD1.shape[0]))
+		return GD1
+
+	def readDefocusArray(self, starpath,labels):
+		'''
+		Read defocus array from starpath without interpolation.
+		The returned array is defocus in microns with data y axis flipped
+		'''
+		xlist = []
+		ylist = []
+		dflist = []
+		for line in open(starpath):
+			l = line.strip().split()
+			if len(l)<3: continue
+			x = float(l[labels.index("_rlnCoordinateX")])
+			y = float(l[labels.index("_rlnCoordinateY")])
+			du = float(l[labels.index("_rlnDefocusU")])*10e-5
+			dv = float(l[labels.index("_rlnDefocusV")])*10e-5
+			df = (du+dv)/2
+			dflist.append(df)
+			xlist.append(x)
+			ylist.append(y)
+		# There maybe gap unaccounted for if a whole row or column is missing.
+		xset = set(xlist)
+		yset = set(ylist)
+		sorted_x = sorted(xset)
+		sorted_y = sorted(yset)
+		xsize = len(xset)
+		ysize = len(yset)
+		apDisplay.printMsg('Total of %d defocii read from %d columns and %d rows' % (len(dflist),xsize, ysize))
+		if xsize*ysize == len(dflist):
+			matrix = np.array(dflist)
+			matrix = np.reshape(matrix,(ysize,xsize))
+			return matrix
+		elif xsize*ysize > len(dflist):
+			matrix = [[np.nan for x in range(xsize)] for y in range(ysize)]
+			for i in range(len(dflist)):
+				xi = sorted_x.index(xlist[i])
+				yi = sorted_y.index(ylist[i])
+				matrix[xi][yi] = dflist[i]
+			matrix = np.asarray(matrix)
+			matrix = np.ma.masked_invalid(matrix)
+			return matrix	
+		else:
+			apDisplay.printError('There are more defocus value than the grid')
+
+	def plotGridContour(self,GD1,fbase):
+		imgx = GD1.shape[1]
+		imgy = GD1.shape[0]
+		# use plasma color map if available:
+		try:
+			plt.imshow(GD1, extent=(0, imgx, 0, imgy),cmap=cm.plasma)
+			line_color = 'k'
+		# else generate similar colormap
+		except:
+			plt.imshow(GD1, extent=(0, imgx, 0, imgy), cmap=cm.hot)
+			line_color = '#009999'
+
+		# colorbar on right
+#		plt.colorbar()
+
+		# contour lines
+		X,Y = np.meshgrid(range(GD1.shape[1]),range(GD1.shape[0]))
+		CS = plt.contour(X,Y[::-1],GD1,15,linewidths=0.5, colors=line_color)
+		plt.clabel(CS, fontsize=9, inline=1)
+
+		# hide x & y axis tickmarks
+		plt.gca().xaxis.set_major_locator(plt.NullLocator())
+		plt.gca().yaxis.set_major_locator(plt.NullLocator())
+
+		pngfile = os.path.join(self.powerspecdir,fbase+"_localDF.png")
+		plt.savefig(pngfile,bbox_inches='tight',pad_inches=0)
+		plt.close()
+
+	#======================
 	def getMovieAverageType(self):
 		'''
 		movie average type 0 is coherent (averaging F as a vector)
@@ -407,6 +597,27 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 		#incoherent averaging (averaging |F|) makes sense when using movie to align
 		# since coherent average would be no different from working with sum image
 		return int(self.params['ddstackid'] is not None and self.params['ddstackid'] is not 0)
+
+	#======================
+	def generateRasterStarFile(self,fbase,dimx,dimy,spacing):
+		# raster star file header
+		f = open(fbase+"_raster.star",'w')
+		f.write("data_images\n\nloop_\n\n")
+		f.write("_rlnCoordinateX #1\n")
+		f.write("_rlnCoordinateY #2\n")
+		f.write("_rlnMicrographName #3\n") 
+
+		numspx=int(math.ceil(dimx/float(spacing)))
+		numspy=int(math.ceil(dimy/float(spacing)))
+
+		for i in range(numspx+1):
+			for j in range(numspy+1):
+				xval = (dimx*i/numspx)
+				yval = (dimy*j/numspy)
+				if xval > 0: xval-=1
+				if yval > 0: yval-=1
+				f.write("%12.6f %12.6f %s.mrc\n"%(xval,yval,fbase))
+		f.close()
 
 	#======================
 	def commitToDatabase(self, imgdata):
@@ -431,10 +642,10 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 
 		# first create an aceparam object
 		paramq = appiondata.ApCtfFind4ParamsData()
-		copyparamlist = ['ampcontrast','fieldsize','cs','bestdb','resmin','defstep','shift_phase']
+		copyparamlist = ['ampcontrast','fieldsize','cs','bestdb','resmin','defstep','shift_phase','local_refine']
 		if self.params['shift_phase']:
 			copyparamlist.extend(['min_phase_shift','max_phase_shift','phase_search_step'])
-			copyparamlist = ('ampcontrast','fieldsize','cs','bestdb','resmin','defstep')
+			copyparamlist = ('ampcontrast','fieldsize','cs','bestdb','resmin','defstep','local_refine')
 		for p in copyparamlist:
 			if p in self.params:
 				paramq[p] = self.params[p]

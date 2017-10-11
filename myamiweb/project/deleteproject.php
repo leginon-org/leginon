@@ -42,7 +42,7 @@ project_header("Project $title");
 </table>
 </form>
 
-<?
+<?php
 project_footer(); 
 exit;
 } else if ($_POST['yes']) {

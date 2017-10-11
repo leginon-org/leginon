@@ -43,12 +43,12 @@ class JAHCFinder(targetfinder.TargetFinder):
 		'template diameter': 40,
 		'template filename': default_template,
 		'file diameter': 168,
+		'template image min':0.0,
 		'template invert': False,
 		'template type': 'cross',
 		'template lpf': {
 			'sigma': 1.0,
 		},
-		'template threshold':0.0,
 		'threshold': 3.0,
 		'threshold method': "Threshold = mean + A * stdev",
 		'blobs border': 20,
@@ -280,7 +280,6 @@ class JAHCFinder(targetfinder.TargetFinder):
 		tmax = self.settings['ice max mean']
 		tstdmax = self.settings['ice max std']
 		tstdmin = self.settings['ice min std']
-		print tstdmax, tstdmin
 		self.hf.configure_ice(i0=i0,tmin=tmin,tmax=tmax,tstdmax=tstdmax, tstdmin=tstdmin)
 		try:
 			self.hf.calc_ice()

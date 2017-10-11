@@ -381,6 +381,7 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 		if self.params['maskassess'] is not None and not self.params['checkmask']:
 			apDisplay.printMsg("running mask assess")
 			self.params['checkmask'] = True
+		if self.params['localCTF']: self.params['ctfmethod']='localctf'
 
 	def checkIsDD(self):
 		apDisplay.printWarning('Checking for dd')

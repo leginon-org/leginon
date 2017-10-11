@@ -23,6 +23,9 @@ class AppionCamFrameProcessing(apDDprocess.DDFrameProcessing):
 		self.correct_dark_gain = True
 		self.correct_frame_mask = False
 		
+	def hasNonZeroDark(self):
+		return False
+
 	def setCycleReferenceChannels(self, value=False):
 		# Force cycle_ref_channels to False
 		self.cycle_ref_channels = False

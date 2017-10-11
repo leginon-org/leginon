@@ -596,6 +596,7 @@
 		<field name="camera pixel size" type="double" />
 		<field name="cs" type="double" />
 		<field name="pixelmax" type="int(20)" />
+		<field name="hidden" type="tinyint(1)" />
     <key>PRIMARY KEY (`DEF_id`)</key>
     <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
 	</sqltable>

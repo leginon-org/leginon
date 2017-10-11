@@ -54,8 +54,8 @@ class PhasePlateAligner(referencecounter.ReferenceCounter):
 		#if self.settings['bypass']:
 		#	self.publish(None, database=False, pubevent=True, pubeventclass=event.PhasePlateUsagePublishEvent)
 
-	def onTest(self, request_data=None):
-		super(PhasePlateAligner, self).onTest(request_data)
+	def onTest(self):
+		super(PhasePlateAligner, self).onTest()
 		if not self.preset_name:
 			self.logger.warning('Preset unknown. phase plate was not charged after advancing')
 

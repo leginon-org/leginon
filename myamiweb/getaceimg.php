@@ -19,6 +19,7 @@ switch($_GET['g']){
 	case 2: $graph="graph2"; break;
 	case 3: $graph="graph3"; break;
 	case 4: $graph="graph4"; break;
+	case 5: $graph="localplot"; break;
 	default: $graph="graph1"; break;
 }
 
@@ -48,7 +49,6 @@ if (!$basename) {
 	imagedestroy($blkimg);
 	exit(1);
 }
-
 $opfile = $ctfdata['path'].'/opimages/'.$basename;
 $rtfile = $ctfdata['path'].'/'.$basename;
 $key = "opimages/";

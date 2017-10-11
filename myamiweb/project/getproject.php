@@ -125,19 +125,19 @@ $ld = ($_GET['ld']==0) ? $link_on : $link_off;
 $cat  = ($_GET['cat']==0) ? $link_on : $link_off;
 ?>
 <form method="POST" name="projectform" action="<?php echo $_SERVER['PHP_SELF']."?projectId=".$selectedprojectId; ?>">
-<input type="hidden" name="v" value="<?=$_REQUEST['v']?>">
+<input type="hidden" name="v" value="<?php $_REQUEST['v']?>">
 <table border="0" >
 <tr>
 <td valign="top">
 <?php
 
 ?>
-<a class="header" href="<?=$_SERVER['PHP_SELF']."?v=$view&amp;projectId=".$selectedprojectId?>">&lt;<?=$link?>&gt;</a>
+<a class="header" href="<?php $_SERVER['PHP_SELF']."?v=$view&amp;projectId=".$selectedprojectId?>">&lt;<?php $link?>&gt;</a>
 <?php
 	if ($is_admin)
 		echo "<a class='header' href='updateproject.php?projectId=$selectedprojectId&amp;ln=".urlencode($url)."'>&lt;edit&gt;<img alt='edit' border='0' src='img/edit.png'></a>";
 ?>
-<?=divtitle('Info');?>
+<?php divtitle('Info');?>
 <table border="0" width="600">
 <tr>
 	<th>Short Description</th>
@@ -520,14 +520,14 @@ if ($view=='d') {
 	$rows = 10;
 if ($_GET['ld']!=1) {
 ?>
-<textarea class='textarea' cols="<?=$cols?>" rows="<?=$rows?>" readonly="readonly" >
-<?=($projectinfo['Description'])?>
+<textarea class='textarea' cols="<?php $cols?>" rows="<?php $rows?>" readonly="readonly" >
+<?php ($projectinfo['Description'])?>
 </textarea>
 <?php
 }
 	echo divtitle('Category | Funding | Associates');
 ?>
-<textarea class="textarea" cols="<?=$cols?>" rows="<?=$rows?>" readonly="readonly" >
+<textarea class="textarea" cols="<?php $cols?>" rows="<?php $rows?>" readonly="readonly" >
 <?php
 	echo $projectinfo['Category'];
 	echo "\n";

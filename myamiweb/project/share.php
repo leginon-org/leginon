@@ -1,4 +1,4 @@
-<?
+<?php
 require_once("inc/project.inc.php");
 require_once("inc/leginon.inc");
 require_once("inc/share.inc.php");
@@ -18,12 +18,12 @@ checkExptAccessPrivilege($sessionId,'shareexperiments');
 $is_admin = checkExptAdminPrivilege($sessionId,'shareexperiments');
 ?>
 
-<form method="POST" name="projectform" action="<?=$_SERVER['REQUEST_URI'] ?>">
-<input type="hidden" name="sessionId" value="<?= $sessionId ?>">
+<form method="POST" name="projectform" action="<?php $_SERVER['REQUEST_URI'] ?>">
+<input type="hidden" name="sessionId" value="<?php $sessionId ?>">
 
 <h3>Selected Experiment </h3>
 <table class="tableborder" border="1" valign="top">
-<?
+<?php
 	$info = $leginondata->getSessionInfo($_GET['expId']);
 	$keys_to_display = array('Name', 'Purpose', 'Total Duration', 'Instrument', 'User');
 	foreach ($info as $k=>$v) {
@@ -42,13 +42,13 @@ $is_admin = checkExptAdminPrivilege($sessionId,'shareexperiments');
 </table>
 <h3>Select a user to share this experiment with:</h3>
 <p>
-<?
+<?php
 	if ($is_admin) {
 ?>
 <img src="img/info.png"> Users with no password set won't be listed; go
-to <a class="header" href="<? echo BASE_URL.'user.php'; ?>">[user]</a> to update user's profile.
+to <a class="header" href="<?php echo BASE_URL.'user.php'; ?>">[user]</a> to update user's profile.
 </p>
-<?
+<?php
 	};
 	
 	// Functions to add and delete a shared user on button click
@@ -75,7 +75,7 @@ to <a class="header" href="<? echo BASE_URL.'user.php'; ?>">[user]</a> to update
 	if ($is_admin) {
 	?>
 	<select name="userId">
-	<?
+	<?php
 		echo "<option value='default' > -- select user -- </option>";
 		foreach($users as $user) {
 			$s = ($user['userId']==$_POST['userId']) ? "selected" : "";
@@ -90,7 +90,7 @@ to <a class="header" href="<? echo BASE_URL.'user.php'; ?>">[user]</a> to update
 		}
 	?>
 	</select>
-	<?
+	<?php
 	
 	// Display the add button
 	$bt_add= "<input class='bt1' type='submit' name='bt' value='add'>";
@@ -142,6 +142,6 @@ to <a class="header" href="<? echo BASE_URL.'user.php'; ?>">[user]</a> to update
 	
 ?>
 </form>
-<?
+<?php
 project_footer();
 ?>

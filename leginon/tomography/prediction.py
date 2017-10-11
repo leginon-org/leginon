@@ -188,7 +188,7 @@ class Prediction(object):
 		debug_print(' ')
 		debug_print('Predicting %.2f' % math.degrees(tilt))
 
-		n_start_fit = 3 
+		n_start_fit = self.fitdata 
 		tilt_series = self.getCurrentTiltSeries()
 		tilt_group = self.getCurrentTiltGroup()
 		current_group_index = self.getCurrentTiltGroupIndex()
@@ -203,12 +203,14 @@ class Prediction(object):
 		debug_print('tilts are: %s' % tilt_group.tilts)
 		if n_tilts < 1:
 			raise RuntimeError
-		elif n_tilts < 2 and not parameters[-1] == 0.0 and not self.fixed_model:
+		elif n_tilts < n_start_fit and not parameters[-1] == 0.0 and not self.fixed_model:
+			debug_print('set to input value since no fit, yet')
 			# one tilt : set to the input value
 			# x, y, z unchanged
 			x, y = tilt_group.xs[-1], tilt_group.ys[-1]
 			z = 0.0
 		elif n_tilts < n_start_fit:
+			debug_print('set use input model as prediction')
 			# number of tilts not enough to calculate modeled position.
 			# calculate real z correction with current parameters
 			x0 = tilt_group.xs[0]

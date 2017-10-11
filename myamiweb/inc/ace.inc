@@ -49,6 +49,9 @@ function getAceViewerForm($name, $aceruns) {
 	$aceform.="<option value='2'>1D component fit graph</option>";
 	$aceform.="<option value='3'>2D from package</option>";
 	$aceform.="<option value='4'>1D from package</option>";
+	# local CTF
+	$aceform.="<option value='5'>Local CTF plot</option>";
+
 	$aceform.='</select>';
 	$aceform.='</p>';
 	$aceform.='<input type="button" value="update" onclick=setAceParam(\''.$name.'\') />';

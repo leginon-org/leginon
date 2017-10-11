@@ -198,14 +198,14 @@ echo stackViewer($file_hed, $file_img, $n_images, $stackoptions);
 ?>
 
 <script type="text/javascript">
-var expId="<?=$expId?>"
-var sessionname="<?=$sessionname?>"
-var filename="<?=$filename?>"
-var stackId="<?=$stackId?>"
-var clusterId="<?=$clusterId?>"
-var templateStackId="<?=$templateStackId?>"
-var alignId="<?=$alignId?>"
-var refs="<?=$refs?>"
+var expId="<?php $expId?>"
+var sessionname="<?php $sessionname?>"
+var filename="<?php $filename?>"
+var stackId="<?php $stackId?>"
+var clusterId="<?php $clusterId?>"
+var templateStackId="<?php $templateStackId?>"
+var alignId="<?php $alignId?>"
+var refs="<?php $refs?>"
 
 <?php
 if ($alignId || $clusterId) {
@@ -393,7 +393,7 @@ function showHelicalInfo() {
 </script>
 </head>
 <body onload='load()'>
-<?
+<?php
 $printfilename = ($virtualfilename) ? $virtualfilename : $file_hed;
 echo "stack: $printfilename";
 echo "<br \>";
@@ -404,7 +404,7 @@ $lastimg=($_POST['endimg']) ? $_POST['endimg'] : $defendimg;
 ?>
 
 from: <input id="startimg" type="text" alt="Start" value="0" size="10">
-to: <input id="endimg" type="text" alt="End" value="<?=$lastimg?>" size="10">
+to: <input id="endimg" type="text" alt="End" value="<?php $lastimg?>" size="10">
 binning: <select id="binning">
 		<option value="1">1</option>
 		<option value="2">2</option>
@@ -421,7 +421,7 @@ quality: <select id="quality">
 info:<input type="checkbox" checked id="info" >
 scale bar:<input type="checkbox" id="scalebar" >
 <input id="loadbutton" type="button" alt="Load" value="Load" onclick="load();">
-<?
+<?php
 
 
 //Buttons for inclusion

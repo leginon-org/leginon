@@ -70,6 +70,7 @@ class Protomo2CoarseAlignSummary extends BasicLayoutForm
 		
 		global $outdir;
 		global $runname;
+		global $tiltseries;
 		
 		$defocus_gif_files = glob("$outdir/$runname/defocus_estimation/*/*/diagnostic.gif");
 		$ctf_gif_files = glob("$outdir/$runname/media/ctf_correction/s*.gif");
@@ -132,10 +133,6 @@ class Protomo2CoarseAlignSummary extends BasicLayoutForm
 		$rec2_ogv = "loadvid.php?filename=".$rec_vid_files[4];
 		$rec2_webm = "loadvid.php?filename=".$rec_vid_files[5];
 		$download_rec_mp4 = "downloadvid.php?filename=".$rec_vid_files[0];
-		$rec2_gif = "loadimg.php?rawgif=1&filename=".$rec_gif_files[1];
-		$rec2_mp4 = "loadvid.php?filename=".$rec_vid_files[3];
-		$rec2_ogv = "loadvid.php?filename=".$rec_vid_files[4];
-		$rec2_webm = "loadvid.php?filename=".$rec_vid_files[5];
 		$download_rec2_mp4 = "downloadvid.php?filename=".$rec_vid_files[3];
 		$manual_rec_gif = "loadimg.php?rawgif=1&filename=".$manual_rec_gif_files[0];
 		$manual_rec_mp4 = "loadvid.php?filename=".$manual_rec_vid_files[0];
@@ -370,6 +367,7 @@ class Protomo2CoarseAlignSummary extends BasicLayoutForm
 		} else {
 			$html .= "<center><b>Depiction Tilt-Series Video for Coarse Alignment either failed to generate, is still processing, or wasn't requested</b></center>";
 		}
+		
 		$html .= "
 	<br />
 	<center><H4>Tilt-Series Reconstruction After Coarse Alignment</H4></center>
@@ -483,6 +481,9 @@ class Protomo2CoarseAlignSummary extends BasicLayoutForm
 				<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2RefineForm'><b><center>[Click here to continue onto <font size='4'>Refinement</font> if the Coarse Alignment results are satisfactory] <font size='5'>→</font></center></b></a>";
 			$html .= "<br></br>
 				<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2CoarseAlignForm'><b><center><font size='5'>←</font> [Click here to go back to <font size='4'>Coarse Alignment</font>]</center></b></a>";
+			$html .= "<br></br><b><center>[If you wish to manually align the (1st) Coarse Alignment, run the following command:</b><br><br>
+				/usr/bin/python `which protomo2manualaligner.py` --rundir=$outdir/$runname/ --tiltseries=$tiltseries --iteration=Coarse --center_all_images=False --sampling=4 --image_fraction=0.65<br><br>
+				<b>and then choose 'More Manual' as the starting tilt file in Refinement.]</center></b><br>";
 		}
 		
 		return $html;

@@ -19,12 +19,14 @@ from appionlib import apInstrument
 from appionlib import apDDprocess
 from appionlib.apCtf import ctfdb
 from appionlib.apCtf import ctfinsert
+from appionlib.apCtf import ctffind4AvgRotPlot
 
 class ctfEstimateLoop(appionLoop2.AppionLoop):
 	"""
 	appion Loop function that
 	CTFFIND 4 was written by Alexis Rohou.
-	It is a rewrite of CTFFIND 3, written by Nikolaus Grigorieff.
+	Appion is Compatible with CTFFIND version 4.1.5
+	http://emg.nysbc.org/redmine/projects/appion/wiki/Package_executable_alias_name_in_Appion
 	to estimate the CTF in images
 	"""
 
@@ -46,9 +48,9 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			help="Number of steps to search in grid", metavar="#")
 		self.parser.add_option("--dast", dest="dast", type="float", default=100.0,
 			help="dAst in microns is used to restrain the amount of astigmatism", metavar="#")
-		self.parser.add_option("--minphaseshift", "--min_phase_shift", dest="min_phase_shift", type="float", default=0.0,
+		self.parser.add_option("--minphaseshift", "--min_phase_shift", dest="min_phase_shift", type="float", default=10.0,
 			help="Minimum phase shift by phase plate, in degrees", metavar="#")
-		self.parser.add_option("--maxphaseshift", "--max_phase_shift", dest="max_phase_shift", type="float", default=0.0,
+		self.parser.add_option("--maxphaseshift", "--max_phase_shift", dest="max_phase_shift", type="float", default=170.0,
 			help="Maximum phase shift by phase plate, in degrees", metavar="#")
 		self.parser.add_option("--phasestep", "--phase_search_step", dest="phase_search_step", type="float", default=10.0,
 			help="phase shift search step, in degrees", metavar="#")
@@ -63,7 +65,9 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			action="store_true", help="Use best amplitude contrast and astig difference from database")
 		self.parser.add_option("--phaseplate", "--phase_plate", dest="shift_phase", default=False,
 			action="store_true", help="Find additionalphase shift")
-
+		self.parser.add_option("--exhaust", "--exhaustive-search", dest="exhaustiveSearch", default=False,
+			action="store_true", help="Conduct an exhaustive search of the astigmatism of the CTF")
+		
 	#======================
 	def checkConflicts(self):
 		if self.params['resmin'] > 50.0:
@@ -132,7 +136,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			return True
 
 	def getPhaseParamValue(self):
-			return self.getYesNoParamValue('shift_phase')
+		return self.getYesNoParamValue('shift_phase')
 
 	def getYesNoParamValue(self, key):
 		phaseparam = 'no'
@@ -144,6 +148,8 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		return 'no'
 
 	def getExhaustiveAstigSearchValue(self):
+		if self.params['exhaustiveSearch'] is True:
+			return 'yes'
 		return 'no'
 
 	def getRestrainAstigValue(self):
@@ -224,7 +230,10 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		imageresmax = self.params['resmax']
 		if ctfvalue is not None and self.params['bestdb'] is True:
 			### set res max from resolution_80_percent
-			gmean = (ctfvalue['resolution_80_percent']*ctfvalue['resolution_50_percent']*self.params['resmax'])**(1/3.)
+			try:
+				gmean = (ctfvalue['resolution_80_percent']*ctfvalue['resolution_50_percent']*self.params['resmax'])**(1/3.)
+			except:
+				gmean = 9999
 			if gmean < self.params['resmin']*0.9:
 				# replace only if valid Issue #3291
 				imageresmax = round(gmean,2)
@@ -362,6 +371,12 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		shutil.move(inputparams['output'], os.path.join(self.powerspecdir, inputparams['output']))
 		self.ctfvalues['graph1'] = outputjpg
 
+		##convert avgrot file to a PNG
+		avgrotfile = apDisplay.short(imgdata['filename'])+"-pow_avrot.txt"
+		outputpng = ctffind4AvgRotPlot.createPlot(avgrotfile)
+		shutil.move(outputpng, os.path.join(self.powerspecdir, outputpng))
+		self.ctfvalues['graph2'] = outputpng
+		
 		#apFile.removeFile(inputparams['input'])
 
 		return

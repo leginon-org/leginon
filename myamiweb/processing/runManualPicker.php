@@ -134,7 +134,7 @@ function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $
 
   createAppionLoopTable($sessiondata, $defrunname, "extract");
 	?>
-	<font style="font-weight: bold"><?=docpop("picklabel", "Particle Labels");?></font>
+	<font style="font-weight: bold"><?php docpop("picklabel", "Particle Labels");?></font>
 	<p>
 	Label: <input type="text" name="picklabel" value="particle">
 	<input type="submit" name="addpicklabel" value="Add">

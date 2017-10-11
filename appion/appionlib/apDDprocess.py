@@ -15,6 +15,9 @@ from appionlib import apDisplay, apDatabase,apDBImage, appiondata,apFile
 import subprocess
 import socket
 import itertools
+from joblib import Parallel, delayed
+import timeit
+import glob
 
 # testing options
 save_jpg = False
@@ -194,15 +197,8 @@ class DirectDetectorProcessing(object):
 			apDisplay.printWarning('No alignment log file %s found for thresholding drift' % logfile)
 			return False
 		positions = ddinfo.readPositionsFromAlignLog(logfile)
-		# place holder for first frame shift duplication
-		shifts = [None,]
-		for p in range(len(positions)-1):
-			shift = math.hypot(positions[p][0]-positions[p+1][0],positions[p][1]-positions[p+1][1])
-			shifts.append(shift)
+		shifts = ddinfo.calculateFrameShifts(positions)
 		apDisplay.printDebug('Got %d shifts' % (len(shifts)-1))
-		# duplicate first and last shift for the end points
-		shifts.append(shifts[-1])
-		shifts[0] = shifts[1]
 		return shifts
 
 	def getStillFrames(self,threshold):
@@ -283,6 +279,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		self.flipAlongYAxis = 0
 		self.use_frame_aligner_yflip = False
 		self.use_frame_aligner_rotate = 0
+		self.override_db = False
 
 		if debug:
 			self.log = open('newref.log','w')
@@ -339,7 +336,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 
 	def setGPUid(self,gpuid):
 		self.gpuid = gpuid
-
+	
 	def getSingleFrameDarkArray(self):
 		try:
 			darkdata = self.getRefImageData('dark')
@@ -870,6 +867,9 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			plan, plandata = self.c_client.retrieveCorrectorPlan(self.camerainfo)
 		return plan
 
+	def hasNonZeroDark(self):
+		return True
+
 	def hasBadPixels(self):
 		# set camerainfo so to find corretor plan
 		self.setCameraInfo(1,self.use_full_raw_area)
@@ -1024,7 +1024,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		return self.tempframestackpath
 
 	def makeCorrectedFrameStack(self, use_full_raw_area=False):
-		return self.makeCorrectedFrameStack_cpu(use_full_raw_area)
+		return self.makeCorrectedFrameStack_serial(use_full_raw_area)
 
 	def makeDarkNormMrcs(self):
 		self.setupDarkNormMrcs(False)
@@ -1099,6 +1099,106 @@ class DDFrameProcessing(DirectDetectorProcessing):
 				mrc.append(array,self.tempframestackpath,True)
 			else:
 				mrc.append(array,self.tempframestackpath,False)
+		return self.tempframestackpath
+
+	def makeCorrectedFrameStack_parallel(self, use_full_raw_area=False):
+		'''
+		Creates a file of gain/dark corrected stack of frames
+		'''
+		imagedata=self.image
+		darkarray=imagedata['dark']['image']
+		brightarray=imagedata['bright']['image']
+		imgrootname=imagedata['filename']
+		framepath=imagedata['session']['frame path']
+		framepattern = os.path.join(framepath, (imgrootname+'*'))
+		filelist = glob.glob(framepattern)
+		framearray=mrc.read(filelist[0])
+		nframes=imagedata['camera']['nframes']
+		
+		darkarray=imagefun.flipImageTopBottom(darkarray)
+		brightarray=imagefun.flipImageTopBottom(brightarray)
+		
+		if self.override_db is True:
+			badcols=self.badcols
+			badrows=self.badrows
+			print type(badcols), badcols
+			print type(badrows), badrows
+			print self.flipgain
+			if self.flipgain is True:
+				print "flipping gains"
+				darkarray=imagefun.flipImageTopBottom(darkarray)
+				brightarray=imagefun.flipImageTopBottom(brightarray)
+		else:
+			badrows=[]
+			badcols=[]
+			
+		start_time = timeit.default_timer()
+		print "correcting"
+		imagelist=Parallel(n_jobs=5)(delayed(imagefun.normalizeFromDarkAndBright)(frame,darkarray,brightarray,scale=nframes,badrowlist=badrows,badcolumnlist=badcols) for frame in framearray)
+		elapsed = timeit.default_timer() - start_time
+		print elapsed, "for parallel"
+		
+		start_time = timeit.default_timer()
+		print "writing"
+		outstackname=imgrootname+'_st.mrc'
+		mrc.write(imagelist[0],outstackname)
+		sum=numpy.zeros(brightarray.shape)
+		for i in imagelist[1:]:
+			sum+=i
+			mrc.append(i,outstackname)
+		mrc.write(sum,'corrected.mrc')
+		elapsed = timeit.default_timer() - start_time
+		print elapsed, "for writing"
+		self.tempframestackpath=outstackname
+		return self.tempframestackpath
+
+	def makeCorrectedFrameStack_serial(self, use_full_raw_area=False):
+		'''
+		Creates a file of gain/dark corrected stack of frames
+		'''
+		imagedata=self.image
+		darkarray=imagedata['dark']['image']
+		brightarray=imagedata['bright']['image']
+		imgrootname=imagedata['filename']
+		framepath=imagedata['session']['frame path']
+		framepattern = os.path.join(framepath, (imgrootname+'*'))
+		filelist = glob.glob(framepattern)
+		framearray=mrc.read(filelist[0])
+		nframes=imagedata['camera']['nframes']
+		
+		darkarray=imagefun.flipImageTopBottom(darkarray)
+		brightarray=imagefun.flipImageTopBottom(brightarray)
+		
+		if self.override_db is True:
+			badcols=self.badcols
+			badrows=self.badrows
+			print type(badcols), badcols
+			print type(badrows), badrows
+			print self.flipgain
+			if self.flipgain is True:
+				print "flipping gains"
+				darkarray=imagefun.flipImageTopBottom(darkarray)
+				brightarray=imagefun.flipImageTopBottom(brightarray)
+		else:
+			badrows=[]
+			badcols=[]
+		clip=self.clip
+		start_time = timeit.default_timer()
+		print "correcting and writing"
+		outstackname=imgrootname+'_st.mrc'
+		###correct first frame
+		frame=imagefun.normalizeFromDarkAndBright(framearray[0],darkarray,brightarray,scale=nframes,badrowlist=badrows,badcolumnlist=badcols,clip=clip)
+		mrc.write(frame,outstackname)
+		###correct the rest
+		for n, frame in enumerate(framearray[1:]):
+			print "frame", n
+			frame=imagefun.normalizeFromDarkAndBright(frame,darkarray,brightarray,scale=nframes,badrowlist=badrows,badcolumnlist=badcols,clip=clip)
+			mrc.append(frame,outstackname)
+		
+		elapsed = timeit.default_timer() - start_time
+		print elapsed, "for correcting and writing frame stack"
+		
+		self.tempframestackpath=outstackname
 		return self.tempframestackpath
 
 	def setNewBinning(self,bin):

@@ -5,7 +5,6 @@
  *	For terms of the license agreement
  *	see  http://leginon.org
  *
- *	Simple viewer to view a image using mrcmodule
  */
 
 require_once "inc/particledata.inc";
@@ -34,7 +33,7 @@ echo "    Here you will find the same maintained software packages \n"
 echo "  <h4>\n";
 echo "    <i>(The following workflows use PHP sessions to keep track of \n"
         ."variables. They are designed to be used immediately following \n"
-        ."a full \'Align Tilt-Series\' run.)</i>";
+        ."a full 'Align Tilt-Series' run.)</i>";
 echo "  </h4>\n";
 echo "</td></tr>\n";
 echo "</table>\n";
@@ -54,7 +53,9 @@ echo " <p> Protomo is a software package used in electron tomography for marker-
 	."projection reconstruction of tilt-series. The marker-free alignment is based on cross-correlation methods and "
 	."projection matching. Protomo also includes the refinement of geometric parameters of the tilt-series. "
 	."3D reconstruction is carried out by weighted back-projection with general weighting functions "
-	."that allow varying tilt angle increments. ";
+	."that allow varying tilt angle increments. "
+	."<br/><br/>The <a href='https://www.ncbi.nlm.nih.gov/pubmed/26455557' target='_blank'> original research article is here</a>."
+	."</p>\n";
 echo "</td></tr>\n";
 
 /*

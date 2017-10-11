@@ -40,8 +40,8 @@ time_start = time.strftime("%Yyr%mm%dd-%Hhr%Mm%Ss")
 class ProTomo2Aligner(basicScript.BasicScript):
 	#=====================
 	def setupParserOptions(self):
-		self.parser.set_usage( "Usage: %prog --tiltseriesnumber=<#> --sessionname=<sessionname> [options]"
-			+"\nFor initial coarse alignment: %prog --tiltseriesnumber=<#> --sessionname=<sessionname> --coarse=True [options]")
+		self.parser.set_usage( "Usage: %prog --tiltseries=<#> --sessionname=<sessionname> [100 more options are you crazy just generate the command from the webpage]"
+			+"\nFor initial coarse alignment: %prog --tiltseries=<#> --sessionname=<sessionname> --coarse=True [options]")
 		
 		self.parser.add_option("--seriesname", dest="seriesname", help="Series name (for database)")
 		
@@ -260,8 +260,8 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		self.parser.add_option("--r5_highpass_apod_y", dest="r5_highpass_apod_y", default=0.002, type="float",
 			help="Provide in angstroms. This will be converted to Protomo units, e.g. --r5_highpass_diameter_y=0.02", metavar="float")
 
-		self.parser.add_option("--thickness", dest="thickness",  default=1000, type="float",
-			help="Estimated thickness of unbinned specimen (in pixels), e.g. --thickness=100.0", metavar="float")
+		self.parser.add_option("--thickness", dest="thickness", type="float",
+			help="Estimated thickness of unbinned specimen (in pixels), e.g. --thickness=1000.0", metavar="float")
 		
 		self.parser.add_option("--pixelsize", dest="pixelsize", type="float",
 			help="Pixelsize of raw images in angstroms/pixel, e.g. --pixelsize=3.5", metavar="float")
@@ -575,6 +575,12 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		self.parser.add_option("--tilt_azimuth", dest="tilt_azimuth",  type="float",
 			help='Override the tilt-azimuth as recorded in the database. Applied before alignment, e.g. --tilt_azimuth="-57"')
 		
+		self.parser.add_option("--azimuth_stability_check", dest="azimuth_stability_check", default=False,
+			help='Check whether the tilt azimuth has deviated from the initial til azimuth, e.g. --azimuth_stability_check=True')
+		
+		self.parser.add_option("--azimuth_max_deviation", dest="azimuth_max_deviation",  type="float", default=0,
+			help='Maximum +-deviation allowed for the tilt-azimuth during refinement, e.g. --azimuth_max_deviation=5')
+		
 		# self.parser.add_option("--select_images", dest="select_images",  default="0-999999",
 		# 	help='Select specific images in the tilt-series, e.g. --select_images="1,2,5-7"')
 		
@@ -737,8 +743,8 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		self.parser.add_option("--restart_from_run", dest="restart_from_run",  default='',
 			help="Run name (if in same Output directory) or full path (if not in same Output directory) of previously Refined Appion-Protomo run from which you wish to restart the Refinement using the current, new Run name and/or Output directory e.g. --restart_from_run=tiltseries0002")
 		
-		self.parser.add_option("--restart_from_iteration", dest="restart_from_iteration",  type="int",  default=0,
-			help="Refinement iteration of specified previously Refined Appion-Protomo run from which you would like to restart the Refinement, e.g. --restart_from_iteration=2", metavar="int")
+		self.parser.add_option("--restart_from_iteration", dest="restart_from_iteration",  default=0,
+			help="Refinement iteration of specified previously Refined Appion-Protomo run from which you would like to restart the Refinement, e.g. --restart_from_iteration=2")
 		
 		self.parser.add_option("--link", dest="link",  default="False",
 			help="Link raw images if True, copy if False, e.g. --link=False (NOW OBSOLETE)")
@@ -826,6 +832,15 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		
 		self.parser.add_option("--manual_alignment_finished", dest="manual_alignment_finished",  default="False",
 			help="Internal option.")
+		
+		self.parser.add_option("--center_all_images", dest="center_all_images",  default="False",
+			help="Re-center all images. Used when there is significant overshifting either by Leginon or Protomo, e.g. --center_all_images=True")
+		
+		self.parser.add_option("--change_refimg", dest="change_refimg",  default="False",
+			help="Change the Protomo Reference image? e.g. --change_refimg=True")
+		
+		self.parser.add_option("--desired_ref_tilt_angle", dest="desired_ref_tilt_angle",  type="float",  default=0,
+			help="Change the Protomo Reference image to be the image closest to this tilt angle, e.g. --desired_ref_tilt_angle=17")
 		
 		self.parser.add_option("--make_searchable", dest="make_searchable",  default="True",
 			help="Hidden option. Places a .tiltseries.XXXX file in the rundir so that it will be found by Batch Summary webpages.")
@@ -1382,11 +1397,13 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		
 		seriesnumber = "%04d" % int(self.params['tiltseries'])
 		seriesname='series'+seriesnumber
+		backup_tiltfilename=seriesname+'.tlt_backup'
+		backup_tiltfilename_full=rundir+'/'+backup_tiltfilename
 		tiltfilename=seriesname+'.tlt'
 		tiltfilename_full=rundir+'/'+tiltfilename
 		originaltilt=rundir+'/original.tlt'
 		
-		if (self.params['restart_from_run'] != '' and self.params['restart_from_iteration'] > 0):
+		if (self.params['restart_from_run'] != '' and (self.params['restart_from_iteration'] > 0 or self.params['restart_from_iteration'] == 'MoreManual')):
 			if os.path.exists(self.params['restart_from_run']):
 				restart_path = self.params['restart_from_run']
 			elif os.path.exists(os.path.dirname(rundir)+'/'+self.params['restart_from_run']):
@@ -1395,16 +1412,26 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				f.write('Restart Refinement Run not found! Aborting Refinement!\n')
 				apDisplay.printError("Restart Refinement Run not found! Aborting Refinement!")
 				sys.exit()
-			restart_seriesnumber = "%03d" % (int(self.params['restart_from_iteration']) - 1)
-			restart_seriesname = seriesname + restart_seriesnumber
+			if self.params['restart_from_iteration'] == 'MoreManual':
+				restart_seriesname = 'more_manual_'+seriesname
+			else:
+				restart_seriesnumber = "%03d" % (int(self.params['restart_from_iteration']) - 1)
+				restart_seriesname = seriesname + restart_seriesnumber
 			restart_tlt_file = restart_path + '/' + restart_seriesname + '.tlt'
 			if os.path.exists(restart_tlt_file):
-				f.write('Restarting Refinement from %s Iteration %d\n' % (os.path.basename(restart_path), self.params['restart_from_iteration']))
-				apDisplay.printMsg("Restarting Refinement from %s Iteration %d..." % (os.path.basename(restart_path), self.params['restart_from_iteration']))
+				if self.params['restart_from_iteration'] == 'MoreManual':
+					f.write('Restarting Refinement from %s with More Manual\n' % os.path.basename(restart_path))
+					apDisplay.printMsg("Restarting Refinement from %s with More Manual..." % os.path.basename(restart_path))
+				else:
+					f.write('Restarting Refinement from %s Iteration %d\n' % (os.path.basename(restart_path), self.params['restart_from_iteration']))
+					apDisplay.printMsg("Restarting Refinement from %s Iteration %d..." % (os.path.basename(restart_path), self.params['restart_from_iteration']))
 				os.system('cp %s %s/%s' % (restart_tlt_file, rundir, tiltfilename))
 				os.system('cp -r %s %s' % (os.path.join(restart_path,'raw'), rundir))
 				os.system('cp -r %s %s 2>/dev/null' % (os.path.join(restart_path,'media','dose_compensation'), os.path.join(rundir,'media')))
-				os.system('touch %s/restarted_from_%s_iteration_%d' % (rundir, os.path.basename(restart_path), self.params['restart_from_iteration']))
+				try:
+					os.system('touch %s/restarted_from_%s_iteration_%d' % (rundir, os.path.basename(restart_path), self.params['restart_from_iteration']))
+				except:
+					os.system('touch %s/restarted_from_%s_iteration_%s' % (rundir, os.path.basename(restart_path), self.params['restart_from_iteration']))
 			else:
 				f.write('Restart Refinement Iteration not found! Aborting Refinement!\n')
 				apDisplay.printError("Restart Refinement Iteration not found! Aborting Refinement!")
@@ -1469,7 +1496,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		else: #Refinement. Just get maxtilt for param file
 			rawimagecount, maxtilt=self.excludeImages(tiltfilename_full, f)  #Remove images from .tlt file if user requests
 			self.params['maxtilt'] = maxtilt
-			if (self.params['restart_from_run'] == '' and self.params['restart_from_iteration'] == 0):
+			if (self.params['restart_from_run'] == '' and self.params['restart_from_iteration'] == 0 and not os.path.exists(backup_tiltfilename_full)):
 				if self.params['starting_tlt_file'] == "Initial":
 					apDisplay.printMsg("Using Initial alignment from the microscope as starting .tlt file for Refinement by copying original.tlt to %s." % tiltfilename)
 					f.write("Using Initial alignment from the microscope as starting .tlt file for Refinement by copying original.tlt to %s." % tiltfilename)
@@ -1478,6 +1505,10 @@ class ProTomo2Aligner(basicScript.BasicScript):
 					apDisplay.printMsg("Using Manual alignment for Refinement by copying %s to %s." % ('manual_'+seriesname+'.tlt', tiltfilename))
 					f.write("Using Manual alignment for Refinement by copying %s to %s." % ('manual_'+seriesname+'.tlt', tiltfilename))
 					os.system("cp %s %s" % ('manual_'+seriesname+'.tlt', tiltfilename_full))
+				elif self.params['starting_tlt_file'] == "MoreManual":
+					apDisplay.printMsg("Using More Manual alignment for Refinement by copying %s to %s." % ('more_manual_'+seriesname+'.tlt', tiltfilename))
+					f.write("Using More Manual alignment for Refinement by copying %s to %s." % ('more_manual_'+seriesname+'.tlt', tiltfilename))
+					os.system("cp %s %s" % ('more_manual_'+seriesname+'.tlt', tiltfilename_full))
 				elif self.params['starting_tlt_file'] == "Coarse_Iter_1":
 					apDisplay.printMsg("Using Coarse alignment iteration 1 for Refinement by copying %s to %s." % ('coarse_'+tiltfilename, tiltfilename))
 					f.write("Using Coarse alignment iteration 1 for Refinement by copying %s to %s." % ('coarse_'+tiltfilename, tiltfilename))
@@ -1498,9 +1529,19 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				else:
 					apDisplay.printError("starting_tlt_file request should be Initial, Coarse_Iter_1, or Coarse_Iter_2")
 					sys.exit()
+			elif os.path.exists(backup_tiltfilename_full):
+				apDisplay.printMsg("Using backup .tlt file as starting .tlt file.")
+				os.system("mv %s %s" % (backup_tiltfilename_full, tiltfilename_full))
+				
 			if (self.params['defocus_save'] != 0 and isinstance(self.params['defocus_save'],float)): #Can only save defocus during refinement (or reconstruction)
 				apProTomo2Prep.defocusEstimate(seriesname, rundir, self.params['projectid'], self.params['sessionname'], self.params['parallel'], int(self.params['tiltseries']), tiltfilename, self.params['frame_aligned'], self.params['pixelsize'], self.params['defocus_ang_negative'], self.params['defocus_ang_positive'], self.params['amp_contrast_defocus'], self.params['res_min'], self.params['res_max'], self.params['defocus'], self.params['defocus_difference'], self.params['defocus_min'], self.params['defocus_max'], self.params['defocus_save'])
 			rawimagecount, maxtilt=self.excludeImages(tiltfilename_full, f)  #Remove images from .tlt file if user requests
+		
+		if self.params['change_refimg'] == "True":
+			apProTomo2Aligner.changeReferenceImage(tiltfilename_full, self.params['desired_ref_tilt_angle'])
+		
+		if self.params['center_all_images'] == "True":
+			apProTomo2Aligner.centerAllImages(tiltfilename_full, self.params['dimx'], self.params['dimy'])
 		
 		self.params['cos_alpha']=np.cos(self.params['maxtilt']*np.pi/180)
 		
@@ -1754,7 +1795,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				jobs4.append(mp.Process(target=apProTomo2Aligner.makeTiltSeriesVideos, args=(seriesname, 0, manualtilt, rawimagecount, rundir, raw_path, self.params['pixelsize'], self.params['map_sampling'], self.params['image_file_type'], self.params['video_type'], self.params['tilt_clip'], self.params['parallel'], "Manual",)))
 				for job in jobs4:
 					job.start()
-				series.mapfile('out/manual_%s.img' % seriesname)
+				series.mapfile('%s/manual_%s.img' % (self.params['protomo_outdir'], seriesname))
 				if self.params['create_reconstruction'] == "true":
 					apDisplay.printMsg("Generating Coarse Alignment reconstruction...")
 					f.write('Generating Coarse Alignment reconstruction...\n')
@@ -1983,8 +2024,8 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				self.params['cycle'] = n+1  #Iterations in Protomo start at 0
 				if (n+1 == start+1):
 					r=1  #Round number
-					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s of Tilt-Series #%s\n" % (n+1,r,self.params['tiltseries']))
-					f.write('\nBeginning Refinement Iteration #%s, Round #%s of Tilt-Series #%s\n' % (n+1,r,self.params['tiltseries']))
+					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s of Tilt-Series #%s (%s)\n" % (n+1,r,self.params['tiltseries'],self.params['runname']))
+					f.write('\nBeginning Refinement Iteration #%s, Round #%s of Tilt-Series #%s (%s)\n' % (n+1,r,self.params['tiltseries'],self.params['runname']))
 					apDisplay.printMsg("lowpass = %s Angstroms\n" % r1_lp)
 					f.write("lowpass = %s Angstroms\n" % r1_lp)
 					region_x=self.params['r1_region_x']
@@ -1996,10 +2037,11 @@ class ProTomo2Aligner(basicScript.BasicScript):
 						f.write("%s = %s\n" % (val,round1[val]))
 						apDisplay.printMsg("%s = %s" % (val,round1[val]))
 						series.setparam(val,round1[val])
+					current_round = "round1"
 				elif (n+1 == start+self.params['r1_iters']+1):
 					r=2
-					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s of Tilt-Series #%s\n" % (n+1,r,self.params['tiltseries']))
-					f.write('\nBeginning Refinement Iteration #%s, Round #%s of Tilt-Series #%s\n' % (n+1,r,self.params['tiltseries']))
+					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s of Tilt-Series #%s (%s)\n" % (n+1,r,self.params['tiltseries'],self.params['runname']))
+					f.write('\nBeginning Refinement Iteration #%s, Round #%s of Tilt-Series #%s (%s)\n' % (n+1,r,self.params['tiltseries'],self.params['runname']))
 					apDisplay.printMsg("lowpass = %s angstroms\n" % r2_lp)
 					f.write("lowpass = %s angstroms\n" % r2_lp)
 					region_x=self.params['r2_region_x']
@@ -2011,10 +2053,11 @@ class ProTomo2Aligner(basicScript.BasicScript):
 						f.write("%s = %s\n" % (val,round2[val]))
 						apDisplay.printMsg("%s = %s" % (val,round2[val]))
 						series.setparam(val,round2[val])
+					current_round = "round2"
 				elif (n+1 == start+self.params['r1_iters']+self.params['r2_iters']+1):
 					r=3
-					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s of Tilt-Series #%s\n" % (n+1,r,self.params['tiltseries']))
-					f.write('\nBeginning Refinement Iteration #%s, Round #%s of Tilt-Series #%s\n' % (n+1,r,self.params['tiltseries']))
+					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s of Tilt-Series #%s (%s)\n" % (n+1,r,self.params['tiltseries'],self.params['runname']))
+					f.write('\nBeginning Refinement Iteration #%s, Round #%s of Tilt-Series #%s (%s)\n' % (n+1,r,self.params['tiltseries'],self.params['runname']))
 					apDisplay.printMsg("lowpass = %s angstroms\n" % r3_lp)
 					f.write("lowpass = %s angstroms\n" % r3_lp)
 					region_x=self.params['r3_region_x']
@@ -2026,10 +2069,11 @@ class ProTomo2Aligner(basicScript.BasicScript):
 						f.write("%s = %s\n" % (val,round3[val]))
 						apDisplay.printMsg("%s = %s" % (val,round3[val]))
 						series.setparam(val,round3[val])
+					current_round = "round3"
 				elif (n+1 == start+self.params['r1_iters']+self.params['r2_iters']+self.params['r3_iters']+1):
 					r=4
-					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s of Tilt-Series #%s\n" % (n+1,r,self.params['tiltseries']))
-					f.write('\nBeginning Refinement Iteration #%s, Round #%s of Tilt-Series #%s\n' % (n+1,r,self.params['tiltseries']))
+					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s of Tilt-Series #%s (%s)\n" % (n+1,r,self.params['tiltseries'],self.params['runname']))
+					f.write('\nBeginning Refinement Iteration #%s, Round #%s of Tilt-Series #%s (%s)\n' % (n+1,r,self.params['tiltseries'],self.params['runname']))
 					apDisplay.printMsg("lowpass = %s angstroms\n" % r4_lp)
 					f.write("lowpass = %s angstroms\n" % r4_lp)
 					region_x=self.params['r4_region_x']
@@ -2041,10 +2085,11 @@ class ProTomo2Aligner(basicScript.BasicScript):
 						f.write("%s = %s\n" % (val,round4[val]))
 						apDisplay.printMsg("%s = %s" % (val,round4[val]))
 						series.setparam(val,round4[val])
+					current_round = "round4"
 				elif (n+1 == start+self.params['r1_iters']+self.params['r2_iters']+self.params['r3_iters']+self.params['r4_iters']+1):
 					r=5
-					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s of Tilt-Series #%s\n" % (n+1,r,self.params['tiltseries']))
-					f.write('\nBeginning Refinement Iteration #%s, Round #%s of Tilt-Series #%s\n' % (n+1,r,self.params['tiltseries']))
+					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s of Tilt-Series #%s (%s)\n" % (n+1,r,self.params['tiltseries'],self.params['runname']))
+					f.write('\nBeginning Refinement Iteration #%s, Round #%s of Tilt-Series #%s (%s)\n' % (n+1,r,self.params['tiltseries'],self.params['runname']))
 					apDisplay.printMsg("lowpass = %s angstroms\n" % r5_lp)
 					f.write("lowpass = %s angstroms\n" % r5_lp)
 					region_x=self.params['r5_region_x']
@@ -2056,11 +2101,12 @@ class ProTomo2Aligner(basicScript.BasicScript):
 						f.write("%s = %s\n" % (val,round5[val]))
 						apDisplay.printMsg("%s = %s" % (val,round5[val]))
 						series.setparam(val,round5[val])
+					current_round = "round5"
 				else:
-					f.write("\nNo Round parameters changed for Iteration #%s of Tilt-Series #%s\n" % (n+1,self.params['tiltseries']))
-					apDisplay.printMsg("No Round parameters changed for Iteration #%s of Tilt-Series #%s\n" % (n+1,self.params['tiltseries']))
-					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s of Tilt-Series #%s\n" % (n+1,r,self.params['tiltseries']))
-					f.write('\nBeginning Refinement Iteration #%s, Round #%s of Tilt-Series #%s\n' % (n+1,r,self.params['tiltseries']))
+					apDisplay.printMsg("No Round parameters changed for Iteration #%s of Tilt-Series #%s (%s)\n" % (n+1,self.params['tiltseries'],self.params['runname']))
+					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s of Tilt-Series #%s (%s)\n" % (n+1,r,self.params['tiltseries'],self.params['runname']))
+					f.write("\nNo Round parameters changed for Iteration #%s of Tilt-Series #%s (%s)\n" % (n+1,self.params['tiltseries'],self.params['runname']))
+					f.write('\nBeginning Refinement Iteration #%s, Round #%s of Tilt-Series #%s (%s)\n' % (n+1,r,self.params['tiltseries'],self.params['runname']))
 				
 				#change parameters depending on switches
 				toggle=0
@@ -2141,11 +2187,11 @@ class ProTomo2Aligner(basicScript.BasicScript):
 							new_region_y=apProTomo2Aligner.nextLargestSize(int(region_x/sampling)+1)
 							shift+=1
 						if (min(new_region_x,new_region_y) == 20 and shift == 4):
-							apDisplay.printMsg("Refinement Iteration #%s for Tilt-Series #%s failed after resampling the search area %s time(s)." % (n+1, self.params['tiltseries'], retry-1))
+							apDisplay.printMsg("Refinement Iteration #%s for Tilt-Series #%s (%s) failed after resampling the search area %s time(s)." % (n+1, self.params['tiltseries'], self.params['runname'], retry-1))
 							apDisplay.printMsg("Window Size (x) was windowed down to %s" % (new_region_x*sampling))
 							apDisplay.printMsg("Window Size (y) was windowed down to %s" % (new_region_y*sampling))
 							apDisplay.printMsg("Put values less than these into the corresponding parameter boxes on the Protomo Refinement Appion webpage and try again.\n")
-							f.write('Refinement Iteration #%s for Tilt-Series #%s failed after resampling the search area %s time(s).\n' % (n+1, self.params['tiltseries'], retry-1))
+							f.write('Refinement Iteration #%s for Tilt-Series #%s (%s) failed after resampling the search area %s time(s).\n' % (n+1, self.params['tiltseries'], self.params['runname'], retry-1))
 							f.write('Window Size (x) was windowed down to %s\n' % (new_region_x*sampling))
 							f.write('Window Size (y) was windowed down to %s\n' % (new_region_y*sampling))
 							f.write('Put values less than these into the corresponding parameter boxes on the Protomo Refinement Appion webpage and try again.\n')
@@ -2198,8 +2244,17 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				apDisplay.printMsg("\033[43mCCMS(scale) = %s\033[0m for Iteration #%s of Tilt-Series #%s." % (round(CCMS_scale,5), n+1, self.params['tiltseries']))
 				f.write('CCMS(scale) = %s for Iteration #%s of Tilt-Series #%s.\n' % (round(CCMS_scale,5), n+1, self.params['tiltseries']))
 				
-				apDisplay.printMsg("\033[1mThe scaled sum of CCMS values is %s\033[0m for Iteration #%s of Tilt-Series #%s." % (round(CCMS_sum,5), n+1, self.params['tiltseries']))
-				f.write('The scaled sum of CCMS values is #%s for Tilt-Series #%s.\n' % (round(CCMS_sum,5), self.params['tiltseries']))
+				apDisplay.printMsg("\033[1mThe scaled sum of CCMS values is %s\033[0m for Iteration #%s of Tilt-Series #%s (%s)." % (round(CCMS_sum,5), n+1, self.params['tiltseries'], self.params['sessionname']))
+				f.write('The scaled sum of CCMS values is #%s for iteration %s of Tilt-Series #%s.\n' % (round(CCMS_sum,5), n+1, self.params['tiltseries']))
+				
+				alignment_quality, alignment_quality2, alignment_quality_confidence, alignment_stability = apProTomo2Aligner.alignmentAccuracyAndStabilityReport(CCMS_sum, rawimagecount, name, n)
+				
+				apDisplay.printMsg("Alignment quality for Iteration #%s of Tilt-Series #%s (%s): %s (confidence: %f%%)" % (n+1, self.params['tiltseries'], self.params['sessionname'], alignment_quality, round(alignment_quality_confidence,2)))
+				f.write('Alignment quality for Iteration #%s of Tilt-Series #%s (%s): %s (confidence: %f%%)' % (n+1, self.params['tiltseries'], self.params['sessionname'], alignment_quality2, alignment_quality_confidence))
+				
+				if n+1 > 3: #Check alignment stability only after at least 3 iterations have gone through
+					apDisplay.printMsg("Tilt model stability (with respect to the last 3 iterations) at Iteration #%s of Tilt-Series #%s (%s): %s" % (n+1, self.params['tiltseries'], self.params['sessionname'], alignment_stability))
+					f.write('Tilt model stability (with respect to the last 3 iterations) at Iteration #%s of Tilt-Series #%s (%s): %s' % (n+1, self.params['tiltseries'], self.params['sessionname'], alignment_stability))
 				
 				if self.params['parallel'] != "True":
 					apDisplay.printMsg("Creating Depiction Videos for Iteration #%s..." % (n+1))
@@ -2213,6 +2268,10 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				
 				# Make correlation peak videos for depiction
 				self.params['corr_peak_gif']='media/correlations/'+seriesname+ittt+'_cor.gif';self.params['corr_peak_ogv']='media/correlations/'+seriesname+ittt+'_cor.ogv';self.params['corr_peak_mp4']='media/correlations/'+seriesname+ittt+'_cor.mp4';self.params['corr_peak_webm']='media/correlations/'+seriesname+ittt+'_cor.webm'
+				if os.path.exists(backup_tiltfilename_full): #Move last cor.img file to the current iteration filename
+					corimglist = glob.glob(os.path.join(self.params['protomo_outdir'], seriesname+'*_cor.img'))
+					corimglist.sort()
+					os.system("mv %s %s" % (corimglist[-1],os.path.join(self.params['protomo_outdir'], seriesname+ittt+'_cor.img')))
 				jobs.append(mp.Process(target=apProTomo2Aligner.makeCorrPeakVideos, args=(name, it, rundir, self.params['protomo_outdir'], self.params['video_type'], "Refinement")))
 				if self.params['parallel'] != "True":
 					[job.start() for job in jobs]
@@ -2229,7 +2288,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				
 				# Make refinement plots of tilt azimuth and theta
 				self.params['azimuth_gif']='media/angle_refinement/'+seriesname+'_azimuth.gif';self.params['theta_gif']='media/angle_refinement/'+seriesname+'_theta.gif';
-				jobs.append(mp.Process(target=apProTomo2Aligner.makeAngleRefinementPlots, args=(rundir, name,)))
+				jobs.append(mp.Process(target=apProTomo2Aligner.makeAngleRefinementPlots, args=(rundir, name, tiltfilename_full, self.params['azimuth_max_deviation'], self.params['azimuth_stability_check'])))
 				if self.params['parallel'] != "True":
 					[job.start() for job in jobs]
 					[p.join() for p in mp.active_children()]
@@ -2276,13 +2335,15 @@ class ProTomo2Aligner(basicScript.BasicScript):
 						series.setparam("map.lowpass.diameter", "{ %s %s }" % (new_lp_x, new_lp_y))
 						series.setparam("map.body", "%s" % (new_body))
 						
-						series.mapfile()
+						recon_filename="%s/%s%s_bck.img" % (self.params['protomo_outdir'], seriesname, itt)
+						series.mapfile(recon_filename)
 						
 						#Reset sampling values for next iteration
 						series.setparam("sampling",'%s' % self.params[s])
 						series.setparam("map.sampling",'%s' % self.params[s])
 					else:
-						series.mapfile()
+						recon_filename="%s/%s%s_bck.img" % (self.params['protomo_outdir'], seriesname, itt)
+						series.mapfile(recon_filename)
 					
 					rx='r%s_region_x' % r
 					ry='r%s_region_y' % r
@@ -2300,6 +2361,43 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				for job in jobs:
 					job.join()
 				
+				# Tilt azimuth stability check
+				if self.params['azimuth_stability_check'] == "True":
+					azimuth_stable, azimuth_deviation, initial_azimuth = apProTomo2Aligner.chechAzimuthStability(tiltfile, tiltfilename_full, self.params['azimuth_max_deviation'])
+					if azimuth_stable:
+						apDisplay.printMsg("The tilt azimuth after iteration #%s deviated from the initial tilt azimuth by %f, which is less than the maximum allowed deviation of %f." % (n+1, azimuth_deviation, self.params['azimuth_max_deviation']))
+						f.write('The tilt azimuth after iteration #%s deviated from the initial tilt azimuth by %f, which is less than the maximum allowed deviation of %f.' % (n+1, azimuth_deviation, self.params['azimuth_max_deviation']))
+					else:
+						apDisplay.printMsg("The tilt azimuth after iteration #%s deviated from the initial tilt azimuth by %f, which is greater than the maximum allowed deviation of %f." % (n+1, azimuth_deviation, self.params['azimuth_max_deviation']))
+						apDisplay.printMsg("Changing the tilt azimuth back to the initial tilt azimuth of %f for the next iteration." % initial_azimuth)
+						f.write('The tilt azimuth after iteration #%s deviated from the initial tilt azimuth by %f, which is greater than the maximum allowed deviation of %f.' % (n+1, azimuth_deviation, self.params['azimuth_max_deviation']))
+						f.write('Changing the tilt azimuth back to the initial tilt azimuth of %f for the next iteration.' % initial_azimuth)
+						os.system("rm %s" % (i3tfile))
+						if not os.path.exists(backup_tiltfilename_full):
+							os.system("cp %s %s" % (tiltfilename_full, backup_tiltfilename_full))
+						os.system("cp %s %s" % (tiltfile, tiltfilename_full))
+						apProTomo2Aligner.changeTiltAzimuth(tiltfilename_full, initial_azimuth)
+						del seriesparam, seriesgeom, series
+						seriesparam=protomo.param(param_out_full)
+						seriesgeom=protomo.geom(tiltfilename_full)
+						series=protomo.series(seriesparam,seriesgeom)
+						if current_round == "round1":
+							for val in round1:
+								series.setparam(val,round1[val])
+						elif current_round == "round2":
+							for val in round2:
+								series.setparam(val,round2[val])
+						elif current_round == "round3":
+							for val in round3:
+								series.setparam(val,round3[val])
+						elif current_round == "round4":
+							for val in round4:
+								series.setparam(val,round4[val])
+						elif current_round == "round5":
+							for val in round5:
+								series.setparam(val,round5[val])
+						os.system("cp %s %s" % (backup_tiltfilename_full, tiltfilename_full))
+				
 				if final_retry > 0:
 					apDisplay.printMsg("Refinement Iteration #%s finished after retrying %s time(s) due to the sampled search area being too small." % (n+1, final_retry))
 					apDisplay.printMsg("Window Size (x) was windowed down to %s" % (new_region_x*sampling))
@@ -2309,8 +2407,8 @@ class ProTomo2Aligner(basicScript.BasicScript):
 					f.write('Window Size (y) was windowed down to %s\n' % (new_region_y*sampling))
 				
 				if n == range(iters)[-1]:
-					apDisplay.printMsg("Finished Refinement for Tilt-Series #%s!\n" % self.params['tiltseries'])
-					f.write('Finished Refinement for Tilt-Series #%s!\n' % self.params['tiltseries'])
+					apDisplay.printMsg("Finished Refinement for Tilt-Series #%s (%s)!\n" % (self.params['tiltseries'], self.params['runname']))
+					f.write('Finished Refinement for Tilt-Series #%s (%s)!\n' % (self.params['tiltseries'], self.params['runname']))
 			
 			#Insert iteration information into the database
 			#if self.params['commit']=="True":
@@ -2322,14 +2420,14 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		os.system('rm -rf %s' % self.params['cachedir'])
 		
 		apProTomo2Aligner.printTips("Alignment")
-				
+		
 		time_end = time.strftime("%Yyr%mm%dd-%Hhr%Mm%Ss")
 		apDisplay.printMsg('Did everything blow up and now you\'re yelling at your computer screen?')
-		apDisplay.printMsg('If so, kindly email Alex at anoble@nysbc.org and include this log file.')
-		apDisplay.printMsg('If everything worked beautifully and you publish it, please use the appropriate citations listed on the Appion webpage! You can also print out all citations by typing: protomo2aligner.py --citations')
+		apDisplay.printMsg('If so, kindly email Alex at anoble@nysbc.org explaining the issue and include this log file.')
+		apDisplay.printMsg('If everything worked beautifully and you publish, please use the appropriate citations listed on the Appion webpage! You can also print out all citations by typing: protomo2aligner.py --citations')
 		f.write('Did everything blow up and now you\'re yelling at your computer screen?\n')
-		f.write('If so, kindly email Alex at anoble@nysbc.org and include this log file\n.')
-		f.write('If everything worked beautifully and you publish it, please use the appropriate citations listed on the Appion webpage! You can also print out all citations by typing: protomo2aligner.py --citations\n')
+		f.write('If so, kindly email Alex at anoble@nysbc.org explaining the issue and include this log file.\n')
+		f.write('If everything worked beautifully and you publish, please use the appropriate citations listed on the Appion webpage! You can also print out all citations by typing: protomo2aligner.py --citations\n')
 		print "\n"
 		apDisplay.printMsg("Closing log file %s/protomo2aligner_%s.log\n" % (rundir, time_start))
 		f.write("\nEnd time: %s" % time_end)

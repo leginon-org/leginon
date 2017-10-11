@@ -226,7 +226,7 @@ function createForm() {
 	?>
 <html>
 	<head>
-		<title><?=$title; ?> queue remover</title>
+		<title><?php $title; ?> queue remover</title>
 		<link rel="stylesheet" type="text/css" href="css/viewer.css"> 
 		<STYLE type="text/css">
 			 DIV.comment_section { text-align: justify; 
@@ -257,13 +257,13 @@ function createForm() {
 						<tr>
 							<td>total target list =
 							</td>
-							<td> <? echo count($imagetls); ?>
+							<td> <?php echo count($imagetls); ?>
 							</td>
 						</tr>
 						<tr>
 							<td>total dequeued image target list =
 							</td>
-							<td> <? echo count($dqimagetls); ?>
+							<td> <?php echo count($dqimagetls); ?>
 							</td>
 						</tr>
 					</table>
@@ -280,21 +280,21 @@ function createForm() {
 		<table width=100% class='tableborder' cellspacing='1' cellpadding='2'>
 			<tr>
 				<td>
-	<?
+	<?php
 	if (count($aborting)>0) {
 		foreach ($aborting as $deq) {
 			$targetimage = $leginondata->getTargetListInfo($deq['REF|ImageTargetListData|list']);
 			if ($targetimage[0]['count']) {
 			echo $targetimage[0]['count'];
 			?></td><td> targets from 
-			</td><td><?
+			</td><td><?php
 			echo $targetimage[0]['filename'].".mrc";
 	?>
 				</td>
 			</tr>
 			<tr>
 				<td>
-	<?
+	<?php
 			}
 		}
 	} else {
@@ -307,7 +307,7 @@ function createForm() {
 	</td></tr></table>
 	</body>
 </html>
-<?
+<?php
 }
 
 function runQueueRemover() {

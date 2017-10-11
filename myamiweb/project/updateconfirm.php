@@ -87,13 +87,13 @@ foreach($map as $k=>$v) {
 project_header("Confirm $title");
 ?>
 
-<a href="<?=$_GET['ln'];?>">[ &laquo; back ]</a>
+<a href="<?php $_GET['ln'];?>">[ &laquo; back ]</a>
 <p>
 <font color=red>*</font>
 <font face="Arial, Helvetica, sans-serif" size="2">: required fields</font>
 </p>
 <link href="css/aform.css" rel="stylesheet" type="text/css" />
-<?
+<?php
 
 $form=new form();
 $form->setPrefix("c");

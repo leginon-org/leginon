@@ -5,7 +5,6 @@
  *	For terms of the license agreement
  *	see  http://leginon.org
  *
- *	Simple viewer to view a image using mrcmodule
  */
 
 require_once "inc/particledata.inc";
@@ -30,23 +29,27 @@ $outdir = $_GET['outdir'];
 processing_header("Protomo Alignment and Reconstruction Summary","Protomo Alignment Summary", $javascript);
 
 $html = "<h4>Protomo Tilt-Series Alignment Runs</h4>";
-$html .= "rundir: $outdir";
-$html .= "<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>";
-$html .= "<TR>";
-$display_keys = array ( '<center>runname</center>','<center>tilt-series #</center>','<center>last alignment<br>type</center>','<center># of refinement<br>iterations</center>','<center>best iteration<br>(all, bin 1 or 2)</center>','<center>alignment quality<br>(all, bin 1 or 2)</center>','<center>tilt azimuth<br>(all, bin 1 or 2)</center>','<center>tilt angle<br>range</center>','<center>recorded<br>defocus</center>','<center>dose<br>compensated</center>','<center># of reconstructions<br>available</center>','<center>suggested<br>next steps</center>','<center>summary<br>webpage</center>');
-foreach($display_keys as $key) {
-	$html .= "<td><span class='datafield0'>".$key."</span></TD> ";
-}
-$html .= "</TR>";
+
 $tiltseries_runs = glob("$outdir/*/series[0-9][0-9][0-9][0-9].tlt");
 
+$html .= "rundir: $outdir";
+if (count($tiltseries_runs) > 12) {
+$html .= "<br><br><b>To continue processing a tilt-series, <a href='runAppionLoop.php?expId=$expId&form=Protomo2CoarseAlignForm' target='_blank'>Click Here</a>, change the runname & output directory, and select the appropriate tilt-series, then continue on to the desired processing step.<br>Estimate defocus or dose compensate existing tilt-series by continuing to Batch or to More Tilt-Series Processing.</b>";
+}
+$html .= "<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>";
+$html .= "<TR>";
+$display_keys = array ( 'runname,<br>run date','tilt-series<br>#','last alignment<br>type','# of<br>iterations','best iteration<br>(all, bin 1 or 2)','alignment quality<br>(all, bin 1 or 2)','tilt azimuth<br>(all, bin 1 or 2)','tilt angle<br>range','recorded<br>defocus (Å)','dose<br>compensated','# of recons<br>available','suggested<br>next steps','preview of best/<br>coarse iteration','additional<br>information','summary<br>webpage');
+foreach($display_keys as $key) {
+	$html .= "<td><span class='datafield0'><center>".$key."</center></span></TD> ";
+}
+$html .= "</TR>";
 $counter = 0;
 foreach($tiltseries_runs as $tiltseries_run) {
 	//Counter for repeating header
 	$counter++;
-	if ($counter % 15 == 0) {
+	if ($counter % 12 == 0) {
 		foreach($display_keys as $key) {
-			$html .= "<td><span class='datafield0'>".$key."</span> </TD> ";
+			$html .= "<td><span class='datafield0'><center>".$key."</center></span></TD>";
 		}
 		$html .= "</TR>";
 	}
@@ -55,8 +58,23 @@ foreach($tiltseries_runs as $tiltseries_run) {
 	$tiltseriesnumber = (int)substr($tiltseriesnumber[0], 6, 10);
 	$refine_iterations = glob("$outdir/$path_chunks[1]/series*.tlt");
 	$coarse_iterations = glob("$outdir/$path_chunks[1]/coarse_series*.tlt");
-	$html .= "<td>$path_chunks[1]</TD>";
-	$html .= "<td>$tiltseriesnumber</TD>";
+	$protomo2aligner_logs = glob("$outdir/$path_chunks[1]/protomo2aligner_*.log");
+	$protomo2aligner_logs = array_reverse($protomo2aligner_logs);
+	$protomo2aligner_logs = array_reverse(explode('/',$protomo2aligner_logs[0]));
+	$protomo2aligner_logs = explode('_',$protomo2aligner_logs[0]);
+	$protomo2aligner_logs = explode('.',$protomo2aligner_logs[1]);
+	$protomo2aligner_logs = explode('-',$protomo2aligner_logs[0]);
+	$date_yr = explode('yr',$protomo2aligner_logs[0]);
+	$date_m = explode('m',$date_yr[1]);
+	$date_d = explode('d',$date_m[1]);
+	$time_hr = explode('hr',$protomo2aligner_logs[1]);
+	$time_m = explode('m',$time_hr[1]);
+	if ($protomo2aligner_logs[0] != '') {
+		$html .= "<td><center><b>$path_chunks[1]</b><br>$date_m[0]-$date_d[0]-$date_yr[0]<br>@ $time_hr[0]:$time_m[0]</center></TD>";
+	}else{
+		$html .= "<td><center><b>$path_chunks[1]</b></center></TD>";
+	}
+	$html .= "<td><center>$tiltseriesnumber</center></TD>";
 	
 	//Quality lookup and tilt azimuth lookup
 	if (count($refine_iterations) > 1){
@@ -65,46 +83,106 @@ foreach($tiltseries_runs as $tiltseries_run) {
 		$quality_assessment = file($quality_assessment_file[0]);
 		$quality_assessment_best = $quality_assessment[0];
 		$quality_assessment_best = array_reverse(explode(' ',$quality_assessment_best));
-		$html .= "<td>Refinement</TD>";
-		$html .= "<td>$iterations</TD>";
+		$html .= "<td><center>Refinement</center></TD>";
+		$html .= "<td><center>$iterations</center></TD>";
 		$best_iteration = glob("$outdir/$path_chunks[1]/best.*");
 		$best_bin1or2_iteration = glob("$outdir/$path_chunks[1]/best_bin1or2.*");
 		if (count($best_iteration) > 0) {
 			$best_iteration = array_reverse(explode('/',$best_iteration[0]));
 			$best_iteration = explode('.',$best_iteration[0]);
-			//$html .= '<td><a href="protomo2RefineIterationSummary.php?iter='.$best_iteration[1].'&outdir='.$outdir.'&runname='.$path_chunks[1].'&tiltseries='.$tiltseriesnumber.'" target="_blank">'.$best_iteration[1].'</a></TD>';
 		}
 		if (count($best_bin1or2_iteration) > 0) {
 			$best_bin1or2_iteration = array_reverse(explode('/',$best_bin1or2_iteration[0]));
 			$best_bin1or2_iteration = explode('.',$best_bin1or2_iteration[0]);
-			//$html .= '<td><a href="protomo2RefineIterationSummary.php?iter='.$best_bin1or2_iteration[1].'&outdir='.$outdir.'&runname='.$path_chunks[1].'&tiltseries='.$tiltseriesnumber.'" target="_blank">'.$best_bin1or2_iteration[1].'</a></TD>';
 		}
 		if ((count($best_iteration) > 0) and (count($best_bin1or2_iteration) > 0)) {
-			$html .= '<td><a href="protomo2RefineIterationSummary.php?iter='.$best_iteration[1].'&outdir='.$outdir.'&runname='.$path_chunks[1].'&tiltseries='.$tiltseriesnumber.'" target="_blank">'.$best_iteration[1].'</a>, ';
-			$html .= '<a href="protomo2RefineIterationSummary.php?iter='.$best_bin1or2_iteration[1].'&outdir='.$outdir.'&runname='.$path_chunks[1].'&tiltseries='.$tiltseriesnumber.'" target="_blank">'.$best_bin1or2_iteration[1].'</a></TD>';
+			$html .= '<td><a href="protomo2RefineIterationSummary.php?iter='.$best_iteration[1].'&outdir='.$outdir.'&runname='.$path_chunks[1].'&tiltseries='.$tiltseriesnumber.'" target="_blank"><center>'.$best_iteration[1].'</a>, ';
+			$html .= '<a href="protomo2RefineIterationSummary.php?iter='.$best_bin1or2_iteration[1].'&outdir='.$outdir.'&runname='.$path_chunks[1].'&tiltseries='.$tiltseriesnumber.'" target="_blank">'.$best_bin1or2_iteration[1].'</center></a></TD>';
 		} elseif (count($best_iteration) > 0) {
-			$html .= '<td><a href="protomo2RefineIterationSummary.php?iter='.$best_iteration[1].'&outdir='.$outdir.'&runname='.$path_chunks[1].'&tiltseries='.$tiltseriesnumber.'" target="_blank">'.$best_iteration[1].'</a></TD>';
+			$html .= '<td><a href="protomo2RefineIterationSummary.php?iter='.$best_iteration[1].'&outdir='.$outdir.'&runname='.$path_chunks[1].'&tiltseries='.$tiltseriesnumber.'" target="_blank"><center>'.$best_iteration[1].'</center></a></TD>';
 		} else {
-			$html .= "<td>--</TD>";
+			$html .= "<td><center>--</center></TD>";
 		}
-		if ((float)($quality_assessment_best[0]) > 0){
-			if ($quality_assessment_best[0] < 0.005){
-				$html .= "<td><font color='green'><b><i>Perfection!</i></b></font></TD>";
-			} elseif ($quality_assessment_best[0] < 0.0075){
-				$html .= "<td><font color='green'><b>Excellent</b></font></TD>";
-			} elseif ($quality_assessment_best[0] < 0.0125){
-				$html .= "<td><font color='green'>Very Good</font></TD>";
-			} elseif ($quality_assessment_best[0] < 0.02){
-				$html .= "<td><font color='green'>Good</font></TD>";
-			} elseif ($quality_assessment_best[0] < 0.03){
-				$html .= "<td>Okay</TD>";
-			} else {
-				$html .= "<td><font color='red'>Bad</font></TD>";
+		
+		if (count($best_iteration) > 0) {
+			foreach($quality_assessment as $key) {
+				$iteration = explode(' ',$key);
+				$iteration = $iteration[0];
+				if ((int)$iteration == (int)$best_iteration[1]) {
+					$CCMS = array_reverse(explode(' ',$key));
+					$CCMS = (float)$CCMS[0];
+					if ($CCMS < 0.0025){
+						$best_quality = "<font color='green'><b><i>Suspiciously<br>Perfect...</i></b><br></font>";
+					}elseif ($CCMS < 0.005){
+						$best_quality = "<font color='green'><b><i>Perfection!</i></b><br></font>";
+					} elseif ($CCMS < 0.0075){
+						$best_quality = "<font color='green'><b>Excellent</b><br></font>";
+					} elseif ($CCMS < 0.0125){
+						$best_quality = "<font color='green'>Very Good<br></font>";
+					} elseif ($CCMS < 0.02){
+						$best_quality = "<font color='green'>Good<br></font>";
+					} elseif ($CCMS < 0.03){
+						$best_quality = "Okay<br>";
+					} else {
+						if (count($refine_iterations) == 2) {
+							$best_quality = "<font color='red'>Bad</font><br>(1st iteration is<br>always bad)<br>";
+						}else{
+							$best_quality = "<font color='red'>Bad<br></font>";
+						}
+					}
+				}
 			}
 		} else {
-			$html .= "<td>--</TD>";
+			$best_quality = '';
 		}
+		if (count($best_bin1or2_iteration) > 0) {
+			foreach($quality_assessment as $key) {
+				$iteration = explode(' ',$key);
+				$iteration = $iteration[0];
+				if ((int)$iteration == (int)$best_bin1or2_iteration[1]) {
+					$CCMS = array_reverse(explode(' ',$key));
+					$CCMS = (float)$CCMS[0];
+					if ($CCMS < 0.0025){
+						$best_bin1or2_quality = "<font color='green'><b><i>Suspiciously<br>Perfect...</i></b></font>";
+					}elseif ($CCMS < 0.005){
+						$best_bin1or2_quality = "<font color='green'><b><i>Perfection!</i></b></font>";
+					} elseif ($CCMS < 0.0075){
+						$best_bin1or2_quality = "<font color='green'><b>Excellent</b></font>";
+					} elseif ($CCMS < 0.0125){
+						$best_bin1or2_quality = "<font color='green'>Very Good</font>";
+					} elseif ($CCMS < 0.02){
+						$best_bin1or2_quality = "<font color='green'>Good</font>";
+					} elseif ($CCMS < 0.03){
+						$best_bin1or2_quality = "Okay";
+					} else {
+						if (count($refine_iterations) == 2) {
+							$best_bin1or2_quality = "<font color='red'>Bad</font><br>(1st iteration is<br>always bad)";
+						}else{
+							$best_bin1or2_quality = "<font color='red'>Bad</font>";
+						}
+					}
+				}
+			}
+		} else {
+			$best_bin1or2_quality = '';
+		}
+		if (($best_quality == '') and ($best_bin1or2_quality == '')) {
+			$html .= "<td><center>--</center></TD>";
+		}elseif (($best_quality == '') and ($best_bin1or2_quality !== '')) {
+			$html .= "<td><center>--<br>$best_bin1or2_quality</center></TD>";
+		}elseif (($best_quality !== '') and ($best_bin1or2_quality == '')) {
+			$html .= "<td><center>$best_quality</center></TD>";
+		}elseif (($best_quality !== '') and ($best_bin1or2_quality !== '')) {
+			if ($best_bin1or2_iteration[1] == $best_iteration[1]) {
+				$html .= "<td><center>$best_bin1or2_quality</center></TD>";
+			}else{
+				$html .= "<td><center>$best_quality$best_bin1or2_quality</center></TD>";
+			}
+		}
+		
+		//Tilt angle range too
 		$best_tlt_file = "$outdir/$path_chunks[1]/series".sprintf('%04d',$tiltseriesnumber).sprintf('%03d',$best_iteration[1]-1).".tlt";
+		$best_bin1or2_tlt_file = "$outdir/$path_chunks[1]/series".sprintf('%04d',$tiltseriesnumber).sprintf('%03d',$best_bin1or2_iteration[1]-1).".tlt";
 		$tlt_file = "$outdir/$path_chunks[1]/series".sprintf('%04d',$tiltseriesnumber).".tlt";
 		if (file_exists($best_tlt_file)) {
 			$best_tlt_file = file($best_tlt_file);
@@ -113,13 +191,32 @@ foreach($tiltseries_runs as $tiltseries_run) {
 					$tilt_azimuth = array_reverse(explode(' ',trim($key)));
 				}
 			}
-			$html .= "<td>$tilt_azimuth[0]</TD>";
+			if (file_exists($best_bin1or2_tlt_file) and ($best_iteration[1] !== $best_bin1or2_iteration[1])) {
+				$best_bin1or2_tlt_file = file($best_bin1or2_tlt_file);
+				foreach($best_bin1or2_tlt_file as $key) {
+					if (strpos($key, 'AZIMUTH') !== false) {
+						$tilt_azimuth2 = array_reverse(explode(' ',trim($key)));
+					}
+				}
+				$html .= "<td><center>$tilt_azimuth[0],<br>$tilt_azimuth2[0]</center></TD>";
+			}else{
+				$html .= "<td><center>$tilt_azimuth[0]</center></TD>";
+			}
 			$i=1;
 			foreach($best_tlt_file as $key) {
 				if (strpos($key, 'TILT ANGLE') !== false) {
-					if ($i == 1) {
+					if ($i == 1) {   //First image in the .tlt file
 						$tilt_min = explode(' ',$key);
-						$tilt_min = round($tilt_min[12]);
+						$z=0;
+						foreach($tilt_min as $key2) {
+							if ($tilt_min[$z] == 'ANGLE') {
+								$tilt_min_location = $z+2;
+								if (is_float(floatval($tilt_min[$tilt_min_location]))) {}
+								else{$tilt_min_location = $z+3;}
+								$tilt_min = round($tilt_min[$tilt_min_location]);
+							}
+							$z++;
+						}
 					}
 					$i++;
 				}
@@ -141,16 +238,42 @@ foreach($tiltseries_runs as $tiltseries_run) {
 					$tilt_azimuth = array_reverse(explode(' ',trim($key)));
 				}
 			}
-			$html .= "<td>$tilt_azimuth[0]</TD>";
+			$html .= "<td><center>$tilt_azimuth[0]</center></TD>";
+			$i=1;
+			foreach($tlt_file as $key) {
+				if (strpos($key, 'TILT ANGLE') !== false) {
+					if ($i == 1) {
+						$tilt_min = explode(' ',$key);
+						$tilt_min = round($tilt_min[12]);
+					}
+					$i++;
+				}
+			}
+			$j=1;
+			foreach($tlt_file as $key) {
+				if (strpos($key, 'TILT ANGLE') !== false) {
+					if ($i-1 == $j) {
+						$tilt_max = explode(' ',$key);
+						$tilt_max = round($tilt_max[12]);
+					}
+					$j++;
+				}
+			}
 		} else {
-			$html .= "<td>--</TD>";
+			$html .= "<td><center>--</center></TD>";
+			$tilt_min = 0;
+			$tilt_max = 0;
 		}
-		$html .= "<td><center>[$tilt_min:$tilt_max]</center></TD>";
+		if (($tilt_min == 0) and ($tilt_max == 0)) {
+			$html .= "<td><center>--</center></TD>";
+		}else {
+			$html .= "<td><center>[$tilt_min:$tilt_max]</center></TD>";
+		}
 	} elseif (count($coarse_iterations) > 0){
-		$html .= "<td>Coarse</TD>";
-		$html .= "<td>--</TD>";
-		$html .= "<td>--</TD>";
-		$html .= "<td>--</TD>";
+		$html .= "<td><center>Coarse</center></TD>";
+		$html .= "<td><center>--</center></TD>";
+		$html .= "<td><center>--</center></TD>";
+		$html .= "<td><center>--</center></TD>";
 		$tlt_file = "$outdir/$path_chunks[1]/series".sprintf('%04d',$tiltseriesnumber).".tlt";
 		if (file_exists($tlt_file)) {
 			$tlt_file = file($tlt_file);
@@ -159,35 +282,47 @@ foreach($tiltseries_runs as $tiltseries_run) {
 					$tilt_azimuth = array_reverse(explode(' ',trim($key)));
 				}
 			}
-			$html .= "<td>$tilt_azimuth[0]</TD>";
+			$html .= "<td><center>$tilt_azimuth[0]</center></TD>";
 		} else {
-			$html .= "<td>--</TD>";
+			$html .= "<td><center>--</center></TD>";
 		}
-		$i=1;
-		foreach($tlt_file as $key) {
-			if (strpos($key, 'TILT ANGLE') !== false) {
-				if ($i == 1) {
-					$tilt_min = explode(' ',$key);
-					$tilt_min = round($tilt_min[12]);
+		$tlt_file = "$outdir/$path_chunks[1]/series".sprintf('%04d',$tiltseriesnumber).".tlt";
+		if (file_exists($tlt_file)) {
+			$tlt_file = file($tlt_file);
+			$i=1;
+			foreach($tlt_file as $key) {
+				if (strpos($key, 'TILT ANGLE') !== false) {
+					if ($i == 1) {
+						$tilt_min = explode(' ',$key);
+						$tilt_min = round($tilt_min[12]);
+					}
+					$i++;
 				}
-				$i++;
 			}
+			$j=1;
+			foreach($tlt_file as $key) {
+				if (strpos($key, 'TILT ANGLE') !== false) {
+					if ($i-1 == $j) {
+						$tilt_max = explode(' ',$key);
+						$tilt_max = round($tilt_max[12]);
+					}
+					$j++;
+				}
+			}
+		} else {
+			$tilt_min = 0;
+			$tilt_max = 0;
 		}
-		$j=1;
-		foreach($tlt_file as $key) {
-			if (strpos($key, 'TILT ANGLE') !== false) {
-				if ($i-1 == $j) {
-					$tilt_max = explode(' ',$key);
-					$tilt_max = round($tilt_max[12]);
-				}
-				$j++;
-			}
+		if (($tilt_min == 0) and ($tilt_max == 0)) {
+			$html .= "<td><center>--</center></TD>";
+		}else {
+			$html .= "<td><center>[$tilt_min:$tilt_max]</center></TD>";
 		}
 	} else {
-		$html .= "<td>None</TD>";
-		$html .= "<td>--</TD>";
-		$html .= "<td>--</TD>";
-		$html .= "<td>--</TD>";
+		$html .= "<td><center>None</center></TD>";
+		$html .= "<td><center>--</center></TD>";
+		$html .= "<td><center>--</center></TD>";
+		$html .= "<td><center>--</center></TD>";
 		$tlt_file = "$outdir/$path_chunks[1]/series".sprintf('%04d',$tiltseriesnumber).".tlt";
 		if (file_exists($tlt_file)) {
 			$tlt_file = file($tlt_file);
@@ -196,14 +331,13 @@ foreach($tiltseries_runs as $tiltseries_run) {
 					$tilt_azimuth = array_reverse(explode(' ',trim($key)));
 				}
 			}
-			$html .= "<td>$tilt_azimuth[0]</TD>";
+			$html .= "<td><center>$tilt_azimuth[0]</center></TD>";
+			$html .= "<td><center>--</center></TD>";
 		} else {
-			$html .= "<td>--</TD>";
+			$html .= "<td><center>--</center></TD>";
+			$html .= "<td><center>--</center></TD>";
 		}
 	}
-	
-	//Tilt angle range
-	
 	
 	//Defocus record check
 	$defocus_file = glob("$outdir/$path_chunks[1]/defocus_estimation/defocus_[0-9]*");
@@ -211,54 +345,117 @@ foreach($tiltseries_runs as $tiltseries_run) {
 		$defocus_file = array_reverse(explode('/',$defocus_file[0]));
 		$defocus = explode('_',$defocus_file[0]);
 		$defocus = (float)$defocus[1];
-		$html .= "<td>$defocus</TD>";
-		$defocus_suggestion = '';
+		$html .= "<td><center>$defocus</center></TD>";
+		$defocus_suggestion = "<a href='runAppionLoop.php?expId=$expId&form=Protomo2TomoCTFEstimate&outdir=$outdir&runname=$path_chunks[1]' target='_blank'>Refine defocus</a>,<br>";
 	} else {
-		$html .= "<td>--</TD>";
-		$defocus_suggestion = 'Estimate defocus,<br>';
+		$html .= "<td><center>--</center></TD>";
+		$defocus_suggestion = "<a href='runAppionLoop.php?expId=$expId&form=Protomo2TomoCTFEstimate&outdir=$outdir&runname=$path_chunks[1]' target='_blank'>Estimate defocus</a>,<br>";
 	}
 	
 	//Dose compensation check
 	$dose_comp_file = glob("$outdir/$path_chunks[1]/raw/dose_comp_*");
 	if (count($dose_comp_file) > 0){
-		$html .= "<td>Yes</TD>";
+		$dose_comp_file = $dose_comp_file[0];
+		$dose_comp_file = array_reverse(explode('/',$dose_comp_file));
+		$dose_comp_file = $dose_comp_file[0];
+		$dose_comp_file = explode('_',$dose_comp_file);
+		$dose_a = explode('a',$dose_comp_file[2]);
+		$dose_b = explode('b',$dose_comp_file[3]);
+		$dose_c = explode('c',$dose_comp_file[4]);
+		if (((float)$dose_a[1] == 0.245) and ((float)$dose_b[1] == -1.8) and ((float)$dose_c[1] == 12.)) {
+			$dose_comp_type = "(Light)";
+		} elseif (((float)$dose_a[1] == 0.245) and ((float)$dose_b[1] == -1.665) and ((float)$dose_c[1] == 2.81)) {
+			$dose_comp_type = "(Moderate)";
+		} elseif (((float)$dose_a[1] == 0.245) and ((float)$dose_b[1] == -1.4) and ((float)$dose_c[1] == 2.0)) {
+			$dose_comp_type = "(Heavy)";
+		} else {
+			$dose_comp_type = "(Custom)";
+		}
+		$html .= "<td><center>Yes<br>$dose_comp_type</center></TD>";
 		$dose_suggestion = '';
 	} else {
-		$html .= "<td>No</TD>";
+		$html .= "<td><center>No</center></TD>";
 		$dose_suggestion = ',<br>Dose compensate';
 	}
 	
 	//Number of reconstructions available
 	$recon_files = glob("$outdir/$path_chunks[1]/recons_*/*.mrc",GLOB_BRACE);
 	$recon_number = count($recon_files);
-	$html .= "<td>$recon_number</TD>";
+	$html .= "<td><center>$recon_number</center></TD>";
 	
 	//Suggested next steps
 	$suggestion = '';
 	if (count($refine_iterations) > 1){
 		if ((float)($quality_assessment_best[0]) > 0){
 			if ($quality_assessment_best[0] < 0.0125){
-				$suggestion .= '<center>'.$defocus_suggestion.'CTF correct'.$dose_suggestion.',<br>Reconstruct,<br>SPT/Segment,<br>Publish! (and cite)</center>';
+				#$suggestion .= '<center>'.$defocus_suggestion.'CTF correct'.$dose_suggestion.',<br><a href="runAppionLoop.php?expId='.$expId.'&form=Protomo2ReconstructionForm&rundir='.$outdir.'&runname='.$path_chunks[1].'&iter='.$best_bin1or2_iteration[1].'&tiltseries='.$tiltseriesnumber.'" target="_blank"><b>Reconstruct</b></a>,<br>SPT/Segment,<br>Publish! (and <a href="protomo2Citations.php" target="_blank">cite</a>)';
+				$suggestion .= '<center>'.$defocus_suggestion.'CTF correct'.$dose_suggestion.',<br>Reconstruct,<br>SPT/Segment,<br>Publish! (and <a href="protomo2Citations.php" target="_blank">cite</a>)';
 			} elseif ($quality_assessment_best[0] < 0.02){
-				$suggestion .= '<center>Optimize alignment'.$dose_suggestion.'</center>';
+				$suggestion .= '<center>'.$defocus_suggestion.'Optimize alignment'.$dose_suggestion.'</center>';
 			} else {
-				$suggestion .= '<center>Check/Fix tilt-series,<br>Optimize alignment'.$dose_suggestion.'</center>';
+				$suggestion .= '<center>'.$defocus_suggestion.'Check/Fix tilt-series,<br>Optimize alignment'.$dose_suggestion.'</center>';
 			}
 		} else {
-			$suggestion .= '<center>Check/Fix tilt-series,<br>Optimize alignment'.$dose_suggestion.'</center>';
+			$suggestion .= '<center>'.$defocus_suggestion.'Check/Fix tilt-series,<br>Optimize alignment'.$dose_suggestion.'</center>';
 		}
 	} elseif (count($coarse_iterations) > 0){
-		$suggestion .= '<center>Full refinement'.$dose_suggestion.'</center>';
+		$suggestion .= '<center>'.$defocus_suggestion.'Check/Fix tilt-series,<br>Full refinement'.$dose_suggestion.'</center>';
 	} else {
-		$suggestion .= '<center>Coarse/Manual<br>alignment,<br>Full refinement'.$dose_suggestion.'</center>';
+		$suggestion .= '<center>'.$defocus_suggestion.'Coarse/Manual<br>alignment,<br>Full refinement'.$dose_suggestion.'</center>';
 	}
 	$html .= "<td>$suggestion</TD>";
 	
+	//Tilt-series preview
+	if (count($refine_iterations) > 1){
+		$tilt_gif_files = glob("$outdir/$path_chunks[1]/media/tiltseries/s*.gif");
+		$tilt_vid_files = glob("$outdir/$path_chunks[1]/media/tiltseries/series".sprintf('%04d',$tiltseriesnumber).sprintf('%03d',$best_iteration[1]-1).".{mp4,ogv,webm}",GLOB_BRACE);
+		$tilt_gif = "loadimg.php?rawgif=1&filename=".$tilt_gif_files[$best_iteration[1]-1];
+		$tilt_mp4 = "loadvid.php?filename=".$tilt_vid_files[0];
+		$tilt_ogv = "loadvid.php?filename=".$tilt_vid_files[1];
+		$tilt_webm = "loadvid.php?filename=".$tilt_vid_files[2];
+		$html .= '<td><center><video id="tiltVideos" width="85" controls autoplay loop>
+					  <source src="'.$tilt_mp4.'" type="video/mp4" loop>'.'<br />
+					  <source src="'.$tilt_webm.'" type="video/webm" loop>'.'<br />
+					  <source src="'.$tilt_ogv.'" type="video/ogg" loop>'.'<br />
+					  HTML5 video is not supported by your browser.
+					  </video></center></TD>';
+	} elseif (count($coarse_iterations) > 0){
+		$tilt_gif_files = glob("$outdir/$path_chunks[1]/media/tiltseries/c*.gif");
+		$tilt_vid_files = glob("$outdir/$path_chunks[1]/media/tiltseries/c*.{mp4,ogv,webm}",GLOB_BRACE);
+		$tilt_gif = "loadimg.php?rawgif=1&filename=".$tilt_gif_files[$best_iteration[1]-1];
+		$tilt_mp4 = "loadvid.php?filename=".$tilt_vid_files[0];
+		$tilt_ogv = "loadvid.php?filename=".$tilt_vid_files[1];
+		$tilt_webm = "loadvid.php?filename=".$tilt_vid_files[2];
+		$html .= '<td><center><video id="tiltVideos" width="85" controls autoplay loop>
+					  <source src="'.$tilt_mp4.'" type="video/mp4" loop>'.'<br />
+					  <source src="'.$tilt_webm.'" type="video/webm" loop>'.'<br />
+					  <source src="'.$tilt_ogv.'" type="video/ogg" loop>'.'<br />
+					  HTML5 video is not supported by your browser.
+					  </video></center></TD>';
+	}else{
+		$html .= "<td><center>--</center></TD>";
+	}
+	
+	//Additional information
+	$protomo2aligner_logs = glob("$outdir/$path_chunks[1]/protomo2aligner_*.log");
+	$protomo2aligner_logs = array_reverse($protomo2aligner_logs);
+	if (file_exists($protomo2aligner_logs[0])) {
+		$html .= '<td><a href="protomo2Log.php?runname='.$path_chunks[1].'&tiltseries='.$tiltseriesnumber.'&log='.$protomo2aligner_logs[0].'" target="_blank"><center>Description<br>and Log</center></a></TD>';
+	}else{
+		$html .= "<td><center>--</center></TD>";
+	}
+	
 	//Summary webpages
 	if (count($refine_iterations) > 1){
-		$html .= '<td><a href="protomo2TiltSummary.php?outdir='.$outdir.'&runname='.$path_chunks[1].'&tiltseries='.$tiltseriesnumber.'" target="_blank"><center>Refinement<br>Summary</center></a></TD>';
+		if (count($coarse_iterations) > 0){
+			$html .= '<td><a href="protomo2CoarseTiltSummary.php?expId='.$_GET['expId'].'&outdir='.$outdir.'&runname='.$path_chunks[1].'&tiltseries='.$tiltseriesnumber.'" target="_blank"><center>Coarse<br>Summary</center></a>';
+			$html .= '<center>--------------</center>';
+			$html .= '<a href="protomo2TiltSummary.php?expId='.$_GET['expId'].'&outdir='.$outdir.'&runname='.$path_chunks[1].'&tiltseries='.$tiltseriesnumber.'" target="_blank"><center>Refinement<br>Summary</center></a></TD>';
+		}else{
+			$html .= '<td><a href="protomo2TiltSummary.php?expId='.$_GET['expId'].'&outdir='.$outdir.'&runname='.$path_chunks[1].'&tiltseries='.$tiltseriesnumber.'" target="_blank"><center>Refinement<br>Summary</center></a></TD>';
+		}
 	} elseif (count($coarse_iterations) > 0){
-		$html .= '<td><a href="protomo2CoarseTiltSummary.php?outdir='.$outdir.'&runname='.$path_chunks[1].'&tiltseries='.$tiltseriesnumber.'" target="_blank"><center>Coarse Alignment<br>Summary</center></a></TD>';
+		$html .= '<td><a href="protomo2CoarseTiltSummary.php?expId='.$_GET['expId'].'&outdir='.$outdir.'&runname='.$path_chunks[1].'&tiltseries='.$tiltseriesnumber.'" target="_blank"><center>Coarse<br>Alignment<br>Summary</center></a></TD>';
 	} else {
 		$html .= "<td><center>--</center></TD>";
 	}
@@ -267,7 +464,7 @@ foreach($tiltseries_runs as $tiltseries_run) {
 
 $html .= "</table>";
 $html .= "<br>";
-$html .= "<b>To continue processing a tilt-series, <a href='runAppionLoop.php?expId=$expId&form=Protomo2CoarseAlignForm' target='_blank'>click here</a>, change the runname & output directory, and select the appropriate tilt-series, then continue on to the desired processing step.</b>";
+$html .= "<b>To continue processing a tilt-series, <a href='runAppionLoop.php?expId=$expId&form=Protomo2CoarseAlignForm' target='_blank'>Click Here</a>, change the runname & output directory, and select the appropriate tilt-series, then continue on to the desired processing step.<br>Estimate defocus or dose compensate existing tilt-series by continuing to Batch or to More Tilt-Series Processing.</b>";
 echo $html;
 
 ?>

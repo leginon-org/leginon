@@ -59,6 +59,14 @@ class MotionCor2UCSFAlignStackLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop)
 		# use the first gpuids as gpuid in log
 		self.params['gpuid'] = int(self.params['gpuids'].split(',')[0].strip())
 
+	def isUseFrameAlignerFlat(self):
+		if self.dd.hasBadPixels() or not self.isAlign() or self.dd.hasNonZeroDark():
+			self.dd.setUseFrameAlignerFlat(False)
+			return False
+		else:
+			self.dd.setUseFrameAlignerFlat(True)
+			return True
+
 	def setFrameAligner(self):
 		self.framealigner = apDDFrameAligner.MotionCor2_UCSF()
 
@@ -82,7 +90,7 @@ class MotionCor2UCSFAlignStackLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop)
 		else:
 			self.has_dose = True
 #		self.temp_aligned_dw_sumpath = 'temp%s.gpuid_%d_sum_DW.mrc' % (self.hostname, self.params['gpuid'])
-		if not self.dd.hasBadPixels() and not self.params['force_cpu_flat']:
+		if self.isUseFrameAlignerFlat() and not self.params['force_cpu_flat']:
 			frame_flip, frame_rotate=self.dd.getImageFrameOrientation()
 			self.dd.setUseFrameAlignerYFlip(frame_flip)
 			self.dd.setUseFrameAlignerRotate(frame_rotate)
@@ -100,12 +108,12 @@ class MotionCor2UCSFAlignStackLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop)
 		'''
 		temp_aligned_sumpath = self.temp_aligned_sumpath
 		temp_aligned_dw_sumpath = self.temp_aligned_dw_sumpath
-		gain_flip, gain_rot = self.framealigner.getGainModification()
+		gain_flip, gain_rotate = self.framealigner.getGainModification()
 		if gain_flip:
 			apDisplay.printMsg('Flipping the aligned sum back')
 			self.imageYFlip(temp_aligned_sumpath)
 			self.imageYFlip(temp_aligned_dw_sumpath)
-		if gain_rot:
+		if gain_rotate:
 			apDisplay.printMsg('Rotating the aligned sum back')
 			self.imageRotate(temp_aligned_sumpath, gain_rotate)
 			self.imageRotate(temp_aligned_dw_sumpath, gain_rotate)

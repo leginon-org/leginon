@@ -1,5 +1,5 @@
-<form name="gridboxform" action="<?= $PHP_SELF ?>" method="POST">
-  <input type="hidden" name="gridboxId" value="<?=$gridboxId?>">
+<form name="gridboxform" action="<?php $PHP_SELF ?>" method="POST">
+  <input type="hidden" name="gridboxId" value="<?php $gridboxId?>">
   <table border="0" cellspacing="0" cellpadding="0" >
     <tr> 
       <td> 
@@ -7,7 +7,7 @@
           </font><font color=red>*</font>&nbsp;:&nbsp;</div>
       </td>
       <td><font face="Arial, Helvetica, sans-serif" size="2"> 
-        <input type="text" name="label" value="<?=$curgridbox[gridboxlabel]?>" class="field" size="40" tabindex="1" />
+        <input type="text" name="label" value="<?php $curgridbox[gridboxlabel]?>" class="field" size="40" tabindex="1" />
         </font></td>
     </tr>
     <tr> 
@@ -18,7 +18,7 @@
       <td>
 	<script>
 	imgs = new Array();
-	<?  foreach($boxtypes as $bt) {
+	<?php  foreach($boxtypes as $bt) {
 		$id = $bt[boxtypeId];
 		$imgId = 'img'.$id;
 		echo	$imgId.' = new Image();'."\n"
@@ -37,22 +37,22 @@
 	</script>
 	<font face="Arial, Helvetica, sans-serif" size="2"> 
 	<select name="boxtypeId" onChange="updateimg()">
-	<?  foreach($boxtypes as $bt) {
+	<?php  foreach($boxtypes as $bt) {
 		$sg = ($bt[boxtypeId]==$boxtypeId) ? 'selected' : '';
 		echo'<option value="'.$bt[boxtypeId].'" '.$sg.'>'.$bt[label];
 	}
 	?>
 	</select>
 	<br>
-	<? $curimg = (empty($curgridbox[image_tiny])) ? $boxtypes[0][image_tiny]
+	<?php $curimg = (empty($curgridbox[image_tiny])) ? $boxtypes[0][image_tiny]
 			: $curgridbox[image_tiny];?>
-	<img name="fr" src="img/<?=$curimg?>">
+	<img name="fr" src="img/<?php $curimg?>">
         </font>
       </td>
     </tr>
     <tr>
       <td >
-        <input type="submit" value="<?=$action?>" name="submit">
+        <input type="submit" value="<?php $action?>" name="submit">
       </td>
     </tr>
   </table>

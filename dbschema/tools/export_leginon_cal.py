@@ -126,6 +126,14 @@ class CalibrationJsonMaker(jsonfun.DataJsonMaker):
 				print 'Adding Eucentric Focus for %d mag and %s probe' % (mag, probe)
 				self.publish(results)
 
+	def printRotationCenterQueries(self, mags, probe):
+		# EucentricFocus in both micro and nano probe mode
+		for mag in mags:
+			results = leginondata.RotationCenterData(tem=self.tem, magnification=mag, probe=probe).query(results=1)
+			if results:
+				print 'Adding Rotation Center for %d mag and %s probe' % (mag, probe)
+				self.publish(results)
+
 	def run(self):
 		mags = self.getMags()
 		#print self.cam.dbid
@@ -136,6 +144,7 @@ class CalibrationJsonMaker(jsonfun.DataJsonMaker):
 		for p in (None,'micro','nano'):
 			self.printMatrixCalibrationQueries(mags,p)
 			self.printEucentricFocusQueries(mags,p)
+			self.printRotationCenterQueries(mags,p)
 		json_filename = 'cal_%s+%s+%s.json' % (self.tem['name'],self.cam['hostname'],self.cam['name'])
 		self.writeJsonFile(json_filename)
 

@@ -1,5 +1,5 @@
-<form name="gform" action="<?=$_SERVER['PHP_SELF']?>" method="POST">
-  <input type="hidden" name="gridId" value="<?=$gridId?>">
+<form name="gform" action="<?php $_SERVER['PHP_SELF']?>" method="POST">
+  <input type="hidden" name="gridId" value="<?php $gridId?>">
   <table border="0" cellspacing="0" cellpadding="1" >
     <tr> 
       <td> 
@@ -24,7 +24,7 @@
           </font><font color=red>*</font>&nbsp;:&nbsp;</div>
       </td>
       <td><font face="Arial, Helvetica, sans-serif" size="2"> 
-        <input class="field" type="text" name="label" value='<?=$curgrid['label']?>' size="40" tabindex="1" >
+        <input class="field" type="text" name="label" value='<?php $curgrid['label']?>' size="40" tabindex="1" >
         </font></td>
     </tr>
     <tr> 
@@ -34,7 +34,7 @@
       </td>
       <td>
 	<font face="Arial, Helvetica, sans-serif" size="2"> 
-	<input type="text" name="prepdate" value="<?=$f_prepdate;?>" size="40" maxlength="100" class="field" tabindex="2" >
+	<input type="text" name="prepdate" value="<?php $f_prepdate;?>" size="40" maxlength="100" class="field" tabindex="2" >
         </font>
       </td>
     </tr>
@@ -45,7 +45,7 @@
       </td>
       <td>
 	<font face="Arial, Helvetica, sans-serif" size="2"> 
-	<input type="text" name="specimen" value="<?=$curgrid['specimen']?>" size="40" maxlength="100" class="field" tabindex="3" >
+	<input type="text" name="specimen" value="<?php $curgrid['specimen']?>" size="40" maxlength="100" class="field" tabindex="3" >
         </font>
       </td>
     </tr>
@@ -56,7 +56,7 @@
       </td>
       <td>
 	<font face="Arial, Helvetica, sans-serif" size="2"> 
-	<input type="text" name="preparation" value="<?=$curgrid['preparation']?>" size="40" maxlength="100" class="field" tabindex="4" >
+	<input type="text" name="preparation" value="<?php $curgrid['preparation']?>" size="40" maxlength="100" class="field" tabindex="4" >
         </font>
       </td>
     </tr>
@@ -67,7 +67,7 @@
       </td>
       <td>
 	<font face="Arial, Helvetica, sans-serif" size="2"> 
-	<input type="text" name="number" value="<?=$curgrid['number']?>" size="40" maxlength="100" class="field" tabindex="5" >
+	<input type="text" name="number" value="<?php $curgrid['number']?>" size="40" maxlength="100" class="field" tabindex="5" >
         </font>
       </td>
     </tr>
@@ -78,16 +78,16 @@
       </td>
       <td>
 	<font face="Arial, Helvetica, sans-serif" size="2"> 
-	<textarea class="textarea" name="note" rows="7" cols="40" tabindex="6"><?=$note?></textarea>
+	<textarea class="textarea" name="note" rows="7" cols="40" tabindex="6"><?php $note?></textarea>
 	</font>
       </td>
     </tr>
     <tr>
       <td >
-        <input type="submit" value="<?=$action?>" name="submitgrid">
+        <input type="submit" value="<?php $action?>" name="submitgrid">
       </td>
     </tr>
-<? if ($gridId) { ?>
+<?php if ($gridId) { ?>
 		<tr>
 			<td colspan=2>
 				<hr/>
@@ -100,13 +100,13 @@
       </td>
       <td>
 	
-<?
+<?php
 $gridboxes = $gridboxdata->getGridBoxes();
 ?>
-<input type="hidden" name="gridId" value="<?=$gridId?>">
+<input type="hidden" name="gridId" value="<?php $gridId?>">
 <select size="1" name="currentgridbox" onchange="onChangeGridBoxType()">
 <option value="none">-- none --</option>
-<?
+<?php
 $selectedgridboxId = ($_POST['currentgridbox']) ? $_POST['currentgridbox'] : $boxId;
 foreach ($gridboxes as $gridbox) {
     $s = ($gridbox['gridboxId']==$selectedgridboxId) ? 'selected' : '';
@@ -116,10 +116,10 @@ foreach ($gridboxes as $gridbox) {
 </select>
       </td>
     </tr>
-<? } ?>
+<?php } ?>
   </table>
 </form>
-<?
+<?php
 
 if ($gridId) {
 	$gridboxId=$selectedgridboxId;
@@ -128,7 +128,7 @@ if ($gridId) {
 ?>
 		<h4> Click at the position where you want the grid to be stored </h4>
 		<p> No need to click on the update button </p>
-<?
+<?php
 	}
 	switch ($gridboxinfo['boxtypeId']) {
 		case '1':

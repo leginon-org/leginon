@@ -3,6 +3,7 @@ from leginon import singlefocuser, manualfocuschecker
 import gui.wx.Focuser
 from leginon import leginondata
 from leginon import node, targetwatcher
+import math
 
 class Focuser(singlefocuser.SingleFocuser):
 	panelclass = gui.wx.Focuser.Panel
@@ -66,6 +67,10 @@ class Focuser(singlefocuser.SingleFocuser):
 		The correction result are kept and at the end of target loop
 		an average of the correction is applied.
 		"""
+		if self.getIsResetTiltInList() and goodtargets:
+			# ? Do we need to reset on every target ?
+			self.logger.info('Tilting to %.2f degrees on first good target.' % (self.targetlist_reset_tilt*180.0/math.pi))
+			self.instrument.tem.setDirectStagePosition({'a':self.targetlist_reset_tilt})
 		# initialize
 		self.current_target = None
 		self.current_focus_sequence_step = 0
@@ -135,9 +140,7 @@ class Focuser(singlefocuser.SingleFocuser):
 						self.reportTargetStatus(adjustedtarget, 'aborted')
 
 					# pause check after a good target processing
-					if self.player.state() == 'pause':
-						self.setStatus('user input')
-					state = self.player.wait()
+					state =  self.pauseCheck('paused after processTargetData')
 					self.setStatus('processing')
 					if state in ('stop', 'stopqueue'):
 						self.logger.info('Aborted')

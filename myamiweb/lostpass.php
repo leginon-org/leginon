@@ -24,7 +24,7 @@ if (!empty($_POST)) {
 <center><h1><?php echo PROJECT_TITLE; ?></h1></center>
 <hr/>
 <fieldset>
-<form name='register' method='POST' action='<?=$_SERVER['PHP_SELF']?>'>
+<form name='register' method='POST' action='<?php $_SERVER['PHP_SELF']?>'>
 <table border="0" cellspacing="0" cellpadding="5">
 	<?php if(!empty($_POST)) { ?>
 	<tr>
@@ -49,7 +49,7 @@ if (!empty($_POST)) {
 </form>
 </fieldset>
 
-<?
+<?php
 login_footer();
 
 ?>

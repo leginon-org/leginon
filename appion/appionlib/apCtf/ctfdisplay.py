@@ -35,7 +35,7 @@ class CtfDisplay(object):
 	#====================
 	def __init__(self):
 		### global params that do NOT change with image
-		self.ringwidth = 1.0
+		self.default_ringwidth = 1.0
 		self.debug = False
 		self.outerAngstrom1D = 3.0
 		# plotlimit2DAngstrom trims the power spectrum generated
@@ -194,11 +194,14 @@ class CtfDisplay(object):
 
 		meandefocus = math.sqrt(self.defocus1*self.defocus2)
 		if meandefocus < 0.6e-6:
-			self.ringwidth = 3.0
+			self.ringwidth = self.default_ringwidth*1.5
 		elif meandefocus < 1.0e-6:
-			self.ringwidth = 2.0
+			self.ringwidth = self.default_ringwidth*1.1
 		elif meandefocus > 5.0e-6:
-			self.ringwidth = 0.5
+			self.ringwidth = self.default_ringwidth/2.
+		else:
+			#set at the top of the file
+			self.ringwidth = self.default_ringwidth 
 
 		if self.debug:
 			imagestat.printImageInfo(zdata2d)
@@ -215,14 +218,29 @@ class CtfDisplay(object):
 		if self.ellipratio is None:
 			return None
 		if self.debug is True:
-			apDisplay.printMsg("performing elliptical average, please wait")
+			apDisplay.printMsg("getting Ctf Extrema")
 		firstpeak = ctftools.getCtfExtrema(meandefocus, self.trimfreq*1e10, self.cs, self.volts,
 			self.ampcontrast, self.extra_phase_shift, numzeros=1, zerotype="peak")[0]
-		pixelrdata, rotdata = ctftools.ellipticalAverage(zdata2d, self.ellipratio, self.angle,
-			self.ringwidth, firstpeak, full=True)
-		if numpy.any(numpy.isnan(rotdata)):  #note does not work with 'is True'
-			print ("rotdata.min()=%.2f"%(rotdata.min()))
-			apDisplay.printError("Major Error (NaN) in elliptical average, rotdata")
+
+
+		if self.debug is True:
+			apDisplay.printMsg("performing equiphase average, please wait")
+		#pixelrdata, rotdata = ctftools.rotationalAverage(zdata2d,
+		#	self.ringwidth, firstpeak, full=True)
+		if meandefocus > 0.7e-6:
+			pixelrdata, rotdata = ctftools.ellipticalAverage(zdata2d, self.ellipratio, self.angle,
+				self.ringwidth, firstpeak, full=True)
+		else:
+			pixelsize =  self.trimapix*1e-10
+			pixelrdata, rotdata = genctf.equiPhaseAverage(zdata2d, self.ellipratio,
+				self.defocus1, self.defocus2, self.angle, pixelsize,
+				self.cs, self.volts, self.ampcontrast, self.extra_phase_shift,
+				self.ringwidth, firstpeak, full=True)
+
+		if pixelrdata is None:
+			apDisplay.printWarning("Ellipitcal Average failed, using Rotational Average")
+			pixelrdata, rotdata = ctftools.rotationalAverage(zdata2d,
+				self.ringwidth, firstpeak, full=True)
 		#tail filter
 		#changed to full=True in March 2016 for close to focus estimates and to push for more resolution
 		raddata = pixelrdata*self.trimfreq
@@ -244,6 +262,7 @@ class CtfDisplay(object):
 			valley = ctftools.getCtfExtrema(meandefocus, self.trimfreq*1e10, self.cs, self.volts,
 				self.ampcontrast, self.extra_phase_shift, numzeros=numzeros, zerotype="valley")
 			if valley[-1] < maxExtrema and numzeros < 1e5:
+				print "debug", valley[-1], "? < ?", maxExtrema, "++", numzeros
 				apDisplay.printMsg("far from focus images, increasing number of extrema (%d)"%(numzeros))
 				numzeros *= 2
 				continue
@@ -252,6 +271,7 @@ class CtfDisplay(object):
 			peak = ctftools.getCtfExtrema(meandefocus, self.trimfreq*1e10, self.cs, self.volts,
 				self.ampcontrast, self.extra_phase_shift, numzeros=numzeros, zerotype="peak")
 			if peak[-1] < maxExtrema  and numzeros < 1e5:
+				print "debug", peak[-1], "? < ?", maxExtrema, "++", numzeros
 				apDisplay.printMsg("far from focus images, increasing number of extrema (%d)"%(numzeros))
 				numzeros *= 2
 				continue
@@ -285,9 +305,10 @@ class CtfDisplay(object):
 		numPeaks = numpy.where(peak > maxExtrema, 0, 1).sum()
 		numValleys = numpy.where(valley > maxExtrema, 0, 1).sum()
 		minExtrema = min(numPeaks, numValleys)
-		extremaPerSection = 7
+		extremaPerSection = 2
 		if minExtrema < numSections*extremaPerSection:
-			numSections=int(math.floor(minExtrema/float(extremaPerSection)))+1
+			#this is for close-to-focus images
+			numSections = int(math.floor(minExtrema/float(extremaPerSection)))+1
 			apDisplay.printMsg("reducing the number of sections to: %d"%(numSections))
 		if self.debug is True:
 			print "Extrema available in image = %d peaks, %d valleys"%(numPeaks, numValleys)
@@ -328,7 +349,8 @@ class CtfDisplay(object):
 			apDisplay.printColor("Using %d sections for %d points (index %d to %d), %d points per section"
 				%(numSections, noiseNumPoints, firstvalleyindex, len(raddata), noiseNumPoints/numSections), "cyan")
 
-		numSections, noiseStartIndexes, noiseEndIndexes, mergeIndexes = self.createSections(numSections, fvi, raddatasq, pixelrdata, valley)
+		indexData = numpy.arange(0, len(raddata), dtype=numpy.float)
+		numSections, noiseStartIndexes, noiseEndIndexes, mergeIndexes = self.createSections(numSections, fvi, indexData, pixelrdata, valley)
 
 		if not numSections:
 			return None
@@ -679,6 +701,7 @@ class CtfDisplay(object):
 		## auto set max location
 		showres = (self.res80*self.res50*self.outerAngstrom1D)**(1/3.)
 		showres = (showres*self.res50*self.outerAngstrom1D)**(1/3.)
+		#showres = 3.5
 		maxloc = 1.0/showres
 		maxlocsq = maxloc**2
 
@@ -946,9 +969,10 @@ class CtfDisplay(object):
 		minloc = xdata.min()
 		if maxloc is None:
 			maxloc = xdata.max()
-		xstd = xdata.std()/2.
+		xstd = xdata.std()/4.
 		pyplot.xlim(xmin=minloc, xmax=maxloc)
 		locs, labels = pyplot.xticks()
+
 		if square is True:
 			if 'subplot2grid' in dir(pyplot):
 				units = r'$\AA^2$'
@@ -1064,6 +1088,8 @@ class CtfDisplay(object):
 		plotlimit2DAngstrom = (self.plotlimit2DAngstrom * self.res80 * self.res50 * maxValleyResolution)**(1/4.)
 		print (self.plotlimit2DAngstrom, self.res80, self.res50, maxValleyResolution)
 		plotlimit2DAngstrom = max(plotlimit2DAngstrom, maxImageResolution)
+		## override
+		#plotlimit2DAngstrom = 3.5
 		apDisplay.printMsg("Final resolution ring of 2D Plot: %.3f"%(plotlimit2DAngstrom))
 
 		origpowerspec = ctftools.trimPowerSpectraToOuterResolution(origpowerspec, plotlimit2DAngstrom, self.trimfreq)

@@ -1,4 +1,4 @@
-<?
+<?php
 require_once "inc/project.inc.php";
 require_once "inc/gridbox.inc.php";
 require_once "inc/grid.inc.php";
@@ -203,10 +203,10 @@ if (!$error && !$confirm && $_POST) {
 	echo "<p>";
 } else {
 ?>
-<form method="post" name="noteform" action="<?=$_SERVER['PHP_SELF']?>" enctype="multipart/form-data" >
-	<input type="hidden" name="redirect" value="<?=$redirect?>">
-	<input type="hidden" name="confirm" value="<?=$confirm?>">
-	<input type="hidden" name="tmpfile" value="<?=$newfile?>">
+<form method="post" name="noteform" action="<?php $_SERVER['PHP_SELF']?>" enctype="multipart/form-data" >
+	<input type="hidden" name="redirect" value="<?php $redirect?>">
+	<input type="hidden" name="confirm" value="<?php $confirm?>">
+	<input type="hidden" name="tmpfile" value="<?php $newfile?>">
 	<input type="hidden" name="MAX_FILE_SIZE" value="50000000">
   <table border="0" cellspacing="0" cellpadding="3" width=500>
     <tr> 
@@ -232,7 +232,7 @@ if (!$error && !$confirm && $_POST) {
           </font><font color=red>*</font>&nbsp;:&nbsp;</div>
       </td>
       <td><font face="Arial, Helvetica, sans-serif" size="2"> 
-        <input class="field" type="text" name="traylabel" value="<?=$traylabel?>" size="20" tabindex="2" />
+        <input class="field" type="text" name="traylabel" value="<?php $traylabel?>" size="20" tabindex="2" />
         </font></td>
     </tr>
     <tr> 
@@ -258,7 +258,7 @@ if (!$error && !$confirm && $_POST) {
 			<?php
 				$action=($confirm && !$error) ? "Import Anyway" : "Import";
 			?>
-				<input type="submit" name="add_grids" tabindex="4" value="<?=$action?>" />
+				<input type="submit" name="add_grids" tabindex="4" value="<?php $action?>" />
       </td> 
     </tr>
   </table>
@@ -274,9 +274,9 @@ if (!$error && !$confirm && $_POST) {
 i.e: <a class="header" href="grids.txt">grids.txt</a>
 <p>
 <pre>
-<?=file_get_contents("grids.txt");?>
+<?php file_get_contents("grids.txt");?>
 </pre>
-<?
+<?php
 }
 project_footer();
 ?>

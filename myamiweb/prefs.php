@@ -18,7 +18,7 @@ $userId = $login_check[1];
 login_header("My Preferences");
 ?>
 <h3>My Profile</h3>
-<?
+<?php
 $haspass = $dbemauth->hasPassword($username);
 if ($_POST) {
 	if ($_POST['submit']=='update') {
@@ -50,8 +50,8 @@ $action="update";
 $checkpass=true;
 $advancedval = ($userinfo['advanced'] == 1) ? "CHECKED":"";
 ?>
-<form name="userform" action="<?=$_SERVER['PHP_SELF'] ?>" method="POST">
-  <input type="hidden" name="userId" value="<?=$userId?>">
+<form name="userform" action="<?php $_SERVER['PHP_SELF'] ?>" method="POST">
+  <input type="hidden" name="userId" value="<?php $userId?>">
   <table border=0 cellspacing=0 cellpadding=2>
 	<tr>
 	<td>
@@ -63,16 +63,16 @@ $advancedval = ($userinfo['advanced'] == 1) ? "CHECKED":"";
 		<b><?php echo $userinfo['name']; ?></b><br />
 	</td>
 	<td>
-		<?=($checkpass) ? "<br />" : "" ?>
+		<?php ($checkpass) ? "<br />" : "" ?>
 		<label for="mypass1">Password:</label><br />
 		<label for="mypass2">confirm:</label><br />
 	</td>
 	<td>
-		<? if (!$haspass) { ?>
+		<?php if (!$haspass) { ?>
 		<font color="red">no password set</font><br />
-		<? } else if ($checkpass) { ?>
+		<?php } else if ($checkpass) { ?>
 		<input type="checkbox" name="chpass"><font color="red">Change Password</font><br />
-		<? } ?>
+		<?php } ?>
 		<input class="field" type="password" value="" name="mypass1" size="15" ><br />
 		<input class="field" type="password" value="" name="mypass2" size="15" ><br />
 	</td>
@@ -176,13 +176,13 @@ $advancedval = ($userinfo['advanced'] == 1) ? "CHECKED":"";
 	</tr>
 	<tr>
 	<td>
-		<input type="checkbox" name="advanced" <?=$advancedval?> >
+		<input type="checkbox" name="advanced" <?php $advancedval?> >
 		<label for="advanced">Always show advanced options</label><br />
 	</td>
 	</tr>	
 	<tr>
 	<td>
-		<input type="submit" value="<?=$action?>" name="submit">
+		<input type="submit" value="<?php $action?>" name="submit">
 	</td>
 	</tr>
   </table>
@@ -194,7 +194,7 @@ exit();
 
 ?>
 <h3>My Preferences</h3>
-<? if (!$username)
+<?php if (!$username)
 	exit;
 
 $comment_pref = new ViewerPreference;
@@ -247,33 +247,33 @@ $viewstat_ck = ($mypref['viewstat']=='Y') ? 'checked' : '';
 $viewcomment_ck = ($mypref['viewcomment']=='Y') ? 'checked' : '';
 $viewmyexp_ck = ($mypref['viewmyexp']=='Y') ? 'checked' : '';
 ?>
-<form method="POST" action="<?=$_SERVER['REQUEST_URI']?>" name="pref">
+<form method="POST" action="<?php $_SERVER['REQUEST_URI']?>" name="pref">
 <table border=0>
 <tr valign=top>
 	<td>
-<?  echo divtitle("Main Page"); ?>
+<?php  echo divtitle("Main Page"); ?>
 	</td>
 </tr>
 <tr>
 	<td>
 View Stats:
-<input class="bt1" type="checkbox" <?=$viewstat_ck?> value='Y' name="viewstat" >
+<input class="bt1" type="checkbox" <?php $viewstat_ck?> value='Y' name="viewstat" >
 	</td>
 </tr>
 <tr valign=top>
 	<td>
-<?  echo divtitle("Viewer"); ?>
+<?php  echo divtitle("Viewer"); ?>
 View comment
-<input class="bt1" type="checkbox" <?=$viewcomment_ck?> value='Y' name="viewcomment" ><br>
+<input class="bt1" type="checkbox" <?php $viewcomment_ck?> value='Y' name="viewcomment" ><br>
 View my experiment only 
-<input class="bt1" type="checkbox" <?=$viewmyexp_ck?> value='Y' name="myexponly" ><br>
+<input class="bt1" type="checkbox" <?php $viewmyexp_ck?> value='Y' name="myexponly" ><br>
 <br>
 <input class="bt1" type="submit" name="v" value="save">
 	</td>
 </tr>
 <tr valign=top>
 	<td>
-<?  echo divtitle("Comment Setup"); ?>
+<?php  echo divtitle("Comment Setup"); ?>
 	</td>
 </tr>
 <tr>
@@ -291,7 +291,7 @@ View my experiment only
 	</tr>
 	<tr>
 	<td>
-<?
+<?php
 if ($mycommentpref) {
 	echo '<select name="commentId" size="5" >';
 	foreach ($mycommentpref as $pref) {
@@ -313,18 +313,18 @@ echo '
 </table>
 	</td>
 	<td>
-<? if ($commentId) { ?>
+<?php if ($commentId) { ?>
 <table>
 	<tr>
 	<td colspan="2">
-Category for <b>"<?=$commentinfo['name']?>"</b> (i.e. : A, Good, Ok):<br>
+Category for <b>"<?php $commentinfo['name']?>"</b> (i.e. : A, Good, Ok):<br>
 <input class='field' type='text' size='15' name='cat_lbl'>
 <input class="bt1" type="submit" name="c" value="Add">
 	</td>
 	</tr>
 	<tr>
 	<td>
-<? if ($mycategory) { 
+<?php if ($mycategory) {
 echo '<select name="categoryId" size="5" >';
 foreach ($mycategory as $category) {
 	echo "<option value='".$category['id']."' >".$category['name']."</option>\n";
@@ -347,7 +347,7 @@ echo '
 		<tr>
 		<td>
 
-<?
+<?php
 echo 'Add Sessions to comment type <b>"'.$commentinfo['name'].'"</b><br>';
 echo '<select style="width: 500" name="sessionId" size="5" >';
 foreach ($sessions as $session) {
@@ -376,7 +376,7 @@ echo '</select>';
 		</td>
 		</tr>
 	</table>
-<? } ?>
+<?php } ?>
 	</td>
 	</tr>
 </table>
@@ -384,7 +384,7 @@ echo '</select>';
 </tr>
 </table>
 </form>
-<?
+<?php
 login_footer();
 
 function add_cat($name) {

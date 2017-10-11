@@ -1,24 +1,24 @@
-<form name="userform" action="<?=$_SERVER['PHP_SELF'] ?>" method="POST">
-  <input type="hidden" name="userId" value="<?=$userId?>">
+<form name="userform" action="<?php $_SERVER['PHP_SELF'] ?>" method="POST">
+  <input type="hidden" name="userId" value="<?php $userId?>">
   <table border=0 cellspacing=0 cellpadding=2>
 	<tr>
 	<td>
 		<label for="username">username: </label>
 	</td>
 	<td>
-		<input class="field" type="text" value="<?=$username?>" name="username" id="username" size="15" ><br>
+		<input class="field" type="text" value="<?php $username?>" name="username" id="username" size="15" ><br>
 	</td>
 	<td>
-		<?=($checkpass) ? "<br />" : "" ?>
+		<?php ($checkpass) ? "<br />" : "" ?>
 		<label for="mypass1">password:</label><br />
 		<label for="mypass2">confirm:</label><br />
 	</td>
 	<td>
-		<? if ($nopass) { ?>
+		<?php if ($nopass) { ?>
 		<font color="red">no password set</font><br />
-		<? } else if ($checkpass) { ?>
+		<?php } else if ($checkpass) { ?>
 		<font color="red">check to change</font>:<input type="checkbox" name="chpass"><br />
-		<? } ?>
+		<?php } ?>
 		<input class="field" type="password" value=".<?$password?>." name="mypass1" size="15" ><br />
 		<input class="field" type="password" value="" name="mypass2" size="15" ><br />
 	</td>
@@ -28,7 +28,7 @@
 		<label for="email">Email: </label>
 	</td>
 	<td>
-		<input class="field" type="text" value="<?=$email?>" name="email" id="email"><br>
+		<input class="field" type="text" value="<?php $email?>" name="email" id="email"><br>
 	</td>
 	</tr>
 	<tr>
@@ -36,13 +36,13 @@
 		<label for="Firstname">firstname: </label>
 	</td>
 	<td>
-		<input class="field" type="text" value="<?=$firstname?>" name="firstname" id="firstname" size="15" ><br>
+		<input class="field" type="text" value="<?php $firstname?>" name="firstname" id="firstname" size="15" ><br>
 	</td>
 	<td>
 		<label for="Lastname">lastname: </label>
 	</td>
 	<td>
-		<input class="field" type="text" value="<?=$lastname?>" name="lastname" id="lastname" size="15" ><br>
+		<input class="field" type="text" value="<?php $lastname?>" name="lastname" id="lastname" size="15" ><br>
 	</td>
 	</tr>
 	<tr>
@@ -50,7 +50,7 @@
 		<label for="title">Title: </label>
 	</td>
 	<td>
-		<input class="field" type="text" value="<?=htmlentities($title)?>" name="title" id="title" size="20" ><br>
+		<input class="field" type="text" value="<?php htmlentities($title)?>" name="title" id="title" size="20" ><br>
 	</td>
 	</tr>
 	<tr>
@@ -58,13 +58,13 @@
 		<label for="institution">Institution: </label>
 	</td>
 	<td>
-		<input class="field" type="text" value="<?=htmlentities($institution)?>" name="institution" id="institution" size="25" ><br>
+		<input class="field" type="text" value="<?php htmlentities($institution)?>" name="institution" id="institution" size="25" ><br>
 	</td>
 	<td>
 		<label for="dept">Dept: </label>
 	</td>
 	<td>
-		<input class="field" type="text" value="<?=htmlentities($dept)?>" name="dept" id="dept" size="20" ><br>
+		<input class="field" type="text" value="<?php htmlentities($dept)?>" name="dept" id="dept" size="20" ><br>
 	</td>
 	</tr>
 	<tr>
@@ -72,7 +72,7 @@
 		<label for="address">Address: </label>
 	</td>
 	<td>
-		<input class="field" type="text" value="<?=htmlentities($address)?>" name="address" id="address" size="25" ><br>
+		<input class="field" type="text" value="<?php htmlentities($address)?>" name="address" id="address" size="25" ><br>
 	</td>
 	</tr>
 	<tr>
@@ -80,13 +80,13 @@
 		<label for="city">City: </label>
 	</td>
 	<td>
-		<input class="field" type="text" value="<?=$city?>" name="city" id="city" size="10" ><br>
+		<input class="field" type="text" value="<?php $city?>" name="city" id="city" size="10" ><br>
 	</td>
 	<td>
 		<label for="statecountry">State/Country: </label>
 	</td>
 	<td>
-		<input class="field" type="text" value="<?=$statecountry?>" name="statecountry" id="statecountry" size="10" ><br>
+		<input class="field" type="text" value="<?php $statecountry?>" name="statecountry" id="statecountry" size="10" ><br>
 	</td>
 	</tr>
 	<tr>
@@ -94,7 +94,7 @@
 		<label for="zip">Zip: </label>
 	</td>
 	<td>
-		<input class="field" type="text" value="<?=$zip?>" name="zip" id="zip" size="10" ><br>
+		<input class="field" type="text" value="<?php $zip?>" name="zip" id="zip" size="10" ><br>
 	</td>
 	</tr>
 	<tr>
@@ -102,13 +102,13 @@
 		<label for="phone">Phone: </label>
 	</td>
 	<td>
-		<input class="field" type="text" value="<?=$phone?>" name="phone" id="phone" size="15" ><br>
+		<input class="field" type="text" value="<?php $phone?>" name="phone" id="phone" size="15" ><br>
 	</td>
 	<td>
 		<label for="fax">Fax: </label>
 	</td>
 	<td>
-		<input class="field" type="text" value="<?=$fax?>" name="fax" id="fax" size="15" ><br>
+		<input class="field" type="text" value="<?php $fax?>" name="fax" id="fax" size="15" ><br>
 	</td>
 	</tr>
 	<tr>
@@ -117,14 +117,14 @@
 	</td>
 	<td>
 	
-		<input class="field" type="text" value="<?=$url?>" name="url" id="url"><br>
+		<input class="field" type="text" value="<?php $url?>" name="url" id="url"><br>
 	</td>
 	</tr>
 	<tr>
 	<td colspan="2">
 	<fieldset>
 	<legend><b>Group:</b></legend>
-<?
+<?php
 if ($login_is_groupadmin) {
 ?>
 	<select size="1" name="group" > 
@@ -134,7 +134,7 @@ if ($login_is_groupadmin) {
 		}
 	?>
 	</select>
-<?
+<?php
 } else {
 	echo $groupname;
 }
@@ -144,7 +144,7 @@ if ($login_is_groupadmin) {
 	</tr>
 	<tr>
 	<td>
-		<input type="submit" value="<?=$action?>" name="submit">
+		<input type="submit" value="<?php $action?>" name="submit">
 	</td>
 	</tr>
   </table>

@@ -51,7 +51,7 @@ project_header("Grid $title");
 </table>
 </form>
 
-<?
+<?php
 project_footer(); 
 exit;
 } else if ($_POST['yes']) {
