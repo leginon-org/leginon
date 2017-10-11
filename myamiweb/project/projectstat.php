@@ -66,7 +66,7 @@ foreach ($projects as $p) {
 ?>
 </table>
 <br>
-Total Projects: <b><?php count($projects)?></b> Total Exp: <b><?php $tot_exp?></b>
+Total Projects: <b><?php echo count($projects); ?></b> Total Exp: <b><?php echo $tot_exp; ?></b>
 <?php
 if ($enableimage) {
 	echo "Total Images: <b>$tot_exp_img</b>";
@@ -77,8 +77,8 @@ if ($enableimage) {
 if (count($excludedprojects)) {
 ?>
 <p>
-Excluded projects: <?php implode(', ',$excludedprojects);?><br>
-Total Projects: <b><?php (count($projects)-count($excludedprojectIds))?></b> Total Exp: <b><?php $tot_exp_exclusif?></b>
+Excluded projects: <?php echo implode(', ',$excludedprojects); ?><br>
+Total Projects: <b><?php echo count($projects)-count($excludedprojectIds); ?></b> Total Exp: <b><?php echo $tot_exp_exclusif; ?></b>
 <?php
 }
 if ($enableimage) {
