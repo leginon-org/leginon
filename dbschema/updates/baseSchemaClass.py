@@ -77,6 +77,9 @@ class SchemaUpdate(object):
 		self.backup = backup
 		self.schema_pythonfile = "schema-r%s.py"%(str(self.schemaNumber))
 		subclassfile = os.path.basename(sys.modules[self.__module__].__file__)
+		# pyc file is o.k.
+		if subclassfile.endswith('pyc'):
+			subclassfile = subclassfile[:-1]
 		if subclassfile != self.schema_pythonfile:
 			raise IOError("filename of schema tag '%s' must be '%s' NOT '%s'"
 				%(self.schemaNumber, self.schema_pythonfile, subclassfile))
