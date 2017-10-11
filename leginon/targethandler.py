@@ -194,6 +194,7 @@ class TargetHandler(object):
 				if state == 'stopqueue' or self.inDequeued(targetlist):
 					self.logger.info('Queue aborted, skipping target list')
 				else:
+					# FIX ME: empty targetlist does not need to revert Z.
 					self.revertTargetListZ(targetlist)
 					self.processTargetList(targetlist)
 					state = self.player.wait()
@@ -346,6 +347,7 @@ class TargetHandler(object):
 		except Exception, e:
 			self.logger.error('getting scopedata failed: %s' % (e))
 			raise
+		self.targetlist_reset_tilt = scopedata['stage position']['a']
 		scopedata.friendly_update(preset)
 		lastnumber = self.lastTargetNumber(session=self.session, type='simulated')
 		nextnumber = lastnumber + 1

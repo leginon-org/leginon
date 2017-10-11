@@ -531,26 +531,26 @@ $totalCTF = $aceRun + $ace2Run + $ctfindRun;
 	</tr>
 	<tr height="15"></tr>
 	<tr>
-		<td># Processed images:</td><td><?php echo number_format($aceProcessedImages);?></td>
+		<td># Processed images:</td><td><?php echo number_format($aceProcessedImages); ?></td>
 	</tr>
 	<tr height="15"></tr>
 	<tr>
 		<td># Particle picking runs:</td><td><?php echo number_format($particleSelectionRuns); ?></td>
 	</tr>
 	<tr>
-		<td>&nbsp;&nbsp;&nbsp;&nbsp; # Template Picker runs:</td><td><?php echo number_format($templatePicker);?></td>
+		<td>&nbsp;&nbsp;&nbsp;&nbsp; # Template Picker runs:</td><td><?php echo number_format($templatePicker); ?></td>
 	</tr>
 	<tr>
-		<td>&nbsp;&nbsp;&nbsp;&nbsp; # Dog Picker runs:</td><td><?php echo number_format($dogPickerRuns);?></td>
+		<td>&nbsp;&nbsp;&nbsp;&nbsp; # Dog Picker runs:</td><td><?php echo number_format($dogPickerRuns); ?></td>
 	</tr>
 	<tr>
-		<td>&nbsp;&nbsp;&nbsp;&nbsp; # Manual Picker runs:</td><td><?php echo number_format($manualPickerRuns);?></td>
+		<td>&nbsp;&nbsp;&nbsp;&nbsp; # Manual Picker runs:</td><td><?php echo number_format($manualPickerRuns); ?></td>
 	</tr>
 	<tr>
-		<td>&nbsp;&nbsp;&nbsp;&nbsp; # Tilt Picker runs:</td><td><?php echo number_format($tiltPickerRuns);?></td>
+		<td>&nbsp;&nbsp;&nbsp;&nbsp; # Tilt Picker runs:</td><td><?php echo number_format($tiltPickerRuns); ?></td>
 	</tr>
 	<tr>
-		<td># Particles picked:</td><td><?php echo number_format($selectedParticles);?></td>
+		<td># Particles picked:</td><td><?php echo number_format($selectedParticles); ?></td>
 	</tr>
 	<tr height="15"></tr>
 	<tr>
@@ -570,40 +570,40 @@ $totalCTF = $aceRun + $ace2Run + $ctfindRun;
 		<td># Particle stacks:</td><td><?php echo number_format($totalStacks); ?></td>
 	</tr>
 	<tr>
-		<td>&nbsp;&nbsp;&nbsp;&nbsp; # Particles in stacks:</td><td><?php echo number_format($totalStacksParticles);?></td>
+		<td>&nbsp;&nbsp;&nbsp;&nbsp; # Particles in stacks:</td><td><?php echo number_format($totalStacksParticles); ?></td>
 	</tr>	
 	<tr height="15"></tr>
 	<tr>
-		<td># Classification runs:</td><td><?php echo number_format($classificationRuns);?></td>
+		<td># Classification runs:</td><td><?php echo number_format($classificationRuns); ?></td>
 	</tr>
 	<tr>
-		<td># Classes:</td><td><?php echo number_format($numOfClasses);?></td>
+		<td># Classes:</td><td><?php echo number_format($numOfClasses); ?></td>
 	</tr>
 	<tr>
-		<td># Classified particles:</td><td><?php echo number_format($classifiedParticles);?></td>
+		<td># Classified particles:</td><td><?php echo number_format($classifiedParticles); ?></td>
 	</tr>
 	<tr>
-		<td># RCT models:</td><td><?php echo number_format($totalRCTModels);?></td>
+		<td># RCT models:</td><td><?php echo number_format($totalRCTModels); ?></td>
 	</tr>
 	<tr>
-		<td># Tomograms:</td><td><?php echo number_format($tomogramRun);?></td>
-	</tr>
-	<tr height="15"></tr>
-	<tr>
-		<td># 3D Maps:</td><td><?php echo number_format($totalReconRun);?></td>
-	</tr>
-	<tr>
-		<td>&nbsp;&nbsp;&nbsp;&nbsp; # Iterations:</td><td><?php echo number_format($totalReconIterations);?></td>
-	</tr>
-	<tr>
-		<td>&nbsp;&nbsp;&nbsp;&nbsp; # Classified Particles:</td><td><?php echo number_format($totalClassifiedParticles);?></td>
+		<td># Tomograms:</td><td><?php echo number_format($tomogramRun); ?></td>
 	</tr>
 	<tr height="15"></tr>
 	<tr>
-		<td># Templates:</td><td><?php echo number_format($totalTemplates);?></td>
+		<td># 3D Maps:</td><td><?php echo number_format($totalReconRun); ?></td>
 	</tr>
 	<tr>
-		<td># Initial Models:</td><td><?php echo number_format($totalInitialModels);?></td>
+		<td>&nbsp;&nbsp;&nbsp;&nbsp; # Iterations:</td><td><?php echo number_format($totalReconIterations); ?></td>
+	</tr>
+	<tr>
+		<td>&nbsp;&nbsp;&nbsp;&nbsp; # Classified Particles:</td><td><?php echo number_format($totalClassifiedParticles); ?></td>
+	</tr>
+	<tr height="15"></tr>
+	<tr>
+		<td># Templates:</td><td><?php echo number_format($totalTemplates); ?></td>
+	</tr>
+	<tr>
+		<td># Initial Models:</td><td><?php echo number_format($totalInitialModels); ?></td>
 	</tr>
 	<tr>
 		<td colspan=2><b>Notes:</b> Only projects that have processed data associated are counted.<br />

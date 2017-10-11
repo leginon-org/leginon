@@ -70,7 +70,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		self.reference_target = None
 		self.preset_name = None
 		self.navigator_bound = False
-
+		self.at_reference_target = False
 		self.last_processed = None
 
 
@@ -173,10 +173,20 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		'''
 		Set Preset and EMTarget to scope
 		'''
+		self.logger.info('Setting preset and move to reference target')
+		if self.at_reference_target == True:
+			self.logger.info('Already at reference target. Change preset only')
+			self.presets_client.toScope(preset_name)
+			preset = self.presets_client.getCurrentPreset()
+			if preset['name'] != preset_name:
+				message = 'failed to set preset \'%s\'' % preset_name
+				raise MoveError(message)
+			return
+			
 		em_target_data = self.getEMTargetData(preset_name)
 
 		self.publish(em_target_data, database=True)
-		self.logger.info('Move to reference target')
+		self.setStageZAlpha(self.reference_target)
 		if self.settings['mover'] == 'presets manager':
 			self.presets_client.toScope(preset_name, em_target_data)
 		else:
@@ -193,13 +203,28 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 					message = 'iterative move failed'
 					raise MoveError(message)
 				self.presets_client.toScope(preset_name)
+		self.at_reference_target = True
 		# check results
 		p = self.instrument.tem.StagePosition
-		self.logger.info('Reference target position x: %.2f um, y:%.2f um' % (p['x']*1e6,p['y']*1e6))
+		self.logger.info('Reference target position x: %.1f um, y:%.1f um, z:%.1f um' % (p['x']*1e6,p['y']*1e6,p['z']))
 		preset = self.presets_client.getCurrentPreset()
 		if preset['name'] != preset_name:
 			message = 'failed to set preset \'%s\'' % preset_name
 			raise MoveError(message)
+
+	def setStageZAlpha(self,target_data):
+		try:
+			parent = target_data['image']
+			z = parent['scope']['stage position']['z']
+			alpha = parent['scope']['stage position']['a']
+			p = {'z':z}
+			a0 = self.instrument.tem.StagePosition['a']
+			# Do not set alpha unless very different
+			if abs(a0-alpha) > 0.1:
+				p['a'] = alpha
+			self.instrument.tem.StagePosition = p
+		except:
+			raise
 
 	def _processRequest(self, request_data):
 		# This is the function that would be different between Timer and Counter
@@ -207,12 +232,19 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		message = 'always process request'
 		self.logger.info(message)
 		self.moveAndExecute(request_data)
-		self.last_processed = time.time()
+		# subclass need to define self.last_processed in resetProcess
+
+	def moveBack(self,position0):
+		self.logger.info('Returning to the original position....')
+		self.instrument.tem.StagePosition = position0
+		self.at_reference_target = False
+		self.pauseBeforeReturn()
 
 	def moveAndExecute(self, request_data):
 		'''
 		move to reference target, set to the preset in request_data
-		and execute.  Request_data must exist
+		, execute and then move back.  self.last_processed is reset in here.
+		Request_data must exist
 		'''
 		pause_time = self.settings['pause time']
 		# Moving part
@@ -224,22 +256,24 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 			self.declareDrift('stage')
 		except Exception, e:
 			self.logger.error('Error moving to target, %s' % e)
-			self.logger.info('Returning to the original position without execution')
-			self.instrument.tem.StagePosition = position0
-			self.pauseBeforeReturn()
+			self.moveBack(position0)
 			return
 		# Execution part
 		if pause_time is not None:
 			self.logger.info('Pausing %.1f second before execution' % (pause_time,))
 			time.sleep(pause_time)
+		if self.player.state() == 'stop':
+			self.moveBack(position0)
+			return
 		try:
 			self.execute(request_data)
+			# default behavior: reset only if successful
+			self.resetProcess()
 		except Exception, e:
 			self.logger.error('Error executing request, %s' % e)
 		finally:
-			self.logger.info('Returning to the original position....')
-			self.instrument.tem.StagePosition = position0
-			self.pauseBeforeReturn()
+			# Must move back
+			self.moveBack(position0)
 			return
 
 	def pauseBeforeReturn(self):
@@ -266,6 +300,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		'''
 		Subclass should overwrite this.
 		'''
+		# request_data input may be None if from onTest
 		pass
 
 	def onMakeReference(self, request_data=None):
@@ -274,63 +309,64 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		self.player.play()
 		try:
 			self.setReferenceTarget()
+			self.logger.info('Done setting reference target')
 		except:
 			self.logger.error('can not set reference target at current position')
-			raise
 		finally:
 			self.panel.playerEvent('stop')
 			self.setStatus('idle')
-			self.logger.info('Done setting reference target')
 
-	def onTest(self, request_data=None):
+	def onTest(self):
 		'''
-		Testing with or without reference target.
+		Testing with or without reference target. It uses current preset.
 		'''
 		# This is different from moveAndExecute
 		self.logger.info('Testing...')
 		self.setStatus('processing')
 		self.player.play()
-
-		preset_name = None
-		self.reference_target = self.getReferenceTarget()
-		# move to reference target with preset
-		if self.reference_target:
-			if not request_data:
-				preset = self.presets_client.getCurrentPreset()
-				if preset:
-					preset_name = preset['name']
-					self.logger.info('Use current preset %s to test' % preset_name)
-				else:
-					self.logger.warning('No current preset. Will not move to reference target')
-			else:
-				if 'preset' not in request_data.keys():
-					self.logger.error('Bad request data')
-					return
-				preset_name = request_data['preset']
-			if preset_name:
-				try:
-					self.moveToTarget(preset_name)
-					self.declareDrift('stage')
-				except Exception, e:
-					self.logger.error('Error moving to target, %s' % e)
-					return
-			else:
-				self.logger.info('Use current position and instrument state for testing')
-
-			self.preset_name = preset_name
-		else:
-			self.logger.warning('No reference target')
-			self.logger.info('Use current position for testing')
-		pause_time = self.settings['pause time']
-		if pause_time is not None:
-			self.logger.info('Pausing %.1f second before execution' % (pause_time,))
-			time.sleep(pause_time)
 		try:
-			self.execute(request_data)
+			self._testRun()
+		except Exception, e:
+			self.logger.error(e.message)
+			raise
 		finally:
 			self.panel.playerEvent('stop')
 			self.setStatus('idle')
 			self.logger.info('Done testing')
+
+	def _testRun(self):
+		preset_name = None
+		pause_time = self.settings['pause time']
+		# must have preset
+		preset = self.presets_client.getCurrentPreset()
+		if not (preset and preset['name']):
+			self.logger.error('No current preset. Send desired preset for testing first')
+			return
+		self.preset_name = preset['name']
+		self.reference_target = self.getReferenceTarget()
+		if self.reference_target:
+			# move to reference target with preset
+			self.logger.info('Use reference target for testing')
+			request_data = {'preset':preset['name']}
+			self.moveAndExecute(request_data)
+		else:
+			self.logger.warning('No reference target')
+			self.logger.info('Use current position for testing')
+			if pause_time is not None:
+				self.logger.info('Pausing %.1f second before execution' % (pause_time,))
+				time.sleep(pause_time)
+			if self.player.state() == 'stop':
+				return
+			try:
+				self.execute(None)
+			finally:
+				self.resetProcess()
+
+	def resetProcess(self):
+		# self.last_processed is different between Timer and Counter
+		# See subclass ReferenceTimer and ReferenceCounter for implementation
+		self.logger.info('Reset Request Process')
+		self.last_processed = None
 
 	def getImageFilename(self,imagedata):
 		'''
@@ -360,6 +396,13 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		# acquire an image with current preset
 		preset = self.presets_client.getCurrentPreset()
 		if preset:
+			# check image size. This is used as parent image to move, so it need
+			#to be reasonably large
+			cam_pixelsize = self.calibration_clients['stage position'].getPixelSize(preset['magnification'],preset['tem'],preset['ccdcamera'])
+			image_length = cam_pixelsize*preset['binning']['x']*preset['dimension']['x']
+			if image_length < 3e-6:
+				self.logger.error('Preset image length smaller than 3 um, Not reliable as parent image for navigation')
+				raise RuntimeError('Bad preset')
 			preset_name = preset['name']
 			self.logger.info('Use current preset %s to make reference parent image and target' % preset_name)
 		else:

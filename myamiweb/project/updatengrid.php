@@ -100,7 +100,7 @@ if (empty($gridId) || !($grid->checkGridExistsbyId($gridId))) {
 project_header("Grid $title");
 ?>
 
-<a href="<?php $_GET['ln'];?>">[ &laquo; back ]</a>
+<a href="<?php echo $_GET['ln']; ?>">[ &laquo; back ]</a>
 <p>
 <font color=red>*</font>
 <font face="Arial, Helvetica, sans-serif" size="2">: required fields</font>

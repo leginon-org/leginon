@@ -40,7 +40,7 @@ if ($in == 0) $selectedmodelId = $models[0][DEF_id];
 admin_header();
 ?>
 <h3>View Goniometer</h3>
-<form name="goniometerform" method="POST" action="<?php echo $_SERVER['PHP_SELF'];?>">
+<form name="goniometerform" method="POST" action="<?php echo $_SERVER['PHP_SELF']; ?>">
 <select name="host" onChange="javascript:document.goniometerform.submit()">
 <?php
 foreach($validhosts as $host) {

@@ -424,7 +424,7 @@ function getDistance() {
 </div>
 </div>
 <div id="divimg" style="z-index:1; position:absolute; width:100%; height:100%; overflow:auto;cursor:crosshair; ">
-<div id="img" style="position:absolute; top:0px; left:0px; width:<?php echo $imgwidth;?>px; height:<?php echo $imgheight;?>; background:url('<?php echo $imgsrc; ?>')"
+<div id="img" style="position:absolute; top:0px; left:0px; width:<?php echo $imgwidth; ?>px; height:<?php echo $imgheight; ?>; background:url('<?php echo $imgsrc; ?>')"
 	onmousemove	=	"imgmousemove(event)";
 	onmousedown	=	"imgmousedown(event)";
 	onmouseup		=	"imgmouseup(event)";

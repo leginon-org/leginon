@@ -297,6 +297,7 @@ class UploadRelion3DRefine(reconUploader.generalReconUploader):
 		plt.grid(True)
 
 		plt.savefig(os.path.join(self.params['rundir'],name + ".png"))
+		shutil.move(os.path.join(self.params['rundir'],name + ".png"),os.path.join(self.params['rundir'],name + ".gif"))
 		plt.close()
 
 	#======================================================
@@ -312,6 +313,18 @@ class UploadRelion3DRefine(reconUploader.generalReconUploader):
 		plt.grid(True)
 
 		plt.savefig(os.path.join(self.params['rundir'],name + ".png"))
+		shutil.move(os.path.join(self.params['rundir'],name + ".png"),os.path.join(self.params['rundir'],name + ".gif"))
+		plt.close()
+
+	#======================================================
+	def plotfsc(self,spatialfreq_data,fsc_data):
+		fscplot = plt.plot(spatialfreq_data,fsc_data)
+		plt.xlabel('Spatial Frequency (1/A)')
+		plt.ylabel('FSC')
+		plt.title('Fourier Shell Correlation')
+		plt.grid(True)
+		plt.savefig(os.path.join(self.params['rundir'],"fsc.png"))
+		shutil.move(os.path.join(self.params['rundir'],"fsc.png"),os.path.join(self.params['rundir'],"fsc.gif"))
 		plt.close()
 
 	#======================================================
@@ -341,6 +354,7 @@ class UploadRelion3DRefine(reconUploader.generalReconUploader):
 		plt.yticks([0,1,2,3,4,5,6,7,8],labels,size=6)
 		plt.colorbar(ax)
 		plt.savefig(os.path.join(self.params['rundir'],"SpearmanCorrelation.png"))
+		shutil.move(os.path.join(self.params['rundir'],"SpearmanCorrelation.png"),os.path.join(self.params['rundir'],"SpearmanCorrelation.gif"))
 		plt.show()
 		plt.close()
 		
@@ -354,6 +368,7 @@ class UploadRelion3DRefine(reconUploader.generalReconUploader):
 		plt.yticks([0,1,2,3,4,5,6,7,8],labels,size=6)
 		plt.colorbar(ax)
 		plt.savefig(os.path.join(self.params['rundir'],"PearsonCorrelation.png"))
+		shutil.move(os.path.join(self.params['rundir'],"PearsonCorrelation.png"),os.path.join(self.params['rundir'],"PearsonCorrelation.gif"))
 		plt.show()
 		plt.close()
 		
@@ -393,6 +408,20 @@ class UploadRelion3DRefine(reconUploader.generalReconUploader):
 		
 		## Calculate Pearson and Spearman Correlations
 		self.calculateCorrelation(defocusU,defocusV,astig,coordX,coordY,anglePsi,angleRot,angleTilt,maxProb)
+
+		## Plot FSC Curve
+		if not os.path.isfile(os.path.join(self.params['rundir'],"eman.fsc")):
+			apDisplay.printMsg("eman.fsc file does not exists; self.Read04_maps() may not have completed properly.")
+
+		f = open(os.path.join(self.params['rundir'],"eman.fsc"),"r")
+		lines = f.readlines()
+		spatialfreq_data = []
+		fsc_data = []
+		for line in lines:
+			spatialfreq_data.append(line.split('\t')[0])
+			fsc_data.append(line.split('\t')[1])
+
+		self.plotfsc(spatialfreq_data,fsc_data)
 		
 		#apDisplay.printMsg("Getting image data from database")
 		#imgtree = apDatabase.getSpecificImagesFromDB(boxfiles)
