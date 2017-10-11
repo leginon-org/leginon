@@ -121,7 +121,7 @@ function createContourPickerForm($extra=false, $title='Manual Object Tracer Laun
 
 	createAppionLoopTable($sessiondata, $defrunname, "extract");
 	?>
-	<font style="font-weight: bold"><?php docpop("picklabel", "Single Point Particle Labels");?></font>
+	<font style="font-weight: bold"><?php echo docpop("picklabel", "Single Point Particle Labels"); ?></font>
 	<p>
 	Label: <input type="text" name="picklabel" value="particle">
 	<input type="submit" name="addpicklabel" value="Add">

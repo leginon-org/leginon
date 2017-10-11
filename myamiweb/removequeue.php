@@ -276,7 +276,7 @@ function createForm() {
 			</tr>
 			<tr valign="top">
 				 <td colspan="4"> 
-	 <?php echo divtitle("Active Target List");?>
+	 <?php echo divtitle("Active Target List"); ?>
 		<table width=100% class='tableborder' cellspacing='1' cellpadding='2'>
 			<tr>
 				<td>
