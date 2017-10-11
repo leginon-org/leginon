@@ -87,7 +87,7 @@ foreach($map as $k=>$v) {
 project_header("Confirm $title");
 ?>
 
-<a href="<?php $_GET['ln'];?>">[ &laquo; back ]</a>
+<a href="<?php echo $_GET['ln']; ?>">[ &laquo; back ]</a>
 <p>
 <font color=red>*</font>
 <font face="Arial, Helvetica, sans-serif" size="2">: required fields</font>

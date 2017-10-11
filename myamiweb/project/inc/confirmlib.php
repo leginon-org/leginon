@@ -42,8 +42,6 @@ class Confirm {
 		$data["note"]=$note;
 		$data["samplerequest"]=$samplerequest;
 		$data["experimentrequest"]=$experimentrequest;
-echo 'addconfirm';
-print_r($data);
 		$id =  $this->mysql->SQLInsert($table, $data);
 		return $id;
 	} 
@@ -59,8 +57,6 @@ print_r($data);
 		$data["experimentrequest"]=$experimentrequest;
 
 		$where["confirmId"]=$confirmId;
-echo 'addconfirm';
-print_r($data);
 
 		$s = $this->mysql->SQLUpdate($table, $data, $where);
 	} 

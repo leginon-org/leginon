@@ -11,7 +11,7 @@ require_once 'inc/leginon.inc';
 	<form name="deletionlist" method="POST" action="deletionlist.php">
 		<table>
 			<tr><td>
-	<?echo divtitle("Files marked for deletion but still exist");?>
+	<?echo divtitle("Files marked for deletion but still exist"); ?>
 			<table class='tableborder' border='1' cellspacing='1' cellpadding='5' width=100%>
 				<tr><td>
 <?php
@@ -29,7 +29,7 @@ if ($filecount == 0)
 		</table>
 		<br>
 		</td></tr><tr><td>
-	<?echo divtitle("Files marked for deletion that are removed");?>
+	<?echo divtitle("Files marked for deletion that are removed"); ?>
 <table class='tableborder' border='1' cellspacing='1' cellpadding='5' width=100%>
 <tr><td>
 <?php
