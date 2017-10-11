@@ -929,9 +929,9 @@ if (is_numeric($expId)) {
 	}
 
 	$nruns=array();
+	$nruns[] = "<a href='runAppionLoop.php?expId=$sessionId&form=imgRejector2Form'>Run Image Rejector</a>";
 	$nruns[] = "<a href='imgassessor.php?expId=$sessionId'>Web Img Assessment</a>";
 	$nruns[] = "<a href='multiimgassessor.php?expId=$sessionId'>Multi Img Assessment</a>";
-	$nruns[] = "<a href='runImgRejector.php?expId=$sessionId'>Run Image Rejector</a>";
 
 	$data[] = array(
 		'action' => array($action, $celloption),

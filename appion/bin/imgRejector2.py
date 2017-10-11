@@ -54,7 +54,7 @@ class ImageRejector2(appionScript.AppionScript):
 			help="Hide images with sorting method below this resolution in Angstroms", metavar="#")
 		self.parser.add_option("--driftmax", dest="driftmax", type="float", default=None,
 			help="Hide images with largest drift per frame above this value in Angstroms", metavar="#")
-		self.parser.add_option("--icemin", dest="icemin", type="float", default=None,
+		self.parser.add_option("--icemax", dest="icemax", type="float", default=None,
 			help="Hide images with intensity in expected resolution this much times standard deviation of the backgound", metavar="#")
 
 
@@ -63,9 +63,9 @@ class ImageRejector2(appionScript.AppionScript):
 		### check for requirement
 		if not self.params['preset']:
 			apDisplay.printError('Must specify preset')
-		if self.params['icemin'] is None and self.params['resmin'] is None and self.params['driftmax'] is None:
+		if self.params['icemax'] is None and self.params['resmin'] is None and self.params['driftmax'] is None:
 			apDisplay.printError('No rejection criteria set')
-		if self.params['icemin'] is not None and self.params['resmin'] is None:
+		if self.params['icemax'] is not None and self.params['resmin'] is None:
 			apDisplay.printError('Must reject also by ctf fit resolution as well if request ice crystal to be rejected')
 		if self.params['resmin'] and self.params['ctfrunid'] is None and self.params['bestdb'] is False:
 			apDisplay.printError("Please provide either a ctfrun or use best ctf in db to evaluate")
@@ -108,7 +108,7 @@ class ImageRejector2(appionScript.AppionScript):
 				self.hideDriftImage(imgdata)
 			if self.params['resmin'] is not None:
 				is_hidden = self.hideBadCtfImage(imgdata)
-				if not is_hidden and self.params['icemin']:
+				if not is_hidden and self.params['icemax']:
 					self.hideIceCrystalImage(imgdata)
 
 	def hideDriftImage(self, imgdata):
@@ -225,7 +225,7 @@ class ImageRejector2(appionScript.AppionScript):
 		after_std = qr_bins[icer+2:icer+4].std()
 		apDisplay.printMsg('Std deviation intensity around ice crystal resolution are: %.3f and %.3f' % (before_std, after_std))
 		apDisplay.printMsg('Ice crystal resolution mean intensity above background: %.3f' % (at-(before+after)/2))
-		return at-(before+after)/2 > self.params['icemin']* max((before_std,after_std,min_std))
+		return at-(before+after)/2 > self.params['icemax']* max((before_std,after_std,min_std))
 
 	def calculateQuarterRadialProfile(self, imgarray, nr, icer):
 		# Use only one quarter for simplicity
@@ -268,12 +268,16 @@ class ImageRejector2(appionScript.AppionScript):
 	def _hideImage(self, image):
 		'''
 		Hide if not hidden.  Returns True if it is now hidden so
-		that further validation can be skipped.  testrun will
+		that further validation can be skipped.  no-commit flag will
 		always return False so that everything is checked.
 		'''
-		if self.params['testrun']:
+		if not self.params['commit']:
 			print 'Will need to hide %s' % (image['filename'])
 			return False
+		else:
+			return self.commitToDatabase(image)
+
+	def commitToDatabase(self, image):
 		status = apDatabase.getImgViewerStatus(image)
 		if status is False:
 			# already hidden or trashed
@@ -281,9 +285,6 @@ class ImageRejector2(appionScript.AppionScript):
 			return True
 		apDatabase.setImgViewerStatus(image, False)
 		return True
-
-	def commitToDatabase(self,old_ctfdata, to_imgdata):
-		pass
 
 	def selectImageAtPreset(self, presetname, images):
 		for imgdata in images:

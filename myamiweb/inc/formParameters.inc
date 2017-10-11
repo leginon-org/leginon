@@ -51,6 +51,11 @@ class FormParameters
 		return $this->params[$name]["value"];
 	}
 	
+	final public function setParamDefault( $name, $value ) 
+	{
+		$this->params[$name]["default"] = $value;
+	}
+	
 	final public function getParamDefault( $name ) 
 	{
 		return $this->params[$name]["default"];
