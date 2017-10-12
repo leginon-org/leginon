@@ -1300,11 +1300,8 @@ class SessionListCtrl(wx.ListCtrl, ColumnSorterMixin):
 				session_time = None
 			try:
 				lastimg = leginon.leginondata.AcquisitionImageData(session=session).query(results=1)[0]
-				if session_time and lastimg:
-					session_timedelta = lastimg.timestamp - session_time
-					session_hours = '%.1f' % (session_timedelta.days*24 + session_timedelta.seconds/60.0/60.0)
-				else:
-					session_hours = 'N/A'
+				session_timedelta = lastimg.timestamp - session_time
+				session_hours = '%.1f' % (session_timedelta.days*24 + session_timedelta.seconds/60.0/60.0)
 			except:
 				session_hours = 'N/A'
 			try:
