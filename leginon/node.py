@@ -600,6 +600,9 @@ class Node(correctorclient.CorrectorClient):
 		self.instrument.tem.exposeSpecimenNotCamera(seconds)
 		self.logger.info('specimen-only exposure done')
 
+	def setUserVerificationStatus(self, state):
+		evt = gui.wx.Events.UserVerificationUpdatedEvent(self.panel, state)
+		self.panel.GetEventHandler().AddPendingEvent(evt)
 
 ## module global for storing start times
 start_times = {}

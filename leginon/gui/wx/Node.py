@@ -120,7 +120,6 @@ class Panel(wx.lib.scrolledpanel.ScrolledPanel):
 		self.GetEventHandler().AddPendingEvent(evt)
 
 	def setUserVerificationStatus(self, status):
-		print 'setting to', status
 		evt = leginon.gui.wx.Events.UserVerificationUpdatedEvent(self, status)
 		self.GetEventHandler().AddPendingEvent(evt)
 
