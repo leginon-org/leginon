@@ -84,18 +84,16 @@ class SelectorItem(object):
 	def setSelected(self, selected):
 		color = wx.Colour(180,250,205)
 		if selected:
-			for item in self.items:
-				if item is None:
-					continue
-				item.SetBackgroundColour(color)
-			self.panel.SetBackgroundColour(color)
+			if len(self.items) > 2 and self.items[1] is not None:
+				self.items[1].SetBackgroundColour(color)
+			else:
+				self.panel.SetBackgroundColour(color)
 			self.items[1].SetForegroundColour(wx.Colour(200,0,0))
 		else:
-			for item in self.items:
-				if item is None:
-					continue
-				item.SetBackgroundColour(wx.WHITE)
-			self.panel.SetBackgroundColour(wx.WHITE)
+			if len(self.items) > 2 and self.items[1] is not None:
+				self.items[1].SetBackgroundColour(wx.WHITE)
+			else:
+				self.panel.SetBackgroundColour(wx.WHITE)
 			self.items[1].SetForegroundColour(wx.BLACK)
 		self.items[1].Refresh()
 
@@ -104,6 +102,20 @@ class SelectorItem(object):
 
 	def setStatus(self, value):
 		self.items[3].set(value)
+
+	def setUserVerificationStatus(self, value):
+		# there should always be more than 2 items, but check anyway.
+		if value:
+			self.items[0].SetBackgroundColour(wx.RED)
+			if len(self.items) > 2:
+				self.items[2].SetBackgroundColour(wx.RED)
+		else:
+			self.items[0].SetBackgroundColour(wx.WHITE)
+			if len(self.items) > 2:
+				self.items[2].SetBackgroundColour(wx.WHITE)
+		self.items[0].Refresh()
+		if len(self.items) > 2:
+			self.items[2].Refresh()
 
 class Selector(wx.lib.scrolledpanel.ScrolledPanel):
 	def __init__(self, parent):
