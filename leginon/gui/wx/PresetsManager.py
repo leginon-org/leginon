@@ -1278,9 +1278,8 @@ class SessionListCtrl(wx.ListCtrl, ColumnSorterMixin):
 	def __init__(self, parent):
 		wx.ListCtrl.__init__(self, parent, -1, style=wx.LC_REPORT)
 		self.InsertColumn(0, 'Session')
-		self.InsertColumn(1, 'Time')
+		self.InsertColumn(1, 'Length (hrs)')
 		self.InsertColumn(2, 'User')
-		self.InsertColumn(3, 'Description')
 
 		self.itemDataMap = {}
 		ColumnSorterMixin.__init__(self, 4)
@@ -1296,22 +1295,29 @@ class SessionListCtrl(wx.ListCtrl, ColumnSorterMixin):
 			usernamelist = []
 			name = session['name']
 			try:
-				time = session.timestamp
+				session_time = session.timestamp
 			except:
-				time = None
+				session_time = None
+			try:
+				lastimg = leginon.leginondata.AcquisitionImageData(session=session).query(results=1)[0]
+				if session_time and lastimg:
+					session_timedelta = lastimg.timestamp - session_time
+					session_hours = '%.1f' % (session_timedelta.days*24 + session_timedelta.seconds/60.0/60.0)
+				else:
+					session_hours = 'N/A'
+			except:
+				session_hours = 'N/A'
 			try:
 				usernamelist.append(session['user']['firstname'])
 				usernamelist.append(session['user']['lastname'])
 				user = ' '.join(usernamelist)
 			except:
 				continue
-			comment = session['comment']
 			index = self.InsertStringItem(0, name)
-			self.SetStringItem(index, 1, str(time))
+			self.SetStringItem(index, 1, session_hours)
 			self.SetStringItem(index, 2, user)
-			self.SetStringItem(index, 3, comment)
 			self.SetItemData(index, i)
-			self.itemDataMap[i] = (name, time, user, comment)
+			self.itemDataMap[i] = (name, session_hours, user)
 		sessions.reverse()
 		self.SetColumnWidth(0, wx.LIST_AUTOSIZE)
 		self.SetColumnWidth(1, wx.LIST_AUTOSIZE)
