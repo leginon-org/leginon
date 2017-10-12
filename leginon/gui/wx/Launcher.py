@@ -240,6 +240,7 @@ class Panel(ListCtrlPanel):
 		}
 
 		self.Bind(leginon.gui.wx.Events.EVT_STATUS_UPDATED, self.onStatusUpdated)
+		self.Bind(leginon.gui.wx.Events.EVT_USER_VERIFICATION_UPDATED, self.onUserVerificationUpdated)
 		self.Bind(EVT_SET_ORDER, self.onSetOrder)
 		self.swmessage.Bind(wx.EVT_SIZE, self.onMessageSize)
 
@@ -279,6 +280,15 @@ class Panel(ListCtrlPanel):
 					item.setBitmap(2, self.statusicons[evt.level])
 				except KeyError:
 					item.setBitmap(2, None)
+				break
+
+	def onUserVerificationUpdated(self, evt):
+		evtobj = evt.GetEventObject()
+		print evtobj
+		for name, panel in self.panelmap.items():
+			if panel is evtobj:
+				item = self.selector.getItem(name)
+				item.setUserVerificationStatus(evt.status)
 				break
 
 	def sortOrder(self, x, y):
