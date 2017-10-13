@@ -37,12 +37,14 @@ class SelectorItem(object):
 		self.name = name
 		self.data = data
 		self.items = []
+		self.is_user_check = False
 
 		self.panel = wx.Panel(parent, -1)
 		self.panel.SetBackgroundColour(wx.WHITE)
 		self.sz = wx.GridBagSizer(0, 3)
 		self.sz.SetEmptyCellSize((16, 16))
 
+		# icon is the first item
 		if icon is not None:
 			bitmap = getBitmap(icon)
 			sb = wx.StaticBitmap(self.panel, -1, bitmap)
@@ -50,11 +52,14 @@ class SelectorItem(object):
 		else:
 			self.items.append(wx.StaticBitmap(self.panel, -1))
 
+		# node name is the second item
 		showname = '_'.join(name.split())
 		label = wx.StaticText(self.panel, -1, showname)
 		self.items.append(label)
 
+		# status is the third item
 		self.items.append(wx.StaticBitmap(self.panel, -1))
+		# process is the fourth item
 		self.items.append(leginon.gui.wx.Processing.Throbber(self.panel))
 		self.items[-1].SetBackgroundColour(wx.WHITE)
 
@@ -84,17 +89,16 @@ class SelectorItem(object):
 	def setSelected(self, selected):
 		color = wx.Colour(180,250,205)
 		if selected:
-			if len(self.items) > 2 and self.items[1] is not None:
-				self.items[1].SetBackgroundColour(color)
-			else:
-				self.panel.SetBackgroundColour(color)
+			self.panel.SetBackgroundColour(color)
+			if not self.is_user_check:
+				self.setUserVerificationStatusColor(color)
 			self.items[1].SetForegroundColour(wx.Colour(200,0,0))
 		else:
-			if len(self.items) > 2 and self.items[1] is not None:
-				self.items[1].SetBackgroundColour(wx.WHITE)
-			else:
-				self.panel.SetBackgroundColour(wx.WHITE)
+			self.panel.SetBackgroundColour(wx.WHITE)
+			if not self.is_user_check:
+				self.setUserVerificationStatusColor(wx.WHITE)
 			self.items[1].SetForegroundColour(wx.BLACK)
+		self.panel.Refresh()
 		self.items[1].Refresh()
 
 	def setBitmap(self, index, name):
@@ -103,19 +107,18 @@ class SelectorItem(object):
 	def setStatus(self, value):
 		self.items[3].set(value)
 
+	def setUserVerificationStatusColor(self, color):
+		for i in (0,2,3):
+			self.items[i].SetBackgroundColour(color)
+			self.items[i].Refresh()
+
 	def setUserVerificationStatus(self, value):
-		# there should always be more than 2 items, but check anyway.
+		# set background color on all items except the text
 		if value:
-			self.items[0].SetBackgroundColour(wx.RED)
-			if len(self.items) > 2:
-				self.items[2].SetBackgroundColour(wx.RED)
+			self.setUserVerificationStatusColor(wx.RED)
 		else:
-			self.items[0].SetBackgroundColour(wx.WHITE)
-			if len(self.items) > 2:
-				self.items[2].SetBackgroundColour(wx.WHITE)
-		self.items[0].Refresh()
-		if len(self.items) > 2:
-			self.items[2].Refresh()
+			self.setUserVerificationStatusColor(wx.WHITE)
+		self.is_user_check = value
 
 class Selector(wx.lib.scrolledpanel.ScrolledPanel):
 	def __init__(self, parent):

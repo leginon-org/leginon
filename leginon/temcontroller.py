@@ -317,7 +317,7 @@ class TEMController(node.Node):
 			self.logger.warning('Invalid grid slot state. Can not load.')
 			self.panel.setTEMParamDone()
 			return
-		return _loadGrid(slot_number)
+		return self._loadGrid(slot_number)
 
 	def _loadGrid(self, slot_number):
 		# Loading occupied grid.

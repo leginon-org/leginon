@@ -284,7 +284,6 @@ class Panel(ListCtrlPanel):
 
 	def onUserVerificationUpdated(self, evt):
 		evtobj = evt.GetEventObject()
-		print evtobj
 		for name, panel in self.panelmap.items():
 			if panel is evtobj:
 				item = self.selector.getItem(name)

@@ -125,7 +125,7 @@ class HoleFinder(object):
 		## some default configuration parameters
 		self.save_mrc = False
 		self.template_config = {'template filename':'', 'template diameter':168, 'file diameter':168, 'invert':False}
-		self.correlation_config = {'cortype': 'cross', 'corfilt': (1.0,)}
+		self.correlation_config = {'cortype': 'cross', 'corfilt': (1.0,),'cor_image_min':0.0}
 		self.threshold = 3.0
 		self.threshold_method = "Threshold = mean + A * stdev"
 		self.blobs_config = {'border': 20, 'maxblobsize': 50, 'maxblobs':100}
@@ -198,10 +198,15 @@ class HoleFinder(object):
 
 		im2 = scipy.ndimage.zoom(tempim, scale)
 		origshape = im2.shape
-		edgevalue = im2[0,0]
-		template = edgevalue * numpy.ones(shape, im2.dtype)
-		offset = ( (shape[0]-origshape[0])/2, (shape[1]-origshape[1])/2 )
-		template[offset[0]:offset[0]+origshape[0], offset[1]:offset[1]+origshape[1]] = im2
+		if min(shape) > min(origshape):
+			edgevalue = im2[0,0]
+			template = edgevalue * numpy.ones(shape, im2.dtype)
+			offset = ( (shape[0]-origshape[0])/2, (shape[1]-origshape[1])/2 )
+			template[offset[0]:offset[0]+origshape[0], offset[1]:offset[1]+origshape[1]] = im2
+		else:
+			# Issue #3033 make sure template is not larger than the image
+			offset = ((origshape[0]-shape[0])/2,(origshape[1]-shape[1])/2 ) 
+			template = im2[offset[0]:offset[0]+shape[0], offset[1]:offset[1]+shape[1]]
 		shift = (shape[0]/2, shape[1]/2)
 		template = scipy.ndimage.shift(template, shift, mode='wrap')
 
@@ -214,7 +219,9 @@ class HoleFinder(object):
 		if cortype is not None:
 			self.correlation_config['cortype'] = cortype
 		self.correlation_config['corfilt'] = corfilt
-		self.correlation_config['cor_image_min'] = cor_image_min
+		if cor_image_min is not None:
+			# for back compatibility
+			self.correlation_config['cor_image_min'] = cor_image_min
 
 	def maskBlack(self, image):
 		'''
