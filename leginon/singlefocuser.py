@@ -120,6 +120,7 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 				return []
 
 		sequence = []
+		has_manual_on = False
 		for name in focus_sequence_data['sequence']:
 			focus_setting = self.researchFocusSetting(name)
 			if focus_setting is None:
@@ -127,6 +128,9 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 				self.logger.warning(warning)
 			else:
 				sequence.append(focus_setting)
+				if focus_setting['focus method'] == 'Manual' and focus_setting['switch'] is True:
+					has_manual_on = True
+		self.setUserVerificationStatus(has_manual_on)
 		return sequence
 
 	def researchFocusSetting(self, name):
