@@ -223,7 +223,8 @@ class Node(correctorclient.CorrectorClient):
 
 	def onInitialized(self):
 		if self.panel is None:
-			return
+			# gui not loaded
+			return False
 		evt = gui.wx.Node.NodeInitializedEvent(self)
 		self.panel.GetEventHandler().AddPendingEvent(evt)
 		evt.event.wait()

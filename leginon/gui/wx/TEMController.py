@@ -88,10 +88,35 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		# Contoller Events
 		self.Bind(leginon.gui.wx.Events.EVT_GET_DISPLAY_PRESSURE, self.onDisplayPressure)
 		self.Bind(leginon.gui.wx.Events.EVT_GET_DISPLAY_GRID_LOADER_SLOT_STATES, self.onDisplayGridLoaderSlotStates)
+		self.Bind(leginon.gui.wx.Events.EVT_UPDATE_GRID_SLOT_SELECTOR, self.onUpdateGridSlotSelector)
 
+	def onSettingsTool(self, evt):
+		dialog = SettingsDialog(self,show_basic=True)
+		dialog.ShowModal()
+		dialog.Destroy()
+
+	def onShow(self):
+		self.setPresetChoice()
+		self.setGridSlotChoice()
+
+	def setTEMParamDone(self):
+		'''
+		called from node. Event creater for contoller.
+		'''
+		self.refreshDisplay()
+
+	def onRefreshTool(self, evt):
+		self.refreshDisplay()
+
+	def refreshDisplay(self):
+		self.addDisplayPressureEvent()
+		self.addDisplayGridLoaderSlotStatesEvent()
+		self.addUpdateGridSlotSelectorEvent()
+
+	#=============Preset Selector and Set  ========================
 	def insertPresetSelector(self, position):
 		'''
-		Select preset to send/get.
+		Select preset to send.
 		'''
 		# This needs to be done after self.node is set.
 		self.presetnames = self.node.presetsclient.getPresetNames()
@@ -106,10 +131,6 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 													shortHelpString='Send preset to scope')
 		self.toolbar.InsertControl(position, self.preset_choices)
 		return
-
-	def onShow(self):
-		self.setPresetChoice()
-		self.setGridSlotChoice()
 
 	def setPresetChoice(self):
 		current_choice = self.preset_choices.GetStringSelection()
@@ -140,35 +161,10 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		# node is selected.
 		self.enableAll(True)
 
+	#=============COLUMN VALVE CONTROL========================
 	def enableAll(self, state):
 		self._lightonEnable(state)
 		self._lightoffEnable(state)
-
-	def setTEMParamDone(self):
-		'''
-		called from node. Event creater for contoller.
-		'''
-		self.refreshDisplay()
-
-	def onRefreshTool(self, evt):
-		self.refreshDisplay()
-
-	def refreshDisplay(self):
-		self.addDisplayPressureEvent()
-		self.addDisplayGridLoaderSlotStatesEvent()
-
-	def addDisplayPressureEvent(self):
-		# MCV model create event to publish
-		evt = leginon.gui.wx.Events.GetDisplayPressureEvent()
-		evt.unit = 'Pascal'
-		evt.values = self.node.getPressuresToDisplay(evt.unit)
-		self.GetEventHandler().AddPendingEvent(evt)
-
-	def onDisplayPressure(self, evt):
-		# MCV controller handle event and set change to view
-		self.sz_pressure.setUnit(evt.unit)
-		self.sz_pressure.setFloat(evt.values)
-		self.szmain.Layout()
 
 	def _lightonEnable(self, enable):
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_LIGHT_ON, enable)
@@ -180,20 +176,6 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		self._lightonEnable(not status)
 		self._lightoffEnable(status)
 
-	def onResetXY(self, evt):
-		self.node.onResetXY()
-
-	def onResetZ(self, evt):
-		self.node.onResetZ()
-
-	def onResetAlpha(self, evt):
-		self.node.onResetAlpha()
-
-	def onSettingsTool(self, evt):
-		dialog = SettingsDialog(self,show_basic=True)
-		dialog.ShowModal()
-		dialog.Destroy()
-
 	def onLightOnTool(self, evt):
 		self._lightonEnable(False)
 		self._lightoffEnable(True)
@@ -204,19 +186,20 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		self._lightoffEnable(False)
 		threading.Thread(target=self.node.uiCloseColumnValve).start()
 
-	def insertGridSlotSelector(self,position):
-		'''
-		Select preset to send/get.
-		'''
+	#=========GRID SLOT SELECTOR============================
+	def getGridSelectionNames(self):
 		# This needs to be done after self.node is set.
 		self.grid_slot_names = self.node.getGridSlotNames()
-		if not self.grid_slot_names:
-			return
-		self.sz_gridloader.setOrder(self.grid_slot_names)
 		# Use a different list to include default before knowing which grid is loaded.
 		self.grid_selection_names = list(self.grid_slot_names)
-		self.grid_selection_names.insert(0,'?')
+		if self.grid_selection_names:
+			self.grid_selection_names.insert(0,'?')
 
+	def insertGridSlotSelector(self,position):
+		'''
+		Create Choice Sizer
+		'''
+		self.getGridSelectionNames()
 		self.grid_slot_choices = Choice(self.toolbar, -1, choices=self.grid_selection_names)
 		# Insert in reverse order
 		self.toolbar.InsertSeparator(position)
@@ -227,17 +210,33 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 													'extractgrid',
 													shortHelpString='Insert grid from gridloader slot')
 		self.toolbar.InsertControl(position,self.grid_slot_choices)
-		self.addDisplayGridLoaderSlotStatesEvent()
 		return
+
+	def addUpdateGridSlotSelectorEvent(self):
+		# MCV model create event to publish
+		self.getGridSelectionNames()
+		if not self.grid_selection_names:
+			# Do nothing is no grids
+			return
+		evt = leginon.gui.wx.Events.UpdateGridSlotSelectorEvent()
+		evt.values = self.grid_selection_names
+		self.GetEventHandler().AddPendingEvent(evt)
+
+	def onUpdateGridSlotSelector(self, evt):
+		names = evt.values
+		self.setGridSlotChoices(names)
+		self.setGridSlotChoice()
+
+	def setGridSlotChoices(self,names):
+		# This part is needed for wxpython 2.8.  It can be replaced by Set function in 3.0
+		self.grid_slot_choices.Clear()
+		for name in names:
+			self.grid_slot_choices.Append(name)
 
 	def setGridSlotChoice(self):
 		if not self.grid_slot_names:
 			return
 		current_choice = self.grid_slot_choices.GetStringSelection()
-		# This part is needed for wxpython 2.8.  It can be replaced by Set function in 3.0
-		self.grid_slot_choices.Clear()
-		for name in self.grid_selection_names:
-			self.grid_slot_choices.Append(name)
 		if current_choice in self.grid_selection_names:
 			self.grid_slot_choices.SetStringSelection(current_choice)
 
@@ -258,6 +257,32 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		self.displayGridLoaderSlotStates()
 		self.enableAll(True)
 
+	#===========STAGE CONTROL===================
+	def onResetXY(self, evt):
+		self.node.onResetXY()
+
+	def onResetZ(self, evt):
+		self.node.onResetZ()
+
+	def onResetAlpha(self, evt):
+		self.node.onResetAlpha()
+
+	#=============PRESSURE DISPLAY=====================
+	def addDisplayPressureEvent(self):
+		# MCV model create event to publish
+		evt = leginon.gui.wx.Events.GetDisplayPressureEvent()
+		evt.unit = 'Pascal'
+		evt.values = self.node.getPressuresToDisplay(evt.unit)
+		self.GetEventHandler().AddPendingEvent(evt)
+
+	def onDisplayPressure(self, evt):
+		# MCV controller handle event and set change to view
+		self.sz_pressure.setUnit(evt.unit)
+		self.sz_pressure.setFloat(evt.values)
+		self.szmain.Layout()
+
+
+	#==========GRID LOADER SLOT STATE DISPLAY=======
 	def addDisplayGridLoaderSlotStatesEvent(self):
 		# MCV model create event to publish
 		states = self.node.getGridSlotStatesToDisplay()
@@ -270,6 +295,9 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		self.GetEventHandler().AddPendingEvent(evt)
 
 	def onDisplayGridLoaderSlotStates(self, evt):
+		# Reload it in case it is different such as instrument not ready
+		self.grid_slot_names = self.node.getGridSlotNames()
+		self.sz_gridloader.setOrder(self.grid_slot_names)
 		self.sz_gridloader.setUnit(evt.unit)
 		self.sz_gridloader.setString(evt.values)
 		self.szmain.Layout()
@@ -300,11 +328,19 @@ class TEMParameters(wx.StaticBoxSizer):
 		self.sts = {}
 		self.sz = wx.GridBagSizer(0, 5)
 		self.unit = ''
+		self.order = []
 		self.setOrder(order)
 		self.sz.AddGrowableCol(0)
 		self.Add(self.sz, 1, wx.EXPAND|wx.ALL, 3)
 
 	def setOrder(self, name_order):
+		'''
+		set the inmutable item keys and unit and insert static text sizer
+		in oder.
+		'''
+		if self.order:
+			# set Only once
+			return
 		# order is a list of name of parameters to be displayed
 		self.order = name_order
 		for i, name in enumerate(self.order):
