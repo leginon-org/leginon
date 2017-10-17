@@ -32,7 +32,7 @@ class experimentdata {
 		foreach ($qarray as $q) {
 			$res = $sqld->SQLQuery($q);
 			echo $sqld->getError();
-			$row = mysql_fetch_row($res);
+			$row = mysqli_fetch_row($res);
 			$nb += $row[0];
 		}
 		return $nb;

@@ -31,7 +31,7 @@ class statusreportdata {
 		   .'where projectId="'.$projectId.'" '
 		   .'order by timestamp desc';
 		$RstatusreportInfo = $this->mysql->SQLQuery($q);
-		while ($row = mysql_fetch_array($RstatusreportInfo))
+		while ($row = mysqli_fetch_array($RstatusreportInfo))
 			$statusreports[]=array(
 			0 => $row[statusreportId], 'statusreportId' => $row[statusreportId],
 			1 => $row[timestamp], 'timestamp' => $row[timestamp],
@@ -51,7 +51,7 @@ class statusreportdata {
 		   .'where statusreportId="'.$statusreportId.'" '
 		   .'order by timestamp desc';
 		$RstatusreportInfo = $this->mysql->SQLQuery($q);
-		$statusreport = mysql_fetch_array($RstatusreportInfo);
+		$statusreport = mysqli_fetch_array($RstatusreportInfo);
 		return $statusreport;
 	}
 
@@ -68,7 +68,7 @@ class statusreportdata {
 		$q=' select statusreportId from statusreports where '
 			.' projectId="'.$projectId.'" and statusreport="'.$statusreport.'"';
 		$RstatusreportInfo = $this->mysql->SQLQuery($q);
-		$statusreportInfo = mysql_fetch_array($RstatusreportInfo);
+		$statusreportInfo = mysqli_fetch_array($RstatusreportInfo);
 		return $statusreportInfo[statusreportId];
 	}
 

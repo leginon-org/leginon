@@ -4051,7 +4051,7 @@ class particledata {
 		$q = "INSERT INTO `ApRecipeData` "
 			."(`name`, `description`,`ctfrunids`,`REF|ApStackData|stack`,`REF|ApAlignStackData|alignstack`) "
 			."VALUES "
-			."('$name','".mysql_real_escape_string($description)."',";
+			."('$name','".mysqli_real_escape_string($description)."',";
 		$q .= ($ctfrunids) ? "'$ctfrunids'," : "NULL,";
 		$q .= ($stackid) ? "'$stackid'," : "NULL,";
 		$q .= ($alignstackid) ? "'$alignstackid'" : "NULL";
