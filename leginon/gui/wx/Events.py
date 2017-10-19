@@ -104,8 +104,9 @@ eventFactory('Set CCDCamera', attributes=['name'], command=True)
 eventFactory('Set CCDCameras', attributes=['names'], command=True)
 eventFactory('CCDCamera Change', attributes=['name'], command=True)
 # MCV events
-eventFactory('Get Display Pressure', attributes=['unit','values']) 
-eventFactory('Get Display Grid Loader Slot States', attributes=['values']) 
+eventFactory('Get Display Pressure', attributes=['unit','values'])
+eventFactory('Get Display Grid Loader Slot States', attributes=['values'])
+eventFactory('Update Grid Slot Selector', attributes=['values'])
 
 
 
@@ -113,11 +114,13 @@ PlayerEventType = wx.NewEventType()
 SetImageEventType = wx.NewEventType()
 SetTargetsEventType = wx.NewEventType()
 StatusUpdatedEventType = wx.NewEventType()
+UserVerificationUpdatedEventType = wx.NewEventType()
 
 EVT_PLAYER = wx.PyEventBinder(PlayerEventType)
 EVT_SET_IMAGE = wx.PyEventBinder(SetImageEventType)
 EVT_SET_TARGETS = wx.PyEventBinder(SetTargetsEventType)
 EVT_STATUS_UPDATED = wx.PyEventBinder(StatusUpdatedEventType)
+EVT_USER_VERIFICATION_UPDATED = wx.PyEventBinder(UserVerificationUpdatedEventType)
 
 class PlayerEvent(wx.PyEvent):
 	def __init__(self, state):
@@ -145,5 +148,11 @@ class StatusUpdatedEvent(wx.PyCommandEvent):
 		wx.PyCommandEvent.__init__(self, StatusUpdatedEventType, source.GetId())
 		self.SetEventObject(source)
 		self.level = level
+		self.status = status
+
+class UserVerificationUpdatedEvent(wx.PyCommandEvent):
+	def __init__(self, source, status=None):
+		wx.PyCommandEvent.__init__(self, UserVerificationUpdatedEventType, source.GetId())
+		self.SetEventObject(source)
 		self.status = status
 

@@ -141,6 +141,9 @@ class CacheFS(fs.osfs.OSFS):
 			self.removedir(os.path.dirname(name), recursive=True)
 		except fs.errors.DirectoryNotEmptyError:
 			pass
+		except fs.errors.RemoveRootError:
+			print 'CACHEFS ERROR: removeRootError while removing parent directory of: ', name
+			pass
 
 test_cache_dir = 'cachedir'
 

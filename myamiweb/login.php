@@ -53,7 +53,7 @@ if ($login!=2) {
 <?php
 	}
 ?>
-	<form method="post" action="<?php $_SERVER['REQUEST_URI']?>" name="">
+	<form method="post" action="<?php echo $_SERVER['REQUEST_URI']?>" name="">
 		<center><table cellspacing=20>
 			<tr>
 			<td align="center">

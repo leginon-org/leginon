@@ -336,7 +336,6 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 
 	def _testRun(self):
 		preset_name = None
-		position0 = {}
 		pause_time = self.settings['pause time']
 		# must have preset
 		preset = self.presets_client.getCurrentPreset()
@@ -344,9 +343,9 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 			self.logger.error('No current preset. Send desired preset for testing first')
 			return
 		self.preset_name = preset['name']
-		# move to reference target with preset
 		self.reference_target = self.getReferenceTarget()
 		if self.reference_target:
+			# move to reference target with preset
 			self.logger.info('Use reference target for testing')
 			request_data = {'preset':preset['name']}
 			self.moveAndExecute(request_data)

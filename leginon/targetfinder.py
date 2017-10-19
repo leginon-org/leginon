@@ -90,6 +90,11 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		# assumes needing focus. Overwritten by subclasses
 		self.foc_activated = True
 
+	def onInitialized(self):
+		super(TargetFinder, self).onInitialized()
+		# self.panel is now made
+		self.setUserVerificationStatus(self.settings['user check'])
+
 	def handleApplicationEvent(self,evt):
 		'''
 		Find the Acquisition class or its subclass instance bound
