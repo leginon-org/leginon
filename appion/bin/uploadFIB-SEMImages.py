@@ -44,16 +44,17 @@ class UploadSEMImages(appionScript.AppionScript):
 			help="Section slice width (z width) in nm")
 		
 	def checkConflicts(self):
-		if self.params['description'] is None:
-			apDisplay.printError("Please provide a description, e.g., --description='test'")
 		if self.params['imagedir'] is None:
 			apDisplay.printError("Please provide a image directory, e.g., --imagedir=/path/to/files/")
 			if not os.path.isdir(self.params['imagedir']):
 				apDisplay.printError("Image directory '%s' does not exist"%(self.params['imagedir']))
 
+
 		### set session name if undefined
 		if not 'sessionname' in self.params or self.params['sessionname'] is None:
 			self.params['sessionname'] = self.getUnusedSessionName()
+			if self.params['description'] is None:
+				apDisplay.printError("Please provide a description, e.g., --description='test'")
 
 		### set leginon dir if undefined
 		if self.params['leginondir'] is None:
@@ -208,7 +209,10 @@ class UploadSEMImages(appionScript.AppionScript):
 		im=Image.open(origfilepath)
 		self.SEM_Data = {}
 		header=im.tag[fei_tag]
-		#header=header[0] #sd added this since header type is tuple in the sample images from https://catalog.data.gov/dataset/fib-sem-image-data-set-of-caenorhabditis-elegans-exposed-to-60-nm-au-nanoparticles 
+
+		if isinstance(header,tuple):#sd added this since header type is tuple in the sample images from https://catalog.data.gov/dataset/fib-sem-image-data-set-of-caenorhabditis-elegans-exposed-to-60-nm-au-nanoparticles
+			header=header[0] 
+		 
 		for key in keys:
 		   match=re.search(re.escape(key[0]) + r"=(.*)\r\n",header)
 		   if key[1] != 'radians' :
@@ -296,9 +300,11 @@ class UploadSEMImages(appionScript.AppionScript):
 				apDisplay.printMsg("Path exists: skipping "+newimagepath)
 				continue
 			imagearray = self.prepareImageForUpload(tif_file)
-			cmd = ['tif2mrc',tif_file, newimagepath]
+			cmd = ['tif2mrc','-u',tif_file, newimagepath]
+			
 			p = subprocess.Popen(cmd)
 			p.communicate()
+
 			imagearray = mrc.read(newimagepath)
 			### get image dimensions
 			dims = self.getImageDimensions(newimagepath)
