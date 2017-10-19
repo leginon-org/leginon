@@ -300,7 +300,7 @@ class UploadSEMImages(appionScript.AppionScript):
 				apDisplay.printMsg("Path exists: skipping "+newimagepath)
 				continue
 			imagearray = self.prepareImageForUpload(tif_file)
-			cmd = ['tif2mrc','-u',tif_file, newimagepath]
+			cmd = ['tif2mrc','-s',tif_file, newimagepath]
 			
 			p = subprocess.Popen(cmd)
 			p.communicate()
