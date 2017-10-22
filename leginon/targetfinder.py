@@ -93,7 +93,8 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 	def onInitialized(self):
 		super(TargetFinder, self).onInitialized()
 		# self.panel is now made
-		self.setUserVerificationStatus(self.settings['user check'])
+		combined_state = self.settings['user check'] and not self.settings['queue']
+		self.setUserVerificationStatus(combined_state)
 
 	def handleApplicationEvent(self,evt):
 		'''
