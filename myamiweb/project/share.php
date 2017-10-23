@@ -18,8 +18,8 @@ checkExptAccessPrivilege($sessionId,'shareexperiments');
 $is_admin = checkExptAdminPrivilege($sessionId,'shareexperiments');
 ?>
 
-<form method="POST" name="projectform" action="<?php $_SERVER['REQUEST_URI'] ?>">
-<input type="hidden" name="sessionId" value="<?php $sessionId ?>">
+<form method="POST" name="projectform" action="<?php echo $_SERVER['REQUEST_URI'] ?>">
+<input type="hidden" name="sessionId" value="<?php echo $sessionId ?>">
 
 <h3>Selected Experiment </h3>
 <table class="tableborder" border="1" valign="top">
