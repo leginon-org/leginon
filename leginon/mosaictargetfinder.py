@@ -126,12 +126,10 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 			if coord_tuple in self.existing_position_targets and self.existing_position_targets[coord_tuple]:
 				# pop so that it has a smaller dictionary to check
 				targetdata = self.existing_position_targets[coord_tuple].pop()
-				print 'popped targetdata', coord_tuple, targetdata.dbid
 			else:
 				# This is a new position, publish it
 				c,r = coord_tuple
 				targetdata = self.mosaicToTarget(typename, r, c)
-				print 'add target at', coord_tuple
 			if coord_tuple not in displayedtargetdata:
 				displayedtargetdata[coord_tuple] = []
 			displayedtargetdata[coord_tuple].append(targetdata)
@@ -173,18 +171,9 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.refreshDatabaseDisplayedTargets()
 		# create target list
 		self.logger.info('Submitting targets...')
-		if self.existing_position_targets:
-			print map((lambda x: '%s:%s, ' % (x,self.existing_position_targets[x][0].dbid)),self.existing_position_targets.keys()), 'before acquisition'
 		self.getTargetDataList('acquisition')
-		if self.existing_position_targets:
-			print map((lambda x: '%s:%s, ' % (x,self.existing_position_targets[x][0].dbid)),self.existing_position_targets.keys()), 'after acquisition'
 		self.getTargetDataList('focus')
 		self.getTargetDataList('preview')
-		if self.existing_position_targets:
-			try:
-				print map((lambda x: '%s:%s, ' % (x,self.existing_position_targets[x][0].dbid)),self.existing_position_targets.keys()), 'after preview'
-			except:
-				print 'there are empty existing_postion_targets', self.existing_position_targets
 		try:
 			self.publish(self.targetlist, pubevent=True)
 		except node.PublishError, e:
