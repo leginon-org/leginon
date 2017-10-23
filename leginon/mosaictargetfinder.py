@@ -115,19 +115,29 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 			self.logger.debug('done create final')
 
 	def getTargetDataList(self, typename):
+		'''
+		Get positions of the typename targets from atlas, publish the new ones,
+		and then update self.existing_position_targets with the published one added.
+		'''
 		displayedtargetdata = {}
-		targetsfromimage = self.panel.getTargetPositions(typename)
-		for t in targetsfromimage:
-			## if displayed previously (not clicked)...
-			if t in self.displayedtargetdata and self.displayedtargetdata[t]:
-				targetdata = self.displayedtargetdata[t].pop()
+		target_positions_from_image = self.panel.getTargetPositions(typename)
+		for coord_tuple in target_positions_from_image:
+			##  check if it is an existing position with database target.
+			if coord_tuple in self.existing_position_targets and self.existing_position_targets[coord_tuple]:
+				# pop so that it has a smaller dictionary to check
+				targetdata = self.existing_position_targets[coord_tuple].pop()
+				print 'popped targetdata', coord_tuple, targetdata.dbid
 			else:
-				c,r = t
+				# This is a new position, publish it
+				c,r = coord_tuple
 				targetdata = self.mosaicToTarget(typename, r, c)
-			if t not in displayedtargetdata:
-				displayedtargetdata[t] = []
-			displayedtargetdata[t].append(targetdata)
-		self.displayedtargetdata = displayedtargetdata
+				print 'add target at', coord_tuple
+			if coord_tuple not in displayedtargetdata:
+				displayedtargetdata[coord_tuple] = []
+			displayedtargetdata[coord_tuple].append(targetdata)
+		# update self.existing_position_targets,  This is still a bit strange.
+		for coord_tuple in displayedtargetdata:
+			self.existing_position_targets[coord_tuple] = displayedtargetdata[coord_tuple]
 
 	def getDisplayedReferenceTarget(self):
 		try:
@@ -141,6 +151,8 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.userpause.set()
 		try:
 			if self.settings['autofinder']:
+				# trigger onTargetsSubmitted in the gui.
+				self.panel.targetsSubmitted()
 				return
 		except:
 			pass
@@ -149,10 +161,30 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 			self.targetlist = self.newTargetList()
 			self.publish(self.targetlist, database=True, dbforce=True)
 
+		if self.hasNewImageVersion():
+			self.logger.error('New version of images were acquired after this atlas is generated')
+			self.logger.error('You must refresh the map and repick the targets')
+			# trigger onTargetsSubmitted in the gui.
+			self.panel.targetsSubmitted()
+			return
+
+		# self.existing_position_targets becomes empty on the second
+		# submit if not refreshed. 
+		self.refreshDatabaseDisplayedTargets()
+		# create target list
 		self.logger.info('Submitting targets...')
+		if self.existing_position_targets:
+			print map((lambda x: '%s:%s, ' % (x,self.existing_position_targets[x][0].dbid)),self.existing_position_targets.keys()), 'before acquisition'
 		self.getTargetDataList('acquisition')
+		if self.existing_position_targets:
+			print map((lambda x: '%s:%s, ' % (x,self.existing_position_targets[x][0].dbid)),self.existing_position_targets.keys()), 'after acquisition'
 		self.getTargetDataList('focus')
 		self.getTargetDataList('preview')
+		if self.existing_position_targets:
+			try:
+				print map((lambda x: '%s:%s, ' % (x,self.existing_position_targets[x][0].dbid)),self.existing_position_targets.keys()), 'after preview'
+			except:
+				print 'there are empty existing_postion_targets', self.existing_position_targets
 		try:
 			self.publish(self.targetlist, pubevent=True)
 		except node.PublishError, e:
@@ -168,6 +200,9 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 				self.logger.error('Submitting reference target failed')
 			else:
 				self.logger.info('Reference target submitted')
+		self.logger.info('Done target submission')
+		# trigger onTargetsSubmitted in the gui.
+		self.panel.targetsSubmitted()
 
 	def clearTiles(self):
 		self.tilemap = {}
@@ -209,6 +244,9 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		return False
 
 	def targetsFromDatabase(self):
+		'''
+		This function sets the most recent version of the targets in targetmap and reference target.
+		'''
 		for id, imagedata in self.imagemap.items():
 			recent_imagedata = self.researchImages(list=imagedata['list'],target=imagedata['target'])[-1]
 			self.targetmap[id] = {}
@@ -257,7 +295,48 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		### this is a list of targets, in this case, one target
 		self.currentposition = [vcoord]
 
+	def refreshDatabaseDisplayedTargets(self):
+		self.logger.info('Getting targets from database...')
+		if not self.hasNewImageVersion():
+			self.targetsFromDatabase()
+		else:
+			self.logger.error('Can not refresh with new image version')
+		# refresh but not set display.  Thefefore does not care about the returned values
+		self.createExistingPositionTargets()
+
+	def createExistingPositionTargets(self):
+		# start fresh
+		self.existing_position_targets = {}
+		targets = {}
+		donetargets = []
+		for ttype in ('acquisition','focus'):
+			targets[ttype] = []
+			for id, targetlists in self.targetmap.items():
+				if ttype not in targetlists.keys():
+					targetlist = []
+				else:
+					targetlist = targetlists[ttype]
+				for targetdata in targetlist:
+					tile = self.tilemap[id]
+					#tilepos = self.mosaic.getTilePosition(tile)
+					r,c = self.targetToMosaic(tile, targetdata)
+					vcoord = c,r
+					if vcoord not in self.existing_position_targets:
+						# a position without saved target as default.
+						self.existing_position_targets[vcoord] = []
+					if targetdata['status'] in ('done', 'aborted'):
+						self.existing_position_targets[vcoord].append(targetdata)
+						donetargets.append(vcoord)
+					elif targetdata['status'] in ('new','processing'):
+						self.existing_position_targets[vcoord].append(targetdata)
+						targets[ttype].append(vcoord)
+					else:
+						# other status ignored (mainly NULL)
+						pass
+		return targets, donetargets
+
 	def displayDatabaseTargets(self):
+
 		self.logger.info('Getting targets from database...')
 		if not self.hasNewImageVersion():
 			self.targetsFromDatabase()
@@ -274,32 +353,10 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		if self.__class__ != MosaicClickTargetFinder:
 			self.setTargets([], 'region')
 
-		self.displayedtargetdata = {}
-		targets = {}
-		for type in ('acquisition','focus'):
-			targets[type] = []
-			for id, targetlists in self.targetmap.items():
-				if type not in targetlists.keys():
-					targetlist = []
-				else:
-					targetlist = targetlists[type]
-				for targetdata in targetlist:
-					tile = self.tilemap[id]
-					#tilepos = self.mosaic.getTilePosition(tile)
-					r,c = self.targetToMosaic(tile, targetdata)
-					vcoord = c,r
-					if vcoord not in self.displayedtargetdata:
-						self.displayedtargetdata[vcoord] = []
-					if targetdata['status'] in ('done', 'aborted'):
-						donetargets.append(vcoord)
-						self.displayedtargetdata[vcoord].append(targetdata)
-					elif targetdata['status'] in ('new','processing'):
-						targets[type].append(vcoord)
-						self.displayedtargetdata[vcoord].append(targetdata)
-					else:
-						# other status ignored (mainly NULL)
-						pass
-			self.setTargets(targets[type], type)
+		#
+		targets, donetargets = self.createExistingPositionTargets()
+		for ttype in targets.keys():
+			self.setTargets(targets[ttype], ttype)
 		self.setTargets(donetargets, 'done')
 
 		# ...
@@ -488,6 +545,9 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		return scaledpos
 
 	def _mosaicToTarget(self, row, col):
+		'''
+		Convert mosaic position to target position on a tile image.
+		'''
 		self.logger.debug('mosaicToTarget r %s, c %s' % (row, col))
 		unscaled = self.mosaic.unscaled((row,col))
 		tile, pos = self.mosaic.mosaic2tile(unscaled)
@@ -498,6 +558,9 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		return imagedata, drow, dcol
 
 	def mosaicToTarget(self, typename, row, col):
+		'''
+		Convert and publish the mosaic position to targetdata of the tile image.
+		'''
 		imagedata, drow, dcol = self._mosaicToTarget(row, col)
 		### create a new target list if we don't have one already
 		'''

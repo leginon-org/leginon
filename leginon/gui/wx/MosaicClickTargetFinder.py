@@ -63,6 +63,7 @@ class Panel(leginon.gui.wx.ClickTargetFinder.Panel):
 											id=leginon.gui.wx.ToolBar.ID_CURRENT_POSITION)
 
 		self.Bind(leginon.gui.wx.ImagePanelTools.EVT_SETTINGS, self.onImageSettings)
+		self.Bind(leginon.gui.wx.Events.EVT_TARGETS_SUBMITTED, self.onTargetsSubmitted)
 		self.addOtherBindings()
 
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SETTINGS, False)
@@ -75,8 +76,8 @@ class Panel(leginon.gui.wx.ClickTargetFinder.Panel):
 		threading.Thread(target=self._onSubmitTool, args=(evt,)).start()
 
 	def _onSubmitTool(self, evt):
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, False)
 		self.node.submitTargets()
-		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, True)
 
 	def onTargetsSubmitted(self, evt):
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, True)
