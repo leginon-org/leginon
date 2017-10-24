@@ -70,7 +70,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 	})
 
 	eventoutputs = targetfinder.ClickTargetFinder.eventoutputs + [event.MosaicDoneEvent]
-	targetnames = ['acquisition','focus','preview','reference','done']
+	targetnames = ['acquisition','focus','preview','reference','done','Blobs']
 	def __init__(self, id, session, managerlocation, **kwargs):
 		self.mosaicselectionmapping = {}
 		targetfinder.ClickTargetFinder.__init__(self, id, session, managerlocation, **kwargs)
@@ -645,6 +645,11 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 																self.settings['blobs']['max'],
 																self.settings['blobs']['max size'],
 																self.settings['blobs']['min size'])
+
+		# show blob target and stats
+		targets = self.blobStatsTargets(blobs)
+		self.logger.info('Number of blobs: %s' % (len(targets),))
+		self.setTargets(targets, 'Blobs')
 
 		## use stats to find good ones
 		mean_min = self.settings['blobs']['min mean']

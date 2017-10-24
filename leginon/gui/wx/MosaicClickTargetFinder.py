@@ -48,6 +48,8 @@ class Panel(leginon.gui.wx.ClickTargetFinder.Panel):
 		self.toolbar.InsertSeparator(10)
 		self.toolbar.InsertTool(11, leginon.gui.wx.ToolBar.ID_FIND_SQUARES,
 			'squarefinder',shortHelpString='Find Squares')
+		self.imagepanel.addTargetTool('Blobs', wx.Colour(0, 255, 255), shape='o')
+		self.imagepanel.selectiontool.setDisplayed('Blobs', True)
 		self.imagepanel.addTypeTool('Filtered', display=True, settings=True)
 		self.imagepanel.addTypeTool('Thresholded', display=True, settings=True)
 
