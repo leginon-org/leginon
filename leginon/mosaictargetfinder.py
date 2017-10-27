@@ -659,6 +659,8 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		targets = []
 		prefs = self.storeSquareFinderPrefs()
 		rows, columns = image.shape
+		blob_sizes = numpy.array(map((lambda x: x.stats['n']),blobs))
+		self.logger.info('Mean blob size is %.1f' % ( blob_sizes.mean(),))
 		for blob in blobs:
 			row = blob.stats['center'][0]
 			column = blob.stats['center'][1]
