@@ -2797,3 +2797,27 @@ class CameraDarkCurrentUpdatedData(Data):
 			('hostname', str),
 		)
 	typemap = classmethod(typemap)
+
+class ZeroLossIceThicknessData(InSessionData):
+	def typemap(cls):
+		return Data.typemap() + (
+			('image', AcquisitionImageData),
+			('slit mean', float),
+			('slit sd', float),
+			('no slit mean', float),
+			('no slit sd', float),
+			('thickness', float),
+		)
+	typemap = classmethod(typemap)
+
+class ZeroLossIceThicknessSettingsData(SettingsData):
+	def typemap(cls):
+		return SettingsData.typemap() + (
+			('process', bool),
+			('exposure time', float),
+			('slit width', float),
+			('mean free path', float),   #nm
+		)
+	typemap = classmethod(typemap)
+
+
