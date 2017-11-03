@@ -385,8 +385,8 @@ class MotionCor2_UCSF(DDFrameAligner):
 		for l in outbuffer: 
 			m = re.match("...... Frame", l)
 			if m:
-				shx = float(l[26:].split()[0])
-				shy = float(l[26:].split()[1])
+				shx = float(l.split()[-2])
+				shy = float(l.split()[-1])
 				shifts.append([shx, shy])
 
 		### convert motioncorr2 output to motioncorr1 format
