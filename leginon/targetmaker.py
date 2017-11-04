@@ -232,6 +232,7 @@ class MosaicTargetMaker(TargetMaker):
 		pixelsize = self.getPixelSize(scope, camera)
 		binning, imagedimension = self.getCameraParameters(camera)
 		targets = self.makeCircle(radius, overlap, pixelsize, binning, imagedimension)
+		self.logger.info('%d targets needed' % len(targets))
 		return targets, scope, camera, preset
 
 	def _publishAtlas(self, targets, scope, camera, preset, evt=None):
