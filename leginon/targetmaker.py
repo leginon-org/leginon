@@ -61,6 +61,7 @@ class MosaicTargetMaker(TargetMaker):
 		'mosaic center': 'stage center',
 		'ignore request': False,
 		'alpha tilt': 0.0,
+		'use spiral path': False,
 	}
 	eventinputs = TargetMaker.eventinputs + [event.MakeTargetListEvent]
 	def __init__(self, id, session, managerlocation, **kwargs):
@@ -256,24 +257,37 @@ class MosaicTargetMaker(TargetMaker):
 		self.publish(targetlist, pubevent=True)
 		self.logger.info('Atlas targets published')
 
-	def makeCircle(self, radius, overlap, pixelsize, binning, dimension):
-		maxtargets = self.settings['max targets']
-		maxsize = self.settings['max size']
+	def makeLines(self, pixelradius, tile_y_size):
+		lines = [tile_y_size/2]
+		while lines[-1] < pixelradius - tile_y_size:
+			lines.append(lines[-1] + tile_y_size)
+		return lines
 
+	def calculateImageTile(self, dimension, overlap):
 		imagetile = {}
 		for axis in ('x','y'):
 			imagetile[axis] = int(round(dimension[axis]*(1.0 - overlap)))
 			if imagetile[axis] <= 0:
 				raise AtlasSizeError('invalid overlap')
+		return imagetile
+
+	def makeCircle(self, radius, overlap, pixelsize, binning, dimension):
+		maxtargets = self.settings['max targets']
+		maxsize = self.settings['max size']
 
 		pixelradius = radius/(pixelsize*binning)
 		if pixelradius > maxsize/2:
 			raise AtlasSizeError('final image will be huge, try using more binning')
 
+		imagetile = self.calculateImageTile(dimension, overlap)
+		if not self.settings['use spiral path']:
+			return self.makeSnakeInCircle(pixelradius, maxtargets, imagetile)
+		else:
+			return self.makeSpiralInCircle(pixelradius, maxtargets, imagetile)
+
+	def makeSnakeInCircle(self, pixelradius, maxtargets, imagetile):
 		tile_y_size = imagetile['y']
-		lines = [tile_y_size/2]
-		while lines[-1] < pixelradius - tile_y_size:
-			lines.append(lines[-1] + tile_y_size)
+		lines = self.makeLines(pixelradius, tile_y_size)
 
 		# pixels are the y coordinates of the circle intercept at a given line
 		pixels = [pixelradius*2]
@@ -310,18 +324,24 @@ class MosaicTargetMaker(TargetMaker):
 
 		return targets
 
-	def makeSpiral(self, maxtargets, overlap, size):
-		spacing = size - (overlap / 100.0) * size
+	def makeSpiralInCircle(self, pixelradius, maxtargets, imagetile):
 		spiral = self.relativeSpiral(maxtargets)
 		deltalist = []
+		circlelist = []
 		for x, y in spiral:
-			column, row = (x*spacing, y*spacing)
+			column, row = (x*imagetile['x'], y*imagetile['y'])
 			try:
 				lastdelta = deltalist[-1]
-				deltalist.append((row + lastdelta[0], column + lastdelta[1]))
+				next_row, next_col = (row + lastdelta[0], column + lastdelta[1])
+				if math.hypot(next_row-row0,next_col-col0) <= pixelradius:
+					circlelist.append((next_row, next_col))
+				deltalist.append((next_row, next_col))
 			except IndexError:
+				circlelist.append((row, column))
 				deltalist.append((row, column))
-		return deltalist
+				row0 = row
+				col0 = column
+		return circlelist
 
 	def absoluteSpiral(self, length):
 		spiral = [(0,0)]
@@ -357,18 +377,43 @@ class MosaicTargetMaker(TargetMaker):
 			spiral.append(next_pos)
 			spiraldir.append(dir)
 			cur_pos = next_pos
-			if cur_pos[0] > xmax:
+			if cur_pos[0] >= xmax:
 				xmax = cur_pos[0]
-				dir = (0,1)
-			elif cur_pos[0] < xmin:
+				if cur_pos[1] == 0:
+					dir = (-0.5,1)
+				else:
+					dir = (0.5,1)
+			elif cur_pos[0] <= xmin:
 				xmin = cur_pos[0]
-				dir = (0,-1)
+				if cur_pos[1] == 0:
+					dir = (0.5,-1)
+				elif cur_pos[1] < 0:
+					dir = (-0.5,1)
+				elif cur_pos[1] > 0:
+					dir = (-0.5,-1)
 			elif cur_pos[1] > ymax:
 				ymax = cur_pos[1]
-				dir = (-1,0)
+				if cur_pos[0] <= xmax/2.0:
+					dir = (-1,0)
+				else:
+					dir = (-0.5,1)
 			elif cur_pos[1] < ymin:
 				ymin = cur_pos[1]
-				dir = (1,0)
+				if cur_pos[0] >= xmin/2.0:
+					dir = (1,0)
+				else:
+					dir = (0.5,1)
+			else:
+				if dir == (1,0) and cur_pos[0] > xmax/2.0:
+					if cur_pos[1] == 0:
+						dir = (-0.5,1)
+					else:
+						dir = (0.5,1)
+				if dir == (-1,0) and cur_pos[0] < xmin/2.0:
+					if cur_pos[1] == 0:
+						dir = (0.5, -1)
+					else:
+						dir = (-0.5,-1)
 		return spiraldir
 
 if __name__ == '__main__':
