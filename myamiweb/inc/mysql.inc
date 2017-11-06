@@ -261,10 +261,9 @@ class mysql {
 	}
 
 	function getSQLResult($query, $fetch=MYSQL_ASSOC) {
-		if (!$result = $this->SQLQuery($query))
+		$result = $this->SQLQuery($query);
+		if (!$result)
 			return False;
-		if (!is_resource($result))
-			return $result;
 		$data = array();
 		while ($row = mysqli_fetch_array($result, $fetch))
 			$data[] = $row;
