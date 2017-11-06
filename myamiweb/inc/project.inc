@@ -65,7 +65,12 @@ class project {
 	}
 
 	function checkDBConnection() {
-		return $this->mysql->checkDBConnection();
+		$this->mysql->checkDBConnection();
+		//This was used to check if there was projectdb but we will
+		//always have projectdb now a day.
+		//The change to mysqli makes this to return false even if
+		// projectbd exists.
+		return true;
 	}
 
 	function getGridInfo($gridId){
