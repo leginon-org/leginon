@@ -1329,6 +1329,7 @@ class MosaicTargetMakerSettingsData(SettingsData):
 			('mosaic center', str),
 			('ignore request', bool),
 			('alpha tilt', float),
+			('use spiral path', bool),
 		)
 	typemap = classmethod(typemap)
 
