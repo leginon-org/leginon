@@ -46,7 +46,7 @@ if ($cache) {
 		if ($t=='png')
 			imagepng($img);
 		else
-			imagejpeg($img,'',$quality);
+			imagejpeg($img,NULL,$quality);
 		imagedestroy($img);
 		exit;
 	}
@@ -126,7 +126,7 @@ if ($g) {
         if ($t=='png')
                 imagepng($img);
         else
-                imagejpeg($img,'',$quality);
+                imagejpeg($img,NULL,$quality);
 	imagedestroy($img);
 } else {
 	Header("Content-type: image/png");

@@ -179,6 +179,9 @@ class TEM(baseinstrument.BaseInstrument):
 		else:
 			return 100.0
 
+	def hasAutoFiller(self):
+		return False
+
 	def runAutoFiller(self):
 		'''
 		Start AutoFiller. Default is a timed filler

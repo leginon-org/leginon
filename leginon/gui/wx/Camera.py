@@ -134,8 +134,10 @@ class CameraPanel(wx.Panel):
 		#self.Enable(False)
 
 	def disableFrameWidges(self):
-		for widget in self.framewidges:
-			widget.Disable()
+		self.saveframes.Disable()
+		self.alignframes.Disable()
+		self.alignfilter.Disable()
+		self.useframes.Disable()
 
 	def createFrameCameraSizer(self):
 		sb = wx.StaticBox(self, -1, 'Camera with Movie Mode')

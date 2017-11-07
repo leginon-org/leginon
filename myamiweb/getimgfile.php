@@ -70,7 +70,7 @@ if ($g) {
         if ($t=='png')
                 imagepng($img);
         else
-                imagejpeg($img,'',$quality);
+                imagejpeg($img,Null,$quality);
 	imagedestroy($img);
 } else {
 	Header("Content-type: image/png");
