@@ -56,7 +56,7 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		sizer = wx.GridBagSizer(5, 4)
 		bordersize = 3
 		self.widgets['use tilts'] = \
-				wx.CheckBox(self, -1, 'Acquire each target at different tilt in the list')
+				wx.CheckBox(self, -1, 'Acquire all targets in each list at the same tilt but change to a new tilt at the next list')
 		sizer.Add(self.widgets['use tilts'], (0,0), (1,4), wx.ALL|wx.EXPAND|wx.ALIGN_CENTER_VERTICAL, bordersize)
 
 		label = wx.StaticText(self, -1, 'List of Tilts to Collect (in degrees)')

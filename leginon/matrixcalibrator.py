@@ -277,10 +277,19 @@ class MatrixCalibrator(calibrator.Calibrator):
 			raise RuntimeError('no parameter selected')
 		calclient.storeMatrix(ht, mag, parameter, matrix, tem, ccdcamera)
 
-	def pixelToPixel(self, mag1, mag2, p1):
-		stagecal = self.parameters['stage position']
+	def scaleMatrix(self):
+		par = self.parameter
+		if par is 'defocus':
+			self.logger.error('Not applicable to %s matrix' % (par))
+			return
+		calclient = self.parameters[par]
 		tem = self.instrument.getTEMData()
 		cam = self.instrument.getCCDCameraData()
 		ht = self.instrument.tem.HighTension
-		p2 = stagecal.pixelToPixel(tem, cam, tem, cam, ht, mag1, mag2, p1)
-		return p2
+		ref_mag, mags = self.getMagnification()
+		for target_mag in mags:
+			if target_mag > ref_mag:
+				self.logger.info('Scaling %s matrix from %dx to %dx' % (par, int(ref_mag), int(target_mag)))
+				calclient.scaleMatrix(tem, cam, par, ht, ref_mag, target_mag, probe=None)
+		self.logger.info('Done scaling')
+

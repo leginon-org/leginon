@@ -590,6 +590,12 @@ class MatrixCalibrationClient(CalibrationClient):
 		matrix = self.retrieveMatrix(*args)
 		return self.getMatrixAngles(matrix)
 
+	def scaleMatrix(self, tem, ccdcamera, caltype, ht, ref_mag, target_mag, probe=None):
+		ref_matrix = self.retrieveMatrix(tem, ccdcamera, caltype, ht, ref_mag)
+		newmatrix = numpy.array(ref_matrix, numpy.float64)*ref_mag/target_mag
+		self.storeMatrix(ht, target_mag, caltype, newmatrix, tem, ccdcamera, probe)
+
+
 class BeamTiltCalibrationClient(MatrixCalibrationClient):
 	def __init__(self, node):
 		MatrixCalibrationClient.__init__(self, node)

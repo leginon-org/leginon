@@ -1329,6 +1329,7 @@ class MosaicTargetMakerSettingsData(SettingsData):
 			('mosaic center', str),
 			('ignore request', bool),
 			('alpha tilt', float),
+			('use spiral path', bool),
 		)
 	typemap = classmethod(typemap)
 
@@ -1944,15 +1945,6 @@ class AutoExposureSettingsData(AcquisitionSettingsData):
 			('mean intensity tolerance', float),
 			('maximum exposure time', float),
 			('maximum attempts', int),
-		)
-	typemap = classmethod(typemap)
-
-class TiltAcquisitionSettingsData(AcquisitionSettingsData):
-	def typemap(cls):
-		return AcquisitionSettingsData.typemap() + (
-			('tilts', str),
-			('use tilts', bool),
-			('reset per targetlist', bool),
 		)
 	typemap = classmethod(typemap)
 

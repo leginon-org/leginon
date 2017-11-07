@@ -37,11 +37,18 @@ class TEMController(node.Node):
 		self.instrument = instrument.Proxy(self.objectservice, self.session,
 																				self.panel)
 		self.presetsclient = presets.PresetsClient(self)
+		self.loaded_grid_slot = None
+		self.grid_slot_numbers = []
+		self.grid_slot_names = []
+		self.start()
 
+	def onInitialized(self):
+		status = super(TEMController, self).onInitialized()
+		if status is False:
+			return
+		# This may not give results since instrument may not be loaded, yet
 		self.grid_slot_numbers = self.researchLoadableGridSlots()
 		self.grid_slot_names = map((lambda x:'%d' % (x,)),self.grid_slot_numbers)
-		self.loaded_grid_slot = None
-		self.start()
 
 	def _toScope(self,name, stagedict):
 		try:
@@ -208,8 +215,10 @@ class TEMController(node.Node):
 		'''
 		try:
 			total_grids = self.instrument.tem.getGridLoaderNumberOfSlots()
-			return map((lambda x:x+1),range(total_grids))[1:]
-		except:
+			return map((lambda x:x+1),range(total_grids))
+		except Exception, e:
+			self.logger.warning(e.message)
+			self.logger.warning('Send a preset to scope to set TEM and then refresh TEM display')
 			return []
 
 	def getGridSlotNames(self):
@@ -227,6 +236,8 @@ class TEMController(node.Node):
 
 	def getGridSlotStatesToDisplay(self):
 		try:
+			self.grid_slot_numbers = self.researchLoadableGridSlots()
+			self.grid_slot_names = map((lambda x:'%d' % (x,)),self.grid_slot_numbers)
 			number_states = self.getAllSlotState()
 			name_states = {}
 			for key in number_states:
