@@ -112,7 +112,7 @@ if ($g) {
 		if ($t=='png')
 			imagepng($img);
 		else
-			imagejpeg($img,'',$quality);
+			imagejpeg($img,NULL,$quality);
 
 		imagedestroy($img);
 	} else {
