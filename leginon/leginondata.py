@@ -41,6 +41,7 @@ class InstrumentData(Data):
 		return Data.typemap() + (
 			('name', str),
 			('hostname', str),
+			('description', str),
 			('cs', float),
 			('pixelmax', int),
 			('hidden', bool),
