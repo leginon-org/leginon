@@ -44,7 +44,7 @@ class mysql {
 		$link = @mysqli_connect($host, $this->db_user, $this->db_pass);
 		if (!$link || empty($link)) {
          $this->mysqlerror = "Connect Error: " . mysqli_connect_errno();
-			return False;
+			return false;
 		}
 
 		if(!empty($this->db))
@@ -52,21 +52,24 @@ class mysql {
       $this->db_link = $link;
 		return $link;
 	}
-	
+
 	function select_db($database , $link) {
-		
 		$db = mysqli_select_db($link, $database);
 		if(!$db) {
 			$this->mysqlerror = "Error: ".mysqli_error($link);
 			$this->mysqlerrornb = mysqli_errno($link);
-			return False;
+			return false;
 		}
+		// Need to set db attribute to allow it to reconnect
+		// Especially when default database was not set when this instance
+		// of the class is initiated.
+		$this->db = $database;
 		return $link;
 	}
 
 	function checkDBConnection($host="") {
 		$resource = $this->connect_db($host);
-		if (is_resource($resource)) {
+		if (is_object($resource)) {
 			$this->close_db($resource);
 			return True;
 		} else {
@@ -226,6 +229,10 @@ class mysql {
 		return $this->mysqlerrornb;
 	}
 
+	function getDBName() {
+		return $this->getSQLResult("SELECT database();");
+	}
+
 	function getSQLQuery() {
 		return $this->sqlquery;
 	}
@@ -233,7 +240,7 @@ class mysql {
 	function getSQLNumRows($query) {
 		if (!$result = $this->SQLQuery($query))
 			return False;
-		if (!is_resource($result))
+		if (!is_object($result))
 			return $result;
 		$numrows = mysqli_num_rows($result);
 		return $numrows;
@@ -262,8 +269,9 @@ class mysql {
 
 	function getSQLResult($query, $fetch=MYSQL_ASSOC) {
 		$result = $this->SQLQuery($query);
-		if (!$result)
-			return False;
+		if (!is_object($result)) {
+			return $result;
+		}
 		$data = array();
 		while ($row = mysqli_fetch_array($result, $fetch))
 			$data[] = $row;

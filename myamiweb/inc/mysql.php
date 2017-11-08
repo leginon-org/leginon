@@ -58,7 +58,7 @@ class mysql {
 
 	function checkDBConnection($host="") {
 		$resource = $this->connect_db($host);
-		if (is_resource($resource)) {
+		if (is_object($resource)) {
 			$this->close_db($resource);
 			return True;
 		} else {
@@ -234,7 +234,7 @@ class mysql {
 	function getSQLResult($query, $fetch=MYSQL_ASSOC) {
 		if (!$result = $this->SQLQuery($query))
 			return False;
-		if (!is_resource($result))
+		if (!is_object($result))
 			return $result;
 		$data = array();
 		while ($row = mysqli_fetch_array($result, $fetch))
