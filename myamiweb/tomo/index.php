@@ -94,7 +94,7 @@ function init() {
 		<a href="summary.php?sessionId=<?php echo $sessionId; ?>">Summary</a>
 		</td><td width=200 align=right>
 		<b>show model parameters:</b>
-		<input type='checkbox' name='showmodel' <?php $showmodel?> onClick="submit()">
+		<input type='checkbox' name='showmodel' <?php echo $showmodel; ?> onClick="submit()">
 	</td></tr>
 </table>
 </div>
@@ -122,7 +122,7 @@ if($tiltSeriesId != NULL) {
 	} else {
 		$state = ($deletestatus== 'marked') ? 'Remove from Deletion List' : 'Mark for Deletion';
 		?>
-		<input type="submit" name="action" value="<?php $state?>">
+		<input type="submit" name="action" value="<?php echo $state; ?>">
 		<?php
 	} 
 	echo '</td></tr></table>';

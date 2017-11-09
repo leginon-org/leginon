@@ -80,7 +80,7 @@ $advancedval = ($userinfo['advanced'] == 1) ? "CHECKED":"";
 		<label for="groupname">Group Name</label><br />
 	</td>
 	<td>
-		<input type="checkbox" name="noleginon" <?php $noleginonval?> >
+		<input type="checkbox" name="noleginon" <?php echo $noleginonval ?> >
 		<label for="NoLeginon"><font color="red">Hidden in Leginon </font></label><br />
 		<?php if($action=='update'){
 				 echo '<b>' . $userinfo['username'] . '</b><br />';

@@ -142,7 +142,7 @@ function pickingsummarytable($selectionid, $mini=false, $showOptions=True) {
 		$selectiondata['hidden'] = 0;
 	}
 
-	$j = "Uploaded 3D Refine Info: <span class='aptitle' >"
+	$j = "Particle Selection Info: <span class='aptitle' >"
 		."<a href='particlerunreport.php?expId=$expId&rId=$selectionid'>"
 		.$selectiondata['name']."</a></span> (ID: $selectionid)\n";
 	if ($selectiondata['hidden'] == 1) {

@@ -60,7 +60,7 @@ $crlf = "<br />";
 
 
 <form name="data" method="POST" enctype="multipart/form-data" action="<?php echo $_SERVER['PHP_SELF']; ?>">
-<input type="hidden" name="db_memo" value="<?php $s_db?>" />
+<input type="hidden" name="db_memo" value="<?php echo $s_db ?>" />
 <select name="s_db" onChange="document.data.submit()">
 <?php
 foreach($databases as $db) {

@@ -498,8 +498,37 @@ class TIA_Falcon3(TIA_Falcon):
 	def _getImage(self):
 		crop = self.getOffset()
 		original_dimension = self.setFullCameraSetup()
-		image = super(TIA_,self)._getImage()
-		if not image:
+		'''
+		Copied from TIA class Acquire an image using the setup for this ESVision client.
+		'''
+		try:
+			self.selectSetup()
+			self.custom_setup()
+			self.finalizeSetup()
+		except:
+			raise RunTimeError('Error setting camera acquisition parameters')
+
+		t0 = time.time()
+
+		try:
+			self.acqman.Acquire()
+			t1 = time.time()
+			self.exposure_timestamp = (t1 + t0) / 2.0
+			arr = self.im.Data.Array
+		except:
+			raise RunTimeError('Camera Acquisition Error in getting array')
+
+		try:
+			arr.shape = (self.dimension['y'],self.dimension['x'])
+			arr = numpy.flipud(arr)
+		except AttributeError, e:
+			print 'comtypes did not return an numpy 2D array, but %s' % (type(arr))
+		except Exception, e:
+			print e
+			arr = None
+
+		image = arr
+		if type(image).__module__!='numpy':
 			return image
 		# workaround to offset image problem
 		self.setOffset(crop)

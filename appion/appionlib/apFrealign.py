@@ -1374,7 +1374,7 @@ def Relion_to_Frealign8(starfile, parfile, mag=None):
 		shiftx = float(loopDict[i]['_rlnOriginX']) * -1
 		shifty = float(loopDict[i]['_rlnOriginY']) * -1
 		dx = float(loopDict[i]['_rlnDefocusU'])
-		dy = float(loopDict[i]['_rlnDefocusU'])
+		dy = float(loopDict[i]['_rlnDefocusV'])
 		astig = float(loopDict[i]['_rlnDefocusAngle'])
 
 		if mag is None:
@@ -1417,7 +1417,7 @@ def Relion_to_Frealign9(starfile, parfile, apix, mag=None, occ=100, logp=5000, s
 		shiftx = float(loopDict[i]['_rlnOriginX']) * -1
 		shifty = float(loopDict[i]['_rlnOriginY']) * -1
 		dx = float(loopDict[i]['_rlnDefocusU'])
-		dy = float(loopDict[i]['_rlnDefocusU'])
+		dy = float(loopDict[i]['_rlnDefocusV'])
 		astig = float(loopDict[i]['_rlnDefocusAngle'])
 		if mag is None:
 			try:
