@@ -1392,7 +1392,7 @@ class Tecnai(tem.TEM):
 			raise RuntimeError('Failed Force Refill')
 		t1 = time.time()
 		if t1-t0 < 10.0:
-			raise RuntimeError('Force refill returning too fast: %.1f' % (t1-t0))
+			raise RuntimeError('Force refill Denied: returned in %.1f sec' % (t1-t0))
 
 	def isAutoFillerBusy(self):
 		try:

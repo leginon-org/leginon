@@ -278,8 +278,7 @@ class AutoNitrogenFiller(Conditioner):
 		t1 = threading.Thread(target=self.runNitrogenFiller)
 		t1.start()
 		# Dark Current Reference Update if needed
-		print 'pretend to acquire dark current ref'
-		#self.runCameraDarkCurrentReferenceUpdate()
+		self.runCameraDarkCurrentReferenceUpdate()
 		t1.join()
 
 		filler_status = self.monitorRefillWithIsBusy()
@@ -294,8 +293,9 @@ class AutoNitrogenFiller(Conditioner):
 			temname = temdata['hostname']
 			if 'description' in temdata.keys() and temdata['description']:
 				temname = temdata['description']
-			slack_inst = slack_interface.slack_interface()
-			slack_inst.send_message('test','%s:%s ' % (temname,msg))
+			slack_inst = slack_interface.SlackInterface()
+			channel = slack_inst.getDefaultChannel()
+			slack_inst.sendMessage(channel,'%s:%s error:%s ' % (temname,self.name,msg))
 		except:
 			pass
 
