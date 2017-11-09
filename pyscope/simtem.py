@@ -17,7 +17,7 @@ try:
 except:
 	nidaq = None
 
-simu_autofiller = True
+simu_autofiller = False
 
 class SimTEM(tem.TEM):
 	name = 'SimTEM'
