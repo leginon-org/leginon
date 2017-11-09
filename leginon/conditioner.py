@@ -1,4 +1,5 @@
 from leginon import event
+import sys
 import threading
 import leginon.node as node
 import leginon.gui.wx.Conditioner
@@ -114,17 +115,31 @@ class Conditioner(node.Node):
 			self.outputEvent(evt1, wait=False)
 			self._handleFixConditionEvent(evt)
 			status = 'ok'
+		except RuntimeError, e:
+			self.logger.error('Operation error: e')
+			self.pauseAndInformUser(e.args[0])
 		except Exception, e:
-			self.logger.info('handling exception %s' %(e,))
+			self.logger.info('handling exception %s' %(e.args[0]))
 			status='exception'
 		try:
 			evt2 = event.IdleTimerRestartEvent()
 			self.outputEvent(evt2, wait=False)
 		except Exception, e:
-			raise
-			self.logger.warning('handling exception for restarting idle timer %s' %(e,))
+			self.logger.warning('handling exception for restarting idle timer %s' %(e.args[0]))
 		self.confirmEvent(evt, status=status)
 		self.setStatus('idle')
+		self.player.stop()
+
+	def pauseAndInformUser(self,msg):
+		self.player.pause()
+		self.instrument.tem.ColumnValvePosition = 'closed'
+		self.logger.info('Column valve closed')
+		self.setStatus('user input')
+		try:
+			self.slackNotification(msg)
+		except:
+			pass
+		state = self.player.wait()
 
 	def _handleFixConditionEvent(self, evt):
 		'''
@@ -163,10 +178,13 @@ class Conditioner(node.Node):
 		'''
 		self.logger.info('handle fix condition request')
 		if self.isAboveTripValue():
+			self.setStatus('processing')
 			self._fixCondition(condition_type)
 			self.logger.info('done %s' % (condition_type))
 		else:
-			self.logger.info('condition still below trip level, nothing to do')
+			self.logger.info('no need to do anything')
+		self.setStatus('idle')
+		self.player.stop()
 
 	def isAboveTripValue(self):
 		'''
@@ -189,6 +207,7 @@ class Conditioner(node.Node):
 			self.fixCondition(ctype)
 		evt = event.IdleTimerRestartEvent()
 		self.outputEvent(evt, wait=False)
+		self.player.stop()
 		self.setStatus('idle')
 
 class AutoNitrogenFiller(Conditioner):
@@ -214,22 +233,25 @@ class AutoNitrogenFiller(Conditioner):
 
 	def _fixCondition(self, condition_type):
 		self.setStatus('processing')
-		self.logger.info('handle fix condition request')
-		# calling monitorRefillWithIsBusy first to make sure it is not already refilling
-		self.monitorRefillWithIsBusy()
-		refilled = self.refillRefrigerantLevel()
-		if refilled:
-			self.logger.info('done %s' % (condition_type))
-		else:
-			self.logger.info('no need to do anything')
+		self.refillRefrigerant()
 		self.setStatus('idle')
 		self.player.stop()
 
-	def refillRefrigerantLevel(self):
+	def isAboveTripValue(self):
+		# calling monitorRefillWithIsBusy first to make sure it is not already refilling
+		if not self.hasAutoFiller():
+			self.logger.warning('No autofiller on this tem')
+			return False
+		self.monitorRefillWithIsBusy()
+		return self.isRefillNeeded()
+
+	def isRefillNeeded(self):
 		'''
 		Check refrigerant levels and refill if necessary
 		'''
 		loader_level,column_level = self.getRefrigerantLevels()
+		self.loader_level_before = loader_level
+		self.column_level_before = column_level
 		check_loader = self.settings['autofiller mode'] in ['both cold','column RT, loader cold']
 		check_column = self.settings['autofiller mode'] in ['both cold','column cold, loader RT']
 		force_fill = False
@@ -240,24 +262,63 @@ class AutoNitrogenFiller(Conditioner):
 			self.logger.info('Runing autofiller for loader')
 			force_fill = True
 		self.logger.debug('force_fill_state is %s' % (force_fill,))
-		if force_fill:
-			# Do refill and dark current reference update at the same time.
-			self.logger.info('Start refilling autofiller thread')
-			time.sleep(0.1)
-			t1 = threading.Thread(target=self.startNitrogenFilling)
-			t1.start()
-			# Dark Current Reference Update if needed 
-			self.runCameraDarkCurrentReferenceUpdate()
-			t1.join()
+		return force_fill
 
-			filler_status = self.monitorRefillWithIsBusy()
-			if filler_status is None:
-				self.monitorRefill(check_column,check_loader)
-			return True
-		return False
+	def hasAutoFiller(self):
+		try:
+			has_auto_filler = self.instrument.tem.hasAutoFiller()
+		except:
+			has_auto_filler = False
+		return has_auto_filler
 
-	def startNitrogenFilling(self):
-		self.instrument.tem.runAutoFiller()
+	def refillRefrigerant(self):
+		# Do refill and dark current reference update at the same time.
+		self.logger.info('Start refilling autofiller thread')
+		time.sleep(0.1)
+		t1 = threading.Thread(target=self.runNitrogenFiller)
+		t1.start()
+		# Dark Current Reference Update if needed
+		print 'pretend to acquire dark current ref'
+		#self.runCameraDarkCurrentReferenceUpdate()
+		t1.join()
+
+		filler_status = self.monitorRefillWithIsBusy()
+
+	def slackNotification(self, msg):
+		try:
+			from slack import slack_interface
+			# getTEMData here will just get the first tem in instrument.cfg on
+			# scope. It gives EF-Krios if both EF-Krios and Krios are in
+			# the config.
+			temdata = self.instrument.getTEMData()
+			temname = temdata['hostname']
+			if 'description' in temdata.keys() and temdata['description']:
+				temname = temdata['description']
+			slack_inst = slack_interface.slack_interface()
+			slack_inst.send_message('test','%s:%s ' % (temname,msg))
+		except:
+			pass
+
+	def runNitrogenFiller(self):
+		try:
+			self.instrument.tem.ColumnValvePosition = 'closed'
+			self.instrument.tem.runAutoFiller()
+		except RuntimeError as e:
+			if self.isRealFillerError():
+				message = e.args[0]
+				self.logger.error('Operation error: %s' % (message,))
+				self.logger.error('Can not recover. Check filler and tank')
+				self.pauseAndInformUser(e.args[0])
+
+	def isRealFillerError(self):
+		'''
+		AutoFiller denies filling if too full with error raised, too.
+		It does not require pausing and notification.
+		'''
+		loader_level,column_level = self.getRefrigerantLevels()
+		if loader_level >= self.settings['loader fill end'] and column_level >= self.settings['column fill end']:
+			return False
+		return True
 
 	def runCameraDarkCurrentReferenceUpdate(self):
 		camnames = self.instrument.getCCDCameraNames()
@@ -296,89 +357,6 @@ class AutoNitrogenFiller(Conditioner):
 			isbusy = self.instrument.tem.isAutoFillerBusy()
 			time.sleep(10)
 		return isbusy
-
-	def monitorRefill(self,check_column,check_loader):
-		'''
-		Old refill monitoring before isAutoFillerBusy is implemented in TEM Scripting.
-		'''
-		sleeptime = 3
-		significance = 0.1
-		column_filled = False
-		loader_filled = False
-		if check_column:
-			column_filled = self.monitorColumnRefill(sleeptime,significance)
-
-		if check_loader:
-			loader_filled = self.monitorGridLoaderRefill(sleeptime,significance)
-
-			# report final values
-			loader_level,column_level = self.getRefrigerantLevels()
-			self.logger.info('Column N2 at %.1f %%' % (column_level,))
-			self.logger.info('Grid autoloader at %.1f %%' % (loader_level,))
-
-			# OK if autoloader not filled when 'both cold' mode is used
-			if self.settings['autofiller mode'] == 'both cold' and column_filled and not loader_filled:
-				self.logger.warning('Grid autoloader not full but column o.k. to continue')
-				return
-		self.testprint('loader_filled=%s, column_filled=%s, filler_mode=%s' % (loader_filled, column_filled, self.settings['autofiller mode']))
-		# Handle autoloader malfunctioning
-		if check_loader and not loader_filled:
-			self.logger.error('Autoloader not filled, paused.')
-			self.player.pause()
-			self.setStatus('user input')
-			state = self.player.wait()
-
-		# Handle autoloader malfunctioning
-		if check_column and not column_filled:
-			self.logger.error('Column not filled, paused.')
-			self.player.pause()
-			self.setStatus('user input')
-			state = self.player.wait()
-		else:
-			# Successful refill
-			return
-
-	def monitorColumnRefill(self,sleeptime=3,significance=0.1):
-		column_filled = False
-		old_column_level = -20
-		new_column_level = self.instrument.tem.getRefrigerantLevel(1)
-		self.logger.info('col N2 refill initial at %.1f %%' % (new_column_level))
-		time.sleep(sleeptime)
-		while new_column_level - old_column_level > significance:
-			# Filling in progress
-			old_column_level = new_column_level
-			new_column_level = self.instrument.tem.getRefrigerantLevel(1)
-			self.logger.debug('Refilling column N2 level at %.1f %%' % (new_column_level,))
-			if new_column_level >= self.settings['column fill end']:
-				self.logger.info('Stop refilling column at %.1f %%' % (new_column_level,))
-				column_filled = True
-				break
-			time.sleep(sleeptime)
-		return column_filled
-
-	def monitorGridLoaderRefill(self,sleeptime=3,significance=0.1):
-		loader_filled = False
-		old_loader_level = -20
-		new_loader_level = self.instrument.tem.getRefrigerantLevel(0)
-		# Since this is normally reached after column filling, loader level may have changed
-		if new_loader_level >= self.settings['loader fill end']:
-			self.logger.debug('Grid autoloader is already full after column refill')
-			loader_filled = True
-		else:
-			self.logger.debug('Filling grid autoloader at %.1f %%' % (new_loader_level))
-			time.sleep(sleeptime)
-			while new_loader_level - old_loader_level > significance:
-				# Filling in progress
-				old_loader_level = new_loader_level
-				new_loader_level = self.instrument.tem.getRefrigerantLevel(0)
-				if new_loader_level >= self.settings['loader fill end']:
-					self.logger.debug('Stop refilling loader at %.1f %%' % (new_loader_level,))
-					loader_filled = True
-					break
-				else:
-					self.logger.debug('Wait for refilling loader at %.1f %%' % (new_loader_level,))
-				time.sleep(sleeptime)
-		return loader_filled
 
 	def getRefrigerantLevels(self):
 		loader_level = self.instrument.tem.getRefrigerantLevel(0)
