@@ -10,6 +10,8 @@ from leginon import player
 import time
 import itertools
 
+PAUSE_AND_INFORM_ERROR = False
+
 class Conditioner(node.Node):
 	'''
 	This fixes one or more instrument condition
@@ -131,6 +133,8 @@ class Conditioner(node.Node):
 		self.player.stop()
 
 	def pauseAndInformUser(self,msg):
+		if not PAUSE_AND_INFORM_ERROR:
+			return
 		self.player.pause()
 		self.instrument.tem.ColumnValvePosition = 'closed'
 		self.logger.info('Column valve closed')
@@ -301,7 +305,6 @@ class AutoNitrogenFiller(Conditioner):
 
 	def runNitrogenFiller(self):
 		try:
-			self.instrument.tem.ColumnValvePosition = 'closed'
 			self.instrument.tem.runAutoFiller()
 		except RuntimeError as e:
 			if self.isRealFillerError():
