@@ -17,7 +17,7 @@ try:
 except:
 	nidaq = None
 
-simu_autofiller = False
+simu_autofiller = True
 
 class SimTEM(tem.TEM):
 	name = 'SimTEM'
@@ -93,6 +93,7 @@ class SimTEM(tem.TEM):
 		self.columnvalveposition = 'open'
 		self.emission = 'on'
 		self.BeamBlank = 'on'
+		self.buffer_pressure = 30.0
 
 		self.energy_filter = False
 		self.energy_filter_width = 0.0
@@ -328,9 +329,12 @@ class SimTEM(tem.TEM):
 	def setFocus(self, value):
 		self.focus = value
 
+	def getBufferTankPressure(self):
+		return self.buffer_pressure
+
 	def runBufferCycle(self):
 		time.sleep(5)
-		pass
+		self.buffer_pressure -= 5
 
 	def getTurboPump(self):
 			if not hasattr(self, 'turbo'):
@@ -377,10 +381,13 @@ class SimTEM(tem.TEM):
 		print id, level
 		return level
 
+	def hasAutoFiller(self):
+		return True
+
 	def runAutoFiller(self):
-		t = threading.Thread(target=self.addRefrigerant)
-		t.setDaemon(True)
-		t.start()
+		if self.level0 >=50 or self.level1 >=50:
+			raise RuntimeError('Force fill failed')
+		self.addRefrigerant()
 
 	def useRefrigerant(self):
 		while 1:
