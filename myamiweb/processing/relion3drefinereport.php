@@ -40,6 +40,11 @@ echo '<a target="_blank" href="../ngl/webapp.php?expId=4062&filename=/gpfs/appio
 		echo '<img border="0" style="width:'.$imgwidth.';" src="loadimg.php?rawgif=1&filename='.$runparams[path].'/XYcoordinates.gif"/>';
 		echo '</td></tr>';
 		echo '<tr><td>';
+		echo '<img border="0" style="width:'.$imgwidth.';" src="loadimg.php?rawgif=1&filename='.$runparams[path].'/EulerAngleDistribution.gif"/>';
+		echo '</td><td>';
+		echo '<img border="0" style="width:'.$imgwidth.';" src="loadimg.php?rawgif=1&filename='.$runparams[path].'/ThreeDFSC.gif"/>';
+		echo '</td></tr>';
+		echo '<tr><td>';
 		echo '<img border="0" style="width:'.$imgwidth.';" src="loadimg.php?rawgif=1&filename='.$runparams[path].'/DefocusV.gif"/>';
 		echo '</td><td>';
 		echo '<img border="0" style="width:'.$imgwidth.';" src="loadimg.php?rawgif=1&filename='.$runparams[path].'/DefocusU.gif"/>';
@@ -47,7 +52,6 @@ echo '<a target="_blank" href="../ngl/webapp.php?expId=4062&filename=/gpfs/appio
 		echo '<tr><td>';
 		echo '<img border="0" style="width:'.$imgwidth.';" src="loadimg.php?rawgif=1&filename='.$runparams[path].'/SpearmanCorrelation.gif"/>';
 		echo '<td>';
-
 		echo '<img border="    0" style="width:'.$imgwidth.';" src="loadimg.php?rawgif=1&filename='.$runparams[path].'/PearsonCorrelation.gif">';
 	echo "</td></tr></table>\n";
 
