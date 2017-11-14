@@ -37,7 +37,7 @@ class Panel(wx.lib.scrolledpanel.ScrolledPanel):
 		wx.lib.scrolledpanel.ScrolledPanel.__init__(self, parent, id, **kwargs)
 
 		self.toolbar = parent.getToolBar()
-
+		self.manualcheck = False
 		self.szmain = wx.GridBagSizer(5, 5)
 
 		self.messagelog = leginon.gui.wx.MessageLog.MessageLog(parent.swmessage, self)
@@ -117,5 +117,9 @@ class Panel(wx.lib.scrolledpanel.ScrolledPanel):
 	def setStatus(self, status):
 		level = 'STATUS'
 		evt = leginon.gui.wx.Events.StatusUpdatedEvent(self, level, status)
+		self.GetEventHandler().AddPendingEvent(evt)
+
+	def setUserVerificationStatus(self, status):
+		evt = leginon.gui.wx.Events.UserVerificationUpdatedEvent(self, status)
 		self.GetEventHandler().AddPendingEvent(evt)
 

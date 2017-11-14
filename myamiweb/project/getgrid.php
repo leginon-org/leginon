@@ -13,7 +13,7 @@ if ($gridId) {
 </head>
 <body>
 
-<?
+<?php
 $selectedgridId=$gridId;
 $grid = new grid();
 $gridinfo = $grid->getGridInfo($selectedgridId);
@@ -32,10 +32,10 @@ if (is_array($gridinfo)) {
 </tr>
 <tr valign="top">
 <td>
-<?=$gridinfo['label']?>
+<?php echo $gridinfo['label'] ?>
 </td>
 <td>
-<?=$gridinfo['prepdate']?>
+<?php echo $gridinfo['prepdate'] ?>
 </td>
 </tr>
 <tr valign="top">
@@ -48,10 +48,10 @@ if (is_array($gridinfo)) {
 </tr>
 <tr valign="top">
 <td>
-<?=$gridinfo['specimen']?>
+<?php echo $gridinfo['specimen'] ?>
 </td>
 <td>
-<?=$gridinfo['preparation']?>
+<?php echo $gridinfo['preparation'] ?>
 </td>
 </tr>
 <tr valign="top">
@@ -64,10 +64,10 @@ if (is_array($gridinfo)) {
 </tr>
 <tr valign="top">
 <td>
-<?=$gridinfo['number']?>
+<?php echo $gridinfo['number'] ?>
 </td>
 <td>
-<?=$gridinfo['location']?>
+<?php echo $gridinfo['location'] ?>
 </td>
 </tr>
 <tr valign="top">
@@ -83,13 +83,13 @@ if (is_array($gridinfo)) {
 </tr>
 <tr valign="top">
 <td>
-<?=$gridinfo['note']?>
+<?php echo $gridinfo['note'] ?>
 </td>
 <td>
-<?=$gridinfo['fraction']?>
+<?php echo $gridinfo['fraction'] ?>
 </td>
 <td>
-<?=$gridinfo['concentration']?>
+<?php echo $gridinfo['concentration'] ?>
 </td>
 </tr>
 <tr valign="top">
@@ -101,11 +101,11 @@ if (is_array($gridinfo)) {
 </tr>
 <tr>
 <td colspan="3">
-<?
+<?php
 $gridboxdata = new gridbox();
 $gridboxinfo = $gridboxdata->getGridBoxInfo($gridinfo['boxId']);
 if ($gridinfo['boxId']) {
-?><h3>Grid Box: <?=$gridboxinfo['gridboxlabel']?></h3><?
+?><h3>Grid Box: <?php echo $gridboxinfo['gridboxlabel'] ?></h3><?php
 
 switch ($gridboxinfo['boxtypeId']) {
 	case '1':
@@ -119,8 +119,8 @@ switch ($gridboxinfo['boxtypeId']) {
 		break;
 }
 ?>
-<img alt="gridbox" src="drawgridbox.php?gbt=<?=$gridboxinfo['boxtypeId']?>&amp;<?=$link?>size=tiny&amp;gl=<?=$gridinfo['boxId']?>&amp;gid=<?=$gridId?>" border="0">
-<? } ?>
+<img alt="gridbox" src="drawgridbox.php?gbt=<?php echo $gridboxinfo['boxtypeId'] ?>&amp;<?php echo $link ?>size=tiny&amp;gl=<?php echo $gridinfo['boxId'] ?>&amp;gid=<?php echo $gridId ?>" border="0">
+<?php } ?>
 
 </td>
 </tr>
@@ -128,6 +128,6 @@ switch ($gridboxinfo['boxtypeId']) {
 </table>
 </body>
 </html>
-<?
+<?php
 }
 ?>

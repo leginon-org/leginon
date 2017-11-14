@@ -296,6 +296,9 @@ class DBDataKeeper(object):
 		table = (dbname, tablename)
 		definition, formatedData = sqldict.dataSQLColumns(newdata, fail)
 		## check for any new columns that have not been created
+		# FIX ME: columns_created need to be initializaed. Otherwise the
+		# first time this is called will always want to create table
+		# even though the table does exist.
 		if table not in columns_created:
 			columns_created[table] = {}
 		fields = [d['Field'] for d in definition]
@@ -308,6 +311,9 @@ class DBDataKeeper(object):
 				columns_created[table][field] = None
 				create_table = True
 		if create_table:
+			# FIX ME: If we want to use InnoDB, we need to
+			# make this in advance so that sqldict.createSQLTable
+			# does not need CREATE IF NOT EXIST
 			self.dbd.createSQLTable(table, definition)
 		myTable = self.dbd.Table(table)
 		if skipinsert is True:

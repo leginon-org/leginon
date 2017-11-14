@@ -27,7 +27,7 @@ $text = ($_GET['text']) ? $t: $defaulttext;
 <hr/>
 <p>
 	<h3> Your access to the page was denied </h3>
-	<h4> <? echo $text ?> </h4>
+	<h4> <?php echo $text; ?> </h4>
 	<h4> Use your browser to return to the last allowed page. </h4>
 </p>
 <?php

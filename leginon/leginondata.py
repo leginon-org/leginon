@@ -41,6 +41,7 @@ class InstrumentData(Data):
 		return Data.typemap() + (
 			('name', str),
 			('hostname', str),
+			('description', str),
 			('cs', float),
 			('pixelmax', int),
 			('hidden', bool),
@@ -1329,6 +1330,7 @@ class MosaicTargetMakerSettingsData(SettingsData):
 			('mosaic center', str),
 			('ignore request', bool),
 			('alpha tilt', float),
+			('use spiral path', bool),
 		)
 	typemap = classmethod(typemap)
 
@@ -1947,7 +1949,7 @@ class AutoExposureSettingsData(AcquisitionSettingsData):
 		)
 	typemap = classmethod(typemap)
 
-class TiltAcquisitionSettingsData(AcquisitionSettingsData):
+class TiltAlternaterSettingsData(AcquisitionSettingsData):
 	def typemap(cls):
 		return AcquisitionSettingsData.typemap() + (
 			('tilts', str),
@@ -1956,12 +1958,11 @@ class TiltAcquisitionSettingsData(AcquisitionSettingsData):
 		)
 	typemap = classmethod(typemap)
 
-class TiltAlternaterSettingsData(AcquisitionSettingsData):
+class TiltListAlternaterSettingsData(AcquisitionSettingsData):
 	def typemap(cls):
 		return AcquisitionSettingsData.typemap() + (
 			('tilts', str),
 			('use tilts', bool),
-			('reset per targetlist', bool),
 		)
 	typemap = classmethod(typemap)
 

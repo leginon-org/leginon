@@ -1,5 +1,5 @@
-<form action="<?=$_SERVER['REQUEST_URI'] ?>" method="POST">
-  <input type="hidden" name="projectId" value="<?=$projectId?>">
+<form action="<?php echo $_SERVER['REQUEST_URI'] ?>" method="POST">
+  <input type="hidden" name="projectId" value="<?php echo $projectId ?>">
   <table border="0" cellspacing="0" cellpadding="1" >
     <tr> 
       <td> 
@@ -7,7 +7,7 @@
           </font><font color=red>*</font>&nbsp;:&nbsp;</div>
       </td>
       <td><font face="Arial, Helvetica, sans-serif" size="2"> 
-        <input class="field" type="text" name="name" value="<?=$name?>" size="40" tabindex="1" >
+        <input class="field" type="text" name="name" value="<?php echo $name ?>" size="40" tabindex="1" >
         </font></td>
     </tr>
     <tr> 
@@ -16,7 +16,7 @@
           </font>&nbsp;:&nbsp;</div>
       </td>
       <td>
-	<input class="field" type="text" name="category" value="<?=$category?>" size="40" maxlength="100" tabindex="2" >
+	<input class="field" type="text" name="category" value="<?php echo $category ?>" size="40" maxlength="100" tabindex="2" >
       </td>
     </tr>
     <tr> 
@@ -25,7 +25,7 @@
           </font>&nbsp;:&nbsp;</div>
       </td>
       <td>
-	<textarea class="textarea" name="funding" cols="40" rows="2" tabindex="3"><?=$funding?></textarea> 
+	<textarea class="textarea" name="funding" cols="40" rows="2" tabindex="3"><?php echo $funding ?></textarea>
       </td>
     </tr>
     <tr> 
@@ -34,7 +34,7 @@
           </font><font color=red>*</font>&nbsp;:&nbsp;</div>
       </td>
       <td>
-	<textarea class="textarea" name="short_description" rows="3" cols="60" tabindex="4"><?=$short_description?></textarea>
+	<textarea class="textarea" name="short_description" rows="3" cols="60" tabindex="4"><?php echo $short_description ?></textarea>
         </td>
     </tr>
     <tr> 
@@ -43,12 +43,12 @@
           </font>&nbsp;:&nbsp;</div>
       </td>
       <td>
-	<textarea class="textarea" name="long_description" rows="10" cols="60" tabindex="5"><?=$long_description?></textarea>
+	<textarea class="textarea" name="long_description" rows="10" cols="60" tabindex="5"><?php echo $long_description ?></textarea>
       </td>
     </tr>
     <tr>
       <td>
-        <input type="submit" value="<?=$action?>" name="submit">
+        <input type="submit" value="<?php echo $action ?>" name="submit">
       </td>
     </tr>
   </table>

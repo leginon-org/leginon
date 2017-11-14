@@ -530,6 +530,9 @@ class CreateTable(SQLExpression):
 		else:
 			type_str = " ENGINE=MyISAM" 
 
+		# FIX ME: For InnoDB implementation, CREATE TABLE IF NOT EXISTS
+		# need to be replaced with CREATE TABLE, and a seperate query need
+		# to be made to find out if the table exists.
 		create = "CREATE TABLE IF NOT EXISTS %s " % (tableStr(self.table),)
 		keys = []
 		fields = []

@@ -39,6 +39,8 @@ class BufferCycler(conditioner.Conditioner):
 		Define what to do
 		'''
 		self.runBufferCycle()
+		pressure = self.instrument.tem.BufferTankPressure
+		self.logger.info("Buffer Tank Gauge value after cycleing: %.4e" % pressure)
 
 	def runBufferCycle(self):
 		try:

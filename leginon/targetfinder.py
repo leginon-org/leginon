@@ -18,6 +18,7 @@ import targethandler
 import appclient
 import remoteserver
 from pyami import convolver, imagefun, mrc, numpil
+from pyami import ordereddict
 import numpy
 import pyami.quietscipy
 import scipy.ndimage as nd
@@ -89,6 +90,12 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		self.onQueueCheckBox(self.settings['queue'])
 		# assumes needing focus. Overwritten by subclasses
 		self.foc_activated = True
+
+	def onInitialized(self):
+		super(TargetFinder, self).onInitialized()
+		# self.panel is now made
+		combined_state = self.settings['user check'] and not self.settings['queue']
+		self.setUserVerificationStatus(combined_state)
 
 	def handleApplicationEvent(self,evt):
 		'''
@@ -168,6 +175,12 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		'''
 		Wait for user interaction either locally or remotely.
 		'''
+		# Rule about z height retention to the target selected
+		# when z height is changed during interaction:
+		# If the target will be in a queue, the z will be the z of the parent image.
+		# If the target will not be in a queue, the z will be the value it happens
+		# to be at the time of its processing, i.e., afected by z adjustment during
+		# and after the interaction.
 		valid_selection = False
 		while not valid_selection:
 			if self.settings['check method'] == 'remote':
@@ -594,6 +607,19 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			else:
 				if 'queue' in self.remote.toolbar.tools:
 					self.remote.toolbar.tools['queue'].deActivate()
+
+	def blobStatsTargets(self, blobs):
+		targets = []
+		for blob in blobs:
+			target = {}
+			target['x'] = blob.stats['center'][1]
+			target['y'] = blob.stats['center'][0]
+			target['stats'] = ordereddict.OrderedDict()
+			target['stats']['Size'] = blob.stats['n']
+			target['stats']['Mean'] = blob.stats['mean']
+			target['stats']['Std. Dev.'] = blob.stats['stddev']
+			targets.append(target)
+		return targets
 
 class ClickTargetFinder(TargetFinder):
 	targetnames = ['preview', 'reference', 'focus', 'acquisition']

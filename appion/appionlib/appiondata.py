@@ -2297,5 +2297,6 @@ class ApSEMData(Data):
 			('working_distance', float),
 			('resolution_x', int),
 			('resolution_y', int),
+			('z_slice', str),
 		)
 	typemap = classmethod(typemap)

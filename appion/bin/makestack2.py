@@ -92,7 +92,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 				if ctfdata:
 					# if CTF is written to micrographs.star, localCTF values not taken
 					if self.params['localCTF'] is not True:
-						rel_line+= "micrographs/%s "%(imgdata['filename']+".ctf:mrc")
+						rel_line+= " micrographs/%s "%(imgdata['filename']+".ctf:mrc")
 						c = apRelion.formatCtfForRelion(imgdata,ctfdata,self.params['apix'])
 						rel_line+= "%13.6f%13.6f%13.6f"%(c['defU'],c['defV'],c['defAngle'])
 						rel_line+= "%13.6f%13.6f%13.6f%13.6f"%(c['kev'],c['cs'],c['amp'],c['cc'])
@@ -1288,15 +1288,15 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 						f.write(line)
 						continue
 					for i in range(len(labels)):
+						if i>0 and i<(len(labels)-1): f.write(" ")
 						if labels[i] in ("_rlnMicrographName","_rlnImageName"):
-							if i>0: f.write(" ")
 							f.write(l[i])
 						elif labels[i] == "_rlnDetectorPixelSize":
-							f.write("%13.6f"%(float(l[i])*self.params['bin']))
-						else: f.write("%13s"%l[i])
+							f.write("%12.6f"%(float(l[i])*self.params['bin']))
+						else: f.write("%12s"%l[i])
 					f.write("\n")
 				f.close()
-				os.remove(rootname+".backup.star")
+				#os.remove(rootname+".backup.star")
 
 		### Delete CTF corrected images
 		if self.params['keepall'] is False:

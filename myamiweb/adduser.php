@@ -71,8 +71,8 @@ $noleginonval = ($userinfo['noleginon'] == 1) ? "CHECKED":"";
 $advancedval = ($userinfo['advanced'] == 1) ? "CHECKED":"";
 
 ?>
-<form name="userform" action="<?=$_SERVER['PHP_SELF'] ?>?userId=<?=$userId?>" method="POST">
-  <input type="hidden" name="userId" value="<?=$userId?>">
+<form name="userform" action="<?php $_SERVER['PHP_SELF'] ?>?userId=<?php echo $userId; ?>" method="POST">
+  <input type="hidden" name="userId" value="<?php echo $userId; ?>">
   <table border=0 cellspacing=0 cellpadding=2>
 	<tr>
 	<td>
@@ -80,7 +80,7 @@ $advancedval = ($userinfo['advanced'] == 1) ? "CHECKED":"";
 		<label for="groupname">Group Name</label><br />
 	</td>
 	<td>
-		<input type="checkbox" name="noleginon" <?=$noleginonval?> >
+		<input type="checkbox" name="noleginon" <?php echo $noleginonval ?> >
 		<label for="NoLeginon"><font color="red">Hidden in Leginon </font></label><br />
 		<?php if($action=='update'){
 				 echo '<b>' . $userinfo['username'] . '</b><br />';
@@ -105,14 +105,14 @@ $advancedval = ($userinfo['advanced'] == 1) ? "CHECKED":"";
 	</td>
 	<?php if($action=='update'){ ?>
 	<td>
-		<?=($checkpass) ? "<br />" : "" ?>
+		<?php ($checkpass) ? "<br />" : "" ?>
 		<label for="mypass1">Password:</label><br />
 		<label for="mypass2">confirm:</label><br />
 	</td>
 	<td>
-		<? if ($checkpass) { ?>
+		<?php if ($checkpass) { ?>
 		<input type="checkbox" name="chpass"><font color="red">Change Password</font><br />
-		<? } ?>
+		<?php } ?>
 		<input class="field" type="password" value="" name="mypass1" size="15" ><br />
 		<input class="field" type="password" value="" name="mypass2" size="15" ><br />
 	</td>
@@ -225,13 +225,13 @@ $advancedval = ($userinfo['advanced'] == 1) ? "CHECKED":"";
 	</tr>
 	<tr>
 	<td>
-		<input type="checkbox" name="advanced" <?=$advancedval?> >
+		<input type="checkbox" name="advanced" <?php echo $advancedval; ?> >
 		<label for="advanced">Always show advanced options</label><br />
 	</td>
 	</tr>
 	<tr>
 	<td>
-		<input type="submit" value="<?=$action?>" name="submit">
+		<input type="submit" value="<?php echo $action; ?>" name="submit">
 	</td>
 	</tr>
   </table>

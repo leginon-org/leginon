@@ -79,37 +79,133 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 
 	def revertTargetListZ(self, targetlistdata):
 		'''use the z position of the target list parent image'''
-		imageref = targetlistdata.special_getitem('image', dereference=False)
-		imageid = imageref.dbid
-		# This is the version 0 of the parent when the imagetargetlist was created.
-		imagedata0 = self.researchDBID(leginondata.AcquisitionImageData, imageid, readimages=False)
-
-		targetlist_imagedata = imagedata0
-		# look for a more recent version of this image
-		target = imagedata0['target']
-		if target:
-			#this will go very wrong if the image comes from no target
-			imquery = leginondata.AcquisitionImageData(target=target)
-			allversions = imquery.query(readimages=False)
-			self.logger.info('%d versions found from parent target id %d' % (len(allversions), target.dbid))
-			imagedata = allversions[0]
-		else:
-			imagedata = imagedata0
+		parentimage = self.getTargetListParentImageWithStagePosition(targetlistdata, recent=True)
 		try:
-			scope = imagedata['scope']
+			scope = parentimage['scope']
 			z = scope['stage position']['z']
 			tem = scope['tem']
 		except:
-			self.logger.warning('Error retrieving z from most recent parent from targetlist of image id=%d' % imagedata0.dbid)
-			scope = imagedata0['scope']
-			z = scope['stage position']['z']
-			tem = scope['tem']
-			imagedata = imagedata0
-		filename = imagedata['filename']
+			self.logger.warning('Error retrieving z from most recent parent from targetlist of image id=%d' % parentimage.dbid)
+		filename = parentimage['filename']
 		self.logger.info('returning %s to z=%.4e of parent image %s' % (tem['name'], z, filename,))
 		self.instrument.setTEM(tem['name'])
 		self.instrument.tem.StagePosition = {'z': z}
 		self.logger.info('z change done')
+
+
+	def getTargetListParentImageWithStagePosition(self, targetlistdata, recent=False):
+		'''
+		This function is used for restoring z or alpha tilt of the targetlist.
+		Target list may not have parent or the parent may not have stage position.
+		If none of the potential parents have stage position, it will return None.
+		'''
+		imageref = targetlistdata.special_getitem('image', dereference=False)
+		if hasattr(imageref,'dbid'):
+			imageid = imageref.dbid
+			# This is the version 0 of the parent when the imagetargetlist was created.
+			imagedata0 = self.researchDBID(leginondata.AcquisitionImageData, imageid, readimages=False)
+		else:
+			imagedata0 = None
+		if not imagedata0:
+				# grid atlas targetlist (one targetlist for all image tiles)
+				# has no parent image but targets in that list has parent image.
+				#	HACK: Use the most recent target to get the parent image
+				result_t = leginondata.AcquisitionImageTargetData(list=targetlistdata).query(results=1)
+				try:
+					# parent image must have ScopeEMData reference
+					stage = result_t[0]['image']['scope']['stage position']
+					imagedata0 = result_t[0]['image']
+					self.logger.info('Found target parent image (id=%d) through a target of the targetlist' % imagedata0.dbid)
+				except:
+					# No parent image in any way.
+					return None
+		# look for a more recent version of this image
+		if recent:
+			target = imagedata0['target']
+			if target:
+				#this will go very wrong if the image comes from no target
+				# Fortunately only manual or uploaded images have no target.
+				imquery = leginondata.AcquisitionImageData(target=target)
+				allversions = imquery.query(readimages=False)
+				self.logger.info('%d versions found from parent target id %d' % (len(allversions), target.dbid))
+				imagedata = allversions[0]
+				try:
+					# parent image must have ScopeEMData reference.  True for all images.
+					stage = imagedata['scope']['stage position']
+					self.logger.info('Found most recent target parent image (id=%d)' % imagedata.dbid)
+				except Exception, e:
+					# This should never happen unless there is database error
+					self.logger.error(str(e))
+			else:
+				imagedata = imagedata0
+		else:
+			imagedata = imagedata0
+		return imagedata
+
+	def getTiltForList(self, targetlistdata):
+		original_position = self.instrument.tem.getStagePosition()
+		parent_tilt = original_position['a']
+		#tilt the stage first
+		if self.settings['use parent tilt']:
+			# FIX ME: Do we have to use most the recent version of the parent image ?
+			parentimage = self.getTargetListParentImageWithStagePosition(targetlistdata, recent=False)
+			if parentimage :
+				parent_tilt = parentimage['scope']['stage position']['a']
+				self.logger.info('Found targetlist parent image stage tilt at %.2f degrees.' % (parent_tilt*180.0/math.pi))
+			else:
+				parent_tilt = original_position['a']
+		return parent_tilt
+
+	def sortTargetsByType(self, targetlist, mytargettype):
+		# separate the good targets from the rejects
+		completed_targets = []
+		good_targets = []
+		rejects = []
+		#ignored = []
+
+		for target in targetlist:
+			if target['status'] in ('done', 'aborted'):
+				completed_targets.append(target)
+			elif target['type'] == mytargettype:
+				good_targets.append(target)
+			#elif not rejects:
+				## this only allows one reject
+			else:
+				rejects.append(target)
+			#else:
+			#	ignored.append(target)
+		self.logger.info('%d target(s) in the list' % len(targetlist))
+		if completed_targets:
+			self.logger.info('%d target(s) have already been processed' % len(completed_targets))
+		if rejects:
+			self.logger.info('%d target(s) will be rejected based on type' % len(rejects))
+		#if ignored:
+		#	self.logger.info('%d target(s) will be ignored' % len(ignored))
+		return completed_targets, good_targets, rejects
+
+	def experimentalSettingsAlternation(self):
+		########## THIS IS EXPERIMENTAL AND SHOULD NOT BE USED ###############
+#####################################################################
+		import random
+		import os.path
+		homedir = os.path.expanduser('~')
+		filename = os.path.join(homedir, 'settings_list.txt')
+		try:
+			f = open(filename)
+		except:
+			print '****** No ~/settings_list.txt'
+			pass
+		else:
+			lines = f.readlines()
+			f.close()
+			node_name = lines[0].strip()
+			if node_name == self.name:
+				idlines = lines[1:]
+				ids_strings = map(str.strip, idlines)
+				ids_ints = map(int, ids_strings)
+				id = random.choice(ids_ints)
+				print '************** Loading new settings:', id
+				self.loadSettingsByID(id)
 
 	def processTargetList(self, newdata):
 		self.setStatus('processing')
@@ -120,41 +216,17 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		listid = newdata.dbid
 		self.logger.debug('TargetWatcher will process %s targets in list %s' % (len(targetlist), listid))
 
-		# separate the good targets from the rejects
-		completed_targets = []
-		goodtargets = []
-		rejects = []
-		#ignored = []
+		completed_targets, good_targets, rejects = self.sortTargetsByType(targetlist, mytargettype)
 
-		for target in targetlist:
-			if target['status'] in ('done', 'aborted'):
-				completed_targets.append(target)
-			elif target['type'] == mytargettype:
-				goodtargets.append(target)
-			#elif not rejects:
-				## this only allows one reject
-			else:
-				rejects.append(target)
-			#else:
-			#	ignored.append(target)
-
-		self.logger.info('%d target(s) in the list' % len(targetlist))
-		if completed_targets:
-			self.logger.info('%d target(s) have already been processed' % len(completed_targets))
-		if rejects:
-			self.logger.info('%d target(s) will be rejected based on type' % len(rejects))
-		#if ignored:
-		#	self.logger.info('%d target(s) will be ignored' % len(ignored))
 		# There may not be good targets but only rejected
-		# or reference targets causing parent_tilt undefined.
+		# or reference targets causing self.targetlist_reset_tilt undefined.
 		# define it now regardless.
 		original_position = self.instrument.tem.getStagePosition()
-		parent_tilt = original_position['a']
-		if goodtargets:
+		self.targetlist_reset_tilt = original_position['a']
+		if good_targets:
+			# Things to do before reject targets are published.
 			# pause and abort check before reference and rejected targets are sent away
-			if self.player.state() == 'pause':
-				self.setStatus('user input')
-			state = self.player.wait()
+			state = self.pauseCheck('paused before reject targets are published')
 			self.setStatus('processing')
 			if state in ('stop', 'stopqueue'):
 				targetliststatus = 'aborted'
@@ -166,18 +238,8 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 
 			# initialize is_first-image
 			self.is_firstimage = True
-			#tilt the stage first
-			if self.settings['use parent tilt']:
-				state1 = leginondata.ScopeEMData()
-				parentimage = newdata.special_getitem('image', True, readimages=False)
-				if parentimage :
-					state1['stage position'] = {'a':parentimage['scope']['stage position']['a']}
-					self.instrument.setData(state1)
-					parent_tilt = state1['stage position']['a']
-					original_position['a'] = parent_tilt
-					self.logger.info('Found parent image stage tilt at %.2f degrees and use it.' % (parent_tilt*180.0/math.pi))
-				else:
-					parent_tilt = original_position['a']
+			self.targetlist_reset_tilt = self.getTiltForList(newdata)
+			# There was a set self.targetlist_reset_tilt in the old code.
 			# start conditioner
 			condition_status = 'repeat'
 			while condition_status == 'repeat':
@@ -205,16 +267,21 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			self.setStatus('waiting')
 			self.fixAlignment()
 			self.setStatus('processing')
+			# This will bright z to the value before reference targets and alignment
+			# fixing.
+			self.logger.info('Setting z to original z of %.2f um' % (original_position['z']*1e6))
 			self.instrument.tem.setStagePosition({'z':original_position['z']})
-			self.logger.info('Processing %d %s targets...' % (len(goodtargets), mytargettype))
+			self.logger.info('Processing %d %s targets...' % (len(good_targets), mytargettype))
 		# republish the rejects and wait for them to complete
 		waitrejects = rejects and self.settings['wait for rejects']
 		if waitrejects:
+			# FIX ME: If autofocus involves stage tilt and self.targetlist_reset_tilt
+			# is at high tilt, it is better not to tilt first but if autofocus does
+			# not involve that, it needs to be tilted now.
 			rejectstatus = self.rejectTargets(newdata)
 			if rejectstatus != 'success':
-				## report my status as reject status
-				## may not be a good idea all the time
-				## This means if rejects were aborted
+				## report my status as reject status may not be a good idea
+				##all the time. This means if rejects were aborted
 				## then this whole target list was aborted
 				self.logger.debug('Passed targets not processed, aborting current target list')
 				self.reportTargetListDone(newdata, rejectstatus)
@@ -223,50 +290,59 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 					return
 			self.logger.info('Passed targets processed, processing current target list')
 
-		########## THIS IS EXPERIMENTAL AND SHOULD NOT BE USED ###############
-		use_it_anyway = False
-		if use_it_anyway:
-			import random
-			import os.path
-			homedir = os.path.expanduser('~')
-			filename = os.path.join(homedir, 'settings_list.txt')
-			try:
-				f = open(filename)
-			except:
-				print '****** No ~/settings_list.txt'
-				pass
-			else:
-				lines = f.readlines()
-				f.close()
-				node_name = lines[0].strip()
-				if node_name == self.name:
-					idlines = lines[1:]
-					ids_strings = map(str.strip, idlines)
-					ids_ints = map(int, ids_strings)
-					id = random.choice(ids_ints)
-					print '************** Loading new settings:', id
-					self.loadSettingsByID(id)
-		#####################################################################
+		# Experimental
+		if False:
+			self.experimentalSettingsAlternation()
 
+		self.logger.info('Original tilt %.2f degrees.' % (original_position['a']*180.0/math.pi))
+		self.logger.info('Parent tilt %.2f degrees.' % (self.targetlist_reset_tilt*180.0/math.pi))
 		# process the good ones
-		if self.settings['use parent tilt'] and goodtargets:
-			self.logger.info('Tilting to %.2f degrees.' % (parent_tilt*180.0/math.pi))
-			self.instrument.tem.setDirectStagePosition({'a':parent_tilt})
+
 		targetliststatus = 'success'
-		self.processGoodTargets(goodtargets)
+		self.processGoodTargets(good_targets)
 
 		self.reportTargetListDone(newdata, targetliststatus)
 		if self.settings['park after list']:
 			self.park()
 		self.setStatus('idle')
 
-	def processGoodTargets(self, goodtargets):
-		for i, target in enumerate(goodtargets):
+	def getIsResetTiltInList(self):
+		'''
+		Determine whether to reset tilt before the first target is processed.
+		Subclasses like RCT and TiltListAlternator
+		'''
+		return self.settings['use parent tilt']
+
+	def pauseCheck(self, msg):
+		'''
+		Check if need pause.  During pause z might change from
+		other nodes.  Restore the z when resume.
+		'''
+		if self.player.state() == 'pause':
+			self.logger.info(msg)
+			self.setStatus('user input')
+			self.z_now = self.instrument.tem.getStagePosition()['z']
+		else:
+			self.z_now = None
+		state = self.player.wait()
+		if self.z_now is not None:
+			self.instrument.tem.StagePosition={'z':self.z_now}
+		return state
+
+	def processGoodTargets(self, good_targets):
+		for i, target in enumerate(good_targets):
+			# target adjustment may have changed the tilt.
+			if self.getIsResetTiltInList() and self.is_firstimage:
+				# ? Do we need to reset on every target ?
+				self.logger.info('Tilting to %.2f degrees on first good target.' % (self.targetlist_reset_tilt*180.0/math.pi))
+				self.instrument.tem.setDirectStagePosition({'a':self.targetlist_reset_tilt})
 			self.goodnumber = i
 			self.logger.debug('target %s status %s' % (i, target['status'],))
 			# ...
 			if self.player.state() == 'pause':
+				self.logger.info('paused after resetTiltInList')
 				self.setStatus('user input')
+				# FIX ME: if player does not wait, why should it pause ?
 			state = self.clearBeamPath()
 			self.setStatus('processing')
 			# abort
@@ -327,9 +403,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 					self.reportTargetStatus(adjustedtarget, 'aborted')
 
 				# pause check after a good target processing
-				if self.player.state() == 'pause':
-					self.setStatus('user input')
-				state = self.player.wait()
+				state =  self.pauseCheck('paused after processTargetData')
 				self.setStatus('processing')
 				if state in ('stop', 'stopqueue'):
 					self.logger.info('Aborted')

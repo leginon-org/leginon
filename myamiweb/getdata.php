@@ -43,7 +43,7 @@ if (preg_match("%undefined%",$opennodes))
 	$opennodes=0;
 if (!empty($opennodes))
 	$opennodes = '0,'.$opennodes;
-echo "ano = new Array($opennodes);\n";?>
+echo "ano = new Array($opennodes);\n"; ?>
 createTree(Tree,0,ano);
 //-->
 </script>

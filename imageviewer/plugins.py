@@ -1,6 +1,7 @@
 import wx
 import icons
 import numpyimage
+import math
 
 class Plugin(wx.EvtHandler):
     def __init__(self, imagewindow):
@@ -54,6 +55,8 @@ class NumpyPlugin(Plugin):
         self.region = wx.Region()
         self.array = None
         self.scale = 1.0
+        self.divide_factor = 1
+        self.array_offset = [0,0]
         self.rect = self.getRect()
         self.extrema = None
         self.valuerange = None
@@ -73,13 +76,25 @@ class NumpyPlugin(Plugin):
         if self.fitclient:
             self.scale = min(float(crect.width)/self.array.shape[1],
                              float(crect.height)/self.array.shape[0])
-
-            rect.width = int(round(self.scale*self.array.shape[1]))
-            rect.height = int(round(self.scale*self.array.shape[0]))
+            self.divide_factor = int(math.ceil(1.0/self.scale))
+            if self.divide_factor == 0:
+                # Zoom
+                self.divide_factor = 1.0/self.scale
+            self.scale = 1.0/self.divide_factor
+            rect.width = int(math.floor(self.scale*self.array.shape[1]))
+            rect.height = int(math.floor(self.scale*self.array.shape[0]))
         else:
-            rect.width = int(round(self.scale*self.array.shape[1]))
-            rect.height = int(round(self.scale*self.array.shape[0]))
-
+            self.divide_factor = int(math.ceil(1.0/self.scale))
+            if self.divide_factor == 0:
+                # Zoom
+                self.divide_factor = 1.0/self.scale
+            self.scale = 1.0/self.divide_factor
+            rect.width = int(math.floor(self.scale*self.array.shape[1]))
+            rect.height = int(math.floor(self.scale*self.array.shape[0]))
+        # use an offset to get center of the image
+        offset_col = (self.array.shape[1] - int(self.divide_factor*rect.width))//2
+        offset_row = (self.array.shape[0] - int(self.divide_factor*rect.height))//2
+        self.array_offset = [offset_row,offset_col]
         return rect
 
     def getNumpy(self):
@@ -123,6 +138,8 @@ class NumpyPlugin(Plugin):
                                       r.x - self.rect.x, r.y - self.rect.y,
                                       r.width, r.height,
                                       self.rect.width, self.rect.height,
+                                      self.array_offset[1], self.array_offset[0],
+                                      self.divide_factor,
                                       self.valuerange)
             sourcedc = wx.MemoryDC()
             sourcedc.SelectObject(bitmap)
@@ -147,8 +164,8 @@ class NumpyPlugin(Plugin):
         cx, cy, ch, cw = self.clientregion.GetBox()
         x = x + cx - ix
         y = y + cy - iy
-        x = int(round(x/self.scale))
-        y = int(round(y/self.scale))
+        x = int(round(x/self.scale))+self.array_offset[1]
+        y = int(round(y/self.scale))+self.array_offset[0]
         return x, y
 
     def getXYValue(self, x, y):
@@ -292,7 +309,9 @@ class ToolTipPlugin(Plugin):
         dc.DrawText(self.text, self.border[0], self.border[1])
         dc.SelectObject(wx.NullBitmap)
         image = bitmap.ConvertToImage()
-        image.InitAlpha()
+        image.SetMaskColour(1,1,1)
+        if not image.HasAlpha():
+            image.InitAlpha()
         size = self.rect.width*self.rect.height
         image.SetAlphaData(chr(127)*size)
         self.bitmap = image.ConvertToBitmap()
@@ -364,6 +383,9 @@ class MagnifierPlugin(Plugin):
                   self.rect.height - 2*self.border,
                   self.imageplugin.array.shape[1]*scale,
                   self.imageplugin.array.shape[0]*scale,
+                  self.imageplugin.array_offset[1],
+                  self.imageplugin.array_offset[0],
+                  1.0/scale,
                   self.imageplugin.valuerange)
         except (AttributeError, ValueError):
             self.bitmap = None
@@ -383,7 +405,9 @@ class MagnifierPlugin(Plugin):
         sourcedc.SelectObject(wx.NullBitmap)
         dc.SelectObject(wx.NullBitmap)
         image = bitmap.ConvertToImage()
-        image.InitAlpha()
+        image.SetMaskColour(1,1,1)
+        if not image.HasAlpha():
+            image.InitAlpha()
         size = self.rect.width*self.rect.height
         image.SetAlphaData(chr(self.alpha)*size)
         self.bitmap = image.ConvertToBitmap()

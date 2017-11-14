@@ -241,6 +241,7 @@ if (is_array($imageinfo)) {
 		echo formatHtmlRow('WorkingDistance',$semData['working_distance'].' m');
 		echo formatHtmlRow('ResolutionX',$semData['resolution_x']);
 		echo formatHtmlRow('ResolutionY',$semData['resolution_y']);
+		echo formatHtmlRow('Z Slice Width',$semData['z_slice']);
 	}
 	echo "</table>";
 }

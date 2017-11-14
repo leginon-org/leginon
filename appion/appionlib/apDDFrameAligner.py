@@ -377,16 +377,24 @@ class MotionCor2_UCSF(DDFrameAligner):
 
 		### this is unnecessary, need to figure out how to convert outbuffer from subprocess PIPE to readable format
 		f = open(log2, "r")
+			
 		outbuffer = f.readlines()
 		f.close()
 
 		### parse motioncor2 output
+		temp = []
+		found = False
+		for line in outbuffer:
+			if "Full-frame alignment shift" in line or found:
+				temp.append(line)
+				found = True
 		shifts = []
-		for l in outbuffer: 
+		
+		for l in temp: 
 			m = re.match("...... Frame", l)
 			if m:
-				shx = float(l[26:].split()[0])
-				shy = float(l[26:].split()[1])
+				shx = float(l.split()[-2])
+				shy = float(l.split()[-1])
 				shifts.append([shx, shy])
 
 		### convert motioncorr2 output to motioncorr1 format

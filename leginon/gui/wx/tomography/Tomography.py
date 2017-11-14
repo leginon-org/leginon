@@ -155,7 +155,7 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		total_length = (1,2)
 		sz = getattr(self,sz_name)
 		sz.Add(self.widgets['use preset exposure'], start_position, (1, 2),
-				  wx.ALIGN_CENTER)
+				  wx.ALIGN_LEFT)
 		return start_position[0]+total_length[0],start_position[1]+total_length[1]
 
 	def createTiltOrderSelector(self):
@@ -263,15 +263,16 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 															chars=5,
 															value='2.0')
 
-		expsz = wx.GridBagSizer(5, 10)
+		self.expsz = wx.GridBagSizer(5, 10)
+		pos = self.createUsePresetExposureCheckBox('expsz', (0,0))
 		label = wx.StaticText(self, -1, 'Total dose')
-		expsz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		expsz.Add(self.widgets['dose'], (0, 1), (1, 1),
+		self.expsz.Add(label, (pos[0], 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.expsz.Add(self.widgets['dose'], (pos[0], 1), (1, 1),
 					wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.FIXED_MINSIZE)
 		label = wx.StaticText(self, -1, 'e-/A^2')
-		expsz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		self.expsz.Add(label, (pos[0], 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		label = wx.StaticText(self, -1, 'Exposure time')
-		expsz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.expsz.Add(label, (pos[0]+1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		exptsz = wx.GridBagSizer(0,0)
 		label = wx.StaticText(self, -1, 'Min.')
@@ -285,13 +286,13 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		label = wx.StaticText(self, -1, 'seconds')
 		exptsz.Add(label, (0, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
-		expsz.Add(exptsz, (1, 1), (1, 2), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		self.expsz.Add(exptsz, (pos[0]+1, 1), (1, 2), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 
-		expsz.AddGrowableCol(0)
-		expsz.AddGrowableRow(0)
-		expsz.AddGrowableRow(1)
+		self.expsz.AddGrowableCol(0)
+		self.expsz.AddGrowableRow(0)
+		self.expsz.AddGrowableRow(1)
 
-		expsbsz.Add(expsz, 1, wx.EXPAND|wx.ALL, 5)
+		expsbsz.Add(self.expsz, 1, wx.EXPAND|wx.ALL, 5)
 
 		self.widgets['run buffer cycle'] = wx.CheckBox(self, -1, 'Run buffer cycle')
 		self.widgets['align zero loss peak'] = wx.CheckBox(self, -1, 'Align zero loss peak')

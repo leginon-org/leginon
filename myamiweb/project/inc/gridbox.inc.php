@@ -1,4 +1,4 @@
-<?
+<?php
 function blank() {
 	header('location: img/blank.png');
 }

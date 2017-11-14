@@ -54,16 +54,15 @@ class ReferenceCounter(reference.Reference):
 				self.logger.info(message % interval)
 				return
 		self.moveAndExecute(request_data)
-		self.last_processed = 0
 
-	def onTest(self, request_data=None):
-		super(ReferenceCounter,self).onTest(request_data)
-		self.logger.info('Reset Request Process Counter')
-		self.last_processed = 0
+	def onTest(self):
+		super(ReferenceCounter,self).onTest()
 
 	def uiResetCounter(self):
-		# reset counter, not timer
+		self.resetProcess()
+
+	def resetProcess(self):
+		# reset timer
 		self.logger.info('Reset Request Process Counter')
+		# reset counter, not timer
 		self.last_processed = 0
-
-

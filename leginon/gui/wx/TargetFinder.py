@@ -133,6 +133,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 																	'Allow for user verification of selected targets')
 		self.widgets['queue'] = wx.CheckBox(self, -1,
 																							'Queue up targets')
+		self.Bind(wx.EVT_CHECKBOX, self.onUserCheckbox, self.widgets['user check'])
 		self.Bind(wx.EVT_CHECKBOX, self.onQueueCheckbox, self.widgets['queue'])
 		sz = wx.GridBagSizer(5, 5)
 		sz.Add(self.widgets['user check'], (0, 0), (1, 1),
@@ -168,6 +169,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.widgets['allow append'] = wx.CheckBox(self, -1, 'Allow target finding on old images')
 		self.widgets['multifocus'] = wx.CheckBox(self, -1, 'Use all focus targets for averaging')
 		self.widgets['allow no focus'] = wx.CheckBox(self, -1, 'Do not require focus targets in user varification')
+		self.Bind(wx.EVT_CHECKBOX, self.onUserCheckbox, self.widgets['user check'])
 		self.Bind(wx.EVT_CHECKBOX, self.onQueueCheckbox, self.widgets['queue'])
 
 		sz = wx.GridBagSizer(5, 5)
@@ -193,8 +195,17 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 
 		return sz
 
+	def onUserCheckbox(self, evt):
+		state = evt.IsChecked()
+		# This event affects user verification status
+		combined_state = state and not self.widgets['queue'].GetValue()
+		self.panel.setUserVerificationStatus(combined_state)
+
 	def onQueueCheckbox(self, evt):
 		state = evt.IsChecked()
+		# This event affects user verification status
+		combined_state = not state and self.widgets['user check'].GetValue()
+		self.panel.setUserVerificationStatus(combined_state)
 		parent = self.panel
 		parent.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT_QUEUE, state)
 		evt.Skip()

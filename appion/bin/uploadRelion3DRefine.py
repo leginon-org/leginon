@@ -12,6 +12,7 @@ import scipy
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+import numpy as np
 #appion
 from appionlib import appionScript
 from appionlib import apEMAN
@@ -100,7 +101,7 @@ class UploadRelion3DRefine(reconUploader.generalReconUploader):
 		return pixelsize,current_resolution
 		
 	#======================================================	
-	def Read03_rundatastar(self,particle_diameter):
+	def Read03_rundatastar(self,particle_diameter,pixelsize):
 		#relion_directory = os.path.dirname(self.params['starfile'])
 		
 		## Extract information from run_data.star
@@ -109,7 +110,7 @@ class UploadRelion3DRefine(reconUploader.generalReconUploader):
 		else:
 			shutil.copy(self.params['starfile'],self.params['rundir'])
 			Input03_StarFile = os.path.join(self.params['rundir'],"run_data.star")
-			preset_used,micrograph_dimensions,defocusU,defocusV,astig,coordX,coordY,anglePsi,angleRot,angleTilt,maxProb = self.readPartStarFile(Input03_StarFile,particle_diameter)
+			preset_used,micrograph_dimensions,defocusU,defocusV,astig,coordX,coordY,anglePsi,angleRot,angleTilt,maxProb = self.readPartStarFile(Input03_StarFile,particle_diameter,pixelsize)
 		
 		return preset_used,micrograph_dimensions,defocusU,defocusV,astig,coordX,coordY,anglePsi,angleRot,angleTilt,maxProb
 
@@ -158,7 +159,7 @@ class UploadRelion3DRefine(reconUploader.generalReconUploader):
 				apDisplay.printError("Do not have permissions to read the run.err and run.out files. Change file permissions.")
 
 	#======================================================
-	def readPartStarFile(self, inputfile, particle_diameter):
+	def readPartStarFile(self, inputfile, particle_diameter, pixelsize):
 		starData = starFile.StarFile(inputfile)
 		starData.read()
 		
@@ -191,6 +192,8 @@ class UploadRelion3DRefine(reconUploader.generalReconUploader):
 		angleRot = []
 		angleTilt = []
 		maxProb = []
+		# scaling factor for recentering
+		scalefactor = None
 		
 		for particle in particleTree:
 			micrograph = (os.path.splitext(os.path.basename(particle['_rlnMicrographName']))[0])
@@ -208,11 +211,14 @@ class UploadRelion3DRefine(reconUploader.generalReconUploader):
 			angleTilt.append(float(particle['_rlnAngleTilt']))
 			maxProb.append(float(particle['_rlnMaxValueProbDistribution']))
 			
-			if (self.params['recenter'] == "True"):
+			if (self.params['recenter'] is True):
+				if not scalefactor:
+					orig_apix = apDatabase.getPixelSize(apDatabase.getImageData(micrograph))
+					scalefactor = pixelsize/orig_apix
 				peakdict = {
 					'diameter': particle_diameter,
-					'xcoord': float(particle['_rlnCoordinateX']) + float(particle['_rlnOriginX']),
-					'ycoord': float(particle['_rlnCoordinateY']) + float(particle['_rlnOriginY']),
+					'xcoord': float(particle['_rlnCoordinateX']) - (scalefactor*float(particle['_rlnOriginX'])),
+					'ycoord': float(particle['_rlnCoordinateY']) - (scalefactor*float(particle['_rlnOriginY'])),
 					'peakarea': 10,
 				}
 			else:
@@ -247,6 +253,7 @@ class UploadRelion3DRefine(reconUploader.generalReconUploader):
 		runq['name'] = self.params['runname']
 		runq['session'] = self.sessiondata
 		runq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
+		runq['program'] = 'relion'
 		rundatas = runq.query(results=1)
 		if rundatas and rundatas[0]['params']['diam'] != particle_diameter:
 			apDisplay.printError("upload diameter not the same as last run")
@@ -291,6 +298,7 @@ class UploadRelion3DRefine(reconUploader.generalReconUploader):
 		plt.grid(True)
 
 		plt.savefig(os.path.join(self.params['rundir'],name + ".png"))
+		shutil.move(os.path.join(self.params['rundir'],name + ".png"),os.path.join(self.params['rundir'],name + ".gif"))
 		plt.close()
 
 	#======================================================
@@ -306,6 +314,18 @@ class UploadRelion3DRefine(reconUploader.generalReconUploader):
 		plt.grid(True)
 
 		plt.savefig(os.path.join(self.params['rundir'],name + ".png"))
+		shutil.move(os.path.join(self.params['rundir'],name + ".png"),os.path.join(self.params['rundir'],name + ".gif"))
+		plt.close()
+
+	#======================================================
+	def plotfsc(self,spatialfreq_data,fsc_data):
+		fscplot = plt.plot(spatialfreq_data,fsc_data)
+		plt.xlabel('Spatial Frequency (1/A)')
+		plt.ylabel('FSC')
+		plt.title('Fourier Shell Correlation')
+		plt.grid(True)
+		plt.savefig(os.path.join(self.params['rundir'],"fsc.png"))
+		shutil.move(os.path.join(self.params['rundir'],"fsc.png"),os.path.join(self.params['rundir'],"fsc.gif"))
 		plt.close()
 
 	#======================================================
@@ -335,6 +355,7 @@ class UploadRelion3DRefine(reconUploader.generalReconUploader):
 		plt.yticks([0,1,2,3,4,5,6,7,8],labels,size=6)
 		plt.colorbar(ax)
 		plt.savefig(os.path.join(self.params['rundir'],"SpearmanCorrelation.png"))
+		shutil.move(os.path.join(self.params['rundir'],"SpearmanCorrelation.png"),os.path.join(self.params['rundir'],"SpearmanCorrelation.gif"))
 		plt.show()
 		plt.close()
 		
@@ -348,12 +369,60 @@ class UploadRelion3DRefine(reconUploader.generalReconUploader):
 		plt.yticks([0,1,2,3,4,5,6,7,8],labels,size=6)
 		plt.colorbar(ax)
 		plt.savefig(os.path.join(self.params['rundir'],"PearsonCorrelation.png"))
+		shutil.move(os.path.join(self.params['rundir'],"PearsonCorrelation.png"),os.path.join(self.params['rundir'],"PearsonCorrelation.gif"))
 		plt.show()
 		plt.close()
+	
+	#======================================================
+	def plotEulerAngleDistribution(self,angleRot,angleTilt):
+		color_map = plt.cm.Spectral_r
+		points = [angleRot,angleTilt]
+	
+		xbnds = np.array([0,360.0])
+		ybnds = np.array([0,360.0])
+		extent = [xbnds[0],xbnds[1],ybnds[0],ybnds[1]]
+
+		fig=plt.figure(figsize=(10,9))
+		ax = fig.add_subplot(111)
+		plt.title('Euler Angle Distribution')
+
+		image = plt.hexbin(angleRot,angleTilt,cmap=color_map,gridsize=20,extent=extent,mincnt=1,bins='log')
+
+		counts = image.get_array()
+		ncnts = np.count_nonzero(np.power(10,counts))
+		verts = image.get_offsets()
+		for offc in xrange(verts.shape[0]):
+			binx,biny = verts[offc][0],verts[offc][1]
+			if counts[offc]:
+				plt.plot(binx,biny,'k.',zorder=100)
+		ax.set_xlim(xbnds)
+		ax.set_ylim(ybnds)
+		plt.grid(True)
+		plt.xlabel("Rot Angle (Degrees)")
+		plt.ylabel("Tilt Angle (Degrees)")
+		cb = plt.colorbar(image,spacing="uniform",extend="max",label="log(Number of Particles)")
+		plt.savefig(os.path.join(self.params['rundir'],"EulerAngleDistribution.png"))
+		shutil.move(os.path.join(self.params['rundir'],"EulerAngleDistribution.png"),os.path.join(self.params['rundir'],"EulerAngleDistribution.gif"))
+		plt.show()
+		plt.close()
+
+	#======================================================
+	def ThreeDFSC(self,pixelsize):
+		import Image
+		import ImageDraw
+		
+		img = Image.new('RGB', (200, 100))
+		d = ImageDraw.Draw(img)
+		d.text((20, 20), '3DFSC Coming Soon', fill=(255, 0, 0))
+		
+		img.save(os.path.join(self.params['rundir'],"ThreeDFSC.png"))
+		shutil.move(os.path.join(self.params['rundir'],"ThreeDFSC.png"),os.path.join(self.params['rundir'],"ThreeDFSC.gif"))
 		
 	#======================================================
 	def start(self):
 		## Get diameter from run.job
+		if self.params['recenter'] is True:
+			apDisplay.printMsg("Recentering particles")
 		apDisplay.printMsg("01: Reading run.job")
 		particle_diameter,particle_symmetry = self.Read01_runjob()
 		
@@ -367,7 +436,7 @@ class UploadRelion3DRefine(reconUploader.generalReconUploader):
 		
 		## Insert particles from refinement as manual pick run
 		apDisplay.printMsg("04: Reading run_data.star")
-		preset_used,micrograph_dimensions,defocusU,defocusV,astig,coordX,coordY,anglePsi,angleRot,angleTilt,maxProb = self.Read03_rundatastar(particle_diameter)
+		preset_used,micrograph_dimensions,defocusU,defocusV,astig,coordX,coordY,anglePsi,angleRot,angleTilt,maxProb = self.Read03_rundatastar(particle_diameter,pixelsize)
 		
 		## Copy over the maps and logs for display
 		self.Read04_maps(pixelsize)
@@ -382,9 +451,25 @@ class UploadRelion3DRefine(reconUploader.generalReconUploader):
 		self.plot1dhistogram(defocusU,BestAppiondefocus1,"DefocusU","Defocus ($\AA$)","DefocusU Values of All Micrographs (Yellow)\nversus Relion 3D Refine (Blue)")
 		self.plot1dhistogram(defocusV,BestAppiondefocus2,"DefocusV","Defocus ($\AA$)","DefocusV Values of All Micrographs (Yellow)\nversus Relion 3D Refine (Blue)")
 		self.plot2dhexplot(coordX,coordY,micrograph_dimensions,"XYcoordinates","Particle location on micrograph")
+		self.plotEulerAngleDistribution(angleRot,angleTilt)
+		self.ThreeDFSC(pixelsize)
 		
 		## Calculate Pearson and Spearman Correlations
 		self.calculateCorrelation(defocusU,defocusV,astig,coordX,coordY,anglePsi,angleRot,angleTilt,maxProb)
+
+		## Plot FSC Curve
+		if not os.path.isfile(os.path.join(self.params['rundir'],"eman.fsc")):
+			apDisplay.printMsg("eman.fsc file does not exists; self.Read04_maps() may not have completed properly.")
+
+		f = open(os.path.join(self.params['rundir'],"eman.fsc"),"r")
+		lines = f.readlines()
+		spatialfreq_data = []
+		fsc_data = []
+		for line in lines:
+			spatialfreq_data.append(line.split('\t')[0])
+			fsc_data.append(line.split('\t')[1])
+
+		self.plotfsc(spatialfreq_data,fsc_data)
 		
 		#apDisplay.printMsg("Getting image data from database")
 		#imgtree = apDatabase.getSpecificImagesFromDB(boxfiles)

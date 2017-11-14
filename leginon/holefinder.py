@@ -175,19 +175,6 @@ class HoleFinder(targetfinder.TargetFinder):
 			centers.append((c[1],c[0]))
 		return centers
 
-	def blobStatsTargets(self, blobs):
-		targets = []
-		for blob in blobs:
-			target = {}
-			target['x'] = blob.stats['center'][1]
-			target['y'] = blob.stats['center'][0]
-			target['stats'] = ordereddict.OrderedDict()
-			target['stats']['Size'] = blob.stats['n']
-			target['stats']['Mean'] = blob.stats['mean']
-			target['stats']['Std. Dev.'] = blob.stats['stddev']
-			targets.append(target)
-		return targets
-
 	def findBlobs(self):
 		self.logger.info('find blobs')
 		border = self.settings['blobs border']

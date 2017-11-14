@@ -1,4 +1,4 @@
-<?
+<?php
 function readtxtfile ($file) {
 	$delimiter = "\t";
 	if (!is_readable($file) || !($fp = fopen($file, 'r')))
