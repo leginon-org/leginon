@@ -26,7 +26,7 @@ function getStatistic($dbname) {
 	);
 	$legdb = new mysql(DB_HOST, DB_USER, DB_PASS, $dbname);
 	$res = $legdb->SQLQuery('SHOW TABLE STATUS FROM `'.$dbname.'`'); 
-	while ($row = mysqli_fetch_array($res, MYSQL_ASSOC)) {
+	while ($row = mysqli_fetch_array($res, MYSQLI_ASSOC)) {
 		$stats['tbl_cnt']++;
 		$stats['data_sz'] += $row['Data_length'];
 		$stats['idx_sz'] += $row['Index_length'];
@@ -106,7 +106,7 @@ $q = "select distinct `REF|SessionData|session` as sessionID,
 		count(DEF_id) as images from AcquisitionImageData group by sessionID";
 $r = mysqli_query($link, $q) or die("Query error: " . mysqli_error($link));
 
-while ($row = mysqli_fetch_array($r, MYSQL_ASSOC)) {
+while ($row = mysqli_fetch_array($r, MYSQLI_ASSOC)) {
 	$numOfSessionsWithImages += (int)$row['images'] > 10 ? 1 : 0;
 }
 
@@ -207,7 +207,7 @@ if (empty($latestRunTimestamp) || strtotime($latestRunTimestamp) < strtotime("-1
 	$currentTime = time();
 	$firstExptRunTime = $currentTime;
 	
-	while ($row = mysqli_fetch_array($result, MYSQL_ASSOC)) {
+	while ($row = mysqli_fetch_array($result, MYSQLI_ASSOC)) {
 
 		//This is only special for our group.
 		//if($row['appiondb'] == 'ap5') continue;

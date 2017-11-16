@@ -267,7 +267,7 @@ class mysql {
 		return $res;
 	}
 
-	function getSQLResult($query, $fetch=MYSQL_ASSOC) {
+	function getSQLResult($query, $fetch=MYSQLI_ASSOC) {
 		$result = $this->SQLQuery($query);
 		if (!is_object($result)) {
 			return $result;

@@ -63,7 +63,7 @@ function getStatistic($db_info) {
 	);
 	$legdb = new mysql(DB_HOST, DB_USER, DB_PASS, $db_info[database]);
 	$res = $legdb->SQLQuery('SHOW TABLE STATUS FROM `'.$db_info[database].'`'); 
-	while ($row = mysqli_fetch_array($res, MYSQL_ASSOC)) {
+	while ($row = mysqli_fetch_array($res, MYSQLI_ASSOC)) {
 		$stats['tbl_cnt']++;
 		$stats['data_sz'] += $row['Data_length'];
 		$stats['idx_sz'] += $row['Index_length'];
@@ -89,7 +89,7 @@ function getImageSizeInfo($leg) {
 		.'order by timestamp desc limit 2';
 
 	$imgsize = $dbp->SQLQuery($qleg);
-	while ($row = mysqli_fetch_array($imgsize, MYSQL_ASSOC))
+	while ($row = mysqli_fetch_array($imgsize, MYSQLI_ASSOC))
 		$info[] = $row;
 
 	return $info;

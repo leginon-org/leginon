@@ -14,12 +14,12 @@ $q = "show tables";
 $Rtables = $db->SQLQuery($q);
 
 $data = array();
-while ( $row = mysqli_fetch_array($Rtables, MYSQL_ASSOC)) {
+while ( $row = mysqli_fetch_array($Rtables, MYSQLI_ASSOC)) {
 	$table = $row[Tables_in_dbemdata];
 	$q = "show fields from $table";
 	$Rfields = $db->SQLQuery($q);
 	echo "<h3>$table</h3>";
-	while ($fields=mysqli_fetch_array($Rfields, MYSQL_ASSOC)) {
+	while ($fields=mysqli_fetch_array($Rfields, MYSQLI_ASSOC)) {
 		if (!preg_match("%^REF\||^DEF_%",$fields[Field]))
 			echo "$fields[Field] <br>";
 	}

@@ -259,7 +259,7 @@ class project {
 		  ."funding as 'Funding'  FROM projects "
 		  ."WHERE DEF_id='$projectId'";
 		$RprojectInfo = $this->mysql->SQLQuery($q);
-		$info = mysqli_fetch_array($RprojectInfo, MYSQL_ASSOC);
+		$info = mysqli_fetch_array($RprojectInfo, MYSQLI_ASSOC);
 		return $info;
 	}
 

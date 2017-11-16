@@ -859,7 +859,7 @@ class leginondata {
 		$q = 'select '.$str_fields.' from `'.$table.'`'
 			.' where `DEF_id`="'.$id.'"';
 		$R = $this->mysql->SQLQuery($q);
-		while ($r = mysqli_fetch_array($R, MYSQL_ASSOC))
+		while ($r = mysqli_fetch_array($R, MYSQLI_ASSOC))
 			$data[] = $r;
 		return $data;
 	}
@@ -1421,7 +1421,7 @@ class leginondata {
 			."a.`DEF_id` ='".$imgId."' "
 			."order by pi.`DEF_id` desc"; 
 		$Rimageinfo = $this->mysql->SQLQuery($q);
-		$imageinfo = mysqli_fetch_array($Rimageinfo,MYSQL_ASSOC);
+		$imageinfo = mysqli_fetch_array($Rimageinfo,MYSQLI_ASSOC);
 		return $imageinfo;
 	}
 
@@ -1496,7 +1496,7 @@ class leginondata {
 			."a.`DEF_id` ='".$imgId."' "; 
 		$parents = array();
 		$Rparent = $this->mysql->SQLQuery($q);
-		while ($parent = mysqli_fetch_array($Rparent, MYSQL_ASSOC))
+		while ($parent = mysqli_fetch_array($Rparent, MYSQLI_ASSOC))
 			$parents[]=$parent;
 		return $parents;
 	}
@@ -2207,7 +2207,7 @@ class leginondata {
 		$q="SELECT `DEF_id`, concat(label,' ',axis) as label  from StageModelCalibrationData order by `DEF_timestamp` DESC";
 		$result = $this->mysql->SQLQuery($q);
 		if($result != false){
-			while ($row= mysqli_fetch_array($result, MYSQL_ASSOC))
+			while ($row= mysqli_fetch_array($result, MYSQLI_ASSOC))
 				$models[] = $row;
 		}
 		return $models;
@@ -2224,7 +2224,7 @@ class leginondata {
 		." order by s.`DEF_timestamp` DESC";
 		$result = $this->mysql->SQLQuery($q);
 		if($result != false){
-			while ($row= mysqli_fetch_array($result, MYSQL_ASSOC))
+			while ($row= mysqli_fetch_array($result, MYSQLI_ASSOC))
 				$models[] = $row;
 		}
 		return $models;
@@ -2240,7 +2240,7 @@ class leginondata {
 	function getGoniometerModel($Id) {
 		$q="SELECT * from StageModelCalibrationData where `DEF_id` = \"$Id\"";
 		$result = $this->mysql->SQLQuery($q);
-		$row = mysqli_fetch_array($result, MYSQL_ASSOC);
+		$row = mysqli_fetch_array($result, MYSQLI_ASSOC);
 		return $row;
 	}
 

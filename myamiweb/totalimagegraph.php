@@ -76,7 +76,7 @@ if ($type=="r") {
 	$keyedData = array();
 	
 	// for each appion database, get the number of processing runs per quarter
-	while ($row = mysqli_fetch_array($result, MYSQL_ASSOC)) {
+	while ($row = mysqli_fetch_array($result, MYSQLI_ASSOC)) {
 
 		mysqli_select_db($link, $row['appiondb']);
 		
@@ -86,7 +86,7 @@ if ($type=="r") {
 			$r = mysqli_query($link, $q) or die("Database query error: " . mysqli_error($link));
 			
 			// add the processing runs from this project to the appropriate quarter
-			while ($rowInner = mysqli_fetch_array($r, MYSQL_ASSOC)) {
+			while ($rowInner = mysqli_fetch_array($r, MYSQLI_ASSOC)) {
 				$k = array();
 				foreach ($timekeys as $t) $k[] = sprintf('%02d', (int) $rowInner[$t]);
 				// combine data from different appiondb
