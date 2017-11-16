@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # update the status of the reconstruction in the appion database
 
-import MySQLdb
 import sinedon
 import sys
 
@@ -22,8 +21,7 @@ if __name__ == "__main__":
 	if projectid is not None:
 		pjc = sinedon.getConfig('projectdata')
 		q = "SELECT appiondb FROM processingdb WHERE `REF|projects|project`='%s'" % (projectid,)
-		dbc = MySQLdb.Connect(**pjc)
-		dbc.autocommit(True)
+		dbc = sinedon.sqldb.connect(**pjc)
 		cursor = dbc.cursor()
 		result = cursor.execute(q)
 		if result:
@@ -35,8 +33,7 @@ if __name__ == "__main__":
 	# connect to database
 	c = sinedon.getConfig('appiondata')
 
-	dbc = MySQLdb.Connect(**c)
-	dbc.autocommit(True)
+	dbc = sinedon.sqldb.connect(**c)
 	cursor = dbc.cursor()
 
 	# execute update

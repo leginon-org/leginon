@@ -6,7 +6,6 @@ import os
 import time
 import re
 import shutil
-import MySQLdb
 #appion
 from appionlib import appionScript
 from appionlib import apStack
@@ -26,7 +25,7 @@ class tiltStackSync(appionScript.AppionScript):
 		appionScript.AppionScript.__init__(self)
 		# connect
 		self.dbconf = sinedon.getConfig('appiondata')
-		self.db     = MySQLdb.connect(**self.dbconf)
+		self.db     = sinedon.sqldb.connect(**self.dbconf)
 		self.db.autocommit(True)
 		# create a cursor
 		self.cursor = self.db.cursor()

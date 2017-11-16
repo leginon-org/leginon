@@ -24,7 +24,6 @@ import sinedon
 import numpy
 from pyami import mrc, quietscipy
 from scipy import ndimage, stats
-import MySQLdb
 
 class satEulerScript(appionScript.AppionScript):
 	def __init__(self):
@@ -36,8 +35,7 @@ class satEulerScript(appionScript.AppionScript):
 		if self.cursor is None:
 			# connect
 			self.dbconf = sinedon.getConfig('appiondata')
-			self.db     = MySQLdb.connect(**self.dbconf)
-			self.db.autocommit(True)
+			self.db     = sinedon.sqldb.connect(**self.dbconf)
 			# create a cursor
 			self.cursor = self.db.cursor()
 
@@ -712,8 +710,7 @@ class satEulerScript(appionScript.AppionScript):
 		if self.cursor is None:
 			# connect
 			self.dbconf = sinedon.getConfig('appiondata')
-			self.db     = MySQLdb.connect(**self.dbconf)
-			self.db.autocommit(True)
+			self.db     = sinedon.sqldb.connect(**self.dbconf)
 			# create a cursor
 			self.cursor = self.db.cursor()
 		if not self.params['reconid']:
