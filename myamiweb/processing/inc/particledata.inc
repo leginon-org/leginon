@@ -1152,6 +1152,7 @@ class particledata {
 			."c.`amplitude_contrast`, "
 			."c.`angle_astigmatism`, "
 			.$phase_shift_select
+			."c.`REF|ApAceRunData|acerun`, "  //Needed in checking if there is result.
 			."c.`noise1`, "
 			."c.`noise2`, "
 			."c.`noise3`, "
@@ -1246,13 +1247,14 @@ class particledata {
 	}
 
 	function getBestCTFOrder($ctftable_alias='c') {
-		// First order by res80. If some entries of res80 are null, they will be sorted as 999 and end up at the end of the list.
+		// First order by ctffind4_resolution which also records equiphase resolution from gctf.  Then sort by res80. If some entries of res80 are null, they will be sorted as 999 and end up at the end of the list.
 		// Then sort by res50. If there was a tie from res80, the tie is broken with res50.
 		// Res80 and res50 are only set for newer versions of Appion. For runs that were mase with older versions, we still want to sort by
 		// cross_correlation (ctffind) and confidence (ace1 and ace2). After sorting by resolution, old runs should all be tied with 999, so the
 		// final sort will sort by whichever is not null, the ctffind correlation or the Appion overall conf.
 		$c = (empty($ctftable_alias)) ? '':$ctftable_alias.'.';
-		$q .= "	ORDER BY coalesce(".$c."resolution_80_percent,999) ASC ";
+		$q .= "	ORDER BY coalesce(".$c."ctffind4_resolution,999) ASC ";
+		$q .= "	, coalesce(".$c."resolution_80_percent,999) ASC ";
 		$q .= " , coalesce(".$c."resolution_50_percent,999) ASC ";
 		$q .= " , coalesce(".$c."`cross_correlation`, confidence_appion, 0.0) DESC ";
 		return $q;
@@ -1261,6 +1263,12 @@ class particledata {
 	function getAppionConfidenceScoreSelect($ctftable_alias='c') {
 		$c = $ctftable_alias;
 		$q = "greatest(coalesce(".$c.".confidence, 0), coalesce(".$c.".confidence_d,0), coalesce(".$c.".confidence_30_10,0), coalesce(".$c.".confidence_5_peak,0)) as confidence_appion ";
+		return $q;
+	}
+
+	function getAppionResolutionSelect($ctftable_alias='c') {
+		$c = $ctftable_alias;
+		$q = "greatest(coalesce(".$c.".resolution_50_percent, 999.0), coalesce(".$c.".resolution_80_percent,999.0), coalesce(".$c.".ctffind4_resolution,0)) as resolution_appion ";
 		return $q;
 	}
 
@@ -1279,6 +1287,7 @@ class particledata {
 			."    unix_timestamp(s.`DEF_timestamp`) as unix_timestamp, "
 			."		2*ABS(ctf.defocus1-ctf.defocus2)/(ctf.defocus1+ctf.defocus2) AS difference, "
 			.$this->getAppionConfidenceScoreSelect('ctf').", "
+			.$this->getAppionResolutionSelect('ctf').", "
 			."		ctf.* "
 			."	FROM `ApCtfData` AS ctf "
 			."	LEFT JOIN ".DB_LEGINON.".`AcquisitionImageData` AS i ON (i.`DEF_id` = ctf.`REF|leginondata|AcquisitionImageData|image`) "
@@ -1296,16 +1305,11 @@ class particledata {
 			."	AND  "
 			." ( viewer.status IS NULL OR viewer.status != 'hidden' ) "
 			."		)  "
-			// First order by res80. If some entries of res80 are null, they will be sorted as 999 and end up at the end of the list.
-			// Then sort by res50. If there was a tie from res80, the tie is broken with res50.
-			// Res80 and res50 are only set for newer versions of Appion. For runs that were mase with older versions, we still want to sort by
-			// cross_correlation (ctffind) and confidence (ace1 and ace2). After sorting by resolution, old runs should all be tied with 999, so the
-			// final sort will sort by whichever is not null, the ctffind correlation or the Ace conf.
 			.$this->getBestCTFOrder('ctf')
 			."	) ctfdata ";
 		// if $limit is specified, report only values with confidences > $limit
 		if ($limit) {
-			$q .= " WHERE confidence_appion > $limit ";
+			$q .= " WHERE resolution_appion < $limit ";
 		}
 		$q .= " GROUP BY ctfdata.imageid ORDER BY ctfdata.unix_timestamp ";
 		//echo $q."<br/><br/>\n";
