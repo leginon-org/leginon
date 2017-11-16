@@ -1267,8 +1267,9 @@ class particledata {
 	}
 
 	function getAppionResolutionSelect($ctftable_alias='c') {
+		//FIX ME:This makes AppionResolution different from the resolution used in ordering.
 		$c = $ctftable_alias;
-		$q = "greatest(coalesce(".$c.".resolution_50_percent, 999.0), coalesce(".$c.".resolution_80_percent,999.0), coalesce(".$c.".ctffind4_resolution,0)) as resolution_appion ";
+		$q = "least(coalesce(".$c.".resolution_50_percent, 999.0), coalesce(".$c.".resolution_80_percent,999.0), coalesce(".$c.".ctffind4_resolution,999.0)) as resolution_appion ";
 		return $q;
 	}
 
@@ -1289,7 +1290,7 @@ class particledata {
 			.$this->getAppionConfidenceScoreSelect('ctf').", "
 			.$this->getAppionResolutionSelect('ctf').", "
 			."		ctf.* "
-			."	FROM `ApCtfData` AS ctf "
+			."	FROM ".PARTICLE_DB.".`ApCtfData` AS ctf "
 			."	LEFT JOIN ".DB_LEGINON.".`AcquisitionImageData` AS i ON (i.`DEF_id` = ctf.`REF|leginondata|AcquisitionImageData|image`) "
 			."	LEFT JOIN ".DB_LEGINON.".`PresetData` AS p ON (p.DEF_id = i.`REF|PresetData|preset`) "
 			." LEFT JOIN ".DB_LEGINON.".`ScopeEMData` AS s ON (i.`REF|ScopeEMData|scope` = s.`DEF_id`) "
