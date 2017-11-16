@@ -516,24 +516,33 @@ class AlterTableIndex(SQLExpression):
 			alter = "ALTER TABLE %s ADD INDEX (%s) " % (tableStr(self.table), backquote(self.column['Field']))
 		return alter
 
+class HasTable(SQLExpression):
+	def __init__(self, table):
+		self.db = table[0]
+		self.tablename = table[1]
+
+	def sqlRepr(self):
+		q = "SELECT * FROM information_schema.tables WHERE table_schema = '%s' and table_name= '%s'" % (self.db, self.tablename)
+		return q
 
 class CreateTable(SQLExpression):
 	def __init__(self, table, columns, type=None):
 		self.table = table
 		self.columns = columns
 		self.type = type
+
 	def sqlRepr(self):
 		if not self.columns:
 			return ''
 		if self.type in ('BDB', 'HEAP', 'ISAM', 'InnoDB', 'MERGE', 'MRG_MyISAM', 'MyISAM'):
 			type_str = " ENGINE=%s " % self.type
 		else:
-			type_str = " ENGINE=MyISAM" 
+			type_str = " ENGINE=MyISAM "
 
-		# FIX ME: For InnoDB implementation, CREATE TABLE IF NOT EXISTS
-		# need to be replaced with CREATE TABLE, and a seperate query need
-		# to be made to find out if the table exists.
-		create = "CREATE TABLE IF NOT EXISTS %s " % (tableStr(self.table),)
+		# For InnoDB implementation, CREATE TABLE IF NOT EXISTS
+		# is replaced with CREATE TABLE, and a seperate query 
+		# is made to find out if the table exists.
+		create = "CREATE TABLE %s " % (tableStr(self.table),)
 		keys = []
 		fields = []
 
