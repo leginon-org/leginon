@@ -27,8 +27,6 @@ class TemplateConvolver(object):
 		self.lattice_spacing = pixels
 
 	def setLatticeAngle(self,degrees):
-		if not self.npoint % 2:
-			degrees -= 45
 		self.lattice_angle = math.radians(degrees)
 
 	def setSingleTemplateScale(self,scale):
@@ -109,7 +107,7 @@ class TemplateConvolver(object):
 		return template_image
 
 	def run(self):
-		templat_image = self.makeMultiTemplate()
+		template_image = self.makeMultiTemplate()
 		outfile = './%dholetemplate.mrc' % (self.npoint)
 		outfile = os.path.abspath(outfile)
 		print 'output the template file as\n %s' % outfile 
