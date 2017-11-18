@@ -48,6 +48,9 @@ class JAHCFinder(targetfinder.TargetFinder):
 		'template type': 'cross',
 		'template lpf': {
 			'sigma': 1.0,
+		'template multiple':1,
+		'multihole angle':0.0,
+		#'multihole spacing':200,
 		},
 		'threshold': 3.0,
 		'threshold method': "Threshold = mean + A * stdev",
@@ -132,6 +135,9 @@ class JAHCFinder(targetfinder.TargetFinder):
 		diameter = self.settings['template diameter']
 		filediameter = self.settings['file diameter']
 		invert = self.settings['template invert']
+		multiple = self.settings['template multiple']
+		spacing = self.settings['lattice spacing']
+		angle = self.settings['multihole angle']
 		if self.settings['template filename'] != '':
 			if os.path.isfile(self.settings['template filename']):
 				filename = self.settings['template filename']
@@ -140,7 +146,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 				filename = default_template
 		else:
 			filename = default_template
-		self.hf.configure_template(diameter, filename, filediameter, invert)
+		self.hf.configure_template(diameter, filename, filediameter, invert, multiple, spacing, angle)
 		try:
 			self.hf.create_template()
 		except Exception, e:
