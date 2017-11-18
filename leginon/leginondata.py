@@ -1592,6 +1592,8 @@ class JAHCFinderSettingsData(HoleFinderSettingsData):
 			('template invert', bool),
 			('template image min', float),
 			('lattice extend', str),
+			('template multiple', int),
+			('multihole angle', float),
 		)
 	typemap = classmethod(typemap)
 
