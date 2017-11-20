@@ -1,7 +1,12 @@
 #!/usr/bin/env python
 
+import sys
 import cv2
 import numpy
+import platform
+
+print "system platform: ", platform.platform()
+print "openCV version:  ", cv2.__version__
 
 detector = cv2.FeatureDetector_create("SIFT")
 descriptor = cv2.DescriptorExtractor_create("BRIEF")
