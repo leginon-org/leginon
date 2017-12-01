@@ -111,8 +111,9 @@ class CentosInstallation(object):
 	
 	# if SeLinus is not disable, return false, otherwise good to go.
 	def checkSeLinux(self):
-		
-		proc = subprocess.Popen("/usr/sbin/selinuxenabled")
+		selinuxenabled = "/usr/sbin/selinuxenabled"
+		if not os.path.exists(selinuxenabled): return True
+		proc = subprocess.Popen(selinuxenabled)
 		returnValue = proc.wait()
 
 		
