@@ -264,18 +264,6 @@ class CentosInstallation(object):
 	def processServerPackageEnable(self):
 		self.linkMpiRun()
 
-	def processServerExtraPythonPackageInstall(self):
-		packagelist = [
-			{
-				# PyFFTW
-				'targzFileName':'PyFFTW3-0.2.2.tar.gz',
-				'fileLocation':'http://launchpad.net/pyfftw/trunk/0.2.2/+download/',
-				'unpackDirName':'PyFFTW3-0.2.2',
-			}
-		]
-		for p in packagelist:
-			self.installPythonPackage(p['targzFileName'], p['fileLocation'], p['unpackDirName'])
-
 	def setupWebServer(self):
 		self.writeToLog("--- Start install Web Server")
 		#myamiweb yum packages
@@ -330,9 +318,7 @@ class CentosInstallation(object):
 		# make certain yum package binary available
 		self.processServerPackageEnable()
 
-		# install non-Yum packages
-		self.processServerExtraPythonPackageInstall()
- 
+
 		# install all the myami python packages except appion.
 		os.chdir(self.gitMyamiDir)
 		self.runCommand('./pysetup.sh install')
@@ -1020,12 +1006,6 @@ endif
 		self.yumInstall(packagelist)
 		# Most are installed as on processingServer
 		packagelist = [
-			{
-				# PyFFTW
-				'targzFileName':'PyFFTW3-0.2.2.tar.gz',
-				'fileLocation':'http://launchpad.net/pyfftw/trunk/0.2.2/+download/',
-				'unpackDirName':'PyFFTW3-0.2.2',
-			},
 			{
 				# Python fs
 				'targzFileName':'fs-0.4.0.tar.gz',
