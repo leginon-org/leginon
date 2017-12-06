@@ -265,7 +265,7 @@ class CentosInstallation(object):
 		self.linkMpiRun()
 
 	def processServerExtraPythonPackageInstall(self):
-		self.runCommand("yum install python-pip")
+		self.runCommand("yum install -y python-pip")
 		self.runCommand("pip install joblib==0.10.3")
 		
 	def setupWebServer(self):
