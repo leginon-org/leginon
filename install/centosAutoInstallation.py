@@ -264,6 +264,10 @@ class CentosInstallation(object):
 	def processServerPackageEnable(self):
 		self.linkMpiRun()
 
+	def processServerExtraPythonPackageInstall(self):
+		self.runCommand("yum install python-pip")
+		self.runCommand("pip install joblib==0.10.3")
+		
 	def setupWebServer(self):
 		self.writeToLog("--- Start install Web Server")
 		#myamiweb yum packages
@@ -318,7 +322,9 @@ class CentosInstallation(object):
 		# make certain yum package binary available
 		self.processServerPackageEnable()
 
-
+		# install non-Yum packages
+		self.processServerExtraPythonPackageInstall()
+ 
 		# install all the myami python packages except appion.
 		os.chdir(self.gitMyamiDir)
 		self.runCommand('./pysetup.sh install')
