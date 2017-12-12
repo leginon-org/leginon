@@ -3,8 +3,8 @@
 import os
 import sys
 import time
-import MySQLdb
 import dbconfig
+import sinedon.sqldb
 
 messaging = {
 	'long query': True,
@@ -48,10 +48,10 @@ class DBUpgradeTools(object):
 		if messaging['success'] is True:
 			print "\033[32mconnected to db '%s' on server '%s'\033[0m"%(dbconf['db'], dbconf['host'])
 		### connect to db
-		db = MySQLdb.connect(**dbconf)
-		db.autocommit(True)
+		db = sinedon.sqldb.connect(**dbconf)
 		### create cursor
 		self.cursor = db.cursor()
+		self.engine = self.formatEngine(dbconf)
 		self.defid = 'int(20) NOT NULL auto_increment'
 		self.link = 'int(20) NULL DEFAULT NULL'
 		self.int = 'int(20) NULL DEFAULT NULL' 
@@ -59,6 +59,11 @@ class DBUpgradeTools(object):
 		self.str = 'text NULL DEFAULT NULL' 
 		self.float = 'double NULL DEFAULT NULL'
 		self.timestamp = 'timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP' 
+
+	def formatEngine(self, dbconfig):
+		if 'engine' in dbconfig and dbconfig['engine']:
+			return 'ENGINE=%s' % dbconfig['engine']
+		return ''
 
 	#==============
 	def getDatabaseName(self):
@@ -488,7 +493,7 @@ class DBUpgradeTools(object):
 		query += "PRIMARY KEY (`DEF_id`), \n"
 		query += "KEY `DEF_timestamp` (`DEF_timestamp`) \n"
 		### set defaults
-		query += ") ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;\n"
+		query += ") %s AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;\n" % (self.engine)
 		self.executeQuery(query)
 
 		if self.tableExists(table) is False:

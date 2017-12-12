@@ -1236,11 +1236,6 @@
     <key>KEY `REF|AcquisitionImageData|image` (`REF|AcquisitionImageData|image`)</key>
     <key>KEY `status` (`status`)</key>
 	</sqltable>
-	<sqltable name="viewer_cache">
-		<field name="session" type="varchar(255)" null="NOT NULL" />
-		<field name="timestamp" type="timestamp" null="NOT NULL" Default="CURRENT_TIMESTAMP" />
-    <key>PRIMARY KEY (`session`)</key>
-	</sqltable>
 	<sqltable name="viewer_comment">
 		<field name="id" type="int(11)" null="NOT NULL" extra="auto_increment" />
 		<field name="timestamp" type="timestamp" null="NOT NULL" Default="CURRENT_TIMESTAMP" />
@@ -1268,56 +1263,6 @@
     <key>KEY `sessionId` (`sessionId`)</key>
     <key>KEY `imageId` (`imageId`)</key>
     <key>KEY `status` (`status`)</key>
-	</sqltable>
-	<sqltable name="viewer_login">
-		<field name="id" type="int(11)" null="NOT NULL" extra="auto_increment" />
-		<field name="username" type="varchar(50)" />
-		<field name="password" type="varchar(50)" />
-		<field name="privilege" type="tinyint(4)" />
-    <key>PRIMARY KEY (`id`)</key>
-    <key>KEY `username` (`username`)</key>
-	</sqltable>
-	<sqltable name="viewer_pref_image">
-		<field name="id" type="int(11)" null="NOT NULL" extra="auto_increment" />
-		<field name="timestamp" type="timestamp" null="NOT NULL" Default="CURRENT_TIMESTAMP" />
-		<field name="username" type="varchar(50)" />
-		<field name="sessionId" type="int(11)" />
-		<field name="imageId" type="int(11)" />
-		<field name="status" type="enum('hidden','visible','exemplar')" />
-    <key>PRIMARY KEY (`id`)</key>
-    <key>KEY `timestamp` (`timestamp`)</key>
-    <key>KEY `username` (`username`)</key>
-    <key>KEY `sessionId` (`sessionId`)</key>
-    <key>KEY `imageId` (`imageId`)</key>
-    <key>KEY `status` (`status`)</key>
-	</sqltable>
-	<sqltable name="viewer_update">
-		<field name="id" type="int(11)" null="NOT NULL" extra="auto_increment" />
-		<field name="timestamp" type="timestamp" null="NOT NULL" Default="CURRENT_TIMESTAMP" />
-		<field name="status" type="enum('N','Y')" />
-		<field name="name" type="text" />
-		<field name="update" type="text" />
-    <key>PRIMARY KEY (`id`)</key>
-    <key>KEY `timestamp` (`timestamp`)</key>
-	</sqltable>
-	<sqltable name="viewer_users">
-		<field name="userId" type="int(11)" null="NOT NULL" extra="auto_increment" />
-		<field name="login" type="varchar(50)" />
-		<field name="firstname" type="text" />
-		<field name="lastname" type="text" />
-		<field name="title" type="text" />
-		<field name="institution" type="text" />
-		<field name="dept" type="text" />
-		<field name="address" type="text" />
-		<field name="city" type="text" />
-		<field name="statecountry" type="text" />
-		<field name="zip" type="text" />
-		<field name="phone" type="text" />
-		<field name="fax" type="text" />
-		<field name="email" type="text" />
-		<field name="url" type="text" />
-    <key>PRIMARY KEY (`userId`)</key>
-    <key>KEY `login` (`login`)</key>
 	</sqltable>
 
 	<sqltable name="BeamTiltFixerSettingsData" >

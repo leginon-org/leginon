@@ -9,7 +9,6 @@ import time
 import numpy
 ### db
 import sinedon
-import MySQLdb
 ### appion
 from appionlib import apDisplay
 from appionlib import apStack
@@ -26,8 +25,7 @@ class ApEulerJump(object):
 		### get db config info
 		self.dbconf = sinedon.getConfig('appiondata')
 		### connect
-		self.db     = MySQLdb.connect(**self.dbconf)
-		self.db.autocommit(True)
+		self.db     = sinedon.sqldb.connect(**self.dbconf)
 		### create a cursor
 		self.cursor = self.db.cursor()
 		### keep sinedon version too

@@ -10,7 +10,7 @@ from leginon import player
 import time
 import itertools
 
-PAUSE_AND_INFORM_ERROR = False
+PAUSE_AND_INFORM_ERROR = True
 
 class Conditioner(node.Node):
 	'''

@@ -23,7 +23,7 @@ $bydf = ($_GET['bydf']) ? $_GET['bydf'] : 'confidence';
 $f = $_GET['f'];
 $preset= ($_GET['preset']) ? $_GET['preset'] : '';
 $summary = ($_GET['s']==1 ) ? true : false;
-$minimum = ($_GET['mconf']) ? $_GET['mconf'] : 0.2;
+$minimum = ($_GET['mconf']) ? $_GET['mconf'] : 20.0; //fit resolution minimal resolution in Angstroms
 $width=$_GET['w'];
 $height=$_GET['h'];
 $xmin = ($_GET['xmin']) ? $_GET['xmin'] : false;

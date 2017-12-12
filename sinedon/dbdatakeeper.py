@@ -311,9 +311,6 @@ class DBDataKeeper(object):
 				columns_created[table][field] = None
 				create_table = True
 		if create_table:
-			# FIX ME: If we want to use InnoDB, we need to
-			# make this in advance so that sqldict.createSQLTable
-			# does not need CREATE IF NOT EXIST
 			self.dbd.createSQLTable(table, definition)
 		myTable = self.dbd.Table(table)
 		if skipinsert is True:

@@ -22,7 +22,6 @@ from appionlib import apProject
 from appionlib import apFourier
 from pyami import spider
 import sinedon
-import MySQLdb
 
 #=====================
 #=====================

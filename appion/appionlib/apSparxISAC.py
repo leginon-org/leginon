@@ -17,7 +17,6 @@ from appionlib import appiondata
 from appionlib import processingHost
 from appionlib import apRecon
 import sinedon
-import MySQLdb
 
 #=====================
 #=====================
@@ -301,7 +300,7 @@ class ISACJob(apRemoteJob.RemoteJob): # technically not a refine job, but a big 
 		if self.params['commit'] is False:
 			return
 		config = sinedon.getConfig('appiondata')
-		dbc = MySQLdb.Connect(**config)
+		dbc = sinedon.sqldb.connect(**config)
 		cursor = dbc.cursor()
 		query = (
 			"  UPDATE ApISACRunData "

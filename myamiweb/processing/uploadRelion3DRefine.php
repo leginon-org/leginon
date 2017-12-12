@@ -90,6 +90,9 @@ $title='uploadParticles.py Launcher', $heading='Upload particle selection') {
 	echo "<br>\n";
 	echo "<INPUT TYPE='checkbox' NAME='recenter' value='recenter'>\n";
 	echo docpop('recenter', "Recenter particles based on shifts during Relion 3D auto-refine");
+	echo "<br>\n";
+	echo "<INPUT TYPE='checkbox' NAME='noinsert' value='noinsert'>\n";
+	echo docpop('noinsert', "Do not insert final particle picks from Relion 3D auto-refine");
 
 	/*
 	**
@@ -158,6 +161,8 @@ function runUploadRefine3DRefine() {
 	$command.="--starfile=\"$starfile\" ";
 	if ($_POST['recenter'] == 'recenter')
 		$command.="--recenter ";
+	if ($_POST['noinsert'] == 'noinsert')
+		$command.="--noinsert ";
 	$command.="--session=$sessionname ";
 	$command.="--commit ";
 

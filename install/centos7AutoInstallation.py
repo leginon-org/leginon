@@ -17,9 +17,9 @@ class CentosInstallation(object):
 		# need to change to branch when release
 		self.gitCmd = "git clone -b myami-beta http://emg.nysbc.org/git/myami " + self.gitMyamiDir
 		# redhat release related values
-		self.redhatRelease = '6.8' # currently used to decide the name of the epel download.
 		self.torqueLibPath = '/var/lib/torque/'
 
+ 		self.redhatMajorRelease = '7'
 		# SHA-1 digest of a registration key provided by AMI. When we change the key that we give to
 		# registered users, we need to update this value.
 		self.regKeyHash = '4\xa3T\xf2KB\x0e\xd7\x1fk1\xfdb\xcd\x04\xdcH>\xcc\x8e'
@@ -43,7 +43,7 @@ class CentosInstallation(object):
 
 		print "Current OS Information: " + flavor
 		self.writeToLog("CentOS info: " + flavor)
-		#self.redhatRelease = flavor.split()[2]
+
 		
 	def  determineNumberOfCPUs(self):
 		""" Number of virtual or physical CPUs on this system """
@@ -111,8 +111,9 @@ class CentosInstallation(object):
 	
 	# if SeLinus is not disable, return false, otherwise good to go.
 	def checkSeLinux(self):
-		
-		proc = subprocess.Popen("/usr/sbin/selinuxenabled")
+		selinuxenabled = "/usr/sbin/selinuxenabled"
+		if not os.path.exists(selinuxenabled): return True
+		proc = subprocess.Popen(selinuxenabled)
 		returnValue = proc.wait()
 
 		
@@ -149,11 +150,7 @@ class CentosInstallation(object):
 
 	def yumUpdate(self):
 		print "Updating system files...."
-		redhatMajorRelease = self.redhatRelease.split('.')[0]
-		redhatMinorRelease = self.redhatRelease.split('.')[1]
-
-		# download from http://dl.fedoraproject.org/pub/epel/6/i386/epel-release-6-8.noarch.rpm 
-		self.runCommand("rpm -Uvh http://dl.fedoraproject.org/pub/epel/%s/`uname -i`/epel-release-%s-%s.noarch.rpm" % (redhatMajorRelease, redhatMajorRelease, redhatMinorRelease))
+		self.runCommand("rpm -Uvh https://dl.fedoraproject.org/pub/epel/epel-release-latest-%s.noarch.rpm" % (self.redhatMajorRelease))
 
 		self.runCommand("yum -y update yum*")
 
@@ -266,8 +263,8 @@ class CentosInstallation(object):
 
 	def processServerExtraPythonPackageInstall(self):
 		self.runCommand("yum install -y python-pip")
-		self.runCommand("pip install joblib==0.10.3")
-		
+		self.runCommand("pip install joblib==0.10.3")		
+
 	def setupWebServer(self):
 		self.writeToLog("--- Start install Web Server")
 		#myamiweb yum packages
@@ -286,9 +283,8 @@ class CentosInstallation(object):
 		self.installMyamiWeb()
 		self.editMyamiWebConfig()
 		
-		self.runCommand("/sbin/service httpd stop")
-		self.runCommand("/sbin/service httpd start")
-		self.runCommand("/sbin/chkconfig httpd on")
+		self.runCommand("systemctl restart httpd")
+		self.runCommand("systemctl enable httpd")
 		self.openFirewallPort(80)
 		return True
 
@@ -296,12 +292,14 @@ class CentosInstallation(object):
 		self.writeToLog("--- Start install Database Server")
 		self.mysqlYumInstall()
 		# turn on auto mysql start
-		self.runCommand("/sbin/chkconfig mysqld on")
 		
 		# stop mysql server (if it's running)
-		self.runCommand("/sbin/service mysqld stop")
+		self.runCommand("systemctl enable mysqld")
 		# start mysql server
-		os.system("mysqld_safe --skip-grant-tables &")
+		
+		#https://stackoverflow.com/questions/33510184/change-mysql-root-password-on-centos7
+		os.system('systemctl set-environment MYSQLD_OPTS="--skip-grant-tables"')
+		os.system("systemctl start mysqld")
 		mysql_is_active = False
                 while not mysql_is_active:
                         mysql_is_active = os.system("mysqladmin -umysql ping") == 0
@@ -385,8 +383,8 @@ class CentosInstallation(object):
 			self.writeToLog(message)
 			return True
 
-		self.runCommand("/sbin/chkconfig pbs_server on")
-		self.runCommand("/sbin/chkconfig pbs_sched on")
+		self.runCommand("systemctl start pbs_server")
+		self.runCommand("systemctl start pbs_sched")
 		
 		f = open(nodes_file, 'w')
 		f.write("%s np=%d" % (self.hostname, self.nproc))
@@ -400,8 +398,8 @@ class CentosInstallation(object):
 		self.editHosts()
 
 		# start the Torque server, keep this after any config file editing.
-		self.runCommand("/sbin/service pbs_server start")
-		self.runCommand("/sbin/service pbs_sched start")
+		self.runCommand("systemctl enable pbs_server")
+		self.runCommand("systemctl enable pbs_sched")
 		
 		self.runCommand("/sbin/service network restart")
 		return True
@@ -809,7 +807,7 @@ endif
 	def enableTorqueComputeNode(self):
 		packagelist = ['torque-mom', 'torque-client', ]
 		self.yumInstall(packagelist)
-		self.runCommand("/sbin/chkconfig pbs_mom on")
+		self.runCommand("systemctl enable pbs_mom")
 
 		torqueConfig_file = self.torqueLibPath + 'mom_priv/config'
 		if not os.path.exists(torqueConfig_file):
@@ -834,11 +832,12 @@ endif
 		self.runCommand('qmgr -c "s q batch resources_default.walltime=3600"')
 		self.runCommand('qmgr -c "s s default_queue=batch"')		
 		
-		self.runCommand("/sbin/service pbs_mom start")
+		self.runCommand("systemctl start pbs_mom")
 		
 		f.close()
 
 	def mysqlYumInstall(self):
+		self.runCommand("rpm -Uvh http://repo.mysql.com/mysql57-community-release-el%s.rpm" % (self.redhatMajorRelease))
 		packagelist = ['mysql-server', 'php', 'php-mysql', ]
 		self.yumInstall(packagelist)
 	
@@ -1316,7 +1315,7 @@ endif
 		print("========================")
 
 		# Start the Torque server
-		self.runCommand("/etc/init.d/pbs_server start")
+		self.runCommand("systemctl start pbs_server")
 				
 		setupURL = "http://localhost/myamiweb/setup/autoInstallSetup.php?password=" + self.serverRootPass + "&myamidir=" + self.gitMyamiDir + "&uploadsample=" + "%d" % int(self.doDownloadSampleImages)
 		setupOpened = None
