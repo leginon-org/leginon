@@ -12,6 +12,7 @@ import scipy
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+import numpy as np
 #appion
 from appionlib import appionScript
 from appionlib import apEMAN
@@ -371,6 +372,51 @@ class UploadRelion3DRefine(reconUploader.generalReconUploader):
 		shutil.move(os.path.join(self.params['rundir'],"PearsonCorrelation.png"),os.path.join(self.params['rundir'],"PearsonCorrelation.gif"))
 		plt.show()
 		plt.close()
+	
+	#======================================================
+	def plotEulerAngleDistribution(self,angleRot,angleTilt):
+		color_map = plt.cm.Spectral_r
+		points = [angleRot,angleTilt]
+	
+		xbnds = np.array([0,360.0])
+		ybnds = np.array([0,360.0])
+		extent = [xbnds[0],xbnds[1],ybnds[0],ybnds[1]]
+
+		fig=plt.figure(figsize=(10,9))
+		ax = fig.add_subplot(111)
+		plt.title('Euler Angle Distribution')
+
+		image = plt.hexbin(angleRot,angleTilt,cmap=color_map,gridsize=20,extent=extent,mincnt=1,bins='log')
+
+		counts = image.get_array()
+		ncnts = np.count_nonzero(np.power(10,counts))
+		verts = image.get_offsets()
+		for offc in xrange(verts.shape[0]):
+			binx,biny = verts[offc][0],verts[offc][1]
+			if counts[offc]:
+				plt.plot(binx,biny,'k.',zorder=100)
+		ax.set_xlim(xbnds)
+		ax.set_ylim(ybnds)
+		plt.grid(True)
+		plt.xlabel("Rot Angle (Degrees)")
+		plt.ylabel("Tilt Angle (Degrees)")
+		cb = plt.colorbar(image,spacing="uniform",extend="max",label="log(Number of Particles)")
+		plt.savefig(os.path.join(self.params['rundir'],"EulerAngleDistribution.png"))
+		shutil.move(os.path.join(self.params['rundir'],"EulerAngleDistribution.png"),os.path.join(self.params['rundir'],"EulerAngleDistribution.gif"))
+		plt.show()
+		plt.close()
+
+	#======================================================
+	def ThreeDFSC(self,pixelsize):
+		import Image
+		import ImageDraw
+		
+		img = Image.new('RGB', (200, 100))
+		d = ImageDraw.Draw(img)
+		d.text((20, 20), '3DFSC Coming Soon', fill=(255, 0, 0))
+		
+		img.save(os.path.join(self.params['rundir'],"ThreeDFSC.png"))
+		shutil.move(os.path.join(self.params['rundir'],"ThreeDFSC.png"),os.path.join(self.params['rundir'],"ThreeDFSC.gif"))
 		
 	#======================================================
 	def start(self):
@@ -405,6 +451,8 @@ class UploadRelion3DRefine(reconUploader.generalReconUploader):
 		self.plot1dhistogram(defocusU,BestAppiondefocus1,"DefocusU","Defocus ($\AA$)","DefocusU Values of All Micrographs (Yellow)\nversus Relion 3D Refine (Blue)")
 		self.plot1dhistogram(defocusV,BestAppiondefocus2,"DefocusV","Defocus ($\AA$)","DefocusV Values of All Micrographs (Yellow)\nversus Relion 3D Refine (Blue)")
 		self.plot2dhexplot(coordX,coordY,micrograph_dimensions,"XYcoordinates","Particle location on micrograph")
+		self.plotEulerAngleDistribution(angleRot,angleTilt)
+		self.ThreeDFSC(pixelsize)
 		
 		## Calculate Pearson and Spearman Correlations
 		self.calculateCorrelation(defocusU,defocusV,astig,coordX,coordY,anglePsi,angleRot,angleTilt,maxProb)

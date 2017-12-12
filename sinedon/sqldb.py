@@ -9,7 +9,10 @@
 import MySQLdb
 
 def connect(**kwargs):
-	c = MySQLdb.connect(**kwargs)
+	newkwargs = kwargs.copy()
+	if 'engine' in newkwargs:
+		del newkwargs['engine']
+	c = MySQLdb.connect(**newkwargs)
 	c.autocommit(True)
 	c.kwargs = dict(kwargs)
 	return c

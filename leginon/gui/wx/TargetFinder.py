@@ -197,10 +197,15 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 
 	def onUserCheckbox(self, evt):
 		state = evt.IsChecked()
-		self.panel.setUserVerificationStatus(state)
+		# This event affects user verification status
+		combined_state = state and not self.widgets['queue'].GetValue()
+		self.panel.setUserVerificationStatus(combined_state)
 
 	def onQueueCheckbox(self, evt):
 		state = evt.IsChecked()
+		# This event affects user verification status
+		combined_state = not state and self.widgets['user check'].GetValue()
+		self.panel.setUserVerificationStatus(combined_state)
 		parent = self.panel
 		parent.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT_QUEUE, state)
 		evt.Skip()

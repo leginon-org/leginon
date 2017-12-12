@@ -41,6 +41,7 @@ class InstrumentData(Data):
 		return Data.typemap() + (
 			('name', str),
 			('hostname', str),
+			('description', str),
 			('cs', float),
 			('pixelmax', int),
 			('hidden', bool),
@@ -1329,6 +1330,7 @@ class MosaicTargetMakerSettingsData(SettingsData):
 			('mosaic center', str),
 			('ignore request', bool),
 			('alpha tilt', float),
+			('use spiral path', bool),
 		)
 	typemap = classmethod(typemap)
 
@@ -1590,6 +1592,8 @@ class JAHCFinderSettingsData(HoleFinderSettingsData):
 			('template invert', bool),
 			('template image min', float),
 			('lattice extend', str),
+			('template multiple', int),
+			('multihole angle', float),
 		)
 	typemap = classmethod(typemap)
 
@@ -1944,15 +1948,6 @@ class AutoExposureSettingsData(AcquisitionSettingsData):
 			('mean intensity tolerance', float),
 			('maximum exposure time', float),
 			('maximum attempts', int),
-		)
-	typemap = classmethod(typemap)
-
-class TiltAcquisitionSettingsData(AcquisitionSettingsData):
-	def typemap(cls):
-		return AcquisitionSettingsData.typemap() + (
-			('tilts', str),
-			('use tilts', bool),
-			('reset per targetlist', bool),
 		)
 	typemap = classmethod(typemap)
 

@@ -254,6 +254,7 @@ class Dialog(leginon.gui.wx.Dialog.Dialog):
 		paramsizer.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.focus_method_choice = leginon.gui.wx.Choice.Choice(self, -1, choices=self.settings.focus_methods)
 		self.focus_method_choice.Bind(wx.EVT_CHOICE, self.onFocusMethodChoice)
+		self.switch_checkbox.Bind(wx.EVT_CHECKBOX, self.onSwitchCheck)
 		paramsizer.Add(self.focus_method_choice, (1, 1), (1, 1), wx.EXPAND)
 
 		### Frame for widgets that are not enabled for manual focusing
@@ -417,8 +418,33 @@ class Dialog(leginon.gui.wx.Dialog.Dialog):
 		elif method == 'Beam Tilt':
 			self.enableAuto(True)
 			self.tiltlabel.SetLabel('radians')
+		elif method == 'Manual':
+			self.enableAuto(False)
 		else:
 			self.enableAuto(False)
+		# Combine switch checkbox state and event method selection
+		# as the state of the current setting
+		evt_state = method=='Manual'
+		combined_state = evt_state and self.switch_checkbox.GetValue()
+		self.setUserVerificationStatus(combined_state)
+
+	def setUserVerificationStatus(self,this_state=False):
+		combined_state = this_state
+		current_index = self.settings.sequence.index(self.current_setting)
+		for i,seq in enumerate(self.settings.sequence):
+			if i != current_index:
+				# current settings is not updated, yet
+				state = seq['switch'] and seq['focus method'] == 'Manual'
+				combined_state = combined_state or state
+		self.parent.setUserVerificationStatus(combined_state)
+
+	def onSwitchCheck(self, evt=None):
+		# Combine switch event state and current method selection
+		# as the state of the current setting
+		evt_state = evt.IsChecked()
+		method = self.focus_method_choice.GetStringSelection()
+		combined_state = evt_state and method == 'Manual'
+		self.setUserVerificationStatus(combined_state)
 
 	def enableAuto(self, enable):
 		for widget in self.autowidgets:

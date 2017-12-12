@@ -55,6 +55,7 @@ class GonModeler(calibrator.Calibrator):
 	def loop(self, label, axis, points, interval):
 		try:
 			if self.initInstruments():
+				self.threadlock.release()
 				self.panel.measurementDone()
 				return
 		except Exception, e:

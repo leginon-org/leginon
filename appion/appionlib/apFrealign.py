@@ -1362,7 +1362,7 @@ def Relion_to_Frealign8(starfile, parfile, mag=None):
 	ff.write("%s%8s%8s%8s%8s%8s%8s%6s%9s%9s%8s\n" \
 		% ("C      ","PSI","THETA","PHI","SHX","SHY","MAG","FILM","DF1","DF2","ANGAST"))
 
-	olddx = 0
+	oldastig = 0
 	micn = 0
 	for i in range(len(loopDict)):
 		if i % 1000 == 0:
@@ -1374,7 +1374,7 @@ def Relion_to_Frealign8(starfile, parfile, mag=None):
 		shiftx = float(loopDict[i]['_rlnOriginX']) * -1
 		shifty = float(loopDict[i]['_rlnOriginY']) * -1
 		dx = float(loopDict[i]['_rlnDefocusU'])
-		dy = float(loopDict[i]['_rlnDefocusU'])
+		dy = float(loopDict[i]['_rlnDefocusV'])
 		astig = float(loopDict[i]['_rlnDefocusAngle'])
 
 		if mag is None:
@@ -1385,9 +1385,9 @@ def Relion_to_Frealign8(starfile, parfile, mag=None):
 
 		phi, theta, psi = apEulerCalc.convertXmippEulersToFrealign(rlnrot, rlntilt, rlnpsi)
 
-		if dx != olddx:
+		if astig != oldastig:
 			micn += 1
-			olddx = dx
+			oldastig = astig
 
 		ff.write("%7d%8.2f%8.2f%8.2f%8.2f%8.2f%8d%6d%9.1f%9.1f%8.2f\n" \
 			% (i+1, psi, theta, phi, shiftx, shifty, mag, micn, dx, dy, astig))
@@ -1405,7 +1405,7 @@ def Relion_to_Frealign9(starfile, parfile, apix, mag=None, occ=100, logp=5000, s
 	ff.write("%s%8s%8s%8s%10s%10s%8s%6s%9s%9s%8s%8s%10s%11s%8s%8s\n" \
 		% ("C      ","PSI","THETA","PHI","SHX","SHY","MAG","FILM","DF1","DF2","ANGAST","OCC","-LogP","SIGMA","SCORE","CHANGE"))
 
-	olddx = 0
+	oldastig = 0
 	micn = 0
 	for i in range(len(loopDict)):
 		if i % 1000 == 0:
@@ -1417,7 +1417,7 @@ def Relion_to_Frealign9(starfile, parfile, apix, mag=None, occ=100, logp=5000, s
 		shiftx = float(loopDict[i]['_rlnOriginX']) * -1
 		shifty = float(loopDict[i]['_rlnOriginY']) * -1
 		dx = float(loopDict[i]['_rlnDefocusU'])
-		dy = float(loopDict[i]['_rlnDefocusU'])
+		dy = float(loopDict[i]['_rlnDefocusV'])
 		astig = float(loopDict[i]['_rlnDefocusAngle'])
 		if mag is None:
 			try:
@@ -1429,9 +1429,9 @@ def Relion_to_Frealign9(starfile, parfile, apix, mag=None, occ=100, logp=5000, s
 		Fx = shiftx * apix
 		Fy = shifty * apix
 
-		if dx != olddx:
+		if astig != oldastig:
 			micn += 1
-			olddx = dx
+			oldastig = astig
 
 		ff.write("%7d%8.2f%8.2f%8.2f%10.2f%10.2f%8d%6d%9.1f%9.1f%8.2f%8.2f%10d%11.4f%8.2f%8.2f\n" \
 			% (i+1, psi, theta, phi, Fx, Fy, mag, micn, dx, dy, astig, occ, logp, sigma, score, change))

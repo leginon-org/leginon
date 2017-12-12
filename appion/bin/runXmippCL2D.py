@@ -23,7 +23,6 @@ from appionlib import apFourier
 from appionlib import proc2dLib
 from pyami import spider
 import sinedon
-import MySQLdb
 
 #=====================
 #=====================
@@ -158,7 +157,7 @@ class CL2D(appionScript.AppionScript):
 		if self.params['commit'] is False:
 			return
 		config = sinedon.getConfig('appiondata')
-		dbc = MySQLdb.Connect(**config)
+		dbc = sinedon.sqldb.connect(**config)
 		cursor = dbc.cursor()
 		query = (
 			"  UPDATE ApCL2DRunData "

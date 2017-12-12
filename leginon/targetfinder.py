@@ -18,6 +18,7 @@ import targethandler
 import appclient
 import remoteserver
 from pyami import convolver, imagefun, mrc, numpil
+from pyami import ordereddict
 import numpy
 import pyami.quietscipy
 import scipy.ndimage as nd
@@ -93,7 +94,8 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 	def onInitialized(self):
 		super(TargetFinder, self).onInitialized()
 		# self.panel is now made
-		self.setUserVerificationStatus(self.settings['user check'])
+		combined_state = self.settings['user check'] and not self.settings['queue']
+		self.setUserVerificationStatus(combined_state)
 
 	def handleApplicationEvent(self,evt):
 		'''
@@ -605,6 +607,19 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			else:
 				if 'queue' in self.remote.toolbar.tools:
 					self.remote.toolbar.tools['queue'].deActivate()
+
+	def blobStatsTargets(self, blobs):
+		targets = []
+		for blob in blobs:
+			target = {}
+			target['x'] = blob.stats['center'][1]
+			target['y'] = blob.stats['center'][0]
+			target['stats'] = ordereddict.OrderedDict()
+			target['stats']['Size'] = blob.stats['n']
+			target['stats']['Mean'] = blob.stats['mean']
+			target['stats']['Std. Dev.'] = blob.stats['stddev']
+			targets.append(target)
+		return targets
 
 class ClickTargetFinder(TargetFinder):
 	targetnames = ['preview', 'reference', 'focus', 'acquisition']

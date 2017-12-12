@@ -212,11 +212,15 @@ class RawTransfer(object):
 		'''
 		# make destination dirs
 		dirname,basename = os.path.split(os.path.abspath(dst))
+
+		# get path of the session, e.g. /data/frames/joeuser/17nov06a
+		sessionpath = os.path.abspath(os.path.join(dirname,'..'))
+
 		self.makeDir(dirname)
 
 		self._transfer(src,dst,method)
 
-		self.changeOwnership(uid,gid,dirname)
+		self.changeOwnership(uid,gid,sessionpath)
 
 		self.cleanUp(src,method)
 

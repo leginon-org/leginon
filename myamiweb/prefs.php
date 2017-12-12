@@ -257,16 +257,16 @@ $viewmyexp_ck = ($mypref['viewmyexp']=='Y') ? 'checked' : '';
 <tr>
 	<td>
 View Stats:
-<input class="bt1" type="checkbox" <?php $viewstat_ck?> value='Y' name="viewstat" >
+<input class="bt1" type="checkbox" <?php echo $viewstat_ck ?> value='Y' name="viewstat" >
 	</td>
 </tr>
 <tr valign=top>
 	<td>
 <?php  echo divtitle("Viewer"); ?>
 View comment
-<input class="bt1" type="checkbox" <?php $viewcomment_ck?> value='Y' name="viewcomment" ><br>
+<input class="bt1" type="checkbox" <?php echo $viewcomment_ck ?> value='Y' name="viewcomment" ><br>
 View my experiment only 
-<input class="bt1" type="checkbox" <?php $viewmyexp_ck?> value='Y' name="myexponly" ><br>
+<input class="bt1" type="checkbox" <?php echo $viewmyexp_ck ?> value='Y' name="myexponly" ><br>
 <br>
 <input class="bt1" type="submit" name="v" value="save">
 	</td>

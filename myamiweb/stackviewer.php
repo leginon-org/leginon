@@ -99,7 +99,7 @@ function setImage() {
 </script>
 </head>
 <body>
-<form name="myf" method="POST" action="<?php $_SERVER['PHP_SELF']?>">
+<form name="myf" method="POST" action="<?php echo $_SERVER['PHP_SELF'] ?>">
 <select name="file" size="5" onChange="setImage()">
 <?php
 foreach($filenames as $f) {
@@ -119,7 +119,7 @@ echo $lastimg;
 ?>
 
 from: <input id="startimg" type="text" alt="Start" value="0" size="10">
-to: <input id="endimg" type="text" alt="End" value="<?php $lastimg?>" size="10">
+to: <input id="endimg" type="text" alt="End" value="<?php echo $lastimg ?>" size="10">
 binning: <select id="binning">
 		<option value="1">1</option>
 		<option value="2">2</option>
