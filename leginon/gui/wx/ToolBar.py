@@ -81,6 +81,7 @@ ID_ABORT_ONE_TARGET = 10063
 ID_REMOTE = 10064
 ID_LIGHT_ON = 10065
 ID_LIGHT_OFF = 10066
+ID_NULL = 10067
 
 class ToolBar(wx.ToolBar):
 	def __init__(self, parent):
@@ -96,6 +97,15 @@ class ToolBar(wx.ToolBar):
 		#print self.ToolSize()
 		self.tool_bitmap_size = wx.Size(16,16)
 		#self.setSize(size)
+
+	def AddNullSpacer(self):
+		bitmap = '%s.png' % 'null'
+		image = wx.Image(leginon.icons.getPath(bitmap))
+		image.ConvertAlphaToMask(64)
+		image.Rescale(self.tool_bitmap_size.width, self.tool_bitmap_size.height)
+		bitmap = wx.BitmapFromImage(image)
+		wx.ToolBar.AddTool(self, ID_NULL, bitmap)
+		self.EnableTool(ID_NULL, False)
 
 	def AddTool(self, id, bitmap, **kwargs):
 		bitmap = '%s.png' % bitmap
