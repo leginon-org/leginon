@@ -37,6 +37,9 @@ KRIOS_ADD_STAGE_ALPHA_BACKLASH = False
 # Falcon protector causes certain delays
 HAS_FALCON_PROTECTOR = True
 
+# Lens normalization is usually set in TUI but there are cases that
+# they are not active through scripting call. This force the normalization.
+FORCE_NORMALIZE_ALL_LENS_AFTER_MAG_SETTING = False
 
 # This scale convert beam tilt readout in radian to 
 # Tecnai or TEM Scripting Illumination.RotationCenter value
@@ -70,6 +73,7 @@ class Tecnai(tem.TEM):
 		self.projection_submode_map = self.special_submode_mags.copy()
 		
 		self.correctedstage = True
+		self.normalize_all_after_mag_setting = FORCE_NORMALIZE_ALL_LENS_AFTER_MAG_SETTING
 		try:
 			com_module.CoInitializeEx(com_module.COINIT_MULTITHREADED)
 		except:
@@ -703,6 +707,8 @@ class Tecnai(tem.TEM):
 		if self.use_normalization:
 			self.normalizeProjectionForMagnificationChange(index)
 		self.setMagnificationIndex(index)
+		if self.normalize_all_after_mag_setting:
+			self.normalizeLens('all')
 		return
 
 	def getMagnificationIndex(self, magnification=None):
