@@ -139,8 +139,8 @@ if ($imgId) {
 		echo "<br /><b>particle labels:</b> ".join(', ', $formatlabels);
 
 	} else {
-		$image_timestamp = $imageinfo['timestamp'];
-		echo "<br /><b>timestamp:</b> ".$image_timestamp;
+		$format_timestamp = '<span style="color:20B2AA">'.$imageinfo['timestamp'].'</span>';
+		echo "<br />".$format_timestamp;
 	}
 	echo "</font>";
 }
