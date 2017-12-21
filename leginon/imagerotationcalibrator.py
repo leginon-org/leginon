@@ -20,7 +20,7 @@ class ImageRotationCalibrator(calibrator.Calibrator):
 	'''
 	panelclass = gui.wx.ImageRotationCalibrator.Panel
 	settingsclass = leginondata.ImageRotationCalibratorSettingsData
-	defaultsettings = calibrator.Calibrator.defaultsettings
+	defaultsettings = dict(calibrator.Calibrator.defaultsettings)
 
 	def __init__(self, id, session, managerlocation, **kwargs):
 		calibrator.Calibrator.__init__(self, id, session, managerlocation, **kwargs)

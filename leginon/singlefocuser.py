@@ -23,7 +23,7 @@ import player
 class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 	panelclass = gui.wx.Focuser.Panel
 	settingsclass = leginondata.SingleFocuserSettingsData
-	defaultsettings = manualfocuschecker.ManualFocusChecker.defaultsettings
+	defaultsettings = dict(manualfocuschecker.ManualFocusChecker.defaultsettings)
 	defaultsettings.update({
 		'process target type': 'focus',
 		'melt time': 0.0,

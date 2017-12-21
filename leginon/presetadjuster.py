@@ -17,7 +17,7 @@ class PresetAdjuster(referencetimer.ReferenceTimer):
 	eventoutputs = referencetimer.ReferenceTimer.eventoutputs + [event.UpdatePresetEvent]
 	panelclass = gui.wx.BeamFixer.BeamFixerPanel
 	settingsclass = leginondata.PresetAdjusterSettingsData
-	defaultsettings = referencetimer.ReferenceTimer.defaultsettings
+	defaultsettings = dict(referencetimer.ReferenceTimer.defaultsettings)
 	defaultsettings.update({
 		'override preset': False,
 		'instruments': {'tem':None, 'ccdcamera':None},

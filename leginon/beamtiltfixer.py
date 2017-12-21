@@ -27,7 +27,7 @@ import os
 class BeamTiltFixer(acquisition.Acquisition):
 	panelclass = gui.wx.BeamTiltFixer.Panel
 	settingsclass = leginondata.BeamTiltFixerSettingsData
-	defaultsettings = acquisition.Acquisition.defaultsettings
+	defaultsettings = dict(acquisition.Acquisition.defaultsettings)
 	defaultsettings.update({
 		'process target type': 'acquisition',
 		'beam tilt': 0.005,

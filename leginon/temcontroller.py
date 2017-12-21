@@ -217,7 +217,10 @@ class TEMController(node.Node):
 			total_grids = self.instrument.tem.getGridLoaderNumberOfSlots()
 			return map((lambda x:x+1),range(total_grids))
 		except Exception, e:
-			self.logger.warning(e.message)
+			if hasattr(e,'args') and len(e.args) > 0:
+				self.logger.warning(e.args[0])
+			else:
+				self.logger.warning('error with no message')
 			self.logger.warning('Send a preset to scope to set TEM and then refresh TEM display')
 			return []
 

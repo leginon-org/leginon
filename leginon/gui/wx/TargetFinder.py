@@ -30,6 +30,7 @@ class Panel(leginon.gui.wx.Node.Panel):
 													'play',
 													shortHelpString='Submit Targets')
 		self.Bind(leginon.gui.wx.Events.EVT_SUBMIT_TARGETS, self.onSubmitTargets)
+		self.toolbar.AddNullSpacer()
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SUBMIT_QUEUE,
 													'send_queue_out',
 													shortHelpString='Submit Queued Targets')

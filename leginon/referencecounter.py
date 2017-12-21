@@ -15,7 +15,7 @@ class ReferenceCounter(reference.Reference):
 	eventinputs = reference.Reference.eventinputs + [event.AcquisitionImagePublishEvent]
 	eventoutputs = reference.Reference.eventoutputs
 
-	defaultsettings = reference.Reference.defaultsettings
+	defaultsettings = dict(reference.Reference.defaultsettings)
 	defaultsettings.update (
 		{'interval count': 1}
 	)
