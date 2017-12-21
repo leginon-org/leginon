@@ -223,9 +223,8 @@ def partnum2defid(stackid):
 	apDisplay.printMsg("Mapping %d stack particle IDs"%(stackpartnum))
 
 	import sinedon
-	import MySQLdb
 	dbconf = sinedon.getConfig('appiondata')
-	db     = MySQLdb.connect(**dbconf)
+	db     = sinedon.sqldb.connect(**dbconf)
 	cursor = db.cursor()
 
 	cursor.execute('SELECT DEF_id, particleNumber FROM ApStackParticleData WHERE `REF|ApStackData|stack` = %s' % (stackid,))
@@ -255,9 +254,8 @@ def setGoodBadParticlesFromReconId(reconid):
 	Goes through existing recons and caches the number of good and bad particles
 	"""
 	import sinedon
-	import MySQLdb
 	dbconf = sinedon.getConfig('appiondata')
-	db     = MySQLdb.connect(**dbconf)
+	db     = sinedon.sqldb.connect(**dbconf)
 	db.autocommit(True)
 	cursor = db.cursor()
 

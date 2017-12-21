@@ -72,7 +72,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 	eventoutputs = targetfinder.ClickTargetFinder.eventoutputs + [event.MosaicDoneEvent]
 	targetnames = ['acquisition','focus','preview','reference','done','Blobs']
 	def __init__(self, id, session, managerlocation, **kwargs):
-		self.mosaicselectionmapping = {}
+		self.mosaicselections = {}
 		targetfinder.ClickTargetFinder.__init__(self, id, session, managerlocation, **kwargs)
 		self.calclients = {
 			'image shift': calibrationclient.ImageShiftCalibrationClient(self),
@@ -179,7 +179,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		except node.PublishError, e:
 			self.logger.error('Submitting acquisition targets failed')
 		else:
-			self.logger.info('Acquisition targets submitted')
+			self.logger.info('Acquisition targets submitted on %s' % self.getMosaicLabel())
 
 		reference_target = self.getDisplayedReferenceTarget()
 		if reference_target is not None:
@@ -188,7 +188,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 			except node.PublishError, e:
 				self.logger.error('Submitting reference target failed')
 			else:
-				self.logger.info('Reference target submitted')
+				self.logger.info('Reference target submitted on %s' % self.getMosaicLabel())
 		self.logger.info('Done target submission')
 		# trigger onTargetsSubmitted in the gui.
 		self.panel.targetsSubmitted()
@@ -448,22 +448,25 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.mosaicimagedata = mosaicimagedata
 		self.logger.info('Mosaic saved')
 
-	def researchMosaicTileData(self):
-		tilequery = leginondata.MosaicTileData(session=self.session, list=leginondata.ImageListData())
+	def _researchMosaicTileData(self,imagelist=None):
+		tilequery = leginondata.MosaicTileData(session=self.session, list=imagelist)
 		mosaictiles = self.research(datainstance=tilequery)
-		mosaiclists = ordereddict.OrderedDict()
-		for tile in mosaictiles:
+		return mosaictiles
+
+	def researchMosaicTileData(self,imagelist=None):
+		tiles = self._researchMosaicTileData(imagelist)
+		mosaiclist = ordereddict.OrderedDict()
+		for tile in tiles:
 			imglist = tile['list']
 			key = self.makeMosaicNameFromImageList(imglist)
-			if key not in mosaiclists:
-				mosaiclists[key] = []
-			mosaiclists[key].append(tile)
-		self.mosaicselectionmapping = mosaiclists
-		return mosaiclists
+			if key not in mosaiclist:
+				mosaiclist[key] = imglist
+		self.mosaicselections = mosaiclist
+		return mosaiclist
 
 	def getMosaicNames(self):
 		self.researchMosaicTileData()
-		return self.mosaicselectionmapping.keys()
+		return self.mosaicselections.keys()
 
 	def setMosaicName(self, mosaicname):
 		self.mosaicname = mosaicname
@@ -482,24 +485,36 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		key = '%s:  %s' % (imglist.dbid, label)
 		return key
 
+	def getMosaicLabel(self):
+		bits = self.getMosaicName().split(':')
+		label = ':'.join(bits[1:]).strip()
+		return label
+
 	def getMosaicName(self):
+		'''
+		return a name that has both image list dbid and label in this format: dbid: label
+		'''
 		return self.mosaicname
+
+	def getMosaicTiles(self, mosaicname):
+		return tiles
 
 	def loadMosaicTiles(self, mosaicname):
 		self.logger.info('Clearing mosaic')
 		self.clearTiles()
 		self.logger.info('Loading mosaic images')
 		try:
-			tiles = self.mosaicselectionmapping[mosaicname]
+			tile_imagelist = self.mosaicselections[mosaicname]
 		except KeyError:
 			# new inbound mosaic is not in selectionmapping. Refresh the list and try again
 			self.researchMosaicTileData()
-			if mosaicname not in self.mosaicselectionmapping.keys():
+			if mosaicname not in self.mosaicselections.keys():
 				raise ValueError
 			else:
-				tiles = self.mosaicselectionmapping[mosaicname]
-		self.mosaicimagelist = tiles[0]['list']
+				tile_imagelist = self.mosaicselections[mosaicname]
+		self.mosaicimagelist = tile_imagelist
 		mosaicsession = self.mosaicimagelist['session']
+		tiles = self._researchMosaicTileData(tile_imagelist)
 		ntotal = len(tiles)
 		if not ntotal:
 			self.logger.info('no tiles in selected list')

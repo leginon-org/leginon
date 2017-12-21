@@ -42,6 +42,7 @@ class uploadRelion3DRefineForm extends BasicLayoutForm
 		$params->addParam( "commit", $commit, "Commit to Database" );
 		$params->addParam( "starfile", $starfile, "Relion 3D auto-refine run_data.star with path " );
 		$params->addParam( "recenter", $recenter, "Recenter particles based on shifts during Relion 3D auto-refine" );
+		$params->addParam( "noinsert", $noinsert, "Do not insert final particle picks from Relion 3D auto-refine" );
 		$params->addParam( "session", $session, "Session name" );
 
 
@@ -57,6 +58,7 @@ class uploadRelion3DRefineForm extends BasicLayoutForm
 
 		$html .= $params->insertTextField( "starfile", $fieldSize, '', 'uploadRelion3DRefine.starfile' );
 		$html .= $params->insertCheckboxField( "recenter",'', 'uploadRelion3DRefine.recenter' );
+		$html .= $params->insertCheckboxField( "noinsert",'', 'uploadRelion3DRefine.noinsert' );
 		$html .= $params->insertCheckboxField("commit");
 
 

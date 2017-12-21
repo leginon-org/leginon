@@ -1,0 +1,14 @@
+[Unit]
+Description=Redux Image Server
+After=httpd.service
+
+[Service]
+Type=simple
+User=root
+Group=root
+PrivateTmp=true
+WorkingDirectory=/usr/local/bin
+ExecStart=/usr/local/bin/reduxd
+
+[Install]
+WantedBy=multi-user.target

@@ -84,7 +84,7 @@ if ($imgId) {
 			}
 			else if ($k=='exposure time') {
 				if( empty($v) && !empty($imageinfo['exposure time']))
-					$v = $imageinfo['exposure time'];
+  				$v = $imageinfo['exposure time'];
 				if(!empty($v) && $showexptime)
 					echo " <b>$k:</b> ",($leginondata->formatExposuretime($v));
 			}
@@ -138,6 +138,9 @@ if ($imgId) {
 			}
 		echo "<br /><b>particle labels:</b> ".join(', ', $formatlabels);
 
+	} else {
+		$format_timestamp = '<span style="color:20B2AA">'.$imageinfo['timestamp'].'</span>';
+		echo "<br />".$format_timestamp;
 	}
 	echo "</font>";
 }

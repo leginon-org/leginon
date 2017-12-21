@@ -1,6 +1,5 @@
 #!/usr/bin/python -O
 
-import MySQLdb
 import math
 import os
 import sys
@@ -28,8 +27,7 @@ def getEulersForIteration(reconid, iteration=1):
 	"""
 	# connect
 	dbconf = sinedon.getConfig('appiondata')
-	db = MySQLdb.connect(**dbconf)
-	db.autocommit(True)
+	db = sinedon.sqldb.connect(**dbconf)
 	# create a cursor
 	cursor = db.cursor()
 

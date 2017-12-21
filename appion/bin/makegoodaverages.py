@@ -13,9 +13,6 @@ try:
 	import EMAN
 except ImportError:
 	print "EMAN module did not get imported"
-#db
-import sinedon
-import MySQLdb
 #appion
 from appionlib import appionScript
 from appionlib import appiondata

@@ -1,7 +1,5 @@
 ### webscripting
 
-#python
-import MySQLdb
 #appion
 from appionlib import appiondata
 #leginon
@@ -38,8 +36,7 @@ def setJobStatus(jobid, status):
 
 	### do the query
 	dbconf = sinedon.getConfig('appiondata')
-	db     = MySQLdb.connect(**dbconf)
-	db.autocommit(True)
+	db     = sinedon.sqldb.connect(**dbconf)
 	cursor = db.cursor()
 	query = (
 		"UPDATE \n"

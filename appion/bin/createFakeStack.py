@@ -5,7 +5,6 @@ import sys
 import time
 import random
 import cPickle
-import MySQLdb
 import sinedon
 from appionlib import apEMAN
 from appionlib import apDisplay
@@ -130,8 +129,7 @@ class fakeStackScript(appionScript.AppionScript):
 		if self.params['stackid'] is None:
 			apDisplay.printError("enter a stackid ID, e.g. --stackid=773")
 		dbconf = sinedon.getConfig('appiondata')
-		db     = MySQLdb.connect(**dbconf)
-		db.autocommit(True)
+		db     = sinedon.sqldb.connect(**dbconf)
 		self.cursor = db.cursor()
 
 	#=====================

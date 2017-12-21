@@ -37,6 +37,9 @@ KRIOS_ADD_STAGE_ALPHA_BACKLASH = False
 # Falcon protector causes certain delays
 HAS_FALCON_PROTECTOR = True
 
+# Lens normalization is usually set in TUI but there are cases that
+# they are not active through scripting call. This force the normalization.
+FORCE_NORMALIZE_ALL_LENS_AFTER_MAG_SETTING = False
 
 # This scale convert beam tilt readout in radian to 
 # Tecnai or TEM Scripting Illumination.RotationCenter value
@@ -70,6 +73,7 @@ class Tecnai(tem.TEM):
 		self.projection_submode_map = self.special_submode_mags.copy()
 		
 		self.correctedstage = True
+		self.normalize_all_after_mag_setting = FORCE_NORMALIZE_ALL_LENS_AFTER_MAG_SETTING
 		try:
 			com_module.CoInitializeEx(com_module.COINIT_MULTITHREADED)
 		except:
@@ -703,6 +707,8 @@ class Tecnai(tem.TEM):
 		if self.use_normalization:
 			self.normalizeProjectionForMagnificationChange(index)
 		self.setMagnificationIndex(index)
+		if self.normalize_all_after_mag_setting:
+			self.normalizeLens('all')
 		return
 
 	def getMagnificationIndex(self, magnification=None):
@@ -1362,11 +1368,37 @@ class Tecnai(tem.TEM):
 			time.sleep(exptime)
 			self.setMainScreenPosition('up')
 
+	def hasAutoFiller(self):
+		try:
+			return self.tecnai.TemperatureControl.TemperatureControlAvailable
+		except:
+			raise
+			return False
+
 	def runAutoFiller(self):
 		'''
-		Trigger autofiller refill
+		Trigger autofiller refill. If it can not refill, a COMError
+		is raised, and DewarsAreBusyFilling is set to True.  Further
+		call of this function returns immediately. The function can be
+		reactivated in NitrogenNTS Temperature Control with "Stop Filling"
+		followed by "Recover".  It takes some time to recover.
+		If ignore these steps for long enough, it does stop filling by itself
+		and give Dewar increase not detected error on TUI but will not
+		recover automatically.
+		If both dewar levels are above 70 percent, the command is denied
+		and the function returns 0
 		'''
-		self.tecnai.TemperatureControl.ForceRefill()
+		if not self.hasAutoFiller:
+			return
+		t0 = time.time()
+		try:
+			self.tecnai.TemperatureControl.ForceRefill()
+		except com_module.COMError as e:
+			#COMError: (-2147155969, None, (u'[ln=102, hr=80004005] Cannot force refill', u'TEM Scripting', None, 0, None))
+			raise RuntimeError('Failed Force Refill')
+		t1 = time.time()
+		if t1-t0 < 10.0:
+			raise RuntimeError('Force refill Denied: returned in %.1f sec' % (t1-t0))
 
 	def isAutoFillerBusy(self):
 		try:

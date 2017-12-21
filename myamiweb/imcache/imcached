@@ -7,7 +7,6 @@ database, then converting them to JPEGs using redux with default parameters.
 
 import os
 import sinedon
-import MySQLdb
 import datetime
 import time
 import imcacheconfig
@@ -67,7 +66,7 @@ class QueryThread(threading.Thread):
 
 	def connect(self):
 		args = sinedon.getConfig('leginondata')
-		db = MySQLdb.connect(**args)
+		db = sinedon.sqldb.connect(**args)
 		return db
 
 	def query_images(self):

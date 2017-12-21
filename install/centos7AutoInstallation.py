@@ -111,8 +111,9 @@ class CentosInstallation(object):
 	
 	# if SeLinus is not disable, return false, otherwise good to go.
 	def checkSeLinux(self):
-		
-		proc = subprocess.Popen("/usr/sbin/selinuxenabled")
+		selinuxenabled = "/usr/sbin/selinuxenabled"
+		if not os.path.exists(selinuxenabled): return True
+		proc = subprocess.Popen(selinuxenabled)
 		returnValue = proc.wait()
 
 		
@@ -261,16 +262,8 @@ class CentosInstallation(object):
 		self.linkMpiRun()
 
 	def processServerExtraPythonPackageInstall(self):
-		packagelist = [
-			{
-				# PyFFTW
-				'targzFileName':'PyFFTW3-0.2.2.tar.gz',
-				'fileLocation':'http://launchpad.net/pyfftw/trunk/0.2.2/+download/',
-				'unpackDirName':'PyFFTW3-0.2.2',
-			}
-		]
-		for p in packagelist:
-			self.installPythonPackage(p['targzFileName'], p['fileLocation'], p['unpackDirName'])
+		self.runCommand("yum install -y python-pip")
+		self.runCommand("pip install joblib==0.10.3")		
 
 	def setupWebServer(self):
 		self.writeToLog("--- Start install Web Server")
@@ -958,7 +951,7 @@ endif
 		
 		outf.write('; custom parameters from CentOS Auto Install script\n')
 		outf.write('max_execution_time = 300 ; Maximum execution time of each script, in seconds\n')
-		outf.write('max_input_time = 300	 ; Maximum amout of time to spend parsing request data\n')
+		outf.write('max_input_time = 300	 ; Maximum amount of time to spend parsing request data\n')
 		outf.write('memory_limit = 1024M	 ; Maximum amount of memory a script may consume\n')
 		outf.write('\n')
 
@@ -1018,12 +1011,6 @@ endif
 		self.yumInstall(packagelist)
 		# Most are installed as on processingServer
 		packagelist = [
-			{
-				# PyFFTW
-				'targzFileName':'PyFFTW3-0.2.2.tar.gz',
-				'fileLocation':'http://launchpad.net/pyfftw/trunk/0.2.2/+download/',
-				'unpackDirName':'PyFFTW3-0.2.2',
-			},
 			{
 				# Python fs
 				'targzFileName':'fs-0.4.0.tar.gz',

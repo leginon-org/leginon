@@ -14,7 +14,6 @@ from appionlib import apStack
 from appionlib import apDatabase
 from appionlib.apTilt import apTiltTransform
 import sinedon
-import MySQLdb
 
 ####
 # This is a database connections file with no file functions

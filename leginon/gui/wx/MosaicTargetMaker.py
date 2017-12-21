@@ -182,6 +182,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.widgets['overlap'] = FloatEntry(self, -1, max=100.0, chars=6)
 		self.widgets['mosaic center'] = Choice(self, -1, choices=['stage center', 'current position'])
 		self.widgets['ignore request'] = wx.CheckBox(self, -1, 'Ignore Request to Make Targets from Others')
+		self.widgets['use spiral path'] = wx.CheckBox(self, -1, 'Spiral from center')
 
 		#szradius = wx.GridBagSizer(5, 5)
 		#szradius.Add(self.widgets['radius'], (0, 0), (1, 1),
@@ -211,8 +212,9 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['mosaic center'], (3, 1), (1, 1),
 										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		sz.Add(self.widgets['use spiral path'], (4, 0), (1, 3), wx.ALIGN_CENTER_VERTICAL)
 
-		sz.Add(self.widgets['ignore request'], (4, 0), (1, 3), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['ignore request'], (5, 0), (1, 3), wx.ALIGN_CENTER_VERTICAL)
 
 		sz.AddGrowableCol(1)
 		# add to main
