@@ -10,7 +10,7 @@ from pyami import arraystats
 class PhasePlateAligner(referencecounter.ReferenceCounter):
 	# relay measure does events
 	settingsclass = leginondata.PhasePlateAlignerSettingsData
-	defaultsettings = referencecounter.ReferenceCounter.defaultsettings
+	defaultsettings = dict(referencecounter.ReferenceCounter.defaultsettings)
 	defaultsettings.update({
 		'settle time': 60.0,
 		'charge time': 2.0,

@@ -8,7 +8,7 @@ import math
 class Focuser(singlefocuser.SingleFocuser):
 	panelclass = gui.wx.Focuser.Panel
 	settingsclass = leginondata.FocuserSettingsData
-	defaultsettings = singlefocuser.SingleFocuser.defaultsettings
+	defaultsettings = dict(singlefocuser.SingleFocuser.defaultsettings)
 	defaultsettings.update({
 		'process target type': 'focus',
 		'melt time': 0.0,

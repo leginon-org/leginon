@@ -29,7 +29,7 @@ hide_incomplete = False
 class BeamTiltImager(manualfocuschecker.ManualFocusChecker):
 	panelclass = gui.wx.BeamTiltImager.Panel
 	settingsclass = leginondata.BeamTiltImagerSettingsData
-	defaultsettings = manualfocuschecker.ManualFocusChecker.defaultsettings
+	defaultsettings = dict(manualfocuschecker.ManualFocusChecker.defaultsettings)
 	defaultsettings.update({
 		'process target type': 'focus',
 		'beam tilt': 0.005,

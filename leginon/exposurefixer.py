@@ -17,7 +17,7 @@ class ExposureFixer(presetadjuster.PresetAdjuster):
 	eventoutputs = presetadjuster.PresetAdjuster.eventoutputs
 	panelclass = gui.wx.ExposureFixer.ExposureFixerPanel
 	settingsclass = leginondata.ExposureFixerSettingsData
-	defaultsettings = presetadjuster.PresetAdjuster.defaultsettings
+	defaultsettings = dict(presetadjuster.PresetAdjuster.defaultsettings)
 	defaultsettings.update({
 		'required dose': 10.0,
 		'adjust method': 'exposure time',
