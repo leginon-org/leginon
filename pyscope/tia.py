@@ -484,6 +484,13 @@ class TIA_Falcon3(TIA_Falcon):
 	camera_name = 'BM-Falcon'
 	binning_limits = [1,2,4]
 
+	'''
+	Note 11/09/17
+	When Frames per fraction is not 0, the frame files overwrites the
+	same filename in LostandFound.  Therefore, if the frames file saving
+	is not finished, An error "Acquisition Label must be unique" show up.
+	This happens in Focus node often.
+	'''
 	def setFullCameraSetup(self):
 		# workaround to offset image problem
 		no_crop = {'x':0,'y':0}
