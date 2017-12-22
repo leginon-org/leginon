@@ -851,7 +851,7 @@ function addJobSubmitParams( $command, $processhost, $nproc, $ppn, $nodes, $wall
 
 /**************************************/
 function submitAppionJob($command, $outdir, $runname, $expId, $jobtype, $testimg=False,
-$xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0, $walltime="0", $cputime=False) {
+$xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0, $walltime="96", $cputime=False) {
 	global $DATA_DIRS;
 
 	$allow_processing = checkExptAdminPrivilege($expId,'data');
