@@ -19,7 +19,7 @@ import player
 class AutoExposure(acquisition.Acquisition):
 	panelclass = gui.wx.AutoExposure.Panel
 	settingsclass = leginondata.AutoExposureSettingsData
-	defaultsettings = acquisition.Acquisition.defaultsettings
+	defaultsettings = dict(acquisition.Acquisition.defaultsettings)
 	defaultsettings.update({
 		'process target type': 'meter',
 		'mean intensity': 50000,

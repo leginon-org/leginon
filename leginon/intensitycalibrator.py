@@ -25,7 +25,7 @@ class Abort(Exception):
 class IntensityCalibrator(calibrator.Calibrator):
 	panelclass = gui.wx.IntensityCalibrator.Panel
 	settingsclass = leginondata.IntensityCalibratorSettingsData
-	defaultsettings = calibrator.Calibrator.defaultsettings
+	defaultsettings = dict(calibrator.Calibrator.defaultsettings)
 	defaultsettings.update({
 		'min': 0.3,
 		'max': 0.7,
