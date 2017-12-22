@@ -13,7 +13,7 @@ def setImageFilename(imagedata, phase_plate_number, patch_position=None):
 class PhasePlateTestImager(acquisition.Acquisition):
 	panelclass = gui.wx.PhasePlateTestImager.Panel
 	settingsclass = leginondata.PhasePlateTestImagerSettingsData
-	defaultsettings = acquisition.Acquisition.defaultsettings
+	defaultsettings = dict(acquisition.Acquisition.defaultsettings)
 	defaultsettings.update({
 		'phase plate number': 1,
 		})
@@ -58,7 +58,7 @@ class PhasePlateTestImager(acquisition.Acquisition):
 class PhasePlateTester(PhasePlateTestImager):
 	panelclass = gui.wx.PhasePlateTester.Panel
 	settingsclass = leginondata.PhasePlateTesterSettingsData
-	defaultsettings = acquisition.Acquisition.defaultsettings
+	defaultsettings = dict(acquisition.Acquisition.defaultsettings)
 	defaultsettings.update({
 		'phase plate number': 1,
 		'total positions': 76,

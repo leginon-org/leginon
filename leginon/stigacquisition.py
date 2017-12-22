@@ -13,7 +13,7 @@ import gui.wx.StigAcquisition
 class StigAcquisition(acquisition.Acquisition):
 	panelclass = gui.wx.StigAcquisition.Panel
 	settingsclass = leginondata.StigAcquisitionSettingsData
-	defaultsettings = acquisition.Acquisition.defaultsettings
+	defaultsettings = dict(acquisition.Acquisition.defaultsettings)
 	defaultsettings.update({
 		'stig0x': 0.0,
 		'stig0y': 0.0,

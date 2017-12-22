@@ -37,7 +37,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 	'''
 	panelclass = gui.wx.MatrixCalibrator.Panel
 	settingsclass = leginondata.MatrixCalibratorSettingsData
-	defaultsettings = calibrator.Calibrator.defaultsettings
+	defaultsettings = dict(calibrator.Calibrator.defaultsettings)
 	defaultsettings.update({
 		'image shift tolerance': 12.0,
 		'image shift shift fraction': 25.0,

@@ -218,7 +218,7 @@ class AutoNitrogenFiller(Conditioner):
 	panelclass = leginon.gui.wx.AutoFiller.Panel
 	settingsclass = leginondata.AutoFillerSettingsData
 	defaultsettings = {}
-	defaultsettings = Conditioner.defaultsettings
+	defaultsettings = dict(Conditioner.defaultsettings)
 	defaultsettings.update({
 		'autofiller mode':'both cold',
 		'column fill start': 15,

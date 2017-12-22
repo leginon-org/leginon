@@ -28,7 +28,7 @@ class ImageBeamCalibrator(calibrator.Calibrator):
 	'''
 	panelclass = gui.wx.ImageBeamCalibrator.Panel
 	settingsclass = leginondata.ImageBeamCalibratorSettingsData
-	defaultsettings = calibrator.Calibrator.defaultsettings
+	defaultsettings = dict(calibrator.Calibrator.defaultsettings)
 	defaultsettings.update({
 		'image shift delta': 2e-6,
 	})

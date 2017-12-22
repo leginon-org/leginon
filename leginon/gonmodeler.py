@@ -22,7 +22,7 @@ import gui.wx.GonModeler
 class GonModeler(calibrator.Calibrator):
 	panelclass = gui.wx.GonModeler.Panel
 	settingsclass = leginondata.GonModelerSettingsData
-	defaultsettings = calibrator.Calibrator.defaultsettings
+	defaultsettings = dict(calibrator.Calibrator.defaultsettings)
 	defaultsettings.update({
 		'measure axis': 'x',
 		'measure points': 200,

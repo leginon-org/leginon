@@ -79,7 +79,7 @@ def targetPoints(targets):
 class TiltTracker(acquisition.Acquisition):
 	panelclass = gui.wx.TiltTracker.Panel
 	settingsclass = leginondata.TiltTrackerSettingsData
-	defaultsettings = acquisition.Acquisition.defaultsettings
+	defaultsettings = dict(acquisition.Acquisition.defaultsettings)
 	defaultsettings.update({
 		'activation interval': 1,
 		'tilts': '(-45, 0)',

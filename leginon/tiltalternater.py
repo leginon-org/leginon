@@ -18,7 +18,7 @@ class TiltAlternater(acquisition.Acquisition):
 	'''
 	panelclass = gui.wx.TiltAlternater.Panel
 	settingsclass = leginondata.TiltAlternaterSettingsData
-	defaultsettings = acquisition.Acquisition.defaultsettings
+	defaultsettings = dict(acquisition.Acquisition.defaultsettings)
 	defaultsettings.update({
 		'use tilts': False,
 		'reset per targetlist': False,

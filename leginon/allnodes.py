@@ -275,6 +275,9 @@ noderegistry.registerNodeClass(ImageAssessor,classtype)
 from temcontroller import TEMController
 noderegistry.registerNodeClass(TEMController,classtype)
 
+from icethicknessEF import IcethicknessEF
+noderegistry.registerNodeClass(IcethicknessEF,classtype)
+
 ##############################
 # Finale
 ##############################

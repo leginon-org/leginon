@@ -23,7 +23,7 @@ class MagCalibrator(calibrator.Calibrator):
 	'''
 	panelclass = gui.wx.MagCalibrator.Panel
 	settingsclass = leginondata.MagCalibratorSettingsData
-	defaultsettings = calibrator.Calibrator.defaultsettings
+	defaultsettings = dict(calibrator.Calibrator.defaultsettings)
 	defaultsettings.update({
 		'minsize': 50,
 		'maxsize': 500,

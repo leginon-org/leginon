@@ -20,7 +20,7 @@ class PixelSizeCalibrator(calibrator.Calibrator):
 	'''
 	panelclass = gui.wx.PixelSizeCalibrator.Panel
 	settingsclass = leginondata.PixelSizeCalibratorSettingsData
-	defaultsettings = calibrator.Calibrator.defaultsettings
+	defaultsettings = dict(calibrator.Calibrator.defaultsettings)
 	defaultsettings.update({
 		'lattice a': 69.0,
 		'lattice b': 173.5,

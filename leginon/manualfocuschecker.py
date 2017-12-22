@@ -21,7 +21,7 @@ import player
 class ManualFocusChecker(acquisition.Acquisition):
 	panelclass = gui.wx.Focuser.Panel
 	settingsclass = leginondata.AcquisitionSettingsData
-	defaultsettings = acquisition.Acquisition.defaultsettings
+	defaultsettings = dict(acquisition.Acquisition.defaultsettings)
 
 	eventinputs = acquisition.Acquisition.eventinputs
 	eventoutputs = acquisition.Acquisition.eventoutputs
