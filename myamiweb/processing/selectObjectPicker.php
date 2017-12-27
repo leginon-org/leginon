@@ -65,38 +65,6 @@ echo " <p> This picker simply tries to pick circular objects with high contrast 
 echo "</td></tr>\n";
 
 /*
-** DoG Picker 2
-*/
-
-echo "<tr><td width='100' align='center'>\n";
-echo "  <img src='img/dogpicker2.jpg' height='100'>\n";
-echo "</td><td>\n";
-echo "  <h3><a href='runAppionLoop.php?expId=$expId&form=DogPicker2Form'>DoG Picker 2</a></h3>\n";
-echo " <p> This is an updated version of DoG picker that runs the same dog picker,\n but instead of "
-	." thresholding the difference of Gaussians map it does an additional cross-correlation of the map "
-	." to a circle of the picking size. \nNeil found out that this provides more consistent picking "
-	." in data sets with a variety of situations,\n most commonly high density objects (e.g., crud, "
-	." ice chucks)\n appear in some micrographs but not others.\n "
-	."</p>\n";
-
-echo "</td></tr>\n";
-
-/*
-** Gautomatch
-*/
-
-echo "<tr><td width='100' align='center'>\n";
-echo "  <img src='img/appionlogo.jpg' height='100'>\n";
-echo "</td><td>\n";
-echo "  <h3><a href='runAppionLoop.php?expId=$expId&form=gautomatchForm'>Gautomatch Picking</a></h3>\n";
-echo " <p>  Gautomatch is a GPU accelerated program for accurate,\n fast, flexible and fully "
-	."automatic particle picking from cryo‐EM micrographs with or without templates.\n</p>\n";
-
-echo "</td></tr>\n";
-
-
-
-/*
 ** FindEM Template Picking
 */
 
@@ -128,8 +96,69 @@ echo " <p> A manual picker was create for editing existing picks or picking part
 
 echo "</td></tr>\n";
 
+/*
+** Gautomatch
+*/
+
+echo "<tr><td width='100' align='center'>\n";
+echo "  <img src='img/appionlogo.jpg' height='100'>\n";
+echo "</td><td>\n";
+echo "  <h3><a href='runAppionLoop.php?expId=$expId&form=gautomatchForm'>Gautomatch Picking</a></h3>\n";
+echo " <p>  Gautomatch is a GPU accelerated program for accurate,\n fast, flexible and fully "
+	."automatic particle picking from cryo‐EM micrographs with or without templates.\n</p>\n";
+
+echo "</td></tr>\n";
 
 
+
+
+
+/*
+** DoG Picker 2
+*/
+
+echo "<tr><td width='100' align='center'>\n";
+echo "  <img src='img/dogpicker2.jpg' height='100'>\n";
+echo "</td><td>\n";
+echo "  <h3><a href='runAppionLoop.php?expId=$expId&form=DogPicker2Form'>DoG Picker 2</a></h3>\n";
+echo " <p> This is an updated version of DoG picker that runs the same dog picker,\n but instead of "
+	." thresholding the difference of Gaussians map it does an additional cross-correlation of the map "
+	." to a circle of the picking size. \nNeil found out that this provides more consistent picking "
+	." in data sets with a variety of situations,\n most commonly high density objects (e.g., crud, "
+	." ice chucks)\n appear in some micrographs but not others.\n "
+	."</p>\n";
+
+echo "</td></tr>\n";
+
+/*
+** Contour Picker
+*/
+if (!HIDE_FEATURE)
+{
+	echo "<tr><td width='100' align='center'>\n";
+	echo "  <img src='img/appionlogo.jpg' height='100'>\n";
+	echo "</td><td>\n";
+	echo "  <h3><a href='runContourPicker.php?expId=$expId'>Object Tracing</a></h3>\n";
+	echo " <p> "
+		."</p>\n";
+	echo "</td></tr>\n";
+}
+
+// The signature feature is added with issue #368, however was not tested prior to 2.0 release.
+// It is no longer supported
+/*
+if (!HIDE_FEATURE)
+{
+	echo "<tr><td width='100' align='center'>\n";
+	echo "  <img src='img/signature.jpg' height='50'>\n";
+	echo "</td><td>\n";
+	echo "  <h3><a href='runSignature.php?expId=$expId'>Signature</a></h3>\n";
+	echo " <p> Signature employs a hierarchical screening procedure to identify molecular particles "
+		."<br/><br/>The <a href='http://dx.doi.org/10.1016/j.jsb.2006.06.001'> original research article is here</a>."
+		."</p>\n";
+	echo "</td></tr>\n";
+}
+*/
 
 /*
 ** Tilt Pickers
@@ -160,23 +189,6 @@ if ($maxangle > 5) {
 	echo "</td></tr>\n";
 
 }
-
-/*
-** Contour Picker
-*/
-if (!HIDE_FEATURE)
-{
-	echo "<tr><td width='100' align='center'>\n";
-	echo "  <img src='img/appionlogo.jpg' height='100'>\n";
-	echo "</td><td>\n";
-	echo "  <h3><a href='runContourPicker.php?expId=$expId'>Object Tracing</a></h3>\n";
-	echo " <p> "
-		."</p>\n";
-	echo "</td></tr>\n";
-}
-
-// The signature feature is added with issue #368, however was not tested prior to 2.0 release.
-// It is no longer supported
 
 /*
 ** Appion Loop Again

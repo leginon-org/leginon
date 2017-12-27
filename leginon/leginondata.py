@@ -14,7 +14,6 @@ import projectdata
 Data = sinedon.data.Data
 
 class GroupData(Data):
-	need_at_init = True
 	def typemap(cls):
 		return Data.typemap() + (
 			('name', str),
@@ -24,7 +23,6 @@ class GroupData(Data):
 	typemap = classmethod(typemap)
 
 class UserData(Data):
-	need_at_init = True
 	def typemap(cls):
 		return Data.typemap() + (
 			('username', str),
@@ -267,7 +265,6 @@ class LocationData(InSessionData):
 	pass
 
 class NodeLocationData(LocationData):
-	need_at_init = True
 	def typemap(cls):
 		return LocationData.typemap()  + (
 			('location', dict),
@@ -276,7 +273,6 @@ class NodeLocationData(LocationData):
 	typemap = classmethod(typemap)
 
 class NodeClassesData(InSessionData):
-	need_at_init = True
 	def typemap(cls):
 		return InSessionData.typemap() + (
 			('nodeclasses', tuple),
@@ -783,7 +779,6 @@ class DoseImageData(CameraImageData):
 	typemap = classmethod(typemap)
 
 class ViewerImageStatus(Data):
-	need_at_init = True
 	def typemap(cls):
 		return Data.typemap() + (
 			('status', str),
@@ -1006,7 +1001,6 @@ class PhasePlateTestLogData(PhasePlateLogData):
 	typemap = classmethod(typemap)
 
 class PhasePlateUsageData(PhasePlateLogData):
-	need_at_init = True
 	def typemap(cls):
 		return PhasePlateLogData.typemap()
 	typemap = classmethod(typemap)
@@ -1092,7 +1086,6 @@ class EMTargetData(InSessionData):
 	typemap = classmethod(typemap)
 
 class ApplicationData(Data):
-	need_at_init = True
 	def typemap(cls):
 		return Data.typemap() + (
 			('name', str),
@@ -1102,7 +1095,6 @@ class ApplicationData(Data):
 	typemap = classmethod(typemap)
 
 class NodeSpecData(Data):
-	need_at_init = True
 	def typemap(cls):
 		return Data.typemap() + (
 			('class string', str),
@@ -1114,7 +1106,6 @@ class NodeSpecData(Data):
 	typemap = classmethod(typemap)
 
 class BindingSpecData(Data):
-	need_at_init = True
 	def typemap(cls):
 		return Data.typemap() + (
 			('event class string', str),
@@ -2584,7 +2575,6 @@ class StageTiltAxisOffsetData(CalibrationData):
 	typemap = classmethod(typemap)
 
 class ImageCommentData(InSessionData):
-	need_at_init = True
 	def typemap(cls):
 		return InSessionData.typemap() + (
 			('image', AcquisitionImageData),
@@ -2593,7 +2583,6 @@ class ImageCommentData(InSessionData):
 	typemap = classmethod(typemap)
 
 class ImageStatusData(InSessionData):
-	need_at_init = True
 	def typemap(cls):
 		return InSessionData.typemap() + (
 			('image', AcquisitionImageData),

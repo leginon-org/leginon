@@ -44,7 +44,7 @@ class UserSearcher(object):
 		project_sessions = projectdata.projectexperiments(project=self.project).query()
 		allsharers = []
 		for session in map((lambda x:x['session']),project_sessions):
-			if session is None:
+			if session is None or session['name'] != '14may29anchitestA7':
 				continue
 			sharers = projectdata.shareexperiments(experiment=session).query()
 			users = map((lambda x: x['user']),sharers)

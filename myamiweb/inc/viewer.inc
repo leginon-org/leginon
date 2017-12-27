@@ -677,7 +677,6 @@ class view {
 		$this->loadjpgmemo= $this->name.'df';
 		$this->cacheonlymemo= $this->name.'cacheonly';
 		$this->btfftmemo = $this->name.'fft_bt_st';
-		$this->btacememo = $this->name.'ace_bt_st';
 		$this->bttagmemo = $this->name.'tag_bt_st';
 		$this->btnptclmemo = $this->name.'nptcl_bt_st';
 		$this->bttargetmemo = $this->name.'target_bt_st';

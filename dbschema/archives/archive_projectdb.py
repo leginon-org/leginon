@@ -284,7 +284,7 @@ class ProjectArchiver(Archiver):
 		self.importProcessingDB()
 		self.importProjectOwners()
 		self.importUserDetails()
-		#self.importInstall()
+		self.importInstall()
 		self.reset()
 		print ''
 

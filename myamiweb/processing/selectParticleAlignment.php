@@ -263,9 +263,24 @@ echo " <p> first you select template and then this method uses the "
 echo "</td></tr>\n";
 
 /*
-** Xmipp Maximum Likelihood Reference Based Alignment removed since 3.3
+** Xmipp Maximum Likelihood Reference Based Alignment
 */
 
+echo "<tr><td width='100' align='center'>\n";
+echo "  <img src='img/xmipp_logo.png' width='64'>\n";
+echo "</td><td>\n";
+echo "  <h3><a href='runRefBasedMaxlikeAlign.php?expId=$expId'>Xmipp Reference Based Maximum Likelihood Alignment</a></h3>\n";
+echo " <p> similar to reference-free but you select templates first."
+	." It uses the "
+	."<a href='http://xmipp.cnb.csic.es/twiki/bin/view/Xmipp/MLalign2D'>Xmipp ml_align2d</a>"
+	."&nbsp;<img src='img/external.png'>"
+	." program to perform alignments. "
+	."</p><p>\n"
+	."Still untested as to how much bias the reference gives you, but this may be useful in some cases. "
+	."Also, when no particles align to a particular template, it goes black and unused in further iterations. "
+	."</p>\n";
+//echo "  <img src='img/align-smr.png' width='250'><br/>\n";
+echo "</td></tr>\n";
 
 /*
 ** SPIDER Reference Free Alignment
@@ -288,14 +303,45 @@ echo " <p> this method uses the "
 echo "</td></tr>\n";
 
 
-/*
-** SPIDER Ed Brignole Iter Alignment is removed since 3.3
-*/
-	
-
+if (!HIDE_FEATURE)
+{
 	/*
-	** EMAN1 reference-free alignment removed since 3.3
+	** SPIDER Ed Iter Alignment
 	*/
+	
+	echo "<tr><td width='100' align='center'>\n";
+	echo "  <img src='img/editer.jpg' width='64'>\n";
+	echo "</td><td>\n";
+	echo "  <h3><a href='runEdIterAlignment.php?expId=$expId'>Ed's Iteration Alignment</a></h3>\n";
+	echo " <p> this method uses the "
+		."<a href='http://www.wadsworth.org/spider_doc/spider/docs/man/apsr.html'>Spider AP SR</a>"
+		."&nbsp;<img src='img/external.png'> "
+		." and the  "
+		."<a href='http://www.wadsworth.org/spider_doc/spider/docs/man/apsh.html'>Spider AP SH</a>"
+		."&nbsp;<img src='img/external.png'> "
+		." commands to align your particles through multiple iterations of ref-free and ref-based alignments. "
+		."</p><p>\n"
+		."<font color='#aa2222'>WARNING:</font> report all problems to Ed Brignole"
+		."</p>\n";
+	//echo "  <img src='img/align-rsm.png' width='125'><br/>\n";
+	echo "</td></tr>\n";
+}
+
+if (!HIDE_FEATURE)
+{
+	/*
+	** EMAN reference-free alignment
+	*/
+	echo "<tr><td width='100' align='center'>\n";
+	echo "  <img src='img/eman_logo.png' width='64'>\n";
+	echo "</td><td>\n";
+	echo "  <h3><a href='runEmanRefine2d.php?expId=$expId'>EMAN Refine 2d Reference-free Alignment</a></h3>\n";
+	echo "<p>Fast and easy 2D ref-free alignment using EMAN's "
+		."<a href='http://blake.bcm.tmc.edu/eman/eman1/progs/refine2d.py.html'>"
+		."refine2d.py</a> program"
+		."</p>\n";
+	echo "</td></tr>\n";
+}
 
 
 echo "</table>\n";

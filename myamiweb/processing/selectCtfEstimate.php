@@ -103,8 +103,19 @@ echo "</td></tr>\n";
 
 
 /*
-** ACE 2 is removed since 3.3
+** ACE 2
 */
+
+echo "<tr><td width='100' align='center'>\n";
+echo "  <img src='img/appionlogo.jpg' width='96'>\n";
+echo "</td><td>\n";
+echo "  <h3><a href='runAce2.php?expId=$expId'>ACE 2</a></h3>\n";
+echo " <p> ACE 2 is an unpublished re-implementation of ACE1, but written in objective-C "
+	."ACE2 make several improvements over ACE1 including a several speed "
+	."enhancements and a robust astigmatism estimate.<br/> "
+	."<i>Note:</i> It was designed "
+	."around FEI Tecnai FEG data and other have reported problems using this program";
+echo "</td></tr>\n";
 
 /*
 ** ACE 1
@@ -125,8 +136,6 @@ if (!HIDE_MATLAB)
 	echo "</td></tr>\n";
 }
 
-if (!HIDE_FEATURE)
-{
 /*
 ** Phasor CTF
 */
@@ -161,6 +170,8 @@ echo "</td></tr>\n";
 ** Interactive CTF
 */
 
+if (!HIDE_FEATURE)
+{
 	echo "<tr><td width='100' align='center'>\n";
 			echo "  <img src='img/interactiveCtf_logo.png' width='96'>\n";
 	echo "</td><td>\n";
@@ -172,10 +183,56 @@ echo " <p> <b>Experimental</b> manual CTF estimation program, currently has way 
 }
 
 /*
-** Xmipp CTF is removed since 3.3
+** Xmipp CTF
 */
+if (!HIDE_FEATURE)
+{
+	echo "<tr><td width='100' align='center'>\n";
+	echo "  <img src='img/xmipp_logo.png' width='64'>\n";
+	echo "</td><td>\n";
+	echo "  <h3><a href='runXmippCtf.php?expId=$expId'>Xmipp CTF</a></h3>\n";
+	echo " <p> It uses the "
+		."<a href='http://xmipp.cnb.csic.es/twiki/bin/view/Xmipp/Ctf_estimate_from_micrograph_v3'>Xmipp Ctf Estimate</a>"
+		."&nbsp;<img src='img/external.png'>"
+		." program to search for the CTF parameters. "
+		."<br/><i>Note:</i> still under development for Appion. "
+		."<br/><i>Note:</i> the published ARMA method is disabled. "
+		."</p>\n";
+	echo "</td></tr>\n";
+}
 
-//CTFTilt is removed since 3.3
+echo "</table>\n";
+
+//CTFTilt Estimation works and uploads, but fails alot; there is a warning
+if (!HIDE_FEATURE)
+{
+	$particle = new particledata();
+	$maxangle = $particle->getMaxTiltAngle($expId);
+	if ($maxangle > 5) {
+		// Selection Header
+		echo "<table border='0' width='640'>\n";
+			echo "<tr><td>\n";
+			echo "  <h2>CTF Estimation Procedures specialized for tilted images</h2>\n";
+			echo "</td></tr>\n";
+		echo "</table>\n";
+
+		echo "<br/>\n";
+		echo "<table border='1' class='tableborder' width='640'>\n";
+
+			echo "<tr><td width='100' align='center'>\n";
+			echo "  <img src='img/grigorieff_sq_logo.png' width='96'>\n";
+			echo "</td><td>\n";
+			echo "  <h3><a href='runCtfEstimate.php?expId=$expId&ctftilt=1'>CTFTILT</a></h3>\n";
+			echo " <p>CTFTILT uses the same robust grid search algorithm to find the optimal "
+				."CTF parameters, but also includes estimate of the tilt angle. "
+				."Please see the <a href='http://grigoriefflab.janelia.org/ctf'> "
+				."Grigorieff lab website</a><img src='img/external.png'> for more information. "
+				."</p>\n";
+			echo "</td></tr>\n";
+		echo "</table>\n";
+	}
+}
+
 
 processing_footer();
 exit;

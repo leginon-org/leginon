@@ -73,7 +73,7 @@ class CameraClient(object):
 			orig_camera_name = camera_name
 		else:
 			camera_name = orig_camera_name
-		print 'positionCamera', camera_name			
+			
 
 		camera_exchanged = False
 		orig_blank_status = self.instrument.tem.BeamBlank

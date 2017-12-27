@@ -21,9 +21,6 @@ def getCurrentCommitCount():
 	return number
 
 def getCurrentCommitCountOLDGit():
-	if sys.platform == 'win32':
-		# fake return.  No easy way to get git version
-		return 100000
 	cmd = "git rev-list HEAD | wc -l"
 	proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	stdout, stderr = proc.communicate()
@@ -32,9 +29,6 @@ def getCurrentCommitCountOLDGit():
 	return number
 
 def getCurrentBranch():
-	if sys.platform == 'win32':
-		# fake return.
-		return 'non-sense on win32'
 	cmd = "git branch | grep '\*' | cut -d' ' -f2-"
 	proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	stdout, stderr = proc.communicate()
@@ -42,9 +36,6 @@ def getCurrentBranch():
 	return result
 
 def getVersion():
-	if sys.platform == 'win32':
-		# fake return.  No easy way to get git version
-		return '100000'
 	cmd = "git --version | cut -d' ' -f3-"
 	proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	stdout, stderr = proc.communicate()
