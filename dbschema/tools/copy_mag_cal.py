@@ -24,7 +24,13 @@ class Copier(object):
 			raise ValueError('Reference Mag not found on this TEM')
 
 	def setExcludedMagnifications(self, value):
-		self.excluded_mags = map((lambda x: int(x)),value.split(','))
+		bits = value.split(',')
+		if not len(bits):
+			self.excluded_mags = []
+		else:
+			if bits[0] == '':
+				bits.pop(0)
+			self.excluded_mags = map((lambda x: int(x)),bits)
 		for m in self.excluded_mags:
 			if m not in self.mags:
 				raise ValueError('%d not found in magnifications on this TEM' % m)
@@ -103,7 +109,7 @@ if __name__ == '__main__':
 	app.setMatrixType(cal_type)
 	ref_mag = raw_input('Use the matrix at this mag to scale all magnification above it: ')
 	app.setReferenceMagnification(ref_mag)
-	exclude_mags = raw_input('List mags to exclude the insert, separate by "."')
+	exclude_mags = raw_input('List mags to exclude the insert, separate by ","')
 	app.setExcludedMagnifications(exclude_mags)
 	app.run()
 	raw_input('hit enter when ready to quit') 
