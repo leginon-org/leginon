@@ -692,7 +692,7 @@ function newfile(view){
 		exportlink.href = nexportlink
 
 	if (cif=eval("this."+view+"if")) {
-		iflink = jspresetscriptcur+"?vf="+jsvfile+"&id="+jsimgId+"&preset="+selpreset+pselp+nptcl
+		iflink = jspresetscriptcur+"?vf="+jsvfile+"&id="+jsimgId+"&preset="+selpreset+pselp+"&s=256"+nptcl
 		// --- for specific estimation method presets
 		if (eval("jsacemethod"+view)==2)
 			iflink = iflink+"&ctf=ace1"

@@ -19,9 +19,8 @@
 -- Current Database: `leginondb`
 --
 
-CREATE DATABASE /*!32312 IF NOT EXISTS*/ `leginondb` /*!40100 DEFAULT CHARACTER SET latin1 */;
 
-USE `leginondb`;
+USE `archiveleginon1`;
 
 --
 -- Table structure for table `AcquisitionImageData`
@@ -2419,9 +2418,7 @@ UNLOCK TABLES;
 -- Current Database: `projectdb`
 --
 
-CREATE DATABASE /*!32312 IF NOT EXISTS*/ `projectdb` /*!40100 DEFAULT CHARACTER SET latin1 */;
-
-USE `projectdb`;
+USE `archiveproj1`;
 
 --
 -- Table structure for table `boxtypes`

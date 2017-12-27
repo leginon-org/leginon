@@ -312,6 +312,9 @@ class Data(newdict.TypedDict):
 	to initialize with a dictionary.  If a key exists in both
 	initializer and kwargs, the kwargs value is used.
 	'''
+	# sql table needed for myamiweb initialization
+	need_at_init = False
+
 	def validator(cls, value):
 		if isinstance(value, DataReference):
 			if value.dataclass is cls:

@@ -847,7 +847,11 @@ def archiveProject(projectid):
 	print 'Found %d sessions for the project' %  (len(session_names))
 	for session_name in session_names:
 		# Don't archive sessions before 2011
-		if int(session_name[:2]) < (YEAR-2000):
+		# importsettings sessionts will also be skipped
+		try:
+			if int(session_name[:2]) < (YEAR-2000):
+				continue
+		except:
 			continue
 		app = SessionArchiver(session_name)
 		if SKIP_ARCHIVED and app.isSessionInArchive():
@@ -855,6 +859,8 @@ def archiveProject(projectid):
 			continue
 		app.run()
 		app = None
+		# Testing just one
+		break
 
 if __name__ == '__main__':
 	import sys

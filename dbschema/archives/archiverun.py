@@ -18,10 +18,10 @@ class ArchiveRun(object):
 		# configuration
 		self.old_projectdb = 'projectdb'
 		self.old_leginondb = 'leginondb'
-		self.new_projectdb = 'archiveprojectdb'
-		self.new_leginondb = 'archiveleginondb'
-		self.normal_sinedon_path = '/your-myami-trunk/sinedon'
-		self.dbcopy_sinedon_path = '/your-myami-dbcopy/sinedon'
+		self.new_projectdb = 'archiveproj1'
+		self.new_leginondb = 'archiveleginon1'
+		self.normal_sinedon_path = '/Users/acheng/packages/myami-trunk/sinedon'
+		self.dbcopy_sinedon_path = '/Users/acheng/packages/myami-dbcopy/sinedon'
 		self.projectids = [1,]
 
 	def setDatabases(self):
@@ -134,7 +134,7 @@ class ArchiveRun(object):
 		self.backupSinedonCfg()
 		self.cleanupImportMappingData()
 		self.deactivateArchive()
-		self.archiveDefaultSettings()
+		#self.archiveDefaultSettings()
 		for projectid in self.projectids:
 			self.initializeArchive(projectid)
 			self.archiveLeginonDB(projectid)

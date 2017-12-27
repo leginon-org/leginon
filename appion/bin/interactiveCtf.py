@@ -180,6 +180,7 @@ class RefineCTFDialog(wx.Dialog):
 		def1   = self.def1Value.GetValue()
 		def2   = self.def2Value.GetValue()
 		ampcon = self.ampconValue.GetValue()
+		extra_phase_shift = 0.0
 		## ellip angle is positive toward y-axis, ctf angle is negative toward y-axis
 		ellipangle = -self.angleValue.GetValue()
 		cs = self.parent.ctfvalues['cs']
@@ -212,9 +213,9 @@ class RefineCTFDialog(wx.Dialog):
 			oldzavg = (def1+def2)/2.0
 			pixelrdata, raddata, PSDarray = self.parent.getOneDProfile(full=False)
 			peaks = ctftools.getCtfExtrema(oldzavg, self.parent.freq*1e10, cs, 
-				volts, ampcon, numzeros=250, zerotype="peak")
+				volts, ampcon, extra_phase_shift, numzeros=250, zerotype="peak")
 			ctffitdata = genctf.generateCTF1d(raddata*1e10, focus=oldzavg, cs=cs,
-				volts=volts, ampconst=ampcon, failParams=False)
+				volts=volts, ampconst=ampcon, extra_phase_shift=extra_phase_shift,failParams=False)
 			### get the confidence
 			confraddata, confdata = ctfres.getCorrelationProfile(raddata, PSDarray, ctffitdata, peaks, self.parent.freq)
 			### get the weights
@@ -249,6 +250,7 @@ class RefineCTFDialog(wx.Dialog):
 		self.parent.ctfvalues['defocus2'] = self.def2Value.GetValue()
 		self.parent.ctfvalues['amplitude_contrast'] = self.ampconValue.GetValue()
 		self.parent.ctfvalues['angle_astigmatism'] = self.angleValue.GetValue()
+		self.parent.ctfvalues['extra_phase_shift'] = math.radians(self.phaseValue.GetValue())
 		self.parent.convertCtfToEllipse()
 
 ##################################
@@ -343,10 +345,10 @@ class ThonRingTool(ImagePanelTools.ImageTool):
 		numzeros = 20
 
 		radii1 = ctftools.getCtfExtrema(self.app.ctfvalues['defocus1'], self.app.freq*1e10,
-			self.app.ctfvalues['cs'], self.app.ctfvalues['volts'], self.app.ctfvalues['amplitude_contrast'],
+			self.app.ctfvalues['cs'], self.app.ctfvalues['volts'], self.app.ctfvalues['amplitude_contrast'], self.app.ctfvalues['extra_phase_shift'],
 			numzeros=numzeros, zerotype="valleys")
 		radii2 = ctftools.getCtfExtrema(self.app.ctfvalues['defocus2'], self.app.freq*1e10,
-			self.app.ctfvalues['cs'], self.app.ctfvalues['volts'], self.app.ctfvalues['amplitude_contrast'],
+			self.app.ctfvalues['cs'], self.app.ctfvalues['volts'], self.app.ctfvalues['amplitude_contrast'], self.app.ctfvalues['extra_phase_shift'],
 			numzeros=numzeros, zerotype="valleys")
 
 		s1 = 1.0/math.sqrt(radii1[0]*self.app.wavelength)
@@ -413,7 +415,7 @@ class EditParamsDialog(wx.Dialog):
 		self.parent = parent
 		wx.Dialog.__init__(self, self.parent.frame, -1, "Edit CTF Parameters")
 
-		inforow = wx.FlexGridSizer(2, 4, 5, 5) #row, col
+		inforow = wx.FlexGridSizer(2, 5, 5, 5) #row, col
 		entrywidth = 120
 
 		label = wx.StaticText(self, -1, "Defocus 1: ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
@@ -440,6 +442,12 @@ class EditParamsDialog(wx.Dialog):
 		inforow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		inforow.Add(self.angleValue, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
 
+		label = wx.StaticText(self, -1, "Phase Shift: ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		self.phaseValue = FloatEntry(self, -1, allownone=False, min=-180, max=180, chars=16, value="0")
+		self.phaseValue.SetMinSize((entrywidth, -1))
+		inforow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		inforow.Add(self.phaseValue, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
+
 		self.cancel = wx.Button(self, wx.ID_CANCEL, '&Cancel')
 		self.save = wx.Button(self, wx.ID_SAVE, '&Save')
 		self.Bind(wx.EVT_BUTTON, self.onSave, self.save)
@@ -459,6 +467,7 @@ class EditParamsDialog(wx.Dialog):
 		self.parent.ctfvalues['defocus2'] = self.def2value.GetValue()
 		self.parent.ctfvalues['amplitude_contrast'] = self.ampconvalue.GetValue()
 		self.parent.ctfvalues['angle_astigmatism'] = self.angleValue.GetValue()
+		self.parent.ctfvalues['extra_phase_shift'] = math.radians(self.phaseValue.GetValue())
 		self.parent.convertCtfToEllipse()
 
 ##################################
@@ -1028,6 +1037,8 @@ class CTFApp(wx.App):
 			self.editparam_dialog.def2value.SetValue(self.ctfvalues['defocus2'])
 		if 'amplitude_contrast' in self.ctfvalues:
 			self.editparam_dialog.ampconvalue.SetValue(self.ctfvalues['amplitude_contrast'])
+		if 'extra_phase_shift' in self.ctfvalues:
+			self.editparam_dialog.phaseValue.SetValue(math.degrees(self.ctfvalues['extra_phase_shift']))
 		if 'angle_astigmatism' in self.ctfvalues:
 			while self.ctfvalues['angle_astigmatism'] < -90:
 				self.ctfvalues['angle_astigmatism'] += 180
@@ -1068,6 +1079,7 @@ class CTFApp(wx.App):
 		self.ctfvalues['defocus1'] = self.bestvalues['defocus1']
 		self.ctfvalues['defocus2'] = self.bestvalues['defocus2']
 		self.ctfvalues['angle_astigmatism'] = self.bestvalues['angle_astigmatism']
+		self.ctfvalues['extra_phase_shift'] = self.bestvalues['extra_phase_shift']
 
 		self.convertCtfToEllipse()
 
@@ -1075,6 +1087,9 @@ class CTFApp(wx.App):
 			self.ctfvalues['defocus1'], self.ctfvalues['defocus2'],
 			self.ctfvalues['defocus2']/self.ctfvalues['defocus1'],
 			self.ctfvalues['angle_astigmatism'], self.ctfvalues['amplitude_contrast']), "magenta")
+		if self.ctfvalues['extra_phase_shift'] is not None:
+			sys.stderr.write("   additional phase shift: %.1f degrees \n"%
+		( math.degrees(ctfvalue['extra_phase_shift'])))
 
 		print self.ctfvalues
 
@@ -1110,6 +1125,7 @@ class CTFApp(wx.App):
 			self.ctfvalues['angle_astigmatism'] = ctfdata['angle_astigmatism'] + 90
 		if self.ctfvalues['angle_astigmatism'] > 90:
 			self.ctfvalues['angle_astigmatism'] -= 180
+		self.ctfvalues['extra_phase_shift'] = ctfdata['extra_phase_shift']
 
 		self.convertCtfToEllipse()
 
@@ -1156,6 +1172,7 @@ class CTFApp(wx.App):
 		self.ellipratio = 1.0
 		self.ctfvalues['angle_astigmatism'] = 0.0
 		self.ctfvalues['amplitude_contrast'] = 0.07
+		self.ctfvalues['extra_phase_shift'] = 0.0
 		self.onSubt2dBoxFilter(evt)
 		self.onRotAverage(evt)
 		self.onDeleteCorners(evt)
@@ -1263,11 +1280,11 @@ class CTFApp(wx.App):
 		if self.ellipseParams is None:
 			self.ellipseParams = {}
 		a = ctftools.getCtfExtrema(self.ctfvalues['defocus1'], self.freq*1e10,
-				self.ctfvalues['cs'], self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'],
+				self.ctfvalues['cs'], self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'], self.ctfvalues['extra_phase_shift'],
 				numzeros=1, zerotype="valleys")
 		self.ellipseParams['a'] = a[0]
 		b = ctftools.getCtfExtrema(self.ctfvalues['defocus2'], self.freq*1e10,
-				self.ctfvalues['cs'], self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'],
+				self.ctfvalues['cs'], self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'], self.ctfvalues['extra_phase_shift'],
 				numzeros=1, zerotype="valleys")
 		self.ellipseParams['b'] = b[0]
 		## ellip angle is positive toward y-axis, ctf angle is negative toward y-axis
@@ -1292,7 +1309,11 @@ class CTFApp(wx.App):
 		#rename values for shorter equation below
 		wv = self.wavelength
 		cs = self.ctfvalues['cs']
-		phi = math.asin(self.ctfvalues['amplitude_contrast'])
+		#FIX_ME
+		if not 'extra_phase_shift' in self.ctfvalues:
+			self.ctfvalues['extra_phase_shift'] = 0.0
+		extra_phi = math.asin(self.ctfvalues['extra_phase_shift'])
+		phi = math.asin(self.ctfvalues['amplitude_contrast']) + extra_phi
 		#node = 4, # this is the first local minima of CTF^2 best for picking
 		#node = 3, # this is the first downward zero crossing of CTF^2 best for ransac
 
@@ -1711,17 +1732,17 @@ class CTFApp(wx.App):
 
 		"""
 		peakradii = ctftools.getCtfExtrema(meandefocus, self.freq*1e10,
-			self.ctfvalues['cs'], self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'],
+			self.ctfvalues['cs'], self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'], self.ctfvalues['extra_phase_shift'],
 			numzeros=100, zerotype="peaks")
 		valleyradii = ctftools.getCtfExtrema(meandefocus, self.freq*1e10,
-			self.ctfvalues['cs'], self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'],
+			self.ctfvalues['cs'], self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'], self.ctfvalues['extra_phase_shift'],
 			numzeros=100, zerotype="valleys")
 		firstpeak = peakradii[0]
 		firstpeakindex = numpy.searchsorted(raddata, firstpeak*self.freq)
 		"""
 
 		genctfdata = genctf.generateCTF1d(raddata*1e10, focus=meandefocus, cs=self.cs,
-			volts=self.volts, ampconst=self.ctfvalues['amplitude_contrast'])
+			volts=self.volts, ampconst=self.ctfvalues['amplitude_contrast'], extra_phase_shift=self.ctfvalues['extra_phase_shift'])
 
 		thirtyindex = numpy.searchsorted(raddata, 1/30.)
 		tenindex = numpy.searchsorted(raddata, 1/8.)
@@ -1783,10 +1804,10 @@ class CTFApp(wx.App):
 			meandefocus = math.sqrt(self.ctfvalues['defocus1']*self.ctfvalues['defocus2'])
 
 		peaks = ctftools.getCtfExtrema(meandefocus, self.freq*1e10, self.ctfvalues['cs'], 
-			self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'], numzeros=250, zerotype="peak")
+			self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'], self.ctfvalues['extra_phase_shift'], numzeros=250, zerotype="peak")
 
 		ctffitdata = genctf.generateCTF1d(raddata*1e10, focus=meandefocus, cs=self.ctfvalues['cs'],
-			volts=self.ctfvalues['volts'], ampconst=self.ctfvalues['amplitude_contrast'], failParams=False)
+			volts=self.ctfvalues['volts'], ampconst=self.ctfvalues['amplitude_contrast'], extra_phase_shift=self.ctfvalues['extra_phase_shift'], failParams=False)
 
 		### get the confidence
 		confraddata, confdata = ctfres.getCorrelationProfile(raddata, PSDarray, ctffitdata, peaks, self.freq)
@@ -1815,7 +1836,7 @@ class CTFApp(wx.App):
 			raddatasq = raddata**2
 			confraddatasq = confraddata**2
 			peakradii = ctftools.getCtfExtrema(meandefocus, self.freq*1e10,
-				self.ctfvalues['cs'], self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'],
+				self.ctfvalues['cs'], self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'], self.ctfvalues['extra_phase_shift'],
 				numzeros=2, zerotype="peaks")
 			firstpeak = peakradii[0]
 			fpi = numpy.searchsorted(raddata, peakradii[0]*self.freq) #firstpeakindex
@@ -1977,13 +1998,14 @@ class CTFApp(wx.App):
 		newdefocus = (self.ctfvalues['defocus2']+self.ctfvalues['defocus1'])/2.0 
 		pixelrdata, raddata, PSDarray = self.getOneDProfile(full=False)
 
+		weights = None
 		if self.checkNormalized(msg=False) is True:
 			print "using limits from resolution profile"
 			### get the data
 			peaks = ctftools.getCtfExtrema(newdefocus, self.freq*1e10, self.ctfvalues['cs'], 
-				self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'], numzeros=250, zerotype="peak")
+				self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'], self.ctfvalues['extra_phase_shift'], numzeros=250, zerotype="peak")
 			ctffitdata = genctf.generateCTF1d(raddata*1e10, focus=newdefocus, cs=self.ctfvalues['cs'],
-				volts=self.ctfvalues['volts'], ampconst=self.ctfvalues['amplitude_contrast'], failParams=False)
+				volts=self.ctfvalues['volts'], ampconst=self.ctfvalues['amplitude_contrast'], extra_phase_shift=self.ctfvalues['extra_phase_shift'], failParams=False)
 			### get the confidence
 			confraddata, confdata = ctfres.getCorrelationProfile(raddata, PSDarray, ctffitdata, peaks, self.freq)
 			### get the weights
@@ -2069,9 +2091,9 @@ class CTFApp(wx.App):
 			print "using weights from resolution profile"
 			### get the data
 			peaks = ctftools.getCtfExtrema(meandefocus, self.freq*1e10, self.ctfvalues['cs'], 
-				self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'], numzeros=250, zerotype="peak")
+				self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'], self.ctfvalues['extra_phase_shift'], numzeros=250, zerotype="peak")
 			ctffitdata = genctf.generateCTF1d(raddata*1e10, focus=meandefocus, cs=self.ctfvalues['cs'],
-				volts=self.ctfvalues['volts'], ampconst=self.ctfvalues['amplitude_contrast'], failParams=False)
+				volts=self.ctfvalues['volts'], ampconst=self.ctfvalues['amplitude_contrast'], extra_phase_shift=self.ctfvalues['extra_phase_shift'], failParams=False)
 			### get the confidence
 			confraddata, confdata = ctfres.getCorrelationProfile(raddata, PSDarray, ctffitdata, peaks, self.freq)
 			### get the weights
@@ -2127,9 +2149,9 @@ class CTFApp(wx.App):
 			print "using weights from resolution profile"
 			### get the data
 			peaks = ctftools.getCtfExtrema(oldzavg, self.freq*1e10, self.ctfvalues['cs'], 
-				self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'], numzeros=250, zerotype="peak")
+				self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'], self.ctfvalues['extra_phase_shift'], numzeros=250, zerotype="peak")
 			ctffitdata = genctf.generateCTF1d(raddata*1e10, focus=oldzavg, cs=self.ctfvalues['cs'],
-				volts=self.ctfvalues['volts'], ampconst=self.ctfvalues['amplitude_contrast'], failParams=False)
+				volts=self.ctfvalues['volts'], ampconst=self.ctfvalues['amplitude_contrast'], extra_phase_shift=self.ctfvalues['extra_phase_shift'],failParams=False)
 			### get the confidence
 			confraddata, confdata = ctfres.getCorrelationProfile(raddata, PSDarray, ctffitdata, peaks, self.freq)
 			### get the weights
@@ -2210,9 +2232,9 @@ class CTFApp(wx.App):
 			oldzavg = (self.ctfvalues['defocus2']+self.ctfvalues['defocus1'])/2.0
 			pixelrdata, raddata, PSDarray = self.getOneDProfile(full=False)
 			peaks = ctftools.getCtfExtrema(oldzavg, self.freq*1e10, self.ctfvalues['cs'], 
-				self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'], numzeros=250, zerotype="peak")
+				self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'], self.ctfvalues['extra_phase_shift'], numzeros=250, zerotype="peak")
 			ctffitdata = genctf.generateCTF1d(raddata*1e10, focus=oldzavg, cs=self.ctfvalues['cs'],
-				volts=self.ctfvalues['volts'], ampconst=self.ctfvalues['amplitude_contrast'], failParams=False)
+				volts=self.ctfvalues['volts'], ampconst=self.ctfvalues['amplitude_contrast'], extra_phase_shift=self.ctfvalues['extra_phase_shift'],failParams=False)
 			### get the confidence
 			confraddata, confdata = ctfres.getCorrelationProfile(raddata, PSDarray, ctffitdata, peaks, self.freq)
 			### get the weights
@@ -2321,12 +2343,12 @@ class CTFApp(wx.App):
 		#	return
 
 		minpeaks = ctftools.getCtfExtrema(self.maxdef, self.freq*1e10,
-			self.ctfvalues['cs'], self.ctfvalues['volts'], 0.0,
+			self.ctfvalues['cs'], self.ctfvalues['volts'], 0.0, 0.0,
 			numzeros=2, zerotype="peaks")
 		minEdgeRadius = minpeaks[0]
 
 		maxvalleys = ctftools.getCtfExtrema(self.mindef, self.freq*1e10,
-			self.ctfvalues['cs'], self.ctfvalues['volts'], 0.0,
+			self.ctfvalues['cs'], self.ctfvalues['volts'], 0.0, 0.0,
 			numzeros=2, zerotype="valleys")
 		maxEdgeRadius = maxvalleys[0]
 
@@ -2473,7 +2495,7 @@ class CTFApp(wx.App):
 		if 'defocus1' in self.ctfvalues.keys():
 			#get first zero
 			valleys = ctftools.getCtfExtrema(self.ctfvalues['defocus1'], self.freq*1e10,
-				self.ctfvalues['cs'], self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'],
+				self.ctfvalues['cs'], self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'], self.ctfvalues['extra_phase_shift'],
 				numzeros=250, zerotype="valleys")
 			firstvalley = valleys[0]
 			valleyradii = numpy.array(valleys, dtype=numpy.float64)*self.freq
@@ -2549,7 +2571,7 @@ class CTFApp(wx.App):
 			#get first zero
 			meandefocus = math.sqrt(self.ctfvalues['defocus1']*self.ctfvalues['defocus2'])
 			peaks = ctftools.getCtfExtrema(meandefocus, self.freq*1e10,
-				self.ctfvalues['cs'], self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'],
+				self.ctfvalues['cs'], self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'], self.ctfvalues['extra_phase_shift'],
 				numzeros=250, zerotype="peaks")
 			firstpeak = peaks[0]
 			peakradii = numpy.array(peaks, dtype=numpy.float64)*self.freq
@@ -2664,7 +2686,7 @@ class CTFApp(wx.App):
 		meandefocus = math.sqrt(self.ctfvalues['defocus1']*self.ctfvalues['defocus2'])
 
 		valleyradii = ctftools.getCtfExtrema(meandefocus, self.freq*1e10,
-			self.ctfvalues['cs'], self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'],
+			self.ctfvalues['cs'], self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'], self.ctfvalues['extra_phase_shift'],
 			numzeros=250, zerotype="valleys")
 		extrema = numpy.array(valleyradii, dtype=numpy.float64)*self.freq
 
@@ -2706,7 +2728,7 @@ class CTFApp(wx.App):
 		meandefocus = math.sqrt(self.ctfvalues['defocus1']*self.ctfvalues['defocus2'])
 
 		peakradii = ctftools.getCtfExtrema(meandefocus, self.freq*1e10,
-			self.ctfvalues['cs'], self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'],
+			self.ctfvalues['cs'], self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'], self.ctfvalues['extra_phase_shift'],
 			numzeros=250, zerotype="peaks")
 		extrema = numpy.array(peakradii, dtype=numpy.float64)*self.freq
 
@@ -3006,6 +3028,7 @@ class ManualCTF(appionLoop2.AppionLoop):
 		* defocus 2
 		* angle astig
 		* amplitude contrast
+		* extra_phase_shift
 		all stored in self.ctfvalues
 		"""
 		if self.app.submit is False:

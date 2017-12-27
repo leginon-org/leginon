@@ -15,7 +15,9 @@ $imgId=$_GET['id'];
 $preset=$_GET['preset'];
 $ctftype = $_GET['ctf'];
 $runId = $_GET['r'];
+$vsize = ( $_GET['s'] ) ? $_GET['s']:512 ;
 
+$is_large_vsize = ( $vsize > 300);
 $newimage = $leginondata->findImage($imgId, $preset);
 $imgId = $newimage['id'];
 $imageinfo = $leginondata->getImageInfo($imgId);
@@ -45,7 +47,8 @@ $ctfdata['cs'] = $leginondata->getCsValueFromSession($sessionId);
 
 $keys[]='runname';
 // estimate parameters
-$keys[]='defocus';
+if ($is_large_vsize) 
+	$keys[]='defocus';
 $keys[]='defocus1';
 // assume defocus1 and defocus2 are equal if equal at Angstrom level
 $epsilon = 1e-10;
@@ -53,22 +56,29 @@ if (abs($ctfdata['defocus1'] - $ctfdata['defocus2']) > $epsilon) {
 	$keys[]='defocus2';
 	$keys[]='angle_astigmatism';
 }
-$keys[]='amplitude_contrast';
+if ($is_large_vsize) 
+	$keys[]='amplitude_contrast';
 if (abs($ctfdata['extra_phase_shift']) > 0.001) {
 	$keys[]='extra_phase_shift';
 }
-$keys[]='cs';
+if ($is_large_vsize) 
+	$keys[]='cs';
 // estimate quality
-$keys[]='resolution_80_percent';
+if ($is_large_vsize) 
+	$keys[]='resolution_80_percent';
 $keys[]='resolution_50_percent';
-$keys[]='confidence_appion';
+if ($is_large_vsize) 
+	$keys[]='confidence_appion';
 //$keys[]='confidence_30_10';
 //$keys[]='confidence_5_peak';
 $keys[]='ctffind4_resolution';
-if ($ctftype=='ctffind') 
-	$keys[]='cross_correlation';
-else 
-	$keys[]='confidence';
+
+if ($is_large_vsize) {
+	if ($ctftype=='ctffind') 
+		$keys[]='cross_correlation';
+	else 
+		$keys[]='confidence';
+}
 //$keys[]='confidence_d';
 // add the Cs
 
