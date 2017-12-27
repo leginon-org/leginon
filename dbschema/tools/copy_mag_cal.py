@@ -82,9 +82,11 @@ class Copier(object):
 
 
 	def insertDest(self, newdata):
-		print "Rerun the script with extra option of 1 at the end to insert to database"
 		if self.commit == 1:
 			newdata.insert()
+			print "Inserted into leginon database"
+		else:
+			print "Rerun the script with extra option of 1 at the end to insert to database"
 		print ""
 		return
 
