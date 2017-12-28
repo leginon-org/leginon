@@ -602,6 +602,18 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		self.other_axis = {'x':'y','y':'x'}
 		self.default_beamtilt_vectors = [(0,0),(1,0)]
 
+	def retrieveMatrix(self, tem, ccdcamera, caltype, ht, mag, probe=None):
+		try:
+			return super(BeamTiltCalibrationClient,self).retrieveMatrix(tem, ccdcamera, caltype, ht, mag, probe)
+		except NoMatrixCalibrationError, e:
+			if probe is None:
+				raise
+			else:
+				# Try without probe assignment for back compatibility
+				matrix = self.retrieveMatrix(tem, ccdcamera, caltype, ht, mag, None)
+				self.node.logger.warning('Only old %s calibration not specified by probe found. Please recalibrate.' % (caltype,))
+				return matrix
+
 	def getBeamTilt(self):
 		try:
 			return self.instrument.tem.BeamTilt
@@ -728,9 +740,10 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		cam = self.instrument.getCCDCameraData()
 		ht = self.instrument.tem.HighTension
 		mag = self.instrument.tem.Magnification
+		probe = self.instrument.tem.ProbeMode
 		# Can not handle the exception for retrieveMatrix here. 
 		# Focuser node that calls this need to know the type of error
-		fmatrix = self.retrieveMatrix(tem, cam, 'defocus', ht, mag)
+		fmatrix = self.retrieveMatrix(tem, cam, 'defocus', ht, mag, probe)
 
 		tilt_deltas = self.getBeamTiltDeltaPair(tilt_value, on_phase_plate)
 		all_tilt_deltas = [tilt_deltas,]
