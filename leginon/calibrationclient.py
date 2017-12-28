@@ -652,8 +652,9 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		cam = self.instrument.getCCDCameraData()
 		ht = self.instrument.tem.HighTension
 		mag = self.instrument.tem.Magnification
+		probe = self.instrument.tem.ProbeMode
 		try:
-			fmatrix = self.retrieveMatrix(tem, cam, 'defocus', ht, mag)
+			fmatrix = self.retrieveMatrix(tem, cam, 'defocus', ht, mag, probe)
 		except (NoMatrixCalibrationError,RuntimeError), e:
 			self.node.logger.error('Measurement failed: %s' % e)
 			return {'x':0.0, 'y': 0.0}
@@ -753,8 +754,8 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			rotation_90deg = math.pi/2
 			orthogonal_tilt_deltas = map((lambda x: self.rotateXY0(x, rotation_90deg)),tilt_deltas)
 			try:
-				amatrix = self.retrieveMatrix(tem, cam, 'stigx', ht, mag)
-				bmatrix = self.retrieveMatrix(tem, cam, 'stigy', ht, mag)
+				amatrix = self.retrieveMatrix(tem, cam, 'stigx', ht, mag, probe)
+				bmatrix = self.retrieveMatrix(tem, cam, 'stigy', ht, mag, probe)
 				# do not append if Error is raised.
 				all_tilt_deltas.append(orthogonal_tilt_deltas)
 			except NoMatrixCalibrationError:
@@ -1037,12 +1038,13 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		cam = self.instrument.getCCDCameraData()
 		ht = self.instrument.tem.HighTension
 		mag = self.instrument.tem.Magnification
+		probe = self.instrument.tem.ProbeMode
 		self.rpixelsize = None
 		self.ht = ht
 		self.initTableau()
 
 		par = 'beam-tilt coma'
-		cmatrix = self.retrieveMatrix(tem, cam, 'beam-tilt coma', ht, mag)
+		cmatrix = self.retrieveMatrix(tem, cam, 'beam-tilt coma', ht, mag, probe)
 
 		dc = [0,0]
 		failed_measurement = False
@@ -1096,7 +1098,8 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		par = 'image-shift coma'
 		try:
 			# not to query specific mag for now
-			matrix = self.retrieveMatrix(tem, cam, 'image-shift coma', ht, None)
+			probe = self.instrument.tem.ProbeMode
+			matrix = self.retrieveMatrix(tem, cam, 'image-shift coma', ht, None, probe)
 		except NoMatrixCalibrationError:
 			raise RuntimeError('missing %s calibration matrix' % par)
 		self.node.logger.debug("Image Shift ( %5.2f, %5.2f)" % (imageshift['x']*1e6,imageshift['y']*1e6))
