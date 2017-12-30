@@ -290,14 +290,15 @@ $icethicknesspresets = $leginondata->getIceThicknessPresets($expId);
 
 $icethicknesszlp = $leginondata->getZeroLossIceThickness($expId); # see if anything was collected
 	echo "<tr>";
-	echo "<td colspan='2'>";
+	//echo "<td colspan='2'>";
 	echo divtitle("Ice Thickness");
 	if (!empty($icethicknesszlp)) {
 		echo "<td>";
-		echo "<a href='zlp_icegraph.php?Id=".$expId.">[data]</a>";
-		echo "<a href='zlp_icegraph.php?Id=".$expId."'>[sql]</a><br>";
-		echo "<a href='zlp_icegraph.php?Id=".$expId.".'>";
-		echo "<img border='0' src='zlp_icegraph.php?Id=$expId&w=256"."'>";
+		echo "<a href='zlp_icegraph.php?Id=$expId&vdata=1'>[data]</a>";
+		echo "<a href='zlp_icegraph.php?Id=$expId&vs=1'>[sql]</a><br>";
+		//echo "<a href='zlp_icegraph.php?Id=$expId?h=256'>";
+		echo "<a href='zlp_icegraph.php?Id=$expId&w=256&h=256'>";
+		echo "<img border='0' src='zlp_icegraph.php?Id=$expId&w=256&h=256'>";
 		echo "</a>\n";
 		echo "</td>\n";
 	}
