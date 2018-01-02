@@ -357,7 +357,7 @@
       "isdefault":true,
       "repeat time":1800
     }
-  }
+  },
   {
     "PhasePlateAlignerSettingsData":{
       "interval count":20,
@@ -378,7 +378,7 @@
       "isdefault":true,
       "total positions":76
     }
-  }
+  },
   {
     "AlignZLPSettingsData":{
       "name":"Align ZLP",
