@@ -883,6 +883,18 @@
     <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
     <key>KEY `REF|SessionData|session` (`REF|SessionData|session`)</key>
 	</sqltable>
+	<sqltable name="DequeuedImageTargetListData">
+		<field name="DEF_id" type="int(16)" null="NOT NULL" extra="auto_increment" />
+		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" Default="CURRENT_TIMESTAMP" />
+		<field name="REF|SessionData|session" type="int(20)" />
+		<field name="REF|QueueData|queue" type="int(20)" />
+		<field name="REF|ImageTargetListData|list" type="int(20)" />
+    <key>PRIMARY KEY (`DEF_id`)</key>
+    <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
+    <key>KEY `REF|SessionData|session` (`REF|SessionData|session`)</key>
+    <key>KEY `REF|QueueData|queue` (`REF|QueueData|queue`)</key>
+    <key>KEY `REF|ImageTargetListData|list` (`REF|ImageTargetListData|list`)</key>
+	</sqltable>
 	<sqltable name="RCTAcquisitionSettingsData">
 		<field name="DEF_id" type="int(16)" null="NOT NULL" extra="auto_increment" />
 		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" Default="CURRENT_TIMESTAMP" />
