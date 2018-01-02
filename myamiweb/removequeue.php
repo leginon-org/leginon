@@ -226,7 +226,7 @@ function createForm() {
 	?>
 <html>
 	<head>
-		<title><?php $title; ?> queue remover</title>
+		<title> queue remover</title>
 		<link rel="stylesheet" type="text/css" href="css/viewer.css"> 
 		<STYLE type="text/css">
 			 DIV.comment_section { text-align: justify; 
@@ -269,7 +269,7 @@ function createForm() {
 					</table>
 				</td>
 				<TD ALIGN='RIGHT' VALIGN='BOTTOM'>
- <FORM name='removeform' method='POST' ACTION='<?$formAction?>' >
+ <FORM name='removeform' method='POST' ACTION='<?php echo $formAction; ?>' >
 					<input type='submit' name='remove' value='Remove Active'><BR>
 	</FORM>
 				</TD>
