@@ -147,16 +147,24 @@ if __name__ == '__main__':
 	_correlator = Correlator(None, 2,1.5)
 
 	size = 16
-
+	camdim = {'x': 4096,'y':4096}
 	offset = (400 + 64, 400 + 64)
-	image = numpy.random.random((4096, 4096))
+	image = numpy.random.random((camdim['y'], camdim['x']))
+	camdata = leginon.leginondata.CameraEMData()
+	camdata['binning'] = {'x':1,'y':1}
 	image[offset[0]:offset[0] + size, offset[1]:offset[1] + size] += 16
-	_correlator.correlate(image, None)
+	imagedata = leginon.leginondata.AcquisitionImageData()
+	imagedata['image'] = image
+	imagedata['camera'] = camdata
+	_correlator.correlate(imagedata, False)
 
-	offset = (50 + 64, 50 + 64)
-	image = numpy.random.random((4096, 4096))
+	offset = (150 + 64, 50 + 64)
+	image = numpy.random.random((camdim['y'], camdim['x']))
 	image[offset[0]:offset[0] + size, offset[1]:offset[1] + size] += 16
-	_correlator.correlate(image, None)
+	imagedata = leginon.leginondata.AcquisitionImageData()
+	imagedata['image'] = image
+	imagedata['camera'] = camdata
+	_correlator.correlate(imagedata, False)
 
 	print _correlator.getShift(True)
 
