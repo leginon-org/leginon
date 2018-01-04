@@ -138,8 +138,10 @@ class Correlator(object):
 
 	def tiltShift(self,tilt,shift,angle=0.0):
 		# This is a simplified shift correction
-		shift['x'] = shift['x']*math.cos(tilt)*math.cos(angle)
-		shift['y'] = shift['x']*math.cos(tilt)*math.sin(angle)
+		x = shift['x']*math.cos(angle)-shift['y']*math.sin(angle)
+		y = shift['x']*math.sin(angle)+shift['y']*math.cos(angle)
+		shift['x'] = x*math.cos(tilt)
+		shift['y'] = y*math.cos(tilt)
 		return shift
 
 if __name__ == '__main__':
