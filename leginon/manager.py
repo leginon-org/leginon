@@ -758,6 +758,8 @@ class Manager(node.Node):
 		map = {}
 		for a in appdatalist:
 			name =  a['application']['name']
+			if a['application']['hide']:
+				continue
 			if name not in history:
 				history.append(name)
 				map[name] = a['launchers']
