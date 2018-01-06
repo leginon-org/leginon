@@ -28,7 +28,7 @@
       type="varchar(100)" 
       null="NOT NULL" 
     />
-    <key>KEY (`key`)</key>
+    <key>PRIMARY KEY (`key`)</key>
 	</sqltable>
   <sqltable name="boxtypes" >
     <field 
