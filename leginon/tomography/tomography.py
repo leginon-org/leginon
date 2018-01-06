@@ -68,7 +68,7 @@ class Tomography(leginon.acquisition.Acquisition):
 		'fit data points': 4,
 		'use z0': False,
 		'addon tilts':'()',
-		'use preset exposure':True,
+		'use preset exposure':False,
 	})
 
 	def __init__(self, *args, **kwargs):
