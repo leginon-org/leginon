@@ -3,7 +3,7 @@
 - Application XML-Dump
 - http://emg.nysbc.org/ 
 -
-- Application :MSI-Typhon2 (3.1)
+- Application :MSI-Typhon2
 - Version     :0
 - Date : 02/04/2014
 -
@@ -120,7 +120,7 @@
     <sqltable name="ApplicationData" >
         <field name="DEF_id" >22</field>
         <field name="DEF_timestamp" >2014-02-04 17:30:49</field>
-        <field name="name" >MSI-Typhon2 (3.1)</field>
+        <field name="name" >MSI-Typhon2</field>
         <field name="version" >0</field>
         <field name="hide" >0</field>
     </sqltable>

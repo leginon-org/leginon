@@ -5,7 +5,6 @@
       "final image shift":false,
       "wait time":0.0,
       "park after target":false,
-      "wait for transform":null,
       "save image":true,
       "adjust time by tilt":false,
       "pause between time":0.0,
@@ -52,7 +51,6 @@
       "final image shift":false,
       "wait time":0.0,
       "park after target":false,
-      "wait for transform":null,
       "save image":true,
       "adjust time by tilt":false,
       "pause between time":0.0,
@@ -74,7 +72,7 @@
       "high mean":65536.0,
       "target offset col":0,
       "preset order":[
-        "en"
+        "ep"
       ],
       "use parent tilt":false,
       "pause time":2.5,
@@ -99,7 +97,6 @@
       "final image shift":false,
       "wait time":0.0,
       "park after target":false,
-      "wait for transform":null,
       "save image":true,
       "adjust time by tilt":false,
       "pause between time":0.0,
@@ -347,15 +344,6 @@
       "reset defocus":null,
       "node name":"PP Focus",
       "isdefault":false
-    }
-  },
-  {
-    "BufferCyclerSettingsData":{
-      "trip value":80.0,
-      "bypass":true,
-      "name":"Buffer Cycling",
-      "isdefault":true,
-      "repeat time":1800
     }
   },
   {

@@ -3,7 +3,7 @@
 - Application XML-Dump
 - http://emg.nysbc.org/ 
 -
-- Application :MSI-Lacey (3.3)
+- Application :MSI-Lacey
 - Version     :0
 - Date : 03/18/2011
 -
@@ -116,7 +116,7 @@
     <sqltable name="ApplicationData" >
         <field name="DEF_id" >723</field>
         <field name="DEF_timestamp" >2017-03-07 13:59:40</field>
-        <field name="name" >MSI-Lacey (3.3)</field>
+        <field name="name" >MSI-Lacey</field>
         <field name="version" >0</field>
         <field name="hide" >0</field>
     </sqltable>
