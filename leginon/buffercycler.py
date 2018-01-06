@@ -15,6 +15,7 @@ class BufferCycler(conditioner.Conditioner):
 	# Inherit the default settings from the parent class, Conditioner
 	defaultsettings = dict(conditioner.Conditioner.defaultsettings)
 	defaultsettings.update({
+			'repeat time': 600,
 			'trip value': 18.0,
 	})
 	# Inherit the eventinputs
