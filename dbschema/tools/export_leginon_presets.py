@@ -29,15 +29,14 @@ class DataJsonMaker(object):
 
 	def research(self,q,most_recent=False):
 		'''
-		Query results from source database. Sorted by entry time. Oldest fist
+		Query results from source database. Sorted by entry time. Newest fist
 		'''
 		if most_recent:
 			r = q.query(results=1)
 			if r:
-				return r[0]
+				return r
 		else:
 			r = q.query()
-			r.reverse()
 		return r
 
 	def publish(self,results):
@@ -53,7 +52,8 @@ class DataJsonMaker(object):
 			for k in r.keys():
 				if k not in self.ignorelist:
 					if hasattr(r[k],'dbid'):
-						print "ignored ",k
+						# not to include data reference
+						pass
 					else:
 						data[k] = r[k]
 			self.alldata.append({classname:data})
