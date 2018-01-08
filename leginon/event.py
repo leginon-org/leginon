@@ -105,6 +105,22 @@ class NodeUninitializedEvent(NotificationEvent):
 	'Event sent by a node to indicate that it is no longer operational'
 	pass
 
+class NodeLogErrorEvent(NotificationEvent):
+	'Event sent by a node to indicate that it has logged an error'
+	def typemap(cls):
+		return NotificationEvent.typemap() + (
+			('message', str),
+		)
+	typemap = classmethod(typemap)
+
+class ActivateNotificationEvent(NotificationEvent):
+	'Event sent by presets manager to activate slack error notification'
+	pass
+
+class DeactivateNotificationEvent(NotificationEvent):
+	'Event sent by presets manager to deactivate slack error notification'
+	pass
+
 class TargetListDoneEvent(NotificationEvent):
 	'Event indicating target list is done'
 	def typemap(cls):

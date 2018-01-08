@@ -57,13 +57,15 @@ class Node(correctorclient.CorrectorClient):
 									event.NodeAvailableEvent,
 									event.NodeUnavailableEvent,
 									event.NodeInitializedEvent,
-									event.NodeUninitializedEvent]
+									event.NodeUninitializedEvent,
+									event.NodeLogErrorEvent]
 
 	objectserviceclass = remotecall.NodeObjectService
 
 	def __init__(self, name, session, managerlocation=None, otherdatabinder=None, otherdbdatakeeper=None, tcpport=None, launcher=None, panel=None):
 		self.name = name
 		self.panel = panel
+		self.has_log_error = False
 		
 		self.initializeLogger()
 
@@ -108,6 +110,10 @@ class Node(correctorclient.CorrectorClient):
 		correctorclient.CorrectorClient.__init__(self)
 
 		self.initializeSettings()
+
+	def setHasLogError(self, value, message):
+		if value:
+			self.outputEvent(event.NodeLogErrorEvent(message=message))
 
 	def testprint(self,msg):
 		if testing:

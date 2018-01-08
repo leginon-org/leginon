@@ -90,6 +90,9 @@ class Manager(node.Node):
 		self.nodelocations = {}
 		self.broadcast = []
 
+		# notify user of logged error
+		self.notifyerror = False
+
 		# ready nodes, someday 'initialized' nodes
 		self.initializednodescondition = threading.Condition()
 		self.initializednodes = []
@@ -107,6 +110,9 @@ class Manager(node.Node):
 															self.handleNodeClassesPublish)
 		self.addEventInput(event.NodeInitializedEvent, self.handleNodeStatus)
 		self.addEventInput(event.NodeUninitializedEvent, self.handleNodeStatus)
+		self.addEventInput(event.NodeLogErrorEvent, self.handleNodeLogError)
+		self.addEventInput(event.ActivateNotificationEvent, self.handleNotificationStatus)
+		self.addEventInput(event.DeactivateNotificationEvent, self.handleNotificationStatus)
 		# this makes every received event get distributed
 		self.addEventInput(event.Event, self.distributeEvents)
 
@@ -353,6 +359,7 @@ class Manager(node.Node):
 					eventcopy = copy.copy(ievent)
 					eventcopy['destination'] = to_node
 					self.clients[to_node].send(eventcopy)
+					# Something will be sending an event to others if automated.
 				except datatransport.TransportError:
 					### bad client, get rid of it
 					self.logger.error('Cannot send to node ' + str(to_node)
@@ -694,6 +701,31 @@ class Manager(node.Node):
 			self.setNodeStatus(nodename, False)
 			# group into another function
 			self.removeNode(nodename)
+
+	# Node Error Notification
+	def handleNodeLogError(self, ievent):
+		nodename = ievent['node']
+		msg = ievent['message']
+		if self.notifyerror:
+			msg = '%s %s error: %s' % (self.session['name'], nodename, msg)
+			self.slackNotification(msg)
+
+	def handleNotificationStatus(self, ievent):
+		nodename = ievent['node']
+		if isinstance(ievent, event.ActivateNotificationEvent):
+			# reset
+			self.notifyerror = True
+		elif isinstance(ievent, event.DeactivateNotificationEvent):
+			self.notifyerror = False
+
+	def slackNotification(self, msg):
+		try:
+			from slack import slack_interface
+			slack_inst = slack_interface.SlackInterface()
+			channel = slack_inst.getDefaultChannel()
+			slack_inst.sendMessage(channel,'%s ' % (msg))
+		except:
+			print msg
 
 	# application methods
 
