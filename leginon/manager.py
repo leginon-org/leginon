@@ -704,10 +704,8 @@ class Manager(node.Node):
 
 	# Node Error Notification
 	def handleNodeLogError(self, ievent):
-		nodename = ievent['node']
 		msg = ievent['message']
 		if self.notifyerror:
-			msg = '%s %s error: %s' % (self.session['name'], nodename, msg)
 			self.slackNotification(msg)
 
 	def handleNotificationStatus(self, ievent):

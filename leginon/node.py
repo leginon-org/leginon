@@ -65,7 +65,7 @@ class Node(correctorclient.CorrectorClient):
 	def __init__(self, name, session, managerlocation=None, otherdatabinder=None, otherdbdatakeeper=None, tcpport=None, launcher=None, panel=None):
 		self.name = name
 		self.panel = panel
-		self.has_log_error = False
+		self.tem_hostname = ''
 		
 		self.initializeLogger()
 
@@ -113,7 +113,28 @@ class Node(correctorclient.CorrectorClient):
 
 	def setHasLogError(self, value, message):
 		if value:
-			self.outputEvent(event.NodeLogErrorEvent(message=message))
+			tem_hostname = self.getTemHostname()
+			nodename = self.name
+			msg = '%s %s Error: %s' % (tem_hostname, nodename, message)
+			self.outputEvent(event.NodeLogErrorEvent(message=msg))
+
+	def getTemHostname(self):
+		if not self.tem_hostname:
+			if self.session:
+				results = leginondata.ConnectToClientsData(session=self.session).query(results=1)
+				if not results:
+					return ''
+				for client in results[0]['clients']:
+					instruments = leginondata.InstrumentData(hostname=client).query()
+					if instruments and not self.tem_hostname:
+						for instr in instruments:
+							if instr['cs']:
+								temname = str(client)
+								if 'description' in instr.keys() and instr['description']:
+									temname = instr['description']
+								self.tem_hostname = temname
+								break
+		return self.tem_hostname
 
 	def testprint(self,msg):
 		if testing:
