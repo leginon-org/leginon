@@ -364,13 +364,14 @@ class PresetsManager(node.Node):
 		if self.idleactive:
 			self.idleactive = False
 			self.outputEvent(event.DeactivateNotificationEvent())
-			self.logger.info('Instrument timeout deactivated')
+			#self.logger.info('Instrument timeout deactivated')
+			self.logger.info('Instrument error notification deactivated')
 		else:
 			# update first then start tracking
 			self.instrument.updateLastSetGetTime()
 			self.idleactive = True
 			self.outputEvent(event.ActivateNotificationEvent())
-			self.logger.info('Instrument timeout activated')
+			self.logger.info('Instrument error notification activated')
 			# FIX ME: this tracker does not work, yet. Often timeout too early.
 			#self.startInstrumentUsageTracker()
 
