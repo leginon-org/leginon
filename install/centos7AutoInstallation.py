@@ -15,7 +15,7 @@ class CentosInstallation(object):
 
 	def setReleaseDependantValues(self):
 		# need to change to branch when release
-		self.gitCmd = "git clone -b myami-beta http://emg.nysbc.org/git/myami " + self.gitMyamiDir
+		self.gitCmd = "git clone http://emg.nysbc.org/git/myami " + self.gitMyamiDir
 		# redhat release related values
 		self.torqueLibPath = '/var/lib/torque/'
 
@@ -201,7 +201,7 @@ class CentosInstallation(object):
 		# replacing with:
 		self.runCommand("/sbin/iptables -I INPUT -p tcp --dport %d -j ACCEPT" % (port))		
 		self.runCommand("/sbin/iptables-save > /etc/sysconfig/iptables")
-		self.runCommand("/etc/init.d/iptables restart")
+		self.runCommand("service iptables restart")
 		self.writeToLog("firewall port %d opened" % (port))
 
 	def installPythonPackage(self, targzFileName, fileLocation, unpackDirName):
