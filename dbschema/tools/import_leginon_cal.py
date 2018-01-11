@@ -40,7 +40,6 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 				q['session'] = self.session
 			if 'vectors' in q.keys():
 				# convert 2 1-D array to list of list
-				print q['vectors']
 				q['vectors'] = (q['vectors'][0].tolist(),q['vectors'][1].tolist())
 			# This is a forced insert so it is the most recent record
 			q.insert(force=True)
