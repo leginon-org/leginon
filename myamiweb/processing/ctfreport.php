@@ -241,9 +241,9 @@ if ($ctfrundatas) {
 				."hg=0&expId=$expId&f=difference_from_mean&preset=$preset' alt='please wait...'></a>\n";
 	echo "</td><td>\n";
 		echo "<h3>Angle Astigmatism</h3>";
-		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&xmin=-90&xmax=90&f=angle_astigmatism'>\n";
+		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&f=angle_astigmatism'>\n";
 		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
-			."w=800&h=600&hg=1&expId=$expId&s=1&xmin=-90&xmax=90&f=angle_astigmatism' alt='please wait...'></a>\n";
+			."w=800&h=600&hg=1&expId=$expId&s=1&f=angle_astigmatism' alt='please wait...'></a>\n";
 	echo "</td></tr><tr><td>\n";
 		echo "<h3>Amplitude Contrast</h3>";
 		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&xmin=0.0&f=amplitude_contrast'>\n";

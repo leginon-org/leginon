@@ -101,7 +101,7 @@ if ($histogram) {
 
 
 $dbemgraph->scalex(1);
-$yscale = ($f == 'defocus1' || $f == 'defocus2') ? 1e-6:1;
+$yscale = ($f == 'defocus1' || $f == 'defocus2' || $f == 'difference_from_nom') ? 1e-6:1;
 if ($color)
 	$dbemgraph->mark->SetFillColor($color);
 

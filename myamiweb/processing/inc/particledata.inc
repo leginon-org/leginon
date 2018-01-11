@@ -1207,7 +1207,7 @@ class particledata {
 		return $r;
 	}
 
-	function getBestCTFOrder($ctftable_alias='c') {
+	function getBestCTFOrder($ctftable_alias='c', $skip_appion=false) {
 		// First order by ctffind4_resolution which also records equiphase resolution from gctf.  Then sort by res80. If some entries of res80 are null, they will be sorted as 999 and end up at the end of the list.
 		// Then sort by res50. If there was a tie from res80, the tie is broken with res50.
 		// Res80 and res50 are only set for newer versions of Appion. For runs that were mase with older versions, we still want to sort by
@@ -1217,7 +1217,10 @@ class particledata {
 		$q .= "	ORDER BY coalesce(".$c."ctffind4_resolution,999) ASC ";
 		$q .= "	, coalesce(".$c."resolution_80_percent,999) ASC ";
 		$q .= " , coalesce(".$c."resolution_50_percent,999) ASC ";
-		$q .= " , coalesce(".$c."`cross_correlation`, confidence_appion, 0.0) DESC ";
+		$q .= " , coalesce(".$c."`cross_correlation`, ";
+		// appion merged values are not available in quick stat query.
+		if (!$skip_appion) $q.= "confidence_appion, ";
+		$q .= " 0.0) DESC ";
 		return $q;
 	}
 
@@ -1334,8 +1337,8 @@ class particledata {
 				$q .= "AND c.`DEF_id`=(".
 					"SELECT c2.`DEF_id` FROM ApCtfData AS c2 "
 					."WHERE c2.`REF|leginondata|AcquisitionImageData|image` = c.`REF|leginondata|AcquisitionImageData|image` "
-					."AND c2.resolution_50_percent IS NOT NULL AND c2.resolution_80_percent IS NOT NULL "
-					."ORDER BY (c2.resolution_50_percent+c2.resolution_80_percent) ASC LIMIT 1 "
+					."			".$this->getBestCTFOrder('c', true)
+					."LIMIT 1 "
 				.")";
 			}
 			//$q .= "GROUP BY p.`name`";
