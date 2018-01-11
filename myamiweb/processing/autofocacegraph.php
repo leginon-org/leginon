@@ -20,7 +20,7 @@ $histogram = ($_GET['hg']==1) ? true : false;
 $f = $_GET[f];
 $preset=$_GET['preset'];
 $summary = ($_GET['s']==1 ) ? true : false;
-$minimum = $_GET['mconf'];
+$minimum = ($_GET['mres']) ? $_GET['mres']: false;
 $width=$_GET['w'];
 $height=$_GET['h'];
 
