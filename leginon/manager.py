@@ -92,7 +92,9 @@ class Manager(node.Node):
 
 		# notify user of logged error
 		self.notifyerror = False
-
+		# timeout timer
+		self.timeout_minutes = 0.5
+		self.timer = None
 		# ready nodes, someday 'initialized' nodes
 		self.initializednodescondition = threading.Condition()
 		self.initializednodes = []
@@ -200,6 +202,7 @@ class Manager(node.Node):
 		pass
 
 	def exit(self):
+		self.cancelTimeoutTimer()
 		if self.launcher is not None:
 			self.killNode(self.launcher.name, wait=True)
 		launchers = self.getLauncherNames()
@@ -303,6 +306,7 @@ class Manager(node.Node):
 		## 1) all nodes  (if destination set to empty string)
 		## 2) use application event bindings (destination is None)
 		## 3) one node  (destination set to node name)
+		self.restartTimeoutTimer()
 		if ievent['destination'] is '':
 			if ievent['confirm'] is not None:
 				raise RuntimeError('not allowed to wait for broadcast event')
@@ -542,6 +546,8 @@ class Manager(node.Node):
 			self.frame.GetEventHandler().AddPendingEvent(evt)
 		except PyDeadObjectError:
 			pass
+		except RuntimeError:
+			pass
 
 	def unregisterNode(self, evt):
 		'''Event handler Removes all information, event mappings and the client.'''
@@ -692,6 +698,8 @@ class Manager(node.Node):
 	def killNode(self, nodename, **kwargs):
 		'''Attempt telling a node to die and unregister. Unregister if communication with the node fails.'''
 		ev = event.KillEvent()
+		self.cancelTimeoutTimer()
+		self.timer = False
 		try:
 			self.outputEvent(ev, nodename, **kwargs)
 		except:
@@ -701,6 +709,37 @@ class Manager(node.Node):
 			self.setNodeStatus(nodename, False)
 			# group into another function
 			self.removeNode(nodename)
+
+	# Timeout Timer
+	def cancelTimeoutTimer(self):
+			if hasattr(self.timer,'is_alive') and self.timer.is_alive():
+				self.timer.cancel()
+
+	def slackTimeoutNotification(self):
+		timeout = self.timeout_minutes*60.0
+		msg = 'Leginon is idle for %.1f minute' % self.timeout_minutes
+		self.slackNotification(msg)
+		self.timer = False
+
+	def restartTimeoutTimer(self):
+		'''
+		Restart timout timer if self.timer is not False.
+		Possible self timer values:
+		None: Default and the value when notification is not active.
+		False: The value to stop new Timer to be started to avoid
+			hanging when Leginon is shutting down and new notification
+			to be sent after it is already sent.
+		'''
+		if not self.notifyerror:
+			self.cancelTimeoutTimer()
+			self.timer = None
+			return
+		if self.timer == False:
+			return
+		self.cancelTimeoutTimer()
+		timeout = self.timeout_minutes*60.0
+		self.timer = threading.Timer(timeout,self.slackTimeoutNotification)
+		self.timer.start()
 
 	# Node Error Notification
 	def handleNodeLogError(self, ievent):
@@ -713,7 +752,9 @@ class Manager(node.Node):
 		if isinstance(ievent, event.ActivateNotificationEvent):
 			# reset
 			self.notifyerror = True
+			self.restartTimeoutTimer()
 		elif isinstance(ievent, event.DeactivateNotificationEvent):
+			self.cancelTimeoutTimer()
 			self.notifyerror = False
 
 	def slackNotification(self, msg):
