@@ -93,7 +93,7 @@ class Manager(node.Node):
 		# notify user of logged error
 		self.notifyerror = False
 		# timeout timer
-		self.timeout_minutes = 0.5
+		self.timeout_minutes = 30.0
 		self.timer = None
 		# ready nodes, someday 'initialized' nodes
 		self.initializednodescondition = threading.Condition()
