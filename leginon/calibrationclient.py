@@ -578,11 +578,11 @@ class MatrixCalibrationClient(CalibrationClient):
 		y_shift_row = matrix[0, 1]
 		y_shift_col = matrix[1, 1]
 
-		# calculations invert image coordinates (+y top, -y bottom)
+		# angle is from x axis with +x to +y as positive.
 		# angle from the x shift of the parameter
-		theta_x = math.atan2(-x_shift_row, x_shift_col)
+		theta_x = math.atan2(x_shift_row, x_shift_col)
 		# angle from the y shift of the parameter
-		theta_y = math.atan2(-y_shift_row, -y_shift_col)
+		theta_y = math.atan2(y_shift_row, y_shift_col)
 
 		return theta_x, theta_y
 
