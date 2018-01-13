@@ -121,6 +121,10 @@ class DeactivateNotificationEvent(NotificationEvent):
 	'Event sent by presets manager to deactivate slack error notification'
 	pass
 
+class NodeBusyNotificationEvent(NotificationEvent):
+	'Event sent by node such as Tomography to restart timeout timer'
+	pass
+
 class TargetListDoneEvent(NotificationEvent):
 	'Event indicating target list is done'
 	def typemap(cls):

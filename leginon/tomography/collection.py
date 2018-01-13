@@ -307,6 +307,8 @@ class Collection(object):
 					break
 
 			self.logger.info('Saving image...')
+			# notify manager on every image.
+			self.node.notifyNodeBusy()
 			while True:
 				try:
 					tilt_series_image_data = self.tilt_series.saveImage(image_data)
