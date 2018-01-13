@@ -714,6 +714,7 @@ class Manager(node.Node):
 	def cancelTimeoutTimer(self):
 			if hasattr(self.timer,'is_alive') and self.timer.is_alive():
 				self.timer.cancel()
+				print 'timer canceled'
 
 	def slackTimeoutNotification(self):
 		timeout = self.timeout_minutes*60.0
@@ -723,13 +724,16 @@ class Manager(node.Node):
 
 	def restartTimeoutTimer(self):
 		'''
-		Restart timout timer if self.timer is not False.
+		Restart timeout timer if self.timer is not False.
 		Possible self timer values:
 		None: Default and the value when notification is not active.
 		False: The value to stop new Timer to be started to avoid
 			hanging when Leginon is shutting down and new notification
 			to be sent after it is already sent.
 		'''
+		# Deactivated for now
+		return
+		# Should not come here
 		if not self.notifyerror:
 			self.cancelTimeoutTimer()
 			self.timer = None
@@ -737,9 +741,11 @@ class Manager(node.Node):
 		if self.timer == False:
 			return
 		self.cancelTimeoutTimer()
+		# canceled timer can not be restarted. make a new one.
 		timeout = self.timeout_minutes*60.0
 		self.timer = threading.Timer(timeout,self.slackTimeoutNotification)
 		self.timer.start()
+		print 'timer started'
 
 	# Node Error Notification
 	def handleNodeLogError(self, ievent):
