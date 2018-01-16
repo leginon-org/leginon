@@ -1024,7 +1024,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		return self.tempframestackpath
 
 	def makeCorrectedFrameStack(self, use_full_raw_area=False):
-		return self.makeCorrectedFrameStack_serial(use_full_raw_area)
+		return self.makeCorrectedFrameStack_cpu(use_full_raw_area)
 
 	def makeDarkNormMrcs(self):
 		self.setupDarkNormMrcs(False)
