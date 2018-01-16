@@ -741,7 +741,6 @@ class CrosshairTool(ImageTool):
 	def onNewTiltAxisFromXAxis(self,evt):
 		# Tilt axis angle from image +x-axis toward +y-axis in raidans
 		self.tiltaxis = evt.tiltaxis
-		print 'got', self.tiltaxis
 
 ##################################
 ##

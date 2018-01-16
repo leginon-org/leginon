@@ -115,7 +115,11 @@ class NodeLogErrorEvent(NotificationEvent):
 
 class ActivateNotificationEvent(NotificationEvent):
 	'Event sent by presets manager to activate slack error notification'
-	pass
+	def typemap(cls):
+		return NotificationEvent.typemap() + (
+			('tem_host', str),
+		)
+	typemap = classmethod(typemap)
 
 class DeactivateNotificationEvent(NotificationEvent):
 	'Event sent by presets manager to deactivate slack error notification'
