@@ -370,7 +370,8 @@ class PresetsManager(node.Node):
 			# update first then start tracking
 			self.instrument.updateLastSetGetTime()
 			self.idleactive = True
-			self.outputEvent(event.ActivateNotificationEvent())
+			tem_hostname = self.getTemHostname()
+			self.outputEvent(event.ActivateNotificationEvent(tem_host=tem_hostname))
 			self.logger.info('Instrument error notification activated')
 			# FIX ME: this tracker does not work, yet. Often timeout too early.
 			#self.startInstrumentUsageTracker()

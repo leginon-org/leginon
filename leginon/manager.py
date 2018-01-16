@@ -90,6 +90,7 @@ class Manager(node.Node):
 		self.nodelocations = {}
 		self.broadcast = []
 
+		self.tem_host = ''
 		# notify user of logged error
 		self.notifyerror = False
 		# timeout timer
@@ -727,7 +728,7 @@ class Manager(node.Node):
 
 	def slackTimeoutNotification(self):
 		timeout = self.timeout_minutes*60.0
-		msg = 'Leginon is idle for %.1f minute' % self.timeout_minutes
+		msg = 'Leginon has been idle for %.1f minutes' % self.timeout_minutes
 		self.slackNotification(msg)
 		self.timer = False
 
@@ -778,6 +779,7 @@ class Manager(node.Node):
 	def handleNotificationStatus(self, ievent):
 		nodename = ievent['node']
 		if isinstance(ievent, event.ActivateNotificationEvent):
+			self.tem_host = ievent['tem_host']
 			# reset
 			self.notifyerror = True
 			# first allow timer to restart, if was set to false by completing a timeout
@@ -790,6 +792,7 @@ class Manager(node.Node):
 			self.notifyerror = False
 
 	def slackNotification(self, msg):
+		msg = '%s %s' % (self.tem_host, msg)
 		try:
 			from slack import slack_interface
 			slack_inst = slack_interface.SlackInterface()

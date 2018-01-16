@@ -113,9 +113,8 @@ class Node(correctorclient.CorrectorClient):
 
 	def setHasLogError(self, value, message):
 		if value:
-			tem_hostname = self.getTemHostname()
 			nodename = self.name
-			msg = '%s %s Error: %s' % (tem_hostname, nodename, message)
+			msg = '%s Error: %s' % (nodename, message)
 			self.outputEvent(event.NodeLogErrorEvent(message=msg))
 
 	def getTemHostname(self):
