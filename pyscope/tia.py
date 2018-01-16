@@ -480,7 +480,7 @@ class TIA_Ceta(TIA):
 		return {'x': 1.4e-5, 'y': 1.4e-5}
 
 class TIA_Falcon3(TIA_Falcon):
-	name = 'Falcon'
+	name = 'Falcon3'
 	camera_name = 'BM-Falcon'
 	binning_limits = [1,2,4]
 

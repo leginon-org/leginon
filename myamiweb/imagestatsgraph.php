@@ -9,7 +9,6 @@
 
 require_once "inc/leginon.inc";
 require_once "inc/graph.inc";
-require_once "inc/datafilter.inc";
 
 $defaultId=1445;
 $defaultpreset='hl';
@@ -22,22 +21,12 @@ $width=$_GET['w'];
 $height=$_GET['h'];
 $stdev=($_GET['stdev']==1) ? true : false;
 $data_name=($stdev) ? 'stdev': 'mean';
-$filter= true;
-$filter_type = '>';
-$filter_key = 'mean';
-$filter_value = 130; 
 
 $thicknessdata = $leginondata->getImageStats($sessionId, $preset);
 
-if ($filter) {
-	$datafilter = new datafilter($thicknessdata);
-	$thicknessdata = $datafilter->filter($filter_key, $filter_type,$filter_value);
-	$datafilter->setFilterDisplay();
-}
 if ($viewsql) {
 	$sql = $leginondata->mysql->getSQLQuery();
 	echo $sql;
-	echo $datafilter->display();
 	exit;
 }
 

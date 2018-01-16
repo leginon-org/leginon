@@ -21,7 +21,7 @@ from leginon import calibrationclient
 class BeamSizeCalibrator(calibrator.ScreenCalibrator):
 	panelclass = gui.wx.BeamSizeCalibrator.Panel
 	settingsclass = leginondata.BeamSizeCalibratorSettingsData
-	defaultsettings = calibrator.ScreenCalibrator.defaultsettings
+	defaultsettings = dict(calibrator.ScreenCalibrator.defaultsettings)
 	defaultsettings.update({
 		'beam diameter': 4e-2,
 	})

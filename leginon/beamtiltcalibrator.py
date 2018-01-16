@@ -25,7 +25,7 @@ class Abort(Exception):
 class BeamTiltCalibrator(calibrator.Calibrator):
 	panelclass = gui.wx.BeamTiltCalibrator.Panel
 	settingsclass = leginondata.BeamTiltCalibratorSettingsData
-	defaultsettings = calibrator.Calibrator.defaultsettings
+	defaultsettings = dict(calibrator.Calibrator.defaultsettings)
 	defaultsettings.update({
 		'defocus beam tilt': 0.01,
 		'first defocus': -2e-6,

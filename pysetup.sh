@@ -40,7 +40,6 @@ packages=(
 	imageviewer
 	leginon
 	pyscope
-	slack
 	modules/radermacher
 	modules/libcv
 	modules/numextension

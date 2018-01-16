@@ -44,7 +44,7 @@ class AppionPBS(appionLoop2.AppionLoop):
 		self.parser.add_option("--queue_scratch", dest='queue_scratch', type='str', default=None, help='Scratch directory if queueing up jobs')
 		self.parser.add_option("--queue_name", dest='queue_name', type='str', default=None, help='Name of the queue to use')
 		self.parser.add_option("--queue_style", dest='queue_style', type='str', default='PBS', help='Style of the queue to use. Only PBS and MOAB supported.')
-		self.parser.add_option("--walltime", dest='walltime', type='int', default='4', help='Walltime for the queue in hours.')
+		self.parser.add_option("--walltime", dest='walltime', type='int', default='0', help='Walltime for the queue in hours.')
 		self.parser.add_option("--queue_memory", dest='queue_memory', type='int', default='2', help='Memory required for queued process. In GB')
 		self.parser.add_option("--queue_ppn", dest='queue_ppn', type='int', default='1', help='Processors per node. The default will typically work.')
 		self.parser.add_option("--njobs", dest='njobs', type='int', default=1, help='Number of jobs to submit to queue')
@@ -253,7 +253,8 @@ class AppionPBS(appionLoop2.AppionLoop):
 		f.write('#!/bin/csh\n')
 		if self.params['queue_style']=='MOAB' or self.params['queue_style']=='PBS':
 			f.write('#%s -l nodes=1:ppn=%d\n' % (self.params['queue_style'], self.params['queue_ppn']))
-			f.write('#%s -l walltime=%d:00:00\n' % (self.params['queue_style'], self.params['walltime']))
+			if self.params['walltime']:
+				f.write('#%s -l walltime=%d:00:00\n' % (self.params['queue_style'], self.params['walltime']))
 			f.write('#%s -l pmem=%dgb\n\n' % (self.params['queue_style'], self.params['queue_memory']))
 		elif self.params['queue_style']=='SLURM':
 			f.write('#SBATCH -N 1\n')

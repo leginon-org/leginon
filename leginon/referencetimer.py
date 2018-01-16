@@ -15,7 +15,7 @@ class ReferenceTimer(reference.Reference):
 	eventinputs = reference.Reference.eventinputs
 	eventoutputs = reference.Reference.eventoutputs
 
-	defaultsettings = reference.Reference.defaultsettings
+	defaultsettings = dict(reference.Reference.defaultsettings)
 	defaultsettings.update (
 		{'interval time': 0.0}
 	)
@@ -54,7 +54,7 @@ class ReferenceTimer(reference.Reference):
 class AlignZeroLossPeak(ReferenceTimer):
 	settingsclass = leginondata.AlignZLPSettingsData
 	# defaultsettings are not the same as the parent class.  Therefore redefined.
-	defaultsettings = reference.Reference.defaultsettings
+	defaultsettings = dict(reference.Reference.defaultsettings)
 	defaultsettings.update (
 		{'interval time': 900.0,
 		'check preset': '',
@@ -264,7 +264,7 @@ class AlignZeroLossPeak(ReferenceTimer):
 		self.publishZeroLossCheck(image)
 
 class MeasureDose(ReferenceTimer):
-	defaultsettings = reference.Reference.defaultsettings
+	defaultsettings = dict(reference.Reference.defaultsettings)
 	defaultsettings.update (
 		{'interval time': 900.0,
 		}

@@ -18,7 +18,7 @@ class BeamFixer(presetadjuster.PresetAdjuster):
 	eventoutputs = presetadjuster.PresetAdjuster.eventoutputs
 	panelclass = gui.wx.BeamFixer.BeamFixerPanel
 	settingsclass = leginondata.BeamFixerSettingsData
-	defaultsettings = presetadjuster.PresetAdjuster.defaultsettings
+	defaultsettings = dict(presetadjuster.PresetAdjuster.defaultsettings)
 	defaultsettings.update({
 		'shift step': 25.0,
 	})

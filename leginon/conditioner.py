@@ -10,7 +10,7 @@ from leginon import player
 import time
 import itertools
 
-PAUSE_AND_INFORM_ERROR = False
+PAUSE_AND_INFORM_ERROR = True
 
 class Conditioner(node.Node):
 	'''
@@ -218,7 +218,7 @@ class AutoNitrogenFiller(Conditioner):
 	panelclass = leginon.gui.wx.AutoFiller.Panel
 	settingsclass = leginondata.AutoFillerSettingsData
 	defaultsettings = {}
-	defaultsettings = Conditioner.defaultsettings
+	defaultsettings = dict(Conditioner.defaultsettings)
 	defaultsettings.update({
 		'autofiller mode':'both cold',
 		'column fill start': 15,

@@ -179,7 +179,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		except node.PublishError, e:
 			self.logger.error('Submitting acquisition targets failed')
 		else:
-			self.logger.info('Acquisition targets submitted')
+			self.logger.info('Acquisition targets submitted on %s' % self.getMosaicLabel())
 
 		reference_target = self.getDisplayedReferenceTarget()
 		if reference_target is not None:
@@ -188,7 +188,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 			except node.PublishError, e:
 				self.logger.error('Submitting reference target failed')
 			else:
-				self.logger.info('Reference target submitted')
+				self.logger.info('Reference target submitted on %s' % self.getMosaicLabel())
 		self.logger.info('Done target submission')
 		# trigger onTargetsSubmitted in the gui.
 		self.panel.targetsSubmitted()
@@ -485,7 +485,15 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		key = '%s:  %s' % (imglist.dbid, label)
 		return key
 
+	def getMosaicLabel(self):
+		bits = self.getMosaicName().split(':')
+		label = ':'.join(bits[1:]).strip()
+		return label
+
 	def getMosaicName(self):
+		'''
+		return a name that has both image list dbid and label in this format: dbid: label
+		'''
 		return self.mosaicname
 
 	def getMosaicTiles(self, mosaicname):
