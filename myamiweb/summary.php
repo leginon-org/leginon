@@ -286,6 +286,23 @@ $icethicknesspresets = $leginondata->getIceThicknessPresets($expId);
 	echo "</table>\n";
 } else echo "no Ice Thickness information available";
 	echo "</td>";
+
+
+$icethicknesszlp = $leginondata->getZeroLossIceThickness($expId); # see if anything was collected
+	echo "<tr>";
+	//echo "<td colspan='2'>";
+	echo divtitle("Ice Thickness");
+	if (!empty($icethicknesszlp)) {
+		echo "<td>";
+		echo "<a href='zlp_icegraph.php?Id=$expId&vdata=1'>[data]</a>";
+		echo "<a href='zlp_icegraph.php?Id=$expId&vs=1'>[sql]</a><br>";
+		//echo "<a href='zlp_icegraph.php?Id=$expId?h=256'>";
+		echo "<a href='zlp_icegraph.php?Id=$expId&w=256&h=256'>";
+		echo "<img border='0' src='zlp_icegraph.php?Id=$expId&w=256&h=256'>";
+		echo "</a>\n";
+		echo "</td>\n";
+	}
+
 	
 ?>
 </tr>
@@ -415,8 +432,8 @@ if (!empty($comments)) {
 <tr>
 <td colspan="2">
 <?php
-$minconf = (is_numeric($_POST['mconf'])) ? $_POST['mconf'] 
-		: (is_numeric($_GET['mconf']) ? $_GET['mconf'] : false);
+$minres = (is_numeric($_POST['mres'])) ? $_POST['mres'] 
+		: (is_numeric($_GET['mres']) ? $_GET['mres'] : false);
 
 if ($ptcl) {
 echo divtitle("CTF");
@@ -427,24 +444,24 @@ if ($particle->hasCtfData($sessionId)) {
 	echo "<a href='processing/ctfreport.php?expId=$sessionId'>report &raquo;</a>\n";
 	?>
 	<form method="POST" action="<?php echo $_SERVER['REQUEST_URI']; ?>">
-		minimum allowed confidence:<input class="field" name="mconf" type="text" size="5" value="<?php echo $minconf; ?>">
+		maximum allowed CTF appion resolution (&Aring;):<input class="field" name="mres" type="text" size="5" value="<?php echo $minres; ?>">
 	</form>
 	<?php
 
-	$urlmconf = ($minconf) ? "&mconf=$minconf" : "";
+	$urlmres = ($minres) ? "&mres=$minres" : "";
 
 	$display_keys = array ( 'preset', 'nb', 'min', 'max', 'avg', 'stddev', 'img');
-	$fields = array('defocus1', 'confidence', 'confidence_d','difference');
-	$bestctf = $particle->getBestStats($fields, $sessionId, $minconf);
+	$fields = array('defocus1', 'resolution_appion', 'confidence','difference_from_nom');
+	$bestctf = $particle->getBestStats($fields, $sessionId, $minres);
 	
 	if ($bestctf) {
 		//phase shift progression
 		echo '</td></tr><tr><td>'."\n";
 		echo 'Phase shift by phase plate';
 		$phasegraph = '<a href="processing/phaseshiftgraph.php?expId='.$sessionId.'&hg=0'
-							.'&s=1'.$urlmconf.'">'
+							.'&s=1'.$urlmres.'">'
 							.'<img border="0" src="processing/phaseshiftgraph.php?w=300&s=1&expId='.$sessionId
-							.''.$urlmconf.'"></a>';
+							.''.$urlmres.'"></a>';
 		echo '</td></tr><tr><td>'."\n";
 		echo $phasegraph;
 		echo "<a href='processing/phaseshiftgraph.php?vd=1&s=1&hg=0&expId=$expId'>[data]</a>";
@@ -457,20 +474,20 @@ if ($particle->hasCtfData($sessionId)) {
 				$preset = $bestctf[$field][$k]['name'];
 				if ($field !='difference') {
 					$cdf='<a href="processing/ctfgraph.php?expId='.$sessionId.'&hg=1'
-							.'&s=1&f='.$field.'&preset='.$preset.''.$urlmconf.'">'
+							.'&s=1&f='.$field.'&preset='.$preset.''.$urlmres.'">'
 							.'<img border="0" src="processing/ctfgraph.php?w=150&hg=1&expId='.$sessionId
-							.'&s=1&f='.$field.'&preset='.$preset.''.$urlmconf.'"></a>';
+							.'&s=1&f='.$field.'&preset='.$preset.''.$urlmres.'"></a>';
 				} else {	
 					$cdf='<a href="processing/autofocacegraph.php?hg=0&expId='.$sessionId
-							.'&s=1&f='.$field.'&preset='.$preset.''.$urlmconf.'">'
+							.'&f='.$field.'_from_nom'.'&preset='.$preset.''.$urlmres.'">'
 							.'<img border="0" src="processing/autofocacegraph.php?w=150&hg=0&expId='.$sessionId
-							.'&s=1&f='.$field.'&preset='.$preset.''.$urlmconf.'"></a>';
+							.'&f='.$field.'_from_nom&preset='.$preset.''.$urlmres.'"></a>';
 				}
 				$bestctf[$field][$k]['img'] = $cdf;
 			}
 		}
-		echo '<a href="processing/showctfdata.php?Id='.$sessionId.''.$urlmconf.'&vd=1">[data]</a>';
-		echo '<a href="processing/showctfdata.php?Id='.$sessionId.''.$urlmconf.'&vs=1">[sql]</a>';
+		echo '<a href="processing/showctfdata.php?Id='.$sessionId.''.$urlmres.'&vd=1">[data]</a>';
+		echo '<a href="processing/showctfdata.php?Id='.$sessionId.''.$urlmres.'&vs=1">[sql]</a>';
 		$display_keys = array ( 'name', 'nb', 'min', 'max', 'avg', 'stddev', 'img');
 		echo displayCTFstats($bestctf, $display_keys);
 		} else { echo "Database Error"; }

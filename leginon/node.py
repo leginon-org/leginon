@@ -57,13 +57,15 @@ class Node(correctorclient.CorrectorClient):
 									event.NodeAvailableEvent,
 									event.NodeUnavailableEvent,
 									event.NodeInitializedEvent,
-									event.NodeUninitializedEvent]
+									event.NodeUninitializedEvent,
+									event.NodeLogErrorEvent]
 
 	objectserviceclass = remotecall.NodeObjectService
 
 	def __init__(self, name, session, managerlocation=None, otherdatabinder=None, otherdbdatakeeper=None, tcpport=None, launcher=None, panel=None):
 		self.name = name
 		self.panel = panel
+		self.tem_hostname = ''
 		
 		self.initializeLogger()
 
@@ -108,6 +110,31 @@ class Node(correctorclient.CorrectorClient):
 		correctorclient.CorrectorClient.__init__(self)
 
 		self.initializeSettings()
+
+	def setHasLogError(self, value, message):
+		if value:
+			tem_hostname = self.getTemHostname()
+			nodename = self.name
+			msg = '%s %s Error: %s' % (tem_hostname, nodename, message)
+			self.outputEvent(event.NodeLogErrorEvent(message=msg))
+
+	def getTemHostname(self):
+		if not self.tem_hostname:
+			if self.session:
+				results = leginondata.ConnectToClientsData(session=self.session).query(results=1)
+				if not results:
+					return ''
+				for client in results[0]['clients']:
+					instruments = leginondata.InstrumentData(hostname=client).query()
+					if instruments and not self.tem_hostname:
+						for instr in instruments:
+							if instr['cs']:
+								temname = str(client)
+								if 'description' in instr.keys() and instr['description']:
+									temname = instr['description']
+								self.tem_hostname = temname
+								break
+		return self.tem_hostname
 
 	def testprint(self,msg):
 		if testing:

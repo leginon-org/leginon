@@ -15,6 +15,8 @@ class DDStackLoop(appionLoop2.AppionLoop):
 		# Boolean
 		self.parser.add_option("--no-keepstack", dest="keepstack", default=True,
 			action="store_false", help="Clean up frame stack after alignment and sum image upload")
+		self.parser.add_option("--keepstack", dest="keepstack", default=True,
+			action="store_true", help="Clean up frame stack after alignment and sum image upload")
 		# String
 		self.parser.add_option("--tempdir", dest="tempdir",
 			help="Local path for storing temporary stack output, e.g. --tempdir=/tmp/appion/makeddstack",

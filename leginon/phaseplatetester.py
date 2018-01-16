@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import time
 from leginon import leginondata
 from leginon import acquisition
 import gui.wx.PhasePlateTester
@@ -92,6 +93,10 @@ class PhasePlateTester(PhasePlateTestImager):
 				status = 'aborted'
 				break
 			self.nextPhasePlate()
+			if i < self.settings['total test positions']-1:
+				pausetime = self.settings['pause time']
+				self.logger.info('pausing for %s s' % (pausetime,))
+				time.sleep(pausetime)
 		return status
 
 	def uiSetStartPosition(self):

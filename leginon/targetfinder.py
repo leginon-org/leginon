@@ -451,6 +451,8 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			self.setTargets([], target_name, block=True)
 
 		self.setTargetImageVector(imagedata)
+		self.setImageTiltAxis(imagedata)
+
 		# check if there is already a target list for this image
 		# or any other versions of this image (all from same target/preset)
 		# exclude sublists (like rejected target lists)
@@ -543,6 +545,19 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 	def _setTargetImageVector(self,cam_length_on_image,beam_diameter_on_image):
 		self.targetbeamradius = beam_diameter_on_image / 2
 		self.targetimagevector = (cam_length_on_image,0)
+
+	def setImageTiltAxis(self, imagedata):
+		try:
+			tem = imagedata['scope']['tem']
+			ccdcamera = imagedata['camera']['ccdcamera']
+			ht = imagedata['scope']['high tension']
+			mag = imagedata['scope']['magnification']
+			thetax, thetay = self.calclients['stage position'].getAngles(tem, ccdcamera, 'stage position', ht, mag, None)
+			self.panel.onNewTiltAxis(thetax)
+		except NoMatrixCalibrationError, e:
+			self.logger.warning('No stage position matrix. Can not show tilt axis')
+		except:
+			raise
 
 	def getTargetImageVector(self):
 		return self.targetimagevector

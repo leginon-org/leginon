@@ -92,7 +92,7 @@ class SimTEM(tem.TEM):
 		self.main_screen_position = self.main_screen_positions[0]
 		self.columnvalveposition = 'open'
 		self.emission = 'on'
-		self.BeamBlank = 'on'
+		self.BeamBlank = 'off'
 		self.buffer_pressure = 30.0
 
 		self.energy_filter = False

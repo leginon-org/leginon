@@ -3,7 +3,7 @@
 - Application XML-Dump
 - http://emg.nysbc.org/ 
 -
-- Application :Robot MSI-Screen Evaluation (1.6)
+- Application :Robot MSI-Screen Evaluation
 - Version     :0
 - Date : 11/03/2008
 -
@@ -189,7 +189,7 @@
     <sqltable name="ApplicationData" >
         <field name="DEF_id" >600</field>
         <field name="DEF_timestamp" >2008-11-03 17:33:51</field>
-        <field name="name" >Robot MSI-Screen Evaluation (1.6)</field>
+        <field name="name" >Robot MSI-Screen Evaluation</field>
         <field name="version" >0</field>
         <field name="hide" >0</field>
     </sqltable>

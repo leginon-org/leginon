@@ -578,11 +578,11 @@ class MatrixCalibrationClient(CalibrationClient):
 		y_shift_row = matrix[0, 1]
 		y_shift_col = matrix[1, 1]
 
-		# calculations invert image coordinates (+y top, -y bottom)
+		# angle is from x axis with +x to +y as positive.
 		# angle from the x shift of the parameter
-		theta_x = math.atan2(-x_shift_row, x_shift_col)
+		theta_x = math.atan2(x_shift_row, x_shift_col)
 		# angle from the y shift of the parameter
-		theta_y = math.atan2(-y_shift_row, -y_shift_col)
+		theta_y = math.atan2(y_shift_row, y_shift_col)
 
 		return theta_x, theta_y
 
@@ -601,6 +601,18 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		MatrixCalibrationClient.__init__(self, node)
 		self.other_axis = {'x':'y','y':'x'}
 		self.default_beamtilt_vectors = [(0,0),(1,0)]
+
+	def retrieveMatrix(self, tem, ccdcamera, caltype, ht, mag, probe=None):
+		try:
+			return super(BeamTiltCalibrationClient,self).retrieveMatrix(tem, ccdcamera, caltype, ht, mag, probe)
+		except NoMatrixCalibrationError, e:
+			if probe is None:
+				raise
+			else:
+				# Try without probe assignment for back compatibility
+				matrix = self.retrieveMatrix(tem, ccdcamera, caltype, ht, mag, None)
+				self.node.logger.warning('Only old %s calibration not specified by probe found. Please recalibrate.' % (caltype,))
+				return matrix
 
 	def getBeamTilt(self):
 		try:
@@ -640,8 +652,9 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		cam = self.instrument.getCCDCameraData()
 		ht = self.instrument.tem.HighTension
 		mag = self.instrument.tem.Magnification
+		probe = self.instrument.tem.ProbeMode
 		try:
-			fmatrix = self.retrieveMatrix(tem, cam, 'defocus', ht, mag)
+			fmatrix = self.retrieveMatrix(tem, cam, 'defocus', ht, mag, probe)
 		except (NoMatrixCalibrationError,RuntimeError), e:
 			self.node.logger.error('Measurement failed: %s' % e)
 			return {'x':0.0, 'y': 0.0}
@@ -728,9 +741,10 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		cam = self.instrument.getCCDCameraData()
 		ht = self.instrument.tem.HighTension
 		mag = self.instrument.tem.Magnification
+		probe = self.instrument.tem.ProbeMode
 		# Can not handle the exception for retrieveMatrix here. 
 		# Focuser node that calls this need to know the type of error
-		fmatrix = self.retrieveMatrix(tem, cam, 'defocus', ht, mag)
+		fmatrix = self.retrieveMatrix(tem, cam, 'defocus', ht, mag, probe)
 
 		tilt_deltas = self.getBeamTiltDeltaPair(tilt_value, on_phase_plate)
 		all_tilt_deltas = [tilt_deltas,]
@@ -740,8 +754,8 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			rotation_90deg = math.pi/2
 			orthogonal_tilt_deltas = map((lambda x: self.rotateXY0(x, rotation_90deg)),tilt_deltas)
 			try:
-				amatrix = self.retrieveMatrix(tem, cam, 'stigx', ht, mag)
-				bmatrix = self.retrieveMatrix(tem, cam, 'stigy', ht, mag)
+				amatrix = self.retrieveMatrix(tem, cam, 'stigx', ht, mag, probe)
+				bmatrix = self.retrieveMatrix(tem, cam, 'stigy', ht, mag, probe)
 				# do not append if Error is raised.
 				all_tilt_deltas.append(orthogonal_tilt_deltas)
 			except NoMatrixCalibrationError:
@@ -1024,12 +1038,13 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		cam = self.instrument.getCCDCameraData()
 		ht = self.instrument.tem.HighTension
 		mag = self.instrument.tem.Magnification
+		probe = self.instrument.tem.ProbeMode
 		self.rpixelsize = None
 		self.ht = ht
 		self.initTableau()
 
 		par = 'beam-tilt coma'
-		cmatrix = self.retrieveMatrix(tem, cam, 'beam-tilt coma', ht, mag)
+		cmatrix = self.retrieveMatrix(tem, cam, 'beam-tilt coma', ht, mag, probe)
 
 		dc = [0,0]
 		failed_measurement = False
@@ -1083,7 +1098,8 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		par = 'image-shift coma'
 		try:
 			# not to query specific mag for now
-			matrix = self.retrieveMatrix(tem, cam, 'image-shift coma', ht, None)
+			probe = self.instrument.tem.ProbeMode
+			matrix = self.retrieveMatrix(tem, cam, 'image-shift coma', ht, None, probe)
 		except NoMatrixCalibrationError:
 			raise RuntimeError('missing %s calibration matrix' % par)
 		self.node.logger.debug("Image Shift ( %5.2f, %5.2f)" % (imageshift['x']*1e6,imageshift['y']*1e6))

@@ -2727,13 +2727,13 @@ class leginondata {
 
 	function getZeroLossIceThickness($sessionId) {
  		$q="SELECT "
-		. "a.DEF_id AS DEF_id, a.DEF_timestamp AS timestamp, filename, thickness"
+		. "a.DEF_id AS DEF_id, a.DEF_timestamp AS timestamp, filename, thickness "
 		. "FROM "
 		. "AcquisitionImageData AS a INNER JOIN  SessionData AS s "
 		. "ON a.`REF|SessionData|session` = s.DEF_id "
 		. "INNER JOIN ZeroLossIceThicknessData AS z ON z.`REF|AcquisitionImageData|image` = a.DEF_id "
 		. "WHERE "
-		. "s.DEF_id = $sessionID ";
+		. "s.DEF_id = $sessionId ";
 		return $this->mysql->getSQLResult($q);
 	}
 

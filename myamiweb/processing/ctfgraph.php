@@ -19,11 +19,11 @@ $sessionId = $_GET['expId'];
 $viewdata = ($_GET['vd']==1) ? true : false;
 $histogram = ($_GET['hg']==1) ? true : false;
 $cutoff = ($_GET['cutoff']) ? $_GET['cutoff'] : false;
-$bydf = ($_GET['bydf']) ? $_GET['bydf'] : 'confidence';
+$bydf = ($_GET['bydf']) ? $_GET['bydf'] : 'resolution_50_percent';
 $f = $_GET['f'];
 $preset= ($_GET['preset']) ? $_GET['preset'] : '';
 $summary = ($_GET['s']==1 ) ? true : false;
-$minimum = ($_GET['mconf']) ? $_GET['mconf'] : 20.0; //fit resolution minimal resolution in Angstroms
+$minimum = ($_GET['mres']) ? $_GET['mres'] : 20.0; //fit resolution minimal resolution in Angstroms
 $width=$_GET['w'];
 $height=$_GET['h'];
 $xmin = ($_GET['xmin']) ? $_GET['xmin'] : false;
@@ -39,10 +39,9 @@ if ($summary) {
 	$runId= ($_GET[rId]);
 	$ctfinfo = $ctf->getCtfInfo($runId);
 }
-
 foreach($ctfinfo as $t) {
 	if ($preset) {
-		$p = $leginondata->getPresetFromImageId($id);
+		$p = $leginondata->getPresetFromImageId($t['imageid']);
 		if ($p['name']!=$preset) {
 			continue;
 		}
@@ -52,21 +51,16 @@ foreach($ctfinfo as $t) {
 		$value = max($t['confidence'],$t['confidence_d'],$t['cross_correlation']);
 	else
 		$value=$t[$f];
-
-	// if grouping by defocus, set cutoff
+	// if grouping by cutoff confidence or resolution with one cutoff
 	if ($cutoff) {
 		// first check if value exists
 		if (!$t[$bydf]) continue;
 		// check if within set range
-		if ((substr($bydf,0,10)=='resolution' && $t[$bydf] > $cutoff) ||
-		   (substr($bydf,0,10)!='resolution' && $t[$bydf] < $cutoff))
+		if ((strpos($bydf,'resolution')!== false && $t[$bydf] > $cutoff) ||
+		   (strpos($bydf,'resolution') === false && $t[$bydf] < $cutoff))
 			continue;
-		// get average defocus
-		$df1=$t['defocus1'];
-		$df2=$t['defocus2'];
-		$value = ($df1+$df2)/2;
 	}
-
+	// group by value with specified max and min
 	if ($xmax && $value > $xmax)
 		continue;
 	if ($xmin && $value < $xmin)
@@ -89,9 +83,14 @@ if ($histogram == true && $histaxis == 'x')
 	$axes = array($display_y,$display_x);
 $dbemgraph = new dbemgraph($ndata, $axes[0], $axes[1]);
 $dbemgraph->lineplot=true;
-$dbemgraph->title=$fieldname. ($preset) ? " for preset $preset":'';
+$graph_title = ($f == 'ctffind4_resolution') ? 'package resolution' : $f;
+$graph_title = ($preset) ? $graph_title." for preset $preset": $graph_title;
+$dbemgraph->title=$graph_title;
 $yunit = ($f == 'defocus1' || $f == 'defocus2') ? ' (um)':'';
-$dbemgraph->yaxistitle= ($cutoff) ? 'avg defocus (um)' : $axes[1].$yunit;
+$yunit = (strpos($f,'resolution') !== false) ? ' (angstroms)': $yunit;
+$ytitle = ($f == 'ctffind4_resolution') ? 'package_resolution': $axes[1];
+$ytitle = ($cutoff) ? $ytitle.' avg defocus (um)' : $ytitle.$yunit;
+$dbemgraph->yaxistitle= $ytitle;
 
 if ($viewdata) {
 	$dbemgraph->dumpData(array($display_x, $display_y));
@@ -102,7 +101,7 @@ if ($histogram) {
 
 
 $dbemgraph->scalex(1);
-$yscale = ($f == 'defocus1' || $f == 'defocus2') ? 1e-6:1;
+$yscale = ($f == 'defocus1' || $f == 'defocus2' || $f == 'difference_from_nom') ? 1e-6:1;
 if ($color)
 	$dbemgraph->mark->SetFillColor($color);
 

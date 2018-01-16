@@ -15,7 +15,7 @@ class CentosInstallation(object):
 
 	def setReleaseDependantValues(self):
 		# need to change to branch when release
-		self.gitCmd = "git clone -b myami-beta http://emg.nysbc.org/git/myami " + self.gitMyamiDir
+		self.gitCmd = "git clone http://emg.nysbc.org/git/myami " + self.gitMyamiDir
 		# redhat release related values
 		self.torqueLibPath = '/var/lib/torque/'
 
@@ -201,7 +201,7 @@ class CentosInstallation(object):
 		# replacing with:
 		self.runCommand("/sbin/iptables -I INPUT -p tcp --dport %d -j ACCEPT" % (port))		
 		self.runCommand("/sbin/iptables-save > /etc/sysconfig/iptables")
-		self.runCommand("/etc/init.d/iptables restart")
+		self.runCommand("service iptables restart")
 		self.writeToLog("firewall port %d opened" % (port))
 
 	def installPythonPackage(self, targzFileName, fileLocation, unpackDirName):
@@ -951,7 +951,7 @@ endif
 		
 		outf.write('; custom parameters from CentOS Auto Install script\n')
 		outf.write('max_execution_time = 300 ; Maximum execution time of each script, in seconds\n')
-		outf.write('max_input_time = 300	 ; Maximum amout of time to spend parsing request data\n')
+		outf.write('max_input_time = 300	 ; Maximum amount of time to spend parsing request data\n')
 		outf.write('memory_limit = 1024M	 ; Maximum amount of memory a script may consume\n')
 		outf.write('\n')
 

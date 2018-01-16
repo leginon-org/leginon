@@ -125,6 +125,7 @@ class IcethicknessEF(imagewatcher.ImageWatcher):
 		camdata1['exposure time'] = exp_time
 
 		try:
+			self.instrument.setCCDCamera(camdata1['ccdcamera']['name'])  #select the right camera!!!!
 			self.instrument.setData(camdata1)
 		except:
 			self.logger.error(errstr % 'unable to set camera parameters')

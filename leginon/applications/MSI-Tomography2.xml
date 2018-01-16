@@ -3,7 +3,7 @@
 - Application XML-Dump
 - http://emg.nysbc.org/ 
 -
-- Application :MSI-Tomography2 (3.1)
+- Application :MSI-Tomography2
 - Version     :0
 - Date : 10/10/2011
 -
@@ -116,7 +116,7 @@
     <sqltable name="ApplicationData" >
         <field name="DEF_id" >725</field>
         <field name="DEF_timestamp" >2011-10-10 18:19:57</field>
-        <field name="name" >MSI-Tomography2 (3.1)</field>
+        <field name="name" >MSI-Tomography2</field>
         <field name="version" >0</field>
         <field name="hide" >0</field>
     </sqltable>

@@ -240,6 +240,7 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 		# failed in the process or not as a safety
 		beamtilt0 = self.btcalclient.getBeamTilt()
 
+		measure_status = None
 		try:
 			# increased settle time from 0.25 to 0.5 for Falcon protector
 			settletime = self.settings['beam tilt settle time']
@@ -247,19 +248,25 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 			correction = self.btcalclient.measureDefocusStig(btilt, correct_tilt=False, correlation_type=setting['correlation type'], stig=setting['stig correction'], settle=settletime, image0=lastdriftimage, on_phase_plate=self.settings['on phase plate'])
 		except calibrationclient.Abort:
 			self.logger.info('Measurement of defocus and stig. has been aborted')
-			return 'aborted'
+			measure_status = 'aborted'
 		except calibrationclient.NoMatrixCalibrationError, e:
 			self.player.pause()
 			self.logger.error('Measurement failed without calibration: %s' % e)
 			self.logger.info('Calibrate and then continue...')
 			self.beep()
-			return 'repeat'
-		except:
+			measure_statue = 'repeat'
+		except calibrationclient.NoCalibrationError, e:
+			self.logger.error('Measurement failed without calibration: %s' % e)
+			measure_status = 'aborted'
 			# any other exception
-			self.logger.warning('Error in measuring defocus/stig')
+		except Exception, e:
+			self.logger.error('Other error: %s' % e)
+			measure_status = 'aborted'
 		finally:
 			self.logger.info('Set beam tilt back')
 			self.btcalclient.setBeamTilt(beamtilt0)
+			if measure_status:
+				return measure_status
 
 		if setting['stig correction'] and correction['stigx'] and correction['stigy']:
 			sx = '%.3f' % correction['stigx']

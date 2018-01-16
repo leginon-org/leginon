@@ -304,7 +304,7 @@ class HoleFinder(object):
 	def correlate_template(self):
 		fromimage = 'edges'
 
-		if None in (self.__results[fromimage], self.__results['template']):
+		if self.__results[fromimage] is None or self.__results['template'] is None:
 			raise RuntimeError('need image %s and template before correlation' % (fromimage,))
 		edges = self.__results[fromimage]
 		template = self.__results['template']
@@ -357,7 +357,7 @@ class HoleFinder(object):
 		'''
 		find blobs on a thresholded image
 		'''
-		if None in (self.__results['threshold'],self.__results['correlation']):
+		if self.__results['threshold'] is None or self.__results['correlation'] is None:
 			raise RuntimeError('need correlation image and threshold image to find blobs')
 		im = self.__results['correlation']
 		mask = self.__results['threshold']
@@ -391,7 +391,7 @@ class HoleFinder(object):
 			self.dist_config['binned_pixel'] = binned_pixel
 
 	def find_distance(self):
-		if None in (self.__results['blobs'],):
+		if self.__results['blobs'] is None:
 			raise RuntimeError('need blobs to calc hole depth')
 		blobnumber = 0
 		blobcoord = []
@@ -461,7 +461,7 @@ class HoleFinder(object):
 		
 
 	def mark_holes(self):
-		if None in (self.__results['holes'], self.__results['original']):
+		if self.__results['holes'] is None or self.__results['original'] is None:
 			raise RuntimeError('need original image and holes before marking holes')
 		image = self.__results['original']
 		im = image.copy()

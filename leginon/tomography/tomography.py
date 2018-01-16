@@ -34,7 +34,7 @@ class Tomography(leginon.acquisition.Acquisition):
 		'tilt max': 60.0,
 		'tilt start': 0.0,
 		'tilt step': 1.0,
-		'tilt order': 'alternate',
+		'tilt order': 'sequential',
 		'equally sloped': False,
 		'equally sloped n': 8,
 		'xcf bin': 1,
@@ -68,7 +68,7 @@ class Tomography(leginon.acquisition.Acquisition):
 		'fit data points': 4,
 		'use z0': False,
 		'addon tilts':'()',
-		'use preset exposure':True,
+		'use preset exposure':False,
 	})
 
 	def __init__(self, *args, **kwargs):

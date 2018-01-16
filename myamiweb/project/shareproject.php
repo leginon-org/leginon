@@ -51,13 +51,25 @@ to <a class="header" href="<?php echo BASE_URL.'user.php'; ?>">[user]</a> to upd
 <?php
 	};
 	$db = $project->mysql;
-	$userId = $_POST['userId'];
+	$loginId = getLoginUserId();
+	$userId = $_POST['userId']; //User to add
 	if ($_POST['bt']=="add") {
 		if ($userId && $projectId) {
 			$project->addProjectOwner($userId, $projectId);
 		}
 	} else if ($_POST['bt']=="del" && $_POST['ck']) {
-		$project->removeProjectOwner($_POST['ck'], $projectId);
+		$is_self = false;
+		if ($loginId !== true && privilege('projects') < 4) {
+			foreach ($_POST['ck'] as $cki) {
+				if ($cki == $loginId ) $is_self = true;
+			}
+		}
+		if ( $is_self ) {
+			$error = "<p> Error: Can not remove self. Ask for administrative asistance. </p>";
+		} else {
+			$project->removeProjectOwner($_POST['ck'], $projectId);
+			$error = '';
+		}
 	}
 
 
@@ -102,6 +114,7 @@ to <a class="header" href="<?php echo BASE_URL.'user.php'; ?>">[user]</a> to upd
 	$bt_del = "<input class='bt1' type='submit' name='bt' value='del'>";
 	echo "<table>";
 	if ($owners) {
+		$loginId = getLoginUserId();
 		foreach ($owners as $v) {
 			$ck = "<input type='checkbox' name='ck[]' value='".$v['userId']."'>";
 			$cuser = ($v['lastname']||$v['firstname']) ? $v['firstname']." ".$v['lastname']:$v['username'];
@@ -109,16 +122,23 @@ to <a class="header" href="<?php echo BASE_URL.'user.php'; ?>">[user]</a> to upd
 			echo "<td>";
 			echo " - ".$cuser;
 			echo "</td>";
-			if ($is_admin && count($owners) > 1) {
+			if ($is_admin && count($owners) >= 1) {
 				echo "<td>";
-				echo $ck;
+				if ($loginId !== true && privilege('projects') < 4 && count($owners)==1) {
+					//Do not allow removing last owner when a user is logged in
+					//with lower project administrator privilege.
+					echo '';
+				} else {
+					echo $ck;
+				}
 				echo "</td>";
 			}
 			echo "</tr>";
 		}
 		echo "</table>";
 		echo "<br>";
-		if ($is_admin && count($owners) > 1) {
+		if ($is_admin && count($owners) >= 1) {
+			echo $error;
 			echo "delete selected: ".$bt_del;
 		}
 	}

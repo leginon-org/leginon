@@ -252,7 +252,7 @@ class PresetsManager(node.Node):
 		'idle minute': 10.0,
 	}
 	eventinputs = node.Node.eventinputs + [event.ChangePresetEvent, event.MeasureDoseEvent, event.UpdatePresetEvent, event.IdleTimerPauseEvent, event.IdleTimerRestartEvent]
-	eventoutputs = node.Node.eventoutputs + [event.PresetChangedEvent, event.PresetPublishEvent, event.DoseMeasuredEvent, event.MoveToTargetEvent]
+	eventoutputs = node.Node.eventoutputs + [event.PresetChangedEvent, event.PresetPublishEvent, event.DoseMeasuredEvent, event.MoveToTargetEvent, event.ActivateNotificationEvent, event.DeactivateNotificationEvent]
 
 	def __init__(self, name, session, managerlocation, **kwargs):
 		node.Node.__init__(self, name, session, managerlocation, **kwargs)
@@ -363,14 +363,17 @@ class PresetsManager(node.Node):
 	def toggleInstrumentTimeout(self):
 		if self.idleactive:
 			self.idleactive = False
-			self.logger.info('Instrument timeout deactivated')
+			self.outputEvent(event.DeactivateNotificationEvent())
+			#self.logger.info('Instrument timeout deactivated')
+			self.logger.info('Instrument error notification deactivated')
 		else:
 			# update first then start tracking
 			self.instrument.updateLastSetGetTime()
 			self.idleactive = True
-			self.logger.info('Instrument timeout activated')
-			self.startInstrumentUsageTracker()
-
+			self.outputEvent(event.ActivateNotificationEvent())
+			self.logger.info('Instrument error notification activated')
+			# FIX ME: this tracker does not work, yet. Often timeout too early.
+			#self.startInstrumentUsageTracker()
 
 	def lock(self, n):
 		'''many nodes could be waiting for a lock.  It is undefined which

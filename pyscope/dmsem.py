@@ -503,6 +503,7 @@ class GatanK2Base(DMSEM):
 			'doEarlyReturn': self.getDoEarlyReturn(),
 			'earlyReturnFrameCount': self.getEarlyReturnFrameCount(),
 			'earlyReturnRamGrabs': self.getEarlyReturnRamGrabs(),
+			'lzwtiff': self.getSaveLzwTiffFrames(),
 		}
 		return params
 
@@ -531,7 +532,10 @@ class GatanK2Base(DMSEM):
 			self.early_return_frame_count = min([self.getDmsemConfig('k2','early_return_frame_count'), nframes])
 
 	def getDoEarlyReturn(self):
-		return self.getDmsemConfig('k2','do_early_return')
+		return bool(self.getDmsemConfig('k2','do_early_return'))
+
+	def getSaveLzwTiffFrames(self):
+		return bool(self.getDmsemConfig('k2','save_lzw_tiff_frames'))
 
 	def setAlignFrames(self, value):
 		self.align_frames = bool(value)

@@ -15,7 +15,7 @@ class CentosInstallation(object):
 
 	def setReleaseDependantValues(self):
 		# need to change to branch when release
-		self.gitCmd = "git clone -b myami-beta http://emg.nysbc.org/git/myami " + self.gitMyamiDir
+		self.gitCmd = "git clone -b trunk http://emg.nysbc.org/git/myami " + self.gitMyamiDir
 		# redhat release related values
 		self.redhatRelease = '6.8' # currently used to decide the name of the epel download.
 		self.torqueLibPath = '/var/lib/torque/'
@@ -952,7 +952,7 @@ endif
 		
 		outf.write('; custom parameters from CentOS Auto Install script\n')
 		outf.write('max_execution_time = 300 ; Maximum execution time of each script, in seconds\n')
-		outf.write('max_input_time = 300	 ; Maximum amout of time to spend parsing request data\n')
+		outf.write('max_input_time = 300	 ; Maximum amount of time to spend parsing request data\n')
 		outf.write('memory_limit = 1024M	 ; Maximum amount of memory a script may consume\n')
 		outf.write('\n')
 

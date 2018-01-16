@@ -183,6 +183,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 											event.AlignZeroLossPeakPublishEvent,
 											event.ScreenCurrentLoggerPublishEvent,
 											event.PhasePlatePublishEvent,
+											event.NodeBusyNotificationEvent,
 											event.ImageListPublishEvent, event.ReferenceTargetPublishEvent] \
 											+ navigator.NavigatorClient.eventoutputs
 
@@ -981,6 +982,12 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.parkAtHighMag()
 		super(Acquisition,self).park()
 		
+	def notifyNodeBusy(self):
+			'''
+			Notify Manager that the node is doing something so it does not timeout.
+			'''
+			self.outputEvent(event.NodeBusyNotificationEvent())
+
 	def publishDisplayWait(self, imagedata):
 		'''
 		publish image data, display it, then wait for something to 
@@ -1006,6 +1013,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 				imagedata['mover'] = moverq
 			imagedata.insert(force=True)
 		self.publish(imagedata, pubevent=True)
+		self.notifyNodeBusy()
 
 		## set up to handle done events
 		dataid = imagedata.dbid

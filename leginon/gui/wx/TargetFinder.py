@@ -112,6 +112,10 @@ class Panel(leginon.gui.wx.Node.Panel):
 		evt = leginon.gui.wx.Events.SubmitTargetsEvent()
 		self.GetEventHandler().AddPendingEvent(evt)
 
+	def onNewTiltAxis(self, angle):
+		idcevt = leginon.gui.wx.ImagePanelTools.ImageNewTiltAxisEvent(self.imagepanel, angle)
+		self.imagepanel.GetEventHandler().AddPendingEvent(idcevt)
+
 
 class SettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
