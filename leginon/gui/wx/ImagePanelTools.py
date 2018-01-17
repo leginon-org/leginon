@@ -690,7 +690,7 @@ class CrosshairTool(ImageTool):
 		bitmap = leginon.gui.wx.TargetPanelBitmaps.getTargetIconBitmap(self.color, shape='+')
 		tooltip = 'Crosshair or Tilt axis'
 		cursor = None
-		self.tiltaxis = math.radians(0.0)
+		self.tiltaxis = None
 		ImageTool.__init__(self, imagepanel, sizer, bitmap, tooltip, cursor, False)
 		self.imagepanel.Bind(leginon.gui.wx.ImagePanelTools.EVT_IMAGE_NEW_TILT_AXIS, self.onNewTiltAxisFromXAxis, self.imagepanel)
 
@@ -708,14 +708,17 @@ class CrosshairTool(ImageTool):
 		x, y = self.imagepanel.image2view(center)
 		width = self.imagepanel.buffer.GetWidth()
 		height = self.imagepanel.buffer.GetHeight()
-		x0,y0,x1,y1 = self.getAxisEndPoints(x,y,width, height, self.tiltaxis, 1.0)
-		dc.DrawLine(x0, y0, x1, y1)
-		if self.tiltaxis < 0.01:
-			scale = 1.0
+		if self.tiltaxis is None:
+			axisangle = 0.0
+			yscale = 1.0
 		else:
-			# Draw stage y axis a bit shorter.
-			scale = 0.8
-		x0,y0,x1,y1 = self.getAxisEndPoints(x,y,width, height, self.tiltaxis+math.pi/2.0, scale)
+			axisangle = self.tiltaxis
+			yscale = 0.8
+		x0,y0,x1,y1 = self.getAxisEndPoints(x,y,width, height, axisangle, 1.0)
+		
+		dc.DrawLine(x0, y0, x1, y1)
+		# Draw stage y axis a bit shorter.
+		x0,y0,x1,y1 = self.getAxisEndPoints(x,y,width, height, axisangle+math.pi/2.0, yscale)
 		dc.DrawLine(x0, y0, x1, y1)
 
 	def getAxisEndPoints(self, centerx, centery, width, height, angle, scale=1.0):
@@ -724,14 +727,14 @@ class CrosshairTool(ImageTool):
 		if abs(math.cos(angle)) < 0.001:
 			return centerx, 0, centerx, height
 		x0 = 0 + (1-scale)*centerx
-		y0 = centery - centery*math.tan(angle)
+		y0 = centery - scale*centerx*math.tan(angle)
 		x1 = centerx + (width-centerx)*scale
-		y1 = centery + centery*math.tan(angle)
-		if y0 > height or y0 < 0:
+		y1 = centery + scale*centerx*math.tan(angle)
+		if y0 > height*scale or y0 < 0+(1-scale)*height:
 			y0 = 0 + (1-scale)*centery
-			x0 = centerx + centerx*math.tan(self.tiltaxis+math.pi/2.0)
+			x0 = centerx + scale*centery*math.tan(angle+math.pi/2.0)
 			y1 = centery + (height-centery)*scale
-			x1 = centerx - centerx*math.tan(self.tiltaxis+math.pi/2.0)
+			x1 = centerx - scale*centery*math.tan(angle+math.pi/2.0)
 		return int(x0),int(y0),int(x1),int(y1)
 
 	#--------------------
