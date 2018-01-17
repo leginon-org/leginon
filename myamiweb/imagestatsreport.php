@@ -8,9 +8,13 @@
  */
 
 require_once "inc/leginon.inc";
+require_once "inc/project.inc";
 
-$defaultId= 1445;
+$defaultId= 1;
 $sessionId= ($_GET['Id']) ? $_GET['Id'] : $defaultId;
+
+//Block unauthorized user
+checkExptAccessPrivilege($sessionId,'data');
 
 // --- Set  experimentId
 // $lastId = $leginondata->getLastSessionId();
