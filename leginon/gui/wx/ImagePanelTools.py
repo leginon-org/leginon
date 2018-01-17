@@ -727,14 +727,14 @@ class CrosshairTool(ImageTool):
 		if abs(math.cos(angle)) < 0.001:
 			return centerx, 0, centerx, height
 		x0 = 0 + (1-scale)*centerx
-		y0 = centery - scale*centerx*math.tan(angle)
+		y0 = centery - (scale*centerx)*math.tan(angle)
 		x1 = centerx + (width-centerx)*scale
-		y1 = centery + scale*centerx*math.tan(angle)
+		y1 = centery + (width-centerx)*scale*math.tan(angle)
 		if y0 > height*scale or y0 < 0+(1-scale)*height:
 			y0 = 0 + (1-scale)*centery
 			x0 = centerx + scale*centery*math.tan(angle+math.pi/2.0)
 			y1 = centery + (height-centery)*scale
-			x1 = centerx - scale*centery*math.tan(angle+math.pi/2.0)
+			x1 = centerx - (height-centery)*scale*math.tan(angle+math.pi/2.0)
 		return int(x0),int(y0),int(x1),int(y1)
 
 	#--------------------
