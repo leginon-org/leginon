@@ -18,6 +18,10 @@
 # Geometry: by tomogram (Alex Noble) or Berriman +30 -30 image pairs
 
 
+#camdata0['energy filtered'] -- means: does the camera have a filter or not
+#camdata0['energy filter'])  -- means: is the slit inserted or not
+
+
 from leginon import leginondata
 import event
 import imagewatcher
@@ -37,6 +41,7 @@ import gui.wx.Presets #wjr`
 from math import log # natural log
 import copy
 import instrument
+import time
 
 
 
@@ -50,7 +55,7 @@ class IcethicknessEF(imagewatcher.ImageWatcher):
 		'process': False,
                 'exposure time': 500.0,         #ms
 		'slit width': 15.0,         #eV
-		'mean free path': 340.0,   #nm
+		'mean free path': 395.0,   #nm
 	}
 	def __init__(self, id, session, managerlocation, **kwargs):
 		imagewatcher.ImageWatcher.__init__(self, id, session, managerlocation, **kwargs)
@@ -112,7 +117,7 @@ class IcethicknessEF(imagewatcher.ImageWatcher):
 		was_saving_frames = bool(camdata0['save frames'])
 		was_aligning_frames = bool(camdata0['align frames'])
 		was_slit_width = float(camdata0['energy filter width']) 
-		was_filtered = bool(camdata0['energy filtered']) 
+		was_filtered = bool(camdata0['energy filter']) 
 		was_time = float(camdata0['exposure time'])
 		## deactivate frame saving and align frame flags
 		camdata0['save frames'] = False
@@ -120,12 +125,17 @@ class IcethicknessEF(imagewatcher.ImageWatcher):
 
 		camdata1 = copy.copy(camdata0) #not a deep copy
 		#set correct energy filter params
-		camdata1['energy filtered'] = filtered
+		camdata1['energy filter'] = filtered
 		camdata1['energy filter width'] = slit_width
 		camdata1['exposure time'] = exp_time
 
 		try:
 			self.instrument.setCCDCamera(camdata1['ccdcamera']['name'])  #select the right camera!!!!
+			has_filter = self.instrument.ccdcamera.getEnergyFiltered()
+			if not has_filter:   # if camera does not have an EF, raise an error
+				self.logger.error(errstr % 'Energy filter not present')
+				return
+			#self.instrument.ccdcamera.setEnergyFilter(filtered)
 			self.instrument.setData(camdata1)
 		except:
 			self.logger.error(errstr % 'unable to set camera parameters')
@@ -139,7 +149,7 @@ class IcethicknessEF(imagewatcher.ImageWatcher):
 			# restore preset parameters Bug #3614
 			camdata0['save frames'] = was_saving_frames
 			camdata0['align frames'] = was_aligning_frames
-			camdata0['energy filtered'] = was_filtered
+			camdata0['energy filter'] = was_filtered
 			camdata0['energy filter width'] = was_slit_width
 			camdata0['exposure time'] = was_time
 			self.instrument.setData(camdata0)
