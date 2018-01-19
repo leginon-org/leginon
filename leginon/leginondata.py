@@ -2820,6 +2820,7 @@ class ZeroLossIceThicknessSettingsData(SettingsData):
 			('exposure time', float),
 			('slit width', float),
 			('mean free path', float),   #nm
+			('decimate',int),
 		)
 	typemap = classmethod(typemap)
 

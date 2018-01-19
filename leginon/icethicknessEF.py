@@ -42,6 +42,7 @@ from math import log # natural log
 import copy
 import instrument
 import time
+import appclient
 
 
 
@@ -56,6 +57,7 @@ class IcethicknessEF(imagewatcher.ImageWatcher):
                 'exposure time': 500.0,         #ms
 		'slit width': 15.0,         #eV
 		'mean free path': 395.0,   #nm
+		'decimate': 4,       #take measurement every N images
 	}
 	def __init__(self, id, session, managerlocation, **kwargs):
 		imagewatcher.ImageWatcher.__init__(self, id, session, managerlocation, **kwargs)
@@ -66,13 +68,20 @@ class IcethicknessEF(imagewatcher.ImageWatcher):
 		self.calclient = calibrationclient.CalibrationClient(self)
 		self.postprocess = threading.Event()
 		self.presetsclient = presets.PresetsClient(self)
+		self.zlpcounter = 0           #keep count of how many times it has been called in order to di it every N images
 		self.start()
 
 	def processImageData(self, imagedata, ):  #wjr
 		'''
 	        collect two images: one with slit in, one without, and compare intensitites to get thickness
 		'''
-		if self.settings['process']:
+		self.zlpcounter += 1
+		if (self.settings['decimate'] <1):
+			self.settings['decimate'] =1
+		modulus = self.zlpcounter % self.settings['decimate']
+		if (modulus >0) :
+			self.logger.info('skipping zlp measurement for this image; count = %i' %(self.zlpcounter))
+		if self.settings['process'] and not modulus:
 			exp_preset = imagedata['preset']
 			acquirestr = 'Itot'
 			noslitimagedata=  self._acquireSpecialImage(exp_preset, acquirestr, self.settings['exposure time'], False, self.settings['slit width'])
@@ -95,9 +104,10 @@ class IcethicknessEF(imagewatcher.ImageWatcher):
 
    			zlossth['thickness'] = self.settings['mean free path'] * log (zlossth['no slit mean']/(zlossth['slit mean']))
 			
-			self.logger.info('no slit mean: %f' % (zlossth['no slit mean'],))
-			self.logger.info('slit mean: %f' % (zlossth['slit mean'],))
-			self.logger.info('calculated thickness: %f' % (zlossth['thickness'],))
+			self.logger.info('no slit mean: %f counts' % (zlossth['no slit mean'],))
+			self.logger.info('slit mean: %f counts' % (zlossth['slit mean'],))
+			self.logger.info('calculated thickness: %f nm' % (zlossth['thickness'],))
+			self.logger.info('Number of function calls: %i' %(self.zlpcounter))
  
 			zlossth.insert()
 	def _acquireSpecialImage(self, preset, acquirestr, exp_time, filtered, slit_width):
@@ -163,7 +173,31 @@ class IcethicknessEF(imagewatcher.ImageWatcher):
 			return
 		return imagedata
 
+	def handleApplicationEvent(self,evt):
+		'''
+		Find the Acquisition class or its subclass instance bound
+		to this node upon application loading.
+		'''
+		app = evt['application']
+		self.last_acq_node = appclient.getLastNodeThruBinding(app,self.name,'AcquisitionImagePublishEvent','Acquisition')
 
 
-
+	def checkSettings(self,settings):
+		'''
+		Check that exposure will wait for this node to finish
+		'''
+		if self.last_acq_node:
+			settingsclassname = self.last_acq_node['class string']+'SettingsData'
+			results= self.reseachDBSettings(getattr(leginondata,settingsclassname),self.last_acq_node['alias'])
+			if not results:
+				# default acquisition settings waiting is False. However, admin default
+				# should be o.k.
+				return []
+			else:
+				last_acq_wait = results[0]['wait for process']
+			if settings['process'] and not last_acq_wait:
+				return [('error','"%s" node "wait for process" setting must be True when ice thickness measurements are taken' % (self.last_acq_node['alias'],))]
+			if not settings['process'] and last_acq_wait:
+				return [('error','"%s" node "wait for process" setting must be False when ice thickness measurements are not taken' % (self.last_acq_node['alias'],))]
+		return []
 
