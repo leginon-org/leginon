@@ -46,10 +46,8 @@ class TemplateConvolver(object):
 			is_odd = True
 		else:
 			is_odd = False
-		vectors = []
-		if not is_odd:
-			vectors = [(-1,-1),(1,1),(1,-1),(-1,1)]
-		else:
+		vectors = [(-1,-1),(1,1),(1,-1),(-1,1)]
+		if is_odd:
 			base_vectors = [(0,0),(-1,0),(1,0),(0,1),(0,-1)]
 			vectors = base_vectors + vectors
 		vectors = numpy.array(vectors[:npoint])

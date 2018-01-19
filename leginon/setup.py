@@ -27,6 +27,6 @@ setup(
 		('leginon/icons/processing', glob.glob('icons/processing/*.png')),
 		('leginon/applications', glob.glob('applications/*.xml')),
 	],
-	scripts=['install-leginon.py', 'start-leginon.py'],
+	scripts=['install-leginon.py', 'start-leginon.py', 'rawtransfer.py'],
 )
 
