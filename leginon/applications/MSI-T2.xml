@@ -445,6 +445,22 @@
         <field name="REF|ApplicationData|application" >8</field>
     </sqltable>
     <sqltable name="BindingSpecData" >
+        <field name="DEF_id" >560</field>
+        <field name="DEF_timestamp" >2018-01-23 16:36:37</field>
+        <field name="event class string" >AcquisitionImagePublishEvent</field>
+        <field name="from node alias" >Exposure</field>
+        <field name="to node alias" >IceT</field>
+        <field name="REF|ApplicationData|application" >8</field>
+    </sqltable>
+    <sqltable name="BindingSpecData" >
+        <field name="DEF_id" >560</field>
+        <field name="DEF_timestamp" >2018-01-23 16:36:37</field>
+        <field name="event class string" >ImageProcessDoneEvent</field>
+        <field name="from node alias" >IceT</field>
+        <field name="to node alias" >Exposure</field>
+        <field name="REF|ApplicationData|application" >8</field>
+    </sqltable>
+    <sqltable name="BindingSpecData" >
         <field name="DEF_id" >561</field>
         <field name="DEF_timestamp" >2018-01-04 22:36:37</field>
         <field name="event class string" >MoveToTargetEvent</field>
@@ -812,6 +828,15 @@
         <field name="DEF_timestamp" >2018-01-04 22:36:37</field>
         <field name="class string" >AlignZeroLossPeak</field>
         <field name="alias" >Align ZLP</field>
+        <field name="launcher alias" >main</field>
+        <field name="SEQ|dependencies" >[]</field>
+        <field name="REF|ApplicationData|application" >8</field>
+    </sqltable>
+     <sqltable name="NodeSpecData" >
+        <field name="DEF_id" >148</field>
+        <field name="DEF_timestamp" >2018-01-23 16:36:37</field>
+        <field name="class string" >IcethicknessEF</field>
+        <field name="alias" >IceT</field>
         <field name="launcher alias" >main</field>
         <field name="SEQ|dependencies" >[]</field>
         <field name="REF|ApplicationData|application" >8</field>
