@@ -51,10 +51,11 @@ class BasicParticleForm extends BasicLoopForm
 	public function generateParticleTable() {
 		// Add the Particle Loop Form
 		//$particleTable = SimpleParticleTable();
-		
-		$html .= $this->particleTable->generateForm($this->showfilters);
+
+		$this->particleTable->setShowFilters($this->showfilters);
+		$html .= $this->particleTable->generateForm();
 		$html .= $this->imageContrastTable->generateForm();
-	
+
 		return $html;
 	}
 

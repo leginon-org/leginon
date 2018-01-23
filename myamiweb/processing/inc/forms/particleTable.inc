@@ -20,6 +20,7 @@ class FilterTable extends BasicForm
 	{
 		parent::__construct();
 
+		$this->showfilters = true;
 		// Get the form parameters that have been created by the parent class
 		$params = $this->getFormParams();
 		
@@ -41,8 +42,13 @@ class FilterTable extends BasicForm
 
 		//keepall is not set in gui
 	}
+
+	public function setShowFilters($value)
+	{
+		$this->showfilters = $value;
+	}
 			
-	public function generateForm($showfilters)
+	public function generateForm()
 	{
 		$this->updateFormParams();
 		$params = $this->getFormParams();
@@ -57,7 +63,7 @@ class FilterTable extends BasicForm
 
 		// Filter
 		$html.= "<B>Filter Values:</B><br />\n";
-		if ($showfilters) {
+		if ($this->showfilters) {
 			$html.= $params->insertTextField( "lpval", $fieldSize,"(in &Aring;ngstroms; 0 = off)" );
 			$html.= $params->insertTextField( "hpval", $fieldSize,"(in &Aring;ngstroms; 0 = off)" );
 		} else {
@@ -279,14 +285,14 @@ class SimpleParticleTable extends FilterTable
 		$params->addParam( "defocpair", $defocpairv, "Calculate shifts for defocal pairs" );
 	}
 			
-	public function generateForm($showfilters)
+	public function generateForm()
 	{
 		$this->updateFormParams();
 		$params = $this->getFormParams();
 		
 		$fieldSize = 5;
 		
-		$html.= parent::generateForm($showfilters);
+		$html.= parent::generateForm();
 
 		$html.=  "<!-- BEGIN Simple Particle Param -->\n";
 		$html.= "<B>Defocal pairs:</B><br />\n";
