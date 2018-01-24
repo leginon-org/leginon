@@ -265,8 +265,18 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sbszsim = wx.StaticBoxSizer(sbsim, wx.VERTICAL)
 
 		# simulate loop settings
+		self.widgets['loop delay time'] = FloatEntry(self, -1, min=0.0, chars=6)
 		self.widgets['wait time'] = FloatEntry(self, -1, min=0.0, chars=6)
 		self.widgets['iterations'] = IntEntry(self, -1, min=0.0, chars=6)
+
+		szdelaytime = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Delay Time before first loop:')
+		szdelaytime.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szdelaytime.Add(self.widgets['loop delay time'], (0, 1), (1, 1),
+		wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'seconds')
+		szdelaytime.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
 		szwaittime = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Wait Time:')
 		szwaittime.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
@@ -282,8 +292,9 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		# simluate target loop
 		szsim = wx.GridBagSizer(5, 5)
-		szsim.Add(szwaittime, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szsim.Add(sziterations, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szsim.Add(szdelaytime, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szsim.Add(szwaittime, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szsim.Add(sziterations, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sbszsim.Add(szsim, 0, wx.ALIGN_CENTER)
 		return sbszsim
 

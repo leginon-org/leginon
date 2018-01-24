@@ -139,6 +139,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		#'duplicate target type': 'focus',
 		'iterations': 1,
 		'wait time': 0,
+		'loop delay time': 0,
 		'adjust for transform': 'no',
 		'use parent mover': False,
 		'drift between': False,
@@ -1277,9 +1278,31 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 	def simulateTargetLoop(self):
 		self.setStatus('processing')
+		self.simloopstop.clear()
+		if self.settings['loop delay time'] > 0:
+			self.logger.info('delay the loop by %.1f mins' % (self.settings['loop delay time']/60.0))
+			self.setStatus('processing')
+			time0 = time.time()
+			blocktime = 20.0
+			num_block = int(self.settings['loop delay time']/blocktime)
+			while num_block > 0:
+				if self.simloopstop.isSet():
+					self.logger.info('User stopped loop')
+					self.setStatus('idle')
+					return
+				time.sleep(blocktime)
+				time1 = time.time() - time0
+				num_block = int(time1/blocktime)
+			# remaining time
+			if self.simloopstop.isSet():
+				self.logger.info('User stopped loop')
+				self.setStatus('idle')
+				return
+			time1 = time.time() - time0
+			if time1 > 1.0:
+				time.sleep(time1)
 		iterations = self.settings['iterations']
 		self.logger.info('begin simulated target loop of %s iterations' % (iterations,))
-		self.simloopstop.clear()
 		for i in range(iterations):
 			self.logger.info('iteration %s of %s' % (i+1, iterations,))
 			self.simulateTarget()
@@ -1293,7 +1316,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.setStatus('processing')
 		self.logger.info('Simulated Target Loop Done')
 		self.setStatus('idle')
-	
 
 	def simulateTargetLoopStop(self):
 		self.logger.info('Simulated Target Loop will stop after next iteration')

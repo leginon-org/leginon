@@ -2,7 +2,7 @@
 
 import os
 import wx
-import learningStackCleaner
+from appionlib import learningStackCleaner
 from appionlib import apStack
 from appionlib import apDisplay
 from appionlib.StackClass import stackTools

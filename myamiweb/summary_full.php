@@ -264,7 +264,7 @@ echo "</tr>";
 $icethicknesspresets = $leginondata->getIceThicknessPresets($expId);
 	echo "<tr>";
 	echo "<td colspan='2'>";
-	echo divtitle("Ice Thickness");
+	echo divtitle("Ice Thickness estimated from holefinder");
 	if (!empty($icethicknesspresets)) {
 	echo "<table border='0'>\n";
 	echo "<tr>";
@@ -290,9 +290,17 @@ $icethicknesspresets = $leginondata->getIceThicknessPresets($expId);
 
 $icethicknesszlp = $leginondata->getZeroLossIceThickness($expId); # see if anything was collected
 	echo "<tr>";
-	//echo "<td colspan='2'>";
-	echo divtitle("Ice Thickness");
+	echo "<td colspan='2'>";
+	echo divtitle("ZLP Ice Thickness");
 	if (!empty($icethicknesszlp)) {
+		echo "<table border='0'>\n";
+		echo "<tr>";
+		echo "<td>";
+		echo "<a href='zlpdensityreport.php?Id=$expId'>report &raquo;</a>";
+		echo "</td>";
+	echo "</tr>";
+	echo "<tr>";
+	echo "<tr>";
 		echo "<td>";
 		echo "<a href='zlp_icegraph.php?Id=$expId&vdata=1'>[data]</a>";
 		echo "<a href='zlp_icegraph.php?Id=$expId&vs=1'>[sql]</a><br>";
@@ -301,7 +309,11 @@ $icethicknesszlp = $leginondata->getZeroLossIceThickness($expId); # see if anyth
 		echo "<img border='0' src='zlp_icegraph.php?Id=$expId&w=256&h=256'>";
 		echo "</a>\n";
 		echo "</td>\n";
-	}
+		echo "</tr>\n";
+		echo "</table>\n";
+
+	} else echo "no ZLP Ice Thickness information available";
+		echo "</td>";
 
 	
 ?>

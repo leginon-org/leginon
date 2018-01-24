@@ -1477,7 +1477,10 @@ class CtfDisplay(object):
 				val = 0.0
 			return val
 		#back compatible for those without extra phase
-		self.extra_phase_shift = to_float(ctfdata['extra_phase_shift'])
+		if 'extra_phase_shift' in ctfdata.keys():
+			self.extra_phase_shift = to_float(ctfdata['extra_phase_shift'])
+		else:
+			self.extra_phase_shift = 0.0
 
 		### process power spectra
 		self.apix = apDatabase.getPixelSize(imgdata)

@@ -38,6 +38,7 @@ class gctf extends BasicLoopForm
 
 		//Other forms to include	
 		$this->ddStackSelectTable = new DDStackSelectTable($expId, $useDDStack, $ddstackid);
+		$this->ddStackSelectTable->setOnlyAligned(false);
 		$this->dbDefocusTable = new dbDefocusTable($expId, $bestdb, $nominal);
 
 		//------ Set Parameters specific to the program that requires this new form -----//
@@ -109,6 +110,8 @@ class gctf extends BasicLoopForm
 		$params = $this->getFormParams();
 
 		$html .=$this->ddStackSelectTable->generateForm();
+		$html.= $params->insertTextField( "mdef_aveN",4);
+		$html.= "<hr>";
 
 		$html.= parent::generateAdditionalFormLeft();
 		return $html;
@@ -155,7 +158,6 @@ class gctf extends BasicLoopForm
 		$html.= $params->insertTextField( "resmax", $fieldSize );
 		$html.= $params->insertTextField( "fieldsize", $fieldSize );
 		$html.= $params->insertTextField( "dast", $fieldSize );
-		$html.= $params->insertTextField( "mdef_aveN",$fieldSize);
 		$html.= $params->insertCheckBoxField( "do_EPA");
 /*
 		$html .= "

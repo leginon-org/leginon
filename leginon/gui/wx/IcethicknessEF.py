@@ -115,11 +115,19 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz_slit_width.Add(self.widgets['slit width'], (0, 1), (1, 1),
 										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 
+		self.widgets['decimate'] = FloatEntry(self, -1, min=0.0, chars=6)
+		sz_decimate = wx.GridBagSizer(5,5)
+		label = wx.StaticText(self, -1, 'Measure every N images, where N=')
+		sz_decimate.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz_decimate.Add(self.widgets['decimate'], (0, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+
 		sz = wx.GridBagSizer(5, 10)
 		sz.Add(self.widgets['process'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(sz_exp_time, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(sz_slit_width, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(szmeanfreepath, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(sz_decimate, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
