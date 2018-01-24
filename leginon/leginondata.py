@@ -1806,6 +1806,7 @@ class AcquisitionSettingsData(TargetWatcherSettingsData):
 			('wait for reference', bool),
 			#('duplicate targets', bool),
 			#('duplicate target type', str),
+			('loop delay time', float),
 			('wait time', float),
 			('iterations', int),
 			('adjust for transform', str),
