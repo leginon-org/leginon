@@ -18,6 +18,7 @@ from appionlib import apDatabase
 from appionlib import apStack
 from appionlib import apProject
 from appionlib import apConfig
+from appionlib import apParam
 from appionlib import apParallelTasks
 from appionlib import apTaskMonitor
 import sinedon
@@ -113,7 +114,7 @@ class stackPolisherScript(appionScript.AppionScript):
 		qimage = self.stackparts[0]['particle']['image']
 
 		# micrograph & frame info
-		frames = qimage['use frames']
+		frames = qimage['camera']['use frames']
 		nframes = len(frames)
 		if self.params['framelastali'] is None:
 			self.params['framelastali'] = frames[-1]
