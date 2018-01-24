@@ -9,7 +9,7 @@
 
 require_once "basicLoopForm.inc";
 
-class MakeDDStackForm extends BasicLoopForm
+class MotionCorrPurdueForm extends BasicLoopForm
 
 {
 	function __construct(  $expId, $errorHTML='', $infoHTML='',$align=True, $defergpu='', $bin=1, $nokeepstack='', $ddstartframe=0, $ddnframe='',$alignoffset=7,$alignbfactor=1000,$alignccbox=96,$alignlabel='a', $flp=0, $nrw=3, $gpuid=0 ) 

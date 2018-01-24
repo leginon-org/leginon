@@ -7,62 +7,114 @@
  *	see  http://leginon.org
  */
 
-require_once "basicForm.inc";
+require_once "basicLoopForm.inc";
 
+class MakeDDStackForm extends BasicLoopForm
 
-class DDStackForm extends BasicForm
 {
-	function __construct( $ddstackval='',$param_label='',$selection_helpkey='' ) 
+	function __construct(  $expId, $errorHTML='', $infoHTML='', $bin=1, $refimgid )
 	{
-		parent::__construct();
-		$params = $this->getFormParams();
-				
-		$this->ddstack = $ddstackval;
-		$this->selection_helpkey=$selection_helpkey;
-		$params->addParam( "ddstack", '',$param_label,true, false );
-	}
-	
-	public function generateForm()
-	{
-		// if the form is being reloaded, make sure we keep anything the user already set.
-		// does not seem to work in this case
-		$this->updateFormParams();
+		parent::__construct($expId, $errorHTML, $infoHTML);
 
-		$html =  $this->addDDStackSelector();
+		//------ Set Parameters for the parent class, BasicLoopForm (general Appion params) -----//
+
+		// Set the publications to be references on the web pages
+		$pubList = array('appion');
+		$this->setPublications( $pubList );
+		$this->setJobType( 'makeddstack' );
+		$this->setOutputDirectory( 'ddstack' );
+		$this->setBaseRunName( 'ddstack' );
+		$this->setTitle( 'makeDDStack.py Launcher' );
+		$this->setHeading( 'Create a Direct Detector Frame Stack Without Alignment' );
+		$this->setExeFile( 'makeDDStack.py' );
+		$this->setGuideURL( "http://emg.nysbc.org/redmine/projects/appion/wiki/Appion_Processing" );
+		$this->setTestable( True ); // True to activate "test single image".
+		$this->setUseLegOutDir( False ); // The output directory will be created in the Appion run directory rather than Leginon.
+		$this->setShowDesc( True ); // Flag to hide the description field of the run parameters.
+
+		//------ Set Parameters specific to the program that requires this new form -----//
+		$params = $this->getFormParams();
+
+		// The help section corresponds to the array key for these parameters found in help.js for popup help.
+		$params->setHelpSection( "makeDDStack" );
+				
+		$params->addParam( "bin", $bin, "binning" );
+		$params->addParam( "refimgid", $refimgid, "refimgid" );
+		// Validations
+		$params->addValidation( "bin", "num" );
+		$params->addValidation( "refimgid", "num" );
+	}
+
+	public function generateAdditionalFormRight()
+	{
+		$this->updateFormParams();
+		$params = $this->getFormParams();
+
+		$fieldSize = 4;
+
+		$html .= "<b>Make DD stack params:</b><br />\n";
+
+		$html.= "<br/>\n";
+		$html.= $params->insertTextFieldInRow( "bin", $fieldSize );
+		$html.= "<br/>\n";
+		$html.= $params->insertTextFieldInRow( "refimgid", 8 );
 		$html.= "<br/>\n";
 
 		return $html;
 	}
 
-	// Returns the html to display a stack selector
-	// stackInfos input contains ddstack run id and runname.
-	function addDDStackSelector() 
+	public function validate( $postArray )
 	{
-		$particle = new particledata();
-		$stackInfos = $particle->getDDStackRunIdsAlign($_GET['expId']);
-		$stackidval = $this->ddstack;
-
-		/*
-		$html = "<SELECT NAME='ddstack'";
-		$html .= "onchange='this.form.submit()'";
-		$html .= ">\n";
-		*/
-		// default to not specifying ddstack
-
-		if (empty($stackInfos)) return '';
-
-		array_unshift($stackInfos,array('stackid'=>'','runname'=>'no-ddstack-specified'));
-		
-		$ddselect_options = array();
-		foreach ( $stackInfos as $stackinfo ) {
-			$option = $stackinfo['stackid'];
-			$idtext =  ($stackinfo['stackid'] === '') ? '':'ID: '.$stackinfo[stackid];
-			$desc = $stackinfo['runname'].' '.$idtext;
-			$ddselect_options[$option] = $desc;
+		$msg = parent::validate( $postArray );
+		// Get recent image to check nframes against alignoffset and nrw.
+		$preset = $postArray['preset'];
+		$testfilename = $postArray['testfilename'];
+		$leginondata = new leginondata();
+		if ( $testfilename ) {
+			// testing
+			$images = $leginondata->getFilename($testfilename, $this->expId);
+			if ( !is_array($images ) || empty($images) ) {
+				$msg .= "<B>Error:</B> image ".$testfilename." not found in the session <br/>";
+			} else {
+				$imageId = $images[0]['id'];
+			}
+		} else {
+			// preset
+			$images = $leginondata->getFilenames($this->expId, $preset);
+			if ( !is_array($images ) || empty($images) ) {
+				$msg .= "<B>Error:</B> no image found in preset";
+			} else {
+				$imageId = $images[0]['id'];
+			}
 		}
-		// The help section corresponds to the array key for these parameters found in help.js for popup help.
-		$html = $this->formParams->insertSelectField( 'ddstack', $options=$ddselect_options, $note='', $this->selection_helpkey );
-		return $html;
+
+		if ( $imageId ) {
+			$nframes = $leginondata->getNFramesSavedFromImage($imageId);
+			if ( $nframes == false ) {
+				if ( $testfilename ) {
+					$msg .= "<B>Error</B> Image does not have frames saved. Can not make DDstack";
+				}	else {
+					$msg .= "<B>Error</B> Last image of the specified preset does not have frames saved. Can not validate. Try again later.";
+				}
+			}
+		}
+		return $msg;
+	}
+
+	// Override the parent build Commnad function to accomodate the "-" in the no-keepstack flag.
+	// Dashes are not parsed correctly in the help.js file, so I have replaced them with an "_" in this file.
+	public function buildCommand( $postArray )
+	{
+		$command = parent::buildCommand($postArray);
+
+		$paramArray = $this->formParams->getParamArray();
+		$value = $this->formParams->getParamValue( "refimgid" );
+		// if we are not testing an image, add the parellel flag
+		if ( !($postArray['testimage']=="on") ) {
+			$command = $this->addCommandFlag($command, "parallel", "parallel", "on" );
+		}
+
+		return $command;
 	}
 
 }
