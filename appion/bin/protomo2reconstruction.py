@@ -25,6 +25,7 @@ from appionlib.apImage import imagefilter
 
 try:
 	import protomo
+	print "\033[92m(Ignore the error: 'protomo: could not load libi3tiffio.so, TiffioModule disabled')\033[0m"
 except:
 	apDisplay.printWarning("Protomo did not get imported. Protomo reconstruction will break if used.")
 
@@ -149,7 +150,7 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 			help="Use frame-aligned images instead of naively summed images, if present.")
 		
 		self.parser.add_option("--bin_type", dest="bin_type",  default="",
-			help="Bin by sum or by interpolation, set by: bin_type=sum, otherwise interpolation will be used.")
+			help="Bin by fourier, sum, or by interpolation.")
 		
 		self.parser.add_option("--amp_correct", dest="amp_correct",  default="off",
 			help="Amplitude correct? e.g. --amp_correct=on")
@@ -208,6 +209,9 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 		"""
 		Rotates and tanslates a single image from Protomo orientation to IMOD orientation.
 		Scales images if .tlt file specifies scaling.
+		First translates the image by integer pixels only, then scales the image by 5th order
+		interpolation, then rotates the image by 5th order interpolation.
+		RETIRED. USE VERSION 2!
 		"""
 		try:
 			#Get information from tlt file. This needs to versatile for differently formatted .tlt files, so awk it is.
@@ -226,10 +230,10 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 			proc=subprocess.Popen(cmd4, stdout=subprocess.PIPE, shell=True)
 			(rotation, err) = proc.communicate()
 			rotation=float(rotation)
-			cmd5="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/TILT/) print $(j+2)}'" % (i, tiltfilename)
-			proc=subprocess.Popen(cmd5, stdout=subprocess.PIPE, shell=True)
-			(tilt_angle, err) = proc.communicate()
-			tilt_angle=float(tilt_angle)
+			# cmd5="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/TILT/) print $(j+2)}'" % (i, tiltfilename)
+			# proc=subprocess.Popen(cmd5, stdout=subprocess.PIPE, shell=True)
+			# (tilt_angle, err) = proc.communicate()
+			# tilt_angle=float(tilt_angle)
 			cmd6="awk '/AZIMUTH /{print $3}' %s" % tiltfilename
 			proc=subprocess.Popen(cmd6, stdout=subprocess.PIPE, shell=True)
 			(azimuth, err) = proc.communicate()
@@ -275,21 +279,71 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 			except: #reference image doesn't have scale
 				pass
 			
-			#Write temp mrc before rotation
-			#mrc.write(image,mrcf_out)
-			
 			#Rotate image
 			rot = -90 - azimuth - rotation
 			image=scipy.ndimage.interpolation.rotate(image, -rot, order=5)
 			mrc.write(image,mrcf_out)
-			#command1='proc2d %s %s clip=%d,%d >/dev/null' % (mrcf_out, mrcf_out, max(dimx,dimy), max(dimx,dimy))
-			#command2='proc2d %s %s clip=%d,%d rot=%s >/dev/null' % (mrcf_out, mrcf_out, dimy, dimx, rot)
-			#command2='proc2d %s %s rot=%s >/dev/null' % (mrcf_out, mrcf_out, rot)
-			#os.system(command1)
-			#os.system(command2)
 			
 			return
-		except:
+		except:  #Image was probably removed
+			return
+	
+
+	def rotateAndTranslateAndMaybeScaleImage2(self, i, tiltfilename, rundir, recon_dir, tilt_list, azimuth, newshape):
+		"""
+		Rotates and tanslates a single image from Protomo orientation to IMOD orientation.
+		Scales images if .tlt file specifies scaling.
+		Uses a single 5th order interpolation for the entire transformation.
+		"""
+		try:
+			#Get information from tlt file. This needs to versatile for differently formatted .tlt files, so awk it is.
+			cmd1="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/FILE/) print $(j+1)}' | tr '\n' ' ' | sed 's/ //g'" % (i, tiltfilename)
+			proc=subprocess.Popen(cmd1, stdout=subprocess.PIPE, shell=True)
+			(filename, err) = proc.communicate()
+			cmd2="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/ORIGIN/) print $(j+2)}'" % (i, tiltfilename)
+			proc=subprocess.Popen(cmd2, stdout=subprocess.PIPE, shell=True)
+			(originx, err) = proc.communicate()
+			originx=float(originx)
+			cmd3="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/ORIGIN/) print $(j+3)}'" % (i, tiltfilename)
+			proc=subprocess.Popen(cmd3, stdout=subprocess.PIPE, shell=True)
+			(originy, err) = proc.communicate()
+			originy=float(originy)
+			cmd4="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/ROTATION/) print $(j+1)}'" % (i, tiltfilename)
+			proc=subprocess.Popen(cmd4, stdout=subprocess.PIPE, shell=True)
+			(rotation, err) = proc.communicate()
+			rotation=float(rotation)
+			
+			mrcf=os.path.join(rundir,'raw',filename+'.mrc')
+			mrcf_out=os.path.join(recon_dir,'tomo3d',filename+'.mrc')
+			im=mrc.read(mrcf)
+			rot = 90 + azimuth + rotation
+			an=np.deg2rad(rot)
+			rot=np.array([[np.cos(an),-np.sin(an)], [np.sin(an),np.cos(an)]])
+			invrot=rot.T
+			
+			#Scale image if .tlt file has scaling
+			try:
+				if 'SCALE' in open(tiltfilename).read():
+					cmd5="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/SCALE/) print $(j+1)}'" % (i, tiltfilename)
+					proc=subprocess.Popen(cmd5, stdout=subprocess.PIPE, shell=True)
+					(scale, err) = proc.communicate()
+					scale=float(scale)
+				else:
+					scale=1
+			except: #reference image doesn't have scale
+				scale=1
+			
+			invscale=np.diag((1/scale, 1/scale))
+			invtrans=np.dot(invscale, invrot)
+			cin=np.array((originy, originx))
+			cout=0.5*np.array(newshape)
+			offset=cin-np.dot(invtrans,cout)
+						
+			im_out=scipy.ndimage.interpolation.affine_transform(im, invtrans, order=5, offset=offset, output_shape=newshape, cval=im.mean())
+			mrc.write(im_out, mrcf_out)
+			
+			return
+		except:  #Image was probably removed
 			return
 	
 	#=====================
@@ -516,6 +570,7 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 			os.system(command)
 			
 			# Convert to mrc
+			print "\033[92m(Ignore the error: 'i3cut: could not load libi3tiffio.so, TiffioModule disabled')\033[0m"
 			os.system("i3cut -fmt mrc %s %s" % (img_full, mrc_full))
 			os.system("rm %s" % img_full)
 			
@@ -556,7 +611,7 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 				else:
 					procs = int(self.params['stack_procs'])
 			if (self.params['reconstruction_actions'] == 1 or self.params['reconstruction_actions'] == 3):
-				apDisplay.printMsg("Translating images and rotating them with proc2d for Tomo3D/IMOD convention...")
+				apDisplay.printMsg("Translating, rotating, and maybe scaling images for Tomo3D/IMOD convention...")
 				os.system('mkdir %s 2>/dev/null' % stack_dir_full)
 				tomo3d_dir = os.path.join(recon_dir,'tomo3d')
 				try:
@@ -566,22 +621,69 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 				
 				mrc_list=[]
 				tilt_list=[]
-				dimy,dimx = mrc.read(os.path.join(raw_path,os.listdir(raw_path)[0])).shape
+				dimy,dimx = mrc.read(os.path.join(raw_path,os.listdir(raw_path)[2])).shape
 				# dimx=0
 				# dimy=0
 				# for i in range(tiltstart,numimages+tiltstart+1):
 				# 	dx,dy = self.rotateAndTranslateAndMaybeScaleImage(i, recon_tilt_out_full, self.params['rundir'], recon_dir, mrc_list, tilt_list)
 				# 	dimx=max(dx,dimx)
 				# 	dimy=max(dy,dimy)
-				for i, j in zip(range(tiltstart,numimages+tiltstart+102), range(numimages+101)):
-					p = mp.Process(target=self.rotateAndTranslateAndMaybeScaleImage, args=(i, recon_tilt_out_full, self.params['rundir'], recon_dir, tilt_list,))
+				
+				#Need to find the maximum amount of scaling, rotation, and shift for padding all images the same
+				cmd1="awk '/IMAGE /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/FILE/) print $(j+1)}' | awk 'NR==1{print $1}' | tr '\n' ' ' | sed 's/ //g'" % recon_tilt_out_full
+				proc=subprocess.Popen(cmd1, stdout=subprocess.PIPE, shell=True)
+				(filename, err) = proc.communicate()
+				cmd2="awk '/AZIMUTH /{print $3}' %s" % recon_tilt_out_full
+				proc=subprocess.Popen(cmd2, stdout=subprocess.PIPE, shell=True)
+				(azimuth, err) = proc.communicate()
+				azimuth=float(azimuth)
+				mrcf=os.path.join(self.params['rundir'],'raw',filename+'.mrc')
+				im=mrc.read(mrcf)
+				newshape_x=0
+				newshape_y=0
+				try:
+					for i in range(tiltstart,numimages+tiltstart+202):
+						cmd3="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/ORIGIN/) print $(j+2)}'" % (i, recon_tilt_out_full)
+						proc=subprocess.Popen(cmd3, stdout=subprocess.PIPE, shell=True)
+						(originx, err) = proc.communicate()
+						originx=float(originx)
+						cmd4="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/ORIGIN/) print $(j+3)}'" % (i, recon_tilt_out_full)
+						proc=subprocess.Popen(cmd4, stdout=subprocess.PIPE, shell=True)
+						(originy, err) = proc.communicate()
+						originy=float(originy)
+						cmd5="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/ROTATION/) print $(j+1)}'" % (i, recon_tilt_out_full)
+						proc=subprocess.Popen(cmd5, stdout=subprocess.PIPE, shell=True)
+						(rotation, err) = proc.communicate()
+						rotation=float(rotation)
+						try:
+							if 'SCALE' in open(tiltfilename).read():
+								cmd5="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/SCALE/) print $(j+1)}'" % (i, tiltfilename)
+								proc=subprocess.Popen(cmd5, stdout=subprocess.PIPE, shell=True)
+								(scale, err) = proc.communicate()
+								scale=float(scale)
+							else:
+								scale=1
+						except: #reference image doesn't have scale
+							scale=1
+						
+						extra_angle = np.deg2rad(min(abs(- azimuth - rotation), abs(90 - azimuth - rotation), abs(180 - azimuth - rotation), abs(270 - azimuth - rotation), abs(360 - azimuth - rotation), abs(450 - azimuth - rotation), abs(540 - azimuth - rotation), abs(630 - azimuth - rotation), abs(720 - azimuth - rotation), abs(-90 - azimuth - rotation), abs(-180 - azimuth - rotation), abs(-270 - azimuth - rotation), abs(-360 - azimuth - rotation), abs(-450 - azimuth - rotation), abs(-540 - azimuth - rotation), abs(-630 - azimuth - rotation), abs(-720 - azimuth - rotation)))
+						newshape_angle_scale_addition=max(scale*im.shape[0]*np.sin(extra_angle), scale*im.shape[1]*np.sin(extra_angle))
+						newshape_shift_addition_x=abs(im.shape[0]/2-originx)
+						newshape_shift_addition_y=abs(im.shape[1]/2-originy)
+						newshape_x=max(newshape_x, apProTomo2Aligner.nextLargestSize(int(im.shape[0]+newshape_shift_addition_x+newshape_angle_scale_addition+1)))
+						newshape_y=max(newshape_y, apProTomo2Aligner.nextLargestSize(int(im.shape[1]+newshape_shift_addition_y+newshape_angle_scale_addition+1)))
+				except: #image doesn't exist
+					pass
+				newshape=(newshape_x, newshape_y)
+				for i, j in zip(range(tiltstart,numimages+tiltstart+202), range(numimages+201)):
+					p = mp.Process(target=self.rotateAndTranslateAndMaybeScaleImage2, args=(i, recon_tilt_out_full, self.params['rundir'], recon_dir, tilt_list, azimuth, newshape))
 					p.start()
 					
 					if (j % procs == 0) and (j != 0):
 						[p.join() for p in mp.active_children()]
 				[p.join() for p in mp.active_children()]
 				
-				for i in range(tiltstart,numimages+tiltstart+102):
+				for i in range(tiltstart,numimages+tiltstart+202):
 					try:
 						cmd1="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/FILE/) print $(j+1)}' | tr '\n' ' ' | sed 's/ //g'" % (i, recon_tilt_out_full)
 						proc=subprocess.Popen(cmd1, stdout=subprocess.PIPE, shell=True)
@@ -613,8 +715,8 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 							rotated_image_shape = mrc.read(image).shape
 							rotated_dimy = max(rotated_dimy, rotated_image_shape[0])
 							rotated_dimx = max(rotated_dimx, rotated_image_shape[1])
-						for image in [os.path.abspath(f) for f in glob.glob(os.path.join(recon_dir, 'tomo3d','*'))]:
-							os.system("proc2d %s %s clip=%d,%d >/dev/null" % (image, image, rotated_dimx, rotated_dimy))
+						#for image in [os.path.abspath(f) for f in glob.glob(os.path.join(recon_dir, 'tomo3d','*'))]:
+							#os.system("proc2d %s %s clip=%d,%d >/dev/null" % (image, image, rotated_dimx, rotated_dimy))
 						stack = np.zeros((len(mrc_list),rotated_dimy,rotated_dimx))
 						for i in range(len(mrc_list)):
 							stack[i,:,:] = mrc.read(mrc_list[i])
@@ -646,11 +748,14 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 						except: #reference image doesn't have scale
 							scaled_stack[i,:,:] = stack[i,:,:]
 					stack = scaled_stack
-				
+			
+			bintype = ''
 			if self.params['recon_map_sampling'] > 1:
-				apDisplay.printMsg("Binning stack...")
 				#Check if images are evenly divisible by sampling (imagefilter.binImg will clip them if not)
 				if self.params['bin_type'] == 'sum':
+					apDisplay.printMsg("Binning stack by summing pixels...")
+					apDisplay.printMsg("(for higher quality use Fourier binning)...")
+					bintype = 'sum'
 					shape = np.asarray(stack[0].shape)
 					bin2 = self.params['recon_map_sampling'] * 2
 					remain = shape % bin2
@@ -669,24 +774,35 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 						for i in range(len(mrc_list)):
 							binned_stack[i,:,:] = imagefilter.binImg(stack[i,:,:], bin=self.params['recon_map_sampling'])
 					stack_name1 = self.params['sessionname']+'_'+seriesname+'_stack_ite'+it+'_bin%s' % self.params['recon_map_sampling']
-					stack_name2 = '_pxlsz'+str(self.params['pixelsize'])+dose_comp+'.mrcs'
-					stack_path = os.path.join(stack_dir_full,stack_name1+stack_name2)
-				else:
+					stack_name2 = 'sum_pxlsz'+str(self.params['pixelsize'])+dose_comp+'.mrcs'
+				elif self.params['bin_type'] == 'interpolation':
+					apDisplay.printMsg("Binning stack by real space interpolation...")
+					apDisplay.printMsg("(for higher quality use Fourier binning)...")
+					bintype = 'interp'
 					scaling = 1/self.params['recon_map_sampling']
-					new_dimy,new_dimx = apProTomo2Aligner.scaleByZoomInterpolation(stack[0], scaling, order=1, clip_image=True).shape
+					new_dimy,new_dimx = apProTomo2Aligner.scaleByZoomInterpolation(stack[0], scaling, order=5, clip_image=True).shape
 					binned_stack = np.zeros((len(mrc_list),new_dimy,new_dimx))
 					for i in range(len(mrc_list)):
 						binned_stack[i,:,:] = apProTomo2Aligner.scaleByZoomInterpolation(stack[i,:,:], scaling, clip_image=True)
 					stack_name1 = self.params['sessionname']+'_'+seriesname+'_stack_ite'+it+'_bin%s' % self.params['recon_map_sampling']
-					stack_name2 = '_pxlsz'+str(self.params['pixelsize'])+dose_comp+'.mrcs'
-					stack_path = os.path.join(stack_dir_full,stack_name1+stack_name2)
-				
+					stack_name2 = 'interp_pxlsz'+str(self.params['pixelsize'])+dose_comp+'.mrcs'
+				else: #self.params['bin_type'] == 'fourier'
+					apDisplay.printMsg("Binning stack with Fourier binning (this takes a while, relax)...")
+					apDisplay.printMsg("(for faster, lower-quality binning use Sum)...")
+					bintype = 'fourier'
+					new_dimy,new_dimx = apProTomo2Aligner.downsample(stack[0], self.params['recon_map_sampling']).shape
+					binned_stack = np.zeros((len(mrc_list),new_dimy,new_dimx))
+					for i in range(len(mrc_list)):
+						binned_stack[i,:,:] = apProTomo2Aligner.downsample(stack[i,:,:], self.params['recon_map_sampling'])
+					stack_name1 = self.params['sessionname']+'_'+seriesname+'_stack_ite'+it+'_bin%s' % self.params['recon_map_sampling']
+					stack_name2 = 'fourier_pxlsz'+str(self.params['pixelsize'])+dose_comp+'.mrcs'
+				stack_path = os.path.join(stack_dir_full,stack_name1+stack_name2)
 				mrc.write(binned_stack, stack_path)
 		
 		# Tomo3D Reconstruction by WBP
 		if self.params['reconstruction_method'] == 2:
 			z = int(math.ceil(z / 2.) * 2) # Rounds up the thickness to the nearest even number
-			mrcf = self.params['sessionname']+'_'+seriesname+'_ite'+it+'_ang'+ang+'_thick'+str(int(self.params['recon_thickness']))+'_pxlsz'+str(self.params['pixelsize'])+dose_comp+'.bin'+str(self.params['recon_map_sampling'])+'_tomo3dWBP.mrc'
+			mrcf = self.params['sessionname']+'_'+seriesname+'_ite'+it+'_ang'+ang+'_thick'+str(int(self.params['recon_thickness']))+'_pxlsz'+str(self.params['pixelsize'])+dose_comp+'.bin'+str(self.params['recon_map_sampling'])+bintype+'_tomo3dWBP.mrc'
 			mrc_full = recon_dir + mrcf
 			os.system('rm -r %s 2>/dev/null' % mrc_full)
 			cmd = 'tomo3d -a %s -i %s -t %s -v 2 -z %s %s -o %s' % (tiltlist, stack_path, procs, z, self.params['tomo3d_options'], mrc_full)
@@ -694,13 +810,14 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 		# Tomo3D Reconstruction by SIRT
 		elif self.params['reconstruction_method'] == 3:
 			z = int(math.ceil(z / 2.) * 2) # Rounds up the thickness to the nearest even number
-			mrcf = self.params['sessionname']+'_'+seriesname+'_ite'+it+'_ang'+ang+'_thick'+str(int(self.params['recon_thickness']))+'_pxlsz'+str(self.params['pixelsize'])+dose_comp+'.bin'+str(self.params['recon_map_sampling'])+'_tomo3dSIRT_'+str(self.params['tomo3d_sirt_iters'])+'_iters.mrc'
+			mrcf = self.params['sessionname']+'_'+seriesname+'_ite'+it+'_ang'+ang+'_thick'+str(int(self.params['recon_thickness']))+'_pxlsz'+str(self.params['pixelsize'])+dose_comp+'.bin'+str(self.params['recon_map_sampling'])+bintype+'_tomo3dSIRT_'+str(self.params['tomo3d_sirt_iters'])+'_iters.mrc'
 			mrc_full = recon_dir + mrcf
 			os.system('rm -r %s 2>/dev/null' % mrc_full)
 			cmd = 'tomo3d -a %s -i %s -t %s -v 2 -z %s -S -l %s %s -o %s' % (tiltlist, stack_path, procs, z, self.params['tomo3d_sirt_iters'], self.params['tomo3d_options'], mrc_full)
 		
 		if self.params['reconstruction_method'] == 2 or self.params['reconstruction_method'] == 3:
 			print cmd
+			
 			#os.system(cmd)
 			proc=subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
 			(out, err) = proc.communicate()
@@ -760,7 +877,7 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 			apDisplay.printMsg("Dose compensation script created: stack_dose_compensate.py")
 			os.system("chmod +x %s" % os.path.join(self.params['rundir'],'stack','stack_dose_compensate.py'))
 			
-			#Create a small python script that, when executed on a stack, will bin the stack
+			#Create a small python script that, when executed on a stack, will bin the stack (by summing)
 			f=open(os.path.join(self.params['rundir'],'stack','stack_binning.py'),'w')
 			f.write("#!/usr/bin/env python\n")
 			f.write("# Usage: ./stack_binning.py <stack.mrcs> <binning factor>\n")
@@ -942,5 +1059,5 @@ if __name__ == '__main__':
 	protomo2reconstruction.start()
 	protomo2reconstruction.close()
 	protomo2reconstruction_log=cwd+'/'+'protomo2reconstruction.log'
-	cleanup="mv %s %s/protomo2reconstruction_%s.log" % (protomo2reconstruction_log, wd, timestr)
+	cleanup="mv %s %s/protomo2reconstruction_%s.log 2>/dev/null" % (protomo2reconstruction_log, wd, timestr)
 	os.system(cleanup)

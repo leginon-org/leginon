@@ -11,6 +11,7 @@ error_reporting(E_ALL | E_STRICT);
 
 require_once "basicLayoutForm.inc";
 require_once "inc/leginon.inc";
+require_once "inc/html_elements.inc";
 
 ini_set('session.gc_maxlifetime', 604800);
 session_set_cookie_params(604800);
@@ -52,7 +53,7 @@ class Protomo2CoarseAlignSummary extends BasicLayoutForm
 		$this->setTitle( 'Protomo Coarse Alignment Summary' );
 		$this->setHeading( 'Protomo Coarse Alignment Summary' );
 		$this->setExeFile( '' );
-		$this->setGuideURL( "http://emg.nysbc.org/redmine/projects/appion/wiki/Align_Tilt-Series" );
+		$this->setGuideURL( "https://github.com/nysbc/appion-protomo#example" );
 		$this->setTestable( False ); // True to activate "test single image".
 		$this->setUseLegOutDir( False ); // The output directory will be created in the Appion run directory rather than Leginon.
 		$this->setShowDesc( False ); // Flag to hide the description field of the run parameters.
@@ -71,18 +72,21 @@ class Protomo2CoarseAlignSummary extends BasicLayoutForm
 		global $outdir;
 		global $runname;
 		global $tiltseries;
+		global $imageinfo;
 		
 		$defocus_gif_files = glob("$outdir/$runname/defocus_estimation/*/*/diagnostic.gif");
 		$ctf_gif_files = glob("$outdir/$runname/media/ctf_correction/s*.gif");
 		$dose_gif_files = glob("$outdir/$runname/media/dose_compensation/s*.gif");
 		$corrpeak_gif_files = glob("$outdir/$runname/media/correlations/c*.gif");
 		$corrpeak_vid_files = glob("$outdir/$runname/media/correlations/c*.{mp4,ogv,webm}",GLOB_BRACE);
-		$initial_tilt_gif_files = glob("$outdir/$runname/media/tiltseries/i*.gif");
-		$initial_tilt_vid_files = glob("$outdir/$runname/media/tiltseries/i*.{mp4,ogv,webm}",GLOB_BRACE);
+		$initial_tilt_gif_files = glob("$outdir/$runname/media/tiltseries/in*.gif");
+		$initial_tilt_vid_files = glob("$outdir/$runname/media/tiltseries/in*.{mp4,ogv,webm}",GLOB_BRACE);
 		$manual_tilt_gif_files = glob("$outdir/$runname/media/tiltseries/m*.gif");
 		$manual_tilt_vid_files = glob("$outdir/$runname/media/tiltseries/m*.{mp4,ogv,webm}",GLOB_BRACE);
 		$tilt_gif_files = glob("$outdir/$runname/media/tiltseries/c*.gif");
 		$tilt_vid_files = glob("$outdir/$runname/media/tiltseries/c*.{mp4,ogv,webm}",GLOB_BRACE);
+		$imod_tilt_gif_files = glob("$outdir/$runname/media/tiltseries/im*.gif");
+		$imod_tilt_vid_files = glob("$outdir/$runname/media/tiltseries/im*.{mp4,ogv,webm}",GLOB_BRACE);
 		$manual_rec_gif_files = glob("$outdir/$runname/media/reconstructions/m*.gif");
 		$manual_rec_vid_files = glob("$outdir/$runname/media/reconstructions/m*.{mp4,ogv,webm}",GLOB_BRACE);
 		$rec_gif_files = glob("$outdir/$runname/media/reconstructions/c*.gif");
@@ -124,6 +128,11 @@ class Protomo2CoarseAlignSummary extends BasicLayoutForm
 		$tilt2_webm = "loadvid.php?filename=".$tilt_vid_files[5];
 		$download_tilt_mp4 = "downloadvid.php?filename=".$tilt_vid_files[0];
 		$download_tilt2_mp4 = "downloadvid.php?filename=".$tilt_vid_files[3];
+		$imod_tilt_gif = "loadimg.php?rawgif=1&filename=".$imod_tilt_gif_files[0];
+		$imod_tilt_mp4 = "loadvid.php?filename=".$imod_tilt_vid_files[0];
+		$imod_tilt_ogv = "loadvid.php?filename=".$imod_tilt_vid_files[1];
+		$imod_tilt_webm = "loadvid.php?filename=".$imod_tilt_vid_files[2];
+		$download_imod_tilt_mp4 = "downloadvid.php?filename=".$imod_tilt_vid_files[0];
 		$rec_gif = "loadimg.php?rawgif=1&filename=".$rec_gif_files[0];
 		$rec_mp4 = "loadvid.php?filename=".$rec_vid_files[0];
 		$rec_ogv = "loadvid.php?filename=".$rec_vid_files[1];
@@ -271,7 +280,7 @@ class Protomo2CoarseAlignSummary extends BasicLayoutForm
 		$html .= '</div>';
 		
 		$html .= "
-	<hr /><br /><center><H4>Tilt-Series After Coarse Alignment</H4></center>
+	<hr /><br /><center><H4>Tilt-Series After Protomo Coarse Alignment</H4></center>
 	<br />";
 		if (isset($tilt_gif_files[0]) and isset($tilt_gif_files[1]) and isset($manual_tilt_gif_files[0])) {
 			$html .= '<center><img src="'.$tilt_gif.'" alt="tiltseries" /> <img src="'.$manual_tilt_gif.'" alt="manualtiltseries" /> <img src="'.$tilt2_gif.'" alt="tiltseries2" />'."<br /></center>";
@@ -368,6 +377,26 @@ class Protomo2CoarseAlignSummary extends BasicLayoutForm
 			$html .= "<center><b>Depiction Tilt-Series Video for Coarse Alignment either failed to generate, is still processing, or wasn't requested</b></center>";
 		}
 		
+		if (isset($imod_tilt_gif_files[0]) or isset($imod_tilt_vid_files[0])) {
+			$html .= "
+		<br /><center><H4>Tilt-Series After Imod Coarse Alignment</H4></center>
+		<br />";
+			if (isset($imod_tilt_gif_files[0])) {
+				$html .= '<center><img src="'.$imod_tilt_gif.'" alt="tiltseries" />'."<br /></center>";
+				$html .= '<center>'.docpop('imodtiltimageinfo_coarse', 'Image Info').'<br /><br /></center>';
+				$html .= '<p align="right"><a href="'.$download_imod_tilt_mp4.'">Download Video</a></p><br /><br />';
+			} elseif (isset($imod_tilt_vid_files[0])){
+				$html .= '<center><video id="imodTiltVideos" controls autoplay loop>
+					  <source src="'.$imod_tilt_mp4.'" type="video/mp4" loop>'.'<br />
+					  <source src="'.$imod_tilt_webm.'" type="video/webm" loop>'.'<br />
+					  <source src="'.$imod_tilt_ogv.'" type="video/ogg" loop>'.'<br />
+					  HTML5 video is not supported by your browser.
+					  </video></center>';
+				$html .= '<center>'.docpop('imodtiltimageinfo_coarse', 'Image Info').'</center>';
+				$html .= '<p align="right"><a href="'.$download_imod_tilt_mp4.'">Download Video</a></p><hr />';
+			}
+		}
+	
 		$html .= "
 	<br />
 	<center><H4>Tilt-Series Reconstruction After Coarse Alignment</H4></center>
@@ -470,22 +499,34 @@ class Protomo2CoarseAlignSummary extends BasicLayoutForm
 		// Only display link to next step in tomo processing if Coarse Alignment is complete
 		if (max(count($corrpeak_gif_files),count($corrpeak_vid_files)) < 1)
 		{
-			$html .= "<br></br>
+			$html .= "<br></br></br>
 				<b><center>[Refresh this page after Coarse Alignment completes]</center><br></b>";
-			$html .= "<br></br>
+			$html .= openRoundBorder();
+			$html .= "<table border='0'>";
+			$html .= "<br>
 				<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2CoarseAlignForm'><b><center><font size='5'>←</font> [Click here to go back to <font size='4'>Coarse Alignment</font>]</center></b></a>";
 			$html .= "<br></br><br></br>
 				<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2RefineForm'><b><center>[Click here to continue onto <font size='4'>Refinement</font> ONLY if you know what you're doing!] <font size='5'>→</font></center></b></a>";
+				$html .= "<br></tr>\n";
+			$html .= "</table>\n";
+			$html .= closeRoundBorder();
 		} else {
+			$html .= openRoundBorder();
+			$html .= "<table border='0'>";
 			$html .= "<br></br>
 				<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2RefineForm'><b><center>[Click here to continue onto <font size='4'>Refinement</font> if the Coarse Alignment results are satisfactory] <font size='5'>→</font></center></b></a>";
 			$html .= "<br></br>
 				<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2CoarseAlignForm'><b><center><font size='5'>←</font> [Click here to go back to <font size='4'>Coarse Alignment</font>]</center></b></a>";
-			$html .= "<br></br><b><center>[If you wish to manually align the (1st) Coarse Alignment, run the following command:</b><br><br>
-				/usr/bin/python `which protomo2manualaligner.py` --rundir=$outdir/$runname/ --tiltseries=$tiltseries --iteration=Coarse --center_all_images=False --sampling=4 --image_fraction=0.65<br><br>
-				<b>and then choose 'More Manual' as the starting tilt file in Refinement.]</center></b><br>";
+			if ($imageinfo['dimx'] < 2049 or $imageinfo['dimy'] < 2049) {$manual_sampling = 2;}
+			elseif ($imageinfo['dimx'] < 4097 or $imageinfo['dimy'] < 4097) {$manual_sampling = 4;}
+			else {$manual_sampling = 8;}
+			$html .= "<br></br><b><center>[If you wish to manually align, run the following command:</b><br><br>
+				protomo2manualaligner.py --rundir=$outdir/$runname/ --tiltseries=$tiltseries --sampling=$manual_sampling --iteration=Coarse --center_all_images=False --max_image_fraction=0.75<br><br>
+				<b>and then choose 'More Manual' as the starting tilt file in Refinement.]<br><br>(Possible 'Iteration' options are: Original, Coarse, Coarse2, or Imod)<br>You may also wish to change the center_all_images, sampling, or image_fraction options.</center></b><br>";
+			$html .= "<br></tr>\n";
+			$html .= "</table>\n";
+			$html .= closeRoundBorder();
 		}
-		
 		return $html;
 	}	
 	
