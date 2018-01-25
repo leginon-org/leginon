@@ -86,6 +86,9 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 	$az = ($_POST['az']) ? $_POST['az'] : "";
 	$tiltlist = ($_POST['tiltlist']) ? $_POST['tiltlist'] : "";
 	$doselist = ($_POST['doselist']) ? $_POST['doselist'] : "";
+	$serialem_stack = ($_POST['serialem_stack']) ? $_POST[''] : "";
+	$serialem_mdoc = ($_POST['serialem_mdoc']) ? $_POST[''] : "";
+	$voltage = ($_POST['voltage']) ? $_POST[''] : "voltage";
 	$invert_check = ($_POST['invert_check']=='on') ? 'checked' : '';
 	$default_cs = ($from_existing_session) ? $leginondata->getCsValueFromSession($expId):'2.0';
 	$cs = ($_POST['cs']) ? $_POST['cs'] : $default_cs;
@@ -110,7 +113,7 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 
 
 	// Choose Upload Type
-	$uploadtypes = array('normal'=>'None','tiltseries'=>'Tilt Series');
+	$uploadtypes = array('normal'=>'None','tiltseries'=>'Tilt Series','serialem_tiltseries'=>'SerialEM Tilt Series');
 	if (!$expId)
 		$uploadtypes['defocalseries'] = 'Defocal Series';
 	$uploadtypeinput = docpop('uploadtype', '<b>Images grouped by:</b>');
@@ -143,7 +146,7 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 		$descriptioninput .= "<input type='text' name='description' size='46' value='$description'>";
 	}
 
-	if ($utypeval != 'normal') {
+	if (($utypeval != 'normal') && ($utypeval != 'serialem_tiltseries')) {
 		// Setup Images in Group
 		$imagegroupinput = docpop('images_in_group', 'Number of images in each tilt series:');
 		$imagegroupinput .= "<br/>\n<input type='text' name='imagegroup' value='$imagegroup' size='5'>\n";
@@ -168,89 +171,126 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 	// Currently defocal series can only be uploaded by uploadImages.py which could not be used 
 	// for adding more images, for example
 	$paramtypes = array(($utypeval != 'defocalseries' && !$imgdir),(!$batch && !($utypeval == 'tiltseries' && $expId)));
-	if ($paramtypes[0] && $paramtypes[1]) {
-		$optiontitle = "<font size='+1'><b>Use one of two following options for upload:</b></font>\n";
-	}
-	if ($paramtypes[0]) {
-		// Setup batchfile
-		$fileinput = "<font size='+1'>1. Specify a parameter file:</font><br/>\n";
-		$fileinput .= "&nbsp;\n";
-		$fileinput .= openRoundBorder();
-		$fileinput .= docpop('batchfile', 'Information file for the images (with full path):');
-		$fileinput .= "<br/>\n<input type='text' name='batch' value='$batch' size='45'>\n";
-		$fileinput .= "<br/>\n<input type='checkbox' NAME='batchcheck' $batch_check>\n";
-		$fileinput .= docpop('batchcheck','<B>Confirm existence and format of the information file</B>');
-
-		$fileinput .= "<br/><br/>\n";
-		$fileinput .=  closeRoundBorder();
-	}
-	// Title choices
-	if ($paramtypes[0] && $paramtypes[1]) {
-		$paramtitle = "<font size='+1'>2. Enter parameters manually:</font><br/>\n";
-	} elseif ($paramtypes[1]) {
-		$paramtitle = "<font size='+1'>Upload all images in the directory using these parameters:</font><br/>\n";
-	}
-	if ($paramtypes[1]) {
-		// Enter parameters manually
-		$open_keyinput = "&nbsp;\n";
-		$open_keyinput .= openRoundBorder();
-		$open_keyinput .= "<table border='0'>\n";
-
-		$keyinput_dir = "<tr><td colspan='2'>\n";
-		$keyinput_dir .= docpop('imgpath','Directory containing images');
-		$keyinput_dir .= "<br/>\n";
-		$keyinput_dir .= "<input type='text' name='imgdir' value='$imgdir' size='45'>\n";
-		$keyinput_dir .= "</td></tr>\n";
-
-		$keyinput_format = "<tr><td>\n";
-		$keyinput_format .=  docpop('fileformat', 'file format:');
-		$keyinput_format .= "</td><td align='right'>\n";
-		$keyinput_format .= " <select name='fileformat'>\n";
-		if ($utypeval == 'normal')
-			$filetypes = array("mrc","tif","dm3","dm2");
-		else
-			$filetypes = array("mrc");
-		foreach ($filetypes as $ftype) {
-			$s = ($ftype==$_POST[fileformat]) ? ' selected' : '';
-			$keyinput_format .= "<option".$s.">$ftype</option>";
+	$tiltseriestype = array(($utypeval == 'serialem_tiltseries'));
+	if (!$tiltseriestype[0]) {
+		if ($paramtypes[0] && $paramtypes[1]) {
+			$optiontitle = "<font size='+1'><b>Use one of two following options for upload:</b></font>\n";
 		}
-		$keyinput_format .= "</select>\n";
-		$keyinput_format .= "</td></tr>\n";
-
-		$keyinput_apix = $html_elements->justifiedInputTableRow
-				('apix','pixel size (A):','apix',$apix,5);
-		$keyinput_binx = $html_elements->justifiedInputTableRow
-				('imgbin','binning in x:','binx',$binx,2);
-		$keyinput_biny = $html_elements->justifiedInputTableRow
-				('imgbin','binning in y:','biny',$biny,2);
-		$keyinput_mag = $html_elements->justifiedInputTableRow
-				('magnification','magnification:','mag',$mag,6);
-		$keyinput_ht = $html_elements->justifiedInputTableRow
-				('kev','high tension (kV):','kv',$kv,3);
-		if ($utypeval == 'defocalseries') {
+		if ($paramtypes[0]) {
+			// Setup batchfile
+			$fileinput = "<font size='+1'>1. Specify a parameter file:</font><br/>\n";
+			$fileinput .= "&nbsp;\n";
+			$fileinput .= openRoundBorder();
+			$fileinput .= docpop('batchfile', 'Information file for the images (with full path):');
+			$fileinput .= "<br/>\n<input type='text' name='batch' value='$batch' size='45'>\n";
+			$fileinput .= "<br/>\n<input type='checkbox' NAME='batchcheck' $batch_check>\n";
+			$fileinput .= docpop('batchcheck','<B>Confirm existence and format of the information file</B>');
+	
+			$fileinput .= "<br/><br/>\n";
+			$fileinput .=  closeRoundBorder();
+		}
+		// Title choices
+		if ($paramtypes[0] && $paramtypes[1]) {
+			$paramtitle = "<font size='+1'>2. Enter parameters manually:</font><br/>\n";
+		} elseif ($paramtypes[1]) {
+			$paramtitle = "<font size='+1'>Upload all images in the directory using these parameters:</font><br/>\n";
+		}
+		if ($paramtypes[1]) {
+			// Enter parameters manually
+			$open_keyinput = "&nbsp;\n";
+			$open_keyinput .= openRoundBorder();
+			$open_keyinput .= "<table border='0'>\n";
+	
+			$keyinput_dir = "<tr><td colspan='2'>\n";
+			$keyinput_dir .= docpop('imgpath','Directory containing images');
+			$keyinput_dir .= "<br/>\n";
+			$keyinput_dir .= "<input type='text' name='imgdir' value='$imgdir' size='45'>\n";
+			$keyinput_dir .= "</td></tr>\n";
+	
+			$keyinput_format = "<tr><td>\n";
+			$keyinput_format .=  docpop('fileformat', 'file format:');
+			$keyinput_format .= "</td><td align='right'>\n";
+			$keyinput_format .= " <select name='fileformat'>\n";
+			if ($utypeval == 'normal')
+				$filetypes = array("mrc","tif","dm3","dm2");
+			else
+				$filetypes = array("mrc");
+			foreach ($filetypes as $ftype) {
+				$s = ($ftype==$_POST[fileformat]) ? ' selected' : '';
+				$keyinput_format .= "<option".$s.">$ftype</option>";
+			}
+			$keyinput_format .= "</select>\n";
+			$keyinput_format .= "</td></tr>\n";
+	
+			$keyinput_apix = $html_elements->justifiedInputTableRow
+					('apix','pixel size (A):','apix',$apix,5);
+			$keyinput_binx = $html_elements->justifiedInputTableRow
+					('imgbin','binning in x:','binx',$binx,2);
+			$keyinput_biny = $html_elements->justifiedInputTableRow
+					('imgbin','binning in y:','biny',$biny,2);
+			$keyinput_mag = $html_elements->justifiedInputTableRow
+					('magnification','magnification:','mag',$mag,6);
+			$keyinput_ht = $html_elements->justifiedInputTableRow
+					('kev','high tension (kV):','kv',$kv,3);
+			if ($utypeval == 'defocalseries') {
+				$keyinput_def = $html_elements->justifiedInputTableRow
+						('defociilist','defocii list (microns):','dflist',$dflist,30);
+			} else {
+				$keyinput_def = $html_elements->justifiedInputTableRow
+						('defocus','defocus (microns):','df',$df,4);
+			}
+			if ($utypeval == 'tiltseries') {
+				$keyinput_az = $html_elements->justifiedInputTableRow
+						('azimuth','tilt azimuth (degrees):','az',$az,3);
+			}
+			if ($utypeval == 'tiltseries') {
+				$keyinput_tilt = $html_elements->justifiedInputTableRow
+						('tiltlist','tilt angle list (degrees):','tiltlist',$tiltlist,30);
+			}
+			if ($utypeval == 'tiltseries') {
+				$keyinput_dose = $html_elements->justifiedInputTableRow
+						('doselist','dose list (e-/Å^2):','doselist',$doselist,30);
+			}
+	
+			$close_keyinput = "</table>\n";
+			$close_keyinput .= closeRoundBorder();
+		}
+	} else {
+		if ($expId) {
+			$optiontitle = "<font size='+1'><b>Enter the path of a containing SerialEM stacks and mdocs:</b></font>\n";
+			$open_keyinput .= openRoundBorder();
+			$open_keyinput .= "<table border='0'>\n";
+			$keyinput_dir = "<tr><td colspan='2'>\n";
+			$keyinput_dir .= docpop('serialem_dir','SerialEM directory path');
+			$keyinput_dir .= "<br/>\n";
+			$keyinput_dir .= "<input type='text' name='serialem_dir' value='$serialem_dir' size='45'>\n";
 			$keyinput_def = $html_elements->justifiedInputTableRow
-					('defociilist','defocii list (microns):','dflist',$dflist,30);
+					('voltage','voltage (kV):','voltage',$voltage,4);
+			$keyinput_dir .= "</td></tr>\n";
+			
+			$close_keyinput = "</table>\n";
+			$close_keyinput .= closeRoundBorder();
 		} else {
+			$optiontitle = "<font size='+1'><b>Enter the full path for a SerialEM stack and mdoc:</b></font>\n";
+			$open_keyinput .= openRoundBorder();
+			$open_keyinput .= "<table border='0'>\n";
+			$keyinput_dir = "<tr><td colspan='2'>\n";
+			$keyinput_dir .= docpop('serialem_stack','SerialEM stack path (.st or .mrc)');
+			$keyinput_dir .= "<br/>\n";
+			$keyinput_dir .= "<input type='text' name='serialem_stack' value='$serialem_stack' size='45'>\n";
+			$keyinput_dir .= "<br/>\n";
+			$keyinput_dir .= docpop('serialem_mdoc','SerialEM mdoc');
+			$keyinput_dir .= "<br/>";
+			$keyinput_dir .= "<input type='text' name='serialem_mdoc' value='$serialem_mdoc' size='45'>\n";
 			$keyinput_def = $html_elements->justifiedInputTableRow
-					('defocus','defocus (microns):','df',$df,4);
+					('voltage','voltage (kV):','voltage',$voltage,4);
+			$keyinput_dir .= "</td></tr>\n";
+			
+			$close_keyinput = "</table>\n";
+			$close_keyinput .= closeRoundBorder();
 		}
-		if ($utypeval == 'tiltseries') {
-			$keyinput_az = $html_elements->justifiedInputTableRow
-					('azimuth','tilt azimuth (degrees):','az',$az,3);
-		}
-		if ($utypeval == 'tiltseries') {
-			$keyinput_tilt = $html_elements->justifiedInputTableRow
-					('tiltlist','tilt angle list (degrees):','tiltlist',$tiltlist,30);
-		}
-		if ($utypeval == 'tiltseries') {
-			$keyinput_dose = $html_elements->justifiedInputTableRow
-					('doselist','dose list (e-/Å^2):','doselist',$doselist,30);
-		}
-
-		$close_keyinput = "</table>\n";
-		$close_keyinput .= closeRoundBorder();
 	}
-
+	
 	// Presentation to the web page
 	processing_header($title,$heading,$javafunctions);
 	echo $extrainput;
@@ -333,10 +373,16 @@ function runUploadImage() {
 	$uploadtype = $_POST['uploadtype'];
 	$doselist = $_POST['doselist'];
 	$tiltlist = $_POST['tiltlist'];
+	$serialem_stack = $_POST['serialem_stack'];
+	$serialem_mdoc = $_POST['serialem_mdoc'];
+	$serialem_dir = $_POST['serialem_dir'];
+	$voltage = $_POST['voltage'];
 	$outdir = $_POST['outdir'];
 
 	// determine which upload script to use
-	if (!$batch)
+	if (($serialem_stack) OR ($serialem_dir))
+		$uploadscript = 'uploadSerialEM';
+	elseif (!$batch)
 		$uploadscript = ($uploadtype == 'normal') ? 'imageloader': 'uploadImages';
 	else
 		$uploadscript = 'imageloader';
@@ -346,7 +392,7 @@ function runUploadImage() {
 
 	$leginon = new leginondata();
 
-	if ($uploadscript == 'imageloader') {
+	if (($uploadscript == 'imageloader') OR ($uploadscript == 'uploadSerialEM')) {
 		//imageloader allows user to enter session name.  Therefore it is
 		//necessary to check to see it is valid.
 		//make sure a session name was entered if upload an independent file
@@ -356,8 +402,10 @@ function runUploadImage() {
 		$session_is_reserved = $leginon->checkSessionReservation($sessionname);
 
 		if ($has_session) {
-			if (!$leginon->onlyUploadedImagesInSession($has_session[0]['DEF_id'])) {
-				createUploadImageForm($errormsg."Session contains images not from  'appion' Host is not available for uploading more images");
+			if ($uploadtype !== 'tiltseries'){
+				if (!$leginon->onlyUploadedImagesInSession($has_session[0]['DEF_id'])) {
+					createUploadImageForm($errormsg."Session contains images not from  'appion' Host is not available for uploading more images");
+				}
 			}
 			if ($uploadtype == 'defocalseries')
 				createUploadImageForm("<B>ERROR:</B> Defocal series can not be uploaded to an existing session");
@@ -400,7 +448,7 @@ function runUploadImage() {
 		$command.="--cs=$cs ";
 	}
 	//determine if a information batch file was provided
-	if (!$batch) {
+	if ((!$batch) && (!$voltage)) {
 		$errormsg = "<b>ERROR:</b> ";
 		$imgdir = $_POST['imgdir'];
 		if (!$imgdir)
@@ -507,8 +555,14 @@ function runUploadImage() {
 		$command.="--batchparams=$batch ";
 		if ($imagegroup >= 2)
 			$command.="--tiltgroup=$imagegroup ";
-	}
-	else {
+	} elseif ($serialem_stack) {
+		$command.="--serialem_stack=$serialem_stack ";
+		$command.="--serialem_mdoc=$serialem_mdoc ";
+		$command.="--voltage=$voltage ";
+	} elseif ($serialem_dir) {
+		$command.="--serialem_dir=$serialem_dir ";
+		$command.="--voltage=$voltage ";
+	} else {
 		$badbatch = false;
 	}
 	if ($badbatch) createUploadImageForm("<B>ERROR:</B> Invalid format in the batch file");
