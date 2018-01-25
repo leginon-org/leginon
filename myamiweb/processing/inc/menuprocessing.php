@@ -897,11 +897,11 @@ if (is_numeric($expId)) {
 		);
 	}
 
-	#if ($leginondata->onlyUploadedImagesInSession($sessionId)) {
+	if ($leginondata->onlyUploadedImagesInSession($sessionId)) {
 	$nruns[] = array(
 		'name'=>"<a href='uploadimage.php?expId=$sessionId'>Upload more images</a>",
 	);
-	#}
+	}
 
 	$nruns[] = array(
 		'name'=>"<a href='runAppionLoop.php?expId=$sessionId&form=UploadCtf'>Upload CTF</a>",
