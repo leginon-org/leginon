@@ -12,6 +12,7 @@
 require_once "basicLayoutForm.inc";
 require_once "inc/processing.inc";
 require_once "inc/appionloop.inc";
+require_once "inc/html_elements.inc";
 
 #Keep session alive for one week
 ini_set('session.gc_maxlifetime', 604800);
@@ -38,8 +39,8 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 	$grow='0', $window_area='0.95', $mask_apod_x='', $mask_apod_y='', $mask_width_x='', $mask_width_y='', $dimx='', $dimy='',$correlation_size_x='192',
 	$correlation_size_y='192', $peak_search_radius_x='1000', $peak_search_radius_y='1000', $logging='true', $loglevel='2', $slab='true', $map_size_x='512',
 	$map_size_y='512', $filename_prefix='', $image_file_type='', $cachedir='cache', $protomo_outdir='out', $grid_limit='2.0', $grid_step='0.1',
-	$create_reconstruction='true', $show_window_size='true', $create_tilt_video='true', $keep_recons='false', $region_x='512', $video_type='',
-	$shift_limit='30' , $angle_limit='40', $parallel='', $ctf_correct='', $amp_contrast_ctf='0.07', $iWidth='20', $DefocusTol='200',
+	$create_reconstruction='true', $show_window_size='true', $create_tilt_video='true', $keep_recons='false', $region_x='512', $video_type='', $imod_coarse_align='True',
+	$shift_limit='90' , $angle_limit='60', $parallel='', $ctf_correct='', $amp_contrast_ctf='0.07', $iWidth='20', $DefocusTol='200',
 	$dose_presets='', $dose_a='', $dose_b='', $dose_c='', $frame_aligned='', $negative='', $positive='', $defocus_min='', $defocus_max='',
 	$defocus_estimate='', $defocus_difference='0.2', $defocus_ang_negative='', $defocus_ang_positive='', $amp_contrast_defocus='0.07',
 	$res_min='10000', $res_max='10', $defocus_save='', $further_alignment='', $center_all_images='False', $change_refimg='True', $desired_ref_tilt_angle=0)
@@ -154,9 +155,11 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 			if (!isset($_POST['preset_search'])) {$_POST['preset_search']=1;}
 			
 			//Preset pulldown menus
-			$size_presets=array("Generic", "10 nm", "25 nm", "50 nm", "100 nm", "250 nm", "500 nm", "1000 nm");
+			$size_presets=array("Generic", "10 nm", "25 nm", "50 nm", "100 nm");
 			$search_presets=array("Generic", "Tiny search (10%)", "Small search (25%)", "Med-Sm search (40%)", "Medium search (50%)", "Med-Lg search (60%)", "Large search (75%)", "Full search (90%)");
-			$html.= '<select name="preset_size" onchange=submit() style="width:150px">';
+			
+			$html .= openRoundBorder();
+			$html.= '<center><select name="preset_size" onchange=submit() style="width:150px">';
 			for ($i = 1; $i < count($size_presets)+1; $i++) {
 				$html.= '<option ';
 				if ($i == $_POST['preset_size']) {
@@ -174,7 +177,8 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 				}
 				$html.= 'value="'.$i.'">'.$search_presets[$i-1].'</option>';
 			}
-			$html.= '</select>'; $html.= docpop('protomo_coarse_presets_search', ' Search Area<br>');
+			$html.= '</select>'; $html.= docpop('protomo_coarse_presets_search', ' Search Area</center><br>');
+			$html .= closeRoundBorder();
 		}
 		
 		if ($_SESSION['manual'] != 1) {
@@ -200,6 +204,7 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 			$_POST['preprocessing'] = $preprocessing='true';
 			$_POST['gradient'] = $gradient='true';
 			$_POST['iter_gradient'] = $iter_gradient='false';
+			$_POST['imod_coarse_align'] = $imod_coarse_align='True';
 			$_POST['filter'] = $filter='median';
 			$_POST['border'] = $border='100';
 			$_POST['clip_low'] = $clip_low='3.5';
@@ -343,74 +348,47 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 			//Size Presets
 			if ($_POST['preset_size'] == 1)  //Generic
 			{
-				$_POST['lowpass_diameter_x'] = $lp_diam_x = min(round(pow(10,10)*$imageinfo['pixelsize']*75), round(0.75*$hp_diam_x));
-				$_POST['lowpass_diameter_y'] = $lp_diam_y = min(round(pow(10,10)*$imageinfo['pixelsize']*75), round(0.75*$hp_diam_x));
+				$_POST['lowpass_diameter_x'] = $lp_diam_x = min(7.5*round(pow(10,10)*$imageinfo['pixelsize']*2), round(0.75*$hp_diam_x));
+				$_POST['lowpass_diameter_y'] = $lp_diam_y = min(7.5*round(pow(10,10)*$imageinfo['pixelsize']*2), round(0.75*$hp_diam_x));
+				$_POST['lowpass_apod_x'] = $lp_apod_x = 2.5*$lp_diam_x;
+				$_POST['lowpass_apod_y'] = $lp_apod_y = 2.5*$lp_diam_y;
+				$_POST['thickness'] = $thickness = 750;
+			}
+			
+			if ($_POST['preset_size'] == 2)  //Size 10 nm
+			{
+				$_POST['lowpass_diameter_x'] = $lp_diam_x = min(5*round(pow(10,10)*$imageinfo['pixelsize']*2), round(0.75*$hp_diam_x));
+				$_POST['lowpass_diameter_y'] = $lp_diam_y = min(5*round(pow(10,10)*$imageinfo['pixelsize']*2), round(0.75*$hp_diam_x));
+				$_POST['lowpass_apod_x'] = $lp_apod_x = 2.5*$lp_diam_x;
+				$_POST['lowpass_apod_y'] = $lp_apod_y = 2.5*$lp_diam_y;
+				$_POST['thickness'] = $thickness = 250;
+			}
+			
+			if ($_POST['preset_size'] == 3)  //Size 25 nm
+			{
+				$_POST['lowpass_diameter_x'] = $lp_diam_x = min(10*round(pow(10,10)*$imageinfo['pixelsize']*2), round(0.75*$hp_diam_x));
+				$_POST['lowpass_diameter_y'] = $lp_diam_y = min(10*round(pow(10,10)*$imageinfo['pixelsize']*2), round(0.75*$hp_diam_x));
 				$_POST['lowpass_apod_x'] = $lp_apod_x = 2.5*$lp_diam_x;
 				$_POST['lowpass_apod_y'] = $lp_apod_y = 2.5*$lp_diam_y;
 				$_POST['thickness'] = $thickness = 1000;
 			}
 			
-			if ($_POST['preset_size'] == 2)  //Size 10 nm
-			{
-				$_POST['lowpass_diameter_x'] = $lp_diam_x = min(50, round(0.75*$hp_diam_x));
-				$_POST['lowpass_diameter_y'] = $lp_diam_y = min(50, round(0.75*$hp_diam_x));
-				$_POST['lowpass_apod_x'] = $lp_apod_x = 2.5*$lp_diam_x;
-				$_POST['lowpass_apod_y'] = $lp_apod_y = 2.5*$lp_diam_y;
-				$_POST['thickness'] = $thickness = 500;
-			}
-			
-			if ($_POST['preset_size'] == 3)  //Size 25 nm
-			{
-				$_POST['lowpass_diameter_x'] = $lp_diam_x = min(125, round(0.75*$hp_diam_x));
-				$_POST['lowpass_diameter_y'] = $lp_diam_y = min(125, round(0.75*$hp_diam_x));
-				$_POST['lowpass_apod_x'] = $lp_apod_x = 2.5*$lp_diam_x;
-				$_POST['lowpass_apod_y'] = $lp_apod_y = 2.5*$lp_diam_y;
-				$_POST['thickness'] = $thickness = 1250;
-			}
-			
 			if ($_POST['preset_size'] == 4)  //Size 50 nm
 			{
-				$_POST['lowpass_diameter_x'] = $lp_diam_x = min(250, round(0.75*$hp_diam_x));
-				$_POST['lowpass_diameter_y'] = $lp_diam_y = min(250, round(0.75*$hp_diam_x));
+				$_POST['lowpass_diameter_x'] = $lp_diam_x = min(20*round(pow(10,10)*$imageinfo['pixelsize']*2), round(0.75*$hp_diam_x));
+				$_POST['lowpass_diameter_y'] = $lp_diam_y = min(20*round(pow(10,10)*$imageinfo['pixelsize']*2), round(0.75*$hp_diam_x));
 				$_POST['lowpass_apod_x'] = $lp_apod_x = 2.5*$lp_diam_x;
 				$_POST['lowpass_apod_y'] = $lp_apod_y = 2.5*$lp_diam_y;
-				$_POST['thickness'] = $thickness = 2500;
+				$_POST['thickness'] = $thickness = 2000;
 			}
 			
 			if ($_POST['preset_size'] == 5)  //Size 100 nm
 			{
-				$_POST['lowpass_diameter_x'] = $lp_diam_x = min(500, round(0.75*$hp_diam_x));
-				$_POST['lowpass_diameter_y'] = $lp_diam_y = min(500, round(0.75*$hp_diam_x));
+				$_POST['lowpass_diameter_x'] = $lp_diam_x = min(40*round(pow(10,10)*$imageinfo['pixelsize']*2), round(0.75*$hp_diam_x));
+				$_POST['lowpass_diameter_y'] = $lp_diam_y = min(40*round(pow(10,10)*$imageinfo['pixelsize']*2), round(0.75*$hp_diam_x));
 				$_POST['lowpass_apod_x'] = $lp_apod_x = 2.5*$lp_diam_x;
 				$_POST['lowpass_apod_y'] = $lp_apod_y = 2.5*$lp_diam_y;
-				$_POST['thickness'] = $thickness = 5000;
-			}
-			
-			if ($_POST['preset_size'] == 6)  //Size 250 nm
-			{
-				$_POST['lowpass_diameter_x'] = $lp_diam_x = min(1250, round(0.75*$hp_diam_x));
-				$_POST['lowpass_diameter_y'] = $lp_diam_y = min(1250, round(0.75*$hp_diam_x));
-				$_POST['lowpass_apod_x'] = $lp_apod_x = 2.5*$lp_diam_x;
-				$_POST['lowpass_apod_y'] = $lp_apod_y = 2.5*$lp_diam_y;
-				$_POST['thickness'] = $thickness = 12500;
-			}
-			
-			if ($_POST['preset_size'] == 7)  //Size 500 nm
-			{
-				$_POST['lowpass_diameter_x'] = $lp_diam_x = min(2500, round(0.75*$hp_diam_x));
-				$_POST['lowpass_diameter_y'] = $lp_diam_y = min(2500, round(0.75*$hp_diam_x));
-				$_POST['lowpass_apod_x'] = $lp_apod_x = 2.5*$lp_diam_x;
-				$_POST['lowpass_apod_y'] = $lp_apod_y = 2.5*$lp_diam_y;
-				$_POST['thickness'] = $thickness = 25000;
-			}
-			
-			if ($_POST['preset_size'] == 8)  //Size 1000 nm
-			{
-				$_POST['lowpass_diameter_x'] = $lp_diam_x = min(5000, round(0.75*$hp_diam_x));
-				$_POST['lowpass_diameter_y'] = $lp_diam_y = min(5000, round(0.75*$hp_diam_x));
-				$_POST['lowpass_apod_x'] = $lp_apod_x = 2.5*$lp_diam_x;
-				$_POST['lowpass_apod_y'] = $lp_apod_y = 2.5*$lp_diam_y;
-				$_POST['thickness'] = $thickness = 50000;
+				$_POST['thickness'] = $thickness = 4000;
 			}
 		}
 		
@@ -461,7 +439,7 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		$this->setTitle( 'Protomo Coarse Alignment Launcher' );
 		$this->setHeading( 'Protomo Coarse Alignment' );
 		$this->setExeFile( 'protomo2aligner.py' );
-		$this->setGuideURL( "http://emg.nysbc.org/redmine/projects/appion/wiki/Align_Tilt-Series" );
+		$this->setGuideURL( "https://github.com/nysbc/appion-protomo#example" );
 		$this->setTestable( False ); // True to activate "test single image".
 		$this->setUseLegOutDir( False ); // The output directory will be created in the Appion run directory rather than Leginon.
 		$this->setShowDesc( True ); // Flag to hide the description field of the run parameters.
@@ -512,6 +490,7 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		$params->addParam( "thr_high", $thr_high, "Upper Threshold (in density values)" );
 		$params->addParam( "gradient", $gradient, "Linear Gradient Subtraction" );
 		$params->addParam( "iter_gradient", $iter_gradient, "Iterate Gradient Subtraction Once" );
+		$params->addParam( "imod_coarse_align", $imod_coarse_align, "Coarse Align with Imod in Parallel" );
 		$params->addParam( "filter", $filter, "Preprocessing median/gauss Filter" );
 		$params->addParam( "kernel_x", $kernel_x, "Filter Window Size (x)" );
 		$params->addParam( "kernel_y", $kernel_y, "Filter Window Size (y)" );
@@ -559,7 +538,7 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		$params->addParam( "change_refimg", $change_refimg, "Change Reference Image to Tilt Angle Closest to " );
 		$params->addParam( "desired_ref_tilt_angle", $desired_ref_tilt_angle, "degrees" );
 		$params->addParam( "defocus_save", $defocus_save, "Save Defocus Value" );
-		$params->addParam( "further_alignment", $further_alignment, "Iterate Coarse Alignment Once (w/ Manual Alignment)" );
+		$params->addParam( "further_alignment", $further_alignment, "Iterate Coarse Alignment Once" );
 		
 		// Validations
 		if ($_POST['settings'] == 2 or $_POST['settings'] == 3)  //Basic or Advanced Settings
@@ -590,9 +569,9 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		{
 			global $html;
 			$html .= "<br></br>
-			<b><center>[Choose a Tilt-Series to align to proceed]</center></b><br><hr><br>
-			<!--<b><center>[For manual tilt-series setup <a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2CoarseAlignForm&manual=1'>Click here</a>]</center></b><br>-->
-			<b><center>[To upload a SerialEM-collected tilt-series, run the following command:</b><br><br>
+			<b><center>[Choose a Tilt-Series to align to proceed]</center></b><br><hr><br>";
+			$html .= "<b><center>To upload more tilt-series to this session click 'Upload more images' on the left.</center></b><br>";
+			$html .= "<b><center>[To upload a SerialEM-collected tilt-series, run the following command:</b><br><br>
 			protomo2aligner.py --serialem_stack=[stack path] --serialem_mdoc=[mdoc path] --voltage=[in keV]<br><br>
 			<b>and then follow the insturctions after running the command.]</center></b><br>";
 		}
@@ -675,10 +654,9 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 				$html.= '<option value="False">false</option>';
 				$html.= '</select>'; $html.= docpop('protomo_parallel', ' Parallelize Non-Protomo Processes').'<br>';
 				$html.= '<select name="further_alignment" style="width:66px">';
-				$html.= '<option value="Manual_then_Coarse">Manual then Coarse</option>';
-				$html.= '<option value="Coarse">Coarse</option>';
-				$html.= '<option selected value="None">None</option>';
-				$html.= '</select>'; $html.= docpop('protomo_further_alignment', ' Iterate Coarse Alignment Once (w/ Manual Alignment)').'<br>';
+				$html.= '<option value="True">True</option>';
+				$html.= '<option selected value="False">False</option>';
+				$html.= '</select>'; $html.= docpop('protomo_further_alignment', ' Iterate Coarse Alignment Once').'<br>';
 				
 				$html .= "
 			    <br />
@@ -847,10 +825,13 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 				$html.= '</select>'; $html.= docpop('protomo_logging', ' Logging').'<br>';
 				$html.= $params->insertTextField( "loglevel", $fieldSize );
 				$html.= '<select name="further_alignment" style="width:66px">';
-				$html.= '<option value="Manual_then_Coarse">Manual then Coarse</option>';
-				$html.= '<option value="Coarse">Coarse</option>';
-				$html.= '<option selected value="None">None</option>';
-				$html.= '</select>'; $html.= docpop('protomo_further_alignment', ' Iterate Coarse Alignment Once (w/ Manual Alignment)').'<br>';
+				$html.= '<option value="True">True</option>';
+				$html.= '<option selected value="False">False</option>';
+				$html.= '</select>'; $html.= docpop('protomo_further_alignment', ' Iterate Coarse Alignment Once').'<br>';
+				$html.= '<select name="imod_coarse_align" style="width:66px">';
+				$html.= '<option selected value="True">True</option>';
+				$html.= '<option value="False">False</option>';
+				$html.= '</select>'; $html.= docpop('protomo_imod_coarse_align', ' Coarse Align with Imod in Parallel').'<br>';
 				
 				$html .= "
 				<br />
@@ -980,7 +961,7 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 			if ((empty($_POST['tiltseries']) OR empty($_POST['region_x']) OR empty($_POST['region_y']) OR empty($_POST['thickness']) OR empty($_POST['grid_limit']) OR empty($_POST['grid_step'])) AND !isset($_POST['process']))
 			{
 				$html .= "<br></br>
-				<b><center>[Choose appropriate presets and/or edit desired parameters then click 'Just Show Command' to proceed]</center><br></b>";
+				<b><center>[Choose appropriate presets and/or edit desired parameters then click 'Just Show Command']</center><br></b>";
 			}
 		}
 		return $html;
@@ -1030,7 +1011,9 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		// Only display link to next step in tomo processing if on completed Command page
 		if (isset($_POST['region_x']) AND isset($_POST['region_y']) AND isset($_POST['thickness']) AND isset($_POST['gridsearch_limit']) AND isset($_POST['gridsearch_step']) AND isset($_POST['process']))
 		{
-			$html .= "<br></br>
+			$html .= openRoundBorder();
+			$html .= "<table border='0'>";
+			$html .= "<br>
 			<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2CoarseAlignSummary'><b><center>[Click here to <font size='4'>View Coarse Alignment Results</font> after protomo2aligner.py --coarse has been run] <font size='5'>→</font></center></b></a>";
 			$html .= "
 			<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2BatchSummary'><b><center>[Click here to <font size='4'>View Batch Coarse Alignment Results</font>] <font size='5'>→</font></center></b></a>";
@@ -1043,6 +1026,9 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 				$html .= "<br>
 				<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2ReconstructionForm'><b><center>[or Click here to <font size='4'>Go Directly to the Reconstruction Page</font>] <font size='5'>→</font></center></b></a><br>";
 			}
+			$html .= "<br></tr>\n";
+			$html .= "</table>\n";
+			$html .= closeRoundBorder();
 		}
 		
 		return $html;

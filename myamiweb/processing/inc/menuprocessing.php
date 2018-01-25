@@ -753,7 +753,8 @@ if (is_numeric($expId)) {
 		$tiltseries_runs = glob("$sessionpath/*/series[0-9][0-9][0-9][0-9].tlt");
 		$tadone = count($tiltseries_runs);
 		if ($tadone > 0){
-			$taresults[] = "<a href='protomoalignrunsummary.php?expId=$sessionId&outdir=$sessionpath'>$tadone runs processing or finished</a>";
+			$taresults[] = "<a href='protomoalignrunsummary.php?expId=$sessionId&outdir=$sessionpath'>$tadone runs processing/done (vids)</a>";
+			$taresults2[] = "<a href='protomoalignrunsummary.php?expId=$sessionId&outdir=$sessionpath&videos=off'>$tadone runs processing/done (no vids)</a>";
 		}
 		
 		// get full tomogram making stats:
@@ -788,7 +789,7 @@ if (is_numeric($expId)) {
 		);
 		$nruns[] = array(
 			'name'=>"<a href='selectBatchAlignTiltSeries.php?expId=$sessionId'>Batch Align Tilt-Series</a>",
-			'result'=>$taresults,
+			'result'=>$taresults2,
 		);
 		$nruns[] = array(
 			'name'=>"<a href='selectMoreTiltSeriesProcessing.php?expId=$sessionId''>More Tilt-Series Processing</a>",
@@ -896,11 +897,11 @@ if (is_numeric($expId)) {
 		);
 	}
 
-	if ($leginondata->onlyUploadedImagesInSession($sessionId)) {
-		$nruns[] = array(
-			'name'=>"<a href='uploadimage.php?expId=$sessionId'>Upload more images</a>",
-		);
-	}
+	#if ($leginondata->onlyUploadedImagesInSession($sessionId)) {
+	$nruns[] = array(
+		'name'=>"<a href='uploadimage.php?expId=$sessionId'>Upload more images</a>",
+	);
+	#}
 
 	$nruns[] = array(
 		'name'=>"<a href='runAppionLoop.php?expId=$sessionId&form=UploadCtf'>Upload CTF</a>",

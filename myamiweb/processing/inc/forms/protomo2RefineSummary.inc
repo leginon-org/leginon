@@ -11,6 +11,7 @@ error_reporting(E_ALL | E_STRICT);
 
 require_once "basicLayoutForm.inc";
 require_once "inc/leginon.inc";
+require_once "inc/html_elements.inc";
 
 ini_set('session.gc_maxlifetime', 604800);
 session_set_cookie_params(604800);
@@ -56,7 +57,7 @@ class Protomo2RefineSummary extends BasicLayoutForm
 		$this->setTitle( 'Protomo Refinement Summary' );
 		$this->setHeading( 'Protomo Refinement Summary' );
 		$this->setExeFile( '' );
-		$this->setGuideURL( "http://emg.nysbc.org/redmine/projects/appion/wiki/Align_Tilt-Series" );
+		$this->setGuideURL( "https://github.com/nysbc/appion-protomo#example" );
 		$this->setTestable( False ); // True to activate "test single image".
 		$this->setUseLegOutDir( False ); // The output directory will be created in the Appion run directory rather than Leginon.
 		$this->setShowDesc( False ); // Flag to hide the description field of the run parameters.
@@ -273,15 +274,26 @@ class Protomo2RefineSummary extends BasicLayoutForm
 		// Only display link to next step in tomo processing if at least one iteration is complete
 		if (max(count($corrpeak_gif_files),count($corrpeak_vid_files)) < 1)
 		{
+			$html .= openRoundBorder();
+			$html .= "<table border='0'>";
 			$html .= "<br></br>
 				<b><center>[Refresh this page after at least one Refinement iteration completes]</center><br></b>";
 			$html .= "<br></br>
 				<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2RefineForm'><b><center><font size='5'>←</font> [Click here to go back to <font size='4'>Refinement</font>]</center></b></a><br>";
+			$html .= "<br></tr>\n";
+			$html .= "</table>\n";
+			$html .= closeRoundBorder();
 		} else {
-			$html .= "<br><hr /><br></br>
+			$html .= "<br><hr /><br>";
+			$html .= openRoundBorder();
+			$html .= "<table border='0'>";
+			$html .= "<br></br>
 				<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2ReconstructionForm'><b><center>[Click here to continue onto <font size='4'>Reconstruction</font> if protomo2aligner.py has finished <br>and you're happy with the alignment of at least one iteration] <font size='5'>→</font></center></b></a>";
 			$html .= "<br></br>
 				<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2RefineForm'><b><center><font size='5'>←</font> [Click here to go back to <font size='4'>Refinement</font>]</center></b></a><br>";
+			$html .= "<br></tr>\n";
+			$html .= "</table>\n";
+			$html .= closeRoundBorder();
 		}
 			
 		return $html;
@@ -312,10 +324,15 @@ class Protomo2RefineSummary extends BasicLayoutForm
 		$_SESSION['preset_search'] = $preset_search;
 		$_SESSION['preset_type'] = $preset_type;
 		
+		$html .= openRoundBorder();
+		$html .= "<table border='0'>";
 		$html .= "<br></br>
 			<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2ReconstructionForm'><b><center>[Click here to continue onto <font size='4'>Reconstruction</font> if protomo2aligner.py has finished <br>and you're happy with the alignment of at least one iteration] <font size='5'>→</font></center></b></a>";
 		$html .= "<br></br>
 			<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2RefineForm'><b><center><font size='5'>←</font> [Click here to go back to <font size='4'>Refinement</font>]</center></b></a><br>";
+		$html .= "<br></tr>\n";
+		$html .= "</table>\n";
+		$html .= closeRoundBorder();
 
 		return $html;
 	}

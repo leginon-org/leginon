@@ -17,6 +17,7 @@ require_once "inc/viewer.inc";
 require_once "inc/project.inc";
 require_once "inc/appionloop.inc";
 require_once "inc/particledata.inc";
+require_once "inc/html_elements.inc";
 
 $outdir=$_GET['outdir'];
 $runname=$_GET['runname'];
@@ -125,7 +126,7 @@ if (isset($rec_gif_files[0])) {
         //$html .= '<center>'.docpop('reconimageinfo_coarse', 'Image Info').'</center>';
         $html .= '<p align="right"><a href="'.$download_rec_mp4.'">Download Video</a></p>';
 		$html .= "<br><br><b><center>[If you wish to manually align from the this alignment iteration, run the following command:</b><br><br>
-			/usr/bin/python `which protomo2manualaligner.py` --rundir=$outdir/$runname/ --tiltseries=$tiltseries --iteration=$iter<br><br>
+			protomo2manualaligner.py --rundir=$outdir/$runname/ --tiltseries=$tiltseries --iteration=$iter --sampling=4 --max_image_fraction=0.75<br><br>
 			<b>and then use the 'Restart Refinement from Run' option and input iteration: MoreManual]</center></b><br>";
 } else {
         $html .= "<center><b>Depiction Reconstruction Video for Refinement Iteration ".$iter." either failed to generate, is still processing, or wasn't requested.</b></center>";
