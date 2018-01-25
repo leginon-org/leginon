@@ -19,7 +19,14 @@ import leginon.session
 import leginon.leginonconfig
 import os
 import sys
-import numextension
+try:
+	import numextension
+except:
+	# Issue #5466
+	print "numextension not loaded."
+	print "You must have it installed if using Leginon"
+	print "Appion mostly use functions not involving this and hence o.k."
+	print "Recalculate Dark with Gram-Schmidt process will fail in frame gain/dark correction (seldon used)"
 
 ref_cache = {}
 idcounter = itertools.cycle(range(100))
