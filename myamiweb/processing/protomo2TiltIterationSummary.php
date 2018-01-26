@@ -90,7 +90,7 @@ $html .= '<td><img src="'.$corr_cofx.'" alt="cofx" width="500" />'."<br /></td>"
 $html .= '<td><img src="'.$corr_cofy.'" alt="cofy" width="500" />'."<br /></td>";
 $html .= "</tr><tr>";
 $html .= '<th>Correction Rotation Factor</th>';
-$html .= '<th>Angle between the (x) and (y) Correction Factors</th>';
+$html .= '<th>Correction Factor for Scaling</th>';
 $html .= "</tr><tr>";
 $html .= '<td><img src="'.$corr_rot.'" alt="rot" width="500" />'."<br /></td>";
 $html .= '<td><img src="'.$corr_scl.'" alt="scl" width="500" />'."<br /></td>";
@@ -136,7 +136,7 @@ if (isset($rec_gif_files[0])) {
 
 //$html .= '<a href="runAppionLoop.php?expId='.$_GET['expId'].'&form=Protomo2ReconstructionForm&rundir='.$outdir.'&runname='.$runname.'&iter='.$iter.'&tiltseries='.$tiltseries.'" target="_blank"><b><center>[Click here to <font size="4">Reconstruct</font> from this iteration] →</center></b></a><br><br>';
 $html .= "<b><center>[If you wish to manually align from the this alignment iteration, run the following command:</b><br><br>
-	/usr/bin/python `which protomo2manualaligner.py` --rundir=$outdir/$runname/ --tiltseries=$tiltseries --iteration=$iter<br><br>
+	protomo2manualaligner.py --rundir=$outdir/$runname/ --tiltseries=$tiltseries --iteration=$iter --sampling=4 --image_fraction=0.75<br><br>
 	<b>and then use the 'Restart Refinement from Run' option and input as iteration: MoreManual]</center></b><br>";
 echo $html
 ?>

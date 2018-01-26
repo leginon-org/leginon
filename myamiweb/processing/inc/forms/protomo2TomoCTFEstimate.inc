@@ -114,7 +114,7 @@ class Protomo2TomoCTFEstimate extends BasicLayoutForm
 		$this->setTitle( 'TomoCTF Defocus Estimation Launcher' );
 		$this->setHeading( 'TomoCTF Defocus Estimation' );
 		$this->setExeFile( 'protomo2tomoctfestimate.py' );
-		$this->setGuideURL( "http://emg.nysbc.org/redmine/projects/appion/wiki/Align_Tilt-Series" );
+		$this->setGuideURL( "https://github.com/nysbc/appion-protomo#example" );
 		$this->setTestable( False ); // True to activate "test single image".
 		$this->setUseLegOutDir( False ); // The output directory will be created in the Appion run directory rather than Leginon.
 		$this->setShowDesc( True ); // Flag to hide the description field of the run parameters.

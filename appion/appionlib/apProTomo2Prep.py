@@ -6,6 +6,7 @@ import os
 import re
 import sys
 import glob
+import time
 import shutil
 import subprocess
 import scipy.misc
@@ -13,6 +14,7 @@ import scipy.interpolate
 import multiprocessing as mp
 import numpy as np
 from pyami import mrc
+from datetime import datetime
 from appionlib import apParam
 from appionlib import apDisplay
 from appionlib import apProTomo2Aligner
@@ -127,7 +129,7 @@ def frameOrNonFrameTiltdata2(tiltdata):
 
 
 #=======================
-def prepareTiltFile(sessionname, seriesname, tiltfilename, tiltseriesnumber, raw_path, frame_aligned_images, link=False, coarse=True):
+def prepareTiltFile(sessionname, seriesname, tiltfilename, tiltseriesnumber, raw_path, frame_aligned_images, link=False, coarse=True, export=False):
 	'''
 	Creates tlt file from basic image information and copies raw images
 	'''
@@ -138,7 +140,13 @@ def prepareTiltFile(sessionname, seriesname, tiltfilename, tiltseriesnumber, raw
 	apDisplay.printMsg("getting imagelist")
 	
 	frame_tiltdata, non_frame_tiltdata = frameOrNonFrameTiltdata(tiltdata)
-	tilts,ordered_imagelist,accumulated_dose_list,ordered_mrc_files,refimg = apTomo.orderImageList(frame_tiltdata, non_frame_tiltdata, frame_aligned=frame_aligned_images)
+	try:
+		if export == False:
+			tilts,ordered_imagelist,accumulated_dose_list,ordered_mrc_files,refimg = apTomo.orderImageList(frame_tiltdata, non_frame_tiltdata, frame_aligned=frame_aligned_images)
+		else:
+			tilts,ordered_imagelist,dose_list,accumulated_dose_list,ordered_mrc_files,refimg,defocus_list,pixelsize,magnification = apTomo.orderImageList(frame_tiltdata, non_frame_tiltdata, frame_aligned=frame_aligned_images, export=True)
+	except TypeError:
+		apDisplay.printError('Tilt-series #%d does not exist or is broken! Skipping...' % tiltseriesnumber)
 	if frame_aligned_images == "True":  #Azimuth is only present in the non-frame aligned images
 		a,ordered_imagelist_for_azimuth,c,d,e = apTomo.orderImageList(frame_tiltdata, non_frame_tiltdata, frame_aligned="False")
 	
@@ -147,34 +155,39 @@ def prepareTiltFile(sessionname, seriesname, tiltfilename, tiltseriesnumber, raw
 	apDisplay.printMsg("highest tilt angle is %f" % maxtilt)
 	
 	if coarse == "True":
-		if frame_aligned_images == "True":  #Azimuth is only present in the non-frame aligned images
-			azimuth = apTomo.getAverageAzimuthFromSeries(ordered_imagelist_for_azimuth)
-		else:
-			azimuth = apTomo.getAverageAzimuthFromSeries(ordered_imagelist)
-		
 		rawexists = apParam.createDirectory(raw_path)
 		
-		apDisplay.printMsg("Copying raw images, normalizing, and converting images to float32 for Protomo...") #Linking removed because raw images will likely be edited by the user.
-		newfilenames, new_ordered_imagelist = apProTomo.getImageFiles(ordered_imagelist, raw_path, link=False, copy="True")
-		apDisplay.printMsg("Creating a backup copy of the original tilt images...")
-		original_raw = os.path.join(raw_path,'original')
-		os.system('mkdir %s 2>/dev/null;cp %s/*mrc %s' % (original_raw,raw_path,original_raw))
+		if export == False:
+			if frame_aligned_images == "True":  #Azimuth is only present in the non-frame aligned images
+				azimuth = apTomo.getAverageAzimuthFromSeries(ordered_imagelist_for_azimuth)
+			else:
+				azimuth = apTomo.getAverageAzimuthFromSeries(ordered_imagelist)
+			
+			apDisplay.printMsg("Copying raw images, normalizing, and converting images to float32 for Protomo...") #Linking removed because raw images will likely be edited by the user.
+			newfilenames, new_ordered_imagelist = apProTomo.getImageFiles(ordered_imagelist, raw_path, link=False, copy="True")
+			apDisplay.printMsg("Creating a backup copy of the original tilt images...")
+			original_raw = os.path.join(raw_path,'original')
+			os.system('mkdir %s 2>/dev/null;cp %s/*mrc %s' % (original_raw,raw_path,original_raw))
+			
+			#get image size from the first image
+			imagesizex = tiltdata[0]['image'].shape[1]
+			imagesizey = tiltdata[0]['image'].shape[0]
+			
+			#shift half tilt series relative to eachother
+			#SS I'm arbitrarily making the bin parameter here 1 because it's not necessary to sample at this point
+			shifts = apTomo.getGlobalShift(ordered_imagelist, 1, refimg)
+			
+			#OPTION: refinement might be more robust by doing one round of IMOD aligment to prealign images before doing protomo refine
+			origins = convertShiftsToOrigin(shifts, imagesizex, imagesizey)
+			
+			writeTiltFile2(tiltfilename, seriesname, newfilenames, origins, tilts, azimuth, refimg)
+			
+			return tilts, accumulated_dose_list, new_ordered_imagelist, maxtilt
+		else:
+			newfilenames, new_ordered_imagelist, original_filename_split = apProTomo.getImageFiles(ordered_imagelist, raw_path, link="False", copy=False, export=True)
+			
+			return tilts, dose_list, accumulated_dose_list, new_ordered_imagelist, maxtilt, original_filename_split[0], defocus_list, pixelsize, magnification
 		
-		###create tilt file
-		#get image size from the first image
-		imagesizex = tiltdata[0]['image'].shape[1]
-		imagesizey = tiltdata[0]['image'].shape[0]
-		
-		#shift half tilt series relative to eachother
-		#SS I'm arbitrarily making the bin parameter here 1 because it's not necessary to sample at this point
-		shifts = apTomo.getGlobalShift(ordered_imagelist, 1, refimg)
-		
-		#OPTION: refinement might be more robust by doing one round of IMOD aligment to prealign images before doing protomo refine
-		origins = convertShiftsToOrigin(shifts, imagesizex, imagesizey)
-	
-		writeTiltFile2(tiltfilename, seriesname, newfilenames, origins, tilts, azimuth, refimg)
-	
-	return tilts, accumulated_dose_list, new_ordered_imagelist, maxtilt
 
 
 #=====================
@@ -1273,8 +1286,7 @@ def serialEM2Appion(stack, mdoc, voltage):
 	(mag, err) = proc.communicate()
 	mag = int(mag)
 	
-	info_file = os.path.join(temp_image_dir,'%s_info.txt' % prefix)
-	info=open(info_file,'w')
+	image_list=[]
 	for image_number in range(1,len(stack)+1):
 		cmd4="awk '/TiltAngle /{print}' %s | awk '{print $3}' | head -%s | tail -1" % (mdoc, image_number)
 		proc=subprocess.Popen(cmd4, stdout=subprocess.PIPE, shell=True)
@@ -1288,10 +1300,28 @@ def serialEM2Appion(stack, mdoc, voltage):
 		proc=subprocess.Popen(cmd6, stdout=subprocess.PIPE, shell=True)
 		(dose, err) = proc.communicate()
 		dose = float(dose)
+		cmd7="awk '/DateTime /{print}' %s | awk '{print $3}' | head -%s | tail -1" % (mdoc, image_number)
+		proc=subprocess.Popen(cmd7, stdout=subprocess.PIPE, shell=True)
+		(datestamp, err) = proc.communicate()
+		cmd8="awk '/DateTime /{print}' %s | awk '{print $4}' | head -%s | tail -1" % (mdoc, image_number)
+		proc=subprocess.Popen(cmd8, stdout=subprocess.PIPE, shell=True)
+		(timestamp, err) = proc.communicate()
+		full_timestamp = '%s %s' % (datestamp.rstrip('\n'), timestamp.rstrip('\n').rstrip())
+		full_timestamp = time.mktime(datetime.strptime(full_timestamp, "%d-%b-%y %H:%M:%S").timetuple())
+		
 		filename = "%s/%s_%04d.mrc" % (temp_image_dir, prefix, image_number)
 		
-		info.write('%s\t%fe-10\t%d\t%d\t%d\t%fe-6\t%d\t%f\t%f\n' % (filename, pixelsize, binning, binning, mag, defocus, int(voltage)*1000, tiltangle, dose))
+		tilt_info = '%s\t%fe-10\t%d\t%d\t%d\t%fe-6\t%d\t%f\t%f\n' % (filename, pixelsize, binning, binning, mag, defocus, int(voltage)*1000, tiltangle, dose)
+		image_list.append({'timestamp':full_timestamp, 'tilt_info':tilt_info})
+	
+	time_sorted_image_list = sorted(image_list, key=lambda k: k['timestamp'])
+	info_file = os.path.join(temp_image_dir,'%s_info.txt' % prefix)
+	info=open(info_file,'w')
+	
+	for image_number in range(0,len(stack)):
+		info.write(time_sorted_image_list[image_number]['tilt_info'])
 	info.close()
+	image_number = image_number+1
 	apDisplay.printMsg("Number of tilt-images: %d" % image_number)
 	apDisplay.printMsg("Tilt info path: %s" % info_file)
 	apDisplay.printMsg("Input these parameters into the Appion upload tilt-series interface.")

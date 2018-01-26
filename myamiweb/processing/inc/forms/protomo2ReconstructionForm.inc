@@ -32,7 +32,6 @@ if (isset($_GET['runname'])) {  //If user is coming from main summary
 	$outdir=$_SESSION['outdir'];
 	$runname=$_SESSION['runname'];
 }
-$refine_thickness=$_SESSION['thickness'];
 $sessionname=$_SESSION['sessionname'];
 $imageinfo=$_SESSION['imageinfo'];
 $protomo_outdir = $_SESSION['protomo_outdir'];
@@ -68,8 +67,8 @@ if ($_SESSION['erase_refine'] == 1){  //Just using erase_refine as a token
 
 class Protomo2ReconstructionForm extends BasicLayoutForm
 {
-	function __construct( $expId, $extraHTML, $commit='false', $reconstruction_actions='', $negative_recon='', $positive_recon='', $recon_iter='', $recon_map_sampling='2',
-	$recon_map_size_x='2048', $recon_map_size_y='2048', $recon_thickness='1500', $pixelsize='', $recon_lowpass='', $recon_lp_diam_x='15',
+	function __construct( $expId, $extraHTML, $commit='false', $reconstruction_actions='', $negative_recon='', $positive_recon='', $recon_iter='', $recon_map_sampling='4',
+	$recon_map_size_x='2048', $recon_map_size_y='2048', $recon_thickness='2500', $pixelsize='', $recon_lowpass='', $recon_lp_diam_x='15',
 	$recon_lp_diam_y='15', $ctf_correct='', $amp_contrast_ctf='0.07', $iWidth='20', $DefocusTol='200', $dose_presets='', $dose_a='',
 	$dose_b='', $dose_c='', $link_recon='', $frame_aligned='', $reconstruction_method='', $tomo3d_procs='all', $tomo3d_options='',
 	$tomo3d_sirt_iters='30', $exclude_images_by_angle='', $stack_procs='all', $bin_type='', $amp_correct='', $amp_correct_w1='0.67', $amp_correct_w2='0.33',
@@ -114,7 +113,6 @@ class Protomo2ReconstructionForm extends BasicLayoutForm
 		
 		global $imageinfo;
 		global $protomo_outdir;
-		global $refine_thickness;
 		$tiltseries=$_SESSION['tiltseries'];
 		$_POST['runname']=$_SESSION['runname'];
 		$_POST['outdir']=$_SESSION['outdir'];
@@ -123,7 +121,6 @@ class Protomo2ReconstructionForm extends BasicLayoutForm
 		$recon_iter=$_SESSION['iter'];
 		$recon_map_size_x = $imageinfo['dimx'];
 		$recon_map_size_y = $imageinfo['dimy'];
-		$recon_thickness = $refine_thickness;
 		$recon_lp_diam_x = round(pow(10,10)*$imageinfo['pixelsize']*8);
 		$recon_lp_diam_y = round(pow(10,10)*$imageinfo['pixelsize']*8);
 		
@@ -144,7 +141,7 @@ class Protomo2ReconstructionForm extends BasicLayoutForm
 		$this->setTitle( 'Protomo Reconstruction Launcher' );
 		$this->setHeading( 'Protomo Reconstruction' );
 		$this->setExeFile( 'protomo2reconstruction.py' );
-		$this->setGuideURL( "http://emg.nysbc.org/redmine/projects/appion/wiki/Align_Tilt-Series" );
+		$this->setGuideURL( "https://github.com/nysbc/appion-protomo#example" );
 		$this->setTestable( False ); // True to activate "test single image".
 		$this->setUseLegOutDir( False ); // The output directory will be created in the Appion run directory rather than Leginon.
 		$this->setShowDesc( False ); // Flag to hide the description field of the run parameters.
@@ -327,8 +324,9 @@ class Protomo2ReconstructionForm extends BasicLayoutForm
 		if ($_POST['reconstruction_method'] == 2 or $_POST['reconstruction_method'] == 3){
 			$html.= $params->insertTextFieldInRow( "recon_map_sampling", $fieldSize ).'│ ';
 			$html.= '<select name="bin_type" style="width:100px">';
-			$html.= '<option selected value="sum">Sum</option>';
-			$html.= '<option value="Interpolation">Interpolation</option>';
+			$html.= '<option selected value="fourier">Fourier</option>';
+			$html.= '<option value="sum">Sum</option>';
+			$html.= '<option value="interpolation">Interpolation</option>';
 			$html.= '</select>'; $html.= docpop('bin_type', ' Sampling Method').'<br>';
 			$html.= $params->insertTextField( "recon_thickness", $fieldSize );
 			$html.= $params->insertTextField( "tomo3d_procs", $fieldSize );
@@ -336,7 +334,8 @@ class Protomo2ReconstructionForm extends BasicLayoutForm
 		if ($_POST['reconstruction_method'] == 4){
 			$html.= $params->insertTextFieldInRow( "recon_map_sampling", $fieldSize ).'│ ';
 			$html.= '<select name="bin_type" style="width:100px">';
-			$html.= '<option selected value="sum">Sum</option>';
+			$html.= '<option selected value="fourier">Fourier</option>';
+			$html.= '<option value="sum">Sum</option>';
 			$html.= '<option value="Interpolation">Interpolation</option>';
 			$html.= '</select>'; $html.= docpop('bin_type', ' Sampling Method').'<br>';
 			$html.= $params->insertTextField( "stack_procs", $fieldSize );
