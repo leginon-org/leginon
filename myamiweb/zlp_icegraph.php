@@ -55,8 +55,8 @@ if ($histogram) {
 	$dbemgraph->histogram=true;
 }
 
-$dbemgraph->scalex(1e-3);
-$dbemgraph->scaley(1e-3);
+$dbemgraph->scalex(1e-0);
+$dbemgraph->scaley(1e-0);
 $dbemgraph->dim($width,$height);
 $dbemgraph->graph();
 
