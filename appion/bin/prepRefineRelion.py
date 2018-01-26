@@ -134,6 +134,12 @@ class PrepRefineRelion(apPrepRefine.Prep3DRefinement):
 		rescale = not self.params['paramonly']
 		super(PrepRefineRelion,self).preprocessModelWithProc3d(rescale)
 			
+	#=====================
+	def preprocessStack(self):
+		if self.params['paramonly']:
+			outstack = os.path.join(self.params['rundir'], "particles.mrcs")
+			return outstack
+		super(PrepRefineRelion,self).preprocessStack()
 	#=====================		
 	def runRelionPreprocess(self, newstackroot):
 		'''

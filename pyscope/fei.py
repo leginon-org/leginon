@@ -11,6 +11,7 @@ import subprocess
 import os
 import datetime
 import math
+from pyscope import moduleconfig
 
 try:
 	import nidaq
@@ -26,37 +27,7 @@ try:
 except ImportError:
 	pass
 
-DEBUG = False
-# Location of next phase plate AutoIt executable
-AUTOIT_EXE_PATH = "C:\\Program Files\\AutoIt3\\nextphaseplate.exe"
-
-# Newer Krios stage needs backlash.
-KRIOS_ADD_STAGE_BACKLASH = True
-KRIOS_ADD_STAGE_ALPHA_BACKLASH = False
-
-# Falcon protector causes certain delays
-HAS_FALCON_PROTECTOR = True
-
-# Lens normalization is usually set in TUI but there are cases that
-# they are not active through scripting call. This force the normalization.
-FORCE_NORMALIZE_ALL_LENS_AFTER_MAG_SETTING = False
-
-# This scale convert beam tilt readout in radian to 
-# Tecnai or TEM Scripting Illumination.RotationCenter value
-# Depending on the version,  this may be 1.0 or closer to 6
-rotation_center_scale = 1.0
-
-# if a stage position movement is less than the following, then ignore it
-minimum_stage = {
-	'x': 5e-8,
-	'y': 5e-8,
-	'z': 5e-8,
-	'a': 6e-5,
-	'b': 6e-5,
-}
-
-# print stage position set if have error for debuging
-PRINT_STAGE_DEBUG = True
+configs = moduleconfig.getConfigured('fei.cfg')
 
 class MagnificationsUninitialized(Exception):
 	pass
@@ -73,7 +44,7 @@ class Tecnai(tem.TEM):
 		self.projection_submode_map = self.special_submode_mags.copy()
 		
 		self.correctedstage = True
-		self.normalize_all_after_mag_setting = FORCE_NORMALIZE_ALL_LENS_AFTER_MAG_SETTING
+		self.normalize_all_after_mag_setting = self.getFeiConfig('optics','force_normalize_all_after_mag_setting')
 		try:
 			com_module.CoInitializeEx(com_module.COINIT_MULTITHREADED)
 		except:
@@ -145,6 +116,33 @@ class Tecnai(tem.TEM):
 					self.pressure_prop[location] = gauge_map[name]
 					break
 			
+	def getFeiConfig(self,optionname,itemname=None):
+		if optionname not in configs.keys():
+			return None
+		if itemname is None:
+			return configs[optionname]
+		else:
+			if itemname not in configs[optionname]:
+				return None
+			return configs[optionname][itemname]
+
+	def getDebugAll(self):
+		return self.getFeiConfig('debug','all')
+
+	def getDebugStage(self):
+		return self.getFeiConfig('debug','stage')
+
+	def getHasFalconProtector(self):
+		return self.getFeiConfig('camera','has_falcon_protector')
+
+	def getAutoitExePath(self):
+		return self.getFeiConfig('phase plate','autoit_exe_path')
+
+	def getRotationCenterScale(self):
+		return self.getFeiConfig('optics','rotation_center_scale')
+
+	def getMinimumStageMovement(self):
+		return self.getFeiConfig('stage','minimum_stage_movement')
 	def getMagnificationsInitialized(self):
 		if self.magnifications:
 			return True
@@ -161,6 +159,7 @@ class Tecnai(tem.TEM):
 	def checkStagePosition(self, position):
 		current = self.getStagePosition()
 		bigenough = {}
+		minimum_stage = self.getMinimumStageMovement()
 		for axis in ('x', 'y', 'z', 'a', 'b'):
 			if axis in position:
 				delta = abs(position[axis] - current[axis])
@@ -362,13 +361,13 @@ class Tecnai(tem.TEM):
 		self._setBeamBlank(bb)
 		# Falcon protector delays the response of the blanker and 
 		# cause it to be out of sync
-		if HAS_FALCON_PROTECTOR:
+		if self.getHasFalconProtector():
 			i = 0
 			time.sleep(0.5)
 			if self.getBeamBlank() != bb:
 				if i < 10:
 					time.sleep(0.5)
-					if DEBUG:
+					if self.getDebugAll():
 						print 'retry BeamBlank operation'
 					self._setBeamBlank(bb)
 					i += 1
@@ -474,8 +473,8 @@ class Tecnai(tem.TEM):
 	
 	def getBeamTilt(self):
 		value = {'x': None, 'y': None}
-		value['x'] = float(self.tecnai.Illumination.RotationCenter.X) / rotation_center_scale
-		value['y'] = float(self.tecnai.Illumination.RotationCenter.Y) / rotation_center_scale 
+		value['x'] = float(self.tecnai.Illumination.RotationCenter.X) / self.getRotationCenterScale()
+		value['y'] = float(self.tecnai.Illumination.RotationCenter.Y) / self.getRotationCenterScale() 
 
 		return value
 	
@@ -497,11 +496,11 @@ class Tecnai(tem.TEM):
 		
 		vec = self.tecnai.Illumination.RotationCenter
 		try:
-			vec.X = vector['x'] * rotation_center_scale
+			vec.X = vector['x'] * self.getRotationCenterScale()
 		except KeyError:
 			pass
 		try:
-			vec.Y = vector['y'] * rotation_center_scale
+			vec.Y = vector['y'] * self.getRotationCenterScale()
 		except KeyError:
 			pass
 		self.tecnai.Illumination.RotationCenter = vec
@@ -790,7 +789,7 @@ class Tecnai(tem.TEM):
 			trials += 1
 			if time.time()-t0 > timeout:
 				raise RuntimeError('stage is not going to ready status in %d seconds' % (int(timeout)))
-		if PRINT_STAGE_DEBUG and trials > 0:
+		if self.getDebugStage() and trials > 0:
 			print datetime.datetime.now()
 			donetime = time.time() - t0
 			print 'took extra %.1f seconds to get to ready status' % (donetime)
@@ -822,7 +821,7 @@ class Tecnai(tem.TEM):
 		try:
 			self.tecnai.Stage.Goto(pos, axes)
 		except com_module.COMError, e:
-			if PRINT_STAGE_DEBUG:
+			if self.getDebugStage():
 				print datetime.datetime.now()
 				print 'COMError in going to %s' % (position,)
 			try:
@@ -834,7 +833,7 @@ class Tecnai(tem.TEM):
 			except:
 				raise ValueError('COMError in _setStagePosition: %s' % (e,))
 		except:
-			if PRINT_STAGE_DEBUG:
+			if self.getDebugStage():
 				print datetime.datetime.now()
 				print 'Other error in going to %s' % (position,)
 			raise RuntimeError('_setStagePosition Unknown error')
@@ -1416,8 +1415,8 @@ class Tecnai(tem.TEM):
 		return self.tecnai.TemperatureControl.RefrigerantLevel(id)
 
 	def nextPhasePlate(self):
-		if os.path.isfile(AUTOIT_EXE_PATH):
-			subprocess.call(AUTOIT_EXE_PATH)
+		if os.path.isfile(self.getAutoitExePath()):
+			subprocess.call(self.getAutoitExePath())
 		else:
 			pass
 
@@ -1477,8 +1476,8 @@ class Krios(Tecnai):
 	use_normalization = True
 	def __init__(self):
 		Tecnai.__init__(self)
-		self.correctedstage = KRIOS_ADD_STAGE_BACKLASH
-		self.corrected_alpha_stage = KRIOS_ADD_STAGE_ALPHA_BACKLASH
+		self.correctedstage = self.getFeiConfig('stage','krios_add_stage_backlash')
+		self.corrected_alpha_stage = self.getFeiConfig('stage','krios_add_stage_backlash')
 
 	def normalizeProjectionForMagnificationChange(self, new_mag_index):
 		'''

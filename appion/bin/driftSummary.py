@@ -32,7 +32,7 @@ class TestLoop(appionLoop2.AppionLoop):
 		# find the ddstackrun of the image
 		self.dd.setDDStackRun(self.params['ddstack'])
 		self.dd.setImageData(imgdata)
-		self.framelist = self.dd.getFrameList(self.params)
+		self.framelist = self.dd.getFrameListFromParams(self.params)
 		# compare image ddstackrun with the specified ddstackrun
 		if self.params['ddstack'] and self.params['ddstack'] != self.dd.getDDStackRun().dbid:
 			apDisplay.printWarning('ddstack image not from specified ddstack run')

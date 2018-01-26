@@ -1804,9 +1804,9 @@ class AcquisitionSettingsData(TargetWatcherSettingsData):
 			('wait for process', bool),
 			('wait for rejects', bool),
 			('wait for reference', bool),
-			('wait for transform', bool),
 			#('duplicate targets', bool),
 			#('duplicate target type', str),
+			('loop delay time', float),
 			('wait time', float),
 			('iterations', int),
 			('adjust for transform', str),
@@ -2821,6 +2821,7 @@ class ZeroLossIceThicknessSettingsData(SettingsData):
 			('exposure time', float),
 			('slit width', float),
 			('mean free path', float),   #nm
+			('decimate',int),
 		)
 	typemap = classmethod(typemap)
 

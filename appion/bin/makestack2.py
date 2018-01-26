@@ -228,7 +228,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		'''
 		Returns integrated and gain/dark corrected image according to framelist
 		'''
-		framelist = self.dd.getFrameList(self.params)
+		framelist = self.dd.getFrameListFromParams(self.params)
 		# FIXME handle empty framelist caused by driftlimit
 		if self.is_dd_frame:
 			return self.dd.correctFrameImage(framelist)
@@ -303,7 +303,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			and not self.params['phaseflipped'] and not self.params['rotate']):
 			# If processing on whole image is not needed, it is more efficient to use mmap to box frame stack
 			apDisplay.printMsg("boxing "+str(len(parttree))+" particles into temp file: "+imgstackfile)
-			framelist = self.dd.getFrameList(self.params)
+			framelist = self.dd.getFrameListFromParams(self.params)
 			apBoxer.boxerFrameStack(self.dd.framestackpath, parttree, imgstackfile, self.boxsize, framelist)
 		else:
 			self._boxParticlesFromImage(imgdata, parttree, imgstackfile)

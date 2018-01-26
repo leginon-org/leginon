@@ -244,7 +244,7 @@ class TEM(baseinstrument.BaseInstrument):
 	def loadGridCartridge(self, number):
 		if not self.hasGridLoader():
 			return
-		if number not in range(1,self.getGridLoaderNumberOfSlots()):
+		if number not in range(1,self.getGridLoaderNumberOfSlots()+1):
 			return
 		if self.getGridLoaderSlotState(number) != 'occupied':
 			raise ValueError('Grid %d is not occupied' % number)
@@ -259,7 +259,7 @@ class TEM(baseinstrument.BaseInstrument):
 			return
 		
 		has_empty = False
-		for number in range(1,self.getGridLoaderNumberOfSlots()):
+		for number in range(1,self.getGridLoaderNumberOfSlots()+1):
 			if self.getGridLoaderSlotState(number) == 'empty':
 				has_empty = True
 				break
@@ -269,7 +269,7 @@ class TEM(baseinstrument.BaseInstrument):
 		try:
 			self._unloadCartridge()
 		except RuntimeError, e:
-			raise RuntimeError('Grid Loading failed')
+			raise RuntimeError('Grid unLoading failed')
 
 	def _loadCartridge(self, number):
 		raise NotImplementedError()

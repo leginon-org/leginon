@@ -3,7 +3,7 @@
 - Application XML-Dump
 - http://emg.nysbc.org/ 
 -
-- Application :MSI-Raster Screen (3.0)
+- Application :MSI-Raster Screen
 - Version     :2
 - Date : 11/17/2011
 -
@@ -116,7 +116,7 @@
     <sqltable name="ApplicationData" >
         <field name="DEF_id" >735</field>
         <field name="DEF_timestamp" >2011-11-17 13:03:03</field>
-        <field name="name" >MSI-Raster Screen (3.0)</field>
+        <field name="name" >MSI-Raster Screen</field>
         <field name="version" >2</field>
         <field name="hide" >0</field>
     </sqltable>

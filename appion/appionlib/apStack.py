@@ -538,7 +538,10 @@ def commitSubStack(params, newname=False, centered=False, oldstackparts=None, so
 				# if it is a sinedon data object
 				v = v.dbid
 			vals.append(v)
-		partlistvals.append("('"+"','".join(str(x) for x in vals)+"')")
+		valstr = "('"+"','".join(str(x) for x in vals)+"')"
+		# sql understand Null without string quote, not 'None'
+		valstr = valstr.replace("'None'","Null")
+		partlistvals.append(valstr)
 
 		newpartnum += 1
 

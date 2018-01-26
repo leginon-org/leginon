@@ -45,7 +45,7 @@ $form = "AutoMaskForm";
 echo "  <h3><a href='runAppionLoop.php?expId=$expId&form=$form'>Auto Masking</a></h3>\n";
 echo " <p> This is the <a href='https://github.com/hbradlow/em_hole_finder'>
 	em_hole_finder.</a>&nbsp;<img src='img/external.png'> "
-	."This procedure computes masks of carbon holes in electron micrographs. "
+	."Written by Henry Bradlow. This procedure computes masks of carbon holes in electron micrographs. "
 	."</p>\n";
 //echo "  <img src='img/align-smr.png' width='250'><br/>\n";
 echo "</td></tr>\n";
@@ -60,7 +60,7 @@ echo "</td><td>\n";
 //echo "  <h3><a href='runDBMaskAutoMasker.php?expId=$expId'>DB Mask Auto Masking</a></h3>\n";
 $form = "DBMaskAutoMaskForm";
 echo "  <h3><a href='runAppionLoop.php?expId=$expId&form=$form'>DBSCAN Auto Masking</a></h3>\n";
-echo " <p> This is the DBSCAN automasker. "
+echo " <p> Written by Jake Bruggeman. "
         ."</p>\n";
 //echo "  <img src='img/align-smr.png' width='250'><br/>\n";
 echo "</td></tr>\n";

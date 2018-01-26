@@ -25,16 +25,24 @@ header("Refresh: 300; URL=$page");
 
 $expId = $_GET['expId'];
 $outdir = $_GET['outdir'];
+$videos = $_GET['videos'];
 
 processing_header("Protomo Alignment and Reconstruction Summary","Protomo Alignment Summary", $javascript);
 
 $html = "<h4>Protomo Tilt-Series Alignment Runs</h4>";
 
 $tiltseries_runs = glob("$outdir/*/series[0-9][0-9][0-9][0-9].tlt");
+$all_recon_files = array();   // initialization
 
 $html .= "rundir: $outdir";
+if ($videos == 'off'){
+$html .= "<br><a href='protomoalignrunsummary.php?expId=$expId&outdir=$outdir&videos=on'>Turn videos on</a>";
+}else{
+$html .= "<br><a href='protomoalignrunsummary.php?expId=$expId&outdir=$outdir&videos=off'>Turn videos off</a>";
+}
 if (count($tiltseries_runs) > 12) {
-$html .= "<br><br><b>To continue processing a tilt-series, <a href='runAppionLoop.php?expId=$expId&form=Protomo2CoarseAlignForm' target='_blank'>Click Here</a>, change the runname & output directory, and select the appropriate tilt-series, then continue on to the desired processing step.<br>Estimate defocus or dose compensate existing tilt-series by continuing to Batch or to More Tilt-Series Processing.</b>";
+$html .= "<br><br><b>To continue processing a tilt-series, <a href='runAppionLoop.php?expId=$expId&form=Protomo2CoarseAlignForm' target='_blank'>Click Here</a>, change the runname & output directory, and select the appropriate tilt-series, then continue on to the desired processing step.</b><br>";
+//$html .= "<b>Estimate defocus or dose compensate existing tilt-series by continuing to Batch or to More Tilt-Series Processing.</b>";
 }
 $html .= "<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>";
 $html .= "<TR>";
@@ -70,11 +78,23 @@ foreach($tiltseries_runs as $tiltseries_run) {
 	$time_hr = explode('hr',$protomo2aligner_logs[1]);
 	$time_m = explode('m',$time_hr[1]);
 	if ($protomo2aligner_logs[0] != '') {
-		$html .= "<td><center><b>$path_chunks[1]</b><br>$date_m[0]-$date_d[0]-$date_yr[0]<br>@ $time_hr[0]:$time_m[0]</center></TD>";
+		$html .= "<td><center><b>$path_chunks[1]</b><br>$date_m[0]-$date_d[0]-$date_yr[0]<br>@ $time_hr[0]:$time_m[0]<br><input type='checkbox' onclick='return writeTo(this)' name='check_list' value='$outdir/$path_chunks[1]/'><sup>remove?</sup></center></TD>";
 	}else{
-		$html .= "<td><center><b>$path_chunks[1]</b></center></TD>";
+		$html .= "<td><center><b>$path_chunks[1]</b><br><input type='checkbox' onclick='return writeTo(this)' name='check_list' value='$outdir/$path_chunks[1]/'><sup>remove?</sup></center></TD>";
 	}
+	$html .= '<script>
+				function writeTo(object) {
+					  var container = document.getElementById("container");
+					  if (object.checked) {
+						 container.innerHTML = container.innerHTML + "rm -rf " + object.value + " <br />";   
+					  }
+					}
+				</script>';
+						// else {
+						// container.innerHTML = container.innerHTML - "rm -rf " - object.value + " <br />";   
+					 // }
 	$html .= "<td><center>$tiltseriesnumber</center></TD>";
+
 	
 	//Quality lookup and tilt azimuth lookup
 	if (count($refine_iterations) > 1){
@@ -380,6 +400,7 @@ foreach($tiltseries_runs as $tiltseries_run) {
 	
 	//Number of reconstructions available
 	$recon_files = glob("$outdir/$path_chunks[1]/recons_*/*.mrc",GLOB_BRACE);
+	$all_recon_files = array_merge($all_recon_files,$recon_files);
 	$recon_number = count($recon_files);
 	$html .= "<td><center>$recon_number</center></TD>";
 	
@@ -406,34 +427,38 @@ foreach($tiltseries_runs as $tiltseries_run) {
 	$html .= "<td>$suggestion</TD>";
 	
 	//Tilt-series preview
-	if (count($refine_iterations) > 1){
-		$tilt_gif_files = glob("$outdir/$path_chunks[1]/media/tiltseries/s*.gif");
-		$tilt_vid_files = glob("$outdir/$path_chunks[1]/media/tiltseries/series".sprintf('%04d',$tiltseriesnumber).sprintf('%03d',$best_iteration[1]-1).".{mp4,ogv,webm}",GLOB_BRACE);
-		$tilt_gif = "loadimg.php?rawgif=1&filename=".$tilt_gif_files[$best_iteration[1]-1];
-		$tilt_mp4 = "loadvid.php?filename=".$tilt_vid_files[0];
-		$tilt_ogv = "loadvid.php?filename=".$tilt_vid_files[1];
-		$tilt_webm = "loadvid.php?filename=".$tilt_vid_files[2];
-		$html .= '<td><center><video id="tiltVideos" width="85" controls autoplay loop>
-					  <source src="'.$tilt_mp4.'" type="video/mp4" loop>'.'<br />
-					  <source src="'.$tilt_webm.'" type="video/webm" loop>'.'<br />
-					  <source src="'.$tilt_ogv.'" type="video/ogg" loop>'.'<br />
-					  HTML5 video is not supported by your browser.
-					  </video></center></TD>';
-	} elseif (count($coarse_iterations) > 0){
-		$tilt_gif_files = glob("$outdir/$path_chunks[1]/media/tiltseries/c*.gif");
-		$tilt_vid_files = glob("$outdir/$path_chunks[1]/media/tiltseries/c*.{mp4,ogv,webm}",GLOB_BRACE);
-		$tilt_gif = "loadimg.php?rawgif=1&filename=".$tilt_gif_files[$best_iteration[1]-1];
-		$tilt_mp4 = "loadvid.php?filename=".$tilt_vid_files[0];
-		$tilt_ogv = "loadvid.php?filename=".$tilt_vid_files[1];
-		$tilt_webm = "loadvid.php?filename=".$tilt_vid_files[2];
-		$html .= '<td><center><video id="tiltVideos" width="85" controls autoplay loop>
-					  <source src="'.$tilt_mp4.'" type="video/mp4" loop>'.'<br />
-					  <source src="'.$tilt_webm.'" type="video/webm" loop>'.'<br />
-					  <source src="'.$tilt_ogv.'" type="video/ogg" loop>'.'<br />
-					  HTML5 video is not supported by your browser.
-					  </video></center></TD>';
-	}else{
+	if ($videos == 'off'){
 		$html .= "<td><center>--</center></TD>";
+	}else{
+		if (count($refine_iterations) > 1){
+			$tilt_gif_files = glob("$outdir/$path_chunks[1]/media/tiltseries/s*.gif");
+			$tilt_vid_files = glob("$outdir/$path_chunks[1]/media/tiltseries/series".sprintf('%04d',$tiltseriesnumber).sprintf('%03d',$best_iteration[1]-1).".{mp4,ogv,webm}",GLOB_BRACE);
+			$tilt_gif = "loadimg.php?rawgif=1&filename=".$tilt_gif_files[$best_iteration[1]-1];
+			$tilt_mp4 = "loadvid.php?filename=".$tilt_vid_files[0];
+			$tilt_ogv = "loadvid.php?filename=".$tilt_vid_files[1];
+			$tilt_webm = "loadvid.php?filename=".$tilt_vid_files[2];
+			$html .= '<td><center><video id="tiltVideos" width="85" controls autoplay loop>
+						  <source src="'.$tilt_mp4.'" type="video/mp4" loop>'.'<br />
+						  <source src="'.$tilt_webm.'" type="video/webm" loop>'.'<br />
+						  <source src="'.$tilt_ogv.'" type="video/ogg" loop>'.'<br />
+						  HTML5 video is not supported by your browser.
+						  </video></center></TD>';
+		} elseif (count($coarse_iterations) > 0){
+			$tilt_gif_files = glob("$outdir/$path_chunks[1]/media/tiltseries/c*.gif");
+			$tilt_vid_files = glob("$outdir/$path_chunks[1]/media/tiltseries/c*.{mp4,ogv,webm}",GLOB_BRACE);
+			$tilt_gif = "loadimg.php?rawgif=1&filename=".$tilt_gif_files[$best_iteration[1]-1];
+			$tilt_mp4 = "loadvid.php?filename=".$tilt_vid_files[0];
+			$tilt_ogv = "loadvid.php?filename=".$tilt_vid_files[1];
+			$tilt_webm = "loadvid.php?filename=".$tilt_vid_files[2];
+			$html .= '<td><center><video id="tiltVideos" width="85" controls autoplay loop>
+						  <source src="'.$tilt_mp4.'" type="video/mp4" loop>'.'<br />
+						  <source src="'.$tilt_webm.'" type="video/webm" loop>'.'<br />
+						  <source src="'.$tilt_ogv.'" type="video/ogg" loop>'.'<br />
+						  HTML5 video is not supported by your browser.
+						  </video></center></TD>';
+		}else{
+			$html .= "<td><center>--</center></TD>";
+		}
 	}
 	
 	//Additional information
@@ -464,7 +489,24 @@ foreach($tiltseries_runs as $tiltseries_run) {
 
 $html .= "</table>";
 $html .= "<br>";
-$html .= "<b>To continue processing a tilt-series, <a href='runAppionLoop.php?expId=$expId&form=Protomo2CoarseAlignForm' target='_blank'>Click Here</a>, change the runname & output directory, and select the appropriate tilt-series, then continue on to the desired processing step.<br>Estimate defocus or dose compensate existing tilt-series by continuing to Batch or to More Tilt-Series Processing.</b>";
+$html .= "<b>To continue processing a tilt-series, <a href='runAppionLoop.php?expId=$expId&form=Protomo2CoarseAlignForm' target='_blank'>Click Here</a>, change the runname & output directory, and select the appropriate tilt-series, then continue on to the desired processing step.</b><br>";
+//$html .= "<b>Estimate defocus or dose compensate existing tilt-series by continuing to Batch or to More Tilt-Series Processing.</b>";
+
+if (count($all_recon_files) > 0) {
+	$html .= "
+	<hr />
+	<H4><b>Available Reconstructions</b></H4>
+	<hr />";
+	
+	foreach ($all_recon_files as $item) {
+		$html .= '<br>'.$item;
+	}
+	$html .= '<br>';
+
+}
+
+$html .= "<br><hr /><b>Remove selected runs by <font color='green' size=4>(<u>carefully!!</u>)</font> running the following commands <font color='red' size=4>(checkboxes aren't meant to be unchecked!)</font>:</b><hr /><br>";
+$html .= "<br><div id='container'></div><br>";
 echo $html;
 
 ?>

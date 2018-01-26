@@ -805,7 +805,11 @@ class SetupWizard(wx.wizard.Wizard):
 			self.session = self.setup.createSession(user, name, description,
 																							directory)
 			self.session['holder'] = holderdata
-			self.session['remote passcode'] = self.generatePassCode()
+			# FIX ME: Issue #5450 workaround:
+			# Not to generate passcode until remote is working.
+			# insertion of this makes any other session creation unique
+			#self.session['remote passcode'] = self.generatePassCode()
+
 			#Issue #4634 use insert method so that self.session becomes sinedon
 			#query result after this first insert.
 			self.session.insert()

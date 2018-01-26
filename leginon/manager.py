@@ -90,6 +90,17 @@ class Manager(node.Node):
 		self.nodelocations = {}
 		self.broadcast = []
 
+		self.tem_host = ''
+		# notify user of logged error
+		self.notifyerror = False
+		# timeout timer
+		self.timer_debug = False
+		self.timeout_minutes = 30.0
+		if self.timer_debug:
+			self.timeout_minutes = 0.3
+		self.timer = None
+		self.timer_thread_lock = False
+
 		# ready nodes, someday 'initialized' nodes
 		self.initializednodescondition = threading.Condition()
 		self.initializednodes = []
@@ -107,6 +118,10 @@ class Manager(node.Node):
 															self.handleNodeClassesPublish)
 		self.addEventInput(event.NodeInitializedEvent, self.handleNodeStatus)
 		self.addEventInput(event.NodeUninitializedEvent, self.handleNodeStatus)
+		self.addEventInput(event.NodeLogErrorEvent, self.handleNodeLogError)
+		self.addEventInput(event.ActivateNotificationEvent, self.handleNotificationStatus)
+		self.addEventInput(event.DeactivateNotificationEvent, self.handleNotificationStatus)
+		self.addEventInput(event.NodeBusyNotificationEvent, self.handleNodeBusyNotification)
 		# this makes every received event get distributed
 		self.addEventInput(event.Event, self.distributeEvents)
 
@@ -194,6 +209,9 @@ class Manager(node.Node):
 		pass
 
 	def exit(self):
+		self.cancelTimeoutTimer()
+		# do not let others to restart it
+		self.timer = False
 		if self.launcher is not None:
 			self.killNode(self.launcher.name, wait=True)
 		launchers = self.getLauncherNames()
@@ -353,6 +371,7 @@ class Manager(node.Node):
 					eventcopy = copy.copy(ievent)
 					eventcopy['destination'] = to_node
 					self.clients[to_node].send(eventcopy)
+					# Something will be sending an event to others if automated.
 				except datatransport.TransportError:
 					### bad client, get rid of it
 					self.logger.error('Cannot send to node ' + str(to_node)
@@ -535,6 +554,8 @@ class Manager(node.Node):
 			self.frame.GetEventHandler().AddPendingEvent(evt)
 		except PyDeadObjectError:
 			pass
+		except RuntimeError:
+			pass
 
 	def unregisterNode(self, evt):
 		'''Event handler Removes all information, event mappings and the client.'''
@@ -695,6 +716,91 @@ class Manager(node.Node):
 			# group into another function
 			self.removeNode(nodename)
 
+	# Timeout Timer
+	def handleNodeBusyNotification(self, ievent):
+		self.restartTimeoutTimer()
+
+	def cancelTimeoutTimer(self):
+			if hasattr(self.timer,'is_alive') and self.timer.is_alive():
+				self.timer.cancel()
+				if self.timer_debug:
+					print 'timer canceled'
+
+	def slackTimeoutNotification(self):
+		timeout = self.timeout_minutes*60.0
+		msg = 'Leginon has been idle for %.1f minutes' % self.timeout_minutes
+		self.slackNotification(msg)
+		self.timer = False
+
+	def restartTimeoutTimer(self):
+		'''
+		Restart timeout timer is called when certain events are
+		sent to manager to indicate that Leginon is still busy.
+		Add NodeBusyNotificationEvent in the node that need to send
+		the notification.
+		'''
+		# Multiply thread may access this. Now that we monitor only
+		# sparsed event, this may not be as critical.  Leave it for now.
+		if self.timer_thread_lock:
+			return
+		self.timer_thread_lock = True
+		self._restartTimeoutTimer()
+		self.timer_thread_lock = False
+
+	def _restartTimeoutTimer(self):
+		'''
+		Restart timeout timer if self.timer is not False.
+		Possible self timer values:
+		None: Default and the value when notification is not active.
+		False: The value to stop new Timer to be started to avoid
+			hanging when Leginon is shutting down and new notification
+			to be sent after it is already sent.
+		'''
+		if not self.notifyerror:
+			self.cancelTimeoutTimer()
+			self.timer = None
+			return
+		if self.timer == False:
+			return
+		self.cancelTimeoutTimer()
+		# canceled timer can not be restarted. make a new one.
+		timeout = self.timeout_minutes*60.0
+		self.timer = threading.Timer(timeout,self.slackTimeoutNotification)
+		self.timer.start()
+		if self.timer_debug:
+			print 'timer started'
+
+	# Node Error Notification
+	def handleNodeLogError(self, ievent):
+		msg = ievent['message']
+		if self.notifyerror:
+			self.slackNotification(msg)
+
+	def handleNotificationStatus(self, ievent):
+		nodename = ievent['node']
+		if isinstance(ievent, event.ActivateNotificationEvent):
+			self.tem_host = ievent['tem_host']
+			# reset
+			self.notifyerror = True
+			# first allow timer to restart, if was set to false by completing a timeout
+			if self.timer == False:
+				self.timer = None
+			self.restartTimeoutTimer()
+		elif isinstance(ievent, event.DeactivateNotificationEvent):
+			self.cancelTimeoutTimer()
+			self.timer = None
+			self.notifyerror = False
+
+	def slackNotification(self, msg):
+		msg = '%s %s' % (self.tem_host, msg)
+		try:
+			from slack import slack_interface
+			slack_inst = slack_interface.SlackInterface()
+			channel = slack_inst.getDefaultChannel()
+			slack_inst.sendMessage(channel,'%s ' % (msg))
+		except:
+			print msg
+
 	# application methods
 
 	def getBuiltinApplications(self):
@@ -758,6 +864,8 @@ class Manager(node.Node):
 		map = {}
 		for a in appdatalist:
 			name =  a['application']['name']
+			if a['application']['hide']:
+				continue
 			if name not in history:
 				history.append(name)
 				map[name] = a['launchers']
@@ -802,6 +910,9 @@ class Manager(node.Node):
 		self.onApplicationStarted(name)
 
 	def killApplication(self):
+		self.cancelTimeoutTimer()
+		# set back to default
+		self.timer = None
 		self.application.kill()
 		self.application = None
 		self.onApplicationKilled()

@@ -414,6 +414,7 @@ class MessageLogHandler(logging.Handler):
 		if self.window is None:
 			return
 		level = record.levelname
+		level_number = record.levelno
 		message = self.format(record)
 		try:	
 			# listctrl can't do this...need to activate and show with dialog
@@ -422,6 +423,8 @@ class MessageLogHandler(logging.Handler):
 		except ValueError:
 			pass
 		secs = record.created
+		if level_number >= 40:
+			self.window.node.setHasLogError(True, message)
 		try:
 			evt = MessageLog.AddMessageEvent(self.window, level, message, secs)
 			self.window.GetEventHandler().AddPendingEvent(evt)

@@ -50,7 +50,7 @@ class Protomo2BatchSummary extends BasicLayoutForm
 		$this->setTitle( 'Protomo Batch Summary' );
 		$this->setHeading( 'Protomo Batch Summary' );
 		$this->setExeFile( '' );
-		$this->setGuideURL( "http://emg.nysbc.org/redmine/projects/appion/wiki/Align_Tilt-Series" );
+		$this->setGuideURL( "https://github.com/nysbc/appion-protomo#example" );
 		$this->setTestable( False ); // True to activate "test single image".
 		$this->setUseLegOutDir( False ); // The output directory will be created in the Appion run directory rather than Leginon.
 		$this->setShowDesc( False ); // Flag to hide the description field of the run parameters.
