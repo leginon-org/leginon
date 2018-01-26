@@ -47,6 +47,7 @@ def printTips(tip_type):
 	choices.append("Info: To print a full list of citations, just type protomo2aligner.py --citations")
 	choices.append("Info: Sometimes horizontal black bars show up in the videos. Don't worry, your images are ok.")
 	choices.append("Info: Your tilt-series runs will show up on a summary webpage under 'Align Tilt-Series' on the left side of the webpages for easy reference.")
+	choices.append("Info: Tilt-series alignment depends on the objects in the ice not moving during tilt-series collection. Beam-induced motion and ice doming are uncorrectable errors. Beam-induced motion refers to the aggregate frame-to-frame motion for all tilt images (assuming a movie camera is used). Doming refers to the ice itself bending during collection, thus changing the 3D locations and orientations of objects in the ice (remember, Protomo aligns using a central portion of the 3D volume).")
 	choices.append("Tip: Use Run names 'tiltseries####' in order to see your tilt-series alignments on the Batch Summary webpages.")
 	choices.append("Tip: Aligned tilt-series videos should always be checked for individual tilt images that aligned poorly before proceeding to reconstruction.")
 	choices.append("Tip: Each microscope + holder will have a unique tilt azimuth. To determine this value, collect a tilt-series of high SNR objects without ice contamination and run Appion-Protomo refinement for 50-100 iterations at binned by 8, followed by 5-10 iterations at binned by 4, 2, then 1. If the alignment converged (CCMS values and correction factors are all very low), then the tilt azimuth has likely been estimated properly. You may wish to check the opposite tilt azimuth (plus or minus 180 degrees) to see if it aligns better or worse. Use the resulting value as input into all tilt-series alignment for this microscope + holder combination by inputting the value into the tilt-series collection software tilt axis model (+-90  degrees possibly), or inputting it into the 'Override Tilt Azimuth' parameter in Appion-Protomo. Collecting and processing a medium-magnification tilt-series may be the easiest method for determining tilt azimuth.")
@@ -155,6 +156,12 @@ def printCitations():
 	apDisplay.printMsg("Tomo3D 2.0 - Exploitation of Advanced Vector eXtensions (AVX) for 3D reconstruction")
 	apDisplay.printMsg("J.I. Agulleiro, J.J. Fernandez")
 	apDisplay.printMsg("doi:10.1016/j.jsb.2014.11.009")
+	print ''
+	apDisplay.printMsg("\033[1mIf you used Appion-Protomo to investigate single particle grids, you may wish to cite the following:\33[0m")
+	print ''
+	apDisplay.printMsg("Routine Single Particle CryoEM Sample and Grid Characterization by Tomography")
+	apDisplay.printMsg("Noble, A. J., Dandey, V. P., Wei, H., Brasch, J., Chase, J., Acharya, P., Tan Y. Z., Zhang Z., Kim L. Y., Scapin G., Rapp M., Eng E. T., Rice M. J., Cheng A., Negro C. J., Shapiro L., Kwong P. D., Jeruzalmi D., des Georges A., Potter C. S., Carragher, B.")
+	apDisplay.printMsg("doi:10.1101/230276")
 	print '\n________________________________\n'
 	
 	return
@@ -471,6 +478,108 @@ def angstromsToProtomo(options):
 	return options
 
 
+def imodCoarseAlignment(rawdir, tiltfilename_full, image_file_type):
+	"""
+	Performs coarse alignment by nearest-neighbor correlation using IMOD's tiltxcorr.
+	A Protomo .tlt file is written with the IMOD alignment.
+	The inputted tilt azimuth (in original.tlt) is assumed to be correct.
+	Algorithm partially by William J. Rice.
+	"""
+	imod_temp_dir = os.path.join(rawdir, 'imod_temp')
+	os.mkdir(imod_temp_dir)
+	os.chdir(imod_temp_dir)
+	
+	cmd1="awk '/ORIGIN /{print}' %s | wc -l" % (tiltfilename_full)
+	proc=subprocess.Popen(cmd1, stdout=subprocess.PIPE, shell=True)
+	(numimages, err) = proc.communicate()
+	numimages=int(numimages)
+	cmd2="awk '/IMAGE /{print $2}' %s | head -n +1" % (tiltfilename_full)
+	proc=subprocess.Popen(cmd2, stdout=subprocess.PIPE, shell=True)
+	(tiltstart, err) = proc.communicate()
+	tiltstart=int(tiltstart)
+	cmd3="awk '/AZIMUTH /{print $3}' %s" % tiltfilename_full
+	proc=subprocess.Popen(cmd3, stdout=subprocess.PIPE, shell=True)
+	(azimuth, err) = proc.communicate()
+	azimuth=float(azimuth)
+	image_rotation = -90 - azimuth
+	
+	cmd4="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/FILE/) print $(j+1)}' | tr '\n' ' ' | sed 's/ //g'" % (tiltstart, tiltfilename_full)
+	proc=subprocess.Popen(cmd4, stdout=subprocess.PIPE, shell=True)
+	(filename, err) = proc.communicate()
+	filepath = rawdir + '/' + filename + '.' + image_file_type
+	dimx,dimy = mrc.read(filepath).shape
+	centerx = dimx/2
+	centery = dimy/2
+	stack = np.zeros((numimages,dimx,dimy))
+	tiltlist = imod_temp_dir + '/tiltlist.rawtlt'
+	tiltlist_file = open(tiltlist,'w')
+	
+	stack_counter = 0
+	for i in range(numimages+100):
+		try:
+			cmd1="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/FILE/) print $(j+1)}' | tr '\n' ' ' | sed 's/ //g'" % (i, tiltfilename_full)
+			proc=subprocess.Popen(cmd1, stdout=subprocess.PIPE, shell=True)
+			(filename, err) = proc.communicate()
+			cmd2="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/TILT/) print $(j+2)}'" % (i, tiltfilename_full)
+			proc=subprocess.Popen(cmd2, stdout=subprocess.PIPE, shell=True)
+			(tilt_angle, err) = proc.communicate()
+			tilt_angle=float(tilt_angle)
+			filepath = rawdir + '/' + filename + '.' + image_file_type
+			stack[stack_counter,:,:] = mrc.read(os.path.join(rawdir,filepath))
+			stack_counter = stack_counter + 1
+			tiltlist_file.write("%f\n" % tilt_angle)
+		except:
+			pass
+	tiltlist_file.close()
+	
+	stack_file = imod_temp_dir + '/temp_stack.st'
+	mrc.write(stack, stack_file)
+	imod_coarse_alignment_file = imod_temp_dir + '/imod_coarse_alignment.out'
+	
+	cmd = 'tiltxcorr -leaveaxis -binning 1 -rotation %f -tiltfile %s %s %s' % (image_rotation, tiltlist, stack_file, imod_coarse_alignment_file)
+	os.system(cmd)
+	
+	#Convert IMOD alignment to Protomo .tlt
+	alignment_file=open(imod_coarse_alignment_file,'r')
+	alignment_file_lines=alignment_file.readlines()
+	alignment_file.close()
+	initial_tlt_file=open(tiltfilename_full,'r')
+	initial_tlt_file_lines=initial_tlt_file.readlines()
+	initial_tlt_file.close()
+	
+	imod_coarse_aligned_tlt_file_path = os.path.dirname(rawdir) + '/imod_coarse_' + os.path.basename(tiltfilename_full)
+	imod_coarse_aligned_tlt_file=open(imod_coarse_aligned_tlt_file_path,'w')
+	alignment_file_line=0
+	for line in initial_tlt_file_lines:
+		if ('IMAGE' in line) and ('ORIGIN' in line):
+			words1=alignment_file_lines[alignment_file_line].split()
+			words2=line.split()
+			alignment_file_line = alignment_file_line + 1
+			shiftx = float(words1[4])
+			shifty = float(words1[5])
+			new_x = centerx - shiftx
+			new_y = centery - shifty
+			new_x = '%s' % new_x
+			new_y = '%s' % new_y
+			for i in range(len(words2)):
+				if words2[i] == 'ORIGIN':
+					old_x=words2[i+2]
+					old_y=words2[i+3]
+			imod_coarse_aligned_tlt_file.write(line.replace(old_x,new_x).replace(old_y,new_y))
+		else:
+			imod_coarse_aligned_tlt_file.write(line)		
+	imod_coarse_aligned_tlt_file.close()
+	
+	os.chdir(os.path.dirname(rawdir))
+	
+	findMaxSearchArea(os.path.basename(imod_coarse_aligned_tlt_file_path), dimx, dimy)
+	
+	#cleanup
+	os.system('rm -rf %s' % imod_temp_dir)
+	
+	return
+
+
 def hyphen_range(s):
 	"""
 	Takes a range in form of "a-b" and generate a list of numbers between a and b inclusive.
@@ -505,6 +614,7 @@ def nextLargestSize(limit):
 		else:
 			return p*factor+r
 	
+	limit = int(limit)
 	primes=[2,3,5,7]
 	good=[]
 	for n in range(0,limit,2):
@@ -520,6 +630,81 @@ def nextLargestSize(limit):
 	return int(good[-1])
 
 
+def centerAlignment(tiltfilename_full, dim_x, dim_y):
+	'''
+	This will center all images in the provided Protomo .tlt file with respect to the alignment.
+	'''
+	apDisplay.printMsg("Centering alignment...")
+	cmd1="awk '/ORIGIN /{print}' %s | wc -l" % (tiltfilename_full)
+	proc=subprocess.Popen(cmd1, stdout=subprocess.PIPE, shell=True)
+	(numimages, err) = proc.communicate()
+	numimages=int(numimages)
+	cmd2="awk '/IMAGE /{print $2}' %s | head -n +1" % (tiltfilename_full)
+	proc=subprocess.Popen(cmd2, stdout=subprocess.PIPE, shell=True)
+	(tiltstart, err) = proc.communicate()
+	tiltstart=int(tiltstart)
+	
+	max_shift_x_pos = 0
+	max_shift_x_neg = 0
+	max_shift_y_pos = 0
+	max_shift_y_neg = 0
+	for i in range(tiltstart-1,tiltstart+numimages+100):
+		try:
+			cmd3="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/ORIGIN/) print $(j+2)}'" % (i, tiltfilename_full)
+			proc=subprocess.Popen(cmd3, stdout=subprocess.PIPE, shell=True)
+			(originx, err) = proc.communicate()
+			originx=float(originx)
+			cmd4="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/ORIGIN/) print $(j+3)}'" % (i, tiltfilename_full)
+			proc=subprocess.Popen(cmd4, stdout=subprocess.PIPE, shell=True)
+			(originy, err) = proc.communicate()
+			originy=float(originy)
+		
+			shift_x = dim_x/2 - originx
+			shift_y = dim_y/2 - originy
+			max_shift_x_pos = max(max_shift_x_pos, shift_x)
+			max_shift_x_neg = min(max_shift_x_neg, shift_x)
+			max_shift_y_pos = max(max_shift_y_pos, shift_y)
+			max_shift_y_neg = min(max_shift_y_neg, shift_y)
+		except:
+			pass
+	
+	# if max_shift_x_pos > max_shift_x_neg: #move everything left
+	# 	shift_x = (max_shift_x_pos - max_shift_x_neg)/2
+	# else: #move everything right
+	# 	shift_x = (max_shift_x_neg - max_shift_x_pos)/2
+	# if max_shift_y_pos > max_shift_y_neg: #move everything down
+	# 	shift_y = (max_shift_y_pos - max_shift_y_neg)/2
+	# else: #move everything up
+	# 	shift_y = (max_shift_y_neg - max_shift_y_pos)/2
+	zero_shift_x = (max_shift_x_pos - max_shift_x_neg)/2
+	zero_shift_y = (max_shift_y_pos - max_shift_y_neg)/2
+	shift_x = max_shift_x_pos - zero_shift_x
+	shift_y = max_shift_y_pos - zero_shift_y
+	
+	with open(tiltfilename_full) as f:
+		lines = f.readlines()
+	
+	f=open(tiltfilename_full,'w')
+	for line in lines:
+		if ('IMAGE' in line) and ('ORIGIN' in line):
+			strings=line.split()
+			for i in range(len(strings)):
+				if strings[i] == 'ORIGIN':
+					old_x=strings[i+2]
+					old_y=strings[i+3]
+					old_x_num = float(old_x)
+					old_y_num = float(old_y)
+					new_x_num = old_x_num - shift_x
+					new_y_num = old_y_num - shift_y
+					new_x = '%.3f' % new_x_num
+					new_y = '%.3f' % new_y_num
+			f.write(line.replace(old_x,new_x).replace(old_y,new_y))
+		else:
+			f.write(line)
+	f.close()
+	
+	return
+
 def centerAllImages(tiltfilename_full, dim_x, dim_y):
 	'''
 	This will center all images in the provided Protomo .tlt file based on the provided image dimensions.
@@ -532,8 +717,8 @@ def centerAllImages(tiltfilename_full, dim_x, dim_y):
 	
 	with open(tiltfilename_full) as f:
 		lines = f.readlines()
-	f=open(tiltfilename_full,'w')
 	
+	f=open(tiltfilename_full,'w')
 	for line in lines:
 		if ('IMAGE' in line) and ('ORIGIN' in line):
 			strings=line.split()
@@ -568,7 +753,10 @@ def changeReferenceImage(tiltfilename_full, desired_ref_tilt_angle):
 			cmd="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/TILT/) print $(j+2)}'" % (i+1, tiltfilename_full)
 			proc=subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
 			(tilt_angle, err) = proc.communicate()
-			tilt_angle=float(tilt_angle)
+			try:
+				tilt_angle=float(tilt_angle)
+			except ValueError:
+				tilt_angle=float(tilt_angle[1:])
 			if abs(tilt_angle-desired_ref_tilt_angle) < abs(closest_angle-desired_ref_tilt_angle):
 				closest_angle=tilt_angle
 				closest_angle_refimg=i+1
@@ -584,6 +772,40 @@ def changeReferenceImage(tiltfilename_full, desired_ref_tilt_angle):
 	os.system(cmd2)
 		
 	return
+
+
+# def downsample_parallel(stack, factor, procs):
+# 	'''
+# 	Calls downsample in parallel by splitting stack into 5 sub-stacks.
+# 	Dirty but works.
+# 	'''
+# 	if procs > 4:
+# 		
+# 	else:
+# 		apDisplay.printMsg("Parallel Fourier binning requires at least 5 cores. Reverting to single CPU...")
+# 		binned_stack[i,:,:] = downsample(stack[i,:,:], self.params['recon_map_sampling'])
+# 	
+# 	return binned_stack
+
+def downsample(x, factor):
+	'''
+	Downsample 2d array using fourier transform
+	from https://github.com/tbepler/topaz/
+	'''
+	
+	m,n = x.shape[-2:]
+	
+	F = np.fft.rfft2(x)
+	
+	S = 2*factor
+	A = F[...,0:m//S+1,0:n//S+1]
+	B = F[...,-m//S:,0:n//S+1]
+	
+	F = np.concatenate([A,B], axis=-2)
+	
+	f = np.fft.irfft2(F)
+	
+	return f
 
 
 def scaleByZoomInterpolation(image, scale, pad_constant='mean', order=5, clip_image=False):
@@ -688,7 +910,10 @@ def removeHighlyShiftedImages(tiltfile, dimx, dimy, shift_limit, angle_limit):
 		cmd3="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/TILT/) print $(j+2)}'" % (i, tiltfile)
 		proc=subprocess.Popen(cmd3, stdout=subprocess.PIPE, shell=True)
 		(tilt_angle, err) = proc.communicate()
-		tilt_angle=float(tilt_angle)
+		try:
+			tilt_angle=float(tilt_angle)
+		except ValueError:
+			tilt_angle=float(tilt_angle[1:])
 		
 		#Identify tilt images from .tlt file whose shift(s) exceed limits
 		if (abs(dimx/2 - originx) > shift_limit*dimx/100) or (abs(dimy/2 - originy) > shift_limit*dimy/100):
@@ -821,6 +1046,53 @@ def removeHighTiltsFromTiltFile(tiltfile, negative=-90, positive=90):
 				pass
 	
 	return removed_images, mintilt, maxtilt
+
+
+def findMaxSearchArea(tiltfilename_full, dimx, dimy):
+	'''
+	Finds the maximum search area given file.tlt and writes file.tlt.maxsearch.max_x.max_y
+	'''
+	cmd1="awk '/ORIGIN /{print}' %s | wc -l" % (tiltfilename_full)
+	proc=subprocess.Popen(cmd1, stdout=subprocess.PIPE, shell=True)
+	(numimages, err) = proc.communicate()
+	numimages=int(numimages)
+	cmd2="awk '/IMAGE /{print $2}' %s | head -n +1" % (tiltfilename_full)
+	proc=subprocess.Popen(cmd2, stdout=subprocess.PIPE, shell=True)
+	(tiltstart, err) = proc.communicate()
+	tiltstart=int(tiltstart)
+
+	max_shift_x = 0
+	max_shift_y = 0
+	for i in range(tiltstart-1,tiltstart+numimages+100):
+		try:
+			cmd3="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/ORIGIN/) print $(j+2)}'" % (i, tiltfilename_full)
+			proc=subprocess.Popen(cmd3, stdout=subprocess.PIPE, shell=True)
+			(originx, err) = proc.communicate()
+			originx=float(originx)
+			cmd4="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/ORIGIN/) print $(j+3)}'" % (i, tiltfilename_full)
+			proc=subprocess.Popen(cmd4, stdout=subprocess.PIPE, shell=True)
+			(originy, err) = proc.communicate()
+			originy=float(originy)
+		
+			shift_x = abs(dimx/2 - originx)
+			shift_y = abs(dimy/2 - originy)
+			max_shift_x = max(max_shift_x, shift_x)
+			max_shift_y = max(max_shift_y, shift_y)
+		except:
+			pass
+	
+	window_x = int(dimx - 2*max_shift_x)
+	window_y = int(dimy - 2*max_shift_y)
+	if window_x < 0:
+		window_x = 0
+	if window_y < 0:
+		window_y = 0
+	
+	old_max_search_file = tiltfilename_full + '.maxsearch.*'
+	max_search_file = tiltfilename_full + '.maxsearch.' + str(window_x) + '.' + str(window_y)
+	os.system('rm %s 2>/dev/null; touch %s' % (old_max_search_file, max_search_file))
+	
+	return
 
 
 def unShiftTiltFile(tiltfile, dimx, dimy, shift_limit):
@@ -1013,6 +1285,7 @@ def makeCorrPeakVideos(seriesname, iteration, rundir, outdir, video_type, align_
 		png_full=vid_path+'/'+png
 		pngff_full=vid_path+'/'+pngff
 		# Convert the corr peak *.img file to mrc for further processing
+		print "\033[92m(Ignore the error: 'i3cut: could not load libi3tiffio.so, TiffioModule disabled')\033[0m"
 		os.system("i3cut -fmt mrc %s %s" % (img_full, mrc_full))
 		volume = mrc.read(mrc_full)
 		slices = len(volume) - 1
@@ -1405,11 +1678,11 @@ def alignmentAccuracyAndStabilityReport(CCMS_sum, rawimagecount, name, n):
 		proc=subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
 		(corrfile_length, err) = proc.communicate()
 		corrfile_length=int(corrfile_length)
-		print rawimagecount-1, corrfile_length
+		#print rawimagecount-1, corrfile_length
 		if rawimagecount-1 == corrfile_length:
 			alignment_quality_confidence = 100
 		else:
-			alignment_quality_confidence = corrfile_length/(rawimagecount-1)
+			alignment_quality_confidence = 100*corrfile_length/(rawimagecount-1)
 	except:
 		apDisplay.printWarning("Check your alignment output, something went wrong...")
 		alignment_quality_confidence = 0
@@ -1727,6 +2000,8 @@ def makeTiltSeriesVideos(seriesname, iteration, tiltfilename, rawimagecount, run
 				tiltimage = os.path.join(vid_path,"coarse_tilt%04d.png" % (j))
 			elif align_step == "Coarse2":
 				tiltimage = os.path.join(vid_path,"coarse2_tilt%04d.png" % (j))
+			elif align_step == "Imod":
+				tiltimage = os.path.join(vid_path,"imod_tilt%04d.png" % (j))
 			elif align_step == "Manual":
 				tiltimage = os.path.join(vid_path,"manual_tilt%04d.png" % (j))
 			else: #align_step == "Refinement"
@@ -1760,9 +2035,10 @@ def makeTiltSeriesVideos(seriesname, iteration, tiltfilename, rawimagecount, run
 			pass
 	
 	try: #If anything fails, it's likely that something isn't in the path
-		if (parallel=="True" and align_step=="Coarse") or (parallel=="True" and align_step=="Coarse2") or (parallel=="True" and align_step=="Manual"):
-			procs=min(5,mp.cpu_count()-1)
-		elif parallel=="True":
+		# if (parallel=="True" and align_step=="Coarse") or (parallel=="True" and align_step=="Coarse2") or (parallel=="True" and align_step=="Manual"):
+		# 	procs=min(5,mp.cpu_count()-1)
+		# el
+		if parallel=="True":
 			procs=max(mp.cpu_count()-1,2)
 		else:
 			procs=1
@@ -1811,6 +2087,13 @@ def makeTiltSeriesVideos(seriesname, iteration, tiltfilename, rawimagecount, run
 			webm='coarse_'+seriesname+'_iter2.webm'
 			png='coarse2_*.png'
 			pngff='coarse2_tilt%04d.png'
+		elif align_step == "Imod":
+			gif='imod_'+seriesname+'.gif'
+			ogv='imod_'+seriesname+'.ogv'
+			mp4='imod_'+seriesname+'.mp4'
+			webm='imod_'+seriesname+'.webm'
+			png='imod_*.png'
+			pngff='imod_tilt%04d.png'
 		elif align_step == "Manual":
 			gif='manual_'+seriesname+'.gif'
 			ogv='manual_'+seriesname+'.ogv'
@@ -1851,6 +2134,8 @@ def makeTiltSeriesVideos(seriesname, iteration, tiltfilename, rawimagecount, run
 			apDisplay.printMsg("Done creating coarse tilt-series video!")
 		elif align_step == "Coarse2":
 			apDisplay.printMsg("Done creating coarse iteration 2 tilt-series video!")
+		elif align_step == "Imod":
+			apDisplay.printMsg("Done creating Imod coarse tilt-series video!")
 		elif align_step == "Manual":
 			apDisplay.printMsg("Done creating manual alignment tilt-series video!")
 		else: #align_step == "Refinement"
@@ -1942,6 +2227,7 @@ def makeReconstructionVideos(seriesname, iteration, rundir, rx, ry, show_window_
 		ry=int(ry/map_sampling)
 		
 		# Convert the reconstruction *.img file to mrc for further processing
+		print "\033[92m(Ignore the error: 'i3cut: could not load libi3tiffio.so, TiffioModule disabled')\033[0m"
 		os.system("i3cut -fmt mrc %s %s" % (img_full, mrc_full))
 		#Normalizing here doesn't change video normalization.
 		

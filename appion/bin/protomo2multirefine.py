@@ -15,11 +15,6 @@ import subprocess
 import multiprocessing as mp
 from appionlib import apDisplay
 
-try:
-	import protomo
-except:
-	apDisplay.printError("Protomo did not get imported. Make sure Protomo is properly sourced in your environment.")
-
 
 def parseOptions():
 	parser=optparse.OptionParser()
@@ -691,7 +686,7 @@ def parseOptions():
 		help="To perform an initial coarse alignment, set to 'True'. Requires gridsearch, corr, and mask options, e.g. --coarse=True")
 	
 	parser.add_option("--further_alignment", dest="further_alignment",  default=False,
-		help="Iterate Coarse Alignment once or Manually align followed by a 2nd Coarse Alignment?, e.g. --further_alignment=Coarse")
+		help="Iterate Coarse Alignment once?, e.g. --further_alignment=True")
 	
 	parser.add_option("--gridsearch_limit", dest="gridsearch_limit",  type="float",  default=2.0,
 		help="Protomo2.4 only: Gridseach +-angle limit for coarse alignment. To do a translational alignment only set to 1 and set gridsearch_limit to 0, e.g. --gridsearch_limit=2.0", metavar="float")
@@ -862,17 +857,17 @@ if __name__ == '__main__':
 		restart_seriesname = seriesname + restart_seriesnumber
 		restart_tlt_file = restart_path + '/' + restart_seriesname + '.tlt'
 		if os.path.exists(restart_tlt_file):
-			apDisplay.printMsg("Restarting Refinement from %s Iteration %d" % (os.path.basename(restart_path), options.restart_from_iteration))
+			apDisplay.printMsg("Restarting Refinement from %s Iteration %d" % (os.path.basename(restart_path), int(options.restart_from_iteration)))
 			os.system('mkdir %s; cp %s %s' % (rundir, restart_tlt_file, tiltfilename_full))
 			os.system('mkdir -p %s/raw/original/; ln %s/* %s/raw/ 2>/dev/null; ln %s/original/* %s/raw/original/' % (rundir, os.path.join(restart_path,'raw'), rundir, os.path.join(restart_path,'raw'), rundir))
 			os.system('cp -r %s %s 2>/dev/null' % (os.path.join(restart_path,'media','dose_compensation'), os.path.join(rundir,'media')))
 			os.system('mkdir %s/defocus_estimation/; cp -r %s/defocus_estimation/* %s/defocus_estimation/ 2>/dev/null' % (rundir, restart_path, rundir))
-			apDisplay.printMsg("Restarting Refinement from %s Iteration %d" % (os.path.basename(restart_path), options.restart_from_iteration))
+			apDisplay.printMsg("Restarting Refinement from %s Iteration %d" % (os.path.basename(restart_path), int(options.restart_from_iteration)))
 			os.system('mkdir %s; cp %s %s' % (rundir, restart_tlt_file, tiltfilename_full))
 			os.system('mkdir -p %s/raw/original/; ln %s/* %s/raw/ 2>/dev/null; ln %s/original/* %s/raw/original/' % (rundir, os.path.join(restart_path,'raw'), rundir, os.path.join(restart_path,'raw'), rundir))
 			os.system('cp -r %s %s 2>/dev/null' % (os.path.join(restart_path,'media','dose_compensation'), os.path.join(rundir,'media')))
 			os.system('mkdir %s/defocus_estimation/; cp -r %s/defocus_estimation/* %s/defocus_estimation/ 2>/dev/null' % (rundir, restart_path, rundir))
-			os.system('touch %s/restarted_from_%s_iteration_%d' % (rundir, os.path.basename(restart_path), options.restart_from_iteration))
+			os.system('touch %s/restarted_from_%s_iteration_%d' % (rundir, os.path.basename(restart_path), int(options.restart_from_iteration)))
 		else:
 			apDisplay.printError("Restart Refinement Iteration not found! Aborting Refinement!")
 			sys.exit()
@@ -886,13 +881,17 @@ if __name__ == '__main__':
 			coarse2_tlt_file = 'coarse_'+seriesname+'_iter2.tlt'
 			coarse2_tlt_filefull = rundir+'/'+coarse2_tlt_file
 			os.system('cp %s %s' % (coarse2_tlt_filefull, tiltfilename_full))
+		elif options.starting_tlt_file == "Imod_Coarse":
+			imod_tlt_file = 'imod_coarse_'+seriesname+'.tlt'
+			imod_tlt_filefull = rundir+'/'+imod_tlt_file
+			os.system("cp %s %s" % (imod_tlt_filefull, tiltfilename_full))
 		elif options.starting_tlt_file == "Manual":
 			manual_tlt_file = 'manual_'+seriesname+'.tlt'
 			manual_tlt_filefull = rundir+'/'+manual_tlt_file
 			os.system('cp %s %s' % (manual_tlt_filefull, tiltfilename_full))
 		elif (options.starting_tlt_file == "More_Manual") or (options.starting_tlt_file == "MoreManual"):
 			manual_tlt_file = 'more_manual_'+seriesname+'.tlt'
-			if not os.path.isfile(manual_tlt_file):
+			if not os.path.isfile(rundir+'/'+manual_tlt_file):
 				apDisplay.printWarning("%s file not found," % manual_tlt_file)
 				manual_tlt_file = 'more_manual_coarse_'+seriesname+'.tlt'
 				apDisplay.printWarning("Switching to %s" % manual_tlt_file)
@@ -935,6 +934,7 @@ if __name__ == '__main__':
 						input_command += '--%s=%s ' % (key, options.__dict__[key])
 				else:
 					input_command += '--%s=%s ' % (key, options.__dict__[key])
+		input_command += '--from_multirefine=True'
 		alignment_commands.append(input_command)
 	
 	#Set up new directories

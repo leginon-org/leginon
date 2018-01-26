@@ -137,7 +137,7 @@ def getImageFiles2(imgtree, rawdir, link, copy):
 	[p.join() for p in mp.active_children()]
 	return filenamelist, newimgtree
 
-def getImageFiles(imgtree, rawdir, link, copy): #Backup for above multiprocessing version
+def getImageFiles(imgtree, rawdir, link, copy, export=False): #Backup for above multiprocessing version
 	#This function should replace linkImageFiles in all calls (i.e. in tomoaligner.py and everywhere else)
 	filenamelist = []
 	newimgtree=[]
@@ -161,15 +161,20 @@ def getImageFiles(imgtree, rawdir, link, copy): #Backup for above multiprocessin
 		elif copy == "True":
 			#shutil.copy(imgfullpath,destpath)	
 			
-			#Y-flip raw images, normalize them, and convert them to float32 because Protomo
+			#Normalize them raw images, and convert them to float32 because Protomo
 			image=mrc.read(imgfullpath)
 			#image=numpy.flipud(image)
 			image=imagenorm.normStdev(image)
 			image=numpy.float32(image)
 			#image=numpy.rot90(image)
 			mrc.write(image,destpath)
+		if export !=False:
+			shutil.copy(imgfullpath,destpath)
 		#else: just return values
-	return filenamelist, newimgtree
+	if export == False:
+		return filenamelist, newimgtree
+	else:
+		return filenamelist, newimgtree, imagedata['filename'].split(presetname)
 
 def writeTiltFile(outfilename, seriesname, imagedict, parameterdict=False):
 	f=open(outfilename,'w')

@@ -110,7 +110,11 @@ class SimFrameProcessing(apDDprocess.DDFrameProcessing):
 			# TO DO: this should research only ones before the image is taken.
 			scopedata = self.image['scope']
 			channel = self.image['channel']
-			refdata = self.c_client.researchCorrectorImageData(reftype, scopedata, self.camerainfo, channel)
+			try:
+				refdata = self.c_client.researchCorrectorImageData(reftype, scopedata, self.camerainfo, channel)
+			except:
+				# from image itself
+				refdata = self.c_client.researchCorrectorImageData(reftype, scopedata, self.image['camera'], channel)
 		return refdata
 
 if __name__ == '__main__':
