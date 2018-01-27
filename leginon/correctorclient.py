@@ -71,6 +71,10 @@ class CorrectorClient(cameraclient.CameraClient):
 		else:
 			return None
 
+		default_directory = leginon.leginonconfig.mapPath(leginon.leginonconfig.IMAGE_PATH)
+		if default_directory not in ref['session']['image path']:
+			self.logger.warning('Other path not allowed')
+			return None
 		if ref['image'] is None:
 			return None
 
