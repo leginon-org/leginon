@@ -562,6 +562,9 @@ class CorrectorClient(cameraclient.CameraClient):
 			if not r['session']:
 				continue
 			impath = r['session']['image path']
+			default_directory = leginon.leginonconfig.mapPath(leginon.leginonconfig.IMAGE_PATH)
+			if default_directory not in impath:
+				continue
 			if os.access(impath, os.W_OK):
 				refsession = r
 				break
