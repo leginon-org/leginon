@@ -1718,7 +1718,7 @@ class leginondata {
 
 	function getAllApplicationIdsOfSameName($id) {
 		$app_ids = array();
-		$app_info = $this->getApplicationInfo($id)[0];
+		$app_info = $this->getApplicationInfo($id);
 		$app_name = $app_info['name'];
 		$q = "select DEF_id from ApplicationData "
 			."where name like '".$app_name."' order by name,version";
@@ -1729,7 +1729,7 @@ class leginondata {
 	}
 
 	function updateApplicationHideStatus($id,$status) {
-		$app_info = $this->getApplicationInfo($id)[0];
+		$app_info = $this->getApplicationInfo($id);
 		$status_display = $status ? "hidden": "unhidden";
 		if ($app_info['hide'] !== $status) {
 			$data = array('DEF_timestamp'=>$r[0]['DEF_timestamp'],'hide'=>$status);
@@ -1945,7 +1945,8 @@ class leginondata {
 	}
 
 	function getApplicationInfo($id) {
-		return $this->getDataInfo('ApplicationData', $id);
+		list($r) = $this->getDataInfo('ApplicationData', $id);
+		return $r;
 	}
 
 	function dumpApplicationData($applicationId, $format="xml") {
