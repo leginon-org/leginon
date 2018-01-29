@@ -375,8 +375,14 @@ class SessionNamePage(WizardPage):
 		self.Bind(wx.EVT_TEXT_ENTER, self.onValidateName, self.nametextctrl)
 		sizer.Add(self.nametextctrl, (1, 1), (1, 1), wx.EXPAND|wx.ALL)
 
-		holders = leginon.leginondata.GridHolderData()
+		holders = leginon.leginondata.GridHolderData(hidden=False)
 		holders = holders.query()
+		# Trick the system to be back compatible
+		if not holders:
+			holders = leginon.leginondata.GridHolderData(hidden=False).query()
+			if not holders:
+				leginon.leginondata.GridHolderData(name='fake',hidden=True).insert()
+				holders = leginon.leginondata.GridHolderData(hidden=False).query()
 		holders = [holder['name'] for holder in holders]
 		holders.sort()
 		self.holderctrl = wx.ComboBox(self, -1, choices=holders, style=wx.CB_DROPDOWN)
@@ -800,7 +806,7 @@ class SetupWizard(wx.wizard.Wizard):
 			description = self.namepage.descriptiontextctrl.GetValue()
 			description = description.strip()
 			holder = self.namepage.holderctrl.GetValue()
-			holderdata = leginon.leginondata.GridHolderData(name=holder)
+			holderdata = leginon.leginondata.GridHolderData(name=holder,hidden=False)
 			directory = self.imagedirectorypage.directorytextctrl.GetValue()
 			self.session = self.setup.createSession(user, name, description,
 																							directory)
