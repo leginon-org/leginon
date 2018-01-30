@@ -71,6 +71,10 @@ class CorrectorClient(cameraclient.CameraClient):
 		else:
 			return None
 
+		default_directory = leginon.leginonconfig.mapPath(leginon.leginonconfig.IMAGE_PATH)
+		if default_directory not in ref['session']['image path']:
+			self.logger.warning('Other path not allowed')
+			return None
 		if ref['image'] is None:
 			return None
 
@@ -535,7 +539,12 @@ class CorrectorClient(cameraclient.CameraClient):
 		if session_name is None:
 			raise RuntimeError('no reference session name determined')
 
-		directory = leginon.leginonconfig.mapPath(leginon.leginonconfig.IMAGE_PATH)
+		ref_directory = leginon.leginonconfig.mapPath(leginon.leginonconfig.REF_PATH)
+		if ref_directory is not None:
+			directory = leginon.leginonconfig.mapPath(leginon.leginonconfig.IMAGE_PATH)
+		else:
+			directory = leginon.leginonconfig.mapPath(leginon.leginonconfig.REF_PATH)
+
 		imagedirectory = os.path.join(leginon.leginonconfig.unmapPath(directory), session_name, 'rawdata').replace('\\', '/')
 
 		initializer = {
@@ -562,6 +571,11 @@ class CorrectorClient(cameraclient.CameraClient):
 			if not r['session']:
 				continue
 			impath = r['session']['image path']
+			# restrict to ref path if specified.  Useful when disk access to old data
+			# is not available
+			default_directory = leginon.leginonconfig.mapPath(leginon.leginonconfig.REF_PATH)
+			if default_director is not None and default_directory not in impath:
+				continue
 			if os.access(impath, os.W_OK):
 				refsession = r
 				break

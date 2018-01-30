@@ -17,7 +17,7 @@ class rubinsteinParticlePolisher extends BasicLayoutForm
 	protected $unalignedDDStackIds;
 	
 	// Set Default values in the constructor
-	function __construct( $expId, $extraHTML='',$stackId='',  $expweight=true, $localavg=true,$localavgsigma='500', $smooth='1.0', $exaggerate='10',$framefirstali='0', $framefirstave='0', $rmax1='500',$rmax2='20',$bfactor='2000',$commit='on')
+	function __construct( $expId, $extraHTML='',$stackId='',  $ddstackId='', $expweight=true, $localavg=true,$localavgsigma='500', $smooth='1.0', $exaggerate='10',$framefirstali='0', $framefirstave='0', $rmax1='500',$rmax2='20',$bfactor='2000',$commit='on')
 
 	{
 		parent::__construct($expId, $extraHTML);
@@ -235,13 +235,6 @@ class rubinsteinParticlePolisher extends BasicLayoutForm
 		$command = $this->removeCommandFlag( $command, "stack" );
 		$command = $this->addCommandFlag( $command, "stack", "stack", $stackid );
 	
-
-		$ddstackid = $params->getParamValue( "ddstackid" );
-		list($ddstackid,$apix,$boxsz,$totpart) = preg_split('%\|--\|%',$ddstackid);
-		$command = $this->removeCommandFlag( $command, "ddstackid" );
-		$command = $this->addCommandFlag( $command, "ddstackid", "ddstackid", $ddstackid );
-
-
 		// If the commit box is checked, add --commit, otherwise --no-commit
 		$commit  = ($params->getParamValue('commit') == 'on' ) ? true : false;
 		if (!$commit) {
@@ -274,13 +267,23 @@ class rubinsteinParticlePolisher extends BasicLayoutForm
 		$localavgsigma = $params->getParamValue('localavgsigma');
 		$localavg = $params->getParamValue('localavg');
 		$particleradius = $params->getParamValue('particleradius');
+		$ddstackid = $params->getParamValue( "ddstackid" );
+		$stackid = $params->getParamValue( "stackid" );
 		$micrographs_per_job = $params->getParamValue('micrographs_per_job');
-		$nproc = $params->getParamValue('nproc');
+
+		if ($_POST['process'] != 'Just Show Command')
+			$msg .="<B>Error: </B> This needs to be run from head node with job scheduler with pasted command.<br>";
 
 		if($particleradius==='')
 		{
 		$msg .="<B>Error: </B> Select particle radius in angstroms<br>";
 		}
+
+		if ($stackid==='')
+			$msg .="<B>Error: </B> Need particle stack to run<br>";
+
+		if ($ddstackid==='')
+			$msg .="<B>Error: </B> Need unaligned ddstack to run<br>";
 
 		if($micrographs_per_job==='')
 		{

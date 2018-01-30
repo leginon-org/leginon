@@ -36,6 +36,10 @@ fullname:
 
 [Drive Mapping]
 
+# Optional restriction of reference path to the specified
+#[References]
+#path:
+
 # password entered in GUI
 #[Email]
 #host: smtp.yourdomain.com
