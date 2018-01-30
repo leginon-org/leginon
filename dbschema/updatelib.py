@@ -25,9 +25,9 @@ class UpdateLib:
 			print idlist
 			return True
 		# perform upgrade
-		self.subversionSchemaUpgrade()
+		self.versionControlSchemaUpgrade()
 
-	def subversionSchemaUpgrade(self):
+	def versionControlSchemaUpgrade(self):
 		print "update schema table in database from legacy version"
 		last_revision = self.getDatabaseRevision(msg=False)
 		db_branch = self.getDatabaseBranch(msg=False)
@@ -56,7 +56,8 @@ class UpdateLib:
 		updateq.insert(force=True)
 
 	def getAvailableTagsForBranch(self):
-		tag_list = gitlib.getAvailableTagsForBranch()
+		# have to get all since release branches are not merged
+		tag_list = gitlib.getAvailableTagsForAll()
 		tag_number_list = []
 		for tag in tag_list:
 			if tag.startswith("schema"):
