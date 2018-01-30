@@ -13,11 +13,13 @@ import sys
 import inspect
 
 logevents = False
+# Set to None if it is an optional configuration
+REF_PATH = None
 
 pathmapping = {}
 if sys.platform == 'win32':
 	def mapPath(path):
-			if not pathmapping:
+			if not pathmapping or path is None:
 				return path
 			for key, value in pathmapping.items():
 				if value.lower() == path[:len(value)].lower():
@@ -27,7 +29,7 @@ if sys.platform == 'win32':
 			return os.path.normpath(path)
 
 	def unmapPath(path):
-			if not pathmapping:
+			if not pathmapping or path is None:
 				return path
 			for key, value in pathmapping.items():
 				if key.lower() == path[:len(key)].lower():
@@ -39,6 +41,17 @@ else:
 		return path
 	def unmapPath(path):
 		return path
+
+def validatePath(path):
+	if not path:
+		return None
+	if sys.platform == 'win32':
+		mapped_path = mapPath(path)
+	else:
+		mapped_path = path
+	if not os.access(mapped_path, os.W_OK):
+		sys.stderr.write('Error:  image path is not writable: %s\n' % (path,))
+	return mapped_path
 
 # Here is a replacement for os.mkdirs that won't complain if dir
 # already exists (from Python Cookbook, Recipe 4.17)
@@ -76,13 +89,12 @@ else:
 	sys.stderr.write('Warning:  You have not configured Images path in leginon.cfg!  Using current directory.\n')
 	IMAGE_PATH = os.path.abspath(os.curdir)
 
+	validatePath(IMAGE_PATH)
 
-if sys.platform == 'win32':
-	mapped_path = mapPath(IMAGE_PATH)
-else:
-	mapped_path = IMAGE_PATH
-if not os.access(mapped_path, os.W_OK):
-	sys.stderr.write('Error:  image path is not writable: %s\n' % (IMAGE_PATH,))
+# optional reference path.  Will restrict research and create of
+# reference sessions to these is specified
+if leginonconfigparser.has_section('References'):
+	REF_PATH = leginonconfigparser.get('References', 'path')
 
 # project
 try:

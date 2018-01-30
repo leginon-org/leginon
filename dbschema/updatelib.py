@@ -25,9 +25,9 @@ class UpdateLib:
 			print idlist
 			return True
 		# perform upgrade
-		self.subversionSchemaUpgrade()
+		self.versionControlSchemaUpgrade()
 
-	def subversionSchemaUpgrade(self):
+	def versionControlSchemaUpgrade(self):
 		print "update schema table in database from legacy version"
 		last_revision = self.getDatabaseRevision(msg=False)
 		db_branch = self.getDatabaseBranch(msg=False)
@@ -56,7 +56,8 @@ class UpdateLib:
 		updateq.insert(force=True)
 
 	def getAvailableTagsForBranch(self):
-		tag_list = gitlib.getAvailableTagsForBranch()
+		# have to get all since release branches are not merged
+		tag_list = gitlib.getAvailableTagsForAll()
 		tag_number_list = []
 		for tag in tag_list:
 			if tag.startswith("schema"):
@@ -72,11 +73,11 @@ class UpdateLib:
 		'''
 		has_appiondbs = self.checkProcessingDB()
 		### this seems so clunky, can we do this better
-		if branch_name == 'trunk':
-			schema_revisions = [12857,13713,14077,14891,15069,15497,15526,15653,16182,16607,17035,17111,17224,17561,17562,17617,17812,17813,17916,18000,18034,19470]
+		if branch_name == 'trunk' or branch_name == 'myami-beta':
+			schema_revisions = [12857,13713,14077,14891,15069,15497,15526,15653,16182,16607,17035,17111,17224,17561,17562,17617,17812,17813,17916,18000,18034,19470, 20369]
 			appion_only_revisions = [15248,15251,15293,15961,16412,16446,17035,17311,17982]
 		elif branch_name == 'myami-3.3':
-			schema_revisions = [12857,13713,14077,14891,15069,15497,15526,15653,16182,16607,17035,17111,17224,17561,17562,17617,17812,17813,17916,18000,18034,19470]
+			schema_revisions = [12857,13713,14077,14891,15069,15497,15526,15653,16182,16607,17035,17111,17224,17561,17562,17617,17812,17813,17916,18000,18034,19470,20369]
 			appion_only_revisions = [15248,15251,15293,15961,16412,16446,17035,17311,17982]
 		elif branch_name == 'myami-3.2':
 			schema_revisions = [12857,13713,14077,14891,15069,15497,15526,15653,16182,16607,17035,17111,17224,17561,17562,17617,17812,17813,17916,18000,18034,19470]

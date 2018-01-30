@@ -1705,7 +1705,7 @@ class leginondata {
 		return $this->mysql->getSQLResult($q);
 	}
 
-	function getApplications() {
+	function getApplications($name='') {
 		$applications = array();
 		if ($this->mysql->SQLTableExists("ApplicationData")) {
 			$q = "select DEF_Id, name, version from ApplicationData order by name,version";
@@ -1714,6 +1714,30 @@ class leginondata {
 				$applications[] = $application;
 		}
 		return $applications;
+	}
+
+	function getAllApplicationIdsOfSameName($id) {
+		$app_ids = array();
+		$app_info = $this->getApplicationInfo($id);
+		$app_name = $app_info['name'];
+		$q = "select DEF_id from ApplicationData "
+			."where name like '".$app_name."' order by name,version";
+		$rapp_ids = $this->mysql->getSQLResult($q);
+		foreach ($rapp_ids as $r)
+			$app_ids[] = $r['DEF_id'];
+		return $app_ids;
+	}
+
+	function updateApplicationHideStatus($id,$status) {
+		$app_info = $this->getApplicationInfo($id);
+		$status_display = $status ? "hidden": "unhidden";
+		if ($app_info['hide'] !== $status) {
+			$data = array('DEF_timestamp'=>$r[0]['DEF_timestamp'],'hide'=>$status);
+			$this->mysql->SQLUpdate('ApplicationData', $data, array('DEF_id'=>$id));
+			return $app_info['name']."-".$app_info['version']." is now ".$status_display;
+		} else {
+			return $app_info['name']." is already ".$status_display;
+		}
 	}
 
 	function getSQLTableDefinitionXML($table) {
@@ -1921,7 +1945,8 @@ class leginondata {
 	}
 
 	function getApplicationInfo($id) {
-		return $this->getDataInfo('ApplicationData', $id);
+		list($r) = $this->getDataInfo('ApplicationData', $id);
+		return $r;
 	}
 
 	function dumpApplicationData($applicationId, $format="xml") {

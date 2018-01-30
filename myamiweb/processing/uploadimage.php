@@ -431,14 +431,8 @@ function runUploadImage() {
 		$description=$_POST['description'];
 		if ($description) $command.="--description='$description' ";
 		if ($z_slice) $command.="--z-slice=$z_slice ";
-				
-		$headinfo .= appionRef(); // main appion ref
-		$errors = showOrSubmitCommand($command, $headinfo, 'uploadimage', 1);
-		
-		// if error display them
-		if ($errors)
-			createuploadImageForm($errors);
-			exit;
+		// command geneeration is handled at the end of the script
+
 	} else {
 		// determine which upload script to use
 		if (($serialem_stack) OR ($serialem_dir))
@@ -489,6 +483,7 @@ function runUploadImage() {
 		$description=$_POST['description'];
 		if (!$description && !$session_in_project)
 			createUploadImageForm("<B>ERROR:</B> Enter a brief description of the session");
+		$command.="--description='$description' ";
 
 		// for inverting density
 		if ($invert_check=='on') $command.="--invert ";
@@ -628,8 +623,22 @@ function runUploadImage() {
 		} else {
 			$badbatch = false;
 		}
-		$headinfo .= appionRef(); // main appion ref
-		$errors = showOrSubmitCommand($command, $headinfo, 'uploadimage', 1);
+		if ($badbatch) createUploadImageForm("<B>ERROR:</B> Invalid format in the batch file");
+
 	}
+	//Common for all cases
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
+	$headinfo .= appionRef(); // main appion ref
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
+	$errors = showOrSubmitCommand($command, $headinfo, 'uploadimage', 1);
+
+	// if error display them
+	if ($errors)
+		createuploadImageForm($errors);
+	exit;
 }
 ?>

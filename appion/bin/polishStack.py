@@ -378,17 +378,17 @@ class stackPolisherScript(appionScript.AppionScript):
 		multiple queued job submission with a scheduler
 		'''
 		# submission agent object
-		#a = apParallelTasks.Agent(self.configfile)
+		a = apParallelTasks.Agent(self.configfile)
 		for i in range(len(self.joblist)):
 			jobfile = 'align_polish_parts_%d' % i
 			task = self.joblist[i]
-			#a.Main(jobfile, [task])
+			a.Main(jobfile, [task])
 
 		# Clean up
 		apDisplay.printMsg("deleting temporary processing files")
 
-                particlePolishMonitor = apTaskMonitor.ParallelTaskMonitor(self.configfile,self.params['rundir'])
-                particlePolishMonitor.Main()
+		particlePolishMonitor = apTaskMonitor.ParallelTaskMonitor(self.configfile,self.params['rundir'])
+		particlePolishMonitor.Main()
 
 	#=====================
 	def start(self):

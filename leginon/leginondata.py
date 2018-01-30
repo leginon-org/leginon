@@ -104,6 +104,7 @@ class GridHolderData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('name', str),
+			('hidden', bool),
 		)
 	typemap = classmethod(typemap)
 

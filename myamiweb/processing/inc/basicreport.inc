@@ -156,7 +156,6 @@ class BasicReport {
 		if (!$showHidden) $q.= " AND (r.`hidden` IS NULL OR r.`hidden` = 0) ";
 		if ($this->thisExpIdOnly) $q.= "AND r.`REF|leginondata|SessionData|session`=$this->expId ";
 		$q.= "ORDER BY r.`DEF_id` DESC ";
-		echo $q;
 		$r = $this->mysql->getSQLResult($q);
 		if ( $r === False ) {
 			$dberror = $this->mysql->getError();

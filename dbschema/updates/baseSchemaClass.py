@@ -221,6 +221,18 @@ class SchemaUpdate(object):
 		print "\033[35mSuccessful Update\033[0m"
 		self.commitUpdate()
 
+	def getUpgradeDB(self, sinedon_module_name):
+		if sinedon_module_name == 'leginondata':
+			return self.leginon_dbupgrade
+		elif sinedon_module_name == 'projectdata':
+			return self.project_dbupgrade
+		else:
+			raise ValueError('%s not valid for this operation' % sinedon_module_name)
+
+	def addBooleanColumn(self, sinedon_module_name, class_name, key):
+		upgradedb = self.getUpgradeDB(sinedon_module_name)
+		upgradedb.addColumn(class_name, key, upgradedb.bool)
+
 if __name__ == "__main__":
 	update = SchemaUpdate(backup=False)
 	update.run()
