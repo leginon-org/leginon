@@ -53,6 +53,13 @@ def getVersion():
 
 def getAvailableTagsForBranch():
 	cmd = "git tag --merged"
+	return _getAvailableTags(cmd)
+
+def getAvailableTagsForAll():
+	cmd = "git tag"
+	return _getAvailableTags(cmd)
+
+def _getAvailableTags(cmd):
 	proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	stdout, stderr = proc.communicate()
 	if len(stderr) > 0:

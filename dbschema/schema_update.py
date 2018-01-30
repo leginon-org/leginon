@@ -30,14 +30,13 @@ if __name__ == "__main__":
 			print "????"
 		schema_pythonfile = "updates/schema-r%s.py"%(str(schema_tag))
 		if not os.path.isfile(schema_pythonfile):
+			# Use this to indicate branch not
+			# needing update since we can not use git tag --merge
 			print "schema file not found: %s"%(schema_pythonfile)
 			if len(schema_to_run_list) > 0:
 				# stop and update what we have so far
 				del schema_tag_list
-				break
-			else:
-				# error missing schema files
-				raise IOError("schema update not found.")
+			break
 		if need_update:
 			schema_to_run_list.append("python %s" % (schema_pythonfile))
 
