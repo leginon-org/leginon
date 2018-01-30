@@ -268,6 +268,7 @@ class rubinsteinParticlePolisher extends BasicLayoutForm
 		$localavg = $params->getParamValue('localavg');
 		$particleradius = $params->getParamValue('particleradius');
 		$ddstackid = $params->getParamValue( "ddstackid" );
+		$stackid = $params->getParamValue( "stackid" );
 		$micrographs_per_job = $params->getParamValue('micrographs_per_job');
 
 		if ($_POST['process'] != 'Just Show Command')
@@ -277,6 +278,9 @@ class rubinsteinParticlePolisher extends BasicLayoutForm
 		{
 		$msg .="<B>Error: </B> Select particle radius in angstroms<br>";
 		}
+
+		if ($stackid==='')
+			$msg .="<B>Error: </B> Need particle stack to run<br>";
 
 		if ($ddstackid==='')
 			$msg .="<B>Error: </B> Need unaligned ddstack to run<br>";
