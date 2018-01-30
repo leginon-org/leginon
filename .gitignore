@@ -15,6 +15,12 @@ jeol.cfg
 .DS_Store
 *.dat
 *.old
+# build folders
+leginon/build
+pyami/build
+sinedon/build
+pyscope/build
+imageviewer/build
 #Eclipse project files
 .project
 .pydevproject
