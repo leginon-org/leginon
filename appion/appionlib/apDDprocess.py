@@ -112,6 +112,12 @@ class DirectDetectorProcessing(object):
 		else:
 			return self.framestackpath	
 		
+	def getForcedFrameSessionPath(self):
+		return self.forced_frame_session_path
+
+	def setForcedFrameSessionPath(self, path):
+		self.forced_frame_session_path = path
+
 	def setTempDir(self,tempdir=None):
 		'''
 		This is the rundir for ddstack
@@ -387,12 +393,6 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			return False
 		else:
 			return session_frame_path
-
-	def getForcedFrameSessionPath(self):
-		return self.forced_frame_session_path
-
-	def setForcedFrameSessionPath(self, path):
-		self.forced_frame_session_path = path
 
 	def getSessionFramePathFromImage(self, imagedata):
 		# Forcing a particular path
