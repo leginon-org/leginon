@@ -292,6 +292,10 @@ class UpdateLib:
 
 		## hack for python 2.6, yuck
 		module_name = "schema-r%s"%(str(schema_number))
+		schema_pythonfile = "updates/schema-r%s.py"%(str(schema_number))
+		if not os.path.isfile(schema_pythonfile):
+			print "schema file not found: %s"%(schema_pythonfile)
+			return False
 		my_module = getattr(__import__("updates", fromlist=[module_name]), module_name)
 		try:
 			my_class = my_module.SchemaUpdate()
