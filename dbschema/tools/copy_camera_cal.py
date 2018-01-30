@@ -10,8 +10,8 @@ class CopyCameraCal(object):
 		try:
 			from_cam, to_cam =self.readCameras()
 			self.setInstrument(from_cam, to_cam)
-		except e:
-			print dir(e)
+		except Exception, e:
+			print e.message
 			self.close()
 
 	def setCommit(self,value):
