@@ -5,7 +5,7 @@ from leginon import leginondata
 from sinedon import directq
 
 if len(sys.argv) != 3:
-	print 'usage: python pathchang.py new_path_base'
+	print 'usage: python batch_leginon_path_change.py new_path_base'
 	print 'this searches database based on the session name in the new_path_base'
 	print 'and make the image path or frame path change'
 	print 'new_path_base needs to be the parent directory of the sessionname'

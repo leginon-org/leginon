@@ -3,6 +3,16 @@ from pyami import gitlib
 from leginon import version
 from leginon import projectdata
 import xml.dom.minidom as dom
+import inspect
+
+def getInstalledLocation():
+	'''where is this module located'''
+	# full path of this module
+	this_file = inspect.currentframe().f_code.co_filename
+	fullmod = os.path.abspath(this_file)
+	# just the directory
+	dirname = os.path.dirname(fullmod)
+	return dirname
 
 class UpdateLib:
 	def __init__(self, project_dbupgrade):
@@ -114,7 +124,7 @@ class UpdateLib:
 		'''
 		branch_reset_revision = self.db_revision
 		if not self.getDatabaseReset():
-			if branch_name == 'trunk':
+			if branch_name == 'trunk' or branch_name == 'myami-beta':
 				branch_reset_revision = 18034
 			elif branch_name == 'myami-3.3':
 				branch_reset_revision = 18034
@@ -196,6 +206,8 @@ class UpdateLib:
 		versionlist = versiontext.split('.')
 		if len(versionlist) > 1:
 			branch_name = 'myami-'+'.'.join(versionlist[:2])
+		elif versiontext == 'beta':
+			branch_name = 'myami-'+versiontext
 		else:
 			# trunk
 			branch_name = versionlist[0]
@@ -292,10 +304,6 @@ class UpdateLib:
 
 		## hack for python 2.6, yuck
 		module_name = "schema-r%s"%(str(schema_number))
-		schema_pythonfile = "updates/schema-r%s.py"%(str(schema_number))
-		if not os.path.isfile(schema_pythonfile):
-			print "schema file not found: %s"%(schema_pythonfile)
-			return False
 		my_module = getattr(__import__("updates", fromlist=[module_name]), module_name)
 		try:
 			my_class = my_module.SchemaUpdate()
@@ -354,6 +362,7 @@ class UpdateLib:
 
 	def updateDatabaseVersion(self,current_version):
 		### set version of database
+		### version has been stripped off myami-
 		selectq = " SELECT * FROM `install` WHERE `key`='version'"
 		values = self.project_dbupgrade.returnCustomSQL(selectq)
 		if values:
