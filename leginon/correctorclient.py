@@ -574,7 +574,7 @@ class CorrectorClient(cameraclient.CameraClient):
 			# restrict to ref path if specified.  Useful when disk access to old data
 			# is not available
 			default_directory = leginon.leginonconfig.mapPath(leginon.leginonconfig.REF_PATH)
-			if default_director is not None and default_directory not in impath:
+			if default_directory is not None and default_directory not in impath:
 				continue
 			if os.access(impath, os.W_OK):
 				refsession = r
