@@ -122,17 +122,28 @@ class Node(correctorclient.CorrectorClient):
 			if self.session:
 				results = leginondata.ConnectToClientsData(session=self.session).query(results=1)
 				if not results:
+					# session not created properly
 					return ''
-				for client in results[0]['clients']:
+				clients = results[0]['clients']
+				if not clients:
+					# session without clients still has ConnectToClientsData with empty list
+					# use my hostname
+					clients = [socket.gethostname().lower(),]
+				for client in clients:
 					instruments = leginondata.InstrumentData(hostname=client).query()
 					if instruments and not self.tem_hostname:
+						temname = ''
+						description = None
 						for instr in instruments:
 							if instr['cs']:
+								# It is tem
 								temname = str(client)
 								if 'description' in instr.keys() and instr['description']:
-									temname = instr['description']
-								self.tem_hostname = temname
-								break
+									description = instr['description']
+						if description:
+							# set temname as description if it is ever set to not None.
+							temname = description
+						self.tem_hostname = temname
 		return self.tem_hostname
 
 	def testprint(self,msg):
