@@ -353,6 +353,7 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 	echo "</table>\n";
 	echo "</form>\n";
 	echo "</li>\n";
+	/*
 	echo "<li class='tab' title='Upload SEM Images'>\n";
 	
 	echo $extrainput;
@@ -386,6 +387,7 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 	
 	
 	echo "</li>\n";
+	*/
 	echo "<script type='text/javascript'>
 	UI.Tabview.init('tab-body', { 
 									width: '100%',
