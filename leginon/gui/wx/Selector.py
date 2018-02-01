@@ -114,8 +114,9 @@ class SelectorItem(object):
 
 	def setUserVerificationStatus(self, value):
 		# set background color on all items except the text
+		orange = wx.Colour(255,140,0)
 		if value:
-			self.setUserVerificationStatusColor(wx.RED)
+			self.setUserVerificationStatusColor(orange)
 		else:
 			self.setUserVerificationStatusColor(wx.WHITE)
 		self.is_user_check = value
