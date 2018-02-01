@@ -71,8 +71,8 @@ class CorrectorClient(cameraclient.CameraClient):
 		else:
 			return None
 
-		default_directory = leginon.leginonconfig.mapPath(leginon.leginonconfig.IMAGE_PATH)
-		if default_directory not in ref['session']['image path']:
+		default_directory = leginon.leginonconfig.mapPath(leginon.leginonconfig.REF_PATH)
+		if default_directory and default_directory not in ref['session']['image path']:
 			self.logger.warning('Other path not allowed')
 			return None
 		if ref['image'] is None:
@@ -540,7 +540,7 @@ class CorrectorClient(cameraclient.CameraClient):
 			raise RuntimeError('no reference session name determined')
 
 		ref_directory = leginon.leginonconfig.mapPath(leginon.leginonconfig.REF_PATH)
-		if ref_directory is not None:
+		if ref_directory is None:
 			directory = leginon.leginonconfig.mapPath(leginon.leginonconfig.IMAGE_PATH)
 		else:
 			directory = leginon.leginonconfig.mapPath(leginon.leginonconfig.REF_PATH)
