@@ -60,6 +60,7 @@ class CorrectorClient(cameraclient.CameraClient):
 		for key in ('tem', 'high tension'):
 			imagetemp['scope'][key] = scopedata[key]
 		imagetemp['channel'] = channel
+		refimageq = imagetemp.copy()
 		try:
 			ref = imagetemp.query(results=1)
 		except Exception, e:
@@ -71,10 +72,14 @@ class CorrectorClient(cameraclient.CameraClient):
 		else:
 			return None
 
-		default_directory = leginon.leginonconfig.mapPath(leginon.leginonconfig.REF_PATH)
-		if default_directory and default_directory not in ref['session']['image path']:
-			self.logger.warning('Other path not allowed')
-			return None
+		ref_path = leginon.leginonconfig.mapPath(leginon.leginonconfig.REF_PATH)
+		'''
+		Reference path is used to restrict where the image come from so that
+		this will not try to access a file on an unmounted disk which freezes the program.
+		'''
+		if ref_path and ref_path not in ref['session']['image path']:
+			self.logger.warning('Searching only reference in %s' % ref_path)
+			ref = self.researchReferenceOnlyInPath(refimageq, ref_path)
 		if ref['image'] is None:
 			return None
 
@@ -84,6 +89,15 @@ class CorrectorClient(cameraclient.CameraClient):
 			self.logger.error('%s: bad shape: %s' % (ref['filename'], shape,))
 			return None
 		return ref
+
+	def researchReferenceOnlyInPath(self, refimageq, ref_path):
+		results = refimageq.query(timelimit='-90 0:0:0')
+		for r in results:
+			if ref_path in r['session']['image path']:
+				self.logger.info('Use reference in %s' % (r['session']['image path']))
+				return r
+		self.logger.warning('Found none in the last 90 days')
+		return {'image':None}
 
 	def getBrightImageFromNorm(self,normdata):
 		'''
@@ -577,6 +591,7 @@ class CorrectorClient(cameraclient.CameraClient):
 			if default_directory is not None and default_directory not in impath:
 				continue
 			if os.access(impath, os.W_OK):
+				# checking access on a disk that is unmounted will hang here.
 				refsession = r
 				break
 
