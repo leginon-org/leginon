@@ -120,6 +120,8 @@ class MosaicTargetMaker(TargetMaker):
 		self.logger.debug('Getting current instrument state...')
 		presetname = self.settings['preset']
 		preset = self.presetsclient.getPresetByName(presetname)
+		if preset is None:
+			raise AtlasError('cannot find preset \'%s\' in this session' % presetname)
 		temname = preset['tem']['name']
 		self.instrument.setTEM(temname)
 		camname = preset['ccdcamera']['name']
@@ -161,7 +163,7 @@ class MosaicTargetMaker(TargetMaker):
 
 		preset = self.presetsclient.getPresetByName(presetname)
 		if preset is None:
-			raise AtlasError('cannot find preset \'%s\'' % presetname)
+			raise AtlasError('cannot find preset \'%s\' in this session' % presetname)
 
 		return preset
 

@@ -160,6 +160,7 @@ class AlignZeroLossPeak(ReferenceTimer):
 				self.logger.warning('Energy filtering is not enabled.')
 				return 'bypass'
 			self.positionCamera(camera_name=ccd_name)
+			self.openColumnValveBeforeExposure()
 			self.logger.info('Aligning ZLP with %s camera' % ccd_name)
 			ccd_camera.alignEnergyFilterZeroLossPeak()
 			m = 'Energy filter zero loss peak aligned.'
