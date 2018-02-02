@@ -116,7 +116,7 @@ class SelectorItem(object):
 		# set background color on all items except the text
 		if value:
 			# CentOS only takes wx.REF not orange wx.Colour(255,140,0)
-			self.setUserVerificationStatusColor(wx.RED)
+			self.setUserVerificationStatusColor(wx.Colour(255,140,0))
 		else:
 			self.setUserVerificationStatusColor(wx.WHITE)
 		self.is_user_check = value
