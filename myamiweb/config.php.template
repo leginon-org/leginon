@@ -191,6 +191,8 @@ define('STARTUP_MESSAGE', "");
 // --- define('SERVER_PORT', "55123"); --- //
 define('SERVER_HOST', "");
 define('SERVER_PORT', "55123");
+// --- If a disk is down and causing image serving to hang, use this constant to avoid it
+//define('REDUX_AVOID_PATH',"/bad_data_disk");
 
 // --- list specifc datasets that have test scripts associated with them --- //
 // --- example:
