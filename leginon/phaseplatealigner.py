@@ -103,6 +103,7 @@ class PhasePlateAligner(referencecounter.ReferenceCounter):
 			time.sleep(pause_time)
 
 	def chargePhasePlate(self):
+		self.openColumnValveBeforeExposure()
 		# Need self.preset_name which is set by _processRequest
 		if self.settings['charge time'] and self.preset_name:
 			self.presets_client.toScope(self.preset_name)
