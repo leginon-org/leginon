@@ -70,6 +70,9 @@ class DDFrameAligner(object):
 		cmd = ' '.join([self.executable, self.framestackpath, self.aligned_sumpath])
 		cmd += self.joinFrameAlignOptions(glue='-')
 		cmd += ' > '+self.logpath
+		apDisplay.printWarning('This example alignment copy the whole stack!!!!')
+		apDisplay.printWarning('This example alignment copy the whole stack!!!!')
+		apDisplay.printWarning('This example alignment copy the whole stack!!!!')
 		return cmd
 
 	def alignFrameStack(self):
