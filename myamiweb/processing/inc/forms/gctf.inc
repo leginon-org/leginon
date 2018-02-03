@@ -82,8 +82,8 @@ class gctf extends BasicLoopForm
 		$params->addParam( "local_resH", $local_resH, "High resolution limit for local CTF");
 		$params->addParam( "refine_local_astm", $refine_local_astm, "Local refinement astigmation");
 		//$params->addParam( "refine_tilt", $refine_tilt, "Do tilt refinement. 0: no tilt refinement; 1: refine global tilt before local refinement");
-		$params->addParam( "init_tilt_ang", $init_tilt_ang, "Initial tilt angle");
-		$params->addParam( "init_tilt_err", $init_tilt_error, "Error of tilt angle");
+		//$params->addParam( "init_tilt_ang", $init_tilt_ang, "Initial tilt angle");
+		//$params->addParam( "init_tilt_err", $init_tilt_error, "Error of tilt angle");
 		$params->addParam( "do_phase_flip", $do_phase_flip, "Do phase flipping");
 		$params->addParam( "do_validation", $do_validation, "Do validation of CTF determination.");
 		$params->addParam( "boxsuffix", $boxsuffix, "Input suffix for local refinement");
