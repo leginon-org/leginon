@@ -81,10 +81,9 @@ class gctf extends BasicLoopForm
 		$params->addParam( "local_resL", $local_resL, "Low resolution limit for local CTF");
 		$params->addParam( "local_resH", $local_resH, "High resolution limit for local CTF");
 		$params->addParam( "refine_local_astm", $refine_local_astm, "Local refinement astigmation");
-		$params->addParam( "refine_tilt", $refine_tilt, "Do tilt refinement. 0: no tilt refinement; 1: refine global tilt before local refinement
-");
-		$params->addParam( "init_tilt_ang", $init_tilt_ang, "Initial tilt angle");
-		$params->addParam( "init_tilt_err", $init_tilt_error, "Error of tilt angle");
+		//$params->addParam( "refine_tilt", $refine_tilt, "Do tilt refinement. 0: no tilt refinement; 1: refine global tilt before local refinement");
+		//$params->addParam( "init_tilt_ang", $init_tilt_ang, "Initial tilt angle");
+		//$params->addParam( "init_tilt_err", $init_tilt_error, "Error of tilt angle");
 		$params->addParam( "do_phase_flip", $do_phase_flip, "Do phase flipping");
 		$params->addParam( "do_validation", $do_validation, "Do validation of CTF determination.");
 		$params->addParam( "boxsuffix", $boxsuffix, "Input suffix for local refinement");
@@ -201,7 +200,7 @@ class gctf extends BasicLoopForm
 		$html.= $params->insertTextField( "min_phase_shift", $fieldSize );
 		$html.= $params->insertTextField( "phase_search_step", $fieldSize );
 
-
+/*	Hide until python function is implemented
 		$html .= "
 	    <br />
 
@@ -211,6 +210,7 @@ class gctf extends BasicLoopForm
 		$html.= $params->insertTextField( "refine_tilt", $fieldSize );
 		$html.= $params->insertTextField( "init_tilt_ang", $fieldSize );
 		$html.= $params->insertTextField( "init_tilt_err", $fieldSize );
+*/
 /*
 		$html .= "
 	    <br />
