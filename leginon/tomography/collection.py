@@ -83,7 +83,7 @@ class Collection(object):
 		self.saveInstrumentState()
 		self.logger.info('Instrument state saved.')
 
-		self.prediction.fitdata = self.settings['fit data points']
+		self.prediction.fitdata = self.settings['fit data points'], self.settings['fit data points2']
 		self.tilt_series = leginon.tomography.tiltseries.TiltSeries(self.node, self.settings,
 												 self.session, self.preset,
 												 self.target, self.emtarget)

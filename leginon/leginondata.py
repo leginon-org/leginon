@@ -2239,6 +2239,7 @@ class TomographySettingsData(AcquisitionSettingsData):
 			('use tilt', bool),
 #			('wiener max tilt', float),
 			('fit data points', int),
+			('fit data points2', int),
 			('use z0', bool),
 			('addon tilts', str),
 			('use preset exposure', bool),

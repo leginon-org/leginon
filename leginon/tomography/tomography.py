@@ -66,6 +66,7 @@ class Tomography(leginon.acquisition.Acquisition):
 		'use tilt': True,
 #		'wiener max tilt': 45,
 		'fit data points': 4,
+		'fit data points2': 4,
 		'use z0': False,
 		'addon tilts':'()',
 		'use preset exposure':False,
