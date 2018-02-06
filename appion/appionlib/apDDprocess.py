@@ -203,7 +203,7 @@ class DirectDetectorProcessing(object):
 			apDisplay.printWarning('No alignment log file %s found for thresholding drift' % logfile)
 			return False
 		positions = ddinfo.readPositionsFromAlignLog(logfile)
-		shifts = ddinfo.calculateFrameShifts(positions)
+		shifts = ddinfo.calculateFrameShiftFromPositions(positions)
 		apDisplay.printDebug('Got %d shifts' % (len(shifts)-1))
 		return shifts
 
