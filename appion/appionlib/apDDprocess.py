@@ -864,6 +864,10 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		if plandata:
 			plan = self.c_client.formatCorrectorPlan(plandata)
 		else:
+			if not self.use_full_raw_area:
+				# no plan and is using the original imagedata camearinfo means it truly has no plan.
+				return None
+			# This will end up be the most recent value not the one prior to the image
 			plan, plandata = self.c_client.retrieveCorrectorPlan(self.camerainfo)
 		return plan
 
