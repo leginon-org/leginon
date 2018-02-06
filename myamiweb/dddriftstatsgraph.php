@@ -23,6 +23,7 @@ $viewsql=$_GET['vs'];
 $width=$_GET['w'];
 $height=$_GET['h'];
 $topn=($_GET['top'] > 1 ) ? (int) $_GET['top'] : 1;
+$offsetn=($_GET['offset']) ? (int) $_GET['offset'] : 0;
 $data_name= ( $topn == 1 ) ? 'maximal movemnet':'top '.$topn.' movement average';
 
 //function in project.inc that sets $_SESSION
@@ -45,8 +46,8 @@ foreach ($imagestatsdata as $imagestats ) {
 		$shift_distances = $particle->getShiftDistancesFromPositions($shift_data);
 		// sorted from high to low
 		rsort($shift_distances);
-		if ( count($shift_distances) < $topn ) continue;
-		$top_avg = array_sum(array_slice($shift_distances,0,$topn)) / $topn;
+		if ( count($shift_distances) < $topn+$offsetn ) continue;
+		$top_avg = array_sum(array_slice($shift_distances,$offsetn,$topn)) / $topn;
 		$data[] = array('timestamp'=>$imagestats['timestamp'],'unix_timestamp'=>$imagestats['unix_timestamp'],$data_name=>$top_avg);
 	}
 }
