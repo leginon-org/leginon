@@ -136,12 +136,13 @@ class Correlator(object):
 			shift = self.shift.copy()
 		return shift
 
-	def tiltShift(self,tilt,shift,angle=0.0):
-		# This is a simplified shift correction
-		x = shift['x']*math.cos(angle)-shift['y']*math.sin(angle)
-		y = shift['x']*math.sin(angle)+shift['y']*math.cos(angle)
-		shift['x'] = x*math.cos(tilt)
-		shift['y'] = y*math.cos(tilt)
+	def tiltShift(self,tilt,shift,angle_from_y=0.0):
+		'''
+		Correct shift from what tilt corrector gives. It should consider both
+		tilt and delta tilt.
+		'''
+		# got better result if not correct than correct it wrongly.  Leave it uncorrected
+		# for now.
 		return shift
 
 if __name__ == '__main__':
