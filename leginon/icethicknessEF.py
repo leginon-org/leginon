@@ -58,6 +58,9 @@ class IcethicknessEF(imagewatcher.ImageWatcher):
 		'slit width': 15.0,         #eV
 		'mean free path': 395.0,   #nm
 		'decimate': 4,       #take measurement every N images
+		'process_obj_thickness': False,
+		'obj mean free path': 300.0, #nm
+		'vacuum intensity': -1.0, #counts 
 	}
 	def __init__(self, id, session, managerlocation, **kwargs):
 		imagewatcher.ImageWatcher.__init__(self, id, session, managerlocation, **kwargs)
@@ -76,6 +79,7 @@ class IcethicknessEF(imagewatcher.ImageWatcher):
 	        collect two images: one with slit in, one without, and compare intensitites to get thickness
 		'''
 		self.zlpcounter += 1
+
 		if (self.settings['decimate'] <1):
 			self.settings['decimate'] =1
 		modulus = self.zlpcounter % self.settings['decimate']
@@ -108,8 +112,19 @@ class IcethicknessEF(imagewatcher.ImageWatcher):
 			self.logger.info('slit mean: %f counts' % (zlossth['slit mean'],))
 			self.logger.info('calculated thickness: %f nm' % (zlossth['thickness'],))
 			self.logger.info('Number of function calls: %i' %(self.zlpcounter))
- 
 			zlossth.insert()
+
+		if self.settings['process_obj_thickness'] and self.settings['vacuum intensity'] >0 :
+			
+			objth = leginondata.ObjIceThicknessData()
+			objth['vacuum intensity'] = self.settings['vacuum intensity']
+			objth['mfp'] = self.settings['obj mean free path']
+			objth['intensity'] = arraystats.mean(imagedata['image'])
+			objth['thickness'] = objth['mfp'] * log (objth['vacuum intensity'] / objth['intensity']) 
+#			self.logger.info('mean counts of current image: %f' %(objth['intensity']))
+			self.logger.info('objective scattering thickness: %f nm' %(objth['thickness']))
+			objth.insert()
+
 	def _acquireSpecialImage(self, preset, acquirestr, exp_time, filtered, slit_width):
 		# acquire an image by only changing camera params, not microscope. 
 						#leginon/leginondata.py: ('energy filtered', bool),
@@ -197,7 +212,7 @@ class IcethicknessEF(imagewatcher.ImageWatcher):
 				last_acq_wait = results[0]['wait for process']
 			if settings['process'] and not last_acq_wait:
 				return [('error','"%s" node "wait for process" setting must be True when ice thickness measurements are taken' % (self.last_acq_node['alias'],))]
-			if not settings['process'] and last_acq_wait:
+			if not (settings['process'] or settings['process_obj_thickness'])  and last_acq_wait:
 				return [('error','"%s" node "wait for process" setting must be False when ice thickness measurements are not taken' % (self.last_acq_node['alias'],))]
 		return []
 

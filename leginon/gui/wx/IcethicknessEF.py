@@ -122,12 +122,28 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz_decimate.Add(self.widgets['decimate'], (0, 1), (1, 1),
 										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 
+		self.widgets['process_obj_thickness'] = wx.CheckBox(self, -1, 'Calculate ice thickness from objective scattering')
+		self.widgets['obj mean free path'] = FloatEntry(self, -1, min=0.0, chars=6)
+		sz_objmeanfreepath = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Objective scattering mean free path (nm):')
+		sz_objmeanfreepath.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz_objmeanfreepath.Add(self.widgets['obj mean free path'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		self.widgets['vacuum intensity'] = FloatEntry(self, -1, min=0.0, chars=6)
+		sz_vac = wx.GridBagSizer(5,5)
+		label = wx.StaticText(self, -1, 'Vacuum intensity for exposure images:')
+		sz_vac.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz_vac.Add(self.widgets['vacuum intensity'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+
+
 		sz = wx.GridBagSizer(5, 10)
 		sz.Add(self.widgets['process'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(sz_exp_time, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(sz_slit_width, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(szmeanfreepath, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(sz_decimate, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['process_obj_thickness'], (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(sz_objmeanfreepath, (6, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(sz_vac, (7, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
