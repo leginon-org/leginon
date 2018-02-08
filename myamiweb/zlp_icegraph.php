@@ -31,12 +31,12 @@ if ($viewsql) {
 	exit;
 }
 if ($viewdata) {
-	$keys = array("timestamp", "filename", "thickness");
+	$keys = array("unix_timestamp", "filename", "slit mean", "no slit mean", "thickness");
 	echo dumpData($thicknessdata, $keys);
 	exit;
 }
 
-$display_x = 'timestamp';
+$display_x = 'unix_timestamp';
 $display_y = 'thickness';
 $axes = array($display_x,$display_y);
 if ($histogram == true && $histaxis == 'x') 
@@ -47,7 +47,7 @@ $dbemgraph->title="Ice Thickness histogram using zero loss peak";
 $dbemgraph->yaxistitle="Thickness /nm";
 
 if ($viewdata) {
-	$keys = array("timestamp", "thickness");
+	$keys = array("unix_timestamp", "thickness");
 	echo dumpData($thicknessdata, $keys);
 	$dbemgraph->dumpData(array($display_x, $display_y));
 }

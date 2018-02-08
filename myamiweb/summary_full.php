@@ -305,8 +305,15 @@ $icethicknesszlp = $leginondata->getZeroLossIceThickness($expId); # see if anyth
 		echo "<a href='zlp_icegraph.php?Id=$expId&vdata=1'>[data]</a>";
 		echo "<a href='zlp_icegraph.php?Id=$expId&vs=1'>[sql]</a><br>";
 		//echo "<a href='zlp_icegraph.php?Id=$expId?h=256'>";
-		echo "<a href='zlp_icegraph.php?Id=$expId&w=256&h=256'>";
+		echo "<a href='zlp_icegraph.php?Id=$expId&w=1024&h=512'>";
 		echo "<img border='0' src='zlp_icegraph.php?Id=$expId&w=512&h=256'>";
+		echo "</a>\n";
+		echo "</td>\n";
+		echo "</tr>\n";
+		echo "<tr>";
+		echo "<td>";
+		echo "<a href='zlp_icegraph2.php?Id=$expId&w=1024&h=512'>";
+		echo "<img border='0' src='zlp_icegraph2.php?Id=$expId&w=512&h=256'>";
 		echo "</a>\n";
 		echo "</td>\n";
 		echo "</tr>\n";
@@ -316,6 +323,44 @@ $icethicknesszlp = $leginondata->getZeroLossIceThickness($expId); # see if anyth
 		echo "</td>";
 
 	
+$icethicknessobj = $leginondata->getObjIceThickness($expId); # see if anything was collected
+	echo "<tr>";
+	echo "<td colspan='2'>";
+	echo divtitle("Objective Scattering Ice Thickness");
+	if (!empty($icethicknesszlp)) {
+		echo "<table border='0'>\n";
+		echo "<tr>";
+		echo "<td>";
+		echo "<a href='objdensityreport.php?Id=$expId'>report &raquo;</a>";
+		echo "</td>";
+	echo "</tr>";
+	echo "<tr>";
+	echo "<tr>";
+		echo "<td>";
+		echo "<a href='obj_icegraph.php?Id=$expId&vdata=1'>[data]</a>";
+		echo "<a href='obj_icegraph.php?Id=$expId&vs=1'>[sql]</a><br>";
+		//echo "<a href='zlp_icegraph.php?Id=$expId?h=256'>";
+		echo "<a href='obj_icegraph.php?Id=$expId&w=1024&h=512'>";
+		echo "<img border='0' src='obj_icegraph.php?Id=$expId&w=512&h=256'>";
+		echo "</a>\n";
+		echo "</td>\n";
+		echo "</tr>\n";
+
+		echo "<tr>";
+		echo "<td>";
+		echo "<a href='obj_icegraph2.php?Id=$expId&w=1024&h=512'>";
+		echo "<img border='0' src='obj_icegraph2.php?Id=$expId&w=512&h=256'>";
+		echo "</a>\n";
+		echo "</td>\n";
+		echo "</tr>\n";
+
+		echo "</table>\n";
+
+	} else echo "no Objective Scattering Ice Thickness information available";
+		echo "</td>";
+
+
+
 ?>
 </tr>
 <?php

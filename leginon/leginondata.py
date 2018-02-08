@@ -2819,7 +2819,7 @@ class ZeroLossIceThicknessData(InSessionData):
 class ObjIceThicknessData(InSessionData):
 	def typemap(cls):
 		return Data.typemap() + (
-#			('image', AcquisitionImageData),
+			('image', AcquisitionImageData),
 			('vacuum intensity', float),
 			('mfp', float),
 			('intensity', float),

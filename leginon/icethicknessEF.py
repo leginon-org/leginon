@@ -121,6 +121,7 @@ class IcethicknessEF(imagewatcher.ImageWatcher):
 			objth['mfp'] = self.settings['obj mean free path']
 			objth['intensity'] = arraystats.mean(imagedata['image'])
 			objth['thickness'] = objth['mfp'] * log (objth['vacuum intensity'] / objth['intensity']) 
+			objth['image'] = imagedata;
 #			self.logger.info('mean counts of current image: %f' %(objth['intensity']))
 			self.logger.info('objective scattering thickness: %f nm' %(objth['thickness']))
 			objth.insert()
