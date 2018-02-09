@@ -327,7 +327,7 @@ $icethicknessobj = $leginondata->getObjIceThickness($expId); # see if anything w
 	echo "<tr>";
 	echo "<td colspan='2'>";
 	echo divtitle("Objective Scattering Ice Thickness");
-	if (!empty($icethicknesszlp)) {
+	if (!empty($icethicknessobj)) {
 		echo "<table border='0'>\n";
 		echo "<tr>";
 		echo "<td>";
@@ -356,8 +356,14 @@ $icethicknessobj = $leginondata->getObjIceThickness($expId); # see if anything w
 
 		echo "</table>\n";
 
-	} else echo "no Objective Scattering Ice Thickness information available";
+	} else { 
+		echo "no Objective Scattering Ice Thickness information available";
+		echo "<a href='obj_icegraph.php?Id=$expId&vdata=1'>[data]</a>";
+		echo "<a href='obj_icegraph.php?Id=$expId&vs=1'>[sql]</a><br>";
+
 		echo "</td>";
+
+		}
 
 
 
