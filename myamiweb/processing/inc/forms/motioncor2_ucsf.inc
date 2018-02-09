@@ -141,13 +141,13 @@ class motioncor2_ucsf extends MakeDDStackForm
 		$align = $params->getParamValue('align');
 		if (!$align) return $msg;
 		$nrw = $params->getParamValue('nrw');
-		if ($nrw != 1 )
+		/*if ($nrw != 1 )
 			$msg .= "<B>Error:</B> Grouping more than 1 will reduce alignment accuracy in the first few frames. This is not allowed for now".$nrw."<br/>";
-		/*if ( $nrw%2 == 0 )
+		*/
+		if ( $nrw%2 == 0 )
 		{
 			$msg .= "<B>Error:</B> testNumber of frames in running average window must be odd. nrw = ".$nrw."<br/>";
 		}
-		*/
 		// Get recent image to check nframes against alignoffset and nrw.
 		$preset = $postArray['preset'];
 		$testfilename = $postArray['testfilename'];
