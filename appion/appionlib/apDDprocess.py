@@ -367,13 +367,16 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		return self.rawframe_dir
 
 	def getRawFrameStackPath(self):
-		if self.getRawFrameType() == 'stack':
+		raw_frame_type = self.getRawFrameType()
+		if raw_frame_type == 'stack':
 			return self.getRawFrameDir()
 		else:
+			apDisplay.printError('frame flip debug: getRawFrameType is not stack, but %s' % (raw_frame_type,))
 			return self.makeRawFrameStack()
 
 	def setRawFrameType(self,frametype='singles'):
 		if frametype in ('singles','stack'):
+			apDisplay.printMsg('Raw frame type is %s' % frametype)
 			self.rawframetype = frametype
 
 	def getRawFrameType(self):
@@ -402,6 +405,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		# defined in database.  It is only False if the BufferHostData is
 		# not defined for the camera or set to disabled.
 		session_frame_path = self.getBufferFrameSessionPathFromImage(imagedata)
+		apDisplay.printMsg('frame flip debug: buffer session_frame_path: %s' % (session_frame_path,))
 		if session_frame_path is False:
 			if imagedata['session']['frame path']:
 				 session_frame_path = imagedata['session']['frame path']
@@ -426,6 +430,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		if not self.waitForPathExist(rawframedir,self.rawtransfer_wait):
 			apDisplay.printError('Raw Frame Dir %s does not exist.' % rawframedir)
 		self.getFrameNamePattern(rawframedir)
+		apDisplay.printMsg('Raw Frame Dir from image is %s' % (rawframedir,))
 		return rawframedir
 
 	def getKVFromImage(self, imagedata):
@@ -867,6 +872,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			if not self.use_full_raw_area:
 				# no plan and is using the original imagedata camearinfo means it truly has no plan.
 				return None
+			apDisplay.printWarning('Using most recent corrector plan')
 			# This will end up be the most recent value not the one prior to the image
 			plan, plandata = self.c_client.retrieveCorrectorPlan(self.camerainfo)
 		return plan
@@ -879,6 +885,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		self.setCameraInfo(1,self.use_full_raw_area)
 		plan = self.getCorrectorPlan(self.camerainfo)
 		if plan and (plan['columns'] or plan['rows'] or plan['pixels']):
+			apDisplay.printWarning('frame flip debug: has bad pixels')
 			return True
 		return False
 
@@ -985,6 +992,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		first = 0
 		frameprocess_dir = os.path.dirname(self.tempframestackpath)
 		rawframestack_path = os.path.join(frameprocess_dir,self.image['filename']+'_raw_st.mrc')
+		apDisplay.printMsg('Making raw frame stack and saving it to %s' % (rawframestack_path,))
 		for start_frame in range(first,first+total_frames):
 			array = self.loadOneRawFrame(rawframe_dir,start_frame)
 			array = self.modifyImageArray(array)
@@ -1005,6 +1013,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		'''
 		Creates a file of non gain/dark corrected stack of frames
 		'''
+		apDisplay.printMsg('Making a non-gain corrected stack for FrameAligner')
 		self.setupDarkNormMrcs(use_full_raw_area)
 		rawframestack_path = self.getRawFrameStackPath()
 		if not os.path.isfile(self.tempframestackpath) and os.path.isfile(rawframestack_path):
@@ -1014,7 +1023,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 				if frame_rotate:
 					apDisplay.printError("stack rotation not implemented")
 				if frame_flip:
-					apDisplay.printColor("flipping frame stack",'blue')
+					apDisplay.printColor("flipping the whole frame stack",'blue')
 					a = mrc.read(rawframestack_path)
 					# 3D array left-right flip creates the effect of up-down flip on axis 1 and 2
 					a = numpy.fliplr(a)
