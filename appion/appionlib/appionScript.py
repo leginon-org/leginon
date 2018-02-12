@@ -344,7 +344,7 @@ class AppionScript(basicScript.BasicScript):
 		if useglobalparams is True:
 			self.setupGlobalParserOptions()
 		self.setupParserOptions()
-		self.params = apParam.convertParserToParams(self.parser)
+		self.params = apParam.convertParserToParams(self.parser, optargs=optargs)
 		self.checkForDuplicateCommandLineInputs(optargs)
 
 	#=====================
