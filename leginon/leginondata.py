@@ -2816,6 +2816,18 @@ class ZeroLossIceThicknessData(InSessionData):
 		)
 	typemap = classmethod(typemap)
 
+class ObjIceThicknessData(InSessionData):
+	def typemap(cls):
+		return Data.typemap() + (
+			('image', AcquisitionImageData),
+			('vacuum intensity', float),
+			('mfp', float),
+			('intensity', float),
+			('thickness', float),
+		)
+	typemap = classmethod(typemap)
+
+
 class ZeroLossIceThicknessSettingsData(SettingsData):
 	def typemap(cls):
 		return SettingsData.typemap() + (
@@ -2823,7 +2835,10 @@ class ZeroLossIceThicknessSettingsData(SettingsData):
 			('exposure time', float),
 			('slit width', float),
 			('mean free path', float),   #nm
-			('decimate',int),
+			('decimate', int),
+			('process_obj_thickness', bool),
+			('obj mean free path', float),
+			('vacuum intensity', float),
 		)
 	typemap = classmethod(typemap)
 

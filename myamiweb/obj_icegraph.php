@@ -16,11 +16,11 @@ $sessionId= ($_GET[Id]) ? $_GET[Id] : $defaultId;
 $viewdata = ($_GET['vdata']==1) ? true : false;
 $viewsql = $_GET['vs'];
 
-$histogram= true;
+$histogram= ($_GET['Histo']) ? $_GET['Histo'] : true;
 $histaxis=($_GET['haxis']) ? $_GET['haxis'] : 'y';
 $width=$_GET['w'];
 $height=$_GET['h'];
-$thicknessdata = $leginondata->getZeroLossIceThickness($sessionId);
+$thicknessdata = $leginondata->getObjIceThickness($sessionId);
 
 foreach($thicknessdata as $t) {
 	$data[] = $t['thickness'];
@@ -31,7 +31,7 @@ if ($viewsql) {
 	exit;
 }
 if ($viewdata) {
-	$keys = array("unix_timestamp", "filename", "slit mean", "no slit mean", "thickness");
+	$keys = array("unix_timestamp", "filename", "mfp", "vacuum intensity", "intensity", "thickness");
 	echo dumpData($thicknessdata, $keys);
 	exit;
 }
@@ -43,11 +43,11 @@ if ($histogram == true && $histaxis == 'x')
 	$axes = array($display_y,$display_x);
 $dbemgraph= new dbemgraph($thicknessdata, $axes[0], $axes[1]);
 $dbemgraph->lineplot=False;
-$dbemgraph->title="Ice Thickness histogram using zero loss peak";
+$dbemgraph->title="Ice Thickness histogram using objective scattering";
 $dbemgraph->yaxistitle="Thickness /nm";
 
 if ($viewdata) {
-	$keys = array("unix_timestamp", "thickness");
+	$keys = array("timestamp", "thickness");
 	echo dumpData($thicknessdata, $keys);
 	$dbemgraph->dumpData(array($display_x, $display_y));
 }

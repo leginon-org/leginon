@@ -16,7 +16,7 @@ $sessionId= ($_GET[Id]) ? $_GET[Id] : $defaultId;
 $viewdata = ($_GET['vdata']==1) ? true : false;
 $viewsql = $_GET['vs'];
 
-$histogram= true;
+$histogram= false;
 $histaxis=($_GET['haxis']) ? $_GET['haxis'] : 'y';
 $width=$_GET['w'];
 $height=$_GET['h'];
@@ -31,7 +31,7 @@ if ($viewsql) {
 	exit;
 }
 if ($viewdata) {
-	$keys = array("unix_timestamp", "filename", "slit mean", "no slit mean", "thickness");
+	$keys = array("unix_timestamp", "filename", "thickness");
 	echo dumpData($thicknessdata, $keys);
 	exit;
 }
@@ -43,7 +43,7 @@ if ($histogram == true && $histaxis == 'x')
 	$axes = array($display_y,$display_x);
 $dbemgraph= new dbemgraph($thicknessdata, $axes[0], $axes[1]);
 $dbemgraph->lineplot=False;
-$dbemgraph->title="Ice Thickness histogram using zero loss peak";
+$dbemgraph->title="Ice Thickness  using zero loss peak";
 $dbemgraph->yaxistitle="Thickness /nm";
 
 if ($viewdata) {
