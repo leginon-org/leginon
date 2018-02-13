@@ -1536,7 +1536,7 @@ class leginondata {
 			return array('id'=>$imgId);
 		$newimage=array();
 		$imageinfo = $this->getImageInfo($imgId);
-		if (	empty($preset)
+		if (	!empty($preset)
 			|| $imageinfo['preset']==$preset 
 			|| in_array($preset, $this->defaulttypes)
 			|| $preset == $this->manualtype
