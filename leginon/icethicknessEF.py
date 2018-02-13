@@ -120,7 +120,11 @@ class IcethicknessEF(imagewatcher.ImageWatcher):
 			objth['vacuum intensity'] = self.settings['vacuum intensity']
 			objth['mfp'] = self.settings['obj mean free path']
 			objth['intensity'] = arraystats.mean(imagedata['image'])
-			objth['thickness'] = objth['mfp'] * log (objth['vacuum intensity'] / objth['intensity']) 
+			try:
+				objth['thickness'] = objth['mfp'] * log (objth['vacuum intensity'] / objth['intensity']) 
+			except: 
+				self.logger.error('Math error! Negative or zero value for intensity?')
+				objth['thickness'] = 0
 			objth['image'] = imagedata;
 #			self.logger.info('mean counts of current image: %f' %(objth['intensity']))
 			self.logger.info('objective scattering thickness: %f nm' %(objth['thickness']))
