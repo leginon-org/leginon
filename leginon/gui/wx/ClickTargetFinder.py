@@ -32,7 +32,7 @@ class Panel(leginon.gui.wx.TargetFinder.Panel):
 		self.imagepanel.selectiontool.setDisplayed('focus', True)
 		self.imagepanel.addTargetTool('reference', wx.Colour(128, 0, 128), target=True, unique=True)
 		self.imagepanel.selectiontool.setDisplayed('reference', True)
-		self.imagepanel.addTargetTool('done', wx.Colour(218, 0, 0))
+		self.imagepanel.addTargetTool('done', wx.Colour(218, 0, 0), numbers=True)
 		self.imagepanel.selectiontool.setDisplayed('done', True)
 		self.imagepanel.addTargetTool('position', wx.Colour(218, 165, 32), shape='x')
 		self.imagepanel.selectiontool.setDisplayed('position', True)
