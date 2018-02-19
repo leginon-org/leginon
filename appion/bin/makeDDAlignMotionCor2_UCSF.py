@@ -56,8 +56,6 @@ class MotionCor2UCSFAlignStackLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop)
 		if self.params['keepstack'] is True:
 			apDisplay.printWarning('Frame stack saving not available to MotionCor2 from UCSF')
 			self.params['keepstack'] = False
-		# use the first gpuids as gpuid in log
-		self.params['gpuid'] = int(self.params['gpuids'].split(',')[0].strip())
 
 	def isUseFrameAlignerFlat(self):
 		has_bad_pixels =  self.dd.hasBadPixels()
@@ -73,6 +71,8 @@ class MotionCor2UCSFAlignStackLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop)
 
 	def setFrameAligner(self):
 		self.framealigner = apDDFrameAligner.MotionCor2_UCSF()
+		# use the first gpuids as gpuid in log. See why this is set here in Issue #5576
+		self.params['gpuid'] = int(self.params['gpuids'].split(',')[0].strip())
 
 	def setOtherProcessImageResultParams(self):
 		# The alignment is done in tempdir (a local directory to reduce network traffic)
