@@ -101,7 +101,7 @@ class AlignStackLoop(apDDStackMaker.FrameStackLoop):
 			self.framealigner.setAlignedSumFrameList(framelist)
 			# whether the sum can be don in framealigner depends on the framelist
 			self.framealigner.setIsUseFrameAlignerSum(self.isUseFrameAlignerSum())
-			self.framealigner.setSaveAlignedStack = self.dd.getKeepAlignedStack()
+			self.framealigner.setSaveAlignedStack(self.dd.getKeepAlignedStack())
 			if self.isUseFrameAlignerFlat():
 				self.dd.makeDarkNormMrcs()
 				gain_ref = self.dd.getNormRefMrcPath()

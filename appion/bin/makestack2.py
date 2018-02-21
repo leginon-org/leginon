@@ -90,6 +90,11 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			if self.params['noctf'] is not True:
 				ctfdata = self.getBestCtfValue(imgdata)
 				if ctfdata:
+					if ctfdata['graph3']:
+						# create symbolic link to ctf pow image
+						linkfile = os.path.join(linkdir,imgdata['filename'])+".ctf"
+						ctf_pow_file = os.path.join(ctfdata['acerun']['path']['path'],'opimage',ctfdata['graph3'])
+						os.symlink(ctf_pow_file,linkfile)
 					# if CTF is written to micrographs.star, localCTF values not taken
 					if self.params['localCTF'] is not True:
 						rel_line+= " micrographs/%s "%(imgdata['filename']+".ctf:mrc")

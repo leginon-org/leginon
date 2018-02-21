@@ -188,7 +188,7 @@ def getStarFileColumnLabels(starfile):
 def getColumnFromRelionLine(line,col):
 	# return a specified column (starting with 0)
 	l = line.strip().split()
-	if (len(l)<col or l[:4]=="_rln" or l[0] in ['data_','loop_']):
+	if (len(l)<col+1 or l[:4]=="_rln" or l[0] in ['data_','loop_']):
 		return None
 	return l[col]
 	
@@ -270,6 +270,12 @@ def generateCtfFile(imgname,cs,kev,amp,mag,dstep,defU,defV,defAngle,cc):
 	f.write("      DFMID1      DFMID2      ANGAST	  CC\n")
 	f.write("   %9.2f   %9.2f    %8.2f    %8.5f  Final Values\n"%(defU,defV,defAngle,cc))
 	f.close()
+
+def generateCtfFile2(imgname,cs,kev,amp,mag,dstep,defU,defV,defAngle,cc):
+	f = open(imgname,'w')
+	f.write("   %9.2f   %9.2f    %8.2f    %8.5f  Final Values\n"%(defU,defV,defAngle,cc))
+	f.close()
+
 
 def extractParticles(starfile,rootname,boxsize,bin,bgradius,pixlimit,invert,ext,nproc=1,logfile=None):
 	relion_version = getRelionVersion()

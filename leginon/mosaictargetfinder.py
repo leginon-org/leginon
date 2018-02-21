@@ -298,6 +298,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.existing_position_targets = {}
 		targets = {}
 		donetargets = []
+		donedict = {}
 		for ttype in ('acquisition','focus'):
 			targets[ttype] = []
 			for id, targetlists in self.targetmap.items():
@@ -315,13 +316,18 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 						self.existing_position_targets[vcoord] = []
 					if targetdata['status'] in ('done', 'aborted'):
 						self.existing_position_targets[vcoord].append(targetdata)
-						donetargets.append(vcoord)
+						donedict[targetdata['number']]=vcoord
 					elif targetdata['status'] in ('new','processing'):
 						self.existing_position_targets[vcoord].append(targetdata)
 						targets[ttype].append(vcoord)
 					else:
 						# other status ignored (mainly NULL)
 						pass
+		# sort donetargets by target number
+		donekeys = donedict.keys()
+		donekeys.sort()
+		for k in donekeys:
+			donetargets.append(donedict[k])
 		return targets, donetargets
 
 	def displayDatabaseTargets(self):
