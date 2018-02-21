@@ -37,7 +37,7 @@ function getSessionSelector($sessions, $sessionId=NULL) {
 		return $selector;
 }
 
-function printResult($qresult,$qtype='',$ttype='') {
+function printResult($qresult,$qtype='',$ttype='', $is_queue=true) {
 	if ($qresult[2] == 0) return;
 	$pretext = $qresult[0];
 	$totalNew = $qresult[1];
@@ -50,11 +50,12 @@ function printResult($qresult,$qtype='',$ttype='') {
 	$esthour = (int) floor(($esttime%86400) / 3600);
 	$estminute = (int) floor(($esttime%3600) / 60);
 	$estsecond = (int) floor($esttime%60);
+	$queuetext = ($is_queue) ? 'queue': 'targetlist';
 ?>
 	<td>
 		<p> <h3> <?php echo $qtype ?> </h3></p>
-		<p> total <?php echo $ttype ?> targets in queue <?php echo $pretext.$totalNew ?> </p>
-		<p> <h4> unprocessed queue= <?php echo $totalActive  ?></h4></p>
+		<p> total <?php echo $ttype ?> targets in <?php echo $queuetext.' '.$pretext.$totalNew ?> </p>
+		<p> <h4> unprocessed = <?php echo $totalActive  ?></h4></p>
 		<p> avg time so far = <?php echo (int)($avgtime) ?> s</p>
 		<p> <h4> estimated time for the remaining targets  = 
 	<?php
@@ -111,6 +112,10 @@ if (!$qtypes) {
 
 	} 
 }
+
+	$countbytype = $leginondata->getNonQueueCountResults($sessionId);
+	if ($countbytype !== false)
+		printResult($countbytype['acquisition'],'Non Queue Targets',false);
 ?>
 </tr></table>
 </form> </body></html>
