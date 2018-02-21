@@ -48,10 +48,10 @@ class JAHCFinder(targetfinder.TargetFinder):
 		'template type': 'cross',
 		'template lpf': {
 			'sigma': 1.0,
+		},
 		'template multiple':1,
 		'multihole angle':0.0,
 		#'multihole spacing':200,
-		},
 		'threshold': 3.0,
 		'threshold method': "Threshold = mean + A * stdev",
 		'blobs border': 20,
