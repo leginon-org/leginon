@@ -14,23 +14,29 @@ import jahcfinderback
 from pyami import ordereddict
 import threading
 import ice
-import instrument
 import os.path
 import math
-import gui.wx.JAHCFinder
 import version
 import itertools
 
 invsqrt2 = math.sqrt(2.0)/2.0
 default_template = os.path.join(version.getInstalledLocation(),'holetemplate.mrc')
 
-class JAHCFinder(targetfinder.TargetFinder):
-	panelclass = gui.wx.JAHCFinder.Panel
+class JAHCFinderModel(object):
 	settingsclass = leginondata.JAHCFinderSettingsData
 	defaultsettings = dict(targetfinder.TargetFinder.defaultsettings)
 	defaultsettings.update({
 		'skip': False,
 		'image filename': '',
+		'edge lpf': {
+			'sigma': 1.0,
+		},
+		'edge': True,
+		'edge type': 'sobel',
+		'edge log size': 9,
+		'edge log sigma': 1.4,
+		'edge absolute': False,
+		'edge threshold': 100.0,
 		'template diameter': 40,
 		'template filename': default_template,
 		'file diameter': 168,
@@ -72,16 +78,19 @@ class JAHCFinder(targetfinder.TargetFinder):
 		'focus offset col': 0,
 	})
 	extendtypes = ['off', 'full', '3x3']
-	targetnames = targetfinder.TargetFinder.targetnames + ['Blobs']
-	def __init__(self, id, session, managerlocation, **kwargs):
-		targetfinder.TargetFinder.__init__(self, id, session, managerlocation, **kwargs)
+	def __init__(self, logger, settings, targetnames):
+		self.targetnames = targetnames
 		self.hf = jahcfinderback.HoleFinder()
+		self.logger = logger
 		self.hf.logger = self.logger
+		self.settings = self.defaultsettings
+		if settings:
+			for k in settings.keys():
+				self.settings[k] = settings[k]
 		self.icecalc = ice.IceCalculator()
 
 		self.images = {
 			'Original': None,
-			'Edge': None,
 			'Template': None,
 			'Threshold': None,
 			'Blobs': None,
@@ -90,12 +99,13 @@ class JAHCFinder(targetfinder.TargetFinder):
 		}
 		self.imagetargets = {
 			'Original': {},
-			'Edge': {},
 			'Template': {},
 			'Threshold': {},
 			'Blobs': {},
 			'Lattice': {},
 			'Final': {},
+			'acquisition': {},
+			'focus': {},
 		}
 		self.filtertypes = [
 			'sobel',
@@ -107,15 +117,40 @@ class JAHCFinder(targetfinder.TargetFinder):
 
 		self.cortypes = ['cross', 'phase']
 		self.focustypes = ['Off', 'Any Hole', 'Good Hole', 'Center']
-		self.userpause = threading.Event()
 
 		self.foc_counter = itertools.count()
 		self.foc_activated = False
 
-		self.start()
+	def setSettings(self, settings):
+		'''
+		Set current settings.
+		'''
+		self.settings = settings
 
-	def readImage(self, filename):
-		self.hf['original'] = targetfinder.TargetFinder.readImage(self, filename)
+	def setOriginalImage(self,imagearray):
+		self.hf['original'] = imagearray
+
+	def setSession(self,session):
+		self.session = session
+
+	def setImage(self,imagearray,label):
+		'''
+		send an event to set gui.
+		'''
+		self.images[label]=imagearray
+
+	def getImage(self,label):
+		return self.images[label]
+
+	def setTargets(self, targets, targettype, block=False):
+		self.imagetargets[targettype] = targets
+		# block does not do anything here.
+
+	def getTargets(self, targettype):
+		return self.imagetargets[targettype]
+
+	def setStatus(self, status):
+		pass
 
 	def correlateTemplate(self):
 		'''
@@ -127,7 +162,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 		filediameter = self.settings['file diameter']
 		invert = self.settings['template invert']
 		multiple = self.settings['template multiple']
-		spacing = self.settings['multihole spacing']
+		spacing = self.settings['lattice spacing']
 		angle = self.settings['multihole angle']
 		if self.settings['template filename'] != '':
 			if os.path.isfile(self.settings['template filename']):
@@ -196,18 +231,21 @@ class JAHCFinder(targetfinder.TargetFinder):
 		self.logger.info('Number of blobs: %s' % (len(targets),))
 		self.setTargets(targets, 'Blobs')
 
-	def usePickedBlobs(self):
-		self.logger.info('find blobs')
-		picks = self.panel.getTargetPositions('Blobs')
-		try:
-			self.hf.find_blobs(picks)
-		except Exception, e:
-			self.logger.error(e)
-			return
-		blobs = self.hf['blobs']
-		targets = self.blobStatsTargets(blobs)
-		self.logger.info('Number of blobs: %s' % (len(targets),))
-		self.setTargets(targets, 'Blobs')
+	def blobStatsTargets(self, blobs):
+		'''
+		Copied from targetfinder.TargetFinder.
+		'''
+		targets = []
+		for blob in blobs:
+			target = {}
+			target['x'] = blob.stats['center'][1]
+			target['y'] = blob.stats['center'][0]
+			target['stats'] = ordereddict.OrderedDict()
+			target['stats']['Size'] = blob.stats['n']
+			target['stats']['Mean'] = blob.stats['mean']
+			target['stats']['Std. Dev.'] = blob.stats['stddev']
+			targets.append(target)
+		return targets
 
 	def holeStatsTargets(self, holes):
 		targets = []
@@ -480,6 +518,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 		self.ice()
 
 	def storeHoleStatsData(self, prefs):
+		return
 		holes = self.hf['holes']
 		for hole in holes:
 			stats = hole.stats
@@ -494,6 +533,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 			self.publish(holestats, database=True)
 
 	def storeHoleFinderPrefsData(self, imagedata):
+		return
 		hfprefs = leginondata.HoleFinderPrefsData()
 		hfprefs.update({
 			'session': self.session,
@@ -554,16 +594,20 @@ class JAHCFinder(targetfinder.TargetFinder):
 				self.logger.info('Lattice extension is on and some blob added.')
 				return True
 
+	def setCurrentImageData(self, imdata):
+		self.hf['original'] = imdata['image']
+		self.currentimagedata = imdata
+
 	def findTargets(self, imdata, targetlist):
 		self.setStatus('processing')
 		autofailed = None
 
 		## auto or not?
-		self.hf['original'] = imdata['image']
-		self.currentimagedata = imdata
+		self.setCurrentImageData(imdata)
 		self.setImage(imdata['image'], 'Original')
 		if not self.settings['skip']:
-			if self.isFromNewParentImage(imdata):
+			#if self.isFromNewParentImage(imdata):
+			if False:
 				self.logger.debug('Reset focus counter')
 				self.foc_counter = itertools.count()
 				self.resetLastFocusedTargetList(targetlist)
@@ -574,33 +618,21 @@ class JAHCFinder(targetfinder.TargetFinder):
 				self.logger.error('auto target finder failed: %s' % (e,))
 				autofailed = True
 
-		## user part
-		if self.settings['user check'] or autofailed:
-			while True:
-				self.oldblobs = self.panel.getTargetPositions('Blobs')
-				self.waitForInteraction(imdata)
-				ptargets = self.processPreviewTargets(imdata, targetlist)
-				newblobs = self.blobsChanged()
-				if newblobs:
-					try:
-						self.logger.info('Autofinder rerun starting from Lattice fitting')
-						self.usePickedBlobs()
-						self.fitLattice(auto_center=False)
-						self.ice()
-						self.logger.info('Autofinder rerun due to blob editing finished')
-					except Exception, e:
-						raise
-						self.logger.error('Failed: %s' % (e,))
-						continue
-				if not ptargets and not newblobs:
-					break
-				self.panel.targetsSubmitted()
+		# do user part outside this class
 
-		# set self.last_focused for target publishing	
-		self.setLastFocusedTargetList(targetlist)
-		### publish targets from goodholesimage
-		self.logger.info('Publishing targets...')
-		self.publishTargets(imdata, 'focus', targetlist)
-		self.publishTargets(imdata, 'acquisition', targetlist)
-		self.setStatus('idle')
+class FakeLogger():
+	def info(self,msg):
+		print 'INFO: %s' % msg
 
+	def warning(self,msg):
+		print 'WARNING: %s' % msg
+	def error(self,msg):
+		print 'ERROR: %s' % msg
+
+if __name__=='__main__':
+	logger = FakeLogger()
+	settings = {'ice min mean':-5.0}
+	app = JAHCFinderModel(logger,settings,['acquisition','focus'])
+	a = leginondata.AcquisitionImageData().direct_query(694)
+	app.setSession(a['session'])
+	app.findTargets(a,[])
