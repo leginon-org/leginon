@@ -77,6 +77,8 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 	$description = ($_POST['description']) ? $_POST['description']: $description;
 	$imgdir = ($_POST['imgdir']);
 	$apix = ($_POST['apix']) ? $_POST['apix'] : "";
+	$binx = ($_POST['binx']) ? $_POST['binx'] : "1";
+	$biny = ($_POST['biny']) ? $_POST['biny'] : "1";
 	$kv = ($_POST['kv']) ? $_POST['kv'] : "";
 	$mag = ($_POST['mag']) ? $_POST['mag'] : "";
 	$df = ($_POST['df']) ? $_POST['df'] : "";
@@ -222,6 +224,10 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 	
 			$keyinput_apix = $html_elements->justifiedInputTableRow
 					('apix','pixel size (A):','apix',$apix,5);
+			$keyinput_binx = $html_elements->justifiedInputTableRow
+					('imgbin','binning in x:','binx',$binx,2);
+			$keyinput_biny = $html_elements->justifiedInputTableRow
+					('imgbin','binning in y:','biny',$biny,2);
 			$keyinput_mag = $html_elements->justifiedInputTableRow
 					('magnification','magnification:','mag',$mag,6);
 			$keyinput_ht = $html_elements->justifiedInputTableRow
@@ -286,12 +292,7 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 	}
 	
 	// Presentation to the web page
-	$headerstuff = $javafunctions."<script src='../js/tabview.js' type='text/javascript'></script>
-<link href='../css/tabview.css' rel='stylesheet' type='text/css'/>";
-	processing_header($title,$heading,$headerstuff);
-	echo "<div id='tab-body'>\n";
-	echo "<ul class='tab-collection'>
-	<li class='tab' title='Upload TEM Images'>\n";
+	processing_header($title,$heading,$javafunctions);
 	echo $extrainput;
 	echo "<FORM NAME='viewerform' method='POST' ACTION='$formAction'>\n";
 	echo $outdirinput;
@@ -331,6 +332,8 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 		echo $keyinput_dir;
 		echo $keyinput_format;
 		echo $keyinput_apix;
+		echo $keyinput_binx;
+		echo $keyinput_biny;
 		echo $keyinput_mag;
 		echo $keyinput_ht;
 		echo $keyinput_def;
@@ -352,51 +355,7 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 	echo "	</td></tr>\n";
 	echo "</table>\n";
 	echo "</form>\n";
-	echo "</li>\n";
-	echo "<li class='tab' title='Upload SEM Images'>\n";
-	
-	echo $extrainput;
-	echo "<FORM NAME='upload_sem' method='POST' ACTION='$formAction'>\n";
-	echo $outdirinput;
-	// Start Tables
-	echo $projectinput;
-	echo "				<br/><br/>\n";
-	echo $sessioninput;
-	echo "				<br/><br/>\n";
-	echo $descriptioninput;
-	echo "				<br/><br/>\n";
-	echo $open_keyinput;
-	echo docpop('imgpath','&nbsp;Directory containing images');
-	echo "<br/>\n";
-	echo "<input type='text' name='imgdir' value='$imgdir' size='45'>\n";
-	
-	echo "<br/>\n";
-	echo "<label for='z-slice'>&nbsp;Z Slice: </label>";
-	echo "<input type='text' name='z-slice' size='2' style='text-align:center'>\n";
-	echo "<br/><br/>\n";
-	echo $close_keyinput;
-	echo '<input type="hidden" name="semform" value=""/>';
-	// Launcher
-	echo "<p align='center'>\n";
-	echo getSubmitForm("Upload Image");
-	
-	// End table
-	echo "</p>\n";
-	echo "</form>\n";
-	
-	
-	echo "</li>\n";
-	echo "<script type='text/javascript'>
-	UI.Tabview.init('tab-body', { 
-									width: '100%',
-							 		activeColorBackground: '#386F8F',
-									activeColorText: 'white',
-									inactiveColorBackground: 'white',
-									inactiveColorText: '#386F8F'
-								});
 
-	</script>\n";
-	echo "</div>\n";
 	echo appionRef();
 	processing_footer();
 	exit;
@@ -419,217 +378,208 @@ function runUploadImage() {
 	$serialem_dir = $_POST['serialem_dir'];
 	$voltage = $_POST['voltage'];
 	$outdir = $_POST['outdir'];
-	$z_slice = $_POST['z-slice'];
-	$imgdir = $_POST['imgdir'];
-	if (isset($_POST['semform'])){
-		if (!$imgdir) createUploadImageForm($errormsg."Specify an image directory");
-		
-		$command = "uploadFIB-SEMImages.py ";
-		if ($sessionname) $command.="--session-mame=$sessionname ";
-		$command.="--image-dir=$imgdir ";
-		
-		$description=$_POST['description'];
-		if ($description) $command.="--description='$description' ";
-		if ($z_slice) $command.="--z-slice=$z_slice ";
-				
-		$headinfo .= appionRef(); // main appion ref
-		$errors = showOrSubmitCommand($command, $headinfo, 'uploadimage', 1);
-		
-		// if error display them
-		if ($errors)
-			createuploadImageForm($errors);
-			exit;
-	} else {
-		// determine which upload script to use
-		if (($serialem_stack) OR ($serialem_dir))
-			$uploadscript = 'uploadSerialEM';
-		elseif (!$batch)
-			$uploadscript = ($uploadtype == 'normal') ? 'imageloader': 'uploadImages';
-		else
-			$uploadscript = 'imageloader';
-		// start setting up the imageloader command
-		$command = $uploadscript.".py ";
-		$command.="--projectid=".$projectId." ";
 
-		$leginon = new leginondata();
+	// determine which upload script to use
+	if (($serialem_stack) OR ($serialem_dir))
+		$uploadscript = 'uploadSerialEM';
+	elseif (!$batch)
+		$uploadscript = ($uploadtype == 'normal') ? 'imageloader': 'uploadImages';
+	else
+		$uploadscript = 'imageloader';
+	// start setting up the imageloader command
+	$command = $uploadscript.".py ";
+	$command.="--projectid=".$projectId." ";
 
-		if (($uploadscript == 'imageloader') OR ($uploadscript == 'uploadSerialEM')) {
-			//imageloader allows user to enter session name.  Therefore it is
-			//necessary to check to see it is valid.
-			//make sure a session name was entered if upload an independent file
-			if (!$sessionname) createUploadImageForm("<B>ERROR:</B> Enter a session name of the image");
-			$has_session = $leginon->checkSessionNameExistance($sessionname,false);
-			$session_in_project = $leginon->checkSessionNameExistance($sessionname,$projectId);
-			$session_is_reserved = $leginon->checkSessionReservation($sessionname);
+	$leginon = new leginondata();
 
-			if ($has_session) {
-				if ($uploadtype !== 'tiltseries'){
-					if (!$leginon->onlyUploadedImagesInSession($has_session[0]['DEF_id'])) {
-						createUploadImageForm($errormsg."Session contains images not from  'appion' Host is not available for uploading more images");
-					}	
+	if (($uploadscript == 'imageloader') OR ($uploadscript == 'uploadSerialEM')) {
+		//imageloader allows user to enter session name.  Therefore it is
+		//necessary to check to see it is valid.
+		//make sure a session name was entered if upload an independent file
+		if (!$sessionname) createUploadImageForm("<B>ERROR:</B> Enter a session name of the image");
+		$has_session = $leginon->checkSessionNameExistance($sessionname,false);
+		$session_in_project = $leginon->checkSessionNameExistance($sessionname,$projectId);
+		$session_is_reserved = $leginon->checkSessionReservation($sessionname);
+
+		if ($has_session) {
+			if ($uploadtype !== 'tiltseries'){
+				if (!$leginon->onlyUploadedImagesInSession($has_session[0]['DEF_id'])) {
+					createUploadImageForm($errormsg."Session contains images not from  'appion' Host is not available for uploading more images");
 				}
-				if ($uploadtype == 'defocalseries')
-					createUploadImageForm("<B>ERROR:</B> Defocal series can not be uploaded to an existing session");
-
-				if ($has_session && !$session_in_project)
-					createUploadImageForm("<B>ERROR:</B> You have entered an existing session not belonging to this project");
-			} else {
-				// reserved sessionname do not yet have session entry in SessionData
-				if ($session_is_reserved)
-					createUploadImageForm("<B>ERROR:</B>  You have entered a session already reserved by others");
 			}
+			if ($uploadtype == 'defocalseries')
+				createUploadImageForm("<B>ERROR:</B> Defocal series can not be uploaded to an existing session");
 
-			if ($session_in_project)
-				$warning = ("<B>Warning:</B>  Will append to an existing session with the original description");
-			// add session to the command
-			$command.="--session=$sessionname ";
-		}
-
-		//make sure a description was provided
-		$description=$_POST['description'];
-		if (!$description && !$session_in_project)
-			createUploadImageForm("<B>ERROR:</B> Enter a brief description of the session");
-
-		// for inverting density
-		if ($invert_check=='on') $command.="--invert ";
-		if ($cs === "") {
-			createUploadImageForm($errormsg."Specify the Cs value");
+			if ($has_session && !$session_in_project)
+				createUploadImageForm("<B>ERROR:</B> You have entered an existing session not belonging to this project");
 		} else {
-			$cs = $cs + 0;
-			if ( $cs < 0.0 ) {
-				createUploadImageForm($errormsg."The Cs value must be a positive number");
-			}
-			if ($has_session) {
-				$session_cs = $leginon->getCsValueFromSession($has_session[0]['DEF_id']);
-				if ($session_cs != $cs) {
-					createUploadImageForm("<B>ERROR:</B> Existing session Cs can not be changed");
-				}
-			}
-			$command.="--cs=$cs ";
+			// reserved sessionname do not yet have session entry in SessionData
+			if ($session_is_reserved)
+				createUploadImageForm("<B>ERROR:</B>  You have entered a session already reserved by others");
 		}
 
-		//determine if a information batch file was provided
-		if ((!$batch) && (!$voltage)) {
-			$errormsg = "<b>ERROR:</b> ";
-			$imgdir = $_POST['imgdir'];
-			if (!$imgdir)
-				createUploadImageForm($errormsg."Specify an image directory");
-			$fileformat = $_POST['fileformat'];
-			$apix = $_POST['apix'];
-			if (!$apix)
-				createUploadImageForm($errormsg."Specify a pixel size");
-			$mag = $_POST['mag'];
-			if (!$mag)
-				createUploadImageForm($errormsg."Specify a magnification");
+		if ($session_in_project)
+			$warning = ("<B>Warning:</B>  Will append to an existing session with the original description");
+		// add session to the command
+		$command.="--session=$sessionname ";
+		$leginon->makeSessionReservation($sessionname);
+	}
 
-			//defocus
-			if ($uploadtype != 'defocalseries') {
-				$df = $_POST['df'];
-				if (!$df)
-					createUploadImageForm($errormsg."Specify a defocus");
-				$dfarray = array($df);
-			} else {
-				$dflist = $_POST['dflist'];
-				if (!$dflist) 
-					createUploadImageForm($errormsg."Specify a defocii list");
-				$dfarray = explode(',',trim($dflist));
-				if (count($dfarray) != $imagegroup)
-					createUploadImageForm($errormsg."Specify matched image-per-group and defocii list");
+	//make sure a description was provided
+	$description=$_POST['description'];
+	if (!$description && !$session_in_project)
+		createUploadImageForm("<B>ERROR:</B> Enter a brief description of the session");
+
+	// for inverting density
+	if ($invert_check=='on') $command.="--invert ";
+	if ($cs === "") {
+			createUploadImageForm($errormsg."Specify the Cs value");
+	} else {
+		$cs = $cs + 0;
+		if ( $cs < 0.0 ) {
+			createUploadImageForm($errormsg."The Cs value must be a positive number");
+		}
+		if ($has_session) {
+			$session_cs = $leginon->getCsValueFromSession($has_session[0]['DEF_id']);
+			if ($session_cs != $cs) {
+				createUploadImageForm("<B>ERROR:</B> Existing session Cs can not be changed");
 			}
-			$tiltanglearray = array();
+		}
+		$command.="--cs=$cs ";
+	}
+	//determine if a information batch file was provided
+	if ((!$batch) && (!$voltage)) {
+		$errormsg = "<b>ERROR:</b> ";
+		$imgdir = $_POST['imgdir'];
+		if (!$imgdir)
+			createUploadImageForm($errormsg."Specify an image directory");
+		$fileformat = $_POST['fileformat'];
+		$apix = $_POST['apix'];
+		if (!$apix)
+			createUploadImageForm($errormsg."Specify a pixel size");
+		$binx = $_POST['binx'];
+		$biny = $_POST['biny'];
+		if (!($binx && $biny))
+			createUploadImageForm($errormsg."Specify both x and y binning");
+		$mag = $_POST['mag'];
+		if (!$mag)
+			createUploadImageForm($errormsg."Specify a magnification");
+		if ($uploadtype != 'defocalseries') {
+			$df = $_POST['df'];
+			if (!$df)
+				createUploadImageForm($errormsg."Specify a defocus");
+			$dfarray = array($df);
+		} else {
+			$dflist = $_POST['dflist'];
+			if (!$dflist) 
+				createUploadImageForm($errormsg."Specify a defocii list");
+			$dfarray = explode(',',trim($dflist));
+			if (count($dfarray) != $imagegroup)
+				createUploadImageForm($errormsg."Specify matched image-per-group and defocii list");
+		}
+		$tiltanglearray = array();
 			if ($uploadtype == 'tiltseries') {
-				$az = $_POST['az'];
-				if (strlen($az)==0)
-					createUploadImageForm($errormsg."Specify a tilt azimuth");
-				$tiltlist = $_POST['tiltlist'];
-				if (!$tiltlist) 
-					createUploadImageForm($errormsg."Specify a tilt angle list");
-				$tiltanglearray = explode(',',trim($tiltlist));
-				if (count($tiltanglearray) != $imagegroup)
-					createUploadImageForm($errormsg."Specify matched image-per-group and tilt-angle list");
-				$dosearray = explode(',',trim($doselist));
-				if (count($dosearray) != $imagegroup)
-					createUploadImageForm($errormsg."Specify matched image-per-group and dose list");
-				$rtiltarray = array();
-				foreach($tiltanglearray as $ta)
-					$rtiltarray[] = sprintf('%.5f', $ta * 3.14159 / 180.0);
-				$tiltanglearray = $rtiltarray;
-			}
-			$mdfarray = array();
-			foreach($dfarray as $df) {
-				if ($df > 0) $df = $df*-1;
-				if ($df > -0.1)
-					createUploadImageForm("<b>Error:</b> defocus must be in microns (i.e. -1.5)");
-				$mdfarray[] = $df * 1e-6;
-			}
-			// kv
-			$kv = $_POST['kv'];
-			if (!$kv)
-				createUploadImageForm($errormsg."specify the high tension");
-			if ($kv > 1000)
-				createUploadImageForm("<b>Error:</b> high tension must be in kilovolts (i.e. 120)");
-			// Make reservation only after validation
-			$leginon->makeSessionReservation($sessionname);
-			// add options to command
-			if ($uploadscript == 'imageloader') {
-				// imageloader.py
-				$command.="--dir=$imgdir ";
-				$command.="--filetype=$fileformat ";
-				$command.="--apix=$apix ";
-				// pass binx=1 and biny=1 all the time
-				$command.="--binx=1 ";
-				$command.="--biny=1 ";
-				$command.="--df=$df ";
-				if ($imagegroup >= 2)
-					$command.="--tiltgroup=$imagegroup ";
-			} else {
-				// uploadImages.py
-				$command.="--image-dir=$imgdir ";
-				$mpix = $apix*1e-10;
-				$command.="--mpix=$mpix ";
-				$command.="--type=$uploadtype ";
-				$command.="--images-per-series=$imagegroup ";
-				if (count($mdfarray) > 1) 
-					$command.="--defocus-list=".implode(',',$mdfarray)." ";
-				else
-					$command.="--defocus=".$mdfarray[0]." ";
-				$command.="--azimuth=$az ";
-				if ($uploadtype == 'tiltseries')
-					$command.="--angle-list=".implode(',',$tiltanglearray)." ";
-				if ($uploadtype == 'tiltseries')
-					$command.="--dose-list=".implode(',',$dosearray)." ";
-			}
-			$command.="--mag=$mag ";
-			$command.="--kv=$kv ";
-
-		} elseif ($batch) {
-			if ($batch_check && !file_exists($batch))
-				createUploadImageForm("<B>ERROR:</B> Batch file does not exist");
-			//make sure  the batch file contains 7 or 8 fields separated by tab at each line
-			$bf = file($batch);
-			foreach ($bf as $line) {
-				$items = explode("\t",$line);
-				if (count($items)!=7  && (count($items)!=8 && count($items)!=9 && $imagegroup > 1)) {
-					$badbatch = true;
-					break;
-				}
-			}
-			// add batch file to command
-			$command.="--batchparams=$batch ";
+			$az = $_POST['az'];
+			if (strlen($az)==0)
+				createUploadImageForm($errormsg."Specify a tilt azimuth");
+			$tiltlist = $_POST['tiltlist'];
+			if (!$tiltlist) 
+				createUploadImageForm($errormsg."Specify a tilt angle list");
+			$tiltanglearray = explode(',',trim($tiltlist));
+			if (count($tiltanglearray) != $imagegroup)
+				createUploadImageForm($errormsg."Specify matched image-per-group and tilt-angle list");
+			$dosearray = explode(',',trim($doselist));
+			if (count($dosearray) != $imagegroup)
+				createUploadImageForm($errormsg."Specify matched image-per-group and dose list");
+			$rtiltarray = array();
+			foreach($tiltanglearray as $ta)
+				$rtiltarray[] = sprintf('%.5f', $ta * 3.14159 / 180.0);
+			$tiltanglearray = $rtiltarray;
+		}
+		$mdfarray = array();
+		foreach($dfarray as $df) {
+			if ($df > 0) $df = $df*-1;
+			if ($df > -0.1)
+				createUploadImageForm("<b>Error:</b> defocus must be in microns (i.e. -1.5)");
+			$mdfarray[] = $df * 1e-6;
+		}
+		$kv = $_POST['kv'];
+		if (!$kv)
+			createUploadImageForm($errormsg."specify the high tension");
+		if ($kv > 1000)
+			createUploadImageForm("<b>Error:</b> high tension must be in kilovolts (i.e. 120)");
+		// add options to command
+		if ($uploadscript == 'imageloader') {
+			// imageloader.py
+			$command.="--dir=$imgdir ";
+			$command.="--filetype=$fileformat ";
+			$command.="--apix=$apix ";
+			$command.="--binx=$binx ";
+			$command.="--biny=$biny ";
+			$command.="--df=$df ";
 			if ($imagegroup >= 2)
 				$command.="--tiltgroup=$imagegroup ";
-		} elseif ($serialem_stack) {
-			$command.="--serialem_stack=$serialem_stack ";
-			$command.="--serialem_mdoc=$serialem_mdoc ";
-			$command.="--voltage=$voltage ";
-		} elseif ($serialem_dir) {
-			$command.="--serialem_dir=$serialem_dir ";
-			$command.="--voltage=$voltage ";
 		} else {
-			$badbatch = false;
+			// uploadImages.py
+			$command.="--image-dir=$imgdir ";
+			$mpix = $apix*1e-10;
+			$command.="--mpix=$mpix ";
+			$command.="--type=$uploadtype ";
+			$command.="--images-per-series=$imagegroup ";
+			if (count($mdfarray) > 1) 
+				$command.="--defocus-list=".implode(',',$mdfarray)." ";
+			else
+				$command.="--defocus=".$mdfarray[0]." ";
+			$command.="--azimuth=$az ";
+			if ($uploadtype == 'tiltseries')
+				$command.="--angle-list=".implode(',',$tiltanglearray)." ";
+			if ($uploadtype == 'tiltseries')
+				$command.="--dose-list=".implode(',',$dosearray)." ";
 		}
-		$headinfo .= appionRef(); // main appion ref
-		$errors = showOrSubmitCommand($command, $headinfo, 'uploadimage', 1);
+		$command.="--mag=$mag ";
+		$command.="--kv=$kv ";
+
+	} elseif ($batch) {
+		if ($batch_check && !file_exists($batch))
+			createUploadImageForm("<B>ERROR:</B> Batch file does not exist");
+		//make sure  the batch file contains 7 or 8 fields separated by tab at each line
+		$bf = file($batch);
+		foreach ($bf as $line) {
+			$items = explode("\t",$line);
+			if (count($items)!=7  && (count($items)!=8 && count($items)!=9 && $imagegroup > 1)) {
+				$badbatch = true;
+				break;
+			}
+		}
+		// add batch file to command
+		$command.="--batchparams=$batch ";
+		if ($imagegroup >= 2)
+			$command.="--tiltgroup=$imagegroup ";
+	} elseif ($serialem_stack) {
+		$command.="--serialem_stack=$serialem_stack ";
+		$command.="--serialem_mdoc=$serialem_mdoc ";
+		$command.="--voltage=$voltage ";
+	} elseif ($serialem_dir) {
+		$command.="--serialem_dir=$serialem_dir ";
+		$command.="--voltage=$voltage ";
+	} else {
+		$badbatch = false;
 	}
+	if ($badbatch) createUploadImageForm("<B>ERROR:</B> Invalid format in the batch file");
+
+	$command.="--description=\"$description\" ";
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
+	$headinfo .= appionRef(); // main appion ref
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
+	$errors = showOrSubmitCommand($command, $headinfo, 'uploadimage', 1);
+
+	// if error display them
+	if ($errors)
+		createuploadImageForm($errors);
+	exit;
 }
 ?>
