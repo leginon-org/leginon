@@ -933,6 +933,7 @@ def imodCoarseAlign(log_file, tiltseriesnumber, coarse_options):
 	imodtilt = tiltdir+'/imod_coarse_original.tlt'
 	imodtiltmaxsearch = tiltdir+'/imod_coarse_original.tlt.maxsearch.*'
 	tiltfile = tiltdir+'/imod_coarse_' + tiltfilename
+	
 	os.system('mv %s %s;rm %s' % (imodtilt, tiltfile, imodtiltmaxsearch))
 	apProTomo2Aligner.findMaxSearchArea(tiltfile, coarse_options.dimx, coarse_options.dimy)
 	
@@ -2428,6 +2429,7 @@ def protomoExport(log_file, tiltseriesnumber, export_options):
 	stack_file = seriesname + '_' + original_filename + '.mrc'
 	stack_file_full = os.path.join(export_dir, stack_file)
 	mdoc_file_full = export_dir + '/' + seriesname + '_' + original_filename + '.mrc.mdoc'
+	tlt_file_full = export_dir + '/' + seriesname + '_' + original_filename + '.mrc.tlt'
 	
 	#Get all required SerialEM-formated information in a nice list of dictionaries
 	current_time=time.time()
@@ -2463,6 +2465,11 @@ def protomoExport(log_file, tiltseriesnumber, export_options):
 		mdoc.write('\n')
 	f.close()
 	mdoc.close()
+	
+	tlt = open(tlt_file_full,'w')
+	for data, i in zip(sorted_image_list, range(len(sorted_image_list))):
+		tlt.write('%s\n' % data['tilt'])
+	tlt.close()
 	
 	dimx,dimy = mrc.read(sorted_image_list[0]['image']).shape
 	stack = np.zeros((len(sorted_image_list),dimx,dimy))
@@ -2505,8 +2512,8 @@ if __name__ == '__main__':
 		apDisplay.printMsg("Preparing Files and Directories for Protomo")
 		log.write("Preparing Files and Directories for Protomo\n")
 		
-		if (options.procs > 5): #For tilt-series of size 5k x 4k by 37 tilts, each protomoPrep process will consume over 6GB of ram. If the ram is maxed out, the system will revert to disk swap and slow down this step considerably.
-			procs=5
+		if (options.procs > 8): #For tilt-series of size 5k x 4k by 37 tilts, each protomoPrep process will consume over 6GB of ram. If the ram is maxed out, the system will revert to disk swap and slow down this step considerably.
+			procs=8
 		else:
 			procs=options.procs
 		
@@ -2847,8 +2854,8 @@ if __name__ == '__main__':
 		log.write("Appion-Protomo Tilt-Series Exporting Mode\n")
 		log.write("Tilt-series will be exported as a single tilt image stack and a SerialEM-formatted mdoc file.\n")
 		log.write("The exported tilt-series are formatted properly for import into Appion-Protomo (native and Docker).\n")
-		if (options.procs > 5):
-			procs=5
+		if (options.procs > 8):
+			procs=8
 		else:
 			procs=options.procs
 		
@@ -2875,3 +2882,5 @@ if __name__ == '__main__':
 	apDisplay.printMsg("Closing log file %s\n" % log_file)
 	log.write("\nEnd time: %s" % time_end)
 	log.close()
+	for i in tiltseriesranges:
+		os.system('ln %s %s/tiltseries%04d' % (log_file, options.rundir, i))

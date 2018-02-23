@@ -66,13 +66,13 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 			help='Select specific images in the tilt-series, e.g. --exclude_images="1,2,5-7"')
 		
 		self.parser.add_option("--exclude_images_by_angle", dest="exclude_images_by_angle",  default="",
-			help='Select specific tilt angles in the tilt-series to remove. Accuracy must be within +-0.5 degrees, e.g. --exclude_images_by_angle="-37.5, 4.2, 27"')
+			help='Select specific tilt angles in the tilt-series to remove. Accuracy must be within +-0.05 degrees, e.g. --exclude_images_by_angle="-37.5,4.2,27"')
 		
-		self.parser.add_option("--negative_recon", dest="negative_recon", type="float",  default="-90",
-			help="Tilt angle, in degrees, below which all images will be removed, e.g. --negative_recon=-45", metavar="float")
+		self.parser.add_option("--negative", dest="negative", type="float",  default="-90",
+			help="Tilt angle, in degrees, below which all images will be removed, e.g. --negative=-45", metavar="float")
 		
-		self.parser.add_option("--positive_recon", dest="positive_recon", type="float",  default="90",
-			help="Tilt angle, in degrees, above which all images will be removed, e.g. --positive_recon=45", metavar="float")
+		self.parser.add_option("--positive", dest="positive", type="float",  default="90",
+			help="Tilt angle, in degrees, above which all images will be removed, e.g. --positive=45", metavar="float")
 		
 		self.parser.add_option("--stack_procs", dest="stack_procs", default=1,
 			help="Number of cores to use in stack creation, e.g. --stack_procs=24")
@@ -456,8 +456,8 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 		proc=subprocess.Popen(cmd3, stdout=subprocess.PIPE, shell=True)
 		(images, err) = proc.communicate()
 		images=int(images) - len(self.params['exclude_images'])
-		if (self.params['positive_recon'] < 90) or (self.params['negative_recon'] > -90):
-			removed_images, mintilt, maxtilt = apProTomo2Aligner.removeHighTiltsFromTiltFile(recon_tilt_out_full, self.params['negative_recon'], self.params['positive_recon'])
+		if (self.params['positive'] < 90) or (self.params['negative'] > -90):
+			removed_images, mintilt, maxtilt = apProTomo2Aligner.removeHighTiltsFromTiltFile(recon_tilt_out_full, self.params['negative'], self.params['positive'])
 			apDisplay.printMsg("Images %s have been removed before stack creation/reconstruction" % removed_images)
 		else:
 			mintilt=0

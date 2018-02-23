@@ -80,6 +80,7 @@ class Protomo2RefineSummary extends BasicLayoutForm
 		$defocus_gif_files = glob("$outdir/$runname/defocus_estimation/*/*/diagnostic.gif");
 		$ctf_gif_files = glob("$outdir/$runname/media/ctf_correction/s*.gif");
 		$dose_gif_files = glob("$outdir/$runname/media/dose_compensation/s*.gif");
+		$drift_gif_files = glob("$outdir/$runname/media/max_drift/s*.gif");
 		$corrpeak_gif_files = glob("$outdir/$runname/media/correlations/s*.gif");
 		$corrpeak_vid_files = glob("$outdir/$runname/media/correlations/s*.{mp4,ogv,webm}",GLOB_BRACE);
 		$recon_files = glob("$outdir/$runname/recons_*/*.mrc",GLOB_BRACE);
@@ -94,6 +95,7 @@ class Protomo2RefineSummary extends BasicLayoutForm
 		$ctfdefocus_gif = "loadimg.php?rawgif=1&filename=".$ctf_gif_files[1];
 		$dose_gif = "loadimg.php?rawgif=1&filename=".$dose_gif_files[0];
 		$dosecomp_gif = "loadimg.php?rawgif=1&filename=".$dose_gif_files[1];
+		$drift_gif = "loadimg.php?rawgif=1&filename=".$drift_gif_files[0];
 		$qa_gif = "loadimg.php?rawgif=1&filename=".$qa_gif_file;
 		$azimuth_gif = "loadimg.php?rawgif=1&filename=".$azimuth_gif_file;
 		$orientation_gif = "loadimg.php?rawgif=1&filename=".$orientation_gif_file;
@@ -164,6 +166,17 @@ class Protomo2RefineSummary extends BasicLayoutForm
 			$html .= '<td><a href="protomo2QualityAssessmentPlots.php?outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseries.'" target="_blank"><img src="'.$dosecomp_gif.'" alt="dosecomp_gif" width="300" />'."</a><br /></td>";
 			$html .= '</tr><tr></table></center><br>';
 			$html .= '<center>'.docpop('doseplot_info', 'Image Info').'</center><br><hr />';
+		}
+		
+		if (isset($drift_gif_files[0])) {
+			$html .= "
+		<br />	
+		<center><H4>Maximum Per-Tilt Image Frame Drift</H4></center>
+		<br />";
+			$html .= '<center><table id="" class="display" cellspacing="0" border="0"><tr>';
+			$html .= '<td><a href="protomo2QualityAssessmentPlots.php?outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseries.'" target="_blank"><img src="'.$drift_gif.'" alt="drift_gif" width="300" />'."</a><br /></td>";
+			$html .= '</tr><tr></table></center><br>';
+			$html .= '<center>'.docpop('driftplot_info', 'Image Info').'</center><br><hr />';
 		}
 		
 		// Table of all of the correlation peaks for easy identification of bad alignment iterations

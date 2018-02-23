@@ -32,6 +32,7 @@ $tiltseries=$_GET['tiltseries'];
 $defocus_gif_files = glob("$outdir/$runname/defocus_estimation/*/*/diagnostic.gif");
 $ctf_gif_files = glob("$outdir/$runname/media/ctf_correction/s*.gif");
 $dose_gif_files = glob("$outdir/$runname/media/dose_compensation/s*.gif");
+$drift_gif_files = glob("$outdir/$runname/media/max_drift/s*.gif");
 $corrpeak_gif_files = glob("$outdir/$runname/media/correlations/c*.gif");
 $corrpeak_vid_files = glob("$outdir/$runname/media/correlations/c*.{mp4,ogv,webm}",GLOB_BRACE);
 $initial_tilt_gif_files = glob("$outdir/$runname/media/tiltseries/in*.gif");
@@ -53,6 +54,7 @@ $ctfplot_gif = "loadimg.php?rawgif=1&filename=".$ctf_gif_files[0];
 $ctfdefocus_gif = "loadimg.php?rawgif=1&filename=".$ctf_gif_files[1];
 $dose_gif = "loadimg.php?rawgif=1&filename=".$dose_gif_files[0];
 $dosecomp_gif = "loadimg.php?rawgif=1&filename=".$dose_gif_files[1];
+$drift_gif = "loadimg.php?rawgif=1&filename=".$drift_gif_files[0];
 $corrpeak_gif = "loadimg.php?rawgif=1&filename=".$corrpeak_gif_files[0];
 $corrpeak_mp4 = "loadvid.php?filename=".$corrpeak_vid_files[0];
 $corrpeak_ogv = "loadvid.php?filename=".$corrpeak_vid_files[1];
@@ -189,6 +191,17 @@ if (isset($dose_gif_files[0])) {
 	$html .= '<center><table id="" class="display" cellspacing="0" border="0"><tr>';
 	$html .= '<td><img src="'.$dose_gif.'" alt="dose_gif" width="400" />'."<br /></td>";
 	$html .= '<td><img src="'.$dosecomp_gif.'" alt="dosecomp_gif" width="400" />'."<br /></td>";
+	$html .= '</tr><tr></table></center><br>';
+	$html .= '<center>';
+}
+
+if (isset($drift_gif_files[0])) {
+	$html .= "
+<br />	
+<center><H4>Maximum Per-Tilt Image Frame Drift</H4></center>
+<br />";
+	$html .= '<center><table id="" class="display" cellspacing="0" border="0"><tr>';
+	$html .= '<td><img src="'.$drift_gif.'" alt="drift_gif" width="400" />'."<br /></td>";
 	$html .= '</tr><tr></table></center><br>';
 	$html .= '<center>';
 }
@@ -432,10 +445,11 @@ if (isset($rec_gif_files[0]) and isset($rec_gif_files[1]) and isset($manual_rec_
 }
 
 $html .= "<br></br><b><center>[If you wish to manually align, run the following command:</b><br><br>
-				protomo2manualaligner.py --rundir=$outdir/$runname/ --tiltseries=$tiltseries --sampling=4 --iteration=Coarse --center_all_images=False --max_image_fraction=0.75<br><br>
-				<b>and then choose 'More Manual' as the starting tilt file in Refinement.]<br><br>
-				(Possible 'Iteration' options are: Original, Coarse, Coarse2, or Imod)</b><br>
-				<b>You may also wish to change the center_all_images, sampling, or image_fraction options.</center></b><br>";
+		protomo2manualaligner.py --rundir=$outdir/$runname/ --tiltseries=$tiltseries --sampling=4 --max_image_fraction=0.75 --center_all_images=False --iteration=Coarse --exclude_angles=<br><br>
+		<b>and then choose 'Manual' as the starting tilt file in Refinement.]<br><br>
+		Possible 'iteration' options are: Original, Coarse, Coarse2, or Imod<br>
+		If there are bad images (contamination, missed target, etc.), you should remove them by adding a comma-separated list after '--exclude_angles='.<br>
+		You may also wish to change the center_all_images, sampling, or max_image_fraction options.</center></b><br>";
 
 echo $html
 ?>

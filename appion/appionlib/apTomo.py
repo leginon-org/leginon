@@ -203,7 +203,7 @@ def orderImageList(frame_tiltdata, non_frame_tiltdata=None, frame_aligned="True"
 		tiltkeys = map((lambda x: math.degrees(x['scope']['stage position']['a'])),imagelist)
 		
 		accumulate_dose = getAccumulatedDoses(imagelist)
-		return tiltkeys,imagelist,accumulate_dose,mrc_files,int(len(tiltkeys)*0.5)
+		return tiltkeys,imagelist,accumulate_dose,mrc_files,apDatabase.getPixelSize(imagelist[0]),int(len(tiltkeys)*0.5)
 	if start_tilt is None:
 		start_tilt = math.degrees(imagelist[0]['scope']['stage position']['a'])
 	tiltangledict = {}
@@ -256,7 +256,7 @@ def orderImageList(frame_tiltdata, non_frame_tiltdata=None, frame_aligned="True"
 	testing = False
 	if not testing:
 		if export == False:
-			return tiltkeys,ordered_imagelist,accumulated_dose_list,mrc_files,refimg
+			return tiltkeys,ordered_imagelist,accumulated_dose_list,mrc_files,apDatabase.getPixelSize(imagedata),refimg
 		else:
 			return tiltkeys,ordered_imagelist,dose_list,accumulated_dose_list,mrc_files,refimg,defocus_list,apDatabase.getPixelSize(imagedata),dose_imagedata['scope']['magnification']
 	else:
@@ -270,7 +270,7 @@ def orderImageList(frame_tiltdata, non_frame_tiltdata=None, frame_aligned="True"
 		cutdoses = accumulated_dose_list[cut:-cut2]
 		refimg = refimg - cut 
 		print len(cutlist),refimg
-		return cuttilts,cutlist,cutdoses,cutfiles,refimg
+		return cuttilts,cutlist,cutdoses,cutfiles,apDatabase.getPixelSize(imagedata),refimg
 
 def getCorrelatorBinning(imageshape):
 		minsize = min(imageshape)

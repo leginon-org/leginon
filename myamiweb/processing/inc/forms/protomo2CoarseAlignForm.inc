@@ -1015,14 +1015,14 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 			$html .= "<table border='0'>";
 			$html .= "<br>
 			<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2CoarseAlignSummary'><b><center>[Click here to <font size='4'>View Coarse Alignment Results</font> after protomo2aligner.py --coarse has been run] <font size='5'>→</font></center></b></a>";
-			$html .= "
-			<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2BatchSummary'><b><center>[Click here to <font size='4'>View Batch Coarse Alignment Results</font>] <font size='5'>→</font></center></b></a>";
+			//$html .= "
+			//<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2BatchSummary'><b><center>[Click here to <font size='4'>View Batch Coarse Alignment Results</font>] <font size='5'>→</font></center></b></a>";
 			if (count($qa_gif_file) > 0)
 			{
 				$html .= "<br></br>
 				<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2RefineSummary'><b><center>[or Click here to <font size='4'>Go Directly to the Refinement Results</font>] <font size='5'>→</font></center></b></a>";
-				$html .= "
-				<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2BatchSummary&refine=1'><b><center>[Click here to <font size='4'>View Batch Refinement Results</font>] <font size='5'>→</font></center></b></a><br>";
+				//$html .= "
+				//<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2BatchSummary&refine=1'><b><center>[Click here to <font size='4'>View Batch Refinement Results</font>] <font size='5'>→</font></center></b></a><br>";
 				$html .= "<br>
 				<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2ReconstructionForm'><b><center>[or Click here to <font size='4'>Go Directly to the Reconstruction Page</font>] <font size='5'>→</font></center></b></a><br>";
 			}

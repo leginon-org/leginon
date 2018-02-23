@@ -33,6 +33,7 @@ $tiltseriesnumber=$_GET['tiltseries'];
 $defocus_gif_files = glob("$outdir/".$runname."/defocus_estimation/*/*/diagnostic.gif");
 $ctf_gif_files = glob("$outdir/".$runname."/media/ctf_correction/s*.gif");
 $dose_gif_files = glob("$outdir/".$runname."/media/dose_compensation/s*.gif");
+$drift_gif_files = glob("$outdir/".$runname."/media/max_drift/s*.gif");
 $corrpeak_gif_files = glob("$outdir/".$runname."/media/correlations/s*.gif");
 $corrpeak_vid_files = glob("$outdir/".$runname."/media/correlations/s*.{mp4,ogv,webm}",GLOB_BRACE);
 $recon_files = glob("$outdir/".$runname."/recons_*/*.mrc",GLOB_BRACE);
@@ -41,11 +42,13 @@ $qa_gif_file = "$outdir/".$runname."/media/quality_assessment/series".sprintf('%
 $azimuth_gif_file = "$outdir/".$runname."/media/angle_refinement/series".sprintf('%04d',$tiltseriesnumber)."_azimuth.gif";
 $orientation_gif_file = "$outdir/".$runname."/media/angle_refinement/series".sprintf('%04d',$tiltseriesnumber)."_orientation.gif";
 $elevation_gif_file = "$outdir/".$runname."/media/angle_refinement/series".sprintf('%04d',$tiltseriesnumber)."_elevation.gif";
+
 $defocus_gif = "loadimg.php?rawgif=1&filename=".$defocus_gif_files[0];
 $ctfplot_gif = "loadimg.php?rawgif=1&filename=".$ctf_gif_files[0];
 $ctfdefocus_gif = "loadimg.php?rawgif=1&filename=".$ctf_gif_files[1];
 $dose_gif = "loadimg.php?rawgif=1&filename=".$dose_gif_files[0];
 $dosecomp_gif = "loadimg.php?rawgif=1&filename=".$dose_gif_files[1];
+$drift_gif = "loadimg.php?rawgif=1&filename=".$drift_gif_files[0];
 $qa_gif = "loadimg.php?rawgif=1&filename=".$qa_gif_file;
 $azimuth_gif = "loadimg.php?rawgif=1&filename=".$azimuth_gif_file;
 $orientation_gif = "loadimg.php?rawgif=1&filename=".$orientation_gif_file;
@@ -70,21 +73,21 @@ if (isset($defocus_gif_files[0])) {
 <br />";
 	$html .= '<table id="" class="display" cellspacing="0" border="1" align="center">';
 	$html .= "<tr>";
-	$html .= '<th><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[2].'" alt="defocus_gif2" width="225" /></th>';
-	$html .= '<th><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[6].'" alt="defocus_gif6" width="325" /></th>';
-	$html .= '<th><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[10].'" alt="defocus_gif10" width="420" /></th>';
+	$html .= '<th><a href="protomo2QualityAssessmentPlots.php?outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseriesnumber.'" target="_blank"><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[2].'" alt="defocus_gif2" width="225" /></a></th>';
+	$html .= '<th><a href="protomo2QualityAssessmentPlots.php?outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseriesnumber.'" target="_blank"><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[6].'" alt="defocus_gif6" width="325" /></a></th>';
+	$html .= '<th><a href="protomo2QualityAssessmentPlots.php?outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseriesnumber.'" target="_blank"><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[10].'" alt="defocus_gif10" width="420" /></a></th>';
 	$html .= "</tr><tr>";
-	$html .= '<th><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[0].'" alt="defocus_gif0" width="225" /></th>';
-	$html .= '<th><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[4].'" alt="defocus_gif4" width="325" /></th>';
-	$html .= '<th><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[8].'" alt="defocus_gif8" width="420" /></th>';
+	$html .= '<th><a href="protomo2QualityAssessmentPlots.php?outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseriesnumber.'" target="_blank"><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[0].'" alt="defocus_gif0" width="225" /></a></th>';
+	$html .= '<th><a href="protomo2QualityAssessmentPlots.php?outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseriesnumber.'" target="_blank"><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[4].'" alt="defocus_gif4" width="325" /></a></th>';
+	$html .= '<th><a href="protomo2QualityAssessmentPlots.php?outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseriesnumber.'" target="_blank"><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[8].'" alt="defocus_gif8" width="420" /></a></th>';
 	$html .= "</tr><tr>";
-	$html .= '<th><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[1].'" alt="defocus_gif1" width="225" /></th>';
-	$html .= '<th><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[5].'" alt="defocus_gif5" width="325" /></th>';
-	$html .= '<th><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[9].'" alt="defocus_gif9" width="420" /></th>';
+	$html .= '<th><a href="protomo2QualityAssessmentPlots.php?outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseriesnumber.'" target="_blank"><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[1].'" alt="defocus_gif1" width="225" /></a></th>';
+	$html .= '<th><a href="protomo2QualityAssessmentPlots.php?outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseriesnumber.'" target="_blank"><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[5].'" alt="defocus_gif5" width="325" /></a></th>';
+	$html .= '<th><a href="protomo2QualityAssessmentPlots.php?outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseriesnumber.'" target="_blank"><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[9].'" alt="defocus_gif9" width="420" /></a></th>';
 	$html .= "</tr><tr>";
-	$html .= '<th><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[3].'" alt="defocus_gif3" width="225" /></th>';
-	$html .= '<th><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[7].'" alt="defocus_gif7" width="325" /></th>';
-	$html .= '<th><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[11].'" alt="defocus_gif11" width="420" /></th>';
+	$html .= '<th><a href="protomo2QualityAssessmentPlots.php?outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseriesnumber.'" target="_blank"><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[3].'" alt="defocus_gif3" width="225" /></a></th>';
+	$html .= '<th><a href="protomo2QualityAssessmentPlots.php?outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseriesnumber.'" target="_blank"><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[7].'" alt="defocus_gif7" width="325" /></a></th>';
+	$html .= '<th><a href="protomo2QualityAssessmentPlots.php?outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseriesnumber.'" target="_blank"><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[11].'" alt="defocus_gif11" width="420" /></a></th>';
 	$html .= '</tr><tr></table><br>';
 }
 
@@ -96,16 +99,23 @@ if (isset($ctf_gif_files[0])) {
 		$html .= '<td><img src="'.$ctfplot_gif.'" alt="ctfplot_gif" width="300" />'."<br /></td>";
 		$html .= '</tr><tr></table></center>';
 }
-	
+
 if (isset($dose_gif_files[0])) {
 		$html .= "
 	<center><H4>Dose Compensation</H4></center>";
 		$html .= '<center><table id="" class="display" cellspacing="0" border="0"><tr>';
-		$html .= '<td><img src="'.$dose_gif.'" alt="dose_gif" width="300" />'."<br /></td>";
-		$html .= '<td><img src="'.$dosecomp_gif.'" alt="dosecomp_gif" width="300" />'."<br /></td>";
+		$html .= '<td><a href="protomo2QualityAssessmentPlots.php?outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseriesnumber.'" target="_blank"><img src="'.$dose_gif.'" alt="dose_gif" width="300" />'."</a><br /></td>";
+		$html .= '<td><a href="protomo2QualityAssessmentPlots.php?outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseriesnumber.'" target="_blank"><img src="'.$dosecomp_gif.'" alt="dosecomp_gif" width="300" />'."</a><br /></td>";
 		$html .= '</tr><tr></table></center><br>';
 }
-	
+
+if (isset($drift_gif_files[0])) {
+		$html .= "
+	<center><H4>Maximum Per-Tilt Image Frame Drift</H4></center>";
+		$html .= '<center><table id="" class="display" cellspacing="0" border="0"><tr>';
+		$html .= '<td><a href="protomo2QualityAssessmentPlots.php?outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseriesnumber.'" target="_blank"><img src="'.$drift_gif.'" alt="drift_gif" width="300" />'."</a><br /></td>";
+		$html .= '</tr><tr></table></center><br>';
+}
 
 $html .= "
 <hr />

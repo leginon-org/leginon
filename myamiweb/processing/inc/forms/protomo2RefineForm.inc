@@ -114,6 +114,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 		if (isset($_GET['preset_search']) && !empty($_GET['preset_search'])) {$_POST['preset_search']=$_GET['preset_search'];}
 		if (!isset($_POST['preset_type'])) {$_POST['preset_type']=1;}
 		if (isset($_GET['preset_type']) && !empty($_GET['preset_type'])) {$_POST['preset_type']=$_GET['preset_type'];}
+		if (isset($_GET['starting_tlt_file']) && !empty($_GET['starting_tlt_file'])) {$_POST['starting_tlt_file']=$_GET['starting_tlt_file'];}
 		if (count($maxsearch_coarse2) > 0 and (!isset($_POST['starting_tlt_file']))) {$_POST['starting_tlt_file']=2;} elseif (count($maxsearch_coarse2) == 0 and (!isset($_POST['starting_tlt_file']))) {$_POST['starting_tlt_file']=1;}
 		if (isset($_GET['starting_tlt_file']) && !empty($_GET['starting_tlt_file'])) {$_POST['starting_tlt_file']=$_GET['starting_tlt_file'];}
 		if ($_POST['preset_size'] == 6) {$_POST['preset_size']=1;} //The dotted line divider
@@ -125,7 +126,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 		if ((count($maxsearch_initial) == 0) and $_POST['starting_tlt_file'] == 5) {$_POST['starting_tlt_file']=1; echo "<b>Error:</b> 'Initial' alignment does not exist.<br><br>";}
 		$my_tlt_file = glob($_SESSION['outdir']."/".$_SESSION['runname']."/series".sprintf('%04d',$_SESSION['tiltseries']).".*tlt");
 		if ((count($my_tlt_file) == 0) and $_POST['starting_tlt_file'] == 6) {$_POST['starting_tlt_file']=1; echo "Error: 'My tlt file' <b>does not exist</b>. Place series".sprintf('%04d',$_SESSION['tiltseries']).".tlt in the run directory and remove the corresponding series".sprintf('%04d',$_SESSION['tiltseries']).".tlt.maxsearch file to use this option.<br><br>";}
-		elseif ((count($my_tlt_file) > 0) and $_POST['starting_tlt_file'] == 6) {echo "series".sprintf('%04d',$_SESSION['tiltseries']).".tlt found in the run directory. If you placed this file here, then proceed normally to use it. If not, then overwrite this file with your own.<br><br>";}
+		elseif ((count($my_tlt_file) > 0) and $_POST['starting_tlt_file'] == 6 and $_POST['process'] != "Just Show Command") {echo "series".sprintf('%04d',$_SESSION['tiltseries']).".tlt found in the run directory. If you placed this file here, then proceed normally to use it. If not, then overwrite this file with your own.<br><br>";}
 		if ((count($maxsearch_my) == 0) and $_POST['starting_tlt_file'] == 6 and $_POST['preset_search'] < 9) {$_POST['preset_search'] = 13;}
 		if ($_POST['starting_tlt_file'] == 1) {$maxsearch_x = $maxsearch_coarse1_x; $maxsearch_y = $maxsearch_coarse1_y;}
 		if ($_POST['starting_tlt_file'] == 2) {$maxsearch_x = $maxsearch_coarse2_x; $maxsearch_y = $maxsearch_coarse2_y;}
@@ -1161,7 +1162,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 			    <H4>General Parameters ".docpop('genparam_info2', '(Info)')."</H4>
 			    <hr />";
 				$shift_left = $_GET['shift_left'] + 1;
-				$html .= "<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2RefineForm&shift_left=".$shift_left."&basic=1&preset_size=".$_POST['preset_size']."&preset_search=".$_POST['preset_search']."&preset_type=".$_POST['preset_type']."'><b><font size='3'>←</font>Shift Rounds Left</b></a><br>";
+				$html .= "<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2RefineForm&shift_left=".$shift_left."&basic=1&preset_size=".$_POST['preset_size']."&preset_search=".$_POST['preset_search']."&starting_tlt_file=".$_POST['starting_tlt_file']."&preset_type=".$_POST['preset_type']."'><b><font size='3'>←</font>Shift Rounds Left</b></a><br>";
 				$html.= $params->insertTextFieldInRow( "r1_iters", $fieldSize2 ).'│ ';
 				$html.= $params->insertTextFieldInRow( "r2_iters", $fieldSize2 ).'│ ';
 				$html.= $params->insertTextFieldInRow( "r3_iters", $fieldSize2 ).'│ ';
@@ -1206,7 +1207,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 				$html.= $params->insertTextFieldInRow( "r3_region_y", $fieldSize2 ).'│ ';
 				$html.= $params->insertTextFieldInRow( "r4_region_y", $fieldSize2 ).'│ ';
 				$html.= $params->insertTextField( "r5_region_y", $fieldSize2 );
-				$html.= $params->insertTextField( "thickness", $fieldSize2 );
+				$html.= $params->insertTextField( "thickness", $fieldSize3+4 );
 				
 				$html .= "
 			    <br />
@@ -1401,7 +1402,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 			    <H4>General Parameters ".docpop('genparam_info2', '(Info)')."</H4>
 			    <hr />";
 				$shift_left = $_GET['shift_left'] + 1;
-				$html .= "<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2RefineForm&shift_left=".$shift_left."&advanced=1&preset_size=".$_POST['preset_size']."&preset_search=".$_POST['preset_search']."&preset_type=".$_POST['preset_type']."'><b><font size='3'>←</font>Shift Rounds Left</b></a><br>";
+				$html .= "<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2RefineForm&shift_left=".$shift_left."&advanced=1&preset_size=".$_POST['preset_size']."&preset_search=".$_POST['preset_search']."&starting_tlt_file=".$_POST['starting_tlt_file']."&preset_type=".$_POST['preset_type']."'><b><font size='3'>←</font>Shift Rounds Left</b></a><br>";
 				$html.= $params->insertTextFieldInRow( "r1_iters", $fieldSize2 ).'│ ';
 				$html.= $params->insertTextFieldInRow( "r2_iters", $fieldSize2 ).'│ ';
 				$html.= $params->insertTextFieldInRow( "r3_iters", $fieldSize2 ).'│ ';
@@ -1449,7 +1450,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 				$html.= $params->insertTextField( "loglevel", $fieldSize );
 				//$html.= $params->insertTextField( "restart_cycle", $fieldSize );
 				$html.= $params->insertTextField( "defocus_save", $fieldSize );
-				$html.= $params->insertTextFieldInRow( "restart_from_run", $fieldSize3 );
+				$html.= $params->insertTextFieldInRow( "restart_from_run", $fieldSize3+10 );
 				$html.= $params->insertTextField( "restart_from_iteration", $fieldSize );
 				
 				$html .= "
@@ -1508,7 +1509,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 				$html.= $params->insertTextFieldInRow( "r4_region_y", $fieldSize2 ).'│ ';
 				$html.= $params->insertTextField( "r5_region_y", $fieldSize2 );
 				$html.= $params->insertTextField( "window_area", $fieldSize );
-				$html.= $params->insertTextField( "thickness", $fieldSize );
+				$html.= $params->insertTextField( "thickness", $fieldSize3+4 );
 				
 				$html .= "
 			    <br />
@@ -1789,6 +1790,8 @@ class Protomo2RefineForm extends BasicLayoutForm
 			$html .= "<br></br>
 				<b><center>[This command runs multiple refinements with the different requested thicknesses.<br>To access a particular refinement run, return back to 'Align Tilt-Series' on the left and input the appropriate runname.]</center></b><br>";
 			$html .= "<br>
+				<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2RefineSummary'><b><center>[Click here to continue onto <font size='4'>Refinement Summary</font> for ".$_SESSION['runname']."] <font size='5'>→</font></center></b></a>";
+			$html .= "<br>
 				<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2ReconstructionForm'><b><center>[Click here to continue onto <font size='4'>Reconstruction</font> for ".$_SESSION['runname']."] <font size='5'>→</font></center></b></a>";
 			$html .= "<br></tr>\n";
 			$html .= "</table>\n";
@@ -1799,8 +1802,8 @@ class Protomo2RefineForm extends BasicLayoutForm
 			$html .= "<table border='0'>";
 			$html .= "<br>
 			<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2RefineSummary'><b><center>[Click here to <font size='4'>View Refinement Results</font> after protomo2aligner.py has been run] <font size='5'>→</font></center></b></a>";
-			$html .= "
-			<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2BatchSummary&refine=1'><b><center>[Click here to <font size='4'>View Batch Refinement Results</font>] <font size='5'>→</font></center></b></a>";
+			//$html .= "
+			//<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2BatchSummary&refine=1'><b><center>[Click here to <font size='4'>View Batch Refinement Results</font>] <font size='5'>→</font></center></b></a>";
 			$html .= "<br></tr>\n";
 			$html .= "</table>\n";
 			$html .= closeRoundBorder();

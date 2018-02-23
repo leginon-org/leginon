@@ -46,7 +46,7 @@ $html .= "<br><br><b>To continue processing a tilt-series, <a href='runAppionLoo
 }
 $html .= "<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>";
 $html .= "<TR>";
-$display_keys = array ( 'runname,<br>run date','tilt-series<br>#','last alignment<br>type','# of<br>iterations','best iteration<br>(all, bin 1 or 2)','alignment quality<br>(all, bin 1 or 2)','tilt azimuth<br>(all, bin 1 or 2)','tilt angle<br>range','recorded<br>defocus (Å)','dose<br>compensated','# of recons<br>available','suggested<br>next steps','preview of best/<br>coarse iteration','additional<br>information','summary<br>webpage');
+$display_keys = array ( 'runname,<br>run date','tilt-series<br>#','last alignment<br>type','# of<br>iters','best iter, quality<br>(all, bin 1 or 2)','tilt azimuth<br>(all, bin 1 or 2)','tilt angle<br>range','recorded<br>defocus (Å)','dose<br>compensated','# of recons<br>available','suggested<br>next steps','preview of best/<br>coarse iteration','additional<br>information','summary<br>webpage');
 foreach($display_keys as $key) {
 	$html .= "<td><span class='datafield0'><center>".$key."</center></span></TD> ";
 }
@@ -67,6 +67,9 @@ foreach($tiltseries_runs as $tiltseries_run) {
 	$refine_iterations = glob("$outdir/$path_chunks[1]/series*.tlt");
 	$coarse_iterations = glob("$outdir/$path_chunks[1]/coarse_series*.tlt");
 	$protomo2aligner_logs = glob("$outdir/$path_chunks[1]/protomo2aligner_*.log");
+	if (count($protomo2aligner_logs) == 0) {
+		$protomo2aligner_logs = glob("$outdir/$path_chunks[1]/protomo2batch_*.log");
+	}
 	$protomo2aligner_logs = array_reverse($protomo2aligner_logs);
 	$protomo2aligner_logs = array_reverse(explode('/',$protomo2aligner_logs[0]));
 	$protomo2aligner_logs = explode('_',$protomo2aligner_logs[0]);
@@ -103,8 +106,8 @@ foreach($tiltseries_runs as $tiltseries_run) {
 		$quality_assessment = file($quality_assessment_file[0]);
 		$quality_assessment_best = $quality_assessment[0];
 		$quality_assessment_best = array_reverse(explode(' ',$quality_assessment_best));
-		$html .= "<td><center>Refinement</center></TD>";
-		$html .= "<td><center>$iterations</center></TD>";
+		$html .= '<td><a href="protomo2TiltSummary.php?expId='.$_GET['expId'].'&outdir='.$outdir.'&runname='.$path_chunks[1].'&tiltseries='.$tiltseriesnumber.'" target="_blank"><center>Refinement</center></a></TD>';
+		$html .= '<td><a href="protomo2TiltSummary.php?expId='.$_GET['expId'].'&outdir='.$outdir.'&runname='.$path_chunks[1].'&tiltseries='.$tiltseriesnumber.'" target="_blank"><center>'.$iterations.'</center></a></TD>';
 		$best_iteration = glob("$outdir/$path_chunks[1]/best.*");
 		$best_bin1or2_iteration = glob("$outdir/$path_chunks[1]/best_bin1or2.*");
 		if (count($best_iteration) > 0) {
@@ -114,14 +117,6 @@ foreach($tiltseries_runs as $tiltseries_run) {
 		if (count($best_bin1or2_iteration) > 0) {
 			$best_bin1or2_iteration = array_reverse(explode('/',$best_bin1or2_iteration[0]));
 			$best_bin1or2_iteration = explode('.',$best_bin1or2_iteration[0]);
-		}
-		if ((count($best_iteration) > 0) and (count($best_bin1or2_iteration) > 0)) {
-			$html .= '<td><a href="protomo2RefineIterationSummary.php?iter='.$best_iteration[1].'&outdir='.$outdir.'&runname='.$path_chunks[1].'&tiltseries='.$tiltseriesnumber.'" target="_blank"><center>'.$best_iteration[1].'</a>, ';
-			$html .= '<a href="protomo2RefineIterationSummary.php?iter='.$best_bin1or2_iteration[1].'&outdir='.$outdir.'&runname='.$path_chunks[1].'&tiltseries='.$tiltseriesnumber.'" target="_blank">'.$best_bin1or2_iteration[1].'</center></a></TD>';
-		} elseif (count($best_iteration) > 0) {
-			$html .= '<td><a href="protomo2RefineIterationSummary.php?iter='.$best_iteration[1].'&outdir='.$outdir.'&runname='.$path_chunks[1].'&tiltseries='.$tiltseriesnumber.'" target="_blank"><center>'.$best_iteration[1].'</center></a></TD>';
-		} else {
-			$html .= "<td><center>--</center></TD>";
 		}
 		
 		if (count($best_iteration) > 0) {
@@ -191,12 +186,13 @@ foreach($tiltseries_runs as $tiltseries_run) {
 		}elseif (($best_quality == '') and ($best_bin1or2_quality !== '')) {
 			$html .= "<td><center>--<br>$best_bin1or2_quality</center></TD>";
 		}elseif (($best_quality !== '') and ($best_bin1or2_quality == '')) {
-			$html .= "<td><center>$best_quality</center></TD>";
+			$html .= '<td><center><a href="protomo2RefineIterationSummary.php?iter='.$best_iteration[1].'&outdir='.$outdir.'&runname='.$path_chunks[1].'&tiltseries='.$tiltseriesnumber.'" target="_blank">'.$best_iteration[1].', '.$best_quality.'</center></a></TD>';
 		}elseif (($best_quality !== '') and ($best_bin1or2_quality !== '')) {
 			if ($best_bin1or2_iteration[1] == $best_iteration[1]) {
-				$html .= "<td><center>$best_bin1or2_quality</center></TD>";
+				$html .= '<td><center><a href="protomo2RefineIterationSummary.php?iter='.$best_bin1or2_iteration[1].'&outdir='.$outdir.'&runname='.$path_chunks[1].'&tiltseries='.$tiltseriesnumber.'" target="_blank">'.$best_bin1or2_iteration[1].', '.$best_bin1or2_quality.'</center></a></TD>';
 			}else{
-				$html .= "<td><center>$best_quality$best_bin1or2_quality</center></TD>";
+				$html .= '<td><center><a href="protomo2RefineIterationSummary.php?iter='.$best_iteration[1].'&outdir='.$outdir.'&runname='.$path_chunks[1].'&tiltseries='.$tiltseriesnumber.'" target="_blank">'.$best_iteration[1].', '.$best_quality.'</center></a>';
+				$html .= '<center><a href="protomo2RefineIterationSummary.php?iter='.$best_bin1or2_iteration[1].'&outdir='.$outdir.'&runname='.$path_chunks[1].'&tiltseries='.$tiltseriesnumber.'" target="_blank">'.$best_bin1or2_iteration[1].', '.$best_bin1or2_quality.'</center></a></TD>';
 			}
 		}
 		
@@ -290,8 +286,7 @@ foreach($tiltseries_runs as $tiltseries_run) {
 			$html .= "<td><center>[$tilt_min:$tilt_max]</center></TD>";
 		}
 	} elseif (count($coarse_iterations) > 0){
-		$html .= "<td><center>Coarse</center></TD>";
-		$html .= "<td><center>--</center></TD>";
+		$html .= '<td><a href="protomo2CoarseTiltSummary.php?expId='.$_GET['expId'].'&outdir='.$outdir.'&runname='.$path_chunks[1].'&tiltseries='.$tiltseriesnumber.'" target="_blank"><center>Coarse</center></a>';
 		$html .= "<td><center>--</center></TD>";
 		$html .= "<td><center>--</center></TD>";
 		$tlt_file = "$outdir/$path_chunks[1]/series".sprintf('%04d',$tiltseriesnumber).".tlt";
@@ -340,7 +335,6 @@ foreach($tiltseries_runs as $tiltseries_run) {
 		}
 	} else {
 		$html .= "<td><center>None</center></TD>";
-		$html .= "<td><center>--</center></TD>";
 		$html .= "<td><center>--</center></TD>";
 		$html .= "<td><center>--</center></TD>";
 		$tlt_file = "$outdir/$path_chunks[1]/series".sprintf('%04d',$tiltseriesnumber).".tlt";
@@ -463,6 +457,9 @@ foreach($tiltseries_runs as $tiltseries_run) {
 	
 	//Additional information
 	$protomo2aligner_logs = glob("$outdir/$path_chunks[1]/protomo2aligner_*.log");
+	if (count($protomo2aligner_logs) == 0) {
+		$protomo2aligner_logs = glob("$outdir/$path_chunks[1]/protomo2batch_*.log");
+	}
 	$protomo2aligner_logs = array_reverse($protomo2aligner_logs);
 	if (file_exists($protomo2aligner_logs[0])) {
 		$html .= '<td><a href="protomo2Log.php?runname='.$path_chunks[1].'&tiltseries='.$tiltseriesnumber.'&log='.$protomo2aligner_logs[0].'" target="_blank"><center>Description<br>and Log</center></a></TD>';

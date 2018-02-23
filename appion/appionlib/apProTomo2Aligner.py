@@ -488,7 +488,6 @@ def imodCoarseAlignment(rawdir, tiltfilename_full, image_file_type):
 	imod_temp_dir = os.path.join(rawdir, 'imod_temp')
 	os.mkdir(imod_temp_dir)
 	os.chdir(imod_temp_dir)
-	
 	cmd1="awk '/ORIGIN /{print}' %s | wc -l" % (tiltfilename_full)
 	proc=subprocess.Popen(cmd1, stdout=subprocess.PIPE, shell=True)
 	(numimages, err) = proc.communicate()
@@ -536,10 +535,13 @@ def imodCoarseAlignment(rawdir, tiltfilename_full, image_file_type):
 	mrc.write(stack, stack_file)
 	imod_coarse_alignment_file = imod_temp_dir + '/imod_coarse_alignment.out'
 	
+	os.system('ls %s' % imod_temp_dir)
 	cmd = 'tiltxcorr -leaveaxis -binning 1 -rotation %f -tiltfile %s %s %s' % (image_rotation, tiltlist, stack_file, imod_coarse_alignment_file)
 	os.system(cmd)
 	
 	#Convert IMOD alignment to Protomo .tlt
+	while not os.path.isfile(imod_coarse_alignment_file):
+		sleep(1)
 	alignment_file=open(imod_coarse_alignment_file,'r')
 	alignment_file_lines=alignment_file.readlines()
 	alignment_file.close()
@@ -1091,6 +1093,10 @@ def findMaxSearchArea(tiltfilename_full, dimx, dimy):
 	old_max_search_file = tiltfilename_full + '.maxsearch.*'
 	max_search_file = tiltfilename_full + '.maxsearch.' + str(window_x) + '.' + str(window_y)
 	os.system('rm %s 2>/dev/null; touch %s' % (old_max_search_file, max_search_file))
+	
+	percent_x = 100*window_x/dimx
+	percent_y = 100*window_y/dimy
+	apDisplay.printMsg("Maximum central search area in common between all tilt images: (x, y) = (%d, %d) = (%.1f%%, %.1f%%) of image dimensions" % (window_x, window_y, percent_x, percent_y))
 	
 	return
 
@@ -2054,7 +2060,7 @@ def makeTiltSeriesVideos(seriesname, iteration, tiltfilename, rawimagecount, run
 			apDisplay.printWarning("Warning: Depiction video might be so large that it breaks your web browser!")
 		
 		if procs == 1:
-			for i in range(start, start+rawimagecount+100):
+			for i in range(start-1, start+rawimagecount+100):
 				processTiltImages(i,i,tiltfilename,raw_path,image_file_type,map_sampling,rundir,pixelsize,rawimagecount,tilt_clip)
 		else: #Parallel process the images
 			for i,j in zip(range(start-1, start+rawimagecount+100),range(rawimagecount+100)):
@@ -2402,7 +2408,7 @@ def makeDosePlots(rundir, seriesname, tilts, accumulated_dose_list, dose_a, dose
 	Creates a plot of the dose compensation performed.
 	'''
 	import warnings
-	warnings.simplefilter("ignore", RuntimeWarning)  #supresses an annoying power warningthat doesn't affect anything.
+	warnings.simplefilter("ignore", RuntimeWarning)  #supresses an annoying warning that doesn't affect anything.
 	try: #If anything fails, it's likely that something isn't in the path
 		os.system("mkdir -p %s/media/dose_compensation 2>/dev/null" % rundir)
 		dose_full=rundir+'/media/dose_compensation/'+seriesname+'_dose.png'
@@ -2438,6 +2444,72 @@ def makeDosePlots(rundir, seriesname, tilts, accumulated_dose_list, dose_a, dose
 	except:
 		apDisplay.printWarning("Dose plots could not be generated. Make sure pylab is in your $PATH\n")
 
+
+def makeDriftPlot(rundir, seriesname, tilts, ordered_mrc_files, pixelsize):
+	'''
+	Creates a plot of the maximum tilt image drift versus tilt angle.
+	'''
+	try: #If anything fails, it's likely that the rundir is not default (user's fault) or there are no aligned frames for at least one image
+		#Get parent directory to protomo_alignments, which is where ddstack is stored
+		split_rundir=rundir.split('/')
+		appion_session_path = []
+		for i in range(len(split_rundir)):
+			if split_rundir[i] != 'protomo_alignments':
+				appion_session_path.append(split_rundir[i])
+			else:
+				break
+		appion_session_path = os.path.join(os.sep, *appion_session_path)
+		ddstack_session_path = os.path.join(appion_session_path, 'ddstack')
+		
+		max_frame_shifts = []
+		for i in range(len(tilts)):
+			#Find most recent frame alignment for each image
+			modified_image_basename = os.path.basename(ordered_mrc_files[i])[10:-4].split('-')
+			modified_image_basename = modified_image_basename[0] + '*' + modified_image_basename[1][2:]
+			align_log_paths = ddstack_session_path + '*/*/*' + modified_image_basename + '*Log.txt'
+			align_log_paths = glob.glob(align_log_paths)
+			align_log_paths.sort(key=os.path.getmtime)
+			align_log=open(align_log_paths[-1],'r')
+			align_log_lines=align_log.readlines()
+			align_log.close()
+			
+			#Calculate distance from frame to frame
+			max_frame_shift = 0
+			iter_lines = iter(align_log_lines) #Need to skip 1st line
+			next(iter_lines)
+			last_x = -9999
+			last_y = -9999
+			for line in iter_lines:
+				current_x = float(line.split(' ')[-2])
+				current_y = float(line.split(' ')[-1])
+				if (last_x != -9999 and last_y != -9999):
+					dist = ((last_x - current_x)**2 + (last_y - current_y)**2)**0.5
+					max_frame_shift = max(max_frame_shift, dist)
+				last_x = current_x
+				last_y = current_y
+			max_frame_shifts.append(max_frame_shift*pixelsize)
+	except:
+		pass
+		
+	try: #If anything fails, it's likely that something isn't in the path
+		os.system("mkdir -p %s/media/max_drift/ 2>/dev/null" % rundir)
+		drift_full=rundir+'/media/max_drift/'+seriesname+'_max_drift.png'
+		pylab.clf()
+		
+		pylab.plot(tilts, max_frame_shifts, '.')
+		pylab.xlabel("Tilt Image Angle (degrees)")
+		pylab.ylabel("Maximum Frame Drift ($\AA$)")
+		pylab.title("Maximum Per-frame Motion")
+		pylab.grid(True)
+		pylab.minorticks_on()
+		pylab.savefig(drift_full, bbox_inches='tight')
+		pylab.clf()
+		
+		#rename pngs to be gifs so that Appion will display them properly (this is a ridiculous redux workaround to display images with white backgrounds by changing png filename extensions to gif and then using loadimg.php?rawgif=1 to load them, but oh well)
+		os.system('mv %s %s' % (drift_full,drift_full[:-3]+"gif"))
+	except:
+		pass
+	
 
 def makeAngleRefinementPlots(rundir, seriesname, initial_tiltfile, azimuth_max_deviation, azimuth_stability_check):
 	'''

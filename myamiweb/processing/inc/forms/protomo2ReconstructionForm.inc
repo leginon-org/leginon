@@ -86,6 +86,8 @@ class Protomo2ReconstructionForm extends BasicLayoutForm
 		global $html; //I can only get the selector form to pass variables properly by defining it globally in the constructor.
 		
 		if (!isset($_POST['reconstruction_actions'])) {$_POST['reconstruction_actions']=1;}
+		if ($_POST['reconstruction_actions'] == 2) {$_POST['reconstruction_actions']=1;echo "<b>Error:</b> CTF correction is currently disabled";}
+		if ($_POST['reconstruction_actions'] == 4) {$_POST['reconstruction_actions']=1;echo "<b>Error:</b> CTF correction is currently disabled";}
 		$action_settings=array("Reconstruct", "CTF Correct > Reconstruct", "Dose Compensate > Reconstruct", "CTF Correct > Dose Compensate > Reconstruct");
 
 		$html.= '<hr /><br><center><select name="reconstruction_actions" onchange=submit() style="width:225px">';

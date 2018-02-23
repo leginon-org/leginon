@@ -10,8 +10,6 @@ import re
 import sys
 import glob
 import subprocess
-import numpy as np
-import multiprocessing as mp
 from pyami import mrc
 from appionlib import basicScript
 from appionlib import apDisplay
@@ -35,8 +33,17 @@ class ProTomo2ManualAligner(basicScript.BasicScript):
 		
 		self.parser.add_option('-R', '--rundir', dest='rundir', help="Path of run directory")
 		
-		self.parser.add_option('--iteration', dest='iteration', help="Iteration to run manual alignment on. Either an integer > 0, 'Coarse', or 'Original'.")
+		self.parser.add_option('--iteration', dest='iteration', help="Iteration to run manual alignment on. Either an integer > 0, 'Coarse', 'Coarse2', 'Imod', or 'Original'.")
 
+		self.parser.add_option("--exclude_angles", dest="exclude_angles",  default="",
+			help='Select specific tilt angles in the tilt-series to remove. Accuracy must be within +-0.1 degrees, e.g. --exclude_angles="-37.5,4.2,27"')
+		
+		self.parser.add_option("--negative", dest="negative", type="float",  default="-90",
+			help="Tilt angle, in degrees, below which all images will be removed, e.g. --negative=-45", metavar="float")
+		
+		self.parser.add_option("--positive", dest="positive", type="float",  default="90",
+			help="Tilt angle, in degrees, above which all images will be removed, e.g. --positive=45", metavar="float")
+		
 		self.parser.add_option("--max_image_fraction", dest="max_image_fraction", type="float",  default="0.75",
 			help="Central fraction of the tilt images that will be samples for manual alignment, e.g. --max_image_fraction=0.5", metavar="float")
 		
@@ -82,7 +89,7 @@ class ProTomo2ManualAligner(basicScript.BasicScript):
 			apProTomo2Aligner.printCitations()
 			sys.exit()
 		os.chdir(self.params['rundir'])
-		os.system('rm *i3t')
+		os.system('rm *i3t 2>/dev/null')
 		
 		seriesnumber = "%04d" % int(self.params['tiltseries'])
 		base_seriesname='series'+seriesnumber
@@ -90,7 +97,7 @@ class ProTomo2ManualAligner(basicScript.BasicScript):
 			seriesname='coarse_'+base_seriesname
 			tiltfilename='original.tlt'
 			tiltfilename_full=self.params['rundir']+'/'+tiltfilename
-		elif (self.params['iteration'] == 'Coarse') or (self.params['iteration'] == 'coarse'):
+		elif (self.params['iteration'] == 'Coarse') or (self.params['iteration'] == 'coarse') or (self.params['iteration'] == 'Coarse1') or (self.params['iteration'] == 'coarse1'):
 			seriesname='coarse_'+base_seriesname
 			tiltfilename=seriesname+'.tlt'
 			tiltfilename_full=self.params['rundir']+'/'+tiltfilename
@@ -117,6 +124,42 @@ class ProTomo2ManualAligner(basicScript.BasicScript):
 		if (self.params['iteration'] == 'Imod') or (self.params['iteration'] == 'imod') or (self.params['iteration'] == 'IMOD'):
 			paramfilename='coarse_'+base_seriesname+'.param'
 			paramfilename_full=self.params['rundir']+'/'+paramfilename
+		
+		raw_dir_mrcs = self.params['rundir']+'/raw/*mrc'
+		image_list=glob.glob(raw_dir_mrcs)
+		random_mrc=mrc.read(image_list[1])
+		dimy, dimx = random_mrc.shape
+		
+		if self.params['exclude_angles'] != '':
+			temp_tlt_file = os.path.join(os.path.dirname(tiltfilename_full),'excluded_angles.tlt')
+			os.system('cp %s %s' % (tiltfilename_full, temp_tlt_file))
+			tiltfilename_full = temp_tlt_file
+			remove_tilt_angles=self.params['exclude_angles'].split(',')
+			remove_image_by_tilt_angle=[]
+			with open(tiltfilename_full,'r') as f:
+				for line in f:
+					if 'TILT ANGLE' in line:
+						tilt_angle=float(line.split()[[i for i,x in enumerate(line.split()) if x == 'ANGLE'][0]+1])
+						for angle in remove_tilt_angles:
+							if ((float(angle) + 0.1) > tilt_angle) and ((float(angle) - 0.1) < tilt_angle):
+								remove_image_by_tilt_angle.append(line.split()[[i for i,x in enumerate(line.split()) if x == 'IMAGE'][0]+1])
+								if angle in remove_tilt_angles: remove_tilt_angles.remove(angle)
+			if len(remove_tilt_angles) > 0:
+				for tilt in remove_tilt_angles:
+					apDisplay.printWarning("Tilt angle %s was not found in the .tlt file and thus was not removed." % tilt)
+				apDisplay.printWarning("Removal of tilt images by tilt angles requires angles accurate to +-0.1 degrees.")
+			for imagenumber in remove_image_by_tilt_angle:
+				apProTomo2Aligner.removeImageFromTiltFile(tiltfilename_full, imagenumber, remove_refimg="False")
+			apProTomo2Aligner.findMaxSearchArea(os.path.basename(tiltfilename_full), dimx, dimy)
+			apDisplay.printMsg("Images %s have been removed from the .tlt file by user request" % remove_image_by_tilt_angle)
+			
+		if (self.params['positive'] < 90) or (self.params['negative'] > -90):
+			temp_tlt_file = os.path.join(os.path.dirname(tiltfilename_full),'excluded_range.tlt')
+			os.system('cp %s %s' % (tiltfilename_full, temp_tlt_file))
+			tiltfilename_full = temp_tlt_file
+			removed_images, mintilt, maxtilt = apProTomo2Aligner.removeHighTiltsFromTiltFile(tiltfilename_full, self.params['negative'], self.params['positive'])
+			apProTomo2Aligner.findMaxSearchArea(os.path.basename(tiltfilename_full), dimx, dimy)
+			apDisplay.printMsg("Images %s have been removed before manual alignment" % removed_images)
 		
 		#Print out Protomo IMAGE == TILT ANGLE pairs
 		cmd1="awk '/ORIGIN /{print}' %s | wc -l" % (tiltfilename_full)
@@ -151,21 +194,16 @@ class ProTomo2ManualAligner(basicScript.BasicScript):
 		manualparam = '%s/manual_%s.param' % (self.params['rundir'], base_seriesname)
 		manuali3t = '%s/manual_%s.i3t' % (self.params['rundir'], base_seriesname)
 		os.system('rm %s 2>/dev/null' % manuali3t)
-		raw_dir_mrcs = self.params['rundir']+'/raw/*mrc'
-		image_list=glob.glob(raw_dir_mrcs)
-		random_mrc=mrc.read(image_list[1])
-		dimy, dimx = random_mrc.shape
 		
-		maxsearch_file=glob.glob(tiltfilename+'.maxsearch.*')
+		maxsearch_file=glob.glob(tiltfilename_full+'.maxsearch.*')
 		if not maxsearch_file == 0:
 			apProTomo2Aligner.findMaxSearchArea(os.path.basename(tiltfilename_full), dimx, dimy)
-			maxsearch_file=glob.glob(tiltfilename+'.maxsearch.*')
+			maxsearch_file=glob.glob(tiltfilename_full+'.maxsearch.*')
 		maxsearch_x = int(maxsearch_file[0].split('.')[-2])
 		maxsearch_y = int(maxsearch_file[0].split('.')[-1])
 		
 		manual_x_size = apProTomo2Aligner.nextLargestSize(int(self.params['max_image_fraction']*maxsearch_x)+1)
 		manual_y_size = apProTomo2Aligner.nextLargestSize(int(self.params['max_image_fraction']*maxsearch_y)+1)
-		
 		if self.params['center_all_images'] == "True":
 			temp_tlt_file = os.path.join(os.path.dirname(tiltfilename_full),'manual_centered.tlt')
 			os.system('cp %s %s' % (tiltfilename_full, temp_tlt_file))
@@ -191,11 +229,14 @@ class ProTomo2ManualAligner(basicScript.BasicScript):
 		manualseries.geom(0).write(manualtilt)
 		
 		#cleanup
+		os.system('rm %s 2>/dev/null' % manuali3t)
 		os.system('rm -rf %s' % self.params['rundir']+'/cache/')
 		if self.params['center_all_images'] == "True":
 			os.system('rm -rf %s' % tiltfilename_full)
 		
 		apProTomo2Aligner.findMaxSearchArea(os.path.basename(manualtilt), dimx, dimy)
+		
+		apDisplay.printMsg("Finished Manual Alignment for Tilt-Series #%s!\n" % self.params['tiltseries'])
 		
 		apProTomo2Aligner.printTips("Alignment")
 		

@@ -84,13 +84,13 @@ class Protomo2BatchForm extends BasicLayoutForm
 			if (!isset($_POST['laststep'])) {$_POST['laststep']=3;}
 			//Check for impossible setting
 			if ($_POST['firststep'] > $_POST['laststep']) {$_POST['laststep']=$_POST['firststep'];}
-			if ($_POST['firststep'] == 5 or $_POST['firststep'] == 11 or $_POST['laststep'] == 5 or $_POST['laststep'] == 11) {$_POST['firststep']=1; $_POST['laststep']=3;}
+			if ($_POST['firststep'] == 5 or $_POST['firststep'] == 10 or $_POST['firststep'] == 11 or $_POST['laststep'] == 5 or $_POST['laststep'] == 10 or $_POST['laststep'] == 11) {$_POST['firststep']=1; $_POST['laststep']=3;}
 			if (($_POST['firststep'] == 1 or $_POST['firststep'] == 2 or $_POST['firststep'] == 3 or $_POST['firststep'] == 4) and ($_POST['laststep'] == 6 or $_POST['laststep'] == 7 or $_POST['laststep'] == 8 or $_POST['laststep'] == 9 or $_POST['laststep'] == 10 or $_POST['laststep'] == 12)) {$_POST['laststep']=4;}
 			if ($_POST['firststep'] == 6){$_POST['laststep']=6;}
 			if ($_POST['firststep'] == 7){$_POST['laststep']=7;}
 			if ($_POST['firststep'] == 8){$_POST['laststep']=8;}
 			if ($_POST['firststep'] == 9){$_POST['laststep']=9;}
-			if ($_POST['firststep'] == 10){$_POST['laststep']=10;}
+			//if ($_POST['firststep'] == 10){$_POST['laststep']=10;}
 			if ($_POST['firststep'] == 12){$_POST['laststep']=12;}
 			if ($_POST['firststep'] == 14){$_POST['laststep']=14;}
 			
@@ -100,7 +100,8 @@ class Protomo2BatchForm extends BasicLayoutForm
 			$html .= "
 				<center>(Batch processing only operates on tiltseries#### directories)</center>";
 			
-			$html.= '<br><center><select name="firststep" onchange=submit() style="width:145px">';
+			$html .= '<br>'.openRoundBorder();
+			$html.= '<center><select name="firststep" onchange=submit() style="width:145px">';
 			for ($i = 1; $i < count($steps)+1; $i++) {
 				$html.= '<option ';
 				if ($i == $_POST['firststep']) {
@@ -119,6 +120,7 @@ class Protomo2BatchForm extends BasicLayoutForm
 				$html.= 'value="'.$i.'">'.$steps[$i-1].'</option>';
 			}
 			$html.= '</select>'; $html.= docpop('protomo_laststep', ' Last Step').'</center><br>';
+			$html .= closeRoundBorder();
 			
 			global $html2;
 			global $html3;
@@ -179,6 +181,10 @@ class Protomo2BatchForm extends BasicLayoutForm
 			$res_max = round($imageinfo['pixelsize']*4*pow(10,10),1);
 			
 			$coarse_param_file=$_SESSION['outdir'].'/'.$_SESSION['runname'].'/ready_for_batch/coarse_series'.sprintf('%04d',$_SESSION['tiltseries']).'.param';
+			if (!file_exists($coarse_param_file)) {
+				$coarse_param_files = glob($_SESSION['outdir']."/*/coarse_series*.param");
+				if (file_exists($coarse_param_files[0])) {$coarse_param_file = $coarse_param_files[0];}
+			}
 			$refine_param_file=$_SESSION['outdir'].'/'.$_SESSION['runname'].'/ready_for_batch/refine_series'.sprintf('%04d',$_SESSION['tiltseries']).'.param';
 			$recon_param_file=$_SESSION['outdir'].'/'.$_SESSION['runname'].'/ready_for_batch/recon_series'.sprintf('%04d',$_SESSION['tiltseries']).'.param';
 			$link_recons=$_SESSION['outdir'].'/'.'batch_tiltseries_out/';
@@ -1872,7 +1878,7 @@ class Protomo2BatchForm extends BasicLayoutForm
 		<br />
 		<H3>Coarse Alignment Parameters ".docpop('coarse_info', '(Info)')."</H3>
 		<hr />";
-			$html.= $params->insertTextField( "coarse_param_file", $fieldSize3 );
+			$html.= $params->insertTextField( "coarse_param_file", $fieldSize3+40 );
 			$html.= '<select name="imod_coarse_align" style="width:66px">';
 			$html.= '<option selected value="True">True</option>';
 			$html.= '<option value="False">False</option>';
@@ -1887,7 +1893,7 @@ class Protomo2BatchForm extends BasicLayoutForm
 		<hr />";
 			$html.=$html2;  //Preset Parameters
 			$html.=$html3;  //Preset Parameters
-			$html.= $params->insertTextField( "refine_param_file", $fieldSize3 );
+			$html.= $params->insertTextField( "refine_param_file", $fieldSize3+40 );
 			$html.= $params->insertTextFieldInRow( "r1_iters", $fieldSize2 ).'│ ';
 			$html.= $params->insertTextFieldInRow( "r2_iters", $fieldSize2 ).'│ ';
 			$html.= $params->insertTextFieldInRow( "r3_iters", $fieldSize2 ).'│ ';
@@ -2052,7 +2058,7 @@ class Protomo2BatchForm extends BasicLayoutForm
 		<br />
 		<H3>Reconstruction Parameters ".docpop('recon_info', '(Info)')."</H3>
 		<hr />";
-			$html.= $params->insertTextField( "recon_param_file", $fieldSize3 );
+			$html.= $params->insertTextField( "recon_param_file", $fieldSize3+40 );
 			$html.= $params->insertTextField( "link_recons", $fieldSize3 );
 			$html.= '<select name="recon_iter_presets" style="width:66px">';
 			$html.= '<option selected value="BestBin1or2">BestBin1or2</option>';
@@ -2095,7 +2101,7 @@ class Protomo2BatchForm extends BasicLayoutForm
 			$html.= $params->insertTextFieldInRow( "shift_limit", $fieldSize ).'│ ';
 			$html.= $params->insertTextField( "angle_limit", $fieldSize );
 			$html.= $params->insertTextField( "tilt_azimuth", $fieldSize );
-			$html.= $params->insertTextField( "coarse_param_file", $fieldSize3 );
+			$html.= $params->insertTextField( "coarse_param_file", $fieldSize3+40 );
 			
 		}
 		
@@ -2181,9 +2187,9 @@ class Protomo2BatchForm extends BasicLayoutForm
 		<H3>Fully Automated Parameters ".docpop('auto_info', '(Info)')."</H3>
 		<hr />";
 			$html.=$html2.'<br><br>';  //Preset Parameters
-			$html.= $params->insertTextField( "coarse_param_file", $fieldSize3 );
-			$html.= $params->insertTextField( "refine_param_file", $fieldSize3 );
-			$html.= $params->insertTextField( "recon_param_file", $fieldSize3 ).'<br>';
+			$html.= $params->insertTextField( "coarse_param_file", $fieldSize3+40 );
+			$html.= $params->insertTextField( "refine_param_file", $fieldSize3+40 );
+			$html.= $params->insertTextField( "recon_param_file", $fieldSize3+40 ).'<br>';
 			$html.= '<br><select name="frame_aligned" style="width:66px">';
 			$html.= '<option selected value="True">True</option>';
 			$html.= '<option value="False">False</option>';

@@ -142,13 +142,13 @@ def prepareTiltFile(sessionname, seriesname, tiltfilename, tiltseriesnumber, raw
 	frame_tiltdata, non_frame_tiltdata = frameOrNonFrameTiltdata(tiltdata)
 	try:
 		if export == False:
-			tilts,ordered_imagelist,accumulated_dose_list,ordered_mrc_files,refimg = apTomo.orderImageList(frame_tiltdata, non_frame_tiltdata, frame_aligned=frame_aligned_images)
+			tilts,ordered_imagelist,accumulated_dose_list,ordered_mrc_files,pixelsize,refimg = apTomo.orderImageList(frame_tiltdata, non_frame_tiltdata, frame_aligned=frame_aligned_images)
 		else:
 			tilts,ordered_imagelist,dose_list,accumulated_dose_list,ordered_mrc_files,refimg,defocus_list,pixelsize,magnification = apTomo.orderImageList(frame_tiltdata, non_frame_tiltdata, frame_aligned=frame_aligned_images, export=True)
 	except TypeError:
 		apDisplay.printError('Tilt-series #%d does not exist or is broken! Skipping...' % tiltseriesnumber)
 	if frame_aligned_images == "True":  #Azimuth is only present in the non-frame aligned images
-		a,ordered_imagelist_for_azimuth,c,d,e = apTomo.orderImageList(frame_tiltdata, non_frame_tiltdata, frame_aligned="False")
+		a,ordered_imagelist_for_azimuth,c,d,e,f = apTomo.orderImageList(frame_tiltdata, non_frame_tiltdata, frame_aligned="False")
 	
 	#tilts are tilt angles, ordered_imagelist are imagedata, ordered_mrc_files are paths to files, refimg is an int
 	maxtilt = max([abs(tilts[0]),abs(tilts[-1])])
@@ -158,6 +158,10 @@ def prepareTiltFile(sessionname, seriesname, tiltfilename, tiltseriesnumber, raw
 		rawexists = apParam.createDirectory(raw_path)
 		
 		if export == False:
+			#Make tilt-series drift plot
+			apProTomo2Aligner.makeDriftPlot(os.path.dirname(raw_path), seriesname, tilts, ordered_mrc_files, pixelsize)
+			
+			#Setup raw directory and .tlt file
 			if frame_aligned_images == "True":  #Azimuth is only present in the non-frame aligned images
 				azimuth = apTomo.getAverageAzimuthFromSeries(ordered_imagelist_for_azimuth)
 			else:
@@ -473,7 +477,7 @@ def defocusEstimate(seriesname, rundir, projectid, sessionname, procs, tiltserie
 		tiltdata = apTomo.getImageList([tiltseriesdata], ddstackid=None, appion_protomo=True)
 		
 		frame_tiltdata, non_frame_tiltdata = frameOrNonFrameTiltdata(tiltdata)
-		tilts,ordered_imagelist,accumulated_dose_list,ordered_mrc_files,refimg = apTomo.orderImageList(frame_tiltdata, non_frame_tiltdata, frame_aligned=frame_aligned_images)
+		tilts,ordered_imagelist,accumulated_dose_list,ordered_mrc_files,pixelsize,refimg = apTomo.orderImageList(frame_tiltdata, non_frame_tiltdata, frame_aligned=frame_aligned_images)
 		cs = tiltdata[0]['scope']['tem']['cs']*1000
 		voltage = int(tiltdata[0]['scope']['high tension']/1000)
 		
@@ -620,7 +624,7 @@ def imodCtfCorrect(seriesname, rundir, projectid, sessionname, tiltseriesnumber,
 		tiltdata = apTomo.getImageList([tiltseriesdata], ddstackid=None, appion_protomo=True)
 		
 		frame_tiltdata, non_frame_tiltdata = frameOrNonFrameTiltdata(tiltdata)
-		tilts,ordered_imagelist,accumulated_dose_list,ordered_mrc_files,refimg = apTomo.orderImageList(frame_tiltdata, non_frame_tiltdata, frame_aligned=frame_aligned_images)
+		tilts,ordered_imagelist,accumulated_dose_list,ordered_mrc_files,pixelsize,refimg = apTomo.orderImageList(frame_tiltdata, non_frame_tiltdata, frame_aligned=frame_aligned_images)
 		cs = tiltdata[0]['scope']['tem']['cs']*1000
 		voltage = int(tiltdata[0]['scope']['high tension']/1000)
 		
@@ -828,7 +832,7 @@ def tomoCtfCorrect(seriesname, rundir, projectid, sessionname, tiltseriesnumber,
 	tiltdata = apTomo.getImageList([tiltseriesdata], ddstackid=None, appion_protomo=True)
 	
 	frame_tiltdata, non_frame_tiltdata = frameOrNonFrameTiltdata(tiltdata)
-	tilts,ordered_imagelist,accumulated_dose_list,ordered_mrc_files,refimg = apTomo.orderImageList(frame_tiltdata, non_frame_tiltdata, frame_aligned="True")
+	tilts,ordered_imagelist,accumulated_dose_list,ordered_mrc_files,pixelsize,refimg = apTomo.orderImageList(frame_tiltdata, non_frame_tiltdata, frame_aligned="True")
 	cs = tiltdata[0]['scope']['tem']['cs']*1000
 	voltage = int(tiltdata[0]['scope']['high tension']/1000)
 	
@@ -977,7 +981,7 @@ def doseCompensate(seriesname, rundir, sessionname, tiltseriesnumber, frame_alig
 		tiltdata = apTomo.getImageList([tiltseriesdata], ddstackid=None, appion_protomo=True)
 		
 		frame_tiltdata, non_frame_tiltdata = frameOrNonFrameTiltdata(tiltdata)
-		tilts, ordered_imagelist, accumulated_dose_list, ordered_mrc_files, refimg = apTomo.orderImageList(frame_tiltdata, non_frame_tiltdata, frame_aligned="False")
+		tilts, ordered_imagelist, accumulated_dose_list, ordered_mrc_files, pixelsize, refimg = apTomo.orderImageList(frame_tiltdata, non_frame_tiltdata, frame_aligned="False")
 		if (dose_presets == "Light"):
 			dose_a = 0.245
 			dose_b = -1.8
@@ -1022,9 +1026,9 @@ def doseCompensate(seriesname, rundir, sessionname, tiltseriesnumber, frame_alig
 			tiltdata = apTomo.getImageList([tiltseriesdata], ddstackid=None, appion_protomo=True)
 			
 			frame_tiltdata, non_frame_tiltdata = frameOrNonFrameTiltdata(tiltdata)
-			tilts, ordered_imagelist, accumulated_dose_list, ordered_mrc_files, refimg = apTomo.orderImageList(frame_tiltdata, non_frame_tiltdata, frame_aligned="False")
+			tilts, ordered_imagelist, accumulated_dose_list, ordered_mrc_files, pixelsize, refimg = apTomo.orderImageList(frame_tiltdata, non_frame_tiltdata, frame_aligned="False")
 			if frame_aligned_images == "True":  #For different image filenames
-				a, ordered_imagelist, c, d, e = apTomo.orderImageList(frame_tiltdata, non_frame_tiltdata, frame_aligned=frame_aligned_images)
+				a, ordered_imagelist, c, d, e, f = apTomo.orderImageList(frame_tiltdata, non_frame_tiltdata, frame_aligned=frame_aligned_images)
 			newfilenames, new_ordered_imagelist = apProTomo.getImageFiles(ordered_imagelist, raw_path, link=False, copy=False)
 			if (dose_presets == "Light"):
 				dose_a = 0.245

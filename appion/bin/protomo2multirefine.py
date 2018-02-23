@@ -46,11 +46,11 @@ def parseOptions():
 	
 	parser.add_option('--angle_limit', dest='angle_limit', type='float', metavar='float', help='Only remove images from the tilt file greater than abs(angle_limit), e.g. --angle_limit=35') 
 	
-	parser.add_option("--negative_recon", dest="negative_recon", type="float",  default="-90",
-		help="Tilt angle, in degrees, below which all images will be removed, e.g. --negative_recon=-45", metavar="float")
+	parser.add_option("--negative", dest="negative", type="float",  default="-90",
+		help="Tilt angle, in degrees, below which all images will be removed, e.g. --negative=-45", metavar="float")
 	
-	parser.add_option("--positive_recon", dest="positive_recon", type="float",  default="90",
-		help="Tilt angle, in degrees, above which all images will be removed, e.g. --positive_recon=45", metavar="float")
+	parser.add_option("--positive", dest="positive", type="float",  default="90",
+		help="Tilt angle, in degrees, above which all images will be removed, e.g. --positive=45", metavar="float")
 	
 	parser.add_option("--starting_tlt_file", dest="starting_tlt_file", default="Coarse",
 		help="Begin refinement with coarse alignment results or initial alignment (ie. from the microscope)?, e.g. --starting_tlt_file=Coarse",)
@@ -563,7 +563,7 @@ def parseOptions():
 		help='Select specific images in the tilt-series to remove, e.g. --exclude_images="1,2,5-7"')
 	
 	parser.add_option("--exclude_images_by_angle", dest="exclude_images_by_angle",  default="",
-		help='Select specific tilt angles in the tilt-series to remove, e.g. --exclude_images_by_angle="-37.5, 4.2, 27"')
+		help='Select specific tilt angles in the tilt-series to remove, e.g. --exclude_images_by_angle="-37.5,4.2,27"')
 	
 	parser.add_option("--exclude_images_by_angle_accuracy", dest="exclude_images_by_angle_accuracy",  type="float",  default=0.05,
 		help='How accurate must your requested image removal be, in degrees?, e.g. --exclude_images_by_angle_accuracy=0.01')
@@ -845,7 +845,7 @@ if __name__ == '__main__':
 	tiltfilename_full=rundir+'/'+tiltfilename
 	
 	#If restart is also requested, make a dummy directory with the restart files (images and restart tlt)
-	if (options.restart_from_run != '' and options.restart_from_iteration > 0):
+	if (options.restart_from_run != '' and (options.restart_from_iteration > 0 or options.restart_from_iteration == 'Manual' or options.restart_from_iteration == 'manual')):
 		if os.path.exists(options.restart_from_run):
 			restart_path = options.restart_from_run
 		elif os.path.exists(os.path.dirname(rundir)+'/'+options.restart_from_run):
@@ -853,21 +853,32 @@ if __name__ == '__main__':
 		else:
 			apDisplay.printError("Restart Refinement Run not found! Aborting Refinement!")
 			sys.exit()
-		restart_seriesnumber = "%03d" % (int(options.restart_from_iteration) - 1)
-		restart_seriesname = seriesname + restart_seriesnumber
-		restart_tlt_file = restart_path + '/' + restart_seriesname + '.tlt'
+		
+		if (options.restart_from_iteration == 'Manual' or options.restart_from_iteration == 'manual'):
+			restart_tlt_file = restart_path + '/manual_' + seriesname + '.tlt'
+		else:
+			restart_seriesnumber = "%03d" % (int(options.restart_from_iteration) - 1)
+			restart_seriesname = seriesname + restart_seriesnumber
+			restart_tlt_file = restart_path + '/' + restart_seriesname + '.tlt'
+		
+		if os.path.exists(rundir):
+			apDisplay.printWarning("%s already exists! Trying a different run directory:" % rundir)
+			rundir=rundir+'b'
+			if os.path.exists(rundir):
+				apDisplay.printError("%s already exists too! Aborting! Choose a new 'Run directory'" % restart_path)
+				sys.exit()
+		
 		if os.path.exists(restart_tlt_file):
-			apDisplay.printMsg("Restarting Refinement from %s Iteration %d" % (os.path.basename(restart_path), int(options.restart_from_iteration)))
 			os.system('mkdir %s; cp %s %s' % (rundir, restart_tlt_file, tiltfilename_full))
+			if (options.restart_from_iteration == 'Manual' or options.restart_from_iteration == 'manual'):
+				apDisplay.printMsg("Restarting Refinement from %s after Manual Alignment" % os.path.basename(restart_path))
+				os.system('touch %s/restarted_from_%s_manual_alignment' % (rundir, os.path.basename(restart_path)))
+			else:
+				apDisplay.printMsg("Restarting Refinement from %s  Iteration %d" % (os.path.basename(restart_path), int(options.restart_from_iteration)))
+				os.system('touch %s/restarted_from_%s_iteration_%d' % (rundir, os.path.basename(restart_path), int(options.restart_from_iteration)))
 			os.system('mkdir -p %s/raw/original/; ln %s/* %s/raw/ 2>/dev/null; ln %s/original/* %s/raw/original/' % (rundir, os.path.join(restart_path,'raw'), rundir, os.path.join(restart_path,'raw'), rundir))
 			os.system('cp -r %s %s 2>/dev/null' % (os.path.join(restart_path,'media','dose_compensation'), os.path.join(rundir,'media')))
 			os.system('mkdir %s/defocus_estimation/; cp -r %s/defocus_estimation/* %s/defocus_estimation/ 2>/dev/null' % (rundir, restart_path, rundir))
-			apDisplay.printMsg("Restarting Refinement from %s Iteration %d" % (os.path.basename(restart_path), int(options.restart_from_iteration)))
-			os.system('mkdir %s; cp %s %s' % (rundir, restart_tlt_file, tiltfilename_full))
-			os.system('mkdir -p %s/raw/original/; ln %s/* %s/raw/ 2>/dev/null; ln %s/original/* %s/raw/original/' % (rundir, os.path.join(restart_path,'raw'), rundir, os.path.join(restart_path,'raw'), rundir))
-			os.system('cp -r %s %s 2>/dev/null' % (os.path.join(restart_path,'media','dose_compensation'), os.path.join(rundir,'media')))
-			os.system('mkdir %s/defocus_estimation/; cp -r %s/defocus_estimation/* %s/defocus_estimation/ 2>/dev/null' % (rundir, restart_path, rundir))
-			os.system('touch %s/restarted_from_%s_iteration_%d' % (rundir, os.path.basename(restart_path), int(options.restart_from_iteration)))
 		else:
 			apDisplay.printError("Restart Refinement Iteration not found! Aborting Refinement!")
 			sys.exit()
@@ -940,7 +951,7 @@ if __name__ == '__main__':
 	#Set up new directories
 	apDisplay.printMsg("Setting up directories for runs with differing thicknesses...")
 	for new_rundir in new_rundirs:
-		os.system('mkdir -p %s/raw/original/ 2>/dev/null; ln %s/raw/original/* %s/raw/original/ 2>/dev/null; cp %s/raw/* %s/raw/ 2>/dev/null; cp %s %s/%s; ln %s/restarted_from_* %s 2>/dev/null; mkdir %s/defocus_estimation/; cp -r %s/defocus_estimation/* %s/defocus_estimation/ 2>/dev/null' % (new_rundir, rundir, new_rundir, rundir, new_rundir, tiltfilename_full, new_rundir, tiltfilename, rundir, new_rundir, new_rundir, rundir, new_rundir))
+		os.system('mkdir -p %s/raw/original/ 2>/dev/null; ln %s/raw/original/* %s/raw/original/ 2>/dev/null; cp %s/raw/* %s/raw/ 2>/dev/null; cp %s %s/%s; ln %s/restarted_from_* %s 2>/dev/null; mkdir %s/defocus_estimation/; cp -r %s/defocus_estimation/* %s/defocus_estimation/ 2>/dev/null; mkdir -p %s/media/dose_compensation/; cp -r %s/media/dose_compensation/* %s/media/dose_compensation/ 2>/dev/null; mkdir -p %s/media/max_drift/; cp -r %s/media/max_drift/* %s/media/max_drift/ 2>/dev/null' % (new_rundir, rundir, new_rundir, rundir, new_rundir, tiltfilename_full, new_rundir, tiltfilename, rundir, new_rundir, new_rundir, rundir, new_rundir, new_rundir, rundir, new_rundir, new_rundir, rundir, new_rundir))
 		
 	#If restart is also requested, delete the dummy directory
 	if (options.restart_from_run != '' and options.restart_from_iteration > 0):
@@ -951,7 +962,6 @@ if __name__ == '__main__':
 		else:
 			apDisplay.printError("It's logically impossible to reach this statement.")
 			sys.exit()
-		os.system("ls %s" % restart_path)
 		os.system('rm -rf %s' % rundir)
 	
 	#Run refinements

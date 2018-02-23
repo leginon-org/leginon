@@ -72,11 +72,11 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		
 		self.parser.add_option('--angle_limit', dest='angle_limit', type='float', metavar='float', help='Only remove images from the tilt file greater than abs(angle_limit), e.g. --angle_limit=35') 
 		
-		self.parser.add_option("--negative_recon", dest="negative_recon", type="float",  default="-90",
-			help="Tilt angle, in degrees, below which all images will be removed, e.g. --negative_recon=-45", metavar="float")
+		self.parser.add_option("--negative", dest="negative", type="float",  default="-90",
+			help="Tilt angle, in degrees, below which all images will be removed, e.g. --negative=-45", metavar="float")
 		
-		self.parser.add_option("--positive_recon", dest="positive_recon", type="float",  default="90",
-			help="Tilt angle, in degrees, above which all images will be removed, e.g. --positive_recon=45", metavar="float")
+		self.parser.add_option("--positive", dest="positive", type="float",  default="90",
+			help="Tilt angle, in degrees, above which all images will be removed, e.g. --positive=45", metavar="float")
 		
 		self.parser.add_option("--starting_tlt_file", dest="starting_tlt_file", default="Coarse",
 			help="Begin refinement with coarse alignment results or initial alignment (ie. from the microscope)?, e.g. --starting_tlt_file=Coarse",)
@@ -1588,8 +1588,8 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		r1_lp, r2_lp, r3_lp, r4_lp, r5_lp, self.params['r1_body'], self.params['r2_body'], self.params['r3_body'], self.params['r4_body'], self.params['r5_body'] = self.angstromsToProtomo(coarse=self.params['coarse'])
 		
 		###remove high tilt angles if requested
-		if (self.params['positive_recon'] < 90) or (self.params['negative_recon'] > -90):
-			removed_images, mintilt, maxtilt = apProTomo2Aligner.removeHighTiltsFromTiltFile(tiltfilename_full, self.params['negative_recon'], self.params['positive_recon'])
+		if (self.params['positive'] < 90) or (self.params['negative'] > -90):
+			removed_images, mintilt, maxtilt = apProTomo2Aligner.removeHighTiltsFromTiltFile(tiltfilename_full, self.params['negative'], self.params['positive'])
 			apDisplay.printMsg("High tilt images %s have been removed by request" % removed_images)
 		
 		###create param file
@@ -1820,6 +1820,8 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				apDisplay.printMsg("Creating IMOD Coarse Alignment tilt-series video...")
 				f.write('Creating IMOD Coarse Alignment tilt-series video...\n')
 				imod_coarse_tlt_file = rundir + '/imod_coarse_' + tiltfilename
+				while not os.path.isfile(imod_coarse_tlt_file):
+					sleep(1)
 				jobs8.append(mp.Process(target=apProTomo2Aligner.makeTiltSeriesVideos, args=(seriesname, 0, imod_coarse_tlt_file, rawimagecount, rundir, raw_path, self.params['pixelsize'], self.params['map_sampling'], self.params['image_file_type'], self.params['video_type'], self.params['tilt_clip'], self.params['parallel'], "Imod",)))
 				for job in jobs8:
 					job.start()
@@ -2435,13 +2437,13 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				if self.params['azimuth_stability_check'] == "True":
 					azimuth_stable, azimuth_deviation, initial_azimuth = apProTomo2Aligner.chechAzimuthStability(tiltfile, tiltfilename_full, self.params['azimuth_max_deviation'])
 					if azimuth_stable:
-						apDisplay.printMsg("The tilt azimuth after iteration #%s deviated from the initial tilt azimuth by %f, which is less than the maximum allowed deviation of %f." % (n+1, azimuth_deviation, self.params['azimuth_max_deviation']))
-						f.write('The tilt azimuth after iteration #%s deviated from the initial tilt azimuth by %f, which is less than the maximum allowed deviation of %f.' % (n+1, azimuth_deviation, self.params['azimuth_max_deviation']))
+						apDisplay.printMsg("The tilt azimuth after iteration #%s deviated from the initial tilt azimuth by %f degrees, which is less than the maximum allowed deviation of %f degrees." % (n+1, azimuth_deviation, self.params['azimuth_max_deviation']))
+						f.write('The tilt azimuth after iteration #%s deviated from the initial tilt azimuth by %f degrees, which is less than the maximum allowed deviation of %f degrees.' % (n+1, azimuth_deviation, self.params['azimuth_max_deviation']))
 					else:
-						apDisplay.printMsg("The tilt azimuth after iteration #%s deviated from the initial tilt azimuth by %f, which is greater than the maximum allowed deviation of %f." % (n+1, azimuth_deviation, self.params['azimuth_max_deviation']))
-						apDisplay.printMsg("Changing the tilt azimuth back to the initial tilt azimuth of %f for the next iteration." % initial_azimuth)
-						f.write('The tilt azimuth after iteration #%s deviated from the initial tilt azimuth by %f, which is greater than the maximum allowed deviation of %f.' % (n+1, azimuth_deviation, self.params['azimuth_max_deviation']))
-						f.write('Changing the tilt azimuth back to the initial tilt azimuth of %f for the next iteration.' % initial_azimuth)
+						apDisplay.printMsg("The tilt azimuth after iteration #%s deviated from the initial tilt azimuth by %f degrees, which is greater than the maximum allowed deviation of %f degrees." % (n+1, azimuth_deviation, self.params['azimuth_max_deviation']))
+						apDisplay.printMsg("Changing the tilt azimuth back to the initial tilt azimuth of %f degrees for the next iteration." % initial_azimuth)
+						f.write('The tilt azimuth after iteration #%s deviated from the initial tilt azimuth by %f degrees, which is greater than the maximum allowed deviation of %f degrees.' % (n+1, azimuth_deviation, self.params['azimuth_max_deviation']))
+						f.write('Changing the tilt azimuth back to the initial tilt azimuth of %f degrees for the next iteration.' % initial_azimuth)
 						os.system("rm %s" % (i3tfile))
 						if not os.path.exists(backup_tiltfilename_full):
 							os.system("cp %s %s" % (tiltfilename_full, backup_tiltfilename_full))

@@ -76,7 +76,7 @@ def serialEM2Appion(stack, mdoc, voltage):
 	cmd2="awk '/Binning /{print}' %s | head -1 | awk '{print $3}'" % mdoc
 	proc=subprocess.Popen(cmd2, stdout=subprocess.PIPE, shell=True)
 	(binning, err) = proc.communicate()
-	binning = int(binning)
+	binning = int(round(binning))
 	cmd3="awk '/Magnification /{print}' %s | head -1 | awk '{print $3}'" % mdoc
 	proc=subprocess.Popen(cmd3, stdout=subprocess.PIPE, shell=True)
 	(mag, err) = proc.communicate()
