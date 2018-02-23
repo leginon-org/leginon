@@ -47,6 +47,8 @@ class MosaicQuiltFinder(mosaictargetfinder.MosaicClickTargetFinder):
 		self.cortypes = self.hf.cortypes
 		self.focustypes = self.hf.focustypes
 		self.extendtypes = self.hf.extendtypes
+		self.current_jahc_imageid = None
+		self.test_jahc_imageid = None
 
 	def mosaicToTarget(self, typename, row, col):
 		imagedata, drow, dcol = self._mosaicToTarget(row, col)
@@ -68,22 +70,42 @@ class MosaicQuiltFinder(mosaictargetfinder.MosaicClickTargetFinder):
 		index = self.mosaic.tiles[int(count/2.0)]
 		return index
 
-	def setOriginal(self):
+	def getTileCount(self):
+		count = len(self.mosaic.tiles)
+		return count
+
+	def getTileChoices(self):
+		try:
+			count = self.getTileCount()
+		except:
+			count = 1
+		choices = map((lambda x: '%d' % x), range(count))
+		return choices
+
+	def setOriginal(self, index):
 		'''
 		Set test tile
 		'''
-		tile =  self.getMiddleTile()
-		print tile.imagedata.dbid
+		tile = self.mosaic.tiles[index]
+		self.test_jahc_imageid = tile.imagedata.dbid
+		self.current_jahc_imageid = None
 		self.hf.setCurrentImageData(tile.imagedata)
 		self.hf.setImage(tile.imagedata['image'], 'Original')
 		self.setImage(self.hf.getImage('Original'),'Original')
+
+	def isResetByFullRun(self):
+		if self.current_jahc_imageid and self.test_jahc_imageid and self.current_jahc_imageid != self.test_jahc_imageid:
+			self.logger.error('Original reset by real run. Must choose Original again')
+			return True
+		return False
 
 	def correlateTemplate(self):
 		'''
 		Test correlateTemplate on the test tile
 		'''
+		if self.isResetByFullRun():
+			return
 		self.hf.setSettings(self.settings)
-		self.setOriginal()
 		self.hf.correlateTemplate()
 		self.setImage(self.hf.getImage('Template'),'Template')
 
@@ -91,6 +113,8 @@ class MosaicQuiltFinder(mosaictargetfinder.MosaicClickTargetFinder):
 		'''
 		Test Threshold and Blobs on the test tile
 		'''
+		if self.isResetByFullRun():
+			return
 		self.hf.setSettings(self.settings)
 		self.hf.threshold()
 		self.setImage(self.hf.getImage('Threshold'),'Threshold')
@@ -101,6 +125,8 @@ class MosaicQuiltFinder(mosaictargetfinder.MosaicClickTargetFinder):
 		'''
 		Test fitLattice on the tile
 		'''
+		if self.isResetByFullRun():
+			return
 		self.hf.setSettings(self.settings)
 		self.hf.fitLattice(auto_center)
 		self.setTargets(self.hf.imagetargets['Lattice'], 'Lattice')
@@ -109,13 +135,25 @@ class MosaicQuiltFinder(mosaictargetfinder.MosaicClickTargetFinder):
 		'''
 		Test ice on a tile
 		'''
+		if self.isResetByFullRun():
+			return
 		self.hf.setSettings(self.settings)
 		self.hf.ice()
 		self.setTargets(self.hf.imagetargets['acquisition'], 'acquisition')
 		self.setTargets(self.hf.imagetargets['focus'], 'focus')
 
+	def clearJAHCFinder(self):
+		self.hf.setImage(None,'Original')
+		self.hf.setImage(None,'Template')
+		self.hf.setImage(None,'Threshold')
+		self.setImage(None,'Original')
+		self.setImage(None,'Template')
+		self.setImage(None,'Threshold')
+
 	def findSquares(self):
 		self.hf.setSettings(self.settings)
+		if not self.mosaic.tiles:
+			self.logger.error('Need tile images in mosaic to process')
 		all_targets = {}
 		for k in self.hf.targetnames:
 			all_targets[k] = []
@@ -131,6 +169,8 @@ class MosaicQuiltFinder(mosaictargetfinder.MosaicClickTargetFinder):
 					targetdict = {'delta row': drow,'delta column':dcol}
 					y,x = self.targetToMosaic(tile, targetdict)
 					all_targets[k].append((x, y))
+			self.current_jahc_imageid = tile.imagedata.dbid
+		self.clearJAHCFinder()
 		for k in self.hf.targetnames:
 			self.setTargets(all_targets[k],k)
 		self.panel.squaresFound()

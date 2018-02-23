@@ -26,10 +26,28 @@ from leginon.gui.wx.Presets import PresetChoice
 class Panel(leginon.gui.wx.ClickTargetFinder.Panel):
 	icon = 'atlastarget'
 	def initialize(self):
-		leginon.gui.wx.ClickTargetFinder.Panel.initialize(self)
+		leginon.gui.wx.TargetFinder.Panel.initialize(self)
+		self.SettingsDialog = leginon.gui.wx.TargetFinder.SettingsDialog
+
+		self.imagepanel = leginon.gui.wx.TargetPanel.TargetImagePanel(self, -1)
+		self.imagepanel.addTypeTool('Image', display=True)
+		self.imagepanel.selectiontool.setDisplayed('Image', True)
+		self.addJAHCFinderTesting()
+		self.imagepanel.addTargetTool('acquisition', wx.GREEN, target=True, settings=True, numbers=True,exp=True)
+		self.imagepanel.selectiontool.setDisplayed('acquisition', True)
+		self.imagepanel.addTargetTool('focus', wx.BLUE, target=True, settings=True)
+		self.imagepanel.selectiontool.setDisplayed('focus', True)
 		self.imagepanel.selectiontool.setEnableSettings('acquisition', True)
 		self.imagepanel.selectiontool.setDisplayed('focus', False)
 		self.imagepanel.selectiontool.setEnableSettings('focus', False)
+		self.imagepanel.addTargetTool('done', wx.Colour(218, 0, 0), numbers=True)
+		self.imagepanel.selectiontool.setDisplayed('done', True)
+		self.imagepanel.addTargetTool('position', wx.Colour(218, 165, 32), shape='x')
+		self.imagepanel.selectiontool.setDisplayed('position', True)
+
+		self.szmain.Add(self.imagepanel, (1, 0), (1, 1), wx.EXPAND)
+		self.szmain.AddGrowableRow(1)
+		self.szmain.AddGrowableCol(0)
 
 		self.toolbar.InsertSeparator(4)
 
@@ -49,6 +67,8 @@ class Panel(leginon.gui.wx.ClickTargetFinder.Panel):
 		self.toolbar.InsertSeparator(10)
 		self.toolbar.InsertTool(11, leginon.gui.wx.ToolBar.ID_FIND_SQUARES,
 			'squarefinder',shortHelpString='Find Squares')
+
+	def addJAHCFinderTesting(self):
 		self.imagepanel.addTypeTool('Original', display=True, settings=True)
 		self.imagepanel.addTypeTool('Template', display=True, settings=True)
 		self.imagepanel.addTypeTool('Threshold', display=True, settings=True)
@@ -129,12 +149,16 @@ class Panel(leginon.gui.wx.ClickTargetFinder.Panel):
 		dialog.Destroy()
 
 	def onFindSquaresButton(self, evt):
-		#self.node.findSquares()
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_FIND_SQUARES, False)
+		# set up what to display before running.  Got an X error and crash
+		# if doing it after.
+		self.imagepanel.showTypeToolDisplays(['Image'])
+		self.imagepanel.hideTypeToolDisplays(['Blobs'])
+		self.imagepanel.showTypeToolDisplays(['acquisition','focus'])
 		threading.Thread(target=self.node.findSquares).start()
 
 	def squaresFound(self):
-		self.imagepanel.hideTypeToolDisplays(['Original','Blobs','Template','Threshold','Lattice'])
-		self.imagepanel.showTypeToolDisplays(['acquisition','focus','Image'])
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_FIND_SQUARES, True)
 
 class TilesDialog(wx.Dialog):
 	def __init__(self, parent, choices):
@@ -249,9 +273,17 @@ class OriginalSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return OriginalScrolledSettings(self,self.scrsize,False)
 
+	def onShow(self):
+		self.scrsettings.setTileChoices()
 class OriginalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
 		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
+		self.ctile = wx.Choice(self, -1, choices=self.node.getTileChoices())
+		sz = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Load tile from current mosaic at index:')
+		sz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.ctile, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
 		self.btest = wx.Button(self, -1, 'Test')
 		szbutton = wx.GridBagSizer(5, 5)
 		szbutton.Add(self.btest, (0, 0), (1, 1),
@@ -259,12 +291,17 @@ class OriginalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		szbutton.AddGrowableCol(0)
 
 		self.Bind(wx.EVT_BUTTON, self.onTestButton, self.btest)
+		return [sz, szbutton]
 
-		return [szbutton]
+	def setTileChoices(self):
+		choices = self.node.getTileChoices()
+		self.ctile.Clear()
+		for c in choices:
+			self.ctile.Append(c)
 
 	def onTestButton(self, evt):
 		self.dialog.setNodeSettings()
-		self.node.setOriginal()
+		self.node.setOriginal(int(self.ctile.GetStringSelection()))
 		self.panel.imagepanel.showTypeToolDisplays(['Original'])
 
 class LPFSettingsDialog(leginon.gui.wx.Settings.Dialog):
