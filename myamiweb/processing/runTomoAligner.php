@@ -8,12 +8,13 @@
  *      Simple viewer to view a image using mrcmodule
  */
 
+
 require_once "inc/particledata.inc";
 require_once "inc/leginon.inc";
 require_once "inc/project.inc";
 require_once "inc/viewer.inc";
 require_once "inc/processing.inc";
-require_once "inc/forms/ddstackForm.inc";
+require_once "inc/forms/ddstackSelectTable.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
@@ -25,12 +26,11 @@ else {
 	createTomoAlignerForm();
 }
 
-function buildOutdir($sessioninfo,$tiltseriesnumber,$is_raptor) {
+function buildOutdir($sessioninfo,$tiltseriesnumber) {
 	$outdir=$sessioninfo;
 	$outdir=getBaseAppionPath($sessioninfo);
 	$outdir .="/tomo/tiltseries".$tiltseriesnumber;
-	if (!$is_raptor)
-		$outdir=$outdir.'/align';
+	$outdir=$outdir.'/align';
 	return $outdir;	
 }
 
@@ -53,7 +53,7 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
 		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 	}
   
-	$ddstackform = new DDStackForm('','Apply to ddframe stack result images','ddstack.ddstack' );
+	$ddstackform = new DDStackSelectTable($expId);
 
 	echo"<FORM name='viewerform' method='POST' ACTION='$formAction'>\n";
 	$sessiondata=getSessionList($projectId,$expId);
@@ -70,13 +70,9 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
 	$defaultmethod = ($lastalignerId)? 'protomo': 'leginon';
 	$alignmethod = ($_POST['alignmethod']) ? $_POST['alignmethod'] : $defaultmethod;
 	$leginoncheck = ($_POST['alignmethod'] == 'leginon' || !($_POST['alignmethod'])) ? "CHECKED" : "";
-	//$raptorcheck = ($_POST['alignmethod'] == 'raptor') ? "CHECKED" : "";
-	# For Jensen Lab
-	#$raptorcheck = ($_POST['alignmethod'] == 'raptor' || !($_POST['alignmethod'])) ? "CHECKED" : "";
-	#$protomo2check = ($_POST['alignmethod'] == 'protomo2') ? "CHECKED" : "";
 	$imodcheck = ($_POST['alignmethod'] == 'imod-shift') ? "CHECKED" : "";
 
-	$runtypes = array('leginon'=>'leginon','raptor'=>'raptor','imod-shift'=>'imodxc','protomo'=>'protomo', 'protomo2'=>'protomo');
+	$runtypes = array('leginon'=>'leginon','imod-shift'=>'imodxc','protomo'=>'protomo');
 	$alignruns = $particle->countTomoAlignmentRuns($tiltseriesId);
 	$autorunname = ($alignruns) ? $runtypes[$alignmethod].($alignruns+1):$runtypes[$alignmethod].'1';
 	$runname = ($_POST && $_POST['lasttiltseries']==$tiltseriesId && $_POST['lastalignmethod']==$alignmethod && $_POST['lastrunname'] && $_POST['lastrunname']!=$_POST['runname']) ? $_POST['runname']:$autorunname;
@@ -90,11 +86,6 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
 	$LdiameterY = $_POST['LdiameterY'];
 	$HdiameterX = $_POST['HdiameterX'];
 	$HdiameterY= $_POST['HdiameterY'];
-	//raptor parameters
-	$markersize = ($_POST['markersize']) ? $_POST['markersize'] : 10;
-	$markernumber = ($_POST['markernumber']) ? $_POST['markernumber'] : 0;
-	$reconbin = ($_POST['reconbin']) ? $_POST['reconbin'] : 2;
-	$reconthickness = ($_POST['reconthickness']) ? $_POST['reconthickness'] : 500;
 
 	echo"
   <table border=3 class=tableborder>
@@ -208,7 +199,7 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
 	echo "<br />\n";
 	echo $ddstackform->generateForm();
 	echo "<br />\n";
-	$outdir=buildOutdir($sessioninfo,$tiltseriesinfos[0]['number'],$raptorcheck);
+	$outdir=buildOutdir($sessioninfo,$tiltseriesinfos[0]['number']);
 	echo "<input type='hidden' name='outdir' value='$outdir'>\n";
 	echo "<input type='hidden' name='imagesize' value='$imagesize'>\n";
 	echo "</td></table>";
@@ -376,12 +367,6 @@ function runTomoAligner() {
 				//put the advance parameters here
 			}
 		}
-		if($alignmethod == 'raptor'){
-			if (!is_numeric($markersize)) createTomoAlignerForm("<b>ERROR:</b> Enter the value of the marker size (nm)");
-			if (!is_numeric($markernumber)) createTomoAlignerForm("<b>ERROR:</b> Enter the estimated number of the marker");
-			if (!is_numeric($reconbin)) createTomoAlignerForm("<b>ERROR:</b> Enter the value of the bin factor  as integer for reconstruction ");
-			if (!is_numeric($reconthickness)) createTomoAlignerForm("<b>ERROR:</b> Enter the value of the specimen thickness (nm)");
-		}
 	} else {
 		//make sure the region is not too large
 		if ($maxregion < $region) 
@@ -391,12 +376,8 @@ function runTomoAligner() {
 	/* *******************
 	PART 3: Create program command
 	******************** */
-	$ddstackform = new DDStackForm('','Apply to ddframe stack result images','ddstack.ddstack' );
-	if ($alignmethod == 'raptor') {
-		$command = "tomoraptor.py ";
-	} else {
-		$command = "tomoaligner.py ";
-	}
+	$ddstackform = new DDStackSelectTable($expId);
+	$command = "tomoaligner.py ";
 	$command.="--session=$sessionname ";
 	$command.="--projectid=$projectId ";
 	$command.="--runname=$runname ";
@@ -418,9 +399,6 @@ function runTomoAligner() {
 		$command.="--goodend=$goodend ";
 	}
 	$command.="--rundir=".$outdir.'/'.$runname." ";
-	if ($alignmethod != 'raptor') {
-		$command.="--alignmethod=$alignmethod ";
-	}
 	if ($alignmethod == 'protomo') {
 		$command.="--cycle=$cycle ";
 		$command.="--sample=$sample ";
@@ -445,12 +423,6 @@ function runTomoAligner() {
 		
 	}
 
-	if ($alignmethod == 'raptor') {
-		$command .="--markersize=".(int)$markersize." ";
-		$command .="--markernumber=".(int)$markernumber." ";
-		$command .="--reconbin=".(int)$reconbin." ";
-		$command .="--thickness=".(int)$reconthickness." ";
-	}
 	$command.="--description=\"$description\" ";
 	$command.="--commit ";
 
