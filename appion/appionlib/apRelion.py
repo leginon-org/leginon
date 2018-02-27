@@ -188,8 +188,9 @@ def getStarFileColumnLabels(starfile):
 def getColumnFromRelionLine(line,col):
 	# return a specified column (starting with 0)
 	l = line.strip().split()
-	if (len(l)<col+1 or l[:4]=="_rln" or l[0] in ['data_','loop_']):
+	if (len(l)<col+1 or l[0][:4]=="_rln" or l[0] in ['data_','loop_']):
 		return None
+	print l
 	return l[col]
 	
 def getMrcParticleFilesFromStar(starfile):
