@@ -88,11 +88,13 @@ MAP: <?php echo $filename; ?>
 <script language="javascript" src="js/cross.js"></script>
 <script language="javascript" src="js/scale.js"></script>
 <script type="text/javascript">
-var filename= "<?php echo $filename; ?>"
-var pixsize = <?php echo $display_pixelsize; ?>;
-var fftflag= <?php echo $fftflag; ?>
+var filename="<?php echo $filename; ?>"
 
-var jssize= <?php echo $imgwidth; ?>
+var pixsize=<?php echo $display_pixelsize; ?>;
+
+var fftflag=<?php echo $fftflag; ?>
+
+var jssize=<?php echo $imgwidth; ?>
 
 var jsimgheight=<?php echo $imgheight; ?>
 
