@@ -425,7 +425,7 @@ function runUploadImage() {
 		if (!$imgdir) createUploadImageForm($errormsg."Specify an image directory");
 		
 		$command = "uploadFIB-SEMImages.py ";
-		if ($sessionname) $command.="--session-mame=$sessionname ";
+		if ($sessionname) $command.="--session-name=$sessionname ";
 		$command.="--image-dir=$imgdir ";
 		
 		$description=$_POST['description'];
