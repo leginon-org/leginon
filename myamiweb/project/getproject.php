@@ -406,10 +406,10 @@ if (SAMPLE_TRACK) {
 		if ( $numimg == 0 ) continue;
 		
 		// if there is not much data in the experiment, mark it as one to hide
-		$hide = ($numimg < 3 || $totalsecs < 60) ? True : False;
-		if ( $hide && !$showHidden ) {
-			continue;
-		}
+// 		$hide = ($numimg < 3 || $totalsecs < 60) ? True : False;
+// 		if ( $hide && !$showHidden ) {
+// 			continue;
+// 		}
 		
 		$sessions[trim($info['SessionId'])]=$info['Name'];
 		$sessionlink="<a class='header' target='viewer' href='".VIEWER_URL.$info['SessionId']."'>".$info['Name']."</a>";
