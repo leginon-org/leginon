@@ -57,13 +57,18 @@ class UploadSEMImages(appionScript.AppionScript):
                 apDisplay.printError("Please provide a description, e.g., --description='test'")
 
         ### set leginon dir if undefined
+        
         if self.params['leginondir'] is None:
             try:
                 self.params['leginondir'] = leginon.leginonconfig.unmapPath(leginon.leginonconfig.IMAGE_PATH).replace('\\','/')
             except AttributeError:
                 apDisplay.printError("Please provide a leginon output directory, "
                     +"e.g., --leginon-output-dir=/data/leginon")
-        self.leginonimagedir = os.path.join(self.params['leginondir'], self.params['sessionname'], 'rawdata')
+                
+        projectdata = leginon.projectdata.projects.direct_query(self.params['projectid'])
+        owner = leginon.projectdata.projectowners(project=projectdata)
+        owner = owner.query()[0]      
+        self.leginonimagedir = os.path.join(self.params['leginondir'], owner['user']['username'], self.params['sessionname'], 'rawdata')
         if self.params['z_slice'] is None:
             self.params['z_slice'] = ""
 
@@ -118,9 +123,8 @@ class UploadSEMImages(appionScript.AppionScript):
             sessionq['user'] = userdata
             sessionq['hidden'] = False
             apDisplay.printColor("Created new session %s" % (self.params['sessionname']), "cyan")
-            
-        projectdata = leginon.projectdata.projects.direct_query(self.params['projectid'])
         
+        projectdata = leginon.projectdata.projects.direct_query(self.params['projectid'])       
         projectexpq = leginon.projectdata.projectexperiments()
         projectexpq['project'] = projectdata
         projectexpq['session'] = sessionq
@@ -164,7 +168,7 @@ class UploadSEMImages(appionScript.AppionScript):
         ### setup scope data
         scopedata = leginon.leginondata.ScopeEMData()
         scopedata['session'] = self.sessiondata
-        scopedata['magnification'] = numpy.interp(self.SEM_Data['HFW'],HFW, e_beam_mag)
+        scopedata['magnification'] = numpy.interp(float(self.SEM_Data['HFW']),HFW, e_beam_mag)
         scopedata['high tension'] = self.SEM_Data['HV']
         ### setup camera data
         presetdata = leginon.leginondata.PresetData()
@@ -266,7 +270,8 @@ class UploadSEMImages(appionScript.AppionScript):
         SEMData['beam_current'] = float(self.SEM_Data['BeamCurrent'])
         SEMData['dynamic_focus_is_on'] = self.SEM_Data['DynamicFocusIsOn']
         SEMData['stage_ta'] = float(self.SEM_Data['StageTa'])
-        SEMData['tilt_correction_angle'] = float(self.SEM_Data['TiltCorrectionAngle'])
+        if self.SEM_Data.has_key('TiltCorrectionAngle'):
+            SEMData['tilt_correction_angle'] = float(self.SEM_Data['TiltCorrectionAngle'])
         SEMData['dwell_time'] = float(self.SEM_Data['Dwelltime'])
         SEMData['pixel_width'] = float(self.SEM_Data['PixelWidth'])
         SEMData['integrate'] = float(self.SEM_Data['Integrate'])
