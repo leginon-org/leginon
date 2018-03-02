@@ -224,7 +224,6 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 		}
 
 		self.bools = {
-			'film': wx.CheckBox(self, -1, 'Use film'),
 			'tem energy filter': wx.CheckBox(self, -1, 'Energy filtered'),
 			'energy filter': wx.CheckBox(self, -1, 'Energy filtered'),
 			'skip': wx.CheckBox(self, -1, 'Skip when cycling'),
@@ -354,7 +353,6 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 
 		sizer.Add(self.labels['ccdcamera'], (0, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sizer.Add(self.choices['ccdcamera'], (0, 6), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.EXPAND)
-		sizer.Add(self.bools['film'], (1, 5), (1, 2), wx.ALIGN_CENTER_VERTICAL)
 		sizer.Add(self.bools['energy filter'], (2, 5), (1, 2), wx.ALIGN_CENTER_VERTICAL)
 
 		sizer.Add(self._buttons['ccdcamera']['energy filter'], (2, 7), (1, 1), wx.ALIGN_CENTER)
@@ -554,7 +552,7 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 				except KeyError:
 					pass
 
-		for key in ['skip', 'alt channel', 'film', 'tem energy filter', 'energy filter']:
+		for key in ['skip', 'alt channel', 'tem energy filter', 'energy filter']:
 			try:
 				self.bools[key].SetValue(bool(parameters[key]))
 			except KeyError:
@@ -628,7 +626,7 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 					value = float(value)
 				parameters[key][axis] = value
 
-		for key in ['skip', 'alt channel', 'film', 'tem energy filter', 'energy filter']:
+		for key in ['skip', 'alt channel', 'tem energy filter', 'energy filter']:
 			parameters[key] = bool(self.bools[key].GetValue())
 
 		ccdcamera = self.choices['ccdcamera'].GetStringSelection()
@@ -1732,7 +1730,6 @@ class Parameters(wx.StaticBoxSizer):
 			('intensity', 'Intensity:'),
 			('image shift', 'Image shift:'),
 			('beam shift', 'Beam shift:'),
-			('film', 'Use film:'),
 			('tem energy filter', 'Energy filtered:'),
 			('tem energy filter width', 'Energy filter width:'),
 			('energy filter', 'Energy filtered:'),
@@ -1778,8 +1775,6 @@ class Parameters(wx.StaticBoxSizer):
 
 		sz.Add(self.labels['ccdcamera'], (0, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.values['ccdcamera'], (0, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		sz.Add(self.labels['film'], (1, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.values['film'], (1, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 		sz.Add(self.labels['energy filter'], (2, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.values['energy filter'], (2, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 		sz.Add(self.labels['energy filter width'], (3, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
@@ -1860,7 +1855,7 @@ class Parameters(wx.StaticBoxSizer):
 					s = '(None, None)'
 				self.values[key].SetLabel(s)
 
-			for key in ['film', 'tem energy filter', 'energy filter', 'skip', 'save frames']:
+			for key in ['tem energy filter', 'energy filter', 'skip', 'save frames']:
 				if parameters[key]:
 					s = 'Yes'
 				else:
@@ -1948,7 +1943,6 @@ class SelectParameters(Parameters):
 		selected['intesity'] = self.lblintensity.GetValue()
 		selected['image shift'] = self.lblimageshift.GetValue()
 		selected['beam shift'] = self.lblbeamshift.GetValue()
-		selected['use film'] = self.lblfilm.GetValue()
 		selected['tem energy filter'] = self.lbltemenergyfilter.GetValue()
 		selected['tem energy filter width'] = self.lbltemenergyfilterwidth.GetValue()
 		selected['energy filter'] = self.lblenergyfilter.GetValue()
@@ -1969,7 +1963,6 @@ class SelectParameters(Parameters):
 		self.lblimageshift.SetValue(
 															parameters is None or 'image shift' in parameters)
 		self.lblbeamshift.SetValue(parameters is None or 'beam shift' in parameters)
-		self.lblfilm.SetValue(parameters is None or 'use film' in parameters)
 		self.lbltemenergyfilter.SetValue(parameters is None or 'tem energy filter' in parameters)
 		self.lbltemenergyfilterwidth.SetValue(parameters is None or 'tem energy filter width' in parameters)
 		self.lblenergyfilter.SetValue(parameters is None or 'energy filter' in parameters)
@@ -2086,7 +2079,6 @@ if __name__ == '__main__':
 				'intensity': 0.0,
 				'image shift': {'x': 0.0, 'y': 0.0},
 				'beam shift': {'x': 0.0, 'y': 0.0},
-				'film': False,
 				'dimension': {'x': 1024, 'y': 1024},
 				'offset': {'x': 0, 'y': 0},
 				'binning': {'x': 1, 'y': 1},
