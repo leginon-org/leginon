@@ -872,8 +872,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			print tnum, 'APDW START'
 			t0 = time.time()
 
-			imagedata = self.acquireCCD(presetdata, emtarget, channel=channel)
-
+		imagedata = self.acquireCCD(presetdata, emtarget, channel=channel)
 
 		self.imagedata = imagedata
 		if self.settings['correct image shift coma']:
