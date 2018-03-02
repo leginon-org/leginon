@@ -502,10 +502,6 @@ class JAHCFinder(targetfinder.TargetFinder):
 			'skip-auto': self.settings['skip'],
 			'queue': self.settings['queue'],
 
-			'edge-lpf-sigma': self.settings['edge lpf']['sigma'],
-			'edge-filter-type': self.settings['edge type'],
-			'edge-threshold': self.settings['edge threshold'],
-
 			'template-correlation-type': self.settings['template type'],
 			'template-lpf': self.settings['template lpf']['sigma'],
 
