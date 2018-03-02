@@ -1050,7 +1050,6 @@ class PresetsManager(node.Node):
 			newpreset['name'] = presetname
 			newpreset['number'] = len(self.presets)
 			newpreset['removed'] = False
-			newpreset['film'] = False
 			newpreset['hasref'] = False
 			newpreset['pre exposure'] = 0.0
 			newpreset['skip'] = False

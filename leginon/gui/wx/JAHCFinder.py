@@ -125,7 +125,7 @@ class TemplateScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sbsztemplate = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sz = wx.GridBagSizer(5, 5)
 		newrow,newcol = self.createTemplateMultipleEntry(sz, (0,0))
-		newrow,newcol = self.createLatticeSpacingEntry(sz, (newrow,0))
+		newrow,newcol = self.createMultiHoleSpacingEntry(sz, (newrow,0))
 		newrow,newcol = self.createMultiHoleAngleEntry(sz, (newrow,0))
 		sbsztemplate.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
 		return sbsztemplate
@@ -201,13 +201,13 @@ class TemplateScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		newrow, newcol = self.addToSizer(sz, label, start_position, (1,1))
 		return self.addToSizer(sz, self.widgets['template multiple'], (start_position[0],newcol), (1,1), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 
-	def	createLatticeSpacingEntry(self, sz, start_position):
-		self.widgets['lattice spacing'] = FloatEntry(self, -1,
+	def	createMultiHoleSpacingEntry(self, sz, start_position):
+		self.widgets['multihole spacing'] = FloatEntry(self, -1,
 																												min=0.0, chars=8)
 		sz1 = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Hole lattice spacing')
 		sz1.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz1.Add(self.widgets['lattice spacing'], (0, 1), (1, 1),
+		sz1.Add(self.widgets['multihole spacing'], (0, 1), (1, 1),
 							wx.ALIGN_CENTER_VERTICAL)
 		label = wx.StaticText(self, -1, 'pixels')
 		sz1.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)

@@ -157,18 +157,6 @@ scope_params = (
 	('small screen position', str),
 	('low dose', str),
 	('low dose mode', str),
-	('film stock', int),
-	('film exposure number', int),
-	('pre film exposure', bool),
-	('post film exposure', bool),
-	('film exposure', bool),
-	('film exposure type', str),
-	('film exposure time', float),
-	('film manual exposure time', float),
-	('film automatic exposure time', float),
-	('film text', str),
-	('film user code', str),
-	('film date type', str),
 	('objective current', float),
 	('exp wait time', float),
 	('tem energy filtered', bool),
@@ -551,7 +539,6 @@ class PresetData(InSessionData):
 			('removed', bool),
 			('hasref', bool),
 			('dose', float),
-			('film', bool),
 			('tem', InstrumentData),
 			('ccdcamera', InstrumentData),
 			('tem energy filter', bool),
@@ -1513,18 +1500,10 @@ class LowPassFilterSettingsData(Data):
 		)
 	typemap = classmethod(typemap)
 
-class HoleFinderSettingsData(TargetFinderSettingsData):
+class TemplateTargetFinderSettingsData(TargetFinderSettingsData):
 	def typemap(cls):
 		return TargetFinderSettingsData.typemap() + (
 			('image filename', str),
-			('edge lpf', LowPassFilterSettingsData),
-			('edge', bool),
-			('edge type', str),
-			('edge log size', int),
-			('edge log sigma', float),
-			('edge absolute', bool),
-			('edge threshold', float),
-			('template rings', list),
 			('template type', str),
 			('template lpf', LowPassFilterSettingsData),
 			('threshold', float),
@@ -1556,6 +1535,20 @@ class HoleFinderSettingsData(TargetFinderSettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class HoleFinderSettingsData(TemplateTargetFinderSettingsData):
+	def typemap(cls):
+		return TemplateTargetFinderSettingsData.typemap() + (
+			('edge lpf', LowPassFilterSettingsData),
+			('edge', bool),
+			('edge type', str),
+			('edge log size', int),
+			('edge log sigma', float),
+			('edge absolute', bool),
+			('edge threshold', float),
+			('template rings', list),
+		)
+	typemap = classmethod(typemap)
+
 class HoleDepthFinderSettingsData(TargetFinderSettingsData):
 	def typemap(cls):
 		return TargetFinderSettingsData.typemap() + (
@@ -1584,9 +1577,9 @@ class HoleDepthFinderSettingsData(TargetFinderSettingsData):
 		)
 	typemap = classmethod(typemap)
 
-class JAHCFinderSettingsData(HoleFinderSettingsData):
+class JAHCFinderSettingsData(TemplateTargetFinderSettingsData):
 	def typemap(cls):
-		return HoleFinderSettingsData.typemap() + (
+		return TemplateTargetFinderSettingsData.typemap() + (
 			('template diameter', int),
 			('file diameter', int),
 			('template filename', str),
@@ -1595,6 +1588,7 @@ class JAHCFinderSettingsData(HoleFinderSettingsData):
 			('lattice extend', str),
 			('template multiple', int),
 			('multihole angle', float),
+			('multihole spacing', float),
 		)
 	typemap = classmethod(typemap)
 
@@ -1778,6 +1772,19 @@ class MosaicSectionFinderSettingsData(ClickTargetFinderSettingsData,
 			('raster preset', str),
 			('raster overlap', float),
 			('black on white', bool),
+		)
+		return typemap
+	typemap = classmethod(typemap)
+
+class MosaicQuiltFinderSettingsData( JAHCFinderSettingsData):
+	def typemap(cls):
+		typemap = JAHCFinderSettingsData.typemap()
+		typemap += (
+			('calibration parameter', str),
+			('scale image', bool),
+			('scale size', int),
+			('create on tile change', str),
+			('no resubmit', bool),
 		)
 		return typemap
 	typemap = classmethod(typemap)
