@@ -509,7 +509,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			if preset_index > 0 and pause_between_time > 0.0:
 				self.logger.info('Pausing for extra %.1f before acquisition with %s' % (pause_between_time,newpresetname))
 				time.sleep(pause_between_time)
-			### acquire film or CCD
+			### acquire CCD
 			self.startTimer('acquire')
 			ret = self.acquire(presetdata, emtarget, attempt=attempt, target=targetdata)
 			self.stopTimer('acquire')
@@ -655,72 +655,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.publish(emtargetdata, database=True)
 		return emtargetdata
 
-	def lastFilmAcquisition(self):
-		filmdata = self.research(datainstance=leginondata.FilmData(), results=1)
-		if filmdata:
-			filmdata = filmdata[0]
-		else:
-			filmdata = None
-		return filmdata
-
 	def setImageFilename(self, imagedata):
 		setImageFilename(imagedata)
-
-	def acquireFilm(self, presetdata, emtarget=None):
-		self.logger.info('acquiring film')
-		## get current film parameters
-		stock = self.instrument.tem.FilmStock
-		if stock < 1:
-			self.logger.error('Film stock = %s. Film exposure failed' % (stock,))
-			return 'no stock'
-		## create FilmData(AcquisitionImageData) which 
-		## will be used to store info about this exposure
-		targetdata = emtarget['target']
-		filmdata = leginondata.FilmData(session=self.session, preset=presetdata, label=self.name, target=targetdata, emtarget=emtarget)
-
-		## first three of user name
-		self.instrument.tem.FilmUserCode = self.session['user']['username'][:3]
-		## use next dbid for film text
-		last_film = self.lastFilmAcquisition()
-		if last_film is None:
-			last_dbid = 0
-		else:
-			last_dbid = last_film.dbid
-		next_dbid = last_dbid + 1
-		existing_filmtext = self.instrument.tem.FilmText
-		lines = existing_filmtext.split('\n')
-		leg_label = 'Leginon ID: %s' % (next_dbid,)
-		if lines[-1].startswith('Leginon') or len(lines) >= 4:
-			lines[-1] = leg_label
-		else:
-			lines.append(leg_label)
-		new_filmtext = '\n'.join(lines)
-		
-		self.instrument.tem.FilmText = new_filmtext
-		self.instrument.tem.FilmDateType = 'YY.MM.DD'
-
-		## get scope for database
-		scopebefore = self.instrument.getData(leginondata.ScopeEMData)
-		camerabefore = self.instrument.getData(leginondata.CameraEMData)
-		filmdata['camera'] = camerabefore
-		filmdata['scope'] = scopebefore
-		## insert film
-		self.instrument.tem.preFilmExposure(True)
-		# wait for shaking to stop
-		pause_time = self.instrument.tem.ExpWaitTime
-		self.logger.info('pausing for %s seconds' % (pause_time,))
-		time.sleep(pause_time)
-		# expose film
-		self.instrument.ccdcamera.getImage()
-		## take out film
-		self.instrument.tem.postFilmExposure(True)
-		filmleft = self.instrument.tem.FilmStock
-		self.logger.info('Films left: %d' % (filmleft,))
-		if filmleft < 1:
-			self.logger.error('No more film left, please change film box and click continue')
-			self.player.pause()
-			self.declareDrift('film changed')
-		return filmdata
 
 	def exposeSpecimen(self, seconds):
 		self.exposeSpecimenWithShutterOverride(seconds)
@@ -936,11 +872,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			print tnum, 'APDW START'
 			t0 = time.time()
 
-		if presetdata['film']:
-			imagedata = self.acquireFilm(presetdata, emtarget)
-		else:
-			imagedata = self.acquireCCD(presetdata, emtarget, channel=channel)
-
+		imagedata = self.acquireCCD(presetdata, emtarget, channel=channel)
 
 		self.imagedata = imagedata
 		if self.settings['correct image shift coma']:

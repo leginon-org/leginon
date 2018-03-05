@@ -430,7 +430,11 @@ class Dialog(leginon.gui.wx.Dialog.Dialog):
 
 	def setUserVerificationStatus(self,this_state=False):
 		combined_state = this_state
-		current_index = self.settings.sequence.index(self.current_setting)
+		if self.current_setting is None:
+			# set everything
+			current_index = -1
+		else:
+			current_index = self.settings.sequence.index(self.current_setting)
 		for i,seq in enumerate(self.settings.sequence):
 			if i != current_index:
 				# current settings is not updated, yet
