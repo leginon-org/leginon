@@ -390,9 +390,37 @@ if (!empty($imageshiftpresets)) {
 		echo "</tr>\n";
 		echo "</table>\n";
 } else echo "no Autofocus information available";
-	echo "</td>";
-	echo "</tr>";
+echo "<tr>";
+echo '<td colspan="2">';
+foreach ($presets as $preset) {
+    $presetinfo=$leginondata->getPresetFromSessionId($sessionId, $preset);
+    $displaystat=false;
+    foreach ((array)$presetinfo as $row) {
+        $displaystat=($row['defocus range min'] && $row['defocus range max']) ? true:false;
+        if ($displaystat)
+            break;
+    }
+    if (!$displaystat)
+        continue;
+        $cstats=$leginondata->getDefocus($sessionId, $preset, true);
+        $cstats['preset']=$preset;
+        $img='<a href="defocusgraph.php?hg=1&vdata=1&Id='.$sessionId
+        .'&preset='.$preset.'">[data]</a> '
+    .'<a href="defocusgraph.php?hg=1&vs=1&Id='.$sessionId
+    .'&preset='.$preset.'">[sql]</a><br />'
+      .'<a href="defocusgraph.php?hg=1&Id='.$sessionId
+      .'&preset='.$preset.'"><img border="0" src="img/placeholder_hist.png"></a>';
+      $cstats['img']=$img;
+      $ds['defocus'][]=$cstats;
+}
+$display_keys = array ( 'preset', 'nb', 'min', 'max', 'avg', 'stddev', 'img');
+if ($ptcl) {
+    echo displayCTFstats($ds, $display_keys);
+}
 ?>
+</td>
+</tr>
+
 <tr>
 <td colspan="2">
 <?php
