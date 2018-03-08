@@ -230,22 +230,101 @@ $icethicknesspresets = $leginondata->getIceThicknessPresets($expId);
 	echo "</td>";
 
 
+
+$icethicknesszlp = $leginondata->getZeroLossIceThickness($expId); # see if anything was collected
 	echo "<tr>";
 	echo "<td colspan='2'>";
-	echo divtitle("Ice Thickness");
+	echo divtitle("ZLP Ice Thickness");
 	if (!empty($icethicknesszlp)) {
+		echo "<table border='0'>\n";
+		echo "<tr>";
+		echo "<td>";
+		echo "<a href='zlpdensityreport.php?Id=$expId'>report &raquo;</a>";
+		echo "</td>";
+	echo "</tr>";
+	echo "<tr>";
+	echo "<tr>";
 		echo "<td>";
 		echo "<a href='zlp_icegraph.php?Id=$expId&vdata=1'>[data]</a>";
 		echo "<a href='zlp_icegraph.php?Id=$expId&vs=1'>[sql]</a><br>";
-		//echo "<a href='zlp_icegraph.php?Id=$expId?h=256'>";
-		echo "<a href='zlp_icegraph.php?Id=$expId&w=256&h=256'>";
+		echo "<a href='zlp_icegraph.php?Id=$expId&w=1024&h=512'>";
+		echo "<img border='0' src='img/placeholder_hist.png'>";
+		echo "</a>\n";
+		echo "</td>\n";
+		echo "</tr>\n";
+		echo "<tr>";
+		echo "<td>";
+		echo "<a href='zlp_icegraph2.php?Id=$expId&w=1024&h=512'>";
 		echo "<img border='0' src='img/placeholder_scatter.png'>";
 		echo "</a>\n";
 		echo "</td>\n";
-	}
+		echo "</tr>\n";
+		echo "</table>\n";
+
+	} else echo "no ZLP Ice Thickness information available";
+		echo "</td>";
 
 	
+$icethicknessobj = $leginondata->getObjIceThickness($expId); # see if anything was collected
+	echo "<tr>";
+	echo "<td colspan='2'>";
+	echo divtitle("Objective Scattering Ice Thickness");
+	if (!empty($icethicknessobj)) {
+		echo "<table border='0'>\n";
+		echo "<tr>";
+		echo "<td>";
+		echo "<a href='objdensityreport.php?Id=$expId'>report &raquo;</a>";
+		echo "</td>";
+	echo "</tr>";
+	echo "<tr>";
+	echo "<tr>";
+		echo "<td>";
+		echo "<a href='obj_icegraph.php?Id=$expId&vdata=1'>[data]</a>";
+		echo "<a href='obj_icegraph.php?Id=$expId&vs=1'>[sql]</a><br>";
+		echo "<a href='obj_icegraph.php?Id=$expId&w=1024&h=512'>";
+		echo "<img border='0' src='img/placeholder_hist.png'>";
+		echo "</a>\n";
+		echo "</td>\n";
+		echo "</tr>\n";
+
+		echo "<tr>";
+		echo "<td>";
+		echo "<a href='obj_icegraph2.php?Id=$expId&w=1024&h=512'>";
+		echo "<img border='0' src='img/placeholder_scatter.png'>";
+		echo "</a>\n";
+		echo "</td>\n";
+		echo "</tr>\n";
+
+		echo "</table>\n";
+
+	} else { 
+		echo "no Objective Scattering Ice Thickness information available";
+		echo "<a href='obj_icegraph.php?Id=$expId&vdata=1'>[data]</a>";
+		echo "<a href='obj_icegraph.php?Id=$expId&vs=1'>[sql]</a><br>";
+
+		echo "</td>";
+
+		}
+
+
+#############
+#	echo "<tr>";
+#	echo "<td colspan='2'>";
+#	echo divtitle("Ice Thickness");
+#	if (!empty($icethicknesszlp)) {
+#		echo "<td>";
+#		echo "<a href='zlp_icegraph.php?Id=$expId&vdata=1'>[data]</a>";
+#		echo "<a href='zlp_icegraph.php?Id=$expId&vs=1'>[sql]</a><br>";
+#		//echo "<a href='zlp_icegraph.php?Id=$expId?h=256'>";
+#		echo "<a href='zlp_icegraph.php?Id=$expId&w=256&h=256'>";
+#		echo "<img border='0' src='img/placeholder_scatter.png'>";
+#		echo "</a>\n";
+#		echo "</td>\n";
+#	}
+################
+	
 ?>
+
 </tr>
 <?php
 $imageshiftpresets = $leginondata->getImageShiftPresets($expId);
@@ -311,9 +390,37 @@ if (!empty($imageshiftpresets)) {
 		echo "</tr>\n";
 		echo "</table>\n";
 } else echo "no Autofocus information available";
-	echo "</td>";
-	echo "</tr>";
+echo "<tr>";
+echo '<td colspan="2">';
+foreach ($presets as $preset) {
+    $presetinfo=$leginondata->getPresetFromSessionId($sessionId, $preset);
+    $displaystat=false;
+    foreach ((array)$presetinfo as $row) {
+        $displaystat=($row['defocus range min'] && $row['defocus range max']) ? true:false;
+        if ($displaystat)
+            break;
+    }
+    if (!$displaystat)
+        continue;
+        $cstats=$leginondata->getDefocus($sessionId, $preset, true);
+        $cstats['preset']=$preset;
+        $img='<a href="defocusgraph.php?hg=1&vdata=1&Id='.$sessionId
+        .'&preset='.$preset.'">[data]</a> '
+    .'<a href="defocusgraph.php?hg=1&vs=1&Id='.$sessionId
+    .'&preset='.$preset.'">[sql]</a><br />'
+      .'<a href="defocusgraph.php?hg=1&Id='.$sessionId
+      .'&preset='.$preset.'"><img border="0" src="img/placeholder_hist.png"></a>';
+      $cstats['img']=$img;
+      $ds['defocus'][]=$cstats;
+}
+$display_keys = array ( 'preset', 'nb', 'min', 'max', 'avg', 'stddev', 'img');
+if ($ptcl) {
+    echo displayCTFstats($ds, $display_keys);
+}
 ?>
+</td>
+</tr>
+
 <tr>
 <td colspan="2">
 <?php

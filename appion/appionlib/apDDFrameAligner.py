@@ -35,7 +35,7 @@ class DDFrameAligner(object):
 		self.is_use_frame_aligner_sum = value
 
 	def setSaveAlignedStack(self, value):
-		self.save_aligned_stack
+		self.save_aligned_stack = value
 
 	def setInputFrameStackPath(self, filepath):
 		'''

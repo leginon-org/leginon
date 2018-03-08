@@ -825,6 +825,16 @@ if (is_numeric($expId)) {
 		$utresults[] = ($utrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=uploadtomo'>$utrun running</a>";
 		$utresults[] = ($utq==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=uploadtomo'>$utq queued</a>";
 
+		// get tilt series shift-only alignement stats:
+		$tsaresults=array();
+		$tsadone = count($subclusterjobs['tomoaligner']['done']);
+		$tsadone = count($particle->getTomoAlignmentRunsFromSession($sessionId, False));
+		$tsarun = count($subclusterjobs['tomoaligner']['running']);
+		$tsaq = count($subclusterjobs['tomoaligner']['queued']);
+		$tsaresults[] = ($tsadone==0) ? "" : "<a href='tomoalignrunsummary.php?expId=$sessionId'>$tsadone complete</a>";
+		$tsaresults[] = ($tsarun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=tomoaligner'>$tarun running</a>";
+		$tsaresults[] = ($tsaq==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=tomoaligner'>$tsaq queued</a>";
+
 		// get full tomogram making stats:
 		$tmresults=array();
 		$tmdone = $fulltomoruns - $etomo_sample;
@@ -854,6 +864,10 @@ if (is_numeric($expId)) {
 		$nruns[] = array(
 			'name'=>"<a href='runTomoAutoRecon.php?expId=$sessionId'>Auto align+reconstruction</a>",
 			'result'=>$tarresults,
+		);
+		$nruns[] = array(
+			'name'=>"<a href='runTomoAligner.php?expId=$sessionId'>Align Tilt-Series(Shift-only)</a>",
+			'result'=>$tsaresults,
 		);
 		$nruns[] = array(
 			'name'=>"<a href='runTomoMaker.php?expId=$sessionId'>Create full tomogram</a>",

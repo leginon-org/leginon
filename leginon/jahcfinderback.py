@@ -207,18 +207,21 @@ class HoleFinder(object):
 		tempim = self.multiconvolver.makeMultiTemplate()
 		# create template of proper size
 		shape = self.__results[fromimage].shape
-		center = (0,0)
 
 		origshape = tempim.shape
-		if min(shape) > min(origshape):
-			edgevalue = tempim[0,0]
-			template = edgevalue * numpy.ones(shape, tempim.dtype)
-			offset = ( (shape[0]-origshape[0])/2, (shape[1]-origshape[1])/2 )
-			template[offset[0]:offset[0]+origshape[0], offset[1]:offset[1]+origshape[1]] = tempim
-		else:
-			# Issue #3033 make sure template is not larger than the image
-			offset = ((origshape[0]-shape[0])/2,(origshape[1]-shape[1])/2 ) 
-			template = tempim[offset[0]:offset[0]+shape[0], offset[1]:offset[1]+shape[1]]
+		edgevalue = tempim[0,0]
+		template = edgevalue * numpy.ones(shape, tempim.dtype)
+		# make sure the tamplate is smaller than from_image in both axes #5607
+		if shape[0] < origshape[0]:
+				offset = int((origshape[0]-shape[0])/2.0)
+				tempim = tempim[offset:offset+shape[0],:]
+		if shape[1] < origshape[1]:
+				offset = int((origshape[1]-shape[1])/2.0)
+				tempim = tempim[:,offset:offset+shape[1]]
+		# Redefine origshape which is now always equal or smaller than shape
+		origshape = tempim.shape
+		offset = ( int((shape[0]-origshape[0])/2.0), int((shape[1]-origshape[1])/2.0) )
+		template[offset[0]:offset[0]+origshape[0], offset[1]:offset[1]+origshape[1]] = tempim
 		shift = (shape[0]/2, shape[1]/2)
 		template = scipy.ndimage.shift(template, shift, mode='wrap')
 

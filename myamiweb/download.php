@@ -46,7 +46,7 @@ if (file_exists($pic))  {
 	header("Content-Type: application/force-download");
 	header("Content-Type: application/download");
 	header("Content-Length: $size");
-	header("Content-Disposition: attachment; filename=".$filename);
+	header('Content-Disposition: attachment; filename="'.$filename.'"');	
 	readfile($pic);
 } else {
 echo "

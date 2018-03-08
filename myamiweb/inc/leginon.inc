@@ -3208,7 +3208,7 @@ class leginondata {
 		return $r;
 	}
 
-	function getTargetListIds($sessionId,$qtype,$limit=100) {
+	function getQueueTargetListIds($sessionId,$qtype,$limit=100) {
 		$whereqtype = "";
 		if ($qtype) 
 			$whereqtype = ""
@@ -3224,6 +3224,22 @@ class leginondata {
 			.$whereqtype
 			."AND "
 			."`itlist`.`REF|QueueData|queue` > 0 "
+			."order by itlid desc limit ".$limit." "
+			."";
+		return $this->mysql->getSQLResult($q);
+	}
+
+	function getNonQueueTargetListIds($sessionId,$mosaic=0,$limit=1000) {
+		$q="SELECT distinct "
+			."itlist.`DEF_id` as itlid "
+			."FROM "
+			."`ImageTargetListData` AS `itlist` "
+			."where "
+			."`itlist`.`REF|SessionData|session`=".$sessionId." "
+			."AND "
+			." `itlist`.mosaic=".$mosaic." "
+			."AND "
+			."`itlist`.`REF|QueueData|queue` is Null "
 			."order by itlid desc limit ".$limit." "
 			."";
 		return $this->mysql->getSQLResult($q);
@@ -3258,6 +3274,77 @@ class leginondata {
 		$result = array_reduce($counts,"rsum");
 		if (!$result) $result=0;
 		return $result;
+	}
+
+	function getNonQueueCountResults($sessionId) {
+		// The while loop makes it faster if the total number is large (long session)
+		// but most of the targets are done as it should be in normal situation.
+		$limit = 200;
+		while (true) {
+			$sqldataTList = $this->getNonQueueTargetListIds($sessionId,0,$limit);
+
+			// Test to see if there are more than the limit number of queue targetlist
+			$oversqldataTList = $this->getNonQueueTargetListIds($sessionId,0,$limit+1);
+			$pretext = (count($oversqldataTList) > count($sqldataTList)) ? '> ':'= ';
+			if (empty($sqldataTList)) return false;
+
+			// Unprocessed/Active queue is the difference of the two lists
+			$doneitls = array();
+			$allitls = array();
+			//FIX ME: make a DoneTargetList in the future to reduce query time.
+			//foreach ($sqldataDoneList as $d) {
+			//	array_push($doneitls,$d['doneid']);
+			//};
+			foreach ($sqldataTList as $d) {
+				array_push($allitls,$d['itlid']);
+			};
+
+			$activeitls = array_diff($allitls,$doneitls);
+			if (count($activeitls) == $limit) {
+				$limit = (int)($limit * 1.5);
+			} else {
+				break;
+			}
+		}
+		foreach (array('acquisition',) as $ttype) {
+			//$sqldataTime = $this->getQueueTimeData($sessionId,$qtype,$ttype,$limit);
+			$totalActive = $this->getCountsFromImageTargetLists($activeitls,$ttype);
+			$totalNew = $this->getCountsFromImageTargetLists($allitls,$ttype);
+			$totalDone = 0;
+			$totalTime = 0;
+			$totalDoneInActive = 0;
+			// Some targets in the active target list may have been processed
+			foreach ($activeitls as $d) {
+				$totalDoneInActive += $this->getCountFromTargetListId($d,'done',$ttype);
+				$totalDoneInActive += $this->getCountFromTargetListId($d,'aborted',$ttype);
+			}
+			$totalActive -= $totalDoneInActive;
+
+			// Total Done include only  non-aborted done targets
+			//foreach ($sqldataTime as $d) {
+			//	$totalDone = $totalDone + $d['QueueCount'];
+			//	$totalTime = $totalTime + $d['QueueTime'];
+			//}
+			if ($totalDone > 0) {
+				$avgtime = ($totalTime / $totalDone);
+				$esttime= ($totalActive) * $avgtime;
+			} else {
+				$avgtime = 0;
+			}
+			$qcount_by_targettype[$ttype] = array($pretext,$totalNew,$totalActive,(int)($avgtime));
+		}
+		return $qcount_by_targettype;
+	}
+
+	function getCountsFromNonQueueTargetLists($sessionId,$targettype,$mosaic=0, $limit=1000) {
+		//This gives all status
+		$sqldataTList = $this->getNonQueueTargetListIds($sessionId,$mosaic,$limit);
+		$allitls = array();
+		foreach ($sqldataTList as $d) {
+			array_push($allitls,$d['itlid']);
+		};
+		$count = $this->getCountsFromImageTargetLists($allitls,$targettype);
+		return $count;
 	}
 
 	function getQueueTimeData($sessionId,$qtype,$targettype='acquisition',$limit=100) {
@@ -3317,10 +3404,10 @@ class leginondata {
 		$limit = 200;
 		while (true) {
 			$sqldataDqList = $this->getDeQueuedTargetListIds($sessionId,$qtype,$limit);
-			$sqldataTList = $this->getTargetListIds($sessionId,$qtype,$limit);
+			$sqldataTList = $this->getQueueTargetListIds($sessionId,$qtype,$limit);
 
 			// Test to see if there are more than the limit number of queue targetlist
-			$oversqldataTList = $this->getTargetListIds($sessionId,$qtype,$limit+1);
+			$oversqldataTList = $this->getQueueTargetListIds($sessionId,$qtype,$limit+1);
 			$pretext = (count($oversqldataTList) > count($sqldataTList)) ? '> ':'= ';
 			if (empty($sqldataTList)) return false;
 
