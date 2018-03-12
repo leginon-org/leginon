@@ -554,7 +554,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			mag = imagedata['scope']['magnification']
 			thetax, thetay = self.calclients['stage position'].getAngles(tem, ccdcamera, 'stage position', ht, mag, None)
 			self.panel.onNewTiltAxis(thetax)
-		except NoMatrixCalibrationError, e:
+		except calibrationclient.NoMatrixCalibrationError, e:
 			self.logger.warning('No stage position matrix. Can not show tilt axis')
 		except:
 			raise

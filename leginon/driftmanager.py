@@ -115,6 +115,10 @@ class DriftManager(watcher.Watcher):
 			## declare drift above threshold
 			self.declareDrift('threshold')
 
+		if im is None:
+			self.logger.error('DriftManager failed monitoring drift')
+			self.setStatus('idle')
+			return
 		## Generate DriftMonitorResultData
 		## only output if this was called from another node
 		if driftdata is not None:
@@ -161,7 +165,7 @@ class DriftManager(watcher.Watcher):
 		imagedata = self.acquireImage(channel=corchan)
 		self.logger.info('first image acquired')
 		if imagedata is None:
-			return 'aborted', None
+			return 'aborted', None, None
 		numdata = imagedata['image']
 		t0 = imagedata['scope']['system time']
 		self.correlator.insertImage(numdata)
@@ -203,7 +207,7 @@ class DriftManager(watcher.Watcher):
 				corchan = 1
 			imagedata = self.acquireImage(channel=corchan)
 			if imagedata is None:
-				continue
+				return 'aborted', None, None
 			self.logger.info('new image acquired')
 			numdata = imagedata['image']
 			binning = imagedata['camera']['binning']['x']
@@ -296,6 +300,9 @@ class DriftManager(watcher.Watcher):
 
 		## acquire first image
 		imagedata = self.acquireImage(0)
+		if imagedata is None:
+			self.logger.error('Failed acquiring image')
+			return
 		numdata = imagedata['image']
 		t0 = imagedata['scope']['system time']
 		self.correlator.insertImage(numdata)
@@ -312,6 +319,9 @@ class DriftManager(watcher.Watcher):
 		
 		## acquire next image
 		imagedata = self.acquireImage(1)
+		if imagedata is None:
+			self.logger.error('Failed acquiring image')
+			return
 		numdata = imagedata['image']
 		t1 = imagedata['scope']['system time']
 		self.correlator.insertImage(numdata)

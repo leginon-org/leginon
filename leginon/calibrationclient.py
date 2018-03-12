@@ -126,6 +126,9 @@ class CalibrationClient(object):
 		self.node.stopTimer('calclient acquire pause')
 
 		imagedata = self.node.acquireCorrectedCameraImageData(corchannel, force_no_frames=True)
+		if imagedata is None:
+			# need to raise exception or it will cause further error in correlation
+			raise RuntimeError('Failed image acquisition')
 		if correct_tilt:
 			self.correctTilt(imagedata)
 		newscope = imagedata['scope']
@@ -663,7 +666,11 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		state1['defocus'] = defocus1
 		state2['defocus'] = defocus2
 
-		im1 = self.acquireImage(state1, settle=settle)
+		try:
+			im1 = self.acquireImage(state1, settle=settle)
+		except Exception, e:
+			self.node.logger.error('Measurement failed: %s' % e.message)
+			return {'x':0.0, 'y': 0.0}
 		shiftinfo = self.measureScopeChange(im1, state2, settle=settle, correlation_type=correlation_type)
 
 		shift = shiftinfo['pixel shift']
@@ -1150,7 +1157,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		try:
 			self._rotationCenterToScope()
 		except Exception, e:
-			self.node.logger.error('Unable to set rotation center: %s' % e)
+			self.node.logger.error('Unable to set rotation center: %s' % e.message)
 		else:
 			self.node.logger.info('Set instrument rotation center')
 
@@ -1166,7 +1173,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		try:
 			self._rotationCenterFromScope()
 		except Exception, e:
-			self.node.logger.error('Unable to get rotation center: %s' % e)
+			self.node.logger.error('Unable to get rotation center: %s' % e.message)
 		else:
 			self.node.logger.info('Saved instrument rotation center')
 
@@ -1633,26 +1640,27 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 		state[0]['stage position'] = {'a':0.0}
 		state[1]['stage position'] = {'a':-tilt_value}
 		state[2]['stage position'] = {'a':tilt_value}
-		## alpha backlash correction
-		self.instrument.tem.StagePosition = state[1]['stage position']
-		# make sure main screen is up since there is no failure in this function
-		self.instrument.tem.setMainScreenPosition('up')
+		try:
+			## alpha backlash correction
+			self.instrument.tem.StagePosition = state[1]['stage position']
+			# make sure main screen is up since there is no failure in this function
+			self.instrument.tem.setMainScreenPosition('up')
 
-		## do tilt and measure image shift
-		## move from state2, through 0, to state1 to remove backlash
-		self.instrument.tem.StagePosition = state[2]['stage position']
-		self.instrument.tem.StagePosition = state[0]['stage position']
-		im0 = self.acquireImage(state[0])
-		# measure the change from 0 to state1
-		shiftinfo[1] = self.measureScopeChange(im0, state[1], correlation_type=correlation_type, lp=1)
-		## move from state1, through 0, to state2 to remove backlash
-		self.instrument.tem.StagePosition = state[0]['stage position']
-		im0 = self.acquireImage(state[0])
-		# measure the change from 0 to state1
-		shiftinfo[2] = self.measureScopeChange(im0, state[2], correlation_type=correlation_type,lp=1)
-
-		# return to original
-		self.instrument.tem.StagePosition = {'a':orig_a}
+			## do tilt and measure image shift
+			## move from state2, through 0, to state1 to remove backlash
+			self.instrument.tem.StagePosition = state[2]['stage position']
+			self.instrument.tem.StagePosition = state[0]['stage position']
+			im0 = self.acquireImage(state[0])
+			# measure the change from 0 to state1
+			shiftinfo[1] = self.measureScopeChange(im0, state[1], correlation_type=correlation_type, lp=1)
+			## move from state1, through 0, to state2 to remove backlash
+			self.instrument.tem.StagePosition = state[0]['stage position']
+			im0 = self.acquireImage(state[0])
+			# measure the change from 0 to state1
+			shiftinfo[2] = self.measureScopeChange(im0, state[2], correlation_type=correlation_type,lp=1)
+		finally:
+			# return to original
+			self.instrument.tem.StagePosition = {'a':orig_a}
 
 		state[1] = shiftinfo[1]['next']['scope']
 		state[2] = shiftinfo[2]['next']['scope']
@@ -2032,7 +2040,7 @@ class ModeledStageCalibrationClient(MatrixCalibrationClient):
 			caldatay = self.retrieveMagCalibration(tem, cam, ht, mag, 'y')
 		except Exception, e:
 			matrix = None
-			self.node.logger.warning('Cannot get matrix from stage model: %s' % e)
+			self.node.logger.warning('Cannot get matrix from stage model: %s' % e.message)
 			return matrix
 			
 		means = [caldatax['mean'],caldatay['mean']]

@@ -2007,8 +2007,9 @@ class PresetsManager(node.Node):
 		self.logger.info('Beam image using temporary exposure time: %.1f' % (float(temp_exptime),))
 		# acquire image
 		self.beamimagedata = self.acquireCorrectedCameraImageData(force_no_frames=True)
-		im = self.beamimagedata['image']
-		self.panel.setBeamImage(im)
+		if im:
+			im = self.beamimagedata['image']
+			self.panel.setBeamImage(im)
 		# display info
 		beamshift = self.instrument.tem.BeamShift
 		self.panel.displayBeamShift(beamshift)
