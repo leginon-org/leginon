@@ -143,6 +143,8 @@ class GonModeler(calibrator.Calibrator):
 		## acquire image
 		newimagedata = self.acquireCorrectedCameraImageData(self.corchannel, force_no_frames=True)
 
+		if newimagedata is None:
+			raise RuntimeError('Failed acquiring next image')
 		newnumimage = newimagedata['image']
 		self.setImage(newnumimage, 'Image')
 

@@ -37,7 +37,14 @@ class CorrectorClient(cameraclient.CameraClient):
 		self.max_badpixels = 800
 
 	def acquireCorrectedCameraImageData(self, channel=0, **kwargs):
+		'''Acquire a gain/dark corrected image from the currently
+		configured CCD camera. Exceptions are caught,add to logger,
+		and this method returns None
+		'''
 		imagedata = self.acquireCameraImageData(**kwargs)
+		if imagedata is None:
+			# error acquiring image already caught and handled
+			return None
 		self.correctCameraImageData(imagedata, channel)
 		return imagedata
 
