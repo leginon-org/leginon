@@ -67,8 +67,15 @@ class UploadSEMImages(appionScript.AppionScript):
                 
         projectdata = leginon.projectdata.projects.direct_query(self.params['projectid'])
         owner = leginon.projectdata.projectowners(project=projectdata)
-        owner = owner.query()[0]      
-        self.leginonimagedir = os.path.join(self.params['leginondir'], owner['user']['username'], self.params['sessionname'], 'rawdata')
+        result = owner.query()
+        if result:
+            owner = result[0]
+            if not self.params['leginondir'].endswith(owner['user']['username']):
+                self.leginonimagedir = os.path.join(self.params['leginondir'], owner['user']['username'], self.params['sessionname'], 'rawdata')
+            else:
+                self.leginonimagedir = os.path.join(self.params['leginondir'], self.params['sessionname'], 'rawdata')
+        else:
+            self.leginonimagedir = os.path.join(self.params['leginondir'], self.params['sessionname'], 'rawdata')
         if self.params['z_slice'] is None:
             self.params['z_slice'] = ""
 
@@ -240,7 +247,6 @@ class UploadSEMImages(appionScript.AppionScript):
            corr_ypix= float(pixwidth.group(1))/cos(tang) *1E9   # convert to nm
            self.SEM_Data['corr_ypix'] =  corr_ypix
 
-
     def startInit(self):
         """
         Initialization of variables
@@ -301,9 +307,11 @@ class UploadSEMImages(appionScript.AppionScript):
                 continue
             imagearray = self.prepareImageForUpload(tif_file)
             cmd = ['tif2mrc','-s',tif_file, newimagepath]
-            
             p = subprocess.Popen(cmd)
             p.communicate()
+            cmd = 'clip flipx '+newimagepath+" "+newimagepath
+            p = subprocess.Popen(cmd, shell=True)
+            p.communicate()            
 
             imagearray = mrc.read(newimagepath)
             ### get image dimensions
