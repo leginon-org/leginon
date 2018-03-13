@@ -122,7 +122,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		displayedtargetdata = {}
 		try:
 			target_positions_from_image = self.panel.getTargetPositions(typename)
-		except:
+		except ValueError:
 			return
 		for coord_tuple in target_positions_from_image:
 			##  check if it is an existing position with database target.
@@ -143,7 +143,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 	def getDisplayedReferenceTarget(self):
 		try:
 			column, row = self.panel.getTargetPositions('reference')[-1]
-		except IndexError:
+		except (IndexError, ValueError) as e:
 			return None
 		imagedata, delta_row, delta_column = self._mosaicToTarget(row, column)
 		return self.newReferenceTarget(imagedata, delta_row, delta_column)

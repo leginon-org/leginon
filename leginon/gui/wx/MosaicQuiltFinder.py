@@ -40,6 +40,8 @@ class Panel(leginon.gui.wx.ClickTargetFinder.Panel):
 		self.imagepanel.selectiontool.setEnableSettings('acquisition', True)
 		self.imagepanel.selectiontool.setDisplayed('focus', False)
 		self.imagepanel.selectiontool.setEnableSettings('focus', False)
+		self.imagepanel.addTargetTool('preview', wx.Colour(255, 128, 255), target=True)
+		self.imagepanel.selectiontool.setDisplayed('preview', True)
 		self.imagepanel.addTargetTool('done', wx.Colour(218, 0, 0), numbers=True)
 		self.imagepanel.selectiontool.setDisplayed('done', True)
 		self.imagepanel.addTargetTool('position', wx.Colour(218, 165, 32), shape='x')
