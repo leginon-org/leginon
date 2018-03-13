@@ -120,7 +120,10 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		and then update self.existing_position_targets with the published one added.
 		'''
 		displayedtargetdata = {}
-		target_positions_from_image = self.panel.getTargetPositions(typename)
+		try:
+			target_positions_from_image = self.panel.getTargetPositions(typename)
+		except:
+			return
 		for coord_tuple in target_positions_from_image:
 			##  check if it is an existing position with database target.
 			if coord_tuple in self.existing_position_targets and self.existing_position_targets[coord_tuple]:
