@@ -241,7 +241,7 @@ acquisition.
 			self.custom_setup()
 			self.finalizeSetup()
 		except:
-			raise RunTimeError('Error setting camera acquisition parameters')
+			raise RuntimeError('Error setting camera acquisition parameters')
 
 		t0 = time.time()
 
@@ -251,7 +251,7 @@ acquisition.
 			self.exposure_timestamp = (t1 + t0) / 2.0
 			arr = self.im.Data.Array
 		except:
-			raise RunTimeError('Camera Acquisition Error in getting array')
+			raise RuntimeError('Camera Acquisition Error in getting array')
 
 		try:
 			arr.shape = (self.dimension['y'],self.dimension['x'])
@@ -513,7 +513,7 @@ class TIA_Falcon3(TIA_Falcon):
 			self.custom_setup()
 			self.finalizeSetup()
 		except:
-			raise RunTimeError('Error setting camera acquisition parameters')
+			raise RuntimeError('Error setting camera acquisition parameters')
 
 		t0 = time.time()
 
@@ -523,7 +523,7 @@ class TIA_Falcon3(TIA_Falcon):
 			self.exposure_timestamp = (t1 + t0) / 2.0
 			arr = self.im.Data.Array
 		except:
-			raise RunTimeError('Camera Acquisition Error in getting array')
+			raise RuntimeError('Camera Acquisition Error in getting array')
 
 		try:
 			arr.shape = (self.dimension['y'],self.dimension['x'])
