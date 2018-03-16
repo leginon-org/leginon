@@ -7,9 +7,9 @@ import xml.dom.minidom
 import xml.etree.ElementTree as et
 import itertools
 
-class FalconFrameConfigXmlMaker(object):
+class FalconFrameMaker(object):
 	'''
-	Create Falcon IntermediateConfig.xml for given exposure time
+	Base class for making Falcon frame range for given exposure time
 	either when frames to be saved and not.
 	The raw frames are put in limited number of bins.
 	'''
@@ -23,9 +23,8 @@ class FalconFrameConfigXmlMaker(object):
 		self.format_version = 1.0
 		self.no_save_frame_path = 'E:\\not_a_real_path'
 		self.base_frame_path = 'E:\\frames'
-		self.configxml_path = 'C:\Titan\Data\Falcon'
-		# Falcon 2 software can save frames in at most 7 bins
-		self.output_bin_limit = 7
+		# almost limitless
+		self.output_bin_limit = 1000
 		self.output_bins = self.output_bin_limit + 0
 		self.equal_distributed_frame = 0
 		self.resetParams()
@@ -54,6 +53,12 @@ class FalconFrameConfigXmlMaker(object):
 
 	def getFrameDirName(self):
 		return self.frames_name
+
+	def getFrameName(self):
+		return self.frames_name
+
+	def setBaseFramePath(self,base_path):
+		self.base_frame_path = base_path
 
 	def createFramePath(self,base_path):
 		if os.path.isdir(base_path) or self.simulation:
@@ -162,7 +167,7 @@ class FalconFrameConfigXmlMaker(object):
 		'''
 		nframe_in_bins = self.distributeFramesInBins()
 		if self.simulation:
-			print nframe_in_bins
+			print 'number of base frames in bin', nframe_in_bins
 		end_frames = []
 		offset = self.frame_readout_delay - self.internal_readout_delay
 		if False:
@@ -173,6 +178,24 @@ class FalconFrameConfigXmlMaker(object):
 			start_frames.insert(0,self.frame_readout_delay)
 		self.output_bins = len(start_frames)
 		return start_frames, end_frames
+
+class FalconFrameConfigXmlMaker(FalconFrameMaker):
+	def __init__(self,simu=False):
+		'''
+		i/o time unit is second
+		'''
+		self.simulation = simu
+		self.idcounter = itertools.cycle(range(100))
+		self.base_frame_time = 0.055771
+		self.format_version = 1.0
+		self.no_save_frame_path = 'E:\\not_a_real_path'
+		self.base_frame_path = 'E:\\frames'
+		self.configxml_path = 'C:\Titan\Data\Falcon'
+		# Falcon 2 software can save frames in at most 7 bins
+		self.output_bin_limit = 7
+		self.output_bins = self.output_bin_limit + 0
+		self.equal_distributed_frame = 0
+		self.resetParams()
 
 	def writeConfigXml(self,start_frames,end_frames):
 		rt = et.Element('IntermediateConfig')
@@ -239,6 +262,76 @@ class FalconFrameConfigXmlMaker(object):
 		self.makeConfigXML()
 		return True
 
+class FalconFrameRangeListMaker(FalconFrameMaker):
+	def __init__(self,simu=False):
+		'''
+		i/o time unit is second
+		Based on the behavior of Advanced Scripting for Falcon III
+		'''
+		self.simulation = simu
+		self.idcounter = itertools.cycle(range(100))
+		self.base_frame_time = 0.025
+		self.number_of_available_frames = 1
+		self.format_version = 1.0
+		self.no_save_frame_path = ''
+		self.base_frame_path = 'E:\\frames'
+		# Falcon 2 software can save frames in at most 7 bins
+		self.output_bin_limit = 1000
+		self.output_bins = self.output_bin_limit + 0
+		self.equal_distributed_frame = 0
+		# Falcon III delay is zero
+		self.setFrameReadoutDelay(0)
+		self.resetParams()
+
+	def createFramePath(self,base_path):
+		if os.path.isdir(base_path) or self.simulation:
+			# real path below existing base_path becomes the frame path
+			self.frame_path = os.path.join(base_path,self.makeFrameDirName(True))
+		else:
+			# dummy path will keep the frames from being written
+			self.makeFrameDirName(False)
+			self.frame_path = base_path
+
+	def getNumberOfAvailableFrames(self):
+		return self.number_of_available_frames
+
+	def setNumberOfAvailableFrames(self,number):
+		self.number_of_available_frames = number
+
+	def makeRangeList(self, starts, ends):
+		length = len(starts)
+		rangelist = []
+		for i in range(length):
+			rangelist.append((starts[i],ends[i]+1))
+		return rangelist
+
+	def makeRangeListFromNumberOfBaseFramesAndFrameTime(self, n_base_frames, frame_time_second):
+		'''
+		Distribute number of base frames by frame time.
+		'''
+		self.setNumberOfAvailableFrames(n_base_frames)
+		exposure_second = n_base_frames * self.base_frame_time
+		return self.makeRangeListFromExposureAndFrameTime(exposure_second, frame_time_second)
+
+	def makeRangeListFromExposureAndFrameTime(self, exposure_second, frame_time_second):
+		'''
+		Distribute exposure time by frame time.
+		'''
+		self.setExposureTime(exposure_second)
+		bin_second = frame_time_second
+		self.createFramePath(self.base_frame_path)
+		bins = int(exposure_second / bin_second)
+		self.setMaxNumberOfFrameBins(bins)
+		print bins, bin_second
+		starts, ends = self.setFrameRange()
+		rangelist = self.makeRangeList(starts, ends)
+		return rangelist
+
+	def test(self):
+		starts, ends = self.setFrameRange()
+		rangelist = self.makeRangeList(starts, ends)
+		print rangelist
+
 if __name__ == '__main__':
 		equal_distr_frame = 0
 		if len(sys.argv) < 2:
@@ -259,8 +352,23 @@ if __name__ == '__main__':
 				delay = int(sys.argv[3])
 			else:
 				delay = 1
+		'''
+		Test of the Advanced Scriptins RangeList making
+		'''
+		app = FalconFrameRangeListMaker(True)
+		app.setExposureTime(exposure_second)
+		frame_time_second = 0.1
+		bins = int(exposure_second / frame_time_second)
+		app.setMaxNumberOfFrameBins(bins)
+		n_base_frames = int(math.floor(exposure_second / app.base_frame_time))
+		print n_base_frames
+		rangelist2 = app.makeRangeListFromNumberOfBaseFramesAndFrameTime(n_base_frames, frame_time_second)
+		print rangelist2
+		'''
+		# Test of the Falcon2 Config Xml file making
 		app = FalconFrameConfigXmlMaker(True)
 		#is_success = app.makeDummyConfig(exposure_second)
 		is_success = app.makeRealConfigFromExposureTime(exposure_second, equal_distr_frame,delay)
 		print is_success
+		'''
 		print app.getFrameDirName()
