@@ -161,7 +161,7 @@ class Collection(object):
 	def initLoop2(self):
 		self.restoreInstrumentState()
 		self.correlator[1].reset()
-		if self.settings['adjust for transform'] != "no":
+		if True:
 			self.logger.info('Adjust target for the second tilt group...')
 			try:
 				self.emtarget, status = self.node.adjusttarget(self.preset['name'], self.target, self.emtarget)
