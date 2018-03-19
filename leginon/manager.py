@@ -29,6 +29,7 @@ import noderegistry
 import remotecall
 import time
 import sys
+import gui.wx.Events
 
 class DataBinder(databinder.DataBinder):
 	def handleData(self, newdata):
@@ -101,6 +102,10 @@ class Manager(node.Node):
 		self.timer = None
 		self.timer_thread_lock = False
 
+		# auto run testing
+		self.autorun = False
+		self.autogridslot = None
+
 		# ready nodes, someday 'initialized' nodes
 		self.initializednodescondition = threading.Condition()
 		self.initializednodes = []
@@ -152,7 +157,7 @@ class Manager(node.Node):
 			app.setLauncherAlias(alias, hostname)
 		self.runApplication(app)
 
-	def run(self, session, clients, prevapp=False):
+	def run(self, session, clients, prevapp=False, gridslot=None):
 		self.session = session
 		self.frame.session = self.session
 
@@ -167,6 +172,9 @@ class Manager(node.Node):
 			except Exception, e:
 				self.logger.warning('Failed to add launcher: %s' % e)
 
+		if gridslot:
+			self.autorun = True
+			self.autogridslot = gridslot
 		if prevapp:
 			threading.Thread(target=self.launchPreviousApp).start()
 
@@ -908,6 +916,31 @@ class Manager(node.Node):
 		d = leginondata.LaunchedApplicationData(initializer=initializer)
 		self.publish(d, database=True, dbforce=True)
 		self.onApplicationStarted(name)
+		if self.autorun:
+			self.autoStartApplication()
+
+	def autoStartApplication(self):
+		'''
+		Experimental automatic start of application.
+		'''
+		node_name = 'KPresets Manager'
+		ievent = event.ChangePresetEvent()
+		ievent['name'] = 'en'
+		ievent['emtarget'] = None
+		ievent['keep image shift'] = False
+		self.outputEvent(ievent, node_name, wait=True, timeout=None)
+		# load grid
+		node_name = 'TEM Remote'
+		ievent = event.LoadAutoLoaderGridEvent()
+		ievent['slot name'] = self.autogridslot
+		self.outputEvent(ievent, node_name, wait=True, timeout=None)
+		# load grid
+		node_name = 'KGrid Targeting'
+		ievent = event.MakeTargetListEvent()
+		# Set grid to None for now since we don't have a system for
+		# passing emgrid info, yet.
+		ievent['grid'] = None
+		self.outputEvent(ievent, node_name, wait=False, timeout=None)
 
 	def killApplication(self):
 		self.cancelTimeoutTimer()

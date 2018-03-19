@@ -209,7 +209,10 @@ class MosaicTargetMaker(TargetMaker):
 		return targetlist, grid
 
 	def _makeAtlas(self, evt):
-		if evt['grid'] is None or self.settings['ignore request']:
+		# TO DO: This change is temporary.  Need to make sure it
+		# won't cause problem
+		#if evt['grid'] is None or self.settings['ignore request']:
+		if self.settings['ignore request']:
 			return
 		try:
 			args = self._calculateAtlas(evt)

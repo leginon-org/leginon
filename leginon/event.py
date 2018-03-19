@@ -367,6 +367,14 @@ class ExtractGridEvent(ControlEvent):
 	'Event that signals a grid to be extracted'
 	pass
 
+class LoadAutoLoaderGridEvent(ControlEvent):
+	'Event that signals a grid to be loaded through TEMcontroller'
+	def typemap(cls):
+		return ControlEvent.typemap() + (
+			('slot name', str),
+		)
+	typemap = classmethod(typemap)
+	
 class MakeTargetListEvent(ControlEvent):
 	'Event telling target maker to make a target list'
 	def typemap(cls):

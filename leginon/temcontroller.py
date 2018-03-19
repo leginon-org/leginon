@@ -30,12 +30,14 @@ class TEMController(node.Node):
 	defaultsettings = {
 	}
 	eventinputs = node.Node.eventinputs + presets.PresetsClient.eventinputs
+	eventinputs.append(event.LoadAutoLoaderGridEvent)
 	eventoutputs = node.Node.eventoutputs + presets.PresetsClient.eventoutputs
 
 	def __init__(self, id, session, managerlocation, **kwargs):
 		node.Node.__init__(self, id, session, managerlocation, **kwargs)
 		self.instrument = instrument.Proxy(self.objectservice, self.session,
 																				self.panel)
+		self.addEventInput(event.LoadAutoLoaderGridEvent, self.handleLoadAutoLoaderGrid)
 		self.presetsclient = presets.PresetsClient(self)
 		self.loaded_grid_slot = None
 		self.grid_slot_numbers = []
@@ -49,6 +51,13 @@ class TEMController(node.Node):
 		# This may not give results since instrument may not be loaded, yet
 		self.grid_slot_numbers = self.researchLoadableGridSlots()
 		self.grid_slot_names = map((lambda x:'%d' % (x,)),self.grid_slot_numbers)
+
+	def handleLoadAutoLoaderGrid(self,evt):
+		# Hope instrument is loaded by now.
+		self.grid_slot_numbers = self.researchLoadableGridSlots()
+		grid_slot_name = evt['slot name']
+		self.loadGrid(grid_slot_name)
+		self.confirmEvent(evt)
 
 	def _toScope(self,name, stagedict):
 		try:
