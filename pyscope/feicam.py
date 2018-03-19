@@ -138,7 +138,7 @@ class FeiCam(ccdcamera.CCDCamera):
 		if SIMULATION:
 			connection = get_feiadv_sim()
 		else:
-			connection = get_feiadv():
+			connection = get_feiadv()
 		self.instr = connection.instr
 		self.csa = connection.csa
 		# TODO: setCamera

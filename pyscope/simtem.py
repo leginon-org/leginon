@@ -430,6 +430,7 @@ class SimTEM(tem.TEM):
 
 	def _loadCartridge(self, number):
 		self.loaded_slot_number = number
+		time.sleep(2)
 
 	def _unloadCartridge(self):
 		self.loaded_slot_number = None
