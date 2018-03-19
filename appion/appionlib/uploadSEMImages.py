@@ -142,15 +142,10 @@ class UploadSEMImages(appionScript.AppionScript):
         return
     #=====================
     def getAppionInstruments(self):
-        instrumentq = leginon.leginondata.InstrumentData()
-        instrumentq['hostname'] = "appion"
-        instrumentq['name'] = "AppionSEM"
-        self.temdata = instrumentq
-        
-        instrumentq = leginon.leginondata.InstrumentData()
-        instrumentq['hostname'] = "appion"
-        instrumentq['name'] = "AppionCamera"
-        self.camdata = instrumentq
+
+        instrumentq = leginon.leginondata.InstrumentData(name='Helios')
+        scopeq = leginon.leginondata.ScopeEMData(tem=instrumentq.query()[0])
+        self.scopedata = scopeq.query()[0]
         return
     
     def setRunDir(self):
@@ -173,26 +168,27 @@ class UploadSEMImages(appionScript.AppionScript):
     #=====================
     def uploadImageInformation(self, imagearray, newimagepath, dims):
         ### setup scope data
-        scopedata = leginon.leginondata.ScopeEMData()
-        scopedata['session'] = self.sessiondata
-        scopedata['magnification'] = numpy.interp(float(self.SEM_Data['HFW']),HFW, e_beam_mag)
-        scopedata['high tension'] = self.SEM_Data['HV']
+#         scopedata = leginon.leginondata.ScopeEMData()
+#         scopedata['session'] = self.sessiondata
+#         scopedata['magnification'] = numpy.interp(float(self.SEM_Data['HFW']),HFW, e_beam_mag)
+#         scopedata['high tension'] = self.SEM_Data['HV']
         ### setup camera data
         presetdata = leginon.leginondata.PresetData()
         presetdata['session'] = self.sessiondata
         presetname = 'upload'
         presetdata['name'] = presetname
         ### setup camera data
-        cameradata = leginon.leginondata.CameraEMData()
-        cameradata['session'] = self.sessiondata
-        cameradata['ccdcamera'] = self.camdata
-        cameradata['dimension'] = dims
-        cameradata['binning'] = {'x': 1, 'y': 1}
-        cameradata['pixel size'] = {'x':float(self.SEM_Data['PixelWidth'])*10e-9,
-                                'y':float(self.SEM_Data['PixelWidth'])*10e-9}
+#         cameradata = leginon.leginondata.CameraEMData()
+#         cameradata['session'] = self.sessiondata
+#         cameradata['ccdcamera'] = self.camdata
+#         cameradata['dimension'] = dims
+#         cameradata['binning'] = {'x': 1, 'y': 1}
+#         cameradata['pixel size'] = {'x':float(self.SEM_Data['PixelWidth'])*10e-9,
+#                                 'y':float(self.SEM_Data['PixelWidth'])*10e-9}
         ### setup image data
         imgdata = leginon.leginondata.AcquisitionImageData()
         imgdata['session'] = self.sessiondata
+        imgdata['scope'] = self.scopedata
         imgdata['preset'] = presetdata
         basename = os.path.basename(newimagepath)
         if basename.endswith(".mrc"):
