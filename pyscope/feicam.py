@@ -1,16 +1,24 @@
 #import comtypes.client
 import ccdcamera
-import numpy
 import time
 import simscripting
 import falconframe
 from pyscope import moduleconfig
 
-SIMULATION = True
+SIMULATION = False
+class FEIAdvScriptingConnection(object):
+	instr = None
+	csa = None
+	cameras = []
+
 if SIMULATION:
+	# There is problem starting numpy in FEI 2.9 software as FEI version of python2.7 becomes the default.
+	import numpy
 	import simscripting
 	connection = simscripting.Connection()
 else:
+	import comtypes
+	import comtypes.client
 	connection = FEIAdvScriptingConnection()
 
 READOUT_FULL = 0
@@ -22,11 +30,6 @@ configs = moduleconfig.getConfigured('fei.cfg')
 ## Muliple calls to get_feiadv will return the same connection.
 ## Store the handle in the com module, which is safer than in
 ## this module due to multiple imports.
-class FEIAdvScriptingConnection(object):
-	instr = None
-	csa = None
-	cameras = []
-
 def get_feiadv():
 	global connection
 	if connection.instr is None:
@@ -34,10 +37,10 @@ def get_feiadv():
 			comtypes.CoInitializeEx(comtypes.COINIT_MULTITHREADED)
 		except:
 			comtypes.CoInitialize()
-		connection.instr = comtypes.client.CreateObject('TEMAdvancedScripting.Instrument')
+		connection.instr = comtypes.client.CreateObject('TEMAdvancedScripting.AdvancedInstrument.1')
 		connection.acq = connection.instr.Acquisitions
-		connection.csa = connection.acq.CameraSingelAcquisition
-		connection.cameras = csa.SupportedCameras
+		connection.csa = connection.acq.CameraSingleAcquisition
+		connection.cameras = connection.csa.SupportedCameras
 	return connection
 
 def get_feiadv_sim():
@@ -297,7 +300,7 @@ exposure is the exposure time in seconds
 
 	def getInserted(self):
 		if self.getRetractable():
-			return self.camera.IsInsert
+			return self.camera.IsInserted()
 		else:
 			return True
 
@@ -307,10 +310,10 @@ exposure is the exposure time in seconds
 			return
 		if value:
 			sleeptime = 5
-			self.camera.Insert
+			self.camera.Insert()
 		else:
 			sleeptime = 1
-			self.camera.Retract
+			self.camera.Retract()
 		time.sleep(sleeptime)
 
 	def getEnergyFiltered(self):
@@ -332,12 +335,11 @@ class Falcon(FeiCam):
 		self.readout_delay_ms = 0
 		self.align_frames = False
 		self.align_filter = 'None'
-		self.initFrameConfig()
+		#self.initFrameConfig()
 
 	def initFrameConfig(self):
 		self.frameconfig = falconframe.FalconFrameRangeListMaker(False)
-		raw_frame_dir = self.getFeiConfig('camera','raw_frame_dir')
-		self.camera_settings.PathToImageStorage = raw_frame_dir
+		ram_frame_dir = self.camera_settings.PathToImageStorage #read only
 		self.frameconfig.setBaseFramePath(raw_frame_dir)
 
 	def setInserted(self, value):

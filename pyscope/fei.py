@@ -39,6 +39,7 @@ class Tecnai(tem.TEM):
 		tem.TEM.__init__(self)
 		self.projection_submodes = {1:'LM',2:'Mi',3:'SA',4:'Mh',5:'LAD',6:'D'}
 		self.gridloader_slot_states = {0:'unknown', 1:'occupied', 2:'empty', 3:'error'}
+		self.aperture_mechanism_indexmap = {'condenser2':2,'objective':4,'selected area':5}
 		self.special_submode_mags = {}
 		#self.special_submode_mags = {380:('EFTEM',3)}
 		self.projection_submode_map = self.special_submode_mags.copy()
@@ -1471,6 +1472,132 @@ class Tecnai(tem.TEM):
 			return True
 		return False
 
+	def hasAutoAperture(self):
+		return False
+
+	def retractApertureMechanism(self,name):
+		'''
+		Retract aperture mechanism.
+		'''
+		am = self._getApertureMechanismObj(name)
+		if am.State == 3:
+			# already retracted mechanism can not be retracted again.
+			return False	# successful
+		if am.State != 1:
+			raise RuntimeError('Aperture not in a retractable state')
+		status = am.Retract()
+		return bool(status)
+
+	def _getApertureMechanismObj(self, name):
+		if not self.hasAutoAperture():
+			raise ValueError('No automated aperture')
+		amc = self.tecnai.ApertureMechanismCollection
+		# TO DO: better to use ID for obj aperture (4)
+		index = self._getApertureMechanismIndex(name)
+		if index == False:
+			raise ValueError('Aperture mechanism %s does not exist' % name)
+		am = amc.Item(index)
+		return am
+
+	def _getApertureMechanismIndex(self, name):
+		'''
+		Get index of aperture mechanism in ApertureMechanismCollection
+		'''
+		if not self.hasAutoAperture() or name not in self.aperture_mechanism_indexmap.keys():
+			return False
+		amc = self.tecnai.ApertureMechanismCollection
+		count = amc.Count
+		for i in range(count):
+			if amc.Item(i).Id == self.aperture_mechanism_indexmap[name]:
+				return i
+
+	def getApertures(self):
+		'''
+		Names of the available aperture mechanism
+		'''
+		return ['condenser2', 'objective', 'selected area']
+
+	def _getApertureObjsOfMechanismName(self,mechanism_name):
+		'''
+		All aperture objects on an aperture mechanism.
+		'''
+		# get aperture objects
+		am = self._getApertureMechanismObj(mechanism_name)
+		ac = am.ApertureCollection
+		count = ac.Count
+		apertures = map((lambda x: ac.Item(x)),range(count))
+		return apertures
+
+	def getApertureSelections(self, mechanism_name):
+		'''
+		get valid selection for an aperture mechanism to be used in gui.
+		'''
+		names = self.getApertureNames(mechanism_name)
+		am = self._getApertureMechanismObj(mechanism_name)
+		if am.IsRetractable:
+			names.insert(0,'retracted')
+		names.insert(0,'unknown')
+		return names
+
+	def getApertureSelection(self, mechanism_name):
+		'''
+		get current aperture selection by string name or as retracted.
+		'''
+		am = self._getApertureMechanismObj(mechanism_name)
+		state = am.State
+		if state == 3:
+			return 'retracted'
+		if state == 1:
+			a = am.SelectedAperture
+			return a.Name
+		# all counted as invalid state
+		return 'unknown'
+
+	def setApertureSelection(self, mechanism_name, name):
+		'''
+		set aperture selection by string name or retract the mechanism.
+		'''
+		selections = self.getApertureSelections(mechanism_name)
+		if name not in selections:
+			raise ValueError('Invalid selection: %s' % name)
+		if name == 'unknown' or name == '' or name is None:
+			# nothing to do
+			return False
+		if name == 'retracted':
+			has_error = self.retractApertureMechanism(mechanism_name)
+			if has_error:
+				raise ValueError('Fail to retract %s' % mechanism_name)
+		else:
+			has_error = self.insertSelectedApertureMechanism(mechanism_name, name)
+			if has_error:
+				raise ValueError('Fail to select %s on %s aperture' % (name,mechanism_name))
+		return False
+
+	def getApertureNames(self, mechanism_name):
+		'''
+		Get string name list of the aperture collection in a mechanism.
+		'''
+		aps = self._getApertureObjsOfMechanismName(mechanism_name)
+		names = []
+		for ap in aps:
+			names.append(ap.Name)
+		return names
+
+	def insertSelectedApertureMechanism(self,mechanism_name, aperture_name):
+		'''
+		Insert an aperture selected for a mechanism.
+		'''
+		am = self._getApertureMechanismObj(mechanism_name)
+		names = self.getApertureNames(mechanism_name)
+		if aperture_name not in names:
+			raise ValueError('No apeture of the name %s on %s' %(aperture_name, mechanism_name))
+		if am.State != 1 and am.State != 3 :
+			raise RuntimeError('Aperture not in a controlable state')
+		aps = self._getApertureObjsOfMechanismName(mechanism_name)
+		status = am.SelectAperture(aps[names.index(aperture_name)])
+		# aperture already selected will return immediately.
+		return bool(status)
+
 class Krios(Tecnai):
 	name = 'Krios'
 	use_normalization = True
@@ -1513,6 +1640,9 @@ class Krios(Tecnai):
 				time.sleep(0.2)
 		return self._setStagePosition(value)
 
+	def hasAutoAperture(self):
+		return True
+
 class Halo(Tecnai):
 	'''
 	Titan Halo has Titan 3 condensor system but side-entry holder.
@@ -1542,6 +1672,13 @@ class Arctica(Tecnai):
 	name = 'Arctica'
 	use_normalization = True
 
+	def hasAutoAperture(self):
+		return True
+
 class Talos(Tecnai):
 	name = 'Talos'
 	use_normalization = True
+
+	def hasAutoAperture(self):
+		return True
+
