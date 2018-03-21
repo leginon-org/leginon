@@ -1494,7 +1494,7 @@ class Tecnai(tem.TEM):
 		amc = self.tecnai.ApertureMechanismCollection
 		# TO DO: better to use ID for obj aperture (4)
 		index = self._getApertureMechanismIndex(name)
-		if index === False:
+		if index == False:
 			raise ValueError('Aperture mechanism %s does not exist' % name)
 		am = amc.Item(index)
 		return am
@@ -1508,7 +1508,7 @@ class Tecnai(tem.TEM):
 		amc = self.tecnai.ApertureMechanismCollection
 		count = amc.Count
 		for i in range(count):
-			if amc.Item(i).Id == indexmap[name]:
+			if amc.Item(i).Id == self.aperture_mechanism_indexmap[name]:
 				return i
 
 	def getApertures(self):
@@ -1533,7 +1533,9 @@ class Tecnai(tem.TEM):
 		get valid selection for an aperture mechanism to be used in gui.
 		'''
 		names = self.getApertureNames(mechanism_name)
-		names.insert(0,'retracted')
+		am = self._getApertureMechanismObj(mechanism_name)
+		if am.IsRetractable:
+			names.insert(0,'retracted')
 		names.insert(0,'unknown')
 		return names
 
@@ -1556,26 +1558,29 @@ class Tecnai(tem.TEM):
 		set aperture selection by string name or retract the mechanism.
 		'''
 		selections = self.getApertureSelections(mechanism_name)
+		if name not in selections:
+			raise ValueError('Invalid selection: %s' % name)
 		if name == 'unknown' or name == '' or name is None:
 			# nothing to do
-			return
+			return False
 		if name == 'retracted':
-			has_error = self.retractAperture(mechanism_name)
+			has_error = self.retractApertureMechanism(mechanism_name)
 			if has_error:
 				raise ValueError('Fail to retract %s' % mechanism_name)
 		else:
 			has_error = self.insertSelectedApertureMechanism(mechanism_name, name)
 			if has_error:
 				raise ValueError('Fail to select %s on %s aperture' % (name,mechanism_name))
+		return False
 
 	def getApertureNames(self, mechanism_name):
 		'''
 		Get string name list of the aperture collection in a mechanism.
 		'''
-		aps = _getApertureObjsOfMechanismName(mechanism_name)
+		aps = self._getApertureObjsOfMechanismName(mechanism_name)
 		names = []
-		for i in range(count):
-			names = names.append(aps[i].Name)
+		for ap in aps:
+			names.append(ap.Name)
 		return names
 
 	def insertSelectedApertureMechanism(self,mechanism_name, aperture_name):
@@ -1583,13 +1588,13 @@ class Tecnai(tem.TEM):
 		Insert an aperture selected for a mechanism.
 		'''
 		am = self._getApertureMechanismObj(mechanism_name)
-		names = getApertureNames(mechanism_name)
+		names = self.getApertureNames(mechanism_name)
 		if aperture_name not in names:
-			raise ValuError('No apeture of the name %s on %s' (aperture_name, mechanism_name)
-		if am.State != 1 and am.State != 3:
+			raise ValueError('No apeture of the name %s on %s' %(aperture_name, mechanism_name))
+		if am.State != 1 and am.State != 3 :
 			raise RuntimeError('Aperture not in a controlable state')
-		aps = _getApertureObjsOfMechanismName(self,mechanism_name)
-		status = am.SelectAperture(aps.Item(names.index(aperture_name)))
+		aps = self._getApertureObjsOfMechanismName(mechanism_name)
+		status = am.SelectAperture(aps[names.index(aperture_name)])
 		# aperture already selected will return immediately.
 		return bool(status)
 
