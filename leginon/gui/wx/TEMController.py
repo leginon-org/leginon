@@ -45,6 +45,9 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		self.pressure_order = ['column','projection','buffer tank']
 		self.sz_pressure = TEMParameters(self,'Gauge Pressure', self.pressure_order)
 		self.szmain.Add(self.sz_pressure, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.current_aperture = ''
+		self.sz_aperture = TEMParameters(self,'Aperture State', [])
+		self.szmain.Add(self.sz_aperture, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		# set sz_gridloader key order later
 		self.sz_gridloader = TEMParameters(self,'Grid Loader', [])
 		self.szmain.Add(self.sz_gridloader, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
@@ -60,6 +63,7 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		# Base Class function call
 		leginon.gui.wx.Instrument.SelectionMixin.onNodeInitialized(self)
 		# These need to be here because self.node is not defined in __init__
+		self.insertApertureSelector(3)
 		self.insertGridSlotSelector(3)
 		self.insertPresetSelector(3)
 		# ToolBar Events
@@ -71,6 +75,8 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 											id=leginon.gui.wx.ToolBar.ID_EXTRACT)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onLoadGridTool,
 											id=leginon.gui.wx.ToolBar.ID_INSERT)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onSetApertureTool,
+											id=leginon.gui.wx.ToolBar.ID_PLAY)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
 											id=leginon.gui.wx.ToolBar.ID_SETTINGS)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onRefreshTool,
@@ -88,7 +94,9 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		# Contoller Events
 		self.Bind(leginon.gui.wx.Events.EVT_GET_DISPLAY_PRESSURE, self.onDisplayPressure)
 		self.Bind(leginon.gui.wx.Events.EVT_GET_DISPLAY_GRID_LOADER_SLOT_STATES, self.onDisplayGridLoaderSlotStates)
+		self.Bind(leginon.gui.wx.Events.EVT_GET_DISPLAY_APERTURE_STATES, self.onDisplayApertureStates)
 		self.Bind(leginon.gui.wx.Events.EVT_UPDATE_GRID_SLOT_SELECTOR, self.onUpdateGridSlotSelector)
+		self.Bind(leginon.gui.wx.Events.EVT_UPDATE_APERTURE_SELECTOR, self.onUpdateApertureSelector)
 
 	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self,show_basic=True)
@@ -112,6 +120,8 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		self.addDisplayPressureEvent()
 		self.addDisplayGridLoaderSlotStatesEvent()
 		self.addUpdateGridSlotSelectorEvent()
+		self.addDisplayApertureStatesEvent()
+		self.addUpdateApertureSelectorEvent()
 
 	#=============Preset Selector and Set  ========================
 	def insertPresetSelector(self, position):
@@ -267,6 +277,61 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 	def onResetAlpha(self, evt):
 		self.node.onResetAlpha()
 
+	#=========OBJECTIVE APERTURE SELECTOR============================
+	def getApertureSelectionNames(self):
+		# This needs to be done after self.node is set.
+		self.aperture_names = self.node.getApertureNames()
+		# Use a different list to include default before knowing which grid is loaded.
+		self.aperture_selection_names = list(self.aperture_names)
+
+	def insertApertureSelector(self,position):
+		'''
+		Create Choice Sizer
+		'''
+		self.getApertureSelectionNames()
+		self.aperture_choices = Choice(self.toolbar, -1, choices=self.aperture_selection_names)
+		# Insert in reverse order
+		self.toolbar.InsertSeparator(position)
+		self.toolbar.InsertTool(position, leginon.gui.wx.ToolBar.ID_PLAY,
+													'instrumentset',
+												shortHelpString='Send objective aperture selection to scope')
+		self.toolbar.InsertControl(position,self.aperture_choices)
+		return
+
+	def addUpdateApertureSelectorEvent(self):
+		# MCV model create event to publish
+		self.getApertureSelectionNames()
+		if not self.aperture_selection_names:
+			# Do nothing is no grids
+			return
+		evt = leginon.gui.wx.Events.UpdateApertureSelectorEvent()
+		evt.values = self.aperture_selection_names
+		evt.current = self.current_aperture
+		self.GetEventHandler().AddPendingEvent(evt)
+
+	def onUpdateApertureSelector(self, evt):
+		names = evt.values
+		current = evt.current
+		self.setApertureChoices(names)
+		self.setApertureChoice(current)
+
+	def setApertureChoices(self,names):
+		# This part is needed for wxpython 2.8.  It can be replaced by Set function in 3.0
+		self.aperture_choices.Clear()
+		for name in names:
+			self.aperture_choices.Append(name)
+
+	def setApertureChoice(self,current_choice):
+		if not self.aperture_selection_names:
+			return
+		if current_choice in self.aperture_selection_names:
+			self.aperture_choices.SetStringSelection(current_choice)
+
+	def onSetApertureTool(self,evt):
+		self.current_aperture = self.aperture_choices.GetStringSelection()
+		args = (self.current_aperture,)
+		threading.Thread(target=self.node.selectObjAperture,args=args).start()
+
 	#=============PRESSURE DISPLAY=====================
 	def addDisplayPressureEvent(self):
 		# MCV model create event to publish
@@ -300,6 +365,21 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		self.sz_gridloader.setOrder(self.grid_slot_names)
 		self.sz_gridloader.setUnit(evt.unit)
 		self.sz_gridloader.setString(evt.values)
+		self.szmain.Layout()
+
+	#=============Aperture DISPLAY=====================
+	def addDisplayApertureStatesEvent(self):
+		# MCV model create event to publish
+		evt = leginon.gui.wx.Events.GetDisplayApertureStatesEvent()
+		evt.values = self.node.getApertureStatesToDisplay()
+		self.GetEventHandler().AddPendingEvent(evt)
+
+	def onDisplayApertureStates(self, evt):
+		# MCV controller handle event and set change to view
+		mech_names= self.node.getApertureMechanisms()
+		self.sz_aperture.setOrder(mech_names)
+		self.sz_aperture.setUnit('um')
+		self.sz_aperture.setString(evt.values)
 		self.szmain.Layout()
 
 class SettingsDialog(leginon.gui.wx.Settings.Dialog):
@@ -347,7 +427,8 @@ class TEMParameters(wx.StaticBoxSizer):
 			stname = wx.StaticText(self.parent, -1, name)
 			label = 'Unknown'
 			unitkey = '%s unit' % name
-			self.sts[unitkey] = wx.StaticText(self.parent, -1, self.unit)
+			this_unit = self.getUnitFromLabel(label)
+			self.sts[unitkey] = wx.StaticText(self.parent, -1, this_unit)
 			self.sts[name] = wx.StaticText(self.parent, -1, label)
 			self.sz.Add(stname, (i, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 			self.sz.Add(self.sts[name], (i, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
@@ -356,13 +437,22 @@ class TEMParameters(wx.StaticBoxSizer):
 	def setUnit(self, value):
 		self.unit = value
 
+	def getUnitFromLabel(self,label):
+		try:
+			float(label)
+			this_unit = self.unit
+		except ValueError:
+			this_unit = ''
+		return this_unit
+
 	def setString(self, values):
 		for name in self.order:
 			try:
 				label = '%s' % (values[name])
 				self.sts[name].SetLabel(label)
+				this_unit = self.getUnitFromLabel(label)
 				unitkey = '%s unit' % name
-				self.sts[unitkey].SetLabel(self.unit)
+				self.sts[unitkey].SetLabel(this_unit)
 			except (TypeError, KeyError), e:
 				self.sts[name].SetLabel('None')
 		self.Layout()
@@ -372,8 +462,9 @@ class TEMParameters(wx.StaticBoxSizer):
 			try:
 				label = '%6.4e' % (values[name])
 				self.sts[name].SetLabel(label)
+				this_unit = self.getUnitFromLabel(label)
 				unitkey = '%s unit' % name
-				self.sts[unitkey].SetLabel(self.unit)
+				self.sts[unitkey].SetLabel(this_unit)
 			except (TypeError, KeyError), e:
 				self.sts[name].SetLabel('None')
 			except:

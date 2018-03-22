@@ -1511,7 +1511,7 @@ class Tecnai(tem.TEM):
 			if amc.Item(i).Id == self.aperture_mechanism_indexmap[name]:
 				return i
 
-	def getApertures(self):
+	def getApertureMechanisms(self):
 		'''
 		Names of the available aperture mechanism
 		'''
@@ -1535,18 +1535,18 @@ class Tecnai(tem.TEM):
 		names = self.getApertureNames(mechanism_name)
 		am = self._getApertureMechanismObj(mechanism_name)
 		if am.IsRetractable:
-			names.insert(0,'retracted')
-		names.insert(0,'unknown')
+			names.insert(0,'open')
 		return names
 
 	def getApertureSelection(self, mechanism_name):
 		'''
-		get current aperture selection by string name or as retracted.
+		Get current aperture selection of specified aperture mechanism
+		as string name in um or as open.
 		'''
 		am = self._getApertureMechanismObj(mechanism_name)
 		state = am.State
 		if state == 3:
-			return 'retracted'
+			return 'open'
 		if state == 1:
 			a = am.SelectedAperture
 			return a.Name
@@ -1555,15 +1555,17 @@ class Tecnai(tem.TEM):
 
 	def setApertureSelection(self, mechanism_name, name):
 		'''
-		set aperture selection by string name or retract the mechanism.
+		Set Aperture selection of a aperture mechanism with aperture name.
+		Aperture name 'open' means retracted aperture. Size string in
+		unit of um is used as the name for that aperture.
 		'''
 		selections = self.getApertureSelections(mechanism_name)
 		if name not in selections:
 			raise ValueError('Invalid selection: %s' % name)
-		if name == 'unknown' or name == '' or name is None:
+		if name == '' or name is None:
 			# nothing to do
 			return False
-		if name == 'retracted':
+		if name == 'open':
 			has_error = self.retractApertureMechanism(mechanism_name)
 			if has_error:
 				raise ValueError('Fail to retract %s' % mechanism_name)

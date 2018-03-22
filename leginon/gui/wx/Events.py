@@ -106,7 +106,9 @@ eventFactory('CCDCamera Change', attributes=['name'], command=True)
 # MCV events
 eventFactory('Get Display Pressure', attributes=['unit','values'])
 eventFactory('Get Display Grid Loader Slot States', attributes=['values'])
+eventFactory('Get Display Aperture States', attributes=['values'])
 eventFactory('Update Grid Slot Selector', attributes=['values'])
+eventFactory('Update Aperture Selector', attributes=['values','current'])
 
 
 
