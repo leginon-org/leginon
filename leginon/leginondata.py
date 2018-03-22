@@ -1839,6 +1839,7 @@ class AcquisitionSettingsData(TargetWatcherSettingsData):
 			('target offset col', int),
 			('correct image shift coma', bool),
 			('park after target', bool),
+			('retract obj aperture', bool),
 		)
 	typemap = classmethod(typemap)
 

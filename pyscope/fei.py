@@ -1566,13 +1566,19 @@ class Tecnai(tem.TEM):
 			# nothing to do
 			return False
 		if name == 'open':
-			has_error = self.retractApertureMechanism(mechanism_name)
-			if has_error:
-				raise ValueError('Fail to retract %s' % mechanism_name)
+			try:
+				has_error = self.retractApertureMechanism(mechanism_name)
+				if has_error:
+					raise RuntimeError('Fail to retract %s' % mechanism_name)
+			except RuntimeError, e:
+				raise
 		else:
-			has_error = self.insertSelectedApertureMechanism(mechanism_name, name)
+			try:
+				has_error = self.insertSelectedApertureMechanism(mechanism_name, name)
 			if has_error:
-				raise ValueError('Fail to select %s on %s aperture' % (name,mechanism_name))
+				raise RuntimeError('Fail to select %s on %s aperture' % (name,mechanism_name))
+			except RuntimeError, e:
+				raise
 		return False
 
 	def getApertureNames(self, mechanism_name):

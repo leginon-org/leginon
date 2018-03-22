@@ -385,6 +385,14 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 						wx.ALIGN_CENTER_VERTICAL)
 		return sz_beampath
 
+	def createRetractObjApertureSizer(self):
+		self.widgets['retract obj aperture'] = wx.CheckBox(self, -1, 'Retract objective aperture while imaging')
+		# mskr sizer
+		sz_obj_ap = wx.GridBagSizer(0, 0)
+		sz_obj_ap.Add(self.widgets['retract obj aperture'], (0, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		return sz_obj_ap
+
 	def addSettings(self):
 		# move type
 		szmovetype = self.createMoveTypeSizer()
@@ -397,6 +405,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz_emission = self.createEmissionSizer()
 		sz_tilt = self.createTiltSizer()
 		sz_beampath = self.createClearBeamPathSizer()
+		sz_obj_ap = self.createRetractObjApertureSizer()
 		sbszsim = self.createSimulatedTargetLoopBoxSizer()
 
 		# misc
@@ -429,7 +438,8 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz.Add(sz_emission, (5,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(sz_tilt, (6,0), (2,1), wx.ALIGN_TOP)
 		sz.Add(sz_beampath, (8,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(sbszsim, (9,0), (2,1), wx.ALIGN_BOTTOM)
+		sz.Add(sz_obj_ap, (9,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(sbszsim, (10,0), (2,1), wx.ALIGN_BOTTOM)
 		# middle with 1 column
 		sz.Add(sz_misc, (3,1), (8,1), wx.ALIGN_TOP)
 		# right
