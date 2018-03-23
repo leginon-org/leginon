@@ -1343,7 +1343,7 @@ class Jeol(tem.TEM):
 	def alignEnergyFilterZeroLossPeak(self):
 		pass
 
-	def getApertures(self):
+	def getApertureMechanisms(self):
 		return ['condenser', 'objective', 'high contrast', 'selected area']
 
 	def _getApertureKind(self, name):
@@ -1373,11 +1373,56 @@ class Jeol(tem.TEM):
 		else:
 			raise ValueError('Invalid aperture name specified')
 
+	def getApertureSelections(self, aperture_mechanism):
+		'''
+		get valid selection for an aperture mechanism to be used in gui.
+		'''
+		sizes = self._getApertureSizesOfKind(aperture_mechanism) #list in meters, 0 is open.
+		names = []
+		for size in sizes:
+			if size == 0:
+				name = 'open'
+			else:
+				name = '%d' % (int(size*1e6))
+			names.append(name)
+		return names
+
+	def getApertureSelection(self, aperture_mechanism):
+		'''
+		Get current aperture selection of specified aperture mechanism
+		as string name in um or as open.
+		'''
+		size = self.getApertureSize[aperture_mechanism]
+		if size == 0:
+			name = 'open'
+		else:
+			name = '%d' % (int(size*1e6))
+		return name
+
+	def setApertureSelection(self, aperture_mechanism, name):
+		'''
+		Set Aperture selection of a aperture mechanism with aperture name.
+		Aperture name 'open' means retracted aperture. Size string in
+		unit of um is used as the name for that aperture.
+		'''
+		valid_names = self.getApertureSelections(aperture_mechanism)
+		if name not in valid_names:
+			raise ValueError('invalid aperture name')
+		if name == '' or name is None:
+			# nothing to do
+			return False
+		if name == 'open':
+			size = 0
+		else:
+			size = int(name)*1e-6
+		sizedict = {aperture_mechanism:size}
+		self.setApertureSize(self, sizedict)
+		return False
 
 	def getApertureSizes(self):
 		sizes = {}
 
-		names = self.getApertures()
+		names = self.getApertureMechanisms()
 
 		for name in names:
 			sizes[name] = self._getApertureSizesOfKind(name)
@@ -1481,7 +1526,7 @@ class Jeol(tem.TEM):
 	def getAperturePosition(self):
 		positions = {}
 
-		names = self.getApertures()
+		names = self.getApertureMechanisms()
 
 		if not self.has_auto_apt:
 			for name in names:

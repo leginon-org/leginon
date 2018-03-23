@@ -223,6 +223,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		# define it now regardless.
 		original_position = self.instrument.tem.getStagePosition()
 		self.targetlist_reset_tilt = original_position['a']
+		self.obj_aperture_reset_value = self.instrument.tem.getApertureSelection('objective')
 		if good_targets:
 			# Things to do before reject targets are published.
 			# pause and abort check before reference and rejected targets are sent away
@@ -297,14 +298,51 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		self.logger.info('Original tilt %.2f degrees.' % (original_position['a']*180.0/math.pi))
 		self.logger.info('Parent tilt %.2f degrees.' % (self.targetlist_reset_tilt*180.0/math.pi))
 		# process the good ones
+		retract_successful = False
+		if self.isNeedRetractObjectiveAperture(good_targets):
+			retract_successful = self.retractObjectiveAperture()
 
 		targetliststatus = 'success'
 		self.processGoodTargets(good_targets)
 
 		self.reportTargetListDone(newdata, targetliststatus)
+		if retract_successful:
+			self.putBackObjectiveAperture()
+
 		if self.settings['park after list']:
 			self.park()
 		self.setStatus('idle')
+
+	def isNeedRetractObjectiveAperture(self,good_targets):
+		want_to = good_targets and self.settings['retract obj aperture']
+		can_do = self.obj_aperture_reset_value and self.obj_aperture_reset_value not in ('unknown','open')
+		if want_to and not can_do:
+			if self.obj_aperture_reset_value != 'open':
+				self.logger.warning('Objective aperture not in a restorable state. Skip retraction')
+			else:
+				self.logger.warning('Objective aperture already retracted. Skip retraction')
+
+		return want_to and can_do
+
+	def retractObjectiveAperture(self):
+		retract_ap_successful = False
+		self.logger.info('Retracting objective aperture....')
+		try:
+			state = self.instrument.tem.setApertureSelection('objective','open')
+			self.logger.info('Objective aperture retracted')
+			retract_ap_successful = True
+		except Exception, e:
+			self.logger.error(e.message)
+		return retract_ap_successful
+
+	def putBackObjectiveAperture(self):
+		self.logger.info('Inserting objective aperture....')
+		value = self.obj_aperture_reset_value
+		try:
+			state = self.instrument.tem.setApertureSelection('objective',value)
+			self.logger.info('%s um objective aperture inserted' % (value,))
+		except Exception, e:
+			self.logger.error(e.message)
 
 	def getIsResetTiltInList(self):
 		'''

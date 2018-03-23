@@ -358,6 +358,48 @@ class TEMController(node.Node):
 			self.logger.info('Grid Loaded from slot %d' % (slot_number,))
 		self.panel.setTEMParamDone()
 
+	def getApertureNames(self):
+		try:
+			names = self.instrument.tem.getApertureSelections('objective')
+		except:
+			names = []
+		return names
+
+	def getApertureNameUnit(self,name):
+		try:
+			int_name=int(name)
+			unit = 'um'
+		except ValueError:
+			unit = ''
+		return unit
+
+	def selectObjAperture(self,name):
+		unit = self.getApertureNameUnit(name)
+		self.logger.info('Changing objective aperture to %s %s' % (name,unit))
+		is_success = False
+		try:
+			self.instrument.tem.setApertureSelection('objective',name)
+			is_success = True
+		except Exception, e:
+			self.logger.error(e.message)
+		if is_success == True:
+			self.logger.info('Objective aperture changed to %s %s' % (name,unit))
+		self.panel.setTEMParamDone()
+
+	def getApertureMechanisms(self):
+		return self.instrument.tem.getApertureMechanisms()
+
+	def getApertureStatesToDisplay(self):
+		names = self.getApertureMechanisms()
+		name_states = {}
+		for name in names:
+			state = self.instrument.tem.getApertureSelection(name)
+			if state is None or state=='' or state not in self.instrument.tem.getApertureSelections(name):
+				state = 'unknown'
+			name_states[name] = state
+		return name_states
+
+
 if __name__ == '__main__':
 	id = ('navigator',)
 	n = Navigator(id, None)

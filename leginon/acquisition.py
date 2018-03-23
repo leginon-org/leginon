@@ -162,6 +162,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		'target offset col': 0,
 		'correct image shift coma': False,
 		'park after target': False,
+		'retract obj aperture': False,
 	})
 	eventinputs = targetwatcher.TargetWatcher.eventinputs \
 								+ [event.DriftMonitorResultEvent,
