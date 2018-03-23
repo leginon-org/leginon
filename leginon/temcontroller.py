@@ -56,8 +56,13 @@ class TEMController(node.Node):
 		# Hope instrument is loaded by now.
 		self.grid_slot_numbers = self.researchLoadableGridSlots()
 		grid_slot_name = evt['slot name']
-		self.loadGrid(grid_slot_name)
-		self.confirmEvent(evt)
+		t0 = time.time()
+		is_successful = self.loadGrid(grid_slot_name)
+		if is_successful:
+			self.confirmEvent(evt)
+		else:
+			# Will need restart to clear confirm event.
+			self.logger.error('Failer auto loading.  Please restart.')
 
 	def _toScope(self,name, stagedict):
 		try:
@@ -346,6 +351,7 @@ class TEMController(node.Node):
 		# Loading occupied grid.
 		self.logger.info('Loading grid from slot %d' % (slot_number,))
 		is_success = False
+		state = 'unknown'
 		try:
 			self.instrument.tem.loadGridCartridge(slot_number)
 			state = self.instrument.tem.getGridLoaderSlotState(slot_number)
@@ -356,7 +362,10 @@ class TEMController(node.Node):
 		if is_success == True:
 			self.loaded_grid_slot = slot_number
 			self.logger.info('Grid Loaded from slot %d' % (slot_number,))
+		else:
+			self.logger.warning('Loader slot state after loading is %s' % (state))
 		self.panel.setTEMParamDone()
+		return is_success
 
 	def getApertureNames(self):
 		try:
