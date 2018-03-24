@@ -146,11 +146,22 @@ class Tecnai(tem.TEM):
 		return self.getFeiConfig('stage','minimum_stage_movement')
 
 	def getStageLimits(self):
-		
 		limits = self.getFeiConfig('stage','stage_limits')
 		if limits is None:
 			limits = {}
 		return limits
+
+	def getXYZStageBacklashDelta(self):
+		value = self.getFeiConfig('stage','xyz_stage_backlash_delta')
+		if value is None:
+			value = 0
+		return value
+
+	def getXYStageRelaxDistance(self):
+		relax = self.getFeiConfig('stage','xy_stage_relax_distance')
+		if relax is None:
+			relax = 0
+		return relax
 
 	def getMagnificationsInitialized(self):
 		if self.magnifications:
@@ -182,14 +193,22 @@ class Tecnai(tem.TEM):
 		if not value:
 			return
 		if self.correctedstage:
-			delta = 2e-6
+			delta = self.getXYZStageBacklashDelta()
+			relax = self.getXYStageRelaxDistance()
 			stagenow = self.getStagePosition()
 			# calculate pre-position
 			prevalue = {}
+			prevalue2 = {}
 			for axis in ('x','y','z'):
 				if axis in value:
 					prevalue[axis] = value[axis] - delta
-			if prevalue:
+			for axis in ('x','y'):
+				if axis in value:
+					prevalue2[axis] = value[axis] + relax
+			if delta and prevalue:
+				self._setStagePosition(prevalue)
+				time.sleep(0.2)
+			if abs(relax) > 1e-9 and prevalue2:
 				self._setStagePosition(prevalue)
 				time.sleep(0.2)
 		return self._setStagePosition(value)
@@ -1599,8 +1618,8 @@ class Tecnai(tem.TEM):
 		else:
 			try:
 				has_error = self.insertSelectedApertureMechanism(mechanism_name, name)
-			if has_error:
-				raise RuntimeError('Fail to select %s on %s aperture' % (name,mechanism_name))
+				if has_error:
+					raise RuntimeError('Fail to select %s on %s aperture' % (name,mechanism_name))
 			except RuntimeError, e:
 				raise
 		return False
@@ -1655,20 +1674,28 @@ class Krios(Tecnai):
 		if not value:
 			return
 		if self.correctedstage:
-			delta = 2e-6
+			delta = self.getXYZStageBacklashDelta()
+			relax = self.getXYStageRelaxDistance()
 			stagenow = self.getStagePosition()
 			# calculate pre-position
 			prevalue = {}
+			prevalue2 = value.copy()
 			for axis in ('x','y','z'):
 				if axis in value:
 					prevalue[axis] = value[axis] - delta
+			for axis in ('x','y'):
+				if axis in value:
+					prevalue2[axis] = value[axis] + relax
 			# alpha tilt backlash only in one direction
 			alpha_delta_degrees = 3.0
 			if 'a' in value.keys() and self.corrected_alpha_stage:
 					axis = 'a'
 					prevalue[axis] = value[axis] - alpha_delta_degrees*3.14159/180.0
-			if prevalue:
+			if prevalue and delta:
 				self._setStagePosition(prevalue)
+				time.sleep(0.2)
+			if abs(relax) > 1e-9 and prevalue2:
+				self._setStagePosition(prevalue2)
 				time.sleep(0.2)
 		return self._setStagePosition(value)
 

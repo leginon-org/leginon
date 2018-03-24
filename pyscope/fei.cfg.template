@@ -37,3 +37,8 @@ MINIMUM_STAGE_MOVEMENT%Y = 5.0e-8
 MINIMUM_STAGE_MOVEMENT%Z = 5.0e-8
 MINIMUM_STAGE_MOVEMENT%A = 6.0e-5
 MINIMUM_STAGE_MOVEMENT%B = 6.0e-5
+
+# XYZ backlash delta (positive means preposition to negative direction)
+XYZ_StAGE_BACKLASH_DELTA = 2e-6
+# Relax distance
+#XY_STAGE_RELAX_DISTANCE = 10.0e-8
