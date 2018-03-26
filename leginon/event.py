@@ -374,6 +374,7 @@ class MakeTargetListEvent(ControlEvent):
 			('grid', leginondata.GridData),
 			('grid location', int),
 			('tray label', str),
+			('stagez', float),
 		)
 	typemap = classmethod(typemap)
 

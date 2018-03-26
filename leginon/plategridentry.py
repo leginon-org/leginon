@@ -29,6 +29,7 @@ class PlateGridEntry(gridentry.GridEntry):
 	settingsclass = leginondata.PlateGridEntrySettingsData
 	defaultsettings = {
 		'grid name': None,
+		'stage z': 0.0,
 		'plate name': None,
 		'grid format name': None,
 		'plate format name': None,
