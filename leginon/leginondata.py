@@ -2171,6 +2171,7 @@ class GridEntrySettingsData(SettingsData):
 	def typemap(cls):
 		return SettingsData.typemap() + (
 			('grid name', str),
+			('stage z', float),
 		)
 	typemap = classmethod(typemap)
 

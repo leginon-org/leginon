@@ -144,6 +144,25 @@ class Tecnai(tem.TEM):
 
 	def getMinimumStageMovement(self):
 		return self.getFeiConfig('stage','minimum_stage_movement')
+
+	def getStageLimits(self):
+		limits = self.getFeiConfig('stage','stage_limits')
+		if limits is None:
+			limits = {}
+		return limits
+
+	def getXYZStageBacklashDelta(self):
+		value = self.getFeiConfig('stage','xyz_stage_backlash_delta')
+		if value is None:
+			value = 0
+		return value
+
+	def getXYStageRelaxDistance(self):
+		relax = self.getFeiConfig('stage','xy_stage_relax_distance')
+		if relax is None:
+			relax = 0
+		return relax
+
 	def getMagnificationsInitialized(self):
 		if self.magnifications:
 			return True
@@ -174,14 +193,22 @@ class Tecnai(tem.TEM):
 		if not value:
 			return
 		if self.correctedstage:
-			delta = 2e-6
+			delta = self.getXYZStageBacklashDelta()
+			relax = self.getXYStageRelaxDistance()
 			stagenow = self.getStagePosition()
 			# calculate pre-position
 			prevalue = {}
+			prevalue2 = {}
 			for axis in ('x','y','z'):
 				if axis in value:
 					prevalue[axis] = value[axis] - delta
-			if prevalue:
+			for axis in ('x','y'):
+				if axis in value:
+					prevalue2[axis] = value[axis] + relax
+			if delta and prevalue:
+				self._setStagePosition(prevalue)
+				time.sleep(0.2)
+			if abs(relax) > 1e-9 and prevalue2:
 				self._setStagePosition(prevalue)
 				time.sleep(0.2)
 		return self._setStagePosition(value)
@@ -783,13 +810,23 @@ class Tecnai(tem.TEM):
 				pass
 		return value
 
-	def waitForStageReady(self,timeout=5):
+	def waitForStageReady(self,position_log,timeout=10):
 		t0 = time.time()
 		trials = 0
 		while self.tecnai.Stage.Status in (2,3,4):
 			trials += 1
+			if time.time()-t0 > timeout/2.0:
+				time.sleep(timeout/10.0)
 			if time.time()-t0 > timeout:
-				raise RuntimeError('stage is not going to ready status in %d seconds' % (int(timeout)))
+				stage_status = self.tecnai.Stage.Status
+				msg = 'stage is at status %d, not ready in %d seconds' % (int(stage_status),int(timeout))
+				if self.getDebugStage():
+					print msg
+					print position_log
+					# allow it to go through for now.
+					break
+				else:
+					raise RuntimeError('stage is not going to ready status in %d seconds' % (int(timeout)))
 		if self.getDebugStage() and trials > 0:
 			print datetime.datetime.now()
 			donetime = time.time() - t0
@@ -799,7 +836,7 @@ class Tecnai(tem.TEM):
 #		tolerance = 1.0e-4
 #		polltime = 0.01
 
-		self.waitForStageReady()
+		self.waitForStageReady('before setting %s' % (position,))
 		if relative == 'relative':
 			for key in position:
 				position[key] += getattr(self.tecnai.Stage.Position, key.upper())
@@ -809,11 +846,17 @@ class Tecnai(tem.TEM):
 		pos = self.tecnai.Stage.Position
 
 		axes = 0
+		stage_limits = self.getStageLimits()
 		for key, value in position.items():
 			if use_nidaq and key == 'b':
 				deg = value / 3.14159 * 180.0
 				nidaq.setBeta(deg)
 				continue
+			if key in stage_limits.keys() and (value < stage_limits[key][0] or value > stage_limits[key][1]):
+				raise ValueError('position %s beyond stage limit at %.2e' % (key, value))
+			setattr(pos, key.upper(), value)
+			axes |= getattr(self.tem_constants, 'axis' + key.upper())
+
 			setattr(pos, key.upper(), value)
 			axes |= getattr(self.tem_constants, 'axis' + key.upper())
 
@@ -838,7 +881,7 @@ class Tecnai(tem.TEM):
 				print datetime.datetime.now()
 				print 'Other error in going to %s' % (position,)
 			raise RuntimeError('_setStagePosition Unknown error')
-		self.waitForStageReady()
+		self.waitForStageReady('after setting %s' % (position,))
 
 	def setDirectStagePosition(self,value):
 		self._setStagePosition(value)
@@ -1575,8 +1618,8 @@ class Tecnai(tem.TEM):
 		else:
 			try:
 				has_error = self.insertSelectedApertureMechanism(mechanism_name, name)
-			if has_error:
-				raise RuntimeError('Fail to select %s on %s aperture' % (name,mechanism_name))
+				if has_error:
+					raise RuntimeError('Fail to select %s on %s aperture' % (name,mechanism_name))
 			except RuntimeError, e:
 				raise
 		return False
@@ -1631,20 +1674,28 @@ class Krios(Tecnai):
 		if not value:
 			return
 		if self.correctedstage:
-			delta = 2e-6
+			delta = self.getXYZStageBacklashDelta()
+			relax = self.getXYStageRelaxDistance()
 			stagenow = self.getStagePosition()
 			# calculate pre-position
 			prevalue = {}
+			prevalue2 = value.copy()
 			for axis in ('x','y','z'):
 				if axis in value:
 					prevalue[axis] = value[axis] - delta
+			for axis in ('x','y'):
+				if axis in value:
+					prevalue2[axis] = value[axis] + relax
 			# alpha tilt backlash only in one direction
 			alpha_delta_degrees = 3.0
 			if 'a' in value.keys() and self.corrected_alpha_stage:
 					axis = 'a'
 					prevalue[axis] = value[axis] - alpha_delta_degrees*3.14159/180.0
-			if prevalue:
+			if prevalue and delta:
 				self._setStagePosition(prevalue)
+				time.sleep(0.2)
+			if abs(relax) > 1e-9 and prevalue2:
+				self._setStagePosition(prevalue2)
 				time.sleep(0.2)
 		return self._setStagePosition(value)
 
