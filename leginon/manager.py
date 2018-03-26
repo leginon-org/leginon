@@ -608,7 +608,7 @@ class Manager(node.Node):
 			for othernodename in iter_distmap:
 				try:
 					self.distmap[eventclass][othernodename].remove(nodename)
-				except (ValueError, RuntimeError) :
+				except (KeyError, ValueError, RuntimeError) :
 					pass
 
 	def launchNode(self, launcher, target, name, dependencies=[]):
