@@ -603,7 +603,9 @@ class Manager(node.Node):
 				del self.distmap[eventclass][nodename]
 			except KeyError:
 				pass
-			for othernodename in self.distmap[eventclass]:
+			# prevent self.distmap change size error
+			iter_distmap = self.distmap[eventclass].copy()
+			for othernodename in iter_distmap:
 				try:
 					self.distmap[eventclass][othernodename].remove(nodename)
 				except (ValueError, RuntimeError) :
