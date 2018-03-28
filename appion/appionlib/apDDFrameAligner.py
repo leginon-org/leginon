@@ -246,7 +246,7 @@ class MotionCor2_UCSF(DDFrameAligner):
 
 		# binning
 		if self.alignparams['FtBin'] > 1:
-			cmd += ' -FtBin %d ' % self.alignparams['FtBin']
+			cmd += ' -FtBin %s ' % (self.alignparams['FtBin'],)
 
 		# bfactor
 		if self.alignparams['bft'] > 0:

@@ -24,8 +24,6 @@ class DDStackLoop(appionLoop2.AppionLoop):
 		# Integer
 		self.parser.add_option("--stackid", dest="stackid", type="int",
 			help="ID for particle stack to restrict ddstack making(optional)", metavar="INT")
-		self.parser.add_option("--bin", dest="bin", type="int", default=1,
-			help="Binning factor relative to the dd stack (optional)", metavar="INT")
 		self.parser.add_option("--ddstartframe", dest="startframe", type="int", default=0,
 			help="starting frame for summing the frames. The first frame is 0")
 		self.parser.add_option("--ddnframe", dest="nframe", type="int",
@@ -34,6 +32,7 @@ class DDStackLoop(appionLoop2.AppionLoop):
 			help="label to be appended to the presetname, e.g. --label=a gives ed-a as the aligned preset for preset ed", metavar="CHAR")
 		self.parser.remove_option("--uncorrected")
 		self.parser.remove_option("--reprocess")
+		self.addBinOption()
 
 		# Dosefgpu_driftcoor options
 		self.parser.add_option("--alignoffset", dest="fod", type="int", default=2,
@@ -49,6 +48,12 @@ class DDStackLoop(appionLoop2.AppionLoop):
 		self.parser.add_option("--totaldose",dest="totaldose",metavar="float",type=float,
                         help="total dose for the full movie stack in e/A^2. If not specified, will get value from database")
 
+	def addBinOption(self):
+		'''
+		bin is defined as float for MotionCor2 alignment but as integer in all others.
+		'''
+		self.parser.add_option("--bin", dest="bin", type="int", default=1,
+			help="Binning factor relative to the dd stack (optional)", metavar="INT")
 
 	def getUnAlignedImageIds(self,imageids):
 		'''
