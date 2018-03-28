@@ -17,8 +17,11 @@ class SessionCreator(object):
 
 	def setOldSession(self,old_session_name):
 		r = leginondata.SessionData(name=old_session_name).query()
-		if len(r) != 1:
+		if len(r) > 1:
 			raise ValueError('Error: old session not unique')
+			sys.exit(1)
+		if len(r) < 1:
+			raise ValueError('Error: old session not found')
 			sys.exit(1)
 		self.old_session = r[0]
 
@@ -86,6 +89,12 @@ class SessionCreator(object):
 			q['session'] = self.session
 			q.insert()
 
+	def getOldSessionStageZ(self):
+		old_session = self.old_session
+		scope = leginondata.ScopeEMData(session=old_session).query(results=1)[0]
+		stagez = scope['stage position']['z']
+		return stagez
+
 def readMapFile(filepath):
 	f = open(filepath)
 	lines = f.readlines()
@@ -98,7 +107,7 @@ def readMapFile(filepath):
 class Options(object):
 	pass
 
-def start(sessionname, clientlist, gridslot):
+def start(sessionname, clientlist, gridslot,z):
 	if clientlist:
 		clients = ','.join(clientlist)
 	else:
@@ -107,7 +116,9 @@ def start(sessionname, clientlist, gridslot):
 		gridslot = '%d' % gridslot
 	else:
 		gridslot = None
-	option_dict = {'version':None, 'session': sessionname, 'clients': clients,'prevapp':True, 'gridslot':gridslot}
+	if not gridslot:
+		z = None
+	option_dict = {'version':None, 'session': sessionname, 'clients': clients,'prevapp':True, 'gridslot':gridslot, 'stagez':z}
 	# options need to be set as attributes
 	options = Options()
 	for k in option_dict.keys():
@@ -117,19 +128,34 @@ def start(sessionname, clientlist, gridslot):
 
 if __name__ == "__main__":
 	answer = raw_input('Enter autoloader cassette-grid mapping filename=')
-	if not os.path.isfile(answer):
-		print 'Error: file not found'
-		sys.exit(1)
-	comment_map = readMapFile(answer)
-	answer = raw_input('Enter an old session name to base new sessions on=')
+	if answer:
+		if not os.path.isfile(answer):
+			print 'Error: file not found'
+			sys.exit(1)
+		comment_map = readMapFile(answer)
+	else:
+		comment_map = {}
+		ganswer = raw_input('Grid loader slot number for the grid= ')
+		if not ganswer:
+			print 'Error: Invalid grid loader slot number'
+			sys.exit(1)
+		answer = raw_input('Session comment field entry: ')
+		comment_map[int(ganswer)]=answer
+	# old session
+	answer = raw_input('Enter an old session name to base new sessions on: ')
 	if not answer:
 		sys.exit(0)
-
 	app = SessionCreator()
 	app.setOldSession(answer)
+	# z value
+	zanswer = raw_input('Enter Z stage height to return to in um (default: the old session): ') 
+	stagez = app.getOldSessionStageZ()
+	if zanswer == '':
+		zanswer = '%.1f' % (stagez*1e6)
+	# ready to create
 	keys = comment_map.keys()
 	keys.sort()
 	for k in keys:
 		app.setComment(comment_map[k])
 		app.createSession()
-		start(app.session['name'],app.clients,k)
+		start(app.session['name'],app.clients,k,zanswer)

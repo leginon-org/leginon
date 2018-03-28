@@ -13,6 +13,8 @@ parser.add_option('-p', '--prevapp', action='store_true', dest='prevapp',
                   help="restart previous application")
 parser.add_option('-g', '--gridslot', action='store', dest='gridslot',
                   help="gridslot number in the autoloader")
+parser.add_option('-z', '--stagez', action='store', dest='stagez',
+                  help="stage z value in um to restore before making grid atlas")
 
 (options, args) = parser.parse_args()
 

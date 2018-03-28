@@ -106,6 +106,7 @@ class Manager(node.Node):
 		# auto run testing
 		self.autorun = False
 		self.autogridslot = None
+		self.autostagez = None
 
 		# ready nodes, someday 'initialized' nodes
 		self.initializednodescondition = threading.Condition()
@@ -158,7 +159,7 @@ class Manager(node.Node):
 			app.setLauncherAlias(alias, hostname)
 		self.runApplication(app)
 
-	def run(self, session, clients, prevapp=False, gridslot=None):
+	def run(self, session, clients, prevapp=False, gridslot=None, stagez=None):
 		self.session = session
 		self.frame.session = self.session
 
@@ -176,6 +177,8 @@ class Manager(node.Node):
 		if gridslot:
 			self.autorun = True
 			self.autogridslot = gridslot
+		if stagez is not None:
+			self.autostagez = stagez
 		if prevapp:
 			threading.Thread(target=self.launchPreviousApp).start()
 
@@ -919,30 +922,54 @@ class Manager(node.Node):
 		self.publish(d, database=True, dbforce=True)
 		self.onApplicationStarted(name)
 		if self.autorun:
+			self.auto_class_names = ['PresetsManager', 'TEMController','MosaicTargetMaker']
+			self.auto_class_aliases = self.getAutoStartNodeNames(app)
 			self.autoStartApplication()
+
+	def getAutoStartNodeNames(self, app):
+		'''
+		Get node alias for the node classes that auto start will
+		send event to.
+		'''
+		self.auto_class_names = ['PresetsManager', 'TEMController','MosaicTargetMaker']
+		auto_class_aliases = {}
+		for key in self.auto_class_names:
+			auto_class_aliases[key] = None
+			for spec in app.nodespecs:
+				if spec['class string'] == key:
+					auto_class_aliases[key] = spec['alias']
+					break
+		return auto_class_aliases
 
 	def autoStartApplication(self):
 		'''
 		Experimental automatic start of application.
 		'''
-		node_name = 'KPresets Manager'
+		node_name = self.auto_class_aliases['PresetsManager']
+		if node_name is None:
+			return
+		# Need wait for instrument ready with simulator
+		time.sleep(1)
 		ievent = event.ChangePresetEvent()
 		ievent['name'] = 'en'
 		ievent['emtarget'] = None
 		ievent['keep image shift'] = False
 		self.outputEvent(ievent, node_name, wait=True, timeout=None)
 		# load grid
-		node_name = 'TEM Remote'
-		ievent = event.LoadAutoLoaderGridEvent()
-		ievent['slot name'] = self.autogridslot
-		self.outputEvent(ievent, node_name, wait=True, timeout=None)
+		node_name = self.auto_class_aliases['TEMController']
+		if node_name is not None:
+			ievent = event.LoadAutoLoaderGridEvent()
+			ievent['slot name'] = self.autogridslot
+			self.outputEvent(ievent, node_name, wait=True, timeout=None)
 		# load grid
-		node_name = 'KGrid Targeting'
-		ievent = event.MakeTargetListEvent()
-		# Set grid to None for now since we don't have a system for
-		# passing emgrid info, yet.
-		ievent['grid'] = None
-		self.outputEvent(ievent, node_name, wait=False, timeout=None)
+		node_name = self.auto_class_aliases['MosaicTargetMaker']
+		if node_name is not None:
+			ievent = event.MakeTargetListEvent()
+			# Set grid to None for now since we don't have a system for
+			# passing emgrid info, yet.
+			ievent['grid'] = None
+			ievent['stagez'] = self.autostagez
+			self.outputEvent(ievent, node_name, wait=False, timeout=None)
 
 	def killApplication(self):
 		self.cancelTimeoutTimer()
