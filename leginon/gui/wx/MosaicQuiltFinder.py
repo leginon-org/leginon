@@ -34,14 +34,10 @@ class Panel(leginon.gui.wx.ClickTargetFinder.Panel):
 		self.imagepanel.selectiontool.setDisplayed('Image', True)
 		self.addJAHCFinderTesting()
 		self.imagepanel.addTargetTool('acquisition', wx.GREEN, target=True, settings=True, numbers=True,exp=True)
+		self.imagepanel.addTargetTool('focus', wx.BLUE, target=True, settings=False)
 		self.imagepanel.selectiontool.setDisplayed('acquisition', True)
-		self.imagepanel.addTargetTool('focus', wx.BLUE, target=True, settings=True)
-		self.imagepanel.selectiontool.setDisplayed('focus', True)
-		self.imagepanel.selectiontool.setEnableSettings('acquisition', True)
 		self.imagepanel.selectiontool.setDisplayed('focus', False)
-		self.imagepanel.selectiontool.setEnableSettings('focus', False)
-		self.imagepanel.addTargetTool('preview', wx.Colour(255, 128, 255), target=True)
-		self.imagepanel.selectiontool.setDisplayed('preview', True)
+		self.imagepanel.selectiontool.setEnableSettings('acquisition', True)
 		self.imagepanel.addTargetTool('done', wx.Colour(218, 0, 0), numbers=True)
 		self.imagepanel.selectiontool.setDisplayed('done', True)
 		self.imagepanel.addTargetTool('position', wx.Colour(218, 165, 32), shape='x')
@@ -303,7 +299,11 @@ class OriginalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 
 	def onTestButton(self, evt):
 		self.dialog.setNodeSettings()
-		self.node.setOriginal(int(self.ctile.GetStringSelection()))
+		try:
+			index = int(self.ctile.GetStringSelection())
+		except ValueError:
+			index = 0
+		self.node.setOriginal(index)
 		self.panel.imagepanel.showTypeToolDisplays(['Original'])
 
 class LPFSettingsDialog(leginon.gui.wx.Settings.Dialog):
