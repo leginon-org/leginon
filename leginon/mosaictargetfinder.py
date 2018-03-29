@@ -561,7 +561,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 			self.createMosaicImage()
 
 	def targetToMosaic(self, tile, targetdata):
-		scalepos = self._targetToMosaic(tile, target, self.mosaic)
+		scalepos = self._targetToMosaic(tile, targetdata, self.mosaic)
 		return scalepos
 
 	def _targetToMosaic(self, tile, targetdata, mosaic_instance):
