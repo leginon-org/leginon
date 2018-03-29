@@ -34,7 +34,7 @@ class Panel(leginon.gui.wx.ClickTargetFinder.Panel):
 		self.imagepanel.selectiontool.setDisplayed('Image', True)
 		self.addJAHCFinderTesting()
 		self.imagepanel.addTargetTool('acquisition', wx.GREEN, target=True, settings=True, numbers=True,exp=True)
-		self.imagepanel.addTargetTool('focus', wx.BLUE, target=True, settings=False)
+		self.imagepanel.addTargetTool('focus', wx.BLUE, target=True)
 		self.imagepanel.selectiontool.setDisplayed('acquisition', True)
 		self.imagepanel.selectiontool.setDisplayed('focus', False)
 		self.imagepanel.selectiontool.setEnableSettings('acquisition', True)

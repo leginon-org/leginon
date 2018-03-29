@@ -32,6 +32,7 @@ class MosaicQuiltFinder(mosaictargetfinder.MosaicClickTargetFinder):
 	})
 
 	eventoutputs = mosaictargetfinder.MosaicClickTargetFinder.eventoutputs + [event.MosaicDoneEvent]
+	targetnames = ['focus', 'acquisition']
 
 	def __init__(self, id, session, managerlocation, **kwargs):
 		self.mosaicselectionmapping = {}
