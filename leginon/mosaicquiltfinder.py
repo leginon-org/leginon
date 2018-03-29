@@ -50,7 +50,7 @@ class MosaicQuiltFinder(mosaictargetfinder.MosaicClickTargetFinder):
 		self.current_jahc_imageid = None
 		self.test_jahc_imageid = None
 
-	def mosaicToTarget(self, typename, row, col):
+	def mosaicToTarget(self, typename, row, col, **kwargs):
 		imagedata, drow, dcol = self._mosaicToTarget(row, col)
 		### create a new target list if we don't have one already
 		'''
@@ -60,7 +60,7 @@ class MosaicQuiltFinder(mosaictargetfinder.MosaicClickTargetFinder):
 		'''
 		# publish as targets on most recent version of image to preserve adjusted z
 		recent_imagedata = self.researchImages(list=imagedata['list'],target=imagedata['target'])[-1]
-		targetdata = self.newTargetForTile(recent_imagedata, drow, dcol, type=typename, list=self.targetlist, last_focused=recent_imagedata['target']['list'])
+		targetdata = self.newTargetForTile(recent_imagedata, drow, dcol, type=typename, list=self.targetlist, last_focused=recent_imagedata['target']['list'],**kwargs)
 		## can we do dbforce here?  it might speed it up
 		self.publish(targetdata, database=True)
 		return targetdata

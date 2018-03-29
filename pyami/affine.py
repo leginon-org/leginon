@@ -97,3 +97,27 @@ def transform(image2, libcvMatrix, image1shape):
 	offset = tuple(matrix[:2,2])
 	output = scipy.ndimage.affine_transform(image2, mat, offset=offset, output_shape=image1shape)
 	return output
+
+def solveAffineMatrixFromImageTargets(from_xys,to_xys):
+	'''
+	Least square fit of 3x3 Affine transformation matrix. Inputs are matching list of (col,row) tuples.
+	'''
+	from_coords = numpy.matrix(from_xys)
+	to_coords = numpy.matrix(to_xys)
+	pad = lambda x:numpy.hstack([x,numpy.ones((x.shape[0],1))])
+	from_matrix = pad(from_coords)
+	to_matrix = pad(to_coords)
+	A, residual, rank, s = numpy.linalg.lstsq(from_matrix,to_matrix)
+	return A, residual
+
+def transformImageTargets(A,from_xys):
+	'''
+	Affine transform of a list of targets.
+	A: 3x3 Affine matrix for 2D array
+	from_xys: a list of (col,row) tuples.
+	'''
+	from_coords = numpy.matrix(from_xys)
+	pad = lambda x:numpy.hstack([x,numpy.ones((x.shape[0],1))])
+	from_matrix = pad(from_coords)
+	to_matrix = from_matrix*A
+	return map((lambda x: tuple(x)),to_matrix.tolist())

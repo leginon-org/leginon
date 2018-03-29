@@ -14,6 +14,7 @@
 import wx
 from leginon.gui.wx.Choice import Choice
 from leginon.gui.wx.Entry import IntEntry, FloatEntry
+import leginon.gui.wx.MosaicAligner
 import leginon.gui.wx.Settings
 import leginon.gui.wx.TargetFinder
 import leginon.gui.wx.ImagePanelTools
@@ -46,7 +47,9 @@ class Panel(leginon.gui.wx.ClickTargetFinder.Panel):
 
 	def addOtherTools(self):
 		self.toolbar.InsertSeparator(10)
-		self.toolbar.InsertTool(11, leginon.gui.wx.ToolBar.ID_FIND_SQUARES,
+		self.toolbar.InsertTool(11, leginon.gui.wx.ToolBar.ID_ALIGN,
+			'alignpresets', shortHelpString='Transfer targets')
+		self.toolbar.InsertTool(12, leginon.gui.wx.ToolBar.ID_FIND_SQUARES,
 			'squarefinder',shortHelpString='Find Squares')
 		self.imagepanel.addTargetTool('Blobs', wx.Colour(0, 255, 255), shape='o')
 		self.imagepanel.selectiontool.setDisplayed('Blobs', True)
@@ -70,6 +73,8 @@ class Panel(leginon.gui.wx.ClickTargetFinder.Panel):
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SETTINGS, False)
 
 	def addOtherBindings(self):
+		self.toolbar.Bind(wx.EVT_TOOL, self.onTransferTargetsButton,
+											id=leginon.gui.wx.ToolBar.ID_ALIGN)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onFindSquaresButton,
 											id=leginon.gui.wx.ToolBar.ID_FIND_SQUARES)
 
@@ -121,8 +126,15 @@ class Panel(leginon.gui.wx.ClickTargetFinder.Panel):
 			dialog.ShowModal()
 			dialog.Destroy()
 
+	def onTransferTargetsButton(self, evt):
+		if not self.node.getMosaicName():
+			threading.Thread(target=self.node.logger.error, args=['Need to load mosaic to use this.']).start()
+			return
+		dialog = leginon.gui.wx.MosaicAligner.AlignDialog(self, self.node)
+		dialog.ShowModal()
+		dialog.Destroy()
+
 	def onFindSquaresButton(self, evt):
-		#self.node.findSquares()
 		threading.Thread(target=self.node.findSquares).start()
 
 class TilesDialog(wx.Dialog):
