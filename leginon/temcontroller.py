@@ -397,9 +397,19 @@ class TEMController(node.Node):
 		names = self.getApertureMechanisms()
 		name_states = {}
 		for name in names:
-			state = self.instrument.tem.getApertureSelection(name)
-			if state is None or state=='' or state not in self.instrument.tem.getApertureSelections(name):
+			try:
+				state = self.instrument.tem.getApertureSelection(name)
+			except ValueError, e:
+				self.logger.warning(e)
 				state = 'unknown'
+			except RuntimeError, e:
+				self.logger.error(e)
+				state = 'unknown'
+			try:
+				if state is None or state=='' or state not in self.instrument.tem.getApertureSelections(name):
+					state = 'unknown'
+			except:
+					state = 'unknown'
 			name_states[name] = state
 		return name_states
 

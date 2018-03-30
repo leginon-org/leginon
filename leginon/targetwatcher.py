@@ -223,7 +223,16 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		# define it now regardless.
 		original_position = self.instrument.tem.getStagePosition()
 		self.targetlist_reset_tilt = original_position['a']
-		self.obj_aperture_reset_value = self.instrument.tem.getApertureSelection('objective')
+		if self.settings['retract obj aperture']:
+			# get aperture selection only if need to avoid error in accessing info.
+			try:
+				self.obj_aperture_reset_value = self.instrument.tem.getApertureSelection('objective')
+			except Exception, e:
+				self.logger.error(e.message)
+				self.logger.error('Please retract objective aperture manually and continue')
+				self.player.pause()
+				self.obj_aperture_reset_value = 'unknown'
+			
 		if good_targets:
 			# Things to do before reject targets are published.
 			# pause and abort check before reference and rejected targets are sent away
@@ -315,6 +324,8 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 
 	def isNeedRetractObjectiveAperture(self,good_targets):
 		want_to = good_targets and self.settings['retract obj aperture']
+		if not want_to:
+			return False
 		can_do = self.obj_aperture_reset_value and self.obj_aperture_reset_value not in ('unknown','open')
 		if want_to and not can_do:
 			if self.obj_aperture_reset_value != 'open':

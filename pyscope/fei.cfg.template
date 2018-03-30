@@ -14,9 +14,10 @@ FORCE_NORMALIZE_ALL_LENS_AFTER_MAG_SETTING = False
 ROTATION_CENTER_SCALE = 1.0
 
 [aperture]
-#disable control of auto apertures if not working or not available
-USE_AUTO_APT = False
-CLA_SIZES = 0, 150e-6, 70e-6, 50e-6, 20e-6
+# Disable control of auto apertures if not working or not available
+# not all versions of microscope software allows auto aperture control
+# from scripting level.
+USE_AUTO_APERTURE = False
 
 [camera]
 # Falcon protector causes certain delays

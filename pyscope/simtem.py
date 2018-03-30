@@ -460,6 +460,9 @@ class SimTEM(tem.TEM):
 		self.aperture_selection[aperture_mechanism] = name
 		return False
 
+	def retractApertureMechanism(self, aperture_mechanism):
+		return setApertureSelection(aperture_mechanism, 'open')
+
 class SimTEM300(SimTEM):
 	name = 'SimTEM300'
 	def __init__(self):

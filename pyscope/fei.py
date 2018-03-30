@@ -133,6 +133,9 @@ class Tecnai(tem.TEM):
 	def getDebugStage(self):
 		return self.getFeiConfig('debug','stage')
 
+	def getUseAutoAperture(self):
+		return self.getFeiConfig('aperture','use_auto_aperture')
+
 	def getHasFalconProtector(self):
 		return self.getFeiConfig('camera','has_falcon_protector')
 
@@ -1700,7 +1703,7 @@ class Krios(Tecnai):
 		return self._setStagePosition(value)
 
 	def hasAutoAperture(self):
-		return True
+		return self.getUseAutoAperture()
 
 class Halo(Tecnai):
 	'''
@@ -1732,12 +1735,12 @@ class Arctica(Tecnai):
 	use_normalization = True
 
 	def hasAutoAperture(self):
-		return True
+		return self.getUseAutoAperture()
 
 class Talos(Tecnai):
 	name = 'Talos'
 	use_normalization = True
 
 	def hasAutoAperture(self):
-		return True
+		return self.getUseAutoAperture()
 
