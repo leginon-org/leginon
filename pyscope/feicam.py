@@ -225,7 +225,7 @@ exposure is the exposure time in seconds
 		exposure = self.exposure/1000.0
 
 		# send it to camera
-		self.setConfig(binning=binning, readout=readout_key, exposure=exposure)
+		self.setConfig(readout=readout_key, exposure=exposure)
 
 
 	def custom_setup(self):
@@ -335,11 +335,11 @@ class Falcon(FeiCam):
 		self.readout_delay_ms = 0
 		self.align_frames = False
 		self.align_filter = 'None'
-		#self.initFrameConfig()
+		self.initFrameConfig()
 
 	def initFrameConfig(self):
 		self.frameconfig = falconframe.FalconFrameRangeListMaker(False)
-		ram_frame_dir = self.camera_settings.PathToImageStorage #read only
+		raw_frame_dir = self.camera_settings.PathToImageStorage #read only
 		self.frameconfig.setBaseFramePath(raw_frame_dir)
 
 	def setInserted(self, value):
