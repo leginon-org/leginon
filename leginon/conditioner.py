@@ -221,10 +221,10 @@ class AutoNitrogenFiller(Conditioner):
 	defaultsettings = dict(Conditioner.defaultsettings)
 	defaultsettings.update({
 		'autofiller mode':'both cold',
-		'column fill start': 15,
-		'column fill end': 85,
-		'loader fill start': 15,
-		'loader fill end': 85,
+		'column fill start': 45,
+		'column fill end': 70,
+		'loader fill start': 17,
+		'loader fill end': 70,
 	})
 	eventinputs = node.Node.eventinputs + [event.FixConditionEvent]
 
