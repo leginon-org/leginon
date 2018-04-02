@@ -276,6 +276,10 @@ class AutoNitrogenFiller(Conditioner):
 		return has_auto_filler
 
 	def refillRefrigerant(self):
+		isbusy = self.instrument.tem.isAutoFillerBusy()
+		if isbusy:
+			self.logger.error('Autofiller is busy despite previous check. Abort filling')
+			return
 		# Do refill and dark current reference update at the same time.
 		self.logger.info('Start refilling autofiller thread')
 		time.sleep(0.1)
@@ -358,7 +362,8 @@ class AutoNitrogenFiller(Conditioner):
 			self.logger.info('filler is idle')
 		while isbusy is True:
 			isbusy = self.instrument.tem.isAutoFillerBusy()
-			time.sleep(10)
+			self.logger.info('filler is busy. check again in 1 min.')
+			time.sleep(60)
 		return isbusy
 
 	def getRefrigerantLevels(self):

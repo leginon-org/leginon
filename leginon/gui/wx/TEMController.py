@@ -281,7 +281,7 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 	def getApertureSelectionNames(self):
 		# This needs to be done after self.node is set.
 		self.aperture_names = self.node.getApertureNames()
-		# Use a different list to include default before knowing which grid is loaded.
+		# Use a different list to include default before knowing which state it is in.
 		self.aperture_selection_names = list(self.aperture_names)
 
 	def insertApertureSelector(self,position):
@@ -296,6 +296,8 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 													'instrumentset',
 												shortHelpString='Send objective aperture selection to scope')
 		self.toolbar.InsertControl(position,self.aperture_choices)
+		if not self.aperture_selection_names:
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, False)
 		return
 
 	def addUpdateApertureSelectorEvent(self):
@@ -314,6 +316,7 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		current = evt.current
 		self.setApertureChoices(names)
 		self.setApertureChoice(current)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, bool(names))
 
 	def setApertureChoices(self,names):
 		# This part is needed for wxpython 2.8.  It can be replaced by Set function in 3.0

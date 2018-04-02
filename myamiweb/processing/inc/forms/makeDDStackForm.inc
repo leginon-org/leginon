@@ -40,6 +40,12 @@ class MakeDDStackForm extends BasicLoopForm
 				
 		$params->addParam( "bin", $bin, "binning" );
 		$params->addParam( "refimgid", $refimgid, "refimgid" );
+		$this->addValidations();
+	}
+
+	public function addValidations()
+	{
+		$params = $this->getFormParams();
 		// Validations
 		$params->addValidation( "bin", "num" );
 		$params->addValidation( "refimgid", "num" );

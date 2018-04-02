@@ -287,6 +287,9 @@ class TEMController(node.Node):
 		return None
 
 	def unloadGrid(self):
+		'''
+		Unoad a grid to the first empty slot.
+		'''
 		if not self.instrument.tem.hasGridLoader():
 			self.logger.error('TEM has no auto grid loader')
 			return
@@ -312,6 +315,9 @@ class TEMController(node.Node):
 		self.panel.setTEMParamDone()
 
 	def loadGrid(self, slot_name):
+		'''
+		Load a grid by slot name string.
+		'''
 		if slot_name not in self.grid_slot_names:
 			self.logger.error('Selected slot is not valid for this project')
 			return
@@ -348,6 +354,9 @@ class TEMController(node.Node):
 		return self._loadGrid(slot_number)
 
 	def _loadGrid(self, slot_number):
+		'''
+		Load grid by slot number.  All validation must already be handled.
+		'''
 		# Loading occupied grid.
 		self.logger.info('Loading grid from slot %d' % (slot_number,))
 		is_success = False
@@ -402,9 +411,19 @@ class TEMController(node.Node):
 		names = self.getApertureMechanisms()
 		name_states = {}
 		for name in names:
-			state = self.instrument.tem.getApertureSelection(name)
-			if state is None or state=='' or state not in self.instrument.tem.getApertureSelections(name):
+			try:
+				state = self.instrument.tem.getApertureSelection(name)
+			except ValueError, e:
+				self.logger.warning(e)
 				state = 'unknown'
+			except RuntimeError, e:
+				self.logger.error(e)
+				state = 'unknown'
+			try:
+				if state is None or state=='' or state not in self.instrument.tem.getApertureSelections(name):
+					state = 'unknown'
+			except:
+					state = 'unknown'
 			name_states[name] = state
 		return name_states
 
