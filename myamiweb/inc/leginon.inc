@@ -2774,6 +2774,30 @@ class leginondata {
 		return $this->mysql->getSQLResult($q);
 	}
 
+	function getZeroLossIceThicknessfromImage($sessionId,$imgId) {
+ 		$q="SELECT "
+		. " z.thickness "
+		. "FROM "
+		. "AcquisitionImageData AS a INNER JOIN  SessionData AS s "
+		. "ON a.`REF|SessionData|session` = s.DEF_id "
+		. "INNER JOIN ZeroLossIceThicknessData AS z ON z.`REF|AcquisitionImageData|image` = a.DEF_id "
+		. "WHERE "
+		. "s.DEF_id = $sessionId  AND a.DEF_id = $imgId";
+		return $this->mysql->getSQLResult($q);
+	}
+
+	function getObjIceThicknessfromImage($sessionId,$imgId) {
+ 		$q="SELECT "
+		. "z.thickness "
+		. "FROM "
+		. "AcquisitionImageData AS a INNER JOIN  SessionData AS s "
+		. "ON a.`REF|SessionData|session` = s.DEF_id "
+		. "INNER JOIN ObjIceThicknessData AS z ON z.`REF|AcquisitionImageData|image` = a.DEF_id "
+		. "WHERE "
+		. "s.DEF_id = $sessionId  AND a.DEF_id = $imgId";
+		return $this->mysql->getSQLResult($q);
+	}
+
 
 	function getStats($field, $sub_q) {
 			$q="select "
