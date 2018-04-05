@@ -98,7 +98,7 @@ class AlignDialog(leginon.gui.wx.Dialog.Dialog):
 	def createButtons(self):
 		self.bload = wx.Button(self, -1, 'Load')
 		self.bload.Enable(True)
-		self.bstart = wx.Button(self, -1, 'Start')
+		self.bstart = wx.Button(self, -1, 'Transfer Targets')
 		self.baccept = wx.Button(self, -1, 'Accept')
 
 		szbutton = wx.GridBagSizer(5, 5)
@@ -204,7 +204,8 @@ if __name__ == '__main__':
 			return [(100,100),(300,300),(100,300)]
 		def saveAlignerNewTargets(self,targets):
 			print 'transformed target c,r: ', map((lambda t: (t.x,t.y)),targets)
-
+		def displayDatabaseTargets(self):
+			pass
 		def readImage(self,filepath):
 			return numpil.read(filepath)
 
