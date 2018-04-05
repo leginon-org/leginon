@@ -635,12 +635,7 @@
 		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" default="CURRENT_TIMESTAMP" />
 		<field name="name" type="text" />
 		<field name="hostname" type="text" />
-		<field name="type" type="text" />
-		<field name="description" type="text" />
-		<field name="scope" type="text" />
-		<field name="camera" type="text" />
-		<field name="camera size" type="int(11)" />
-		<field name="camera pixel size" type="double" />
+		<field name="description" type="text" null="NULL" />
 		<field name="cs" type="double" />
 		<field name="pixelmax" type="int(20)" />
 		<field name="hidden" type="tinyint(1)" />
