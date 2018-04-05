@@ -45,7 +45,7 @@ class AlignDialog(leginon.gui.wx.Dialog.Dialog):
 		szmain.Add(szimages, (0, 0), (1, 1), wx.EXPAND)
 		szmain.Add(szbutton, (1, 0), (1, 1), wx.ALL, border=5)
 
-		szmain.AddGrowableRow(1)
+		szmain.AddGrowableRow(0)
 		szmain.AddGrowableCol(0)
 
 		self.SetSizerAndFit(szmain)
@@ -172,6 +172,7 @@ class AlignDialog(leginon.gui.wx.Dialog.Dialog):
 	def onAccept(self, evt):
 		targets = self.targets['new'].getTargets('target')
 		self.node.saveAlignerNewTargets(targets)
+		self.node.displayDatabaseTargets()
 		self.onClose(evt)
 
 	def onClose(self, evt):
