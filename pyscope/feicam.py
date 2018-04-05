@@ -156,25 +156,23 @@ class FeiCam(ccdcamera.CCDCamera):
 
 	def setConfig(self, **kwargs):
 		'''
-range is the sequence:  xmin, ymin, xmax, ymax
-binning is an integer binning factor
-exposure is the exposure time in seconds
+		Set commera settings.
+		readout is an index 0:Full,1:Half, 2:Quarter.
+		Binning is calculated from that.
+		exposure is the exposure time in seconds
+
 		'''
 		try:
 			if 'readout' in kwargs:
 				readout = kwargs['readout']
+				print 'readout area index', readout
 				self.camera_settings.ReadoutArea = readout
-			if 'binning' in kwargs:
-				binning = kwargs['binning']
-				# assum x and y binnings are the same
-				self.camera_settings.Binning.Width = binning['x']
-				self.camera_settings.Binning.Height = binning['y']
 			if 'exposure' in kwargs:
 				exposure = kwargs['exposure']
 				self.camera_settings.ExposureTime = exposure
 		except:
-			raise
 			print 'could not set', kwargs
+			raise
 
 	def getConfig(self, param):
 		if param == 'readout':
@@ -339,8 +337,14 @@ class Falcon(FeiCam):
 
 	def initFrameConfig(self):
 		self.frameconfig = falconframe.FalconFrameRangeListMaker(False)
-		raw_frame_dir = self.camera_settings.PathToImageStorage #read only
-		self.frameconfig.setBaseFramePath(raw_frame_dir)
+		falcon_image_storage = self.camera_settings.PathToImageStorage #read only
+		print 'Falcon Image Storage Server Path is ', falcon_image_storage
+		sub_frame_dir = self.getFeiConfig('camera','frame_subpath')
+		try:
+			self.frameconfig.setFeiImageStoragePath(falcon_image_storage)
+			self.frameconfig.setBaseFramePath(sub_frame_dir)
+		except:
+			raise
 
 	def setInserted(self, value):
 		super(Falcon,self).setInserted(value)
@@ -392,6 +396,7 @@ class Falcon(FeiCam):
 
 	def getFrameTime(self):
 		# TO DO: Find out if need fractional millisecond.
+		# custom_setup may modify this if bins are not even.
 		ms = self.dosefrac_frame_time * 1000.0
 		return ms
 
@@ -407,8 +412,11 @@ class Falcon(FeiCam):
 		if self.save_frames:
 			# Use all available frames
 			rangelist = self.frameconfig.makeRangeListFromNumberOfBaseFramesAndFrameTime(max_nframes,frame_time_second)
-			self.frames_name = self.frameconfig.getFrameDirName()
-			self.camera_settings.SubPathPattern = self.frames_name
+			if rangelist:
+				# modify frame time in case of uneven bins
+				self.dosefrac_frame_time = movie_exposure_second / len(rangelist)
+			self.frames_pattern = self.frameconfig.getSubPathFramePattern()
+			self.camera_settings.SubPathPattern = self.frames_pattern
 		else:
 			rangelist = []
 			self.frames_name = None

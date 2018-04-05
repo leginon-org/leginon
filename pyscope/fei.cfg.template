@@ -22,6 +22,8 @@ USE_AUTO_APERTURE = False
 [camera]
 # Falcon protector causes certain delays
 HAS_FALCON_PROTECTOR = True
+# Falcon III subpath. Must exists and writable
+FRAME_SUBPATH = leginonframes
 
 [phase plate]
 # Location of next phase plate AutoIt executable

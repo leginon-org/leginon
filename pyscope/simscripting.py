@@ -103,7 +103,7 @@ class CameraSettings(object):
 	def __init__(self):
 		self.ExposureTime = 1.0
 		self.Binning = Binning()		
-		self.PathToImageStorage = ''
+		self.PathToImageStorage = '/Users/acheng/testdata'
 		self.SubPathPattern = 'frames'
 		self.ReadoutArea = 0
 		self.DoseFractionsDefinition = DoseFractionsDefinition()
@@ -111,7 +111,9 @@ class CameraSettings(object):
 		self.base_time = 0.025
 
 	def CalculateNumberOfFrames(self):
-		return int(math.floor(self.ExposureTime / self.base_time))
+		print 'calculate',self.ExposureTime, self.base_time
+		# rounding error. int(0.6/0.025) = 23. Multiply by 1000 resolves that.
+		return int(self.ExposureTime*1000 / (self.base_time*1000))
 
 class Camera(object):
 	def __init__(self):
