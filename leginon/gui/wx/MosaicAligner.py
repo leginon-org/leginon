@@ -171,8 +171,7 @@ class AlignDialog(leginon.gui.wx.Dialog.Dialog):
 
 	def onAccept(self, evt):
 		targets = self.targets['new'].getTargets('target')
-		self.node.saveAlignerNewTargets(targets)
-		self.node.displayDatabaseTargets()
+		self.node.acceptResults(targets)
 		self.onClose(evt)
 
 	def onClose(self, evt):
@@ -202,10 +201,8 @@ if __name__ == '__main__':
 			return self.getAlignerNewMosaicImage()
 		def getAlignerOldTargets(self):
 			return [(100,100),(300,300),(100,300)]
-		def saveAlignerNewTargets(self,targets):
+		def acceptResults(self,targets):
 			print 'transformed target c,r: ', map((lambda t: (t.x,t.y)),targets)
-		def displayDatabaseTargets(self):
-			pass
 		def readImage(self,filepath):
 			return numpil.read(filepath)
 
@@ -228,7 +225,7 @@ if __name__ == '__main__':
 
 	class App2(wx.App):
 		def OnInit(self):
-			frame = wx.Frame(None, -1, 'Presets Test')
+			frame = wx.Frame(None, -1, 'Align Mosaic Test')
 			node = Node()
 			dialog = AlignDialog(frame, node)
 			dialog.Show()

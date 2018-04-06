@@ -2661,6 +2661,16 @@ class TransformMatrixData(InSessionData):
 		)
 	typemap = classmethod(typemap)
 
+class MosaicTransformMatrixData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('imagelist1', ImageListData),
+			('imagelist2', ImageListData),
+			('matrix', sinedon.newdict.DatabaseArrayType),
+			('move type', str),
+		)
+	typemap = classmethod(typemap)
+
 class AlignmentTargetList(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (

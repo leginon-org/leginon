@@ -90,6 +90,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.mosaic = mosaic.EMMosaic(self.calclients[parameter])
 		self.oldmosaic = mosaic.EMMosaic(self.calclients[parameter])
 		self.mosaicimagelist = None
+		self.oldmosaicimagelist = None
 		self.mosaicimage = None
 		self.mosaicname = None
 		self.mosaicimagescale = None
@@ -680,7 +681,9 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.oldtargetmap = {}
 		self.oldtilemap = {}
 		self.oldmosaic.clear()
+		self.Affine_matrix = None
 		tile_imagelist = self.oldmosaicselections[mosaicname]
+		self.oldmosaicimagelist = tile_imagelist
 		# specify session based on tile_imagelist
 		tiles = self._researchMosaicTileData(tile_imagelist, tile_imagelist['session'])
 		for i, tile in enumerate(tiles):
@@ -714,8 +717,10 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		points1 = map((lambda t: (t.x,t.y)),targets1)
 		points2 = map((lambda t: (t.x,t.y)),targets2)
 		if len(points1) < 3:
-			return numpy.matrix([(1,0,0),(0,1,0),(0,0,1)]),0.0
-		A, residule = affine.solveAffineMatrixFromImageTargets(points1,points2)
+			A = numpy.matrix([(1,0,0),(0,1,0),(0,0,1)])
+			residule = 0.0
+		else:
+			A, residule = affine.solveAffineMatrixFromImageTargets(points1,points2)
 		self.Affine_matrix = A
 		return A, residule
 
@@ -741,7 +746,20 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 			# by using the returned new target, it makes sure the transaction is completed.
 			newtarget = self.mosaicToTarget('acquisition', row, col, status='new')
 			self.mosaicToTarget('acquisition', row, col, number=newtarget['number'],status='done')
-		
+
+	def saveTransform(self):
+		q = leginondata.MosaicTransformMatrixData(session=self.session)
+		q['imagelist1'] = self.oldmosaicimagelist
+		q['imagelist2'] = self.mosaicimagelist
+		q['move type'] = self.settings['calibration parameter']
+		q['matrix'] = self.Affine_matrix
+		q.insert()
+	
+	def acceptResults(self, targets):
+		self.saveAlignerNewTargets(targets)
+		self.saveTransform()
+		self.displayDatabaseTargets()
+
 	#=============Target Finding==============
 	def storeSquareFinderPrefs(self):
 		prefs = leginondata.SquareFinderPrefsData()
