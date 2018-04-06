@@ -5,7 +5,7 @@ import simscripting
 import falconframe
 from pyscope import moduleconfig
 
-SIMULATION = False
+SIMULATION = True
 class FEIAdvScriptingConnection(object):
 	instr = None
 	csa = None
@@ -60,6 +60,7 @@ class FeiCam(ccdcamera.CCDCamera):
 		self.save_frames = False
 		self._connectToFEIAdvScripting()
 		self.setReadoutLimits()
+		self.setCameraBinnings()
 		self.initSettings()
 
 	def __getattr__(self, name):
@@ -109,6 +110,21 @@ class FeiCam(ccdcamera.CCDCamera):
 	def getDimension(self):
 		return self.dimension
 
+	def setCameraBinnings(self):
+		'''
+		Read from camera capabilities the supported binnings and
+		set self.binning_limits and the self.binning_limit_objs
+		'''
+		self.binning_limit_objs= self.capabilities.SupportedBinnings
+		count = self.binning_limit_objs.count
+		binning_limits = []
+		for index in range(count):
+			binning_limits.append(self.binning_limit_objs[index].Width)
+		self.binning_limits = binning_limits
+
+	def getCameraBinnings(self):
+		return self.binning_limits
+
 	def setBinning(self, value):
 		self.binning = value
 
@@ -153,6 +169,7 @@ class FeiCam(ccdcamera.CCDCamera):
 		# set attributes
 		self.camera = this_camera
 		self.camera_settings = self.csa.CameraSettings
+		self.capabilities = self.camera_settings.Capabilities
 
 	def setConfig(self, **kwargs):
 		'''
@@ -170,6 +187,11 @@ class FeiCam(ccdcamera.CCDCamera):
 			if 'exposure' in kwargs:
 				exposure = kwargs['exposure']
 				self.camera_settings.ExposureTime = exposure
+			if 'binning' in kwargs:
+				binnings = kwargs['binning']
+				# binning can only be set by supported binning objects
+				b_index = self.binning_limits.index(binning['x'])
+				self.camera_settings.Binning = self.binning_limit_objs[b_index]
 		except:
 			print 'could not set', kwargs
 			raise
@@ -223,7 +245,7 @@ class FeiCam(ccdcamera.CCDCamera):
 		exposure = self.exposure/1000.0
 
 		# send it to camera
-		self.setConfig(readout=readout_key, exposure=exposure)
+		self.setConfig(binning= binning, readout=readout_key, exposure=exposure)
 
 
 	def custom_setup(self):
@@ -259,8 +281,6 @@ class FeiCam(ccdcamera.CCDCamera):
 			self.im = self.csa.Acquire()
 			t1 = time.time()
 			self.exposure_timestamp = (t1 + t0) / 2.0
-			# TO DO: Not sure what to ask for. Not explained in doc.
-			# Either just Array or AsSafeArray. Need to try on the actual camera.
 			arr = self.im.AsSafeArray
 		except:
 			raise
@@ -272,7 +292,7 @@ class FeiCam(ccdcamera.CCDCamera):
 		self.image_metadata = self.im.MetaData
 		rk = self.getConfig('readout')
 		try:
-			arr.shape = (self.limit_dim[rk]['y'],self.limit_dim[rk]['x'])
+			arr.reshape((self.limit_dim[rk]['y'],self.limit_dim[rk]['x']))
 			#arr = numpy.flipud(arr)
 		except AttributeError, e:
 			print 'comtypes did not return an numpy 2D array, but %s' % (type(arr))
