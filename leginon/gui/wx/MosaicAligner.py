@@ -23,6 +23,7 @@ class AlignDialog(leginon.gui.wx.Dialog.Dialog):
 		self.parent = parent
 		self.targets = {}
 		self.choices = {}
+		self.old_session_choices = {}
 
 
 		szmain = wx.GridBagSizer(2, 2)
@@ -35,11 +36,10 @@ class AlignDialog(leginon.gui.wx.Dialog.Dialog):
 			sz = self.createTargetPanelSizer(key)
 			szimages.Add(sz, 1, wx.EXPAND)
 		
+		szbutton = self.createButtons()
+
 		atlas_names = self.node.getAlignerOldMosaicNames()
 		self.setOldMosaicChoices(atlas_names)
-
-
-		szbutton = self.createButtons()
 
 		szmain = wx.GridBagSizer(5,5)
 		szmain.Add(szimages, (0, 0), (1, 1), wx.EXPAND)
@@ -58,6 +58,7 @@ class AlignDialog(leginon.gui.wx.Dialog.Dialog):
 		self.Bind(wx.EVT_BUTTON, self.onStart, self.bstart)
 		self.Bind(leginon.gui.wx.Events.EVT_SET_IMAGE, self.onSetImage)
 		self.Bind(wx.EVT_BUTTON, self.onAccept, self.baccept)
+		self.Bind(wx.EVT_CHOICE, self.onOldSessionSelected, self.oldsession_selector)
 		self.Bind(wx.EVT_CLOSE, self.onClose)
 		self.enableLoad()
 		self.setNewMosaicSelection()
@@ -69,6 +70,25 @@ class AlignDialog(leginon.gui.wx.Dialog.Dialog):
 		self.choices['new'].Disable()
 		# initialize old with current mosaic
 		self.choices['old'].SetStringSelection(self.node.getMosaicName())
+
+	def createOldSessionSizer(self):
+		label = wx.StaticText(self, -1, 'From Session:')
+		all_keys, current_key = self.node.getAlignerOldSessionKeys()
+		self.oldsession_selector = leginon.gui.wx.Choice.Choice(self, -1, choices=all_keys)
+		self.oldsession_selector.SetStringSelection(current_key)
+		sz = wx.GridBagSizer(5, 5)
+		sz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER)
+		sz.Add(self.oldsession_selector, (0, 1), (1, 1))
+		return sz
+
+	def createNewSessionSizer(self):
+		label = wx.StaticText(self, -1, 'In This Session')
+		current_key = self.node.getAlignerNewSessionKey()
+		fake_selector = leginon.gui.wx.Choice.Choice(self, -1, choices=[current_key,])
+		sz = wx.GridBagSizer(5, 5)
+		sz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER)
+		sz.Add(fake_selector, (0, 1), (1, 1))
+		return sz
 
 	def createTargetPanelSizer(self,key):	
 		# Choice
@@ -85,13 +105,28 @@ class AlignDialog(leginon.gui.wx.Dialog.Dialog):
 		szatlas = wx.GridBagSizer(2, 2)
 		szatlas.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER)
 		szatlas.Add(self.choices[key], (0, 1), (1, 1))
+		if key == 'old':
+			szold = self.createOldSessionSizer()
+			szatlas.Add(szold, (1, 0), (1, 2))
+		else:
+			sznew = self.createNewSessionSizer()
+			szatlas.Add(sznew, (1, 0), (1, 2))
 		sz.Add(szatlas, 0, wx.EXPAND)
 		sz.Add(self.targets[key], 1, wx.EXPAND)
 		return sz
 
+	def onOldSessionSelected(self, evt):
+		session_key = self.oldsession_selector.GetStringSelection()
+		atlas_names = self.node.onSelectOldSession(session_key)
+		self.setOldMosaicChoices(atlas_names)
+
 	def setOldMosaicChoices(self,names):
 		# This part is needed for wxpython 2.8.  It can be replaced by Set function in 3.0
 		self.choices['old'].Clear()
+		if len(names) == 0:
+			self.disableAll()
+		else:
+			self.enableLoad()
 		for name in names:
 			self.choices['old'].Append(name)
 
@@ -150,6 +185,11 @@ class AlignDialog(leginon.gui.wx.Dialog.Dialog):
 		else:
 			self.targets['new'].setImage(evt.image)
 
+	def disableAll(self):
+		self.bload.Enable(False)
+		self.bstart.Disable()
+		self.baccept.Disable()
+
 	def enableLoad(self):
 		self.choices['old'].Enable(True)
 		self.bload.Enable(True)
@@ -171,8 +211,7 @@ class AlignDialog(leginon.gui.wx.Dialog.Dialog):
 
 	def onAccept(self, evt):
 		targets = self.targets['new'].getTargets('target')
-		self.node.saveAlignerNewTargets(targets)
-		self.node.displayDatabaseTargets()
+		self.node.acceptResults(targets)
 		self.onClose(evt)
 
 	def onClose(self, evt):
@@ -202,13 +241,14 @@ if __name__ == '__main__':
 			return self.getAlignerNewMosaicImage()
 		def getAlignerOldTargets(self):
 			return [(100,100),(300,300),(100,300)]
-		def saveAlignerNewTargets(self,targets):
+		def acceptResults(self,targets):
 			print 'transformed target c,r: ', map((lambda t: (t.x,t.y)),targets)
-		def displayDatabaseTargets(self):
-			pass
 		def readImage(self,filepath):
 			return numpil.read(filepath)
-
+		def getAlignerNewSessionKey(self):
+			return 'new session'
+		def getAlignerOldSessionKeys(self):
+			return ['old session','new session'], 'new session'
 		def calculateTransform(self, targets1, targets2):
 			points1 = map((lambda t: (t.x,t.y)),targets1)
 			points2 = map((lambda t: (t.x,t.y)),targets2)
@@ -228,7 +268,7 @@ if __name__ == '__main__':
 
 	class App2(wx.App):
 		def OnInit(self):
-			frame = wx.Frame(None, -1, 'Presets Test')
+			frame = wx.Frame(None, -1, 'Align Mosaic Test')
 			node = Node()
 			dialog = AlignDialog(frame, node)
 			dialog.Show()

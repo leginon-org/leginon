@@ -1963,7 +1963,7 @@ class AutoExposureSettingsData(AcquisitionSettingsData):
 class TiltAlternaterSettingsData(AcquisitionSettingsData):
 	def typemap(cls):
 		return AcquisitionSettingsData.typemap() + (
-			('tilts', str),
+			('tilts', str), # Issue #5687. should be tuple. Too late now.
 			('use tilts', bool),
 			('reset per targetlist', bool),
 		)
@@ -1972,7 +1972,7 @@ class TiltAlternaterSettingsData(AcquisitionSettingsData):
 class TiltListAlternaterSettingsData(AcquisitionSettingsData):
 	def typemap(cls):
 		return AcquisitionSettingsData.typemap() + (
-			('tilts', str),
+			('tilts', str), # Issue #5687. should be tuple, Too late now.
 			('use tilts', bool),
 		)
 	typemap = classmethod(typemap)
@@ -2658,6 +2658,16 @@ class TransformMatrixData(InSessionData):
 			('image1', AcquisitionImageData),
 			('image2', AcquisitionImageData),
 			('matrix', sinedon.newdict.DatabaseArrayType),
+		)
+	typemap = classmethod(typemap)
+
+class MosaicTransformMatrixData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('imagelist1', ImageListData),
+			('imagelist2', ImageListData),
+			('matrix', sinedon.newdict.DatabaseArrayType),
+			('move type', str),
 		)
 	typemap = classmethod(typemap)
 
