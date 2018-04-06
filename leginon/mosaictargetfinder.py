@@ -8,6 +8,7 @@
 
 import calibrationclient
 from leginon import leginondata
+from leginon import project
 import event
 import instrument
 import imagewatcher
@@ -759,6 +760,38 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.saveAlignerNewTargets(targets)
 		self.saveTransform()
 		self.displayDatabaseTargets()
+
+	def getAlignerNewSessionKey(self):
+		'''
+		Return this session key as a fake entry for gui so it aligns with
+		the old one.
+		'''
+		s = self.session
+		k = '%6d: %s' % (s.dbid, s['name'])
+		return k
+
+	def getAlignerOldSessionKeys(self):
+		'''
+		Returns all session keys in the project for selection and the current session
+		'''
+		p = project.ProjectData()
+		self.projectid = p.getProjectId(self.session)
+		self.projectsessions = p.getSessionsFromProjectId(self.projectid)
+		self.oldsession_selections = {}
+		for s in self.projectsessions:
+			k = '%6d: %s' % (s.dbid, s['name'])
+			self.oldsession_selections[k] = s
+		selection_keys = list(self.oldsession_selections)
+		selection_keys.sort()
+		selection_keys.reverse()
+		return selection_keys, '%6d: %s' % (self.session.dbid, self.session['name'])
+
+	def onSelectOldSession(self, session_key):
+		'''
+		Called from gui when a session key is selected.
+		'''
+		self.oldsession = self.oldsession_selections[session_key]
+		return self.getAlignerOldMosaicNames()
 
 	#=============Target Finding==============
 	def storeSquareFinderPrefs(self):
