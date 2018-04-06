@@ -5,7 +5,7 @@ import simscripting
 import falconframe
 from pyscope import moduleconfig
 
-SIMULATION = True
+SIMULATION = False
 class FEIAdvScriptingConnection(object):
 	instr = None
 	csa = None
@@ -188,7 +188,7 @@ class FeiCam(ccdcamera.CCDCamera):
 				exposure = kwargs['exposure']
 				self.camera_settings.ExposureTime = exposure
 			if 'binning' in kwargs:
-				binnings = kwargs['binning']
+				binning = kwargs['binning']
 				# binning can only be set by supported binning objects
 				b_index = self.binning_limits.index(binning['x'])
 				self.camera_settings.Binning = self.binning_limit_objs[b_index]
