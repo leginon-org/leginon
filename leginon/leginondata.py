@@ -1942,7 +1942,7 @@ class AutoExposureSettingsData(AcquisitionSettingsData):
 class TiltAlternaterSettingsData(AcquisitionSettingsData):
 	def typemap(cls):
 		return AcquisitionSettingsData.typemap() + (
-			('tilts', str),
+			('tilts', str), # Issue #5687. should be tuple. Too late now.
 			('use tilts', bool),
 			('reset per targetlist', bool),
 		)
@@ -1951,7 +1951,7 @@ class TiltAlternaterSettingsData(AcquisitionSettingsData):
 class TiltListAlternaterSettingsData(AcquisitionSettingsData):
 	def typemap(cls):
 		return AcquisitionSettingsData.typemap() + (
-			('tilts', str),
+			('tilts', str), # Issue #5687. should be tuple, Too late now.
 			('use tilts', bool),
 		)
 	typemap = classmethod(typemap)
