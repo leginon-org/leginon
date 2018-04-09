@@ -134,6 +134,9 @@ class ManualAcquisition(node.Node):
 			self.logger.error('Error acquiring image: %s' % e)
 			raise AcquireError
 
+		if imagedata is None:
+			raise AcquireError
+
 		image = imagedata['image']
 		self.logger.info('Displaying image...')
 		self.getImageStats(image)
@@ -424,6 +427,8 @@ class ManualAcquisition(node.Node):
 		# acquire image
 		imagedata = self.acquireCorrectedCameraImageData(force_no_frames=True)
 
+		if imagedata is None:
+			raise AcquireError
 		# display
 		self.logger.info('Displaying dose image...')
 		self.getImageStats(imagedata['image'])
@@ -511,7 +516,6 @@ class ManualAcquisition(node.Node):
 					imagedata = self.acquireCameraImageData(force_no_frames=True)
 				imarray = imagedata['image']
 			except:
-				raise
 				self.manualchecklock.release()
 				self.manualplayer.pause()
 				self.logger.error('Failed to acquire image, pausing...')

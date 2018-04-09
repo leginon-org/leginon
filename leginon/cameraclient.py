@@ -175,7 +175,20 @@ class CameraClient(object):
 			time.sleep(0.5)
 
 	def acquireCameraImageData(self, scopeclass=leginondata.ScopeEMData, allow_retracted=False, type='normal', force_no_frames=False):
-		'''Acquire a raw image from the currently configured CCD camera'''
+		'''Acquire a raw image from the currently configured CCD camera
+		Exceptions are caught and return None
+		'''
+		try:
+			imagedata = self.acquireRawCameraImageData(scopeclass=scopeclass, allow_retracted=allow_retracted, type=type, force_no_frames=force_no_frames)
+			return imagedata
+		except Exception, e:
+			self.logger.error(e.message)
+			return None
+
+	def acquireRawCameraImageData(self, scopeclass=leginondata.ScopeEMData, allow_retracted=False, type='normal', force_no_frames=False):
+		'''Acquire a raw image from the currently configured CCD camera
+			Exceptions are raised
+		'''
 		self.prepareToAcquire(allow_retracted,exposure_type=type)
 		if force_no_frames:
 			try:
@@ -196,10 +209,7 @@ class CameraClient(object):
 			pass
 
 		## acquire image, get new scope/camera params
-		try:
-			scopedata = self.instrument.getData(scopeclass)
-		except:
-			raise
+		scopedata = self.instrument.getData(scopeclass)
 		#cameradata_before = self.instrument.getData(leginondata.CameraEMData)
 		imagedata['scope'] = scopedata
 		self.startExposureTimer()
@@ -213,6 +223,8 @@ class CameraClient(object):
 		imagedata['use frames'] = cameradata_after['use frames']
 
 		self.readout_done_event.set()
+		if imagedata['image'] is None or imagedata['image'].shape == (0,0):
+			raise RuntimeError('No valid image returned. Check camera software/hardware')
 		return imagedata
 
 	def requireRecentDarkCurrentReferenceOnBright(self):

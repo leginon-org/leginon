@@ -318,6 +318,10 @@ class Tomography(leginon.acquisition.Acquisition):
 
 	def adjusttarget(self,preset_name,target,emtarget):
 		self.declareDrift('tilt')
+		# Force transform adjustment on tomography
+		if self.settings['adjust for transform'] == 'no':
+			self.logger.warning('Force target adjustment for tomography')
+			self.settings['adjust for transform'] = 'one'
 		target = self.adjustTargetForTransform(target)
 		emtarget = self.targetToEMTargetData(target)
 		presetdata = self.presetsclient.getPresetFromDB(preset_name)

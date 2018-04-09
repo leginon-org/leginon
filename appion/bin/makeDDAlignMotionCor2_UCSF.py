@@ -12,7 +12,6 @@ class MotionCor2UCSFAlignStackLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop)
 	def setupParserOptions(self):
 		super(MotionCor2UCSFAlignStackLoop,self).setupParserOptions()
 
-		#self.parser.remove_option('gpuid')
 		self.parser.add_option("--gpuids", dest="gpuids", default='0')
 		self.parser.add_option("--nrw", dest="nrw", type="int", default=1,
 			help="Number (1, 3, 5, ...) of frames in running average window. 0 = disabled", metavar="INT")
@@ -49,6 +48,10 @@ class MotionCor2UCSFAlignStackLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop)
 		self.parser.add_option("--force_cpu_flat", dest="force_cpu_flat", default=False,
 			action="store_true", help="Use cpu to make frame flat field corrrection")
 
+	def addBinOption(self):
+		self.parser.add_option("--bin",dest="bin",metavar="#",type=float,default="1.0",
+			help="Binning factor relative to the dd stack. MotionCor2 takes float value (optional)")
+
 	#=======================
 	def checkConflicts(self):
 		super(MotionCor2UCSFAlignStackLoop,self).checkConflicts()
@@ -56,6 +59,14 @@ class MotionCor2UCSFAlignStackLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop)
 		if self.params['keepstack'] is True:
 			apDisplay.printWarning('Frame stack saving not available to MotionCor2 from UCSF')
 			self.params['keepstack'] = False
+
+	def getAlignBin(self):
+		alignbin = self.params['bin']
+		if alignbin > 1:
+			bintext = '_%4.1fx' % (alignbin)
+		else:
+			bintext = ''
+		return bintext
 
 	def isUseFrameAlignerFlat(self):
 		has_bad_pixels =  self.dd.hasBadPixels()

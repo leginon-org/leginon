@@ -424,6 +424,7 @@ function runTomoAligner() {
 	}
 
 	$command.="--description=\"$description\" ";
+	$command.="--alignmethod=$alignmethod ";
 	$command.="--commit ";
 
 	/* *******************

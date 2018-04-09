@@ -309,3 +309,14 @@ class TEM(baseinstrument.BaseInstrument):
 		# valid values: ready, off, busy, unknown
 		return 'ready'
 
+	def getApertureMechanisms(self):
+		return ['objective']
+
+	def getApertureSelections(self, aperture_mechanism):
+		return []
+
+	def getApertureSelection(self, aperture_mechanism):
+		return ''
+
+	def setApertureSelection(self, aperture_mechanism, name):
+		return False

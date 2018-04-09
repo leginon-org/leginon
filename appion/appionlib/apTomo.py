@@ -194,6 +194,8 @@ def orderImageList(frame_tiltdata, non_frame_tiltdata=None, frame_aligned="True"
 	if not imagelist:
 		apDisplay.printWarning('No images in image list.')
 		return
+	if not dose_imagelist:
+		dose_imagelist = imagelist
 	mrc_files = []
 	imagepath = imagelist[0]['session']['image path']
 	tiltseries = imagelist[0]['tilt series']

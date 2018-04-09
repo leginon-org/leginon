@@ -96,6 +96,10 @@ class SimFrameProcessing(apDDprocess.DDFrameProcessing):
 		a = self.modifyFrameImage(a,offset,crop_end,bin)
 		return a
 
+	def hasNonZeroDark(self):
+		# Faking K2
+		return False
+
 	def getImageCameraEMData(self):
 		camdata = leginondata.CameraEMData(initializer=self.image['camera'])
 		return camdata

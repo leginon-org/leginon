@@ -102,6 +102,8 @@ class SimTEM(tem.TEM):
 		self.loaded_slot_number = None
 		self.is_init = True
 
+		self.aperture_selection = {'objective':'','condenser2':'70','selected area':'open'}
+
 	def resetRefrigerant(self):
 		self.level0 = 100.0
 		self.level1 = 100.0
@@ -430,12 +432,36 @@ class SimTEM(tem.TEM):
 
 	def _loadCartridge(self, number):
 		self.loaded_slot_number = number
+		time.sleep(2)
 
 	def _unloadCartridge(self):
 		self.loaded_slot_number = None
 
 	def getGridLoaderInventory(self):
 		self.getAllGridSlotStates()
+
+	def getApertureMechanisms(self):
+		'''
+		Names of the available aperture mechanism
+		'''
+		return ['condenser2', 'objective', 'selected area']
+
+	def getApertureSelections(self, aperture_mechanism):
+		if aperture_mechanism == 'objective':
+			return ['open','100']
+		if aperture_mechanism == 'condenser2':
+			return ['open','100']
+		return ['open']
+
+	def getApertureSelection(self, aperture_mechanism):
+		return self.aperture_selection[aperture_mechanism]
+
+	def setApertureSelection(self, aperture_mechanism, name):
+		self.aperture_selection[aperture_mechanism] = name
+		return False
+
+	def retractApertureMechanism(self, aperture_mechanism):
+		return setApertureSelection(aperture_mechanism, 'open')
 
 class SimTEM300(SimTEM):
 	name = 'SimTEM300'

@@ -7,28 +7,28 @@
  *	see  http://leginon.org
  */
 
-require_once "basicLoopForm.inc";
+require_once "basicLayoutForm.inc";
 
-class MakeDDStackForm extends BasicLoopForm
+class fibsem_MakeStackForm extends BasicLayoutForm
 
 {
-	function __construct(  $expId, $errorHTML='', $infoHTML='', $bin=1, $refimgid )
+	function __construct(  $expId, $errorHTML='', $infoHTML='', $flip=0 )
 	{
 		parent::__construct($expId, $errorHTML, $infoHTML);
 
 		//------ Set Parameters for the parent class, BasicLoopForm (general Appion params) -----//
 
 		// Set the publications to be references on the web pages
-		$pubList = array('appion');
+		$pubList = array('imod');
 		$this->setPublications( $pubList );
-		$this->setJobType( 'makeddstack' );
-		$this->setOutputDirectory( 'ddstack' );
-		$this->setBaseRunName( 'ddstack' );
-		$this->setTitle( 'makeDDStack.py Launcher' );
-		$this->setHeading( 'Create a Direct Detector Frame Stack Without Alignment' );
-		$this->setExeFile( 'makeDDStack.py' );
+		$this->setJobType( 'makestack' );
+		$this->setOutputDirectory( 'stack' );
+		$this->setBaseRunName( 'fibsem_stack_creation' );
+		$this->setTitle( 'makefibsemstack.py Launcher' );
+		$this->setHeading( 'Create a stack from images collected on FIBSEM' );
+		$this->setExeFile( 'makefibsemstack.py' );
 		$this->setGuideURL( "http://emg.nysbc.org/redmine/projects/appion/wiki/Appion_Processing" );
-		$this->setTestable( True ); // True to activate "test single image".
+		$this->setTestable( False ); // True to activate "test single image".
 		$this->setUseLegOutDir( False ); // The output directory will be created in the Appion run directory rather than Leginon.
 		$this->setShowDesc( True ); // Flag to hide the description field of the run parameters.
 
@@ -36,19 +36,13 @@ class MakeDDStackForm extends BasicLoopForm
 		$params = $this->getFormParams();
 
 		// The help section corresponds to the array key for these parameters found in help.js for popup help.
-		$params->setHelpSection( "makeDDStack" );
+		$params->setHelpSection( "make_fibsem_stack" );
 				
-		$params->addParam( "bin", $bin, "binning" );
-		$params->addParam( "refimgid", $refimgid, "refimgid" );
-		$this->addValidations();
-	}
+		$params->addParam( "flip", $flip, "Flip images across x-axis (default 0=no)" );
+//		$params->addParam( "last", $refimgid, "Last image to include (default all)" );
 
-	public function addValidations()
-	{
-		$params = $this->getFormParams();
 		// Validations
-		$params->addValidation( "bin", "num" );
-		$params->addValidation( "refimgid", "num" );
+		/* $params->addValidation( "dewarp", "req" ); */
 	}
 
 	public function generateAdditionalFormRight()
@@ -58,13 +52,13 @@ class MakeDDStackForm extends BasicLoopForm
 
 		$fieldSize = 4;
 
-		$html .= "<b>Make DD stack params:</b><br />\n";
+		$html .= "<b>Create FIBSEM stack params:</b><br />\n";
 
 		$html.= "<br/>\n";
-		$html.= $params->insertTextFieldInRow( "bin", $fieldSize );
 		$html.= "<br/>\n";
-		$html.= $params->insertTextFieldInRow( "refimgid", 8 );
-		$html.= "<br/>\n";
+		$html.= $params->insertTextField( "flip", $fieldSize );
+//		$html.= $params->insertTextField( "first", $fieldSize, );
+//		$html.= $params->insertTextField( "last", $fieldSize );
 
 		return $html;
 	}

@@ -161,7 +161,7 @@ class Collection(object):
 	def initLoop2(self):
 		self.restoreInstrumentState()
 		self.correlator[1].reset()
-		if self.settings['adjust for transform'] != "no":
+		if True:
 			self.logger.info('Adjust target for the second tilt group...')
 			try:
 				self.emtarget, status = self.node.adjusttarget(self.preset['name'], self.target, self.emtarget)
@@ -286,6 +286,9 @@ class Collection(object):
 			# TODO: error checking
 			channel = self.correlator[seq[0]].getChannel()
 			image_data = self.node.acquireCorrectedCameraImageData(channel)
+			if image_data is None:
+				self.finalize()
+				raise Fail
 			self.logger.info('Image acquired.')
 
 			image_mean = image_data['image'].mean()

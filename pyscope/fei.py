@@ -39,6 +39,7 @@ class Tecnai(tem.TEM):
 		tem.TEM.__init__(self)
 		self.projection_submodes = {1:'LM',2:'Mi',3:'SA',4:'Mh',5:'LAD',6:'D'}
 		self.gridloader_slot_states = {0:'unknown', 1:'occupied', 2:'empty', 3:'error'}
+		self.aperture_mechanism_indexmap = {'condenser2':2,'objective':4,'selected area':5}
 		self.special_submode_mags = {}
 		#self.special_submode_mags = {380:('EFTEM',3)}
 		self.projection_submode_map = self.special_submode_mags.copy()
@@ -132,6 +133,9 @@ class Tecnai(tem.TEM):
 	def getDebugStage(self):
 		return self.getFeiConfig('debug','stage')
 
+	def getUseAutoAperture(self):
+		return self.getFeiConfig('aperture','use_auto_aperture')
+
 	def getHasFalconProtector(self):
 		return self.getFeiConfig('camera','has_falcon_protector')
 
@@ -143,6 +147,25 @@ class Tecnai(tem.TEM):
 
 	def getMinimumStageMovement(self):
 		return self.getFeiConfig('stage','minimum_stage_movement')
+
+	def getStageLimits(self):
+		limits = self.getFeiConfig('stage','stage_limits')
+		if limits is None:
+			limits = {}
+		return limits
+
+	def getXYZStageBacklashDelta(self):
+		value = self.getFeiConfig('stage','xyz_stage_backlash_delta')
+		if value is None:
+			value = 0
+		return value
+
+	def getXYStageRelaxDistance(self):
+		relax = self.getFeiConfig('stage','xy_stage_relax_distance')
+		if relax is None:
+			relax = 0
+		return relax
+
 	def getMagnificationsInitialized(self):
 		if self.magnifications:
 			return True
@@ -173,14 +196,22 @@ class Tecnai(tem.TEM):
 		if not value:
 			return
 		if self.correctedstage:
-			delta = 2e-6
+			delta = self.getXYZStageBacklashDelta()
+			relax = self.getXYStageRelaxDistance()
 			stagenow = self.getStagePosition()
 			# calculate pre-position
 			prevalue = {}
+			prevalue2 = {}
 			for axis in ('x','y','z'):
 				if axis in value:
 					prevalue[axis] = value[axis] - delta
-			if prevalue:
+			for axis in ('x','y'):
+				if axis in value:
+					prevalue2[axis] = value[axis] + relax
+			if delta and prevalue:
+				self._setStagePosition(prevalue)
+				time.sleep(0.2)
+			if abs(relax) > 1e-9 and prevalue2:
 				self._setStagePosition(prevalue)
 				time.sleep(0.2)
 		return self._setStagePosition(value)
@@ -782,13 +813,23 @@ class Tecnai(tem.TEM):
 				pass
 		return value
 
-	def waitForStageReady(self,timeout=5):
+	def waitForStageReady(self,position_log,timeout=10):
 		t0 = time.time()
 		trials = 0
 		while self.tecnai.Stage.Status in (2,3,4):
 			trials += 1
+			if time.time()-t0 > timeout/2.0:
+				time.sleep(timeout/10.0)
 			if time.time()-t0 > timeout:
-				raise RuntimeError('stage is not going to ready status in %d seconds' % (int(timeout)))
+				stage_status = self.tecnai.Stage.Status
+				msg = 'stage is at status %d, not ready in %d seconds' % (int(stage_status),int(timeout))
+				if self.getDebugStage():
+					print msg
+					print position_log
+					# allow it to go through for now.
+					break
+				else:
+					raise RuntimeError('stage is not going to ready status in %d seconds' % (int(timeout)))
 		if self.getDebugStage() and trials > 0:
 			print datetime.datetime.now()
 			donetime = time.time() - t0
@@ -798,7 +839,7 @@ class Tecnai(tem.TEM):
 #		tolerance = 1.0e-4
 #		polltime = 0.01
 
-		self.waitForStageReady()
+		self.waitForStageReady('before setting %s' % (position,))
 		if relative == 'relative':
 			for key in position:
 				position[key] += getattr(self.tecnai.Stage.Position, key.upper())
@@ -808,11 +849,17 @@ class Tecnai(tem.TEM):
 		pos = self.tecnai.Stage.Position
 
 		axes = 0
+		stage_limits = self.getStageLimits()
 		for key, value in position.items():
 			if use_nidaq and key == 'b':
 				deg = value / 3.14159 * 180.0
 				nidaq.setBeta(deg)
 				continue
+			if key in stage_limits.keys() and (value < stage_limits[key][0] or value > stage_limits[key][1]):
+				raise ValueError('position %s beyond stage limit at %.2e' % (key, value))
+			setattr(pos, key.upper(), value)
+			axes |= getattr(self.tem_constants, 'axis' + key.upper())
+
 			setattr(pos, key.upper(), value)
 			axes |= getattr(self.tem_constants, 'axis' + key.upper())
 
@@ -837,7 +884,7 @@ class Tecnai(tem.TEM):
 				print datetime.datetime.now()
 				print 'Other error in going to %s' % (position,)
 			raise RuntimeError('_setStagePosition Unknown error')
-		self.waitForStageReady()
+		self.waitForStageReady('after setting %s' % (position,))
 
 	def setDirectStagePosition(self,value):
 		self._setStagePosition(value)
@@ -1471,6 +1518,140 @@ class Tecnai(tem.TEM):
 			return True
 		return False
 
+	def hasAutoAperture(self):
+		return False
+
+	def retractApertureMechanism(self,name):
+		'''
+		Retract aperture mechanism.
+		'''
+		am = self._getApertureMechanismObj(name)
+		if am.State == 3:
+			# already retracted mechanism can not be retracted again.
+			return False	# successful
+		if am.State != 1:
+			raise RuntimeError('Aperture not in a retractable state')
+		status = am.Retract()
+		return bool(status)
+
+	def _getApertureMechanismObj(self, name):
+		if not self.hasAutoAperture():
+			raise ValueError('No automated aperture')
+		amc = self.tecnai.ApertureMechanismCollection
+		# TO DO: better to use ID for obj aperture (4)
+		index = self._getApertureMechanismIndex(name)
+		if index == False:
+			raise ValueError('Aperture mechanism %s does not exist' % name)
+		am = amc.Item(index)
+		return am
+
+	def _getApertureMechanismIndex(self, name):
+		'''
+		Get index of aperture mechanism in ApertureMechanismCollection
+		'''
+		if not self.hasAutoAperture() or name not in self.aperture_mechanism_indexmap.keys():
+			return False
+		amc = self.tecnai.ApertureMechanismCollection
+		count = amc.Count
+		for i in range(count):
+			if amc.Item(i).Id == self.aperture_mechanism_indexmap[name]:
+				return i
+
+	def getApertureMechanisms(self):
+		'''
+		Names of the available aperture mechanism
+		'''
+		return ['condenser2', 'objective', 'selected area']
+
+	def _getApertureObjsOfMechanismName(self,mechanism_name):
+		'''
+		All aperture objects on an aperture mechanism.
+		'''
+		# get aperture objects
+		am = self._getApertureMechanismObj(mechanism_name)
+		ac = am.ApertureCollection
+		count = ac.Count
+		apertures = map((lambda x: ac.Item(x)),range(count))
+		return apertures
+
+	def getApertureSelections(self, mechanism_name):
+		'''
+		get valid selection for an aperture mechanism to be used in gui.
+		'''
+		names = self.getApertureNames(mechanism_name)
+		am = self._getApertureMechanismObj(mechanism_name)
+		if am.IsRetractable:
+			names.insert(0,'open')
+		return names
+
+	def getApertureSelection(self, mechanism_name):
+		'''
+		Get current aperture selection of specified aperture mechanism
+		as string name in um or as open.
+		'''
+		am = self._getApertureMechanismObj(mechanism_name)
+		state = am.State
+		if state == 3:
+			return 'open'
+		if state == 1:
+			a = am.SelectedAperture
+			return a.Name
+		# all counted as invalid state
+		return 'unknown'
+
+	def setApertureSelection(self, mechanism_name, name):
+		'''
+		Set Aperture selection of a aperture mechanism with aperture name.
+		Aperture name 'open' means retracted aperture. Size string in
+		unit of um is used as the name for that aperture.
+		'''
+		selections = self.getApertureSelections(mechanism_name)
+		if name not in selections:
+			raise ValueError('Invalid selection: %s' % name)
+		if name == '' or name is None:
+			# nothing to do
+			return False
+		if name == 'open':
+			try:
+				has_error = self.retractApertureMechanism(mechanism_name)
+				if has_error:
+					raise RuntimeError('Fail to retract %s' % mechanism_name)
+			except RuntimeError, e:
+				raise
+		else:
+			try:
+				has_error = self.insertSelectedApertureMechanism(mechanism_name, name)
+				if has_error:
+					raise RuntimeError('Fail to select %s on %s aperture' % (name,mechanism_name))
+			except RuntimeError, e:
+				raise
+		return False
+
+	def getApertureNames(self, mechanism_name):
+		'''
+		Get string name list of the aperture collection in a mechanism.
+		'''
+		aps = self._getApertureObjsOfMechanismName(mechanism_name)
+		names = []
+		for ap in aps:
+			names.append(ap.Name)
+		return names
+
+	def insertSelectedApertureMechanism(self,mechanism_name, aperture_name):
+		'''
+		Insert an aperture selected for a mechanism.
+		'''
+		am = self._getApertureMechanismObj(mechanism_name)
+		names = self.getApertureNames(mechanism_name)
+		if aperture_name not in names:
+			raise ValueError('No apeture of the name %s on %s' %(aperture_name, mechanism_name))
+		if am.State != 1 and am.State != 3 :
+			raise RuntimeError('Aperture not in a controlable state')
+		aps = self._getApertureObjsOfMechanismName(mechanism_name)
+		status = am.SelectAperture(aps[names.index(aperture_name)])
+		# aperture already selected will return immediately.
+		return bool(status)
+
 class Krios(Tecnai):
 	name = 'Krios'
 	use_normalization = True
@@ -1496,22 +1677,33 @@ class Krios(Tecnai):
 		if not value:
 			return
 		if self.correctedstage:
-			delta = 2e-6
+			delta = self.getXYZStageBacklashDelta()
+			relax = self.getXYStageRelaxDistance()
 			stagenow = self.getStagePosition()
 			# calculate pre-position
 			prevalue = {}
+			prevalue2 = value.copy()
 			for axis in ('x','y','z'):
 				if axis in value:
 					prevalue[axis] = value[axis] - delta
+			for axis in ('x','y'):
+				if axis in value:
+					prevalue2[axis] = value[axis] + relax
 			# alpha tilt backlash only in one direction
 			alpha_delta_degrees = 3.0
 			if 'a' in value.keys() and self.corrected_alpha_stage:
 					axis = 'a'
 					prevalue[axis] = value[axis] - alpha_delta_degrees*3.14159/180.0
-			if prevalue:
+			if prevalue and delta:
 				self._setStagePosition(prevalue)
 				time.sleep(0.2)
+			if abs(relax) > 1e-9 and prevalue2:
+				self._setStagePosition(prevalue2)
+				time.sleep(0.2)
 		return self._setStagePosition(value)
+
+	def hasAutoAperture(self):
+		return self.getUseAutoAperture()
 
 class Halo(Tecnai):
 	'''
@@ -1542,6 +1734,13 @@ class Arctica(Tecnai):
 	name = 'Arctica'
 	use_normalization = True
 
+	def hasAutoAperture(self):
+		return self.getUseAutoAperture()
+
 class Talos(Tecnai):
 	name = 'Talos'
 	use_normalization = True
+
+	def hasAutoAperture(self):
+		return self.getUseAutoAperture()
+

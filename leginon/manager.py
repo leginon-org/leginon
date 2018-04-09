@@ -52,7 +52,8 @@ class DataBinder(databinder.DataBinder):
 
 	def delBinding(self, nodename, dataclass=None, method=None):
 		if dataclass is None:
-			dataclasses = self.bindings.keys()
+			# doing it to all keys
+			dataclasses = list(self.bindings)
 		else:
 			dataclasses = [dataclass]
 		for dataclass in dataclasses:
@@ -598,15 +599,16 @@ class Manager(node.Node):
 	def removeNodeDistmaps(self, nodename):
 		'''Remove event mappings related to the node with the specifed node ID.'''
 		# needs to completely cleanup the distmap
-		for eventclass in self.distmap:
+		for eventclass in list(self.distmap):
 			try:
 				del self.distmap[eventclass][nodename]
 			except KeyError:
 				pass
-			for othernodename in self.distmap[eventclass]:
+			# prevent self.distmap change size error by making a copy of the keys.
+			for othernodename in list(self.distmap[eventclass]):
 				try:
 					self.distmap[eventclass][othernodename].remove(nodename)
-				except (ValueError, RuntimeError) :
+				except (KeyError, ValueError, RuntimeError) :
 					pass
 
 	def launchNode(self, launcher, target, name, dependencies=[]):

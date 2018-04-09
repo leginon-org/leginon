@@ -1119,7 +1119,7 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 				tems[tem_name]['magnifications'] = tem.Magnifications
 				tems[tem_name]['probe modes'] = tem.ProbeModes
 				try:
-					tems[tem_name]['apertures'] = tem.Apertures
+					tems[tem_name]['apertures'] = tem.ApertureMechanisms
 					tems[tem_name]['aperture sizes'] = tem.ApertureSizes
 				except AttributeError:
 					pass

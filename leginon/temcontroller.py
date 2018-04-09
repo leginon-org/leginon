@@ -273,6 +273,9 @@ class TEMController(node.Node):
 		return None
 
 	def unloadGrid(self):
+		'''
+		Unoad a grid to the first empty slot.
+		'''
 		if not self.instrument.tem.hasGridLoader():
 			self.logger.error('TEM has no auto grid loader')
 			return
@@ -298,6 +301,9 @@ class TEMController(node.Node):
 		self.panel.setTEMParamDone()
 
 	def loadGrid(self, slot_name):
+		'''
+		Load a grid by slot name string.
+		'''
 		if slot_name not in self.grid_slot_names:
 			self.logger.error('Selected slot is not valid for this project')
 			return
@@ -334,9 +340,13 @@ class TEMController(node.Node):
 		return self._loadGrid(slot_number)
 
 	def _loadGrid(self, slot_number):
+		'''
+		Load grid by slot number.  All validation must already be handled.
+		'''
 		# Loading occupied grid.
 		self.logger.info('Loading grid from slot %d' % (slot_number,))
 		is_success = False
+		state = 'unknown'
 		try:
 			self.instrument.tem.loadGridCartridge(slot_number)
 			state = self.instrument.tem.getGridLoaderSlotState(slot_number)
@@ -347,7 +357,62 @@ class TEMController(node.Node):
 		if is_success == True:
 			self.loaded_grid_slot = slot_number
 			self.logger.info('Grid Loaded from slot %d' % (slot_number,))
+		else:
+			self.logger.warning('Loader slot state after loading is %s' % (state))
 		self.panel.setTEMParamDone()
+		return is_success
+
+	def getApertureNames(self):
+		try:
+			names = self.instrument.tem.getApertureSelections('objective')
+		except:
+			names = []
+		return names
+
+	def getApertureNameUnit(self,name):
+		try:
+			int_name=int(name)
+			unit = 'um'
+		except ValueError:
+			unit = ''
+		return unit
+
+	def selectObjAperture(self,name):
+		unit = self.getApertureNameUnit(name)
+		self.logger.info('Changing objective aperture to %s %s' % (name,unit))
+		is_success = False
+		try:
+			self.instrument.tem.setApertureSelection('objective',name)
+			is_success = True
+		except Exception, e:
+			self.logger.error(e.message)
+		if is_success == True:
+			self.logger.info('Objective aperture changed to %s %s' % (name,unit))
+		self.panel.setTEMParamDone()
+
+	def getApertureMechanisms(self):
+		return self.instrument.tem.getApertureMechanisms()
+
+	def getApertureStatesToDisplay(self):
+		names = self.getApertureMechanisms()
+		name_states = {}
+		for name in names:
+			try:
+				state = self.instrument.tem.getApertureSelection(name)
+			except ValueError, e:
+				self.logger.warning(e)
+				state = 'unknown'
+			except RuntimeError, e:
+				self.logger.error(e)
+				state = 'unknown'
+			try:
+				if state is None or state=='' or state not in self.instrument.tem.getApertureSelections(name):
+					state = 'unknown'
+			except:
+					state = 'unknown'
+			name_states[name] = state
+		return name_states
+
 
 if __name__ == '__main__':
 	id = ('navigator',)

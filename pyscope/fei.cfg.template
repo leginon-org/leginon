@@ -14,13 +14,16 @@ FORCE_NORMALIZE_ALL_LENS_AFTER_MAG_SETTING = False
 ROTATION_CENTER_SCALE = 1.0
 
 [aperture]
-#disable control of auto apertures if not working or not available
-USE_AUTO_APT = False
-CLA_SIZES = 0, 150e-6, 70e-6, 50e-6, 20e-6
+# Disable control of auto apertures if not working or not available
+# not all versions of microscope software allows auto aperture control
+# from scripting level.
+USE_AUTO_APERTURE = False
 
 [camera]
 # Falcon protector causes certain delays
 HAS_FALCON_PROTECTOR = True
+# Falcon III subpath. Must exists and writable
+FRAME_SUBPATH = leginonframes
 
 [phase plate]
 # Location of next phase plate AutoIt executable
@@ -37,3 +40,8 @@ MINIMUM_STAGE_MOVEMENT%Y = 5.0e-8
 MINIMUM_STAGE_MOVEMENT%Z = 5.0e-8
 MINIMUM_STAGE_MOVEMENT%A = 6.0e-5
 MINIMUM_STAGE_MOVEMENT%B = 6.0e-5
+
+# XYZ backlash delta (positive means preposition to negative direction)
+XYZ_StAGE_BACKLASH_DELTA = 2e-6
+# Relax distance
+#XY_STAGE_RELAX_DISTANCE = 10.0e-8
