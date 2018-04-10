@@ -324,6 +324,7 @@ class AutoNitrogenFiller(Conditioner):
 		'''
 		loader_level,column_level = self.getRefrigerantLevels()
 		if loader_level >= self.settings['loader fill end'] and column_level >= self.settings['column fill end']:
+			self.logger.warning('Error received from instrument but liquid level above upper trip level. Error can be ignored.')
 			return False
 		return True
 
@@ -350,10 +351,12 @@ class AutoNitrogenFiller(Conditioner):
 		try:
 			isbusy = self.instrument.tem.isAutoFillerBusy()
 		except AttributeError:
+			self.logger.warning('No auto filler isAutoFillerBusy')
 			return None
 
 		# handle script not available
 		if isbusy is None:
+			self.logger.warning('Auto filler isAutoFillerBusy call returns None')
 			return isbusy
 
 		if isbusy is True:
@@ -369,4 +372,6 @@ class AutoNitrogenFiller(Conditioner):
 	def getRefrigerantLevels(self):
 		loader_level = self.instrument.tem.getRefrigerantLevel(0)
 		column_level = self.instrument.tem.getRefrigerantLevel(1)
+		self.logger.info('Grid loader liquid N2 level is %d %%' % int(loader_level))
+		self.logger.info('Column liquid N2 level is %d %%' % int(column_level))
 		return loader_level,column_level
