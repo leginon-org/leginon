@@ -170,6 +170,7 @@ class UploadRelionMaxLikeScript(appionScript.AppionScript):
 		for relionpartdict in particleTree:
 			partdict = self.adjustPartDict(relionpartdict, reflist)
 			refnum = partdict['refnum']
+			refnum -= 1
 			self.class_count[refnum] = self.class_count.get(refnum, 0) + 1
 			partlist.append(partdict)
 		apDisplay.printMsg("read rotation and shift parameters for "+str(len(partlist))+" particles")
