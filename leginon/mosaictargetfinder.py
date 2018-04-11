@@ -729,6 +729,8 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		'''
 		Transform targets with affine matrix
 		'''
+		if not targets1:
+			return []
 		points1 = map((lambda t: (t.x,t.y)),targets1)
 		points2 = affine.transformImageTargets(affine_matrix, points1)
 		return points2
@@ -755,11 +757,21 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		q['move type'] = self.settings['calibration parameter']
 		q['matrix'] = self.Affine_matrix
 		q.insert()
-	
+
+	def showScaleRotationFromTransform(self):
+		'''
+		Show in logger the scale and rotation obtained.
+		TODO: take into account mosaic formation and get scale.
+		'''
+		m = self.Affine_matrix
+		rotation_radians = math.atan2(m[(0,1)],m[(0,0)])
+		self.logger.info('Affine transform rotation to apply on old atlas is %.1f degrees' % (math.degrees(rotation_radians)))
+
 	def acceptResults(self, targets):
 		self.saveAlignerNewTargets(targets)
 		self.saveTransform()
 		self.displayDatabaseTargets()
+		self.showScaleRotationFromTransform()
 
 	def getAlignerNewSessionKey(self):
 		'''
