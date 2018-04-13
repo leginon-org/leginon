@@ -1454,6 +1454,17 @@ class Tecnai(tem.TEM):
 			isbusy = None
 		return isbusy
 
+	def getAutoFillerRemainingTime(self):
+		'''
+		Get remaining time from instrument. TO DO: need to find unit
+		'''
+		try:
+			remain_sec = self.tecnai.TemperatureControl.DewarsRemainingTime
+		except:
+			# property not exist for older versions
+			remain_sec = None
+		return remain_sec
+
 	def getRefrigerantLevel(self,id=0):
 		'''
 		Get current refrigerant level. Only works on Krios and Artica. id 0 is the
