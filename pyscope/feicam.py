@@ -383,10 +383,11 @@ class FeiCam(ccdcamera.CCDCamera):
 	def getEnergyFiltered(self):
 		return False
 
-class Falcon(FeiCam):
-	name = 'Falcon3EC'
+class Falcon3(FeiCam):
+	name = 'Falcon3Linear'
 	camera_name = 'BM-Falcon'
 	binning_limits = [1,2,4]
+	electron_counting = False
 
 	def __init__(self):
 		super(Falcon,self).__init__()
@@ -469,7 +470,11 @@ class Falcon(FeiCam):
 	def getPreviousRawFramesName(self):
 		return self.frames_name
 
+	def setElectronCounting(self,value):
+		self.camera_settings.ElectronCounting = value
+
 	def custom_setup(self):
+		self.setElectronCounting(self.electron_counting)
 		self.calculateMovieExposure()
 		movie_exposure_second = self.movie_exposure/1000.0
 		self.camera_settings.ExposureTime = movie_exposure_second
@@ -505,32 +510,12 @@ class Falcon(FeiCam):
 		'''
 		return 3
 
-	def _getImage(self):
-		# super (or self.as_super as used in de.py) does not work in proxy call
-		# copy the parent code here
-		try:
-			self.finalizeSetup()
-			self.custom_setup()
-		except:
-			raise
-			raise RuntimeError('Error setting camera acquisition parameters')
-
-		t0 = time.time()
-
-		try:
-			self.im = self.csa.Acquire()
-			t1 = time.time()
-			self.exposure_timestamp = (t1 + t0) / 2.0
-			# this array is 1D
-			arr = self.im.AsSafeArray
-		except:
-			raise RuntimeError('Camera Acquisition Error in getting array')
-		arr = self.modifyImage(arr)
-		# END copy the parent code here
-
-		image = arr
-		return image
-
 	def getUseFrames(self):
 				return (self.start_frame_number,self.end_frame_number)
+
+class Falcon3EC(Falcon3):
+	name = 'Falcon3EC'
+	camera_name = 'BM-Falcon'
+	binning_limits = [1,2,4]
+	electron_counting = True
 
