@@ -383,14 +383,14 @@ class FeiCam(ccdcamera.CCDCamera):
 	def getEnergyFiltered(self):
 		return False
 
-class Falcon3(FeiCam):
+class Falcon3Linear(FeiCam):
 	name = 'Falcon3Linear'
 	camera_name = 'BM-Falcon'
 	binning_limits = [1,2,4]
 	electron_counting = False
 
 	def __init__(self):
-		super(Falcon,self).__init__()
+		super(Falcon3Linear,self).__init__()
 		self.dfd = self.camera_settings.DoseFractionsDefinition
 		self.save_frames = False
 		self.frames_name = None
@@ -414,7 +414,7 @@ class Falcon3(FeiCam):
 			raise
 
 	def setInserted(self, value):
-		super(Falcon,self).setInserted(value)
+		super(FalconLinear,self).setInserted(value)
 		if value == False:
 			# extra pause for Orius insert since Orius might think
 			# it is already inserted
@@ -513,7 +513,7 @@ class Falcon3(FeiCam):
 	def getUseFrames(self):
 				return (self.start_frame_number,self.end_frame_number)
 
-class Falcon3EC(Falcon3):
+class Falcon3EC(Falcon3Linear):
 	name = 'Falcon3EC'
 	camera_name = 'BM-Falcon'
 	binning_limits = [1,2,4]
