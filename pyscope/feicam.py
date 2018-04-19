@@ -383,14 +383,14 @@ class FeiCam(ccdcamera.CCDCamera):
 	def getEnergyFiltered(self):
 		return False
 
-class Falcon3Linear(FeiCam):
-	name = 'Falcon3Linear'
+class Falcon3(FeiCam):
+	name = 'Falcon3'
 	camera_name = 'BM-Falcon'
 	binning_limits = [1,2,4]
 	electron_counting = False
 
 	def __init__(self):
-		super(Falcon3Linear,self).__init__()
+		super(Falcon3,self).__init__()
 		self.dfd = self.camera_settings.DoseFractionsDefinition
 		self.save_frames = False
 		self.frames_name = None
@@ -513,7 +513,7 @@ class Falcon3Linear(FeiCam):
 	def getUseFrames(self):
 				return (self.start_frame_number,self.end_frame_number)
 
-class Falcon3EC(Falcon3Linear):
+class Falcon3EC(Falcon3):
 	name = 'Falcon3EC'
 	camera_name = 'BM-Falcon'
 	binning_limits = [1,2,4]
