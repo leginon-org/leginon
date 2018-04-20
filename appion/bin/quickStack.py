@@ -38,7 +38,7 @@ def makeStack(starfile):
 	stackfile = imDict['_stackFile']
 	initboxsize = int(imDict['_initBoxSize'])
 	finalboxsize = int(imDict['_finalBoxSize'])
-	invert = bool(imDict['_invert'])
+	invert = bool(int(imDict['_invert']))
 
 	coordinates = []
 	partnum = 0
