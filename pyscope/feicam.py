@@ -195,7 +195,6 @@ class FeiCam(ccdcamera.CCDCamera):
 				b_index = self.binning_limits.index(binning['x'])
 				self.camera_settings.Binning = self.binning_limit_objs[b_index]
 		except:
-			print 'could not set', kwargs
 			raise
 
 	def getConfig(self, param):
@@ -218,8 +217,8 @@ class FeiCam(ccdcamera.CCDCamera):
 		self.exposuretype = value
 
 	def getPixelSize(self):
-		pixelsize = self.camera.PixelSize #in meters
-		return {'x': pixelsize, 'y': pixelsize}
+		p = self.camera.PixelSize #in meters
+		return {'x': p.Width, 'y': p.Height}
 
 	def getReadoutAreaKey(self,unbindim, off):
 		size = self.getCameraSize()
@@ -336,7 +335,7 @@ class FeiCam(ccdcamera.CCDCamera):
 			try:
 				#integer
 				value = int(v_string)
-			except ValueError:
+			except (TypeError,ValueError):
 				try:
 					#float
 					value = float(v_string)
@@ -364,7 +363,7 @@ class FeiCam(ccdcamera.CCDCamera):
 
 	def getInserted(self):
 		if self.getRetractable():
-			return self.camera.IsInserted()
+			return self.camera.IsInserted
 		else:
 			return True
 
@@ -374,10 +373,12 @@ class FeiCam(ccdcamera.CCDCamera):
 			return
 		if value:
 			sleeptime = 5
-			self.camera.Insert()
+			error_state=self.camera.Insert()
 		else:
 			sleeptime = 1
-			self.camera.Retract()
+			error_state=self.camera.Retract()
+		if error_state:
+			raise RuntimeError('Can not alter insert state')
 		time.sleep(sleeptime)
 
 	def getEnergyFiltered(self):
@@ -414,7 +415,7 @@ class Falcon3(FeiCam):
 			raise
 
 	def setInserted(self, value):
-		super(FalconLinear,self).setInserted(value)
+		super(Falcon3,self).setInserted(value)
 		if value == False:
 			# extra pause for Orius insert since Orius might think
 			# it is already inserted
@@ -518,4 +519,3 @@ class Falcon3EC(Falcon3):
 	camera_name = 'BM-Falcon'
 	binning_limits = [1,2,4]
 	electron_counting = True
-
