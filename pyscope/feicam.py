@@ -489,6 +489,7 @@ class Falcon3(FeiCam):
 				self.dosefrac_frame_time = movie_exposure_second / len(rangelist)
 			self.frames_pattern = self.frameconfig.getSubPathFramePattern()
 			self.camera_settings.SubPathPattern = self.frames_pattern
+			self.frames_name = self.frames_pattern
 		else:
 			rangelist = []
 			self.frames_name = None
