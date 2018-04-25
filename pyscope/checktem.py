@@ -4,7 +4,7 @@ SIMULATION = False
 if not SIMULATION:
 	from pyscope import fei
 	answer = raw_input('Is the scope in EF-TEM mode ? (Y/N)')
-	if answer == 'Y':
+	if answer.upper() == 'Y':
 		f = fei.EFKrios()
 	else:
 		f = fei.Krios()
