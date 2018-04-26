@@ -325,6 +325,11 @@ class RawTransfer(object):
 			self.transfer(src_path, dst_path, uid, gid,method)
 			# de only
 			leginon.ddinfo.saveImageDDinfoToDatabase(imdata,os.path.join(dst_path,'info.txt'))
+			# falcon3 only, xml file transfer
+			xml_src_path = src_path.replace('mrc','xml')
+			xml_dst_path = dst_path.replace('mrc','xml')
+			if os.path.exists(xml_src_path):
+				self.transfer(xml_src_path, xml_dst_path, uid, gid,method)
 
 	def run(self):
 		self.params = self.parseParams()
