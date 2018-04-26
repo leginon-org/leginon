@@ -757,7 +757,7 @@ class leginondata {
 			." where `REF|SessionData|session`='$sessionId' "
 			." order by `DEF_timestamp` desc limit 1 ";
 		$RfileInfo = $this->mysql->SQLQuery($q);
-		$fileInfo = mysql_fetch_array($RfileInfo);
+		$fileInfo = mysqli_fetch_array($RfileInfo);
 		return $fileInfo['id'];
 	} 
 
@@ -768,7 +768,7 @@ class leginondata {
 		$q = "select `image path` as path from `SessionData` "
 				." where `DEF_id`='$sessionId' ";
 		$Rpath=$this->mysql->SQLQuery($q);
-		$path = mysql_fetch_array($Rpath);
+		$path = mysqli_fetch_array($Rpath);
 		return Path::formatPath($path['path']);
 	}
 
@@ -814,7 +814,7 @@ class leginondata {
 
 	function findField($name) {
 		$result = $this->mysql->SQLQuery("SHOW TABLES");
-		while($row = mysql_fetch_row($result))
+		while($row = mysqli_fetch_row($result))
 			$tables[] = $row[0];
 	}
 
@@ -859,7 +859,7 @@ class leginondata {
 		$q = 'select '.$str_fields.' from `'.$table.'`'
 			.' where `DEF_id`="'.$id.'"';
 		$R = $this->mysql->SQLQuery($q);
-		while ($r = mysql_fetch_array($R, MYSQL_ASSOC))
+		while ($r = mysqli_fetch_array($R, MYSQLI_ASSOC))
 			$data[] = $r;
 		return $data;
 	}
@@ -868,7 +868,7 @@ class leginondata {
 		$q = "select `MRC|image` as filename from `MosaicImageData` where "
 			." `REF|SessionData|Session` =\"$sessionId\" ";
 		$RfileInfo = $this->mysql->SQLQuery($q);
-		$fileInfo = mysql_fetch_array($RfileInfo);
+		$fileInfo = mysqli_fetch_array($RfileInfo);
 		return $fileInfo['filename'];
 	}
 
@@ -1421,7 +1421,7 @@ class leginondata {
 			."a.`DEF_id` ='".$imgId."' "
 			."order by pi.`DEF_id` desc"; 
 		$Rimageinfo = $this->mysql->SQLQuery($q);
-		$imageinfo = mysql_fetch_array($Rimageinfo,MYSQL_ASSOC);
+		$imageinfo = mysqli_fetch_array($Rimageinfo,MYSQLI_ASSOC);
 		return $imageinfo;
 	}
 
@@ -1445,7 +1445,7 @@ class leginondata {
 			."a.`DEF_id` ='".$imgId."' "; 
 
 		$Rgridinfo = $this->mysql->SQLQuery($q);
-		$gridinfo = mysql_fetch_array($Rgridinfo);
+		$gridinfo = mysqli_fetch_array($Rgridinfo);
 		return $gridinfo['gridId'];
 	}
 
@@ -1496,7 +1496,7 @@ class leginondata {
 			."a.`DEF_id` ='".$imgId."' "; 
 		$parents = array();
 		$Rparent = $this->mysql->SQLQuery($q);
-		while ($parent = mysql_fetch_array($Rparent, MYSQL_ASSOC))
+		while ($parent = mysqli_fetch_array($Rparent, MYSQLI_ASSOC))
 			$parents[]=$parent;
 		return $parents;
 	}
@@ -1710,7 +1710,7 @@ class leginondata {
 		if ($this->mysql->SQLTableExists("ApplicationData")) {
 			$q = "select DEF_Id, name, version from ApplicationData order by name,version";
 			$Rapplication = $this->mysql->SQLQuery($q);
-			while($application = mysql_fetch_array($Rapplication))
+			while($application = mysqli_fetch_array($Rapplication))
 				$applications[] = $application;
 		}
 		return $applications;
@@ -1747,7 +1747,7 @@ class leginondata {
 			$schema_create = " <sqltable name=\"".$table."\" >$crlf";
 	
 			$result = $this->mysql->SQLQuery("SHOW FIELDS FROM $table"); 
-			while($row = mysql_fetch_array($result))
+			while($row = mysqli_fetch_array($result))
 			{
 					$schema_create .= "    <field $crlf";
 					$schema_create .= "      name=\"$row[Field]\" $crlf";
@@ -1763,7 +1763,7 @@ class leginondata {
 			}
 			$schema_create = preg_replace("%,".$crlf."$%", "", $schema_create);
 			$result = $this->mysql->SQLQuery("SHOW KEYS FROM $table") ;
-			while($row = mysql_fetch_array($result))
+			while($row = mysqli_fetch_array($result))
 			{
 					$kname = ($row['Key_name'] == "PRIMARY") ? 
 				$row['Key_name'] : $this->addBackquotes($row['Key_name']);
@@ -1830,19 +1830,19 @@ class leginondata {
 
 	function dumpDeleteSession($sessionId) {
 			$result = $this->mysql->SQLQuery("SHOW TABLES");
-			while($row = mysql_fetch_row($result))
+			while($row = mysqli_fetch_row($result))
 		$tables[] = $row[0];
 			// --- Get Reference Ids
 			$where = " `DEF_id` = $sessionId ";
 			$Rinfo = $this->mysql->SQLQuery("SELECT date_format(DEF_timestamp,'%m/%d/%Y') as date, `name` from SessionData where $where");
-			$result = mysql_fetch_array($Rinfo);
+			$result = mysqli_fetch_array($Rinfo);
 			$name = $result['name'];
 			$date = $result['date'];
 
 			$ref_tables[]='SessionData';
 			foreach($tables as $table) {
 				$result = $this->mysql->SQLQuery("SHOW FIELDS FROM $table"); 
-				while($row = mysql_fetch_array($result))
+				while($row = mysqli_fetch_array($result))
 			if (preg_match("^REF\|SessionData", $row['Field']))
 				if(!in_array($table,$ref_tables))
 					$ref_tables[]=$table;
@@ -1953,12 +1953,12 @@ class leginondata {
 			$crlf = $this->crlf;
 			$tbl_applicationdata="ApplicationData";
 			$result = $this->mysql->SQLQuery("SHOW TABLES");
-			while($row = mysql_fetch_row($result))
+			while($row = mysqli_fetch_row($result))
 		$tables[] = $row[0];
 			// --- Get Reference Ids
 			$where = " `DEF_Id` = $applicationId ";
 			$Rinfo = $this->mysql->SQLQuery("SELECT date_format(DEF_timestamp,'%m/%d/%Y') as date, `name`, `version` from $tbl_applicationdata where $where");
-			$result = mysql_fetch_array($Rinfo);
+			$result = mysqli_fetch_array($Rinfo);
 			$name = $result['name'];
 			$version = $result['version'];
 			$date = $result['date'];
@@ -1968,7 +1968,7 @@ class leginondata {
 		if ($table=="LaunchedApplicationData" || $table=="launchedapplicationdata")
 			continue;
 				$result = $this->mysql->SQLQuery("SHOW FIELDS FROM $table"); 
-				while($row = mysql_fetch_array($result))
+				while($row = mysqli_fetch_array($result))
 			if (preg_match("%^REF\|$tbl_applicationdata%", $row['Field']))
 				if(!in_array($table,$ref_tables))
 					$ref_tables[]=$table;
@@ -2145,7 +2145,7 @@ class leginondata {
 		$query = "Select `DEF_id`, name, version from ApplicationData where $where ";
 		$query .= "order by `version` desc ";
 		$Rresult = $this->mysql->SQLQuery($query);
-		$result = mysql_fetch_array($Rresult);
+		$result = mysqli_fetch_array($Rresult);
 		$appinsert = $sqldata['ApplicationData'][0];
 		if ($result) {
 			//--- This makes the new import always the highest local version
@@ -2232,7 +2232,7 @@ class leginondata {
 		$q="SELECT `DEF_id`, concat(label,' ',axis) as label  from StageModelCalibrationData order by `DEF_timestamp` DESC";
 		$result = $this->mysql->SQLQuery($q);
 		if($result != false){
-			while ($row= mysql_fetch_array($result, MYSQL_ASSOC))
+			while ($row= mysqli_fetch_array($result, MYSQLI_ASSOC))
 				$models[] = $row;
 		}
 		return $models;
@@ -2249,7 +2249,7 @@ class leginondata {
 		." order by s.`DEF_timestamp` DESC";
 		$result = $this->mysql->SQLQuery($q);
 		if($result != false){
-			while ($row= mysql_fetch_array($result, MYSQL_ASSOC))
+			while ($row= mysqli_fetch_array($result, MYSQLI_ASSOC))
 				$models[] = $row;
 		}
 		return $models;
@@ -2258,14 +2258,14 @@ class leginondata {
 	function getGoniometerModelId($label, $axis) {
 		$q="SELECT `DEF_id` from StageModelCalibrationData where label=\"$label\" and axis=\"$axis\" order by `DEF_timestamp` DESC limit 1";
 		$result = $this->mysql->SQLQuery($q);
-		$row = mysql_fetch_array($result);
+		$row = mysqli_fetch_array($result);
 		return $row['DEF_id'];
 	}
 
 	function getGoniometerModel($Id) {
 		$q="SELECT * from StageModelCalibrationData where `DEF_id` = \"$Id\"";
 		$result = $this->mysql->SQLQuery($q);
-		$row = mysql_fetch_array($result, MYSQL_ASSOC);
+		$row = mysqli_fetch_array($result, MYSQLI_ASSOC);
 		return $row;
 	}
 
@@ -2974,9 +2974,10 @@ class leginondata {
 
 	function readDataTree(&$arr_node,$Rq,$refname="",$recursive=true) {
 		if ($Rq)
-		while  ($row  =  mysql_fetch_row($Rq))  {
-			for  ($i=0;  $i<mysql_num_fields($Rq);  $i++)  {
-				$field = mysql_field_name(($Rq), $i);
+		while  ($row  =  mysqli_fetch_row($Rq))  {
+			for  ($i=0;  $i<mysqli_num_fields($Rq);  $i++)  {
+            $fieldInfo = mysqli_fetch_field_direct(($Rq), $i);
+            $field = $fieldInfo->name;
 				if (preg_match("%^REF\|%",$field)){
 					$ref = preg_replace("%^REF\|%",'',$field);
 					$ref .= '|'.preg_replace("%'%","",$row[$i]);

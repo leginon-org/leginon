@@ -26,7 +26,7 @@ function getStatistic($dbname) {
 	);
 	$legdb = new mysql(DB_HOST, DB_USER, DB_PASS, $dbname);
 	$res = $legdb->SQLQuery('SHOW TABLE STATUS FROM `'.$dbname.'`'); 
-	while ($row = mysql_fetch_array($res, MYSQL_ASSOC)) {
+	while ($row = mysqli_fetch_array($res, MYSQLI_ASSOC)) {
 		$stats['tbl_cnt']++;
 		$stats['data_sz'] += $row['Data_length'];
 		$stats['idx_sz'] += $row['Index_length'];
@@ -43,14 +43,14 @@ function getStatistic($dbname) {
 
 function count_tbl_rows($dbc, $table) {
         $res = $dbc->SQLQuery("SELECT COUNT(*) FROM `$table`");
-        $row = mysql_fetch_row($res);
+        $row = mysqli_fetch_row($res);
 	$num_rows = $row[0];
 	return $num_rows;
 }
 
 function count_tbl_fields($dbc, $table) {
         $res = $dbc->SQLQuery("SHOW FIELDS FROM `$table`");
-	$num_rows = mysql_num_rows($res);
+	$num_rows = mysqli_num_rows($res);
 	return $num_rows;
 }
 
@@ -86,63 +86,65 @@ $numOfLeginonDBRecord = $dbStats['tot_cell'];
 $today = date("m/d/y");
 project_header("Statistics Report - " . $today);
 
-mysql_connect(DB_HOST, DB_USER, DB_PASS) or
-    die("Could not connect: " . mysql_error());
+$link = mysqli_connect(DB_HOST, DB_USER, DB_PASS);
+if (mysqli_connect_errno()) {
+    die("Could not connect: " . mysqli_connect_error());
+}
 
 /* use leginon database */
-mysql_select_db(DB_LEGINON);
+mysqli_select_db($link, DB_LEGINON);
 
 /* get total number of images and total size of images */
 $q = "select count(DEF_id), sum(pixels) from AcquisitionImageData";
-$r = mysql_query($q) or die("Query error: " . mysql_error());
-$row = mysql_fetch_row($r);
+$r = mysqli_query($link, $q) or die("Query error: " . mysqli_error($link));
+$row = mysqli_fetch_row($r);
 $numOfImages = (int)$row[0];
 $numOfImageSize = byteSize($row[1] * 4);
 
 /* get total number of sessions with at least 10 images */
 $q = "select distinct `REF|SessionData|session` as sessionID, 
 		count(DEF_id) as images from AcquisitionImageData group by sessionID";
-$r = mysql_query($q) or die("Query error: " . mysql_error());
+$r = mysqli_query($link, $q) or die("Query error: " . mysqli_error($link));
 
-while ($row = mysql_fetch_array($r, MYSQL_ASSOC)) {
+while ($row = mysqli_fetch_array($r, MYSQLI_ASSOC)) {
 	$numOfSessionsWithImages += (int)$row['images'] > 10 ? 1 : 0;
 }
 
 /* get total tomographic tilt series */
 $q = "SELECT count(*) from TiltSeriesData where `tilt max` is not null";
-$r = mysql_query($q) or die("Query error: " . mysql_error());
-$row = mysql_fetch_row($r);
+$r = mysqli_query($link, $q) or die("Query error: " . mysqli_error($link));
+$row = mysqli_fetch_row($r);
 $TomographicTiltSeries = (int)$row[0];
 
 /* change to project database */
-mysql_select_db(DB_PROJECT);
+mysqli_select_db($link, DB_PROJECT);
 
 /* get total number of projects */
 $q = "select count(DEF_id) from projects";
-$r = mysql_query($q) or die("Query error: " . mysql_error());
-$row = mysql_fetch_row($r);
+$r = mysqli_query($link, $q) or die("Query error: " . mysqli_error($link));
+$row = mysqli_fetch_row($r);
 $totalNumProjects = (int)$row[0];
 
 /* get total sessions tie with projects and total project contain sessions.*/
 $q = "select count(distinct `REF|leginondata|SessionData|session`), 
 		count(distinct `REF|projects|project`) from projectexperiments";
-$r = mysql_query($q) or die("Query error: " . mysql_error());
-$row = mysql_fetch_row($r);
+$r = mysqli_query($link, $q) or die("Query error: " . mysqli_error($link));
+$row = mysqli_fetch_row($r);
 $totalNumSessionUnderProjects = (int)$row[0];
 $totalProjectWithSessions = (int)$row[1];
 
 $q = "select DATE_FORMAT(DEF_timestamp, '%Y-%m-%e'), `REF|leginondata|SessionData|session` 
 		from projectexperiments order by DEF_timestamp desc limit 1";
-$r = mysql_query($q) or die("Query error: " . mysql_error());
-$row = mysql_fetch_row($r);
+$r = mysqli_query($link, $q) or die("Query error: " . mysqli_error($link));
+$row = mysqli_fetch_row($r);
 $lastSessionTime = $row[0];
 $lastSessionID = $row[1];
 
 $q = "select DATE_FORMAT(DEF_timestamp, '%Y-%m-%e'), `REF|leginondata|SessionData|session` 
 		from projectexperiments where `REF|leginondata|SessionData|session` <> 'NULL' 
 		order by DEF_timestamp ASC limit 1";
-$r = mysql_query($q) or die("Query error: " . mysql_error());
-$row = mysql_fetch_row($r);
+$r = mysqli_query($link, $q) or die("Query error: " . mysqli_error($link));
+$row = mysqli_fetch_row($r);
 $firstSessionTime = $row[0];
 $firstSessionID = $row[1];
 
@@ -154,8 +156,8 @@ $firstSessionID = $row[1];
  */
 
 $q = "select * from dataStatusReport order by `DEF_timestamp` desc limit 1";
-$r = mysql_query($q) or die("Query error: " . mysql_error());
-$row = mysql_fetch_row($r);
+$r = mysqli_query($link, $q) or die("Query error: " . mysqli_error($link));
+$row = mysqli_fetch_row($r);
 
 if(!empty($row)){
 	$latestRunTimestamp = $row[1];
@@ -194,7 +196,7 @@ if(!empty($row)){
 if (empty($latestRunTimestamp) || strtotime($latestRunTimestamp) < strtotime("-1 week")){ 
 	
 	/* get all the ap databases name */
-	$result = mysql_query("select distinct appiondb from processingdb");
+	$result = mysqli_query($link, "select distinct appiondb from processingdb");
 	/*
 	 * select count(appiondb) from processingdb;  => 208 (total projects have ap database)
 	 * select count(*) from projects; => 258 (total projects)
@@ -205,27 +207,27 @@ if (empty($latestRunTimestamp) || strtotime($latestRunTimestamp) < strtotime("-1
 	$currentTime = time();
 	$firstExptRunTime = $currentTime;
 	
-	while ($row = mysql_fetch_array($result, MYSQL_ASSOC)) {
+	while ($row = mysqli_fetch_array($result, MYSQLI_ASSOC)) {
 
 		//This is only special for our group.
 		//if($row['appiondb'] == 'ap5') continue;
 		
-		mysql_select_db($row['appiondb']);
+		mysqli_select_db($link, $row['appiondb']);
 		$apdb = new mysql(DB_HOST, DB_USER, DB_PASS, $row['appiondb']);
 		// No ScriptProgramRun means no processing
 		if (!$apdb->SQLTableExists('ScriptProgramRun')) continue;
 
 		/* get Total number of Projects with processed data: */
 		$q = "SELECT count(DEF_id) from ScriptProgramRun";
-		$r = mysql_query($q) or die("Query error: " . mysql_error());
-		$row = mysql_fetch_row($r);
+		$r = mysqli_query($link, $q) or die("Query error: " . mysqli_error($link));
+		$row = mysqli_fetch_row($r);
 		$numOfApProjects += count((int)$row[0]) == 0 ? 0 : 1;
 		
 		/* get number of Sessions with processed data */
 		$q = "select count(distinct `REF|leginondata|SessionData|session`), 
 				count(DEF_id), max(DEF_timestamp), min(DEF_timestamp) from ApAppionJobData";
-		$r = mysql_query($q) or die("Query error: " . mysql_error());
-		$row = mysql_fetch_row($r);
+		$r = mysqli_query($link, $q) or die("Query error: " . mysqli_error($link));
+		$row = mysqli_fetch_row($r);
 		$numOfSessionsProcessed += (int)$row[0];
 		$numOfTotalProcessingRuns += (int)$row[1];
 		
@@ -238,26 +240,26 @@ if (empty($latestRunTimestamp) || strtotime($latestRunTimestamp) < strtotime("-1
 		/* get total processed images */
 		$q = "SELECT COUNT(DISTINCT `REF|leginondata|AcquisitionImageData|image`) AS img
 				FROM `ApCtfData`";	
-		$r = mysql_query($q) or die("Query error: " . mysql_error());
-		$row = mysql_fetch_row($r);
+		$r = mysqli_query($link, $q) or die("Query error: " . mysqli_error($link));
+		$row = mysqli_fetch_row($r);
 		$aceProcessedImages += (int)$row[0];
 		
 		/* get ace run */
 		$q = "SELECT count(*) from ApAceParamsData";
-		$r = mysql_query($q) or die("Query error: " . mysql_error());
-		$row = mysql_fetch_row($r);
+		$r = mysqli_query($link, $q) or die("Query error: " . mysqli_error($link));
+		$row = mysqli_fetch_row($r);
 		$aceRun += (int)$row[0];
 		
 		/* get ace 2 run */
 		$q = "SELECT count(*) from ApAce2ParamsData";
-		$r = mysql_query($q) or die("Query error: " . mysql_error());
-		$row = mysql_fetch_row($r);
+		$r = mysqli_query($link, $q) or die("Query error: " . mysqli_error($link));
+		$row = mysqli_fetch_row($r);
 		$ace2Run += (int)$row[0];
 		
 		/* get ctffind run */
 		$q = "SELECT count(*) from ApCtfTiltParamsData";
-		$r = mysql_query($q) or die("Query error: " . mysql_error());
-		$row = mysql_fetch_row($r);
+		$r = mysqli_query($link, $q) or die("Query error: " . mysqli_error($link));
+		$row = mysqli_fetch_row($r);
 		$ctfindRun += (int)$row[0];
 	
 		/* get particle picking run information */
@@ -267,8 +269,8 @@ if (empty($latestRunTimestamp) || strtotime($latestRunTimestamp) < strtotime("-1
 				COUNT(DISTINCT `REF|ApTiltAlignParamsData|tiltparams`) AS tilt
 				FROM `ApSelectionRunData`";	
 		
-		$r = mysql_query($q) or die("Query error: " . mysql_error());
-		$row = mysql_fetch_row($r);
+		$r = mysqli_query($link, $q) or die("Query error: " . mysqli_error($link));
+		$row = mysqli_fetch_row($r);
 		$particleSelectionRuns += (int)$row[0];
 		$dogPickerRuns += (int)$row[1];
 		$manualPickerRuns += (int)$row[2];
@@ -280,21 +282,21 @@ if (empty($latestRunTimestamp) || strtotime($latestRunTimestamp) < strtotime("-1
 				COUNT(DISTINCT `REF|leginondata|AcquisitionImageData|image`) AS i 
 				FROM `ApParticleData`";
 		
-		$r = mysql_query($q) or die("Query error: " . mysql_error());
-		$row = mysql_fetch_row($r);
+		$r = mysqli_query($link, $q) or die("Query error: " . mysqli_error($link));
+		$row = mysqli_fetch_row($r);
 		$selectedParticles += (int)$row[0];
 		
 		/* classification runs */
 		$q = "SELECT count(*), sum(num_classes) as total_classes from ApClusteringStackData";
-		$r = mysql_query($q) or die("Query error: " . mysql_error());
-		$row = mysql_fetch_row($r);
+		$r = mysqli_query($link, $q) or die("Query error: " . mysqli_error($link));
+		$row = mysqli_fetch_row($r);
 		$classificationRuns += (int)$row[0];
 		$numOfClasses += (int)$row[1];
 		
 		/* Classified particles */
 		$q = "SELECT count(*) from ApClusteringParticleData";
-		$r = mysql_query($q) or die("Query error: " . mysql_error());
-		$row = mysql_fetch_row($r);
+		$r = mysqli_query($link, $q) or die("Query error: " . mysqli_error($link));
+		$row = mysqli_fetch_row($r);
 		$classifiedParticles += (int)$row[0];
 		
 		/* Stack info */
@@ -304,25 +306,25 @@ if (empty($latestRunTimestamp) || strtotime($latestRunTimestamp) < strtotime("-1
 				LEFT JOIN `ApStackParticleData` AS p
 				ON s.`DEF_id` = p.`REF|ApStackData|stack`";
 		
-		$r = mysql_query($q) or die("Query error: " . mysql_error());
-		$row = mysql_fetch_row($r);
+		$r = mysqli_query($link, $q) or die("Query error: " . mysqli_error($link));
+		$row = mysqli_fetch_row($r);
 		$totalStacks += (int)$row[1];
 		$totalStacksParticles += (int)$row[0];
 		
 		/* RCT Models */
 		$q = "SELECT count(*) from ApRctRunData";
-		$r = mysql_query($q) or die("Query error: " . mysql_error());
-		$row = mysql_fetch_row($r);
+		$r = mysqli_query($link, $q) or die("Query error: " . mysqli_error($link));
+		$row = mysqli_fetch_row($r);
 		$totalRCTModels += (int)$row[0];		
 		
 		/* Tomograms (need to add sub tomogram run and also full tomogram run */
 		$q = "SELECT count(*) from ApTomogramData";
-		$r = mysql_query($q) or die("Query error: " . mysql_error());
-		$row = mysql_fetch_row($r);
+		$r = mysqli_query($link, $q) or die("Query error: " . mysqli_error($link));
+		$row = mysqli_fetch_row($r);
 		$tomogramRun += (int)$row[0];
 		$q = "SELECT count(*) from ApFullTomogramData";
-		$r = mysql_query($q) or die("Query error: " . mysql_error());
-		$row = mysql_fetch_row($r);
+		$r = mysqli_query($link, $q) or die("Query error: " . mysqli_error($link));
+		$row = mysqli_fetch_row($r);
 		$tomogramRun += (int)$row[0];
 		
 		/* get information about Reconstruction */
@@ -333,8 +335,8 @@ if (empty($latestRunTimestamp) || strtotime($latestRunTimestamp) < strtotime("-1
 			LEFT JOIN `ApRefineParticleData` AS p
 			ON i.`DEF_id` = p.`REF|ApRefineIterData|refineIter`";
 		
-		$r = mysql_query($q) or die("Query error: " . mysql_error());
-		$row = mysql_fetch_row($r);
+		$r = mysqli_query($link, $q) or die("Query error: " . mysqli_error($link));
+		$row = mysqli_fetch_row($r);
 		$totalReconRun += (int)$row[2];
 		$totalReconIterations += (int)$row[1];
 		$totalClassifiedParticles += (int)$row[0];
@@ -343,16 +345,16 @@ if (empty($latestRunTimestamp) || strtotime($latestRunTimestamp) < strtotime("-1
 		$q = "SELECT count(*) AS templates
 				FROM ApTemplateImageData";
 		
-		$r = mysql_query($q) or die("Query error: " . mysql_error());
-		$row = mysql_fetch_row($r);
+		$r = mysqli_query($link, $q) or die("Query error: " . mysqli_error($link));
+		$row = mysqli_fetch_row($r);
 		$totalTemplates += (int)$row[0];
 	
 		/* total initial models */
 		$q = "SELECT count(*) AS models
 				FROM ApInitialModelData";
 		
-		$r = mysql_query($q) or die("Query error: " . mysql_error());
-		$row = mysql_fetch_row($r);
+		$r = mysqli_query($link, $q) or die("Query error: " . mysqli_error($link));
+		$row = mysqli_fetch_row($r);
 		$totalInitialModels += (int)$row[0];
 		   
 	} // end while loop
@@ -361,7 +363,7 @@ if (empty($latestRunTimestamp) || strtotime($latestRunTimestamp) < strtotime("-1
 	if ( $firstExptRunTime == $currentTime ) $firstExptRunTime = "0000-00-00-00:00:00";
 	
 	// save data in to the dataStatusReport table
-	mysql_select_db(DB_PROJECT);
+	mysqli_select_db($link, DB_PROJECT);
 	$q = "insert into dataStatusReport 
 			(appion_project, processed_session, processed_run, last_exp_runtime, 
 			ace_run, ace2_run, ctfind_run,ace_processed_image, particle_selection, dog_picker, 
@@ -374,7 +376,7 @@ if (empty($latestRunTimestamp) || strtotime($latestRunTimestamp) < strtotime("-1
 			$classifiedParticles.", ".$totalRCTModels.", ".$tomogramRun.", ".$totalStacks.", ".
 			$totalStacksParticles.", ".$totalReconRun.", ".$totalReconIterations.", ".$totalClassifiedParticles.", ".
 			$totalTemplates.", ".$totalInitialModels.", '".$firstExptRunTime."')";
-	$r = mysql_query($q) or die("Query error: " . mysql_error());
+	$r = mysqli_query($link, $q) or die("Query error: " . mysqli_error($link));
 }
 	
 $totalCTF = $aceRun + $ace2Run + $ctfindRun;
@@ -446,7 +448,7 @@ $totalCTF = $aceRun + $ace2Run + $ctfindRun;
 	LEFT JOIN userdetails ON userdetails.`REF|leginondata|UserData|user` = projectowners.`REF|leginondata|UserData|user`
 	WHERE (projectexperiments.`DEF_timestamp` BETWEEN '$dateFrom' and '$dateTo')
 		GROUP BY userdetails.`institution`";
-		$r = mysql_query($q) or die("Query error: " . mysql_error());
+		$r = mysqli_query($link, $q) or die("Query error: " . mysqli_error($link));
 	}
 	else{
 		$q = "SELECT userdetails.`institution`, count( DISTINCT projectexperiments.`REF|projects|project` ), count( DISTINCT projectexperiments.`REF|leginondata|SessionData|session` )
@@ -454,17 +456,17 @@ $totalCTF = $aceRun + $ace2Run + $ctfindRun;
 	LEFT JOIN projectowners ON projectowners.`REF|projects|project` = projectexperiments.`REF|projects|project`
 	LEFT JOIN userdetails ON userdetails.`REF|leginondata|UserData|user` = projectowners.`REF|leginondata|UserData|user`
 	GROUP BY userdetails.`institution`";
-		$r = mysql_query($q) or die("Query error: " . mysql_error());
+		$r = mysqli_query($link, $q) or die("Query error: " . mysqli_error($link));
 		$date_q = "SELECT DATE_FORMAT(MIN(projectexperiments.`DEF_timestamp`), '%Y-%m-%d') AS date1,
        				DATE_FORMAT(MAX(projectexperiments.`DEF_timestamp`), '%Y-%m-%d') AS date2
 					FROM projectexperiments";
 		
-		$date_r = mysql_query($date_q) or die("Query error: " . mysql_error());
-		$row = mysql_fetch_row($date_r);
+		$date_r = mysqli_query($link, $date_q) or die("Query error: " . mysqli_error($link));
+		$row = mysqli_fetch_row($date_r);
 		$dateFrom = $row[0];
 		$dateTo = $row[1];
 	}
-	while ($totalProjectWithSessionsByInstitution =  mysql_fetch_row($r))
+	while ($totalProjectWithSessionsByInstitution =  mysqli_fetch_row($r))
 	{
 		echo "<tr><td>$totalProjectWithSessionsByInstitution[0]</td><td>$totalProjectWithSessionsByInstitution[1]</td><td>$totalProjectWithSessionsByInstitution[2]</td></tr>"; 
 	}
@@ -490,7 +492,7 @@ $totalCTF = $aceRun + $ace2Run + $ctfindRun;
 		<table border="1"  cellpadding="5" cellspacing="0" width="100%">
 			<tr><td><b>TEM</b></td><td><b>Camera</b></td><td><b>Hostname</b></td><td><b># Images</b></td></tr>
 			<?php
-			mysql_select_db(DB_LEGINON);
+			mysqli_select_db($link, DB_LEGINON);
 			$q = "SELECT B.tem, B.camera, A.hostname, A.image_count
 				FROM (
 				SELECT i.hostname, c.image_count, cid
@@ -510,8 +512,8 @@ $totalCTF = $aceRun + $ace2Run + $ctfindRun;
 				JOIN `InstrumentData` i2 ON p.`REF|InstrumentData|ccdcamera` = i2.`DEF_id`
 				GROUP BY `REF|InstrumentData|ccdcamera`
 				) AS B ON B.DEF_id = A.cid";
-			$r = mysql_query($q) or die("Query error: " . mysql_error());
-			while ($row =  mysql_fetch_row($r))
+			$r = mysqli_query($link, $q) or die("Query error: " . mysqli_error($link));
+			while ($row =  mysqli_fetch_row($r))
 			{
 				echo "<tr><td>$row[0]</td><td>$row[1]</td><td>$row[2]</td><td>$row[3]</td></tr>";
 			}
