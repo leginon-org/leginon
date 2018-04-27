@@ -42,11 +42,12 @@ class CameraSingleAcquisition(object):
 		binning = self.CameraSettings.Binning.Width
 		image_shape = (int(unbinned_image_shape[0]/binning),int(unbinned_image_shape[1]/binning))
 		ar = self.getSyntheticImage(image_shape)
-		ar = ar.reshape((image_shape[0]*image_shape[1],))
+		# make into stream
+		ar1 = ar.reshape((image_shape[0]*image_shape[1],))
 		image_obj = Image()
 		image_obj.MetaData.ImageSize.Width = image_shape[1]
 		image_obj.MetaData.ImageSize.Height = image_shape[0]
-		image_obj.AsSafeArray = ar
+		image_obj.AsSafeArray = ar1
 		self.IsActive = False
 		nframes = len(self.CameraSettings.DoseFractionsDefinition.frame_range_list)
 		print 'movie nframes', nframes
@@ -58,7 +59,7 @@ class CameraSingleAcquisition(object):
 				if i == 0:
 					mrc.write(ar,file_path)
 				else:
-					ar = self.getSyntheticImage(camsize)
+					ar = self.getSyntheticImage(image_shape)
 					mrc.append(ar,file_path)
 		return image_obj
 
