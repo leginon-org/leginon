@@ -1,14 +1,26 @@
 #!/usr/bin/env python
 import leginondata
-import noderegistry
 '''
 Module for general functions that use Node and Binding Specs of an Application
 '''
+
+def getNodeSpecData(appdata,node_alias):
+	'''
+	Return node data.
+	'''
+	q = leginondata.NodeSpecData(application=appdata,alias=node_alias)
+	r = q.query()
+	if not r:
+		# no node of this name
+		return None
+	return r[0]
 
 def getLastNodeThruBinding(appdata,to_node_alias,binding_name,last_node_baseclass_name):
 	'''
 	Use the binding in the application to get the last/previous node of a defined base class.
 	'''
+	# Not to do  global import so that it does not import when the module is loaded
+	import noderegistry
 	last_class = noderegistry.getNodeClass(last_node_baseclass_name)
 	# Try 10 iteration before giving up
 	for iter in range(10):
@@ -37,6 +49,8 @@ def getNextNodeThruBinding(appdata,from_node_alias,binding_name,next_node_basecl
 	'''
 	Use the binding in the application to get the next node of a defined base class.
 	'''
+	# Not to do  global import so that it does not import when the module is loaded
+	import noderegistry
 	next_class = noderegistry.getNodeClass(next_node_baseclass_name)
 	# Try 10 iteration before giving up
 	for iter in range(10):
