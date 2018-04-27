@@ -113,6 +113,12 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		if self.__class__ == MosaicClickTargetFinder:
 			self.start()
 
+	def insertDoneTargetList(self, targetlistdata):
+		# this class targetlist must not be recorded done so that
+		# more targets can be added to it
+		self.logger.debug('%s did not insert done on %d' % (self.name,targetlistdata.dbid))
+		pass
+
 	# not complete
 	def handleTargetListDone(self, targetlistdoneevent):
 		if self.settings['create on tile change'] == 'final':
