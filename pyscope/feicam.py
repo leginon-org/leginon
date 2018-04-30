@@ -59,8 +59,9 @@ class FeiCam(ccdcamera.CCDCamera):
 		ccdcamera.CCDCamera.__init__(self)
 		self.save_frames = False
 		self._connectToFEIAdvScripting()
-		self.setReadoutLimits()
+		# set binning first so we can use it
 		self.setCameraBinnings()
+		self.setReadoutLimits()
 		self.initSettings()
 
 	def __getattr__(self, name):
@@ -94,6 +95,7 @@ class FeiCam(ccdcamera.CCDCamera):
 		readout_dicts = {READOUT_FULL:1,READOUT_HALF:2,READOUT_QUARTER:4}
 		self.sorted_readout_keys = (READOUT_QUARTER, READOUT_HALF, READOUT_FULL)
 		size = self.getCameraSize()
+		# before binning
 		self.limit_dim = {}
 		self.limit_off = {}
 		for k in self.sorted_readout_keys:
@@ -116,7 +118,7 @@ class FeiCam(ccdcamera.CCDCamera):
 		set self.binning_limits and the self.binning_limit_objs
 		'''
 		self.binning_limit_objs= self.capabilities.SupportedBinnings
-		count = self.binning_limit_objs.count
+		count = self.binning_limit_objs.Count
 		binning_limits = []
 		for index in range(count):
 			binning_limits.append(self.binning_limit_objs[index].Width)
@@ -193,7 +195,6 @@ class FeiCam(ccdcamera.CCDCamera):
 				b_index = self.binning_limits.index(binning['x'])
 				self.camera_settings.Binning = self.binning_limit_objs[b_index]
 		except:
-			print 'could not set', kwargs
 			raise
 
 	def getConfig(self, param):
@@ -216,10 +217,13 @@ class FeiCam(ccdcamera.CCDCamera):
 		self.exposuretype = value
 
 	def getPixelSize(self):
-		pixelsize = self.camera.PixelSize #in meters
-		return {'x': pixelsize, 'y': pixelsize}
+		p = self.camera.PixelSize #in meters
+		return {'x': p.Width, 'y': p.Height}
 
 	def getReadoutAreaKey(self,unbindim, off):
+		size = self.getCameraSize()
+		if unbindim['x']+off['x'] > size['x'] or unbindim['y']+off['y'] > size['y']:
+			raise ValueError('defined readout area outside the camera')
 		for k in self.sorted_readout_keys:
 			limit_off = self.limit_off[k]
 			limit_dim = self.limit_dim[k]
@@ -230,9 +234,9 @@ class FeiCam(ccdcamera.CCDCamera):
 				return k
 		raise ValueError('Does not fit any defined readout area')
 
-	def getReadoutOffset(self, key, full_off):
+	def getReadoutOffset(self, key, binned_full_off):
 		limit_off = self.limit_off[key]
-		return {'x':full_off['x']-limit_off['x'],'y':full_off['x']-limit_off['y']}
+		return {'x':binned_full_off['x']-limit_off['x']/self.binning['x'],'y':binned_full_off['x']-limit_off['y']/self.binning['y']}
 
 	def finalizeSetup(self):
 		# final bin
@@ -240,13 +244,14 @@ class FeiCam(ccdcamera.CCDCamera):
 
 		# final range
 		unbindim = {'x':self.dimension['x']*binning['x'], 'y':self.dimension['y']*binning['y']}
-		off = self.offset
-		readout_key = self.getReadoutAreaKey(unbindim, off)
+		unbinoff = {'x':self.offset['x']*binning['x'], 'y':self.offset['y']*binning['y']}
+		print 'binned', self.dimension, self.offset
+		print 'unbin', unbindim, unbinoff
+		readout_key = self.getReadoutAreaKey(unbindim, unbinoff)
 		exposure = self.exposure/1000.0
 
 		# send it to camera
 		self.setConfig(binning= binning, readout=readout_key, exposure=exposure)
-
 
 	def custom_setup(self):
 		'''
@@ -277,6 +282,8 @@ class FeiCam(ccdcamera.CCDCamera):
 
 		t0 = time.time()
 
+		#TODO: Check if this is going to be an issue
+		self.csa.Wait()
 		try:
 			self.im = self.csa.Acquire()
 			t1 = time.time()
@@ -285,14 +292,20 @@ class FeiCam(ccdcamera.CCDCamera):
 		except:
 			raise
 			#raise RuntimeError('Camera Acquisition Error in getting array')
+		if not SIMULATION:
+			self.image_metadata = self.getMetaDataDict(self.im.MetaData)
+		else:
+			self.image_metadata = {}
 		arr = self.modifyImage(arr)
 		return arr
 
 	def modifyImage(self, arr):
-		self.image_metadata = self.im.MetaData
 		rk = self.getConfig('readout')
+		print rk, arr.shape
+		# reshape to 2D
 		try:
-			arr.reshape((self.limit_dim[rk]['y'],self.limit_dim[rk]['x']))
+			arr = arr.reshape((self.limit_dim[rk]['y']/self.binning['y'],self.limit_dim[rk]['x']/self.binning['x']))
+			print arr.shape
 			#arr = numpy.flipud(arr)
 		except AttributeError, e:
 			print 'comtypes did not return an numpy 2D array, but %s' % (type(arr))
@@ -302,9 +315,9 @@ class FeiCam(ccdcamera.CCDCamera):
 		#Offset to apply to get back the requested area
 		readout_offset = self.getReadoutOffset(rk, self.offset)
 		try:
-			if self.dimension['x'] < self.limit_dim[rk]['x']:
+			if self.dimension['x'] < arr.shape[1]:
 				arr=arr[:,readout_offset['x']:readout_offset['x']+self.dimension['x']]
-			if self.dimension['y'] < self.limit_dim[rk]['y']:
+			if self.dimension['y'] < arr.shape[0]:
 				arr=arr[readout_offset['y']:readout_offset['y']+self.dimension['y'],:]
 		except Exception, e:
 			print 'croping %s to offset %s and dim %s failed' %(self.limit_dim, self.readout_offset,self.dimension)
@@ -313,12 +326,44 @@ class FeiCam(ccdcamera.CCDCamera):
 		# TO DO: Maybe need to scale ?
 		return arr
 
+	def getMetaDataDict(self,meta_obj):
+		mdict = {}
+		count = meta_obj.Count
+		for i in range(count):
+			key = meta_obj[i].Key
+			v_string = meta_obj[i].ValueAsString
+			try:
+				#integer
+				value = int(v_string)
+			except (TypeError,ValueError):
+				try:
+					#float
+					value = float(v_string)
+				except:
+					#boolean
+					if v_string in ('FALSE','TRUE'):
+						if v_string == 'FALSE':
+							v_value = False
+						else:
+							v_value = True
+					else:
+						# string
+						value = v_string
+			if '.' in key:
+				bits = key.split('.')
+				if bits[0] not in mdict.keys():
+					mdict[bits[0]]={}
+				mdict[bits[0]][bits[1]]=value
+			else:
+				mdict[key]=value
+		return mdict
+
 	def getRetractable(self):
 		return True
 
 	def getInserted(self):
 		if self.getRetractable():
-			return self.camera.IsInserted()
+			return self.camera.IsInserted
 		else:
 			return True
 
@@ -328,22 +373,25 @@ class FeiCam(ccdcamera.CCDCamera):
 			return
 		if value:
 			sleeptime = 5
-			self.camera.Insert()
+			error_state=self.camera.Insert()
 		else:
 			sleeptime = 1
-			self.camera.Retract()
+			error_state=self.camera.Retract()
+		if error_state:
+			raise RuntimeError('Can not alter insert state')
 		time.sleep(sleeptime)
 
 	def getEnergyFiltered(self):
 		return False
 
-class Falcon(FeiCam):
-	name = 'Falcon3EC'
+class Falcon3(FeiCam):
+	name = 'Falcon3'
 	camera_name = 'BM-Falcon'
 	binning_limits = [1,2,4]
+	electron_counting = False
 
 	def __init__(self):
-		super(Falcon,self).__init__()
+		super(Falcon3,self).__init__()
 		self.dfd = self.camera_settings.DoseFractionsDefinition
 		self.save_frames = False
 		self.frames_name = None
@@ -367,7 +415,7 @@ class Falcon(FeiCam):
 			raise
 
 	def setInserted(self, value):
-		super(Falcon,self).setInserted(value)
+		super(Falcon3,self).setInserted(value)
 		if value == False:
 			# extra pause for Orius insert since Orius might think
 			# it is already inserted
@@ -423,7 +471,11 @@ class Falcon(FeiCam):
 	def getPreviousRawFramesName(self):
 		return self.frames_name
 
+	def setElectronCounting(self,value):
+		self.camera_settings.ElectronCounting = value
+
 	def custom_setup(self):
+		self.setElectronCounting(self.electron_counting)
 		self.calculateMovieExposure()
 		movie_exposure_second = self.movie_exposure/1000.0
 		self.camera_settings.ExposureTime = movie_exposure_second
@@ -437,6 +489,7 @@ class Falcon(FeiCam):
 				self.dosefrac_frame_time = movie_exposure_second / len(rangelist)
 			self.frames_pattern = self.frameconfig.getSubPathFramePattern()
 			self.camera_settings.SubPathPattern = self.frames_pattern
+			self.frames_name = self.frameconfig.getFrameDirName()
 		else:
 			rangelist = []
 			self.frames_name = None
@@ -459,60 +512,11 @@ class Falcon(FeiCam):
 		'''
 		return 3
 
-	def setFullCameraSetup(self):
-		# workaround to offset image problem
-		no_crop = {'x':0,'y':0}
-		self.setOffset(no_crop)
-		camsize = self.getCameraSize()
-		binning = self.getBinning()
-		full_dim = {'x': camsize['x']/binning['x'],'y':camsize['y']/binning['y']}
-		original_dim = self.getDimension()
-		self.setDimension(full_dim)
-		return original_dim
-
-	def _getImage(self):
-		crop = self.getOffset()
-		original_dimension = self.setFullCameraSetup()
-
-		# super (or self.as_super as used in de.py) does not work in proxy call
-		# copy the parent code here
-		try:
-			self.finalizeSetup()
-			self.custom_setup()
-		except:
-			raise
-			raise RuntimeError('Error setting camera acquisition parameters')
-
-		t0 = time.time()
-
-		try:
-			self.im = self.csa.Acquire()
-			t1 = time.time()
-			self.exposure_timestamp = (t1 + t0) / 2.0
-			# TO DO: Not sure what to ask for. Not explained in doc.
-			# Either just Array or AsSafeArray. Need to try on the actual camera.
-			arr = self.im.AsSafeArray
-		except:
-			raise
-			#raise RuntimeError('Camera Acquisition Error in getting array')
-		arr = self.modifyImage(arr)
-		# END copy the parent code here
-
-		image = arr
-		if type(image).__module__!='numpy':
-			return image
-		# workaround to offset image problem
-		self.setOffset(crop)
-		self.setDimension(original_dimension)
-		startx = self.getOffset()['x']
-		starty = self.getOffset()['y']
-		if startx != 0 or starty != 0:
-			endx = self.dimension['x'] + startx
-			endy = self.dimension['y'] + starty
-			image = image[starty:endy,startx:endx]
-		print 'modified shape',image.shape
-		return image
-
 	def getUseFrames(self):
 				return (self.start_frame_number,self.end_frame_number)
 
+class Falcon3EC(Falcon3):
+	name = 'Falcon3EC'
+	camera_name = 'BM-Falcon'
+	binning_limits = [1,2,4]
+	electron_counting = True

@@ -60,30 +60,33 @@ if ($type=="r") {
 		."from ApAppionJobData "
 		."where DEF_timestamp<>'0000-00-00 00:00:00' group by year,".$timegroup;
 		
-	mysql_connect(DB_HOST, DB_USER, DB_PASS) or die("Could not connect: " . mysql_error());
+	$link = mysqli_connect(DB_HOST, DB_USER, DB_PASS);
+   if (mysqli_connect_errno()) {
+       die("Could not connect: " . mysqli_connect_error());
+   }
 	
 	/* use the project database */
-	mysql_select_db(DB_PROJECT);
+	mysqli_select_db($link, DB_PROJECT);
 	
 	/* get all the ap database names */
-	$result = mysql_query("select distinct appiondb from processingdb") or die("Query error: " . mysql_error());
+	$result = mysqli_query($link, "select distinct appiondb from processingdb") or die("Query error: " . mysqli_error($link));
 
 	// $keyedData uses the unix timestamp for each quarter as the key and stores the total number
 	// of runs for the quarter across all projects as the value. 
 	$keyedData = array();
 	
 	// for each appion database, get the number of processing runs per quarter
-	while ($row = mysql_fetch_array($result, MYSQL_ASSOC)) {
+	while ($row = mysqli_fetch_array($result, MYSQLI_ASSOC)) {
 
-		mysql_select_db($row['appiondb']);
+		mysqli_select_db($link, $row['appiondb']);
 		
-		$rexists = mysql_query("SHOW TABLES LIKE 'ApAppionJobData'");
-		$tableExists = mysql_num_rows($rexists) > 0;
+		$rexists = mysqli_query($link, "SHOW TABLES LIKE 'ApAppionJobData'");
+		$tableExists = mysqli_num_rows($rexists) > 0;
 		if ( $tableExists ) {
-			$r = mysql_query($q) or die("Database query error: " . mysql_error());
+			$r = mysqli_query($link, $q) or die("Database query error: " . mysqli_error($link));
 			
 			// add the processing runs from this project to the appropriate quarter
-			while ($rowInner = mysql_fetch_array($r, MYSQL_ASSOC)) {
+			while ($rowInner = mysqli_fetch_array($r, MYSQLI_ASSOC)) {
 				$k = array();
 				foreach ($timekeys as $t) $k[] = sprintf('%02d', (int) $rowInner[$t]);
 				// combine data from different appiondb

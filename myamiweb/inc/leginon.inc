@@ -757,7 +757,7 @@ class leginondata {
 			." where `REF|SessionData|session`='$sessionId' "
 			." order by `DEF_timestamp` desc limit 1 ";
 		$RfileInfo = $this->mysql->SQLQuery($q);
-		$fileInfo = mysql_fetch_array($RfileInfo);
+		$fileInfo = mysqli_fetch_array($RfileInfo);
 		return $fileInfo['id'];
 	} 
 
@@ -768,7 +768,7 @@ class leginondata {
 		$q = "select `image path` as path from `SessionData` "
 				." where `DEF_id`='$sessionId' ";
 		$Rpath=$this->mysql->SQLQuery($q);
-		$path = mysql_fetch_array($Rpath);
+		$path = mysqli_fetch_array($Rpath);
 		return Path::formatPath($path['path']);
 	}
 
@@ -814,7 +814,7 @@ class leginondata {
 
 	function findField($name) {
 		$result = $this->mysql->SQLQuery("SHOW TABLES");
-		while($row = mysql_fetch_row($result))
+		while($row = mysqli_fetch_row($result))
 			$tables[] = $row[0];
 	}
 
@@ -859,7 +859,7 @@ class leginondata {
 		$q = 'select '.$str_fields.' from `'.$table.'`'
 			.' where `DEF_id`="'.$id.'"';
 		$R = $this->mysql->SQLQuery($q);
-		while ($r = mysql_fetch_array($R, MYSQL_ASSOC))
+		while ($r = mysqli_fetch_array($R, MYSQLI_ASSOC))
 			$data[] = $r;
 		return $data;
 	}
@@ -868,7 +868,7 @@ class leginondata {
 		$q = "select `MRC|image` as filename from `MosaicImageData` where "
 			." `REF|SessionData|Session` =\"$sessionId\" ";
 		$RfileInfo = $this->mysql->SQLQuery($q);
-		$fileInfo = mysql_fetch_array($RfileInfo);
+		$fileInfo = mysqli_fetch_array($RfileInfo);
 		return $fileInfo['filename'];
 	}
 
@@ -1421,7 +1421,7 @@ class leginondata {
 			."a.`DEF_id` ='".$imgId."' "
 			."order by pi.`DEF_id` desc"; 
 		$Rimageinfo = $this->mysql->SQLQuery($q);
-		$imageinfo = mysql_fetch_array($Rimageinfo,MYSQL_ASSOC);
+		$imageinfo = mysqli_fetch_array($Rimageinfo,MYSQLI_ASSOC);
 		return $imageinfo;
 	}
 
@@ -1445,7 +1445,7 @@ class leginondata {
 			."a.`DEF_id` ='".$imgId."' "; 
 
 		$Rgridinfo = $this->mysql->SQLQuery($q);
-		$gridinfo = mysql_fetch_array($Rgridinfo);
+		$gridinfo = mysqli_fetch_array($Rgridinfo);
 		return $gridinfo['gridId'];
 	}
 
@@ -1496,7 +1496,7 @@ class leginondata {
 			."a.`DEF_id` ='".$imgId."' "; 
 		$parents = array();
 		$Rparent = $this->mysql->SQLQuery($q);
-		while ($parent = mysql_fetch_array($Rparent, MYSQL_ASSOC))
+		while ($parent = mysqli_fetch_array($Rparent, MYSQLI_ASSOC))
 			$parents[]=$parent;
 		return $parents;
 	}
@@ -1710,7 +1710,7 @@ class leginondata {
 		if ($this->mysql->SQLTableExists("ApplicationData")) {
 			$q = "select DEF_Id, name, version from ApplicationData order by name,version";
 			$Rapplication = $this->mysql->SQLQuery($q);
-			while($application = mysql_fetch_array($Rapplication))
+			while($application = mysqli_fetch_array($Rapplication))
 				$applications[] = $application;
 		}
 		return $applications;
@@ -1747,7 +1747,7 @@ class leginondata {
 			$schema_create = " <sqltable name=\"".$table."\" >$crlf";
 	
 			$result = $this->mysql->SQLQuery("SHOW FIELDS FROM $table"); 
-			while($row = mysql_fetch_array($result))
+			while($row = mysqli_fetch_array($result))
 			{
 					$schema_create .= "    <field $crlf";
 					$schema_create .= "      name=\"$row[Field]\" $crlf";
@@ -1763,7 +1763,7 @@ class leginondata {
 			}
 			$schema_create = preg_replace("%,".$crlf."$%", "", $schema_create);
 			$result = $this->mysql->SQLQuery("SHOW KEYS FROM $table") ;
-			while($row = mysql_fetch_array($result))
+			while($row = mysqli_fetch_array($result))
 			{
 					$kname = ($row['Key_name'] == "PRIMARY") ? 
 				$row['Key_name'] : $this->addBackquotes($row['Key_name']);
@@ -1830,19 +1830,19 @@ class leginondata {
 
 	function dumpDeleteSession($sessionId) {
 			$result = $this->mysql->SQLQuery("SHOW TABLES");
-			while($row = mysql_fetch_row($result))
+			while($row = mysqli_fetch_row($result))
 		$tables[] = $row[0];
 			// --- Get Reference Ids
 			$where = " `DEF_id` = $sessionId ";
 			$Rinfo = $this->mysql->SQLQuery("SELECT date_format(DEF_timestamp,'%m/%d/%Y') as date, `name` from SessionData where $where");
-			$result = mysql_fetch_array($Rinfo);
+			$result = mysqli_fetch_array($Rinfo);
 			$name = $result['name'];
 			$date = $result['date'];
 
 			$ref_tables[]='SessionData';
 			foreach($tables as $table) {
 				$result = $this->mysql->SQLQuery("SHOW FIELDS FROM $table"); 
-				while($row = mysql_fetch_array($result))
+				while($row = mysqli_fetch_array($result))
 			if (preg_match("^REF\|SessionData", $row['Field']))
 				if(!in_array($table,$ref_tables))
 					$ref_tables[]=$table;
@@ -1953,12 +1953,12 @@ class leginondata {
 			$crlf = $this->crlf;
 			$tbl_applicationdata="ApplicationData";
 			$result = $this->mysql->SQLQuery("SHOW TABLES");
-			while($row = mysql_fetch_row($result))
+			while($row = mysqli_fetch_row($result))
 		$tables[] = $row[0];
 			// --- Get Reference Ids
 			$where = " `DEF_Id` = $applicationId ";
 			$Rinfo = $this->mysql->SQLQuery("SELECT date_format(DEF_timestamp,'%m/%d/%Y') as date, `name`, `version` from $tbl_applicationdata where $where");
-			$result = mysql_fetch_array($Rinfo);
+			$result = mysqli_fetch_array($Rinfo);
 			$name = $result['name'];
 			$version = $result['version'];
 			$date = $result['date'];
@@ -1968,7 +1968,7 @@ class leginondata {
 		if ($table=="LaunchedApplicationData" || $table=="launchedapplicationdata")
 			continue;
 				$result = $this->mysql->SQLQuery("SHOW FIELDS FROM $table"); 
-				while($row = mysql_fetch_array($result))
+				while($row = mysqli_fetch_array($result))
 			if (preg_match("%^REF\|$tbl_applicationdata%", $row['Field']))
 				if(!in_array($table,$ref_tables))
 					$ref_tables[]=$table;
@@ -2145,7 +2145,7 @@ class leginondata {
 		$query = "Select `DEF_id`, name, version from ApplicationData where $where ";
 		$query .= "order by `version` desc ";
 		$Rresult = $this->mysql->SQLQuery($query);
-		$result = mysql_fetch_array($Rresult);
+		$result = mysqli_fetch_array($Rresult);
 		$appinsert = $sqldata['ApplicationData'][0];
 		if ($result) {
 			//--- This makes the new import always the highest local version
@@ -2232,7 +2232,7 @@ class leginondata {
 		$q="SELECT `DEF_id`, concat(label,' ',axis) as label  from StageModelCalibrationData order by `DEF_timestamp` DESC";
 		$result = $this->mysql->SQLQuery($q);
 		if($result != false){
-			while ($row= mysql_fetch_array($result, MYSQL_ASSOC))
+			while ($row= mysqli_fetch_array($result, MYSQLI_ASSOC))
 				$models[] = $row;
 		}
 		return $models;
@@ -2249,7 +2249,7 @@ class leginondata {
 		." order by s.`DEF_timestamp` DESC";
 		$result = $this->mysql->SQLQuery($q);
 		if($result != false){
-			while ($row= mysql_fetch_array($result, MYSQL_ASSOC))
+			while ($row= mysqli_fetch_array($result, MYSQLI_ASSOC))
 				$models[] = $row;
 		}
 		return $models;
@@ -2258,14 +2258,14 @@ class leginondata {
 	function getGoniometerModelId($label, $axis) {
 		$q="SELECT `DEF_id` from StageModelCalibrationData where label=\"$label\" and axis=\"$axis\" order by `DEF_timestamp` DESC limit 1";
 		$result = $this->mysql->SQLQuery($q);
-		$row = mysql_fetch_array($result);
+		$row = mysqli_fetch_array($result);
 		return $row['DEF_id'];
 	}
 
 	function getGoniometerModel($Id) {
 		$q="SELECT * from StageModelCalibrationData where `DEF_id` = \"$Id\"";
 		$result = $this->mysql->SQLQuery($q);
-		$row = mysql_fetch_array($result, MYSQL_ASSOC);
+		$row = mysqli_fetch_array($result, MYSQLI_ASSOC);
 		return $row;
 	}
 
@@ -2974,9 +2974,10 @@ class leginondata {
 
 	function readDataTree(&$arr_node,$Rq,$refname="",$recursive=true) {
 		if ($Rq)
-		while  ($row  =  mysql_fetch_row($Rq))  {
-			for  ($i=0;  $i<mysql_num_fields($Rq);  $i++)  {
-				$field = mysql_field_name(($Rq), $i);
+		while  ($row  =  mysqli_fetch_row($Rq))  {
+			for  ($i=0;  $i<mysqli_num_fields($Rq);  $i++)  {
+            $fieldInfo = mysqli_fetch_field_direct(($Rq), $i);
+            $field = $fieldInfo->name;
 				if (preg_match("%^REF\|%",$field)){
 					$ref = preg_replace("%^REF\|%",'',$field);
 					$ref .= '|'.preg_replace("%'%","",$row[$i]);
@@ -3253,13 +3254,47 @@ class leginondata {
 		return $this->mysql->getSQLResult($q);
 	}
 
-	function getNonQueueTargetListIds($sessionId,$mosaic=0,$limit=1000) {
+	function getNonQueueNodeSpecIds($sessionId) {
+		if (!$this->mysql->FieldExists('ImageTargetListData','REF|NodeSpecData|node')) return array();
+		$q="SELECT distinct "
+			."`REF|NodeSpecData|node` as nodeId "
+			."FROM ImageTargetListData "
+			."WHERE `REF|SessionData|session`=$sessionId "
+			."AND "
+			." mosaic=0 "
+			."";
+		return $this->mysql->getSQLResult($q);
+	}
+
+	function getNonQueueTargetListIds($sessionId,$nodeId, $mosaic=0,$limit=1000) {
 		$q="SELECT distinct "
 			."itlist.`DEF_id` as itlid "
 			."FROM "
 			."`ImageTargetListData` AS `itlist` "
 			."where "
 			."`itlist`.`REF|SessionData|session`=".$sessionId." "
+			."AND "
+			." `itlist`.`REF|NodeSpecData|node`=".$nodeId." "
+			."AND "
+			." `itlist`.mosaic=".$mosaic." "
+			."AND "
+			."`itlist`.`REF|QueueData|queue` is Null "
+			."order by itlid desc limit ".$limit." "
+			."";
+		return $this->mysql->getSQLResult($q);
+	}
+
+	function getNonQueueDoneTargetListIds($sessionId,$nodeId, $mosaic=0,$limit=1000) {
+		$q="SELECT distinct "
+			."itlist.`DEF_id` as itlid "
+			."FROM "
+			."`ImageTargetListData` AS `itlist` "
+			."RIGHT JOIN `DoneImageTargetListData` donelist "
+			."ON donelist.`REF|ImageTargetListData|list`=itlist.`DEF_id` "
+			."where "
+			."`itlist`.`REF|SessionData|session`=".$sessionId." "
+			."AND "
+			." `itlist`.`REF|NodeSpecData|node`=".$nodeId." "
 			."AND "
 			." `itlist`.mosaic=".$mosaic." "
 			."AND "
@@ -3279,11 +3314,12 @@ class leginondata {
 			." t.`REF|ImageTargetListData|list` = ".$targetlistId." "
 			."AND t.`type` LIKE CONVERT(_utf8 '".$targettype."' USING latin1) COLLATE "."latin1_swedish_ci "
 			."AND t.`status` LIKE CONVERT(_utf8 '".$status."' USING latin1) COLLATE " ."latin1_swedish_ci "
-			."AND t.`version` = 0 "
+			//."AND t.`version` = 0 "
+			."GROUP BY t.`number` "
 			."";
 		$result = $this->mysql->getSQLResult($q);
 		if ($result) {
-			return $result[0]['Count'];
+			return count($result);
 		} else {
 			return;	
 		}
@@ -3300,25 +3336,50 @@ class leginondata {
 		return $result;
 	}
 
+	function getTargetNodeAliases($sessionId) {
+		$nodeIds = $this->getNonQueueNodeSpecIds($sessionId);
+		if (empty($nodeIds)) return false;
+		$results = array();
+		foreach ($nodeIds as $item) {
+			$id = $item['nodeId'];
+			$q = "SELECT * from NodeSpecData where `DEF_id`=".$id." ";  
+			$result = $this->mysql->getSQLResult($q);
+			$results[$id] = $result[0]['alias'];
+		}
+		return $results;
+	}
+
 	function getNonQueueCountResults($sessionId) {
+		$nodes = $this->getTargetNodeAliases($sessionId);
+		if (empty($nodes)) return;
+		$results = array();
+		foreach ($nodes as $id=>$nodename) {
+			if (empty($id)) continue;
+				$results[$nodename] = $this->getNonQueueCountResultsFromNodeId($sessionId, $id);
+		}
+		return $results;
+	}
+
+	function getNonQueueCountResultsFromNodeId($sessionId, $nodeId) {
 		// The while loop makes it faster if the total number is large (long session)
 		// but most of the targets are done as it should be in normal situation.
 		$limit = 200;
 		while (true) {
-			$sqldataTList = $this->getNonQueueTargetListIds($sessionId,0,$limit);
+			$sqldataTList = $this->getNonQueueTargetListIds($sessionId,$nodeId,0,$limit);
 
 			// Test to see if there are more than the limit number of queue targetlist
-			$oversqldataTList = $this->getNonQueueTargetListIds($sessionId,0,$limit+1);
+			$oversqldataTList = $this->getNonQueueTargetListIds($sessionId,$nodeId,0,$limit+1);
 			$pretext = (count($oversqldataTList) > count($sqldataTList)) ? '> ':'= ';
 			if (empty($sqldataTList)) return false;
 
 			// Unprocessed/Active queue is the difference of the two lists
 			$doneitls = array();
 			$allitls = array();
-			//FIX ME: make a DoneTargetList in the future to reduce query time.
-			//foreach ($sqldataDoneList as $d) {
-			//	array_push($doneitls,$d['doneid']);
-			//};
+			//get done targetlist.
+			$sqldataDoneList = $this->getNonQueueDoneTargetListIds($sessionId,$nodeId,0,$limit);
+			foreach ($sqldataDoneList as $d) {
+				array_push($doneitls,$d['itlid']);
+			};
 			foreach ($sqldataTList as $d) {
 				array_push($allitls,$d['itlid']);
 			};
@@ -3330,8 +3391,9 @@ class leginondata {
 				break;
 			}
 		}
+
 		foreach (array('acquisition',) as $ttype) {
-			//$sqldataTime = $this->getQueueTimeData($sessionId,$qtype,$ttype,$limit);
+			$sqldataTime = $this->getTargetListProcessTimeData($sessionId,$nodeId,$ttype,$limit);
 			$totalActive = $this->getCountsFromImageTargetLists($activeitls,$ttype);
 			$totalNew = $this->getCountsFromImageTargetLists($allitls,$ttype);
 			$totalDone = 0;
@@ -3345,30 +3407,71 @@ class leginondata {
 			$totalActive -= $totalDoneInActive;
 
 			// Total Done include only  non-aborted done targets
-			//foreach ($sqldataTime as $d) {
-			//	$totalDone = $totalDone + $d['QueueCount'];
-			//	$totalTime = $totalTime + $d['QueueTime'];
-			//}
+			foreach ($sqldataTime as $d) {
+				$totalDone = $totalDone + $d['QueueCount'];
+				$totalTime = $totalTime + $d['QueueTime'];
+			}
 			if ($totalDone > 0) {
 				$avgtime = ($totalTime / $totalDone);
 				$esttime= ($totalActive) * $avgtime;
 			} else {
 				$avgtime = 0;
 			}
-			$qcount_by_targettype[$ttype] = array($pretext,$totalNew,$totalActive,(int)($avgtime));
+			$qcount_by_targettype[$ttype] = array($pretext,$totalNew,$totalActive,(int)($avgtime), (int)($esttime));
 		}
-		return $qcount_by_targettype;
+		return $qcount_by_targettype['acquisition'];
 	}
 
 	function getCountsFromNonQueueTargetLists($sessionId,$targettype,$mosaic=0, $limit=1000) {
 		//This gives all status
-		$sqldataTList = $this->getNonQueueTargetListIds($sessionId,$mosaic,$limit);
+		$sqldataTList = $this->getNonQueueTargetListIds($sessionId,$nodeId,$mosaic,$limit);
 		$allitls = array();
 		foreach ($sqldataTList as $d) {
 			array_push($allitls,$d['itlid']);
 		};
 		$count = $this->getCountsFromImageTargetLists($allitls,$targettype);
 		return $count;
+	}
+
+	function getTargetListProcessTimeData($sessionId,$nodeId,$targettype='acquisition',$limit=100) {
+		// This query does not include target adjustment time since it is a target 
+		// on the original not the reacquired image
+		$q="SELECT "
+			."	proc.QueueOn as queue,"
+			."	done.QueueCount as QueueCount, "
+			."	(done.time-proc.time) as QueueTime "
+			."FROM "
+			."	(SELECT "
+			."		min(UNIX_timestamp(`t`.`DEF_timestamp`)) as time, "
+			."		`t`.`REF|AcquisitionImageData|image` as QueueOn, "
+			."		count(`t`.`REF|AcquisitionImageData|image`) as QueueCount "
+			."	FROM "
+			."		`AcquisitionImageTargetData` AS `t` "
+			."		LEFT JOIN `ImageTargetListData` AS `itlist` ON" ."(`itlist`.`DEF_id`=`t`.`REF|ImageTargetListData|list`) "
+			."	WHERE "
+			."		t.`REF|SessionData|session` = ".$sessionId." "
+			."		AND t.`type` LIKE CONVERT(_utf8 '".$targettype."' USING latin1) COLLATE "."latin1_swedish_ci "
+			."		AND t.`status` LIKE CONVERT(_utf8 'processing' USING latin1) COLLATE " ."latin1_swedish_ci "
+			."		AND itlist.`REF|NodeSpecData|node` = ".$nodeId." "
+			."	group by t.`REF|AcquisitionImageData|image`) AS proc, "
+			."	(SELECT "
+			."		max(UNIX_timestamp(`t`.`DEF_timestamp`)) as time, "
+			."		`t`.`REF|AcquisitionImageData|image` as QueueOn, "
+			."		count(`t`.`REF|AcquisitionImageData|image`) as QueueCount "
+			."	FROM "
+			."		`AcquisitionImageTargetData` AS `t` "
+			."		LEFT JOIN `ImageTargetListData` AS `itlist` ON" ."(`itlist`.`DEF_id`=`t`.`REF|ImageTargetListData|list`) "
+			."	WHERE "
+			."		t.`REF|SessionData|session` = ".$sessionId." "
+			."		AND t.`type` LIKE CONVERT(_utf8 '".$targettype."' USING latin1) COLLATE "."latin1_swedish_ci "
+			."		AND t.`status` LIKE CONVERT(_utf8 'done' USING latin1) COLLATE "."latin1_swedish_ci "
+			."		AND itlist.`REF|NodeSpecData|node` = ".$nodeId." "
+			."	group by t.`REF|AcquisitionImageData|image`) AS done "
+			."WHERE "
+			."	proc.QueueOn=done.QueueOn "
+			."order by queue desc limit ".$limit." "
+			."";
+		return $this->mysql->getSQLResult($q);
 	}
 
 	function getQueueTimeData($sessionId,$qtype,$targettype='acquisition',$limit=100) {

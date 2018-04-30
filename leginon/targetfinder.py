@@ -102,6 +102,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		Find the Acquisition class or its subclass instance bound
 		to this node upon application loading.
 		'''
+		super(TargetFinder,self).handleApplicationEvent(evt)
 		app = evt['application']
 		self.last_acq_node = appclient.getLastNodeThruBinding(app,self.name,'AcquisitionImagePublishEvent','Acquisition')
 		self.next_acq_node = appclient.getNextNodeThruBinding(app,self.name,'ImageTargetListPublishEvent','Acquisition')

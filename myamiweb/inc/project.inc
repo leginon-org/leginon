@@ -65,6 +65,7 @@ class project {
 	}
 
 	function checkDBConnection() {
+		$this->mysql->checkDBConnection();
 		return $this->mysql->checkDBConnection();
 	}
 

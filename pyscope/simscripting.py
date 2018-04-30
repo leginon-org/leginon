@@ -7,7 +7,7 @@ import random
 from pyami import mrc
 random.seed()
 
-camsize = (2048,2048) # row,col
+camsize = (4096,4096) # row,col
 
 class SupportedCamera(object):
 	def __init__(self,name):
@@ -38,10 +38,16 @@ class CameraSingleAcquisition(object):
 		self.IsActive = True
 		time.sleep(0.5)
 		scale=float(2**(self.CameraSettings.ReadoutArea))
-		image_shape = (int(camsize[0]/scale),int(camsize[1]/scale))
+		unbinned_image_shape = (int(camsize[0]/scale),int(camsize[1]/scale))
+		binning = self.CameraSettings.Binning.Width
+		image_shape = (int(unbinned_image_shape[0]/binning),int(unbinned_image_shape[1]/binning))
 		ar = self.getSyntheticImage(image_shape)
+		# make into stream
+		ar1 = ar.reshape((image_shape[0]*image_shape[1],))
 		image_obj = Image()
-		image_obj.AsSafeArray = ar
+		image_obj.MetaData.ImageSize.Width = image_shape[1]
+		image_obj.MetaData.ImageSize.Height = image_shape[0]
+		image_obj.AsSafeArray = ar1
 		self.IsActive = False
 		nframes = len(self.CameraSettings.DoseFractionsDefinition.frame_range_list)
 		print 'movie nframes', nframes
@@ -53,7 +59,7 @@ class CameraSingleAcquisition(object):
 				if i == 0:
 					mrc.write(ar,file_path)
 				else:
-					ar = self.getSyntheticImage(camsize)
+					ar = self.getSyntheticImage(image_shape)
 					mrc.append(ar,file_path)
 		return image_obj
 
@@ -67,6 +73,16 @@ class CameraSingleAcquisition(object):
 		  column_offset:column_offset+shape[1]/2] *= 1.5
 		image = numpy.asarray(image, dtype=numpy.uint16)
 		return image
+
+	def Wait(self):
+		t0 = time.time()
+		while self.IsActive:
+			time.sleep(0.5)
+			t1 = time.time()
+			if t1-t0 > 10.0:
+				print 'waiting too long'
+				break
+		return
 
 class Image(object):
 	def __init__(self):
@@ -109,6 +125,7 @@ class CameraSettings(object):
 		self.DoseFractionsDefinition = DoseFractionsDefinition()
 		self.ElectronCounting = True
 		self.base_time = 0.025
+		self.Capabilities = Capabilities()
 
 	def CalculateNumberOfFrames(self):
 		print 'calculate',self.ExposureTime, self.base_time
@@ -130,3 +147,21 @@ class Instrument(object):
 class Connection(object):
 	def __init__(self):
 		self.Instrument = Instrument()
+
+class Capabilities(object):
+	def __init__(self):
+		self.SupportedBinnings = self.makeBinningList()
+
+	def makeBinningList(self):
+		b_list = ListWithCount()
+		for b in (1,2,4):
+			bin_obj = Binning()
+			bin_obj.Width = b
+			bin_obj.Height = b
+			b_list.append(bin_obj)
+		b_list.Count = len(b_list)
+		return b_list
+
+class ListWithCount(list):
+	def __init__(self):
+		self.Count = 0

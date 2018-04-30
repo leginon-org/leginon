@@ -396,6 +396,7 @@ if __name__ == '__main__':
 			rangelist2 = app.makeRangeListFromNumberOfBaseFramesAndFrameTime(n_base_frames, frame_time_second)
 			print 'range list: ',rangelist2
 			print 'SubPathPattern: ', app.getSubPathFramePattern()
+			print 'frame name: ',app.getFrameDirName()
 
 		def testFalcon2():
 			'''

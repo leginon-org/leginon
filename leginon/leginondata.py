@@ -1025,6 +1025,7 @@ class ImageTargetListData(InSessionData):
 			('image', AcquisitionImageData),
 			('queue', QueueData),
 			('sublist', bool),
+			('node', NodeSpecData),
 		)
 	typemap = classmethod(typemap)
 
@@ -1032,6 +1033,17 @@ class DequeuedImageTargetListData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
 			('queue', QueueData),
+			('list', ImageTargetListData),
+		)
+	typemap = classmethod(typemap)
+
+class DoneImageTargetListData(InSessionData):
+	'''
+	TODO: This may replace DequeuedImageTargetListData since
+	ImageTargetListData now have NodeSpecData reference.
+	'''
+	def typemap(cls):
+		return InSessionData.typemap() + (
 			('list', ImageTargetListData),
 		)
 	typemap = classmethod(typemap)

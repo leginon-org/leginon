@@ -9,6 +9,7 @@
 
 import sinedon
 from leginon import leginondata
+from leginon import appclient
 from databinder import DataBinder
 import datatransport
 import event
@@ -64,6 +65,7 @@ class Node(correctorclient.CorrectorClient):
 
 	def __init__(self, name, session, managerlocation=None, otherdatabinder=None, otherdbdatakeeper=None, tcpport=None, launcher=None, panel=None):
 		self.name = name
+		self.this_node = None
 		self.panel = panel
 		self.tem_hostname = ''
 		
@@ -384,7 +386,8 @@ class Node(correctorclient.CorrectorClient):
 		This is for future setting synchronization.  Not implemented yet.
 		It does nothing now.
 		'''
-		pass
+		app = ievent['application']
+		self.this_node = appclient.getNodeSpecData(app,self.name)
 
 	def handleConfirmedEvent(self, ievent):
 		'''Handler for ConfirmationEvents. Unblocks the call waiting for confirmation of the event generated.'''
