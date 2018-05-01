@@ -3377,9 +3377,11 @@ class leginondata {
 			$allitls = array();
 			//get done targetlist.
 			$sqldataDoneList = $this->getNonQueueDoneTargetListIds($sessionId,$nodeId,0,$limit);
-			foreach ($sqldataDoneList as $d) {
-				array_push($doneitls,$d['itlid']);
-			};
+			if (is_array($sqldataDoneList) && count($sqldataDoneList)) {
+				foreach ($sqldataDoneList as $d) {
+					array_push($doneitls,$d['itlid']);
+				};
+			}
 			foreach ($sqldataTList as $d) {
 				array_push($allitls,$d['itlid']);
 			};

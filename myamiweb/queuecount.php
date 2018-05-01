@@ -38,6 +38,7 @@ function getSessionSelector($sessions, $sessionId=NULL) {
 }
 
 function printResult($qresult,$qtype='',$ttype='', $is_queue=true) {
+	if ($qresult === false) return;
 	if ($qresult[2] == 0) return;
 	$pretext = $qresult[0];
 	$totalNew = $qresult[1];
@@ -114,11 +115,13 @@ if (!$qtypes) {
 }
 {
 	$countbynode = $leginondata->getNonQueueCountResults($sessionId);
-	$nodenames = array_keys($countbynode);
-	rsort($nodenames);
-	foreach ($nodenames as $alias) {
-		$data = $countbynode[$alias];
-		printResult($data,$alias,'',false);
+	if (is_array($countbynode) && count($countbynode)) {
+		$nodenames = array_keys($countbynode);
+		rsort($nodenames);
+		foreach ($nodenames as $alias) {
+			$data = $countbynode[$alias];
+			printResult($data,$alias,'',false);
+		}
 	}
 }
 ?>

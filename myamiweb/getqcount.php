@@ -54,6 +54,7 @@ if (count($qtargetlistIds)+count($nqtargetlistIds) >= 500) {
 		rsort($nodenames);
 		foreach ($nodenames as $qtype) {
 			$q = $nqcounts[$qtype];
+			if ($q===false) continue;
 			if (empty($q[2])) continue;
 			$esttime = $q[4];
 			$estminute = (int) floor(($esttime / 60));
