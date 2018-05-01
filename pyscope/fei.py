@@ -1441,6 +1441,7 @@ class Tecnai(tem.TEM):
 			self.tecnai.TemperatureControl.ForceRefill()
 		except com_module.COMError as e:
 			#COMError: (-2147155969, None, (u'[ln=102, hr=80004005] Cannot force refill', u'TEM Scripting', None, 0, None))
+			# This COMError can occur when fill is slow, too.  Need to ignore it
 			raise RuntimeError('Failed Force Refill')
 		t1 = time.time()
 		if t1-t0 < 10.0:

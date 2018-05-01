@@ -188,6 +188,12 @@ class TEM(baseinstrument.BaseInstrument):
 		'''
 		pass
 
+	def resetAutoFillerError(self):
+		'''
+		Reset autofiller error to start over.
+		'''
+		pass
+
 	def getTimedN2FillParams(self):
 		'''
 		Return tuple of three parameters for timed nitrogen filler.
