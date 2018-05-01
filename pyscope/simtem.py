@@ -105,6 +105,7 @@ class SimTEM(tem.TEM):
 		self.aperture_selection = {'objective':'','condenser2':'70','selected area':'open'}
 
 	def resetRefrigerant(self):
+		self.autofiller_busy = False
 		self.level0 = 100.0
 		self.level1 = 100.0
 		if simu_autofiller:
@@ -387,9 +388,19 @@ class SimTEM(tem.TEM):
 		return True
 
 	def runAutoFiller(self):
-		if self.level0 >=50 or self.level1 >=50:
+		self.addRefrigerant(1)
+		if self.level0 <=40 or self.level1 <=40:
+			self.autofiller_busy = True
 			raise RuntimeError('Force fill failed')
-		self.addRefrigerant()
+		self.addRefrigerant(4)
+
+	def resetAutoFillerError(self):
+		self.autofiller_busy = False
+		self.level0 = 100
+		self.level1 = 100
+
+	def isAutoFillerBusy(self):
+		return self.autofiller_busy
 
 	def useRefrigerant(self):
 		while 1:
@@ -402,8 +413,8 @@ class SimTEM(tem.TEM):
 			print 'using', self.level0, self.level1
 			time.sleep(4)
 
-	def addRefrigerant(self):
-		for i in range(5):
+	def addRefrigerant(self,cycle):
+		for i in range(cycle):
 			self.level0 += 20
 			self.level1 += 20
 			print 'adding', self.level0, self.level1
