@@ -90,6 +90,8 @@ class FeiCam(ccdcamera.CCDCamera):
 		self.offset = {'x':0, 'y':0}
 		self.exposure = 500.0
 		self.exposuretype = 'normal'
+		self.start_frame_number = 1
+		self.end_frame_number = None
 
 	def setReadoutLimits(self):
 		readout_dicts = {READOUT_FULL:1,READOUT_HALF:2,READOUT_QUARTER:4}
@@ -184,7 +186,6 @@ class FeiCam(ccdcamera.CCDCamera):
 		try:
 			if 'readout' in kwargs:
 				readout = kwargs['readout']
-				print 'readout area index', readout
 				self.camera_settings.ReadoutArea = readout
 			if 'exposure' in kwargs:
 				exposure = kwargs['exposure']
@@ -245,8 +246,6 @@ class FeiCam(ccdcamera.CCDCamera):
 		# final range
 		unbindim = {'x':self.dimension['x']*binning['x'], 'y':self.dimension['y']*binning['y']}
 		unbinoff = {'x':self.offset['x']*binning['x'], 'y':self.offset['y']*binning['y']}
-		print 'binned', self.dimension, self.offset
-		print 'unbin', unbindim, unbinoff
 		readout_key = self.getReadoutAreaKey(unbindim, unbinoff)
 		exposure = self.exposure/1000.0
 
@@ -267,7 +266,10 @@ class FeiCam(ccdcamera.CCDCamera):
 			self.registerCallback(name, self.readoutcallback)
 			self.backgroundReadout(name)
 		else:
-			return self._getImage()
+			result=self._getImage()
+			self.csa.Wait()
+			print 'done waiting after acquire'
+			return result
 
 	def _getImage(self):
 		'''
@@ -284,14 +286,20 @@ class FeiCam(ccdcamera.CCDCamera):
 
 		#TODO: Check if this is going to be an issue
 		self.csa.Wait()
+		print 'done waiting before acquire'
 		try:
 			self.im = self.csa.Acquire()
+			print 'acquire call is back'
 			t1 = time.time()
 			self.exposure_timestamp = (t1 + t0) / 2.0
 			arr = self.im.AsSafeArray
 		except:
 			raise
 			#raise RuntimeError('Camera Acquisition Error in getting array')
+		if isinstance(arr,type(None)):
+			print 'No array in memory'
+			self.csa.Wait()
+			arr = self.im.AsSafeArray
 		if not SIMULATION:
 			self.image_metadata = self.getMetaDataDict(self.im.MetaData)
 		else:
@@ -301,12 +309,9 @@ class FeiCam(ccdcamera.CCDCamera):
 
 	def modifyImage(self, arr):
 		rk = self.getConfig('readout')
-		print rk, arr.shape
 		# reshape to 2D
 		try:
 			arr = arr.reshape((self.limit_dim[rk]['y']/self.binning['y'],self.limit_dim[rk]['x']/self.binning['x']))
-			print arr.shape
-			#arr = numpy.flipud(arr)
 		except AttributeError, e:
 			print 'comtypes did not return an numpy 2D array, but %s' % (type(arr))
 		except Exception, e:
@@ -475,6 +480,7 @@ class Falcon3(FeiCam):
 		self.camera_settings.ElectronCounting = value
 
 	def custom_setup(self):
+		print 'is counting: ', self.electron_counting
 		self.setElectronCounting(self.electron_counting)
 		self.calculateMovieExposure()
 		movie_exposure_second = self.movie_exposure/1000.0
@@ -510,10 +516,11 @@ class Falcon3(FeiCam):
 		'''
 		Frame Rotate direction is defined as x to -y rotation applied after up-down flip
 		'''
-		return 3
+		return 0
 
 	def getUseFrames(self):
-				return (self.start_frame_number,self.end_frame_number)
+		nframes = self.getNumberOfFrames()
+		return tuple(range(nframes))
 
 class Falcon3EC(Falcon3):
 	name = 'Falcon3EC'
