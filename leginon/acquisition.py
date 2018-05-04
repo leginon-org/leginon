@@ -887,7 +887,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.imagedata = imagedata
 		if self.settings['correct image shift coma']:
 			self.instrument.tem.BeamTilt = self.beamtilt0
+			self.instrument.tem.Stigmator = {'objective':self.stig0}
 			self.logger.info("reset beam tilt to (%.4f,%.4f)" % (self.instrument.tem.BeamTilt['x'],self.instrument.tem.BeamTilt['y']))
+			stig1 = self.instrument.tem.getStigmator()['objective']
+			self.logger.info("reset object stig to (%.4f,%.4f)" % (stig1['x'],stig1['y']))
 		targetdata = emtarget['target']
 		if targetdata is not None:
 			if 'grid' in targetdata and targetdata['grid'] is not None:
