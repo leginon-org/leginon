@@ -166,6 +166,8 @@ class mysql {
 	    $local_query = "SELECT * FROM $table WHERE $where";
 	    $result = $this->SQLQuery($local_query) or die(mysqli_error($this->db_link));
 	    $i = 0;
+			// failed sql query
+			if (!is_array($result)) return (true);
 	    while($row = mysqli_fetch_row($result))
 	    {
 	        set_time_limit(60); // HaRa
@@ -492,6 +494,7 @@ class mysql {
 	function getTables() {
 		$tables = array();
 		$R = $this->SQLQuery("SHOW TABLES ");
+		if ($R == false) return $tables;
 		while ($row = mysqli_fetch_row($R))
 			$tables[] = $row[0];
 

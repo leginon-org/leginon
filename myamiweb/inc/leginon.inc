@@ -1829,9 +1829,7 @@ class leginondata {
 	}
 
 	function dumpDeleteSession($sessionId) {
-			$result = $this->mysql->SQLQuery("SHOW TABLES");
-			while($row = mysqli_fetch_row($result))
-		$tables[] = $row[0];
+			$tables = $this->mysql->getTables();
 			// --- Get Reference Ids
 			$where = " `DEF_id` = $sessionId ";
 			$Rinfo = $this->mysql->SQLQuery("SELECT date_format(DEF_timestamp,'%m/%d/%Y') as date, `name` from SessionData where $where");
@@ -1842,10 +1840,12 @@ class leginondata {
 			$ref_tables[]='SessionData';
 			foreach($tables as $table) {
 				$result = $this->mysql->SQLQuery("SHOW FIELDS FROM $table"); 
-				while($row = mysqli_fetch_array($result))
-			if (preg_match("^REF\|SessionData", $row['Field']))
-				if(!in_array($table,$ref_tables))
-					$ref_tables[]=$table;
+				if ($result) {
+					while($row = mysqli_fetch_array($result))
+						if (preg_match("^REF\|SessionData", $row['Field']))
+							if(!in_array($table,$ref_tables))
+								$ref_tables[]=$table;
+				}
 
 			}
 
@@ -1953,6 +1953,7 @@ class leginondata {
 			$crlf = $this->crlf;
 			$tbl_applicationdata="ApplicationData";
 			$result = $this->mysql->SQLQuery("SHOW TABLES");
+			if (!$result) return;
 			while($row = mysqli_fetch_row($result))
 		$tables[] = $row[0];
 			// --- Get Reference Ids
