@@ -19,6 +19,7 @@ function dbValidation(){
 $errMsg = dbValidation();
 if(!empty($errMsg)){
 	$displayerror = "An error with the database connection has occured. Please <a href='setup/index.php'>check your configuration</a>. ";
+	error_log($errMsg);
 }
 
 $username=trim($_POST['username']);
