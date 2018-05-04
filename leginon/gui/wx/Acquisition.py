@@ -20,7 +20,7 @@ import leginon.gui.wx.Icons
 
 import leginon.targethandler
 
-hide_incomplete = True
+hide_incomplete = False
 
 class SettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
