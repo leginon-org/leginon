@@ -719,12 +719,21 @@ class Acquisition(targetwatcher.TargetWatcher):
 				mag = self.instrument.tem.Magnification
 				imageshift = self.instrument.tem.getImageShift()
 				self.beamtilt0 = self.instrument.tem.getBeamTilt()
+				self.stig0 = self.instrument.tem.getStigmator()['objective']
 				try:
 					beamtilt = beamtiltclient.transformImageShiftToBeamTilt(imageshift, tem, cam, ht, self.beamtilt0, mag)
 					self.instrument.tem.BeamTilt = beamtilt
 					self.logger.info("beam tilt for image acquired (%.4f,%.4f)" % (self.instrument.tem.BeamTilt['x'],self.instrument.tem.BeamTilt['y']))
 				except Exception, e:
 					raise NoMoveCalibration(e)
+				try:
+					stig = beamtiltclient.transformImageShiftToObjStig(imageshift, tem, cam, ht, self.stig0, mag)
+					self.instrument.tem.Stigmator = {'objective':stig}
+					stig1 = self.instrument.tem.getStigmator()['objective']
+					self.logger.info("objective stig for image acquired (%.4f,%.4f)" % (stig1['x']-self.stig0['x'],stig1['y']-self.stig0['y']))
+				except Exception, e:
+					raise NoMoveCalibration(e)
+
 			if self.settings['adjust time by tilt'] and abs(stagea) > 10 * 3.14159 / 180:
 				camdata = leginondata.CameraEMData()
 				camdata.friendly_update(presetdata)
