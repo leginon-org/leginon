@@ -725,6 +725,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 					self.instrument.tem.BeamTilt = beamtilt
 					self.logger.info("beam tilt for image acquired (%.4f,%.4f)" % (self.instrument.tem.BeamTilt['x'],self.instrument.tem.BeamTilt['y']))
 				except Exception, e:
+					self.resetComaCorrection()
 					raise NoMoveCalibration(e)
 				try:
 					stig = beamtiltclient.transformImageShiftToObjStig(imageshift, tem, cam, ht, self.stig0, mag)
@@ -732,6 +733,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 					stig1 = self.instrument.tem.getStigmator()['objective']
 					self.logger.info("objective stig for image acquired (%.4f,%.4f)" % (stig1['x']-self.stig0['x'],stig1['y']-self.stig0['y']))
 				except Exception, e:
+					self.resetComaCorrection()
 					raise NoMoveCalibration(e)
 
 			if self.settings['adjust time by tilt'] and abs(stagea) > 10 * 3.14159 / 180:
