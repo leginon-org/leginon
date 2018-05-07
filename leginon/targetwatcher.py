@@ -437,7 +437,9 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 				except Exception, e:
 					self.logger.exception('Process target failed: %s' % e)
 					process_status = 'exception'
-					
+				finally:
+					self.resetComaCorrection()
+	
 				self.stopTimer('processTargetData')
 
 				if process_status == 'repeat':

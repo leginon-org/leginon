@@ -22,7 +22,8 @@ class IceCalculator(object):
 
 	def get_stdev_thickness(self, stdev_intensity, mean_intensity):
 		if stdev_intensity >= mean_intensity:
-			std = inf
+			# an unlikely large number as stand-in.
+			std = 10.0
 		else:
 			std = math.log(mean_intensity / (mean_intensity-stdev_intensity))
 		return std

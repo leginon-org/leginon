@@ -1118,6 +1118,24 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		self.node.logger.debug("Beam Tilt ( %5.2f, %5.2f)" % (newbeamtilt['x']*1e3,newbeamtilt['y']*1e3))
 		return newbeamtilt
 
+	def transformImageShiftToObjStig(self, imageshift, tem, cam, ht, zero, mag):
+		new = {}
+		par = 'image-shift stig'
+		try:
+			# not to query specific mag for now
+			probe = self.instrument.tem.ProbeMode
+			matrix = self.retrieveMatrix(tem, cam, par, ht, None, probe)
+		except NoMatrixCalibrationError:
+			raise RuntimeError('missing %s calibration matrix' % par)
+		self.node.logger.debug("Image Shift ( %5.2f, %5.2f)" % (imageshift['x']*1e6,imageshift['y']*1e6))
+		shiftvect = numpy.array((imageshift['x'], imageshift['y']))
+		change = numpy.dot(matrix, shiftvect)
+		new['x'] = zero['x'] - change[0]
+		new['y'] = zero['y'] - change[1]
+		self.node.logger.debug("Obj Stig Correction ( %5.2f, %5.2f)" % (change[0]*1e3,change[1]*1e3))
+		self.node.logger.debug("Obj Stig ( %5.2f, %5.2f)" % (new['x']*1e3,new['y']*1e3))
+		return new
+
 	def correctImageShiftComa(self):
 		tem = self.instrument.getTEMData()
 		cam = self.instrument.getCCDCameraData()

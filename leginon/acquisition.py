@@ -719,12 +719,23 @@ class Acquisition(targetwatcher.TargetWatcher):
 				mag = self.instrument.tem.Magnification
 				imageshift = self.instrument.tem.getImageShift()
 				self.beamtilt0 = self.instrument.tem.getBeamTilt()
+				self.stig0 = self.instrument.tem.getStigmator()['objective']
 				try:
 					beamtilt = beamtiltclient.transformImageShiftToBeamTilt(imageshift, tem, cam, ht, self.beamtilt0, mag)
 					self.instrument.tem.BeamTilt = beamtilt
 					self.logger.info("beam tilt for image acquired (%.4f,%.4f)" % (self.instrument.tem.BeamTilt['x'],self.instrument.tem.BeamTilt['y']))
 				except Exception, e:
+					self.resetComaCorrection()
 					raise NoMoveCalibration(e)
+				try:
+					stig = beamtiltclient.transformImageShiftToObjStig(imageshift, tem, cam, ht, self.stig0, mag)
+					self.instrument.tem.Stigmator = {'objective':stig}
+					stig1 = self.instrument.tem.getStigmator()['objective']
+					self.logger.info("objective stig for image acquired (%.4f,%.4f)" % (stig1['x']-self.stig0['x'],stig1['y']-self.stig0['y']))
+				except Exception, e:
+					self.resetComaCorrection()
+					raise NoMoveCalibration(e)
+
 			if self.settings['adjust time by tilt'] and abs(stagea) > 10 * 3.14159 / 180:
 				camdata = leginondata.CameraEMData()
 				camdata.friendly_update(presetdata)
@@ -783,6 +794,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			pixeltype = str(imagedata['image'].dtype)
 		except:
 			self.logger.error('array not returned from camera')
+			self.resetComaCorrection()
 			return
 		imagedata = leginondata.AcquisitionImageData(initializer=imagedata, preset=presetdata, label=self.name, target=targetdata, list=self.imagelistdata, emtarget=emtarget, pixels=pixels, pixeltype=pixeltype)
 		imagedata['phase plate'] = self.pp_used
@@ -876,9 +888,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 		imagedata = self.acquireCCD(presetdata, emtarget, channel=channel)
 
 		self.imagedata = imagedata
-		if self.settings['correct image shift coma']:
-			self.instrument.tem.BeamTilt = self.beamtilt0
-			self.logger.info("reset beam tilt to (%.4f,%.4f)" % (self.instrument.tem.BeamTilt['x'],self.instrument.tem.BeamTilt['y']))
 		targetdata = emtarget['target']
 		if targetdata is not None:
 			if 'grid' in targetdata and targetdata['grid'] is not None:
@@ -900,6 +909,14 @@ class Acquisition(targetwatcher.TargetWatcher):
 			ttt = time.time() - self.timedebug[tkey]
 			del self.timedebug[tkey]
 			print tnum, '************* TOTAL ***', ttt
+
+	def resetComaCorrection(self):
+		if self.settings['correct image shift coma']:
+			self.instrument.tem.BeamTilt = self.beamtilt0
+			self.instrument.tem.Stigmator = {'objective':self.stig0}
+			self.logger.info("reset beam tilt to (%.4f,%.4f)" % (self.instrument.tem.BeamTilt['x'],self.instrument.tem.BeamTilt['y']))
+			stig1 = self.instrument.tem.getStigmator()['objective']
+			self.logger.info("reset object stig to (%.4f,%.4f)" % (stig1['x'],stig1['y']))
 
 	def parkAtHighMag(self):
 		# wait for at least for 30 seconds
