@@ -27,7 +27,7 @@ class Server(object):
 			return self.datahandler.handle(request)
 		except AttributeError:
 			if self.datahandler is None:
-				raise TransportError('error handling request, no handler')
+				raise TransportError('error handling local request, no handler')
 			else:
 				raise
 
