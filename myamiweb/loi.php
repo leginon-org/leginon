@@ -10,7 +10,7 @@ require_once "inc/leginon.inc";
 require_once "inc/viewer.inc";
 require_once "inc/project.inc";
 
-$refreshtime = ($_POST['refreshtime']) ? $_POST['refreshtime'] : 10;
+$refreshtime = ($_POST['refreshtime']) ? $_POST['refreshtime'] : 60;
 
 // --- Set sessionId
 $sessionId=$_POST[sessionId];
