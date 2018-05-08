@@ -6,6 +6,8 @@
 #	   see  http://leginon.org
 #
 
+DEBUG = True
+
 import cPickle as pickle
 import socket
 import SocketServer
@@ -79,6 +81,10 @@ class TransportError(datatransport.TransportError):
 	pass
 
 class Handler(SocketServer.StreamRequestHandler):
+	'''
+	Handler of request through socket as stream. Receives pickled request
+	handle it, and then pickle the result to send.
+	'''
 	def __init__(self, request, server_address, server):
 		SocketServer.StreamRequestHandler.__init__(self, request,
 																								server_address, server)
@@ -106,7 +112,13 @@ class Handler(SocketServer.StreamRequestHandler):
 				except AttributeError:
 					pass
 				result = e
-
+		if DEBUG:
+			if type(result).__name__ in ('ndarray'):
+				displayed_result = 'array of %s' % (result.shape,)
+			else:
+				displayed_result = result
+			print 'request', request.__class__.__name__
+			print 'result to send', displayed_result
 		try:
 			s = pickle.dumps(result, pickle.HIGHEST_PROTOCOL)
 			psize = len(s)
@@ -163,7 +175,13 @@ class Client(object):
 			sfile = s.makefile('rwb')
 		except Exception, e:
 			raise TransportError('error creating socket file, %s' % e)
-			
+
+		if DEBUG and request.__class__.__name__== 'MultiRequest':
+			# pickle can only handle standard exceptions.
+			# if an item in multirequest gives error, need to debug
+			# from the other side.
+			print 'sending multirequest attributes', request.attributename
+			print 'to %s' % (self.serverlocation,)
 		try:
 			#Peng Hack
 			ss = pickle.dumps(request, pickle.HIGHEST_PROTOCOL)
@@ -186,6 +204,12 @@ class Client(object):
 		try:
 			result = pickle.load(sfile)
 		except Exception, e:
+			if DEBUG and request.__class__.__name__== 'MultiRequest':
+				# pickle can only handle standard exceptions.
+				# if an item in multirequest gives error, need to debug
+				# from the other side.
+				print 'multirequest attributes', request.attributename
+				print 'has %s during unpickling: %s' % (e.__class__.__name__, e)
 			raise TransportError('error unpickling response, %s' % e)
 
 		try:
