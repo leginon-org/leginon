@@ -88,7 +88,7 @@ class mysql {
 		$table_exists=false;
 		$Rtables = $this->SQLQuery("SHOW TABLES");
 		if ($Rtables === false){
-			error_log("Error in mysql.inc SQLTableExists ".mysql_error());
+			error_log("Error in mysql.inc SQLTableExists ".$this->mysqlerror);
 			return false;
 		}
 	    	while($table = mysqli_fetch_array($Rtables))
