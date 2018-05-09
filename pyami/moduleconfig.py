@@ -93,12 +93,9 @@ class ModuleConfigParser(object):
 
 	def parse(self):
 		print "parsing %s...." % self.config_filename
-		# use the path of this module
-		modinfo = imp.find_module(self.package)
-		modpath = modinfo[1]
 
 		# read instruments.cfg
-		confdirs = pyami.fileutil.get_config_dirs()
+		confdirs = pyami.fileutil.get_config_dirs(package_name=self.package)
 		filenames = [os.path.join(confdir, self.config_filename) for confdir in confdirs]
 		one_exists = False
 		for filename in filenames:

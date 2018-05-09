@@ -3,6 +3,7 @@ import inspect
 import os
 import sys
 import errno
+import imp
 
 def getMyFilename(up=1):
 	'''
@@ -43,7 +44,7 @@ def mkdirs(newdir):
 			raise
 	os.umask(originalumask)
 
-def get_config_dirs(module=None):
+def get_config_dirs(module=None, package_name=None):
 	'''
 	Determine a list of directories where config files may be located.
 	One of the directories will be the installed module directory, but
@@ -60,8 +61,12 @@ def get_config_dirs(module=None):
 
 	# installed module directory, specified by argument, or auto detected
 	if module is None:
-		# not this function, but the caller of this function, so up=2
-		installed_dir = getMyDir(up=2)
+		if package_name is None:
+			# not this function, but the caller of this function, so up=2
+			installed_dir = getMyDir(up=2)
+		else:
+			package_path = imp.find_module(package_name)[1]
+			installed_dir = os.path.abspath(package_path)
 	else:
 		installed_dir = os.path.dirname(os.path.abspath(module.__file__))
 
