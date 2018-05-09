@@ -3,7 +3,7 @@ import math
 import sys
 import comtypes.client
 from pyscope import tem
-from pyscope import moduleconfig
+from pyami import moduleconfig
 
 DEBUG = False
 

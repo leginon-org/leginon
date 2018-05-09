@@ -15,7 +15,7 @@ import gatansocket
 import numpy
 import itertools
 import os
-from pyscope import moduleconfig
+from pyami import moduleconfig
 
 simulation = False
 if simulation:
