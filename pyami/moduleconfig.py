@@ -105,13 +105,11 @@ class ModuleConfigParser(object):
 			if os.path.exists(filename):
 				one_exists = True
 		if not one_exists:
-			print 'please configure at least one of these:  %s' % (filenames,)
-			sys.exit()
+			raise IOError('please configure at least one of these:  %s' % (filenames,))
 		try:
 			self.configfiles = self.configparser.read(filenames)
 		except:
-			print 'error reading %s' % (filenames,)
-			sys.exit()
+			raise IOError('error reading %s' % (filenames,))
 
 		# parse
 		names = self.configparser.sections()
@@ -127,13 +125,30 @@ class ModuleConfigParser(object):
 		return self.configured
 
 
-def getConfigured(config_file='jeol.cfg'):
-	app = ModuleConfigParser(config_file)
+def getConfigured(config_file='jeol.cfg', package='pyscope'):
+	app = ModuleConfigParser(config_file, package=package)
 	configured = app.configured
 	if not configured:
 		configured = app.parse()
 	return configured
 
+def testOneConfig(config_file,package_name):
+	from pyami import testfun
+	module = 'moduleconfig loading %s in %s subpackage' % (config_file, package_name)
+	try:
+		configs = getConfigured(config_file, package=package_name)
+		if type(configs) == type({}) and configs.keys():
+			testfun.printResult(module,True)
+		else:
+			testfun.printResult(module,False,'config not read')
+	except Exception, e:
+		testfun.printResult(module,False,e)
+
+def test():
+	testOneConfig('leginon.cfg','leginon')
+	testOneConfig('sinedon.cfg','leginon')
+
 if __name__ == '__main__':
-	print getConfigured('jeol.cfg')
-	raw_input('Hit any key to quit.')
+	test()
+	if sys.platform == 'win32':
+		raw_input('Hit any key to quit.')
