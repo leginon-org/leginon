@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import time
-import socket
+from pyami import mysocket
 import numpy
 from leginon import databinder
 from leginon import event
@@ -46,7 +46,7 @@ def printData(d):
    print 'Event Sent Time (sec)', t1 - t0
 
 
-myhostname = socket.gethostname().lower()
+myhostname = mysocket.gethostname().lower()
 
 for myport in range(49152,65536):
    try:

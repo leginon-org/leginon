@@ -100,10 +100,10 @@ def getPrimaryPort(hostname):
 		return r[0]['primary port']
 
 if __name__ == '__main__':
-	import socket
+	from pyami import mysocket
 	import sys
 
-	hostname = socket.gethostname().lower()
+	hostname = mysocket.gethostname().lower()
 	launchername = hostname
 
 	managerlocation = {}

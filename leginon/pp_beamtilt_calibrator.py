@@ -3,7 +3,7 @@ import sys
 import math
 import threading
 import time
-import socket
+from pyami import mysocket
 
 from leginon import leginondata, calibrationclient
 from pyscope import config
@@ -136,7 +136,7 @@ Type N if a direction reversal is needed :
 		return answer.lower() == 'y'
 
 	def storeToDatabase(self, anglei, y_is_positive):
-		tems = leginondata.InstrumentData(hostname=socket.gethostname(),name=self.tem1.name).query(results=1)
+		tems = leginondata.InstrumentData(hostname=mysocket.gethostname(),name=self.tem1.name).query(results=1)
 		tem=tems[0]
 		cam = None
 		probe = self.tem1.getProbeMode()

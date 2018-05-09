@@ -12,8 +12,9 @@ import cPickle as pickle
 import socket
 import SocketServer
 import threading
-import datatransport
 import math
+import datatransport
+from pyami import mysocket
 
 CHUNK_SIZE = 8*1024*1024
 
@@ -143,7 +144,7 @@ class Server(object):
 		self.exitevent = threading.Event()
 		self.exitedevent = threading.Event()
 		self.datahandler = datahandler
-		self.hostname = socket.gethostname().lower()
+		self.hostname = mysocket.gethostname().lower()
 
 	def start(self):
 		self.thread = threading.Thread(name='socket server thread',

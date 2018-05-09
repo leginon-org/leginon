@@ -9,7 +9,7 @@
 from leginon import leginondata
 import instrument
 import node
-import socket
+from pyami import mysocket
 import threading
 import gui.wx.Instrument
 from pyscope import tem, ccdcamera, registry
@@ -75,7 +75,7 @@ class EM(node.Node):
 
 			class ObjectClass(c, instrumentclass):
 				def __init__(self):
-					self._hostname = socket.gethostname().lower()
+					self._hostname = mysocket.gethostname().lower()
 					c.__init__(self)
 					instrumentclass.__init__(self)
 
