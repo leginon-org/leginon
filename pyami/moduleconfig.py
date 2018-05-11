@@ -92,7 +92,7 @@ class ModuleConfigParser(object):
 		return newkeys
 
 	def parse(self):
-		print "parsing %s...." % self.config_filename
+		#print "parsing %s...." % self.config_filename
 
 		# read instruments.cfg
 		confdirs = pyami.fileutil.get_config_dirs(package_name=self.package)
