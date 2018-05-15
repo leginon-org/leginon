@@ -8,6 +8,10 @@
 #       see  http://leginon.org
 #
 
+# testing before start
+import configcheck
+configcheck.testBeforeStart()
+
 from leginon import leginondata
 import event
 import node
