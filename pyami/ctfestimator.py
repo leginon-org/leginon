@@ -8,7 +8,7 @@ from pyami import mrc,imagefun,fftfun
 from leginon import leginondata,calibrationclient
 
 class GctfEstimator(object):
-	def __init__(self, gctfexe='gctfCurrent', dbids=[], ln_pattern='test'):
+	def __init__(self, gctfexe='gctfCurrent', dbids=[], ln_pattern='tmp'):
 		self.gctfexe = gctfexe
 		self.pcal = calibrationclient.CalibrationClient(None)
 		self.ln_pattern = ln_pattern
@@ -51,7 +51,8 @@ class GctfEstimator(object):
 		mrc.write(a, '%s%03d.mrc' % (self.ln_pattern, i))
 
 	def runACE(self, pixelsize, defocus, ht, amp_contrast, cs,path_pattern='test*'):
-		cmd = "%s --apix %.5f --kV %d --Cs %.1f --ac %.3f %s.mrc" % (self.gctfexe, defocus*1e10, int(ht/1000), cs*1e3, amp_contrast, path_pattern)
+		defocusH = defocus*1.2
+		cmd = "%s --apix %.5f --defL %.0f --defH %.0f --kV %d --Cs %.1f --ac %.3f %s.mrc" % (self.gctfexe, pixelsize*1e10, defocus*1e10, defocusH*1e10, int(ht/1000), cs*1e3, amp_contrast, path_pattern)
 		print cmd
 		proc = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE,)
 		proc.stdin.write(cmd)
@@ -78,6 +79,8 @@ class GctfEstimator(object):
 						'cs' : self.cs,
 						'volts' : self.ht,
 						'do_local_refine' : False,
+						'ctffind4_resolution' : float(bits['_rlnFinalResolution']),
+						'extra_phase_shift' : 0.0
 					}
 			all_ctfvalues.append(ctfvalues)
 		return all_ctfvalues	
@@ -105,6 +108,8 @@ class GctfEstimator(object):
 		return result[0]
 
 if __name__ == '__main__':
-	app = GctfEstimator('gctfCurrent')
+	#dbids = [5713064,5713066,5713068,5713071,5713073]
+	app = GctfEstimator('gctfCurrent',dbids=dbids)
+	i#app.runImages()
 	imagedata = leginondata.AcquisitionImageData().query(results=1)[0]
 	app.runOneImageData(imagedata)
