@@ -9,6 +9,7 @@ from leginon import leginondata,calibrationclient
 
 class GctfEstimator(object):
 	def __init__(self, gctfexe='gctfCurrent', dbids=[], ln_pattern='tmp'):
+		self.count = 0
 		self.gctfexe = gctfexe
 		self.pcal = calibrationclient.CalibrationClient(None)
 		self.ln_pattern = ln_pattern
@@ -101,15 +102,34 @@ class GctfEstimator(object):
 		return ctfvalues
 
 	def runOneImageData(self, imagedata):
+		'''
+		Run through ctf estimation of one image data and return its appion format ctfresult.
+		'''
 		self.reset()
 		self.setGlobalInputParams(imagedata)
 		self.addImage(imagedata)
-		result = self.runImages()
-		return result[0]
+		results = self.runImages()
+		return results[0]
+
+	def fakeRunOneImageData(self, imagedata):
+		'''
+		Read Ctf Results without really running. loop though 5 results in output.
+		Used in simulator test.
+		'''
+		self.reset()
+		self.setGlobalInputParams(imagedata)
+		for i in range(5):
+			self.addImage(imagedata)
+		results = self.getCTFResults()
+		result = results[self.count]
+		self.count += 1
+		if self.count >= len(results):
+			self.count = 0
+		return result
 
 if __name__ == '__main__':
 	#dbids = [5713064,5713066,5713068,5713071,5713073]
 	app = GctfEstimator('gctfCurrent',dbids=dbids)
-	i#app.runImages()
+	#app.runImages()
 	imagedata = leginondata.AcquisitionImageData().query(results=1)[0]
 	app.runOneImageData(imagedata)
