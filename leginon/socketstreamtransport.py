@@ -6,7 +6,7 @@
 #	   see  http://leginon.org
 #
 
-DEBUG = True
+DEBUG = False
 
 import cPickle as pickle
 import socket
