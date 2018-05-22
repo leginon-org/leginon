@@ -309,7 +309,14 @@ class CentosInstallation(object):
 		cmd = os.path.join(self.gitMyamiDir, 'install/newDBsetup.php -L %s -P %s -H %s -U %s -E %s' % (self.leginonDB, self.projectDB, self.dbHost, self.dbUser, self.adminEmail))
 		cmd = 'php ' + cmd
 
-		self.runCommand(cmd)
+		self.writeToLog("#===================================================")
+		self.writeToLog("Run the following Command:")
+		self.writeToLog("%s" % (cmd,))
+		print cmd + '\n'
+		print 'Please wait......(This may take a few minutes.)\n'
+		proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		proc.communicate()
+
 		self.openFirewallPort(3306)
 		return True
 
