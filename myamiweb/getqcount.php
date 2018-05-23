@@ -46,7 +46,7 @@ if (count($qtargetlistIds)+count($nqtargetlistIds) >= 500) {
 		$display .= '</div>';
 		echo $display;
 	}
-	/*
+
 	$nqcounts = $leginondata->getNonQueueCountResults($sessionId);
 	if ($nqcounts) {
 		$display='estimated non-queue processing time
@@ -69,7 +69,7 @@ if (count($qtargetlistIds)+count($nqtargetlistIds) >= 500) {
 		$display .= '</div>';
 		echo $display;
 	}
-	*/
+
 }
 ?>
 	</body>
