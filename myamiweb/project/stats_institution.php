@@ -27,20 +27,20 @@ mysqli_select_db($link, DB_PROJECT);
 	if(isset($_GET['dateFrom']) and isset($_GET['dateTo'])){
 		$dateFrom = date('Y-m-d', strtotime($_GET['dateFrom']));
 		$dateTo = date('Y-m-d', strtotime($_GET['dateTo']));
-		$q = "SELECT userdetails.`institution`, count( DISTINCT projectexperiments.`REF|projects|project` ), count( DISTINCT projectexperiments.`REF|leginondata|SessionData|session` )
+		$q = "SELECT userdetails.`institution`, count( DISTINCT projectexperiments.`REF|projects|project` ) as project_count, count( DISTINCT projectexperiments.`REF|leginondata|SessionData|session` ) as session_count
 	FROM projectexperiments
 	LEFT JOIN projectowners ON projectowners.`REF|projects|project` = projectexperiments.`REF|projects|project`
 	LEFT JOIN userdetails ON userdetails.`REF|leginondata|UserData|user` = projectowners.`REF|leginondata|UserData|user`
 	WHERE (projectexperiments.`DEF_timestamp` BETWEEN '$dateFrom' and '$dateTo')
-		GROUP BY userdetails.`institution`";
+		GROUP BY userdetails.`institution` order by session_count DESC";
 		$r = mysqli_query($link, $q) or die("Query error: " . mysqli_error($link));
 	}
 	else{
-		$q = "SELECT userdetails.`institution`, count( DISTINCT projectexperiments.`REF|projects|project` ), count( DISTINCT projectexperiments.`REF|leginondata|SessionData|session` )
+		$q = "SELECT userdetails.`institution`, count( DISTINCT projectexperiments.`REF|projects|project` ) as project_count, count( DISTINCT projectexperiments.`REF|leginondata|SessionData|session` ) as session_count
 	FROM projectexperiments
 	LEFT JOIN projectowners ON projectowners.`REF|projects|project` = projectexperiments.`REF|projects|project`
 	LEFT JOIN userdetails ON userdetails.`REF|leginondata|UserData|user` = projectowners.`REF|leginondata|UserData|user`
-	GROUP BY userdetails.`institution`";
+	GROUP BY userdetails.`institution` order by session_count DESC";
 		$r = mysqli_query($link, $q) or die("Query error: " . mysqli_error($link));
 		$date_q = "SELECT DATE_FORMAT(MIN(projectexperiments.`DEF_timestamp`), '%Y-%m-%d') AS date1,
        				DATE_FORMAT(MAX(projectexperiments.`DEF_timestamp`), '%Y-%m-%d') AS date2
