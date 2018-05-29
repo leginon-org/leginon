@@ -6,7 +6,7 @@ $imgId  = $_GET['id'];
 $preset = $_GET['preset'];
 $fft = ($_GET['fft']==1) ? true : false;
 $format = ($_GET['f']) ? $_GET['f']: false;
-
+$sb = ($_GET['sb']==1) ? true : false;
 $newimage = $leginondata->findImage($imgId, $preset);
 $imgId = $newimage['id'];
 $imageinfo = $leginondata->getImageInfo($imgId);
@@ -47,7 +47,6 @@ if (file_exists($pic))  {
 		    $size=filesize($pic);
 		}
 		else{
-
 		file_put_contents($tmpfile,$imgstr);
 		$pic=$tmpfile;
 		$size=filesize($pic);
