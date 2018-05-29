@@ -719,7 +719,7 @@ function setDownloadlink(view) {
 	}
 	if (eval(view+"fft_bt_st")) fft="&fft=1"; else fft=""
 	if (cdwdformat = eval("jsdwdformat"+view)) dwdformat="&f="+cdwdformat; else cdwdformat=""
-	ndownloadlink = "download.php?id="+jsimgId+"&preset="+selpreset+fft+dwdformat
+	ndownloadlink = "download.php?id="+jsimgId+"&preset="+selpreset+fft+dwdformat+sb
 	if (downloadlink = document.getElementById("download"+view+"_bthref"))
 		downloadlink.href = ndownloadlink
 }
