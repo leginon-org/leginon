@@ -84,14 +84,24 @@ class ScaleBar {
 		$barX2 = $this->nbpixels+$this->offsetbarX;
 		$barY1 = $h-$this->offsetbarY;
 		$barY2 = $h-$this->offsetbarY+1;
-
-		$black = imagecolorallocate($this->img, 0, 0, 0);
-		imagestring($this->img, $this->labelfontsize, $offsetbarlabelX+1,
-			$offsetbarlabelY+1, $this->label,$black);
-		imagestring($this->img, $this->labelfontsize, $offsetbarlabelX,
-			$offsetbarlabelY, $this->label,$this->color);
-		ImageRectangle($this->img,$barX1-1, $barY1, $barX2+1, $barY2+1,$black);
-		ImageRectangle($this->img,$barX1, $barY1, $barX2, $barY2,$this->color);
+		if ($this->size > 2000) {
+		    $this->labelfontsize = 85;
+		    $barY2 = $barY2 + 10;
+		    $font = '/usr/share/fonts/dejavu/DejaVuSans-Bold.ttf';
+		    imagettftext($this->img, $this->labelfontsize, 0,  $offsetbarlabelX, $offsetbarlabelY-100, $this->color, $font, $this->label);
+		    # main bar
+		    imagefilledrectangle($this->img,$barX1+100, $barY1-100, $barX2+100, $barY2-100,$this->color);
+		    
+		}
+		else{
+    		$black = imagecolorallocate($this->img, 0, 0, 0);
+    		imagestring($this->img, $this->labelfontsize, $offsetbarlabelX+1,
+    			$offsetbarlabelY+1, $this->label,$black);
+    		imagestring($this->img, $this->labelfontsize, $offsetbarlabelX,
+    			$offsetbarlabelY, $this->label,$this->color);
+    		ImageRectangle($this->img,$barX1-1, $barY1, $barX2+1, $barY2+1,$black);
+    		ImageRectangle($this->img,$barX1, $barY1, $barX2, $barY2,$this->color);
+		}
 	}
 }
 ?>

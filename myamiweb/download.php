@@ -38,9 +38,20 @@ if (file_exists($pic))  {
 		$imgstr = $imagerequest->requestDefaultFullImage($pic,$fileformat,$fft);
 		$filename= preg_replace("%mrc$%",$fileext,$filename);
 		$tmpfile=tempnam("/tmp", "leginon");
+		if ($sb && $format=="jpeg"){
+		    $img = imagecreatefromstring($imgstr);
+		    $display_pixelsize = getDisplayPixelSize($img,$imageinfo,$fft,'a',$imageinfo->dimx);
+		    $img = addScaleBarRingToImage($img,$display_pixelsize,$fft,'a');
+		    imagejpeg($img, $tmpfile);
+		    $pic=$tmpfile;
+		    $size=filesize($pic);
+		}
+		else{
+
 		file_put_contents($tmpfile,$imgstr);
 		$pic=$tmpfile;
 		$size=filesize($pic);
+		}
 	}
 	header("Content-Type: application/octet-stream");
 	header("Content-Type: application/force-download");
