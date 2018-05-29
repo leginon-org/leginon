@@ -510,8 +510,9 @@ $totalCTF = $aceRun + $ace2Run + $ctfindRun;
 				FROM `PixelSizeCalibrationData` p
 				JOIN `InstrumentData` i1 ON p.`REF|InstrumentData|tem` = i1.`DEF_id`
 				JOIN `InstrumentData` i2 ON p.`REF|InstrumentData|ccdcamera` = i2.`DEF_id`
+				WHERE i1.`name` not like 'SIM%' and i2.`name` not like 'SIM%'
 				GROUP BY `REF|InstrumentData|ccdcamera`
-				) AS B ON B.DEF_id = A.cid";
+				) AS B ON B.DEF_id = A.cid order by A.`image_count` DESC";
 			$r = mysqli_query($link, $q) or die("Query error: " . mysqli_error($link));
 			while ($row =  mysqli_fetch_row($r))
 			{
