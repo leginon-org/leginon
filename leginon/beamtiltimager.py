@@ -27,6 +27,7 @@ import os
 from pyami import aberration
 
 hide_incomplete = False
+TESTING = False
 
 class BeamTiltImager(manualfocuschecker.ManualFocusChecker):
 	panelclass = gui.wx.BeamTiltImager.Panel
@@ -206,7 +207,11 @@ class BeamTiltImager(manualfocuschecker.ManualFocusChecker):
 			self.deltaz = emtarget['delta z']
 
 		# aquire and save the focus image
+		# Need to set Magnification of the preset first so that beam and stig is valid
+		self.setPresetMagProbeMode(presetdata, emtarget)
+
 		oldbt = self.instrument.tem.BeamTilt
+		oldstig = self.instrument.tem.Stigmator['objective']
 		tiltlist,anglelist,radlist = self.getBeamTiltList()
 
 		## initialize a new tableau
@@ -258,11 +263,12 @@ class BeamTiltImager(manualfocuschecker.ManualFocusChecker):
 				self.splitTableau(imagedata)
 			elif 'beam tilt series' in self.settings['tableau type']:
 				if 'power' in self.settings['tableau type']:
-					ctfresult = self.getImageCtfResult(imagedata)
-					# For testing
-					ctfresult = self.getSimulatedImageCtfResult(imagedata)
-					if ctfresult['ctffind4_resolution'] > 4.0:
-						self.logger.error('ctf fitting bad resolution=%.1 Angstrom' % ctfresult['ctffind4_resolution'])
+					if not TESTING:
+						ctfresult = self.getImageCtfResult(imagedata)
+					else:
+						ctfresult = self.getSimulatedImageCtfResult(imagedata)
+					if ctfresult['ctffind4_resolution'] > 5.0:
+						self.logger.error('ctf fitting bad resolution=%.1f Angstrom' % ctfresult['ctffind4_resolution'])
 					else:
 						self.abe.addData(bt,ctfresult)
 				self.insertTableau(imagedata, angle, rad)
@@ -276,33 +282,48 @@ class BeamTiltImager(manualfocuschecker.ManualFocusChecker):
 				displace.append((pixelshift['row'],pixelshift['col']))
 		if 'beam tilt series' in self.settings['tableau type']:
 			self.renderTableau()
-			# not to calculate Axial Coma to save time for now
-			if 'power' in self.settings['tableau type']:
-				autocoma_success = self.autoComaCorrection()
-				newbt = self.instrument.tem.BeamTilt
-				self.logger.info('Final beam tilt: %.5f, %.5f' % (newbt['x'],newbt['y'],))
+			self.instrument.tem.BeamTilt = oldbt
+			self.instrument.tem.Stigmator = {'objective':oldstig}
+			self.logger.info('Final beam tilt: %.5f, %.5f' % (oldbt['x'],oldbt['y'],))
+			# beam tilt series modifies self.beamtilt0 and self.stig0 at each tilt
+			# when it calls moveAndPreset. Need to reset them back to the value before
+			# the series.
+			self.setComaStig0()
 		return status
 
 	def autoComaCorrection(self):
-		c21,deltabt = self.calculateAxialComa()
-		if self.settings['do auto coma']:
+		self.auto_count = 0
+		count_limit = 2
+		c21 = None
+		deltabt = None
+		# auto coma correction loop
+		while self.auto_count < count_limit:
+			self._simulateTarget()
+			c21, deltabt = self.calculateAxialComa()
 			if deltabt is None:
-				self.logger.error('Abort auto coma correction')
-				return True
+				self.logger.error('No correction to correct')
+				return
+			c21total = math.hypot(c21['x'],c21['y'])
+			if c21total <= self.settings['auto coma limit']:
+				self.logger.info('Auto coma successful')
+				return
+			deltabt_total = math.hypot(deltabt['x'],deltabt['y'])
+			self.logger.info('auto coma correction trial %d made %.2f mrad change' % (self.auto_count+1,deltabt_total*1e3))
 			self.applyTiltChange(deltabt)
+			# Change how the node reset Coma and Stig
+			self.setComaStig0()
 			self.auto_count += 1
-			if self.auto_count < 2:
-				c21total = math.hypot(c21['x'],c21['y'])
-				if c21total > self.settings['auto coma limit']:
-					self.abe.resetData()
-					self.simulateTarget()
-				else:
-					self.logger.info('Auto coma successful')
-					return True
-			else:
-				self.logger.error('auto coma failed to reach threshold in %d tries' % (self.auto_count))
-				return False
-		return True
+		self.logger.error('auto coma failed to reach threshold in %d triales' % (count_limit))
+
+	def simulateTarget(self):
+		if not self.settings['do auto coma']:
+			self._simulateTarget()
+			return
+		else:
+			self.autoComaCorrection()
+
+	def _simulateTarget(self):
+		return super(BeamTiltImager,self).simulateTarget()
 
 	def alreadyAcquired(self, targetdata, presetname):
 		## for now, always do acquire
@@ -405,7 +426,7 @@ class BeamTiltImager(manualfocuschecker.ManualFocusChecker):
 		if self.tabscale is not None:
 			bt['x'] = deltacol * self.settings['beam tilt']/self.tabscale
 			bt['y'] = -deltarow * self.settings['beam tilt']/self.tabscale
-			self.applyTiltChangeAndReacquireTableau(self,bt)
+			self.applyTiltChangeAndReacquireTableau(bt)
 		else:
 			self.logger.warning('need more than one beam tilt images in tableau to navigate')
 
@@ -562,9 +583,14 @@ class BeamTiltImager(manualfocuschecker.ManualFocusChecker):
 			self.logger.error(e)
 			return None, None
 		c21 = Adict['coma']
+		if TESTING:
+			# reduced by half for each iteration
+			c21['x'] = (0.5**self.auto_count)*(Adict['coma']['x'])
+			c21['y'] = (0.5**self.auto_count)*(Adict['coma']['y'])
 		bt = self.abe.calculateBeamTiltCorrection(A)
 		self.logger.info('Axial Coma C21 (um)= (%.2f,%.2f),total= %.2f' % (c21['x']*1e6,c21['y']*1e6,math.hypot(c21['x'],c21['y'])*1e6))
 		self.logger.info('Coma correction beam tilt (x,y)(mrad)= (%.2f,%.2f)' % (bt['x']*1e3,bt['y']*1e3))
+		self.abe.resetData()
 		return c21, bt
 
 	def getTilt(self):
