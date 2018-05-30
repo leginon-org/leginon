@@ -676,6 +676,35 @@ class Acquisition(targetwatcher.TargetWatcher):
 		y = simageshift['y'] + imageshift['y']
 		self.instrument.tem.ImageShift = {'x':x, 'y':y}
 
+	def setPresetMagProbeMode(self, presetdata,emtarget):
+		'''
+		Set magnification and probe mode according to presetdata.
+		This is required before setting beam tilt or other projection
+		submode dependent values.
+		'''
+		if not presetdata:
+			return
+		tem = presetdata['tem']
+		current_tem = self.instrument.getTEMData()
+		if not tem or current_tem.dbid != tem.dbid:
+			self.instrument.setTEM(tem['name'])
+		# magnification check
+		preset_mag = presetdata['magnification']
+		current_mag = self.instrument.tem.Magnification
+		# probe mode
+		current_probe = self.instrument.tem.getProbeMode()
+		preset_probe = presetdata['probe mode']
+		if preset_mag != current_mag or preset_probe != current_probe:
+			presetname = presetdata['name']
+			self.logger.info('Setting Preset and emtarget to %s to get zero beam tilt and stig' % (presetname))
+			self.presetsclient.toScope(presetname, emtarget, keep_shift=False)
+		
+	def setComaStig0(self):
+		mag = self.instrument.tem.Magnification
+		self.logger.info('Set zero beam tilt and stig at %d mag' % (int(mag)))
+		self.beamtilt0 = self.instrument.tem.getBeamTilt()
+		self.stig0 = self.instrument.tem.getStigmator()['objective']
+
 	def moveAndPreset(self, presetdata, emtarget):
 			'''
 			Move xy to emtarget position with its mover and set preset
@@ -717,9 +746,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 				cam = self.instrument.getCCDCameraData()
 				ht = self.instrument.tem.HighTension
 				mag = self.instrument.tem.Magnification
+				self.setComaStig0()
 				imageshift = self.instrument.tem.getImageShift()
-				self.beamtilt0 = self.instrument.tem.getBeamTilt()
-				self.stig0 = self.instrument.tem.getStigmator()['objective']
 				try:
 					beamtilt = beamtiltclient.transformImageShiftToBeamTilt(imageshift, tem, cam, ht, self.beamtilt0, mag)
 					self.instrument.tem.BeamTilt = beamtilt
@@ -865,13 +893,19 @@ class Acquisition(targetwatcher.TargetWatcher):
 		else:
 			defaultchannel = channel
 		args = (presetdata, emtarget, defaultchannel)
-		if self.settings['background']:
-			self.clearCameraEvents()
-			t = threading.Thread(target=self.acquirePublishDisplayWait, args=args)
-			t.start()
-			self.waitExposureDone()
-		else:
-			self.acquirePublishDisplayWait(*args)
+		try:
+			if self.settings['background']:
+				self.clearCameraEvents()
+				t = threading.Thread(target=self.acquirePublishDisplayWait, args=args)
+				t.start()
+				self.waitExposureDone()
+			else:
+				self.acquirePublishDisplayWait(*args)
+		except:
+			self.resetComaCorrection()
+			raise
+		finally:
+			self.resetComaCorrection()
 		return status
 
 	def acquirePublishDisplayWait(self, presetdata, emtarget, channel):
@@ -911,6 +945,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 			print tnum, '************* TOTAL ***', ttt
 
 	def resetComaCorrection(self):
+		# projection submode and probe mode must be the same as beamtilt0
+		# and stig0 when calling this.
 		if self.settings['correct image shift coma']:
 			self.instrument.tem.BeamTilt = self.beamtilt0
 			self.instrument.tem.Stigmator = {'objective':self.stig0}
