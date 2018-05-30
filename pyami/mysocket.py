@@ -32,7 +32,10 @@ def gethostname():
 
 def gethostbyname(hostname):
 	lower_hostname = hostname.lower()
-	ipaddress = getHostMappings()[lower_hostname]
+	try:
+		ipaddress = getHostMappings()[lower_hostname]
+	except KeyError:
+		ipaddress = None
 	if not ipaddress:
 		try:
 			ipaddress = socket.gethostbyname(lower_hostname)
