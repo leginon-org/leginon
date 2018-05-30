@@ -5,7 +5,7 @@ from pyami import moduleconfig
 
 def getDefaultConfigs():
 	dconfig = {}
-	myname = socket.gethostname()
+	myname = socket.gethostname().lower()
 	myaddress = socket.gethostbyname(myname)
 	dconfig['my ip map'] = {myname:myaddress}
 	return dconfig
@@ -31,10 +31,11 @@ def gethostname():
 		KeyError('Missing "my ip map" module in pyami.cfg')
 
 def gethostbyname(hostname):
-	ipaddress = getHostMappings()[hostname]
+	lower_hostname = hostname.lower()
+	ipaddress = getHostMappings()[lower_hostname]
 	if not ipaddress:
 		try:
-			ipaddress = socket.gethostbyname(hostname)
+			ipaddress = socket.gethostbyname(lower_hostname)
 		except Exception, e:
 			raise LookupError(e)
 	return ipaddress
