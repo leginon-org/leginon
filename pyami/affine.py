@@ -121,3 +121,9 @@ def transformImageTargets(A,from_xys):
 	from_matrix = pad(from_coords)
 	to_matrix = from_matrix*A
 	return map((lambda x: tuple(x)),to_matrix.tolist())
+
+if __name__=='__main__':
+	from_xys = [(0,0),(1,0),(0,1),(1,1)]
+	to_xys = [(0,0),(0,1),(-1,0),(-1,1)]
+	print solveAffineMatrixFromImageTargets(from_xys,to_xys)
+
