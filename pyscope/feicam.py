@@ -5,7 +5,7 @@ import simscripting
 import falconframe
 from pyami import moduleconfig
 
-SIMULATION = True
+SIMULATION = False
 class FEIAdvScriptingConnection(object):
 	instr = None
 	csa = None
