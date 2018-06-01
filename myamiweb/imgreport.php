@@ -32,7 +32,7 @@ $newimage = $leginondata->findImage($imgId, $preset);
 $imgId = $newimage['id'];
 
 $imageinfo = $leginondata->getImageInfo($imgId);
-if ($imageinfo === false) $imageinfo = $leginondata->getMinimalImageInfo($imgId);
+if (!$imageinfo) $imageinfo = $leginondata->getMinimalImageInfo($imgId);
 $sessionId = $imageinfo[sessionId];
 $_GET['expId'] = $sessionId;
 require_once "inc/project.inc";
