@@ -48,6 +48,9 @@ class BadImageStatsPause(targetwatcher.PauseRepeatException):
 class BadImageAcquirePause(targetwatcher.PauseRestartException):
 	pass
 
+class BadImageAcquireBypass(targetwatcher.BypassException):
+	pass
+
 class BadImageStatsAbort(Exception):
 	pass
 
@@ -798,7 +801,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.reportStatus('acquisition', 'image acquired')
 		self.stopTimer('acquire getData')
 		if imagedata is None:
-			raise BadImageAcquirePause('failed acquire camera image')
+			raise BadImageAcquireBypass('failed acquire camera image')
 		if imagedata['image'] is None:
 			raise BadImageAcquirePause('Acquired array is None. Possible camera problem')
 
@@ -1253,6 +1256,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.logger.error('processing target failed: %s' %e)
 			ret = 'aborted'
 		except BadImageAcquirePause, e:
+			self.logger.error('processing target failed: %s' %e)
+			ret = 'aborted'
+		except BadImageAcquireBypass, e:
 			self.logger.error('processing target failed: %s' %e)
 			ret = 'aborted'
 		except BadImageStatsAbort, e:

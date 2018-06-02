@@ -27,6 +27,11 @@ class PauseRestartException(Exception):
 	repeated after a user pause'''
 	pass
 
+class BypassException(Exception):
+	'''Raised within processTargetData method if the target should be
+	bypassed'''
+	pass
+
 class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 	'''
 	TargetWatcher will watch for TargetLists
@@ -420,6 +425,9 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 				try:
 					self.logger.info('Processing target id %d' % adjustedtarget.dbid)
 					process_status = self.processTargetData(adjustedtarget, attempt=attempt)
+				except BypassException, e:
+					self.logger.error(str(e) + '... Bypass this target and pretend it is done')
+					process_status = 'bypass'
 				except PauseRestartException, e:
 					self.player.pause()
 					self.logger.error(str(e) + '... Fix it, then resubmit targets from previous step to repeat')
