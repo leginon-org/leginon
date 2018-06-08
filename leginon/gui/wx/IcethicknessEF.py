@@ -91,7 +91,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Ice Thickness using Energy Filter')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
-		sb = wx.StaticBox(self, -1, 'Ice Thickness by Objective Scattering')
+		sb = wx.StaticBox(self, -1, 'Ice Thickness using Aperture Limited Scattering')
 		sbszdb = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		self.widgets['process'] = wx.CheckBox(self, -1,
@@ -124,10 +124,10 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz_decimate.Add(self.widgets['decimate'], (0, 1), (1, 1),
 										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 
-		self.widgets['process_obj_thickness'] = wx.CheckBox(self, -1, 'Calculate ice thickness from objective scattering')
+		self.widgets['process_obj_thickness'] = wx.CheckBox(self, -1, 'Calculate ice thickness from aperture limited scattering')
 		self.widgets['obj mean free path'] = FloatEntry(self, -1, min=0.0, chars=6)
 		sz_objmeanfreepath = wx.GridBagSizer(5, 5)
-		label = wx.StaticText(self, -1, 'Objective scattering mean free path (nm):')
+		label = wx.StaticText(self, -1, 'ALS coefficient (nm):')
 		sz_objmeanfreepath.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz_objmeanfreepath.Add(self.widgets['obj mean free path'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		self.widgets['vacuum intensity'] = FloatEntry(self, -1, min=0.0, chars=6)
