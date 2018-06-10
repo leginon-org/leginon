@@ -233,7 +233,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			try:
 				self.obj_aperture_reset_value = self.instrument.tem.getApertureSelection('objective')
 			except Exception, e:
-				self.logger.error(e.message)
+				self.logger.error(e)
 				self.logger.error('Please retract objective aperture manually and continue')
 				self.player.pause()
 				self.obj_aperture_reset_value = 'unknown'
@@ -348,7 +348,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			self.logger.info('Objective aperture retracted')
 			retract_ap_successful = True
 		except Exception, e:
-			self.logger.error(e.message)
+			self.logger.error(e)
 		return retract_ap_successful
 
 	def putBackObjectiveAperture(self):
@@ -358,7 +358,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			state = self.instrument.tem.setApertureSelection('objective',value)
 			self.logger.info('%s um objective aperture inserted' % (value,))
 		except Exception, e:
-			self.logger.error(e.message)
+			self.logger.error(e)
 
 	def getIsResetTiltInList(self):
 		'''
