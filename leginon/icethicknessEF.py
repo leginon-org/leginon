@@ -128,6 +128,13 @@ class IcethicknessEF(imagewatcher.ImageWatcher):
 			objth['image'] = imagedata;
 #			self.logger.info('mean counts of current image: %f' %(objth['intensity']))
 			self.logger.info('objective scattering thickness: %f nm' %(objth['thickness']))
+			if objth['thickness'] < -10:
+				objth['thickness'] = -10
+				self.logger.info('objective scattering thickness truncated to -10 nm')
+			if objth['thickness'] > 500:
+				objth['thickness'] = 500
+				self.logger.info('objective scattering thickness truncated to 500 nm')
+			
 			objth.insert()
 
 	def _acquireSpecialImage(self, preset, acquirestr, exp_time, filtered, slit_width):

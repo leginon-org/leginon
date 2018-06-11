@@ -149,7 +149,7 @@ if ($imgId) {
 			echo "&nbsp &nbsp <b>ZLP Thickness:</b> ",intval($zlp_thickness['thickness']), " nm";
 		}
 		if ( !empty($obj_thickness['thickness'])) {
-			echo "&nbsp &nbsp <b>Obj Thickness:</b> ",intval($obj_thickness['thickness']), " nm";
+			echo "&nbsp &nbsp <b>ALS Thickness:</b> ",intval($obj_thickness['thickness']), " nm";
 		}
 	}
 	echo "</font>";
