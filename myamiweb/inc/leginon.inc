@@ -136,6 +136,7 @@ class leginondata {
 				$wherecam = ' ';
 			}
 			
+			$where = "where s.`hidden` != 1 ";
 			if (is_numeric($camId) or is_numeric($temId) or is_numeric($projectId) or $privilege_level <=2) {
 				
 				$q="select s.DEF_id as `id`, ".$selectcomment." as `name`, s.comment as `comment`, "
@@ -144,7 +145,8 @@ class leginondata {
 					."left join SessionData s on (s.`DEF_id` = a.`REF|SessionData|session`) ";
 					$q .= $joinproject;
 					$q .= $jointem.$joincam;
-					$where = "where a.`REF|SessionData|Session` IS NOT NULL ".$whereproject;
+					$where .= " and a.`REF|SessionData|Session` IS NOT NULL ";
+					$where .= $whereproject;
 					$where .= $wheretem.$wherecam;
 					$grouporder = " "
 						."group by a.`REF|SessionData|session` "
