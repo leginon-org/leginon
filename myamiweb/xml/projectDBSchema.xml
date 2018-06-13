@@ -557,7 +557,7 @@
       name="last_exp_runtime" 
       type="timestamp" 
       null="NOT NULL"
-      default="DEFAULT CURRENT_TIMESTAMP" 
+      default="DEFAULT '2000-01-01 00:00:00'" 
     />
     <field 
       name="ace_run" 
@@ -695,7 +695,7 @@
       name="first_exp_runtime" 
       type="timestamp" 
       null="NOT NULL"
-      default="DEFAULT CURRENT_TIMESTAMP" 
+      default="DEFAULT '2000-01-01 00:00:00'" 
     />
      
     <key>PRIMARY KEY (`DEF_id`)</key>
