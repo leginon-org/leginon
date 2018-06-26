@@ -1352,6 +1352,7 @@ class PresetsManagerSettingsData(SettingsData):
 			('stage always', bool),
 			('cycle', bool),
 			('optimize cycle', bool),
+			('import random', bool),
 			('mag only', bool),
 			('apply offset', bool),
 			('disable stage for image shift', bool),
@@ -1998,6 +1999,14 @@ class MoveAcquisitionSettingsData(AcquisitionSettingsData):
 			('imaging delay', float),  #seconds
 			('tilt to', float),		#degrees
 			('total move time', float),  #seconds
+			('nsteps', int),
+		)
+	typemap = classmethod(typemap)
+
+class DefocusSequenceSettingsData(AcquisitionSettingsData):
+	def typemap(cls):
+		return AcquisitionSettingsData.typemap() + (
+			('step size', float),  #meter
 			('nsteps', int),
 		)
 	typemap = classmethod(typemap)

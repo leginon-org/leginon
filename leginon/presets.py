@@ -249,7 +249,8 @@ class PresetsManager(node.Node):
 		'disable stage for image shift': False,
 		'blank': False,
 		'smallsize': 1024,
-		'idle minute': 10.0,
+		'idle minute': 30.0,
+		'import random': False,
 	}
 	eventinputs = node.Node.eventinputs + [event.ChangePresetEvent, event.MeasureDoseEvent, event.UpdatePresetEvent, event.IdleTimerPauseEvent, event.IdleTimerRestartEvent]
 	eventoutputs = node.Node.eventoutputs + [event.PresetChangedEvent, event.PresetPublishEvent, event.DoseMeasuredEvent, event.MoveToTargetEvent, event.ActivateNotificationEvent, event.DeactivateNotificationEvent]
@@ -499,8 +500,9 @@ class PresetsManager(node.Node):
 			if not name:
 				continue
 			newp = leginondata.PresetData(initializer=preset, session=self.session)
-			## for safety, disable random defocus range
-			newp['defocus range min'] = newp['defocus range max'] = None
+			## for safety, disable random defocus range by default
+			if not self.settings['import random']:
+				newp['defocus range min'] = newp['defocus range max'] = None
 			self.presetToDB(newp)
 			self.presets[name] = newp
 		self.setOrder()
