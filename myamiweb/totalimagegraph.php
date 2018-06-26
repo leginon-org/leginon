@@ -37,7 +37,7 @@ $db = new mysql(DB_HOST, DB_USER, DB_PASS, DB_PROJECT);
 $results = $db->getSQLResult($sql);
 if (empty($timegroup)) {
 	// stats by years if db used for a while
-	if (count($results) > 1 && $results[count($results)-1]['year']-$results[0]['year']> 2) {
+	if (count($results) > 1 && $results[count($results)-1]['year']-$results[0]['year']> 5) {
 		$timegroup = 'year';
 	} else {
 		$timegroup = 'month';

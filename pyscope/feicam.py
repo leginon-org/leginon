@@ -3,7 +3,7 @@ import ccdcamera
 import time
 import simscripting
 import falconframe
-from pyscope import moduleconfig
+from pyami import moduleconfig
 
 SIMULATION = False
 class FEIAdvScriptingConnection(object):

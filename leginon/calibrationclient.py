@@ -669,7 +669,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		try:
 			im1 = self.acquireImage(state1, settle=settle)
 		except Exception, e:
-			self.node.logger.error('Measurement failed: %s' % e.message)
+			self.node.logger.error('Measurement failed: %s' % e)
 			return {'x':0.0, 'y': 0.0}
 		shiftinfo = self.measureScopeChange(im1, state2, settle=settle, correlation_type=correlation_type)
 
@@ -1175,7 +1175,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		try:
 			self._rotationCenterToScope()
 		except Exception, e:
-			self.node.logger.error('Unable to set rotation center: %s' % e.message)
+			self.node.logger.error('Unable to set rotation center: %s' % e)
 		else:
 			self.node.logger.info('Set instrument rotation center')
 
@@ -1191,7 +1191,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		try:
 			self._rotationCenterFromScope()
 		except Exception, e:
-			self.node.logger.error('Unable to get rotation center: %s' % e.message)
+			self.node.logger.error('Unable to get rotation center: %s' % e)
 		else:
 			self.node.logger.info('Saved instrument rotation center')
 
@@ -2058,7 +2058,7 @@ class ModeledStageCalibrationClient(MatrixCalibrationClient):
 			caldatay = self.retrieveMagCalibration(tem, cam, ht, mag, 'y')
 		except Exception, e:
 			matrix = None
-			self.node.logger.warning('Cannot get matrix from stage model: %s' % e.message)
+			self.node.logger.warning('Cannot get matrix from stage model: %s' % e)
 			return matrix
 			
 		means = [caldatax['mean'],caldatay['mean']]

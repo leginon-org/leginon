@@ -13,6 +13,7 @@ import SocketServer
 import numpy
 import sys
 import math
+from pyami import mysocket
 
 PORT = 55555
 
@@ -63,7 +64,7 @@ class Client(object):
 		return result
 
 def run_server():
-	hostname = socket.gethostname()
+	hostname = mysocket.gethostname()
 	port = PORT
 	print 'Running Server'
 	print '  host: %s' % (hostname,)

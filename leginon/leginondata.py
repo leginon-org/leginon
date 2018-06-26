@@ -1875,6 +1875,8 @@ class BeamTiltImagerSettingsData(AcquisitionSettingsData):
 			('tableau binning', int),
 			('tableau split', int),
 			('correlation type', str),
+			('do auto coma', bool),
+			('auto coma limit', float),
 		)
 	typemap = classmethod(typemap)
 

@@ -670,7 +670,7 @@ function newfile(view){
 	nlink = (eval(view+"dd_bt_st")) ? nddlink: nmaplink
 	ninfolink = "imgreport.php?id="+jsimgId+"&preset="+selpreset
 	ndeqlink = "javascript:popUpW('removequeue.php?id="+jsimgId+"&preset="+selpreset+"')"
-	ndownloadlink = "download.php?id="+jsimgId+"&preset="+selpreset+fft+cdwdformat
+	ndownloadlink = "download.php?id="+jsimgId+"&preset="+selpreset+fft+cdwdformat+sb
 	nexportlink = "getfilenames.php?sessionId="+jsSessionId+"&pre="+selpreset
 
 	if (img = document.images[eval("\"" +view+ "img\"")]) {

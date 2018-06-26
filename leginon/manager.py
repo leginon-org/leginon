@@ -22,6 +22,7 @@ import threading
 import logging
 import copy
 from pyami import ordereddict
+from pyami import mysocket
 import socket
 from wx import PyDeadObjectError
 import gui.wx.Manager
@@ -192,14 +193,14 @@ class Manager(node.Node):
 		self.frame.GetEventHandler().AddPendingEvent(evt)
 
 	def createLauncher(self):
-		self.launcher = launcher.Launcher(socket.gethostname().lower(),
+		self.launcher = launcher.Launcher(mysocket.gethostname().lower(),
 																			session=self.session,
 																			managerlocation=self.location())
 		self.onAddLauncherPanel(self.launcher)
 
 	def location(self):
 		location = {}
-		location['hostname'] = socket.gethostname().lower()
+		location['hostname'] = mysocket.gethostname().lower()
 		location['data binder'] = self.databinder.location()
 		return location
 
