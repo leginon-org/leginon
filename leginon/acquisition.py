@@ -835,9 +835,11 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.publish(imagedata['camera'], database=True)
 		return imagedata
 
-	def acquire(self, presetdata, emtarget=None, attempt=None, target=None, channel=None):
+	def preAcquire(self, presetdata, emtarget=None, channel=None):
+		'''
+		Things to do after moved to preset.
+		'''
 		reduce_pause = self.onTarget
-
 		if debug:
 			try:
 				tnum = emtarget['target']['number']
@@ -851,11 +853,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 			if 'consecutive' in self.timedebug:
 				print tnum, '************************************* CONSECUTIVE', t0 - self.timedebug['consecutive']
 			self.timedebug['consecutive'] = t0
-
-		status = self.moveAndPreset(presetdata, emtarget)
-		if status == 'error':
-			self.logger.warning('Move failed. skipping acquisition at this target')
-			return status
 
 		pausetime = self.settings['pause time']
 		if reduce_pause:
@@ -895,6 +892,14 @@ class Acquisition(targetwatcher.TargetWatcher):
 				defaultchannel = None
 		else:
 			defaultchannel = channel
+
+	def acquire(self, presetdata, emtarget=None, attempt=None, target=None, channel=None):
+		status = self.moveAndPreset(presetdata, emtarget)
+		if status == 'error':
+			self.logger.warning('Move failed. skipping acquisition at this target')
+			return status
+
+		defaultchannel = self.preAcquire(presetdata, emtarget, channel)
 		args = (presetdata, emtarget, defaultchannel)
 		try:
 			if self.settings['background']:

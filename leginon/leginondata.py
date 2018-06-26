@@ -2002,6 +2002,14 @@ class MoveAcquisitionSettingsData(AcquisitionSettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class DefocusSequenceSettingsData(AcquisitionSettingsData):
+	def typemap(cls):
+		return AcquisitionSettingsData.typemap() + (
+			('step size', float),  #meter
+			('nsteps', int),
+		)
+	typemap = classmethod(typemap)
+
 class CalibratorSettingsData(SettingsData):
 	def typemap(cls):
 		return SettingsData.typemap() + (
