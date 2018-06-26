@@ -1171,7 +1171,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 #																					'Move stage x and y axes only')
 #		self.widgets['stage always'] = wx.CheckBox(self, -1,
 #																		'Always move stage regardless of move type')
-		self.widgets['import random'] = wx.CheckBox(self, -1, 'Carry over random defocus when importing presets')
+		self.widgets['import random'] = wx.CheckBox(self, -1, 'Carry over random defocus range when importing presets')
 		self.widgets['cycle'] = wx.CheckBox(self, -1, 'Cycle presets')
 		self.widgets['optimize cycle'] = wx.CheckBox(self, -1,
 																									'Optimize preset cycle')
