@@ -38,6 +38,7 @@ class TEM(baseinstrument.BaseInstrument):
 		{'name': 'StageStatus', 'type': 'property'},
 		{'name': 'VacuumStatus', 'type': 'property'},
 		{'name': 'BeamBlankedDuringCameraExchange', 'type': 'property'},
+		{'name': 'ProjectionSubModeName', 'type': 'property'},
 
 		######## get/set
 		{'name': 'BeamBlank', 'type': 'property'},
