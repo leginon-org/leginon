@@ -262,7 +262,7 @@ class BeamTiltImager(manualfocuschecker.ManualFocusChecker):
 			if self.settings['tableau type'] == 'split image-power':
 				self.splitTableau(imagedata)
 			elif 'beam tilt series' in self.settings['tableau type']:
-				if 'power' in self.settings['tableau type']:
+				if 'power' in self.settings['tableau type'] and self.settings['do auto coma']:
 					if not TESTING:
 						ctfresult = self.getImageCtfResult(imagedata)
 					else:
