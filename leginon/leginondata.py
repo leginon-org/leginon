@@ -1352,6 +1352,7 @@ class PresetsManagerSettingsData(SettingsData):
 			('stage always', bool),
 			('cycle', bool),
 			('optimize cycle', bool),
+			('import random', bool),
 			('mag only', bool),
 			('apply offset', bool),
 			('disable stage for image shift', bool),
