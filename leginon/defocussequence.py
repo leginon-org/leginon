@@ -48,8 +48,8 @@ class DefocusSequence(acquisition.Acquisition):
 	settingsclass = leginondata.DefocusSequenceSettingsData
 	defaultsettings = dict(acquisition.Acquisition.defaultsettings)
 	defaultsettings.update({
-			('step size', 1e-6),  #meter
-			('nsteps', 2),
+			'step size': 1e-6, #meters
+			'nsteps': 2,
 	})
 
 	eventinputs = acquisition.Acquisition.eventinputs
