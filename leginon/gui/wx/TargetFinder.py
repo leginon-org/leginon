@@ -166,7 +166,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		#			'Wait for another node to process targets before marking them done')
 		self.widgets['user check'] = wx.CheckBox(self, -1,
 																	'Allow for user verification of selected targets')
-		#checkmethodsz = self.createCheckMethodSizer()
+		checkmethodsz = self.createCheckMethodSizer()
 		self.widgets['queue'] = wx.CheckBox(self, -1,
 																							'Queue up targets')
 		self.widgets['queue drift'] = wx.CheckBox(self, -1, 'Declare drift when queue submitted')
@@ -180,8 +180,8 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz = wx.GridBagSizer(5, 5)
 		sz.Add(self.widgets['user check'], (0, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		#sz.Add(checkmethodsz, (1, 0), (1, 1),
-		#				wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(checkmethodsz, (1, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
 		#sz.Add(self.widgets['wait for done'], (1, 0), (1, 1),
 		#				wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['queue'], (2, 0), (1, 1),
