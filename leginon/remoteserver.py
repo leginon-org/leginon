@@ -214,17 +214,17 @@ class RemoteTargetServer(RemoteServer):
 		lines = infile.readlines()
 		infile.close()
 
-		passcode_in_file = lines[0][:-1]
-		if passcode_in_file != self.remote_passcode:
-			self.resetTargets()
-			raise ValueError('Passcode not matching. Targets removed')
+		#passcode_in_file = lines[0][:-1]
+		#if passcode_in_file != self.remote_passcode:
+		#	self.resetTargets()
+		#	raise ValueError('Passcode not matching. Targets removed')
 		xys = {}
 		for n in self.targetnames:
 			xys[n] = []
 
-		for l in lines[1:]:
+		for l in lines[:]:
 			# strip one regardless of the form
-			bits = l[:-1].split('\t')
+			bits = l[:-1].split(',')
 			tname = bits[0]
 			x = int(bits[1])
 			y = int(bits[2])
