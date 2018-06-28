@@ -107,7 +107,9 @@ class RemoteTargetServer(RemoteServer):
 		self.datafile_base = os.path.join(remotedata_base,'targets')
 		fileutil.mkdirs(self.datafile_base)
 		self.targefilepath = None
-		self.excluded_targetnames = ['Blob']
+		self.excluded_targetnames = ['Blobs','preview']
+		self.readonly_targetnames = ['done']
+		self.writeonly_targetnames = []
 
 	def setTargetNames(self,targetnames):
 		'''
@@ -120,11 +122,29 @@ class RemoteTargetServer(RemoteServer):
 				targetnames.remove(name)
 
 		self.out_targetnamesfilepath = os.path.join(self.datafile_base,'targetnames')
+		self.setTargetPermission(targetnames)
 		self._writeTargetNames(targetnames)
 
+	def setTargetPermission(self, targetnames):
+		self.permissions = {}
+		for name in targetnames:
+			if name not in self.writeonly_targetnames:
+				self.permissions[name]='r' # all are readable
+			else:
+				self.permissions[name]=''
+			if name not in self.readonly_targetnames:
+				self.permissions[name]+='w' # all are readable
+
 	def _writeTargetNames(self, targetnames):
+		'''
+		Write target names and permission. File will be overwritten.
+		'''
 		f = open(self.out_targetnamesfilepath,'w')
-		f.write('\n'.join(targetnames))
+		lines = []
+		for name in targetnames:
+			line = '%s,%s' % (name, self.permissions[name])
+			lines.append(line)
+		f.write('\n'.join(lines))
 		f.close()
 	
 	def setImage(self, imagedata):
@@ -182,7 +202,7 @@ class RemoteTargetServer(RemoteServer):
 		f = open(self.out_targetfilepath,'w')
 		for name in targets.keys():
 			for xy in targets[name]:
-				line = '\t'.join([name,'%d' % xy[0],'%d' % xy[1]])
+				line = ','.join([name,'%d' % xy[0],'%d' % xy[1]])
 				line +='\n'
 				f.write(line)
 		f.close()
@@ -225,6 +245,8 @@ class RemoteTargetServer(RemoteServer):
 		for l in lines[:]:
 			# strip one regardless of the form
 			bits = l[:-1].split(',')
+			if len(bits) != 3:
+				continue
 			tname = bits[0]
 			x = int(bits[1])
 			y = int(bits[2])
@@ -239,11 +261,21 @@ class RemoteTargetServer(RemoteServer):
 		xys = False
 		while xys is False:
 			xys = self._readTargetsFromFile()
+		xys = self.filterInTargets(xys)
+		return xys
+
+	def filterInTargets(self, xys):
+		'''
+		Remove non-writable targets
+		'''
+		for tname in xys.keys():
+			if 'w' not in self.permissions[tname]:
+				del xys[tname]
 		return xys
 
 	def resetTargets(self):
 		'''
-		Remove target file
+		Remove target file once they are handled by TargetFinder
 		'''
 		if not os.access(self.in_targetfilepath, os.W_OK):
 			raise ValueError('%s not writable.' % self.in_targetfilepath)

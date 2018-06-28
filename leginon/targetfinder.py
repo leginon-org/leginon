@@ -262,7 +262,9 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		Display all xytargets from remote target server on ImagePanel.
 		'''
 		for name in self.targetnames:
-			self.setTargets(xys[name], name, block=True)
+			if name in xys.keys():
+				# This will reset named targets
+				self.setTargets(xys[name], name, block=True)
 
 	def processPreviewTargets(self, imdata, targetlist):
 			preview_targets = self.panel.getTargetPositions('preview')
