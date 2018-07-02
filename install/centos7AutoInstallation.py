@@ -288,22 +288,44 @@ class CentosInstallation(object):
 		self.openFirewallPort(80)
 		return True
 
+	def updateMyCnf(self):
+		shutil.copy("/etc/my.cnf", "./my.cnf")
+		f = open('/etc/my.cnf', 'r')
+		lines = f.readlines()
+		f.close()
+		outlines = ''
+		for l in lines:
+			outlines += l
+			if '[mysqld]' in l:
+				# just the minimal now. This is not tested.
+				outlines +='default_storage_engine = myisam\n'
+				outlines +='default_tmp_storage_engine = myisam\n'
+		f = open('./my.cnf','w')
+		f.write(outlines)
+		f.close()
+		shutil.copy("./my.cnf", "/etc/my.cnf")
+
 	def setupDBServer(self):
-		self.writeToLog("--- Start install Database Server")
-		self.mysqlYumInstall()
+		self.writeToLog("--- Start Setting up Database Server")
+		self.writeToLog("--- MariaDB is pre-installed for CentOs 7"
 		# turn on auto mysql start
 		
 		# stop mysql server (if it's running)
-		self.runCommand("systemctl enable mysqld")
+		self.runCommand("systemctl stop mariadb")
 		# start mysql server
 		
 		#https://stackoverflow.com/questions/33510184/change-mysql-root-password-on-centos7
 		os.system('systemctl set-environment MYSQLD_OPTS="--skip-grant-tables"')
-		os.system("systemctl start mysqld")
+		# TO DO: Need to find a good my.cnf for mariadb
+		self.updateMyCnf()
+		os.system("systemctl start mariadb")
 		mysql_is_active = False
-                while not mysql_is_active:
-                        mysql_is_active = os.system("mysqladmin -umysql ping") == 0
-                        time.sleep(1.0)
+		t0 = time.time()
+		while not mysql_is_active and time.time() - t0 < 30.0:
+			mysql_is_active = os.system("mysqladmin -umysql ping") == 0
+			time.sleep(1.0)
+		if time.time() - t0 >= 30.0:
+			return False
 
 		# run database setup script.
 		cmd = os.path.join(self.gitMyamiDir, 'install/newDBsetup.php -L %s -P %s -H %s -U %s -E %s' % (self.leginonDB, self.projectDB, self.dbHost, self.dbUser, self.adminEmail))
