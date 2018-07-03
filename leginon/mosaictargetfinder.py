@@ -184,6 +184,10 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		# self.existing_position_targets becomes empty on the second
 		# submit if not refreshed. 
 		self.refreshDatabaseDisplayedTargets()
+		if self.settings['check method'] == 'remote':
+			self.sendTargetsToRemote()
+			self.waitForTargetsFromRemote()
+
 		# create target list
 		self.logger.info('Submitting targets...')
 		self.getTargetDataList('acquisition')
@@ -205,6 +209,9 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 			else:
 				self.logger.info('Reference target submitted on %s' % self.getMosaicLabel())
 		self.logger.info('Done target submission')
+		if self.settings['check method'] == 'remote':
+			# just remove intargets, not the image tree
+			self.remote.targets.resetTargets()
 		# trigger onTargetsSubmitted in the gui.
 		self.panel.targetsSubmitted()
 
@@ -896,3 +903,37 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 	def checkSettings(self,settings):
 		# always queuing. No need to check "wait for process" conflict
 		return []
+
+	def sendTargetsToRemote(self):
+		'''
+		Remote service target without confirmation
+		'''
+		# 1. createMosaicImage
+		self.logger.warning('Sending mosaic image and targets to remote server here')
+		self.publishMosaicImage()
+		try:
+			mosaic_image_shape = self.mosaicimage.shape
+		except AttributeError:
+			self.logger.error('Need mosaic image to set targets')
+			return
+		# 2. get displayed targets
+		xytargets = self.getPanelTargets(mosaic_image_shape)
+		# 3. send to remote server
+		# put stuff in OutBox
+		self.remote.targets.setImage(self.mosaicimagedata)
+		self.remote.targets.setOutTargets(xytargets)
+		# wait and get stuff from InBox
+		targetfile = self.remote.targets.getInTargetFilePath()
+		self.logger.info('Waiting for targets in data file %s' % targetfile)
+		self.setStatus('processing')
+
+	def waitForTargetsFromRemote(self):
+		# targetxys are target coordinates in x, y grouped by targetnames
+		targetxys = self.remote.targets.getInTargets()
+		print 'remote targets',targetxys
+
+		self.displayRemoteTargetXYs(targetxys)
+		preview_targets = self.panel.getTargetPositions('preview')
+		if preview_targets:
+			self.logger.error('can not handle preview with remote')
+		self.setStatus('idle')

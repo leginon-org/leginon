@@ -23,6 +23,7 @@ hide_incomplete = False
 class Panel(leginon.gui.wx.Node.Panel):
 	def __init__(self, *args, **kwargs):
 		leginon.gui.wx.Node.Panel.__init__(self, *args, **kwargs)
+		self.SettingsDialog = SettingsDialog
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SETTINGS,
 													'settings',
 													shortHelpString='Settings')
@@ -91,7 +92,7 @@ class Panel(leginon.gui.wx.Node.Panel):
 		return self.imagepanel.getTargets(typename)
 
 	def onSettingsTool(self, evt):
-		dialog = SettingsDialog(self,show_basic=True)
+		dialog = self.SettingsDialog(self,show_basic=True)
 		dialog.ShowModal()
 		dialog.Destroy()
 
