@@ -1418,6 +1418,10 @@ class leginondata {
 			."c.`exposure time`, "
 			."pi.pixelsize as pixelsize, "
 			."scope.magnification, "
+			."scope.`SUBD|beam tilt|x` as `beam tilt x`, "
+			."scope.`SUBD|beam tilt|y` as `beam tilt y`, "
+			."scope.`SUBD|image shift|x` as `image shift x`, "
+			."scope.`SUBD|image shift|y` as `image shift y`, "
 			."scope.`SUBD|stage position|x` as `stage x`, "
 			."scope.`SUBD|stage position|y` as `stage y`, "
 			."scope.`SUBD|stage position|z` as `stage z`, "
@@ -1444,6 +1448,32 @@ class leginondata {
 		$Rimageinfo = $this->mysql->SQLQuery($q);
 		$imageinfo = mysqli_fetch_array($Rimageinfo,MYSQLI_ASSOC);
 		return $imageinfo;
+	}
+
+	function getZeroBeamTilt($imginfo) {
+		// Uses parent image to calculate zero beam tilt.  Will get beam tilt
+		// of the input if target is simulated.
+		if ( array_key_exists('parentId', $imginfo) ) {
+			$imginfo = $this->getImageInfo($imginfo['parentId']);
+		}
+		$bt0 = array('beam tilt x'=>$imginfo['beam tilt x'],'beam tilt y'=>$imginfo['beam tilt y']);
+		return $bt0;
+	}
+
+	function getImageBeamTilt($imgid, $bt0) {
+		// Get beam tilt from image shift coma calibration.  Returns 0,0 if
+		// no calibration.
+		$imginfo = $this->getImageInfo($imgid);
+		$bt0 = $this->getZeroBeamTilt($imginfo);
+		$m = $this->getImageMatrixCalibration($imgid, $type='image-shift coma');
+		$matrix = matrix($m[a11],$m[a12],$m[a21],$m[a22]);
+		$is_x = $imginfo['image shift x'];
+		$is_y = $imginfo['image shift y'];
+		$vector = array($is_x,$is_y);
+		$result_vector = matrix_multiply($matrix, $vector);
+		$result_vector[1] -= $bt0['beam tilt x'];
+		$result_vector[2] -= $bt0['beam tilt y'];
+		return $result_vector;
 	}
 
 	function getPhasePlateInfo($pp_usageId) {
