@@ -211,7 +211,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.logger.info('Done target submission')
 		if self.settings['check method'] == 'remote':
 			# just remove intargets, not the image tree
-			self.remote.targeting.resetTargets()
+			self.remote_targeting.resetTargets()
 		# trigger onTargetsSubmitted in the gui.
 		self.panel.targetsSubmitted()
 
@@ -920,16 +920,16 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		xytargets = self.getPanelTargets(mosaic_image_shape)
 		# 3. send to remote server
 		# put stuff in OutBox
-		self.remote.targeting.setImage(self.mosaicimagedata)
-		self.remote.targeting.setOutTargets(xytargets)
+		self.remote_targeting.setImage(self.mosaicimagedata)
+		self.remote_targeting.setOutTargets(xytargets)
 		# wait and get stuff from InBox
-		targetfile = self.remote.targeting.getInTargetFilePath()
+		targetfile = self.remote_targeting.getInTargetFilePath()
 		self.logger.info('Waiting for targets in data file %s' % targetfile)
 		self.setStatus('processing')
 
 	def waitForTargetsFromRemote(self):
 		# targetxys are target coordinates in x, y grouped by targetnames
-		targetxys = self.remote.targeting.getInTargets()
+		targetxys = self.remote_targeting.getInTargets()
 		print 'remote targets',targetxys
 
 		self.displayRemoteTargetXYs(targetxys)

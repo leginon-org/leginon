@@ -20,29 +20,55 @@ import gui.wx.ClickTargetFinder
 SLEEP_TIME = 5
 
 class RemoteServerMaster(object):
+	'''
+	This is used to set up session wide parameters.
+	'''
 	def __init__(self, logger, sessiondata, node):
 		self.logger = logger
 		self.session = sessiondata
 		self.node = node
-		self.node_name = node.name.replace(' ','_')
-		self.remote_passcode = sessiondata['remote passcode']
 		
-		self.remotedata_base = os.path.join(os.path.dirname(sessiondata['image path']),'remote',self.node_name)
+		self.remotedata_base = os.path.join(os.path.dirname(sessiondata['image path']),'remote')
 		fileutil.mkdirs(self.remotedata_base)
-		self.toolbar = RemoteToolbar(logger, sessiondata, node, self.remotedata_base)
-		self.targeting = RemoteTargetingServer(logger, sessiondata, node, self.remotedata_base)
 
 class RemoteServer(object):
 	def __init__(self, logger, sessiondata, node):
 		self.logger = logger
 		self.session = sessiondata
 		self.node = node
+		self.node_name = node.name.replace(' ','_')
 		self.remote_passcode = sessiondata['remote passcode']
+
+class RemoteStatusbar(RemoteServer):
+	def __init__(self, logger, sessiondata, node, remotedata_base):
+		super(RemoteStatusbar,self).__init__(logger, sessiondata, node)
+		self.datafile_base = os.path.join(remotedata_base,'statusbar')
+		fileutil.mkdirs(self.datafile_base)
+		self.tmp_path = os.path.join(self.datafile_base, 'status.tmp')
+		self.status_path = os.path.join(self.datafile_base, 'status.txt')
+
+	def setStatus(self, status):
+		if status == 'processing':
+			self.setBusyStatus()
+		else:
+			self.setStandbyStatus()
+
+	def setStandbyStatus(self):
+		self._writeStatusToFile(None)
+
+	def setBusyStatus(self):
+		self._writeStatusToFile('busy')
+
+	def _writeStatusToFile(self, status):
+		f = open(self.status_path,'w')
+		if status:
+			f.write('%s, busy' % (self.node_name))
+		f.close()
 
 class RemoteToolbar(RemoteServer):
 	def __init__(self, logger, sessiondata, node, remotedata_base):
 		super(RemoteToolbar,self).__init__(logger, sessiondata, node)
-		self.datafile_base = os.path.join(remotedata_base,'tools')
+		self.datafile_base = os.path.join(remotedata_base,self.node_name,'toolbar')
 		fileutil.mkdirs(self.datafile_base)
 		self.tools = {}
 
@@ -104,7 +130,7 @@ class RemoteTargetingServer(RemoteServer):
 	def __init__(self, logger, sessiondata, node, remotedata_base):
 		super(RemoteTargetingServer,self).__init__(logger, sessiondata, node)
 		self.targetnames = []
-		self.datafile_base = os.path.join(remotedata_base,'targeting')
+		self.datafile_base = os.path.join(remotedata_base,self.node_name,'targeting')
 		fileutil.mkdirs(self.datafile_base)
 		self.targefilepath = None
 		self.excluded_targetnames = ['Blobs','preview']

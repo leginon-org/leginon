@@ -85,8 +85,9 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		self.targetimagevector = (0,0)
 		self.targetbeamradius = 0
 		self.resetLastFocusedTargetList(None)
-		self.remote = remoteserver.RemoteServerMaster(self.logger, session, self)
-		self.remote.targeting.setTargetNames(self.targetnames)
+		self.remote_targeting = remoteserver.RemoteTargetingServer(self.logger, session, self, self.remote.remotedata_base)
+		self.remote_toolbar = remoteserver.RemoteToolbar(self.logger, session, self, self.remote.remotedata_base)
+		self.remote_targeting.setTargetNames(self.targetnames)
 		self.onQueueCheckBox(self.settings['queue'])
 		# assumes needing focus. Overwritten by subclasses
 		self.foc_activated = True
@@ -225,20 +226,20 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		self.twobeeps()
 		xytargets = self.getPanelTargets(imdata['image'].shape)
 		# put stuff in OutBox
-		self.remote.targeting.setImage(imdata)
-		self.remote.targeting.setOutTargets(xytargets)
+		self.remote_targeting.setImage(imdata)
+		self.remote_targeting.setOutTargets(xytargets)
 		# wait and get stuff from InBox
-		targetfile = self.remote.targeting.getInTargetFilePath()
+		targetfile = self.remote_targeting.getInTargetFilePath()
 		self.logger.info('Waiting for targets in data file %s' % targetfile)
 		self.setStatus('processing')
 		# targetxys are target coordinates in x, y grouped by targetnames
-		targetxys = self.remote.targeting.getInTargets()
-		print 'remote.targeting',targetxys
+		targetxys = self.remote_targeting.getInTargets()
+		print 'remote targets',targetxys
 
 		self.displayRemoteTargetXYs(targetxys)
 		preview_targets = self.panel.getTargetPositions('preview')
 		if not preview_targets:
-			self.remote.targeting.unsetImage(imdata)
+			self.remote_targeting.unsetImage(imdata)
 		self.setStatus('idle')
 
 	def getPanelTargets(self,imageshape):
@@ -285,7 +286,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		status = True
 		try:
 			# clear targetis set from the server
-			self.remote.targeting.resetTargets()
+			self.remote_targeting.resetTargets()
 		except Exception, e:
 			# assumes no preview targets
 			self.logger.error(e)
@@ -621,10 +622,10 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		'''
 		if self.settings['check method'] == 'remote':
 			if state is True:
-				self.remote.toolbar.addClickTool('queue','publishQueue','process queue')
+				self.remote_toolbar.addClickTool('queue','publishQueue','process queue')
 			else:
-				if 'queue' in self.remote.toolbar.tools:
-					self.remote.toolbar.tools['queue'].deActivate()
+				if 'queue' in self.remote_toolbar.tools:
+					self.remote_toolbar.tools['queue'].deActivate()
 
 	def blobStatsTargets(self, blobs):
 		targets = []
