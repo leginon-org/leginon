@@ -30,7 +30,7 @@ class RemoteServerMaster(object):
 		self.remotedata_base = os.path.join(os.path.dirname(sessiondata['image path']),'remote',self.node_name)
 		fileutil.mkdirs(self.remotedata_base)
 		self.toolbar = RemoteToolbar(logger, sessiondata, node, self.remotedata_base)
-		self.targets = RemoteTargetServer(logger, sessiondata, node, self.remotedata_base)
+		self.targeting = RemoteTargetingServer(logger, sessiondata, node, self.remotedata_base)
 
 class RemoteServer(object):
 	def __init__(self, logger, sessiondata, node):
@@ -100,11 +100,11 @@ class ClickTool(Tool):
 				os.remove(self.triggerpath)
 			time.sleep(SLEEP_TIME)		
 
-class RemoteTargetServer(RemoteServer):
+class RemoteTargetingServer(RemoteServer):
 	def __init__(self, logger, sessiondata, node, remotedata_base):
-		super(RemoteTargetServer,self).__init__(logger, sessiondata, node)
+		super(RemoteTargetingServer,self).__init__(logger, sessiondata, node)
 		self.targetnames = []
-		self.datafile_base = os.path.join(remotedata_base,'targets')
+		self.datafile_base = os.path.join(remotedata_base,'targeting')
 		fileutil.mkdirs(self.datafile_base)
 		self.targefilepath = None
 		self.excluded_targetnames = ['Blobs','preview']

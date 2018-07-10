@@ -86,7 +86,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		self.targetbeamradius = 0
 		self.resetLastFocusedTargetList(None)
 		self.remote = remoteserver.RemoteServerMaster(self.logger, session, self)
-		self.remote.targets.setTargetNames(self.targetnames)
+		self.remote.targeting.setTargetNames(self.targetnames)
 		self.onQueueCheckBox(self.settings['queue'])
 		# assumes needing focus. Overwritten by subclasses
 		self.foc_activated = True
@@ -225,20 +225,20 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		self.twobeeps()
 		xytargets = self.getPanelTargets(imdata['image'].shape)
 		# put stuff in OutBox
-		self.remote.targets.setImage(imdata)
-		self.remote.targets.setOutTargets(xytargets)
+		self.remote.targeting.setImage(imdata)
+		self.remote.targeting.setOutTargets(xytargets)
 		# wait and get stuff from InBox
-		targetfile = self.remote.targets.getInTargetFilePath()
+		targetfile = self.remote.targeting.getInTargetFilePath()
 		self.logger.info('Waiting for targets in data file %s' % targetfile)
 		self.setStatus('processing')
 		# targetxys are target coordinates in x, y grouped by targetnames
-		targetxys = self.remote.targets.getInTargets()
-		print 'remote targets',targetxys
+		targetxys = self.remote.targeting.getInTargets()
+		print 'remote.targeting',targetxys
 
 		self.displayRemoteTargetXYs(targetxys)
 		preview_targets = self.panel.getTargetPositions('preview')
 		if not preview_targets:
-			self.remote.targets.unsetImage(imdata)
+			self.remote.targeting.unsetImage(imdata)
 		self.setStatus('idle')
 
 	def getPanelTargets(self,imageshape):
@@ -285,7 +285,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		status = True
 		try:
 			# clear targetis set from the server
-			self.remote.targets.resetTargets()
+			self.remote.targeting.resetTargets()
 		except Exception, e:
 			# assumes no preview targets
 			self.logger.error(e)
