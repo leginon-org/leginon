@@ -1187,7 +1187,14 @@ class leginondata {
 			return array();
 	}
 
-	function getImageMatrixCalibration($imgId, $type='image shift') {
+	function getImageMatrixCalibration($imgId, $type='image shift', $mag_depend=true) {
+		if ($mag_depend) {
+			$mag_where = ""
+				."and "
+				."scope.magnification = mcal.magnification ";
+		} else {
+			$mag_where = " ";
+		}
 		$q = "select "
 			."mcal.`DEF_id`, "
 			."mcal.`DEF_timestamp`, "
@@ -1205,8 +1212,7 @@ class leginondata {
 			."scope.`REF|InstrumentData|tem`=mcal.`REF|InstrumentData|tem` "
 			."and "
 			."c.`REF|InstrumentData|ccdcamera`=mcal.`REF|InstrumentData|ccdcamera` "
-			."and "
-			."scope.magnification = mcal.magnification "
+			.$mag_where
 			."and "
 			."scope.`high tension` = mcal.`high tension` "
 			."and "
@@ -1450,29 +1456,17 @@ class leginondata {
 		return $imageinfo;
 	}
 
-	function getZeroBeamTilt($imginfo) {
-		// Uses parent image to calculate zero beam tilt.  Will get beam tilt
-		// of the input if target is simulated.
-		if ( array_key_exists('parentId', $imginfo) ) {
-			$imginfo = $this->getImageInfo($imginfo['parentId']);
-		}
-		$bt0 = array('beam tilt x'=>$imginfo['beam tilt x'],'beam tilt y'=>$imginfo['beam tilt y']);
-		return $bt0;
-	}
-
 	function getImageBeamTilt($imgid, $bt0) {
 		// Get beam tilt from image shift coma calibration.  Returns 0,0 if
 		// no calibration.
 		$imginfo = $this->getImageInfo($imgid);
-		$bt0 = $this->getZeroBeamTilt($imginfo);
-		$m = $this->getImageMatrixCalibration($imgid, $type='image-shift coma');
+		// image-shift coma is not mag dependent
+		$m = $this->getImageMatrixCalibration($imgid, $type='image-shift coma', $mag_depend=false);
 		$matrix = matrix($m[a11],$m[a12],$m[a21],$m[a22]);
 		$is_x = $imginfo['image shift x'];
 		$is_y = $imginfo['image shift y'];
 		$vector = array($is_x,$is_y);
 		$result_vector = matrix_multiply($matrix, $vector);
-		$result_vector[1] -= $bt0['beam tilt x'];
-		$result_vector[2] -= $bt0['beam tilt y'];
 		return $result_vector;
 	}
 
