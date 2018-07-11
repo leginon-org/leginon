@@ -104,6 +104,17 @@ class ImageRejector2(appionScript.AppionScript):
 		for imgdata in images:
 			apDisplay.printMsg('______________________')
 			apDisplay.printMsg('Checking %s' % imgdata['filename'])
+			status = apDatabase.getImgViewerStatus(imgdata)
+			apDisplay.printMsg('Current Status: %s' % (status))
+			if status is False:
+				apDisplay.printMsg('Check and hide siblings')
+				print self.hideImage(imgdata)
+				continue
+			elif status is True:
+				apDisplay.printMsg('All aligned siblings will become exemplar')
+				self.makeSiblingExemplar(imgdata)
+				continue
+			# Test and hide bad ones
 			if self.params['driftmax']:
 				self.hideDriftImage(imgdata)
 			if self.params['resmin'] is not None:
@@ -254,6 +265,13 @@ class ImageRejector2(appionScript.AppionScript):
 		except:
 			return [imgdata,]
 
+	def makeSiblingExemplar(self, image):
+		if self.params['hideall']:
+			allimages = self.getAllDDAlignSiblings(image)
+			for img in allimages:
+				if img['camera']['align frames']:
+					return self.commitToDatabase(img, True)
+
 	def hideImage(self, image):
 		if self.params['hideall']:
 			allimages = self.getAllDDAlignSiblings(image)
@@ -275,15 +293,15 @@ class ImageRejector2(appionScript.AppionScript):
 			print 'Will need to hide %s' % (image['filename'])
 			return False
 		else:
-			return self.commitToDatabase(image)
+			return self.commitToDatabase(image, False)
 
-	def commitToDatabase(self, image):
+	def commitToDatabase(self, image, new_status):
 		status = apDatabase.getImgViewerStatus(image)
-		if status is False:
+		if status is False and new_status == status:
 			# already hidden or trashed
-			apDisplay.printMsg('%s is already hidden' % (image['filename']))
+			apDisplay.printMsg('%s is already set' % (image['filename']))
 			return True
-		apDatabase.setImgViewerStatus(image, False)
+		apDatabase.setImgViewerStatus(image, new_status)
 		return True
 
 	def selectImageAtPreset(self, presetname, images):
