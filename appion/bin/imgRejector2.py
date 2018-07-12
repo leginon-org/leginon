@@ -120,10 +120,7 @@ class ImageRejector2(appionScript.AppionScript):
 			self.ddresults = apDDResult.DDResults(imgdata)
 			alignpair = self.ddresults.getAlignImagePairData()
 		except:
-				# ??? Return means preset image remains hidden
-				raise
 				self.ddresults = None
-				#return
 		status = apDatabase.getImgViewerStatus(imgdata)
 		if status is not False and not self.params['applyall']:
 			# do nothing is the target image is not hidden.
@@ -164,7 +161,7 @@ class ImageRejector2(appionScript.AppionScript):
 			apDisplay.printMsg('Current Status: %s' % (status))
 			if status is False:
 				apDisplay.printMsg('Check and hide siblings')
-				print self.hideImage(imgdata)
+				self.hideImage(imgdata)
 				continue
 			elif status is True:
 				apDisplay.printMsg('All aligned siblings will become exemplar')
