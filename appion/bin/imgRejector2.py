@@ -40,10 +40,10 @@ class ImageRejector2(appionScript.AppionScript):
 			help="Radius in pixels on ctffind4 2d graph where the ice crystal is found. Not needed if not a ctffind4 run.", metavar="#")
 		self.parser.add_option("--ctfrunid", dest="ctfrunid", type="int",
 			help="Specific Ctf run to be evaluated", metavar="#")
+		self.parser.add_option("--limit", dest="limit", type="int",
+			help="Limit number of images to run on for testing", metavar="#")
 
 		### true / false
-		self.parser.add_option("--testrun", dest="testrun", default=False,
-			action="store_true", help="Print the results instead of hiding them")
 		self.parser.add_option("--bestdb", dest="bestdb", default=False,
 			action="store_true", help="transfer best ctf")
 		self.parser.add_option("--applyall", dest="applyall", default=False,
@@ -93,6 +93,8 @@ class ImageRejector2(appionScript.AppionScript):
 		self.sessiondata = self.getSessionData()
 		self.rundata = None
 		self.isCtffind4_dict = {}
+		self.hide_count = 0
+		self.log = open('tohide_nothidden.txt','w')
 		return
 
 	#=====================
@@ -104,6 +106,8 @@ class ImageRejector2(appionScript.AppionScript):
 		# go through images
 		images = apDatabase.getImagesFromDB(self.params['sessionname'], self.params['preset'])
 		if images:
+			if self.params['limit'] > 0:
+				images=images[:self.params['limit']]
 			if not self.params['unhide']:
 				self.runHiding(images)
 			else:
@@ -281,6 +285,9 @@ class ImageRejector2(appionScript.AppionScript):
 		# polar average goes to the full diagonal length
 		max_radius = math.sqrt(2)*self.graph_size/2.0
 		icer = int(rbin*ice_pixel_radius/(max_radius))
+		if icer >= rbin -3 :
+			apDisplay.printWarning('Expected ice ring to close to the edge of the power spectrum. Skipping')
+			return False
 		qr_bins = self.calculateQuarterRadialProfile(imgarray, rbin,icer)
 		before = qr_bins[icer-2]
 		before_std = qr_bins[icer-3:icer-1].std()
@@ -342,6 +349,7 @@ class ImageRejector2(appionScript.AppionScript):
 		that further validation can be skipped.  no-commit flag will
 		always return False so that everything is checked.
 		'''
+		self.hide_count += 1
 		if not self.params['commit']:
 			print 'Will need to hide %s' % (image['filename'])
 			return False
@@ -354,6 +362,7 @@ class ImageRejector2(appionScript.AppionScript):
 		'''
 		status = apDatabase.getImgViewerStatus(image)
 		if new_status == status:
+			self.hide_count -= 1
 			# already hidden or trashed
 			apDisplay.printMsg('%s is already set' % (image['filename']))
 			return new_status is False
@@ -380,6 +389,12 @@ class ImageRejector2(appionScript.AppionScript):
 
 	def getBestCtfValue(self, imgdata, msg=False):
 		return ctfdb.getBestCtfValue(imgdata, sortType=self.params['sorttype'], method=None, msg=msg)
+
+	def close(self):
+		self.log.close()
+		if not self.params['unhide']:
+			apDisplay.printMsg('Final count: Hiding %d unique images' % self.hide_count)
+		super(ImageRejector2,self).close()
 
 #=====================
 #=====================

@@ -19,7 +19,7 @@ require_once "inc/summarytables.inc"; // needed to show stack and model tables
 class ImgRejector2Form extends BasicLayoutForm
 {
 
-	function __construct( $expId, $extraHTML='', $commit=True, $preset='en-a', $bestdb='', $checkdrift=True, $driftmax=5.0, $checkctf=True, $sort='rePkg', $ctfrunid='0', $resmin='7.0', $applyall=True, $unhide=False, $checkice=False, $icemax='3.0')
+	function __construct( $expId, $extraHTML='', $commit=True, $preset='en-a', $bestdb='', $checkdrift=True, $driftmax=5.0, $checkctf=True, $sort='rePkg', $ctfrunid='0', $resmin='7.0', $applyall=True, $unhide=False, $checkice=False, $icemax='6.0')
 	{
 		parent::__construct($expId, $extraHTML);
 
