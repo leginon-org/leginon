@@ -509,7 +509,8 @@ var help = {
 	},
 	'imgreject': {
 		'preset' : 'Preset to be used for evaluation',
-		'hideall' : 'Hide sibling images in addition to the selected preset. For example, en,en-a,en-a-DW will all be hidden if activate this when preset selection is en-a.',
+		'unhide' : 'Unhide specified preset images. Combine this option with Apply to all if you want to revert all siblings. Hiding criteria parameters are ignored.',
+		'applyall' : 'Apply accessment to sibling images in addition to the selected preset. For example, en,en-a,en-a-DW will all be hidden if activate this when preset selection is en-a.',
 		'checkdrift': 'filter with direct detector movie frame drift',
 		'driftmax' : 'Hide if any frame drift of the movie in the ddstack run that produced this preset exceeds this value',
 		'checkctf': 'filter with ctf value',

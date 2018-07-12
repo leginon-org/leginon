@@ -46,7 +46,7 @@ class ImageRejector2(appionScript.AppionScript):
 			action="store_true", help="Print the results instead of hiding them")
 		self.parser.add_option("--bestdb", dest="bestdb", default=False,
 			action="store_true", help="transfer best ctf")
-		self.parser.add_option("--hideall", "--applyall", dest="applyall", default=False,
+		self.parser.add_option("--applyall", dest="applyall", default=False,
 			action="store_true", help="Apply to all source and results of DD frame alignment related to this preset")
 		self.parser.add_option("--unhide", dest="unhide", default=False,
 			action="store_true", help="unHide images of the specified preset to undo image rejection")
@@ -119,22 +119,20 @@ class ImageRejector2(appionScript.AppionScript):
 		try:
 			self.ddresults = apDDResult.DDResults(imgdata)
 			alignpair = self.ddresults.getAlignImagePairData()
-			# only handle images in a specific dd runs.
-			if self.params['ddstackid'] and alignpair['ddstackrun'].dbid != self.params['ddstackid']:
-				return
 		except:
 				# ??? Return means preset image remains hidden
+				raise
 				self.ddresults = None
 				#return
 		status = apDatabase.getImgViewerStatus(imgdata)
-		if status is not False:
+		if status is not False and not self.params['applyall']:
 			# do nothing is the target image is not hidden.
 			return
 		self.unhideImage(imgdata)
 
 	def unhideImage(self, image):
 		if self.ddresults and self.params['applyall']:
-			allimages = self.ddresults.getAlignSiblings()
+			allimages = self.getAllDDAlignSiblings(image)
 		else:
 			allimages = [image,]
 		for img in allimages:
@@ -362,11 +360,8 @@ class ImageRejector2(appionScript.AppionScript):
 			# already hidden or trashed
 			apDisplay.printMsg('%s is already set' % (image['filename']))
 			return new_status is False
-		if self.params['unhide'] and status is True:
-			apDisplay.printMsg('Keep %s in exemplar' % (image['filename']))
-			return False
 		apDatabase.setImgViewerStatus(image, new_status)
-		return True
+		return new_status is False
 
 	def selectImageAtPreset(self, presetname, images):
 		for imgdata in images:
