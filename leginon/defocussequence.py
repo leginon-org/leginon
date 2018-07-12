@@ -67,11 +67,12 @@ class DefocusSequence(acquisition.Acquisition):
 		return defocii
 
 	def acquire(self, presetdata, emtarget=None, attempt=None, target=None, channel=None):
+		reduce_pause = self.onTarget
 		status = self.moveAndPreset(presetdata, emtarget)
 		if status == 'error':
 			self.logger.warning('Move failed. skipping acquisition at this target')
 			return status
-		defaultchannel = self.preAcquire(presetdata, emtarget, channel)
+		defaultchannel = self.preAcquire(presetdata, emtarget, channel, reduce_pause)
 
 		defocii = self.getDefocusSeries(presetdata)
 		try:
