@@ -529,18 +529,19 @@ def setImgViewerStatus(imgdata, status=None, msg=True):
 	elif status is True:
 		statusVal = 'exemplar'
 	else:
-		print "skipping set viewer status"
-		return
+		#print "skipping set viewer status"
+		#return
+		statusVal = None
 
 	currentstatus = getImgViewerStatus(imgdata)
 
-	if currentstatus is None:
+	if currentstatus is None and statusVal:
 		#insert new
 		statusq = leginon.leginondata.ViewerImageStatus()
 		statusq['image'] = imgdata
 		statusq['status'] = statusVal
 		statusq.insert()
-	elif currentstatus != status:
+	elif currentstatus != status and statusVal:
 		#update column
 		dbconf=sinedon.getConfig('leginondata')
 		db=sinedon.sqldb.sqlDB(**dbconf)
@@ -548,6 +549,14 @@ def setImgViewerStatus(imgdata, status=None, msg=True):
 			+"SET status = '"+statusVal
 			+ ("' WHERE `REF|AcquisitionImageData|image`=%d" % (imgdata.dbid,)))
 		db.execute(q)
+	elif currentstatus is False and statusVal is None:
+		dbconf=sinedon.getConfig('leginondata')
+		db=sinedon.sqldb.sqlDB(**dbconf)
+		q= ( "DELETE FROM "+dbconf['db']+".`ViewerImageStatus` "
+			+ (" WHERE `REF|AcquisitionImageData|image`=%d" % (imgdata.dbid,)))
+		db.execute(q)
+	elif currentstatus is True and statusVal is None:
+		apDisplay.printWarning('Currently not handle status change from EXEMPLAR to DEFAULT')
 
 	#check assessment
 	if msg is True:

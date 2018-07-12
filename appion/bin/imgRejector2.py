@@ -46,8 +46,10 @@ class ImageRejector2(appionScript.AppionScript):
 			action="store_true", help="Print the results instead of hiding them")
 		self.parser.add_option("--bestdb", dest="bestdb", default=False,
 			action="store_true", help="transfer best ctf")
-		self.parser.add_option("--hideall", dest="hideall", default=False,
-			action="store_true", help="Hide all source and results of DD frame alignment related to this preset")
+		self.parser.add_option("--applyall", dest="applyall", default=False,
+			action="store_true", help="Apply to all source and results of DD frame alignment related to this preset")
+		self.parser.add_option("--unhide", dest="unhide", default=False,
+			action="store_true", help="unHide images of the specified preset to undo image rejection")
 
 		### float
 		self.parser.add_option("--resmin", dest="resmin", type="float", default=None,
@@ -63,12 +65,6 @@ class ImageRejector2(appionScript.AppionScript):
 		### check for requirement
 		if not self.params['preset']:
 			apDisplay.printError('Must specify preset')
-		if self.params['icemax'] is None and self.params['resmin'] is None and self.params['driftmax'] is None:
-			apDisplay.printError('No rejection criteria set')
-		if self.params['icemax'] is not None and self.params['resmin'] is None:
-			apDisplay.printError('Must reject also by ctf fit resolution as well if request ice crystal to be rejected')
-		if self.params['resmin'] and self.params['ctfrunid'] is None and self.params['bestdb'] is False:
-			apDisplay.printError("Please provide either a ctfrun or use best ctf in db to evaluate")
 		if self.params['sessionname'] is None:
 			if self.params['expid']:
 				# onInit has not been run yet. There is no self.sessiondata to use here
@@ -78,6 +74,16 @@ class ImageRejector2(appionScript.AppionScript):
 				apDisplay.printError("Please provide a Session name, e.g., --session=09feb12b")
 		if self.params['projectid'] is None:
 			apDisplay.printError("Please provide a Project database ID, e.g., --projectid=42")
+		if self.params['unhide']:
+			# unhide does not check for any further criteria
+			return
+		# hiding criteria
+		if self.params['icemax'] is None and self.params['resmin'] is None and self.params['driftmax'] is None:
+			apDisplay.printError('No rejection criteria set')
+		if self.params['icemax'] is not None and self.params['resmin'] is None:
+			apDisplay.printError('Must reject also by ctf fit resolution as well if request ice crystal to be rejected')
+		if self.params['resmin'] and self.params['ctfrunid'] is None and self.params['bestdb'] is False:
+			apDisplay.printError("Please provide either a ctfrun or use best ctf in db to evaluate")
 
 	#=====================
 	def onInit(self):
@@ -95,12 +101,59 @@ class ImageRejector2(appionScript.AppionScript):
 
 	#=====================
 	def start(self):
-		# default ic radius in pixels
-		self.ice_radius = self.params['ice_radius']
 		# go through images
 		images = apDatabase.getImagesFromDB(self.params['sessionname'], self.params['preset'])
 		if images:
-			self.apix = apDatabase.getPixelSize(images[0])
+			if not self.params['unhide']:
+				self.runHiding(images)
+			else:
+				self.runUnHiding(images)
+
+	def runUnHiding(self, images):
+		for imgdata in images:
+			apDisplay.printMsg('______________________')
+			apDisplay.printMsg('Checking %s' % imgdata['filename'])
+			self.unhideSiblingImages(imgdata)
+
+	def unhideSiblingImages(self, imgdata):
+		try:
+			self.ddresults = apDDResult.DDResults(imgdata)
+			alignpair = self.ddresults.getAlignImagePairData()
+		except:
+				self.ddresults = None
+		status = apDatabase.getImgViewerStatus(imgdata)
+		if status is not False and not self.params['applyall']:
+			# do nothing is the target image is not hidden.
+			return
+		self.unhideImage(imgdata)
+
+	def unhideImage(self, image):
+		if self.ddresults and self.params['applyall']:
+			allimages = self.getAllDDAlignSiblings(image)
+		else:
+			allimages = [image,]
+		for img in allimages:
+			if not self.params['applyall'] and img.dbid != image.dbid:
+				continue
+			is_hidden = self._unhideImage(img)
+		return is_hidden
+
+	def _unhideImage(self, image):
+		'''
+		Unhide if hidden.  Returns True if it is now hidden so
+		that further validation can be skipped.  no-commit flag will
+		always return False so that everything is checked.
+		'''
+		if not self.params['commit']:
+			print 'Will need to unhide %s' % (image['filename'])
+			return False
+		else:
+			return self.commitToDatabase(image, None)
+
+	def runHiding(self, images):
+		# default ic radius in pixels
+		self.ice_radius = self.params['ice_radius']
+		self.apix = apDatabase.getPixelSize(images[0])
 		for imgdata in images:
 			apDisplay.printMsg('______________________')
 			apDisplay.printMsg('Checking %s' % imgdata['filename'])
@@ -108,7 +161,7 @@ class ImageRejector2(appionScript.AppionScript):
 			apDisplay.printMsg('Current Status: %s' % (status))
 			if status is False:
 				apDisplay.printMsg('Check and hide siblings')
-				print self.hideImage(imgdata)
+				self.hideImage(imgdata)
 				continue
 			elif status is True:
 				apDisplay.printMsg('All aligned siblings will become exemplar')
@@ -266,14 +319,14 @@ class ImageRejector2(appionScript.AppionScript):
 			return [imgdata,]
 
 	def makeSiblingExemplar(self, image):
-		if self.params['hideall']:
+		if self.params['applyall']:
 			allimages = self.getAllDDAlignSiblings(image)
 			for img in allimages:
 				if img['camera']['align frames']:
 					return self.commitToDatabase(img, True)
 
 	def hideImage(self, image):
-		if self.params['hideall']:
+		if self.params['applyall']:
 			allimages = self.getAllDDAlignSiblings(image)
 		else:
 			allimages = [image,]
@@ -296,13 +349,16 @@ class ImageRejector2(appionScript.AppionScript):
 			return self.commitToDatabase(image, False)
 
 	def commitToDatabase(self, image, new_status):
+		'''
+		Change the status as needed.  Returns True if the new status is Hidden
+		'''
 		status = apDatabase.getImgViewerStatus(image)
-		if status is False and new_status == status:
+		if new_status == status:
 			# already hidden or trashed
 			apDisplay.printMsg('%s is already set' % (image['filename']))
-			return True
+			return new_status is False
 		apDatabase.setImgViewerStatus(image, new_status)
-		return True
+		return new_status is False
 
 	def selectImageAtPreset(self, presetname, images):
 		for imgdata in images:
