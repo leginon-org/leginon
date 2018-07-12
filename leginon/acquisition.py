@@ -835,11 +835,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.publish(imagedata['camera'], database=True)
 		return imagedata
 
-	def preAcquire(self, presetdata, emtarget=None, channel=None):
+	def preAcquire(self, presetdata, emtarget=None, channel=None, reduce_pause=False):
 		'''
 		Things to do after moved to preset.
 		'''
-		reduce_pause = self.onTarget
 		if debug:
 			try:
 				tnum = emtarget['target']['number']
@@ -894,12 +893,13 @@ class Acquisition(targetwatcher.TargetWatcher):
 			defaultchannel = channel
 
 	def acquire(self, presetdata, emtarget=None, attempt=None, target=None, channel=None):
+		reduce_pause = self.onTarget
 		status = self.moveAndPreset(presetdata, emtarget)
 		if status == 'error':
 			self.logger.warning('Move failed. skipping acquisition at this target')
 			return status
 
-		defaultchannel = self.preAcquire(presetdata, emtarget, channel)
+		defaultchannel = self.preAcquire(presetdata, emtarget, channel, reduce_pause)
 		args = (presetdata, emtarget, defaultchannel)
 		try:
 			if self.settings['background']:
