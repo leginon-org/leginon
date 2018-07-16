@@ -307,7 +307,8 @@ class CentosInstallation(object):
 
 	def setupDBServer(self):
 		self.writeToLog("--- Start Setting up Database Server")
-		self.writeToLog("--- MariaDB is pre-installed for CentOs 7"
+		self.mariadbYumInstall()
+		self.writeToLog("--- MariaDB is installed through yum on CentOs 7"
 		# turn on auto mysql start
 		
 		# stop mysql server (if it's running)
@@ -869,6 +870,10 @@ endif
 		packagelist = ['mysql-server', 'php', 'php-mysql', ]
 		self.yumInstall(packagelist)
 	
+	def mariadbYumInstall(self):
+		packagelist = ['mariadb-server', 'php', 'php-mysql', ]
+		self.yumInstall(packagelist)
+
 	def setupLeginonCfg(self):
 		# The template config file is in the git download location. The last place the leginon.cfg
 		# file is looked for is /etc/myami, which makes it the most global config file location.
