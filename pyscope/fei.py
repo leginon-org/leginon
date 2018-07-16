@@ -13,6 +13,12 @@ import datetime
 import math
 from pyami import moduleconfig
 
+# API notes:
+#COMError from TEMScripting is not consistent in which
+# attribute contains text information.  Need to check by trial and error.
+# For example Stage.Goto has empty details attribute but text has the message.
+# ApertureMechanism not avtivated in Scripting error uses details to contain the list which has the message we need on item index 1. text and message attributes are empty strings.
+
 try:
 	import nidaq
 except:
@@ -1759,7 +1765,4 @@ class Talos(Tecnai):
 class Glacios(Arctica):
 	name = 'Glacios'
 	use_normalization = True
-
-	def hasAutoAperture(self):
-		return self.getUseAutoAperture()
 
