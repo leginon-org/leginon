@@ -869,7 +869,7 @@ endif
 		shutil.copy(pyscopeCfgDir + '/instruments.cfg.template', pyscopeCfgDir + '/instruments.cfg')
 
 
-	def setupSinedonCfg(self, sinedonDir):
+	def setupSinedonCfg(self):
 		# sinedon import needs sinedon.cfg already configured.  Therefore, it is better
 		# to get the cfg template from self.gitMyamiDir
 		inf = open(self.gitMyamiDir + 'sinedon/examples/sinedon.cfg', 'r')
