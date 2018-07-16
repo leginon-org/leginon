@@ -11,7 +11,7 @@ import subprocess
 import os
 import datetime
 import math
-from pyscope import moduleconfig
+from pyami import moduleconfig
 
 try:
 	import nidaq
@@ -1751,6 +1751,13 @@ class Arctica(Tecnai):
 
 class Talos(Tecnai):
 	name = 'Talos'
+	use_normalization = True
+
+	def hasAutoAperture(self):
+		return self.getUseAutoAperture()
+
+class Glacios(Arctica):
+	name = 'Glacios'
 	use_normalization = True
 
 	def hasAutoAperture(self):
