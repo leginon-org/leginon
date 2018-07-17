@@ -308,7 +308,7 @@ class CentosInstallation(object):
 	def setupDBServer(self):
 		self.writeToLog("--- Start Setting up Database Server")
 		self.mariadbYumInstall()
-		self.writeToLog("--- MariaDB is installed through yum on CentOs 7"
+		self.writeToLog("--- MariaDB is installed through yum on CentOs 7")
 		# turn on auto mysql start
 		
 		# stop mysql server (if it's running)
