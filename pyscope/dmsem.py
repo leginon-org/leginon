@@ -359,6 +359,20 @@ class DMSEM(ccdcamera.CCDCamera):
 		if result < 0.0:
 			raise RuntimeError('unable to set energy filter width')
 
+	def getEnergyFilterOffset(self):
+		# get Spectrum Offset in general, but will read Shift gui if
+		# set in GMS gui.
+		# For example, shift of 10 eV in Quantum LS Control/Main panel gives back -10
+		# as the return of this function. Spectrum Offset in the same gui which
+		# setEnergyFilterShift affects shows 0 still. After using setEnergyFilterShift function, Shift gui resets to 0.0 while this function reads Spectrum Offset value.
+		return self.camera.GetEnergyFilterOffset()
+
+	def setEnergyFilterOffset(self, value):
+		# Set Spectrum Offset in Quantum LS Control/Main panel.
+		result = self.camera.SetEnergyFilterOffset(value)
+		if result < 0.0:
+			raise RuntimeError('unable to set energy filter energy shift')
+
 	def alignEnergyFilterZeroLossPeak(self):
 		result = self.camera.AlignEnergyFilterZeroLossPeak()
 		if result < 0.0:
