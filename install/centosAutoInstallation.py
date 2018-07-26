@@ -355,9 +355,7 @@ class CentosInstallation(object):
 
 		# setup Sinedon configuration file
 		self.writeToLog("setup Sinedon configuration file")
-		sinedonDir = self.runCommand('python -c "import sinedon; print sinedon.__path__[0]"')
-		sinedonDir = sinedonDir.strip()
-		self.setupSinedonCfg(sinedonDir)
+		self.setupSinedonCfg()
 
 		# setup .appion.cfg configuration file
 		self.writeToLog("setup .appion.cfg configuration file")
@@ -871,7 +869,9 @@ endif
 		shutil.copy(pyscopeCfgDir + '/instruments.cfg.template', pyscopeCfgDir + '/instruments.cfg')
 
 
-	def setupSinedonCfg(self, sinedonDir):
+	def setupSinedonCfg(self):
+		# sinedon import needs sinedon.cfg already configured.  Therefore, it is better
+		# to get the cfg template from self.gitMyamiDir
 		inf = open(self.gitMyamiDir + 'sinedon/examples/sinedon.cfg', 'r')
 		outf = open('/etc/myami/sinedon.cfg', 'w')
 

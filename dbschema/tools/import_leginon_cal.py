@@ -41,6 +41,8 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 			if 'vectors' in q.keys():
 				# convert 2 1-D array to list of list
 				q['vectors'] = (q['vectors'][0].tolist(),q['vectors'][1].tolist())
+			if classname == 'ProjectionSubModeMappingData':
+				q['magnification list'] = self.maglistdata
 			# This is a forced insert so it is the most recent record
 			q.insert(force=True)
 			print 'insert %s dbid=%d' % (classname, q.dbid)
@@ -103,12 +105,26 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 			r.insert()
 			self.session = r
 
+	def setMagnificationsData(self):
+		mags = []
+		for datadict in self.alldata:
+			classname = datadict.keys()[0]
+			kwargs = datadict[classname]
+			if classname == 'ProjectionSubModeMappingData':
+				mags.append(float(kwargs['magnification']))
+		mags.sort()
+		print mags
+		q = leginondata.MagnificationsData(instrument=self.temdata,magnifications=mags)
+		q.insert()
+		return q
+
 	def printQuery(self, q):
 		print q
 		return
 
 	def run(self):
 		self.readJsonFile(self.jsonfile)
+		self.maglistdata = self.setMagnificationsData()
 		self.insertAllData()
 
 	def close(self, status):

@@ -73,6 +73,24 @@ class CalibrationJsonMaker(jsonfun.DataJsonMaker):
 		magsdata = leginondata.MagnificationsData(instrument=self.tem).query(results=1)[0]
 		return magsdata['magnifications']
 
+	def printMagSubmodeMap(self):
+		magsdata = leginondata.MagnificationsData(instrument=self.tem).query(results=1)[0]
+		q = leginondata.ProjectionSubModeMappingData()
+		q['magnification list'] = magsdata
+		results = q.query()
+		if results:
+			for r in results:
+				print 'Adding Submode Mag at %dx = %s' % (r['magnification'], r['name'])
+			self.publish(results)
+
+	def printPixelSizeCalibrationQueries(self, mags):
+		#PixelSizeCalibrationData
+		for mag in mags:
+			results = leginondata.PixelSizeCalibrationData(ccdcamera=self.cam,magnification=mag).query(results=1)
+			if results:
+				print 'Adding PixeSize at %dx = %.3e' % (mag, results[0]['pixelsize'])
+				self.publish(results)
+
 	def printPixelSizeCalibrationQueries(self, mags):
 		#PixelSizeCalibrationData
 		for mag in mags:
@@ -166,6 +184,7 @@ class CalibrationJsonMaker(jsonfun.DataJsonMaker):
 		mags = self.getMags()
 		#print self.cam.dbid
 		#print mags
+		self.printMagSubmodeMap()
 		self.printPixelSizeCalibrationQueries(mags)
 		self.printCameraSensitivityQueries()
 		self.printStageModelCalibrationQueries(mags)

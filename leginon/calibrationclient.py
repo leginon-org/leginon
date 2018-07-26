@@ -1119,8 +1119,19 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		return newbeamtilt
 
 	def transformImageShiftToObjStig(self, imageshift, tem, cam, ht, zero, mag):
-		new = {}
 		par = 'image-shift stig'
+		new = self._transformImageShiftToNewPar(imageshift, tem, cam, ht, zero, mag, par)
+		return new
+
+	def transformImageShiftToDefocus(self, imageshift, tem, cam, ht, defoc0, mag):
+		par = 'image-shift defocus'
+		zero = {'x':defoc0,'y':0}
+		new = self._transformImageShiftToNewPar(imageshift, tem, cam, ht, zero, mag, par)
+		defoc1 = new['x']
+		return defoc1
+
+	def _transformImageShiftToNewPar(self, imageshift, tem, cam, ht, zero, mag, par):
+		new = {}
 		try:
 			# not to query specific mag for now
 			probe = self.instrument.tem.ProbeMode
@@ -1132,7 +1143,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		change = numpy.dot(matrix, shiftvect)
 		new['x'] = zero['x'] - change[0]
 		new['y'] = zero['y'] - change[1]
-		self.node.logger.debug("Obj Stig Correction ( %5.2f, %5.2f)" % (change[0]*1e3,change[1]*1e3))
+		self.node.logger.debug("%s Correction ( %5.2f, %5.2f)" % (par, change[0]*1e3,change[1]*1e3))
 		self.node.logger.debug("Obj Stig ( %5.2f, %5.2f)" % (new['x']*1e3,new['y']*1e3))
 		return new
 

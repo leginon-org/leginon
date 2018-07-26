@@ -159,6 +159,8 @@ class GatanSocket(object):
 			('IFCDoAlignZeroLoss', 'AlignEnergyFilterZeroLossPeak'),
 			('IFGetSlitIn', 'GetEnergyFilter'),
 			('IFSetSlitIn', 'SetEnergyFilter'),
+			('IFGetEnergyLoss', 'GetEnergyFilterOffset'),
+			('IFSetEnergyLoss', 'SetEnergyFilterOffset'),
 			('IFGetSlitWidth', 'GetEnergyFilterWidth'),
 			('IFSetSlitWidth', 'SetEnergyFilterWidth'),
 			('GT_CenterZLP', 'AlignEnergyFilterZeroLossPeak'),
@@ -384,6 +386,18 @@ class GatanSocket(object):
 		if 'SetEnergyFilterWidth' not in self.filter_functions.keys():
 			return -1.0
 		script = 'if ( %s(%f) ) { Exit(1.0); } else { Exit(-1.0); }' % (self.filter_functions['SetEnergyFilterWidth'], value)
+		return self.ExecuteSendScript(script)
+
+	def GetEnergyFilterOffset(self):
+		if 'GetEnergyFilterOffset' not in self.filter_functions.keys():
+			return 0.0
+		script = 'Exit(%s())' % (self.filter_functions['GetEnergyFilterOffset'],)
+		return self.ExecuteGetDoubleScript(script)
+
+	def SetEnergyFilterOffset(self, value):
+		if 'SetEnergyFilterOffset' not in self.filter_functions.keys():
+			return -1.0
+		script = 'if ( %s(%f) ) { Exit(1.0); } else { Exit(-1.0); }' % (self.filter_functions['SetEnergyFilterOffset'], value)
 		return self.ExecuteSendScript(script)
 
 	def AlignEnergyFilterZeroLossPeak(self):

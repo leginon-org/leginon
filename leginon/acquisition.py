@@ -707,6 +707,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.logger.info('Set zero beam tilt and stig at %d mag' % (int(mag)))
 		self.beamtilt0 = self.instrument.tem.getBeamTilt()
 		self.stig0 = self.instrument.tem.getStigmator()['objective']
+		self.defoc0 = self.instrument.tem.getDefocus()
 
 	def moveAndPreset(self, presetdata, emtarget):
 			'''
@@ -763,6 +764,14 @@ class Acquisition(targetwatcher.TargetWatcher):
 					self.instrument.tem.Stigmator = {'objective':stig}
 					stig1 = self.instrument.tem.getStigmator()['objective']
 					self.logger.info("objective stig for image acquired (%.4f,%.4f)" % (stig1['x']-self.stig0['x'],stig1['y']-self.stig0['y']))
+				except Exception, e:
+					self.resetComaCorrection()
+					raise NoMoveCalibration(e)
+				try:
+					defoc = beamtiltclient.transformImageShiftToDefocus(imageshift, tem, cam, ht, self.defoc0, mag)
+					self.instrument.tem.Defocus = defoc
+					defoc1 = self.instrument.tem.getDefocus()
+					self.logger.info("correcting defocus for image acquired is (%.4f) (um)" % ((defoc1-self.defoc0)*1e6))
 				except Exception, e:
 					self.resetComaCorrection()
 					raise NoMoveCalibration(e)
@@ -835,11 +844,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.publish(imagedata['camera'], database=True)
 		return imagedata
 
-	def preAcquire(self, presetdata, emtarget=None, channel=None):
+	def preAcquire(self, presetdata, emtarget=None, channel=None, reduce_pause=False):
 		'''
 		Things to do after moved to preset.
 		'''
-		reduce_pause = self.onTarget
 		if debug:
 			try:
 				tnum = emtarget['target']['number']
@@ -894,12 +902,13 @@ class Acquisition(targetwatcher.TargetWatcher):
 			defaultchannel = channel
 
 	def acquire(self, presetdata, emtarget=None, attempt=None, target=None, channel=None):
+		reduce_pause = self.onTarget
 		status = self.moveAndPreset(presetdata, emtarget)
 		if status == 'error':
 			self.logger.warning('Move failed. skipping acquisition at this target')
 			return status
 
-		defaultchannel = self.preAcquire(presetdata, emtarget, channel)
+		defaultchannel = self.preAcquire(presetdata, emtarget, channel, reduce_pause)
 		args = (presetdata, emtarget, defaultchannel)
 		try:
 			if self.settings['background']:
@@ -958,9 +967,12 @@ class Acquisition(targetwatcher.TargetWatcher):
 		if self.settings['correct image shift coma']:
 			self.instrument.tem.BeamTilt = self.beamtilt0
 			self.instrument.tem.Stigmator = {'objective':self.stig0}
+			self.instrument.tem.Defocus = self.defoc0
 			self.logger.info("reset beam tilt to (%.4f,%.4f)" % (self.instrument.tem.BeamTilt['x'],self.instrument.tem.BeamTilt['y']))
 			stig1 = self.instrument.tem.getStigmator()['objective']
 			self.logger.info("reset object stig to (%.4f,%.4f)" % (stig1['x'],stig1['y']))
+			defoc1 = self.instrument.tem.getDefocus()
+			self.logger.info("reset defocus to (%.4f) um" % (defoc1*1e6))
 
 	def parkAtHighMag(self):
 		# wait for at least for 30 seconds
