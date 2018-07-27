@@ -1112,6 +1112,8 @@ class particledata {
 			."c.`defocusinit`, "
 			."c.`amplitude_contrast`, "
 			."c.`angle_astigmatism`, "
+			."cos(c.`angle_astigmatism`*3.14159/180)*(c.`defocus1`-c.`defocus2`)/2 as astig_x, "
+			."sin(c.`angle_astigmatism`*3.14159/180)*(c.`defocus1`-c.`defocus2`)/2 as astig_y, "
 			.$phase_shift_select
 			."c.`REF|ApAceRunData|acerun`, "  //Needed in checking if there is result.
 			."c.`noise1`, "
@@ -1256,6 +1258,8 @@ class particledata {
 			."    unix_timestamp(s.`DEF_timestamp`) as unix_timestamp, "
 			."		2*ABS(ctf.defocus1-ctf.defocus2)/(ctf.defocus1+ctf.defocus2) AS difference_from_mean, "
 			."		(ctf.`defocus1`+ctf.`defocus2`)/2+s.`defocus` as difference_from_nom, "
+			."    cos(ctf.`angle_astigmatism`*3.14159/180)*(ctf.`defocus1`-ctf.`defocus2`)/2 as astig_x, "
+			."    sin(ctf.`angle_astigmatism`*3.14159/180)*(ctf.`defocus1`-ctf.`defocus2`)/2 as astig_y, "
 			.$this->getAppionConfidenceScoreSelect('ctf').", "
 			.$this->getAppionResolutionSelect('ctf').", "
 			."		ctf.* "
