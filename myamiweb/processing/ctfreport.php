@@ -247,8 +247,8 @@ if ($ctfrundatas) {
 	echo "</td></tr><tr><td>\n";
 		echo "<h3>Astigmatism Distribution</h3>";
 		echo "<a href='ctfgraph.php?hg=0&expId=$expId&s=1&f=astig_distribution'>\n";
-		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
-			."w=800&h=600&hg=1&expId=$expId&s=1&xmin=0.0&f=amplitude_contrast' alt='please wait...'></a>\n";
+		echo "<img border='0' width='200' height='200' src='ctfgraph.php?"
+			."w=600&h=600&hg=0&expId=$expId&s=1&f=astig_distribution' alt='please wait...'></a>\n";
 	echo "</td><td>\n";
 		echo "<h3>Extra Phase Shift</h3>";
 		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&xmin=0&xmax=180&f=extra_phase_shift'>\n";
