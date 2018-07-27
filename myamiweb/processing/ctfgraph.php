@@ -132,10 +132,6 @@ if ($color)
 if ($f == 'astig_distribution') {
 	$dbemgraph->proportion(0,false);
 	$maxdim = max($width,$height);
-	var_dump($dbemgraph->xmin);
-	var_dump($dbemgraph->ymin);
-	var_dump($dbemgraph->xmax);
-	var_dump($dbemgraph->ymax);
 	$maxdim = ($maxdim) ? $maxdim: max($dbemgraph->width,$dbemgraph->height);
 	$width = $maxdim;
 	$height = $maxdim;
@@ -143,6 +139,6 @@ if ($f == 'astig_distribution') {
 	$dbemgraph->height = $maxdim;
 }
 $dbemgraph->dim($width,$height);
-//$dbemgraph->graph();
+$dbemgraph->graph();
 
 ?>
