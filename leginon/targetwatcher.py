@@ -434,6 +434,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 					self.beep()
 					process_status = 'repeat'
 				except PauseRepeatException, e:
+					#TODO: NoMoveCalibration is a subclass of this. It is not handled now.
 					self.player.pause()
 					self.logger.error(str(e) + '... Fix it, then press play to repeat target')
 					self.beep()
