@@ -348,9 +348,9 @@ class FeiCam(ccdcamera.CCDCamera):
 					#boolean
 					if v_string in ('FALSE','TRUE'):
 						if v_string == 'FALSE':
-							v_value = False
+							value = False
 						else:
-							v_value = True
+							value = True
 					else:
 						# string
 						value = v_string
