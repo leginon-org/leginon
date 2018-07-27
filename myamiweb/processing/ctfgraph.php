@@ -39,6 +39,7 @@ if ($summary) {
 	$runId= ($_GET[rId]);
 	$ctfinfo = $ctf->getCtfInfo($runId);
 }
+
 foreach($ctfinfo as $t) {
 	if ($preset) {
 		$p = $leginondata->getPresetFromImageId($t['imageid']);
@@ -49,6 +50,8 @@ foreach($ctfinfo as $t) {
 	// if looking for confidence, get highest of 3
 	if ($f=='confidence') 
 		$value = max($t['confidence'],$t['confidence_d'],$t['cross_correlation']);
+	elseif ($f=='astig_distribution')
+		$value = $t['astig_x'];
 	else
 		$value=$t[$f];
 	// if grouping by cutoff confidence or resolution with one cutoff
@@ -73,20 +76,37 @@ foreach($ctfinfo as $t) {
 	}
 	$data[$imageid] = $value;
 	$where[] = "DEF_id=".$id;
-	$ndata[]=array('unix_timestamp' => $t['unix_timestamp'], "$f"=>$value);
+	if ($f!='astig_distribution') {
+		$ndata[]=array('unix_timestamp' => $t['unix_timestamp'], "$f"=>$value);
+	} else {
+		$ndata[]=array('astig_x' => $t['astig_x'], "astig_y"=>$t['astig_y']);
+	}
 }
 
-$display_x = 'unix_timestamp';
-$display_y = $f;
+if ($f == 'astig_distribution') {
+	$display_x = 'astig_x';
+	$display_y = 'astig_y';
+} else {
+	$display_x = 'unix_timestamp';
+	$display_y = $f;
+}
 $axes = array($display_x,$display_y);
 if ($histogram == true && $histaxis == 'x') 
 	$axes = array($display_y,$display_x);
 $dbemgraph = new dbemgraph($ndata, $axes[0], $axes[1]);
-$dbemgraph->lineplot=true;
+//plot type
+$is_lineplot = ($f == 'astig_distribution') ? false:true;
+$dbemgraph->lineplot=$is_lineplot;
 $graph_title = ($f == 'ctffind4_resolution') ? 'package resolution' : $f;
 $graph_title = ($preset) ? $graph_title." for preset $preset": $graph_title;
 $dbemgraph->title=$graph_title;
-$yunit = ($f == 'defocus1' || $f == 'defocus2') ? ' (um)':'';
+//axis titles
+//x
+$xunit = ($f == 'astig_distribution') ? ' (um)':'';
+$xtitle = $axes[0].$xunit;
+$dbemgraph->xaxistitle= $xtitle;
+//y
+$yunit = ($f == 'defocus1' || $f == 'defocus2' || 'astig_distribution') ? ' (um)':'';
 $yunit = (strpos($f,'resolution') !== false) ? ' (angstroms)': $yunit;
 $ytitle = ($f == 'ctffind4_resolution') ? 'package_resolution': $axes[1];
 $ytitle = ($cutoff) ? $ytitle.' avg defocus (um)' : $ytitle.$yunit;
@@ -99,14 +119,30 @@ if ($histogram) {
 	$dbemgraph->histogram=true;
 }
 
+$xscale = ($f == 'astig_distribution') ? 1e-6:1;
+$dbemgraph->scalex($xscale);
+//y
+$yscale = ($f == 'defocus1' || $f == 'defocus2' || $f == 'difference_from_nom' || $f == 'astig_distribution') ? 1e-6:1;
+$dbemgraph->scaley($yscale);
 
-$dbemgraph->scalex(1);
-$yscale = ($f == 'defocus1' || $f == 'defocus2' || $f == 'difference_from_nom') ? 1e-6:1;
 if ($color)
 	$dbemgraph->mark->SetFillColor($color);
 
-$dbemgraph->scaley($yscale);
+
+if ($f == 'astig_distribution') {
+	$dbemgraph->proportion(0,false);
+	$maxdim = max($width,$height);
+	var_dump($dbemgraph->xmin);
+	var_dump($dbemgraph->ymin);
+	var_dump($dbemgraph->xmax);
+	var_dump($dbemgraph->ymax);
+	$maxdim = ($maxdim) ? $maxdim: max($dbemgraph->width,$dbemgraph->height);
+	$width = $maxdim;
+	$height = $maxdim;
+	$dbemgraph->width = $maxdim;
+	$dbemgraph->height = $maxdim;
+}
 $dbemgraph->dim($width,$height);
-$dbemgraph->graph();
+//$dbemgraph->graph();
 
 ?>
