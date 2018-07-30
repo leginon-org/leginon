@@ -4,7 +4,7 @@ import os
 from leginon import leginondata
 from sinedon import directq
 
-if len(sys.argv) != 3:
+if len(sys.argv) != 2:
 	print 'usage: python batch_leginon_path_change.py new_path_base'
 	print 'this searches database based on the session name in the new_path_base'
 	print 'and make the image path or frame path change'
@@ -47,7 +47,8 @@ for sessionname in new_sessionnames:
 	sessionid = results[0].dbid
 
 	# update
-	query = "update `SessionData` set `%s path` = '%s' where `SessionData`.`DEF_id`=%d" % (dirtype, new_path, sessionid)
+	query = "update `SessionData` set `%s path` = '%s' where `SessionData`.`DEF_id`=%d" % (datatype, new_path, sessionid)
 
 	# send the query to the database linked to sinedon module named leginondata
 	directq.complexMysqlQuery('leginondata',query)
+	print 'Session %s %s path is now set to %s' % (sessionname, datatype, new_path)
