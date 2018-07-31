@@ -39,9 +39,12 @@ def initializeDDFrameprocess(sessionname,wait_flag=False):
 	elif 'DE' in dcamdata['name']:
 		from appionlib import apDEprocess
 		return apDEprocess.DEProcessing(wait_flag)
+	elif 'Falcon3' in dcamdata['name']:
+		from appionlib import apFalcon3Process
+		return apFalcon3Process.FalconProcessing(wait_flag)
 	elif 'TIA' in dcamdata['name'] or 'Falcon' in dcamdata['name']:
-		from appionlib import apFalconProcess
-		return apFalconProcess.FalconProcessing(wait_flag)
+		from appionlib import apFalcon2Process
+		return apFalcon2Process.FalconProcessing(wait_flag)
 	elif 'Appion' in dcamdata['name']:
 		from appionlib import apAppionCamProcess
 		return apAppionCamProcess.AppionCamFrameProcessing(wait_flag)

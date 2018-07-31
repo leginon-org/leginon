@@ -50,9 +50,19 @@ if (count($qtargetlistIds)+count($nqtargetlistIds) >= 500) {
 	if ($nqcounts) {
 		$display='estimated non-queue processing time
 	<div id="nqcount" style="position:relative; width:250px; border: 1px #696969 solid" >';
-		foreach ((array)$nqcounts as $qtype=>$q) {
+		$nodenames = array_keys($nqcounts);
+		rsort($nodenames);
+		foreach ($nodenames as $qtype) {
+			$q = $nqcounts[$qtype];
+			if ($q===false) continue;
+			if (empty($q[2])) continue;
+			$esttime = $q[4];
+			$estminute = (int) floor(($esttime / 60));
+			$estsecond = (int) floor($esttime%60);
 			$display	.= '<ul><li><b>'.$qtype.' </b>('.$q[1].' targets)</li>'
-							.'<li>unprocessed queue = '.$q[2].'</li>'
+							.'<li>unprocessed targets = '.$q[2].'</li>'
+							.'<li>avg time so far = '. (int)($q[3]) .' s</li>'
+							.'<li>remaining time  = '. $estminute .' min '.$estsecond.' s</li>'
 							.'</ul>';
 		}
 		$display .= '</div>';

@@ -194,7 +194,7 @@ class Corrector(imagewatcher.ImageWatcher):
 			try:
 				image = self.acquireRawCameraImageData(force_no_frames=True)['image']
 			except Exception, e:
-				self.logger.Error(e.message)
+				self.logger.error(e)
 				return
 			series.append(image)
 		return series
@@ -318,7 +318,7 @@ class Corrector(imagewatcher.ImageWatcher):
 			elif combine == 'median':
 				refimagedata = self.acquireSeriesMedian(n, type, channel)
 		except Exception, e:
-			self.logger.Error(e.message)
+			self.logger.error(e)
 			return None
 		if refimagedata is None:
 			return None

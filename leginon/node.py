@@ -9,6 +9,7 @@
 
 import sinedon
 from leginon import leginondata
+from leginon import appclient
 from databinder import DataBinder
 import datatransport
 import event
@@ -18,6 +19,7 @@ import gui.wx.LeginonLogging as Logging
 import gui.wx.Node
 import copy
 import socket
+from pyami import mysocket
 import remotecall
 import time
 import numpy
@@ -64,6 +66,7 @@ class Node(correctorclient.CorrectorClient):
 
 	def __init__(self, name, session, managerlocation=None, otherdatabinder=None, otherdbdatakeeper=None, tcpport=None, launcher=None, panel=None):
 		self.name = name
+		self.this_node = None
 		self.panel = panel
 		self.tem_hostname = ''
 		
@@ -128,7 +131,7 @@ class Node(correctorclient.CorrectorClient):
 				if not clients:
 					# session without clients still has ConnectToClientsData with empty list
 					# use my hostname
-					clients = [socket.gethostname().lower(),]
+					clients = [mysocket.gethostname().lower(),]
 				for client in clients:
 					instruments = leginondata.InstrumentData(hostname=client).query()
 					if instruments and not self.tem_hostname:
@@ -308,7 +311,7 @@ class Node(correctorclient.CorrectorClient):
 	# location method
 	def location(self):
 		location = {}
-		location['hostname'] = socket.gethostname().lower()
+		location['hostname'] = mysocket.gethostname().lower()
 		if self.launcher is not None:
 			location['launcher'] = self.launcher.name
 		else:
@@ -384,7 +387,8 @@ class Node(correctorclient.CorrectorClient):
 		This is for future setting synchronization.  Not implemented yet.
 		It does nothing now.
 		'''
-		pass
+		app = ievent['application']
+		self.this_node = appclient.getNodeSpecData(app,self.name)
 
 	def handleConfirmedEvent(self, ievent):
 		'''Handler for ConfirmationEvents. Unblocks the call waiting for confirmation of the event generated.'''

@@ -38,6 +38,7 @@ class TEM(baseinstrument.BaseInstrument):
 		{'name': 'StageStatus', 'type': 'property'},
 		{'name': 'VacuumStatus', 'type': 'property'},
 		{'name': 'BeamBlankedDuringCameraExchange', 'type': 'property'},
+		{'name': 'ProjectionSubModeName', 'type': 'property'},
 
 		######## get/set
 		{'name': 'BeamBlank', 'type': 'property'},
@@ -185,6 +186,12 @@ class TEM(baseinstrument.BaseInstrument):
 	def runAutoFiller(self):
 		'''
 		Start AutoFiller. Default is a timed filler
+		'''
+		pass
+
+	def resetAutoFillerError(self):
+		'''
+		Reset autofiller error to start over.
 		'''
 		pass
 

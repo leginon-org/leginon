@@ -229,7 +229,8 @@ function CheckPHPVersion($aMinVersion) {
     list($majorC, $minorC, $editC) = preg_split('/[\/.-]/', PHP_VERSION);
     list($majorR, $minorR, $editR) = preg_split('/[\/.-]/', $aMinVersion);
 
-    if ($majorC != $majorR) return false;
+    // allow newer major PHP version to run.
+    //if ($majorC != $majorR) return false;
     if ($majorC < $majorR) return false;
     // same major - check minor
     if ($minorC > $minorR) return true;

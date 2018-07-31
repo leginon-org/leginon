@@ -41,6 +41,7 @@ packages=(
 	leginon
 	pyscope
 	slack
+	myami_test
 	modules/radermacher
 	modules/libcv
 	modules/numextension

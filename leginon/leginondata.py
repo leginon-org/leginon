@@ -1025,6 +1025,7 @@ class ImageTargetListData(InSessionData):
 			('image', AcquisitionImageData),
 			('queue', QueueData),
 			('sublist', bool),
+			('node', NodeSpecData),
 		)
 	typemap = classmethod(typemap)
 
@@ -1032,6 +1033,17 @@ class DequeuedImageTargetListData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
 			('queue', QueueData),
+			('list', ImageTargetListData),
+		)
+	typemap = classmethod(typemap)
+
+class DoneImageTargetListData(InSessionData):
+	'''
+	TODO: This may replace DequeuedImageTargetListData since
+	ImageTargetListData now have NodeSpecData reference.
+	'''
+	def typemap(cls):
+		return InSessionData.typemap() + (
 			('list', ImageTargetListData),
 		)
 	typemap = classmethod(typemap)
@@ -1340,6 +1352,7 @@ class PresetsManagerSettingsData(SettingsData):
 			('stage always', bool),
 			('cycle', bool),
 			('optimize cycle', bool),
+			('import random', bool),
 			('mag only', bool),
 			('apply offset', bool),
 			('disable stage for image shift', bool),
@@ -1863,6 +1876,8 @@ class BeamTiltImagerSettingsData(AcquisitionSettingsData):
 			('tableau binning', int),
 			('tableau split', int),
 			('correlation type', str),
+			('do auto coma', bool),
+			('auto coma limit', float),
 		)
 	typemap = classmethod(typemap)
 
@@ -1963,7 +1978,7 @@ class AutoExposureSettingsData(AcquisitionSettingsData):
 class TiltAlternaterSettingsData(AcquisitionSettingsData):
 	def typemap(cls):
 		return AcquisitionSettingsData.typemap() + (
-			('tilts', str),
+			('tilts', str), # Issue #5687. should be tuple. Too late now.
 			('use tilts', bool),
 			('reset per targetlist', bool),
 		)
@@ -1972,7 +1987,7 @@ class TiltAlternaterSettingsData(AcquisitionSettingsData):
 class TiltListAlternaterSettingsData(AcquisitionSettingsData):
 	def typemap(cls):
 		return AcquisitionSettingsData.typemap() + (
-			('tilts', str),
+			('tilts', str), # Issue #5687. should be tuple, Too late now.
 			('use tilts', bool),
 		)
 	typemap = classmethod(typemap)
@@ -1984,6 +1999,14 @@ class MoveAcquisitionSettingsData(AcquisitionSettingsData):
 			('imaging delay', float),  #seconds
 			('tilt to', float),		#degrees
 			('total move time', float),  #seconds
+			('nsteps', int),
+		)
+	typemap = classmethod(typemap)
+
+class DefocusSequenceSettingsData(AcquisitionSettingsData):
+	def typemap(cls):
+		return AcquisitionSettingsData.typemap() + (
+			('step size', float),  #meter
 			('nsteps', int),
 		)
 	typemap = classmethod(typemap)
@@ -2122,6 +2145,7 @@ class ManualAcquisitionSettingsData(SettingsData):
 			('correct image', bool),
 			('save image', bool),
 			('loop pause time', float),
+			('max loop', int),
 			('image label', str),
 			('low dose', bool),
 			('low dose pause time', float),
@@ -2129,6 +2153,9 @@ class ManualAcquisitionSettingsData(SettingsData):
 			('defocus1', float),
 			('defocus2switch', bool),
 			('defocus2', float),
+			('do defocus series', bool),
+			('defocus start', float),
+			('defocus step', float),
 			('dark', bool),
 			('force annotate', bool),
 			('reduced params', bool),
@@ -2658,6 +2685,16 @@ class TransformMatrixData(InSessionData):
 			('image1', AcquisitionImageData),
 			('image2', AcquisitionImageData),
 			('matrix', sinedon.newdict.DatabaseArrayType),
+		)
+	typemap = classmethod(typemap)
+
+class MosaicTransformMatrixData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('imagelist1', ImageListData),
+			('imagelist2', ImageListData),
+			('matrix', sinedon.newdict.DatabaseArrayType),
+			('move type', str),
 		)
 	typemap = classmethod(typemap)
 

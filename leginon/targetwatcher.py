@@ -27,6 +27,11 @@ class PauseRestartException(Exception):
 	repeated after a user pause'''
 	pass
 
+class BypassException(Exception):
+	'''Raised within processTargetData method if the target should be
+	bypassed'''
+	pass
+
 class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 	'''
 	TargetWatcher will watch for TargetLists
@@ -228,7 +233,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			try:
 				self.obj_aperture_reset_value = self.instrument.tem.getApertureSelection('objective')
 			except Exception, e:
-				self.logger.error(e.message)
+				self.logger.error(e)
 				self.logger.error('Please retract objective aperture manually and continue')
 				self.player.pause()
 				self.obj_aperture_reset_value = 'unknown'
@@ -343,7 +348,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			self.logger.info('Objective aperture retracted')
 			retract_ap_successful = True
 		except Exception, e:
-			self.logger.error(e.message)
+			self.logger.error(e)
 		return retract_ap_successful
 
 	def putBackObjectiveAperture(self):
@@ -353,7 +358,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			state = self.instrument.tem.setApertureSelection('objective',value)
 			self.logger.info('%s um objective aperture inserted' % (value,))
 		except Exception, e:
-			self.logger.error(e.message)
+			self.logger.error(e)
 
 	def getIsResetTiltInList(self):
 		'''
@@ -420,12 +425,16 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 				try:
 					self.logger.info('Processing target id %d' % adjustedtarget.dbid)
 					process_status = self.processTargetData(adjustedtarget, attempt=attempt)
+				except BypassException, e:
+					self.logger.error(str(e) + '... Bypass this target and pretend it is done')
+					process_status = 'bypass'
 				except PauseRestartException, e:
 					self.player.pause()
 					self.logger.error(str(e) + '... Fix it, then resubmit targets from previous step to repeat')
 					self.beep()
 					process_status = 'repeat'
 				except PauseRepeatException, e:
+					#TODO: NoMoveCalibration is a subclass of this. It is not handled now.
 					self.player.pause()
 					self.logger.error(str(e) + '... Fix it, then press play to repeat target')
 					self.beep()
@@ -437,7 +446,9 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 				except Exception, e:
 					self.logger.exception('Process target failed: %s' % e)
 					process_status = 'exception'
-					
+				finally:
+					self.resetComaCorrection()
+	
 				self.stopTimer('processTargetData')
 
 				if process_status == 'repeat':

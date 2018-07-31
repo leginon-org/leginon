@@ -399,7 +399,7 @@ class TEMController(node.Node):
 			self.instrument.tem.setApertureSelection('objective',name)
 			is_success = True
 		except Exception, e:
-			self.logger.error(e.message)
+			self.logger.error(e)
 		if is_success == True:
 			self.logger.info('Objective aperture changed to %s %s' % (name,unit))
 		self.panel.setTEMParamDone()

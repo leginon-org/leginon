@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import sys
 import time
-import socket
+from pyami import mysocket
 from leginon import databinder
 from leginon import event
 from leginon import datatransport
@@ -32,7 +32,7 @@ class Logger(object):
    def warning(self, stuff):
       print 'WARNING', stuff
 
-myhostname = socket.gethostname().lower()
+myhostname = mysocket.gethostname().lower()
 
 for myport in range(49152,65536):
    try:

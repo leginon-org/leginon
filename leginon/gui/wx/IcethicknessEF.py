@@ -89,8 +89,10 @@ class SettingsDialog(leginon.gui.wx.Settings.Dialog):
 class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
 		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
-		sb = wx.StaticBox(self, -1, 'Ice Thickness EF')
+		sb = wx.StaticBox(self, -1, 'Ice Thickness using Energy Filter')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		sb = wx.StaticBox(self, -1, 'Ice Thickness using Aperture Limited Scattering')
+		sbszdb = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		self.widgets['process'] = wx.CheckBox(self, -1,
 																			'Collect ice thickness image')
@@ -122,10 +124,10 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz_decimate.Add(self.widgets['decimate'], (0, 1), (1, 1),
 										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 
-		self.widgets['process_obj_thickness'] = wx.CheckBox(self, -1, 'Calculate ice thickness from objective scattering')
+		self.widgets['process_obj_thickness'] = wx.CheckBox(self, -1, 'Calculate ice thickness from aperture limited scattering')
 		self.widgets['obj mean free path'] = FloatEntry(self, -1, min=0.0, chars=6)
 		sz_objmeanfreepath = wx.GridBagSizer(5, 5)
-		label = wx.StaticText(self, -1, 'Objective scattering mean free path (nm):')
+		label = wx.StaticText(self, -1, 'ALS coefficient (nm):')
 		sz_objmeanfreepath.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz_objmeanfreepath.Add(self.widgets['obj mean free path'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		self.widgets['vacuum intensity'] = FloatEntry(self, -1, min=0.0, chars=6)
@@ -141,13 +143,17 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz.Add(sz_slit_width, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(szmeanfreepath, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(sz_decimate, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['process_obj_thickness'], (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(sz_objmeanfreepath, (6, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(sz_vac, (7, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-
 		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
+		#sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
-		return [sbsz, ]
+		sz = wx.GridBagSizer(5, 10)
+		#label = wx.StaticText(self, -1, 'Find images in this session with label:')
+		sz.Add(self.widgets['process_obj_thickness'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(sz_objmeanfreepath, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(sz_vac, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sbszdb.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
+
+		return [sbsz, sbszdb]
 
 	def GetPresetNameWidget(self,preset_type): # simply creates a widget to choose a preset for the preset type
 		self.widgets[preset_type] = PresetChoice(self, -1)

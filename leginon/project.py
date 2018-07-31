@@ -126,8 +126,10 @@ class ProjectData:
 		except:
 			return None
 
-
-
+	def getSessionsFromProjectId(self, projectId):
+		projdata = projectdata.projects.direct_query(projectId)
+		r = projectdata.projectexperiments(project=projdata).query()
+		return map((lambda x: x['session']),r)
 
 ########################################
 ## Testing

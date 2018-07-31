@@ -1030,6 +1030,31 @@ if (is_numeric($expId)) {
 		'newrun' => array($nruns, $celloption),
 	);
 
+// FIBSEM Tools
+	$action = "FIBSEM Tools";
+	$nruns=array();
+	$nruns[] = array(
+		'name'=>"<a href='runAppionLoop.php?expId=$sessionId&form=fibsem_MakeStackForm'>Make Inital Stack</a>",
+		);
+	$nruns[] = array(
+		'name'=>"<a href='runAppionLoop.php?expId=$sessionId&form=fibsem_ClipStackForm'>Select Subtack</a>",
+		);
+	$nruns[] = array(
+		'name'=>"<a href='runAppionLoop.php?expId=$sessionId&form=fibsem_AlignStackForm'>Align Stack</a>",
+		);
+	$nruns[] = array(
+		'name'=>"<a href='runAppionLoop.php?expId=$sessionId&form=fibsem_GenerateStackForm'>Generate Aligned Stack</a>",
+		);
+	$nruns[] = array(
+		'name'=>"<a href='runAppionLoop.php?expId=$sessionId&form=fibsem_DewarpStackForm'>Dewarp Stack</a>",
+		);
+	
+	$data[] = array(
+		'action' => array($action, $celloption),
+		'newrun' => array($nruns, $celloption),
+	);
+
+
 	// Automated Software Testing
 
 	// $TEST_SESSIONS is defined in config.php. It is an array containing the session name

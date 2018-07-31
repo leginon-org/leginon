@@ -38,6 +38,7 @@ function getSessionSelector($sessions, $sessionId=NULL) {
 }
 
 function printResult($qresult,$qtype='',$ttype='', $is_queue=true) {
+	if ($qresult === false) return;
 	if ($qresult[2] == 0) return;
 	$pretext = $qresult[0];
 	$totalNew = $qresult[1];
@@ -52,6 +53,7 @@ function printResult($qresult,$qtype='',$ttype='', $is_queue=true) {
 	$estsecond = (int) floor($esttime%60);
 	$queuetext = ($is_queue) ? 'queue': 'targetlist';
 ?>
+	<tr>
 	<td>
 		<p> <h3> <?php echo $qtype ?> </h3></p>
 		<p> total <?php echo $ttype ?> targets in <?php echo $queuetext.' '.$pretext.$totalNew ?> </p>
@@ -67,7 +69,7 @@ function printResult($qresult,$qtype='',$ttype='', $is_queue=true) {
 		echo "$estminute minutes, $estsecond seconds\n";
 	?> <h4></p>
 	</td>
-	</tr><tr>
+	</tr>
 <?php return;
 	}
 // --- Set sessionId
@@ -88,12 +90,11 @@ if (!$selected_sessionId) {
 	<table>
 	<tr><td> <?php if (!$selected_sessionId) echo 'Session '.$sessionSelector; ?></td>
 	</tr>
-	<tr>
 <?php
 // --- Get nodes with queue
 $qtypes = $leginondata->getQueueTypes($sessionId);
 if (!$qtypes) {
-	?><td><h4>No queuing in this session</h4></td><?php
+	?><tr><td><h4>No queuing in this session</h4></td></tr><?php
 } else {
 	arsort($qtypes);
 	// Change details to true to see acquisition and focus separately for debuging
@@ -112,10 +113,17 @@ if (!$qtypes) {
 
 	} 
 }
-
-	$countbytype = $leginondata->getNonQueueCountResults($sessionId);
-	if ($countbytype !== false)
-		printResult($countbytype['acquisition'],'Non Queue Targets',false);
+{
+	$countbynode = $leginondata->getNonQueueCountResults($sessionId);
+	if (is_array($countbynode) && count($countbynode)) {
+		$nodenames = array_keys($countbynode);
+		rsort($nodenames);
+		foreach ($nodenames as $alias) {
+			$data = $countbynode[$alias];
+			printResult($data,$alias,'',false);
+		}
+	}
+}
 ?>
-</tr></table>
+</table>
 </form> </body></html>

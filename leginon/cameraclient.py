@@ -182,7 +182,7 @@ class CameraClient(object):
 			imagedata = self.acquireRawCameraImageData(scopeclass=scopeclass, allow_retracted=allow_retracted, type=type, force_no_frames=force_no_frames)
 			return imagedata
 		except Exception, e:
-			self.logger.error(e.message)
+			self.logger.error(e)
 			return None
 
 	def acquireRawCameraImageData(self, scopeclass=leginondata.ScopeEMData, allow_retracted=False, type='normal', force_no_frames=False):

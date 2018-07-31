@@ -10,7 +10,7 @@ import time
 import wx
 import wx.wizard
 import wx.lib.intctrl
-import socket
+from pyami import mysocket
 
 import leginon.leginondata
 import leginon.projectdata
@@ -1007,7 +1007,7 @@ class Setup(object):
 	def saveClients(self, session, clients):
 		ver = leginon.version.getVersion()
 		loc = leginon.version.getInstalledLocation()
-		host = socket.gethostname()
+		host = mysocket.gethostname()
 		initializer = {'session': session, 'clients': clients, 'localhost':host, 'version': ver, 'installation': loc}
 		clientsdata = leginon.leginondata.ConnectToClientsData(initializer=initializer)
 		self.publish(clientsdata, database=True, dbforce=True)
@@ -1082,7 +1082,7 @@ class Setup(object):
 			if temdata:
 				break
 		if not temdata:
-			localhost = socket.gethostname()
+			localhost = mysocket.gethostname()
 			# use tem on localhost, including simulation
 			temdata = self.getTEM(localhost,False)
 		if temdata and c2size:

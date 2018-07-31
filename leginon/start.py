@@ -8,6 +8,10 @@
 #	see  http://leginon.org
 #
 
+# testing before start
+import configcheck
+configcheck.testBeforeStart()
+
 import pyami.quietscipy
 import sinedon.data as data
 import leginon.gui.wx.Manager

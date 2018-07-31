@@ -56,6 +56,18 @@ class TargetHandler(object):
 		self.logger.info('%s done with target list ID: %s, status: %s' % (self.name, listid, status))
 		e = event.TargetListDoneEvent(targetlistid=listid, status=status, targetlist=targetlistdata)
 		self.outputEvent(e)
+		# mosaic quilt finder and mosaic target finder
+		# should not do this to count done targets after the first submit is done
+		self.insertDoneTargetList(targetlistdata)
+
+	def insertDoneTargetList(self, targetlistdata):
+		if targetlistdata['node'] and self.name == targetlistdata['node']['alias']:
+			q = leginondata.DoneImageTargetListData(session=self.session,list=targetlistdata)
+			q.insert()
+			self.logger.debug('targetlist %d is inserted as done' % (targetlistdata.dbid))
+		else:
+			self.logger.debug('targetlist %d is not insert as done' % (targetlistdata.dbid))
+		return
 
 	def researchTargets(self, **kwargs):
 		'''
@@ -246,7 +258,7 @@ class TargetHandler(object):
 			queuedata = self.getQueue()
 		else:
 			queuedata = None
-		listdata = leginondata.ImageTargetListData(session=self.session, label=label, mosaic=mosaic, image=image, queue=queuedata, sublist=sublist)
+		listdata = leginondata.ImageTargetListData(session=self.session, label=label, mosaic=mosaic, image=image, queue=queuedata, sublist=sublist, node=self.this_node)
 		return listdata
 
 	def getQueue(self, label=None):

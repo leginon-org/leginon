@@ -5,6 +5,7 @@
 #       For terms of the license agreement
 #       see  http://leginon.org
 #
+DEBUG = False
 
 class TransportError(IOError):
 	pass
@@ -25,6 +26,10 @@ class Base(object):
 		self.logger = logger
 
 class Client(Base):
+	'''
+	Basic data transport client. It sends request to transportmodule
+  server location and receives results handled.
+	'''
 	def __init__(self, serverlocation, logger):
 		Base.__init__(self, logger)
 
@@ -48,13 +53,31 @@ class Client(Base):
 
 	# these aren't ordering right, dictionary iteration
 	def _send(self, request):
+		# Go through all clients until one of them will take the request.
 		for client in self.clients:
 			try:
 				ret = client.send(request)
 				return ret
 			except TransportError, e:
+				# Means this this not the right client. Just need to move on.
 				pass
-		raise TransportError('Error sending request')
+		# It gets here if none of the clients can handle the request.
+		if DEBUG:
+			print 'failed request sending to clients', self.getClientServerLocations(self.clients)
+			print 'request attr', self.getMultiRequestAttributeName(request)
+		msg = '%s' % (request.__class__.__name__,)
+		raise TransportError('Error sending request: %s' % msg)
+
+	def getMultiRequestAttributeName(self, request):
+		if request.__class__.__name__ in ('MultiRequest','Request'):
+			return request.attributename
+
+	def getClientServerLocations(self,clients):
+		locations = []
+		for c in clients:
+			if hasattr(c,'serverlocation'):
+				locations.append(c.serverlocation)
+		return locations
 
 	def send(self, request):
 		result = self._send(request)
@@ -70,6 +93,10 @@ class Client(Base):
 		return True
 
 class Server(Base):
+	'''
+	Basic data transport server. It defines data handler, server location
+	and starts it. Can be either local or tcp transport.
+	'''
 	def __init__(self, dh, logger, tcpport=None):
 		Base.__init__(self, logger)
 		self.datahandler = dh

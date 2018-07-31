@@ -21,8 +21,9 @@ class FalconFrameMaker(object):
 		self.idcounter = itertools.cycle(range(100))
 		self.base_frame_time = 0.055771
 		self.format_version = 1.0
-		self.no_save_frame_path = 'E:\\not_a_real_path'
-		self.base_frame_path = 'E:\\frames'
+		self.no_save_frame_path = 'not_a_real_path'
+		self.fei_image_storage_path = 'E:\\'
+		self.base_frame_path = 'frames'
 		# almost limitless
 		self.output_bin_limit = 1000
 		self.output_bins = self.output_bin_limit + 0
@@ -52,24 +53,44 @@ class FalconFrameMaker(object):
 		return self.frames_name
 
 	def getFrameDirName(self):
+		'''
+		older interface makes single files in this directory.
+		'''
 		return self.frames_name
 
-	def getFrameName(self):
-		return self.frames_name
+	def getSubPathFramePattern(self):
+		'''
+		returns SubPathPattern required by advanced TEM scripting.
+		'''
+		return self.subpath_pattern
+
+	def setFeiImageStoragePath(self,path):
+		if path.endswith(':'):
+			# Windows does not join path from drive preperly.
+			path += '\\'
+		self.fei_image_storage_path = path
 
 	def setBaseFramePath(self,base_path):
 		self.base_frame_path = base_path
 
 	def createFramePath(self,base_path):
-		if os.path.isdir(base_path) or self.simulation:
-			# real path below existing base_path becomes the frame path
-			self.frame_path = os.path.join(base_path,self.makeFrameDirName(True))
+		full_base_path = os.path.join(self.fei_image_storage_path, base_path)
+		if not os.path.isdir(full_base_path):
+			raise ValueError('Base Path %s not exists. Please create first' % full_base_path)
+		return self._createFramePath(base_path)
+
+	def _createFramePath(self, base_path):
+		full_base_path = os.path.join(self.fei_image_storage_path, base_path)
+		if os.path.isdir(full_base_path) or self.simulation:
+			# real path including existing base_path becomes the subpath_pattern
+			self.subpath_pattern = os.path.join(base_path,self.makeFrameDirName(True))
+			self.fullpath_pattern = os.path.join(self.fei_image_storage_path,self.subpath_pattern)
 			if not self.simulation:
-				os.makedirs(self.frame_path)
+				os.makedirs(self.fullpath_pattern)
 		else:
 			# dummy path will keep the frames from being written
 			self.makeFrameDirName(False)
-			self.frame_path = base_path
+			self.fullpath_pattern = full_base_path
 
 	def getFramePath(self):
 		return self.frame_path
@@ -188,8 +209,9 @@ class FalconFrameConfigXmlMaker(FalconFrameMaker):
 		self.idcounter = itertools.cycle(range(100))
 		self.base_frame_time = 0.055771
 		self.format_version = 1.0
-		self.no_save_frame_path = 'E:\\not_a_real_path'
-		self.base_frame_path = 'E:\\frames'
+		self.no_save_frame_path = 'not_a_real_path'
+		self.fei_image_storage_path = 'E:\\'
+		self.base_frame_path = 'frames'
 		self.configxml_path = 'C:\Titan\Data\Falcon'
 		# Falcon 2 software can save frames in at most 7 bins
 		self.output_bin_limit = 7
@@ -202,7 +224,7 @@ class FalconFrameConfigXmlMaker(FalconFrameMaker):
 		fv = et.SubElement(rt,'FormatVersion')
 		fv.text = '%.1f' % self.format_version
 		sp = et.SubElement(rt,'StoragePath')
-		sp.text = self.frame_path
+		sp.text = self.fullpath_pattern
 		ifb = {}
 		for i in range(len(start_frames)):
 			ifb[i] = et.SubElement(rt,'InterFrameBoundary')
@@ -274,8 +296,8 @@ class FalconFrameRangeListMaker(FalconFrameMaker):
 		self.number_of_available_frames = 1
 		self.format_version = 1.0
 		self.no_save_frame_path = ''
-		self.base_frame_path = 'E:\\frames'
-		# Falcon 2 software can save frames in at most 7 bins
+		self.fei_image_storage_path = 'Z:\\'
+		self.base_frame_path = 'frames'
 		self.output_bin_limit = 1000
 		self.output_bins = self.output_bin_limit + 0
 		self.equal_distributed_frame = 0
@@ -283,14 +305,20 @@ class FalconFrameRangeListMaker(FalconFrameMaker):
 		self.setFrameReadoutDelay(0)
 		self.resetParams()
 
-	def createFramePath(self,base_path):
-		if os.path.isdir(base_path) or self.simulation:
-			# real path below existing base_path becomes the frame path
-			self.frame_path = os.path.join(base_path,self.makeFrameDirName(True))
-		else:
-			# dummy path will keep the frames from being written
-			self.makeFrameDirName(False)
-			self.frame_path = base_path
+	def _createFramePath(self, base_path):
+		# real path including existing base_path becomes the subpath_pattern
+		self.subpath_pattern = os.path.join(base_path,self.makeFrameDirName(True))
+		self.fullpath_pattern = os.path.join(self.fei_image_storage_path,self.subpath_pattern)
+
+	def makeFrameDirName(self,use_timestamp):
+		'''
+		make frame stack name without mrc extension.
+		For advanced tem scripting, this is the stack name not directory name.
+		'''
+		# no dummy
+		frames_name = time.strftime('%Y%m%d_%H%M%S', time.localtime())
+		self.frames_name = frames_name + '%02d' % (self.idcounter.next(),)
+		return self.frames_name
 
 	def getNumberOfAvailableFrames(self):
 		return self.number_of_available_frames
@@ -320,9 +348,8 @@ class FalconFrameRangeListMaker(FalconFrameMaker):
 		self.setExposureTime(exposure_second)
 		bin_second = frame_time_second
 		self.createFramePath(self.base_frame_path)
-		bins = int(exposure_second / bin_second)
+		bins = int(math.ceil(exposure_second*1000 / (bin_second*1000)))
 		self.setMaxNumberOfFrameBins(bins)
-		print bins, bin_second
 		starts, ends = self.setFrameRange()
 		rangelist = self.makeRangeList(starts, ends)
 		return rangelist
@@ -352,23 +379,35 @@ if __name__ == '__main__':
 				delay = int(sys.argv[3])
 			else:
 				delay = 1
-		'''
-		Test of the Advanced Scriptins RangeList making
-		'''
-		app = FalconFrameRangeListMaker(True)
-		app.setExposureTime(exposure_second)
-		frame_time_second = 0.1
-		bins = int(exposure_second / frame_time_second)
-		app.setMaxNumberOfFrameBins(bins)
-		n_base_frames = int(math.floor(exposure_second / app.base_frame_time))
-		print n_base_frames
-		rangelist2 = app.makeRangeListFromNumberOfBaseFramesAndFrameTime(n_base_frames, frame_time_second)
-		print rangelist2
-		'''
-		# Test of the Falcon2 Config Xml file making
-		app = FalconFrameConfigXmlMaker(True)
-		#is_success = app.makeDummyConfig(exposure_second)
-		is_success = app.makeRealConfigFromExposureTime(exposure_second, equal_distr_frame,delay)
-		print is_success
-		'''
-		print app.getFrameDirName()
+		fei_image_storage_path = os.getcwd()
+		def testFalcon3():
+			'''
+			Test of the Advanced Scriptins RangeList making
+			'''
+			app = FalconFrameRangeListMaker(False)
+			app.setFeiImageStoragePath(fei_image_storage_path)
+			app.setBaseFramePath('framecam')
+			app.setExposureTime(exposure_second)
+			frame_time_second = 0.2
+			bins = int(exposure_second / frame_time_second)
+			app.setMaxNumberOfFrameBins(bins)
+			n_base_frames = int(math.floor(exposure_second*1000 / (app.base_frame_time*1000)))
+			print 'number of base frames: ',n_base_frames
+			rangelist2 = app.makeRangeListFromNumberOfBaseFramesAndFrameTime(n_base_frames, frame_time_second)
+			print 'range list: ',rangelist2
+			print 'SubPathPattern: ', app.getSubPathFramePattern()
+			print 'frame name: ',app.getFrameDirName()
+
+		def testFalcon2():
+			'''
+			# Test of the Falcon2 Config Xml file making
+			'''
+			app = FalconFrameConfigXmlMaker(True)
+			app.setFeiImageStoragePath(fei_image_storage_path)
+			app.setBaseFramePath('framecam')
+			#is_success = app.makeDummyConfig(exposure_second)
+			is_success = app.makeRealConfigFromExposureTime(exposure_second, equal_distr_frame,delay)
+			print 'is successful: ',is_success
+			print 'frame name: ',app.getFrameDirName()
+
+		testFalcon3()

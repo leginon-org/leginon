@@ -327,7 +327,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		try:
 			self._testRun()
 		except Exception, e:
-			self.logger.error(e.message)
+			self.logger.error(e)
 			raise
 		finally:
 			self.panel.playerEvent('stop')

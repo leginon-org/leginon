@@ -168,6 +168,9 @@ noderegistry.registerNodeClass(TiltListAlternater,classtype)
 from tiltalternater import TiltAlternater
 noderegistry.registerNodeClass(TiltAlternater,classtype)
 
+from defocussequence import DefocusSequence
+noderegistry.registerNodeClass(DefocusSequence,classtype)
+
 ##############################
 # Calibrations
 ##############################

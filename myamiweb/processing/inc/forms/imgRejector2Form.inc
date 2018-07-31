@@ -19,7 +19,7 @@ require_once "inc/summarytables.inc"; // needed to show stack and model tables
 class ImgRejector2Form extends BasicLayoutForm
 {
 
-	function __construct( $expId, $extraHTML='', $commit=True, $preset='en-a', $bestdb='', $checkdrift=True, $driftmax=5.0, $checkctf=True, $sort='rePkg', $ctfrunid='0', $resmin='7.0', $hideall=True, $checkice=False, $icemax='3.0')
+	function __construct( $expId, $extraHTML='', $commit=True, $preset='en-a', $bestdb='', $checkdrift=True, $driftmax=5.0, $checkctf=True, $sort='rePkg', $ctfrunid='0', $resmin='7.0', $applyall=True, $unhide=False, $checkice=False, $icemax='6.0')
 	{
 		parent::__construct($expId, $extraHTML);
 
@@ -51,7 +51,8 @@ class ImgRejector2Form extends BasicLayoutForm
 		// Add each of the parameters here.
 		// addParam( "key", default_value, "Label that appears in GUI")
 		$params->addParam( "preset", $preset, "Preset to check values" );
-		$params->addParam( "hideall", $hideall, "Hide all sibling presets" );
+		$params->addParam( "applyall", $applyall, "Apply to all sibling presets" );
+		$params->addParam( "unhide", $unhide, "Unhide specified preset images" );
 		$params->addParam( "checkdrift", $checkdrift, "Reject according to direct detector frame drift" );
 		$params->addParam( "driftmax", $driftmax, "Maximal frame drift","angstrom" );
 		$params->addParam( "checkctf", $checkctf, "Reject according to CTF fit quality");
@@ -117,7 +118,7 @@ class ImgRejector2Form extends BasicLayoutForm
 		$fieldSize = 10;
 		$params = $this->getFormParams();
 		$html.= $params->insertSelectField( "preset", $this->presetList );
-		$html.= $params->insertCheckboxField( "hideall" );
+		$html.= '<h4>'.$params->insertCheckboxField( "applyall" )."</h4>";
 		$html.= '<hr>';
 		$html.= '<h4>'.$params->insertCheckboxField( "checkdrift" ).'</h4>';
 		$html.= $params->insertTextFieldInRow( "driftmax", $fieldSize,'(angstroms/frame)' );
@@ -132,7 +133,11 @@ class ImgRejector2Form extends BasicLayoutForm
 		$html.= '<h4>'.$params->insertCheckboxField( "checkice" ).'</h4>';
 		$html.= $params->insertTextFieldInRow( "icemax", $fieldSize,'ice-background rms deviation ratio' );
 		$html.= '<hr>';
-		$html.= $params->insertCheckboxField( "commit" );
+		$html.= '<h4>'.$params->insertCheckboxField( "unhide" ).'</h4>';
+		$html.= '<hr>';
+		$html.= '<hr>';
+		$html.= '<p>';
+		$html.= '<h4>'.$params->insertCheckboxField( "commit" ).'</h4>';
 
 
 		return $html;
@@ -142,10 +147,16 @@ class ImgRejector2Form extends BasicLayoutForm
 	{
 		$this->formParams->getPostedValues( $postArray );
 		$msg = $this->formParams->validate();
-		if ($postArray['bestdb']!='on' & $postArray['ctfrunid']==0 )
-			$msg .= '<B>ERROR:</B>Use either best run or specify a run. You have chosen neither.<br/>';	
-		if ($postArray['bestdb']=='on' & $postArray['ctfrunid']!=0 )
-			$msg .= '<B>ERROR:</B>Use either best run or specify a run, not both.<br/>';	
+		if ($postArray['unhide']) return $msg;
+		// only if checking ctf
+		if ($postArray['checkctf']) {
+			if ($postArray['bestdb']!='on' & $postArray['ctfrunid']==0 )
+				$msg .= '<B>ERROR:</B>Use either best run or specify a run. You have chosen neither.<br/>';	
+			if ($postArray['bestdb']=='on' & $postArray['ctfrunid']!=0 )
+				$msg .= '<B>ERROR:</B>Use either best run or specify a run, not both.<br/>';	
+		} else {
+			if ($postArray['checkice'])
+				$msg .= '<B>ERROR:</B>Currently need ctf estimation to check ice crystal<br/>';	
 		return $msg;
 	}
 

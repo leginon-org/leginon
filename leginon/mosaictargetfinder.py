@@ -8,6 +8,7 @@
 
 import calibrationclient
 from leginon import leginondata
+from leginon import project
 import event
 import instrument
 import imagewatcher
@@ -90,6 +91,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.mosaic = mosaic.EMMosaic(self.calclients[parameter])
 		self.oldmosaic = mosaic.EMMosaic(self.calclients[parameter])
 		self.mosaicimagelist = None
+		self.oldmosaicimagelist = None
 		self.mosaicimage = None
 		self.mosaicname = None
 		self.mosaicimagescale = None
@@ -110,6 +112,12 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 
 		if self.__class__ == MosaicClickTargetFinder:
 			self.start()
+
+	def insertDoneTargetList(self, targetlistdata):
+		# this class targetlist must not be recorded done so that
+		# more targets can be added to it
+		self.logger.debug('%s did not insert done on %d' % (self.name,targetlistdata.dbid))
+		pass
 
 	# not complete
 	def handleTargetListDone(self, targetlistdoneevent):
@@ -680,7 +688,9 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.oldtargetmap = {}
 		self.oldtilemap = {}
 		self.oldmosaic.clear()
+		self.Affine_matrix = None
 		tile_imagelist = self.oldmosaicselections[mosaicname]
+		self.oldmosaicimagelist = tile_imagelist
 		# specify session based on tile_imagelist
 		tiles = self._researchMosaicTileData(tile_imagelist, tile_imagelist['session'])
 		for i, tile in enumerate(tiles):
@@ -714,8 +724,10 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		points1 = map((lambda t: (t.x,t.y)),targets1)
 		points2 = map((lambda t: (t.x,t.y)),targets2)
 		if len(points1) < 3:
-			return numpy.matrix([(1,0,0),(0,1,0),(0,0,1)]),0.0
-		A, residule = affine.solveAffineMatrixFromImageTargets(points1,points2)
+			A = numpy.matrix([(1,0,0),(0,1,0),(0,0,1)])
+			residule = 0.0
+		else:
+			A, residule = affine.solveAffineMatrixFromImageTargets(points1,points2)
 		self.Affine_matrix = A
 		return A, residule
 
@@ -723,6 +735,8 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		'''
 		Transform targets with affine matrix
 		'''
+		if not targets1:
+			return []
 		points1 = map((lambda t: (t.x,t.y)),targets1)
 		points2 = affine.transformImageTargets(affine_matrix, points1)
 		return points2
@@ -741,7 +755,62 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 			# by using the returned new target, it makes sure the transaction is completed.
 			newtarget = self.mosaicToTarget('acquisition', row, col, status='new')
 			self.mosaicToTarget('acquisition', row, col, number=newtarget['number'],status='done')
-		
+
+	def saveTransform(self):
+		q = leginondata.MosaicTransformMatrixData(session=self.session)
+		q['imagelist1'] = self.oldmosaicimagelist
+		q['imagelist2'] = self.mosaicimagelist
+		q['move type'] = self.settings['calibration parameter']
+		q['matrix'] = self.Affine_matrix
+		q.insert()
+
+	def showScaleRotationFromTransform(self):
+		'''
+		Show in logger the scale and rotation obtained.
+		TODO: take into account mosaic formation and get scale.
+		'''
+		m = self.Affine_matrix
+		rotation_radians = math.atan2(m[(0,1)],m[(0,0)])
+		self.logger.info('Affine transform rotation to apply on old atlas is %.1f degrees' % (math.degrees(rotation_radians)))
+
+	def acceptResults(self, targets):
+		self.saveAlignerNewTargets(targets)
+		self.saveTransform()
+		self.displayDatabaseTargets()
+		self.showScaleRotationFromTransform()
+
+	def getAlignerNewSessionKey(self):
+		'''
+		Return this session key as a fake entry for gui so it aligns with
+		the old one.
+		'''
+		s = self.session
+		k = '%6d: %s' % (s.dbid, s['name'])
+		return k
+
+	def getAlignerOldSessionKeys(self):
+		'''
+		Returns all session keys in the project for selection and the current session
+		'''
+		p = project.ProjectData()
+		self.projectid = p.getProjectId(self.session)
+		self.projectsessions = p.getSessionsFromProjectId(self.projectid)
+		self.oldsession_selections = {}
+		for s in self.projectsessions:
+			k = '%6d: %s' % (s.dbid, s['name'])
+			self.oldsession_selections[k] = s
+		selection_keys = list(self.oldsession_selections)
+		selection_keys.sort()
+		selection_keys.reverse()
+		return selection_keys, '%6d: %s' % (self.session.dbid, self.session['name'])
+
+	def onSelectOldSession(self, session_key):
+		'''
+		Called from gui when a session key is selected.
+		'''
+		self.oldsession = self.oldsession_selections[session_key]
+		return self.getAlignerOldMosaicNames()
+
 	#=============Target Finding==============
 	def storeSquareFinderPrefs(self):
 		prefs = leginondata.SquareFinderPrefsData()

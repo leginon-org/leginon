@@ -11,7 +11,13 @@ import subprocess
 import os
 import datetime
 import math
-from pyscope import moduleconfig
+from pyami import moduleconfig
+
+# API notes:
+#COMError from TEMScripting is not consistent in which
+# attribute contains text information.  Need to check by trial and error.
+# For example Stage.Goto has empty details attribute but text has the message.
+# ApertureMechanism not avtivated in Scripting error uses details to contain the list which has the message we need on item index 1. text and message attributes are empty strings.
 
 try:
 	import nidaq
@@ -1441,6 +1447,7 @@ class Tecnai(tem.TEM):
 			self.tecnai.TemperatureControl.ForceRefill()
 		except com_module.COMError as e:
 			#COMError: (-2147155969, None, (u'[ln=102, hr=80004005] Cannot force refill', u'TEM Scripting', None, 0, None))
+			# This COMError can occur when fill is slow, too.  Need to ignore it
 			raise RuntimeError('Failed Force Refill')
 		t1 = time.time()
 		if t1-t0 < 10.0:
@@ -1453,6 +1460,17 @@ class Tecnai(tem.TEM):
 			# property not exist for older versions
 			isbusy = None
 		return isbusy
+
+	def getAutoFillerRemainingTime(self):
+		'''
+		Get remaining time from instrument. TO DO: need to find unit
+		'''
+		try:
+			remain_sec = self.tecnai.TemperatureControl.DewarsRemainingTime
+		except:
+			# property not exist for older versions
+			remain_sec = None
+		return remain_sec
 
 	def getRefrigerantLevel(self,id=0):
 		'''
@@ -1743,4 +1761,8 @@ class Talos(Tecnai):
 
 	def hasAutoAperture(self):
 		return self.getUseAutoAperture()
+
+class Glacios(Arctica):
+	name = 'Glacios'
+	use_normalization = True
 

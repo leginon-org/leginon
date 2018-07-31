@@ -48,6 +48,9 @@ class BadImageStatsPause(targetwatcher.PauseRepeatException):
 class BadImageAcquirePause(targetwatcher.PauseRestartException):
 	pass
 
+class BadImageAcquireBypass(targetwatcher.BypassException):
+	pass
+
 class BadImageStatsAbort(Exception):
 	pass
 
@@ -676,6 +679,36 @@ class Acquisition(targetwatcher.TargetWatcher):
 		y = simageshift['y'] + imageshift['y']
 		self.instrument.tem.ImageShift = {'x':x, 'y':y}
 
+	def setPresetMagProbeMode(self, presetdata,emtarget):
+		'''
+		Set magnification and probe mode according to presetdata.
+		This is required before setting beam tilt or other projection
+		submode dependent values.
+		'''
+		if not presetdata:
+			return
+		tem = presetdata['tem']
+		current_tem = self.instrument.getTEMData()
+		if not tem or current_tem.dbid != tem.dbid:
+			self.instrument.setTEM(tem['name'])
+		# magnification check
+		preset_mag = presetdata['magnification']
+		current_mag = self.instrument.tem.Magnification
+		# probe mode
+		current_probe = self.instrument.tem.getProbeMode()
+		preset_probe = presetdata['probe mode']
+		if preset_mag != current_mag or preset_probe != current_probe:
+			presetname = presetdata['name']
+			self.logger.info('Setting Preset and emtarget to %s to get zero beam tilt and stig' % (presetname))
+			self.presetsclient.toScope(presetname, emtarget, keep_shift=False)
+		
+	def setComaStig0(self):
+		mag = self.instrument.tem.Magnification
+		self.logger.info('Set zero beam tilt and stig at %d mag' % (int(mag)))
+		self.beamtilt0 = self.instrument.tem.getBeamTilt()
+		self.stig0 = self.instrument.tem.getStigmator()['objective']
+		self.defoc0 = self.instrument.tem.getDefocus()
+
 	def moveAndPreset(self, presetdata, emtarget):
 			'''
 			Move xy to emtarget position with its mover and set preset
@@ -717,14 +750,32 @@ class Acquisition(targetwatcher.TargetWatcher):
 				cam = self.instrument.getCCDCameraData()
 				ht = self.instrument.tem.HighTension
 				mag = self.instrument.tem.Magnification
+				self.setComaStig0()
 				imageshift = self.instrument.tem.getImageShift()
-				self.beamtilt0 = self.instrument.tem.getBeamTilt()
 				try:
 					beamtilt = beamtiltclient.transformImageShiftToBeamTilt(imageshift, tem, cam, ht, self.beamtilt0, mag)
 					self.instrument.tem.BeamTilt = beamtilt
 					self.logger.info("beam tilt for image acquired (%.4f,%.4f)" % (self.instrument.tem.BeamTilt['x'],self.instrument.tem.BeamTilt['y']))
 				except Exception, e:
+					self.resetComaCorrection()
 					raise NoMoveCalibration(e)
+				try:
+					stig = beamtiltclient.transformImageShiftToObjStig(imageshift, tem, cam, ht, self.stig0, mag)
+					self.instrument.tem.Stigmator = {'objective':stig}
+					stig1 = self.instrument.tem.getStigmator()['objective']
+					self.logger.info("objective stig for image acquired (%.4f,%.4f)" % (stig1['x']-self.stig0['x'],stig1['y']-self.stig0['y']))
+				except Exception, e:
+					self.resetComaCorrection()
+					raise NoMoveCalibration(e)
+				try:
+					defoc = beamtiltclient.transformImageShiftToDefocus(imageshift, tem, cam, ht, self.defoc0, mag)
+					self.instrument.tem.Defocus = defoc
+					defoc1 = self.instrument.tem.getDefocus()
+					self.logger.info("correcting defocus for image acquired is (%.4f) (um)" % ((defoc1-self.defoc0)*1e6))
+				except Exception, e:
+					self.resetComaCorrection()
+					raise NoMoveCalibration(e)
+
 			if self.settings['adjust time by tilt'] and abs(stagea) > 10 * 3.14159 / 180:
 				camdata = leginondata.CameraEMData()
 				camdata.friendly_update(presetdata)
@@ -759,7 +810,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.reportStatus('acquisition', 'image acquired')
 		self.stopTimer('acquire getData')
 		if imagedata is None:
-			raise BadImageAcquirePause('failed acquire camera image')
+			raise BadImageAcquireBypass('failed acquire camera image')
 		if imagedata['image'] is None:
 			raise BadImageAcquirePause('Acquired array is None. Possible camera problem')
 
@@ -783,6 +834,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			pixeltype = str(imagedata['image'].dtype)
 		except:
 			self.logger.error('array not returned from camera')
+			self.resetComaCorrection()
 			return
 		imagedata = leginondata.AcquisitionImageData(initializer=imagedata, preset=presetdata, label=self.name, target=targetdata, list=self.imagelistdata, emtarget=emtarget, pixels=pixels, pixeltype=pixeltype)
 		imagedata['phase plate'] = self.pp_used
@@ -792,9 +844,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.publish(imagedata['camera'], database=True)
 		return imagedata
 
-	def acquire(self, presetdata, emtarget=None, attempt=None, target=None, channel=None):
-		reduce_pause = self.onTarget
-
+	def preAcquire(self, presetdata, emtarget=None, channel=None, reduce_pause=False):
+		'''
+		Things to do after moved to preset.
+		'''
 		if debug:
 			try:
 				tnum = emtarget['target']['number']
@@ -808,11 +861,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 			if 'consecutive' in self.timedebug:
 				print tnum, '************************************* CONSECUTIVE', t0 - self.timedebug['consecutive']
 			self.timedebug['consecutive'] = t0
-
-		status = self.moveAndPreset(presetdata, emtarget)
-		if status == 'error':
-			self.logger.warning('Move failed. skipping acquisition at this target')
-			return status
 
 		pausetime = self.settings['pause time']
 		if reduce_pause:
@@ -852,14 +900,29 @@ class Acquisition(targetwatcher.TargetWatcher):
 				defaultchannel = None
 		else:
 			defaultchannel = channel
+
+	def acquire(self, presetdata, emtarget=None, attempt=None, target=None, channel=None):
+		reduce_pause = self.onTarget
+		status = self.moveAndPreset(presetdata, emtarget)
+		if status == 'error':
+			self.logger.warning('Move failed. skipping acquisition at this target')
+			return status
+
+		defaultchannel = self.preAcquire(presetdata, emtarget, channel, reduce_pause)
 		args = (presetdata, emtarget, defaultchannel)
-		if self.settings['background']:
-			self.clearCameraEvents()
-			t = threading.Thread(target=self.acquirePublishDisplayWait, args=args)
-			t.start()
-			self.waitExposureDone()
-		else:
-			self.acquirePublishDisplayWait(*args)
+		try:
+			if self.settings['background']:
+				self.clearCameraEvents()
+				t = threading.Thread(target=self.acquirePublishDisplayWait, args=args)
+				t.start()
+				self.waitExposureDone()
+			else:
+				self.acquirePublishDisplayWait(*args)
+		except:
+			self.resetComaCorrection()
+			raise
+		finally:
+			self.resetComaCorrection()
 		return status
 
 	def acquirePublishDisplayWait(self, presetdata, emtarget, channel):
@@ -876,9 +939,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 		imagedata = self.acquireCCD(presetdata, emtarget, channel=channel)
 
 		self.imagedata = imagedata
-		if self.settings['correct image shift coma']:
-			self.instrument.tem.BeamTilt = self.beamtilt0
-			self.logger.info("reset beam tilt to (%.4f,%.4f)" % (self.instrument.tem.BeamTilt['x'],self.instrument.tem.BeamTilt['y']))
 		targetdata = emtarget['target']
 		if targetdata is not None:
 			if 'grid' in targetdata and targetdata['grid'] is not None:
@@ -900,6 +960,19 @@ class Acquisition(targetwatcher.TargetWatcher):
 			ttt = time.time() - self.timedebug[tkey]
 			del self.timedebug[tkey]
 			print tnum, '************* TOTAL ***', ttt
+
+	def resetComaCorrection(self):
+		# projection submode and probe mode must be the same as beamtilt0
+		# and stig0 when calling this.
+		if self.settings['correct image shift coma']:
+			self.instrument.tem.BeamTilt = self.beamtilt0
+			self.instrument.tem.Stigmator = {'objective':self.stig0}
+			self.instrument.tem.Defocus = self.defoc0
+			self.logger.info("reset beam tilt to (%.4f,%.4f)" % (self.instrument.tem.BeamTilt['x'],self.instrument.tem.BeamTilt['y']))
+			stig1 = self.instrument.tem.getStigmator()['objective']
+			self.logger.info("reset object stig to (%.4f,%.4f)" % (stig1['x'],stig1['y']))
+			defoc1 = self.instrument.tem.getDefocus()
+			self.logger.info("reset defocus to (%.4f) um" % (defoc1*1e6))
 
 	def parkAtHighMag(self):
 		# wait for at least for 30 seconds
@@ -1200,6 +1273,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.logger.error('processing target failed: %s' %e)
 			ret = 'aborted'
 		except BadImageAcquirePause, e:
+			self.logger.error('processing target failed: %s' %e)
+			ret = 'aborted'
+		except BadImageAcquireBypass, e:
 			self.logger.error('processing target failed: %s' %e)
 			ret = 'aborted'
 		except BadImageStatsAbort, e:
