@@ -759,7 +759,7 @@ class leginondata {
 			."`p`.`SUBD|dimension|y`, `p`.`SUBD|binning|x`, `p`.`SUBD|binning|y`, "
 			."`p`.`SUBD|offset|x`, `p`.`SUBD|offset|y`, `p`.`exposure time`, "
 			."`p`.`removed`, `p`.`hasref`, `p`.`dose`, `p`.`number`, "
-			."`p`.`film`, `p`.`REF|InstrumentData|tem`, `p`.`REF|InstrumentData|ccdcamera` "
+			, `p`.`REF|InstrumentData|tem`, `p`.`REF|InstrumentData|ccdcamera` "
 			."FROM "
 			."`AcquisitionImageData` AS `a` "
 			."LEFT JOIN `PresetData` AS `p` ON (`p`.`DEF_id`=`a`.`REF|PresetData|preset`) "
