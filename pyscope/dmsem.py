@@ -194,11 +194,13 @@ class DMSEM(ccdcamera.CCDCamera):
 			'binning': physical_binning,
 			'top': self.tempoffset['y'] / binscale,
 			'left': self.tempoffset['x'] / binscale,
-			'bottom': height / binscale,
-			'right': width / binscale,
 			'exposure': self.getRealExposureTime(),
 			'shutterDelay': shutter_delay,
 		}
+		acqparams.update({
+			'bottom': height+acqparams['top'],
+			'right': width+acqparams['left'],
+			})
 		self.debug_print('DM acqire shape (%d, %d)' % (height,width))
 		return acqparams
 
@@ -217,7 +219,7 @@ class DMSEM(ccdcamera.CCDCamera):
 		self.camera.SelectCamera(self.cameraid)
 		self.custom_setup()
 		acqparams = self.calculateAcquireParams()
-
+		self.acqparams = acqparams
 		t0 = time.time()
 		image = self.camera.GetImage(**acqparams)
 		t1 = time.time()
@@ -227,14 +229,13 @@ class DMSEM(ccdcamera.CCDCamera):
 			self.modifyDarkImage(image)
 		# workaround dose fractionation image rotate-flip not applied problem
 		self.debug_print('received shape %s' %(image.shape,))
+
+		print 'before', image.shape
 		if self.save_frames or self.align_frames:
-			if not self.isDM231orUp():
-				k2_rotate = self.getDmsemConfig('k2','rotate')
-				k2_flip = self.getDmsemConfig('k2','flip')
-				if k2_rotate:
-					image = numpy.rot90(image,4-k2_rotate)
-				if k2_flip:
-					image = numpy.fliplr(image)
+			image = self._modifyImageOrientation(image)
+		image = self._modifyImageShape(image)
+		print 'after', image.shape
+
 		# workaround to offset image problem
 		startx = self.getOffset()['x']
 		starty = self.getOffset()['y']
@@ -247,6 +248,20 @@ class DMSEM(ccdcamera.CCDCamera):
 		if self.dm_processing == 'gain normalized' and self.ed_mode in ('counting','super resolution'):
 			image = numpy.asarray(image, dtype=numpy.float32)
 			image /= self.float_scale
+		return image
+
+	def _modifyImageShape(self, image):
+		# default no modification
+		return image
+
+	def _modifyImageOrientation(self, image):
+		if not self.isDM231orUp():
+			k2_rotate = self.getDmsemConfig('k2','rotate')
+			k2_flip = self.getDmsemConfig('k2','flip')
+			if k2_rotate:
+				image = numpy.rot90(image,4-k2_rotate)
+			if k2_flip:
+				image = numpy.fliplr(image)
 		return image
 
 	def modifyDarkImage(self,image):
@@ -650,3 +665,27 @@ class GatanK2Super(GatanK2Base):
 		# pixel size on Gatan K2
 		return {'x': 2.5e-6, 'y': 2.5e-6}
 
+class GatanK3(GatanK2Base):
+	name = 'GatanK3'
+	readmodes = {'linear': 3, 'counting': 4, 'super resolution': 4}
+	ed_mode = 'super resolution'
+	if simulation:
+		hw_proc = 'none'
+	else:
+		hw_proc = 'dark+gain'
+	def __init__(self):
+		super(GatanK3, self).__init__()
+		self.dosefrac_frame_time = 0.013
+		self.record_precision = 0.013
+		self.user_exposure_ms = 13
+
+	def modifyDarkImage(self,image):
+		image[:,:] = 0
+
+	def _modifyImageShape(self, image):
+		# simulator binned image when saving frames has wrong shape
+		print self.acqparams
+		if self.acqparams['width']*self.acqparams['height'] == image.shape[0]*image.shape[1]:
+			image = image.reshape(self.acqparams['height'],self.acqparams['width'])
+		print 'modified', image.shape
+		return image
