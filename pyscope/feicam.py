@@ -488,6 +488,7 @@ class Falcon3(FeiCam):
 		max_nframes = self.camera_settings.CalculateNumberOfFrames()
 		frame_time_second = self.dosefrac_frame_time
 		if self.save_frames:
+			self.camera_settings.AlignImage(self.align_frames)
 			# Use all available frames
 			rangelist = self.frameconfig.makeRangeListFromNumberOfBaseFramesAndFrameTime(max_nframes,frame_time_second)
 			if rangelist:
@@ -521,6 +522,12 @@ class Falcon3(FeiCam):
 	def getUseFrames(self):
 		nframes = self.getNumberOfFrames()
 		return tuple(range(nframes))
+
+	def setAlignFrames(self, value):
+		self.align_frames = bool(value)
+
+	def getAlignFrames(self):
+		return self.align_frames
 
 class Falcon3EC(Falcon3):
 	name = 'Falcon3EC'
