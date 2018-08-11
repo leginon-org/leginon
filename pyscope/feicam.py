@@ -240,6 +240,8 @@ class FeiCam(ccdcamera.CCDCamera):
 		return {'x':binned_full_off['x']-limit_off['x']/self.binning['x'],'y':binned_full_off['x']-limit_off['y']/self.binning['y']}
 
 	def finalizeSetup(self):
+		# Default not to align
+		self.camera_settings.AlignImage = False
 		# final bin
 		binning = self.binning
 
@@ -488,7 +490,7 @@ class Falcon3(FeiCam):
 		max_nframes = self.camera_settings.CalculateNumberOfFrames()
 		frame_time_second = self.dosefrac_frame_time
 		if self.save_frames:
-			self.camera_settings.AlignImage(self.align_frames)
+			self.camera_settings.AlignImage = self.align_frames
 			# Use all available frames
 			rangelist = self.frameconfig.makeRangeListFromNumberOfBaseFramesAndFrameTime(max_nframes,frame_time_second)
 			if rangelist:
