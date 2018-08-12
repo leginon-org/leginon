@@ -353,6 +353,9 @@ class Tecnai(tem.TEM):
 		else:
 			raise ValueError
 		setattr(self.tecnai.Illumination, self.intensity_prop, intensity)
+		# sleep for intensity change
+		if self.getFeiConfig('camera','extra_protector_sleep_time'):
+			time.sleep(1)
 
 	def getDarkFieldMode(self):
 		if self.tecnai.Illumination.DFMode == self.tem_constants.dfOff:
