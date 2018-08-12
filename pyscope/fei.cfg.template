@@ -2,6 +2,7 @@
 [debug]
 ALL = False
 STAGE = False
+CAMERA = False
 
 [optics]
 # Lens normalization is usually set in TUI but there are cases that
@@ -24,7 +25,8 @@ USE_AUTO_APERTURE = False
 HAS_FALCON_PROTECTOR = True
 # Falcon III subpath. Must exists and writable
 FRAME_SUBPATH = leginonframes
-
+# Falcon protector may be too slow
+EXTRA_PROTECTOR_SLEEP_TIME = 0
 [phase plate]
 # Location of next phase plate AutoIt executable
 AUTOIT_EXE_PATH = C:\Program Files\AutoIt3\nextphaseplate.exe
