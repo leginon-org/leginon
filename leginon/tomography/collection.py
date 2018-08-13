@@ -207,7 +207,7 @@ class Collection(object):
 		m = 'Initial defocus: %g meters.'
 		self.logger.info(m % defocus0)
 
-		if self.tilt_order == 'alternate' and len(tilts) > 1:
+		if self.tilt_order in ('alternate','swing') and len(tilts) > 1:
 			# duplicate the first tilt to the other tilt group
 			other_group = int(not seq0[0])
 			self.prediction.setCurrentTiltGroup(other_group)
@@ -356,7 +356,7 @@ class Collection(object):
 					time.sleep(1.0)
 
 			if seq_index == 0: 
-				if self.tilt_order == 'alternate':
+				if self.tilt_order in ('alternate','swing'):
 					other_group = int(not seq[0])
 					fake_corr_image = self.correlator[other_group].correlate(tilt_series_image_data, self.settings['use tilt'], channel=channel, wiener=False, taper=0)
 		

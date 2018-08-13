@@ -521,7 +521,7 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 			return choices
 
 	def getTiltOrderChoices(self):
-		choices = ['sequential','alternate']
+		choices = ['sequential','alternate','swing']
 		return choices
 
 class Panel(leginon.gui.wx.Acquisition.Panel):
