@@ -194,6 +194,10 @@ class SQLDict(object):
 			self.connected = False
 			self.sqlexception = e
 			raise
+		if 'engine' in kwargs:
+			self.engine = kwargs['engine']
+		else:
+			self.engine = None
 
 	def ping(self):
 		try:
@@ -247,7 +251,7 @@ class SQLDict(object):
 		[{'Field': 'id', 'Type': 'int(16)', 'Key': 'PRIMARY', 'Extra':'auto_increment'},
 		{'Field': 'Name', 'Type': 'VARCHAR(50)'}])
 		"""
-		return _createSQLTable(self.db, table, definition)
+		return _createSQLTable(self.db, table, definition, self.engine)
 
 	def diffSQLTable(self, table, data_definition):
 		"""
@@ -276,6 +280,7 @@ class SQLDict(object):
 		self.db.ping()
 		cur = self.db.cursor(cursorclass=MySQLdb.cursors.DictCursor)
 		cur.execute(query)
+		cur.close()
 
 class _Table:
 
@@ -744,10 +749,11 @@ class _multipleQueries:
 
 class _createSQLTable:
 
-		def __init__(self, db, table, definition):
+		def __init__(self, db, table, definition, engine=None):
 			self.db = db
 			self.table = table
 			self.definition = definition
+			self.engine = engine
 			self.create()
 
 		def _cursor(self):
@@ -755,13 +761,28 @@ class _createSQLTable:
 			return self.db.cursor(cursorclass=MySQLdb.cursors.DictCursor)
 
 		def create(self):
-			q = sqlexpr.CreateTable(self.table, self.definition).sqlRepr()
+			table_exist = self.hasTable()
+			if table_exist:
+				# Check if new field added
+				self._checkTable()
+				return
+			q = sqlexpr.CreateTable(self.table, self.definition, self.engine).sqlRepr()
 			c = self._cursor()
 			if debug:
 				print q
 			c.execute(q)
 			c.close()
 			self._checkTable()
+
+		def hasTable(self):
+			q = sqlexpr.HasTable(self.table).sqlRepr()
+			if debug:
+				print q
+			c = self._cursor()
+			c.execute(q)
+			results = c.fetchall()
+			c.close()
+			return bool(results)
 
 		def formatDescription(self, description):
 			newdict = {}

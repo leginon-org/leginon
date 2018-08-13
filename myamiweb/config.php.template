@@ -167,8 +167,11 @@ define('APPION_PARENT_ADDITION',0);
 // --- negative index of the directory before the last directory named "leginon"
 // in DEFAULT_APPION_PATH used to replace the element of DEFAULT_APPION_PATH
 // before the last directory named "appion"--- //
-// Thre result is a subdivision of data by user or group before appion/leginon directories.
+// The result is a subdivision of data by user or group before appion/leginon directories.
 //define('APPION_PARENT_REPLACEMENT',-2); 
+
+// --- direct detector frame transfer initiated by user, not rawtransfer.py //
+//define('FRAME_TRANSFER_BY_USER', false);
 
 // --- sample tracking ---//
 define('SAMPLE_TRACK', false);
@@ -188,6 +191,8 @@ define('STARTUP_MESSAGE', "");
 // --- define('SERVER_PORT', "55123"); --- //
 define('SERVER_HOST', "");
 define('SERVER_PORT', "55123");
+// --- If a disk is down and causing image serving to hang, use this constant to avoid it
+//define('REDUX_AVOID_PATH',"/bad_data_disk");
 
 // --- list specifc datasets that have test scripts associated with them --- //
 // --- example:

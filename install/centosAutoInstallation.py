@@ -265,17 +265,9 @@ class CentosInstallation(object):
 		self.linkMpiRun()
 
 	def processServerExtraPythonPackageInstall(self):
-		packagelist = [
-			{
-				# PyFFTW
-				'targzFileName':'PyFFTW3-0.2.2.tar.gz',
-				'fileLocation':'http://launchpad.net/pyfftw/trunk/0.2.2/+download/',
-				'unpackDirName':'PyFFTW3-0.2.2',
-			}
-		]
-		for p in packagelist:
-			self.installPythonPackage(p['targzFileName'], p['fileLocation'], p['unpackDirName'])
-
+		self.runCommand("yum install -y python-pip")
+		self.runCommand("pip install joblib==0.10.3")
+		
 	def setupWebServer(self):
 		self.writeToLog("--- Start install Web Server")
 		#myamiweb yum packages
@@ -363,9 +355,7 @@ class CentosInstallation(object):
 
 		# setup Sinedon configuration file
 		self.writeToLog("setup Sinedon configuration file")
-		sinedonDir = self.runCommand('python -c "import sinedon; print sinedon.__path__[0]"')
-		sinedonDir = sinedonDir.strip()
-		self.setupSinedonCfg(sinedonDir)
+		self.setupSinedonCfg()
 
 		# setup .appion.cfg configuration file
 		self.writeToLog("setup .appion.cfg configuration file")
@@ -879,7 +869,9 @@ endif
 		shutil.copy(pyscopeCfgDir + '/instruments.cfg.template', pyscopeCfgDir + '/instruments.cfg')
 
 
-	def setupSinedonCfg(self, sinedonDir):
+	def setupSinedonCfg(self):
+		# sinedon import needs sinedon.cfg already configured.  Therefore, it is better
+		# to get the cfg template from self.gitMyamiDir
 		inf = open(self.gitMyamiDir + 'sinedon/examples/sinedon.cfg', 'r')
 		outf = open('/etc/myami/sinedon.cfg', 'w')
 
@@ -960,7 +952,7 @@ endif
 		
 		outf.write('; custom parameters from CentOS Auto Install script\n')
 		outf.write('max_execution_time = 300 ; Maximum execution time of each script, in seconds\n')
-		outf.write('max_input_time = 300	 ; Maximum amout of time to spend parsing request data\n')
+		outf.write('max_input_time = 300	 ; Maximum amount of time to spend parsing request data\n')
 		outf.write('memory_limit = 1024M	 ; Maximum amount of memory a script may consume\n')
 		outf.write('\n')
 
@@ -1020,12 +1012,6 @@ endif
 		self.yumInstall(packagelist)
 		# Most are installed as on processingServer
 		packagelist = [
-			{
-				# PyFFTW
-				'targzFileName':'PyFFTW3-0.2.2.tar.gz',
-				'fileLocation':'http://launchpad.net/pyfftw/trunk/0.2.2/+download/',
-				'unpackDirName':'PyFFTW3-0.2.2',
-			},
 			{
 				# Python fs
 				'targzFileName':'fs-0.4.0.tar.gz',

@@ -38,7 +38,7 @@ def makeStack(starfile):
 	stackfile = imDict['_stackFile']
 	initboxsize = int(imDict['_initBoxSize'])
 	finalboxsize = int(imDict['_finalBoxSize'])
-	invert = bool(imDict['_invert'])
+	invert = bool(int(imDict['_invert']))
 
 	coordinates = []
 	partnum = 0
@@ -194,7 +194,7 @@ class QuickStack(appionScript.AppionScript):
 				defV = ctfdata['defocus2']*1.0e10
 				defAngle = ctfdata['angle_astigmatism']
 				amp_contrast = ctfdata['amplitude_contrast']
-				extra_phase_shift = ctfdata['extra_phase_shift']
+				extra_phase_shift = ctfdata['extra_phase_shift'] * 180.0/math.pi
 				spherical_aberration = ctfdata['cs']
 
 			for i in range(numpart):
@@ -208,12 +208,15 @@ class QuickStack(appionScript.AppionScript):
 				#microscope
 				valueString += ("%d %.3f %.3f"%(voltage, spherical_aberration, amp_contrast))
 
+				#phase-shift in degrees
+				valueString += ("%.2f %.1f %.6f"%(extra_phase_shift, 10000.0, self.apix))
 				valueSets.append(valueString)
 
 		outputstarfile = "%s-complete_relion_stack.star"%(self.params['runname'])
 		labels = ["_rlnImageName", "_rlnMicrographName",
 			"_rlnDefocusU", "_rlnDefocusV", "_rlnDefocusAngle",
-			"_rlnVoltage", '_rlnSphericalAberration', '_rlnAmplitudeContrast',]
+			"_rlnVoltage", '_rlnSphericalAberration', '_rlnAmplitudeContrast',
+			'_rlnPhaseShift', '_rlnMagnification', '_rlnDetectorPixelSize',]
 
 		star = starFile.StarFile(outputstarfile)
 		star.buildLoopFile( "data_", labels, valueSets )

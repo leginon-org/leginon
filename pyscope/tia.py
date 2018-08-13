@@ -241,7 +241,7 @@ acquisition.
 			self.custom_setup()
 			self.finalizeSetup()
 		except:
-			raise RunTimeError('Error setting camera acquisition parameters')
+			raise RuntimeError('Error setting camera acquisition parameters')
 
 		t0 = time.time()
 
@@ -251,7 +251,7 @@ acquisition.
 			self.exposure_timestamp = (t1 + t0) / 2.0
 			arr = self.im.Data.Array
 		except:
-			raise RunTimeError('Camera Acquisition Error in getting array')
+			raise RuntimeError('Camera Acquisition Error in getting array')
 
 		try:
 			arr.shape = (self.dimension['y'],self.dimension['x'])
@@ -480,10 +480,17 @@ class TIA_Ceta(TIA):
 		return {'x': 1.4e-5, 'y': 1.4e-5}
 
 class TIA_Falcon3(TIA_Falcon):
-	name = 'Falcon'
+	name = 'Falcon3'
 	camera_name = 'BM-Falcon'
 	binning_limits = [1,2,4]
 
+	'''
+	Note 11/09/17
+	When Frames per fraction is not 0, the frame files overwrites the
+	same filename in LostandFound.  Therefore, if the frames file saving
+	is not finished, An error "Acquisition Label must be unique" show up.
+	This happens in Focus node often.
+	'''
 	def setFullCameraSetup(self):
 		# workaround to offset image problem
 		no_crop = {'x':0,'y':0}
@@ -506,7 +513,7 @@ class TIA_Falcon3(TIA_Falcon):
 			self.custom_setup()
 			self.finalizeSetup()
 		except:
-			raise RunTimeError('Error setting camera acquisition parameters')
+			raise RuntimeError('Error setting camera acquisition parameters')
 
 		t0 = time.time()
 
@@ -516,7 +523,7 @@ class TIA_Falcon3(TIA_Falcon):
 			self.exposure_timestamp = (t1 + t0) / 2.0
 			arr = self.im.Data.Array
 		except:
-			raise RunTimeError('Camera Acquisition Error in getting array')
+			raise RuntimeError('Camera Acquisition Error in getting array')
 
 		try:
 			arr.shape = (self.dimension['y'],self.dimension['x'])

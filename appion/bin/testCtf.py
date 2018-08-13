@@ -4,7 +4,6 @@
 import os
 import shutil
 import random
-import MySQLdb
 #appion
 import sinedon
 import leginon.leginondata
@@ -32,8 +31,7 @@ class CTFTest(appionScript.AppionScript):
 		apParam.createDirectory(self.powerspecdir, warning=False)
 		self.ctfrundata = None
 		self.dbconf = sinedon.getConfig('leginondata')
-		self.db     = MySQLdb.connect(**self.dbconf)
-		self.db.autocommit(True)
+		self.db     = sql.connect(**self.dbconf)
 		# create a cursor
 		self.cursor = self.db.cursor()
 		return

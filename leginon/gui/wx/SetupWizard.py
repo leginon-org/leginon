@@ -10,7 +10,7 @@ import time
 import wx
 import wx.wizard
 import wx.lib.intctrl
-import socket
+from pyami import mysocket
 
 import leginon.leginondata
 import leginon.projectdata
@@ -375,8 +375,14 @@ class SessionNamePage(WizardPage):
 		self.Bind(wx.EVT_TEXT_ENTER, self.onValidateName, self.nametextctrl)
 		sizer.Add(self.nametextctrl, (1, 1), (1, 1), wx.EXPAND|wx.ALL)
 
-		holders = leginon.leginondata.GridHolderData()
+		holders = leginon.leginondata.GridHolderData(hidden=False)
 		holders = holders.query()
+		# Trick the system to be back compatible
+		if not holders:
+			holders = leginon.leginondata.GridHolderData(hidden=False).query()
+			if not holders:
+				leginon.leginondata.GridHolderData(name='fake',hidden=True).insert()
+				holders = leginon.leginondata.GridHolderData(hidden=False).query()
 		holders = [holder['name'] for holder in holders]
 		holders.sort()
 		self.holderctrl = wx.ComboBox(self, -1, choices=holders, style=wx.CB_DROPDOWN)
@@ -800,12 +806,16 @@ class SetupWizard(wx.wizard.Wizard):
 			description = self.namepage.descriptiontextctrl.GetValue()
 			description = description.strip()
 			holder = self.namepage.holderctrl.GetValue()
-			holderdata = leginon.leginondata.GridHolderData(name=holder)
+			holderdata = leginon.leginondata.GridHolderData(name=holder,hidden=False)
 			directory = self.imagedirectorypage.directorytextctrl.GetValue()
 			self.session = self.setup.createSession(user, name, description,
 																							directory)
 			self.session['holder'] = holderdata
-			self.session['remote passcode'] = self.generatePassCode()
+			# FIX ME: Issue #5450 workaround:
+			# Not to generate passcode until remote is working.
+			# insertion of this makes any other session creation unique
+			#self.session['remote passcode'] = self.generatePassCode()
+
 			#Issue #4634 use insert method so that self.session becomes sinedon
 			#query result after this first insert.
 			self.session.insert()
@@ -997,7 +1007,7 @@ class Setup(object):
 	def saveClients(self, session, clients):
 		ver = leginon.version.getVersion()
 		loc = leginon.version.getInstalledLocation()
-		host = socket.gethostname()
+		host = mysocket.gethostname()
 		initializer = {'session': session, 'clients': clients, 'localhost':host, 'version': ver, 'installation': loc}
 		clientsdata = leginon.leginondata.ConnectToClientsData(initializer=initializer)
 		self.publish(clientsdata, database=True, dbforce=True)
@@ -1072,7 +1082,7 @@ class Setup(object):
 			if temdata:
 				break
 		if not temdata:
-			localhost = socket.gethostname()
+			localhost = mysocket.gethostname()
 			# use tem on localhost, including simulation
 			temdata = self.getTEM(localhost,False)
 		if temdata and c2size:

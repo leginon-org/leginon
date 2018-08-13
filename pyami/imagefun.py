@@ -105,6 +105,9 @@ def power(a, mask_radius=1.0, thresh=3):
 		pow = numpy.log(pow)
 	except OverflowError:
 		pow = numpy.log(pow+1e-20)
+	except:
+		print 'numpy.log failed, bypass'
+		pass
 	pow = swap_quadrants(pow)
 
 	mask_radius = int(mask_radius / 100.0 * pow.shape[0])

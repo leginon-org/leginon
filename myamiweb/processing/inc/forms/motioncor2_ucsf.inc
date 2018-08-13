@@ -69,12 +69,18 @@ class motioncor2_ucsf extends MakeDDStackForm
 		$params->addParam( "alignlabel", $alignlabel, "append label to aligned image" );
 
 #		Using 'nrw' notation from motioncor2_ucsf instead of 'nrw' in motioncorr-Purdue
-		$params->addParam( "nrw", $nrw, "Number (1, 3, 5, ...) of frames in running average window");
+		$params->addParam( "nrw", $nrw, "Number of frames in running average window");
 #		$params->addParam( "flp", $flp, "Flip frames along Y axis.; 0 = no flip, 1 = flip");
-		// Validations
-		$params->addValidation( "bin", "num" );
 	}
 		
+	public function addValidations()
+	{
+		$params = $this->getFormParams();
+		// Validations
+		$params->addValidation( "bin", "float" );
+		$params->addValidation( "refimgid", "num" );
+	}
+
 	public function generateAdditionalFormRight()
 	{
 		$this->updateFormParams();
@@ -93,7 +99,7 @@ class motioncor2_ucsf extends MakeDDStackForm
 //		$html.= $params->insertCheckboxField( "no_keepstack" );
 	
 		
-		$html.= $params->insertTextFieldInRow( "bin", $fieldSize );
+		$html.= $params->insertTextFieldInRow( "bin", $fieldSize*2 );
 		$html.= "<br/>\n";
 //		$html.= $params->insertTextFieldInRow( "alignoffset",$fieldSize );
 //		$html.= "<br/>\n";
@@ -141,12 +147,8 @@ class motioncor2_ucsf extends MakeDDStackForm
 		$align = $params->getParamValue('align');
 		if (!$align) return $msg;
 		$nrw = $params->getParamValue('nrw');
-		if ($nrw != 1 )
+		/*if ($nrw != 1 )
 			$msg .= "<B>Error:</B> Grouping more than 1 will reduce alignment accuracy in the first few frames. This is not allowed for now".$nrw."<br/>";
-		/*if ( $nrw%2 == 0 )
-		{
-			$msg .= "<B>Error:</B> testNumber of frames in running average window must be odd. nrw = ".$nrw."<br/>";
-		}
 		*/
 		// Get recent image to check nframes against alignoffset and nrw.
 		$preset = $postArray['preset'];

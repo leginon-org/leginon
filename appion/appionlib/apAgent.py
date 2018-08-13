@@ -20,8 +20,8 @@ import time
 import os
 
 try:
-	import MySQLdb
 	import sinedon
+	import MySQLdb
 except ImportError, e:
 	sys.stderr.write("Warning: %s, status updates will be disabled\n" % (e))
 	statusUpdatesEnabled = False
@@ -198,10 +198,8 @@ class Agent (basicAgent.BasicAgent):
 	def __updateStatusInDB (self, jobid, status):
 		retVal = True   #initialize return value to True
 		dbConfig = sinedon.getConfig('appiondata')
-		dbConnection = MySQLdb.connect(**dbConfig)
-		dbConnection.autocommit(True)
-		cursor = dbConnection.cursor()
-		   
+		dbConnection = sinedon.sqldb.connect(**dbConfig)
+		cursor = dbConnection.cursor()   
 		   
 		updateCommand = "UPDATE ApAppionJobData SET status= '%s' WHERE `DEF_id` = '%s'" % (status, jobid)
 		result = cursor.execute(updateCommand)
@@ -219,9 +217,8 @@ class Agent (basicAgent.BasicAgent):
 		try:
 			#Determine the appion project database name using the project id.
 			projDBConfig = sinedon.getConfig('projectdata')
-			dbConnection = MySQLdb.connect(**projDBConfig)
-			dbConnection.autocommit(True)
-			cursor =  dbConnection.cursor()
+			dbConnection = sinedon.sqldb.connect(**projDBConfig)
+			cursor = dbConnection.cursor()
 										  
 			query = "SELECT appiondb from processingdb WHERE `REF|projects|project`=%d" % (jobObject.getProjectId())
 			queryResult=cursor.execute(query)

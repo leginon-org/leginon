@@ -76,6 +76,7 @@ class TemplateScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 
 		sbsztemplate = self.createTemplateCorrelationBox()
+		sbszmultihole = self.createTemplateMultiHoleBox()
 		sbszlpf = self.createTemplateLPFBox()
 
 		self.btest = wx.Button(self, -1, 'Test')
@@ -86,7 +87,7 @@ class TemplateScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 
 		self.Bind(wx.EVT_BUTTON, self.onTestButton, self.btest)
 
-		return [sbsztemplate, sbszlpf, szbutton]
+		return [sbsztemplate, sbszmultihole, sbszlpf, szbutton]
 
 	def createTemplateLPFBox(self):
 		sb = wx.StaticBox(self, -1, 'Low Pass Filter (Phase Correlation)')
@@ -116,6 +117,16 @@ class TemplateScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		newrow,newcol = self.createTemplateFilenameEntry(sz, (newrow,0))
 		newrow,newcol = self.createTemplateOriginalDiameterEntry(sz, (newrow,0))
 		newrow,newcol = self.createTemplateDiameterEntry(sz, (newrow,0))
+		sbsztemplate.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
+		return sbsztemplate
+
+	def createTemplateMultiHoleBox(self):
+		sb = wx.StaticBox(self, -1, 'Multiple Hole Template')
+		sbsztemplate = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		sz = wx.GridBagSizer(5, 5)
+		newrow,newcol = self.createTemplateMultipleEntry(sz, (0,0))
+		newrow,newcol = self.createMultiHoleSpacingEntry(sz, (newrow,0))
+		newrow,newcol = self.createMultiHoleAngleEntry(sz, (newrow,0))
 		sbsztemplate.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
 		return sbsztemplate
 
@@ -182,6 +193,38 @@ class TemplateScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 
 		# fill sizer
 		return self.addToSizer(sz, szcorlimit, start_position, (1,3))
+
+	def	createTemplateMultipleEntry(self, sz, start_position):
+		self.widgets['template multiple'] = IntEntry(self, -1, chars=4)
+		label = wx.StaticText(self, -1, 'Number of holes in template')
+		# add to main
+		newrow, newcol = self.addToSizer(sz, label, start_position, (1,1))
+		return self.addToSizer(sz, self.widgets['template multiple'], (start_position[0],newcol), (1,1), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+
+	def	createMultiHoleSpacingEntry(self, sz, start_position):
+		self.widgets['multihole spacing'] = FloatEntry(self, -1,
+																												min=0.0, chars=8)
+		sz1 = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Hole lattice spacing')
+		sz1.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz1.Add(self.widgets['multihole spacing'], (0, 1), (1, 1),
+							wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'pixels')
+		sz1.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		# fill sizer
+		return self.addToSizer(sz, sz1, start_position, (1,3))
+
+	def	createMultiHoleAngleEntry(self, sz, start_position):
+		self.widgets['multihole angle'] = FloatEntry(self, -1, chars=8)
+		sz1 = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Hole lattice angle')
+		sz1.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz1.Add(self.widgets['multihole angle'], (0, 1), (1, 1),
+							wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'degrees')
+		sz1.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		# fill sizer
+		return self.addToSizer(sz, sz1, start_position, (1,3))
 
 	def onTestButton(self, evt):
 		self.dialog.setNodeSettings()
@@ -299,9 +342,9 @@ class LatticeScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sb = wx.StaticBox(self, -1, 'Hole Statistics')
 		sbszstats = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
-		self.widgets['lattice spacing'] = FloatEntry(self, -1, chars=6)
-		self.widgets['lattice tolerance'] = FloatEntry(self, -1, chars=6)
-		self.widgets['lattice hole radius'] = FloatEntry(self, -1, chars=6)
+		self.widgets['lattice spacing'] = FloatEntry(self, -1, min=0.0, chars=6)
+		self.widgets['lattice tolerance'] = FloatEntry(self, -1, min=0.0, chars=6)
+		self.widgets['lattice hole radius'] = FloatEntry(self, -1, min=0.0, chars=6)
 		self.widgets['lattice zero thickness'] = FloatEntry(self, -1, chars=6)
 		extendlabel = wx.StaticText(self, -1, 'Extend Lattice')
 		self.widgets['lattice extend'] = Choice(self, -1, choices=self.node.extendtypes)

@@ -33,6 +33,9 @@ class ImageWatcher(watcher.Watcher):
 		initializer = {'imageid': imageid, 'status': status}
 		oevent = event.ImageProcessDoneEvent(initializer=initializer)
 		self.outputEvent(oevent)
+		# notify manager this node has been busy
+		oevent = event.NodeBusyNotificationEvent()
+		self.outputEvent(oevent)
 
 	def processData(self, idata):
 		if isinstance(idata, leginondata.ImageData):

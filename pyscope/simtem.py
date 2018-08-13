@@ -92,7 +92,7 @@ class SimTEM(tem.TEM):
 		self.main_screen_position = self.main_screen_positions[0]
 		self.columnvalveposition = 'open'
 		self.emission = 'on'
-		self.BeamBlank = 'on'
+		self.BeamBlank = 'off'
 		self.buffer_pressure = 30.0
 
 		self.energy_filter = False
@@ -102,7 +102,10 @@ class SimTEM(tem.TEM):
 		self.loaded_slot_number = None
 		self.is_init = True
 
+		self.aperture_selection = {'objective':'','condenser2':'70','selected area':'open'}
+
 	def resetRefrigerant(self):
+		self.autofiller_busy = False
 		self.level0 = 100.0
 		self.level1 = 100.0
 		if simu_autofiller:
@@ -385,9 +388,19 @@ class SimTEM(tem.TEM):
 		return True
 
 	def runAutoFiller(self):
-		if self.level0 >=50 or self.level1 >=50:
+		self.addRefrigerant(1)
+		if self.level0 <=40 or self.level1 <=40:
+			self.autofiller_busy = True
 			raise RuntimeError('Force fill failed')
-		self.addRefrigerant()
+		self.addRefrigerant(4)
+
+	def resetAutoFillerError(self):
+		self.autofiller_busy = False
+		self.level0 = 100
+		self.level1 = 100
+
+	def isAutoFillerBusy(self):
+		return self.autofiller_busy
 
 	def useRefrigerant(self):
 		while 1:
@@ -400,8 +413,8 @@ class SimTEM(tem.TEM):
 			print 'using', self.level0, self.level1
 			time.sleep(4)
 
-	def addRefrigerant(self):
-		for i in range(5):
+	def addRefrigerant(self,cycle):
+		for i in range(cycle):
 			self.level0 += 20
 			self.level1 += 20
 			print 'adding', self.level0, self.level1
@@ -430,12 +443,36 @@ class SimTEM(tem.TEM):
 
 	def _loadCartridge(self, number):
 		self.loaded_slot_number = number
+		time.sleep(2)
 
 	def _unloadCartridge(self):
 		self.loaded_slot_number = None
 
 	def getGridLoaderInventory(self):
 		self.getAllGridSlotStates()
+
+	def getApertureMechanisms(self):
+		'''
+		Names of the available aperture mechanism
+		'''
+		return ['condenser2', 'objective', 'selected area']
+
+	def getApertureSelections(self, aperture_mechanism):
+		if aperture_mechanism == 'objective':
+			return ['open','100']
+		if aperture_mechanism == 'condenser2':
+			return ['open','100']
+		return ['open']
+
+	def getApertureSelection(self, aperture_mechanism):
+		return self.aperture_selection[aperture_mechanism]
+
+	def setApertureSelection(self, aperture_mechanism, name):
+		self.aperture_selection[aperture_mechanism] = name
+		return False
+
+	def retractApertureMechanism(self, aperture_mechanism):
+		return setApertureSelection(aperture_mechanism, 'open')
 
 class SimTEM300(SimTEM):
 	name = 'SimTEM300'

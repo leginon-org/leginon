@@ -4,8 +4,8 @@ import scipy.optimize
 from scipy.linalg import lstsq
 
 def debug_print(msg):
-	print msg
-	#pass
+	#print msg
+	pass
 
 class TiltSeries(object):
 	def __init__(self):
@@ -62,7 +62,7 @@ class Prediction(object):
 		self.initial_params = [[0, 0, 0],[0, 0, 0]]
 		self.image_pixel_size = 2e-9
 		self.ucenter_limit = 2e-6
-		self.fitdata = 4
+		self.fitdata = [4,4]
 		self.fixed_model = True
 		self.valid_tilt_series_list = []
 
@@ -188,10 +188,11 @@ class Prediction(object):
 		debug_print(' ')
 		debug_print('Predicting %.2f' % math.degrees(tilt))
 
-		n_start_fit = self.fitdata 
 		tilt_series = self.getCurrentTiltSeries()
 		tilt_group = self.getCurrentTiltGroup()
 		current_group_index = self.getCurrentTiltGroupIndex()
+		n_start_fit = self.fitdata[current_group_index]
+		n_smooth_fit = self.fitdata[current_group_index]
 		n_tilt_series = len(self.valid_tilt_series_list)
 		n_tilt_groups = len(tilt_series)
 		n_tilts = len(tilt_group.tilts)
@@ -252,7 +253,8 @@ class Prediction(object):
 			x, y = self.leastSquaresXY(tilt_group.tilts,
 								  tilt_group.xs,
 								  tilt_group.ys,
-								  tilt)
+								  tilt,
+									n_smooth_fit)
 			## calculate optical axis tilt and offset
 			mintilt, maxtilt = self.getMinMaxTiltsOfTiltSeriesList(current_group_index)
 			if (abs(maxtilt) < math.radians(30) and abs(mintilt) < math.radians(30)):
@@ -377,7 +379,7 @@ class Prediction(object):
 		current_tilt_group = self.getCurrentTiltGroup()
 		current_group_index = self.getCurrentTiltGroupIndex()
 		current_tilt = current_tilt_group.tilts[-1]
-		datalimit = self.fitdata
+		datalimit = self.fitdata[current_group_index]
 		if len(current_tilt_group) >= datalimit:
 			previous_tilts = current_tilt_group.tilts[-datalimit:]
 		else:
@@ -515,8 +517,8 @@ class Prediction(object):
 			position += x[j]*tilt**j
 		return position
 
-	def leastSquaresXY(self, tilts, xs, ys, tilt, n=5):
-		n = self.fitdata + 1
+	def leastSquaresXY(self, tilts, xs, ys, tilt, n_smooth_fit=4):
+		n = n_smooth_fit+1
 		position = scipy.zeros(2, scipy.dtype('d'))
 		for i, positions in enumerate((xs, ys)):
 			position[i] = self._leastSquaresXY(tilts[-n:], positions[-n:], tilt)

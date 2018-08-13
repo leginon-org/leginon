@@ -3,7 +3,7 @@
 - Application XML-Dump
 - http://emg.nysbc.org/ 
 -
-- Application :MSI-T PP (3.3)
+- Application :MSI-T PP
 - Version     :7
 - Date : 07/07/2017
 -
@@ -119,7 +119,7 @@
     <sqltable name="ApplicationData" >
         <field name="DEF_id" >156</field>
         <field name="DEF_timestamp" >2017-07-07 22:16:03</field>
-        <field name="name" >MSI-T PP (3.3)</field>
+        <field name="name" >MSI-T PP</field>
         <field name="version" >7</field>
         <field name="hide" >0</field>
     </sqltable>

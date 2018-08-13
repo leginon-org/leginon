@@ -16,6 +16,7 @@ import math
 from pyami import imagefun, peakfinder, convolver, correlator, mrc, arraystats
 import ice
 import lattice
+import multihole
 
 hole_template_files = {}
 hole_templates = {}
@@ -117,6 +118,7 @@ class HoleFinder(object):
 		}
 
 		## other necessary components
+		self.multiconvolver = multihole.TemplateConvolver()
 		self.convolver = convolver.Convolver()
 		self.peakfinder = peakfinder.PeakFinder()
 		self.circle = CircleMaskCreator()
@@ -124,7 +126,7 @@ class HoleFinder(object):
 
 		## some default configuration parameters
 		self.save_mrc = False
-		self.template_config = {'template filename':'', 'template diameter':168, 'file diameter':168, 'invert':False}
+		self.template_config = {'template filename':'', 'template diameter':168, 'file diameter':168, 'invert':False, 'min':0.0, 'multiple':1, 'spacing': 100.0, 'angle':0.0}
 		self.correlation_config = {'cortype': 'cross', 'corfilt': (1.0,),'cor_image_min':0.0}
 		self.threshold = 3.0
 		self.threshold_method = "Threshold = mean + A * stdev"
@@ -153,7 +155,7 @@ class HoleFinder(object):
 		## update this result
 		self.__results[key] = image
 
-	def configure_template(self, diameter=None, filename=None, filediameter=None, invert=False):
+	def configure_template(self, diameter=None, filename=None, filediameter=None, invert=False, multiple=1, spacing=100.0, angle=0.0):
 		if diameter is not None:
 			self.template_config['template diameter'] = diameter
 		if filename is not None:
@@ -162,6 +164,12 @@ class HoleFinder(object):
 			self.template_config['file diameter'] = filediameter
 		if invert is not None:
 			self.template_config['invert'] = bool(invert)
+		if multiple is not None:
+			self.template_config['multiple'] = int(multiple)
+		if spacing is not None:
+			self.template_config['spacing'] = spacing
+		if angle is not None:
+			self.template_config['angle'] = angle # degrees
 
 	def read_hole_template(self, filename):
 		if filename in hole_template_files:
@@ -189,24 +197,31 @@ class HoleFinder(object):
 			tempim_med = (tempim.min() + tempim.max()) / 2
 			tempim = -tempim + 2 * tempim_med
 
-		# create template of proper size
-		shape = self.__results[fromimage].shape
-		center = (0,0)
 		filediameter = self.template_config['file diameter']
 		diameter = self.template_config['template diameter']
 		scale = float(diameter) / filediameter
+		# multiple hole template generation
+		self.multiconvolver.setSingleTemplate(tempim)
+		self.multiconvolver.setConfig(self.template_config['multiple'],self.template_config['spacing'], self.template_config['angle'], scale)
 
-		im2 = scipy.ndimage.zoom(tempim, scale)
-		origshape = im2.shape
-		if min(shape) > min(origshape):
-			edgevalue = im2[0,0]
-			template = edgevalue * numpy.ones(shape, im2.dtype)
-			offset = ( (shape[0]-origshape[0])/2, (shape[1]-origshape[1])/2 )
-			template[offset[0]:offset[0]+origshape[0], offset[1]:offset[1]+origshape[1]] = im2
-		else:
-			# Issue #3033 make sure template is not larger than the image
-			offset = ((origshape[0]-shape[0])/2,(origshape[1]-shape[1])/2 ) 
-			template = im2[offset[0]:offset[0]+shape[0], offset[1]:offset[1]+shape[1]]
+		tempim = self.multiconvolver.makeMultiTemplate()
+		# create template of proper size
+		shape = self.__results[fromimage].shape
+
+		origshape = tempim.shape
+		edgevalue = tempim[0,0]
+		template = edgevalue * numpy.ones(shape, tempim.dtype)
+		# make sure the tamplate is smaller than from_image in both axes #5607
+		if shape[0] < origshape[0]:
+				offset = int((origshape[0]-shape[0])/2.0)
+				tempim = tempim[offset:offset+shape[0],:]
+		if shape[1] < origshape[1]:
+				offset = int((origshape[1]-shape[1])/2.0)
+				tempim = tempim[:,offset:offset+shape[1]]
+		# Redefine origshape which is now always equal or smaller than shape
+		origshape = tempim.shape
+		offset = ( int((shape[0]-origshape[0])/2.0), int((shape[1]-origshape[1])/2.0) )
+		template[offset[0]:offset[0]+origshape[0], offset[1]:offset[1]+origshape[1]] = tempim
 		shift = (shape[0]/2, shape[1]/2)
 		template = scipy.ndimage.shift(template, shift, mode='wrap')
 

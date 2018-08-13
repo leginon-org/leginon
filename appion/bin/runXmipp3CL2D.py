@@ -23,7 +23,6 @@ from appionlib import starFile
 from appionlib import proc2dLib
 from pyami import spider
 import sinedon
-import MySQLdb
 # following http://stackoverflow.com/questions/5427040/loading-environment-modules-within-a-python-script 
 cmd = os.popen("csh -c 'modulecmd python load xmipp/3.1'")
 exec(cmd)
@@ -170,7 +169,7 @@ class CL2D(appionScript.AppionScript):
 		if self.params['commit'] is False:
 			return
 		config = sinedon.getConfig('appiondata')
-		dbc = MySQLdb.Connect(**config)
+		dbc = sinedon.sqldb.connect(**config)
 		cursor = dbc.cursor()
 		query = (
 			"  UPDATE ApCL2DRunData "

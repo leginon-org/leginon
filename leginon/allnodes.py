@@ -168,6 +168,9 @@ noderegistry.registerNodeClass(TiltListAlternater,classtype)
 from tiltalternater import TiltAlternater
 noderegistry.registerNodeClass(TiltAlternater,classtype)
 
+from defocussequence import DefocusSequence
+noderegistry.registerNodeClass(DefocusSequence,classtype)
+
 ##############################
 # Calibrations
 ##############################
@@ -274,6 +277,9 @@ noderegistry.registerNodeClass(ImageAssessor,classtype)
 
 from temcontroller import TEMController
 noderegistry.registerNodeClass(TEMController,classtype)
+
+from icethicknessEF import IcethicknessEF
+noderegistry.registerNodeClass(IcethicknessEF,classtype)
 
 ##############################
 # Finale

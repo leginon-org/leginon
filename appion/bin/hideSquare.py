@@ -4,7 +4,6 @@ import os
 import sys
 import time
 import sinedon
-import MySQLdb
 from appionlib import apDisplay
 from appionlib import apDatabase
 import leginon.leginondata
@@ -20,8 +19,7 @@ if __name__ == '__main__':
 	squareid = int(sys.argv[1])
 
 	dbconf = sinedon.getConfig('leginon.leginondata')
-	db     = MySQLdb.connect(**dbconf)
-	db.autocommit(True)
+	db     = sinedon.sqldb.connect(**dbconf)
 	cursor = db.cursor()
 
 	query = ( "SELECT "

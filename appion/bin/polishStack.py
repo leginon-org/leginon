@@ -18,6 +18,7 @@ from appionlib import apDatabase
 from appionlib import apStack
 from appionlib import apProject
 from appionlib import apConfig
+from appionlib import apParam
 from appionlib import apParallelTasks
 from appionlib import apTaskMonitor
 import sinedon
@@ -113,7 +114,7 @@ class stackPolisherScript(appionScript.AppionScript):
 		qimage = self.stackparts[0]['particle']['image']
 
 		# micrograph & frame info
-		frames = qimage['use frames']
+		frames = qimage['camera']['use frames']
 		nframes = len(frames)
 		if self.params['framelastali'] is None:
 			self.params['framelastali'] = frames[-1]
@@ -377,17 +378,17 @@ class stackPolisherScript(appionScript.AppionScript):
 		multiple queued job submission with a scheduler
 		'''
 		# submission agent object
-		#a = apParallelTasks.Agent(self.configfile)
+		a = apParallelTasks.Agent(self.configfile)
 		for i in range(len(self.joblist)):
 			jobfile = 'align_polish_parts_%d' % i
 			task = self.joblist[i]
-			#a.Main(jobfile, [task])
+			a.Main(jobfile, [task])
 
 		# Clean up
 		apDisplay.printMsg("deleting temporary processing files")
 
-                particlePolishMonitor = apTaskMonitor.ParallelTaskMonitor(self.configfile,self.params['rundir'])
-                particlePolishMonitor.Main()
+		particlePolishMonitor = apTaskMonitor.ParallelTaskMonitor(self.configfile,self.params['rundir'])
+		particlePolishMonitor.Main()
 
 	#=====================
 	def start(self):

@@ -38,6 +38,7 @@ class TEM(baseinstrument.BaseInstrument):
 		{'name': 'StageStatus', 'type': 'property'},
 		{'name': 'VacuumStatus', 'type': 'property'},
 		{'name': 'BeamBlankedDuringCameraExchange', 'type': 'property'},
+		{'name': 'ProjectionSubModeName', 'type': 'property'},
 
 		######## get/set
 		{'name': 'BeamBlank', 'type': 'property'},
@@ -188,6 +189,12 @@ class TEM(baseinstrument.BaseInstrument):
 		'''
 		pass
 
+	def resetAutoFillerError(self):
+		'''
+		Reset autofiller error to start over.
+		'''
+		pass
+
 	def getTimedN2FillParams(self):
 		'''
 		Return tuple of three parameters for timed nitrogen filler.
@@ -244,7 +251,7 @@ class TEM(baseinstrument.BaseInstrument):
 	def loadGridCartridge(self, number):
 		if not self.hasGridLoader():
 			return
-		if number not in range(1,self.getGridLoaderNumberOfSlots()):
+		if number not in range(1,self.getGridLoaderNumberOfSlots()+1):
 			return
 		if self.getGridLoaderSlotState(number) != 'occupied':
 			raise ValueError('Grid %d is not occupied' % number)
@@ -259,7 +266,7 @@ class TEM(baseinstrument.BaseInstrument):
 			return
 		
 		has_empty = False
-		for number in range(1,self.getGridLoaderNumberOfSlots()):
+		for number in range(1,self.getGridLoaderNumberOfSlots()+1):
 			if self.getGridLoaderSlotState(number) == 'empty':
 				has_empty = True
 				break
@@ -269,7 +276,7 @@ class TEM(baseinstrument.BaseInstrument):
 		try:
 			self._unloadCartridge()
 		except RuntimeError, e:
-			raise RuntimeError('Grid Loading failed')
+			raise RuntimeError('Grid unLoading failed')
 
 	def _loadCartridge(self, number):
 		raise NotImplementedError()
@@ -309,3 +316,14 @@ class TEM(baseinstrument.BaseInstrument):
 		# valid values: ready, off, busy, unknown
 		return 'ready'
 
+	def getApertureMechanisms(self):
+		return ['objective']
+
+	def getApertureSelections(self, aperture_mechanism):
+		return []
+
+	def getApertureSelection(self, aperture_mechanism):
+		return ''
+
+	def setApertureSelection(self, aperture_mechanism, name):
+		return False

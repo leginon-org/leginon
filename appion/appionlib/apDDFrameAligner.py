@@ -35,7 +35,7 @@ class DDFrameAligner(object):
 		self.is_use_frame_aligner_sum = value
 
 	def setSaveAlignedStack(self, value):
-		self.save_aligned_stack
+		self.save_aligned_stack = value
 
 	def setInputFrameStackPath(self, filepath):
 		'''
@@ -70,6 +70,9 @@ class DDFrameAligner(object):
 		cmd = ' '.join([self.executable, self.framestackpath, self.aligned_sumpath])
 		cmd += self.joinFrameAlignOptions(glue='-')
 		cmd += ' > '+self.logpath
+		apDisplay.printWarning('This example alignment copy the whole stack!!!!')
+		apDisplay.printWarning('This example alignment copy the whole stack!!!!')
+		apDisplay.printWarning('This example alignment copy the whole stack!!!!')
 		return cmd
 
 	def alignFrameStack(self):
@@ -243,7 +246,7 @@ class MotionCor2_UCSF(DDFrameAligner):
 
 		# binning
 		if self.alignparams['FtBin'] > 1:
-			cmd += ' -FtBin %d ' % self.alignparams['FtBin']
+			cmd += ' -FtBin %s ' % (self.alignparams['FtBin'],)
 
 		# bfactor
 		if self.alignparams['bft'] > 0:

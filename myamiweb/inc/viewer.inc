@@ -111,16 +111,21 @@ class viewer {
 		$this->addfiltersel = $filterselector;
 	}
 
-	function addSessionSelector($sessions=array()) {
+	function addSessionSelector($sessions=array(), $limit=0) {
 		$selector = '<select name="sessionId" onchange="newexp()">'.$this->crlf;
+		$i = 0;
 		foreach ((array)$sessions as $session) {
+			if (++$i == $limit) {
+				$selector .= '<option value="-1">List all sessions</option>'.$this->crlf;
+				break;
+			}
 			if ($session[id]==$this->sessionId) $s='selected'; else $s='';
 			$maxlength=70;
 			if (strlen($session[name])>$maxlength) {
 				$session[name]=substr($session[name],0,$maxlength)."... ";
 			}
 			$selector .= '<option value='.$session[id].' '.$s.' >'
-					.$session[name].'</option>'.$this->crlf; 
+					.$session[name].'</option>'.$this->crlf;
 		}
 		$selector .= '</select>';
 		$selector .= '<input type="hidden" name="sessionIdmemo" value="'.$this->sessionId.'">';

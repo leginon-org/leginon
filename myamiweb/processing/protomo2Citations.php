@@ -56,6 +56,12 @@ $html .= "Tomo3D 2.0 - Exploitation of Advanced Vector eXtensions (AVX) for 3D r
 $html .= "J.I. Agulleiro, J.J. Fernandez<br>";
 $html .= '<a href="https://doi.org/10.1016/j.jsb.2014.11.009" target="_blank">doi:10.1016/j.jsb.2014.11.009</a><br>';
 
+$html .= "<br><hr><center><b>If you used Appion-Protomo to investigate single particle grids, you may wish to cite the following</b></center></hr><br><br>";
+
+$html .= "Routine Single Particle CryoEM Sample and Grid Characterization by Tomography<br>";
+$html .= "Noble, A. J., Dandey, V. P., Wei, H., Brasch, J., Chase, J., Acharya, P., Tan Y. Z., Zhang Z., Kim L. Y., Scapin G., Rapp M., Eng E. T., Rice M. J., Cheng A., Negro C. J., Shapiro L., Kwong P. D., Jeruzalmi D., des Georges A., Potter C. S., Carragher, B.<br>";
+$html .= '<a href="https://doi.org/10.1101/230276" target="_blank">doi:10.1101/230276</a><br><br>';
+
 echo $html;
 
 ?>

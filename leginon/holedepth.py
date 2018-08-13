@@ -101,7 +101,11 @@ class HoleDepth(holefinder.HoleFinder):
 		lowpasssig = lpfsettings['sigma']
 		edgethresh = self.settings['edge threshold']
 		self.hf.configure_edges(filter=filt, size=n, sigma=sig, absvalue=ab, lpsig=lowpasssig, thresh=edgethresh, edges=edges)
-		self.hf.find_edges()
+		try:
+			self.hf.find_edges()
+		except Exception, e:
+			self.logger.error(e)
+			return
 		# convert to Float32 to prevent seg fault
 		self.setImage(self.hf['edges'], 'Edge')
 
@@ -124,14 +128,22 @@ class HoleDepth(holefinder.HoleFinder):
 		else:
 			corfilt = None
 		self.hf.configure_correlation(cortype, corfilt)
-		self.hf.correlate_template()
+		try:
+			self.hf.correlate_template()
+		except Exception, e:
+			self.logger.error(e)
+			return
 		self.setImage(self.hf['correlation'], 'Template')
 
 	def threshold(self):
 		self.logger.info('threshold')
 		tvalue = self.settings['threshold']
 		self.hf.configure_threshold(tvalue)
-		self.hf.threshold_correlation()
+		try:
+			self.hf.threshold_correlation()
+		except Exception, e:
+			self.logger.error(e)
+			return
 		# convert to Float32 to prevent seg fault
 		self.setImage(self.hf['threshold'], 'Threshold')
 
@@ -161,17 +173,29 @@ class HoleDepth(holefinder.HoleFinder):
 		blobsize = self.settings['blobs max size']
 		maxblobs = self.settings['blobs max']
 		self.hf.configure_blobs(border=border, maxblobsize=blobsize, maxblobs=maxblobs)
-		self.hf.find_blobs()
+		try:
+			self.hf.find_blobs()
+		except Exception, e:
+			self.logger.error(e)
+			return
 		self.getHoleDepth
 
 	def makeBlobs(self,centers):
 		self.logger.info('create blobs from selection')
 		self.hf.configure_makeblobs(centers)
-		self.hf.make_blobs()
+		try:
+			self.hf.make_blobs()
+		except Exception, e:
+			self.logger.error(e)
+			return
 		
 	def getHoleDepth(self):
 		self.logger.info('calculating hole depth')
-		holedepth=self.hf.find_distance()
+		try:
+			holedepth=self.hf.find_distance()
+		except Exception, e:
+			self.logger.error(e)
+			return
 		self.holedepth=holedepth['depth']
 		self.blobtilt=holedepth['tilt']
 		holedepthnm=holedepth['depth']*(1e9)
@@ -186,6 +210,8 @@ class HoleDepth(holefinder.HoleFinder):
 
 	def holeStatsTargets(self, holes):
 		targets = []
+		if not holes:
+			return targets
 		for hole in holes:
 
 			mean = float(hole.stats['hole_mean'])
@@ -252,7 +278,11 @@ class HoleDepth(holefinder.HoleFinder):
 		self.hf.configure_pickhole(center_list=good_centers)
 
 		self.hf.configure_holestats(radius=r)
-		self.hf.calc_holestats()
+		try:
+			self.hf.calc_holestats()
+		except Exception, e:
+			self.logger.error(e)
+			return
 
 		holes = self.hf['holes']
 		

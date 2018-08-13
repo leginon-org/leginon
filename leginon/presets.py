@@ -249,10 +249,11 @@ class PresetsManager(node.Node):
 		'disable stage for image shift': False,
 		'blank': False,
 		'smallsize': 1024,
-		'idle minute': 10.0,
+		'idle minute': 30.0,
+		'import random': False,
 	}
 	eventinputs = node.Node.eventinputs + [event.ChangePresetEvent, event.MeasureDoseEvent, event.UpdatePresetEvent, event.IdleTimerPauseEvent, event.IdleTimerRestartEvent]
-	eventoutputs = node.Node.eventoutputs + [event.PresetChangedEvent, event.PresetPublishEvent, event.DoseMeasuredEvent, event.MoveToTargetEvent]
+	eventoutputs = node.Node.eventoutputs + [event.PresetChangedEvent, event.PresetPublishEvent, event.DoseMeasuredEvent, event.MoveToTargetEvent, event.ActivateNotificationEvent, event.DeactivateNotificationEvent]
 
 	def __init__(self, name, session, managerlocation, **kwargs):
 		node.Node.__init__(self, name, session, managerlocation, **kwargs)
@@ -363,14 +364,18 @@ class PresetsManager(node.Node):
 	def toggleInstrumentTimeout(self):
 		if self.idleactive:
 			self.idleactive = False
-			self.logger.info('Instrument timeout deactivated')
+			self.outputEvent(event.DeactivateNotificationEvent())
+			#self.logger.info('Instrument timeout deactivated')
+			self.logger.info('Instrument error notification deactivated')
 		else:
 			# update first then start tracking
 			self.instrument.updateLastSetGetTime()
 			self.idleactive = True
-			self.logger.info('Instrument timeout activated')
-			self.startInstrumentUsageTracker()
-
+			tem_hostname = self.getTemHostname()
+			self.outputEvent(event.ActivateNotificationEvent(tem_host=tem_hostname))
+			self.logger.info('Instrument error notification activated')
+			# FIX ME: this tracker does not work, yet. Often timeout too early.
+			#self.startInstrumentUsageTracker()
 
 	def lock(self, n):
 		'''many nodes could be waiting for a lock.  It is undefined which
@@ -495,8 +500,9 @@ class PresetsManager(node.Node):
 			if not name:
 				continue
 			newp = leginondata.PresetData(initializer=preset, session=self.session)
-			## for safety, disable random defocus range
-			newp['defocus range min'] = newp['defocus range max'] = None
+			## for safety, disable random defocus range by default
+			if not self.settings['import random']:
+				newp['defocus range min'] = newp['defocus range max'] = None
 			self.presetToDB(newp)
 			self.presets[name] = newp
 		self.setOrder()
@@ -1046,7 +1052,6 @@ class PresetsManager(node.Node):
 			newpreset['name'] = presetname
 			newpreset['number'] = len(self.presets)
 			newpreset['removed'] = False
-			newpreset['film'] = False
 			newpreset['hasref'] = False
 			newpreset['pre exposure'] = 0.0
 			newpreset['skip'] = False
@@ -2004,8 +2009,9 @@ class PresetsManager(node.Node):
 		self.logger.info('Beam image using temporary exposure time: %.1f' % (float(temp_exptime),))
 		# acquire image
 		self.beamimagedata = self.acquireCorrectedCameraImageData(force_no_frames=True)
-		im = self.beamimagedata['image']
-		self.panel.setBeamImage(im)
+		if im:
+			im = self.beamimagedata['image']
+			self.panel.setBeamImage(im)
 		# display info
 		beamshift = self.instrument.tem.BeamShift
 		self.panel.displayBeamShift(beamshift)

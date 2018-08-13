@@ -21,7 +21,7 @@ import player
 class ManualFocusChecker(acquisition.Acquisition):
 	panelclass = gui.wx.Focuser.Panel
 	settingsclass = leginondata.AcquisitionSettingsData
-	defaultsettings = acquisition.Acquisition.defaultsettings
+	defaultsettings = dict(acquisition.Acquisition.defaultsettings)
 
 	eventinputs = acquisition.Acquisition.eventinputs
 	eventoutputs = acquisition.Acquisition.eventoutputs
@@ -104,13 +104,17 @@ class ManualFocusChecker(acquisition.Acquisition):
 			imdata = self.acquireCorrectedCameraImageData(force_no_frames=True)
 		else:
 			imdata = self.acquireCameraImageData(force_no_frames=True)
-		imarray = imdata['image']
 		self.manualchecklock.release()
-		pow = imagefun.power(imarray, self.maskradius)
-		self.man_power = pow.astype(numpy.float32)
-		self.man_image = imarray.astype(numpy.float32)
-		self.panel.setManualImage(self.man_image, 'Image')
-		self.panel.setManualImage(self.man_power, 'Power')
+		if imdata is not None:
+			# None means bad acquisition
+			imarray = imdata['image']
+			pow = imagefun.power(imarray, self.maskradius)
+			self.man_power = pow.astype(numpy.float32)
+			self.man_image = imarray.astype(numpy.float32)
+			self.panel.setManualImage(self.man_image, 'Image')
+			self.panel.setManualImage(self.man_power, 'Power')
+		else:
+			self.logger.error('manual focus image acquisition failed')
 		#sleep if too fast in simulation
 		safetime = 1.0
 		t1 = time.time()

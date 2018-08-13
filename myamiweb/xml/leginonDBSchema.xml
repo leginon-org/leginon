@@ -2,7 +2,7 @@
  <definition>
 	<sqltable name="AcquisitionSettingsData">
 		<field name="DEF_id" type="int(16)" null="NOT NULL" extra="auto_increment" />
-		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" Default="CURRENT_TIMESTAMP" />
+		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" default="CURRENT_TIMESTAMP" />
 		<field name="correct image" type="tinyint(1)" />
 		<field name="SEQ|preset order" type="text" />
 		<field name="wait for rejects" type="tinyint(1)" />
@@ -17,7 +17,6 @@
 		<field name="name" type="text" />
 		<field name="wait time" type="double" />
 		<field name="iterations" type="int(20)" />
-		<field name="adjust for drift" type="tinyint(1)" />
 		<field name="isdefault" type="tinyint(1)" />
 		<field name="mover" type="text" />
 		<field name="move precision" type="double" />
@@ -27,20 +26,19 @@
 		<field name="final image shift" type="int(20)" />
 		<field name="accept precision" type="double" />
 		<field name="wait for reference" type="int(20)" />
-		<field name="wait for transform" type="tinyint(1)" />
 		<field name="adjust for transform" type="text" />
 		<field name="background" type="tinyint(1)" />
 		<field name="use parent tilt" type="tinyint(1)" />
 		<field name="use parent mover" type="tinyint(1)" />
-		<field name="adjust time by tilt" type="tinyint(1)" Default="0" />
-		<field name="reset tilt" type="tinyint(1)" Default="0" />
+		<field name="adjust time by tilt" type="tinyint(1)" default="0" />
+		<field name="reset tilt" type="tinyint(1)" default="0" />
 		<field name="bad stats response" type="text" />
 		<field name="high mean" type="double" />
 		<field name="low mean" type="double" />
-		<field name="emission off" type="tinyint(1)" Default="0" />
+		<field name="emission off" type="tinyint(1)" default="0" />
 		<field name="target offset row" type="int(20)" />
 		<field name="target offset col" type="int(20)" />
-		<field name="correct image shift coma" type="tinyint(1)" Default="0" />
+		<field name="correct image shift coma" type="tinyint(1)" default="0" />
 		<field 
 			name="pause between time" 
 			type="DOUBLE" 
@@ -63,21 +61,58 @@
     <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
     <key>KEY `REF|SessionData|session` (`REF|SessionData|session`)</key>
 	</sqltable>
+	<sqltable name="AlignZLPSettingsData">
+		<field name="DEF_id" type="int(16)" null="NOT NULL" extra="auto_increment" />
+		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" default="CURRENT_TIMESTAMP" />
+		<field name="REF|SessionData|session" type="int(20)" />
+		<field name="name" type="text" />
+		<field name="isdefault" type="tinyint(1)" default="0" />
+		<field name="bypass" type="tinyint(1)" default="0" />
+		<field name="move type" type="text" />
+		<field name="mover" type="text" />
+		<field name="move precision" type="double" />
+		<field name="accept precision" type="double" />
+		<field name="pause time" type="double" />
+		<field name="interval time" type="double" />
+		<field name="return settle time" type="double" />
+		<field name="check preset" type="text" />
+		<field name="threshold" type="double" />
+    <key>PRIMARY KEY (`DEF_id`)</key>
+    <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
+    <key>KEY `REF|SessionData|session` (`REF|SessionData|session`)</key>
+	</sqltable>
 	<sqltable name="ApplicationData">
 		<field name="DEF_id" type="int(16)" null="NOT NULL" extra="auto_increment" />
-		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" Default="CURRENT_TIMESTAMP" />
+		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" default="CURRENT_TIMESTAMP" />
 		<field name="name" type="text" />
 		<field name="version" type="int(20)" />
 		<field name="hide" type="tinyint(1)" null="NULL" default="0"/>
     <key>PRIMARY KEY (`DEF_id`)</key>
     <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
 	</sqltable>
-	<sqltable name="BeamFixerSettingsData">
+	<sqltable name="AutoFillerSettingsData">
 		<field name="DEF_id" type="int(16)" null="NOT NULL" extra="auto_increment" />
-		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" Default="CURRENT_TIMESTAMP" />
+		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" default="CURRENT_TIMESTAMP" />
 		<field name="REF|SessionData|session" type="int(20)" />
 		<field name="name" type="text" />
-		<field name="isdefault" type="int(20)" />
+		<field name="isdefault" type="tinyint(1)" default="0" />
+		<field name="bypass" type="tinyint(1)" default="0" />
+		<field name="repeat time" type="double" />
+		<field name="autofiller mode" type="text" />
+		<field name="column fill start" type="double" />
+		<field name="column fill end" type="double" />
+		<field name="loader fill start" type="double" />
+		<field name="loader fill end" type="double" />
+    <key>PRIMARY KEY (`DEF_id`)</key>
+    <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
+    <key>KEY `REF|SessionData|session` (`REF|SessionData|session`)</key>
+	</sqltable>
+	<sqltable name="BeamFixerSettingsData">
+		<field name="DEF_id" type="int(16)" null="NOT NULL" extra="auto_increment" />
+		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" default="CURRENT_TIMESTAMP" />
+		<field name="REF|SessionData|session" type="int(20)" />
+		<field name="name" type="text" />
+		<field name="isdefault" type="tinyint(1)" default="0" />
 		<field name="move type" type="text" />
 		<field name="pause time" type="double" />
 		<field name="interval time" type="double" />
@@ -97,20 +132,21 @@
 	</sqltable>
 	<sqltable name="BeamTiltCalibratorSettingsData">
 		<field name="DEF_id" type="int(16)" null="NOT NULL" extra="auto_increment" />
-		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" Default="CURRENT_TIMESTAMP" />
+		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" default="CURRENT_TIMESTAMP" />
 		<field name="REF|SessionData|session" type="int(20)" />
 		<field name="name" type="text" />
-		<field name="isdefault" type="tinyint(1)" Default="0" />
-		<field name="override preset" type="tinyint(1)" Default="0" />
+		<field name="isdefault" type="tinyint(1)" default="0" />
+		<field name="override preset" type="tinyint(1)" default="0" />
 		<field name="REF|CameraSettingsData|camera settings" type="int(20)" />
 		<field name="correlation type" type="text" />
+		<field name="lpf sigma" type="double" />
 		<field name="defocus beam tilt" type="double" />
 		<field name="first defocus" type="double" />
 		<field name="second defocus" type="double" />
 		<field name="stig beam tilt" type="double" />
 		<field name="stig delta" type="double" />
 		<field name="measure beam tilt" type="double" />
-		<field name="correct tilt" type="tinyint(1)" Default="0" />
+		<field name="correct tilt" type="tinyint(1)" default="0" />
 		<field name="settling time" type="double" />
 		<field name="comafree beam tilt" type="double" />
 		<field name="comafree misalign" type="double" />
@@ -127,7 +163,7 @@
 	</sqltable>
 	<sqltable name="BeamTiltImagerSettingsData">
 		<field name="DEF_id" type="int(16)" null="NOT NULL" extra="auto_increment" />
-		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" Default="CURRENT_TIMESTAMP" />
+		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" default="CURRENT_TIMESTAMP" />
 		<field name="correct image" type="tinyint(1)" />
 		<field name="SEQ|preset order" type="text" />
 		<field name="wait for rejects" type="tinyint(1)" />
@@ -142,8 +178,7 @@
 		<field name="name" type="text" />
 		<field name="wait time" type="double" />
 		<field name="iterations" type="int(20)" />
-		<field name="adjust for drift" type="tinyint(1)" />
-		<field name="isdefault" type="tinyint(1)" />
+		<field name="isdefault" type="tinyint(1)" default="0" />
 		<field name="mover" type="text" />
 		<field name="move precision" type="double" />
 		<field name="process target type" type="text" />
@@ -152,19 +187,18 @@
 		<field name="final image shift" type="int(20)" />
 		<field name="accept precision" type="double" />
 		<field name="wait for reference" type="int(20)" />
-		<field name="wait for transform" type="tinyint(1)" />
 		<field name="adjust for transform" type="text" />
 		<field name="background" type="tinyint(1)" />
 		<field name="use parent tilt" type="tinyint(1)" />
-		<field name="adjust time by tilt" type="tinyint(1)" Default="0" />
-		<field name="reset tilt" type="tinyint(1)" Default="0" />
+		<field name="adjust time by tilt" type="tinyint(1)" default="0" />
+		<field name="reset tilt" type="tinyint(1)" default="0" />
 		<field name="bad stats response" type="text" />
 		<field name="high mean" type="double" />
 		<field name="low mean" type="double" />
-		<field name="emission off" type="tinyint(1)" Default="0" />
+		<field name="emission off" type="tinyint(1)" default="0" />
 		<field name="target offset row" type="int(20)" />
 		<field name="target offset col" type="int(20)" />
-		<field name="correct image shift coma" type="tinyint(1)" Default="0" />
+		<field name="correct image shift coma" type="tinyint(1)" default="0" />
 		<field 
 			name="pause between time" 
 			type="DOUBLE" 
@@ -197,7 +231,7 @@
 	</sqltable>
 	<sqltable name="BindingSpecData">
 		<field name="DEF_id" type="int(16)" null="NOT NULL" extra="auto_increment" />
-		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" Default="CURRENT_TIMESTAMP" />
+		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" default="CURRENT_TIMESTAMP" />
 		<field name="event class string" type="text" />
 		<field name="from node alias" type="text" />
 		<field name="to node alias" type="text" />
@@ -208,7 +242,7 @@
 	</sqltable>
 	<sqltable name="BlobFinderSettingsData">
 		<field name="DEF_id" type="int(16)" null="NOT NULL" extra="auto_increment" />
-		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" Default="CURRENT_TIMESTAMP" />
+		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" default="CURRENT_TIMESTAMP" />
 		<field name="on" type="tinyint(1)" />
 		<field name="max" type="int(20)" />
 		<field name="min size" type="int(20)" />
@@ -220,14 +254,27 @@
 		<field name="max stdev" type="double" />
 		<field name="REF|SessionData|session" type="int(20)" />
 		<field name="name" type="text" />
-		<field name="isdefault" type="tinyint(1)" />
+		<field name="isdefault" type="tinyint(1)" default="0" />
+    <key>PRIMARY KEY (`DEF_id`)</key>
+    <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
+    <key>KEY `REF|SessionData|session` (`REF|SessionData|session`)</key>
+	</sqltable>
+	<sqltable name="BufferCyclerSettingsData">
+		<field name="DEF_id" type="int(16)" null="NOT NULL" extra="auto_increment" />
+		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" default="CURRENT_TIMESTAMP" />
+		<field name="REF|SessionData|session" type="int(20)" />
+		<field name="name" type="text" />
+		<field name="isdefault" type="tinyint(1)" default="0" />
+		<field name="bypass" type="tinyint(1)" default="0" />
+		<field name="repeat time" type="double" />
+		<field name="trip value" type="double" />
     <key>PRIMARY KEY (`DEF_id`)</key>
     <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
     <key>KEY `REF|SessionData|session` (`REF|SessionData|session`)</key>
 	</sqltable>
 	<sqltable name="CameraSettingsData">
 		<field name="DEF_id" type="int(16)" null="NOT NULL" extra="auto_increment" />
-		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" Default="CURRENT_TIMESTAMP" />
+		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" default="CURRENT_TIMESTAMP" />
 		<field name="exposure time" type="double" />
 		<field name="SUBD|dimension|x" type="int(20)" />
 		<field name="SUBD|dimension|y" type="int(20)" />
@@ -240,10 +287,10 @@
 	</sqltable>
 	<sqltable name="CenterTargetFilterSettingsData">
 		<field name="DEF_id" type="int(16)" null="NOT NULL" extra="auto_increment" />
-		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" Default="CURRENT_TIMESTAMP" />
+		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" default="CURRENT_TIMESTAMP" />
 		<field name="REF|SessionData|session" type="int(20)" />
 		<field name="name" type="text" />
-		<field name="isdefault" type="tinyint(1)" />
+		<field name="isdefault" type="tinyint(1)" default="0" />
 		<field name="bypass" type="tinyint(1)" />
 		<field name="limit" type="int(20)" />
 		<field name="target type" type="text" />
@@ -254,7 +301,7 @@
 	</sqltable>
 	<sqltable name="ClickTargetFinderSettingsData">
 		<field name="DEF_id" type="int(16)" null="NOT NULL" extra="auto_increment" />
-		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" Default="CURRENT_TIMESTAMP" />
+		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" default="CURRENT_TIMESTAMP" />
 		<field name="wait for done" type="tinyint(1)" />
 		<field name="REF|SessionData|session" type="int(20)" />
 		<field name="ignore images" type="tinyint(1)" />
@@ -262,7 +309,7 @@
 		<field name="name" type="text" />
 		<field name="queue" type="tinyint(1)" />
 		<field name="user check" type="tinyint(1)" />
-		<field name="isdefault" type="tinyint(1)" />
+		<field name="isdefault" type="tinyint(1)" default="0" />
 		<field name="queue drift" type="tinyint(1)" />
 		<field name="sort target" type="int(20)" />
 		<field name="allow append" type="int(20)" />
@@ -273,7 +320,7 @@
 	</sqltable>
 	<sqltable name="CorrectorSettingsData">
 		<field name="DEF_id" type="int(16)" null="NOT NULL" extra="auto_increment" />
-		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" Default="CURRENT_TIMESTAMP" />
+		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" default="CURRENT_TIMESTAMP" />
 		<field name="REF|SessionData|session" type="int(20)" />
 		<field name="name" type="text" />
 		<field name="despike size" type="int(20)" />
@@ -295,10 +342,10 @@
 	</sqltable>
 	<sqltable name="DTFinderSettingsData">
 		<field name="DEF_id" type="int(16)" null="NOT NULL" extra="auto_increment" />
-		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" Default="CURRENT_TIMESTAMP" />
+		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" default="CURRENT_TIMESTAMP" />
 		<field name="REF|SessionData|session" type="int(20)" />
 		<field name="name" type="text" />
-		<field name="isdefault" type="int(20)" />
+		<field name="isdefault" type="tinyint(1)" />
 		<field name="wait for done" type="int(20)" />
 		<field name="ignore images" type="int(20)" />
 		<field name="queue" type="int(20)" />
@@ -354,15 +401,16 @@
 	</sqltable>
 	<sqltable name="DoseCalibratorSettingsData">
 		<field name="DEF_id" type="int(16)" null="NOT NULL" extra="auto_increment" />
-		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" Default="CURRENT_TIMESTAMP" />
+		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" default="CURRENT_TIMESTAMP" />
 		<field name="REF|SessionData|session" type="int(20)" />
 		<field name="name" type="text" />
-		<field name="isdefault" type="tinyint(1)" Default="0" />
+		<field name="isdefault" type="tinyint(1)" default="0" />
 		<field name="SUBD|instruments|ccdcamera" type="text" />
 		<field name="SUBD|instruments|tem" type="text" />
-		<field name="override preset" type="tinyint(1)" Default="0" />
+		<field name="override preset" type="tinyint(1)" default="0" />
 		<field name="REF|CameraSettingsData|camera settings" type="int(20)" />
 		<field name="correlation type" type="text" />
+		<field name="lpf sigma" type="double" />
 		<field name="beam diameter" type="double" />
 		<field name="scale factor" type="double" />
     <key>PRIMARY KEY (`DEF_id`)</key>
@@ -372,18 +420,18 @@
 	</sqltable>
 	<sqltable name="FocusSequenceData">
 		<field name="DEF_id" type="int(16)" null="NOT NULL" extra="auto_increment" />
-		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" Default="CURRENT_TIMESTAMP" />
+		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" default="CURRENT_TIMESTAMP" />
 		<field name="REF|SessionData|session" type="int(20)" />
 		<field name="node name" type="text" />
 		<field name="SEQ|sequence" type="text" />
-		<field name="isdefault" type="int(20)" />
+		<field name="isdefault" type="tinyint(1)" default="0" />
     <key>PRIMARY KEY (`DEF_id`)</key>
     <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
     <key>KEY `REF|SessionData|session` (`REF|SessionData|session`)</key>
 	</sqltable>
 	<sqltable name="FocusSettingData">
 		<field name="DEF_id" type="int(16)" null="NOT NULL" extra="auto_increment" />
-		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" Default="CURRENT_TIMESTAMP" />
+		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" default="CURRENT_TIMESTAMP" />
 		<field name="REF|SessionData|session" type="int(20)" />
 		<field name="correlation type" type="text" />
 		<field name="fit limit" type="double" />
@@ -402,14 +450,14 @@
 		<field name="delta min" type="double" />
 		<field name="delta max" type="double" />
 		<field name="reset defocus" type="tinyint(1)" />
-		<field name="isdefault" type="int(20)" />
+		<field name="isdefault" type="tinyint(1)" default="0" />
     <key>PRIMARY KEY (`DEF_id`)</key>
     <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
     <key>KEY `REF|SessionData|session` (`REF|SessionData|session`)</key>
 	</sqltable>
 	<sqltable name="FocuserSettingsData">
 		<field name="DEF_id" type="int(16)" null="NOT NULL" extra="auto_increment" />
-		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" Default="CURRENT_TIMESTAMP" />
+		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" default="CURRENT_TIMESTAMP" />
 		<field name="acquire final" type="tinyint(1)" />
 		<field name="REF|SessionData|session" type="int(20)" />
 		<field name="SEQ|preset order" type="text" />
@@ -424,7 +472,6 @@
 		<field name="duplicate target type" type="text" />
 		<field name="wait for process" type="tinyint(1)" />
 		<field name="move type" type="text" />
-		<field name="adjust for drift" type="tinyint(1)" />
 		<field name="wait time" type="double" />
 		<field name="iterations" type="int(20)" />
 		<field name="isdefault" type="tinyint(1)" />
@@ -438,19 +485,18 @@
 		<field name="final image shift" type="int(20)" />
 		<field name="accept precision" type="double" />
 		<field name="wait for reference" type="tinyint(1)" />
-		<field name="wait for transform" type="tinyint(1)" />
 		<field name="adjust for transform" type="text" />
 		<field name="background" type="tinyint(1)" />
 		<field name="use parent tilt" type="tinyint(1)" />
-		<field name="adjust time by tilt" type="tinyint(1)" Default="0" />
-		<field name="reset tilt" type="tinyint(1)" Default="0" />
+		<field name="adjust time by tilt" type="tinyint(1)" default="0" />
+		<field name="reset tilt" type="tinyint(1)" default="0" />
 		<field name="bad stats response" type="text" />
 		<field name="high mean" type="double" />
 		<field name="low mean" type="double" />
-		<field name="emission off" type="tinyint(1)" Default="0" />
+		<field name="emission off" type="tinyint(1)" default="0" />
 		<field name="target offset row" type="int(20)" />
 		<field name="target offset col" type="int(20)" />
-		<field name="correct image shift coma" type="tinyint(1)" Default="0" />
+		<field name="correct image shift coma" type="tinyint(1)" default="0" />
 		<field 
 			name="pause between time" 
 			type="DOUBLE" 
@@ -475,11 +521,11 @@
 	</sqltable>
 	<sqltable name="GonModelerSettingsData">
 		<field name="DEF_id" type="int(16)" null="NOT NULL" extra="auto_increment" />
-		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" Default="CURRENT_TIMESTAMP" />
+		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" default="CURRENT_TIMESTAMP" />
 		<field name="REF|SessionData|session" type="int(20)" />
 		<field name="name" type="text" />
-		<field name="isdefault" type="tinyint(1)" Default="0" />
-		<field name="override preset" type="tinyint(1)" Default="0" />
+		<field name="isdefault" type="tinyint(1)" default="0" />
+		<field name="override preset" type="tinyint(1)" default="0" />
 		<field name="REF|CameraSettingsData|camera settings" type="int(20)" />
 		<field name="correlation type" type="text" />
 		<field name="measure axis" type="text" />
@@ -489,8 +535,9 @@
 		<field name="model axis" type="text" />
 		<field name="model magnification" type="int(20)" />
 		<field name="model terms" type="int(20)" />
-		<field name="model mag only" type="tinyint(1)" Default="0" />
+		<field name="model mag only" type="tinyint(1)" default="0" />
 		<field name="model tolerance" type="double" />
+		<field name="lpf sigma" type="double" />
 		<field name="SUBD|instruments|ccdcamera" type="text" />
 		<field name="SUBD|instruments|tem" type="text" />
     <key>PRIMARY KEY (`DEF_id`)</key>
@@ -500,10 +547,10 @@
 	</sqltable>
 	<sqltable name="GridEntrySettingsData">
 		<field name="DEF_id" type="int(16)" null="NOT NULL" extra="auto_increment" />
-		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" Default="CURRENT_TIMESTAMP" />
+		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" default="CURRENT_TIMESTAMP" />
 		<field name="REF|SessionData|session" type="int(20)" />
 		<field name="name" type="text" />
-		<field name="isdefault" type="tinyint(1)" Default="0" />
+		<field name="isdefault" type="tinyint(1)" default="0" />
 		<field name="grid name" type="text" />
     <key>PRIMARY KEY (`DEF_id`)</key>
     <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
@@ -521,7 +568,7 @@
 	</sqltable>
 	<sqltable name="HoleFinderSettingsData">
 		<field name="DEF_id" type="int(16)" null="NOT NULL" extra="auto_increment" />
-		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" Default="CURRENT_TIMESTAMP" />
+		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" default="CURRENT_TIMESTAMP" />
 		<field name="lattice tolerance" type="double" />
 		<field name="blobs max" type="int(20)" />
 		<field name="lattice spacing" type="double" />
@@ -574,7 +621,7 @@
 	</sqltable>
 	<sqltable name="ImageCommentData">
 		<field name="DEF_id" type="int(16)" null="NOT NULL" extra="auto_increment" />
-		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" Default="CURRENT_TIMESTAMP" />
+		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" default="CURRENT_TIMESTAMP" />
 		<field name="REF|SessionData|session" type="int(20)" />
 		<field name="REF|AcquisitionImageData|image" type="int(20)" />
 		<field name="comment" type="text" />
@@ -585,15 +632,10 @@
 	</sqltable>
 	<sqltable name="InstrumentData">
 		<field name="DEF_id" type="int(16)" null="NOT NULL" extra="auto_increment" />
-		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" Default="CURRENT_TIMESTAMP" />
+		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" default="CURRENT_TIMESTAMP" />
 		<field name="name" type="text" />
 		<field name="hostname" type="text" />
-		<field name="type" type="text" />
 		<field name="description" type="text" />
-		<field name="scope" type="text" />
-		<field name="camera" type="text" />
-		<field name="camera size" type="int(11)" />
-		<field name="camera pixel size" type="double" />
 		<field name="cs" type="double" />
 		<field name="pixelmax" type="int(20)" />
 		<field name="hidden" type="tinyint(1)" />
@@ -602,7 +644,7 @@
 	</sqltable>
 	<sqltable name="JAHCFinderSettingsData">
 		<field name="DEF_id" type="int(16)" null="NOT NULL" extra="auto_increment" />
-		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" Default="CURRENT_TIMESTAMP" />
+		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" default="CURRENT_TIMESTAMP" />
 		<field name="lattice tolerance" type="double" />
 		<field name="blobs max" type="int(20)" />
 		<field name="blobs border" type="int(20)" />
@@ -667,7 +709,7 @@
       name="DEF_timestamp" 
       type="timestamp" 
       null="NOT NULL" 
-      default="DEFAULT CURRENT_TIMESTAMP" 
+      default="CURRENT_TIMESTAMP" 
     />
     <field 
       name="REF|ApplicationData|application" 
@@ -688,7 +730,7 @@
   </sqltable>
 	<sqltable name="LowPassFilterSettingsData">
 		<field name="DEF_id" type="int(16)" null="NOT NULL" extra="auto_increment" />
-		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" Default="CURRENT_TIMESTAMP" />
+		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" default="CURRENT_TIMESTAMP" />
 		<field name="on" type="tinyint(1)" />
 		<field name="sigma" type="double" />
 		<field name="size" type="int(20)" />
@@ -697,34 +739,35 @@
 	</sqltable>
 	<sqltable name="MatrixCalibratorSettingsData">
 		<field name="DEF_id" type="int(16)" null="NOT NULL" extra="auto_increment" />
-		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" Default="CURRENT_TIMESTAMP" />
+		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" default="CURRENT_TIMESTAMP" />
 		<field name="REF|SessionData|session" type="int(20)" />
 		<field name="name" type="text" />
-		<field name="isdefault" type="tinyint(1)" Default="0" />
+		<field name="isdefault" type="tinyint(1)" default="0" />
 		<field name="SUBD|instruments|ccdcamera" type="text" />
 		<field name="SUBD|instruments|tem" type="text" />
-		<field name="override preset" type="tinyint(1)" Default="0" />
+		<field name="override preset" type="tinyint(1)" default="0" />
 		<field name="REF|CameraSettingsData|camera settings" type="int(20)" />
 		<field name="correlation type" type="text" />
+		<field name="lpf sigma" type="double" />
 		<field name="image shift tolerance" type="double" />
 		<field name="image shift shift fraction" type="double" />
 		<field name="image shift n average" type="int(20)" />
 		<field name="image shift interval" type="double" />
-		<field name="image shift current as base" type="tinyint(1)" Default="0" />
+		<field name="image shift current as base" type="tinyint(1)" default="0" />
 		<field name="SUBD|image shift base|x" type="double" />
 		<field name="SUBD|image shift base|y" type="double" />
 		<field name="beam shift tolerance" type="double" />
 		<field name="beam shift shift fraction" type="double" />
 		<field name="beam shift n average" type="int(20)" />
 		<field name="beam shift interval" type="double" />
-		<field name="beam shift current as base" type="tinyint(1)" Default="0" />
+		<field name="beam shift current as base" type="tinyint(1)" default="0" />
 		<field name="SUBD|beam shift base|x" type="double" />
 		<field name="SUBD|beam shift base|y" type="double" />
 		<field name="stage position tolerance" type="double" />
 		<field name="stage position shift fraction" type="double" />
 		<field name="stage position n average" type="int(20)" />
 		<field name="stage position interval" type="double" />
-		<field name="stage position current as base" type="tinyint(1)" Default="0" />
+		<field name="stage position current as base" type="tinyint(1)" default="0" />
 		<field name="SUBD|stage position base|x" type="double" />
 		<field name="SUBD|stage position base|y" type="double" />
     <key>PRIMARY KEY (`DEF_id`)</key>
@@ -734,7 +777,7 @@
 	</sqltable>
 	<sqltable name="MosaicClickTargetFinderSettingsData">
 		<field name="DEF_id" type="int(16)" null="NOT NULL" extra="auto_increment" />
-		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" Default="CURRENT_TIMESTAMP" />
+		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" default="CURRENT_TIMESTAMP" />
 		<field name="REF|SessionData|session" type="int(20)" />
 		<field name="mosaic image on tile change" type="tinyint(1)" />
 		<field name="REF|BlobFinderSettingsData|blobs" type="int(20)" />
@@ -787,7 +830,7 @@
 	</sqltable>
 	<sqltable name="MosaicTargetMakerSettingsData">
 		<field name="DEF_id" type="int(16)" null="NOT NULL" extra="auto_increment" />
-		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" Default="CURRENT_TIMESTAMP" />
+		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" default="CURRENT_TIMESTAMP" />
 		<field name="max targets" type="int(20)" />
 		<field name="name" type="text" />
 		<field name="max size" type="int(20)" />
@@ -798,30 +841,30 @@
 		<field name="preset" type="text" />
 		<field name="mosaic center" type="text" />
 		<field name="isdefault" type="tinyint(1)" />
-		<field name="ignore request" type="tinyint(1)" Default="0" />
+		<field name="ignore request" type="tinyint(1)" default="0" />
     <key>PRIMARY KEY (`DEF_id`)</key>
     <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
     <key>KEY `REF|SessionData|session` (`REF|SessionData|session`)</key>
 	</sqltable>
 	<sqltable name="NavigatorSettingsData">
 		<field name="DEF_id" type="int(16)" null="NOT NULL" extra="auto_increment" />
-		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" Default="CURRENT_TIMESTAMP" />
+		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" default="CURRENT_TIMESTAMP" />
 		<field name="REF|SessionData|session" type="int(20)" />
 		<field name="name" type="text" />
-		<field name="isdefault" type="tinyint(1)" Default="0" />
+		<field name="isdefault" type="tinyint(1)" default="0" />
 		<field name="pause time" type="double" />
 		<field name="move type" type="text" />
-		<field name="check calibration" type="tinyint(1)" Default="0" />
-		<field name="complete state" type="tinyint(1)" Default="0" />
-		<field name="override preset" type="tinyint(1)" Default="0" />
+		<field name="check calibration" type="tinyint(1)" default="0" />
+		<field name="complete state" type="tinyint(1)" default="0" />
+		<field name="override preset" type="tinyint(1)" default="0" />
 		<field name="REF|CameraSettingsData|camera settings" type="int(20)" />
 		<field name="precision" type="double" />
 		<field name="accept precision" type="double" />
 		<field name="max error" type="double" />
-		<field name="cycle each" type="tinyint(1)" Default="0" />
-		<field name="cycle after" type="tinyint(1)" Default="0" />
-		<field name="final image shift" type="tinyint(1)" Default="0" />
-		<field name="background readout" type="tinyint(1)" Default="0" />
+		<field name="cycle each" type="tinyint(1)" default="0" />
+		<field name="cycle after" type="tinyint(1)" default="0" />
+		<field name="final image shift" type="tinyint(1)" default="0" />
+		<field name="background readout" type="tinyint(1)" default="0" />
 		<field name="SUBD|instruments|ccdcamera" type="text" />
 		<field name="SUBD|instruments|tem" type="text" />
     <key>PRIMARY KEY (`DEF_id`)</key>
@@ -831,7 +874,7 @@
 	</sqltable>
 	<sqltable name="NodeSpecData">
 		<field name="DEF_id" type="int(16)" null="NOT NULL" extra="auto_increment" />
-		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" Default="CURRENT_TIMESTAMP" />
+		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" default="CURRENT_TIMESTAMP" />
 		<field name="class string" type="text" />
 		<field name="alias" type="text" />
 		<field name="launcher alias" type="text" />
@@ -843,15 +886,16 @@
 	</sqltable>
 	<sqltable name="PixelSizeCalibratorSettingsData">
 		<field name="DEF_id" type="int(16)" null="NOT NULL" extra="auto_increment" />
-		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" Default="CURRENT_TIMESTAMP" />
+		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" default="CURRENT_TIMESTAMP" />
 		<field name="REF|SessionData|session" type="int(20)" />
 		<field name="name" type="text" />
-		<field name="isdefault" type="tinyint(1)" Default="0" />
-		<field name="override preset" type="tinyint(1)" Default="0" />
+		<field name="isdefault" type="tinyint(1)" default="0" />
+		<field name="override preset" type="tinyint(1)" default="0" />
 		<field name="REF|CameraSettingsData|camera settings" type="int(20)" />
 		<field name="SUBD|instruments|ccdcamera" type="text" />
 		<field name="SUBD|instruments|tem" type="text" />
 		<field name="correlation type" type="text" />
+		<field name="lpf sigma" type="double" />
 		<field name="lattice a" type="double" />
 		<field name="lattice b" type="double" />
 		<field name="lattice gamma" type="double" />
@@ -864,33 +908,172 @@
     <key>KEY `REF|SessionData|session` (`REF|SessionData|session`)</key>
     <key>KEY `REF|CameraSettingsData|camera settings` (`REF|CameraSettingsData|camera settings`)</key>
 	</sqltable>
-	<sqltable name="PresetsManagerSettingsData">
+	<sqltable name="PhasePlateTestImagerSettingsData">
 		<field name="DEF_id" type="int(16)" null="NOT NULL" extra="auto_increment" />
-		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" Default="CURRENT_TIMESTAMP" />
+		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" default="CURRENT_TIMESTAMP" />
+		<field name="correct image" type="tinyint(1)" />
+		<field name="SEQ|preset order" type="text" />
+		<field name="wait for rejects" type="tinyint(1)" />
+		<field name="move type" type="text" />
+		<field name="save image" type="tinyint(1)" />
+		<field name="pause time" type="double" />
+		<field name="display image" type="tinyint(1)" />
+		<field name="duplicate targets" type="tinyint(1)" />
+		<field name="wait for process" type="tinyint(1)" />
+		<field name="duplicate target type" type="text" />
 		<field name="REF|SessionData|session" type="int(20)" />
 		<field name="name" type="text" />
-		<field name="isdefault" type="tinyint(1)" Default="0" />
+		<field name="wait time" type="double" />
+		<field name="iterations" type="int(20)" />
+		<field name="isdefault" type="tinyint(1)" />
+		<field name="mover" type="text" />
+		<field name="move precision" type="double" />
+		<field name="process target type" type="text" />
+		<field name="save integer" type="int(20)" />
+		<field name="drift between" type="int(20)" />
+		<field name="final image shift" type="int(20)" />
+		<field name="accept precision" type="double" />
+		<field name="wait for reference" type="int(20)" />
+		<field name="adjust for transform" type="text" />
+		<field name="background" type="tinyint(1)" />
+		<field name="use parent tilt" type="tinyint(1)" />
+		<field name="use parent mover" type="tinyint(1)" />
+		<field name="adjust time by tilt" type="tinyint(1)" default="0" />
+		<field name="reset tilt" type="tinyint(1)" default="0" />
+		<field name="bad stats response" type="text" />
+		<field name="high mean" type="double" />
+		<field name="low mean" type="double" />
+		<field name="emission off" type="tinyint(1)" default="0" />
+		<field name="target offset row" type="int(20)" />
+		<field name="target offset col" type="int(20)" />
+		<field name="correct image shift coma" type="tinyint(1)" default="0" />
+		<field name="phase plate number" type="int(20)" />
+		<field 
+			name="pause between time" 
+			type="DOUBLE" 
+			null="NULL" 
+			default="NULL" 
+		/> 
+		<field 
+			name="park after target" 
+			type="TINYINT(1)" 
+			null="NULL" 
+			default="0" 
+		/> 
+		<field 
+			name="park after list" 
+			type="TINYINT(1)" 
+			null="NULL" 
+			default="0" 
+		/> 
+    <key>PRIMARY KEY (`DEF_id`)</key>
+    <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
+    <key>KEY `REF|SessionData|session` (`REF|SessionData|session`)</key>
+	</sqltable>
+	<sqltable name="PhasePlateTesterSettingsData">
+		<field name="DEF_id" type="int(16)" null="NOT NULL" extra="auto_increment" />
+		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" default="CURRENT_TIMESTAMP" />
+		<field name="correct image" type="tinyint(1)" />
+		<field name="SEQ|preset order" type="text" />
+		<field name="wait for rejects" type="tinyint(1)" />
+		<field name="move type" type="text" />
+		<field name="save image" type="tinyint(1)" />
 		<field name="pause time" type="double" />
-		<field name="xy only" type="tinyint(1)" Default="0" />
-		<field name="stage always" type="tinyint(1)" Default="0" />
-		<field name="cycle" type="tinyint(1)" Default="0" />
-		<field name="optimize cycle" type="tinyint(1)" Default="0" />
-		<field name="mag only" type="tinyint(1)" Default="0" />
-		<field name="apply offset" type="tinyint(1)" Default="0" />
-		<field name="blank" type="tinyint(1)" Default="0" />
+		<field name="display image" type="tinyint(1)" />
+		<field name="duplicate targets" type="tinyint(1)" />
+		<field name="wait for process" type="tinyint(1)" />
+		<field name="duplicate target type" type="text" />
+		<field name="REF|SessionData|session" type="int(20)" />
+		<field name="name" type="text" />
+		<field name="wait time" type="double" />
+		<field name="iterations" type="int(20)" />
+		<field name="isdefault" type="tinyint(1)" />
+		<field name="mover" type="text" />
+		<field name="move precision" type="double" />
+		<field name="process target type" type="text" />
+		<field name="save integer" type="int(20)" />
+		<field name="drift between" type="int(20)" />
+		<field name="final image shift" type="int(20)" />
+		<field name="accept precision" type="double" />
+		<field name="wait for reference" type="int(20)" />
+		<field name="adjust for transform" type="text" />
+		<field name="background" type="tinyint(1)" />
+		<field name="use parent tilt" type="tinyint(1)" />
+		<field name="use parent mover" type="tinyint(1)" />
+		<field name="adjust time by tilt" type="tinyint(1)" default="0" />
+		<field name="reset tilt" type="tinyint(1)" default="0" />
+		<field name="bad stats response" type="text" />
+		<field name="high mean" type="double" />
+		<field name="low mean" type="double" />
+		<field name="emission off" type="tinyint(1)" default="0" />
+		<field name="target offset row" type="int(20)" />
+		<field name="target offset col" type="int(20)" />
+		<field name="correct image shift coma" type="tinyint(1)" default="0" />
+		<field name="phase plate number" type="int(20)" />
+		<field name="total positions" type="int(20)" />
+		<field name="total test positions" type="int(20)" />
+		<field name="current position" type="int(20)" />
+		<field name="start position" type="int(20)" />
+		<field 
+			name="pause between time" 
+			type="DOUBLE" 
+			null="NULL" 
+			default="NULL" 
+		/> 
+		<field 
+			name="park after target" 
+			type="TINYINT(1)" 
+			null="NULL" 
+			default="0" 
+		/> 
+		<field 
+			name="park after list" 
+			type="TINYINT(1)" 
+			null="NULL" 
+			default="0" 
+		/> 
+    <key>PRIMARY KEY (`DEF_id`)</key>
+    <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
+    <key>KEY `REF|SessionData|session` (`REF|SessionData|session`)</key>
+	</sqltable>
+	<sqltable name="PresetsManagerSettingsData">
+		<field name="DEF_id" type="int(16)" null="NOT NULL" extra="auto_increment" />
+		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" default="CURRENT_TIMESTAMP" />
+		<field name="REF|SessionData|session" type="int(20)" />
+		<field name="name" type="text" />
+		<field name="isdefault" type="tinyint(1)" default="0" />
+		<field name="pause time" type="double" />
+		<field name="xy only" type="tinyint(1)" default="0" />
+		<field name="stage always" type="tinyint(1)" default="0" />
+		<field name="cycle" type="tinyint(1)" default="0" />
+		<field name="optimize cycle" type="tinyint(1)" default="0" />
+		<field name="mag only" type="tinyint(1)" default="0" />
+		<field name="apply offset" type="tinyint(1)" default="0" />
+		<field name="blank" type="tinyint(1)" default="0" />
 		<field name="smallsize" type="int(20)" />
     <key>PRIMARY KEY (`DEF_id`)</key>
     <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
     <key>KEY `REF|SessionData|session` (`REF|SessionData|session`)</key>
 	</sqltable>
+	<sqltable name="DequeuedImageTargetListData">
+		<field name="DEF_id" type="int(16)" null="NOT NULL" extra="auto_increment" />
+		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" default="CURRENT_TIMESTAMP" />
+		<field name="REF|SessionData|session" type="int(20)" />
+		<field name="REF|QueueData|queue" type="int(20)" />
+		<field name="REF|ImageTargetListData|list" type="int(20)" />
+    <key>PRIMARY KEY (`DEF_id`)</key>
+    <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
+    <key>KEY `REF|SessionData|session` (`REF|SessionData|session`)</key>
+    <key>KEY `REF|QueueData|queue` (`REF|QueueData|queue`)</key>
+    <key>KEY `REF|ImageTargetListData|list` (`REF|ImageTargetListData|list`)</key>
+	</sqltable>
 	<sqltable name="RCTAcquisitionSettingsData">
 		<field name="DEF_id" type="int(16)" null="NOT NULL" extra="auto_increment" />
-		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" Default="CURRENT_TIMESTAMP" />
+		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" default="CURRENT_TIMESTAMP" />
 		<field name="wait time" type="double" />
 		<field name="SEQ|preset order" type="text" />
 		<field name="save image" type="tinyint(1)" />
 		<field name="pause time" type="double" />
-		<field name="adjust for drift" type="tinyint(1)" />
 		<field name="REF|SessionData|session" type="int(20)" />
 		<field name="duplicate targets" type="tinyint(1)" />
 		<field name="iterations" type="int(20)" />
@@ -927,19 +1110,18 @@
 		<field name="final image shift" type="int(20)" />
 		<field name="accept precision" type="double" />
 		<field name="wait for reference" type="tinyint(1)" />
-		<field name="wait for transform" type="tinyint(1)" />
 		<field name="adjust for transform" type="text" />
 		<field name="background" type="tinyint(1)" />
-		<field name="use parent tilt" type="tinyint(1)" Default="0" />
-		<field name="adjust time by tilt" type="tinyint(1)" Default="0" />
-		<field name="reset tilt" type="tinyint(1)" Default="0" />
+		<field name="use parent tilt" type="tinyint(1)" default="0" />
+		<field name="adjust time by tilt" type="tinyint(1)" default="0" />
+		<field name="reset tilt" type="tinyint(1)" default="0" />
 		<field name="bad stats response" type="text" />
 		<field name="high mean" type="double" />
 		<field name="low mean" type="double" />
-		<field name="emission off" type="tinyint(1)" Default="0" />
+		<field name="emission off" type="tinyint(1)" default="0" />
 		<field name="target offset row" type="int(20)" />
 		<field name="target offset col" type="int(20)" />
-		<field name="correct image shift coma" type="tinyint(1)" Default="0" />
+		<field name="correct image shift coma" type="tinyint(1)" default="0" />
 		<field 
 			name="pause between time" 
 			type="DOUBLE" 
@@ -964,7 +1146,7 @@
 	</sqltable>
 	<sqltable name="RasterFinderSettingsData">
 		<field name="DEF_id" type="int(16)" null="NOT NULL" extra="auto_increment" />
-		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" Default="CURRENT_TIMESTAMP" />
+		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" default="CURRENT_TIMESTAMP" />
 		<field name="raster limit" type="int(20)" />
 		<field name="SEQ|acquisition constant template" type="text" />
 		<field name="SEQ|focus constant template" type="text" />
@@ -1009,7 +1191,7 @@
 	</sqltable>
 	<sqltable name="RasterTargetFilterSettingsData">
 		<field name="DEF_id" type="int(16)" null="NOT NULL" extra="auto_increment" />
-		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" Default="CURRENT_TIMESTAMP" />
+		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" default="CURRENT_TIMESTAMP" />
 		<field name="REF|SessionData|session" type="int(20)" />
 		<field name="name" type="text" />
 		<field name="isdefault" type="tinyint(1)" />
@@ -1032,16 +1214,16 @@
 	</sqltable>
 	<sqltable name="RobotSettingsData">
 		<field name="DEF_id" type="int(16)" null="NOT NULL" extra="auto_increment" />
-		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" Default="CURRENT_TIMESTAMP" />
+		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" default="CURRENT_TIMESTAMP" />
 		<field name="REF|SessionData|session" type="int(20)" />
 		<field name="name" type="text" />
-		<field name="isdefault" type="tinyint(1)" Default="0" />
+		<field name="isdefault" type="tinyint(1)" default="0" />
 		<field name="column pressure threshold" type="double" />
 		<field name="default Z position" type="double" />
-		<field name="simulate" type="tinyint(1)" Default="0" />
-		<field name="turbo on" type="tinyint(1)" Default="0" />
-		<field name="grid clear wait" type="tinyint(1)" Default="0" />
-		<field name="pause" type="tinyint(1)" Default="0" />
+		<field name="simulate" type="tinyint(1)" default="0" />
+		<field name="turbo on" type="tinyint(1)" default="0" />
+		<field name="grid clear wait" type="tinyint(1)" default="0" />
+		<field name="pause" type="tinyint(1)" default="0" />
 		<field name="grid tray" type="text" />
     <key>PRIMARY KEY (`DEF_id`)</key>
     <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
@@ -1049,7 +1231,7 @@
 	</sqltable>
 	<sqltable name="SessionData">
 		<field name="DEF_id" type="int(16)" null="NOT NULL" extra="auto_increment" />
-		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" Default="CURRENT_TIMESTAMP" />
+		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" default="CURRENT_TIMESTAMP" />
 		<field name="name" type="text" />
 		<field name="REF|UserData|user" type="int(20)" />
 		<field name="image path" type="text" />
@@ -1065,26 +1247,26 @@
 	</sqltable>
 	<sqltable name="SetupWizardSettingsData">
 		<field name="DEF_id" type="int(16)" null="NOT NULL" extra="auto_increment" />
-		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" Default="CURRENT_TIMESTAMP" />
+		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" default="CURRENT_TIMESTAMP" />
 		<field name="REF|SessionData|session" type="int(20)" />
 		<field name="name" type="text" />
-		<field name="isdefault" type="tinyint(1)" Default="0" />
+		<field name="isdefault" type="tinyint(1)" default="0" />
 		<field name="session type" type="text" />
 		<field name="selected session" type="text" />
-		<field name="limit" type="tinyint(1)" Default="0" />
+		<field name="limit" type="tinyint(1)" default="0" />
 		<field name="n limit" type="int(20)" />
-		<field name="connect" type="tinyint(1)" Default="0" />
+		<field name="connect" type="tinyint(1)" default="0" />
     <key>PRIMARY KEY (`DEF_id`)</key>
     <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
     <key>KEY `REF|SessionData|session` (`REF|SessionData|session`)</key>
 	</sqltable>
 	<sqltable name="TiltRotateSettingsData">
 		<field name="DEF_id" type="int(16)" null="NOT NULL" extra="auto_increment" />
-		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" Default="CURRENT_TIMESTAMP" />
+		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" default="CURRENT_TIMESTAMP" />
 		<field name="REF|SessionData|session" type="int(20)" />
 		<field name="name" type="text" />
-		<field name="isdefault" type="tinyint(1)" Default="0" />
-		<field name="bypass" type="tinyint(1)" Default="0" />
+		<field name="isdefault" type="tinyint(1)" default="0" />
+		<field name="bypass" type="tinyint(1)" default="0" />
 		<field name="tilts" type="text" />
     <key>PRIMARY KEY (`DEF_id`)</key>
     <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
@@ -1092,7 +1274,7 @@
 	</sqltable>
 	<sqltable name="TomographySettingsData">
 		<field name="DEF_id" type="int(16)" null="NOT NULL" extra="auto_increment" />
-		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" Default="CURRENT_TIMESTAMP" />
+		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" default="CURRENT_TIMESTAMP" />
 		<field name="display image" type="tinyint(1)" />
 		<field name="SEQ|registration preset order" type="text" />
 		<field name="wait time" type="double" />
@@ -1100,7 +1282,6 @@
 		<field name="tilt max" type="double" />
 		<field name="save image" type="tinyint(1)" />
 		<field name="pause time" type="double" />
-		<field name="adjust for drift" type="tinyint(1)" />
 		<field name="REF|SessionData|session" type="int(20)" />
 		<field name="duplicate targets" type="tinyint(1)" />
 		<field name="iterations" type="int(20)" />
@@ -1119,9 +1300,11 @@
 		<field name="wait for process" type="tinyint(1)" />
 		<field name="tilt start" type="double" />
 		<field name="tilt step" type="double" />
+		<field name="tilt order" type="text" />
 		<field name="dose" type="double" />
 		<field name="min exposure" type="double" />
 		<field name="max exposure" type="double" />
+		<field name="use preset exposure" type="tinyint(1)" />
 		<field name="process target type" type="text" />
 		<field name="mover" type="text" />
 		<field name="move precision" type="double" />
@@ -1153,19 +1336,18 @@
 		<field name="fit data points" type="int(20)" />
 		<field name="taper size" type="int(20)" />
 		<field name="wait for reference" type="tinyint(1)" />
-		<field name="wait for transform" type="tinyint(1)" />
 		<field name="adjust for transform" type="text" />
 		<field name="background" type="tinyint(1)" />
-		<field name="use parent tilt" type="tinyint(1)" Default="0" />
-		<field name="adjust time by tilt" type="tinyint(1)" Default="0" />
-		<field name="reset tilt" type="tinyint(1)" Default="0" />
+		<field name="use parent tilt" type="tinyint(1)" default="0" />
+		<field name="adjust time by tilt" type="tinyint(1)" default="0" />
+		<field name="reset tilt" type="tinyint(1)" default="0" />
 		<field name="bad stats response" type="text" />
 		<field name="high mean" type="double" />
 		<field name="low mean" type="double" />
-		<field name="emission off" type="tinyint(1)" Default="0" />
+		<field name="emission off" type="tinyint(1)" default="0" />
 		<field name="target offset row" type="int(20)" />
 		<field name="target offset col" type="int(20)" />
-		<field name="correct image shift coma" type="tinyint(1)" Default="0" />
+		<field name="correct image shift coma" type="tinyint(1)" default="0" />
 		<field 
 			name="pause between time" 
 			type="DOUBLE" 
@@ -1185,17 +1367,17 @@
 			default="0" 
 		/> 
 		<field name="z0" type="double" />
-		<field name="use z0" type="tinyint(1)" Default="0" />
+		<field name="use z0" type="tinyint(1)" default="0" />
     <key>PRIMARY KEY (`DEF_id`)</key>
     <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
     <key>KEY `REF|SessionData|session` (`REF|SessionData|session`)</key>
 	</sqltable>
 	<sqltable name="TransformManagerSettingsData">
 		<field name="DEF_id" type="int(16)" null="NOT NULL" extra="auto_increment" />
-		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" Default="CURRENT_TIMESTAMP" />
+		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" default="CURRENT_TIMESTAMP" />
 		<field name="REF|SessionData|session" type="int(20)" />
 		<field name="name" type="text" />
-		<field name="isdefault" type="tinyint(1)" Default="0" />
+		<field name="isdefault" type="tinyint(1)" default="0" />
 		<field name="registration" type="text" />
 		<field name="threshold" type="double" />
 		<field name="pause time" type="double" />
@@ -1209,15 +1391,15 @@
 	</sqltable>
 	<sqltable name="UserData">
 		<field name="DEF_id" type="int(16)" null="NOT NULL" extra="auto_increment" />
-		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" Default="CURRENT_TIMESTAMP" />
+		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" default="CURRENT_TIMESTAMP" />
 		<field name="username" type="varchar(24)" />
 		<field name="firstname" type="varchar(24)" />
 		<field name="lastname" type="varchar(24)" />
 		<field name="password" type="char(32)" />
 		<field name="email" type="varchar(60)" />
 		<field name="REF|GroupData|group" type="int(20)" />
-		<field name="noleginon" type="tinyint(1)" Default="0" />
-		<field name="advanced" type="tinyint(1)" Default="0" />
+		<field name="noleginon" type="tinyint(1)" default="0" />
+		<field name="advanced" type="tinyint(1)" default="0" />
     <key>PRIMARY KEY (`DEF_id`)</key>
     <key>UNIQUE `username` (`username`)</key>
     <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
@@ -1226,7 +1408,7 @@
 	</sqltable>
 	<sqltable name="ViewerImageStatus">
 		<field name="DEF_id" type="int(11)" null="NOT NULL" extra="auto_increment" />
-		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" Default="CURRENT_TIMESTAMP" />
+		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" default="CURRENT_TIMESTAMP" />
 		<field name="REF|SessionData|session" type="int(11)" />
 		<field name="REF|AcquisitionImageData|image" type="int(11)" />
 		<field name="status" type="enum('hidden','visible','exemplar','trash')" />
@@ -1236,14 +1418,9 @@
     <key>KEY `REF|AcquisitionImageData|image` (`REF|AcquisitionImageData|image`)</key>
     <key>KEY `status` (`status`)</key>
 	</sqltable>
-	<sqltable name="viewer_cache">
-		<field name="session" type="varchar(255)" null="NOT NULL" />
-		<field name="timestamp" type="timestamp" null="NOT NULL" Default="CURRENT_TIMESTAMP" />
-    <key>PRIMARY KEY (`session`)</key>
-	</sqltable>
 	<sqltable name="viewer_comment">
 		<field name="id" type="int(11)" null="NOT NULL" extra="auto_increment" />
-		<field name="timestamp" type="timestamp" null="NOT NULL" Default="CURRENT_TIMESTAMP" />
+		<field name="timestamp" type="timestamp" null="NOT NULL" default="CURRENT_TIMESTAMP" />
 		<field name="sessionId" type="int(11)" />
 		<field name="type" type="enum('rt','post')" />
 		<field name="imageId" type="int(11)" />
@@ -1257,7 +1434,7 @@
 	</sqltable>
 	<sqltable name="viewer_del_image">
 		<field name="id" type="int(11)" null="NOT NULL" extra="auto_increment" />
-		<field name="timestamp" type="timestamp" null="NOT NULL" Default="CURRENT_TIMESTAMP" />
+		<field name="timestamp" type="timestamp" null="NOT NULL" default="CURRENT_TIMESTAMP" />
 		<field name="username" type="varchar(50)" />
 		<field name="sessionId" type="int(11)" />
 		<field name="imageId" type="int(11)" />
@@ -1268,56 +1445,6 @@
     <key>KEY `sessionId` (`sessionId`)</key>
     <key>KEY `imageId` (`imageId`)</key>
     <key>KEY `status` (`status`)</key>
-	</sqltable>
-	<sqltable name="viewer_login">
-		<field name="id" type="int(11)" null="NOT NULL" extra="auto_increment" />
-		<field name="username" type="varchar(50)" />
-		<field name="password" type="varchar(50)" />
-		<field name="privilege" type="tinyint(4)" />
-    <key>PRIMARY KEY (`id`)</key>
-    <key>KEY `username` (`username`)</key>
-	</sqltable>
-	<sqltable name="viewer_pref_image">
-		<field name="id" type="int(11)" null="NOT NULL" extra="auto_increment" />
-		<field name="timestamp" type="timestamp" null="NOT NULL" Default="CURRENT_TIMESTAMP" />
-		<field name="username" type="varchar(50)" />
-		<field name="sessionId" type="int(11)" />
-		<field name="imageId" type="int(11)" />
-		<field name="status" type="enum('hidden','visible','exemplar')" />
-    <key>PRIMARY KEY (`id`)</key>
-    <key>KEY `timestamp` (`timestamp`)</key>
-    <key>KEY `username` (`username`)</key>
-    <key>KEY `sessionId` (`sessionId`)</key>
-    <key>KEY `imageId` (`imageId`)</key>
-    <key>KEY `status` (`status`)</key>
-	</sqltable>
-	<sqltable name="viewer_update">
-		<field name="id" type="int(11)" null="NOT NULL" extra="auto_increment" />
-		<field name="timestamp" type="timestamp" null="NOT NULL" Default="CURRENT_TIMESTAMP" />
-		<field name="status" type="enum('N','Y')" />
-		<field name="name" type="text" />
-		<field name="update" type="text" />
-    <key>PRIMARY KEY (`id`)</key>
-    <key>KEY `timestamp` (`timestamp`)</key>
-	</sqltable>
-	<sqltable name="viewer_users">
-		<field name="userId" type="int(11)" null="NOT NULL" extra="auto_increment" />
-		<field name="login" type="varchar(50)" />
-		<field name="firstname" type="text" />
-		<field name="lastname" type="text" />
-		<field name="title" type="text" />
-		<field name="institution" type="text" />
-		<field name="dept" type="text" />
-		<field name="address" type="text" />
-		<field name="city" type="text" />
-		<field name="statecountry" type="text" />
-		<field name="zip" type="text" />
-		<field name="phone" type="text" />
-		<field name="fax" type="text" />
-		<field name="email" type="text" />
-		<field name="url" type="text" />
-    <key>PRIMARY KEY (`userId`)</key>
-    <key>KEY `login` (`login`)</key>
 	</sqltable>
 
 	<sqltable name="BeamTiltFixerSettingsData" >
@@ -1331,7 +1458,7 @@
 			name="DEF_timestamp" 
 			type="timestamp" 
 			null="NOT NULL" 
-			default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
+			default="CURRENT_TIMESTAMP" 
 		/> 
 		<field 
 			name="REF|SessionData|session" 
@@ -1411,12 +1538,6 @@
 		/> 
 		<field 
 			name="wait for reference" 
-			type="TINYINT(1)" 
-			null="NULL" 
-			default="0" 
-		/> 
-		<field 
-			name="wait for transform" 
 			type="TINYINT(1)" 
 			null="NULL" 
 			default="0" 
@@ -1584,7 +1705,7 @@
 			name="DEF_timestamp" 
 			type="timestamp" 
 			null="NOT NULL" 
-			default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
+			default="CURRENT_TIMESTAMP" 
 		/> 
 		<field name="SEQ|correction presets" type="text" />
 		<field 
@@ -1667,7 +1788,7 @@
 			name="DEF_timestamp" 
 			type="timestamp" 
 			null="NOT NULL" 
-			default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
+			default="CURRENT_TIMESTAMP" 
 		/> 
 		<field 
 			name="REF|SessionData|session" 

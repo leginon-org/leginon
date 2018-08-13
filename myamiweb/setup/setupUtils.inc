@@ -330,8 +330,8 @@ class setupUtils{
 
 		$link = $this->checkDBConnection($dbHost, $dbUsername, $dbPassword);
 
-		$db = mysql_select_db($db, $link);
-		mysql_close($link);
+		$db = mysqli_select_db($link, $db);
+		mysqli_close($link);
 		if(!$db)
 			return false;
 		//$result = $this->select_db($db, $link);

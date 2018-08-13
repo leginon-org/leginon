@@ -181,18 +181,21 @@ def getAccumulatedDoses(imagelist):
 	cumarray = numpy.cumsum(dosearray)
 	return cumarray.tolist()
 
-def orderImageList(frame_tiltdata, non_frame_tiltdata=None, frame_aligned="True"):
+def orderImageList(frame_tiltdata, non_frame_tiltdata=None, frame_aligned="True", export=False):
 	'''This is complex because the two start tilt images are often sorted wrong if
-			just use alpha tilt.  Therefore, a fake alpha tilt value is created based
-			on the tilt image collected next in time
+	just use alpha tilt.  Therefore, a fake alpha tilt value is created based
+	on the tilt image collected next in time
 	'''
-	if frame_aligned =="True":
+	if (frame_aligned == "True") or (frame_aligned == True):
 		imagelist = frame_tiltdata
 	else:
 		imagelist = non_frame_tiltdata
+	dose_imagelist = non_frame_tiltdata #Frame aligned images don't have the correct dose...
 	if not imagelist:
 		apDisplay.printWarning('No images in image list.')
 		return
+	if not dose_imagelist:
+		dose_imagelist = imagelist
 	mrc_files = []
 	imagepath = imagelist[0]['session']['image path']
 	tiltseries = imagelist[0]['tilt series']
@@ -229,10 +232,16 @@ def orderImageList(frame_tiltdata, non_frame_tiltdata=None, frame_aligned="True"
 				reftilts.append(tilt)
 		tiltangledict[tilt] = imagedata
 		tiltangledict2[tilt] = imagedata_editable
+	
+	dose_list=[]
+	for i,dose_imagedata in enumerate(dose_imagelist):
+		dose_list.append(getImageDose(dose_imagedata))
+	
 	tiltkeys = tiltangledict.keys(); tiltkeys2 = tiltangledict2.keys()
 	tiltkeys.sort(); tiltkeys2.sort()
 	ordered_imagelist = []
 	accumulated_dose_list=[]
+	defocus_list=[]
 	for key in tiltkeys:
 		imagedata = tiltangledict[key]
 		imagedata_editable = tiltangledict2[key]
@@ -241,13 +250,17 @@ def orderImageList(frame_tiltdata, non_frame_tiltdata=None, frame_aligned="True"
 		mrc_files.append(fullname)
 		ordered_imagelist.append(imagedata)
 		accumulated_dose_list.append(imagedata_editable['accumulated dose'])
+		defocus_list.append(imagedata['scope']['defocus']*1000000)
 	if len(reftilts) > 2:
 		apDisplay.printError('Got too many images at the start tilt')
 	refimg = tiltkeys.index(max(reftilts))
 	#cut down for testing
 	testing = False
 	if not testing:
-		return tiltkeys,ordered_imagelist,accumulated_dose_list,mrc_files,refimg
+		if export == False:
+			return tiltkeys,ordered_imagelist,accumulated_dose_list,mrc_files,refimg
+		else:
+			return tiltkeys,ordered_imagelist,dose_list,accumulated_dose_list,mrc_files,refimg,defocus_list,apDatabase.getPixelSize(imagedata),dose_imagedata['scope']['magnification']
 	else:
 		# testing with half the data
 		print len(tiltkeys),refimg

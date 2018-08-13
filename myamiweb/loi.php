@@ -10,7 +10,7 @@ require_once "inc/leginon.inc";
 require_once "inc/viewer.inc";
 require_once "inc/project.inc";
 
-$refreshtime = ($_POST['refreshtime']) ? $_POST['refreshtime'] : 10;
+$refreshtime = ($_POST['refreshtime']) ? $_POST['refreshtime'] : 60;
 
 // --- Set sessionId
 $sessionId=$_POST[sessionId];
@@ -57,7 +57,7 @@ foreach ($datatypes as $datatype) {
 	$view->displayDeqIcon(true);
 	$view->setDataTypes($datatypes);
 	$view->selectDataType($datatype);
-	$view->setCacheOnly(true);
+	$view->setCacheOnly(false);
 	$viewer->add($view);
 	$v++;
 }

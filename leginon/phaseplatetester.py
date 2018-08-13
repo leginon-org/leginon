@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import time
 from leginon import leginondata
 from leginon import acquisition
 import gui.wx.PhasePlateTester
@@ -13,7 +14,7 @@ def setImageFilename(imagedata, phase_plate_number, patch_position=None):
 class PhasePlateTestImager(acquisition.Acquisition):
 	panelclass = gui.wx.PhasePlateTestImager.Panel
 	settingsclass = leginondata.PhasePlateTestImagerSettingsData
-	defaultsettings = acquisition.Acquisition.defaultsettings
+	defaultsettings = dict(acquisition.Acquisition.defaultsettings)
 	defaultsettings.update({
 		'phase plate number': 1,
 		})
@@ -58,7 +59,7 @@ class PhasePlateTestImager(acquisition.Acquisition):
 class PhasePlateTester(PhasePlateTestImager):
 	panelclass = gui.wx.PhasePlateTester.Panel
 	settingsclass = leginondata.PhasePlateTesterSettingsData
-	defaultsettings = acquisition.Acquisition.defaultsettings
+	defaultsettings = dict(acquisition.Acquisition.defaultsettings)
 	defaultsettings.update({
 		'phase plate number': 1,
 		'total positions': 76,
@@ -92,6 +93,10 @@ class PhasePlateTester(PhasePlateTestImager):
 				status = 'aborted'
 				break
 			self.nextPhasePlate()
+			if i < self.settings['total test positions']-1:
+				pausetime = self.settings['pause time']
+				self.logger.info('pausing for %s s' % (pausetime,))
+				time.sleep(pausetime)
 		return status
 
 	def uiSetStartPosition(self):

@@ -1,0 +1,49 @@
+# This configuration file is based on Titan Krios with energy filter
+[debug]
+ALL = False
+STAGE = False
+CAMERA = False
+
+[optics]
+# Lens normalization is usually set in TUI but there are cases that
+# they are not active through scripting call. This force the normalization.
+FORCE_NORMALIZE_ALL_LENS_AFTER_MAG_SETTING = False
+
+# This scale convert beam tilt readout in radian to 
+# Tecnai or TEM Scripting Illumination.RotationCenter value
+# Depending on the version,  this may be 1.0 or closer to 6
+ROTATION_CENTER_SCALE = 1.0
+
+[aperture]
+# Disable control of auto apertures if not working or not available
+# not all versions of microscope software allows auto aperture control
+# from scripting level.
+USE_AUTO_APERTURE = False
+
+[camera]
+# Falcon protector causes certain delays
+HAS_FALCON_PROTECTOR = True
+# Falcon III subpath. Must exists and writable
+FRAME_SUBPATH = leginonframes
+# Falcon protector may be too slow
+EXTRA_PROTECTOR_SLEEP_TIME = 0
+[phase plate]
+# Location of next phase plate AutoIt executable
+AUTOIT_EXE_PATH = C:\Program Files\AutoIt3\nextphaseplate.exe
+
+[stage]
+# Newer Krios stage needs backlash.
+KRIOS_ADD_STAGE_BACKLASH = True
+KRIOS_ADD_STAGE_ALPHA_BACKLASH = False
+
+# if a stage position movement is less than the following, then ignore it
+MINIMUM_STAGE_MOVEMENT%X = 5.0e-8
+MINIMUM_STAGE_MOVEMENT%Y = 5.0e-8
+MINIMUM_STAGE_MOVEMENT%Z = 5.0e-8
+MINIMUM_STAGE_MOVEMENT%A = 6.0e-5
+MINIMUM_STAGE_MOVEMENT%B = 6.0e-5
+
+# XYZ backlash delta (positive means preposition to negative direction)
+XYZ_StAGE_BACKLASH_DELTA = 2e-6
+# Relax distance
+#XY_STAGE_RELAX_DISTANCE = 10.0e-8

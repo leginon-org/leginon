@@ -89,7 +89,7 @@ class RCTAcquisition(acquisition.Acquisition):
 	'''
 	panelclass = gui.wx.RCTAcquisition.Panel
 	settingsclass = leginondata.RCTAcquisitionSettingsData
-	defaultsettings = acquisition.Acquisition.defaultsettings
+	defaultsettings = dict(acquisition.Acquisition.defaultsettings)
 	defaultsettings.update({
 		'tilts': '(-45, 0)',
 		'stepsize': 42.0,

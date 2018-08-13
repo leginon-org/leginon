@@ -15,7 +15,7 @@ class ReferenceTimer(reference.Reference):
 	eventinputs = reference.Reference.eventinputs
 	eventoutputs = reference.Reference.eventoutputs
 
-	defaultsettings = reference.Reference.defaultsettings
+	defaultsettings = dict(reference.Reference.defaultsettings)
 	defaultsettings.update (
 		{'interval time': 0.0}
 	)
@@ -54,7 +54,7 @@ class ReferenceTimer(reference.Reference):
 class AlignZeroLossPeak(ReferenceTimer):
 	settingsclass = leginondata.AlignZLPSettingsData
 	# defaultsettings are not the same as the parent class.  Therefore redefined.
-	defaultsettings = reference.Reference.defaultsettings
+	defaultsettings = dict(reference.Reference.defaultsettings)
 	defaultsettings.update (
 		{'interval time': 900.0,
 		'check preset': '',
@@ -160,6 +160,8 @@ class AlignZeroLossPeak(ReferenceTimer):
 				self.logger.warning('Energy filtering is not enabled.')
 				return 'bypass'
 			self.positionCamera(camera_name=ccd_name)
+			self.openColumnValveBeforeExposure()
+			self.logger.info('Aligning ZLP with %s camera' % ccd_name)
 			ccd_camera.alignEnergyFilterZeroLossPeak()
 			m = 'Energy filter zero loss peak aligned.'
 			self.logger.info(m)
@@ -222,6 +224,8 @@ class AlignZeroLossPeak(ReferenceTimer):
 			self.logger.warning('No energy filter on this instrument.')
 			return False
 		imagedata = self.acquireCorrectedCameraImageData(force_no_frames=True)
+		if imagedata is None:
+			return False
 		image = imagedata['image']
 		stageposition = imagedata['scope']['stage position']
 		lastresetq = leginondata.ZeroLossCheckData(session=self.session, preset=self.checkpreset)
@@ -259,12 +263,14 @@ class AlignZeroLossPeak(ReferenceTimer):
 			return
 		self.logger.info('reset zero-loss check data')
 		imagedata = self.acquireCorrectedCameraImageData(force_no_frames=True)
+		if imagedata is None:
+			return
 		stageposition = imagedata['scope']['stage position']
 		image = imagedata['image']
 		self.publishZeroLossCheck(image)
 
 class MeasureDose(ReferenceTimer):
-	defaultsettings = reference.Reference.defaultsettings
+	defaultsettings = dict(reference.Reference.defaultsettings)
 	defaultsettings.update (
 		{'interval time': 900.0,
 		}

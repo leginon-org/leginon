@@ -23,19 +23,23 @@ $im_hostId = ($_POST[import_hostId]) ? $_POST[import_hostId] : current($hostkeys
 $leginondata->mysql->setSQLHost($SQL_HOSTS[$exfromhostId]);
 $applications = $leginondata->getApplications();
 $check_str = 'checked="checked"';
+$app_change_display = array();
 
 if ($_POST[format]) {
 	$xmlradiochecked = ($_POST[format]=="xml") ? $check_str : '';
 	$tableradiochecked = ($_POST[format]=="table") ? $check_str : '';
 	$hostradiochecked = ($_POST[format]=="host") ? $check_str : '';
+	$hideradiochecked = ($_POST[format]=="hide") ? $check_str : '';
+	$unhideradiochecked = ($_POST[format]=="unhide") ? $check_str : '';
 	$filechecked  = ($_POST[saveasfile]) ? 'checked="checked"' : '';
+	$allversionschecked  = ($_POST[all_versions]) ? 'checked="checked"' : '';
 } else {
 	$xmlradiochecked = $check_str;
 }
 
 if ($_POST[bt_export]) {
 	if ($_POST[applicationId]) {
-		list($appinfo) = $leginondata->getApplicationInfo($applicationId);
+		$appinfo = $leginondata->getApplicationInfo($applicationId);
 		$dumpapplication = $leginondata->dumpApplicationData($applicationId,'xml');
 		if ($_POST[format]=='xml' && $_POST[saveasfile]) {
 			$filename = $appinfo['name'].'_'.$appinfo['version'].'.xml';
@@ -43,32 +47,39 @@ if ($_POST[bt_export]) {
 			exit;
 		}
 	}
+	if ( $hideradiochecked || $unhideradiochecked ) {
+		$hide_status = ( $hideradiochecked ) ? 1:0;
+		if ($_POST[applicationId]) {
+			$app_ids_to_update = array($applicationId);
+			if ($allversionschecked)
+				$app_ids_to_update = $leginondata->getAllApplicationIdsOfSameName($applicationId);
+			foreach ($app_ids_to_update as $app_id)
+				$app_change_display[] = $leginondata->updateApplicationHideStatus($app_id, $hide_status);
+		}
+	}
 }
-if ($_POST[bt_import]) {
+
+	if ($_POST[bt_import]) {
 	if ($filename = $_FILES[import_file][name])
 		$xmldata = $_FILES[import_file][tmp_name];
 }
 
 admin_header();
 if ($is_admin) {
-	$title = "Import/Export";
+	$title = "Management";
 } else {
 	$title = "Export";
 }
 ?>
-<h3>Applications <?php echo $title?></h3>
+<h3>Application <?php echo $title?></h3>
 <form name="data" method="POST" enctype="multipart/form-data" action="<?php echo $_SERVER['PHP_SELF']; ?>">
 <table border=0 class=tableborder>
 <tr valign=top >
 <td>
   <table border=0>
-    <tr>
-      <td>
-  	<h3>Export</h3>
-      </td>
-    </tr>
 <tr valign=top >
 <td>
+	<h3>Select</h3>
 From Host:
 	<select name="exportfromhostId" onChange="javascript:document.data.submit();">
 		<?php
@@ -97,6 +108,11 @@ From Host:
 	</select>
      </td>
     </tr>
+    <tr>
+      <td>
+				<h4>Export</h4>
+      </td>
+    </tr>
     <tr valign=top>
      <td>
 	<input type="radio" name="format" value="xml" id="radio_format_xml"  <?php echo $xmlradiochecked; ?> >
@@ -121,9 +137,28 @@ From Host:
 	<label for="checkbox_file_Id">Save as...</label>
      </td>
     </tr>
+	<?php if ($is_admin) { ?>
     <tr>
      <td>
-	<input id="bt_export_id" type="submit" name="bt_export" value="Export">
+			<h4>or Change Status</h4>
+	<input type="radio" name="format" value="hide" id="radio_app_status"  <?php echo $hideradiochecked; ?> >
+	<label for="radio_hide_app">Hide</label>
+     <br>
+	<input type="radio" name="format" value="unhide" id="radio_app_status"  <?php echo $unhideradiochecked; ?> >
+	<label for="radio_hide_app">Unhide</label>
+     <br>
+     </td>
+     <td>
+	<input type="checkbox" name="all_versions" id="checkbox_all_versions" <?php echo $allversionschecked; ?> >
+	<label for="checkbox_all_versions">All versions</label>
+     </td>
+    </tr>
+	<?php } ?>
+    <tr>
+     <td colspan=2>
+     <br>
+			<hr>
+	<input id="bt_export_id" type="submit" name="bt_export" value="Execute">
      </td>
     </tr>
    </table>
@@ -181,21 +216,24 @@ if ($_POST[bt_export]) {
 		echo htmlspecialchars($dumpapplication);
 		echo "</pre>";
 	} else if ($_POST[format]=="table") {
-	   foreach ($leginondata->applicationtables as $table) {
-		echo "<b>".$table."</b>";
+		foreach ($leginondata->applicationtables as $table) {
+			echo "<b>".$table."</b>";
 			if (!$leginondata->mysql->SQLTableExists($table)) {
 				echo " not found <br>";continue;
 			}
-		    $where = ($table=='ApplicationData') 
-			? " `DEF_id` = $applicationId"
-			: " `REF|ApplicationData|application` = $applicationId";
-		$q = "select * from `$table` where $where";
-		$r = $leginondata->mysql->getSQLResult($q);
-		display($r, True);
-	}
+		  $where = ($table=='ApplicationData')
+				? " `DEF_id` = $applicationId"
+				: " `REF|ApplicationData|application` = $applicationId";
+			$q = "select * from `$table` where $where";
+			$r = $leginondata->mysql->getSQLResult($q);
+			display($r, True);
+		}
 		echo "<br>";
 	} else if ($_POST[format]=="host") {
 		$xmldata=$dumpapplication;
+	} else if ($_POST[format]=="hide" || $_POST[format]=="unhide") {
+		foreach ($app_change_display as $display_str)
+			echo $display_str."<br>";
 	}
 } 
 if ($xmldata) {

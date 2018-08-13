@@ -328,6 +328,10 @@ class AppionLoop(appionScript.AppionScript):
 			default="all", type="choice", choices=self.tiltoptions,
 			help="Only process images with specific tilt angles, options: "+str(self.tiltoptions))
 
+		self.parser.add_option("--startimgid", dest="startimgid", type="int",
+			help="Only process images at and after <startimgid> ")
+		self.parser.add_option("--endimgid", dest="endimgid", type="int",
+			help="Only process images at and before <endimgid> ")
 		### True / False options
 		self.parser.add_option("--continue", dest="continue", default=True,
 			action="store_true", help="Continue processing run from last image")
@@ -805,6 +809,16 @@ class AppionLoop(appionScript.AppionScript):
 				status=apDatabase.getSiblingImgCompleteStatus(imgdata)
 			else:
 				status=apDatabase.getImgCompleteStatus(imgdata) 
+
+			if self.params['startimgid'] and imgdata.dbid < self.params['startimgid']:
+				reason = 'reject'
+				skip = True
+				return skip, reason
+
+			if self.params['endimgid'] and imgdata.dbid > self.params['endimgid']:
+				reason = 'reject'
+				skip = True
+				return skip, reason
 
 			if self.params['norejects'] is True and status is False:
 				reason = 'reject'

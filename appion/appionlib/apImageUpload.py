@@ -166,8 +166,7 @@ class ImageLoader(appionLoop2.AppionLoop):
 					allappionscopeems.extend(appionscopeems)
 			scopeemq = leginon.leginondata.ScopeEMData(session=sessiondatas[0])
 			allscopeems = scopeemq.query()
-			if len(allscopeems) > len(allappionscopeems):
-
+			if (len(allscopeems) > len(allappionscopeems)):
 				apDisplay.printError("You can only add more images to an existing session that contains only appion uploads")
 		else:
 			### METHOD 2 : create new session

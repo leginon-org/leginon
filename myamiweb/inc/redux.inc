@@ -373,6 +373,11 @@ class redux{
 	
 	function requestImage(){
 
+		if (defined('REDUX_AVOID_PATH') && (strpos($this->getFilename(), REDUX_AVOID_PATH) !== false)) {
+		//if (false) {
+			$reply=$this->filename;
+			return $reply;
+		}
 		$msg = $this->constructRequestString() ."\n";
 
 		$reduxsock = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);

@@ -164,13 +164,14 @@ fileHeader();
 $aliases = array('edge lpf','template lpf','lpf');
 $user_id = $leginondata->getAdminUserId();
 $extratables = array('LowPassFilterSettingsData','BlobFinderSettingsData','FocusSequenceData');
+
 //Tables
 if ($show_tables) {
 	foreach ($extratables as $table) {
-		echo $table?></br><?php;
+		echo $table; ?></br><?php 
 	}
 	foreach (array_keys($nodenames) as $table) {
-		echo $table?></br><?php;
+		echo $table; ?></br><?php 
 	}
 }
 //Default values

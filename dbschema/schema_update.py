@@ -16,6 +16,7 @@ if __name__ == "__main__":
 	print "\n\nlist of schema tags to check:"
 	print schema_tag_list
 
+	install_dir = updatelib.getInstalledLocation()
 	schema_to_run_list = []
 	# getnerate list of needed schema updates
 	print ""
@@ -28,21 +29,27 @@ if __name__ == "__main__":
 			print "completed"
 		else:
 			print "????"
+
 		schema_pythonfile = "updates/schema-r%s.py"%(str(schema_tag))
+		if install_dir != os.getcwd():
+			schema_pythonfile = os.path.join(install_dir,schema_pythonfile)
+
 		if not os.path.isfile(schema_pythonfile):
+			# Use this to indicate branch not
+			# needing update since we can not use git tag --merge
 			print "schema file not found: %s"%(schema_pythonfile)
 			if len(schema_to_run_list) > 0:
 				# stop and update what we have so far
 				del schema_tag_list
-				break
-			else:
-				# error missing schema files
-				raise IOError("schema update not found.")
+			break
 		if need_update:
 			schema_to_run_list.append("python %s" % (schema_pythonfile))
 
 	if len(schema_to_run_list) > 0:
-		schema_to_run_list.append("python log_package_revision.py")
+		log_pythonfile = "log_package_revision.py"
+		if install_dir != os.getcwd():
+			log_pythonfile = os.path.join(install_dir,log_pythonfile)
+		schema_to_run_list.append("python %s" % (log_pythonfile))
 
 	# print out the results
 	if len(schema_to_run_list) > 0:
