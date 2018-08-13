@@ -147,10 +147,17 @@ class ImgRejector2Form extends BasicLayoutForm
 	{
 		$this->formParams->getPostedValues( $postArray );
 		$msg = $this->formParams->validate();
-		if ($postArray['bestdb']!='on' & $postArray['ctfrunid']==0 )
-			$msg .= '<B>ERROR:</B>Use either best run or specify a run. You have chosen neither.<br/>';	
-		if ($postArray['bestdb']=='on' & $postArray['ctfrunid']!=0 )
-			$msg .= '<B>ERROR:</B>Use either best run or specify a run, not both.<br/>';	
+		if ($postArray['unhide']) return $msg;
+		// only if checking ctf
+		if ($postArray['checkctf']) {
+			if ($postArray['bestdb']!='on' & $postArray['ctfrunid']==0 )
+				$msg .= '<B>ERROR:</B>Use either best run or specify a run. You have chosen neither.<br/>';	
+			if ($postArray['bestdb']=='on' & $postArray['ctfrunid']!=0 )
+				$msg .= '<B>ERROR:</B>Use either best run or specify a run, not both.<br/>';	
+		} else {
+			if ($postArray['checkice'])
+				$msg .= '<B>ERROR:</B>Currently need ctf estimation to check ice crystal<br/>';	
+		}
 		return $msg;
 	}
 

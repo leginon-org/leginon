@@ -109,7 +109,10 @@ class GctfEstimator(object):
 		self.setGlobalInputParams(imagedata)
 		self.addImage(imagedata)
 		results = self.runImages()
-		return results[0]
+		try:
+			return results[0]
+		except IndexError, e:
+			raise RuntimeError('ctf estimation failed to produce result')
 
 	def fakeRunOneImageData(self, imagedata):
 		'''

@@ -39,7 +39,7 @@ if ($_POST[format]) {
 
 if ($_POST[bt_export]) {
 	if ($_POST[applicationId]) {
-		list($appinfo) = $leginondata->getApplicationInfo($applicationId);
+		$appinfo = $leginondata->getApplicationInfo($applicationId);
 		$dumpapplication = $leginondata->dumpApplicationData($applicationId,'xml');
 		if ($_POST[format]=='xml' && $_POST[saveasfile]) {
 			$filename = $appinfo['name'].'_'.$appinfo['version'].'.xml';

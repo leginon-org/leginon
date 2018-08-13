@@ -1187,7 +1187,14 @@ class leginondata {
 			return array();
 	}
 
-	function getImageMatrixCalibration($imgId, $type='image shift') {
+	function getImageMatrixCalibration($imgId, $type='image shift', $mag_depend=true) {
+		if ($mag_depend) {
+			$mag_where = ""
+				."and "
+				."scope.magnification = mcal.magnification ";
+		} else {
+			$mag_where = " ";
+		}
 		$q = "select "
 			."mcal.`DEF_id`, "
 			."mcal.`DEF_timestamp`, "
@@ -1205,8 +1212,7 @@ class leginondata {
 			."scope.`REF|InstrumentData|tem`=mcal.`REF|InstrumentData|tem` "
 			."and "
 			."c.`REF|InstrumentData|ccdcamera`=mcal.`REF|InstrumentData|ccdcamera` "
-			."and "
-			."scope.magnification = mcal.magnification "
+			.$mag_where
 			."and "
 			."scope.`high tension` = mcal.`high tension` "
 			."and "
@@ -1418,6 +1424,10 @@ class leginondata {
 			."c.`exposure time`, "
 			."pi.pixelsize as pixelsize, "
 			."scope.magnification, "
+			."scope.`SUBD|beam tilt|x` as `beam tilt x`, "
+			."scope.`SUBD|beam tilt|y` as `beam tilt y`, "
+			."scope.`SUBD|image shift|x` as `image shift x`, "
+			."scope.`SUBD|image shift|y` as `image shift y`, "
 			."scope.`SUBD|stage position|x` as `stage x`, "
 			."scope.`SUBD|stage position|y` as `stage y`, "
 			."scope.`SUBD|stage position|z` as `stage z`, "
@@ -1444,6 +1454,20 @@ class leginondata {
 		$Rimageinfo = $this->mysql->SQLQuery($q);
 		$imageinfo = mysqli_fetch_array($Rimageinfo,MYSQLI_ASSOC);
 		return $imageinfo;
+	}
+
+	function getImageBeamTilt($imgid, $bt0) {
+		// Get beam tilt from image shift coma calibration.  Returns 0,0 if
+		// no calibration.
+		$imginfo = $this->getImageInfo($imgid);
+		// image-shift coma is not mag dependent
+		$m = $this->getImageMatrixCalibration($imgid, $type='image-shift coma', $mag_depend=false);
+		$matrix = matrix($m[a11],$m[a12],$m[a21],$m[a22]);
+		$is_x = $imginfo['image shift x'];
+		$is_y = $imginfo['image shift y'];
+		$vector = array($is_x,$is_y);
+		$result_vector = matrix_multiply($matrix, $vector);
+		return $result_vector;
 	}
 
 	function getPhasePlateInfo($pp_usageId) {
