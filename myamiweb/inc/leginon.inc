@@ -3005,7 +3005,9 @@ class leginondata {
 		$q = "SELECT "
 			."date_format(h.`DEF_timestamp`, '%Y-%d-%m %T') as `timestamp`, "
 			."a.filename as filename, "
-			.'`h`.`thickness-mean` '
+			.'`h`.`thickness-mean`, '
+			.'`h`.`good` AS `good`, '
+			.'`a`.`DEF_id` AS `image_id` '
 			.'FROM '
 			.'`HoleStatsData` AS `h` '
 			.'LEFT JOIN `HoleFinderPrefsData` AS `pref` ON (`pref`.`DEF_id`=`h`.`REF|HoleFinderPrefsData|prefs`) '
