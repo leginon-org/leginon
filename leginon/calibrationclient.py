@@ -1126,9 +1126,13 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 	def transformImageShiftToDefocus(self, imageshift, tem, cam, ht, defoc0, mag):
 		par = 'image-shift defocus'
 		zero = {'x':defoc0,'y':0}
-		new = self._transformImageShiftToNewPar(imageshift, tem, cam, ht, zero, mag, par)
-		defoc1 = new['x']
-		return defoc1
+		try:
+			new = self._transformImageShiftToNewPar(imageshift, tem, cam, ht, zero, mag, par)
+			defoc1 = new['x']
+			return defoc1
+		except:
+			self.node.logger.warning('image-shift defocus not calibrated, ignore such correction.')
+			return defoc0
 
 	def _transformImageShiftToNewPar(self, imageshift, tem, cam, ht, zero, mag, par):
 		new = {}
