@@ -1281,6 +1281,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 		except BadImageStatsAbort, e:
 			self.logger.error('processing target failed: %s' %e)
 			ret = 'aborted'
+		except Exception, e:
+			self.logger.error('processing target failed: %s' %e)
+			ret = 'aborted'
 		self.reportTargetStatus(proctargetdata, 'done')
 		self.logger.info('Done with simulated target, status: %s (repeat will not be honored)' % (ret,))
 		self.setStatus('idle')

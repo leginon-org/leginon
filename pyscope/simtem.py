@@ -18,6 +18,7 @@ except:
 	nidaq = None
 
 simu_autofiller = False
+STAGE_DEBUG = False
 
 class SimTEM(tem.TEM):
 	name = 'SimTEM'
@@ -43,6 +44,9 @@ class SimTEM(tem.TEM):
 		]
 		self.probe_mode_index = 0
 
+		self.correctedstage = False
+		self.corrected_alpha_stage = False
+		self.alpha_backlash_delta = 3.0
 		self.stage_axes = ['x', 'y', 'z', 'a']
 		if nidaq is not None:
 			self.stage_axes.append('b')
@@ -51,6 +55,13 @@ class SimTEM(tem.TEM):
 			'y': (-1e-3, 1e-3),
 			'z': (-5e-4, 5e-4),
 			'a': (-math.pi/2, math.pi/2),
+		}
+		self.minimum_stage = {
+			'x':5e-8,
+			'y':5e-8,
+			'z':5e-8,
+			'a':math.radians(0.01),
+			'b':1e-4,
 		}
 		self.stage_position = {}
 		for axis in self.stage_axes:
@@ -104,6 +115,10 @@ class SimTEM(tem.TEM):
 
 		self.aperture_selection = {'objective':'','condenser2':'70','selected area':'open'}
 
+	def printStageDebug(self,msg):
+		if STAGE_DEBUG:
+			print msg
+
 	def resetRefrigerant(self):
 		self.autofiller_busy = False
 		self.level0 = 100.0
@@ -139,7 +154,34 @@ class SimTEM(tem.TEM):
 			pass	
 		return copy.copy(self.stage_position)
 
+	def _setStagePosition(self,value):
+		keys = value.keys()
+		keys.sort()
+		for axis in keys:
+				self.printStageDebug('%s: %s' % (axis, value[axis]))
+				try:
+					self.stage_position[axis] = value[axis]
+				except KeyError:
+					pass
+		self.printStageDebug('----------')
+
+	def setDirectStagePosition(self,value):
+		self._setStagePosition(value)
+
+	def checkStagePosition(self, position):
+		current = self.getStagePosition()
+		bigenough = {}
+		minimum_stage = self.minimum_stage
+		for axis in ('x', 'y', 'z', 'a', 'b'):
+			if axis in position:
+				delta = abs(position[axis] - current[axis])
+				if delta > minimum_stage[axis]:
+					bigenough[axis] = position[axis]
+		return bigenough
+
 	def setStagePosition(self, value):
+		self.printStageDebug(value.keys())
+		value = self.checkStagePosition(value)
 		for axis in self.stage_axes:
 			if axis == 'b':
 				pass
@@ -159,11 +201,38 @@ class SimTEM(tem.TEM):
 					nidaq.setBeta(value['b'])
 				except:
 					print 'exception, beta not set'
-			else:
-				try:
-					self.stage_position[axis] = value[axis]
-				except KeyError:
-					pass
+		# calculate pre-position
+		prevalue = {}
+		prevalue2 = {}
+		stagenow = self.getStagePosition()
+		if self.correctedstage:
+			delta = 2e-6
+			for axis in ('x','y','z'):
+				if axis in value:
+					prevalue[axis] = value[axis] - delta
+		relax = 0
+		if abs(relax) > 1e-9:
+			for axis in ('x','y'):
+				if axis in value:
+					prevalue2[axis] = value[axis] + relax
+		if self.corrected_alpha_stage: 
+			# alpha tilt backlash only in one direction
+			alpha_delta_degrees = self.alpha_backlash_delta
+			if 'a' in value.keys():
+					axis = 'a'
+					prevalue[axis] = value[axis] - alpha_delta_degrees*3.14159/180.0
+		if prevalue:
+			# set all axes in prevalue
+			for axis in value.keys():
+				if axis not in prevalue.keys():
+					prevalue[axis] = value[axis]
+					del value[axis]
+			self._setStagePosition(prevalue)
+			time.sleep(0.2)
+		if abs(relax) > 1e-9 and prevalue2:
+			self._setStagePosition(prevalue2)
+			time.sleep(0.2)
+		return self._setStagePosition(value)
 
 	def normalizeLens(self, lens='all'):
 		pass
