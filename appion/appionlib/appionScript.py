@@ -177,6 +177,7 @@ class AppionScript(basicScript.BasicScript):
 			if s:
 				self.params['sessionname'] = s.groups()[0]
 				sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
+		self.sessiondata=sessiondata
 		return sessiondata
 
 	#=====================
@@ -314,6 +315,23 @@ class AppionScript(basicScript.BasicScript):
 		#create the run directory, if needed
 		apParam.createDirectory(self.params['rundir'], warning=(not self.quiet))
 		os.chdir(self.params['rundir'])
+
+	#=====================
+	def getMaxRunNumber(self):
+		"""
+		Create a default runname based on the jobtype
+		"""
+		q = appiondata.ApAppionJobData()
+		q['session']=self.sessiondata
+		q['jobtype']=self.params['jobtype']
+		results = q.query()
+		if len(results)==0: return 0
+		nlist = []
+		for r in results:
+			# get all run names associated with job type
+			name = (r['name'].split('-')[0]).split('.')[0]
+			nlist.append(int(float(re.search('(\d+)$', name).group(0))))
+		return max(nlist)
 
 	#=====================
 	def __del__(self):
