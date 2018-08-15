@@ -111,7 +111,7 @@ class viewer {
 		$this->addfiltersel = $filterselector;
 	}
 
-	function addSessionSelector($sessions=array(), $limit=0) {
+	function addSessionSelector($sessions=array(), $limit=100) {
 		$selector = '<select name="sessionId" onchange="newexp()">'.$this->crlf;
 		$i = 0;
 		foreach ((array)$sessions as $session) {
