@@ -236,7 +236,7 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 
 		buttons = {
 			'tem': (
-				'magnification', 
+				'magnification',
 				'defocus',
 				'spot size',
 				'intensity',
@@ -401,7 +401,7 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 						event.wait()
 						value = self.node.last_value
 						if name != 'camera parameters':
-							value = {name: value} 
+							value = {name: value}
 						self.setParameters(value)
 					except:
 						pass
@@ -828,8 +828,8 @@ class DoseDialog(leginon.gui.wx.Dialog.Dialog):
 	def onCancel(self,evt):
 		self.parent.onCancelDoseMeasure()
 		self.EndModal(0)
-		
-		
+
+
 
 class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin):
 	icon = 'presets'
@@ -957,7 +957,7 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 
 	def onMatchDose(self, dose_to_match, dose):
 		presetname = self.presets.getSelectedPreset()
-		self.node.matchDose(presetname, dose_to_match, dose)	
+		self.node.matchDose(presetname, dose_to_match, dose)
 
 	def onCancelDoseMeasure(self):
 		presetname = self.presets.getSelectedPreset()
@@ -1328,7 +1328,7 @@ class AlignDialog(leginon.gui.wx.Dialog.Dialog):
 		self.node = node
 		self.parent = parent
 
-		
+
 		refname = self.parent.presets.getSelectedPreset()
 		boxref = wx.StaticBox(self, -1)
 		szref = wx.StaticBoxSizer(boxref, wx.HORIZONTAL)
@@ -1342,7 +1342,7 @@ class AlignDialog(leginon.gui.wx.Dialog.Dialog):
 		szref.Add(sz, 1, wx.ALIGN_CENTER|wx.ALL, 5)
 		szmode = wx.BoxSizer(wx.HORIZONTAL)
 		szmode.Add(szref, 1)
-		self.choiceacquiremode = wx.Choice(self, -1, choices=(['Full Camera','Similar look across mags']))	
+		self.choiceacquiremode = wx.Choice(self, -1, choices=(['Full Camera','Similar look across mags']))
 		szmode.Add(self.choiceacquiremode, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.ALL, 5)
 
 		preset_names = self.node.presets.keys()
@@ -1382,8 +1382,8 @@ class AlignDialog(leginon.gui.wx.Dialog.Dialog):
 		szbutton.Add(self.bstart, (0, 0), (1, 1), wx.ALIGN_CENTER)
 		szbutton.Add(self.bcontinue, (0, 1), (1, 1), wx.ALIGN_CENTER)
 		szbutton.Add(self.bdone, (0, 2), (1, 1), wx.ALIGN_CENTER)
-		
-		
+
+
 		szimages = wx.BoxSizer(wx.HORIZONTAL)
 		szimages.Add(szleft, 1, wx.EXPAND)
 		szimages.Add(szright, 1, wx.EXPAND)
@@ -1487,7 +1487,7 @@ class BeamDialog(wx.Dialog):
 		self.im = leginon.gui.wx.ImagePanel.ClickImagePanel(self, -1, imagesize=(imsize,imsize))
 		self.Bind(leginon.gui.wx.ImagePanelTools.EVT_IMAGE_CLICKED, self.onImageClicked, self.im)
 		self.im.statstypesizer.SetEmptyCellSize((110, 100))
-	
+
 		### create buttons
 		self.bacquire = wx.Button(self, -1, 'Acquire')
 		self.bacquire.Enable(True)
@@ -1745,7 +1745,7 @@ class Parameters(wx.StaticBoxSizer):
 			('pre exposure', 'Pre-Exposure (s):'),
 			('skip', 'Skip when cycling:'),
 		)
-			
+
 		self.labels = {}
 		self.values = {}
 		for key, value in labels:
@@ -1889,7 +1889,7 @@ class Parameters(wx.StaticBoxSizer):
 						self.aperture_sizer.Remove(self.values['aperture size'][aperture])
 						self.values['aperture size'][aperture].Destroy()
 						del self.values['aperture size'][aperture]
-	
+
 				self.aperture_sbsizer.Remove(self.aperture_sizer)
 				self._sz.Remove(self.aperture_sbsizer)
 				self.aperture_sizer = None
@@ -2076,6 +2076,7 @@ if __name__ == '__main__':
 				'skip': True,
 				'save frames': False,
 				'frame time': 200.0,
+				'request nframes': 1,
 				'dose': 0,
 				'spot size': 1,
 				'intensity': 0.0,
@@ -2126,4 +2127,3 @@ if __name__ == '__main__':
 
 	app = App(0)
 	app.MainLoop()
-
