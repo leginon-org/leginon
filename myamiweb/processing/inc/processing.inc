@@ -188,10 +188,11 @@ function getSubmitForm($name="Run", $displayhost=true, $warning=false, $button="
 	else if ($_SESSION['loggedin']) {
 		$hostarray = getSelectedHostArray();
 		if (!$hostarray['nojobqueue'])
-			$html.="  <input type='submit' name='process' value='$name' onclick='pleasewait()'>\n";
+			$long_name = $name.' with Job Scheduler';
+			$html.="  <input type='submit' name='process' value='$long_name' onclick='pleasewait()'>\n";
 
 		if ($hostarray['allowdirectrun'])
-			$html.="  <input type='submit' name='process' value='Run without Job Scheduler' onclick='pleasewait()'>\n";
+			$html.="  <input type='submit' name='process' value='Run Directly on Host' onclick='pleasewait()'>\n";
 	}
 	return $html;
 }
@@ -683,7 +684,7 @@ function showOrSubmitCommand($command, $headinfo, $jobtype, $nproc, $testimg=Fal
 	}	
 
 	// simple ssh in and run.
-	if ($_POST['process'] == "Run without Job Scheduler" && $jobtype != 'uploadimage') {
+	if ($_POST['process'] == "Run Directly on Host" && $jobtype != 'uploadimage') {
 		// Option 1: selected the run button
 		$user = $_SESSION['username'];
 		$password = $_SESSION['password'];
