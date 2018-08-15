@@ -4,6 +4,7 @@ import time
 import pyami.imagefun
 import ccdcamera
 import threading
+from pyscope import moduleconfig
 
 # frame flipping configuration.
 # default here is for DE-20 orientation on JEM-3200FSC
@@ -127,25 +128,33 @@ class DECameraBase(ccdcamera.CCDCamera):
 		self.setProperty('ROI Offset X', 0)
 		self.setProperty('ROI Offset Y', 0)
 
-	def getProperty(self, name):		
+	def getDEConfig(self, optionname, itemname=None):
+		if itemname is None:
+			return deconfigs[optionname]
+		else:
+			return deconfigs[optionname][itemname]
+
+	def getProperty(self, name):
 		value = de_getProperty(self.name, name)
 		return value
 
-	def setProperty(self, name, value):		
+	def setProperty(self, name, value):
 		value = de_setProperty(self.name, name, value)
 		return value
 
-	def getDictProp(self, name):		
+	def getDictProp(self, name):
 		return de_getDictProp(self.name, name)
 
-	def setDictProp(self, name, xydict):		
+	def setDictProp(self, name, xydict):
 		return de_setDictProp(self.name, name, xydict)
 
 	def _getImage(self):
 		old_frames_name = self.getPreviousRawFramesName()
+		self.custom_setup()
 		t0 = time.time()
 		image = de_getImage(self.name)
 		t1 = time.time()
+		self.postAcquisitionSetup()
 		self.exposure_timestamp = (t1 + t0) / 2.0
 		if not isinstance(image, numpy.ndarray):
 			raise ValueError('GetImage did not return array')
@@ -393,6 +402,53 @@ class DD(DECameraBase):
 		'''
 		return FRAME_ROTATE + 2
 
+    def setElectronCounting(self, state):
+        self.setProperty('Electron Counting', state)
+
+    def getElectronCounting(self):
+        return self.getProperty('Electron Counting')
+
+    def setSensorHardwareBinning(self, state):
+        self.setProperty('Sensor Hardware Binning', state)
+
+    def getSensorHardwareBinning(self):
+        return self.getProperty('Sensor Hardware Binning')
+
+    def setHardwareBinning(self, value):
+        self.setProperty('Binning X', value)
+        self.setProperty('Binning Y', value)
+
+    def getHardwareBinning(self):
+        x = self.getProperty('Binning X')
+        y = self.getProperty('Binning Y')
+        return {'x': x, 'y': y}
+
+    def setECApplyCountingGain(self, state):
+        self.setProperty('Electron Counting - Apply Post-Counting Gain', state)
+
+    def getECApplyCountingGain(self):
+        return self.getProperty('Electron Counting - Apply Post-Counting Gain')
+
+    def setFramesPerSecond(self, value):
+        self.setProperty('Frames Per Second', value)
+
+    def getFramesPerSecond(self):
+        return self.getProperty('Frames Per Second')
+
+    def setECDoseFractionationNumberFrames(self, name):
+        value = self.getDEConfig(name, 'dose_fractionation_number_of_frames')
+        self.setProperty('Electron Counting - Dose Fractionation Number of Frames', value)
+
+    def getECDoseFractionationNumberFrames(self):
+        return self.getProperty('Electron Counting - Dose Fractionation Number of Frames')
+
+    def setECThreshold(self, name):
+        value = self.getDEConfig(name, 'threshold')
+        self.setProperty('Electron Counting - Threshold', value)
+
+    def getECThreshold(self):
+        return self.getProperty('Electron Counting - Threshold')
+
 class DE12(DD):
 	name = 'DE12'
 
@@ -414,3 +470,73 @@ class DE64(DD):
 		'''
 		return FRAME_ROTATE
 
+	def custom_setup(self):
+		'''DE64 Integration specific camera setting'''
+		self.setElectronCounting('Disable')
+		self.setHardwareBinning(1)
+		self.setSensorHardwareBinning('Disable')
+		self.setECApplyCountingGain('Disable')
+		# self.setProperty('Correction Mode', 'Uncorrected Raw')
+		# self.setProperty('Autosave Movie', 'Discard')
+		# self.setProperty('Autosave Final Image', 'Discard')
+
+
+class DE64c(DD):
+	name = 'DE64c'
+	model_name = 'DE64'
+
+	def getPixelSize(self):
+		psize = 6.5e-6
+		return {'x': psize, 'y': psize}
+
+	def getSystemGainDarkCorrected(self):
+		return True
+
+	def custom_setup(self):
+		'''DE64 Counting specific camera setting'''
+		self.setSensorHardwareBinning('Enable')
+		self.setHardwareBinning(2)
+		self.setElectronCounting('Enable')
+		self.setECApplyCountingGain('Enable')
+		# self.setFramesPerSecond(141.22)
+		self.setProperty('Correction Mode', 'Dark Corrected')
+		# self.setProperty('Autosave Movie', 'Save')
+		self.setProperty('Autosave Raw Frames', 'Discard')
+		# self.setProperty('Autosave Final Image', 'Discard')
+		self.setProperty('Electron Counting - Apply Post-Counting Gain', 'Enable')
+		self.setProperty('Electron Counting - Apply Post-Threshold Gain', 'Enable')
+		self.setProperty('Electron Counting - Fourier Filter Final', 'Enable')
+		self.setProperty('Electron Counting - Fourier Filter Movie', 'Enable')
+		self.setECDoseFractionationNumberFrames(self.name)
+
+	def postAcquisitionSetup(self):
+		# Setting FrameTime and NumberOfFrames of correct value reading in counting mode
+		if self.name == 'DE64c':
+			nfractionation = self.getECDoseFractionationNumberFrames()
+			frame_time_ms = self.getFrameTime() * nfractionation
+			requestenframes = 'requestednframes'
+			self.setFrameTime(frame_time_ms)
+
+	def setRequestNFrames(self, value):
+		self.requestnframes = value
+
+	def getRequestNFrames(self):
+		return self.requestnframes
+
+	def getSaveRawFrames(self):
+		'''Save or Discard'''
+		value = self.getProperty('Autosave Movie')
+		if value == 'Save':
+			return True
+		elif value == 'Discard':
+			return False
+		else:
+			raise ValueError('unexpected value from Autosave Raw Frames: %s' % (value,))
+
+	def setSaveRawFrames(self, value):
+		'''DE64 True: save frames,  False: discard frames'''
+		if value:
+			value_string = 'Save'
+		else:
+			value_string = 'Discard'
+		self.setProperty('Autosave Movie', value_string)

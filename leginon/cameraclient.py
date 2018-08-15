@@ -13,6 +13,7 @@ default_settings['binning'] = {'x': 1, 'y': 1}
 default_settings['exposure time'] = 200
 default_settings['save frames'] = False
 default_settings['frame time'] = 200
+default_settings['request nframes'] = 1
 default_settings['align frames'] = False
 default_settings['align filter'] = 'None'
 default_settings['use frames'] = ''

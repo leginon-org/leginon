@@ -47,6 +47,7 @@ class CameraPanel(wx.Panel):
 		self.defaultalignfilter = 'None'
 		self.defaultuseframes = ''
 		self.defaultreadoutdelay= 0
+		self.defaultrequestnframes = 1
 		self.common = {}
 		self.setfuncs = {
 			'exposure time': self._setExposureTime,
@@ -56,6 +57,7 @@ class CameraPanel(wx.Panel):
 			'align filter': self._setAlignFilter,
 			'use frames': self._setUseFrames,
 			'readout delay': self._setReadoutDelay,
+			'request nframes': self._setRequestNFrames,
 		}
 		self.getfuncs = {
 			'exposure time': self._getExposureTime,
@@ -65,6 +67,7 @@ class CameraPanel(wx.Panel):
 			'align filter': self._getAlignFilter,
 			'use frames': self._getUseFrames,
 			'readout delay': self._getReadoutDelay,
+			'request nframes': self._getRequestNFrames,
 		}
 
 		self.framewidges = []
@@ -160,6 +163,14 @@ class CameraPanel(wx.Panel):
 						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		ftsz.Add(stms, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		ddsz.Add(ftsz, (1, 1), (1, 2), wx.ALIGN_CENTER|wx.EXPAND)
+
+		# DE64c Request Total Movie Frames
+        label = wx.StaticText(self, -1, 'DE64c Request Total Movie Frames:')
+        self.requestnframes = IntEntry(self, -1)
+        self.framewidges.append(self.requestnframes)
+        ddsz.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        ddsz.Add(self.requestnframes, (2, 1), (1, 1), wx.ALIGN_CENTER | wx.EXPAND)
+
 		# use raw frames
 		label = wx.StaticText(self, -1, 'Frames to use:')
 		self.useframes = Entry(self, -1)
@@ -205,6 +216,7 @@ class CameraPanel(wx.Panel):
 	def bindFrameCameraEvents(self):
 		self.Bind(wx.EVT_CHECKBOX, self.onSaveFrames, self.saveframes)
 		self.Bind(EVT_ENTRY, self.onFrameTime, self.frametime)
+		self.Bind(EVT_ENTRY, self.onRequestNFrames, self.requestnframes)
 		self.Bind(EVT_ENTRY, self.onUseFrames, self.useframes)
 		self.Bind(EVT_ENTRY, self.onReadoutDelay, self.readoutdelay)
 
@@ -261,6 +273,7 @@ class CameraPanel(wx.Panel):
 		self.alignfilter.SetValue(self.defaultalignfilter)
 		self.useframes.SetValue(self.defaultuseframes)
 		self.readoutdelay.SetValue(self.defaultreadoutdelay)
+		self.requestnframes.SetValue(self.requestnframes)
 		#self.Enable(False)
 		self.Thaw()
 
@@ -282,6 +295,9 @@ class CameraPanel(wx.Panel):
 
 	def onReadoutDelay(self, evt):
 		self.onConfigurationChanged()
+
+	def onRequestNFrames(self, evt):
+        self.onConfigurationchanged()
 
 	def setCommonChoice(self):
 		for key, geometry in self.common.items():
@@ -336,6 +352,12 @@ class CameraPanel(wx.Panel):
 
 	def _setFrameTime(self, value):
 		self.frametime.SetValue(value)
+
+	def _getRequestNFrames(self):
+        return self.requestnframes.GetValue()
+
+    def _setRequestNFrames(self, value):
+        self.requestnframes.SetValue(value)
 
 	def _getAlignFrames(self):
 		return self.alignframes.GetValue()
@@ -535,7 +557,7 @@ class CameraPanel(wx.Panel):
 				if g == 'offset':
 					label = '(%d, %d)'
 				else:
-					#label = '%d × %d'
+					#label = '%d ï¿½ %d'
 					label = '%d x %d'
 				label = label % (self.geometry[g]['x'], self.geometry[g]['y'])
 				getattr(self, 'st' + g).SetLabel(label)
