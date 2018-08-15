@@ -1,0 +1,69 @@
+{
+	"CustomGroups": {
+		"UserName": "GroupName",
+		"anotheruser": "somegroup"
+	},
+
+	"GlobalJobParameters": {
+		"defaultScheduler": {
+			"execCommand": "srun",
+			"statusCommand": "squeue",
+			"options": {
+				"-N": "1",
+				"-t": "48:00:00",
+				"--mem": "4GB"
+			}
+
+		},
+		"ctfestimate.py": {
+			"options": {
+				"-N": "1",
+				"-t": "48:00:00",
+				"--mem": "6GB",
+				"-p": "genacc"
+			}
+		},
+		"gctf.py": {
+			"options": {
+				"-N": "1",
+				"-t": "48:00:00",
+				"--mem": "6GB",
+				"-p": "genacc",
+				"--gres" : "gpu:1"
+			}
+		},
+		"motioncor2.py": {
+			"options": {
+				"-N": "1",
+				"-t": "48:00:00",
+				"--mem": "6GB",
+				"-p": "genacc",
+				"--gres" : "gpu:1"
+			}
+		}
+
+	},
+
+	"UserJobParameters": {
+		"someguy": {
+			"default": {
+				"prefix": "#SBATCH",
+				"options": {
+					"-N": "1",
+					"-n": "8",
+					"-t": "01:00:00",
+					"--mem": "4GB",
+					"-p": "stagg_q"
+				}
+			},
+			"ctfestimate.py": {
+				"options": {
+					"-N": "1",
+					"-t": "01:00:00",
+					"--mem": "6GB",
+					"-p": "stagg_q"
+				}
+			}
+		}
+	}
+}
