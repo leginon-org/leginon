@@ -284,7 +284,7 @@ class DECameraBase(ccdcamera.CCDCamera):
 	def getPreviousRawFramesName(self):
 		frames_name = self.getProperty('Autosave Frames - Previous Dataset Name')
 		return frames_name
-        
+		
 	def getNumberOfFramesSaved(self):
 		nframes = self.getProperty('Autosave Raw Frames - Frames Written in Last Exposure')
 		return int(nframes)
@@ -402,52 +402,52 @@ class DD(DECameraBase):
 		'''
 		return FRAME_ROTATE + 2
 
-    def setElectronCounting(self, state):
-        self.setProperty('Electron Counting', state)
+	def setElectronCounting(self, state):
+		self.setProperty('Electron Counting', state)
 
-    def getElectronCounting(self):
-        return self.getProperty('Electron Counting')
+	def getElectronCounting(self):
+		return self.getProperty('Electron Counting')
 
-    def setSensorHardwareBinning(self, state):
-        self.setProperty('Sensor Hardware Binning', state)
+	def setSensorHardwareBinning(self, state):
+		self.setProperty('Sensor Hardware Binning', state)
 
-    def getSensorHardwareBinning(self):
-        return self.getProperty('Sensor Hardware Binning')
+	def getSensorHardwareBinning(self):
+		return self.getProperty('Sensor Hardware Binning')
 
-    def setHardwareBinning(self, value):
-        self.setProperty('Binning X', value)
-        self.setProperty('Binning Y', value)
+	def setHardwareBinning(self, value):
+		self.setProperty('Binning X', value)
+		self.setProperty('Binning Y', value)
 
-    def getHardwareBinning(self):
-        x = self.getProperty('Binning X')
-        y = self.getProperty('Binning Y')
-        return {'x': x, 'y': y}
+	def getHardwareBinning(self):
+		x = self.getProperty('Binning X')
+		y = self.getProperty('Binning Y')
+		return {'x': x, 'y': y}
 
-    def setECApplyCountingGain(self, state):
-        self.setProperty('Electron Counting - Apply Post-Counting Gain', state)
+	def setECApplyCountingGain(self, state):
+		self.setProperty('Electron Counting - Apply Post-Counting Gain', state)
 
-    def getECApplyCountingGain(self):
-        return self.getProperty('Electron Counting - Apply Post-Counting Gain')
+	def getECApplyCountingGain(self):
+		return self.getProperty('Electron Counting - Apply Post-Counting Gain')
 
-    def setFramesPerSecond(self, value):
-        self.setProperty('Frames Per Second', value)
+	def setFramesPerSecond(self, value):
+		self.setProperty('Frames Per Second', value)
 
-    def getFramesPerSecond(self):
-        return self.getProperty('Frames Per Second')
+	def getFramesPerSecond(self):
+		return self.getProperty('Frames Per Second')
 
-    def setECDoseFractionationNumberFrames(self, name):
-        value = self.getDEConfig(name, 'dose_fractionation_number_of_frames')
-        self.setProperty('Electron Counting - Dose Fractionation Number of Frames', value)
+	def setECDoseFractionationNumberFrames(self, name):
+		value = self.getDEConfig(name, 'dose_fractionation_number_of_frames')
+		self.setProperty('Electron Counting - Dose Fractionation Number of Frames', value)
 
-    def getECDoseFractionationNumberFrames(self):
-        return self.getProperty('Electron Counting - Dose Fractionation Number of Frames')
+	def getECDoseFractionationNumberFrames(self):
+		return self.getProperty('Electron Counting - Dose Fractionation Number of Frames')
 
-    def setECThreshold(self, name):
-        value = self.getDEConfig(name, 'threshold')
-        self.setProperty('Electron Counting - Threshold', value)
+	def setECThreshold(self, name):
+		value = self.getDEConfig(name, 'threshold')
+		self.setProperty('Electron Counting - Threshold', value)
 
-    def getECThreshold(self):
-        return self.getProperty('Electron Counting - Threshold')
+	def getECThreshold(self):
+		return self.getProperty('Electron Counting - Threshold')
 
 class DE12(DD):
 	name = 'DE12'

@@ -106,10 +106,10 @@ class CCDCamera(baseinstrument.BaseInstrument):
 			settings['frame time'] = self.getFrameTime()
 		except:
 			settings['frame time'] = None
-        try:
-            settings['request nframes'] = self.getRequestNFrames()
-        except:
-            settings['request nframes'] = self.getNumberOfFrames()
+		try:
+			settings['request nframes'] = self.getRequestNFrames()
+		except:
+			settings['request nframes'] = self.getNumberOfFrames()
 		try:
 			settings['use frames'] = self.getUseFrames()
 		except:
@@ -144,9 +144,9 @@ class CCDCamera(baseinstrument.BaseInstrument):
 		except:
 			pass
 		try:
-            self.setRequestNFrames(settings['request nframes'])
-        except:
-            pass
+			self.setRequestNFrames(settings['request nframes'])
+		except:
+			pass
 		try:
 			self.setReadoutDelay(settings['readout delay'])
 		except:

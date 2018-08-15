@@ -1,8 +1,8 @@
 # -*- coding: iso-8859-1 -*-
-#       The Leginon software is Copyright under
-#       Apache License, Version 2.0
-#       For terms of the license agreement
-#       see  http://leginon.org
+#	   The Leginon software is Copyright under
+#	   Apache License, Version 2.0
+#	   For terms of the license agreement
+#	   see  http://leginon.org
 
 import copy
 import wx
@@ -165,18 +165,18 @@ class CameraPanel(wx.Panel):
 		ddsz.Add(ftsz, (1, 1), (1, 2), wx.ALIGN_CENTER|wx.EXPAND)
 
 		# DE64c Request Total Movie Frames
-        label = wx.StaticText(self, -1, 'DE64c Request Total Movie Frames:')
-        self.requestnframes = IntEntry(self, -1)
-        self.framewidges.append(self.requestnframes)
-        ddsz.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-        ddsz.Add(self.requestnframes, (2, 1), (1, 1), wx.ALIGN_CENTER | wx.EXPAND)
+		label = wx.StaticText(self, -1, 'DE64c Request Total Movie Frames:')
+		self.requestnframes = IntEntry(self, -1)
+		self.framewidges.append(self.requestnframes)
+		ddsz.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		ddsz.Add(self.requestnframes, (2, 1), (1, 1), wx.ALIGN_CENTER | wx.EXPAND)
 
 		# use raw frames
 		label = wx.StaticText(self, -1, 'Frames to use:')
 		self.useframes = Entry(self, -1)
 		self.framewidges.append(self.useframes)
-		ddsz.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		ddsz.Add(self.useframes, (2, 1), (1, 1), wx.ALIGN_CENTER|wx.EXPAND)
+		ddsz.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		ddsz.Add(self.useframes, (3, 1), (1, 1), wx.ALIGN_CENTER|wx.EXPAND)
 
 		# readout delay
 		strd = wx.StaticText(self, -1, 'Readout delay:')
@@ -187,7 +187,7 @@ class CameraPanel(wx.Panel):
 		sz.Add(strd)
 		sz.Add(self.readoutdelay)
 		sz.Add(stms)
-		ddsz.Add(sz, (3, 0), (1, 2), wx.ALIGN_CENTER|wx.EXPAND)
+		ddsz.Add(sz, (4, 0), (1, 2), wx.ALIGN_CENTER|wx.EXPAND)
 
 		# align frames box
 		sb = wx.StaticBox(self, -1, 'Frame-Aligning Camera Only')
@@ -207,7 +207,7 @@ class CameraPanel(wx.Panel):
 		afsz.Add(self.alignfilter, (1, 1), (1, 1), wx.ALIGN_CENTER|wx.EXPAND)
 		afsb.Add(afsz, 0, wx.EXPAND|wx.ALL, 2)
 
-		ddsz.Add(afsb, (4, 0), (3, 2), wx.ALIGN_CENTER|wx.EXPAND)
+		ddsz.Add(afsb, (5, 0), (3, 2), wx.ALIGN_CENTER|wx.EXPAND)
 
 		ddsb.Add(ddsz, 0, wx.EXPAND|wx.ALL, 2)
 		ddsz.AddGrowableCol(1)
@@ -297,7 +297,7 @@ class CameraPanel(wx.Panel):
 		self.onConfigurationChanged()
 
 	def onRequestNFrames(self, evt):
-        self.onConfigurationchanged()
+		self.onConfigurationchanged()
 
 	def setCommonChoice(self):
 		for key, geometry in self.common.items():
@@ -354,10 +354,10 @@ class CameraPanel(wx.Panel):
 		self.frametime.SetValue(value)
 
 	def _getRequestNFrames(self):
-        return self.requestnframes.GetValue()
+		return self.requestnframes.GetValue()
 
-    def _setRequestNFrames(self, value):
-        self.requestnframes.SetValue(value)
+	def _setRequestNFrames(self, value):
+		self.requestnframes.SetValue(value)
 
 	def _getAlignFrames(self):
 		return self.alignframes.GetValue()
