@@ -95,7 +95,14 @@ function getHosts(){
 
 function getSelectedProcessingHost() 
 {
+	if ($_POST['changehostname']) {
+		// clusterParamForm may change hostname rather than processinghost
+		$_POST['processinghost'] = $_POST['changehostname'];
+	} 
 	if ($_POST['processinghost']) {
+		// $_SESSION['processinghost'] is changed according to $_POST after
+		// using and is not reset.  This sets it so it won't have conflict
+		// with the default.
 		$_SESSION['processinghost'] = $_POST['processinghost'];
 	}
 	return $_SESSION['processinghost'];
@@ -116,7 +123,7 @@ function getSelectedHostArray() {
 
 function getHostForm() {
 	$h=array();
-	$selected_host=$_POST['processinghost'];
+	$selected_host= getSelectedProcessingHost();
 	$proc_list = (array)getHosts();
 	$hostArray = $proc_list[0];
 
@@ -125,17 +132,9 @@ function getHostForm() {
 			
 		foreach ($proc_list as $host) {
 			$s = "";
-			if ($host['host'] == $_POST['processinghost']) {
+			if ($host['host'] == $selected_host) {
 				$s = "selected";
 				$hostArray = $host;
-			} elseif ( !$_POST['processinghost'] && $_SESSION['processinghost'] ) {
-				// $_SESSION['processinghost'] is changed according to $_POST after
-				// using and is not reset.  This sets it so it won't have conflict
-				// with the default.
-				if ($host['host'] == $_SESSION['processinghost']) {
-					$hostArray = $host;
-					$s = "selected";
-				}
 			}
 
 			$h[]="<option value='".$host['host']."' ".$s." >".$host['host']."</option>\n";
@@ -678,6 +677,7 @@ function showOrSubmitCommand($command, $headinfo, $jobtype, $nproc, $testimg=Fal
 	// Get the processing host
 	$processhost = getSelectedProcessingHost();
 
+
 	if ($_POST['process'] == "Refresh Test Results" && $testimg) {		
 		// if we are testing an image, return to the parameter page 
 		return;
@@ -691,7 +691,7 @@ function showOrSubmitCommand($command, $headinfo, $jobtype, $nproc, $testimg=Fal
 		if (!($user && $password)) {
 			return "<B>ERROR:</B> Enter a user name and password";
 		}
-		$errors = submitAppionCommand($command, $outdir, $runname, $expId, $jobtype, $processhost);
+		$errors = submitAppionCommand($command, $outdir, $runname, $expId, $jobtype, $processhost, $testimg);
 		
 		// if errors:
 		if ($errors) {
@@ -699,7 +699,6 @@ function showOrSubmitCommand($command, $headinfo, $jobtype, $nproc, $testimg=Fal
 		} else if ($testimg) {
 			return;
 		}
-
 		exit;
 
 	// until uploadimage works with appionJob submission, it is not allowed to do so
@@ -899,7 +898,7 @@ function addJobSubmitParams( $command, $processhost, $nproc, $ppn, $nodes, $wall
 }
 
 /**************************************/
-function submitAppionCommand($command, $outdir, $runname, $expId, $jobtype) {
+function submitAppionCommand($command, $outdir, $runname, $expId, $jobtype, $processinghost, $testimg=False) {
 	$user = $_SESSION['username'];
 	$pass = $_SESSION['password'];
 
@@ -914,19 +913,24 @@ function submitAppionCommand($command, $outdir, $runname, $expId, $jobtype) {
 	$final_command = "nohup ".$wrappedcommand." >& ".$logpath;
 	// uploadimage is run directly through ssh, not webcaller.py and qsub
 	$no_error2 = exec_over_ssh($processhost, $user, $pass, $final_command, TRUE);
-	processing_header("Run command through ssh and background processing", "Run command in the background");
-	echo $headinfo;
-	echo "<B>Command submitted to ".$processhost." through ssh on ".$outdir.".</B>";
-	echo "<p></p>\n";
-	echo $final_command;
-	echo "<p></p>\n";
-	echo justShowCommandTable($command, $processhost, true);
+	$msg = "<B>Command submitted to ".$processinghost." through ssh on ".$outdir.".</B>";
+	if (!$testimg) {
+		processing_header("Appion Background Submission","Appion Background Submission");
+		echo $msg;
+		echo "<p></p>\n";
+		echo $final_command;
+		echo "<p></p>\n";
+		echo justShowCommandTable($command, $processhost, true);
+	processing_footer();
+	exit;
+	}
 	$no_error3 = linkLogInRunDir($processhost, $user, $pass, $logpath, $appionlogpath);
 	if ($no_error1 === false || $no_error2 === false || $no_error3 === false ){
 		$errMsg = "Could not run command directly in $outdir from $processhost: ";
 		$errMsg .= pconnError();
 		return $errMsg;
 	}
+	if ($testimg) return;
 	processing_footer();
 	exit;
 
@@ -1098,7 +1102,7 @@ function writeTestResults($jpg,$ccclist,$bin,$process_str='')
 	if ($process_str === '') {
 		$process_str = getProcessString();
 	}
-	$showcmd = preg_match('/[Ss]how/',$process_str);
+	$showcmd = preg_match('/[Ss]how/',$process_str) || preg_match('/[Rr]un Directly/',$process_str);
 	if ( !$showcmd )	{
 		$showcmd = preg_match('/[Rr]efresh/',$process_str);
 	}

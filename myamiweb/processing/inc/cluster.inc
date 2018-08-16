@@ -94,7 +94,7 @@ class Cluster {
         $this->gpus = $hostconfig['gpus'];
         $this->queues = $hostconfig['queues']; //an array of queues available on this cluster
         $this->noJobQueue = $hostconfig['nojobqueue']; //has no job scheduler
-        $this->allowDirectCommandRun = $hostconfig['allowdirectrun']; //allow running appion script directly
+        $this->allowDirectRun = $hostconfig['allowdirectrun']; //allow running appion script directly
     }
 
     function getHostName() {
@@ -121,8 +121,8 @@ class Cluster {
         return $this->reconPerNodeDef;
     }
 
-		function getAllowDirectCommandRun() {
-        return $this->allowDirectCommandRun;
+		function getAllowDirectRun() {
+        return $this->allowDirectRun;
 		}
 
 		function getNoJobQueue() {
