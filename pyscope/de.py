@@ -498,7 +498,7 @@ class DE64c(DD):
 		self.setHardwareBinning(2)
 		self.setElectronCounting('Enable')
 		self.setECApplyCountingGain('Enable')
-		# self.setFramesPerSecond(141.22)
+		self.setFramesPerSecond(141.22)
 		self.setProperty('Correction Mode', 'Dark Corrected')
 		# self.setProperty('Autosave Movie', 'Save')
 		self.setProperty('Autosave Raw Frames', 'Discard')
@@ -507,15 +507,24 @@ class DE64c(DD):
 		self.setProperty('Electron Counting - Apply Post-Threshold Gain', 'Enable')
 		self.setProperty('Electron Counting - Fourier Filter Final', 'Enable')
 		self.setProperty('Electron Counting - Fourier Filter Movie', 'Enable')
-		self.setECDoseFractionationNumberFrames(self.name)
+		self.setCalculatedFractionNumber()
+
+	def setCalculatedFractionNumber(self):
+		# Calculation for the Fractionation Number for movie creation
+		numframes = self.getRequestNFrames()
+		seconds = self.getProperty('Exposure Time (seconds)')
+		ms = int(seconds * 1000.0)
+		fps = self.getFramesPerSecond()
+		fpms = fps / 1000.0
+		baseframetime = 1 / fpms
+		nfractionation = int(round(ms / (baseframetime * numframes)))
+		self.setECDoseFractionationNumberFrames(nfractionation)
 
 	def postAcquisitionSetup(self):
-		# Setting FrameTime and NumberOfFrames of correct value reading in counting mode
-		if self.name == 'DE64c':
-			nfractionation = self.getECDoseFractionationNumberFrames()
-			frame_time_ms = self.getFrameTime() * nfractionation
-			requestenframes = 'requestednframes'
-			self.setFrameTime(frame_time_ms)
+		# It resets the movie frame time to its original value
+		nfractionation = self.getECDoseFractionationNumberFrames()
+		frame_time_ms = self.getFrameTime() * nfractionation
+		self.setFrameTime(frame_time_ms)
 
 	def setRequestNFrames(self, value):
 		self.requestnframes = value
