@@ -37,11 +37,11 @@ CREATE TABLE `AcquisitionImageData` (
   `REF|ScopeEMData|scope` int(20) DEFAULT NULL,
   `REF|CameraEMData|camera` int(20) DEFAULT NULL,
   `REF|PresetData|preset` int(20) DEFAULT NULL,
-  `MRC|image` text,
-  `pixeltype` text,
+  `MRC|image` varchar(255),
+  `pixeltype` varchar(255),
   `pixels` int(20) DEFAULT NULL,
-  `label` text,
-  `filename` text,
+  `label` varchar(255),
+  `filename` varchar(255),
   `correction channel` int(20) DEFAULT NULL,
   `channel` int(20) DEFAULT NULL,
   `version` int(20) DEFAULT NULL,
@@ -76,7 +76,7 @@ CREATE TABLE `AcquisitionImageData` (
   KEY `REF|SpotWellMapData|spotmap` (`REF|SpotWellMapData|spotmap`),
   KEY `REF|TiltSeriesData|tilt series` (`REF|TiltSeriesData|tilt series`),
   KEY `REF|MoverParamsData|mover` (`REF|MoverParamsData|mover`)
-) ENGINE=MyISAM AUTO_INCREMENT=13 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -124,37 +124,37 @@ CREATE TABLE `AcquisitionSettingsData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `correct image` tinyint(1) DEFAULT NULL,
-  `SEQ|preset order` text,
+  `SEQ|preset order` varchar(255),
   `wait for rejects` tinyint(1) DEFAULT NULL,
-  `move type` text,
+  `move type` varchar(255),
   `save image` tinyint(1) DEFAULT NULL,
   `pause time` double DEFAULT NULL,
   `display image` tinyint(1) DEFAULT NULL,
   `duplicate targets` tinyint(1) DEFAULT NULL,
   `wait for process` tinyint(1) DEFAULT NULL,
-  `duplicate target type` text,
+  `duplicate target type` varchar(255),
   `REF|SessionData|session` int(20) DEFAULT NULL,
-  `name` text,
+  `name` varchar(255),
   `wait time` double DEFAULT NULL,
   `iterations` int(20) DEFAULT NULL,
   `adjust for drift` tinyint(1) DEFAULT NULL,
   `isdefault` tinyint(1) DEFAULT NULL,
-  `mover` text,
+  `mover` varchar(255),
   `move precision` double DEFAULT NULL,
-  `process target type` text,
+  `process target type` varchar(255),
   `save integer` int(20) DEFAULT NULL,
   `drift between` int(20) DEFAULT NULL,
   `final image shift` int(20) DEFAULT NULL,
   `accept precision` double DEFAULT NULL,
   `wait for reference` int(20) DEFAULT NULL,
   `wait for transform` tinyint(1) DEFAULT NULL,
-  `adjust for transform` text,
+  `adjust for transform` varchar(255),
   `background` tinyint(1) DEFAULT NULL,
   `use parent tilt` tinyint(1) DEFAULT NULL,
   `use parent mover` tinyint(1) DEFAULT NULL,
   `adjust time by tilt` tinyint(1) DEFAULT NULL,
   `reset tilt` tinyint(1) DEFAULT NULL,
-  `bad stats response` text,
+  `bad stats response` varchar(255),
   `high mean` double DEFAULT NULL,
   `low mean` double DEFAULT NULL,
   `emission off` tinyint(1) DEFAULT NULL,
@@ -167,7 +167,7 @@ CREATE TABLE `AcquisitionSettingsData` (
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|SessionData|session` (`REF|SessionData|session`)
-) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -181,7 +181,7 @@ CREATE TABLE `AlignmentManagerSettingsData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `REF|SessionData|session` int(20) DEFAULT NULL,
-  `name` text,
+  `name` varchar(255),
   `isdefault` tinyint(1) DEFAULT NULL,
   `bypass` tinyint(1) DEFAULT NULL,
   `reset a` tinyint(1) DEFAULT NULL,
@@ -191,7 +191,7 @@ CREATE TABLE `AlignmentManagerSettingsData` (
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|SessionData|session` (`REF|SessionData|session`)
-) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -204,12 +204,12 @@ DROP TABLE IF EXISTS `ApplicationData`;
 CREATE TABLE `ApplicationData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `name` text,
+  `name` varchar(255),
   `version` int(20) DEFAULT NULL,
   `hide` tinyint(1) DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -232,25 +232,25 @@ CREATE TABLE `BeamFixerSettingsData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `REF|SessionData|session` int(20) DEFAULT NULL,
-  `name` text,
+  `name` varchar(255),
   `isdefault` int(20) DEFAULT NULL,
-  `move type` text,
+  `move type` varchar(255),
   `pause time` double DEFAULT NULL,
   `interval time` double DEFAULT NULL,
   `override preset` int(20) DEFAULT NULL,
   `REF|CameraSettingsData|camera settings` int(20) DEFAULT NULL,
-  `SUBD|instruments|ccdcamera` text,
-  `SUBD|instruments|tem` text,
+  `SUBD|instruments|ccdcamera` varchar(255),
+  `SUBD|instruments|tem` varchar(255),
   `SUBD|stage position|x` double DEFAULT NULL,
   `SUBD|stage position|y` double DEFAULT NULL,
   `SUBD|stage position|z` double DEFAULT NULL,
-  `SEQ|correction presets` text,
+  `SEQ|correction presets` varchar(255),
   `shift step` double DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|SessionData|session` (`REF|SessionData|session`),
   KEY `REF|CameraSettingsData|camera settings` (`REF|CameraSettingsData|camera settings`)
-) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -264,11 +264,11 @@ CREATE TABLE `BeamTiltCalibratorSettingsData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `REF|SessionData|session` int(20) DEFAULT NULL,
-  `name` text,
+  `name` varchar(255),
   `isdefault` tinyint(1) DEFAULT NULL,
   `override preset` tinyint(1) DEFAULT NULL,
   `REF|CameraSettingsData|camera settings` int(20) DEFAULT NULL,
-  `correlation type` text,
+  `correlation type` varchar(255),
   `defocus beam tilt` double DEFAULT NULL,
   `first defocus` double DEFAULT NULL,
   `second defocus` double DEFAULT NULL,
@@ -283,13 +283,13 @@ CREATE TABLE `BeamTiltCalibratorSettingsData` (
   `imageshift coma step` double DEFAULT NULL,
   `imageshift coma number` int(20) DEFAULT NULL,
   `imageshift coma repeat` int(20) DEFAULT NULL,
-  `SUBD|instruments|ccdcamera` text,
-  `SUBD|instruments|tem` text,
+  `SUBD|instruments|ccdcamera` varchar(255),
+  `SUBD|instruments|tem` varchar(255),
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|SessionData|session` (`REF|SessionData|session`),
   KEY `REF|CameraSettingsData|camera settings` (`REF|CameraSettingsData|camera settings`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -312,14 +312,14 @@ CREATE TABLE `BeamTiltFixerSettingsData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `REF|SessionData|session` int(20) DEFAULT NULL,
-  `name` text,
+  `name` varchar(255),
   `isdefault` tinyint(1) DEFAULT NULL,
-  `SEQ|preset order` text,
-  `process target type` text,
+  `SEQ|preset order` varchar(255),
+  `process target type` varchar(255),
   `park after list` tinyint(1) DEFAULT NULL,
   `pause time` double DEFAULT NULL,
   `pause between time` double DEFAULT NULL,
-  `move type` text,
+  `move type` varchar(255),
   `correct image` tinyint(1) DEFAULT NULL,
   `display image` tinyint(1) DEFAULT NULL,
   `save image` tinyint(1) DEFAULT NULL,
@@ -329,9 +329,9 @@ CREATE TABLE `BeamTiltFixerSettingsData` (
   `wait for transform` tinyint(1) DEFAULT NULL,
   `wait time` double DEFAULT NULL,
   `iterations` int(20) DEFAULT NULL,
-  `adjust for transform` text,
+  `adjust for transform` varchar(255),
   `drift between` tinyint(1) DEFAULT NULL,
-  `mover` text,
+  `mover` varchar(255),
   `move precision` double DEFAULT NULL,
   `accept precision` double DEFAULT NULL,
   `final image shift` tinyint(1) DEFAULT NULL,
@@ -340,7 +340,7 @@ CREATE TABLE `BeamTiltFixerSettingsData` (
   `use parent tilt` tinyint(1) DEFAULT NULL,
   `adjust time by tilt` tinyint(1) DEFAULT NULL,
   `reset tilt` tinyint(1) DEFAULT NULL,
-  `bad stats response` text,
+  `bad stats response` varchar(255),
   `high mean` double DEFAULT NULL,
   `low mean` double DEFAULT NULL,
   `emission off` tinyint(1) DEFAULT NULL,
@@ -355,7 +355,7 @@ CREATE TABLE `BeamTiltFixerSettingsData` (
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|SessionData|session` (`REF|SessionData|session`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -378,36 +378,36 @@ CREATE TABLE `BeamTiltImagerSettingsData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `correct image` tinyint(1) DEFAULT NULL,
-  `SEQ|preset order` text,
+  `SEQ|preset order` varchar(255),
   `wait for rejects` tinyint(1) DEFAULT NULL,
-  `move type` text,
+  `move type` varchar(255),
   `save image` tinyint(1) DEFAULT NULL,
   `pause time` double DEFAULT NULL,
   `display image` tinyint(1) DEFAULT NULL,
   `duplicate targets` tinyint(1) DEFAULT NULL,
   `wait for process` tinyint(1) DEFAULT NULL,
-  `duplicate target type` text,
+  `duplicate target type` varchar(255),
   `REF|SessionData|session` int(20) DEFAULT NULL,
-  `name` text,
+  `name` varchar(255),
   `wait time` double DEFAULT NULL,
   `iterations` int(20) DEFAULT NULL,
   `adjust for drift` tinyint(1) DEFAULT NULL,
   `isdefault` tinyint(1) DEFAULT NULL,
-  `mover` text,
+  `mover` varchar(255),
   `move precision` double DEFAULT NULL,
-  `process target type` text,
+  `process target type` varchar(255),
   `save integer` int(20) DEFAULT NULL,
   `drift between` int(20) DEFAULT NULL,
   `final image shift` int(20) DEFAULT NULL,
   `accept precision` double DEFAULT NULL,
   `wait for reference` int(20) DEFAULT NULL,
   `wait for transform` tinyint(1) DEFAULT NULL,
-  `adjust for transform` text,
+  `adjust for transform` varchar(255),
   `background` tinyint(1) DEFAULT NULL,
   `use parent tilt` tinyint(1) DEFAULT NULL,
   `adjust time by tilt` tinyint(1) DEFAULT NULL,
   `reset tilt` tinyint(1) DEFAULT NULL,
-  `bad stats response` text,
+  `bad stats response` varchar(255),
   `high mean` double DEFAULT NULL,
   `low mean` double DEFAULT NULL,
   `emission off` tinyint(1) DEFAULT NULL,
@@ -421,14 +421,14 @@ CREATE TABLE `BeamTiltImagerSettingsData` (
   `beam tilt count` int(20) DEFAULT NULL,
   `sites` int(20) DEFAULT NULL,
   `startangle` double DEFAULT NULL,
-  `tableau type` text,
+  `tableau type` varchar(255),
   `tableau binning` int(20) DEFAULT NULL,
   `tableau split` int(20) DEFAULT NULL,
-  `correlation type` text,
+  `correlation type` varchar(255),
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|SessionData|session` (`REF|SessionData|session`)
-) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -441,14 +441,14 @@ DROP TABLE IF EXISTS `BindingSpecData`;
 CREATE TABLE `BindingSpecData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `event class string` text,
-  `from node alias` text,
-  `to node alias` text,
+  `event class string` varchar(255),
+  `from node alias` varchar(255),
+  `to node alias` varchar(255),
   `REF|ApplicationData|application` int(20) DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|ApplicationData|application` (`REF|ApplicationData|application`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -480,12 +480,12 @@ CREATE TABLE `BlobFinderSettingsData` (
   `max mean` double DEFAULT NULL,
   `max stdev` double DEFAULT NULL,
   `REF|SessionData|session` int(20) DEFAULT NULL,
-  `name` text,
+  `name` varchar(255),
   `isdefault` tinyint(1) DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|SessionData|session` (`REF|SessionData|session`)
-) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -507,7 +507,7 @@ CREATE TABLE `CameraEMData` (
   `SUBD|binning|y` int(20) DEFAULT NULL,
   `binned multiplier` double DEFAULT NULL,
   `exposure time` double DEFAULT NULL,
-  `exposure type` text,
+  `exposure type` varchar(255),
   `exposure timestamp` double DEFAULT NULL,
   `inserted` tinyint(1) DEFAULT '0',
   `dump` tinyint(1) DEFAULT '0',
@@ -517,13 +517,13 @@ CREATE TABLE `CameraEMData` (
   `nframes` int(20) DEFAULT NULL,
   `save frames` tinyint(1) DEFAULT '0',
   `align frames` tinyint(1) DEFAULT '0',
-  `align filter` text,
-  `frames name` text,
+  `align filter` varchar(255),
+  `frames name` varchar(255),
   `frame time` double DEFAULT NULL,
   `frame flip` tinyint(1) DEFAULT '0',
   `frame rotate` int(20) DEFAULT NULL,
   `temperature` double DEFAULT NULL,
-  `temperature status` text,
+  `temperature status` varchar(255),
   `readout delay` int(20) DEFAULT NULL,
   `gain index` int(20) DEFAULT NULL,
   `system corrected` tinyint(1) DEFAULT '0',
@@ -531,7 +531,7 @@ CREATE TABLE `CameraEMData` (
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|SessionData|session` (`REF|SessionData|session`),
   KEY `REF|InstrumentData|ccdcamera` (`REF|InstrumentData|ccdcamera`)
-) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -563,7 +563,7 @@ CREATE TABLE `CameraSettingsData` (
   `SUBD|binning|y` int(20) DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -586,16 +586,16 @@ CREATE TABLE `CenterTargetFilterSettingsData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `REF|SessionData|session` int(20) DEFAULT NULL,
-  `name` text,
+  `name` varchar(255),
   `isdefault` tinyint(1) DEFAULT NULL,
   `bypass` tinyint(1) DEFAULT NULL,
   `limit` int(20) DEFAULT NULL,
-  `target type` text,
+  `target type` varchar(255),
   `user check` int(20) DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|SessionData|session` (`REF|SessionData|session`)
-) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -612,7 +612,7 @@ CREATE TABLE `ClickTargetFinderSettingsData` (
   `REF|SessionData|session` int(20) DEFAULT NULL,
   `ignore images` tinyint(1) DEFAULT NULL,
   `no resubmit` tinyint(1) DEFAULT NULL,
-  `name` text,
+  `name` varchar(255),
   `queue` tinyint(1) DEFAULT NULL,
   `user check` tinyint(1) DEFAULT NULL,
   `isdefault` tinyint(1) DEFAULT NULL,
@@ -623,7 +623,7 @@ CREATE TABLE `ClickTargetFinderSettingsData` (
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|SessionData|session` (`REF|SessionData|session`)
-) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -637,16 +637,16 @@ CREATE TABLE `CorrectorSettingsData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `REF|SessionData|session` int(20) DEFAULT NULL,
-  `name` text,
+  `name` varchar(255),
   `despike size` int(20) DEFAULT NULL,
   `despike threshold` double DEFAULT NULL,
   `despike` tinyint(1) DEFAULT NULL,
   `n average` int(20) DEFAULT NULL,
   `REF|CameraSettingsData|camera settings` int(20) DEFAULT NULL,
-  `SUBD|instruments|ccdcamera` text,
-  `SUBD|instruments|tem` text,
+  `SUBD|instruments|ccdcamera` varchar(255),
+  `SUBD|instruments|tem` varchar(255),
   `isdefault` tinyint(1) DEFAULT NULL,
-  `combine` text,
+  `combine` varchar(255),
   `clip min` double DEFAULT NULL,
   `clip max` double DEFAULT NULL,
   `channels` int(20) DEFAULT NULL,
@@ -654,7 +654,7 @@ CREATE TABLE `CorrectorSettingsData` (
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|SessionData|session` (`REF|SessionData|session`),
   KEY `REF|CameraSettingsData|camera settings` (`REF|CameraSettingsData|camera settings`)
-) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -668,7 +668,7 @@ CREATE TABLE `DTFinderSettingsData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `REF|SessionData|session` int(20) DEFAULT NULL,
-  `name` text,
+  `name` varchar(255),
   `isdefault` int(20) DEFAULT NULL,
   `wait for done` int(20) DEFAULT NULL,
   `ignore images` int(20) DEFAULT NULL,
@@ -678,18 +678,18 @@ CREATE TABLE `DTFinderSettingsData` (
   `sort target` int(20) DEFAULT NULL,
   `allow append` int(20) DEFAULT NULL,
   `skip` int(20) DEFAULT NULL,
-  `image filename` text,
+  `image filename` varchar(255),
   `REF|LowPassFilterSettingsData|edge lpf` int(20) DEFAULT NULL,
   `edge` int(20) DEFAULT NULL,
-  `edge type` text,
+  `edge type` varchar(255),
   `edge log size` int(20) DEFAULT NULL,
   `edge log sigma` double DEFAULT NULL,
   `edge absolute` int(20) DEFAULT NULL,
   `edge threshold` double DEFAULT NULL,
-  `template type` text,
+  `template type` varchar(255),
   `REF|LowPassFilterSettingsData|template lpf` int(20) DEFAULT NULL,
   `threshold` double DEFAULT NULL,
-  `threshold method` text,
+  `threshold method` varchar(255),
   `blobs border` int(20) DEFAULT NULL,
   `blobs max` int(20) DEFAULT NULL,
   `blobs max size` int(20) DEFAULT NULL,
@@ -701,7 +701,7 @@ CREATE TABLE `DTFinderSettingsData` (
   `ice min mean` double DEFAULT NULL,
   `ice max mean` double DEFAULT NULL,
   `ice max std` double DEFAULT NULL,
-  `focus hole` text,
+  `focus hole` varchar(255),
   `target template` int(20) DEFAULT NULL,
   `focus template thickness` int(20) DEFAULT NULL,
   `focus stats radius` int(20) DEFAULT NULL,
@@ -710,10 +710,10 @@ CREATE TABLE `DTFinderSettingsData` (
   `focus max stdev thickness` double DEFAULT NULL,
   `template diameter` int(20) DEFAULT NULL,
   `file diameter` int(20) DEFAULT NULL,
-  `template filename` text,
+  `template filename` varchar(255),
   `template size` int(20) DEFAULT NULL,
   `correlation lpf` double DEFAULT NULL,
-  `correlation type` text,
+  `correlation type` varchar(255),
   `angle increment` double DEFAULT NULL,
   `rotate` int(20) DEFAULT NULL,
   `snr threshold` double DEFAULT NULL,
@@ -722,7 +722,7 @@ CREATE TABLE `DTFinderSettingsData` (
   KEY `REF|SessionData|session` (`REF|SessionData|session`),
   KEY `REF|LowPassFilterSettingsData|edge lpf` (`REF|LowPassFilterSettingsData|edge lpf`),
   KEY `REF|LowPassFilterSettingsData|template lpf` (`REF|LowPassFilterSettingsData|template lpf`)
-) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -736,20 +736,20 @@ CREATE TABLE `DoseCalibratorSettingsData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `REF|SessionData|session` int(20) DEFAULT NULL,
-  `name` text,
+  `name` varchar(255),
   `isdefault` tinyint(1) DEFAULT NULL,
-  `SUBD|instruments|ccdcamera` text,
-  `SUBD|instruments|tem` text,
+  `SUBD|instruments|ccdcamera` varchar(255),
+  `SUBD|instruments|tem` varchar(255),
   `override preset` tinyint(1) DEFAULT NULL,
   `REF|CameraSettingsData|camera settings` int(20) DEFAULT NULL,
-  `correlation type` text,
+  `correlation type` varchar(255),
   `beam diameter` double DEFAULT NULL,
   `scale factor` double DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|SessionData|session` (`REF|SessionData|session`),
   KEY `REF|CameraSettingsData|camera settings` (`REF|CameraSettingsData|camera settings`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -771,11 +771,11 @@ DROP TABLE IF EXISTS `ExposureFixerSettingsData`;
 CREATE TABLE `ExposureFixerSettingsData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `SEQ|correction presets` text,
+  `SEQ|correction presets` varchar(255),
   `REF|SessionData|session` int(20) DEFAULT NULL,
-  `name` text,
+  `name` varchar(255),
   `isdefault` tinyint(1) DEFAULT NULL,
-  `move type` text,
+  `move type` varchar(255),
   `pause time` double DEFAULT NULL,
   `interval time` double DEFAULT NULL,
   `override preset` tinyint(1) DEFAULT NULL,
@@ -791,7 +791,7 @@ CREATE TABLE `ExposureFixerSettingsData` (
   KEY `isdefault` (`isdefault`),
   KEY `override preset` (`override preset`),
   KEY `REF|CameraSettingsData|camera settings` (`REF|CameraSettingsData|camera settings`)
-) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -805,13 +805,13 @@ CREATE TABLE `FocusSequenceData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `REF|SessionData|session` int(20) DEFAULT NULL,
-  `node name` text,
-  `SEQ|sequence` text,
+  `node name` varchar(255),
+  `SEQ|sequence` varchar(255),
   `isdefault` int(20) DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|SessionData|session` (`REF|SessionData|session`)
-) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -825,19 +825,19 @@ CREATE TABLE `FocusSettingData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `REF|SessionData|session` int(20) DEFAULT NULL,
-  `correlation type` text,
+  `correlation type` varchar(255),
   `fit limit` double DEFAULT NULL,
-  `focus method` text,
+  `focus method` varchar(255),
   `stig defocus min` double DEFAULT NULL,
   `drift threshold` double DEFAULT NULL,
   `stig correction` tinyint(1) DEFAULT NULL,
-  `correction type` text,
+  `correction type` varchar(255),
   `check drift` tinyint(1) DEFAULT NULL,
-  `preset name` text,
-  `name` text,
+  `preset name` varchar(255),
+  `name` varchar(255),
   `stig defocus max` double DEFAULT NULL,
   `tilt` double DEFAULT NULL,
-  `node name` text,
+  `node name` varchar(255),
   `switch` tinyint(1) DEFAULT NULL,
   `delta min` double DEFAULT NULL,
   `delta max` double DEFAULT NULL,
@@ -846,7 +846,7 @@ CREATE TABLE `FocusSettingData` (
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|SessionData|session` (`REF|SessionData|session`)
-) ENGINE=MyISAM AUTO_INCREMENT=30 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=30 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -861,39 +861,39 @@ CREATE TABLE `FocuserSettingsData` (
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `acquire final` tinyint(1) DEFAULT NULL,
   `REF|SessionData|session` int(20) DEFAULT NULL,
-  `SEQ|preset order` text,
+  `SEQ|preset order` varchar(255),
   `save image` tinyint(1) DEFAULT NULL,
   `pause time` double DEFAULT NULL,
   `duplicate targets` tinyint(1) DEFAULT NULL,
   `melt time` double DEFAULT NULL,
-  `name` text,
+  `name` varchar(255),
   `correct image` tinyint(1) DEFAULT NULL,
   `wait for rejects` tinyint(1) DEFAULT NULL,
   `display image` tinyint(1) DEFAULT NULL,
-  `duplicate target type` text,
+  `duplicate target type` varchar(255),
   `wait for process` tinyint(1) DEFAULT NULL,
-  `move type` text,
+  `move type` varchar(255),
   `adjust for drift` tinyint(1) DEFAULT NULL,
   `wait time` double DEFAULT NULL,
   `iterations` int(20) DEFAULT NULL,
   `isdefault` tinyint(1) DEFAULT NULL,
-  `mover` text,
+  `mover` varchar(255),
   `move precision` double DEFAULT NULL,
-  `process target type` text,
-  `melt preset` text,
-  `manual focus preset` text,
+  `process target type` varchar(255),
+  `melt preset` varchar(255),
+  `manual focus preset` varchar(255),
   `save integer` int(20) DEFAULT NULL,
   `drift between` int(20) DEFAULT NULL,
   `final image shift` int(20) DEFAULT NULL,
   `accept precision` double DEFAULT NULL,
   `wait for reference` tinyint(1) DEFAULT NULL,
   `wait for transform` tinyint(1) DEFAULT NULL,
-  `adjust for transform` text,
+  `adjust for transform` varchar(255),
   `background` tinyint(1) DEFAULT NULL,
   `use parent tilt` tinyint(1) DEFAULT NULL,
   `adjust time by tilt` tinyint(1) DEFAULT NULL,
   `reset tilt` tinyint(1) DEFAULT NULL,
-  `bad stats response` text,
+  `bad stats response` varchar(255),
   `high mean` double DEFAULT NULL,
   `low mean` double DEFAULT NULL,
   `emission off` tinyint(1) DEFAULT NULL,
@@ -906,7 +906,7 @@ CREATE TABLE `FocuserSettingsData` (
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|SessionData|session` (`REF|SessionData|session`)
-) ENGINE=MyISAM AUTO_INCREMENT=11 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -920,27 +920,27 @@ CREATE TABLE `GonModelerSettingsData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `REF|SessionData|session` int(20) DEFAULT NULL,
-  `name` text,
+  `name` varchar(255),
   `isdefault` tinyint(1) DEFAULT NULL,
   `override preset` tinyint(1) DEFAULT NULL,
   `REF|CameraSettingsData|camera settings` int(20) DEFAULT NULL,
-  `correlation type` text,
-  `measure axis` text,
+  `correlation type` varchar(255),
+  `measure axis` varchar(255),
   `measure points` int(20) DEFAULT NULL,
   `measure interval` double DEFAULT NULL,
   `measure tolerance` double DEFAULT NULL,
-  `model axis` text,
+  `model axis` varchar(255),
   `model magnification` int(20) DEFAULT NULL,
   `model terms` int(20) DEFAULT NULL,
   `model mag only` tinyint(1) DEFAULT NULL,
   `model tolerance` double DEFAULT NULL,
-  `SUBD|instruments|ccdcamera` text,
-  `SUBD|instruments|tem` text,
+  `SUBD|instruments|ccdcamera` varchar(255),
+  `SUBD|instruments|tem` varchar(255),
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|SessionData|session` (`REF|SessionData|session`),
   KEY `REF|CameraSettingsData|camera settings` (`REF|CameraSettingsData|camera settings`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -963,13 +963,13 @@ CREATE TABLE `GridEntrySettingsData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `REF|SessionData|session` int(20) DEFAULT NULL,
-  `name` text,
+  `name` varchar(255),
   `isdefault` tinyint(1) DEFAULT NULL,
-  `grid name` text,
+  `grid name` varchar(255),
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|SessionData|session` (`REF|SessionData|session`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -991,13 +991,13 @@ DROP TABLE IF EXISTS `GroupData`;
 CREATE TABLE `GroupData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `name` text,
-  `description` text,
+  `name` varchar(255),
+  `description` varchar(255),
   `REF|projectdata|privileges|privilege` int(11) DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|projectdata|privileges|privilege` (`REF|projectdata|privileges|privilege`)
-) ENGINE=MyISAM AUTO_INCREMENT=6 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1033,7 +1033,7 @@ CREATE TABLE `HoleFinderSettingsData` (
   `edge threshold` double DEFAULT NULL,
   `threshold` double DEFAULT NULL,
   `REF|SessionData|session` int(20) DEFAULT NULL,
-  `SEQ|focus template` text,
+  `SEQ|focus template` varchar(255),
   `edge log sigma` double DEFAULT NULL,
   `target template` tinyint(1) DEFAULT NULL,
   `ignore images` tinyint(1) DEFAULT NULL,
@@ -1042,21 +1042,21 @@ CREATE TABLE `HoleFinderSettingsData` (
   `ice min mean` double DEFAULT NULL,
   `edge log size` int(20) DEFAULT NULL,
   `wait for done` tinyint(1) DEFAULT NULL,
-  `template type` text,
+  `template type` varchar(255),
   `lattice hole radius` double DEFAULT NULL,
   `focus stats radius` int(20) DEFAULT NULL,
-  `focus hole` text,
-  `SEQ|acquisition template` text,
+  `focus hole` varchar(255),
+  `SEQ|acquisition template` varchar(255),
   `user check` tinyint(1) DEFAULT NULL,
-  `edge type` text,
+  `edge type` varchar(255),
   `focus min mean thickness` double DEFAULT NULL,
   `blobs border` int(20) DEFAULT NULL,
-  `SEQ|template rings` text,
+  `SEQ|template rings` varchar(255),
   `ice max mean` double DEFAULT NULL,
   `REF|LowPassFilterSettingsData|edge lpf` int(20) DEFAULT NULL,
-  `name` text,
+  `name` varchar(255),
   `focus max mean thickness` double DEFAULT NULL,
-  `image filename` text,
+  `image filename` varchar(255),
   `ice max std` double DEFAULT NULL,
   `lattice zero thickness` double DEFAULT NULL,
   `blobs max size` int(20) DEFAULT NULL,
@@ -1065,7 +1065,7 @@ CREATE TABLE `HoleFinderSettingsData` (
   `queue` tinyint(1) DEFAULT NULL,
   `queue drift` tinyint(1) DEFAULT NULL,
   `isdefault` tinyint(1) DEFAULT NULL,
-  `threshold method` text,
+  `threshold method` varchar(255),
   `sort target` int(20) DEFAULT NULL,
   `allow append` int(20) DEFAULT NULL,
   `blobs min size` int(20) DEFAULT NULL,
@@ -1074,7 +1074,7 @@ CREATE TABLE `HoleFinderSettingsData` (
   KEY `REF|SessionData|session` (`REF|SessionData|session`),
   KEY `REF|LowPassFilterSettingsData|template lpf` (`REF|LowPassFilterSettingsData|template lpf`),
   KEY `REF|LowPassFilterSettingsData|edge lpf` (`REF|LowPassFilterSettingsData|edge lpf`)
-) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1089,12 +1089,12 @@ CREATE TABLE `ImageCommentData` (
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `REF|SessionData|session` int(20) DEFAULT NULL,
   `REF|AcquisitionImageData|image` int(20) DEFAULT NULL,
-  `comment` text,
+  `comment` varchar(255),
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|SessionData|session` (`REF|SessionData|session`),
   KEY `REF|AcquisitionImageData|image` (`REF|AcquisitionImageData|image`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1116,12 +1116,12 @@ DROP TABLE IF EXISTS `InstrumentData`;
 CREATE TABLE `InstrumentData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `name` text,
-  `hostname` text,
-  `type` text,
-  `description` text,
-  `scope` text,
-  `camera` text,
+  `name` varchar(255),
+  `hostname` varchar(255),
+  `type` varchar(255),
+  `description` varchar(255),
+  `scope` varchar(255),
+  `camera` varchar(255),
   `camera size` int(11) DEFAULT NULL,
   `camera pixel size` double DEFAULT NULL,
   `cs` double DEFAULT NULL,
@@ -1129,7 +1129,7 @@ CREATE TABLE `InstrumentData` (
   `hidden` tinyint(1) DEFAULT '0',
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`)
-) ENGINE=MyISAM AUTO_INCREMENT=6 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1163,7 +1163,7 @@ CREATE TABLE `JAHCFinderSettingsData` (
   `edge threshold` double DEFAULT NULL,
   `threshold` double DEFAULT NULL,
   `REF|SessionData|session` int(20) DEFAULT NULL,
-  `SEQ|focus template` text,
+  `SEQ|focus template` varchar(255),
   `edge log sigma` double DEFAULT NULL,
   `target template` tinyint(1) DEFAULT NULL,
   `queue drift` tinyint(1) DEFAULT NULL,
@@ -1174,39 +1174,39 @@ CREATE TABLE `JAHCFinderSettingsData` (
   `edge log size` int(20) DEFAULT NULL,
   `wait for done` tinyint(1) DEFAULT NULL,
   `isdefault` tinyint(1) DEFAULT NULL,
-  `template type` text,
+  `template type` varchar(255),
   `lattice hole radius` double DEFAULT NULL,
   `focus stats radius` int(20) DEFAULT NULL,
-  `focus hole` text,
-  `SEQ|acquisition template` text,
+  `focus hole` varchar(255),
+  `SEQ|acquisition template` varchar(255),
   `template diameter` int(20) DEFAULT NULL,
   `user check` tinyint(1) DEFAULT NULL,
-  `edge type` text,
+  `edge type` varchar(255),
   `focus min mean thickness` double DEFAULT NULL,
   `file diameter` int(20) DEFAULT NULL,
   `ice max mean` double DEFAULT NULL,
   `REF|LowPassFilterSettingsData|edge lpf` int(20) DEFAULT NULL,
-  `name` text,
+  `name` varchar(255),
   `focus max mean thickness` double DEFAULT NULL,
-  `image filename` text,
+  `image filename` varchar(255),
   `ice max std` double DEFAULT NULL,
   `lattice zero thickness` double DEFAULT NULL,
   `blobs max size` int(20) DEFAULT NULL,
   `queue` tinyint(1) DEFAULT NULL,
-  `template filename` text,
+  `template filename` varchar(255),
   `edge` tinyint(1) DEFAULT NULL,
   `focus max stdev thickness` double DEFAULT NULL,
-  `threshold method` text,
+  `threshold method` varchar(255),
   `sort target` int(20) DEFAULT NULL,
   `blobs min size` int(20) DEFAULT NULL,
   `allow append` int(20) DEFAULT NULL,
-  `lattice extend` text,
+  `lattice extend` varchar(255),
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|SessionData|session` (`REF|SessionData|session`),
   KEY `REF|LowPassFilterSettingsData|template lpf` (`REF|LowPassFilterSettingsData|template lpf`),
   KEY `REF|LowPassFilterSettingsData|edge lpf` (`REF|LowPassFilterSettingsData|edge lpf`)
-) ENGINE=MyISAM AUTO_INCREMENT=6 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1220,13 +1220,13 @@ CREATE TABLE `LaunchedApplicationData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `REF|ApplicationData|application` int(20) DEFAULT NULL,
-  `SEQ|launchers` text,
+  `SEQ|launchers` varchar(255),
   `REF|SessionData|session` int(20) DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
   KEY `REF|SessionData|session` (`REF|SessionData|session`),
   KEY `REF|ApplicationData|application` (`REF|ApplicationData|application`),
   KEY `DEF_timestamp` (`DEF_timestamp`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1253,7 +1253,7 @@ CREATE TABLE `LowPassFilterSettingsData` (
   `size` int(20) DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`)
-) ENGINE=MyISAM AUTO_INCREMENT=7 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1267,13 +1267,13 @@ CREATE TABLE `MatrixCalibratorSettingsData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `REF|SessionData|session` int(20) DEFAULT NULL,
-  `name` text,
+  `name` varchar(255),
   `isdefault` tinyint(1) DEFAULT NULL,
-  `SUBD|instruments|ccdcamera` text,
-  `SUBD|instruments|tem` text,
+  `SUBD|instruments|ccdcamera` varchar(255),
+  `SUBD|instruments|tem` varchar(255),
   `override preset` tinyint(1) DEFAULT NULL,
   `REF|CameraSettingsData|camera settings` int(20) DEFAULT NULL,
-  `correlation type` text,
+  `correlation type` varchar(255),
   `image shift tolerance` double DEFAULT NULL,
   `image shift shift fraction` double DEFAULT NULL,
   `image shift n average` int(20) DEFAULT NULL,
@@ -1299,7 +1299,7 @@ CREATE TABLE `MatrixCalibratorSettingsData` (
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|SessionData|session` (`REF|SessionData|session`),
   KEY `REF|CameraSettingsData|camera settings` (`REF|CameraSettingsData|camera settings`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1325,10 +1325,10 @@ CREATE TABLE `MosaicClickTargetFinderSettingsData` (
   `mosaic image on tile change` tinyint(1) DEFAULT NULL,
   `REF|BlobFinderSettingsData|blobs` int(20) DEFAULT NULL,
   `no resubmit` tinyint(1) DEFAULT NULL,
-  `name` text,
+  `name` varchar(255),
   `scale image` tinyint(1) DEFAULT NULL,
   `wait for done` tinyint(1) DEFAULT NULL,
-  `calibration parameter` text,
+  `calibration parameter` varchar(255),
   `scale size` int(20) DEFAULT NULL,
   `threshold` double DEFAULT NULL,
   `REF|LowPassFilterSettingsData|lpf` int(20) DEFAULT NULL,
@@ -1343,11 +1343,11 @@ CREATE TABLE `MosaicClickTargetFinderSettingsData` (
   `raster spacing` double DEFAULT NULL,
   `raster angle` double DEFAULT NULL,
   `watchdone` tinyint(1) DEFAULT NULL,
-  `targetpreset` text,
+  `targetpreset` varchar(255),
   `raster overlap` double DEFAULT NULL,
   `min threshold` double DEFAULT NULL,
   `max threshold` double DEFAULT NULL,
-  `raster calibration` text,
+  `raster calibration` varchar(255),
   `black on white` tinyint(1) DEFAULT NULL,
   `axis ratio` double DEFAULT NULL,
   `limit region in sections` tinyint(1) DEFAULT NULL,
@@ -1356,11 +1356,11 @@ CREATE TABLE `MosaicClickTargetFinderSettingsData` (
   `section display` tinyint(1) DEFAULT NULL,
   `max sections` int(20) DEFAULT NULL,
   `section axis ratio` double DEFAULT NULL,
-  `find section options` text,
+  `find section options` varchar(255),
   `adjust section area` double DEFAULT NULL,
   `region from centers` tinyint(1) DEFAULT NULL,
   `create when done` tinyint(1) DEFAULT NULL,
-  `create on tile change` text,
+  `create on tile change` varchar(255),
   `autofinder` tinyint(1) DEFAULT NULL,
   `sort target` int(20) DEFAULT NULL,
   `allow append` int(20) DEFAULT NULL,
@@ -1370,7 +1370,7 @@ CREATE TABLE `MosaicClickTargetFinderSettingsData` (
   KEY `REF|SessionData|session` (`REF|SessionData|session`),
   KEY `REF|BlobFinderSettingsData|blobs` (`REF|BlobFinderSettingsData|blobs`),
   KEY `REF|LowPassFilterSettingsData|lpf` (`REF|LowPassFilterSettingsData|lpf`)
-) ENGINE=MyISAM AUTO_INCREMENT=5 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1384,20 +1384,20 @@ CREATE TABLE `MosaicTargetMakerSettingsData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `max targets` int(20) DEFAULT NULL,
-  `name` text,
+  `name` varchar(255),
   `max size` int(20) DEFAULT NULL,
   `overlap` double DEFAULT NULL,
-  `label` text,
+  `label` varchar(255),
   `REF|SessionData|session` int(20) DEFAULT NULL,
   `radius` double DEFAULT NULL,
-  `preset` text,
-  `mosaic center` text,
+  `preset` varchar(255),
+  `mosaic center` varchar(255),
   `isdefault` tinyint(1) DEFAULT NULL,
   `ignore request` tinyint(1) DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|SessionData|session` (`REF|SessionData|session`)
-) ENGINE=MyISAM AUTO_INCREMENT=4 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1411,10 +1411,10 @@ CREATE TABLE `NavigatorSettingsData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `REF|SessionData|session` int(20) DEFAULT NULL,
-  `name` text,
+  `name` varchar(255),
   `isdefault` tinyint(1) DEFAULT NULL,
   `pause time` double DEFAULT NULL,
-  `move type` text,
+  `move type` varchar(255),
   `check calibration` tinyint(1) DEFAULT NULL,
   `complete state` tinyint(1) DEFAULT NULL,
   `override preset` tinyint(1) DEFAULT NULL,
@@ -1426,13 +1426,13 @@ CREATE TABLE `NavigatorSettingsData` (
   `cycle after` tinyint(1) DEFAULT NULL,
   `final image shift` tinyint(1) DEFAULT NULL,
   `background readout` tinyint(1) DEFAULT NULL,
-  `SUBD|instruments|ccdcamera` text,
-  `SUBD|instruments|tem` text,
+  `SUBD|instruments|ccdcamera` varchar(255),
+  `SUBD|instruments|tem` varchar(255),
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|SessionData|session` (`REF|SessionData|session`),
   KEY `REF|CameraSettingsData|camera settings` (`REF|CameraSettingsData|camera settings`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1454,15 +1454,15 @@ DROP TABLE IF EXISTS `NodeSpecData`;
 CREATE TABLE `NodeSpecData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `class string` text,
-  `alias` text,
-  `launcher alias` text,
-  `SEQ|dependencies` text,
+  `class string` varchar(255),
+  `alias` varchar(255),
+  `launcher alias` varchar(255),
+  `SEQ|dependencies` varchar(255),
   `REF|ApplicationData|application` int(20) DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|ApplicationData|application` (`REF|ApplicationData|application`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1490,13 +1490,13 @@ CREATE TABLE `PixelSizeCalibrationData` (
   `magnification` int(20) DEFAULT NULL,
   `high tension` int(20) DEFAULT NULL,
   `pixelsize` double DEFAULT NULL,
-  `comment` text,
+  `comment` varchar(255),
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|SessionData|session` (`REF|SessionData|session`),
   KEY `REF|InstrumentData|tem` (`REF|InstrumentData|tem`),
   KEY `REF|InstrumentData|ccdcamera` (`REF|InstrumentData|ccdcamera`)
-) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1520,13 +1520,13 @@ CREATE TABLE `PixelSizeCalibratorSettingsData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `REF|SessionData|session` int(20) DEFAULT NULL,
-  `name` text,
+  `name` varchar(255),
   `isdefault` tinyint(1) DEFAULT NULL,
   `override preset` tinyint(1) DEFAULT NULL,
   `REF|CameraSettingsData|camera settings` int(20) DEFAULT NULL,
-  `SUBD|instruments|ccdcamera` text,
-  `SUBD|instruments|tem` text,
-  `correlation type` text,
+  `SUBD|instruments|ccdcamera` varchar(255),
+  `SUBD|instruments|tem` varchar(255),
+  `correlation type` varchar(255),
   `lattice a` double DEFAULT NULL,
   `lattice b` double DEFAULT NULL,
   `lattice gamma` double DEFAULT NULL,
@@ -1538,7 +1538,7 @@ CREATE TABLE `PixelSizeCalibratorSettingsData` (
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|SessionData|session` (`REF|SessionData|session`),
   KEY `REF|CameraSettingsData|camera settings` (`REF|CameraSettingsData|camera settings`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1564,7 +1564,7 @@ CREATE TABLE `PresetData` (
   `REF|InstrumentData|tem` int(20) DEFAULT NULL,
   `REF|InstrumentData|ccdcamera` int(20) DEFAULT NULL,
   `number` int(20) DEFAULT NULL,
-  `name` text,
+  `name` varchar(255),
   `magnification` int(20) DEFAULT NULL,
   `spot size` int(20) DEFAULT NULL,
   `intensity` double DEFAULT NULL,
@@ -1586,15 +1586,15 @@ CREATE TABLE `PresetData` (
   `save frames` tinyint(1) DEFAULT '0',
   `frame time` double DEFAULT NULL,
   `align frames` tinyint(1) DEFAULT '0',
-  `align filter` text,
+  `align filter` varchar(255),
   `readout delay` int(20) DEFAULT NULL,
-  `probe mode` text,
+  `probe mode` varchar(255),
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|SessionData|session` (`REF|SessionData|session`),
   KEY `REF|InstrumentData|tem` (`REF|InstrumentData|tem`),
   KEY `REF|InstrumentData|ccdcamera` (`REF|InstrumentData|ccdcamera`)
-) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1618,7 +1618,7 @@ CREATE TABLE `PresetsManagerSettingsData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `REF|SessionData|session` int(20) DEFAULT NULL,
-  `name` text,
+  `name` varchar(255),
   `isdefault` tinyint(1) DEFAULT NULL,
   `pause time` double DEFAULT NULL,
   `xy only` tinyint(1) DEFAULT NULL,
@@ -1632,7 +1632,7 @@ CREATE TABLE `PresetsManagerSettingsData` (
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|SessionData|session` (`REF|SessionData|session`)
-) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1646,7 +1646,7 @@ CREATE TABLE `RCTAcquisitionSettingsData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `wait time` double DEFAULT NULL,
-  `SEQ|preset order` text,
+  `SEQ|preset order` varchar(255),
   `save image` tinyint(1) DEFAULT NULL,
   `pause time` double DEFAULT NULL,
   `adjust for drift` tinyint(1) DEFAULT NULL,
@@ -1654,29 +1654,29 @@ CREATE TABLE `RCTAcquisitionSettingsData` (
   `duplicate targets` tinyint(1) DEFAULT NULL,
   `iterations` int(20) DEFAULT NULL,
   `isdefault` tinyint(1) DEFAULT NULL,
-  `name` text,
+  `name` varchar(255),
   `correct image` tinyint(1) DEFAULT NULL,
   `wait for rejects` tinyint(1) DEFAULT NULL,
   `tilt2` double DEFAULT NULL,
   `display image` tinyint(1) DEFAULT NULL,
   `tilt1` double DEFAULT NULL,
-  `duplicate target type` text,
+  `duplicate target type` varchar(255),
   `wait for process` tinyint(1) DEFAULT NULL,
-  `move type` text,
+  `move type` varchar(255),
   `minsize` double DEFAULT NULL,
   `sigma` double DEFAULT NULL,
   `maxsize` double DEFAULT NULL,
   `minstable` double DEFAULT NULL,
   `minperiod` double DEFAULT NULL,
   `stepsize` double DEFAULT NULL,
-  `tilts` text,
-  `process target type` text,
-  `mover` text,
+  `tilts` varchar(255),
+  `process target type` varchar(255),
+  `mover` varchar(255),
   `move precision` double DEFAULT NULL,
   `blur` double DEFAULT NULL,
   `sharpen` double DEFAULT NULL,
   `drift threshold` double DEFAULT NULL,
-  `drift preset` text,
+  `drift preset` varchar(255),
   `save integer` int(20) DEFAULT NULL,
   `nsteps` int(20) DEFAULT NULL,
   `pause` double DEFAULT NULL,
@@ -1687,12 +1687,12 @@ CREATE TABLE `RCTAcquisitionSettingsData` (
   `accept precision` double DEFAULT NULL,
   `wait for reference` tinyint(1) DEFAULT NULL,
   `wait for transform` tinyint(1) DEFAULT NULL,
-  `adjust for transform` text,
+  `adjust for transform` varchar(255),
   `background` tinyint(1) DEFAULT NULL,
   `use parent tilt` tinyint(1) DEFAULT NULL,
   `adjust time by tilt` tinyint(1) DEFAULT NULL,
   `reset tilt` tinyint(1) DEFAULT NULL,
-  `bad stats response` text,
+  `bad stats response` varchar(255),
   `high mean` double DEFAULT NULL,
   `low mean` double DEFAULT NULL,
   `emission off` tinyint(1) DEFAULT NULL,
@@ -1705,7 +1705,7 @@ CREATE TABLE `RCTAcquisitionSettingsData` (
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|SessionData|session` (`REF|SessionData|session`)
-) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1719,25 +1719,25 @@ CREATE TABLE `RasterFinderSettingsData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `raster limit` int(20) DEFAULT NULL,
-  `SEQ|acquisition constant template` text,
-  `SEQ|focus constant template` text,
+  `SEQ|acquisition constant template` varchar(255),
+  `SEQ|focus constant template` varchar(255),
   `ice box size` double DEFAULT NULL,
   `user check` tinyint(1) DEFAULT NULL,
   `focus convolve` tinyint(1) DEFAULT NULL,
   `ice max mean` double DEFAULT NULL,
-  `name` text,
+  `name` varchar(255),
   `REF|SessionData|session` int(20) DEFAULT NULL,
   `ignore images` tinyint(1) DEFAULT NULL,
   `acquisition convolve` tinyint(1) DEFAULT NULL,
-  `image filename` text,
+  `image filename` varchar(255),
   `ice thickness` double DEFAULT NULL,
   `ice max std` double DEFAULT NULL,
-  `SEQ|focus convolve template` text,
+  `SEQ|focus convolve template` varchar(255),
   `ice min mean` double DEFAULT NULL,
   `ice min std` double DEFAULT NULL,
   `wait for done` tinyint(1) DEFAULT NULL,
   `raster spacing` int(20) DEFAULT NULL,
-  `SEQ|acquisition convolve template` text,
+  `SEQ|acquisition convolve template` varchar(255),
   `queue` tinyint(1) DEFAULT NULL,
   `queue drift` tinyint(1) DEFAULT NULL,
   `isdefault` tinyint(1) DEFAULT NULL,
@@ -1751,15 +1751,15 @@ CREATE TABLE `RasterFinderSettingsData` (
   `raster limit asymm` int(20) DEFAULT NULL,
   `raster symmetric` int(20) DEFAULT NULL,
   `sort target` int(20) DEFAULT NULL,
-  `raster preset` text,
-  `raster movetype` text,
+  `raster preset` varchar(255),
+  `raster movetype` varchar(255),
   `raster overlap` double DEFAULT NULL,
   `skip` int(20) DEFAULT NULL,
   `allow append` int(20) DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|SessionData|session` (`REF|SessionData|session`)
-) ENGINE=MyISAM AUTO_INCREMENT=7 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1773,16 +1773,16 @@ CREATE TABLE `RasterTargetFilterSettingsData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `REF|SessionData|session` int(20) DEFAULT NULL,
-  `name` text,
+  `name` varchar(255),
   `isdefault` tinyint(1) DEFAULT NULL,
   `bypass` tinyint(1) DEFAULT NULL,
   `raster spacing` double DEFAULT NULL,
   `raster angle` double DEFAULT NULL,
-  `raster preset` text,
-  `raster movetype` text,
+  `raster preset` varchar(255),
+  `raster movetype` varchar(255),
   `raster overlap` double DEFAULT NULL,
   `raster width` double DEFAULT NULL,
-  `target type` text,
+  `target type` varchar(255),
   `ellipse angle` double DEFAULT NULL,
   `ellipse a` double DEFAULT NULL,
   `ellipse b` double DEFAULT NULL,
@@ -1791,7 +1791,7 @@ CREATE TABLE `RasterTargetFilterSettingsData` (
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|SessionData|session` (`REF|SessionData|session`)
-) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1805,7 +1805,7 @@ CREATE TABLE `RobotSettingsData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `REF|SessionData|session` int(20) DEFAULT NULL,
-  `name` text,
+  `name` varchar(255),
   `isdefault` tinyint(1) DEFAULT NULL,
   `column pressure threshold` double DEFAULT NULL,
   `default Z position` double DEFAULT NULL,
@@ -1813,11 +1813,11 @@ CREATE TABLE `RobotSettingsData` (
   `turbo on` tinyint(1) DEFAULT NULL,
   `grid clear wait` tinyint(1) DEFAULT NULL,
   `pause` tinyint(1) DEFAULT NULL,
-  `grid tray` text,
+  `grid tray` varchar(255),
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|SessionData|session` (`REF|SessionData|session`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1849,48 +1849,48 @@ CREATE TABLE `ScopeEMData` (
   `focus` double DEFAULT NULL,
   `reset defocus` int(20) DEFAULT NULL,
   `screen current` double DEFAULT NULL,
-  `beam blank` text,
+  `beam blank` varchar(255),
   `corrected stage position` int(20) DEFAULT NULL,
   `SUBD|stage position|a` double DEFAULT NULL,
   `SUBD|stage position|x` double DEFAULT NULL,
   `SUBD|stage position|y` double DEFAULT NULL,
   `SUBD|stage position|z` double DEFAULT NULL,
-  `holder type` text,
-  `holder status` text,
-  `stage status` text,
-  `vacuum status` text,
-  `column valves` text,
+  `holder type` varchar(255),
+  `holder status` varchar(255),
+  `stage status` varchar(255),
+  `vacuum status` varchar(255),
+  `column valves` varchar(255),
   `column pressure` double DEFAULT NULL,
-  `turbo pump` text,
+  `turbo pump` varchar(255),
   `high tension` int(20) DEFAULT NULL,
-  `main screen position` text,
+  `main screen position` varchar(255),
   `main screen magnification` int(20) DEFAULT NULL,
-  `small screen position` text,
-  `low dose` text,
-  `low dose mode` text,
+  `small screen position` varchar(255),
+  `low dose` varchar(255),
+  `low dose mode` varchar(255),
   `film stock` int(20) DEFAULT NULL,
   `film exposure number` int(20) DEFAULT NULL,
   `pre film exposure` tinyint(1) DEFAULT '0',
   `post film exposure` tinyint(1) DEFAULT '0',
   `film exposure` tinyint(1) DEFAULT '0',
-  `film exposure type` text,
+  `film exposure type` varchar(255),
   `film exposure time` double DEFAULT NULL,
   `film manual exposure time` double DEFAULT NULL,
   `film automatic exposure time` double DEFAULT NULL,
-  `film text` text,
-  `film user code` text,
-  `film date type` text,
+  `film text` varchar(255),
+  `film user code` varchar(255),
+  `film date type` varchar(255),
   `objective current` double DEFAULT NULL,
   `exp wait time` double DEFAULT NULL,
   `tem energy filtered` tinyint(1) DEFAULT '0',
   `tem energy filter` tinyint(1) DEFAULT '0',
   `tem energy filter width` double DEFAULT NULL,
-  `probe mode` text,
+  `probe mode` varchar(255),
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|SessionData|session` (`REF|SessionData|session`),
   KEY `REF|InstrumentData|tem` (`REF|InstrumentData|tem`)
-) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1913,20 +1913,20 @@ DROP TABLE IF EXISTS `SessionData`;
 CREATE TABLE `SessionData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `name` text,
+  `name` varchar(255),
   `REF|UserData|user` int(20) DEFAULT NULL,
-  `image path` text,
-  `comment` text,
+  `image path` varchar(255),
+  `comment` varchar(255),
   `hidden` tinyint(4) DEFAULT NULL,
   `REF|InstrumentData|instrument` int(20) DEFAULT NULL,
   `REF|GridHolderData|holder` int(20) DEFAULT NULL,
-  `frame path` text,
+  `frame path` varchar(255),
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|UserData|user` (`REF|UserData|user`),
   KEY `REF|GridHolderData|holder` (`REF|GridHolderData|holder`),
-  FULLTEXT KEY `name` (`name`)
-) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+  KEY `name` (`name`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1950,17 +1950,17 @@ CREATE TABLE `SetupWizardSettingsData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `REF|SessionData|session` int(20) DEFAULT NULL,
-  `name` text,
+  `name` varchar(255),
   `isdefault` tinyint(1) DEFAULT NULL,
-  `session type` text,
-  `selected session` text,
+  `session type` varchar(255),
+  `selected session` varchar(255),
   `limit` tinyint(1) DEFAULT NULL,
   `n limit` int(20) DEFAULT NULL,
   `connect` tinyint(1) DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|SessionData|session` (`REF|SessionData|session`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1983,14 +1983,14 @@ CREATE TABLE `TiltRotateSettingsData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `REF|SessionData|session` int(20) DEFAULT NULL,
-  `name` text,
+  `name` varchar(255),
   `isdefault` tinyint(1) DEFAULT NULL,
   `bypass` tinyint(1) DEFAULT NULL,
-  `tilts` text,
+  `tilts` varchar(255),
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|SessionData|session` (`REF|SessionData|session`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -2013,9 +2013,9 @@ CREATE TABLE `TomographySettingsData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `display image` tinyint(1) DEFAULT NULL,
-  `SEQ|registration preset order` text,
+  `SEQ|registration preset order` varchar(255),
   `wait time` double DEFAULT NULL,
-  `SEQ|preset order` text,
+  `SEQ|preset order` varchar(255),
   `tilt max` double DEFAULT NULL,
   `save image` tinyint(1) DEFAULT NULL,
   `pause time` double DEFAULT NULL,
@@ -2029,20 +2029,20 @@ CREATE TABLE `TomographySettingsData` (
   `thickness value` double DEFAULT NULL,
   `run buffer cycle` tinyint(1) DEFAULT NULL,
   `correct image` tinyint(1) DEFAULT NULL,
-  `move type` text,
+  `move type` varchar(255),
   `wait for rejects` tinyint(1) DEFAULT NULL,
-  `name` text,
+  `name` varchar(255),
   `align zero loss peak` tinyint(1) DEFAULT NULL,
   `xcf bin` int(20) DEFAULT NULL,
-  `duplicate target type` text,
+  `duplicate target type` varchar(255),
   `wait for process` tinyint(1) DEFAULT NULL,
   `tilt start` double DEFAULT NULL,
   `tilt step` double DEFAULT NULL,
   `dose` double DEFAULT NULL,
   `min exposure` double DEFAULT NULL,
   `max exposure` double DEFAULT NULL,
-  `process target type` text,
-  `mover` text,
+  `process target type` varchar(255),
+  `mover` varchar(255),
   `move precision` double DEFAULT NULL,
   `equally sloped` tinyint(1) DEFAULT NULL,
   `equally sloped n` int(20) DEFAULT NULL,
@@ -2055,7 +2055,7 @@ CREATE TABLE `TomographySettingsData` (
   `intscale` double DEFAULT NULL,
   `pausegroup` tinyint(1) DEFAULT NULL,
   `save integer` int(20) DEFAULT NULL,
-  `model mag` text,
+  `model mag` varchar(255),
   `z0 error` double DEFAULT NULL,
   `phi` double DEFAULT NULL,
   `offset` double DEFAULT NULL,
@@ -2073,12 +2073,12 @@ CREATE TABLE `TomographySettingsData` (
   `taper size` int(20) DEFAULT NULL,
   `wait for reference` tinyint(1) DEFAULT NULL,
   `wait for transform` tinyint(1) DEFAULT NULL,
-  `adjust for transform` text,
+  `adjust for transform` varchar(255),
   `background` tinyint(1) DEFAULT NULL,
   `use parent tilt` tinyint(1) DEFAULT NULL,
   `adjust time by tilt` tinyint(1) DEFAULT NULL,
   `reset tilt` tinyint(1) DEFAULT NULL,
-  `bad stats response` text,
+  `bad stats response` varchar(255),
   `high mean` double DEFAULT NULL,
   `low mean` double DEFAULT NULL,
   `emission off` tinyint(1) DEFAULT NULL,
@@ -2093,7 +2093,7 @@ CREATE TABLE `TomographySettingsData` (
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|SessionData|session` (`REF|SessionData|session`)
-) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -2116,9 +2116,9 @@ CREATE TABLE `TransformManagerSettingsData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `REF|SessionData|session` int(20) DEFAULT NULL,
-  `name` text,
+  `name` varchar(255),
   `isdefault` tinyint(1) DEFAULT NULL,
-  `registration` text,
+  `registration` varchar(255),
   `threshold` double DEFAULT NULL,
   `pause time` double DEFAULT NULL,
   `REF|CameraSettingsData|camera settings` int(20) DEFAULT NULL,
@@ -2128,7 +2128,7 @@ CREATE TABLE `TransformManagerSettingsData` (
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|SessionData|session` (`REF|SessionData|session`),
   KEY `REF|CameraSettingsData|camera settings` (`REF|CameraSettingsData|camera settings`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -2163,7 +2163,7 @@ CREATE TABLE `UserData` (
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|GroupData|group` (`REF|GroupData|group`),
   KEY `email` (`email`)
-) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -2194,7 +2194,7 @@ CREATE TABLE `ViewerImageStatus` (
   KEY `REF|SessionData|session` (`REF|SessionData|session`),
   KEY `REF|AcquisitionImageData|image` (`REF|AcquisitionImageData|image`),
   KEY `status` (`status`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -2217,7 +2217,7 @@ CREATE TABLE `viewer_cache` (
   `session` varchar(255) NOT NULL,
   `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`session`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -2242,14 +2242,14 @@ CREATE TABLE `viewer_comment` (
   `sessionId` int(11) DEFAULT NULL,
   `type` enum('rt','post') DEFAULT NULL,
   `imageId` int(11) DEFAULT NULL,
-  `name` text,
-  `comment` text,
+  `name` varchar(255),
+  `comment` varchar(255),
   PRIMARY KEY (`id`),
   KEY `timestamp` (`timestamp`),
   KEY `sessionId` (`sessionId`),
   KEY `imageId` (`imageId`),
   KEY `type` (`type`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -2281,7 +2281,7 @@ CREATE TABLE `viewer_del_image` (
   KEY `sessionId` (`sessionId`),
   KEY `imageId` (`imageId`),
   KEY `status` (`status`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -2307,7 +2307,7 @@ CREATE TABLE `viewer_login` (
   `privilege` tinyint(4) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `username` (`username`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -2339,7 +2339,7 @@ CREATE TABLE `viewer_pref_image` (
   KEY `sessionId` (`sessionId`),
   KEY `imageId` (`imageId`),
   KEY `status` (`status`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -2362,11 +2362,11 @@ CREATE TABLE `viewer_update` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `status` enum('N','Y') DEFAULT NULL,
-  `name` text,
-  `update` text,
+  `name` varchar(255),
+  `update` varchar(255),
   PRIMARY KEY (`id`),
   KEY `timestamp` (`timestamp`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -2388,22 +2388,22 @@ DROP TABLE IF EXISTS `viewer_users`;
 CREATE TABLE `viewer_users` (
   `userId` int(11) NOT NULL AUTO_INCREMENT,
   `login` varchar(50) DEFAULT NULL,
-  `firstname` text,
-  `lastname` text,
-  `title` text,
-  `institution` text,
-  `dept` text,
-  `address` text,
-  `city` text,
-  `statecountry` text,
-  `zip` text,
-  `phone` text,
-  `fax` text,
-  `email` text,
-  `url` text,
+  `firstname` varchar(255),
+  `lastname` varchar(255),
+  `title` varchar(255),
+  `institution` varchar(255),
+  `dept` varchar(255),
+  `address` varchar(255),
+  `city` varchar(255),
+  `statecountry` varchar(255),
+  `zip` varchar(255),
+  `phone` varchar(255),
+  `fax` varchar(255),
+  `email` varchar(255),
+  `url` varchar(255),
   PRIMARY KEY (`userId`),
   KEY `login` (`login`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -2437,7 +2437,7 @@ CREATE TABLE `boxtypes` (
   `image` varchar(100) NOT NULL DEFAULT '0',
   `image_tiny` varchar(100) NOT NULL,
   PRIMARY KEY (`boxtypeId`)
-) ENGINE=MyISAM AUTO_INCREMENT=4 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -2465,7 +2465,7 @@ CREATE TABLE `confirmauth` (
   `lastname` text NOT NULL,
   `email` text NOT NULL,
   `date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -2516,7 +2516,7 @@ CREATE TABLE `dataStatusReport` (
   `first_exp_runtime` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -2538,11 +2538,11 @@ DROP TABLE IF EXISTS `gridboxes`;
 CREATE TABLE `gridboxes` (
   `gridboxId` int(11) NOT NULL AUTO_INCREMENT,
   `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `label` text,
+  `label` varchar(255),
   `boxtypeId` int(11) DEFAULT '0',
-  `container` text,
+  `container` varchar(255),
   PRIMARY KEY (`gridboxId`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -2567,7 +2567,7 @@ CREATE TABLE `gridlocations` (
   `gridId` int(11) DEFAULT NULL,
   `location` int(11) DEFAULT NULL,
   PRIMARY KEY (`gridlocationId`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -2596,15 +2596,15 @@ CREATE TABLE `grids` (
   `preparation` varchar(100) DEFAULT NULL,
   `number` varchar(10) DEFAULT NULL,
   `concentration` double DEFAULT NULL,
-  `fraction` text,
-  `note` text,
-  `sort` text,
+  `fraction` varchar(255),
+  `note` varchar(255),
+  `sort` varchar(255),
   `boxId` int(11) DEFAULT NULL,
   `projectId` int(20) DEFAULT NULL,
   `specimen` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`gridId`),
   KEY `label` (`label`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -2627,7 +2627,7 @@ CREATE TABLE `install` (
   `key` varchar(100) NOT NULL,
   `value` varchar(100) NOT NULL,
   KEY `key` (`key`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -2660,7 +2660,7 @@ CREATE TABLE `privileges` (
   `gridboxes` tinyint(4) NOT NULL,
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`)
-) ENGINE=MyISAM AUTO_INCREMENT=6 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -2689,7 +2689,7 @@ CREATE TABLE `processingdb` (
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|projects|project` (`REF|projects|project`),
   KEY `appiondb` (`appiondb`)
-) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -2718,7 +2718,7 @@ CREATE TABLE `projectexperiments` (
   KEY `project` (`REF|projects|project`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `session` (`REF|leginondata|SessionData|session`)
-) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -2747,7 +2747,7 @@ CREATE TABLE `projectowners` (
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|projects|project` (`REF|projects|project`),
   KEY `REF|leginondata|UserData|user` (`REF|leginondata|UserData|user`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -2778,7 +2778,7 @@ CREATE TABLE `projects` (
   `hidden` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`DEF_id`),
   KEY `hidden` (`hidden`)
-) ENGINE=MyISAM AUTO_INCREMENT=4 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -2807,7 +2807,7 @@ CREATE TABLE `shareexperiments` (
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|leginondata|SessionData|experiment` (`REF|leginondata|SessionData|experiment`),
   KEY `REF|leginondata|UserData|user` (`REF|leginondata|UserData|user`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -2843,7 +2843,7 @@ CREATE TABLE `userdetails` (
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|leginondata|UserData|user` (`REF|leginondata|UserData|user`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -2873,7 +2873,7 @@ DROP TABLE IF EXISTS `Ap3dDensityData`;
 CREATE TABLE `Ap3dDensityData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `name` text,
+  `name` varchar(255),
   `boxsize` int(20) DEFAULT NULL,
   `mask` int(20) DEFAULT NULL,
   `imask` int(20) DEFAULT NULL,
@@ -2887,12 +2887,12 @@ CREATE TABLE `Ap3dDensityData` (
   `norm` tinyint(1) DEFAULT NULL,
   `invert` tinyint(1) DEFAULT NULL,
   `hidden` tinyint(1) DEFAULT NULL,
-  `md5sum` text,
-  `pdbid` text,
-  `emdbid` text,
-  `eman` text,
-  `description` text,
-  `ampName` text,
+  `md5sum` varchar(255),
+  `pdbid` varchar(255),
+  `emdbid` varchar(255),
+  `eman` varchar(255),
+  `description` varchar(255),
+  `ampName` varchar(255),
   `REF|ApPathData|path` int(20) DEFAULT NULL,
   `REF|ApPathData|ampPath` int(20) DEFAULT NULL,
   `REF|ApSymmetryData|symmetry` int(20) DEFAULT NULL,
@@ -2919,7 +2919,7 @@ CREATE TABLE `Ap3dDensityData` (
   KEY `REF|ApRctRunData|rctrun` (`REF|ApRctRunData|rctrun`),
   KEY `REF|ApOtrRunData|otrrun` (`REF|ApOtrRunData|otrrun`),
   KEY `REF|leginondata|SessionData|session` (`REF|leginondata|SessionData|session`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -2957,7 +2957,7 @@ CREATE TABLE `ApAce2ParamsData` (
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `stig` (`stig`),
   KEY `refine2d` (`refine2d`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -2981,7 +2981,7 @@ CREATE TABLE `ApAceParamsData` (
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `display` int(20) DEFAULT NULL,
   `stig` int(20) DEFAULT NULL,
-  `medium` text,
+  `medium` varchar(255),
   `df_override` double DEFAULT NULL,
   `edgethcarbon` double DEFAULT NULL,
   `edgethice` double DEFAULT NULL,
@@ -2994,7 +2994,7 @@ CREATE TABLE `ApAceParamsData` (
   `reprocess` double DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -3021,7 +3021,7 @@ CREATE TABLE `ApAceRunData` (
   `REF|ApAce2ParamsData|ace2_params` int(20) DEFAULT NULL,
   `REF|leginondata|SessionData|session` int(20) DEFAULT NULL,
   `REF|ApPathData|path` int(20) DEFAULT NULL,
-  `name` text,
+  `name` varchar(255),
   `hidden` tinyint(1) DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
@@ -3031,7 +3031,7 @@ CREATE TABLE `ApAceRunData` (
   KEY `REF|leginondata|SessionData|session` (`REF|leginondata|SessionData|session`),
   KEY `REF|ApPathData|path` (`REF|ApPathData|path`),
   KEY `hidden` (`hidden`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -3054,11 +3054,11 @@ CREATE TABLE `ApAffinityPropagationClusterParamsData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `mask_diam` double DEFAULT NULL,
-  `preference_type` text,
+  `preference_type` varchar(255),
   `run_seconds` int(20) DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -3080,8 +3080,8 @@ DROP TABLE IF EXISTS `ApAlignAnalysisRunData`;
 CREATE TABLE `ApAlignAnalysisRunData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `runname` text,
-  `description` text,
+  `runname` varchar(255),
+  `description` varchar(255),
   `hidden` tinyint(1) DEFAULT NULL,
   `REF|ApPathData|path` int(20) DEFAULT NULL,
   `REF|ApCoranRunData|coranrun` int(20) DEFAULT NULL,
@@ -3094,7 +3094,7 @@ CREATE TABLE `ApAlignAnalysisRunData` (
   KEY `REF|ApCoranRunData|coranrun` (`REF|ApCoranRunData|coranrun`),
   KEY `REF|ApImagicAlignAnalysisData|imagicMSArun` (`REF|ApImagicAlignAnalysisData|imagicMSArun`),
   KEY `REF|ApAlignStackData|alignstack` (`REF|ApAlignStackData|alignstack`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -3135,7 +3135,7 @@ CREATE TABLE `ApAlignParticleData` (
   KEY `mirror` (`mirror`),
   KEY `REF|ApAlignReferenceData|ref` (`REF|ApAlignReferenceData|ref`),
   KEY `bad` (`bad`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -3159,9 +3159,9 @@ CREATE TABLE `ApAlignReferenceData` (
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `refnum` int(20) DEFAULT NULL,
   `iteration` int(20) DEFAULT NULL,
-  `mrcfile` text,
-  `varmrcfile` text,
-  `imagicfile` text,
+  `mrcfile` varchar(255),
+  `varmrcfile` varchar(255),
+  `imagicfile` varchar(255),
   `ssnr_resolution` double DEFAULT NULL,
   `REF|ApAlignRunData|alignrun` int(20) DEFAULT NULL,
   `REF|ApPathData|path` int(20) DEFAULT NULL,
@@ -3173,7 +3173,7 @@ CREATE TABLE `ApAlignReferenceData` (
   KEY `REF|ApPathData|path` (`REF|ApPathData|path`),
   KEY `REF|ApTemplateImageData|template` (`REF|ApTemplateImageData|template`),
   KEY `REF|ApTemplateStackData|templatestack` (`REF|ApTemplateStackData|templatestack`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -3195,11 +3195,11 @@ DROP TABLE IF EXISTS `ApAlignRunData`;
 CREATE TABLE `ApAlignRunData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `runname` text,
+  `runname` varchar(255),
   `bin` int(20) DEFAULT NULL,
   `hp_filt` int(20) DEFAULT NULL,
   `lp_filt` int(20) DEFAULT NULL,
-  `description` text,
+  `description` varchar(255),
   `REF|ApSpiderNoRefRunData|norefrun` int(20) DEFAULT NULL,
   `REF|ApRefBasedRunData|refbasedrun` int(20) DEFAULT NULL,
   `REF|ApMaxLikeRunData|maxlikerun` int(20) DEFAULT NULL,
@@ -3224,7 +3224,7 @@ CREATE TABLE `ApAlignRunData` (
   KEY `REF|ApCL2DRunData|cl2drun` (`REF|ApCL2DRunData|cl2drun`),
   KEY `hidden` (`hidden`),
   KEY `REF|ApPathData|path` (`REF|ApPathData|path`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -3246,16 +3246,16 @@ DROP TABLE IF EXISTS `ApAlignStackData`;
 CREATE TABLE `ApAlignStackData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `imagicfile` text,
-  `avgmrcfile` text,
-  `refstackfile` text,
+  `imagicfile` varchar(255),
+  `avgmrcfile` varchar(255),
+  `refstackfile` varchar(255),
   `iteration` int(20) DEFAULT NULL,
   `REF|ApPathData|path` int(20) DEFAULT NULL,
   `REF|ApStackData|stack` int(20) DEFAULT NULL,
   `REF|ApAlignRunData|alignrun` int(20) DEFAULT NULL,
   `boxsize` int(20) DEFAULT NULL,
   `pixelsize` double DEFAULT NULL,
-  `description` text,
+  `description` varchar(255),
   `hidden` tinyint(1) DEFAULT NULL,
   `num_particles` int(20) DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
@@ -3264,7 +3264,7 @@ CREATE TABLE `ApAlignStackData` (
   KEY `REF|ApStackData|stack` (`REF|ApStackData|stack`),
   KEY `REF|ApAlignRunData|alignrun` (`REF|ApAlignRunData|alignrun`),
   KEY `hidden` (`hidden`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -3287,15 +3287,15 @@ CREATE TABLE `ApAppionJobData` (
   `DEF_id` int(20) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `REF|ApPathData|path` int(20) DEFAULT NULL,
-  `name` text,
-  `jobtype` text,
+  `name` varchar(255),
+  `jobtype` varchar(255),
   `REF|ApPathData|dmfpath` int(20) DEFAULT NULL,
   `REF|ApPathData|clusterpath` int(20) DEFAULT NULL,
   `REF|leginondata|SessionData|session` int(20) DEFAULT NULL,
-  `cluster` text,
+  `cluster` varchar(255),
   `clusterjobid` int(20) DEFAULT NULL,
   `status` varchar(1) DEFAULT NULL,
-  `user` text,
+  `user` varchar(255),
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|ApPathData|clusterpath` (`REF|ApPathData|clusterpath`),
@@ -3304,7 +3304,7 @@ CREATE TABLE `ApAppionJobData` (
   KEY `clusterjobid` (`clusterjobid`),
   KEY `status` (`status`),
   KEY `jobtype_10` (`jobtype`(10))
-) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -3324,7 +3324,7 @@ CREATE TABLE `ApAssessmentData` (
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|ApAssessmentRunData|assessmentrun` (`REF|ApAssessmentRunData|assessmentrun`),
   KEY `REF|leginondata|AcquisitionImageData|image` (`REF|leginondata|AcquisitionImageData|image`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -3347,11 +3347,11 @@ CREATE TABLE `ApAssessmentRunData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `REF|leginondata|SessionData|session` int(20) DEFAULT NULL,
-  `name` text,
+  `name` varchar(255),
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|leginondata|SessionData|session` (`REF|leginondata|SessionData|session`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -3384,7 +3384,7 @@ CREATE TABLE `ApBootstrappedAngularReconstitutionParamsData` (
   `non_weighted_sequence` tinyint(1) DEFAULT NULL,
   `PCA` tinyint(1) DEFAULT NULL,
   `numeigens` int(20) DEFAULT NULL,
-  `preference_type` text,
+  `preference_type` varchar(255),
   `prealign_avgs` tinyint(1) DEFAULT NULL,
   `scale` tinyint(1) DEFAULT NULL,
   `recalculate_volumes` tinyint(1) DEFAULT NULL,
@@ -3396,7 +3396,7 @@ CREATE TABLE `ApBootstrappedAngularReconstitutionParamsData` (
   KEY `prealign_avgs` (`prealign_avgs`),
   KEY `scale` (`scale`),
   KEY `recalculate_volumes` (`recalculate_volumes`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -3418,14 +3418,14 @@ DROP TABLE IF EXISTS `ApBootstrappedAngularReconstitutionRunData`;
 CREATE TABLE `ApBootstrappedAngularReconstitutionRunData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `runname` text,
+  `runname` varchar(255),
   `REF|ApPathData|path` int(20) DEFAULT NULL,
   `REF|ApBootstrappedAngularReconstitutionParamsData|aar_params` int(20) DEFAULT NULL,
   `pixelsize` double DEFAULT NULL,
   `boxsize` int(20) DEFAULT NULL,
   `REF|ApTemplateStackData|templatestackid` int(20) DEFAULT NULL,
   `REF|ApClusteringStackData|clusterid` int(20) DEFAULT NULL,
-  `description` text,
+  `description` varchar(255),
   `hidden` tinyint(1) DEFAULT NULL,
   `REF|projectdata|projects|project` int(20) DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
@@ -3435,7 +3435,7 @@ CREATE TABLE `ApBootstrappedAngularReconstitutionRunData` (
   KEY `REF|ApTemplateStackData|templatestackid` (`REF|ApTemplateStackData|templatestackid`),
   KEY `REF|ApClusteringStackData|clusterid` (`REF|ApClusteringStackData|clusterid`),
   KEY `hidden` (`hidden`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -3457,10 +3457,10 @@ DROP TABLE IF EXISTS `ApCL2DRunData`;
 CREATE TABLE `ApCL2DRunData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `runname` text,
-  `fast` text,
+  `runname` varchar(255),
+  `fast` varchar(255),
   `run_seconds` int(20) DEFAULT NULL,
-  `timestamp` text,
+  `timestamp` varchar(255),
   `REF|projectdata|projects|project` int(20) DEFAULT NULL,
   `REF|ApPathData|path` int(20) DEFAULT NULL,
   `finished` tinyint(1) DEFAULT NULL,
@@ -3478,7 +3478,7 @@ CREATE TABLE `ApCL2DRunData` (
   KEY `correntropy` (`correntropy`),
   KEY `classical_multiref` (`classical_multiref`),
   KEY `intracluster_multiref` (`intracluster_multiref`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -3511,7 +3511,7 @@ CREATE TABLE `ApClusteringParticleData` (
   KEY `REF|ApClusteringReferenceData|clusterreference` (`REF|ApClusteringReferenceData|clusterreference`),
   KEY `REF|ApClusteringStackData|clusterstack` (`REF|ApClusteringStackData|clusterstack`),
   KEY `REF|ApAlignParticleData|alignparticle` (`REF|ApAlignParticleData|alignparticle`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -3534,8 +3534,8 @@ CREATE TABLE `ApClusteringReferenceData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `refnum` int(20) DEFAULT NULL,
-  `avg_mrcfile` text,
-  `var_mrcfile` text,
+  `avg_mrcfile` varchar(255),
+  `var_mrcfile` varchar(255),
   `ssnr_resolution` double DEFAULT NULL,
   `num_particles` int(20) DEFAULT NULL,
   `REF|ApClusteringRunData|clusterrun` int(20) DEFAULT NULL,
@@ -3544,7 +3544,7 @@ CREATE TABLE `ApClusteringReferenceData` (
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|ApClusteringRunData|clusterrun` (`REF|ApClusteringRunData|clusterrun`),
   KEY `REF|ApPathData|path` (`REF|ApPathData|path`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -3566,8 +3566,8 @@ DROP TABLE IF EXISTS `ApClusteringRunData`;
 CREATE TABLE `ApClusteringRunData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `runname` text,
-  `description` text,
+  `runname` varchar(255),
+  `description` varchar(255),
   `boxsize` int(20) DEFAULT NULL,
   `pixelsize` double DEFAULT NULL,
   `num_particles` int(20) DEFAULT NULL,
@@ -3587,7 +3587,7 @@ CREATE TABLE `ApClusteringRunData` (
   KEY `REF|ApRotKerDenSOMParamsData|rotkerdenparams` (`REF|ApRotKerDenSOMParamsData|rotkerdenparams`),
   KEY `REF|ApAffinityPropagationClusterParamsData|affpropparams` (`REF|ApAffinityPropagationClusterParamsData|affpropparams`),
   KEY `REF|ApCL2DRunData|cl2dparams` (`REF|ApCL2DRunData|cl2dparams`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -3611,8 +3611,8 @@ CREATE TABLE `ApClusteringStackData` (
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `num_classes` int(20) DEFAULT NULL,
   `hidden` tinyint(1) DEFAULT NULL,
-  `avg_imagicfile` text,
-  `var_imagicfile` text,
+  `avg_imagicfile` varchar(255),
+  `var_imagicfile` varchar(255),
   `REF|ApPathData|path` int(20) DEFAULT NULL,
   `REF|ApClusteringRunData|clusterrun` int(20) DEFAULT NULL,
   `ignore_images` int(20) DEFAULT NULL,
@@ -3623,7 +3623,7 @@ CREATE TABLE `ApClusteringStackData` (
   KEY `hidden` (`hidden`),
   KEY `REF|ApPathData|path` (`REF|ApPathData|path`),
   KEY `REF|ApClusteringRunData|clusterrun` (`REF|ApClusteringRunData|clusterrun`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -3645,20 +3645,20 @@ DROP TABLE IF EXISTS `ApContourData`;
 CREATE TABLE `ApContourData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `name` text,
+  `name` varchar(255),
   `REF|leginondata|AcquisitionImageData|image` int(20) DEFAULT NULL,
   `x` double DEFAULT NULL,
   `y` double DEFAULT NULL,
   `version` int(20) DEFAULT NULL,
-  `method` text,
-  `particleType` text,
-  `runname` text,
+  `method` varchar(255),
+  `particleType` varchar(255),
+  `runname` varchar(255),
   `REF|ApSelectionRunData|selectionrun` int(20) DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|leginondata|AcquisitionImageData|image` (`REF|leginondata|AcquisitionImageData|image`),
   KEY `REF|ApSelectionRunData|selectionrun` (`REF|ApSelectionRunData|selectionrun`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -3686,7 +3686,7 @@ CREATE TABLE `ApContourPointData` (
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|ApContourData|contour` (`REF|ApContourData|contour`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -3711,13 +3711,13 @@ CREATE TABLE `ApCoranEigenImageData` (
   `REF|ApCoranRunData|coranRun` int(20) DEFAULT NULL,
   `factor_num` int(20) DEFAULT NULL,
   `percent_contrib` double DEFAULT NULL,
-  `image_name` text,
+  `image_name` varchar(255),
   `REF|ApPathData|path` int(20) DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|ApCoranRunData|coranRun` (`REF|ApCoranRunData|coranRun`),
   KEY `REF|ApPathData|path` (`REF|ApPathData|path`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -3744,7 +3744,7 @@ CREATE TABLE `ApCoranRunData` (
   `num_factors` int(20) DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -3778,11 +3778,11 @@ CREATE TABLE `ApCtfData` (
   `snr` double DEFAULT NULL,
   `confidence` double DEFAULT NULL,
   `confidence_d` double DEFAULT NULL,
-  `graph1` text,
-  `graph2` text,
-  `mat_file` text,
+  `graph1` varchar(255),
+  `graph2` varchar(255),
+  `mat_file` varchar(255),
   `cross_correlation` double DEFAULT NULL,
-  `ctfvalues_file` text,
+  `ctfvalues_file` varchar(255),
   `cs` double DEFAULT NULL,
   `noise1` double DEFAULT NULL,
   `noise2` double DEFAULT NULL,
@@ -3798,7 +3798,7 @@ CREATE TABLE `ApCtfData` (
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|ApAceRunData|acerun` (`REF|ApAceRunData|acerun`),
   KEY `REF|leginondata|AcquisitionImageData|image` (`REF|leginondata|AcquisitionImageData|image`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -3820,7 +3820,7 @@ DROP TABLE IF EXISTS `ApCtfTiltParamsData`;
 CREATE TABLE `ApCtfTiltParamsData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `medium` text,
+  `medium` varchar(255),
   `ampcarbon` double DEFAULT NULL,
   `ampice` double DEFAULT NULL,
   `fieldsize` int(20) DEFAULT NULL,
@@ -3832,7 +3832,7 @@ CREATE TABLE `ApCtfTiltParamsData` (
   `dast` double DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -3854,10 +3854,10 @@ DROP TABLE IF EXISTS `ApDDStackParamsData`;
 CREATE TABLE `ApDDStackParamsData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `preset` text,
+  `preset` varchar(255),
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -3879,7 +3879,7 @@ DROP TABLE IF EXISTS `ApDDStackRunData`;
 CREATE TABLE `ApDDStackRunData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `runname` text,
+  `runname` varchar(255),
   `REF|ApDDStackParamsData|params` int(20) DEFAULT NULL,
   `REF|leginondata|SessionData|session` int(20) DEFAULT NULL,
   `REF|ApPathData|path` int(20) DEFAULT NULL,
@@ -3888,7 +3888,7 @@ CREATE TABLE `ApDDStackRunData` (
   KEY `REF|ApDDStackParamsData|params` (`REF|ApDDStackParamsData|params`),
   KEY `REF|leginondata|SessionData|session` (`REF|leginondata|SessionData|session`),
   KEY `REF|ApPathData|path` (`REF|ApPathData|path`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -3929,7 +3929,7 @@ CREATE TABLE `ApDogParamsData` (
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `defocal_pairs` (`defocal_pairs`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -3951,13 +3951,13 @@ DROP TABLE IF EXISTS `ApEMANRefine2dRunData`;
 CREATE TABLE `ApEMANRefine2dRunData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `runname` text,
+  `runname` varchar(255),
   `num_iters` int(20) DEFAULT NULL,
   `num_classes` int(20) DEFAULT NULL,
   `run_seconds` int(20) DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -3979,7 +3979,7 @@ DROP TABLE IF EXISTS `ApEdIterRunData`;
 CREATE TABLE `ApEdIterRunData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `runname` text,
+  `runname` varchar(255),
   `radius` int(20) DEFAULT NULL,
   `num_iter` int(20) DEFAULT NULL,
   `freealigns` int(20) DEFAULT NULL,
@@ -3989,7 +3989,7 @@ CREATE TABLE `ApEdIterRunData` (
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `invert_templs` (`invert_templs`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -4011,7 +4011,7 @@ DROP TABLE IF EXISTS `ApEmanRefineIterData`;
 CREATE TABLE `ApEmanRefineIterData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `package` text,
+  `package` varchar(255),
   `ang` double DEFAULT NULL,
   `lpfilter` int(20) DEFAULT NULL,
   `hpfilter` int(20) DEFAULT NULL,
@@ -4045,7 +4045,7 @@ CREATE TABLE `ApEmanRefineIterData` (
   KEY `EMAN_refine` (`EMAN_refine`),
   KEY `EMAN_goodbad` (`EMAN_goodbad`),
   KEY `EMAN_perturb` (`EMAN_perturb`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -4080,7 +4080,7 @@ CREATE TABLE `ApEulerJumpData` (
   KEY `REF|ApStackParticleData|particle` (`REF|ApStackParticleData|particle`),
   KEY `REF|ApRefineRunData|refineRun` (`REF|ApRefineRunData|refineRun`),
   KEY `REF|ApMultiModelRefineRunData|multiModelRefineRun` (`REF|ApMultiModelRefineRunData|multiModelRefineRun`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -4108,7 +4108,7 @@ CREATE TABLE `ApFSCData` (
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|ApRefineIterData|refineIter` (`REF|ApRefineIterData|refineIter`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -4146,7 +4146,7 @@ CREATE TABLE `ApFrealignIterData` (
   `rbfact` double DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -4168,13 +4168,13 @@ DROP TABLE IF EXISTS `ApFrealignPrepareData`;
 CREATE TABLE `ApFrealignPrepareData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `name` text,
+  `name` varchar(255),
   `ppn` int(20) DEFAULT NULL,
   `rpn` int(20) DEFAULT NULL,
   `nodes` int(20) DEFAULT NULL,
   `memory` int(20) DEFAULT NULL,
   `hidden` tinyint(1) DEFAULT NULL,
-  `tarfile` text,
+  `tarfile` varchar(255),
   `REF|ApSymmetryData|symmetry` int(20) DEFAULT NULL,
   `REF|ApPathData|path` int(20) DEFAULT NULL,
   `REF|ApStackData|stack` int(20) DEFAULT NULL,
@@ -4192,7 +4192,7 @@ CREATE TABLE `ApFrealignPrepareData` (
   KEY `REF|ApInitialModelData|model` (`REF|ApInitialModelData|model`),
   KEY `REF|ApAppionJobData|job` (`REF|ApAppionJobData|job`),
   KEY `REF|ApRefineIterData|refineIter` (`REF|ApRefineIterData|refineIter`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -4222,8 +4222,8 @@ CREATE TABLE `ApFullTomogramData` (
   `thickness` int(20) DEFAULT NULL,
   `bin` int(20) DEFAULT NULL,
   `REF|ApPathData|path` int(20) DEFAULT NULL,
-  `name` text,
-  `description` text,
+  `name` varchar(255),
+  `description` varchar(255),
   `REF|leginondata|AcquisitionImageData|zprojection` int(20) DEFAULT NULL,
   `hidden` tinyint(1) DEFAULT NULL,
   `REF|ApTomoReconParamsData|reconparam` int(20) DEFAULT NULL,
@@ -4238,7 +4238,7 @@ CREATE TABLE `ApFullTomogramData` (
   KEY `REF|leginondata|AcquisitionImageData|zprojection` (`REF|leginondata|AcquisitionImageData|zprojection`),
   KEY `hidden` (`hidden`),
   KEY `REF|ApTomoReconParamsData|reconparam` (`REF|ApTomoReconParamsData|reconparam`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -4261,14 +4261,14 @@ CREATE TABLE `ApFullTomogramRunData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `REF|leginondata|SessionData|session` int(20) DEFAULT NULL,
-  `runname` text,
+  `runname` varchar(255),
   `REF|ApPathData|path` int(20) DEFAULT NULL,
-  `method` text,
+  `method` varchar(255),
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|leginondata|SessionData|session` (`REF|leginondata|SessionData|session`),
   KEY `REF|ApPathData|path` (`REF|ApPathData|path`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -4299,7 +4299,7 @@ CREATE TABLE `ApHelicalCoordData` (
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|leginondata|AcquisitionImageData|image` (`REF|leginondata|AcquisitionImageData|image`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -4324,31 +4324,31 @@ CREATE TABLE `ApHipIterData` (
   `REF|leginondata|SessionData|session` int(20) DEFAULT NULL,
   `REF|ApHipRunData|hipRun` int(20) DEFAULT NULL,
   `iteration` int(20) DEFAULT NULL,
-  `iterpath` text,
-  `volumeDensity` text,
+  `iterpath` varchar(255),
+  `volumeDensity` varchar(255),
   `REF|ApResolutionData|resolution` int(20) DEFAULT NULL,
   `REF|ApRMeasureData|rMeasure` int(20) DEFAULT NULL,
-  `cutfit1` text,
-  `cutfit2` text,
-  `cutfit3` text,
-  `chop1` text,
-  `chop2` text,
-  `avglist_file` text,
+  `cutfit1` varchar(255),
+  `cutfit2` varchar(255),
+  `cutfit3` varchar(255),
+  `chop1` varchar(255),
+  `chop2` varchar(255),
+  `avglist_file` varchar(255),
   `final_numpart` int(20) DEFAULT NULL,
   `asymsu` int(20) DEFAULT NULL,
-  `avg_file` text,
-  `map_file` text,
-  `mrc_file` text,
-  `ll_file` text,
-  `op_file` text,
-  `output_file` text,
+  `avg_file` varchar(255),
+  `map_file` varchar(255),
+  `mrc_file` varchar(255),
+  `ll_file` varchar(255),
+  `op_file` varchar(255),
+  `output_file` varchar(255),
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|leginondata|SessionData|session` (`REF|leginondata|SessionData|session`),
   KEY `REF|ApHipRunData|hipRun` (`REF|ApHipRunData|hipRun`),
   KEY `REF|ApResolutionData|resolution` (`REF|ApResolutionData|resolution`),
   KEY `REF|ApRMeasureData|rMeasure` (`REF|ApRMeasureData|rMeasure`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -4382,15 +4382,15 @@ CREATE TABLE `ApHipParamsData` (
   `padval` int(20) DEFAULT NULL,
   `rescut` int(20) DEFAULT NULL,
   `filval` int(20) DEFAULT NULL,
-  `strong` text,
-  `range` text,
-  `llbo` text,
-  `final_stack` text,
+  `strong` varchar(255),
+  `range` varchar(255),
+  `llbo` varchar(255),
+  `final_stack` varchar(255),
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|leginondata|SessionData|session` (`REF|leginondata|SessionData|session`),
   KEY `REF|ApHipRunData|hipRun` (`REF|ApHipRunData|hipRun`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -4415,7 +4415,7 @@ CREATE TABLE `ApHipParticleData` (
   `REF|leginondata|SessionData|session` int(20) DEFAULT NULL,
   `REF|ApHipRunData|hipRun` int(20) DEFAULT NULL,
   `particleNumber` int(20) DEFAULT NULL,
-  `filename` text,
+  `filename` varchar(255),
   `REF|ApStackData|stack` int(20) DEFAULT NULL,
   `REF|ApStackRunData|stackRun` int(20) DEFAULT NULL,
   `tilt` double DEFAULT NULL,
@@ -4429,20 +4429,20 @@ CREATE TABLE `ApHipParticleData` (
   `ner_z` double DEFAULT NULL,
   `ner_rscale` double DEFAULT NULL,
   `ner_ampscale` double DEFAULT NULL,
-  `mrc_file` text,
-  `s_file` text,
-  `dft_file` text,
-  `colb_file` text,
-  `ner_file` text,
-  `far_file` text,
-  `fft_file` text,
+  `mrc_file` varchar(255),
+  `s_file` varchar(255),
+  `dft_file` varchar(255),
+  `colb_file` varchar(255),
+  `ner_file` varchar(255),
+  `far_file` varchar(255),
+  `fft_file` varchar(255),
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|leginondata|SessionData|session` (`REF|leginondata|SessionData|session`),
   KEY `REF|ApHipRunData|hipRun` (`REF|ApHipRunData|hipRun`),
   KEY `REF|ApStackData|stack` (`REF|ApStackData|stack`),
   KEY `REF|ApStackRunData|stackRun` (`REF|ApStackRunData|stackRun`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -4464,9 +4464,9 @@ DROP TABLE IF EXISTS `ApHipRunData`;
 CREATE TABLE `ApHipRunData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `runname` text,
+  `runname` varchar(255),
   `REF|ApPathData|path` int(20) DEFAULT NULL,
-  `description` text,
+  `description` varchar(255),
   `REF|projectdata|projects|project` int(20) DEFAULT NULL,
   `REF|leginondata|SessionData|session` int(20) DEFAULT NULL,
   `apix` double DEFAULT NULL,
@@ -4478,7 +4478,7 @@ CREATE TABLE `ApHipRunData` (
   KEY `REF|leginondata|SessionData|session` (`REF|leginondata|SessionData|session`),
   KEY `REF|ApStackData|stack` (`REF|ApStackData|stack`),
   KEY `hidden` (`hidden`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -4518,7 +4518,7 @@ CREATE TABLE `ApImageTiltTransformData` (
   KEY `REF|leginondata|AcquisitionImageData|image1` (`REF|leginondata|AcquisitionImageData|image1`),
   KEY `REF|leginondata|AcquisitionImageData|image2` (`REF|leginondata|AcquisitionImageData|image2`),
   KEY `REF|ApSelectionRunData|tiltrun` (`REF|ApSelectionRunData|tiltrun`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -4550,7 +4550,7 @@ CREATE TABLE `ApImageTransformationData` (
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|leginondata|AcquisitionImageData|image1` (`REF|leginondata|AcquisitionImageData|image1`),
   KEY `REF|leginondata|AcquisitionImageData|image2` (`REF|leginondata|AcquisitionImageData|image2`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -4574,7 +4574,7 @@ CREATE TABLE `ApImagic3dRefineIterationData` (
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `REF|ApImagic3dRefineRunData|refinement_run` int(20) DEFAULT NULL,
   `iteration` int(20) DEFAULT NULL,
-  `name` text,
+  `name` varchar(255),
   `REF|ApSymmetryData|symmetry` int(20) DEFAULT NULL,
   `filt_stack` tinyint(1) DEFAULT NULL,
   `hp_filt` int(20) DEFAULT NULL,
@@ -4622,7 +4622,7 @@ CREATE TABLE `ApImagic3dRefineIterationData` (
   KEY `cent_stack` (`cent_stack`),
   KEY `spider_align` (`spider_align`),
   KEY `hidden` (`hidden`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -4644,13 +4644,13 @@ DROP TABLE IF EXISTS `ApImagic3dRefineRunData`;
 CREATE TABLE `ApImagic3dRefineRunData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `runname` text,
+  `runname` varchar(255),
   `REF|ApInitialModelData|initialModel` int(20) DEFAULT NULL,
   `REF|ApStackData|stackrun` int(20) DEFAULT NULL,
   `radius` int(20) DEFAULT NULL,
   `boxsize` int(20) DEFAULT NULL,
   `pixelsize` double DEFAULT NULL,
-  `description` text,
+  `description` varchar(255),
   `REF|ApPathData|path` int(20) DEFAULT NULL,
   `hidden` tinyint(1) DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
@@ -4659,7 +4659,7 @@ CREATE TABLE `ApImagic3dRefineRunData` (
   KEY `REF|ApStackData|stackrun` (`REF|ApStackData|stackrun`),
   KEY `REF|ApPathData|path` (`REF|ApPathData|path`),
   KEY `hidden` (`hidden`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -4681,7 +4681,7 @@ DROP TABLE IF EXISTS `ApImagicAlignAnalysisData`;
 CREATE TABLE `ApImagicAlignAnalysisData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `runname` text,
+  `runname` varchar(255),
   `run_seconds` int(20) DEFAULT NULL,
   `bin` int(20) DEFAULT NULL,
   `highpass` int(20) DEFAULT NULL,
@@ -4690,11 +4690,11 @@ CREATE TABLE `ApImagicAlignAnalysisData` (
   `mask_dropoff` double DEFAULT NULL,
   `numiters` int(20) DEFAULT NULL,
   `overcorrection` double DEFAULT NULL,
-  `MSAdistance` text,
-  `eigenimages` text,
+  `MSAdistance` varchar(255),
+  `eigenimages` varchar(255),
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -4722,7 +4722,7 @@ CREATE TABLE `ApImodXcorrParamsData` (
   `FilterSigma2` double DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -4746,12 +4746,12 @@ CREATE TABLE `ApInitialModelData` (
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `REF|ApPathData|path` bigint(20) DEFAULT NULL,
   `REF|projectdata|projects|project` int(20) DEFAULT NULL,
-  `name` text,
+  `name` varchar(255),
   `resolution` double DEFAULT NULL,
   `REF|ApSymmetryData|symmetry` int(20) DEFAULT NULL,
   `pixelsize` double DEFAULT NULL,
   `boxsize` int(20) DEFAULT NULL,
-  `description` text,
+  `description` varchar(255),
   `hidden` tinyint(1) DEFAULT '0',
   `md5sum` varchar(32) DEFAULT NULL,
   `REF|Ap3dDensityData|original_density` int(20) DEFAULT NULL,
@@ -4765,7 +4765,7 @@ CREATE TABLE `ApInitialModelData` (
   KEY `hidden` (`hidden`),
   KEY `REF|Ap3dDensityData|original_density` (`REF|Ap3dDensityData|original_density`),
   KEY `REF|ApInitialModelData|original_model` (`REF|ApInitialModelData|original_model`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -4790,11 +4790,11 @@ CREATE TABLE `ApKerDenSOMParamsData` (
   `mask_diam` double DEFAULT NULL,
   `x_dimension` int(20) DEFAULT NULL,
   `y_dimension` int(20) DEFAULT NULL,
-  `convergence` text,
+  `convergence` varchar(255),
   `run_seconds` int(20) DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -4830,7 +4830,7 @@ CREATE TABLE `ApManualParamsData` (
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|ApSelectionRunData|oldselectionrun` (`REF|ApSelectionRunData|oldselectionrun`),
   KEY `trace` (`trace`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -4859,7 +4859,7 @@ CREATE TABLE `ApMaskAssessmentData` (
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|ApMaskAssessmentRunData|run` (`REF|ApMaskAssessmentRunData|run`),
   KEY `REF|ApMaskRegionData|region` (`REF|ApMaskRegionData|region`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -4882,13 +4882,13 @@ CREATE TABLE `ApMaskAssessmentRunData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `REF|leginondata|SessionData|session` int(20) DEFAULT NULL,
-  `name` text,
+  `name` varchar(255),
   `REF|ApMaskMakerRunData|maskrun` int(20) DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|leginondata|SessionData|session` (`REF|leginondata|SessionData|session`),
   KEY `REF|ApMaskMakerRunData|maskrun` (`REF|ApMaskMakerRunData|maskrun`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -4911,7 +4911,7 @@ CREATE TABLE `ApMaskMakerParamsData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `bin` int(20) DEFAULT NULL,
-  `mask_type` text,
+  `mask_type` varchar(255),
   `pdiam` int(20) DEFAULT NULL,
   `region_diameter` int(20) DEFAULT NULL,
   `edge_blur` double DEFAULT NULL,
@@ -4925,7 +4925,7 @@ CREATE TABLE `ApMaskMakerParamsData` (
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `convex_hull` (`convex_hull`),
   KEY `libcv` (`libcv`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -4949,14 +4949,14 @@ CREATE TABLE `ApMaskMakerRunData` (
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `REF|ApMaskMakerParamsData|params` int(20) DEFAULT NULL,
   `REF|leginondata|SessionData|session` int(20) DEFAULT NULL,
-  `name` text,
+  `name` varchar(255),
   `REF|ApPathData|path` int(20) DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|ApMaskMakerParamsData|params` (`REF|ApMaskMakerParamsData|params`),
   KEY `REF|leginondata|SessionData|session` (`REF|leginondata|SessionData|session`),
   KEY `REF|ApPathData|path` (`REF|ApPathData|path`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -4991,7 +4991,7 @@ CREATE TABLE `ApMaskRegionData` (
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|ApMaskMakerRunData|maskrun` (`REF|ApMaskMakerRunData|maskrun`),
   KEY `REF|leginondata|AcquisitionImageData|image` (`REF|leginondata|AcquisitionImageData|image`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -5013,8 +5013,8 @@ DROP TABLE IF EXISTS `ApMaxLikeJobData`;
 CREATE TABLE `ApMaxLikeJobData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `runname` text,
-  `timestamp` text,
+  `runname` varchar(255),
+  `timestamp` varchar(255),
   `REF|ApPathData|path` int(20) DEFAULT NULL,
   `REF|projectdata|projects|project` int(20) DEFAULT NULL,
   `finished` tinyint(1) DEFAULT NULL,
@@ -5024,7 +5024,7 @@ CREATE TABLE `ApMaxLikeJobData` (
   KEY `REF|ApPathData|path` (`REF|ApPathData|path`),
   KEY `finished` (`finished`),
   KEY `hidden` (`hidden`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -5046,13 +5046,13 @@ DROP TABLE IF EXISTS `ApMaxLikeRunData`;
 CREATE TABLE `ApMaxLikeRunData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `runname` text,
+  `runname` varchar(255),
   `mirror` tinyint(1) DEFAULT NULL,
   `student` tinyint(1) DEFAULT NULL,
   `mask_diam` int(20) DEFAULT NULL,
-  `init_method` text,
+  `init_method` varchar(255),
   `fast` tinyint(1) DEFAULT NULL,
-  `fastmode` text,
+  `fastmode` varchar(255),
   `run_seconds` int(20) DEFAULT NULL,
   `REF|ApMaxLikeJobData|job` int(20) DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
@@ -5061,7 +5061,7 @@ CREATE TABLE `ApMaxLikeRunData` (
   KEY `student` (`student`),
   KEY `fast` (`fast`),
   KEY `REF|ApMaxLikeJobData|job` (`REF|ApMaxLikeJobData|job`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -5088,9 +5088,9 @@ CREATE TABLE `ApMiscData` (
   `REF|leginondata|SessionData|session` int(20) DEFAULT NULL,
   `REF|ApFullTomogramData|fulltomogram` int(20) DEFAULT NULL,
   `REF|ApPathData|path` int(20) DEFAULT NULL,
-  `name` text,
-  `description` text,
-  `md5sum` text,
+  `name` varchar(255),
+  `description` varchar(255),
+  `md5sum` varchar(255),
   `hidden` tinyint(1) DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
@@ -5099,7 +5099,7 @@ CREATE TABLE `ApMiscData` (
   KEY `REF|ApFullTomogramData|fulltomogram` (`REF|ApFullTomogramData|fulltomogram`),
   KEY `REF|ApPathData|path` (`REF|ApPathData|path`),
   KEY `hidden` (`hidden`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -5121,14 +5121,14 @@ DROP TABLE IF EXISTS `ApMultiModelRefineRunData`;
 CREATE TABLE `ApMultiModelRefineRunData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `runname` text,
+  `runname` varchar(255),
   `num_refinements` int(20) DEFAULT NULL,
   `REF|projectdata|projects|project` int(20) DEFAULT NULL,
   `REF|leginondata|SessionData|session` int(20) DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|leginondata|SessionData|session` (`REF|leginondata|SessionData|session`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -5150,14 +5150,14 @@ DROP TABLE IF EXISTS `ApMultiRefAlignRunData`;
 CREATE TABLE `ApMultiRefAlignRunData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `runname` text,
+  `runname` varchar(255),
   `lowpass_refs` int(20) DEFAULT NULL,
   `thresh_refs` int(20) DEFAULT NULL,
   `maskrad_refs` double DEFAULT NULL,
   `mirror` tinyint(1) DEFAULT NULL,
   `center` tinyint(1) DEFAULT NULL,
-  `alignment_type` text,
-  `first_alignment` text,
+  `alignment_type` varchar(255),
+  `first_alignment` varchar(255),
   `num_orientations` int(20) DEFAULT NULL,
   `max_shift_orig` double DEFAULT NULL,
   `max_shift_this` double DEFAULT NULL,
@@ -5169,7 +5169,7 @@ CREATE TABLE `ApMultiRefAlignRunData` (
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `mirror` (`mirror`),
   KEY `center` (`center`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -5191,15 +5191,15 @@ DROP TABLE IF EXISTS `ApOtrRunData`;
 CREATE TABLE `ApOtrRunData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `runname` text,
-  `classnums` text,
+  `runname` varchar(255),
+  `classnums` varchar(255),
   `numiter` int(20) DEFAULT NULL,
   `euleriter` int(20) DEFAULT NULL,
   `maskrad` int(20) DEFAULT NULL,
   `lowpassvol` double DEFAULT NULL,
   `highpasspart` double DEFAULT NULL,
   `median` int(20) DEFAULT NULL,
-  `description` text,
+  `description` varchar(255),
   `numpart` int(20) DEFAULT NULL,
   `hidden` tinyint(1) DEFAULT NULL,
   `REF|ApResolutionData|fsc_resolution` int(20) DEFAULT NULL,
@@ -5217,7 +5217,7 @@ CREATE TABLE `ApOtrRunData` (
   KEY `REF|ApStackData|tiltstack` (`REF|ApStackData|tiltstack`),
   KEY `REF|ApAlignStackData|alignstack` (`REF|ApAlignStackData|alignstack`),
   KEY `REF|ApClusteringStackData|clusterstack` (`REF|ApClusteringStackData|clusterstack`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -5250,14 +5250,14 @@ CREATE TABLE `ApParticleData` (
   `peakstddev` double DEFAULT NULL,
   `peakarea` int(20) DEFAULT NULL,
   `diameter` double DEFAULT NULL,
-  `label` text,
+  `label` varchar(255),
   `helixnum` int(20) DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|ApSelectionRunData|selectionrun` (`REF|ApSelectionRunData|selectionrun`),
   KEY `REF|leginondata|AcquisitionImageData|image` (`REF|leginondata|AcquisitionImageData|image`),
   KEY `REF|ApTemplateImageData|template` (`REF|ApTemplateImageData|template`)
-) ENGINE=MyISAM AUTO_INCREMENT=1326 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1326 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -5285,13 +5285,13 @@ CREATE TABLE `ApParticleExtractorData` (
   `aceCutoff` double DEFAULT NULL,
   `correlationMin` double DEFAULT NULL,
   `correlationMax` double DEFAULT NULL,
-  `checkMask` text,
+  `checkMask` varchar(255),
   `checkImage` tinyint(1) DEFAULT NULL,
   `norejects` tinyint(1) DEFAULT NULL,
   `minDefocus` double DEFAULT NULL,
   `maxDefocus` double DEFAULT NULL,
   `defocpair` tinyint(1) DEFAULT NULL,
-  `tiltangle` text,
+  `tiltangle` varchar(255),
   `rotate` tinyint(1) DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
@@ -5299,7 +5299,7 @@ CREATE TABLE `ApParticleExtractorData` (
   KEY `norejects` (`norejects`),
   KEY `defocpair` (`defocpair`),
   KEY `rotate` (`rotate`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -5324,12 +5324,12 @@ CREATE TABLE `ApParticleMovieData` (
   `movieNumber` int(20) DEFAULT NULL,
   `REF|ApParticleMovieRunData|movieRun` int(20) DEFAULT NULL,
   `REF|ApParticleData|particle` int(20) DEFAULT NULL,
-  `format` text,
+  `format` varchar(255),
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|ApParticleMovieRunData|movieRun` (`REF|ApParticleMovieRunData|movieRun`),
   KEY `REF|ApParticleData|particle` (`REF|ApParticleData|particle`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -5356,13 +5356,13 @@ CREATE TABLE `ApParticleMovieParamsData` (
   `aceCutoff` double DEFAULT NULL,
   `correlationMin` double DEFAULT NULL,
   `correlationMax` double DEFAULT NULL,
-  `checkMask` text,
+  `checkMask` varchar(255),
   `checkImage` tinyint(1) DEFAULT NULL,
   `norejects` tinyint(1) DEFAULT NULL,
   `minDefocus` double DEFAULT NULL,
   `maxDefocus` double DEFAULT NULL,
   `defocpair` tinyint(1) DEFAULT NULL,
-  `tiltangle` text,
+  `tiltangle` varchar(255),
   `rotate` tinyint(1) DEFAULT NULL,
   `frameavg` int(20) DEFAULT NULL,
   `framestep` int(20) DEFAULT NULL,
@@ -5372,7 +5372,7 @@ CREATE TABLE `ApParticleMovieParamsData` (
   KEY `norejects` (`norejects`),
   KEY `defocpair` (`defocpair`),
   KEY `rotate` (`rotate`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -5394,7 +5394,7 @@ DROP TABLE IF EXISTS `ApParticleMovieRunData`;
 CREATE TABLE `ApParticleMovieRunData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `movieRunName` text,
+  `movieRunName` varchar(255),
   `REF|ApParticleMovieParamsData|movieParams` int(20) DEFAULT NULL,
   `REF|ApSelectionRunData|selectionrun` int(20) DEFAULT NULL,
   `REF|leginondata|SessionData|session` int(20) DEFAULT NULL,
@@ -5405,7 +5405,7 @@ CREATE TABLE `ApParticleMovieRunData` (
   KEY `REF|ApSelectionRunData|selectionrun` (`REF|ApSelectionRunData|selectionrun`),
   KEY `REF|leginondata|SessionData|session` (`REF|leginondata|SessionData|session`),
   KEY `REF|ApPathData|path` (`REF|ApPathData|path`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -5427,11 +5427,11 @@ DROP TABLE IF EXISTS `ApPathData`;
 CREATE TABLE `ApPathData` (
   `DEF_id` int(20) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `path` text,
+  `path` varchar(255),
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `path_index32` (`path`(32))
-) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -5454,14 +5454,14 @@ DROP TABLE IF EXISTS `ApPrepRefineData`;
 CREATE TABLE `ApPrepRefineData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `name` text,
+  `name` varchar(255),
   `hidden` tinyint(1) DEFAULT NULL,
   `REF|ApPathData|path` int(20) DEFAULT NULL,
   `REF|ApStackData|stack` int(20) DEFAULT NULL,
   `REF|ApAppionJobData|job` int(20) DEFAULT NULL,
   `REF|leginondata|SessionData|session` int(20) DEFAULT NULL,
-  `method` text,
-  `description` text,
+  `method` varchar(255),
+  `description` varchar(255),
   `REF|ApRefineIterData|paramiter` int(20) DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
@@ -5471,7 +5471,7 @@ CREATE TABLE `ApPrepRefineData` (
   KEY `REF|ApAppionJobData|job` (`REF|ApAppionJobData|job`),
   KEY `REF|leginondata|SessionData|session` (`REF|leginondata|SessionData|session`),
   KEY `REF|ApRefineIterData|paramiter` (`REF|ApRefineIterData|paramiter`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -5499,7 +5499,7 @@ CREATE TABLE `ApProtomoAlignerParamsData` (
   `REF|ApProtomoRefinementParamsData|good_cycle` int(20) DEFAULT NULL,
   `good_start` int(20) DEFAULT NULL,
   `good_end` int(20) DEFAULT NULL,
-  `description` text,
+  `description` varchar(255),
   `hidden` tinyint(1) DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
@@ -5508,7 +5508,7 @@ CREATE TABLE `ApProtomoAlignerParamsData` (
   KEY `REF|ApProtomoRefinementParamsData|refine_cycle` (`REF|ApProtomoRefinementParamsData|refine_cycle`),
   KEY `REF|ApProtomoRefinementParamsData|good_cycle` (`REF|ApProtomoRefinementParamsData|good_cycle`),
   KEY `hidden` (`hidden`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -5538,7 +5538,7 @@ CREATE TABLE `ApProtomoAlignmentData` (
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|ApTomoAlignerParamsData|aligner` (`REF|ApTomoAlignerParamsData|aligner`),
   KEY `REF|leginondata|AcquisitionImageData|image` (`REF|leginondata|AcquisitionImageData|image`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -5568,7 +5568,7 @@ CREATE TABLE `ApProtomoModelData` (
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|ApTomoAlignerParamsData|aligner` (`REF|ApTomoAlignerParamsData|aligner`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -5590,10 +5590,10 @@ DROP TABLE IF EXISTS `ApProtomoParamsData`;
 CREATE TABLE `ApProtomoParamsData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `series_name` text,
+  `series_name` varchar(255),
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -5618,7 +5618,7 @@ CREATE TABLE `ApProtomoRefinementParamsData` (
   `REF|ApProtomoParamsData|protomo` int(20) DEFAULT NULL,
   `cycle` int(20) DEFAULT NULL,
   `alismp` double DEFAULT NULL,
-  `cormod` text,
+  `cormod` varchar(255),
   `imgref` int(20) DEFAULT NULL,
   `REF|leginondata|AcquisitionImageData|reference` int(20) DEFAULT NULL,
   `SUBD|alibox|x` double DEFAULT NULL,
@@ -5627,7 +5627,7 @@ CREATE TABLE `ApProtomoRefinementParamsData` (
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|ApProtomoParamsData|protomo` (`REF|ApProtomoParamsData|protomo`),
   KEY `REF|leginondata|AcquisitionImageData|reference` (`REF|leginondata|AcquisitionImageData|reference`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -5649,11 +5649,11 @@ DROP TABLE IF EXISTS `ApRMeasureData`;
 CREATE TABLE `ApRMeasureData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `volume` text,
+  `volume` varchar(255),
   `rMeasure` double DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -5679,7 +5679,7 @@ CREATE TABLE `ApRaptorParamsData` (
   `markernumber` int(20) DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -5701,15 +5701,15 @@ DROP TABLE IF EXISTS `ApRctRunData`;
 CREATE TABLE `ApRctRunData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `runname` text,
-  `classnums` text,
+  `runname` varchar(255),
+  `classnums` varchar(255),
   `numiter` int(20) DEFAULT NULL,
   `maskrad` int(20) DEFAULT NULL,
   `lowpassvol` double DEFAULT NULL,
   `highpasspart` double DEFAULT NULL,
   `lowpasspart` double DEFAULT NULL,
   `median` int(20) DEFAULT NULL,
-  `description` text,
+  `description` varchar(255),
   `numpart` int(20) DEFAULT NULL,
   `hidden` tinyint(1) DEFAULT NULL,
   `REF|ApResolutionData|fsc_resolution` int(20) DEFAULT NULL,
@@ -5727,7 +5727,7 @@ CREATE TABLE `ApRctRunData` (
   KEY `REF|ApStackData|tiltstack` (`REF|ApStackData|tiltstack`),
   KEY `REF|ApAlignStackData|alignstack` (`REF|ApAlignStackData|alignstack`),
   KEY `REF|ApClusteringStackData|clusterstack` (`REF|ApClusteringStackData|clusterstack`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -5749,7 +5749,7 @@ DROP TABLE IF EXISTS `ApRefBasedRunData`;
 CREATE TABLE `ApRefBasedRunData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `runname` text,
+  `runname` varchar(255),
   `mask_diam` int(20) DEFAULT NULL,
   `xysearch` int(20) DEFAULT NULL,
   `xystep` int(20) DEFAULT NULL,
@@ -5763,7 +5763,7 @@ CREATE TABLE `ApRefBasedRunData` (
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `invert_templs` (`invert_templs`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -5793,7 +5793,7 @@ CREATE TABLE `ApRefineGoodBadParticleData` (
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|ApRefineIterData|refine` (`REF|ApRefineIterData|refine`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -5817,14 +5817,14 @@ CREATE TABLE `ApRefineInitModelData` (
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `REF|ApPrepRefineData|preprefine` int(20) DEFAULT NULL,
   `REF|ApInitialModelData|refmodel` int(20) DEFAULT NULL,
-  `filename` text,
-  `format` text,
+  `filename` varchar(255),
+  `format` varchar(255),
   `apix` double DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|ApPrepRefineData|preprefine` (`REF|ApPrepRefineData|preprefine`),
   KEY `REF|ApInitialModelData|refmodel` (`REF|ApInitialModelData|refmodel`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -5853,10 +5853,10 @@ CREATE TABLE `ApRefineIterData` (
   `imask` int(20) DEFAULT NULL,
   `alignmentInnerRadius` int(20) DEFAULT NULL,
   `alignmentOuterRadius` int(20) DEFAULT NULL,
-  `volumeDensity` text,
-  `refineClassAverages` text,
-  `postRefineClassAverages` text,
-  `classVariance` text,
+  `volumeDensity` varchar(255),
+  `refineClassAverages` varchar(255),
+  `postRefineClassAverages` varchar(255),
+  `classVariance` varchar(255),
   `REF|ApSymmetryData|symmetry` int(20) DEFAULT NULL,
   `REF|ApRefineRunData|refineRun` int(20) DEFAULT NULL,
   `REF|ApResolutionData|resolution` int(20) DEFAULT NULL,
@@ -5878,7 +5878,7 @@ CREATE TABLE `ApRefineIterData` (
   KEY `REF|ApFrealignIterData|frealignParams` (`REF|ApFrealignIterData|frealignParams`),
   KEY `REF|ApXmippML3DRefineIterData|xmippML3DParams` (`REF|ApXmippML3DRefineIterData|xmippML3DParams`),
   KEY `REF|ApRelionIterData|relionParams` (`REF|ApRelionIterData|relionParams`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -5902,14 +5902,14 @@ CREATE TABLE `ApRefineMaskVolData` (
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `REF|ApPrepRefineData|preprefine` int(20) DEFAULT NULL,
   `REF|ApInitialModelData|refmodel` int(20) DEFAULT NULL,
-  `filename` text,
-  `format` text,
+  `filename` varchar(255),
+  `format` varchar(255),
   `apix` double DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|ApPrepRefineData|preprefine` (`REF|ApPrepRefineData|preprefine`),
   KEY `REF|ApInitialModelData|refmodel` (`REF|ApInitialModelData|refmodel`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -5947,7 +5947,7 @@ CREATE TABLE `ApRefineParticleData` (
   `2Dclass_num` int(20) DEFAULT NULL,
   `refine_keep` tinyint(1) DEFAULT NULL,
   `postRefine_keep` tinyint(1) DEFAULT NULL,
-  `euler_convention` text,
+  `euler_convention` varchar(255),
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|ApRefineIterData|refineIter` (`REF|ApRefineIterData|refineIter`),
@@ -5957,7 +5957,7 @@ CREATE TABLE `ApRefineParticleData` (
   KEY `mirror` (`mirror`),
   KEY `refine_keep` (`refine_keep`),
   KEY `postRefine_keep` (`postRefine_keep`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -5979,8 +5979,8 @@ DROP TABLE IF EXISTS `ApRefineReferenceData`;
 CREATE TABLE `ApRefineReferenceData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `volumeDensityStart` text,
-  `volumeDensityEnd` text,
+  `volumeDensityStart` varchar(255),
+  `volumeDensityEnd` varchar(255),
   `reference_number` int(20) DEFAULT NULL,
   `REF|ApPathData|path` int(20) DEFAULT NULL,
   `REF|ApRefineIterData|iteration` int(20) DEFAULT NULL,
@@ -5988,7 +5988,7 @@ CREATE TABLE `ApRefineReferenceData` (
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|ApPathData|path` (`REF|ApPathData|path`),
   KEY `REF|ApRefineIterData|iteration` (`REF|ApRefineIterData|iteration`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -6010,9 +6010,9 @@ DROP TABLE IF EXISTS `ApRefineRunData`;
 CREATE TABLE `ApRefineRunData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `runname` text,
-  `package` text,
-  `description` text,
+  `runname` varchar(255),
+  `package` varchar(255),
+  `description` varchar(255),
   `num_iter` int(20) DEFAULT NULL,
   `hidden` tinyint(1) DEFAULT NULL,
   `reference_number` int(20) DEFAULT NULL,
@@ -6029,7 +6029,7 @@ CREATE TABLE `ApRefineRunData` (
   KEY `REF|ApPathData|path` (`REF|ApPathData|path`),
   KEY `REF|ApAppionJobData|job` (`REF|ApAppionJobData|job`),
   KEY `REF|ApMultiModelRefineRunData|multiModelRefineRun` (`REF|ApMultiModelRefineRunData|multiModelRefineRun`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -6053,12 +6053,12 @@ CREATE TABLE `ApRefineStackData` (
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `REF|ApPrepRefineData|preprefine` int(20) DEFAULT NULL,
   `REF|ApStackData|stackref` int(20) DEFAULT NULL,
-  `filename` text,
+  `filename` varchar(255),
   `bin` int(20) DEFAULT NULL,
   `lowpass` double DEFAULT NULL,
   `highpass` double DEFAULT NULL,
   `last_part` int(20) DEFAULT NULL,
-  `format` text,
+  `format` varchar(255),
   `apix` double DEFAULT NULL,
   `boxsize` int(20) DEFAULT NULL,
   `cs` double DEFAULT NULL,
@@ -6069,7 +6069,7 @@ CREATE TABLE `ApRefineStackData` (
   KEY `REF|ApPrepRefineData|preprefine` (`REF|ApPrepRefineData|preprefine`),
   KEY `REF|ApStackData|stackref` (`REF|ApStackData|stackref`),
   KEY `recon` (`recon`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -6101,7 +6101,7 @@ CREATE TABLE `ApRelionIterData` (
   `ctf_corrected_ref` tinyint(1) DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -6123,12 +6123,12 @@ DROP TABLE IF EXISTS `ApResolutionData`;
 CREATE TABLE `ApResolutionData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `fscfile` text,
+  `fscfile` varchar(255),
   `half` double DEFAULT NULL,
-  `type` text,
+  `type` varchar(255),
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -6153,7 +6153,7 @@ CREATE TABLE `ApRotKerDenSOMParamsData` (
   `mask_diam` double DEFAULT NULL,
   `x_dimension` int(20) DEFAULT NULL,
   `y_dimension` int(20) DEFAULT NULL,
-  `convergence` text,
+  `convergence` varchar(255),
   `run_seconds` int(20) DEFAULT NULL,
   `initregulfact` double DEFAULT NULL,
   `finalregulfact` double DEFAULT NULL,
@@ -6164,7 +6164,7 @@ CREATE TABLE `ApRotKerDenSOMParamsData` (
   `spectrahighharmonic` int(20) DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -6192,7 +6192,7 @@ CREATE TABLE `ApRunsInStackData` (
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|ApStackData|stack` (`REF|ApStackData|stack`),
   KEY `REF|ApStackRunData|stackRun` (`REF|ApStackRunData|stackRun`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -6230,7 +6230,7 @@ CREATE TABLE `ApSelectionParamsData` (
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `defocal_pairs` (`defocal_pairs`)
-) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -6253,7 +6253,7 @@ DROP TABLE IF EXISTS `ApSelectionRunData`;
 CREATE TABLE `ApSelectionRunData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `name` text,
+  `name` varchar(255),
   `hidden` tinyint(1) DEFAULT NULL,
   `REF|ApPathData|path` int(20) DEFAULT NULL,
   `REF|leginondata|SessionData|session` int(20) DEFAULT NULL,
@@ -6261,7 +6261,7 @@ CREATE TABLE `ApSelectionRunData` (
   `REF|ApDogParamsData|dogparams` int(20) DEFAULT NULL,
   `REF|ApManualParamsData|manparams` int(20) DEFAULT NULL,
   `REF|ApTiltAlignParamsData|tiltparams` int(20) DEFAULT NULL,
-  `description` text,
+  `description` varchar(255),
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `hidden` (`hidden`),
@@ -6271,7 +6271,7 @@ CREATE TABLE `ApSelectionRunData` (
   KEY `REF|ApDogParamsData|dogparams` (`REF|ApDogParamsData|dogparams`),
   KEY `REF|ApManualParamsData|manparams` (`REF|ApManualParamsData|manparams`),
   KEY `REF|ApTiltAlignParamsData|tiltparams` (`REF|ApTiltAlignParamsData|tiltparams`)
-) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -6294,15 +6294,15 @@ DROP TABLE IF EXISTS `ApSizingRunData`;
 CREATE TABLE `ApSizingRunData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `name` text,
+  `name` varchar(255),
   `REF|ApPathData|path` int(20) DEFAULT NULL,
-  `method` text,
+  `method` varchar(255),
   `REF|ApSelectionRunData|tracerun` int(20) DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|ApPathData|path` (`REF|ApPathData|path`),
   KEY `REF|ApSelectionRunData|tracerun` (`REF|ApSelectionRunData|tracerun`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -6324,8 +6324,8 @@ DROP TABLE IF EXISTS `ApSparxISACJobData`;
 CREATE TABLE `ApSparxISACJobData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `runname` text,
-  `timestamp` text,
+  `runname` varchar(255),
+  `timestamp` varchar(255),
   `REF|ApPathData|path` int(20) DEFAULT NULL,
   `REF|projectdata|projects|project` int(20) DEFAULT NULL,
   `finished` tinyint(1) DEFAULT NULL,
@@ -6335,7 +6335,7 @@ CREATE TABLE `ApSparxISACJobData` (
   KEY `REF|ApPathData|path` (`REF|ApPathData|path`),
   KEY `finished` (`finished`),
   KEY `hidden` (`hidden`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -6357,14 +6357,14 @@ DROP TABLE IF EXISTS `ApSparxISACRunData`;
 CREATE TABLE `ApSparxISACRunData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `runname` text,
+  `runname` varchar(255),
   `REF|ApSparxISACJobData|job` int(20) DEFAULT NULL,
   `REF|ApAlignStackData|alignstackid` int(20) DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|ApSparxISACJobData|job` (`REF|ApSparxISACJobData|job`),
   KEY `REF|ApAlignStackData|alignstackid` (`REF|ApAlignStackData|alignstackid`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -6386,11 +6386,11 @@ DROP TABLE IF EXISTS `ApSpiderClusteringParamsData`;
 CREATE TABLE `ApSpiderClusteringParamsData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `factor_list` text,
-  `method` text,
+  `factor_list` varchar(255),
+  `method` varchar(255),
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -6412,15 +6412,15 @@ DROP TABLE IF EXISTS `ApSpiderNoRefRunData`;
 CREATE TABLE `ApSpiderNoRefRunData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `runname` text,
+  `runname` varchar(255),
   `particle_diam` double DEFAULT NULL,
   `first_ring` int(20) DEFAULT NULL,
   `last_ring` int(20) DEFAULT NULL,
   `run_seconds` int(20) DEFAULT NULL,
-  `init_method` text,
+  `init_method` varchar(255),
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -6443,11 +6443,11 @@ CREATE TABLE `ApStackData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `REF|ApPathData|path` int(20) DEFAULT NULL,
-  `name` text,
-  `description` text,
+  `name` varchar(255),
+  `description` varchar(255),
   `hidden` tinyint(1) DEFAULT NULL,
   `REF|ApStackData|oldstack` int(20) DEFAULT NULL,
-  `substackname` text,
+  `substackname` varchar(255),
   `pixelsize` double DEFAULT NULL,
   `centered` tinyint(1) DEFAULT NULL,
   `junksorted` tinyint(1) DEFAULT NULL,
@@ -6463,7 +6463,7 @@ CREATE TABLE `ApStackData` (
   KEY `centered` (`centered`),
   KEY `junksorted` (`junksorted`),
   KEY `beamtilt_corrected` (`beamtilt_corrected`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -6497,7 +6497,7 @@ CREATE TABLE `ApStackFormatData` (
   KEY `REF|ApPathData|spider` (`REF|ApPathData|spider`),
   KEY `REF|ApPathData|xmipp` (`REF|ApPathData|xmipp`),
   KEY `REF|ApPathData|frealign` (`REF|ApPathData|frealign`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -6524,17 +6524,17 @@ CREATE TABLE `ApStackParamsData` (
   `aceCutoff` double DEFAULT NULL,
   `correlationMin` double DEFAULT NULL,
   `correlationMax` double DEFAULT NULL,
-  `checkMask` text,
+  `checkMask` varchar(255),
   `checkImage` tinyint(1) DEFAULT NULL,
   `norejects` tinyint(1) DEFAULT NULL,
   `minDefocus` double DEFAULT NULL,
   `maxDefocus` double DEFAULT NULL,
   `defocpair` tinyint(1) DEFAULT NULL,
-  `tiltangle` text,
+  `tiltangle` varchar(255),
   `rotate` tinyint(1) DEFAULT NULL,
   `phaseFlipped` tinyint(1) DEFAULT NULL,
-  `fliptype` text,
-  `fileType` text,
+  `fliptype` varchar(255),
+  `fileType` varchar(255),
   `inverted` tinyint(1) DEFAULT NULL,
   `normalized` tinyint(1) DEFAULT NULL,
   `xmipp-norm` double DEFAULT NULL,
@@ -6549,7 +6549,7 @@ CREATE TABLE `ApStackParamsData` (
   KEY `phaseFlipped` (`phaseFlipped`),
   KEY `inverted` (`inverted`),
   KEY `normalized` (`normalized`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -6590,7 +6590,7 @@ CREATE TABLE `ApStackParticleData` (
   KEY `REF|ApStackData|stack` (`REF|ApStackData|stack`),
   KEY `REF|ApStackRunData|stackRun` (`REF|ApStackRunData|stackRun`),
   KEY `REF|ApParticleData|particle` (`REF|ApParticleData|particle`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -6612,7 +6612,7 @@ DROP TABLE IF EXISTS `ApStackRunData`;
 CREATE TABLE `ApStackRunData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `stackRunName` text,
+  `stackRunName` varchar(255),
   `REF|ApStackParamsData|stackParams` int(20) DEFAULT NULL,
   `REF|ApSyntheticStackParamsData|syntheticStackParams` int(20) DEFAULT NULL,
   `REF|ApSelectionRunData|selectionrun` int(20) DEFAULT NULL,
@@ -6623,7 +6623,7 @@ CREATE TABLE `ApStackRunData` (
   KEY `REF|ApSyntheticStackParamsData|syntheticStackParams` (`REF|ApSyntheticStackParamsData|syntheticStackParams`),
   KEY `REF|ApSelectionRunData|selectionrun` (`REF|ApSelectionRunData|selectionrun`),
   KEY `REF|leginondata|SessionData|session` (`REF|leginondata|SessionData|session`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -6648,7 +6648,7 @@ CREATE TABLE `ApSubTomogramRunData` (
   `REF|leginondata|SessionData|session` int(20) DEFAULT NULL,
   `REF|ApSelectionRunData|pick` int(20) DEFAULT NULL,
   `REF|ApStackData|stack` int(20) DEFAULT NULL,
-  `runname` text,
+  `runname` varchar(255),
   `invert` tinyint(1) DEFAULT NULL,
   `subbin` int(20) DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
@@ -6657,7 +6657,7 @@ CREATE TABLE `ApSubTomogramRunData` (
   KEY `REF|ApSelectionRunData|pick` (`REF|ApSelectionRunData|pick`),
   KEY `REF|ApStackData|stack` (`REF|ApStackData|stack`),
   KEY `invert` (`invert`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -6681,13 +6681,13 @@ CREATE TABLE `ApSymmetryData` (
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `eman_name` varchar(8) DEFAULT NULL,
   `fold_symmetry` int(11) DEFAULT NULL,
-  `symmetry` text,
-  `description` text,
+  `symmetry` varchar(255),
+  `description` varchar(255),
   PRIMARY KEY (`DEF_id`),
   UNIQUE KEY `symmetry` (`symmetry`(12)),
   KEY `eman_name` (`eman_name`),
   KEY `DEF_timestamp` (`DEF_timestamp`)
-) ENGINE=MyISAM AUTO_INCREMENT=34 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=34 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -6727,7 +6727,7 @@ CREATE TABLE `ApSyntheticStackParamsData` (
   `astigmatism` double DEFAULT NULL,
   `snr1` double DEFAULT NULL,
   `snrtot` double DEFAULT NULL,
-  `envelope` text,
+  `envelope` varchar(255),
   `ace2correct` tinyint(1) DEFAULT NULL,
   `ace2correct_rand` tinyint(1) DEFAULT NULL,
   `ace2correct_std` double DEFAULT NULL,
@@ -6744,7 +6744,7 @@ CREATE TABLE `ApSyntheticStackParamsData` (
   KEY `ace2correct_rand` (`ace2correct_rand`),
   KEY `ace2estimate` (`ace2estimate`),
   KEY `norm` (`norm`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -6768,10 +6768,10 @@ CREATE TABLE `ApTemplateImageData` (
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `REF|ApPathData|path` bigint(20) DEFAULT NULL,
   `REF|projectdata|projects|project` int(20) DEFAULT NULL,
-  `templatename` text,
+  `templatename` varchar(255),
   `apix` double DEFAULT NULL,
   `diam` int(20) DEFAULT NULL,
-  `description` text,
+  `description` varchar(255),
   `hidden` tinyint(1) DEFAULT '0',
   `md5sum` varchar(32) DEFAULT NULL,
   `REF|ApStackData|stack` int(20) DEFAULT NULL,
@@ -6786,7 +6786,7 @@ CREATE TABLE `ApTemplateImageData` (
   KEY `md5sum` (`md5sum`),
   KEY `REF|ApAlignStackData|alignstack` (`REF|ApAlignStackData|alignstack`),
   KEY `REF|ApClusteringStackData|clusterstack` (`REF|ApClusteringStackData|clusterstack`)
-) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -6822,7 +6822,7 @@ CREATE TABLE `ApTemplateRunData` (
   KEY `REF|ApTemplateImageData|template` (`REF|ApTemplateImageData|template`),
   KEY `REF|ApSelectionRunData|selectionrun` (`REF|ApSelectionRunData|selectionrun`),
   KEY `mirror` (`mirror`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -6846,11 +6846,11 @@ CREATE TABLE `ApTemplateStackData` (
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `REF|ApClusteringStackData|clusterstack` int(20) DEFAULT NULL,
   `REF|ApAlignStackData|alignstack` int(20) DEFAULT NULL,
-  `templatename` text,
+  `templatename` varchar(255),
   `cls_avgs` tinyint(1) DEFAULT NULL,
   `forward_proj` tinyint(1) DEFAULT NULL,
-  `origfile` text,
-  `description` text,
+  `origfile` varchar(255),
+  `description` varchar(255),
   `REF|leginondata|SessionData|session` int(20) DEFAULT NULL,
   `apix` double DEFAULT NULL,
   `boxsize` int(20) DEFAULT NULL,
@@ -6867,7 +6867,7 @@ CREATE TABLE `ApTemplateStackData` (
   KEY `REF|leginondata|SessionData|session` (`REF|leginondata|SessionData|session`),
   KEY `hidden` (`hidden`),
   KEY `REF|ApPathData|path` (`REF|ApPathData|path`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -6883,7 +6883,7 @@ CREATE TABLE `ApTestParamsData` (
   `bin` int(20) DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -6904,7 +6904,7 @@ CREATE TABLE `ApTestResultData` (
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|ApTestRunData|testrun` (`REF|ApTestRunData|testrun`),
   KEY `REF|leginondata|AcquisitionImageData|image` (`REF|leginondata|AcquisitionImageData|image`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -6919,15 +6919,15 @@ CREATE TABLE `ApTestRunData` (
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `REF|ApTestParamsData|params` int(20) DEFAULT NULL,
   `REF|leginondata|SessionData|session` int(20) DEFAULT NULL,
-  `name` text,
+  `name` varchar(255),
   `REF|ApPathData|path` int(20) DEFAULT NULL,
-  `append_timestamp` text,
+  `append_timestamp` varchar(255),
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|ApTestParamsData|params` (`REF|ApTestParamsData|params`),
   KEY `REF|leginondata|SessionData|session` (`REF|leginondata|SessionData|session`),
   KEY `REF|ApPathData|path` (`REF|ApPathData|path`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -6947,12 +6947,12 @@ CREATE TABLE `ApTiltAlignParamsData` (
   `hp_filt` int(20) DEFAULT NULL,
   `median` int(20) DEFAULT NULL,
   `pixel_value_limit` double DEFAULT NULL,
-  `output_type` text,
+  `output_type` varchar(255),
   `REF|ApSelectionRunData|oldselectionrun` int(20) DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|ApSelectionRunData|oldselectionrun` (`REF|ApSelectionRunData|oldselectionrun`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -6974,7 +6974,7 @@ CREATE TABLE `ApTiltParticlePairData` (
   KEY `REF|ApParticleData|particle1` (`REF|ApParticleData|particle1`),
   KEY `REF|ApParticleData|particle2` (`REF|ApParticleData|particle2`),
   KEY `REF|ApImageTiltTransformData|transform` (`REF|ApImageTiltTransformData|transform`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -6997,7 +6997,7 @@ CREATE TABLE `ApTiltsInAlignRunData` (
   KEY `REF|leginondata|TiltSeriesData|tiltseries` (`REF|leginondata|TiltSeriesData|tiltseries`),
   KEY `REF|leginondata|TomographySettingsData|settings` (`REF|leginondata|TomographySettingsData|settings`),
   KEY `primary_tiltseries` (`primary_tiltseries`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -7016,7 +7016,7 @@ CREATE TABLE `ApTomoAlignerParamsData` (
   `REF|ApProtomoRefinementParamsData|good_cycle` int(20) DEFAULT NULL,
   `good_start` int(20) DEFAULT NULL,
   `good_end` int(20) DEFAULT NULL,
-  `description` text,
+  `description` varchar(255),
   `hidden` tinyint(1) DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
@@ -7025,7 +7025,7 @@ CREATE TABLE `ApTomoAlignerParamsData` (
   KEY `REF|ApProtomoRefinementParamsData|refine_cycle` (`REF|ApProtomoRefinementParamsData|refine_cycle`),
   KEY `REF|ApProtomoRefinementParamsData|good_cycle` (`REF|ApProtomoRefinementParamsData|good_cycle`),
   KEY `hidden` (`hidden`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -7045,9 +7045,9 @@ CREATE TABLE `ApTomoAlignmentRunData` (
   `REF|ApProtomoParamsData|fineProtomoParams` int(20) DEFAULT NULL,
   `REF|ApRaptorParamsData|raptorParams` int(20) DEFAULT NULL,
   `bin` int(20) DEFAULT NULL,
-  `name` text,
+  `name` varchar(255),
   `REF|ApPathData|path` int(20) DEFAULT NULL,
-  `description` text,
+  `description` varchar(255),
   `hidden` tinyint(1) DEFAULT NULL,
   `badAlign` tinyint(1) DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
@@ -7061,7 +7061,7 @@ CREATE TABLE `ApTomoAlignmentRunData` (
   KEY `REF|ApPathData|path` (`REF|ApPathData|path`),
   KEY `hidden` (`hidden`),
   KEY `badAlign` (`badAlign`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -7074,12 +7074,12 @@ DROP TABLE IF EXISTS `ApTomoAverageRunData`;
 CREATE TABLE `ApTomoAverageRunData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `runname` text,
+  `runname` varchar(255),
   `REF|ApPathData|path` int(20) DEFAULT NULL,
   `REF|ApStackData|stack` int(20) DEFAULT NULL,
   `REF|ApSubTomogramRunData|subtomorun` int(20) DEFAULT NULL,
   `xyhalfwidth` int(20) DEFAULT NULL,
-  `description` text,
+  `description` varchar(255),
   `hidden` tinyint(1) DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
@@ -7087,7 +7087,7 @@ CREATE TABLE `ApTomoAverageRunData` (
   KEY `REF|ApStackData|stack` (`REF|ApStackData|stack`),
   KEY `REF|ApSubTomogramRunData|subtomorun` (`REF|ApSubTomogramRunData|subtomorun`),
   KEY `hidden` (`hidden`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -7109,7 +7109,7 @@ CREATE TABLE `ApTomoAvgParticleData` (
   KEY `REF|ApTomoAverageRunData|avgrun` (`REF|ApTomoAverageRunData|avgrun`),
   KEY `REF|ApTomogramData|subtomo` (`REF|ApTomogramData|subtomo`),
   KEY `REF|ApAlignParticleData|aligned_particle` (`REF|ApAlignParticleData|aligned_particle`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -7128,7 +7128,7 @@ CREATE TABLE `ApTomoReconParamsData` (
   `tilt_axis_rotation_in_xyplane` double DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -7148,11 +7148,11 @@ CREATE TABLE `ApTomogramData` (
   `REF|ApPathData|path` int(20) DEFAULT NULL,
   `REF|ApParticleData|center` int(20) DEFAULT NULL,
   `offsetz` int(20) DEFAULT NULL,
-  `name` text,
+  `name` varchar(255),
   `number` int(20) DEFAULT NULL,
   `pixelsize` double DEFAULT NULL,
-  `description` text,
-  `md5sum` text,
+  `description` varchar(255),
+  `md5sum` varchar(255),
   `hidden` tinyint(1) DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
@@ -7163,7 +7163,7 @@ CREATE TABLE `ApTomogramData` (
   KEY `REF|ApPathData|path` (`REF|ApPathData|path`),
   KEY `REF|ApParticleData|center` (`REF|ApParticleData|center`),
   KEY `hidden` (`hidden`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -7176,8 +7176,8 @@ DROP TABLE IF EXISTS `ApTopolRepJobData`;
 CREATE TABLE `ApTopolRepJobData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `runname` text,
-  `timestamp` text,
+  `runname` varchar(255),
+  `timestamp` varchar(255),
   `REF|ApPathData|path` int(20) DEFAULT NULL,
   `REF|projectdata|projects|project` int(20) DEFAULT NULL,
   `finished` tinyint(1) DEFAULT NULL,
@@ -7187,7 +7187,7 @@ CREATE TABLE `ApTopolRepJobData` (
   KEY `REF|ApPathData|path` (`REF|ApPathData|path`),
   KEY `finished` (`finished`),
   KEY `hidden` (`hidden`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -7200,18 +7200,18 @@ DROP TABLE IF EXISTS `ApTopolRepRunData`;
 CREATE TABLE `ApTopolRepRunData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `runname` text,
+  `runname` varchar(255),
   `mask` int(20) DEFAULT NULL,
   `itermult` double DEFAULT NULL,
   `learn` double DEFAULT NULL,
   `ilearn` double DEFAULT NULL,
   `age` int(20) DEFAULT NULL,
-  `mramethod` text,
+  `mramethod` varchar(255),
   `REF|ApTopolRepJobData|job` int(20) DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|ApTopolRepJobData|job` (`REF|ApTopolRepJobData|job`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -7224,13 +7224,13 @@ DROP TABLE IF EXISTS `ApXmippML3DRefineIterData`;
 CREATE TABLE `ApXmippML3DRefineIterData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `InSelFile` text,
-  `InitialReference` text,
-  `WorkingDir` text,
+  `InSelFile` varchar(255),
+  `InitialReference` varchar(255),
+  `WorkingDir` varchar(255),
   `DoDeleteWorkingDir` tinyint(1) DEFAULT NULL,
   `DoMlf` tinyint(1) DEFAULT NULL,
   `DoCorrectAmplitudes` tinyint(1) DEFAULT NULL,
-  `InCtfDatFile` text,
+  `InCtfDatFile` varchar(255),
   `HighResLimit` double DEFAULT NULL,
   `ImagesArePhaseFlipped` tinyint(1) DEFAULT NULL,
   `InitialMapIsAmplitudeCorrected` tinyint(1) DEFAULT NULL,
@@ -7243,15 +7243,15 @@ CREATE TABLE `ApXmippML3DRefineIterData` (
   `DoGenerateSeeds` tinyint(1) DEFAULT NULL,
   `NumberOfReferences` int(20) DEFAULT NULL,
   `DoJustRefine` tinyint(1) DEFAULT NULL,
-  `SeedsSelfile` text,
+  `SeedsSelfile` varchar(255),
   `DoML3DClassification` tinyint(1) DEFAULT NULL,
   `AngularSampling` int(20) DEFAULT NULL,
   `NumberOfIterations` int(20) DEFAULT NULL,
-  `Symmetry` text,
+  `Symmetry` varchar(255),
   `DoNorm` tinyint(1) DEFAULT NULL,
   `DoFourier` tinyint(1) DEFAULT NULL,
   `RestartIter` tinyint(1) DEFAULT NULL,
-  `ExtraParamsMLrefine3D` text,
+  `ExtraParamsMLrefine3D` varchar(255),
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `DoDeleteWorkingDir` (`DoDeleteWorkingDir`),
@@ -7268,7 +7268,7 @@ CREATE TABLE `ApXmippML3DRefineIterData` (
   KEY `DoNorm` (`DoNorm`),
   KEY `DoFourier` (`DoFourier`),
   KEY `RestartIter` (`RestartIter`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -7282,19 +7282,19 @@ CREATE TABLE `ApXmippRefineIterData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `NumberofIterations` int(20) DEFAULT NULL,
-  `MaskFileName` text,
+  `MaskFileName` varchar(255),
   `MaskRadius` int(20) DEFAULT NULL,
   `InnerRadius` int(20) DEFAULT NULL,
   `OuterRadius` int(20) DEFAULT NULL,
-  `SymmetryGroup` text,
+  `SymmetryGroup` varchar(255),
   `FourierMaxFrequencyOfInterest` double DEFAULT NULL,
-  `SelFileName` text,
-  `DocFileName` text,
-  `ReferenceFileName` text,
-  `WorkingDir` text,
+  `SelFileName` varchar(255),
+  `DocFileName` varchar(255),
+  `ReferenceFileName` varchar(255),
+  `WorkingDir` varchar(255),
   `CleanUpFiles` tinyint(1) DEFAULT NULL,
   `DoCtfCorrection` tinyint(1) DEFAULT NULL,
-  `CTFDatName` text,
+  `CTFDatName` varchar(255),
   `DoAutoCtfGroup` tinyint(1) DEFAULT NULL,
   `CtfGroupMaxDiff` double DEFAULT NULL,
   `CtfGroupMaxResol` double DEFAULT NULL,
@@ -7313,20 +7313,20 @@ CREATE TABLE `ApXmippRefineIterData` (
   `DoRetricSearchbyTiltAngle` tinyint(1) DEFAULT NULL,
   `Tilt0` double DEFAULT NULL,
   `TiltF` double DEFAULT NULL,
-  `SymmetryGroupNeighbourhood` text,
+  `SymmetryGroupNeighbourhood` varchar(255),
   `OnlyWinner` tinyint(1) DEFAULT NULL,
   `MinimumCrossCorrelation` double DEFAULT NULL,
   `DiscardPercentage` double DEFAULT NULL,
-  `ProjMatchingExtra` text,
+  `ProjMatchingExtra` varchar(255),
   `DoAlign2D` tinyint(1) DEFAULT NULL,
   `Align2DIterNr` int(20) DEFAULT NULL,
   `Align2dMaxChangeOffset` double DEFAULT NULL,
   `Align2dMaxChangeRot` double DEFAULT NULL,
-  `ReconstructionMethod` text,
+  `ReconstructionMethod` varchar(255),
   `ARTLambda` double DEFAULT NULL,
-  `ARTReconstructionExtraCommand` text,
-  `WBPReconstructionExtraCommand` text,
-  `FourierReconstructionExtraCommand` text,
+  `ARTReconstructionExtraCommand` varchar(255),
+  `WBPReconstructionExtraCommand` varchar(255),
+  `FourierReconstructionExtraCommand` varchar(255),
   `ResolSam` double DEFAULT NULL,
   `ConstantToAddToFiltration` double DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
@@ -7342,7 +7342,7 @@ CREATE TABLE `ApXmippRefineIterData` (
   KEY `DoRetricSearchbyTiltAngle` (`DoRetricSearchbyTiltAngle`),
   KEY `OnlyWinner` (`OnlyWinner`),
   KEY `DoAlign2D` (`DoAlign2D`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -7355,18 +7355,18 @@ DROP TABLE IF EXISTS `ScriptHostName`;
 CREATE TABLE `ScriptHostName` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `name` text,
-  `ip` text,
-  `system` text,
-  `distro` text,
-  `arch` text,
+  `name` varchar(255),
+  `ip` varchar(255),
+  `system` varchar(255),
+  `distro` varchar(255),
+  `arch` varchar(255),
   `nproc` int(20) DEFAULT NULL,
   `memory` int(20) DEFAULT NULL,
-  `cpu_vendor` text,
-  `gpu_vendor` text,
+  `cpu_vendor` varchar(255),
+  `gpu_vendor` varchar(255),
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`)
-) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -7379,12 +7379,12 @@ DROP TABLE IF EXISTS `ScriptParamName`;
 CREATE TABLE `ScriptParamName` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `name` text,
+  `name` varchar(255),
   `REF|ScriptProgramName|progname` int(20) DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|ScriptProgramName|progname` (`REF|ScriptProgramName|progname`)
-) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -7397,15 +7397,15 @@ DROP TABLE IF EXISTS `ScriptParamValue`;
 CREATE TABLE `ScriptParamValue` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `value` text,
-  `usage` text,
+  `value` varchar(255),
+  `usage` varchar(255),
   `REF|ScriptParamName|paramname` int(20) DEFAULT NULL,
   `REF|ScriptProgramRun|progrun` int(20) DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|ScriptParamName|paramname` (`REF|ScriptParamName|paramname`),
   KEY `REF|ScriptProgramRun|progrun` (`REF|ScriptProgramRun|progrun`)
-) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -7418,10 +7418,10 @@ DROP TABLE IF EXISTS `ScriptProgramName`;
 CREATE TABLE `ScriptProgramName` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `name` text,
+  `name` varchar(255),
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`)
-) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -7434,15 +7434,15 @@ DROP TABLE IF EXISTS `ScriptProgramRun`;
 CREATE TABLE `ScriptProgramRun` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `runname` text,
-  `revision` text,
+  `runname` varchar(255),
+  `revision` varchar(255),
   `REF|ScriptProgramName|progname` int(20) DEFAULT NULL,
   `REF|ScriptUserName|username` int(20) DEFAULT NULL,
   `REF|ScriptHostName|hostname` int(20) DEFAULT NULL,
   `REF|ApPathData|rundir` int(20) DEFAULT NULL,
   `REF|ApAppionJobData|job` int(20) DEFAULT NULL,
   `REF|ApPathData|appion_path` int(20) DEFAULT NULL,
-  `unixshell` text,
+  `unixshell` varchar(255),
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|ScriptProgramName|progname` (`REF|ScriptProgramName|progname`),
@@ -7451,7 +7451,7 @@ CREATE TABLE `ScriptProgramRun` (
   KEY `REF|ApPathData|rundir` (`REF|ApPathData|rundir`),
   KEY `REF|ApAppionJobData|job` (`REF|ApAppionJobData|job`),
   KEY `REF|ApPathData|appion_path` (`REF|ApPathData|appion_path`)
-) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -7464,13 +7464,13 @@ DROP TABLE IF EXISTS `ScriptUserName`;
 CREATE TABLE `ScriptUserName` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `name` text,
+  `name` varchar(255),
   `uid` int(20) DEFAULT NULL,
   `gid` int(20) DEFAULT NULL,
-  `fullname` text,
+  `fullname` varchar(255),
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`)
-) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
