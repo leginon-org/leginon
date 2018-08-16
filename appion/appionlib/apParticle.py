@@ -12,7 +12,7 @@ from appionlib import appiondata
 from appionlib import apDatabase
 from appionlib import apDisplay
 from appionlib import apDefocalPairs
-#siedon
+#sinedon
 from sinedon import connections
 ####
 # This is a database connections file with no file functions
