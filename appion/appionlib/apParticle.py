@@ -321,7 +321,7 @@ def fastInsertParticlePeaks(peaktree, imgdata, runname, msg=False):
 	cursor.executemany(mysql_string, values_list)
 	db.dbd.db.commit()
 	cursor.close()
-        
+	count = len(values_list)    
 	if msg is True:
 		apDisplay.printMsg("inserted "+str(count)+" of "+str(len(peaktree))+" peaks into database"
 			+" in "+apDisplay.timeString(time.time()-t0))
