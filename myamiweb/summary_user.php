@@ -208,59 +208,30 @@ echo "</table>\n";
 //
 		
 if ($ptcl) {
-echo divtitle("Contrast Transfer Function");
-$sessionId=$expId;
-$particle = new particledata();
-if ($particle->hasCtfData($sessionId)) {
+	echo divtitle("Contrast Transfer Function");
+	$particle = new particledata();
+	if ($particle->hasCtfData($expId)) {
+		echo "<a href='processing/ctfreport.php?expId=$expId'>"
+			."&lt; view full CTF report &gt;</a>\n";
 
-	$minres = (is_numeric($_POST['mres'])) ? $_POST['mres'] 
-			: (is_numeric($_GET['mres']) ? $_GET['mres'] : false);
+		echo "<h3>CTF Resolution during Leginon run</h3>\n";
+		echo "<a href='processing/ctfgraph.php?hg=0&expId=$expId&s=1&"
+			."f=resolution_appion&w=1920&h=1080'>\n";
+		echo "<img border='0' width='640' height='360' src='processing/ctfgraph.php?"
+			."w=640&h=360&hg=0&expId=$expId&s=1&f=resolution_appion'></a>\n";
+		
+		echo "<h3>Astigmatism Distribution</h3>";
+		echo "<a href='processing/ctfgraph.php?hg=0&expId=$expId&s=1&"
+			."f=astig_distribution&w=1080&h=1080'>\n";
+		echo "<img border='0' width='360' height='360' src='processing/ctfgraph.php?"
+			."w=640&h=360&hg=0&expId=$expId&s=1&f=astig_distribution' alt='please wait...'></a>\n";
 
-	echo "<a href='processing/ctfreport.php?expId=$sessionId'>report &raquo;</a>\n";
-	?>
-	<form method="POST" action="<?php echo $_SERVER['REQUEST_URI']; ?>">
-		maximum allowed CTF appion resolution (&Aring;):<input class="field" name="mres" type="text" size="5" value="<?php echo $minres; ?>">
-	</form>
-	<?php
-
-	$urlmres = ($minres) ? "&mres=$minres" : "";
-	$display_keys = array ( 'preset', 'nb', 'min', 'max', 'avg', 'stddev', 'img');
-	$fields = array('defocus1', 'resolution_appion', 'confidence','difference_from_nom');
-	$bestctf = $particle->getBestStats($fields, $sessionId, $minres);
-	
-	if ($bestctf) {
-		//phase shift progression
-		echo 'Phase shift by phase plate';
-		$phasegraph = '<a href="processing/phaseshiftgraph.php?expId='.$sessionId.'&hg=0'
-			.'&s=1'.$urlmres.'">'
-			.'<img border="0" src="processing/phaseshiftgraph.php?w=300&s=1&expId='.$sessionId
-			.''.$urlmres.'"></a>';
-		echo $phasegraph;
-		echo "<a href='processing/phaseshiftgraph.php?vd=1&s=1&hg=0&expId=$expId'>[data]</a>";
-		//Summary table
-		echo 'Summary';
-		foreach($bestctf as $field=>$data) {
-			foreach($data as $k=>$v) {
-				$preset = $bestctf[$field][$k]['name'];
-				if ($field !='difference') {
-					$cdf='<a href="processing/ctfgraph.php?expId='.$sessionId.'&hg=1'
-							.'&s=1&f='.$field.'&preset='.$preset.''.$urlmres.'">'
-							.'<img border="0" src="processing/ctfgraph.php?w=150&hg=1&expId='.$sessionId
-							.'&s=1&f='.$field.'&preset='.$preset.''.$urlmres.'"></a>';
-				} else {	
-					$cdf='<a href="processing/autofocacegraph.php?hg=0&expId='.$sessionId
-							.'&f='.$field.'_from_nom'.'&preset='.$preset.''.$urlmres.'">'
-							.'<img border="0" src="processing/autofocacegraph.php?w=150&hg=0&expId='.$sessionId
-							.'&f='.$field.'_from_nom&preset='.$preset.''.$urlmres.'"></a>';
-				}
-				$bestctf[$field][$k]['img'] = $cdf;
-			}
-		}
-		echo '<a href="processing/showctfdata.php?Id='.$sessionId.''.$urlmres.'&vd=1">[data]</a>';
-		echo '<a href="processing/showctfdata.php?Id='.$sessionId.''.$urlmres.'&vs=1">[sql]</a>';
-		$display_keys = array ( 'name', 'nb', 'min', 'max', 'avg', 'stddev', 'img');
-		echo displayCTFstats($bestctf, $display_keys);
-		} else { echo "Database Error"; }
+		echo "<h3>CTF Resolution at 0.5 cutoff</h3>";
+		echo "<a href='processing/ctfgraph.php?hg=1&expId=$expId&s=1&xmin=1&xmax=30&"
+			."f=resolution_50_percent&w=1920&h=1080'>\n";
+		echo "<img border='0' width='640' height='360' src='processing/ctfgraph.php?"
+			."w=640&h=360&hg=1&expId=$expId&s=1&xmin=1&xmax=30&f=resolution_50_percent' "
+			."alt='please wait...'></a>\n";
 	} else {
 		echo "no CTF information available";
 	}
@@ -373,8 +344,8 @@ $icethicknesspresets = $leginondata->getIceThicknessPresets($expId);
 		echo "Preset: ".$preset['name']."</br>";
 		echo "<a href='icegraph.php?Id=$expId&vdata=1&preset=".$preset['name']."'>[data]</a>";
 		echo "<a href='icegraph.php?Id=$expId&vs=1&preset=".$preset['name']."'>[sql]</a><br/>";
-		echo "<a href='icegraph.php?Id=$expId&preset=".$preset['name']."'>";
-		echo "<img border='0' src='icegraph.php?Id=$expId&w=256&preset=".$preset['name']."'>";
+		echo "<a href='icegraph.php?Id=$expId&w=1920&h=1080&preset=".$preset['name']."'>";
+		echo "<img border='0' src='icegraph.php?Id=$expId&w=640&h=360&preset=".$preset['name']."'>";
 		echo "</a>\n";
 		echo "</td>\n";
 		echo "</tr>\n";
@@ -397,15 +368,15 @@ $icethicknesszlp = $leginondata->getZeroLossIceThickness($expId); # see if anyth
 		echo "<a href='zlp_icegraph.php?Id=$expId&vdata=1'>[data]</a>";
 		echo "<a href='zlp_icegraph.php?Id=$expId&vs=1'>[sql]</a><br>";
 		//echo "<a href='zlp_icegraph.php?Id=$expId?h=256'>";
-		echo "<a href='zlp_icegraph.php?Id=$expId&w=1024&h=512'>";
-		echo "<img border='0' src='zlp_icegraph.php?Id=$expId&w=512&h=256'>";
+		echo "<a href='zlp_icegraph.php?Id=$expId&w=1920&h=1080'>";
+		echo "<img border='0' src='zlp_icegraph.php?Id=$expId&w=640&h=360'>";
 		echo "</a>\n";
 		echo "</td>\n";
 		echo "</tr>\n";
 		echo "<tr>";
 		echo "<td>";
-		echo "<a href='zlp_icegraph2.php?Id=$expId&w=1024&h=512'>";
-		echo "<img border='0' src='zlp_icegraph2.php?Id=$expId&w=512&h=256'>";
+		echo "<a href='zlp_icegraph2.php?Id=$expId&w=1920&h='>";
+		echo "<img border='0' src='zlp_icegraph2.php?Id=$expId&w=640&h=360'>";
 		echo "</a>\n";
 		echo "</td>\n";
 		echo "</tr>\n";
@@ -429,16 +400,16 @@ $icethicknessobj = $leginondata->getObjIceThickness($expId); # see if anything w
 		echo "<a href='obj_icegraph.php?Id=$expId&vdata=1'>[data]</a>";
 		echo "<a href='obj_icegraph.php?Id=$expId&vs=1'>[sql]</a><br>";
 		//echo "<a href='zlp_icegraph.php?Id=$expId?h=256'>";
-		echo "<a href='obj_icegraph.php?Id=$expId&w=1024&h=512'>";
-		echo "<img border='0' src='obj_icegraph.php?Id=$expId&w=512&h=256'>";
+		echo "<a href='obj_icegraph.php?Id=$expId&w=1920&h=1080'>";
+		echo "<img border='0' src='obj_icegraph.php?Id=$expId&w=640&h=360'>";
 		echo "</a>\n";
 		echo "</td>\n";
 		echo "</tr>\n";
 
 		echo "<tr>";
 		echo "<td>";
-		echo "<a href='obj_icegraph2.php?Id=$expId&w=1024&h=512'>";
-		echo "<img border='0' src='obj_icegraph2.php?Id=$expId&w=512&h=256'>";
+		echo "<a href='obj_icegraph2.php?Id=$expId&w=1920&h=1080'>";
+		echo "<img border='0' src='obj_icegraph2.php?Id=$expId&w=640&h=360'>";
 		echo "</a>\n";
 		echo "</td>\n";
 		echo "</tr>\n";
