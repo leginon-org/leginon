@@ -224,7 +224,7 @@ def insertParticlePeakPairs(peaktree1, peaktree2, peakerrors, imgdata1, imgdata2
 	return
 
 #===========================
-def insertParticlePeaks(peaktree, imgdata, runname, msg=False):
+def insertParticlePeaks(peaktree, imgdata, runname, msg=False, query=False):
 	"""
 	takes an image data object (imgdata) and inserts particles into DB from peaktree
 	"""
@@ -278,7 +278,10 @@ def insertParticlePeaks(peaktree, imgdata, runname, msg=False):
 
 		### INSERT VALUES
 		if peakhasarea is True:
-			presult = particlesq.query()
+			if query:
+				presult = particlesq.query()
+			else:
+				presult = False
 			if not presult:
 				count+=1
 				particlesq.insert()
