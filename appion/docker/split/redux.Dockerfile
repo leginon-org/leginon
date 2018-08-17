@@ -1,13 +1,9 @@
-FROM centos:centos6.7
+FROM centos:7
 
-RUN yum -y update
-RUN yum -y install wget
-RUN wget 'http://mirrors.cat.pdx.edu/epel/6/i386/epel-release-6-8.noarch.rpm'
-RUN yum -y --nogpgcheck localinstall epel-release-6-8.noarch.rpm
+RUN yum -y update && yum -y --nogpgcheck install epel-release
 
-RUN yum clean all
-
-RUN yum -y install \
+RUN yum -y update && yum -y install \
+  wget \
   nano \
   telnet \
   php-gd \
