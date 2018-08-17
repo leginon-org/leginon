@@ -114,9 +114,11 @@ class viewer {
 	function addSessionSelector($sessions=array(), $limit=100) {
 		$selector = '<select name="sessionId" onchange="newexp()">'.$this->crlf;
 		$i = 0;
+		if ($limit != 0){
+			$selector .= '<option value="-1">List all sessions</option>'.$this->crlf;
+		} 
 		foreach ((array)$sessions as $session) {
 			if (++$i == $limit) {
-				$selector .= '<option value="-1">List all sessions</option>'.$this->crlf;
 				break;
 			}
 			if ($session[id]==$this->sessionId) $s='selected'; else $s='';
