@@ -16,10 +16,23 @@ import numpy
 import itertools
 import os
 from pyami import moduleconfig
+import numextension
 
 simulation = False
 if simulation:
 	print 'USING SIMULATION SETTINGS'
+
+def imagefun_bin(image, binning0, binning1=0):
+	'''
+	Binning using numextension as implemented in pyami/imagefun.
+	bin function in pyami/imagefun.py is copied here so
+	that we don't have to import other unnecessary modules
+	'''
+	if binning1 == 0:
+		binning1 = binning0
+	if binning0==1 and binning1==1:
+		return image
+	return numextension.bin(image, binning0, binning1)
 
 # only one connection will be shared among all classes
 def connect():
@@ -162,6 +175,31 @@ class DMSEM(ccdcamera.CCDCamera):
 
 		return False
 
+	def getAcqBinning(self):
+		physical_binning = self.binning['x']
+		if self.ed_mode != 'super resolution':
+			binscale = 1
+		else:
+			binscale = 2
+			if self.binning['x'] > 1:
+				# physical binning is half super resolution binning except when the latter is 1
+				physical_binning /= binscale
+		return physical_binning, binscale
+
+	def getAcqBinningAndROI(self):
+		acq_binning, binscale = self.getAcqBinning()
+		height = self.offset['y']+self.dimension['y']
+		width = self.offset['x']+self.dimension['x']
+		if self.needConfigDimensionFlip(height,width):
+			tmpheight = height
+			height = width
+			width = tmpheight
+		left = self.tempoffset['x'] / binscale
+		top = self.tempoffset['y'] / binscale
+		bottom = top + height
+		right = lef + width
+		return acq_binning, left, top, right, bottom, width, height
+
 	def calculateAcquireParams(self):
 		exptype = self.getExposureType()
 		if exptype == 'dark':
@@ -172,34 +210,21 @@ class DMSEM(ccdcamera.CCDCamera):
 		# I think it's negative...
 		shutter_delay = -self.readout_delay_ms / 1000.0
 
-		physical_binning = self.binning['x']
-		if self.ed_mode != 'super resolution':
-			binscale = 1
-		else:
-			binscale = 2
-			if self.binning['x'] > 1:
-				# physical binning is half super resolution binning except when the latter is 1
-				physical_binning /= binscale
+		acq_binning, left, top, right, bottom, width, height = self.getAcqBinningAndROI()
 
-		height = self.offset['y']+self.dimension['y']
-		width = self.offset['x']+self.dimension['x']
-		if self.needConfigDimensionFlip(height,width):
-			tmpheight = height
-			height = width
-			width = tmpheight
 		acqparams = {
 			'processing': processing,
 			'height': height,
 			'width': width,
-			'binning': physical_binning,
-			'top': self.tempoffset['y'] / binscale,
-			'left': self.tempoffset['x'] / binscale,
+			'binning': acq_binning,
+			'top': top,
+			'left': left,
 			'exposure': self.getRealExposureTime(),
 			'shutterDelay': shutter_delay,
 		}
 		acqparams.update({
-			'bottom': height+acqparams['top'],
-			'right': width+acqparams['left'],
+			'bottom': bottom,
+			'right': right,
 			})
 		self.debug_print('DM acqire shape (%d, %d)' % (height,width))
 		return acqparams
@@ -667,7 +692,7 @@ class GatanK2Super(GatanK2Base):
 
 class GatanK3(GatanK2Base):
 	name = 'GatanK3'
-	readmodes = {'linear': 3, 'counting': 4, 'super resolution': 4}
+	readmodes = {'linear': 3, 'super resolution': 4}
 	ed_mode = 'super resolution'
 	if simulation:
 		hw_proc = 'none'
@@ -679,13 +704,57 @@ class GatanK3(GatanK2Base):
 		self.record_precision = 0.013
 		self.user_exposure_ms = 13
 
+	def getSystemGainDarkCorrected(self):
+		return True
+
+	def getAcqBinning(self):
+		self.acq_binning = self.binning['x']
+		if self.binning['x'] > 2:
+			#K3 can only bin from super resolution by 1 or 2.
+			self.acq_binning = 2
+		# bin scale is always 1
+		return self.acq_binning, 1
+
+	def getAcqBinningAndROI(self):
+		'''
+		Return acquisition parameters to be send to camera.
+		K3 does not binning beyond physical pixel nor can
+		give cropped images properly.  This function
+		work around that.
+		'''
+		acq_binning, binscale = self.getAcqBinning()
+		height = self.camsize['y'] / acq_binning
+		width = self.camsize['x'] / acq_binning
+		if self.needConfigDimensionFlip(height,width):
+			tmpheight = height
+			height = width
+			width = tmpheight
+		left = self.tempoffset['x'] / binscale
+		top = self.tempoffset['y'] / binscale
+		right = left + width
+		bottom = top + height
+		return acq_binning, left, top, right, bottom, width, height
+
 	def modifyDarkImage(self,image):
 		image[:,:] = 0
 
 	def _modifyImageShape(self, image):
-		# simulator binned image when saving frames has wrong shape
-		print self.acqparams
-		if self.acqparams['width']*self.acqparams['height'] == image.shape[0]*image.shape[1]:
-			image = image.reshape(self.acqparams['height'],self.acqparams['width'])
-		print 'modified', image.shape
+		print 'recieved', image.shape
+		if self.acqparams['width']*self.acqparams['height'] != image.shape[0]*image.shape[1]:
+			print 'ERROR: image not in the right shape'
+			return image
+		else:
+			# simulator binned image when saving frames has wrong shape
+			if self.acqparams['width'] != image.shape[1]:
+				image = image.reshape(self.acqparams['height'],self.acqparams['width'])
+				print 'WARNING: image reshaped', image.shape
+		# K3 can not bin more than 2. Bin it here.
+		added_binning = self.binning['x'] / self.acq_binning
+		if added_binning > 1:
+			image = imagefun_bin(image, added_binning)
+			print 'binned', image.shape
+		if self.offset['x'] != 0 or self.offset['y'] != 0:
+			image = image[self.offset['y']:self.offset['y']+self.dimension['y'],
+					self.offset['x']:self.offset['x']+self.dimension['x']]
+			print 'cropped', image.shape
 		return image

@@ -6,7 +6,7 @@ random.seed()
 import time
 import remote
 import os
-from pyami import mrc
+from pyami import mrc, imagefun
 import itertools
 from pyscope import falconframe
 
@@ -552,3 +552,92 @@ class SimK2SuperResCamera(SimFrameCamera):
 		super(SimK2SuperResCamera,self).__init__()
 		self.binning_limits = [1]
 		self.binmethod = 'floor'
+
+class SimK3Camera(SimFrameCamera):
+	name = 'SimK3Camera'
+	def __init__(self):
+		super(SimK3Camera,self).__init__()
+		self.binning_limits = [1,2,4,8]
+		self.binmethod = 'floor'
+		self.camsize = self.getCameraSize()
+		self.tempoffset = dict(self.offset)
+
+	def setOffset(self, value):
+		# Work around
+		self.offset = dict(value)
+		self.tempoffset = {'x':0,'y':0}
+
+	def _getImage(self):
+		if not self.validateGeometry():
+			raise ValueError('invalid image geometry')
+
+		for axis in ['x', 'y']:
+			if self.dimension[axis] * self.binning[axis] > self.getCameraSize()[axis]:
+				raise ValueError('invalid dimension/binning combination')
+
+		acqparams = self.calculateAcquireParams()
+		self.acqparams = acqparams
+
+		columns = self.acqparams['width']
+		rows = self.acqparams['height']
+
+		shape = (rows, columns)
+
+		t0 = time.time()
+		## exposure time
+		time.sleep(self.exposure_time)
+		t1 = time.time()
+		self.exposure_timestamp = (t1 + t0) / 2.0
+		image = self.getSyntheticImage(shape)
+		image = self._modifyImageShape(image)
+		return image
+		
+	def needConfigDimensionFlip(self, height,width):
+		return False
+
+	def calculateAcquireParams(self):
+		acq_binning, left, top, right, bottom, width, height = self.getAcqBinningAndROI()
+		return {'width':width, 'height':height}
+
+	def getAcqBinning(self):
+		self.acq_binning = self.binning['x']
+		if self.binning['x'] > 2:
+			#K3 can only bin from super resolution by 1 or 2.
+			self.acq_binning = 2
+		# bin scale is 1 always
+		return self.acq_binning, 1
+
+	def getAcqBinningAndROI(self):
+		acq_binning, binscale = self.getAcqBinning()
+		height = self.camsize['y'] / acq_binning
+		width = self.camsize['x'] / acq_binning
+		if self.needConfigDimensionFlip(height,width):
+			tmpheight = height
+			height = width
+			width = tmpheight
+		left = self.tempoffset['x'] / binscale
+		top = self.tempoffset['y'] / binscale
+		right = left + width
+		bottom = top + height
+		return acq_binning, left, top, right, bottom, width, height
+
+	def _modifyImageShape(self, image):
+		print 'recieved', image.shape
+		if self.acqparams['width']*self.acqparams['height'] != image.shape[0]*image.shape[1]:
+			print 'ERROR: image not in the right shape'
+			return image
+		else:
+			# simulator binned image when saving frames has wrong shape
+			if self.acqparams['width'] != image.shape[1]:
+				image = image.reshape(self.acqparams['height'],self.acqparams['width'])
+				print 'WARNING: image reshaped', image.shape
+		# K3 can not bin more than 2. Bin it here.
+		added_binning = self.binning['x'] / self.acq_binning
+		if added_binning > 1:
+			image = imagefun.bin(image, added_binning)
+			print 'binned', image.shape
+		if self.offset['x'] != 0 or self.offset['y'] != 0:
+			image = image[self.offset['y']:self.offset['y']+self.dimension['y'],
+					self.offset['x']:self.offset['x']+self.dimension['x']]
+			print 'cropped', image.shape
+		return image
