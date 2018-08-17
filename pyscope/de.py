@@ -458,7 +458,6 @@ class DD(DECameraBase):
 		return self.getProperty('Electron Counting - Threshold')
 
 	def countingSetUp(self):
-		#self.setSensorHardwareBinning('Enable')
 		binvalue = self.getDEConfig(self.name, 'binning')
 		frameratevalue = self.getDEConfig(self.name, 'frames_per_second')
 		self.setHardwareBinning(binvalue)
@@ -466,9 +465,7 @@ class DD(DECameraBase):
 		self.setElectronCounting('Enable')
 		self.setECApplyCountingGain('Enable')
 		self.setProperty('Correction Mode', 'Dark Corrected')
-		# self.setProperty('Autosave Movie', 'Save')
 		self.setProperty('Autosave Raw Frames', 'Discard')
-		# self.setProperty('Autosave Final Image', 'Discard')
 		self.setProperty('Electron Counting - Apply Post-Counting Gain', 'Enable')
 		self.setProperty('Electron Counting - Apply Post-Threshold Gain', 'Enable')
 		self.setProperty('Electron Counting - Fourier Filter Final', 'Enable')
@@ -513,7 +510,6 @@ class DE20(DD):
 		self.setElectronCounting('Disable')
 		binvalue = self.getDEConfig(self.name, 'binning')
 		self.setHardwareBinning(binvalue)
-		#self.setSensorHardwareBinning('Disable')
 		self.setECApplyCountingGain('Disable')
 		self.setProperty('Electron Counting - Dose Fractionation Number of Frames', 1)
 
@@ -568,12 +564,10 @@ class DE64(DD):
 		self.setElectronCounting('Disable')
 		binvalue = self.getDEConfig(self.name, 'binning')
 		self.setHardwareBinning(binvalue)
-		#self.setSensorHardwareBinning('Disable')
+		self.setSensorHardwareBinning('Disable')
 		self.setECApplyCountingGain('Disable')
 		self.setProperty('Electron Counting - Dose Fractionation Number of Frames', 1)
-		# self.setProperty('Correction Mode', 'Uncorrected Raw')
-		# self.setProperty('Autosave Movie', 'Discard')
-		# self.setProperty('Autosave Final Image', 'Discard')
+
 
 
 class DE64c(DD):
@@ -589,6 +583,7 @@ class DE64c(DD):
 
 	def custom_setup(self):
 		'''DE64 Counting specific camera setting'''
+		self.setSensorHardwareBinning('Enable')
 		self.countingSetUp()
 		self.setCalculatedFractionNumber()
 

@@ -165,7 +165,7 @@ class CameraPanel(wx.Panel):
 		ddsz.Add(ftsz, (1, 1), (1, 2), wx.ALIGN_CENTER|wx.EXPAND)
 
 		# DE64c Request Total Movie Frames
-		label = wx.StaticText(self, -1, 'DE64c Request Total Movie Frames:')
+		label = wx.StaticText(self, -1, 'DEc Request Total Movie Frames:')
 		self.requestnframes = IntEntry(self, -1)
 		self.framewidges.append(self.requestnframes)
 		ddsz.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
