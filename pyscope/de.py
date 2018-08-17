@@ -100,6 +100,7 @@ def de_getImage(de_name):
 
 ##### End thread safe functions to operate on DE Server #####
 
+deconfigs = moduleconfig.getConfigured('de.cfg')
 
 class DECameraBase(ccdcamera.CCDCamera):
 	'''
@@ -135,24 +136,24 @@ class DECameraBase(ccdcamera.CCDCamera):
 			return deconfigs[optionname][itemname]
 
 	def getProperty(self, name):
-		value = de_getProperty(self.name, name)
+		value = de_getProperty(self.model_name, name)
 		return value
 
 	def setProperty(self, name, value):
-		value = de_setProperty(self.name, name, value)
+		value = de_setProperty(self.model_name, name, value)
 		return value
 
 	def getDictProp(self, name):
-		return de_getDictProp(self.name, name)
+		return de_getDictProp(self.model_name, name)
 
 	def setDictProp(self, name, xydict):
-		return de_setDictProp(self.name, name, xydict)
+		return de_setDictProp(self.model_name, name, xydict)
 
 	def _getImage(self):
 		old_frames_name = self.getPreviousRawFramesName()
 		self.custom_setup()
 		t0 = time.time()
-		image = de_getImage(self.name)
+		image = de_getImage(self.model_name)
 		t1 = time.time()
 		self.postAcquisitionSetup()
 		self.exposure_timestamp = (t1 + t0) / 2.0
@@ -350,18 +351,24 @@ class DECameraBase(ccdcamera.CCDCamera):
 
 class DE12Survey(DECameraBase):
 	name = 'DE12 Survey'
+	model_name = 'DE12 Survey'
 	def __init__(self):
 		DECameraBase.__init__(self)
 		self.dimension = {'x': 1024, 'y': 1024}
 
 class DE20Survey(DECameraBase):
 	name = 'DE20 Survey'
+	model_name = 'DE20 Survey'
 	def __init__(self):
 		DECameraBase.__init__(self)
 		self.dimension = {'x': 2048, 'y': 1920}
 
+	def custom_setup(self):
+		return 1
+
 class DD(DECameraBase):
 	name = 'DD'
+	model_name = 'DD'
 	def __init__(self):
 		'''
 		DD camera
@@ -436,23 +443,26 @@ class DD(DECameraBase):
 	def getFramesPerSecond(self):
 		return self.getProperty('Frames Per Second')
 
-	def setECDoseFractionationNumberFrames(self, name):
-		value = self.getDEConfig(name, 'dose_fractionation_number_of_frames')
-		self.setProperty('Electron Counting - Dose Fractionation Number of Frames', value)
+	#def setECDoseFractionationNumberFrames(self, name):
+	#	value = self.getDEConfig(name, 'dose_fractionation_number_of_frames')
+	#	self.setProperty('Electron Counting - Dose Fractionation Number of Frames', value)
 
 	def getECDoseFractionationNumberFrames(self):
 		return self.getProperty('Electron Counting - Dose Fractionation Number of Frames')
 
-	def setECThreshold(self, name):
-		value = self.getDEConfig(name, 'threshold')
-		self.setProperty('Electron Counting - Threshold', value)
+	#def setECThreshold(self, name):
+	#	value = self.getDEConfig(name, 'threshold')
+	#	self.setProperty('Electron Counting - Threshold', value)
 
 	def getECThreshold(self):
 		return self.getProperty('Electron Counting - Threshold')
 
 	def countingSetUp(self):
-		self.setSensorHardwareBinning('Enable')
-		self.setHardwareBinning(2)
+		#self.setSensorHardwareBinning('Enable')
+		binvalue = self.getDEConfig(self.name, 'binning')
+		frameratevalue = self.getDEConfig(self.name, 'frames_per_second')
+		self.setHardwareBinning(binvalue)
+		self.setFramesPerSecond(frameratevalue)
 		self.setElectronCounting('Enable')
 		self.setECApplyCountingGain('Enable')
 		self.setProperty('Correction Mode', 'Dark Corrected')
@@ -489,9 +499,11 @@ class DD(DECameraBase):
 
 class DE12(DD):
 	name = 'DE12'
+	model_name = 'DE12'
 
 class DE20(DD):
 	name = 'DE20'
+	model_name = 'DE20'
 	def getPixelSize(self):
 		psize = 6.4e-6
 		return {'x': psize, 'y': psize}
@@ -499,8 +511,9 @@ class DE20(DD):
 	def custom_setup(self):
 		'''DE20 Integration specific camera setting'''
 		self.setElectronCounting('Disable')
-		self.setHardwareBinning(1)
-		self.setSensorHardwareBinning('Disable')
+		binvalue = self.getDEConfig(self.name, 'binning')
+		self.setHardwareBinning(binvalue)
+		#self.setSensorHardwareBinning('Disable')
 		self.setECApplyCountingGain('Disable')
 		self.setProperty('Electron Counting - Dose Fractionation Number of Frames', 1)
 
@@ -517,7 +530,6 @@ class DE20c(DD):
 	def custom_setup(self):
 		'''DE20 Counting specific camera setting'''
 		self.countingSetUp()
-		self.setFramesPerSecond(141.22)
 		self.setCalculatedFractionNumber()
 
 	def getSaveRawFrames(self):
@@ -540,6 +552,7 @@ class DE20c(DD):
 
 class DE64(DD):
 	name = 'DE64'
+	model_name = 'DE64'
 	def getPixelSize(self):
 		psize = 6.5e-6
 		return {'x': psize, 'y': psize}
@@ -553,8 +566,9 @@ class DE64(DD):
 	def custom_setup(self):
 		'''DE64 Integration specific camera setting'''
 		self.setElectronCounting('Disable')
-		self.setHardwareBinning(1)
-		self.setSensorHardwareBinning('Disable')
+		binvalue = self.getDEConfig(self.name, 'binning')
+		self.setHardwareBinning(binvalue)
+		#self.setSensorHardwareBinning('Disable')
 		self.setECApplyCountingGain('Disable')
 		self.setProperty('Electron Counting - Dose Fractionation Number of Frames', 1)
 		# self.setProperty('Correction Mode', 'Uncorrected Raw')
@@ -576,7 +590,6 @@ class DE64c(DD):
 	def custom_setup(self):
 		'''DE64 Counting specific camera setting'''
 		self.countingSetUp()
-		self.setFramesPerSecond(141.22)
 		self.setCalculatedFractionNumber()
 
 	def getSaveRawFrames(self):
