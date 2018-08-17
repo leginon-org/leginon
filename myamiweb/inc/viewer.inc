@@ -111,12 +111,14 @@ class viewer {
 		$this->addfiltersel = $filterselector;
 	}
 
-	function addSessionSelector($sessions=array(), $limit=0) {
+	function addSessionSelector($sessions=array(), $limit=100) {
 		$selector = '<select name="sessionId" onchange="newexp()">'.$this->crlf;
 		$i = 0;
+		if ($limit != 0){
+			$selector .= '<option value="-1">List all sessions</option>'.$this->crlf;
+		} 
 		foreach ((array)$sessions as $session) {
 			if (++$i == $limit) {
-				$selector .= '<option value="-1">List all sessions</option>'.$this->crlf;
 				break;
 			}
 			if ($session[id]==$this->sessionId) $s='selected'; else $s='';
@@ -1505,7 +1507,9 @@ function add_comment_box($name) {
 }
 
 function viewer_menu($sessionId) {
-	$str = '<a class="header" target="summary" href="summary.php?expId='.$sessionId.'">[summary]</a> ';
+	$str = ' ';
+	$str .= '<a class="header" target="summary" href="summary.php?expId='.$sessionId.'">[summary]</a> ';
+	$str .= '<a class="header" target="summary" href="summary_user.php?expId='.$sessionId.'">[user results]</a> ';
 	if (defined('PROCESSING')) {
 		$str.='<a class="header" target="processing" href="processing/index.php?expId='.$sessionId.'">[processing]</a> ';
 		$str.='<a class="header" target="make jpgs" href="processing/runJpgMaker.php?expId='.$sessionId.'">[make jpgs]</a>';
