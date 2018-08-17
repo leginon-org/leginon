@@ -177,7 +177,7 @@ class UploadParticles(appionScript.AppionScript):
 				apDisplay.printError("Session and Image do not match "+imgdata['filename'])	
 
 			peaktree = self.boxFileToPeakTree(imgdata)
-			apParticle.insertParticlePeaks(peaktree, imgdata, self.params['runname'], msg=True)
+			apParticle.fastInsertParticlePeaks(peaktree, imgdata, self.params['runname'], msg=True)
 
 if __name__ == '__main__':
 	uploadpart = UploadParticles()
