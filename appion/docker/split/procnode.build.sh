@@ -15,4 +15,4 @@ wget -nc -c 'http://emg.nysbc.org/redmine/attachments/download/7489/findem-docke
 cd $curdir
 tar zxvf TGZ/findem-docker-centos7.tgz
 
-docker build -t myami_procnode - < procnode.Dockerfile
+docker build -t myami_procnode -f procnode.Dockerfile

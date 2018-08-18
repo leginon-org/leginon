@@ -14,6 +14,7 @@ from appionlib import appiondata
 from appionlib import apProject
 from appionlib import apFile
 from appionlib import apDatabase
+from appionlib import jsonconfigparser
 
 #=====================
 #=====================
@@ -30,6 +31,10 @@ class appionLauncherScript(appionScript.AppionScript):
 		self.parser.add_option("--alignlabel", dest="alignlabel", default='a')
 		self.parser.add_option("--totaldose", dest="totaldose", metavar="FLOAT",
 			help="total exposure (in e-/A^2)")
+		self.parser.add_option("--phase_plate", dest="phase_plate", default=False,
+			action="store_true", help="Find additional phase shift")
+		self.parser.add_option("--localctf", default=False,
+			action="store_true", help="local CTF estimation with gctf")
 
 	#=====================
 	def checkConflicts(self):
@@ -120,14 +125,61 @@ class appionLauncherScript(appionScript.AppionScript):
 		pars['defstep'] = 0.1
 		pars['numstep'] = 25
 		pars['dast'] = 0.05
-		pars['min_phase_shift'] = 10
-		pars['max_phase_shift'] = 170
-		pars['phase_search_step'] = 10
+		pars['num_frame_avg'] = 7
 		pars['commit'] = True
 		pars['no-rejects'] = True
 		pars['continue'] = True
 		pars['bestdb'] = True
 		pars['parallel'] = True
+		if self.params['phase_plate'] is True:
+			pars['phase_plate'] = True
+			pars['min_phase_shift'] = 10
+			pars['max_phase_shift'] = 170
+			pars['phase_search_step'] = 10
+
+		return self.convertParToString(cmd,pars)
+
+	#=====================
+	def createGCTFCommand(self,preset):
+		# make ctffind4 command
+		cmd = "gctf.py"
+
+		self.setupRunInfo(cmd)
+
+		pars = {}
+		pars['runname'] = self.params['runname']
+		pars['rundir'] = self.params['rundir']
+		pars['session'] = self.params['session']
+		pars['expid'] = self.params['expid']
+		pars['projectid'] = self.params['projectid']
+		pars['jobtype'] = self.params['jobtype']
+		pars['preset'] = preset
+		pars['ampcontrast'] = 0.1
+		pars['fieldsize'] = 1024
+		pars['resmin'] = 30
+		pars['resmax'] = 4
+		pars['defstep'] = 0.1
+		pars['numstep'] = 25
+		pars['dast'] = 0.1
+		pars['mdef_aveN'] = 7
+		pars['do_EPA'] = True
+		pars['commit'] = True
+		pars['no-rejects'] = True
+		pars['continue'] = True
+		pars['bestdb'] = True
+		pars['fastmode'] = True
+		if self.params['localctf'] is True:
+			pars['do_local_refine'] = True
+			pars['local_raster'] = 600
+			pars['local_radius'] = 1024
+			pars['local_boxsize'] = 512
+			pars['local_overlap'] = 0.5
+			pars['fastmode'] = False
+		if self.params['phase_plate'] is True:
+			pars['phaseplate'] = True
+			pars['max_phase_shift'] = 180
+			pars['min_phase_shift'] = 0
+			pars['phase_search_step'] = 1
 
 		return self.convertParToString(cmd,pars)
 
@@ -142,6 +194,9 @@ class appionLauncherScript(appionScript.AppionScript):
 	#=====================
 	def launchjob(self,cmd):
 		apDisplay.printMsg("launching command:")
+		# prepare for specified host
+		jsondict = os.path.join(self.appiondir,'appionlib/Settings.json')
+		cmd = jsonconfigparser.returnCommand(jsondict,cmd)
 		apDisplay.printMsg("%s\n"%cmd)
 
 	#=====================
@@ -177,6 +232,10 @@ class appionLauncherScript(appionScript.AppionScript):
 
 		# launch CtfFind4
 		cmd = self.createCtfFind4Command(alignedpreset)
+		self.launchjob(cmd)
+
+		# launch gCTF
+		cmd = self.createGCTFCommand(alignedpreset)
 		self.launchjob(cmd)
 
 #=====================
