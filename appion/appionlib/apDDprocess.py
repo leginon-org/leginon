@@ -102,9 +102,10 @@ class DirectDetectorProcessing(object):
 			# Use pair data to find the align source image
 			result = self.getAlignImagePairData(None,query_source=False)
 			if result is False:
-				# This means that frames were aligned by camera algorithm and frame stack was not saved
-				return False
-			source_imagedata = result['source']
+				# This means that frames were aligned by camera algorithm and  wwith frame stack saved
+				source_imagedata = self.image
+			else:
+				source_imagedata = result['source']
 			imagename = source_imagedata['filename']
 		self.tempframestackpath = os.path.join(self.tempdir,imagename+'_st.mrc')
 		self.framestackpath = os.path.join(self.rundir,imagename+'_st.mrc')
