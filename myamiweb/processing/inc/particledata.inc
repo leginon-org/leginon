@@ -6248,7 +6248,7 @@ function simplify($e) {
 function displayCTFstats($stats, $display_keys) {
 	if (!is_array($stats) || !is_array($display_keys))
 		return ;
-	$html = "<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>";
+	$html = "<table class='paleBlueRows'>";
 	foreach($stats as  $field=>$data) {
 		$field_shown = ($field == 'resolution_appion') ? "resolution<br/><br>highest of res(pkg),<br/>res(0.5),res(0.8)": $field;
 		$field_shown = ($field == 'ctffind4_resolution') ? "package resolution": $field;

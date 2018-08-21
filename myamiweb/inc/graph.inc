@@ -100,25 +100,26 @@ class dbemGraph {
 		$graph = new Graph($this->width, $this->height,"auto");    
 		if ($this->histogram) {
 			$histogram = new histogram($this->datay);
-			$bars_number = 50;
+			$bars_number = intval(sqrt(count($rdata['x']))) + 10;
 			$histogram->setBarsNumber($bars_number);
 			$rdata = $histogram->getData();
 			$rdatax = $rdata['x'];
 			$rdatay = $rdata['y'];
 
 			$graph->SetScale("linlin");
-			$left_margin = 40;
+			$left_margin = 45;
 			$right_margin = 30;
-			$graph->img->SetMargin($left_margin,$right_margin,20,40);
+			$graph->img->SetMargin($left_margin,$right_margin,25,40);
 
 			$bplot = new BarPlot($rdatay, $rdatax);
 			$bwidth = $histogram->getBarWidth($this->width,$left_margin,$right_margin);
 			$bplot->SetWidth($bwidth);
+			$bplot->SetFillColor('#B0C4DE');
 			$graph->Add($bplot);
 
 			$graph->title->Set("histogram: ".$this->title);
 			$graph->xaxis->title->Set($this->yaxistitle);
-			$graph->yaxis->title->Set("Frequency");
+			$graph->yaxis->title->Set("Frequency (".$bars_number." bars)");
 		} else {
 			$graph->img->SetMargin(50,30,30,60);
 			$graph->title->Set($this->title);

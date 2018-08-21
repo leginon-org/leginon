@@ -454,7 +454,7 @@ class leginondata {
 		array_unshift( $scopes, $allscopes);
 		return $scopes;
 	}
-
+	
 	function getSummary($expId, $presetname=false, $hidden=false) {
 	/*
 		$q="select if (isnull(p.name), '"
@@ -469,7 +469,7 @@ class leginondata {
 			$hiddenjoin = "left join `ViewerImageStatus` r on (r.`REF|AcquisitionImageData|image`=a.DEF_id) ";
 			$hiddenwhere = "and (r.DEF_id is NULL or (r.status <>'hidden' and r.status <> 'trash') ";
 		}
-		$q="SELECT p.name, count(a.`DEF_id`) as nb, p.magnification "
+		$q="SELECT p.DEF_id as presetId, p.name, count(a.`DEF_id`) as nb, p.magnification "
 			.",p.dose, min(p.defocus) as defocusmin, max(p.defocus) as defocusmax"
 			." FROM AcquisitionImageData a "
 			.$hiddenjoin
@@ -483,6 +483,39 @@ class leginondata {
 		return $this->mysql->getSQLResult($q);
 	}
 
+	function getImageInfoFromPreset($presetId) {
+		$q = 'SELECT DEF_id '
+			.' FROM AcquisitionImageData AS i '
+			.' WHERE i.`REF|PresetData|preset` = '.$presetId
+			.' ORDER BY RAND() LIMIT 1';
+		$imgIds = $this->mysql->getSQLResult($q);
+		$imgId = $imgIds[0]['DEF_id'];
+		$imageinfo = $this->getImageInfo($imgId);
+		return $imageinfo;
+	}
+
+	function getAllPresetData($presetId) {
+		$q = 'SELECT * '
+			.' FROM PresetData AS p '
+			.' WHERE p.DEF_id = '.$presetId
+			.' LIMIT 1';
+		$datas = $this->mysql->getSQLResult($q);
+		return $datas[0];
+	}
+
+	function getMinMaxDefocusForPreset($presetName, $sessionId) {
+		$q = 'SELECT MIN(s.defocus) AS mindef, MAX(s.defocus) AS maxdef'
+			.' FROM AcquisitionImageData AS i '
+			.' LEFT JOIN ScopeEMData AS s '
+			.' ON (s.DEF_id = i.`REF|ScopeEMData|scope`) '
+			.' LEFT JOIN PresetData AS p '
+			.' ON (p.DEF_id = i.`REF|PresetData|preset`) '
+			." WHERE p.`name` = '".$presetName."'"
+			.' AND p.`REF|SessionData|session` = '.$sessionId;
+		$datas = $this->mysql->getSQLResult($q);
+		return $datas[0];
+	}
+	
 	function getUsers($order=null) {
 		return $this->getAll('UserData', $order);
 	}
@@ -3005,7 +3038,9 @@ class leginondata {
 		$q = "SELECT "
 			."date_format(h.`DEF_timestamp`, '%Y-%d-%m %T') as `timestamp`, "
 			."a.filename as filename, "
-			.'`h`.`thickness-mean` '
+			.'`h`.`thickness-mean`, '
+			.'`h`.`good` AS `good`, '
+			.'`a`.`DEF_id` AS `image_id` '
 			.'FROM '
 			.'`HoleStatsData` AS `h` '
 			.'LEFT JOIN `HoleFinderPrefsData` AS `pref` ON (`pref`.`DEF_id`=`h`.`REF|HoleFinderPrefsData|prefs`) '
