@@ -1,5 +1,5 @@
 # standard lib
-import os
+import os, sys
 
 import scipy.misc
 
@@ -31,6 +31,11 @@ class Read(Pipe):
 	def run(self, input, filename, info, frame=None):
 		## input ignored
 		### determine input format
+		if not os.path.exists(filename):
+			sys.stderr.write(filename + ' does not exists.')
+			filename = filename.replace('/gpfs/leginon', '/gpfs/cache')
+			filename = filename.replace('.mrc', '.jpg')
+			sys.stderr.write('Trying cached version instead: '+filename)
 		if filename.endswith('mrc') or filename.endswith('MRC') or filename.endswith('mrcs'):
 			## use MRC module to read
 			input_format = 'mrc'
