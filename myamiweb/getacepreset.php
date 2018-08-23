@@ -43,7 +43,10 @@ list($ctfdata) = $ctf->getCtfInfoFromImageId($imgId,$order=False,$ctftype,$runId
 
 $ctfdata['cs'] = $leginondata->getCsValueFromSession($sessionId);
 
-$keys[]='runname';
+// Set the order of the displayed information
+$keys[]='resolution_50_percent';
+$keys[]='ctffind4_resolution';
+
 // estimate parameters
 $keys[]='defocus';
 $keys[]='defocus1';
@@ -53,22 +56,22 @@ if (abs($ctfdata['defocus1'] - $ctfdata['defocus2']) > $epsilon) {
 	$keys[]='defocus2';
 	$keys[]='angle_astigmatism';
 }
-$keys[]='amplitude_contrast';
 if (abs($ctfdata['extra_phase_shift']) > 0.001) {
 	$keys[]='extra_phase_shift';
 }
-$keys[]='cs';
-// estimate quality
+$keys[]='runname';
 $keys[]='resolution_80_percent';
-$keys[]='resolution_50_percent';
 $keys[]='confidence_appion';
 //$keys[]='confidence_30_10';
 //$keys[]='confidence_5_peak';
-$keys[]='ctffind4_resolution';
+
 if ($ctftype=='ctffind') 
 	$keys[]='cross_correlation';
 else 
 	$keys[]='confidence';
+$keys[]='cs';
+$keys[]='amplitude_contrast';
+
 //$keys[]='confidence_d';
 // add the Cs
 
@@ -77,37 +80,47 @@ $keymap = array(
 	"defocus"  => "nomDef",
 	"defocus1"  => "def1",
 	"defocus2"  => "def2",
-	"confidence"  => "conf&nbsp;(pkg)",
+	"runname"  => "runname",
+	"confidence"  => "conf<sub>pkg</sub>",
 	"angle_astigmatism"  => "&theta;<sub>astig</sub>",
 	"extra_phase_shift"  => "&phi;<sub>pp</sub>",
 	"cross_correlation"  => "cc",
 	"amplitude_contrast" => "amp&nbsp;con",
-	"confidence_appion" => "conf&nbsp;(appion)",
-	"confidence_30_10" => "conf&nbsp;(30/10)",
-	"confidence_5_peak" => "conf&nbsp;(5 peak)",
-	"resolution_80_percent" => "<br/>res&nbsp;(0.8)",
-	"resolution_50_percent" => "res&nbsp;(0.5)",
-	"ctffind4_resolution" => "res&nbsp;(pkg)",
-
+	"confidence_appion" => "conf<sub>appion</sub>",
+	"confidence_30_10" => "conf<sub>30/10</sub>",
+	"confidence_5_peak" => "conf<sub>5 peak</sub>",
+	"resolution_80_percent" => "res<sub>0.8</sub>",
+	"resolution_50_percent" => "res<sub>0.5</sub>",
+	"ctffind4_resolution" => "res<sub>pkg</sub>",
 );
 
 if ($ctfdata) {
-	echo "<font style='font-size: 12px;'>";
+	echo "<font style='font-size: 11px; font-family: monospace;'>";
 	if (is_array($ctfdata))
 		foreach($keys as $k) {
-			if (!array_key_exists($k,$ctfdata))
+			// skip unknown values
+			if (!array_key_exists($k, $ctfdata))
 				continue;
+			// get the value
 			$v=$ctfdata[$k];
+			// use keymap for better formatting
 			if (array_key_exists($k, $keymap)) 
 				$name = $keymap[$k];
 			else
 				$name = $k;
+			// special numerical formatting
 			if (preg_match('%defocus%',$k))
 				echo " <b>$name:</b>&nbsp;",($leginondata->formatDefocus($v));
-			elseif (preg_match('%phase_shift%',$k))
+			elseif ($k == 'angle_astigmatism')
+				echo " <b>$name:</b>&nbsp;".format_angle_degree($v,2,2);
+			elseif ($k == 'extra_phase_shift')
 				echo " <b>$name:</b>&nbsp;".format_angle_degree($v*180/3.14159,2,2);
-			elseif (preg_match('%ctffind4_res%',$k))
+			elseif (preg_match('%resolution%',$k))
 				echo " <b>$name:</b>&nbsp;".format_angstrom_number($v*1e-10,2,2);
+			elseif (preg_match('confidence%',$k) || $k == "amplitude_contrast")
+				echo " <b>$name:</b>&nbsp;".number_format($v,2);
+			elseif ($k == 'cs')
+				echo " <b>$name:</b>&nbsp;".number_format($v,3)."&nbsp;mm";
 			elseif ($v-floor($v)) 
 				echo " <b>$name:</b>&nbsp;".format_sci_number($v,2,2);
 			else

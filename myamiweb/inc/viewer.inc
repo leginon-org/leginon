@@ -1445,7 +1445,7 @@ class view {
 					<td>
 			<iframe name="'.$this->name.'if" 
 	      src="'.$this->presetscript.'"
-				frameborder="0" width="'.$this->size.'" height="50"
+				frameborder="0" width="'.$this->size.'" height="60"
 				marginheight="1" marginwidth="5"
 				scrolling="no" ></iframe>
 			';
