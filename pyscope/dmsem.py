@@ -176,6 +176,10 @@ class DMSEM(ccdcamera.CCDCamera):
 		return False
 
 	def getAcqBinning(self):
+		'''
+		Camera binning given for acquisition is based on physical pixel,
+		regardless of ed mode.
+		'''
 		physical_binning = self.binning['x']
 		if self.ed_mode != 'super resolution':
 			binscale = 1
@@ -187,6 +191,10 @@ class DMSEM(ccdcamera.CCDCamera):
 		return physical_binning, binscale
 
 	def getAcqBinningAndROI(self):
+		'''
+		Calculating the acquisition boundary and binning to send
+		to Gatan socket.
+		'''
 		acq_binning, binscale = self.getAcqBinning()
 		height = self.offset['y']+self.dimension['y']
 		width = self.offset['x']+self.dimension['x']
@@ -201,6 +209,9 @@ class DMSEM(ccdcamera.CCDCamera):
 		return acq_binning, left, top, right, bottom, width, height
 
 	def calculateAcquireParams(self):
+		'''
+		Return acquisition parameters to be sent.
+		'''
 		exptype = self.getExposureType()
 		if exptype == 'dark':
 			processing = 'dark'
@@ -219,13 +230,11 @@ class DMSEM(ccdcamera.CCDCamera):
 			'binning': acq_binning,
 			'top': top,
 			'left': left,
+			'bottom': bottom,
+			'right': right,
 			'exposure': self.getRealExposureTime(),
 			'shutterDelay': shutter_delay,
 		}
-		acqparams.update({
-			'bottom': bottom,
-			'right': right,
-			})
 		self.debug_print('DM acqire shape (%d, %d)' % (height,width))
 		return acqparams
 
@@ -261,7 +270,28 @@ class DMSEM(ccdcamera.CCDCamera):
 		image = self._modifyImageShape(image)
 		print 'after', image.shape
 
-		# workaround to offset image problem
+		if self.dm_processing == 'gain normalized' and self.ed_mode in ('counting','super resolution'):
+			image = numpy.asarray(image, dtype=numpy.float32)
+			image /= self.float_scale
+		return image
+
+	def _fixBadShape(self, image):
+		# no need to change normally.
+		return image
+
+	def _modifyImageShape(self, image):
+		image = self._fixBadShape(image)
+		added_binning = self.binning['x'] / self.acq_binning
+		if added_binning > 1:
+			# software binning
+			image = imagefun_bin(image, added_binning)
+			print 'binned', image.shape
+		image = self._cropImage(image)
+		return image
+		return self._cropImage(image)
+
+	def _cropImage(self, image):
+		# default no modification
 		startx = self.getOffset()['x']
 		starty = self.getOffset()['y']
 		if startx != 0 or starty != 0:
@@ -269,14 +299,6 @@ class DMSEM(ccdcamera.CCDCamera):
 			endy = self.dimension['y'] + starty
 			image = image[starty:endy,startx:endx]
 		self.debug_print('modified shape %s' % (image.shape,))
-
-		if self.dm_processing == 'gain normalized' and self.ed_mode in ('counting','super resolution'):
-			image = numpy.asarray(image, dtype=numpy.float32)
-			image /= self.float_scale
-		return image
-
-	def _modifyImageShape(self, image):
-		# default no modification
 		return image
 
 	def _modifyImageOrientation(self, image):
@@ -293,6 +315,7 @@ class DMSEM(ccdcamera.CCDCamera):
 		'''
 		in-place modification of image array
 		'''
+		# non-counting camera default to be as-is.
 		return
 
 	def getPixelSize(self):
@@ -459,6 +482,9 @@ class GatanK2Base(DMSEM):
 		self.setEarlyReturnFrameCount(None)
 
 	def custom_setup(self):
+		'''
+		K2 specific setup.
+		'''
 		#self.camera.SetShutterNormallyClosed(self.cameraid,self.bblankerid)
 		if self.ed_mode != 'base':
 			k2params = self.calculateK2Params()
@@ -668,6 +694,9 @@ class GatanK2Counting(GatanK2Base):
 		hw_proc = 'dark+gain'
 
 	def modifyDarkImage(self,image):
+		'''
+		in-place modification of image array
+		'''
 		if self.isDM231orUp():
 			image[:,:] = 0
 
@@ -682,6 +711,9 @@ class GatanK2Super(GatanK2Base):
 		hw_proc = 'dark+gain'
 
 	def modifyDarkImage(self,image):
+		'''
+		in-place modification of image array
+		'''
 		if self.isDM231orUp():
 			image[:,:] = 0
 
@@ -691,6 +723,8 @@ class GatanK2Super(GatanK2Base):
 		return {'x': 2.5e-6, 'y': 2.5e-6}
 
 class GatanK3(GatanK2Base):
+	# K3 camsize is in super resolution
+	binning_limits = [1,2,4,8]
 	name = 'GatanK3'
 	readmodes = {'linear': 3, 'super resolution': 4}
 	ed_mode = 'super resolution'
@@ -698,11 +732,13 @@ class GatanK3(GatanK2Base):
 		hw_proc = 'none'
 	else:
 		hw_proc = 'dark+gain'
+
 	def __init__(self):
 		super(GatanK3, self).__init__()
 		self.dosefrac_frame_time = 0.013
 		self.record_precision = 0.013
 		self.user_exposure_ms = 13
+		self.dm_processing = 'gain normalized'
 
 	def getSystemGainDarkCorrected(self):
 		return True
@@ -715,31 +751,13 @@ class GatanK3(GatanK2Base):
 		# bin scale is always 1
 		return self.acq_binning, 1
 
-	def getAcqBinningAndROI(self):
-		'''
-		Return acquisition parameters to be send to camera.
-		K3 does not binning beyond physical pixel nor can
-		give cropped images properly.  This function
-		work around that.
-		'''
-		acq_binning, binscale = self.getAcqBinning()
-		height = self.camsize['y'] / acq_binning
-		width = self.camsize['x'] / acq_binning
-		if self.needConfigDimensionFlip(height,width):
-			tmpheight = height
-			height = width
-			width = tmpheight
-		left = self.tempoffset['x'] / binscale
-		top = self.tempoffset['y'] / binscale
-		right = left + width
-		bottom = top + height
-		return acq_binning, left, top, right, bottom, width, height
-
 	def modifyDarkImage(self,image):
 		image[:,:] = 0
 
-	def _modifyImageShape(self, image):
+	def _fixBadShape(self, image):
 		print 'recieved', image.shape
+		# TODO: Found image shape returned incorrectly in simulation.
+		# Leave this here for now.
 		if self.acqparams['width']*self.acqparams['height'] != image.shape[0]*image.shape[1]:
 			print 'ERROR: image not in the right shape'
 			return image
@@ -748,13 +766,4 @@ class GatanK3(GatanK2Base):
 			if self.acqparams['width'] != image.shape[1]:
 				image = image.reshape(self.acqparams['height'],self.acqparams['width'])
 				print 'WARNING: image reshaped', image.shape
-		# K3 can not bin more than 2. Bin it here.
-		added_binning = self.binning['x'] / self.acq_binning
-		if added_binning > 1:
-			image = imagefun_bin(image, added_binning)
-			print 'binned', image.shape
-		if self.offset['x'] != 0 or self.offset['y'] != 0:
-			image = image[self.offset['y']:self.offset['y']+self.dimension['y'],
-					self.offset['x']:self.offset['x']+self.dimension['x']]
-			print 'cropped', image.shape
 		return image

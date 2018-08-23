@@ -553,6 +553,9 @@ class SimK2SuperResCamera(SimFrameCamera):
 		self.binning_limits = [1]
 		self.binmethod = 'floor'
 
+def imagefun_bin(image, binning0, binning1=0):
+	return imagefun.bin(image, binning0)
+
 class SimK3Camera(SimFrameCamera):
 	name = 'SimK3Camera'
 	def __init__(self):
@@ -561,6 +564,9 @@ class SimK3Camera(SimFrameCamera):
 		self.binmethod = 'floor'
 		self.camsize = self.getCameraSize()
 		self.tempoffset = dict(self.offset)
+
+	def getSystemGainDarkCorrected(self):
+		return True
 
 	def setOffset(self, value):
 		# Work around
@@ -621,8 +627,21 @@ class SimK3Camera(SimFrameCamera):
 		bottom = top + height
 		return acq_binning, left, top, right, bottom, width, height
 
+	def _cropImage(self, image):
+		# default no modification
+		startx = self.getOffset()['x']
+		starty = self.getOffset()['y']
+		if startx != 0 or starty != 0:
+			endx = self.dimension['x'] + startx
+			endy = self.dimension['y'] + starty
+			image = image[starty:endy,startx:endx]
+			print 'cropped', image.shape
+		return image
+
 	def _modifyImageShape(self, image):
 		print 'recieved', image.shape
+		# TODO: Found image shape returned incorrectly in simulation.
+		# Leave this here for now.
 		if self.acqparams['width']*self.acqparams['height'] != image.shape[0]*image.shape[1]:
 			print 'ERROR: image not in the right shape'
 			return image
@@ -634,10 +653,8 @@ class SimK3Camera(SimFrameCamera):
 		# K3 can not bin more than 2. Bin it here.
 		added_binning = self.binning['x'] / self.acq_binning
 		if added_binning > 1:
-			image = imagefun.bin(image, added_binning)
+			image = imagefun_bin(image, added_binning)
 			print 'binned', image.shape
-		if self.offset['x'] != 0 or self.offset['y'] != 0:
-			image = image[self.offset['y']:self.offset['y']+self.dimension['y'],
-					self.offset['x']:self.offset['x']+self.dimension['x']]
-			print 'cropped', image.shape
+		image = self._cropImage(image)
+		self.debug_print('modified shape %s' % (image.shape,))
 		return image
