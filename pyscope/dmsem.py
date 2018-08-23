@@ -65,7 +65,7 @@ class DMSEM(ccdcamera.CCDCamera):
 		self.bblankerid = 0
 		self.binning = {'x': 1, 'y': 1}
 		self.offset = {'x': 0, 'y': 0}
-		self.tempoffset = dict(self.offset)
+		self.acqoffset = {'x': 0, 'y': 0}
 		self.camsize = self.getCameraSize()
 		self.dimension = {'x': self.camsize['x'], 'y': self.camsize['y']}
 		self.exposuretype = 'normal'
@@ -117,7 +117,6 @@ class DMSEM(ccdcamera.CCDCamera):
 	def setOffset(self, value):
 		# Work around
 		self.offset = dict(value)
-		self.tempoffset = {'x':0,'y':0}
 
 	def getDimension(self):
 		return dict(self.dimension)
@@ -131,7 +130,7 @@ class DMSEM(ccdcamera.CCDCamera):
 
 	def setBinning(self, value):
 		if value['x'] != value['y']:
-			raise ValueError('multiple binning dimesions not supported')
+			raise ValueError('multiple binning dimensions not supported')
 		self.binning = dict(value)
 
 	def getRealExposureTime(self):
@@ -178,7 +177,7 @@ class DMSEM(ccdcamera.CCDCamera):
 	def getAcqBinning(self):
 		'''
 		Camera binning given for acquisition is based on physical pixel,
-		regardless of ed mode.
+		regardless of ed mode usually.
 		'''
 		physical_binning = self.binning['x']
 		if self.ed_mode != 'super resolution':
@@ -190,22 +189,36 @@ class DMSEM(ccdcamera.CCDCamera):
 				physical_binning /= binscale
 		return physical_binning, binscale
 
+	def getAcqDimension(self, acq_binning, binscale):
+		acq_dimension = self.camsize.copy()
+		physical_binning = binscale * acq_binning
+		acq_dimension['x'] = acq_dimension['x']/physical_binning
+		acq_dimension['y'] = acq_dimension['y']/physical_binning
+		return acq_dimension
+
+	def getAcqOffset(self, acq_binning, binscale):
+		# all software offset for now
+		acq_offset = self.acqoffset.copy()
+		return acq_offset
+
 	def getAcqBinningAndROI(self):
 		'''
 		Calculating the acquisition boundary and binning to send
 		to Gatan socket.
 		'''
 		acq_binning, binscale = self.getAcqBinning()
-		height = self.offset['y']+self.dimension['y']
-		width = self.offset['x']+self.dimension['x']
+		acq_dimension = self.getAcqDimension(acq_binning,binscale)
+		acq_offset = self.getAcqOffset(acq_binning,binscale)
+		height = acq_offset['y']+acq_dimension['y']
+		width = acq_offset['x']+acq_dimension['x']
 		if self.needConfigDimensionFlip(height,width):
 			tmpheight = height
 			height = width
 			width = tmpheight
-		left = self.tempoffset['x'] / binscale
-		top = self.tempoffset['y'] / binscale
+		left = acq_offset['x']
+		top = acq_offset['y']
 		bottom = top + height
-		right = lef + width
+		right = left + width
 		return acq_binning, left, top, right, bottom, width, height
 
 	def calculateAcquireParams(self):
@@ -264,11 +277,10 @@ class DMSEM(ccdcamera.CCDCamera):
 		# workaround dose fractionation image rotate-flip not applied problem
 		self.debug_print('received shape %s' %(image.shape,))
 
-		print 'before', image.shape
 		if self.save_frames or self.align_frames:
 			image = self._modifyImageOrientation(image)
 		image = self._modifyImageShape(image)
-		print 'after', image.shape
+		self.debug_print('final shape %s' %(image.shape,))
 
 		if self.dm_processing == 'gain normalized' and self.ed_mode in ('counting','super resolution'):
 			image = numpy.asarray(image, dtype=numpy.float32)
@@ -281,11 +293,12 @@ class DMSEM(ccdcamera.CCDCamera):
 
 	def _modifyImageShape(self, image):
 		image = self._fixBadShape(image)
-		added_binning = self.binning['x'] / self.acq_binning
+		acq_binning, binscale = self.getAcqBinning()
+		added_binning = self.binning['x'] / acq_binning
 		if added_binning > 1:
 			# software binning
 			image = imagefun_bin(image, added_binning)
-			print 'binned', image.shape
+			self.debug_print('software binned %s' % (image.shape,))
 		image = self._cropImage(image)
 		return image
 		return self._cropImage(image)
@@ -298,7 +311,7 @@ class DMSEM(ccdcamera.CCDCamera):
 			endx = self.dimension['x'] + startx
 			endy = self.dimension['y'] + starty
 			image = image[starty:endy,startx:endx]
-		self.debug_print('modified shape %s' % (image.shape,))
+			self.debug_print('software cropped %s' % (image.shape,))
 		return image
 
 	def _modifyImageOrientation(self, image):
@@ -306,8 +319,10 @@ class DMSEM(ccdcamera.CCDCamera):
 			k2_rotate = self.getDmsemConfig('k2','rotate')
 			k2_flip = self.getDmsemConfig('k2','flip')
 			if k2_rotate:
+				self.debug_print('rotate image %s' % (image.shape,))
 				image = numpy.rot90(image,4-k2_rotate)
 			if k2_flip:
+				self.debug_print('flip image %s' % (image.shape,))
 				image = numpy.fliplr(image)
 		return image
 
@@ -725,6 +740,7 @@ class GatanK2Super(GatanK2Base):
 class GatanK3(GatanK2Base):
 	# K3 camsize is in super resolution
 	binning_limits = [1,2,4,8]
+	soft_crop = True
 	name = 'GatanK3'
 	readmodes = {'linear': 3, 'super resolution': 4}
 	ed_mode = 'super resolution'
@@ -744,18 +760,18 @@ class GatanK3(GatanK2Base):
 		return True
 
 	def getAcqBinning(self):
-		self.acq_binning = self.binning['x']
+		# K3 SerialEMCCD native is in super resolution
+		acq_binning = self.binning['x']
 		if self.binning['x'] > 2:
 			#K3 can only bin from super resolution by 1 or 2.
-			self.acq_binning = 2
+			acq_binning = 2
 		# bin scale is always 1
-		return self.acq_binning, 1
+		return acq_binning, 1
 
 	def modifyDarkImage(self,image):
 		image[:,:] = 0
 
 	def _fixBadShape(self, image):
-		print 'recieved', image.shape
 		# TODO: Found image shape returned incorrectly in simulation.
 		# Leave this here for now.
 		if self.acqparams['width']*self.acqparams['height'] != image.shape[0]*image.shape[1]:
