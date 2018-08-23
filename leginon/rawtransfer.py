@@ -57,6 +57,8 @@ class RawTransfer(object):
 			help="Camera computer hostname in leginondb, e.g. --camera_host=gatank2")
 		parser.add_option("--destination_head", dest="dest_path_head",
 			help="Specific head destination frame path to transfer if multiple frame transfer is run for one source to frame paths not all mounted on the same computer, e.g. --destination_head=/data1", metavar="PATH", default='')
+		parser.add_option("--path_mode", dest="mode_str", 
+			help="recursive session permission modification by chmod if specified, default means not to modify e.g. --path_mode=g-w,o-rw")
 		parser.add_option("--check_interval", dest="check_interval", help="Seconds between checking for new frames", type="int", default=check_interval)
 
 		# parsing options
@@ -202,7 +204,15 @@ class RawTransfer(object):
 			p = subprocess.Popen(cmd, shell=True)
 			p.wait()
 
-	def transfer(self, src, dst, uid, gid, method):
+	def changeMode(self,path,mode_str='g-w,o-rw'):
+		if not self.is_win32:
+			# only works on linux
+			cmd = 'chmod -R %s %s' % (mode_str, path)
+			print cmd
+			p = subprocess.Popen(cmd, shell=True)
+			p.wait()
+
+	def transfer(self, src, dst, uid, gid, method, mode_str):
 		'''
 		This function at minimal organize and rename the time-stamped file
 		to match the Leginon session and integrated image.  If the source is
@@ -221,6 +231,8 @@ class RawTransfer(object):
 		self._transfer(src,dst,method)
 
 		self.changeOwnership(uid,gid,sessionpath)
+		if mode_str:
+			self.changeMode(sessionpath, mode_str)
 
 		self.cleanUp(src,method)
 
@@ -239,7 +251,7 @@ class RawTransfer(object):
 			frames_path = leginon.ddinfo.getRawFrameSessionPathFromSessionPath(image_path)
 		return frames_path
 
-	def run_once(self,parent_src_path,cam_host,dest_head,method):
+	def run_once(self,parent_src_path,cam_host,dest_head,method,mode_str):
 		global next_time_start
 		global time_expire
 		global mtime
@@ -322,14 +334,14 @@ class RawTransfer(object):
 				self.cleanUp(src_path,method)
 				return
 			# do actual copy and delete
-			self.transfer(src_path, dst_path, uid, gid,method)
+			self.transfer(src_path, dst_path, uid, gid, method, mode_str)
 			# de only
 			leginon.ddinfo.saveImageDDinfoToDatabase(imdata,os.path.join(dst_path,'info.txt'))
 			# falcon3 only, xml file transfer
 			xml_src_path = src_path.replace('mrc','xml')
 			xml_dst_path = dst_path.replace('mrc','xml')
 			if os.path.exists(xml_src_path):
-				self.transfer(xml_src_path, xml_dst_path, uid, gid,method)
+				self.transfer(xml_src_path, xml_dst_path, uid, gid, method, mode_str)
 
 	def run(self):
 		self.params = self.parseParams()
@@ -340,7 +352,7 @@ class RawTransfer(object):
 			print "Limit processing to destination frame path started with %s" % (dst_head)
 		while True:
 			print 'Iterating...'
-			self.run_once(src_path,self.params['camera_host'],dst_head,method=self.params['method'])
+			self.run_once(src_path,self.params['camera_host'],dst_head,method=self.params['method'], mode_str=self.params['mode_str'])
 			print 'Sleeping...'
 			time.sleep(check_interval)
 
