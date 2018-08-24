@@ -166,6 +166,10 @@ class GatanK2Processing(apDDprocess.DDFrameProcessing):
 			refdata = self.c_client.researchCorrectorImageData(reftype, scopedata, self.camerainfo, channel)
 		return refdata
 
+class GatanK3Processing(GatanK2Processing):
+	def __init__(self,wait_for_new=False):
+		super(GatanK3Processing,self).__init__(wait_for_new)
+		self.setDefaultDimension(8184,11520)
 
 if __name__ == '__main__':
         dd = GatanK2Processing()

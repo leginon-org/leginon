@@ -36,6 +36,9 @@ def initializeDDFrameprocess(sessionname,wait_flag=False):
 	if 'GatanK2' in dcamdata['name']:
 		from appionlib import apK2process
 		return apK2process.GatanK2Processing(wait_flag)
+	elif 'GatanK3' in dcamdata['name']:
+		from appionlib import apK2process
+		return apK2process.GatanK3Processing(wait_flag)
 	elif 'DE' in dcamdata['name']:
 		from appionlib import apDEprocess
 		return apDEprocess.DEProcessing(wait_flag)
