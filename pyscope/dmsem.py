@@ -754,10 +754,18 @@ class GatanK3(GatanK2Base):
 		self.dosefrac_frame_time = 0.013
 		self.record_precision = 0.013
 		self.user_exposure_ms = 13
-		self.dm_processing = 'gain normalized'
+		self.dm_processing = self.getDmProcessing()
+
+	def getDmProcessing(self):
+		value = self.getDmsemConfig('k3','dm_processing')
+		if value == 'dark subtracted':
+			return value
+		else:
+			# default
+			return 'gain normalized'
 
 	def getSystemGainDarkCorrected(self):
-		return True
+		return self.dm_processing == 'gain normalized'
 
 	def getAcqBinning(self):
 		# K3 SerialEMCCD native is in super resolution
