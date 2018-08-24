@@ -300,7 +300,19 @@ class FeiCam(ccdcamera.CCDCamera):
 		except Exception, e:
 			if self.getDebugCamera():
 				print 'Camera acquire:',e
-			raise RuntimeError('Error camera acquiring: %s' % (e,))
+				print self.camera_settings.ExposureTime
+			if self.getAlignFrames() and self.getSaveRawFrames():
+				# dose fractionation definition range list is modified by the program.
+				#framecount = self.dfd.Count
+				#for i in range(framecount):
+				#	print '%d,%d' % (self.dfd[i].Begin, self.dfd[i].End)
+				try:
+					if 'The parameter is incorrect' in e.text:
+						self.im = self.csa.Acquire()
+				except Exception, e:
+					raise RuntimeError('Error camera acquiring: %s' % (e,))
+			else:
+				raise RuntimeError('Error camera acquiring: %s' % (e,))
 		try:
 			arr = self.im.AsSafeArray
 		except Exception, e:
@@ -511,12 +523,17 @@ class Falcon3(FeiCam):
 		self.calculateMovieExposure()
 		movie_exposure_second = self.movie_exposure/1000.0
 		self.camera_settings.ExposureTime = movie_exposure_second
-		max_nframes = self.camera_settings.CalculateNumberOfFrames()
-		frame_time_second = self.dosefrac_frame_time
 		if self.save_frames:
 			self.camera_settings.AlignImage = self.align_frames
+		max_nframes = self.camera_settings.CalculateNumberOfFrames()
+		if self.getDebugCamera():
+			print 'n base frames', max_nframes
+		frame_time_second = self.dosefrac_frame_time
+		if self.save_frames:
 			# Use all available frames
 			rangelist = self.frameconfig.makeRangeListFromNumberOfBaseFramesAndFrameTime(max_nframes,frame_time_second)
+			if self.getDebugCamera():
+				print 'rangelist', rangelist
 			if rangelist:
 				# modify frame time in case of uneven bins
 				self.dosefrac_frame_time = movie_exposure_second / len(rangelist)
