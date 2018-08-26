@@ -52,7 +52,7 @@ class AlignStackLoop(apDDStackMaker.FrameStackLoop):
 		self.framealigner = apDDFrameAligner.DDFrameAligner()
 
 	def checkFrameAlignerExecutable(self):
-		self.framealigner = apDDFrameAligner.DDFrameAligner()
+		self.setFrameAligner()
 		exename = self.framealigner.getExecutableName()
 		alignexe = subprocess.Popen("which "+exename, shell=True, stdout=subprocess.PIPE).stdout.read().strip()
 		if not os.path.isfile(alignexe):
