@@ -64,7 +64,8 @@ class GatanK2Processing(apDDprocess.DDFrameProcessing):
 		Load from rawframe_path (a stack file) the chosen frame of the current image.
 		'''
 		try:
-			bin = self.camerainfo['binning']
+			# the frames are binned too now ?
+			bin = {'x':1,'y':1}
 			offset = self.camerainfo['offset']
 			dimension = self.camerainfo['dimension']
 		except:
