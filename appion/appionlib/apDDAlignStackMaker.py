@@ -92,6 +92,7 @@ class AlignStackLoop(apDDStackMaker.FrameStackLoop):
 		self.framealigner.setLogPath(self.temp_logpath)
 
 		if self.isAlign():
+			self.framealigner.setStackBinning(self.dd.stack_binning)
 			# set framelist
 			framelist = self.dd.getFrameListFromParams(self.params)
 			self.dd.setAlignedSumFrameList(framelist)

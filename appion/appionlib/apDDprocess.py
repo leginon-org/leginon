@@ -394,7 +394,9 @@ class DDFrameProcessing(DirectDetectorProcessing):
 
 	def getBufferFrameSessionPathFromImage(self, imagedata):
 		session_frame_path = ddinfo.getBufferFrameSessionPathFromImage(imagedata)
-		if session_frame_path is False or self.getAllAlignImagePairData(None,query_source=True):
+		if session_frame_path is False:
+			return False
+		if self.getAllAlignImagePairData(None,query_source=True):
 			# Transfer to permanent location is automatic
 			apDisplay.printWarning('Alignment already run. frames moved from buffer')
 			return False
@@ -485,6 +487,8 @@ class DDFrameProcessing(DirectDetectorProcessing):
 
 	def getRefImageData(self,reftype):
 		refdata = self._getRefImageData(reftype)
+		if not refdata:
+			return
 		if self.getUseAlternativeChannelReference():
 			oldrefname = refdata['filename']
 			refdata = self.c_client.getAlternativeChannelReference(reftype,refdata)
@@ -494,7 +498,10 @@ class DDFrameProcessing(DirectDetectorProcessing):
 	def _getRefImageData(self,reftype):
 		imagedata = self.getCorrectedImageData()
 		if not self.use_full_raw_area:
-			refdata = imagedata[reftype]
+			try:
+				refdata = imagedata[reftype]
+			except:
+				return None
 			#if self.image.dbid <= 1815252 and self.image.dbid >= 1815060:
 				# special case to back correct images with bad references
 				#refdata = apDatabase.getRefImageDataFromSpecificImageId(reftype,1815281)
@@ -618,7 +625,8 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		Load from rawframe_dir the chosen frame of the current image.
 		'''
 		try:
-			bin = self.camerainfo['binning']
+			# the frames are binned too now ?
+			bin = {'x':1,'y':1}
 			offset = self.camerainfo['offset']
 			dimension = self.camerainfo['dimension']
 		except:
@@ -1220,9 +1228,16 @@ class DDFrameProcessing(DirectDetectorProcessing):
 
 	def setNewBinning(self,bin):
 		'''
-		Camera binning of the stack.
+		further binning of the stack.
 		'''
 		self.stack_binning = bin
+
+	def getStackBinning(self):
+		'''
+		TO DO: replace getNewBinning every where to this.
+		because we will assume the stack has the camera binning.
+		'''
+		return self.stack_binning
 
 	def getNewBinning(self):
 		return self.stack_binning
@@ -1251,16 +1266,14 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		else:
 			dims = camdata['dimension']
 		camerasize = {}
-		newbin = self.getNewBinning()
+		added_bin = self.getStackBinning()
+		old_bin = camdata['binning']['x']
+		newbin = old_bin * added_bin
 		t = self.getTrimingEdge()
 		for axis in ('x','y'):
-			if camdata['binning'][axis] != 1 or camdata['offset'][axis] != 0:
-				apDisplay.printError('Starting image must be unbinned and at full dimension for now')
-			if newbin < camdata['binning'][axis]:
-				apDisplay.displayError('can not change to smaller binning')
 			camerasize[axis] = (camdata['offset'][axis]*2+camdata['dimension'][axis])*camdata['binning'][axis]
 			camdata['dimension'][axis] = dims[axis] * camdata['binning'][axis] / newbin - 2*t / newbin
-			camdata['binning'][axis] = newbin
+			camdata['binning'][axis] = added_bin*old_bin
 			camdata['offset'][axis] = (camerasize[axis]/newbin -camdata['dimension'][axis])/2
 		framelist = self.getAlignedSumFrameList()
 		if framelist:

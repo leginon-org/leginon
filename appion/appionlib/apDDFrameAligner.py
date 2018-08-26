@@ -6,12 +6,14 @@ import re
 import subprocess
 
 class DDFrameAligner(object):
-	executable = 'cp'
+	# testbin.py is a test script in appion/bin as an example
+	executable = 'testbin.py'
 	def __init__(self):
 		self.alignparams = {}
 		self.gain_dark_cmd = ''
 		self.save_aligned_stack = True
 		self.is_use_frame_aligner_sum = True
+		self.stack_binning = 1
 
 	def getExecutableName(self):
 		return self.executable
@@ -65,14 +67,18 @@ class DDFrameAligner(object):
 		
 	def getAlignedSumFrameList(self):
 		return self.sumframelist
-		
+
+	def setStackBinning(self, value):
+		self.stackbinning = value
+
 	def makeFrameAlignmentCommand(self):
-		cmd = ' '.join([self.executable, self.framestackpath, self.aligned_sumpath])
+		'''
+		Frame alignment command construction.
+		'''
+		cmd = ' '.join([self.executable, self.framestackpath, self.aligned_sumpath, '%d' % (self.stackbinning)])
 		cmd += self.joinFrameAlignOptions(glue='-')
 		cmd += ' > '+self.logpath
-		apDisplay.printWarning('This example alignment copy the whole stack!!!!')
-		apDisplay.printWarning('This example alignment copy the whole stack!!!!')
-		apDisplay.printWarning('This example alignment copy the whole stack!!!!')
+		apDisplay.printWarning('This example alignment copies and bins the first frame')
 		return cmd
 
 	def alignFrameStack(self):
