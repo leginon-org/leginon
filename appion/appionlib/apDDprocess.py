@@ -33,7 +33,7 @@ def initializeDDFrameprocess(sessionname,wait_flag=False):
 	dcamdata = apDatabase.getFrameImageCamera(sessiondata)
 	if not dcamdata:
 		apDisplay.printError('Can not determine DD camera type. Did you save frames?')
-	if 'GatanK2' in dcamdata['name']:
+	if 'GatanK' in dcamdata['name']:
 		from appionlib import apK2process
 		return apK2process.GatanK2Processing(wait_flag)
 	elif 'DE' in dcamdata['name']:
