@@ -1585,7 +1585,7 @@ class Tecnai(tem.TEM):
 		amc = self.tecnai.ApertureMechanismCollection
 		# TO DO: better to use ID for obj aperture (4)
 		index = self._getApertureMechanismIndex(name)
-		if index == False:
+		if index is False:
 			raise ValueError('Aperture mechanism %s does not exist' % name)
 		am = amc.Item(index)
 		return am
