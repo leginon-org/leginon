@@ -52,6 +52,11 @@ class ScrolledSettings(leginon.gui.wx.Calibrator.ScrolledSettings):
 
 		return sizers + [sbsz]
 
+def capitalize(string):
+	if string:
+		string = string[0].upper() + string[1:]
+	return string
+
 class Panel(leginon.gui.wx.Calibrator.Panel):
 	icon = 'beamtilt'
 	settingsdialogclass = SettingsDialog
@@ -70,13 +75,13 @@ class Panel(leginon.gui.wx.Calibrator.Panel):
 		self.szmain.AddGrowableRow(0)
 		self.szmain.AddGrowableCol(0)
 		# tools
-		choices = ['Defocus', 'Beam-Tilt Coma']
+		choices = ['Defocus', 'Image-Shift Coma', 'Image-Shift Stig', 'Image-Shift Defocus']
 		if not hide_stig:
 			choices.append('Stigmator')
-		self.parameter = wx.Choice(self.toolbar, -1, choices=choices)
-		self.parameter.SetSelection(0)
+		self.cparameter = wx.Choice(self.toolbar, -1, choices=choices)
+		self.cparameter.SetSelection(0)
 
-		self.toolbar.InsertControl(5, self.parameter)
+		self.toolbar.InsertControl(5, self.cparameter)
 		self.toolbar.InsertTool(6, leginon.gui.wx.ToolBar.ID_PARAMETER_SETTINGS, 'settings', shortHelpString='Parameter Settings')
 		self.toolbar.AddSeparator()
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_MEASURE, 'ruler', shortHelpString='Measure')
@@ -104,8 +109,11 @@ class Panel(leginon.gui.wx.Calibrator.Panel):
 		self.comafree_dialog = MeasureComafreeDialog(self)
 		self.align_dialog = AlignRotationCenterDialog(self)
 
+		self.Bind(leginon.gui.wx.Events.EVT_EDIT_MATRIX, self.onEditMatrix)
 		self.Bind(leginon.gui.wx.Events.EVT_EDIT_FOCUS_CALIBRATION, self.onEditFocusCalibration)
 
+		self.cparameter.SetStringSelection(capitalize(self.node.parameter))
+		self.cparameter.Bind(wx.EVT_CHOICE, self.onParameterChoice, self.cparameter)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onParameterSettingsTool, id=leginon.gui.wx.ToolBar.ID_PARAMETER_SETTINGS)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onMeasureTool, id=leginon.gui.wx.ToolBar.ID_MEASURE)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onMeasureComafreeTool, id=leginon.gui.wx.ToolBar.ID_MEASURE_COMAFREE)
@@ -146,7 +154,7 @@ class Panel(leginon.gui.wx.Calibrator.Panel):
 
 	def _calibrationEnable(self, enable):
 		self._acquisitionEnable(enable)
-		self.parameter.Enable(enable)
+		self.cparameter.Enable(enable)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PARAMETER_SETTINGS, enable)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, not enable)
 
@@ -219,8 +227,11 @@ class Panel(leginon.gui.wx.Calibrator.Panel):
 	def onMeasureComafreeTool(self, evt):
 		self.comafree_dialog.ShowModal()
 
+	def onParameterChoice(self, evt):
+		self.node.parameter = evt.GetString().lower()
+
 	def onParameterSettingsTool(self, evt):
-		parameter = self.parameter.GetStringSelection()
+		parameter = self.cparameter.GetStringSelection()
 		if parameter == 'Defocus':
 			dialog = DefocusSettingsDialog(self)
 		elif parameter == 'Stigmator':
@@ -230,13 +241,15 @@ class Panel(leginon.gui.wx.Calibrator.Panel):
 		elif parameter == 'Image-Shift Coma':
 			dialog = ImageShiftComaSettingsDialog(self)
 		else:
-			raise RuntimeError
+			# Do nothing, just enable other tools
+			self._calibrationEnable(True)
+			return
 		dialog.ShowModal()
 		dialog.Destroy()
 
 	def onCalibrateTool(self, evt):
 		self._calibrationEnable(False)
-		parameter = self.parameter.GetStringSelection()
+		parameter = self.cparameter.GetStringSelection()
 		if parameter == 'Defocus':
 			threading.Thread(target=self.node.calibrateDefocus).start()
 		elif parameter == 'Stigmator':
@@ -246,22 +259,49 @@ class Panel(leginon.gui.wx.Calibrator.Panel):
 		elif parameter == 'Image-Shift Coma':
 			threading.Thread(target=self.node.calibrateImageShiftComa).start()
 		else:
-			raise RuntimeError
+			# Do nothing, just enable other tools
+			self._calibrationEnable(True)
+			return
 
 	def onAbortTool(self, evt):
 		self.node.abortCalibration()
 
 	def onEditFocusCalibrationTool(self, evt):
-		threading.Thread(target=self.node.editCurrentCalibration).start()
+		parameter = self.cparameter.GetStringSelection()
+		if parameter != 'Defocus':
+			threading.Thread(target=self.node.editCurrentCalibration).start()
+		else:
+			threading.Thread(target=self.node.editCurrentFocusCalibration).start()
+
+	def onEditMatrix(self, evt):
+		'''
+		Edit and save upon closing dialog.
+		Includes probe but not magnification.
+		'''
+		matrix = evt.calibrationdata['matrix']
+		parameter = evt.calibrationdata['type']
+		ht = evt.calibrationdata['high tension']
+		probe = evt.calibrationdata['probe']
+		tem = evt.calibrationdata['tem']
+		ccdcamera = evt.calibrationdata['ccdcamera']
+		dialog = EditMatrixDialog(self, matrix, 'Edit Calibration')
+		if dialog.ShowModal() == wx.ID_OK:
+			matrix = dialog.getMatrix()
+			self.node.saveCalibration(matrix, parameter, ht, None, tem, ccdcamera, probe)
+		dialog.Destroy()
+
+	def editCalibration(self, calibrationdata):
+		evt = leginon.gui.wx.Events.EditMatrixEvent(calibrationdata=calibrationdata)
+		self.GetEventHandler().AddPendingEvent(evt)
 
 	def onEditFocusCalibration(self, evt):
 		dialog = EditFocusCalibrationDialog(self, evt.matrix, evt.rotation_center, evt.eucentric_focus, 'Edit Calibration')
 		if dialog.ShowModal() == wx.ID_OK:
 			calibration = dialog.getFocusCalibration()
-			self.node.saveCalibration(calibration, evt.parameter, evt.high_tension, evt.magnification, evt.tem, evt.ccd_camera, evt.probe)
+			self.node.saveFocusCalibration(calibration, evt.parameter, evt.high_tension, evt.magnification, evt.tem, evt.ccd_camera, evt.probe)
 		dialog.Destroy()
 
-	def editCalibration(self, **kwargs):
+	def editFocusCalibration(self, **kwargs):
 		evt = leginon.gui.wx.Events.EditFocusCalibrationEvent(**kwargs)
 		self.GetEventHandler().AddPendingEvent(evt)
 
@@ -573,6 +613,9 @@ class MeasureScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def onResetDefocusButton(self, evt):
 		self.panel.instrumentEnable(False)
 		threading.Thread(target=self.node.resetDefocus).start()
+
+class EditMatrixDialog(leginon.gui.wx.MatrixCalibrator.EditMatrixDialog):
+	pass
 
 class EditFocusCalibrationDialog(leginon.gui.wx.MatrixCalibrator.EditMatrixDialog):
 	def __init__(self, parent, matrix, rotation_center, eucentric_focus, title, subtitle='Focus Calibration'):
