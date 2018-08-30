@@ -50,6 +50,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 
 		self.measurement = {}
 		self.comameasurement = {}
+		self.parameter = 'defocus'
 
 		self.calibration_clients = {
 			'beam tilt': calibrationclient.BeamTiltCalibrationClient(self),
@@ -477,14 +478,42 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		self.abort.set()
 
 	def editCurrentCalibration(self):
+		'''
+		Edit calibration of the gui-selected matrix without magnification.  Similar to the function in MatrixCalibrator.
+		'''
 		try:
-			kwargs = self.getCurrentCalibration()
-			self.panel.editCalibration(**kwargs)
+			calibrationdata = self.getCurrentNoMagCalibration()
+		except calibrationclient.NoMatrixCalibrationError, e:
+			if e.state is None:
+				raise e
+			else:
+				self.logger.warning('No calibration found for current state: %s' % e)
+				calibrationdata = e.state
+		except Exception, e:
+			self.logger.error('Calibration edit failed: %s' % e)
+			return
+		self.panel.editCalibration(calibrationdata)
+
+	def editCurrentFocusCalibration(self):
+		try:
+			kwargs = self.getCurrentFocusCalibration()
+			self.panel.editFocusCalibration(**kwargs)
 		except Exception, e:
 			self.logger.error('Calibration edit failed: %s' % e)
 			return
 
-	def getCurrentCalibration(self):
+	def getCurrentNoMagCalibration(self):
+		if self.instrument.tem is None:
+			raise RuntimeError('cannot access TEM')
+		tem = self.instrument.getTEMData()
+		cam = self.instrument.getCCDCameraData()
+		par = self.parameter
+		ht = self.instrument.tem.HighTension
+		probe = self.instrument.tem.ProbeMode
+		mag = None
+		return self.btcalclient.researchMatrix(tem, cam, par, ht, mag, probe)
+
+	def getCurrentFocusCalibration(self):
 		tem = self.instrument.getTEMData()
 		if tem is None:
 			raise RuntimerError('no TEM selected')
@@ -534,7 +563,11 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		}
 		return kwargs
 
-	def saveCalibration(self, calibration, parameter, high_tension, magnification, tem, ccd_camera, probe):
+	def saveCalibration(self, matrix, parameter, ht, mag, tem, ccdcamera, probe):
+		self.btcalclient.storeMatrix(ht, mag, parameter, matrix, tem, ccdcamera, probe)
+		self.logger.info('%s matrix is saved for %s probe' % (parameter, probe))
+
+	def saveFocusCalibration(self, calibration, parameter, high_tension, magnification, tem, ccd_camera, probe):
 		matrix, rotation_center, eucentric_focus = calibration
 		client = self.calibration_clients['beam tilt']
 		client.storeMatrix(high_tension, magnification, parameter, matrix, tem, ccd_camera, probe)
