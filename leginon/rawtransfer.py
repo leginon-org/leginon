@@ -270,10 +270,10 @@ class RawTransfer(object):
 			if name in expired_names:
 				continue
 			# ignore irrelevent source files or folders
-			# gatan k2 summit data ends with '.mrc'
+			# gatan k2 summit data ends with '.mrc' or 'tif'
 			# de folder starts with '20'
 			# falcon mrchack stacks ends with '.mrcs'
-			if not ext.startswith('.mrc') and  ext != '.frames' and not name.startswith('20'):
+			if not ext.startswith('.mrc') and not ext != 'tif' and  ext != '.frames' and not name.startswith('20'):
 				continue
 			print '**running', src_path
 
@@ -286,6 +286,11 @@ class RawTransfer(object):
 				ext_len = len(ext)
 				frames_name = name[:-ext_len]
 				dst_suffix = '.frames.mrc'
+			elif ext.startswith('.tif'):
+				# tiff format
+				ext_len = len(ext)
+				frames_name = name[:-ext_len]
+				dst_suffix = '.frames.tif'
 			else:
 				frames_name = name
 				dst_suffix = '.frames'
