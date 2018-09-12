@@ -325,6 +325,10 @@ This method returns that multiplier, M.  In the standard case, returns 1.0.
 		# rotation in multiple of 90 degrees
 		return 0
 
+	def getSaveLzwTiffFrames(self):
+		# Lzw Tiff file saving for frames
+		return False
+
 	def requireRecentDarkCurrentReferenceOnBright(self):
 		return False
 	
