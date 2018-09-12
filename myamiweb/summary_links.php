@@ -247,14 +247,14 @@ $icethicknesszlp = $leginondata->getZeroLossIceThickness($expId); # see if anyth
 		echo "<td>";
 		echo "<a href='zlp_icegraph.php?Id=$expId&vdata=1'>[data]</a>";
 		echo "<a href='zlp_icegraph.php?Id=$expId&vs=1'>[sql]</a><br>";
-		echo "<a href='zlp_icegraph.php?Id=$expId&w=1024&h=512'>";
+		echo "<a href='zlp_icegraph.php?Id=$expId&w=1024&h=512&truncate=true'>";
 		echo "<img border='0' src='img/placeholder_hist.png'>";
 		echo "</a>\n";
 		echo "</td>\n";
 		echo "</tr>\n";
 		echo "<tr>";
 		echo "<td>";
-		echo "<a href='zlp_icegraph2.php?Id=$expId&w=1024&h=512'>";
+		echo "<a href='zlp_icegraph2.php?Id=$expId&w=1024&h=512&truncate=true'>";
 		echo "<img border='0' src='img/placeholder_scatter.png'>";
 		echo "</a>\n";
 		echo "</td>\n";
@@ -281,7 +281,7 @@ $icethicknessobj = $leginondata->getObjIceThickness($expId); # see if anything w
 		echo "<td>";
 		echo "<a href='obj_icegraph.php?Id=$expId&vdata=1'>[data]</a>";
 		echo "<a href='obj_icegraph.php?Id=$expId&vs=1'>[sql]</a><br>";
-		echo "<a href='obj_icegraph.php?Id=$expId&w=1024&h=512'>";
+		echo "<a href='obj_icegraph.php?Id=$expId&w=1024&h=512&truncate=true'>";
 		echo "<img border='0' src='img/placeholder_hist.png'>";
 		echo "</a>\n";
 		echo "</td>\n";
@@ -289,7 +289,7 @@ $icethicknessobj = $leginondata->getObjIceThickness($expId); # see if anything w
 
 		echo "<tr>";
 		echo "<td>";
-		echo "<a href='obj_icegraph2.php?Id=$expId&w=1024&h=512'>";
+		echo "<a href='obj_icegraph2.php?Id=$expId&w=1024&h=512&truncate=true'>";
 		echo "<img border='0' src='img/placeholder_scatter.png'>";
 		echo "</a>\n";
 		echo "</td>\n";

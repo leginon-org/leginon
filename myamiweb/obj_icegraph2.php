@@ -7,8 +7,20 @@
  *	see  http://leginon.org
  */
 require_once "inc/leginon.inc";
+#require_once "inc/stats.inc";
 require_once "inc/graph.inc";
+function mean($array) {
+	return array_sum($array)/count($array);
+}
 
+// Function to calculate square of value - mean
+function sd_square($x, $mean) { return pow($x - $mean,2); }
+
+// Function to calculate standard deviation (uses sd_square)    
+function sd($array) {
+   // square root of sum of squares devided by N-1
+	return sqrt(array_sum(array_map("sd_square", $array, array_fill(0,count($array), (array_sum($array) / count($array)) ) ) ) / (count($array)-1) );
+}
 $defaultId= 4828;
 //$defaultpreset='en';
 $sessionId= ($_GET[Id]) ? $_GET[Id] : $defaultId;
@@ -21,11 +33,19 @@ $histogram= ($_GET['Histo']) ? $_GET['Histo'] : false;
 $histaxis=($_GET['haxis']) ? $_GET['haxis'] : 'y';
 $width=$_GET['w'];
 $height=$_GET['h'];
+$truncated= ($_GET['truncate']) ? $_GET['truncate'] : false;
 $thicknessdata = $leginondata->getObjIceThickness($sessionId);
 
 foreach($thicknessdata as $t) {
 	$data[] = $t['thickness'];
 }
+$mean = mean($data);
+
+if (count($data) >1) {
+	$sd = sd($data);
+	$limit = 3 * $sd;  //truncate to mean +/- 3 sd if desired
+}
+
 if ($viewsql) {
 	$sql = $leginondata->mysql->getSQLQuery();
 	echo $sql;
@@ -42,9 +62,17 @@ $display_y = 'thickness';
 $axes = array($display_x,$display_y);
 if ($histogram == true && $histaxis == 'x') 
 	$axes = array($display_y,$display_x);
-$dbemgraph= new dbemgraph($thicknessdata, $axes[0], $axes[1]);
+if ($truncated != true && count($data) >1) {
+	$dbemgraph= new dbemgraph($thicknessdata, $axes[0], $axes[1]);
+}
+else {
+	foreach($thicknessdata as $t) {
+		if (abs($t['thickness'] - $mean) <= $limit) {$truncateddata[] = $t;}
+	}
+	$dbemgraph= new dbemgraph($truncateddata, $axes[0], $axes[1]);
+}
 $dbemgraph->lineplot=False;
-$dbemgraph->title="Ice Thickness using objective scattering";
+$dbemgraph->title="Ice Thickness using aperture limited scattering";
 $dbemgraph->yaxistitle="Thickness /nm";
 
 if ($viewdata) {
