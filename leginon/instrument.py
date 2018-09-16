@@ -420,6 +420,7 @@ parametermapping = (
 	('energy filter width', 'EnergyFilterWidth'),
 	('nframes', 'NumberOfFrames'),
 	('align frames', 'AlignFrames'),
+	('tiff frames', 'SaveLzwTiffFrames'),
 	('align filter', 'AlignFilter'),
 	('save frames', 'SaveRawFrames'),
 	('frames name', 'PreviousRawFramesName'),

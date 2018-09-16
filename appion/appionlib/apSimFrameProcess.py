@@ -40,7 +40,7 @@ class SimFrameProcessing(apDDprocess.DDFrameProcessing):
 		'''
 		rawframe_basepath = self.getSessionFramePathFromImage(imagedata)
 		# frame stackfile is image filename plus '.frames.mrc'
-		rawframedir = os.path.join(rawframe_basepath,'%s.frames.mrc' % imagedata['filename'])
+		rawframedir = os.path.join(rawframe_basepath,'%s.frames.%s' % (imagedata['filename'],self.extname))
 		if not self.waitForPathExist(rawframedir,30):
 			apDisplay.printError('Raw Frame Dir %s does not exist.' % rawframedir)
 		return rawframedir

@@ -182,6 +182,7 @@ camera_params = (
 	('nframes', int),
 	('save frames', bool),
 	('align frames', bool),
+	('tiff frames', bool),
 	('align filter', str),
 	('frames name', str),
 	('use frames', tuple),

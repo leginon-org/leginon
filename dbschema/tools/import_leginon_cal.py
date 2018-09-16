@@ -78,20 +78,25 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 	def getTemInstrumentData(self, tem_name):
 		temq = leginondata.InstrumentData(name=tem_name)
 		r = leginondata.PixelSizeCalibrationData(tem=temq, ccdcamera=self.cameradata).query(results=1)
+		ptemid = None # tem with pixel calibration is checked first.
 		if r:
-			return r[0]['tem']
-		else:
-			results = leginondata.InstrumentData().query()
-			tems = []
-			for r in results:
-				if r['cs']:
-					tems.append(r)
-			for t in tems:
-				answer = raw_input(' Is %s %s the tem to import calibration ? Y/y/N/n' % (t['hostname'], t['name']))
-				if answer.lower() == 'y':
-					return t
-			print "  No tem found"
-			sys.exit()
+			t = r[0]['tem']
+			answer = raw_input(' Is %s %s the tem to import calibration ? Y/y/N/n ' % (t['hostname'], t['name']))
+			if answer.lower() == 'y':
+				return t
+			ptemid = t.dbid
+		# check the rest
+		results = leginondata.InstrumentData().query()
+		tems = []
+		for r in results:
+			if r['cs'] and (ptemid is None or ptemid!=r.dbid):
+				tems.append(r)
+		for t in tems:
+			answer = raw_input(' Is %s %s the tem to import calibration ? Y/y/N/n ' % (t['hostname'], t['name']))
+			if answer.lower() == 'y':
+				return t
+		print "  No tem found"
+		sys.exit()
 
 	def setSessionData(self):
 		# find administrator user

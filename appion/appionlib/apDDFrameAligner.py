@@ -237,6 +237,13 @@ class MotionCor2_UCSF(DDFrameAligner):
 		self.gain_dark_cmd = cmd
 		apDisplay.printMsg('Gain Dark Command Option: %s' % cmd)
 
+	def getInputCommand(self):
+		if self.framestackpath.endswith('.tif'):
+			cmd = '-InTiff %s' % self.framestackpath
+		else:
+			cmd = '-InMrc %s' % self.framestackpath
+		return cmd
+
 	def makeFrameAlignmentCommand(self):
 		'''
 		David Agard lab's gpu program for aligning frames using all defaults
@@ -248,7 +255,7 @@ class MotionCor2_UCSF(DDFrameAligner):
 
 		# Construct the command line with defaults
 
-		cmd = '%s -InMrc %s -OutMrc %s' % (self.executable, self.framestackpath, self.aligned_sumpath)
+		cmd = '%s %s -OutMrc %s' % (self.executable, self.getInputCommand(), self.aligned_sumpath)
 
 		# binning
 		if self.alignparams['FtBin'] > 1:

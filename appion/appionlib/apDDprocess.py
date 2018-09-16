@@ -89,6 +89,7 @@ class DirectDetectorProcessing(object):
 		'''
 		self.image = imagedata
 		# dark/gain corrected stack is saved here
+		self.extname = self.getRawFrameStackExtension(imagedata)
 		self.setFrameStackPath()
 
 	def getImageData(self):
@@ -101,6 +102,7 @@ class DirectDetectorProcessing(object):
 		'''
 		imagename = self.image['filename']
 
+		source_imagedata = self.image
 		if self.image['camera']['align frames']:
 			# Use pair data to find the align source image
 			result = self.getAlignImagePairData(None,query_source=False)
@@ -110,8 +112,16 @@ class DirectDetectorProcessing(object):
 			else:
 				source_imagedata = result['source']
 			imagename = source_imagedata['filename']
-		self.tempframestackpath = os.path.join(self.tempdir,imagename+'_st.mrc')
+		# input
+		self.tempframestackpath = os.path.join(self.tempdir,imagename+'_st.'+self.extname)
+		# output
 		self.framestackpath = os.path.join(self.rundir,imagename+'_st.mrc')
+
+	def getRawFrameStackExtension(self,imagedata):
+		self.extname = 'mrc'
+		if imagedata['camera']['tiff frames']:
+			extname = 'tif'
+		return extname
 		
 	def getFrameStackPath(self,temp=False):
 		if not temp:
@@ -1006,7 +1016,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		half_way_frame = int(total_frames // 2)
 		first = 0
 		frameprocess_dir = os.path.dirname(self.tempframestackpath)
-		rawframestack_path = os.path.join(frameprocess_dir,self.image['filename']+'_raw_st.mrc')
+		rawframestack_path = os.path.join(frameprocess_dir,self.image['filename']+'_raw_st.'+self.extname)
 		apDisplay.printMsg('Making raw frame stack and saving it to %s' % (rawframestack_path,))
 		for start_frame in range(first,first+total_frames):
 			array = self.loadOneRawFrame(rawframe_dir,start_frame)

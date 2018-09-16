@@ -2,15 +2,14 @@ FROM centos:7
 MAINTAINER Neil Voss <vossman77@gmail.com>
 
 ### install epel
-RUN yum -y install epel-release
-RUN yum -y install dnf
-RUN dnf -y upgrade \
-  && dnf -y install wget sudo passwd rsync tar openssh-clients && dnf -y clean all
+RUN yum -y --nogpgcheck install epel-release
+RUN yum -y upgrade \
+  && yum -y install wget sudo passwd rsync tar openssh-clients && yum -y clean all
 
 RUN yum clean all
 
 ### install software
-RUN dnf -y upgrade && dnf -y install \
+RUN yum -y upgrade && yum -y install \
  python-tools python-devel python-matplotlib \
  ImageMagick grace gnuplot bash-completion colordiff \
  wxPython numpy scipy python-imaging  \
@@ -22,11 +21,11 @@ RUN dnf -y upgrade && dnf -y install \
  xorg-x11-server-Xvfb netpbm-progs python-requests \
  mlocate nano elinks file which telnet \
  python-configparser h5py git pyflakes \
- numactl && dnf -y clean all
+ numactl && yum -y clean all
 
 ## Appion specific installs
-#RUN dnf -y upgrade && dnf -y install mozilla-adblockplus firefox dbus && dnf -y clean all
-RUN dnf install -y python2-pip
+#RUN yum -y upgrade && yum -y install mozilla-adblockplus firefox dbus && yum -y clean all
+RUN yum install -y python2-pip
 RUN dbus-uuidgen > /var/lib/dbus/machine-id
 RUN pip install --upgrade pip
 RUN pip install joblib pyfftw3 fs==0.5.4 scikit-learn==0.18.2
@@ -38,21 +37,13 @@ RUN mkdir -p /emg/sw && echo 'mkdir /emg/sw'
 RUN chmod 777 -R /emg  && echo 'chmod 777'
 
 ### Myami setup
-RUN git clone http://emg.nysbc.org/git/myami.git /emg/sw/myami/
-RUN ln -sv /emg/sw/myami/myamiweb /var/www/html/ami
-RUN ln -sv /emg/sw/myami/myamiweb /var/www/html/myamiweb
+RUN git clone -b myami-3.3 http://emg.nysbc.org/git/myami.git /emg/sw/myami/
 
-COPY sinedon.cfg /etc/myami/sinedon.cfg
-COPY leginon.cfg /etc/myami/leginon.cfg
-COPY instruments.cfg /etc/myami/instruments.cfg
-COPY appion.cfg /etc/myami/appion.cfg
-COPY redux.cfg /etc/myami/redux.cfg
-COPY config.php /emg/sw/myami/myamiweb/config.php
-COPY docker.sql /emg/sw/docker.sql
-COPY particledata.dat /emg/sw/particledata.dat
-RUN mkdir -p /var/cache/myami/redux/ && chmod 777 /var/cache/myami/redux/
+#COPY sinedon.cfg /etc/myami/sinedon.cfg
+#COPY leginon.cfg /etc/myami/leginon.cfg
+#COPY instruments.cfg /etc/myami/instruments.cfg
+#COPY appion.cfg /etc/myami/appion.cfg
 RUN ln -sv /emg/sw/myami/appion/appionlib /usr/lib64/python2.7/site-packages/
-RUN ln -sv /emg/sw/myami/redux/bin/reduxd /usr/bin/ && chmod 755 /usr/bin/reduxd
 RUN for i in pyami imageviewer leginon pyscope sinedon redux; \
 	do ln -sv /emg/sw/myami/$i /usr/lib64/python2.7/site-packages/; done
 
@@ -66,13 +57,13 @@ RUN python ./setup.py install
 WORKDIR /emg/sw/myami/redux
 RUN python ./setup.py install
 
+### see procnode.build.sh to obtain files
+
 RUN mkdir /etc/fftw
 RUN python /emg/sw/myami/pyami/fft/fftwsetup.py 2 4096 4096 && mv -v ~/fftw3-wisdom-* /etc/fftw/wisdom
-RUN cp -v /emg/sw/myami/redux/init.d/reduxd /etc/init.d/reduxd
-COPY findem-docker-centos7/findem64.exe /emg/sw/myami/appion/bin/
+ADD TGZ/findem-docker-centos7.tgz /emg/sw/
+#COPY /emg/sw/findem-docker-centos7/findem64.exe /emg/sw/myami/appion/bin/
 WORKDIR /emg/sw/myami/
-
-### see procnode.build.sh to obtain files
 
 ### Xmipp
 ADD TGZ/xmipp_centos6_docker.tgz /emg/sw
