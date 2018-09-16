@@ -69,12 +69,12 @@ do
 	SESSIONFOLDER=$(echo $SESSIONPATH | sed -e "s@/rawdata/@@g")
 
 	if [ ! -d "$TARGETDIR$SESSIONPATH" ]; then
-	mkdir -p $TARGETDIR$SESSIONPATH
-	chmod --reference=$MONITORDIR$SESSIONFOLDER $TARGETDIR$SESSIONFOLDER;
-        chown -vR --reference=$MONITORDIR$SESSIONFOLDER $TARGETDIR$SESSIONFOLDER;
-	echo "mkdir -p $TARGETDIR$SESSIONPATH"
-	echo 'chmod --reference=$MONITORDIR$SESSIONFOLDER $TARGETDIR$SESSIONFOLDER;'
-        echo 'chown -vR --reference=$MONITORDIR$SESSIONFOLDER $TARGETDIR$SESSIONFOLDER;'
+	  mkdir -p $TARGETDIR$SESSIONPATH
+	  chmod --reference=$MONITORDIR$SESSIONFOLDER $TARGETDIR$SESSIONFOLDER;
+    chown -vR --reference=$MONITORDIR$SESSIONFOLDER $TARGETDIR$SESSIONFOLDER;
+	  echo "mkdir -p $TARGETDIR$SESSIONPATH"
+	  echo 'chmod --reference=$MONITORDIR$SESSIONFOLDER $TARGETDIR$SESSIONFOLDER;'
+    echo 'chown -vR --reference=$MONITORDIR$SESSIONFOLDER $TARGETDIR$SESSIONFOLDER;'
 	fi
 	echo 'bufferpath is $MONITORDIR$SESSIONPATH$NEWFILE'
 	echo "MONITORDIR IS $MONITORDIR"
@@ -87,50 +87,50 @@ do
 
 	if [ ! -f ${NEWFILE}.bz2 ] && [ ! -d $NEWFILE ] && [[ "$FILEPATH" != *references* ]]; then
 
-	echo dir1 is $FILEPATH , dir2 is $TARGETDIR$SESSIONPATH
-	echo diff is 
+	  echo dir1 is $FILEPATH , dir2 is $TARGETDIR$SESSIONPATH
+	  echo diff is 
 
-	echo FILEPATH IS ${FILEPATH}
-	DIFF=$( diff <(ls ${FILEPATH} | sed 's/$/.bz2/g') <(ls $TARGETDIR$SESSIONPATH ) | sed 's/.bz2$//g' | grep \< | awk '{print $2}' )
+	  echo FILEPATH IS ${FILEPATH}
+	  DIFF=$( diff <(ls ${FILEPATH} | sed 's/$/.bz2/g') <(ls $TARGETDIR$SESSIONPATH ) | sed 's/.bz2$//g' | grep \< | awk '{print $2}' )
 
-	echo check
-	echo DIFF IS $DIFF
-	echo LENGTH OF DIFF IS $(echo $DIFF | wc -w)
-	for j in $DIFF;
-	do
+	  echo check
+	  echo DIFF IS $DIFF
+	  echo LENGTH OF DIFF IS $(echo $DIFF | wc -w)
+	  for j in $DIFF;
+	  do
 	
-	TEMPFILENAME=$TARGETDIR$SESSIONPATH$j
-	echo TEMPFILENAME IS $TEMPFILENAME
-	if [ ! -f "$TARGETDIR$SESSIONPATH$j.bz2" ] && ([ ${TEMPFILENAME: -4} == ".mrc" ] || [ ${TEMPFILENAME: -4} == ".xml" ] ) && [[ "${TARGETDIR}${SESSIONPATH}" != *references* ]];
+	    TEMPFILENAME=$TARGETDIR$SESSIONPATH$j
+	    echo TEMPFILENAME IS $TEMPFILENAME
+	    if [ ! -f "$TARGETDIR$SESSIONPATH$j.bz2" ] && ([ ${TEMPFILENAME: -4} == ".mrc" ] || [ ${TEMPFILENAME: -4} == ".xml" ] ) && [[ "${TARGETDIR}${SESSIONPATH}" != *references* ]];
 
-	  then
+	    then
 
-	    echo source: $FILEPATH$j target: $TARGETDIR$SESSIONPATH$j.bz2 j: $j
-	    pbzip2 -kv -p$NUMPROCS $FILEPATH$j
-	    echo rsync -av --remove-source-files $FILEPATH$j.bz2 $TARGETDIR$SESSIONPATH$j.bz2
-	    rsync -av --remove-source-files $FILEPATH$j.bz2 $TARGETDIR$SESSIONPATH$j.bz2
+	      echo source: $FILEPATH$j target: $TARGETDIR$SESSIONPATH$j.bz2 j: $j
+	      pbzip2 -kv -p$NUMPROCS $FILEPATH$j
+	      echo rsync -av --remove-source-files $FILEPATH$j.bz2 $TARGETDIR$SESSIONPATH$j.bz2
+	      rsync -av --remove-source-files $FILEPATH$j.bz2 $TARGETDIR$SESSIONPATH$j.bz2
             
-            LOGFILE=$TARGETDIR$SESSIONPATH
-            LOGFILE+=transfer.log
-            echo "LOGFILE IS $LOGFILE"
-	    echo "Compression and transfer of $TARGETDIR$SESSIONPATH$j.bz2 successful" >> $LOGFILE;
-            chmod --reference=$FILEPATH$NEWFILE $TARGETDIR$SESSIONPATH$NEWFILE.bz2;
-            chown -v --reference=$FILEPATH$NEWFILE $TARGETDIR$SESSIONPATH$NEWFILE.bz2;
+        LOGFILE=$TARGETDIR$SESSIONPATH
+        LOGFILE+=transfer.log
+        echo "LOGFILE IS $LOGFILE"
+	      echo "Compression and transfer of $TARGETDIR$SESSIONPATH$j.bz2 successful" >> $LOGFILE;
+        chmod --reference=$FILEPATH$NEWFILE $TARGETDIR$SESSIONPATH$NEWFILE.bz2;
+        chown -v --reference=$FILEPATH$NEWFILE $TARGETDIR$SESSIONPATH$NEWFILE.bz2;
 
-	    if [ -d "${FILEPATH}references" ]; then
-	    echo "######################"
-	    echo "RSYNC REFERENCES"
-	    echo rsync -av ${FILEPATH}references ${TARGETDIR}${SESSIONPATH}
+	      if [ -d "${FILEPATH}references" ]; then
+	        echo "######################"
+	        echo "RSYNC REFERENCES"
+	        echo rsync -av ${FILEPATH}references ${TARGETDIR}${SESSIONPATH}
 
-	    rsync -av --exclude=".*" ${FILEPATH}references ${TARGETDIR}${SESSIONPATH}
-	    echo "######################"
-	    wait $!; 
-	    fi
+	        rsync -av --exclude=".*" ${FILEPATH}references ${TARGETDIR}${SESSIONPATH}
+	        echo "######################"
+	        wait $!; 
+	      fi
 	   
-	else
-	  echo skipping compression and rsync of $TARGETDIR$SESSIONPATH$j. 
-	fi
-	done
+	    else
+	      echo skipping compression and rsync of $TARGETDIR$SESSIONPATH$j. 
+	    fi
+	  done
 
 	fi
 done
