@@ -1,6 +1,8 @@
 #!/bin/bash
-MONITORDIR="/bufferdirectory/"
-TARGETDIR="/filesystem/frames/"
+#MONITORDIR="/bufferdirectory/"
+#TARGETDIR="/filesystem/frames/"
+MONITORDIR="/home/acheng/tests/test_transfermonitor/fromdir/"
+TARGETDIR="/home/acheng/tests/test_transfermonitor/todir/"
 NUMPROCS=10
 
 # Carl Negro
@@ -62,19 +64,21 @@ NUMPROCS=10
 # failed_reference_read.txt
 # reference_list.txt
 
-inotifywait -q -m -r -e MOVED_TO --format '%w %f' "${MONITORDIR}" | while read FILEPATH NEWFILE 
+# specify to notify only if MOVED_TO when rawtransfer.py change the name to
+# be that of acquisition image
+inotifywait -m -r -e MOVED_TO --format '%w %f' "${MONITORDIR}" | while read FILEPATH NEWFILE 
 do
 
 	SESSIONPATH=$(echo $FILEPATH | sed -e "s@$MONITORDIR@@g" -e "s@$NEWFILE@@g" )
 	SESSIONFOLDER=$(echo $SESSIONPATH | sed -e "s@/rawdata/@@g")
 
 	if [ ! -d "$TARGETDIR$SESSIONPATH" ]; then
-	  mkdir -p $TARGETDIR$SESSIONPATH
-	  chmod --reference=$MONITORDIR$SESSIONFOLDER $TARGETDIR$SESSIONFOLDER;
-    chown -vR --reference=$MONITORDIR$SESSIONFOLDER $TARGETDIR$SESSIONFOLDER;
-	  echo "mkdir -p $TARGETDIR$SESSIONPATH"
-	  echo 'chmod --reference=$MONITORDIR$SESSIONFOLDER $TARGETDIR$SESSIONFOLDER;'
-    echo 'chown -vR --reference=$MONITORDIR$SESSIONFOLDER $TARGETDIR$SESSIONFOLDER;'
+		mkdir -p $TARGETDIR$SESSIONPATH
+		chmod --reference=$MONITORDIR$SESSIONFOLDER $TARGETDIR$SESSIONFOLDER;
+		chown -vR --reference=$MONITORDIR$SESSIONFOLDER $TARGETDIR$SESSIONFOLDER;
+		echo "mkdir -p $TARGETDIR$SESSIONPATH"
+		echo 'chmod --reference=$MONITORDIR$SESSIONFOLDER $TARGETDIR$SESSIONFOLDER;'
+		echo 'chown -vR --reference=$MONITORDIR$SESSIONFOLDER $TARGETDIR$SESSIONFOLDER;'
 	fi
 	echo 'bufferpath is $MONITORDIR$SESSIONPATH$NEWFILE'
 	echo "MONITORDIR IS $MONITORDIR"
@@ -87,50 +91,63 @@ do
 
 	if [ ! -f ${NEWFILE}.bz2 ] && [ ! -d $NEWFILE ] && [[ "$FILEPATH" != *references* ]]; then
 
-	  echo dir1 is $FILEPATH , dir2 is $TARGETDIR$SESSIONPATH
-	  echo diff is 
+		echo dir1 is $FILEPATH , dir2 is $TARGETDIR$SESSIONPATH
 
-	  echo FILEPATH IS ${FILEPATH}
-	  DIFF=$( diff <(ls ${FILEPATH} | sed 's/$/.bz2/g') <(ls $TARGETDIR$SESSIONPATH ) | sed 's/.bz2$//g' | grep \< | awk '{print $2}' )
+		echo FILEPATH IS ${FILEPATH}
 
-	  echo check
-	  echo DIFF IS $DIFF
-	  echo LENGTH OF DIFF IS $(echo $DIFF | wc -w)
-	  for j in $DIFF;
-	  do
-	
-	    TEMPFILENAME=$TARGETDIR$SESSIONPATH$j
-	    echo TEMPFILENAME IS $TEMPFILENAME
-	    if [ ! -f "$TARGETDIR$SESSIONPATH$j.bz2" ] && ([ ${TEMPFILENAME: -4} == ".mrc" ] || [ ${TEMPFILENAME: -4} == ".xml" ] ) && [[ "${TARGETDIR}${SESSIONPATH}" != *references* ]];
+		if [[ ${NEWFILE} = *".tif" ]]; then
+			DIFF=$( diff <(ls ${FILEPATH} | sed 's/$/.tif/g') <(ls $TARGETDIR$SESSIONPATH ) | sed 's/.tif$//g' | grep \< | awk '{print $2}' )
+			CHECKEXT=''
+			# fit files are not compressed so the original need to be kept
+			RSYNCREMOVE=''
+		else
+			DIFF=$( diff <(ls ${FILEPATH} | sed 's/$/.bz2/g') <(ls $TARGETDIR$SESSIONPATH ) | sed 's/.bz2$//g' | grep \< | awk '{print $2}' )
+			CHECKEXT='.bz2'
+			RSYNCREMOVE="--remove-source-files"
+		fi
 
-	    then
+		echo check
+		echo DIFF IS $DIFF
+		echo LENGTH OF DIFF IS $(echo $DIFF | wc -w)
+		for j in $DIFF;
+		do
 
-	      echo source: $FILEPATH$j target: $TARGETDIR$SESSIONPATH$j.bz2 j: $j
-	      pbzip2 -kv -p$NUMPROCS $FILEPATH$j
-	      echo rsync -av --remove-source-files $FILEPATH$j.bz2 $TARGETDIR$SESSIONPATH$j.bz2
-	      rsync -av --remove-source-files $FILEPATH$j.bz2 $TARGETDIR$SESSIONPATH$j.bz2
-            
-        LOGFILE=$TARGETDIR$SESSIONPATH
-        LOGFILE+=transfer.log
-        echo "LOGFILE IS $LOGFILE"
-	      echo "Compression and transfer of $TARGETDIR$SESSIONPATH$j.bz2 successful" >> $LOGFILE;
-        chmod --reference=$FILEPATH$NEWFILE $TARGETDIR$SESSIONPATH$NEWFILE.bz2;
-        chown -v --reference=$FILEPATH$NEWFILE $TARGETDIR$SESSIONPATH$NEWFILE.bz2;
+			RSYNCSOURCEFILENAME=$FILEPATH$j$CHECKEXT
+			TEMPFILENAME=$TARGETDIR$SESSIONPATH$j
+			FINALFILENAME=$TARGETDIR$SESSIONPATH$j$CHECKEXT
+			echo TEMPFILENAME IS $TEMPFILENAME
+			if [ ! -f "$FINALEFILENAME" ] && ([ ${TEMPFILENAME: -4} == ".mrc" ] || [ ${TEMPFILENAME: -4} == ".xml" ] || [ ${TEMPFILENAME: -4} == ".tif" ]) && [[ "${TARGETDIR}${SESSIONPATH}" != *references* ]];
 
-	      if [ -d "${FILEPATH}references" ]; then
-	        echo "######################"
-	        echo "RSYNC REFERENCES"
-	        echo rsync -av ${FILEPATH}references ${TARGETDIR}${SESSIONPATH}
+			then
+				echo source: $FILEPATH$j target: $FINALFILENAME j: $j
+				if [ "$CHECKEXT" = ".bz2" ]; then
+					echo compress source to bz2
+					pbzip2 -kv -p$NUMPROCS $FILEPATH$j
+				fi
+				echo rsync -av $RSYNCREMOVE $RSYNCSOURCEFILENAME $FINALFILENAME
+				rsync -av $RSYNCREMOVE $RSYNCSOURCEFILENAME $FINALFILENAME
 
-	        rsync -av --exclude=".*" ${FILEPATH}references ${TARGETDIR}${SESSIONPATH}
-	        echo "######################"
-	        wait $!; 
-	      fi
-	   
-	    else
-	      echo skipping compression and rsync of $TARGETDIR$SESSIONPATH$j. 
-	    fi
-	  done
+				LOGFILE=$TARGETDIR$SESSIONPATH
+				LOGFILE+=transfer.log
+				echo "LOGFILE IS $LOGFILE"
+				echo "Compression and transfer of $FINALEFILENAME successful" >> $LOGFILE;
+				chmod --reference=$FILEPATH$NEWFILE $FINALFILENAME;
+				chown -v --reference=$FILEPATH$NEWFILE $FINALFILENAME;
+
+				if [ -d "${FILEPATH}references" ]; then
+					echo "######################"
+					echo "RSYNC REFERENCES"
+					echo rsync -av ${FILEPATH}references ${TARGETDIR}${SESSIONPATH}
+
+					rsync -av --exclude=".*" ${FILEPATH}references ${TARGETDIR}${SESSIONPATH}
+					echo "######################"
+					wait $!; 
+				fi
+		 
+			else
+				echo skipping compression and rsync of $TARGETDIR$SESSIONPATH$j. 
+			fi
+		done
 
 	fi
 done
