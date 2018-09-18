@@ -11,7 +11,7 @@
 import ccdcamera
 import sys
 import time
-import gatansocket
+import numpy
 import numpy
 import itertools
 import os
@@ -21,6 +21,9 @@ import numextension
 simulation = False
 if simulation:
 	print 'USING SIMULATION SETTINGS'
+	import simgatan
+else:
+	import gatansocket
 
 def imagefun_bin(image, binning0, binning1=0):
 	'''
@@ -40,6 +43,9 @@ def connect():
 		gatansocket.myGS = gatansocket.GatanSocket()
 	return gatansocket.myGS
 
+def simconnect():
+	return simgatan.SimGatan()
+
 configs = moduleconfig.getConfigured('dmsem.cfg')
 
 class DMSEM(ccdcamera.CCDCamera):
@@ -54,7 +60,10 @@ class DMSEM(ccdcamera.CCDCamera):
 
 	def __init__(self):
 		self.unsupported = []
-		self.camera = connect()
+		if not simulation:
+			self.camera = connect()
+		else:
+			self.camera = simconnect()
 
 		self.idcounter = itertools.cycle(range(100))
 
