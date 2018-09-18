@@ -309,7 +309,6 @@ class DMSEM(ccdcamera.CCDCamera):
 			self.debug_print('software binned %s' % (image.shape,))
 		image = self._cropImage(image)
 		return image
-		return self._cropImage(image)
 
 	def _cropImage(self, image):
 		# default no modification
@@ -319,6 +318,7 @@ class DMSEM(ccdcamera.CCDCamera):
 			endx = self.dimension['x'] + startx
 			endy = self.dimension['y'] + starty
 			image = image[starty:endy,startx:endx]
+			self.debug_print('software cropped [%d:%d,%d:%d]' % (starty,endy,startx,endx))
 			self.debug_print('software cropped %s' % (image.shape,))
 		return image
 
