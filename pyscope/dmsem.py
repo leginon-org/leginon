@@ -11,7 +11,6 @@
 import ccdcamera
 import sys
 import time
-import gatansocket
 import numpy
 import itertools
 import os
@@ -21,6 +20,9 @@ import numextension
 simulation = False
 if simulation:
 	print 'USING SIMULATION SETTINGS'
+	import simgatan
+else:
+	import gatansocket
 
 def imagefun_bin(image, binning0, binning1=0):
 	'''
@@ -40,6 +42,9 @@ def connect():
 		gatansocket.myGS = gatansocket.GatanSocket()
 	return gatansocket.myGS
 
+def simconnect():
+	return simgatan.SimGatan()
+
 configs = moduleconfig.getConfigured('dmsem.cfg')
 
 class DMSEM(ccdcamera.CCDCamera):
@@ -54,7 +59,10 @@ class DMSEM(ccdcamera.CCDCamera):
 
 	def __init__(self):
 		self.unsupported = []
-		self.camera = connect()
+		if not simulation:
+			self.camera = connect()
+		else:
+			self.camera = simconnect()
 
 		self.idcounter = itertools.cycle(range(100))
 
@@ -301,7 +309,6 @@ class DMSEM(ccdcamera.CCDCamera):
 			self.debug_print('software binned %s' % (image.shape,))
 		image = self._cropImage(image)
 		return image
-		return self._cropImage(image)
 
 	def _cropImage(self, image):
 		# default no modification
@@ -311,6 +318,7 @@ class DMSEM(ccdcamera.CCDCamera):
 			endx = self.dimension['x'] + startx
 			endy = self.dimension['y'] + starty
 			image = image[starty:endy,startx:endx]
+			self.debug_print('software cropped [%d:%d,%d:%d]' % (starty,endy,startx,endx))
 			self.debug_print('software cropped %s' % (image.shape,))
 		return image
 
@@ -724,6 +732,19 @@ class GatanK2Super(GatanK2Base):
 		hw_proc = 'none'
 	else:
 		hw_proc = 'dark+gain'
+
+	def calculateAcquireParams(self):
+		'''
+		Return K2 super resolution acquisition parameters to be sent.
+		Super resolution camera need to send camera boundary in physical size
+		but ask for an image at super resolution size.
+		'''
+		acqparams = super(GatanK2Super,self).calculateAcquireParams()
+		# K2 SerialEMCCD native is in counting
+		acq_binning, binscale = self.getAcqBinning()
+		acqparams['height'] *= binscale
+		acqparams['width'] *= binscale
+		return acqparams
 
 	def modifyDarkImage(self,image):
 		'''
