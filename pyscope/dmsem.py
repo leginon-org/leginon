@@ -12,7 +12,6 @@ import ccdcamera
 import sys
 import time
 import numpy
-import numpy
 import itertools
 import os
 from pyami import moduleconfig
@@ -733,6 +732,19 @@ class GatanK2Super(GatanK2Base):
 		hw_proc = 'none'
 	else:
 		hw_proc = 'dark+gain'
+
+	def calculateAcquireParams(self):
+		'''
+		Return K2 super resolution acquisition parameters to be sent.
+		Super resolution camera need to send camera boundary in physical size
+		but ask for an image at super resolution size.
+		'''
+		acqparams = super(GatanK2Super,self).calculateAcquireParams()
+		# K2 SerialEMCCD native is in counting
+		acq_binning, binscale = self.getAcqBinning()
+		acqparams['height'] *= binscale
+		acqparams['width'] *= binscale
+		return acqparams
 
 	def modifyDarkImage(self,image):
 		'''
