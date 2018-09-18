@@ -99,7 +99,7 @@ def numarray2RGBImage(array, x=0, y=0, width=None, height=None,
 def numarray2wxImage(*args, **kwargs):
     rgbimage = numarray2RGBImage(*args, **kwargs)
     wximage = wx.EmptyImage(*rgbimage.size)
-		wximage.SetData(numpil.pil_image_tostring(rgbimage))
+    wximage.SetData(numpil.pil_image_tostring(rgbimage))
     return wximage
 
 def numarray2wxBitmap(*args, **kwargs):
