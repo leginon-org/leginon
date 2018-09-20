@@ -22,6 +22,8 @@ RAW_FRAME_DIR = D:\frames\
 DO_EARLY_RETURN = False
 # max number of frames to sum when return early
 EARLY_RETURN_FRAME_COUNT = 0
+# save movies as lzw compressed tiff
+SAVE_LZW_TIFF_FRAMES = False
 
 # K3 only configuration
 [k3]

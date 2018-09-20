@@ -85,7 +85,7 @@ class FeiCam(ccdcamera.CCDCamera):
 			return configs[optionname][itemname]
 
 	def getDebugCamera(self):
-		return self.getFeiConfig('debug','all') or self.getFeiconfig('debug','camera')
+		return self.getFeiConfig('debug','all') or self.getFeiConfig('debug','camera')
 
 	def initSettings(self):
 		self.dimension = self.getCameraSize()
