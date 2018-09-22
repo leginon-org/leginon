@@ -2889,4 +2889,11 @@ class ZeroLossIceThicknessSettingsData(SettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class BlackStripeSettingsData(SettingsData):
+	def typemap(cls):
+		return SettingsData.typemap() + (
+			('process', bool),
+			('pause', bool),
+		)
+	typemap = classmethod(typemap)
 
