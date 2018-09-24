@@ -51,6 +51,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		self.measurement = {}
 		self.comameasurement = {}
 		self.parameter = 'defocus'
+		self.dialog_done = threading.Event()
 
 		self.calibration_clients = {
 			'beam tilt': calibrationclient.BeamTiltCalibrationClient(self),
@@ -131,6 +132,10 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		tem = self.instrument.getTEMData()
 		shift0 = self.instrument.tem.ImageShift
 		state = leginondata.ScopeEMData()
+		# TESTING
+		self.instrument.tem.BeamTilt = {'x':0.00590004, 'y':-0.0213854}
+		fakevalues = {'x':[(0.00355495,-0.0236784),(0.00590004,-0.0213854),(0.00808952,-0.0189389)],'y':[(0.00329904,-0.0192235),(0.00585431,-0.0213466),(0.00822038,-0.023757)]}
+		# TESTING
 		tilt0 = self.instrument.tem.BeamTilt
 		state['image shift'] = shift0
 		state['beam tilt'] = tilt0
@@ -150,21 +155,27 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 					self.instrument.setData(state)
 					newshift = self.instrument.tem.ImageShift
 					self.logger.info('Image Shift ( %5.2f, %5.2f)' % (newshift['x']*1e6,newshift['y']*1e6))
+					self.setPreMeasureState()
+					'''
 					text = '%5.2f %5.2f ' % (newshift['x']*1e6,newshift['y']*1e6)
 					xarray,yarray = calibration_client.repeatMeasureComaFree(tilt_value,settle,repeat)
 					xmean = xarray.mean()
 					ymean = yarray.mean()
 					text = text + "%5.2f %5.2f %5.2f %5.2f" %(xmean*1000,xarray.std()*1000,ymean*1000,yarray.std()*1000) + '\n'
 					f.write(text)
+					'''
+					xmean, ymean = self.readComaFree()
+					xmean, ymean = fakevalues[axis][i]
 					state['image shift'] = shift0
 					state['beam tilt'] = tilt0
 					self.instrument.setData(state)
-					comatilt = {'x':xmean,'y':ymean}
-					data['x'].append(xmean)
-					data['y'].append(ymean)
+					# measured value is the correction needed to remove coma.
+					data['x'].append(-xmean)
+					data['y'].append(-ymean)
 					self.checkAbort()
 				tdict[axis] = tdata
 				xydict[axis] = data
+			print xydict
 			matrix, coma0 = calibration_client.calculateImageShiftComaMatrix(tdict,xydict)
 		except:
 			raise
@@ -172,8 +183,46 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		f.close()
 		return matrix, coma0
 
+	def readComaFree(self):
+		# trigger opening dialog. Let it fail and caught by the caller
+		self.dialog_done.clear()
+		self.panel.readAbFreeState()
+		# wait for dialog to close
+		self.dialog_done.wait()
+		if not self.value_accepted:
+			self.resetState()
+			raise ValueError()
+		newbt = self.instrument.tem.BeamTilt
+		return newbt['x'], newbt['y']
+
+	def guiReadAbFreeStateDone(self,is_ok):
+		self.value_accepted = is_ok
+		self.dialog_done.set()
+
+	def getState(self):
+		state = {}
+		state['beam tilt'] = self.instrument.tem.BeamTilt
+		state['defocus'] = self.instrument.tem.Defocus
+		state['stig'] = self.instrument.tem.Stigmator['objective']
+		return state
+
+	def readState(self):
+		state = self.getState()
+		self.panel.readStateDone(state)
+		return
+
+	def resetState(self):
+		print self.state0
+		self.instrument.tem.BeamTilt = self.state0['beam tilt']
+		self.instrument.tem.Defocus = self.state0['defocus']
+		self.instrument.tem.Stigmator = {'objective':self.state0['stig']}
+
+	def setPreMeasureState(self):
+		self.state0 = self.getState().copy()
+			
 	def measureComaFree(self, tilt_value, correctshift=False):
 		tilt0 = self.instrument.tem.BeamTilt
+		self.setPreMeasureState()
 		calibration_client = self.calibration_clients['beam tilt']
 		if correctshift:
 			try:
@@ -183,8 +232,9 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 				self.panel.comaMeasurementDone(self.comameasurement)
 				return
 		try:
-			cftiltsx,cftiltsy = calibration_client.repeatMeasureComaFree(tilt_value, settle=self.settings['settling time'], repeat=1)
-			comatilt = {'x':cftiltsx.mean(),'y':cftiltsy.mean()}
+			#cftiltsx,cftiltsy = calibration_client.repeatMeasureComaFree(tilt_value, settle=self.settings['settling time'], repeat=1)
+			#comatilt = {'x':cftiltsx.mean(),'y':cftiltsy.mean()}
+			comatilt = self.readComaFree()
 			self.comameasurement = comatilt
 		except Exception, e:
 			self.logger.error('ComaFree Measurement failed: %s' % e)
