@@ -286,6 +286,7 @@ class Panel(leginon.gui.wx.Calibrator.Panel):
 			dialog = ImageShiftComaSettingsDialog(self)
 		else:
 			# Do nothing, just enable other tools
+			self.node.logger.warning('Please use Beam-Tilt Coma selection to calibrate this')
 			self._calibrationEnable(True)
 			return
 		dialog.ShowModal()
@@ -303,6 +304,7 @@ class Panel(leginon.gui.wx.Calibrator.Panel):
 		elif parameter == 'Image-Shift Coma':
 			threading.Thread(target=self.node.calibrateImageShiftComa).start()
 		else:
+			self.node.logger.warning('Please use Beam-Tilt Coma selection to calibrate this')
 			# Do nothing, just enable other tools
 			self._calibrationEnable(True)
 			return
@@ -797,13 +799,13 @@ class EditFocusCalibrationDialog(leginon.gui.wx.MatrixCalibrator.EditMatrixDialo
 if __name__ == '__main__':
 	class Node(object):
 		def __init__(self):
-	app = wx.PySimpleApp()
-	app.frame = wx.Frame(None, -1, 'Matrix Calibration Test')
-	app.frame.node = Node()
-	matrix = numpy.zeros((2, 2))
-	rotation_center = {'x': 0, 'y': 0}
-	eucentric_focus = 0
-	app.dialog = ReadAberrationFreeDialog(app.frame)
-	app.dialog.Show()
-	app.MainLoop()
+			app = wx.PySimpleApp()
+			app.frame = wx.Frame(None, -1, 'Matrix Calibration Test')
+			app.frame.node = Node()
+			matrix = numpy.zeros((2, 2))
+			rotation_center = {'x': 0, 'y': 0}
+			eucentric_focus = 0
+			app.dialog = ReadAberrationFreeDialog(app.frame)
+			app.dialog.Show()
+			app.MainLoop()
 

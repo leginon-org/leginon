@@ -1023,22 +1023,22 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			return False
 		return True
 
-	def calculateImageShiftComaMatrix(self,tdata,xydata):
+	def calculateImageShiftAberrationMatrix(self,tdata,xydata):
 		''' Fit the beam tilt vector induced by image shift 
 				to a straight line on individual axis.  
 				Strickly speaking we should use orthogonal distance regression.''' 
 		ordered_axes = ['x','y']
 		matrix = numpy.zeros((2,2))
-		coma0 = {'x':0.0,'y':0.0}
+		ab0 = {'x':0.0,'y':0.0}
 		for index1, axis1 in enumerate(ordered_axes):
 			data = xydata[axis1]
-			for axis2 in data.keys():
+			for axis2 in ordered_axes:
 				(slope,t_intercept) = scipy.polyfit(numpy.array(tdata[axis1]),numpy.array(xydata[axis1][axis2]),1)
 				index2 = ordered_axes.index(axis2)
-				matrix[index1,index2] = slope
-				coma0[axis2] += t_intercept
-			coma0[axis2] /= len(ordered_axes)
-		return matrix, coma0
+				matrix[index2,index1] = slope
+				ab0[axis2] += t_intercept
+			ab0[axis2] /= len(ordered_axes)
+		return matrix, ab0
 
 	def measureComaFree(self, tilt_value, settle, raise_error=False):
 		tem = self.instrument.getTEMData()
