@@ -52,6 +52,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		self.comameasurement = {}
 		self.parameter = 'defocus'
 		self.dialog_done = threading.Event()
+		self.ab_types = ['beam tilt','stig','defocus']
 
 		self.calibration_clients = {
 			'beam tilt': calibrationclient.BeamTiltCalibrationClient(self),
@@ -107,39 +108,50 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 			shift_step = self.settings['imageshift coma step']
 			shift_n = self.settings['imageshift coma number']
 			repeat = self.settings['imageshift coma repeat']
-			matrix,coma0 = self.measureImageShiftComaMatrix(shift_n,shift_step,repeat, tilt_value, settle=self.settings['settling time'])
+			matrices = self.measureImageShiftAberrationMatrices(shift_n,shift_step,repeat, tilt_value, settle=self.settings['settling time'])
 		except Exception, e:
 			self.logger.error('Calibration failed: %s' % e)
-			matrix = None
+			matrices = None
 		else:
 			self.logger.info('Calibration completed')
 		# store calibration
-		if matrix is not None:
+		if matrices is not None:
 			self.logger.info('Storing calibration...')
 			mag = self.instrument.tem.Magnification
 			ht = self.instrument.tem.HighTension
 			probe = self.instrument.tem.ProbeMode
-			calibration_client.storeMatrix(ht, mag, 'image-shift coma', matrix, probe=probe)
-			self.logger.info('Calibration stored')
+			for key in matrices.keys():
+				matrix = matrices[key]
+				self.logger.info('Storing image-shift %s calibration' % (key,))
+				calibration_client.storeMatrix(ht, mag, 'image-shift %s' % (key,), matrix, probe=probe)
+			self.logger.info('Calibrations stored')
 		self.panel.calibrationDone()
 
-	def measureImageShiftComaMatrix(self, shift_n, shift_step, repeat, tilt_value, settle):
-		''' Measure coma for a range of image shift and fit the results 
+	def getFakeValues(self, axis, index):
+		'''
+		get fake values for testing.
+		'''
+		newstate = {}
+		fake = {}
+		fake['beam tilt'] = {'x':[(0.00355495,-0.0236784),(0.00590004,-0.0213854),(0.00808952,-0.0189389)],'y':[(0.00329904,-0.0192235),(0.00585431,-0.0213466),(0.00822038,-0.023757)]}
+		fake['stig'] = {'x':[(-0.0047448,-0.0031997),(-0.012963,-0.0113492),(-0.0225249,-0.0163792)],'y':[(-0.0111456, -0.0247119),(-0.0131071,-0.0115893),(-0.0147681, 0.00236871)]}
+		fake['defocus'] = {'x':[-3.14407e-6*2.429,-2.358393e-6*2.429,-1.64571e-6*2.429],'y':[-2.00239e-6*2.429,-2.33574e-6*2.429,-2.90392e-6*2.429]}
+		for ab_type in fake.keys():
+			if type(fake[ab_type][axis][index]) == type(()):
+				newstate[ab_type] = {'x':fake[ab_type][axis][index][0],'y':fake[ab_type][axis][index][1]}
+			else:
+				newstate[ab_type] = fake[ab_type][axis][index]
+		return newstate
+
+	def measureImageShiftAberrationMatrices(self, shift_n, shift_step, repeat, tilt_value, settle):
+		''' Measure various aberration for a range of image shift and fit the results 
 				to a straight line on individual axis.  Strickly speaking should
 				use orthogonal distance regression.''' 
 		calibration_client = self.calibration_clients['beam tilt']
-		f = open(self.session['name']+'tilt.dat','w')
 		tem = self.instrument.getTEMData()
 		shift0 = self.instrument.tem.ImageShift
 		state = leginondata.ScopeEMData()
-		# TESTING
-		self.instrument.tem.BeamTilt = {'x':0.00590004, 'y':-0.0213854}
-		fakevalues = {'x':[(0.00355495,-0.0236784),(0.00590004,-0.0213854),(0.00808952,-0.0189389)],'y':[(0.00329904,-0.0192235),(0.00585431,-0.0213466),(0.00822038,-0.023757)]}
-		# TESTING
-		tilt0 = self.instrument.tem.BeamTilt
 		state['image shift'] = shift0
-		state['beam tilt'] = tilt0
-		coma0 = tilt0
 		tdict = {}
 		xydict = {}
 		ordered_axes = ['x','y']
@@ -147,43 +159,84 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		try:
 			for axis in ordered_axes:
 				tdata = []
-				data = {'x':[],'y':[]}
+				data = {}
+				for ab_type in self.ab_types:
+					data[ab_type] = {'x':[],'y':[]}
 				for i in range(0,2*shift_n+1):
 					shift = (i - shift_n) * shift_step
 					tdata.append(shift)
+					# set to shift0 so that the other axis is reset.
+					state['image shift'] = shift0
 					state['image shift'][axis] = shift0[axis] + shift
+					# all values are at original except image shift
 					self.instrument.setData(state)
 					newshift = self.instrument.tem.ImageShift
 					self.logger.info('Image Shift ( %5.2f, %5.2f)' % (newshift['x']*1e6,newshift['y']*1e6))
+					# memorize the aberration state0
 					self.setPreMeasureState()
+					# For TESTING ---START HERE
 					'''
-					text = '%5.2f %5.2f ' % (newshift['x']*1e6,newshift['y']*1e6)
-					xarray,yarray = calibration_client.repeatMeasureComaFree(tilt_value,settle,repeat)
-					xmean = xarray.mean()
-					ymean = yarray.mean()
-					text = text + "%5.2f %5.2f %5.2f %5.2f" %(xmean*1000,xarray.std()*1000,ymean*1000,yarray.std()*1000) + '\n'
-					f.write(text)
+					newstate = self.getFakeValues(axis, i)
+					self.instrument.tem.BeamTilt = newstate['beam tilt']
+					self.instrument.tem.Defocus = newstate['defocus']
+					self.instrument.tem.Stigmator = {'objective':newstate['stig']}
 					'''
-					xmean, ymean = self.readComaFree()
-					xmean, ymean = fakevalues[axis][i]
-					state['image shift'] = shift0
-					state['beam tilt'] = tilt0
-					self.instrument.setData(state)
+					# For TESTING ---END HERE
+					newstate = self.readAbFree()
+					while abs(newstate['beam tilt']['x']-self.state0['beam tilt']['x']) < 1e-4 or abs(newstate['beam tilt']['y']-self.state0['beam tilt']['y']) < 1e-4:
+						self.logger.error('Beam tilt has not changed. Will cause calibration failure.')
+						self.logger.info('Please repeat the measurement or Cancel in the dialog....')
+						newstate = self.readAbFree()
+					# reset to original state for the original shift to be consistent.
+					self.resetState()
+					self.instrument.tem.ImageShift = shift0
 					# measured value is the correction needed to remove coma.
-					data['x'].append(-xmean)
-					data['y'].append(-ymean)
+					for ab_type in newstate.keys():
+						value = newstate[ab_type]
+						if ab_type == 'defocus':
+							data[ab_type]['x'].append(value)
+							data[ab_type]['y'].append(value)
+						else:
+							data[ab_type]['x'].append(-value['x'])
+							data[ab_type]['y'].append(-value['y'])
 					self.checkAbort()
 				tdict[axis] = tdata
 				xydict[axis] = data
-			print xydict
-			matrix, coma0 = calibration_client.calculateImageShiftComaMatrix(tdict,xydict)
-		except:
-			raise
-			matrix = None
-		f.close()
-		return matrix, coma0
+			matrices, ab0s = self.calculateImageShiftAberrationMatrix(tdict,xydict)
+		except ValueError, e:
+			self.logger.warning('Aborting calibration....')
+			self.resetState()
+			self.instrument.tem.ImageShift = shift0
+			matrices = None
+		return matrices
+
+	def calculateImageShiftAberrationMatrix(self, tdict, xydict):
+		'''
+		Calculate the aberration matrix.  Requires input of
+		tdict = {'x': [shiftx1,....],'y':[shifty1,....]}
+		xydict ={'x':{aberration_type: [aberration_value_dictx1,....],
+		         'y':{aberration_type: [aberration_value_dictx1,....],
+						}
+		aberration_value_dicts are in the form of {'x':valuex, 'y':valuey}
+		'''
+		matrices = {}
+		ab0s = {}
+		for ab_type in self.ab_types:
+			this_xydict = {'x':xydict['x'][ab_type],'y':xydict['y'][ab_type]}
+			matrix, ab0 = self.btcalclient.calculateImageShiftAberrationMatrix(tdict,this_xydict)
+			if ab_type == 'beam tilt':
+				matrices['coma'] = matrix
+				ab0s['coma'] = ab0
+			else:
+				matrices[ab_type] = matrix
+				ab0s[ab_type] = ab0
+		return matrices, ab0s
 
 	def readComaFree(self):
+		newstate = self.readAbFree()
+		return newstate['beam tilt']['x'], newstate['beam tilt']['y']
+
+	def readAbFree(self):
 		# trigger opening dialog. Let it fail and caught by the caller
 		self.dialog_done.clear()
 		self.panel.readAbFreeState()
@@ -191,9 +244,9 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		self.dialog_done.wait()
 		if not self.value_accepted:
 			self.resetState()
-			raise ValueError()
-		newbt = self.instrument.tem.BeamTilt
-		return newbt['x'], newbt['y']
+			raise ValueError('Abort calibration')
+		newstate = self.getState()
+		return newstate
 
 	def guiReadAbFreeStateDone(self,is_ok):
 		self.value_accepted = is_ok
@@ -212,10 +265,11 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		return
 
 	def resetState(self):
-		print self.state0
 		self.instrument.tem.BeamTilt = self.state0['beam tilt']
 		self.instrument.tem.Defocus = self.state0['defocus']
 		self.instrument.tem.Stigmator = {'objective':self.state0['stig']}
+		self.logger.info('Reset to uncorrected state at current image shift')
+		self.readState()
 
 	def setPreMeasureState(self):
 		self.state0 = self.getState().copy()
