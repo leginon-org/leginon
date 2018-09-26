@@ -137,8 +137,9 @@ class viewer {
 			$selector = '<select name="scopeId" onchange="newexp()">'.$this->crlf;
 			foreach ((array)$scopes as $scope) {
 				if ($scope[id]==$this->scopeId) $s='selected'; else $s='';
+				$scope_alias = ($scope[description]) ? $scope[description]: $scope[hostname].'-'.$scope[name];
 				$selector .= '<option value='.$scope[id].' '.$s.' >'
-						.$scope[hostname].'-'.$scope[name].'</option>'.$this->crlf; 
+						.$scope_alias.'</option>'.$this->crlf;
 			}
 			$selector .= '</select>';
 			$selector .= '<input type="hidden" name="scopeIdmemo" value="'.$this->scopeId.'">';

@@ -440,7 +440,7 @@ class leginondata {
 	}
 
 	function getScopes($hostname=false, $real_only=false) {
-		$q="select `DEF_id` as id, name, hostname from `InstrumentData` "
+		$q="select `DEF_id` as id, name, hostname, description from `InstrumentData` "
 			." where (cs is not null)";
 		if (!empty($hostname)) $q .= " and hostname='$hostname'";
 		if (!empty($real_only)) $q .= " and not name like 'Sim%' and not name like 'Appion%' and hidden != 1";
@@ -450,7 +450,7 @@ class leginondata {
 	function getScopesForSelection() {
 		$scopes = $this->getScopes(false,true);
 		if ( !is_array($scopes)) return false;
-		$allscopes = array('id'=>false,'name'=>'all microscopes');
+		$allscopes = array('id'=>false,'name'=>'all microscopes', 'description'=>false);
 		array_unshift( $scopes, $allscopes);
 		return $scopes;
 	}
