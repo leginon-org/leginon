@@ -286,7 +286,8 @@ class leginondata {
 		$q="select "
 		."i.`DEF_id` as `InstrumentId`, "
 		."i.`name`, "
-		."i.`hostname` "
+		."i.`hostname`, "
+		."i.`description` "
 		."from `SessionData` s "
 		."left join AcquisitionImageData a on (a.`REF|SessionData|session`=s.`DEF_id`) "
 		."left join ScopeEMData sc on (sc.`DEF_id`=a.`REF|ScopeEMData|scope`) "
@@ -302,7 +303,7 @@ class leginondata {
 		foreach ($scopeinfo as $info) {
 			$names[] = $info['name'];
 			$ids[] = $info['InstrumentId'];
-			$hosts[] = $info['hostname'];
+			$hosts[] = ($info['description']) ? $info['description']:$info['hostname'];
 		}
 		$name_str = implode(', ',$names);
 		$scopeid_str = implode(', ',$ids);
