@@ -444,39 +444,53 @@ class ImageShiftComaScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sb = wx.StaticBox(self, -1, 'Image-Shift Coma Calibration')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
+
+		self.sz = wx.GridBagSizer(5, 5)
+		position = (0,0)
+		#position = self.addImageshiftComaTiltSizer(position)
+		position = self.addImageshiftComaNumberSizer(position)
+		position = self.addImageshiftComaStepSizer(position)
+		#position = self.addImageshiftComaRepeatSizer(position)
+		sbsz.Add(self.sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
+		return [sbsz]
+
+	def addImageshiftComaTiltSizer(self, p=(0,0)):
 		self.widgets['imageshift coma tilt'] = FloatEntry(self, -1, chars=9)
-		self.widgets['imageshift coma step'] = FloatEntry(self, -1, chars=9)
-		self.widgets['imageshift coma number'] = IntEntry(self, -1, min=1, chars=2)
-		self.widgets['imageshift coma repeat'] = IntEntry(self, -1, min=1, chars=2)
-
-		sz = wx.GridBagSizer(5, 5)
-
 		label = wx.StaticText(self, -1, 'Coma measurement beam tilt (+/-)')
-		sz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['imageshift coma tilt'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		self.sz.Add(label, p, (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.sz.Add(self.widgets['imageshift coma tilt'], (p[0],p[1]+1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		label = wx.StaticText(self, -1, 'radians')
+		self.sz.Add(label, (p[0],p[1]+2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		return (p[0]+1,p[1])
 
+	def addImageshiftComaNumberSizer(self, p=(0,0)):
+		self.widgets['imageshift coma number'] = IntEntry(self, -1, min=1, chars=2)
 		label = wx.StaticText(self, -1, 'Measure coma at')
-		sz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['imageshift coma number'], (1, 1), (1, 1),
+		self.sz.Add(label, p, (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.sz.Add(self.widgets['imageshift coma number'], (p[0],p[1]+1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		label = wx.StaticText(self, -1, 'positions per image shift direction')
-		sz.Add(label, (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.sz.Add(label, (p[0],p[1]+2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		return (p[0]+1,p[1])
 
+	def addImageshiftComaStepSizer(self, p=(0,0)):
+		self.widgets['imageshift coma step'] = FloatEntry(self, -1, chars=9)
 		label = wx.StaticText(self, -1, 'Add additional')
-		sz.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['imageshift coma step'], (2, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		self.sz.Add(label, p, (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.sz.Add(self.widgets['imageshift coma step'], (p[0], p[1]+1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		label = wx.StaticText(self, -1, 'm image shift at each position')
-		sz.Add(label, (2, 2), (1, 1), wx.ALIGN_LEFT)
+		self.sz.Add(label, (p[0], p[1]+2), (1, 1), wx.ALIGN_LEFT)
+		return (p[0]+1,p[1])
 
+	def addImageshiftComaRepeatSizer(self, p=(0,0)):
+		self.widgets['imageshift coma repeat'] = IntEntry(self, -1, min=1, chars=2)
 		label = wx.StaticText(self, -1, 'Repeat coma measurement')
-		sz.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['imageshift coma repeat'], (3, 1), (1, 1),
+		self.sz.Add(label, p, (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.sz.Add(self.widgets['imageshift coma repeat'], (p[0], p[1]+1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		label = wx.StaticText(self, -1, 'times')
-		sz.Add(label, (3, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-
-		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
-		return [sbsz]
+		self.sz.Add(label, (p[0], p[1]+2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		return (p[0]+1,p[1])
 
 class ReadAberrationFreeDialog(wx.Dialog):
 	def __init__(self, parent):

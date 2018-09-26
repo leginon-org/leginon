@@ -37,9 +37,9 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		'settling time': 0.5,
 		'comafree beam tilt': 0.005,
 		'comafree misalign': 0.002,
-		'imageshift coma tilt': 0.005,
-		'imageshift coma step': -1e-6,
-		'imageshift coma number': 1,
+		'imageshift coma tilt': 0.01,
+		'imageshift coma step': -5e-6,
+		'imageshift coma number': 2,
 		'imageshift coma repeat': 1,
 	})
 
