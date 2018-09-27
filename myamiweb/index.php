@@ -21,6 +21,7 @@ $link->addlink('rctviewer.php','RCT','', 'rct');
 $link->addlink('2wayviewer.php','2 Way Viewer','', 'viewer');
 $link->addlink('tomo/','Tomography','', 'tomo_icon_3');
 $link->addlink('dualview.php','Dual Viewer','', 'dual_view');
+$link->addlink('fileviewer.php','File Listing','', 'file');
 $link->addlink('template.php', 'Hole Template viewer','', 'template');
 
 if (privilege('groups') > 3 ) 

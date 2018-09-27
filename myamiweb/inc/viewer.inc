@@ -137,8 +137,9 @@ class viewer {
 			$selector = '<select name="scopeId" onchange="newexp()">'.$this->crlf;
 			foreach ((array)$scopes as $scope) {
 				if ($scope[id]==$this->scopeId) $s='selected'; else $s='';
+				$scope_alias = ($scope[description]) ? $scope[description]: $scope[hostname].'-'.$scope[name];
 				$selector .= '<option value='.$scope[id].' '.$s.' >'
-						.$scope[hostname].'-'.$scope[name].'</option>'.$this->crlf; 
+						.$scope_alias.'</option>'.$this->crlf;
 			}
 			$selector .= '</select>';
 			$selector .= '<input type="hidden" name="scopeIdmemo" value="'.$this->scopeId.'">';
@@ -624,6 +625,8 @@ class view {
 		$this->displayhideallbt = true;
 		$this->displaynextbt = true;
 		$this->displayexemplarbt = true;
+		$this->displaygradient = true;
+		$this->displayimage = true;
 		$this->framecolor = ' class="bgcolor1" ';
 		$this->menucolor = ' class="bgimg1" ';
 		$this->presetscript = 'getpreset.php';
@@ -803,7 +806,8 @@ class view {
 	}
 
 	function displayPresets($state) {
-		$this->displaypreset= $state;
+		$this->displaypresetselection= $state;
+		$this->displaypresetinfo= $state;
 	}
 
 	function displayHideBt($state) {
@@ -1338,7 +1342,7 @@ class view {
 			<table class="bgcolor0" border="0" cellspacing="0" cellpadding="0">
 		';
 		// --- begin option table
-		if (is_array($datatypes) || $this->displayadjustlink || $this->displaypreset ) {
+		if (is_array($datatypes) || $this->displayadjustlink || $this->displaypresetselection ) {
 		$htmlframe .='
 			 <tr>
 				<td width="'.$this->size.'">
@@ -1368,15 +1372,8 @@ class view {
 				$htmlframe .= "<td>$export_icon</td>";
 			}
 		}
-		$htmlframe .= '
-						<td valign="center">
-				';
-		$param = "left=0,top=".($this->viewnb*180).",height=400,width=330";
-		$url = "adjust.php?name=$name&displayname=$this->title";
-		$htmlframe .= "<div id='".$this->name."imgstat'>";
-		$htmlframe .='
-			<a href="javascript:popUpAdjust(\''.$url.'\',\''.$name.'\',\''.$param.'\');">
-		';
+
+		// Scale and gradient display and setting
 		$settings_icon = '<img alt="setting" class="setting" src="img/settings.png" >';
 //		$quality = (is_numeric($this->quality)) ? "jpg".$this->quality : $this->quality;
 //		$filter = ($this->filter=='default') ? "no filter": "filter:".$this->filter;
@@ -1385,9 +1382,20 @@ class view {
 		$gradoptions = "h=12&w=100&dm=1".$minpix.$maxpix;
 		$gradient = "img/dfe/grad.php?".$gradoptions;
 		$imgstatus = "<img alt='gradient' name='".$this->name."imgstatgrad' border='0' src='".$gradient."'> ".$settings_icon;
-		$htmlframe .= $imgstatus;
-		$htmlframe .='
+		if ($this->displaygradient) {
+			$htmlframe .= '
+						<td valign="center">
+				';
+			$param = "left=0,top=".($this->viewnb*180).",height=400,width=330";
+			$url = "adjust.php?name=$name&displayname=$this->title";
+			$htmlframe .= "<div id='".$this->name."imgstat'>";
+			$htmlframe .='
+			<a href="javascript:popUpAdjust(\''.$url.'\',\''.$name.'\',\''.$param.'\');">
+		';
+			$htmlframe .= $imgstatus;
+			$htmlframe .='
 			</a></div></td>';
+		}
 
 		// Various image status buttons
 		$thispreset = $_POST[$this->name.'pre'];
@@ -1437,7 +1445,7 @@ class view {
 		$htmlframe .= '
 				</td>
 			 </tr>';
-		if ($this->displaypreset) {
+		if ($this->displaypresetinfo) {
 			$htmlframe .= '
 				 <tr>
 					<td>
@@ -1463,19 +1471,21 @@ class view {
 			.'</tr>';
 		}
 	} // --- end option row
-
-	$htmlframe .= '<tr>
-			<td  width="'.$this->size.'">';
-	$htmlframe .= '
-<div><div id="loadingdiv'.$this->name.'" style="position:absolute; z-index:69; visibility: hidden"><h4> Loading <img alt="progress" src="img/progress_1.gif"></h4></div></div>
-		';
+	if ($this->displayimage) {
+		$htmlframe .= '<tr>
+				<td  width="'.$this->size.'">';
+		$htmlframe .= '
+	<div><div id="loadingdiv'.$this->name.'" style="position:absolute; z-index:69; visibility: hidden"><h4> Loading <img alt="progress" src="img/progress_1.gif"></h4></div></div>
+			';
 		$htmlframe .= '
 			<a href="javascript:void(0)" id="'.$this->name.'href">'.
 			'<img alt="empty" name="'.$this->name.'img" src="img/empty.gif" border="0" hspace="0" vspace="0" width="'.$this->size.'" ></a>'; 
 
 		$htmlframe .= '
 				</td>
-			 </tr>
+			 </tr>';
+		}
+		$htmlframe .= '
 			</table>';
 		}
 		$htmlframe .= '

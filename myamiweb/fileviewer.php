@@ -86,7 +86,7 @@ $viewer->setImageId($imageId);
 $viewer->addSessionSelector($sessions);
 $viewer->setScopeId($scopeId);
 $viewer->addScopeSelector($scopes);
-$viewer->addFileSelector($filenames);
+//$viewer->addFileSelector($filenames);
 $viewer->setNbViewPerRow('1');
 $viewer->addjs($jsdata);
 $pl_refresh_time=".5";
@@ -95,19 +95,43 @@ $playbackcontrol=$viewer->getPlaybackControl();
 $javascript = $viewer->getJavascript();
 
 
-$view1 = new view('Main View', 'v1');
+$view1 = new view('Data Selection', 'v1');
 $view1->setControl();
 $view1->setDataTypes($datatypes);
 $view1->setSize(100);
+		$view1->displayscaleicon = false;
+		$view1->displayscaleicon = false;
+		$view1->displaytargeticon = false;
+		$view1->displaytagicon = false;
+		$view1->displaynptclicon = false;
+		$view1->displayffticon = false;
+		$view1->displayaceicon = false;
+		$view1->displayinfoicon = false;
+		$view1->displayparticleicon = false;
+		$view1->displaydownloadicon = false;
+		$view1->displaydeqicon = false;
+		$view1->displayddicon = false;
+		$view1->displaycloseicon = false;
+		$view1->displayadjustlink = false;
+		$view1->displayexportlink = false;
+		$view1->displayhidebt = false;
+		$view1->displayhideallbt = false;
+		$view1->displaynextbt = false;
+		$view1->displayexemplarbt = false;
+		$view1->displaygradient = false;
+		$view1->displayimage = false;
+		$view1->displaypresetinfo = false;
+		$view1->framecolor = ' class="bgcolor1" ';
+		$view1->menucolor = ' class="bgimg1" ';
+
 $viewer->add($view1);
 
 
 $javascript .= $viewer->getJavascriptInit();
-login_header('image viewer', $javascript, 'initviewer()');
+login_header('file listing', $javascript, 'initviewer()');
 viewer_menu($sessionId);
 $viewer->display();
 
-echo "<p>files</p>";
 foreach ($filenames as $f) {
 	echo "<p>".$f['name']."</p>";
 }
