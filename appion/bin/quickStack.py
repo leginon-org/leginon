@@ -196,7 +196,6 @@ class QuickStack(appionScript.AppionScript):
 				amp_contrast = ctfdata['amplitude_contrast']
 				extra_phase_shift = ctfdata['extra_phase_shift'] * 180.0/math.pi
 				spherical_aberration = ctfdata['cs']
-
 			for i in range(numpart):
 				partcount = i+1
 				#basics
@@ -206,7 +205,7 @@ class QuickStack(appionScript.AppionScript):
 				valueString += ("%d %d %.3f "%(defU, defV, defAngle))
 
 				#microscope
-				valueString += ("%d %.3f %.3f"%(voltage, spherical_aberration, amp_contrast))
+				valueString += ("%d %.3f %.3f "%(voltage, spherical_aberration, amp_contrast))
 
 				#phase-shift in degrees
 				valueString += ("%.2f %.1f %.6f"%(extra_phase_shift, 10000.0, self.apix))
