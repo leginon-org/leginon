@@ -92,7 +92,7 @@ class Panel(leginon.gui.wx.Calibrator.Panel):
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SET_BEAMTILT, 'beamtiltset', shortHelpString='Rotation Center To Scope')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ALIGN, 'rotcenter', shortHelpString='Align Rotation Center')
 		self.toolbar.AddSeparator()
-		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_MEASURE_COMAFREE, 'ruler', shortHelpString='Measure Coma-free beam tilt')
+		#self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_MEASURE_COMAFREE, 'ruler', shortHelpString='Measure Coma-free beam tilt')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_EDIT, 'edit', shortHelpString='Edit current calibration')
 
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
@@ -100,7 +100,7 @@ class Panel(leginon.gui.wx.Calibrator.Panel):
 		self.Bind(leginon.gui.wx.Events.EVT_GET_INSTRUMENT_DONE, self.onGetInstrumentDone)
 		self.Bind(leginon.gui.wx.Events.EVT_SET_INSTRUMENT_DONE, self.onSetInstrumentDone)
 		self.Bind(leginon.gui.wx.Events.EVT_MEASUREMENT_DONE, self.onMeasurementDone)
-		self.Bind(leginon.gui.wx.Events.EVT_COMA_MEASUREMENT_DONE, self.onComaMeasurementDone)
+		#self.Bind(leginon.gui.wx.Events.EVT_COMA_MEASUREMENT_DONE, self.onComaMeasurementDone)
 		self.Bind(leginon.gui.wx.Events.EVT_READ_AB_FREE_STATE, self.onReadAbFreeState)
 		self.Bind(leginon.gui.wx.Events.EVT_READ_STATE_DONE, self.onReadStateDone)
 
@@ -119,7 +119,7 @@ class Panel(leginon.gui.wx.Calibrator.Panel):
 		self.cparameter.Bind(wx.EVT_CHOICE, self.onParameterChoice, self.cparameter)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onParameterSettingsTool, id=leginon.gui.wx.ToolBar.ID_PARAMETER_SETTINGS)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onMeasureTool, id=leginon.gui.wx.ToolBar.ID_MEASURE)
-		self.toolbar.Bind(wx.EVT_TOOL, self.onMeasureComafreeTool, id=leginon.gui.wx.ToolBar.ID_MEASURE_COMAFREE)
+		#self.toolbar.Bind(wx.EVT_TOOL, self.onMeasureComafreeTool, id=leginon.gui.wx.ToolBar.ID_MEASURE_COMAFREE)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onEucentricFocusFromScope, id=leginon.gui.wx.ToolBar.ID_GET_INSTRUMENT)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onEucentricFocusToScope, id=leginon.gui.wx.ToolBar.ID_SET_INSTRUMENT)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onRotationCenterFromScope, id=leginon.gui.wx.ToolBar.ID_GET_BEAMTILT)

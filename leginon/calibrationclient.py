@@ -1100,27 +1100,16 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			self.node.logger.debug("std %5.2f,  %5.2f" %(xarray.std()*1000,yarray.std()*1000))
 			return xarray,yarray
 
-	def transformImageShiftToBeamTilt(self, imageshift, tem, cam, ht, zerobeamtilt, mag):
-		newbeamtilt = {}
+	def transformImageShiftToBeamTilt(self, imageshift, tem, cam, ht, zero, mag):
 		par = 'image-shift coma'
-		try:
-			# not to query specific mag for now
-			probe = self.instrument.tem.ProbeMode
-			matrix = self.retrieveMatrix(tem, cam, 'image-shift coma', ht, None, probe)
-		except NoMatrixCalibrationError:
-			raise RuntimeError('missing %s calibration matrix' % par)
-		self.node.logger.debug("Image Shift ( %5.2f, %5.2f)" % (imageshift['x']*1e6,imageshift['y']*1e6))
-		shiftvect = numpy.array((imageshift['x'], imageshift['y']))
-		change = numpy.dot(matrix, shiftvect)
-		newbeamtilt['x'] = zerobeamtilt['x'] - change[0]
-		newbeamtilt['y'] = zerobeamtilt['y'] - change[1]
-		self.node.logger.debug("Beam Tilt Correction ( %5.2f, %5.2f)" % (change[0]*1e3,change[1]*1e3))
-		self.node.logger.debug("Beam Tilt ( %5.2f, %5.2f)" % (newbeamtilt['x']*1e3,newbeamtilt['y']*1e3))
-		return newbeamtilt
+		new = self._transformImageShiftToNewPar(imageshift, tem, cam, ht, zero, mag, par)
+		self.node.logger.debug("Beam Tilt ( %5.2f, %5.2f) mrad" % (new['x']*1e3,new['y']*1e3))
+		return new
 
 	def transformImageShiftToObjStig(self, imageshift, tem, cam, ht, zero, mag):
 		par = 'image-shift stig'
 		new = self._transformImageShiftToNewPar(imageshift, tem, cam, ht, zero, mag, par)
+		self.node.logger.debug("Obj Stig ( %5.2f, %5.2f) * 1e-3" % (new['x']*1e3,new['y']*1e3))
 		return new
 
 	def transformImageShiftToDefocus(self, imageshift, tem, cam, ht, defoc0, mag):
@@ -1129,6 +1118,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		try:
 			new = self._transformImageShiftToNewPar(imageshift, tem, cam, ht, zero, mag, par)
 			defoc1 = new['x']
+			self.node.logger.debug("Defocus %5.2f um" % (defoc1*1e6,))
 			return defoc1
 		except:
 			self.node.logger.warning('image-shift defocus not calibrated, ignore such correction.')
@@ -1147,8 +1137,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		change = numpy.dot(matrix, shiftvect)
 		new['x'] = zero['x'] - change[0]
 		new['y'] = zero['y'] - change[1]
-		self.node.logger.debug("%s Correction ( %5.2f, %5.2f)" % (par, change[0]*1e3,change[1]*1e3))
-		self.node.logger.debug("Obj Stig ( %5.2f, %5.2f)" % (new['x']*1e3,new['y']*1e3))
+		self.node.logger.debug("Change ( %5.2f, %5.2f) * 1e-3" % (new['x']*1e3,new['y']*1e3))
 		return new
 
 	def correctImageShiftComa(self):

@@ -129,13 +129,13 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 
 	def getFakeValues(self, axis, index):
 		'''
-		get fake values for testing.
+		get fake values for testing. Set shift to -10e-6 and number of steps to 1.
 		'''
 		newstate = {}
 		fake = {}
 		fake['beam tilt'] = {'x':[(0.00355495,-0.0236784),(0.00590004,-0.0213854),(0.00808952,-0.0189389)],'y':[(0.00329904,-0.0192235),(0.00585431,-0.0213466),(0.00822038,-0.023757)]}
 		fake['stig'] = {'x':[(-0.0047448,-0.0031997),(-0.012963,-0.0113492),(-0.0225249,-0.0163792)],'y':[(-0.0111456, -0.0247119),(-0.0131071,-0.0115893),(-0.0147681, 0.00236871)]}
-		fake['defocus'] = {'x':[-3.14407e-6*2.429,-2.358393e-6*2.429,-1.64571e-6*2.429],'y':[-2.00239e-6*2.429,-2.33574e-6*2.429,-2.90392e-6*2.429]}
+		fake['defocus'] = {'x':[3.14407e-6*2.429,2.358393e-6*2.429,1.64571e-6*2.429],'y':[2.00239e-6*2.429,2.33574e-6*2.429,2.90392e-6*2.429]}
 		for ab_type in fake.keys():
 			if type(fake[ab_type][axis][index]) == type(()):
 				newstate[ab_type] = {'x':fake[ab_type][axis][index][0],'y':fake[ab_type][axis][index][1]}
@@ -195,8 +195,8 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 					for ab_type in newstate.keys():
 						value = newstate[ab_type]
 						if ab_type == 'defocus':
-							data[ab_type]['x'].append(value)
-							data[ab_type]['y'].append(value)
+							data[ab_type]['x'].append(-value)
+							data[ab_type]['y'].append(-value)
 						else:
 							data[ab_type]['x'].append(-value['x'])
 							data[ab_type]['y'].append(-value['y'])
