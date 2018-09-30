@@ -771,7 +771,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 					defoc = beamtiltclient.transformImageShiftToDefocus(imageshift, tem, cam, ht, self.defoc0, mag)
 					self.instrument.tem.Defocus = defoc
 					defoc1 = self.instrument.tem.getDefocus()
-					self.logger.info("correcting defocus for image acquired is (%.4f) (um)" % ((defoc1-self.defoc0)*1e6))
+					self.logger.info("correcting defocus for image acquired by (%.4f) (um)" % ((defoc1-self.defoc0)*1e6))
 				except Exception, e:
 					self.resetComaCorrection()
 					raise NoMoveCalibration(e)
