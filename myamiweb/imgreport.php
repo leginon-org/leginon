@@ -402,7 +402,8 @@ echo divtitle("Calibrations");
 <?php
 foreach ($types as $type) {
 	$t = $type['type'];
-	$m = $leginondata->getImageMatrixCalibration($imgId, $t);
+	$is_magd = $leginondata->getIsMagDependentMatrix($t);
+	$m = $leginondata->getImageMatrixCalibration($imgId, $t, $is_magd);
 	if (!$m) continue;
 	$matrix = displayMatrix(matrix(
 			$leginondata->formatMatrixValue($m[a11]),

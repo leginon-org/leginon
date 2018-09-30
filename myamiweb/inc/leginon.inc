@@ -1311,6 +1311,10 @@ class leginondata {
 		return $types;
 	}
 
+	function getIsMagDependentMatrix($mtype) {
+		return (substr($mtype,0,11) === "image-shift") ? false:true;
+	}
+
 	function getImageFFT($imgId) {
 		$q = "select "
 			."fft.`DEF_id` as fftimageId, "
