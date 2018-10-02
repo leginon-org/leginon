@@ -293,7 +293,6 @@ class ImageRejector2(appionScript.AppionScript):
 		before_std = qr_bins[icer-3:icer-1].std()
 		at = qr_bins[icer]
 		after = qr_bins[icer+2]
-		after_std = qr_bins[icer+2:icer+4].std()
 		after1_std = qr_bins[icer+2:icer+4].std()
 		if rbin > icer+4:
 			# shift out more since the ring may be too strong.
