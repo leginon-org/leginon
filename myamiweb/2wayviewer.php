@@ -9,6 +9,15 @@ if (defined('PROCESSING')) {
 // --- get Predefined Variables form GET or POST method --- //
 list($projectId, $sessionId, $imageId, $preset, $runId, $scopeId) = getPredefinedVars();
 
+if (is_null($sessionId)){
+	$_SESSION['unlimited_images'] = false;
+	$limit = 100;
+}
+elseif ($sessionId=='-1' || !empty($_SESSION['unlimited_images'])){
+	$limit = 0;
+	$_SESSION['unlimited_images'] = true;
+}
+else  $limit = 100;
 // --- set 2nd view's preset
 $presetv1 = ($_POST) ? $_POST['v1pre'] : $_GET['v1pre'];
 
@@ -70,7 +79,7 @@ if($projectdb) {
 }
 $viewer->setSessionId($sessionId);
 $viewer->setImageId($imageId);
-$viewer->addSessionSelector($sessions);
+$viewer->addSessionSelector($sessions, $limit);
 $viewer->setScopeId($scopeId);
 $viewer->addScopeSelector($scopes);
 $viewer->addFileSelector($filenames);
