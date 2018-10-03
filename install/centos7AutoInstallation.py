@@ -270,7 +270,7 @@ class CentosInstallation(object):
 		#myamiweb yum packages
 		packagelist = ['php-pecl-ssh2','mod_ssl', 'fftw3-devel','git','python-imaging','python-devel','mod_python','scipy','httpd', 'libssh2-devel', 'php', 'php-mysql', 'phpMyAdmin.noarch', 'php-devel', 'php-gd', ]
 		self.yumInstall(packagelist)
-		self.runCommand("easy_install fs PyFFTW3")
+		self.runCommand("easy_install fs==0.5 PyFFTW3")
 
 		# Redux Server is on Web server for now.
 		self.installReduxServer()
