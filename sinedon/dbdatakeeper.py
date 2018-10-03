@@ -6,13 +6,15 @@
 #       see  http://leginon.org
 #
 
-import data
-import sqldict
+import sys
+from sinedon import data
+import pymysql
+pymysql.install_as_MySQLdb()
+from sinedon import sqldict
 import threading
 import logging
-import _mysql_exceptions
 import MySQLdb.constants.CR
-import dbconfig
+from sinedon import dbconfig
 
 columns_created = {}
 
@@ -33,7 +35,7 @@ class DBDataKeeper(object):
 		self.logger = logger
 		try:
 			self.dbd = sqldict.SQLDict(**kwargs)
-		except _mysql_exceptions.OperationalError, e:
+		except MySQLdb.OperationalError as e:
 			raise DatabaseError(e.args[-1])
 		#self.mysqldb = self.dbd.db
 		self.lock = threading.RLock()
@@ -69,7 +71,7 @@ class DBDataKeeper(object):
 
 	def delete(self, dataobject):
 		datainfo = self.datainfo(dataobject)
-		print 'DATAINFO', datainfo
+		print('DATAINFO', datainfo)
 		queryinfo = datainfo[0]
 		self.lock.acquire()
 		try:
@@ -80,7 +82,7 @@ class DBDataKeeper(object):
 	def _reconnect(self):
 		try:
 			self.dbd = sqldict.SQLDict()
-		except _mysql_exceptions.OperationalError, e:
+		except MySQLdb.OperationalError as e:
 			raise DatabaseError(e.args[-1])
 
 	def query(self, idata, results=None, readimages=False, timelimit=None):
@@ -110,7 +112,7 @@ class DBDataKeeper(object):
 		self.dbd.ping()
 		try:
 			result  = self.dbd.multipleQueries(queryinfo, readimages=readimages)
-		except _mysql_exceptions.OperationalError, e:
+		except MySQLdb.OperationalError as e:
 			if e.args[0] == MySQLdb.constants.CR.SERVER_LOST:
 				raise Reconnect(e.args[-1])
 			raise QueryError(e.args[-1])
@@ -215,7 +217,7 @@ class DBDataKeeper(object):
 
 		if memo is None:
 			memo = {}
-		if memo.has_key(d):
+		if d in memo.keys():
 			return None
 
 		myresult = []
@@ -285,7 +287,7 @@ class DBDataKeeper(object):
 		self.dbd.ping()
 		try:
 			return self.recursiveInsert(newdata, force=force)
-		except _mysql_exceptions.OperationalError, e:
+		except MySQLdb.OperationalError as e:
 			if e.args[0] == MySQLdb.constants.CR.SERVER_LOST:
 				raise Reconnect(e.args[-1])
 			raise InsertError(e.args[-1])

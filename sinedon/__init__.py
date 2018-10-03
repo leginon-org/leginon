@@ -20,8 +20,8 @@ getConnection(modulename)
   Call this function to get a connection to the named database
 '''
 
-from data import Data
-from dbconfig import getConfig, setConfig
-from connections import getConnection
+from sinedon.data import Data
+from sinedon.dbconfig import getConfig, setConfig
+from sinedon.connections import getConnection
 import warnings
 warnings.filterwarnings('ignore', module='sinedon')

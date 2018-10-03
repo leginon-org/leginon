@@ -7,21 +7,21 @@
 	require in, group by etc.
 """
 
-import sinedon
-import sqldb
+from sinedon import dbconfig
+from sinedon import sqldb
 
 connections = {}
 
 def getConnection(modulename='leginondata'):
-	if not connections.has_key(modulename):
-		print 'connecting'
-		param = sinedon.getConfig(modulename)
+	if not modulename in connections.keys():
+		print('connecting')
+		param = dbconfig.getConfig(modulename)
 		connections[modulename] = sqldb.sqlDB(**param)
 	return connections[modulename]
 
 def complexMysqlQuery(basedbmodule,query):
 	if len(query) > 10000:
-		print "Long MySQL query of %d characters"%(len(query))
+		print("Long MySQL query of %d characters"%(len(query)))
 	cur = getConnection(basedbmodule)
 	results = cur.selectall(query)
 

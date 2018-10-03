@@ -20,10 +20,10 @@ MRC I/O functions:
 
 import numpy
 import sys
-import arraystats
-import weakattr
+import pyami.arraystats as arraystats
+import pyami.weakattr as weakattr
 import weakref
-import resultcache
+import pyami.resultcache as resultcache
 import types
 
 cache_enabled = False
@@ -216,7 +216,7 @@ def printHeader(headerdict):
 	for field in header_fields:
 		name = field[0]
 		value = headerdict[name]
-		print '%-10s:  %s' % (name, value)
+		print('%-10s:  %s' % (name, value))
 
 def zeros(n):
 	'''
@@ -673,7 +673,7 @@ def substackFromMRCStack(mrcstack, outfile, listfile, excludeList=False):
 	# get number of particles
 	header = read_file_header(mrcstack)
 	npart = header['shape'][0]
-	print npart
+	print(npart)
 
 	# decide whether included or excluded
 	if excludeList is True:
@@ -695,7 +695,7 @@ def substackFromMRCStack(mrcstack, outfile, listfile, excludeList=False):
 			a = read(mrcstack, zslice=include)
 			append(a, outfile)
 		if i % 1000 == 0:
-			print "written %d images to stack" % i
+			print("written %d images to stack" % i)
 		i+=1
 
 

@@ -100,7 +100,7 @@ def validateStr(obj):
 registerValidator(str, validateStr)
 
 ## most common types are their own validator
-for t in (bool, complex, dict, float, int, list, long, type(None), tuple):
+for t in (bool, complex, dict, float, int, list, type(None), tuple):
 	registerValidator(t, t)
 
 ## other types we define here, and validators too

@@ -6,7 +6,7 @@
 #       see  http://leginon.org
 #
 "MySQL module for pyLeginon"
-import MySQLdb
+import pymysql as MySQLdb
 
 def connect(**kwargs):
 	newkwargs = kwargs.copy()
@@ -31,8 +31,10 @@ class sqlDB(object):
 	Default: host="localhost", user="usr_object", db="dbemdata"
 	"""
 	def __init__(self, **kwargs):
+		print(kwargs)
 		self.dbConnection = connect(**kwargs)
-		self.c = self.dbConnection.cursor(cursorclass=MySQLdb.cursors.DictCursor)
+		
+		self.c = self.dbConnection.cursor(cursor=MySQLdb.cursors.DictCursor)
 
 	def selectone(self, strSQL, param=None):
 		'Execute a query and return the first row.'
@@ -53,7 +55,7 @@ class sqlDB(object):
 		## then try the old insert_id() method
 		try:
 			insert_id = self.c.lastrowid
-		except Exception, e:
+		except Exception as e:
 			insert_id = self.c.insert_id()
 		return insert_id
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import os
-import ConfigParser
+import configparser
 import pyami.fileutil
 
 debug = False
@@ -14,7 +14,7 @@ confdirs = pyami.fileutil.get_config_dirs()
 config_locations = [os.path.join(confdir, configfilename) for confdir in confdirs]
 pyami.fileutil.check_exist_one_file(config_locations)
 
-configparser = ConfigParser.SafeConfigParser()
+configparser = configparser.SafeConfigParser()
 configfiles = configparser.read(config_locations)
 
 def tail(modulename):
@@ -24,9 +24,9 @@ def printConfigFiles():
 	'''
 	print config files loaded for debugging purposes
 	'''
-	print "Config files used: "
+	print("Config files used: ")
 	for configfile in configfiles:
-		print '\t%s' % (configfile,)
+		print('\t%s' % (configfile,))
 
 allsections = configparser.sections()
 configs = {}
@@ -94,10 +94,10 @@ def printConfigs():
 	'''
 	print all configs for debugging purposes
 	'''
-	print 'Configs:'
+	print('Configs:')
 	for name,config in configs.items():
-		print '\t%s' % (name,)
-		print '\t\t%s' % (config,)
+		print('\t%s' % (name,))
+		print('\t\t%s' % (config,))
 
 if __name__ == '__main__':
 	printConfigFiles()

@@ -8,13 +8,13 @@ array values have changed, and you want to recalculate the statistic,
 then you must specify force=True.
 '''
 
-import weakattr
+import pyami.weakattr as weakattr
 import numpy
 
 debug = False
 def dprint(s):
 	if debug:
-		print s
+		print(s)
 
 ## publicly available functions
 
@@ -135,7 +135,7 @@ def setCachedStat(a, stat, value):
 def test():
 	import numpy
 	a = numpy.array((1,2,3,4))
-	print all(a)
+	print(all(a))
 
 if __name__ == '__main__':
 	debug = True

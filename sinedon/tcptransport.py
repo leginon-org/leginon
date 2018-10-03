@@ -5,9 +5,9 @@
 #       For terms of the license agreement
 #       see  http://leginon.org
 #
-import SocketServer
+import socketserver as SocketServer
 import socket
-import socketstreamtransport
+from sinedon import socketstreamtransport
 import errno
 from pyami import mysocket
 
@@ -25,7 +25,7 @@ class Server(socketstreamtransport.Server, SocketServer.ThreadingTCPServer):
 			try:
 				SocketServer.ThreadingTCPServer.__init__(self, ('', port),
 																									socketstreamtransport.Handler)
-			except socket.error, e:
+			except socket.error as e:
 				en, string = e
 				raise TransportError(string)
 		else:
@@ -39,7 +39,7 @@ class Server(socketstreamtransport.Server, SocketServer.ThreadingTCPServer):
 																									socketstreamtransport.Handler)
 					exception = False
 					break
-				except socket.error, e:
+				except socket.error as e:
 					en, string = e
 					if en == errno.EADDRINUSE:
 						port += 1
@@ -74,7 +74,7 @@ class Client(socketstreamtransport.Client):
 			raise TransportErrorr('invalid location')
 		try:
 			s.connect((hostname, port))
-		except socket.error, e:
+		except socket.error as e:
 			en, string = e
 			raise TransportError(string)
 		return s

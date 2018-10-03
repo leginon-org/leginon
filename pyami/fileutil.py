@@ -35,10 +35,10 @@ def getMyLineno(up=1):
 # Here is a replacement for os.mkdirs that won't complain if dir
 # already exists (from Python Cookbook, Recipe 4.17)
 def mkdirs(newdir):
-	originalumask = os.umask(02)
+	originalumask = os.umask(0o2)
 	try:
 		os.makedirs(newdir)
-	except OSError, err:
+	except OSError as err:
 		os.umask(originalumask)
 		if err.errno != errno.EEXIST or not os.path.isdir(newdir) and os.path.splitdrive(newdir)[1]:
 			raise
@@ -77,7 +77,7 @@ def get_config_dirs(module=None, package_name=None):
 	# module config environment variable
 	installed_dir_basename = os.path.basename(installed_dir)
 	config_environ_name = '%s_CFG_PATH' % (installed_dir_basename.upper())
-	if os.environ.has_key(config_environ_name):
+	if config_environ_name in os.environ.keys():
 		confdirs.append(os.environ[config_environ_name])#added to have an option to have mutiple sinedon.cfg files
 	return confdirs
 
@@ -95,11 +95,11 @@ def check_exist_one_file(filenames):
 	if not one_exists:
 		msg = 'please configure at least one of these:  %s' % (filenames,)
 		if sys.platform == 'win32':
-			print msg
+			print(msg)
 			raw_input('hit return key to exit')
 			sys.exit()
 		else:
 			raise IOError(msg)
 
 if __name__ == '__main__':
-	print getMyFilename()
+	print(getMyFilename())

@@ -1,5 +1,5 @@
-import dbconfig
-from dbdatakeeper import DBDataKeeper as DB
+from sinedon import dbconfig
+from sinedon.dbdatakeeper import DBDataKeeper as DB
 import threading
 
 lock = threading.Lock()

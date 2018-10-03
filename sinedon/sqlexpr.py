@@ -20,7 +20,7 @@ sqlexpr.py: Build SQL expressions
 class VersionError(Exception):
 	pass
 
-True, False = (1==1), (0==1)
+#True, False = (1==1), (0==1)
 
 ########################################
 ## Quoting
@@ -52,11 +52,12 @@ except ImportError:
 import datetime
 import re
 import string
-import sqldict
-import MySQLdb
-import newdict
-import cPickle
-import dbconfig
+import six
+from sinedon import sqldict
+import pymysql as MySQLdb
+from sinedon import newdict
+import pickle
+from sinedon import dbconfig
 
 def backquote(inputstr):
 		"""
@@ -75,13 +76,13 @@ def isoStr(val):
 def sqlRepr(obj):
 	if isinstance(obj, SQLExpression):
 		return obj.sqlRepr()
-	elif isinstance(obj, basestring):
+	elif isinstance(obj, six.string_types):
 		for orig, repl in sqlStringReplace:
 			obj = str(obj.replace(orig, repl))
 		return "'%s'" % obj
 	elif isinstance(obj, bool):
 		return repr(int(obj))
-	elif isinstance(obj, (int,long)):
+	elif isinstance(obj, (int)):
 		return repr(int(obj))
 	elif isinstance(obj, float):
 		return repr(obj)
@@ -94,8 +95,8 @@ def sqlRepr(obj):
 	elif isinstance(obj, (tuple, list)):
 		return "(%s)" % ", ".join(map(sqlRepr, obj))
 	else:
-		raise ValueError, "Unknown SQL builtin type: %s for %s" % \
-			  (type(obj), obj)
+		raise ValueError("Unknown SQL builtin type: %s for %s" % \
+			  (type(obj), obj))
 
 
 ########################################
@@ -167,9 +168,9 @@ class SQLExpression:
 		return self.sqlRepr()
 
 	def __cmp__(self, other):
-		raise VersionError, "Python 2.1+ required"
+		raise VersionError("Python 2.1+ required")
 	def __rcmp__(self, other):
-		raise VersionError, "Python 2.1+ required"
+		raise VersionError("Python 2.1+ required")
 
 	def startswith(self, s):
 		return STARTSWITH(self, s)
@@ -323,7 +324,7 @@ class Select(SQLExpression):
 		if self.orderBy is not None:
 			fields = self.orderBy['fields']
 			sort = 'ASC'
-			if self.orderBy.has_key('sort'):
+			if 'sort' in self.orderBy.keys():
 				sort = self.orderBy['sort']
 			fields = string.join(map(lambda id: sqlRepr(id), fields), ', ')
 			select += " ORDER BY %s %s" % (fields, sort,)
@@ -355,7 +356,7 @@ class SelectAll(SQLExpression):
 		if self.orderBy is not None:
 			fields = self.orderBy['fields']
 			sort = 'ASC'
-			if self.orderBy.has_key('sort'):
+			if 'sort' in self.orderBy.keys():
 				sort = self.orderBy['sort']
 			fields = string.join(map(lambda id: sqlRepr(id), fields), ', ')
 			select += " ORDER BY %s %s" % (fields, sort,)
@@ -482,10 +483,10 @@ class AlterTable(SQLExpression):
 
 	def sqlRepr(self):
 		str_null = "NOT NULL"
-		if self.column.has_key('Null') and self.column['Null']=='YES':
+		if 'Null' in self.column.keys() and self.column['Null']=='YES':
 			str_null = "NULL"
 		default = ""
-		if self.column.has_key('Default') and self.column['Default'] is not None:
+		if 'Default' in self.column.keys() and self.column['Default'] is not None:
 			default = "DEFAULT '%s'" % (self.column['Default'])
 
 		if not self.column:
@@ -561,7 +562,7 @@ class Insert(SQLExpression):
 		self.table = table
 		if valueList:
 			if values:
-				raise TypeError, "You may only give valueList *or* values"
+				raise TypeError("You may only give valueList *or* values")
 			self.valueList = valueList
 		else:
 			self.valueList = [values]
@@ -586,10 +587,10 @@ class Insert(SQLExpression):
 				insert += ", "
 			if type(value) is type({}):
 				if template is None:
-					raise TypeError, "You can't mix non-dictionaries with dictionaries in an INSERT if you don't provide a template (%s)" % repr(value)
+					raise TypeError("You can't mix non-dictionaries with dictionaries in an INSERT if you don't provide a template (%s)" % repr(value))
 				value = dictToList(template, value)
 			elif not allowNonDict:
-				raise TypeError, "You can't mix non-dictionaries with dictionaries in an INSERT if you don't provide a template (%s)" % repr(value)
+				raise TypeError("You can't mix non-dictionaries with dictionaries in an INSERT if you don't provide a template (%s)" % repr(value))
 			insert += "(%s)" % ", ".join(map(sqlRepr, value))
 		return insert
 
@@ -598,7 +599,7 @@ def dictToList(template, dict):
 	for key in template:
 		list.append(dict[key])
 	if len(dict.keys()) > len(template):
-		raise TypeError, "Extra entries in dictionary that aren't asked for in template (template=%s, dict=%s)" % (repr(template), repr(dict))
+		raise TypeError( "Extra entries in dictionary that aren't asked for in template (template=%s, dict=%s)" % (repr(template), repr(dict)))
 	return list
 
 class Update(SQLExpression):
@@ -638,7 +639,7 @@ class Delete(SQLExpression):
 	def __init__(self, table, where=None):
 		self.table = table
 		if where is None:
-			raise TypeError, "You must give a where clause or pass in None to indicate no where clause"
+			raise TypeError("You must give a where clause or pass in None to indicate no where clause")
 		self.whereClause = where
 	def sqlRepr(self):
 		if self.whereClause is None:
@@ -771,7 +772,7 @@ def whereFormat(in_dict):
 			value = int(value)
 		elif isinstance(value,newdict.AnyObject):
 			key = sqldict.object2sqlColumn(key)
-			value = cPickle.dumps(value.o, cPickle.HIGHEST_PROTOCOL)
+			value = pickle.dumps(value.o, pickle.HIGHEST_PROTOCOL)
 		evalue = str(value)
 		if key=="DEF_timelimit":
 		#	For MySQL 4.1.1 or greater
@@ -849,8 +850,7 @@ if __name__ == "__main__":
 """
 	for expr in tests.split('\n'):
 		if not expr.strip(): continue
-		print expr
 		if expr.startswith('>>> '):
 			expr = expr[4:]
-			print repr(eval(expr))
+			print(repr(eval(expr)))
 

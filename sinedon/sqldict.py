@@ -148,23 +148,23 @@ OR
 
 
 import sys
-import sqlexpr
+from sinedon import sqlexpr
 import copy
-import sqldb
+from sinedon import sqldb
 import string
 import datetime
 import re
 import numpy
 import math
-import MySQLdb.cursors
+import pymysql as MySQLdb
 from types import *
-import newdict
-import data
+from sinedon import newdict
+from sinedon import data
 import sinedon
 import pyami.mrc
 import os
-import dbconfig
-import cPickle
+from sinedon import dbconfig
+import pickle as cPickle # python3
 import time
 from pyami import weakattr
 
@@ -189,7 +189,7 @@ class SQLDict(object):
 		try:
 			self.db = sqldb.connect(**kwargs)
 			self.connected = True
-		except Exception,e:
+		except Exception as e:
 			self.db = None
 			self.connected = False
 			self.sqlexception = e
@@ -201,9 +201,8 @@ class SQLDict(object):
 
 	def ping(self):
 		try:
-			if self.db.stat() == 'MySQL server has gone away':
-				self.db = sqldb.connect(**self.db.kwargs)
-		except (MySQLdb.ProgrammingError, MySQLdb.OperationalError), e:
+			self.db.ping(reconnect=True)
+		except (MySQLdb.ProgrammingError, MySQLdb.OperationalError) as e:
 			# self.db.stat function gives error when connection is not available.
 			errno = e.args[0]
 			## some version of mysqlpython parses the exception differently
@@ -212,7 +211,7 @@ class SQLDict(object):
 			## 2006:  MySQL server has gone away
 			if errno in (2006,):
 				ctime = time.strftime("%H:%M:%S")
-				print "reconnecting at %s after MySQL server has gone away error" % (ctime,)
+				print("reconnecting at %s after MySQL server has gone away error" % (ctime,))
 				self.db = sqldb.connect(**self.kwargs)
 			else:
 				raise
@@ -269,16 +268,16 @@ class SQLDict(object):
 	def delete(self, queryinfo):
 		# should be just a single object for now
 		info = queryinfo.popitem()[1]
-		print 'INFO', info
+		print('INFO', info)
 		tablename = info['class'].__name__
-		print 'TABLENAME', tablename
+		print('TABLENAME', tablename)
 		where = info['where'].popitem()
 		where = '%s = %d' % where
-		print 'WHERE', where
+		print('WHERE', where)
 		query = str(sqlexpr.Delete(tablename, where))
-		print 'QUERY', query
+		print('QUERY', query)
 		self.db.ping()
-		cur = self.db.cursor(cursorclass=MySQLdb.cursors.DictCursor)
+		cur = self.db.cursor(cursor=MySQLdb.cursors.DictCursor)
 		cur.execute(query)
 		cur.close()
 
@@ -363,7 +362,7 @@ class _Table:
 		if force or not result:
 			q = sqlexpr.Insert(self.table, v).sqlRepr()
 			if debug:
-				print q
+				print(q)
 			c.execute(q)
 			## try the new lastrowid attribute first,
 			## then try the old insert_id() method
@@ -452,7 +451,7 @@ class _Cursor:
 
 	def __init__(self, db, load, columns):
 		db.ping()
-		self.cursor = db.cursor(cursorclass=MySQLdb.cursors.DictCursor)
+		self.cursor = db.cursor(cursor=MySQLdb.cursors.DictCursor)
 		self.columns = columns
 		self.load = load
 		self.db = db
@@ -537,13 +536,13 @@ class _multipleQueries:
 		#print 'querinfo ', self.queryinfo
 		self.queries = setQueries(queryinfo)
 		if debug:
-			print 'queries ', self.queries
+			print('queries ', self.queries)
 		self.cursors = {}
 		self.execute()
 
 	def _cursor(self):
 		self.db.ping()
-		return self.db.cursor(cursorclass=MySQLdb.cursors.DictCursor)
+		return self.db.cursor(cursor=MySQLdb.cursors.DictCursor)
 
 	def execute(self):
 		for key,query in self.queries.items():
@@ -557,7 +556,7 @@ class _multipleQueries:
 				## print '-----------------------------------------------'
 				## print 'query =', query
 				c.execute(query)
-			except (MySQLdb.ProgrammingError, MySQLdb.OperationalError), e:
+			except (MySQLdb.ProgrammingError, MySQLdb.OperationalError) as e:
 				errno = e.args[0]
 				## some version of mysqlpython parses the exception differently
 				if not isinstance(errno, int):
@@ -634,13 +633,14 @@ class _multipleQueries:
 		def test(obj):
 			return not isinstance(obj, (data.Data,data.DataReference))
 		actualresults = filter(test, cursorresults.values())
-		if actualresults:
-			numrows = len(actualresults[0])
-		else:
-			numrows = 0
-		all = [{} for i in range(numrows)]
+		# Have to convert to list to access single item in dataview.
+		# Is there a better way ?
+		actualr_list = list(actualresults)
+		numrow = len(actualr_list[0])
+		all = []
 
-		for i in range(numrows):
+		for i in range(numrow):
+			all.append({})
 			for qikey, cursorresult in cursorresults.items():
 				if isinstance(cursorresult, (data.Data,data.DataReference)):
 					## cursorresult was known before query
@@ -692,7 +692,7 @@ class _multipleQueries:
 					## there could be columns that
 					## are no longer used
 					newdata.friendly_update(r)
-				except KeyError, e:
+				except KeyError as e:
 					raise
 
 				## add pending dbid for now, actual dbid
@@ -758,7 +758,7 @@ class _createSQLTable:
 
 		def _cursor(self):
 			self.db.ping()
-			return self.db.cursor(cursorclass=MySQLdb.cursors.DictCursor)
+			return self.db.cursor(cursor=MySQLdb.cursors.DictCursor)
 
 		def create(self):
 			table_exist = self.hasTable()
@@ -769,7 +769,7 @@ class _createSQLTable:
 			q = sqlexpr.CreateTable(self.table, self.definition, self.engine).sqlRepr()
 			c = self._cursor()
 			if debug:
-				print q
+				print(q)
 			c.execute(q)
 			c.close()
 			self._checkTable()
@@ -777,7 +777,7 @@ class _createSQLTable:
 		def hasTable(self):
 			q = sqlexpr.HasTable(self.table).sqlRepr()
 			if debug:
-				print q
+				print(q)
 			c = self._cursor()
 			c.execute(q)
 			results = c.fetchall()
@@ -787,7 +787,7 @@ class _createSQLTable:
 		def formatDescription(self, description):
 			newdict = {}
 			newdict['Field'] = description['Field']
-			if description.has_key('Default'):
+			if 'Default' in description.keys():
 				newdict['Default'] = description['Default']
 				if description['Default']=='CURRENT_TIMESTAMP':
 					newdict['Default'] = None
@@ -831,9 +831,9 @@ class _createSQLTable:
 				try:
 					for q in queries:
 						if debug:
-							print q
+							print(q)
 						c.execute(q)
-				except MySQLdb.OperationalError, e:
+				except MySQLdb.OperationalError as e:
 					pass
 			c.close()
 
@@ -945,7 +945,7 @@ class ObjectBuilder:
 		"""
 		for k, v in dict.items():
 			if k in self.columns: setattr(self, k, v)
-			elif not skim: raise AttributeError, k
+			elif not skim: raise AttributeError(k)
 
 	def __setattr__(self, key, value):
 		try:
@@ -1077,12 +1077,12 @@ def queryFormatOptimized(queryinfo,tableselect):
 		optimizedjoinlist.append(tableselect)
 
 	for l in optimizedjoinlist:
-		if joinon.has_key(l):
+		if l in joinon.keys():
 			if not joinon[l] in optimizedjoinlist:
 				optimizedjoinlist.append(joinon[l])
 			if not alljoinon[l] in sqljoin:
 				sqljoin.append(alljoinon[l])
-		if onjoin.has_key(l):
+		if l in onjoin.keys():
 			if not alljoinon[onjoin[l]] in sqljoin:
 				sqljoin.append(alljoinon[onjoin[l]])
 
@@ -1173,7 +1173,7 @@ def unflatDict(in_dict, join):
 		a = key.split(sep)
 		if a[0] == 'SUBD':
 			name = a[1]
-			if not allsubdicts.has_key(name):
+			if not name in allsubdicts.keys():
 				allsubdicts[a[1]]=None
 		
 		elif a[0] != 'ARRAY':
@@ -1321,7 +1321,6 @@ def sql2data(in_dict, qikey=None, qinfo=None):
 		join = qinfo[qikey]['join']
 		parentclass = qinfo[qikey]['class']
 	content = datatype(in_dict, join=join, parentclass=parentclass)
-
 	return content
 
 ## get rid of this function when field names are converted to have full
@@ -1365,7 +1364,7 @@ def datatype(in_dict, join=None, parentclass=None):
 		a0 = a[0]
 		if a0 == 'ARRAY':
 			name = a[1]
-			if not allarrays.has_key(name):
+			if not name in allarrays.keys():
 				allarrays[name]=None
 		elif a0 == 'SEQ':
 			if value is None:
@@ -1452,7 +1451,7 @@ def _sqltype(t):
 		return "DOUBLE"
 	elif t is bool:
 		return "TINYINT(1)"
-	elif issubclass(t, (int,long)):
+	elif issubclass(t, int):
 		return "INT(20)"
 	elif t is datetime.datetime:
 		return "TIMESTAMP"
@@ -1545,7 +1544,7 @@ def dataSQLColumns(data_instance, fail=True):
 		try:
 			value_type = type_dict[key]
 		except KeyError:
-			raise ValueError, value_type.__name__
+			raise ValueError(value_type.__name__)
 
 		result = type2column(key, value, value_type, data_instance)
 		if result is not None:
@@ -1560,9 +1559,9 @@ def dataSQLColumns(data_instance, fail=True):
 			continue
 
 		if fail is True:
-			raise ValueError, value_type.__name__
+			raise ValueError(value_type.__name__)
 		else:
-			print "ERROR", value_type.__name__
+			print("ERROR", value_type.__name__)
 
 	return columns, row
 
@@ -1644,15 +1643,15 @@ def type2columns(key, value, value_type, parentdata):
 
 
 if __name__ == '__main__':
-	data_instance = data.AcquisitionImageData()
+	data_instance = data.AcquisitionData()
 	columns, row = dataSQLColumns(data_instance)
 	for column in columns:
 		field = column['Field']
-		print field
-		print column
+		print(field)
+		print(column)
 		if field in ('DEF_id', 'DEF_timestamp'):
 			print
 			continue
-		print row[field]
-		print
+		print(row[field])
+		print('')
 

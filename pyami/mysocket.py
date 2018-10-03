@@ -26,7 +26,7 @@ def getHostMappings():
 
 def gethostname():
 	try:
-		return configs['my ip map'].keys()[0]
+		return list(configs['my ip map'].keys())[0]  # This is o.k. because I know I only have one key.
 	except:
 		KeyError('Missing "my ip map" module in pyami.cfg')
 
@@ -39,7 +39,7 @@ def gethostbyname(hostname):
 	if not ipaddress:
 		try:
 			ipaddress = socket.gethostbyname(lower_hostname)
-		except Exception, e:
+		except Exception as e:
 			raise LookupError(e)
 	return ipaddress
 
@@ -52,7 +52,7 @@ def testMapping(hostname):
 		else:
 			e = '%s is mapped to %s in the network, not %s' % (hostname, assigned_ip, this_ip)
 			raise ValueError(e)
-	except Exception, e:
+	except Exception as e:
 		raise LookupError(e)
 
 def test():
@@ -63,7 +63,7 @@ def test():
 		try:
 			r = testMapping(host)
 			testfun.printResult(module,r)
-		except Exception, e:
+		except Exception as e:
 			testfun.printResult(module,False, e)
 
 if __name__=='__main__':

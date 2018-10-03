@@ -5,16 +5,16 @@
 # see http://leginon.org
 
 import numpy
-import newdict
+from sinedon import newdict
 import warnings
 import types
 import threading
-import dbdatakeeper
+from sinedon import dbdatakeeper
 import copy
-import tcptransport
+from sinedon import tcptransport
 import weakref
 import os
-import connections
+from sinedon import connections
 from pyami import weakattr
 import itertools
 
@@ -64,7 +64,7 @@ class DataManager(object):
 		self.weakcache = weakref.WeakValueDictionary()
 		self.dbcache = weakref.WeakValueDictionary()
 
-		self.nextdmid = itertools.izip(itertools.repeat(self.location), itertools.count()).next
+		self.nextdmid = itertools.chain(zip(itertools.repeat(self.location), itertools.count()))
 
 		self.holdimages = True
 
@@ -86,7 +86,7 @@ class DataManager(object):
 	def cacheInsert(self, datainstance):
 		## if datainstance has no dmid, give it one
 		if not hasattr(datainstance, 'dmid') or datainstance.dmid is None:
-			datainstance.dmid = self.nextdmid()
+			datainstance.dmid = next(self.nextdmid)
 
 		## keep in the weak cache
 		self.weakcache[datainstance.dmid] = datainstance
@@ -174,7 +174,7 @@ class DataManager(object):
 		elif isinstance(request, newdict.FileReference):
 			return self.readFile(request)
 		else:
-			print 'bad request:', request
+			print('bad request:', request)
 
 datamanager = DataManager()
 
@@ -504,7 +504,7 @@ class Data(newdict.TypedDict):
 			try:
 				value = value.read()
 			except:
-				print 'Could not read file: %s' % (value,)
+				print('Could not read file: %s' % (value,))
 				value = None
 			# This gives the option of keeping the FileReference rather
 			# than the image data, for memory vs. speed tradeoff

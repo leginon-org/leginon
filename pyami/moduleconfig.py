@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import copy
 import sys
-import ConfigParser
+import configparser as ConfigParser
 import os
 import imp
 import pyami.fileutil
@@ -92,7 +92,7 @@ class ModuleConfigParser(object):
 		return newkeys
 
 	def parse(self):
-		#print "parsing %s...." % self.config_filename
+		#print("parsing %s...." % self.config_filename)
 
 		# read instruments.cfg
 		confdirs = pyami.fileutil.get_config_dirs(package_name=self.package)
@@ -138,7 +138,7 @@ def testOneConfig(config_file,package_name):
 			testfun.printResult(module,True)
 		else:
 			testfun.printResult(module,False,'config not read')
-	except Exception, e:
+	except Exception as e:
 		testfun.printResult(module,False,e)
 
 def test():
