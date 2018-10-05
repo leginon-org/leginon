@@ -12,8 +12,8 @@ import pyami.fileutil, pyami.mrc
 
 next_time_start = 0
 mtime = 0
-time_expire = 300  # ignore anything older than 5 minutes
-expired_names = {} # directories that should not be transferred
+query_day_limit = 30 # ignore database query for older dates
+expired_names = ['.DS_Store',] # files that should not be transferred
 check_interval = 20  # seconds between checking for new frames
 
 class RawTransfer(object):
@@ -60,6 +60,7 @@ class RawTransfer(object):
 		parser.add_option("--path_mode", dest="mode_str", 
 			help="recursive session permission modification by chmod if specified, default means not to modify e.g. --path_mode=g-w,o-rw")
 		parser.add_option("--check_interval", dest="check_interval", help="Seconds between checking for new frames", type="int", default=check_interval)
+		parser.add_option("--check_days", dest="check_days", help="Number of days to query database", type="int", default=query_day_limit)
 
 		# parsing options
 		(options, optargs) = parser.parse_args(sys.argv[1:])
@@ -98,12 +99,14 @@ class RawTransfer(object):
 		return self.getAndValidatePath('dest_path_head')
 
 	def query_image_by_frames_name(self,name,cam_host):
+		# speed up query by adding time limit Issue #6127
+		time_limit = '-%d 0:0:0' % self.params['check_days']
 		qccd = leginon.leginondata.InstrumentData(hostname=cam_host)
 		qcam = leginon.leginondata.CameraEMData(ccdcamera=qccd)
 		qcam['frames name'] = name
 		for cls in self.image_classes:
 			qim = cls(camera=qcam)
-			results = qim.query()
+			results = qim.query(timelimit=time_limit)
 			if results:
 				if len(results) > 1:
 					# fix for issue #3967. Not to work on the aligned images
@@ -253,29 +256,37 @@ class RawTransfer(object):
 
 	def run_once(self,parent_src_path,cam_host,dest_head,method,mode_str):
 		global next_time_start
-		global time_expire
 		global mtime
 		names = os.listdir(parent_src_path)
-		time.sleep(10)  # wait for any current writes to finish
+		#time.sleep(10)  # wait for any current writes to finish
 		time_start = next_time_start
 		for name in names:
 			src_path = os.path.join(parent_src_path, name)
 			_, ext = os.path.splitext(name)
+			# skip expired dirs, mrcs
+			if name in expired_names:
+				continue
+			print '**checking', src_path
+			# check access instead of wait for files to write. Speeds up interval
+			try:
+				if not os.access(src_path, os.R_OK):
+					print 'not ready. Deferring to next iteration'
+					continue
+			except Exception as e:
+					# There maybe other reason for it to fail.
+					print 'error checking access: %s' % e
+					continue
 			## skip empty directories
 			if os.path.isdir(src_path) and not os.listdir(src_path):
 				# maybe delete empty dir too?
 				continue
 
-			# skip expired dirs, mrcs
-			if name in expired_names:
-				continue
 			# ignore irrelevent source files or folders
 			# gatan k2 summit data ends with '.mrc' or 'tif'
 			# de folder starts with '20'
 			# falcon mrchack stacks ends with '.mrcs'
 			if not ext.startswith('.mrc') and not ext != 'tif' and  ext != '.frames' and not name.startswith('20'):
 				continue
-			print '**running', src_path
 
 			# adjust next expiration timer to most recent time
 			if mtime > next_time_start:
@@ -308,6 +319,7 @@ class RawTransfer(object):
 				print '    Destination frame path does not starts with %s. Skipped' % (dest_head)
 				continue
 
+			print '**running', src_path
 			if self.refcopy:
 				self.refcopy.setFrameDir(frames_path)
 
