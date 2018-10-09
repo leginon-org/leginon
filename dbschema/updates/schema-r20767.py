@@ -49,8 +49,12 @@ class SchemaUpdate(baseSchemaClass.SchemaUpdate):
 	#######################################################################
 
 	def saveImageDDAlignStats(self, aligned_imgdata):
+		if '-DW' in aligned_imgdata['filename']:
+			return False
 		try:
 			ddr = apDDResult.DDResults(aligned_imgdata)
+			if appiondata.ApDDAlignStatsData(image=aligned_imgdata).query():
+				return False
 			xydict = ddr.getFrameAlignTrajectoryFromLog()
 		except ValueError:
 			return False
