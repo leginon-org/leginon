@@ -12,6 +12,7 @@ from pyami import mrc
 from appionlib import apDisplay
 from appionlib import apDDStackMaker
 from appionlib import apDDFrameAligner
+from appionlib import apDDResult
 from appionlib import apFile
 
 class AlignStackLoop(apDDStackMaker.FrameStackLoop):
@@ -248,6 +249,14 @@ class AlignStackLoop(apDDStackMaker.FrameStackLoop):
 			# Doing the alignment
 			self.framealigner.alignFrameStack()
 
+	def commitAlignStats(self, aligned_imgdata):
+		try:
+			ddr = apDDResult.DDResults(aligned_imgdata)
+			xydict = ddr.getFrameAlignTrajectoryFromLog()
+		except Exception as e:
+			apDisplay.printError('Can not commit alignmnet stats: %s' % e) 
+		trajdata = ddr.saveFrameAlignTrajectory(ddr.ddstackrun, xydict, None)
+		ddr.saveAlignStats(ddr.ddstackrun, trajdata)
 
 if __name__ == '__main__':
 	makeStack = AlignStackLoop()

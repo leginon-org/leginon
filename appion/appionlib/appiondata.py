@@ -770,10 +770,27 @@ class ApFrameAlignTrajectory(Data):
 			('image', leginon.leginondata.AcquisitionImageData),
 			('particle', ApStackParticleData ),
 			('ddstackrun', ApDDStackRunData ),
-			('xshift', list),
-			('yshift', list)
+			('xshift', list), #pixels
+			('yshift', list) #pixels
 			
 		)
+
+class ApDDAlignStatsData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('image', leginon.leginondata.AcquisitionImageData),
+			('ddstackrun', ApDDStackRunData),
+			('trajectory', ApFrameAlignTrajectory),
+			('apix', float), #angstroms per pixel
+			('top_shift1_value', float), #pixels
+			('top_shift2_value', float), #pixels
+			('top_shift3_value', float), #pixels
+			('top_shift1_index', int), #base-0
+			('top_shift2_index', int), #base-0
+			('top_shift3_index', int), #base-0
+			('median_shift_value', float), #pixels
+		)
+
 ### END Stack tables ###
 ### START alignment tables  ###
 
