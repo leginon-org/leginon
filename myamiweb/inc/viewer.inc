@@ -597,22 +597,22 @@ class view {
 		$this->btinfo = new button('info'.$this->name, 'info');
 		$this->btinfo->setLink('imgreport.php','imginfo');
 		$this->btscale = new toggleButton($this->name.'scale', 'scale');
-		$this->btscale->onToggle($name.'btscaleaction');
+		$this->btscale->onToggle($this->name.'btscaleaction');
 		$this->bttarget = new toggleButton($this->name.'target', 'target');
-		$this->bttarget->onToggle($name.'bttargetaction');
+		$this->bttarget->onToggle($this->name.'bttargetaction');
 		$this->bttag = new toggleButton($this->name.'tag', 'tag');
-		$this->bttag->onToggle($name.'bttagaction');
+		$this->bttag->onToggle($this->name.'bttagaction');
 		$this->btfft = new toggleButton($this->name.'fft', 'fft');
-		$this->btfft->onToggle($name.'btfftaction'); 
+		$this->btfft->onToggle($this->name.'btfftaction'); 
 		$this->btclose = new toggleButton($this->name.'close', 'open', 'close');
-		$this->btclose->onToggle($name.'btcloseaction'); 
+		$this->btclose->onToggle($this->name.'btcloseaction'); 
 		$this->btnptcl = new toggleButton($this->name.'nptcl', 'ptcl');
-		$this->btnptcl->onToggle($name.'btnptclaction');
+		$this->btnptcl->onToggle($this->name.'btnptclaction');
 		$this->btace = new toggleButton($this->name.'ace', 'ace');
-		$this->btace->onToggle($name.'btaceaction'); 
+		$this->btace->onToggle($this->name.'btaceaction'); 
 		$this->btdeq = new button('deq'.$this->name, 'deq');
 		$this->btdd = new toggleButton($this->name.'dd', 'drift');
-		$this->btdd->onToggle($name.'btddaction');
+		$this->btdd->onToggle($this->name.'btddaction');
 	}
 
 	function __setDefaultDisplays() {
@@ -1143,14 +1143,14 @@ class view {
 			$htmlframe .= '</td><td width="9">';
 			$downimg='<img alt="menu" src="img/menudown1.gif" border="0">';
 			$closedownimg='<img alt="close" src="img/close_bt_off.gif" border="0">';
-			$dwdmenu = new dropdown($downimg, $name."dwd");
+			$dwdmenu = new dropdown($downimg, $this->name."dwd");
 			$dwdmenu->closeval=$closedownimg;
 			$dwdmenu->height="";
 			$dwdmenu->width="";
 			$formats=array("mrc", "tiff", "jpeg");
 			foreach ($formats as $format) {
 				$sel = ($this->jsdwdformat==$format) ? "checked" : "";
-				$dwdformats[]='<input type="radio" name="'.$name.'dwdformat1" id="'.$name.'dwdparam1" value="'.$format.'" '.$sel.' onClick="setFormat(\''.$name.'\', \''.$format.'\')">'.$format;
+				$dwdformats[]='<input type="radio" name="'.$this->name.'dwdformat1" id="'.$this->name.'dwdparam1" value="'.$format.'" '.$sel.' onClick="setFormat(\''.$this->name.'\', \''.$format.'\')">'.$format;
 			}
 			$dwdform=join("<br />", $dwdformats);
 			$dwdmenu->setContent($dwdform);
@@ -1260,11 +1260,11 @@ class view {
 			$htmlframe .= '</td><td width="9">';
 			$downimg='<img alt="menu" src="img/menudown1.gif" border="0">';
 			$closedownimg='<img alt="close" src="img/close_bt_off.gif" border="0">';
-			$acemenu = new dropdown($downimg, $name."ace");
+			$acemenu = new dropdown($downimg, $this->name."ace");
 			$acemenu->closeval=$closedownimg;
 			$acemenu->height="";
 			$acemenu->width="";
-			$aceform=getAceViewerForm($name, $this->params['aceruns']);
+			$aceform=getAceViewerForm($this->name, $this->params['aceruns']);
 			$acemenu->setContent($aceform);
 			$htmlframe.=$acemenu->display();
 		$htmlframe .= '
