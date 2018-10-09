@@ -18,6 +18,7 @@ class FalconProcessing(apDDprocess.DDFrameProcessing):
 		super(FalconProcessing,self).__init__(wait_for_new)
 		self.setDefaultDimension(4096,4096)
 		self.correct_dark_gain = False
+		self.rawframetype = 'stack'
 		
 	def hasNonZeroDark(self):
 		return False

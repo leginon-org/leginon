@@ -174,6 +174,15 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 					self.logger.info('Image Shift ( %5.2f, %5.2f)' % (newshift['x']*1e6,newshift['y']*1e6))
 					# memorize the aberration state0
 					self.setPreMeasureState()
+					try:
+						last_calibration = self.getCurrentNoMagCalibration()
+					except calibrationclient.NoMatrixCalibrationError, e:
+						pass
+					try:
+						self.btcalclient.correctImageShiftComa()
+						self.logger.warning('Apply beam tilt delta from last image-shift coma calibration to start')
+					except:
+						self.logger.warning('use original beam tilt to start')
 					# For TESTING ---START HERE
 					'''
 					newstate = self.getFakeValues(axis, i)

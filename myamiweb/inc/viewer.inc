@@ -572,7 +572,7 @@ class view {
 	var $displayview='true';
 	var $params;
 
-	function view($title, $name) {
+	function __construct($title, $name) {
 		global $VIEWNB;
 		$this->viewnb = $VIEWNB++;
 		$this->title = $title;
@@ -581,6 +581,15 @@ class view {
 		$this->displayPresets(true);
 		$this->displayComment(false);
 
+		$this->__initializeTools();
+		$this->__setDefaultDisplays();
+		$this->__setScripts();
+		$this->__setDefaultStates();
+		$this->__setJSNames();
+		$this->__setStatesFromRequest();
+	}
+
+	function __initializeTools() {
 		// initialize tools
 		$this->btdownload = new button('download'.$this->name, 'dwd');
 		$this->btdownload->setLink('download.php','');
@@ -604,7 +613,9 @@ class view {
 		$this->btdeq = new button('deq'.$this->name, 'deq');
 		$this->btdd = new toggleButton($this->name.'dd', 'drift');
 		$this->btdd->onToggle($name.'btddaction');
+	}
 
+	function __setDefaultDisplays() {
 		// default
 		$this->displayscaleicon = true;
 		$this->displayscaleicon = true;
@@ -629,12 +640,18 @@ class view {
 		$this->displayimage = true;
 		$this->framecolor = ' class="bgcolor1" ';
 		$this->menucolor = ' class="bgimg1" ';
+	}
+
+	function __setScripts() {
 		$this->presetscript = 'getpreset.php';
 		$this->reportscript = 'imgreport.php';
 		$this->dwdscript = 'download.php';
 		$this->histoscript = 'imagehistogram.php';
 		$this->imagescript = 'getimg.php';
 		$this->commentscript = 'getcomment.php';
+	}
+
+	function __setDefaultStates() {
 		$this->scale_st = "false";
 		$this->target_st = "false";
 		$this->tag_st = "false";
@@ -666,6 +683,9 @@ class view {
 		// tag?
 		$this->jstagpar1 = "1";
 		$this->jstagpar2 = "1";
+	}
+
+	function __setJSNames() {
 		if ($_POST) {
 			$this->jstagpar1 = ($_REQUEST[$this->name.'tagp1']) ? "1" : $_POST[$this->name.'tagp1'];
 			$this->jstagpar2 = ($_REQUEST[$this->name.'tagp2']) ? "1" : "0";
@@ -690,7 +710,9 @@ class view {
 		$this->bttargetmemo = $this->name.'target_bt_st';
 		$this->btscalememo = $this->name.'scale_bt_st';
 		$this->btddmemo = $this->name.'dd_bt_st';
+	}
 
+	function __setStatesFromRequest() {
 		// set options through javascript
 		if ($ptcl=$_REQUEST[$this->ptclselmemo])
 			$this->ptclsel = $ptcl;
@@ -1114,6 +1136,28 @@ class view {
 		$this->commentscript= $scriptname;
 	}
 
+	function getDownloadHtml() {
+		$htmlframe = '
+			<td width="15">'
+			.$this->btdownload->display().$this->crlf;
+			$htmlframe .= '</td><td width="9">';
+			$downimg='<img alt="menu" src="img/menudown1.gif" border="0">';
+			$closedownimg='<img alt="close" src="img/close_bt_off.gif" border="0">';
+			$dwdmenu = new dropdown($downimg, $name."dwd");
+			$dwdmenu->closeval=$closedownimg;
+			$dwdmenu->height="";
+			$dwdmenu->width="";
+			$formats=array("mrc", "tiff", "jpeg");
+			foreach ($formats as $format) {
+				$sel = ($this->jsdwdformat==$format) ? "checked" : "";
+				$dwdformats[]='<input type="radio" name="'.$name.'dwdformat1" id="'.$name.'dwdparam1" value="'.$format.'" '.$sel.' onClick="setFormat(\''.$name.'\', \''.$format.'\')">'.$format;
+			}
+			$dwdform=join("<br />", $dwdformats);
+			$dwdmenu->setContent($dwdform);
+			$htmlframe.=$dwdmenu->display();
+		return $htmlframe;
+	}
+
 	function display() {
 		$iconwidth=15;
 		$datatypes = $this->datatypes;
@@ -1193,24 +1237,7 @@ class view {
 			.'</td> ';
 		}
 		if ($this->displaydownloadicon) {
-		$htmlframe .= '
-			<td width="15">'
-			.$this->btdownload->display().$this->crlf;
-			$htmlframe .= '</td><td width="9">';
-			$downimg='<img alt="menu" src="img/menudown1.gif" border="0">';
-			$closedownimg='<img alt="close" src="img/close_bt_off.gif" border="0">';
-			$dwdmenu = new dropdown($downimg, $name."dwd");
-			$dwdmenu->closeval=$closedownimg;
-			$dwdmenu->height="";
-			$dwdmenu->width="";
-			$formats=array("mrc", "tiff", "jpeg");
-			foreach ($formats as $format) {
-				$sel = ($this->jsdwdformat==$format) ? "checked" : "";
-				$dwdformats[]='<input type="radio" name="'.$name.'dwdformat1" id="'.$name.'dwdparam1" value="'.$format.'" '.$sel.' onClick="setFormat(\''.$name.'\', \''.$format.'\')">'.$format;
-			}
-			$dwdform=join("<br />", $dwdformats);
-			$dwdmenu->setContent($dwdform);
-			$htmlframe.=$dwdmenu->display();
+			$htmlframe .= $this->getDownloadHtml();
 		}
 		if ($this->displayinfoicon) {
 		$htmlframe .= '
@@ -1494,6 +1521,39 @@ class view {
 		</table> 
 		';	
 		return $htmlframe;
+	}
+}
+
+class fileview extends view
+{
+	function __construct($title, $name) {
+		parent::__construct($title, $name);
+	}
+
+	function __setDefaultDisplays() {
+		parent::__setDefaultDisplays();
+		$this->displayscaleicon = false;
+		$this->displayscaleicon = false;
+		$this->displaytargeticon = false;
+		$this->displaytagicon = false;
+		$this->displaynptclicon = false;
+		$this->displayffticon = false;
+		$this->displayaceicon = false;
+		$this->displayinfoicon = false;
+		$this->displayparticleicon = false;
+		$this->displaydownloadicon = false;
+		$this->displaydeqicon = false;
+		$this->displayddicon = false;
+		$this->displaycloseicon = false;
+		$this->displayadjustlink = false;
+		$this->displayexportlink = false;
+		$this->displayhidebt = false;
+		$this->displayhideallbt = false;
+		$this->displaynextbt = false;
+		$this->displayexemplarbt = false;
+		$this->displaygradient = false;
+		$this->displayimage = false;
+		$this->displaypresetinfo = false;
 	}
 }
 

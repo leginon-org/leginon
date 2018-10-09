@@ -16,6 +16,7 @@ class GatanK2Processing(apDDprocess.DDFrameProcessing):
 	def __init__(self,wait_for_new=False):
 		super(GatanK2Processing,self).__init__(wait_for_new)
 		self.setDefaultDimension(3710,3838)
+		self.rawframetype = 'stack'
 		self.correct_dark_gain = True
 		self.correct_frame_mask = False
 		

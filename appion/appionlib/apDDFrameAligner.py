@@ -262,9 +262,16 @@ class MotionCor2_UCSF(DDFrameAligner):
 			cmd += ' -FtBin %s ' % (self.alignparams['FtBin'],)
 
 		# bfactor
-		if self.alignparams['bft'] > 0:
-			cmd += ' -Bft %d ' % self.alignparams['bft']
-
+		#if (self.alignparams['bft'][0] > 0) and (self.alignparams['bft'][1] > 0):
+		#	cmd += ' -Bft %d %d' % (self.alignparams['bft'][0], self.alignparams['bft'])
+		
+			
+		if (self.alignparams['Bft_global'] > 0) and (self.alignparams['Bft_local'] > 0):
+			cmd += ' -Bft %d %d' % (self.alignparams['Bft_global'], self.alignparams['Bft_local'])		
+		
+		else:
+			apDisplay.printError("Invalid Bft arguments ! (global: %s, local: %s)" %(self.alignparams['Bft_global'], self.alignparams['Bft_local']))
+			
 		# frame truncation
 		if self.alignparams['Throw'] > 0:
 			cmd += ' -Throw %d' % self.alignparams['Throw']
@@ -344,7 +351,8 @@ class MotionCor2_UCSF(DDFrameAligner):
 			'nrw':'Group', 
 			'flp':'flp', 
 			'bin':'FtBin', 
-			"Bft":"bft",
+			"Bft_global":"Bft_global",
+			"Bft_local":"Bft_local",
 			"apix":"PixSize",
 			"Iter":"Iter",
 			"Patchrows":"Patchrows",
