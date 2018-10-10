@@ -76,7 +76,7 @@ class DDResults(object):
 			return pixel_shifts
 		return map((lambda x: x*self.apix), pixel_shifts)
 
-	def getFrameAlignTrajectoryFromLog(self):
+	def getFrameTrajectoryFromLog(self):
 		'''
 		Read frame alignment trajectory from log file. Returns dictionary
 		of x,y with a list of relative shift positions
@@ -87,16 +87,26 @@ class DDResults(object):
 		xydict['y'] = map((lambda x: x[1]), positions)
 		return xydict
 
-	def saveFrameAlignTrajectory(self, rundata, xydict, particle=None):
+	def saveFrameTrajectory(self, rundata, xydict, limit=10, reference_index=None, particle=None):
 		'''
-		Save appiondata ApFrameAlignTrajectory
+		Save appiondata ApDDFrameTrajectoryData
 		'''
-		q=appiondata.ApFrameAlignTrajectory()
+		n_positions = len(xydict['x'])
+		limit = min([n_positions,limit])
+		if limit < 2:
+			raise ValueError('Not enough frames to save trajectory')
+		if reference_index == None:
+			reference_index = n_positions // 2
+		q=appiondata.ApDDFrameTrajectoryData()
 		q['image']=self.image
 		q['particle']=particle
 		q['ddstackrun']=rundata
-		q['xshift']=list(xydict['x'])
-		q['yshift']=list(xydict['y'])
+		q['pos_x']=list(xydict['x'][:limit]) #position relative to reference
+		q['pos_y']=list(xydict['y'][:limit]) #position relative to reference
+		q['last_x']=xydict['x'][-1]
+		q['last_y']=xydict['y'][-1]
+		q['number_of_positions']= n_positions
+		q['reference_index']= reference_index
 		q.insert()
 		return q
 
@@ -148,8 +158,8 @@ if __name__ == '__main__':
 	print(dd.rundir)
 	ddinfo.printDriftStats(imagedata['filename'][:-5]+'*',dd.apix)
 	print(dd.getFrameStats())
-	xydict = dd.getFrameAlignTrajectoryFromLog()
-	trajdata = dd.saveFrameAlignTrajectory(dd.ddstackrun, xydict, None)
+	xydict = dd.getFrameTrajectoryFromLog()
+	trajdata = dd.saveFrameTrajectory(dd.ddstackrun, xydict)
 	if trajdata.dbid:
 		dd.saveAlignStats(dd.ddstackrun, trajdata)
 	os.chdir(cwd)

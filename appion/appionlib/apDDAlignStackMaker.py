@@ -252,10 +252,10 @@ class AlignStackLoop(apDDStackMaker.FrameStackLoop):
 	def commitAlignStats(self, aligned_imgdata):
 		try:
 			ddr = apDDResult.DDResults(aligned_imgdata)
-			xydict = ddr.getFrameAlignTrajectoryFromLog()
+			xydict = ddr.getFrameTrajectoryFromLog()
 		except Exception as e:
 			apDisplay.printError('Can not commit alignmnet stats: %s' % e) 
-		trajdata = ddr.saveFrameAlignTrajectory(ddr.ddstackrun, xydict, None)
+		trajdata = ddr.saveFrameTrajectory(ddr.ddstackrun, xydict)
 		ddr.saveAlignStats(ddr.ddstackrun, trajdata)
 
 if __name__ == '__main__':
