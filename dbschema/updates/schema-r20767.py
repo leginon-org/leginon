@@ -55,11 +55,11 @@ class SchemaUpdate(baseSchemaClass.SchemaUpdate):
 			ddr = apDDResult.DDResults(aligned_imgdata)
 			if appiondata.ApDDAlignStatsData(image=aligned_imgdata).query():
 				return False
-			xydict = ddr.getFrameAlignTrajectoryFromLog()
+			xydict = ddr.getFrameTrajectoryFromLog()
 		except ValueError:
 			return False
 		if xydict and xydict['x'] and xydict['y']:
-			trajdata = ddr.saveFrameAlignTrajectory(ddr.ddstackrun, xydict, None)
+			trajdata = ddr.saveFrameTrajectory(ddr.ddstackrun, xydict)
 			ddr.saveAlignStats(ddr.ddstackrun, trajdata)
 			return True
 		return False
