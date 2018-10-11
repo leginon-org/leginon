@@ -764,16 +764,54 @@ class ApDEAlignerParamsData(Data):
 		)
 	typemap = classmethod(typemap)
 
+class ApDDFrameTrajectoryData(Data):
+	'''
+	Retake of ApFrameAlignTrajectory. Save typically 10 frames
+	plus the last frame which is just enough to view the
+	trend to save space.
+	'''
+	def typemap(cls):
+		return Data.typemap() + (
+			('image', leginon.leginondata.AcquisitionImageData),
+			('particle', ApStackParticleData ),
+			('ddstackrun', ApDDStackRunData ),
+			('pos_x', list), #pixels relative to reference frame of the first 10 frames
+			('pos_y', list), #pixels relative to reference frame of the first 10 frames
+			('last_x', float), #pixels relative to reference frame
+			('last_y', float), #pixels relative to reference frame
+			('number_of_positions', int), #number of frames in the alignment
+			('reference_index', int) #reference frame index, base=0
+		)
+	typemap = classmethod(typemap)
+
 class ApFrameAlignTrajectory(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('image', leginon.leginondata.AcquisitionImageData),
 			('particle', ApStackParticleData ),
 			('ddstackrun', ApDDStackRunData ),
-			('xshift', list),
-			('yshift', list)
-			
+			('xshift', list), #pixels relative to the next frame
+			('yshift', list) #pixels relative to the next frame
 		)
+	typemap = classmethod(typemap)
+
+class ApDDAlignStatsData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('image', leginon.leginondata.AcquisitionImageData),
+			('ddstackrun', ApDDStackRunData),
+			('trajectory', ApDDFrameTrajectoryData),
+			('apix', float), #angstroms per pixel
+			('top_shift1_value', float), #pixels
+			('top_shift2_value', float), #pixels
+			('top_shift3_value', float), #pixels
+			('top_shift1_index', int), #base-0
+			('top_shift2_index', int), #base-0
+			('top_shift3_index', int), #base-0
+			('median_shift_value', float), #pixels
+		)
+	typemap = classmethod(typemap)
+
 ### END Stack tables ###
 ### START alignment tables  ###
 
