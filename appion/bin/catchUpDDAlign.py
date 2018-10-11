@@ -271,6 +271,13 @@ class CatchUpFrameAlignmentLoop(appionScript.AppionScript):
 			q = appiondata.ApDDAlignImagePairData(source=imgdata,result=self.aligned_imagedata,ddstackrun=self.rundata)
 			q.insert()
 
+	def loopCleanUp(self):
+		if self.aligned_imagedata != None and self.params['commit']:
+			pattern = self.aligned_imagedata['filename']+'_c*.mrc'
+			aligned_mrcs = glob.glob(pattern)
+			for filename in aligned_mrcs:
+				apFile.removeFile(filename)
+
 	def getAllFiles(self):
 		if not self.params['mrcnames']:
 			# assume that we are in the ddstack rundir
@@ -311,6 +318,7 @@ class CatchUpFrameAlignmentLoop(appionScript.AppionScript):
 			self.processImage(imagedata)
 			if self.params['commit']:
 				self.commitToDatabase(imagedata)
+				self.loopCleanUp()
 			apDisplay.printMsg('\n')
 		return False
 
