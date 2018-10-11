@@ -60,7 +60,10 @@ class DDResults(object):
 		logfile = self.getAlignLogPath()
 		if not os.path.isfile(self.logfile):
 			raise ValueError('No align log file found')
-		positions = ddinfo.readPositionsFromAlignLog(logfile)
+		try:
+			positions = ddinfo.readPositionsFromAlignLog(logfile)
+		except IOError as e:
+			raise ValueError('align log file %s not readable' % logfile)
 		return positions
 
 	def getPixelShiftsBetweenFrames(self):
