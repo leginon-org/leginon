@@ -872,8 +872,9 @@ class DDFrameProcessing(DirectDetectorProcessing):
 
 		# BAD PIXEL FIXING
 		plan = self.getCorrectorPlan(self.camerainfo)
-		apDisplay.printMsg('Fixing bad pixel, columns, and rows')
-		self.c_client.fixBadPixels(corrected,plan)
+		if plan is not None:
+			apDisplay.printMsg('Fixing bad pixel, columns, and rows')
+			self.c_client.fixBadPixels(corrected,plan)
 		#Clipping is turned off to avoid artifacts in analog DD
 		#apDisplay.printMsg('Cliping corrected image')
 		#corrected = numpy.clip(corrected,0,10000)
