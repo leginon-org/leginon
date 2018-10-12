@@ -94,6 +94,8 @@ class DDStackLoop(appionLoop2.AppionLoop):
 			apDisplay.printMsg('Uploading aligned image as %s' % self.aligned_imagedata['filename'])
 			q = appiondata.ApDDAlignImagePairData(source=imgdata,result=self.aligned_imagedata,ddstackrun=self.rundata)
 			q.insert()
+			# Issue #6155 need new query to get timestamp
+			self.aligned_imagedata = leginondata.AcquisitionImageData().direct_query(q['result'].dbid)
 			self.commitAlignStats(self.aligned_imagedata)
 			transferALSThickness(q['source'],q['result'])
 			transferZLPThickness(q['source'],q['result'])
@@ -102,6 +104,8 @@ class DDStackLoop(appionLoop2.AppionLoop):
 			apDisplay.printMsg('Uploading aligned image as %s' % self.aligned_dw_imagedata['filename'])
 			q = appiondata.ApDDAlignImagePairData(source=imgdata,result=self.aligned_dw_imagedata,ddstackrun=self.rundata)
 			q.insert()
+			# Issue #6155 need new query to get timestamp
+			self.aligned_dw_imagedata = leginondata.AcquisitionImageData().direct_query(q['result'].dbid)
 			transferALSThickness(q['source'],q['result'])
 			transferZLPThickness(q['source'],q['result'])
 
