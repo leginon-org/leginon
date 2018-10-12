@@ -274,8 +274,10 @@ class CatchUpFrameAlignmentLoop(appionScript.AppionScript):
 	def loopCleanUp(self):
 		if self.aligned_imagedata != None and self.params['commit']:
 			pattern = self.aligned_imagedata['filename']+'_c*.mrc'
-			aligned_mrcs = glob.glob(pattern)
-			for filename in aligned_mrcs:
+			temp_pattern = 'temp%s_%d_sum_*.mrc' % (self.hostname, self.params['gpuid'])
+			mrcs_to_delete = glob.glob(pattern)
+			mrcs_to_delete.extend(glob.glob(temp_pattern))
+			for filename in mrcs_to_delete:
 				apFile.removeFile(filename)
 
 	def getAllFiles(self):
