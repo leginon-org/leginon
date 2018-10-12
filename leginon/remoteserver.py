@@ -14,7 +14,8 @@ import time
 import threading
 
 from leginon import leginondata
-from pyami import fileutil, jpg
+import pyami.fileutil
+import pyami.jpg
 import gui.wx.ClickTargetFinder
 
 SLEEP_TIME = 5
@@ -29,7 +30,7 @@ class RemoteServerMaster(object):
 		self.node = node
 		
 		self.remotedata_base = os.path.join(os.path.dirname(sessiondata['image path']),'remote')
-		fileutil.mkdirs(self.remotedata_base)
+		pyami.fileutil.mkdirs(self.remotedata_base)
 
 class RemoteServer(object):
 	def __init__(self, logger, sessiondata, node):
@@ -43,33 +44,39 @@ class RemoteStatusbar(RemoteServer):
 	def __init__(self, logger, sessiondata, node, remotedata_base):
 		super(RemoteStatusbar,self).__init__(logger, sessiondata, node)
 		self.datafile_base = os.path.join(remotedata_base,'statusbar')
-		fileutil.mkdirs(self.datafile_base)
-		self.tmp_path = os.path.join(self.datafile_base, 'status.tmp')
-		self.status_path = os.path.join(self.datafile_base, 'status.txt')
+		pyami.fileutil.mkdirs(self.datafile_base)
+		self.node_dir = os.path.join(self.datafile_base, self.node_name)
 
 	def setStatus(self, status):
-		if status == 'processing':
-			self.setBusyStatus()
+		if not issubclass(self.node.settingsclass, leginondata.AcquisitionSettingsData):
+			return
+		if status in ('processing','user input','waiting'):
+			self.setActiveStatus(status)
 		else:
 			self.setStandbyStatus()
 
 	def setStandbyStatus(self):
 		self._writeStatusToFile(None)
 
-	def setBusyStatus(self):
-		self._writeStatusToFile('busy')
+	def setActiveStatus(self, status):
+		status_str='_'.join(status.split())
+		self._writeStatusToFile(status_str)
 
 	def _writeStatusToFile(self, status):
-		f = open(self.status_path,'w')
+		if not os.path.isdir(self.node_dir):
+			pyami.fileutil.mkdirs(self.node_dir)
 		if status:
-			f.write('%s, busy' % (self.node_name))
-		f.close()
+			self.status_path = os.path.join(self.node_dir,status)
+			f = open(self.status_path,'w')
+			f.close()
+		else:
+			pyami.fileutil.remove_all_files_in_dir(self.node_dir)
 
 class RemoteToolbar(RemoteServer):
 	def __init__(self, logger, sessiondata, node, remotedata_base):
 		super(RemoteToolbar,self).__init__(logger, sessiondata, node)
 		self.datafile_base = os.path.join(remotedata_base,self.node_name,'toolbar')
-		fileutil.mkdirs(self.datafile_base)
+		pyami.fileutil.mkdirs(self.datafile_base)
 		self.tools = {}
 
 	def addClickTool(self,name, handling_attr_name, help_string=''):
@@ -131,7 +138,7 @@ class RemoteTargetingServer(RemoteServer):
 		super(RemoteTargetingServer,self).__init__(logger, sessiondata, node)
 		self.targetnames = []
 		self.datafile_base = os.path.join(remotedata_base,self.node_name,'targeting')
-		fileutil.mkdirs(self.datafile_base)
+		pyami.fileutil.mkdirs(self.datafile_base)
 		self.targefilepath = None
 		self.excluded_targetnames = ['Blobs','preview']
 		self.readonly_targetnames = ['done']
@@ -179,7 +186,7 @@ class RemoteTargetingServer(RemoteServer):
 		'''
 		self.imagedata = imagedata
 		image_base = os.path.join(self.datafile_base,'%06d' % imagedata.dbid)
-		fileutil.mkdirs(image_base)
+		pyami.fileutil.mkdirs(image_base)
 		self.out_jpgfilepath = os.path.join(image_base,'image.jpg')
 		self.out_targetfilepath = os.path.join(image_base,'outtargets')
 		self.in_targetfilepath = os.path.join(image_base,'intargets')
@@ -193,7 +200,7 @@ class RemoteTargetingServer(RemoteServer):
 		self.imagedata = None
 
 	def _writeOutJpgFile(self):
-		jpg.write(self.imagedata['image'],self.out_jpgfilepath)
+		pyami.jpg.write(self.imagedata['image'],self.out_jpgfilepath)
 
 	def setOutTargets(self, xytargets):
 		'''
