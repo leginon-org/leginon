@@ -4,6 +4,7 @@ import os
 import socket
 import shutil
 import numpy
+import glob
 
 #pyami
 from pyami import fileutil
@@ -257,6 +258,20 @@ class AlignStackLoop(apDDStackMaker.FrameStackLoop):
 			apDisplay.printError('Can not commit alignmnet stats: %s' % e) 
 		trajdata = ddr.saveFrameTrajectory(ddr.ddstackrun, xydict)
 		ddr.saveAlignStats(ddr.ddstackrun, trajdata)
+
+	def loopCleanUp(self, imgdata):
+		'''
+		Clean up within AppionLoop.  This is executed after commitToDatabase,
+		and is used to remove align corrected mrc files.
+		'''
+		super(AlignStackLoop, self).loopCleanUp(imgdata)
+		if self.aligned_imagedata != None and self.params['commit']:
+			pattern = self.aligned_imagedata['filename']+'_c*.mrc'
+			temp_pattern = 'temp%s.gpuid_%d_sum_*.mrc' % (self.hostname, self.dd.gpuid)
+			mrcs_to_delete = glob.glob(pattern)
+			mrcs_to_delete.extend(glob.glob(temp_pattern))
+			for filename in mrcs_to_delete:
+				apFile.removeFile(filename)
 
 if __name__ == '__main__':
 	makeStack = AlignStackLoop()
