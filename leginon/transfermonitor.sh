@@ -1,8 +1,6 @@
 #!/bin/bash
-#MONITORDIR="/bufferdirectory/"
-#TARGETDIR="/filesystem/frames/"
-MONITORDIR="/home/acheng/tests/test_transfermonitor/fromdir/"
-TARGETDIR="/home/acheng/tests/test_transfermonitor/todir/"
+MONITORDIR="/bufferdirectory/"
+TARGETDIR="/filesystem/frames/"
 NUMPROCS=10
 
 # Carl Negro
@@ -86,7 +84,7 @@ do
 	echo "NEWFILE IS $NEWFILE"
 	echo "SESSIONPATH IS $SESSIONPATH"
 	echo "TARGETDIR IS $TARGETDIR"
-	echo "$TARGETDIR$SESSIONPATH$NEWFILE.bz2"
+	echo "WORKING ON $TARGETDIR$SESSIONPATH$NEWFILE"
 
 
 	if [ ! -f ${NEWFILE}.bz2 ] && [ ! -d $NEWFILE ] && [[ "$FILEPATH" != *references* ]]; then
@@ -98,7 +96,7 @@ do
 		if [[ ${NEWFILE} = *".tif" ]]; then
 			DIFF=$( diff <(ls ${FILEPATH} | sed 's/$/.tif/g') <(ls $TARGETDIR$SESSIONPATH ) | sed 's/.tif$//g' | grep \< | awk '{print $2}' )
 			CHECKEXT=''
-			# fit files are not compressed so the original need to be kept
+			# tif files are not compressed so the original need to be kept
 			RSYNCREMOVE=''
 		else
 			DIFF=$( diff <(ls ${FILEPATH} | sed 's/$/.bz2/g') <(ls $TARGETDIR$SESSIONPATH ) | sed 's/.bz2$//g' | grep \< | awk '{print $2}' )

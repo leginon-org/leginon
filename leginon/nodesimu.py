@@ -20,7 +20,7 @@ class NodeSimulator(object):
 		self.event_output = []
 
 	def addEventInput(self,evt,handler):
-		self.event_input.append({evt,handler})
+		self.event_input.append((evt,handler))
 
 	def addEventOutput(self,evt):
 		self.event_output.append(evt)

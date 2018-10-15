@@ -138,7 +138,7 @@ class FrameStackLoop(apDDLoop.DDStackLoop):
 		apDisplay.printColor('frame stack path are cleaned up before start', 'blue')
 
 		if not self.isUseFrameAlignerFlat():
-			apDisplay.printError('frame flip debug: Should be set to use frame aligner flat')
+			apDisplay.printWarning('frame flip debug: Set to gain/dark correct each frame')
 			### make stack named as self.dd.tempframestackpath
 			self.dd.makeCorrectedFrameStack(self.params['rawarea'])
 		else:
