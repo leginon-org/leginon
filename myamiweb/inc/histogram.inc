@@ -39,7 +39,7 @@ class histogram {
 	}
 
 	function getBarWidth($graph_width,$left_margin,$right_margin,$percent=0.9) {
-		return $percent * ($graph_width - $left_margin - $right_margin) / $this->nbbars;
+		return $percent * ($graph_width - $left_margin - $right_margin) / ($this->nbbars + 3);
 	}
 
 	function generateData() {

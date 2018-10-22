@@ -89,14 +89,23 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 			sys.exit()
 
 	def setSessionData(self):
-		userq = leginondata.UserData(username='administrator')
-		q = leginondata.SessionData(hidden=True,user=userq)
+		# find administrator user
+		ur = leginondata.UserData(username='administrator').query()
+		if ur:
+			admin_user = ur[0]
+		else:
+			# do not process without administrator.
+			print " Need administrator user to import"
+			self.close(True)
+		q = leginondata.SessionData(user=admin_user)
 		r = q.query(results=1)
 		if r:
+			# use any existing session.
 			self.session = r[0]
 		else:
 			q['name']='presetimport'
 			q['comment'] = 'import presets from json'
+			q['hidden'] = True
 			r.insert()
 			self.session = r
 		print 'Using Session %s to import' % self.session['name']

@@ -38,6 +38,11 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 			checkq = q.copy()
 			if 'session' in q.keys():
 				q['session'] = self.session
+			if 'vectors' in q.keys():
+				# convert 2 1-D array to list of list
+				q['vectors'] = (q['vectors'][0].tolist(),q['vectors'][1].tolist())
+			if classname == 'ProjectionSubModeMappingData':
+				q['magnification list'] = self.maglistdata
 			# This is a forced insert so it is the most recent record
 			q.insert(force=True)
 			print 'insert %s dbid=%d' % (classname, q.dbid)
@@ -73,32 +78,60 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 	def getTemInstrumentData(self, tem_name):
 		temq = leginondata.InstrumentData(name=tem_name)
 		r = leginondata.PixelSizeCalibrationData(tem=temq, ccdcamera=self.cameradata).query(results=1)
+		ptemid = None # tem with pixel calibration is checked first.
 		if r:
-			return r[0]['tem']
-		else:
-			results = leginondata.InstrumentData().query()
-			tems = []
-			for r in results:
-				if r['cs']:
-					tems.append(r)
-			for t in tems:
-				answer = raw_input(' Is %s %s the tem to import calibration ? Y/y/N/n' % (t['hostname'], t['name']))
-				if answer.lower() == 'y':
-					return t
-			print "  No tem found"
-			sys.exit()
+			t = r[0]['tem']
+			answer = raw_input(' Is %s %s the tem to import calibration ? Y/y/N/n ' % (t['hostname'], t['name']))
+			if answer.lower() == 'y':
+				return t
+			ptemid = t.dbid
+		# check the rest
+		results = leginondata.InstrumentData().query()
+		tems = []
+		for r in results:
+			if r['cs'] and (ptemid is None or ptemid!=r.dbid):
+				tems.append(r)
+		for t in tems:
+			answer = raw_input(' Is %s %s the tem to import calibration ? Y/y/N/n ' % (t['hostname'], t['name']))
+			if answer.lower() == 'y':
+				return t
+		print "  No tem found"
+		sys.exit()
 
 	def setSessionData(self):
-		userq = leginondata.UserData(username='administrator')
-		q = leginondata.SessionData(hidden=True,user=userq)
+		# find administrator user
+		ur = leginondata.UserData(username='administrator').query()
+		if ur:
+			admin_user = ur[0]
+		else:
+			# do not process without administrator.
+			print " Need administrator user to import"
+			self.close(True)
+		q = leginondata.SessionData(user=admin_user)
 		r = q.query(results=1)
 		if r:
+			# use any existing session.
 			self.session = r[0]
 		else:
 			q['name']='calimport'
 			q['comment'] = 'import calibrations from json'
-			r.insert()
-			self.session = r
+			# insert as a hidden session.
+			q['hidden'] = True
+			q.insert()
+			self.session = q
+
+	def setMagnificationsData(self):
+		mags = []
+		for datadict in self.alldata:
+			classname = datadict.keys()[0]
+			kwargs = datadict[classname]
+			if classname == 'ProjectionSubModeMappingData':
+				mags.append(float(kwargs['magnification']))
+		mags.sort()
+		print mags
+		q = leginondata.MagnificationsData(instrument=self.temdata,magnifications=mags)
+		q.insert()
+		return q
 
 	def printQuery(self, q):
 		print q
@@ -106,6 +139,7 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 
 	def run(self):
 		self.readJsonFile(self.jsonfile)
+		self.maglistdata = self.setMagnificationsData()
 		self.insertAllData()
 
 	def close(self, status):

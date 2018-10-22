@@ -79,7 +79,7 @@ def targetPoints(targets):
 class TiltTracker(acquisition.Acquisition):
 	panelclass = gui.wx.TiltTracker.Panel
 	settingsclass = leginondata.TiltTrackerSettingsData
-	defaultsettings = acquisition.Acquisition.defaultsettings
+	defaultsettings = dict(acquisition.Acquisition.defaultsettings)
 	defaultsettings.update({
 		'activation interval': 1,
 		'tilts': '(-45, 0)',
@@ -307,6 +307,8 @@ class TiltTracker(acquisition.Acquisition):
 			self.logger.info('Acquire intermediate tilted parent image')
 			#print 'acquire intertilt'
 			imagenew = self.acquireCorrectedCameraImageData(force_no_frames=True)
+			if imagedata is None:
+				return None,None
 			arraynew = numpy.asarray(imagenew['image'], dtype=numpy.float32)
 			if medfilt > 1:
 				arraynew = ndimage.median_filter(arraynew, size=medfilt)

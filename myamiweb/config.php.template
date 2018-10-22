@@ -117,7 +117,7 @@ define('WEBSERVICE_URL', false);
 // --- if the login and passphrase are false/null	-- //
 // --- the username and password that the user   	-- //
 // --- logs into appion with will be used.			-- //
-// $PROCESSING_HOSTS[] = array('host' => 'myhost.inst.edu',	'nproc' => 32,'nodesdef' => '4','nodesmax' => '280','ppndef' => '32','ppnmax' => '32','reconpn' => '16','walltimedef' => '48','walltimemax' => '240','cputimedef' => '1536','cputimemax' => '10000','memorymax' => '','appionbin' => 'bin/','appionlibdir' => 'appion/','baseoutdir' => 'appion','localhelperhost' => '','dirsep' => '/','wrapperpath' => 'appion','loginmethod' => 'SHAREDKEY','loginusername' => '','passphrase' => '','publickey' => 'rsa.pub','privatekey' => 'rsa','gpus' => array( '0.0' => 'device 0: Tesla', '1' => 'device 1', '2' => 'device 2'), 'queues' => array('bigmem','myami')	);
+// $PROCESSING_HOSTS[] = array('host' => 'myhost.inst.edu',	'nproc' => 32,'nodesdef' => '4','nodesmax' => '280','ppndef' => '32','ppnmax' => '32','reconpn' => '16','walltimedef' => '48','walltimemax' => '240','cputimedef' => '1536','cputimemax' => '10000','memorymax' => '','appionbin' => 'bin/','appionlibdir' => 'appion/','baseoutdir' => 'appion','localhelperhost' => '','dirsep' => '/','wrapperpath' => 'appion','loginmethod' => 'SHAREDKEY','loginusername' => '','passphrase' => '','publickey' => 'rsa.pub','privatekey' => 'rsa','gpus' => array( '0.0' => 'device 0: Tesla', '1' => 'device 1', '2' => 'device 2'), 'queues' => array('bigmem','myami'), 'noqueuing' => false, 'allowdirectrun' => false	);
 
 
 // --- Restrict file server if you want --- //
@@ -167,8 +167,11 @@ define('APPION_PARENT_ADDITION',0);
 // --- negative index of the directory before the last directory named "leginon"
 // in DEFAULT_APPION_PATH used to replace the element of DEFAULT_APPION_PATH
 // before the last directory named "appion"--- //
-// Thre result is a subdivision of data by user or group before appion/leginon directories.
+// The result is a subdivision of data by user or group before appion/leginon directories.
 //define('APPION_PARENT_REPLACEMENT',-2); 
+
+// --- direct detector frame transfer initiated by user, not rawtransfer.py //
+//define('FRAME_TRANSFER_BY_USER', false);
 
 // --- sample tracking ---//
 define('SAMPLE_TRACK', false);
@@ -188,6 +191,8 @@ define('STARTUP_MESSAGE', "");
 // --- define('SERVER_PORT', "55123"); --- //
 define('SERVER_HOST', "");
 define('SERVER_PORT', "55123");
+// --- If a disk is down and causing image serving to hang, use this constant to avoid it
+//define('REDUX_AVOID_PATH',"/bad_data_disk");
 
 // --- list specifc datasets that have test scripts associated with them --- //
 // --- example:

@@ -105,6 +105,30 @@ class NodeUninitializedEvent(NotificationEvent):
 	'Event sent by a node to indicate that it is no longer operational'
 	pass
 
+class NodeLogErrorEvent(NotificationEvent):
+	'Event sent by a node to indicate that it has logged an error'
+	def typemap(cls):
+		return NotificationEvent.typemap() + (
+			('message', str),
+		)
+	typemap = classmethod(typemap)
+
+class ActivateNotificationEvent(NotificationEvent):
+	'Event sent by presets manager to activate slack error notification'
+	def typemap(cls):
+		return NotificationEvent.typemap() + (
+			('tem_host', str),
+		)
+	typemap = classmethod(typemap)
+
+class DeactivateNotificationEvent(NotificationEvent):
+	'Event sent by presets manager to deactivate slack error notification'
+	pass
+
+class NodeBusyNotificationEvent(NotificationEvent):
+	'Event sent by node such as Tomography to restart timeout timer'
+	pass
+
 class TargetListDoneEvent(NotificationEvent):
 	'Event indicating target list is done'
 	def typemap(cls):
@@ -350,6 +374,7 @@ class MakeTargetListEvent(ControlEvent):
 			('grid', leginondata.GridData),
 			('grid location', int),
 			('tray label', str),
+			('stagez', float),
 		)
 	typemap = classmethod(typemap)
 

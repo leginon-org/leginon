@@ -217,7 +217,7 @@ class Agent (basicAgent.BasicAgent):
 		try:
 			#Determine the appion project database name using the project id.
 			projDBConfig = sinedon.getConfig('projectdata')
-			dbConnection = sinedon.sqldb.connect(**dbConfig)
+			dbConnection = sinedon.sqldb.connect(**projDBConfig)
 			cursor = dbConnection.cursor()
 										  
 			query = "SELECT appiondb from processingdb WHERE `REF|projects|project`=%d" % (jobObject.getProjectId())

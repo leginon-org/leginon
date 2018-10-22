@@ -25,7 +25,8 @@ if (privilege('users')>2)
 	$link->addlink('user.php','Users','', 'user', '');
 if (privilege('users')>1)
 	$link->addlink('revertsettings.php','Revert Settings','', 'calibration', '');
-#$link->addlink('addcal.php','Calibrations','', 'calibration', '');
+if (privilege('groups')>3) 
+	$link->addlink('updateinstrument.php','Instruments','', 'tem_tecnai_icon', '');
 if (privilege('groups')>2)
 	$link->addlink('addapp.php','Applications','', 'application', '');
 if (privilege('data')>1)

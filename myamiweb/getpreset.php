@@ -84,7 +84,7 @@ if ($imgId) {
 			}
 			else if ($k=='exposure time') {
 				if( empty($v) && !empty($imageinfo['exposure time']))
-					$v = $imageinfo['exposure time'];
+  				$v = $imageinfo['exposure time'];
 				if(!empty($v) && $showexptime)
 					echo " <b>$k:</b> ",($leginondata->formatExposuretime($v));
 			}
@@ -138,6 +138,19 @@ if ($imgId) {
 			}
 		echo "<br /><b>particle labels:</b> ".join(', ', $formatlabels);
 
+	} else {
+		$format_timestamp = '<span style="color:20B2AA">'.$imageinfo['timestamp'].'</span>';
+		$zlp_thickness = $leginondata->getZeroLossIceThicknessfromImage($sessionId,$imgId);
+		$obj_thickness = $leginondata->getObjIceThicknessfromImage($sessionId,$imgId);
+  		$obj_thickness = $obj_thickness[0];
+  		$zlp_thickness = $zlp_thickness[0];
+		echo "<br />".$format_timestamp;
+		if ( !empty($zlp_thickness['thickness'])) {
+			echo "&nbsp &nbsp <b>ZLP Thickness:</b> ",intval($zlp_thickness['thickness']), " nm";
+		}
+		if ( !empty($obj_thickness['thickness'])) {
+			echo "&nbsp &nbsp <b>ALS Thickness:</b> ",intval($obj_thickness['thickness']), " nm";
+		}
 	}
 	echo "</font>";
 }

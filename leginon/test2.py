@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import databinder
 import socket
+from pyami import mysocket
 import event
 import datatransport
 import sys
@@ -26,7 +27,7 @@ class Logger(object):
    def warning(self, stuff):
       print 'WARNING', stuff
 
-myhostname = socket.gethostname().lower()
+myhostname = mysocket.gethostname().lower()
 
 for myport in range(49152,65536):
    try:
@@ -35,7 +36,7 @@ for myport in range(49152,65536):
    except:
       continue
 print '---------------------'
-print 'ACCEPTING CONNECTIONS AT:  %s:%s address %s' % (myhostname, myport, socket.gethostbyname(myhostname))
+print 'ACCEPTING CONNECTIONS AT:  %s:%s address %s' % (myhostname, myport, mysocket.gethostbyname(myhostname))
 print '---------------------'
 
 db.addBinding(myhostname, event.NodeAvailableEvent, printData)
@@ -45,7 +46,7 @@ yourlocation = {'TCP transport': {'hostname': tecnaihost, 'port': tecnaiport}}
 
 evt = event.SetManagerEvent(destination=tecnaihost, location=mylocation)
 print '---------------------'
-print 'CONNECTING TO:  %s:%s address %s' % (tecnaihost, tecnaiport, socket.gethostbyname(tecnaihost))
+print 'CONNECTING TO:  %s:%s address %s' % (tecnaihost, tecnaiport, mysocket.gethostbyname(tecnaihost))
 print '---------------------'
 print ' '
 try:

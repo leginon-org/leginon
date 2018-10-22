@@ -34,12 +34,14 @@ $ctf_gif_files = glob("$outdir/$runname/media/ctf_correction/s*.gif");
 $dose_gif_files = glob("$outdir/$runname/media/dose_compensation/s*.gif");
 $corrpeak_gif_files = glob("$outdir/$runname/media/correlations/c*.gif");
 $corrpeak_vid_files = glob("$outdir/$runname/media/correlations/c*.{mp4,ogv,webm}",GLOB_BRACE);
-$initial_tilt_gif_files = glob("$outdir/$runname/media/tiltseries/i*.gif");
-$initial_tilt_vid_files = glob("$outdir/$runname/media/tiltseries/i*.{mp4,ogv,webm}",GLOB_BRACE);
+$initial_tilt_gif_files = glob("$outdir/$runname/media/tiltseries/in*.gif");
+$initial_tilt_vid_files = glob("$outdir/$runname/media/tiltseries/in*.{mp4,ogv,webm}",GLOB_BRACE);
 $manual_tilt_gif_files = glob("$outdir/$runname/media/tiltseries/m*.gif");
 $manual_tilt_vid_files = glob("$outdir/$runname/media/tiltseries/m*.{mp4,ogv,webm}",GLOB_BRACE);
 $tilt_gif_files = glob("$outdir/$runname/media/tiltseries/c*.gif");
 $tilt_vid_files = glob("$outdir/$runname/media/tiltseries/c*.{mp4,ogv,webm}",GLOB_BRACE);
+$imod_tilt_gif_files = glob("$outdir/$runname/media/tiltseries/im*.gif");
+$imod_tilt_vid_files = glob("$outdir/$runname/media/tiltseries/im*.{mp4,ogv,webm}",GLOB_BRACE);
 $manual_rec_gif_files = glob("$outdir/$runname/media/reconstructions/m*.gif");
 $manual_rec_vid_files = glob("$outdir/$runname/media/reconstructions/m*.{mp4,ogv,webm}",GLOB_BRACE);
 $rec_gif_files = glob("$outdir/$runname/media/reconstructions/c*.gif");
@@ -81,6 +83,11 @@ $tilt2_ogv = "loadvid.php?filename=".$tilt_vid_files[4];
 $tilt2_webm = "loadvid.php?filename=".$tilt_vid_files[5];
 $download_tilt_mp4 = "downloadvid.php?filename=".$tilt_vid_files[0];
 $download_tilt2_mp4 = "downloadvid.php?filename=".$tilt_vid_files[3];
+$imod_tilt_gif = "loadimg.php?rawgif=1&filename=".$imod_tilt_gif_files[0];
+$imod_tilt_mp4 = "loadvid.php?filename=".$imod_tilt_vid_files[0];
+$imod_tilt_ogv = "loadvid.php?filename=".$imod_tilt_vid_files[1];
+$imod_tilt_webm = "loadvid.php?filename=".$imod_tilt_vid_files[2];
+$download_imod_tilt_mp4 = "downloadvid.php?filename=".$imod_tilt_vid_files[0];
 $rec_gif = "loadimg.php?rawgif=1&filename=".$rec_gif_files[0];
 $rec_mp4 = "loadvid.php?filename=".$rec_vid_files[0];
 $rec_ogv = "loadvid.php?filename=".$rec_vid_files[1];
@@ -224,7 +231,7 @@ if (isset($initial_tilt_gif_files[0])) {
 $html .= '</div>';
 
 $html .= "
-<hr /><br /><center><H4>Tilt-Series After Coarse Alignment</H4></center>
+<hr /><br /><center><H4>Tilt-Series After Protomo Coarse Alignment</H4></center>
 <br />";
 if (isset($tilt_gif_files[0]) and isset($tilt_gif_files[1]) and isset($manual_tilt_gif_files[0])) {
 	$html .= '<center><img src="'.$tilt_gif.'" alt="tiltseries" /> <img src="'.$manual_tilt_gif.'" alt="manualtiltseries" /> <img src="'.$tilt2_gif.'" alt="tiltseries2" />'."<br /></center>";
@@ -311,6 +318,26 @@ if (isset($tilt_gif_files[0]) and isset($tilt_gif_files[1]) and isset($manual_ti
 	$html .= '<p align="right"><a href="'.$download_tilt_mp4.'">Download Video</a></p><hr />';
 } else {
 	$html .= "<center><b>Depiction Tilt-Series Video for Coarse Alignment either failed to generate, is still processing, or wasn't requested</b></center>";
+}
+
+if (isset($imod_tilt_gif_files[0]) or (isset($imod_tilt_vid_files[0]))) {
+	$html .= "
+	<center><H4>Tilt-Series After Imod Coarse Alignment</H4></center>
+	<br />";
+	if (isset($imod_tilt_gif_files[0])) {
+		$html .= '<center><img src="'.$imod_tilt_gif.'" alt="tiltseries" />'."<br /></center>";
+		$html .= '<center>';
+		$html .= '<p align="right"><a href="'.$download_imod_tilt_mp4.'">Download Video</a></p><br /><br />';
+	} elseif (isset($imod_tilt_vid_files[0])){
+		$html .= '<center><video id="imodTiltVideos" controls autoplay loop>
+			  <source src="'.$imod_tilt_mp4.'" type="video/mp4" loop>'.'<br />
+			  <source src="'.$imod_tilt_webm.'" type="video/webm" loop>'.'<br />
+			  <source src="'.$imod_tilt_ogv.'" type="video/ogg" loop>'.'<br />
+			  HTML5 video is not supported by your browser.
+			  </video></center>';
+		$html .= '<center>';
+		$html .= '<p align="right"><a href="'.$download_imod_tilt_mp4.'">Download Video</a></p><hr />';
+	}
 }
 
 $html .= "
@@ -404,10 +431,11 @@ if (isset($rec_gif_files[0]) and isset($rec_gif_files[1]) and isset($manual_rec_
 	$html .= "<center><b>Depiction Reconstruction Video for Coarse Alignment either failed to generate, is still processing, or wasn't requested</b></center>";
 }
 
-$html .= "<br></br><b><center>[If you wish to manually align the (1st) Coarse Alignment, run the following command:</b><br><br>
-				/usr/bin/python `which protomo2manualaligner.py` --rundir=$outdir/$runname/ --tiltseries=$tiltseries --iteration=Coarse --center_all_images=False --sampling=4 --image_fraction=0.65<br><br>
-				<b>and then choose 'More Manual' as the starting tilt file in Refinement.]</b><br><br>
-				<b>You may wish to change the cneter_all_images, sampling, or image_fraction options.</center></b><br>";
+$html .= "<br></br><b><center>[If you wish to manually align, run the following command:</b><br><br>
+				protomo2manualaligner.py --rundir=$outdir/$runname/ --tiltseries=$tiltseries --sampling=4 --iteration=Coarse --center_all_images=False --max_image_fraction=0.75<br><br>
+				<b>and then choose 'More Manual' as the starting tilt file in Refinement.]<br><br>
+				(Possible 'Iteration' options are: Original, Coarse, Coarse2, or Imod)</b><br>
+				<b>You may also wish to change the center_all_images, sampling, or image_fraction options.</center></b><br>";
 
 echo $html
 ?>

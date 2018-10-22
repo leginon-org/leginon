@@ -67,6 +67,8 @@ eventFactory('Get BeamTilt Done')
 eventFactory('Set BeamTilt Done')
 eventFactory('Measurement Done')
 eventFactory('Coma Measurement Done')
+eventFactory('Read Ab Free State')
+eventFactory('Read State Done')
 eventFactory('Submit Targets')
 eventFactory('Targets Submitted')
 eventFactory('Enable Play Button')
@@ -106,7 +108,9 @@ eventFactory('CCDCamera Change', attributes=['name'], command=True)
 # MCV events
 eventFactory('Get Display Pressure', attributes=['unit','values'])
 eventFactory('Get Display Grid Loader Slot States', attributes=['values'])
+eventFactory('Get Display Aperture States', attributes=['values'])
 eventFactory('Update Grid Slot Selector', attributes=['values'])
+eventFactory('Update Aperture Selector', attributes=['values','current'])
 
 
 

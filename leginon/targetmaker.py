@@ -67,13 +67,16 @@ class MosaicTargetMaker(TargetMaker):
 	def __init__(self, id, session, managerlocation, **kwargs):
 		TargetMaker.__init__(self, id, session, managerlocation, **kwargs)
 		self.pixelsizecalclient = calibrationclient.PixelSizeCalibrationClient(self)
-		self.addEventInput(event.MakeTargetListEvent, self._makeAtlas)
+		self.addEventInput(event.MakeTargetListEvent, self.handleMakeTargetList)
 		self.presetsclient = presets.PresetsClient(self)
 
 		self.publishargs = None
 		self.start()
 
 	def calculateAtlas(self):
+		'''
+		Calculate atlas grid points. Called from gui.
+		'''
 		self.publishargs = None
 		try:
 			self.publishargs = self._calculateAtlas()
@@ -104,7 +107,7 @@ class MosaicTargetMaker(TargetMaker):
 			raise AtlasError('label "%s" is already used, choose another' % (label,))
 
 	def validateSettings(self, evt=None):
-		if evt is None:
+		if evt is None or evt['grid'] is None:
 			label = self.settings['label']
 			self.checkLabel(label)
 		radius = self.settings['radius']
@@ -120,6 +123,8 @@ class MosaicTargetMaker(TargetMaker):
 		self.logger.debug('Getting current instrument state...')
 		presetname = self.settings['preset']
 		preset = self.presetsclient.getPresetByName(presetname)
+		if preset is None:
+			raise AtlasError('cannot find preset \'%s\' in this session' % presetname)
 		temname = preset['tem']['name']
 		self.instrument.setTEM(temname)
 		camname = preset['ccdcamera']['name']
@@ -135,15 +140,27 @@ class MosaicTargetMaker(TargetMaker):
 		self.logger.debug('Get current instrument state completed')
 		return scope, camera
 
-	def setAlpha(self, alpha_degrees):
+	def setStageZ(self, z_meters):
 		'''
-		TEM is already set by now.
+		Set scope stage z value. TEM must already be set.
 		'''
+		z_um = z_meters*1e6
+		self.logger.info('Setting stage to %.1f um' % z_um)
+		self.instrument.tem.setStagePosition({'z':z_meters})
+		self.logger.info('Stage set to %.1f um' % z_um)
+
+	def setAlpha(self, alpha_radians):
+		'''
+		Set scope stage alpha in radians.  TEM must already be set.
+		'''
+		alpha_degrees = math.degrees(alpha_radians)
 		self.logger.info('Set stage tilt to %.2f degrees' % alpha_degrees)
-		alpha_radians = math.radians(alpha_degrees)
 		self.instrument.tem.setDirectStagePosition({'a':alpha_radians})
 
 	def getAlpha(self, scope):
+		'''
+		Returns stage alpha in radians.
+		'''
 		try:
 			alpha = scope['stage position']['a']
 		except KeyError:
@@ -161,7 +178,7 @@ class MosaicTargetMaker(TargetMaker):
 
 		preset = self.presetsclient.getPresetByName(presetname)
 		if preset is None:
-			raise AtlasError('cannot find preset \'%s\'' % presetname)
+			raise AtlasError('cannot find preset \'%s\' in this session' % presetname)
 
 		return preset
 
@@ -206,22 +223,36 @@ class MosaicTargetMaker(TargetMaker):
 		self.logger.debug('Target list created')
 		return targetlist, grid
 
-	def _makeAtlas(self, evt):
-		if evt['grid'] is None or self.settings['ignore request']:
+	def handleMakeTargetList(self, evt):
+		if self.settings['ignore request']:
 			return
+		return self._makeAtlas(evt)
+
+	def _makeAtlas(self, evt):
+		'''
+		Calculate and make Atlas from event.
+		'''
 		try:
 			args = self._calculateAtlas(evt)
+			# pass evt values to _publishAtlas
 			kwargs = {'evt': evt}
 			self._publishAtlas(*args, **kwargs)
 		except Exception, e:
 			self.logger.exception('Atlas creation failed: %s' % e)
 
 	def _calculateAtlas(self,evt=None):
+		'''
+		Calculate atlas grid point and reset stage alpha and z.
+		Called either from calculateAtlas or from MakeTargetList
+		event handling.
+		'''
 		self.logger.info('Creating atlas targets...')
 		radius, overlap = self.validateSettings(evt)
 		scope, camera = self.getState()
 		if self.settings['alpha tilt'] is not None:
-			self.setAlpha(self.settings['alpha tilt'])
+			self.setAlpha(math.radians(self.settings['alpha tilt']))
+		if evt and 'stagez' in evt.keys() and evt['stagez'] is not None:
+			self.setStageZ(evt['stagez'])
 		alpha = self.getAlpha(scope)
 		preset = self.getPreset()
 		if self.settings['mosaic center'] == 'stage center':

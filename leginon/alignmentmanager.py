@@ -7,7 +7,7 @@ from leginon import leginondata
 class AlignmentManager(trepeater.TargetRepeater):
 	panelclass = leginon.gui.wx.AlignmentManager.Panel
 	settingsclass = leginondata.AlignmentManagerSettingsData
-	defaultsettings = trepeater.TargetRepeater.defaultsettings
+	defaultsettings = dict(trepeater.TargetRepeater.defaultsettings)
 	defaultsettings.update({
 		'repeat time': 0,
 	})

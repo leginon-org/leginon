@@ -229,13 +229,6 @@ class SettingsDialog(leginon.gui.wx.Settings.Dialog):
 
 class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
-		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
-		sb = wx.StaticBox(self, -1, 'Grid Entry')
-		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
-		sz = wx.GridBagSizer(5, 5)
-		label = wx.StaticText(self, -1, 'No Settings')
-		sz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sbsz.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
-
-		return [sbsz]
+		sizers = leginon.gui.wx.GridEntry.ScrolledSettings.initialize(self)
+		return sizers
 

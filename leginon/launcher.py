@@ -8,6 +8,10 @@
 #       see  http://leginon.org
 #
 
+# testing before start
+import configcheck
+configcheck.testBeforeStart()
+
 from leginon import leginondata
 import event
 import node
@@ -100,10 +104,10 @@ def getPrimaryPort(hostname):
 		return r[0]['primary port']
 
 if __name__ == '__main__':
-	import socket
+	from pyami import mysocket
 	import sys
 
-	hostname = socket.gethostname().lower()
+	hostname = mysocket.gethostname().lower()
 	launchername = hostname
 
 	managerlocation = {}

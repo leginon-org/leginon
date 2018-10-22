@@ -54,12 +54,13 @@ def getSpecificImagesFromSession(imglist, sessionname, msg=True):
 	return getSpecificImagesFromDB(imglist, sessiondata, msg)
 
 #================
-def getImagesFromDB(session, preset):
+def getImagesFromDB(session, preset, msg=True):
 	"""
 	returns list of image names from DB
 	"""
 	t0 = time.time()
-	apDisplay.printMsg("Querying database for preset '"+preset+"' images from session '"+session+"' ... ")
+	if msg is True:
+		apDisplay.printMsg("Querying database for preset '"+preset+"' images from session '"+session+"' ... ")
 	if preset != 'manual':
 		sessionq = leginon.leginondata.SessionData(name=session)
 		sessiondata = sessionq.query(results=1)[0]
@@ -83,8 +84,8 @@ def getImagesFromDB(session, preset):
 	"""
 	#for img in imgtree:
 		#img.holdimages=False
-	apDisplay.printMsg("%d images recevied in %s"
-		%(len(imgtree), apDisplay.timeString(time.time()-t0)))
+	if msg is True:
+		apDisplay.printMsg("%d images received in %s"%(len(imgtree), apDisplay.timeString(time.time()-t0)))
 	return imgtree
 
 #================
@@ -529,18 +530,19 @@ def setImgViewerStatus(imgdata, status=None, msg=True):
 	elif status is True:
 		statusVal = 'exemplar'
 	else:
-		print "skipping set viewer status"
-		return
+		#print "skipping set viewer status"
+		#return
+		statusVal = None
 
 	currentstatus = getImgViewerStatus(imgdata)
 
-	if currentstatus is None:
+	if currentstatus is None and statusVal:
 		#insert new
 		statusq = leginon.leginondata.ViewerImageStatus()
 		statusq['image'] = imgdata
 		statusq['status'] = statusVal
 		statusq.insert()
-	elif currentstatus != status:
+	elif currentstatus != status and statusVal:
 		#update column
 		dbconf=sinedon.getConfig('leginondata')
 		db=sinedon.sqldb.sqlDB(**dbconf)
@@ -548,6 +550,14 @@ def setImgViewerStatus(imgdata, status=None, msg=True):
 			+"SET status = '"+statusVal
 			+ ("' WHERE `REF|AcquisitionImageData|image`=%d" % (imgdata.dbid,)))
 		db.execute(q)
+	elif currentstatus is False and statusVal is None:
+		dbconf=sinedon.getConfig('leginondata')
+		db=sinedon.sqldb.sqlDB(**dbconf)
+		q= ( "DELETE FROM "+dbconf['db']+".`ViewerImageStatus` "
+			+ (" WHERE `REF|AcquisitionImageData|image`=%d" % (imgdata.dbid,)))
+		db.execute(q)
+	elif currentstatus is True and statusVal is None:
+		apDisplay.printWarning('Currently not handle status change from EXEMPLAR to DEFAULT')
 
 	#check assessment
 	if msg is True:
@@ -572,13 +582,20 @@ def checkMag(imgdata,goodmag):
 		return False
 
 #================
+def getCameraDimsFromSessionPresetName(sessionname, presetname):
+	''' return x & y dims for preset '''
+	sessiondata = leginon.leginondata.SessionData(name=sessionname).query()[0]
+	presetdata = leginon.leginondata.PresetData(name=presetname,session=sessiondata).query(results=1)[0]
+	return presetdata['dimension']['x'], presetdata['dimension']['y']
+
+#================
 def getDoseFromSessionPresetNames(sessionname, presetname):
 	''' returns dose, in electrons per Angstrom '''
-	sessiondata = leginondata.SessionData(name=sessionname).query()[0]
-	presetdata = leginondata.PresetData(name=presetname,session=sessiondata).query(results=1)[0]
+	sessiondata = leginon.leginondata.SessionData(name=sessionname).query()[0]
+	presetdata = leginon.leginondata.PresetData(name=presetname,session=sessiondata).query(results=1)[0]
 	dose = presetdata['dose']
 	if not dose:
-		raise RunTimeError("dose not available for %s session and preset %s" % (sessionname,presetname))
+		raise apDisplay.printError("dose not available for %s session and preset %s" % (sessionname,presetname))
 	return dose / 1e20
 
 #================

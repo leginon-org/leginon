@@ -395,6 +395,7 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		self.widgets['fixed model'] = wx.CheckBox(self, -1, 'Keep the tilt axis parameters fixed')
 		self.widgets['use z0'] = wx.CheckBox(self, -1, 'Initialize z0 with current model')
 		self.widgets['fit data points'] = IntEntry(self, -1, min=4, allownone=False, chars=5, value='4')
+		self.widgets['fit data points2'] = IntEntry(self, -1, min=4, allownone=False, chars=5, value='4')
 
 		magsz = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Initialize with the model of')
@@ -460,12 +461,7 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		label = wx.StaticText(self, -1, 'um of z0 jump between models' )
 		zsz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
-		fsz = wx.GridBagSizer(5, 5)
-		label = wx.StaticText(self, -1, 'Smooth' )
-		fsz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		fsz.Add(self.widgets['fit data points'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		label = wx.StaticText(self, -1, 'tilts (>=4) for defocus prediction' )
-		fsz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		fsz = self.createFitDataPointsSizer()
 
 		modelsz = wx.GridBagSizer(5, 5)
 		modelsz.Add(magsz, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
@@ -473,7 +469,7 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		modelsz.Add(zsz, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		modelsz.Add(self.widgets['fixed model'], (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		modelsz.Add(self.widgets['use z0'], (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		modelsz.Add(fsz, (5, 0), (1, 1), wx.ALIGN_RIGHT)
+		modelsz.Add(fsz, (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		modelbsz.Add(modelsz, 1, wx.ALL|wx.ALIGN_CENTER, 5)
 		modelsz.AddGrowableCol(0)
@@ -493,6 +489,24 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		self.Bind(wx.EVT_CHECKBOX, self.onFixedModel, self.widgets['fixed model'])
 		return sz
 
+	def createFitDataPointsSizer(self):
+		fb = wx.StaticBox(self, -1, 'xy smooth fit')
+		fbsz = wx.StaticBoxSizer(fb, wx.VERTICAL)
+		fsz = wx.GridBagSizer(2, 2)
+		label = wx.StaticText(self, -1, 'Number of data points used in fitting:' )
+		fsz.Add(label, (0, 0), (2, 1), wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, '+d')
+		fsz.Add(label, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		fsz.Add(self.widgets['fit data points'],
+				   (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, '-d')
+		fsz.Add(label, (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		fsz.Add(self.widgets['fit data points2'],
+				   (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		fbsz.Add(fsz, 1, wx.ALL|wx.ALIGN_CENTER, 5)
+		fsz.AddGrowableCol(0)
+		return fbsz
+
 	def onFixedModel(self, evt):
 		state = evt.IsChecked()
 		self.widgets['fit data points'].Enable(state)
@@ -507,7 +521,7 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 			return choices
 
 	def getTiltOrderChoices(self):
-		choices = ['sequential','alternate']
+		choices = ['sequential','alternate','swing']
 		return choices
 
 class Panel(leginon.gui.wx.Acquisition.Panel):

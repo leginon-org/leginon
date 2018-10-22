@@ -31,15 +31,6 @@ class JAHCFinder(targetfinder.TargetFinder):
 	defaultsettings.update({
 		'skip': False,
 		'image filename': '',
-		'edge lpf': {
-			'sigma': 1.0,
-		},
-		'edge': True,
-		'edge type': 'sobel',
-		'edge log size': 9,
-		'edge log sigma': 1.4,
-		'edge absolute': False,
-		'edge threshold': 100.0,
 		'template diameter': 40,
 		'template filename': default_template,
 		'file diameter': 168,
@@ -48,10 +39,10 @@ class JAHCFinder(targetfinder.TargetFinder):
 		'template type': 'cross',
 		'template lpf': {
 			'sigma': 1.0,
+		},
 		'template multiple':1,
 		'multihole angle':0.0,
-		#'multihole spacing':200,
-		},
+		'multihole spacing':200.0,
 		'threshold': 3.0,
 		'threshold method': "Threshold = mean + A * stdev",
 		'blobs border': 20,
@@ -136,7 +127,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 		filediameter = self.settings['file diameter']
 		invert = self.settings['template invert']
 		multiple = self.settings['template multiple']
-		spacing = self.settings['lattice spacing']
+		spacing = self.settings['multihole spacing']
 		angle = self.settings['multihole angle']
 		if self.settings['template filename'] != '':
 			if os.path.isfile(self.settings['template filename']):
@@ -510,10 +501,6 @@ class JAHCFinder(targetfinder.TargetFinder):
 			'user-check': self.settings['user check'],
 			'skip-auto': self.settings['skip'],
 			'queue': self.settings['queue'],
-
-			'edge-lpf-sigma': self.settings['edge lpf']['sigma'],
-			'edge-filter-type': self.settings['edge type'],
-			'edge-threshold': self.settings['edge threshold'],
 
 			'template-correlation-type': self.settings['template type'],
 			'template-lpf': self.settings['template lpf']['sigma'],

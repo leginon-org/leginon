@@ -88,7 +88,7 @@ class TargetTransformer(targethandler.TargetHandler, imagehandler.ImageHandler):
 		try:
 			matrix = reg.registerImageData(image1,image2)
 		except Exception, exc:
-			self.logger.warning('Registration type "%s" failed: %s' % (regtype, exc))
+			self.logger.warning('Registration type "%s" failed: %s' % (regtype, exc.message))
 			reg = self.registrations['identity']
 			self.logger.warning('Targets will not be transformed.')
 			matrix = reg.registerImageData(image1,image2)
@@ -446,13 +446,16 @@ class TransformManager(node.Node, TargetTransformer):
 
 		targetdata = emtarget['target']
 		# extra wait for falcon protector or normalization
-		self.logger.info('Wait for %.1f second before reaquire' % self.settings['pause time'])
+		self.logger.info('Wait for %.1f second before reacquire' % self.settings['pause time'])
 		time.sleep(self.settings['pause time'])
 		try:
 			imagedata = self.acquireCorrectedCameraImageData(channel)
-		except Exception, exc:
-			self.logger.error('Reacquire image failed: %s' % (exc,))
-			#TO DO: Need to handle no imagedata defined with exception here.
+		except Exception, e:
+			self.logger.error('Reacquire image failed: %s' % (e.message))
+			return None
+		if imagedata is None:
+			self.logger.error('Reacquire image failed')
+			return None
 		# The preset used does not always have the original preset's parameters such as image shift
 		currentpresetdata = self.presetsclient.getCurrentPreset()
 		## convert CameraImageData to AcquisitionImageData

@@ -222,6 +222,9 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		self.Bind(wx.EVT_BUTTON, self.onGrabPixels, self.bgrabpixels)
 		self.Bind(wx.EVT_BUTTON, self.onClearPixels, self.bclearpixels)
 
+		# disable acquire until user checks the settings
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ACQUIRE, False)
+
 	def onSetImage(self, evt):
 		leginon.gui.wx.Node.Panel.onSetImage(self, evt)
 
@@ -242,6 +245,7 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 	def onSettingsTool(self, evt):
 		self.resetInstruments()
 		self.settingsdialog.ShowModal()
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ACQUIRE, True)
 		plan = self.node.retrieveCorrectorPlanFromSettings()
 		self.setPlan(plan)
 
@@ -437,6 +441,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		szref.Add(self.widgets['combine'], (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 
 		szref.Add(self.widgets['store series'], (2,0), (1,2))
+		self.widgets['store series'].Disable()
 
 		sbszref.Add(szref, 1, wx.ALIGN_CENTER|wx.EXPAND|wx.ALL, 3)
 

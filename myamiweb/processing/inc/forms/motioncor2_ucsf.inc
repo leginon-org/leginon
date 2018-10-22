@@ -13,7 +13,7 @@ class motioncor2_ucsf extends MakeDDStackForm
 
 // Removed defergpu, alignoffset,alignccbox, nrw to make compatible with motioncor2 version
 {
-	function __construct(  $expId, $errorHTML='', $infoHTML='',$align=True,$bin=1, $nokeepstack=True, $ddstartframe=0, $ddnframe='',$alignlabel='a',$nrw=1, $MaskCentrow=0, $MaskCentcol=0, $MaskSizerows=1.0, $MaskSizecols=1.0, $Patchrows=5, $Patchcols=5, $Iter=7,$Tol=0.5,$Bft=100.0,$FmRef=0,$totaldose='', $doseweight=true, $gpuids=0 )
+	function __construct(  $expId, $errorHTML='', $infoHTML='',$align=True,$bin=1, $nokeepstack=True, $ddstartframe=0, $ddnframe='',$alignlabel='a',$nrw=1, $MaskCentrow=0, $MaskCentcol=0, $MaskSizerows=1.0, $MaskSizecols=1.0, $Patchrows=5, $Patchcols=5, $Iter=7,$Tol=0.5,$Bft_global=500.0,$Bft_local=100.0,$FmRef=0,$totaldose='', $doseweight=true, $gpuids=0 )
 	{
 		parent::__construct($expId, $errorHTML, $infoHTML);
 		
@@ -52,7 +52,6 @@ class motioncor2_ucsf extends MakeDDStackForm
 		$params->addParam( "MaskSize", $MaskSize,"" );
 		$params->addParam( "MaskSizerows", $MaskSizerows, "");
 		$params->addParam( "MaskSizecols", $MaskSizecols, "Mask size");
-//		$params->addParam( "Patch", $Patch, "" );
 		$params->addParam( "Patchrows", $Patchrows,"");
 		$params->addParam( "Patchcols", $Patchcols, "Tile frames into m x n segments");
 		$params->addParam( "Iter", $Iter, "Number of iterations to perform for alignment");
@@ -60,21 +59,23 @@ class motioncor2_ucsf extends MakeDDStackForm
 		$params->addParam( "FmRef", $FmRef, "Reference frame which other frames are aligned to");
 		$params->addParam( "doseweight", $doseweight, "Also Perform Dose Weighting and upload both results" );
 		$params->addParam( "totaldose", $totaldose,"Total Dose used in dose weighting (e/A^2)","default uses database value");
-
-		
-		
-#		$params->addParam( "alignoffset", $alignoffset, "frame offset" );dd
-		$params->addParam( "Bft", $Bft, "B Factor in A^2" );
-#		$params->addParam( "alignccbox", $alignccbox, "CC search boxsize in motioncor2" );
+		$params->addParam( "Bft_global", $Bft_global, "Global B Factor in A^2" );
+		$params->addParam( "Bft_local", $Bft_local, "Local B Factor in A^2");
 		$params->addParam( "alignlabel", $alignlabel, "append label to aligned image" );
 
 #		Using 'nrw' notation from motioncor2_ucsf instead of 'nrw' in motioncorr-Purdue
-		$params->addParam( "nrw", $nrw, "Number (1, 3, 5, ...) of frames in running average window");
+		$params->addParam( "nrw", $nrw, "Number of frames in running average window");
 #		$params->addParam( "flp", $flp, "Flip frames along Y axis.; 0 = no flip, 1 = flip");
-		// Validations
-		$params->addValidation( "bin", "num" );
 	}
 		
+	public function addValidations()
+	{
+		$params = $this->getFormParams();
+		// Validations
+		$params->addValidation( "bin", "float" );
+		$params->addValidation( "refimgid", "num" );
+	}
+
 	public function generateAdditionalFormRight()
 	{
 		$this->updateFormParams();
@@ -89,14 +90,9 @@ class motioncor2_ucsf extends MakeDDStackForm
 		$html.= $params->insertTextFieldInRow( "gpuids", 2*$fieldSize );
 		$html.= "<br/>\n";
 		$html.= "<hr>\n";
-//		$html.= $params->insertCheckboxField( "defergpu" );
-//		$html.= $params->insertCheckboxField( "no_keepstack" );
-	
 		
-		$html.= $params->insertTextFieldInRow( "bin", $fieldSize );
+		$html.= $params->insertTextFieldInRow( "bin", $fieldSize*2 );
 		$html.= "<br/>\n";
-//		$html.= $params->insertTextFieldInRow( "alignoffset",$fieldSize );
-//		$html.= "<br/>\n";
 
 		$html.= $params->insertTextFieldInRow( "Patchrows",$fieldSize );
 		$html.= $params->insertTextFieldInRow( "Patchcols",$fieldSize );
@@ -109,17 +105,14 @@ class motioncor2_ucsf extends MakeDDStackForm
 		$html.= "<br/>\n";
 		$html.= $params->insertTextFieldInRow( "Iter",$fieldSize );
 		$html.= "<br/>\n";
-	#	$html.= $params->insertTextFieldInRow( "Tol",$fieldSize );
-	#	$html.= "<br/>\n";
 		$html.= $params->insertTextFieldInRow( "FmRef",$fieldSize );
 		$html.= "<br/>\n";
-		$html.= $params->insertTextFieldInRow( "Bft", $fieldSize );
+		$html.= $params->insertTextFieldInRow( "Bft_global", $fieldSize );
 		$html.= "<br/>\n";
-	#	$html.= $params->insertTextFieldInRow( "alignccbox",$fieldSize );
-  	#	$html.= "<br/>\n";
+		$html.= $params->insertTextFieldInRow( "Bft_local", $fieldSize );
+		$html.= "<br/>\n";
                 $html.= $params->insertTextFieldinRow( "nrw", $fieldSize );
                 $html.= "<br/>\n";
-#               $html.= $params->insertTextFieldinRow( "flp", $fieldSize );
 		$html.= "<br/><br/>Frames used for sum image after alignment: <br/>\n";
 		$html.= $params->insertTextFieldInRow( "ddstartframe", $fieldSize );
 		$html.= $params->insertTextFieldInRow( "ddnframe", $fieldSize );
@@ -141,12 +134,8 @@ class motioncor2_ucsf extends MakeDDStackForm
 		$align = $params->getParamValue('align');
 		if (!$align) return $msg;
 		$nrw = $params->getParamValue('nrw');
-		if ($nrw != 1 )
+		/*if ($nrw != 1 )
 			$msg .= "<B>Error:</B> Grouping more than 1 will reduce alignment accuracy in the first few frames. This is not allowed for now".$nrw."<br/>";
-		/*if ( $nrw%2 == 0 )
-		{
-			$msg .= "<B>Error:</B> testNumber of frames in running average window must be odd. nrw = ".$nrw."<br/>";
-		}
 		*/
 		// Get recent image to check nframes against alignoffset and nrw.
 		$preset = $postArray['preset'];

@@ -90,7 +90,7 @@ class authlib{
 
 			$q="select DEF_id from UserData where username = '$username'";
 			$query = $dbc->SQLQuery($q);
-			$result = @mysql_num_rows($query);
+			$result = @mysqli_num_rows($query);
 
 			if ($result > 0) {
 
@@ -187,7 +187,7 @@ class authlib{
 
 		$q="select DEF_id from UserData where username = '$username'";
 		$query = $dbc->SQLQuery($q);
-		$result = @mysql_num_rows($query);
+		$result = @mysqli_num_rows($query);
 
 		if ($result > 0) {
 			return $this->error['username_exists'];
@@ -430,7 +430,7 @@ class authlib{
 		$q="select DEF_id from GroupData where name = '$name'";
 			
 		$query=$dbc->SQLQuery($q);
-		$result = @mysql_fetch_array($query);
+		$result = @mysqli_fetch_array($query);
 
 		if(!empty($result))
 			return $result['DEF_id'];
@@ -464,14 +464,14 @@ class authlib{
 		}
 		
 		$query=$dbc->SQLQuery($q);
-		$result = @mysql_num_rows($query);
+		$result = @mysqli_num_rows($query);
 	
 		if ($result != 1) {
 			return false;
 		}
 		
 		//The part from the database
-		list ($id,$timestamp) = mysql_fetch_row($query);
+		list ($id,$timestamp) = mysqli_fetch_row($query);
 		//The part from configuration
 		$hash = md5($this->secret.$timestamp);
 		$expire = (COOKIE_TIME) ? time()+COOKIE_TIME : 0;
@@ -497,13 +497,13 @@ class authlib{
 			."where u.username = '$username' ";
 
 		$query=$dbc->SQLQuery($q);
-		$result = @mysql_num_rows($query);
+		$result = @mysqli_num_rows($query);
 
 		if ($result < 1) {
 			return false;
 		}
 		//The part from the database
-		list ($id, $timestamp, $privilege) = mysql_fetch_row($query);
+		list ($id, $timestamp, $privilege) = mysqli_fetch_row($query);
 		//The part from configuration
 		$hash = md5($this->secret.$timestamp);
 
@@ -544,14 +544,14 @@ class authlib{
 				."from confirmauth "
 				."where mdhash = '$hash'";
 			$query = $dbP->SQLQuery($q);
-			$result = @mysql_num_rows($query);
+			$result = @mysqli_num_rows($query);
 
 
 			if ($result < 1) {
 				return $this->error['database_err1'];
 			}
 
-			list($username,$password,$firstname,$lastname,$email) = mysql_fetch_row($query);
+			list($username,$password,$firstname,$lastname,$email) = mysqli_fetch_row($query);
 
 			
 			$dbL = new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
@@ -620,10 +620,10 @@ class authlib{
 		$q="select DEF_id, username, firstname, lastname, email from UserData where username = '$username'";
 
 		$query = $dbc->SQLQuery($q);
-		$result = @mysql_num_rows($query);
+		$result = @mysqli_num_rows($query);
 
 		// setup query result value and assign to those variables
-		list($userID, $username, $firstname, $lastname, $email) = @mysql_fetch_row($query);
+		list($userID, $username, $firstname, $lastname, $email) = @mysqli_fetch_row($query);
 
 		if (!$username) {
 			return $this->error['no_username'];
@@ -667,24 +667,24 @@ class authlib{
 
 		else {
 
-			mysql_connect(DB_HOST, DB_USER, DB_PASS);
-			mysql_select_db(DB_LEGINON);
+			$link = mysqli_connect(DB_HOST, DB_USER, DB_PASS);
+			mysqli_select_db($link, DB_LEGINON);
 
-			$query = mysql_query("select * from confirmauth where id = '$id' AND email = '$email' AND mdhash = '$mdhash'");
-			$result = @mysql_num_rows($query);
+			$query = mysqli_query($link, "select * from confirmauth where id = '$id' AND email = '$email' AND mdhash = '$mdhash'");
+			$result = @mysqli_num_rows($query);
 
 			if ($result < 1) {
 
-				mysql_close();
+				mysqli_close($link);
 
 				return $this->error[15];
 
 			}
 
-			$update = mysql_query("update UserData set email = '$email' where id = '$id'");
-			$delete = mysql_query("delete from confirmauth where email = '$email'");
+			$update = mysqli_query($link, "update UserData set email = '$email' where id = '$id'");
+			$delete = mysqli_query($link, "delete from confirmauth where email = '$email'");
 
-			mysql_close();
+			mysqli_close($link);
 
 			return 2;
 
@@ -694,12 +694,12 @@ class authlib{
 
 	function email_flush () {
 
-		mysql_connect(DB_HOST, DB_USER, DB_PASS);
-		mysql_select_db(DB_LEGINON);
+		$link = mysqli_connect(DB_HOST, DB_USER, DB_PASS);
+		mysqli_select_db($link, DB_LEGINON);
 
-		$query = mysql_query("delete from confirmauth where date_add(date, interval 2 day) < now()");
+		$query = mysqli_query($link, "delete from confirmauth where date_add(date, interval 2 day) < now()");
 
-		mysql_close();
+		mysqli_close($link);
 
 		if (!$query) {
 
@@ -739,13 +739,13 @@ class authlib{
 
 			}
 
-			mysql_connect(DB_HOST, DB_USER, DB_PASS);
-			mysql_select_db(DB_LEGINON);
+			$link = mysqli_connect(DB_HOST, DB_USER, DB_PASS);
+			mysqli_select_db($link, DB_LEGINON);
 			$password = md5($password);
 
-			$query = mysql_query("update UserData set password = '$password' where id = '$id'");
+			$query = mysqli_query($link, "update UserData set password = '$password' where id = '$id'");
 
-			mysql_close();
+			mysqli_close($link);
 
 			if (!$query) {
 
@@ -761,12 +761,12 @@ class authlib{
 
 	function delete($id) {
 
-		mysql_connect(DB_HOST, DB_USER, DB_PASS);
-		mysql_select_db(DB_LEGINON);
+		$link = mysqli_connect(DB_HOST, DB_USER, DB_PASS);
+		mysqli_select_db($link, DB_LEGINON);
 
-		$query = mysql_query("delete from UserData where id = '$id'");
+		$query = mysqli_query($link, "delete from UserData where id = '$id'");
 
-		mysql_close();
+		mysqli_close($link);
 
 		return 2;
 

@@ -30,7 +30,7 @@ class Protomo2BatchForm extends BasicLayoutForm
 {
 	function __construct( $expId, $extraHTML, $sessionname='', $raw_path='', $dimx='', $dimy='', $procs='all',$coarse_param_file='',
 	$refine_param_file='', $recon_param_file='', $cachedir='', $protomo_outdir='', $link_recons='', $tiltseriesranges='', $firststep='1',
-	$laststep='3', $shift_limit='30' , $angle_limit='40', $r1_sampling='8', $r2_sampling='4', $r3_sampling='2', $r4_sampling='1', $r5_sampling='1',
+	$laststep='3', $shift_limit='90' , $angle_limit='60',  $imod_coarse_align='True', $r1_sampling='8', $r2_sampling='4', $r3_sampling='2', $r4_sampling='1', $r5_sampling='1',
 	$r6_sampling='', $r7_sampling='', $r8_sampling='',$r1_iters='20', $r2_iters='15', $r3_iters='10', $r4_iters='5', $r5_iters='', $r6_iters='',
 	$r7_iters='', $r8_iters='',$r1_lp_diam_x='15', $r2_lp_diam_x='15', $r3_lp_diam_x='15', $r4_lp_diam_x='15', $r5_lp_diam_x='',
 	$r6_lp_diam_x='', $r7_lp_diam_x='', $r8_lp_diam_x='', $r1_lp_diam_y='', $r2_lp_diam_y='', $r3_lp_diam_y='', $r4_lp_diam_y='',
@@ -51,7 +51,7 @@ class Protomo2BatchForm extends BasicLayoutForm
 	$r4_kernel_y='5', $r5_kernel_y='5', $r6_kernel_y='', $r7_kernel_y='', $r8_kernel_y='', $r1_corr_mode='mcf', $r2_corr_mode='mcf', $r3_corr_mode='mcf',
 	$r4_corr_mode='mcf', $r5_corr_mode='pcf', $r6_corr_mode='', $r7_corr_mode='', $r8_corr_mode='', $negative='', $positive='', 
 	$orientation='true', $orientation_switch='', $azimuth='true', $azimuth_switch='', $elevation='false', $tilt_azimuth='',
-	$elevation_switch='', $rotation='true', $rotation_switch='', $scale='false', $scale_switch='', $screening_start='1',
+	$elevation_switch='', $rotation='true', $rotation_switch='', $scale='false', $scale_switch='', $screening_start='1', $center_all_images='False',
 	$recon_map_sampling='2', $recon_map_size_x='2048', $recon_map_size_y='2048', $recon_thickness='1500', $recon_iter='',$recon_iter_presets='',
 	$auto_convergence='0.015', $auto_convergence_iters='5', $auto_ctf_correct='', $ctf_correct='', $amp_contrast_ctf='0.07', $iWidth='20', $DefocusTol='200',
 	$map_sampling='8', $tilt_clip='', $show_window_size='', $pixelsize='', $video_type='', $dose_presets='', $dose_a='', $dose_b='', $dose_c='', $frame_aligned='',
@@ -92,8 +92,9 @@ class Protomo2BatchForm extends BasicLayoutForm
 			if ($_POST['firststep'] == 9){$_POST['laststep']=9;}
 			if ($_POST['firststep'] == 10){$_POST['laststep']=10;}
 			if ($_POST['firststep'] == 12){$_POST['laststep']=12;}
+			if ($_POST['firststep'] == 14){$_POST['laststep']=14;}
 			
-			$steps=array("File Preparation", "Coarse Alignment", "Refinement", "Reconstruction", "----------------", "Screening Mode", "Defocus Estimation", "CTF Correction", "Dose Compensation", "3D Picking", "----------------", "Fully Automated");
+			$steps=array("File Preparation", "Coarse Alignment", "Refinement", "Reconstruction", "----------------", "Screening Mode", "Defocus Estimation", "CTF Correction", "Dose Compensation", "3D Picking", "----------------", "Fully Automated", "----------------", "Export Tilt-Series");
 			$html .= "<br>
 				<b><center>Number of tilt-series available to process for session $sessionname: <font size='5'>$numtiltseries</font></center></b>";
 			$html .= "
@@ -1537,7 +1538,7 @@ class Protomo2BatchForm extends BasicLayoutForm
 			$this->setTitle( 'Protomo Batch Refinement and Reconstruction Launcher' );
 			$this->setHeading( 'Protomo Batch Refinement and Reconstruction' );
 			$this->setExeFile( 'protomo2batch.py' );
-			$this->setGuideURL( "http://emg.nysbc.org/redmine/projects/appion/wiki/Align_Tilt-Series" );
+			$this->setGuideURL( "https://github.com/nysbc/appion-protomo#example" );
 			$this->setTestable( False ); // True to activate "test single image".
 			$this->setUseLegOutDir( False ); // The output directory will be created in the Appion run directory rather than Leginon.
 			$this->setShowDesc( False ); // Flag to hide the description field of the run parameters.
@@ -1568,6 +1569,7 @@ class Protomo2BatchForm extends BasicLayoutForm
 			$params->addParam( "tilt_azimuth", $tilt_azimuth, "Override Tilt Azimuth" );
 			$params->addParam( "change_refimg", $change_refimg, "Change Reference Image to Tilt Angle Closest to " );
 			$params->addParam( "desired_ref_tilt_angle", $desired_ref_tilt_angle, "degrees" );
+			$params->addParam( "imod_coarse_align", $imod_coarse_align, "Coarse Align with Imod" );
 			$params->addParam( "r1_region_x", $r1_region_x, "R1" );
 			$params->addParam( "r2_region_x", $r2_region_x, "R2" );
 			$params->addParam( "r3_region_x", $r3_region_x, "R3" );
@@ -1768,6 +1770,7 @@ class Protomo2BatchForm extends BasicLayoutForm
 			$params->addParam( "amp_contrast_defocus", $amp_contrast_defocus, "Amplitude Contrast" );
 			$params->addParam( "res_min", $res_min, "Lowest Resolution for Fitting" );
 			$params->addParam( "res_max", $res_max, "Highest Resolution for Fitting" );
+			$params->addParam( "center_all_images", $center_all_images, "Center All Images" );
 			$params->addParam( "defocus_tlt", $defocus_tlt, "Iteration for Tilt-Azimuth" );
 			$params->addParam( "defocus_tlt_iteration", $defocus_tlt_iteration, "Iteration Number" );
 			$params->addParam( "ctf_correct", $ctf_correct, "Correct for CTF" );
@@ -1837,14 +1840,18 @@ class Protomo2BatchForm extends BasicLayoutForm
 			$html.= '<option value="False">False</option>';
 			$html.= '</select>'; $html.= docpop('protomo_change_refimg', ' Change Reference Image to Tilt Angle Closest to ');
 			$html.= $params->insertTextField( "desired_ref_tilt_angle", $fieldSize );
+			$html.= '<select name="center_all_images" style="width:66px">';
+			$html.= '<option value="True">True</option>';
+			$html.= '<option selected value="False">False</option>';
+			$html.= '</select>'; $html.= docpop('protomo_center_all_images', ' Center All Images').'<br>';
 			$html .= "
 		<br />
 		<H3>Dose Compensation Parameters ".docpop('dose_info', '(Info)')."</H3>
 		<hr />";
 			$html.= '<select name="dose_presets" style="width:87px">';
-			$html.= '<option selected value="False">None</option>';
+			$html.= '<option value="False">None</option>';
 			$html.= '<option value="Light">Light</option>';
-			$html.= '<option value="Moderate">Moderate</option>';
+			$html.= '<option selected value="Moderate">Moderate</option>';
 			$html.= '<option value="Heavy">Heavy</option>';
 			$html.= '<option value="Custom">Custom</option>';
 			$html.= '</select>'; $html.= docpop('dose_presets', ' Dose Compensation Type').'<br>';
@@ -1866,6 +1873,10 @@ class Protomo2BatchForm extends BasicLayoutForm
 		<H3>Coarse Alignment Parameters ".docpop('coarse_info', '(Info)')."</H3>
 		<hr />";
 			$html.= $params->insertTextField( "coarse_param_file", $fieldSize3 );
+			$html.= '<select name="imod_coarse_align" style="width:66px">';
+			$html.= '<option selected value="True">True</option>';
+			$html.= '<option value="False">False</option>';
+			$html.= '</select>'; $html.= docpop('protomo_imod_coarse_align', ' Coarse Align with Imod').'<br>';
 		}
 		
 		if ($_POST['firststep'] <= 3 and $_POST['laststep'] >= 3)
@@ -2401,7 +2412,7 @@ class Protomo2BatchForm extends BasicLayoutForm
 			$html.= '<option value="dbl">dbl</option>';
 			$html.= '</select>'; $html.= docpop('protomo_r8_corr_mode', ' R8 | Correlation Mode').'<br>';
 			$html.= "</div><br>";
-	    		$html.= $params->insertTextField( "recon_map_sampling", $fieldSize );
+	    	$html.= $params->insertTextField( "recon_map_sampling", $fieldSize );
 			$html.= $params->insertTextField( "recon_map_size_x", $fieldSize );
 			$html.= $params->insertTextField( "recon_map_size_y", $fieldSize );
 			$html.= $params->insertTextField( "recon_thickness", $fieldSize );
@@ -2426,6 +2437,19 @@ class Protomo2BatchForm extends BasicLayoutForm
 			$html.= $params->insertTextField( "link_recons", $fieldSize3 );
 			
 		}
+		
+		
+		if ($_POST['firststep'] == 14 and $_POST['laststep'] == 14)
+		{
+			$html .= "
+		<br />
+		<H3>Tilt-Series Exporting Parameters ".docpop('exporting_info', '(Info)')."</H3>
+		<hr />";
+			$html.= '<br><select name="frame_aligned" style="width:66px">';
+			$html.= '<option selected value="True">True</option>';
+			$html.= '<option value="False">False</option>';
+			$html.= '</select>'; $html.= docpop('protomo_frame_aligned', ' Use Frame Aligned Images').'<br>';
+		}		
 		
 		if ($_POST['firststep'] == 2 or $_POST['firststep'] == 3 or $_POST['firststep'] == 6  or $_POST['firststep'] == 12 or $_POST['laststep'] == 2 or $_POST['laststep'] == 3 or $_POST['laststep'] == 6 or $_POST['laststep'] == 12 or (($_POST['firststep'] == 1 or $_POST['firststep'] == 2 or $_POST['firststep'] == 3) and $_POST['laststep'] == 4))
 		{
@@ -2501,6 +2525,7 @@ class Protomo2BatchForm extends BasicLayoutForm
 		if ($_POST['firststep'] == 9) {$command.="--prep_files=False --coarse_align=False --refine=False --reconstruct=False ";}
 		if ($_POST['firststep'] == 10) {$command.="--prep_files=False --coarse_align=False --refine=False --reconstruct=False --particle_picking=True ";}
 		if ($_POST['firststep'] == 12) {$command.="--automation=True --auto_prep=True --auto_coarse_align=True --auto_refine=True --auto_recon=True --recon_iter_presets=BestBin1or2 --sampling=8 ";}
+		if ($_POST['firststep'] == 14) {$command.="--exporting=True ";}
 		
 		$image_file_type=$_SESSION['image_file_type'];
 		$pixelsize=$_POST['pixelsize'];

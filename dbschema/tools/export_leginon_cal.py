@@ -73,6 +73,24 @@ class CalibrationJsonMaker(jsonfun.DataJsonMaker):
 		magsdata = leginondata.MagnificationsData(instrument=self.tem).query(results=1)[0]
 		return magsdata['magnifications']
 
+	def printMagSubmodeMap(self):
+		magsdata = leginondata.MagnificationsData(instrument=self.tem).query(results=1)[0]
+		q = leginondata.ProjectionSubModeMappingData()
+		q['magnification list'] = magsdata
+		results = q.query()
+		if results:
+			for r in results:
+				print 'Adding Submode Mag at %dx = %s' % (r['magnification'], r['name'])
+			self.publish(results)
+
+	def printPixelSizeCalibrationQueries(self, mags):
+		#PixelSizeCalibrationData
+		for mag in mags:
+			results = leginondata.PixelSizeCalibrationData(ccdcamera=self.cam,magnification=mag).query(results=1)
+			if results:
+				print 'Adding PixeSize at %dx = %.3e' % (mag, results[0]['pixelsize'])
+				self.publish(results)
+
 	def printPixelSizeCalibrationQueries(self, mags):
 		#PixelSizeCalibrationData
 		for mag in mags:
@@ -127,24 +145,57 @@ class CalibrationJsonMaker(jsonfun.DataJsonMaker):
 				self.publish(results)
 
 	def printRotationCenterQueries(self, mags, probe):
-		# EucentricFocus in both micro and nano probe mode
+		# RotationCenter in both micro and nano probe mode
 		for mag in mags:
 			results = leginondata.RotationCenterData(tem=self.tem, magnification=mag, probe=probe).query(results=1)
 			if results:
 				print 'Adding Rotation Center for %d mag and %s probe' % (mag, probe)
 				self.publish(results)
 
+	def printImageRotationCalibrationQueries(self, mags, probe):
+		# Image Rotation in both micro and nano probe mode
+		for mag in mags:
+			results = leginondata.ImageRotationCalibrationData(tem=self.tem, ccdcamera=self.cam, magnification=mag, probe=probe).query(results=1)
+			if results:
+				print 'Adding Image Rotation for %d mag and %s probe' % (mag, probe)
+				self.publish(results)
+
+	def printImageScaleAdditionCalibrationQueries(self, mags, probe):
+		# ImageScaleAddition in both micro and nano probe mode
+		for mag in mags:
+			results = leginondata.ImageScaleAdditionCalibrationData(tem=self.tem, ccdcamera=self.cam, magnification=mag, probe=probe).query(results=1)
+			if results:
+				print 'Adding Image Scale Addition for %d mag and %s probe' % (mag, probe)
+				self.publish(results)
+
+	def printPPBeamTiltRotationQuery(self, probe):
+		results = leginondata.PPBeamTiltRotationData(tem=self.tem, probe=probe).query(results=1)
+		if results:
+			print 'Adding Phase Plate Beam Tilt Rotation for %s probe' % (probe)
+			self.publish(results)
+
+	def printPPBeamTiltVectorsQuery(self, probe):
+		results = leginondata.PPBeamTiltVectorsData(tem=self.tem, probe=probe).query(results=1)
+		if results:
+			print 'Adding Phase Plate Beam Tilt Vectors for %s probe' % (probe)
+			self.publish(results)
+
 	def run(self):
 		mags = self.getMags()
 		#print self.cam.dbid
 		#print mags
+		self.printMagSubmodeMap()
 		self.printPixelSizeCalibrationQueries(mags)
 		self.printCameraSensitivityQueries()
 		self.printStageModelCalibrationQueries(mags)
 		for p in (None,'micro','nano'):
 			self.printMatrixCalibrationQueries(mags,p)
+			self.printImageRotationCalibrationQueries(mags,p)
+			self.printImageScaleAdditionCalibrationQueries(mags,p)
 			self.printEucentricFocusQueries(mags,p)
 			self.printRotationCenterQueries(mags,p)
+			self.printPPBeamTiltVectorsQuery(p)
+			self.printPPBeamTiltRotationQuery(p)
 		json_filename = 'cal_%s+%s+%s.json' % (self.tem['name'],self.cam['hostname'],self.cam['name'])
 		self.writeJsonFile(json_filename)
 

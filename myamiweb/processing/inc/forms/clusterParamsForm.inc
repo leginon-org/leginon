@@ -34,6 +34,7 @@ class ClusterParamsForm extends BasicForm
 		$this->cluster = new Cluster( $processinghost );
 		
 		// Set default values based on the selected cluster
+		$nojobqueue 		= ( $nojobqueue == '') ? $this->cluster->getNoJobQueue() : $nojobqueue;
 		$nodes 		= ( $nodes == '') ? $this->cluster->getNodesDef() : $nodes;
 		$ppn 		= ( $ppn == '') ? $this->cluster->getPpnDef() : $ppn;
 		$rpn 		= ( $rpn == '') ? $this->cluster->getRpnDef() : $rpn;
@@ -50,6 +51,10 @@ class ClusterParamsForm extends BasicForm
 		$params->setHelpSection( "cluster" );
 				
 		$params->addParam( "processinghost", $processinghost, "Selected Host" );
+		if ($nojobqueue) {
+			$params->addValidation( "processinghost", "req" );
+			return;
+		}
 		$params->addParam( "nodes", $nodes, "Nodes" );
 		$params->addParam( "ppn", $ppn, "Proc/Node" );
 		$params->addParam( "rpn", $rpn, "Recons/Node" );
@@ -61,7 +66,6 @@ class ClusterParamsForm extends BasicForm
 		$params->addParam( "queue", $queue, "Queue" );
 		
 		// add validations
-		$params->addValidation( "processinghost", "req" );
 		$params->addValidation( "nodes", "req" );
 		$params->addValidation( "nodes", "num" );
 		$params->addValidation( "ppn", "req" );
@@ -120,6 +124,14 @@ class ClusterParamsForm extends BasicForm
 		$html.= "</td>\n";
 		$html.= "<td>\n";
 		$html.= $params->insertTextFieldInRow( "processinghost", 20 );
+		$nojobqueue 		= $this->cluster->getNoJobQueue();
+		if ($nojobqueue) {
+			$html.= "</td></tr>\n";
+			// End table
+			$html.= "</table>\n";
+			return $html;
+		}
+		
 		if ( $queueOptions ) {
 			$html.= "</td>\n";
 			$html.= "<td>\n";
@@ -245,6 +257,9 @@ class ClusterParamsForm extends BasicForm
 		$msg = parent::validate( $postArray );
 		
 		$params = $this->getFormParams();
+		$nojobqueue 		= $this->cluster->getNoJobQueue();
+		if ($nojobqueue) return $msg;
+		// further validation
 		$ppn = $params->getParamValue( "ppn" );
 		$rpn = $params->getParamValue( "rpn" );
 		

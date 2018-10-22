@@ -47,12 +47,16 @@ class ManualAcquisition(node.Node):
 		'save image': False,
 		'image label': '',
 		'loop pause time': 0.0,
+		'max loop': 10,
 		'low dose': False,
 		'low dose pause time': 5.0,
 		'defocus1switch': False,
 		'defocus1': 0.0,
 		'defocus2switch': False,
 		'defocus2': 0.0,
+		'do defocus series': False,
+		'defocus start': -5e-7,
+		'defocus step': -2.5e-7,
 		'dark': False,
 		'manual focus exposure time': 100.0,
 		'force annotate': False,
@@ -134,6 +138,9 @@ class ManualAcquisition(node.Node):
 			self.logger.error('Error acquiring image: %s' % e)
 			raise AcquireError
 
+		if imagedata is None:
+			raise AcquireError
+
 		image = imagedata['image']
 		self.logger.info('Displaying image...')
 		self.getImageStats(image)
@@ -189,16 +196,16 @@ class ManualAcquisition(node.Node):
 		suffix = 'ma'
 		extension = 'mrc'
 		if self.defocus is None:
-			defindex = '_0'
+			defindex = '_00'
 		else:
-			defindex = '_%d' % (self.defocus,)
+			defindex = '_%02d' % (self.defocus,)
 		try:
 			path = imagedata.mkpath()
 		except Exception, e:
 			raise
 			raise node.PublishError(e)
 		filenames = os.listdir(path)
-		pattern = '^%s_[0-9]{%d}%s_[0-9].%s$' % (prefix, digits, suffix, extension)
+		pattern = '^%s_[0-9]{%d}%s_[0-9][0-9].%s$' % (prefix, digits, suffix, extension)
 		number = 0
 		end = len('%s%s.%s' % (suffix, defindex, extension))
 		for filename in filenames:
@@ -316,14 +323,21 @@ class ManualAcquisition(node.Node):
 			return
 
 		self.loopstop.clear()
+		self.published_images = []
+		nloop = 1
 		self.logger.info('Acquisition loop started')
 		self.loopStarted()
 		while True:
+			self.logger.info('acquiring loop %d' % (nloop))
+			if nloop > self.settings['max loop']:
+				self.loopstop.set()
 			if self.loopstop.isSet():
 				break
-			self.published_images = []
+			if self.settings['do defocus series']:
+				self.setDefocus(nloop)
 			try:
 				self.acquire()
+				nloop += 1
 			except AcquireError:
 				self.loopstop.set()
 				break
@@ -332,6 +346,8 @@ class ManualAcquisition(node.Node):
 				self.logger.info('Pausing for ' + str(pausetime) + ' seconds...')
 				time.sleep(pausetime)
 
+		if self.settings['do defocus series']:
+			self.resetDefocus()
 		try:
 			self.postExposure()
 		except RuntimeError:
@@ -340,6 +356,18 @@ class ManualAcquisition(node.Node):
 
 		self.loopStopped()
 		self.logger.info('Acquisition loop stopped')
+
+	def setDefocus(self, nloop):
+		i = nloop-1
+		defocus = self.settings['defocus start']+self.settings['defocus step']*i
+		self.logger.info('Defocus set to %.2f um' % (defocus*1e6))
+		self.instrument.tem.Defocus = defocus
+		self.defocus = nloop
+		return
+
+	def resetDefocus(self):
+		self.instrument.tem.Defocus = self.settings['defocus start']
+		self.logger.info('Defocus set to %.2f um' % (self.settings['defocus start']*1e6))
 
 	def acquisitionLoopStart(self):
 		if not self.loopstop.isSet():
@@ -424,6 +452,8 @@ class ManualAcquisition(node.Node):
 		# acquire image
 		imagedata = self.acquireCorrectedCameraImageData(force_no_frames=True)
 
+		if imagedata is None:
+			raise AcquireError
 		# display
 		self.logger.info('Displaying dose image...')
 		self.getImageStats(imagedata['image'])
@@ -511,7 +541,6 @@ class ManualAcquisition(node.Node):
 					imagedata = self.acquireCameraImageData(force_no_frames=True)
 				imarray = imagedata['image']
 			except:
-				raise
 				self.manualchecklock.release()
 				self.manualplayer.pause()
 				self.logger.error('Failed to acquire image, pausing...')

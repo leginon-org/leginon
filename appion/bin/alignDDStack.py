@@ -94,7 +94,7 @@ class AlignFrameStackLoop(apDDLoop.DDStackLoop):
 		# set other parameters
 		self.dd.setNewBinning(self.params['bin'])
 		self.dd.setAlignedCameraEMData()
-		framelist = self.dd.getFrameList(self.params)
+		framelist = self.dd.getFrameListFromParams(self.params)
 		self.dd.setAlignedSumFrameList(framelist)
 
 		### first remove any existing stack file

@@ -22,7 +22,7 @@ import gui.wx.GonModeler
 class GonModeler(calibrator.Calibrator):
 	panelclass = gui.wx.GonModeler.Panel
 	settingsclass = leginondata.GonModelerSettingsData
-	defaultsettings = calibrator.Calibrator.defaultsettings
+	defaultsettings = dict(calibrator.Calibrator.defaultsettings)
 	defaultsettings.update({
 		'measure axis': 'x',
 		'measure points': 200,
@@ -143,6 +143,8 @@ class GonModeler(calibrator.Calibrator):
 		## acquire image
 		newimagedata = self.acquireCorrectedCameraImageData(self.corchannel, force_no_frames=True)
 
+		if newimagedata is None:
+			raise RuntimeError('Failed acquiring next image')
 		newnumimage = newimagedata['image']
 		self.setImage(newnumimage, 'Image')
 

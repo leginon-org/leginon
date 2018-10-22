@@ -3,7 +3,12 @@
 # DM Version
 DM_VERSION = 2.31.734.0
 
-### K2 Summit configuration through SERIALEMCCD plugin
+#Logger
+[logger]
+#verbosity 1=info, 2=debug
+VERBOSITY = 0
+
+### K2 or K3 Summit configuration through SERIALEMCCD plugin
 [k2]
 # Camera ID
 CAMERA_ID = 0
@@ -14,9 +19,17 @@ ROTATE = 1
 # raw frame base directory. Use '\' as path separator
 RAW_FRAME_DIR = D:\frames\
 # return camera call before file is saved
-DO_EARLY_RETURN = True
+DO_EARLY_RETURN = False
 # max number of frames to sum when return early
 EARLY_RETURN_FRAME_COUNT = 0
+# save movies as lzw compressed tiff
+SAVE_LZW_TIFF_FRAMES = False
+
+# K3 only configuration
+[k3]
+# K3 processing mode. 'gain normalized' or 'dark subtracted'
+DM_PROCESSING = gain normalized
+#DM_PROCESSING = dark subtracted
 
 ### Orius configuration if exists
 [orius]

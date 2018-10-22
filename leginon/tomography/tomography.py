@@ -34,7 +34,7 @@ class Tomography(leginon.acquisition.Acquisition):
 		'tilt max': 60.0,
 		'tilt start': 0.0,
 		'tilt step': 1.0,
-		'tilt order': 'alternate',
+		'tilt order': 'sequential',
 		'equally sloped': False,
 		'equally sloped n': 8,
 		'xcf bin': 1,
@@ -66,9 +66,10 @@ class Tomography(leginon.acquisition.Acquisition):
 		'use tilt': True,
 #		'wiener max tilt': 45,
 		'fit data points': 4,
+		'fit data points2': 4,
 		'use z0': False,
 		'addon tilts':'()',
-		'use preset exposure':True,
+		'use preset exposure':False,
 	})
 
 	def __init__(self, *args, **kwargs):
@@ -224,7 +225,11 @@ class Tomography(leginon.acquisition.Acquisition):
 		collect.exposures = exposures
 		collect.prediction = self.prediction
 		collect.setStatus = self.setStatus
+		collect.reset_tilt = self.targetlist_reset_tilt
 
+		self.logger.info('Set stage position alpha to %.2f degrees according to targetlist' % math.degrees(self.targetlist_reset_tilt))
+		self.instrument.tem.StagePosition = {'a': self.targetlist_reset_tilt}
+		time.sleep(self.settings['tilt pause time'])
 		try:
 			collect.start()
 		except leginon.tomography.collection.Abort:
@@ -317,6 +322,10 @@ class Tomography(leginon.acquisition.Acquisition):
 
 	def adjusttarget(self,preset_name,target,emtarget):
 		self.declareDrift('tilt')
+		# Force transform adjustment on tomography
+		if self.settings['adjust for transform'] == 'no':
+			self.logger.warning('Force target adjustment for tomography')
+			self.settings['adjust for transform'] = 'one'
 		target = self.adjustTargetForTransform(target)
 		emtarget = self.targetToEMTargetData(target)
 		presetdata = self.presetsclient.getPresetFromDB(preset_name)

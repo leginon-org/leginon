@@ -381,7 +381,7 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 		if self.params['maskassess'] is not None and not self.params['checkmask']:
 			apDisplay.printMsg("running mask assess")
 			self.params['checkmask'] = True
-		if self.params['localCTF']: self.params['ctfmethod']='localctf'
+		if 'localCTF' in self.params.keys() and self.params['localCTF']: self.params['ctfmethod']='localctf'
 
 	def checkIsDD(self):
 		apDisplay.printWarning('Checking for dd')
@@ -468,7 +468,7 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 		# check to see if image is rejected by other criteria
 		if self.rejectImage(imgdata) is False:
 			return False
-		if not self.params['boxfiles'] and self.params['noctf'] is not True:
+		if 'boxfiles' in self.params.keys() and not self.params['boxfiles'] and 'noctf' in self.params.keys() and self.params['noctf'] is not True:
 			# check CTF parameters for image and skip if criteria is not met
 			if self.checkCtfParams(imgdata) is False:
 				return False
@@ -486,7 +486,7 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 				apDisplay.printWarning('%s skipped for no-frame-saved\n ' % imgdata['filename'])
 				return
 			self.dd.setImageData(imgdata)
-			self.framelist = self.dd.getFrameList(self.params)
+			self.framelist = self.dd.getFrameListFromParams(self.params)
 			if not self.framelist:
 				apDisplay.printWarning('image rejected because no frame passes drift limit test')
 				return

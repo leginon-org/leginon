@@ -86,7 +86,7 @@ $viewer->setImageId($imageId);
 $viewer->addSessionSelector($sessions);
 $viewer->setScopeId($scopeId);
 $viewer->addScopeSelector($scopes);
-$viewer->addFileSelector($filenames);
+//$viewer->addFileSelector($filenames);
 $viewer->setNbViewPerRow('1');
 $viewer->addjs($jsdata);
 $pl_refresh_time=".5";
@@ -95,19 +95,19 @@ $playbackcontrol=$viewer->getPlaybackControl();
 $javascript = $viewer->getJavascript();
 
 
-$view1 = new view('Main View', 'v1');
+$view1 = new fileview('Data Selection', 'v1');
 $view1->setControl();
 $view1->setDataTypes($datatypes);
 $view1->setSize(100);
+
 $viewer->add($view1);
 
 
 $javascript .= $viewer->getJavascriptInit();
-login_header('image viewer', $javascript, 'initviewer()');
+login_header('file listing', $javascript, 'initviewer()');
 viewer_menu($sessionId);
 $viewer->display();
 
-echo "<p>files</p>";
 foreach ($filenames as $f) {
 	echo "<p>".$f['name']."</p>";
 }

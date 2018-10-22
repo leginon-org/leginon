@@ -54,15 +54,15 @@ class share {
 	function add_experiments($usrId, $allexp) {
 
 		$query = "select id from datalib_login where id = '$usrId'";
-		$result = mysql_num_rows($query);
+		$result = mysqli_num_rows($query);
 
 		if (is_array($allexp))
 		foreach($allexp as $exp) {
 
 			$q = "select experimentId from shareexperiments where experimentId='$exp' and  userId='$usrId' ";
-			$result = mysql_num_rows($q);
+			$result = mysqli_num_rows($q);
 			if ($result == 0) {
-				$is_success_first = mysql_query("insert into shareexperiments (experimentId, userId) values ('$exp', '$usrId')");
+				$is_success_first = mysqli_query($this->mysql->db_link, "insert into shareexperiments (experimentId, userId) values ('$exp', '$usrId')");
 			}
 		}
 		return 2;

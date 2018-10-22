@@ -12,7 +12,6 @@ class MotionCor2UCSFAlignStackLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop)
 	def setupParserOptions(self):
 		super(MotionCor2UCSFAlignStackLoop,self).setupParserOptions()
 
-		#self.parser.remove_option('gpuid')
 		self.parser.add_option("--gpuids", dest="gpuids", default='0')
 		self.parser.add_option("--nrw", dest="nrw", type="int", default=1,
 			help="Number (1, 3, 5, ...) of frames in running average window. 0 = disabled", metavar="INT")
@@ -43,11 +42,18 @@ class MotionCor2UCSFAlignStackLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop)
 		self.parser.add_option("--MaskSizerows",dest="MaskSizerows",metavar="#",type=float,default="1.0",
 			help="The Y size of subarea that will be used for alignment, default 1.0 corresponding full size.")
 
-		self.parser.add_option("--Bft",dest="Bft",metavar="#",type=float,default=100,
-                        help=" B-Factor for alignment, default 100.")
+		self.parser.add_option("--Bft_global",dest="Bft_global",metavar="#",type=float,default=500.0,
+                        help=" Global B-Factor for alignment, default 500.0.")
+
+		self.parser.add_option("--Bft_local",dest="Bft_local",metavar="#",type=float,default=150.0,
+                        help=" Global B-Factor for alignment, default 150.0.")
 
 		self.parser.add_option("--force_cpu_flat", dest="force_cpu_flat", default=False,
 			action="store_true", help="Use cpu to make frame flat field corrrection")
+
+	def addBinOption(self):
+		self.parser.add_option("--bin",dest="bin",metavar="#",type=float,default="1.0",
+			help="Binning factor relative to the dd stack. MotionCor2 takes float value (optional)")
 
 	#=======================
 	def checkConflicts(self):
@@ -56,11 +62,21 @@ class MotionCor2UCSFAlignStackLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop)
 		if self.params['keepstack'] is True:
 			apDisplay.printWarning('Frame stack saving not available to MotionCor2 from UCSF')
 			self.params['keepstack'] = False
-		# use the first gpuids as gpuid in log
-		self.params['gpuid'] = int(self.params['gpuids'].split(',')[0].strip())
+
+	def getAlignBin(self):
+		alignbin = self.params['bin']
+		if alignbin > 1:
+			bintext = '_%4.1fx' % (alignbin)
+		else:
+			bintext = ''
+		return bintext
 
 	def isUseFrameAlignerFlat(self):
-		if self.dd.hasBadPixels() or not self.isAlign() or self.dd.hasNonZeroDark():
+		has_bad_pixels =  self.dd.hasBadPixels()
+		is_align = self.isAlign()
+		has_non_zero_dark = self.dd.hasNonZeroDark()
+		apDisplay.printMsg('frame flip debug: has_bad_pixel %s, is_align %s, has_non_zero_dark %s' % (has_bad_pixels, is_align, has_non_zero_dark))
+		if has_bad_pixels or not is_align or has_non_zero_dark:
 			self.dd.setUseFrameAlignerFlat(False)
 			return False
 		else:
@@ -69,6 +85,8 @@ class MotionCor2UCSFAlignStackLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop)
 
 	def setFrameAligner(self):
 		self.framealigner = apDDFrameAligner.MotionCor2_UCSF()
+		# use the first gpuids as gpuid in log. See why this is set here in Issue #5576
+		self.params['gpuid'] = int(self.params['gpuids'].split(',')[0].strip())
 
 	def setOtherProcessImageResultParams(self):
 		# The alignment is done in tempdir (a local directory to reduce network traffic)

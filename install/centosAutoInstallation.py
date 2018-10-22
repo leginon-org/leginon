@@ -273,7 +273,7 @@ class CentosInstallation(object):
 		#myamiweb yum packages
 		packagelist = ['php-pecl-ssh2','mod_ssl', 'fftw3-devel','git','python-imaging','python-devel','mod_python','scipy','httpd', 'libssh2-devel', 'php', 'php-mysql', 'phpMyAdmin.noarch', 'php-devel', 'php-gd', ]
 		self.yumInstall(packagelist)
-		self.runCommand("easy_install fs PyFFTW3")
+		self.runCommand("easy_install fs==0.5 PyFFTW3")
 
 		# Redux Server is on Web server for now.
 		self.installReduxServer()
@@ -355,9 +355,7 @@ class CentosInstallation(object):
 
 		# setup Sinedon configuration file
 		self.writeToLog("setup Sinedon configuration file")
-		sinedonDir = self.runCommand('python -c "import sinedon; print sinedon.__path__[0]"')
-		sinedonDir = sinedonDir.strip()
-		self.setupSinedonCfg(sinedonDir)
+		self.setupSinedonCfg()
 
 		# setup .appion.cfg configuration file
 		self.writeToLog("setup .appion.cfg configuration file")
@@ -871,7 +869,9 @@ endif
 		shutil.copy(pyscopeCfgDir + '/instruments.cfg.template', pyscopeCfgDir + '/instruments.cfg')
 
 
-	def setupSinedonCfg(self, sinedonDir):
+	def setupSinedonCfg(self):
+		# sinedon import needs sinedon.cfg already configured.  Therefore, it is better
+		# to get the cfg template from self.gitMyamiDir
 		inf = open(self.gitMyamiDir + 'sinedon/examples/sinedon.cfg', 'r')
 		outf = open('/etc/myami/sinedon.cfg', 'w')
 
@@ -952,7 +952,7 @@ endif
 		
 		outf.write('; custom parameters from CentOS Auto Install script\n')
 		outf.write('max_execution_time = 300 ; Maximum execution time of each script, in seconds\n')
-		outf.write('max_input_time = 300	 ; Maximum amout of time to spend parsing request data\n')
+		outf.write('max_input_time = 300	 ; Maximum amount of time to spend parsing request data\n')
 		outf.write('memory_limit = 1024M	 ; Maximum amount of memory a script may consume\n')
 		outf.write('\n')
 

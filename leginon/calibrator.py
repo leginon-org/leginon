@@ -99,7 +99,7 @@ class Calibrator(node.Node):
 			return
 
 		if imagedata is None:
-			self.messagelog.error('Acquisition failed')
+			self.logger.error('Acquisition failed')
 			self.panel.acquisitionDone()
 			return
 

@@ -104,6 +104,7 @@ class QuickStackForm extends BasicLayoutForm
 		//$params->addParam( "lowpass", $lowpass, "Low Pass Filter Radius" );
 		//$params->addParam( "highpass", $highpass, "High Pass Filter Radius" );
 		$params->addParam( "commit", $commit, "Commit to Database" );
+		$params->addParam( "nproc", $nproc, "Number of CPU Cores" );
 		$params->addParam( "invert", $invert, "Invert image density" );
 		$params->addParam( "mode", $mode, "Type of stacks to produce" );
 
@@ -129,12 +130,13 @@ class QuickStackForm extends BasicLayoutForm
 		$params = $this->getFormParams();
 
 		$fieldSize = 5;
-
+		$partrunval = ($_POST['partrunid']) ? $_POST['partrunid'] : -1;
+		$binval = ($_POST['bin']) ? $_POST['bin'] : '2';
 		$html = "";
 		$req = "<font color='red'><B>**</b></font>";
 
 		$html .= "<H4>Particle Selection</H4>\n\n";
-
+		//get pixelsize
 		if (!$this->selectionIds) {
 			$html .=  "<font color='red'><B>No Particles for this Session</B></FONT>\n";
 		} else {
@@ -165,8 +167,46 @@ class QuickStackForm extends BasicLayoutForm
 		}
 
 		$html .= "<br /><hr/><H4>Particle box sizes</H4>";
-
+		// get particle selection parameters
+		$partrundata = $particle->getSelectionParams($partrunval);
+		$partrunids = $particle->getParticleRunIds($this->expId);
+		//get pixelsize
+		if ($partrunids) {
+		    $imgid = $particle->getImgIdFromSelectionRun($partrunids[0]['DEF_id']);
+		    $pixelsize = $particle->getPixelSizeFromImgId($imgid)*1e10;
+		}
+		// Determine best box size...
+		if (!$_POST['boxsize']) {
+		    $partdiam = $partrundata[0]['diam'];
+		    $helicalstep = $partrundata[0]['helicalstep'];
+		    //echo "Diameter: $partdiam &Aring;<br/>\n";
+		    //echo "Image id: $imgid<br/>\n";
+		    //echo "Pixel size: $pixelsize &Aring;<br/>\n";
+		    if ($helicalstep) {
+		        $boxdiam = (int) ($helicalstep/$pixelsize);
+		    }
+		    else {
+		        $pixdiam = (int) ($partdiam/$pixelsize);
+		        //echo "Pixel diam: $pixdiam pixels<br/>\n";
+		        $boxdiam = (int) ($partdiam/$pixelsize*1.5);
+		        //echo "Box diam: $boxdiam pixels<br/>\n";
+		    }
+		    global $goodboxes;
+		    foreach ($goodboxes as $box) {
+		        if ($box >= $boxdiam/$binval) {
+		            $defaultboxsize = $box*$binval;
+		            break;
+		        }
+		    }
+		    //echo "Box size: $defaultboxsize pixels<br/>\n";
+		    $boxszval = $defaultboxsize;
+		} else {
+		    $boxszval = $_POST['boxsize'];
+		}
+		$params->setParamValue("init-boxsize", $boxszval);
 		$html .= $params->insertTextField( "init-boxsize", $fieldSize, "(pixels)", 'quickStack.initboxsize' );
+		$params->setParamValue("final-boxsize", round($boxszval/$binval));
+		
 		$html .= $params->insertTextField( "final-boxsize", $fieldSize, "(pixels)", 'quickStack.finalboxsize' );
 		$html .= $params->insertCheckboxField("overridebox");
 
@@ -200,7 +240,11 @@ class QuickStackForm extends BasicLayoutForm
 
 		$html .= "<br />";
 		$html .= $params->insertCheckboxField("commit");
-
+		$html .= "<hr/>\n";
+		global $PROCESSING_HOSTS;
+		$nproc = $PROCESSING_HOSTS[0]['ppnmax'];
+		$params->setParamValue("nproc", $nproc);
+		$html .= $params->insertTextField( "nproc", 4);
 		return $html;
 	}
 
@@ -212,22 +256,14 @@ class QuickStackForm extends BasicLayoutForm
 
 		$params = $this->getFormParams();
 
-		// Extract the stack id from the stack string
-		$selectid = $params->getParamValue( "selectid" );
-		//$command = $this->removeCommandFlag( $command, "stack" );
-		//$command = $this->addCommandFlag( $command, "stack", "stack", $stackid );
 		$command = $this->removeCommandFlag( $command, "override" );
-
-
-		// Set the clip diameter
-		$bin  = $params->getParamValue( "bin" );
-
 		// If the commit box is checked, add --commit, otherwise --no-commit
 		$commit  = ($params->getParamValue('commit') == 'on' ) ? true : false;
 		if (!$commit) {
 			$command.= " --no-commit ";
 		}
-
+		$command.= " --ppn=".$params->getParamValue('nproc');
+		$command.= " --nodes=1";
 		return $command;
 	}
 

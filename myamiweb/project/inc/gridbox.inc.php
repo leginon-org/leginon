@@ -89,7 +89,7 @@ class gridbox {
 		$q=' select gridId, gridboxId, location from gridlocations where '
 		.' gridboxId="'.$gridboxId.'" and location = "'.$location.'"';
 		$Rcheck = $this->mysql->SQLQuery($q);
-    if (mysql_num_rows($Rcheck) > 0)
+    if (mysqli_num_rows($Rcheck) > 0)
 			return true;
 		else
 			return false;
@@ -584,7 +584,7 @@ class abstractgridbox {
 		  .' gridId="'.$gridId.'" '
 		  .$gridboxsql;
 		$RgridlocationInfo = $this->mysql->SQLQuery($q);
-		$gridlocationInfo = mysql_fetch_array($RgridlocationInfo);
+		$gridlocationInfo = mysqli_fetch_array($RgridlocationInfo);
 		return array (	'gridboxId' => $gridlocationInfo['gridboxId'],
 				'location' => $gridlocationInfo['location'] );
 	}
@@ -593,7 +593,7 @@ class abstractgridbox {
 		$q=' select gridlocationId, gridId from gridlocations where '
 		  .' gridboxId="'.$gridboxId.'" and location="'.$location.'"';
 		$RgridlocationInfo = $this->mysql->SQLQuery($q);
-		$gridlocationInfo = mysql_fetch_array($RgridlocationInfo);
+		$gridlocationInfo = mysqli_fetch_array($RgridlocationInfo);
 		return array (	'locationId' => $gridlocationInfo[gridlocationId],
 				'gridId' => $gridlocationInfo[gridId] );
 	}

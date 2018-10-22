@@ -6,12 +6,14 @@ import re
 import subprocess
 
 class DDFrameAligner(object):
-	executable = 'cp'
+	# testbin.py is a test script in appion/bin as an example
+	executable = 'testbin.py'
 	def __init__(self):
 		self.alignparams = {}
 		self.gain_dark_cmd = ''
 		self.save_aligned_stack = True
 		self.is_use_frame_aligner_sum = True
+		self.stack_binning = 1
 
 	def getExecutableName(self):
 		return self.executable
@@ -35,7 +37,7 @@ class DDFrameAligner(object):
 		self.is_use_frame_aligner_sum = value
 
 	def setSaveAlignedStack(self, value):
-		self.save_aligned_stack
+		self.save_aligned_stack = value
 
 	def setInputFrameStackPath(self, filepath):
 		'''
@@ -65,11 +67,18 @@ class DDFrameAligner(object):
 		
 	def getAlignedSumFrameList(self):
 		return self.sumframelist
-		
+
+	def setStackBinning(self, value):
+		self.stackbinning = value
+
 	def makeFrameAlignmentCommand(self):
-		cmd = ' '.join([self.executable, self.framestackpath, self.aligned_sumpath])
+		'''
+		Frame alignment command construction.
+		'''
+		cmd = ' '.join([self.executable, self.framestackpath, self.aligned_sumpath, '%d' % (self.stackbinning)])
 		cmd += self.joinFrameAlignOptions(glue='-')
 		cmd += ' > '+self.logpath
+		apDisplay.printWarning('This example alignment copies and bins the first frame')
 		return cmd
 
 	def alignFrameStack(self):
@@ -228,6 +237,13 @@ class MotionCor2_UCSF(DDFrameAligner):
 		self.gain_dark_cmd = cmd
 		apDisplay.printMsg('Gain Dark Command Option: %s' % cmd)
 
+	def getInputCommand(self):
+		if self.framestackpath.endswith('.tif'):
+			cmd = '-InTiff %s' % self.framestackpath
+		else:
+			cmd = '-InMrc %s' % self.framestackpath
+		return cmd
+
 	def makeFrameAlignmentCommand(self):
 		'''
 		David Agard lab's gpu program for aligning frames using all defaults
@@ -239,16 +255,23 @@ class MotionCor2_UCSF(DDFrameAligner):
 
 		# Construct the command line with defaults
 
-		cmd = '%s -InMrc %s -OutMrc %s' % (self.executable, self.framestackpath, self.aligned_sumpath)
+		cmd = '%s %s -OutMrc %s' % (self.executable, self.getInputCommand(), self.aligned_sumpath)
 
 		# binning
 		if self.alignparams['FtBin'] > 1:
-			cmd += ' -FtBin %d ' % self.alignparams['FtBin']
+			cmd += ' -FtBin %s ' % (self.alignparams['FtBin'],)
 
 		# bfactor
-		if self.alignparams['bft'] > 0:
-			cmd += ' -Bft %d ' % self.alignparams['bft']
-
+		#if (self.alignparams['bft'][0] > 0) and (self.alignparams['bft'][1] > 0):
+		#	cmd += ' -Bft %d %d' % (self.alignparams['bft'][0], self.alignparams['bft'])
+		
+			
+		if (self.alignparams['Bft_global'] > 0) and (self.alignparams['Bft_local'] > 0):
+			cmd += ' -Bft %d %d' % (self.alignparams['Bft_global'], self.alignparams['Bft_local'])		
+		
+		else:
+			apDisplay.printError("Invalid Bft arguments ! (global: %s, local: %s)" %(self.alignparams['Bft_global'], self.alignparams['Bft_local']))
+			
 		# frame truncation
 		if self.alignparams['Throw'] > 0:
 			cmd += ' -Throw %d' % self.alignparams['Throw']
@@ -328,7 +351,8 @@ class MotionCor2_UCSF(DDFrameAligner):
 			'nrw':'Group', 
 			'flp':'flp', 
 			'bin':'FtBin', 
-			"Bft":"bft",
+			"Bft_global":"Bft_global",
+			"Bft_local":"Bft_local",
 			"apix":"PixSize",
 			"Iter":"Iter",
 			"Patchrows":"Patchrows",

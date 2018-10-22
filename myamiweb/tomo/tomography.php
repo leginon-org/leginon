@@ -274,7 +274,7 @@ class Tomography {
 			."a.`DEF_id` ='".$imgId."' "; 
 		$parents = array();
 		$Rparent = $this->mysql->SQLQuery($q);
-		while ($parent = mysql_fetch_array($Rparent, MYSQL_ASSOC))
+		while ($parent = mysqli_fetch_array($Rparent, MYSQLI_ASSOC))
 			$parents[]=$parent;
 		return $parents;
 	}

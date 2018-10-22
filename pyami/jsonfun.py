@@ -19,6 +19,9 @@ class DataJsonLoader(object):
 		for key in kwargs.keys():
 			# leginondata keys never contains '_'
 			realkey = key.replace('_',' ')
+			# settings key may have been removed. This is rare but possible between versions
+			if realkey not in q.keys():
+				continue
 			if type(kwargs[key]) == type([]):
 				if len(kwargs[key]) > 0:
 					if type(kwargs[key][0]) == type([]):

@@ -170,6 +170,7 @@ class UploadRelionMaxLikeScript(appionScript.AppionScript):
 		for relionpartdict in particleTree:
 			partdict = self.adjustPartDict(relionpartdict, reflist)
 			refnum = partdict['refnum']
+			refnum -= 1
 			self.class_count[refnum] = self.class_count.get(refnum, 0) + 1
 			partlist.append(partdict)
 		apDisplay.printMsg("read rotation and shift parameters for "+str(len(partlist))+" particles")
@@ -459,10 +460,9 @@ class UploadRelionMaxLikeScript(appionScript.AppionScript):
 			apDisplay.printWarning("%d of %d classes were empty and set to black: %s"
 				%(len(blank_classes), len(stackarray), str(blank_classes)))
 		apImagicFile.writeImagic(stackarray, unaligned_refstack_imagic)
-
 		# createAlignedStack
 		temp_imagicfile = apStackFile.createAlignedStack(reflist, unaligned_refstack_imagic, 'temp_aligned_ref')
-		apFile.moveStack(temp_imagicfile, alignref_imagicfile)
+		apFile.moveStack(unaligned_refstack_imagic, alignref_imagicfile)
 		#sys.exit(1)
 
 		#create average image for web

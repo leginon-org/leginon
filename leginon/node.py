@@ -9,6 +9,7 @@
 
 import sinedon
 from leginon import leginondata
+from leginon import appclient
 from databinder import DataBinder
 import datatransport
 import event
@@ -18,6 +19,7 @@ import gui.wx.LeginonLogging as Logging
 import gui.wx.Node
 import copy
 import socket
+from pyami import mysocket
 import remotecall
 import time
 import numpy
@@ -57,13 +59,16 @@ class Node(correctorclient.CorrectorClient):
 									event.NodeAvailableEvent,
 									event.NodeUnavailableEvent,
 									event.NodeInitializedEvent,
-									event.NodeUninitializedEvent]
+									event.NodeUninitializedEvent,
+									event.NodeLogErrorEvent]
 
 	objectserviceclass = remotecall.NodeObjectService
 
 	def __init__(self, name, session, managerlocation=None, otherdatabinder=None, otherdbdatakeeper=None, tcpport=None, launcher=None, panel=None):
 		self.name = name
+		self.this_node = None
 		self.panel = panel
+		self.tem_hostname = ''
 		
 		self.initializeLogger()
 
@@ -108,6 +113,41 @@ class Node(correctorclient.CorrectorClient):
 		correctorclient.CorrectorClient.__init__(self)
 
 		self.initializeSettings()
+
+	def setHasLogError(self, value, message):
+		if value:
+			nodename = self.name
+			msg = '%s Error: %s' % (nodename, message)
+			self.outputEvent(event.NodeLogErrorEvent(message=msg))
+
+	def getTemHostname(self):
+		if not self.tem_hostname:
+			if self.session:
+				results = leginondata.ConnectToClientsData(session=self.session).query(results=1)
+				if not results:
+					# session not created properly
+					return ''
+				clients = results[0]['clients']
+				if not clients:
+					# session without clients still has ConnectToClientsData with empty list
+					# use my hostname
+					clients = [mysocket.gethostname().lower(),]
+				for client in clients:
+					instruments = leginondata.InstrumentData(hostname=client).query()
+					if instruments and not self.tem_hostname:
+						temname = ''
+						description = None
+						for instr in instruments:
+							if instr['cs']:
+								# It is tem
+								temname = str(client)
+								if 'description' in instr.keys() and instr['description']:
+									description = instr['description']
+						if description:
+							# set temname as description if it is ever set to not None.
+							temname = description
+						self.tem_hostname = temname
+		return self.tem_hostname
 
 	def testprint(self,msg):
 		if testing:
@@ -271,7 +311,7 @@ class Node(correctorclient.CorrectorClient):
 	# location method
 	def location(self):
 		location = {}
-		location['hostname'] = socket.gethostname().lower()
+		location['hostname'] = mysocket.gethostname().lower()
 		if self.launcher is not None:
 			location['launcher'] = self.launcher.name
 		else:
@@ -347,7 +387,8 @@ class Node(correctorclient.CorrectorClient):
 		This is for future setting synchronization.  Not implemented yet.
 		It does nothing now.
 		'''
-		pass
+		app = ievent['application']
+		self.this_node = appclient.getNodeSpecData(app,self.name)
 
 	def handleConfirmedEvent(self, ievent):
 		'''Handler for ConfirmationEvents. Unblocks the call waiting for confirmation of the event generated.'''

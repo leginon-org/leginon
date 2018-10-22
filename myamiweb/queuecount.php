@@ -37,7 +37,8 @@ function getSessionSelector($sessions, $sessionId=NULL) {
 		return $selector;
 }
 
-function printResult($qresult,$qtype='',$ttype='') {
+function printResult($qresult,$qtype='',$ttype='', $is_queue=true) {
+	if ($qresult === false) return;
 	if ($qresult[2] == 0) return;
 	$pretext = $qresult[0];
 	$totalNew = $qresult[1];
@@ -50,11 +51,13 @@ function printResult($qresult,$qtype='',$ttype='') {
 	$esthour = (int) floor(($esttime%86400) / 3600);
 	$estminute = (int) floor(($esttime%3600) / 60);
 	$estsecond = (int) floor($esttime%60);
+	$queuetext = ($is_queue) ? 'queue': 'targetlist';
 ?>
+	<tr>
 	<td>
 		<p> <h3> <?php echo $qtype ?> </h3></p>
-		<p> total <?php echo $ttype ?> targets in queue <?php echo $pretext.$totalNew ?> </p>
-		<p> <h4> unprocessed queue= <?php echo $totalActive  ?></h4></p>
+		<p> total <?php echo $ttype ?> targets in <?php echo $queuetext.' '.$pretext.$totalNew ?> </p>
+		<p> <h4> unprocessed = <?php echo $totalActive  ?></h4></p>
 		<p> avg time so far = <?php echo (int)($avgtime) ?> s</p>
 		<p> <h4> estimated time for the remaining targets  = 
 	<?php
@@ -66,7 +69,7 @@ function printResult($qresult,$qtype='',$ttype='') {
 		echo "$estminute minutes, $estsecond seconds\n";
 	?> <h4></p>
 	</td>
-	</tr><tr>
+	</tr>
 <?php return;
 	}
 // --- Set sessionId
@@ -87,12 +90,11 @@ if (!$selected_sessionId) {
 	<table>
 	<tr><td> <?php if (!$selected_sessionId) echo 'Session '.$sessionSelector; ?></td>
 	</tr>
-	<tr>
 <?php
 // --- Get nodes with queue
 $qtypes = $leginondata->getQueueTypes($sessionId);
 if (!$qtypes) {
-	?><td><h4>No queuing in this session</h4></td><?php
+	?><tr><td><h4>No queuing in this session</h4></td></tr><?php
 } else {
 	arsort($qtypes);
 	// Change details to true to see acquisition and focus separately for debuging
@@ -111,6 +113,17 @@ if (!$qtypes) {
 
 	} 
 }
+{
+	$countbynode = $leginondata->getNonQueueCountResults($sessionId);
+	if (is_array($countbynode) && count($countbynode)) {
+		$nodenames = array_keys($countbynode);
+		rsort($nodenames);
+		foreach ($nodenames as $alias) {
+			$data = $countbynode[$alias];
+			printResult($data,$alias,'',false);
+		}
+	}
+}
 ?>
-</tr></table>
+</table>
 </form> </body></html>

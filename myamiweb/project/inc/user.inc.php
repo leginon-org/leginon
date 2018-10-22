@@ -116,21 +116,21 @@ class user {
 	function checkUserExistsbyLogin($username) {
 		$q='select `DEF_id` as userId from '.DB_LEGINON.'.UserData where username="'.$username.'"';
 		$RuserInfo = $this->mysql->SQLQuery($q);
-		$userInfo = mysql_fetch_array($RuserInfo);
+		$userInfo = mysqli_fetch_array($RuserInfo);
 		return $userInfo['userId'];
 	}
 
 	function checkUserExistsbyName($firstname, $lastname) {
 		$q='select `DEF_id` as userId from '.DB_LEGINON.'.UserData where `firstname`="'.$firstname.'" and `lastname` = "'.$lastname.'"';
 		$RuserInfo = $this->mysql->SQLQuery($q);
-		$userInfo = mysql_fetch_array($RuserInfo);
+		$userInfo = mysqli_fetch_array($RuserInfo);
 		return $userInfo['userId'];
 	}
 
 	function checkUserExistsbyId($id) {
 		$q='select `DEF_id` as userId from '.DB_LEGINON.'.UserData where `DEF_id`="'.$id.'"';
 		$RuserInfo = $this->mysql->SQLQuery($q);
-		$userInfo = mysql_fetch_array($RuserInfo);
+		$userInfo = mysqli_fetch_array($RuserInfo);
 		$id = $userInfo['userId'];
 		if(empty($id))
 			return false;

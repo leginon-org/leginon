@@ -65,14 +65,14 @@ $javafunctions.= "}\n";
 
 // for cutoff values
 $javafunctions.= "function changeCutoff(sel) {\n";
-$javafunctions.= "  if (sel.value.substring(0,10)=='resolution') {\n";
+$javafunctions.= "  if (sel.value.indexOf('resolution')!=-1) {\n";
 $javafunctions.= "    document.getElementById('cval').innerHTML='&Aring;';\n";
 $javafunctions.= "  } else {document.getElementById('cval').innerHTML='0-1';}\n";
 $javafunctions.= "}\n";
 $javafunctions.= "function submitCutoff() {\n";
 $javafunctions.= "  var sel = document.getElementById('bydf').value;\n";
 $javafunctions.= "  var cutoff = document.getElementById('cutoff').value;\n";
-$javafunctions.= "  if ((sel.substring(0,10)!='resolution') && \n";
+$javafunctions.= "  if ((sel.indexOf('resolution')==-1) && \n";
 $javafunctions.= "    (cutoff >= 1 || cutoff <= 0)) {\n";
 $javafunctions.= "    alert ('Enter a cutoff value between 0 and 1');\n";
 $javafunctions.= "    return false;\n";
@@ -131,21 +131,21 @@ if ($ctfrundatas) {
 	// Overall Summary
 	echo "<tr><td colspan='2' align='center'>\n";
 
-		$minconf = 0.2;
+		//Should not use confidence for limit any more.
+		$minconf = false;
 		$ctfinfo = $ctf->getBestCtfInfoByResolution($expId, $minconf);
 
 		$numctfest = count($ctfinfo);
-
+		$preset_names = array();
 		if ($numctfest > 1) {
 
 			echo "<b>Overall Summary for $numctfest CTF estimates</b></br>\n";
 
 			$fields = array('defocus1', 'defocus2', 
 				//'confidence', 'confidence_d', 
-				'angle_astigmatism', 'amplitude_contrast',  
+				'angle_astigmatism', 'astig_distribution',
 				'extra_phase_shift',
-				'confidence_30_10', 'confidence_5_peak',  
-				'resolution_80_percent', 'resolution_50_percent');
+				'resolution_80_percent', 'resolution_50_percent', 'ctffind4_resolution');
 			$stats = $ctf->getCTFStats($fields, $expId);
 			$display_ctf=false;
 			foreach($stats as $field=>$data) {
@@ -155,6 +155,7 @@ if ($ctfrundatas) {
 					$imageId = $stats[$field][$k]['id'];
 					$p = $leginondata->getPresetFromImageId($imageId);
 					$stats[$field][$k]['preset'] = $p['name'];
+					if (!in_array($p['name'],$preset_names)) $preset_names[]=$p['name'];
 					$cdf = '<a href="ctfgraph.php?hg=1&expId='
 							.$expId.'&rId='.$ctfrunid.'&f='.$field.'&preset='.$p['name'].'">'
 						.'<img border="0" src="ctfgraph.php?w=100&hg=1&expId='
@@ -162,6 +163,10 @@ if ($ctfrundatas) {
 					$stats[$field][$k]['img'] = $cdf;
 				}
 			}
+			//Determine the preset
+			$first_query_preset = (count($preset_names)) ? $preset_names[0]: '';
+			$preset = ($_POST['preset']) ? $_POST['preset']: $first_query_preset;
+
 			$display_keys = array ( 'nb', 'min', 'max', 'avg', 'stddev');
 
 			$popupstr = "<a href=\"javascript:infopopup(";
@@ -230,23 +235,33 @@ if ($ctfrundatas) {
 
 	// Row 0
 	echo "<tr><td>\n";
-		echo "<h3>Amplitude Contrast</h3>";
-		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&xmin=0.0&f=amplitude_contrast'>\n";
-		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
-			."w=800&h=600&hg=1&expId=$expId&s=1&xmin=0.0&f=amplitude_contrast' alt='please wait...'></a>\n";
+		echo "<h3>Astig as percent difference from mean</h3>\n";
+		echo "<a href='autofocacegraph.php?hg=0&expId=$expId&f=difference_from_mean&preset=$preset'>\n";
+		echo "<img border='0' width='400' height='200' src='autofocacegraph.php?"
+				."hg=0&expId=$expId&f=difference_from_mean&preset=$preset' alt='please wait...'></a>\n";
 	echo "</td><td>\n";
 		echo "<h3>Angle Astigmatism</h3>";
-		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&xmin=-90&xmax=90&f=angle_astigmatism'>\n";
+		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&f=angle_astigmatism'>\n";
 		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
-			."w=800&h=600&hg=1&expId=$expId&s=1&xmin=-90&xmax=90&f=angle_astigmatism' alt='please wait...'></a>\n";
+			."w=800&h=600&hg=1&expId=$expId&s=1&f=angle_astigmatism' alt='please wait...'></a>\n";
 	echo "</td></tr><tr><td>\n";
+		echo "<h3>Astigmatism Distribution</h3>";
+		echo "<a href='ctfgraph.php?hg=0&expId=$expId&s=1&f=astig_distribution'>\n";
+		echo "<img border='0' width='200' height='200' src='ctfgraph.php?"
+			."w=600&h=600&hg=0&expId=$expId&s=1&f=astig_distribution' alt='please wait...'></a>\n";
+	echo "</td><td>\n";
 		echo "<h3>Extra Phase Shift</h3>";
 		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&xmin=0&xmax=180&f=extra_phase_shift'>\n";
 		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
-			."w=800&h=600&hg=1&expId=$expId&s=1&xmin=-90&xmax=90&f=extra_phase_shift' alt='please wait...'></a>\n";
+			."w=800&h=600&hg=0&expId=$expId&s=1&xmin=-90&xmax=90&f=extra_phase_shift' alt='please wait...'></a>\n";
 	echo "</td></tr>";
 
 	$confidenceOpts=array();
+
+	$confidenceOpts[]='resolution_50_percent';
+	$confidenceOpts[]='resolution_80_percent';
+	$confidenceOpts[]='ctffind4_resolution';
+	$confidenceOpts[]='appion_resolution';
 
 	if ($showmore > 0) {
 	// Row 0
@@ -263,50 +278,44 @@ if ($ctfrundatas) {
 		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
 			."w=800&h=600&hg=1&expId=$expId&s=1&xmin=0.3&f=confidence_d' alt='please wait...'></a>\n";
 	echo "</td></tr>";
-	}
 
 	// Row 1
-	$confidenceOpts[]='confidence_30_10';
-	echo "<tr><td>\n";
-		echo "<h3>Confidence 1/30&Aring; - 1/10&Aring;</h3>";
-		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&f=confidence_30_10'>\n";
-		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
-			."w=800&h=600&hg=1&expId=$expId&s=1&xmin=0.3&f=confidence_30_10' alt='please wait...'></a>\n";
-	$confidenceOpts[]='confidence_5_peak';
-	echo "</td><td>\n";
-		echo "<h3>Confidence 5 Peaks</h3>";
-		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&f=confidence_5_peak'>\n";
-		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
-			."w=800&h=600&hg=1&expId=$expId&s=1&xmin=0.3&f=confidence_5_peak' alt='please wait...'></a>\n";
-	echo "</td></tr>";
 	// Row 2
-	$confidenceOpts[]='resolution_80_percent';
 	echo "<tr><td>\n";
 		echo "<h3>Resolution at 0.8</h3>";
-		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&xmin=2&xmax=50&f=resolution_80_percent'>\n";
+		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&xmin=1&xmax=50&f=resolution_80_percent'>\n";
 		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
-			."w=800&h=600&hg=1&expId=$expId&s=1&xmin=2&xmax=30&f=resolution_80_percent' alt='please wait...'></a>\n";
-	$confidenceOpts[]='resolution_50_percent';
+			."w=800&h=600&hg=1&expId=$expId&s=1&xmin=1&xmax=50&f=resolution_80_percent' alt='please wait...'></a>\n";
 	echo "</td><td>\n";
 		echo "<h3>Resolution at 0.5</h3>";
-		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&xmin=2&xmax=30&f=resolution_50_percent'>\n";
+		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&xmin=1&xmax=30&f=resolution_50_percent'>\n";
 		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
-			."w=800&h=600&hg=1&expId=$expId&s=1&xmin=2&xmax=30&f=resolution_50_percent' alt='please wait...'></a>\n";
+			."w=800&h=600&hg=1&expId=$expId&s=1&xmin=1&xmax=30&f=resolution_50_percent' alt='please wait...'></a>\n";
 	echo "</td></tr>";
 	// Row 3
 	echo "<tr><td>\n";
-		echo "<h3>Confidence values during run</h3>\n";
-		echo "<a href='ctfgraph.php?hg=0&expId=$expId&s=1&f=confidence'>\n";
+		echo "<h3>Software Package Resolution</h3>\n";
+		echo "<a href='ctfgraph.php?hg=0&expId=$expId&s=1&f=ctffind4_resolution'>\n";
 		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
-			."w=800&h=600&hg=0&expId=$expId&s=1&f=confidence'></a>\n";
+			."w=800&h=600&hg=1&expId=$expId&s=1&f=ctffind4_resolution'></a>\n";
 	echo "</td><td>\n";
-	// very hacky
-		$sessiondata = getSessionList($projectId, $expId);
-		$preset = (!empty($_POST['preset'])) ? $_POST['preset'] : end($sessiondata['presets']);
-		echo "<h3>Difference from Leginon for preset '$preset'</h3>\n";
-		echo "<a href='autofocacegraph.php?hg=0&expId=$expId&s=1&f=difference&preset=$preset'>\n";
+	} else {
+		echo "<tr><td>\n";
+	}
+		echo "<h3>Appion Resolution during run</h3>\n";
+		echo "<a href='ctfgraph.php?hg=0&expId=$expId&s=1&f=resolution_appion'>\n";
+		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
+			."w=800&h=600&hg=0&expId=$expId&s=1&f=resolution_appion'></a>\n";
+	if ($showmore > 0) {
+		echo "</td></tr>";
+		echo "<tr><td>\n";
+	} else {
+		echo "</td><td>\n";
+	}
+		echo "<h3>Difference from Leginon settings for preset '$preset'</h3>\n";
+		echo "<a href='autofocacegraph.php?hg=0&expId=$expId&f=difference_from_nom&preset=$preset'>\n";
 		echo "<img border='0' width='400' height='200' src='autofocacegraph.php?"
-			."hg=0&expId=$expId&s=1&f=difference&preset=$preset' alt='please wait...'></a>\n";
+			."hg=0&expId=$expId&f=difference_from_nom&preset=$preset' alt='please wait...'></a>\n";
 	echo "</td></tr>";
 	echo "</table>";
 
@@ -317,12 +326,13 @@ if ($ctfrundatas) {
 	echo "<table cellpadding=5 cellspacing=0 border=0><tr><td>\n";
 	echo "<b>Cutoff method: </b><select name='bydf' id='bydf' onChange='changeCutoff(this)'>\n";
 	foreach ($confidenceOpts as $confm) {
-		echo "<option>$confm</option>\n";
+		$confm_display = ($confm == 'ctffind4_resolution') ? 'package_resolution':$confm;
+		echo "<option value=$confm >$confm_display</option>\n";
 	}
 	echo "</select>\n";
 	echo "</td></tr><tr><td>\n";
 
-	echo "<b>Cutoff value (<span id='cval'>0-1</span>): </b><input name='cutoff' type='text' id='cutoff' size='5'>\n";
+	echo "<b>Cutoff value (<span id='cval'> &Aring; </span>): </b><input name='cutoff' type='text' id='cutoff' size='5'>\n";
 	echo "</td></tr><tr><td>\n";
 
 	echo "<input type='submit' name='applycutoff' value='Generate Histogram' onclick='submitCutoff()'>\n";
@@ -353,15 +363,22 @@ if ($ctfrundatas) {
 	echo $formhtml;
 
 	$ctfdownlink = "<h3>";
-	$ctfdownlink .= "<a href='downloadctfdata.php?expId=$expId&preset=$preset&runId=$runId&relion=True'>\n";
+	$ctfdownlink .= "<a href='downloadctfdata.php?expId=$expId&preset=$preset&runId=$runId&relion=1'>\n";
 	$ctfdownlink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download star file for RELION 1.4'>&nbsp;download star file for RELION 1.4\n";
 	$ctfdownlink .= "</a></h3>\n";
 	echo $ctfdownlink;
 
 	$ctfdownlink = "<h3>";
 	$ctfdownlink = "<h3>";
-	$ctfdownlink .= "<a href='downloadctfdata.php?expId=$expId&preset=$preset&runId=$runId&vlion=True'>\n";
+	$ctfdownlink .= "<a href='downloadctfdata.php?expId=$expId&preset=$preset&runId=$runId&relion=2'>\n";
 	$ctfdownlink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download star file for Relion 2.0 or VLION'>&nbsp;download star file for Relion 2.0 or VLION\n";
+	$ctfdownlink .= "</a></h3>\n";
+	echo $ctfdownlink;
+
+	$ctfdownlink = "<h3>";
+	$ctfdownlink = "<h3>";
+	$ctfdownlink .= "<a href='downloadctfdata.php?expId=$expId&preset=$preset&runId=$runId&relion=3'>\n";
+	$ctfdownlink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download beam tilt star file for Relion 3.0'>&nbsp;download star file with expected beam tilt for Relion 3.0\n";
 	$ctfdownlink .= "</a></h3>\n";
 	echo $ctfdownlink;
 
@@ -397,9 +414,8 @@ if ($ctfrundatas) {
 		//echo "ctfdata".print_r($ctfdata);
 		$fields = array('defocus1', 'defocus2', 
 			//'confidence', 'confidence_d', 
-			'angle_astigmatism', 'amplitude_contrast',  
-			'confidence_30_10', 'confidence_5_peak',  
-			'resolution_80_percent', 'resolution_50_percent');
+			'angle_astigmatism', 'amplitude_contrast', 'extra_phase_shift', 
+			'resolution_80_percent', 'resolution_50_percent','ctffind4_resolution');
 		$stats = $ctf->getCTFStats($fields, $expId, $ctfrunid);
 		$display_ctf=false;
 		foreach($stats as $field=>$data) {

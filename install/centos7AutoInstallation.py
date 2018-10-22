@@ -15,7 +15,7 @@ class CentosInstallation(object):
 
 	def setReleaseDependantValues(self):
 		# need to change to branch when release
-		self.gitCmd = "git clone -b myami-beta http://emg.nysbc.org/git/myami " + self.gitMyamiDir
+		self.gitCmd = "git clone http://emg.nysbc.org/git/myami " + self.gitMyamiDir
 		# redhat release related values
 		self.torqueLibPath = '/var/lib/torque/'
 
@@ -201,7 +201,7 @@ class CentosInstallation(object):
 		# replacing with:
 		self.runCommand("/sbin/iptables -I INPUT -p tcp --dport %d -j ACCEPT" % (port))		
 		self.runCommand("/sbin/iptables-save > /etc/sysconfig/iptables")
-		self.runCommand("/etc/init.d/iptables restart")
+		self.runCommand("service iptables restart")
 		self.writeToLog("firewall port %d opened" % (port))
 
 	def installPythonPackage(self, targzFileName, fileLocation, unpackDirName):
@@ -270,7 +270,7 @@ class CentosInstallation(object):
 		#myamiweb yum packages
 		packagelist = ['php-pecl-ssh2','mod_ssl', 'fftw3-devel','git','python-imaging','python-devel','mod_python','scipy','httpd', 'libssh2-devel', 'php', 'php-mysql', 'phpMyAdmin.noarch', 'php-devel', 'php-gd', ]
 		self.yumInstall(packagelist)
-		self.runCommand("easy_install fs PyFFTW3")
+		self.runCommand("easy_install fs==0.5 PyFFTW3")
 
 		# Redux Server is on Web server for now.
 		self.installReduxServer()
@@ -288,28 +288,60 @@ class CentosInstallation(object):
 		self.openFirewallPort(80)
 		return True
 
+	def updateMyCnf(self):
+		shutil.copy("/etc/my.cnf", "./my.cnf")
+		f = open('/etc/my.cnf', 'r')
+		lines = f.readlines()
+		f.close()
+		outlines = ''
+		for l in lines:
+			outlines += l
+			if '[mysqld]' in l:
+				# just the minimal now. This is not tested.
+				outlines +='default_storage_engine = myisam\n'
+				#outlines +='default_tmp_storage_engine = myisam\n'
+		f = open('./my.cnf','w')
+		f.write(outlines)
+		f.close()
+		shutil.copy("./my.cnf", "/etc/my.cnf")
+
 	def setupDBServer(self):
-		self.writeToLog("--- Start install Database Server")
-		self.mysqlYumInstall()
+		self.writeToLog("--- Start Setting up Database Server")
+		self.mariadbYumInstall()
+		self.writeToLog("--- MariaDB is installed through yum on CentOs 7")
 		# turn on auto mysql start
-		
+		self.runCommand("systemctl enable mariadb")
 		# stop mysql server (if it's running)
-		self.runCommand("systemctl enable mysqld")
+		self.runCommand("systemctl stop mariadb")
 		# start mysql server
+		self.runCommand("chown -R mysql:mysql  /var/lib/mysql")
 		
 		#https://stackoverflow.com/questions/33510184/change-mysql-root-password-on-centos7
-		os.system('systemctl set-environment MYSQLD_OPTS="--skip-grant-tables"')
-		os.system("systemctl start mysqld")
+		#os.system('systemctl set-environment MYSQLD_OPTS="--skip-grant-tables"')
+		# TO DO: Need to find a good my.cnf for mariadb
+		self.updateMyCnf()
+		os.system("mysqld_safe --skip-grant-tables &")
+		#os.system("systemctl start mariadb")
 		mysql_is_active = False
-                while not mysql_is_active:
-                        mysql_is_active = os.system("mysqladmin -umysql ping") == 0
-                        time.sleep(1.0)
+		t0 = time.time()
+		while not mysql_is_active and time.time() - t0 < 30.0:
+			mysql_is_active = os.system("mysqladmin -umysql ping") == 0
+			time.sleep(1.0)
+		if time.time() - t0 >= 30.0:
+			return False
 
 		# run database setup script.
 		cmd = os.path.join(self.gitMyamiDir, 'install/newDBsetup.php -L %s -P %s -H %s -U %s -E %s' % (self.leginonDB, self.projectDB, self.dbHost, self.dbUser, self.adminEmail))
 		cmd = 'php ' + cmd
 
-		self.runCommand(cmd)
+		self.writeToLog("#===================================================")
+		self.writeToLog("Run the following Command:")
+		self.writeToLog("%s" % (cmd,))
+		print cmd + '\n'
+		print 'Please wait......(This may take a few minutes.)\n'
+		proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		proc.communicate()
+
 		self.openFirewallPort(3306)
 		return True
 
@@ -353,9 +385,7 @@ class CentosInstallation(object):
 
 		# setup Sinedon configuration file
 		self.writeToLog("setup Sinedon configuration file")
-		sinedonDir = self.runCommand('python -c "import sinedon; print sinedon.__path__[0]"')
-		sinedonDir = sinedonDir.strip()
-		self.setupSinedonCfg(sinedonDir)
+		self.setupSinedonCfg()
 
 		# setup .appion.cfg configuration file
 		self.writeToLog("setup .appion.cfg configuration file")
@@ -367,7 +397,8 @@ class CentosInstallation(object):
 		self.setupPyscopeCfg(pyscopeDir)
 
 		os.chdir(self.currentDir)		
-		self.enableTorqueComputeNode()
+		if self.doInstallJobServerPackages:	
+			self.enableTorqueComputeNode()
 		return True
 
 	def setupJobServer(self):
@@ -801,7 +832,7 @@ endif
 
 	def processServerYumInstall(self):
 
-		packagelist = ['ImageMagick', 'MySQL-python', 'compat-gcc-34-g77', 'fftw3-devel', 'gcc-c++', 'gcc-gfortran', 'gcc-objc', 'gnuplot', 'grace', 'gsl-devel', 'libtiff-devel', 'netpbm-progs', 'numpy', 'openmpi-devel', 'opencv-python', 'python-devel', 'python-imaging', 'python-matplotlib', 'python-tools', 'scipy', 'wxPython', 'xorg-x11-server-Xvfb', 'libjpeg-devel', 'zlib-devel', ]
+		packagelist = ['ImageMagick', 'MySQL-python', 'compat-gcc-34-g77', 'fftw3-devel', 'gcc-c++', 'gcc-gfortran', 'gcc-objc', 'gnuplot', 'grace', 'gsl-devel', 'libtiff-devel', 'netpbm-progs', 'numpy', 'openmpi-devel', 'opencv-python', 'python-devel', 'python-imaging', 'python-matplotlib', 'python-tools', 'scipy', 'wxPython', 'xorg-x11-server-Xvfb', 'libjpeg-devel', 'zlib-devel', 'unzip']
 		self.yumInstall(packagelist)
 
 	def enableTorqueComputeNode(self):
@@ -841,6 +872,10 @@ endif
 		packagelist = ['mysql-server', 'php', 'php-mysql', ]
 		self.yumInstall(packagelist)
 	
+	def mariadbYumInstall(self):
+		packagelist = ['mariadb-server', 'php', 'php-mysql', ]
+		self.yumInstall(packagelist)
+
 	def setupLeginonCfg(self):
 		# The template config file is in the git download location. The last place the leginon.cfg
 		# file is looked for is /etc/myami, which makes it the most global config file location.
@@ -870,7 +905,9 @@ endif
 		shutil.copy(pyscopeCfgDir + '/instruments.cfg.template', pyscopeCfgDir + '/instruments.cfg')
 
 
-	def setupSinedonCfg(self, sinedonDir):
+	def setupSinedonCfg(self):
+		# sinedon import needs sinedon.cfg already configured.  Therefore, it is better
+		# to get the cfg template from self.gitMyamiDir
 		inf = open(self.gitMyamiDir + 'sinedon/examples/sinedon.cfg', 'r')
 		outf = open('/etc/myami/sinedon.cfg', 'w')
 
@@ -951,7 +988,7 @@ endif
 		
 		outf.write('; custom parameters from CentOS Auto Install script\n')
 		outf.write('max_execution_time = 300 ; Maximum execution time of each script, in seconds\n')
-		outf.write('max_input_time = 300	 ; Maximum amout of time to spend parsing request data\n')
+		outf.write('max_input_time = 300	 ; Maximum amount of time to spend parsing request data\n')
 		outf.write('memory_limit = 1024M	 ; Maximum amount of memory a script may consume\n')
 		outf.write('\n')
 
@@ -1199,6 +1236,10 @@ endif
 		questionText = "Would you like to install EMAN, Xmipp, Spider, and Protomo at this time?"
 		self.doInstallExternalPackages = self.getBooleanInput(questionText)
 		
+		questionText = "Would you like to install Torque for Job server at this time?"
+		self.doInstallJobServerPackages = self.getBooleanInput(questionText)
+		self.failedInstallJobServer = False
+	
 	def getBooleanInput(self, questionText = ''):
 		'''
 		Return boolean True/False depending on Y/N input from user.
@@ -1280,10 +1321,11 @@ endif
 		self.yumUpdate()
 		self.yumInstall(['git'])
 		self.getMyami()
-		
-		result = self.setupJobServer()
-		if result is False:
-			sys.exit(1)
+	
+		if self.doInstallJobServerPackages:	
+			result = self.setupJobServer()
+			if result is False:
+				self.failedInstallJobServer = True
 		
 		result = self.setupProcessServer()
 		if result is False:
@@ -1314,8 +1356,14 @@ endif
 		print("Start the Redux Server with the following command: /sbin/service reduxd start")
 		print("========================")
 
-		# Start the Torque server
-		self.runCommand("systemctl start pbs_server")
+		if self.doInstallJobServerPackages:	
+			if self.failedInstallJobServer == False:
+				# Start the Torque server
+				self.runCommand("systemctl start pbs_server")
+			else:
+				print("========================")
+				print("Torque job server installation failed. Use command copy and paste method to run")
+				print("========================")
 				
 		setupURL = "http://localhost/myamiweb/setup/autoInstallSetup.php?password=" + self.serverRootPass + "&myamidir=" + self.gitMyamiDir + "&uploadsample=" + "%d" % int(self.doDownloadSampleImages)
 		setupOpened = None
