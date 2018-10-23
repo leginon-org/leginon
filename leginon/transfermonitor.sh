@@ -84,7 +84,7 @@ do
 	echo "NEWFILE IS $NEWFILE"
 	echo "SESSIONPATH IS $SESSIONPATH"
 	echo "TARGETDIR IS $TARGETDIR"
-	echo "WORKING ON $TARGETDIR$SESSIONPATH$NEWFILE"
+	echo "TRIGGERED BY $TARGETDIR$SESSIONPATH$NEWFILE"
 
 
 	if [ ! -f ${NEWFILE}.bz2 ] && [ ! -d $NEWFILE ] && [[ "$FILEPATH" != *references* ]]; then
@@ -94,9 +94,9 @@ do
 		echo FILEPATH IS ${FILEPATH}
 
 		if [[ ${NEWFILE} = *".tif" ]]; then
-			DIFF=$( diff <(ls ${FILEPATH} | sed 's/$/.tif/g') <(ls $TARGETDIR$SESSIONPATH ) | sed 's/.tif$//g' | grep \< | awk '{print $2}' )
+			DIFF=$( diff <(ls ${FILEPATH}) <(ls $TARGETDIR$SESSIONPATH) | grep \< | awk '{print $2}' )
 			CHECKEXT=''
-			# tif files are not compressed so the original need to be kept
+			# fit files are not compressed so the original need to be kept
 			RSYNCREMOVE=''
 		else
 			DIFF=$( diff <(ls ${FILEPATH} | sed 's/$/.bz2/g') <(ls $TARGETDIR$SESSIONPATH ) | sed 's/.bz2$//g' | grep \< | awk '{print $2}' )
