@@ -61,6 +61,9 @@ class SettingsJsonLoader(DataJsonLoader):
 		return self.session
 
 	def setJsonFilename(self,applicationname):
+		if applicationname.endswith('.json'):
+			self.jsonfile = applicationname
+			return
 		from leginon import version
 		leginondir = version.getInstalledLocation()
 		jsonpath = os.path.join(leginondir,'applications',applicationname+'_Settings.json')
@@ -90,7 +93,7 @@ class SettingsJsonLoader(DataJsonLoader):
 
 if  __name__ == '__main__':
 	if len(sys.argv) != 2:
-		print "Usage: python import_leginon_settings.py <applicationname>"
+		print "Usage: python import_leginon_settings.py <applicationname or json filepath>"
 		sys.exit()
 
 	applicationname = sys.argv[1]

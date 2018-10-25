@@ -44,7 +44,7 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 
 	def validateInput(self, params):
 		if len(params) != 3:
-			print "Usage import_leginon_presets.py database_hostname camera_cal_json_file"
+			print "Usage import_leginon_presets.py database_hostname tem_camera_presets_json_file"
 			self.close(1)
 		database_hostname = leginondata.sinedon.getConfig('leginondata')['host']
 		if params[1] != database_hostname:
