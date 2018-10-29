@@ -5,10 +5,11 @@ import os
 from leginon import leginondata
 from pyami import jsonfun
 '''
-	This program shows sql statement required to insert calibrations
+	This program creates sql statement and insert the calibrations
 	into leginon database of dest_database_host based on the existing
 	calibration on the source_database_host.  The latter is in sinedon.cfg
-	Usage: showcal.py source_database_hostname source_camera_hosthame camera_name
+	Usage: import_leginon_cal.py source_database_hostname source_camera_hosthame camera_name
+	Requirements: InstrumentData and MagnificationsData
 '''
 pixelsize_scale = 1
 
