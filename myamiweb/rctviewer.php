@@ -30,6 +30,8 @@ if($projectdb) {
 	$sessions=$projectdata->getSessions($sessions);
 }
 
+if ( is_numeric(SESSION_LIMIT) && count($sessions) > SESSION_LIMIT) $sessions=array_slice($sessions,0,SESSION_LIMIT);
+
 $jsdata='';
 if ($ptcl) {
 	list ($jsdata, $particleruns) = getParticleInfo($sessionId);

@@ -38,7 +38,7 @@ class CalibrationJsonMaker(jsonfun.DataJsonMaker):
 			print "ERROR: incorrect hostname...."
 			r = leginondata.InstrumentData(name=from_camname).query(results=1)
 			if r:
-				raise ValueError("Try %s instead" % result['hostname'])
+				raise ValueError("Try %s instead" % r[0]['hostname'])
 			else:
 				raise ValueError("  No %s camera found" % from_camname)
 			sys.exit()
@@ -55,7 +55,7 @@ class CalibrationJsonMaker(jsonfun.DataJsonMaker):
 			raise ValueError('no tem linked with the camera')
 		temids = []
 		for c in allcaldata:
-			if c['tem'].dbid not in temids:
+			if c['tem'] and c['tem'].dbid not in temids:
 				temids.append(c['tem'].dbid)
 		for id in temids:
 			tem = leginondata.InstrumentData().direct_query(id)
@@ -115,13 +115,14 @@ class CalibrationJsonMaker(jsonfun.DataJsonMaker):
 					self.publish(results)
 
 	def printMatrixCalibrationQueries(self, mags, probe):
+		probe_dependent = ('defocus','image-shift coma','image-shift stig','image-shift defocus')
 		for mag in mags:
 			# MatrixCarlibationData
-			for matrix_type in ('stage position','image shift','defocus','beam shift'):
+			for matrix_type in ('stage position','image shift','defocus','beam shift','image-shift coma','image-shift stig','image-shift defocus'):
 				# stage position is not probe dependent
-				if matrix_type == 'defocus' and probe is None:
+				if matrix_type in probe_dependent and probe is None:
 					continue
-				if matrix_type != 'defocus' and probe is not None:
+				if matrix_type not in probe_dependent and probe is not None:
 					continue
 				q = leginondata.MatrixCalibrationData(tem=self.tem, ccdcamera=self.cam,magnification=mag,type=matrix_type, probe=probe)
 				results = q.query(results=1)
@@ -182,8 +183,10 @@ class CalibrationJsonMaker(jsonfun.DataJsonMaker):
 
 	def run(self):
 		mags = self.getMags()
-		#print self.cam.dbid
-		#print mags
+		print self.cam.dbid
+		if not mags:
+			print 'Need magnifications to export'
+			self.close(1)
 		self.printMagSubmodeMap()
 		self.printPixelSizeCalibrationQueries(mags)
 		self.printCameraSensitivityQueries()
