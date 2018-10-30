@@ -126,12 +126,9 @@ class CalibrationClient(object):
 		self.node.stopTimer('calclient acquire pause')
 
 		imagedata = self.node.acquireCorrectedCameraImageData(corchannel, force_no_frames=True)
-<<<<<<< HEAD
 		if imagedata is None:
 			# need to raise exception or it will cause further error in correlation
 			raise RuntimeError('Failed image acquisition')
-=======
->>>>>>> origin/trunk
 		if correct_tilt:
 			self.correctTilt(imagedata)
 		newscope = imagedata['scope']
@@ -681,7 +678,6 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		bt = self.solveEq10_t(fmatrix, defocus1, defocus2, d)
 		return {'x':bt[0], 'y':bt[1]}
 
-<<<<<<< HEAD
 	def modifyBeamTilt(self, bt0, bt_delta):
 		bt1 = dict(bt0)
 		bt1['x'] += bt_delta['x']
@@ -747,9 +743,6 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 
 	def measureDefocusStig(self, tilt_value, stig=True, correct_tilt=False, correlation_type=None, settle=0.5, image0=None, on_phase_plate=False):
 
-=======
-	def measureDefocusStig(self, tilt_value, stig=True, correct_tilt=False, correlation_type=None, settle=0.5, image0=None, double_tilt=False):
->>>>>>> origin/trunk
 		self.abortevent.clear()
 		tem = self.instrument.getTEMData()
 		cam = self.instrument.getCCDCameraData()
@@ -780,7 +773,6 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		shifts = []
 		tilts = []
 		self.checkAbort()
-<<<<<<< HEAD
 		for index, tds in enumerate(all_tilt_deltas):
 			# first tilt
 			bt_delta1 = tds[0]
@@ -788,34 +780,17 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			# second tilt
 			bt_delta2 = tds[1]
 			bt2 = self.modifyBeamTilt(tiltcenter, bt_delta2)
-=======
-		for tiltaxis in tiltaxes:
-			bt1 = dict(tiltcenter)
-			if double_tilt:
-				bt1[tiltaxis] -= tilt_value
-				tilt_scale = 2*tilt_value
-			else:
-				tilt_scale = tilt_value
-			bt2 = dict(tiltcenter)
-			bt2[tiltaxis] += tilt_value
->>>>>>> origin/trunk
 			state1 = leginondata.ScopeEMData()
 			state1['beam tilt'] = bt1
 			state2 = leginondata.ScopeEMData()
 			state2['beam tilt'] = bt2
 			
-<<<<<<< HEAD
 			if image0 is None or abs(bt_delta1['x']) > 1e-5 or bt_delta1['y'] > 1e-5:
 				# double tilt needs new image0 for each axis
 				self.node.logger.info('Tilt beam by (x,y)=(%.2f,%.2f) mrad and acquire image' % (bt_delta1['x']*1000,bt_delta1['y']*1000))
 				image0 = self.acquireImage(state1, settle=settle, correct_tilt=correct_tilt, corchannel=0)
 			else:
 				self.node.logger.info('Use final drift image for autofocusing')
-=======
-			if image0 is None or double_tilt:
-				# double tilt needs new image0 for each axis
-				image0 = self.acquireImage(state1, settle=settle, correct_tilt=correct_tilt, corchannel=0)
->>>>>>> origin/trunk
 
 			try:
 				self.node.logger.info('Tilt beam by (x,y)=(%.2f,%.2f) mrad and acquire image' % (bt_delta2['x']*1000,bt_delta2['y']*1000))
@@ -826,15 +801,8 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			pixshift = shiftinfo['pixel shift']
 
 			shifts.append( (pixshift['row'], pixshift['col']) )
-<<<<<<< HEAD
 			delta_delta = (bt_delta2['x']-bt_delta1['x'],bt_delta2['y']-bt_delta1['y'])
 			tilts.append( delta_delta )
-=======
-			if tiltaxis == 'x':
-				tilts.append( (tilt_scale, 0) )
-			else:
-				tilts.append( (0, tilt_scale) )
->>>>>>> origin/trunk
 			try:
 				self.checkAbort()
 			except Abort:

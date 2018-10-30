@@ -18,7 +18,6 @@ require_once "inc/html_elements.inc";
 ini_set('session.gc_maxlifetime', 604800);
 session_set_cookie_params(604800);
 
-<<<<<<< HEAD
 session_start();
 if (isset($_GET['manual'])){$_SESSION['manual'] = $_GET['manual'];}
 if ($_SESSION['manual'] == 1 AND $_POST['submit'] != "Submit Manual Parameters")
@@ -30,28 +29,11 @@ if ($_SESSION['manual'] == 1 AND $_POST['submit'] != "Submit Manual Parameters")
 	$imageinfo['tiltseries'] = $_POST['tiltseries'] = $_SESSION['tiltseries'];
 	$imageinfo['defocus'] = floatval($_SESSION['imageinfo']['defocus']);
 }
-=======
-#Keep session alive for one week
-ini_set('session.gc_maxlifetime', 604800);
-session_set_cookie_params(604800);
->>>>>>> origin/trunk
 
-session_start();
-if (isset($_GET['manual'])){$_SESSION['manual'] = $_GET['manual'];}
-if ($_SESSION['manual'] == 1 AND $_POST['submit'] != "Submit Manual Parameters")
-{
-	global $imageinfo;
-	$imageinfo['dimx'] = $_POST['dimx'] = $_SESSION['dimx'];
-	$imageinfo['dimy'] = $_POST['dimy'] = $_SESSION['dimy'];
-	$imageinfo['pixelsize'] = $_POST['pixelsize'] = $_SESSION['pixelsize'];
-	$imageinfo['tiltseries'] = $_POST['tiltseries'] = $_SESSION['tiltseries'];
-}
-	
 class Protomo2CoarseAlignForm extends BasicLayoutForm
 {
 	function __construct( $expId, $extraHTML, $region_x='512', $region_y='512', $sampling='8', $map_sampling='', $thickness='1000', $pixelsize='',
 	$lp_diam_x='20', $lp_diam_y='20', $lp_apod_x='50', $lp_apod_y='50', $hp_diam_x='500', $hp_diam_y='500', $hp_apod_x='150', $hp_apod_y='150',
-<<<<<<< HEAD
 	$corr_mode='mcf', $iters='', $param='', $binning='true', $preprocessing='true', $select_images='', $exclude_images_by_angle='', $exclude_images_by_angle_accuracy='0.05',
 	$tilt_azimuth='', $border='100',$clip_low='3.5', $clip_high='3.5', $thr_low='', $thr_high='', $gradient='true', $iter_gradient='false', $filter='median', $kernel_x='', $kernel_y='',
 	$grow='0', $window_area='0.95', $mask_apod_x='', $mask_apod_y='', $mask_width_x='', $mask_width_y='', $dimx='', $dimy='',$correlation_size_x='192',
@@ -62,20 +44,10 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 	$dose_presets='', $dose_a='', $dose_b='', $dose_c='', $frame_aligned='', $negative='', $positive='', $defocus_min='', $defocus_max='',
 	$defocus_estimate='', $defocus_difference='0.2', $defocus_ang_negative='', $defocus_ang_positive='', $amp_contrast_defocus='0.07',
 	$res_min='10000', $res_max='10', $defocus_save='', $further_alignment='', $center_all_images='False', $change_refimg='True', $desired_ref_tilt_angle=0)
-=======
-	$corr_mode='mcf', $iters='', $param='', $binning='true', $preprocessing='true', $select_images='', $exclude_images='', $border='100',
-	$clip_low='3.5', $clip_high='3.5', $thr_low='', $thr_high='', $gradient='true', $iter_gradient='false', $filter='median', $kernel_x='', $kernel_y='',
-	$grow='0', $window_area='0.95', $mask_apod_x='', $mask_apod_y='', $mask_width_x='', $mask_width_y='', $dimx='', $dimy='',$correlation_size_x='192',
-	$correlation_size_y='192', $peak_search_radius_x='300', $peak_search_radius_y='300', $logging='true', $loglevel='2', $slab='true', $map_size_x='512',
-	$map_size_y='512', $filename_prefix='', $image_file_type='', $cachedir='cache', $protomo_outdir='out', $grid_limit='2.0', $grid_step='0.1',
-	$create_reconstruction='true', $show_window_size='true', $create_tilt_video='true', $keep_recons='false', $region_x='512', $video_type='',
-	$shift_limit='30' , $angle_limit='40', $parallel='', $ctf_correct='', $amp_contrast='0.07', $iWidth='20', $DefocusTol='200',
-	$dose_presets='', $dose_a='', $dose_b='', $dose_c='', $frame_aligned='', $negative='', $positive='')
->>>>>>> origin/trunk
 	{
 		parent::__construct($expId, $extraHTML);
 		//print "_POST:" . "<br>";
-		//var_dump($_POST);d
+		//var_dump($_POST);
 		//print "_GET:" . "<br>";
 		//var_dump($_GET);
 		//print "_SESSION:" . "<br>";
@@ -125,7 +97,6 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 			} else {
 				if ($tiltseriesId)
 					$html.=  "<br/><b>Bad Tilt-Series! Do not use.</b><br/>";
-<<<<<<< HEAD
 			}
 			
 			// Hide secondary tilt-series until dual tilt is processable.
@@ -147,29 +118,6 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 				if ($tiltseriesId2)
 					$html.=  "<br/><b>Bad Tilt-Series! Do not use.</b><br/>";
 			}
-=======
-			}
-			
-			// Hide secondary tilt-series until dual tilt is processable.
-			// Dual tilt-series processing is not in Appion-Protomo (yet)
-			if (false) {
-				$html.=  "</td><td Valign='TOP'>\n";
-				$html.=  $seriesselector_array2[0];
-				$html.=  docpop('tiltseriestwo', 'Secondary Tilt-Series');
-			}
-			if (count($tiltseriesinfos2) && $tiltseriesId2) {
-				if ($tiltseriesId2==$tiltseriesId){
-					$html.=  "<br/><b>2nd tilt-series must be different.</b><br/>";
-				} else {
-					$html.=  "
-						<br/><b>First Image in the Tilt-Series:</b><br/>"
-						.$tiltseriesinfos2[0]['filename'].".".pathinfo($imageinfo['filename'], PATHINFO_EXTENSION);
-				}
-			} else {
-				if ($tiltseriesId2)
-					$html.=  "<br/><b>Bad Tilt-Series! Do not use.</b><br/>";
-			}
->>>>>>> origin/trunk
 		}
 		elseif ($_SESSION['manual'] == 1 AND $_POST['submit'] == "Submit Manual Parameters")
 		{
@@ -229,18 +177,13 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 				}
 				$html.= 'value="'.$i.'">'.$search_presets[$i-1].'</option>';
 			}
-<<<<<<< HEAD
 			$html.= '</select>'; $html.= docpop('protomo_coarse_presets_search', ' Search Area</center><br>');
 			$html .= closeRoundBorder();
-=======
-			$html.= '</select>'; $html.= docpop('protomo_coarse_presets_search', ' Search Area<br>');
->>>>>>> origin/trunk
 		}
 		
 		if ($_SESSION['manual'] != 1) {
 				$_SESSION['tiltseries'] = $tiltseriesinfos[0]['number'];
 		}
-<<<<<<< HEAD
 		//if ($imageinfo['dimx'] < 2049 or $imageinfo['dimy'] < 2049){
 		//	$_POST['map_sampling'] = $map_sampling='4';
 		//	$_POST['sampling'] = $sampling='4';
@@ -252,16 +195,6 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		$_POST['map_size_y'] = $map_size_y=intval($imageinfo['dimy']/$map_sampling);
 		$defocus_min = -round($imageinfo['defocus']*pow(10,6)*0.8,2);
 		$defocus_max = -round($imageinfo['defocus']*pow(10,6)*1.2,2);
-=======
-		if ($imageinfo['dimx'] < 2049 or $imageinfo['dimy'] < 2049){
-			$_POST['map_sampling'] = $map_sampling='4';
-		}else{
-			$_POST['map_sampling'] = $map_sampling='8';
-		}
-		$_POST['map_size_x'] = $map_size_x=intval($imageinfo['dimx']/$map_sampling);
-		$_POST['map_size_y'] = $map_size_y=intval($imageinfo['dimy']/$map_sampling);
-		
->>>>>>> origin/trunk
 		if ($_POST['settings'] == 1 or $_POST['settings'] == 2)  //Express or Basic Settings
 		{
 			//General Parameters
@@ -466,13 +399,10 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		$mask_apod_x='10';
 		$mask_apod_y='10';
 		$voltage=$_POST['voltage']=$imageinfo['high tension']/1000;
-<<<<<<< HEAD
 		$defocus_min = -round($imageinfo['defocus']*pow(10,6)*0.8,2);
 		$defocus_max = -round($imageinfo['defocus']*pow(10,6)*1.2,2);
 		$res_max = round($imageinfo['pixelsize']*4*pow(10,10),1);
 
-=======
->>>>>>> origin/trunk
 		if ($_SESSION['manual'] == 1){
 			$_POST['dimx'] = $imageinfo['dimx'];
 			$_POST['dimy'] = $imageinfo['dimy'];
@@ -490,11 +420,7 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		//------ Set Parameters for the parent class, BasicLoopForm (general Appion params) -----//
 		
 		// Set the publications to be references on the web pages
-<<<<<<< HEAD
 		$pubList = array('appion-protomo', 'protomo','imodctf', 'tomoctf', 'dose_comp');
-=======
-		$pubList = array('appion-protomo', 'protomo','imodctf', 'dose_comp');
->>>>>>> origin/trunk
 		$this->setPublications( $pubList );
 		$this->setJobType( 'protomo' );
 		$this->setOutputDirectory( 'protomo_alignments' );
@@ -513,11 +439,7 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		$this->setTitle( 'Protomo Coarse Alignment Launcher' );
 		$this->setHeading( 'Protomo Coarse Alignment' );
 		$this->setExeFile( 'protomo2aligner.py' );
-<<<<<<< HEAD
 		$this->setGuideURL( "https://github.com/nysbc/appion-protomo#example" );
-=======
-		$this->setGuideURL( "http://emg.nysbc.org/redmine/projects/appion/wiki/Align_Tilt-Series" );
->>>>>>> origin/trunk
 		$this->setTestable( False ); // True to activate "test single image".
 		$this->setUseLegOutDir( False ); // The output directory will be created in the Appion run directory rather than Leginon.
 		$this->setShowDesc( True ); // Flag to hide the description field of the run parameters.
@@ -600,7 +522,6 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		$params->addParam( "video_type", $video_type, "Video Type" );
 		$params->addParam( "shift_limit", $shift_limit, "Shift Limit" );
 		$params->addParam( "angle_limit", $angle_limit, "Angle Limit" );
-<<<<<<< HEAD
 		$params->addParam( "amp_contrast_ctf", $amp_contrast_ctf, "Amplitude Contrast" );
 		$params->addParam( "iWidth", $iWidth, "Interpolation Width" );
 		$params->addParam( "DefocusTol", $DefocusTol, "Defocus Tolerance" );
@@ -618,12 +539,6 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		$params->addParam( "desired_ref_tilt_angle", $desired_ref_tilt_angle, "degrees" );
 		$params->addParam( "defocus_save", $defocus_save, "Save Defocus Value" );
 		$params->addParam( "further_alignment", $further_alignment, "Iterate Coarse Alignment Once" );
-=======
-		$params->addParam( "amp_contrast", $amp_contrast, "Amplitude Contrast" );
-		$params->addParam( "iWidth", $iWidth, "Interpolation Width" );
-		$params->addParam( "DefocusTol", $DefocusTol, "Defocus Tolerance" );
-		
->>>>>>> origin/trunk
 		
 		// Validations
 		if ($_POST['settings'] == 2 or $_POST['settings'] == 3)  //Basic or Advanced Settings
@@ -650,7 +565,6 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 			<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2CoarseAlignForm'><b><center>Click here or Refresh this page to continue.</center></b></a>";	
 			$_SESSION['erase_coarse'] = 0;
 		}
-<<<<<<< HEAD
 		elseif (empty($_POST['tiltseriesId']) AND $_SESSION['erase_coarse'] != 1 AND $_SESSION['manual'] != 1)
 		{
 			global $html;
@@ -660,14 +574,6 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 			$html .= "<b><center>[To upload a SerialEM-collected tilt-series, run the following command:</b><br><br>
 			protomo2aligner.py --serialem_stack=[stack path] --serialem_mdoc=[mdoc path] --voltage=[in keV]<br><br>
 			<b>and then follow the insturctions after running the command.]</center></b><br>";
-=======
-		elseif (empty($_POST['tiltseriesId']) AND $_SESSION['erase_coarse']!=1 AND $_SESSION['manual'] != 1)
-		{
-			global $html;
-			$html .= "<br></br>
-			<b><center>[Choose a Tilt-Series to align to proceed]</center></b>
-			<b><center>[For manual tilt-series setup <a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2CoarseAlignForm&manual=1'>Click here</a>]</center></b><br>";
->>>>>>> origin/trunk
 		}
 		elseif ($_GET['manual'] == 1 AND $_POST['submit'] != "Submit Manual Parameters")
 		{
@@ -680,11 +586,7 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 			$html .= '<input type="text" name="dimy" size="4">'.docpop('protomo_dimy', ' Dim (y)').'<br>';
 			$html .= '<input type="text" name="pixelsize" size="4">'.docpop('protomo_pixelsize', ' Pixelsize').'<br>';
 			$html .= '<input type="text" name="tiltseries" size="4">'.docpop('protomo_tiltseries_manual', ' Tilt-Series Number').'<br>';
-<<<<<<< HEAD
 			$html .= '<br><center><input type="submit" name="submit" value="Submit Manual Parameters"><center> </form>';	
-=======
-			$html .= '<br><center><input type="submit" name="submit" value="Submit Manual Parameters"><center> </form>';
->>>>>>> origin/trunk
 		}
 		else
 		{
@@ -702,7 +604,6 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 				if ($_SESSION['manual'] != 1) {
 					$html .= "
 					<br />
-<<<<<<< HEAD
 					<H4>Defocus Estimation Parameters ".docpop('defocus_info', '(Info)')."</H4>
 					<hr />";
 					$html.= '<select name="defocus_estimate" style="width:66px">';
@@ -719,15 +620,6 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 					//$html.= '<option value="True">True</option>';
 					//$html.= '<option selected value="False">False</option>';
 					//$html.= '</select>'; $html.= docpop('ctf_correct', ' Correct for CTF').'<br>';
-=======
-					<H4>CTF Correction Parameters ".docpop('ctf_info', '(Info)')."</H4>
-					<hr />";
-					
-					$html.= '<select name="ctf_correct" style="width:66px">';
-					$html.= '<option value="True">True</option>';
-					$html.= '<option selected value="False">False</option>';
-					$html.= '</select>'; $html.= docpop('ctf_correct', ' Correct for CTF').'<br>';
->>>>>>> origin/trunk
 				
 					$html .= "
 					<br>
@@ -735,15 +627,9 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 					<hr />";
 					
 					$html.= '<select name="dose_presets" style="width:66px">';
-<<<<<<< HEAD
 					$html.= '<option value="False">None</option>';
 					$html.= '<option value="Light">Light</option>';
 					$html.= '<option selected value="Moderate">Moderate</option>';
-=======
-					$html.= '<option selected value="False">None</option>';
-					$html.= '<option value="Light">Light</option>';
-					$html.= '<option value="Moderate">Moderate</option>';
->>>>>>> origin/trunk
 					$html.= '<option value="Heavy">Heavy</option>';
 					$html.= '</select>'; $html.= docpop('dose_presets', ' Dose Compensation Type').'<br>';
 				}
@@ -760,23 +646,17 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 						$html.= '<option value="False">False</option>';
 						$html.= '</select>'; $html.= docpop('protomo_frame_aligned', ' Use Frame Aligned Images').'<br>';
 				}
-<<<<<<< HEAD
 				$html.= $params->insertTextField( "tilt_azimuth", $fieldSize );
-=======
->>>>>>> origin/trunk
 				$html.= $params->insertTextFieldInRow( "shift_limit", $fieldSize ).'│ ';
 				$html.= $params->insertTextField( "angle_limit", $fieldSize );
 				$html.= '<select name="parallel" style="width:66px">';
 				$html.= '<option selected value="True">true</option>';
 				$html.= '<option value="False">false</option>';
 				$html.= '</select>'; $html.= docpop('protomo_parallel', ' Parallelize Non-Protomo Processes').'<br>';
-<<<<<<< HEAD
 				$html.= '<select name="further_alignment" style="width:66px">';
 				$html.= '<option value="True">True</option>';
 				$html.= '<option selected value="False">False</option>';
 				$html.= '</select>'; $html.= docpop('protomo_further_alignment', ' Iterate Coarse Alignment Once').'<br>';
-=======
->>>>>>> origin/trunk
 				
 				$html .= "
 			    <br />
@@ -859,7 +739,6 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 				if ($_SESSION['manual'] != 1) {
 					$html .= "
 					<br />
-<<<<<<< HEAD
 					<H4>Defocus Estimation Parameters ".docpop('defocus_info', '(Info)')."</H4>
 					<hr />";
 					$html.= '<select name="defocus_estimate" style="width:66px">';
@@ -888,18 +767,6 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 					//$html.= $params->insertTextField( "amp_contrast_ctf", $fieldSize );
 					//$html.= $params->insertTextField( "iWidth", $fieldSize );
 					//$html.= $params->insertTextField( "DefocusTol", $fieldSize );
-=======
-					<H4>CTF Correction Parameters ".docpop('ctf_info', '(Info)')."</H4>
-					<hr />";
-					
-					$html.= '<select name="ctf_correct" style="width:66px">';
-					$html.= '<option value="True">True</option>';
-					$html.= '<option selected value="False">False</option>';
-					$html.= '</select>'; $html.= docpop('ctf_correct', ' Correct for CTF').'<br>';
-					$html.= $params->insertTextField( "amp_contrast", $fieldSize );
-					$html.= $params->insertTextField( "iWidth", $fieldSize );
-					$html.= $params->insertTextField( "DefocusTol", $fieldSize );
->>>>>>> origin/trunk
 					
 					$html .= "
 					<br>
@@ -907,15 +774,9 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 					<hr />";
 					
 					$html.= '<select name="dose_presets" style="width:66px">';
-<<<<<<< HEAD
 					$html.= '<option value="False">None</option>';
 					$html.= '<option value="Light">Light</option>';
 					$html.= '<option selected value="Moderate">Moderate</option>';
-=======
-					$html.= '<option selected value="False">None</option>';
-					$html.= '<option value="Light">Light</option>';
-					$html.= '<option value="Moderate">Moderate</option>';
->>>>>>> origin/trunk
 					$html.= '<option value="Heavy">Heavy</option>';
 					$html.= '<option value="Custom">Custom</option>';
 					$html.= '</select>'; $html.= docpop('dose_presets', ' Dose Compensation Type').'<br>';
@@ -939,7 +800,6 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 				//$html.= $params->insertTextField( "select_images", $fieldSize );
 				$html.= $params->insertTextFieldInRow( "negative", $fieldSize ).'│ ';
 				$html.= $params->insertTextField( "positive", $fieldSize );
-<<<<<<< HEAD
 				$html.= $params->insertTextField( "tilt_azimuth", $fieldSize );
 				//$html.= $params->insertTextField( "exclude_images", $fieldSize );
 				$html.= $params->insertTextFieldInRow( "exclude_images_by_angle", $fieldSize );
@@ -955,11 +815,6 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 				$html.= '<option value="True">True</option>';
 				$html.= '<option selected value="False">False</option>';
 				$html.= '</select>'; $html.= docpop('protomo_center_all_images', ' Center All Images').'<br>';
-=======
-				$html.= $params->insertTextField( "exclude_images", $fieldSize );
-				$html.= $params->insertTextFieldInRow( "shift_limit", $fieldSize ).'│ ';
-				$html.= $params->insertTextField( "angle_limit", $fieldSize );
->>>>>>> origin/trunk
 				$html.= '<select name="parallel" style="width:66px">';
 				$html.= '<option selected value="True">true</option>';
 				$html.= '<option value="False">false</option>';
@@ -1106,11 +961,7 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 			if ((empty($_POST['tiltseries']) OR empty($_POST['region_x']) OR empty($_POST['region_y']) OR empty($_POST['thickness']) OR empty($_POST['grid_limit']) OR empty($_POST['grid_step'])) AND !isset($_POST['process']))
 			{
 				$html .= "<br></br>
-<<<<<<< HEAD
 				<b><center>[Choose appropriate presets and/or edit desired parameters then click 'Just Show Command']</center><br></b>";
-=======
-				<b><center>[Choose appropriate presets and/or edit desired parameters then click 'Just Show Command' to proceed]</center><br></b>";
->>>>>>> origin/trunk
 			}
 		}
 		return $html;
@@ -1125,24 +976,16 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		$sessionname=$_POST['sessionname'];
 		$tiltseries=$_SESSION['tiltseries'];
 		$pixelsize=$_SESSION['pixelsize'];
-<<<<<<< HEAD
 		$defocus=-$_SESSION['imageinfo']['defocus']*pow(10,6);
-=======
->>>>>>> origin/trunk
 		if ($_SESSION['manual'] == 1) {$pixelsize=$pixelsize*pow(10,10);}
 		$dimx=$_SESSION['dimx'];
 		$dimy=$_SESSION['dimy'];
 		$image_file_type=$_POST['image_file_type'];
 		$ctf_correct=$_POST['ctf_correct'];
-<<<<<<< HEAD
 		$defocus_estimate=$_POST['defocus_estimate'];
 		if ($_SESSION['manual']!=1){$command.="--tiltseries=$tiltseries ";}
 		if ($_SESSION['manual']==1){$command.="--my_tlt=True ";}
 		if ($_POST['settings']==1 or $_POST['settings']==2){$command.="--defocus=$defocus ";}
-=======
-		if ($_SESSION['manual']!=1){$command.="--tiltseries=$tiltseries ";}
-		if ($_SESSION['manual']==1){$command.="--my_tlt=True ";}
->>>>>>> origin/trunk
 		$command.="--sessionname=$sessionname ";
 		$command.="--pixelsize=$pixelsize ";
 		$command.="--dimx=$dimx ";

@@ -6,7 +6,6 @@ import math
 import numpy
 #appionlib
 from appionlib import starFile
-<<<<<<< HEAD
 from appionlib import apInstrument
 from appionlib import apParam
 #pyami
@@ -21,10 +20,6 @@ def getRelionVersion():
 			return 2.0
 		else:
 			return 1.4
-=======
-#pyami
-from pyami import mrc
->>>>>>> origin/trunk
 
 def readStarFileDataBlock(starfile, datablock):
 	star = starFile.StarFile(starfile)
@@ -173,17 +168,10 @@ def sortRelionStarFileByParticleNumber(instarfile, outstarfile, datablock="data_
 	l.sort()
 
 	# write sorted star file
-<<<<<<< HEAD
 	loopDictNew = []
 	for val in l:
 		loopDictNew.append(partdict[val])
 	writeLoopDictToStarFile(loopDictNew, datablock, outstarfile)
-=======
-        loopDictNew = []
-        for val in l:
-                loopDictNew.append(partdict[val])
-        writeLoopDictToStarFile(loopDictNew, datablock, outstarfile)
->>>>>>> origin/trunk
 
 def getStarFileColumnLabels(starfile):
 	# returns array of labels, assuming they are in order
@@ -200,14 +188,9 @@ def getStarFileColumnLabels(starfile):
 def getColumnFromRelionLine(line,col):
 	# return a specified column (starting with 0)
 	l = line.strip().split()
-<<<<<<< HEAD
 	if (len(l)<col+1 or l[0][:4]=="_rln" or l[0] in ['data_','loop_']):
 		return None
 	print l
-=======
-	if (len(l)<col or l[:4]=="_rln" or l[0] in ['data_','loop_']):
-		return None
->>>>>>> origin/trunk
 	return l[col]
 	
 def getMrcParticleFilesFromStar(starfile):
@@ -232,7 +215,6 @@ def getPartsFromStar(starfile):
 		if p: partlist.append(p)
 	return partlist
 
-<<<<<<< HEAD
 def writeRelionStarHeader(labels, outstarfile):
 	ofile = open(outstarfile,'w')
 	ofile.write("\ndata_images\n\nloop_\n")
@@ -240,8 +222,6 @@ def writeRelionStarHeader(labels, outstarfile):
 	ofile.write("\n")
 	ofile.close()
 
-=======
->>>>>>> origin/trunk
 def writeRelionMicrographsStarHeader(outstarfile,ctfinfo=False):
 	labels = ["_rlnMicrographName",
 		"_rlnMagnification",
@@ -255,7 +235,6 @@ def writeRelionMicrographsStarHeader(outstarfile,ctfinfo=False):
 		"_rlnSphericalAberration",
 		"_rlnAmplitudeContrast",
 		"_rlnCtfFigureOfMerit"])
-<<<<<<< HEAD
 	writeRelionStarHeader(labels, outstarfile)
 
 def formatCtfForRelion(imgdata,ctfdata,apix):
@@ -285,19 +264,10 @@ def formatCtfForRelion(imgdata,ctfdata,apix):
 
 	return c
 	
-=======
-	ofile = open(outstarfile,'w')
-	ofile.write("\ndata_images\n\nloop_\n")
-	ofile.write("\n".join("%s #%i"%(label,index+1) for index,label in enumerate(labels)))
-	ofile.write("\n")
-	ofile.close()
-
->>>>>>> origin/trunk
 def generateCtfFile(imgname,cs,kev,amp,mag,dstep,defU,defV,defAngle,cc):
 	f = open(imgname,'w')
 	f.write(" CS[mm], HT[kV], AmpCnst, XMAG, DStep[um]\n")
 	f.write(" %4.1f   %6.1f    %4.2f  %8.1f  %7.3f\n"%(cs,kev,amp,mag,dstep))
-<<<<<<< HEAD
 	f.write("      DFMID1      DFMID2      ANGAST	  CC\n")
 	f.write("   %9.2f   %9.2f    %8.2f    %8.5f  Final Values\n"%(defU,defV,defAngle,cc))
 	f.close()
@@ -311,19 +281,11 @@ def generateCtfFile2(imgname,cs,kev,amp,mag,dstep,defU,defV,defAngle,cc):
 def extractParticles(starfile,rootname,boxsize,bin,bgradius,pixlimit,invert,ext,nproc=1,logfile=None):
 	relion_version = getRelionVersion()
 
-=======
-	f.write("      DFMID1      DFMID2      ANGAST          CC\n")
-	f.write("   %9.2f   %9.2f    %8.2f    %8.5f  Final Values\n"%(defU,defV,defAngle,cc))
-	f.close()
-
-def extractParticles(starfile,rootname,boxsize,bin,bgradius,pixlimit,invert,nproc=1,logfile=None):
->>>>>>> origin/trunk
 	relionexe = "`which relion_preprocess"
 	if nproc > 1:
 		relionexe = "mpirun %s_mpi"%relionexe
 	relionexe+= "`"
 
-<<<<<<< HEAD
 	relioncmd = "%s"%relionexe
 	if relion_version < 2:
 		relioncmd+= " --o %s --mic_star %s"%(rootname,starfile)
@@ -331,10 +293,6 @@ def extractParticles(starfile,rootname,boxsize,bin,bgradius,pixlimit,invert,npro
 		relioncmd+= " --part_star %s.star --i %s"%(rootname,starfile)
 		relioncmd+= " --coord_dir %s"%(os.path.abspath("."))
 	relioncmd+= " --coord_suffix %s --extract"%(ext)
-=======
-	relioncmd = "%s --o %s --mic_star %s"%(relionexe,rootname,starfile)
-	relioncmd+= " --coord_suffix .box --extract"
->>>>>>> origin/trunk
 	relioncmd+= " --extract_size %i"%boxsize
 	if bin is not None:
 		relioncmd+=" --scale %i"%(int(boxsize/bin))

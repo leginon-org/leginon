@@ -50,16 +50,8 @@ class Xmipp3CL2DAlign extends BasicLayoutForm
 		$javascript .= "	stackArray[3] = stackArray[3].replace(/\,/g,'');\n";
 		$javascript .= "	document.viewerform.numpart.value = stackArray[3];\n";
 		$javascript .= "	document.viewerform.clip.value = stackArray[2];\n";
-<<<<<<< HEAD
 		// set binning to 1
 		$javascript .= "	document.viewerform.bin.value = 1;\n";
-=======
-		// set max last ring radius
-		$javascript .= "	var bestbin = Math.floor(stackArray[2]/64);\n";
-		$javascript .= "	if (bestbin < 1) {\n";
-		$javascript .= "		var bestbin = 1 ;}\n";
-		$javascript .= "	document.viewerform.bin.value = bestbin;\n";
->>>>>>> origin/trunk
 		//number of references is the natural log of the number of particles
 		$javascript .= "	var bestref = Math.floor(Math.log(stackArray[3])/2)*2;\n";
 		$javascript .= "	if (bestref < 2) {\n";

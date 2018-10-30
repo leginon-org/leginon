@@ -11,11 +11,7 @@
     </sqltable>
     <sqltable name="install" >
         <field name="key" >revision</field>
-<<<<<<< HEAD
         <field name="value" >20281</field>
-=======
-        <field name="value" >19429</field>
->>>>>>> origin/trunk
     </sqltable>
   <!-- boxtypes -->
     <sqltable name="boxtypes" >

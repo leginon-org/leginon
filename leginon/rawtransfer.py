@@ -319,10 +319,7 @@ class RawTransfer(object):
 				print '    Destination frame path does not starts with %s. Skipped' % (dest_head)
 				continue
 
-<<<<<<< HEAD
 			print '**running', src_path
-=======
->>>>>>> origin/trunk
 			if self.refcopy:
 				self.refcopy.setFrameDir(frames_path)
 

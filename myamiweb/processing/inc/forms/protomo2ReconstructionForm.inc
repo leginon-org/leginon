@@ -16,7 +16,6 @@ ini_set('session.gc_maxlifetime', 604800);
 session_set_cookie_params(604800);
 
 session_start();
-<<<<<<< HEAD
 if (isset($_GET['runname'])) {  //If user is coming from main summary
 	$tiltseries=$_GET['tiltseries'];
 	$outdir=$_GET['outdir'];
@@ -33,19 +32,6 @@ if (isset($_GET['runname'])) {  //If user is coming from main summary
 	$outdir=$_SESSION['outdir'];
 	$runname=$_SESSION['runname'];
 }
-=======
-if (isset($_GET['tiltseries'])) {  //If user is coming from batch
-		$tiltseries=ltrim($_GET['tiltseries'], '0');
-		$outdir=$_GET['rundir'];
-		$runname='tiltseries'.$_GET['tiltseries'];
-		$_SESSION['from_batch']=1;
-}else{
-		$tiltseries=$_SESSION['tiltseries'];
-		$outdir=$_SESSION['outdir'];
-		$runname=$_SESSION['runname'];
-}
-$refine_thickness=$_SESSION['thickness'];
->>>>>>> origin/trunk
 $sessionname=$_SESSION['sessionname'];
 $imageinfo=$_SESSION['imageinfo'];
 $protomo_outdir = $_SESSION['protomo_outdir'];
@@ -81,7 +67,6 @@ if ($_SESSION['erase_refine'] == 1){  //Just using erase_refine as a token
 
 class Protomo2ReconstructionForm extends BasicLayoutForm
 {
-<<<<<<< HEAD
 	function __construct( $expId, $extraHTML, $commit='false', $reconstruction_actions='', $negative_recon='', $positive_recon='', $recon_iter='', $recon_map_sampling='4',
 	$recon_map_size_x='2048', $recon_map_size_y='2048', $recon_thickness='2500', $pixelsize='', $recon_lowpass='', $recon_lp_diam_x='15',
 	$recon_lp_diam_y='15', $ctf_correct='', $amp_contrast_ctf='0.07', $iWidth='20', $DefocusTol='200', $dose_presets='', $dose_a='',
@@ -89,13 +74,6 @@ class Protomo2ReconstructionForm extends BasicLayoutForm
 	$tomo3d_sirt_iters='30', $exclude_images_by_angle='', $stack_procs='all', $bin_type='', $amp_correct='', $amp_correct_w1='0.67', $amp_correct_w2='0.33',
 	$defocus_difference='250', $defocus_save_recon='', $pick_tomogram='', $dog_particle_diam='', $dog_diam_variance='5', $dog_max_picks='',
 	$dog_junk_tolerance='5', $dog_lowpass_type='proc3d')
-=======
-	function __construct( $expId, $extraHTML, $commit='false', $negative_recon='', $positive_recon='', $recon_iter='', $recon_map_sampling='2',
-	$recon_map_size_x='2048', $recon_map_size_y='2048',	$recon_thickness='1500', $pixelsize='', $recon_lowpass='', $recon_lp_diam_x='15',
-	$recon_lp_diam_y='15', $ctf_correct='', $amp_contrast='0.07', $iWidth='20', $DefocusTol='200', $dose_presets='', $dose_a='',
-	$dose_b='', $dose_c='', $link_recon='', $frame_aligned='', $reconstruction_method='', $tomo3d_procs='all', $tomo3d_options='',
-	$tomo3d_sirt_iters='30', $exclude_images='')
->>>>>>> origin/trunk
 	{
 		parent::__construct($expId, $extraHTML);
 		//print "_POST:" . "<br>";
@@ -107,7 +85,6 @@ class Protomo2ReconstructionForm extends BasicLayoutForm
 		
 		global $html; //I can only get the selector form to pass variables properly by defining it globally in the constructor.
 		
-<<<<<<< HEAD
 		if (!isset($_POST['reconstruction_actions'])) {$_POST['reconstruction_actions']=1;}
 		$action_settings=array("Reconstruct", "CTF Correct > Reconstruct", "Dose Compensate > Reconstruct", "CTF Correct > Dose Compensate > Reconstruct");
 
@@ -126,28 +103,16 @@ class Protomo2ReconstructionForm extends BasicLayoutForm
 
 		$html.= '<br><select name="reconstruction_method" onchange=submit() style="width:225px">';
 		for ($i = 1; $i < count($method_settings)+1; $i++) {
-=======
-		if (!isset($_POST['reconstruction_method'])) {$_POST['reconstruction_method']=1;}
-		$settings=array("Protomo weighted back-projection", "Tomo3D weighted back-projection", "Tomo3D SIRT", "Stack only");
-
-		$html.= '<br><select name="reconstruction_method" onchange=submit() style="width:225px">';
-		for ($i = 1; $i < count($settings)+1; $i++) {
->>>>>>> origin/trunk
 			$html.= '<option ';
 			if ($i == $_POST['reconstruction_method']) {
 				$html.= 'selected ';
 			}
-<<<<<<< HEAD
 			$html.= 'value="'.$i.'">'.$method_settings[$i-1].'</option>';
-=======
-			$html.= 'value="'.$i.'">'.$settings[$i-1].'</option>';
->>>>>>> origin/trunk
 		}
 		$html.= '</select>'; $html.= docpop('protomo_reconstruction_method', ' Reconstruction Method<br>');
 		
 		global $imageinfo;
 		global $protomo_outdir;
-		global $refine_thickness;
 		$tiltseries=$_SESSION['tiltseries'];
 		$_POST['runname']=$_SESSION['runname'];
 		$_POST['outdir']=$_SESSION['outdir'];
@@ -156,10 +121,6 @@ class Protomo2ReconstructionForm extends BasicLayoutForm
 		$recon_iter=$_SESSION['iter'];
 		$recon_map_size_x = $imageinfo['dimx'];
 		$recon_map_size_y = $imageinfo['dimy'];
-<<<<<<< HEAD
-=======
-		$recon_thickness = $refine_thickness;
->>>>>>> origin/trunk
 		$recon_lp_diam_x = round(pow(10,10)*$imageinfo['pixelsize']*8);
 		$recon_lp_diam_y = round(pow(10,10)*$imageinfo['pixelsize']*8);
 		
@@ -180,11 +141,7 @@ class Protomo2ReconstructionForm extends BasicLayoutForm
 		$this->setTitle( 'Protomo Reconstruction Launcher' );
 		$this->setHeading( 'Protomo Reconstruction' );
 		$this->setExeFile( 'protomo2reconstruction.py' );
-<<<<<<< HEAD
 		$this->setGuideURL( "https://github.com/nysbc/appion-protomo#example" );
-=======
-		$this->setGuideURL( "http://emg.nysbc.org/redmine/projects/appion/wiki/Align_Tilt-Series" );
->>>>>>> origin/trunk
 		$this->setTestable( False ); // True to activate "test single image".
 		$this->setUseLegOutDir( False ); // The output directory will be created in the Appion run directory rather than Leginon.
 		$this->setShowDesc( False ); // Flag to hide the description field of the run parameters.
@@ -196,26 +153,18 @@ class Protomo2ReconstructionForm extends BasicLayoutForm
 		$params->setHelpSection( "protomo" );
 		
 		$params->addParam( "ctf_correct", $ctf_correct, "Correct for CTF" );
-<<<<<<< HEAD
 		$params->addParam( "amp_contrast_ctf", $amp_contrast_ctf, "Amplitude Contrast" );
-=======
-		$params->addParam( "amp_contrast", $amp_contrast, "Amplitude Contrast" );
->>>>>>> origin/trunk
 		$params->addParam( "iWidth", $iWidth, "Interpolation Width" );
 		$params->addParam( "DefocusTol", $DefocusTol, "Defocus Tolerance" );
 		$params->addParam( "dose_presets", $dose_presets, "Dose Compensation Type" );
 		$params->addParam( "dose_a", $dose_a, "a" );
 		$params->addParam( "dose_b", $dose_b, "b" );
 		$params->addParam( "dose_c", $dose_c, "c" );
-<<<<<<< HEAD
 		$params->addParam( "stack_procs", $stack_procs, "Stack Making Processors" );
-=======
->>>>>>> origin/trunk
 		$params->addParam( "tomo3d_procs", $tomo3d_procs, "Tomo3D Processors" );
 		$params->addParam( "tomo3d_options", $tomo3d_options, "Additional Tomo3D Options" );
 		$params->addParam( "tomo3d_sirt_iters", $tomo3d_sirt_iters, "Number of SIRT Iterations" );
 		$params->addParam( "frame_aligned", $frame_aligned, "Use Frame Aligned Images" );
-<<<<<<< HEAD
 		//$params->addParam( "exclude_images", $exclude_images, "Exclude Specific Images" );
 		$params->addParam( "exclude_images_by_angle", $exclude_images_by_angle, "Exclude Images by Tilt Angles" );
 		$params->addParam( "negative_recon", $negative_recon, "<strong>–</strong> Angle Limit" );
@@ -229,14 +178,6 @@ class Protomo2ReconstructionForm extends BasicLayoutForm
 			$params->addParam( "recon_map_sampling", $recon_map_sampling, "Reconstruction Sampling" );
 		}
 		$params->addParam( "bin_type", $bin_type, "Sampling Method" );
-=======
-		$params->addParam( "exclude_images", $exclude_images, "Exclude Specific Images" );
-		$params->addParam( "negative_recon", $negative_recon, "<strong>–</strong> Angle Limit" );
-		$params->addParam( "positive_recon", $positive_recon, "<strong>+</strong> Angle Limit" );
-		$params->addParam( "recon_iter", $recon_iter, "Refinement Iteration used to generate Reconstruction" );
-		$params->addParam( "reconstruction_method", $reconstruction_method, "Reconstruction Method" );
-		$params->addParam( "recon_map_sampling", $recon_map_sampling, "Reconstruction Sampling" );
->>>>>>> origin/trunk
 		$params->addParam( "recon_map_size_x", $recon_map_size_x, "Reconstruction Size (x)" );
 		$params->addParam( "recon_map_size_y", $recon_map_size_y, "Reconstruction Size (y)" );
 		$params->addParam( "recon_thickness", $recon_thickness, "Reconstruction Thickness" );
@@ -244,7 +185,6 @@ class Protomo2ReconstructionForm extends BasicLayoutForm
 		$params->addParam( "recon_lp_diam_x", $recon_lp_diam_x, "(x)" );
 		$params->addParam( "recon_lp_diam_y", $recon_lp_diam_y, "(y)" );
 		$params->addParam( "link_recon", $link_recon, "Link Final Reconstruction to this Directory" );
-<<<<<<< HEAD
 		$params->addParam( "amp_correct", $amp_correct, "Amplitude Correct" );
 		$params->addParam( "amp_correct_w1", $amp_correct_w1, "w1" );
 		$params->addParam( "amp_correct_w2", $amp_correct_w2, "w2" );
@@ -256,18 +196,12 @@ class Protomo2ReconstructionForm extends BasicLayoutForm
 		$params->addParam( "dog_max_picks", $dog_max_picks, "Maximum Number of Picks" );
 		$params->addParam( "dog_junk_tolerance", $dog_junk_tolerance, "Junk Tolerance" );
 		$params->addParam( "dog_lowpass_type", $dog_lowpass_type, "Type of Lowpass used for DoG" );
-=======
->>>>>>> origin/trunk
 		
 		// Validations
 		$params->addValidation( "recon_iter", "req" );
 		$params->addValidation( "recon_iter", "num" );
 		if ($_POST['reconstruction_method'] == 1 or $_POST['reconstruction_method'] == 2 or $_POST['reconstruction_method'] == 3){
-<<<<<<< HEAD
 			$params->addValidation( "recon_thickness", "req" );
-=======
-				$params->addValidation( "recon_thickness", "req" );
->>>>>>> origin/trunk
 		}
 		
 	}
@@ -292,101 +226,6 @@ class Protomo2ReconstructionForm extends BasicLayoutForm
 		$best = pathinfo($best_file[0], PATHINFO_EXTENSION);
 		$bestbin1or2 = pathinfo($bestbin1or2_file[0], PATHINFO_EXTENSION);
 		$worst = pathinfo($worst_file[0], PATHINFO_EXTENSION);
-<<<<<<< HEAD
-=======
-		
-		$html .= "
-		<br />
-		<H4>CTF Correction Parameters ".docpop('ctf_info', '(Info)')."</H4>
-		<hr />";
-		$html.= '<select name="ctf_correct" style="width:66px">';
-		$html.= '<option value="True">True</option>';
-		$html.= '<option selected value="False">False</option>';
-		$html.= '</select>'; $html.= docpop('ctf_correct', ' Correct for CTF').'<br>';
-		$html.= '<select name="frame_aligned" style="width:66px">';
-		$html.= '<option selected value="True">True</option>';
-		$html.= '<option value="False">False</option>';
-		$html.= '</select>'; $html.= docpop('protomo_frame_aligned', ' Use Frame Aligned Images').'<br>';
-		$html.= $params->insertTextField( "amp_contrast", $fieldSize );
-		$html.= $params->insertTextField( "iWidth", $fieldSize );
-		$html.= $params->insertTextField( "DefocusTol", $fieldSize );
-		
-		$html .= "
-		<br>
-		<H4>Dose Compensation Parameters ".docpop('dose_info', '(Info)')."</H4>
-		<hr />";
-		
-		$html.= '<select name="dose_presets" style="width:66px">';
-		$html.= '<option selected value="False">None</option>';
-		$html.= '<option value="Light">Light</option>';
-		$html.= '<option value="Moderate">Moderate</option>';
-		$html.= '<option value="Heavy">Heavy</option>';
-		$html.= '<option value="Custom">Custom</option>';
-		$html.= '</select>'; $html.= docpop('dose_presets', ' Dose Compensation Type').'<br>';
-		$html.= $params->insertTextFieldInRow( "dose_a", $fieldSize ).'│ ';
-		$html.= $params->insertTextFieldInRow( "dose_b", $fieldSize ).'│ ';
-		$html.= $params->insertTextField( "dose_c", $fieldSize );
-		
-		if ($_POST['reconstruction_method'] == 4){
-				$html .= "
-				<br />
-				<H4>Stack Parameters ".docpop('stack_info', '(Info)')."</H4>
-				<hr />";
-		} else {
-				$html .= "
-				<br />
-				<H4>Reconstruction Parameters ".docpop('recon_info2', '(Info)')."</H4>
-				<hr />";
-		}
-		
-		$html.= '<select name="recon_iter" onchange=submit() style="width:66px">';
-		$html.= '<option value="'.$best.'">Best</option>';
-		$html.= '<option value="'.$bestbin1or2.'">Best w/ bin=1or2</option>';
-		$html.= '<option value="'.$worst.'">Worst</option>';
-		for ($i=1; $i <= $_SESSION['iters']; $i++)
-		{
-			if ($i == $_SESSION['iter'] and $unselect == 0){
-				$_SESSION['recon_iter'] = $_SESSION['iter'];
-				$html.= '<option selected value="'.$i.'">'.$i.'</option>';
-			}elseif ($i == $_POST['recon_iter']){
-				$_SESSION['recon_iter'] = $_POST['recon_iter'];
-				$html.= '<option selected value="'.$i.'">'.$i.'</option>';
-			}else{
-				$html.= '<option value="'.$i.'">'.$i.'</option>';
-			}
-		}
-		$html.= '</select>'; $html.= docpop('protomo_recon_iter', ' Refinement Iteration used to generate Reconstruction<br>');
-	    $html.= $params->insertTextField( "recon_map_sampling", $fieldSize );
-		if ($_POST['reconstruction_method'] == 1){
-				$html.= $params->insertTextField( "recon_map_size_x", $fieldSize );
-				$html.= $params->insertTextField( "recon_map_size_y", $fieldSize );
-				$html.= $params->insertTextField( "recon_thickness", $fieldSize );
-		}
-		if ($_POST['reconstruction_method'] == 2 or $_POST['reconstruction_method'] == 3){
-				$html.= $params->insertTextField( "recon_thickness", $fieldSize );
-				$html.= $params->insertTextField( "tomo3d_procs", $fieldSize );
-		}
-		$html.= $params->insertTextField( "exclude_images", $fieldSize );
-		$html.= $params->insertTextFieldInRow( "negative_recon", $fieldSize ).'│ ';
-		$html.= $params->insertTextField( "positive_recon", $fieldSize );
-		if ($_POST['reconstruction_method'] == 1){
-				$html.= '<select name="recon_lowpass" style="width:66px">';
-				$html.= '<option value="True">True</option>';
-				$html.= '<option selected value="False">False</option>';
-				$html.= '</select>'; $html.= docpop('recon_lowpass', ' Lowpass Filter').'│ ';
-				$html.= $params->insertTextFieldInRow( "recon_lp_diam_x", $fieldSize ).'│ ';
-				$html.= $params->insertTextField( "recon_lp_diam_y", $fieldSize );
-		}
-		if ($_POST['reconstruction_method'] == 3){
-				$html.= $params->insertTextField( "tomo3d_sirt_iters", $fieldSize );
-		}
-		if ($_POST['reconstruction_method'] == 2 or $_POST['reconstruction_method'] == 3){
-				$html.= $params->insertTextField( "tomo3d_options", $fieldSize2 );
-		}
-		if ($_POST['reconstruction_method'] == 1 or $_POST['reconstruction_method'] == 2 or $_POST['reconstruction_method'] == 3){
-				$html.= $params->insertTextField( "link_recon", $fieldSize2 );
-		}
->>>>>>> origin/trunk
 		
 		if ($_POST['reconstruction_actions'] == 2 or $_POST['reconstruction_actions'] == 4){
 			$html .= "
@@ -618,7 +457,6 @@ class Protomo2ReconstructionForm extends BasicLayoutForm
 		$_SESSION['tiltseries'] = $tiltseries;
 		$_SESSION['runname'] = $runname;
 		$_SESSION['sessionname'] = $sessionname;
-		$_SESSION['runname'] = $runname;
 		$_SESSION['outdir'] = $outdir;
 		$_SESSION['iters'] = $iters;
 		$_SESSION['imageinfo'] = $imageinfo;

@@ -555,11 +555,7 @@ class AppionScript(basicScript.BasicScript):
 			time.sleep(0.2)
 			if os.path.isfile(lockfile):
 				apDisplay.printError('Parallel unlock failed')
-<<<<<<< HEAD
 
-=======
-		
->>>>>>> origin/trunk
 	#=====================
 
 class TestScript(AppionScript):

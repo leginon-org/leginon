@@ -15,14 +15,10 @@ class MrcClass(baseClass.StackClass):
 	################################################
 	def _getNumberOfParticles(self):
 		header = mrc.read_file_header(self.filename)
-<<<<<<< HEAD
 		numpart = header.get('mz')
 		if numpart is None:
 			numpart = header.get('nz')
 		return numpart
-=======
-		return header['nz']
->>>>>>> origin/trunk
 	def _getBoxSize(self):
 		header = mrc.read_file_header(self.filename)
 		return header['nx']

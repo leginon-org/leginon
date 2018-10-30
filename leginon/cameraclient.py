@@ -175,7 +175,6 @@ class CameraClient(object):
 			time.sleep(0.5)
 
 	def acquireCameraImageData(self, scopeclass=leginondata.ScopeEMData, allow_retracted=False, type='normal', force_no_frames=False):
-<<<<<<< HEAD
 		'''Acquire a raw image from the currently configured CCD camera
 		Exceptions are caught and return None
 		'''
@@ -190,9 +189,6 @@ class CameraClient(object):
 		'''Acquire a raw image from the currently configured CCD camera
 			Exceptions are raised
 		'''
-=======
-		'''Acquire a raw image from the currently configured CCD camera'''
->>>>>>> origin/trunk
 		self.prepareToAcquire(allow_retracted,exposure_type=type)
 		if force_no_frames:
 			try:

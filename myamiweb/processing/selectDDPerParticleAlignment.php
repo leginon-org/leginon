@@ -29,11 +29,7 @@ echo "</td></tr>\n";
 echo "</table>\n";
 
 /*
-<<<<<<< HEAD
 ** Rubinstein lm-bfgs Particle Polisher
-=======
-** lm-bfgs Particle Polisher
->>>>>>> origin/trunk
 */
 
 echo "<br/>\n";
@@ -42,13 +38,8 @@ echo "<table border='1' class='tableborder' width='640'>\n";
 echo "<tr><td width='100' align='center'>\n";
 echo "  <img src='img/appionlogo.jpg' width='96'>\n";
 echo "</td><td>\n";
-<<<<<<< HEAD
 echo "  <h3><a href='runAppionLoop.php?expId=$expId&form=rubinsteinParticlePolisher'> Rubinstein Particle Polisher</a></h3>\n";
 echo " <p> CPU program Im-bfgs </p>";
-=======
-echo "  <h3><a href='runAppionLoop.php?expId=$expId&form=rubinsteinParticlePolisher'>lm-bfgs Particle Polisher</a></h3>\n";
-echo " <p> CPU program </p>";
->>>>>>> origin/trunk
 echo " <p>Written by John Rubinstein. See <a http://sites.google.com/site/rubinsteingroup/direct-detector-align_lmbfgs> <b>Rubinstein group software site</b> </a> for more information"
         ."</p>\n";
 echo "</td></tr>\n";

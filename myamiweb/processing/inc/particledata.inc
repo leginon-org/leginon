@@ -1097,48 +1097,6 @@ class particledata {
 			$phase_shift_select = "'0.0' as `extra_phase_shift`, ";
 		}
 		return $phase_shift_select;
-<<<<<<< HEAD
-=======
-	}
-	function getCtfInfoWithNominal($sessionId, $runId=false) {
-		$phase_shift_select = $this->getPhaseShiftString('c');
-		$q =	"select "
-			."c.`REF|leginondata|AcquisitionImageData|image`, "
-			."s.`defocus`, "
-			."c.`defocus1`, "
-			."c.`defocus2`, "
-			."c.`defocusinit`, "
-			."c.`amplitude_contrast`, "
-			."c.`angle_astigmatism`, "
-			.$phase_shift_select
-			."c.`noise1`, "
-			."c.`noise2`, "
-			."c.`noise3`, "
-			."c.`noise4`, "
-			."c.`envelope1`, "
-			."c.`envelope2`, "
-			."c.`envelope3`, "
-			."c.`envelope4`, "
-			."c.`lowercutoff`, "
-			."c.`uppercutoff`, "
-			."c.`confidence` , "
-			."c.`confidence_d` , "
-			.$this->getAppionConfidenceScoreSelect('c')." , "
-			."c.`snr` , "
-			."c.`graph1` , "
-			."c.`graph2` , "
-			."(c.`defocus1`+c.`defocus2`)/2+s.`defocus` as difference "
-			."from ApCtfData c left join ApAceRunData r on (c.`REF|ApAceRunData|acerun` = r.`DEF_id`) "
-			."left join ".DB_LEGINON.".AcquisitionImageData i on (c.`REF|leginondata|AcquisitionImageData|image` = i.`DEF_id`) "
-			."left join ".DB_LEGINON.".ScopeEMData s on (i.`REF|ScopeEMData|scope` = s.`DEF_id`) "
-			."where i.`REF|SessionData|session`='$sessionId' ";
-			if ($runId)
-				$q .= "and r.`DEF_id`='$runId' ";
-			else
-				$q .= "and c.`DEF_id`=(select max(c2.`DEF_id`) from ApCtfData c2 where c2.`REF|leginondata|AcquisitionImageData|image` = c.`REF|leginondata|AcquisitionImageData|image`)";
-		//echo $q."<br/><br/>\n";
-		return $this->mysql->getSQLResult($q);
->>>>>>> origin/trunk
 	}
 
 	function getCtfInfo($runId) {
@@ -1154,14 +1112,10 @@ class particledata {
 			."c.`defocusinit`, "
 			."c.`amplitude_contrast`, "
 			."c.`angle_astigmatism`, "
-<<<<<<< HEAD
 			."cos(c.`angle_astigmatism`*3.14159/180)*(c.`defocus1`-c.`defocus2`)/2 as astig_x, "
 			."sin(c.`angle_astigmatism`*3.14159/180)*(c.`defocus1`-c.`defocus2`)/2 as astig_y, "
 			.$phase_shift_select
 			."c.`REF|ApAceRunData|acerun`, "  //Needed in checking if there is result.
-=======
-			.$phase_shift_select
->>>>>>> origin/trunk
 			."c.`noise1`, "
 			."c.`noise2`, "
 			."c.`noise3`, "
@@ -1194,10 +1148,7 @@ class particledata {
 
 	function getCtfInfoFromImageId($imageId, $order=false, $method='', $acerunId='') {
 		$phase_shift_select = $this->getPhaseShiftString('c');
-<<<<<<< HEAD
 		$local_plot_select = ($this->mysql->FieldExists('ApCtfData','localplot')) ? "c.localplot, ": "";
-=======
->>>>>>> origin/trunk
 		$q =	"select "
 			."c.`DEF_id`, "
 			."c.`REF|leginondata|AcquisitionImageData|image`, "
@@ -1245,7 +1196,6 @@ class particledata {
 				$p = $this->ace_method_map[$method];
 				$q .= "AND r. `REF|$p[0]|$p[1]` IS NOT NULL ";
 			}
-<<<<<<< HEAD
 		}
 
 		// Ordering Results
@@ -1255,34 +1205,17 @@ class particledata {
 		} else {
 			$q .= $this->getBestCTFOrder('c');
 		}
-=======
-		}
-
-		// Ordering Results
-		if ($order) {
-			$fields = $order['fields'];
-			$q .= " order by ".join(", ",$fields);
-		} else {
-			$q .= $this->getBestCTFOrder('c');
-		}
->>>>>>> origin/trunk
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
 	}
 
-<<<<<<< HEAD
 	function getBestCTFOrder($ctftable_alias='c', $skip_appion=false) {
 		// First order by ctffind4_resolution which also records equiphase resolution from gctf.  Then sort by res80. If some entries of res80 are null, they will be sorted as 999 and end up at the end of the list.
-=======
-	function getBestCTFOrder($ctftable_alias='c') {
-		// First order by res80. If some entries of res80 are null, they will be sorted as 999 and end up at the end of the list.
->>>>>>> origin/trunk
 		// Then sort by res50. If there was a tie from res80, the tie is broken with res50.
 		// Res80 and res50 are only set for newer versions of Appion. For runs that were mase with older versions, we still want to sort by
 		// cross_correlation (ctffind) and confidence (ace1 and ace2). After sorting by resolution, old runs should all be tied with 999, so the
 		// final sort will sort by whichever is not null, the ctffind correlation or the Appion overall conf.
 		$c = (empty($ctftable_alias)) ? '':$ctftable_alias.'.';
-<<<<<<< HEAD
 		$q .= "	ORDER BY coalesce(".$c."ctffind4_resolution,999) ASC ";
 		$q .= "	, coalesce(".$c."resolution_80_percent,999) ASC ";
 		$q .= " , coalesce(".$c."resolution_50_percent,999) ASC ";
@@ -1303,29 +1236,15 @@ class particledata {
 		//FIX ME:This makes AppionResolution different from the resolution used in ordering.
 		$c = $ctftable_alias;
 		$q = "least(coalesce(".$c.".resolution_50_percent, 999.0), coalesce(".$c.".resolution_80_percent,999.0), coalesce(".$c.".ctffind4_resolution,999.0)) as resolution_appion ";
-=======
-		$q .= "	ORDER BY coalesce(".$c."resolution_80_percent,999) ASC ";
-		$q .= " , coalesce(".$c."resolution_50_percent,999) ASC ";
-		$q .= " , coalesce(".$c."`cross_correlation`, confidence_appion, 0.0) DESC ";
-		return $q;
-	}
-
-	function getAppionConfidenceScoreSelect($ctftable_alias='c') {
-		$c = $ctftable_alias;
-		$q = "greatest(coalesce(".$c.".confidence, 0), coalesce(".$c.".confidence_d,0), coalesce(".$c.".confidence_30_10,0), coalesce(".$c.".confidence_5_peak,0)) as confidence_appion ";
->>>>>>> origin/trunk
 		return $q;
 	}
 
 	function getBestCtfInfoByResolution($sessionId, $limit=false) {
 		// This is used in download, report and aceimage display.
 		// This should be the standard. 
-<<<<<<< HEAD
 		// selection of the result for a image is BestCtfOrder.
 		// May put limit to what image result to return,
 		// use resolution_appion as limit matrix.
-=======
->>>>>>> origin/trunk
 		$q = "SELECT  ctfdata.* "
 			."FROM "
 			."	( "
@@ -1334,7 +1253,6 @@ class particledata {
 			."		i.`DEF_id` AS imageid, "
 			."		p.`name`, "
 			."		s.`defocus`, "
-<<<<<<< HEAD
 			."		s.`defocus` AS nominal_defocus, "
 			// ScopeEMData timestamp is not changed after DD frame alignment
 			."    unix_timestamp(s.`DEF_timestamp`) as unix_timestamp, "
@@ -1344,12 +1262,6 @@ class particledata {
 			."    sin(2*ctf.`angle_astigmatism`*3.14159/180)*(ctf.`defocus1`-ctf.`defocus2`)/2 as astig_y, "
 			.$this->getAppionConfidenceScoreSelect('ctf').", "
 			.$this->getAppionResolutionSelect('ctf').", "
-=======
-			// ScopeEMData timestamp is not changed after DD frame alignment
-			."    unix_timestamp(s.`DEF_timestamp`) as unix_timestamp, "
-			."		2*ABS(ctf.defocus1-ctf.defocus2)/(ctf.defocus1+ctf.defocus2) AS difference, "
-			.$this->getAppionConfidenceScoreSelect('ctf').", "
->>>>>>> origin/trunk
 			."		ctf.* "
 			."	FROM ".PARTICLE_DB.".`ApCtfData` AS ctf "
 			."	LEFT JOIN ".DB_LEGINON.".`AcquisitionImageData` AS i ON (i.`DEF_id` = ctf.`REF|leginondata|AcquisitionImageData|image`) "
@@ -1367,23 +1279,11 @@ class particledata {
 			."	AND  "
 			." ( viewer.status IS NULL OR viewer.status != 'hidden' ) "
 			."		)  "
-<<<<<<< HEAD
-=======
-			// First order by res80. If some entries of res80 are null, they will be sorted as 999 and end up at the end of the list.
-			// Then sort by res50. If there was a tie from res80, the tie is broken with res50.
-			// Res80 and res50 are only set for newer versions of Appion. For runs that were mase with older versions, we still want to sort by
-			// cross_correlation (ctffind) and confidence (ace1 and ace2). After sorting by resolution, old runs should all be tied with 999, so the
-			// final sort will sort by whichever is not null, the ctffind correlation or the Ace conf.
->>>>>>> origin/trunk
 			.$this->getBestCTFOrder('ctf')
 			."	) ctfdata ";
 		// if $limit is specified, report only values with confidences > $limit
 		if ($limit) {
-<<<<<<< HEAD
 			$q .= " WHERE resolution_appion < $limit ";
-=======
-			$q .= " WHERE confidence_appion > $limit ";
->>>>>>> origin/trunk
 		}
 		$q .= " GROUP BY ctfdata.imageid ORDER BY ctfdata.unix_timestamp ";
 		//echo $q."<br/><br/>\n";
@@ -1506,15 +1406,10 @@ class particledata {
 				."			c.`defocus1`, c.`defocus2`, c.`defocusinit`, c.`angle_astigmatism`, "
 				."			".$phase_shift_select
 				."			c.`confidence`,c.`confidence_d` , c.`cross_correlation` , "
-<<<<<<< HEAD
 				."			c.`ctffind4_resolution` , "
 				.$this->getAppionResolutionSelect('c').", "
 				.$this->getAppionConfidenceScoreSelect('c').", "
 				."			(c.`defocus1`+c.`defocus2`)/2+s.`defocus` as difference_from_nom "
-=======
-				.$this->getAppionConfidenceScoreSelect('c').", "
-				."			(c.`defocus1`+c.`defocus2`)/2+s.`defocus` as difference "
->>>>>>> origin/trunk
 				."		from `ApCtfData` c "
 				."		left join ".DB_LEGINON.".`AcquisitionImageData` i on (i.DEF_id=c.`REF|leginondata|AcquisitionImageData|image`) "
 				."		left join ".DB_LEGINON.".`PresetData` p on (p.DEF_id=i.`REF|PresetData|preset`) "
@@ -1525,21 +1420,13 @@ class particledata {
 				."			select a.`DEF_id` from ".DB_LEGINON.".`AcquisitionImageData` a  "
 				."			where a.`REF|SessionData|session`='$sessionId'  "
 				."			)  "
-<<<<<<< HEAD
-=======
-				."       AND c.resolution_50_percent IS NOT NULL AND c.resolution_80_percent IS NOT NULL "
->>>>>>> origin/trunk
 				."			".$this->getBestCTFOrder('c')
 				."		) allctfdata "
 				."	group by allctfdata.`REF|leginondata|AcquisitionImageData|image` "
 				."	) ctfdata ";
 				// if $limit is specified, report only values with confidences > $limit
 				if ($limit){
-<<<<<<< HEAD
 					$q .= " where ctfdata.resolution_appion < $limit ";
-=======
-					$q .= " where ctfdata.confidence_appion > $limit ";
->>>>>>> origin/trunk
 				}
 				$q .= " group by ctfdata.name; ";
 				//echo $q;
@@ -2515,11 +2402,7 @@ class particledata {
 	
 	function getDDStackRunData($ddRunId) 
 	{
-<<<<<<< HEAD
 		return getRunData($ddRunId, "ApDDStackRunData" );
-=======
-		return getRunData($partRunId, "ApDDStackRunData" );
->>>>>>> origin/trunk
 	}
 
 	function getRecentAlignedImage($imgid)

@@ -43,10 +43,7 @@ class TemplatePickerForm extends MathParticleForm
 		$this->setTestable( True ); // True to activate "test single image".
 		$this->setUseLegOutDir( False ); // The output directory will be created in the Appion run directory rather than Leginon.
 		$this->setShowDesc( False ); // Flag to hide the description field of the run parameters.
-<<<<<<< HEAD
 		$this->setUseCluster( False ); // Shows the processing host params to set processors and memory
-=======
->>>>>>> origin/trunk
 		
 		//------ Set Parameters specific to the program that requires this new form -----//
 		$params = $this->getFormParams();

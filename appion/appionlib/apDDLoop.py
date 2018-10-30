@@ -25,11 +25,6 @@ class DDStackLoop(appionLoop2.AppionLoop):
 		# Integer
 		self.parser.add_option("--stackid", dest="stackid", type="int",
 			help="ID for particle stack to restrict ddstack making(optional)", metavar="INT")
-<<<<<<< HEAD
-=======
-		self.parser.add_option("--bin", dest="bin", type="int", default=1,
-			help="Binning factor relative to the dd stack (optional)", metavar="INT")
->>>>>>> origin/trunk
 		self.parser.add_option("--ddstartframe", dest="startframe", type="int", default=0,
 			help="starting frame for summing the frames. The first frame is 0")
 		self.parser.add_option("--ddnframe", dest="nframe", type="int",
@@ -43,14 +38,9 @@ class DDStackLoop(appionLoop2.AppionLoop):
 		# Dosefgpu_driftcoor options
 		self.parser.add_option("--alignoffset", dest="fod", type="int", default=2,
 			help="number of frame offset in alignment in dosefgpu_driftcorr")
-<<<<<<< HEAD
 		self.parser.add_option("--alignbfactor", dest="bft", type="float", default=(500.0,150.0),
 			help="alignment B-factor in pix^2 in dosefgpu_driftcorr", nargs=2)
 		
-=======
-		self.parser.add_option("--alignbfactor", dest="bft", type="float", default=100.0,
-			help="alignment B-factor in pix^2 in dosefgpu_driftcorr")
->>>>>>> origin/trunk
 		self.parser.add_option("--alignccbox", dest="pbx", type="int", default=128,
 			help="alignment CC search box size in dosefgpu_driftcorr")
 
@@ -60,15 +50,12 @@ class DDStackLoop(appionLoop2.AppionLoop):
 		self.parser.add_option("--totaldose",dest="totaldose",metavar="float",type=float,
                         help="total dose for the full movie stack in e/A^2. If not specified, will get value from database")
 
-<<<<<<< HEAD
 	def addBinOption(self):
 		'''
 		bin is defined as float for MotionCor2 alignment but as integer in all others.
 		'''
 		self.parser.add_option("--bin", dest="bin", type="int", default=1,
 			help="Binning factor relative to the dd stack (optional)", metavar="INT")
-=======
->>>>>>> origin/trunk
 
 	def getUnAlignedImageIds(self,imageids):
 		'''
@@ -95,35 +82,28 @@ class DDStackLoop(appionLoop2.AppionLoop):
 		# initialize aligned_imagedata as if not aligned
 		self.aligned_imagedata = None
 		self.aligned_dw_imagedata = None
-<<<<<<< HEAD
 
 	def commitAlignStats(self, aligned_imgdata):
 		'''
 		commit align stats. Only do so if performing alignment using ApDDAlignStackMaker
 		'''
 		pass
-=======
->>>>>>> origin/trunk
 
 	def commitToDatabase(self,imgdata):
 		if self.aligned_imagedata != None:
 			apDisplay.printMsg('Uploading aligned image as %s' % self.aligned_imagedata['filename'])
 			q = appiondata.ApDDAlignImagePairData(source=imgdata,result=self.aligned_imagedata,ddstackrun=self.rundata)
 			q.insert()
-<<<<<<< HEAD
 			# Issue #6155 need new query to get timestamp
 			self.aligned_imagedata = leginondata.AcquisitionImageData().direct_query(q['result'].dbid)
 			self.commitAlignStats(self.aligned_imagedata)
 			transferALSThickness(q['source'],q['result'])
 			transferZLPThickness(q['source'],q['result'])
 	
-=======
->>>>>>> origin/trunk
 		if self.aligned_dw_imagedata != None:
 			apDisplay.printMsg('Uploading aligned image as %s' % self.aligned_dw_imagedata['filename'])
 			q = appiondata.ApDDAlignImagePairData(source=imgdata,result=self.aligned_dw_imagedata,ddstackrun=self.rundata)
 			q.insert()
-<<<<<<< HEAD
 			# Issue #6155 need new query to get timestamp
 			self.aligned_dw_imagedata = leginondata.AcquisitionImageData().direct_query(q['result'].dbid)
 			transferALSThickness(q['source'],q['result'])
@@ -158,5 +138,3 @@ def transferZLPThickness(unaligned,aligned):
 		newzlossth['image'] = aligned
 		newzlossth.insert()
 
-=======
->>>>>>> origin/trunk

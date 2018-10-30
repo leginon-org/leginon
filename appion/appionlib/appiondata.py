@@ -435,10 +435,7 @@ class ApCtfFind4ParamsData(Data):
 			('min_phase_shift', float),
 			('max_phase_shift', float),
 			('phase_search_step', float),
-<<<<<<< HEAD
 			('local_refine', bool),
-=======
->>>>>>> origin/trunk
 		)
 	typemap = classmethod(typemap)
 
@@ -767,7 +764,6 @@ class ApDEAlignerParamsData(Data):
 		)
 	typemap = classmethod(typemap)
 
-<<<<<<< HEAD
 class ApDDFrameTrajectoryData(Data):
 	'''
 	Retake of ApFrameAlignTrajectory. Save typically 10 frames
@@ -788,15 +784,12 @@ class ApDDFrameTrajectoryData(Data):
 		)
 	typemap = classmethod(typemap)
 
-=======
->>>>>>> origin/trunk
 class ApFrameAlignTrajectory(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('image', leginon.leginondata.AcquisitionImageData),
 			('particle', ApStackParticleData ),
 			('ddstackrun', ApDDStackRunData ),
-<<<<<<< HEAD
 			('xshift', list), #pixels relative to the next frame
 			('yshift', list) #pixels relative to the next frame
 		)
@@ -819,12 +812,6 @@ class ApDDAlignStatsData(Data):
 		)
 	typemap = classmethod(typemap)
 
-=======
-			('xshift', list),
-			('yshift', list)
-			
-		)
->>>>>>> origin/trunk
 ### END Stack tables ###
 ### START alignment tables  ###
 

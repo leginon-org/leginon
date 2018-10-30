@@ -162,20 +162,13 @@ class Collection(object):
 	def initLoop2(self):
 		self.restoreInstrumentState()
 		self.correlator[1].reset()
-<<<<<<< HEAD
 		if True:
-=======
-		if self.settings['adjust for transform'] != "no":
->>>>>>> origin/trunk
 			self.logger.info('Adjust target for the second tilt group...')
 			try:
 				self.emtarget, status = self.node.adjusttarget(self.preset['name'], self.target, self.emtarget)
 			except Exception, e:
 				self.logger.error('Failed to adjust target: %s.' % e)
-<<<<<<< HEAD
 				self.finalize()
-=======
->>>>>>> origin/trunk
 				raise
 			if status == 'error':
 				self.finalize()
@@ -215,11 +208,7 @@ class Collection(object):
 		m = 'Initial defocus: %g meters.'
 		self.logger.info(m % defocus0)
 
-<<<<<<< HEAD
 		if self.tilt_order in ('alternate','swing') and len(tilts) > 1:
-=======
-		if self.tilt_order == 'alternate' and len(tilts) > 1:
->>>>>>> origin/trunk
 			# duplicate the first tilt to the other tilt group
 			other_group = int(not seq0[0])
 			self.prediction.setCurrentTiltGroup(other_group)
@@ -368,7 +357,6 @@ class Collection(object):
 					time.sleep(1.0)
 
 			if seq_index == 0: 
-<<<<<<< HEAD
 				if self.tilt_order in ('alternate','swing'):
 					other_group = int(not seq[0])
 					fake_corr_image = self.correlator[other_group].correlate(tilt_series_image_data, self.settings['use tilt'], channel=channel, wiener=False, taper=0)
@@ -378,15 +366,6 @@ class Collection(object):
 			correlation = self.correlator[seq[0]].getShift(False)
 			if self.settings['use tilt']:
 				correlation = self.correlator[seq[0]].tiltShift(tilt,correlation,phi)
-=======
-				if self.tilt_order == 'alternate':
-					other_group = int(not seq[0])
-					fake_corr_image = self.correlator[other_group].correlate(tilt_series_image_data, self.settings['use tilt'], channel=channel, wiener=False, taper=0)
-		
-			correlation = self.correlator[seq[0]].getShift(False)
-			if self.settings['use tilt']:
-				correlation = self.correlator[seq[0]].tiltShift(tilt,correlation)
->>>>>>> origin/trunk
 
 			position = {
 				'x': predicted_position['x'] - correlation['x'],
@@ -411,11 +390,7 @@ class Collection(object):
 			s = (raw_correlation['x'], raw_correlation['y'])
 			self.viewer.setXC(correlation_image, s)
 			if self.settings['use tilt']:
-<<<<<<< HEAD
 				raw_correlation = self.correlator[seq[0]].tiltShift(tilt,raw_correlation,phi)
-=======
-				raw_correlation = self.correlator[seq[0]].tiltShift(tilt,raw_correlation)
->>>>>>> origin/trunk
 
 			self.checkAbort()
 

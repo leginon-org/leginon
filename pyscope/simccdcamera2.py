@@ -10,14 +10,9 @@ from pyami import mrc, imagefun
 import itertools
 from pyscope import falconframe
 
-<<<<<<< HEAD
 DEBUG = False
 FRAME_DIR = '.'
 START_TIME = 11*60+16
-=======
-FRAME_DIR = '.'
-
->>>>>>> origin/trunk
 rawtype = numpy.uint32
 frametype = numpy.uint8
 idcounter = itertools.cycle(range(100))
@@ -538,7 +533,6 @@ class SimOtherCCDCamera(SimCCDCamera):
 
 class SimK2CountingCamera(SimFrameCamera):
 	name = 'SimK2CountingCamera'
-<<<<<<< HEAD
 	def __init__(self):
 		super(SimK2CountingCamera,self).__init__()
 		self.binning_limits = [1,2,4,8]
@@ -555,24 +549,6 @@ class SimK2CountingCamera(SimFrameCamera):
 class SimK2SuperResCamera(SimFrameCamera):
 	name = 'SimK2SuperResCamera'
 	def __init__(self):
-=======
-	def __init__(self):
-		super(SimK2CountingCamera,self).__init__()
-		self.binning_limits = [1,2,4,8]
-		self.binmethod = 'floor'
-
-	def getFrameFlip(self):
-		# flip before? rotation
-		return False
-
-	def getFrameRotate(self):
-		# rotation in multiple of 90 degrees
-		return 0
-
-class SimK2SuperResCamera(SimFrameCamera):
-	name = 'SimK2SuperResCamera'
-	def __init__(self):
->>>>>>> origin/trunk
 		super(SimK2SuperResCamera,self).__init__()
 		self.binning_limits = [1]
 		self.binmethod = 'floor'

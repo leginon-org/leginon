@@ -166,12 +166,7 @@ class ImageLoader(appionLoop2.AppionLoop):
 					allappionscopeems.extend(appionscopeems)
 			scopeemq = leginon.leginondata.ScopeEMData(session=sessiondatas[0])
 			allscopeems = scopeemq.query()
-<<<<<<< HEAD
 			if (len(allscopeems) > len(allappionscopeems)):
-=======
-			if len(allscopeems) > len(allappionscopeems):
-
->>>>>>> origin/trunk
 				apDisplay.printError("You can only add more images to an existing session that contains only appion uploads")
 		else:
 			### METHOD 2 : create new session
@@ -721,18 +716,12 @@ class ImageLoader(appionLoop2.AppionLoop):
 		cameradata['nframes'] = nframes
 		cameradata['frame time'] = 100
 		cameradata['exposure time'] = cameradata['frame time'] * nframes
-<<<<<<< HEAD
 		try: #this try breaks batch tilt-series upload
 			# sensor pixel size in meter is required for frealign preparation Bug #4088
 			sensor_pixelsize = self.params['mag'] * self.params['apix'] * 1e-10
 			cameradata['pixel size'] = {'x':sensor_pixelsize,'y':sensor_pixelsize}
 		except:
 			pass
-=======
-		# sensor pixel size in meter is required for frealign preparation Bug #4088
-		sensor_pixelsize = self.params['mag'] * self.params['apix'] * 1e-10
-		cameradata['pixel size'] = {'x':sensor_pixelsize,'y':sensor_pixelsize}
->>>>>>> origin/trunk
 		return cameradata
 
 	#=====================

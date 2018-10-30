@@ -104,10 +104,6 @@ class ManualFocusChecker(acquisition.Acquisition):
 			imdata = self.acquireCorrectedCameraImageData(force_no_frames=True)
 		else:
 			imdata = self.acquireCameraImageData(force_no_frames=True)
-<<<<<<< HEAD
-=======
-		imarray = imdata['image']
->>>>>>> origin/trunk
 		self.manualchecklock.release()
 		if imdata is not None:
 			# None means bad acquisition

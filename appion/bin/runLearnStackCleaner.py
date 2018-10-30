@@ -2,11 +2,7 @@
 
 import os
 import wx
-<<<<<<< HEAD
 from appionlib import learningStackCleaner
-=======
-import learningStackCleaner
->>>>>>> origin/trunk
 from appionlib import apStack
 from appionlib import apDisplay
 from appionlib.StackClass import stackTools
@@ -76,11 +72,7 @@ class LearningStackCleaner(appionScript.AppionScript):
 		self.main.Show()
 		self.app.MainLoop()
 		## end app
-<<<<<<< HEAD
 
-=======
-		
->>>>>>> origin/trunk
 		## finish assigning particles
 		self.data.assignRemainingTargets()
 
@@ -99,20 +91,14 @@ class LearningStackCleaner(appionScript.AppionScript):
 		numpart = len(particleAssignments)
 		self.params['keepfile'] = 'emankeepfile.lst'
 		keepf = open(self.params['keepfile'], 'w')
-<<<<<<< HEAD
 		keeplist = []
-=======
->>>>>>> origin/trunk
 		for partnum in range(numpart):
 			if particleAssignments.get(partnum, 0) == 1:
 				includecount += 1
 				#eman numbering starting at zero
 				keepf.write('%d\n'%(partnum-1))
-<<<<<<< HEAD
 				#appion numbering starting at one
 				keeplist.append(partnum)
-=======
->>>>>>> origin/trunk
 		keepf.close()
 		apDisplay.printMsg("Including %d of %d particles"%(includecount, numpart))
 
@@ -127,19 +113,11 @@ class LearningStackCleaner(appionScript.AppionScript):
 
 		#get number of particles
 		self.params['description'] += (
-<<<<<<< HEAD
 			(" ... cleaned %d particle substack of stackid %d"
 			 %(includecount, self.params['stackid']))
 		)
 		#create the new sub stack
 		apStack.makeNewStack(oldstack, newstack, keeplist, bad=True)
-=======
-			(" ... cleaned %d particle substack of stackid %d" 
-			 %(includecount, self.params['stackid']))
-		)
-		#create the new sub stack
-		apStack.makeNewStack(oldstack, newstack, self.params['keepfile'], bad=True)
->>>>>>> origin/trunk
 
 		if not os.path.isfile(newstack):
 			apDisplay.printError("No stack was created")
@@ -148,11 +126,7 @@ class LearningStackCleaner(appionScript.AppionScript):
 		if self.params['commit'] is True:
 			apStack.commitSubStack(self.params, newname, sorted=False)
 			newstackid = apStack.getStackIdFromPath(newstack)
-<<<<<<< HEAD
 
-=======
-	
->>>>>>> origin/trunk
 			apDisplay.printMsg("creating Stack Mean Plot montage for stackid")
 			apStackMeanPlot.makeStackMeanPlot(newstackid)
 

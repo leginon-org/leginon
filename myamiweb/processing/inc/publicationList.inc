@@ -406,7 +406,6 @@ $PUBLICATIONS['tomo3d2'] = array(
 'logo' => '',
 'pages' => '');
 
-<<<<<<< HEAD
 $PUBLICATIONS['tomoctf'] = array(
 'title' => 'CTF Determination and Correction in Electron Cryotomography',
 'year' => '2006',
@@ -420,8 +419,6 @@ $PUBLICATIONS['tomoctf'] = array(
 'logo' => '',
 'pages' => '587-596');
 
-=======
->>>>>>> origin/trunk
 $PUBLICATIONS['rpp'] = array(
 'title' => 'Alignment of cryo-EM movies of individual particles by optimization of image translations.',
 'year' => '2015',

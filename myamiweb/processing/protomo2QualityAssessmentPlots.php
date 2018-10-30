@@ -66,7 +66,6 @@ if (isset($azimuth_gif_files)) {
 }
 
 $html .= "
-<<<<<<< HEAD
 	<H4><center><b>Grid Orientation Plot</b></center></H4>";
         
 if (isset($orientation_gif_file)) {
@@ -98,39 +97,6 @@ if (isset($ctf_gif_files[0])) {
 	<hr />';
 }
 
-=======
-	<H4><center><b>Grid Orientation (Theta) Plot</b></center></H4>";
-        
-if (isset($orientation_gif_file)) {
-	$html .= '<center><img src="'.$orientation_gif.'" alt="theta" /></center>
-	<hr />';
-} else {
-        $html .= "<center><b>Grid Orientation Plot for Tilt-Series ".$tiltseries." either failed to generate or is processing</b></center>";
-}
-
-$html .= "
-	<H4><center><b>Tilt Elevation Plot</b></center></H4>";
-        
-if (isset($elevation_gif_files)) {
-	$html .= '<center><img src="'.$elevation_gif.'" alt="theta" /></center>
-	<hr />';
-} else {
-        $html .= "<center><b>Tilt Elevation Plot for Tilt-Series ".$tiltseries." either failed to generate or is processing</b></center>";
-}
-
-if (isset($ctf_gif_files[0])) {
-	$html .= "
-<br />	
-<center><H4>CTF Correction</H4></center>
-<br />";
-	$html .= '<center><table id="" class="display" cellspacing="0" border="0"><tr>';
-	$html .= '<td><img src="'.$ctfdefocus_gif.'" alt="ctfdefocus_gif" />'."<br /></td>";
-	$html .= '<td><img src="'.$ctfplot_gif.'" alt="ctfplot_gif" />'."<br /></td>";
-	$html .= '</tr><tr></table></center><br>
-	<hr />';
-}
-
->>>>>>> origin/trunk
 if (isset($dose_gif_files[0])) {
 	$html .= "
 <br />	

@@ -167,7 +167,6 @@ class CatchUpFrameAlignmentLoop(appionScript.AppionScript):
 		self.nframes = self.dd.getNumberOfFrameSavedFromImageData(imgdata)
 		self.framealigner.setInputNumberOfFrames(self.nframes)
 		self.framealigner.setAlignedSumFrameList(framelist)
-<<<<<<< HEAD
 
 		self.framealigner.setGPUid(self.params['gpuid'])
 
@@ -215,55 +214,6 @@ class CatchUpFrameAlignmentLoop(appionScript.AppionScript):
 			apDisplay.printWarning('Frame alignment FAILED: \n%s not created.' % os.path.basename(temp_aligned_sumpath))
 			return False
 		else:
-=======
-
-		self.framealigner.setGPUid(self.params['gpuid'])
-
-		# original ddstack may not have done flat correction
-		# if there is no bad pixel
-		if self.dd.hasBadPixels():
-			self.dd.setUseFrameAlignerFlat(False)
-		else:
-			self.dd.setUseFrameAlignerFlat(True)
-			self.dd.makeDarkNormMrcs()
-			gain_ref = self.dd.getNormRefMrcPath()
-			per_frame_dark_ref = self.dd.getDarkRefMrcPath()
-			self.framealigner.setGainDarkCmd(gain_ref, per_frame_dark_ref)
-
-
-		# whether the sum can be done in framealigner depends on the framelist
-		self.framealigner.setIsUseFrameAlignerSum(self.isUseFrameAlignerSum())
-		self.framealigner.setSaveAlignedStack = self.dd.getKeepAlignedStack()
-
-		# Doing the alignment
-		self.framealigner.alignFrameStack()
-
-		aligned_sum_path = self.organizeAlignedSum()
-		if aligned_sum_path:
-			self.organizeAlignedStack()
-			self.success_count += 1
-		self.unlockParallel(imgdata.dbid)
-
-	def isUseFrameAlignerSum(self):
-		return self.dd.isSumSubStackWithFrameAligner()
-
-	def organizeAlignedSum(self):
-		'''
-		Move local temp results to rundir in the official names
-		'''
-		# THIS FUNCTION IS COPIED FROM ApDDAlignStacker
-		temp_aligned_sumpath = self.temp_aligned_sumpath
-		temp_aligned_stackpath = self.temp_aligned_stackpath
-		
-		apDisplay.printDebug( 'temp_aligned_sumpath= %s' % self.temp_aligned_sumpath)
-		apDisplay.printDebug('temp_aligned_stackpath= %s' % self.temp_aligned_stackpath)
-		apDisplay.printDebug('self.dd.aligned_sumpath= %s' % self.dd.aligned_sumpath)
-
-		if not os.path.isfile(temp_aligned_sumpath):
-			apDisplay.printWarning('Frame alignment FAILED: \n%s not created.' % os.path.basename(temp_aligned_sumpath))
-			return False
-		else:
->>>>>>> origin/trunk
 			# successful alignment
 			if 'alignlabel' not in self.ddstack_script_params.keys() or not self.ddstack_script_params['alignlabel']:
 				# appion script params may not have included alignlabel

@@ -69,12 +69,8 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		self.lock = threading.RLock()
 		self.reference_target = None
 		self.preset_name = None
-<<<<<<< HEAD
 		self.navigator_bound = False
 		self.at_reference_target = False
-=======
-
->>>>>>> origin/trunk
 		self.last_processed = None
 
 
@@ -82,7 +78,6 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 			print 'isReference'
 			self.start()
 
-<<<<<<< HEAD
 	def handleApplicationEvent(self,evt):
 		'''
 		Find a class or its subclass instance bound
@@ -91,8 +86,6 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		app = evt['application']
 		self.navigator_bound = appclient.getNextNodeThruBinding(app,self.name,'MoveToTargetEvent','Navigator')
 
-=======
->>>>>>> origin/trunk
 	def addWatchFor(self,kwargs):
 		try:
 			watch = kwargs['watchfor']
@@ -128,11 +121,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 
 	def getEMTargetData(self,check_preset_name=None):
 		'''
-<<<<<<< HEAD
 		Setup EMTargetData needed by presets manager using self.reference_target
-=======
-		Setup EMTargetData using self.reference_target
->>>>>>> origin/trunk
 		'''
 		target_data = self.reference_target
 		if target_data is None:
@@ -184,7 +173,6 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		'''
 		Set Preset and EMTarget to scope
 		'''
-<<<<<<< HEAD
 		self.logger.info('Setting preset and move to reference target')
 		if self.at_reference_target == True:
 			self.logger.info('Already at reference target. Change preset only')
@@ -195,8 +183,6 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 				raise MoveError(message)
 			return
 			
-=======
->>>>>>> origin/trunk
 		em_target_data = self.getEMTargetData(preset_name)
 
 		self.publish(em_target_data, database=True)
@@ -242,7 +228,6 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 
 	def _processRequest(self, request_data):
 		# This is the function that would be different between Timer and Counter
-<<<<<<< HEAD
 		# See subclass ReferenceTimer and ReferenceCounter for implementation
 		message = 'always process request'
 		self.logger.info(message)
@@ -263,21 +248,6 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		'''
 		pause_time = self.settings['pause time']
 		# Moving part
-=======
-		interval_time = self.settings['interval time']
-		if interval_time is not None and self.last_processed is not None:
-			interval = time.time() - self.last_processed
-			if interval < interval_time:
-				message = '%d second(s) since last request, ignoring request'
-				self.logger.info(message % interval)
-				return
-		self.moveAndExecute(request_data)
-		self.last_processed = time.time()
-
-	def moveAndExecute(self, request_data):
-		pause_time = self.settings['pause time']
-
->>>>>>> origin/trunk
 		preset_name = request_data['preset']
 		self.preset_name = preset_name
 		position0 = self.instrument.tem.StagePosition
@@ -301,7 +271,6 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 			self.resetProcess()
 		except Exception, e:
 			self.logger.error('Error executing request, %s' % e)
-<<<<<<< HEAD
 		finally:
 			# Must move back
 			self.moveBack(position0)
@@ -312,12 +281,6 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		if pause_time is not None:
 			self.logger.info('Settling the stage for %.1f second' % (pause_time,))
 			time.sleep(pause_time)
-=======
-			self.instrument.tem.StagePosition = position0
-			return
-
-		self.instrument.tem.StagePosition = position0
->>>>>>> origin/trunk
 
 	def processRequest(self, request_data):
 		self.reference_target = self.getReferenceTarget()
@@ -352,7 +315,6 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		finally:
 			self.panel.playerEvent('stop')
 			self.setStatus('idle')
-<<<<<<< HEAD
 
 	def onTest(self):
 		'''
@@ -493,17 +455,3 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 			self.logger.info(infostr)
 		self.panel.playerEvent(state)
 
-=======
-			self.logger.info('Done testing')
-
-	def onPlayer(self, state):
-		infostr = ''
-		if state == 'pause':
-			infostr += 'Paused'
-		elif state == 'stop':
-			infostr += 'Aborting...'
-		if infostr:
-			self.logger.info(infostr)
-		self.panel.playerEvent(state)
-
->>>>>>> origin/trunk

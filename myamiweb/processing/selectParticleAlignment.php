@@ -109,7 +109,6 @@ echo "</td></tr>\n";
 if (!HIDE_AWS_FEATURE)
 {
 /*
-<<<<<<< HEAD
  ** Relion 2.0 2D Reference Free Alignment with AWS
 */
         echo "<tr><td width='100' align='center'>\n";
@@ -153,35 +152,6 @@ if (!HIDE_GPU_FEATURE)
 }
 
 
-=======
- ** Relion 2.0 2D Reference Free Alignment for GPU
-*/
-if (!HIDE_GPU_FEATURE)
-{
-        echo "<tr><td width='100' align='center'>\n";
-        echo "  <img src='img/Relion_logo_v1_64x64.png' width='64'>\n";
-        echo "</td><td>\n";
-        $form = "relion2Align2DForm";
-        echo "  <h3><a href='runAppionLoop.php?expId=$expId&form=$form'>Relion 2.0 GPU-Powered 2D Maximum Likelihood Alignment</a></h3>\n";
-        echo " <p> this method is the most robust, but takes some time to complete."
-                ." It uses the "
-                ."<a href='http://www2.mrc-lmb.cam.ac.uk/relion/index.php/Calculate_2D_class_averages'>Relion Refine 2d</a>"
-                ."&nbsp;<img src='img/external.png'>"
-                ." program to perform alignments. "
-                ."</p><p>\n"
-                ."Like Xmipp Maximum Likelihood (from the same author), "
-                ."this method is unbiased and very thorough, but also the slowest of the methods (~days). "
-                ."While it produces excellent templates, it only does a course search (integer pixels shifts and large angle increments), "
-                ."so it is best to use ref-based alignment to get better alignment parameters"
-                ."</p>\n";
-
-
-        //echo "  <img src='img/align-smr.png' width='250'><br/>\n";
-        echo "</td></tr>\n";
-}
-
-
->>>>>>> origin/trunk
 
 
 //echo "  <img src='img/align-smr.png' width='250'><br/>\n";
@@ -237,10 +207,6 @@ if (!HIDE_IMAGIC) {
 
 /*
  ** Iterative Stable Alignment and Clustering (ISAC)
-<<<<<<< HEAD
-*/
-
-=======
 */
 
 
@@ -279,107 +245,6 @@ echo "<p>Fast & easy 2D ref-free alignment by iterative MSA/MRA.  Classification
 	."</p>\n";
 echo "</td></tr>\n";
 
-/*
-** SPIDER Reference Based Alignment
-*/
-
-echo "<tr><td width='100' align='center'>\n";
-echo "  <img src='img/spider_logo.png' width='64'>\n";
-echo "</td><td>\n";
-echo "  <h3><a href='runRefBasedAlignment.php?expId=$expId'>Spider Reference-based Alignment</a></h3>\n";
-echo " <p> first you select template and then this method uses the "
-	."<a href='http://www.wadsworth.org/spider_doc/spider/docs/man/apmq.html'>Spider AP MQ</a>"
-	."&nbsp;<img src='img/external.png'>"
-	." command to align your particles to the selected templates. Multiprocessing additions has made this extremely fast (~1 hour)."
-	."<br/>"
-	."<br/>"
-	."This method is broken on SPIDER version 18 or newer, <a href='http://emg.nysbc.org/redmine/issues/2064'>see bug report</a>"
-	."</p>\n";
-//echo "  <img src='img/align-rsm.png' width='125'><br/>\n";
-echo "</td></tr>\n";
-
-/*
-** Xmipp Maximum Likelihood Reference Based Alignment
-*/
-
-echo "<tr><td width='100' align='center'>\n";
-echo "  <img src='img/xmipp_logo.png' width='64'>\n";
-echo "</td><td>\n";
-echo "  <h3><a href='runRefBasedMaxlikeAlign.php?expId=$expId'>Xmipp Reference Based Maximum Likelihood Alignment</a></h3>\n";
-echo " <p> similar to reference-free but you select templates first."
-	." It uses the "
-	."<a href='http://xmipp.cnb.csic.es/twiki/bin/view/Xmipp/MLalign2D'>Xmipp ml_align2d</a>"
-	."&nbsp;<img src='img/external.png'>"
-	." program to perform alignments. "
-	."</p><p>\n"
-	."Still untested as to how much bias the reference gives you, but this may be useful in some cases. "
-	."Also, when no particles align to a particular template, it goes black and unused in further iterations. "
-	."</p>\n";
-//echo "  <img src='img/align-smr.png' width='250'><br/>\n";
-echo "</td></tr>\n";
-
-/*
-** SPIDER Reference Free Alignment
-*/
-
-echo "<tr><td width='100' align='center'>\n";
-echo "  <img src='img/spider_logo.png' width='64'>\n";
-echo "</td><td>\n";
-echo "  <h3><a href='runSpiderNoRefAlignment.php?expId=$expId'>Spider Reference-free Alignment</a></h3>\n";
-echo " <p> this method uses the "
-	."<a href='http://www.wadsworth.org/spider_doc/spider/docs/man/apsr.html'>Spider AP SR</a>"
-	."&nbsp;<img src='img/external.png'>"
-	." command to align your particles. "
-	."</p><p>\n"
-	."<font color='#aa2222'>WARNING:</font> this method is very quick (~few minutes), "
-	."but also very sloppy and does not always do a great job. "
-	."The only way to obtain decent results is to run several times and compare the results.</p>"
-	."</p>\n";
-//echo "  <img src='img/align-rsm.png' width='125'><br/>\n";
-echo "</td></tr>\n";
-
->>>>>>> origin/trunk
-
-if (!HIDE_FEATURE)
-{
-echo "<tr><td width='100' align='center'>\n";
-echo "  <h2>ISAC</h2>\n";
-	echo "</td><td>\n";
-	//echo "  <h3><a href='runISAC.php?expId=$expId'>Iterative Stable Alignment and Clustering (ISAC)</a></h3>\n";
-	$form = "IsacForm";
-	echo "  <h3><a href='runAppionLoop.php?expId=$expId&form=$form'>Iterative Stable Alignment and Clustering (ISAC)</a></h3>\n";
-	echo " <p>Initial version. More information about ISAC is available from:"
-		." <a href='http://sparx-em.org/sparxwiki/sxisac'>sxisac - SPARX</a>"
-		."</p><p>\n"
-		."ISAC produces great class averages for common lines or trying to tease out small conformational states,"
-		."but it is by far the slowest alignment (~weeks) and requires lots of parallelization "
-		."</p><p>\n"
-<<<<<<< HEAD
-		."Note: job launching is not quite ready, though uploader works great."
-=======
-		."<font color='#aa2222'>WARNING:</font> report all problems to Ed Brignole"
->>>>>>> origin/trunk
-		."</p>\n";
-	echo "</td></tr>\n";
-}
-
-/*
-** Topology representing network alignment
-*/
-echo "<tr><td width='100' align='center'>\n";
-echo "  <img src='img/canimg.png' width='64'>\n";
-echo "</td><td>\n";
-echo "  <h3><a href='runTopolAlign.php?expId=$expId'>Iterative MSA/MRA</a></h3>\n";
-echo "<p>Fast & easy 2D ref-free alignment by iterative MSA/MRA.  Classification "
-	." can be performed using a topology-representing network or IMAGIC MSA."
-	." Multi-reference alignment can be performed using IMAGIC or EMAN. </a>" 
-#		."The classification is performed by Vince Ramey's implementation of "
-#		."<a target='blank' href='http://www.ncbi.nlm.nih.gov/pubmed/14572474'>"
-#		."Ogura et al. JSB (2003)</a>"
-	."</p>\n";
-echo "</td></tr>\n";
-
-<<<<<<< HEAD
 /*
 ** SPIDER Reference Based Alignment
 */
@@ -424,8 +289,6 @@ echo " <p> this method uses the "
 //echo "  <img src='img/align-rsm.png' width='125'><br/>\n";
 echo "</td></tr>\n";
 
-=======
->>>>>>> origin/trunk
 
 /*
 ** SPIDER Ed Brignole Iter Alignment is removed since 3.3

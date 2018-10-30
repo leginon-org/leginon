@@ -98,7 +98,6 @@ class leginondata {
 	}
 
 	function getSessions($comment="", $projectId=false, $like="", $temId=false, $camId=false) {
-<<<<<<< HEAD
 		if (isset($this->sessions) and !is_numeric($temId))	{
 			return $this->sessions;
 		}
@@ -169,66 +168,6 @@ class leginondata {
 					."on p.`REF|projects|project` = o.`REF|projects|project` ";
 				$where1 .= " "
 					."and o.`REF|leginondata|UserData|user` = ".$userId." "
-=======
-		if ($like)
-			$wherelike = "and s.`name` like '$like' ";
-		
-		$selectcomment = ($comment) ? 
-				"if (length(s.comment)>0, concat(s.name,' - ',s.comment), s.name)" : "s.name";
-
-		$joinproject = "left join ".DB_PROJECT.".`projectexperiments` p "
-			."on s.`DEF_id` = p.`REF|leginondata|SessionData|session` ";
-		$privilege_level = privilege('data');
-		if ($privilege_level > 2 && !is_numeric($projectId)) {
-			// save time with one less join when it is not necessary
-			$joinproject = ' ';
-		}
-		if (is_numeric($projectId)) {
-			$whereproject = "and p.`REF|projects|project` = ".$projectId." ";
-		} else {
-			$whereproject = ' ';
-		}
-		if (is_numeric($temId)) {
-			$jointem = "left join ScopeEMData scope on (scope.`DEF_id` = a.`REF|ScopeEMData|scope`) ";
-			$wheretem = "and scope.`REF|InstrumentData|tem` = ".$temId." ";
-		} else {
-			$jointem = ' ';
-			$wheretem = ' ';
-		}
-		if (is_numeric($camId)) {
-			$joincam = "left join CameraEMData c on (c.`DEF_id` = a.`REF|CameraEMData|camera`) ";
-			$wherecam = "and c.`REF|InstrumentData|ccdcamera` = ".$camId." ";
-		} else {
-			$joincam = ' ';
-			$wherecam = ' ';
-		}
-		// exclude ones without images saved
-		$q="select s.DEF_id as `id`, ".$selectcomment." as `name`, s.comment as `comment`, "
-			."s.name as `name_org`, s.`DEF_timestamp` as `stimestamp` "
-			."from ".DB_LEGINON.".AcquisitionImageData a "
-			."left join SessionData s on (s.`DEF_id` = a.`REF|SessionData|session`) ";
-		$q .= $joinproject;
-		$q .= $jointem.$joincam;
-		$where = "where a.`REF|SessionData|Session` IS NOT NULL ".$whereproject;
-		$where .= $wheretem.$wherecam;
-		$grouporder = " "
-			."group by a.`REF|SessionData|session` "
-			."order by s.DEF_timestamp DESC ";
-		if ($privilege_level <=2) {
-			$userId = getLoginUserId();
-			//project owners
-			$q1 = "left join ".DB_PROJECT.".`projectowners` o "
-				."on p.`REF|projects|project` = o.`REF|projects|project` ";
-			$where1 .= " "
-				."and o.`REF|leginondata|UserData|user` = ".$userId." "
-			." ";
-			$where1 = $where.$where1.$wherelike;
-			$q1 = $q.$q1.$where1.$grouporder;
-			//share experiments
-			$q2 = "left join ".DB_PROJECT.".`shareexperiments` sh "
-				."on ( s.`DEF_id` = sh.`REF|leginondata|SessionData|experiment`) ";
-			$where2 = "and sh.`REF|leginondata|UserData|user` = ".$userId." "
->>>>>>> origin/trunk
 				." ";
 				$where1 = $where.$where1.$wherelike;
 				$q1 = $q.$q1.$where1.$grouporder;
@@ -502,11 +441,7 @@ class leginondata {
 	}
 
 	function getScopes($hostname=false, $real_only=false) {
-<<<<<<< HEAD
 		$q="select `DEF_id` as id, name, hostname, description from `InstrumentData` "
-=======
-		$q="select `DEF_id` as id, name, hostname from `InstrumentData` "
->>>>>>> origin/trunk
 			." where (cs is not null)";
 		if (!empty($hostname)) $q .= " and hostname='$hostname'";
 		if (!empty($real_only)) $q .= " and not name like 'Sim%' and not name like 'Appion%' and hidden != 1";
@@ -516,19 +451,11 @@ class leginondata {
 	function getScopesForSelection() {
 		$scopes = $this->getScopes(false,true);
 		if ( !is_array($scopes)) return false;
-<<<<<<< HEAD
 		$allscopes = array('id'=>false,'name'=>'all microscopes', 'description'=>false);
 		array_unshift( $scopes, $allscopes);
 		return $scopes;
 	}
 	
-=======
-		$allscopes = array('id'=>false,'name'=>'all microscopes');
-		array_unshift( $scopes, $allscopes);
-		return $scopes;
-	}
-
->>>>>>> origin/trunk
 	function getSummary($expId, $presetname=false, $hidden=false) {
 	/*
 		$q="select if (isnull(p.name), '"

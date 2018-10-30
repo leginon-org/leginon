@@ -317,21 +317,12 @@ class GatanSocket(object):
 		return self.num_grab_sum
 
 	@logwrap
-<<<<<<< HEAD
 	def SetupFileSaving(self, rotationFlip, dirname, rootname, filePerImage, doEarlyReturn, earlyReturnFrameCount=0,earlyReturnRamGrabs=0, lzwtiff=False):
 		pixelSize = 1.0
 		self.setNumGrabSum(earlyReturnFrameCount, earlyReturnRamGrabs)
 		if self.save_frames and (doEarlyReturn or lzwtiff):
 			# early return flag
 			flag = 128*int(doEarlyReturn) + 8*int(lzwtiff)
-=======
-	def SetupFileSaving(self, rotationFlip, dirname, rootname, filePerImage, doEarlyReturn, earlyReturnFrameCount=0,earlyReturnRamGrabs=0):
-		pixelSize = 1.0
-		self.setNumGrabSum(earlyReturnFrameCount, earlyReturnRamGrabs)
-		if self.save_frames and doEarlyReturn:
-			# early return flag
-			flag = 128
->>>>>>> origin/trunk
 			numGrabSum = self.getNumGrabSum()
 			# set values to pass
 			longs = [enum_gs['GS_SetupFileSaving2'], rotationFlip, flag,]

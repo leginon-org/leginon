@@ -15,11 +15,7 @@ class ReferenceCounter(reference.Reference):
 	eventinputs = reference.Reference.eventinputs + [event.AcquisitionImagePublishEvent]
 	eventoutputs = reference.Reference.eventoutputs
 
-<<<<<<< HEAD
 	defaultsettings = dict(reference.Reference.defaultsettings)
-=======
-	defaultsettings = reference.Reference.defaultsettings
->>>>>>> origin/trunk
 	defaultsettings.update (
 		{'interval count': 1}
 	)
@@ -58,7 +54,6 @@ class ReferenceCounter(reference.Reference):
 				self.logger.info(message % interval)
 				return
 		self.moveAndExecute(request_data)
-<<<<<<< HEAD
 
 	def onTest(self):
 		super(ReferenceCounter,self).onTest()
@@ -71,13 +66,3 @@ class ReferenceCounter(reference.Reference):
 		self.logger.info('Reset Request Process Counter')
 		# reset counter, not timer
 		self.last_processed = 0
-=======
-		self.last_processed = 0
-
-	def uiResetCounter(self):
-		# reset counter, not timer
-		self.logger.info('Reset Request Process Counter')
-		self.last_processed = 0
-
-
->>>>>>> origin/trunk

@@ -7,7 +7,6 @@ import math
 import time
 import shutil
 import subprocess
-<<<<<<< HEAD
 
 #to generate 2D map from local refine
 from matplotlib import use
@@ -22,8 +21,6 @@ except:
 	import scipy.ndimage as ndimage
 	HAS_GRIDDATA=False
 
-=======
->>>>>>> origin/trunk
 #appion
 from appionlib import apFile
 from appionlib import apImage
@@ -36,10 +33,7 @@ from appionlib import appiondata
 from appionlib import apInstrument
 from appionlib.apCtf import ctfdb
 from appionlib.apCtf import ctfinsert
-<<<<<<< HEAD
 from appionlib import apRelion
-=======
->>>>>>> origin/trunk
 
 #from appionlib import ctffind4
 
@@ -70,7 +64,6 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 			help="Number of steps to search in grid", metavar="#")
 		self.parser.add_option("--dast", dest="dast", type="float", default=1000.0,
 			help="dAst in microns is used to restrain the amount of astigmatism", metavar="#")
-<<<<<<< HEAD
 		self.parser.add_option("--local_raster", dest="raster", type="int", default=200,
 			help="spacing for GCTF local estimation", metavar="#")
 		self.parser.add_option("--local_radius", dest="local_radius", type="int", default=1024,
@@ -79,17 +72,12 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 			help="Boxsize used for local refinement", metavar="#")
 		self.parser.add_option("--local_overlap", dest="local_overlap", type="float", default=0.5,
 			help="Overlap factor for grid box sampling", metavar="#")
-=======
->>>>>>> origin/trunk
 	
 		self.parser.add_option("--do_EPA", dest="do_EPA", default=False, action="store_true",
 			help="Do equiphase averaging")
 
-<<<<<<< HEAD
 		self.parser.add_option("--do_local_refine", dest="local_refine", default=False, action="store_true",
 			help="Perform local CTF estimation")
-=======
->>>>>>> origin/trunk
 		self.parser.add_option("--do_Hres_ref", dest="do_Hres_ref", default=False, action="store_true",
 			help="Boost high resolution refinement")
 
@@ -218,7 +206,6 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 		# finalize paramInputOrder
 		if self.params['shift_phase']:
 			paramInputOrder.extend(['phase_shift_H','phase_shift_L','phase_shift_S'])
-<<<<<<< HEAD
 		# add local CTF estimation
 		if self.params['local_refine']:
 			paramInputOrder.extend(['do_local_refine','boxsuffix','local_radius','local_boxsize','local_overlap'])
@@ -227,8 +214,6 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 			dimy = imgdata['camera']['dimension']['y']
 			self.generateRasterStarFile(apDisplay.short(imgdata['filename']),dimx,dimy,self.params['raster'])
 
-=======
->>>>>>> origin/trunk
 #      paramInputOrder.append('expert_opts')
 #      paramInputOrder.append('newline')
 
@@ -263,7 +248,6 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 
 		imageresmax = self.params['resmax']
 		if ctfvalue is not None and self.params['bestdb'] is True:
-<<<<<<< HEAD
 			try:
 				### set res max from resolution_80_percent
 				gmean = (ctfvalue['resolution_80_percent']*ctfvalue['resolution_50_percent']*self.params['resmax'])**(1/3.)
@@ -275,10 +259,6 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 				else:
 					apDisplay.printWarning('Unknown validataion, accept it anyway')
 					gmean = 100.0
-=======
-			### set res max from resolution_80_percent
-			gmean = (ctfvalue['resolution_80_percent']*ctfvalue['resolution_50_percent']*self.params['resmax'])**(1/3.)
->>>>>>> origin/trunk
 			if gmean < self.params['resmin']*0.9:
 				# replace only if valid Issue #3291
 				imageresmax = round(gmean,2)
@@ -289,10 +269,6 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 		# inputparams defocii and astig are in Angstroms
 
 		# may be gain/dark corrected movie that has been binned
-<<<<<<< HEAD
-=======
-		print 'here'
->>>>>>> origin/trunk
 		origpath, binning = self.getOriginalPathAndBinning(imgdata)
 
 		# ddstack might be binned.
@@ -318,16 +294,12 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 			'mdef_ave_type' : self.getMovieAverageType(),
 			'phase_shift_H': self.params['max_phase_shift'],
 			'phase_shift_L': self.params['min_phase_shift'],
-<<<<<<< HEAD
 			'phase_shift_S': self.params['phase_search_step'],
 			'do_local_refine': self.params['local_refine'],
 			'local_radius': self.params['local_radius'],
 			'local_boxsize': self.params['local_boxsize'],
 			'local_overlap': self.params['local_overlap'],
 			'boxsuffix': "_raster.star",
-=======
-			'phase_shift_S': self.params['phase_search_step']
->>>>>>> origin/trunk
 		}
 
 
@@ -401,28 +373,18 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 		### cannot run ctffind_plot_results.sh on CentOS 6
 		# This script requires gnuplot version >= 4.6, but you have version 4.2
 
-<<<<<<< HEAD
 		# remove raster star file, it is redundant
 #		if os.path.isfile(rasterfilename):
 #			apFile.removeFile(rasterfilename)
 
-=======
->>>>>>> origin/trunk
 		### parse ctf estimation output
 		self.ctfvalues = {}
 		#ctfproglog = apDisplay.short(imgdata['filename'])+"-pow.txt"		
 		ctfproglog = apDisplay.short(imgdata['filename'])+"_gctf.log"		
 
-<<<<<<< HEAD
 		apDisplay.printMsg("reading %s"%(ctfproglog))
 		logf = open(ctfproglog, "r")
 		apDisplay.printMsg('current path is %s'%(os.getcwd()))
-=======
-		print 'ctfproglog = ',ctfproglog
-		apDisplay.printMsg("reading %s"%(ctfproglog))
-		logf = open(ctfproglog, "r")
-		print 'current path is ',os.getcwd()
->>>>>>> origin/trunk
 		for line in logf:
 			sline = line.strip()
 			if (re.match('Defocus_U',sline)):
@@ -439,10 +401,7 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 					'defocusinit' : bestdef*1e-10,
 					'cs' : self.params['cs'],
 					'volts' : imgdata['scope']['high tension'],
-<<<<<<< HEAD
 					'do_local_refine' : inputparams['do_local_refine'],
-=======
->>>>>>> origin/trunk
 				}
 				## bit len specific values
 				if len(bits) == 6:
@@ -460,15 +419,9 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 						'extra_phase_shift': round(math.radians(float(bits[3])),5), # radians
 					})
 
-<<<<<<< HEAD
 				apDisplay.printMsg('defocus2 = '+str(self.ctfvalues['defocus2']))
 				apDisplay.printMsg('defocus1 = '+str(self.ctfvalues['defocus1']))
 				apDisplay.printMsg('angle_astigmatism = '+str(self.ctfvalues['angle_astigmatism']))
-=======
-				print 'defocus2 = '+str(self.ctfvalues['defocus2'])
-				print 'defocus1 = '+str(self.ctfvalues['defocus1'])
-				print 'angle_astigmatism = '+str(self.ctfvalues['angle_astigmatism'])
->>>>>>> origin/trunk
 	
 			if sline.startswith('Resolution'):
 				bits = sline.split()
@@ -494,7 +447,6 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 		shutil.move(inputparams['output'], os.path.join(self.powerspecdir, inputparams['output']))
 		self.ctfvalues['graph1'] = os.path.join(os.path.basename(self.powerspecdir), outputjpgbase)
 		self.ctfvalues['graph3'] = os.path.join(os.path.basename(self.powerspecdir), outputjpgbase)
-<<<<<<< HEAD
 		# generate colored display if local CTF estimation
 		if self.params['local_refine']:
 			self.generateLocalCTFmap(apDisplay.short(imgdata['filename']),dimx,dimy)
@@ -637,10 +589,6 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 		plt.close()
 
 	#======================
-=======
-		return
-
->>>>>>> origin/trunk
 	def getMovieAverageType(self):
 		'''
 		movie average type 0 is coherent (averaging F as a vector)
@@ -651,7 +599,6 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 		return int(self.params['ddstackid'] is not None and self.params['ddstackid'] is not 0)
 
 	#======================
-<<<<<<< HEAD
 	def generateRasterStarFile(self,fbase,dimx,dimy,spacing):
 		# raster star file header
 		f = open(fbase+"_raster.star",'w')
@@ -673,8 +620,6 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 		f.close()
 
 	#======================
-=======
->>>>>>> origin/trunk
 	def commitToDatabase(self, imgdata):
 		self.insertCtfRun(imgdata)
 		### time to insert
@@ -697,13 +642,9 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 
 		# first create an aceparam object
 		paramq = appiondata.ApCtfFind4ParamsData()
-<<<<<<< HEAD
 		copyparamlist = ['ampcontrast','fieldsize','cs','bestdb','resmin','defstep','shift_phase','local_refine']
 		if self.params['shift_phase']:
 			copyparamlist.extend(['min_phase_shift','max_phase_shift','phase_search_step'])
-=======
-		copyparamlist = ('ampcontrast','fieldsize','cs','bestdb','resmin','defstep')
->>>>>>> origin/trunk
 		for p in copyparamlist:
 			if p in self.params:
 				paramq[p] = self.params[p]

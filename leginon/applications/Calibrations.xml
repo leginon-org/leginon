@@ -3,11 +3,7 @@
 - Application XML-Dump
 - http://emg.nysbc.org/ 
 -
-<<<<<<< HEAD
 - Application :Calibrations
-=======
-- Application :Calibrations (3.3)
->>>>>>> origin/trunk
 - Version     :0
 - Date : 10/25/2016
 -
@@ -123,11 +119,7 @@
     <sqltable name="ApplicationData" >
         <field name="DEF_id" >118</field>
         <field name="DEF_timestamp" >2016-10-25 07:59:34</field>
-<<<<<<< HEAD
         <field name="name" >Calibrations</field>
-=======
-        <field name="name" >Calibrations (3.3)</field>
->>>>>>> origin/trunk
         <field name="version" >0</field>
         <field name="hide" >0</field>
     </sqltable>

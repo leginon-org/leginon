@@ -15,7 +15,6 @@ jeol.cfg
 .DS_Store
 *.dat
 *.old
-<<<<<<< HEAD
 # build folders
 leginon/build
 pyami/build
@@ -26,5 +25,3 @@ imageviewer/build
 .project
 .pydevproject
 
-=======
->>>>>>> origin/trunk

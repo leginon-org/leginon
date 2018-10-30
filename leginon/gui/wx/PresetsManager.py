@@ -840,11 +840,7 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SETTINGS,
 													'settings',
 													shortHelpString='Settings')
-<<<<<<< HEAD
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_EXTRACT, 'clock', shortHelpString='Toggle error notification')
-=======
-		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_EXTRACT, 'clock', shortHelpString='Toggle scope timeout')
->>>>>>> origin/trunk
 		# presets
 
 		self.calibrations = Calibrations(self)
@@ -1202,20 +1198,12 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz.Add(self.widgets['cycle'], (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['optimize cycle'], (3, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-<<<<<<< HEAD
 		sz.Add(self.widgets['import random'], (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['mag only'], (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['apply offset'], (6, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['blank'], (7, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(szsmallsize, (8, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['disable stage for image shift'], (9, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-=======
-		sz.Add(self.widgets['mag only'], (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['apply offset'], (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['blank'], (6, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(szsmallsize, (7, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['disable stage for image shift'], (8, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
->>>>>>> origin/trunk
 
 		sbsz.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
 

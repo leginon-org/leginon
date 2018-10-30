@@ -23,11 +23,7 @@ $bydf = ($_GET['bydf']) ? $_GET['bydf'] : 'confidence';
 $f = 'extra_phase_shift';
 $preset= ($_GET['preset']) ? $_GET['preset'] : '';
 $summary = ($_GET['s']==1 ) ? true : false;
-<<<<<<< HEAD
 $minimum = ($_GET['mres']) ? $_GET['mres'] : 20.0; //fit resolution minimal resolution in Angstroms
-=======
-$minimum = ($_GET['mconf']) ? $_GET['mconf'] : 0.2;
->>>>>>> origin/trunk
 $width=$_GET['w'];
 $height=$_GET['h'];
 $xmin = ($_GET['xmin']) ? $_GET['xmin'] : false;
@@ -49,11 +45,7 @@ if ($summary) {
 } else {
 	$runId= ($_GET[rId]);
 	$ctfinfo = $ctf->getCtfInfo($runId);
-<<<<<<< HEAD
 	$pp_ctfruns[] = $runId;
-=======
-	$pp_ctfrunsp[] = $runId;
->>>>>>> origin/trunk
 }
 
 

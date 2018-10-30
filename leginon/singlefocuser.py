@@ -19,19 +19,11 @@ import copy
 import gui.wx.Focuser
 import player
 
-<<<<<<< HEAD
-=======
-DOUBLE_TILT_FOCUS = True
->>>>>>> origin/trunk
 
 class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 	panelclass = gui.wx.Focuser.Panel
 	settingsclass = leginondata.SingleFocuserSettingsData
-<<<<<<< HEAD
 	defaultsettings = dict(manualfocuschecker.ManualFocusChecker.defaultsettings)
-=======
-	defaultsettings = manualfocuschecker.ManualFocusChecker.defaultsettings
->>>>>>> origin/trunk
 	defaultsettings.update({
 		'process target type': 'focus',
 		'melt time': 0.0,
@@ -40,10 +32,7 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 		'acquire final': True,
         'process target type': 'focus',
 		'beam tilt settle time': 0.25,
-<<<<<<< HEAD
 		'on phase plate': False,
-=======
->>>>>>> origin/trunk
 	})
 
 	eventinputs = manualfocuschecker.ManualFocusChecker.eventinputs
@@ -110,11 +99,7 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 		for setting in self.focus_sequence:
 			presetname = setting['preset name']
 			settingname = setting['name']
-<<<<<<< HEAD
 			if setting['switch'] and presetname not in availablepresets:
-=======
-			if presetname not in availablepresets:
->>>>>>> origin/trunk
 				raise acquisition.InvalidPresetsSequence('bad preset %s in focus sequence %s' % (presetname, settingname))
 
 	def researchFocusSequence(self):
@@ -135,10 +120,7 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 				return []
 
 		sequence = []
-<<<<<<< HEAD
 		has_manual_on = False
-=======
->>>>>>> origin/trunk
 		for name in focus_sequence_data['sequence']:
 			focus_setting = self.researchFocusSetting(name)
 			if focus_setting is None:
@@ -146,12 +128,9 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 				self.logger.warning(warning)
 			else:
 				sequence.append(focus_setting)
-<<<<<<< HEAD
 				if focus_setting['focus method'] == 'Manual' and focus_setting['switch'] is True:
 					has_manual_on = True
 		self.setUserVerificationStatus(has_manual_on)
-=======
->>>>>>> origin/trunk
 		return sequence
 
 	def researchFocusSetting(self, name):
@@ -208,29 +187,17 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 	def autoFocus(self, setting, emtarget, resultdata):
 		presetname = setting['preset name']
 		stiglens = 'objective'
-<<<<<<< HEAD
 		## beam tilt scale
 		btilt = setting['tilt']
 		# relative beam tilt dict
 		btilt1dict = 	self.btcalclient.getFirstBeamTiltDeltaXY(btilt,self.settings['on phase plate'])
-=======
-		## need btilt, pub, driftthresh
-		btilt = setting['tilt']
-
->>>>>>> origin/trunk
 		### Drift check
 		if setting['check drift']:
 			driftthresh = setting['drift threshold']
 			# move first if needed
-<<<<<<< HEAD
 			# TODO: figure out how drift monitor behaves in RCT if doing this
 			self.conditionalMoveAndPreset(presetname, emtarget)
 			driftresult = self.checkDrift(presetname, emtarget, driftthresh, btilt1dict)
-=======
-			# TO DO: figure out how drift monitor behaves in RCT if doing this
-			self.conditionalMoveAndPreset(presetname, emtarget)
-			driftresult = self.checkDrift(presetname, emtarget, driftthresh)
->>>>>>> origin/trunk
 			if setting['recheck drift'] and driftresult['status'] == 'drifted':
 				# See Issue #3990
 				self.logger.info('Drift was detected so target will be repeated')
@@ -241,15 +208,8 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 			lastdrift = driftresult['final']
 			lastdriftimage = self.driftimage
 			self.setImage(lastdriftimage['image'], 'Image')
-<<<<<<< HEAD
 
 			self.logger.info('use final drift image in focuser')
-=======
-			if not DOUBLE_TILT_FOCUS:
-				self.logger.info('use final drift image in focuser')
-			else:
-				self.logger.info('tilt minus and then plus to measure defocus')
->>>>>>> origin/trunk
 		else:
 			lastdrift = None
 			lastdriftimage = None
@@ -280,34 +240,20 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 		# failed in the process or not as a safety
 		beamtilt0 = self.btcalclient.getBeamTilt()
 
-<<<<<<< HEAD
 		measure_status = None
-=======
->>>>>>> origin/trunk
 		try:
 			# increased settle time from 0.25 to 0.5 for Falcon protector
 			settletime = self.settings['beam tilt settle time']
 			### FIX ME temporarily switch off tilt correction because the calculation may be wrong Issue #3030
-<<<<<<< HEAD
 			correction = self.btcalclient.measureDefocusStig(btilt, correct_tilt=False, correlation_type=setting['correlation type'], stig=setting['stig correction'], settle=settletime, image0=lastdriftimage, on_phase_plate=self.settings['on phase plate'])
 		except calibrationclient.Abort:
 			self.logger.info('Measurement of defocus and stig. has been aborted')
 			measure_status = 'aborted'
 		except calibrationclient.NoMatrixCalibrationError, e:
-=======
-			correction = self.btcalclient.measureDefocusStig(btilt, correct_tilt=False, correlation_type=setting['correlation type'], stig=setting['stig correction'], settle=settletime, image0=lastdriftimage, double_tilt=DOUBLE_TILT_FOCUS)
-		except calibrationclient.Abort:
-			self.btcalclient.setBeamTilt(beamtilt0)
-			self.logger.info('Measurement of defocus and stig. has been aborted')
-			return 'aborted'
-		except calibrationclient.NoMatrixCalibrationError, e:
-			self.btcalclient.setBeamTilt(beamtilt0)
->>>>>>> origin/trunk
 			self.player.pause()
 			self.logger.error('Measurement failed without calibration: %s' % e)
 			self.logger.info('Calibrate and then continue...')
 			self.beep()
-<<<<<<< HEAD
 			measure_statue = 'repeat'
 		except calibrationclient.NoCalibrationError, e:
 			self.logger.error('Measurement failed without calibration: %s' % e)
@@ -321,14 +267,6 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 			self.btcalclient.setBeamTilt(beamtilt0)
 			if measure_status:
 				return measure_status
-=======
-			return 'repeat'
-		except:
-			# any other exception
-			self.logger.warning('Error in measuring defocus/stig, set beam tilt back')
-			self.btcalclient.setBeamTilt(beamtilt0)
-			raise
->>>>>>> origin/trunk
 
 		if setting['stig correction'] and correction['stigx'] and correction['stigy']:
 			sx = '%.3f' % correction['stigx']
@@ -443,10 +381,7 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 		self.conditionalMoveAndPreset(presetname,emtarget)
 		target = emtarget['target']
 		orig_a = self.instrument.tem.StagePosition['a']
-<<<<<<< HEAD
 		self.logger.info('Current stage alpha is %.1f degrees' % (math.degrees(orig_a),))
-=======
->>>>>>> origin/trunk
 		try:
 			z = self.stagetiltcalclient.measureZ(atilt, correlation_type=setting['correlation type'])
 			self.logger.info('Measured Z: %.4e' % z)
@@ -457,7 +392,6 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 			status = 'failed'
 		else:
 			status = 'ok'
-<<<<<<< HEAD
 		finally:
 			# always set alpha back Issue #4294
 			self.logger.info('Returning stage alpha to %.1f degrees' % (math.degrees(orig_a),))
@@ -483,14 +417,6 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 				self.logger.error('Failed to move to %s after %d trials' % (pos, trials))
 				self.logger.error('Final error: %s' % (e,))
 
-=======
-		# always set alpha back Issue #4294
-		self.logger.info('Return stage alpha to %.1f degrees' % (math.degrees(orig_a),))
-		self.instrument.tem.StagePosition = {'a':orig_a}
-
-		return status
-
->>>>>>> origin/trunk
 	def noMeasure(self, *args, **kwargs):
 		self.logger.info('no measurement selected')
 
@@ -559,10 +485,6 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 		self.publish(resultdata, database=True, dbforce=True)
 		stagenow = self.instrument.tem.StagePosition
 		self.logger.debug('z after step %s %.2f um' % (setting['name'], stagenow['z']*1e6))
-<<<<<<< HEAD
-=======
-
->>>>>>> origin/trunk
 		return status
 
 	def conditionalMoveAndPreset(self,target_presetname, emtarget):
@@ -577,7 +499,6 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 			self.new_acquire = False
 			return
 
-<<<<<<< HEAD
 	def getFirstFocusSequenceBeamTiltDeltas(self):
 		'''
 		Get the beamtilt delta pair of the first active focus sequence step.
@@ -649,8 +570,6 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 			self.logger.info('melt preset: %s' % (meltpresetname,))
 			self.meltIce()
 
-=======
->>>>>>> origin/trunk
 	def acquire(self, presetdata, emtarget=None, attempt=None, target=None):
 		'''
 		this replaces Acquisition.acquire()
@@ -665,29 +584,7 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 		else:
 			self.deltaz = emtarget['delta z']
 
-<<<<<<< HEAD
 		self.setEMtargetAndMeltIce(emtarget, attempt)
-=======
-		## Need to melt only once per target, even though
-		## this method may be called multiple times on the same
-		## target.
-		melt_time = self.settings['melt time']
-		if melt_time and attempt > 1:
-			self.logger.info('Target attempt %s, not melting' % (attempt,))
-		elif melt_time:
-			self.startTimer('melt')
-			self.logger.info('Melting ice...')
-
-			#### change to melt preset
-			meltpresetname = self.settings['melt preset']
-			self.conditionalMoveAndPreset(meltpresetname,emtarget)
-			self.logger.info('melt preset: %s' % (meltpresetname,))
-
-			self.startTimer('melt exposeSpecimen')
-			self.exposeSpecimen(melt_time)
-			self.stopTimer('melt exposeSpecimen')
-			self.stopTimer('melt')
->>>>>>> origin/trunk
 
 		status = 'unknown'
 

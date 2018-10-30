@@ -80,7 +80,6 @@ class DogPickerForm extends MathParticleForm
 		if ( $numslices != "" && $numslices < 2 )
 		{
 			$msg .= "<B>Error:</B> numslices must be more than 1 for multisize picking";
-<<<<<<< HEAD
 			$sizerange = $params->getParamValue('sizerange');
 			if($sizerange < 1.0) 
 				$msg .= "<B>Error:</B> sizerange must be more than 1.0";
@@ -88,8 +87,6 @@ class DogPickerForm extends MathParticleForm
 			$kfactor = $params->getParamValue('kfactor');
 			if ($kfactor < 1.00001 || $kfactor > 5.0) 
 				$msg .= "<B>Error:</B> K-factor must between 1.00001 and 5.0";
-=======
->>>>>>> origin/trunk
 		}
 		return $msg;
 	}
@@ -105,16 +102,11 @@ class DogPickerForm extends MathParticleForm
 		$pathToMaps = Path::join($outdir, $runname, "maps");
 
 		// Fix me, Not the best way to get binning
-<<<<<<< HEAD
 		$bin = $_POST['bin'];
 		$check_str = 'with Job Scheduler';
 		$check_str_len = strlen($check_str);
 		$full_len = strlen($_POST['process']);
 		if ($_POST['process'] && $full_len >= strlen($scheduler_str) && substr_compare($_POST['process'], $check_str, $full_len-$check_str_len, $check_str_len)) {
-=======
-		$bin = $_POST['bin'];		
-		if ($_POST['process'] != "Just Show Command") {
->>>>>>> origin/trunk
 			$filePattern = $testjpg."*.jpg";
 			$pathPattern = Path::join($pathToMaps, $filePattern);
 			$dogmaplist = glob($pathPattern);

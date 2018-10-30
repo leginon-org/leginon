@@ -1,10 +1,10 @@
 <?php
 
 /**
- *	The Leginon software is Copyright under 
- *	Apache License, Version 2.0
+ *	The Leginon software is Copyright 2003 
+ *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement
- *	see  http://leginon.org
+ *	see  http://ami.scripps.edu/software/leginon-license
  */
 
 require_once dirname(__FILE__).'/../config.php';
@@ -19,12 +19,9 @@ require_once "inc/particledata.inc";
 ini_set('session.gc_maxlifetime', 604800);
 session_set_cookie_params(604800);
 
-<<<<<<< HEAD
 $page = $_SERVER['REQUEST_URI'];
 header("Refresh: 300; URL=$page");
 
-=======
->>>>>>> origin/trunk
 session_start();
 $sessionname=$_SESSION['sessionname'];
 $outdir=$_SESSION['outdir'];
@@ -33,12 +30,9 @@ $imageinfo=$_SESSION['imageinfo'];
 $rundir=$_GET['rundir'];
 $tiltseries=$_GET['tiltseries'];
 
-<<<<<<< HEAD
 processing_header("Batch Protomo Tilt-Series Alignment and Reconstruction Summary","Batch Protomo Tilt-Series Alignment Alignment Summary", $javascript);
 
 $defocus_gif_files = glob("$rundir/tiltseries".$tiltseries."/defocus_estimation/*/*/diagnostic.gif");
-=======
->>>>>>> origin/trunk
 $ctf_gif_files = glob("$rundir/tiltseries".$tiltseries."/media/ctf_correction/s*.gif");
 $dose_gif_files = glob("$rundir/tiltseries".$tiltseries."/media/dose_compensation/s*.gif");
 $corrpeak_gif_files = glob("$rundir/tiltseries".$tiltseries."/media/correlations/s*.gif");
@@ -49,10 +43,7 @@ $qa_gif_file = "$rundir/tiltseries".$tiltseries."/media/quality_assessment/serie
 $azimuth_gif_file = "$rundir/tiltseries".$tiltseries."/media/angle_refinement/series".sprintf('%04d',$tiltseries)."_azimuth.gif";
 $orientation_gif_file = "$rundir/tiltseries".$tiltseries."/media/angle_refinement/series".sprintf('%04d',$tiltseries)."_orientation.gif";
 $elevation_gif_file = "$rundir/tiltseries".$tiltseries."/media/angle_refinement/series".sprintf('%04d',$tiltseries)."_elevation.gif";
-<<<<<<< HEAD
 $defocus_gif = "loadimg.php?rawgif=1&filename=".$defocus_gif_files[0];
-=======
->>>>>>> origin/trunk
 $ctfplot_gif = "loadimg.php?rawgif=1&filename=".$ctf_gif_files[0];
 $ctfdefocus_gif = "loadimg.php?rawgif=1&filename=".$ctf_gif_files[1];
 $dose_gif = "loadimg.php?rawgif=1&filename=".$dose_gif_files[0];
@@ -77,7 +68,6 @@ $html .= '<td><center><a href="protomo2QualityAssessmentPlots.php?outdir='.$rund
 $html .= '<td><center><a href="protomo2QualityAssessmentPlots.php?outdir='.$rundir.'&runname='.$runname.'&tiltseries='.ltrim($tiltseries, '0').'" target="_blank"><img src="'.$elevation_gif.'" alt="elevation" width="275" />'."</a></center></td></tr>";
 $html .= '</tr></td></table>';
 
-<<<<<<< HEAD
 if (isset($defocus_gif_files[0])) {
 	$html .= "
 <center><H4>Defocus Estimation</H4></center>
@@ -102,8 +92,6 @@ if (isset($defocus_gif_files[0])) {
 	$html .= '</tr><tr></table><br>';
 }
 
-=======
->>>>>>> origin/trunk
 if (isset($ctf_gif_files[0])) {
 		$html .= "
 	<center><H4>CTF Correction</H4></center>";

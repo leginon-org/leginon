@@ -12,10 +12,6 @@ class MotionCor2UCSFAlignStackLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop)
 	def setupParserOptions(self):
 		super(MotionCor2UCSFAlignStackLoop,self).setupParserOptions()
 
-<<<<<<< HEAD
-=======
-		#self.parser.remove_option('gpuid')
->>>>>>> origin/trunk
 		self.parser.add_option("--gpuids", dest="gpuids", default='0')
 		self.parser.add_option("--nrw", dest="nrw", type="int", default=1,
 			help="Number (1, 3, 5, ...) of frames in running average window. 0 = disabled", metavar="INT")
@@ -46,27 +42,19 @@ class MotionCor2UCSFAlignStackLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop)
 		self.parser.add_option("--MaskSizerows",dest="MaskSizerows",metavar="#",type=float,default="1.0",
 			help="The Y size of subarea that will be used for alignment, default 1.0 corresponding full size.")
 
-<<<<<<< HEAD
 		self.parser.add_option("--Bft_global",dest="Bft_global",metavar="#",type=float,default=500.0,
                         help=" Global B-Factor for alignment, default 500.0.")
 
 		self.parser.add_option("--Bft_local",dest="Bft_local",metavar="#",type=float,default=150.0,
                         help=" Global B-Factor for alignment, default 150.0.")
-=======
-		self.parser.add_option("--Bft",dest="Bft",metavar="#",type=float,default=100,
-                        help=" B-Factor for alignment, default 100.")
->>>>>>> origin/trunk
 
 		self.parser.add_option("--force_cpu_flat", dest="force_cpu_flat", default=False,
 			action="store_true", help="Use cpu to make frame flat field corrrection")
 
-<<<<<<< HEAD
 	def addBinOption(self):
 		self.parser.add_option("--bin",dest="bin",metavar="#",type=float,default="1.0",
 			help="Binning factor relative to the dd stack. MotionCor2 takes float value (optional)")
 
-=======
->>>>>>> origin/trunk
 	#=======================
 	def checkConflicts(self):
 		super(MotionCor2UCSFAlignStackLoop,self).checkConflicts()
@@ -74,7 +62,6 @@ class MotionCor2UCSFAlignStackLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop)
 		if self.params['keepstack'] is True:
 			apDisplay.printWarning('Frame stack saving not available to MotionCor2 from UCSF')
 			self.params['keepstack'] = False
-<<<<<<< HEAD
 
 	def getAlignBin(self):
 		alignbin = self.params['bin']
@@ -100,13 +87,6 @@ class MotionCor2UCSFAlignStackLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop)
 		self.framealigner = apDDFrameAligner.MotionCor2_UCSF()
 		# use the first gpuids as gpuid in log. See why this is set here in Issue #5576
 		self.params['gpuid'] = int(self.params['gpuids'].split(',')[0].strip())
-=======
-		# use the first gpuids as gpuid in log
-		self.params['gpuid'] = int(self.params['gpuids'].split(',')[0].strip())
-
-	def setFrameAligner(self):
-		self.framealigner = apDDFrameAligner.MotionCor2_UCSF()
->>>>>>> origin/trunk
 
 	def setOtherProcessImageResultParams(self):
 		# The alignment is done in tempdir (a local directory to reduce network traffic)
@@ -128,11 +108,7 @@ class MotionCor2UCSFAlignStackLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop)
 		else:
 			self.has_dose = True
 #		self.temp_aligned_dw_sumpath = 'temp%s.gpuid_%d_sum_DW.mrc' % (self.hostname, self.params['gpuid'])
-<<<<<<< HEAD
 		if self.isUseFrameAlignerFlat() and not self.params['force_cpu_flat']:
-=======
-		if not self.dd.hasBadPixels() and not self.params['force_cpu_flat']:
->>>>>>> origin/trunk
 			frame_flip, frame_rotate=self.dd.getImageFrameOrientation()
 			self.dd.setUseFrameAlignerYFlip(frame_flip)
 			self.dd.setUseFrameAlignerRotate(frame_rotate)
@@ -150,20 +126,12 @@ class MotionCor2UCSFAlignStackLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop)
 		'''
 		temp_aligned_sumpath = self.temp_aligned_sumpath
 		temp_aligned_dw_sumpath = self.temp_aligned_dw_sumpath
-<<<<<<< HEAD
 		gain_flip, gain_rotate = self.framealigner.getGainModification()
-=======
-		gain_flip, gain_rot = self.framealigner.getGainModification()
->>>>>>> origin/trunk
 		if gain_flip:
 			apDisplay.printMsg('Flipping the aligned sum back')
 			self.imageYFlip(temp_aligned_sumpath)
 			self.imageYFlip(temp_aligned_dw_sumpath)
-<<<<<<< HEAD
 		if gain_rotate:
-=======
-		if gain_rot:
->>>>>>> origin/trunk
 			apDisplay.printMsg('Rotating the aligned sum back')
 			self.imageRotate(temp_aligned_sumpath, gain_rotate)
 			self.imageRotate(temp_aligned_dw_sumpath, gain_rotate)

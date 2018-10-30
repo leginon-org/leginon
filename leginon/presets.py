@@ -249,18 +249,11 @@ class PresetsManager(node.Node):
 		'disable stage for image shift': False,
 		'blank': False,
 		'smallsize': 1024,
-<<<<<<< HEAD
 		'idle minute': 30.0,
 		'import random': False,
 	}
 	eventinputs = node.Node.eventinputs + [event.ChangePresetEvent, event.MeasureDoseEvent, event.UpdatePresetEvent, event.IdleTimerPauseEvent, event.IdleTimerRestartEvent]
 	eventoutputs = node.Node.eventoutputs + [event.PresetChangedEvent, event.PresetPublishEvent, event.DoseMeasuredEvent, event.MoveToTargetEvent, event.ActivateNotificationEvent, event.DeactivateNotificationEvent]
-=======
-		'idle minute': 10.0,
-	}
-	eventinputs = node.Node.eventinputs + [event.ChangePresetEvent, event.MeasureDoseEvent, event.UpdatePresetEvent, event.IdleTimerPauseEvent, event.IdleTimerRestartEvent]
-	eventoutputs = node.Node.eventoutputs + [event.PresetChangedEvent, event.PresetPublishEvent, event.DoseMeasuredEvent, event.MoveToTargetEvent]
->>>>>>> origin/trunk
 
 	def __init__(self, name, session, managerlocation, **kwargs):
 		node.Node.__init__(self, name, session, managerlocation, **kwargs)
@@ -371,28 +364,18 @@ class PresetsManager(node.Node):
 	def toggleInstrumentTimeout(self):
 		if self.idleactive:
 			self.idleactive = False
-<<<<<<< HEAD
 			self.outputEvent(event.DeactivateNotificationEvent())
 			#self.logger.info('Instrument timeout deactivated')
 			self.logger.info('Instrument error notification deactivated')
-=======
-			self.logger.info('Instrument timeout deactivated')
->>>>>>> origin/trunk
 		else:
 			# update first then start tracking
 			self.instrument.updateLastSetGetTime()
 			self.idleactive = True
-<<<<<<< HEAD
 			tem_hostname = self.getTemHostname()
 			self.outputEvent(event.ActivateNotificationEvent(tem_host=tem_hostname))
 			self.logger.info('Instrument error notification activated')
 			# FIX ME: this tracker does not work, yet. Often timeout too early.
 			#self.startInstrumentUsageTracker()
-=======
-			self.logger.info('Instrument timeout activated')
-			self.startInstrumentUsageTracker()
-
->>>>>>> origin/trunk
 
 	def lock(self, n):
 		'''many nodes could be waiting for a lock.  It is undefined which
@@ -2026,14 +2009,9 @@ class PresetsManager(node.Node):
 		self.logger.info('Beam image using temporary exposure time: %.1f' % (float(temp_exptime),))
 		# acquire image
 		self.beamimagedata = self.acquireCorrectedCameraImageData(force_no_frames=True)
-<<<<<<< HEAD
 		if im:
 			im = self.beamimagedata['image']
 			self.panel.setBeamImage(im)
-=======
-		im = self.beamimagedata['image']
-		self.panel.setBeamImage(im)
->>>>>>> origin/trunk
 		# display info
 		beamshift = self.instrument.tem.BeamShift
 		self.panel.displayBeamShift(beamshift)

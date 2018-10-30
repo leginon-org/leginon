@@ -162,13 +162,8 @@ noderegistry.registerNodeClass(Baker,classtype)
 from moveacquisition import MoveAcquisition
 noderegistry.registerNodeClass(MoveAcquisition,classtype)
 
-<<<<<<< HEAD
 from tiltlistalternater import TiltListAlternater
 noderegistry.registerNodeClass(TiltListAlternater,classtype)
-=======
-from tiltacquisition import TiltAcquisition
-noderegistry.registerNodeClass(TiltAcquisition,classtype)
->>>>>>> origin/trunk
 
 from tiltalternater import TiltAlternater
 noderegistry.registerNodeClass(TiltAlternater,classtype)

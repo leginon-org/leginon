@@ -522,7 +522,6 @@ class UploadImages(appionScript.AppionScript):
 	def copyFrames(self,source,destination):
 		apFile.safeCopy(source, destination)
 		
-<<<<<<< HEAD
 	def unstack(self,mrc_stack):
 		apDisplay.printMsg("Unstacking mrc stack. A temporary extraction directory will be made using the stack name prefix.")
 		prefix = os.path.splitext(os.path.basename(mrc_stack))[0]
@@ -534,8 +533,6 @@ class UploadImages(appionScript.AppionScript):
 			mrc.write(stack[tilt_image-1],"%s/%s_%04d.mrc" % (temp_image_dir, prefix, tilt_image))
 		return temp_image_dir
 		
-=======
->>>>>>> origin/trunk
 	def prepareImageForUpload(self,origfilepath,newframepath=None,nframes=1):	
 		### In order to obey the rule of first save image then insert 
 		### database record, image need to be read as numpy array, not copied
@@ -604,15 +601,11 @@ class UploadImages(appionScript.AppionScript):
 			# self.dims is only defined with normimg is present
 			self.uploadRefImage('norm', self.params['normimg'])
 			self.uploadRefImage('dark', self.params['darkimg'])
-<<<<<<< HEAD
 		if os.path.isfile(self.params['imagedir']):
 			temp_image_dir = self.unstack(self.params['imagedir'])
 			mrclist = self.getImagesInDirectory(temp_image_dir)
 		else:
 			mrclist = self.getImagesInDirectory(self.params['imagedir'])
-=======
-		mrclist = self.getImagesInDirectory(self.params['imagedir'])
->>>>>>> origin/trunk
 
 		for i in range(min(len(mrclist),6)):
 			print mrclist[i]

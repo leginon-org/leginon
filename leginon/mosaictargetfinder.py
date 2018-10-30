@@ -71,11 +71,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 	})
 
 	eventoutputs = targetfinder.ClickTargetFinder.eventoutputs + [event.MosaicDoneEvent]
-<<<<<<< HEAD
 	targetnames = ['acquisition','focus','preview','reference','done','Blobs']
-=======
-	targetnames = ['acquisition','focus','preview','reference','done']
->>>>>>> origin/trunk
 	def __init__(self, id, session, managerlocation, **kwargs):
 		self.mosaicselections = {}
 		targetfinder.ClickTargetFinder.__init__(self, id, session, managerlocation, **kwargs)
@@ -493,7 +489,6 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 			session = self.session
 		tilequery = leginondata.MosaicTileData(session=session, list=imagelist)
 		mosaictiles = self.research(datainstance=tilequery)
-<<<<<<< HEAD
 		return mosaictiles
 
 	def researchMosaicTileData(self,imagelist=None):
@@ -508,17 +503,6 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 			if key not in mosaiclist:
 				mosaiclist[key] = imglist
 		return mosaiclist
-=======
-		mosaiclists = ordereddict.OrderedDict()
-		for tile in mosaictiles:
-			imglist = tile['list']
-			key = self.makeMosaicNameFromImageList(imglist)
-			if key not in mosaiclists:
-				mosaiclists[key] = []
-			mosaiclists[key].append(tile)
-		self.mosaicselectionmapping = mosaiclists
-		return mosaiclists
->>>>>>> origin/trunk
 
 	def getMosaicNames(self):
 		self.researchMosaicTileData()
@@ -541,14 +525,11 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		key = '%s:  %s' % (imglist.dbid, label)
 		return key
 
-<<<<<<< HEAD
 	def getMosaicLabel(self):
 		bits = self.getMosaicName().split(':')
 		label = ':'.join(bits[1:]).strip()
 		return label
 
-=======
->>>>>>> origin/trunk
 	def getMosaicName(self):
 		'''
 		return a name that has both image list dbid and label in this format: dbid: label

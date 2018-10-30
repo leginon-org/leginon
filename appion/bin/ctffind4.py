@@ -48,15 +48,9 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			help="Number of steps to search in grid", metavar="#")
 		self.parser.add_option("--dast", dest="dast", type="float", default=100.0,
 			help="dAst in microns is used to restrain the amount of astigmatism", metavar="#")
-<<<<<<< HEAD
 		self.parser.add_option("--minphaseshift", "--min_phase_shift", dest="min_phase_shift", type="float", default=10.0,
 			help="Minimum phase shift by phase plate, in degrees", metavar="#")
 		self.parser.add_option("--maxphaseshift", "--max_phase_shift", dest="max_phase_shift", type="float", default=170.0,
-=======
-		self.parser.add_option("--minphaseshift", "--min_phase_shift", dest="min_phase_shift", type="float", default=0.0,
-			help="Minimum phase shift by phase plate, in degrees", metavar="#")
-		self.parser.add_option("--maxphaseshift", "--max_phase_shift", dest="max_phase_shift", type="float", default=0.0,
->>>>>>> origin/trunk
 			help="Maximum phase shift by phase plate, in degrees", metavar="#")
 		self.parser.add_option("--phasestep", "--phase_search_step", dest="phase_search_step", type="float", default=10.0,
 			help="phase shift search step, in degrees", metavar="#")
@@ -71,13 +65,9 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			action="store_true", help="Use best amplitude contrast and astig difference from database")
 		self.parser.add_option("--phaseplate", "--phase_plate", dest="shift_phase", default=False,
 			action="store_true", help="Find additionalphase shift")
-<<<<<<< HEAD
 		self.parser.add_option("--exhaust", "--exhaustive-search", dest="exhaustiveSearch", default=False,
 			action="store_true", help="Conduct an exhaustive search of the astigmatism of the CTF")
 		
-=======
-
->>>>>>> origin/trunk
 	#======================
 	def checkConflicts(self):
 		if self.params['resmin'] > 50.0:
@@ -146,11 +136,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			return True
 
 	def getPhaseParamValue(self):
-<<<<<<< HEAD
 		return self.getYesNoParamValue('shift_phase')
-=======
-			return self.getYesNoParamValue('shift_phase')
->>>>>>> origin/trunk
 
 	def getYesNoParamValue(self, key):
 		phaseparam = 'no'
@@ -162,11 +148,8 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		return 'no'
 
 	def getExhaustiveAstigSearchValue(self):
-<<<<<<< HEAD
 		if self.params['exhaustiveSearch'] is True:
 			return 'yes'
-=======
->>>>>>> origin/trunk
 		return 'no'
 
 	def getRestrainAstigValue(self):
@@ -247,14 +230,10 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		imageresmax = self.params['resmax']
 		if ctfvalue is not None and self.params['bestdb'] is True:
 			### set res max from resolution_80_percent
-<<<<<<< HEAD
 			try:
 				gmean = (ctfvalue['resolution_80_percent']*ctfvalue['resolution_50_percent']*self.params['resmax'])**(1/3.)
 			except:
 				gmean = 9999
-=======
-			gmean = (ctfvalue['resolution_80_percent']*ctfvalue['resolution_50_percent']*self.params['resmax'])**(1/3.)
->>>>>>> origin/trunk
 			if gmean < self.params['resmin']*0.9:
 				# replace only if valid Issue #3291
 				imageresmax = round(gmean,2)

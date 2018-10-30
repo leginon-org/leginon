@@ -47,14 +47,10 @@ def makeNewStack(oldstack, newstack, partlist=None, remove=False, bad=False):
 	apDisplay.printMsg("creating a new stack\n\t"+newstack+
 		"\nfrom the oldstack\n\t"+oldstack+"\n")
 
-<<<<<<< HEAD
 	if isinstance(partlist, str) and os.path.exists(partlist):
 		listfile = partlist
 		#note: eman particle list files start at 0, appion particle lists start at 1
 		partlist = emanLstFileToPartList(listfile)
-=======
-	partlist = emanLstFileToPartList(listfile)
->>>>>>> origin/trunk
 
 	stackTools.createSubStack(oldstack, newstack, partlist, msg=True)
 
@@ -70,23 +66,6 @@ def makeNewStack(oldstack, newstack, partlist=None, remove=False, bad=False):
 		else:
 			apDisplay.printMsg("Rejecting more particles than keeping, not creating a bad stack")
 	return
-
-
-#===============
-def emanLstFileToPartList(listfile):
-	f = open(listfile, "r")
-	partlist = []
-	for line in f:
-		sline = line.strip()
-		partnum = None
-		try:
-			#eman starts at 0, appion starts at 1
-			partnum = int(sline) + 1
-		except ValueError:
-			pass
-		if partnum is not None:
-			partlist.append(partnum)
-	return partlist
 
 #===============
 def emanLstFileToPartList(listfile):

@@ -279,17 +279,12 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		document.getElementById('scaledboxdiv').style.display = shown ? 'none' : 'block';
 		document.getElementById('bin').value = shown ? 2 : '';
 		document.getElementById('pixlimit').value = shown ? 0 : 4.5;
-<<<<<<< HEAD
 		document.viewerform.ctfcorrect.checked = shown ? true : false;";
 	if ($hasLocalCtf) $javascript.= "
 		document.getElementById('localCTFdiv').style.display = shown ? 'none' : 'block';";
 	$javascript.="
 	}\n";
 
-=======
-		document.viewerform.ctfcorrect.checked = shown ? true : false;
-	}\n";
->>>>>>> origin/trunk
 	if ($filetypeval=='relion') $javascript .= "document.addEventListener('DOMContentLoaded', function() {showRelionOptions('relion')},false);\n";
 	$javascript .= "</script>\n";
 	$javascript .= writeJavaPopupFunctions('appion');
@@ -517,17 +512,9 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	
 	$diameterval = ($_POST['diameter']) ? $_POST['diameter'] : $partdiam;
 	echo "<div id='diameterdiv' style='display: none;'>\n";
-<<<<<<< HEAD
 	echo "<input type='text' name='diameter' value='$diameterval' size='4'>\n";
 	echo docpop('stackdiameter','Particle Diameter');
 	echo "(in Angstroms)\n";
-=======
-	echo "<br/>\n";
-	echo "<input type='text' name='diameter' value='$diameterval' size='4'>\n";
-	echo docpop('stackdiameter','Particle Diameter');
-	echo "(in Angstroms)\n";
-	echo "<br/>\n";
->>>>>>> origin/trunk
 	echo "</div>\n";
 
 	echo "<br/>\n";

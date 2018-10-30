@@ -38,12 +38,6 @@ echo "<table border='1' class='tableborder' width='640'>\n";
 
 /*
 ** CTFFIND4
-<<<<<<< HEAD
-*/
-
-echo "<tr><td width='100' align='center'>\n";
-echo "  <img src='img/grigorieff_sq_logo.png' width='96'>\n";
-=======
 */
 
 echo "<tr><td width='100' align='center'>\n";
@@ -60,64 +54,6 @@ echo "</td></tr>\n";
 
 /*
 ** GCTF
-*/
-
-if (HIDE_GPU_FEATURE == false) {
-echo "<tr><td width='100' align='center'>\n";
-echo "  <img src='img/appionlogo.jpg' width='96'>\n";
-echo "</td><td>\n";
-echo "  <h3><a href='runAppionLoop.php?expId=$expId&form=gctf'>GCTF v1.06</a></h3>\n";
-echo " <p>This is a GPU accelerated program for real-time CTF determination, refinement, "
-        ."evaluation and correction. Please see the <a href='http://www.mrc-lmb.cam.ac.uk/kzhang'> "
-        ."Dynein lab website </a>&nbsp;<img src='img/external.png'> for more information. "
-        ."</p>\n";
-echo "</td></tr>\n";
-}
-
-else {}
-
-/*
-** ACE 2
-*/
-
-echo "<tr><td width='100' align='center'>\n";
-echo "  <img src='img/appionlogo.jpg' width='96'>\n";
->>>>>>> origin/trunk
-echo "</td><td>\n";
-echo "  <h3><a href='runAppionLoop.php?expId=$expId&form=CtfFind4'>CTFFIND v4</a></h3>\n";
-echo " <p>CTFFIND uses a robust grid search algorithm to find the optimal "
-	."CTF parameters. Please see the <a href='http://grigoriefflab.janelia.org/ctf'> "
-	."Grigorieff lab website</a>&nbsp;<img src='img/external.png'> for more information. "
-	."</p>\n";
-echo "</td></tr>\n";
-
-
-
-/*
-<<<<<<< HEAD
-** GCTF
-=======
-** ACE 1
-*/
-if (!HIDE_MATLAB)
-{
-	echo "<tr><td width='100' align='center'>\n";
-	echo "  <img src='img/appionlogo.jpg' width='96'>\n";
-	echo "</td><td>\n";
-	echo "  <h3><a href='runPyAce.php?expId=$expId'>ACE 1</a></h3>\n";
-	echo " <p> ACE1 is the original edge detection program for finding the CTF "
-		." parameters. Astigmatism estimation never worked quite right in ACE1 and it "
-		." has a tendency to give false positives, i.e., a high confidence for a poor fit, "
-		." because it will sometimes only try to fit 2 peaks in the powerspectrum. "
-		." Nonetheless, ACE1 has been shown to work on a variety of microscopes and imaging methods. "
-		."<br/><i>Note:</i> requires MATLAB. "
-		."</p>\n";
-	echo "</td></tr>\n";
-}
-
-/*
-** CTFFIND and CTFTILT
->>>>>>> origin/trunk
 */
 
 if (HIDE_GPU_FEATURE == false) {
@@ -167,7 +103,6 @@ echo "</td></tr>\n";
 
 
 /*
-<<<<<<< HEAD
 ** ACE 2 is removed since 3.3
 */
 
@@ -223,8 +158,6 @@ echo " <p> There is a lot going on in the program and it can be very slow or cra
 echo "</td></tr>\n";
 
 /*
-=======
->>>>>>> origin/trunk
 ** Interactive CTF
 */
 
@@ -242,44 +175,8 @@ echo " <p> <b>Experimental</b> manual CTF estimation program, currently has way 
 ** Xmipp CTF is removed since 3.3
 */
 
-<<<<<<< HEAD
 //CTFTilt is removed since 3.3
 
-=======
-echo "</table>\n";
-
-//CTFTilt Estimation works and uploads, but fails alot; there is a warning
-if (!HIDE_FEATURE)
-{
-	$particle = new particledata();
-	$maxangle = $particle->getMaxTiltAngle($expId);
-	if ($maxangle > 5) {
-		// Selection Header
-		echo "<table border='0' width='640'>\n";
-			echo "<tr><td>\n";
-			echo "  <h2>CTF Estimation Procedures specialized for tilted images</h2>\n";
-			echo "</td></tr>\n";
-		echo "</table>\n";
-
-		echo "<br/>\n";
-		echo "<table border='1' class='tableborder' width='640'>\n";
-
-			echo "<tr><td width='100' align='center'>\n";
-			echo "  <img src='img/grigorieff_sq_logo.png' width='96'>\n";
-			echo "</td><td>\n";
-			echo "  <h3><a href='runCtfEstimate.php?expId=$expId&ctftilt=1'>CTFTILT</a></h3>\n";
-			echo " <p>CTFTILT uses the same robust grid search algorithm to find the optimal "
-				."CTF parameters, but also includes estimate of the tilt angle. "
-				."Please see the <a href='http://grigoriefflab.janelia.org/ctf'> "
-				."Grigorieff lab website</a><img src='img/external.png'> for more information. "
-				."</p>\n";
-			echo "</td></tr>\n";
-		echo "</table>\n";
-	}
-}
-
-
->>>>>>> origin/trunk
 processing_footer();
 exit;
 

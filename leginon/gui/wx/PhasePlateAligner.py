@@ -19,7 +19,6 @@ class ScrolledSettings(leginon.gui.wx.ReferenceCounter.ScrolledSettings):
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		self.sz = wx.GridBagSizer(5, 5)
 		position = self.createBypassCheckBox((0, 0))
-<<<<<<< HEAD
 		position = self.createSubTitleSizer((position[0],0),'Moving to Target')
 		position = self.createMoveTypeChoice((position[0],0))
 		position = self.createMoverChoiceSizer((position[0],0))
@@ -29,12 +28,6 @@ class ScrolledSettings(leginon.gui.wx.ReferenceCounter.ScrolledSettings):
 		position = self.createSubTitleSizer((position[0],0),'Counting')
 		position = self.createIntervalCountEntry((position[0],0))
 		position = self.createReturnSettleTimeEntry((position[0],0))
-=======
-		position = self.createMoveTypeChoice((position[0],0))
-		# pause time after stage move to the position is not shown in gui
-		# to avoid confusion.
-		position = self.createIntervalCountEntry((position[0],0))
->>>>>>> origin/trunk
 
 		# Phase Plate Timing Box Sizer
 		timingsb = wx.StaticBox(self, -1, 'Phase Plate Settling and Charging')

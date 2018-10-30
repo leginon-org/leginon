@@ -12,22 +12,14 @@ require_once "inc/particledata.inc";
 
 class DDStackSelectTable extends BasicForm
 {
-<<<<<<< HEAD
 	protected $ddStackIds; //array of (id=>runname)
-=======
-	protected $alignedDDStackIds; //array of (id=>runname)
->>>>>>> origin/trunk
 
 	function __construct ($expId, $useDDStack=false, $ddstackid=false )
 	{
 		parent::__construct();
 		$this->particle = new particledata();
-<<<<<<< HEAD
 		$this->only_aligned = true;
 		$this->expId = $expId;
-=======
-		$this->alignedDDStackIds = $this->particle->getDDStackRunIdsAlign($expId);
->>>>>>> origin/trunk
 		// Get the form parameters that have been created by the parent class
 		$params = $this->getFormParams();
 		
@@ -38,20 +30,16 @@ class DDStackSelectTable extends BasicForm
 		$params->addParam( "ddstackid", $ddstackid, "Select an aligned framestack");
 	}
 
-<<<<<<< HEAD
 	public function setOnlyAligned( $value )
 	{
 		$this->only_aligned = $value;
 	}
 
-=======
->>>>>>> origin/trunk
 	public function generateForm( $displayAdvanced=False )
 	{
 		$this->updateFormParams();
 		// Get the form parameters that have been created by the parent class
 		$params = $this->getFormParams();
-<<<<<<< HEAD
 
 		// Update label according to only_aligned		
 		$this->ddStackIds = $this->particle->getDDStackRunIdsAlign($this->expId);
@@ -72,19 +60,6 @@ class DDStackSelectTable extends BasicForm
 			for($i=0;$i<count($this->ddStackIds);$i++)
 			{
 				$ddoptions[$this->ddStackIds[$i]['stackid']] = $this->ddStackIds[$i]['runname'];
-=======
-		
-		$html.= "<!-- Start ddstack Selector -->\n";
-		$html.=$params->insertCheckboxField("useDDStack");
-		if(!$this->alignedDDStackIds) {
-			$html.= "<font color='red'><B>No aligned ddstacks for this session</B></FONT>\n";
-		} else{
-			$onchange = "switchDefaults(this.value)";
-//		$ddoptions[0] = 'Select DD stack';
-			for($i=0;$i<count($this->alignedDDStackIds);$i++)
-			{
-				$ddoptions[$this->alignedDDStackIds[$i]['stackid']] = $this->alignedDDStackIds[$i]['runname'];
->>>>>>> origin/trunk
 			//      echo $ddoptions[$i];
 			}
 

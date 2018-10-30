@@ -4,10 +4,7 @@ import os
 import time
 import numpy
 from pyami import mrc
-<<<<<<< HEAD
 from pyami import imagefun
-=======
->>>>>>> origin/trunk
 from appionlib import apDisplay
 from appionlib.StackClass import ProcessStack
 
@@ -34,18 +31,13 @@ def getPixelSize(filename):
 ########################################
 ########################################
 ########################################
-<<<<<<< HEAD
 def boxParticlesFromFile(mrcfile, stackfile, initboxsize, finalboxsize, coordinates, invert=False):
-=======
-def boxParticlesFromFile(mrcfile, stackfile, boxsize, coordinates):
->>>>>>> origin/trunk
 	"""
 	reads mrc and writes a stackfile
 	boxsize = integer
 	coordinates is 20x2 numpy array
 		e.g., coordinates[0] = [2030, 1065]
 	"""
-<<<<<<< HEAD
 	apDisplay.printMsg("Making a stack %s -> %s"%(apDisplay.short(mrcfile), stackfile))
 	imgarray = mrc.read(mrcfile)
 	boxedparticles = []
@@ -55,21 +47,10 @@ def boxParticlesFromFile(mrcfile, stackfile, boxsize, coordinates):
 		x2 = x+initboxsize/2
 		y1 = y-initboxsize/2
 		y2 = y+initboxsize/2
-=======
-	print "Making a stack %s -> %s"%(mrcfile, stackfile)
-	imgarray = mrc.read(mrcfile)
-	boxedparticles = []
-	for x,y in coordinates:
-		x1 = x-boxsize/2
-		x2 = x+boxsize/2
-		y1 = y-boxsize/2
-		y2 = y+boxsize/2
->>>>>>> origin/trunk
 		if x1 < 0 or y1 < 0:
 			continue
 		if x2 >= imgarray.shape[1] or y2 >= imgarray.shape[0]:
 			continue
-<<<<<<< HEAD
 		initboxpart = imgarray[y1:y2,x1:x2] #numpy arrays are rows,cols --> y,x not x,y
 		finalboxpart = imagefun.fourier_scale(initboxpart, finalboxsize)
 		if invert is True:
@@ -165,13 +146,6 @@ class MergeStack(ProcessStack.ProcessStack):
 	#===============
 	def postLoop(self):
 		return
-=======
-		boxpart = imgarray[y1:y2,x1:x2] #numpy arrays are rows,cols --> y,x not x,y
-		boxedparticles.append(boxpart)
-	stackClass = ProcessStack.createStackClass(stackfile)
-	stackClass.appendParticlesToFile(boxedparticles)
-	return
->>>>>>> origin/trunk
 
 ########################################
 ########################################

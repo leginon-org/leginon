@@ -79,11 +79,7 @@ if($projectdb) {
 }
 $viewer->setSessionId($sessionId);
 $viewer->setImageId($imageId);
-<<<<<<< HEAD
 $viewer->addSessionSelector($sessions, $limit);
-=======
-$viewer->addSessionSelector($sessions);
->>>>>>> origin/trunk
 $viewer->setScopeId($scopeId);
 $viewer->addScopeSelector($scopes);
 $viewer->addFileSelector($filenames);

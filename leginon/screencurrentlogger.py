@@ -6,11 +6,7 @@ import gui.wx.ScreenCurrentLogger
 class ScreenCurrentLogger(referencetimer.ReferenceTimer):
 	# relay measure does events
 	settingsclass = leginondata.ScreenCurrentLoggerSettingsData
-<<<<<<< HEAD
 	defaultsettings = dict(referencetimer.ReferenceTimer.defaultsettings)
-=======
-	defaultsettings = referencetimer.ReferenceTimer.defaultsettings
->>>>>>> origin/trunk
 	eventinputs = referencetimer.ReferenceTimer.eventinputs + [event.ScreenCurrentLoggerPublishEvent]
 	panelclass = gui.wx.ScreenCurrentLogger.ScreenCurrentLoggerPanel
 	requestdata = leginondata.ScreenCurrentLoggerData
@@ -24,12 +20,6 @@ class ScreenCurrentLogger(referencetimer.ReferenceTimer):
 
 		self.start()
 
-<<<<<<< HEAD
-=======
-	def onTest(self):
-		self.player.play()
-
->>>>>>> origin/trunk
 	def execute(self, request_data=None):
 		self.setStatus('processing')
 		self.logger.info('handle request')

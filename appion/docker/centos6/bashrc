@@ -9,10 +9,7 @@ fi
 umask 002
 
 export APPIONPATH=/emg/sw/myami/appion
-<<<<<<< HEAD
 export LEGINONPATH=/emg/sw/myami/leginon
-=======
->>>>>>> origin/trunk
 export EMANDIR=/emg/sw/eman1
 export EMAN2DIR=/emg/sw/eman2
 export RELIONDIR=/emg/sw/relion
@@ -25,11 +22,7 @@ export SPBIN_DIR=${SPIDERDIR}/bin/
 export SPPROC_DIR=${SPIDERDIR}/proc/
 export SPMAN_DIR=${SPIDERDIR}/man/
 
-<<<<<<< HEAD
 export PATH=/usr/bin:/bin:${APPIONPATH}/bin:${LEGINONPATH}:${EMANDIR}/bin:${XMIPPDIR}/bin:${SPIDERDIR}/bin:
-=======
-export PATH=/usr/bin:/bin:${APPIONPATH}/bin:${EMANDIR}/bin:${XMIPPDIR}/bin:${SPIDERDIR}/bin:
->>>>>>> origin/trunk
 export PATH=${PATH}:${GRIGPATH}/bin:${MPIPATH}/bin:${EMAN2DIR}/bin:${RELIONDIR}/bin
 export PYTHONPATH=${EMANDIR}/lib:${EMAN2DIR}/lib:${EMAN2DIR}/bin
 export LD_LIBRARY_PATH=${EMANDIR}/lib:${XMIPPDIR}/lib:${MPIPATH}/lib:${EMAN2DIR}/lib:${RELIONDIR}/lib
@@ -41,8 +34,4 @@ export HISTFILESIZE=200000
 
 alias dsort="du -sk * | sort -n | tail -50"
 alias ddir="du -sk */ | sort -n | tail -n 50"
-<<<<<<< HEAD
 alias ls="ls --color=auto"
-=======
-
->>>>>>> origin/trunk

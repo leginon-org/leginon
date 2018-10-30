@@ -6,7 +6,6 @@ import datetime
 from pyami import mrc,imagefun
 from leginon import leginondata,ddinfo
 from appionlib import apDDprocess,apDisplay
-from appionlib import apDDprocessv2
 
 # testing options
 save_jpg = False
@@ -171,32 +170,10 @@ class GatanK2Processing(apDDprocess.DDFrameProcessing):
 			refdata = self.c_client.researchCorrectorImageData(reftype, scopedata, self.camerainfo, channel)
 		return refdata
 
-<<<<<<< HEAD
 class GatanK3Processing(GatanK2Processing):
 	def __init__(self,wait_for_new=False):
 		super(GatanK3Processing,self).__init__(wait_for_new)
 		self.setDefaultDimension(8184,11520)
-=======
-
-if __name__ == '__main__':
-        dd = GatanK2Processing()
-        dd.setImageId(1640790)
-        start_frame = 0
-        nframe = 5
-        framelist = range(start_frame,start_frame+nframe)
-        corrected = dd.correctFrameImage(framelist)
-        mrc.write(corrected,'corrected_frame%d_%d.mrc' % (start_frame,nframe))
-
-
-class GatanK2ProcessingV2(apDDprocessv2.DDFrameProcessing):
-
-        def __init__(self,wait_for_new=False):
-                super(GatanK2ProcessingV2,self).__init__(wait_for_new)
-                self.setDefaultDimension(3710,3838)
-                self.correct_dark_gain = True
-                self.correct_frame_mask = False
-
->>>>>>> origin/trunk
 
 if __name__ == '__main__':
         dd = GatanK2Processing()

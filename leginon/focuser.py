@@ -3,19 +3,12 @@ from leginon import singlefocuser, manualfocuschecker
 import gui.wx.Focuser
 from leginon import leginondata
 from leginon import node, targetwatcher
-<<<<<<< HEAD
 import math
-=======
->>>>>>> origin/trunk
 
 class Focuser(singlefocuser.SingleFocuser):
 	panelclass = gui.wx.Focuser.Panel
 	settingsclass = leginondata.FocuserSettingsData
-<<<<<<< HEAD
 	defaultsettings = dict(singlefocuser.SingleFocuser.defaultsettings)
-=======
-	defaultsettings = singlefocuser.SingleFocuser.defaultsettings
->>>>>>> origin/trunk
 	defaultsettings.update({
 		'process target type': 'focus',
 		'melt time': 0.0,
@@ -48,11 +41,7 @@ class Focuser(singlefocuser.SingleFocuser):
 		if currentpreset is None:
 			try:
 				self.validatePresets()
-<<<<<<< HEAD
 			except acquisition.InvalidPresetsSequence:
-=======
-			except InvalidPresetsSequence:
->>>>>>> origin/trunk
 				self.logger.error('Configure at least one preset in the settings for this node.')
 				self.setStatus('idle')
 				return
@@ -78,13 +67,10 @@ class Focuser(singlefocuser.SingleFocuser):
 		The correction result are kept and at the end of target loop
 		an average of the correction is applied.
 		"""
-<<<<<<< HEAD
 		if self.getIsResetTiltInList() and goodtargets:
 			# ? Do we need to reset on every target ?
 			self.logger.info('Tilting to %.2f degrees on first good target.' % (self.targetlist_reset_tilt*180.0/math.pi))
 			self.instrument.tem.setDirectStagePosition({'a':self.targetlist_reset_tilt})
-=======
->>>>>>> origin/trunk
 		# initialize
 		self.current_target = None
 		self.current_focus_sequence_step = 0
@@ -154,13 +140,7 @@ class Focuser(singlefocuser.SingleFocuser):
 						self.reportTargetStatus(adjustedtarget, 'aborted')
 
 					# pause check after a good target processing
-<<<<<<< HEAD
 					state =  self.pauseCheck('paused after processTargetData')
-=======
-					if self.player.state() == 'pause':
-						self.setStatus('user input')
-					state = self.player.wait()
->>>>>>> origin/trunk
 					self.setStatus('processing')
 					if state in ('stop', 'stopqueue'):
 						self.logger.info('Aborted')
@@ -208,38 +188,6 @@ class Focuser(singlefocuser.SingleFocuser):
 			self.reportTargetStatus(target, 'done')
 		self.delayed_targets = []
 
-<<<<<<< HEAD
-=======
-	def meltIce(self,emtarget=None,attempt=None):
-		## Need to melt only once per target, even though
-		## this method may be called multiple times on the same
-		## target.
-		melt_time = self.settings['melt time']
-		if melt_time and attempt > 1:
-			self.logger.info('Target attempt %s, not melting' % (attempt,))
-		elif melt_time:
-			self.startTimer('melt')
-			self.logger.info('Melting ice...')
-		
-			#### change to melt preset
-			meltpresetname = self.settings['melt preset']
-			self.conditionalMoveAndPreset(meltpresetname,emtarget)
-			self.logger.info('melt preset: %s' % (meltpresetname,))
-			beamtilt0 = self.instrument.tem.BeamTilt
-			beamtilt1 = beamtilt0.copy()
-			for d in (1,-1):
-				delta = self.getFocusBeamTilt()
-				beamtilt1['x']+ d* delta
-				self.instrument.tem.BeamTilt = beamtilt1
-				self.logger.info('Melt at %.4f beam tilt' % (delta,))
-				self.startTimer('melt exposeSpecimen')
-				self.exposeSpecimen(melt_time)
-				self.stopTimer('melt exposeSpecimen')
-				self.stopTimer('melt')
-			self.logger.info('returning to beam tilt %.5f' % (beamtilt0['x'],))
-			self.instrument.tem.BeamTilt = beamtilt0
-
->>>>>>> origin/trunk
 	def getFocusBeamTilt(self):
 		for setting in self.focus_sequence:
 			if setting['switch'] and setting['focus method']=='Beam Tilt':
@@ -262,11 +210,7 @@ class Focuser(singlefocuser.SingleFocuser):
 
 		# melt only on the first focus sequence
 		if self.current_focus_sequence_step == 0:
-<<<<<<< HEAD
 			self.setEMtargetAndMeltIce(emtarget, attempt)
-=======
-			self.meltIce(emtarget,attempt)
->>>>>>> origin/trunk
 
 		status = 'unknown'
 

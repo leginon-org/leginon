@@ -34,11 +34,7 @@ class StackClass(object):
 		particles numbers MUST start at 1
 		"""
 		particleNumbers = range(first, last+1)
-<<<<<<< HEAD
 		#apDisplay.printWarning("no readParticleChunkFromFile; using backup method for this StackClass")
-=======
-		apDisplay.printWarning("readParticleChunkFromFile NotImplementedError")
->>>>>>> origin/trunk
 		return self._readParticleListFromFile(particleNumbers)
 
 	def _writeParticlesToFile(self, particleDataTree):
@@ -88,11 +84,7 @@ class StackClass(object):
 	################################################
 	# These functions are general should NOT have overrides in subClasses
 	################################################
-<<<<<<< HEAD
 	def __init__(self, filename, debug=False):
-=======
-	def __init__(self, filename, debug=True):
->>>>>>> origin/trunk
 		self.filename = filename
 		self.debug = debug
 		self.particlesWritten = 0
@@ -199,12 +191,9 @@ class StackClass(object):
 		t0 = time.time()
 		if self.debug is True:
 			print "appending %d particles to file"%(len(particleDataTree))
-<<<<<<< HEAD
 		if len(particleDataTree) == 0:
 			apDisplay.printWarning("cannot append zero particles to a file")
 			return None
-=======
->>>>>>> origin/trunk
 		if not self.fileExists():
 			self._writeParticlesToFile(particleDataTree)
 		else:

@@ -113,11 +113,8 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 		self.parser.add_option('--skipgain', dest='skipgain', action='store_true', default=False, help='Skip flatfield correction')
 		self.parser.add_option('--siblingframes', dest='siblingframes', action='store_true', default=False, help='Use frames from sibling image', metavar='INT')
 		self.parser.add_option("--output_rotation", dest="output_rotation", type='int', default=0, help="Rotate output particles by the specified angle", metavar="INT")
-<<<<<<< HEAD
 		self.parser.add_option("--flipgain", dest="flipgain", action='store_true', default=False, help="Flip dark and bright images upside down", metavar="INT")
 		self.parser.add_option("--flipout", dest="flipout", action='store_true', default=False, help="Flip output upside down", metavar="INT")
-=======
->>>>>>> origin/trunk
 		self.parser.add_option("--make_summary_image", dest="make_summary_image", action='store_true', default=False, help="Make summary image with particle trajectories", metavar="INT")
 		self.parser.add_option("--override_bad_pixs", dest="override_bad_pixs", action='store_true', default=False, help="Override bad pixels from database", metavar="INT")
 		self.parser.add_option("--post_counting_gain", dest="post_counting_gain", default=None , help="Skip normal gain correction and instead use post counting gain", metavar="INT")
@@ -192,7 +189,6 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 		try: 
 			brightrefpath=self.refdata['bright']['session']['image path']
 			brightrefname=self.refdata['bright']['filename']+'.mrc'
-<<<<<<< HEAD
 			if self.params['flipgain'] is True:
 				bright=self.refdata['bright']['image']
 				bright=numpy.flipud(bright)
@@ -200,8 +196,6 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 				mrc.write(bright, newbrightname)
 				brightrefpath=os.getcwd()
 				brightrefname=newbrightname
-=======
->>>>>>> origin/trunk
 			brightref=os.path.join(brightrefpath,brightrefname)
 		except:
 			apDisplay.printWarning("Warning, bright reference not found. Frames will not be gain corrected.")
@@ -211,7 +205,6 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 		try:
 			darkrefpath=self.refdata['dark']['session']['image path']
 			darkrefname=self.refdata['dark']['filename']+'.mrc'
-<<<<<<< HEAD
 			if self.params['flipgain'] is True:
 				dark=self.refdata['dark']['image']
 				dark=numpy.flipud(dark)
@@ -220,8 +213,6 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 				darkrefpath=os.getcwd()
 				darkrefname=newdarkname
 			
-=======
->>>>>>> origin/trunk
 			darkref=os.path.join(darkrefpath,darkrefname)
 		except:
 			apDisplay.printWarning("Warning, dark reference not found. Frames will not be gain corrected.")
@@ -553,15 +544,11 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 			command.append('edgenorm')
 			print command
 			subprocess.call(command)
-<<<<<<< HEAD
 		else:
 			shutil.copyfile(innamepath,outnamepath)
 		newimg_array = mrc.read(outnamepath)
 		if self.params['flipout'] is True:
 			newimg_array=numpy.flipud(newimg_array)
-=======
-		newimg_array = mrc.read(outnamepath)
->>>>>>> origin/trunk
 		particlelst=readDriftFiles(xtranslation, ytranslation)
 		self.commitAlignedImageToDatabase(imgdata, newimg_array, alignlabel=self.params['alignlabel'])
 		self.writeMotionCorrStyleLog(imgdata, particlelst)

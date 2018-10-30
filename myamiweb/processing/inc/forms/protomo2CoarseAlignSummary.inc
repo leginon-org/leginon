@@ -19,9 +19,6 @@ session_set_cookie_params(604800);
 $page = $_SERVER['REQUEST_URI'];
 header("Refresh: 300; URL=$page");
 
-ini_set('session.gc_maxlifetime', 604800);
-session_set_cookie_params(604800);
-
 session_start();
 $tiltseries=$_SESSION['tiltseries'];
 $sessionname=$_SESSION['sessionname'];
@@ -56,11 +53,7 @@ class Protomo2CoarseAlignSummary extends BasicLayoutForm
 		$this->setTitle( 'Protomo Coarse Alignment Summary' );
 		$this->setHeading( 'Protomo Coarse Alignment Summary' );
 		$this->setExeFile( '' );
-<<<<<<< HEAD
 		$this->setGuideURL( "https://github.com/nysbc/appion-protomo#example" );
-=======
-		$this->setGuideURL( "http://emg.nysbc.org/redmine/projects/appion/wiki/Align_Tilt-Series" );
->>>>>>> origin/trunk
 		$this->setTestable( False ); // True to activate "test single image".
 		$this->setUseLegOutDir( False ); // The output directory will be created in the Appion run directory rather than Leginon.
 		$this->setShowDesc( False ); // Flag to hide the description field of the run parameters.
@@ -81,10 +74,7 @@ class Protomo2CoarseAlignSummary extends BasicLayoutForm
 		global $tiltseries;
 		global $imageinfo;
 		
-<<<<<<< HEAD
 		$defocus_gif_files = glob("$outdir/$runname/defocus_estimation/*/*/diagnostic.gif");
-=======
->>>>>>> origin/trunk
 		$ctf_gif_files = glob("$outdir/$runname/media/ctf_correction/s*.gif");
 		$dose_gif_files = glob("$outdir/$runname/media/dose_compensation/s*.gif");
 		$corrpeak_gif_files = glob("$outdir/$runname/media/correlations/c*.gif");
@@ -103,10 +93,7 @@ class Protomo2CoarseAlignSummary extends BasicLayoutForm
 		$rec_vid_files = glob("$outdir/$runname/media/reconstructions/c*.{mp4,ogv,webm}",GLOB_BRACE);
 		
 		// Display Coarse Alignment Summary
-<<<<<<< HEAD
 		$defocus_gif = "loadimg.php?rawgif=1&filename=".$defocus_gif_files[0];
-=======
->>>>>>> origin/trunk
 		$ctfplot_gif = "loadimg.php?rawgif=1&filename=".$ctf_gif_files[0];
 		$ctfdefocus_gif = "loadimg.php?rawgif=1&filename=".$ctf_gif_files[1];
 		$dose_gif = "loadimg.php?rawgif=1&filename=".$dose_gif_files[0];
@@ -186,30 +173,6 @@ class Protomo2CoarseAlignSummary extends BasicLayoutForm
 			$html .= '<th><img src="loadimg.php?rawgif=1&filename='.$defocus_gif_files[11].'" alt="defocus_gif11" width="420" /></th>';
 			$html .= '</tr><tr></table><br>';
 			$html .= '<center>'.docpop('defocus_estimate_info', 'Image Info').'</center><br><hr />';
-		}
-		
-		if (isset($ctf_gif_files[0])) {
-			$html .= "
-		<br />	
-		<center><H4>CTF Correction</H4></center>
-		<br />";
-			$html .= '<center><table id="" class="display" cellspacing="0" border="0"><tr>';
-			$html .= '<td><img src="'.$ctfdefocus_gif.'" alt="ctfdefocus_gif" width="400" />'."<br /></td>";
-			$html .= '<td><img src="'.$ctfplot_gif.'" alt="ctfplot_gif" width="400" />'."<br /></td>";
-			$html .= '</tr><tr></table></center><br>';
-			$html .= '<center>'.docpop('ctfplot_info', 'Image Info').'</center><br><hr />';
-		}
-		
-		if (isset($dose_gif_files[0])) {
-			$html .= "
-		<br />	
-		<center><H4>Dose Compensation</H4></center>
-		<br />";
-			$html .= '<center><table id="" class="display" cellspacing="0" border="0"><tr>';
-			$html .= '<td><img src="'.$dose_gif.'" alt="dose_gif" width="400" />'."<br /></td>";
-			$html .= '<td><img src="'.$dosecomp_gif.'" alt="dosecomp_gif" width="400" />'."<br /></td>";
-			$html .= '</tr><tr></table></center><br>';
-			$html .= '<center>'.docpop('doseplot_info', 'Image Info').'</center><br><hr />';
 		}
 		
 		if (isset($ctf_gif_files[0])) {
@@ -536,7 +499,6 @@ class Protomo2CoarseAlignSummary extends BasicLayoutForm
 		// Only display link to next step in tomo processing if Coarse Alignment is complete
 		if (max(count($corrpeak_gif_files),count($corrpeak_vid_files)) < 1)
 		{
-<<<<<<< HEAD
 			$html .= "<br></br></br>
 				<b><center>[Refresh this page after Coarse Alignment completes]</center><br></b>";
 			$html .= openRoundBorder();
@@ -548,12 +510,6 @@ class Protomo2CoarseAlignSummary extends BasicLayoutForm
 				$html .= "<br></tr>\n";
 			$html .= "</table>\n";
 			$html .= closeRoundBorder();
-=======
-			$html .= "<br></br>
-				<b><center>[Refresh this page after Coarse Alignment completes]</center><br></b>";
-			$html .= "<br></br>
-				<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2CoarseAlignForm'><b><center><font size='5'>←</font> [Click here to go back to <font size='4'>Coarse Alignment</font>]</center></b></a>";
->>>>>>> origin/trunk
 		} else {
 			$html .= openRoundBorder();
 			$html .= "<table border='0'>";

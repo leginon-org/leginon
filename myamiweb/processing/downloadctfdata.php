@@ -10,12 +10,7 @@ require_once "inc/processing.inc";
 
 $expId = $_GET['expId'];
 $runId = $_GET['runId'];
-<<<<<<< HEAD
 $relion = (int)$_GET['relion'];
-=======
-$relion = $_GET['relion'];
-$vlion = $_GET['vlion'];
->>>>>>> origin/trunk
 $preset = $_GET['preset'];
 
 checkExptAccessPrivilege($expId,'data');
@@ -33,11 +28,7 @@ if(empty($runId))
 else
 	$ctfdatas = $appiondb->getCtfInfo($runId);
 
-<<<<<<< HEAD
 if ($relion >= 1) {
-=======
-if ($relion || $vlion) {
->>>>>>> origin/trunk
 	$data[] = "\ndata_\n\nloop_\n";
 	$data[] = "_rlnMicrographName #1\n";
 	$data[] = "_rlnCtfImage #2\n";
@@ -51,7 +42,6 @@ if ($relion || $vlion) {
 	$data[] = "_rlnDetectorPixelSize #10\n";
 	$data[] = "_rlnCtfFigureOfMerit #11\n";
 
-<<<<<<< HEAD
 	if ($relion >= 2)
 		$data[] = "_rlnPhaseShift #12\n";
 	if ($relion >= 3) {
@@ -61,13 +51,6 @@ if ($relion || $vlion) {
 	# get image info for last image,
 	# assume same for all the rest
 	$imgid = $ctfdatas[count($ctfdatas)-1]['imageid'];
-=======
-	if ($vlion)
-		$data[] = "_rlnPhaseShift #12\n";
-	# get image info for first image,
-	# assume same for all the rest
-	$imgid = $ctfdatas[0]['imageid'];
->>>>>>> origin/trunk
 	$imginfo = $leginon->getImageInfo($imgid);
 	//getImageInfo pixelsize is pre-camera-binning
 	$pixelsize = $imginfo['pixelsize']*1e10;
@@ -84,11 +67,7 @@ foreach ($ctfdatas as $ctfdata) {
 	if (!empty($preset))
 		$p = $leginon->getPresetFromImageId($imgid);
 		if ($preset != $p['name'] ) continue;
-<<<<<<< HEAD
 	if ($relion >= 1) {
-=======
-	if ($relion || $vlion) {
->>>>>>> origin/trunk
 		$data_string=sprintf("micrographs/%s.mrc micrographs/%s.ctf:mrc %.6f %.6f %.6f %.6f %.6f %.6f %.6f %.6f %.6f",
 			$filename,
 			$filename,
@@ -102,16 +81,12 @@ foreach ($ctfdatas as $ctfdata) {
 			$pixelsize,
 			$ctfdata['confidence']
 			);
-<<<<<<< HEAD
 		if ( $relion >= 2 ) $data_string .= sprintf(" %6f", $ctfdata['extra_phase_shift'] * 180.0/3.14159); #degrees
 		if ( $relion >= 3 ) {
 			$beamtiltdata = $leginon->getImageBeamTilt($imgid);
 			$data_string .= sprintf(" %.6f", $beamtiltdata['1'] * 1000); #mrad
 			$data_string .= sprintf(" %.6f", $beamtiltdata['2'] * 1000); #mrad
 		}
-=======
-		if ( $vlion ) $data_string .= sprintf(" %6f", $ctfdata['extra_phase_shift'] * 180.0/3.14159); #degrees
->>>>>>> origin/trunk
 		$data[] = $data_string."\n";
 	}
 	else {
@@ -149,11 +124,7 @@ header("Content-Transfer-Encoding: binary");
 header("Content-Length: $size");
 $expt_runname = sprintf("%05d", $expId);
 $expt_runname .= (empty($runId) ) ? '' : sprintf("-run%04d", $runId);
-<<<<<<< HEAD
 if ($relion >= 1) $downname = sprintf("micrographs_ctf-%s.star",$expt_runname);
-=======
-if ($relion || $vlion) $downname = sprintf("micrographs_ctf-%s.star",$expt_runname);
->>>>>>> origin/trunk
 else $downname = sprintf("ctfdata-session%s.dat", $expt_runname);
 header("Content-Disposition: attachment; filename=$downname;");
 

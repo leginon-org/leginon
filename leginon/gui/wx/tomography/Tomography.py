@@ -149,7 +149,6 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		sz.AddGrowableCol(1)
 		return sz
 
-<<<<<<< HEAD
 	def createUsePresetExposureCheckBox(self, sz_name, start_position):
 		self.widgets['use preset exposure'] = \
 				wx.CheckBox(self, -1, 'Always use preset exposure time')
@@ -159,8 +158,6 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 				  wx.ALIGN_LEFT)
 		return start_position[0]+total_length[0],start_position[1]+total_length[1]
 
-=======
->>>>>>> origin/trunk
 	def createTiltOrderSelector(self):
 		tilt_order_choices = self.getTiltOrderChoices()
 		self.widgets['tilt order'] = wx.Choice(self, -1, choices=tilt_order_choices)
@@ -524,11 +521,7 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 			return choices
 
 	def getTiltOrderChoices(self):
-<<<<<<< HEAD
 		choices = ['sequential','alternate','swing']
-=======
-		choices = ['sequential','alternate']
->>>>>>> origin/trunk
 		return choices
 
 class Panel(leginon.gui.wx.Acquisition.Panel):

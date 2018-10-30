@@ -231,10 +231,7 @@ def getBestCtfValue(imgdata, sortType='res80', method=None, msg=True):
 			if sortvalue is None:
 				continue
 		if msg is True:
-<<<<<<< HEAD
 
-=======
->>>>>>> origin/trunk
 			print "%.5f -- %s"%(sortvalue, ctfvalue['acerun']['name'])
 		if sortvalue > bestsortvalue:
 			bestsortvalue = sortvalue

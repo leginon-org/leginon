@@ -9,7 +9,6 @@ import time
 import sys
 import subprocess
 import os
-<<<<<<< HEAD:pyscope/fei.py
 import datetime
 import math
 from pyami import moduleconfig
@@ -19,8 +18,6 @@ from pyami import moduleconfig
 # attribute contains text information.  Need to check by trial and error.
 # For example Stage.Goto has empty details attribute but text has the message.
 # ApertureMechanism not avtivated in Scripting error uses details to contain the list which has the message we need on item index 1. text and message attributes are empty strings.
-=======
->>>>>>> origin/trunk:pyscope/tecnai.py
 
 try:
 	import nidaq
@@ -36,26 +33,7 @@ try:
 except ImportError:
 	pass
 
-<<<<<<< HEAD:pyscope/fei.py
 configs = moduleconfig.getConfigured('fei.cfg')
-=======
-# Location of next phase plate AutoIt executable
-AUTOIT_EXE_PATH = "C:\\Program Files\\AutoIt3\\nextphaseplate.exe"
-
-# This scale convert beam tilt readout in radian to 
-# Tecnai or TEM Scripting Illumination.RotationCenter value
-# Depending on the version,  this may be 1.0 or closer to 6
-rotation_center_scale = 1.0
-
-# if a stage position movement is less than the following, then ignore it
-minimum_stage = {
-	'x': 5e-8,
-	'y': 5e-8,
-	'z': 5e-8,
-	'a': 6e-5,
-	'b': 6e-5,
-}
->>>>>>> origin/trunk:pyscope/tecnai.py
 
 class MagnificationsUninitialized(Exception):
 	pass
@@ -135,11 +113,7 @@ class Tecnai(tem.TEM):
 	def findPresureProps(self):
 		self.pressure_prop = {}
 		gauge_map = {}
-<<<<<<< HEAD:pyscope/fei.py
 		gauges_to_try = {'column':['IPGco','PPc1','P4','IGP1'],'buffer':['PIRbf','P1'],'projection':['CCGp','P3']}
-=======
-		gauges_to_try = {'column':['PPc1','P4','IGP1'],'buffer':['PIRbf','P1'],'projection':['CCGp','P3']}
->>>>>>> origin/trunk:pyscope/tecnai.py
 		gauges_obj = self.tecnai.Vacuum.Gauges
 		for i in range(gauges_obj.Count):
 			g = gauges_obj.Item(i)
@@ -151,7 +125,6 @@ class Tecnai(tem.TEM):
 					self.pressure_prop[location] = gauge_map[name]
 					break
 			
-<<<<<<< HEAD:pyscope/fei.py
 	def getFeiConfig(self,optionname,itemname=None):
 		if optionname not in configs.keys():
 			return None
@@ -201,8 +174,6 @@ class Tecnai(tem.TEM):
 			relax = 0
 		return relax
 
-=======
->>>>>>> origin/trunk:pyscope/tecnai.py
 	def getMagnificationsInitialized(self):
 		if self.magnifications:
 			return True
@@ -1313,10 +1284,7 @@ class Tecnai(tem.TEM):
 			return 'unknown'
 
 	def getGaugePressure(self,location):
-<<<<<<< HEAD:pyscope/fei.py
 		# value in pascal unit
-=======
->>>>>>> origin/trunk:pyscope/tecnai.py
 		if location not in self.pressure_prop.keys():
 			raise KeyError
 		if self.pressure_prop[location] is None:
@@ -1539,7 +1507,6 @@ class Tecnai(tem.TEM):
 		return self.tecnai.TemperatureControl.RefrigerantLevel(id)
 
 	def nextPhasePlate(self):
-<<<<<<< HEAD:pyscope/fei.py
 		if os.path.isfile(self.getAutoitExePath()):
 			subprocess.call(self.getAutoitExePath())
 		else:
@@ -1730,13 +1697,6 @@ class Tecnai(tem.TEM):
 		# aperture already selected will return immediately.
 		return bool(status)
 
-=======
-		if os.path.isfile(AUTOIT_EXE_PATH):
-			subprocess.call(AUTOIT_EXE_PATH)
-		else:
-			pass
-
->>>>>>> origin/trunk:pyscope/tecnai.py
 class Krios(Tecnai):
 	name = 'Krios'
 	use_normalization = True
@@ -1785,40 +1745,6 @@ class Arctica(Tecnai):
 
 	def hasAutoAperture(self):
 		return self.getUseAutoAperture()
-
-	def normalizeProjectionForMagnificationChange(self, new_mag_index):
-		'''
-		Overwrite projection lens normalization on Titan Krios to do nothing
-		even if it is advisable to use normalization on the instrument.
-		This is done because Titan does not have submode 2 See Issue #3986
-		'''
-		pass
-
-class Halo(Tecnai):
-	'''
-	Titan Halo has Titan 3 condensor system but side-entry holder.
-	'''
-	name = 'Halo'
-	def normalizeProjectionForMagnificationChange(self, new_mag_index):
-		'''
-		Overwrite projection lens normalization to do nothing
-		even if it is advisable to use normalization on the instrument.
-		This is done because Titan does not have submode 2 See Issue #3986
-		'''
-		pass
-
-	def getRefrigerantLevel(self,id=0):
-		'''
-		No autofiller, always filled.
-		'''
-		return 100, 100
-
-class EFKrios(Krios):
-	name = 'EF-Krios'
-
-class Arctica(Tecnai):
-	name = 'Arctica'
-	use_normalization = True
 
 class Talos(Tecnai):
 	name = 'Talos'

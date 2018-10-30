@@ -468,11 +468,7 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 		# check to see if image is rejected by other criteria
 		if self.rejectImage(imgdata) is False:
 			return False
-<<<<<<< HEAD
 		if 'boxfiles' in self.params.keys() and not self.params['boxfiles'] and 'noctf' in self.params.keys() and self.params['noctf'] is not True:
-=======
-		if not self.params['boxfiles'] and self.params['noctf'] is not True:
->>>>>>> origin/trunk
 			# check CTF parameters for image and skip if criteria is not met
 			if self.checkCtfParams(imgdata) is False:
 				return False

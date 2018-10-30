@@ -115,45 +115,15 @@ echo "<p>This is one of the original projection-matching refinement protocols, a
 	."</p>\n";
 echo "</td></tr>\n";
 
-<<<<<<< HEAD
-=======
-if (!HIDE_IMAGIC && !HIDE_FEATURE) {
-	/*
-	** IMAGIC Reference Based Alignment
-	*/
-
-	echo "<tr><td width='100' align='center'>\n";
-	echo "  <img src='img/imagic_logo.png' width='64'>\n";
-	echo "</td><td>\n";
-	echo "  <h3><a href='selectStackForm.php?expId=$expId&method=imagic'>IMAGIC Refinement</a></h3>\n";
-	echo " <p></p>\n";
-	echo "</td></tr>\n";
-}
-
-if (!HIDE_FEATURE)
-{
->>>>>>> origin/trunk
 	/*
 	** IMAGIC Reference Based Alignment removed in 3.3
 	*/
-<<<<<<< HEAD
 
 
 	/*
 	** SPIDER Reference Based Alignment removed in 3.3
 	*/
 	
-=======
-	
-	echo "<tr><td width='100' align='center'>\n";
-	echo "  <img src='img/spider_logo.png' width='64'>\n";
-	echo "</td><td>\n";
-	echo "  <h3><a href='selectStackForm.php?expId=$expId&method=spider'>Spider Refinement</a></h3>\n";
-	echo " <p> </p>\n";
-	//echo "  <img src='img/align-rsm.png' width='125'><br/>\n";
-	echo "</td></tr>\n";
-}
->>>>>>> origin/trunk
 
 
 echo "</table>\n";

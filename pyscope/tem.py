@@ -38,10 +38,7 @@ class TEM(baseinstrument.BaseInstrument):
 		{'name': 'StageStatus', 'type': 'property'},
 		{'name': 'VacuumStatus', 'type': 'property'},
 		{'name': 'BeamBlankedDuringCameraExchange', 'type': 'property'},
-<<<<<<< HEAD
 		{'name': 'ProjectionSubModeName', 'type': 'property'},
-=======
->>>>>>> origin/trunk
 
 		######## get/set
 		{'name': 'BeamBlank', 'type': 'property'},
@@ -183,27 +180,21 @@ class TEM(baseinstrument.BaseInstrument):
 		else:
 			return 100.0
 
-<<<<<<< HEAD
 	def hasAutoFiller(self):
 		return False
 
-=======
->>>>>>> origin/trunk
 	def runAutoFiller(self):
 		'''
 		Start AutoFiller. Default is a timed filler
 		'''
 		pass
 
-<<<<<<< HEAD
 	def resetAutoFillerError(self):
 		'''
 		Reset autofiller error to start over.
 		'''
 		pass
 
-=======
->>>>>>> origin/trunk
 	def getTimedN2FillParams(self):
 		'''
 		Return tuple of three parameters for timed nitrogen filler.
@@ -247,7 +238,6 @@ class TEM(baseinstrument.BaseInstrument):
 	def isAutoFillerBusy(self):
 		is_busy = self.isTimedFilling()
 		return is_busy
-<<<<<<< HEAD
 
 	def hasGridLoader(self):
 		return False
@@ -337,5 +327,3 @@ class TEM(baseinstrument.BaseInstrument):
 
 	def setApertureSelection(self, aperture_mechanism, name):
 		return False
-=======
->>>>>>> origin/trunk

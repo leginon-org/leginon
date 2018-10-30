@@ -48,12 +48,9 @@ class BadImageStatsPause(targetwatcher.PauseRepeatException):
 class BadImageAcquirePause(targetwatcher.PauseRestartException):
 	pass
 
-<<<<<<< HEAD
 class BadImageAcquireBypass(targetwatcher.BypassException):
 	pass
 
-=======
->>>>>>> origin/trunk
 class BadImageStatsAbort(Exception):
 	pass
 
@@ -191,10 +188,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 											event.AlignZeroLossPeakPublishEvent,
 											event.ScreenCurrentLoggerPublishEvent,
 											event.PhasePlatePublishEvent,
-<<<<<<< HEAD
 											event.NodeBusyNotificationEvent,
-=======
->>>>>>> origin/trunk
 											event.ImageListPublishEvent, event.ReferenceTargetPublishEvent] \
 											+ navigator.NavigatorClient.eventoutputs
 
@@ -469,12 +463,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 		If called with targetdata=None, this simulates what occurs at
 		a target (going to presets, acquiring images, etc.)
 		'''
-<<<<<<< HEAD
 		# need to validate presets before preTargetSetup because they need
 		# to use preset, too, even though not the same target.
-=======
-		self.preTargetSetup()
->>>>>>> origin/trunk
 		try:
 			self.validatePresets()
 		except InvalidPresetsSequence, e:
@@ -820,11 +810,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.reportStatus('acquisition', 'image acquired')
 		self.stopTimer('acquire getData')
 		if imagedata is None:
-<<<<<<< HEAD
 			raise BadImageAcquireBypass('failed acquire camera image')
-=======
-			raise BadImageAcquirePause('failed acquire camera image')
->>>>>>> origin/trunk
 		if imagedata['image'] is None:
 			raise BadImageAcquirePause('Acquired array is None. Possible camera problem')
 
@@ -848,10 +834,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			pixeltype = str(imagedata['image'].dtype)
 		except:
 			self.logger.error('array not returned from camera')
-<<<<<<< HEAD
 			self.resetComaCorrection()
-=======
->>>>>>> origin/trunk
 			return
 		imagedata = leginondata.AcquisitionImageData(initializer=imagedata, preset=presetdata, label=self.name, target=targetdata, list=self.imagelistdata, emtarget=emtarget, pixels=pixels, pixeltype=pixeltype)
 		imagedata['phase plate'] = self.pp_used
@@ -955,7 +938,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 		imagedata = self.acquireCCD(presetdata, emtarget, channel=channel)
 
-
 		self.imagedata = imagedata
 		targetdata = emtarget['target']
 		if targetdata is not None:
@@ -979,7 +961,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 			del self.timedebug[tkey]
 			print tnum, '************* TOTAL ***', ttt
 
-<<<<<<< HEAD
 	def resetComaCorrection(self):
 		# projection submode and probe mode must be the same as beamtilt0
 		# and stig0 when calling this.
@@ -996,10 +977,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 	def parkAtHighMag(self):
 		# wait for at least for 30 seconds
 		self.logger.info('wait 30 seconds before parking')
-=======
-	def parkAtHighMag(self):
-		# wait for at least for 30 seconds
->>>>>>> origin/trunk
 		time.sleep(max(self.settings['pause time'],30))
 		# send a preset at the highest magnification to keep the lens warm
 		park_presetname = self.presetsclient.getHighestMagPresetName()
@@ -1012,15 +989,12 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.parkAtHighMag()
 		super(Acquisition,self).park()
 		
-<<<<<<< HEAD
 	def notifyNodeBusy(self):
 			'''
 			Notify Manager that the node is doing something so it does not timeout.
 			'''
 			self.outputEvent(event.NodeBusyNotificationEvent())
 
-=======
->>>>>>> origin/trunk
 	def publishDisplayWait(self, imagedata):
 		'''
 		publish image data, display it, then wait for something to 
@@ -1299,12 +1273,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.logger.error('processing target failed: %s' %e)
 			ret = 'aborted'
 		except BadImageAcquirePause, e:
-<<<<<<< HEAD
 			self.logger.error('processing target failed: %s' %e)
 			ret = 'aborted'
 		except BadImageAcquireBypass, e:
-=======
->>>>>>> origin/trunk
 			self.logger.error('processing target failed: %s' %e)
 			ret = 'aborted'
 		except BadImageStatsAbort, e:
@@ -1406,13 +1377,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.logger.error(e)
 
 	def fixCondition(self):
-<<<<<<< HEAD
 		# This is done before any targets are rejected and processed in the targetlist.
 		# First part is for conditions to be fixed don't involve presets,
 		# such as buffer cycling or nitrogen filler
-=======
-		# This is done before any rejected targets
->>>>>>> origin/trunk
 		evt = event.FixConditionEvent()
 		try:
 			self.logger.info('Condition fixing before processing a target')
@@ -1421,10 +1388,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.logger.debug(e)
 		except Exception, e:
 			self.logger.error(e)
-		# Phase Plate stuff
-		preset_name = self.settings['preset order'][-1]
-		self.logger.info('Condition fixing before processing a target')
-		self.tunePhasePlate(preset_name)
 
 		# Second part: Preset-required tuning before rejected targets.
 		try:
