@@ -16,10 +16,14 @@ class DataJsonMaker(object):
 		'''
 		Make SQL query of leginondata from class name and keyword arguments.
 		'''
+		underline_exceptions = ['process_obj_thickness',]
 		q = getattr(leginondata,classname)()
 		for key in kwargs.keys():
-			# leginondata keys never contains '_'
-			realkey = key.replace('_',' ')
+			if key not in underline_exceptions:
+				# leginondata keys almost never contains '_'
+				realkey = key.replace('_',' ')
+			else:
+				realkey = key
 			q[realkey] = kwargs[key]
 		return q
 
@@ -155,6 +159,7 @@ class SettingsJsonMaker(DataJsonMaker):
 				'BufferCycler':'BufferCyclerSettingsData',
 				'EM':None,
 				'FileNames':'ImageProcessorSettingsData',
+				'IcethicknessEF': 'ZeroLossIceThicknessSettingsData',
 		}
 		aliaskeys = allalias.keys()
 		aliaskeys.sort()

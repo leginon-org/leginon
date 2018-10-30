@@ -14,10 +14,14 @@ class DataJsonLoader(object):
 		'''
 		Make SQL query of leginondata from class name and keyword arguments.
 		'''
+		underline_exceptions = ['process_obj_thickness',]
 		q = getattr(leginondata,classname)()
 		for key in kwargs.keys():
-			# leginondata keys never contains '_'
-			realkey = key.replace('_',' ')
+			if key not in underline_exceptions:
+				# leginondata keys almost never contains '_'
+				realkey = key.replace('_',' ')
+			else:
+				realkey = key
 			if type(kwargs[key]) == type([]):
 				if len(kwargs[key]) > 0:
 					if type(kwargs[key][0]) == type([]):
