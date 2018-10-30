@@ -13,7 +13,11 @@ require_once "dbDefocusTable.inc";
 class CtfFind4 extends BasicLoopForm
 {
 	function __construct( $expId, $extraHTML='', $ampcontrast='0.07', $fieldsize='1024',
+<<<<<<< HEAD
 								$resmin='50', $resmax='4', $defstep='0.1', $numstep='25', $dast='0.05', $bestdb=true, $nominal='', $parallel=true, $useDDStack=false, $ddstackid=false, $phase_plate=false, $min_phase_shift=10, $max_phase_shift=170, $phase_search_step=10, $num_frame_avg=7) 
+=======
+								$resmin='50', $resmax='4', $defstep='0.1', $numstep='25', $dast='0.05', $bestdb=true, $nominal='', $parallel=true, $useDDStack=false, $ddstackid=false, $phase_plate=false, $min_phase_shift=10, $max_phase_shift=170, $phase_search_step=10) 
+>>>>>>> origin/trunk
 	{
 		parent::__construct($expId, $extraHTML);
 		
@@ -34,7 +38,10 @@ class CtfFind4 extends BasicLoopForm
 		$this->setShowDesc( False ); // Flag to hide the description field of the run parameters.
 		
 		$this->ddStackSelectTable = new DDStackSelectTable($expId, $useDDStack, $ddstackid);
+<<<<<<< HEAD
 		$this->ddStackSelectTable->setOnlyAligned(false);
+=======
+>>>>>>> origin/trunk
 		$this->dbDefocusTable = new dbDefocusTable($expId, $bestdb, $nominal);
 		//------ Set Parameters specific to the program that requires this new form -----//
 		$params = $this->getFormParams();
@@ -55,7 +62,10 @@ class CtfFind4 extends BasicLoopForm
 		$params->addParam( "min_phase_shift", $min_phase_shift, "Minimun Phase Shift in search (degrees)" );
 		$params->addParam( "max_phase_shift", $max_phase_shift, "Maximun Phase Shift in search (degrees)" );
 		$params->addParam( "phase_search_step", $phase_search_step, "Initial Phase Shift Search Step (degrees)" );
+<<<<<<< HEAD
 		$params->addParam( "num_frame_avg", $num_frame_avg, "Number of Frames to average" );
+=======
+>>>>>>> origin/trunk
 		
 		// Validations
 		//$params->addValidation( "numpart", "req" );
@@ -67,8 +77,11 @@ class CtfFind4 extends BasicLoopForm
 		$params = $this->getFormParams();
 
 		$html .=$this->ddStackSelectTable->generateForm();
+<<<<<<< HEAD
 		$html.= $params->insertTextField( "num_frame_avg", 4 );
 		$html.= "<hr>";
+=======
+>>>>>>> origin/trunk
 
 		$html.= parent::generateAdditionalFormLeft();
 		return $html;

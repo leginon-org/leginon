@@ -5,7 +5,10 @@ import sys
 import glob
 import shutil
 import subprocess
+<<<<<<< HEAD
 import time
+=======
+>>>>>>> origin/trunk
 from appionlib import apDisplay
 from appionlib import appionLoop2
 from appionlib import apDatabase
@@ -102,6 +105,7 @@ class TransferFrames(appionLoop2.AppionLoop):
 					apDisplay.printMsg('transferring %s to %s' % (filename,destnamepath))
 					if self.params['dryrun'] is False:
 						transfer(filename,destnamepath,delete=(not self.params['no-delete']))
+<<<<<<< HEAD
 						count=0
 						while not os.path.exists(destnamepath):
 							apDisplay.printWarning('Attempt at frame transfer failed. Trying again in 5 seconds')
@@ -111,6 +115,8 @@ class TransferFrames(appionLoop2.AppionLoop):
 							if count > 15:
 								apDisplay.printWarning('Frame transfer failed 15 attempts. Giving up.')
 								break
+=======
+>>>>>>> origin/trunk
 					else:
 						self.badprocess=True
 

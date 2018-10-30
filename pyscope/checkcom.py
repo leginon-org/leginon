@@ -7,8 +7,13 @@ com_module =  comtypes
 items = [
 		('TEM Scripting', ('Tecnai.Instrument', 'TEMScripting.Instrument.1')),
 		('TOM Moniker', ('TEM.Instrument.1',)),
+<<<<<<< HEAD
 		('TEM Advanced Scripting',('TEMAdvancedScripting.AdvancedInstrument.1')),
 		('Tecnai Low Dose Kit', ('LDServer.LdSrv',)),
+=======
+		('Tecnai Low Dose Kit', ('LDServer.LdSrv',)),
+		('Tecnai Exposure Adaptor', ('adaExp.TAdaExp',)),
+>>>>>>> origin/trunk
 		('Gatan CCD Camera', ('TecnaiCCD.GatanCamera.2',)),
 		('TIA', ('ESVision.Application',)),
 

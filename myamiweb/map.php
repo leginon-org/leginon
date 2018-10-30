@@ -100,7 +100,13 @@ var jsimgheight=<?php echo $imgheight; ?>
 
 var jsmapwidth=<?php echo $imgmapwidth; ?>
 
+<<<<<<< HEAD
 var jsmapheight=<?php echo $imgmapheight; ?>
+=======
+var jsmapwidth=<?=$imgmapwidth; ?>
+
+var jsmapheight=<?=$imgmapheight; ?>
+>>>>>>> origin/trunk
 
 var ratio=<?php echo $ratio; ?>
 

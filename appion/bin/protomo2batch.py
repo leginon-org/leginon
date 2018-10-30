@@ -627,6 +627,7 @@ def parseOptions():
 		help="Parallelize while you parallelize (parallelizes image and video production). This could break your machine.")
 	parser.add_option("--frame_aligned", dest="frame_aligned",  default="True",
 		help="Use frame-aligned images instead of naively summed images, if present.")
+<<<<<<< HEAD
 	parser.add_option("--center_all_images", dest="center_all_images",  default="False",
 		help="Re-center all images. Used when there is significant overshifting either by Leginon or Protomo, e.g. --center_all_images=True")
 	parser.add_option("--change_refimg", dest="change_refimg",  default="False",
@@ -636,6 +637,8 @@ def parseOptions():
 	parser.add_option("--imod_coarse_align", dest="imod_coarse_align",  default="False",
 		help="Performs IMOD coarse alignment alongside to Protomo coarse alignment to increase robustness/options for the user.")
 	
+=======
+>>>>>>> origin/trunk
 	
 	options, args=parser.parse_args()
 	
@@ -686,7 +689,11 @@ def variableSetup(rundir, tiltseriesnumber, prep):
 			except: #Image is not in the .tlt file
 				pass
 	
+<<<<<<< HEAD
 	return tiltdirname, tiltdir, seriesnumber, seriesname, tiltfilename, tiltfilename_full, raw_path, tiltstart, rawimagecount, maxtilt, tilt_azimuth
+=======
+	return tiltdirname, tiltdir, seriesnumber, seriesname, tiltfilename, tiltfilename_full, raw_path, tiltstart, rawimagecount, maxtilt
+>>>>>>> origin/trunk
 
 
 def editParamFile(tiltdir, param_full, raw_path):
@@ -749,6 +756,7 @@ def getParamValues(coarse_param_full, cos_alpha, new_sampling):
 	proc=subprocess.Popen(cmd7, stdout=subprocess.PIPE, shell=True)
 	(region_y, err) = proc.communicate()
 	region_y=int(region_y)
+<<<<<<< HEAD
 	
 	if new_sampling == "no change":  #Doesn't change for Coarse Alignment
 		body = (orig_thickness/sampling)/cos_alpha
@@ -775,6 +783,28 @@ def protomoPrep(log_file, tiltseriesnumber, prep_options):
 	originaltilt=tiltdir+'/original.tlt'
 	shutil.copy(tiltfilename_full,originaltilt)
 	apProTomo2Aligner.findMaxSearchArea(originaltilt, prep_options.dimx, prep_options.dimy)
+=======
+	
+	if new_sampling == "no change":  #Doesn't change for Coarse Alignment
+		body = (orig_thickness/sampling)/cos_alpha
+	else:
+		body = (orig_thickness/new_sampling)/cos_alpha
+	
+	return body, sampling, orig_thickness, map_sampling, lp, region_x, region_y
+
+
+def protomoPrep(log_file, tiltseriesnumber, prep_options):
+	"""
+	Creates tilt-series directory, links raw images, creates series*.tlt file,
+	and optionally creates an initial tilt-series video.
+	"""
+	tiltdirname,tiltdir,seriesnumber,seriesname,tiltfilename,tiltfilename_full,raw_path,tiltstart,rawimagecount,maxtilt = variableSetup(prep_options.rundir, tiltseriesnumber, prep="True")
+	f = open(log_file,'a')
+	
+	apDisplay.printMsg('Preparing Tilt-Series #%s Images and .tlt File...' % tiltseriesnumber)
+	f.write('Preparing Tilt-Series #%s Images and .tlt File...\n' % tiltseriesnumber)
+	tilts,accumulated_dose_list,new_ordered_imagelist,maxtilt = apProTomo2Prep.prepareTiltFile(prep_options.sessionname, seriesname, tiltfilename_full, tiltseriesnumber, raw_path, prep_options.frame_aligned, link=False, coarse="True")
+>>>>>>> origin/trunk
 	
 	cmd="awk '/FILE /{print}' %s | wc -l" % (tiltfilename_full)  #rawimagecount is zero before this
 	proc=subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
@@ -785,10 +815,13 @@ def protomoPrep(log_file, tiltseriesnumber, prep_options):
 		apDisplay.printMsg("Creating initial tilt-series video...")
 		f.write("Creating initial tilt-series video...\n")
 		apProTomo2Aligner.makeTiltSeriesVideos(seriesname, 0, tiltfilename_full, rawimagecount, tiltdir, raw_path, prep_options.pixelsize, prep_options.map_sampling, prep_options.image_file_type, prep_options.video_type, "true", prep_options.parallel, "Initial")
+<<<<<<< HEAD
 	
 	if tilt_azimuth is not None:
 		apDisplay.printMsg("Changing tilt azimuth to %s" % tilt_azimuth)
 		apProTomo2Aligner.changeTiltAzimuth(tiltfilename_full, tilt_azimuth)
+=======
+>>>>>>> origin/trunk
 	
 	#Removing highly shifted images
 	bad_images, bad_kept_images=apProTomo2Aligner.removeHighlyShiftedImages(tiltfilename_full, prep_options.dimx, prep_options.dimy, prep_options.shift_limit, prep_options.angle_limit)
@@ -804,9 +837,12 @@ def protomoPrep(log_file, tiltseriesnumber, prep_options):
 			f.write('Images %s exceeded the allowed shift, but were at tilt angles less than the %s degree angle limit.\n' % (bad_kept_images, prep_options.angle_limit))
 		apDisplay.printMsg('No images were removed from the .tlt file due to high shifts.')
 		f.write('No images were removed from the .tlt file due to high shifts.\n')
+<<<<<<< HEAD
 
 	if prep_options.center_all_images == "True":
 		apProTomo2Aligner.centerAllImages(tiltfilename_full, prep_options.dimx, prep_options.dimy)
+=======
+>>>>>>> origin/trunk
 	
 	apDisplay.printMsg("Finished Preparing Files and Directories for Tilt-Series #%s." % (tiltseriesnumber))
 	f.write("Finished Preparing Files and Directories for Tilt-Series #%s.\n" % (tiltseriesnumber))
@@ -819,7 +855,11 @@ def protomoCoarseAlign(log_file, tiltseriesnumber, coarse_options):
 	Correlation peak video is made.
 	Depiction videos are made if requested.
 	"""
+<<<<<<< HEAD
 	tiltdirname,tiltdir,seriesnumber,seriesname,tiltfilename,tiltfilename_full,raw_path,tiltstart,rawimagecount,maxtilt,tilt_azimuth = variableSetup(coarse_options.rundir, tiltseriesnumber, prep="False")
+=======
+	tiltdirname,tiltdir,seriesnumber,seriesname,tiltfilename,tiltfilename_full,raw_path,tiltstart,rawimagecount,maxtilt = variableSetup(coarse_options.rundir, tiltseriesnumber, prep="False")
+>>>>>>> origin/trunk
 	f = open(log_file,'a')
 	os.chdir(tiltdir)
 	cos_alpha=np.cos(maxtilt*np.pi/180)
@@ -831,11 +871,16 @@ def protomoCoarseAlign(log_file, tiltseriesnumber, coarse_options):
 	thickness=int(round(orig_thickness*coarse_options.pixelsize))
 	lp=round(2*coarse_options.pixelsize*sampling/orig_lp,2)
 	editParamFile(tiltdir, coarse_param_full, raw_path)
+<<<<<<< HEAD
 	if coarse_options.change_refimg == "True":
 		apProTomo2Aligner.changeReferenceImage(tiltfilename_full, coarse_options.desired_ref_tilt_angle)
 	
 	apDisplay.printMsg('Starting Protomo Coarse Alignment for Tilt-Series #%s' % (tiltseriesnumber))
 	f.write('Starting Protomo Coarse Alignment for Tilt-Series #%s\n' % (tiltseriesnumber))
+=======
+	apDisplay.printMsg('Starting Protomo Coarse Alignment')
+	f.write('Starting Protomo Coarse Alignment\n')
+>>>>>>> origin/trunk
 	coarse_seriesparam=protomo.param(coarse_param_full)
 	coarse_seriesgeom=protomo.geom(tiltfilename_full)
 	try:
@@ -856,8 +901,13 @@ def protomoCoarseAlign(log_file, tiltseriesnumber, coarse_options):
 				if (retry > 0):
 					new_region_x = apProTomo2Aligner.nextLargestSize(new_region_x)
 					new_region_y = apProTomo2Aligner.nextLargestSize(new_region_y)
+<<<<<<< HEAD
 					apDisplay.printMsg("Protomo Coarse Alignment for Tilt-Series #%s failed. Retry #%s with Window Size: (%s, %s) (at sampling %s)..." % (tiltseriesnumber, retry, new_region_x, new_region_y, sampling))
 					f.write("Protomo Coarse Alignment for Tilt-Series #%s failed. Retry #%s with Window Size: (%s, %s) (at sampling %s)...\n" % (tiltseriesnumber, retry, new_region_x, new_region_y, sampling))
+=======
+					apDisplay.printMsg("Coarse Alignment for Tilt-Series #%s failed. Retry #%s with Window Size: (%s, %s) (at sampling %s)..." % (tiltseriesnumber, retry, new_region_x, new_region_y, sampling))
+					f.write("Coarse Alignment for Tilt-Series #%s failed. Retry #%s with Window Size: (%s, %s) (at sampling %s)...\n" % (tiltseriesnumber, retry, new_region_x, new_region_y, sampling))
+>>>>>>> origin/trunk
 					time.sleep(1)  #Allows Ctrl-C to be caught by except
 					newsize = "{ %s %s }" % (new_region_x, new_region_y)
 					series.setparam("window.size", newsize)
@@ -869,11 +919,19 @@ def protomoCoarseAlign(log_file, tiltseriesnumber, coarse_options):
 				brk=sys.exc_info()
 			except:
 				if (min(new_region_x,new_region_y) == 20):
+<<<<<<< HEAD
 					apDisplay.printMsg("Protomo Coarse Alignment for Tilt-Series #%s failed after rescaling the search area %s time(s)." % (tiltseriesnumber, retry-1))
 					apDisplay.printMsg("Window Size (x) was windowed down to %s" % (new_region_x*sampling))
 					apDisplay.printMsg("Window Size (y) was windowed down to %s" % (new_region_y*sampling))
 					apDisplay.printMsg("Put values less than these into the corresponding parameter boxes on the Protomo Coarse Alignment Appion webpage and try again.\n")
 					f.write("Protomo Coarse Alignment for Tilt-Series #%s failed after rescaling the search area %s time(s).\n" % (tiltseriesnumber, retry-1))
+=======
+					apDisplay.printMsg("Coarse Alignment for Tilt-Series #%s failed after rescaling the search area %s time(s)." % (tiltseriesnumber, retry-1))
+					apDisplay.printMsg("Window Size (x) was windowed down to %s" % (new_region_x*sampling))
+					apDisplay.printMsg("Window Size (y) was windowed down to %s" % (new_region_y*sampling))
+					apDisplay.printMsg("Put values less than these into the corresponding parameter boxes on the Protomo Coarse Alignment Appion webpage and try again.\n")
+					f.write("Coarse Alignment for Tilt-Series #%s failed after rescaling the search area %s time(s).\n" % (tiltseriesnumber, retry-1))
+>>>>>>> origin/trunk
 					f.write("Window Size (x) was windowed down to %s\n" % (new_region_x*sampling))
 					f.write("Window Size (y) was windowed down to %s\n" % (new_region_y*sampling))
 					f.write("Put values less than these into the corresponding parameter boxes on the Protomo Coarse Alignment Appion webpage and try again.\n\n")
@@ -894,6 +952,7 @@ def protomoCoarseAlign(log_file, tiltseriesnumber, coarse_options):
 		cleanup="mkdir %s/coarse_out; cp %s/coarse*.* %s/coarse_out; rm %s/*.corr; mv %s/%s.tlt %s/coarse_out/initial_%s.tlt; cp %s/%s.tlt %s/%s.tlt" % (tiltdir, tiltdir, tiltdir, tiltdir, tiltdir, seriesname, tiltdir, seriesname, tiltdir, name, tiltdir, seriesname)
 		os.system(cleanup)
 	except:
+<<<<<<< HEAD
 		apDisplay.printWarning("Protomo Coarse Alignment failed. Skipping Tilt-Series #%s...\n" % (tiltseriesnumber))
 		f.write("Protomo Coarse Alignment failed. Skipping Tilt-Series #%s...\n\n" % (tiltseriesnumber))
 		return
@@ -948,6 +1007,28 @@ def imodCoarseAlign(log_file, tiltseriesnumber, coarse_options):
 
 	apDisplay.printMsg("Imod Coarse Alignment finished for Tilt-Series #%s!\n" % (tiltseriesnumber))
 	f.write("Imod Coarse Alignment finished for Tilt-Series #%s!\n\n" % (tiltseriesnumber))
+=======
+		apDisplay.printWarning("Coarse Alignment failed. Skipping Tilt-Series #%s...\n" % (tiltseriesnumber))
+		f.write("Coarse Alignment failed. Skipping Tilt-Series #%s...\n\n" % (tiltseriesnumber))
+		return
+	os.system('touch %s/.tiltseries.%04d' % (tiltdir, tiltseriesnumber))  #Internal tracker for what has been batch processed through alignments
+	
+	apDisplay.printMsg("Creating Coarse Alignment Depiction Videos")
+	f.write("Creating Coarse Alignment Depiction Videos\n")
+	apProTomo2Aligner.makeCorrPeakVideos(name, 0, tiltdir, 'out', coarse_options.video_type, "Coarse")
+	if (coarse_options.all_tilt_videos == "true"):
+		apDisplay.printMsg("Creating Coarse Alignment tilt-series video...")
+		f.write("Creating Coarse Alignment tilt-series video...\n")
+		apProTomo2Aligner.makeTiltSeriesVideos(seriesname, 0, tiltfile, rawimagecount, tiltdir, raw_path, coarse_options.pixelsize, map_sampling, coarse_options.image_file_type, coarse_options.video_type, "true", coarse_options.parallel, "Coarse")
+	if (coarse_options.all_recon_videos == "true"):
+		apDisplay.printMsg("Generating Coarse Alignment reconstruction...")
+		f.write("Generating Coarse Alignment reconstruction...\n")
+		series.mapfile()
+		apProTomo2Aligner.makeReconstructionVideos(name, 0, tiltdir, region_x, region_y, "true", 'out', coarse_options.pixelsize, sampling, map_sampling, lp, thickness, coarse_options.video_type, "false", coarse_options.parallel, align_step="Coarse")
+	
+	apDisplay.printMsg("Coarse Alignment finished for Tilt-Series #%s!\n" % (tiltseriesnumber))
+	f.write("Coarse Alignment finished for Tilt-Series #%s!\n\n" % (tiltseriesnumber))
+>>>>>>> origin/trunk
 	f.close()
 
 	
@@ -958,7 +1039,11 @@ def protomoRefine(log_file, tiltseriesnumber, refine_options):
 	Quality assessment statistics and images are made.
 	Depiction videos are made if requested.
 	"""
+<<<<<<< HEAD
 	tiltdirname,tiltdir,seriesnumber,seriesname,tiltfilename,tiltfilename_full,raw_path,tiltstart,rawimagecount,maxtilt,tilt_azimuth = variableSetup(refine_options.rundir, tiltseriesnumber, prep="False")
+=======
+	tiltdirname,tiltdir,seriesnumber,seriesname,tiltfilename,tiltfilename_full,raw_path,tiltstart,rawimagecount,maxtilt = variableSetup(refine_options.rundir, tiltseriesnumber, prep="False")
+>>>>>>> origin/trunk
 	os.system('touch %s/.tiltseries.%04d' % (tiltdir, tiltseriesnumber))  #Internal tracker for what has been processed through alignment
 	f = open(log_file,'a')
 	os.chdir(tiltdir)
@@ -1225,7 +1310,10 @@ def protomoRefine(log_file, tiltseriesnumber, refine_options):
 		tiltfile=basename+'.tlt'
 		series.geom(0).write(tiltfile)
 		tiltfilename_full=tiltdir+'/'+tiltfile
+<<<<<<< HEAD
 		apProTomo2Aligner.findMaxSearchArea(tiltfilename_full, refine_options.dimx, refine_options.dimy)
+=======
+>>>>>>> origin/trunk
 		
 		#Produce quality assessment statistics and plot image using corrfile information
 		apDisplay.printMsg("Creating quality assessment statistics...")
@@ -1309,7 +1397,11 @@ def protomoReconstruct(log_file, tiltseriesnumber, recon_options):
 	from and whether to exclude any very high tilts.
 	Options are given for filtering.
 	"""
+<<<<<<< HEAD
 	tiltdirname,tiltdir,seriesnumber,seriesname,tiltfilename,tiltfilename_full,raw_path,tiltstart,rawimagecount,maxtilt,tilt_azimuth = variableSetup(recon_options.rundir, tiltseriesnumber, prep="False")
+=======
+	tiltdirname,tiltdir,seriesnumber,seriesname,tiltfilename,tiltfilename_full,raw_path,tiltstart,rawimagecount,maxtilt = variableSetup(recon_options.rundir, tiltseriesnumber, prep="False")
+>>>>>>> origin/trunk
 	f = open(log_file,'a')
 	os.chdir(tiltdir)
 	
@@ -1522,6 +1614,7 @@ def protomoReconstruct(log_file, tiltseriesnumber, recon_options):
 	f.close()
 
 
+<<<<<<< HEAD
 def defocusEstimaion(tiltseriesnumber, defocus_options):
 	"""
 	This estimates defocus of the untiltsed tilt-seried plane using TomoCTF multiple times using varying parameters.
@@ -1585,6 +1678,15 @@ def imodCtfCorrect(tiltseriesnumber, ctf_options):
 	tiltdirname,tiltdir,seriesnumber,seriesname,tiltfilename,tiltfilename_full,raw_path,tiltstart,rawimagecount,maxtilt,tilt_azimuth = variableSetup(ctf_options.rundir, tiltseriesnumber, prep="False")
 	os.chdir(tiltdir)
 	apProTomo2Prep.imodCtfCorrect(seriesname, tiltdir, ctf_options.projectid, ctf_options.sessionname, tiltseriesnumber, tiltfilename_full, ctf_options.frame_aligned, ctf_options.pixelsize, ctf_options.DefocusTol, ctf_options.iWidth, ctf_options.amp_contrast_ctf)
+=======
+def ctfCorrect(tiltseriesnumber, ctf_options):
+	"""
+	This corrects for ctf using ctfphaseflip. A defocus plot and a CTF plot are made.
+	"""
+	tiltdirname,tiltdir,seriesnumber,seriesname,tiltfilename,tiltfilename_full,raw_path,tiltstart,rawimagecount,maxtilt = variableSetup(ctf_options.rundir, tiltseriesnumber, prep="False")
+	os.chdir(tiltdir)
+	apProTomo2Prep.ctfCorrect(seriesname, tiltdir, ctf_options.projectid, ctf_options.sessionname, tiltseriesnumber, tiltfilename_full, ctf_options.frame_aligned, ctf_options.pixelsize, ctf_options.DefocusTol, ctf_options.iWidth, ctf_options.amp_contrast)
+>>>>>>> origin/trunk
 
 
 def doseCompensate(tiltseriesnumber, dose_options):
@@ -1592,7 +1694,11 @@ def doseCompensate(tiltseriesnumber, dose_options):
 	This compensates for dose using equation (3) from Grant & Grigorieff, 2015.
 	A dose plot and a dose compensation plot are made.
 	"""
+<<<<<<< HEAD
 	tiltdirname,tiltdir,seriesnumber,seriesname,tiltfilename,tiltfilename_full,raw_path,tiltstart,rawimagecount,maxtilt,tilt_azimuth = variableSetup(dose_options.rundir, tiltseriesnumber, prep="False")
+=======
+	tiltdirname,tiltdir,seriesnumber,seriesname,tiltfilename,tiltfilename_full,raw_path,tiltstart,rawimagecount,maxtilt = variableSetup(dose_options.rundir, tiltseriesnumber, prep="False")
+>>>>>>> origin/trunk
 	os.chdir(tiltdir)
 	apProTomo2Prep.doseCompensate(seriesname, tiltdir, dose_options.sessionname, tiltseriesnumber, dose_options.frame_aligned, raw_path, dose_options.pixelsize, dose_options.dose_presets, dose_options.dose_a, dose_options.dose_b, dose_options.dose_c)
 
@@ -1607,7 +1713,11 @@ def protomoAutoRefine(log_file, tiltseriesnumber, auto_refine_options):
 	Quality assessment statistics and images are made.
 	Depiction videos are made if requested.
 	"""
+<<<<<<< HEAD
 	tiltdirname,tiltdir,seriesnumber,seriesname,tiltfilename,tiltfilename_full,raw_path,tiltstart,rawimagecount,maxtilt,tilt_azimuth = variableSetup(auto_refine_options.rundir, tiltseriesnumber, prep="False")
+=======
+	tiltdirname,tiltdir,seriesnumber,seriesname,tiltfilename,tiltfilename_full,raw_path,tiltstart,rawimagecount,maxtilt = variableSetup(auto_refine_options.rundir, tiltseriesnumber, prep="False")
+>>>>>>> origin/trunk
 	f = open(log_file,'a')
 	os.chdir(tiltdir)
 	cos_alpha=np.cos(maxtilt*np.pi/180)
@@ -1765,7 +1875,10 @@ def protomoAutoRefine(log_file, tiltseriesnumber, auto_refine_options):
 		tiltfile=basename+'.tlt'
 		series.geom(0).write(tiltfile)
 		tiltfilename_full=tiltdir+'/'+tiltfile
+<<<<<<< HEAD
 		apProTomo2Aligner.findMaxSearchArea(tiltfilename_full, auto_refine_options.dimx, auto_refine_options.dimy)
+=======
+>>>>>>> origin/trunk
 		
 		#Produce quality assessment statistics and plot image using corrfile information
 		apDisplay.printMsg("Creating quality assessment statistics...")
@@ -2261,7 +2374,11 @@ def protomoScreening(log_file, tiltseriesnumber, screening_options):
 	These are explicit for parallelization reasons.
 	"""
 	#Prep
+<<<<<<< HEAD
 	tiltdirname,tiltdir,seriesnumber,seriesname,tiltfilename,tiltfilename_full,raw_path,tiltstart,rawimagecount,maxtilt,tilt_azimuth = variableSetup(screening_options.rundir, tiltseriesnumber, prep="True")
+=======
+	tiltdirname,tiltdir,seriesnumber,seriesname,tiltfilename,tiltfilename_full,raw_path,tiltstart,rawimagecount,maxtilt = variableSetup(screening_options.rundir, tiltseriesnumber, prep="True")
+>>>>>>> origin/trunk
 	f = open(log_file,'a')
 	
 	apDisplay.printMsg('Preparing Tilt-Series #%s Images and .tlt File...' % tiltseriesnumber)
@@ -2280,10 +2397,13 @@ def protomoScreening(log_file, tiltseriesnumber, screening_options):
 	jobs1.append(mp.Process(target=apProTomo2Aligner.makeTiltSeriesVideos, args=(seriesname, 0, tiltfilename_full, rawimagecount, tiltdir, raw_path, screening_options.pixelsize, screening_options.map_sampling, screening_options.image_file_type, screening_options.video_type, "true", "True", "Initial",)))
 	for job in jobs1:
 		job.start()
+<<<<<<< HEAD
 	
 	if tilt_azimuth is not None:
 		apDisplay.printMsg("Changing tilt azimuth to %s" % tilt_azimuth)
 		apProTomo2Aligner.changeTiltAzimuth(tiltfilename_full, tilt_azimuth)
+=======
+>>>>>>> origin/trunk
 	
 	#Removing highly shifted images
 	bad_images, bad_kept_images=apProTomo2Aligner.removeHighlyShiftedImages(tiltfilename_full, screening_options.dimx, screening_options.dimy, screening_options.shift_limit, screening_options.angle_limit)
@@ -2307,7 +2427,11 @@ def protomoScreening(log_file, tiltseriesnumber, screening_options):
 	f.write("Finished Preparing Files and Directories for Tilt-Series #%s.\n" % (tiltseriesnumber))
 	
 	#Coarse Alignment
+<<<<<<< HEAD
 	tiltdirname,tiltdir,seriesnumber,seriesname,tiltfilename,tiltfilename_full,raw_path,tiltstart,rawimagecount,maxtilt,tilt_azimuth = variableSetup(screening_options.rundir, tiltseriesnumber, prep="False")
+=======
+	tiltdirname,tiltdir,seriesnumber,seriesname,tiltfilename,tiltfilename_full,raw_path,tiltstart,rawimagecount,maxtilt = variableSetup(screening_options.rundir, tiltseriesnumber, prep="False")
+>>>>>>> origin/trunk
 	cos_alpha=np.cos(maxtilt*np.pi/180)
 	name='coarse_'+seriesname
 	coarse_param_full=tiltdir+'/'+name+'.param'
@@ -2407,6 +2531,7 @@ def protomoScreening(log_file, tiltseriesnumber, screening_options):
 	apDisplay.printMsg("Coarse Alignment finished for Tilt-Series #%s!\n" % (tiltseriesnumber))
 	f.write("Coarse Alignment finished for Tilt-Series #%s!\n\n" % (tiltseriesnumber))
 	f.close()
+<<<<<<< HEAD
 	
 
 def protomoExport(log_file, tiltseriesnumber, export_options):
@@ -2473,6 +2598,9 @@ def protomoExport(log_file, tiltseriesnumber, export_options):
 	#cleanup
 	os.system("rm -rf %s" % tiltdir)
 
+=======
+	
+>>>>>>> origin/trunk
 
 
 if __name__ == '__main__':
@@ -2521,6 +2649,7 @@ if __name__ == '__main__':
 		
 		[p.join() for p in mp.active_children()]
 		log = open(log_file,'a')
+<<<<<<< HEAD
 		
 		if (options.dose_presets != "False"):
 			apDisplay.printMsg("Performing Dose Compensation")
@@ -2553,8 +2682,24 @@ if __name__ == '__main__':
 			
 			if (j % options.procs == 0) and (j != 0):
 				[p.join() for p in mp.active_children()]
+=======
+>>>>>>> origin/trunk
 		
+		if (options.ctf_correct == "True"):
+			apDisplay.printMsg("Performing CTF Correction")
+			log.write("Performing CTF Correction\n")
+			for i, j in zip(tiltseriesranges, range(1,len(tiltseriesranges)+1)):
+				p = mp.Process(target=ctfCorrect, args=(i, options,))
+				p.start()
+				
+				if (j % options.procs == 0) and (j != 0):
+					[p.join() for p in mp.active_children()]
+			
+			[p.join() for p in mp.active_children()]
+			apDisplay.printMsg("CTF Correction Finished for Tilt-Series %s!" % options.tiltseriesranges)
+			log.write("CTF Correction Finished for Tilt-Series %s!\n" % options.tiltseriesranges)
 		[p.join() for p in mp.active_children()]
+<<<<<<< HEAD
 		
 		apProTomo2Aligner.printTips("Alignment")
 		
@@ -2569,18 +2714,36 @@ if __name__ == '__main__':
 		log.close()
 		for i, j in zip(tiltseriesranges, range(1,len(tiltseriesranges)+1)):
 			p = mp.Process(target=imodCoarseAlign, args=(log_file, i, options,))
+=======
+		apDisplay.printMsg("Files and Directories Prepared for Tilt-Series %s!" % options.tiltseriesranges)
+		log.write("Files and Directories Prepared for Tilt-Series %s!" % options.tiltseriesranges)
+	
+	#Coarse Alignment
+	if (options.coarse_align == "True" and options.automation == "False"):
+		apDisplay.printMsg("Performing Coarse Alignments")
+		log.write("Performing Coarse Alignments\n")
+		log.close()
+		for i, j in zip(tiltseriesranges, range(1,len(tiltseriesranges)+1)):
+			p = mp.Process(target=protomoCoarseAlign, args=(log_file, i, options,))
+>>>>>>> origin/trunk
 			p.start()
 			
 			if (j % options.procs == 0) and (j != 0):
 				[p.join() for p in mp.active_children()]
 		
 		[p.join() for p in mp.active_children()]
+<<<<<<< HEAD
 		
 		apProTomo2Aligner.printTips("Alignment")
 		
 		log = open(log_file,'a')
 		apDisplay.printMsg("Imod Coarse Alignments Finished for Tilt-Series %s!" % options.tiltseriesranges)
 		log.write("Imod Coarse Alignments Finished for Tilt-Series %s!\n" % options.tiltseriesranges)
+=======
+		log = open(log_file,'a')
+		apDisplay.printMsg("Coarse Alignments Finished for Tilt-Series %s!" % options.tiltseriesranges)
+		log.write("Coarse Alignments Finished for Tilt-Series %s!\n" % options.tiltseriesranges)
+>>>>>>> origin/trunk
 	
 	
 	#Refinement
@@ -2596,9 +2759,12 @@ if __name__ == '__main__':
 				[p.join() for p in mp.active_children()]
 		
 		[p.join() for p in mp.active_children()]
+<<<<<<< HEAD
 		
 		apProTomo2Aligner.printTips("Alignment")
 		
+=======
+>>>>>>> origin/trunk
 		log = open(log_file,'a')
 		apDisplay.printMsg("Refinements Finished for Tilt-Series %s!" % options.tiltseriesranges)
 		log.write("Refinements Finished for Tilt-Series %s!\n" % options.tiltseriesranges)
@@ -2631,9 +2797,12 @@ if __name__ == '__main__':
 				[p.join() for p in mp.active_children()]
 		
 		[p.join() for p in mp.active_children()]
+<<<<<<< HEAD
 		
 		apProTomo2Aligner.printTips("Reconstruction")
 		
+=======
+>>>>>>> origin/trunk
 		log = open(log_file,'a')
 		apDisplay.printMsg("Reconstructions Finished for Tilt-Series %s!" % options.tiltseriesranges)
 		log.write("Reconstructions Finished for Tilt-Series %s!\n" % options.tiltseriesranges)
@@ -2655,13 +2824,17 @@ if __name__ == '__main__':
 				[p.join() for p in mp.active_children()]
 		
 		[p.join() for p in mp.active_children()]
+<<<<<<< HEAD
 		
 		apProTomo2Aligner.printTips("CTF")
 		
+=======
+>>>>>>> origin/trunk
 		apDisplay.printMsg("CTF Correction Finished for Tilt-Series %s!" % options.tiltseriesranges)
 		log.write("CTF Correction Finished for Tilt-Series %s!\n" % options.tiltseriesranges)
 	
 	
+<<<<<<< HEAD
 	#Defocus Estimation
 	if (options.defocus_estimate != "False" and options.automation == "False"):
 		apDisplay.printMsg("Performing Defocus Estimation")
@@ -2675,6 +2848,8 @@ if __name__ == '__main__':
 		log.write("Defocus Estimation Finished for Tilt-Series %s!\n" % options.tiltseriesranges)
 	
 	
+=======
+>>>>>>> origin/trunk
 	#Dose Compensation
 	if (options.dose_presets != "False" and options.automation == "False" and options.prep_files == "False" and options.reconstruct == "False"):
 		apDisplay.printMsg("Performing Dose Compensation")
@@ -2687,9 +2862,12 @@ if __name__ == '__main__':
 				[p.join() for p in mp.active_children()]
 		
 		[p.join() for p in mp.active_children()]
+<<<<<<< HEAD
 		
 		apProTomo2Aligner.printTips("None")
 		
+=======
+>>>>>>> origin/trunk
 		apDisplay.printMsg("Dose Compensation Finished for Tilt-Series %s!" % options.tiltseriesranges)
 		log.write("Dose Compensation Finished for Tilt-Series %s!\n" % options.tiltseriesranges)
 	
@@ -2839,6 +3017,7 @@ if __name__ == '__main__':
 				log.write("Waiting for Tilt-Series #%s to finish being collected. Sleeping for 1 minute...\n" % tiltseriesnumber)
 				time.sleep(60)
 	
+<<<<<<< HEAD
 	#Tilt-series exporting.
 	if (options.exporting == "True"):
 		apDisplay.printMsg("Appion-Protomo Tilt-Series Exporting Mode")
@@ -2875,3 +3054,17 @@ if __name__ == '__main__':
 	apDisplay.printMsg("Closing log file %s\n" % log_file)
 	log.write("\nEnd time: %s" % time_end)
 	log.close()
+=======
+	
+	time_end = time.strftime("%Yyr%mm%dd-%Hhr%Mm%Ss")
+	apDisplay.printMsg('Did everything blow up and now you\'re yelling at your computer screen?')
+	apDisplay.printMsg('If so, kindly email Alex at ajn10d@fsu.edu and include this log file.')
+	apDisplay.printMsg('If everything worked beautifully and you publish it, please use the appropriate citations listed on the Appion webpage!')
+	log.write('Did everything blow up and now you\'re yelling at your computer screen?\n')
+	log.write('If so, kindly email Alex at ajn10d@fsu.edu and include this log file.\n')
+	log.write('If everything worked beautifully and you publish it, please use the appropriate citations listed on the Appion webpage!\n')
+	print "\n"
+	apDisplay.printMsg("Closing log file %s\n" % log_file)
+	log.write("\nEnd time: %s" % time_end)
+	log.close()
+>>>>>>> origin/trunk

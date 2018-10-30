@@ -450,12 +450,18 @@ class TransformManager(node.Node, TargetTransformer):
 		time.sleep(self.settings['pause time'])
 		try:
 			imagedata = self.acquireCorrectedCameraImageData(channel)
+<<<<<<< HEAD
 		except Exception, e:
 			self.logger.error('Reacquire image failed: %s' % (e.message))
 			return None
 		if imagedata is None:
 			self.logger.error('Reacquire image failed')
 			return None
+=======
+		except Exception, exc:
+			self.logger.error('Reacquire image failed: %s' % (exc,))
+			#TO DO: Need to handle no imagedata defined with exception here.
+>>>>>>> origin/trunk
 		# The preset used does not always have the original preset's parameters such as image shift
 		currentpresetdata = self.presetsclient.getCurrentPreset()
 		## convert CameraImageData to AcquisitionImageData
@@ -564,6 +570,84 @@ class TransformManager(node.Node, TargetTransformer):
 	def uiDeclareDrift(self):
 		self.declareTransform('manual')
 		self.logger.info('Drift Declared')
+<<<<<<< HEAD
+=======
+
+	def acquireImage(self, channel=0, correct=True):
+		self.startTimer('drift acquire')
+		if correct:
+			imagedata = self.acquireCorrectedCameraImageData(channel)
+		else:
+			imagedata = self.acquireCameraImageData()
+		if imagedata is not None:
+			self.setImage(imagedata['image'], 'Image')
+		self.stopTimer('drift acquire')
+		return imagedata
+
+	def peak2shift(self, peak, shape):
+		shift = list(peak)
+		half = shape[0] / 2, shape[1] / 2
+		if peak[0] > half[0]:
+			shift[0] = peak[0] - shape[0]
+		if peak[1] > half[1]:
+			shift[1] = peak[1] - shape[1]
+		return tuple(shift)
+
+	def measureDrift(self):
+		## configure camera
+		self.instrument.ccdcamera.Settings = self.settings['camera settings']
+		mag = self.instrument.tem.Magnification
+		tem = self.instrument.getTEMData()
+		cam = self.instrument.getCCDCameraData()
+		pixsize = self.pixsizeclient.retrievePixelSize(tem, cam, mag)
+		self.logger.info('Pixel size %s' % (pixsize,))
+
+		## acquire first image
+		imagedata = self.acquireImage(0)
+		numdata = imagedata['image']
+		t0 = imagedata['scope']['system time']
+		self.correlator.insertImage(numdata)
+
+		# make sure we have waited at least "pause time" before acquire
+		t1 = self.instrument.tem.SystemTime
+		dt = t1 - t0
+		pausetime = self.settings['pause time']
+		if dt < pausetime:
+			thispause = pausetime - dt
+			self.startTimer('drift pause')
+			time.sleep(thispause)
+			self.stopTimer('drift pause')
+		
+		## acquire next image
+		imagedata = self.acquireImage(1)
+		numdata = imagedata['image']
+		t1 = imagedata['scope']['system time']
+		self.correlator.insertImage(numdata)
+
+		## do correlation
+		pc = self.correlator.phaseCorrelate()
+		pc = scipy.ndimage.gaussian_filter(pc,1)
+		try:
+			peak = self.peakfinder.subpixelPeak(newimage=pc)
+		except Exception, e:
+			self.logger.warning(e)
+			self.logger.warning('Error in finding shift, assume no shift')
+			peak = (0,0)
+		rows,cols = self.peak2shift(peak, pc.shape)
+		dist = math.hypot(rows,cols)
+
+		self.setImage(pc, 'Correlation')
+		#self.setTargets([(peak[1],peak[0])], 'Peak')
+
+		## calculate drift 
+		meters = dist * pixsize
+		self.logger.info('Pixel distance %s, (%.2e meters)' % (dist, meters))
+		# rely on system time of EM node
+		seconds = t1 - t0
+		self.logger.info('Seconds %s' % seconds)
+		current_drift = meters / seconds
+		self.logger.info('Drift rate: %.2e' % (current_drift,))
+>>>>>>> origin/trunk
 
 	def displayTarget(self, targetdata):
 		halfrows = targetdata['image']['camera']['dimension']['y'] / 2

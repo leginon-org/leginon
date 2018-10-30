@@ -8,6 +8,11 @@ import os
 import sys
 import glob
 import time
+<<<<<<< HEAD
+=======
+import scipy
+import scipy.interpolate
+>>>>>>> origin/trunk
 import pylab
 import scipy
 import scipy.misc
@@ -30,6 +35,7 @@ try:
 	from appionlib import apTomo
 except:
 	apDisplay.printWarning("MySQLdb not found...database retrieval disabled")
+<<<<<<< HEAD
 
 
 def printTips(tip_type):
@@ -165,6 +171,8 @@ def printCitations():
 	print '\n________________________________\n'
 	
 	return
+=======
+>>>>>>> origin/trunk
 
 
 def angstromsToProtomo(options):
@@ -478,6 +486,7 @@ def angstromsToProtomo(options):
 	return options
 
 
+<<<<<<< HEAD
 def imodCoarseAlignment(rawdir, tiltfilename_full, image_file_type):
 	"""
 	Performs coarse alignment by nearest-neighbor correlation using IMOD's tiltxcorr.
@@ -580,6 +589,8 @@ def imodCoarseAlignment(rawdir, tiltfilename_full, image_file_type):
 	return
 
 
+=======
+>>>>>>> origin/trunk
 def hyphen_range(s):
 	"""
 	Takes a range in form of "a-b" and generate a list of numbers between a and b inclusive.
@@ -934,7 +945,11 @@ def removeHighlyShiftedImages(tiltfile, dimx, dimy, shift_limit, angle_limit):
 	return bad_images, bad_kept_images
 
 
+<<<<<<< HEAD
 def removeDarkorBrightImages(tiltfile):
+=======
+def removeDarkorBrightmages(tiltfile):
+>>>>>>> origin/trunk
 	'''
 	This removes the entry in the tiltfile for any images whose average pixel values exceed N*stdev from the mean.
 	This may be unecessary so it hasn't been implemented. Maybe later?
@@ -952,10 +967,14 @@ def removeImageFromTiltFile(tiltfile, imagenumber, remove_refimg):
 	cmd="awk '/REFERENCE IMAGE /{print $3}' %s" % (tiltfile)
 	proc=subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
 	(refimg, err) = proc.communicate()
+<<<<<<< HEAD
 	try:
 		refimg=int(refimg)
 	except:
 		pass
+=======
+	refimg=int(refimg)
+>>>>>>> origin/trunk
 	if (remove_refimg != "True") and (refimg == imagenumber):
 		apDisplay.printWarning("Unable to remove image #%s because it is the reference image!" % (imagenumber))
 	else:
@@ -974,6 +993,7 @@ def removeImageFromTiltFile(tiltfile, imagenumber, remove_refimg):
 	return
 
 
+<<<<<<< HEAD
 def removeImageByAngleFromTiltFile(tiltfile, tilt_angle, remove_refimg):
 	'''
 	This removes image entries with tilt_angle from a .tlt file. No backups made.
@@ -984,13 +1004,19 @@ def removeImageByAngleFromTiltFile(tiltfile, tilt_angle, remove_refimg):
 	return
 
 
+=======
+>>>>>>> origin/trunk
 def removeHighTiltsFromTiltFile(tiltfile, negative=-90, positive=90):
 	'''
 	This removes all 'IMAGE imagenumber' entries from a .tlt file with
 	tilt angles less than $negative and/or greater than $positive.
 	Designed for use with reconstruction workflows.
 	'''
+<<<<<<< HEAD
 	if (negative <= -90) and (positive >= 90):
+=======
+	if (negative == -90) and (positive == 90):
+>>>>>>> origin/trunk
 		apDisplay.printWarning("You must choose valid ranges for image removal. Skipping image removal.")
 		return [], 0, 0
 	else:
@@ -1048,6 +1074,7 @@ def removeHighTiltsFromTiltFile(tiltfile, negative=-90, positive=90):
 	return removed_images, mintilt, maxtilt
 
 
+<<<<<<< HEAD
 def findMaxSearchArea(tiltfilename_full, dimx, dimy):
 	'''
 	Finds the maximum search area given file.tlt and writes file.tlt.maxsearch.max_x.max_y
@@ -1095,6 +1122,8 @@ def findMaxSearchArea(tiltfilename_full, dimx, dimy):
 	return
 
 
+=======
+>>>>>>> origin/trunk
 def unShiftTiltFile(tiltfile, dimx, dimy, shift_limit):
 	'''
 	Replaces the origin in a .tlt file with [ dimx/2, dimy/2 ] if any shifts are greater than the shift_limit*dimension/100.
@@ -1264,7 +1293,11 @@ def makeCorrPeakVideos(seriesname, iteration, rundir, outdir, video_type, align_
 			mp4=seriesname[0:-6]+'01_cor.mp4'
 			webm=seriesname[0:-6]+'01_cor.webm'
 		else: #align_step == "Refinement"
+<<<<<<< HEAD
 			iteration=format(iteration[1:] if iteration.startswith('0') else iteration) #Protomo file naming conventions are %2d unless iteration number is more than 2 digits.
+=======
+			iteration=format(iteration[1:] if iteration.startswith('0') else iteration) #Protomo filenaming conventions are %2d unless iteration number is more than 2 digits.
+>>>>>>> origin/trunk
 			iteration_depiction='%03d' % int(iteration)
 			img=seriesname+iteration+'_cor.img'
 			mrcf=seriesname+iteration+'_cor.mrc'
@@ -1301,6 +1334,7 @@ def makeCorrPeakVideos(seriesname, iteration, rundir, outdir, video_type, align_
 			os.system(command)
 		
 		#Convert pngs to either a gif or to HTML5 videos
+<<<<<<< HEAD
 		#if video_type == "gif":
 		if align_step == "Coarse" or align_step == "Coarse2":
 			command2 = "convert -delay 22 -loop 0 %s %s;" % (png_full, gif_full)
@@ -1319,6 +1353,25 @@ def makeCorrPeakVideos(seriesname, iteration, rundir, outdir, video_type, align_
 			command2 += 'ffmpeg -y -v 0 -framerate 5.5 -pattern_type glob -i "%s" -codec:v libtheora -b:v 3000K -g 30 %s;' % (png_full, ogv_full)
 			command2 += 'ffmpeg -y -v 0 -framerate 5.5 -pattern_type glob -i "%s" -codec:v libx264 -profile:v baseline -pix_fmt yuv420p -g 30 -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" %s;' % (png_full, mp4_full)
 			command2 += 'ffmpeg -y -v 0 -framerate 5.5 -pattern_type glob -i "%s" -codec:v libvpx -b:v 3000K -g 30 %s' % (png_full, webm_full)
+=======
+		if video_type == "gif":
+			if align_step == "Coarse":
+				command2 = "convert -delay 22 -loop 0 %s %s;" % (png_full, gif_full)
+				command2 += 'ffmpeg -y -v 0 -framerate 4.5 -pattern_type glob -i "%s" -codec:v libx264 -profile:v baseline -pix_fmt yuv420p -g 30 %s' % (png_full, mp4_full)
+			else: #align_step == "Refinement"... Just changing the speed with the delay option
+				command2 = "convert -delay 15 -loop 0 %s %s;" % (png_full, gif_full)
+				command2 += 'ffmpeg -y -v 0 -framerate 5.5 -pattern_type glob -i "%s" -codec:v libx264 -profile:v baseline -pix_fmt yuv420p -g 30 %s' % (png_full, mp4_full)
+		else: #video_type == "html5vid"
+			if align_step == "Coarse":
+				command2 = "convert -delay 22 -loop 0 %s %s;" % (png_full, gif_full)
+				command2 += 'ffmpeg -y -v 0 -framerate 4.5 -pattern_type glob -i "%s" -codec:v libtheora -b:v 3000K -g 30 %s;' % (png_full, ogv_full)
+				command2 += 'ffmpeg -y -v 0 -framerate 4.5 -pattern_type glob -i "%s" -codec:v libx264 -profile:v baseline -pix_fmt yuv420p -g 30 %s;' % (png_full, mp4_full)
+				command2 += 'ffmpeg -y -v 0 -framerate 4.5 -pattern_type glob -i "%s" -codec:v libvpx -b:v 3000K -g 30 %s' % (png_full, webm_full)
+			else: #align_step == "Refinement"... Just changing the speed with the framerate option
+				command2 = 'ffmpeg -y -v 0 -framerate 5.5 -pattern_type glob -i "%s" -codec:v libtheora -b:v 3000K -g 30 %s;' % (png_full, ogv_full)
+				command2 += 'ffmpeg -y -v 0 -framerate 5.5 -pattern_type glob -i "%s" -codec:v libx264 -profile:v baseline -pix_fmt yuv420p -g 30 %s;' % (png_full, mp4_full)
+				command2 += 'ffmpeg -y -v 0 -framerate 5.5 -pattern_type glob -i "%s" -codec:v libvpx -b:v 3000K -g 30 %s' % (png_full, webm_full)
+>>>>>>> origin/trunk
 		os.system(command2)
 		command3 = "rm %s; rm %s" % (png_full, img_full)
 		os.system(command3)
@@ -1422,6 +1475,7 @@ def makeQualityAssessmentImage(tiltseriesnumber, sessionname, seriesname, rundir
 		figqa_full=rundir+'/media/quality_assessment/'+seriesname+'_quality_assessment.png'
 		txtqa_full=rundir+'/media/quality_assessment/'+seriesname+'_quality_assessment.txt'
 		if (r2_iters != 0 and r3_iters != 0 and r4_iters != 0 and r5_iters != 0 and r6_iters != 0 and r7_iters != 0 and r8_iters != 0): #R1-R8
+<<<<<<< HEAD
 			title="Session %s, Tilt-Series #%s | R1: Iters 1-%s @ bin=%s, lp=%s $\AA$ | R2: Iters %s-%s @ bin=%s, lp=%s $\AA$\nR3: Iters %s-%s @ bin=%s, lp=%s $\AA$ | R4: Iters %s-%s @ bin=%s, lp=%s $\AA$ | R5: Iters %s-%s @ bin=%s, lp=%s $\AA$\nR6: Iters %s-%s @ bin=%s, lp=%s $\AA$ | R7: Iters %s-%s @ bin=%s, lp=%s $\AA$ | R8: Iters %s-%s @ bin=%s, lp=%s $\AA$ | thick=%s" % (sessionname, tiltseriesnumber, r1_iters, r1_sampling, r1_lp, r1_iters+1, r1_iters+r2_iters, r2_sampling, r2_lp, r1_iters+r2_iters+1, r1_iters+r2_iters+r3_iters, r3_sampling, r3_lp, r1_iters+r2_iters+r3_iters+1, r1_iters+r2_iters+r3_iters+r4_iters, r4_sampling, r4_lp, r1_iters+r2_iters+r3_iters+r4_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters, r5_sampling, r5_lp, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters, r6_sampling, r6_lp, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters+r7_iters, r7_sampling, r7_lp, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters+r7_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters+r7_iters+r8_iters, r8_sampling, r8_lp, thickness)
 			font="small"
 		elif (r2_iters != 0 and r3_iters != 0 and r4_iters != 0 and r5_iters != 0 and r6_iters != 0 and r7_iters != 0 and r8_iters == 0): #R1-R7
@@ -1443,6 +1497,29 @@ def makeQualityAssessmentImage(tiltseriesnumber, sessionname, seriesname, rundir
 			title="Session %s, Tilt-Series #%s\nR1: Iters 1-%s @ bin=%s, lp=%s $\AA$ | R2: Iters %s-%s @ bin=%s, lp=%s $\AA$ | thick=%s" % (sessionname, tiltseriesnumber, r1_iters, r1_sampling, r1_lp, r1_iters+1, r1_iters+r2_iters, r2_sampling, r2_lp, thickness)
 		elif (r2_iters == 0 and r3_iters == 0 and r4_iters == 0 and r5_iters == 0 and r6_iters == 0 and r7_iters == 0 and r8_iters == 0): #R1
 			title="Session %s, Tilt-Series #%s\nR1: Iters 1-%s @ bin=%s, lp=%s $\AA$ | thick=%s" % (sessionname, tiltseriesnumber, r1_iters, r1_sampling, r1_lp, thickness)
+=======
+			title="Session %s, Tilt-Series #%s | R1: Iters 1-%s @ bin=%s, lp=%s $\AA$ | R2: Iters %s-%s @ bin=%s, lp=%s $\AA$\nR3: Iters %s-%s @ bin=%s, lp=%s $\AA$ | R4: Iters %s-%s @ bin=%s, lp=%s $\AA$ | R5: Iters %s-%s @ bin=%s, lp=%s $\AA$\nR6: Iters %s-%s @ bin=%s, lp=%s $\AA$ | R7: Iters %s-%s @ bin=%s, lp=%s $\AA$ | R8: Iters %s-%s @ bin=%s, lp=%s $\AA$" % (sessionname, tiltseriesnumber, r1_iters, r1_sampling, r1_lp, r1_iters+1, r1_iters+r2_iters, r2_sampling, r2_lp, r1_iters+r2_iters+1, r1_iters+r2_iters+r3_iters, r3_sampling, r3_lp, r1_iters+r2_iters+r3_iters+1, r1_iters+r2_iters+r3_iters+r4_iters, r4_sampling, r4_lp, r1_iters+r2_iters+r3_iters+r4_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters, r5_sampling, r5_lp, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters, r6_sampling, r6_lp, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters+r7_iters, r7_sampling, r7_lp, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters+r7_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters+r7_iters+r8_iters, r8_sampling, r8_lp)
+			font="small"
+		elif (r2_iters != 0 and r3_iters != 0 and r4_iters != 0 and r5_iters != 0 and r6_iters != 0 and r7_iters != 0 and r8_iters == 0): #R1-R7
+			title="Session %s, Tilt-Series #%s | R1: Iters 1-%s @ bin=%s, lp=%s $\AA$ | R2: Iters %s-%s @ bin=%s, lp=%s $\AA$\nR3: Iters %s-%s @ bin=%s, lp=%s $\AA$ | R4: Iters %s-%s @ bin=%s, lp=%s $\AA$ | R5: Iters %s-%s @ bin=%s, lp=%s $\AA$\nR6: Iters %s-%s @ bin=%s, lp=%s $\AA$ | R7: Iters %s-%s @ bin=%s, lp=%s $\AA$" % (sessionname, tiltseriesnumber, r1_iters, r1_sampling, r1_lp, r1_iters+1, r1_iters+r2_iters, r2_sampling, r2_lp, r1_iters+r2_iters+1, r1_iters+r2_iters+r3_iters, r3_sampling, r3_lp, r1_iters+r2_iters+r3_iters+1, r1_iters+r2_iters+r3_iters+r4_iters, r4_sampling, r4_lp, r1_iters+r2_iters+r3_iters+r4_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters, r5_sampling, r5_lp, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters, r6_sampling, r6_lp, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters+r7_iters, r7_sampling, r7_lp)
+			font="small"
+		elif (r2_iters != 0 and r3_iters != 0 and r4_iters != 0 and r5_iters != 0 and r6_iters != 0 and r7_iters == 0 and r8_iters == 0): #R1-R6
+			title="Session %s, Tilt-Series #%s\nR1: Iters 1-%s @ bin=%s, lp=%s $\AA$ | R2: Iters %s-%s @ bin=%s, lp=%s $\AA$ | R3: Iters %s-%s @ bin=%s, lp=%s $\AA$\nR4: Iters %s-%s @ bin=%s, lp=%s $\AA$ | R5: Iters %s-%s @ bin=%s, lp=%s $\AA$ | R6: Iters %s-%s @ bin=%s, lp=%s $\AA$" % (sessionname, tiltseriesnumber, r1_iters, r1_sampling, r1_lp, r1_iters+1, r1_iters+r2_iters, r2_sampling, r2_lp, r1_iters+r2_iters+1, r1_iters+r2_iters+r3_iters, r3_sampling, r3_lp, r1_iters+r2_iters+r3_iters+1, r1_iters+r2_iters+r3_iters+r4_iters, r4_sampling, r4_lp, r1_iters+r2_iters+r3_iters+r4_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters, r5_sampling, r5_lp, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters, r6_sampling, r6_lp)
+			font="medium"
+		elif (r2_iters != 0 and r3_iters != 0 and r4_iters != 0 and r5_iters != 0 and r6_iters == 0 and r7_iters == 0 and r8_iters == 0): #R1-R5
+			title="Session %s, Tilt-Series #%s\nR1: Iters 1-%s @ bin=%s, lp=%s $\AA$ | R2: Iters %s-%s @ bin=%s, lp=%s $\AA$ | R3: Iters %s-%s @ bin=%s, lp=%s $\AA$\nR4: Iters %s-%s @ bin=%s, lp=%s $\AA$ | R5: Iters %s-%s @ bin=%s, lp=%s $\AA$" % (sessionname, tiltseriesnumber, r1_iters, r1_sampling, r1_lp, r1_iters+1, r1_iters+r2_iters, r2_sampling, r2_lp, r1_iters+r2_iters+1, r1_iters+r2_iters+r3_iters, r3_sampling, r3_lp, r1_iters+r2_iters+r3_iters+1, r1_iters+r2_iters+r3_iters+r4_iters, r4_sampling, r4_lp, r1_iters+r2_iters+r3_iters+r4_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters, r5_sampling, r5_lp)
+			font="medium"
+		elif (r2_iters != 0 and r3_iters != 0 and r4_iters != 0 and r5_iters == 0 and r6_iters == 0 and r7_iters == 0 and r8_iters == 0): #R1-R4
+			title="Session %s, Tilt-Series #%s\nR1: Iters 1-%s @ bin=%s, lp=%s $\AA$ | R2: Iters %s-%s @ bin=%s, lp=%s $\AA$\nR3: Iters %s-%s @ bin=%s, lp=%s $\AA$ | R4: Iters %s-%s @ bin=%s, lp=%s $\AA$" % (sessionname, tiltseriesnumber, r1_iters, r1_sampling, r1_lp, r1_iters+1, r1_iters+r2_iters, r2_sampling, r2_lp, r1_iters+r2_iters+1, r1_iters+r2_iters+r3_iters, r3_sampling, r3_lp, r1_iters+r2_iters+r3_iters+1, r1_iters+r2_iters+r3_iters+r4_iters, r4_sampling, r4_lp)
+			font="large"
+		elif (r2_iters != 0 and r3_iters != 0 and r4_iters == 0 and r5_iters == 0 and r6_iters == 0 and r7_iters == 0 and r8_iters == 0): #R1-R3
+			title="Session %s, Tilt-Series #%s\nR1: Iters 1-%s @ bin=%s, lp=%s $\AA$ | R2: Iters %s-%s @ bin=%s, lp=%s $\AA$\nR3: Iters %s-%s @ bin=%s, lp=%s $\AA$" % (sessionname, tiltseriesnumber, r1_iters, r1_sampling, r1_lp, r1_iters+1, r1_iters+r2_iters, r2_sampling, r2_lp, r1_iters+r2_iters+1, r1_iters+r2_iters+r3_iters, r3_sampling, r3_lp)
+			font="large"
+		elif (r2_iters != 0 and r3_iters == 0 and r4_iters == 0 and r5_iters == 0 and r6_iters == 0 and r7_iters == 0 and r8_iters == 0): #R1-R2
+			title="Session %s, Tilt-Series #%s\nR1: Iters 1-%s @ bin=%s, lp=%s $\AA$ | R2: Iters %s-%s @ bin=%s, lp=%s $\AA$" % (sessionname, tiltseriesnumber, r1_iters, r1_sampling, r1_lp, r1_iters+1, r1_iters+r2_iters, r2_sampling, r2_lp)
+		elif (r2_iters == 0 and r3_iters == 0 and r4_iters == 0 and r5_iters == 0 and r6_iters == 0 and r7_iters == 0 and r8_iters == 0): #R1
+			title="Session %s, Tilt-Series #%s\nR1: Iters 1-%s @ bin=%s, lp=%s $\AA$" % (sessionname, tiltseriesnumber, r1_iters, r1_sampling, r1_lp)
+>>>>>>> origin/trunk
 		
 		f=open(txtqa_full,'r')
 		lines=f.readlines()
@@ -1495,7 +1572,11 @@ def makeQualityAssessmentImage(tiltseriesnumber, sessionname, seriesname, rundir
 			fig1.legend(h2+h1,l2+l1,loc='best', frameon=False, fontsize=10)
 		except:
 			fig1.legend(h2+h1,l2+l1,loc='best')
+<<<<<<< HEAD
 			apDisplay.printMsg("Some plotting features may not work because you are using an old version of Matplotlib.")
+=======
+			apDisplay.printMsg("Some plotting features won't work because you are using an old version of Matplotlib.")
+>>>>>>> origin/trunk
 		
 		fig1.yaxis.label.set_color('DarkOrange')
 		try:
@@ -1567,6 +1648,7 @@ def makeQualityAssessmentImage(tiltseriesnumber, sessionname, seriesname, rundir
 		open("worst.%s" % worst,"a").close()
 		apDisplay.printMsg("Done creating quality assessment statistics and plot!")
 		return best, min(ccms_sum), figqa_full
+<<<<<<< HEAD
 	except:
 		apDisplay.printWarning("Quality assessment plot image could not be generated. Make sure matplotlib and numpy are in your $PYTHONPATH.\n")
 
@@ -1707,6 +1789,31 @@ def alignmentAccuracyAndStabilityReport(CCMS_sum, rawimagecount, name, n):
 		alignment_stability = "wait"
 	
 	return alignment_quality, alignment_quality2, alignment_quality_confidence, alignment_stability
+=======
+	except:
+		apDisplay.printWarning("Quality assessment plot image could not be generated. Make sure matplotlib and numpy are in your $PYTHONPATH.\n")
+
+
+def checkCCMSValues(seriesname, rundir, iteration, threshold):
+	'''
+	Checks the individual CCMS values for a quality_assessment txt file after processed by makeQualityAssessmentImage.
+	If all CCMS values are below the threshold, True is returned.
+	'''
+	txtqa_full=rundir+'/media/quality_assessment/'+seriesname+'_quality_assessment.txt'
+	iteration = int(iteration) + 2  #comment lines
+	
+	f=open(txtqa_full,'r')
+	lines=f.readlines()
+	f.close()
+	
+	ccms_shift=float(lines[iteration].split()[5])
+	ccms_rots=float(lines[iteration].split()[8])*14.4/360
+	ccms_scale=float(lines[iteration].split()[11])
+	if (ccms_shift <= threshold) and (ccms_rots <= threshold) and (ccms_scale <= threshold):
+		return True
+	else:
+		return False
+>>>>>>> origin/trunk
 
 
 def makeCorrPlotImages(seriesname, iteration, rundir, corrfile):
@@ -1762,7 +1869,11 @@ def makeCorrPlotImages(seriesname, iteration, rundir, corrfile):
 			cofx.append((float(words[2])-1)*100)
 			cofy.append((float(words[3])-1)*100)
 			coa.append(float(words[4]))
+<<<<<<< HEAD
 			scl.append((float(words[5])-1)*100)
+=======
+			scl.append(float(words[5]))
+>>>>>>> origin/trunk
 		meanx=[]
 		stdx=[]
 		x=[]
@@ -1775,6 +1886,7 @@ def makeCorrPlotImages(seriesname, iteration, rundir, corrfile):
 		meany=[]
 		stdy=[]
 		for i in range(len(cofy)):
+<<<<<<< HEAD
 			meany.append((corrdata[:,3].mean()-1)*100)
 			stdy.append(corrdata[:,3].std()*100)
 		meanscl=[]
@@ -1782,6 +1894,15 @@ def makeCorrPlotImages(seriesname, iteration, rundir, corrfile):
 		for i in range(len(scl)):
 			meanscl.append((corrdata[:,5].mean()-1)*100)
 			stdscl.append(corrdata[:,5].std()*100)
+=======
+			meany.append(corrdata[:,3].mean())
+			stdy.append(corrdata[:,3].std())
+		meanscl=[]
+		stdscl=[]
+		for i in range(len(scl)):
+			meanscl.append(corrdata[:,5].mean())
+			stdscl.append(corrdata[:,5].std())
+>>>>>>> origin/trunk
 		meanx_plus_stdx=[i + j for i, j in zip(meanx, stdx)]
 		meanx_minus_stdx=[i - j for i, j in zip(meanx, stdx)]
 		meany_plus_stdy=[i + j for i, j in zip(meany, stdy)]
@@ -1797,7 +1918,11 @@ def makeCorrPlotImages(seriesname, iteration, rundir, corrfile):
 			meany_color='-g'
 		else:
 			meany_color='-r'
+<<<<<<< HEAD
 		if (meanscl[0] > -1 and meanscl[0] < 1):
+=======
+		if (meanscl[0] > 0.99 and meanscl[0] < 1.01):
+>>>>>>> origin/trunk
 			meanscl_color='-g'
 		else:
 			meanscl_color='-r'
@@ -1810,7 +1935,11 @@ def makeCorrPlotImages(seriesname, iteration, rundir, corrfile):
 			stdy_color='--g'
 		else:
 			stdy_color='--r'
+<<<<<<< HEAD
 		if stdscl[0] < 0.5:
+=======
+		if stdscl[0] < 0.005:
+>>>>>>> origin/trunk
 			stdscl_color='--g'
 		else:
 			stdscl_color='--r'
@@ -1838,7 +1967,11 @@ def makeCorrPlotImages(seriesname, iteration, rundir, corrfile):
 		l5=fig1.plot(x, meanx_minus_stdx, stdx_color, alpha=0.6)
 		pylab.legend(loc='best', fancybox=True, prop=dict(size=11))
 		plt.xlabel("Tilt Image")
+<<<<<<< HEAD
 		plt.ylabel("Geometric Differences not yet Corrected (% of image dimension)")
+=======
+		plt.ylabel("Geometric Differences not yet Corrected (% relative to 1.0)")
+>>>>>>> origin/trunk
 		fig2=fig1.twiny()
 		fig2.set_xlim(int(round(mintilt)),int(round(maxtilt)))
 		fig2.set_xlabel("Tilt Angle (degrees)")
@@ -1855,7 +1988,11 @@ def makeCorrPlotImages(seriesname, iteration, rundir, corrfile):
 		l5=fig1.plot(x, meany_minus_stdy, stdy_color, alpha=0.6)
 		pylab.legend(loc='best', fancybox=True, prop=dict(size=11))
 		plt.xlabel("Tilt Image")
+<<<<<<< HEAD
 		plt.ylabel("Geometric Differences not yet Corrected (% of image dimension)")
+=======
+		plt.ylabel("Geometric Differences not yet Corrected (% relative to 1.0)")
+>>>>>>> origin/trunk
 		fig2=fig1.twiny()
 		fig2.set_xlim(int(round(mintilt)),int(round(maxtilt)))
 		fig2.set_xlabel("Tilt Angle (degrees)")
@@ -1884,7 +2021,11 @@ def makeCorrPlotImages(seriesname, iteration, rundir, corrfile):
 		l5=fig1.plot(x, meanscl_minus_stdscl, stdscl_color, alpha=0.6)
 		pylab.legend(loc='best', fancybox=True, prop=dict(size=11))
 		plt.xlabel("Tilt Image")
+<<<<<<< HEAD
 		plt.ylabel("Scaling Differences not yet Corrected (% of image dimension)")
+=======
+		plt.ylabel("Scaling Differences not yet Corrected (% relative to 1.0)")
+>>>>>>> origin/trunk
 		fig2=fig1.twiny()
 		fig2.set_xlim(int(round(mintilt)),int(round(maxtilt)))
 		fig2.set_xlabel("Tilt Angle (degrees)")
@@ -1998,12 +2139,15 @@ def makeTiltSeriesVideos(seriesname, iteration, tiltfilename, rawimagecount, run
 				tiltimage = os.path.join(vid_path,"initial_tilt%04d.png" % (j))
 			elif align_step == "Coarse":
 				tiltimage = os.path.join(vid_path,"coarse_tilt%04d.png" % (j))
+<<<<<<< HEAD
 			elif align_step == "Coarse2":
 				tiltimage = os.path.join(vid_path,"coarse2_tilt%04d.png" % (j))
 			elif align_step == "Imod":
 				tiltimage = os.path.join(vid_path,"imod_tilt%04d.png" % (j))
 			elif align_step == "Manual":
 				tiltimage = os.path.join(vid_path,"manual_tilt%04d.png" % (j))
+=======
+>>>>>>> origin/trunk
 			else: #align_step == "Refinement"
 				tiltimage = os.path.join(vid_path,"tilt%04d.png" % (j))
 			os.system("mkdir -p %s 2>/dev/null" % (vid_path))
@@ -2018,6 +2162,7 @@ def makeTiltSeriesVideos(seriesname, iteration, tiltfilename, rawimagecount, run
 				image.rotate(rotation).save(tiltimage)
 			
 			#Add scalebar
+<<<<<<< HEAD
 			if pixelsize < 10:
 				scalesize=2500/(pixelsize * map_sampling)    #250nm scaled by sampling
 				command = "convert -gravity South -background white -splice 0x20 -strokewidth 0 -stroke black -strokewidth 5 -draw \"line %s,%s,5,%s\" -gravity SouthWest -pointsize 13 -fill black -strokewidth 0  -draw \"translate 50,0 text 0,0 '250 nm'\" %s %s" % (scalesize, dimy/map_sampling+3, dimy/map_sampling+3, tiltimage, tiltimage)
@@ -2028,6 +2173,14 @@ def makeTiltSeriesVideos(seriesname, iteration, tiltfilename, rawimagecount, run
 			
 			#Add frame numbers and tilt angles
 			tilt_degrees = float("{0:.2f}".format(tilt_angle))
+=======
+			scalesize=2500/(pixelsize * map_sampling)    #250nm scaled by sampling
+			command = "convert -gravity South -background white -splice 0x20 -strokewidth 0 -stroke black -strokewidth 5 -draw \"line %s,%s,5,%s\" -gravity SouthWest -pointsize 13 -fill black -strokewidth 0  -draw \"translate 50,0 text 0,0 '250 nm'\" %s %s" % (scalesize, dimy/map_sampling+3, dimy/map_sampling+3, tiltimage, tiltimage)
+			os.system(command)
+			
+			#Add frame numbers and tilt angles
+			tilt_degrees = float("{0:.1f}".format(tilt_angle))
+>>>>>>> origin/trunk
 			degrees='deg'  #I've tried getting the degrees symbol working, but can't
 			command3 = "convert -gravity South -annotate 0 'Tilt Image: %s/%s' -gravity SouthEast -annotate 0 '%s %s' %s %s" % (j+1, rawimagecount, tilt_degrees, degrees, tiltimage, tiltimage)
 			os.system(command3)
@@ -2035,10 +2188,16 @@ def makeTiltSeriesVideos(seriesname, iteration, tiltfilename, rawimagecount, run
 			pass
 	
 	try: #If anything fails, it's likely that something isn't in the path
+<<<<<<< HEAD
 		# if (parallel=="True" and align_step=="Coarse") or (parallel=="True" and align_step=="Coarse2") or (parallel=="True" and align_step=="Manual"):
 		# 	procs=min(5,mp.cpu_count()-1)
 		# el
 		if parallel=="True":
+=======
+		if (parallel=="True" and align_step=="Coarse"):
+			procs=3
+		elif parallel=="True":
+>>>>>>> origin/trunk
 			procs=max(mp.cpu_count()-1,2)
 		else:
 			procs=1
@@ -2054,10 +2213,17 @@ def makeTiltSeriesVideos(seriesname, iteration, tiltfilename, rawimagecount, run
 			apDisplay.printWarning("Warning: Depiction video might be so large that it breaks your web browser!")
 		
 		if procs == 1:
+<<<<<<< HEAD
 			for i in range(start, start+rawimagecount+100):
 				processTiltImages(i,i,tiltfilename,raw_path,image_file_type,map_sampling,rundir,pixelsize,rawimagecount,tilt_clip)
 		else: #Parallel process the images
 			for i,j in zip(range(start-1, start+rawimagecount+100),range(rawimagecount+100)):
+=======
+			for i in range(start, start+rawimagecount+1):
+				processTiltImages(i,i,tiltfilename,raw_path,image_file_type,map_sampling,rundir,pixelsize,rawimagecount,tilt_clip)
+		else: #Parallel process the images
+			for i,j in zip(range(start-1, start+rawimagecount+1),range(rawimagecount+1)):
+>>>>>>> origin/trunk
 				p2 = mp.Process(target=processTiltImages, args=(i,j,tiltfilename,raw_path,image_file_type,map_sampling,rundir,pixelsize,rawimagecount,tilt_clip,))
 				p2.start()
 				
@@ -2119,10 +2285,17 @@ def makeTiltSeriesVideos(seriesname, iteration, tiltfilename, rawimagecount, run
 		#Convert pngs to either a gif or to HTML5 videos
 		if video_type == "gif":
 			command = "convert -delay 22 -loop 0 %s %s;" % (png_full, gif_full)
+<<<<<<< HEAD
 			command += 'ffmpeg -y -v 0 -framerate 4.5 -pattern_type glob -i "%s" -codec:v libx264 -profile:v baseline -pix_fmt yuv420p -g 30 -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" %s' % (png_full, mp4_full)
 		else: #video_type == "html5vid"
 			command = 'ffmpeg -y -v 0 -framerate 4.5 -pattern_type glob -i "%s" -codec:v libtheora -b:v 3000K -g 30 %s;' % (png_full, ogv_full)
 			command += 'ffmpeg -y -v 0 -framerate 4.5 -pattern_type glob -i "%s" -codec:v libx264 -profile:v baseline -pix_fmt yuv420p -g 30 -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" %s;' % (png_full, mp4_full)
+=======
+			command += 'ffmpeg -y -v 0 -framerate 4.5 -pattern_type glob -i "%s" -codec:v libx264 -profile:v baseline -pix_fmt yuv420p -g 30 %s' % (png_full, mp4_full)
+		else: #video_type == "html5vid"
+			command = 'ffmpeg -y -v 0 -framerate 4.5 -pattern_type glob -i "%s" -codec:v libtheora -b:v 3000K -g 30 %s;' % (png_full, ogv_full)
+			command += 'ffmpeg -y -v 0 -framerate 4.5 -pattern_type glob -i "%s" -codec:v libx264 -profile:v baseline -pix_fmt yuv420p -g 30 %s;' % (png_full, mp4_full)
+>>>>>>> origin/trunk
 			command += 'ffmpeg -y -v 0 -framerate 4.5 -pattern_type glob -i "%s" -codec:v libvpx -b:v 3000K -g 30 %s' % (png_full, webm_full)
 		os.system(command)
 		command2 = "rm %s" % (png_full)
@@ -2149,7 +2322,11 @@ def makeTiltSeriesVideos(seriesname, iteration, tiltfilename, rawimagecount, run
 		apDisplay.printWarning("Tilt-Series Images and/or Videos could not be generated. Make sure ffmpeg and imagemagick is in your $PATH. Make sure that pyami, scipy, numpy, and PIL are in your $PYTHONPATH.\n")
 		
 
+<<<<<<< HEAD
 def makeReconstructionVideos(seriesname, iteration, rundir, rx, ry, show_window_size, outdir, pixelsize, sampling, map_sampling, lowpass, thickness, video_type, keep_recons, parallel, align_step):
+=======
+def makeReconstructionVideos(seriesname, iteraion, rundir, rx, ry, show_window_size, outdir, pixelsize, sampling, map_sampling, lowpass, thickness, video_type, keep_recons, parallel, align_step):
+>>>>>>> origin/trunk
 	'''
 	Creates Reconstruction Videos for Depiction
 	'''
@@ -2179,12 +2356,17 @@ def makeReconstructionVideos(seriesname, iteration, rundir, rx, ry, show_window_
 			im.save(slice)
 		
 		#Add scalebar
+<<<<<<< HEAD
 		if pixelsize < 10:
 			scalesize=2500/(pixelsize * map_sampling)    #250nm scaled by sampling
 			cmd = "convert -gravity South -background white -splice 0x20 -strokewidth 0 -stroke black -strokewidth 5 -draw \"line %s,%s,5,%s\" -gravity SouthWest -pointsize 13 -fill black -strokewidth 0  -draw \"translate 50,0 text 0,0 '250 nm'\" %s %s;" % (scalesize, dimy+3, dimy+3, slice, slice)
 		else:
 			scalesize=25000/(pixelsize * map_sampling)    #2.5um scaled by sampling
 			cmd = "convert -gravity South -background white -splice 0x20 -strokewidth 0 -stroke black -strokewidth 5 -draw \"line %s,%s,5,%s\" -gravity SouthWest -pointsize 13 -fill black -strokewidth 0  -draw \"translate 50,0 text 0,0 '2.5 nm'\" %s %s;" % (scalesize, dimy+3, dimy+3, slice, slice)
+=======
+		scalesize=2500/(pixelsize * map_sampling)    #250nm scaled by sampling
+		cmd = "convert -gravity South -background white -splice 0x20 -strokewidth 0 -stroke black -strokewidth 5 -draw \"line %s,%s,5,%s\" -gravity SouthWest -pointsize 13 -fill black -strokewidth 0  -draw \"translate 50,0 text 0,0 '250 nm'\" %s %s;" % (scalesize, dimy+3, dimy+3, slice, slice)
+>>>>>>> origin/trunk
 		#Add frame numbers
 		cmd += "convert -gravity South -annotate 0 'Z-Slice: %s/%s' -gravity SouthEast -annotate 0 'bin=%s, lp=%s, thick=%s' %s %s" % (i+1, slices+1, map_sampling, lowpass, thickness, slice, slice)
 		os.system(cmd)
@@ -2260,10 +2442,17 @@ def makeReconstructionVideos(seriesname, iteration, rundir, rx, ry, show_window_
 		
 		if video_type == "gif":
 			command = "convert -delay 11 -loop 0 -layers Optimize %s %s;" % (png_full, gif_full)
+<<<<<<< HEAD
 			command += 'ffmpeg -y -v 0 -framerate 9 -pattern_type glob -i "%s" -codec:v libx264 -profile:v baseline -pix_fmt yuv420p -g 30 -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" %s' % (png_full, mp4_full)
 		else: #video_type == "html5vid"
 			command = 'ffmpeg -y -v 0 -framerate 9 -pattern_type glob -i "%s" -codec:v libtheora -b:v 3000K -g 30 %s;' % (png_full, ogv_full)
 			command += 'ffmpeg -y -v 0 -framerate 9 -pattern_type glob -i "%s" -codec:v libx264 -profile:v baseline -pix_fmt yuv420p -g 30 -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" %s;' % (png_full, mp4_full)
+=======
+			command += 'ffmpeg -y -v 0 -framerate 9 -pattern_type glob -i "%s" -codec:v libx264 -profile:v baseline -pix_fmt yuv420p -g 30 %s' % (png_full, mp4_full)
+		else: #video_type == "html5vid"
+			command = 'ffmpeg -y -v 0 -framerate 9 -pattern_type glob -i "%s" -codec:v libtheora -b:v 3000K -g 30 %s;' % (png_full, ogv_full)
+			command += 'ffmpeg -y -v 0 -framerate 9 -pattern_type glob -i "%s" -codec:v libx264 -profile:v baseline -pix_fmt yuv420p -g 30 %s;' % (png_full, mp4_full)
+>>>>>>> origin/trunk
 			command += 'ffmpeg -y -v 0 -framerate 9 -pattern_type glob -i "%s" -codec:v libvpx -b:v 3000K -g 30 %s' % (png_full, webm_full)
 		os.system(command)
 		command2 = "rm %s" % (png_full)
@@ -2319,13 +2508,18 @@ def makeDefocusPlot(rundir, seriesname, defocus_file_full):
 		apDisplay.printWarning("Defocus plot could not be generated. Make sure pylab is in your $PATH. Make sure that scipy are in your $PYTHONPATH.\n")
 
 
+<<<<<<< HEAD
 def makeCTFPlot(rundir, seriesname, defocus_file_full, voltage, cs, defocus_value=0):
+=======
+def makeCTFPlot(rundir, seriesname, defocus_file_full, voltage, cs):
+>>>>>>> origin/trunk
 	'''
 	Creates a plot of the CTF function squared based on the average of the estimated defocus values.
 	Here we use Joachim Frank's CTF and Envelope definitions from section 3 of
 	Three-Dimensional Electron Microscopy of Macromolecular Assemblies 2nd Ed., 2006.
 	'''
 	try: #If anything fails, it's likely that something isn't in the path
+<<<<<<< HEAD
 		if defocus_value == 0: #IMOD Ctf Correction
 			os.system("mkdir -p %s/media/imod_ctf_correction 2>/dev/null" % rundir)
 			ctf_fig_full=rundir+'/media/imod_ctf_correction/'+seriesname+'_estimated_ctf.png'
@@ -2436,6 +2630,89 @@ def makeDosePlots(rundir, seriesname, tilts, accumulated_dose_list, dose_a, dose
 		os.system('mv %s %s;mv %s %s' % (dose_full,dose_full[:-3]+"gif",dose_compensation_full,dose_compensation_full[:-3]+"gif"))
 		
 	except:
+=======
+		os.system("mkdir -p %s/media/ctf_correction 2>/dev/null" % rundir)
+		ctf_fig_full=rundir+'/media/ctf_correction/'+seriesname+'_ctf.png'
+		f=open(defocus_file_full,'r')
+		lines=f.readlines()
+		f.close()
+		
+		iterlines=iter(lines)
+		defocus=[]
+		for line in iterlines:
+			vals=line.split()
+			defocus.append(float(vals[4])*10**-9)
+		
+		defocus=np.array(defocus)
+		avgdefocus=defocus.mean()
+		def_spread=750*10**-10  #750 angstrom defocus spread
+		q0=0.5
+		voltage=voltage*1000
+		cs=cs/1000
+		wavelength=(1.226426025488137*10**-9)/((voltage + (voltage**2)*(9.784756346657094*10**-7)))**(1/2)
+		
+		x=np.linspace(0, 2.5*10**9, 5000)
+		y=(np.sin((-np.pi*avgdefocus*wavelength*x**2)+(np.pi*cs*(wavelength**3)*x**4)/2)*np.exp(-(np.pi**2)*(q0**2)*(cs*(wavelength**3)*(x**3)-avgdefocus*wavelength*x)**2)*np.exp(-(np.pi*def_spread*wavelength*(x**2)/2)**2))**2
+		
+		plt.clf()
+		plt.figure()
+		plt.plot(x,y)
+		plt.xlabel("Spatial Frequency (1/$\AA$)")
+		plt.ylabel("Approximate Phase Contrast Delivered")
+		plt.title("Estimated CTF^2 of Tilt-Series")
+		plt.grid(True)
+		plt.minorticks_on()
+		plt.savefig(ctf_fig_full, bbox_inches='tight')
+		plt.clf()
+		
+		#rename pngs to be gifs so that Appion will display them properly (this is a ridiculous redux workaround to display images with white backgrounds by changing png filename extensions to gif and then using loadimg.php?rawgif=1 to load them, but oh well)
+		os.system('mv %s %s' % (ctf_fig_full,ctf_fig_full[:-3]+"gif"))
+		apDisplay.printMsg("Done creating CTF Plot!")
+	except:
+		apDisplay.printWarning("CTF plot could not be generated. Make sure pylab is in your $PATH. Make sure that scipy are in your $PYTHONPATH.\n")
+
+
+def makeDosePlots(rundir, seriesname, tilts, accumulated_dose_list, dose_a, dose_b, dose_c):
+	'''
+	Creates a plot of the accumulated dose vs tilt image and tilt image angle.
+	Creates a plot of the dose compensation performed.
+	'''
+	import warnings
+	warnings.simplefilter("ignore", RuntimeWarning)  #supresses an annoying power warningthat doesn't affect anything.
+	try: #If anything fails, it's likely that something isn't in the path
+		os.system("mkdir -p %s/media/dose_compensation 2>/dev/null" % rundir)
+		dose_full=rundir+'/media/dose_compensation/'+seriesname+'_dose.png'
+		dose_compensation_full=rundir+'/media/dose_compensation/'+seriesname+'_dose_compensation.png'
+		pylab.clf()
+		
+		pylab.plot(tilts, accumulated_dose_list, '.')
+		pylab.xlabel("Tilt Image Angle (degrees)")
+		pylab.ylabel("Accumulated Dose (e-/$\AA$^2)")
+		pylab.title("Accumulated Dose for Tilt-Series Images")
+		pylab.grid(True)
+		pylab.minorticks_on()
+		pylab.savefig(dose_full, bbox_inches='tight')
+		pylab.clf()
+		
+		plt.clf()
+		upperlim=int(max(accumulated_dose_list) + 9.9999) // 10 * 10
+		x=np.linspace(0, upperlim, 200)
+		y=(dose_a/(x - dose_c))**(1/dose_b)  #equation (3) from Grant & Grigorieff, 2015
+		plt.figure()
+		plt.plot(x,y)
+		plt.xlabel("Accumulated Dose (e-/$\AA$^2)")
+		plt.ylabel("Lowpass Filter ($\AA$)")
+		plt.title("Dose Compensation Applied\n(a=%s, b=%s, c=%s)" % (dose_a, dose_b, dose_c))
+		plt.grid(True)
+		plt.minorticks_on()
+		plt.savefig(dose_compensation_full, bbox_inches='tight')
+		plt.clf()
+		
+		#rename pngs to be gifs so that Appion will display them properly (this is a ridiculous redux workaround to display images with white backgrounds by changing png filename extensions to gif and then using loadimg.php?rawgif=1 to load them, but oh well)
+		os.system('mv %s %s;mv %s %s' % (dose_full,dose_full[:-3]+"gif",dose_compensation_full,dose_compensation_full[:-3]+"gif"))
+		
+	except:
+>>>>>>> origin/trunk
 		apDisplay.printWarning("Dose plots could not be generated. Make sure pylab is in your $PATH\n")
 
 
@@ -2464,6 +2741,7 @@ def makeAngleRefinementPlots(rundir, seriesname, initial_tiltfile, azimuth_max_d
 		thetas=[]
 		phis=[]
 		elevations=[]
+<<<<<<< HEAD
 		if azimuth_stability_check == 'True':
 			cmd="awk '/AZIMUTH /{print $3}' %s" % initial_tiltfile
 			proc=subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
@@ -2471,6 +2749,8 @@ def makeAngleRefinementPlots(rundir, seriesname, initial_tiltfile, azimuth_max_d
 			start_azimuth=float(start_azimuth)
 			min_azimuth=[]
 			max_azimuth=[]
+=======
+>>>>>>> origin/trunk
 		for tiltfile in tiltfiles:
 			cmd1="awk '/AZIMUTH /{print $3}' %s" % tiltfile
 			proc=subprocess.Popen(cmd1, stdout=subprocess.PIPE, shell=True)
@@ -2478,10 +2758,13 @@ def makeAngleRefinementPlots(rundir, seriesname, initial_tiltfile, azimuth_max_d
 			azimuth=float(azimuth)
 			azimuths.append(azimuth)
 			
+<<<<<<< HEAD
 			if azimuth_stability_check == 'True':
 				min_azimuth.append(start_azimuth - azimuth_max_deviation)
 				max_azimuth.append(start_azimuth + azimuth_max_deviation)
 				
+=======
+>>>>>>> origin/trunk
 			cmd2="awk '/PSI /{print $2}' %s" % tiltfile
 			proc=subprocess.Popen(cmd2, stdout=subprocess.PIPE, shell=True)
 			(psi, err) = proc.communicate()

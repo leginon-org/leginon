@@ -37,6 +37,10 @@ class UploadRelionMaxLikeScript(appionScript.AppionScript):
 			help="Maximum likelihood jobid", metavar="#")
 		self.parser.add_option("-t", "--timestamp", dest="timestamp",
 			help="Timestamp of files, e.g. 08nov02b35", metavar="CODE")
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/trunk
 		self.parser.add_option("--no-sort", dest="sort", default=True,
 			action="store_false", help="Do not sort files into nice folders")
 
@@ -123,7 +127,10 @@ class UploadRelionMaxLikeScript(appionScript.AppionScript):
 		apDisplay.printMsg("Sorted "+str(refsort)+" reference files")
 		return
 
+<<<<<<< HEAD
 	#=====================
+=======
+>>>>>>> origin/trunk
 	def adjustPartDict(self, relionpartdict, reflist):
 		return apRelion.adjustPartDict(relionpartdict, reflist)
 
@@ -164,6 +171,7 @@ class UploadRelionMaxLikeScript(appionScript.AppionScript):
 
 		starData = starFile.StarFile(inputfile)
 		starData.read()
+<<<<<<< HEAD
 		dataBlock = starData.getDataBlock('data_images')
 		particleTree = dataBlock.getLoopDict()
 		self.class_count = {}
@@ -175,10 +183,25 @@ class UploadRelionMaxLikeScript(appionScript.AppionScript):
 			partlist.append(partdict)
 		apDisplay.printMsg("read rotation and shift parameters for "+str(len(partlist))+" particles")
 		apDisplay.printMsg("Class counts: %s"%(str(self.class_count)))
+=======
+		#print starData.getHeader()
+		dataBlock = starData.getDataBlock('data_images')
+		particleTree = dataBlock.getLoopDict()
+		#for i in range(10):
+		#	print particleTree[i]
+		for relionpartdict in particleTree:
+			partdict = self.adjustPartDict(relionpartdict, reflist)
+			partlist.append(partdict)
+		apDisplay.printMsg("read rotation and shift parameters for "+str(len(partlist))+" particles")
+>>>>>>> origin/trunk
 		if len(partlist) < 1:
 			apDisplay.printError("Did not find any particles in star file: "+inputfile)
 		return partlist
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/trunk
 	#=====================
 	def readRunParameters(self):
 		paramfile = "maxlike-"+self.params['timestamp']+"-params.pickle"
@@ -312,9 +335,13 @@ class UploadRelionMaxLikeScript(appionScript.AppionScript):
 
 		return
 
+<<<<<<< HEAD
 	#=====================
 	def createAlignedStack(self, partlist, origstackfile):
 		### this is redundant...
+=======
+	def createAlignedStack(self, partlist, origstackfile):
+>>>>>>> origin/trunk
 		return apStackFile.createAlignedStack(partlist, origstackfile)
 
 	#=====================
@@ -324,7 +351,10 @@ class UploadRelionMaxLikeScript(appionScript.AppionScript):
 		f.write(text+"\n\n")
 		f.close()
 
+<<<<<<< HEAD
 	#=====================
+=======
+>>>>>>> origin/trunk
 	def replaceNaNImageInReferenceStack(self, runparams):
 		apDisplay.printMsg('Checking reference stack for NaN data....')
 		finalreffile = "part%s_it%03d_classes.mrcs"%(runparams['timestamp'], runparams['maxiter'])
@@ -438,6 +468,7 @@ class UploadRelionMaxLikeScript(appionScript.AppionScript):
 		# create aligned reference stack
 		reflist = self.readRefStarFile()
 		alignref_imagicfile = "part"+self.params['timestamp']+"_average.hed"
+<<<<<<< HEAD
 
 		### create aligned stacks
 		partlist = self.readPartStarFile(reflist)
@@ -464,6 +495,22 @@ class UploadRelionMaxLikeScript(appionScript.AppionScript):
 		temp_imagicfile = apStackFile.createAlignedStack(reflist, unaligned_refstack_imagic, 'temp_aligned_ref')
 		apFile.moveStack(unaligned_refstack_imagic, alignref_imagicfile)
 		#sys.exit(1)
+=======
+	
+		# convert unaligned refstack from mrc to imagic format
+		unaligned_refstack_mrc = os.path.join('iter%03d' % self.lastiter,'part%s_it%03d_classes.mrcs' % (self.params['timestamp'], self.lastiter))
+		unaligned_refstack_imagic = 'part%s_it%03d_classes.hed' % (self.params['timestamp'], self.lastiter)
+		stackarray = mrc.read(unaligned_refstack_mrc)
+		apImagicFile.writeImagic(stackarray, unaligned_refstack_imagic)
+		# createAlignedStack
+		temp_imagicfile = apStackFile.createAlignedStack(reflist, unaligned_refstack_imagic,'temp_aligned_ref')
+		apFile.moveStack(temp_imagicfile,alignref_imagicfile)
+
+		### create aligned stacks
+		partlist = self.readPartStarFile(reflist)
+		#self.writePartDocFile(partlist)
+		alignimagicfile = self.createAlignedStack(partlist, runparams['localstack'])
+>>>>>>> origin/trunk
 
 		#create average image for web
 		apStack.averageStack(alignimagicfile, msg=False)

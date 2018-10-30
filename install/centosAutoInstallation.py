@@ -15,7 +15,11 @@ class CentosInstallation(object):
 
 	def setReleaseDependantValues(self):
 		# need to change to branch when release
+<<<<<<< HEAD
 		self.gitCmd = "git clone -b trunk http://emg.nysbc.org/git/myami " + self.gitMyamiDir
+=======
+		self.gitCmd = "git clone -b myami-beta http://emg.nysbc.org/git/myami " + self.gitMyamiDir
+>>>>>>> origin/trunk
 		# redhat release related values
 		self.redhatRelease = '6.8' # currently used to decide the name of the epel download.
 		self.torqueLibPath = '/var/lib/torque/'
@@ -869,9 +873,13 @@ endif
 		shutil.copy(pyscopeCfgDir + '/instruments.cfg.template', pyscopeCfgDir + '/instruments.cfg')
 
 
+<<<<<<< HEAD
 	def setupSinedonCfg(self):
 		# sinedon import needs sinedon.cfg already configured.  Therefore, it is better
 		# to get the cfg template from self.gitMyamiDir
+=======
+	def setupSinedonCfg(self, sinedonDir):
+>>>>>>> origin/trunk
 		inf = open(self.gitMyamiDir + 'sinedon/examples/sinedon.cfg', 'r')
 		outf = open('/etc/myami/sinedon.cfg', 'w')
 
@@ -1015,7 +1023,11 @@ endif
 			{
 				# Python fs
 				'targzFileName':'fs-0.4.0.tar.gz',
+<<<<<<< HEAD
 				'fileLocation':'https://pypi.python.org/packages/08/c3/9a6e3c7bd2755e3383c84388c1e01113bddafa8008a0aa4af64996ab4470/',
+=======
+				'fileLocation':'https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/pyfilesystem/',
+>>>>>>> origin/trunk
 				'unpackDirName':'fs-0.4.0',
 			}
 		]

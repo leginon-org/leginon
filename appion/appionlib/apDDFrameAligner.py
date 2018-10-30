@@ -6,14 +6,21 @@ import re
 import subprocess
 
 class DDFrameAligner(object):
+<<<<<<< HEAD
 	# testbin.py is a test script in appion/bin as an example
 	executable = 'testbin.py'
+=======
+	executable = 'cp'
+>>>>>>> origin/trunk
 	def __init__(self):
 		self.alignparams = {}
 		self.gain_dark_cmd = ''
 		self.save_aligned_stack = True
 		self.is_use_frame_aligner_sum = True
+<<<<<<< HEAD
 		self.stack_binning = 1
+=======
+>>>>>>> origin/trunk
 
 	def getExecutableName(self):
 		return self.executable
@@ -37,7 +44,11 @@ class DDFrameAligner(object):
 		self.is_use_frame_aligner_sum = value
 
 	def setSaveAlignedStack(self, value):
+<<<<<<< HEAD
 		self.save_aligned_stack = value
+=======
+		self.save_aligned_stack
+>>>>>>> origin/trunk
 
 	def setInputFrameStackPath(self, filepath):
 		'''
@@ -67,6 +78,7 @@ class DDFrameAligner(object):
 		
 	def getAlignedSumFrameList(self):
 		return self.sumframelist
+<<<<<<< HEAD
 
 	def setStackBinning(self, value):
 		self.stackbinning = value
@@ -79,6 +91,13 @@ class DDFrameAligner(object):
 		cmd += self.joinFrameAlignOptions(glue='-')
 		cmd += ' > '+self.logpath
 		apDisplay.printWarning('This example alignment copies and bins the first frame')
+=======
+		
+	def makeFrameAlignmentCommand(self):
+		cmd = ' '.join([self.executable, self.framestackpath, self.aligned_sumpath])
+		cmd += self.joinFrameAlignOptions(glue='-')
+		cmd += ' > '+self.logpath
+>>>>>>> origin/trunk
 		return cmd
 
 	def alignFrameStack(self):
@@ -237,6 +256,7 @@ class MotionCor2_UCSF(DDFrameAligner):
 		self.gain_dark_cmd = cmd
 		apDisplay.printMsg('Gain Dark Command Option: %s' % cmd)
 
+<<<<<<< HEAD
 	def getInputCommand(self):
 		if self.framestackpath.endswith('.tif'):
 			cmd = '-InTiff %s' % self.framestackpath
@@ -244,6 +264,8 @@ class MotionCor2_UCSF(DDFrameAligner):
 			cmd = '-InMrc %s' % self.framestackpath
 		return cmd
 
+=======
+>>>>>>> origin/trunk
 	def makeFrameAlignmentCommand(self):
 		'''
 		David Agard lab's gpu program for aligning frames using all defaults
@@ -255,6 +277,7 @@ class MotionCor2_UCSF(DDFrameAligner):
 
 		# Construct the command line with defaults
 
+<<<<<<< HEAD
 		cmd = '%s %s -OutMrc %s' % (self.executable, self.getInputCommand(), self.aligned_sumpath)
 
 		# binning
@@ -272,6 +295,18 @@ class MotionCor2_UCSF(DDFrameAligner):
 		else:
 			apDisplay.printError("Invalid Bft arguments ! (global: %s, local: %s)" %(self.alignparams['Bft_global'], self.alignparams['Bft_local']))
 			
+=======
+		cmd = '%s -InMrc %s -OutMrc %s' % (self.executable, self.framestackpath, self.aligned_sumpath)
+
+		# binning
+		if self.alignparams['FtBin'] > 1:
+			cmd += ' -FtBin %d ' % self.alignparams['FtBin']
+
+		# bfactor
+		if self.alignparams['bft'] > 0:
+			cmd += ' -Bft %d ' % self.alignparams['bft']
+
+>>>>>>> origin/trunk
 		# frame truncation
 		if self.alignparams['Throw'] > 0:
 			cmd += ' -Throw %d' % self.alignparams['Throw']
@@ -351,8 +386,12 @@ class MotionCor2_UCSF(DDFrameAligner):
 			'nrw':'Group', 
 			'flp':'flp', 
 			'bin':'FtBin', 
+<<<<<<< HEAD
 			"Bft_global":"Bft_global",
 			"Bft_local":"Bft_local",
+=======
+			"Bft":"bft",
+>>>>>>> origin/trunk
 			"apix":"PixSize",
 			"Iter":"Iter",
 			"Patchrows":"Patchrows",
@@ -401,11 +440,15 @@ class MotionCor2_UCSF(DDFrameAligner):
 
 		### this is unnecessary, need to figure out how to convert outbuffer from subprocess PIPE to readable format
 		f = open(log2, "r")
+<<<<<<< HEAD
 			
+=======
+>>>>>>> origin/trunk
 		outbuffer = f.readlines()
 		f.close()
 
 		### parse motioncor2 output
+<<<<<<< HEAD
 		temp = []
 		found = False
 		for line in outbuffer:
@@ -419,6 +462,14 @@ class MotionCor2_UCSF(DDFrameAligner):
 			if m:
 				shx = float(l.split()[-2])
 				shy = float(l.split()[-1])
+=======
+		shifts = []
+		for l in outbuffer: 
+			m = re.match("...... Frame", l)
+			if m:
+				shx = float(l[26:].split()[0])
+				shy = float(l[26:].split()[1])
+>>>>>>> origin/trunk
 				shifts.append([shx, shy])
 
 		### convert motioncorr2 output to motioncorr1 format

@@ -166,20 +166,31 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		#			'Wait for another node to process targets before marking them done')
 		self.widgets['user check'] = wx.CheckBox(self, -1,
 																	'Allow for user verification of selected targets')
+<<<<<<< HEAD
 		#checkmethodsz = self.createCheckMethodSizer()
+=======
+		checkmethodsz = self.createCheckMethodSizer()
+>>>>>>> origin/trunk
 		self.widgets['queue'] = wx.CheckBox(self, -1,
 																							'Queue up targets')
 		self.widgets['queue drift'] = wx.CheckBox(self, -1, 'Declare drift when queue submitted')
 		self.widgets['sort target'] = wx.CheckBox(self, -1, 'Sort targets by shortest path')
+<<<<<<< HEAD
 		#self.widgets['allow append'] = wx.CheckBox(self, -1, 'Allow target finding on old images')
 		self.widgets['multifocus'] = wx.CheckBox(self, -1, 'Use all focus targets for averaging')
 		self.widgets['allow no focus'] = wx.CheckBox(self, -1, 'Do not require focus targets in user verification')
 		self.Bind(wx.EVT_CHECKBOX, self.onUserCheckbox, self.widgets['user check'])
+=======
+		self.widgets['allow append'] = wx.CheckBox(self, -1, 'Allow target finding on old images')
+		self.widgets['multifocus'] = wx.CheckBox(self, -1, 'Use all focus targets for averaging')
+		self.widgets['allow no focus'] = wx.CheckBox(self, -1, 'Do not require focus targets in user varification')
+>>>>>>> origin/trunk
 		self.Bind(wx.EVT_CHECKBOX, self.onQueueCheckbox, self.widgets['queue'])
 
 		sz = wx.GridBagSizer(5, 5)
 		sz.Add(self.widgets['user check'], (0, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
+<<<<<<< HEAD
 		#sz.Add(checkmethodsz, (1, 0), (1, 1),
 		#				wx.ALIGN_CENTER_VERTICAL)
 		#sz.Add(self.widgets['wait for done'], (1, 0), (1, 1),
@@ -197,6 +208,25 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		#if not hide_incomplete:
 		#	sz.Add(self.widgets['allow append'], (7, 0), (1, 1),
 		#					wx.ALIGN_CENTER_VERTICAL)
+=======
+		sz.Add(checkmethodsz, (1, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		#sz.Add(self.widgets['wait for done'], (1, 0), (1, 1),
+		#				wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['queue'], (2, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['queue drift'], (3, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['sort target'], (4, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['multifocus'], (5, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['allow no focus'], (6, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		if not hide_incomplete:
+			sz.Add(self.widgets['allow append'], (7, 0), (1, 1),
+							wx.ALIGN_CENTER_VERTICAL)
+>>>>>>> origin/trunk
 
 		return sz
 

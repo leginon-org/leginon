@@ -406,7 +406,11 @@ class SimTEM(tem.TEM):
 
 	def runBufferCycle(self):
 		time.sleep(5)
+<<<<<<< HEAD
 		self.buffer_pressure -= 5
+=======
+		pass
+>>>>>>> origin/trunk
 
 	def getTurboPump(self):
 			if not hasattr(self, 'turbo'):
@@ -492,6 +496,7 @@ class SimTEM(tem.TEM):
 	def exposeSpecimenNotCamera(self,seconds):
 		time.sleep(seconds)
 
+<<<<<<< HEAD
 	def hasGridLoader(self):
 		return True
 
@@ -543,6 +548,8 @@ class SimTEM(tem.TEM):
 	def retractApertureMechanism(self, aperture_mechanism):
 		return setApertureSelection(aperture_mechanism, 'open')
 
+=======
+>>>>>>> origin/trunk
 class SimTEM300(SimTEM):
 	name = 'SimTEM300'
 	def __init__(self):

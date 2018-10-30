@@ -452,6 +452,8 @@ class FinalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 										wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 		szice.Add(self.createFocusOffsetSizer(), (5,0), (1,2),
 										wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		szice.Add(self.createFocusOffsetSizer(), (4,0), (1,2),
+										wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 		szice.AddGrowableCol(1)
 
 		sbszice.Add(szice, 1, wx.EXPAND|wx.ALL, 5)

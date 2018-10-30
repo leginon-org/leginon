@@ -78,6 +78,7 @@ def changeToModulePath(module_path=''):
 
 def getGITBranch(module_path=''):
 	revertpath = changeToModulePath(module_path)
+<<<<<<< HEAD
 	return gitlib.getCurrentBranch()
 	#branch = getTextVersion()
 		
@@ -88,12 +89,37 @@ def getGITHash(module_path=''):
 def getVersion(module_path=''):
 	# myami svn frozen before revision 20000
 	return gitlib.getCurrentCommitCount()
+=======
+	info, error = getShellResult('git branch')
+	os.chdir(revertpath)
+	for line in info.split('\n'):
+		if '* ' in line:
+			bits =  line.split('* ')
+			branch = bits[1]
+			return branch
+	branch = getTextVersion()
+		
+def getGITHash(module_path=''):
+	revertpath = changeToModulePath(module_path)
+	info, error = getShellResult('git rev-parse HEAD')
+	os.chdir(revertpath)
+	if len(info) > 8:
+		return info[:8]
+
+def getVersion(module_path=''):
+	# myami svn frozen before revision 20000
+	return '20000'
+>>>>>>> origin/trunk
 
 def getGITInfo(module_path):
 	info = {}
 	info['Branch'] = getGITBranch(module_path)
 	info['Hash'] = getGITHash(module_path)
+<<<<<<< HEAD
 	info['Revision'] = getVersion(module_path)
+=======
+	info['Revision'] = 20000
+>>>>>>> origin/trunk
 
 def getSVNInfo(module_path=''):
 	revertpath = changeToModulePath(module_path='')
@@ -110,7 +136,11 @@ def getSVNInfo(module_path=''):
 	return infodict
 
 def getTextVersion():
+<<<<<<< HEAD
 	return 'pre3.4'
+=======
+	return 'beta'
+>>>>>>> origin/trunk
 
 def getSVNVersion(module_path=''):
 	svninfo = getSVNInfo(module_path)

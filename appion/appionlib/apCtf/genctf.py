@@ -10,6 +10,8 @@ from appionlib.apImage import imagestat
 
 ###this file is not allowed to import any apCtf files, besides ctftools
 
+###this file is not allowed to import any apCtf files, besides ctftools
+
 debug = False
 
 #===================
@@ -121,8 +123,12 @@ def generateCTF1dACE2(radii=None, focus=1.0e-6, cs=2e-3, volts=120000, ampconst=
 
 	radiisq = radii**2
 
+<<<<<<< HEAD
 	#this gamma has the opposide sign of the others
 	gamma = (x4 * radiisq**2) + (-focus * x2 * radiisq) + (x0) - extra_phase_shift
+=======
+	gamma = (x4 * radiisq**2) + (-focus * x2 * radiisq) + (x0) + extra_phase_shift
+>>>>>>> origin/trunk
 	#ctf = -1.0*numpy.cos(gamma) #WRONG
 	#ctf = -1.0*numpy.sin(gamma) #CORRECT
 	ctf = 1.0*numpy.sin(gamma) #MAYBE CORRECT
@@ -137,6 +143,7 @@ def generateRadii1d(numpoints=256, pixelsize=1e-10):
 	radfreq = 1.0/( numpoints*pixelsize )
 	radii = numpy.arange(numpoints) * radfreq
 	return radii
+<<<<<<< HEAD
 
 #===================
 def generateCTF2dFromCtfData(ctfdata, apix, volts, fieldsize):
@@ -210,6 +217,25 @@ def generateLocalFocus2d(focus1=-1.0e-6, focus2=-1.0e-6, theta=0.0, shape=(256,2
 
 #===================
 def generateGamma2d(focus1=-1.0e-6, focus2=-1.0e-6, theta=0.0, 
+=======
+
+#===================
+def generateCTF2dFromCtfData(ctfdata, apix, volts, fieldsize):
+	focus1 = ctfdata['defocus1']
+	focus2 = ctfdata['defocus2']
+	theta = ctfdata['angle_astigmatism']
+	extra_phase_shift = ctfdata['extra_phase_shift'] # radians
+	mpix = apix*1e-10
+	cs = ctfdata['cs']*1e-3
+	volts = volts
+	ampconst = ctfdata['amplitude_contrast']
+	shape = (fieldsize, fieldsize)
+	checkParams(focus1=focus1, focus2=focus2, cs=cs, volts=volts, ampconst=ampconst, extra_phase_shift=extra_phase_shift, failParams=False)
+	return generateCTF2d(focus1, focus2, theta, shape, mpix, cs, volts, ampconst, extra_phase_shift)
+
+#===================
+def generateCTF2d(focus1=-1.0e-6, focus2=-1.0e-6, theta=0.0, 
+>>>>>>> origin/trunk
 	shape=(256,256), pixelsize=1.0e-10, cs=2e-3, volts=120000, ampconst=0.000, extra_phase_shift=0.0):
 	"""
 	calculates a CTF function based on the input details
@@ -239,11 +265,28 @@ def generateGamma2d(focus1=-1.0e-6, focus2=-1.0e-6, theta=0.0,
 		apDisplay.printColor("generateCTF 2d radii: 1/%.2fA --> 1/%.2fA"
 			%(1/math.sqrt(radiisq[halfshape,halfshape])*1e10, 1/math.sqrt(radiisq[0,halfshape])*1e10), "cyan")
 
+<<<<<<< HEAD
+=======
+	#t1 = math.pi * wavelength
+	#t2 = wavelength**2 * cs / 2.0
+	#t3 = -1.0*math.asin(ampconst)
+
+	radiisq = generateRadial2d(shape, xfreq, yfreq)
+	if debug is True:
+		print "\n RADII"
+		imagestat.printImageInfo(1.0/numpy.sqrt(radiisq))
+	if debug is True:
+		halfshape = shape[0]/2
+		apDisplay.printColor("generateCTF 2d radii: 1/%.2fA --> 1/%.2fA"
+			%(1/math.sqrt(radiisq[halfshape,halfshape])*1e10, 1/math.sqrt(radiisq[0,halfshape])*1e10), "cyan")
+
+>>>>>>> origin/trunk
 	angles = -1*generateAngular2d(shape)
 	if debug is True:
 		print "\n ANGLES"
 		imagestat.printImageInfo(angles)
 
+<<<<<<< HEAD
 	localfocus = generateLocalFocus2d(focus1, focus2, theta, shape)
 	if debug is True:
 		print "\n FOCUS"
@@ -254,6 +297,31 @@ def generateGamma2d(focus1=-1.0e-6, focus2=-1.0e-6, theta=0.0,
 	x0 = math.asin(ampconst) + extra_phase_shift
 	if debug is True:
 		print "x0 shift %.1f degrees"%(math.degrees(x0))
+=======
+	localfocus = meanfocus + focusdiff * numpy.cos(2.0*(angles-theta))
+	if debug is True:
+		print "\n FOCUS"
+		imagestat.printImageInfo(localfocus*1e6)
+
+	gamma = -0.5*math.pi*cs*(wavelength**3)*(radiisq**2) + math.pi*localfocus*wavelength*(radiisq) + extra_phase_shift
+	if debug is True:
+		print "\n GAMMA"
+		imagestat.printImageInfo(gamma)
+
+	#gamma = t1*radiisq * (-localfocus + t2*radiisq) + t3
+	A = ampconst
+	B = math.sqrt(1.0 - ampconst**2)
+	prectf = A*numpy.cos(gamma) + B*numpy.sin(gamma)
+	ctf = prectf**2
+
+	if debug is True:
+		print "\n CTF"
+		imagestat.printImageInfo(ctf)
+
+	#gauss = generateGaussion2d(shape, xfreq, yfreq)
+	#imagestat.printImageInfo(gauss)
+	#ctf = ctf*gauss
+>>>>>>> origin/trunk
 
 	gamma1 = (x4 * radiisq**2) + (localfocus * x2 * radiisq) + (x0) 
 
@@ -357,6 +425,7 @@ def equiPhaseAverage(image, ellipratio,
 	## need to convert to integers for scipy labels function
 	sprime = numpy.array(sprime, dtype=numpy.int32)
 
+<<<<<<< HEAD
 	if debug is True:
 		print "computing equiphase average xdata..."
 
@@ -426,6 +495,9 @@ def equiPhaseAverage(image, ellipratio,
 		apDisplay.printMsg("actual max size of equiphase average: %d"%(xdata.max())) 
 
 	return xdata, ydata
+=======
+	return ctf
+>>>>>>> origin/trunk
 
 #===================
 class Angular(object):
@@ -439,8 +511,11 @@ class Angular(object):
 			self.center = (-0.5, -0.5)
 		# function
 		self.flip = flip
+<<<<<<< HEAD
 		# fix for numpy 1.12 or newer
 		shape = numpy.array(shape, dtype=numpy.uint16)
+=======
+>>>>>>> origin/trunk
 		self.angular = numpy.fromfunction(self.arctan, shape, dtype=numpy.float64)
 
 	def arctan(self, y, x):
@@ -557,8 +632,13 @@ def checkParams(focus1=-1.0e-6, focus2=-1.0e-6, pixelsize=1.5e-10,
 		print "  High tension %.1f kV"%(volts*1e-3)
 		print ("  Amp Contrast %.3f (shift %.1f degrees)"
 			%(ampconst, math.degrees(-math.asin(ampconst))))
+<<<<<<< HEAD
 		print ("  Extra Phase Shift  %.1f degrees"
 			% (math.degrees(extra_phase_shift)))
+=======
+		print ("  Extra Phase Shift %.1f degrees"
+			% (extra_phase_shift, math.degrees(extra_phase_shift)))
+>>>>>>> origin/trunk
 	if focus1*1e6 > 15.0 or focus1*1e6 < 0.1:
 		msg = "atypical defocus #1 value %.1f microns (underfocus is positve)"%(focus1*1e6)
 		if failParams is False:

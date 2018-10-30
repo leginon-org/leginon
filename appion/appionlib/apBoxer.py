@@ -36,6 +36,7 @@ def checkBoxInImage(imgdims,start_x,start_y,boxsize):
 		and  (start_y > 0 and start_y+boxsize <= imgdims['y']) )
 
 ##=================
+<<<<<<< HEAD
 def writeParticlesToStar(imgdata, boxsize, partdatas, shiftdata, boxfile, ctfdata=None, localCTF=False):
 	"""
 	for a list of partdicts from database,
@@ -154,6 +155,8 @@ def writeParticlesToStar(imgdata, boxsize, partdatas, shiftdata, boxfile, ctfdat
 	return parttree, boxedpartdatas
 
 ##=================
+=======
+>>>>>>> origin/trunk
 def processParticleData(imgdata, boxsize, partdatas, shiftdata, boxfile, rotate=False, checkInside=True):
 	"""
 	for a list of partdicts from database, apply shift
@@ -195,9 +198,22 @@ def processParticleData(imgdata, boxsize, partdatas, shiftdata, boxfile, rotate=
 			continue
 
 		### xcoord is the upper left area corner of the particle box
+<<<<<<< HEAD
 		start_x, start_y = getBoxStartPosition(halfbox, partdata, shiftdata)
 		if checkInside is False:
 			checkStatus = True
+=======
+		start_x,start_y = getBoxStartPosition(imgdata,halfbox,partdata, shiftdata)
+		if checkBoxInImage(imgdims,start_x,start_y,boxsize) or checkInside is False:
+			partdict = {
+				'x_coord': start_x,
+				'y_coord': start_y,
+				'angle': partdata['angle'],
+			}
+			parttree.append(partdict)
+			boxedpartdatas.append(partdata)
+			f.write("%d\t%d\t%d\t%d\t-3\n"%(start_x,start_y,boxsize,boxsize))
+>>>>>>> origin/trunk
 		else:
 			checkStatus = checkBoxInImage(imgdims, start_x, start_y, boxsize)
 

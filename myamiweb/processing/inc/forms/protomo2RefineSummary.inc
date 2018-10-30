@@ -19,6 +19,9 @@ session_set_cookie_params(604800);
 $page = $_SERVER['REQUEST_URI'];
 header("Refresh: 300; URL=$page");
 
+ini_set('session.gc_maxlifetime', 604800);
+session_set_cookie_params(604800);
+
 session_start();
 $tiltseries=$_SESSION['tiltseries'];
 $sessionname=$_SESSION['sessionname'];
@@ -57,7 +60,11 @@ class Protomo2RefineSummary extends BasicLayoutForm
 		$this->setTitle( 'Protomo Refinement Summary' );
 		$this->setHeading( 'Protomo Refinement Summary' );
 		$this->setExeFile( '' );
+<<<<<<< HEAD
 		$this->setGuideURL( "https://github.com/nysbc/appion-protomo#example" );
+=======
+		$this->setGuideURL( "http://emg.nysbc.org/redmine/projects/appion/wiki/Align_Tilt-Series" );
+>>>>>>> origin/trunk
 		$this->setTestable( False ); // True to activate "test single image".
 		$this->setUseLegOutDir( False ); // The output directory will be created in the Appion run directory rather than Leginon.
 		$this->setShowDesc( False ); // Flag to hide the description field of the run parameters.
@@ -77,7 +84,10 @@ class Protomo2RefineSummary extends BasicLayoutForm
 		global $runname;
 		global $tiltseries;
 		
+<<<<<<< HEAD
 		$defocus_gif_files = glob("$outdir/$runname/defocus_estimation/*/*/diagnostic.gif");
+=======
+>>>>>>> origin/trunk
 		$ctf_gif_files = glob("$outdir/$runname/media/ctf_correction/s*.gif");
 		$dose_gif_files = glob("$outdir/$runname/media/dose_compensation/s*.gif");
 		$corrpeak_gif_files = glob("$outdir/$runname/media/correlations/s*.gif");
@@ -89,7 +99,10 @@ class Protomo2RefineSummary extends BasicLayoutForm
 		$orientation_gif_file = "$outdir/$runname/media/angle_refinement/series".sprintf('%04d',$tiltseries)."_orientation.gif";
 		$elevation_gif_file = "$outdir/$runname/media/angle_refinement/series".sprintf('%04d',$tiltseries)."_elevation.gif";
 		
+<<<<<<< HEAD
 		$defocus_gif = "loadimg.php?rawgif=1&filename=".$defocus_gif_files[0];
+=======
+>>>>>>> origin/trunk
 		$ctfplot_gif = "loadimg.php?rawgif=1&filename=".$ctf_gif_files[0];
 		$ctfdefocus_gif = "loadimg.php?rawgif=1&filename=".$ctf_gif_files[1];
 		$dose_gif = "loadimg.php?rawgif=1&filename=".$dose_gif_files[0];
@@ -116,6 +129,7 @@ class Protomo2RefineSummary extends BasicLayoutForm
 			$html .= '</tr></td></table>';
 		}
 		
+<<<<<<< HEAD
 		if (isset($defocus_gif_files[0])) {
 			$html .= "
 	<br /><hr />
@@ -142,6 +156,8 @@ class Protomo2RefineSummary extends BasicLayoutForm
 			$html .= '<center>'.docpop('defocus_estimate_info', 'Image Info').'</center><br>';
 		}
 		
+=======
+>>>>>>> origin/trunk
 		if (isset($ctf_gif_files[0])) {
 			$html .= "
 		<br />	
@@ -248,6 +264,7 @@ class Protomo2RefineSummary extends BasicLayoutForm
 		}
 		$html .= '</tr><tr></table><br>';
 		
+<<<<<<< HEAD
 		if (count($recon_files) > 0) {
 			$html .= "
 			<hr />
@@ -271,6 +288,8 @@ class Protomo2RefineSummary extends BasicLayoutForm
 			$html .= '<br>';
 		}
 
+=======
+>>>>>>> origin/trunk
 		// Only display link to next step in tomo processing if at least one iteration is complete
 		if (max(count($corrpeak_gif_files),count($corrpeak_vid_files)) < 1)
 		{
@@ -280,9 +299,12 @@ class Protomo2RefineSummary extends BasicLayoutForm
 				<b><center>[Refresh this page after at least one Refinement iteration completes]</center><br></b>";
 			$html .= "<br></br>
 				<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2RefineForm'><b><center><font size='5'>←</font> [Click here to go back to <font size='4'>Refinement</font>]</center></b></a><br>";
+<<<<<<< HEAD
 			$html .= "<br></tr>\n";
 			$html .= "</table>\n";
 			$html .= closeRoundBorder();
+=======
+>>>>>>> origin/trunk
 		} else {
 			$html .= "<br><hr /><br>";
 			$html .= openRoundBorder();

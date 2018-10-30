@@ -9,16 +9,21 @@
 from leginon import leginondata
 import event
 import mosaictargetfinder
+<<<<<<< HEAD
 import targetfinder
 import gui.wx.MosaicQuiltFinder
 import jahcfindermodel
 import jahcfinder
+=======
+import gui.wx.MosaicClickTargetFinder
+>>>>>>> origin/trunk
 
 class MosaicQuiltFinder(mosaictargetfinder.MosaicClickTargetFinder):
 	'''
 	Target selection specific for atlas made from square stitchingor atlas made from.  It retains z height in further imaging. 
 	'''
 
+<<<<<<< HEAD
 	panelclass = gui.wx.MosaicQuiltFinder.Panel
 	settingsclass = leginondata.MosaicQuiltFinderSettingsData
 	defaultsettings = dict(targetfinder.ClickTargetFinder.defaultsettings)
@@ -28,17 +33,27 @@ class MosaicQuiltFinder(mosaictargetfinder.MosaicClickTargetFinder):
 		'scale image': True,
 		'scale size': 512,
 		'create on tile change': 'all',
+=======
+	panelclass = gui.wx.MosaicClickTargetFinder.Panel
+	settingsclass = leginondata.MosaicClickTargetFinderSettingsData
+	defaultsettings = dict(mosaictargetfinder.MosaicClickTargetFinder.defaultsettings)
+	defaultsettings.update({
+>>>>>>> origin/trunk
 		'autofinder': False,
 	})
 
 	eventoutputs = mosaictargetfinder.MosaicClickTargetFinder.eventoutputs + [event.MosaicDoneEvent]
+<<<<<<< HEAD
 	targetnames = ['focus', 'acquisition']
+=======
+>>>>>>> origin/trunk
 
 	def __init__(self, id, session, managerlocation, **kwargs):
 		self.mosaicselectionmapping = {}
 		mosaictargetfinder.MosaicClickTargetFinder.__init__(self, id, session, managerlocation, **kwargs)
 
 		if self.__class__ == MosaicQuiltFinder:
+<<<<<<< HEAD
 			self.setAutoTargetFinder()
 			self.start()
 
@@ -52,6 +67,11 @@ class MosaicQuiltFinder(mosaictargetfinder.MosaicClickTargetFinder):
 		self.test_jahc_imageid = None
 
 	def mosaicToTarget(self, typename, row, col, **kwargs):
+=======
+			self.start()
+
+	def mosaicToTarget(self, typename, row, col):
+>>>>>>> origin/trunk
 		imagedata, drow, dcol = self._mosaicToTarget(row, col)
 		### create a new target list if we don't have one already
 		'''
@@ -61,11 +81,16 @@ class MosaicQuiltFinder(mosaictargetfinder.MosaicClickTargetFinder):
 		'''
 		# publish as targets on most recent version of image to preserve adjusted z
 		recent_imagedata = self.researchImages(list=imagedata['list'],target=imagedata['target'])[-1]
+<<<<<<< HEAD
 		targetdata = self.newTargetForTile(recent_imagedata, drow, dcol, type=typename, list=self.targetlist, last_focused=recent_imagedata['target']['list'],**kwargs)
+=======
+		targetdata = self.newTargetForTile(recent_imagedata, drow, dcol, type=typename, list=self.targetlist, last_focused=recent_imagedata['target']['list'])
+>>>>>>> origin/trunk
 		## can we do dbforce here?  it might speed it up
 		self.publish(targetdata, database=True)
 		return targetdata
 
+<<<<<<< HEAD
 	def getMiddleTile(self):
 		count = len(self.mosaic.tiles)
 		index = self.mosaic.tiles[int(count/2.0)]
@@ -176,3 +201,5 @@ class MosaicQuiltFinder(mosaictargetfinder.MosaicClickTargetFinder):
 			self.setTargets(all_targets[k],k)
 		self.panel.squaresFound()
 		
+=======
+>>>>>>> origin/trunk

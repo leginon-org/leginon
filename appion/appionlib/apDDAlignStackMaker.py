@@ -4,7 +4,10 @@ import os
 import socket
 import shutil
 import numpy
+<<<<<<< HEAD
 import glob
+=======
+>>>>>>> origin/trunk
 
 #pyami
 from pyami import fileutil
@@ -13,7 +16,10 @@ from pyami import mrc
 from appionlib import apDisplay
 from appionlib import apDDStackMaker
 from appionlib import apDDFrameAligner
+<<<<<<< HEAD
 from appionlib import apDDResult
+=======
+>>>>>>> origin/trunk
 from appionlib import apFile
 
 class AlignStackLoop(apDDStackMaker.FrameStackLoop):
@@ -54,7 +60,11 @@ class AlignStackLoop(apDDStackMaker.FrameStackLoop):
 		self.framealigner = apDDFrameAligner.DDFrameAligner()
 
 	def checkFrameAlignerExecutable(self):
+<<<<<<< HEAD
 		self.setFrameAligner()
+=======
+		self.framealigner = apDDFrameAligner.DDFrameAligner()
+>>>>>>> origin/trunk
 		exename = self.framealigner.getExecutableName()
 		alignexe = subprocess.Popen("which "+exename, shell=True, stdout=subprocess.PIPE).stdout.read().strip()
 		if not os.path.isfile(alignexe):
@@ -94,7 +104,10 @@ class AlignStackLoop(apDDStackMaker.FrameStackLoop):
 		self.framealigner.setLogPath(self.temp_logpath)
 
 		if self.isAlign():
+<<<<<<< HEAD
 			self.framealigner.setStackBinning(self.dd.stack_binning)
+=======
+>>>>>>> origin/trunk
 			# set framelist
 			framelist = self.dd.getFrameListFromParams(self.params)
 			self.dd.setAlignedSumFrameList(framelist)
@@ -104,7 +117,11 @@ class AlignStackLoop(apDDStackMaker.FrameStackLoop):
 			self.framealigner.setAlignedSumFrameList(framelist)
 			# whether the sum can be don in framealigner depends on the framelist
 			self.framealigner.setIsUseFrameAlignerSum(self.isUseFrameAlignerSum())
+<<<<<<< HEAD
 			self.framealigner.setSaveAlignedStack(self.dd.getKeepAlignedStack())
+=======
+			self.framealigner.setSaveAlignedStack = self.dd.getKeepAlignedStack()
+>>>>>>> origin/trunk
 			if self.isUseFrameAlignerFlat():
 				self.dd.makeDarkNormMrcs()
 				gain_ref = self.dd.getNormRefMrcPath()
@@ -250,6 +267,7 @@ class AlignStackLoop(apDDStackMaker.FrameStackLoop):
 			# Doing the alignment
 			self.framealigner.alignFrameStack()
 
+<<<<<<< HEAD
 	def commitAlignStats(self, aligned_imgdata):
 		try:
 			ddr = apDDResult.DDResults(aligned_imgdata)
@@ -274,6 +292,8 @@ class AlignStackLoop(apDDStackMaker.FrameStackLoop):
 				apDisplay.printWarning('Deleting temporary results after upload')
 			for filename in mrcs_to_delete:
 				apFile.removeFile(filename, False)
+=======
+>>>>>>> origin/trunk
 
 if __name__ == '__main__':
 	makeStack = AlignStackLoop()

@@ -15,7 +15,11 @@ class ReferenceTimer(reference.Reference):
 	eventinputs = reference.Reference.eventinputs
 	eventoutputs = reference.Reference.eventoutputs
 
+<<<<<<< HEAD
 	defaultsettings = dict(reference.Reference.defaultsettings)
+=======
+	defaultsettings = reference.Reference.defaultsettings
+>>>>>>> origin/trunk
 	defaultsettings.update (
 		{'interval time': 0.0}
 	)
@@ -38,6 +42,7 @@ class ReferenceTimer(reference.Reference):
 				self.logger.info(message % interval)
 				return
 		self.moveAndExecute(request_data)
+<<<<<<< HEAD
 
 	def onTest(self):
 		super(ReferenceTimer,self).onTest()
@@ -47,6 +52,11 @@ class ReferenceTimer(reference.Reference):
 
 	def resetProcess(self):
 		# reset timer
+=======
+		self.last_processed = time.time()
+
+	def uiResetTimer(self):
+>>>>>>> origin/trunk
 		self.logger.info('Reset Request Process Timer')
 		self.last_processed = time.time()
 
@@ -54,6 +64,7 @@ class ReferenceTimer(reference.Reference):
 class AlignZeroLossPeak(ReferenceTimer):
 	settingsclass = leginondata.AlignZLPSettingsData
 	# defaultsettings are not the same as the parent class.  Therefore redefined.
+<<<<<<< HEAD
 	defaultsettings = dict(reference.Reference.defaultsettings)
 	defaultsettings.update (
 		{'interval time': 900.0,
@@ -61,6 +72,16 @@ class AlignZeroLossPeak(ReferenceTimer):
 		'threshold': 0.0,
 		}
 	)
+=======
+	defaultsettings = {
+		'bypass': True,
+		'move type': 'stage position',
+		'pause time': 3.0,
+		'interval time': 900.0,
+		'check preset': '',
+		'threshold': 0.0,
+	}
+>>>>>>> origin/trunk
 	eventinputs = ReferenceTimer.eventinputs + [event.AlignZeroLossPeakPublishEvent, event.FixAlignmentEvent]
 	panelclass = gui.wx.AlignZLP.AlignZeroLossPeakPanel
 	requestdata = leginondata.AlignZeroLossPeakData
@@ -76,6 +97,7 @@ class AlignZeroLossPeak(ReferenceTimer):
 		self.start()
 
 	def handleFixAlignmentEvent(self, evt):
+<<<<<<< HEAD
 		# called from another Reference Class to execute after target move
 		# but before execution.
 		self.logger.info('handling request to execute alignment in place')
@@ -84,6 +106,9 @@ class AlignZeroLossPeak(ReferenceTimer):
 			status = 'bypass'
 			self.confirmEvent(evt, status=status)
 			return
+=======
+		self.logger.info('handling request to execute alignment in place')
+>>>>>>> origin/trunk
 		self.setStatus('processing')
 		self.panel.playerEvent('play')
 		status = self.alignZLP(None)
@@ -92,11 +117,15 @@ class AlignZeroLossPeak(ReferenceTimer):
 		self.panel.playerEvent('stop')
 
 	def setCheckPreset(self):
+<<<<<<< HEAD
 		# set check preset and send to scope
+=======
+>>>>>>> origin/trunk
 		check_preset_name = self.settings['check preset']
 		self.checkpreset = self.presets_client.getPresetFromDB(check_preset_name)
 		self.logger.info('Check preset is %s' % self.checkpreset['name'])
 
+<<<<<<< HEAD
 	def needChecking(self):
 		return self.settings['threshold'] >= 0.1
 
@@ -147,11 +176,51 @@ class AlignZeroLossPeak(ReferenceTimer):
 			# set preset back to avoid confusion
 			self.presets_client.toScope(preset_name)
 		self.moveBack(position0)
+=======
+	def moveAndExecute(self, request_data):
+		preset_name = request_data['preset']
+		pause_time = self.settings['pause time']
+		try:
+			self.moveToTarget(preset_name)
+		except Exception, e:
+			self.logger.error('Error moving to target, %s' % e)
+			return
+
+		# set check preset and send to scope
+		if pause_time is not None:
+			time.sleep(pause_time)
+		if self.settings['threshold'] >= 0.1:
+			try:
+				self.moveToTarget(self.settings['check preset'])
+			except Exception, e:
+				self.logger.error('Error moving to target, %s' % e)
+				return
+			if pause_time is not None:
+				time.sleep(pause_time)
+			need_align = self.checkShift()
+			# align is done with the preset from the request
+			self.moveToTarget(preset_name)
+			
+		else:
+			need_align = True
+		if need_align:
+			try:
+				self.execute(request_data)
+			except Exception, e:
+				self.logger.error('Error executing request, %s' % e)
+				return
+			if self.settings['threshold'] >= 0.1:
+				self.resetZeroLossCheck()
+
+>>>>>>> origin/trunk
 	
 	def alignZLP(self, ccd_camera=None):
 		if not ccd_camera:
 			ccd_camera = self.instrument.ccdcamera
+<<<<<<< HEAD
 		ccd_name = ccd_camera._name
+=======
+>>>>>>> origin/trunk
 		if not ccd_camera.EnergyFiltered:
 			self.logger.warning('No energy filter on this instrument.')
 			return
@@ -159,9 +228,12 @@ class AlignZeroLossPeak(ReferenceTimer):
 			if not ccd_camera.EnergyFilter:
 				self.logger.warning('Energy filtering is not enabled.')
 				return 'bypass'
+<<<<<<< HEAD
 			self.positionCamera(camera_name=ccd_name)
 			self.openColumnValveBeforeExposure()
 			self.logger.info('Aligning ZLP with %s camera' % ccd_name)
+=======
+>>>>>>> origin/trunk
 			ccd_camera.alignEnergyFilterZeroLossPeak()
 			m = 'Energy filter zero loss peak aligned.'
 			self.logger.info(m)
@@ -169,7 +241,10 @@ class AlignZeroLossPeak(ReferenceTimer):
 			m = 'Energy filter methods are not available on this instrument.'
 			self.logger.warning(m)
 		except Exception, e:
+<<<<<<< HEAD
 			raise
+=======
+>>>>>>> origin/trunk
 			s = 'Energy filter align zero loss peak failed: %s.'
 			self.logger.error(s % e)
 
@@ -224,8 +299,11 @@ class AlignZeroLossPeak(ReferenceTimer):
 			self.logger.warning('No energy filter on this instrument.')
 			return False
 		imagedata = self.acquireCorrectedCameraImageData(force_no_frames=True)
+<<<<<<< HEAD
 		if imagedata is None:
 			return False
+=======
+>>>>>>> origin/trunk
 		image = imagedata['image']
 		stageposition = imagedata['scope']['stage position']
 		lastresetq = leginondata.ZeroLossCheckData(session=self.session, preset=self.checkpreset)
@@ -235,6 +313,7 @@ class AlignZeroLossPeak(ReferenceTimer):
 			self.publishZeroLossCheck(image)
 		else:
 			if result:
+<<<<<<< HEAD
 				self.logger.info('Image standard deviation changed from %.2f to %.2f' % (result[0]['std'], image.std()))
 				# compare the standard deviation with that from last alignment
 				# standard deviation goes up when the slit is interfering it.
@@ -242,6 +321,12 @@ class AlignZeroLossPeak(ReferenceTimer):
 					self.logger.info('Energy filter slit has not shifted significantly')
 					return False
 		self.logger.info('Need energy filter slit alignment')
+=======
+				# compare the standard deviation with that from last alignment
+				if result[0]['std'] * self.settings['threshold'] > image.std():
+					self.logger.info('Energe filter slit has not shifted significantly')
+					return False
+>>>>>>> origin/trunk
 		return True
 
 	def publishZeroLossCheck(self,image):
@@ -256,25 +341,40 @@ class AlignZeroLossPeak(ReferenceTimer):
 
 	def resetZeroLossCheck(self):
 		try:
+<<<<<<< HEAD
 			self.at_reference_target = True
+=======
+>>>>>>> origin/trunk
 			self.moveToTarget(self.checkpreset['name'])
 		except Exception, e:
 			self.logger.error('Error moving to target, %s' % e)
 			return
 		self.logger.info('reset zero-loss check data')
 		imagedata = self.acquireCorrectedCameraImageData(force_no_frames=True)
+<<<<<<< HEAD
 		if imagedata is None:
 			return
+=======
+>>>>>>> origin/trunk
 		stageposition = imagedata['scope']['stage position']
 		image = imagedata['image']
 		self.publishZeroLossCheck(image)
 
 class MeasureDose(ReferenceTimer):
+<<<<<<< HEAD
 	defaultsettings = dict(reference.Reference.defaultsettings)
 	defaultsettings.update (
 		{'interval time': 900.0,
 		}
 	)
+=======
+	defaultsettings = {
+		'move type': 'stage position',
+		'pause time': 3.0,
+		'interval time': 900.0,
+		'bypass': True,
+	}
+>>>>>>> origin/trunk
 	# relay measure does events
 	eventinputs = ReferenceTimer.eventinputs + [event.MeasureDosePublishEvent]
 	eventoutputs = ReferenceTimer.eventoutputs

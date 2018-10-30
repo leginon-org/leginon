@@ -34,7 +34,11 @@ class Tomography(leginon.acquisition.Acquisition):
 		'tilt max': 60.0,
 		'tilt start': 0.0,
 		'tilt step': 1.0,
+<<<<<<< HEAD
 		'tilt order': 'sequential',
+=======
+		'tilt order': 'alternate',
+>>>>>>> origin/trunk
 		'equally sloped': False,
 		'equally sloped n': 8,
 		'xcf bin': 1,

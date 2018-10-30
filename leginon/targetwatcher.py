@@ -27,11 +27,14 @@ class PauseRestartException(Exception):
 	repeated after a user pause'''
 	pass
 
+<<<<<<< HEAD
 class BypassException(Exception):
 	'''Raised within processTargetData method if the target should be
 	bypassed'''
 	pass
 
+=======
+>>>>>>> origin/trunk
 class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 	'''
 	TargetWatcher will watch for TargetLists
@@ -317,16 +320,23 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			retract_successful = self.retractObjectiveAperture()
 
 		targetliststatus = 'success'
+<<<<<<< HEAD
 		self.processGoodTargets(good_targets)
 
 		self.reportTargetListDone(newdata, targetliststatus)
 		if retract_successful:
 			self.putBackObjectiveAperture()
 
+=======
+		self.processGoodTargets(goodtargets)
+
+		self.reportTargetListDone(newdata, targetliststatus)
+>>>>>>> origin/trunk
 		if self.settings['park after list']:
 			self.park()
 		self.setStatus('idle')
 
+<<<<<<< HEAD
 	def isNeedRetractObjectiveAperture(self,good_targets):
 		want_to = good_targets and self.settings['retract obj aperture']
 		if not want_to:
@@ -390,6 +400,10 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 				# ? Do we need to reset on every target ?
 				self.logger.info('Tilting to %.2f degrees on first good target.' % (self.targetlist_reset_tilt*180.0/math.pi))
 				self.instrument.tem.setDirectStagePosition({'a':self.targetlist_reset_tilt})
+=======
+	def processGoodTargets(self, goodtargets):
+		for i, target in enumerate(goodtargets):
+>>>>>>> origin/trunk
 			self.goodnumber = i
 			self.logger.debug('target %s status %s' % (i, target['status'],))
 			# ...
@@ -425,9 +439,12 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 				try:
 					self.logger.info('Processing target id %d' % adjustedtarget.dbid)
 					process_status = self.processTargetData(adjustedtarget, attempt=attempt)
+<<<<<<< HEAD
 				except BypassException, e:
 					self.logger.error(str(e) + '... Bypass this target and pretend it is done')
 					process_status = 'bypass'
+=======
+>>>>>>> origin/trunk
 				except PauseRestartException, e:
 					self.player.pause()
 					self.logger.error(str(e) + '... Fix it, then resubmit targets from previous step to repeat')

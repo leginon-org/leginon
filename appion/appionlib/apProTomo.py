@@ -91,6 +91,7 @@ def linkImageFiles(imgtree,rawdir):
 			os.symlink(os.path.join(imgpath,imagedata['filename']+'.mrc'),linkedpath)
 	return filenamelist
 
+<<<<<<< HEAD
 def getImageFiles2(imgtree, rawdir, link, copy):
 	#This parallel version apparently overloads the database???
 	def getImage(imagedata, rawdir, link, copy):
@@ -138,6 +139,9 @@ def getImageFiles2(imgtree, rawdir, link, copy):
 	return filenamelist, newimgtree
 
 def getImageFiles(imgtree, rawdir, link, copy, export=False): #Backup for above multiprocessing version
+=======
+def getImageFiles(imgtree, rawdir, link, copy):
+>>>>>>> origin/trunk
 	#This function should replace linkImageFiles in all calls (i.e. in tomoaligner.py and everywhere else)
 	filenamelist = []
 	newimgtree=[]
@@ -159,15 +163,24 @@ def getImageFiles(imgtree, rawdir, link, copy, export=False): #Backup for above 
 			if not os.path.isfile(destpath):
 				os.symlink(imgfullpath,destpath)
 		elif copy == "True":
+<<<<<<< HEAD
 			#shutil.copy(imgfullpath,destpath)	
 			
 			#Normalize them raw images, and convert them to float32 because Protomo
 			image=mrc.read(imgfullpath)
 			#image=numpy.flipud(image)
+=======
+			shutil.copy(imgfullpath,destpath)	
+			
+			#Y-flip raw images, normalize them, and convert them to float32 because Protomo
+			image=mrc.read(destpath)
+			image=numpy.flipud(image)
+>>>>>>> origin/trunk
 			image=imagenorm.normStdev(image)
 			image=numpy.float32(image)
 			#image=numpy.rot90(image)
 			mrc.write(image,destpath)
+<<<<<<< HEAD
 		if export !=False:
 			shutil.copy(imgfullpath,destpath)
 		#else: just return values
@@ -175,6 +188,10 @@ def getImageFiles(imgtree, rawdir, link, copy, export=False): #Backup for above 
 		return filenamelist, newimgtree
 	else:
 		return filenamelist, newimgtree, imagedata['filename'].split(presetname)
+=======
+		#else: just return values
+	return filenamelist, newimgtree
+>>>>>>> origin/trunk
 
 def writeTiltFile(outfilename, seriesname, imagedict, parameterdict=False):
 	f=open(outfilename,'w')

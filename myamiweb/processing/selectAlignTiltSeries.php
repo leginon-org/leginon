@@ -57,9 +57,13 @@ echo " <p> Protomo is a software package used in electron tomography for marker-
 	."parameters that produce acceptable results on the entire tilt-series session using 'Batch Align Tilt-Series' "
 	."from the left menu.<br><br>"
     ."In addition to Protomo WBP, the user can also choose to reconstruct tomograms with Tomo3D WBP and Tomo3D SIRT.<br><br>"
+<<<<<<< HEAD
     ."A set of video tutorials guiding you through the entire process is available in the User Guide at the top-right."
 	."<br/><br/>The <a href='https://www.ncbi.nlm.nih.gov/pubmed/26455557' target='_blank'> original research article is here</a>."
 	."</p>\n";
+=======
+    ."A set of video tutorials guiding you through the entire process is available in the User Guide at the top-right.";
+>>>>>>> origin/trunk
 echo "</td></tr>\n";
 
 /*
@@ -81,6 +85,7 @@ echo "</td></tr>\n";
 ** Old software
 */
 
+<<<<<<< HEAD
 //echo "<tr><td width='100' align='center'>\n";
 //		echo "  <img src='img/other_software.png' width='125'>\n";
 //echo "</td><td>\n";
@@ -90,6 +95,17 @@ echo "</td></tr>\n";
 //	."These are only good for rough and quick alignment"
 //	."</p>\n";
 //echo "</td></tr>\n";
+=======
+echo "<tr><td width='100' align='center'>\n";
+		echo "  <img src='img/other_software.png' width='125'>\n";
+echo "</td><td>\n";
+echo "  <h3><a href='runTomoAligner.php?expId=$expId'>Other Software Packages</a></h3>\n";
+echo " <p>Here you will find older implementations for aligning tilt-series, "
+	."including Leginon alignment, and Imod shift-only alignment. "
+	."These are only good for rough and quick alignment"
+	."</p>\n";
+echo "</td></tr>\n";
+>>>>>>> origin/trunk
 
 
 

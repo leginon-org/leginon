@@ -2,7 +2,10 @@
 
 #pythonlib
 import os
+<<<<<<< HEAD
 import sys
+=======
+>>>>>>> origin/trunk
 import time
 import math
 import shutil
@@ -110,7 +113,10 @@ def runCTFdisplayTools(imgdata, ctfvalues, opimagedir, fftpath=None, fftfreq=Non
 	try:
 		ctfdisplaydict = ctfdisplay.makeCtfImages(imgdata, ctfvalues, fftpath, fftfreq)
 	except:
+<<<<<<< HEAD
 		print "Unexpected error:", sys.exc_info()
+=======
+>>>>>>> origin/trunk
 		appendFailedImage(rundir, imgdata, ctfvalues,'makeCtfImages exception')
 		return ctfvalues
 

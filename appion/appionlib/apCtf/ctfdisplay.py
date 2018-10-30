@@ -288,6 +288,74 @@ class CtfDisplay(object):
 				print ("rotdata.min()=%.2f"%(rotdata.min()))
 				apDisplay.printError("Major Error (NaN) in elliptical average, rotdata")
 
+		if self.debug:
+			imagestat.printImageInfo(zdata2d)
+		zdata2d = imagefilter.tanhLowPassFilter(zdata2d, 2) ##FIXME
+		if self.debug:
+			imagestat.printImageInfo(zdata2d)
+		zdata2d -= zdata2d.min()-1 #normalize to minimum value of 1
+		if self.debug:
+			imagestat.printImageInfo(zdata2d)
+		if numpy.any(numpy.isnan(zdata2d)):  #note does not work with 'is True'
+			print ("zdata2d.min()=%.2f"%(zdata2d.min()))
+			apDisplay.printError("Major Error (NaN) in original 2D image, zdata2d")
+		### do the elliptical average
+		if self.ellipratio is None:
+			return None
+		if self.debug is True:
+			apDisplay.printMsg("performing elliptical average, please wait")
+		firstpeak = ctftools.getCtfExtrema(meandefocus, self.trimfreq*1e10, self.cs, self.volts,
+			self.ampcontrast, self.extra_phase_shift, numzeros=1, zerotype="peak")[0]
+		pixelrdata, rotdata = ctftools.ellipticalAverage(zdata2d, self.ellipratio, self.angle,
+			self.ringwidth, firstpeak, full=True)
+		if numpy.any(numpy.isnan(rotdata)):  #note does not work with 'is True'
+			print ("rotdata.min()=%.2f"%(rotdata.min()))
+			apDisplay.printError("Major Error (NaN) in elliptical average, rotdata")
+		#tail filter
+		#changed to full=True in March 2016 for close to focus estimates and to push for more resolution
+		raddata = pixelrdata*self.trimfreq
+		raddatasq = raddata**2
+
+		apDisplay.printColor("Resolution range for the data is 1/%.1fA to 1/%.1fA"
+			%(1/raddata[0], 1/raddata[-1]), "green")
+		if self.outerAngstrom1D < 1/raddata[-1]:
+			self.outerAngstrom1D = math.ceil(10/raddata[-1])/10.
+			self.numSections = int(math.ceil(8.0/math.sqrt(self.outerAngstrom1D)))
+			apDisplay.printWarning("Changing self.outerAngstrom1D to available data 1/%.1fA"
+				%(self.outerAngstrom1D))
+
+		#Calculate number of valleys and peaks found in micrograph
+		maxExtrema = pixelrdata[-1]
+		numzeros = 100
+		foundEnd = False
+		while foundEnd is False:
+			valley = ctftools.getCtfExtrema(meandefocus, self.trimfreq*1e10, self.cs, self.volts,
+				self.ampcontrast, self.extra_phase_shift, numzeros=numzeros, zerotype="valley")
+			if valley[-1] < maxExtrema and numzeros < 1e5:
+				apDisplay.printMsg("far from focus images, increasing number of extrema (%d)"%(numzeros))
+				numzeros *= 2
+				continue
+			numValleys = numpy.where(valley > maxExtrema, 0, 1).sum()
+			valley = valley[:numValleys+1]
+			peak = ctftools.getCtfExtrema(meandefocus, self.trimfreq*1e10, self.cs, self.volts,
+				self.ampcontrast, self.extra_phase_shift, numzeros=numzeros, zerotype="peak")
+			if peak[-1] < maxExtrema  and numzeros < 1e5:
+				apDisplay.printMsg("far from focus images, increasing number of extrema (%d)"%(numzeros))
+				numzeros *= 2
+				continue
+			numPeaks = numpy.where(peak > maxExtrema, 0, 1).sum()
+			peak = peak[:numPeaks+1]
+			foundEnd = True
+
+		distanceBetweenFinalPeaks = peak[-1] - peak[-2]
+		if distanceBetweenFinalPeaks > 2:
+			if self.debug is True:
+				apDisplay.printMsg("Low pass filter of %.1f pixels"%(distanceBetweenFinalPeaks/3.0))
+			rotdata = onedimfilter.reflectTanhLowPassFilter(rotdata, distanceBetweenFinalPeaks/3.0)
+			if numpy.any(numpy.isnan(rotdata)):  #note does not work with 'is True'
+				print ("rotdata.min()=%.2f"%(rotdata.min()))
+				apDisplay.printError("Major Error (NaN) in elliptical average, rotdata")
+
 		### get all peak (not valley)
 		apDisplay.printMsg("Number of available peaks is %d"%(len(peak)))
 		if len(peak) < 2:
@@ -305,10 +373,16 @@ class CtfDisplay(object):
 		numPeaks = numpy.where(peak > maxExtrema, 0, 1).sum()
 		numValleys = numpy.where(valley > maxExtrema, 0, 1).sum()
 		minExtrema = min(numPeaks, numValleys)
+<<<<<<< HEAD
 		extremaPerSection = 2
 		if minExtrema < numSections*extremaPerSection:
 			#this is for close-to-focus images
 			numSections = int(math.floor(minExtrema/float(extremaPerSection)))+1
+=======
+		extremaPerSection = 7
+		if minExtrema < numSections*extremaPerSection:
+			numSections=int(math.floor(minExtrema/float(extremaPerSection)))+1
+>>>>>>> origin/trunk
 			apDisplay.printMsg("reducing the number of sections to: %d"%(numSections))
 		if self.debug is True:
 			print "Extrema available in image = %d peaks, %d valleys"%(numPeaks, numValleys)
@@ -349,8 +423,12 @@ class CtfDisplay(object):
 			apDisplay.printColor("Using %d sections for %d points (index %d to %d), %d points per section"
 				%(numSections, noiseNumPoints, firstvalleyindex, len(raddata), noiseNumPoints/numSections), "cyan")
 
+<<<<<<< HEAD
 		indexData = numpy.arange(0, len(raddata), dtype=numpy.float)
 		numSections, noiseStartIndexes, noiseEndIndexes, mergeIndexes = self.createSections(numSections, fvi, indexData, pixelrdata, valley)
+=======
+		numSections, noiseStartIndexes, noiseEndIndexes, mergeIndexes = self.createSections(numSections, fvi, raddatasq, pixelrdata, valley)
+>>>>>>> origin/trunk
 
 		if not numSections:
 			return None
@@ -1088,8 +1166,11 @@ class CtfDisplay(object):
 		plotlimit2DAngstrom = (self.plotlimit2DAngstrom * self.res80 * self.res50 * maxValleyResolution)**(1/4.)
 		print (self.plotlimit2DAngstrom, self.res80, self.res50, maxValleyResolution)
 		plotlimit2DAngstrom = max(plotlimit2DAngstrom, maxImageResolution)
+<<<<<<< HEAD
 		## override
 		#plotlimit2DAngstrom = 3.5
+=======
+>>>>>>> origin/trunk
 		apDisplay.printMsg("Final resolution ring of 2D Plot: %.3f"%(plotlimit2DAngstrom))
 
 		origpowerspec = ctftools.trimPowerSpectraToOuterResolution(origpowerspec, plotlimit2DAngstrom, self.trimfreq)
@@ -1477,10 +1558,14 @@ class CtfDisplay(object):
 				val = 0.0
 			return val
 		#back compatible for those without extra phase
+<<<<<<< HEAD
 		if 'extra_phase_shift' in ctfdata.keys():
 			self.extra_phase_shift = to_float(ctfdata['extra_phase_shift'])
 		else:
 			self.extra_phase_shift = 0.0
+=======
+		self.extra_phase_shift = to_float(ctfdata['extra_phase_shift'])
+>>>>>>> origin/trunk
 
 		### process power spectra
 		self.apix = apDatabase.getPixelSize(imgdata)

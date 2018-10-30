@@ -1546,6 +1546,7 @@ class TemplateTargetFinderSettingsData(TargetFinderSettingsData):
 			('focus interval', int),
 			('focus offset row', int),
 			('focus offset col', int),
+<<<<<<< HEAD
 		)
 	typemap = classmethod(typemap)
 
@@ -1560,6 +1561,8 @@ class HoleFinderSettingsData(TemplateTargetFinderSettingsData):
 			('edge absolute', bool),
 			('edge threshold', float),
 			('template rings', list),
+=======
+>>>>>>> origin/trunk
 		)
 	typemap = classmethod(typemap)
 
@@ -2008,6 +2011,17 @@ class DefocusSequenceSettingsData(AcquisitionSettingsData):
 	def typemap(cls):
 		return AcquisitionSettingsData.typemap() + (
 			('step size', float),  #meter
+			('nsteps', int),
+		)
+	typemap = classmethod(typemap)
+
+class MoveAcquisitionSettingsData(AcquisitionSettingsData):
+	def typemap(cls):
+		return AcquisitionSettingsData.typemap() + (
+			('acquire during move', bool),
+			('imaging delay', float),  #seconds
+			('tilt to', float),		#degrees
+			('total move time', float),  #seconds
 			('nsteps', int),
 		)
 	typemap = classmethod(typemap)
@@ -2502,10 +2516,13 @@ class ReferenceSettingsData(SettingsData):
 			('bypass', bool),
 			('move type', str),
 			('pause time', float),
+<<<<<<< HEAD
 			('return settle time', float),
 			('mover', str),
 			('move precision', float),
 			('accept precision', float),
+=======
+>>>>>>> origin/trunk
 		)
 	typemap = classmethod(typemap)
 

@@ -659,7 +659,11 @@ def appendArray(a, f):
 		end = start + items_per_write
 		b[start:end].tofile(f)
 
+<<<<<<< HEAD
 def substackFromMRCStack(mrcstack, outfile, listfile, excludeList=False):
+=======
+def substackFromMRCStack(mrcstack, outfile, listfile):
+>>>>>>> origin/trunk
 	'''
 	f=/path/to/stack.mrc, list=EMAN-style list, numbering starts with 0, writes output mrc stack
 	'''

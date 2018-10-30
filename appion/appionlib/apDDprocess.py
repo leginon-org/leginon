@@ -220,8 +220,20 @@ class DirectDetectorProcessing(object):
 			apDisplay.printWarning('No alignment log file %s found for thresholding drift' % logfile)
 			return False
 		positions = ddinfo.readPositionsFromAlignLog(logfile)
+<<<<<<< HEAD
 		shifts = ddinfo.calculateFrameShiftFromPositions(positions)
 		apDisplay.printDebug('Got %d shifts' % (len(shifts)-1))
+=======
+		# place holder for first frame shift duplication
+		shifts = [None,]
+		for p in range(len(positions)-1):
+			shift = math.hypot(positions[p][0]-positions[p+1][0],positions[p][1]-positions[p+1][1])
+			shifts.append(shift)
+		apDisplay.printDebug('Got %d shifts' % (len(shifts)-1))
+		# duplicate first and last shift for the end points
+		shifts.append(shifts[-1])
+		shifts[0] = shifts[1]
+>>>>>>> origin/trunk
 		return shifts
 
 	def getStillFrames(self,threshold):
@@ -302,7 +314,10 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		self.flipAlongYAxis = 0
 		self.use_frame_aligner_yflip = False
 		self.use_frame_aligner_rotate = 0
+<<<<<<< HEAD
 		self.override_db = False
+=======
+>>>>>>> origin/trunk
 
 		if debug:
 			self.log = open('newref.log','w')
@@ -347,10 +362,17 @@ class DDFrameProcessing(DirectDetectorProcessing):
 	def getUseFrameAlignerRotate(self):
 		# number of times to rotate by 90 degrees
 		return self.use_frame_aligner_rotate90
+<<<<<<< HEAD
 
 	def setUseFrameAlignerYFlip(self, use_frame_aligner_yflip):
 		self.use_frame_aligner_yflip = use_frame_aligner_yflip
 
+=======
+
+	def setUseFrameAlignerYFlip(self, use_frame_aligner_yflip):
+		self.use_frame_aligner_yflip = use_frame_aligner_yflip
+
+>>>>>>> origin/trunk
 	def getUseFrameAlignerYFlip(self):
 		return self.use_frame_aligner_yflip
 

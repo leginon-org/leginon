@@ -60,7 +60,11 @@ $rec_webm = "loadvid.php?filename=".$rec_vid_files[2];
 $download_rec_mp4 = "downloadvid.php?filename=".$rec_vid_files[0];
 
 $html .= "
+<<<<<<< HEAD
 	<center><H2><b>Tilt-Series #".ltrim($tiltseries, '0')."<br><font size=3>(tiltseries$tiltseries)</font><br>Refinement Iteration #$iter</b></H2></center>
+=======
+	<center><H3><b>Tilt-Series #".ltrim($tiltseries, '0')."<br>Refinement Iteration #$iter</b></H3></center>
+>>>>>>> origin/trunk
 	<hr />";
 $html .= "
 	<H4><center><b>Correlation Peak</b></center></H4>";

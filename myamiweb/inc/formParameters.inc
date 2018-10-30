@@ -51,11 +51,14 @@ class FormParameters
 		return $this->params[$name]["value"];
 	}
 	
+<<<<<<< HEAD
 	final public function setParamDefault( $name, $value ) 
 	{
 		$this->params[$name]["default"] = $value;
 	}
 	
+=======
+>>>>>>> origin/trunk
 	final public function getParamDefault( $name ) 
 	{
 		return $this->params[$name]["default"];

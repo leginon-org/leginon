@@ -81,6 +81,15 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		self.parser.add_option("--starting_tlt_file", dest="starting_tlt_file", default="Coarse",
 			help="Begin refinement with coarse alignment results or initial alignment (ie. from the microscope)?, e.g. --starting_tlt_file=Coarse",)
 		
+		self.parser.add_option("--negative_recon", dest="negative_recon", type="float",  default="-90",
+			help="Tilt angle, in degrees, below which all images will be removed, e.g. --negative_recon=-45", metavar="float")
+		
+		self.parser.add_option("--positive_recon", dest="positive_recon", type="float",  default="90",
+			help="Tilt angle, in degrees, above which all images will be removed, e.g. --positive_recon=45", metavar="float")
+		
+		self.parser.add_option("--starting_tlt_file", dest="starting_tlt_file", default="Coarse",
+			help="Begin refinement with coarse alignment results or initial alignment (ie. from the microscope)?, e.g. --starting_tlt_file=Coarse",)
+		
 		self.parser.add_option("--region_x", dest="region_x", default=512, type="int",
 			help="Pixels in x to use for region matching, e.g. --region=1024", metavar="int")
 		
@@ -261,8 +270,13 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		self.parser.add_option("--r5_highpass_apod_y", dest="r5_highpass_apod_y", default=0.002, type="float",
 			help="Provide in angstroms. This will be converted to Protomo units, e.g. --r5_highpass_diameter_y=0.02", metavar="float")
 
+<<<<<<< HEAD
 		self.parser.add_option("--thickness", dest="thickness", type="float",
 			help="Estimated thickness of unbinned specimen (in pixels), e.g. --thickness=1000.0", metavar="float")
+=======
+		self.parser.add_option("--thickness", dest="thickness",  default=1000, type="float",
+			help="Estimated thickness of unbinned specimen (in pixels), e.g. --thickness=100.0", metavar="float")
+>>>>>>> origin/trunk
 		
 		self.parser.add_option("--pixelsize", dest="pixelsize", type="float",
 			help="Pixelsize of raw images in angstroms/pixel, e.g. --pixelsize=3.5", metavar="float")
@@ -557,6 +571,9 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		self.parser.add_option("--slab", dest="slab", default="true",
 			help="Adjust back-projection body size for a slab-like specimen, e.g. --slab=false")
 
+		self.parser.add_option("--slab", dest="slab", default="true",
+			help="Adjust back-projection body size for a slab-like specimen, e.g. --slab=false")
+
 		self.parser.add_option("--map_size_x", dest="map_size_x",  type="int",  default="1024",
 			help="Size of the reconstructed tomogram in the X direction, e.g. --map_size_x=256", metavar="int")
 
@@ -588,6 +605,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		self.parser.add_option("--binning", dest="binning",  default="true",
 			help="Enable/disable binning of raw image files, e.g. --binning=false")
 		
+<<<<<<< HEAD
 		self.parser.add_option("--tilt_azimuth", dest="tilt_azimuth",  type="float",
 			help='Override the tilt-azimuth as recorded in the database. Applied before alignment, e.g. --tilt_azimuth="-57"')
 		
@@ -597,6 +615,8 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		self.parser.add_option("--azimuth_max_deviation", dest="azimuth_max_deviation",  type="float", default=0,
 			help='Maximum +-deviation allowed for the tilt-azimuth during refinement, e.g. --azimuth_max_deviation=5')
 		
+=======
+>>>>>>> origin/trunk
 		# self.parser.add_option("--select_images", dest="select_images",  default="0-999999",
 		# 	help='Select specific images in the tilt-series, e.g. --select_images="1,2,5-7"')
 		
@@ -774,8 +794,13 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		self.parser.add_option('--iWidth', dest='iWidth', type="int", default=20,
 			help='The distance in pixels between the center lines of two consecutive strips, e.g. --iWidth=20')
 		
+<<<<<<< HEAD
 		self.parser.add_option('--amp_contrast_ctf', dest='amp_contrast_ctf', type="float", default=0.07,
 			help='Amplitude contrast used with CTF correction, e.g. --amp_contrast_ctf=0.07')
+=======
+		self.parser.add_option('--amp_contrast', dest='amp_contrast', type="float", default=0.07,
+			help='Amplitude contrast, e.g. --amp_contrast=0.07')
+>>>>>>> origin/trunk
 		
 		self.parser.add_option("--dose_presets", dest="dose_presets",  default="False",
 			help="Dose compensate using equation given by Grant & Grigorieff, 2015, e.g. --dose_presets=Moderate")
@@ -788,6 +813,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		
 		self.parser.add_option('--dose_c', dest='dose_c', type="float",  default=2.81,
 			help='\'c\' variable in equation (3) of Grant & Grigorieff, 2015, e.g. --dose_c=2')
+<<<<<<< HEAD
 		
 		self.parser.add_option('--defocus_estimate', dest='defocus_estimate', default="False",
 			help='Estimate defocus of the untilted plane using TomoCTF?, e.g. --defocus_estimate=True')
@@ -815,6 +841,8 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		
 		self.parser.add_option('--res_min', dest='res_min', type="float", default=10000,
 			help='Lowest resolution information, in angstroms, to use to fit the signal falloff before defocus estimation, e.g. --res_min=200')
+=======
+>>>>>>> origin/trunk
 		
 		self.parser.add_option('--res_max', dest='res_max', type="float", default=10,
 			help='Highest resolution information, in angstroms, to use to fit the signal falloff before defocus estimation, e.g. --res_max=5')
@@ -831,6 +859,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		self.parser.add_option("--frame_aligned", dest="frame_aligned",  default="True",
 			help="Use frame-aligned images instead of naively summed images, if present.")
 		
+<<<<<<< HEAD
 		self.parser.add_option("--serialem_stack", dest="serialem_stack",  default="",
 			help="SerialEM stack to be prepared for upload to Appion")
 		
@@ -869,6 +898,13 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		
 		self.parser.add_option("--citations", dest="citations", action='store_true',
 			help="Print citations list and exit.")
+=======
+		self.parser.add_option("--my_tlt", dest="my_tlt",  default="False",
+			help="Allows for manual tilt-series setup")
+		
+		self.parser.add_option("--make_searchable", dest="make_searchable",  default="True",
+			help="Hidden option. Places a .tiltseries.XXXX file in the rundir so that it will be found by Batch Summary webpages.")
+>>>>>>> origin/trunk
 		
 		#File path returns and extra information for database
 		self.parser.add_option("--corr_peak_gif", dest="corr_peak_gif", default=None)
@@ -1162,6 +1198,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 	#=====================
 	def excludeImages(self, tiltfilename_full, f):
 		#Remove images from .tlt file if user requests
+<<<<<<< HEAD
 		
 		if self.params['exclude_images_by_angle'] != '':
 			remove_tilt_angles=self.params['exclude_images_by_angle'].split(',')
@@ -1182,6 +1219,8 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				apProTomo2Aligner.removeImageFromTiltFile(tiltfilename_full, imagenumber, remove_refimg="True")
 			apDisplay.printMsg("Images %s have been removed from the .tlt file by user request" % remove_image_by_tilt_angle)
 		
+=======
+>>>>>>> origin/trunk
 		if self.params['exclude_images'] != "999999":
 			exclude_images='%s' % self.params['exclude_images']
 			imageranges=apProTomo2Aligner.hyphen_range(exclude_images)
@@ -1429,6 +1468,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		tiltfilename_full=rundir+'/'+tiltfilename
 		originaltilt=rundir+'/original.tlt'
 		
+<<<<<<< HEAD
 		if (self.params['restart_from_run'] != '' and (self.params['restart_from_iteration'] > 0 or self.params['restart_from_iteration'] == 'MoreManual')):
 			if os.path.exists(self.params['restart_from_run']):
 				restart_path = self.params['restart_from_run']
@@ -1464,6 +1504,9 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				sys.exit()
 		
 		if (self.params['make_searchable'] == "True" and re.split('(\d+)',self.params['runname'])[0] == 'tiltseries' and re.split('(\d+)',self.params['runname'])[1].isdigit() and len(re.split('(\d+)',self.params['runname'])[1]) == 4 and re.split('(\d+)',self.params['runname'])[2] == ''): #Checks to make sure runname is of the form tiltseriesXXXX
+=======
+		if (self.params['make_searchable'] == "True"):
+>>>>>>> origin/trunk
 			os.system('touch %s/.tiltseries.%04d' % (rundir, int(self.params['tiltseries'])))  #Internal tracker for what has been batch processed through alignments
 		
 		###Do queries, make tlt file, CTF correct (optional), dose compensate (optional), remove highly shifted images (optional), and remove high tilt images (optional) if first run from Appion/Leginon database
@@ -1472,6 +1515,17 @@ class ProTomo2Aligner(basicScript.BasicScript):
 			f.write('Preparing raw images and initial tilt file\n')
 			tilts, accumulated_dose_list, new_ordered_imagelist, self.params['maxtilt'] = apProTomo2Prep.prepareTiltFile(self.params['sessionname'], seriesname, tiltfilename, int(self.params['tiltseries']), raw_path, self.params['frame_aligned'], link="False", coarse="True")
 			
+<<<<<<< HEAD
+=======
+			#CTF Correction
+			if (self.params['ctf_correct'] == 'True'):
+				apProTomo2Prep.ctfCorrect(seriesname, rundir, self.params['projectid'], self.params['sessionname'], int(self.params['tiltseries']), tiltfilename, self.params['frame_aligned'], self.params['pixelsize'], self.params['DefocusTol'], self.params['iWidth'], self.params['amp_contrast'])
+			
+			#Dose Compensation
+			if (self.params['dose_presets'] != 'False'):
+				apProTomo2Prep.doseCompensate(seriesname, rundir, self.params['sessionname'], int(self.params['tiltseries']), self.params['frame_aligned'], raw_path, self.params['pixelsize'], self.params['dose_presets'], self.params['dose_a'], self.params['dose_b'], self.params['dose_c'])
+			
+>>>>>>> origin/trunk
 			#Backup original tilt file
 			shutil.copy(tiltfilename_full,originaltilt)
 			apProTomo2Aligner.findMaxSearchArea(os.path.basename(originaltilt), self.params['dimx'], self.params['dimy'])
@@ -1519,6 +1573,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 			self.params['maxtilt'] = maxtilt
 			apDisplay.printMsg("Normalizing and converting raw images to float32 for Protomo...")
 			apProTomo2Aligner.fixImages(raw_path)
+<<<<<<< HEAD
 			apDisplay.printMsg("Creating a backup copy of the original tilt images...")
 			original_raw = os.path.join(raw_path,'original')
 			os.system('cp %s %s' % (tiltfilename_full, originaltilt))
@@ -1582,6 +1637,15 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		if self.params['center_all_images'] == "True":
 			apProTomo2Aligner.centerAllImages(tiltfilename_full, self.params['dimx'], self.params['dimy'])
 		
+=======
+		else: #Refinement. Just get maxtilt for param file
+			rawimagecount, maxtilt=self.excludeImages(tiltfilename_full, f)  #Remove images from .tlt file if user requests
+			self.params['maxtilt'] = maxtilt
+			if self.params['starting_tlt_file'] == "Initial":
+				apDisplay.printMsg("Using Initial alignment from the microscope as starting .tlt file for Refinement by copying original.tlt to %s." % tiltfilename)
+				os.system("cp %s %s" % (originaltilt, tiltfilename_full))
+		
+>>>>>>> origin/trunk
 		self.params['cos_alpha']=np.cos(self.params['maxtilt']*np.pi/180)
 		
 		###convert angstroms to pixels
@@ -1679,7 +1743,10 @@ class ProTomo2Aligner(basicScript.BasicScript):
 			retry=0
 			brk=None
 			end=0
+<<<<<<< HEAD
 			shift=0
+=======
+>>>>>>> origin/trunk
 			while (min(new_region_x,new_region_y) != 20 and end == 0):
 				try:
 					if (brk != None):
@@ -1690,7 +1757,11 @@ class ProTomo2Aligner(basicScript.BasicScript):
 						new_region_y = apProTomo2Aligner.nextLargestSize(new_region_y)
 						apDisplay.printMsg("Coarse Alignment failed. Retry #%s with Window Size: (%s, %s) (at sampling %s)..." % (retry, new_region_x, new_region_y, self.params['sampling']))
 						f.write('Coarse Alignment failed. Retry #%s with Window Size: (%s, %s) (at sampling %s)...\n' % (retry, new_region_x, new_region_y, self.params['sampling']))
+<<<<<<< HEAD
 						time.sleep(0.5)  #Allows Ctrl-C to be caught by except
+=======
+						time.sleep(1)  #Allows Ctrl-C to be caught by except
+>>>>>>> origin/trunk
 						newsize = "{ %s %s }" % (new_region_x, new_region_y)
 						series.setparam("window.size", newsize)
 					retry+=1
@@ -1700,6 +1771,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				except KeyboardInterrupt:  #Only caught if not in series.align()
 					brk=sys.exc_info()
 				except:
+<<<<<<< HEAD
 					if (min(new_region_x,new_region_y) == 20 and shift == 0):
 						apDisplay.printMsg("Retrying by shifting the search area right from center by 20%...")
 						series.unalign()
@@ -1729,6 +1801,9 @@ class ProTomo2Aligner(basicScript.BasicScript):
 						new_region_y=apProTomo2Aligner.nextLargestSize(int(self.params['region_y']/self.params['sampling'])+1)
 						shift+=1
 					if (min(new_region_x,new_region_y) == 20 and shift == 4):
+=======
+					if (min(new_region_x,new_region_y) == 20):
+>>>>>>> origin/trunk
 						apDisplay.printMsg("Coarse Alignment for Tilt-Series #%s failed after rescaling the search area %s time(s)." % (self.params['tiltseries'], retry-1))
 						apDisplay.printMsg("Window Size (x) was windowed down to %s" % (new_region_x*self.params['sampling']))
 						apDisplay.printMsg("Window Size (y) was windowed down to %s" % (new_region_y*self.params['sampling']))
@@ -1752,14 +1827,23 @@ class ProTomo2Aligner(basicScript.BasicScript):
 			#archive results
 			tiltfile=name+'.tlt'
 			series.geom(1).write(tiltfile)
+<<<<<<< HEAD
 			#apProTomo2Aligner.centerAlignment(tiltfile, self.params['dimx'], self.params['dimy'])
 			apProTomo2Aligner.findMaxSearchArea(tiltfile, self.params['dimx'], self.params['dimy'])
+=======
+>>>>>>> origin/trunk
 			if self.params['parallel'] != "True":
 				apDisplay.printMsg("Creating Depiction Videos...")
 				f.write('Creating Depiction Videos...\n')
 			else:
 				apDisplay.printMsg("Creating Depiction Videos in Parallel...")
 				f.write('Creating Depiction Videos in Parallel...\n')
+<<<<<<< HEAD
+=======
+			
+			# For multiprocessing
+			jobs2=[]
+>>>>>>> origin/trunk
 			
 			# Make correlation peak videos for depiction
 			self.params['corr_peak_gif']='media/correlations/'+seriesname+'00_cor.gif';self.params['corr_peak_ogv']='media/correlations/'+seriesname+'00_cor.ogv';self.params['corr_peak_mp4']='media/correlations/'+seriesname+'00_cor.mp4';self.params['corr_peak_webm']='media/correlations/'+seriesname+'00_cor.webm'
@@ -1808,9 +1892,13 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				lp=round(r1_lp, 1)
 				thickness=int(round(self.params['pixelsize']*self.params['thickness']))
 				self.params['recon_gif']='media/reconstructions/'+seriesname+'.gif';self.params['recon_ogv']='media/reconstructions/'+seriesname+'.ogv';self.params['recon_mp4']='media/reconstructions/'+seriesname+'.mp4';self.params['recon_webm']='media/reconstructions/'+seriesname+'.webm';
+<<<<<<< HEAD
 				jobs3.append(mp.Process(target=apProTomo2Aligner.makeReconstructionVideos, args=(name, 0, rundir, self.params[rx], self.params[ry], self.params['show_window_size'], self.params['protomo_outdir'], self.params['pixelsize'], self.params['sampling'], self.params['map_sampling'], lp, thickness, self.params['video_type'], self.params['keep_recons'], self.params['parallel'], "Coarse")))
 				for job in jobs3:
 					job.start()
+=======
+				apProTomo2Aligner.makeReconstructionVideos(name, 0, rundir, self.params[rx], self.params[ry], self.params['show_window_size'], self.params['protomo_outdir'], self.params['pixelsize'], self.params['sampling'], self.params['map_sampling'], lp, thickness, self.params['video_type'], self.params['keep_recons'], self.params['parallel'], align_step="Coarse")
+>>>>>>> origin/trunk
 			else:
 				apDisplay.printMsg("Skipping reconstruction depiction\n")
 				f.write('Skipping reconstruction depiction\n')
@@ -2078,11 +2166,19 @@ class ProTomo2Aligner(basicScript.BasicScript):
 			
 			
 			iters=start+self.params['r1_iters']+self.params['r2_iters']+self.params['r3_iters']+self.params['r4_iters']+self.params['r5_iters']
+<<<<<<< HEAD
 			round1={"window.size":"{ %s %s }" % (int(self.params['r1_region_x']/self.params['r1_sampling']),int(self.params['r1_region_y']/self.params['r1_sampling'])),"window.lowpass.diameter":"{ %s %s }" % (self.params['r1_lowpass_diameter_x'],self.params['r1_lowpass_diameter_y']),"map.lowpass.diameter":"{ %s %s }" % (self.params['r1_lowpass_diameter_x'],self.params['r1_lowpass_diameter_y']),"window.lowpass.apodization":"{ %s %s }" % (self.params['r1_lowpass_apod_x'],self.params['r1_lowpass_apod_y']),"window.highpass.apodization":"{ %s %s }" % (self.params['r1_highpass_apod_x'],self.params['r1_highpass_apod_y']),"window.highpass.diameter":"{ %s %s }" % (self.params['r1_highpass_diameter_x'],self.params['r1_highpass_diameter_y']),"sampling":"%s" % (self.params['r1_sampling']),"map.sampling":"%s" % (self.params['r1_sampling']),"preprocess.mask.kernel":"{ %s %s }" % (self.params['r1_kernel_x'],self.params['r1_kernel_y']),"align.peaksearch.radius":"{ %s %s }" % (self.params['r1_peak_search_radius_x'],self.params['r1_peak_search_radius_y']),"window.mask.width":"{ %s %s }" % (self.params['r1_mask_width_x'],self.params['r1_mask_width_y']),"align.mask.width":"{ %s %s }" % (self.params['r1_mask_width_x'],self.params['r1_mask_width_y']),"window.mask.apodization":"{ %s %s }" % (self.params['r1_mask_apod_x'],self.params['r1_mask_apod_y']),"align.mask.apodization":"{ %s %s }" % (self.params['r1_mask_apod_x'],self.params['r1_mask_apod_y']),"reference.body":"%s" % (self.params['r1_body']),"map.body":"%s" % (self.params['r1_body']),"align.correlation.mode":"%s" % (self.params['r1_corr_mode']),"align.translimit":"%s" % (self.params['r1_translimit'])}
 			round2={"window.size":"{ %s %s }" % (int(self.params['r2_region_x']/self.params['r2_sampling']),int(self.params['r2_region_y']/self.params['r2_sampling'])),"window.lowpass.diameter":"{ %s %s }" % (self.params['r2_lowpass_diameter_x'],self.params['r2_lowpass_diameter_y']),"map.lowpass.diameter":"{ %s %s }" % (self.params['r2_lowpass_diameter_x'],self.params['r2_lowpass_diameter_y']),"window.lowpass.apodization":"{ %s %s }" % (self.params['r2_lowpass_apod_x'],self.params['r2_lowpass_apod_y']),"window.highpass.apodization":"{ %s %s }" % (self.params['r2_highpass_apod_x'],self.params['r2_highpass_apod_y']),"window.highpass.diameter":"{ %s %s }" % (self.params['r2_highpass_diameter_x'],self.params['r2_highpass_diameter_y']),"sampling":"%s" % (self.params['r2_sampling']),"map.sampling":"%s" % (self.params['r2_sampling']),"preprocess.mask.kernel":"{ %s %s }" % (self.params['r2_kernel_x'],self.params['r2_kernel_y']),"align.peaksearch.radius":"{ %s %s }" % (self.params['r2_peak_search_radius_x'],self.params['r2_peak_search_radius_y']),"window.mask.width":"{ %s %s }" % (self.params['r2_mask_width_x'],self.params['r2_mask_width_y']),"align.mask.width":"{ %s %s }" % (self.params['r2_mask_width_x'],self.params['r2_mask_width_y']),"window.mask.apodization":"{ %s %s }" % (self.params['r2_mask_apod_x'],self.params['r2_mask_apod_y']),"align.mask.apodization":"{ %s %s }" % (self.params['r2_mask_apod_x'],self.params['r2_mask_apod_y']),"reference.body":"%s" % (self.params['r2_body']),"map.body":"%s" % (self.params['r2_body']),"align.correlation.mode":"%s" % (self.params['r2_corr_mode']),"align.translimit":"%s" % (self.params['r2_translimit'])}
 			round3={"window.size":"{ %s %s }" % (int(self.params['r3_region_x']/self.params['r3_sampling']),int(self.params['r3_region_y']/self.params['r3_sampling'])),"window.lowpass.diameter":"{ %s %s }" % (self.params['r3_lowpass_diameter_x'],self.params['r3_lowpass_diameter_y']),"map.lowpass.diameter":"{ %s %s }" % (self.params['r3_lowpass_diameter_x'],self.params['r3_lowpass_diameter_y']),"window.lowpass.apodization":"{ %s %s }" % (self.params['r3_lowpass_apod_x'],self.params['r3_lowpass_apod_y']),"window.highpass.apodization":"{ %s %s }" % (self.params['r3_highpass_apod_x'],self.params['r3_highpass_apod_y']),"window.highpass.diameter":"{ %s %s }" % (self.params['r3_highpass_diameter_x'],self.params['r3_highpass_diameter_y']),"sampling":"%s" % (self.params['r3_sampling']),"map.sampling":"%s" % (self.params['r3_sampling']),"preprocess.mask.kernel":"{ %s %s }" % (self.params['r3_kernel_x'],self.params['r3_kernel_y']),"align.peaksearch.radius":"{ %s %s }" % (self.params['r3_peak_search_radius_x'],self.params['r3_peak_search_radius_y']),"window.mask.width":"{ %s %s }" % (self.params['r3_mask_width_x'],self.params['r3_mask_width_y']),"align.mask.width":"{ %s %s }" % (self.params['r3_mask_width_x'],self.params['r3_mask_width_y']),"window.mask.apodization":"{ %s %s }" % (self.params['r3_mask_apod_x'],self.params['r3_mask_apod_y']),"align.mask.apodization":"{ %s %s }" % (self.params['r3_mask_apod_x'],self.params['r3_mask_apod_y']),"reference.body":"%s" % (self.params['r3_body']),"map.body":"%s" % (self.params['r3_body']),"align.correlation.mode":"%s" % (self.params['r3_corr_mode']),"align.translimit":"%s" % (self.params['r3_translimit'])}
 			round4={"window.size":"{ %s %s }" % (int(self.params['r4_region_x']/self.params['r4_sampling']),int(self.params['r4_region_y']/self.params['r4_sampling'])),"window.lowpass.diameter":"{ %s %s }" % (self.params['r4_lowpass_diameter_x'],self.params['r4_lowpass_diameter_y']),"map.lowpass.diameter":"{ %s %s }" % (self.params['r4_lowpass_diameter_x'],self.params['r4_lowpass_diameter_y']),"window.lowpass.apodization":"{ %s %s }" % (self.params['r4_lowpass_apod_x'],self.params['r4_lowpass_apod_y']),"window.highpass.apodization":"{ %s %s }" % (self.params['r4_highpass_apod_x'],self.params['r4_highpass_apod_y']),"window.highpass.diameter":"{ %s %s }" % (self.params['r4_highpass_diameter_x'],self.params['r4_highpass_diameter_y']),"sampling":"%s" % (self.params['r4_sampling']),"map.sampling":"%s" % (self.params['r4_sampling']),"preprocess.mask.kernel":"{ %s %s }" % (self.params['r4_kernel_x'],self.params['r4_kernel_y']),"align.peaksearch.radius":"{ %s %s }" % (self.params['r4_peak_search_radius_x'],self.params['r4_peak_search_radius_y']),"window.mask.width":"{ %s %s }" % (self.params['r4_mask_width_x'],self.params['r4_mask_width_y']),"align.mask.width":"{ %s %s }" % (self.params['r4_mask_width_x'],self.params['r4_mask_width_y']),"window.mask.apodization":"{ %s %s }" % (self.params['r4_mask_apod_x'],self.params['r4_mask_apod_y']),"align.mask.apodization":"{ %s %s }" % (self.params['r4_mask_apod_x'],self.params['r4_mask_apod_y']),"reference.body":"%s" % (self.params['r4_body']),"map.body":"%s" % (self.params['r4_body']),"align.correlation.mode":"%s" % (self.params['r4_corr_mode']),"align.translimit":"%s" % (self.params['r4_translimit'])}
 			round5={"window.size":"{ %s %s }" % (int(self.params['r5_region_x']/self.params['r5_sampling']),int(self.params['r5_region_y']/self.params['r5_sampling'])),"window.lowpass.diameter":"{ %s %s }" % (self.params['r5_lowpass_diameter_x'],self.params['r5_lowpass_diameter_y']),"map.lowpass.diameter":"{ %s %s }" % (self.params['r5_lowpass_diameter_x'],self.params['r5_lowpass_diameter_y']),"window.lowpass.apodization":"{ %s %s }" % (self.params['r5_lowpass_apod_x'],self.params['r5_lowpass_apod_y']),"window.highpass.apodization":"{ %s %s }" % (self.params['r5_highpass_apod_x'],self.params['r5_highpass_apod_y']),"window.highpass.diameter":"{ %s %s }" % (self.params['r5_highpass_diameter_x'],self.params['r5_highpass_diameter_y']),"sampling":"%s" % (self.params['r5_sampling']),"map.sampling":"%s" % (self.params['r5_sampling']),"preprocess.mask.kernel":"{ %s %s }" % (self.params['r5_kernel_x'],self.params['r5_kernel_y']),"align.peaksearch.radius":"{ %s %s }" % (self.params['r5_peak_search_radius_x'],self.params['r5_peak_search_radius_y']),"window.mask.width":"{ %s %s }" % (self.params['r5_mask_width_x'],self.params['r5_mask_width_y']),"align.mask.width":"{ %s %s }" % (self.params['r5_mask_width_x'],self.params['r5_mask_width_y']),"window.mask.apodization":"{ %s %s }" % (self.params['r5_mask_apod_x'],self.params['r5_mask_apod_y']),"align.mask.apodization":"{ %s %s }" % (self.params['r5_mask_apod_x'],self.params['r5_mask_apod_y']),"reference.body":"%s" % (self.params['r5_body']),"map.body":"%s" % (self.params['r5_body']),"align.correlation.mode":"%s" % (self.params['r5_corr_mode']),"align.translimit":"%s" % (self.params['r5_translimit'])}
+=======
+			round1={"window.size":"{ %s %s }" % (int(self.params['r1_region_x']/self.params['r1_sampling']),int(self.params['r1_region_y']/self.params['r1_sampling'])),"window.lowpass.diameter":"{ %s %s }" % (self.params['r1_lowpass_diameter_x'],self.params['r1_lowpass_diameter_y']),"map.lowpass.diameter":"{ %s %s }" % (self.params['r1_lowpass_diameter_x'],self.params['r1_lowpass_diameter_y']),"window.lowpass.apodization":"{ %s %s }" % (self.params['r1_lowpass_apod_x'],self.params['r1_lowpass_apod_y']),"window.highpass.apodization":"{ %s %s }" % (self.params['r1_highpass_apod_x'],self.params['r1_highpass_apod_y']),"window.highpass.diameter":"{ %s %s }" % (self.params['r1_highpass_diameter_x'],self.params['r1_highpass_diameter_y']),"sampling":"%s" % (self.params['r1_sampling']),"map.sampling":"%s" % (self.params['r1_sampling']),"preprocess.mask.kernel":"{ %s %s }" % (self.params['r1_kernel_x'],self.params['r1_kernel_y']),"align.peaksearch.radius":"{ %s %s }" % (self.params['r1_peak_search_radius_x'],self.params['r1_peak_search_radius_y']),"window.mask.width":"{ %s %s }" % (self.params['r1_mask_width_x'],self.params['r1_mask_width_y']),"align.mask.width":"{ %s %s }" % (self.params['r1_mask_width_x'],self.params['r1_mask_width_y']),"window.mask.apodization":"{ %s %s }" % (self.params['r1_mask_apod_x'],self.params['r1_mask_apod_y']),"align.mask.apodization":"{ %s %s }" % (self.params['r1_mask_apod_x'],self.params['r1_mask_apod_y']),"reference.body":"%s" % (self.params['r1_body']),"map.body":"%s" % (self.params['r1_body']),"align.correlation.mode":"%s" % (self.params['r1_corr_mode'])}
+			round2={"window.size":"{ %s %s }" % (int(self.params['r2_region_x']/self.params['r2_sampling']),int(self.params['r2_region_y']/self.params['r2_sampling'])),"window.lowpass.diameter":"{ %s %s }" % (self.params['r2_lowpass_diameter_x'],self.params['r2_lowpass_diameter_y']),"map.lowpass.diameter":"{ %s %s }" % (self.params['r2_lowpass_diameter_x'],self.params['r2_lowpass_diameter_y']),"window.lowpass.apodization":"{ %s %s }" % (self.params['r2_lowpass_apod_x'],self.params['r2_lowpass_apod_y']),"window.highpass.apodization":"{ %s %s }" % (self.params['r2_highpass_apod_x'],self.params['r2_highpass_apod_y']),"window.highpass.diameter":"{ %s %s }" % (self.params['r2_highpass_diameter_x'],self.params['r2_highpass_diameter_y']),"sampling":"%s" % (self.params['r2_sampling']),"map.sampling":"%s" % (self.params['r2_sampling']),"preprocess.mask.kernel":"{ %s %s }" % (self.params['r2_kernel_x'],self.params['r2_kernel_y']),"align.peaksearch.radius":"{ %s %s }" % (self.params['r2_peak_search_radius_x'],self.params['r2_peak_search_radius_y']),"window.mask.width":"{ %s %s }" % (self.params['r2_mask_width_x'],self.params['r2_mask_width_y']),"align.mask.width":"{ %s %s }" % (self.params['r2_mask_width_x'],self.params['r2_mask_width_y']),"window.mask.apodization":"{ %s %s }" % (self.params['r2_mask_apod_x'],self.params['r2_mask_apod_y']),"align.mask.apodization":"{ %s %s }" % (self.params['r2_mask_apod_x'],self.params['r2_mask_apod_y']),"reference.body":"%s" % (self.params['r2_body']),"map.body":"%s" % (self.params['r2_body']),"align.correlation.mode":"%s" % (self.params['r2_corr_mode'])}
+			round3={"window.size":"{ %s %s }" % (int(self.params['r3_region_x']/self.params['r3_sampling']),int(self.params['r3_region_y']/self.params['r3_sampling'])),"window.lowpass.diameter":"{ %s %s }" % (self.params['r3_lowpass_diameter_x'],self.params['r3_lowpass_diameter_y']),"map.lowpass.diameter":"{ %s %s }" % (self.params['r3_lowpass_diameter_x'],self.params['r3_lowpass_diameter_y']),"window.lowpass.apodization":"{ %s %s }" % (self.params['r3_lowpass_apod_x'],self.params['r3_lowpass_apod_y']),"window.highpass.apodization":"{ %s %s }" % (self.params['r3_highpass_apod_x'],self.params['r3_highpass_apod_y']),"window.highpass.diameter":"{ %s %s }" % (self.params['r3_highpass_diameter_x'],self.params['r3_highpass_diameter_y']),"sampling":"%s" % (self.params['r3_sampling']),"map.sampling":"%s" % (self.params['r3_sampling']),"preprocess.mask.kernel":"{ %s %s }" % (self.params['r3_kernel_x'],self.params['r3_kernel_y']),"align.peaksearch.radius":"{ %s %s }" % (self.params['r3_peak_search_radius_x'],self.params['r3_peak_search_radius_y']),"window.mask.width":"{ %s %s }" % (self.params['r3_mask_width_x'],self.params['r3_mask_width_y']),"align.mask.width":"{ %s %s }" % (self.params['r3_mask_width_x'],self.params['r3_mask_width_y']),"window.mask.apodization":"{ %s %s }" % (self.params['r3_mask_apod_x'],self.params['r3_mask_apod_y']),"align.mask.apodization":"{ %s %s }" % (self.params['r3_mask_apod_x'],self.params['r3_mask_apod_y']),"reference.body":"%s" % (self.params['r3_body']),"map.body":"%s" % (self.params['r3_body']),"align.correlation.mode":"%s" % (self.params['r3_corr_mode'])}
+			round4={"window.size":"{ %s %s }" % (int(self.params['r4_region_x']/self.params['r4_sampling']),int(self.params['r4_region_y']/self.params['r4_sampling'])),"window.lowpass.diameter":"{ %s %s }" % (self.params['r4_lowpass_diameter_x'],self.params['r4_lowpass_diameter_y']),"map.lowpass.diameter":"{ %s %s }" % (self.params['r4_lowpass_diameter_x'],self.params['r4_lowpass_diameter_y']),"window.lowpass.apodization":"{ %s %s }" % (self.params['r4_lowpass_apod_x'],self.params['r4_lowpass_apod_y']),"window.highpass.apodization":"{ %s %s }" % (self.params['r4_highpass_apod_x'],self.params['r4_highpass_apod_y']),"window.highpass.diameter":"{ %s %s }" % (self.params['r4_highpass_diameter_x'],self.params['r4_highpass_diameter_y']),"sampling":"%s" % (self.params['r4_sampling']),"map.sampling":"%s" % (self.params['r4_sampling']),"preprocess.mask.kernel":"{ %s %s }" % (self.params['r4_kernel_x'],self.params['r4_kernel_y']),"align.peaksearch.radius":"{ %s %s }" % (self.params['r4_peak_search_radius_x'],self.params['r4_peak_search_radius_y']),"window.mask.width":"{ %s %s }" % (self.params['r4_mask_width_x'],self.params['r4_mask_width_y']),"align.mask.width":"{ %s %s }" % (self.params['r4_mask_width_x'],self.params['r4_mask_width_y']),"window.mask.apodization":"{ %s %s }" % (self.params['r4_mask_apod_x'],self.params['r4_mask_apod_y']),"align.mask.apodization":"{ %s %s }" % (self.params['r4_mask_apod_x'],self.params['r4_mask_apod_y']),"reference.body":"%s" % (self.params['r4_body']),"map.body":"%s" % (self.params['r4_body']),"align.correlation.mode":"%s" % (self.params['r4_corr_mode'])}
+			round5={"window.size":"{ %s %s }" % (int(self.params['r5_region_x']/self.params['r5_sampling']),int(self.params['r5_region_y']/self.params['r5_sampling'])),"window.lowpass.diameter":"{ %s %s }" % (self.params['r5_lowpass_diameter_x'],self.params['r5_lowpass_diameter_y']),"map.lowpass.diameter":"{ %s %s }" % (self.params['r5_lowpass_diameter_x'],self.params['r5_lowpass_diameter_y']),"window.lowpass.apodization":"{ %s %s }" % (self.params['r5_lowpass_apod_x'],self.params['r5_lowpass_apod_y']),"window.highpass.apodization":"{ %s %s }" % (self.params['r5_highpass_apod_x'],self.params['r5_highpass_apod_y']),"window.highpass.diameter":"{ %s %s }" % (self.params['r5_highpass_diameter_x'],self.params['r5_highpass_diameter_y']),"sampling":"%s" % (self.params['r5_sampling']),"map.sampling":"%s" % (self.params['r5_sampling']),"preprocess.mask.kernel":"{ %s %s }" % (self.params['r5_kernel_x'],self.params['r5_kernel_y']),"align.peaksearch.radius":"{ %s %s }" % (self.params['r5_peak_search_radius_x'],self.params['r5_peak_search_radius_y']),"window.mask.width":"{ %s %s }" % (self.params['r5_mask_width_x'],self.params['r5_mask_width_y']),"align.mask.width":"{ %s %s }" % (self.params['r5_mask_width_x'],self.params['r5_mask_width_y']),"window.mask.apodization":"{ %s %s }" % (self.params['r5_mask_apod_x'],self.params['r5_mask_apod_y']),"align.mask.apodization":"{ %s %s }" % (self.params['r5_mask_apod_x'],self.params['r5_mask_apod_y']),"reference.body":"%s" % (self.params['r5_body']),"map.body":"%s" % (self.params['r5_body']),"align.correlation.mode":"%s" % (self.params['r5_corr_mode'])}
+>>>>>>> origin/trunk
 			switches={"preprocess.mask.gradient":{"%s" % (self.params['gradient']):self.params['gradient_switch']},"preprocess.mask.iter":{"%s" % (self.params['iter_gradient']):self.params['iter_gradient_switch']},"fit.orientation":{"%s" % (self.params['orientation']):self.params['orientation_switch']},"fit.azimuth":{"%s" % (self.params['azimuth']):self.params['azimuth_switch']},"fit.elevation":{"%s" % (self.params['elevation']):self.params['elevation_switch']},"fit.rotation":{"%s" % (self.params['rotation']):self.params['rotation_switch']},"fit.scale":{"%s" % (self.params['scale']):self.params['scale_switch']}}
 			
 			apDisplay.printMsg("Beginning Refinements\n")
@@ -2093,8 +2189,13 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				self.params['cycle'] = n+1  #Iterations in Protomo start at 0
 				if (n+1 == start+1):
 					r=1  #Round number
+<<<<<<< HEAD
 					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s of Tilt-Series #%s (%s)\n" % (n+1,r,self.params['tiltseries'],self.params['runname']))
 					f.write('\nBeginning Refinement Iteration #%s, Round #%s of Tilt-Series #%s (%s)\n' % (n+1,r,self.params['tiltseries'],self.params['runname']))
+=======
+					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s\n" % (n+1,r))
+					f.write('\nBeginning Refinement Iteration #%s, Round #%s\n' % (n+1,r))
+>>>>>>> origin/trunk
 					apDisplay.printMsg("lowpass = %s Angstroms\n" % r1_lp)
 					f.write("lowpass = %s Angstroms\n" % r1_lp)
 					region_x=self.params['r1_region_x']
@@ -2106,11 +2207,18 @@ class ProTomo2Aligner(basicScript.BasicScript):
 						f.write("%s = %s\n" % (val,round1[val]))
 						apDisplay.printMsg("%s = %s" % (val,round1[val]))
 						series.setparam(val,round1[val])
+<<<<<<< HEAD
 					current_round = "round1"
 				elif (n+1 == start+self.params['r1_iters']+1):
 					r=2
 					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s of Tilt-Series #%s (%s)\n" % (n+1,r,self.params['tiltseries'],self.params['runname']))
 					f.write('\nBeginning Refinement Iteration #%s, Round #%s of Tilt-Series #%s (%s)\n' % (n+1,r,self.params['tiltseries'],self.params['runname']))
+=======
+				elif (n+1 == start+self.params['r1_iters']+1):
+					r=2
+					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s\n" % (n+1,r))
+					f.write('\nBeginning Refinement Iteration #%s, Round #%s\n' % (n+1,r))
+>>>>>>> origin/trunk
 					apDisplay.printMsg("lowpass = %s angstroms\n" % r2_lp)
 					f.write("lowpass = %s angstroms\n" % r2_lp)
 					region_x=self.params['r2_region_x']
@@ -2122,11 +2230,18 @@ class ProTomo2Aligner(basicScript.BasicScript):
 						f.write("%s = %s\n" % (val,round2[val]))
 						apDisplay.printMsg("%s = %s" % (val,round2[val]))
 						series.setparam(val,round2[val])
+<<<<<<< HEAD
 					current_round = "round2"
 				elif (n+1 == start+self.params['r1_iters']+self.params['r2_iters']+1):
 					r=3
 					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s of Tilt-Series #%s (%s)\n" % (n+1,r,self.params['tiltseries'],self.params['runname']))
 					f.write('\nBeginning Refinement Iteration #%s, Round #%s of Tilt-Series #%s (%s)\n' % (n+1,r,self.params['tiltseries'],self.params['runname']))
+=======
+				elif (n+1 == start+self.params['r1_iters']+self.params['r2_iters']+1):
+					r=3
+					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s\n" % (n+1,r))
+					f.write('\nBeginning Refinement Iteration #%s, Round #%s\n' % (n+1,r))
+>>>>>>> origin/trunk
 					apDisplay.printMsg("lowpass = %s angstroms\n" % r3_lp)
 					f.write("lowpass = %s angstroms\n" % r3_lp)
 					region_x=self.params['r3_region_x']
@@ -2138,11 +2253,18 @@ class ProTomo2Aligner(basicScript.BasicScript):
 						f.write("%s = %s\n" % (val,round3[val]))
 						apDisplay.printMsg("%s = %s" % (val,round3[val]))
 						series.setparam(val,round3[val])
+<<<<<<< HEAD
 					current_round = "round3"
 				elif (n+1 == start+self.params['r1_iters']+self.params['r2_iters']+self.params['r3_iters']+1):
 					r=4
 					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s of Tilt-Series #%s (%s)\n" % (n+1,r,self.params['tiltseries'],self.params['runname']))
 					f.write('\nBeginning Refinement Iteration #%s, Round #%s of Tilt-Series #%s (%s)\n' % (n+1,r,self.params['tiltseries'],self.params['runname']))
+=======
+				elif (n+1 == start+self.params['r1_iters']+self.params['r2_iters']+self.params['r3_iters']+1):
+					r=4
+					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s\n" % (n+1,r))
+					f.write('\nBeginning Refinement Iteration #%s, Round #%s\n' % (n+1,r))
+>>>>>>> origin/trunk
 					apDisplay.printMsg("lowpass = %s angstroms\n" % r4_lp)
 					f.write("lowpass = %s angstroms\n" % r4_lp)
 					region_x=self.params['r4_region_x']
@@ -2154,11 +2276,18 @@ class ProTomo2Aligner(basicScript.BasicScript):
 						f.write("%s = %s\n" % (val,round4[val]))
 						apDisplay.printMsg("%s = %s" % (val,round4[val]))
 						series.setparam(val,round4[val])
+<<<<<<< HEAD
 					current_round = "round4"
 				elif (n+1 == start+self.params['r1_iters']+self.params['r2_iters']+self.params['r3_iters']+self.params['r4_iters']+1):
 					r=5
 					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s of Tilt-Series #%s (%s)\n" % (n+1,r,self.params['tiltseries'],self.params['runname']))
 					f.write('\nBeginning Refinement Iteration #%s, Round #%s of Tilt-Series #%s (%s)\n' % (n+1,r,self.params['tiltseries'],self.params['runname']))
+=======
+				elif (n+1 == start+self.params['r1_iters']+self.params['r2_iters']+self.params['r3_iters']+self.params['r4_iters']+1):
+					r=5
+					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s\n" % (n+1,r))
+					f.write('\nBeginning Refinement Iteration #%s, Round #%s\n' % (n+1,r))
+>>>>>>> origin/trunk
 					apDisplay.printMsg("lowpass = %s angstroms\n" % r5_lp)
 					f.write("lowpass = %s angstroms\n" % r5_lp)
 					region_x=self.params['r5_region_x']
@@ -2172,10 +2301,17 @@ class ProTomo2Aligner(basicScript.BasicScript):
 						series.setparam(val,round5[val])
 					current_round = "round5"
 				else:
+<<<<<<< HEAD
 					apDisplay.printMsg("No Round parameters changed for Iteration #%s of Tilt-Series #%s (%s)\n" % (n+1,self.params['tiltseries'],self.params['runname']))
 					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s of Tilt-Series #%s (%s)\n" % (n+1,r,self.params['tiltseries'],self.params['runname']))
 					f.write("\nNo Round parameters changed for Iteration #%s of Tilt-Series #%s (%s)\n" % (n+1,self.params['tiltseries'],self.params['runname']))
 					f.write('\nBeginning Refinement Iteration #%s, Round #%s of Tilt-Series #%s (%s)\n' % (n+1,r,self.params['tiltseries'],self.params['runname']))
+=======
+					f.write("\nNo Round parameters changed for Iteration #%s\n" % (n+1))
+					apDisplay.printMsg("No Round parameters changed for Iteration #%s\n" % (n+1))
+					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s\n" % (n+1,r))
+					f.write('\nBeginning Refinement Iteration #%s, Round #%s\n' % (n+1,r))
+>>>>>>> origin/trunk
 				
 				#change parameters depending on switches
 				toggle=0
@@ -2206,7 +2342,10 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				retry=0
 				brk=None
 				end=0
+<<<<<<< HEAD
 				shift=0
+=======
+>>>>>>> origin/trunk
 				while (min(new_region_x,new_region_y) != 20 and end == 0):
 					try:
 						if (brk != None):
@@ -2217,7 +2356,11 @@ class ProTomo2Aligner(basicScript.BasicScript):
 							new_region_y = apProTomo2Aligner.nextLargestSize(new_region_y)
 							apDisplay.printMsg("Refinement failed. Retry #%s with Window Size: (%s, %s) (at sampling %s)..." % (retry, new_region_x*sampling, new_region_y*sampling, sampling))
 							f.write('Refinement failed. Retry #%s with Window Size: (%s, %s) (at sampling %s)...\n' % (retry, new_region_x*sampling, new_region_y*sampling, sampling))
+<<<<<<< HEAD
 							time.sleep(0.5)  #Allows Ctrl-C to be caught by except
+=======
+							time.sleep(1)  #Allows Ctrl-C to be caught by except
+>>>>>>> origin/trunk
 							newsize = "{ %s %s }" % (new_region_x, new_region_y)
 							series.setparam("window.size", newsize)
 						retry+=1
@@ -2227,6 +2370,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 					except KeyboardInterrupt:  #Only caught if not in series.align()
 						brk=sys.exc_info()
 					except:
+<<<<<<< HEAD
 						if (min(new_region_x,new_region_y) == 20 and shift == 0):
 							apDisplay.printMsg("Retrying by shifting the search area right from center by 20%...")
 							series.unalign()
@@ -2261,6 +2405,14 @@ class ProTomo2Aligner(basicScript.BasicScript):
 							apDisplay.printMsg("Window Size (y) was windowed down to %s" % (new_region_y*sampling))
 							apDisplay.printMsg("Put values less than these into the corresponding parameter boxes on the Protomo Refinement Appion webpage and try again.\n")
 							f.write('Refinement Iteration #%s for Tilt-Series #%s (%s) failed after resampling the search area %s time(s).\n' % (n+1, self.params['tiltseries'], self.params['runname'], retry-1))
+=======
+						if (min(new_region_x,new_region_y) == 20):
+							apDisplay.printMsg("Refinement Iteration #%s for Tilt-Series #%s failed after resampling the search area %s time(s)." % (n+1, self.params['tiltseries'], retry-1))
+							apDisplay.printMsg("Window Size (x) was windowed down to %s" % (new_region_x*sampling))
+							apDisplay.printMsg("Window Size (y) was windowed down to %s" % (new_region_y*sampling))
+							apDisplay.printMsg("Put values less than these into the corresponding parameter boxes on the Protomo Refinement Appion webpage and try again.\n")
+							f.write('Refinement Iteration #%s for Tilt-Series #%s failed after resampling the search area %s time(s).\n' % (n+1, self.params['tiltseries'], retry-1))
+>>>>>>> origin/trunk
 							f.write('Window Size (x) was windowed down to %s\n' % (new_region_x*sampling))
 							f.write('Window Size (y) was windowed down to %s\n' % (new_region_y*sampling))
 							f.write('Put values less than these into the corresponding parameter boxes on the Protomo Refinement Appion webpage and try again.\n')
@@ -2294,18 +2446,27 @@ class ProTomo2Aligner(basicScript.BasicScript):
 					corrfile=basename+'.corr'
 					try:  #Sometimes Protomo fails to write a corr file correctly...I don't understand this
 						CCMS_shift, CCMS_rots, CCMS_scale, CCMS_sum = apProTomo2Aligner.makeQualityAssessment(name, i, rundir, corrfile)
+<<<<<<< HEAD
 					except:
 						apDisplay.printMsg("Protomo Failed to Write the correction factor file correctly, usually due to a failed alignment. Check your latest tilt-series video to identify offending images.")
 					if i == numcorrfiles-1:
 						self.params['qa_gif']='media/quality_assessment/'+seriesname+'_quality_assessment.gif'
 						thickness=int(round(self.params['pixelsize']*self.params['thickness']))
 						apProTomo2Aligner.makeQualityAssessmentImage(self.params['tiltseries'], self.params['sessionname'], name, rundir, thickness, start+self.params['r1_iters'], self.params['r1_sampling'], r1_lp, start+self.params['r2_iters'], self.params['r2_sampling'], r2_lp, start+self.params['r3_iters'], self.params['r3_sampling'], r3_lp, start+self.params['r4_iters'], self.params['r4_sampling'], r4_lp, start+self.params['r5_iters'], self.params['r5_sampling'], r5_lp)
+=======
+					except NoneType:
+						apDisplay.printMsg("Protomo Failed to Write the correction factor file correctly, usually due to a failed alignment.")
+					if i == numcorrfiles-1:
+						self.params['qa_gif']='media/quality_assessment/'+seriesname+'_quality_assessment.gif'
+						apProTomo2Aligner.makeQualityAssessmentImage(self.params['tiltseries'], self.params['sessionname'], name, rundir, start+self.params['r1_iters'], self.params['r1_sampling'], r1_lp, start+self.params['r2_iters'], self.params['r2_sampling'], r2_lp, start+self.params['r3_iters'], self.params['r3_sampling'], r3_lp, start+self.params['r4_iters'], self.params['r4_sampling'], r4_lp, start+self.params['r5_iters'], self.params['r5_sampling'], r5_lp)
+>>>>>>> origin/trunk
 				it="%03d" % (n)
 				basename='%s%s' % (name,it)
 				corrfile=basename+'.corr'
 				
 				apDisplay.printMsg("\033[43mCCMS(shift) = %s\033[0m for Iteration #%s of Tilt-Series #%s." % (round(CCMS_shift,5), n+1, self.params['tiltseries']))
 				f.write('CCMS(shift) = %s for Iteration #%s of Tilt-Series #%s.\n' % (round(CCMS_shift,5), n+1, self.params['tiltseries']))
+<<<<<<< HEAD
 				
 				apDisplay.printMsg("\033[46mCCMS(rotations) = %s\033[0m for Iteration #%s of Tilt-Series #%s." % (round(CCMS_rots,5), n+1, self.params['tiltseries']))
 				f.write('CCMS(rotations) = %s for Iteration #%s of Tilt-Series #%s.\n' % (round(CCMS_rots,5), n+1, self.params['tiltseries']))
@@ -2324,6 +2485,17 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				if n+1 > 3: #Check alignment stability only after at least 3 iterations have gone through
 					apDisplay.printMsg("Tilt model stability (with respect to the last 3 iterations) at Iteration #%s of Tilt-Series #%s (%s): %s" % (n+1, self.params['tiltseries'], self.params['sessionname'], alignment_stability))
 					f.write('Tilt model stability (with respect to the last 3 iterations) at Iteration #%s of Tilt-Series #%s (%s): %s' % (n+1, self.params['tiltseries'], self.params['sessionname'], alignment_stability))
+=======
+				
+				apDisplay.printMsg("\033[46mCCMS(rotations) = %s\033[0m for Iteration #%s of Tilt-Series #%s." % (round(CCMS_rots,5), n+1, self.params['tiltseries']))
+				f.write('CCMS(rotations) = %s for Iteration #%s of Tilt-Series #%s.\n' % (round(CCMS_rots,5), n+1, self.params['tiltseries']))
+				
+				apDisplay.printMsg("\033[43mCCMS(scale) = %s\033[0m for Iteration #%s of Tilt-Series #%s." % (round(CCMS_scale,5), n+1, self.params['tiltseries']))
+				f.write('CCMS(scale) = %s for Iteration #%s of Tilt-Series #%s.\n' % (round(CCMS_scale,5), n+1, self.params['tiltseries']))
+				
+				apDisplay.printMsg("\033[1mThe scaled sum of CCMS values is %s\033[0m for Iteration #%s of Tilt-Series #%s." % (round(CCMS_sum,5), n+1, self.params['tiltseries']))
+				f.write('The scaled sum of CCMS values is #%s for Tilt-Series #%s.\n' % (round(CCMS_sum,5), self.params['tiltseries']))
+>>>>>>> origin/trunk
 				
 				if self.params['parallel'] != "True":
 					apDisplay.printMsg("Creating Depiction Videos for Iteration #%s..." % (n+1))
@@ -2337,6 +2509,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				
 				# Make correlation peak videos for depiction
 				self.params['corr_peak_gif']='media/correlations/'+seriesname+ittt+'_cor.gif';self.params['corr_peak_ogv']='media/correlations/'+seriesname+ittt+'_cor.ogv';self.params['corr_peak_mp4']='media/correlations/'+seriesname+ittt+'_cor.mp4';self.params['corr_peak_webm']='media/correlations/'+seriesname+ittt+'_cor.webm'
+<<<<<<< HEAD
 				if os.path.exists(backup_tiltfilename_full): #Move last cor.img file to the current iteration filename
 					corimglist = glob.glob(os.path.join(self.params['protomo_outdir'], seriesname+'*_cor.img'))
 					corimglist.sort()
@@ -2345,6 +2518,11 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				jobs.append(mp.Process(target=apProTomo2Aligner.findMaxSearchArea, args=(tiltfile, self.params['dimx'], self.params['dimy'])))
 				if self.params['parallel'] != "True":
 					[job.start() for job in jobs]
+=======
+				jobs.append(mp.Process(target=apProTomo2Aligner.makeCorrPeakVideos, args=(name, it, rundir, self.params['protomo_outdir'], self.params['video_type'], "Refinement")))
+				if self.params['parallel'] != "True":
+					[p.start() for job in jobs]
+>>>>>>> origin/trunk
 					[p.join() for p in mp.active_children()]
 					jobs=[]
 				
@@ -2352,15 +2530,25 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				self.params['corr_plot_coa_gif']='media/corrplots/'+seriesname+ittt+'_coa.gif';self.params['corr_plot_cofx_gif']='media/corrplots/'+seriesname+ittt+'_cofx.gif';self.params['corr_plot_cofy_gif']='media/corrplots/'+seriesname+ittt+'_cofy.gif';self.params['corr_plot_rot_gif']='media/corrplots/'+seriesname+ittt+'_rot.gif';self.params['corr_plot_scl_gif']='media/corrplots/'+seriesname+ittt+'_scl.gif';
 				jobs.append(mp.Process(target=apProTomo2Aligner.makeCorrPlotImages, args=(name, it, rundir, corrfile)))
 				if self.params['parallel'] != "True":
+<<<<<<< HEAD
 					[job.start() for job in jobs]
+=======
+					[p.start() for job in jobs]
+>>>>>>> origin/trunk
 					[p.join() for p in mp.active_children()]
 					jobs=[]
 				
 				# Make refinement plots of tilt azimuth and theta
 				self.params['azimuth_gif']='media/angle_refinement/'+seriesname+'_azimuth.gif';self.params['theta_gif']='media/angle_refinement/'+seriesname+'_theta.gif';
+<<<<<<< HEAD
 				jobs.append(mp.Process(target=apProTomo2Aligner.makeAngleRefinementPlots, args=(rundir, name, tiltfilename_full, self.params['azimuth_max_deviation'], self.params['azimuth_stability_check'])))
 				if self.params['parallel'] != "True":
 					[job.start() for job in jobs]
+=======
+				jobs.append(mp.Process(target=apProTomo2Aligner.makeAngleRefinementPlots, args=(rundir, name,)))
+				if self.params['parallel'] != "True":
+					[p.start() for job in jobs]
+>>>>>>> origin/trunk
 					[p.join() for p in mp.active_children()]
 					jobs=[]
 				
@@ -2371,7 +2559,11 @@ class ProTomo2Aligner(basicScript.BasicScript):
 					self.params['tiltseries_gif']='media/tiltseries/'+seriesname+ittt+'.gif';self.params['tiltseries_ogv']='media/tiltseries/'+seriesname+ittt+'.gif';self.params['tiltseries_mp4']='media/tiltseries/'+seriesname+ittt+'.mp4';self.params['tiltseries_webm']='media/tiltseries/'+seriesname+ittt+'.webm';
 					jobs.append(mp.Process(target=apProTomo2Aligner.makeTiltSeriesVideos, args=(seriesname, it, tiltfile, rawimagecount, rundir, raw_path, self.params['pixelsize'], self.params['map_sampling'], self.params['image_file_type'], self.params['video_type'], self.params['tilt_clip'], self.params['parallel'], "Refinement",)))
 					if self.params['parallel'] != "True":
+<<<<<<< HEAD
 						[job.start() for job in jobs]
+=======
+						[p.start() for job in jobs]
+>>>>>>> origin/trunk
 						[p.join() for p in mp.active_children()]
 						jobs=[]
 				else:
@@ -2421,7 +2613,10 @@ class ProTomo2Aligner(basicScript.BasicScript):
 					thickness=int(round(self.params['pixelsize']*self.params['thickness']))
 					self.params['recon_gif']='media/reconstructions/'+seriesname+itt+'.gif';self.params['recon_ogv']='media/reconstructions/'+seriesname+itt+'.ogv';self.params['recon_mp4']='media/reconstructions/'+seriesname+itt+'.mp4';self.params['recon_webm']='media/reconstructions/'+seriesname+itt+'.webm';
 					apProTomo2Aligner.makeReconstructionVideos(name, itt, rundir, self.params[rx], self.params[ry], self.params['show_window_size'], self.params['protomo_outdir'], self.params['pixelsize'], sampling, self.params['map_sampling'], lp, thickness, self.params['video_type'], self.params['keep_recons'], self.params['parallel'], align_step="Refinement")
+<<<<<<< HEAD
 					#jobs.append(mp.Process(target=apProTomo2Aligner.makeReconstructionVideos, args=(name, itt, rundir, self.params[rx], self.params[ry], self.params['show_window_size'], self.params['protomo_outdir'], self.params['pixelsize'], sampling, self.params['map_sampling'], lp, thickness, self.params['video_type'], self.params['keep_recons'], self.params['parallel'], "Refinement")))
+=======
+>>>>>>> origin/trunk
 					
 				else:
 					apDisplay.printMsg("Skipping reconstruction depiction\n")
@@ -2477,14 +2672,20 @@ class ProTomo2Aligner(basicScript.BasicScript):
 					f.write('Window Size (y) was windowed down to %s\n' % (new_region_y*sampling))
 				
 				if n == range(iters)[-1]:
+<<<<<<< HEAD
 					apDisplay.printMsg("Finished Refinement for Tilt-Series #%s (%s)!\n" % (self.params['tiltseries'], self.params['runname']))
 					f.write('Finished Refinement for Tilt-Series #%s (%s)!\n' % (self.params['tiltseries'], self.params['runname']))
+=======
+					apDisplay.printMsg("Finished Refinement for Tilt-Series #%s!\n" % self.params['tiltseries'])
+					f.write('Finished Refinement for Tilt-Series #%s!\n' % self.params['tiltseries'])
+>>>>>>> origin/trunk
 			
 			#Insert iteration information into the database
 			#if self.params['commit']=="True":
 			#	self.getModelAngles(tiltfile)
 			#	self.param['seriesname'] = name
 			#	self.insertIterationIntoDatabase(r)
+<<<<<<< HEAD
 		
 		#Remove Protomo cache directory
 		os.system('rm -rf %s' % self.params['cachedir'])
@@ -2498,6 +2699,16 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		f.write('Did everything blow up and now you\'re yelling at your computer screen?\n')
 		f.write('If so, kindly email Alex at anoble@nysbc.org explaining the issue and include this log file.\n')
 		f.write('If everything worked beautifully and you publish, please use the appropriate citations listed on the Appion webpage! You can also print out all citations by typing: protomo2aligner.py --citations\n')
+=======
+		
+		time_end = time.strftime("%Yyr%mm%dd-%Hhr%Mm%Ss")
+		apDisplay.printMsg('Did everything blow up and now you\'re yelling at your computer screen?')
+		apDisplay.printMsg('If so, kindly email Alex at ajn10d@fsu.edu and include this log file.')
+		apDisplay.printMsg('If everything worked beautifully and you publish it, please use the appropriate citations listed on the Appion webpage!')
+		f.write('Did everything blow up and now you\'re yelling at your computer screen?\n')
+		f.write('If so, kindly email Alex at ajn10d@fsu.edu and include this log file\n.')
+		f.write('If everything worked beautifully and you publish it, please use the appropriate citations listed on the Appion webpage!\n')
+>>>>>>> origin/trunk
 		print "\n"
 		apDisplay.printMsg("Closing log file %s/protomo2aligner_%s.log\n" % (rundir, time_start))
 		f.write("\nEnd time: %s" % time_end)

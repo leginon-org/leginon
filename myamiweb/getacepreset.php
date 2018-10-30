@@ -56,6 +56,7 @@ if (abs($ctfdata['defocus1'] - $ctfdata['defocus2']) > $epsilon) {
 	$keys[]='defocus2';
 	$keys[]='angle_astigmatism';
 }
+<<<<<<< HEAD
 if (abs($ctfdata['extra_phase_shift']) > 0.001) {
 	$keys[]='extra_phase_shift';
 }
@@ -65,6 +66,20 @@ $keys[]='confidence_appion';
 //$keys[]='confidence_30_10';
 //$keys[]='confidence_5_peak';
 
+=======
+$keys[]='amplitude_contrast';
+if (abs($ctfdata['extra_phase_shift']) > 0.001) {
+	$keys[]='extra_phase_shift';
+}
+$keys[]='cs';
+// estimate quality
+$keys[]='resolution_80_percent';
+$keys[]='resolution_50_percent';
+$keys[]='confidence_appion';
+//$keys[]='confidence_30_10';
+//$keys[]='confidence_5_peak';
+$keys[]='ctffind4_resolution';
+>>>>>>> origin/trunk
 if ($ctftype=='ctffind') 
 	$keys[]='cross_correlation';
 else 
@@ -80,18 +95,32 @@ $keymap = array(
 	"defocus"  => "nomDef",
 	"defocus1"  => "def1",
 	"defocus2"  => "def2",
+<<<<<<< HEAD
 	"runname"  => "runname",
 	"confidence"  => "conf<sub>pkg</sub>",
+=======
+	"confidence"  => "conf&nbsp;(pkg)",
+>>>>>>> origin/trunk
 	"angle_astigmatism"  => "&theta;<sub>astig</sub>",
 	"extra_phase_shift"  => "&phi;<sub>pp</sub>",
 	"cross_correlation"  => "cc",
 	"amplitude_contrast" => "amp&nbsp;con",
+<<<<<<< HEAD
 	"confidence_appion" => "conf<sub>appion</sub>",
 	"confidence_30_10" => "conf<sub>30/10</sub>",
 	"confidence_5_peak" => "conf<sub>5 peak</sub>",
 	"resolution_80_percent" => "res<sub>0.8</sub>",
 	"resolution_50_percent" => "res<sub>0.5</sub>",
 	"ctffind4_resolution" => "res<sub>pkg</sub>",
+=======
+	"confidence_appion" => "conf&nbsp;(appion)",
+	"confidence_30_10" => "conf&nbsp;(30/10)",
+	"confidence_5_peak" => "conf&nbsp;(5 peak)",
+	"resolution_80_percent" => "<br/>res&nbsp;(0.8)",
+	"resolution_50_percent" => "res&nbsp;(0.5)",
+	"ctffind4_resolution" => "res&nbsp;(pkg)",
+
+>>>>>>> origin/trunk
 );
 
 if ($ctfdata) {
@@ -111,6 +140,7 @@ if ($ctfdata) {
 			// special numerical formatting
 			if (preg_match('%defocus%',$k))
 				echo " <b>$name:</b>&nbsp;",($leginondata->formatDefocus($v));
+<<<<<<< HEAD
 			elseif ($k == 'angle_astigmatism')
 				echo " <b>$name:</b>&nbsp;".format_angle_degree($v,2,2);
 			elseif ($k == 'extra_phase_shift')
@@ -121,6 +151,12 @@ if ($ctfdata) {
 				echo " <b>$name:</b>&nbsp;".number_format($v,2);
 			elseif ($k == 'cs')
 				echo " <b>$name:</b>&nbsp;".number_format($v,3)."&nbsp;mm";
+=======
+			elseif (preg_match('%phase_shift%',$k))
+				echo " <b>$name:</b>&nbsp;".format_angle_degree($v*180/3.14159,2,2);
+			elseif (preg_match('%ctffind4_res%',$k))
+				echo " <b>$name:</b>&nbsp;".format_angstrom_number($v*1e-10,2,2);
+>>>>>>> origin/trunk
 			elseif ($v-floor($v)) 
 				echo " <b>$name:</b>&nbsp;".format_sci_number($v,2,2);
 			else

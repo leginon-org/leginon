@@ -730,7 +730,11 @@ Returns:  (bins, r_centers, t_centers)
 	## turn result into 2-D array
 	rt_bins = numpy.asarray(rt_bins)
 	rt_bins.shape = nbins_r, nbins_t
+<<<<<<< HEAD
 
+=======
+	
+>>>>>>> origin/trunk
 	# interpolate NaN in the array which came from bins with no item
 	for tbin in range(nbins_t):
 		rt = rt_bins[:,tbin]
@@ -759,6 +763,7 @@ def radialAverageImage(a):
 	def radial_value(rho, **kwargs):
 		return numpy.interp(rho, r_center, radial_avg, right=radial_avg[-1])
 
+<<<<<<< HEAD
 	return fromRadialFunction(radial_value, a.shape)
 
 def flipImageTopBottom(imagearray):
@@ -868,4 +873,7 @@ def replaceBadRowsAndColumns(imagearray,badrowlist=[], badcolumnlist=[]):
 		newcol=(imagearray[:,lowerneighbor] + imagearray[:,higherneighbor])/2
 		imagearray[:,badcol]=newcol
 	return imagearray
+=======
+	return fromRadialFunction(radial_value, a.shape) 
+>>>>>>> origin/trunk
 

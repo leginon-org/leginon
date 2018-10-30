@@ -18,6 +18,7 @@ class UpdateLib:
 	def __init__(self, project_dbupgrade):
 		msg = True
 		self.project_dbupgrade = project_dbupgrade
+<<<<<<< HEAD
 		self.branch_name = gitlib.getCurrentBranch()
 		if msg is True:
 			print "Branch name '%s'"%(self.branch_name)
@@ -36,6 +37,12 @@ class UpdateLib:
 			return True
 		# perform upgrade
 		self.versionControlSchemaUpgrade()
+=======
+		self.checkout_branch = version.getGITBranch('.')
+		self.checkout_revision = self.getCheckOutRevision()
+		self.db_revision = self.getDatabaseRevision(printMsg)
+		self.db_branch = self.getDatabaseSVNBranch(printMsg)
+>>>>>>> origin/trunk
 
 	def versionControlSchemaUpgrade(self):
 		print "update schema table in database from legacy version"
@@ -82,12 +89,21 @@ class UpdateLib:
 		new schema update script is added.
 		'''
 		has_appiondbs = self.checkProcessingDB()
+<<<<<<< HEAD
 		### this seems so clunky, can we do this better
 		if branch_name == 'trunk' or branch_name == 'myami-beta':
 			schema_revisions = [12857,13713,14077,14891,15069,15497,15526,15653,16182,16607,17035,17111,17224,17561,17562,17617,17812,17813,17916,18000,18034,19470, 20369]
 			appion_only_revisions = [15248,15251,15293,15961,16412,16446,17035,17311,17982]
 		elif branch_name == 'myami-3.3':
 			schema_revisions = [12857,13713,14077,14891,15069,15497,15526,15653,16182,16607,17035,17111,17224,17561,17562,17617,17812,17813,17916,18000,18034,19470,20369]
+=======
+		if svn_branch == 'trunk':
+			schema_revisions = [12857,13713,14077,14891,15069,15497,15526,15653,16182,16607,17035,17111,17224,17561,17562,17617,17812,17813,17916,18000,18034,19470]
+			appion_only_revisions = [15248,15251,15293,15961,16412,16446,17035,17311,17982]
+
+		elif svn_branch == 'myami-3.2':
+			schema_revisions = [12857,13713,14077,14891,15069,15497,15526,15653,16182,16607,17035,17111,17224,17561,17562,17617,17812,17813,17916,18000,18034,19470]
+>>>>>>> origin/trunk
 			appion_only_revisions = [15248,15251,15293,15961,16412,16446,17035,17311,17982]
 		elif branch_name == 'myami-3.2':
 			schema_revisions = [12857,13713,14077,14891,15069,15497,15526,15653,16182,16607,17035,17111,17224,17561,17562,17617,17812,17813,17916,18000,18034,19470]
@@ -124,6 +140,7 @@ class UpdateLib:
 		'''
 		branch_reset_revision = self.db_revision
 		if not self.getDatabaseReset():
+<<<<<<< HEAD
 			if branch_name == 'trunk' or branch_name == 'myami-beta':
 				branch_reset_revision = 18034
 			elif branch_name == 'myami-3.3':
@@ -133,6 +150,15 @@ class UpdateLib:
 			elif branch_name == 'myami-3.1':
 				branch_reset_revision = 18034
 			elif branch_name == 'myami-3.0':
+=======
+			if svn_branch == 'trunk':
+				branch_reset_revision = 18034
+			elif svn_branch == 'myami-3.2':
+				branch_reset_revision = 18034
+			elif svn_branch == 'myami-3.1':
+				branch_reset_revision = 18034
+			elif svn_branch == 'myami-3.0':
+>>>>>>> origin/trunk
 				branch_reset_revision = 17973
 			elif branch_name == 'myami-2.2':
 				branch_reset_revision = 16607

@@ -38,8 +38,11 @@ class Cluster {
     private $passPhrase;   //passPhrase if it is to be stored in cluster config
     private $gpus;     // a dictionary array of the gpu names and device numbers available on this host
     private $queues;  // an array of queues that jobs may be submitted to. This may be empty.	
+<<<<<<< HEAD
     private $noJobQueue;  // boolean to not allow job queuing to run.	
     private $allowDirectCommandRun;  // boolean to allow command to run directly.	
+=======
+>>>>>>> origin/trunk
 
     function __construct($hostname) {
         global $PROCESSING_HOSTS;
@@ -93,8 +96,11 @@ class Cluster {
         $this->privateKey = $hostconfig['privatekey'];
         $this->gpus = $hostconfig['gpus'];
         $this->queues = $hostconfig['queues']; //an array of queues available on this cluster
+<<<<<<< HEAD
         $this->noJobQueue = $hostconfig['nojobqueue']; //has no job scheduler
         $this->allowDirectRun = $hostconfig['allowdirectrun']; //allow running appion script directly
+=======
+>>>>>>> origin/trunk
     }
 
     function getHostName() {
@@ -121,6 +127,7 @@ class Cluster {
         return $this->reconPerNodeDef;
     }
 
+<<<<<<< HEAD
 		function getAllowDirectRun() {
         return $this->allowDirectRun;
 		}
@@ -129,6 +136,8 @@ class Cluster {
         return $this->noJobQueue;
 		}
 
+=======
+>>>>>>> origin/trunk
     function getWallTimeDef() {
         return $this->wallTimeDef;
     }

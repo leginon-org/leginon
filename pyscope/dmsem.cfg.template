@@ -3,12 +3,16 @@
 # DM Version
 DM_VERSION = 2.31.734.0
 
+<<<<<<< HEAD
 #Logger
 [logger]
 #verbosity 1=info, 2=debug
 VERBOSITY = 0
 
 ### K2 or K3 Summit configuration through SERIALEMCCD plugin
+=======
+### K2 Summit configuration through SERIALEMCCD plugin
+>>>>>>> origin/trunk
 [k2]
 # Camera ID
 CAMERA_ID = 0
@@ -19,6 +23,7 @@ ROTATE = 1
 # raw frame base directory. Use '\' as path separator
 RAW_FRAME_DIR = D:\frames\
 # return camera call before file is saved
+<<<<<<< HEAD
 DO_EARLY_RETURN = False
 # max number of frames to sum when return early
 EARLY_RETURN_FRAME_COUNT = 0
@@ -30,12 +35,20 @@ SAVE_LZW_TIFF_FRAMES = False
 # K3 processing mode. 'gain normalized' or 'dark subtracted'
 DM_PROCESSING = gain normalized
 #DM_PROCESSING = dark subtracted
+=======
+DO_EARLY_RETURN = True
+# max number of frames to sum when return early
+EARLY_RETURN_FRAME_COUNT = 0
+>>>>>>> origin/trunk
 
 ### Orius configuration if exists
 [orius]
 # Camera ID
 CAMERA_ID = 1
+<<<<<<< HEAD
 #Midnight Delay.  Not activated if DELAY_LENGTH_MINUTES is 0
 [timing]
 DELAY_START_MINUTES_BEFORE_MIDNIGHT = 0
 DELAY_LENGTH_MINUTES = 0
+=======
+>>>>>>> origin/trunk

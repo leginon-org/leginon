@@ -90,12 +90,15 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		self.onQueueCheckBox(self.settings['queue'])
 		# assumes needing focus. Overwritten by subclasses
 		self.foc_activated = True
+<<<<<<< HEAD
 
 	def onInitialized(self):
 		super(TargetFinder, self).onInitialized()
 		# self.panel is now made
 		combined_state = self.settings['user check'] and not self.settings['queue']
 		self.setUserVerificationStatus(combined_state)
+=======
+>>>>>>> origin/trunk
 
 	def handleApplicationEvent(self,evt):
 		'''
@@ -176,12 +179,15 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		'''
 		Wait for user interaction either locally or remotely.
 		'''
+<<<<<<< HEAD
 		# Rule about z height retention to the target selected
 		# when z height is changed during interaction:
 		# If the target will be in a queue, the z will be the z of the parent image.
 		# If the target will not be in a queue, the z will be the value it happens
 		# to be at the time of its processing, i.e., afected by z adjustment during
 		# and after the interaction.
+=======
+>>>>>>> origin/trunk
 		valid_selection = False
 		while not valid_selection:
 			if self.settings['check method'] == 'remote':
@@ -624,6 +630,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 				if 'queue' in self.remote.toolbar.tools:
 					self.remote.toolbar.tools['queue'].deActivate()
 
+<<<<<<< HEAD
 	def blobStatsTargets(self, blobs):
 		targets = []
 		for blob in blobs:
@@ -637,6 +644,8 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			targets.append(target)
 		return targets
 
+=======
+>>>>>>> origin/trunk
 class ClickTargetFinder(TargetFinder):
 	targetnames = ['preview', 'reference', 'focus', 'acquisition']
 	panelclass = gui.wx.ClickTargetFinder.Panel

@@ -117,6 +117,7 @@ class Conditioner(node.Node):
 			self.outputEvent(evt1, wait=False)
 			self._handleFixConditionEvent(evt)
 			status = 'ok'
+<<<<<<< HEAD
 		except RuntimeError, e:
 			self.logger.error('Operation error: e')
 			self.pauseOnError()
@@ -128,6 +129,17 @@ class Conditioner(node.Node):
 			self.outputEvent(evt2, wait=False)
 		except Exception, e:
 			self.logger.warning('handling exception for restarting idle timer %s' %(e.args[0]))
+=======
+		except Exception, e:
+			self.logger.warning('handling exception %s' %(e,))
+			status='exception'
+		try:
+			evt2 = event.IdleTimerRestartEvent()
+			self.outputEvent(evt2, wait=False)
+		except Exception, e:
+			raise
+			self.logger.warning('handling exception for restarting idle timer %s' %(e,))
+>>>>>>> origin/trunk
 		self.confirmEvent(evt, status=status)
 		self.setStatus('idle')
 		self.player.stop()
@@ -180,6 +192,7 @@ class Conditioner(node.Node):
 		'''
 		self.logger.info('handle fix condition request')
 		if self.isAboveTripValue():
+<<<<<<< HEAD
 			self.setStatus('processing')
 			self._fixCondition(condition_type)
 			self.logger.info('done %s' % (condition_type))
@@ -187,6 +200,12 @@ class Conditioner(node.Node):
 			self.logger.info('no need to do anything')
 		self.setStatus('idle')
 		self.player.stop()
+=======
+			self._fixCondition(condition_type)
+			self.logger.info('done %s' % (condition_type))
+		else:
+			self.logger.info('condition still below trip level, nothing to do')
+>>>>>>> origin/trunk
 
 	def isAboveTripValue(self):
 		'''
@@ -209,7 +228,10 @@ class Conditioner(node.Node):
 			self.fixCondition(ctype)
 		evt = event.IdleTimerRestartEvent()
 		self.outputEvent(evt, wait=False)
+<<<<<<< HEAD
 		self.player.stop()
+=======
+>>>>>>> origin/trunk
 		self.setStatus('idle')
 
 class AutoNitrogenFiller(Conditioner):

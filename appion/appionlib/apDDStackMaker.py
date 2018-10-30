@@ -6,7 +6,10 @@ import sys
 import math
 import shutil
 import subprocess
+<<<<<<< HEAD
 import multiprocessing as mp
+=======
+>>>>>>> origin/trunk
 #pyami
 from pyami import fileutil
 #leginon
@@ -33,6 +36,7 @@ class FrameStackLoop(apDDLoop.DDStackLoop):
 			action="store_true", help="Output square images")
 		self.parser.add_option("--no-cyclechannels", dest="cyclechannels", default=True,
 			action="store_false", help="Use only one reference channel for gain/dark correction")
+<<<<<<< HEAD
 		self.parser.add_option("--compress", dest="compress", default=False,
 			action="store_true", help="Compress raw frames after stack making")
 		self.parser.add_option("--override_db", dest="override_db", default=False,
@@ -40,12 +44,16 @@ class FrameStackLoop(apDDLoop.DDStackLoop):
 		# String
 		self.parser.add_option("--framepath", dest="framepath",
 			help="Force Session Frame Path to this", metavar="PATH")
+=======
+		# String
+>>>>>>> origin/trunk
 		# Integer
 		self.parser.add_option("--refimgid", dest="refimgid", type="int",
 			help="Specify a corrected image to do gain/dark correction with", metavar="INT")
 
 		self.parser.add_option("--trim", dest="trim", type="int", default=0,
 			help="Trim edge off after frame stack gain/dark correction", metavar="INT")
+<<<<<<< HEAD
 		
 	### add options here
 		self.parser.add_option('--clip', dest='clip', default=None, type='int', help= "Clip 'clip' pixels from the raw frames and pad back out with the mean.")
@@ -54,6 +62,8 @@ class FrameStackLoop(apDDLoop.DDStackLoop):
 		self.parser.add_option("--flipgain", dest="flipgain", default=False,
 			action="store_true", help="Flip dark and bright top to bottom before correcting frames")
 
+=======
+>>>>>>> origin/trunk
 
 	#=======================
 	def checkConflicts(self):
@@ -64,7 +74,16 @@ class FrameStackLoop(apDDLoop.DDStackLoop):
 	def getFrameType(self):
 		# set how frames are saved depending on what is found in the basepath
 		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
+<<<<<<< HEAD
 		return ddinfo.getRawFrameTypeFromSession(sessiondata)
+=======
+		if sessiondata['frame path']:
+			# 3.0+
+			return ddinfo.getRawFrameType(sessiondata['frame path'])
+		else:
+			# pre-3.0
+			return ddinfo.getRawFrameType(sessiondata['image path'])
+>>>>>>> origin/trunk
 
 	#=======================
 	def preLoopFunctions(self):
@@ -79,6 +98,7 @@ class FrameStackLoop(apDDLoop.DDStackLoop):
 		# keepstack is resolved for various cases in conflict check.  There should be no ambiguity by now
 		self.dd.setKeepStack(self.params['keepstack'])
 		self.dd.setCycleReferenceChannels(self.params['cyclechannels'])
+<<<<<<< HEAD
 		self.dd.clip=self.params['clip']
 		self.first_image = True
 		if self.params['override_db'] is True:
@@ -90,6 +110,10 @@ class FrameStackLoop(apDDLoop.DDStackLoop):
 		# specification that is not default
 		if self.params['framepath']:
 			self.dd.setForcedFrameSessionPath(self.params['framepath'])
+=======
+
+	
+>>>>>>> origin/trunk
 		if self.params['refimgid']:
 			self.dd.setDefaultImageForReference(self.params['refimgid'])
 		self.imageids = []
@@ -135,10 +159,15 @@ class FrameStackLoop(apDDLoop.DDStackLoop):
 		### first remove any existing stack file
 		apFile.removeFile(self.dd.framestackpath)
 		apFile.removeFile(self.dd.tempframestackpath)
+<<<<<<< HEAD
 		apDisplay.printColor('frame stack path are cleaned up before start', 'blue')
 
 		if not self.isUseFrameAlignerFlat():
 			apDisplay.printWarning('frame flip debug: Set to gain/dark correct each frame')
+=======
+
+		if not self.isUseFrameAlignerFlat():
+>>>>>>> origin/trunk
 			### make stack named as self.dd.tempframestackpath
 			self.dd.makeCorrectedFrameStack(self.params['rawarea'])
 		else:
@@ -152,6 +181,7 @@ class FrameStackLoop(apDDLoop.DDStackLoop):
 			apFile.removeFile(self.dd.framestackpath)
 		self.otherCleanUp(imgdata)
 
+<<<<<<< HEAD
 		# Compress the raw frames
 		if self.params['commit']:
 			self.postProcessOriginalFrames(imgdata)
@@ -208,6 +238,8 @@ class FrameStackLoop(apDDLoop.DDStackLoop):
 		j.start()
 		apDisplay.printColor('Sent multiprocess job','green')
 
+=======
+>>>>>>> origin/trunk
 	def isAlign(self):
 		return False
 

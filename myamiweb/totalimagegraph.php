@@ -37,7 +37,11 @@ $db = new mysql(DB_HOST, DB_USER, DB_PASS, DB_PROJECT);
 $results = $db->getSQLResult($sql);
 if (empty($timegroup)) {
 	// stats by years if db used for a while
+<<<<<<< HEAD
 	if (count($results) > 1 && $results[count($results)-1]['year']-$results[0]['year']> 5) {
+=======
+	if (count($results) > 1 && $results[count($results)-1]['year']-$results[0]['year']> 2) {
+>>>>>>> origin/trunk
 		$timegroup = 'year';
 	} else {
 		$timegroup = 'month';
@@ -86,7 +90,11 @@ if ($type=="r") {
 			$r = mysqli_query($link, $q) or die("Database query error: " . mysqli_error($link));
 			
 			// add the processing runs from this project to the appropriate quarter
+<<<<<<< HEAD
 			while ($rowInner = mysqli_fetch_array($r, MYSQLI_ASSOC)) {
+=======
+			while ($rowInner = mysql_fetch_array($r, MYSQL_ASSOC)) {
+>>>>>>> origin/trunk
 				$k = array();
 				foreach ($timekeys as $t) $k[] = sprintf('%02d', (int) $rowInner[$t]);
 				// combine data from different appiondb

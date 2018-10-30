@@ -3,7 +3,11 @@
 - Application XML-Dump
 - http://emg.nysbc.org/ 
 -
+<<<<<<< HEAD
 - Application :J-MSI-T
+=======
+- Application :J-MSI-T (3.2)
+>>>>>>> origin/trunk
 - Version     :7
 - Date : 09/24/2015
 -
@@ -119,7 +123,11 @@
     <sqltable name="ApplicationData" >
         <field name="DEF_id" >50</field>
         <field name="DEF_timestamp" >2015-09-24 10:06:15</field>
+<<<<<<< HEAD
         <field name="name" >J-MSI-T</field>
+=======
+        <field name="name" >J-MSI-T (3.2)</field>
+>>>>>>> origin/trunk
         <field name="version" >7</field>
         <field name="hide" >0</field>
     </sqltable>

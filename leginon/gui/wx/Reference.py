@@ -34,7 +34,16 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		# seperater
 		position = self.createPauseTimeEntry((position[0],0))
 		position = self.createIntervalEntry((position[0],0))
+<<<<<<< HEAD
 		position = self.createReturnSettleTimeEntry((position[0],0))
+=======
+>>>>>>> origin/trunk
+
+	def createIntervalEntry(self, position):
+		'''
+		Defined in subclasses
+		'''
+		return position
 
 	def createIntervalEntry(self, position):
 		'''
@@ -93,6 +102,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.sz.Add(szpausetime, start_position, (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		return start_position[0]+1,start_position[1]+1
 
+<<<<<<< HEAD
 	def createReturnSettleTimeEntry(self, start_position):
 		self.widgets['return settle time'] = FloatEntry(self, -1, min=0.0, allownone=False, chars=4, value='0.0')
 		szpausetime = wx.GridBagSizer(5, 5)
@@ -102,6 +112,8 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.sz.Add(szpausetime, start_position, (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		return start_position[0]+1,start_position[1]+1
 
+=======
+>>>>>>> origin/trunk
 	def createBypassCheckBox(self,start_position):
 		self.widgets['bypass'] = wx.CheckBox(self, -1, 'Bypass Conditioner')
 		self.sz.Add(self.widgets['bypass'], start_position, (1, 2), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT)
@@ -178,6 +190,9 @@ class ReferencePanel(leginon.gui.wx.Node.Panel):
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
 		self.node.player.stop()
 
+<<<<<<< HEAD
 	def onAcquireTool(self, evt):
 		threading.Thread(target=self.node.onMakeReference).start()
 	
+=======
+>>>>>>> origin/trunk

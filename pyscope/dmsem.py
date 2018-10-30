@@ -14,8 +14,12 @@ import time
 import numpy
 import itertools
 import os
+<<<<<<< HEAD
 from pyami import moduleconfig
 import numextension
+=======
+from pyscope import moduleconfig
+>>>>>>> origin/trunk
 
 simulation = False
 if simulation:
@@ -42,9 +46,12 @@ def connect():
 		gatansocket.myGS = gatansocket.GatanSocket()
 	return gatansocket.myGS
 
+<<<<<<< HEAD
 def simconnect():
 	return simgatan.SimGatan()
 
+=======
+>>>>>>> origin/trunk
 configs = moduleconfig.getConfigured('dmsem.cfg')
 
 class DMSEM(ccdcamera.CCDCamera):
@@ -100,6 +107,7 @@ class DMSEM(ccdcamera.CCDCamera):
 		return object.__getattribute__(self, attr_name)
 
 	def getDmsemConfig(self,optionname,itemname=None):
+<<<<<<< HEAD
 		if optionname not in configs.keys():
 			return None
 		if itemname is None:
@@ -118,6 +126,12 @@ class DMSEM(ccdcamera.CCDCamera):
 		v = self.getDmsemConfig('logger', 'verbosity')
 		if v is not None and v > 1:
 			print msg
+=======
+		if itemname is None:
+			return configs[optionname]
+		else:
+			return configs[optionname][itemname]
+>>>>>>> origin/trunk
 
 	def getOffset(self):
 		return dict(self.offset)
@@ -286,6 +300,7 @@ class DMSEM(ccdcamera.CCDCamera):
 		self.debug_print('received shape %s' %(image.shape,))
 
 		if self.save_frames or self.align_frames:
+<<<<<<< HEAD
 			image = self._modifyImageOrientation(image)
 		image = self._modifyImageShape(image)
 		self.debug_print('final shape %s' %(image.shape,))
@@ -312,6 +327,16 @@ class DMSEM(ccdcamera.CCDCamera):
 
 	def _cropImage(self, image):
 		# default no modification
+=======
+			if not self.isDM231orUp():
+				k2_rotate = self.getDmsemConfig('k2','rotate')
+				k2_flip = self.getDmsemConfig('k2','flip')
+				if k2_rotate:
+					image = numpy.rot90(image,4-k2_rotate)
+				if k2_flip:
+					image = numpy.fliplr(image)
+		# workaround to offset image problem
+>>>>>>> origin/trunk
 		startx = self.getOffset()['x']
 		starty = self.getOffset()['y']
 		if startx != 0 or starty != 0:
@@ -577,8 +602,13 @@ class GatanK2Base(DMSEM):
 		the integrated image returned to Leginon
 		'''
 		if self.isDoseFracOn():
+<<<<<<< HEAD
 			# This makes it always take the value in dmsem.cfg
 			self.setEarlyReturnFrameCount(None)
+=======
+                        # This makes it always take the value in dmsem.cfg
+                        self.setEarlyReturnFrameCount(None)
+>>>>>>> origin/trunk
 			frames_name = time.strftime('%Y%m%d_%H%M%S', time.localtime())
 			self.frames_name = frames_name + '%02d' % (self.idcounter.next(),)
 		else:
@@ -606,7 +636,10 @@ class GatanK2Base(DMSEM):
 			'doEarlyReturn': self.getDoEarlyReturn(),
 			'earlyReturnFrameCount': self.getEarlyReturnFrameCount(),
 			'earlyReturnRamGrabs': self.getEarlyReturnRamGrabs(),
+<<<<<<< HEAD
 			'lzwtiff': self.getSaveLzwTiffFrames(),
+=======
+>>>>>>> origin/trunk
 		}
 		return params
 
@@ -635,10 +668,14 @@ class GatanK2Base(DMSEM):
 			self.early_return_frame_count = min([self.getDmsemConfig('k2','early_return_frame_count'), nframes])
 
 	def getDoEarlyReturn(self):
+<<<<<<< HEAD
 		return bool(self.getDmsemConfig('k2','do_early_return'))
 
 	def getSaveLzwTiffFrames(self):
 		return bool(self.getDmsemConfig('k2','save_lzw_tiff_frames'))
+=======
+		return self.getDmsemConfig('k2','do_early_return')
+>>>>>>> origin/trunk
 
 	def setAlignFrames(self, value):
 		self.align_frames = bool(value)
@@ -758,6 +795,7 @@ class GatanK2Super(GatanK2Base):
 		# pixel size on Gatan K2
 		return {'x': 2.5e-6, 'y': 2.5e-6}
 
+<<<<<<< HEAD
 class GatanK3(GatanK2Base):
 	# K3 camsize is in super resolution
 	binning_limits = [1,2,4,8]
@@ -812,3 +850,5 @@ class GatanK3(GatanK2Base):
 				image = image.reshape(self.acqparams['height'],self.acqparams['width'])
 				print 'WARNING: image reshaped', image.shape
 		return image
+=======
+>>>>>>> origin/trunk

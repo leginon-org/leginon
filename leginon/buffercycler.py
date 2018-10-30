@@ -13,9 +13,14 @@ class BufferCycler(conditioner.Conditioner):
 	# Define the class for node settings
 	settingsclass = leginondata.BufferCyclerSettingsData
 	# Inherit the default settings from the parent class, Conditioner
+<<<<<<< HEAD
 	defaultsettings = dict(conditioner.Conditioner.defaultsettings)
 	defaultsettings.update({
 			'repeat time': 600,
+=======
+	defaultsettings = conditioner.Conditioner.defaultsettings
+	defaultsettings.update({
+>>>>>>> origin/trunk
 			'trip value': 18.0,
 	})
 	# Inherit the eventinputs

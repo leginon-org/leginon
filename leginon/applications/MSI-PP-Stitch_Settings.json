@@ -5,6 +5,10 @@
       "final image shift":false,
       "wait time":0.0,
       "park after target":false,
+<<<<<<< HEAD
+=======
+      "wait for transform":null,
+>>>>>>> origin/trunk
       "save image":true,
       "adjust time by tilt":false,
       "pause between time":0.0,
@@ -51,6 +55,10 @@
       "final image shift":false,
       "wait time":0.0,
       "park after target":false,
+<<<<<<< HEAD
+=======
+      "wait for transform":null,
+>>>>>>> origin/trunk
       "save image":true,
       "adjust time by tilt":false,
       "pause between time":0.0,
@@ -97,6 +105,10 @@
       "final image shift":false,
       "wait time":0.0,
       "park after target":false,
+<<<<<<< HEAD
+=======
+      "wait for transform":null,
+>>>>>>> origin/trunk
       "save image":true,
       "adjust time by tilt":false,
       "pause between time":0.0,
@@ -143,6 +155,57 @@
       "final image shift":false,
       "wait time":0.0,
       "park after target":false,
+<<<<<<< HEAD
+=======
+      "wait for transform":null,
+      "save image":true,
+      "adjust time by tilt":false,
+      "pause between time":0.0,
+      "iterations":1,
+      "park after list":false,
+      "mover":"presets manager",
+      "move precision":0.0,
+      "clear beam path":false,
+      "correct image":true,
+      "wait for rejects":false,
+      "recheck pause time":10,
+      "bad stats type":"Mean",
+      "use parent mover":false,
+      "wait for process":false,
+      "correct image shift coma":false,
+      "accept precision":0.001,
+      "target offset row":0,
+      "low mean":50.0,
+      "high mean":65536.0,
+      "target offset col":0,
+      "preset order":[
+        "gr"
+      ],
+      "use parent tilt":false,
+      "pause time":1.5,
+      "background":false,
+      "process target type":"acquisition",
+      "isdefault":false,
+      "bad stats response":"Continue",
+      "reset tilt":false,
+      "name":"Grid",
+      "display image":true,
+      "emission off":false,
+      "drift between":false,
+      "wait for reference":false,
+      "adjust for transform":"no",
+      "first pause time":0.0,
+      "move type":"stage position"
+    }
+  },
+  {
+    "AcquisitionSettingsData":{
+      "save integer":false,
+      "final image shift":false,
+      "wait time":0.0,
+      "park after target":false,
+      "wait for transform":null,
+>>>>>>> origin/trunk
       "save image":true,
       "adjust time by tilt":false,
       "pause between time":0.0,
@@ -164,7 +227,11 @@
       "high mean":65536.0,
       "target offset col":0,
       "preset order":[
+<<<<<<< HEAD
         "ep"
+=======
+        "en"
+>>>>>>> origin/trunk
       ],
       "use parent tilt":false,
       "pause time":2.5,
@@ -184,6 +251,22 @@
     }
   },
   {
+<<<<<<< HEAD
+=======
+    "AutoFillerSettingsData":{
+      "name":"N2 Filling",
+      "repeat time":10,
+      "autofiller mode":"both cold",
+      "column fill end":95.0,
+      "bypass":false,
+      "column fill start":30.0,
+      "loader fill start":30.0,
+      "loader fill end":85.0,
+      "isdefault":false
+    }
+  },
+  {
+>>>>>>> origin/trunk
     "BeamTiltCalibratorSettingsData":{
       "stig beam tilt":0.01,
       "lpf sigma":1.5,
@@ -252,6 +335,10 @@
       "final image shift":false,
       "wait time":0.0,
       "park after target":false,
+<<<<<<< HEAD
+=======
+      "wait for transform":null,
+>>>>>>> origin/trunk
       "save image":true,
       "adjust time by tilt":false,
       "pause between time":0.0,
@@ -294,8 +381,95 @@
       "acquire final":false,
       "first pause time":0.0,
       "beam tilt settle time":0.25,
+<<<<<<< HEAD
       "move type":"image shift",
       "on phase plate":"1"
+=======
+      "move type":"image shift"
+    }
+  },
+  {
+    "MosaicClickTargetFinderSettingsData":{
+      "multifocus":false,
+      "sort target":false,
+      "name":"Square Targeting",
+      "allow no focus":false,
+      "wait for done":false,
+      "skip":false,
+      "no resubmit":false,
+      "allow append":false,
+      "create on tile change":"all",
+      "queue":false,
+      "threshold":3000.0,
+      "scale image":true,
+      "user check":false,
+      "calibration parameter":"stage position",
+      "scale size":2048,
+      "queue drift":false,
+      "check method":null,
+      "isdefault":false,
+      "ignore images":false
+    }
+  },
+  {
+    "MosaicClickTargetFinderSettingsData":{
+      "multifocus":false,
+      "sort target":false,
+      "name":"Square Targeting",
+      "allow no focus":false,
+      "wait for done":false,
+      "skip":false,
+      "no resubmit":false,
+      "allow append":false,
+      "create on tile change":"all",
+      "queue":false,
+      "threshold":3000.0,
+      "scale image":true,
+      "user check":false,
+      "calibration parameter":"stage position",
+      "scale size":2048,
+      "queue drift":false,
+      "check method":null,
+      "isdefault":false,
+      "ignore images":false
+    }
+  },
+  {
+    "MosaicTargetMakerSettingsData":{
+      "max targets":128,
+      "name":"Grid Targeting",
+      "max size":16384,
+      "overlap":1.0,
+      "label":"g",
+      "preset":"gr",
+      "radius":2e-05,
+      "mosaic center":"stage center",
+      "ignore request":false,
+      "isdefault":false
+    }
+  },
+  {
+    "NavigatorSettingsData":{
+      "preexpose":true,
+      "check calibration":true,
+      "final image shift":false,
+      "accept precision":0.001,
+      "instruments":{
+        "tem":"None",
+        "ccdcamera":"None"
+      },
+      "override preset":false,
+      "cycle after":false,
+      "complete state":true,
+      "precision":0.0,
+      "background readout":false,
+      "pause time":2.5,
+      "max error":256.0,
+      "cycle each":false,
+      "move type":"image shift",
+      "isdefault":false,
+      "name":"Navigation"
+>>>>>>> origin/trunk
     }
   },
   {
@@ -314,6 +488,26 @@
     }
   },
   {
+<<<<<<< HEAD
+=======
+    "PresetsManagerSettingsData":{
+      "stage always":true,
+      "name":"Presets Manager",
+      "xy only":true,
+      "pause time":1.0,
+      "apply offset":false,
+      "disable stage for image shift":false,
+      "smallsize":1024,
+      "idle minute":0.5,
+      "mag only":false,
+      "blank":false,
+      "optimize cycle":true,
+      "isdefault":false,
+      "cycle":false
+    }
+  },
+  {
+>>>>>>> origin/trunk
     "RasterFinderSettingsData":{
       "raster limit":5,
       "sort target":false,
@@ -379,6 +573,10 @@
       "final image shift":false,
       "wait time":0.0,
       "park after target":false,
+<<<<<<< HEAD
+=======
+      "wait for transform":null,
+>>>>>>> origin/trunk
       "save image":true,
       "adjust time by tilt":false,
       "pause between time":0.0,
@@ -445,6 +643,20 @@
     }
   },
   {
+<<<<<<< HEAD
+=======
+    "TransformManagerSettingsData":{
+      "name":"Target Adjustment",
+      "min mag":200,
+      "pause time":2.5,
+      "timeout":null,
+      "registration":"identity",
+      "threshold":3e-10,
+      "isdefault":false
+    }
+  },
+  {
+>>>>>>> origin/trunk
     "FocusSequenceData":{
       "node name":"PP Focus",
       "isdefault":false,
@@ -462,7 +674,11 @@
       "tilt":0.01,
       "delta min":0.0,
       "correlation type":"phase",
+<<<<<<< HEAD
       "fit limit":10000.0,
+=======
+      "fit limit":1000.0,
+>>>>>>> origin/trunk
       "stig defocus min":2e-06,
       "focus method":"Beam Tilt",
       "stig defocus max":4e-06,
@@ -485,7 +701,11 @@
       "tilt":0.01,
       "delta min":0.0,
       "correlation type":"phase",
+<<<<<<< HEAD
       "fit limit":10000.0,
+=======
+      "fit limit":1000.0,
+>>>>>>> origin/trunk
       "stig defocus min":2e-06,
       "focus method":"Beam Tilt",
       "stig defocus max":4e-06,

@@ -11,6 +11,22 @@ class ExposureFixerPanel(leginon.gui.wx.ReferenceTimer.ReferenceTimerPanel, legi
 	imagepanelclass = leginon.gui.wx.ImagePanel.ImagePanel
 	def __init__(self, *args, **kwargs):
 		leginon.gui.wx.ReferenceTimer.ReferenceTimerPanel.__init__(self, *args, **kwargs)
+<<<<<<< HEAD
+=======
+		self.addImagePanel()
+		self.szmain.AddGrowableRow(1)
+		self.szmain.AddGrowableCol(0)
+		self.SetSizer(self.szmain)
+		self.SetAutoLayout(True)
+		self.SetupScrolling()
+
+	def addImagePanel(self):
+		# image
+		self.imagepanel = self.imagepanelclass(self, -1)
+		self.imagepanel.addTypeTool('Image', display=True)
+		self.imagepanel.selectiontool.setDisplayed('Image', True)
+		self.szmain.Add(self.imagepanel, (1, 0), (1, 1), wx.EXPAND|wx.ALL, 3)
+>>>>>>> origin/trunk
 
 	def onSettingsTool(self, evt):
 		# can not inherit for some reason

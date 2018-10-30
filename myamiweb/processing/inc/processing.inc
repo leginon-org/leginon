@@ -677,12 +677,16 @@ function showOrSubmitCommand($command, $headinfo, $jobtype, $nproc, $testimg=Fal
 	// Get the processing host
 	$processhost = getSelectedProcessingHost();
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/trunk
 	if ($_POST['process'] == "Refresh Test Results" && $testimg) {		
 		// if we are testing an image, return to the parameter page 
 		return;
 	}	
 
+<<<<<<< HEAD
 	// simple ssh in and run.
 	if ($_POST['process'] == "Run Directly on Host" && $jobtype != 'uploadimage') {
 		// Option 1: selected the run button
@@ -701,6 +705,8 @@ function showOrSubmitCommand($command, $headinfo, $jobtype, $nproc, $testimg=Fal
 		}
 		exit;
 
+=======
+>>>>>>> origin/trunk
 	// until uploadimage works with appionJob submission, it is not allowed to do so
 	}	elseif ($_POST['process'] != "Just Show Command" && $jobtype != 'uploadimage') {
 		// Option 1: selected the run button
@@ -1102,7 +1108,11 @@ function writeTestResults($jpg,$ccclist,$bin,$process_str='')
 	if ($process_str === '') {
 		$process_str = getProcessString();
 	}
+<<<<<<< HEAD
 	$showcmd = preg_match('/[Ss]how/',$process_str) || preg_match('/[Rr]un Directly/',$process_str);
+=======
+	$showcmd = preg_match('/[Ss]how/',$process_str);
+>>>>>>> origin/trunk
 	if ( !$showcmd )	{
 		$showcmd = preg_match('/[Rr]efresh/',$process_str);
 	}

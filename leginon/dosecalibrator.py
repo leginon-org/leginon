@@ -19,7 +19,11 @@ class DoseCalibrator(calibrator.ScreenCalibrator):
 	'''
 	panelclass = gui.wx.DoseCalibrator.Panel
 	settingsclass = leginondata.DoseCalibratorSettingsData
+<<<<<<< HEAD
 	defaultsettings = dict(calibrator.ScreenCalibrator.defaultsettings)
+=======
+	defaultsettings = calibrator.ScreenCalibrator.defaultsettings
+>>>>>>> origin/trunk
 	defaultsettings.update({
 		'beam diameter': 0.16,
 		'scale factor': 0.88,

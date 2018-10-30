@@ -135,7 +135,11 @@ class Corrector(imagewatcher.ImageWatcher):
 			self.instrument.ccdcamera.Settings = self.settings['camera settings']
 			self.stopTimer('set cam')
 			self.startTimer('get image')
+<<<<<<< HEAD
 			image = self.acquireRawCameraImageData(force_no_frames=True)['image']
+=======
+			image = self.acquireCameraImageData(force_no_frames=True)['image']
+>>>>>>> origin/trunk
 			self.stopTimer('get image')
 		except Exception, e:
 			self.logger.exception('Raw acquisition failed: %s' % (e,))
@@ -154,11 +158,18 @@ class Corrector(imagewatcher.ImageWatcher):
 			self.instrument.ccdcamera.Settings = self.settings['camera settings']
 			self.stopTimer('set ccd')
 			imagedata = self.acquireCorrectedCameraImageData(channel, force_no_frames=True)
+<<<<<<< HEAD
 			if imagedata and 'image' in imagedata:
 				image = imagedata['image']
 				self.maskimg = numpy.zeros(image.shape)
 				self.displayImage(image)
 				self.currentimage = image
+=======
+			image = imagedata['image']
+			self.maskimg = numpy.zeros(image.shape)
+			self.displayImage(image)
+			self.currentimage = image
+>>>>>>> origin/trunk
 			self.panel.acquisitionDone()
 			self.stopTimer('acquireCorrected')
 
@@ -191,11 +202,15 @@ class Corrector(imagewatcher.ImageWatcher):
 		series = []
 		for i in range(n):
 			self.logger.info('Acquiring reference image (%s of %s)' % (i+1, n))
+<<<<<<< HEAD
 			try:
 				image = self.acquireRawCameraImageData(force_no_frames=True)['image']
 			except Exception, e:
 				self.logger.error(e)
 				return
+=======
+			image = self.acquireCameraImageData(force_no_frames=True)['image']
+>>>>>>> origin/trunk
 			series.append(image)
 		return series
 
@@ -207,7 +222,11 @@ class Corrector(imagewatcher.ImageWatcher):
 		for i in range(n):
 			self.logger.info('Acquiring reference image (%s of %s)' % (i+1, n))
 			try:
+<<<<<<< HEAD
 				imagedata = self.acquireRawCameraImageData(type=exposuretype, force_no_frames=True)
+=======
+				imagedata = self.acquireCameraImageData(type=exposuretype, force_no_frames=True)
+>>>>>>> origin/trunk
 			except Exception, e:
 				self.logger.error('Error acquiring image: %s' % e)
 				return
@@ -234,7 +253,11 @@ class Corrector(imagewatcher.ImageWatcher):
 		for i in range(n):
 			self.logger.info('Acquiring reference image (%s of %s)' % (i+1, n))
 			try:
+<<<<<<< HEAD
 				imagedata = self.acquireRawCameraImageData(type=exposuretype, force_no_frames=True)
+=======
+				imagedata = self.acquireCameraImageData(type=exposuretype, force_no_frames=True)
+>>>>>>> origin/trunk
 			except Exception, e:
 				self.logger.error('Error acquiring image: %s' % e)
 				return
@@ -302,9 +325,12 @@ class Corrector(imagewatcher.ImageWatcher):
 					if not self.hasRecentDarkSaved(channel):
 						self.logger.error('Need recent Dark image before acquiring Bright Image')
 						return None
+<<<<<<< HEAD
 				if self.requireRecentDarkCurrentReferenceOnBright():
 					if not self.hasRecentDarkCurrentReferenceSaved(3600):
 						self.updateCameraDarkCurrentReference(warning=True)
+=======
+>>>>>>> origin/trunk
 				self.logger.info('Acquiring bright references...')
 		except Exception, e:
 			self.logger.error('Reference acquisition failed: %s' % (e,))
@@ -323,7 +349,10 @@ class Corrector(imagewatcher.ImageWatcher):
 		if refimagedata is None:
 			return None
 
+<<<<<<< HEAD
 		refarray = refimagedata['image']
+=======
+>>>>>>> origin/trunk
 		if refimagedata is not None and self.needCalcNorm(type):
 			self.logger.info('Got reference image, calculating normalization')
 			self.calc_norm(refimagedata)

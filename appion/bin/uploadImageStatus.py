@@ -9,16 +9,26 @@ from sinedon import directq
 This script runs much faster if the log file provided is a list of images which need to set status
 '''
 if len(sys.argv) != 3:
+<<<<<<< HEAD
 	print 'usage: uploadImageStatus.py <inputlist> <statustype>'
 	print 'inputlist is a list of mrc file full path as known by leginon database'
 	print 'statustype is one the four: "exemplar", "hide", "trash" sets status as named; "reverse" sets other images of the same preset to "hidden"'
+=======
+	print 'usage: uploadstatus.py <inputlist> <filetype>'
+	print 'inputlist is a list of mrc file full path as known by leginon database'
+	print 'filetype is one the four: "exemplar", "hide", "trash" sets status as named; "reverse" sets other images of the same preset to "hidden"'
+>>>>>>> origin/trunk
 	sys.exit()
 
 ######################################
 # Variable section
 ######################################
 # The file may contain a list of all images with fullpath and mrc extension of the desired status.
+<<<<<<< HEAD
 statustype = sys.argv[2]
+=======
+filetype = sys.argv[2]
+>>>>>>> origin/trunk
 
 # set filename
 infilename = sys.argv[1]
@@ -26,7 +36,11 @@ infilename = sys.argv[1]
 #######################################################
 statusmapping = {'exemplar':('exemplar',None), 'reverse':(None,'hidden'), 'hide':('hidden',None), 'trash':('trash',None)}
 
+<<<<<<< HEAD
 if statustype not in statusmapping:
+=======
+if filetype not in statusmapping:
+>>>>>>> origin/trunk
 	print 'Valid status:', statusmapping.keys()
 	sys.exit(1)
 
@@ -55,7 +69,11 @@ def setStatus(imagedata,status):
 infile = open(infilename,'r')
 lines = infile.readlines()
 
+<<<<<<< HEAD
 if statustype != 'reverse':
+=======
+if filetype != 'reverse':
+>>>>>>> origin/trunk
 	# Input file is a list of images to set status on
 	for line in lines:
 		mrcpath = line.split('.mrc')[0]
@@ -67,7 +85,11 @@ if statustype != 'reverse':
 		q = leginondata.AcquisitionImageData(session=qsession,filename=filename)
 		r = q.query()
 		if r:
+<<<<<<< HEAD
 			setStatus(r[0],statusmapping[statustype][0])
+=======
+			setStatus(r[0],statusmapping[filetype][0])
+>>>>>>> origin/trunk
 		else:
 			print 'Query failed. image %s.mrc does not exist' % filename
 else:
@@ -104,6 +126,12 @@ else:
 						continue
 			
 				# set viewer image status to hidden
+<<<<<<< HEAD
 				setStatus(imagedata,statusmapping[statustype][1])
 			else:
 				setStatus(imagedata,statusmapping[statustype][0])
+=======
+				setStatus(imagedata,statusmapping[filetype][1])
+			else:
+				setStatus(imagedata,statusmapping[filetype][0])
+>>>>>>> origin/trunk

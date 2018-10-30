@@ -17,7 +17,11 @@ debug = False
 class MoveAcquisition(acquisition.Acquisition):
 	panelclass = gui.wx.MoveAcquisition.Panel
 	settingsclass = leginondata.MoveAcquisitionSettingsData
+<<<<<<< HEAD
 	defaultsettings = dict(acquisition.Acquisition.defaultsettings)
+=======
+	defaultsettings = acquisition.Acquisition.defaultsettings
+>>>>>>> origin/trunk
 	defaultsettings.update({
 		'acquire during move': False,
 		'imaging delay': 0.0,

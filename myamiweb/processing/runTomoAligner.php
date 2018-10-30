@@ -14,7 +14,11 @@ require_once "inc/leginon.inc";
 require_once "inc/project.inc";
 require_once "inc/viewer.inc";
 require_once "inc/processing.inc";
+<<<<<<< HEAD
 require_once "inc/forms/ddstackSelectTable.inc";
+=======
+require_once "inc/forms/ddstackForm.inc";
+>>>>>>> origin/trunk
 
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
@@ -53,7 +57,11 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
 		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 	}
   
+<<<<<<< HEAD
 	$ddstackform = new DDStackSelectTable($expId);
+=======
+	$ddstackform = new DDStackForm('','Apply to ddframe stack result images','ddstack.ddstack' );
+>>>>>>> origin/trunk
 
 	echo"<FORM name='viewerform' method='POST' ACTION='$formAction'>\n";
 	$sessiondata=getSessionList($projectId,$expId);
@@ -70,6 +78,13 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
 	$defaultmethod = ($lastalignerId)? 'protomo': 'leginon';
 	$alignmethod = ($_POST['alignmethod']) ? $_POST['alignmethod'] : $defaultmethod;
 	$leginoncheck = ($_POST['alignmethod'] == 'leginon' || !($_POST['alignmethod'])) ? "CHECKED" : "";
+<<<<<<< HEAD
+=======
+	//$raptorcheck = ($_POST['alignmethod'] == 'raptor') ? "CHECKED" : "";
+	# For Jensen Lab
+	#$raptorcheck = ($_POST['alignmethod'] == 'raptor' || !($_POST['alignmethod'])) ? "CHECKED" : "";
+	#$protomo2check = ($_POST['alignmethod'] == 'protomo2') ? "CHECKED" : "";
+>>>>>>> origin/trunk
 	$imodcheck = ($_POST['alignmethod'] == 'imod-shift') ? "CHECKED" : "";
 
 	$runtypes = array('leginon'=>'leginon','imod-shift'=>'imodxc','protomo'=>'protomo');
@@ -199,7 +214,11 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
 	echo "<br />\n";
 	echo $ddstackform->generateForm();
 	echo "<br />\n";
+<<<<<<< HEAD
 	$outdir=buildOutdir($sessioninfo,$tiltseriesinfos[0]['number']);
+=======
+	$outdir=buildOutdir($sessioninfo,$tiltseriesinfos[0]['number'],$raptorcheck);
+>>>>>>> origin/trunk
 	echo "<input type='hidden' name='outdir' value='$outdir'>\n";
 	echo "<input type='hidden' name='imagesize' value='$imagesize'>\n";
 	echo "</td></table>";
@@ -376,8 +395,17 @@ function runTomoAligner() {
 	/* *******************
 	PART 3: Create program command
 	******************** */
+<<<<<<< HEAD
 	$ddstackform = new DDStackSelectTable($expId);
 	$command = "tomoaligner.py ";
+=======
+	$ddstackform = new DDStackForm('','Apply to ddframe stack result images','ddstack.ddstack' );
+	if ($alignmethod == 'raptor') {
+		$command = "tomoraptor.py ";
+	} else {
+		$command = "tomoaligner.py ";
+	}
+>>>>>>> origin/trunk
 	$command.="--session=$sessionname ";
 	$command.="--projectid=$projectId ";
 	$command.="--runname=$runname ";

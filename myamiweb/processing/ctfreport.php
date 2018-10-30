@@ -143,9 +143,16 @@ if ($ctfrundatas) {
 
 			$fields = array('defocus1', 'defocus2', 
 				//'confidence', 'confidence_d', 
+<<<<<<< HEAD
 				'angle_astigmatism', 'astig_distribution',
 				'extra_phase_shift',
 				'resolution_80_percent', 'resolution_50_percent', 'ctffind4_resolution');
+=======
+				'angle_astigmatism', 'amplitude_contrast',  
+				'extra_phase_shift',
+				'confidence_30_10', 'confidence_5_peak',  
+				'resolution_80_percent', 'resolution_50_percent');
+>>>>>>> origin/trunk
 			$stats = $ctf->getCTFStats($fields, $expId);
 			$display_ctf=false;
 			foreach($stats as $field=>$data) {
@@ -243,6 +250,7 @@ if ($ctfrundatas) {
 		echo "<h3>Angle Astigmatism</h3>";
 		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&f=angle_astigmatism'>\n";
 		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
+<<<<<<< HEAD
 			."w=800&h=600&hg=1&expId=$expId&s=1&f=angle_astigmatism' alt='please wait...'></a>\n";
 	echo "</td></tr><tr><td>\n";
 		echo "<h3>Astigmatism Distribution</h3>";
@@ -254,6 +262,14 @@ if ($ctfrundatas) {
 		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&xmin=0&xmax=180&f=extra_phase_shift'>\n";
 		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
 			."w=800&h=600&hg=0&expId=$expId&s=1&xmin=-90&xmax=90&f=extra_phase_shift' alt='please wait...'></a>\n";
+=======
+			."w=800&h=600&hg=1&expId=$expId&s=1&xmin=-90&xmax=90&f=angle_astigmatism' alt='please wait...'></a>\n";
+	echo "</td></tr><tr><td>\n";
+		echo "<h3>Extra Phase Shift</h3>";
+		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&xmin=0&xmax=180&f=extra_phase_shift'>\n";
+		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
+			."w=800&h=600&hg=1&expId=$expId&s=1&xmin=-90&xmax=90&f=extra_phase_shift' alt='please wait...'></a>\n";
+>>>>>>> origin/trunk
 	echo "</td></tr>";
 
 	$confidenceOpts=array();
@@ -299,6 +315,7 @@ if ($ctfrundatas) {
 		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
 			."w=800&h=600&hg=1&expId=$expId&s=1&f=ctffind4_resolution'></a>\n";
 	echo "</td><td>\n";
+<<<<<<< HEAD
 	} else {
 		echo "<tr><td>\n";
 	}
@@ -314,6 +331,13 @@ if ($ctfrundatas) {
 	}
 		echo "<h3>Difference from Leginon settings for preset '$preset'</h3>\n";
 		echo "<a href='autofocacegraph.php?hg=0&expId=$expId&f=difference_from_nom&preset=$preset'>\n";
+=======
+	// very hacky
+		$sessiondata = getSessionList($projectId, $expId);
+		$preset = (!empty($_POST['preset'])) ? $_POST['preset'] : end($sessiondata['presets']);
+		echo "<h3>Difference from Leginon for preset '$preset'</h3>\n";
+		echo "<a href='autofocacegraph.php?hg=0&expId=$expId&s=1&f=difference&preset=$preset'>\n";
+>>>>>>> origin/trunk
 		echo "<img border='0' width='400' height='200' src='autofocacegraph.php?"
 			."hg=0&expId=$expId&f=difference_from_nom&preset=$preset' alt='please wait...'></a>\n";
 	echo "</td></tr>";
@@ -363,12 +387,17 @@ if ($ctfrundatas) {
 	echo $formhtml;
 
 	$ctfdownlink = "<h3>";
+<<<<<<< HEAD
 	$ctfdownlink .= "<a href='downloadctfdata.php?expId=$expId&preset=$preset&runId=$runId&relion=1'>\n";
+=======
+	$ctfdownlink .= "<a href='downloadctfdata.php?expId=$expId&preset=$preset&runId=$runId&relion=True'>\n";
+>>>>>>> origin/trunk
 	$ctfdownlink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download star file for RELION 1.4'>&nbsp;download star file for RELION 1.4\n";
 	$ctfdownlink .= "</a></h3>\n";
 	echo $ctfdownlink;
 
 	$ctfdownlink = "<h3>";
+<<<<<<< HEAD
 	$ctfdownlink = "<h3>";
 	$ctfdownlink .= "<a href='downloadctfdata.php?expId=$expId&preset=$preset&runId=$runId&relion=2'>\n";
 	$ctfdownlink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download star file for Relion 2.0 or VLION'>&nbsp;download star file for Relion 2.0 or VLION\n";
@@ -379,6 +408,11 @@ if ($ctfrundatas) {
 	$ctfdownlink = "<h3>";
 	$ctfdownlink .= "<a href='downloadctfdata.php?expId=$expId&preset=$preset&runId=$runId&relion=3'>\n";
 	$ctfdownlink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download beam tilt star file for Relion 3.0'>&nbsp;download star file with expected beam tilt for Relion 3.0\n";
+=======
+	$ctfdownlink = "<h3>";
+	$ctfdownlink .= "<a href='downloadctfdata.php?expId=$expId&preset=$preset&runId=$runId&vlion=True'>\n";
+	$ctfdownlink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download star file for Relion 2.0 or VLION'>&nbsp;download star file for Relion 2.0 or VLION\n";
+>>>>>>> origin/trunk
 	$ctfdownlink .= "</a></h3>\n";
 	echo $ctfdownlink;
 

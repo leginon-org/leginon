@@ -307,8 +307,11 @@ class TiltTracker(acquisition.Acquisition):
 			self.logger.info('Acquire intermediate tilted parent image')
 			#print 'acquire intertilt'
 			imagenew = self.acquireCorrectedCameraImageData(force_no_frames=True)
+<<<<<<< HEAD
 			if imagedata is None:
 				return None,None
+=======
+>>>>>>> origin/trunk
 			arraynew = numpy.asarray(imagenew['image'], dtype=numpy.float32)
 			if medfilt > 1:
 				arraynew = ndimage.median_filter(arraynew, size=medfilt)

@@ -33,7 +33,11 @@ echo "    Here you will find the same maintained software packages \n"
 echo "  <h4>\n";
 echo "    <i>(The following workflows use PHP sessions to keep track of \n"
         ."variables. They are designed to be used immediately following \n"
+<<<<<<< HEAD
         ."a full 'Align Tilt-Series' run.)</i>";
+=======
+        ."a full \'Align Tilt-Series\' run.)</i>";
+>>>>>>> origin/trunk
 echo "  </h4>\n";
 echo "</td></tr>\n";
 echo "</table>\n";

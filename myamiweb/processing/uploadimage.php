@@ -283,6 +283,20 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 			$close_keyinput = "</table>\n";
 			$close_keyinput .= closeRoundBorder();
 		}
+<<<<<<< HEAD
+=======
+		if ($utypeval == 'tiltseries') {
+			$keyinput_az = $html_elements->justifiedInputTableRow
+					('azimuth','tilt azimuth (degrees):','az',$az,3);
+		}
+		if ($utypeval == 'tiltseries') {
+			$keyinput_tilt = $html_elements->justifiedInputTableRow
+					('tiltlist','tilt angle list (degrees):','tiltlist',$tiltlist,30);
+		}
+
+		$close_keyinput = "</table>\n";
+		$close_keyinput .= closeRoundBorder();
+>>>>>>> origin/trunk
 	}
 	
 	// Presentation to the web page
@@ -490,6 +504,7 @@ function runUploadImage() {
 		if ($cs === "") {
 			createUploadImageForm($errormsg."Specify the Cs value");
 		} else {
+<<<<<<< HEAD
 			$cs = $cs + 0;
 			if ( $cs < 0.0 ) {
 				createUploadImageForm($errormsg."The Cs value must be a positive number");
@@ -501,6 +516,37 @@ function runUploadImage() {
 				}
 			}
 			$command.="--cs=$cs ";
+=======
+			$dflist = $_POST['dflist'];
+			if (!$dflist) 
+				createUploadImageForm($errormsg."Specify a defocii list");
+			$dfarray = explode(',',trim($dflist));
+			if (count($dfarray) != $imagegroup)
+				createUploadImageForm($errormsg."Specify matched image-per-group and defocii list");
+		}
+		$tiltanglearray = array();
+			if ($uploadtype == 'tiltseries') {
+			$az = $_POST['az'];
+			if (strlen($az)==0)
+				createUploadImageForm($errormsg."Specify a tilt azimuth");
+			$tiltlist = $_POST['tiltlist'];
+			if (!$tiltlist) 
+				createUploadImageForm($errormsg."Specify a tilt angle list");
+			$tiltanglearray = explode(',',trim($tiltlist));
+			if (count($tiltanglearray) != $imagegroup)
+				createUploadImageForm($errormsg."Specify matched image-per-group and tilt-angle list");
+			$rtiltarray = array();
+			foreach($tiltanglearray as $ta)
+				$rtiltarray[] = sprintf('%.5f', $ta * 3.14159 / 180.0);
+			$tiltanglearray = $rtiltarray;
+		}
+		$mdfarray = array();
+		foreach($dfarray as $df) {
+			if ($df > 0) $df = $df*-1;
+			if ($df > -0.1)
+				createUploadImageForm("<b>Error:</b> defocus must be in microns (i.e. -1.5)");
+			$mdfarray[] = $df * 1e-6;
+>>>>>>> origin/trunk
 		}
 
 		//determine if a information batch file was provided
@@ -621,7 +667,38 @@ function runUploadImage() {
 			$command.="--serialem_dir=$serialem_dir ";
 			$command.="--voltage=$voltage ";
 		} else {
+<<<<<<< HEAD
 			$badbatch = false;
+=======
+			// uploadImages.py
+			$command.="--image-dir=$imgdir ";
+			$mpix = $apix*1e-10;
+			$command.="--mpix=$mpix ";
+			$command.="--type=$uploadtype ";
+			$command.="--images-per-series=$imagegroup ";
+			if (count($mdfarray) > 1) 
+				$command.="--defocus-list=".implode(',',$mdfarray)." ";
+			else
+				$command.="--defocus=".$mdfarray[0]." ";
+			$command.="--azimuth=$az ";
+			if ($uploadtype == 'tiltseries')
+				$command.="--angle-list=".implode(',',$tiltanglearray)." ";
+		}
+		$command.="--mag=$mag ";
+		$command.="--kv=$kv ";
+
+	} elseif ($batch) {
+		if ($batch_check && !file_exists($batch))
+			createUploadImageForm("<B>ERROR:</B> Batch file does not exist");
+		//make sure  the batch file contains 7 or 8 fields separated by tab at each line
+		$bf = file($batch);
+		foreach ($bf as $line) {
+			$items = explode("\t",$line);
+			if (count($items)!=7  && (count($items)!=8 && $imagegroup > 1)) {
+				$badbatch = true;
+				break;
+			}
+>>>>>>> origin/trunk
 		}
 		if ($badbatch) createUploadImageForm("<B>ERROR:</B> Invalid format in the batch file");
 

@@ -17,10 +17,16 @@ def generateMissingStack(stackid):
 	# check if stack file already exists
 	if os.path.isfile(fname):
 		apDisplay.printError("file: '%s' already exists"%fname)
+<<<<<<< HEAD
 
 	vstackdata = apStack.getVirtualStackParticlesFromId(stackid)
 	#appion numbering starts at 1
 	plist = [int(p['particleNumber']) for p in vstackdata['particles']]
+=======
+ 
+	vstackdata = apStack.getVirtualStackParticlesFromId(stackid)
+	plist = [int(p['particleNumber'])-1 for p in vstackdata['particles']]
+>>>>>>> origin/trunk
 
 	apDisplay.printMsg("generating stack: '%s' with %i particles"%(fname,len(plist)))
 	apStack.makeNewStack(vstackdata['filename'], fname, plist)

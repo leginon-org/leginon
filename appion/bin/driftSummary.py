@@ -32,7 +32,11 @@ class TestLoop(appionLoop2.AppionLoop):
 		# find the ddstackrun of the image
 		self.dd.setDDStackRun(self.params['ddstack'])
 		self.dd.setImageData(imgdata)
+<<<<<<< HEAD
 		self.framelist = self.dd.getFrameListFromParams(self.params)
+=======
+		self.framelist = self.dd.getFrameList(self.params)
+>>>>>>> origin/trunk
 		# compare image ddstackrun with the specified ddstackrun
 		if self.params['ddstack'] and self.params['ddstack'] != self.dd.getDDStackRun().dbid:
 			apDisplay.printWarning('ddstack image not from specified ddstack run')
@@ -40,10 +44,15 @@ class TestLoop(appionLoop2.AppionLoop):
 			return None
 		# This function will reset self.dd.ddstackrun for actual processing
 		self.dd.setFrameStackPath(self.params['ddstack'])
+<<<<<<< HEAD
 		shifts = self.dd.getShiftsBetweenFrames()
 		if not shifts:
 			self.max_shift = None
 			return
+=======
+
+		shifts = self.dd.getShiftsBetweenFrames()
+>>>>>>> origin/trunk
 		self.max_shift = self.getLargestDrift(shifts)
 		apDisplay.printMsg('Max shift : %.3f pixels' % (self.max_shift,))
 
@@ -68,8 +77,11 @@ class TestLoop(appionLoop2.AppionLoop):
 	#======================
 	def commitToDatabase(self, imgdata):
 		apix = apDatabase.getPixelSize(imgdata)
+<<<<<<< HEAD
 		if self.max_shift is None:
 			return
+=======
+>>>>>>> origin/trunk
 		angstrom_drift = self.max_shift * apix
 		self.saveValue(imgdata,angstrom_drift)
 		return

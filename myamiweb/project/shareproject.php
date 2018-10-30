@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 <?php
+=======
+<?
+>>>>>>> origin/trunk
 require_once("inc/project.inc.php");
 require_once("inc/leginon.inc");
 require_once("inc/share.inc.php");
@@ -13,9 +17,15 @@ checkProjectAccessPrivilege($projectId);
 $is_admin = checkProjectAdminPrivilege($projectId);
 ?>
 
+<<<<<<< HEAD
 <form method="POST" name="projectform" action="<?php $_SERVER['REQUEST_URI'] ?>">
 <input type="hidden" name="projectId" value="">
 <?php
+=======
+<form method="POST" name="projectform" action="<?=$_SERVER['REQUEST_URI'] ?>">
+<input type="hidden" name="projectId" value="">
+<?
+>>>>>>> origin/trunk
 if ($is_admin) {
 // --- add something for admin only
 }
@@ -23,7 +33,11 @@ if ($is_admin) {
 <h3>Selected Project</h3>
 
 <table class="tableborder" border="1" valign="top">
+<<<<<<< HEAD
 <?php
+=======
+<?
+>>>>>>> origin/trunk
 	$info = $project->getProjectInfo($projectId);
 	$keys_to_display = array('Name');
 	foreach ($info as $k=>$v) {
@@ -41,11 +55,16 @@ if ($is_admin) {
 ?>
 </table>
 <h3>Select an owner to add to this project:</h3>
+<<<<<<< HEAD
 <?php
+=======
+<?
+>>>>>>> origin/trunk
 	if ($is_admin) {
 ?>
 <p>
 <img src="img/info.png"> Users with no password set won't be listed; go
+<<<<<<< HEAD
 to <a class="header" href="<?php echo BASE_URL.'user.php'; ?>">[user]</a> to update user's profile.
 </p>
 <?php
@@ -53,11 +72,20 @@ to <a class="header" href="<?php echo BASE_URL.'user.php'; ?>">[user]</a> to upd
 	$db = $project->mysql;
 	$loginId = getLoginUserId();
 	$userId = $_POST['userId']; //User to add
+=======
+to <a class="header" href="<? echo BASE_URL.'user.php'; ?>">[user]</a> to update user's profile.
+</p>
+<?
+	};
+	$db = $project->mysql;
+	$userId = $_POST['userId'];
+>>>>>>> origin/trunk
 	if ($_POST['bt']=="add") {
 		if ($userId && $projectId) {
 			$project->addProjectOwner($userId, $projectId);
 		}
 	} else if ($_POST['bt']=="del" && $_POST['ck']) {
+<<<<<<< HEAD
 		$is_self = false;
 		if ($loginId !== true && privilege('projects') < 4) {
 			foreach ($_POST['ck'] as $cki) {
@@ -70,6 +98,9 @@ to <a class="header" href="<?php echo BASE_URL.'user.php'; ?>">[user]</a> to upd
 			$project->removeProjectOwner($_POST['ck'], $projectId);
 			$error = '';
 		}
+=======
+		$project->removeProjectOwner($_POST['ck'], $projectId);
+>>>>>>> origin/trunk
 	}
 
 
@@ -84,7 +115,11 @@ to <a class="header" href="<?php echo BASE_URL.'user.php'; ?>">[user]</a> to upd
 	$bt_add= "<input class='bt1' type='submit' name='bt' value='add'>";
 	?>
 	<select name="userId">
+<<<<<<< HEAD
 	<?php
+=======
+	<?
+>>>>>>> origin/trunk
 		echo "<option value='default' > -- select user -- </option>";
 		foreach($users as $user) {
 			$s = ($user['userId']==$_POST['userId']) ? "selected" : "";
@@ -99,7 +134,11 @@ to <a class="header" href="<?php echo BASE_URL.'user.php'; ?>">[user]</a> to upd
 		}
 	?>
 	</select>
+<<<<<<< HEAD
 	<?php
+=======
+	<?
+>>>>>>> origin/trunk
 	echo $bt_add;
 	if ($ln=$_GET['ln']) {
 		echo "<a class=\"header\" href=\"$ln\"> Back to project list</a>";
@@ -114,7 +153,10 @@ to <a class="header" href="<?php echo BASE_URL.'user.php'; ?>">[user]</a> to upd
 	$bt_del = "<input class='bt1' type='submit' name='bt' value='del'>";
 	echo "<table>";
 	if ($owners) {
+<<<<<<< HEAD
 		$loginId = getLoginUserId();
+=======
+>>>>>>> origin/trunk
 		foreach ($owners as $v) {
 			$ck = "<input type='checkbox' name='ck[]' value='".$v['userId']."'>";
 			$cuser = ($v['lastname']||$v['firstname']) ? $v['firstname']." ".$v['lastname']:$v['username'];
@@ -122,6 +164,7 @@ to <a class="header" href="<?php echo BASE_URL.'user.php'; ?>">[user]</a> to upd
 			echo "<td>";
 			echo " - ".$cuser;
 			echo "</td>";
+<<<<<<< HEAD
 			if ($is_admin && count($owners) >= 1) {
 				echo "<td>";
 				if ($loginId !== true && privilege('projects') < 4 && count($owners)==1) {
@@ -131,14 +174,23 @@ to <a class="header" href="<?php echo BASE_URL.'user.php'; ?>">[user]</a> to upd
 				} else {
 					echo $ck;
 				}
+=======
+			if ($is_admin && count($owners) > 1) {
+				echo "<td>";
+				echo $ck;
+>>>>>>> origin/trunk
 				echo "</td>";
 			}
 			echo "</tr>";
 		}
 		echo "</table>";
 		echo "<br>";
+<<<<<<< HEAD
 		if ($is_admin && count($owners) >= 1) {
 			echo $error;
+=======
+		if ($is_admin && count($owners) > 1) {
+>>>>>>> origin/trunk
 			echo "delete selected: ".$bt_del;
 		}
 	}
@@ -148,6 +200,10 @@ to <a class="header" href="<?php echo BASE_URL.'user.php'; ?>">[user]</a> to upd
 	
 ?>
 </form>
+<<<<<<< HEAD
 <?php
+=======
+<?
+>>>>>>> origin/trunk
 project_footer();
 ?>

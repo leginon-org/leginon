@@ -108,6 +108,7 @@ def getDDStackRunData(ddstackid):
 		return None
 	return appiondata.ApDDStackRunData().direct_query(ddstackid)
 
+<<<<<<< HEAD
 def getImageList(tiltserieslist, ddstackid=None, appion_protomo=False):
 	'''
 	Get ImageList in the order of data collection based on ddstackdata if specified
@@ -175,22 +176,81 @@ def getImageDose(imagedata):
 			dose=1
 	return dose
 
+=======
+def getImageList(tiltserieslist, ddstackid=None):
+	'''
+	Get ImageList in the order of data collection based on ddstackdata if specified
+	'''
+	ddstackrundata = getDDStackRunData(ddstackid)
+	imagelist = []
+	# first run find the unaligned images in the order of the collection
+	for tiltseriesdata in tiltserieslist:
+		sessiondata = tiltseriesdata['session']
+		cquery = leginon.leginondata.CameraEMData(session=sessiondata)
+		cquery['align frames'] = False
+		imquery = leginon.leginondata.AcquisitionImageData(camera=cquery)
+		imquery['tilt series'] = tiltseriesdata
+		## query, but don't read image files yet, or else run out of memory
+		subimagelist = imquery.query(readimages=False)
+		## list is reverse chronological, so reverse it
+		subimagelist.reverse()
+		imagelist.extend(subimagelist)
+	unaligned_realist = []
+	for imagedata in imagelist:
+		if imagedata['label'] != 'projection':
+			unaligned_realist.append(imagedata)
+	if ddstackrundata is None:
+		apDisplay.printMsg('Loaded %d images starting from %s.mrc' % (len(unaligned_realist),unaligned_realist[0]['filename']))
+		return unaligned_realist
+
+	# find aligned images
+	aligned_list = []
+	apDisplay.printMsg('Searching for aligned images in ddstackid= %d'%(ddstackrundata.dbid,))
+	for image in unaligned_realist:
+		try:
+			pair = appiondata.ApDDAlignImagePairData(source=image,ddstackrun=ddstackrundata).query()[0]
+		except:
+			ValueError('no aligned image of %s from ddstack run id %d' % (apDisplay.short(image['filename']), ddstackrundata.dbid))
+		aligned_list.append(pair['result'])
+	apDisplay.printMsg('Loaded %d images starting from %s.mrc' % (len(aligned_list),aligned_list[0]['filename']))
+	return aligned_list
+
+def getImageDose(imagedata):
+	try:
+		dose = imagedata['preset']['dose']*(10**-20)*imagedata['camera']['exposure time']/imagedata['preset']['exposure time']
+	except:
+		apDisplay.printWarning("Dose not found in database for image %s. Setting dose to 1 Angstrom/pixel" % imagedata['filename'])
+		dose=1
+	return dose
+
+>>>>>>> origin/trunk
 def getAccumulatedDoses(imagelist):
 	doselist = map((lambda x:getImageDose(x)),imagelist)
 	dosearray = numpy.array(doselist)
 	cumarray = numpy.cumsum(dosearray)
 	return cumarray.tolist()
 
+<<<<<<< HEAD
 def orderImageList(frame_tiltdata, non_frame_tiltdata=None, frame_aligned="True", export=False):
+=======
+def orderImageList(frame_tiltdata, non_frame_tiltdata=None, frame_aligned="True"):
+>>>>>>> origin/trunk
 	'''This is complex because the two start tilt images are often sorted wrong if
 	just use alpha tilt.  Therefore, a fake alpha tilt value is created based
 	on the tilt image collected next in time
 	'''
+<<<<<<< HEAD
 	if (frame_aligned == "True") or (frame_aligned == True):
 		imagelist = frame_tiltdata
 	else:
 		imagelist = non_frame_tiltdata
 	dose_imagelist = non_frame_tiltdata #Frame aligned images don't have the correct dose...
+=======
+	if frame_aligned =="True":
+		imagelist = frame_tiltdata
+	else:
+		imagelist = non_frame_tiltdata
+>>>>>>> origin/trunk
 	if not imagelist:
 		apDisplay.printWarning('No images in image list.')
 		return
@@ -232,16 +292,22 @@ def orderImageList(frame_tiltdata, non_frame_tiltdata=None, frame_aligned="True"
 				reftilts.append(tilt)
 		tiltangledict[tilt] = imagedata
 		tiltangledict2[tilt] = imagedata_editable
+<<<<<<< HEAD
 	
 	dose_list=[]
 	for i,dose_imagedata in enumerate(dose_imagelist):
 		dose_list.append(getImageDose(dose_imagedata))
 	
+=======
+>>>>>>> origin/trunk
 	tiltkeys = tiltangledict.keys(); tiltkeys2 = tiltangledict2.keys()
 	tiltkeys.sort(); tiltkeys2.sort()
 	ordered_imagelist = []
 	accumulated_dose_list=[]
+<<<<<<< HEAD
 	defocus_list=[]
+=======
+>>>>>>> origin/trunk
 	for key in tiltkeys:
 		imagedata = tiltangledict[key]
 		imagedata_editable = tiltangledict2[key]
@@ -250,17 +316,24 @@ def orderImageList(frame_tiltdata, non_frame_tiltdata=None, frame_aligned="True"
 		mrc_files.append(fullname)
 		ordered_imagelist.append(imagedata)
 		accumulated_dose_list.append(imagedata_editable['accumulated dose'])
+<<<<<<< HEAD
 		defocus_list.append(imagedata['scope']['defocus']*1000000)
+=======
+>>>>>>> origin/trunk
 	if len(reftilts) > 2:
 		apDisplay.printError('Got too many images at the start tilt')
 	refimg = tiltkeys.index(max(reftilts))
 	#cut down for testing
 	testing = False
 	if not testing:
+<<<<<<< HEAD
 		if export == False:
 			return tiltkeys,ordered_imagelist,accumulated_dose_list,mrc_files,refimg
 		else:
 			return tiltkeys,ordered_imagelist,dose_list,accumulated_dose_list,mrc_files,refimg,defocus_list,apDatabase.getPixelSize(imagedata),dose_imagedata['scope']['magnification']
+=======
+		return tiltkeys,ordered_imagelist,accumulated_dose_list,mrc_files,refimg
+>>>>>>> origin/trunk
 	else:
 		# testing with half the data
 		print len(tiltkeys),refimg
@@ -563,11 +636,15 @@ def getAverageAzimuthFromSeries(imgtree):
 	
 	###Azimuth is determined from phi. In protomo tilt axis is measured from x where phi is from y
 	###Note there is a mirror between how Leginon reads images vs how protomo does
+<<<<<<< HEAD
 	try:
 		azimuth = -(90-((phi1+phi2)/2))   # Made negative because now images are y-flipped because Protomo
 	except:  #Phi was not recorded
 		apDisplay.printWarning("Azimuth was not recorded. Setting azimuth to -90 degrees, relative to the x-axis.")
 		azimuth = -90
+=======
+	azimuth = -(90-((phi1+phi2)/2))   # Made negative because now images are y-flipped because Protomo
+>>>>>>> origin/trunk
 	apDisplay.printMsg(("Azimuth is %f (relative to y-flipped images)" % azimuth))
 	return azimuth
 

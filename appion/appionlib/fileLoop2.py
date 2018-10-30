@@ -10,12 +10,22 @@ import cPickle
 import glob
 #appion
 from appionlib import apDisplay
+<<<<<<< HEAD
 from appionlib import apImage
 from appionlib import apParam
 from appionlib import fileScript
 #leginon
 from pyami import mem, mrc
 from pyami import fileutil
+=======
+from appionlib import apDatabase
+from appionlib import apImage
+from appionlib import apParam
+from appionlib import apProject
+from appionlib import fileScript
+#leginon
+from pyami import mem, mrc
+>>>>>>> origin/trunk
 
 class FileImageData(dict):
 	pass
@@ -398,9 +408,12 @@ class FileLoop(fileScript.FileScript):
 		"""
 		reads or creates a done dictionary
 		"""
+<<<<<<< HEAD
 		#Lock DoneDict file
 		self._lockDoneDict()
 
+=======
+>>>>>>> origin/trunk
 		self.donedictfile = os.path.join(self.params['rundir'] , self.functionname+".donedict")
 		if os.path.isfile(self.donedictfile) and self.params['continue'] == True:
 			### unpickle previously done dictionary
@@ -412,8 +425,11 @@ class FileLoop(fileScript.FileScript):
 				if self.donedict['commit'] == self.params['commit']:
 					### all is well
 					apDisplay.printMsg("Found "+str(len(self.donedict))+" done dictionary entries")
+<<<<<<< HEAD
 					#Unlock DoneDict file
 					self._unlockDoneDict()
+=======
+>>>>>>> origin/trunk
 					return
 				elif self.donedict['commit'] is True and self.params['commit'] is not True:
 					### die
@@ -433,6 +449,7 @@ class FileLoop(fileScript.FileScript):
 		f = open(self.donedictfile, 'w', 0666)
 		cPickle.dump(self.donedict, f)
 		f.close()
+<<<<<<< HEAD
 
 		#Unlock DoneDict file
 		self._unlockDoneDict()
@@ -465,6 +482,8 @@ class FileLoop(fileScript.FileScript):
 			os.remove('%s%s' % (self.lockname,"donedict"))
 		except OSError:
 			apDisplay.printError('Parallel unlock failed')
+=======
+>>>>>>> origin/trunk
 		return
 
 	#=====================
@@ -472,24 +491,33 @@ class FileLoop(fileScript.FileScript):
 		"""
 		reloads done dictionary
 		"""
+<<<<<<< HEAD
 		#Lock DoneDict file
 		self._lockDoneDict()
 
+=======
+>>>>>>> origin/trunk
 		f = open(self.donedictfile,'r')
 		self.donedict = cPickle.load(f)
 		f.close()
 
+<<<<<<< HEAD
 		#Unlock DoneDict file
 		self._unlockDoneDict()
 
+=======
+>>>>>>> origin/trunk
 	#=====================
 	def _writeDoneDict(self, imgname=None):
 		"""
 		write finished image (imgname) to done dictionary
 		"""
+<<<<<<< HEAD
 		#Lock DoneDict file
 		self._lockDoneDict()
 
+=======
+>>>>>>> origin/trunk
 		### reload donedict from file just in case two runs are running
 		f = open(self.donedictfile,'r')
 		self.donedict = cPickle.load(f)
@@ -505,9 +533,12 @@ class FileLoop(fileScript.FileScript):
 		cPickle.dump(self.donedict, f)
 		f.close()
 
+<<<<<<< HEAD
 		#Unlock DoneDict file
 		self._unlockDoneDict()
 
+=======
+>>>>>>> origin/trunk
 	#=====================
 	def _getAllImages(self):
 		startt = time.time()
@@ -757,7 +788,11 @@ class FileLoop(fileScript.FileScript):
 			if count % 10 == 0:
 				sys.stderr.write(".")
 			skip, reason = self.skipTestOnImage(imgdata)
+<<<<<<< HEAD
 			#imgname = imgdata['filename']
+=======
+			imgname = imgdata['filename']
+>>>>>>> origin/trunk
 			if skip is True:
 				if reason == 'reproc':
 					reproccount += 1

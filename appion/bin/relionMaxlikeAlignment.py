@@ -19,6 +19,10 @@ from appionlib import apImagicFile
 from appionlib import apProject
 from appionlib import proc2dLib
 import sinedon
+<<<<<<< HEAD
+=======
+import MySQLdb
+>>>>>>> origin/trunk
 
 #=====================
 #=====================
@@ -190,7 +194,12 @@ class RelionMaxLikeScript(appionScript.AppionScript):
 		if self.params['commit'] is False:
 			return
 		config = sinedon.getConfig('appiondata')
+<<<<<<< HEAD
 		dbc = sinedon.sqldb.connect(**config)
+=======
+		dbc = MySQLdb.Connect(**config)
+		dbc.autocommit(True)
+>>>>>>> origin/trunk
 		cursor = dbc.cursor()
 		query = (
 			"  UPDATE ApMaxLikeJobData "

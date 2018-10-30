@@ -20,7 +20,11 @@ class ImageScaleAdditionCalibrator(calibrator.Calibrator):
 	'''
 	panelclass = gui.wx.ImageRotationCalibrator.Panel
 	settingsclass = leginondata.ImageRotationCalibratorSettingsData
+<<<<<<< HEAD
 	defaultsettings = dict(calibrator.Calibrator.defaultsettings)
+=======
+	defaultsettings = calibrator.Calibrator.defaultsettings
+>>>>>>> origin/trunk
 
 	def __init__(self, id, session, managerlocation, **kwargs):
 		calibrator.Calibrator.__init__(self, id, session, managerlocation, **kwargs)

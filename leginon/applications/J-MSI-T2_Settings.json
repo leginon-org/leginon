@@ -16,6 +16,10 @@
       "final image shift":false,
       "wait time":0.0,
       "park after target":false,
+<<<<<<< HEAD
+=======
+      "wait for transform":null,
+>>>>>>> origin/trunk
       "save image":true,
       "adjust time by tilt":false,
       "pause between time":0.0,
@@ -67,6 +71,10 @@
       "final image shift":false,
       "wait time":0.0,
       "park after target":false,
+<<<<<<< HEAD
+=======
+      "wait for transform":null,
+>>>>>>> origin/trunk
       "save image":true,
       "adjust time by tilt":false,
       "pause between time":0.0,
@@ -145,9 +153,16 @@
     "BeamTiltImagerSettingsData":{
       "save integer":false,
       "beam tilt count":1,
+<<<<<<< HEAD
       "final image shift":false,
       "wait time":0.0,
       "park after target":false,
+=======
+      "final image shift":null,
+      "wait time":0.0,
+      "park after target":false,
+      "wait for transform":null,
+>>>>>>> origin/trunk
       "save image":true,
       "adjust time by tilt":false,
       "pause between time":0.0,
@@ -541,6 +556,10 @@
       "final image shift":false,
       "wait time":0.0,
       "park after target":false,
+<<<<<<< HEAD
+=======
+      "wait for transform":null,
+>>>>>>> origin/trunk
       "save image":true,
       "adjust time by tilt":false,
       "pause between time":0.0,
@@ -587,6 +606,10 @@
       "final image shift":false,
       "wait time":0.0,
       "park after target":false,
+<<<<<<< HEAD
+=======
+      "wait for transform":null,
+>>>>>>> origin/trunk
       "save image":true,
       "adjust time by tilt":false,
       "pause between time":0.0,
@@ -633,6 +656,10 @@
       "final image shift":false,
       "wait time":0.0,
       "park after target":false,
+<<<<<<< HEAD
+=======
+      "wait for transform":null,
+>>>>>>> origin/trunk
       "save image":true,
       "adjust time by tilt":false,
       "pause between time":0.0,
@@ -679,6 +706,10 @@
       "final image shift":false,
       "wait time":0.0,
       "park after target":false,
+<<<<<<< HEAD
+=======
+      "wait for transform":null,
+>>>>>>> origin/trunk
       "save image":true,
       "adjust time by tilt":false,
       "pause between time":0.0,
@@ -725,6 +756,10 @@
       "final image shift":false,
       "wait time":0.0,
       "park after target":false,
+<<<<<<< HEAD
+=======
+      "wait for transform":null,
+>>>>>>> origin/trunk
       "save image":true,
       "adjust time by tilt":false,
       "pause between time":0.0,
@@ -771,6 +806,10 @@
       "final image shift":false,
       "wait time":0.0,
       "park after target":false,
+<<<<<<< HEAD
+=======
+      "wait for transform":null,
+>>>>>>> origin/trunk
       "save image":true,
       "adjust time by tilt":false,
       "pause between time":null,

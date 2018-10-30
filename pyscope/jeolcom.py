@@ -3,7 +3,11 @@ import math
 import sys
 import comtypes.client
 from pyscope import tem
+<<<<<<< HEAD
 from pyami import moduleconfig
+=======
+from pyscope import moduleconfig
+>>>>>>> origin/trunk
 
 DEBUG = False
 

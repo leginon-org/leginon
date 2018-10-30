@@ -15,9 +15,12 @@ require_once "inc/leginon.inc";
 ini_set('session.gc_maxlifetime', 604800);
 session_set_cookie_params(604800);
 
+<<<<<<< HEAD
 $page = $_SERVER['REQUEST_URI'];
 header("Refresh: 300; URL=$page");
 
+=======
+>>>>>>> origin/trunk
 session_start();
 $sessionname=$_SESSION['sessionname'];
 $outdir=$_SESSION['outdir'];
@@ -50,7 +53,11 @@ class Protomo2BatchSummary extends BasicLayoutForm
 		$this->setTitle( 'Protomo Batch Summary' );
 		$this->setHeading( 'Protomo Batch Summary' );
 		$this->setExeFile( '' );
+<<<<<<< HEAD
 		$this->setGuideURL( "https://github.com/nysbc/appion-protomo#example" );
+=======
+		$this->setGuideURL( "http://emg.nysbc.org/redmine/projects/appion/wiki/Align_Tilt-Series" );
+>>>>>>> origin/trunk
 		$this->setTestable( False ); // True to activate "test single image".
 		$this->setUseLegOutDir( False ); // The output directory will be created in the Appion run directory rather than Leginon.
 		$this->setShowDesc( False ); // Flag to hide the description field of the run parameters.
@@ -68,7 +75,11 @@ class Protomo2BatchSummary extends BasicLayoutForm
 		
 		global $outdir;
 		global $refine;
+<<<<<<< HEAD
 		$tilts = glob("$outdir/tiltseries*/.tiltseries*");
+=======
+		$tilts = glob("$outdir/*/.tiltseries*");
+>>>>>>> origin/trunk
 		$qalist=array();
 		foreach(array_keys($tilts) as $paramName)
 			$qalist[]=pathinfo($tilts["$paramName"], PATHINFO_EXTENSION);
