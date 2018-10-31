@@ -589,6 +589,8 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		camerainfo['offset'] = offset
 		camerainfo['dimension'] = dimension
 		camerainfo['nframe'] = nframe
+		# set to True first
+		self.correct_dark_gain = True
 		camerainfo['norm'] = self.getRefImageData('norm')
 		if not camerainfo['norm']:
 			self.correct_dark_gain = False
@@ -605,9 +607,6 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			if debug:
 				self.log.write( 'first frame image to be processed\n ')
 			return True
-		# no need to change condition if no dark/gain correction will be made
-		if not self.correct_dark_gain:
-			return False
 		# return True all the time to use Gram-Schmidt process to calculate darkarray scale
 		if self.use_GS:
 			return True
