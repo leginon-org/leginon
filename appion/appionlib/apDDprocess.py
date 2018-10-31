@@ -69,6 +69,7 @@ class DirectDetectorProcessing(object):
 		self.altchannel_cycler = itertools.cycle([False,True])
 		self.frame_modified = False
 		self.setForcedFrameSessionPath(None)
+		self.last_correct_dark_gain = None
 
 	def setImageId(self,imageid):
 		from leginon import leginondata
@@ -616,6 +617,9 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			if debug:
 				self.log.write( 'fail norm %d vs %d test\n ' % (self.camerainfo['norm'].dbid,current_norm.dbid))
 			return True
+		if self.last_correct_dark_gain is None or self.last_correct_dark_gain != self.correct_dark_gain:
+			return True
+
 		if self.use_full_raw_area != new_use_full_raw_area:
 			if debug:
 				self.log.write('fail full raw_area %s test\n ' % (new_use_full_raw_area))
@@ -1071,6 +1075,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		'''
 		Creates local reference files for gain/dark-correcting the stack of frames
 		'''
+		apDisplay.printMsg('Will setupDarkNormMrcs make dark/gain? %s' % (self.correct_dark_gain,))
 		if not self.correct_dark_gain:
 			self.dark_path = None
 			self.norm_path = None
@@ -1081,6 +1086,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			apDisplay.displayError('use_full_raw_area when image is cropped is not implemented for gpu')
 		frameprocess_dir = os.path.dirname(self.tempframestackpath)
 		get_new_refs = self.__conditionChanged(1,use_full_raw_area)
+		apDisplay.printMsg('decide to get new refs based on condition change ? %s' % (get_new_refs,))
 		# o.k. to set attribute now that condition change is checked
 		self.use_full_raw_area = use_full_raw_area
 		# at least write dark and norm image once
