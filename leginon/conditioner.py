@@ -223,6 +223,7 @@ class AutoNitrogenFiller(Conditioner):
 		'column fill end': 70,
 		'loader fill start': 17,
 		'loader fill end': 70,
+		'delay dark current ref': 90,
 	})
 	eventinputs = node.Node.eventinputs + [event.FixConditionEvent]
 
@@ -284,6 +285,8 @@ class AutoNitrogenFiller(Conditioner):
 		t1 = threading.Thread(target=self.runNitrogenFiller)
 		t1.start()
 		# Dark Current Reference Update if needed
+		self.logger.info('Waiting for %d seconds before running camera dark current reference update' % (self.settings['delay dark current ref']))
+		time.sleep(self.settings['delay dark current ref'])
 		self.runCameraDarkCurrentReferenceUpdate()
 		t1.join()
 
