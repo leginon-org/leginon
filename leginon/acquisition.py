@@ -239,6 +239,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.phaseplate_bound = False
 		self.screencurrent_bound = False
 		self.alignzlp_warned = False
+		self.beamtilt0 = None
 
 		self.duplicatetypes = ['acquisition', 'focus']
 		self.presetlocktypes = ['acquisition', 'target', 'target list']
@@ -985,6 +986,11 @@ class Acquisition(targetwatcher.TargetWatcher):
 		# projection submode and probe mode must be the same as beamtilt0
 		# and stig0 when calling this.
 		if self.settings['correct image shift coma']:
+			if self.beamtilt0 is None:
+				# Exception during pre-acquire target processing may call this function.
+				# before the real reset values are set
+				self.logger.warning("Calling resetComaCorrection before it is known is not possible. No reset is done")
+				return
 			self.instrument.tem.BeamTilt = self.beamtilt0
 			self.instrument.tem.Stigmator = {'objective':self.stig0}
 			self.instrument.tem.Defocus = self.defoc0
