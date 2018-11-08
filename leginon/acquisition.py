@@ -173,6 +173,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 										event.ImageProcessDoneEvent,
 										event.AcquisitionImagePublishEvent,
 										event.PhasePlateUsagePublishEvent,
+										event.PauseEvent,
+										event.ContinueEvent,
 									] \
 								+ presets.PresetsClient.eventinputs \
 								+ navigator.NavigatorClient.eventinputs
@@ -189,6 +191,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 											event.ScreenCurrentLoggerPublishEvent,
 											event.PhasePlatePublishEvent,
 											event.NodeBusyNotificationEvent,
+											event.ManagerPauseAvailableEvent,
+											event.ManagerPauseNotAvailableEvent,
+											event.ManagerContinueAvailableEvent,
 											event.ImageListPublishEvent, event.ReferenceTargetPublishEvent] \
 											+ navigator.NavigatorClient.eventoutputs
 
@@ -201,6 +206,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.addEventInput(event.ImageProcessDoneEvent, self.handleImageProcessDone)
 		self.addEventInput(event.MakeTargetListEvent, self.setGrid)
 		self.addEventInput(event.PhasePlateUsagePublishEvent, self.handlePhasePlateUsage)
+		self.addEventInput(event.PauseEvent, self.handlePause)
+		self.addEventInput(event.ContinueEvent, self.handleContinue
+)
 		self.driftdone = threading.Event()
 		self.driftimagedone = threading.Event()
 		self.instrument = instrument.Proxy(self.objectservice, self.session)
@@ -231,6 +239,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.phaseplate_bound = False
 		self.screencurrent_bound = False
 		self.alignzlp_warned = False
+		self.beamtilt0 = None
 
 		self.duplicatetypes = ['acquisition', 'focus']
 		self.presetlocktypes = ['acquisition', 'target', 'target list']
@@ -239,6 +248,18 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.timedebug = {}
 
 		self.start()
+
+	def setStatus(self, status):
+		'''
+		Modify Node setStatus to allow manager to pause or continue.
+		'''
+		if status == 'user input':
+			self.notifyManagerContinueAvailable()
+		elif status == 'idle':
+			self.notifyManagerPauseNotAvailable()
+		else:
+			self.notifyManagerPauseAvailable()
+		super(Acquisition, self).setStatus(status)
 
 	def handleApplicationEvent(self,evt):
 		'''
@@ -965,6 +986,11 @@ class Acquisition(targetwatcher.TargetWatcher):
 		# projection submode and probe mode must be the same as beamtilt0
 		# and stig0 when calling this.
 		if self.settings['correct image shift coma']:
+			if self.beamtilt0 is None:
+				# Exception during pre-acquire target processing may call this function.
+				# before the real reset values are set
+				self.logger.warning("Calling resetComaCorrection before it is known is not possible. No reset is done")
+				return
 			self.instrument.tem.BeamTilt = self.beamtilt0
 			self.instrument.tem.Stigmator = {'objective':self.stig0}
 			self.instrument.tem.Defocus = self.defoc0
@@ -994,6 +1020,40 @@ class Acquisition(targetwatcher.TargetWatcher):
 			Notify Manager that the node is doing something so it does not timeout.
 			'''
 			self.outputEvent(event.NodeBusyNotificationEvent())
+
+	def notifyManagerPauseAvailable(self):
+		'''
+		Notify Manager that the node is doing something so it does not timeout.
+		'''
+		self.outputEvent(event.ManagerPauseAvailableEvent())
+
+	def notifyManagerPauseNotAvailable(self):
+		'''
+		Notify Manager that the node is doing something so it does not timeout.
+		'''
+		self.outputEvent(event.ManagerPauseNotAvailableEvent())
+
+	def notifyManagerContinueAvailable(self):
+		'''
+		Notify Manager that the node is doing something so it does not timeout.
+		'''
+		self.outputEvent(event.ManagerContinueAvailableEvent())
+
+	def handlePause(self, evt):
+		'''
+		Manager doing the pause
+		'''
+		#self.panel.playerEvent('pause')
+		self.player.pause()
+		self.setStatus('user input')
+
+	def handleContinue(self, evt):
+		'''
+		Manager continues the paused status
+		'''
+		#self.panel.playerEvent('play')
+		self.player.play()
+		self.setStatus(self.before_pause_node_status)
 
 	def publishDisplayWait(self, imagedata):
 		'''
