@@ -5,10 +5,11 @@ import os
 from leginon import leginondata
 from pyami import jsonfun
 '''
-	This program shows sql statement required to insert calibrations
+	This program creates sql statement and insert the calibrations
 	into leginon database of dest_database_host based on the existing
 	calibration on the source_database_host.  The latter is in sinedon.cfg
-	Usage: showcal.py source_database_hostname source_camera_hosthame camera_name
+	Usage: import_leginon_cal.py source_database_hostname source_camera_hosthame camera_name
+	Requirements: InstrumentData and MagnificationsData
 '''
 pixelsize_scale = 1
 
@@ -75,7 +76,19 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 		cam = results[0]
 		return cam
 
+	def getTemsByName(self, tem_name):
+		results = leginondata.InstrumentData(name=tem_name).query()
+		all_tems = []
+		for r in results:
+			if r['cs']:
+				all_tems.append(r)
+		return all_tems
+
 	def getTemInstrumentData(self, tem_name):
+		all_tems = self.getTemsByName(tem_name)
+		if len(all_tems) == 1:
+			return all_tems[0]
+		print map((lambda x: x['hostname']),all_tems)
 		temq = leginondata.InstrumentData(name=tem_name)
 		r = leginondata.PixelSizeCalibrationData(tem=temq, ccdcamera=self.cameradata).query(results=1)
 		ptemid = None # tem with pixel calibration is checked first.
@@ -86,12 +99,13 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 				return t
 			ptemid = t.dbid
 		# check the rest
-		results = leginondata.InstrumentData().query()
-		tems = []
-		for r in results:
-			if r['cs'] and (ptemid is None or ptemid!=r.dbid):
-				tems.append(r)
-		for t in tems:
+		other_tems = []
+		for r in all_tems:
+			if ptemid is None or ptemid!=r.dbid:
+				other_tems.append(r)
+		if len(other_tems) == 1:
+			return other_tems[0]
+		for t in other_tems:
 			answer = raw_input(' Is %s %s the tem to import calibration ? Y/y/N/n ' % (t['hostname'], t['name']))
 			if answer.lower() == 'y':
 				return t
@@ -128,7 +142,7 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 			if classname == 'ProjectionSubModeMappingData':
 				mags.append(float(kwargs['magnification']))
 		mags.sort()
-		print mags
+		print 'magnifications', mags
 		q = leginondata.MagnificationsData(instrument=self.temdata,magnifications=mags)
 		q.insert()
 		return q
