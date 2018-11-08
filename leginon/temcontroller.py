@@ -30,7 +30,9 @@ class TEMController(node.Node):
 	defaultsettings = {
 	}
 	eventinputs = node.Node.eventinputs + presets.PresetsClient.eventinputs
-	eventoutputs = node.Node.eventoutputs + presets.PresetsClient.eventoutputs
+	eventoutputs = node.Node.eventoutputs + presets.PresetsClient.eventoutputs \
+									+ [event.ManagerPauseEvent, event.ManagerContinueEvent,
+										]
 
 	def __init__(self, id, session, managerlocation, **kwargs):
 		node.Node.__init__(self, id, session, managerlocation, **kwargs)
@@ -118,6 +120,7 @@ class TEMController(node.Node):
 			return False
 
 	def uiOpenColumnValve(self):
+		self.onContinue('event')
 		self.setStatus('processing')
 		self.safeOpenColumnValve()
 		self.panel.setTEMParamDone()
@@ -413,7 +416,22 @@ class TEMController(node.Node):
 			name_states[name] = state
 		return name_states
 
+	def uiPause(self):
+		'''
+		Pause all acquisition class nodes that are not idle.
+		'''
+		self.logger.info('Pausing workflow')
+		self.outputEvent(event.ManagerPauseEvent())
 
+	def uiContinue(self):
+		'''
+		Continue all paused acquisition class nodes.  This should
+		only be used if all pauses are ok to continue.
+		'''
+		self.logger.info('Continuing workflow')
+		# Send the event to manager to continue all paused nodes.
+		self.outputEvent(event.ManagerContinueEvent(all=True))
+		
 if __name__ == '__main__':
 	id = ('navigator',)
 	n = Navigator(id, None)
