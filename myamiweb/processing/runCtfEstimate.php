@@ -1,9 +1,9 @@
 <?php
 /**
- *	The Leginon software is Copyright 2003 
- *	The Scripps Research Institute, La Jolla, CA
+ *	The Leginon software is Copyright under 
+ *	Apache License, Version 2.0
  *	For terms of the license agreement
- *	see  http://ami.scripps.edu/software/leginon-license
+ *	see  http://leginon.org
  *
  *	Simple viewer to view a image using mrcmodule
  */
@@ -49,9 +49,9 @@ function runCtfFind() {
 	$defstep=$_POST['defstep'];
 	$numstep=$_POST['numstep'];
 	$dast=$_POST['dast'];
-	//$nominal=$_POST['nominal'];
+	$nominal= ( $_POST['nominal'] == 'db value') ? false: abs($_POST['nominal']);
 	//$reprocess=$_POST['reprocess'];
-	
+
 	/* *******************
 	PART 2: Check for conflicts, if there is an error display the form again
 	******************** */
@@ -96,13 +96,16 @@ function runCtfFind() {
 	$command.="--defstep=$defstep ";
 	$command.="--numstep=$numstep ";
 	$command.="--dast=$dast ";
+	if ($_POST['bestdb'])
+		$command.=" --bestdb ";		
+	
 
 	$progname = "CtfFind";
 	if ($ctftilt) {
 		$command.="--ctftilt ";
 		$progname = "CtfTilt";
 	}
-	//if ($nominal) $command.=" nominal=$nominal";
+	if ($nominal) $command.=" --nominal=$nominal";
 	//if ($reprocess) $command.=" reprocess=$reprocess";
 
 	/* *******************
@@ -181,6 +184,20 @@ function createCtfFindForm($extra=false) {
 		  obj.defstep.value = 100;
 		  return;
 		}
+		function bestdbChange(obj) {
+			if (obj.bestdb.checked) {
+				obj.ampice.style.backgroundColor = '#bbbbbb';		
+				obj.ampcarbon.style.backgroundColor = '#bbbbbb';
+				obj.resmax.style.backgroundColor = '#bbbbbb';
+				obj.dast.style.backgroundColor = '#bbbbbb';
+			} else {
+				obj.ampice.style.backgroundColor = '#ffffff';		
+				obj.ampcarbon.style.backgroundColor = '#ffffff';
+				obj.resmax.style.backgroundColor = '#ffffff';
+				obj.dast.style.backgroundColor = '#ffffff';
+			}			
+		  return;
+		}		
 		function updateDFsearch() {
 		  var dstep = parseFloat(document.getElementById('defstep').value);
 		  var numstep = parseFloat(document.getElementById('numstep').value);
@@ -216,7 +233,7 @@ function createCtfFindForm($extra=false) {
 
 	// set defaults and check posted values
 	$form_fieldsz = ($_POST['fieldsize']) ? $_POST['fieldsize'] : 512;
-	$form_bin = ($_POST['binval']) ? $_POST['binval'] : 2;
+	$form_bin = ($_POST['binval']) ? $_POST['binval'] : 1;
 	$form_ampc = ($_POST['ampcarbon']) ? $_POST['ampcarbon'] : '0.15';
 	$form_ampi = ($_POST['ampice']) ? $_POST['ampice'] : '0.07';
 	$form_resmin = ($_POST['resmin']) ? $_POST['resmin'] : '100';
@@ -228,6 +245,7 @@ function createCtfFindForm($extra=false) {
 	$ctftiltcheck = ($_POST['runctftilt']=='on') ? 'CHECKED' : '';
 	$form_dast = ($_POST['dast']) ? $_POST['dast'] : '500';
 
+	$form_nominal = ($_POST['nominal']) ? $_POST['nominal']: 'db value';
 	echo"
 	<TABLE BORDER=0 CLASS=tableborder CELLPADDING=15>
 	<TR>
@@ -259,7 +277,21 @@ function createCtfFindForm($extra=false) {
 	echo "<br/><br/>\n";
 
 	echo "<INPUT TYPE='text' NAME='binval' VALUE='$form_bin' SIZE='4'>\n";
-	echo docpop('binval','Binning');
+	echo docpop('binval','Pre-Binning');
+	echo "<br/><br/>\n";
+	
+	if ($lastrunnumber > 1) {
+		echo "<input type='checkbox' name='bestdb' $bestdbcheck onClick='bestdbChange(this.form)'>\n";
+		echo docpop('ctffindBestdb','Use best values from DB');
+	} else {
+		echo "<i>Use best values from DB is not available"
+			."<br/>($lastrunnumber ctf runs)</i>\n";
+	}
+	echo "<br />\n";
+	echo "<B>Override nominal defocus set in experiment:</B><br />\n";
+	echo "Set to:<INPUT TYPE='text' NAME='nominal' VALUE='".$form_nominal."' SIZE='8'>\n";
+	echo "<FONT SIZE=-2><I>(in &mu;m, i.e. <B>2.0</B>)</I></FONT><br />";
+
 	echo "<br/><br/>\n";
 
 	echo "<b>$progname Values</b><br/>\n";
@@ -283,12 +315,13 @@ function createCtfFindForm($extra=false) {
 	echo "<br />\n";
 	echo "Search range: &plusmn; <span id='srange'>";
 	echo round($form_defstep*$form_numstep*1e-4,2);
-	echo "</span>&micro;M<br><br>\n";
+	echo "</span>&micro;m<br><br>\n";
 	echo "<input type='text' name='dast' value='$form_dast' size='6'>\n";
 	echo docpop('dast','Expected astigmatism');
 	echo " (&Aring;ngstroms)<br />\n";
 
 	echo "<br />\n";
+
 
 	echo "<b>PRESET VALUES:</b>";
 	echo "<table border='0'><tr><td>\n";
@@ -306,17 +339,7 @@ function createCtfFindForm($extra=false) {
 	//echo "Reprocess Below Confidence Value<br />\n";
 	//echo "Set Value:<INPUT TYPE='text' NAME='reprocess' DISABLED VALUE='0.8' SIZE='4'>\n";
 	//echo "<FONT SIZE=-2><I>(between 0.0 - 1.0)</I></FONT><br />\n";
-	//echo "<br />\n";
-	//echo "<B>Nominal override:</B><br />\n";
-	//echo "<INPUT TYPE='checkbox' NAME='nominalcheck' onclick='enabledf(this)'>\n";
-	//echo "Override Nominal Defocus<br />\n";
-	//echo "Set Defocus:<INPUT TYPE='text' NAME='nominal' DISABLED VALUE='db value' SIZE='8'>\n";
-	//echo "<FONT SIZE=-2><I>(in meters, i.e. <B>-2.0e-6</B>)</I></FONT><br />";
-	//if ($ctfruns > 0) {
-	//	echo"
-	//		<INPUT TYPE='checkbox' NAME='newnominal'>
-	//    Use Previously ACE Estimated Defocus";
-	//}
+
 	echo"
 	  </TD>
 	</tr>

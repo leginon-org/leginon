@@ -2,10 +2,8 @@
 import cStringIO
 
 # 3rd party
-import numpy
 import scipy.misc
 from PIL import Image
-from PIL import ImageDraw
 
 # myami
 import pyami.mrc
@@ -80,7 +78,15 @@ class Format(redux.pipe.Pipe):
 
 	def make_resultname(self):
 		format = self.kwargs['oformat']
-		self._resultname = 'result' + self.file_formats[format]
+		# Issue #4297 overlay in cache not recalculated upon change
+		overlay = self.kwargs['overlay']
+		overlaycolor = self.kwargs['overlaycolor']
+		overlayname = ''
+		if overlay:
+			bits = overlay.split('/')
+			overlayname='.'.join(bits)+'.%s' % (overlaycolor)
+		# include overlay options in resultname
+		self._resultname = 'result' + self.file_formats[format] + overlayname
 
 	def put_result(self, f, result):
 		f.write(result)

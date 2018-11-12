@@ -1,9 +1,9 @@
 <?php
 /**
- *	The Leginon software is Copyright 2003 
- *	The Scripps Research Institute, La Jolla, CA
+ *	The Leginon software is Copyright under 
+ *	Apache License, Version 2.0
  *	For terms of the license agreement
- *	see  http://ami.scripps.edu/software/leginon-license
+ *	see  http://leginon.org
  *
  */
 require_once "inc/particledata.inc";
@@ -39,9 +39,9 @@ function createForm($extra=false) {
 	// The _GET array should include the actual class name of the form to be displayed
 	$formClass = $_GET['form'];
 	$form = new $formClass( $expId, $extra );
-	
-	// Display the form
-	echo $form->generateForm();
+
+	//Display the form in depending on  $_POST
+	echo $form->generateSequenceForm();
 }
 
 function runAppionLoop() {
@@ -61,7 +61,11 @@ function runAppionLoop() {
 	$errorMsg = $form->validate( $_POST );
 	
 	// reload the form with any validation error messages
-	if ( !empty($errorMsg) ) createForm( $errorMsg );
+	if ( !empty($errorMsg) ) {
+		createForm( $errorMsg );
+		//Do not continue to PART 2 if has error;
+		return;
+	}
 	
 	/* *******************
 	 PART 2: Copy any needed files to the cluster
@@ -76,7 +80,8 @@ function runAppionLoop() {
 	/* *************************
 	PART 4: Show or Run Command
 	***************************** */
-	$headinfo = $form->showReference(); 
+	$headinfo = $form->showReference();
+	$headinfo.= $form->generateFormFooter();
 	$headinfo.= $copyCommand;
 	$headinfo.= "<br />";
 	$jobType  = $form->getJobType();
@@ -91,15 +96,8 @@ function runAppionLoop() {
 	if ($errors) {
 		createForm($errors);
 	} else if ( $testimage ) {
-		// add the appion wrapper to the test command for display
-		$wrappedcmd = addAppionWrapper($command);
-		
-		$results = "<table width='600' border='0'>\n";
-		$results.= "<tr><td>\n";
-		$results.= "<B>Test Command:</B><br />$wrappedcmd";
-		$results.= "</td></tr></table>\n";
-		$results.= "<br />\n";
-		$html =  $results;
+		// display test command
+		$html =  $form->getTestCommand($command );
 		
 		$runname 	  = $_POST['runname'];		
 		$outdir		  = $_POST['outdir'];

@@ -1,9 +1,9 @@
 <?php
 /**
- *	The Leginon software is Copyright 2003 
- *	The Scripps Research Institute, La Jolla, CA
+ *	The Leginon software is Copyright under 
+ *	Apache License, Version 2.0
  *	For terms of the license agreement
- *	see  http://ami.scripps.edu/software/leginon-license
+ *	see  http://leginon.org
  *
  *	Simple viewer to view a image using mrcmodule
  */
@@ -47,17 +47,21 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
          if (document.viewerform.testimage.checked){
 		document.viewerform.testfilename.disabled=false;
 		document.viewerform.testfilename.value='';
+		document.viewerform.commit.disabled=true;
+		document.viewerform.commit.checked=false;
          }	
          else {
 		document.viewerform.testfilename.disabled=true;
 		document.viewerform.testfilename.value='mrc file name';
+		document.viewerform.commit.disabled=false;
+		document.viewerform.commit.checked=true;
          }
 	   }
 	</SCRIPT>\n";
 	$javafunctions .= writeJavaPopupFunctions('appion');	
 
 	processing_header($title, $heading, $headerstuff=$javafunctions, $pleaseWait=true, $showmenu=true, $printDiv=false, 
-						$guideURL="http://ami.scripps.edu/redmine/projects/appion/wiki/Dog_Picking");
+						$guideURL="http://emg.nysbc.org/redmine/projects/appion/wiki/Dog_Picking");
 	
 	if ($extra) {
 		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
@@ -74,6 +78,9 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 	$prtlruns = count($particle->getParticleRunIds($sessionId, True));
 	$lastrunnumber = $particle->getLastRunNumberForType($sessionId,'ApSelectionRunData','name'); 
 	// Set any existing parameters in form
+	while (file_exists('dogrun'.($lastrunnumber+1))) {
+		$lastrunnumber += 1;
+	}
 	$defrunname = ($_POST['runname']) ? $_POST['runname'] : 'dogrun'.($lastrunnumber+1);
 	$presetval = ($_POST['preset']) ? $_POST['preset'] : 'en';
 	$testcheck = ($_POST['testimage']=='on') ? 'CHECKED' : '';
@@ -232,12 +239,14 @@ function runDogPicker() {
 		if ($_POST['process'] != "Just Show Command") {
 			$filePattern = $testjpg."*.jpg";
 			$pathPattern = Path::join($pathToMaps, $filePattern);
+			# write only the written files
 			$dogmaplist = glob($pathPattern);
 			$results .= writeTestResults($jpgimg, $dogmaplist, $_POST['bin']);
 		} else {
 			$mapFile = $testjpg.".dogmap1.jpg";
 			$ccclist = array();
 			$cccimg = Path::join($pathToMaps, $mapFile);
+			# does not check if the result jpg is there because missing cccimg is not an error
 			$ccclist[]=$cccimg;
 			$results.= writeTestResults($jpgimg,$ccclist,$bin=$_POST['bin']);			
 		}		

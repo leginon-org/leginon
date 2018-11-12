@@ -2,9 +2,9 @@
 
 /**
  *      The Leginon software is Copyright 2007 
- *      The Scripps Research Institute, La Jolla, CA
+ *      Apache License, Version 2.0
  *      For terms of the license agreement
- *      see  http://ami.scripps.edu/software/leginon-license
+ *      see  http://leginon.org
  *      
  *      This file has basically become an abstaction layer for ssh calls defined in cluster.inc.
  *      It also provides a global error message that can be accessed with pconnError() after a failed ssh command.

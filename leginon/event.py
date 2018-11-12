@@ -1,9 +1,9 @@
 #
 # COPYRIGHT:
-#       The Leginon software is Copyright 2003
-#       The Scripps Research Institute, La Jolla, CA
+#       The Leginon software is Copyright under
+#       Apache License, Version 2.0
 #       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
+#       see  http://leginon.org
 #
 
 # defines the Event and EventHandler classes
@@ -105,6 +105,68 @@ class NodeUninitializedEvent(NotificationEvent):
 	'Event sent by a node to indicate that it is no longer operational'
 	pass
 
+class NodeLogErrorEvent(NotificationEvent):
+	'Event sent by a node to indicate that it has logged an error'
+	def typemap(cls):
+		return NotificationEvent.typemap() + (
+			('message', str),
+		)
+	typemap = classmethod(typemap)
+
+class ActivateNotificationEvent(NotificationEvent):
+	'Event sent by presets manager to activate slack error notification'
+	def typemap(cls):
+		return NotificationEvent.typemap() + (
+			('tem_host', str),
+		)
+	typemap = classmethod(typemap)
+
+class DeactivateNotificationEvent(NotificationEvent):
+	'Event sent by presets manager to deactivate slack error notification'
+	pass
+
+class NodeBusyNotificationEvent(NotificationEvent):
+	'Event sent by node such as Tomography to restart timeout timer'
+	pass
+
+class ManagerPauseAvailableEvent(NotificationEvent):
+	'''Event sent by node such as Acquisition when it is in a pausable status
+	to allow manager to pause it'''
+	pass
+
+class ManagerPauseNotAvailableEvent(NotificationEvent):
+	'''Event sent by node such as Acquisition when it is in idle status
+	to prevent manager from pausing it'''
+	pass
+
+class ManagerContinueAvailableEvent(NotificationEvent):
+	'Event sent by node such as Acquisition when it is in a paused status'
+	pass
+
+class ManagerPauseEvent(NotificationEvent):
+	'''Event sent by node to notify the manager to do a general pause
+	'''
+	pass
+
+class ManagerContinueEvent(NotificationEvent):
+	'''Event sent by node to notify the manager to resume a general pause
+	'''
+	def typemap(cls):
+		return NotificationEvent.typemap() + (
+			('all', bool),  # Set to continue all or the last.
+		)
+	typemap = classmethod(typemap)
+
+class PauseEvent(NotificationEvent):
+	'''Event sent by the manager to do a general pause
+	'''
+	pass
+
+class ContinueEvent(NotificationEvent):
+	'''Event sent by the manager to resume a general pause
+	'''
+	pass
+
 class TargetListDoneEvent(NotificationEvent):
 	'Event indicating target list is done'
 	def typemap(cls):
@@ -182,6 +244,15 @@ class AlignZeroLossPeakPublishEvent(PublishEvent):
 
 class MeasureDosePublishEvent(PublishEvent):
 	dataclass = leginondata.MeasureDoseData
+
+class ScreenCurrentLoggerPublishEvent(PublishEvent):
+	dataclass = leginondata.ScreenCurrentLoggerData
+
+class PhasePlatePublishEvent(PublishEvent):
+	dataclass = leginondata.PhasePlateData
+
+class PhasePlateUsagePublishEvent(PublishEvent):
+	dataclass = leginondata.PhasePlateUsageData
 
 class FixAlignmentEvent(Event):
 	pass
@@ -288,6 +359,14 @@ class UnlockEvent(ControlEvent):
 	'Event that signals an unlock'
 	pass
 
+class IdleTimerPauseEvent(LockEvent):
+	'Event that pause the idle timer so it does not timeout'
+	pass
+
+class IdleTimerRestartEvent(UnlockEvent):
+	'Event that restart the idle timer countdown'
+	pass
+
 class QueueGridEvent(ControlEvent):
 	def typemap(cls):
 		return ControlEvent.typemap() + (
@@ -333,6 +412,7 @@ class MakeTargetListEvent(ControlEvent):
 			('grid', leginondata.GridData),
 			('grid location', int),
 			('tray label', str),
+			('stagez', float),
 		)
 	typemap = classmethod(typemap)
 

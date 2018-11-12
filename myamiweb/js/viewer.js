@@ -1,8 +1,8 @@
 /**
- *	The Leginon software is Copyright 2003 
- *	The Scripps Research Institute, La Jolla, CA
+ *	The Leginon software is Copyright under 
+ *	Apache License, Version 2.0
  *	For terms of the license agreement
- *	see  http://ami.scripps.edu/software/leginon-license
+ *	see  http://leginon.org
  */
 
 var autoscale=false
@@ -670,7 +670,7 @@ function newfile(view){
 	nlink = (eval(view+"dd_bt_st")) ? nddlink: nmaplink
 	ninfolink = "imgreport.php?id="+jsimgId+"&preset="+selpreset
 	ndeqlink = "javascript:popUpW('removequeue.php?id="+jsimgId+"&preset="+selpreset+"')"
-	ndownloadlink = "download.php?id="+jsimgId+"&preset="+selpreset+fft+cdwdformat
+	ndownloadlink = "download.php?id="+jsimgId+"&preset="+selpreset+fft+cdwdformat+sb
 	nexportlink = "getfilenames.php?sessionId="+jsSessionId+"&pre="+selpreset
 
 	if (img = document.images[eval("\"" +view+ "img\"")]) {
@@ -719,7 +719,8 @@ function setDownloadlink(view) {
 	}
 	if (eval(view+"fft_bt_st")) fft="&fft=1"; else fft=""
 	if (cdwdformat = eval("jsdwdformat"+view)) dwdformat="&f="+cdwdformat; else cdwdformat=""
-	ndownloadlink = "download.php?id="+jsimgId+"&preset="+selpreset+fft+dwdformat
+	if (eval(view+"scale_bt_st")) sb="&sb=1"; else sb=""
+	ndownloadlink = "download.php?id="+jsimgId+"&preset="+selpreset+fft+dwdformat+sb
 	if (downloadlink = document.getElementById("download"+view+"_bthref"))
 		downloadlink.href = ndownloadlink
 }

@@ -33,9 +33,18 @@ def findPeaks(imgdict, maplist, params, maptype="ccmaxmap", pikfile=True):
 	pixdiam =   diam/apix/float(bin)
 	pixrad =    diam/apix/2.0/float(bin)
 
-	peaktreelist = Parallel(n_jobs=params['nproc'])(delayed(runFindPeaks)(params,
-		maplist,maptype,pikfile,thresh,pixdiam,count,olapmult,maxpeaks,maxsizemult,
-		msg,bin,peaktype,pixrad,imgdict) for count in range(0,len(maplist)))
+	numpyVersion = map(float,numpy.version.version.split('.'))
+	if numpyVersion[1] > 7:
+		peaktreelist = Parallel(n_jobs=params['nproc'])(delayed(runFindPeaks)(params,
+			maplist,maptype,pikfile,thresh,pixdiam,count,olapmult,maxpeaks,maxsizemult,
+			msg,bin,peaktype,pixrad,imgdict) for count in range(0,len(maplist)))
+	else:
+		## backup for AttributeError: 'memmap' object has no attribute 'offset', bug #3322
+		peaktreelist = []
+		for count in range(0,len(maplist)):
+			mappeaktree = runFindPeaks(params,maplist,maptype,pikfile,thresh,pixdiam,count,olapmult,
+				maxpeaks,maxsizemult,msg,bin,peaktype,pixrad,imgdict)
+			peaktreelist.append(mappeaktree)
 
 	peaktree = mergePeakTrees(imgdict, peaktreelist, params, msg, pikfile)
 
@@ -403,7 +412,7 @@ def findBlobs(ccmap, thresh, maxsize=500, minsize=1, maxpeaks=1500, border=10,
 	ccthreshmap = imagefun.threshold(ccmap, thresh)
 	percentcov  =  round(100.0*float(ccthreshmap.sum())/float(totalarea),2)
 	#imagefun.find_blobs(image,mask,border,maxblobs,maxblobsize,minblobsize,maxmoment,method)
-	if percentcov > 15:
+	if percentcov > 25:
 		apDisplay.printWarning("too much coverage in threshold: "+str(percentcov))
 		return [],percentcov
 	#apImage.arrayToJpeg(ccmap, "dogmap2.jpg")
@@ -468,7 +477,9 @@ def createPeakJpeg(imgdata, peaktree, params, procimgarray=None):
 		#instead of re-processing image use one that is already processed...
 		imgarray = procimgarray
 	else:
-		imgarray = apImage.preProcessImage(imgarray, bin=bin, planeReg=False, params=params)
+		imgFilter = apImage.ImageFilter()
+		imgFilter.readParamsDict(params)
+		imgarray = imgFilter.processImage(imgarray)
 
 	outfile = os.path.join(jpegdir, imgname+".prtl.jpg")
 	msg = not params['background']
@@ -502,14 +513,17 @@ def createTiltedPeakJpeg(imgdata1, imgdata2, peaktree1, peaktree2, params, proci
 	jpegdir = os.path.join(params['rundir'],"jpgs")
 	apParam.createDirectory(jpegdir, warning=False)
 
+	imgFilter = apImage.ImageFilter()
+	imgFilter.readParamsDict(params)
+
 	if procimg1 is not None:
 		imgarray1 = procimg1
 	else:
-		imgarray1 = apImage.preProcessImage(imgdata1['image'], bin=bin, planeReg=False, params=params)
+		imgarray1 = imgFilter.processImage(imgdata1['image'])
 	if procimg2 is not None:
 		imgarray2 = procimg2
 	else:
-		imgarray2 = apImage.preProcessImage(imgdata2['image'], bin=bin, planeReg=False, params=params)
+		imgarray2 = imgFilter.processImage(imgdata2['image'])
 	imgarray = numpy.hstack((imgarray1,imgarray2))
 
 	image = apImage.arrayToImage(imgarray)

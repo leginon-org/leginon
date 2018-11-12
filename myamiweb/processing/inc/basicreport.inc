@@ -1,16 +1,16 @@
 <?php
 
 /**
- *	The Leginon software is Copyright 2003 
- *	The Scripps Research Institute, La Jolla, CA
+ *	The Leginon software is Copyright under 
+ *	Apache License, Version 2.0
  *	For terms of the license agreement
- *	see  http://ami.scripps.edu/software/leginon-license
+ *	see  http://leginon.org
  */
 
 //--------------------------------------------------------------------------------------
 // This file contains the SQL and html required to display a basic report page based on 
 // the database table name provided to the class. For more information see:
-// http://ami.scripps.edu/redmine/projects/appion/wiki/Using_basicReportinc
+// http://emg.nysbc.org/redmine/projects/appion/wiki/Using_basicReportinc
 //--------------------------------------------------------------------------------------
 
 
@@ -156,7 +156,6 @@ class BasicReport {
 		if (!$showHidden) $q.= " AND (r.`hidden` IS NULL OR r.`hidden` = 0) ";
 		if ($this->thisExpIdOnly) $q.= "AND r.`REF|leginondata|SessionData|session`=$this->expId ";
 		$q.= "ORDER BY r.`DEF_id` DESC ";
-		echo $q;
 		$r = $this->mysql->getSQLResult($q);
 		if ( $r === False ) {
 			$dberror = $this->mysql->getError();

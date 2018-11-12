@@ -1,7 +1,7 @@
-# The Leginon software is Copyright 2004
-# The Scripps Research Institute, La Jolla, CA
+# The Leginon software is Copyright under
+# Apache License, Version 2.0
 # For terms of the license agreement
-# see http://ami.scripps.edu/software/leginon-license
+# see http://leginon.org
 #
 # $Source: /ami/sw/cvsroot/pyleginon/leginon.gui.wx/PresetsManager.py,v $
 # $Revision: 1.94 $
@@ -39,6 +39,7 @@ SetCalibrationsEventType = wx.NewEventType()
 EditPresetEventType = wx.NewEventType()
 UpdatePresetLabelsEventType = wx.NewEventType()
 AcquireAlignDoneEventType = wx.NewEventType()
+NeedRecoverBeamTiltEventType = wx.NewEventType()
 
 EVT_PRESETS = wx.PyEventBinder(PresetsEventType)
 EVT_SET_DOSE_VALUE = wx.PyEventBinder(SetDoseValueEventType)
@@ -47,6 +48,7 @@ EVT_SET_PARAMETERS = wx.PyEventBinder(SetParametersEventType)
 EVT_EDIT_PRESET = wx.PyEventBinder(EditPresetEventType)
 EVT_UPDATE_PRESET_LABELS = wx.PyEventBinder(UpdatePresetLabelsEventType)
 EVT_ACQUIRE_ALIGN_DONE = wx.PyEventBinder(AcquireAlignDoneEventType)
+EVT_NEED_RECOVER_BEAM_TILT = wx.PyEventBinder(NeedRecoverBeamTiltEventType)
 
 class PresetsEvent(wx.PyCommandEvent):
 	def __init__(self, source):
@@ -88,6 +90,12 @@ class AcquireAlignDoneEvent(wx.PyCommandEvent):
 	def __init__(self, source):
 		wx.PyCommandEvent.__init__(self, AcquireAlignDoneEventType, source.GetId())
 		self.SetEventObject(source)
+
+class NeedRecoverBeamTiltEvent(wx.PyCommandEvent):
+	def __init__(self, source, beamtilt_diff):
+		wx.PyCommandEvent.__init__(self, NeedRecoverBeamTiltEventType, source.GetId())
+		self.SetEventObject(source)
+		self.beamtilt_diff = beamtilt_diff
 
 class Calibrations(wx.StaticBoxSizer):
 	def __init__(self, parent):
@@ -148,7 +156,7 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 		try:
 			probes = self.tems[self.parameters['tem']['name']]['probe modes']
 		except:
-			mags = []
+			probes = []
 		return probes
 
 	def getTEMChoices(self):
@@ -216,7 +224,6 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 		}
 
 		self.bools = {
-			'film': wx.CheckBox(self, -1, 'Use film'),
 			'tem energy filter': wx.CheckBox(self, -1, 'Energy filtered'),
 			'energy filter': wx.CheckBox(self, -1, 'Energy filtered'),
 			'skip': wx.CheckBox(self, -1, 'Skip when cycling'),
@@ -341,12 +348,11 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 
 		self.initializeApertureSelection()
 
-		sizer.Add(self.bools['skip'], (12, 0), (1, 4), wx.ALIGN_LEFT)
-		sizer.Add(self.bools['alt channel'], (13, 0), (1, 4), wx.ALIGN_LEFT)
+		sizer.Add(self.bools['skip'], (13, 0), (1, 4), wx.ALIGN_LEFT)
+		sizer.Add(self.bools['alt channel'], (14, 0), (1, 4), wx.ALIGN_LEFT)
 
 		sizer.Add(self.labels['ccdcamera'], (0, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sizer.Add(self.choices['ccdcamera'], (0, 6), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.EXPAND)
-		sizer.Add(self.bools['film'], (1, 5), (1, 2), wx.ALIGN_CENTER_VERTICAL)
 		sizer.Add(self.bools['energy filter'], (2, 5), (1, 2), wx.ALIGN_CENTER_VERTICAL)
 
 		sizer.Add(self._buttons['ccdcamera']['energy filter'], (2, 7), (1, 1), wx.ALIGN_CENTER)
@@ -441,11 +447,11 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 				i += 1
 			self.aperture_sizer.AddGrowableCol(1)
 			self.aperture_sbsizer.Add(self.aperture_sizer, 0, wx.EXPAND|wx.ALL, 5)
-			self._sz.Add(self.aperture_sbsizer, (11, 0), (1, 3), wx.ALIGN_CENTER|wx.EXPAND|wx.HORIZONTAL)
+			self._sz.Add(self.aperture_sbsizer, (12, 0), (1, 3), wx.ALIGN_CENTER|wx.EXPAND|wx.HORIZONTAL)
 			button =  bitmapButton(self, 'instrumentget', 'Set this value from the instrument value')
 			self._buttons['tem']['aperture sizes'] = button
 			self.Bind(wx.EVT_BUTTON, self.onButton, button)
-			self._sz.Add(self._buttons['tem']['aperture sizes'], (11, 3), (1, 1), wx.ALIGN_CENTER)
+			self._sz.Add(self._buttons['tem']['aperture sizes'], (12, 3), (1, 1), wx.ALIGN_CENTER)
 			self._sz.Layout()
 
 	def setTEMItemChoices(self,tem,itemgroupname,itemname,func=str):
@@ -546,7 +552,7 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 				except KeyError:
 					pass
 
-		for key in ['skip', 'alt channel', 'film', 'tem energy filter', 'energy filter']:
+		for key in ['skip', 'alt channel', 'tem energy filter', 'energy filter']:
 			try:
 				self.bools[key].SetValue(bool(parameters[key]))
 			except KeyError:
@@ -620,7 +626,7 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 					value = float(value)
 				parameters[key][axis] = value
 
-		for key in ['skip', 'alt channel', 'film', 'tem energy filter', 'energy filter']:
+		for key in ['skip', 'alt channel', 'tem energy filter', 'energy filter']:
 			parameters[key] = bool(self.bools[key].GetValue())
 
 		ccdcamera = self.choices['ccdcamera'].GetStringSelection()
@@ -834,6 +840,7 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SETTINGS,
 													'settings',
 													shortHelpString='Settings')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_EXTRACT, 'clock', shortHelpString='Toggle error notification')
 		# presets
 
 		self.calibrations = Calibrations(self)
@@ -859,12 +866,14 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		self.Bind(EVT_EDIT_PRESET, self.onEditPreset)
 		self.Bind(EVT_UPDATE_PRESET_LABELS, self.onUpdatePresetLabels)
 		self.Bind(EVT_ACQUIRE_ALIGN_DONE, self.onAcquireAlignDone)
+		self.Bind(EVT_NEED_RECOVER_BEAM_TILT, self.onNeedRecoverBeamTilt)
 
 	def onNodeInitialized(self):
 		leginon.gui.wx.Instrument.SelectionMixin.onNodeInitialized(self)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
 											id=leginon.gui.wx.ToolBar.ID_SETTINGS)
 
+		self.toolbar.Bind(wx.EVT_TOOL, self.onToggleInstrumentTimeout, id=leginon.gui.wx.ToolBar.ID_EXTRACT)
 		#self.parameters.instrumentselection.setProxy(self.node.instrument)
 		#self.parameters.bind(self.onUpdateParameters)
 
@@ -892,6 +901,9 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		self.Bind(EVT_PRESETS, self.onPresets)
 
 		self.alignacquiremode = None
+
+	def onToggleInstrumentTimeout(self, evt):
+		self.node.toggleInstrumentTimeout()
 
 	def _presetsEnable(self, enable):
 		self.toolbar.Enable(enable)
@@ -1034,7 +1046,7 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		self._presetsEnable(False)
 		target = self.node.fromScope
 		# The True in the last argument copies beam shift to all presets at the same mag
-		args = (name,None,None,True)
+		args = (name,None,None,False)
 		threading.Thread(target=target, args=args).start()
 
 	def onNewFromScope(self, evt):
@@ -1107,7 +1119,7 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 				tems[tem_name]['magnifications'] = tem.Magnifications
 				tems[tem_name]['probe modes'] = tem.ProbeModes
 				try:
-					tems[tem_name]['apertures'] = tem.Apertures
+					tems[tem_name]['apertures'] = tem.ApertureMechanisms
 					tems[tem_name]['aperture sizes'] = tem.ApertureSizes
 				except AttributeError:
 					pass
@@ -1134,6 +1146,15 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 			self.node.updatePreset(evt.presetname, dialog.getParameters())
 		dialog.Destroy()
 
+	def onNeedRecoverBeamTilt(self, evt):
+		beamtilt_diff = evt.beamtilt_diff
+		dialog = RecoverBeamTiltDialog(self, beamtilt_diff)
+		if dialog.ShowModal() == wx.ID_OK:
+			self.node.onRecoverBeamTilt()
+		dialog.Destroy()
+		self.node.onNeedRecoverBeamTiltDone()
+
+
 class SettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return ScrolledSettings(self,self.scrsize,False)
@@ -1145,15 +1166,18 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		self.widgets['pause time'] = FloatEntry(self, -1, min=0.0, chars=4)
+		self.widgets['idle minute'] = FloatEntry(self, -1, min=0.0, chars=4)
 #		self.widgets['xy only'] = wx.CheckBox(self, -1,
 #																					'Move stage x and y axes only')
 #		self.widgets['stage always'] = wx.CheckBox(self, -1,
 #																		'Always move stage regardless of move type')
+		self.widgets['import random'] = wx.CheckBox(self, -1, 'Carry over random defocus range when importing presets')
 		self.widgets['cycle'] = wx.CheckBox(self, -1, 'Cycle presets')
 		self.widgets['optimize cycle'] = wx.CheckBox(self, -1,
 																									'Optimize preset cycle')
 		self.widgets['mag only'] = wx.CheckBox(self, -1, 'Cycle magnification only')
 		self.widgets['apply offset'] = wx.CheckBox(self, -1, 'Apply stage tilt axis offset to all image shifts')
+		self.widgets['disable stage for image shift'] = wx.CheckBox(self, -1, 'Disable stage movement when image shift move type is requested')
 
 		self.widgets['blank'] = wx.CheckBox(self, -1, 'Beam blank during preset change')
 		szsmallsize = wx.BoxSizer(wx.HORIZONTAL)
@@ -1162,6 +1186,30 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		szsmallsize.Add(smallsizelab)
 		szsmallsize.Add(self.widgets['smallsize'])
 
+		szpausetime = self.createPauseTimeSizer()
+
+		szidletime = self.createIdleMinuteSizer()
+#		sz.Add(self.widgets['xy only'], (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+#		sz.Add(self.widgets['stage always'], (1, 0), (1, 1),
+#						wx.ALIGN_CENTER_VERTICAL)
+		sz = wx.GridBagSizer(5, 10)
+		sz.Add(szpausetime, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(szidletime, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['cycle'], (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['optimize cycle'], (3, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['import random'], (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['mag only'], (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['apply offset'], (6, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['blank'], (7, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(szsmallsize, (8, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['disable stage for image shift'], (9, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		sbsz.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
+
+		return [sbsz]
+
+	def createPauseTimeSizer(self):
 		szpausetime = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Pause')
 		szpausetime.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
@@ -1169,23 +1217,17 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		label = wx.StaticText(self, -1, 'seconds between preset changes')
 		szpausetime.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		return szpausetime
 
-#		sz.Add(self.widgets['xy only'], (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-#		sz.Add(self.widgets['stage always'], (1, 0), (1, 1),
-#						wx.ALIGN_CENTER_VERTICAL)
-		sz = wx.GridBagSizer(5, 10)
-		sz.Add(szpausetime, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['cycle'], (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['optimize cycle'], (2, 0), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['mag only'], (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['apply offset'], (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['blank'], (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(szsmallsize, (6, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-
-		sbsz.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
-
-		return [sbsz]
+	def createIdleMinuteSizer(self):
+		szpausetime = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Wait for')
+		szpausetime.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szpausetime.Add(self.widgets['idle minute'], (0, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'minutes before instrument idle time out')
+		szpausetime.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		return szpausetime
 
 class NewDialog(wx.Dialog):
 	def __init__(self, parent, node):
@@ -1236,9 +1278,8 @@ class SessionListCtrl(wx.ListCtrl, ColumnSorterMixin):
 	def __init__(self, parent):
 		wx.ListCtrl.__init__(self, parent, -1, style=wx.LC_REPORT)
 		self.InsertColumn(0, 'Session')
-		self.InsertColumn(1, 'Time')
+		self.InsertColumn(1, 'Length (hrs)')
 		self.InsertColumn(2, 'User')
-		self.InsertColumn(3, 'Description')
 
 		self.itemDataMap = {}
 		ColumnSorterMixin.__init__(self, 4)
@@ -1254,22 +1295,26 @@ class SessionListCtrl(wx.ListCtrl, ColumnSorterMixin):
 			usernamelist = []
 			name = session['name']
 			try:
-				time = session.timestamp
+				session_time = session.timestamp
 			except:
-				time = None
+				session_time = None
+			try:
+				lastimg = leginon.leginondata.AcquisitionImageData(session=session).query(results=1)[0]
+				session_timedelta = lastimg.timestamp - session_time
+				session_hours = '%.1f' % (session_timedelta.days*24 + session_timedelta.seconds/60.0/60.0)
+			except:
+				session_hours = 'N/A'
 			try:
 				usernamelist.append(session['user']['firstname'])
 				usernamelist.append(session['user']['lastname'])
 				user = ' '.join(usernamelist)
 			except:
 				continue
-			comment = session['comment']
 			index = self.InsertStringItem(0, name)
-			self.SetStringItem(index, 1, str(time))
+			self.SetStringItem(index, 1, session_hours)
 			self.SetStringItem(index, 2, user)
-			self.SetStringItem(index, 3, comment)
 			self.SetItemData(index, i)
-			self.itemDataMap[i] = (name, time, user, comment)
+			self.itemDataMap[i] = (name, session_hours, user)
 		sessions.reverse()
 		self.SetColumnWidth(0, wx.LIST_AUTOSIZE)
 		self.SetColumnWidth(1, wx.LIST_AUTOSIZE)
@@ -1429,6 +1474,7 @@ class AlignDialog(leginon.gui.wx.Dialog.Dialog):
 	def onClose(self, evt):
 		self.enableStart()
 		self.node.doneAllAlignPresets()
+		self.EndModal(0)
 
 class BeamDialog(wx.Dialog):
 	def __init__(self, parent, node):
@@ -1686,7 +1732,6 @@ class Parameters(wx.StaticBoxSizer):
 			('intensity', 'Intensity:'),
 			('image shift', 'Image shift:'),
 			('beam shift', 'Beam shift:'),
-			('film', 'Use film:'),
 			('tem energy filter', 'Energy filtered:'),
 			('tem energy filter width', 'Energy filter width:'),
 			('energy filter', 'Energy filtered:'),
@@ -1732,8 +1777,6 @@ class Parameters(wx.StaticBoxSizer):
 
 		sz.Add(self.labels['ccdcamera'], (0, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.values['ccdcamera'], (0, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		sz.Add(self.labels['film'], (1, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.values['film'], (1, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 		sz.Add(self.labels['energy filter'], (2, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.values['energy filter'], (2, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 		sz.Add(self.labels['energy filter width'], (3, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
@@ -1808,10 +1851,13 @@ class Parameters(wx.StaticBoxSizer):
 			self.values['defocus range'].SetLabel(s)
 
 			for key in ['image shift', 'beam shift']:
-				s = '(%g, %g)' % (parameters[key]['x'], parameters[key]['y'])
+				try:
+					s = '(%g, %g)' % (parameters[key]['x'], parameters[key]['y'])
+				except TypeError:
+					s = '(None, None)'
 				self.values[key].SetLabel(s)
 
-			for key in ['film', 'tem energy filter', 'energy filter', 'skip', 'save frames']:
+			for key in ['tem energy filter', 'energy filter', 'skip', 'save frames']:
 				if parameters[key]:
 					s = 'Yes'
 				else:
@@ -1899,7 +1945,6 @@ class SelectParameters(Parameters):
 		selected['intesity'] = self.lblintensity.GetValue()
 		selected['image shift'] = self.lblimageshift.GetValue()
 		selected['beam shift'] = self.lblbeamshift.GetValue()
-		selected['use film'] = self.lblfilm.GetValue()
 		selected['tem energy filter'] = self.lbltemenergyfilter.GetValue()
 		selected['tem energy filter width'] = self.lbltemenergyfilterwidth.GetValue()
 		selected['energy filter'] = self.lblenergyfilter.GetValue()
@@ -1920,7 +1965,6 @@ class SelectParameters(Parameters):
 		self.lblimageshift.SetValue(
 															parameters is None or 'image shift' in parameters)
 		self.lblbeamshift.SetValue(parameters is None or 'beam shift' in parameters)
-		self.lblfilm.SetValue(parameters is None or 'use film' in parameters)
 		self.lbltemenergyfilter.SetValue(parameters is None or 'tem energy filter' in parameters)
 		self.lbltemenergyfilterwidth.SetValue(parameters is None or 'tem energy filter width' in parameters)
 		self.lblenergyfilter.SetValue(parameters is None or 'energy filter' in parameters)
@@ -1987,6 +2031,36 @@ def bitmapButton(parent, name, tooltip=None):
 		button.SetToolTip(wx.ToolTip(tooltip))
 	return button
 
+class RecoverBeamTiltDialog(wx.Dialog):
+	def __init__(self, parent,beamtilt_diff):
+		self.preset = {}
+		wx.Dialog.__init__(self, parent, -1, 'Recover Beam Tilt',
+												style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
+
+		self.brecover = wx.Button(self, wx.ID_OK, 'Recover')
+		self.bcancel = wx.Button(self, wx.ID_CANCEL, 'Ignore')
+		self.bcancel.SetDefault()
+
+		szbutton = wx.GridBagSizer(5, 5)
+		szbutton.Add(self.brecover, (0, 0), (1, 1), wx.ALIGN_CENTER)
+		szbutton.Add(self.bcancel, (0, 1), (1, 1), wx.ALIGN_CENTER)
+
+		self.sz = wx.GridBagSizer(5, 5)
+		label = 'Do you want to recover previous Beam Tilt that is differ by %.1f mrad' % (beamtilt_diff*1e3)
+		stlabel = wx.StaticText(self, -1, label)
+		self.sz.Add(stlabel, (0, 0), (1, 1), wx.EXPAND|wx.ALL, 10)
+		self.sz.Add(szbutton, (1, 0), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.ALL, 5)
+
+		self.sz.AddGrowableRow(0)
+		self.sz.AddGrowableCol(0)
+
+		self.SetSizerAndFit(self.sz)
+		self.SetAutoLayout(True)
+
+		self.brecover.Enable(True)
+		self.bcancel.Enable(True)
+
 if __name__ == '__main__':
 	class App(wx.App):
 		def OnInit(self):
@@ -2007,7 +2081,6 @@ if __name__ == '__main__':
 				'intensity': 0.0,
 				'image shift': {'x': 0.0, 'y': 0.0},
 				'beam shift': {'x': 0.0, 'y': 0.0},
-				'film': False,
 				'dimension': {'x': 1024, 'y': 1024},
 				'offset': {'x': 0, 'y': 0},
 				'binning': {'x': 1, 'y': 1},

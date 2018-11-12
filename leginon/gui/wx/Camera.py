@@ -1,8 +1,8 @@
 # -*- coding: iso-8859-1 -*-
-# The Leginon software is Copyright 2004
-# The Scripps Research Institute, La Jolla, CA
-# For terms of the license agreement
-# see http://ami.scripps.edu/software/leginon-license
+#       The Leginon software is Copyright under
+#       Apache License, Version 2.0
+#       For terms of the license agreement
+#       see  http://leginon.org
 
 import copy
 import wx
@@ -31,9 +31,10 @@ class SetConfigurationEvent(wx.PyCommandEvent):
 		self.configuration = configuration
 
 class CameraPanel(wx.Panel):
-	def __init__(self, parent):
+	def __init__(self, parent, hide_frames=False):
 		wx.Panel.__init__(self, parent, -1)
 		sb = wx.StaticBox(self, -1, 'Camera Configuration')
+		self.hide_frames = hide_frames
 		self.sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		self.size = None
 		self.binmethod = 'exact'
@@ -65,6 +66,8 @@ class CameraPanel(wx.Panel):
 			'use frames': self._getUseFrames,
 			'readout delay': self._getReadoutDelay,
 		}
+
+		self.framewidges = []
 
 		# geometry
 		self.ccommon = wx.Choice(self, -1, choices = ['(None)'])
@@ -112,16 +115,43 @@ class CameraPanel(wx.Panel):
 		sz.Add(stms, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.szmain.Add(sz, (4, 1), (1, 2), wx.ALIGN_CENTER|wx.EXPAND)
 
+		sz = self.createFrameCameraSizer()
+		self.szmain.Add(sz, (7, 0), (1, 3), wx.ALIGN_CENTER|wx.EXPAND)
+		if self.hide_frames:
+			self.disableFrameWidges()
+
+		self.szmain.AddGrowableCol(1)
+		self.szmain.AddGrowableCol(2)
+
+		self.sbsz.Add(self.szmain, 0, wx.EXPAND|wx.ALL, 2)
+
+		self.SetSizerAndFit(self.sbsz)
+
+		self.Bind(wx.EVT_CHOICE, self.onCommonChoice, self.ccommon)
+		self.Bind(wx.EVT_BUTTON, self.onCustomButton, bcustom)
+		self.Bind(EVT_ENTRY, self.onExposureTime, self.feexposuretime)
+		self.Bind(EVT_SET_CONFIGURATION, self.onSetConfiguration)
+		#self.Enable(False)
+
+	def disableFrameWidges(self):
+		self.saveframes.Disable()
+		self.alignframes.Disable()
+		self.alignfilter.Disable()
+		self.useframes.Disable()
+
+	def createFrameCameraSizer(self):
 		sb = wx.StaticBox(self, -1, 'Camera with Movie Mode')
 		ddsb = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		ddsz = wx.GridBagSizer(5, 5)
 		# save frames
 		self.saveframes = wx.CheckBox(self, -1, 'Save frames')
+		self.framewidges.append(self.saveframes)
 		ddsz.Add(self.saveframes, (0, 0), (1, 2), wx.ALIGN_CENTER|wx.EXPAND)
 
 		# frame time
 		stet = wx.StaticText(self, -1, 'Exposure time per Frame:')
 		self.frametime = FloatEntry(self, -1, min=0.01, chars=7)
+		self.framewidges.append(self.frametime)
 		stms = wx.StaticText(self, -1, 'ms')
 
 		ddsz.Add(stet, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
@@ -133,12 +163,14 @@ class CameraPanel(wx.Panel):
 		# use raw frames
 		label = wx.StaticText(self, -1, 'Frames to use:')
 		self.useframes = Entry(self, -1)
+		self.framewidges.append(self.useframes)
 		ddsz.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		ddsz.Add(self.useframes, (2, 1), (1, 1), wx.ALIGN_CENTER|wx.EXPAND)
 
 		# readout delay
 		strd = wx.StaticText(self, -1, 'Readout delay:')
 		self.readoutdelay = IntEntry(self, -1, chars=7)
+		self.framewidges.append(self.readoutdelay)
 		stms = wx.StaticText(self, -1, 'ms')
 		sz = wx.BoxSizer(wx.HORIZONTAL)
 		sz.Add(strd)
@@ -152,12 +184,14 @@ class CameraPanel(wx.Panel):
 		afsz = wx.GridBagSizer(3, 3)
 		# align frames
 		self.alignframes = wx.CheckBox(self, -1, 'Align frames')
+		self.framewidges.append(self.alignframes)
 		afsz.Add(self.alignframes, (0, 0), (1, 2), wx.ALIGN_CENTER|wx.EXPAND)
 
 		# align frame filter
 		label = wx.StaticText(self, -1, 'c-correlation filter:')
 		self.alignfilter = wx.Choice(self, -1, choices=self.getAlignFilters())
 		self.alignfilter.SetSelection(0)
+		self.framewidges.append(self.alignfilter)
 		afsz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		afsz.Add(self.alignfilter, (1, 1), (1, 1), wx.ALIGN_CENTER|wx.EXPAND)
 		afsb.Add(afsz, 0, wx.EXPAND|wx.ALL, 2)
@@ -165,26 +199,14 @@ class CameraPanel(wx.Panel):
 		ddsz.Add(afsb, (4, 0), (3, 2), wx.ALIGN_CENTER|wx.EXPAND)
 
 		ddsb.Add(ddsz, 0, wx.EXPAND|wx.ALL, 2)
-		self.szmain.Add(ddsb, (7, 0), (1, 3), wx.ALIGN_CENTER|wx.EXPAND)
-
 		ddsz.AddGrowableCol(1)
-		self.szmain.AddGrowableCol(1)
-		self.szmain.AddGrowableCol(2)
+		return ddsb
 
-		self.sbsz.Add(self.szmain, 0, wx.EXPAND|wx.ALL, 2)
-
-		self.SetSizerAndFit(self.sbsz)
-
-		self.Bind(wx.EVT_CHOICE, self.onCommonChoice, self.ccommon)
-		self.Bind(wx.EVT_BUTTON, self.onCustomButton, bcustom)
-		self.Bind(EVT_ENTRY, self.onExposureTime, self.feexposuretime)
+	def bindFrameCameraEvents(self):
 		self.Bind(wx.EVT_CHECKBOX, self.onSaveFrames, self.saveframes)
 		self.Bind(EVT_ENTRY, self.onFrameTime, self.frametime)
 		self.Bind(EVT_ENTRY, self.onUseFrames, self.useframes)
 		self.Bind(EVT_ENTRY, self.onReadoutDelay, self.readoutdelay)
-		self.Bind(EVT_SET_CONFIGURATION, self.onSetConfiguration)
-
-		#self.Enable(False)
 
 	def setGeometryLimits(self,limitdict):
 		if limitdict is None:

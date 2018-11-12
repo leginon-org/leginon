@@ -3,7 +3,15 @@ import sys
 from appionlib import processingHost
 
 class TorqueHost(processingHost.ProcessingHost):
-	def __init__ (self, configDict=None):
+	#def __init__ (self, configDict=None):
+        def __init__ (self, command, jobType, configDict=None):    
+            
+                # added so detail on what kind of job is available in the class
+                # for web service that generates headers.  The plan is for this custom class to go away :)
+                # dcshrum@fsu.edu
+                self.command = command
+                self.jobType = jobType
+            
 		processingHost.ProcessingHost.__init__(self)  #initialize parent
 		self.type="Torque"
 		self.execCommand="qsub"
@@ -34,6 +42,9 @@ class TorqueHost(processingHost.ProcessingHost):
 			header += self.scriptPrefix +" -l nodes=" + str(currentJob.getNodes())
 			if currentJob.getPPN():
 				header += ":ppn=" + str(currentJob.getPPN())
+
+			elif currentJob.getGpus():
+				header += ":gpus=" + str(currentJob.getGpus())
 			header += "\n"
 		
 		if currentJob.getCpuTime():

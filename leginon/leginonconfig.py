@@ -1,23 +1,25 @@
 #
 # COPYRIGHT:
-#	   The Leginon software is Copyright 2003
-#	   The Scripps Research Institute, La Jolla, CA
+#	   The Leginon software is Copyright under
+#	   Apache License, Version 2.0
 #	   For terms of the license agreement
-#	   see  http://ami.scripps.edu/software/leginon-license
+#	   see  http://leginon.org
 #
 
 import errno
 import os
-import configparser
+import leginonconfigparser
 import sys
 import inspect
 
 logevents = False
+# Set to None if it is an optional configuration
+REF_PATH = None
 
 pathmapping = {}
 if sys.platform == 'win32':
 	def mapPath(path):
-			if not pathmapping:
+			if not pathmapping or path is None:
 				return path
 			for key, value in pathmapping.items():
 				if value.lower() == path[:len(value)].lower():
@@ -27,7 +29,7 @@ if sys.platform == 'win32':
 			return os.path.normpath(path)
 
 	def unmapPath(path):
-			if not pathmapping:
+			if not pathmapping or path is None:
 				return path
 			for key, value in pathmapping.items():
 				if key.lower() == path[:len(key)].lower():
@@ -39,6 +41,17 @@ else:
 		return path
 	def unmapPath(path):
 		return path
+
+def validatePath(path):
+	if not path:
+		return None
+	if sys.platform == 'win32':
+		mapped_path = mapPath(path)
+	else:
+		mapped_path = path
+	if not os.access(mapped_path, os.W_OK):
+		sys.stderr.write('Error:  image path is not writable: %s\n' % (path,))
+	return mapped_path
 
 # Here is a replacement for os.mkdirs that won't complain if dir
 # already exists (from Python Cookbook, Recipe 4.17)
@@ -60,46 +73,45 @@ def mkdirs(newdir):
 class LeginonConfigError(Exception):
 	pass
 
-configparser = configparser.configparser
+leginonconfigparser = leginonconfigparser.leginonconfigparser
 
 # drive mapping
-if configparser.has_section('Drive Mapping'):
-	drives = configparser.options('Drive Mapping')
+if leginonconfigparser.has_section('Drive Mapping'):
+	drives = leginonconfigparser.options('Drive Mapping')
 	for drive in drives:
 		drivepath = drive.upper() + ':'
-		pathmapping[drivepath] = configparser.get('Drive Mapping', drive)
+		pathmapping[drivepath] = leginonconfigparser.get('Drive Mapping', drive)
 
 # image path
-if configparser.has_section('Images'):
-	IMAGE_PATH = configparser.get('Images', 'path')
+if leginonconfigparser.has_section('Images'):
+	IMAGE_PATH = leginonconfigparser.get('Images', 'path')
 else:
 	sys.stderr.write('Warning:  You have not configured Images path in leginon.cfg!  Using current directory.\n')
 	IMAGE_PATH = os.path.abspath(os.curdir)
 
+	validatePath(IMAGE_PATH)
 
-if sys.platform == 'win32':
-	mapped_path = mapPath(IMAGE_PATH)
-else:
-	mapped_path = IMAGE_PATH
-if not os.access(mapped_path, os.W_OK):
-	sys.stderr.write('Error:  image path is not writable: %s\n' % (IMAGE_PATH,))
+# optional reference path.  Will restrict research and create of
+# reference sessions to these is specified
+if leginonconfigparser.has_section('References'):
+	REF_PATH = leginonconfigparser.get('References', 'path')
 
 # project
 try:
-	default_project = configparser.get('Project', 'default')
+	default_project = leginonconfigparser.get('Project', 'default')
 except:
 	default_project = None
 
 # user
 try:
-	USERNAME = configparser.get('User', 'fullname')
+	USERNAME = leginonconfigparser.get('User', 'fullname')
 except:
 	USERNAME = ''
 
 try:
-	emailhost = configparser.get('Email', 'host')
-	emailuser = configparser.get('Email', 'user')
-	emailfrom = configparser.get('Email', 'from')
-	emailto = configparser.get('Email', 'to')
+	emailhost = leginonconfigparser.get('Email', 'host')
+	emailuser = leginonconfigparser.get('Email', 'user')
+	emailfrom = leginonconfigparser.get('Email', 'from')
+	emailto = leginonconfigparser.get('Email', 'to')
 except:
 	emailhost = emailuser = emailfrom = emailto = None

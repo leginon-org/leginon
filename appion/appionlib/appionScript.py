@@ -6,7 +6,6 @@ import pyami.quietscipy
 import os
 import re
 import sys
-import pwd
 import time
 import subprocess
 import glob
@@ -53,13 +52,15 @@ class AppionScript(basicScript.BasicScript):
 		apDisplay.printMsg("Function name: "+self.functionname)
 		self.appiondir = apParam.getAppionDirectory()
 		apDisplay.printMsg("Appion directory: "+self.appiondir)
+		hostname = apParam.getHostname()
+		apDisplay.printMsg("Processing hostname: "+hostname)
 		self.parsePythonPath()
-		loadavg = os.getloadavg()[0]
-		if loadavg > 2.0:
-			apDisplay.printMsg("Load average is high "+str(round(loadavg,2)))
-			loadsquared = loadavg*loadavg
-			time.sleep(loadavg)
-			apDisplay.printMsg("New load average "+str(round(os.getloadavg()[0],2)))
+# 		loadavg = os.getloadavg()[0]
+# 		if loadavg > 2.0:
+# 			apDisplay.printMsg("Load average is high "+str(round(loadavg,2)))
+# 			loadsquared = loadavg*loadavg
+# 			time.sleep(loadavg)
+# 			apDisplay.printMsg("New load average "+str(round(os.getloadavg()[0],2)))
 		self.setLockname('lock')
 
 		### setup default parser: run directory, etc.
@@ -139,7 +140,7 @@ class AppionScript(basicScript.BasicScript):
 			return None
 		optaction = self.optdict[dest].action
 		if optaction == 'store':
-			opttype = self.optdict[dest].type
+			#opttype = self.optdict[dest].type
 			value = str(value)
 			if not ' ' in value:
 				usage = argument+"="+value
@@ -159,17 +160,24 @@ class AppionScript(basicScript.BasicScript):
 	#=====================
 	def getSessionData(self):
 		sessiondata = None
-		if 'sessionname' in self.params and self.params['sessionname'] is not None:
+		if self.params.get('sessionname') is not None:
 			sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
-		if not sessiondata and 'stackid' in self.params:
+		if sessiondata is None and self.params.get('expid') is not None:
+			sessiondata = apDatabase.getSessionDataFromSessionId(self.params['expid'])
+		if sessiondata is None and self.params.get('stackid') is not None:
 			from appionlib import apStack
 			sessiondata = apStack.getSessionDataFromStackId(self.params['stackid'])
-		if not sessiondata:
+		if sessiondata is None and self.params.get('reconid') is not None:
+			from appionlib import apStack
+			self.params['stackid'] = apStack.getStackIdFromRecon(self.params['reconid'], msg=False)
+			sessiondata = apStack.getSessionDataFromStackId(self.params['stackid'])
+		if sessiondata is None:
 			### works with only canonical session names
 			s = re.search('/([0-9][0-9][a-z][a-z][a-z][0-9][0-9][^/]*)/', self.params['rundir'])
 			if s:
 				self.params['sessionname'] = s.groups()[0]
 				sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
+		self.sessiondata=sessiondata
 		return sessiondata
 
 	#=====================
@@ -309,6 +317,23 @@ class AppionScript(basicScript.BasicScript):
 		os.chdir(self.params['rundir'])
 
 	#=====================
+	def getMaxRunNumber(self):
+		"""
+		Create a default runname based on the jobtype
+		"""
+		q = appiondata.ApAppionJobData()
+		q['session']=self.sessiondata
+		q['jobtype']=self.params['jobtype']
+		results = q.query()
+		if len(results)==0: return 0
+		nlist = []
+		for r in results:
+			# get all run names associated with job type
+			name = (r['name'].split('-')[0]).split('.')[0]
+			nlist.append(int(float(re.search('(\d+)$', name).group(0))))
+		return max(nlist)
+
+	#=====================
 	def __del__(self):
 		"""
 		This functions runs whenever the program stops, even if it crashes
@@ -337,7 +362,7 @@ class AppionScript(basicScript.BasicScript):
 		if useglobalparams is True:
 			self.setupGlobalParserOptions()
 		self.setupParserOptions()
-		self.params = apParam.convertParserToParams(self.parser)
+		self.params = apParam.convertParserToParams(self.parser, optargs=optargs)
 		self.checkForDuplicateCommandLineInputs(optargs)
 
 	#=====================
@@ -360,7 +385,10 @@ class AppionScript(basicScript.BasicScript):
 			action="store_false", help="Do not commit processing run to database")
 
 		self.parser.add_option("--expid", "--expId", dest="expid", type="int",
-			help="Session id associated with processing run, e.g. --expId=7159", metavar="#")
+			help="Session id associated with processing run, e.g. --expid=7159", metavar="#")
+		## probably should add this, but may break other things
+		#self.parser.add_option("-s", "--session", "--sessionname", dest="sessionname",
+		#	help="Session name associated with processing run, e.g. --sessionname=18aug26b", metavar="#")
 		self.parser.add_option("--nproc", dest="nproc", type="int",
 			help="Number of processor to use", metavar="#")
 
@@ -368,7 +396,6 @@ class AppionScript(basicScript.BasicScript):
 		# is fed to runJob.py to direct command line running.  Do not use the resulting param.
 		self.parser.add_option("--jobtype", dest="jobtype",
 			help="Job Type of processing run, e.g., partalign", metavar="X")
-
 
 
 	#=====================
@@ -382,7 +409,9 @@ class AppionScript(basicScript.BasicScript):
 			apDisplay.printError("enter a project id, e.g. --projectid=159")
 		if self.maxnproc is not None and self.params['nproc'] is not None:
 			if self.params['nproc'] > self.maxnproc:
-				apDisplay.printWarning('You have specify --nproc=%d.\n  However,we know from experience larger than %d processors in this script can cause problem.\n  We have therefore changed --nproc to %d for you.' % (self.params['nproc'],self.maxnproc,self.maxnproc))
+				apDisplay.printWarning("You have specify --nproc=%d.\n  However,we know from experience larger "
+					+"than %d processors in this script can cause problem.\n  We have therefore changed "
+					+"--nproc to %d for you." % (self.params['nproc'],self.maxnproc,self.maxnproc))
 				self.params['nproc'] = self.maxnproc
 
 	#######################################################
@@ -443,30 +472,10 @@ class AppionScript(basicScript.BasicScript):
 		this function only runs if no rundir is defined at the command line
 		"""
 		if self.params['rundir'] is None:
-			if ('sessionname' in self.params and self.params['sessionname'] is not None ):
-				# command line users may use sessionname rather than expId
-				sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
+			sessiondata = self.getSessionData()
+			if sessiondata is not None:
 				self.params['rundir'] = self.getDefaultBaseAppionDir(sessiondata,[self.processdirname,self.params['runname']])
-			else:
-				if ('expId' in self.params and self.params['expId']):
-					# expId should  always be included from appionwrapper derived appionscript
-					sessiondata = apDatabase.getSessionDataFromSessionId(self.params['expId'])
-					self.params['rundir'] = self.getDefaultBaseAppionDir(sessiondata,[self.processdirname,self.params['runname']])
-		# The rest should not be needed with appionwrapper format
-		from appionlib import apStack
-		if ( self.params['rundir'] is None
-		and 'reconid' in self.params
-		and self.params['reconid'] is not None ):
-			self.params['stackid'] = apStack.getStackIdFromRecon(self.params['reconid'], msg=False)
-		if ( self.params['rundir'] is None
-		and 'stackid' in self.params
-		and self.params['stackid'] is not None ):
-			#auto set the run directory
-			stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
-			path = os.path.abspath(stackdata['path']['path'])
-			path = os.path.dirname(path)
-			path = os.path.dirname(path)
-			self.params['rundir'] = os.path.join(path, self.processdirname, self.params['runname'])
+
 		self.params['outdir'] = self.params['rundir']
 
 	#=====================
@@ -536,15 +545,19 @@ class AppionScript(basicScript.BasicScript):
 			fileutil.open_if_not_exists('%s%d' % (self.lockname,dbid)).close()
 		except OSError:
 			return True # exists before locking
-		
+
 	def unlockParallel(self,dbid):
+		lockfile = '%s%d' % (self.lockname,dbid)
 		try:
-			os.remove('%s%d' % (self.lockname,dbid))
+			os.remove(lockfile)
 		except:
-			apDisplay.printError('Parallel unlock failed')
-		
+			# refs #4595 delay error exit a bit and checking if the file exists
+			time.sleep(0.2)
+			if os.path.isfile(lockfile):
+				apDisplay.printError('Parallel unlock failed')
+
 	#=====================
-	
+
 class TestScript(AppionScript):
 	def setupParserOptions(self):
 		apDisplay.printMsg("Parser options")

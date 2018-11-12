@@ -1,10 +1,10 @@
 <?php
 
 /**
- *	The Leginon software is Copyright 2003 
- *	The Scripps Research Institute, La Jolla, CA
+ *	The Leginon software is Copyright under 
+ *	Apache License, Version 2.0
  *	For terms of the license agreement
- *	see  http://ami.scripps.edu/software/leginon-license
+ *	see  http://leginon.org
  */
 
 require_once "basicLoopForm.inc";
@@ -12,82 +12,116 @@ require_once "basicLoopForm.inc";
 class MakeDDStackForm extends BasicLoopForm
 
 {
-	function __construct(  $expId, $extraHTML='',$align='', $defergpu='', $bin=1, $nokeepstack='', $ddstartframe=0, $ddnframe='' ) 
+	function __construct(  $expId, $errorHTML='', $infoHTML='', $bin=1, $refimgid )
 	{
-		parent::__construct($expId, $extraHTML);
-		
+		parent::__construct($expId, $errorHTML, $infoHTML);
+
 		//------ Set Parameters for the parent class, BasicLoopForm (general Appion params) -----//
-		
+
 		// Set the publications to be references on the web pages
 		$pubList = array('appion');
 		$this->setPublications( $pubList );
-		$this->setJobType( 'makeddrawframestack' );
+		$this->setJobType( 'makeddstack' );
 		$this->setOutputDirectory( 'ddstack' );
 		$this->setBaseRunName( 'ddstack' );
-		$this->setTitle( 'makeDDRawFrameStack.py Launcher' );
-		$this->setHeading( 'Create a Direct Detector Frame Stack' );
-		$this->setExeFile( 'makeDDRawFrameStack.py' );
-		$this->setGuideURL( "http://ami.scripps.edu/redmine/projects/appion/wiki/Appion_Processing" );
+		$this->setTitle( 'makeDDStack.py Launcher' );
+		$this->setHeading( 'Create a Direct Detector Frame Stack Without Alignment' );
+		$this->setExeFile( 'makeDDStack.py' );
+		$this->setGuideURL( "http://emg.nysbc.org/redmine/projects/appion/wiki/Appion_Processing" );
 		$this->setTestable( True ); // True to activate "test single image".
 		$this->setUseLegOutDir( False ); // The output directory will be created in the Appion run directory rather than Leginon.
 		$this->setShowDesc( True ); // Flag to hide the description field of the run parameters.
-		
+
 		//------ Set Parameters specific to the program that requires this new form -----//
 		$params = $this->getFormParams();
-		
+
 		// The help section corresponds to the array key for these parameters found in help.js for popup help.
 		$params->setHelpSection( "makeDDStack" );
 				
-		$params->addParam( "align", $align, "align" );
-		$params->addParam( "defergpu", $defergpu, "defer gpu processing" );
 		$params->addParam( "bin", $bin, "binning" );
-		$params->addParam( "no_keepstack", $nokeepstack, "remove generated stack after uploading aligned sum image" );
-		$params->addParam( "ddstartframe", $ddstartframe, "start frame" );
-		$params->addParam( "ddnframe", $ddnframe, "total frames" );
-		
-		// Validations
-		//$params->addValidation( "numpart", "req" );
+		$params->addParam( "refimgid", $refimgid, "refimgid" );
+		$this->addValidations();
 	}
-		
+
+	public function addValidations()
+	{
+		$params = $this->getFormParams();
+		// Validations
+		$params->addValidation( "bin", "num" );
+		$params->addValidation( "refimgid", "num" );
+	}
+
 	public function generateAdditionalFormRight()
 	{
 		$this->updateFormParams();
 		$params = $this->getFormParams();
-		
-		$fieldSize = 3;
-		
+
+		$fieldSize = 4;
+
 		$html .= "<b>Make DD stack params:</b><br />\n";
-		
-		$html.= $params->insertCheckboxField( "align" );
-		$html.= $params->insertCheckboxField( "defergpu" );
-		$html.= $params->insertCheckboxField( "no_keepstack" );
+
+		$html.= "<br/>\n";
 		$html.= $params->insertTextFieldInRow( "bin", $fieldSize );
-		
-		$html.= "<br/><br/>Frames used for sum image after alignment: <br/>\n";
-		$html.= $params->insertTextFieldInRow( "ddstartframe", $fieldSize );
-		$html.= $params->insertTextFieldInRow( "ddnframe", $fieldSize );
-		
+		$html.= "<br/>\n";
+		$html.= $params->insertTextFieldInRow( "refimgid", 8 );
+		$html.= "<br/>\n";
+
 		return $html;
-	}	
-	
-	// Override the parent build Commnad function to accomodate the "-" in the no-keepstack flag. 
+	}
+
+	public function validate( $postArray )
+	{
+		$msg = parent::validate( $postArray );
+		// Get recent image to check nframes against alignoffset and nrw.
+		$preset = $postArray['preset'];
+		$testfilename = $postArray['testfilename'];
+		$leginondata = new leginondata();
+		if ( $testfilename ) {
+			// testing
+			$images = $leginondata->getFilename($testfilename, $this->expId);
+			if ( !is_array($images ) || empty($images) ) {
+				$msg .= "<B>Error:</B> image ".$testfilename." not found in the session <br/>";
+			} else {
+				$imageId = $images[0]['id'];
+			}
+		} else {
+			// preset
+			$images = $leginondata->getFilenames($this->expId, $preset);
+			if ( !is_array($images ) || empty($images) ) {
+				$msg .= "<B>Error:</B> no image found in preset";
+			} else {
+				$imageId = $images[0]['id'];
+			}
+		}
+
+		if ( $imageId ) {
+			$nframes = $leginondata->getNFramesSavedFromImage($imageId);
+			if ( $nframes == false ) {
+				if ( $testfilename ) {
+					$msg .= "<B>Error</B> Image does not have frames saved. Can not make DDstack";
+				}	else {
+					$msg .= "<B>Error</B> Last image of the specified preset does not have frames saved. Can not validate. Try again later.";
+				}
+			}
+		}
+		return $msg;
+	}
+
+	// Override the parent build Commnad function to accomodate the "-" in the no-keepstack flag.
 	// Dashes are not parsed correctly in the help.js file, so I have replaced them with an "_" in this file.
 	public function buildCommand( $postArray )
 	{
 		$command = parent::buildCommand($postArray);
-						
-		$command = $this->addCommandFlag($command, "no-keepstack", "no_keepstack" );
 
+		$paramArray = $this->formParams->getParamArray();
+		$value = $this->formParams->getParamValue( "refimgid" );
 		// if we are not testing an image, add the parellel flag
 		if ( !($postArray['testimage']=="on") ) {
-			$command.= " --parallel";
+			$command = $this->addCommandFlag($command, "parallel", "parallel", "on" );
 		}
-		
-		// remove params not needed in command
-		$command = $this->removeCommandFlag($command, "no_keepstack" );
-		
+
 		return $command;
-	}		
-	
+	}
+
 }
 ?>

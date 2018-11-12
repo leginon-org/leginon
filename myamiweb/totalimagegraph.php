@@ -10,7 +10,6 @@ require_once "inc/jpgraph_bar.php";
 require_once "inc/histogram.inc";
 require_once "inc/image.inc";
 
-
 $defaultId=1;
 $id= ($_GET['id']) ? $_GET['id'] : $defaultId;
 $histogram = ($_GET['hg']==1) ? true : false;
@@ -32,43 +31,66 @@ $gheight=400;
 $width = $_GET['w'];
 $height = $_GET['h'];
 
+// determine appropriate timegroup
+$sql = "select DEF_id, year (DEF_timestamp) year from projectexperiments";
+$db = new mysql(DB_HOST, DB_USER, DB_PASS, DB_PROJECT);
+$results = $db->getSQLResult($sql);
+if (empty($timegroup)) {
+	// stats by years if db used for a while
+	if (count($results) > 1 && $results[count($results)-1]['year']-$results[0]['year']> 5) {
+		$timegroup = 'year';
+	} else {
+		$timegroup = 'month';
+	}
+}
+$alltimekeys = array('year','month','date');
+$timekeys = array_slice($alltimekeys, 0, array_search($timegroup, $alltimekeys)+1);
+
+
 if ($type=="r") {
 	$alias="njobs";
 	$gtitle="Number of Processing Runs";
-	$gtitle .= ($cumulative) ? " (cumulative)" : " (every year)";
+	$gtitle .= ($cumulative) ? " (cumulative)" : " (every ".$timegroup.")";
 	$yaxistitle="#processingruns";
 
 	$q="select "
 		."count(DEF_id) as $alias, "
-		."year (DEF_timestamp) year"
+		."year (DEF_timestamp) year, "
+		."".$timegroup." (DEF_timestamp) ".$timegroup." "
 		."from ApAppionJobData "
-		."where DEF_timestamp<>'0000-00-00 00:00:00' group by year";
+		."where DEF_timestamp<>'0000-00-00 00:00:00' group by year,".$timegroup;
 		
-	mysql_connect(DB_HOST, DB_USER, DB_PASS) or die("Could not connect: " . mysql_error());
+	$link = mysqli_connect(DB_HOST, DB_USER, DB_PASS);
+   if (mysqli_connect_errno()) {
+       die("Could not connect: " . mysqli_connect_error());
+   }
 	
 	/* use the project database */
-	mysql_select_db(DB_PROJECT);
+	mysqli_select_db($link, DB_PROJECT);
 	
 	/* get all the ap database names */
-	$result = mysql_query("select distinct appiondb from processingdb") or die("Query error: " . mysql_error());
+	$result = mysqli_query($link, "select distinct appiondb from processingdb") or die("Query error: " . mysqli_error($link));
 
 	// $keyedData uses the unix timestamp for each quarter as the key and stores the total number
 	// of runs for the quarter across all projects as the value. 
 	$keyedData = array();
 	
 	// for each appion database, get the number of processing runs per quarter
-	while ($row = mysql_fetch_array($result, MYSQL_ASSOC)) {
+	while ($row = mysqli_fetch_array($result, MYSQLI_ASSOC)) {
 
-		mysql_select_db($row['appiondb']);
+		mysqli_select_db($link, $row['appiondb']);
 		
-		$rexists = mysql_query("SHOW TABLES LIKE 'ApAppionJobData'");
-		$tableExists = mysql_num_rows($rexists) > 0;
+		$rexists = mysqli_query($link, "SHOW TABLES LIKE 'ApAppionJobData'");
+		$tableExists = mysqli_num_rows($rexists) > 0;
 		if ( $tableExists ) {
-			$r = mysql_query($q) or die("Database query error: " . mysql_error());
+			$r = mysqli_query($link, $q) or die("Database query error: " . mysqli_error($link));
 			
 			// add the processing runs from this project to the appropriate quarter
-			while ($rowInner = mysql_fetch_array($r, MYSQL_ASSOC)) {
-				$keyedData[$rowInner['unix_timestamp']] += $rowInner[$alias];
+			while ($rowInner = mysqli_fetch_array($r, MYSQLI_ASSOC)) {
+				$k = array();
+				foreach ($timekeys as $t) $k[] = sprintf('%02d', (int) $rowInner[$t]);
+				// combine data from different appiondb
+				$keyedData[implode('-',$k)] += $rowInner[$alias];
 			}
 		}
 	}
@@ -76,33 +98,34 @@ if ($type=="r") {
 	// sort the data by the timestamp
 	ksort($keyedData);
 	
-	// remove the last data point as it represents an incomplete quarter.
-	array_pop($keyedData);
+	// remove the last data point as it represents an incomplete time group.
+	if (count($keyedData) > 5) array_pop($keyedData);
 	
+
 	// put the data into seperate arrays for display
+	$displayData = array();
 	foreach ($keyedData as $time=>$nruns) {
-		$datax[] = $time;
+		$keyedTime = array();
+		if ( $time ){
+			$timeArray = explode("-", $time);
+			foreach ($timekeys as $j=>$k) { $keyedTime[$k] = $timeArray[$j]; };
+		} else {
+			foreach ($timekeys as $j=>$k) { $keyedTime[$k]="empty"; };
+		}
+		$datax[] = ($keyedTime['year']-$year0)*12+$keyedTime['month'];
 		if(!$cumulative){
 			$datay[] = $nruns;
-		}
-		else{
+		} else {
 			$index = count($datay)-1;
 			$datay[] = $datay[$index] + $nruns;
 		}
+		$displayData[] = array_merge($keyedTime, array("$alias"=>$datay[count($datay)-1]));
 	}
 	
 	// if the user just wants to see the data, display it here
 	if ($viewdata) {
-		$displayData = array();
-		foreach ( $datax as $i=>$date ) {
-			if ( $date ){
-				$formattedDate = strftime("%Y-%m-%d", $date);
-			} else {
-				$formattedDate = "empty";
-			}
-			$displayData[] = array( "timestamp"=>$formattedDate, "$alias"=>$datay[$i] );
-		}
-		$keys = array("timestamp", "$alias");
+
+		$keys = array_merge($timekeys, array("$alias"));
 		echo dumpData($displayData, $keys);
 		exit;
 	}
@@ -113,31 +136,33 @@ if ($type=="r") {
 } else if ($type=="s") {
 	$alias="nsession";
 	$gtitle="Number of Sessions";
-	$gtitle .= ($cumulative) ? " (cumulative)" : " (every year)";
+	$gtitle .= ($cumulative) ? " (cumulative)" : " (every ".$timegroup.")";
 	$yaxistitle="#sessions";
 
 	$sql="select "
-		."count(ns.DEF_id) as $alias, "
-		."year (ns.DEF_timestamp) year "
+		."count(ns.DEF_id) as $alias "
+		.", year (ns.DEF_timestamp) year "
+		.", ".$timegroup." (ns.DEF_timestamp) ".$timegroup." "
 		."from (select "
 		."	s.DEF_timestamp, s.DEF_id "
 		."from AcquisitionImageData a "
 		."left join SessionData s on (s.`DEF_id` = a.`REF|SessionData|Session`) "
 		."where a.`REF|SessionData|Session` IS NOT NULL "
 		."group by a.`REF|SessionData|Session`) ns "
-		."where ns.DEF_timestamp<>'0000-00-00 00:00:00' group by year";
+		."where ns.DEF_timestamp<>'0000-00-00 00:00:00' group by year,".$timegroup;
 	
 } else {
 	$alias="nimage";
 	$gtitle="Number of Images";
-	$gtitle .= ($cumulative) ? " (cumulative)" : " (every year)";
+	$gtitle .= ($cumulative) ? " (cumulative)" : " (every ".$timegroup.")";
 	$yaxistitle="#images";
 	$sql="select "
 		."count(DEF_id) as $alias, "
-		."year(DEF_timestamp) year "
+		."".$timegroup."(DEF_timestamp) ".$timegroup." "
+		.", year(DEF_timestamp) year "
 		."from `AcquisitionImageData` "
 		."where DEF_timestamp<>'0000-00-00 00:00:00' "
-		."group by year"
+		."group by year, ".$timegroup
 		." $limit ";
 }
 /* use leginon database */
@@ -151,7 +176,8 @@ if ($viewsql) {
 }
 
 if ($viewdata) {
-	$keys = array("timestamp", "$alias");
+	$keys = ($timegroup == 'month') ? array('year'): array();
+	$keys = array_merge($keys, array($timegroup, "$alias"));
 	echo dumpData($nimagedata, $keys);
 	exit;
 }
@@ -164,7 +190,11 @@ if ($nimagedata){
 	//suppress the last data, (not the whole 3 month data).
 	unset($nimagedata[count($nimagedata)-1]);
 	foreach ($nimagedata as $d) {
-		$datax[] = $d['year'];
+		if ($timegroup == 'month') {
+			$datax[] = ($d['year']-$nimagedata[0]['year'])*12+$d[$timegroup];
+		} else {
+			$datax[] = $d['year'];
+		}
 		if(!$cumulative){
 			$datay[] = $d[$alias];
 		}

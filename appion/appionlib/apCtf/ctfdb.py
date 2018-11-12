@@ -11,7 +11,6 @@ from appionlib import apParam
 from appionlib import apDisplay
 from appionlib import apDatabase
 from appionlib import appiondata
-
 ####
 # This is a database connections file with no file functions
 # Please keep it this way
@@ -29,7 +28,7 @@ def getNumCtfRunsFromSession(sessionname):
 
 #=====================
 def getCtfMethod(ctfvalue):
-	if not 'acerun' in ctfvalue:
+	if ctfvalue.get('acerun', None) is None:
 		return None
 	if ctfvalue['acerun']['aceparams'] is not None:
 		return "ace1"
@@ -39,6 +38,9 @@ def getCtfMethod(ctfvalue):
 		return "ctffind"
 	elif ctfvalue['acerun']['xmipp_ctf_params'] is not None:
 		return "xmipp_ctf"
+	elif ctfvalue['acerun']['ctffind4_params'] is not None:
+		if ctfvalue['acerun']['ctffind4_params']['local_refine'] == 1:
+			return "localctf"
 	return "unknown"
 
 #=====================
@@ -54,13 +56,16 @@ def printCtfData(ctfvalue):
 	method = getCtfMethod(ctfvalue)
 	if 'acerun' in ctfvalue:
 		method = getCtfMethod(ctfvalue)
-		runname = ctfvalue['acerun']['name']
+		runname = ctfvalue['acerun'].get('name','????')
 		sys.stderr.write("[%s]   method: %s | runname %s\n"%
 		(apDisplay.colorString("CTF run", "blue"), method, runname))
-	sys.stderr.write("[%s] def1: %.2e | def2: %.2e | angle: %.1f | ampcontr %.2f | defratio %.3f\n"%
-		(apDisplay.colorString("CTF param", "blue"), ctfvalue['defocus1'], 
-		ctfvalue['defocus2'], ctfvalue['angle_astigmatism'], 
+	sys.stderr.write("[%s] def1: %.3f um | def2: %.3f um | angle: %.1f | ampcontr %.2f | defratio %.3f\n"%
+		(apDisplay.colorString("CTF param", "blue"), ctfvalue['defocus1']*1e6, 
+		ctfvalue['defocus2']*1e6, ctfvalue['angle_astigmatism'], 
 		ctfvalue['amplitude_contrast'], defocusratio))
+	if ctfvalue['extra_phase_shift'] is not None:
+		sys.stderr.write("[%s]   additional phase shift: %.1f degrees \n"%
+		(apDisplay.colorString("CTF param", "blue"), math.degrees(ctfvalue['extra_phase_shift'])))
 	if 'resolution_80_percent' in ctfvalue.keys() and ctfvalue['resolution_80_percent'] is not None:
 		sys.stderr.write("[%s] conf_30-10: %s | conf_5peak: %s | res_0.8: %.1fA | res_0.5 %.1fA\n"%
 			(apDisplay.colorString("CTF stats", "blue"), 
@@ -123,12 +128,9 @@ def calculateConfidenceScore(ctfdata, ctfavg=True):
 
 	conf1 = ctfdata['confidence']
 	conf2 = ctfdata['confidence_d']
-	try:
-		conf3 = ctfdata['confidence_30_10']
-		conf4 = ctfdata['confidence_5_peak']
-		conf = max(conf1, conf2, conf3, conf4)
-	except KeyError:
-		conf = max(conf1, conf2)
+	conf3 = ctfdata.get('confidence_30_10',-1)
+	conf4 = ctfdata.get('confidence_5_peak',-1)
+	conf = max(conf1, conf2, conf3, conf4)
 	if conf < 0:
 		conf = 0
 	return conf
@@ -147,7 +149,7 @@ def getBestCtfValueForImage(imgdata, ctfavg=True, msg=True, method=None):
 
 #=====================
 def getSortValueFromCtfQuery(ctfvalue, sortType):
-	#self.sortoptions = ('res80', 'res50', 'resplus', 'maxconf', 'conf3010', 'conf5peak')
+	#self.sortoptions = ('res80', 'res50', 'resplus', 'rePkg', 'maxconf', 'conf3010', 'conf5peak')
 	# in order to make the highest value the best value, we will take the inverse of the resolution
 	try:
 		if sortType == 'res80':
@@ -156,6 +158,8 @@ def getSortValueFromCtfQuery(ctfvalue, sortType):
 			return 1.0/ctfvalue['resolution_50_percent']
 		elif sortType == 'resplus':
 			return 1.0/(ctfvalue['resolution_80_percent']+ctfvalue['resolution_50_percent'])
+		elif sortType == 'resPkg':
+			return 1.0/ctfvalue['ctffind4_resolution']
 		elif sortType == 'maxconf':
 			return calculateConfidenceScore(ctfvalue)
 		elif sortType == 'conf3010':
@@ -175,10 +179,32 @@ def getBestCtfValue(imgdata, sortType='res80', method=None, msg=True):
 	"""
 	takes an image and get the best ctfvalues for that image
 	"""
+	imglist = []
+
+	### find sister images for frame alignment
+	### this slows things down, but gets around the transfer, and needed for local CTF
+	if imgdata['camera']['align frames']:
+		alignpairdata = appiondata.ApDDAlignImagePairData(result=imgdata).query()
+		if not alignpairdata:
+			imglist = [imgdata]
+		else:
+			srcimgdata = alignpairdata[0]['source']
+			imglist.append(srcimgdata)
+
+			# get any aligned frames associated with original
+			alignedimages = appiondata.ApDDAlignImagePairData(source=srcimgdata).query()
+			for alignimg in alignedimages:
+				imglist.append(alignimg['result'])
+	else:
+		imglist = [imgdata]
+
 	### get all ctf values
-	ctfq = appiondata.ApCtfData()
-	ctfq['image'] = imgdata
-	ctfvalues = ctfq.query()
+	ctfvalues = []
+	for img in imglist:
+		ctfq = appiondata.ApCtfData()
+		ctfq['image'] = img
+		ctfvalues.extend(ctfq.query())
+
 	imgname = apDisplay.short(imgdata['filename'])
 
 	if msg is True:
@@ -198,10 +224,15 @@ def getBestCtfValue(imgdata, sortType='res80', method=None, msg=True):
 			if method != imgmethod:
 				continue
 		sortvalue = getSortValueFromCtfQuery(ctfvalue, sortType)
+
+		# if nothing found, try for maxconf
 		if sortvalue is None:
-			continue
+			sortvalue = getSortValueFromCtfQuery(ctfvalue,'maxconf')
+			if sortvalue is None:
+				continue
 		if msg is True:
-			print "%.3f -- %s"%(sortvalue, ctfvalue['acerun']['name'])
+
+			print "%.5f -- %s"%(sortvalue, ctfvalue['acerun']['name'])
 		if sortvalue > bestsortvalue:
 			bestsortvalue = sortvalue
 			bestctfvalue = ctfvalue
@@ -248,7 +279,6 @@ def getBestTiltCtfValueForImage(imgdata):
 				if cross_correlation < ctfvalue['cross_correlation']:
 					cross_correlation = ctfvalue['cross_correlation']
 					bestctftiltvalue = ctfvalue
-
 	return bestctftiltvalue
 
 #=====================

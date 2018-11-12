@@ -1,10 +1,10 @@
 <?php
 
 /**
- *	The Leginon software is Copyright 2003 
- *	The Scripps Research Institute, La Jolla, CA
+ *	The Leginon software is Copyright under 
+ *	Apache License, Version 2.0
  *	For terms of the license agreement
- *	see  http://ami.scripps.edu/software/leginon-license
+ *	see  http://leginon.org
  */
 
 $title = "Image Adjust";
@@ -90,7 +90,7 @@ $fftbintypes = $filterdata->getFFTBinTypes();
 
 ?>
 
-<title><?=$title?></title>
+<title><?php echo $title; ?></title>
 <script type="text/javascript" src="js/viewer.js"></script>
 <script type="text/javascript"><!--
 <?php
@@ -262,7 +262,7 @@ function update() {
 		parentwindow.setautoscale(jsviewname,'s;5');
 		parentwindow.setquality(jsviewname,'80');
 		parentwindow.setgradient(jsviewname,'default');
-		parentwindow.setfftbin(jsviewname,'b');
+		parentwindow.setfftbin(jsviewname,'a');
 	} else {
 		
 		if (binninglist = document.adjustform.binning)
@@ -320,11 +320,11 @@ function setGroup(groupRef, state) {
 	}
 	var inputs = groupRef.getElementsByTagName("span");
 		for (var i=0;i<inputs.length;i++) {
-		inputs[i].style.color= (state) ? "<?=$disabledcolor?>" : "";
+		inputs[i].style.color= (state) ? "<?php echo $disabledcolor?>" : "";
 	}
 	var inputs = groupRef.getElementsByTagName("li");
 		for (var i=0;i<inputs.length;i++) {
-		inputs[i].style.color= (state) ? "<?=$disabledcolor?>" : "";
+		inputs[i].style.color= (state) ? "<?php echo $disabledcolor?>" : "";
 	}
 }
 
@@ -426,9 +426,9 @@ display:block;
 <form action="(EmptyReference!)" name="adjustform" >
 <ul class="d">
 <li>
-<span style="font-weight: bold"><?=$title?></span>
-		<input name="loadauto" value="1" <?=$sel_auto?> onclick="f(true); setloadfromjpg(); update()" type="radio">auto
-	<input name="loadauto" value="0" <?=$sel_man?> onclick="f(false); setloadfromjpg(); update()" type="radio">
+<span style="font-weight: bold"><?php echo $title?></span>
+		<input name="loadauto" value="1" <?php echo $sel_auto?> onclick="f(true); setloadfromjpg(); update()" type="radio">auto
+	<input name="loadauto" value="0" <?php echo $sel_man?> onclick="f(false); setloadfromjpg(); update()" type="radio">
 	manual
 </li>
 </ul>
@@ -450,27 +450,27 @@ display:block;
 	<div>
 	<div style="position:relative; margin:0px; padding:0px">
 	<p style="margin:0px 0px 0px 0px; padding:0">
-	<input name="scaletype" value="minmax" type="radio"  <?=$state?> <?=$sel_mnmx?> onclick="update()" >
+	<input name="scaletype" value="minmax" type="radio"  <?php echo $state?> <?php echo $sel_mnmx?> onclick="update()" >
 	<span style="margin-left:10px">min</span>
 	<span style="margin-left:25px">max</span>
 	<spanwarning style="margin-left:10px">*not for fft image</span>
 	</p>
 	
 	<p style="margin:1px 0px 0px 25px; padding:0">
-	<input class="b" id="pminrel" size="3" value="<?=$min?>" type="text"  <?=$state?> onclick="selectradio('minmax')" onchange="setpminrel()" >%
-  	<input class="b" id="pmaxrel" size="3" value="<?=$max?>" type="text"  <?=$state?> onclick="selectradio('minmax')" onchange="setpmaxrel()" >% 
+	<input class="b" id="pminrel" size="3" value="<?php echo $min?>" type="text"  <?php echo $state?> onclick="selectradio('minmax')" onchange="setpminrel()" >%
+  	<input class="b" id="pmaxrel" size="3" value="<?php echo $max?>" type="text"  <?php echo $state?> onclick="selectradio('minmax')" onchange="setpmaxrel()" >%
 	<br />relative value (0 ~ 100)</p>
 	</div>
 	</div>
 	<li>
-	<input name="scaletype" value="stdev" type="radio"  <?=$state?> <?=$sel_std?> onclick="update()" >
-	norm +/- <input class="b" id="nstdev" size="2" value="<?=$def_stddev?>" type="text"  <?=$state?> onclick="selectradio('stdev')" onchange="update()" > std dev
+	<input name="scaletype" value="stdev" type="radio"  <?php echo $state?> <?php echo $sel_std?> onclick="update()" >
+	norm +/- <input class="b" id="nstdev" size="2" value="<?php echo $def_stddev?>" type="text"  <?php echo $state?> onclick="selectradio('stdev')" onchange="update()" > std dev
 	</li>
 	<li>
-	<input name="scaletype" value="cdf" type="radio"  <?=$state?> <?=$sel_cdf?> onclick="update()" >
+	<input name="scaletype" value="cdf" type="radio"  <?php echo $state?> <?php echo $sel_cdf?> onclick="update()" >
 	CDF
-	<input class="b" id="permin" size="3" value="<?=$def_permin?>" type="text"  <?=$state?> onclick="selectradio('cdf')" onchange="update()" > to
-	<input class="b" id="permax" size="3" value="<?=$def_permax?>" type="text"  <?=$state?> onclick="selectradio('cdf')" onchange="update()" > 
+	<input class="b" id="permin" size="3" value="<?php echo $def_permin?>" type="text"  <?php echo $state?> onclick="selectradio('cdf')" onchange="update()" > to
+	<input class="b" id="permax" size="3" value="<?php echo $def_permax?>" type="text"  <?php echo $state?> onclick="selectradio('cdf')" onchange="update()" >
 	</li>
 <?php
 displaygrad($options, $imgsrc);
@@ -483,7 +483,7 @@ displaygrad($options, $imgsrc);
 <ul class="r" style="width: 250px" >
 <li>
 		Filter
-	<select name="filter"  <?=$state?> onchange="update()" >
+	<select name="filter"  <?php echo $state?> onchange="update()" >
 	<?php
 	foreach ($filtertypes as $k=>$filter) {
 		$sel = ($k==$currentfilter) ? 'selected' : '';
@@ -494,7 +494,7 @@ displaygrad($options, $imgsrc);
 </li>
 <li>
 		Binning
-	<select name="binning"  <?=$state?> onchange="update()" >
+	<select name="binning"  <?php echo $state?> onchange="update()" >
 	<?php
 	foreach ($binningtypes as $k=>$binning) {
 		$sel = ($k==$currentbinning) ? 'selected' : '';
@@ -503,7 +503,7 @@ displaygrad($options, $imgsrc);
 	?>
 	</select>
 	Quality
-	<select name="quality"  <?=$state?> onchange="update()" >
+	<select name="quality"  <?php echo $state?> onchange="update()" >
 		<option value="png">png</option>
 	<?php
 		foreach(array(100,90,80,70,60,50) as $q) {
@@ -515,7 +515,7 @@ displaygrad($options, $imgsrc);
 </li>
 <li>
 		Bin image
-	<select name="fftbin"  <?=$state?> onchange="update()" >
+	<select name="fftbin"  <?php echo $state?> onchange="update()" >
 	<?php
 	foreach ($fftbintypes as $k=>$fftbin) {
 		$sel = ($k==$currentfftbin) ? 'selected' : '';

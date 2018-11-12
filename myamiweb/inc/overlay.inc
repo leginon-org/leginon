@@ -27,7 +27,8 @@ class imageOverlay {
 		if ($pixelsize) {
 			$size = ($xyDim[0]) ? $xyDim[0]: 1;
 			$value = $pixelsize;
-			$scalebar = new ScaleBar($this->img, $size, $value);
+			$imgheight = $xyDim[1];
+			$scalebar = new ScaleBar($this->img, $size, $value, $imgheight);
 			$scalebar->display();
 		}
 	}
@@ -54,7 +55,7 @@ class imageOverlay {
 			$col = $this->white;
 			$crosscol = $this->white;
 		}
-		if ($targettype == 'acq') {
+		if ($targettype == 'acq' || $targettype == 'preview') {
 			$squarepoints = getsquarepoints($cx, $cy, $angle, $length);
 			drawsquare($this->img, $squarepoints, $crosscol);
 		} else {

@@ -35,6 +35,7 @@ class TiltSeries(object):
 			'tilt max': self.settings['tilt max'],
 			'tilt start': self.settings['tilt start'],
 			'tilt step': self.settings['tilt step'],
+			'tilt order': self.settings['tilt order'],
 			'number':	series_number,
 		}
 		tilt_series_data = self.dataclass(initializer=initializer)
@@ -55,6 +56,7 @@ class TiltSeries(object):
 		tilt_series_image_data['label'] = self.node.name
 		tilt_series_image_data['target'] = self.target
 		tilt_series_image_data['emtarget'] = self.emtarget
+		tilt_series_image_data['phase plate'] = self.node.pp_used
 		# TODO: put in seperate data
 		#tilt_series_image_data['shift'] = None
 		tilt_series_image_data['tilt series'] = self.tilt_series_data
@@ -68,6 +70,8 @@ class TiltSeries(object):
 		tilt_series_image_data.attachPixelSize()
 
 		self.node.publish(tilt_series_image_data, database=True)
+		# publish image event for image count
+		self.node.publish(tilt_series_image_data, pubevent=True)
 		self.node.publishStats(tilt_series_image_data)
 
 		self.image_counter += 1

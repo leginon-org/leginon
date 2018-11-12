@@ -1,4 +1,4 @@
-<?
+<?php
 
 class notedata {
 
@@ -26,7 +26,7 @@ class notedata {
 		   .'where projectId="'.$projectId.'" '
 		   .'order by timestamp desc';
 		$RnoteInfo = $this->mysql->SQLQuery($q);
-		while ($row = mysql_fetch_array($RnoteInfo))
+		while ($row = mysqli_fetch_array($RnoteInfo))
 			$notes[]=array(
 			0 => $row[noteId], 'noteId' => $row[noteId],
 			1 => $row[timestamp], 'timestamp' => $row[timestamp],
@@ -46,7 +46,7 @@ class notedata {
 		   .'where noteId="'.$noteId.'" '
 		   .'order by timestamp desc';
 		$RnoteInfo = $this->mysql->SQLQuery($q);
-		$note = mysql_fetch_array($RnoteInfo);
+		$note = mysqli_fetch_array($RnoteInfo);
 		return $note;
 	}
 
@@ -59,7 +59,7 @@ class notedata {
 		   .'where projectId="'.$projectId.'" '
 		   .'order by timestamp desc';
 		$RfileInfo = $this->mysql->SQLQuery($q);
-		while ($row = mysql_fetch_array($RfileInfo))
+		while ($row = mysqli_fetch_array($RfileInfo))
 			$files[]=array(
 			0 => $row[fileId], 'fileId' => $row[fileId],
 			1 => $row[timestamp], 'timestamp' => $row[timestamp], 
@@ -78,7 +78,7 @@ class notedata {
 		   .'where fileId="'.$fileId.'" '
 		   .'order by timestamp desc';
 		$RfileInfo = $this->mysql->SQLQuery($q);
-		$file = mysql_fetch_array($RfileInfo);
+		$file = mysqli_fetch_array($RfileInfo);
 		return $file;
 	}
 
@@ -113,7 +113,7 @@ class notedata {
 		if (!$note) return false;
 		$q=' select noteId from notes where note="'.$note.'"';
 		$RnoteInfo = $this->mysql->SQLQuery($q);
-		$noteInfo = mysql_fetch_array($RnoteInfo);
+		$noteInfo = mysqli_fetch_array($RnoteInfo);
 		return $noteInfo[noteId];
 	}
 
@@ -121,7 +121,7 @@ class notedata {
 		if (!$noteId) return false;
 		$q=' select noteId from notes where noteId="'.$noteId.'"';
 		$RnoteInfo = $this->mysql->SQLQuery($q);
-		$noteInfo = mysql_fetch_array($RnoteInfo);
+		$noteInfo = mysqli_fetch_array($RnoteInfo);
 		return $noteInfo[noteId];
 	}
 
@@ -129,7 +129,7 @@ class notedata {
 		if (!$filename) return false;
 		$q=' select fileId from files where projectId="'.$projectId.'" and filename="'.$filename.'"';
 		$RfileInfo = $this->mysql->SQLQuery($q);
-		$fileInfo = mysql_fetch_array($RfileInfo);
+		$fileInfo = mysqli_fetch_array($RfileInfo);
 		return $fileInfo[fileId];
 	}
 
@@ -137,7 +137,7 @@ class notedata {
 		if (!$fileId) return false;
 		$q=' select fileId from files where fileId="'.$fileId.'"';
 		$RfileInfo = $this->mysql->SQLQuery($q);
-		$fileInfo = mysql_fetch_array($RfileInfo);
+		$fileInfo = mysqli_fetch_array($RfileInfo);
 		return $fileInfo[fileId];
 	}
 

@@ -1,28 +1,28 @@
-<?
+<?php
 
 #require_once "inc/mysql.inc";
 require_once "config.php";
 
 function countRows($database,$link){
-	mysql_select_db($database,$link);
+	mysqli_select_db($link, $database);
 	$tables = Array();
-	$r = mysql_query("show tables");
-	while($row = @mysql_fetch_assoc($r)) {
+	$r = mysqli_query($link, "show tables");
+	while($row = @mysqli_fetch_assoc($r)) {
 		$tables[] = $row['Tables_in_'.$database];
 	}
 	$totrows=0;
 	foreach ($tables as $table) {
-		$r = mysql_query("SELECT count(*) as num FROM $table", $link);
-		$num_rows = @mysql_fetch_assoc($r);
+		$r = mysqli_query($link, "SELECT count(*) as num FROM $table");
+		$num_rows = @mysqli_fetch_assoc($r);
 		$totrows=$totrows+$num_rows['num'];
 	}
 	return $totrows;
 }
 
 $apdbs = Array();
-$link = @mysql_connect($DB_HOST,$DB_USER,$DB_PASS);
-$r = mysql_query("show databases");
-while ($row = @mysql_fetch_assoc($r)) {
+$link = @mysqli_connect($DB_HOST,$DB_USER,$DB_PASS);
+$r = mysqli_query($link, "show databases");
+while ($row = @mysqli_fetch_assoc($r)) {
 	$db = $row['Database'];
 	if (preg_match('/^ap/',$db)) {
 		$apdbs[]=$db;

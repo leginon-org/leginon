@@ -1,18 +1,18 @@
 <?php
 
 /**
- *	The Leginon software is Copyright 2003 
- *	The Scripps Research Institute, La Jolla, CA
+ *	The Leginon software is Copyright under 
+ *	Apache License, Version 2.0
  *	For terms of the license agreement
- *	see  http://ami.scripps.edu/software/leginon-license
+ *	see  http://leginon.org
  */
 require_once "basicLoopForm.inc";
 
 class AutoMaskForm extends BasicLoopForm
 {
-	function __construct( $expId, $extraHTML='', $downsample='20', $compsizethresh='50', $adapthresh='500', $blur='10',$dilation='10', $erosion='1') 
+	function __construct( $expId, $errorHTML='', $infoHTML='', $downsample='20', $compsizethresh='50', $adapthresh='500', $blur='10',$dilation='10', $erosion='1') 
 	{
-		parent::__construct($expId, $extraHTML);
+		parent::__construct($expId, $errorHTML, $infoHTML );
 		
 		//------ Set Parameters for the parent class, BasicLoopForm (general Appion params) -----//
 		
@@ -25,7 +25,7 @@ class AutoMaskForm extends BasicLoopForm
 		$this->setTitle( 'Auto Masking Launcher' );
 		$this->setHeading( 'Automated Masking with EM Hole Finder' );
 		$this->setExeFile( 'automasker.py' );
-		$this->setGuideURL( "http://ami.scripps.edu/redmine/projects/appion/wiki/Appion_Processing" );
+		$this->setGuideURL( "http://emg.nysbc.org/redmine/projects/appion/wiki/Appion_Processing" );
 		$this->setTestable( True ); // True to activate "test single image".
 		$this->setUseLegOutDir( False ); // The output directory will be created in the Appion run directory rather than Leginon.
 		$this->setShowDesc( False ); // Flag to hide the description field of the run parameters.
@@ -115,7 +115,7 @@ class AutoMaskForm extends BasicLoopForm
 		} else {
 			// Tell the users what to do if the test results are not found.
 			$html .=  "<FONT COLOR='RED'><B>NO RESULT YET</B><br></FONT>";
-			$html .=  "<FONT COLOR='RED'><B>Refresh this page when processing completes</B><br></FONT>";
+			$html .=  "<FONT COLOR='RED'>Use <B>Refresh Test Results</B> button to display the test results when processing completes<br></FONT>";
 		}
 		
 		return $html;

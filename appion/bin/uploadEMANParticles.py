@@ -12,9 +12,10 @@ from appionlib import apDatabase
 from appionlib import apParticle
 from appionlib import appionScript
 from appionlib import appiondata
+from appionlib import apRelion
 
 """
-This function reads a list of EMAN boxer files
+This function reads a list of box, xmipp, or star files
 (one for each image) and uploads them to the database
 """
 
@@ -45,7 +46,7 @@ class UploadParticles(appionScript.AppionScript):
 		self.parser.add_option("-s", "--session", dest="sessionname",
 			help="Session name associated with processing run, e.g. --session=06mar12a", metavar="SESSION")
 		self.parser.add_option("--files", dest="files",
-			help="EMAN box files (wild cards ok), e.g., --files=/path/*.box", metavar="FILE")
+			help="particle files (box, star, etc.) wild cards ok, e.g., --files=\"/path/*.star\". *FOR RELION*: include the suffix, e.g. /path/to/dir/*_autopick.star", metavar="\"FILE\"")
 		self.parser.add_option("--bin", dest="bin", default=1,
 			help="If particles were picked on binned images, enter the binning factor", type='int')
 		self.parser.add_option("--diam", dest="diam",
@@ -77,18 +78,23 @@ class UploadParticles(appionScript.AppionScript):
 		# get all box files
 		filelist = glob.glob(self.params['files'])
 		if len(filelist) == 0:
-			apDisplay.printError("No images specified")
+			apDisplay.printError("No images specified: %s"%(os.path.abspath(self.params['files'])))
 		boxfiles=[]
 		for filename in filelist:
 			if not os.path.isfile(filename):	
 				apDisplay.printError("Could not find file: "+filename)
 				continue
+
+			boxfile = os.path.join(self.params['rundir'], os.path.basename(filename))
 			if filename[-4:] == ".pos":
 				self.params['coordtype'] = "xmipp"
+			elif filename[-5:] == ".star":
+				self.params['coordtype'] = "relion"
+				self.params['suffix'] = self.params['files'].split("*")[-1]
+				boxfile = os.path.join(self.params['rundir'],os.path.basename(filename[:-len(self.params['suffix'])])+".star")
 			elif filename[-4:] != ".box":
 				apDisplay.printWarning("File is not a boxfile: "+filename)
 
-			boxfile = os.path.join(self.params['rundir'], os.path.basename(filename))
 			apDisplay.printMsg("Copying file to "+boxfile)
 			shutil.copy(filename, boxfile)
 			boxfiles.append(boxfile)
@@ -121,18 +127,24 @@ class UploadParticles(appionScript.AppionScript):
 		boxfile = imgdata['filename']+".box"
 		if self.params['coordtype'] == "xmipp":
 			boxfile = imgdata['filename']+".pos"
+		elif self.params['coordtype'] == "relion":
+			boxfile = imgdata['filename']+".star"
+			labels = apRelion.getStarFileColumnLabels(boxfile)
 		if not os.path.isfile(boxfile):
 			apDisplay.printError("Could not find box file "+boxfile)
 		f = open(boxfile, "r")
 		peaktree = []
 		for line in f:
-			sline = line.strip()
-			cols = sline.split()
+			cols = line.strip().split()
 			if self.params['coordtype'] == "xmipp":
 				if len(cols)>2 or cols[0][0]=="#":
 					continue
 				xcoord = float(cols[0]) * self.params['bin']
 				ycoord = float(cols[1]) * self.params['bin']
+			elif self.params['coordtype'] == "relion":
+				if len(cols)<3: continue
+				xcoord = int(round(float(cols[labels.index("_rlnCoordinateX")])))
+				ycoord = int(round(float(cols[labels.index("_rlnCoordinateY")])))
 			else:
 				xcoord = (float(cols[0]) + float(cols[2])/2.)* self.params['bin']
 				ycoord = (float(cols[1]) + float(cols[3])/2.)* self.params['bin']
@@ -165,7 +177,7 @@ class UploadParticles(appionScript.AppionScript):
 				apDisplay.printError("Session and Image do not match "+imgdata['filename'])	
 
 			peaktree = self.boxFileToPeakTree(imgdata)
-			apParticle.insertParticlePeaks(peaktree, imgdata, self.params['runname'], msg=True)
+			apParticle.fastInsertParticlePeaks(peaktree, imgdata, self.params['runname'], msg=True)
 
 if __name__ == '__main__':
 	uploadpart = UploadParticles()

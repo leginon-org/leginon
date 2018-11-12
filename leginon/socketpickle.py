@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 #
 # COPYRIGHT:
-#	   The Leginon software is Copyright 2003
-#	   The Scripps Research Institute, La Jolla, CA
+#	   The Leginon software is Copyright under
+#	   Apache License, Version 2.0
 #	   For terms of the license agreement
-#	   see  http://ami.scripps.edu/software/leginon-license
+#	   see  http://leginon.org
 #
 
 import cPickle as pickle
@@ -13,6 +13,7 @@ import SocketServer
 import numpy
 import sys
 import math
+from pyami import mysocket
 
 PORT = 55555
 
@@ -63,7 +64,7 @@ class Client(object):
 		return result
 
 def run_server():
-	hostname = socket.gethostname()
+	hostname = mysocket.gethostname()
 	port = PORT
 	print 'Running Server'
 	print '  host: %s' % (hostname,)

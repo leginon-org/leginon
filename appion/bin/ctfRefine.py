@@ -8,6 +8,7 @@ import copy
 import numpy
 import random
 #import subprocess
+from appionlib import apFile
 from appionlib import apParam
 from appionlib import apDisplay
 from appionlib import appiondata
@@ -97,6 +98,7 @@ class RefineCTF(appionLoop2.AppionLoop):
 		fftpath = os.path.join(self.powerspecdir, apDisplay.short(imgdata['filename'])+'.powerspec.mrc')
 		self.processAndSaveFFT(imgdata, fftpath)
 		self.runRefineCTF(imgdata, fftpath)
+		apFile.removeFile(fftpath)
 		return
 
 	#====================================
@@ -282,7 +284,7 @@ class RefineCTF(appionLoop2.AppionLoop):
 			volts=self.ctfvalues['volts'], ampconst=self.ctfvalues['amplitude_contrast'], failParams=False)
 
 		peaks = ctftools.getCtfExtrema(defocus, self.freq*1e10, self.ctfvalues['cs'], 
-			self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'], numzeros=25, zerotype="peak")
+			self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'], 0, numzeros=25, zerotype="peak")
 
 		### get the confidence
 		confraddata, confdata = ctfres.getCorrelationProfile(raddata, PSD, ctffitdata, peaks, self.freq)
@@ -306,7 +308,15 @@ class RefineCTF(appionLoop2.AppionLoop):
 			self.bestvalues['defocus'] = defocus
 			self.bestellipse = copy.deepcopy(self.ellipseParams)
 		elif show is True:
-			print "not saving values %.2f, need an average better than %.2f"%((res8+res5), self.bestres)
+			if (res8+res5) >= self.bestres:
+				print ("not saving values %.2f, need an average better than %.2f"
+					%((res8+res5), self.bestres))
+			elif not (self.minAmpCon < self.ctfvalues['amplitude_contrast'] < self.maxAmpCon):
+				print ("not saving values amplitude contrast %.4f out of range (%.4f <> %.4f)"
+					%(self.ctfvalues['amplitude_contrast'], self.minAmpCon, self.maxAmpCon))
+			else:
+				apDisplay.printError("Something went wrong")
+				
 
 		## normalize the data
 		PSD -= (PSD[lowerBoundIndex:]).min()
@@ -318,7 +328,7 @@ class RefineCTF(appionLoop2.AppionLoop):
 			confraddatasq = confraddata**2
 			peakradii = ctftools.getCtfExtrema(defocus, self.freq*1e10,
 				self.ctfvalues['cs'], self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'],
-				numzeros=2, zerotype="peaks")
+				0, numzeros=2, zerotype="peaks")
 			firstpeak = peakradii[0]
 
 			from matplotlib import pyplot
@@ -358,7 +368,7 @@ class RefineCTF(appionLoop2.AppionLoop):
 		# skip the center
 		valleys = ctftools.getCtfExtrema(defocus, self.freq*1e10,
 			self.ctfvalues['cs'], self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'],
-			numzeros=250, zerotype="valleys")
+			0, numzeros=250, zerotype="valleys")
 		firstvalley = valleys[0]
 		valleyradii = numpy.array(valleys, dtype=numpy.float64)*self.freq
 		firstvalleyindex = numpy.searchsorted(raddata, self.freq*firstvalley)
@@ -420,7 +430,7 @@ class RefineCTF(appionLoop2.AppionLoop):
 		# high pass filter the center
 		peaks = ctftools.getCtfExtrema(defocus, self.freq*1e10,
 			self.ctfvalues['cs'], self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'],
-			numzeros=250, zerotype="peaks")
+			0, numzeros=250, zerotype="peaks")
 		firstpeak = peaks[0]
 		peakradii = numpy.array(peaks, dtype=numpy.float64)*self.freq
 
@@ -598,7 +608,7 @@ class RefineCTF(appionLoop2.AppionLoop):
 				self.ctfvalues['amplitude_contrast'] = results[0]
 				newdefocus = results[1]
 			avgres = self.getResolution(newdefocus, raddata, PSDarray, lowerbound)
-			if avgres > self.bestres:
+			if avgres < self.bestres:
 				defocus = newdefocus
 		self.printBestValues()
 		return self.fixAmpContrast(defocus, raddata, PSDarray, lowerbound, upperbound)
@@ -618,7 +628,7 @@ class RefineCTF(appionLoop2.AppionLoop):
 			if amplitudecontrast is None:
 				apDisplay.printWarning("FAILED to fix amplitude contrast")
 				return defocus
-			elif amplitudecontrast < 0:
+			elif amplitudecontrast < self.minAmpCon:
 				apDisplay.printColor("Amp Cont: %.3f too small, decrease defocus %.3e"%
 					(amplitudecontrast, newdefocus), "blue")
 				scaleFactor = 0.999 - abs(amplitudecontrast)/5.
@@ -663,6 +673,10 @@ class RefineCTF(appionLoop2.AppionLoop):
 			"FMIN :: defRatio=%.5f <a=%.3f , d=%.2e == %.2fA (iter %d)"
 				%(ellipRatio**2, -math.degrees(ellipAlpha), defocus, avgres, self.fminCount),
 			"cyan")
+
+		self.datalog.write("%.8f\t%.8f\t%.8f\n"
+			%(ellipRatio, -math.degrees(ellipAlpha), avgres))
+
 		return avgres
 
 	#====================================
@@ -684,10 +698,16 @@ class RefineCTF(appionLoop2.AppionLoop):
 		self.lowerbound = lowerbound
 		self.upperbound = upperbound
 
+		### log file
+		datafile = self.shortname+"-data.csv"
+		self.datalog = open(datafile, "w")
+
 		### create function self.refineMinFunc that would return res80+res50
 		x0 = [ellipRatio, ellipAlpha]
 		maxfun = self.params['refineIter']
 		results = scipy.optimize.fmin(self.refineMinFunc, x0=x0, maxfun=maxfun)
+		self.datalog.close()
+
 
 		ellipRatio, ellipAlpha = results
 		apDisplay.printColor("BEST FROM FMIN :: defRatio=%.3f < a=%.2f"
@@ -722,8 +742,9 @@ class RefineCTF(appionLoop2.AppionLoop):
 		fftwidth = fftarray.shape[0]
 		maxres = 2.0/(self.freq*fftwidth)
 		if maxres > self.params['reslimit']:
-			apDisplay.printError("Cannot get requested res %.1fA higher than max res %.1fA"
-				%(maxres, self.params['reslimit']))
+			apDisplay.printWarning("Cannot get requested res %.1fA higher than max Nyquist resolution %.1fA"
+				%(self.params['reslimit'], maxres))
+			self.params['reslimit'] = math.ceil(maxres)
 
 		limitwidth = int(math.ceil(2.0/(self.params['reslimit']*self.freq)))
 		limitwidth = primefactor.getNextEvenPrime(limitwidth)
@@ -747,6 +768,7 @@ class RefineCTF(appionLoop2.AppionLoop):
 
 		### print message
 		bestDbValues = ctfdb.getBestCtfByResolution(imgdata)
+		self.shortname = apDisplay.short(imgdata['filename'])
 		if bestDbValues is None:
 			apDisplay.printColor("SKIPPING: No CTF values for image %s"
 				%(apDisplay.short(imgdata['filename'])), "red")
@@ -763,9 +785,9 @@ class RefineCTF(appionLoop2.AppionLoop):
 		self.ctfvalues['amplitude_contrast'] = bestDbValues['amplitude_contrast']
 
 		lowerrad1 = ctftools.getCtfExtrema(bestDbValues['defocus1'], self.mfreq, self.cs, self.volts, 
-			self.ctfvalues['amplitude_contrast'], 1, "valley")
+			self.ctfvalues['amplitude_contrast'], 0, 1, "valley")
 		lowerrad2 = ctftools.getCtfExtrema(bestDbValues['defocus2'], self.mfreq, self.cs, self.volts, 
-			self.ctfvalues['amplitude_contrast'], 1, "valley")
+			self.ctfvalues['amplitude_contrast'], 0, 1, "valley")
 		meanRad = (lowerrad1[0] + lowerrad2[0])/2.0
 
 		self.ellipseParams = {
@@ -826,11 +848,16 @@ class RefineCTF(appionLoop2.AppionLoop):
 			self.ctfvalues['angle_astigmatism'] = 0.0
 			self.ctfvalues['defocus1'] = self.ctfvalues['defocus']
 			self.ctfvalues['defocus2'] = self.ctfvalues['defocus']
+			self.badprocess = True
+			return
 
-		if self.ctfvalues['amplitude_contrast'] < self.minAmpCon:
-			self.ctfvalues['amplitude_contrast'] = self.minAmpCon
-		if self.ctfvalues['amplitude_contrast'] > self.maxAmpCon:
-			self.ctfvalues['amplitude_contrast'] = self.maxAmpCon
+		try:
+			if self.ctfvalues['amplitude_contrast'] < self.minAmpCon:
+				self.ctfvalues['amplitude_contrast'] = self.minAmpCon
+			if self.ctfvalues['amplitude_contrast'] > self.maxAmpCon:
+				self.ctfvalues['amplitude_contrast'] = self.maxAmpCon
+		except KeyError:
+			pass
 
 		if abs(self.ctfvalues['defocus1']) > abs(self.ctfvalues['defocus2']):
 			# incorrect, need to shift angle by 90 degrees

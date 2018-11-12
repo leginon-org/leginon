@@ -1,4 +1,4 @@
-<?
+<?php
 require_once "inc/login.inc";
 
 // if user already login, redirect to homepage
@@ -13,7 +13,7 @@ login_header("Appion / Leginon Register");
 ?>
 <center><h1><?php echo PROJECT_TITLE; ?></h1></center>
 <hr/>
-<?
+<?php
 
 if ($_POST) {
 	$username=$_POST['username'];
@@ -30,7 +30,7 @@ if ($_POST) {
 ?>
 <p>
 You have been registered (still pending). We have sent an email to <b>
-<?=$email; ?></b> and have recorded the following information :</font>
+<?php echo $email; ?></b> and have recorded the following information :</font>
 </p>
 
   <table width="100%" border="0" cellspacing="0" cellpadding="0" bgcolor="#3333FF">
@@ -63,7 +63,7 @@ You have been registered (still pending). We have sent an email to <b>
 		</tr>
 
 		</table>
-<?
+<?php
 	} else {
 	$error='
 		<p align="center"><font face="Arial, Helvetica, sans-serif" size="4" color="#FF2200">'
@@ -86,7 +86,7 @@ if ($displayform) {
 		<label for="username"><font color="red">*</font>Username: </label>
 	</td>
 	<td>
-		<input class="field" type="text" value="<?=$username?>" name="username" id="username">
+		<input class="field" type="text" value="<?php echo $username ?>" name="username" id="username">
 	</td>
 </tr>
 <tr>
@@ -94,13 +94,13 @@ if ($displayform) {
 		<label for="firstname"><font color="red">*</font>First Name: </label>
 	</td>
 	<td>
-		<input class="field" type="text" value="<?=$firstname?>" name="firstname" id="firstname" size="15" >
+		<input class="field" type="text" value="<?php echo $firstname ?>" name="firstname" id="firstname" size="15" >
 	</td>
 	<td>
 		<label for="lastname"><font color="red">*</font>Last Name: </label>
 	</td>
 	<td>
-		<input class="field" type="text" value="<?=$lastname?>" name="lastname" id="lastname" size="15" >
+		<input class="field" type="text" value="<?php echo $lastname ?>" name="lastname" id="lastname" size="15" >
 	</td>
 </tr>
 <tr>
@@ -108,7 +108,7 @@ if ($displayform) {
 		<label for="email"><font color="red">*</font>Email: </label>
 	</td>
 	<td>
-		<input class="field" type="text" value="<?=$email?>" name="email" id="email">
+		<input class="field" type="text" value="<?php echo $email ?>" name="email" id="email">
 	</td>
 </tr>
 <tr>
@@ -136,7 +136,7 @@ if ($displayform) {
 </tr>
 </table>
 </form>
-<?
+<?php
 }
 echo $error;
 login_footer();

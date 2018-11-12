@@ -160,6 +160,19 @@ $PUBLICATIONS['roseman03'] = array(
 'logo' => '',
 'pages' => '225-36');
 
+$PUBLICATIONS['roseman04'] = array(
+'title' => 'FindEM--a fast, efficient program for automatic selection of particles from electron micrographs.',
+'year' => '2004',
+'authorlist' => 'Roseman',
+'journal' => 'J. Struct. Biol.',
+'volume' => '145',
+'issue' => '1-2',
+'pmid' => '15065677',
+'pmcid' => '',
+'doi' => '',
+'logo' => 'img/findem.png',
+'pages' => '91-9');
+
 $PUBLICATIONS['sousa07'] = array(
 'title' => 'Ab initio resolution measurement for single particle structures.',
 'year' => '2007',
@@ -255,14 +268,14 @@ $PUBLICATIONS['optimod'] = array(
 'title' => 'Optimod - An Automated Approach for Constructing and Optimizing Initial Models for Single-Particle Electron Microscopy',
 'year' => '2013',
 'authorlist' => 'Lyumkis, D., Vinterbo, S., Carragher, B., Potter., C.',
-'journal' => 'submitted',
-'volume' => '',
-'issue' => '',
-'pmid' => '',
-'pmcid' => '',
-'doi' => '',
+'journal' => 'Journal of Structural Biology',
+'volume' => '184',
+'issue' => '3',
+'pmid' => '24161732',
+'pmcid' => '3885246',
+'doi' => 'doi:10.1016/j.jsb.2013.10.009',
 'logo' => 'img/topbarbackgrnd.jpg',
-'pages' => '');
+'pages' => '417-426');
 
 $PUBLICATIONS['gpudriftcorr'] = array(
 'title' => 'Electron counting and beam-induced motion correction enable near-atomic-resolution single-particle cryo-EM',
@@ -276,6 +289,32 @@ $PUBLICATIONS['gpudriftcorr'] = array(
 'doi' => 'doi:10.1038/nmeth.2472',
 'logo' => 'img/topbarbackgrnd.jpg',
 'pages' => '584-590');
+
+$PUBLICATIONS['purduedriftcorr'] = array(
+'title' => 'Motion correction for moview recorded using direct electron detectors',
+'year' => '2015',
+'authorlist' => 'Wen Jiang',
+'journal' => "<a href=https://github.com/jianglab/motioncorr > https://github.com/jianglab/motioncorr </a>",
+'volume' => '',
+'issue' => '',
+'pmid' => '',
+'pmcid' => '',
+'doi' => '',
+'logo' => 'img/topbarbackgrnd.jpg',
+'pages' => '');
+
+$PUBLICATIONS['de_frame'] = array(
+'title' => 'Movie-Mode Processing program DE_process_frames.py',
+'year' => '2012-2015',
+'authorlist' => 'Benjamin Bammes',
+'journal' => "<a href=http://www.directelectron.com/products/software > Direct Electron website </a>",
+'volume' => ' 2.7.1',
+'issue' => '',
+'pmid' => '',
+'pmcid' => '',
+'doi' => '',
+'logo' => 'img/DE.png',
+'pages' => '');
 
 $PUBLICATIONS['isac'] = array(
 'title' => 'Iterative stable alignment and clustering of 2D transmission electron microscope images',
@@ -301,5 +340,120 @@ $PUBLICATIONS['xmipp3CL2D'] = array(
 'doi' => '',
 'logo' => 'img/xmipp_logo.png',
 'pages' => '');
+
+$PUBLICATIONS['imodctf'] = array(
+'title' => 'CTF determination and correction for low dose tomographic tilt series',
+'year' => '2009',
+'authorlist' => 'Quanren Xiong, Mary K. Morphew, Cindi L. Schwartz, Andreas H. Hoenger, David N. Mastronarde',
+'journal' => 'J Struct Biol.',
+'volume' => '168',
+'issue' => '3',
+'pmid' => '19732834',
+'pmcid' => '',
+'doi' => 'doi:10.1016/j.jsb.2009.08.016',
+'logo' => '',
+'pages' => '');
+
+$PUBLICATIONS['dose_comp'] = array(
+'title' => 'Measuring the optimal exposure for single particle cryo-EM using a 2.6 Å reconstruction of rotavirus VP6',
+'year' => '2015',
+'authorlist' => 'Timothy Grant, Nikolaus Grigorieff',
+'journal' => 'eLife',
+'volume' => '',
+'issue' => '',
+'pmid' => '26023829',
+'pmcid' => '',
+'doi' => 'doi:10.7554/eLife.06980',
+'logo' => '',
+'pages' => '');
+
+$PUBLICATIONS['appion-protomo'] = array(
+'title' => 'Automated batch fiducial-less tilt-series alignment in Appion using Protomo',
+'year' => '2015',
+'authorlist' => 'Alex J. Noble, Scott M. Stagg',
+'journal' => 'J Struct Biol.',
+'volume' => '',
+'issue' => '',
+'pmid' => '26455557',
+'pmcid' => '',
+'doi' => 'doi:10.1016/j.jsb.2015.10.003',
+'logo' => '',
+'pages' => '');
+
+$PUBLICATIONS['tomo3d1'] = array(
+'title' => 'Fast tomographic reconstruction on multicore computers',
+'year' => '2011',
+'authorlist' => 'J.I. Agulleiro, J.J. Fernandez',
+'journal' => 'Bioinformatics',
+'volume' => '',
+'issue' => '',
+'pmid' => '21172911',
+'pmcid' => '',
+'doi' => 'doi:10.1093/bioinformatics/btq692',
+'logo' => '',
+'pages' => '');
+
+$PUBLICATIONS['tomo3d2'] = array(
+'title' => 'Tomo3D 2.0 - Exploitation of Advanced Vector eXtensions (AVX) for 3D reconstruction',
+'year' => '2015',
+'authorlist' => 'J.I. Agulleiro, J.J. Fernandez',
+'journal' => 'J Struct Biol.',
+'volume' => '',
+'issue' => '',
+'pmid' => '25528570',
+'pmcid' => '',
+'doi' => 'doi:10.1016/j.jsb.2014.11.009',
+'logo' => '',
+'pages' => '');
+
+$PUBLICATIONS['tomoctf'] = array(
+'title' => 'CTF Determination and Correction in Electron Cryotomography',
+'year' => '2006',
+'authorlist' => 'J.J. Fernandez, S. Li, R.A. Crowther ',
+'journal' => 'Ultramicroscopy',
+'volume' => '106',
+'issue' => '7',
+'pmid' => '16616422',
+'pmcid' => '',
+'doi' => 'doi:10.1016/j.ultramic.2006.02.004',
+'logo' => '',
+'pages' => '587-596');
+
+$PUBLICATIONS['rpp'] = array(
+'title' => 'Alignment of cryo-EM movies of individual particles by optimization of image translations.',
+'year' => '2015',
+'authorlist' => 'Rubinstein JL, Brubaker MA',
+'journal' => 'J Struct Biol.',
+'volume' => '192',
+'issue' => '2',
+'pmid' => '26296328',
+'pmcid' => '',
+'doi' => 'doi:10.1016/j.jsb.2015.08.007',
+'logo' => '',
+'pages' => '188-195');
+
+$PUBLICATIONS['gctf'] = array(
+'title' => 'Gctf: real-time CTF determination and correction',
+'year' => '2015',
+'authorlist' => 'Kai Zhang',
+'journal' => 'J Struct Biol.',
+'volume' => '193',
+'issue' => '1',
+'pmid' => '26592709',
+'pmcid' => '4711343',
+'doi' => '10.1016/j.jsb.2015.11.003',
+'logo' => '',
+'pages' => '1-12');
+
+$PUBLICATIONS['ctffind4'] = array(
+'title' => 'CTFFIND4: Fast and accurate defocus estimation from electron micrographs.',
+'year' => '2015',
+'authorlist' => 'Rohou A, Grigorieff N.',
+'journal' => 'J Struct Biol.',
+'volume' => '192',
+'issue' => '2',
+'pmid' => '26278980',
+'doi' => '10.1016/j.jsb.2015.08.008',
+'pages' => '216-21');
 
 ?>

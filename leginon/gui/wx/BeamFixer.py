@@ -3,45 +3,32 @@ import wx
 from leginon.gui.wx.Choice import Choice
 from leginon.gui.wx.Entry import FloatEntry
 from leginon.gui.wx.Presets import EditPresetOrder, EVT_PRESET_ORDER_CHANGED
-import leginon.gui.wx.Reference
+import leginon.gui.wx.ReferenceTimer
 import leginon.gui.wx.Settings
 import leginon.gui.wx.ToolBar
 
-class BeamFixerPanel(leginon.gui.wx.Reference.ReferencePanel, leginon.gui.wx.Instrument.SelectionMixin):
+class BeamFixerPanel(leginon.gui.wx.ReferenceTimer.ReferenceTimerPanel, leginon.gui.wx.Instrument.SelectionMixin):
 	imagepanelclass = leginon.gui.wx.ImagePanel.ImagePanel
 	def __init__(self, *args, **kwargs):
-		leginon.gui.wx.Reference.ReferencePanel.__init__(self, *args, **kwargs)
+		leginon.gui.wx.ReferenceTimer.ReferenceTimerPanel.__init__(self, *args, **kwargs)
 		leginon.gui.wx.Instrument.SelectionMixin.__init__(self)
-		self.addImagePanel()
-		self.szmain.AddGrowableRow(1)
-		self.szmain.AddGrowableCol(0)
-		self.SetSizer(self.szmain)
-		self.SetAutoLayout(True)
-		self.SetupScrolling()
 
 	def onNodeInitialized(self):
-		leginon.gui.wx.Reference.ReferencePanel.onNodeInitialized(self)
+		leginon.gui.wx.ReferenceTimer.ReferenceTimerPanel.onNodeInitialized(self)
 		leginon.gui.wx.Instrument.SelectionMixin.onNodeInitialized(self)
-
-	def addImagePanel(self):
-		# image
-		self.imagepanel = self.imagepanelclass(self, -1)
-		self.imagepanel.addTypeTool('Image', display=True)
-		self.imagepanel.selectiontool.setDisplayed('Image', True)
-		self.szmain.Add(self.imagepanel, (1, 0), (1, 1), wx.EXPAND|wx.ALL, 3)
 
 	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self)
 		dialog.ShowModal()
 		dialog.Destroy()
 
-class SettingsDialog(leginon.gui.wx.Reference.SettingsDialog):
+class SettingsDialog(leginon.gui.wx.ReferenceTimer.SettingsDialog):
 	def initialize(self):
-		return ScrolledSettings(self,self.scrsize,False)
+		return ScrolledSettings(self,self.scrsize,True)
 
-class ScrolledSettings(leginon.gui.wx.Reference.ScrolledSettings):
+class ScrolledSettings(leginon.gui.wx.ReferenceTimer.ScrolledSettings):
 	def initialize(self):
-		refsizers = leginon.gui.wx.Reference.ScrolledSettings.initialize(self)
+		refsizers = leginon.gui.wx.ReferenceTimer.ScrolledSettings.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Beam Fixer')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 

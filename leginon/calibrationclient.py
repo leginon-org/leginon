@@ -1,7 +1,7 @@
-# The Leginon software is Copyright 2004
-# The Scripps Research Institute, La Jolla, CA
+# The Leginon software is Copyright under
+# Apache License, Version 2.0
 # For terms of the license agreement
-# see http://ami.scripps.edu/software/leginon-license
+# see http://leginon.org
 #
 # $Source: /ami/sw/cvsroot/pyleginon/calibrationclient.py,v $
 # $Revision: 1.211 $
@@ -13,6 +13,7 @@
 
 import node, leginondata, event
 import numpy
+import numpy.linalg
 import scipy
 import pyami.quietscipy
 import scipy.ndimage
@@ -34,13 +35,17 @@ class Abort(Exception):
 class NoPixelSizeError(Exception):
 	pass
 
-class NoMatrixCalibrationError(Exception):
+class NoCalibrationError(Exception):
 	def __init__(self, *args, **kwargs):
 		if 'state' in kwargs:
 			self.state = kwargs['state']
 		else:
 			self.state = None
 		Exception.__init__(self, *args)
+
+class NoMatrixCalibrationError(NoCalibrationError):
+	def __init__(self, *args, **kwargs):
+		super(NoMatrixCalibrationError,self).__init__(*args, **kwargs)	
 
 class NoSensitivityError(Exception):
 	pass
@@ -120,7 +125,10 @@ class CalibrationClient(object):
 		time.sleep(settle)
 		self.node.stopTimer('calclient acquire pause')
 
-		imagedata = self.node.acquireCorrectedCameraImageData(corchannel)
+		imagedata = self.node.acquireCorrectedCameraImageData(corchannel, force_no_frames=True)
+		if imagedata is None:
+			# need to raise exception or it will cause further error in correlation
+			raise RuntimeError('Failed image acquisition')
 		if correct_tilt:
 			self.correctTilt(imagedata)
 		newscope = imagedata['scope']
@@ -211,13 +219,14 @@ class CalibrationClient(object):
 		nextimage = self.acquireImage(nextscope, settle, correct_tilt=False)
 		## get ctf parameters
 		self.ht = nextimage['scope']['high tension']
+		self.cs = nextimage['scope']['tem']['cs']
 		if not self.rpixelsize:
 			self.rpixelsize = self.getImageReciprocalPixelSize(nextimage)
 		imagearray = nextimage['image']
 		if imagearray.max() == 0:
 			raise RuntimeError('Bad image intensity range')
 		pow = imagefun.power(imagearray)
-		ctfdata = fftfun.fitFirstCTFNode(pow,self.rpixelsize['x'], None, self.ht)
+		ctfdata = fftfun.fitFirstCTFNode(pow,self.rpixelsize['x'], None, self.ht, self.cs)
 
 		self.checkAbort()
 		if ctfdata is not None:
@@ -246,7 +255,7 @@ class CalibrationClient(object):
 			self.ht = imagedata['scope']['high tension']
 			if not self.rpixelsize:
 				self.rpixelsize = self.getImageReciprocalPixelSize(imagedata)
-			ctfdata = fftfun.fitFirstCTFNode(pow,self.rpixelsize['x'], None, self.ht)
+			ctfdata = fftfun.fitFirstCTFNode(pow,self.rpixelsize['x'], None, self.ht, self.cs)
 			self.ctfdata.append(ctfdata)
 
 			# show defocus estimate on tableau
@@ -554,13 +563,14 @@ class MatrixCalibrationClient(CalibrationClient):
 			timestamp = caldata.timestamp
 		return timestamp
 
-	def storeMatrix(self, ht, mag, type, matrix, tem=None, ccdcamera=None, probe=None):
+	def storeMatrix(self, ht, mag, caltype, matrix, tem=None, ccdcamera=None, probe=None):
 		'''
-		stores a new calibration matrix
+		stores a new calibration matrix.
 		'''
-		caldata = leginondata.MatrixCalibrationData(session=self.node.session, magnification=mag, type=type, matrix=matrix, probe=probe)
-		self.setDBInstruments(caldata,tem,ccdcamera)
+		# the matrix stored needs to be ndarray type
 		newmatrix = numpy.array(matrix, numpy.float64)
+		caldata = leginondata.MatrixCalibrationData(session=self.node.session, magnification=mag, type=caltype, matrix=newmatrix, probe=probe)
+		self.setDBInstruments(caldata,tem,ccdcamera)
 		caldata['high tension'] = ht
 		self.node.publish(caldata, database=True, dbforce=True)
 
@@ -571,11 +581,11 @@ class MatrixCalibrationClient(CalibrationClient):
 		y_shift_row = matrix[0, 1]
 		y_shift_col = matrix[1, 1]
 
-		# calculations invert image coordinates (+y top, -y bottom)
+		# angle is from x axis with +x to +y as positive.
 		# angle from the x shift of the parameter
-		theta_x = math.atan2(-x_shift_row, x_shift_col)
+		theta_x = math.atan2(x_shift_row, x_shift_col)
 		# angle from the y shift of the parameter
-		theta_y = math.atan2(-y_shift_row, -y_shift_col)
+		theta_y = math.atan2(y_shift_row, y_shift_col)
 
 		return theta_x, theta_y
 
@@ -583,9 +593,29 @@ class MatrixCalibrationClient(CalibrationClient):
 		matrix = self.retrieveMatrix(*args)
 		return self.getMatrixAngles(matrix)
 
+	def scaleMatrix(self, tem, ccdcamera, caltype, ht, ref_mag, target_mag, probe=None):
+		ref_matrix = self.retrieveMatrix(tem, ccdcamera, caltype, ht, ref_mag)
+		newmatrix = numpy.array(ref_matrix, numpy.float64)*ref_mag/target_mag
+		self.storeMatrix(ht, target_mag, caltype, newmatrix, tem, ccdcamera, probe)
+
+
 class BeamTiltCalibrationClient(MatrixCalibrationClient):
 	def __init__(self, node):
 		MatrixCalibrationClient.__init__(self, node)
+		self.other_axis = {'x':'y','y':'x'}
+		self.default_beamtilt_vectors = [(0,0),(1,0)]
+
+	def retrieveMatrix(self, tem, ccdcamera, caltype, ht, mag, probe=None):
+		try:
+			return super(BeamTiltCalibrationClient,self).retrieveMatrix(tem, ccdcamera, caltype, ht, mag, probe)
+		except NoMatrixCalibrationError, e:
+			if probe is None:
+				raise
+			else:
+				# Try without probe assignment for back compatibility
+				matrix = self.retrieveMatrix(tem, ccdcamera, caltype, ht, mag, None)
+				self.node.logger.warning('Only old %s calibration not specified by probe found. Please recalibrate.' % (caltype,))
+				return matrix
 
 	def getBeamTilt(self):
 		try:
@@ -625,8 +655,9 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		cam = self.instrument.getCCDCameraData()
 		ht = self.instrument.tem.HighTension
 		mag = self.instrument.tem.Magnification
+		probe = self.instrument.tem.ProbeMode
 		try:
-			fmatrix = self.retrieveMatrix(tem, cam, 'defocus', ht, mag)
+			fmatrix = self.retrieveMatrix(tem, cam, 'defocus', ht, mag, probe)
 		except (NoMatrixCalibrationError,RuntimeError), e:
 			self.node.logger.error('Measurement failed: %s' % e)
 			return {'x':0.0, 'y': 0.0}
@@ -635,7 +666,11 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		state1['defocus'] = defocus1
 		state2['defocus'] = defocus2
 
-		im1 = self.acquireImage(state1, settle=settle)
+		try:
+			im1 = self.acquireImage(state1, settle=settle)
+		except Exception, e:
+			self.node.logger.error('Measurement failed: %s' % e)
+			return {'x':0.0, 'y': 0.0}
 		shiftinfo = self.measureScopeChange(im1, state2, settle=settle, correlation_type=correlation_type)
 
 		shift = shiftinfo['pixel shift']
@@ -643,44 +678,122 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		bt = self.solveEq10_t(fmatrix, defocus1, defocus2, d)
 		return {'x':bt[0], 'y':bt[1]}
 
-	def measureDefocusStig(self, tilt_value, stig=True, correct_tilt=False, correlation_type=None, settle=0.5, image0=None):
+	def modifyBeamTilt(self, bt0, bt_delta):
+		bt1 = dict(bt0)
+		bt1['x'] += bt_delta['x']
+		bt1['y'] += bt_delta['y']
+		return bt1
+
+	def getFirstBeamTiltDeltaXY(self, scale, on_phase_plate = False):
+		btilts = self.getBeamTiltDeltaPair(scale, on_phase_plate)
+		return btilts[0]
+
+	def getBeamTiltDeltaPair(self, scale, on_phase_plate = False):
+		"""
+		Get a list of two beam tilt delta dictionary in radians.
+		This may be the default values or the one saved in the database.
+		i.e. [{'x':-0.01,'y':0},{'x':0.01,'y':0}]
+		"""
+		# Default values
+		btilt1 = self.calculateBeamTiltDeltaXY(self.default_beamtilt_vectors[0], scale,0)
+		btilt2 = self.calculateBeamTiltDeltaXY(self.default_beamtilt_vectors[1], scale,0)
+		if not on_phase_plate:
+			# use default
+			return [btilt1,btilt2]
+		btilts = self.getPhasePlateBeamTilts(scale)
+		if not btilts:
+			# failed to get valid btilts, use default
+			return [btilt1,btilt2]
+		else:
+			return btilts
+
+	def getPhasePlateBeamTilts(self, scale):
+		"""
+		Get from database a list of two special beam tilt delta dictionary in radians.
+		i.e. [{'x':-0.01,'y':0},{'x':0.01,'y':0}]
+		"""
+		tem = self.instrument.getTEMData()
+		rotation = self.retrievePhasePlateBeamTiltRotation(tem)
+		ppbeamtilt_vectors = self.retrievePhasePlateBeamTiltVectors(tem)
+		# NoCalibrationError is raised at this point if no vectors
+		btilts = []
+		if ppbeamtilt_vectors is not None:
+			for bt in ppbeamtilt_vectors:
+				btilts.append(self.calculateBeamTiltDeltaXY(bt, scale,rotation))
+		return btilts
+
+	def calculateBeamTiltDeltaXY(self, tilt_tuple, scale, rotation):
+		"""
+		Rotate and Scale the tilt_dict containing x,y beam tilt
+		"""
+		tilt_dict = {'x':tilt_tuple[0],'y':tilt_tuple[1]}
+		bt = self.rotateXY0(tilt_dict,rotation)
+		bt['x'] *= scale
+		bt['y'] *= scale
+		return bt
+
+	def rotateXY0(self, xy, rotation):
+		'''
+		rotate around {'x':0,'y':0}
+		'''
+		bt = {}
+		bt['x'] = xy['x']*math.cos(rotation)-xy['y']*math.sin(rotation)
+		bt['y'] = xy['x']*math.sin(rotation)+xy['y']*math.cos(rotation)
+		return bt
+
+	def measureDefocusStig(self, tilt_value, stig=True, correct_tilt=False, correlation_type=None, settle=0.5, image0=None, on_phase_plate=False):
+
 		self.abortevent.clear()
 		tem = self.instrument.getTEMData()
 		cam = self.instrument.getCCDCameraData()
 		ht = self.instrument.tem.HighTension
 		mag = self.instrument.tem.Magnification
+		probe = self.instrument.tem.ProbeMode
 		# Can not handle the exception for retrieveMatrix here. 
 		# Focuser node that calls this need to know the type of error
-		fmatrix = self.retrieveMatrix(tem, cam, 'defocus', ht, mag)
+		fmatrix = self.retrieveMatrix(tem, cam, 'defocus', ht, mag, probe)
 
+		tilt_deltas = self.getBeamTiltDeltaPair(tilt_value, on_phase_plate)
+		all_tilt_deltas = [tilt_deltas,]
 		## only do stig if stig matrices exist
 		amatrix = bmatrix = None
 		if stig:
-			tiltaxes = ('x','y')
+			rotation_90deg = math.pi/2
+			orthogonal_tilt_deltas = map((lambda x: self.rotateXY0(x, rotation_90deg)),tilt_deltas)
 			try:
-				amatrix = self.retrieveMatrix(tem, cam, 'stigx', ht, mag)
-				bmatrix = self.retrieveMatrix(tem, cam, 'stigy', ht, mag)
+				amatrix = self.retrieveMatrix(tem, cam, 'stigx', ht, mag, probe)
+				bmatrix = self.retrieveMatrix(tem, cam, 'stigy', ht, mag, probe)
+				# do not append if Error is raised.
+				all_tilt_deltas.append(orthogonal_tilt_deltas)
 			except NoMatrixCalibrationError:
 				stig = False
-				tiltaxes = ('x',)
-		else:
-			tiltaxes = ('x',)
-
 		tiltcenter = self.getBeamTilt()
-
-		if image0 is None:
-			image0 = self.acquireImage(None, settle=settle, correct_tilt=correct_tilt)
 
 		### need two tilt displacement measurements to get stig
 		shifts = []
 		tilts = []
 		self.checkAbort()
-		for tiltaxis in tiltaxes:
-			bt2 = dict(tiltcenter)
-			bt2[tiltaxis] += tilt_value
+		for index, tds in enumerate(all_tilt_deltas):
+			# first tilt
+			bt_delta1 = tds[0]
+			bt1 = self.modifyBeamTilt(tiltcenter, bt_delta1)
+			# second tilt
+			bt_delta2 = tds[1]
+			bt2 = self.modifyBeamTilt(tiltcenter, bt_delta2)
+			state1 = leginondata.ScopeEMData()
+			state1['beam tilt'] = bt1
 			state2 = leginondata.ScopeEMData()
 			state2['beam tilt'] = bt2
+			
+			if image0 is None or abs(bt_delta1['x']) > 1e-5 or bt_delta1['y'] > 1e-5:
+				# double tilt needs new image0 for each axis
+				self.node.logger.info('Tilt beam by (x,y)=(%.2f,%.2f) mrad and acquire image' % (bt_delta1['x']*1000,bt_delta1['y']*1000))
+				image0 = self.acquireImage(state1, settle=settle, correct_tilt=correct_tilt, corchannel=0)
+			else:
+				self.node.logger.info('Use final drift image for autofocusing')
+
 			try:
+				self.node.logger.info('Tilt beam by (x,y)=(%.2f,%.2f) mrad and acquire image' % (bt_delta2['x']*1000,bt_delta2['y']*1000))
 				shiftinfo = self.measureScopeChange(image0, state2, settle=settle, correct_tilt=correct_tilt, correlation_type=correlation_type)
 			except Abort:
 				break
@@ -688,109 +801,20 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			pixshift = shiftinfo['pixel shift']
 
 			shifts.append( (pixshift['row'], pixshift['col']) )
-			if tiltaxis == 'x':
-				tilts.append( (tilt_value, 0) )
-			else:
-				tilts.append( (0, tilt_value) )
+			delta_delta = (bt_delta2['x']-bt_delta1['x'],bt_delta2['y']-bt_delta1['y'])
+			tilts.append( delta_delta )
 			try:
 				self.checkAbort()
 			except Abort:
 				break
 
 		## return to original beam tilt
+		self.node.logger.info('Tilt beam back to (x,y)=(%.5f, %.5f)' % (tiltcenter['x'],tiltcenter['y']))
 		self.instrument.tem.BeamTilt = tiltcenter
 
 		self.checkAbort()
 
 		sol = self.solveEq10(fmatrix, amatrix, bmatrix, tilts, shifts)
-		return sol
-
-	def OLDmeasureDefocusStig(self, tilt_value, publish_images=False, drift_threshold=None, stig=True, target=None, correct_tilt=False, correlation_type=None, settle=0.5):
-		self.abortevent.clear()
-		tem = self.instrument.getTEMData()
-		cam = self.instrument.getCCDCameraData()
-		ht = self.instrument.tem.HighTension
-		mag = self.instrument.tem.Magnification
-		try:
-			fmatrix = self.retrieveMatrix(tem, cam, 'defocus', ht, mag)
-		except NoMatrixCalibrationError:
-				raise RuntimeError('missing calibration matrix')
-		if stig:
-			try:
-				amatrix = self.retrieveMatrix(tem, cam, 'stigx', ht, mag)
-				bmatrix = self.retrieveMatrix(tem, cam, 'stigy', ht, mag)
-			except NoMatrixCalibrationError:
-				stig = False
-
-		tiltcenter = self.getBeamTilt()
-		#self.node.logger.info('Tilt center: x = %g, y = %g.' % (tiltcenter['x'], tiltcenter['y']))
-
-		### need two tilt displacement measurements
-		### easiest is one on each tilt axis
-		shifts = {}
-		tilts = {}
-		self.checkAbort()
-		nodrift = False
-		lastdrift = None
-		for tiltaxis in ('x','y'):
-			bt1 = dict(tiltcenter)
-			bt1[tiltaxis] -= tilt_value
-			bt2 = dict(tiltcenter)
-			bt2[tiltaxis] += tilt_value
-			state1 = leginondata.ScopeEMData()
-			state2 = leginondata.ScopeEMData()
-			state1['beam tilt'] = bt1
-			state2['beam tilt'] = bt2
-			## if no drift on 'x' axis, then assume we don't 
-			## need to check on 'y' axis
-			if nodrift:
-				drift_threshold = None
-			try:
-				shiftinfo = self.measureStateShift(state1, state2, publish_images, settle=settle, drift_threshold=drift_threshold, target=target, correct_tilt=correct_tilt, correlation_type=correlation_type)
-			except Abort:
-				break
-			except Drifting:
-				## return to original beam tilt
-				self.instrument.tem.BeamTilt = tiltcenter
-				#self.node.logger.info('Returned to tilt center: x = %g, y = %g.' % (tiltcenter['x'], tiltcenter['y']))
-
-				raise
-			nodrift = True
-			if shiftinfo['driftdata'] is not None:
-				lastdrift = shiftinfo['driftdata']
-
-			pixshift = shiftinfo['pixel shift']
-
-			shifts[tiltaxis] = (pixshift['row'], pixshift['col'])
-			if tiltaxis == 'x':
-				tilts[tiltaxis] = (2*tilt_value, 0)
-			else:
-				tilts[tiltaxis] = (0, 2*tilt_value)
-			try:
-				self.checkAbort()
-			except Abort:
-				break
-
-		## return to original beam tilt
-		self.instrument.tem.BeamTilt = tiltcenter
-		#self.node.logger.info('Returned to tilt center: x = %g, y = %g.' % (tiltcenter['x'], tiltcenter['y']))
-
-		self.checkAbort()
-
-		#self.node.logger.info('Tilts %s, shifts %s' % (tilts, shifts))
-
-		d1 = shifts['x']
-		t1 = tilts['x']
-		d2 = shifts['y']
-		t2 = tilts['y']
-		if stig:
-			sol = self.solveEq10(fmatrix,amatrix,bmatrix,d1,t1,d2,t2)
-			#self.node.logger.info('Defocus: %g, stig.: (%g, %g), min. = %g' % (sol['defocus'], sol['stigx'], sol['stigy'], sol['min']))
-		else:
-			sol = self.solveEq10_nostig(fmatrix,d1,t1,d2,t2)
-			#self.node.logger.info('Defocus: %g, stig.: (not measured), min. = %g' % (sol['defocus'], sol['min']))
-
-		sol['lastdrift'] = lastdrift
 		return sol
 
 	def solveEq10(self, F, A, B, tilts, shifts):
@@ -878,7 +902,6 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		Each call of this function acquires four images
 		and returns two shift displacements.
 		'''
-
 		# try/finally to be sure we return to original beam tilt
 		try:
 			# set up to measure states
@@ -1000,34 +1023,35 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			return False
 		return True
 
-	def calculateImageShiftComaMatrix(self,tdata,xydata):
+	def calculateImageShiftAberrationMatrix(self,tdata,xydata):
 		''' Fit the beam tilt vector induced by image shift 
 				to a straight line on individual axis.  
 				Strickly speaking we should use orthogonal distance regression.''' 
 		ordered_axes = ['x','y']
 		matrix = numpy.zeros((2,2))
-		coma0 = {'x':0.0,'y':0.0}
+		ab0 = {'x':0.0,'y':0.0}
 		for index1, axis1 in enumerate(ordered_axes):
 			data = xydata[axis1]
-			for axis2 in data.keys():
+			for axis2 in ordered_axes:
 				(slope,t_intercept) = scipy.polyfit(numpy.array(tdata[axis1]),numpy.array(xydata[axis1][axis2]),1)
 				index2 = ordered_axes.index(axis2)
-				matrix[index1,index2] = slope
-				coma0[axis2] += t_intercept
-			coma0[axis2] /= len(ordered_axes)
-		return matrix, coma0
+				matrix[index2,index1] = slope
+				ab0[axis2] += t_intercept
+			ab0[axis2] /= len(ordered_axes)
+		return matrix, ab0
 
 	def measureComaFree(self, tilt_value, settle, raise_error=False):
 		tem = self.instrument.getTEMData()
 		cam = self.instrument.getCCDCameraData()
 		ht = self.instrument.tem.HighTension
 		mag = self.instrument.tem.Magnification
+		probe = self.instrument.tem.ProbeMode
 		self.rpixelsize = None
 		self.ht = ht
 		self.initTableau()
 
 		par = 'beam-tilt coma'
-		cmatrix = self.retrieveMatrix(tem, cam, 'beam-tilt coma', ht, mag)
+		cmatrix = self.retrieveMatrix(tem, cam, 'beam-tilt coma', ht, mag, probe)
 
 		dc = [0,0]
 		failed_measurement = False
@@ -1076,22 +1100,45 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			self.node.logger.debug("std %5.2f,  %5.2f" %(xarray.std()*1000,yarray.std()*1000))
 			return xarray,yarray
 
-	def transformImageShiftToBeamTilt(self, imageshift, tem, cam, ht, zerobeamtilt, mag):
-		newbeamtilt = {}
+	def transformImageShiftToBeamTilt(self, imageshift, tem, cam, ht, zero, mag):
 		par = 'image-shift coma'
+		new = self._transformImageShiftToNewPar(imageshift, tem, cam, ht, zero, mag, par)
+		self.node.logger.debug("Beam Tilt ( %5.2f, %5.2f) mrad" % (new['x']*1e3,new['y']*1e3))
+		return new
+
+	def transformImageShiftToObjStig(self, imageshift, tem, cam, ht, zero, mag):
+		par = 'image-shift stig'
+		new = self._transformImageShiftToNewPar(imageshift, tem, cam, ht, zero, mag, par)
+		self.node.logger.debug("Obj Stig ( %5.2f, %5.2f) * 1e-3" % (new['x']*1e3,new['y']*1e3))
+		return new
+
+	def transformImageShiftToDefocus(self, imageshift, tem, cam, ht, defoc0, mag):
+		par = 'image-shift defocus'
+		zero = {'x':defoc0,'y':0}
+		try:
+			new = self._transformImageShiftToNewPar(imageshift, tem, cam, ht, zero, mag, par)
+			defoc1 = new['x']
+			self.node.logger.debug("Defocus %5.2f um" % (defoc1*1e6,))
+			return defoc1
+		except:
+			self.node.logger.warning('image-shift defocus not calibrated, ignore such correction.')
+			return defoc0
+
+	def _transformImageShiftToNewPar(self, imageshift, tem, cam, ht, zero, mag, par):
+		new = {}
 		try:
 			# not to query specific mag for now
-			matrix = self.retrieveMatrix(tem, cam, 'image-shift coma', ht, None)
+			probe = self.instrument.tem.ProbeMode
+			matrix = self.retrieveMatrix(tem, cam, par, ht, None, probe)
 		except NoMatrixCalibrationError:
 			raise RuntimeError('missing %s calibration matrix' % par)
 		self.node.logger.debug("Image Shift ( %5.2f, %5.2f)" % (imageshift['x']*1e6,imageshift['y']*1e6))
 		shiftvect = numpy.array((imageshift['x'], imageshift['y']))
 		change = numpy.dot(matrix, shiftvect)
-		newbeamtilt['x'] = zerobeamtilt['x'] - change[0]
-		newbeamtilt['y'] = zerobeamtilt['y'] - change[1]
-		self.node.logger.debug("Beam Tilt Correction ( %5.2f, %5.2f)" % (change[0]*1e3,change[1]*1e3))
-		self.node.logger.debug("Beam Tilt ( %5.2f, %5.2f)" % (newbeamtilt['x']*1e3,newbeamtilt['y']*1e3))
-		return newbeamtilt
+		new['x'] = zero['x'] - change[0]
+		new['y'] = zero['y'] - change[1]
+		self.node.logger.debug("Change ( %5.2f, %5.2f) * 1e-3" % (new['x']*1e3,new['y']*1e3))
+		return new
 
 	def correctImageShiftComa(self):
 		tem = self.instrument.getTEMData()
@@ -1151,7 +1198,61 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			self.node.logger.error('Unable to get rotation center: %s' % e)
 		else:
 			self.node.logger.info('Saved instrument rotation center')
+
+	def storePhasePlateBeamTiltRotation(self, tem, cam, angle, probe=None):
+		caldata = leginondata.PPBeamTiltRotationData()
+		caldata['session'] = self.node.session
+		# techcnically this does not depend on cam, but is recorded nonetheless.
+		self.setDBInstruments(caldata,tem,cam)
+		if probe is None:
+			probe = self.instrument.tem.ProbeMode
+		caldata['probe'] = probe
+		caldata['angle'] = angle
+		caldata.insert(force=True)
 	
+	def retrievePhasePlateBeamTiltRotation(self, tem, probe=None):
+		rc = leginondata.PPBeamTiltRotationData()
+		rc['tem'] = tem
+		if probe is None:
+			# get probe mode of the current tem
+			probe = self.instrument.tem.ProbeMode
+		rc['probe'] = probe
+		results = self.node.research(datainstance=rc, results=1)
+		if results:
+			return results[0]['angle']
+		else:
+			return 0.0
+
+	def storePhasePlateBeamTiltVectors(self, tem, cam, beamtilt_vectors, probe=None):
+		"""
+		beamtilt_vectors is a list of two beam tilt directions before phase plate
+		beam tilt rotation is applied.
+		For example, [(-1,0),(0,1)]
+		"""
+		caldata = leginondata.PPBeamTiltVectorsData()
+		caldata['session'] = self.node.session
+		# techcnically this does not depend on cam, but is recorded nonetheless.
+		self.setDBInstruments(caldata,tem,cam)
+		if probe is None:
+			# get probe mode of the current tem
+			probe = self.instrument.tem.ProbeMode
+		caldata['probe'] = probe
+		caldata['vectors'] = tuple(beamtilt_vectors)
+		caldata.insert(force=True)
+
+	def retrievePhasePlateBeamTiltVectors(self, tem, probe=None):
+		rc = leginondata.PPBeamTiltVectorsData()
+		rc['tem'] = tem
+		if probe is None:
+			# get probe mode of the current tem
+			probe = self.instrument.tem.ProbeMode
+		rc['probe'] = probe
+		results = self.node.research(datainstance=rc, results=1)
+		if results:
+			return results[0]['vectors']
+		else:
+			raise NoCalibrationError('Phase Plate Beam Tilt Vectors not defined')
+
 class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 	mover = True
 	def __init__(self, node):
@@ -1175,6 +1276,18 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 		matrix = numpy.array([[xrow,yrow],[xcol,ycol]],numpy.float)
 		matrix = numpy.linalg.inv(matrix)
 		return matrix
+
+	def MatrixToMeasurement(self, matrix):
+		'''
+		convert matrix in [TEM parameter]/pixel to a mesurement in pixels/[TEM parameter] 
+		'''
+		matrix = numpy.linalg.inv(matrix)
+		measurement = {'x':{},'y':{}}
+		measurement['x']['row'] = matrix[0,0]
+		measurement['x']['col'] = matrix[0,1]
+		measurement['y']['row'] = matrix[1,0]
+		measurement['y']['col'] = matrix[1,1]
+		return measurement
 
 	def transform(self, pixelshift, scope, camera):
 		'''
@@ -1213,6 +1326,8 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 		new = leginondata.ScopeEMData(initializer=scope)
 		## make a copy of this since it will be modified
 		new[par] = dict(scope[par])
+		# By defining new parameters by change, physical movement scale
+		# in physical unit has to be accurate.
 		new[par]['x'] += changex
 		new[par]['y'] += changey
 		return new
@@ -1227,6 +1342,8 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 			scope['magnification'],
 		)
 		shift = dict(position)
+		# By defining shift by position, physical movement scale
+		# in physical unit has to be accurate.
 		shift['x'] -= scope[parameter]['x']
 		shift['y'] -= scope[parameter]['y']
 
@@ -1253,6 +1370,55 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 
 		return pixel_shift
 
+	def calculateCalibrationAngleDifference(self, tem1, ccdcamera1, tem2, ccdcamera2, ht, mag1, mag2):
+		par = self.parameter()
+		matrix1 = self.retrieveMatrix(tem1, ccdcamera1, par, ht, mag1)
+		matrix2 = self.retrieveMatrix(tem2, ccdcamera2, par, ht, mag2)
+		return self.angleFromMatrix(matrix2) - self.angleFromMatrix(matrix1)
+
+	def angleFromMatrix(self, matrix):
+		'''
+		calculate calibration 2D vectors (as an ndimage array)
+		average angle to the axis of (1,0),(0,1) vectors, respectively.
+		The result return is in radians
+		'''
+		angles = []
+		angles.append(math.atan2(matrix[0,1],matrix[0,0]))
+		# y axis is assumed to be 90 degrees from x
+		yangle = math.atan2(matrix[1,1],matrix[1,0]) - math.pi/2
+		if yangle < -math.pi:
+			yangle += 2*math.pi
+		angles.append(yangle)
+		angle_average = sum(angles) / 2
+		return angle_average
+
+	def matrixFromPixelAndPositionShifts(self,pixel_shift1,position_shift1, pixel_shift2, position_shift2, camera_binning):
+		'''
+		returns calibration matrix as ndarray type from pixel shift and position shift matrix(or ndarray)
+		image pixel_shift1 (row,col) is the result of scope position_shift1 (x,y)
+		image pixel_shift2 (row,col) is the result of scope position_shift2 (x,y)
+		camera_binnings {'x':bin_col,'y':bin_row}
+		'''
+		pixel_shift_matrix = self.convertImagePixelShiftsToArray(pixel_shift1,pixel_shift2,camera_binning)
+		position_shift_matrix = self.convertScopePositionShiftsToArray(position_shift1, position_shift2).transpose()
+		ipixel_shift = numpy.linalg.inv(pixel_shift_matrix)
+		return numpy.dot(position_shift_matrix,ipixel_shift)
+
+	def convertImagePixelShiftsToArray(self,pixel_shift1,pixel_shift2,camera_binning):
+		# Need to transpose pixel_shift so the array looks like this:
+		# [[pixel_shift1_row  pixel_shift2_row]
+		#  [pixel_shift2_col  pixel_shift2_col]]
+		bins = numpy.array((camera_binning['y'],camera_binning['x']))
+		pixel_shift_matrix = numpy.array((pixel_shift1*bins,pixel_shift2*bins)).transpose()
+		return pixel_shift_matrix
+
+	def convertScopePositionShiftsToArray(self,position_shift1, position_shift2):
+		'''
+		Scope position shifts is a list of dictionary with keys of 'x' and 'y'
+		'''
+		position_shift_matrix = numpy.array(((position_shift1['x'],position_shift1['y']), (position_shift2['x'],position_shift2['y'])))
+		return position_shift_matrix
+
 class ImageShiftCalibrationClient(SimpleMatrixCalibrationClient):
 	def __init__(self, node):
 		SimpleMatrixCalibrationClient.__init__(self, node)
@@ -1270,13 +1436,166 @@ class ImageShiftCalibrationClient(SimpleMatrixCalibrationClient):
 		need to be properly calibrated for this to work right
 		'''
 		par = self.parameter()
-		matrix1 = self.retrieveMatrix(tem1, ccdcamera1, par, ht, mag1)
-		matrix2 = self.retrieveMatrix(tem2, ccdcamera2, par, ht, mag2)
-		matrix2inv = numpy.linalg.inv(matrix2)
-		p1 = numpy.array(p1)
-		physicalpos = numpy.dot(matrix1, p1)
-		p2 = numpy.dot(matrix2inv, physicalpos)
+		physicalpos = self.pixelToPosition(tem1,ccdcamera1, par, ht, mag1, p1)
+		p2 = self.positionToPixel(tem2,ccdcamera2, par, ht, mag2, physicalpos)
 		return p2
+
+	def pixelToPosition(self,tem, ccdcamera, matrix_type, ht, mag, pixel_shift):
+		'''
+		Using matrix to transform a pixel shift on camera to relative physical position.
+		'''
+		par = matrix_type
+		matrix = self.retrieveMatrix(tem, ccdcamera, par, ht, mag)
+		shift = numpy.array(pixel_shift)
+		physicalpos = numpy.dot(matrix, pixel_shift)
+		return physicalpos
+
+	def positionToPixel(self,tem, ccdcamera, matrix_type, ht, mag, position):
+		'''
+		Using matrix to transform a relative physical position to pixel shift on camera.
+		'''
+		par = matrix_type
+		matrix = self.retrieveMatrix(tem, ccdcamera, par, ht, mag)
+		matrix_inv = numpy.linalg.inv(matrix)
+		physicalpos = numpy.array(position)
+		pixel_shift = numpy.dot(matrix_inv, physicalpos)
+		return pixel_shift
+
+class ImageRotationCalibrationClient(ImageShiftCalibrationClient):
+	mover = False
+	def __init__(self, node):
+		ImageShiftCalibrationClient.__init__(self, node)
+
+	def parameter(self):
+		# This need to be set to image shift for other functions.
+		return 'image shift'
+
+	def retrieveLastImageScaleAdditions(self, tem, ccdcamera):
+		'''
+		get most recent calibrations at all mags
+		'''
+		caldatalist = self.researchImageScaleAddition(tem, ccdcamera, mag=None)
+		last = {}
+		for caldata in caldatalist:
+			try:
+				mag = caldata['magnification']
+				if mag not in last:
+					last[mag] = caldata
+			except NoCalibrationError:
+				pass
+			except:
+				raise RuntimeError('Failed retrieving last values')
+		return last.values()
+
+	def retrieveLastImageRotations(self, tem, ccdcamera):
+		'''
+		get most recent calibrations at all mags
+		'''
+		caldatalist = self.researchImageRotation(tem, ccdcamera, mag=None)
+		last = {}
+		for caldata in caldatalist:
+			try:
+				mag = caldata['magnification']
+				if mag not in last:
+					last[mag] = caldata
+			except NoCalibrationError:
+				pass
+			except:
+				raise RuntimeError('Failed retrieving last values')
+		return last.values()
+
+	def researchImageScaleAddition(self, tem, ccdcamera, mag=None, ht=None, probe=None):
+		queryinstance = leginondata.ImageScaleAdditionCalibrationData()
+		return self.researchCalibration(queryinstance, tem, ccdcamera, mag, ht, probe)
+
+	def researchImageRotation(self, tem, ccdcamera, mag=None, ht=None, probe=None):
+		queryinstance = leginondata.ImageRotationCalibrationData()
+		return self.researchCalibration(queryinstance, tem, ccdcamera, mag, ht, probe)
+
+	def researchCalibration(self, queryinstance, tem, ccdcamera, mag, ht, probe):
+		self.setDBInstruments(queryinstance,tem,ccdcamera)
+		if ht is None:
+			ht = self.instrument.tem.HighTension
+		if probe is None:
+			probe = self.instrument.tem.ProbeMode
+		queryinstance['magnification'] = mag
+		queryinstance['high tension'] = ht
+		queryinstance['probe'] = probe
+		caldatalist = self.node.research(datainstance=queryinstance, results=1)
+		return caldatalist
+
+	def retrieveImageRotation(self, tem, ccdcamera, mag, ht=None):
+		'''
+		finds the requested  using magnification
+		'''
+		caldatalist = self.researchImageRotation(tem, ccdcamera, mag, ht)
+		if caldatalist:
+			caldata = caldatalist[0]
+			self.node.logger.info('image rotation calibration dbid: %d' % caldata.dbid)
+			return caldata
+		else:
+			return []
+
+	def retrieveImageScaleAddition(self, tem, ccdcamera, mag, ht=None):
+		'''
+		finds the requested  using magnification
+		'''
+		caldatalist = self.researchImageScaleAddition(tem, ccdcamera, mag, ht)
+		if caldatalist:
+			caldata = caldatalist[0]
+			self.node.logger.info('image scale calibration dbid: %d' % caldata.dbid)
+			return caldata
+		else:
+			return []
+
+	def pixelToPixel(self, tem1, ccdcamera1, tem2, ccdcamera2, ht, mag1, mag2, p1):
+		'''
+		Using physical position as a global coordinate system, we can
+		do pixel to pixel transforms between mags.
+		This function will calculate a pixel vector at mag2, given
+		a pixel vector at mag1.
+		For image shift, this means: the physical image shift values in meters
+		need to be properly calibrated for this to work right
+		'''
+		par = self.parameter()
+		physicalpos = self.pixelToPosition(tem1,ccdcamera1, 'image shift', ht, mag1, p1)
+		# add an additional rotation in case the image shift axis is not consistent.
+		# This happens with high defocus.
+		physicalpos = self.rotatePosition(tem1,ccdcamera1,ht,mag1, physicalpos, False)
+		physicalpos = self.scalePosition(tem1,ccdcamera1,ht,mag1, physicalpos, False)
+		physicalpos = self.rotatePosition(tem2,ccdcamera2,ht,mag2, physicalpos, True)
+		physicalpos = self.scalePosition(tem2,ccdcamera2,ht,mag2, physicalpos, True)
+		p2 = self.positionToPixel(tem2,ccdcamera2, par, ht, mag2, physicalpos)
+		return p2
+
+	def rotatePosition(self, tem, ccdcamera, ht, mag, pixvect, invert=False):
+		try:
+			caldata = self.retrieveImageRotation(tem,ccdcamera,mag,ht)
+			a = caldata['rotation']
+		except:
+			a = 0.0
+		if invert:
+			a = -a
+		m = numpy.matrix([[math.cos(a),math.sin(a)],[-math.sin(a),math.cos(a)]])
+		pixvect = numpy.array(pixvect)
+		rotated_vect = numpy.dot(pixvect,numpy.asarray(m))
+		self.node.logger.info('Adjust for image rotation: rotate %s to %s' % (pixvect, rotated_vect))
+		return rotated_vect
+
+	def scalePosition(self, tem, ccdcamera, ht, mag, pixvect, invert=False):
+		a = 0.0
+		try:
+			caldata = self.retrieveImageScaleAddition(tem,ccdcamera,mag,ht)
+			a = caldata['scale addition']
+		except:
+			self.node.logger.info('No calibration')
+		scale = 1.0 + a
+		if invert:
+			scale = 1.0 / scale
+		pixvect = numpy.array(pixvect)
+		scaled_vect = scale * pixvect
+		self.node.logger.info('Adjust for image scale: %.4f' % (scale))
+		return scaled_vect
 
 class BeamShiftCalibrationClient(SimpleMatrixCalibrationClient):
 	mover = False
@@ -1343,26 +1662,27 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 		state[0]['stage position'] = {'a':0.0}
 		state[1]['stage position'] = {'a':-tilt_value}
 		state[2]['stage position'] = {'a':tilt_value}
-		## alpha backlash correction
-		self.instrument.tem.StagePosition = state[1]['stage position']
-		# make sure main screen is up since there is no failure in this function
-		self.instrument.tem.setMainScreenPosition('up')
+		try:
+			## alpha backlash correction
+			self.instrument.tem.StagePosition = state[1]['stage position']
+			# make sure main screen is up since there is no failure in this function
+			self.instrument.tem.setMainScreenPosition('up')
 
-		## do tilt and measure image shift
-		## move from state2, through 0, to state1 to remove backlash
-		self.instrument.tem.StagePosition = state[2]['stage position']
-		self.instrument.tem.StagePosition = state[0]['stage position']
-		im0 = self.acquireImage(state[0])
-		# measure the change from 0 to state1
-		shiftinfo[1] = self.measureScopeChange(im0, state[1], correlation_type=correlation_type, lp=1)
-		## move from state1, through 0, to state2 to remove backlash
-		self.instrument.tem.StagePosition = state[0]['stage position']
-		im0 = self.acquireImage(state[0])
-		# measure the change from 0 to state1
-		shiftinfo[2] = self.measureScopeChange(im0, state[2], correlation_type=correlation_type,lp=1)
-
-		# return to original
-		self.instrument.tem.StagePosition = {'a':orig_a}
+			## do tilt and measure image shift
+			## move from state2, through 0, to state1 to remove backlash
+			self.instrument.tem.StagePosition = state[2]['stage position']
+			self.instrument.tem.StagePosition = state[0]['stage position']
+			im0 = self.acquireImage(state[0])
+			# measure the change from 0 to state1
+			shiftinfo[1] = self.measureScopeChange(im0, state[1], correlation_type=correlation_type, lp=1)
+			## move from state1, through 0, to state2 to remove backlash
+			self.instrument.tem.StagePosition = state[0]['stage position']
+			im0 = self.acquireImage(state[0])
+			# measure the change from 0 to state1
+			shiftinfo[2] = self.measureScopeChange(im0, state[2], correlation_type=correlation_type,lp=1)
+		finally:
+			# return to original
+			self.instrument.tem.StagePosition = {'a':orig_a}
 
 		state[1] = shiftinfo[1]['next']['scope']
 		state[2] = shiftinfo[2]['next']['scope']
@@ -1558,7 +1878,7 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 			self.node.logger.info('acquiring tilt=0 degrees')
 			self.instrument.setData(state0)
 			time.sleep(0.5)
-			imagedata0 = self.node.acquireCorrectedCameraImageData()
+			imagedata0 = self.node.acquireCorrectedCameraImageData(force_no_frames=True)
 			im0 = imagedata0['image']
 			self.displayImage(im0)
 		else:
@@ -1569,7 +1889,7 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 		self.node.logger.info('acquiring tilt=%s degrees' % (tilt1deg))
 		self.instrument.setData(state1)
 		time.sleep(0.5)
-		imagedata1 = self.node.acquireCorrectedCameraImageData()
+		imagedata1 = self.node.acquireCorrectedCameraImageData(force_no_frames=True)
 		self.stagetiltcorrector.undo_tilt(imagedata1)
 		im1 = imagedata1['image']
 		self.displayImage(im1)
@@ -1623,7 +1943,7 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 			self.node.logger.info('acquiring tilt=0 degrees')
 			self.instrument.setData(state0)
 			time.sleep(0.5)
-			imagedata0 = self.node.acquireCorrectedCameraImageData()
+			imagedata0 = self.node.acquireCorrectedCameraImageData(force_no_frames=True)
 			im0 = imagedata0['image']
 			self.displayImage(im0)
 		else:
@@ -1640,7 +1960,7 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 		self.node.logger.info('acquiring tilt=%s degrees' % (tilt1deg))
 		self.instrument.setData(state1)
 		time.sleep(0.5)
-		imagedata1 = self.node.acquireCorrectedCameraImageData()
+		imagedata1 = self.node.acquireCorrectedCameraImageData(force_no_frames=True)
 		self.stagetiltcorrector.undo_tilt(imagedata1)
 		im1 = imagedata1['image']
 		self.displayImage(im1)

@@ -1,9 +1,9 @@
 #
 # COPYRIGHT:
-#       The Leginon software is Copyright 2003
-#       The Scripps Research Institute, La Jolla, CA
+#       The Leginon software is Copyright under
+#       Apache License, Version 2.0
 #       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
+#       see  http://leginon.org
 #
 
 import sinedon
@@ -408,6 +408,11 @@ class DBDataKeeper(object):
 		## check for any new columns that have not been created
 		if table not in self.columns_created:
 			self.columns_created[table] = {}
+		# FIX ME: columns_created need to be initializaed. Otherwise the
+		# first time this is called will always want to create table
+		# even though the table does exist.
+		if table not in columns_created:
+			columns_created[table] = {}
 		fields = [d['Field'] for d in definition]
 		for field in formatedData.keys():
 			if field not in fields:

@@ -1,13 +1,14 @@
 #
 # COPYRIGHT:
-#       The Leginon software is Copyright 2003
-#       The Scripps Research Institute, La Jolla, CA
+#       The Leginon software is Copyright under
+#       Apache License, Version 2.0
 #       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
+#       see  http://leginon.org
 #
 
 import calibrationclient
 from leginon import leginondata
+from leginon import project
 import event
 import instrument
 import imagewatcher
@@ -15,7 +16,7 @@ import mosaic
 import threading
 import node
 import targethandler
-from pyami import convolver, imagefun, mrc, ordereddict
+from pyami import convolver, imagefun, mrc, ordereddict, affine
 import numpy
 import pyami.quietscipy
 import scipy.ndimage as nd
@@ -70,8 +71,9 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 	})
 
 	eventoutputs = targetfinder.ClickTargetFinder.eventoutputs + [event.MosaicDoneEvent]
+	targetnames = ['acquisition','focus','preview','reference','done','Blobs']
 	def __init__(self, id, session, managerlocation, **kwargs):
-		self.mosaicselectionmapping = {}
+		self.mosaicselections = {}
 		targetfinder.ClickTargetFinder.__init__(self, id, session, managerlocation, **kwargs)
 		self.calclients = {
 			'image shift': calibrationclient.ImageShiftCalibrationClient(self),
@@ -87,8 +89,11 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		}
 		parameter = self.settings['calibration parameter']
 		self.mosaic = mosaic.EMMosaic(self.calclients[parameter])
+		self.oldmosaic = mosaic.EMMosaic(self.calclients[parameter])
 		self.mosaicimagelist = None
+		self.oldmosaicimagelist = None
 		self.mosaicimage = None
+		self.mosaicname = None
 		self.mosaicimagescale = None
 		self.mosaicimagedata = None
 		self.convolver = convolver.Convolver()
@@ -97,6 +102,8 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.presetsclient = presets.PresetsClient(self)
 
 		self.mosaic.setCalibrationClient(self.calclients[parameter])
+		self.oldmosaic.setCalibrationClient(self.calclients[parameter])
+		self.oldsession = self.session
 
 		self.existing_targets = {}
 		self.clearTiles()
@@ -106,32 +113,51 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		if self.__class__ == MosaicClickTargetFinder:
 			self.start()
 
+	def insertDoneTargetList(self, targetlistdata):
+		# this class targetlist must not be recorded done so that
+		# more targets can be added to it
+		self.logger.debug('%s did not insert done on %d' % (self.name,targetlistdata.dbid))
+		pass
+
 	# not complete
 	def handleTargetListDone(self, targetlistdoneevent):
 		if self.settings['create on tile change'] == 'final':
 			self.logger.debug('create final')
 			self.createMosaicImage()
 			self.logger.debug('done create final')
+		# trigger activation of submit button in the gui.
+		self.panel.doneTargetList()
 
 	def getTargetDataList(self, typename):
+		'''
+		Get positions of the typename targets from atlas, publish the new ones,
+		and then update self.existing_position_targets with the published one added.
+		'''
 		displayedtargetdata = {}
-		targetsfromimage = self.panel.getTargetPositions(typename)
-		for t in targetsfromimage:
-			## if displayed previously (not clicked)...
-			if t in self.displayedtargetdata and self.displayedtargetdata[t]:
-				targetdata = self.displayedtargetdata[t].pop()
+		try:
+			target_positions_from_image = self.panel.getTargetPositions(typename)
+		except ValueError:
+			return
+		for coord_tuple in target_positions_from_image:
+			##  check if it is an existing position with database target.
+			if coord_tuple in self.existing_position_targets and self.existing_position_targets[coord_tuple]:
+				# pop so that it has a smaller dictionary to check
+				targetdata = self.existing_position_targets[coord_tuple].pop()
 			else:
-				c,r = t
+				# This is a new position, publish it
+				c,r = coord_tuple
 				targetdata = self.mosaicToTarget(typename, r, c)
-			if t not in displayedtargetdata:
-				displayedtargetdata[t] = []
-			displayedtargetdata[t].append(targetdata)
-		self.displayedtargetdata = displayedtargetdata
+			if coord_tuple not in displayedtargetdata:
+				displayedtargetdata[coord_tuple] = []
+			displayedtargetdata[coord_tuple].append(targetdata)
+		# update self.existing_position_targets,  This is still a bit strange.
+		for coord_tuple in displayedtargetdata:
+			self.existing_position_targets[coord_tuple] = displayedtargetdata[coord_tuple]
 
 	def getDisplayedReferenceTarget(self):
 		try:
 			column, row = self.panel.getTargetPositions('reference')[-1]
-		except IndexError:
+		except (IndexError, ValueError) as e:
 			return None
 		imagedata, delta_row, delta_column = self._mosaicToTarget(row, column)
 		return self.newReferenceTarget(imagedata, delta_row, delta_column)
@@ -140,6 +166,8 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.userpause.set()
 		try:
 			if self.settings['autofinder']:
+				# trigger onTargetsSubmitted in the gui.
+				self.panel.targetsSubmitted()
 				return
 		except:
 			pass
@@ -148,6 +176,17 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 			self.targetlist = self.newTargetList()
 			self.publish(self.targetlist, database=True, dbforce=True)
 
+		if self.hasNewImageVersion():
+			self.logger.error('New version of images were acquired after this atlas is generated')
+			self.logger.error('You must refresh the map and repick the targets')
+			# trigger onTargetsSubmitted in the gui.
+			self.panel.targetsSubmitted()
+			return
+
+		# self.existing_position_targets becomes empty on the second
+		# submit if not refreshed. 
+		self.refreshDatabaseDisplayedTargets()
+		# create target list
 		self.logger.info('Submitting targets...')
 		self.getTargetDataList('acquisition')
 		self.getTargetDataList('focus')
@@ -157,7 +196,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		except node.PublishError, e:
 			self.logger.error('Submitting acquisition targets failed')
 		else:
-			self.logger.info('Acquisition targets submitted')
+			self.logger.info('Acquisition targets submitted on %s' % self.getMosaicLabel())
 
 		reference_target = self.getDisplayedReferenceTarget()
 		if reference_target is not None:
@@ -166,7 +205,10 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 			except node.PublishError, e:
 				self.logger.error('Submitting reference target failed')
 			else:
-				self.logger.info('Reference target submitted')
+				self.logger.info('Reference target submitted on %s' % self.getMosaicLabel())
+		self.logger.info('Done target submission')
+		# trigger onTargetsSubmitted in the gui.
+		self.panel.targetsSubmitted()
 
 	def clearTiles(self):
 		self.tilemap = {}
@@ -188,17 +230,26 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		newtile = self.mosaic.addTile(imagedata)
 		self.tilemap[imid] = newtile
 		self.imagemap[imid] = imagedata
-		self.targetmap[imid] = {}
-		for type in ('acquisition','focus'):
-			targets = self.researchTargets(image=imagedata, type=type)
-			if targets and self.targetlist is None:
-				self.targetlist = targets[0]['list']
-			self.targetmap[imid][type] = targets
+		self.targetlist, onetargetmap = self._makeTargetMap(imagedata, self.targetlist)
+		self.targetmap[imid] = onetargetmap
 		self.logger.info('Image added to mosaic')
 		if self.targetlist:
 			self.logger.debug('add tile targetlist %d' % (self.targetlist.dbid,))
 			self.logger.debug( 'add tile, imid %d %s' % (imid, imagedata['filename']))
 			self.logger.debug( 'add targetmap %d'% (len(self.targetmap[imid]['acquisition']),))
+
+	def _makeTargetMap(self, imagedata, targetlist=None):
+		'''
+		Make targetmap on the input targetlist
+		'''
+		onetargetmap = {}
+		for type in ('acquisition','focus'):
+			targets = self.researchTargets(image=imagedata, type=type)
+			if targets and targetlist is None:
+				# targetlist that of the first target of the first imagedata.
+				targetlist = targets[0]['list']
+			onetargetmap[type] = targets
+		return targetlist, onetargetmap
 
 	def hasNewImageVersion(self):
 		for id, imagedata in self.imagemap.items():
@@ -208,6 +259,9 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		return False
 
 	def targetsFromDatabase(self):
+		'''
+		This function sets the most recent version of the targets in targetmap and reference target.
+		'''
 		for id, imagedata in self.imagemap.items():
 			recent_imagedata = self.researchImages(list=imagedata['list'],target=imagedata['target'])[-1]
 			self.targetmap[id] = {}
@@ -256,7 +310,58 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		### this is a list of targets, in this case, one target
 		self.currentposition = [vcoord]
 
+	def refreshDatabaseDisplayedTargets(self):
+		self.logger.info('Getting targets from database...')
+		if not self.hasNewImageVersion():
+			self.targetsFromDatabase()
+		else:
+			self.logger.error('Can not refresh with new image version')
+		# refresh but not set display.  Thefefore does not care about the returned values
+		self.createExistingPositionTargets()
+
+	def createExistingPositionTargets(self):
+		# start fresh
+		self.existing_position_targets, targets, donetargets = self._createExistingPositionTargets(self.targetmap, self.tilemap, self.mosaic)
+		return targets, donetargets
+
+	def _createExistingPositionTargets(self,targetmap, tilemap, mosaic_instance):
+		existing_position_targets = {}
+		targets = {}
+		donetargets = []
+		donedict = {}
+		for ttype in ('acquisition','focus'):
+			targets[ttype] = []
+			for id, targetlists in targetmap.items():
+				if ttype not in targetlists.keys():
+					targetlist = []
+				else:
+					targetlist = targetlists[ttype]
+				for targetdata in targetlist:
+					tile = tilemap[id]
+					#tilepos = self.mosaic.getTilePosition(tile)
+					r,c = self._targetToMosaic(tile, targetdata, mosaic_instance)
+					vcoord = c,r
+					if vcoord not in existing_position_targets:
+						# a position without saved target as default.
+						existing_position_targets[vcoord] = []
+					if targetdata['status'] in ('done', 'aborted'):
+						existing_position_targets[vcoord].append(targetdata)
+						donedict[targetdata['number']]=vcoord
+					elif targetdata['status'] in ('new','processing'):
+						existing_position_targets[vcoord].append(targetdata)
+						targets[ttype].append(vcoord)
+					else:
+						# other status ignored (mainly NULL)
+						pass
+		# sort donetargets by target number
+		donekeys = donedict.keys()
+		donekeys.sort()
+		for k in donekeys:
+			donetargets.append(donedict[k])
+		return existing_position_targets, targets, donetargets
+
 	def displayDatabaseTargets(self):
+
 		self.logger.info('Getting targets from database...')
 		if not self.hasNewImageVersion():
 			self.targetsFromDatabase()
@@ -273,29 +378,10 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		if self.__class__ != MosaicClickTargetFinder:
 			self.setTargets([], 'region')
 
-		self.displayedtargetdata = {}
-		targets = {}
-		for type in ('acquisition','focus'):
-			targets[type] = []
-			for id, targetlists in self.targetmap.items():
-				targetlist = targetlists[type]
-				for targetdata in targetlist:
-					tile = self.tilemap[id]
-					#tilepos = self.mosaic.getTilePosition(tile)
-					r,c = self.targetToMosaic(tile, targetdata)
-					vcoord = c,r
-					if vcoord not in self.displayedtargetdata:
-						self.displayedtargetdata[vcoord] = []
-					if targetdata['status'] in ('done', 'aborted'):
-						donetargets.append(vcoord)
-						self.displayedtargetdata[vcoord].append(targetdata)
-					elif targetdata['status'] in ('new','processing'):
-						targets[type].append(vcoord)
-						self.displayedtargetdata[vcoord].append(targetdata)
-					else:
-						# other status ignored (mainly NULL)
-						pass
-			self.setTargets(targets[type], type)
+		#
+		targets, donetargets = self.createExistingPositionTargets()
+		for ttype in targets.keys():
+			self.setTargets(targets[ttype], ttype)
 		self.setTargets(donetargets, 'done')
 
 		# ...
@@ -329,6 +415,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		if self.mosaicimagelist and self.mosaicimagelist['targets'] is targetlist:
 			### same targetlist we got before
 			self.logger.debug('same targets')
+			self.setMosaicName(targetlist)
 			return self.mosaicimagelist
 		self.logger.debug('new image list data')
 
@@ -371,7 +458,8 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.logger.debug('Image data processed')
 
 	def hasMosaicImage(self):
-		if None in (self.mosaicimage, self.mosaicimagescale):
+		
+		if self.mosaicimage is None or  self.mosaicimagescale is None:
 			return False
 		return True
 
@@ -396,56 +484,77 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.mosaicimagedata = mosaicimagedata
 		self.logger.info('Mosaic saved')
 
-	def researchMosaicTileData(self):
-		tilequery = leginondata.MosaicTileData(session=self.session, list=leginondata.ImageListData())
+	def _researchMosaicTileData(self,imagelist=None, session=None):
+		if session is None:
+			session = self.session
+		tilequery = leginondata.MosaicTileData(session=session, list=imagelist)
 		mosaictiles = self.research(datainstance=tilequery)
-		mosaiclists = ordereddict.OrderedDict()
-		for tile in mosaictiles:
-			list = tile['list']
-			label = '(no label)'
-			if list['targets'] is not None:
-				if list['targets']['label']:
-					label = list['targets']['label']
-			key = '%s:  %s' % (list.dbid, label)
-			if key not in mosaiclists:
-				mosaiclists[key] = []
-			mosaiclists[key].append(tile)
-		self.mosaicselectionmapping = mosaiclists
-		return mosaiclists
+		return mosaictiles
+
+	def researchMosaicTileData(self,imagelist=None):
+		tiles = self._researchMosaicTileData(imagelist)
+		self.mosaicselections =  self.makeMosaicSelectionsFromTiles(tiles)
+
+	def makeMosaicSelectionsFromTiles(self, tiles):
+		mosaiclist = ordereddict.OrderedDict()
+		for tile in tiles:
+			imglist = tile['list']
+			key = self.makeMosaicNameFromImageList(imglist)
+			if key not in mosaiclist:
+				mosaiclist[key] = imglist
+		return mosaiclist
 
 	def getMosaicNames(self):
 		self.researchMosaicTileData()
-		return self.mosaicselectionmapping.keys()
+		return self.mosaicselections.keys()
 
 	def setMosaicName(self, mosaicname):
 		self.mosaicname = mosaicname
 
 	def setMosaicNameFromImageList(self,list):
-		label = '(no label)'
-		if list['targets'] is not None:
-			if list['targets']['label']:
-				label = list['targets']['label']
-		key = '%s:  %s' % (list.dbid, label)
+		key = self.makeMosaicNameFromImageList(list)
 		self.setMosaicName(key)
 
+	def makeMosaicNameFromImageList(self,imglist):
+		label = '(no label)'
+		if imglist['targets'] is not None:
+			if imglist['targets']['label']:
+				label = imglist['targets']['label']
+			elif imglist['targets']['image'] and imglist['targets']['image']['preset'] and imglist['targets']['image']['target']:
+				label = '%d%s' % (imglist['targets']['image']['target']['number'],imglist['targets']['image']['preset']['name'])
+		key = '%s:  %s' % (imglist.dbid, label)
+		return key
+
+	def getMosaicLabel(self):
+		bits = self.getMosaicName().split(':')
+		label = ':'.join(bits[1:]).strip()
+		return label
+
 	def getMosaicName(self):
+		'''
+		return a name that has both image list dbid and label in this format: dbid: label
+		'''
 		return self.mosaicname
+
+	def getMosaicTiles(self, mosaicname):
+		return tiles
 
 	def loadMosaicTiles(self, mosaicname):
 		self.logger.info('Clearing mosaic')
 		self.clearTiles()
 		self.logger.info('Loading mosaic images')
 		try:
-			tiles = self.mosaicselectionmapping[mosaicname]
+			tile_imagelist = self.mosaicselections[mosaicname]
 		except KeyError:
 			# new inbound mosaic is not in selectionmapping. Refresh the list and try again
 			self.researchMosaicTileData()
-			if mosaicname not in self.mosaicselectionmapping.keys():
+			if mosaicname not in self.mosaicselections.keys():
 				raise ValueError
 			else:
-				tiles = self.mosaicselectionmapping[mosaicname]
-		self.mosaicimagelist = tiles[0]['list']
+				tile_imagelist = self.mosaicselections[mosaicname]
+		self.mosaicimagelist = tile_imagelist
 		mosaicsession = self.mosaicimagelist['session']
+		tiles = self._researchMosaicTileData(tile_imagelist)
 		ntotal = len(tiles)
 		if not ntotal:
 			self.logger.info('no tiles in selected list')
@@ -462,12 +571,16 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 			self.createMosaicImage()
 
 	def targetToMosaic(self, tile, targetdata):
+		scalepos = self._targetToMosaic(tile, targetdata, self.mosaic)
+		return scalepos
+
+	def _targetToMosaic(self, tile, targetdata, mosaic_instance):
 		shape = tile.image.shape
 		drow = targetdata['delta row']
 		dcol = targetdata['delta column']
 		tilepos = drow+shape[0]/2, dcol+shape[1]/2
-		mospos = self.mosaic.tile2mosaic(tile, tilepos)
-		scaledpos = self.mosaic.scaled(mospos)
+		mospos = mosaic_instance.tile2mosaic(tile, tilepos)
+		scaledpos = mosaic_instance.scaled(mospos)
 		return scaledpos
 
 	def scaleToMosaic(self, d):
@@ -480,16 +593,25 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		return scaledpos
 
 	def _mosaicToTarget(self, row, col):
+		'''
+		Convert mosaic position to target position on a tile image.
+		'''
+		return self._mosaicToTargetOnMosaic(row, col, self.mosaic)
+
+	def _mosaicToTargetOnMosaic(self, row, col, mosaic_instance):
 		self.logger.debug('mosaicToTarget r %s, c %s' % (row, col))
-		unscaled = self.mosaic.unscaled((row,col))
-		tile, pos = self.mosaic.mosaic2tile(unscaled)
+		unscaled = mosaic_instance.unscaled((row,col))
+		tile, pos = mosaic_instance.mosaic2tile(unscaled)
 		shape = tile.image.shape
 		drow,dcol = pos[0]-shape[0]/2.0, pos[1]-shape[1]/2.0
 		imagedata = tile.imagedata
 		self.logger.debug('target tile image: %s, pos: %s' % (imagedata.dbid,pos))
 		return imagedata, drow, dcol
 
-	def mosaicToTarget(self, typename, row, col):
+	def mosaicToTarget(self, typename, row, col, **kwargs):
+		'''
+		Convert and publish the mosaic position to targetdata of the tile image.
+		'''
 		imagedata, drow, dcol = self._mosaicToTarget(row, col)
 		### create a new target list if we don't have one already
 		'''
@@ -499,7 +621,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		'''
 		# publish as targets on most recent version of image to preserve adjusted z
 		recent_imagedata = self.researchImages(list=imagedata['list'],target=imagedata['target'])[-1]
-		targetdata = self.newTargetForTile(recent_imagedata, drow, dcol, type=typename, list=self.targetlist)
+		targetdata = self.newTargetForTile(recent_imagedata, drow, dcol, type=typename, list=self.targetlist, **kwargs)
 		## can we do dbforce here?  it might speed it up
 		self.publish(targetdata, database=True)
 		return targetdata
@@ -541,6 +663,157 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		calclient = self.calclients[self.settings['calibration parameter']]
 		self.mosaic.setCalibrationClient(calclient)
 
+	#=============Target Transfer Aligner==============
+	def researchAlignerOldMosaicTileData(self):
+		'''
+		Make a dictionary of old mosaic tiles for each image list
+		'''
+		# TO DO: gui and mechanism for selecting from an older session.
+		if self.oldsession.dbid == self.session.dbid:
+			self.oldmosaicselections = self.mosaicselections
+		else:
+			all_oldtiles = self._researchMosaicTileData(None, self.oldsession)
+			self.oldmosaicselections = self.makeMosaicSelectionsFromTiles(all_oldtiles)
+
+	def getAlignerOldMosaicNames(self):
+		'''
+		Get names of old mosaic for gui.
+		'''
+		self.researchAlignerOldMosaicTileData()
+		return self.oldmosaicselections.keys()
+
+	def setAlignerOldMosaic(self, mosaicname):
+		'''
+		Set old mosaic which has done targets to be transferred.
+		'''
+		self.oldtargetlist = None
+		self.oldtargetmap = {}
+		self.oldtilemap = {}
+		self.oldmosaic.clear()
+		self.Affine_matrix = None
+		tile_imagelist = self.oldmosaicselections[mosaicname]
+		self.oldmosaicimagelist = tile_imagelist
+		# specify session based on tile_imagelist
+		tiles = self._researchMosaicTileData(tile_imagelist, tile_imagelist['session'])
+		for i, tile in enumerate(tiles):
+			imagedata = tile['image']
+			added_tile = self.oldmosaic.addTile(imagedata)
+			imid = imagedata.dbid
+			self.oldtilemap[imid] = added_tile
+			self.oldtargetlist, onetargetmap = self._makeTargetMap(imagedata, self.oldtargetlist)
+			self.oldtargetmap[imid] = onetargetmap
+
+	def getAlignerOldMosaicImage(self):
+		calclient = self.calclients[self.settings['calibration parameter']]
+		self.oldmosaic.setCalibrationClient(calclient)
+		maxdim = self.mosaicimagescale
+		mosaicimage = self.oldmosaic.getMosaicImage(maxdim)
+		return mosaicimage
+
+	def getAlignerNewMosaicImage(self):
+		mosaicimage = self.mosaicimage
+		return mosaicimage
+
+	def getAlignerOldTargets(self):		
+		existing_old_targets, targets, donetargets = self._createExistingPositionTargets(self.oldtargetmap, self.oldtilemap, self.oldmosaic)
+		# only transfer done targets for now.
+		return donetargets
+
+	def calculateTransform(self, targets1, targets2):
+		'''
+		Calculate Affine transformation matrix from list of matching points.
+		'''
+		points1 = map((lambda t: (t.x,t.y)),targets1)
+		points2 = map((lambda t: (t.x,t.y)),targets2)
+		if len(points1) < 3:
+			A = numpy.matrix([(1,0,0),(0,1,0),(0,0,1)])
+			residule = 0.0
+		else:
+			A, residule = affine.solveAffineMatrixFromImageTargets(points1,points2)
+		self.Affine_matrix = A
+		return A, residule
+
+	def transformTargets(self, affine_matrix, targets1):
+		'''
+		Transform targets with affine matrix
+		'''
+		if not targets1:
+			return []
+		points1 = map((lambda t: (t.x,t.y)),targets1)
+		points2 = affine.transformImageTargets(affine_matrix, points1)
+		return points2
+
+	def saveAlignerNewTargets(self, targets):
+		'''
+		Save transferred targets on the new mosaic.
+		'''
+		if self.targetlist is None:
+			self.targetlist = self.newTargetList()
+			self.publish(self.targetlist, database=True, dbforce=True)
+
+		for t in targets:
+			col = t.x
+			row = t.y
+			# by using the returned new target, it makes sure the transaction is completed.
+			newtarget = self.mosaicToTarget('acquisition', row, col, status='new')
+			self.mosaicToTarget('acquisition', row, col, number=newtarget['number'],status='done')
+
+	def saveTransform(self):
+		q = leginondata.MosaicTransformMatrixData(session=self.session)
+		q['imagelist1'] = self.oldmosaicimagelist
+		q['imagelist2'] = self.mosaicimagelist
+		q['move type'] = self.settings['calibration parameter']
+		q['matrix'] = self.Affine_matrix
+		q.insert()
+
+	def showScaleRotationFromTransform(self):
+		'''
+		Show in logger the scale and rotation obtained.
+		TODO: take into account mosaic formation and get scale.
+		'''
+		m = self.Affine_matrix
+		rotation_radians = math.atan2(m[(0,1)],m[(0,0)])
+		self.logger.info('Affine transform rotation to apply on old atlas is %.1f degrees' % (math.degrees(rotation_radians)))
+
+	def acceptResults(self, targets):
+		self.saveAlignerNewTargets(targets)
+		self.saveTransform()
+		self.displayDatabaseTargets()
+		self.showScaleRotationFromTransform()
+
+	def getAlignerNewSessionKey(self):
+		'''
+		Return this session key as a fake entry for gui so it aligns with
+		the old one.
+		'''
+		s = self.session
+		k = '%6d: %s' % (s.dbid, s['name'])
+		return k
+
+	def getAlignerOldSessionKeys(self):
+		'''
+		Returns all session keys in the project for selection and the current session
+		'''
+		p = project.ProjectData()
+		self.projectid = p.getProjectId(self.session)
+		self.projectsessions = p.getSessionsFromProjectId(self.projectid)
+		self.oldsession_selections = {}
+		for s in self.projectsessions:
+			k = '%6d: %s' % (s.dbid, s['name'])
+			self.oldsession_selections[k] = s
+		selection_keys = list(self.oldsession_selections)
+		selection_keys.sort()
+		selection_keys.reverse()
+		return selection_keys, '%6d: %s' % (self.session.dbid, self.session['name'])
+
+	def onSelectOldSession(self, session_key):
+		'''
+		Called from gui when a session key is selected.
+		'''
+		self.oldsession = self.oldsession_selections[session_key]
+		return self.getAlignerOldMosaicNames()
+
+	#=============Target Finding==============
 	def storeSquareFinderPrefs(self):
 		prefs = leginondata.SquareFinderPrefsData()
 		prefs['image'] = self.mosaicimagedata
@@ -586,6 +859,11 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 																self.settings['blobs']['max size'],
 																self.settings['blobs']['min size'])
 
+		# show blob target and stats
+		targets = self.blobStatsTargets(blobs)
+		self.logger.info('Number of blobs: %s' % (len(targets),))
+		self.setTargets(targets, 'Blobs')
+
 		## use stats to find good ones
 		mean_min = self.settings['blobs']['min mean']
 		mean_max = self.settings['blobs']['max mean']
@@ -594,6 +872,9 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		targets = []
 		prefs = self.storeSquareFinderPrefs()
 		rows, columns = image.shape
+		if blobs:
+			blob_sizes = numpy.array(map((lambda x: x.stats['n']),blobs))
+			self.logger.info('Mean blob size is %.1f' % ( blob_sizes.mean(),))
 		for blob in blobs:
 			row = blob.stats['center'][0]
 			column = blob.stats['center'][1]

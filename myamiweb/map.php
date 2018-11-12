@@ -54,7 +54,14 @@ $imgbinning = $dimx / $imgwidth;
 $imgmapwidth=128;
 $mapframe_size=$imgmapwidth;
 $mapxyDim = $imageUtil->imageFitIn($dimx, $dimy, $mapframe_size);
-$imgmapheight = $mapxyDim[1];
+if (!$fftflag) {
+	$imgmapheight = (int) $imgmapwidth*$imgheight/$imgwidth;
+} else {
+	//hack to get the right height
+	$imgheight = max($xyDim);
+	$imgmapheight = max($mapxyDim);
+}
+//detail-image vs mini-map
 $ratio = $imgwidth/$imgmapwidth;
 
 // --- for colored images display area in black
@@ -62,6 +69,10 @@ $areacolor = ($_GET['gr']=="spectrum") ? "#000000" : "#00FF00";
 
 // --- set scale
 $iscache = ($lj) ? true:false;
+
+// This is a hack to make default binning and default binorder (a) works
+$prefftxyDim = array($imginfo['dimx'],$imginfo['dimy']);
+
 $display_pixelsize = $imageUtil->getDisplayPixelSize($imginfo['pixelsize'],$imginfo['binning'],$imginfo['dimx'],$imgwidth,$fftflag,$binorder,$prefftxyDim[0],$iscache);
 $filename = $imginfo['filename'];
 //image width is used as the first factor to determine display size
@@ -76,18 +87,22 @@ MAP: <?php echo $filename; ?>
 <script language="javascript" src="js/draglayer.js"></script>
 <script language="javascript" src="js/cross.js"></script>
 <script language="javascript" src="js/scale.js"></script>
-<script>
-var filename="<?=$filename; ?>"
-var pixsize ="<?=$display_pixelsize; ?>"
-var fftflag="<?=$fftflag; ?>"
+<script type="text/javascript">
+var filename="<?php echo $filename; ?>"
 
-var jssize=<?=$imgwidth; ?>
+var pixsize=<?php echo $display_pixelsize; ?>;
 
-var jsimgheight=<?=$imgheight; ?>
+var fftflag=<?php echo $fftflag; ?>
 
-var jsmapsize = <?=$imgmapwidth; ?>
+var jssize=<?php echo $imgwidth; ?>
 
-var ratio=<?=$ratio; ?>
+var jsimgheight=<?php echo $imgheight; ?>
+
+var jsmapwidth=<?php echo $imgmapwidth; ?>
+
+var jsmapheight=<?php echo $imgmapheight; ?>
+
+var ratio=<?php echo $ratio; ?>
 
 var mx=0
 var my=0
@@ -270,8 +285,8 @@ function areamousemove(e)
 function setArea(e) {
 		aw = getAreaWidth()
 		ah = getAreaHeight()
-		maxw = jsmapsize-aw-1
-		maxh = jsmapsize-ah-1
+		maxw = jsmapwidth-aw-1
+		maxh = jsmapheight-ah-1
 		nx = e.clientX-sldMouseLeft
 		ny = e.clientY-sldMouseTop
 		nx = (nx>maxw)? maxw : nx
@@ -295,8 +310,8 @@ function updateArea() {
 
 	aw = Math.round(ww/ratio)
 	ah = Math.round(wh/ratio)
-	maxw = jsmapsize-2
-	maxh = jsmapsize-2
+	maxw = jsmapwidth-2
+	maxh = jsmapheight-2
 	aw = (aw>maxw) ? maxw : aw
 	ah = (ah>maxh) ? maxh : ah
   setAreaWidth(aw)
@@ -387,13 +402,13 @@ function getDistance() {
 		style="z-index:2; position:absolute; left:0px; top:0px; background-color:rgb(0,0,0); border: 1px solid #000000;" > 
 	<div
 		id="divarea"
-		style="z-index:99;position:absolute;visibility:hidden;width:0px; height:0px;border:1px dashed <?=$areacolor?>;cursor:move;background-color:transparent)"
+		style="z-index:99;position:absolute;visibility:hidden;width:0px; height:0px;border:1px dashed <?php echo $areacolor?>;cursor:move;background-color:transparent)"
 		onmousedown	= "areamousedown(event)"
 		onmouseup		= "areamouseup(event)"
 		onmousemove = "areamousemove(event)"
 		onmouseout	= "areamouseup(event)"
 	></div>
-	<div id="imgmap" style="position:relative; height:<?=$imgmapheight?>px; width:<?=$imgmapwidth?>px; background:url('<?=$imgmapsrc?>')"
+	<div id="imgmap" style="position:relative; height:<?php echo $imgmapheight?>px; width:<?php echo $imgmapwidth?>px; background:url('<?php echo $imgmapsrc?>')"
 		onmousemove = "areamousemove(event)"
 		onmousedown	= "imgmapmousedown(event)" ></div>
 	<div	id="divcoord"
@@ -411,7 +426,7 @@ function getDistance() {
 </div>
 </div>
 <div id="divimg" style="z-index:1; position:absolute; width:100%; height:100%; overflow:auto;cursor:crosshair; ">
-<div id="img" style="position:absolute; top:0px; left:0px; width:<?=$imgwidth;?>px; height:<?=$imgheight;?>; background:url('<?php echo $imgsrc; ?>')"
+<div id="img" style="position:absolute; top:0px; left:0px; width:<?php echo $imgwidth; ?>px; height:<?php echo $imgheight; ?>; background:url('<?php echo $imgsrc; ?>')"
 	onmousemove	=	"imgmousemove(event)";
 	onmousedown	=	"imgmousedown(event)";
 	onmouseup		=	"imgmouseup(event)";

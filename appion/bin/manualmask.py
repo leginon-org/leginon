@@ -314,12 +314,14 @@ class ManualPicker(filterLoop.FilterLoop):
 			
 			maskimg,maskbin = apMask.makeInspectedMask( sessiondata, maskAssessRunName, imgdata )
 			if maskimg is not None and maskimg.size:
-				apDisplay.printMsg("Skipping image with accepted mask region.")
+				apDisplay.printWarning("Skipping %s with accepted mask region." % filename)
 				maskimg = apMask.reshapeMask( imgdata['image'], maskimg )
 				self.maskimg = maskimg
 				self.image = imgdata['image']
 				self.useAcceptedMask = True
 				self.commitToDatabase(imgdata)
+				# write to donedict and print summary etc.
+				self.finishLoopOneImage(imgdata)
 				continue
 			
 			imgpath = os.path.join(self.params['rundir'], imgdata['filename']+'.dwn.mrc')

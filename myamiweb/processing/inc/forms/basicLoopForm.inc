@@ -1,10 +1,10 @@
 <?php
 
 /**
- *	The Leginon software is Copyright 2003 
- *	The Scripps Research Institute, La Jolla, CA
+ *	The Leginon software is Copyright under 
+ *	Apache License, Version 2.0
  *	For terms of the license agreement
- *	see  http://ami.scripps.edu/software/leginon-license
+ *	see  http://leginon.org
  */
 
 //--------------------------------------------------------------------------------------
@@ -20,9 +20,9 @@ require_once "inc/forms/runParametersForm.inc";
 class BasicLoopForm extends BasicLayoutForm
 {
 
-	function __construct( $expId, $extraHTML='' ) 
+	function __construct( $expId, $errorHTML='', $infoHTML='' ) 
 	{
-		parent::__construct($expId, $extraHTML);	
+		parent::__construct($expId, $errorHTML, $infoHTML);	
 	}
 	
 	// Override this to output the html required to display program specific parameters
@@ -49,9 +49,12 @@ class BasicLoopForm extends BasicLayoutForm
 		// Get the max tilt angle which determines if the tilt angle select control is displayed
 		$particle = new particledata();
 		$maxang = $particle->getMaxTiltAngle( $this->expId );	
-		
+
+		// Set nowait according to the timestamp of the most recent non-processed image
+		$nowait_default =  $particle->isSessionRunning( $this->expId );
+
 		// Add the Appion Loop Form
-		$appionLoopTable = new AppionLoopTable( $checkimage='unrejected', $nowait='', $imgorder='normal', $limit='',$tiltangle='', $maxtiltangle=$maxang, $apcontinue='1',
+		$appionLoopTable = new AppionLoopTable( $checkimage='unrejected', $nowait=$nowait_default, $imgorder='normal', $limit='',$tiltangle='', $maxtiltangle=$maxang, $apcontinue='1',
 		$commit='on', $presetList=$presetList, $preset="en", $testimage='', $testfilename='' );
 		
 		// Only hide advanced parameters if there is not an advanced user logged in.

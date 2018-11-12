@@ -5,12 +5,13 @@ import numpy
 import datetime
 from pyami import mrc,imagefun
 from leginon import leginondata,ddinfo
-from appionlib import apDDprocess,apDisplay
+from appionlib import apDisplay,apDDprocess
 
 # testing options
 save_jpg = False
 debug = False
 ddtype = 'thin'
+
 
 class AppionCamFrameProcessing(apDDprocess.DDFrameProcessing):
 	'''
@@ -22,6 +23,9 @@ class AppionCamFrameProcessing(apDDprocess.DDFrameProcessing):
 		self.correct_dark_gain = True
 		self.correct_frame_mask = False
 		
+	def hasNonZeroDark(self):
+		return False
+
 	def setCycleReferenceChannels(self, value=False):
 		# Force cycle_ref_channels to False
 		self.cycle_ref_channels = False
@@ -36,12 +40,18 @@ class AppionCamFrameProcessing(apDDprocess.DDFrameProcessing):
 	def getUsedFramesFromImageData(self,imagedata):
 		return range(self.getNumberOfFrameSavedFromImageData(imagedata))
 
+	def getSessionFramePathFromImage(self, imagedata):
+		# Forcing a particular path
+		if self.getForcedFrameSessionPath():
+			return self.getForcedFrameSessionPath()
+		return imagedata['session']['frame path']
+
 	def getRawFrameDirFromImage(self,imagedata):
 		'''
 		Uploaded raw frames are saved as image stack for feeding into gpu program.
 		RawFrameDir here is actually the filename with mrc extension.
 		'''
-		rawframe_basepath = imagedata['session']['frame path']
+		rawframe_basepath = self.getSessionFramePathFromImage(imagedata)
 		# frame stackfile is image filename plus '.frames.mrc'
 		rawframedir = os.path.join(rawframe_basepath,'%s.frames.mrc' % imagedata['filename'])
 		if not self.waitForPathExist(rawframedir,30):

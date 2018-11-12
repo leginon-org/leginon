@@ -1,9 +1,9 @@
 #
 # COPYRIGHT:
-#       The Leginon software is Copyright 2003
-#       The Scripps Research Institute, La Jolla, CA
+#       The Leginon software is Copyright under
+#       Apache License, Version 2.0
 #       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
+#       see  http://leginon.org
 #
 import node
 from leginon import leginondata
@@ -22,7 +22,7 @@ import gui.wx.GonModeler
 class GonModeler(calibrator.Calibrator):
 	panelclass = gui.wx.GonModeler.Panel
 	settingsclass = leginondata.GonModelerSettingsData
-	defaultsettings = calibrator.Calibrator.defaultsettings
+	defaultsettings = dict(calibrator.Calibrator.defaultsettings)
 	defaultsettings.update({
 		'measure axis': 'x',
 		'measure points': 200,
@@ -55,6 +55,7 @@ class GonModeler(calibrator.Calibrator):
 	def loop(self, label, axis, points, interval):
 		try:
 			if self.initInstruments():
+				self.threadlock.release()
 				self.panel.measurementDone()
 				return
 		except Exception, e:
@@ -140,8 +141,10 @@ class GonModeler(calibrator.Calibrator):
 			self.corchannel = 1
 
 		## acquire image
-		newimagedata = self.acquireCorrectedCameraImageData(self.corchannel)
+		newimagedata = self.acquireCorrectedCameraImageData(self.corchannel, force_no_frames=True)
 
+		if newimagedata is None:
+			raise RuntimeError('Failed acquiring next image')
 		newnumimage = newimagedata['image']
 		self.setImage(newnumimage, 'Image')
 

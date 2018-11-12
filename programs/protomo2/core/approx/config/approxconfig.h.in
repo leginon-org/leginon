@@ -1,0 +1,27 @@
+/*----------------------------------------------------------------------------*
+*
+*  approxconfig.h  -  configuration
+*
+*----------------------------------------------------------------------------*/
+
+#ifndef approxconfig_h_
+#define approxconfig_h_
+
+#include "modulebase.h"
+
+
+/* build identification */
+
+MODULE-PRFX APPROX
+"i3approx"
+"2.4"
+"Copyright © 2012 Hanspeter Winkler"
+
+
+/* module codes */
+
+#define ApproxModuleCode  ( ApproxModuleBase | 0x0000 )
+#define NMminModuleCode   ( ApproxModuleBase | 0x0100 )
+
+
+#endif

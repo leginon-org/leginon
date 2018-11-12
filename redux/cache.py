@@ -4,7 +4,6 @@ import os
 import sys
 import pyami.resultcache
 import pyami.fileutil
-import gdbm
 import cachefs
 import threading
 
@@ -77,7 +76,9 @@ class Cache(pyami.resultcache.ResultCache):
 			return
 		resultfilename = self.result_filename(pipeline)
 		path = os.path.dirname(resultfilename)
-		self.diskcache.makedir(path, recursive=True, allow_recreate=True)
+		path = os.path.join(self.diskcache.root_path, path[1:])
+		if not os.path.exists(path):
+			os.makedirs(path)
 		f = self.diskcache.open(resultfilename, 'wb')
 		final_pipe.put_result(f, result)
 		f.close()
@@ -85,7 +86,7 @@ class Cache(pyami.resultcache.ResultCache):
 	def file_get(self, pipeline):
 		resultfilename = self.result_filename(pipeline)
 		try:
-			f = self.diskcache.open(resultfilename, 'r')
+			f = self.diskcache.open(resultfilename, 'rb')
 		except:
 			return None
 		result = pipeline[-1].get_result(f)
@@ -110,7 +111,3 @@ class Cache(pyami.resultcache.ResultCache):
 		parts = filter(None, parts)
 		path = os.path.join(*parts)
 		return path
-
-
-if __name__ == '__main__':
-	test_disk_cache_manager()

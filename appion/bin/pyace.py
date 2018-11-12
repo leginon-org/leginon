@@ -118,8 +118,7 @@ class aceLoop(appionLoop2.AppionLoop):
 			return False
 
 		acevaluelist = ('defocus1','defocus2','defocusinit','amplitude_contrast','angle_astigmatism',
-			'noise1','noise2','noise3','noise4','envelope1','envelope2','envelope3','envelope4',
-			'lowercutoff','uppercutoff','snr','confidence','confidence_d')
+			'confidence','confidence_d')
 		for i in range(len(acevaluelist)):
 			self.ctfvalues[ acevaluelist[i] ] = acevalues[i]
 

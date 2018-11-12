@@ -75,6 +75,16 @@ class FormGeneratorLib
 		return $html;
 	}
 	
+	public function insertSubmitField( $name, $label='', $value='', $helpkey='' )
+	{
+		$html.= $this->insertLabel( $name, $label, $helpkey );		
+		$html.= "<br/>\n";
+		$html.= "<input type='submit' name='$name' value='$value'>\n";
+		$html.= "<br/>\n";
+		
+		return $html;
+	}
+	
 	public function insertCheckboxField( $name, $label='', $value='', $checked='', $enable='', $note='', $helpkey='', $onchange='' )
 	{
 		$changeString = '';

@@ -941,11 +941,11 @@ def refine_volume(basedir, clsavgs, volnum, mask_radius, inner_radius, outer_rad
 
 	### optional parameters
 	NumberofIterations = 12
-	AngSamplingRateDeg = '4x10 4x5 4x3 2x2 2x1'
-	MaxChangeInAngles = '4x1000 4x20 4x9 2x6 2x3'
-	MaxChangeOffset = '4x1000 4x10'
-	Search5DShift = '4x5 1'
-	Search5DStep = '4x2 1'
+	AngSamplingRateDeg = '4x10 4x5 4x3'
+	MaxChangeInAngles = '4x1000 4x20 4x9'
+	MaxChangeOffset = '4x1000 4x100 4x10'
+	Search5DShift = '4x5 4x3 1'
+	Search5DStep = '8x2 1'
 	FourierMaxFrequencyOfInterest = '0.35'
 	ConstantToAddToFiltration = '0.35'
 

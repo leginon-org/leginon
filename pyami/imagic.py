@@ -40,11 +40,12 @@ def readImagicData(filename, header_dict, frame=None):
 
 	nelements = numpy.product(shape)
 
-	f = open(filename)
-	f.seek(start)
-	a = numpy.fromfile(f, dtype, nelements)
-	f.close()
-	a.shape = shape
+	a = numpy.memmap(filename, dtype=dtype, mode='r', offset=start, shape=shape, order='C')
+	#f = open(filename)
+	#f.seek(start)
+	#a = numpy.fromfile(f, dtype, nelements)
+	#f.close()
+	#a.shape = shape
 	return a
 
 opposite = {

@@ -49,7 +49,7 @@ def estimateTime(numparts, maskpixrad=None):
 	return esttime
 
 #===============================
-def correspondenceAnalysis(alignedstack, boxsize, maskpixrad, numpart, numfactors=8, dataext=".spi"):
+def correspondenceAnalysis(alignedstack, boxsize, maskpixrad, numpart, numfactors=8, dataext=".spi", nproc=1):
 	"""
 	inputs:
 		aligned stack
@@ -67,7 +67,7 @@ def correspondenceAnalysis(alignedstack, boxsize, maskpixrad, numpart, numfactor
 	apParam.createDirectory(rundir)
 
 	### make template in memory
-	mySpider = spyder.SpiderSession(dataext=dataext, logo=True, log=False)
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=True, log=False, nproc=nproc)
 	mySpider.toSpiderQuiet("MO", "_9", "%d,%d" % (boxsize, boxsize), "C", str(maskpixrad*2.0))
 
 	### performing correspondence analysis
@@ -75,7 +75,7 @@ def correspondenceAnalysis(alignedstack, boxsize, maskpixrad, numpart, numfactor
 	mySpider.toSpider(
 		"CA S",
 		spyder.fileFilter(alignedstack)+"@******", "1-"+str(numpart),
-		"_9", str(numfactors), "C", "10",
+		"_9", str(numfactors), "C", "100",
 		rundir+"/corandata")
 	mySpider.close()
 
@@ -228,7 +228,7 @@ def createFactorMap(f1, f2, rundir, dataext):
 	return
 
 #===============================
-def makeDendrogram(numfactors=1, corandata="coran/corandata", dataext=".spi"):
+def makeDendrogram(numfactors=1, corandata="coran/corandata", dataext=".spi",nproc=1):
 
 	rundir = "cluster"
 	apParam.createDirectory(rundir)
@@ -239,7 +239,7 @@ def makeDendrogram(numfactors=1, corandata="coran/corandata", dataext=".spi"):
 	factorstr = factorstr[:-1]
 
 	### do hierarchical clustering
-	mySpider = spyder.SpiderSession(dataext=dataext, logo=False, log=True)
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=False, log=True, nproc=1)
 	mySpider.toSpider(
 		"CL HC",
 		corandata+"_IMC", # path to coran data
@@ -294,7 +294,7 @@ def hierarchClusterProcess(numpart=None, factorlist=range(1,5),
 
 	apDisplay.printMsg("Creating dendrogram file: "+dendrogramfile)
 	### do hierarchical clustering
-	mySpider = spyder.SpiderSession(dataext=dataext, logo=False, log=True)
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=False, log=True, nproc=1)
 	mySpider.toSpider(
 		"CL HC",
 		spyder.fileFilter(corandata)+"_IMC", # path to coran data
@@ -355,7 +355,7 @@ def hierarchClusterClassify(alignedstack, dendrogramfile, numclasses=40, timesta
 	print ""
 
 	### create class averages
-	sys.stderr.write("create class averages")
+	sys.stderr.write("create %i class averages"%classes)
 	for i in range(classes):
 		sys.stderr.write(".")
 		classnum = i+1

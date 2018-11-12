@@ -1,9 +1,9 @@
 <?php
 /**
- *	The Leginon software is Copyright 2003 
- *	The Scripps Research Institute, La Jolla, CA
+ *	The Leginon software is Copyright under 
+ *	Apache License, Version 2.0
  *	For terms of the license agreement
- *	see  http://ami.scripps.edu/software/leginon-license
+ *	see  http://leginon.org
  *
  *	Simple viewer to view a image using mrcmodule
  */
@@ -115,9 +115,13 @@ function createMMForm($extra=false, $title='MaskMaker Launcher', $heading='Autom
 				if (document.viewerform.testimage.checked){
 					document.viewerform.testfilename.disabled=false;
 					document.viewerform.testfilename.value='';
+					document.viewerform.commit.disabled=true;
+					document.viewerform.commit.checked=false;
 				}	else {
 					document.viewerform.testfilename.disabled=true;
 					document.viewerform.testfilename.value='mrc file name';
+					document.viewerform.commit.disabled=false;
+					document.viewerform.commit.checked=true;
 				}
 			}
 			function enable(thresh){

@@ -1,0 +1,14 @@
+FFTPACK  FFTPACK  fftpack
+FOURIER  FFTW2    fftw2thr  srfftw_threads  /usr /usr/local
+FOURIER  FFTW2    fftw2     srfftw          /usr /usr/local
+FOURIER  FFTW2    fftw2thr  sfftw_threads   /usr /usr/local
+FOURIER  FFTW2    fftw2     sfftw           /usr /usr/local
+FOURIER  GSLFFT   gslfft    gsl             /usr /usr/local LIBPATH
+FOURIER  GSLFFT   gslfft    gslcblas        /usr /usr/local LIBPATH
+FOURIER  DJBFFT   djbfft    djbfft          /usr /usr/local LIBPATH
+IMAGE    TIFF     tiff      tiff            /usr /usr/local LIBPATH
+DIERCKX  DIERCKX  dierckx   dierckx         LIBPATH
+MINPACK  MINPACK  minpack   minpack         LIBPATH
+LINALG   LAPACK   lapack    lapack          LIBPATH
+LINALG   BLAS     blas      blas            LIBPATH
+RANLIB   RANLIB   ranlib    ranlib          LIBPATH

@@ -1,9 +1,9 @@
 <!--
 -
 - Application XML-Dump
-- http://ami.scripps.edu/ 
+- http://emg.nysbc.org/ 
 -
-- Application :MSI-SimuTomography (1.6)
+- Application :MSI-SimuTomography
 - Version     :5
 - Date : 02/19/2009
 -
@@ -30,6 +30,10 @@
     <field 
       name="version" 
       type="int(20)" 
+    />
+    <field 
+      name="hide" 
+      type="tinyint(1)" 
     />
     <key>PRIMARY KEY (`DEF_id`)</key>
     <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
@@ -185,8 +189,9 @@
     <sqltable name="ApplicationData" >
         <field name="DEF_id" >629</field>
         <field name="DEF_timestamp" >2009-02-19 15:10:02</field>
-        <field name="name" >MSI-SimuTomography (1.6)</field>
+        <field name="name" >MSI-SimuTomography</field>
         <field name="version" >5</field>
+        <field name="hide" >0</field>
     </sqltable>
   <!-- BindingSpecData -->
     <sqltable name="BindingSpecData" >

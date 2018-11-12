@@ -60,16 +60,16 @@ $crlf = "<br />";
 
 
 <form name="data" method="POST" enctype="multipart/form-data" action="<?php echo $_SERVER['PHP_SELF']; ?>">
-<input type="hidden" name="db_memo" value="<?=$s_db?>" />
+<input type="hidden" name="db_memo" value="<?php echo $s_db ?>" />
 <select name="s_db" onChange="document.data.submit()">
-<?
+<?php
 foreach($databases as $db) {
 	$s = ($db==$_POST['s_db']) ? 'selected' : '';
 	echo '<option '.$s.'>'.$db.'</option>'."\n";
 }
 ?>
 </select>
-<?
+<?php
 if ($dbchanged) {
 	echo "<font color='red'>DB changed &raquo; $s_db </font><br />";
 }

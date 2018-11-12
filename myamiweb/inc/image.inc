@@ -89,14 +89,14 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 	$parentId = getImageIdFromPreset($leginondata,$imageId,$preset);
 	$pic = __getImageFile($leginondata,$parentId,$p['loadjpg'],$p['fft'],$p['cacheonly']);
 
-	if (!$pic || !is_file($pic)) {
-		$messages = array('File not found: ');
-		if ($p['cacheonly'] && $p['loadjpg']) {
-			$messages[] = 'Cached Image Not Ready.';
-		}
-		$messages[] = $pic;
-		return makeBlankImageWithErrorMessage($messages);
-	}
+// 	if (!$pic || !is_file($pic)) {
+// 		$messages = array('File not found: ');
+// 		if ($p['cacheonly'] && $p['loadjpg']) {
+// 			$messages[] = 'Cached Image Not Ready.';
+// 		}
+// 		$messages[] = $pic;
+// 		return makeBlankImageWithErrorMessage($messages);
+// 	}
 	// pass on whether the image is from cache
 	$p['iscache']= (strpos($pic,'jpg'))? true:false;
 
@@ -356,16 +356,20 @@ function addAppionOverlays($leginondata,$img,$childinfo,$imginfo,$p) {
 	if ($p['displaytargets']) {
 		$acqtargets = $leginondata->getImageTargets($imageId);
 		$focustargets = $leginondata->getImageTargets($imageId,'focus');
-		foreach (array('acq'=>$acqtargets,'focus'=>$focustargets) as $targettype=>$targets) {
-			if ($targettype == 'acq') $targets = $leginondata->matchVersionTargets($targets);
+		$previewtargets = $leginondata->getImageTargets($imageId,'preview');
+		foreach (array('acq'=>$acqtargets,'focus'=>$focustargets, 'preview'=>$previewtargets) as $targettype=>$targets) {
+			if ($targettype == 'acq'||$targettype == 'preview') $targets = $leginondata->matchVersionTargets($targets);
 			if (!empty($targets))
 				foreach ($targets as $target) {
+					// acquired targets should have childId
 					$tId=(int)$target['childId'];
+					// show targets before acquiring as as cross, not square
 					if ($tId == 0 && $targettype == 'acq') $targettype = 'new';
+					if ($tId == 0 && $targettype == 'preview') $targettype = 'new';
 					$locationresults = getTargetLocation($leginondata,$imageId,$imginfo,$childinfo,$target,imagesx($img));
 					$child_shown = $locationresults[1];
 					$square_params = $locationresults[0];
-					if ($tId || $targettype != 'acq') 
+					if ($tId || $targettype != 'acq' || $targettype != 'preview') 
 						$overlay->drawTarget($square_params,$child_shown,$targettype);
 			}
 		}
@@ -418,6 +422,7 @@ function addAppionOverlays($leginondata,$img,$childinfo,$imginfo,$p) {
 				$thres2=$particlelabelparams['thres2'][$particle['label']];
 			}
 			//apply threshold
+			$threshold = (is_numeric($thres1) && is_numeric($thres2)) ? true : false;
 			if ($threshold && ($particle['correlation']<$thres1 || $particle['correlation']>$thres2)) {
 				continue;
 			}

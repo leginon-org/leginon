@@ -1,8 +1,8 @@
-#!/usr/bin/python -O
-# The Leginon software is Copyright 2004
-# The Scripps Research Institute, La Jolla, CA
+#!/usr/bin/env python -O
+# The Leginon software is Copyright under
+# Apache License, Version 2.0
 # For terms of the license agreement
-# see http://ami.scripps.edu/software/leginon-license
+# see http://leginon.org
 #
 # $Source: /ami/sw/cvsroot/pyleginon/leginon.gui.wx/ImagePanel.py,v $
 # $Revision: 1.9 $
@@ -16,19 +16,21 @@
 
 #
 # COPYRIGHT:
-#       The Leginon software is Copyright 2003
-#       The Scripps Research Institute, La Jolla, CA
+#       The Leginon software is Copyright under
+#       Apache License, Version 2.0
 #       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
+#       see  http://leginon.org
 #
 
 import cStringIO
-from pyami import mrc, arraystats
+from pyami import mrc, arraystats, numpil
 import numpy
+from pyami import numpil
+Image = numpil.Image2
+
 import wx
 import sys
 import math
-from PIL import Image
 import leginon.gui.wx.Stats
 import ImagePanelTools
 import SelectionTool
@@ -211,6 +213,7 @@ class ImagePanel(wx.Panel):
 
 	#--------------------
 	def numpyToWxImage(self, array):
+
 		clip = self.contrasttool.getRange()
 		wximage = wx.EmptyImage(array.shape[1], array.shape[0])
 		normarray = array.astype(numpy.float32)
@@ -226,13 +229,13 @@ class ImagePanel(wx.Panel):
 			valarray = valarray.astype(numpy.uint16)
 			remapColor = numpy.array(self.colormap)
 			rgbarray = remapColor[valarray].astype(numpy.uint8)
-			print rgbarray[:,:,0]
 			h, w = normarray.shape[:2]
 			r = Image.fromstring("L", (w, h), rgbarray[:,:,0].tostring())
 			g = Image.fromstring("L", (w, h), rgbarray[:,:,1].tostring())
 			b = Image.fromstring("L", (w, h), rgbarray[:,:,2].tostring())
 			imagedata = Image.merge("RGB", (r,g,b))
-		wximage.SetData(imagedata.convert('RGB').tostring())
+
+		wximage.SetData(numpil.pil_image_tostring(imagedata.convert('RGB')))
 		return wximage
 
 	#--------------------
@@ -306,6 +309,12 @@ class ImagePanel(wx.Panel):
 			raise ValueError('No types added')
 		self.selectiontool.setImage(name, imagedata, **kwargs)
 		#self.setImage(imagedata, **kwargs)
+
+	#--------------------
+	def getSelectionToolNames(self):
+		if self.selectiontool is None:
+			return []
+		return self.selectiontool.getTypeNames()
 
 	#--------------------
 	def setImage(self, imagedata):
@@ -803,6 +812,25 @@ class ImagePanel(wx.Panel):
 		self.selectiontool.addTypeTool(name, **kwargs)
 		self.sizer.SetItemMinSize(self.selectiontool, self.selectiontool.GetSize())
 		self.sizer.Layout()
+
+	#--------------------
+	def showTypeToolDisplays(self, names):
+		'''
+		Bring display to top in order of the names list
+		'''
+		for name in names:
+			if name in self.selectiontool.tools.keys():
+				self.selectiontool.setDisplayed(name,False,'display')
+				self.selectiontool.setDisplayed(name,True,'display')
+
+	#--------------------
+	def hideTypeToolDisplays(self, names):
+		'''
+		Remove display in order of the names list
+		'''
+		for name in names:
+			if name in self.selectiontool.tools.keys():
+				self.selectiontool.setDisplayed(name,False,'display')
 
 ##################################
 ##

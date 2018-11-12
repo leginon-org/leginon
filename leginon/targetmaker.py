@@ -1,9 +1,9 @@
 #
 # COPYRIGHT:
-#       The Leginon software is Copyright 2003
-#       The Scripps Research Institute, La Jolla, CA
+#       The Leginon software is Copyright under
+#       Apache License, Version 2.0
 #       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
+#       see  http://leginon.org
 #
 import threading
 import node, event, leginondata
@@ -60,18 +60,23 @@ class MosaicTargetMaker(TargetMaker):
 		'max size': 16384,
 		'mosaic center': 'stage center',
 		'ignore request': False,
+		'alpha tilt': 0.0,
+		'use spiral path': False,
 	}
 	eventinputs = TargetMaker.eventinputs + [event.MakeTargetListEvent]
 	def __init__(self, id, session, managerlocation, **kwargs):
 		TargetMaker.__init__(self, id, session, managerlocation, **kwargs)
 		self.pixelsizecalclient = calibrationclient.PixelSizeCalibrationClient(self)
-		self.addEventInput(event.MakeTargetListEvent, self._makeAtlas)
+		self.addEventInput(event.MakeTargetListEvent, self.handleMakeTargetList)
 		self.presetsclient = presets.PresetsClient(self)
 
 		self.publishargs = None
 		self.start()
 
 	def calculateAtlas(self):
+		'''
+		Calculate atlas grid points. Called from gui.
+		'''
 		self.publishargs = None
 		try:
 			self.publishargs = self._calculateAtlas()
@@ -102,7 +107,7 @@ class MosaicTargetMaker(TargetMaker):
 			raise AtlasError('label "%s" is already used, choose another' % (label,))
 
 	def validateSettings(self, evt=None):
-		if evt is None:
+		if evt is None or evt['grid'] is None:
 			label = self.settings['label']
 			self.checkLabel(label)
 		radius = self.settings['radius']
@@ -118,6 +123,8 @@ class MosaicTargetMaker(TargetMaker):
 		self.logger.debug('Getting current instrument state...')
 		presetname = self.settings['preset']
 		preset = self.presetsclient.getPresetByName(presetname)
+		if preset is None:
+			raise AtlasError('cannot find preset \'%s\' in this session' % presetname)
 		temname = preset['tem']['name']
 		self.instrument.setTEM(temname)
 		camname = preset['ccdcamera']['name']
@@ -133,7 +140,27 @@ class MosaicTargetMaker(TargetMaker):
 		self.logger.debug('Get current instrument state completed')
 		return scope, camera
 
+	def setStageZ(self, z_meters):
+		'''
+		Set scope stage z value. TEM must already be set.
+		'''
+		z_um = z_meters*1e6
+		self.logger.info('Setting stage to %.1f um' % z_um)
+		self.instrument.tem.setStagePosition({'z':z_meters})
+		self.logger.info('Stage set to %.1f um' % z_um)
+
+	def setAlpha(self, alpha_radians):
+		'''
+		Set scope stage alpha in radians.  TEM must already be set.
+		'''
+		alpha_degrees = math.degrees(alpha_radians)
+		self.logger.info('Set stage tilt to %.2f degrees' % alpha_degrees)
+		self.instrument.tem.setDirectStagePosition({'a':alpha_radians})
+
 	def getAlpha(self, scope):
+		'''
+		Returns stage alpha in radians.
+		'''
 		try:
 			alpha = scope['stage position']['a']
 		except KeyError:
@@ -151,7 +178,7 @@ class MosaicTargetMaker(TargetMaker):
 
 		preset = self.presetsclient.getPresetByName(presetname)
 		if preset is None:
-			raise AtlasError('cannot find preset \'%s\'' % presetname)
+			raise AtlasError('cannot find preset \'%s\' in this session' % presetname)
 
 		return preset
 
@@ -178,7 +205,7 @@ class MosaicTargetMaker(TargetMaker):
 
 	def getCameraParameters(self, camera):
 		try:
-			return camera['binning']['x'], camera['dimension']['x']
+			return camera['binning']['x'], camera['dimension']
 		except KeyError:
 			raise AtlasError('unable to get camera geometry')
 
@@ -196,20 +223,36 @@ class MosaicTargetMaker(TargetMaker):
 		self.logger.debug('Target list created')
 		return targetlist, grid
 
-	def _makeAtlas(self, evt):
-		if evt['grid'] is None or self.settings['ignore request']:
+	def handleMakeTargetList(self, evt):
+		if self.settings['ignore request']:
 			return
+		return self._makeAtlas(evt)
+
+	def _makeAtlas(self, evt):
+		'''
+		Calculate and make Atlas from event.
+		'''
 		try:
 			args = self._calculateAtlas(evt)
+			# pass evt values to _publishAtlas
 			kwargs = {'evt': evt}
 			self._publishAtlas(*args, **kwargs)
 		except Exception, e:
 			self.logger.exception('Atlas creation failed: %s' % e)
 
 	def _calculateAtlas(self,evt=None):
+		'''
+		Calculate atlas grid point and reset stage alpha and z.
+		Called either from calculateAtlas or from MakeTargetList
+		event handling.
+		'''
 		self.logger.info('Creating atlas targets...')
 		radius, overlap = self.validateSettings(evt)
 		scope, camera = self.getState()
+		if self.settings['alpha tilt'] is not None:
+			self.setAlpha(math.radians(self.settings['alpha tilt']))
+		if evt and 'stagez' in evt.keys() and evt['stagez'] is not None:
+			self.setStageZ(evt['stagez'])
 		alpha = self.getAlpha(scope)
 		preset = self.getPreset()
 		if self.settings['mosaic center'] == 'stage center':
@@ -218,8 +261,9 @@ class MosaicTargetMaker(TargetMaker):
 			center = None
 		self.updateState(preset, scope, camera, center)
 		pixelsize = self.getPixelSize(scope, camera)
-		binning, imagesize = self.getCameraParameters(camera)
-		targets = self.makeCircle(radius, overlap, pixelsize, binning, imagesize)
+		binning, imagedimension = self.getCameraParameters(camera)
+		targets = self.makeCircle(radius, overlap, pixelsize, binning, imagedimension)
+		self.logger.info('%d targets needed' % len(targets))
 		return targets, scope, camera, preset
 
 	def _publishAtlas(self, targets, scope, camera, preset, evt=None):
@@ -232,6 +276,7 @@ class MosaicTargetMaker(TargetMaker):
 			raise AtlasError('unable to publish atlas targets')
 
 		for target in targets:
+			# target should be in (drow,dcol)
 			targetdata = self.newTargetForGrid(grid,
 																					target[0], target[1],
 																					scope=scope, camera=camera,
@@ -244,22 +289,39 @@ class MosaicTargetMaker(TargetMaker):
 		self.publish(targetlist, pubevent=True)
 		self.logger.info('Atlas targets published')
 
-	def makeCircle(self, radius, overlap, pixelsize, binning, imagesize):
+	def makeLines(self, pixelradius, tile_y_size):
+		lines = [tile_y_size/2]
+		while lines[-1] < pixelradius - tile_y_size:
+			lines.append(lines[-1] + tile_y_size)
+		return lines
+
+	def calculateImageTile(self, dimension, overlap):
+		imagetile = {}
+		for axis in ('x','y'):
+			imagetile[axis] = int(round(dimension[axis]*(1.0 - overlap)))
+			if imagetile[axis] <= 0:
+				raise AtlasSizeError('invalid overlap')
+		return imagetile
+
+	def makeCircle(self, radius, overlap, pixelsize, binning, dimension):
 		maxtargets = self.settings['max targets']
 		maxsize = self.settings['max size']
-
-		imagesize = int(round(imagesize*(1.0 - overlap)))
-		if imagesize <= 0:
-			raise AtlasSizeError('invalid overlap')
 
 		pixelradius = radius/(pixelsize*binning)
 		if pixelradius > maxsize/2:
 			raise AtlasSizeError('final image will be huge, try using more binning')
 
-		lines = [imagesize/2]
-		while lines[-1] < pixelradius - imagesize:
-			lines.append(lines[-1] + imagesize)
+		imagetile = self.calculateImageTile(dimension, overlap)
+		if not self.settings['use spiral path']:
+			return self.makeSnakeInCircle(pixelradius, maxtargets, imagetile)
+		else:
+			return self.makeSpiralInCircle(pixelradius, maxtargets, imagetile)
 
+	def makeSnakeInCircle(self, pixelradius, maxtargets, imagetile):
+		tile_y_size = imagetile['y']
+		lines = self.makeLines(pixelradius, tile_y_size)
+
+		# pixels are the y coordinates of the circle intercept at a given line
 		pixels = [pixelradius*2]
 		for i in lines:
 			if i > pixelradius:
@@ -271,40 +333,47 @@ class MosaicTargetMaker(TargetMaker):
 
 		images = []
 		for i in pixels:
-			images.append(int(math.ceil(i/imagesize)))
+			images.append(int(math.ceil(i/imagetile['y'])))
 
 		targets = []
 		sign = 1
 		for n, i in enumerate(images):
-			xs = range(-sign*imagesize*(i - 1)/2, sign*imagesize*(i + 1)/2,
-									sign*imagesize)
-			y = n*imagesize
-			for x in xs:
-				targets.insert(0, (x, y))
-				if y > 0:
-					targets.append((x, -y))
+			ys = range(-sign*imagetile['y']*(i - 1)/2, sign*imagetile['y']*(i + 1)/2,
+									sign*imagetile['y'])
+			x = n*imagetile['x']
+			for y in ys:
+				# target should be in (drow,dcol)
+				targets.insert(0, (y, x))
+				if x > 0:
+					targets.append((y, -x))
 			sign = -sign
 
-		txs, tys = zip(*targets)
-		xsize = max(txs) - min(txs) + imagesize
-		ysize = max(tys) - min(tys) + imagesize
+		tys, txs = zip(*targets)
+		ysize = max(tys) - min(tys) + imagetile['y']
+		xsize = max(txs) - min(txs) + imagetile['x']
 
 		self.logger.info('Calculated atlas with size %dx%d pixels, from %d target(s)' % (xsize, ysize, len(targets)))
 
 		return targets
 
-	def makeSpiral(self, maxtargets, overlap, size):
-		spacing = size - (overlap / 100.0) * size
+	def makeSpiralInCircle(self, pixelradius, maxtargets, imagetile):
 		spiral = self.relativeSpiral(maxtargets)
 		deltalist = []
+		circlelist = []
 		for x, y in spiral:
-			column, row = (x*spacing, y*spacing)
+			column, row = (x*imagetile['x'], y*imagetile['y'])
 			try:
 				lastdelta = deltalist[-1]
-				deltalist.append((row + lastdelta[0], column + lastdelta[1]))
+				next_row, next_col = (row + lastdelta[0], column + lastdelta[1])
+				if math.hypot(next_row-row0,next_col-col0) <= pixelradius:
+					circlelist.append((next_row, next_col))
+				deltalist.append((next_row, next_col))
 			except IndexError:
+				circlelist.append((row, column))
 				deltalist.append((row, column))
-		return deltalist
+				row0 = row
+				col0 = column
+		return circlelist
 
 	def absoluteSpiral(self, length):
 		spiral = [(0,0)]
@@ -340,18 +409,43 @@ class MosaicTargetMaker(TargetMaker):
 			spiral.append(next_pos)
 			spiraldir.append(dir)
 			cur_pos = next_pos
-			if cur_pos[0] > xmax:
+			if cur_pos[0] >= xmax:
 				xmax = cur_pos[0]
-				dir = (0,1)
-			elif cur_pos[0] < xmin:
+				if cur_pos[1] == 0:
+					dir = (-0.5,1)
+				else:
+					dir = (0.5,1)
+			elif cur_pos[0] <= xmin:
 				xmin = cur_pos[0]
-				dir = (0,-1)
+				if cur_pos[1] == 0:
+					dir = (0.5,-1)
+				elif cur_pos[1] < 0:
+					dir = (-0.5,1)
+				elif cur_pos[1] > 0:
+					dir = (-0.5,-1)
 			elif cur_pos[1] > ymax:
 				ymax = cur_pos[1]
-				dir = (-1,0)
+				if cur_pos[0] <= xmax/2.0:
+					dir = (-1,0)
+				else:
+					dir = (-0.5,1)
 			elif cur_pos[1] < ymin:
 				ymin = cur_pos[1]
-				dir = (1,0)
+				if cur_pos[0] >= xmin/2.0:
+					dir = (1,0)
+				else:
+					dir = (0.5,1)
+			else:
+				if dir == (1,0) and cur_pos[0] > xmax/2.0:
+					if cur_pos[1] == 0:
+						dir = (-0.5,1)
+					else:
+						dir = (0.5,1)
+				if dir == (-1,0) and cur_pos[0] < xmin/2.0:
+					if cur_pos[1] == 0:
+						dir = (0.5, -1)
+					else:
+						dir = (-0.5,-1)
 		return spiraldir
 
 if __name__ == '__main__':

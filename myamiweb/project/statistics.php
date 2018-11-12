@@ -1,4 +1,4 @@
-<?
+<?php
 require_once('inc/project.inc.php');
 require_once('inc/experiment.inc.php');
 
@@ -41,13 +41,13 @@ function formatByteDown($value, $limes = 6, $comma = 0) {
 
 function count_tbl_fields($dbc, $table) {
         $res = $dbc->SQLQuery("SHOW FIELDS FROM `$table`");
-	$num_rows = mysql_num_rows($res);
+	$num_rows = mysqli_num_rows($res);
 	return $num_rows;
 }
 
 function count_tbl_rows($dbc, $table) {
         $res = $dbc->SQLQuery("SELECT COUNT(*) FROM `$table`");
-        $row = mysql_fetch_row($res);
+        $row = mysqli_fetch_row($res);
 	$num_rows = $row[0];
 	return $num_rows;
 }
@@ -63,7 +63,7 @@ function getStatistic($db_info) {
 	);
 	$legdb = new mysql(DB_HOST, DB_USER, DB_PASS, $db_info[database]);
 	$res = $legdb->SQLQuery('SHOW TABLE STATUS FROM `'.$db_info[database].'`'); 
-	while ($row = mysql_fetch_array($res, MYSQL_ASSOC)) {
+	while ($row = mysqli_fetch_array($res, MYSQLI_ASSOC)) {
 		$stats['tbl_cnt']++;
 		$stats['data_sz'] += $row['Data_length'];
 		$stats['idx_sz'] += $row['Index_length'];
@@ -89,7 +89,7 @@ function getImageSizeInfo($leg) {
 		.'order by timestamp desc limit 2';
 
 	$imgsize = $dbp->SQLQuery($qleg);
-	while ($row = mysql_fetch_array($imgsize, MYSQL_ASSOC))
+	while ($row = mysqli_fetch_array($imgsize, MYSQLI_ASSOC))
 		$info[] = $row;
 
 	return $info;
@@ -99,7 +99,7 @@ $experimentdata = new experimentdata();
 $stats = array();
 $experiments = array();
 $info=array('name'=>'leginon database','host'=>DB_HOST,'database'=>DB_LEGINON);
-$experiments[$info[name]] = mysql_num_rows($experimentdata->getExperiments());
+$experiments[$info[name]] = mysqli_num_rows($experimentdata->getExperiments());
 $nbimages[$info[name]] = $experimentdata->getNbImages();
 $stats[$info[name]] = getStatistic($info);
 
@@ -110,7 +110,7 @@ Data Size
 </h3>
 <table class="tableborder" bgcolor="#FFFFFF" border="0" cellpadding="10" cellspacing="0">
 <tr>
-<?
+<?php
 foreach ($experiments as $k=>$v) {
 echo "<td>";
 $title="";
@@ -163,7 +163,7 @@ echo "</td>";
 MySQL Database Size
 </h3>
 
-<?
+<?php
        echo '    <table border="0">' . "\n"
        . '        <tr>' . "\n"
        . '            <th>' . "\n"
@@ -292,5 +292,5 @@ MySQL Database Size
 <br />
 <a href="../totalimagegraph.php?type=s&vd=1">[data]</a><br />
 <img src="../totalimagegraph.php?type=s">
-<?
+<?php
 project_footer();

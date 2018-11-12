@@ -1,9 +1,9 @@
 #
 # COPYRIGHT:
-#       The Leginon software is Copyright 2003
-#       The Scripps Research Institute, La Jolla, CA
+#       The Leginon software is Copyright under
+#       Apache License, Version 2.0
 #       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
+#       see  http://leginon.org
 #
 
 import sinedon.data
@@ -12,7 +12,6 @@ import event
 import node
 import gui.wx.MaskAssessor
 import os
-from PIL import Image
 import numpy
 from pyami import imagefun, mrc
 from leginon import leginondata

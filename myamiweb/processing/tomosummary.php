@@ -1,9 +1,9 @@
 <?php
 /**
- *	The Leginon software is Copyright 2003 
- *	The Scripps Research Institute, La Jolla, CA
+ *	The Leginon software is Copyright under 
+ *	Apache License, Version 2.0
  *	For terms of the license agreement
- *	see  http://ami.scripps.edu/software/leginon-license
+ *	see  http://leginon.org
  *
  */
 
@@ -39,8 +39,8 @@ echo "<form name='templateform' method='post' action='$formAction'>\n";
 
 // --- Get Stack Data
 $particle = new particledata();
-if ($_POST) {
-$allfulltomos = $particle->getFullTomogramsFromSession($sessionId,True,True);
+if (hasPatternInArrayKeys($_POST,'/updateDesc/')) {
+	$allfulltomos = $particle->getFullTomogramsFromSession($sessionId,True,True);
 	foreach ($allfulltomos as $t)
 		$particle->updateTableDescriptionAndHiding($_POST,'ApFullTomogramData',$t['DEF_id']);
 }

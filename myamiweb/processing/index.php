@@ -1,9 +1,9 @@
 <?php
 /**
- *  The Leginon software is Copyright 2003 
- *  The Scripps Research Institute, La Jolla, CA
+ *  The Leginon software is Copyright under 
+ *  Apache License, Version 2.0
  *  For terms of the license agreement
- *  see  http://ami.scripps.edu/software/leginon-license
+ *  see  http://leginon.org
  *
  *  Simple viewer to view a image using mrcmodule
  */
@@ -411,7 +411,7 @@ foreach ($reconRuns as $recon) {
 	$m .= "<ul>\n";
 	
 	// Display relevant publication references
-	$pubKeyList = array("spider", "appion", "eman", "ace", "roseman03", "sousa07", "leginon", "dog", "xmipp", "scheres07", "scheres10" );
+	$pubKeyList = array("spider", "appion", "eman", "ace", "roseman04", "sousa07", "leginon", "dog", "xmipp", "scheres07", "scheres10" );
 	
 	foreach ($pubKeyList as $pubKey ) {
 		$pub = new Publication($pubKey);

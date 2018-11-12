@@ -10,7 +10,6 @@ from appionlib import apRecon
 import sinedon
 import numpy
 import subprocess
-import MySQLdb
 from appionlib import apDisplay
 from appionlib import apProject
 
@@ -19,7 +18,7 @@ from appionlib import apProject
 #==================
 def getTotalNumParticles(reconid, numiter):
 	dbconf = sinedon.getConfig('appiondata')
-	db     = MySQLdb.connect(**dbconf)
+	db     = sinedon.sqldb.connect(**dbconf)
 	# create a cursor
 	cursor = db.cursor()
 	query = ( " SELECT stackpart.`particleNumber` AS p "
@@ -38,7 +37,7 @@ def getTotalNumParticles(reconid, numiter):
 #==================
 def getParticlesForIter(reconid, iternum):
 	dbconf = sinedon.getConfig('appiondata')
-	db     = MySQLdb.connect(**dbconf)
+	db     = sinedon.sqldb.connect(**dbconf)
 	# create a cursor
 	cursor = db.cursor()
 	query = ( " SELECT stackpart.`particleNumber` AS p "
@@ -59,7 +58,7 @@ def getParticlesForIter(reconid, iternum):
 #==================
 def getAllCoranRecons():
 	dbconf = sinedon.getConfig('appiondata')
-	db     = MySQLdb.connect(**dbconf)
+	db     = sinedon.sqldb.connect(**dbconf)
 	# create a cursor
 	cursor = db.cursor()
 	query = ( " SELECT DISTINCT refdat.`REF|ApRefineRunData|refineRun` AS reconid "

@@ -1,7 +1,7 @@
-# The Leginon software is Copyright 2004
-# The Scripps Research Institute, La Jolla, CA
+# The Leginon software is Copyright under
+# Apache License, Version 2.0
 # For terms of the license agreement
-# see http://ami.scripps.edu/software/leginon-license
+# see http://leginon.org
 #
 
 import threading
@@ -10,22 +10,19 @@ import wx.lib.filebrowsebutton as filebrowse
 
 import leginon.gui.wx.TargetPanel
 import leginon.gui.wx.Settings
-import leginon.gui.wx.TargetFinder
+import leginon.gui.wx.AutoTargetFinder
 import leginon.gui.wx.Rings
 from leginon.gui.wx.Choice import Choice
 from leginon.gui.wx.Entry import Entry, IntEntry, FloatEntry
 import leginon.gui.wx.TargetTemplate
 import leginon.gui.wx.ToolBar
 
-class Panel(leginon.gui.wx.TargetFinder.Panel):
+class Panel(leginon.gui.wx.AutoTargetFinder.Panel):
 	icon = 'holefinder'
 	def initialize(self):
-		leginon.gui.wx.TargetFinder.Panel.initialize(self)
-		self.SettingsDialog = SettingsDialog
+		leginon.gui.wx.AutoTargetFinder.Panel.initialize(self)
+		self.SettingsDialog = leginon.gui.wx.AutoTargetFinder.SettingsDialog
 
-		self.imagepanel = leginon.gui.wx.TargetPanel.TargetImagePanel(self, -1)
-		self.imagepanel.addTypeTool('Original', display=True, settings=True)
-		self.imagepanel.selectiontool.setDisplayed('Original', True)
 		self.imagepanel.addTypeTool('Edge', display=True, settings=True)
 		self.imagepanel.addTypeTool('Template', display=True, settings=True)
 		self.imagepanel.addTypeTool('Threshold', display=True, settings=True)
@@ -46,7 +43,7 @@ class Panel(leginon.gui.wx.TargetFinder.Panel):
 
 	def onImageSettings(self, evt):
 		if evt.name == 'Original':
-			dialog = OriginalSettingsDialog(self)
+			dialog = leginon.gui.wx.AutoTargetFinder.OriginalSettingsDialog(self)
 			if dialog.ShowModal() == wx.ID_OK:
 				filename = self.node.settings['image filename']
 				self.node.readImage(filename)
@@ -68,35 +65,8 @@ class Panel(leginon.gui.wx.TargetFinder.Panel):
 		elif evt.name == 'focus':
 			dialog = FinalSettingsDialog(self)
 
-		dialog.ShowModal()
-		dialog.Destroy()
-
-	def onSettingsTool(self, evt):
-		dialog = SettingsDialog(self,show_basic=True)
-		dialog.ShowModal()
-		dialog.Destroy()
-
-class OriginalSettingsDialog(leginon.gui.wx.Settings.Dialog):
-	def initialize(self):
-		return OriginalScrolledSettings(self,self.scrsize,False)
-
-class OriginalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
-	def initialize(self):
-		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
-		sb = wx.StaticBox(self, -1, 'Original Image')
-		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
-
-		self.widgets['image filename'] = filebrowse.FileBrowseButton(self, -1)
-		self.widgets['image filename'].SetMinSize((500,50))
-		self.dialog.bok.SetLabel('&Load')
-
-
-		sz = wx.GridBagSizer(5, 5)
-		sz.Add(self.widgets['image filename'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-
-		sbsz.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
-
-		return [sbsz]
+		# modeless display
+		dialog.Show(True)
 
 class TemplateSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
@@ -154,6 +124,8 @@ class TemplateScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def onTestButton(self, evt):
 		self.dialog.setNodeSettings()
 		self.node.correlateTemplate()
+		self.panel.imagepanel.hideTypeToolDisplays(['Edge'])
+		self.panel.imagepanel.showTypeToolDisplays(['Template'])
 
 class EdgeSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
@@ -224,6 +196,7 @@ class EdgeScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def onTestButton(self, evt):
 		self.dialog.setNodeSettings()
 		self.node.findEdges()
+		self.panel.imagepanel.showTypeToolDisplays(['Edge'])
 
 class ThresholdSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
@@ -258,6 +231,7 @@ class ThresholdScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def onTestButton(self, evt):
 		self.dialog.setNodeSettings()
 		self.node.threshold()
+		self.panel.imagepanel.showTypeToolDisplays(['Threshold'])
 
 class BlobsSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
@@ -303,11 +277,16 @@ class BlobsScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def onTestButton(self, evt):
 		self.dialog.setNodeSettings()
 		self.node.findBlobs()
+		self.panel.imagepanel.hideTypeToolDisplays(['Lattice'])
+		self.panel.imagepanel.showTypeToolDisplays(['Blobs'])
 
 class LatticeSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return LatticeScrolledSettings(self,self.scrsize,False)
 
+	def onShow(self):
+		self.panel.imagepanel.showTypeToolDisplays(['Original'])
+		
 class LatticeScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
 		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
@@ -360,6 +339,8 @@ class LatticeScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def onTestButton(self, evt):
 		self.dialog.setNodeSettings()
 		self.node.fitLattice()
+		self.panel.imagepanel.hideTypeToolDisplays(['Blobs','acquisition','focus'])
+		self.panel.imagepanel.showTypeToolDisplays(['Lattice','Original'])
 
 class FinalSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
@@ -408,6 +389,8 @@ class FinalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		label = wx.StaticText(self, -1, 'Focus hole selection:')
 		szice.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szice.Add(self.widgets['focus hole'], (3, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		szice.Add(self.createFocusOffsetSizer(), (4,0), (1,2),
 										wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 		szice.AddGrowableCol(1)
 
@@ -458,46 +441,29 @@ class FinalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.Bind(wx.EVT_BUTTON, self.onClearButton, self.cice)
 		return [sbszice, sbsztt, szbutton]
 
+	def createFocusOffsetSizer(self):
+		# set widgets
+		self.widgets['focus offset row'] = IntEntry(self, -1, chars=4)
+		self.widgets['focus offset col'] = IntEntry(self, -1, chars=4)
+		# make sizer
+		sz_offset = wx.BoxSizer(wx.HORIZONTAL)
+		sz_offset.Add(wx.StaticText(self, -1, 'Focus offset x:'),0,wx.ALIGN_CENTER_VERTICAL)
+		sz_offset.Add(self.widgets['focus offset col'])
+		sz_offset.AddSpacer(10)
+		sz_offset.Add(wx.StaticText(self, -1, 'y:'),0,wx.ALIGN_CENTER_VERTICAL)
+		sz_offset.Add(self.widgets['focus offset row'])
+		return sz_offset
+
 	def onTestButton(self, evt):
 		self.dialog.setNodeSettings()
 		threading.Thread(target=self.node.ice).start()
+		self.panel.imagepanel.hideTypeToolDisplays(['Blobs'])
+		self.panel.imagepanel.showTypeToolDisplays(['Original','acquisition','focus'])
 
 	def onClearButton(self, evt):
 		self.dialog.setNodeSettings()
 		self.node.clearTargets('acquisition')
 		self.node.clearTargets('focus')
-
-class SettingsDialog(leginon.gui.wx.TargetFinder.SettingsDialog):
-	def initialize(self):
-		return ScrolledSettings(self,self.scrsize,False,self.show_basic)
-
-class ScrolledSettings(leginon.gui.wx.TargetFinder.ScrolledSettings):
-	def initialize(self):
-		tfsd = leginon.gui.wx.TargetFinder.ScrolledSettings.initialize(self)
-		if self.show_basic:
-			return tfsd
-		else:
-			sb = wx.StaticBox(self, -1, 'Hole Finder Settings')
-			sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
-
-			self.widgets['skip'] = wx.CheckBox(self, -1,
-																		'Skip automated hole finder')
-			self.widgets['focus interval'] = IntEntry(self, -1, chars=6)
-
-			sz = wx.GridBagSizer(5, 5)
-			sz.Add(self.widgets['skip'], (0, 0), (1, 1),
-							wx.ALIGN_CENTER_VERTICAL)
-
-			label = wx.StaticText(self, -1, 'Focus every')
-			sz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-			sz.Add(self.widgets['focus interval'], (1, 1), (1, 1),
-										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
-			label = wx.StaticText(self, -1, 'image')
-			sz.Add(label, (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-
-			sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
-
-			return tfsd + [sbsz]
 
 
 if __name__ == '__main__':

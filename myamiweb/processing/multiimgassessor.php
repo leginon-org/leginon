@@ -1,9 +1,9 @@
 <?php
 /**
- *      The Leginon software is Copyright 2003 
- *      The Scripps Research Institute, La Jolla, CA
+ *      The Leginon software is Copyright under 
+ *      Apache License, Version 2.0
  *      For terms of the license agreement
- *      see  http://ami.scripps.edu/software/leginon-license
+ *      see  http://leginon.org
  *
  *      Simple viewer to view a image using mrcmodule
  */
@@ -354,7 +354,9 @@ function displayImagePanel($files,$imgdir,$leginondata,$particle,$assessmentrid,
 	$lastindex = getPrevImage($files, $numfiles, $firstindex, $leginondata, $particle, $assessmentrid);
 	//echo "i$imgindex f$firstindex l$lastindex";
 
-	if ($maskAssessRunId) {
+	# make sure status does not get updated when switching runs
+	$same_run = ($_POST['imgrun'] && $_POST['imgrun']==$_POST['oldimgrun'] );
+	if ($same_run && $maskAssessRunId) {
 		updateMaskStatuses($files, $imgindex, $lastindex, $leginondata, $particle, $maskAssessRunId, $assessmentrid, $maskRunId );
 	}
 	

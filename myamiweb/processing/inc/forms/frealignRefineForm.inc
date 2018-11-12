@@ -1,10 +1,10 @@
 <?php
 
 /**
- *	The Leginon software is Copyright 2003 
- *	The Scripps Research Institute, La Jolla, CA
+ *	The Leginon software is Copyright under 
+ *	Apache License, Version 2.0
  *	For terms of the license agreement
- *	see  http://ami.scripps.edu/software/leginon-license
+ *	see  http://leginon.org
  */
 
 //--------------------------------------------------------------------------------------
@@ -72,9 +72,12 @@ class FrealignRefineForm extends BasicRefineForm
 		$html .=  $paramSet->insertCheckboxField( "ffilt" );
 		$html .=  $paramSet->insertCheckboxField( "fbfact" );
 		$html .=  $paramSet->insertCheckboxField( "pbc" );
-		$html .=  $paramSet->insertTextField( "hp", $shortSize, "(in &Aring;ngstroms; default 2*Nyquist)" );
+		$html .=  $paramSet->insertTextField( "hp", $shortSize, "(in &Aring;ngstroms)" );
 		$html .=  $paramSet->insertTextField( "lp", $shortSize, "(in &Aring;ngstroms)" );
 		$html .=  $paramSet->insertTextField( "wgh", $shortSize, "(percent)");
+		$html .=  $paramSet->insertTextField( "mw", $shortSize, "(in kD)" );
+		// for debugging
+		$html .=  $paramSet->insertCheckboxField( "fmatch" );
 		// These parameters may be added back in when we add the search feature
 		//$html .=  $paramSet->insertTextField( "dang", $shortSize );
 		//$html .=  $paramSet->insertTextField( "itmax", $shortSize );
@@ -154,8 +157,8 @@ class FrealignRefineForm extends BasicRefineForm
 		$pbc  				= '100';
 		$itmax 				= '10';
 		$ipmax				= '0';
-		$hp 				= '10';
-		$lp 				= '300';
+		$hp 				= '300';
+		$lp 				= '10';
 		$reconstackid		= '';
 		$fmag				= ''; 
 		$fdef				= ''; 
@@ -250,7 +253,18 @@ class FrealignRefineForm extends BasicRefineForm
 	    }
 	  </script>\n";
 		return $javafunc;
-	}	
+	}
+	
+	public function buildCommand( $postArray )
+	{
+		$params = $this->getFormParams();
+		//TO DO: fsearch depends on the prepared particle param file
+		$params->setParamValue('fsearch','on');
+
+		$command = parent::buildCommand( $postArray );
+		return $command;
+
+	}
 }
 
 // extend the RefineFormParameters class so that we can add the frealign 
@@ -262,7 +276,7 @@ class FrealignParams extends RefineFormParameters
 							$filterEstimated='', $filterResolution='', $filterComputed='', $filterConstant='',
 							$wgh='', $pbc='', $itmax='', $ipmax='', $hp='', $lp='', $reconstackid='', 
 							$dang='', $fmag='', $fdef='', $fpart='', $fbeaut='', $ffilt='', $fbfact='', 
-							$psi='', $theta='', $phi='', $x='', $y='') 
+							$psi='', $theta='', $phi='', $x='', $y='', $fmatch='CHECKED') 
 	{
 		parent::__construct($id, $label, $outerMaskRadius, $innerMaskRadius, $outerAlignRadius, 
 							$innerAlignRadius, $symmetry, $endIter, $angSampRate, $percentDiscard,  
@@ -274,6 +288,7 @@ class FrealignParams extends RefineFormParameters
 		$this->addParam( "ipmax", $ipmax, "Number of potential matches to refine (IPMAX)" );
 		$this->addParam( "hp", $hp, "Lower resolution limit or high-pass filter (RMAX1)" );
 		$this->addParam( "lp", $lp, "Higher resolution limit or low-pass filter (RMAX2)" );
+		$this->addParam( "mw", $hp, "Approximated molecular weight" );
 		$this->addParam( "reconstackid", $reconstackid, "Reconstruction Stack" );
 		$this->addParam( "dang", $dang, "Angular increment (DANG)" );
 		
@@ -289,6 +304,10 @@ class FrealignParams extends RefineFormParameters
 		$this->addParam( "phi", $phi, "Phi" );
 		$this->addParam( "x", $x, "X" );
 		$this->addParam( "y", $y, "Y" );
+		$this->addParam( "dstep", $dstep, "Camera physical pixel size in micron" );
+		$this->addParam( "fmatch", $fmatch, "save projection match images" );
+		// fsearch depends on whether particle params was prepared from results of another refinement run.
+		$this->addParam( "fsearch", $fsearch, "Do global brute force search" );
 		
 		// disable any general params that do not apply to this method
 		$this->hideParam("outerAlignRadius");
@@ -301,6 +320,7 @@ class FrealignParams extends RefineFormParameters
 		
 		// add parameter requirements
 		$this->addValidation( "outerMaskRadius", "req" );	
+		$this->addValidation( "mw", "req" );	
 	}	
 }
 

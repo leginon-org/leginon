@@ -1,9 +1,9 @@
 #
 # COPYRIGHT:
-#       The Leginon software is Copyright 2003
-#       The Scripps Research Institute, La Jolla, CA
+#       The Leginon software is Copyright under
+#       Apache License, Version 2.0
 #       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
+#       see  http://leginon.org
 #
 import calibrator
 import event, leginondata
@@ -37,7 +37,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 	'''
 	panelclass = gui.wx.MatrixCalibrator.Panel
 	settingsclass = leginondata.MatrixCalibratorSettingsData
-	defaultsettings = calibrator.Calibrator.defaultsettings
+	defaultsettings = dict(calibrator.Calibrator.defaultsettings)
 	defaultsettings.update({
 		'image shift tolerance': 12.0,
 		'image shift shift fraction': 25.0,
@@ -140,6 +140,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 				change = actual2 - actual1
 				if change == 0.0:
 					raise CalibrationError('change in %s is zero' % self.parameter)
+				self.logger.info('scope %s axis % s change between images: %s' % (self.parameter,axis,change))
 
 				perpix = change / totalpix
 
@@ -147,14 +148,16 @@ class MatrixCalibrator(calibrator.Calibrator):
 				## 12%
 				#tol = 12/100.0
 				tol = self.settings['%s tolerance' % self.parameter]/100.0
-				err = abs(perpix - pixsize) / pixsize
+				err = (perpix - pixsize) / pixsize
 
 				s = 'Pixel size error: %.2f' % (err*100.0)
 				s += '%'
 				s += ' (per pixel %s)' % perpix
 				self.logger.info(s)
 
-				if err > tol:
+				self.logger.info('Or config scale multiplication = %.2f' % (pixsize / perpix))
+
+				if abs(err) > tol:
 					self.logger.warning('Failed pixel size tolerance')
 					continue
 
@@ -274,10 +277,19 @@ class MatrixCalibrator(calibrator.Calibrator):
 			raise RuntimeError('no parameter selected')
 		calclient.storeMatrix(ht, mag, parameter, matrix, tem, ccdcamera)
 
-	def pixelToPixel(self, mag1, mag2, p1):
-		stagecal = self.parameters['stage position']
+	def scaleMatrix(self):
+		par = self.parameter
+		if par is 'defocus':
+			self.logger.error('Not applicable to %s matrix' % (par))
+			return
+		calclient = self.parameters[par]
 		tem = self.instrument.getTEMData()
 		cam = self.instrument.getCCDCameraData()
 		ht = self.instrument.tem.HighTension
-		p2 = stagecal.pixelToPixel(tem, cam, tem, cam, ht, mag1, mag2, p1)
-		return p2
+		ref_mag, mags = self.getMagnification()
+		for target_mag in mags:
+			if target_mag > ref_mag:
+				self.logger.info('Scaling %s matrix from %dx to %dx' % (par, int(ref_mag), int(target_mag)))
+				calclient.scaleMatrix(tem, cam, par, ht, ref_mag, target_mag, probe=None)
+		self.logger.info('Done scaling')
+

@@ -1,8 +1,8 @@
-#!/usr/bin/python -O
-# The Leginon software is Copyright 2004
-# The Scripps Research Institute, La Jolla, CA
+#!/usr/bin/env python
+# The Leginon software is Copyright under
+# Apache License, Version 2.0
 # For terms of the license agreement
-# see http://ami.scripps.edu/software/leginon-license
+# see http://leginon.org
 #
 # $Source: /ami/sw/cvsroot/pyleginon/leginon.gui.wx/TargetPanel.py,v $
 # $Revision: 1.10 $
@@ -16,10 +16,10 @@
 
 #
 # COPYRIGHT:
-#       The Leginon software is Copyright 2003
-#       The Scripps Research Institute, La Jolla, CA
+#       The Leginon software is Copyright under
+#       Apache License, Version 2.0
 #       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
+#       see  http://leginon.org
 #
 
 import time
@@ -197,7 +197,7 @@ class TargetImagePanel(leginon.gui.wx.ImagePanel.ImagePanel):
 	#--------------------
 	def drawPolygon(self, dc, color, targets, close=True):
 		dc.SetPen(wx.Pen(color, 3))
-		dc.SetBrush(wx.Brush(color, 1))
+		dc.SetBrush(wx.Brush(color, wx.SOLID))
 		#if self.scaleImage():
 		if False:
 			xscale = self.scale[0]
@@ -250,7 +250,7 @@ class TargetImagePanel(leginon.gui.wx.ImagePanel.ImagePanel):
 	def drawImageArea(self, dc, color, targets):
 		scale = self.getScale()
 		dc.SetPen(wx.Pen(color, 1))
-		dc.SetBrush(wx.Brush(color, 1))
+		dc.SetBrush(wx.Brush(color, wx.SOLID))
 		scaledpoints = [(target.x,target.y) for target in targets]
 		imagevector = self.imagevector
 		dia = (scale[0]*(imagevector[0]/2+imagevector[1]/2), scale[1]*(imagevector[0]/2-imagevector[1]/2))
@@ -264,7 +264,7 @@ class TargetImagePanel(leginon.gui.wx.ImagePanel.ImagePanel):
 	def drawImageExposure(self, dc, color, targets):
 		scale = self.getScale()
 		dc.SetPen(wx.Pen(color, 1))
-		dc.SetBrush(wx.Brush(color, 1))
+		dc.SetBrush(wx.Brush(color, wx.SOLID))
 		scaledpoints = [(target.x,target.y) for target in targets]
 		imagevector = self.imagevector
 		dia = (scale[0]*(imagevector[0]/2+imagevector[1]/2), scale[1]*(imagevector[0]/2-imagevector[1]/2))
@@ -498,12 +498,33 @@ if __name__ == '__main__':
 			frame.Show(True)
 			return True
 
-	app = MyApp(0,box)
+	array = None
 	if filename is None:
-		app.panel.setImage(None)
-	elif filename[-4:] == '.mrc':
-		image = mrc.read(filename)
-		app.panel.setImage(image.astype(numpy.float32))
+		filename = raw_input('Enter file path: ')
+	if not filename:
+		array = None
+	elif filename[-4:] == '.mrc' or filename[-5:] == '.mrcs':
+		h = mrc.readHeaderFromFile(filename)
+		if h['mz'] == 0:
+			print 'invalid mz, assumes 1'
+			h['mz'] = 1
+		nframes = h['nz']/h['mz']
+		frame = 0
+		# 2D image stack
+		if h['mz'] == 1:
+			if nframes > 1:
+				# mrc2014 image stack
+				frame_str = raw_input('This is an image stack of %d frames.\n Enter 0 to %d to select a frame to load: ' % (nframes,nframes-1))
+				frame = int(frame_str)
+		else:
+			if nframes > 1:
+				slice_str = raw_input('This is a stack of %d volume.\n Enter 0 to %d to select a slice to load: ' % (nframes,h['nz']-1))
+			else:
+				slice_str = raw_input('This is a volume.\n Enter 0 to %d to select a slice to load: ' % (h['nz']-1))
+			frame = int(slice_str)
+		image = mrc.read(filename,frame)
+		array = image.astype(numpy.float32)
+
 	elif filename[-4:] == '.tif':
 		# This is only for RawImage tiff files taken from DirectElectron DE camera
 		from pyami import tifffile
@@ -511,10 +532,12 @@ if __name__ == '__main__':
 		a = tif.asarray()
 		a = numpy.asarray(a,dtype=numpy.float32)
 		# DE RawImage tiff files is mirrored horizontally from Leginon
-		a = a[:,::-1]
-		app.panel.setImage(a)
+		array = a[:,::-1]
 	else:
 		from pyami import numpil
-		app.panel.setImage(numpil.read(filename))
+		array = numpil.read(filename)
+	#start gui
+	app = MyApp(0,box)
+	app.panel.setImage(array)
 	app.MainLoop()
 

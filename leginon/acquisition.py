@@ -1,9 +1,9 @@
 #
 # COPYRIGHT:
-#       The Leginon software is Copyright 2003-2012
-#       The Scripps Research Institute, La Jolla, CA
+#       The Leginon software is Copyright under
+#       Apache License, Version 2.0
 #       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
+#       see  http://leginon.org
 #
 '''
 Acquisition node is a TargetWatcher, so it receives either an ImageTargetData
@@ -23,6 +23,7 @@ import instrument
 import gui.wx.Acquisition
 import gui.wx.Presets
 import navigator
+import appclient
 import numpy
 import numpy.linalg
 import math
@@ -42,6 +43,12 @@ class InvalidPresetsSequence(targetwatcher.PauseRepeatException):
 	pass
 
 class BadImageStatsPause(targetwatcher.PauseRepeatException):
+	pass
+
+class BadImageAcquirePause(targetwatcher.PauseRestartException):
+	pass
+
+class BadImageAcquireBypass(targetwatcher.BypassException):
 	pass
 
 class BadImageStatsAbort(Exception):
@@ -135,6 +142,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		#'duplicate target type': 'focus',
 		'iterations': 1,
 		'wait time': 0,
+		'loop delay time': 0,
 		'adjust for transform': 'no',
 		'use parent mover': False,
 		'drift between': False,
@@ -157,12 +165,17 @@ class Acquisition(targetwatcher.TargetWatcher):
 		'target offset col': 0,
 		'correct image shift coma': False,
 		'park after target': False,
+		'retract obj aperture': False,
 	})
 	eventinputs = targetwatcher.TargetWatcher.eventinputs \
 								+ [event.DriftMonitorResultEvent,
 										event.MakeTargetListEvent,
 										event.ImageProcessDoneEvent,
-										event.AcquisitionImagePublishEvent] \
+										event.AcquisitionImagePublishEvent,
+										event.PhasePlateUsagePublishEvent,
+										event.PauseEvent,
+										event.ContinueEvent,
+									] \
 								+ presets.PresetsClient.eventinputs \
 								+ navigator.NavigatorClient.eventinputs
 	eventoutputs = targetwatcher.TargetWatcher.eventoutputs \
@@ -174,6 +187,13 @@ class Acquisition(targetwatcher.TargetWatcher):
 											event.FixBeamEvent,
 											event.FixAlignmentEvent,
 											event.FixConditionEvent,
+											event.AlignZeroLossPeakPublishEvent,
+											event.ScreenCurrentLoggerPublishEvent,
+											event.PhasePlatePublishEvent,
+											event.NodeBusyNotificationEvent,
+											event.ManagerPauseAvailableEvent,
+											event.ManagerPauseNotAvailableEvent,
+											event.ManagerContinueAvailableEvent,
 											event.ImageListPublishEvent, event.ReferenceTargetPublishEvent] \
 											+ navigator.NavigatorClient.eventoutputs
 
@@ -185,6 +205,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.addEventInput(event.DriftMonitorResultEvent, self.handleDriftResult)
 		self.addEventInput(event.ImageProcessDoneEvent, self.handleImageProcessDone)
 		self.addEventInput(event.MakeTargetListEvent, self.setGrid)
+		self.addEventInput(event.PhasePlateUsagePublishEvent, self.handlePhasePlateUsage)
+		self.addEventInput(event.PauseEvent, self.handlePause)
+		self.addEventInput(event.ContinueEvent, self.handleContinue
+)
 		self.driftdone = threading.Event()
 		self.driftimagedone = threading.Event()
 		self.instrument = instrument.Proxy(self.objectservice, self.session)
@@ -206,10 +230,16 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.received_image_drift = threading.Event()
 		self.requested_drift = None
 		self.grid = None
+		self.pp_used = None
 		self.acq_counter = itertools.cycle(range(0,5))
 		self.time0 = time.time()
 		self.times = []
 		self.intensities = []
+		self.alignzlp_bound = False
+		self.phaseplate_bound = False
+		self.screencurrent_bound = False
+		self.alignzlp_warned = False
+		self.beamtilt0 = None
 
 		self.duplicatetypes = ['acquisition', 'focus']
 		self.presetlocktypes = ['acquisition', 'target', 'target list']
@@ -218,6 +248,28 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.timedebug = {}
 
 		self.start()
+
+	def setStatus(self, status):
+		'''
+		Modify Node setStatus to allow manager to pause or continue.
+		'''
+		if status == 'user input':
+			self.notifyManagerContinueAvailable()
+		elif status == 'idle':
+			self.notifyManagerPauseNotAvailable()
+		else:
+			self.notifyManagerPauseAvailable()
+		super(Acquisition, self).setStatus(status)
+
+	def handleApplicationEvent(self,evt):
+		'''
+		Find Reference class or its subclass instance bound
+		to this node upon application loading.
+		'''
+		app = evt['application']
+		self.alignzlp_bound = appclient.getNextNodeThruBinding(app,self.name,'AlignZeroLossPeakPublishEvent','AlignZeroLossPeak')
+		self.phaseplate_bound = appclient.getNextNodeThruBinding(app,self.name,'PhasePlatePublishEvent','PhasePlateAligner')
+		self.screencurrent_bound = appclient.getNextNodeThruBinding(app,self.name,'ScreenCurrentLoggerPublishEvent','ScreenCurrentLogger')
 
 	def checkSettings(self, settings):
 		problems = []
@@ -263,6 +315,12 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.doneevents[imageid]['status'] = status
 			self.doneevents[imageid]['received'].set()
 
+	def handlePhasePlateUsage(self, ev):
+		pp_used = ev['data']
+		if pp_used:
+			self.reportStatus('acquisition', 'Received phase plate patch assignment')
+			self.pp_used = pp_used
+
 	def processData(self, newdata):
 		if isinstance(newdata, leginondata.QueueData):
 			self.processTargetListQueue(newdata)
@@ -297,14 +355,14 @@ class Acquisition(targetwatcher.TargetWatcher):
 			if presetname not in availablepresets:
 				raise InvalidPresetsSequence('bad preset %s in presets order' % (presetname,))
 
-	def makeTransformTarget(self, target, offset):
+	def makeOffsetTarget(self, target, offset):
 		newtarget = leginondata.AcquisitionImageTargetData(initializer=target)
 		# Fix here about version
 		newtarget['delta row'] = target['delta row'] + offset['y']
 		newtarget['delta column'] = target['delta column'] + offset['x']
 		newtarget['fromtarget'] = target
 		newtarget.insert(force=True)
-		self.logger.info('target adjusted by (%.1f,%.1f) (column, row)' % (offset['x'],offset['y']))
+		self.logger.info('target offset by (%.1f,%.1f) (column, row)' % (offset['x'],offset['y']))
 		return newtarget
 
 	def avoidTargetAdjustment(self,target_to_adjust,recent_target):
@@ -359,13 +417,75 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.onTarget = False
 		return newtargetdata
 
+	def tunePhasePlate(self, presetname):
+		# TO DO: need some way to check if there is a phase plate
+		presetdata = self.presetsclient.getPresetByName(presetname)
+		if self.phaseplate_bound:
+				self.nextPhasePlate(presetname)
+
+	def tuneEnergyFilter(self, presetname):
+		presetdata = self.presetsclient.getPresetByName(presetname)
+		if not presetdata:
+			return
+		if presetdata['energy filter'] or presetdata['tem energy filter']:
+			if self.alignzlp_bound:
+				self.alignZeroLossPeak(presetname)
+			else:
+				if False:
+					self.logger.warning('Energy filter activated but can not tune without binding to Align ZLP')
+					self.alignzlp_warned = True	
+
+	def monitorScreenCurrent(self, presetname):
+		presetdata = self.presetsclient.getPresetByName(presetname)
+		if not presetdata:
+			return
+		if self.screencurrent_bound:
+			self.measureScreenCurrent(presetname)
+
+	def nextPhasePlate(self, preset_name):
+		'''
+		Send Phase Plate Advancement  request
+		'''
+		request_data = leginondata.PhasePlateData()
+		request_data['session'] = self.session
+		request_data['preset'] = preset_name
+		self.publish(request_data, database=True, pubevent=True, wait=True)
+
+	def alignZeroLossPeak(self, preset_name):
+		'''
+		Send align ZLP  request
+		'''
+		request_data = leginondata.AlignZeroLossPeakData()
+		request_data['session'] = self.session
+		request_data['preset'] = preset_name
+		self.publish(request_data, database=True, pubevent=True, wait=True)
+
+	def measureScreenCurrent(self, preset_name): 
+		'''
+		Send screen current measurement request
+		'''
+		request_data = leginondata.ScreenCurrentLoggerData()
+		request_data['session'] = self.session
+		request_data['preset'] = preset_name
+		self.publish(request_data, database=True, pubevent=True, wait=True)
+
+	def preTargetSetup(self):
+		'''
+		Things to do before moving to each target and set preset
+		'''
+		zlp_preset_name = self.settings['preset order'][-1]
+		self.logger.info('Tuning before processing a target')
+		self.tuneEnergyFilter(zlp_preset_name)
+		self.monitorScreenCurrent(zlp_preset_name)
+
 	def processTargetData(self, targetdata, attempt=None):
 		'''
 		This is called by TargetWatcher.processData when targets available
 		If called with targetdata=None, this simulates what occurs at
 		a target (going to presets, acquiring images, etc.)
 		'''
-
+		# need to validate presets before preTargetSetup because they need
+		# to use preset, too, even though not the same target.
 		try:
 			self.validatePresets()
 		except InvalidPresetsSequence, e:
@@ -375,7 +495,12 @@ class Acquisition(targetwatcher.TargetWatcher):
 				return 'aborted'
 			else:
 				raise
+		except Exception, e:
+			self.logger.error(str(e))
+			raise
 
+		self.preTargetSetup()
+		# process target begins
 		presetnames = self.settings['preset order']
 		ret = 'ok'
 		self.onTarget = False
@@ -391,7 +516,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 				self.logger.info('target adjusted by (%.1f,%.1f) (column, row)' % (targetdata['delta column']-targetonimage[0],targetdata['delta row']-targetonimage[1]))
 			offset = {'x':self.settings['target offset col'],'y':self.settings['target offset row']}
 			if offset['x'] or offset['y']:
-				targetdata = self.makeTransformTarget(targetdata,offset)
+				targetdata = self.makeOffsetTarget(targetdata,offset)
 
 			# set stage z first before move
 			z = self.moveToLastFocusedStageZ(targetdata)
@@ -409,7 +534,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			if preset_index > 0 and pause_between_time > 0.0:
 				self.logger.info('Pausing for extra %.1f before acquisition with %s' % (pause_between_time,newpresetname))
 				time.sleep(pause_between_time)
-			### acquire film or CCD
+			### acquire CCD
 			self.startTimer('acquire')
 			ret = self.acquire(presetdata, emtarget, attempt=attempt, target=targetdata)
 			self.stopTimer('acquire')
@@ -477,6 +602,18 @@ class Acquisition(targetwatcher.TargetWatcher):
 			targetdeltarow = targetdata['delta row']
 			targetdeltacolumn = targetdata['delta column']
 			origscope = targetdata['scope']
+			# printing parent scope parameters for debugging
+			if targetdata['image']:
+				parentscope = targetdata['image']['scope']
+			else:
+				parentscope = None
+			if hasattr(origscope,'dbid'):
+				self.logger.info('Using ScopeEMData  id %d for emscope calculation' % origscope.dbid)
+			if hasattr(parentscope,'dbid'):
+				self.logger.info('Parent ScopeEMData id %d' % parentscope.dbid)
+				self.logger.info('target parent image stage position (%.2f, %.2f) um' % (parentscope['stage position']['x']*1e6, parentscope['stage position']['y']*1e6)) 
+			self.logger.info('origscope stage position (%.2f, %.2f) um' % (origscope['stage position']['x']*1e6, origscope['stage position']['y']*1e6)) 
+			# Initialize targetscope
 			targetscope = leginondata.ScopeEMData(initializer=origscope)
 			## copy these because they are dictionaries that could
 			## otherwise be shared (although transform() should be
@@ -543,72 +680,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.publish(emtargetdata, database=True)
 		return emtargetdata
 
-	def lastFilmAcquisition(self):
-		filmdata = self.research(datainstance=leginondata.FilmData(), results=1)
-		if filmdata:
-			filmdata = filmdata[0]
-		else:
-			filmdata = None
-		return filmdata
-
 	def setImageFilename(self, imagedata):
 		setImageFilename(imagedata)
-
-	def acquireFilm(self, presetdata, emtarget=None):
-		self.logger.info('acquiring film')
-		## get current film parameters
-		stock = self.instrument.tem.FilmStock
-		if stock < 1:
-			self.logger.error('Film stock = %s. Film exposure failed' % (stock,))
-			return 'no stock'
-		## create FilmData(AcquisitionImageData) which 
-		## will be used to store info about this exposure
-		targetdata = emtarget['target']
-		filmdata = leginondata.FilmData(session=self.session, preset=presetdata, label=self.name, target=targetdata, emtarget=emtarget)
-
-		## first three of user name
-		self.instrument.tem.FilmUserCode = self.session['user']['username'][:3]
-		## use next dbid for film text
-		last_film = self.lastFilmAcquisition()
-		if last_film is None:
-			last_dbid = 0
-		else:
-			last_dbid = last_film.dbid
-		next_dbid = last_dbid + 1
-		existing_filmtext = self.instrument.tem.FilmText
-		lines = existing_filmtext.split('\n')
-		leg_label = 'Leginon ID: %s' % (next_dbid,)
-		if lines[-1].startswith('Leginon') or len(lines) >= 4:
-			lines[-1] = leg_label
-		else:
-			lines.append(leg_label)
-		new_filmtext = '\n'.join(lines)
-		
-		self.instrument.tem.FilmText = new_filmtext
-		self.instrument.tem.FilmDateType = 'YY.MM.DD'
-
-		## get scope for database
-		scopebefore = self.instrument.getData(leginondata.ScopeEMData)
-		camerabefore = self.instrument.getData(leginondata.CameraEMData)
-		filmdata['camera'] = camerabefore
-		filmdata['scope'] = scopebefore
-		## insert film
-		self.instrument.tem.preFilmExposure(True)
-		# wait for shaking to stop
-		pause_time = self.instrument.tem.ExpWaitTime
-		self.logger.info('pausing for %s seconds' % (pause_time,))
-		time.sleep(pause_time)
-		# expose film
-		self.instrument.ccdcamera.getImage()
-		## take out film
-		self.instrument.tem.postFilmExposure(True)
-		filmleft = self.instrument.tem.FilmStock
-		self.logger.info('Films left: %d' % (filmleft,))
-		if filmleft < 1:
-			self.logger.error('No more film left, please change film box and click continue')
-			self.player.pause()
-			self.declareDrift('film changed')
-		return filmdata
 
 	def exposeSpecimen(self, seconds):
 		self.exposeSpecimenWithShutterOverride(seconds)
@@ -627,6 +700,36 @@ class Acquisition(targetwatcher.TargetWatcher):
 		y = simageshift['y'] + imageshift['y']
 		self.instrument.tem.ImageShift = {'x':x, 'y':y}
 
+	def setPresetMagProbeMode(self, presetdata,emtarget):
+		'''
+		Set magnification and probe mode according to presetdata.
+		This is required before setting beam tilt or other projection
+		submode dependent values.
+		'''
+		if not presetdata:
+			return
+		tem = presetdata['tem']
+		current_tem = self.instrument.getTEMData()
+		if not tem or current_tem.dbid != tem.dbid:
+			self.instrument.setTEM(tem['name'])
+		# magnification check
+		preset_mag = presetdata['magnification']
+		current_mag = self.instrument.tem.Magnification
+		# probe mode
+		current_probe = self.instrument.tem.getProbeMode()
+		preset_probe = presetdata['probe mode']
+		if preset_mag != current_mag or preset_probe != current_probe:
+			presetname = presetdata['name']
+			self.logger.info('Setting Preset and emtarget to %s to get zero beam tilt and stig' % (presetname))
+			self.presetsclient.toScope(presetname, emtarget, keep_shift=False)
+		
+	def setComaStig0(self):
+		mag = self.instrument.tem.Magnification
+		self.logger.info('Set zero beam tilt and stig at %d mag' % (int(mag)))
+		self.beamtilt0 = self.instrument.tem.getBeamTilt()
+		self.stig0 = self.instrument.tem.getStigmator()['objective']
+		self.defoc0 = self.instrument.tem.getDefocus()
+
 	def moveAndPreset(self, presetdata, emtarget):
 			'''
 			Move xy to emtarget position with its mover and set preset
@@ -638,8 +741,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 			movetype = self.settings['move type']
 			movefunction = self.settings['mover']
 			keep_shift = False
-			if movetype == 'image shift' and movefunction == 'navigator':
-				self.logger.warning('Navigator cannot be used for image shift, using Presets Manager instead')
+			if 'shift' in movetype and movefunction == 'navigator':
+				self.logger.warning('Navigator cannot be used for %s, using Presets Manager instead' % movetype)
 				movefunction = 'presets manager'
 			self.setStatus('waiting')
 			if movefunction == 'navigator':
@@ -668,14 +771,32 @@ class Acquisition(targetwatcher.TargetWatcher):
 				cam = self.instrument.getCCDCameraData()
 				ht = self.instrument.tem.HighTension
 				mag = self.instrument.tem.Magnification
+				self.setComaStig0()
 				imageshift = self.instrument.tem.getImageShift()
-				self.beamtilt0 = self.instrument.tem.getBeamTilt()
 				try:
 					beamtilt = beamtiltclient.transformImageShiftToBeamTilt(imageshift, tem, cam, ht, self.beamtilt0, mag)
 					self.instrument.tem.BeamTilt = beamtilt
 					self.logger.info("beam tilt for image acquired (%.4f,%.4f)" % (self.instrument.tem.BeamTilt['x'],self.instrument.tem.BeamTilt['y']))
 				except Exception, e:
+					self.resetComaCorrection()
 					raise NoMoveCalibration(e)
+				try:
+					stig = beamtiltclient.transformImageShiftToObjStig(imageshift, tem, cam, ht, self.stig0, mag)
+					self.instrument.tem.Stigmator = {'objective':stig}
+					stig1 = self.instrument.tem.getStigmator()['objective']
+					self.logger.info("objective stig for image acquired (%.4f,%.4f)" % (stig1['x']-self.stig0['x'],stig1['y']-self.stig0['y']))
+				except Exception, e:
+					self.resetComaCorrection()
+					raise NoMoveCalibration(e)
+				try:
+					defoc = beamtiltclient.transformImageShiftToDefocus(imageshift, tem, cam, ht, self.defoc0, mag)
+					self.instrument.tem.Defocus = defoc
+					defoc1 = self.instrument.tem.getDefocus()
+					self.logger.info("correcting defocus for image acquired by (%.4f) (um)" % ((defoc1-self.defoc0)*1e6))
+				except Exception, e:
+					self.resetComaCorrection()
+					raise NoMoveCalibration(e)
+
 			if self.settings['adjust time by tilt'] and abs(stagea) > 10 * 3.14159 / 180:
 				camdata = leginondata.CameraEMData()
 				camdata.friendly_update(presetdata)
@@ -710,7 +831,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.reportStatus('acquisition', 'image acquired')
 		self.stopTimer('acquire getData')
 		if imagedata is None:
-			return 'fail'
+			raise BadImageAcquireBypass('failed acquire camera image')
+		if imagedata['image'] is None:
+			raise BadImageAcquirePause('Acquired array is None. Possible camera problem')
 
 		if self.settings['bad stats response'] != 'Continue':
 			self.recheck_counter = itertools.count()
@@ -728,17 +851,24 @@ class Acquisition(targetwatcher.TargetWatcher):
 		## convert CameraImageData to AcquisitionImageData
 		dim = imagedata['camera']['dimension']
 		pixels = dim['x'] * dim['y']
-		pixeltype = str(imagedata['image'].dtype)
+		try:
+			pixeltype = str(imagedata['image'].dtype)
+		except:
+			self.logger.error('array not returned from camera')
+			self.resetComaCorrection()
+			return
 		imagedata = leginondata.AcquisitionImageData(initializer=imagedata, preset=presetdata, label=self.name, target=targetdata, list=self.imagelistdata, emtarget=emtarget, pixels=pixels, pixeltype=pixeltype)
+		imagedata['phase plate'] = self.pp_used
 		imagedata['version'] = 0
 		## store EMData to DB to prevent referencing errors
 		self.publish(imagedata['scope'], database=True)
 		self.publish(imagedata['camera'], database=True)
 		return imagedata
 
-	def acquire(self, presetdata, emtarget=None, attempt=None, target=None, channel=None):
-		reduce_pause = self.onTarget
-
+	def preAcquire(self, presetdata, emtarget=None, channel=None, reduce_pause=False):
+		'''
+		Things to do after moved to preset.
+		'''
 		if debug:
 			try:
 				tnum = emtarget['target']['number']
@@ -752,11 +882,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 			if 'consecutive' in self.timedebug:
 				print tnum, '************************************* CONSECUTIVE', t0 - self.timedebug['consecutive']
 			self.timedebug['consecutive'] = t0
-
-		status = self.moveAndPreset(presetdata, emtarget)
-		if status == 'error':
-			self.logger.warning('Move failed. skipping acquisition at this target')
-			return status
 
 		pausetime = self.settings['pause time']
 		if reduce_pause:
@@ -796,14 +921,29 @@ class Acquisition(targetwatcher.TargetWatcher):
 				defaultchannel = None
 		else:
 			defaultchannel = channel
+
+	def acquire(self, presetdata, emtarget=None, attempt=None, target=None, channel=None):
+		reduce_pause = self.onTarget
+		status = self.moveAndPreset(presetdata, emtarget)
+		if status == 'error':
+			self.logger.warning('Move failed. skipping acquisition at this target')
+			return status
+
+		defaultchannel = self.preAcquire(presetdata, emtarget, channel, reduce_pause)
 		args = (presetdata, emtarget, defaultchannel)
-		if self.settings['background']:
-			self.clearCameraEvents()
-			t = threading.Thread(target=self.acquirePublishDisplayWait, args=args)
-			t.start()
-			self.waitExposureDone()
-		else:
-			self.acquirePublishDisplayWait(*args)
+		try:
+			if self.settings['background']:
+				self.clearCameraEvents()
+				t = threading.Thread(target=self.acquirePublishDisplayWait, args=args)
+				t.start()
+				self.waitExposureDone()
+			else:
+				self.acquirePublishDisplayWait(*args)
+		except:
+			self.resetComaCorrection()
+			raise
+		finally:
+			self.resetComaCorrection()
 		return status
 
 	def acquirePublishDisplayWait(self, presetdata, emtarget, channel):
@@ -817,15 +957,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 			print tnum, 'APDW START'
 			t0 = time.time()
 
-		if presetdata['film']:
-			imagedata = self.acquireFilm(presetdata, emtarget)
-		else:
-			imagedata = self.acquireCCD(presetdata, emtarget, channel=channel)
+		imagedata = self.acquireCCD(presetdata, emtarget, channel=channel)
 
 		self.imagedata = imagedata
-		if self.settings['correct image shift coma']:
-			self.instrument.tem.BeamTilt = self.beamtilt0
-			self.logger.info("reset beam tilt to (%.4f,%.4f)" % (self.instrument.tem.BeamTilt['x'],self.instrument.tem.BeamTilt['y']))
 		targetdata = emtarget['target']
 		if targetdata is not None:
 			if 'grid' in targetdata and targetdata['grid'] is not None:
@@ -848,6 +982,79 @@ class Acquisition(targetwatcher.TargetWatcher):
 			del self.timedebug[tkey]
 			print tnum, '************* TOTAL ***', ttt
 
+	def resetComaCorrection(self):
+		# projection submode and probe mode must be the same as beamtilt0
+		# and stig0 when calling this.
+		if self.settings['correct image shift coma']:
+			if self.beamtilt0 is None:
+				# Exception during pre-acquire target processing may call this function.
+				# before the real reset values are set
+				self.logger.warning("Calling resetComaCorrection before it is known is not possible. No reset is done")
+				return
+			self.instrument.tem.BeamTilt = self.beamtilt0
+			self.instrument.tem.Stigmator = {'objective':self.stig0}
+			self.instrument.tem.Defocus = self.defoc0
+			self.logger.info("reset beam tilt to (%.4f,%.4f)" % (self.instrument.tem.BeamTilt['x'],self.instrument.tem.BeamTilt['y']))
+			stig1 = self.instrument.tem.getStigmator()['objective']
+			self.logger.info("reset object stig to (%.4f,%.4f)" % (stig1['x'],stig1['y']))
+			defoc1 = self.instrument.tem.getDefocus()
+			self.logger.info("reset defocus to (%.4f) um" % (defoc1*1e6))
+
+	def parkAtHighMag(self):
+		# wait for at least for 30 seconds
+		self.logger.info('wait 30 seconds before parking')
+		time.sleep(max(self.settings['pause time'],30))
+		# send a preset at the highest magnification to keep the lens warm
+		park_presetname = self.presetsclient.getHighestMagPresetName()
+		self.logger.info('parking the scope to preset %s' % (park_presetname,))
+		self.presetsclient.toScope(park_presetname, None, False)
+		self.logger.info('scope parked at preset %s' % (park_presetname,))
+
+	def park(self):
+		# also go to highest mag.
+		self.parkAtHighMag()
+		super(Acquisition,self).park()
+		
+	def notifyNodeBusy(self):
+			'''
+			Notify Manager that the node is doing something so it does not timeout.
+			'''
+			self.outputEvent(event.NodeBusyNotificationEvent())
+
+	def notifyManagerPauseAvailable(self):
+		'''
+		Notify Manager that the node is doing something so it does not timeout.
+		'''
+		self.outputEvent(event.ManagerPauseAvailableEvent())
+
+	def notifyManagerPauseNotAvailable(self):
+		'''
+		Notify Manager that the node is doing something so it does not timeout.
+		'''
+		self.outputEvent(event.ManagerPauseNotAvailableEvent())
+
+	def notifyManagerContinueAvailable(self):
+		'''
+		Notify Manager that the node is doing something so it does not timeout.
+		'''
+		self.outputEvent(event.ManagerContinueAvailableEvent())
+
+	def handlePause(self, evt):
+		'''
+		Manager doing the pause
+		'''
+		#self.panel.playerEvent('pause')
+		self.player.pause()
+		self.setStatus('user input')
+
+	def handleContinue(self, evt):
+		'''
+		Manager continues the paused status
+		'''
+		#self.panel.playerEvent('play')
+		self.player.play()
+		self.setStatus(self.before_pause_node_status)
+
 	def publishDisplayWait(self, imagedata):
 		'''
 		publish image data, display it, then wait for something to 
@@ -861,12 +1068,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			imagedata.attachPixelSize()
 
 		if self.settings['park after target']:
-			time.sleep(self.settings['pause time'])
-			# send a preset at the highest magnification to keep the lens warm
-			park_presetname = self.presetsclient.getHighestMagPresetName()
-			self.logger.info('parking the scope to preset %s' % (park_presetname,))
-			self.presetsclient.toScope(park_presetname, None, False)
-			self.logger.info('scope parked at preset %s' % (park_presetname,))
+			self.parkAtHighMag()
 
 		self.reportStatus('output', 'Publishing image...')
 		self.startTimer('publish image')
@@ -878,6 +1080,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 				imagedata['mover'] = moverq
 			imagedata.insert(force=True)
 		self.publish(imagedata, pubevent=True)
+		self.notifyNodeBusy()
 
 		## set up to handle done events
 		dataid = imagedata.dbid
@@ -967,9 +1170,12 @@ class Acquisition(targetwatcher.TargetWatcher):
 			pass
 		self.reportStatus('acquisition', 'image acquired')
 		self.stopTimer('acquire getData')
+		# failed acquireCCD returns None
 		if imagedata is None:
-			return 'fail'
+			raise BadImageAcquirePause('failed acquire')
 		imagearray = imagedata['image']
+		if imagearray is None:
+			raise BadImageAcquirePause('image array is None. Possible camera problem')
 		if recheck_count == 0:
 			# Restrict recover mean value with this too if slope is used
 			self.recover_mean = imagearray.mean() * 0.8
@@ -1087,11 +1293,11 @@ class Acquisition(targetwatcher.TargetWatcher):
 		presetnames = self.presetsclient.getPresetNames()
 		return presetnames
 
-	def checkDrift(self, presetname, emtarget, threshold):
+	def checkDrift(self, presetname, emtarget, threshold, apply_beamtilt = {'x':0.0,'y':0.0}):
 		'''
 		request DriftManager to monitor drift
 		'''
-		driftdata = leginondata.DriftMonitorRequestData(session=self.session, presetname=presetname, emtarget=emtarget, threshold=threshold)
+		driftdata = leginondata.DriftMonitorRequestData(session=self.session, presetname=presetname, emtarget=emtarget, threshold=threshold, beamtilt=apply_beamtilt)
 		self.driftdone.clear()
 		self.driftimagedone.clear()
 		self.publish(driftdata, pubevent=True, database=True, dbforce=True)
@@ -1113,6 +1319,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 				self.validatePresets()
 			except InvalidPresetsSequence:
 				self.logger.error('Configure at least one preset in the settings for this node.')
+				self.setStatus('idle')
 				return
 			presetnames = self.settings['preset order']
 			currentpreset = self.presetsclient.getPresetByName(presetnames[0])
@@ -1123,10 +1330,18 @@ class Acquisition(targetwatcher.TargetWatcher):
 		try:
 			ret = self.processTargetData(targetdata=proctargetdata, attempt=1)
 		except BadImageStatsPause, e:
-			''' FIX ME!!! need to pause and allow repeat? '''
+			self.logger.error('processing target failed: %s' %e)
+			ret = 'aborted'
+		except BadImageAcquirePause, e:
+			self.logger.error('processing target failed: %s' %e)
+			ret = 'aborted'
+		except BadImageAcquireBypass, e:
 			self.logger.error('processing target failed: %s' %e)
 			ret = 'aborted'
 		except BadImageStatsAbort, e:
+			self.logger.error('processing target failed: %s' %e)
+			ret = 'aborted'
+		except Exception, e:
 			self.logger.error('processing target failed: %s' %e)
 			ret = 'aborted'
 		self.reportTargetStatus(proctargetdata, 'done')
@@ -1135,9 +1350,31 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 	def simulateTargetLoop(self):
 		self.setStatus('processing')
+		self.simloopstop.clear()
+		if self.settings['loop delay time'] > 0:
+			self.logger.info('delay the loop by %.1f mins' % (self.settings['loop delay time']/60.0))
+			self.setStatus('processing')
+			time0 = time.time()
+			blocktime = 20.0
+			num_block = int(self.settings['loop delay time']/blocktime)
+			while num_block > 0:
+				if self.simloopstop.isSet():
+					self.logger.info('User stopped loop')
+					self.setStatus('idle')
+					return
+				time.sleep(blocktime)
+				time1 = time.time() - time0
+				num_block = int(time1/blocktime)
+			# remaining time
+			if self.simloopstop.isSet():
+				self.logger.info('User stopped loop')
+				self.setStatus('idle')
+				return
+			time1 = time.time() - time0
+			if time1 > 1.0:
+				time.sleep(time1)
 		iterations = self.settings['iterations']
 		self.logger.info('begin simulated target loop of %s iterations' % (iterations,))
-		self.simloopstop.clear()
 		for i in range(iterations):
 			self.logger.info('iteration %s of %s' % (i+1, iterations,))
 			self.simulateTarget()
@@ -1151,7 +1388,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.setStatus('processing')
 		self.logger.info('Simulated Target Loop Done')
 		self.setStatus('idle')
-	
 
 	def simulateTargetLoopStop(self):
 		self.logger.info('Simulated Target Loop will stop after next iteration')
@@ -1167,6 +1403,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.setImage(numpy.asarray(imagedata['image'], numpy.float32), 'Image')
 
 	def processReferenceTarget(self):
+		# This happens after fixCondition
 		refq = leginondata.ReferenceTargetData(session=self.session)
 		results = refq.query(results=1, readimages=False)
 		if not results:
@@ -1187,6 +1424,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.logger.error(e)
 
 	def fixAlignment(self):
+		# This happens after processReferenceTarget
+		# start alignment manager.  May replace reference in the future
 		evt = event.FixAlignmentEvent()
 		try:
 			original_position = self.instrument.tem.getStagePosition()
@@ -1198,13 +1437,28 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.logger.error(e)
 
 	def fixCondition(self):
+		# This is done before any targets are rejected and processed in the targetlist.
+		# First part is for conditions to be fixed don't involve presets,
+		# such as buffer cycling or nitrogen filler
 		evt = event.FixConditionEvent()
 		try:
+			self.logger.info('Condition fixing before processing a target')
 			status = self.outputEvent(evt, wait=True)
 		except node.ConfirmationNoBinding, e:
 			self.logger.debug(e)
 		except Exception, e:
 			self.logger.error(e)
+
+		# Second part: Preset-required tuning before rejected targets.
+		try:
+			self.validatePresets()
+		except InvalidPresetsSequence:
+			self.logger.error('Configure at least one preset in the settings for this node.')
+			self.player.pause()
+			self.setStatus('user input')
+		preset_name = self.settings['preset order'][-1]
+		# Phase Plate stuff
+		self.tunePhasePlate(preset_name)
 
 	def getMoveTypes(self):
 		movetypes = []

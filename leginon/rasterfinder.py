@@ -2,10 +2,10 @@
 
 #
 # COPYRIGHT:
-#       The Leginon software is Copyright 2003
-#       The Scripps Research Institute, La Jolla, CA
+#       The Leginon software is Copyright under
+#       Apache License, Version 2.0
 #       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
+#       see  http://leginon.org
 #
 
 from leginon import leginondata
@@ -146,8 +146,8 @@ class RasterFinder(targetfinder.TargetFinder):
 
 		radians = math.pi * self.settings['raster angle'] / 180.0
 		if self.settings['raster center on image']:
-			x0 = imageshape[0]/2.0
-			y0 = imageshape[1]/2.0
+			x0 = imageshape[1]/2.0
+			y0 = imageshape[0]/2.0
 		else:
 			x0 = float(self.settings['raster center x'])
 			y0 = float(self.settings['raster center y'])
@@ -167,8 +167,8 @@ class RasterFinder(targetfinder.TargetFinder):
 				yrot = yshft * numpy.cos(radians) + xshft * numpy.sin(radians)
 				x = int(xrot + x0)
 				y = int(yrot + y0)
-				if x < 0 or x >= imageshape[0]: continue
-				if y < 0 or y >= imageshape[1]: continue
+				if x < 0 or x >= imageshape[1]: continue
+				if y < 0 or y >= imageshape[0]: continue
 				points.append( (x,y) )
 
 		#old stuff
@@ -202,7 +202,7 @@ class RasterFinder(targetfinder.TargetFinder):
 				cc = int(cc + ccenter)
 				if rr < 0 or rr >= imageshape[0]: continue
 				if cc < 0 or cc >= imageshape[1]: continue
-				points.append((int(rr),int(cc)))
+				points.append((int(cc),int(rr)))
 
 		self.setTargets(self.transpose_points(points), 'Raster')
 		self.rasterpoints = points
@@ -340,6 +340,15 @@ class RasterFinder(targetfinder.TargetFinder):
 		# ice
 		self.ice()
 
+	def waitForUserCheck(self):
+			self.setStatus('user input')
+			self.twobeeps()
+			self.logger.info('Waiting for user to check targets...')
+			self.panel.submitTargets()
+			self.userpause.clear()
+			self.userpause.wait()
+			self.setStatus('processing')
+
 	def findTargets(self, imdata, targetlist):
 		## display image
 		self.setImage(imdata['image'], 'Original')
@@ -355,11 +364,10 @@ class RasterFinder(targetfinder.TargetFinder):
 
 		## user part
 		if self.settings['user check']:
-			self.setStatus('user input')
-			self.logger.info('Waiting for user to check targets...')
-			self.panel.submitTargets()
-			self.userpause.clear()
-			self.userpause.wait()
+			while True:
+				self.waitForInteraction(imdata)
+				if not self.processPreviewTargets(imdata, targetlist):
+					break
 			self.panel.targetsSubmitted()
 			self.setStatus('processing')
 

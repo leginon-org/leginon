@@ -1,7 +1,7 @@
-# The Leginon software is Copyright 2004
-# The Scripps Research Institute, La Jolla, CA
+# The Leginon software is Copyright under
+# Apache License, Version 2.0
 # For terms of the license agreement
-# see http://ami.scripps.edu/software/leginon-license
+# see http://leginon.org
 #
 # $Source: /ami/sw/cvsroot/pyleginon/intensitycalibrator.py,v $
 # $Revision: 1.11 $
@@ -25,7 +25,7 @@ class Abort(Exception):
 class IntensityCalibrator(calibrator.Calibrator):
 	panelclass = gui.wx.IntensityCalibrator.Panel
 	settingsclass = leginondata.IntensityCalibratorSettingsData
-	defaultsettings = calibrator.Calibrator.defaultsettings
+	defaultsettings = dict(calibrator.Calibrator.defaultsettings)
 	defaultsettings.update({
 		'min': 0.3,
 		'max': 0.7,
@@ -71,7 +71,7 @@ class IntensityCalibrator(calibrator.Calibrator):
 		print 'mean0,mean1', mean0, mean1
 
 	def acquire(self, intensity):
-		imagedata = self.acquireCorrectedCameraImageData()
+		imagedata = self.acquireCorrectedCameraImageData(force_no_frames=True)
 		self.setImage(imagedata['image'])
 		preset = self.presetsclient.getCurrentPreset()
 		acqimdata = leginondata.AcquisitionImageData(initializer=imagedata, session=self.session, preset=preset)

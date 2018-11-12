@@ -6,7 +6,7 @@ class TiltRotateRepeater(targetrepeater.TargetRepeater):
 	transformtype = 'rotation'
 	panelclass = gui.wx.TiltRotate.Panel
 	settingsclass = leginondata.TiltRotateSettingsData
-	defaultsettings = targetrepeater.TargetRepeater.defaultsettings
+	defaultsettings = dict(targetrepeater.TargetRepeater.defaultsettings)
 	defaultsettings.update({
 		'tilts': '(0,)',
 	})

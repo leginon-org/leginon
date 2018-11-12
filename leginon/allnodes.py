@@ -56,6 +56,9 @@ noderegistry.registerNodeClass(RaptorProcessor,classtype)
 from matlabtargetfinder import MatlabTargetFinder
 noderegistry.registerNodeClass(MatlabTargetFinder,classtype)
 
+from stitchtargetfinder import StitchTargetFinder
+noderegistry.registerNodeClass(StitchTargetFinder,classtype)
+
 from testtargetfinder import TestTargetFinder
 noderegistry.registerNodeClass(TestTargetFinder,classtype)
 
@@ -64,6 +67,9 @@ noderegistry.registerNodeClass(DTFinder,classtype)
 
 from mosaictargetfinder import MosaicClickTargetFinder
 noderegistry.registerNodeClass(MosaicClickTargetFinder,classtype)
+
+from mosaicquiltfinder import MosaicQuiltFinder
+noderegistry.registerNodeClass(MosaicQuiltFinder,classtype)
 
 from mosaicsectionfinder import MosaicSectionFinder
 noderegistry.registerNodeClass(MosaicSectionFinder,classtype)
@@ -99,8 +105,17 @@ noderegistry.registerNodeClass(Acquisition,classtype)
 from focuser import Focuser
 noderegistry.registerNodeClass(Focuser,classtype)
 
+from singlefocuser import SingleFocuser
+noderegistry.registerNodeClass(SingleFocuser,classtype)
+
 from rctacquisition import RCTAcquisition
 noderegistry.registerNodeClass(RCTAcquisition,classtype)
+
+from phaseplatetester import PhasePlateTestImager
+noderegistry.registerNodeClass(PhasePlateTestImager,classtype)
+
+from phaseplatetester import PhasePlateTester
+noderegistry.registerNodeClass(PhasePlateTester,classtype)
 
 from tilttracker import TiltTracker
 noderegistry.registerNodeClass(TiltTracker,classtype)
@@ -123,6 +138,9 @@ noderegistry.registerNodeClass(SampleTargetFilter,classtype)
 from jahcfinder import JAHCFinder
 noderegistry.registerNodeClass(JAHCFinder,classtype)
 
+from dogfinder import DoGFinder
+noderegistry.registerNodeClass(DoGFinder,classtype)
+
 from atlastargetmaker import AtlasTargetMaker
 noderegistry.registerNodeClass(AtlasTargetMaker,classtype)
 
@@ -141,11 +159,17 @@ noderegistry.registerNodeClass(AutoExposure,classtype)
 from baker import Baker
 noderegistry.registerNodeClass(Baker,classtype)
 
-from tiltacquisition import TiltAcquisition
-noderegistry.registerNodeClass(TiltAcquisition,classtype)
+from moveacquisition import MoveAcquisition
+noderegistry.registerNodeClass(MoveAcquisition,classtype)
+
+from tiltlistalternater import TiltListAlternater
+noderegistry.registerNodeClass(TiltListAlternater,classtype)
 
 from tiltalternater import TiltAlternater
 noderegistry.registerNodeClass(TiltAlternater,classtype)
+
+from defocussequence import DefocusSequence
+noderegistry.registerNodeClass(DefocusSequence,classtype)
 
 ##############################
 # Calibrations
@@ -160,11 +184,20 @@ noderegistry.registerNodeClass(GonModeler,classtype)
 from matrixcalibrator import MatrixCalibrator
 noderegistry.registerNodeClass(MatrixCalibrator,classtype)
 
+from imagebeamcalibrator import ImageBeamCalibrator
+noderegistry.registerNodeClass(ImageBeamCalibrator,classtype)
+
 from beamtiltcalibrator import BeamTiltCalibrator
 noderegistry.registerNodeClass(BeamTiltCalibrator,classtype)
 
 from pixelsizecalibrator import PixelSizeCalibrator
 noderegistry.registerNodeClass(PixelSizeCalibrator,classtype)
+
+from imagerotationcalibrator import ImageRotationCalibrator
+noderegistry.registerNodeClass(ImageRotationCalibrator,classtype)
+
+from imagescalecalibrator import ImageScaleAdditionCalibrator
+noderegistry.registerNodeClass(ImageScaleAdditionCalibrator,classtype)
 
 from dosecalibrator import DoseCalibrator
 noderegistry.registerNodeClass(DoseCalibrator,classtype)
@@ -182,10 +215,13 @@ noderegistry.registerNodeClass(ClickTargetTransformer,classtype)
 from driftmanager import DriftManager
 noderegistry.registerNodeClass(DriftManager,classtype)
 
-from reference import AlignZeroLossPeak
+from referencetimer import ReferenceTimer
+noderegistry.registerNodeClass(ReferenceTimer,classtype)
+
+from referencetimer import AlignZeroLossPeak
 noderegistry.registerNodeClass(AlignZeroLossPeak,classtype)
 
-from reference import MeasureDose
+from referencetimer import MeasureDose
 noderegistry.registerNodeClass(MeasureDose,classtype)
 
 from EM import EM
@@ -202,6 +238,12 @@ noderegistry.registerNodeClass(BufferCycler,classtype)
 
 from conditioner import AutoNitrogenFiller
 noderegistry.registerNodeClass(AutoNitrogenFiller,classtype)
+
+from phaseplatealigner import PhasePlateAligner
+noderegistry.registerNodeClass(PhasePlateAligner,classtype)
+
+from screencurrentlogger import ScreenCurrentLogger
+noderegistry.registerNodeClass(ScreenCurrentLogger,classtype)
 
 from maskassessor import MaskAssessor
 noderegistry.registerNodeClass(MaskAssessor,classtype)
@@ -230,9 +272,21 @@ noderegistry.registerNodeClass(ManualImageLoader,classtype)
 from clickmaskmaker import ClickMaskMaker
 noderegistry.registerNodeClass(ClickMaskMaker,classtype)
 
-from navigator import Navigator
-noderegistry.registerNodeClass(Navigator,classtype)
-
 from imageassessor import ImageAssessor
 noderegistry.registerNodeClass(ImageAssessor,classtype)
+
+from temcontroller import TEMController
+noderegistry.registerNodeClass(TEMController,classtype)
+
+from icethicknessEF import IcethicknessEF
+noderegistry.registerNodeClass(IcethicknessEF,classtype)
+
+from blackstripedetector import BlackStripeDetector
+noderegistry.registerNodeClass(BlackStripeDetector,classtype)
+##############################
+# Finale
+##############################
+classtype = 'Finale'
+from navigator import Navigator
+noderegistry.registerNodeClass(Navigator,classtype)
 

@@ -1,10 +1,10 @@
 <?php
 
 /**
- *	The Leginon software is Copyright 2003 
- *	The Scripps Research Institute, La Jolla, CA
+ *	The Leginon software is Copyright under 
+ *	Apache License, Version 2.0
  *	For terms of the license agreement
- *	see  http://ami.scripps.edu/software/leginon-license
+ *	see  http://leginon.org
  */
 
 define('USR_BROWSER_AGENT', trim(browser('b')));
@@ -276,12 +276,23 @@ class dropdown {
 
 function divtitle($title) {
 	$htmlstr = '
-	<div style="padding: 4px; border:1px solid black; background-color:#CCCCFF">
-	<b>'.$title.'</b> 
+	<div style="border-radius: 2px; margin: 2px; padding: 6px; border:2px solid #696969; background-color:#D4E0EE; 
+	 font-family: Helvetica,Arial,sans-serif; font-weight: normal; color: #3F4F4F; font-size: 120%; ">
+	'.$title.'
 	</div>
 	';
 	return $htmlstr;
 }
+
+function opendivbubble() {
+	$htmlstr = '
+	<div style="border-radius: 10px; margin: 10px; padding: 6px; border:2px solid #B9B9B9; background-color:#F8FAFF; 
+	 font-family: Helvetica,Arial,sans-serif; font-weight: normal; color: #3F4F4F; font-size: 100%;
+	 line-height: 150%; ">
+	';
+	return $htmlstr;
+}
+
 
 function getFileSize($filename, $precision, $unit="") {
 	if (!is_file($filename))
@@ -562,7 +573,7 @@ function array2table($data, $columns=array(), $display_header=false, $tableoptio
 	$fields = ($columns) ? $columns : array_keys((array)$data[0]);
 	$html = "<table $tableoption >";
 	if ($display_header) {
-		$html .= "<tr>\n";
+		$html .= "<thead><tr>\n";
 		$option="";
 		foreach ($fields as $field=>$label) {
 			$l = (is_string($label)) ? $label : $field;
@@ -574,8 +585,9 @@ function array2table($data, $columns=array(), $display_header=false, $tableoptio
 			}
 			$html .= "<td $option ><b>".$l."</b></td>";
 		}
-		$html .= "</tr>\n";
+		$html .= "</tr></thead>\n";
 	}
+	$html .= "<tbody>";
 	foreach ((array)$data as $n=>$row) {
 		$html .= "<tr>\n";
 		foreach ($fields as $k=>$v) {
@@ -595,6 +607,7 @@ function array2table($data, $columns=array(), $display_header=false, $tableoptio
 		}
 		$html .= "</tr>\n";
 	}
+	$html .= "</tbody>";
 	$html .= "</table>";
 	return $html;
 }

@@ -1,0 +1,28 @@
+/*----------------------------------------------------------------------------*
+*
+*  tomoseriesconfig.h  -  configuration
+*
+*----------------------------------------------------------------------------*/
+
+#ifndef tomoseriesconfig_h_
+#define tomoseriesconfig_h_
+
+#include "tomomodulebase.h"
+
+
+/* build identification */
+
+MODULE-PRFX TOMOSERIES
+"i3tomoseries"
+"2.4"
+"Copyright © 2012 Hanspeter Winkler"
+
+
+/* module codes */
+
+#define TomoseriesModuleCode     ( TomoSeriesModuleBase | 0x0100 )
+#define TomocacheModuleCode      ( TomoSeriesModuleBase | 0x0200 )
+#define TomodataModuleCode       ( TomoSeriesModuleBase | 0x0300 )
+
+
+#endif

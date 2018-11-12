@@ -2,10 +2,10 @@
 
 #
 # COPYRIGHT:
-#       The Leginon software is Copyright 2003
-#       The Scripps Research Institute, La Jolla, CA
+#       The Leginon software is Copyright under
+#       Apache License, Version 2.0
 #       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
+#       see  http://leginon.org
 #
 
 import numpy
@@ -16,6 +16,7 @@ import math
 from pyami import imagefun, peakfinder, convolver, correlator, mrc, arraystats
 import ice
 import lattice
+import multihole
 
 hole_template_files = {}
 hole_templates = {}
@@ -117,6 +118,7 @@ class HoleFinder(object):
 		}
 
 		## other necessary components
+		self.multiconvolver = multihole.TemplateConvolver()
 		self.convolver = convolver.Convolver()
 		self.peakfinder = peakfinder.PeakFinder()
 		self.circle = CircleMaskCreator()
@@ -124,8 +126,8 @@ class HoleFinder(object):
 
 		## some default configuration parameters
 		self.save_mrc = False
-		self.template_config = {'ring_list': [(25,30)]}
-		self.correlation_config = {'cortype': 'cross', 'corfilt': (1.0,)}
+		self.template_config = {'template filename':'', 'template diameter':168, 'file diameter':168, 'invert':False, 'min':0.0, 'multiple':1, 'spacing': 100.0, 'angle':0.0}
+		self.correlation_config = {'cortype': 'cross', 'corfilt': (1.0,),'cor_image_min':0.0}
 		self.threshold = 3.0
 		self.threshold_method = "Threshold = mean + A * stdev"
 		self.blobs_config = {'border': 20, 'maxblobsize': 50, 'maxblobs':100}
@@ -153,13 +155,21 @@ class HoleFinder(object):
 		## update this result
 		self.__results[key] = image
 
-	def configure_template(self, diameter=None, filename=None, filediameter=None):
+	def configure_template(self, diameter=None, filename=None, filediameter=None, invert=False, multiple=1, spacing=100.0, angle=0.0):
 		if diameter is not None:
 			self.template_config['template diameter'] = diameter
 		if filename is not None:
 			self.template_config['template filename'] = filename
 		if filediameter is not None:
 			self.template_config['file diameter'] = filediameter
+		if invert is not None:
+			self.template_config['invert'] = bool(invert)
+		if multiple is not None:
+			self.template_config['multiple'] = int(multiple)
+		if spacing is not None:
+			self.template_config['spacing'] = spacing
+		if angle is not None:
+			self.template_config['angle'] = angle # degrees
 
 	def read_hole_template(self, filename):
 		if filename in hole_template_files:
@@ -169,28 +179,49 @@ class HoleFinder(object):
 		return im
 
 	def create_template(self):
+		'''
+		Create hole template from file. 
+		'''
+		#self.template_config should be set before calling this.
 		fromimage = 'original'
 		if self.__results[fromimage] is None:
 			raise RuntimeError('need image %s before creating template' % (fromimage,))
-		self.configure_template()
 
 		# read template file
 		filename = self.template_config['template filename']
 		tempim = self.read_hole_template(filename)
 
-		# create template of proper size
-		shape = self.__results[fromimage].shape
-		center = (0,0)
+		# invert if needed
+		if self.template_config['invert']:
+			self.logger.info('invert template for correlation')
+			tempim_med = (tempim.min() + tempim.max()) / 2
+			tempim = -tempim + 2 * tempim_med
+
 		filediameter = self.template_config['file diameter']
 		diameter = self.template_config['template diameter']
 		scale = float(diameter) / filediameter
+		# multiple hole template generation
+		self.multiconvolver.setSingleTemplate(tempim)
+		self.multiconvolver.setConfig(self.template_config['multiple'],self.template_config['spacing'], self.template_config['angle'], scale)
 
-		im2 = scipy.ndimage.zoom(tempim, scale)
-		origshape = im2.shape
-		edgevalue = im2[0,0]
-		template = edgevalue * numpy.ones(shape, im2.dtype)
-		offset = ( (shape[0]-origshape[0])/2, (shape[1]-origshape[1])/2 )
-		template[offset[0]:offset[0]+origshape[0], offset[1]:offset[1]+origshape[1]] = im2
+		tempim = self.multiconvolver.makeMultiTemplate()
+		# create template of proper size
+		shape = self.__results[fromimage].shape
+
+		origshape = tempim.shape
+		edgevalue = tempim[0,0]
+		template = edgevalue * numpy.ones(shape, tempim.dtype)
+		# make sure the tamplate is smaller than from_image in both axes #5607
+		if shape[0] < origshape[0]:
+				offset = int((origshape[0]-shape[0])/2.0)
+				tempim = tempim[offset:offset+shape[0],:]
+		if shape[1] < origshape[1]:
+				offset = int((origshape[1]-shape[1])/2.0)
+				tempim = tempim[:,offset:offset+shape[1]]
+		# Redefine origshape which is now always equal or smaller than shape
+		origshape = tempim.shape
+		offset = ( int((shape[0]-origshape[0])/2.0), int((shape[1]-origshape[1])/2.0) )
+		template[offset[0]:offset[0]+origshape[0], offset[1]:offset[1]+origshape[1]] = tempim
 		shift = (shape[0]/2, shape[1]/2)
 		template = scipy.ndimage.shift(template, shift, mode='wrap')
 
@@ -203,7 +234,9 @@ class HoleFinder(object):
 		if cortype is not None:
 			self.correlation_config['cortype'] = cortype
 		self.correlation_config['corfilt'] = corfilt
-		self.correlation_config['cor_image_min'] = cor_image_min
+		if cor_image_min is not None:
+			# for back compatibility
+			self.correlation_config['cor_image_min'] = cor_image_min
 
 	def maskBlack(self, image):
 		'''
@@ -218,8 +251,11 @@ class HoleFinder(object):
 		return masked.filled(masked.mean())
 
 	def correlate_template(self):
+		'''
+		Correlate template that is already created and configured.
+		'''
 		fromimage = 'original'
-		if None in (self.__results[fromimage], self.__results['template']):
+		if self.__results[fromimage] is None or self.__results['template'] is None:
 			raise RuntimeError('need image %s and template before correlation' % (fromimage,))
 		edges = self.__results[fromimage]
 		edges = self.maskBlack(edges)
@@ -284,7 +320,7 @@ class HoleFinder(object):
 		find blobs on a thresholded image
 		'''
 		if picks is None:
-			if None in (self.__results['threshold'],self.__results['correlation']):
+			if self.__results['threshold'] is None or self.__results['correlation'] is None:
 				raise RuntimeError('need correlation image and threshold image to find blobs')
 			im = self.__results['correlation']
 			mask = self.__results['threshold']
@@ -389,7 +425,7 @@ class HoleFinder(object):
 			self.__update_result('holes', holes)
 
 	def mark_holes(self):
-		if None in (self.__results['holes'], self.__results['original']):
+		if self.__results['holes'] is None or self.__results['original'] is None:
 			raise RuntimeError('need original image and holes before marking holes')
 		image = self.__results['original']
 		im = image.copy()
@@ -451,15 +487,17 @@ class HoleFinder(object):
 			hole.stats['hole_mean'] = holestats['mean']
 			hole.stats['hole_std'] = holestats['std']
 
-	def configure_ice(self, i0=None, tmin=None, tmax=None, tstd=None):
+	def configure_ice(self, i0=None, tmin=None, tmax=None, tstdmax=None, tstdmin=None):
 		if i0 is not None:
 			self.ice_config['i0'] = i0
 		if tmin is not None:
 			self.ice_config['tmin'] = tmin
 		if tmax is not None:
 			self.ice_config['tmax'] = tmax
-		if tstd is not None:
-			self.ice_config['tstd'] = tstd
+		if tstdmax is not None:
+			self.ice_config['tstdmax'] = tstdmax
+		if tstdmin is not None:
+			self.ice_config['tstdmin'] = tstdmin
 
 	def calc_ice(self, i0=None, tmin=None, tmax=None):
 		if self.__results['holes'] is None:
@@ -470,7 +508,8 @@ class HoleFinder(object):
 		i0 = self.ice_config['i0']
 		tmin = self.ice_config['tmin']
 		tmax = self.ice_config['tmax']
-		tstd = self.ice_config['tstd']
+		tstdmax = self.ice_config['tstdmax']
+		tstdmin = self.ice_config['tstdmin']
 		self.icecalc.set_i0(i0)
 		for hole in holes:
 			if 'hole_mean' not in hole.stats:
@@ -482,7 +521,7 @@ class HoleFinder(object):
 			hole.stats['thickness-mean'] = tm
 			ts = self.icecalc.get_stdev_thickness(std, mean)
 			hole.stats['thickness-stdev'] = ts
-			if (tmin <= tm <= tmax) and (ts < tstd):
+			if (tmin <= tm <= tmax) and (tstdmin <= ts < tstdmax):
 				holes2.append(hole)
 				hole.stats['good'] = True
 			else:
@@ -490,6 +529,9 @@ class HoleFinder(object):
 		self.__update_result('holes2', holes2)
 
 	def find_holes(self):
+		'''
+		For testing purpose. Configuration must be done already.
+		'''
 		self.create_template()
 		self.correlate_template()
 		self.threshold_correlation()

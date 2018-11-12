@@ -2,10 +2,10 @@
 
 #
 # COPYRIGHT:
-#       The Leginon software is Copyright 2003
-#       The Scripps Research Institute, La Jolla, CA
+#       The Leginon software is Copyright under
+#       Apache License, Version 2.0
 #       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
+#       see  http://leginon.org
 #
 
 import watcher
@@ -76,17 +76,28 @@ class DriftManager(watcher.Watcher):
 	def monitorDrift(self, driftdata=None):
 		self.setStatus('processing')
 		self.logger.info('DriftManager monitoring drift...')
+		target = None
+		threshold = None
+		beamtilt_delta = {'x':0.0,'y':0.0}
+		need_tilt = False
+
 		if driftdata is not None:
 			## use driftdata to set up scope and camera
 			pname = driftdata['presetname']
 			emtarget = driftdata['emtarget']
 			threshold = driftdata['threshold']
 			target = emtarget['target']
+			beamtilt_delta = driftdata['beamtilt']
 			self.presetsclient.toScope(pname, emtarget)
 			presetdata = self.presetsclient.getCurrentPreset()
-		else:
-			target = None
-			threshold = None
+
+		# tilt the beam if requested
+		need_tilt = beamtilt_delta and (abs(beamtilt_delta['x']) > 1e-6 or abs(beamtilt_delta['y'])) > 1e-6
+		if need_tilt:
+			bt0 = self.instrument.tem.BeamTilt
+			bt1 = {'x':bt0['x']+beamtilt_delta['x'], 'y':bt0['y']+beamtilt_delta['y']}
+			self.logger.info('Tilt beam by (x,y)=(%.2f,%.2f) mrad' % (beamtilt_delta['x'],beamtilt_delta['y']))
+			self.instrument.tem.BeamTilt = bt1
 
 		## acquire images, measure drift
 		self.abortevent.clear()
@@ -95,10 +106,19 @@ class DriftManager(watcher.Watcher):
 		time.sleep(self.settings['pause time']/2.0)	
 		self.logger.info('paused before loop')
 		status,final,im = self.acquireLoop(target, threshold=threshold)
+		# tilt the beam back if requested
+		if need_tilt:
+			self.instrument.tem.BeamTilt = bt0
+			self.logger.info('Tilt Beam back')
+
 		if status in ('drifted', 'timeout'):
 			## declare drift above threshold
 			self.declareDrift('threshold')
 
+		if im is None:
+			self.logger.error('DriftManager failed monitoring drift')
+			self.setStatus('idle')
+			return
 		## Generate DriftMonitorResultData
 		## only output if this was called from another node
 		if driftdata is not None:
@@ -122,11 +142,11 @@ class DriftManager(watcher.Watcher):
 		imagedata = None
 		if correct:
 			try:
-				imagedata = self.acquireCorrectedCameraImageData(channel)
+				imagedata = self.acquireCorrectedCameraImageData(channel, force_no_frames=True)
 			except:
 				self.logger.warning('Acquiring corrected image failed. Raw image is used')
 		if imagedata is None:
-			imagedata = self.acquireCameraImageData()
+			imagedata = self.acquireCameraImageData(force_no_frames=True)
 		if imagedata is not None:
 			self.setImage(imagedata['image'], 'Image')
 		self.stopTimer('drift acquire')
@@ -145,7 +165,7 @@ class DriftManager(watcher.Watcher):
 		imagedata = self.acquireImage(channel=corchan)
 		self.logger.info('first image acquired')
 		if imagedata is None:
-			return 'aborted', None
+			return 'aborted', None, None
 		numdata = imagedata['image']
 		t0 = imagedata['scope']['system time']
 		self.correlator.insertImage(numdata)
@@ -187,7 +207,7 @@ class DriftManager(watcher.Watcher):
 				corchan = 1
 			imagedata = self.acquireImage(channel=corchan)
 			if imagedata is None:
-				continue
+				return 'aborted', None, None
 			self.logger.info('new image acquired')
 			numdata = imagedata['image']
 			binning = imagedata['camera']['binning']['x']
@@ -195,13 +215,18 @@ class DriftManager(watcher.Watcher):
 			self.correlator.insertImage(numdata)
 
 			## do correlation
-			self.startTimer('drift correlate')
-			pc = self.correlator.phaseCorrelate()
-			self.stopTimer('drift correlate')
-			self.startTimer('drift peak')
-			peak = self.peakfinder.subpixelPeak(newimage=pc)
-			self.stopTimer('drift peak')
-			rows,cols = self.peak2shift(peak, pc.shape)
+			try:
+				self.startTimer('drift correlate')
+				pc = self.correlator.phaseCorrelate()
+				self.stopTimer('drift correlate')
+				self.startTimer('drift peak')
+				peak = self.peakfinder.subpixelPeak(newimage=pc)
+				self.stopTimer('drift peak')
+				rows,cols = self.peak2shift(peak, pc.shape)
+			except Exception, e:
+				self.logger.error(e)
+				self.logger.warning('Failed correlation and/or peak finding, Set to zero shift')
+				rows,cols = (0,0)
 			dist = math.hypot(rows,cols)
 
 			self.setImage(pc, 'Correlation')
@@ -275,6 +300,9 @@ class DriftManager(watcher.Watcher):
 
 		## acquire first image
 		imagedata = self.acquireImage(0)
+		if imagedata is None:
+			self.logger.error('Failed acquiring image')
+			return
 		numdata = imagedata['image']
 		t0 = imagedata['scope']['system time']
 		self.correlator.insertImage(numdata)
@@ -291,13 +319,21 @@ class DriftManager(watcher.Watcher):
 		
 		## acquire next image
 		imagedata = self.acquireImage(1)
+		if imagedata is None:
+			self.logger.error('Failed acquiring image')
+			return
 		numdata = imagedata['image']
 		t1 = imagedata['scope']['system time']
 		self.correlator.insertImage(numdata)
 
 		## do correlation
-		pc = self.correlator.phaseCorrelate()
-		peak = self.peakfinder.subpixelPeak(newimage=pc)
+		try:
+			pc = self.correlator.phaseCorrelate()
+			peak = self.peakfinder.subpixelPeak(newimage=pc)
+		except Exception, e:
+			self.logger.error(e)
+			self.logger.warning('Correlation/PeakFinding error, assume no shift')
+			peak = (0,0)
 		rows,cols = self.peak2shift(peak, pc.shape)
 		dist = math.hypot(rows,cols)
 

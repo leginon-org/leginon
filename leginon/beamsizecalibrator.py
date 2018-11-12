@@ -1,7 +1,7 @@
-# The Leginon software is Copyright 2004
-# The Scripps Research Institute, La Jolla, CA
+# The Leginon software is Copyright under
+# Apache License, Version 2.0
 # For terms of the license agreement
-# see http://ami.scripps.edu/software/leginon-license
+# see http://leginon.org
 #
 # $Source: /ami/sw/cvsroot/pyleginon/intensitycalibrator.py,v $
 # $Revision: 1.11 $
@@ -18,16 +18,16 @@ from leginon import leginondata
 import gui.wx.BeamSizeCalibrator
 from leginon import calibrationclient
 
-class BeamSizeCalibrator(calibrator.Calibrator):
+class BeamSizeCalibrator(calibrator.ScreenCalibrator):
 	panelclass = gui.wx.BeamSizeCalibrator.Panel
 	settingsclass = leginondata.BeamSizeCalibratorSettingsData
-	defaultsettings = calibrator.Calibrator.defaultsettings
+	defaultsettings = dict(calibrator.ScreenCalibrator.defaultsettings)
 	defaultsettings.update({
 		'beam diameter': 4e-2,
 	})
 
 	def __init__(self, *args, **kwargs):
-		calibrator.Calibrator.__init__(self, *args, **kwargs)
+		calibrator.ScreenCalibrator.__init__(self, *args, **kwargs)
 
 		self.beamsizecalclient = calibrationclient.BeamSizeCalibrationClient(self)
 		self.beamvalues = {}

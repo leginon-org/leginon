@@ -2,10 +2,10 @@
 
 #
 # COPYRIGHT:
-#       The Leginon software is Copyright 2003
-#       The Scripps Research Institute, La Jolla, CA
+#       The Leginon software is Copyright under
+#       Apache License, Version 2.0
 #       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
+#       see  http://leginon.org
 #
 
 from leginon import leginondata
@@ -31,23 +31,18 @@ class JAHCFinder(targetfinder.TargetFinder):
 	defaultsettings.update({
 		'skip': False,
 		'image filename': '',
-		'edge lpf': {
-			'sigma': 1.0,
-		},
-		'edge': True,
-		'edge type': 'sobel',
-		'edge log size': 9,
-		'edge log sigma': 1.4,
-		'edge absolute': False,
-		'edge threshold': 100.0,
 		'template diameter': 40,
 		'template filename': default_template,
 		'file diameter': 168,
+		'template image min':0.0,
+		'template invert': False,
 		'template type': 'cross',
 		'template lpf': {
 			'sigma': 1.0,
 		},
-		'template threshold':0.0,
+		'template multiple':1,
+		'multihole angle':0.0,
+		'multihole spacing':200.0,
 		'threshold': 3.0,
 		'threshold method': "Threshold = mean + A * stdev",
 		'blobs border': 20,
@@ -62,6 +57,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 		'ice min mean': 0.05,
 		'ice max mean': 0.2,
 		'ice max std': 0.2,
+		'ice min std': 0.0,
 		'focus hole': 'Off',
 		'target template': False,
 		'focus template': [(0, 0)],
@@ -72,6 +68,8 @@ class JAHCFinder(targetfinder.TargetFinder):
 		'focus max mean thickness': 0.5,
 		'focus max stdev thickness': 0.5,
 		'focus interval': 1,
+		'focus offset row': 0,
+		'focus offset col': 0,
 	})
 	extendtypes = ['off', 'full', '3x3']
 	targetnames = targetfinder.TargetFinder.targetnames + ['Blobs']
@@ -120,16 +118,31 @@ class JAHCFinder(targetfinder.TargetFinder):
 		self.hf['original'] = targetfinder.TargetFinder.readImage(self, filename)
 
 	def correlateTemplate(self):
+		'''
+		Set configuration and then create template and correlate
+		'''
 		self.logger.info('correlate ring template')
 		# convert diameters to radii
 		diameter = self.settings['template diameter']
 		filediameter = self.settings['file diameter']
+		invert = self.settings['template invert']
+		multiple = self.settings['template multiple']
+		spacing = self.settings['multihole spacing']
+		angle = self.settings['multihole angle']
 		if self.settings['template filename'] != '':
-			filename = self.settings['template filename']
+			if os.path.isfile(self.settings['template filename']):
+				filename = self.settings['template filename']
+			else:
+				self.logger.warning('Specified template not found. Use default')
+				filename = default_template
 		else:
 			filename = default_template
-		self.hf.configure_template(diameter, filename, filediameter)
-		self.hf.create_template()
+		self.hf.configure_template(diameter, filename, filediameter, invert, multiple, spacing, angle)
+		try:
+			self.hf.create_template()
+		except Exception, e:
+			self.logger.error(e)
+			return
 		cortype = self.settings['template type']
 		cor_image_min = self.settings['template image min']
 		lpfsettings = self.settings['template lpf']
@@ -139,7 +152,11 @@ class JAHCFinder(targetfinder.TargetFinder):
 		else:
 			corfilt = None
 		self.hf.configure_correlation(cortype, corfilt,cor_image_min)
-		self.hf.correlate_template()
+		try:
+			self.hf.correlate_template()
+		except Exception, e:
+			self.logger.error(e)
+			return
 		self.setImage(self.hf['correlation'], 'Template')
 
 	def threshold(self):
@@ -147,7 +164,11 @@ class JAHCFinder(targetfinder.TargetFinder):
 		tvalue = self.settings['threshold']
 		tmeth = self.settings['threshold method']
 		self.hf.configure_threshold(tvalue, tmeth)
-		self.hf.threshold_correlation()
+		try:
+			self.hf.threshold_correlation()
+		except Exception, e:
+			self.logger.error(e)
+			return
 		# convert to Float32 to prevent seg fault
 		self.setImage(self.hf['threshold'], 'Threshold')
 
@@ -158,19 +179,6 @@ class JAHCFinder(targetfinder.TargetFinder):
 			centers.append((c[1],c[0]))
 		return centers
 
-	def blobStatsTargets(self, blobs):
-		targets = []
-		for blob in blobs:
-			target = {}
-			target['x'] = blob.stats['center'][1]
-			target['y'] = blob.stats['center'][0]
-			target['stats'] = ordereddict.OrderedDict()
-			target['stats']['Size'] = blob.stats['n']
-			target['stats']['Mean'] = blob.stats['mean']
-			target['stats']['Std. Dev.'] = blob.stats['stddev']
-			targets.append(target)
-		return targets
-
 	def findBlobs(self):
 		self.logger.info('find blobs')
 		border = self.settings['blobs border']
@@ -178,7 +186,11 @@ class JAHCFinder(targetfinder.TargetFinder):
 		minblobsize = self.settings['blobs min size']
 		maxblobs = self.settings['blobs max']
 		self.hf.configure_blobs(border=border, maxblobsize=blobsize, maxblobs=maxblobs, minblobsize=minblobsize)
-		self.hf.find_blobs()
+		try:
+			self.hf.find_blobs()
+		except Exception, e:
+			self.logger.error(e)
+			return
 		blobs = self.hf['blobs']
 		targets = self.blobStatsTargets(blobs)
 		self.logger.info('Number of blobs: %s' % (len(targets),))
@@ -187,7 +199,11 @@ class JAHCFinder(targetfinder.TargetFinder):
 	def usePickedBlobs(self):
 		self.logger.info('find blobs')
 		picks = self.panel.getTargetPositions('Blobs')
-		self.hf.find_blobs(picks)
+		try:
+			self.hf.find_blobs(picks)
+		except Exception, e:
+			self.logger.error(e)
+			return
 		blobs = self.hf['blobs']
 		targets = self.blobStatsTargets(blobs)
 		self.logger.info('Number of blobs: %s' % (len(targets),))
@@ -223,10 +239,18 @@ class JAHCFinder(targetfinder.TargetFinder):
 		self.icecalc.set_i0(i0)
 
 		self.hf.configure_lattice(spacing=latspace, tolerance=lattol, extend=extend)
-		self.hf.blobs_to_lattice(auto_center=False)
+		try:
+			self.hf.blobs_to_lattice(auto_center=False)
+		except Exception, e:
+			self.logger.error(e)
+			return
 
 		self.hf.configure_holestats(radius=r)
-		self.hf.calc_holestats()
+		try:
+			self.hf.calc_holestats()
+		except Exception, e:
+			self.logger.error(e)
+			return
 
 		holes = self.hf['holes']
 		targets = self.holeStatsTargets(holes)
@@ -238,9 +262,14 @@ class JAHCFinder(targetfinder.TargetFinder):
 		i0 = self.settings['lattice zero thickness']
 		tmin = self.settings['ice min mean']
 		tmax = self.settings['ice max mean']
-		tstd = self.settings['ice max std']
-		self.hf.configure_ice(i0=i0,tmin=tmin,tmax=tmax,tstd=tstd)
-		self.hf.calc_ice()
+		tstdmax = self.settings['ice max std']
+		tstdmin = self.settings['ice min std']
+		self.hf.configure_ice(i0=i0,tmin=tmin,tmax=tmax,tstdmax=tstdmax, tstdmin=tstdmin)
+		try:
+			self.hf.calc_ice()
+		except Exception, e:
+			self.logger.error(e)
+			return
 		goodholes = self.hf['holes2']
 		centers = self.blobCenters(goodholes)
 		allcenters = self.blobCenters(self.hf['holes'])
@@ -265,7 +294,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 				elif onehole == 'Center':
 					focus_points.append(self.centerCarbon(allcenters))
 				elif onehole == 'Any Hole':
-					fochole = self.focus_on_hole(centers, allcenters)
+					fochole = self.focus_on_hole(centers, allcenters, True)
 					focus_points.append(fochole)
 				elif onehole == 'Good Hole':
 					if len(centers) < 2:
@@ -273,7 +302,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 						centers = []
 					else:
 						## use only good centers
-						fochole = self.focus_on_hole(centers, centers)
+						fochole = self.focus_on_hole(centers, centers, True)
 						focus_points.append(fochole)
 
 		self.logger.info('Holes with good ice: %s' % (len(centers),))
@@ -286,7 +315,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 			acq_points = centers
 		# need just one focus point
 		if len(focus_points) > 1 and self.settings['focus template thickness']:
-			focpoint = self.focus_on_hole(focus_points,focus_points)
+			focpoint = self.focus_on_hole(focus_points,focus_points, False)
 			focus_points = [focpoint]
 		self.setTargets(acq_points, 'acquisition', block=True)
 		self.setTargets(focus_points, 'focus', block=True)
@@ -298,7 +327,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 
 	def centerCarbon(self, points):
 		temppoints = points
-		centerhole = self.focus_on_hole(temppoints, temppoints)
+		centerhole = self.focus_on_hole(temppoints, temppoints, False)
 		closexdist = 1.0e10
 		closeydist = 1.0e10
 		xdist = 0.0
@@ -330,7 +359,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 		cy /= len(points)
 		return cx,cy
 
-	def focus_on_hole(self, good, all):
+	def focus_on_hole(self, good, all, apply_offset=False):
 		cx,cy = self.centroid(all)
 		focpoint = None
 
@@ -350,6 +379,8 @@ class JAHCFinder(targetfinder.TargetFinder):
 				if dist < closest_dist:
 					closest_dist = dist
 					closest_point = point
+			if apply_offset:
+				closest_point = self.offsetFocus(closest_point)
 			return closest_point
 
 		## now use a good hole for focus
@@ -362,10 +393,16 @@ class JAHCFinder(targetfinder.TargetFinder):
 				closest_dist = dist
 				closest_point = point
 		good.remove(closest_point)
+		if apply_offset:
+			closest_point = self.offsetFocus(closest_point)
 		return closest_point
+
+	def offsetFocus(self, point):
+			return point[0]+self.settings['focus offset col'],point[1]+self.settings['focus offset row']
 
 	def bypass(self):
 		self.setTargets([], 'Blobs', block=True)
+		self.setTargets([], 'Lattice', block=True)
 		self.setTargets([], 'acquisition', block=True)
 		self.setTargets([], 'focus', block=True)
 		self.setTargets([], 'preview', block=True)
@@ -413,7 +450,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 					rad = self.settings['focus stats radius']
 					tmin = self.settings['focus min mean thickness']
 					tmax = self.settings['focus max mean thickness']
-					tstd = self.settings['focus max stdev thickness']
+					tstdmax = self.settings['focus max stdev thickness']
 					coord = target[1], target[0]
 					stats = self.hf.get_hole_stats(self.hf['original'], coord, rad)
 					if stats is None:
@@ -422,7 +459,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 					tm = self.icecalc.get_thickness(stats['mean'])
 					ts = self.icecalc.get_stdev_thickness(stats['std'], stats['mean'])
 					self.logger.info('template point %s stats:  mean: %s, stdev: %s' % (vect, tm, ts))
-					if (tmin <= tm <= tmax) and (ts < tstd):
+					if (tmin <= tm <= tmax) and (ts < tstdmax):
 						self.logger.info('template point %s passed thickness test' % (vect,))
 						newtargets['focus'].append(target)
 						break
@@ -465,10 +502,6 @@ class JAHCFinder(targetfinder.TargetFinder):
 			'skip-auto': self.settings['skip'],
 			'queue': self.settings['queue'],
 
-			'edge-lpf-sigma': self.settings['edge lpf']['sigma'],
-			'edge-filter-type': self.settings['edge type'],
-			'edge-threshold': self.settings['edge threshold'],
-
 			'template-correlation-type': self.settings['template type'],
 			'template-lpf': self.settings['template lpf']['sigma'],
 
@@ -486,6 +519,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 			'ice-min-thickness': self.settings['ice min mean'],
 			'ice-max-thickness': self.settings['ice max mean'],
 			'ice-max-stdev': self.settings['ice max std'],
+			'ice-min-stdev': self.settings['ice min std'],
 			'template-on': self.settings['target template'],
 			'template-focus': self.settings['focus template'],
 			'template-acquisition': self.settings['acquisition template'],
@@ -540,7 +574,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 		if self.settings['user check'] or autofailed:
 			while True:
 				self.oldblobs = self.panel.getTargetPositions('Blobs')
-				self.waitForUserCheck()
+				self.waitForInteraction(imdata)
 				ptargets = self.processPreviewTargets(imdata, targetlist)
 				newblobs = self.blobsChanged()
 				if newblobs:

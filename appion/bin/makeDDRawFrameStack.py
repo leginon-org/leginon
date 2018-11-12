@@ -41,11 +41,24 @@ class MakeFrameStackLoop(apDDLoop.DDStackLoop):
 		self.parser.add_option("--refimgid", dest="refimgid", type="int",
 			help="Specify a corrected image to do gain/dark correction with", metavar="INT")
 
+		self.parser.add_option("--trim", dest="trim", type="int", default=0,
+			help="Trim edge off after frame stack gain/dark correction", metavar="INT")
+
+		self.parser.add_option("--nrw", dest="nrw", type="int", default=1,
+			help="Number (1, 3, 5, ...) of frames in running average window. 0 = disabled", metavar="INT")
+
+		self.parser.add_option("--flp", dest="flp", type="int", default=0,
+			help="Flip frames along Y axis. (0 = no flip, 1 = flip", metavar="INT")
+
 	#=======================
 	def checkConflicts(self):
 		if self.params['align'] and not self.params['defergpu']:
 			exename = 'dosefgpu_driftcorr'
 			gpuexe = subprocess.Popen("which "+exename, shell=True, stdout=subprocess.PIPE).stdout.read().strip()
+
+	#		gpuexe = "/emg/sw/script/motioncorr-master/bin/"+exename
+
+			print 'gpuexe path is '+gpuexe
 			if not os.path.isfile(gpuexe):
 				apDisplay.printError('Correction program "%s" not available' % exename)
 			# We don't have gpu locking
@@ -58,7 +71,7 @@ class MakeFrameStackLoop(apDDLoop.DDStackLoop):
 					os.access(self.params['tempdir'],os.W_OK|os.X_OK)
 				except:
 					raise
-					apDisplay.printError('Local temp directory not writable')
+				apDisplay.printError('Local temp directory not writable')
 		else:
 			# makes no sense to save gain corrected ddstack in tempdir if no alignment
 			# will be done on the same machine
@@ -90,14 +103,17 @@ class MakeFrameStackLoop(apDDLoop.DDStackLoop):
 		self.dd.setRunDir(self.params['rundir'])
 		self.dd.setTempDir(self.params['tempdir'])
 		self.dd.setRawFrameType(self.getFrameType())
-		self.dd.setUseGPUFlat(True)
+		self.dd.setUseFrameAlignerFlat(True)
 		self.dd.setSquareOutputShape(self.params['square'])
+		self.dd.setTrimingEdge(self.params['trim'])
 		self.dd.setDoseFDriftCorrOptions(self.params)
 		self.dd.setGPUid(self.params['gpuid'])
 		# keepstack is resolved for various cases in conflict check.  There should be no ambiguity by now
 		self.dd.setKeepStack(self.params['keepstack'])
 		self.dd.setCycleReferenceChannels(self.params['cyclechannels'])
-		
+		self.dd.setNewNumRunningAverageFrames(self.params['nrw'])
+		self.dd.setNewFlipAlongYAxis(self.params['flp'])
+	
 		if self.params['refimgid']:
 			self.dd.setDefaultImageForReference(self.params['refimgid'])
 		self.imageids = []
@@ -137,18 +153,18 @@ class MakeFrameStackLoop(apDDLoop.DDStackLoop):
 		self.dd.setNewBinning(self.params['bin'])
 		if self.params['align']:
 			self.dd.setAlignedCameraEMData()
-			framelist = self.dd.getFrameList(self.params)
+			framelist = self.dd.getFrameListFromParams(self.params)
 			self.dd.setAlignedSumFrameList(framelist)
 
 		### first remove any existing stack file
 		apFile.removeFile(self.dd.framestackpath)
 		apFile.removeFile(self.dd.tempframestackpath)
 		if self.dd.hasBadPixels() or not self.params['align']:
-			self.dd.setUseGPUFlat(False)
+			self.dd.setUseFrameAlignerFlat(False)
 			### make stack
 			self.dd.makeCorrectedFrameStack(self.params['rawarea'])
 		else:
-			self.dd.setUseGPUFlat(True)
+			self.dd.setUseFrameAlignerFlat(True)
 			self.dd.makeRawFrameStackForOneStepCorrectAlign(self.params['rawarea'])
 		# Align
 		if self.params['align']:
@@ -160,7 +176,7 @@ class MakeFrameStackLoop(apDDLoop.DDStackLoop):
 			if self.params['defergpu']:
 				return
 			# Doing the alignment
-			if self.dd.getUseGPUFlat():
+			if self.dd.getUseFrameAlignerFlat():
 				self.dd.gainCorrectAndAlignFrameStack()
 			else:
 				self.dd.alignCorrectedFrameStack()

@@ -1,9 +1,9 @@
 #
 # COPYRIGHT:
-#       The Leginon software is Copyright 2003
-#       The Scripps Research Institute, La Jolla, CA
+#       The Leginon software is Copyright under
+#       Apache License, Version 2.0
 #       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
+#       see  http://leginon.org
 #
 
 import calibrationclient
@@ -16,7 +16,9 @@ import threading
 import node
 import targethandler
 import appclient
+import remoteserver
 from pyami import convolver, imagefun, mrc, numpil
+from pyami import ordereddict
 import numpy
 import pyami.quietscipy
 import scipy.ndimage as nd
@@ -46,16 +48,21 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		'wait for done': True,
 		'ignore images': False,
 		'user check': False,
+		'check method': 'local',
 		'queue drift': True,
 		'sort target': False,
 		'allow append': False,
+		'multifocus': False,
+		'allow no focus': False,
 	}
 	eventinputs = imagewatcher.ImageWatcher.eventinputs \
 									+ [event.AcquisitionImagePublishEvent] \
 									+ targethandler.TargetWaitHandler.eventinputs
 	eventoutputs = imagewatcher.ImageWatcher.eventoutputs \
 									+ targethandler.TargetWaitHandler.eventoutputs
-	targetnames = ['acquisition','focus','preview','reference','done', 'meter']
+	targetnames = ['acquisition','focus','preview','reference','done']
+	checkmethods = ['local', 'remote']
+
 	def __init__(self, id, session, managerlocation, **kwargs):
 		imagewatcher.ImageWatcher.__init__(self, id, session, managerlocation,
 																				**kwargs)
@@ -78,12 +85,24 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		self.targetimagevector = (0,0)
 		self.targetbeamradius = 0
 		self.resetLastFocusedTargetList(None)
+		self.remote = remoteserver.RemoteServerMaster(self.logger, session, self)
+		self.remote.targets.setTargetNames(self.targetnames)
+		self.onQueueCheckBox(self.settings['queue'])
+		# assumes needing focus. Overwritten by subclasses
+		self.foc_activated = True
+
+	def onInitialized(self):
+		super(TargetFinder, self).onInitialized()
+		# self.panel is now made
+		combined_state = self.settings['user check'] and not self.settings['queue']
+		self.setUserVerificationStatus(combined_state)
 
 	def handleApplicationEvent(self,evt):
 		'''
 		Find the Acquisition class or its subclass instance bound
 		to this node upon application loading.
 		'''
+		super(TargetFinder,self).handleApplicationEvent(evt)
 		app = evt['application']
 		self.last_acq_node = appclient.getLastNodeThruBinding(app,self.name,'AcquisitionImagePublishEvent','Acquisition')
 		self.next_acq_node = appclient.getNextNodeThruBinding(app,self.name,'ImageTargetListPublishEvent','Acquisition')
@@ -150,14 +169,100 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		'''
 		raise NotImplementedError()
 
+	def getCheckMethods(self):
+		return self.checkmethods
+
+	def waitForInteraction(self,imagedata=None):
+		'''
+		Wait for user interaction either locally or remotely.
+		'''
+		# Rule about z height retention to the target selected
+		# when z height is changed during interaction:
+		# If the target will be in a queue, the z will be the z of the parent image.
+		# If the target will not be in a queue, the z will be the value it happens
+		# to be at the time of its processing, i.e., afected by z adjustment during
+		# and after the interaction.
+		valid_selection = False
+		while not valid_selection:
+			if self.settings['check method'] == 'remote':
+				self.waitForRemoteCheck(imagedata)
+			else:
+				# default
+				self.waitForUserCheck()
+			if not self.settings['allow no focus']:
+				has_aqu = self.hasTargetTypeOnPanel('acquisition')
+				has_foc = self.hasTargetTypeOnPanel('focus')
+				if not has_aqu or has_foc:
+					valid_selection = True
+				else:
+					self.logger.error('Must have a focus target')
+			else:
+				break
+
+	def hasTargetTypeOnPanel(self, typename):
+		targets = self.panel.getTargetPositions(typename)
+		return len(targets) > 0
+		
 	def waitForUserCheck(self):
-			self.setStatus('user input')
-			self.twobeeps()
-			self.logger.info('Waiting for user to check targets...')
-			self.panel.submitTargets()
-			self.userpause.clear()
-			self.userpause.wait()
-			self.setStatus('processing')
+		'''
+		Local gui user target confirmation
+		'''
+		self.setStatus('user input')
+		self.beep()
+		self.logger.info('Waiting for user to check targets...')
+		self.panel.submitTargets()
+		self.userpause.clear()
+		self.userpause.wait()
+		self.setStatus('processing')
+
+	def waitForRemoteCheck(self,imdata):
+		'''
+		Remote service target confirmation
+		'''
+		if imdata is None:
+			return
+		self.setStatus('user input')
+		self.twobeeps()
+		xytargets = self.getPanelTargets(imdata['image'].shape)
+		# put stuff in OutBox
+		self.remote.targets.setImage(imdata)
+		self.remote.targets.setOutTargets(xytargets)
+		# wait and get stuff from InBox
+		targetfile = self.remote.targets.getInTargetFilePath()
+		self.logger.info('Waiting for targets in data file %s' % targetfile)
+		self.setStatus('processing')
+		# targetxys are target coordinates in x, y grouped by targetnames
+		targetxys = self.remote.targets.getInTargets()
+		print 'remote targets',targetxys
+
+		self.displayRemoteTargetXYs(targetxys)
+		preview_targets = self.panel.getTargetPositions('preview')
+		if not preview_targets:
+			self.remote.targets.unsetImage(imdata)
+		self.setStatus('idle')
+
+	def getPanelTargets(self,imageshape):
+		'''
+		Get xy target positions for all target types on ImagePanel in
+		a dictionary.
+		'''
+		xytargets = {}
+		for typename in self.targetnames:
+			try:
+				xys = self.getTargetsFromPanel(typename, imageshape)
+				xytargets[typename] = xys
+			except ValueError:
+				pass
+			except:
+				raise
+		return xytargets
+
+	def displayRemoteTargetXYs(self,xys):
+		'''
+		Display all xytargets from remote target server on ImagePanel.
+		'''
+		for name in self.targetnames:
+			self.setTargets(xys[name], name, block=True)
 
 	def processPreviewTargets(self, imdata, targetlist):
 			preview_targets = self.panel.getTargetPositions('preview')
@@ -167,7 +272,25 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 				self.makeTargetListEvent(targetlist)
 				self.publish(targetlist, database=True, dbforce=True, pubevent=True)
 				self.waitForTargetListDone()
-			return preview_targets
+				status = True
+				if self.settings['check method'] == 'remote':
+					# change status fo False if failed
+					status = self.resetRemoteToListen()
+				self.logger.info('Preview targets processed. Go back to waiting')
+			return preview_targets and status
+
+	def resetRemoteToListen(self):
+		status = True
+		try:
+			# clear targetis set from the server
+			self.remote.targets.resetTargets()
+		except Exception, e:
+			# assumes no preview targets
+			self.logger.error(e)
+			status = False
+		if not status:
+			# clear all targets displayed so that target server can set them again
+			self.clearAllTargets()
 
 	def processImageListData(self, imagelistdata):
 		if 'images' not in imagelistdata or imagelistdata['images'] is None:
@@ -235,25 +358,43 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		self.focusing_targetlist = targetlist
 
 	def setLastFocusedTargetList(self,targetlist):
-		if self.panel.getTargetPositions('focus'):
+		# z may change if this targetfinder produces focus target
+		if 'focus' in self.panel.getSelectionToolNames() and self.panel.getTargetPositions('focus'):
+			# Issue #4331
+			self.resetLastFocusedTargetList(targetlist)
+		# Issue #3794 atlas targetlist, manual image, and simulated target need to reset last focused targetlist
+		elif targetlist['image'] is None or targetlist['image']['target'] is None or targetlist['image']['target']['type'] == 'simulated':
+			# parent image is from simulated target
 			self.resetLastFocusedTargetList(targetlist)
 		else:
 			self.last_focused = self.focusing_targetlist
 
+	def getTargetsFromPanel(self, typename, imageshape):
+		'''
+		Get xy coordinates of the targets of a specified type from ImagePanel.
+		'''
+		imagetargets = self.panel.getTargetPositions(typename)
+		if typename == 'focus' and self.settings['multifocus'] is not True:
+			imagetargets = self.getCenterTargets(imagetargets, imageshape)
+		return imagetargets
+
 	#--------------------
 	def publishTargets(self, imagedata, typename, targetlist):
-		imagetargets = self.panel.getTargetPositions(typename)
+		'''
+		Publish specific type of targets on ImagePanel bound to an 
+		AcquisitionImageData and TargetListData
+		'''
+		imagearray = imagedata['image']
+		imageshape = imagearray.shape
+		imagetargets = self.getTargetsFromPanel(typename, imageshape)
 
 		if not imagetargets:
 			return
 		if self.settings['sort target']:
 			imagetargets = self.sortTargets(imagetargets)
-		imagearray = imagedata['image']
-		imageshape = imagearray.shape
+		# advance to next target number
 		lastnumber = self.lastTargetNumber(image=imagedata, session=self.session)
 		number = lastnumber + 1
-		if typename == 'focus':
-			imagetargets = self.getCenterTargets(imagetargets, imageshape)
 		for imagetarget in imagetargets:
 			column, row = imagetarget
 			drow = row - imageshape[0]/2
@@ -270,11 +411,14 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		if len(imagetargets) <= 1:
 			return imagetargets
 		else:
-			self.logger.warning('Each image can only have one focus target. Publish only the one closest to the center')
+			self.logger.warning('Publish only the focus target closest to the center')
 			deltas = map((lambda x: math.hypot(x[1]-imageshape[0]/2,x[0]-imageshape[1]/2)),imagetargets)
 			return [imagetargets[deltas.index(min(deltas))],]
 
 	def displayPreviousTargets(self, targetlistdata):
+		'''
+		Display targets belongs to a TargetListData.
+		'''
 		targets = self.researchTargets(list=targetlistdata)
 		done = []
 		acq = []
@@ -308,6 +452,8 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			self.setTargets([], target_name, block=True)
 
 		self.setTargetImageVector(imagedata)
+		self.setImageTiltAxis(imagedata)
+
 		# check if there is already a target list for this image
 		# or any other versions of this image (all from same target/preset)
 		# exclude sublists (like rejected target lists)
@@ -364,6 +510,10 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 	def clearTargets(self,targettype):
 		self.setTargets([], targettype, block=False)
 
+	def clearAllTargets(self):
+		for name in self.targetnames:
+			self.clearTargets(name)
+
 	def isFromNewParentImage(self, imdata):
 		'''
 		Determine if the parent image of the given imdata is new. This is used to reset foc_counter for automated hole finders.
@@ -387,12 +537,28 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		return is_new
 
 	def setTargetImageVector(self,imagedata):
-		cam_length_on_image,beam_diameter_on_image = self.getAcquisitionTargetDimensions(imagedata)
-		self._setTargetImageVector(cam_length_on_image,beam_diameter_on_image)
+		try:
+			cam_length_on_image,beam_diameter_on_image = self.getAcquisitionTargetDimensions(imagedata)
+			self._setTargetImageVector(cam_length_on_image,beam_diameter_on_image)
+		except:
+			pass
 
 	def _setTargetImageVector(self,cam_length_on_image,beam_diameter_on_image):
 		self.targetbeamradius = beam_diameter_on_image / 2
 		self.targetimagevector = (cam_length_on_image,0)
+
+	def setImageTiltAxis(self, imagedata):
+		try:
+			tem = imagedata['scope']['tem']
+			ccdcamera = imagedata['camera']['ccdcamera']
+			ht = imagedata['scope']['high tension']
+			mag = imagedata['scope']['magnification']
+			thetax, thetay = self.calclients['stage position'].getAngles(tem, ccdcamera, 'stage position', ht, mag, None)
+			self.panel.onNewTiltAxis(thetax)
+		except calibrationclient.NoMatrixCalibrationError, e:
+			self.logger.warning('No stage position matrix. Can not show tilt axis')
+		except:
+			raise
 
 	def getTargetImageVector(self):
 		return self.targetimagevector
@@ -447,6 +613,30 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			# Set Length to 0 in case of any exception
 			return 0,0
 
+	def onQueueCheckBox(self, state):
+		'''
+		Start queue click tool tracking.
+		'''
+		if self.settings['check method'] == 'remote':
+			if state is True:
+				self.remote.toolbar.addClickTool('queue','publishQueue','process queue')
+			else:
+				if 'queue' in self.remote.toolbar.tools:
+					self.remote.toolbar.tools['queue'].deActivate()
+
+	def blobStatsTargets(self, blobs):
+		targets = []
+		for blob in blobs:
+			target = {}
+			target['x'] = blob.stats['center'][1]
+			target['y'] = blob.stats['center'][0]
+			target['stats'] = ordereddict.OrderedDict()
+			target['stats']['Size'] = blob.stats['n']
+			target['stats']['Mean'] = blob.stats['mean']
+			target['stats']['Std. Dev.'] = blob.stats['stddev']
+			targets.append(target)
+		return targets
+
 class ClickTargetFinder(TargetFinder):
 	targetnames = ['preview', 'reference', 'focus', 'acquisition']
 	panelclass = gui.wx.ClickTargetFinder.Panel
@@ -464,7 +654,7 @@ class ClickTargetFinder(TargetFinder):
 		# display image
 		self.setImage(imdata['image'], 'Image')
 		while True:
-			self.waitForUserCheck()
+			self.waitForInteraction(imdata)
 			if not self.processPreviewTargets(imdata, targetlist):
 				break
 		self.panel.targetsSubmitted()
@@ -475,6 +665,7 @@ class ClickTargetFinder(TargetFinder):
 				self.publishReferenceTarget(imdata)
 			else:
 				self.publishTargets(imdata, i, targetlist)
+		self.logger.info('all targets published')
 		self.setStatus('idle')
 
 	def publishReferenceTarget(self, image_data):
@@ -492,3 +683,4 @@ class ClickTargetFinder(TargetFinder):
 			self.logger.error('Submitting reference target failed')
 		else:
 			self.logger.info('Reference target submitted')
+

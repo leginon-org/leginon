@@ -314,7 +314,6 @@ def makeInspectedMask(sessiondata,maskassessname,imgdata):
 		
 		
 		maskarray = apCrud.makeKeepMask(maskarray,keeplist)
-		print maskarray
 		extrabin = maxbin/maskbins[i]
 		if extrabin > 1:
 			maskarray = apImage.binImg(maskarray, extrabin)

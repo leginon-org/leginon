@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import databinder
 import socket
+from pyami import mysocket
 import event
 import datatransport
 import sys
@@ -26,7 +27,7 @@ class Logger(object):
    def warning(self, stuff):
       print 'WARNING', stuff
 
-myhostname = socket.gethostname().lower()
+myhostname = mysocket.gethostname().lower()
 
 for myport in range(49152,65536):
    try:
@@ -34,19 +35,27 @@ for myport in range(49152,65536):
       break
    except:
       continue
-print 'ACCEPTING CONNECTIONS AT:  %s:%s' % (myhostname, myport)
+print '---------------------'
+print 'ACCEPTING CONNECTIONS AT:  %s:%s address %s' % (myhostname, myport, mysocket.gethostbyname(myhostname))
+print '---------------------'
 
 db.addBinding(myhostname, event.NodeAvailableEvent, printData)
 
 mylocation = {'TCP transport': {'hostname': myhostname, 'port': myport}}
 yourlocation = {'TCP transport': {'hostname': tecnaihost, 'port': tecnaiport}}
 
-e = event.SetManagerEvent(destination=tecnaihost, location=mylocation)
-print 'CONNECTING TO:  %s:%s' % (tecnaihost, tecnaiport)
-client = datatransport.Client(yourlocation, Logger())
+evt = event.SetManagerEvent(destination=tecnaihost, location=mylocation)
+print '---------------------'
+print 'CONNECTING TO:  %s:%s address %s' % (tecnaihost, tecnaiport, mysocket.gethostbyname(tecnaihost))
+print '---------------------'
+print ' '
+try:
+	client = datatransport.Client(yourlocation, Logger())
 
-## this will connect to the tecnai
-client.send(e)
+	## this will connect to the tecnai
+	client.send(evt)
+except datatransport.TransportError, e:
+	print '%s' % e
 
 raw_input('hit enter to kill')
 db.exit()

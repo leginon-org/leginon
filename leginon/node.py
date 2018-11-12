@@ -1,23 +1,25 @@
 #
 # COPYRIGHT:
-#       The Leginon software is Copyright 2003
-#       The Scripps Research Institute, La Jolla, CA
+#       The Leginon software is Copyright under
+#       Apache License, Version 2.0
 #       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
+#       see  http://leginon.org
 #
 #
 
 import sinedon
 from leginon import leginondata
+from leginon import appclient
 from databinder import DataBinder
 import datatransport
 import event
 import threading
 import gui.wx.Events
-import gui.wx.Logging
+import gui.wx.LeginonLogging as Logging
 import gui.wx.Node
 import copy
 import socket
+from pyami import mysocket
 import remotecall
 import time
 import numpy
@@ -57,13 +59,18 @@ class Node(correctorclient.CorrectorClient):
 									event.NodeAvailableEvent,
 									event.NodeUnavailableEvent,
 									event.NodeInitializedEvent,
-									event.NodeUninitializedEvent]
+									event.NodeUninitializedEvent,
+									event.NodeLogErrorEvent]
 
 	objectserviceclass = remotecall.NodeObjectService
 
 	def __init__(self, name, session, managerlocation=None, otherdatabinder=None, tcpport=None, launcher=None, panel=None):
 		self.name = name
+		self.this_node = None
 		self.panel = panel
+		self.node_status = 'idle'
+		self.before_pause_node_status = 'idle'
+		self.tem_hostname = ''
 		
 		self.initializeLogger()
 
@@ -78,7 +85,7 @@ class Node(correctorclient.CorrectorClient):
 
 		if otherdatabinder is None:
 			name = DataBinder.__name__
-			databinderlogger = gui.wx.Logging.getNodeChildLogger(name, self)
+			databinderlogger = Logging.getNodeChildLogger(name, self)
 			self.databinder = DataBinder(self, databinderlogger, tcpport=tcpport)
 		else:
 			self.databinder = otherdatabinder
@@ -104,6 +111,41 @@ class Node(correctorclient.CorrectorClient):
 		correctorclient.CorrectorClient.__init__(self)
 
 		self.initializeSettings()
+
+	def setHasLogError(self, value, message):
+		if value:
+			nodename = self.name
+			msg = '%s Error: %s' % (nodename, message)
+			self.outputEvent(event.NodeLogErrorEvent(message=msg))
+
+	def getTemHostname(self):
+		if not self.tem_hostname:
+			if self.session:
+				results = leginondata.ConnectToClientsData(session=self.session).query(results=1)
+				if not results:
+					# session not created properly
+					return ''
+				clients = results[0]['clients']
+				if not clients:
+					# session without clients still has ConnectToClientsData with empty list
+					# use my hostname
+					clients = [mysocket.gethostname().lower(),]
+				for client in clients:
+					instruments = leginondata.InstrumentData(hostname=client).query()
+					if instruments and not self.tem_hostname:
+						temname = ''
+						description = None
+						for instr in instruments:
+							if instr['cs']:
+								# It is tem
+								temname = str(client)
+								if 'description' in instr.keys() and instr['description']:
+									description = instr['description']
+						if description:
+							# set temname as description if it is ever set to not None.
+							temname = description
+						self.tem_hostname = temname
+		return self.tem_hostname
 
 	def testprint(self,msg):
 		if testing:
@@ -200,9 +242,9 @@ class Node(correctorclient.CorrectorClient):
 	def initializeLogger(self):
 		if hasattr(self, 'logger'):
 			return
-		self.logger = gui.wx.Logging.getNodeLogger(self)
+		self.logger = Logging.getNodeLogger(self)
 		clientname = datatransport.Client.__name__
-		self.clientlogger = gui.wx.Logging.getNodeChildLogger(clientname, self)
+		self.clientlogger = Logging.getNodeChildLogger(clientname, self)
 
 	def logToDB(self, record):
 		'''insertes a logger record into the DB'''
@@ -219,7 +261,8 @@ class Node(correctorclient.CorrectorClient):
 
 	def onInitialized(self):
 		if self.panel is None:
-			return
+			# gui not loaded
+			return False
 		evt = gui.wx.Node.NodeInitializedEvent(self)
 		self.panel.GetEventHandler().AddPendingEvent(evt)
 		evt.event.wait()
@@ -266,7 +309,7 @@ class Node(correctorclient.CorrectorClient):
 	# location method
 	def location(self):
 		location = {}
-		location['hostname'] = socket.gethostname().lower()
+		location['hostname'] = mysocket.gethostname().lower()
 		if self.launcher is not None:
 			location['launcher'] = self.launcher.name
 		else:
@@ -342,7 +385,8 @@ class Node(correctorclient.CorrectorClient):
 		This is for future setting synchronization.  Not implemented yet.
 		It does nothing now.
 		'''
-		pass
+		app = ievent['application']
+		self.this_node = appclient.getNodeSpecData(app,self.name)
 
 	def handleConfirmedEvent(self, ievent):
 		'''Handler for ConfirmationEvents. Unblocks the call waiting for confirmation of the event generated.'''
@@ -478,6 +522,9 @@ class Node(correctorclient.CorrectorClient):
 		self.beep()
 
 	def setStatus(self, status):
+		if status == 'user input':
+			self.before_pause_node_status = copy.copy(self.node_status)
+		self.node_status = status
 		self.panel.setStatus(status)
 
 	def declareDrift(self, type):
@@ -596,6 +643,9 @@ class Node(correctorclient.CorrectorClient):
 		self.instrument.tem.exposeSpecimenNotCamera(seconds)
 		self.logger.info('specimen-only exposure done')
 
+	def setUserVerificationStatus(self, state):
+		evt = gui.wx.Events.UserVerificationUpdatedEvent(self.panel, state)
+		self.panel.GetEventHandler().AddPendingEvent(evt)
 
 ## module global for storing start times
 start_times = {}

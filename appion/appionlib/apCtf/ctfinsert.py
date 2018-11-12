@@ -2,12 +2,11 @@
 
 #pythonlib
 import os
-import re
 import sys
+import time
 import math
 import shutil
 #appion
-from appionlib import apFile
 from appionlib import apDisplay
 from appionlib import appiondata
 from appionlib.apCtf import ctfdisplay
@@ -40,6 +39,11 @@ def validateAndInsertCTFData(imgdata, ctfvalues, rundata, rundir, fftpath=None, 
 
 	### run the main CTF display program
 	opimagedir = os.path.join(rundir, "opimages")
+
+	### default extra phase shift to 0.0
+	if 'extra_phase_shift' not in ctfvalues.keys() or ctfvalues['extra_phase_shift'] is None:
+		ctfvalues['extra_phase_shift'] = 0.0
+
 	if isvalid is True:
 		oldctfvalues = ctfvalues.copy()
 		ctfvalues = runCTFdisplayTools(imgdata, ctfvalues, opimagedir, fftpath, fftfreq)
@@ -65,20 +69,55 @@ def validateAndInsertCTFData(imgdata, ctfvalues, rundata, rundir, fftpath=None, 
 		if key in ctfvalues:
 			ctfq[key] = ctfvalues[key]
 			if debug is True:
-				apDisplay.printMsg("%s :: %s"%(key, ctfvalues[key]))
+				apDisplay.printMsg("%s :: %s"%(key, ctfvalues.get(key, '')))
 		elif debug is True:
-			apDisplay.printMsg("SKIPPING %s :: %s"%(key, ctfvalues[key]))
+			apDisplay.printMsg("SKIPPING %s :: %s"%(key, ctfvalues.get(key, '')))
 	ctfdb.printCtfData(ctfq)
 	ctfq.insert()
 
 	return
 
+def appendFailedImage(rundir,imgdata, ctfvalues, fail_type='makeCTFImages'):
+	filepath = os.path.join(rundir,'failed_ctfdisplay_images.txt')
+	if debug:
+		# Let it die
+		apDisplay.printError('Image %s failed %s' % (imgdata['filename'],fail_type))
+	# Log failure
+	apDisplay.printWarning('Logging images failing CtfdisplayTool to %s' % filepath)
+	if not os.path.isfile(filepath):
+		write_mode = 'w'
+	else:
+		write_mode = 'a'
+	f = open(filepath,write_mode)
+	bits = []
+	bits.append(imgdata['filename'])
+	for key in ('defocus1','defocus2','angle_astigmatism'):
+		if key in ctfvalues.keys():
+			bits.append('%.3f' % (ctfvalues[key]*1e6,))
+		else:
+			bits.append('')
+		line = '\t'.join(bits)
+	f.write(line+'\n')
+	f.close()
+
 #====================
 #====================
 def runCTFdisplayTools(imgdata, ctfvalues, opimagedir, fftpath=None, fftfreq=None):
 	### RUN CTF DISPLAY TOOLS
-	ctfdisplaydict = ctfdisplay.makeCtfImages(imgdata, ctfvalues, fftpath, fftfreq)
+	# rundir is the parent directory of opimages
+	rundir = os.path.dirname(opimagedir)
+	t0 = time.time()
+	try:
+		ctfdisplaydict = ctfdisplay.makeCtfImages(imgdata, ctfvalues, fftpath, fftfreq)
+	except:
+		print "Unexpected error:", sys.exc_info()
+		appendFailedImage(rundir, imgdata, ctfvalues,'makeCtfImages exception')
+		return ctfvalues
+
+	apDisplay.printColor("Full CTF display makeCtfImages routine complete in %s"
+		%(apDisplay.timeString(time.time()-t0)), "purple")
 	if ctfdisplaydict is None:
+		appendFailedImage(rundir, imgdata, ctfvalues,'makeCtfImages return None')
 		return ctfvalues
 	### save the classic images as well
 	if 'graph1' in ctfvalues:
@@ -96,29 +135,31 @@ def runCTFdisplayTools(imgdata, ctfvalues, opimagedir, fftpath=None, fftfreq=Non
 	### new 1d plot file
 	plotfile = os.path.join(opimagedir, ctfdisplaydict['plotsfile'])
 	shutil.move(ctfdisplaydict['plotsfile'], plotfile)
-	ctfvalues['graph2'] = os.path.basename(plotfile)
-	ctfvalues['confidence_30_10'] = ctfdisplaydict['conf3010']
-	ctfvalues['confidence_5_peak'] = ctfdisplaydict['conf5peak']
-	ctfvalues['overfocus_conf_30_10'] = ctfdisplaydict['overconf3010']
-	ctfvalues['overfocus_conf_5_peak'] = ctfdisplaydict['overconf5peak']
-	ctfvalues['resolution_80_percent'] = ctfdisplaydict['res80']
-	ctfvalues['resolution_50_percent'] = ctfdisplaydict['res50']
-	if not 'confidence_d' in ctfvalues or ctfvalues['confidence_d'] is None:
-		ctfvalues['confidence_d'] = ctfdisplaydict['conf5peak']
-	if not 'confidence' in ctfvalues or ctfvalues['confidence'] is None:
-		ctfvalues['confidence'] = ctfdisplaydict['conf3010']
+	try:
+		ctfvalues['graph2'] = os.path.basename(plotfile)
+		ctfvalues['confidence_30_10'] = ctfdisplaydict['conf3010']
+		ctfvalues['confidence_5_peak'] = ctfdisplaydict['conf5peak']
+		ctfvalues['overfocus_conf_30_10'] = ctfdisplaydict['overconf3010']
+		ctfvalues['overfocus_conf_5_peak'] = ctfdisplaydict['overconf5peak']
+		ctfvalues['resolution_80_percent'] = ctfdisplaydict['res80']
+		ctfvalues['resolution_50_percent'] = ctfdisplaydict['res50']
+		if not 'confidence_d' in ctfvalues or ctfvalues['confidence_d'] is None:
+			ctfvalues['confidence_d'] = ctfdisplaydict['conf5peak']
+		if not 'confidence' in ctfvalues or ctfvalues['confidence'] is None:
+			ctfvalues['confidence'] = ctfdisplaydict['conf3010']
 
-	### override the confidence
-	ctfvalues['confidence'] = max(ctfvalues['confidence'], ctfvalues['confidence_d'], ctfdisplaydict['conf5peak'], ctfdisplaydict['conf3010'])
-
+		### override the confidence
+		ctfvalues['confidence'] = max(ctfvalues['confidence'], ctfvalues['confidence_d'], ctfdisplaydict['conf5peak'], ctfdisplaydict['conf3010'])
+	except:
+		appendFailedImage(rundir, imgdata, ctfvalues,'new ctfvalue confidence mapping error')
 	return ctfvalues
 
 #====================
 #====================
 def convertDefociToConvention(ctfvalues):
 	if debug is True:
-		apDisplay.printColor("Final params: def1: %.2e | def2: %.2e | angle: %.1f"%
-			(ctfvalues['defocus1'], ctfvalues['defocus2'], ctfvalues['angle_astigmatism']), "cyan")
+		apDisplay.printColor("Final params: def1: %.3f | def2: %.3f | angle: %.1f"%
+			(ctfvalues['defocus1']*1e6, ctfvalues['defocus2']*1e6, ctfvalues['angle_astigmatism']), "cyan")
 
 	# amplitude contrast must be btw 0.0 and 0.5
 	# sometimes we get a slightly negative number from ACE1, see bug #2003
@@ -151,8 +192,8 @@ def convertDefociToConvention(ctfvalues):
 		angle += 180
 
 	if debug is True:
-		apDisplay.printColor("Final params: def1: %.2e | def2: %.2e | angle: %.1f"%
-			(defocus1, defocus2, angle), "cyan")
+		apDisplay.printColor("Final params: def1: %.3f | def2: %.3f | angle: %.1f"%
+			(defocus1*1e6, defocus2*1e6, angle), "cyan")
 
 		perdiff = abs(defocus1-defocus2)/abs(defocus1+defocus2)
 		print ("Defocus Astig Percent Diff %.2f -- %.3e, %.3e"
@@ -193,12 +234,13 @@ def checkParams(ctfvalues):
 	if absangle > 6.3:
 		confirm_degrees = True
 		radian_suspects = 0
-	elif not confirm_degrees and absangle > 0 and absangle < 1.571:
+	elif debug and not confirm_degrees and absangle > 0 and absangle < 1.571:
 		msg = "suspicious angle astigmatism, may be in radians (%.4f)"%(absangle)
 		radian_suspects += 1
 		apDisplay.printWarning(msg)
 		return False
 	if not confirm_degrees and radian_suspects > 5:
+		print "confirm_degrees", confirm_degrees
 		msg = "too many (%d) suspicious angle astigmatisms, likely in radians"%(radian_suspects)
 		apDisplay.printWarning(msg)
 

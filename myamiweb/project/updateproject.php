@@ -1,4 +1,4 @@
-<?
+<?php
 require_once "inc/project.inc.php";
 require_once "inc/leginon.inc";
 require_once "inc/utilpj.inc.php";

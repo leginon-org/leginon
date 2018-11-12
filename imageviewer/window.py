@@ -1,8 +1,8 @@
 import wx
 
-class Window(wx.Window):
+class Window(wx.ScrolledWindow):
     def __init__(self, parent, id):
-        wx.Window.__init__(self, parent, id)
+        wx.ScrolledWindow.__init__(self, parent, id)
 
         self.ignoresize = False
 

@@ -19,6 +19,7 @@ function dbValidation(){
 $errMsg = dbValidation();
 if(!empty($errMsg)){
 	$displayerror = "An error with the database connection has occured. Please <a href='setup/index.php'>check your configuration</a>. ";
+	error_log("An error with the database connection has occured.".print_r($errMsg, TRUE));
 }
 
 $username=trim($_POST['username']);
@@ -53,7 +54,7 @@ if ($login!=2) {
 <?php
 	}
 ?>
-	<form method="post" action="<?=$_SERVER['REQUEST_URI']?>" name="">
+	<form method="post" action="<?php echo $_SERVER['REQUEST_URI']?>" name="">
 		<center><table cellspacing=20>
 			<tr>
 			<td align="center">

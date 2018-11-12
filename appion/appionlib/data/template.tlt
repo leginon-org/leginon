@@ -1,0 +1,82 @@
+(* Protomo .tlt file template *)
+(* This is a comment *)
+(* Fill in the FILE column with the mrc filenames in your raw directory *)
+(* Fill in the ORIGIN as either the center of the image or the center shifted by the estimated shifts from the data collection software *)
+(* Fill in the TILT ANGLE column with the tilt angles corresponding to the row's filename *)
+
+TILT SERIES series0001  (* This should be the same as your .tlt file filename *)
+
+   AXIS
+
+     TILT AZIMUTH    0.0
+
+   IMAGE 1         FILE ex_001       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE     -64.000    ROTATION        0.000
+   IMAGE 2         FILE ex_002       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE     -62.000    ROTATION        0.000
+   IMAGE 3         FILE ex_003       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE     -60.000    ROTATION        0.000
+   IMAGE 4         FILE ex_004       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE     -57.990    ROTATION        0.000
+   IMAGE 5         FILE ex_005       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE     -56.000    ROTATION        0.000
+   IMAGE 6         FILE ex_006       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE     -54.000    ROTATION        0.000
+   IMAGE 7         FILE ex_007       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE     -51.990    ROTATION        0.000
+   IMAGE 8         FILE ex_008       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE     -49.990    ROTATION        0.000
+   IMAGE 9         FILE ex_009       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE     -47.990    ROTATION        0.000
+   IMAGE 10        FILE ex_010       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE     -45.990    ROTATION        0.000
+   IMAGE 11        FILE ex_011       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE     -43.990    ROTATION        0.000
+   IMAGE 12        FILE ex_012       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE     -41.990    ROTATION        0.000
+   IMAGE 13        FILE ex_013       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE     -40.000    ROTATION        0.000
+   IMAGE 14        FILE ex_014       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE     -37.990    ROTATION        0.000
+   IMAGE 15        FILE ex_015       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE     -35.990    ROTATION        0.000
+   IMAGE 16        FILE ex_016       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE     -34.000    ROTATION        0.000
+   IMAGE 17        FILE ex_017       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE     -32.000    ROTATION        0.000
+   IMAGE 18        FILE ex_018       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE     -29.990    ROTATION        0.000
+   IMAGE 19        FILE ex_019       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE     -28.000    ROTATION        0.000
+   IMAGE 20        FILE ex_020       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE     -26.000    ROTATION        0.000
+   IMAGE 21        FILE ex_021       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE     -24.000    ROTATION        0.000
+   IMAGE 22        FILE ex_022       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE     -22.000    ROTATION        0.000
+   IMAGE 23        FILE ex_023       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE     -20.000    ROTATION        0.000
+   IMAGE 24        FILE ex_024       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE     -18.000    ROTATION        0.000
+   IMAGE 25        FILE ex_025       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE     -16.000    ROTATION        0.000
+   IMAGE 26        FILE ex_026       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE     -14.000    ROTATION        0.000
+   IMAGE 27        FILE ex_027       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE     -12.000    ROTATION        0.000
+   IMAGE 28        FILE ex_028       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE     -10.000    ROTATION        0.000
+   IMAGE 29        FILE ex_029       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE      -8.000    ROTATION        0.000
+   IMAGE 30        FILE ex_030       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE      -6.000    ROTATION        0.000
+   IMAGE 31        FILE ex_031       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE      -4.000    ROTATION        0.000
+   IMAGE 32        FILE ex_032       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE      -2.000    ROTATION        0.000
+   IMAGE 33        FILE ex_033       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE       0.000    ROTATION        0.000
+   IMAGE 34        FILE ex_034       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE       2.000    ROTATION        0.000
+   IMAGE 35        FILE ex_035       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE       4.000    ROTATION        0.000
+   IMAGE 36        FILE ex_036       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE       6.000    ROTATION        0.000
+   IMAGE 37        FILE ex_037       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE       8.000    ROTATION        0.000
+   IMAGE 38        FILE ex_038       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE      10.000    ROTATION        0.000
+   IMAGE 39        FILE ex_039       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE      12.000    ROTATION        0.000
+   IMAGE 40        FILE ex_040       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE      14.000    ROTATION        0.000
+   IMAGE 41        FILE ex_041       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE      15.990    ROTATION        0.000
+   IMAGE 42        FILE ex_042       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE      17.990    ROTATION        0.000
+   IMAGE 43        FILE ex_043       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE      20.000    ROTATION        0.000
+   IMAGE 44        FILE ex_044       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE      22.000    ROTATION        0.000
+   IMAGE 45        FILE ex_045       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE      24.000    ROTATION        0.000
+   IMAGE 46        FILE ex_046       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE      26.000    ROTATION        0.000
+   IMAGE 47        FILE ex_047       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE      27.980    ROTATION        0.000
+   IMAGE 48        FILE ex_048       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE      30.000    ROTATION        0.000
+   IMAGE 49        FILE ex_049       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE      32.000    ROTATION        0.000
+   IMAGE 50        FILE ex_050       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE      34.000    ROTATION        0.000
+   IMAGE 51        FILE ex_051       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE      35.990    ROTATION        0.000
+   IMAGE 52        FILE ex_052       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE      38.000    ROTATION        0.000
+   IMAGE 53        FILE ex_053       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE      39.980    ROTATION        0.000
+   IMAGE 54        FILE ex_054       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE      41.990    ROTATION        0.000
+   IMAGE 55        FILE ex_055       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE      43.990    ROTATION        0.000
+   IMAGE 56        FILE ex_056       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE      45.990    ROTATION        0.000
+   IMAGE 57        FILE ex_057       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE      47.980    ROTATION        0.000
+   IMAGE 58        FILE ex_058       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE      49.990    ROTATION        0.000
+   IMAGE 59        FILE ex_059       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE      52.000    ROTATION        0.000
+   IMAGE 60        FILE ex_060       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE      53.990    ROTATION        0.000
+   IMAGE 61        FILE ex_061       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE      56.000    ROTATION        0.000
+   IMAGE 62        FILE ex_062       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE      58.000    ROTATION        0.000
+   IMAGE 63        FILE ex_063       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE      60.000    ROTATION        0.000
+   IMAGE 64        FILE ex_064       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE      62.000    ROTATION        0.000
+   IMAGE 65        FILE ex_065       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE      64.000    ROTATION        0.000
+
+   REFERENCE IMAGE 33  (* This should be your (first) 0 degree image*)
+
+
+ END

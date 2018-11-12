@@ -414,7 +414,7 @@ class Prep3DRefinement(appionScript.AppionScript):
 		self.setFormat()
 		
 		apDisplay.printColor("Step 2: pre-process package specific preparations", "purple")
-		#self.preProcessPreparations()
+		self.preProcessPreparations()
 		
 		apDisplay.printColor("Step 3: manipulate stack for refinement", "purple")
 		self.__processStack(prepdata)

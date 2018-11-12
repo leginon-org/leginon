@@ -1,0 +1,75 @@
+/*
+ * ANDYK DOCS TAB VIEW
+ * Version: 1.0  
+ * 2008-08-20
+ * based on protoype 1.6.0.1 framework
+ * Author: Andreas Koch
+ * 
+ * files: tabview.css, prototype.js, tabview.js
+ */
+
+.tab-collection {
+
+}
+
+.tab-container {
+	width: 490px; /* keep the tabcontainer padding in mind 5px padding --> -10px width*/
+}
+
+.tab-container .cleaner-left {
+	clear: left;
+}
+
+.tab-container .tab-header {
+	float: left;
+	position: relative;
+	margin-bottom: -1px;
+	background: rgb(255,255,255);
+	
+	margin-right: 3px;
+	cursor: pointer;
+	
+	border-top: 1px solid rgb(44,62,104);
+	border-left: 1px solid rgb(44,62,104);
+	border-right: 2px solid rgb(29,41,68);
+	
+	padding-top: 2px;
+	padding-bottom: 2px;
+	padding-left: 10px;
+	padding-right: 10px;
+	
+	font-family: Arial,Univers,Helvetica,sans-serif;
+	color: rgb(0,0,0);
+	font-size: 14px;
+	text-decoration: none;
+	font-style: normal;
+	font-weight: bold;
+
+	z-index: 2;
+}
+
+.tab-container .tab-contentcontainer {
+	float: left;
+	position: relative;
+	width: 100%;
+	
+	border-top: 1px solid rgb(44,62,104);
+	border-left: 1px solid rgb(44,62,104);
+	border-right: 2px solid rgb(44,62,104);
+	border-bottom: 2px solid rgb(44,62,104);
+	
+	padding: 5px;
+	
+	z-index: 1;
+}
+
+.tab-container .tab-contentcontainer ul {
+	list-style-type: none;
+	list-style-position: outside;
+	padding: 0px;
+}
+
+.tab-container .tab-contentcontainer .tab-content {
+	float: none;
+	width: 100%;
+}

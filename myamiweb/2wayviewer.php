@@ -7,8 +7,17 @@ if (defined('PROCESSING')) {
 }
 
 // --- get Predefined Variables form GET or POST method --- //
-list($projectId, $sessionId, $imageId, $preset, $runId) = getPredefinedVars();
+list($projectId, $sessionId, $imageId, $preset, $runId, $scopeId) = getPredefinedVars();
 
+if (is_null($sessionId)){
+	$_SESSION['unlimited_images'] = false;
+	$limit = 100;
+}
+elseif ($sessionId=='-1' || !empty($_SESSION['unlimited_images'])){
+	$limit = 0;
+	$_SESSION['unlimited_images'] = true;
+}
+else  $limit = 100;
 // --- set 2nd view's preset
 $presetv1 = ($_POST) ? $_POST['v1pre'] : $_GET['v1pre'];
 
@@ -16,11 +25,14 @@ $presetv1 = ($_POST) ? $_POST['v1pre'] : $_GET['v1pre'];
 $lastId = $leginondata->getLastSessionId();
 $sessionId = (empty($sessionId)) ? $lastId : $sessionId;
 
+$scopes = $leginondata->getScopesForSelection();
+$scopeId = (empty($scopeId)) ? false:$scopeId;
+
 $projectdata = new project();
 $projectdb = $projectdata->checkDBConnection();
 
 if(!$sessions) {
-	$sessions = $leginondata->getSessions('description', $projectId);
+	$sessions = $leginondata->getSessions('description', $projectId, '', $scopeId);
 }
 
 if($projectdb) {
@@ -30,6 +42,8 @@ if($projectdb) {
 		$sessionId = $sessions[0]['id'];
 	}
 }
+
+if ( is_numeric(SESSION_LIMIT) && count($sessions) > SESSION_LIMIT) $sessions=array_slice($sessions,0,SESSION_LIMIT);
 
 $jsdata='';
 if ($ptcl) {
@@ -67,7 +81,9 @@ if($projectdb) {
 }
 $viewer->setSessionId($sessionId);
 $viewer->setImageId($imageId);
-$viewer->addSessionSelector($sessions);
+$viewer->addSessionSelector($sessions, $limit);
+$viewer->setScopeId($scopeId);
+$viewer->addScopeSelector($scopes);
 $viewer->addFileSelector($filenames);
 $viewer->setNbViewPerRow('2');
 $viewer->addjs($jsdata);
@@ -84,6 +100,7 @@ $view1->setParam('aceruns',$aceruns);
 $view1->displayDDIcon(true);
 $view1->setSize(512);
 $view1->displayTag(true);
+$view1->displayComment(true); 
 $viewer->add($view1);
 
 $view2 = new view('Main View', 'v2');
@@ -95,6 +112,7 @@ $view2->displayDDIcon(true);
 $view2->setDataTypes($datatypes);
 $view2->selectDataType($preset);
 $view2->addMenuItems($playbackcontrol);
+$view2->displayComment(true); 
 $view2->setSize(512);
 $view2->setSpan(2,2);
 $viewer->add($view2);

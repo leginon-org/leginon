@@ -1,9 +1,9 @@
 <?php
 /**
- *	The Leginon software is Copyright 2003 
- *	The Scripps Research Institute, La Jolla, CA
+ *	The Leginon software is Copyright under 
+ *	Apache License, Version 2.0
  *	For terms of the license agreement
- *	see  http://ami.scripps.edu/software/leginon-license
+ *	see  http://leginon.org
  *
  */
 
@@ -11,7 +11,7 @@
 // This file should display a form for launching a "test_$sessionname.py" script
 //
 // Information on writing appion tests is available at:
-// http://ami.scripps.edu/redmine/projects/appion/wiki/Appion_Testing
+// http://emg.nysbc.org/redmine/projects/appion/wiki/Appion_Testing
 //--------------------------------------------------------------------------------------
 
 require_once "inc/particledata.inc";

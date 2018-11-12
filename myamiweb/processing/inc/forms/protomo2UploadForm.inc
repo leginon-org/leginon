@@ -1,17 +1,17 @@
 <?php
 
 /**
- *	The Leginon software is Copyright 2003 
- *	The Scripps Research Institute, La Jolla, CA
+ *	The Leginon software is Copyright under 
+ *	Apache License, Version 2.0
  *	For terms of the license agreement
- *	see  http://ami.scripps.edu/software/leginon-license
+ *	see  http://leginon.org
  */
 
 require_once "basicLayoutForm.inc";
 
 class Protomo2UploadForm extends BasicLayoutForm
 {
-	function __construct( $expId, $session='',$tiltseries='', $commit='false' )
+	function __construct( $expId, $extraHTML, $session='',$tiltseries='', $commit='false' )
 	{
 		parent::__construct($expId, $extraHTML);
 		
@@ -26,7 +26,7 @@ class Protomo2UploadForm extends BasicLayoutForm
 		$this->setTitle( 'Protomo Upload Launcher' );
 		$this->setHeading( 'Protomo Upload' );
 		$this->setExeFile( 'protomo2upload.py' );
-		$this->setGuideURL( "http://ami.scripps.edu/redmine/projects/appion/wiki/" );
+		$this->setGuideURL( "http://www.electrontomography.org/?page_id=317" );
 		$this->setTestable( False ); // True to activate "test single image".
 		$this->setUseLegOutDir( False ); // The output directory will be created in the Appion run directory rather than Leginon.
 		$this->setShowDesc( False ); // Flag to hide the description field of the run parameters.
@@ -71,20 +71,6 @@ class Protomo2UploadForm extends BasicLayoutForm
 		$html.= $params->insertTextField( "commit", $fieldSize );
 		
 		return $html;
-	}	
-
-	// Override the default build Command Function because the --test flag is not normal
-	// for other Appion Loop methods and not included in the parent.
-	public function buildCommand( $postArray )
-	{
-		$command   = parent::buildCommand( $postArray );
-		
-		if ( $postArray['testimage']=="on" ) {
-			$command.= " --test";
-		}
-
-		echo $html;	
-		return $command." ";
 	}	
 	
 }

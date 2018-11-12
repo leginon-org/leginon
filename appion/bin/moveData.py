@@ -3,7 +3,6 @@
 import os
 import re
 import shutil
-import MySQLdb
 import subprocess
 ##
 import sinedon
@@ -49,7 +48,7 @@ class MoveData(appionScript.AppionScript):
 	def onInit(self):
 		# connect
 		self.dbconf = sinedon.getConfig('appiondata')
-		self.db     = MySQLdb.connect(**self.dbconf)
+		self.db     = sinedon.sqldb.connect(**self.dbconf)
 		self.db.autocommit(True)
 		# create a cursor
 		self.cursor = self.db.cursor()

@@ -1,8 +1,8 @@
 #!/usr/bin/python -O
-# The Leginon software is Copyright 2004
-# The Scripps Research Institute, La Jolla, CA
+# The Leginon software is Copyright under
+# Apache License, Version 2.0
 # For terms of the license agreement
-# see http://ami.scripps.edu/software/leginon-license
+# see http://leginon.org
 #
 # $Source: /ami/sw/cvsroot/pyleginon/leginon.gui.wx/TargetPanelTools.py,v $
 # $Revision: 1.6 $
@@ -13,10 +13,10 @@
 # $Locker:  $
 #
 # COPYRIGHT:
-#       The Leginon software is Copyright 2003
-#       The Scripps Research Institute, La Jolla, CA
+#       The Leginon software is Copyright under
+#       Apache License, Version 2.0
 #       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
+#       see  http://leginon.org
 #
 
 import wx
@@ -87,13 +87,14 @@ class TargetTypeTool(leginon.gui.wx.ImagePanelTools.TypeTool):
 
 		self.togglebuttons['display'].SetBitmapDisabled(self.bitmaps['display'])
 
+		# display numbers does not require target is selectable.
+		if numbers is not None:
+			togglebutton = self.addToggleButton('numbers', 'Show Numbers')
+			self.enableToggleButton('numbers', True)
+			togglebutton.Bind(wx.EVT_BUTTON, self.onToggleNumbers)
+			self.usenumbers = True
 		if target is not None:
-			if numbers is not None:
-				togglebutton = self.addToggleButton('numbers', 'Show Numbers')
-				self.enableToggleButton('numbers', True)
-				togglebutton.Bind(wx.EVT_BUTTON, self.onToggleNumbers)
-				self.usenumbers = True
-
+			# target is selectable
 			if area is not None:
 				togglebutton = self.addToggleButton('area', 'Show Image Area')
 				self.enableToggleButton('area', True)

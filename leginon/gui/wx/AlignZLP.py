@@ -6,15 +6,15 @@ from leginon.gui.wx.Presets import PresetChoice
 import leginon.gui.wx.Node
 import leginon.gui.wx.Settings
 import leginon.gui.wx.ToolBar
-import leginon.gui.wx.Reference
+import leginon.gui.wx.ReferenceTimer
 
-class SettingsDialog(leginon.gui.wx.Reference.SettingsDialog):
+class SettingsDialog(leginon.gui.wx.ReferenceTimer.SettingsDialog):
 	def initialize(self):
 		return ScrolledSettings(self,self.scrsize,False)
 
-class ScrolledSettings(leginon.gui.wx.Reference.ScrolledSettings):
+class ScrolledSettings(leginon.gui.wx.ReferenceTimer.ScrolledSettings):
 	def initialize(self):
-		szr = leginon.gui.wx.Reference.ScrolledSettings.initialize(self)
+		szr = leginon.gui.wx.ReferenceTimer.ScrolledSettings.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Check Zero Loss Peak Shift')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
@@ -40,10 +40,10 @@ class ScrolledSettings(leginon.gui.wx.Reference.ScrolledSettings):
 
 		return [szr[0],sbsz]
 
-class AlignZeroLossPeakPanel(leginon.gui.wx.Reference.ReferencePanel):
+class AlignZeroLossPeakPanel(leginon.gui.wx.ReferenceTimer.ReferenceTimerPanel):
 	icon = 'alignzlp'
 	def __init__(self, *args, **kwargs):
-		leginon.gui.wx.Reference.ReferencePanel.__init__(self, *args, **kwargs)
+		leginon.gui.wx.ReferenceTimer.ReferenceTimerPanel.__init__(self, *args, **kwargs)
 
 	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self)

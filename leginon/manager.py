@@ -2,10 +2,10 @@
 
 #
 # COPYRIGHT:
-#	   The Leginon software is Copyright 2003
-#	   The Scripps Research Institute, La Jolla, CA
+#	   The Leginon software is Copyright under
+#	   Apache License, Version 2.0
 #	   For terms of the license agreement
-#	   see  http://ami.scripps.edu/software/leginon-license
+#	   see  http://leginon.org
 #
 
 import application
@@ -22,6 +22,7 @@ import threading
 import logging
 import copy
 from pyami import ordereddict
+from pyami import mysocket
 import socket
 from wx import PyDeadObjectError
 import gui.wx.Manager
@@ -52,7 +53,8 @@ class DataBinder(databinder.DataBinder):
 
 	def delBinding(self, nodename, dataclass=None, method=None):
 		if dataclass is None:
-			dataclasses = self.bindings.keys()
+			# doing it to all keys
+			dataclasses = list(self.bindings)
 		else:
 			dataclasses = [dataclass]
 		for dataclass in dataclasses:
@@ -77,7 +79,7 @@ class Manager(node.Node):
 
 		## need a special DataBinder
 		name = DataBinder.__name__
-		databinderlogger = gui.wx.Logging.getNodeChildLogger(name, self)
+		databinderlogger = gui.wx.LeginonLogging.getNodeChildLogger(name, self)
 		mydatabinder = DataBinder(self, databinderlogger, tcpport=tcpport)
 		node.Node.__init__(self, self.name, session, otherdatabinder=mydatabinder,
 												**kwargs)
@@ -89,6 +91,21 @@ class Manager(node.Node):
 
 		self.nodelocations = {}
 		self.broadcast = []
+
+		self.tem_host = ''
+		# notify user of logged error
+		self.notifyerror = False
+		# timeout timer
+		self.timer_debug = False
+		self.timeout_minutes = 30.0
+		if self.timer_debug:
+			self.timeout_minutes = 0.3
+		self.timer = None
+		self.timer_thread_lock = False
+
+		# manager pause
+		self.pausable_nodes = []
+		self.paused_nodes = []
 
 		# ready nodes, someday 'initialized' nodes
 		self.initializednodescondition = threading.Condition()
@@ -107,6 +124,15 @@ class Manager(node.Node):
 															self.handleNodeClassesPublish)
 		self.addEventInput(event.NodeInitializedEvent, self.handleNodeStatus)
 		self.addEventInput(event.NodeUninitializedEvent, self.handleNodeStatus)
+		self.addEventInput(event.NodeLogErrorEvent, self.handleNodeLogError)
+		self.addEventInput(event.ActivateNotificationEvent, self.handleNotificationStatus)
+		self.addEventInput(event.DeactivateNotificationEvent, self.handleNotificationStatus)
+		self.addEventInput(event.NodeBusyNotificationEvent, self.handleNodeBusyNotification)
+		self.addEventInput(event.ManagerPauseAvailableEvent, self.handleManagerPauseAvailable)
+		self.addEventInput(event.ManagerPauseNotAvailableEvent, self.handleManagerPauseNotAvailable)
+		self.addEventInput(event.ManagerContinueAvailableEvent, self.handleManagerContinueAvailable)
+		self.addEventInput(event.ManagerPauseEvent, self.handleManagerPause)
+		self.addEventInput(event.ManagerContinueEvent, self.handleManagerContinue)
 		# this makes every received event get distributed
 		self.addEventInput(event.Event, self.distributeEvents)
 
@@ -146,13 +172,21 @@ class Manager(node.Node):
 		t.start()
 
 		for client in clients:
+			port = self.getPrimaryPort(client)
 			try:
-				self.addLauncher(client, 55555)
+				self.addLauncher(client, port)
 			except Exception, e:
 				self.logger.warning('Failed to add launcher: %s' % e)
 
 		if prevapp:
 			threading.Thread(target=self.launchPreviousApp).start()
+
+	def getPrimaryPort(self, hostname):
+		r = leginondata.ClientPortData(hostname=hostname).query()
+		if not r:
+			return 55555
+		else:
+			return r[0]['primary port']
 
 	def getSessionByName(self, name):
 		qsession = leginondata.SessionData(name=name)
@@ -168,14 +202,14 @@ class Manager(node.Node):
 		self.frame.GetEventHandler().AddPendingEvent(evt)
 
 	def createLauncher(self):
-		self.launcher = launcher.Launcher(socket.gethostname().lower(),
+		self.launcher = launcher.Launcher(mysocket.gethostname().lower(),
 																			session=self.session,
 																			managerlocation=self.location())
 		self.onAddLauncherPanel(self.launcher)
 
 	def location(self):
 		location = {}
-		location['hostname'] = socket.gethostname().lower()
+		location['hostname'] = mysocket.gethostname().lower()
 		location['data binder'] = self.databinder.location()
 		return location
 
@@ -186,6 +220,9 @@ class Manager(node.Node):
 		pass
 
 	def exit(self):
+		self.cancelTimeoutTimer()
+		# do not let others to restart it
+		self.timer = False
 		if self.launcher is not None:
 			self.killNode(self.launcher.name, wait=True)
 		launchers = self.getLauncherNames()
@@ -266,6 +303,22 @@ class Manager(node.Node):
 												+ str(tonodename) + ' no such binding')
 			return
 
+
+	def sendManagerNotificationEvent(self, to_node, ievent):
+		'''
+		Send a manager initiated event to a specific node. Unlike broadcast,
+		this is specific, but also requires no node-to-node binding.
+		'''
+		try:
+			eventcopy = copy.copy(ievent)
+			eventcopy['destination'] = to_node
+			self.clients[to_node].send(eventcopy)
+		except datatransport.TransportError:
+			### bad client, get rid of it
+			self.logger.error('Cannot send from manager to node ' + str(to_node))
+			raise
+		self.logEvent(ievent, 'sent by manager to %s' % (to_node,))
+
 	def broadcastToNode(self, nodename):
 		to_node = nodename
 		for ievent in self.broadcast:
@@ -345,6 +398,7 @@ class Manager(node.Node):
 					eventcopy = copy.copy(ievent)
 					eventcopy['destination'] = to_node
 					self.clients[to_node].send(eventcopy)
+					# Something will be sending an event to others if automated.
 				except datatransport.TransportError:
 					### bad client, get rid of it
 					self.logger.error('Cannot send to node ' + str(to_node)
@@ -527,6 +581,8 @@ class Manager(node.Node):
 			self.frame.GetEventHandler().AddPendingEvent(evt)
 		except PyDeadObjectError:
 			pass
+		except RuntimeError:
+			pass
 
 	def unregisterNode(self, evt):
 		'''Event handler Removes all information, event mappings and the client.'''
@@ -569,15 +625,16 @@ class Manager(node.Node):
 	def removeNodeDistmaps(self, nodename):
 		'''Remove event mappings related to the node with the specifed node ID.'''
 		# needs to completely cleanup the distmap
-		for eventclass in self.distmap:
+		for eventclass in list(self.distmap):
 			try:
 				del self.distmap[eventclass][nodename]
 			except KeyError:
 				pass
-			for othernodename in self.distmap[eventclass]:
+			# prevent self.distmap change size error by making a copy of the keys.
+			for othernodename in list(self.distmap[eventclass]):
 				try:
 					self.distmap[eventclass][othernodename].remove(nodename)
-				except (ValueError, RuntimeError) :
+				except (KeyError, ValueError, RuntimeError) :
 					pass
 
 	def launchNode(self, launcher, target, name, dependencies=[]):
@@ -687,6 +744,141 @@ class Manager(node.Node):
 			# group into another function
 			self.removeNode(nodename)
 
+	def handleManagerPauseAvailable(self, ievent):
+		self._addPausableNode(ievent['node'])
+		self._removePausedNode(ievent['node'])
+
+	def handleManagerPauseNotAvailable(self, ievent):
+		self._removePausableNode(ievent['node'])
+		self._removePausedNode(ievent['node'])
+
+	def handleManagerPause(self, ievent):
+		for to_node in self.pausable_nodes:
+			out = event.PauseEvent()
+			self.sendManagerNotificationEvent(to_node, out)
+
+	def handleManagerContinueAvailable(self, ievent):
+		self._removePausableNode(ievent['node'])
+		self._addPausedNode(ievent['node'])
+
+	def handleManagerContinue(self, ievent):
+
+		if len(self.paused_nodes) >= 1:
+			self.logger.warning('Continue the most recently paused node')
+			to_nodes = self.paused_nodes
+			if not ievent['all']:
+				to_nodes = [self.paused_nodes[-1],]
+			for to_node in to_nodes:
+				out = event.ContinueEvent()
+				self.sendManagerNotificationEvent(to_node, out)
+
+	# Timeout Timer
+	def handleNodeBusyNotification(self, ievent):
+		self.restartTimeoutTimer()
+
+	def cancelTimeoutTimer(self):
+			if hasattr(self.timer,'is_alive') and self.timer.is_alive():
+				self.timer.cancel()
+				if self.timer_debug:
+					print 'timer canceled'
+
+	def slackTimeoutNotification(self):
+		timeout = self.timeout_minutes*60.0
+		msg = 'Leginon has been idle for %.1f minutes' % self.timeout_minutes
+		self.slackNotification(msg)
+		self.timer = False
+
+	def restartTimeoutTimer(self):
+		'''
+		Restart timeout timer is called when certain events are
+		sent to manager to indicate that Leginon is still busy.
+		Add NodeBusyNotificationEvent in the node that need to send
+		the notification.
+		'''
+		# Multiply thread may access this. Now that we monitor only
+		# sparsed event, this may not be as critical.  Leave it for now.
+		if self.timer_thread_lock:
+			return
+		self.timer_thread_lock = True
+		self._restartTimeoutTimer()
+		self.timer_thread_lock = False
+
+	def _restartTimeoutTimer(self):
+		'''
+		Restart timeout timer if self.timer is not False.
+		Possible self timer values:
+		None: Default and the value when notification is not active.
+		False: The value to stop new Timer to be started to avoid
+			hanging when Leginon is shutting down and new notification
+			to be sent after it is already sent.
+		'''
+		if not self.notifyerror:
+			self.cancelTimeoutTimer()
+			self.timer = None
+			return
+		if self.timer == False:
+			return
+		self.cancelTimeoutTimer()
+		# canceled timer can not be restarted. make a new one.
+		timeout = self.timeout_minutes*60.0
+		self.timer = threading.Timer(timeout,self.slackTimeoutNotification)
+		self.timer.start()
+		if self.timer_debug:
+			print 'timer started'
+
+	def _addPausableNode(self, nodename):
+		if nodename not in self.pausable_nodes:
+			self.pausable_nodes.append(nodename)
+
+	def _removePausableNode(self, nodename):
+		try:
+			self.pausable_nodes.remove(nodename)
+		except ValueError:
+			# not in the list
+			pass
+
+	def _addPausedNode(self, nodename):
+		if nodename not in self.paused_nodes:
+			self.paused_nodes.append(nodename)
+
+	def _removePausedNode(self, nodename):
+		try:
+			self.paused_nodes.remove(nodename)
+		except ValueError:
+			# not in the list
+			pass
+
+	# Node Error Notification
+	def handleNodeLogError(self, ievent):
+		msg = ievent['message']
+		if self.notifyerror:
+			self.slackNotification(msg)
+
+	def handleNotificationStatus(self, ievent):
+		nodename = ievent['node']
+		if isinstance(ievent, event.ActivateNotificationEvent):
+			self.tem_host = ievent['tem_host']
+			# reset
+			self.notifyerror = True
+			# first allow timer to restart, if was set to false by completing a timeout
+			if self.timer == False:
+				self.timer = None
+			self.restartTimeoutTimer()
+		elif isinstance(ievent, event.DeactivateNotificationEvent):
+			self.cancelTimeoutTimer()
+			self.timer = None
+			self.notifyerror = False
+
+	def slackNotification(self, msg):
+		msg = '%s %s' % (self.tem_host, msg)
+		try:
+			from slack import slack_interface
+			slack_inst = slack_interface.SlackInterface()
+			channel = slack_inst.getDefaultChannel()
+			slack_inst.sendMessage(channel,'%s ' % (msg))
+		except:
+			print msg
+
 	# application methods
 
 	def getBuiltinApplications(self):
@@ -750,6 +942,8 @@ class Manager(node.Node):
 		map = {}
 		for a in appdatalist:
 			name =  a['application']['name']
+			if a['application']['hide']:
+				continue
 			if name not in history:
 				history.append(name)
 				map[name] = a['launchers']
@@ -794,6 +988,9 @@ class Manager(node.Node):
 		self.onApplicationStarted(name)
 
 	def killApplication(self):
+		self.cancelTimeoutTimer()
+		# set back to default
+		self.timer = None
 		self.application.kill()
 		self.application = None
 		self.onApplicationKilled()
@@ -859,7 +1056,7 @@ class Manager(node.Node):
 
 	def sortNodes(self, nodeclasses=[]):
 		allclassnames = noderegistry.getNodeClassNames()
-		classtypes = ['Priority', 'Pipeline', 'Calibrations', 'Utility']
+		classtypes = ['Priority', 'Pipeline', 'Calibrations', 'Utility', 'Finale']
 		sortclasses = {}
 		for classtype in classtypes:
 			sortclasses[classtype] = []

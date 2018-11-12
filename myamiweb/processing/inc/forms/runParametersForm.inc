@@ -1,10 +1,10 @@
 <?php
 
 /**
- *	The Leginon software is Copyright 2003 
- *	The Scripps Research Institute, La Jolla, CA
+ *	The Leginon software is Copyright under 
+ *	Apache License, Version 2.0
  *	For terms of the license agreement
- *	see  http://ami.scripps.edu/software/leginon-license
+ *	see  http://leginon.org
  */
 
 require_once "basicForm.inc";
@@ -47,7 +47,7 @@ class RunParametersForm extends BasicForm
 		$html.= "<br/>\n";
 		$html.= $params->insertStackedTextField( "outdir", 56 );
 		$html.= "<br/>\n";
-		$html.= $params->insertTextArea( "description");
+		$html.= $params->insertTextArea( "description", $cols=3, $rows=50);
 		$html.= closeRoundBorder();
 			
 		$html.= "<br/>\n";

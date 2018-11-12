@@ -1,7 +1,7 @@
-# The Leginon software is Copyright 2004
-# The Scripps Research Institute, La Jolla, CA
+# The Leginon software is Copyright under
+# Apache License, Version 2.0
 # For terms of the license agreement
-# see http://ami.scripps.edu/software/leginon-license
+# see http://leginon.org
 #
 
 import threading
@@ -52,6 +52,11 @@ class ScrolledSettings(leginon.gui.wx.Calibrator.ScrolledSettings):
 
 		return sizers + [sbsz]
 
+def capitalize(string):
+	if string:
+		string = string[0].upper() + string[1:]
+	return string
+
 class Panel(leginon.gui.wx.Calibrator.Panel):
 	icon = 'beamtilt'
 	settingsdialogclass = SettingsDialog
@@ -70,13 +75,13 @@ class Panel(leginon.gui.wx.Calibrator.Panel):
 		self.szmain.AddGrowableRow(0)
 		self.szmain.AddGrowableCol(0)
 		# tools
-		choices = ['Defocus', 'Beam-Tilt Coma']
+		choices = ['Defocus', 'Image-Shift Coma', 'Image-Shift Stig', 'Image-Shift Defocus']
 		if not hide_stig:
 			choices.append('Stigmator')
-		self.parameter = wx.Choice(self.toolbar, -1, choices=choices)
-		self.parameter.SetSelection(0)
+		self.cparameter = wx.Choice(self.toolbar, -1, choices=choices)
+		self.cparameter.SetSelection(0)
 
-		self.toolbar.InsertControl(5, self.parameter)
+		self.toolbar.InsertControl(5, self.cparameter)
 		self.toolbar.InsertTool(6, leginon.gui.wx.ToolBar.ID_PARAMETER_SETTINGS, 'settings', shortHelpString='Parameter Settings')
 		self.toolbar.AddSeparator()
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_MEASURE, 'ruler', shortHelpString='Measure')
@@ -87,7 +92,7 @@ class Panel(leginon.gui.wx.Calibrator.Panel):
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SET_BEAMTILT, 'beamtiltset', shortHelpString='Rotation Center To Scope')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ALIGN, 'rotcenter', shortHelpString='Align Rotation Center')
 		self.toolbar.AddSeparator()
-		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_MEASURE_COMAFREE, 'ruler', shortHelpString='Measure Coma-free beam tilt')
+		#self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_MEASURE_COMAFREE, 'ruler', shortHelpString='Measure Coma-free beam tilt')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_EDIT, 'edit', shortHelpString='Edit current calibration')
 
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
@@ -95,7 +100,9 @@ class Panel(leginon.gui.wx.Calibrator.Panel):
 		self.Bind(leginon.gui.wx.Events.EVT_GET_INSTRUMENT_DONE, self.onGetInstrumentDone)
 		self.Bind(leginon.gui.wx.Events.EVT_SET_INSTRUMENT_DONE, self.onSetInstrumentDone)
 		self.Bind(leginon.gui.wx.Events.EVT_MEASUREMENT_DONE, self.onMeasurementDone)
-		self.Bind(leginon.gui.wx.Events.EVT_COMA_MEASUREMENT_DONE, self.onComaMeasurementDone)
+		#self.Bind(leginon.gui.wx.Events.EVT_COMA_MEASUREMENT_DONE, self.onComaMeasurementDone)
+		self.Bind(leginon.gui.wx.Events.EVT_READ_AB_FREE_STATE, self.onReadAbFreeState)
+		self.Bind(leginon.gui.wx.Events.EVT_READ_STATE_DONE, self.onReadStateDone)
 
 	def onNodeInitialized(self):
 		leginon.gui.wx.Calibrator.Panel.onNodeInitialized(self)
@@ -103,12 +110,16 @@ class Panel(leginon.gui.wx.Calibrator.Panel):
 		self.measure_dialog = MeasureDialog(self)
 		self.comafree_dialog = MeasureComafreeDialog(self)
 		self.align_dialog = AlignRotationCenterDialog(self)
+		self.read_aberration_free_dialog = ReadAberrationFreeDialog(self)
 
+		self.Bind(leginon.gui.wx.Events.EVT_EDIT_MATRIX, self.onEditMatrix)
 		self.Bind(leginon.gui.wx.Events.EVT_EDIT_FOCUS_CALIBRATION, self.onEditFocusCalibration)
 
+		self.cparameter.SetStringSelection(capitalize(self.node.parameter))
+		self.cparameter.Bind(wx.EVT_CHOICE, self.onParameterChoice, self.cparameter)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onParameterSettingsTool, id=leginon.gui.wx.ToolBar.ID_PARAMETER_SETTINGS)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onMeasureTool, id=leginon.gui.wx.ToolBar.ID_MEASURE)
-		self.toolbar.Bind(wx.EVT_TOOL, self.onMeasureComafreeTool, id=leginon.gui.wx.ToolBar.ID_MEASURE_COMAFREE)
+		#self.toolbar.Bind(wx.EVT_TOOL, self.onMeasureComafreeTool, id=leginon.gui.wx.ToolBar.ID_MEASURE_COMAFREE)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onEucentricFocusFromScope, id=leginon.gui.wx.ToolBar.ID_GET_INSTRUMENT)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onEucentricFocusToScope, id=leginon.gui.wx.ToolBar.ID_SET_INSTRUMENT)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onRotationCenterFromScope, id=leginon.gui.wx.ToolBar.ID_GET_BEAMTILT)
@@ -146,7 +157,7 @@ class Panel(leginon.gui.wx.Calibrator.Panel):
 
 	def _calibrationEnable(self, enable):
 		self._acquisitionEnable(enable)
-		self.parameter.Enable(enable)
+		self.cparameter.Enable(enable)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PARAMETER_SETTINGS, enable)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, not enable)
 
@@ -194,6 +205,47 @@ class Panel(leginon.gui.wx.Calibrator.Panel):
 		evt.comatilt = beamtilt
 		self.GetEventHandler().AddPendingEvent(evt)
 
+	def onReadStateDone(self, evt):
+		for key in self.read_aberration_free_dialog.aberrations1d:
+			value = evt.state[key]
+			if value is None:
+				label = '(Not measured)'
+			else:
+				label = '%g' % value
+			self.read_aberration_free_dialog.labels[key].SetLabel(label)
+		for key in self.read_aberration_free_dialog.aberrations2d:
+			ab = evt.state[key]
+			for axis, value in ab.items():
+				if value is None:
+					label = '(Not measured)'
+				else:
+					label = '%g' % value
+				self.read_aberration_free_dialog.labels[key][axis].SetLabel(label)
+		self.read_aberration_free_dialog.Layout()
+		self.read_aberration_free_dialog.Fit()
+
+	def readStateDone(self, state):
+		evt = leginon.gui.wx.Events.ReadStateDoneEvent()
+		evt.state = state
+		self.GetEventHandler().AddPendingEvent(evt)
+
+	def readAbFreeState(self):
+		# This is called from a sub thread.  It therefore need to
+		# initiate dialog through an event
+		evt = leginon.gui.wx.Events.ReadAbFreeStateEvent()
+		self.GetEventHandler().AddPendingEvent(evt)
+
+	def onReadAbFreeState(self, evt):
+		'''
+		Handle ReadAbFreeState event by opening the dialog and then
+		respond accordingly after closing.
+		'''
+		if self.read_aberration_free_dialog.ShowModal() != wx.ID_OK:
+			is_ok = False
+		else:
+			is_ok = True
+		threading.Thread(target=self.node.guiReadAbFreeStateDone, args=(is_ok,)).start()
+
 	def onEucentricFocusToScope(self, evt):
 		self.instrumentEnable(False)
 		threading.Thread(target=self.node.eucentricFocusToScope).start()
@@ -219,8 +271,11 @@ class Panel(leginon.gui.wx.Calibrator.Panel):
 	def onMeasureComafreeTool(self, evt):
 		self.comafree_dialog.ShowModal()
 
+	def onParameterChoice(self, evt):
+		self.node.parameter = evt.GetString().lower()
+
 	def onParameterSettingsTool(self, evt):
-		parameter = self.parameter.GetStringSelection()
+		parameter = self.cparameter.GetStringSelection()
 		if parameter == 'Defocus':
 			dialog = DefocusSettingsDialog(self)
 		elif parameter == 'Stigmator':
@@ -230,13 +285,16 @@ class Panel(leginon.gui.wx.Calibrator.Panel):
 		elif parameter == 'Image-Shift Coma':
 			dialog = ImageShiftComaSettingsDialog(self)
 		else:
-			raise RuntimeError
+			# Do nothing, just enable other tools
+			self.node.logger.warning('Please use Beam-Tilt Coma selection to calibrate this')
+			self._calibrationEnable(True)
+			return
 		dialog.ShowModal()
 		dialog.Destroy()
 
 	def onCalibrateTool(self, evt):
 		self._calibrationEnable(False)
-		parameter = self.parameter.GetStringSelection()
+		parameter = self.cparameter.GetStringSelection()
 		if parameter == 'Defocus':
 			threading.Thread(target=self.node.calibrateDefocus).start()
 		elif parameter == 'Stigmator':
@@ -246,22 +304,50 @@ class Panel(leginon.gui.wx.Calibrator.Panel):
 		elif parameter == 'Image-Shift Coma':
 			threading.Thread(target=self.node.calibrateImageShiftComa).start()
 		else:
-			raise RuntimeError
+			self.node.logger.warning('Please use Beam-Tilt Coma selection to calibrate this')
+			# Do nothing, just enable other tools
+			self._calibrationEnable(True)
+			return
 
 	def onAbortTool(self, evt):
 		self.node.abortCalibration()
 
 	def onEditFocusCalibrationTool(self, evt):
-		threading.Thread(target=self.node.editCurrentCalibration).start()
+		parameter = self.cparameter.GetStringSelection()
+		if parameter != 'Defocus':
+			threading.Thread(target=self.node.editCurrentCalibration).start()
+		else:
+			threading.Thread(target=self.node.editCurrentFocusCalibration).start()
+
+	def onEditMatrix(self, evt):
+		'''
+		Edit and save upon closing dialog.
+		Includes probe but not magnification.
+		'''
+		matrix = evt.calibrationdata['matrix']
+		parameter = evt.calibrationdata['type']
+		ht = evt.calibrationdata['high tension']
+		probe = evt.calibrationdata['probe']
+		tem = evt.calibrationdata['tem']
+		ccdcamera = evt.calibrationdata['ccdcamera']
+		dialog = EditMatrixDialog(self, matrix, 'Edit Calibration')
+		if dialog.ShowModal() == wx.ID_OK:
+			matrix = dialog.getMatrix()
+			self.node.saveCalibration(matrix, parameter, ht, None, tem, ccdcamera, probe)
+		dialog.Destroy()
+
+	def editCalibration(self, calibrationdata):
+		evt = leginon.gui.wx.Events.EditMatrixEvent(calibrationdata=calibrationdata)
+		self.GetEventHandler().AddPendingEvent(evt)
 
 	def onEditFocusCalibration(self, evt):
 		dialog = EditFocusCalibrationDialog(self, evt.matrix, evt.rotation_center, evt.eucentric_focus, 'Edit Calibration')
 		if dialog.ShowModal() == wx.ID_OK:
 			calibration = dialog.getFocusCalibration()
-			self.node.saveCalibration(calibration, evt.parameter, evt.high_tension, evt.magnification, evt.tem, evt.ccd_camera, evt.probe)
+			self.node.saveFocusCalibration(calibration, evt.parameter, evt.high_tension, evt.magnification, evt.tem, evt.ccd_camera, evt.probe)
 		dialog.Destroy()
 
-	def editCalibration(self, **kwargs):
+	def editFocusCalibration(self, **kwargs):
 		evt = leginon.gui.wx.Events.EditFocusCalibrationEvent(**kwargs)
 		self.GetEventHandler().AddPendingEvent(evt)
 
@@ -358,41 +444,142 @@ class ImageShiftComaScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sb = wx.StaticBox(self, -1, 'Image-Shift Coma Calibration')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
-		self.widgets['imageshift coma tilt'] = FloatEntry(self, -1, chars=9)
-		self.widgets['imageshift coma step'] = FloatEntry(self, -1, chars=9)
-		self.widgets['imageshift coma number'] = IntEntry(self, -1, min=1, chars=2)
-		self.widgets['imageshift coma repeat'] = IntEntry(self, -1, min=1, chars=2)
 
-		sz = wx.GridBagSizer(5, 5)
-
-		label = wx.StaticText(self, -1, 'Coma measurement beam tilt (+/-)')
-		sz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['imageshift coma tilt'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
-
-		label = wx.StaticText(self, -1, 'Measure coma at')
-		sz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['imageshift coma number'], (1, 1), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
-		label = wx.StaticText(self, -1, 'positions per image shift direction')
-		sz.Add(label, (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-
-		label = wx.StaticText(self, -1, 'Add additional')
-		sz.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['imageshift coma step'], (2, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
-		label = wx.StaticText(self, -1, 'm image shift at each position')
-		sz.Add(label, (2, 2), (1, 1), wx.ALIGN_LEFT)
-
-		label = wx.StaticText(self, -1, 'Repeat coma measurement')
-		sz.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['imageshift coma repeat'], (3, 1), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
-		label = wx.StaticText(self, -1, 'times')
-		sz.Add(label, (3, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-
-		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
+		self.sz = wx.GridBagSizer(5, 5)
+		position = (0,0)
+		#position = self.addImageshiftComaTiltSizer(position)
+		position = self.addImageshiftComaNumberSizer(position)
+		position = self.addImageshiftComaStepSizer(position)
+		#position = self.addImageshiftComaRepeatSizer(position)
+		sbsz.Add(self.sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 		return [sbsz]
 
-		
+	def addImageshiftComaTiltSizer(self, p=(0,0)):
+		self.widgets['imageshift coma tilt'] = FloatEntry(self, -1, chars=9)
+		label = wx.StaticText(self, -1, 'Coma measurement beam tilt (+/-)')
+		self.sz.Add(label, p, (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.sz.Add(self.widgets['imageshift coma tilt'], (p[0],p[1]+1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		label = wx.StaticText(self, -1, 'radians')
+		self.sz.Add(label, (p[0],p[1]+2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		return (p[0]+1,p[1])
+
+	def addImageshiftComaNumberSizer(self, p=(0,0)):
+		self.widgets['imageshift coma number'] = IntEntry(self, -1, min=1, chars=2)
+		label = wx.StaticText(self, -1, 'Measure coma at')
+		self.sz.Add(label, p, (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.sz.Add(self.widgets['imageshift coma number'], (p[0],p[1]+1), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		label = wx.StaticText(self, -1, 'positions per image shift direction')
+		self.sz.Add(label, (p[0],p[1]+2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		return (p[0]+1,p[1])
+
+	def addImageshiftComaStepSizer(self, p=(0,0)):
+		self.widgets['imageshift coma step'] = FloatEntry(self, -1, chars=9)
+		label = wx.StaticText(self, -1, 'Add additional')
+		self.sz.Add(label, p, (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.sz.Add(self.widgets['imageshift coma step'], (p[0], p[1]+1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		label = wx.StaticText(self, -1, 'm image shift at each position')
+		self.sz.Add(label, (p[0], p[1]+2), (1, 1), wx.ALIGN_LEFT)
+		return (p[0]+1,p[1])
+
+	def addImageshiftComaRepeatSizer(self, p=(0,0)):
+		self.widgets['imageshift coma repeat'] = IntEntry(self, -1, min=1, chars=2)
+		label = wx.StaticText(self, -1, 'Repeat coma measurement')
+		self.sz.Add(label, p, (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.sz.Add(self.widgets['imageshift coma repeat'], (p[0], p[1]+1), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		label = wx.StaticText(self, -1, 'times')
+		self.sz.Add(label, (p[0], p[1]+2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		return (p[0]+1,p[1])
+
+class ReadAberrationFreeDialog(wx.Dialog):
+	def __init__(self, parent):
+		self.node = parent.node
+		self.panel = parent
+		self.aberrations1d = ('defocus',)
+		self.aberrations2d = ('stig','beam tilt')
+
+		wx.Dialog.__init__(self, parent, -1, 'Aberration Free State')
+
+		self.read = wx.Button(self, -1, 'Read Values')
+		self.reset = wx.Button(self, -1, 'Reset Values')
+		self.bok = wx.Button(self, wx.ID_OK, '&OK')
+		self.bcancel = wx.Button(self, wx.ID_CANCEL, '&Cancel')
+
+		self.read.Enable(True)
+		self.reset.Enable(True)
+		self.Bind(wx.EVT_BUTTON, self.onReadButton, self.read)
+		self.Bind(wx.EVT_BUTTON, self.onResetButton, self.reset)
+		self.Bind(wx.EVT_BUTTON, self.onSet, self.bok)
+		self.Bind(wx.EVT_BUTTON, self.onSet, self.bcancel)
+
+		szbutton = wx.GridBagSizer(5, 5)
+		szbutton.Add(self.read, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+		szbutton.Add(self.reset, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+
+		sbsz = wx.GridBagSizer(5, 5)
+
+		self.labels = {}
+		for key in self.aberrations1d:
+				self.labels[key] = wx.StaticText(self, -1, '(Not measured)')
+		for key in self.aberrations2d:
+			self.labels[key] = {}
+			for axis in ('x', 'y'):
+				self.labels[key][axis] = wx.StaticText(self, -1, '(Not measured)')
+
+		self.szresult = wx.GridBagSizer(5, 5)
+
+		startrow = 0
+		for key in self.aberrations1d+self.aberrations2d:
+			startrow = self.AddResultSizer(startrow,key)
+		self.szresult.AddGrowableCol(1)
+
+		#sbsz.Add(self.szresult, (0,0), (1,1), wx.EXPAND|wx.ALL, 10)
+		self.sizer = wx.GridBagSizer(5, 5)
+		self.sizer.Add(szbutton, (0, 0), (2, 1), wx.ALIGN_CENTER_VERTICAL|wx.EXPAND|wx.ALL, 10)
+		self.sizer.Add(self.szresult, (0, 1), (2, 2), wx.EXPAND|wx.ALL, 10)
+		self.sizer.Add(self.bok, (3, 0), (1, 1), wx.EXPAND|wx.ALL, 10)
+		self.sizer.Add(self.bcancel, (3, 1), (1, 1), wx.EXPAND|wx.ALL, 10)
+		self.sizer.AddGrowableRow(0)
+		self.sizer.AddGrowableRow(1)
+		self.sizer.AddGrowableRow(2)
+		self.sizer.AddGrowableCol(0)
+		self.sizer.AddGrowableCol(1)
+		self.sizer.AddGrowableCol(2)
+
+		self.SetSizerAndFit(self.sizer)
+
+	def AddResultSizer(self, row, key):
+		nextrow = row + 0
+		label = wx.StaticText(self, -1, key)
+		self.szresult.Add(label, (nextrow, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+		if key in self.aberrations2d:
+			label = wx.StaticText(self, -1, 'x')
+			self.szresult.Add(label, (nextrow+1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+			self.szresult.Add(self.labels[key]['x'], (nextrow+1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+			label = wx.StaticText(self, -1, 'y')
+			self.szresult.Add(label, (nextrow+2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+			self.szresult.Add(self.labels[key]['y'], (nextrow+2, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+			nextrow +=3
+		else:
+			self.szresult.Add(self.labels[key], (nextrow+1, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+			nextrow +=2
+		for r in range(row,nextrow-1):
+			self.szresult.AddGrowableRow(r)
+		return nextrow
+
+	def onSet(self, evt):
+		evt.Skip()
+
+	def onReadButton(self, evt):
+		self.panel._calibrationEnable(False)
+		threading.Thread(target=self.node.readState).start()
+
+	def onResetButton(self, evt):
+		self.panel._calibrationEnable(False)
+		threading.Thread(target=self.node.resetState).start()
+
+
 class MeasureComafreeDialog(wx.Dialog):
 	def __init__(self, parent):
 		self.node = parent.node
@@ -574,6 +761,9 @@ class MeasureScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.panel.instrumentEnable(False)
 		threading.Thread(target=self.node.resetDefocus).start()
 
+class EditMatrixDialog(leginon.gui.wx.MatrixCalibrator.EditMatrixDialog):
+	pass
+
 class EditFocusCalibrationDialog(leginon.gui.wx.MatrixCalibrator.EditMatrixDialog):
 	def __init__(self, parent, matrix, rotation_center, eucentric_focus, title, subtitle='Focus Calibration'):
 		self.rotation_center = rotation_center
@@ -621,12 +811,15 @@ class EditFocusCalibrationDialog(leginon.gui.wx.MatrixCalibrator.EditMatrixDialo
 		return matrix, rotation_center, eucentric_focus
 
 if __name__ == '__main__':
-	app = wx.PySimpleApp()
-	app.frame = wx.Frame(None, -1, 'Matrix Calibration Test')
-	matrix = numpy.zeros((2, 2))
-	rotation_center = {'x': 0, 'y': 0}
-	eucentric_focus = 0
-	app.dialog = EditFocusCalibrationDialog(app.frame, matrix, rotation_center, eucentric_focus, 'Test Edit Dialog')
-	app.dialog.Show()
-	app.MainLoop()
+	class Node(object):
+		def __init__(self):
+			app = wx.PySimpleApp()
+			app.frame = wx.Frame(None, -1, 'Matrix Calibration Test')
+			app.frame.node = Node()
+			matrix = numpy.zeros((2, 2))
+			rotation_center = {'x': 0, 'y': 0}
+			eucentric_focus = 0
+			app.dialog = ReadAberrationFreeDialog(app.frame)
+			app.dialog.Show()
+			app.MainLoop()
 

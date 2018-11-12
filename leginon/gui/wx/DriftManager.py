@@ -1,7 +1,7 @@
-# The Leginon software is Copyright 2004
-# The Scripps Research Institute, La Jolla, CA
+# The Leginon software is Copyright under
+# Apache License, Version 2.0
 # For terms of the license agreement
-# see http://ami.scripps.edu/software/leginon-license
+# see http://leginon.org
 #
 
 import wx
@@ -139,7 +139,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz = wx.GridBagSizer(5, 10)
 		sz.Add(szpause, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(sztimeout, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(sbsztest, (0, 1), (2, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALL,15)
+		sz.Add(sbsztest, (0, 1), (3, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALL,15)
 		return sz
 
 	def addBasicSettings(self):

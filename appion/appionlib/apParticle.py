@@ -12,7 +12,8 @@ from appionlib import appiondata
 from appionlib import apDatabase
 from appionlib import apDisplay
 from appionlib import apDefocalPairs
-
+#sinedon
+from sinedon import connections
 ####
 # This is a database connections file with no file functions
 # Please keep it this way
@@ -33,6 +34,17 @@ def getParticles(imgdata, selectionRunId, particlelabel=None):
 	particles = prtlq.query()
 
 	return particles
+
+#===========================
+def getOneParticleFromSelectionId(selectionRunId):
+	"""
+	returns paticles (as a list of dicts) for a given image
+	ex: particles[0]['xcoord'] is the xcoord of particle 0
+	"""
+	partq = appiondata.ApParticleData()
+	partq['selectionrun'] = appiondata.ApSelectionRunData.direct_query(selectionRunId)
+	partd = partq.query(results=1)
+	return partd[0]
 
 #===========================
 def getOneParticle(imgdata):
@@ -213,7 +225,7 @@ def insertParticlePeakPairs(peaktree1, peaktree2, peakerrors, imgdata1, imgdata2
 	return
 
 #===========================
-def insertParticlePeaks(peaktree, imgdata, runname, msg=False):
+def insertParticlePeaks(peaktree, imgdata, runname, msg=False, query=False):
 	"""
 	takes an image data object (imgdata) and inserts particles into DB from peaktree
 	"""
@@ -241,24 +253,20 @@ def insertParticlePeaks(peaktree, imgdata, runname, msg=False):
 		if 'template' in peakdict and peakdict['template'] is not None:
 			particlesq['template'] = appiondata.ApTemplateImageData.direct_query(peakdict['template'])
 
-		for key in 'correlation','peakmoment','peakstddev','peakarea', 'label':
-			if key in peakdict and peakdict[key] is not None:
-				if isinstance(peakdict[key], float):
-					### limit decimals
-					particlesq[key] = round(peakdict[key], 6)
-				else:
-					particlesq[key] = peakdict[key]
+		for key in 'correlation','peakmoment','peakstddev','peakarea','label':
+			if isinstance(peakdict.get(key,None) , float):
+				### limit decimals
+				particlesq[key] = round(peakdict[key], 6)
+			else:
+				particlesq[key] = peakdict.get(key, None)
 		### must be integers
 		particlesq['xcoord'] = int(round(peakdict['xcoord']))
 		particlesq['ycoord'] = int(round(peakdict['ycoord']))
-		if 'angle' in peakdict:
-			particlesq['angle'] = peakdict['angle']
-		if 'helixnum' in peakdict:
-			particlesq['helixnum'] = peakdict['helixnum']
-		if 'helicalstep' in peakdict:
-			particlesq['helicalstep'] = peakdict['helicalstep']
+		particlesq['angle'] = peakdict.get('angle', None)
+		particlesq['helixnum'] = peakdict.get('helixnum', None)
+		#particlesq['helicalstep'] = peakdict.get('helicalstep', None) #no entry in appiondata.py
 		if 'diameter' in peakdict and peakdict['diameter'] is not None:
-				peakdict['diameter'] = round(peakdict['diameter'], 6)
+			peakdict['diameter'] = round(peakdict['diameter'], 6)
 
 		if 'peakarea' in peakdict and peakdict['peakarea'] is not None and peakdict['peakarea'] > 0:
 			peakhasarea = True
@@ -271,10 +279,49 @@ def insertParticlePeaks(peaktree, imgdata, runname, msg=False):
 
 		### INSERT VALUES
 		if peakhasarea is True:
-			presult = particlesq.query()
+			if query:
+				presult = particlesq.query()
+			else:
+				presult = False
 			if not presult:
 				count+=1
 				particlesq.insert()
+	if msg is True:
+		apDisplay.printMsg("inserted "+str(count)+" of "+str(len(peaktree))+" peaks into database"
+			+" in "+apDisplay.timeString(time.time()-t0))
+	return
+
+#===========================
+def fastInsertParticlePeaks(peaktree, imgdata, runname, msg=False):
+	"""
+	takes an image data object (imgdata) and inserts particles into DB from peaktree
+	"""
+	#INFO
+	sessiondata = imgdata['session']
+
+	#GET RUN DATA
+	runq=appiondata.ApSelectionRunData()
+	runq['name'] = runname
+	runq['session'] = sessiondata
+	selectionruns=runq.query(results=1)
+
+	if not selectionruns:
+		apDisplay.printError("could not find selection run in database")
+
+	mysql_string = """INSERT INTO `ApParticleData` (`xcoord`, `ycoord`, `diameter`, `peakarea`,`REF|leginondata|AcquisitionImageData|image`, `REF|ApSelectionRunData|selectionrun`) VALUES (%s, %s, %s, %s, %s, %s)"""
+	values_list = []
+	### WRITE PARTICLES TO DATABASE
+	count = 0
+	t0 = time.time()
+	for peakdict in peaktree:
+		values_list.append((peakdict['xcoord'], peakdict['ycoord'], peakdict['diameter'], peakdict['peakarea'], imgdata.dbid, selectionruns[0].dbid))
+		
+	db = connections.getConnection('appionlib.appiondata')
+	cursor = db.dbd.db.cursor()
+	cursor.executemany(mysql_string, values_list)
+	db.dbd.db.commit()
+	cursor.close()
+	count = len(values_list)    
 	if msg is True:
 		apDisplay.printMsg("inserted "+str(count)+" of "+str(len(peaktree))+" peaks into database"
 			+" in "+apDisplay.timeString(time.time()-t0))

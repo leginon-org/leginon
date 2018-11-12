@@ -35,6 +35,14 @@ def getDefocusPair(imgdata):
 		sibling = getManualDefocusPair(imgdata)
 	return sibling
 
+def getParticularSiblingByPreset(imgdata,presetname):
+	allsiblings=getAllSiblings(imgdata)
+	for sib in allsiblings:
+		if sib['preset']['name'] == presetname:
+			return sib
+	return None
+
+
 def getDefocusPairFromTarget(imgdata):
 	origid = imgdata.dbid
 	allsiblings = getAllSiblings(imgdata)
@@ -49,16 +57,25 @@ def getDefocusPairFromTarget(imgdata):
 
 def getAllSiblings(imgdata):
 	'''
-	get all sibling image data, including itself, from the same parent image and target number
+	get all sibling image data, including itself, 
+	from the same parent image and target number, 
+	or step parent images from the same target as reacquired image.
 	'''
 	target = imgdata['target']
 	if target is None or target['image'] is None:
 		return [imgdata]
-	qtarget = leginon.leginondata.AcquisitionImageTargetData()
-	qtarget['image'] = target['image']
-	qtarget['number'] = target['number']
-	qsibling = leginon.leginondata.AcquisitionImageData(target=qtarget)
-	allsiblings = qsibling.query(readimages=False)
+	# Check parent image version to see if there are step siblings
+	parents = [target['image'],]
+	allsiblings = []
+	if 'target' in target['image'] and hasattr(target['image']['target'],'dbid'):
+		# reacquired parents share the same target
+		parents = leginon.leginondata.AcquisitionImageData(target=target['image']['target']).query()
+	for parent in parents:
+		qtarget = leginon.leginondata.AcquisitionImageTargetData()
+		qtarget['image'] = parent
+		qtarget['number'] = target['number']
+		qsibling = leginon.leginondata.AcquisitionImageData(target=qtarget)
+		allsiblings.extend(qsibling.query(readimages=False))
 	return allsiblings
 
 ##===================

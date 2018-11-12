@@ -89,7 +89,16 @@ def convert3DEMIcosEulerFrom532(full_sym_name,phi,theta,omega):
 	r_out = r_in * symr
 	phi,theta,omega = rotationMatrixToEulers3DEM(r_out)
 	return phi,theta,omega
-					
+
+#==================
+def convert3DEMEulers(phi,theta,omega,phi_r,theta_r,omega_r):
+	''' HAS NOT BEE TESTED '''
+	m_in = EulersToRotationMatrix3DEM(phi, theta, omega)
+	m_in_rotate = EulersToRotationMatrix3DEM(phi_r, theta_r, omega_r)
+	m_out = m_in * m_in_rotate
+	phi,theta,omega = rotationMatrixToEulers3DEM(m_out)
+	return phi,theta,omega
+			
 #==================
 def EulersToRotationMatrixEMAN(alt, az, phi, mirror=False):
 	''' 

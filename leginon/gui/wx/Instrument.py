@@ -1,8 +1,8 @@
 # -*- coding: iso-8859-1 -*-
-# The Leginon software is Copyright 2004
-# The Scripps Research Institute, La Jolla, CA
-# For terms of the license agreement
-# see http://ami.scripps.edu/software/leginon-license
+#       The Leginon software is Copyright under
+#       Apache License, Version 2.0
+#       For terms of the license agreement
+#       see  http://leginon.org
 #
 # $Source: /ami/sw/cvsroot/pyleginon/leginon.gui.wx/Instrument.py,v $
 # $Revision: 1.48 $
@@ -259,53 +259,6 @@ class LensesSizer(wx.StaticBoxSizer):
 									wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 			self.xy[group][name][a].Enable(False)
 		self.row += 1
-
-class FilmSizer(wx.StaticBoxSizer):
-	def __init__(self, parent, title='Film'):
-		self.parent = parent
-		wx.StaticBoxSizer.__init__(self, wx.StaticBox(self.parent, -1, title),
-																			wx.VERTICAL)
-		self.sz = wx.GridBagSizer(5, 5)
-		self.Add(self.sz, 1, wx.EXPAND|wx.ALL, 5)
-
-		parameterorder = [
-			'Stock',
-			'Exposure number',
-			'Exposure type',
-			'Automatic exposure time',
-			'Manual exposure time',
-			'User code',
-			'Date Type',
-			'Text',
-			'Shutter',
-			'External shutter',
-		]
-
-		self.parameters = {
-			'Stock': wx.StaticText(self.parent, -1, ''),
-			'Exposure number': IntEntry(self.parent, -1, chars=5, allownone=True),
-			'Exposure type': wx.Choice(self.parent, -1),
-			'Automatic exposure time': wx.StaticText(self.parent, -1, ''),
-			'Manual exposure time': FloatEntry(self.parent, -1, chars=5, allownone=True),
-			'User code': Entry(self.parent, -1, chars=3),
-			'Date Type': wx.Choice(self.parent, -1),
-			'Text': Entry(self.parent, -1, chars=20),
-			'Shutter': wx.Choice(self.parent, -1),
-			'External shutter': wx.Choice(self.parent, -1),
-		}
-
-		row = 0
-		for key in parameterorder:
-			st = wx.StaticText(self.parent, -1, key + ':')
-			self.sz.Add(st, (row, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-			style = wx.ALIGN_CENTER
-			if isinstance(self.parameters[key], Entry):
-				style |= wx.FIXED_MINSIZE
-			self.sz.Add(self.parameters[key], (row, 1), (1, 1), style)
-			self.parameters[key].Enable(False)
-			self.parameters[key].Enable(False)
-			row += 1
-		self.sz.AddGrowableCol(1)
 
 class StageSizer(wx.StaticBoxSizer):
 	def __init__(self, parent, title='Stage'):
@@ -712,8 +665,8 @@ class ParameterMixin(object):
 			parametermap = self.parametermap
 		keys = ['Magnifications', 'LowDoseStates', 'LowDoseModes',
 						'ShutterPositions', 'ExternalShutterStates', 'MainScreenPositions',
-						'HolderTypes', 'ColumnValvePositions', 'FilmExposureTypes',
-						'FilmDateTypes', 'ExposureTypes', 'MirrorStates', 'Rotations',
+						'HolderTypes', 'ColumnValvePositions', 
+						'ExposureTypes', 'MirrorStates', 'Rotations',
 						'CameraSize']
 		for key in keys:
 			try:
@@ -752,8 +705,8 @@ class ParameterMixin(object):
 	def reverseMap(self, map, reversemap={}, keypath=[]):
 		keys = ['Magnifications', 'LowDoseStates', 'LowDoseModes',
 						'ShutterPositions', 'ExternalShutterStates', 'MainScreenPositions',
-						'HolderTypes', 'ColumnValvePositions', 'FilmExposureTypes',
-						'FilmDateTypes', 'ExposureTypes', 'MirrorStates', 'Rotations',
+						'HolderTypes', 'ColumnValvePositions', 
+						'ExposureTypes', 'MirrorStates', 'Rotations',
 						'CameraSize']
 		for key, value in map.items():
 			if key in keys:
@@ -783,7 +736,6 @@ class TEMPanel(wx.Panel, ParameterMixin):
 		self.sz = wx.GridBagSizer(5, 5)
 
 		self.szlenses = LensesSizer(self)
-		self.szfilm = FilmSizer(self)
 		self.szstage = StageSizer(self)
 		self.szholder = HolderSizer(self)
 		self.szscreen = ScreenSizer(self)
@@ -796,7 +748,6 @@ class TEMPanel(wx.Panel, ParameterMixin):
 		self.sz.Add(self.szstage, (0, 1), (1, 1), wx.EXPAND)
 
 		self.sz.Add(self.szlenses, (1, 0), (1, 1), wx.EXPAND)
-		self.sz.Add(self.szfilm, (1, 1), (1, 1), wx.EXPAND)
 
 		self.sz.Add(self.szfocus, (2, 0), (1, 1), wx.EXPAND)
 		self.sz.Add(self.szscreen, (2, 1), (1, 1), wx.EXPAND)
@@ -857,22 +808,6 @@ class TEMPanel(wx.Panel, ParameterMixin):
 					'y': self.szlenses.xy['Stigmator']['Condenser']['y'],
 				},
 			},
-			'FilmStock': self.szfilm.parameters['Stock'],
-			'FilmExposureNumber': self.szfilm.parameters['Exposure number'],
-			'FilmExposureTypes': self.szfilm.parameters['Exposure type'],
-			'FilmExposureType': self.szfilm.parameters['Exposure type'],
-			'FilmAutomaticExposureTime':
-				self.szfilm.parameters['Automatic exposure time'],
-			'FilmManualExposureTime':
-				self.szfilm.parameters['Manual exposure time'],
-			'FilmUserCode': self.szfilm.parameters['User code'],
-			'FilmDateTypes': self.szfilm.parameters['Date Type'],
-			'FilmDateType': self.szfilm.parameters['Date Type'],
-			'FilmText': self.szfilm.parameters['Text'],
-			'ShutterPositions': self.szfilm.parameters['Shutter'],
-			'Shutter': self.szfilm.parameters['Shutter'],
-			'ExternalShutterStates': self.szfilm.parameters['External shutter'],
-			'ExternalShutter': self.szfilm.parameters['External shutter'],
 			'Focus': self.szfocus.parameters['Focus'],
 			'Defocus': self.szfocus.parameters['Defocus'],
 			'ScreenCurrent': self.szscreen.parameters['Current'],

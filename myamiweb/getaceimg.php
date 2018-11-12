@@ -19,6 +19,7 @@ switch($_GET['g']){
 	case 2: $graph="graph2"; break;
 	case 3: $graph="graph3"; break;
 	case 4: $graph="graph4"; break;
+	case 5: $graph="localplot"; break;
 	default: $graph="graph1"; break;
 }
 
@@ -37,7 +38,10 @@ list($ctfdata) = $ctf->getCtfInfoFromImageId($imgid, $order=False, $ctfmethod, $
 $aceparams = $ctf->getAceParams($ctfdata['acerunId']);
 
 // get the filename -- too many conventions...
+// package 2D graph may have been moved to graph 1 when there is no appion fitting successful.
 $basename = $ctfdata[$graph];
+if ($_GET['g'] == 3 && !$basename) $basename = $ctfdata["graph1"];
+
 if (!$basename) {
 	header('Content-type: '.$imagemime);
 	$blkimg = blankimage(256, 64, "CTF $graph not created");
@@ -45,7 +49,6 @@ if (!$basename) {
 	imagedestroy($blkimg);
 	exit(1);
 }
-
 $opfile = $ctfdata['path'].'/opimages/'.$basename;
 $rtfile = $ctfdata['path'].'/'.$basename;
 $key = "opimages/";

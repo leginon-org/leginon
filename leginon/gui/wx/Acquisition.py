@@ -1,7 +1,7 @@
-# The Leginon software is Copyright 2004
-# The Scripps Research Institute, La Jolla, CA
+# The Leginon software is Copyright under
+# Apache License, Version 2.0
 # For terms of the license agreement
-# see http://ami.scripps.edu/software/leginon-license
+# see http://leginon.org
 #
 
 import wx
@@ -265,8 +265,18 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sbszsim = wx.StaticBoxSizer(sbsim, wx.VERTICAL)
 
 		# simulate loop settings
+		self.widgets['loop delay time'] = FloatEntry(self, -1, min=0.0, chars=6)
 		self.widgets['wait time'] = FloatEntry(self, -1, min=0.0, chars=6)
 		self.widgets['iterations'] = IntEntry(self, -1, min=0.0, chars=6)
+
+		szdelaytime = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Delay Time before first loop:')
+		szdelaytime.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szdelaytime.Add(self.widgets['loop delay time'], (0, 1), (1, 1),
+		wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'seconds')
+		szdelaytime.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
 		szwaittime = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Wait Time:')
 		szwaittime.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
@@ -282,8 +292,9 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		# simluate target loop
 		szsim = wx.GridBagSizer(5, 5)
-		szsim.Add(szwaittime, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szsim.Add(sziterations, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szsim.Add(szdelaytime, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szsim.Add(szwaittime, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szsim.Add(sziterations, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sbszsim.Add(szsim, 0, wx.ALIGN_CENTER)
 		return sbszsim
 
@@ -344,7 +355,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz_emission.Add(self.widgets['emission off'], (0, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 		return sz_emission
- 
+
 	def createTiltSizer(self):
 		# set widgets
 		self.widgets['use parent tilt'] = wx.CheckBox(self, -1, 'Tilt the stage like its parent image')
@@ -365,6 +376,23 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 						wx.ALIGN_CENTER_VERTICAL)
 		return sz_tilt
 
+	def createClearBeamPathSizer(self):
+		#set widget
+		self.widgets['clear beam path'] = wx.CheckBox(self, -1, 'Verify opened gun valve before acquiring')
+		# mskr sizer
+		sz_beampath = wx.GridBagSizer(0, 0)
+		sz_beampath.Add(self.widgets['clear beam path'], (0, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		return sz_beampath
+
+	def createRetractObjApertureSizer(self):
+		self.widgets['retract obj aperture'] = wx.CheckBox(self, -1, 'Retract objective aperture while imaging')
+		# mskr sizer
+		sz_obj_ap = wx.GridBagSizer(0, 0)
+		sz_obj_ap.Add(self.widgets['retract obj aperture'], (0, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		return sz_obj_ap
+
 	def addSettings(self):
 		# move type
 		szmovetype = self.createMoveTypeSizer()
@@ -376,6 +404,8 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz_save = self.createImageOptionsSizer()
 		sz_emission = self.createEmissionSizer()
 		sz_tilt = self.createTiltSizer()
+		sz_beampath = self.createClearBeamPathSizer()
+		sz_obj_ap = self.createRetractObjApertureSizer()
 		sbszsim = self.createSimulatedTargetLoopBoxSizer()
 
 		# misc
@@ -407,11 +437,13 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz.Add(sz_save, (3,0), (2,1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(sz_emission, (5,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(sz_tilt, (6,0), (2,1), wx.ALIGN_TOP)
-		sz.Add(sbszsim, (8,0), (2,1), wx.ALIGN_BOTTOM)
+		sz.Add(sz_beampath, (8,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(sz_obj_ap, (9,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(sbszsim, (10,0), (2,1), wx.ALIGN_BOTTOM)
 		# middle with 1 column
-		sz.Add(sz_misc, (3,1), (7,1), wx.ALIGN_TOP)
+		sz.Add(sz_misc, (3,1), (8,1), wx.ALIGN_TOP)
 		# right
-		sz.Add(szright, (0,2),(9,1), wx.ALIGN_TOP)
+		sz.Add(szright, (0,2),(11,1), wx.ALIGN_TOP)
 		return sz
 
 	def onEnterPassword(self, evt):
@@ -515,6 +547,13 @@ class Panel(leginon.gui.wx.Node.Panel):
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT_QUEUE, False)
 		self.node.player.pause()
 
+	def onStopTargetTool(self, evt):
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT_QUEUE, False)
+		self.node.player.stoptarget()
+
 	def onStopTool(self, evt):
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, False)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, False)
@@ -540,15 +579,23 @@ class Panel(leginon.gui.wx.Node.Panel):
 			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, False) 
 			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, True)
 			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT_QUEUE, True)
+		elif evt.state == 'stoptarget':
+			# case for stop one target
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, True)
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, True) 
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT_QUEUE, True)
 		elif evt.state == 'stop':
+			# case for stop one target list
 			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, True)
 			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, True) 
 			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
 			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT_QUEUE, True)
 		elif evt.state == 'stopqueue':
+			# case for stop all target lists in queue
 			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, True)
 			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, True) 
-			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, True)
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
 			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT_QUEUE, False)
 
 	def onBrowseImagesTool(self, evt):

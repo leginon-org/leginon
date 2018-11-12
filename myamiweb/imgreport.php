@@ -1,10 +1,10 @@
 <?php
 
 /**
- *	The Leginon software is Copyright 2003 
- *	The Scripps Research Institute, La Jolla, CA
+ *	The Leginon software is Copyright under 
+ *	Apache License, Version 2.0
  *	For terms of the license agreement
- *	see  http://ami.scripps.edu/software/leginon-license
+ *	see  http://leginon.org
  */
 
 require_once "inc/leginon.inc";
@@ -32,7 +32,7 @@ $newimage = $leginondata->findImage($imgId, $preset);
 $imgId = $newimage['id'];
 
 $imageinfo = $leginondata->getImageInfo($imgId);
-if ($imageinfo === false) $imageinfo = $leginondata->getMinimalImageInfo($imgId);
+if (!$imageinfo) $imageinfo = $leginondata->getMinimalImageInfo($imgId);
 $sessionId = $imageinfo[sessionId];
 $_GET['expId'] = $sessionId;
 require_once "inc/project.inc";
@@ -167,6 +167,7 @@ $mrcmode = array (
 		2=>'MRC_MODE_FLOAT',
 		// 3=>'MRC_MODE_SHORT_COMPLEX',
 		4=>'MRC_MODE_FLOAT_COMPLEX',
+		5=>'MRC_MODE_UNSIGNED_BYTE',
 		6=>'MRC_MODE_UNSIGNED_SHORT'
 		);
 ?>
@@ -221,6 +222,26 @@ if (is_array($imageinfo)) {
 			else
 				echo formatHtmlRow($k, $v);
 		}
+	}
+	$semData = $ctf->getSEMDataFromId($imgId);
+	if (!empty($semData)){
+		echo formatHtmlRow('Date',$semData['date']);
+		echo formatHtmlRow('HV',$semData['hv'].' V');
+		echo formatHtmlRow('Beam',$semData['beam']);
+		echo formatHtmlRow('HFW',$semData['hfw'].' µm');
+		echo formatHtmlRow('ApertureDiameter',$semData['aperture_diameter'].' µm');
+		echo formatHtmlRow('BeamCurrent',$semData['beam_current'].' pA');
+		echo formatHtmlRow('DynamicFocusIsOn',$semData['dynamic_focus_is_on']);
+		echo formatHtmlRow('StageTa',number_format((float)$semData['stage_ta'], 1, '.', '').' °');
+		echo formatHtmlRow('TiltCorrectionAngle',$semData['tilt_correction_angle'].' °');
+		echo formatHtmlRow('Dwelltime',$semData['dwell_time'].' µs');
+		echo formatHtmlRow('PixelWidth',$semData['pixel_width'].' nm');
+		echo formatHtmlRow('FrameTime',$semData['frame_time'].' s');
+		echo formatHtmlRow('Integrate',$semData['integrate']);
+		echo formatHtmlRow('WorkingDistance',$semData['working_distance'].' m');
+		echo formatHtmlRow('ResolutionX',$semData['resolution_x']);
+		echo formatHtmlRow('ResolutionY',$semData['resolution_y']);
+		echo formatHtmlRow('Z Slice Width',$semData['z_slice']);
 	}
 	echo "</table>";
 }
@@ -288,7 +309,7 @@ echo "</table>";
 <table border="0">
 <tr valign=top>
 <td width=300>
-<div style="border: 1px solid #000000; height:290; width:270; margin: 0px;padding:0px;  background-color: #CCCCFF">
+<div style="border: 1px solid #000000; width:270; margin: 0px;padding:0px;  background-color: #CCCCFF">
 <?php $viewer->display(); ?>
 </div>
 </td>
@@ -381,7 +402,8 @@ echo divtitle("Calibrations");
 <?php
 foreach ($types as $type) {
 	$t = $type['type'];
-	$m = $leginondata->getImageMatrixCalibration($imgId, $t);
+	$is_magd = $leginondata->getIsMagDependentMatrix($t);
+	$m = $leginondata->getImageMatrixCalibration($imgId, $t, $is_magd);
 	if (!$m) continue;
 	$matrix = displayMatrix(matrix(
 			$leginondata->formatMatrixValue($m[a11]),

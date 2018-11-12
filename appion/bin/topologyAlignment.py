@@ -1,17 +1,17 @@
 #!/usr/bin/env python
 #
-import os,sys,re
+import os
+import sys
 import time
 import math
 import shutil
 import glob
 import cPickle
 import tarfile
-import subprocess
 import string
-from EMAN2 import *
-from sparx import *
 #appion
+import sinedon.directq
+from appionlib import proc2dLib
 from appionlib import appionScript
 from appionlib import apDisplay
 from appionlib import apFile
@@ -22,9 +22,12 @@ from appionlib import appiondata
 from appionlib import apProject
 from appionlib.apSpider import operations
 from appionlib import apIMAGIC
-from appionlib import apImagicFile
 from appionlib.apImagic import imagicFilters
 from appionlib.apImagic import imagicAlignment
+from appionlib import apRelion
+
+import EMAN2
+import sparx
 
 #=====================
 #=====================
@@ -110,16 +113,25 @@ class TopologyRepScript(appionScript.AppionScript):
 			apDisplay.printError("a number of ending classes was not provided")
 		if self.params['runname'] is None:
 			apDisplay.printError("run name was not defined")
-		stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
-		stackfile = os.path.join(stackdata['path']['path'], stackdata['name'])
-		if self.params['numpart'] > apFile.numImagesInStack(stackfile):
+		self.stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
+		stackfile = os.path.join(self.stackdata['path']['path'], self.stackdata['name'])
+		# check for virtual stack
+		self.params['virtualdata'] = None
+		if not os.path.isfile(stackfile):
+			vstackdata = apStack.getVirtualStackParticlesFromId(self.params['stackid'])
+			npart = len(vstackdata['particles'])
+			self.params['virtualdata'] = vstackdata
+		else:
+			npart = apFile.numImagesInStack(stackfile)
+
+		if self.params['numpart'] is None:
+			self.params['numpart'] = npart
+		elif self.params['numpart'] > npart:
 			apDisplay.printError("trying to use more particles "+str(self.params['numpart'])
 				+" than available "+str(apFile.numImagesInStack(stackfile)))
 
 		self.boxsize = apStack.getStackBoxsize(self.params['stackid'])
 		self.workingboxsize = math.floor(self.boxsize/self.params['bin'])
-		if self.params['numpart'] is None:
-			self.params['numpart'] = apFile.numImagesInStack(stackfile)
 		if not self.params['mask']:
 			self.params['mask'] = (self.boxsize/2)-2
 		self.workingmask = math.floor(self.params['mask']/self.params['bin'])
@@ -129,7 +141,6 @@ class TopologyRepScript(appionScript.AppionScript):
 
 	#=====================
 	def setRunDir(self):
-		self.stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
 		path = self.stackdata['path']['path']
 		uppath = os.path.abspath(os.path.join(path, "../.."))
 		uppath = string.replace(uppath,"/jetstor/APPION","")
@@ -217,7 +228,7 @@ class TopologyRepScript(appionScript.AppionScript):
 		if not os.path.isfile(refstackfile):
 			apDisplay.printError("could not find reference stack file: "+refstackfile)
 
-		alignstackq['stack'] = apStack.getOnlyStackData(self.params['stackid'])
+		alignstackq['stack'] = self.stackdata
 		alignstackq['boxsize'] = math.floor(self.workingboxsize)
 		alignstackq['pixelsize'] = self.stack['apix']*self.params['bin']
 		alignstackq['description'] = self.params['description']
@@ -232,47 +243,114 @@ class TopologyRepScript(appionScript.AppionScript):
 	def insertParticlesIntoDatabase(self, partlist, partrefdict):
 		# insert particle alignment information into database
 		count = 0
-		inserted = 0
 		t0 = time.time()
-		apDisplay.printColor("Inserting particle alignment data, please wait", "cyan")
+		apDisplay.printColor("\nPreparing to insert particle alignment data, please wait", "cyan")
+
+		# get path data
+		pathq = appiondata.ApPathData()
+		pathq['path'] = os.path.abspath(self.params['rundir'])
+		pathdata = pathq.query(results=1)
+		pathid = pathdata[0].dbid
+
+		# align run id
+		alignrunid = self.alignstackdata['alignrun'].dbid
+
+		# get stack particle ids
+		stackpdbdict={}
+		sqlcmd = "SELECT particleNumber,DEF_id "+ \
+			"FROM ApStackParticleData "+ \
+			"WHERE `REF|ApStackData|stack`=%i"%(self.params['stackid'])
+		results = sinedon.directq.complexMysqlQuery('appiondata',sqlcmd)
+
+		for part in results:
+			pnum = int(part['particleNumber'])
+			stackpdbdict[pnum]=int(part['DEF_id'])
+
+		apDisplay.printColor("found "+str(len(results))+" particles in "
+			+apDisplay.timeString(time.time()-t0), "cyan")
+
+		t0 = time.time()
+		apDisplay.printColor("\nInserting class averages into database","cyan")
+		# insert reference image data
+		reflistvals = []
+		for i in range(1,max(partrefdict.values())+1):
+			sqlvals="(%i,%i,'%s',%i,%i)"%( \
+				i,self.params['currentiter'], \
+				os.path.basename(self.params['currentcls'])+".img", \
+				alignrunid,pathid)
+			reflistvals.append(sqlvals)
+
+		sqlcmd = "INSERT INTO `ApAlignReferenceData` ("+ \
+			"`refnum`,`iteration`,`imagicfile`,"+ \
+			"`REF|ApAlignRunData|alignrun`,`REF|ApPathData|path`) "
+		sqlcmd += "VALUES "+",".join(reflistvals)
+		sinedon.directq.complexMysqlQuery('appiondata',sqlcmd)
+
+		# get DEF_ids from inserted references
+		refq = appiondata.ApAlignReferenceData()
+		refq['iteration'] = self.params['currentiter']
+		refq['imagicfile'] = os.path.basename(self.params['currentcls'])+".img"
+		refq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
+		refq['alignrun'] = self.alignstackdata['alignrun']
+		refresults = refq.query()
+
+		# save DEF_ids to dictionary
+		refdbiddict={}
+		for ref in refresults:
+			refdbiddict[ref['refnum']]=ref.dbid
+
+		apDisplay.printColor("inserted "+str(len(refdbiddict))+" class averages in "
+			+apDisplay.timeString(time.time()-t0), "cyan")
+
+		t0 = time.time()
+		apDisplay.printColor("\nAssembling database insertion command","cyan")
+		partlistvals = []
+
 		for partdict in partlist:
 			count += 1
-			if count % 100 == 0:
-				sys.stderr.write(".")
+			if count % (len(partlist)/100) == 0:
+				pleft = int(float(count)/len(partlist)*100)
+				perpart = (time.time()-t0)/count
+				tleft = (len(partlist)-count)*perpart
+				sys.stderr.write("%3i%% complete, %s left    \r"%(pleft,apDisplay.timeString(tleft)))
 
-			### set up reference
-			refq = appiondata.ApAlignReferenceData()
-			## get reference number from partrefdict
-			refq['refnum'] = partrefdict[int(partdict['partnum'])]
-			refq['iteration'] = self.params['currentiter']
-			refq['imagicfile'] = os.path.basename(self.params['currentcls'])+".img"
-			refq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
-			refq['alignrun'] = self.alignstackdata['alignrun']
-			reffile = os.path.join(self.params['rundir'], refq['imagicfile'])
-			if not os.path.isfile(reffile):
-				apDisplay.printError("could not find reference file: "+reffile)
+			partnum = int(partdict['partnum'])
+			refnum = partrefdict[partnum]
+			refnum_dbid = refdbiddict[refnum]
+			stackpart_dbid = stackpdbdict[partnum]
 
-			### set up particle
-			alignpartq = appiondata.ApAlignParticleData()
-			## EMAN particles start with 0, database starts at 1
-			alignpartq['partnum'] = partdict['partnum']
-			alignpartq['alignstack'] = self.alignstackdata
-			stackpartdata = apStack.getStackParticle(self.params['stackid'], partdict['partnum'])
-			alignpartq['stackpart'] = stackpartdata
-			alignpartq['xshift'] = partdict['xshift']
-			alignpartq['yshift'] = partdict['yshift']
-			alignpartq['rotation'] = partdict['inplane']
-			alignpartq['mirror'] = partdict['mirror']
-			alignpartq['correlation'] = partdict['cc']
-			alignpartq['ref'] = refq
+			sqlvals = "(%i,%i,%i,%s,%s,%s,%i,%s,%i)"%( \
+				partdict['partnum'], alignrunid, stackpart_dbid, \
+				partdict['xshift'], partdict['yshift'], \
+				partdict['inplane'], partdict['mirror'], \
+				partdict['cc'],refnum_dbid) 
 
-			### insert
-			if self.params['commit'] is True:
-				inserted += 1
-				alignpartq.insert()
+			partlistvals.append(sqlvals)
+		
+		sys.stderr.write("100% complete\t\n")
 
-		apDisplay.printColor("\ninserted "+str(inserted)+" of "+str(count)+" particles into the database in "
-			+apDisplay.timeString(time.time()-t0), "cyan")
+		apDisplay.printColor("Inserting particle information into database","cyan")
+
+		# start big insert cmd
+		sqlstart = "INSERT INTO `ApAlignParticleData` (" + \
+			"`partnum`,`REF|ApAlignStackData|alignstack`," + \
+			"`REF|ApStackParticleData|stackpart`," + \
+			"`xshift`,`yshift`,`rotation`,`mirror`," + \
+			"`correlation`,`REF|ApAlignReferenceData|ref`) " + \
+			"VALUES "
+
+		# break up command into groups of 100K inserts
+		# this is a workaround for the max_allowed_packet at 16MB
+		n = 100000
+		sqlinserts = [partlistvals[i:i+n] \
+			for i in range(0, len(partlistvals), n)]
+
+		for sqlinsert in sqlinserts:
+			sqlcmd=sqlstart+",".join(sqlinsert)
+			sinedon.directq.complexMysqlQuery('appiondata',sqlcmd)
+
+		apDisplay.printColor("\nInserted "+ str(count)+" particles into the database in "
+			+ apDisplay.timeString(time.time()-t0), "cyan")
 
 	#=====================
 	def writeTopolRepLog(self, text):
@@ -494,7 +572,7 @@ class TopologyRepScript(appionScript.AppionScript):
 		f.write("#!/bin/csh -f\n")
 		f.write("setenv IMAGIC_BATCH 1\n")
 		if self.params['nproc'] > 1:
-			f.write("%s/openmpi/bin/mpirun -np %i -x IMAGIC_BATCH %s/align/mralign.e_mpi << EOF\n" %(self.imagicroot,self.params['nproc'],self.imagicroot))
+			f.write("mpirun -np %i -x IMAGIC_BATCH %s/align/mralign.e_mpi << EOF\n" %(self.params['nproc'],self.imagicroot))
 			if int(self.imagicversion) != 110119:
 				f.write("YES\n")
 				f.write("%i\n"%self.params['nproc'])
@@ -593,7 +671,7 @@ class TopologyRepScript(appionScript.AppionScript):
 
 		f.write("setenv IMAGIC_BATCH 1\n")
 		if self.params['msaproc'] > 1:
-			f.write("%s/openmpi/bin/mpirun -np %i -x IMAGIC_BATCH %s/msa/msa.e_mpi << EOF\n" %(self.imagicroot,self.params['msaproc'],self.imagicroot))
+			f.write("mpirun -np %i -x IMAGIC_BATCH %s/msa/msa.e_mpi << EOF\n" %(self.params['msaproc'],self.imagicroot))
 			if int(self.imagicversion) != 110119:
 				f.write("YES\n")
 				f.write("%i\n"%self.params['msaproc'])
@@ -652,7 +730,6 @@ class TopologyRepScript(appionScript.AppionScript):
 		bfile = "msaclassify.job"
 		outfile = "classes"
 		apFile.removeStack(outfile)
-		numIters = int(self.params['numpart']*self.params['itermult'])
 		decrement = self.params['start']-self.params['end']
 		if self.params['iter']>0:
 			decrement /= float(self.params['iter'])
@@ -915,7 +992,7 @@ class TopologyRepScript(appionScript.AppionScript):
 
 		out = "sortedcls.hed"
 		# read class averages
-		d = EMData.read_images(self.params['currentcls']+".hed")
+		d = EMAN2.EMData.read_images(self.params['currentcls']+".hed")
 		# set translational search range to tenth of box size
 		ts = int(self.workingboxsize*0.1)
 
@@ -933,7 +1010,7 @@ class TopologyRepScript(appionScript.AppionScript):
 			maxcit = -111
 			# find average with highest CC to previous class
 			for i in range(len(d)):
-				p1 = peak_search(Util.window(ccf(d[i],temp),ts,ts))
+				p1 = sparx.peak_search(sparx.Util.window(sparx.ccf(d[i],temp),ts,ts))
 				peak = p1[0][0]
 				if (peak > maxcit):
 					maxcit = peak
@@ -942,7 +1019,7 @@ class TopologyRepScript(appionScript.AppionScript):
 					qi = i
 					pnum = d[i].get_attr('IMAGIC.imgnum')
 			temp = d[qi].copy()
-			temp=rot_shift2D(temp, 0, sx, sy, 0)
+			temp = sparx.rot_shift2D(temp, 0, sx, sy, 0)
 			del d[qi]
 			temp.write_image(out,k)
 			k+=1
@@ -963,7 +1040,7 @@ class TopologyRepScript(appionScript.AppionScript):
 		emancmd = "proc2d %s %s inplace"%(avgfile,avgfile)
 		apEMAN.executeEmanCmd(emancmd,verbose=False)
 
-		d = EMData.read_images(avgfile)
+		d = EMAN2.EMData.read_images(avgfile)
 
 		for avgn in self.sortedList:
 			d[avgn].write_image(out,-1)
@@ -973,48 +1050,69 @@ class TopologyRepScript(appionScript.AppionScript):
 	def start(self):
 		self.insertTopolRepJob()
 		self.stack = {}
-		self.stack['data'] = apStack.getOnlyStackData(self.params['stackid'])
 		self.stack['apix'] = apStack.getStackPixelSizeFromStackId(self.params['stackid'])
-		self.stack['part'] = apStack.getOneParticleFromStackId(self.params['stackid'])
-		self.stack['file'] = os.path.join(self.stack['data']['path']['path'], self.stack['data']['name'])
+		if self.params['virtualdata'] is not None:
+			self.stack['file'] = self.params['virtualdata']['filename']
+		else:
+			self.stack['file'] = os.path.join(self.stackdata['path']['path'], self.stackdata['name'])
 		self.dumpParameters()
 
 		self.params['canexe'] = self.getCANPath()
 
 		### process stack to local file
 		self.params['localstack'] = os.path.join(self.params['rundir'], self.timestamp+".hed")
-		proccmd = "proc2d "+self.stack['file']+" "+self.params['localstack']+" apix="+str(self.stack['apix'])
-		if self.params['bin'] > 1:
-			proccmd += " shrink=%d edgenorm"%(self.params['bin'])
-		proccmd += " last="+str(self.params['numpart']-1)
-		if self.params['invert'] is True:
-			proccmd += " invert"
-		if self.params['highpass'] is not None and self.params['highpass'] > 1:
-			proccmd += " hp="+str(self.params['highpass'])
-		if self.params['lowpass'] is not None and self.params['lowpass'] > 1:
-			proccmd += " lp="+str(self.params['lowpass'])
-		if self.params['premask'] is True and self.params['mramethod'] != 'imagic':
-			proccmd += " mask=%i"%self.params['mask']
-		if self.params['uploadonly'] is not True:
-			if os.path.isfile(os.path.join(self.params['rundir'],"stack.hed")):
-				self.params['localstack']=os.path.join(self.params['rundir'],"stack.hed")
-			else:
-				apEMAN.executeEmanCmd(proccmd, verbose=True)
-			if self.params['numpart'] != apFile.numImagesInStack(self.params['localstack']):
-				apDisplay.printError("Missing particles in stack")
 
-			### IMAGIC mask particles before alignment
-			if self.params['premask'] is True and self.params['mramethod'] == 'imagic':
-				# convert mask to fraction for imagic
-				maskfrac = self.workingmask*2/self.workingboxsize
-				maskstack = imagicFilters.softMask(self.params['localstack'],mask=maskfrac)
-				shutil.move(maskstack+".hed",os.path.splitext(self.params['localstack'])[0]+".hed")
-				shutil.move(maskstack+".img",os.path.splitext(self.params['localstack'])[0]+".img")
+		processImgList=[]
+		### check for Relion star file
+		if self.stack['file'].endswith('.star'):
+			processImgList = apRelion.getMrcParticleFilesFromStar(self.stack['file'])
+		else: processImgList.append(self.stack['file'])
+
+		for pimg in processImgList:
+			a = proc2dLib.RunProc2d()
+			a.setValue('infile',pimg)
+			a.setValue('outfile',self.params['localstack'])
+			a.setValue('apix',self.stack['apix'])
+			a.setValue('bin',self.params['bin'])
+			a.setValue('last',self.params['numpart']-1)
+			a.setValue('append',True)
+
+			if self.params['lowpass'] is not None and self.params['lowpass'] > 1:
+				a.setValue('lowpass',self.params['lowpass'])
+			if self.params['highpass'] is not None and self.params['highpass'] > 1:
+				a.setValue('highpass',self.params['highpass'])
+			if self.params['invert'] is True:
+				a.setValue('invert',True)
+			if self.params['premask'] is True and self.params['mramethod'] != 'imagic':
+				a.setValue('mask',self.params['mask'])
+
+			if self.params['virtualdata'] is not None:
+				vparts = self.params['virtualdata']['particles']
+				plist = [int(p['particleNumber'])-1 for p in vparts]
+				a.setValue('list',plist)
+
+			if self.params['uploadonly'] is not True:
+				if os.path.isfile(os.path.join(self.params['rundir'],"stack.hed")):
+					self.params['localstack']=os.path.join(self.params['rundir'],"stack.hed")
+					break
+				else:
+					a.run()
+
+		if self.params['numpart'] != apFile.numImagesInStack(self.params['localstack']):
+			apDisplay.printError("Missing particles in stack")
+
+		### IMAGIC mask particles before alignment
+		if self.params['premask'] is True and self.params['mramethod'] == 'imagic':
+			# convert mask to fraction for imagic
+			maskfrac = self.workingmask*2/self.workingboxsize
+			maskstack = imagicFilters.softMask(self.params['localstack'],mask=maskfrac)
+			shutil.move(maskstack+".hed",os.path.splitext(self.params['localstack'])[0]+".hed")
+			shutil.move(maskstack+".img",os.path.splitext(self.params['localstack'])[0]+".img")
 
 		origstack = self.params['localstack']
 		### find number of processors
-		if self.params['nproc'] is None:
-			self.params['nproc'] = apParam.getNumProcessors()
+#		if self.params['nproc'] is None:
+		self.params['nproc'] = apParam.getNumProcessors()
 
 		if self.params['uploadonly'] is not True:
 			aligntime = time.time()
@@ -1068,12 +1166,15 @@ class TopologyRepScript(appionScript.AppionScript):
 			## get last iteration
 			alliters = glob.glob("iter*")
 			alliters.sort()
-			os.chdir(alliters[-1])
-			self.params['iterdir'] = os.path.abspath(".")
+
 			## get iteration number from iter dir
 			self.params['currentiter'] = int(alliters[-1][-2:])
-			self.params['alignedstack'] = os.path.abspath("mrastack")
+			self.params['iterdir'] = os.path.join(self.params['rundir'],alliters[-1])
 			self.params['currentcls'] = "classes%02i"%(self.params['currentiter'])
+
+			## go into last iteration directory
+			os.chdir(self.params['iterdir'])
+			self.params['alignedstack'] = os.path.abspath("mrastack")
 			if os.path.isfile(os.path.join(self.params['rundir'],self.params['currentcls']+".hed")):
 				p1 = os.path.join(self.params['rundir'],self.params['currentcls'])
 				p2 = os.path.join(self.params['iterdir'],self.params['currentcls'])
@@ -1101,7 +1202,8 @@ class TopologyRepScript(appionScript.AppionScript):
 			shutil.move(self.params['alignedstack']+".hed","mrastack.hed")
 			shutil.move(self.params['alignedstack']+".img","mrastack.img")
 			# rewrite header
-			imagicFilters.takeoverHeaders("mrastack",self.params['numpart'],self.workingboxsize)
+			if self.params['mramethod'] == "imagic" or self.params['msamethod'] == 'imagic':
+				imagicFilters.takeoverHeaders("mrastack",self.params['numpart'],self.workingboxsize)
 
 		# move actual averages to current directory
 		if self.params['msamethod']=='can':
@@ -1120,8 +1222,9 @@ class TopologyRepScript(appionScript.AppionScript):
 		apFile.removeStack(origstack)
 
 		### save to database
-		self.insertRunIntoDatabase()
-		self.insertParticlesIntoDatabase(partlist, partrefdict)
+		if self.params['commit'] is True:
+			self.insertRunIntoDatabase()
+			self.insertParticlesIntoDatabase(partlist, partrefdict)
 
 #=====================
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
-# The Leginon software is Copyright 2003
-# The Scripps Research Institute, La Jolla, CA
+# The Leginon software is Copyright under
+# Apache License, Version 2.0
 # For terms of the license agreement
-# see  http://ami.scripps.edu/software/leginon-license
+# see  http://leginon.org
 #
 # $Source: /ami/sw/cvsroot/pyleginon/presets.py,v $
 # $Revision: 1.270 $
@@ -19,7 +19,7 @@ import copy
 import threading
 import time
 import unique
-from pyami import ordereddict, imagefun, arraystats
+from pyami import ordereddict, imagefun, arraystats, primefactor
 import gui.wx.PresetsManager
 import instrument
 import random
@@ -29,6 +29,9 @@ import numpy
 ## counter for dose images
 import itertools
 idcounter = itertools.cycle(range(100))
+
+## submodetransform
+SPECIAL_TRANSFORM = False
 
 class PresetChangeError(Exception):
 	pass
@@ -243,11 +246,14 @@ class PresetsManager(node.Node):
 		'optimize cycle': True,
 		'mag only': True,
 		'apply offset': False,
+		'disable stage for image shift': False,
 		'blank': False,
 		'smallsize': 1024,
+		'idle minute': 30.0,
+		'import random': False,
 	}
-	eventinputs = node.Node.eventinputs + [event.ChangePresetEvent, event.MeasureDoseEvent, event.UpdatePresetEvent]
-	eventoutputs = node.Node.eventoutputs + [event.PresetChangedEvent, event.PresetPublishEvent, event.DoseMeasuredEvent, event.MoveToTargetEvent]
+	eventinputs = node.Node.eventinputs + [event.ChangePresetEvent, event.MeasureDoseEvent, event.UpdatePresetEvent, event.IdleTimerPauseEvent, event.IdleTimerRestartEvent]
+	eventoutputs = node.Node.eventoutputs + [event.PresetChangedEvent, event.PresetPublishEvent, event.DoseMeasuredEvent, event.MoveToTargetEvent, event.ActivateNotificationEvent, event.DeactivateNotificationEvent]
 
 	def __init__(self, name, session, managerlocation, **kwargs):
 		node.Node.__init__(self, name, session, managerlocation, **kwargs)
@@ -263,6 +269,7 @@ class PresetsManager(node.Node):
 			'beam tilt':calibrationclient.BeamTiltCalibrationClient(self),
 			'modeled stage':calibrationclient.ModeledStageCalibrationClient(self),
 			'beam size':calibrationclient.BeamSizeCalibrationClient(self),
+			'image rotation':calibrationclient.ImageRotationCalibrationClient(self),
 		}
 		self.dosecal = calibrationclient.DoseCalibrationClient(self)
 		import navigator
@@ -282,14 +289,93 @@ class PresetsManager(node.Node):
 		# HACK: fix me
 		self.last_value = None
 		self.old_time = None
+		# FIX ME temporary disable checkBremTilt workaround for Issue #4335
+		self.no_preset_set = False
+		self.recover_beamtilt = threading.Event()
+
+		# timeout thread
+		self.idleactive = False
+		self.idle_timer_pause_done = {}
+		self.idle_timer_paused = {}
+		self.startInstrumentUsageTracker()
 
 		self.addEventInput(event.ChangePresetEvent, self.changePreset)
 		self.addEventInput(event.MeasureDoseEvent, self.measureDose)
 		self.addEventInput(event.UpdatePresetEvent, self.handleUpdatePresetEvent)
+		self.addEventInput(event.IdleTimerPauseEvent, self.handleIdleTimerPauseEvent)
+		self.addEventInput(event.IdleTimerRestartEvent, self.handleIdleTimerRestartEvent)
 
 		## this will fill in UI with current session presets
 		self.getPresetsFromDB()
 		self.start()
+
+	def startInstrumentUsageTracker(self):
+		t = threading.Thread(target=self.usageTracker)
+		t.setDaemon(True)
+		t.start()
+
+	def isAnyIdleTimerPaused(self):
+		'''
+		Find all nodes that sent IdleTimerPauseEvent but not yet sending
+		IdleTimerRestartEvent.  Some node classes such as AutoN2Filler
+		takes a long time to return.
+		'''
+		any_paused = []
+		for key in self.idle_timer_paused.keys():
+			if self.idle_timer_paused[key] is True:
+				any_paused.append(key)
+		return any_paused
+
+	def usageTracker(self):
+		'''
+		this is run in a thread to watch for instrument last set or get time
+		'''
+		last_set_get_time = self.instrument.getLastSetGetTime()
+		while self.idleactive:
+			paused_fromnode = self.isAnyIdleTimerPaused()
+			for node in paused_fromnode:
+				# Some node classes such as AutoN2Filler do not set instrument
+				# but can take a long time to come back.
+				# These need to wait
+				self.idle_timer_pause_done[node].wait()
+				self.idle_timer_pause_done[node].clear()
+				self.idle_timer_paused[node] = False
+			## idletime before giving up
+			last_set_get_time = self.instrument.getLastSetGetTime()
+			if self.idleactive and time.time() - last_set_get_time > 60*self.settings['idle minute']:
+				self.instrumentIdleFinish()
+				# close valves, stop doing everything or quit
+			time.sleep(10)
+
+	def instrumentIdleFinish(self):
+		'''
+		Things to do when idle timer is timeout.
+		'''
+		if not self.idleactive:
+			return
+		self.instrument.tem.ColumnValvePosition = 'closed'
+		self.logger.warning('column valves closed')
+		#if self.settings['emission off']:
+		if False:
+			self.instrument.tem.Emission = False
+			self.logger.warning('emission switched off')
+		self.idleactive = False
+
+	def toggleInstrumentTimeout(self):
+		if self.idleactive:
+			self.idleactive = False
+			self.outputEvent(event.DeactivateNotificationEvent())
+			#self.logger.info('Instrument timeout deactivated')
+			self.logger.info('Instrument error notification deactivated')
+		else:
+			# update first then start tracking
+			self.instrument.updateLastSetGetTime()
+			self.idleactive = True
+			tem_hostname = self.getTemHostname()
+			self.outputEvent(event.ActivateNotificationEvent(tem_host=tem_hostname))
+			self.logger.info('Instrument error notification activated')
+			# FIX ME: this tracker does not work, yet. Often timeout too early.
+			#self.startInstrumentUsageTracker()
 
 	def lock(self, n):
 		'''many nodes could be waiting for a lock.  It is undefined which
@@ -337,16 +423,26 @@ class PresetsManager(node.Node):
 		for i in range(failtries):
 			try:
 				if emtarget is None or emtarget['movetype'] is None:
+					# can not set with emtarget and moveype
+					# change preset with current values
 					self.logger.info('Changing preset to "%s"' % pname)
 					if ievent['keep image shift']:
+						dx = 0.0
+						dy = 0.0
 						# figure out image shift offset from current preset
-						scope_ishift = self.instrument.tem.ImageShift
-						if self.currentpreset is None:
-							dx = scope_ishift['x']
-							dy = scope_ishift['y']
+						temname = self.currentpreset['tem']['name']
+						if 'Jeol' not in temname:
+							scope_ishift = self.instrument.tem.ImageShift
+							if self.currentpreset is None:
+								dx = scope_ishift['x']
+								dy = scope_ishift['y']
+							else:
+								dx = scope_ishift['x'] - self.currentpreset['image shift']['x']
+								dy = scope_ishift['y'] - self.currentpreset['image shift']['y']
 						else:
-							dx = scope_ishift['x'] - self.currentpreset['image shift']['x']
-							dy = scope_ishift['y'] - self.currentpreset['image shift']['y']
+							# Avoid unknown bug with JEOL scopes:
+							#can not read pre-existing image shift offset at this point
+							self.logger.info('Jeol hack: pre-existing image shift offset dy=0,0')
 					self._cycleToScope(pname)
 					if ievent['keep image shift']:
 						self.logger.info('Keeping pre-existing image shift offset')
@@ -404,8 +500,9 @@ class PresetsManager(node.Node):
 			if not name:
 				continue
 			newp = leginondata.PresetData(initializer=preset, session=self.session)
-			## for safety, disable random defocus range
-			newp['defocus range min'] = newp['defocus range max'] = None
+			## for safety, disable random defocus range by default
+			if not self.settings['import random']:
+				newp['defocus range min'] = newp['defocus range max'] = None
 			self.presetToDB(newp)
 			self.presets[name] = newp
 		self.setOrder()
@@ -629,8 +726,11 @@ class PresetsManager(node.Node):
 			self.currentpreset = presetdata
 		self.logger.info(endmessage)
 		if final:
+			if self.no_preset_set:
+				self.checkBeamTiltChange()
 			self.blankOff()
 			self.outputEvent(event.PresetChangedEvent(name=name, preset=presetdata))
+			self.no_preset_set = False
 
 	def _fromScope(self, name, temname=None, camname=None, parameters=None, copybeam=False):
 		'''
@@ -866,6 +966,13 @@ class PresetsManager(node.Node):
 		if newpreset is None:
 			self.panel.presetsEvent()
 			return
+		# refs #3255 retry if image shift or beam shift parameters are not gotten 
+		trys = 0
+		while trys < 3 and (newpreset['image shift']['x'] is None or newpreset['beam shift']['x'] is None):
+			self.logger.info('scope parameters not complete, retry....')
+			newpreset = self._fromScope(newname, temname, camname, None, copybeam)
+			trys += 1
+
 		self.setOrder()
 		self.panel.setParameters(newpreset)
 		self.logger.info('Preset from instrument: %s' % (newname,))
@@ -945,7 +1052,6 @@ class PresetsManager(node.Node):
 			newpreset['name'] = presetname
 			newpreset['number'] = len(self.presets)
 			newpreset['removed'] = False
-			newpreset['film'] = False
 			newpreset['hasref'] = False
 			newpreset['pre exposure'] = 0.0
 			newpreset['skip'] = False
@@ -1289,6 +1395,8 @@ class PresetsManager(node.Node):
 			minlength = min((fullcamdim['x']/bin,fullcamdim['y']/bin))
 			if minlength <= imagelength:
 				break
+		# always use even prime
+		minlength = primefactor.getAllEvenPrimes(minlength)[-1]
 		return minlength
 		
 	def _acquireSpecialImage(self, preset, acquirestr='', mode='', imagelength=None, binning=None):
@@ -1296,6 +1404,10 @@ class PresetsManager(node.Node):
 		self.logger.info('Acquiring %s image' %(acquirestr))
 		camdata0 = leginondata.CameraEMData()
 		camdata0.friendly_update(preset)
+
+		# These will be overwritten to acquire special image
+		was_saving_frames = bool(camdata0['save frames'])
+		was_aligning_frames = bool(camdata0['align frames'])
 	
 		## deactivate frame saving and align frame flags
 		camdata0['save frames'] = False
@@ -1362,14 +1474,17 @@ class PresetsManager(node.Node):
 			self.logger.error(errstr % 'unable to set camera parameters')
 			return
 		try:
-			imagedata = self.acquireCorrectedCameraImageData()
+			imagedata = self.acquireCorrectedCameraImageData(force_no_frames=True)
 		except:
 			self.logger.error(errstr % 'unable to acquire corrected image data')
 			return
 		try:
+			# restore preset parameters Bug #3614
+			camdata0['save frames'] = was_saving_frames
+			camdata0['align frames'] = was_aligning_frames
 			self.instrument.setData(camdata0)
 		except:
-			estr = 'Return to orginial camera dimemsion failed: %s'
+			estr = 'Return to orginial camera state failed: %s'
 			self.logger.error(estr % 'unable to set camera parameters')
 			return
 
@@ -1461,13 +1576,23 @@ class PresetsManager(node.Node):
 			try:
 				'''
 				pixelshift is the shift value in the unit of the binned pixel
-				pixelvector is the shift value in the unit of binned pixel
+				pixelvector is the shift value in the unit of unbinned pixel
 				'''
 				pixelshift1 = self.calclients['image'].itransform(myimage, fakescope1, fakecam1)
+				### Transform as unbinned pixel shift vector
 				pixrow = pixelshift1['row'] * oldpreset['binning']['y']
 				pixcol = pixelshift1['col'] * oldpreset['binning']['x']
 				pixvect1 = numpy.array((pixrow, pixcol))
-				pixvect2 = self.calclients['image'].pixelToPixel(old_tem,old_ccdcamera,new_tem, new_ccdcamera, ht,oldpreset['magnification'],newpreset['magnification'],pixvect1)
+				# image shift coil rotation
+				pixvect1 = self.imageRotationTransform(pixvect1,oldpreset,newpreset)
+				# extra rotation
+				if SPECIAL_TRANSFORM:
+					pixvect1 = self.specialTransform(pixvect1,new_tem,oldpreset['magnification'],newpreset['magnification'])
+				# magnification and camera (if camera is different)
+				# Transform pixelvect1 at magnification to new magnification according to image-shift matrix
+				# include a relative  image rotation and scale addition to the transform
+				pixvect2 = self.calclients['image rotation'].pixelToPixel(old_tem,old_ccdcamera,new_tem, new_ccdcamera, ht,oldpreset['magnification'],newpreset['magnification'],pixvect1)
+				# transform to the binned pixelsift
 				pixelshift2 = {'row':pixvect2[0] / newpreset['binning']['y'],'col':pixvect2[1] / newpreset['binning']['x']}
 				newscope = self.calclients['image'].transform(pixelshift2, fakescope2, fakecam2)
 				myimage = newscope['image shift']
@@ -1478,9 +1603,12 @@ class PresetsManager(node.Node):
 			except Exception, e:
 				self.logger.error('Image shift transform failed:  %s' % (e,))
 		else:
-			## this assumes that image shift is preserved through a mag change
-			## although this may not always be true.  In particular, I think
-			## that LM and M/SA mag ranges have different image shift coord systems
+			## movetype that is not image or image-beam shift
+			# This part transform the extra image shift of the oldimage in
+			# emtargetdata to the new image.
+			# This assumes that image shift is preserved through a mag change
+			# although this may not always be true.  In particular, I think
+			# that LM and M/SA mag ranges have different image shift coord systems
 			myimage['x'] -= oldimageshift['x']
 			myimage['y'] -= oldimageshift['y']
 			myimage['x'] += newimageshift['x']
@@ -1507,13 +1635,18 @@ class PresetsManager(node.Node):
 			mydefocus = random.uniform(mymin, mymax)
 			self.logger.info('Random defocus for preset %s:  %s' % (newpreset['name'], mydefocus))
 
-
 		### create ScopeEMData with preset and target shift
 		scopedata = leginondata.ScopeEMData()
 		scopedata.friendly_update(newpreset)
 		scopedata['image shift'] = myimage
 		scopedata['beam shift'] = mybeam
-		scopedata['stage position'] = mystage
+		# Disable stage move if movetype does not requires it.
+		if self.settings['disable stage for image shift'] and  (emtargetdata['movetype'] == 'image beam shift' or emtargetdata['movetype'] == 'image shift'):
+				self.logger.info('disable stage movement')
+				scopedata['stage position'] = None
+		else:
+				self.logger.info('stage position sent')
+				scopedata['stage position'] = mystage
 		scopedata['defocus'] = mydefocus
 
 		### correct defocus for tilted stage
@@ -1537,8 +1670,11 @@ class PresetsManager(node.Node):
 
 		## send data to instruments
 		try:
+			self.logger.info('setting scopedata')
 			self.instrument.setData(scopedata)
+			self.logger.info('scopedata set')
 			self.instrument.setData(cameradata)
+			self.logger.info('cameradata set')
 			newstage = self.instrument.tem.StagePosition
 			msg = '%s targetToScope %.6f' % (newpresetname,newstage['z'])
 			self.testprint('Presetmanager:' + msg)
@@ -1557,8 +1693,11 @@ class PresetsManager(node.Node):
 		self.currentpreset = newpreset
 		message = 'Preset (with target) changed to %s' % (name,)
 		self.logger.info(message)
+		if self.no_preset_set:
+			self.checkBeamTiltChange()
 		self.blankOff()
 		self.outputEvent(event.PresetChangedEvent(name=name, preset=newpreset))
+		self.no_preset_set = False
 
 	def getValue(self, instrument_type, instrument_name, parameter, event):
 		# HACK: fix me
@@ -1869,9 +2008,10 @@ class PresetsManager(node.Node):
 		self.instrument.ccdcamera.ExposureTime = temp_exptime
 		self.logger.info('Beam image using temporary exposure time: %.1f' % (float(temp_exptime),))
 		# acquire image
-		self.beamimagedata = self.acquireCorrectedCameraImageData()
-		im = self.beamimagedata['image']
-		self.panel.setBeamImage(im)
+		self.beamimagedata = self.acquireCorrectedCameraImageData(force_no_frames=True)
+		if im:
+			im = self.beamimagedata['image']
+			self.panel.setBeamImage(im)
 		# display info
 		beamshift = self.instrument.tem.BeamShift
 		self.panel.displayBeamShift(beamshift)
@@ -1948,3 +2088,85 @@ class PresetsManager(node.Node):
 		self.updatePreset(presetname, params)
 		self.logger.info('completed update to %s' % (presetname,))
 		self.confirmEvent(evt)
+	
+	def handleIdleTimerPauseEvent(self, evt):
+		node = evt['node']
+		self.idle_timer_paused[node] = True
+		self.idle_timer_pause_done[node] = threading.Event()
+		self.logger.info('%s requested idle timer pause' % (node,))
+
+	def handleIdleTimerRestartEvent(self, evt):
+		node = evt['node']
+		self.logger.info('%s requested idle timer restart' % (node,))
+		self.instrument.updateLastSetGetTime()
+		if node in self.isAnyIdleTimerPaused():
+			self.idle_timer_paused[node] = False
+			self.idle_timer_pause_done[node].set()
+
+	def isLensSeriesChange(self,mag1,mag2):
+		# This is used in specialTransform to restrict the magnifications at
+		# which the transform is applied
+		return (mag1 <=4000 and mag2 >=5000)
+
+	def specialTransform(self,pixelvect,tem, mag1, mag2):
+		'''
+		Rotation Transform that we have not considered.
+		This should be modified to fit the specific case
+		'''
+		# This matrix gives a given degree rotation from +x to +y axis.
+		if tem['hostname'] != 'jem-2100f' or not self.isLensSeriesChange(mag1,mag2):
+			return pixelvect
+		rotate_angle_degrees = 180
+		a = math.radians(rotate_angle_degrees)
+		m = numpy.matrix([[math.cos(a),math.sin(a)],[-math.sin(a),math.cos(a)]])
+		rotated_vect = numpy.dot(pixelvect,numpy.asarray(m))
+		self.logger.info('rotate %s to %s' % (pixelvect, rotated_vect))
+		return rotated_vect
+
+	def imageRotationTransform(self,pixvect, preset1,preset2):
+		'''
+		Pixel vector need to be rotated to account for the rotation of
+		specimen image rotation on the camera and the rotation of
+		image shift coil relative to the specimen
+		'''
+		ht = self.getHighTension()
+		imageshift_axis_rotation = self.calclients['image'].calculateCalibrationAngleDifference(preset1['tem'],preset1['ccdcamera'],preset2['tem'], preset2['ccdcamera'], ht,preset1['magnification'],preset2['magnification'])
+		stage_axis_rotation = self.calclients['stage'].calculateCalibrationAngleDifference(preset1['tem'],preset1['ccdcamera'],preset2['tem'], preset2['ccdcamera'], ht,preset1['magnification'],preset2['magnification'])
+		# This is the rotation needs to be applied to the pixvect of preset1
+		a = stage_axis_rotation - imageshift_axis_rotation
+		m = numpy.matrix([[math.cos(a),math.sin(a)],[-math.sin(a),math.cos(a)]])
+		rotated_vect = numpy.dot(pixvect,numpy.asarray(m))
+		self.logger.info('Adjust for coil rotation: rotate %s to %s' % (pixvect, rotated_vect))
+		return rotated_vect
+
+	def checkBeamTiltChange(self):
+		current_beamtilt = self.instrument.tem.BeamTilt
+		temdata = self.instrument.getTEMData()
+		r = leginondata.ScopeEMData(session=self.session,tem=temdata).query(results=1)
+		if not r:
+			return
+		else:
+			last_beamtilt = r[0]['beam tilt']
+			beamtilt_diff = math.hypot(current_beamtilt['x']-last_beamtilt['x'], current_beamtilt['y']-last_beamtilt['y'])
+			# Larger than 1 mrad is significant. 
+			if beamtilt_diff > 0.001:
+				self.last_beamtilt = last_beamtilt
+				self.guiRecoverBeamTilt(beamtilt_diff)
+			else:
+				self.last_beamtilt = current_beamtilt
+
+	def guiRecoverBeamTilt(self, beamtilt_diff):	
+		self.recover_beamtilt.clear()
+		self.onNeedRecoverBeamTilt(beamtilt_diff)
+		self.recover_beamtilt.wait()
+
+	def onNeedRecoverBeamTilt(self, beamtilt_diff):
+		evt = gui.wx.PresetsManager.NeedRecoverBeamTiltEvent(self.panel, beamtilt_diff)
+		self.panel.GetEventHandler().AddPendingEvent(evt)
+
+	def onNeedRecoverBeamTiltDone(self):
+		self.recover_beamtilt.set()
+
+	def onRecoverBeamTilt(self):
+		self.instrument.tem.BeamTilt = self.last_beamtilt
+		self.logger.info('Returned to last beam tilt at radians (x,y)= %.4f, %.4f)' % (self.last_beamtilt['x'], self.last_beamtilt['y']))

@@ -1,7 +1,7 @@
-# The Leginon software is Copyright 2004
-# The Scripps Research Institute, La Jolla, CA
+# The Leginon software is Copyright under
+# Apache License, Version 2.0
 # For terms of the license agreement
-# see http://ami.scripps.edu/software/leginon-license
+# see http://leginon.org
 
 import wx
 
@@ -58,6 +58,7 @@ class ScrolledSettings(leginon.gui.wx.Conditioner.ScrolledSettings):
 		self.createColumnFillEndEntry((4,0))
 		self.createGridLoaderFillStartEntry((5,0))
 		self.createGridLoaderFillEndEntry((6,0))
+		self.createDelayDarkCurrentRefEntry((7,0))
 
 	def addBindings(self):
 		super(ScrolledSettings,self).addBindings()
@@ -173,3 +174,20 @@ class ScrolledSettings(leginon.gui.wx.Conditioner.ScrolledSettings):
 			self.mode.Enable(True)
 			self.onAutofillerModeChoice()
 
+	def createDelayDarkCurrentRefEntry(self,start_position):
+		self.widgets['delay dark current ref'] = IntEntry(self, -1,
+																		min=0,
+																		allownone=False,
+																		chars=4,
+																		value='60')
+		szcolstart = wx.GridBagSizer(5, 5)
+		szcolstart.Add(wx.StaticText(self, -1, 'Delay acquiring dark current ref by '),
+								(0, 0), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL)
+		szcolstart.Add(self.widgets['delay dark current ref'],
+								(0, 1), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		szcolstart.Add(wx.StaticText(self, -1, 'seconds'),
+								(0, 2), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL)
+		self.sz.Add(szcolstart, start_position, (1, 2), wx.ALIGN_LEFT|wx.ALL)

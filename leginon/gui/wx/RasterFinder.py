@@ -1,7 +1,7 @@
-# The Leginon software is Copyright 2004
-# The Scripps Research Institute, La Jolla, CA
+# The Leginon software is Copyright under
+# Apache License, Version 2.0
 # For terms of the license agreement
-# see http://ami.scripps.edu/software/leginon-license
+# see http://leginon.org
 #
 
 import wx
@@ -11,22 +11,18 @@ import threading
 import leginon.gui.wx.TargetPanel
 import leginon.gui.wx.ImagePanelTools
 import leginon.gui.wx.Settings
-import leginon.gui.wx.TargetFinder
+import leginon.gui.wx.AutoTargetFinder
 from leginon.gui.wx.Entry import Entry, IntEntry, FloatEntry
 from leginon.gui.wx.Presets import PresetChoice
 from leginon.gui.wx.Choice import Choice
 import leginon.gui.wx.TargetTemplate
 import leginon.gui.wx.ToolBar
 
-class Panel(leginon.gui.wx.TargetFinder.Panel):
+class Panel(leginon.gui.wx.AutoTargetFinder.Panel):
 	def initialize(self):
-		leginon.gui.wx.TargetFinder.Panel.initialize(self)
-#		self.SettingsDialog = leginon.gui.wx.TargetFinder.SettingsDialog
-		self.SettingsDialog = SettingsDialog
+		leginon.gui.wx.AutoTargetFinder.Panel.initialize(self)
+		self.SettingsDialog = leginon.gui.wx.AutoTargetFinder.SettingsDialog
 
-		self.imagepanel = leginon.gui.wx.TargetPanel.TargetImagePanel(self, -1)
-		self.imagepanel.addTypeTool('Original', display=True, settings=True)
-		self.imagepanel.selectiontool.setDisplayed('Original', True)
 		self.imagepanel.addTargetTool('Raster', wx.Colour(0, 255, 255), settings=True)
 		
 		self.imagepanel.addTargetTool('Polygon Vertices', wx.Colour(255,255,0), settings=True, target=True, shape='polygon')
@@ -40,6 +36,8 @@ class Panel(leginon.gui.wx.TargetFinder.Panel):
 		self.imagepanel.selectiontool.setDisplayed('acquisition', True)
 		self.imagepanel.addTargetTool('focus', wx.BLUE, target=True, settings=True)
 		self.imagepanel.selectiontool.setDisplayed('focus', True)
+		self.imagepanel.addTargetTool('preview', wx.Colour(255, 128, 255), target=True)
+		self.imagepanel.selectiontool.setDisplayed('preview', True)
 		self.imagepanel.addTargetTool('done', wx.RED)
 		self.imagepanel.selectiontool.setDisplayed('done', True)
 		self.szmain.Add(self.imagepanel, (1, 0), (1, 1), wx.EXPAND)
@@ -48,14 +46,9 @@ class Panel(leginon.gui.wx.TargetFinder.Panel):
 
 		self.Bind(leginon.gui.wx.ImagePanelTools.EVT_SETTINGS, self.onImageSettings)
 
-	def onSettingsTool(self, evt):
-		dialog = SettingsDialog(self,show_basic=True)
-		dialog.ShowModal()
-		dialog.Destroy()
-
 	def onImageSettings(self, evt):
 		if evt.name == 'Original':
-			dialog = OriginalSettingsDialog(self)
+			dialog = leginon.gui.wx.AutoTargetFinder.OriginalSettingsDialog(self)
 			if dialog.ShowModal() == wx.ID_OK:
 				filename = self.node.settings['image filename']
 				self.node.readImage(filename)
@@ -70,36 +63,16 @@ class Panel(leginon.gui.wx.TargetFinder.Panel):
 			dialog = self._FinalSettingsDialog(self)
 		elif evt.name == 'focus':
 			dialog = self._FinalSettingsDialog(self)
-
-		dialog.ShowModal()
-		dialog.Destroy()
+		# modeless display
+		dialog.Show(True)
 
 	def _FinalSettingsDialog(self,parent):
 		# This "private call" allows the class in the module containing
 		# a subclass to redefine it in that module
 		return FinalSettingsDialog(parent)
 	
-class OriginalSettingsDialog(leginon.gui.wx.Settings.Dialog):
-	def initialize(self):
-		return OriginalScrolledSettings(self,self.scrsize,False)
-
-class OriginalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
-	def initialize(self):
-		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
-		sb = wx.StaticBox(self, -1, 'Original Image')
-		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
-
-		self.widgets['image filename'] = filebrowse.FileBrowseButton(self, -1)
-		self.widgets['image filename'].SetMinSize((500,50))
-		self.dialog.bok.SetLabel('&Load')
-
-		sz = wx.GridBagSizer(5, 5)
-		sz.Add(self.widgets['image filename'], (0, 0), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
-
-		sbsz.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
-
-		return [sbsz]
+class OriginalSettingsDialog(leginon.gui.wx.AutoTargetFinder.OriginalSettingsDialog):
+	pass
 
 class RasterSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
@@ -244,6 +217,7 @@ class RasterScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def onTestButton(self, evt):
 		self.dialog.setNodeSettings()
 		self.node.createRaster()
+		self.panel.imagepanel.showTypeToolDisplays(['Raster'])
 
 class PolygonSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
@@ -276,6 +250,7 @@ class PolygonScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def onTestButton(self, evt):
 		self.dialog.setNodeSettings()
 		self.node.setPolygon()
+		self.panel.imagepanel.showTypeToolDisplays(['Polygon Raster'])
 
 class PolygonRasterSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
@@ -299,7 +274,6 @@ class FinalSettingsDialog(leginon.gui.wx.Settings.Dialog):
 class FinalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
 		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
-		print self.__module__
 		sb = wx.StaticBox(self, -1, 'Ice Analysis')
 		sbszice = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sb = wx.StaticBox(self, -1, 'Focus Targets')
@@ -404,41 +378,19 @@ class FinalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def onAnalyzeIceButton(self, evt):
 		self.dialog.setNodeSettings()
 		threading.Thread(target=self.node.ice).start()
+		self.panel.imagepanel.showTypeToolDisplays(['acquisition','focus'])
 
 	def onClearButton(self, evt):
 		self.dialog.setNodeSettings()
 		self.node.clearTargets('acquisition')
 		self.node.clearTargets('focus')
 
-class SettingsDialog(leginon.gui.wx.TargetFinder.SettingsDialog):
-	def initialize(self):
-		return ScrolledSettings(self,self.scrsize,False,self.show_basic)
+class SettingsDialog(leginon.gui.wx.AutoTargetFinder.SettingsDialog):
+	pass
 
-class ScrolledSettings(leginon.gui.wx.TargetFinder.ScrolledSettings):
-	def initialize(self):
-		tfsd = leginon.gui.wx.TargetFinder.ScrolledSettings.initialize(self)
-		if self.show_basic:
-			return tfsd
-		else:
-			sb = wx.StaticBox(self, -1, 'Raster Finder Settings')
-			sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
+class ScrolledSettings(leginon.gui.wx.AutoTargetFinder.ScrolledSettings):
+	pass
 
-			self.widgets['skip'] = wx.CheckBox(self, -1, 'Skip automated raster target making')
-			self.widgets['focus interval'] = IntEntry(self, -1, chars=6)
-			sz = wx.GridBagSizer(5, 5)
-			sz.Add(self.widgets['skip'], (0, 0), (1, 1),
-							wx.ALIGN_CENTER_VERTICAL)
-
-			label = wx.StaticText(self, -1, 'Focus every')
-			sz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-			sz.Add(self.widgets['focus interval'], (1, 1), (1, 1),
-										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
-			label = wx.StaticText(self, -1, 'image')
-			sz.Add(label, (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-
-			sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
-
-			return tfsd + [sbsz]
 
 
 if __name__ == '__main__':

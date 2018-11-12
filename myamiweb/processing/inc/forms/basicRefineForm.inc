@@ -1,10 +1,10 @@
 <?php
 
 /**
- *	The Leginon software is Copyright 2003 
- *	The Scripps Research Institute, La Jolla, CA
+ *	The Leginon software is Copyright under 
+ *	Apache License, Version 2.0
  *	For terms of the license agreement
- *	see  http://ami.scripps.edu/software/leginon-license
+ *	see  http://leginon.org
  */
 
 //--------------------------------------------------------------------------------------
@@ -79,6 +79,7 @@ abstract class BasicRefineForm extends BasicForm
 				$this->stackInfo['lastPart'] = $stack[last_part];
 				$this->stackInfo['stackfilename'] = $stack[filename];
 				$this->stackInfo['parent_apix'] = $stack[parent_pixelsize] / 1e-10; // the angstroms per pixel for the original stack the refine stack was made from
+				$this->stackInfo['dstep'] = $stack[dstep];	
 				
 				break;
 			}			

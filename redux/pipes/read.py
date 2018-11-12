@@ -31,7 +31,7 @@ class Read(Pipe):
 	def run(self, input, filename, info, frame=None):
 		## input ignored
 		### determine input format
-		if filename.endswith('mrc') or filename.endswith('MRC'):
+		if filename.endswith('mrc') or filename.endswith('MRC') or filename.endswith('mrcs'):
 			## use MRC module to read
 			input_format = 'mrc'
 		elif filename[-3:].lower() in ('img', 'hed'):

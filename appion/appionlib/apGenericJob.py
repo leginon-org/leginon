@@ -6,7 +6,7 @@ class genericJob(object):
 		#set defalulst
 		self.runname = "GenericJob"
 		self.command_list = []
-		self.wallTime = 2 #2 hours
+		self.wallTime = 0
 		self.nodes = 1
 		self.ppn = 1
 		self.nproc = self.nodes * self.ppn

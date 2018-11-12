@@ -1,4 +1,4 @@
-#!/usr/bin/python -O
+#!/usr/bin/env python -O
 
 import os
 import sys
@@ -560,7 +560,6 @@ class PickerApp(wx.App):
 			#ndarray = ndimage.watershed_ift(ndarray,markers)
 			ndarray = ndimage.laplace(ndarray)
 			ndarray = ndimage.gaussian_filter(ndarray,1)
-			#ndarray = apImage.preProcessImage(ndarray,params=self.appionloop.params)
 			negative = True 
 		mrc.write(ndarray, os.path.join(self.appionloop.params['rundir'], 'afterfilter'+'.dwn.mrc'))
 

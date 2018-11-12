@@ -10,6 +10,7 @@ require_once "inc/processing.inc";
 
 $sessionId = $_GET['expId'];
 $runId = $_GET['runId'];
+$preset = $_GET['preset'];
 
 checkExptAccessPrivilege($sessionId,'data');
 $appiondb = new particledata();
@@ -29,7 +30,10 @@ else
 $data[] = sprintf("<EMX version=\"1.0\">\n");
 
 foreach ($ctfdatas as $ctfdata) {
-	$filename = $appiondb->getImageNameFromId($ctfdata['REF|leginondata|AcquisitionImageData|image']);
+	$imgid = $ctfdata['REF|leginondata|AcquisitionImageData|image'];
+	$filename = $appiondb->getImageNameFromId($imgid);
+	$p = $leginondata->getPresetFromImageId($imgid);
+	if (!empty($preset) && $preset != $p['name'] ) continue;
 	//$short = $filename; # remove session stamp
 	$pieces = explode("_", $filename);
 	array_shift($pieces);
@@ -97,6 +101,4 @@ foreach ($data as $line) {
 	echo $line;
 }
 
-
-
-
+?>

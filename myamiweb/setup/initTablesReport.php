@@ -22,11 +22,11 @@ require_once("../inc/mysql.inc");
 		
 		$results = $mysqld->SQLQuery('select `key`, value from install where `key` = \'settable\'');
 
-		if(($results != false) && mysql_num_rows($results) > 0){				
+		if(($results != false) && mysqli_num_rows($results) > 0){				
 			// for upgrade			
 			$results = $mysqld->SQLQuery('describe processingdb');
 			$project->install('../xml/projectUpdateSchema.xml');	
-			if (($results == false) || mysql_num_rows($results) == 0) {
+			if (($results == false) || mysqli_num_rows($results) == 0) {
 				$project->install('../xml/projectProcessingAddonSchema.xml');	
 			}
 		}

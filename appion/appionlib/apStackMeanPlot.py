@@ -6,6 +6,7 @@ import os
 import time
 import numpy
 # appion
+import sinedon.directq
 from appionlib import apEMAN
 from appionlib import apFile
 from appionlib import apDisplay
@@ -28,8 +29,23 @@ def makeStackMeanPlot(stackid, gridpoints=16):
 			bin+=1
 	apDisplay.printMsg("binning stack by "+str(bin))
 	stackdata = apStack.getOnlyStackData(stackid, msg=False)
-	stackfile = os.path.join(stackdata['path']['path'], stackdata['name'])
-	partdatas = apStack.getStackParticlesFromId(stackid, msg=False)
+	stackpath = stackdata['path']['path']
+	stackfile = os.path.join(stackpath, stackdata['name'])
+	# if no stackfile, likely virtual stack
+	if not os.path.isfile(stackfile):
+		apDisplay.printMsg("possible virtual stack, searching for original stack")
+		vstackdata = apStack.getVirtualStackParticlesFromId(stackid)
+		partdatas = vstackdata['particles']
+		stackfile = vstackdata['filename']
+		stackdata = apStack.getOnlyStackData(vstackdata['stackid'], msg=False)
+	# otherwise get stack info
+	else:
+		# get stats from stack:
+		sqlcmd = "SELECT " + \
+			"particleNumber, mean, stdev " + \
+			"FROM ApStackParticleData " + \
+			"WHERE `REF|ApStackData|stack` = %i"%(stackid)
+		partdatas = sinedon.directq.complexMysqlQuery('appiondata',sqlcmd)
 	#check only first 100 particles for now
 	#partdatas = partdatas[:500]
 	apFile.removeFile("montage"+str(stackid)+".png")
@@ -61,7 +77,7 @@ def makeStackMeanPlot(stackid, gridpoints=16):
 			key = ("%02dx%02d"%(i,j))
 			partlists[key] = []
 
-	### sort paritcles into bins
+	### sort particles into bins
 	for partdata in partdatas:
 		key = meanStdevToKey(partdata['mean'], partdata['stdev'], limits, gridpoints)
 		partnum = int(partdata['particleNumber'])
@@ -74,7 +90,7 @@ def makeStackMeanPlot(stackid, gridpoints=16):
 	keys.sort()
 	count = 0
 	backs = "\b\b\b\b\b\b\b\b\b\b\b"
-	montagestack = "montage"+str(stackid)+".hed"
+	montagestack = os.path.join(stackpath,"montage"+str(stackid)+".hed")
 	apFile.removeStack(montagestack)
 	mystack = []
 	for key in keys:
@@ -83,11 +99,12 @@ def makeStackMeanPlot(stackid, gridpoints=16):
 		sys.stderr.write("% 3d of % 3d, %s: % 6d"%(count, len(keys), key, len(partlists[key])))
 		avgimg = averageSubStack(partlists[key], stackfile, bin)
 		if avgimg is not False:
+			avgimg = numpy.fliplr(avgimg)
 			mystack.append(avgimg)
 	apImagicFile.writeImagic(mystack, montagestack)
 	sys.stderr.write("\n")
 	assemblePngs(keys, str(stackid), montagestack)
-	apDisplay.printMsg("/bin/mv -v montage"+str(stackid)+".??? "+stackdata['path']['path'])
+	apDisplay.printMsg("/bin/mv -v montage"+str(stackid)+".??? "+stackpath)
 	apDisplay.printMsg("finished in "+apDisplay.timeString(time.time()-t0))
 
 #===============
@@ -112,6 +129,9 @@ def averageSubStack(partlist, stackfile, bin=1):
 #===============
 def assemblePngs(keys, tag, montagestack):
 	apDisplay.printMsg("assembling pngs into montage")
+	# get path from montagestack
+	stackpath = os.path.dirname(os.path.abspath(montagestack))
+
 	montagecmd = "montage -geometry +4+4 "
 	montagestackdata = apImagicFile.readImagic(montagestack)
 	for i,key in enumerate(keys):
@@ -124,7 +144,7 @@ def assemblePngs(keys, tag, montagestack):
 		#apEMAN.executeEmanCmd(proccmd, verbose=False, showcmd=False)
 		montagecmd += pngfile+" "
 	apDisplay.printMsg("montaging")
-	montagefile = "montage"+tag+".png"
+	montagefile = os.path.join(stackpath,"montage"+tag+".png")
 	montagecmd += montagefile
 	apEMAN.executeEmanCmd(montagecmd, verbose=True)
 	#rotatecmd = "mogrify -rotate 180 -flop "+montagefile

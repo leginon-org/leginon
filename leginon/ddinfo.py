@@ -46,6 +46,16 @@ def saveAllPreviousToDatabase():
 				print 'saving:', infoname
 				saveImageDDinfoToDatabase(imagedata, infoname)
 
+def getUseBufferFromImage(imagedata):
+	'''
+	Buffer server is used if BufferHostData is defined for the camera
+	and not disabled.
+	'''
+	r = leginondata.BufferHostData(ccdcamera=imagedata['camera']['ccdcamera']).query(results=1)
+	if not r:
+		return False
+	return not r[0]['disabled']
+
 def saveSessionDDinfoToDatabase(sessiondata):
 	qcam = leginondata.CameraEMData(session=sessiondata)
 	qcam['save frames'] = True
@@ -63,8 +73,8 @@ def getRawFrameSessionPathFromSessionPath(session_path):
 	This function allows frame path to be passed in as well.
 
 	Possible senerios:
-	1. input: /mydata/leginon/mysession/rawdata;  output: /mydata/leginon/mysession/rawdata.
-	2. input: /mydata/leginon/myuser/mysession/rawdata;  output: /mydata/leginon/myuser/mysession/rawdata.
+	1. input: /mydata/leginon/mysession/rawdata;  output: /mydata/frames/mysession/rawdata.
+	2. input: /mydata/leginon/myuser/mysession/rawdata;  output: /mydata/frames/myuser/mysession/rawdata.
 	3. input: /mydata/frames/mysession/rawdata; output=input
 	'''
 	# goal is to replace legdir with framedir
@@ -83,14 +93,70 @@ def getRawFrameSessionPathFromSessionPath(session_path):
 	rawframe_sessionpath = legjoin + framedir + legsplit[-1]
 	return rawframe_sessionpath
 
+def getBufferFrameSessionPathFromImage(imdata):
+	'''
+	Find the buffer host frame path defined by the session. The path has
+	similar format as SessionData frame path, i.e., this is the directory
+	containing all image movies.
+	'''
+	dcamera = imdata['camera']['ccdcamera']
+	session = imdata['session']
+	session_path = session['image path']
+	# get buffer host name and base path
+	r = leginondata.BufferHostData(ccdcamera=dcamera, disabled=False).query(results=1)
+	if not r:
+		return False
+	host = r[0]
+	# query
+	r = leginondata.BufferFramePathData(session=session,host=host).query(results=1)
+	if r:
+		return r[0]['buffer frame path']
+	# new record
+	# leginon is a required directory
+	legdir = 'leginon'
+	legsplit = session_path.split(legdir)
+	if len(legsplit) <= 1:
+		return False
+	# by using os.path.join, '/' need to be removed in legsplit[-1]
+	session_part = legsplit[-1][1:]
+	buffer_framepath = os.path.join(host['buffer base path'],session_part)
+
+	q = leginondata.BufferFramePathData(session=session,host=host)
+	q['buffer frame path'] = buffer_framepath
+	q.insert()
+	return buffer_framepath
+
+def getRawFrameTypeFromSession(sessiondata):
+	'''
+	Use sessiondata to find the raw frame type.
+	'''
+	r = leginondata.BufferFramePathData(session=sessiondata).query(results=1)
+	if  r:
+		ftype = checkRawFrameTypeInPath(r[0]['buffer frame path'])
+	if not r or ftype is False:
+		ftype = checkRawFrameTypeInPath(sessiondata['frame path'])
+	return ftype
+
 def getRawFrameType(session_path):
 	'''
 	Determine Frame Type from either session image path or session frame path.
 	'''
 	rawframe_basepath = getRawFrameSessionPathFromSessionPath(session_path)
-	entries = os.listdir(rawframe_basepath)
+	return checkRawFrameTypeInPath(rawframe_basepath)
+
+def checkRawFrameTypeInPath(image_frame_path):
+	'''
+	Use the content of the path to determine the fram types.
+	False means unknown due to missing path, path not a directory or
+	missing content to determine the type.
+	'''
+	if not os.path.isdir(image_frame_path):
+		return False
+	entries = os.listdir(image_frame_path)
+	if not entries:
+		return False
 	for path in entries:
-		if 'frame' in path and os.path.isdir(os.path.join(rawframe_basepath,path)):
+		if 'frame' in path and os.path.isdir(os.path.join(image_frame_path,path)):
 			return 'singles'
 	return 'stack'
 
@@ -103,9 +169,28 @@ def readPositionsFromAlignLog(filename):
 	lines = text[text.find('Sum Frame'):text.find('Save Sum')].split('\n')[1:-2]
 	positions = []
 	for line in lines:
-		position_strings = line.split('shift:')[-1].split()
-		positions.append((float(position_strings[0]),float(position_strings[1])))
+		shift_bits = line.split('shift:')
+		# Issue #4234
+		if len(shift_bits) <=1:
+			continue
+		position_strings = shift_bits[1].split()
+		position_x = float(position_strings[0])
+		position_y = float(position_strings[1])
+		positions.append((position_x,position_y))
 	return positions
+
+def calculateFrameShiftFromPositions(positions,running=1):
+	# place holder for running first frame shift duplication
+	offset = int((running-1)/2)
+	shifts = offset*[None,]
+	for p in range(len(positions)-1):
+		shift = math.hypot(positions[p][0]-positions[p+1][0],positions[p][1]-positions[p+1][1])
+		shifts.append(shift)
+	# duplicate first and last shift for the end points if running
+	for i in range(offset):
+		shifts.append(shifts[-1])
+		shifts[i] = shifts[offset]
+	return shifts
 
 def printDriftStats(filenamepattern, apix):
 
@@ -116,12 +201,9 @@ def printDriftStats(filenamepattern, apix):
 	allshifts = []
 	imgdata = leginondata.AcquisitionImageData(filename=filelist[0].split('_st_Log.txt')[0]).query()[0]
 	fps = 1000.0 / imgdata['camera']['frame time']
-	for file in filelist:
-		positions = readPositionsFromAlignLog(file)
-		positions.insert(0,positions[0])
-		shifts = []
-		for i in range(len(positions)-1):
-			shifts.append(math.hypot(positions[i+1][0] - positions[i][0], positions[i+1][1] - positions[i][1]))
+	for filepath in filelist:
+		positions = readPositionsFromAlignLog(filepath)
+		shifts = calculateFrameShiftFromPositions(positions,running=1)
 		allshifts.append(shifts)
 
 	import numpy

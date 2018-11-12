@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 
 import os
 import re
@@ -16,9 +15,7 @@ class CentosInstallation(object):
 
 	def setReleaseDependantValues(self):
 		# need to change to branch when release
-		#self.svnCmd = "svn co http://ami.scripps.edu/svn/myami/branches/myami-redux " + self.svnMyamiDir
-		
-		self.svnCmd = "svn co http://ami.scripps.edu/svn/myami/trunk " + self.svnMyamiDir
+		self.gitCmd = "git clone -b trunk http://emg.nysbc.org/git/myami " + self.gitMyamiDir
 		# redhat release related values
 		self.redhatRelease = '6.8' # currently used to decide the name of the epel download.
 		self.torqueLibPath = '/var/lib/torque/'
@@ -121,7 +118,7 @@ class CentosInstallation(object):
 		
 		if not returnValue:
 			print("========================")
-			print("ERROR: Please disable SELinux before running this auto installation. Visit http://ami.scripps.edu/redmine/projects/appion/wiki/Install_Appion_and_Leginon_using_the_auto-installation_tool .")
+			print("ERROR: Please disable SELinux before running this auto installation. Visit http://emg.nysbc.org/redmine/projects/appion/wiki/Install_Appion_and_Leginon_using_the_auto-installation_tool .")
 			print("Exiting installation...")
 			print("========================")
 			return False
@@ -268,23 +265,15 @@ class CentosInstallation(object):
 		self.linkMpiRun()
 
 	def processServerExtraPythonPackageInstall(self):
-		packagelist = [
-			{
-				# PyFFTW
-				'targzFileName':'PyFFTW3-0.2.2.tar.gz',
-				'fileLocation':'http://launchpad.net/pyfftw/trunk/0.2.2/+download/',
-				'unpackDirName':'PyFFTW3-0.2.2',
-			}
-		]
-		for p in packagelist:
-			self.installPythonPackage(p['targzFileName'], p['fileLocation'], p['unpackDirName'])
-
+		self.runCommand("yum install -y python-pip")
+		self.runCommand("pip install joblib==0.10.3")
+		
 	def setupWebServer(self):
 		self.writeToLog("--- Start install Web Server")
 		#myamiweb yum packages
-		packagelist = ['php-pecl-ssh2','mod_ssl', 'fftw3-devel','svn','python-imaging','python-devel','mod_python','scipy','httpd', 'libssh2-devel', 'php', 'php-mysql', 'phpMyAdmin.noarch', 'php-devel', 'php-gd', ]
+		packagelist = ['php-pecl-ssh2','mod_ssl', 'fftw3-devel','git','python-imaging','python-devel','mod_python','scipy','httpd', 'libssh2-devel', 'php', 'php-mysql', 'phpMyAdmin.noarch', 'php-devel', 'php-gd', ]
 		self.yumInstall(packagelist)
-		self.runCommand("easy_install fs PyFFTW3")
+		self.runCommand("easy_install fs==0.5 PyFFTW3")
 
 		# Redux Server is on Web server for now.
 		self.installReduxServer()
@@ -309,11 +298,17 @@ class CentosInstallation(object):
 		# turn on auto mysql start
 		self.runCommand("/sbin/chkconfig mysqld on")
 		
-		# start (restart) mysql server
-		self.runCommand("/sbin/service mysqld restart")
-		
+		# stop mysql server (if it's running)
+		self.runCommand("/sbin/service mysqld stop")
+		# start mysql server
+		os.system("mysqld_safe --skip-grant-tables &")
+		mysql_is_active = False
+                while not mysql_is_active:
+                        mysql_is_active = os.system("mysqladmin -umysql ping") == 0
+                        time.sleep(1.0)
+
 		# run database setup script.
-		cmd = os.path.join(self.svnMyamiDir, 'install/newDBsetup.php -L %s -P %s -H %s -U %s -E %s' % (self.leginonDB, self.projectDB, self.dbHost, self.dbUser, self.adminEmail))
+		cmd = os.path.join(self.gitMyamiDir, 'install/newDBsetup.php -L %s -P %s -H %s -U %s -E %s' % (self.leginonDB, self.projectDB, self.dbHost, self.dbUser, self.adminEmail))
 		cmd = 'php ' + cmd
 
 		self.runCommand(cmd)
@@ -331,7 +326,7 @@ class CentosInstallation(object):
 		self.processServerExtraPythonPackageInstall()
  
 		# install all the myami python packages except appion.
-		os.chdir(self.svnMyamiDir)
+		os.chdir(self.gitMyamiDir)
 		self.runCommand('./pysetup.sh install')
 
 		# install the appion python packages
@@ -341,7 +336,7 @@ class CentosInstallation(object):
 		pyprefix = self.runCommand('python -c "import sys;print sys.prefix"')
 		pyprefix = pyprefix.strip()
 		apbin = os.path.join(pyprefix, 'bin', 'appion')
-		os.chdir(self.svnMyamiDir + 'appion')
+		os.chdir(self.gitMyamiDir + 'appion')
 		self.runCommand('python setup.py install --install-scripts=%s' % (apbin,))
 		
 		# add a custom search path to appion.sh and appion.csh in profile.d
@@ -360,9 +355,7 @@ class CentosInstallation(object):
 
 		# setup Sinedon configuration file
 		self.writeToLog("setup Sinedon configuration file")
-		sinedonDir = self.runCommand('python -c "import sinedon; print sinedon.__path__[0]"')
-		sinedonDir = sinedonDir.strip()
-		self.setupSinedonCfg(sinedonDir)
+		self.setupSinedonCfg()
 
 		# setup .appion.cfg configuration file
 		self.writeToLog("setup .appion.cfg configuration file")
@@ -413,11 +406,11 @@ class CentosInstallation(object):
 
 	def installExternalPackages(self):
 		self.writeToLog("--- Start install External Packages")
-		
 		self.installEman()
 		self.installSpider()
 		self.installXmipp()
-
+		self.installProtomo()
+		self.installFFmpeg()
 		return True
 
 	def installEman(self):
@@ -426,10 +419,10 @@ class CentosInstallation(object):
 		
 		# select 32 or 64 bit file to download
 		if self.machine == "i686" or self.machine == "i386" :
-			fileLocation = "http://ami.scripps.edu/redmine/attachments/download/632/eman-linux-x86-cluster-1.9.tar.gz"
+			fileLocation = "http://emg.nysbc.org/redmine/attachments/download/632/eman-linux-x86-cluster-1.9.tar.gz"
 			fileName = "eman-linux-x86-cluster-1.9.tar.gz"
 		else :
-			fileLocation = "http://ami.scripps.edu/redmine/attachments/download/631/eman-linux-x86_64-cluster-1.9.tar.gz"
+			fileLocation = "http://emg.nysbc.org/redmine/attachments/download/631/eman-linux-x86_64-cluster-1.9.tar.gz"
 			fileName = "eman-linux-x86_64-cluster-1.9.tar.gz"
 
 		# download the tar file and unzip it
@@ -476,7 +469,7 @@ class CentosInstallation(object):
 	def installSpider(self):
 		self.writeToLog("--- Start install Spider")
 		
-		fileLocation = "http://ami.scripps.edu/redmine/attachments/download/638/spidersmall.18.10.tar.gz"
+		fileLocation = "http://emg.nysbc.org/redmine/attachments/download/638/spidersmall.18.10.tar.gz"
 		fileName = "spidersmall.18.10.tar.gz"
 
 		# download the tar file and unzip it
@@ -539,7 +532,7 @@ setenv SPBIN_DIR ${SPIDERDIR}/bin/''')
 		
 		dirName = "Xmipp-2.4-src"
 		tarFileName = dirName + ".tar.gz"
-		tarFileLocation = "http://ami.scripps.edu/redmine/attachments/download/636/" + tarFileName
+		tarFileLocation = "http://emg.nysbc.org/redmine/attachments/download/636/" + tarFileName
 
 		# download the source code tar file and unzip it
 		command = "wget -c " + tarFileLocation
@@ -588,7 +581,9 @@ setenv SPBIN_DIR ${SPIDERDIR}/bin/''')
 
 		# move the main source code directory to global location, like /usr/local
 		self.writeToLog("--- Moving the Xmipp directory to /usr/local/Xmipp.")
-		os.rename(dirName, "/usr/local/Xmipp")
+		xmipp_dest = "/usr/local/Xmipp"
+		if not os.path.exists(xmipp_dest):
+			shutil.move(dirName, xmipp_dest)
 
 		#
 		# set environment variables
@@ -621,10 +616,157 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 
 
 
+        def installFFmpeg(self):
+
+                print "Installing FFmpeg"
+                self.writeToLog("--- Start install FFmpeg")
+                use_local = "/usr/local"
+                cwd = cwd = os.getcwd()
+
+                ffmpegName = "ffmpeg-git-32bit-static"
+                ffmpegtarFileName = ffmpegName + ".tar.xz"
+                ffmpegtarFileLocation = "http://emg.nysbc.org/redmine/attachments/download/4674/ffmpeg-git-32bit-static.tar.xz"
+
+                command = "wget -c " + ffmpegtarFileLocation
+                self.runCommand(command)
+                command = "tar -xvf " + ffmpegtarFileName
+                self.runCommand(command)
+                print "-------------Done downloading ffmpeg with wget.------------"
+
+              
+
+                #ffmpeg tar is compilied daily at http://johnvansickle.com/ffmpeg/. The git static version compiled on 11/11/2015 was used for this ffmpeg installation. The extracted folder name contains the datestamp; make sure to change the datestamp in the extracted folder name if using a newer version of ffmpeg from the johnvansickle site.
+
+                self.runCommand("mv ffmpeg-git-20151111-32bit-static ffmpeg")
+                newDir = os.path.join(use_local,"ffmpeg")
+                command = "mv ffmpeg "+newDir
+                self.runCommand(command)
+                os.chdir(newDir)             
+                command = "./ffmpeg"
+                self.runCommand("./ffmpeg")
+
+                #
+                #set environment variables
+                #
+                bashFile = "ffmpeg.sh"
+                cShellFile = "ffmpeg.csh"
+                profileDir = "/etc/profile.d/"
+
+                print "---------------Create bash and csh scripts---------"
+                #For BASH, create an ffmpeg.sh
+                f = open(bashFile, 'w')
+                f.write('''export FFMPEGDIR="/usr/local/ffmpeg"
+export PATH=${PATH}:${FFMPEGDIR}''')
+
+                f.close()
+
+                # For C shell, create an ffmpeg.sh
+
+                f=open(cShellFile,'w')
+
+                f.write('''setenv FFMPEGDIR="/usr/local/ffmpeg"
+setenv PATH ${FFMPEGDIR}:${PATH}
+if ($?LD_LIBRARY_PATH) then
+        setenv LD_LIBRARY_PATH "${LD_LIBRARY_PATH}:${FFMPEGDIR}"
+else
+        setenv LD_LIBRARY_PATH "${FFMPEGDIR}"
+endif''')
+
+                f.close()
+                #add them to the global /etc/profile.d/ folder
+                self.writeToLog("--- Adding ffmpeg.sh and ffmpeg.csh to /etc/profile.d/.")
+                shutil.copy(bashFile, profileDir + bashFile)
+                shutil.copy(cShellFile, profileDir + cShellFile)
+                os.chmod(profileDir + bashFile, 0755)
+                os.chmod(profileDir + cShellFile,0755)
+
+
+
+
+	def installProtomo(self):
+		self.writeToLog("--- Start install Protomo")
+		
+		cwd = os.getcwd()
+		protomoVer = "protomo-2.4.1"
+		zipFileName = protomoVer + ".zip"
+		zipFileLocation = "http://emg.nysbc.org/redmine/attachments/download/4147/" + zipFileName
+		
+		# download the source code tar file and unzip it
+		command = "wget -c " + zipFileLocation
+		self.runCommand(command)
+		command = "unzip -o " + zipFileName
+		self.runCommand(command)
+		
+		use_local = "/usr/local"
+		# move the unzipped folder to a global location
+		self.runCommand("tar -vxjf " + protomoVer + ".tar.bz2 --directory=" + use_local)
+		protomoDir = os.path.join(use_local, protomoVer)
+		deplibs = os.path.join(protomoDir, 'deplibs')
+		if not os.path.isdir(deplibs):
+			os.mkdir(deplibs)		
+		self.runCommand("tar -vxjf deplibs.tar.bz2 --directory=" + deplibs)
+		self.runCommand("tar -vxjf i3-0.9.6.tar.bz2 --directory=" + use_local)
+		
+			# set environment variables
+		   # For BASH, create an protom.sh
+		f = open('protomo.sh', 'w')
+		f.write('''export I3ROOT=%s
+export I3LIB=${I3ROOT}/lib/linux/x86-64
+export PATH=${PATH}:${I3ROOT}/bin/linux/x86-64
+export I3LEGACY="/usr/local/i3-0.9.6"
+export PATH=${PATH}:/usr/local/i3-0.9.6/bin/linux/x86-64
+export PATH=${PATH}:${I3ROOT}/lib/linux/x86-64
+
+if [ $LD_LIBRARY_PATH ];
+then
+   export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${I3LIB}:%s/lib/linux/x86-64"
+else
+   export LD_LIBRARY_PATH="${I3LIB}:%s/lib/linux/x86-64"
+fi
+if [ $PYTHONPATH ];
+then
+   export PYTHONPATH=${I3LIB}:${PYTHONPATH}
+else
+   export  PYTHONPATH=${I3LIB}
+fi
+''' % (protomoDir, deplibs, deplibs))
+		f.close()
+
+		# For C shell, create an eman.csh
+		f = open('protomo.csh', 'w')
+		f.write('''setenv I3ROOT %s
+setenv I3LIB ${I3ROOT}/lib/linux/x86-64
+setenv PATH ${PATH}:${I3ROOT}/bin/linux/x86-64
+setenv I3LEGACY "/usr/local/i3-0.9.6"
+setenv PATH ${PATH}:/usr/local/i3-0.9.6/bin/linux/x86-64
+setenv PATH ${PATH}:${I3ROOT}/lib/linux/x86-64
+
+if ($?LD_LIBRARY_PATH) then
+	setenv LD_LIBRARY_PATH "${LD_LIBRARY_PATH}:${I3LIB}:%s/lib/linux/x86-64"
+else
+	setenv LD_LIBRARY_PATH "${I3LIB}:%s/lib/linux/x86-64"
+endif
+if ( $?PYTHONPATH) then
+    setenv PYTHONPATH ${I3LIB}:${PYTHONPATH}
+else
+    setenv PYTHONPATH ${I3LIB}
+endif
+''' % (protomoDir, deplibs, deplibs))
+		f.close()
+		
+		# add them to the global /etc/profile.d/ folder
+		shutil.copy("protomo.sh", "/etc/profile.d/protomo.sh")
+		shutil.copy("protomo.csh", "/etc/profile.d/protomo.csh")
+		os.chmod("/etc/profile.d/protomo.sh", 0755)
+		os.chmod("/etc/profile.d/protomo.csh", 0755)
+		self.yumInstall(['http://pkgs.repoforge.org/rpmforge-release/rpmforge-release-0.5.3-1.el6.rf.x86_64.rpm'])
+
+
+
 	def installFrealign(self):
 		self.writeToLog("--- Start install Frealign")
 		
-		fileLocation = "http://ami.scripps.edu/redmine/attachments/download/740/frealign_v8.09_110505.tar.gz"
+		fileLocation = "http://emg.nysbc.org/redmine/attachments/download/740/frealign_v8.09_110505.tar.gz"
 		fileName = "frealign_v8.09_110505.tar.gz"
 
 		# download the tar file and unzip it
@@ -659,7 +801,7 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 
 	def processServerYumInstall(self):
 
-		packagelist = ['ImageMagick', 'MySQL-python', 'compat-gcc-34-g77', 'fftw3-devel', 'gcc-c++', 'gcc-gfortran', 'gcc-objc', 'gnuplot', 'grace', 'gsl-devel', 'libtiff-devel', 'netpbm-progs', 'numpy', 'openmpi-devel', 'python-devel', 'python-imaging', 'python-matplotlib', 'python-tools', 'scipy', 'wxPython', 'xorg-x11-server-Xvfb', 'libjpeg-devel', 'zlib-devel', ]
+		packagelist = ['ImageMagick', 'MySQL-python', 'compat-gcc-34-g77', 'fftw3-devel', 'gcc-c++', 'gcc-gfortran', 'gcc-objc', 'gnuplot', 'grace', 'gsl-devel', 'libtiff-devel', 'netpbm-progs', 'numpy', 'openmpi-devel', 'opencv-python', 'python-devel', 'python-imaging', 'python-matplotlib', 'python-tools', 'scipy', 'wxPython', 'xorg-x11-server-Xvfb', 'libjpeg-devel', 'zlib-devel', ]
 		self.yumInstall(packagelist)
 
 	def enableTorqueComputeNode(self):
@@ -699,9 +841,9 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 		self.yumInstall(packagelist)
 	
 	def setupLeginonCfg(self):
-		# The template config file is in the svn download loacation. The last place the leginon.cfg
+		# The template config file is in the git download location. The last place the leginon.cfg
 		# file is looked for is /etc/myami, which makes it the most global config file location.
-		configTemplateFile	= os.path.join(self.svnMyamiDir, "leginon", "leginon.cfg.template")
+		configTemplateFile	= os.path.join(self.gitMyamiDir, "leginon", "leginon.cfg.template")
 		configOutFile 		= "leginon.cfg"
 		configDest 		= "/etc/myami"
 		
@@ -727,8 +869,10 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 		shutil.copy(pyscopeCfgDir + '/instruments.cfg.template', pyscopeCfgDir + '/instruments.cfg')
 
 
-	def setupSinedonCfg(self, sinedonDir):
-		inf = open(self.svnMyamiDir + 'sinedon/examples/sinedon.cfg', 'r')
+	def setupSinedonCfg(self):
+		# sinedon import needs sinedon.cfg already configured.  Therefore, it is better
+		# to get the cfg template from self.gitMyamiDir
+		inf = open(self.gitMyamiDir + 'sinedon/examples/sinedon.cfg', 'r')
 		outf = open('/etc/myami/sinedon.cfg', 'w')
 
 		for line in inf:
@@ -808,7 +952,7 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 		
 		outf.write('; custom parameters from CentOS Auto Install script\n')
 		outf.write('max_execution_time = 300 ; Maximum execution time of each script, in seconds\n')
-		outf.write('max_input_time = 300	 ; Maximum amout of time to spend parsing request data\n')
+		outf.write('max_input_time = 300	 ; Maximum amount of time to spend parsing request data\n')
 		outf.write('memory_limit = 1024M	 ; Maximum amount of memory a script may consume\n')
 		outf.write('\n')
 
@@ -843,7 +987,7 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 		if os.path.isfile('/etc/php.d/mrc.ini'):
 			return
 
-		phpmrcdir = os.path.join(self.svnMyamiDir, "programs/php_mrc")
+		phpmrcdir = os.path.join(self.gitMyamiDir, "programs/php_mrc")
 		os.chdir(phpmrcdir)
 		self.runCommand("phpize")
 		self.runCommand("./configure")
@@ -869,15 +1013,9 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 		# Most are installed as on processingServer
 		packagelist = [
 			{
-				# PyFFTW
-				'targzFileName':'PyFFTW3-0.2.2.tar.gz',
-				'fileLocation':'http://launchpad.net/pyfftw/trunk/0.2.2/+download/',
-				'unpackDirName':'PyFFTW3-0.2.2',
-			},
-			{
 				# Python fs
 				'targzFileName':'fs-0.4.0.tar.gz',
-				'fileLocation':'https://pyfilesystem.googlecode.com/files/',
+				'fileLocation':'https://pypi.python.org/packages/08/c3/9a6e3c7bd2755e3383c84388c1e01113bddafa8008a0aa4af64996ab4470/',
 				'unpackDirName':'fs-0.4.0',
 			}
 		]
@@ -895,7 +1033,7 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 	def editReduxConfig(self):
 		
 		# The redux log should go to /var/log
-		copyFrom  = self.svnMyamiDir + "redux/redux.cfg.template"
+		copyFrom  = self.gitMyamiDir + "redux/redux.cfg.template"
 		copyTo    = "/etc/myami/redux.cfg"
 		inf       = open(copyFrom, 'r')
 		outf      = open(copyTo, 'w')
@@ -953,9 +1091,9 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 		return nproc
 		
 	def installMyamiWeb(self):
-		svnMyamiwebDir = os.path.join(self.svnMyamiDir, "myamiweb")
+		gitMyamiwebDir = os.path.join(self.gitMyamiDir, "myamiweb")
 		centosWebDir = "/var/www/html"
-		self.runCommand("cp -rf %s %s" % (svnMyamiwebDir, centosWebDir))
+		self.runCommand("cp -rf %s %s" % (gitMyamiwebDir, centosWebDir))
 
 	def editMyamiWebConfig(self):
 	
@@ -982,8 +1120,6 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 				outf.write("define('DB_LEGINON', '%s');\n" % (self.leginonDB))
 			elif line.startswith("define('DB_PROJECT'"):
 				outf.write("define('DB_PROJECT', '%s');\n" % (self.projectDB))
-			elif line.startswith("define('MRC2ANY'"):
-				outf.write("define('MRC2ANY', '%s');\n" % (self.mrc2any))
 			elif "addplugin(\"processing\");" in line:
 				outf.write("addplugin(\"processing\");\n")
 			elif "// $PROCESSING_HOSTS[]" in line:
@@ -1008,8 +1144,14 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 		logfile.close()
 			
 	def getMyami(self):
-		#TODO: handle "svn: is already a working copy for a different URL" case
-		self.runCommand(self.svnCmd)
+		#TODO: handle "git: is already a working copy for a different URL" case
+
+
+                if os.path.exists('/tmp/myami/'):
+
+                        shutil.rmtree('/tmp/myami/')
+
+		self.runCommand(self.gitCmd)
 
 	def getDefaultValues(self):
 
@@ -1021,7 +1163,7 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 		print "===================================="
 		print ""
 		
-		value = raw_input("Please enter the registration key. You must be registered at http://ami.scripps.edu/redmine to recieve a registration key: ")
+		value = raw_input("Please enter the registration key. You must be registered at http://emg.nysbc.org/redmine to recieve a registration key: ")
 		value = value.strip()
 
 		self.regKey = value
@@ -1055,7 +1197,7 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 		questionText = "Would you like to download demo GroEL images and upload them to this installation?"
 		self.doDownloadSampleImages = self.getBooleanInput(questionText)
 		
-		questionText = "Would you like to install EMAN, Xmipp, and Spider at this time?"
+		questionText = "Would you like to install EMAN, Xmipp, Spider, and Protomo at this time?"
 		self.doInstallExternalPackages = self.getBooleanInput(questionText)
 		
 	def getBooleanInput(self, questionText = ''):
@@ -1075,7 +1217,7 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 	
 	def downloadSampleImages(self):
 	   
-		getImageCmd = "wget -P/tmp/images http://ami.scripps.edu/redmine/attachments/download/112/06jul12a_00015gr_00028sq_00004hl_00002en.mrc http://ami.scripps.edu/redmine/attachments/download/113/06jul12a_00015gr_00028sq_00023hl_00002en.mrc http://ami.scripps.edu/redmine/attachments/download/114/06jul12a_00015gr_00028sq_00023hl_00004en.mrc http://ami.scripps.edu/redmine/attachments/download/115/06jul12a_00022gr_00013sq_00002hl_00004en.mrc http://ami.scripps.edu/redmine/attachments/download/116/06jul12a_00022gr_00013sq_00003hl_00005en.mrc http://ami.scripps.edu/redmine/attachments/download/109/06jul12a_00022gr_00037sq_00025hl_00004en.mrc http://ami.scripps.edu/redmine/attachments/download/110/06jul12a_00022gr_00037sq_00025hl_00005en.mrc http://ami.scripps.edu/redmine/attachments/download/111/06jul12a_00035gr_00063sq_00012hl_00004en.mrc"
+		getImageCmd = "wget -P/tmp/images http://emg.nysbc.org/redmine/attachments/download/112/06jul12a_00015gr_00028sq_00004hl_00002en.mrc http://emg.nysbc.org/redmine/attachments/download/113/06jul12a_00015gr_00028sq_00023hl_00002en.mrc http://emg.nysbc.org/redmine/attachments/download/114/06jul12a_00015gr_00028sq_00023hl_00004en.mrc http://emg.nysbc.org/redmine/attachments/download/115/06jul12a_00022gr_00013sq_00002hl_00004en.mrc http://emg.nysbc.org/redmine/attachments/download/116/06jul12a_00022gr_00013sq_00003hl_00005en.mrc http://emg.nysbc.org/redmine/attachments/download/109/06jul12a_00022gr_00037sq_00025hl_00004en.mrc http://emg.nysbc.org/redmine/attachments/download/110/06jul12a_00022gr_00037sq_00025hl_00005en.mrc http://emg.nysbc.org/redmine/attachments/download/111/06jul12a_00035gr_00063sq_00012hl_00004en.mrc"
 
 		print getImageCmd
 		proc = subprocess.Popen(getImageCmd, shell=True)
@@ -1096,7 +1238,7 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 	def run(self):
 		self.currentDir = os.getcwd()
 		self.logFilename = 'installation.log'
-		self.svnMyamiDir = '/tmp/myami/'
+		self.gitMyamiDir = '/tmp/myami/'
 		self.enableLogin = 'false'
 		self.dbHost = 'localhost'
 		self.dbUser = 'root'
@@ -1106,7 +1248,6 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 		self.projectDB = 'projectdb'
 		self.adminEmail = ''
 		self.csValue = 2.0
-		self.mrc2any = '/usr/bin/mrc2any'
 		self.imagesDir = '/myamiImages'
 
 		self.setReleaseDependantValues()
@@ -1138,7 +1279,7 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 		
 
 		self.yumUpdate()
-		self.yumInstall(['subversion'])
+		self.yumInstall(['git'])
 		self.getMyami()
 		
 		result = self.setupJobServer()
@@ -1177,7 +1318,7 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 		# Start the Torque server
 		self.runCommand("/etc/init.d/pbs_server start")
 				
-		setupURL = "http://localhost/myamiweb/setup/autoInstallSetup.php?password=" + self.serverRootPass + "&myamidir=" + self.svnMyamiDir + "&uploadsample=" + "%d" % int(self.doDownloadSampleImages)
+		setupURL = "http://localhost/myamiweb/setup/autoInstallSetup.php?password=" + self.serverRootPass + "&myamidir=" + self.gitMyamiDir + "&uploadsample=" + "%d" % int(self.doDownloadSampleImages)
 		setupOpened = None
 		try:
 			setupOpened = webbrowser.open_new(setupURL)

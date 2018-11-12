@@ -8,8 +8,6 @@ import sinedon
 # local
 import read
 
-# other
-import MySQLdb
 
 def look_up(filename):
 	legname = os.path.basename(filename)
@@ -20,7 +18,7 @@ def look_up(filename):
 	session_str = legname.split('_')[0]
 	q = 'SELECT name from SessionData WHERE name LIKE "%s%%"' % (session_str,)
 	conf = sinedon.getConfig('leginondata')
-	db = MySQLdb.connect(**conf)
+	db = sinedon.sqldb.connect(**conf)
 	cur = db.cursor()
 	cur.execute(q)
 	sessions = cur.fetchall()

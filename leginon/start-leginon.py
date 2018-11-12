@@ -4,7 +4,8 @@
 #
 
 from leginon import legoptparse
-
 ## this starts Leginon user interface
 from leginon import start
-start.start(legoptparse.options)
+
+if __name__ == "__main__":
+	start.start(legoptparse.options)

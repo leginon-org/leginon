@@ -1,9 +1,9 @@
 <!--
 -
 - Application XML-Dump
-- http://ami.scripps.edu/ 
+- http://emg.nysbc.org/ 
 -
-- Application :MSI-T Advanced (3.1)
+- Application :MSI-T Advanced
 - Version     :4
 - Date : 06/05/2012
 -
@@ -32,6 +32,10 @@
     <field 
       name="version" 
       type="int(20)" 
+    />
+    <field 
+      name="hide" 
+      type="tinyint(1)" 
     />
     <key>PRIMARY KEY (`DEF_id`)</key>
     <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
@@ -115,8 +119,9 @@
     <sqltable name="ApplicationData" >
         <field name="DEF_id" >14</field>
         <field name="DEF_timestamp" >2012-06-05 11:45:24</field>
-        <field name="name" >MSI-T Advanced (3.1)</field>
+        <field name="name" >MSI-T Advanced</field>
         <field name="version" >4</field>
+        <field name="hide" >0</field>
     </sqltable>
   <!-- BindingSpecData -->
     <sqltable name="BindingSpecData" >

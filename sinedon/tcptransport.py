@@ -1,14 +1,15 @@
 #
 # COPYRIGHT:
-#       The Leginon software is Copyright 2003
-#       The Scripps Research Institute, La Jolla, CA
+#       The Leginon software is Copyright under
+#       Apache License, Version 2.0
 #       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
+#       see  http://leginon.org
 #
 import SocketServer
 import socket
 import socketstreamtransport
 import errno
+from pyami import mysocket
 
 locationkey = 'TCP transport'
 
@@ -52,7 +53,7 @@ class Server(socketstreamtransport.Server, SocketServer.ThreadingTCPServer):
 
 	def location(self):
 		location = socketstreamtransport.Server.location(self)
-		location['hostname'] = socket.gethostname().lower()
+		location['hostname'] = mysocket.gethostname().lower()
 		location['port'] = self.port
 		return location
 

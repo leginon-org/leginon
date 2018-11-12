@@ -2,7 +2,7 @@
 import os
 from leginon import leginondata
 #appion
-from appionlib import apDatabase, apDisplay
+from appionlib import appiondata, apDatabase, apDisplay
 from leginon import correctorclient
 
 class ApCorrectorClient(correctorclient.CorrectorClient):
@@ -53,3 +53,54 @@ def makeUniqueImageFilename(old_imagedata,old_presetname,new_presetname):
 				version_number += 1
 		apDisplay.printColor('New image filename is: %s' % new_name,'magenta')
 		return new_name
+
+def makeAlignedImageData(old_imagedata,new_camdata,new_array,alignlabel='a'):
+		'''
+		Prepare ImageData to be uploaded after alignment
+		'''
+		label_string = '-%s' % (alignlabel)
+		camdata = leginondata.CameraEMData(initializer=new_camdata) # new CameraEMData for the aligned image
+		align_presetdata = leginondata.PresetData(initializer=old_imagedata['preset'])
+		if old_imagedata['preset'] is None:
+			old_name = 'ma'
+			align_presetdata = leginondata.PresetData(
+					name='ma-%s' % (label_string),
+					magnification=old_imagedata['scope']['magnification'],
+					defocus=old_imagedata['scope']['defocus'],
+					tem = old_imagedata['scope']['tem'],
+					ccdcamera = camdata['ccdcamera'],
+					session = old_imagedata['session'],
+			)
+		else:
+			old_name = align_presetdata['name']
+			align_presetdata['name'] = old_name+label_string
+		align_presetdata['dimension'] = camdata['dimension']
+		align_presetdata['binning'] = camdata['binning']
+		align_presetdata['offset'] = camdata['offset']
+		align_presetdata['exposure time'] = camdata['exposure time']
+		# make new imagedata with the align_preset amd aligned CameraEMData
+		imagedata = leginondata.AcquisitionImageData(initializer=old_imagedata)
+		imagedata['preset'] = align_presetdata
+		imagefilename = imagedata['filename']
+		bits = imagefilename.split(old_name)
+		before_string = old_name.join(bits[:-1])
+		newfilename = align_presetdata['name'].join((before_string,bits[-1]))
+		imagedata['camera'] = camdata
+		imagedata['camera']['align frames'] = True
+		imagedata['image'] = new_array
+		imagedata['filename'] = makeUniqueImageFilename(imagedata,old_name,align_presetdata['name'])
+		return imagedata
+
+def getAlignedSiblings(fromimage):
+		'''
+		Get other aligned images from the same source as the input imagedata.
+		'''
+		pairs = appiondata.ApDDAlignImagePairData(result=fromimage).query(results=1)
+		if not pairs:
+			return []
+		# Should only have one but if more, take the most recent.
+		sourceimage = pairs[0]['source']
+		allpairs = appiondata.ApDDAlignImagePairData(source=sourceimage).query()
+		siblings = map((lambda x: x['result']), allpairs)
+		return siblings
+

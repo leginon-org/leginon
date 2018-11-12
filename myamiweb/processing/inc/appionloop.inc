@@ -2,7 +2,7 @@
 
 /**
  *	The Appion software is Copyright 2007
- *	The Scripps Research Institute, La Jolla, CA
+ *	Apache License, Version 2.0
  */
 
 require_once "inc/particledata.inc";

@@ -1,10 +1,10 @@
 <?php
 
 /**
- *	The Leginon software is Copyright 2003 
- *	The Scripps Research Institute, La Jolla, CA
+ *	The Leginon software is Copyright under 
+ *	Apache License, Version 2.0
  *	For terms of the license agreement
- *	see  http://ami.scripps.edu/software/leginon-license
+ *	see  http://leginon.org
  */
 
 
@@ -41,32 +41,35 @@ class mysql {
 
 	function connect_db($host="") {
 		$host = (empty($host)) ? $this->db_host : $host;
-		$link = @mysql_connect($host, $this->db_user, $this->db_pass);
+		$link = @mysqli_connect($host, $this->db_user, $this->db_pass);
 		if (!$link || empty($link)) {
-			$this->mysqlerror = "Error: ".mysql_error();
-			$this->mysqlerrornb = mysql_errno();
-			return False;
+         $this->mysqlerror = "Connect Error: " . mysqli_connect_errno();
+			return false;
 		}
 
 		if(!empty($this->db))
 			$link = $this->select_db($this->db, $link);
+      $this->db_link = $link;
 		return $link;
 	}
-	
+
 	function select_db($database , $link) {
-		
-		$db = mysql_select_db($database, $link);
+		$db = mysqli_select_db($link, $database);
 		if(!$db) {
-			$this->mysqlerror = "Error: ".mysql_error();
-			$this->mysqlerrornb = mysql_errno();
-			return False;
+			$this->mysqlerror = "Error: ".mysqli_error($link);
+			$this->mysqlerrornb = mysqli_errno($link);
+			return false;
 		}
+		// Need to set db attribute to allow it to reconnect
+		// Especially when default database was not set when this instance
+		// of the class is initiated.
+		$this->db = $database;
 		return $link;
 	}
 
 	function checkDBConnection($host="") {
 		$resource = $this->connect_db($host);
-		if (is_resource($resource)) {
+		if (is_object($resource)) {
 			$this->close_db($resource);
 			return True;
 		} else {
@@ -76,16 +79,16 @@ class mysql {
 
 	function close_db($resource_link="") {
 		if (empty($resource_link))
-			mysql_close();
+			die("Attempting to close non-existent mysql connection.");
 		else
-			mysql_close($resource_link);
+			mysqli_close($resource_link);
 	}
 
 	function SQLTableExists($name) {
 		$table_exists=false;
 		$Rtables = $this->SQLQuery("SHOW TABLES");
 		#if ($Rtables === false) return false;
-	    	while($table = mysql_fetch_array($Rtables))
+	    	while($table = mysqli_fetch_array($Rtables))
 			if ($table[0] == $name) {
 				$table_exists=true;
 				break;
@@ -98,7 +101,7 @@ class mysql {
 		$Rtables = $this->SQLQuery("SHOW TABLES");
 	    
 		$listOfTables = array();
-		while($table = mysql_fetch_array($Rtables))
+		while($table = mysqli_fetch_array($Rtables))
 			$listOfTables[] = $table[0];
 		
 		return $listOfTables;
@@ -114,7 +117,7 @@ class mysql {
 	    $schema_create .= "CREATE TABLE IF NOT EXISTS $table ($crlf";
 	
 	    $result = $this->SQLQuery("SHOW FIELDS FROM $table") or die("show fields error");
-	    while($row = mysql_fetch_array($result))
+	    while($row = mysqli_fetch_array($result))
 	    {
 	        $schema_create .= "   $backquotestr".$row['Field']."$backquotestr ".$row['Type'];
 	
@@ -132,8 +135,8 @@ class mysql {
 	        $schema_create .= ",$crlf";
 	    }
 	    $schema_create = preg_replace("%,%".$crlf."$", "", $schema_create);
-	    $result = $this->SQLQuery("SHOW KEYS FROM $table") or die(mysql_error());
-	    while($row = mysql_fetch_array($result))
+	    $result = $this->SQLQuery("SHOW KEYS FROM $table") or die(mysqli_error($this->db_link));
+	    while($row = mysqli_fetch_array($result))
 	    {
 	        $kname=$row['Key_name'];
 	        if(($kname != "PRIMARY") && ($row['Non_unique'] == 0))
@@ -161,16 +164,21 @@ class mysql {
 	function getSQLTableContent($table, &$content, $where="1") {
 	    $crlf = $this->crlf;
 	    $local_query = "SELECT * FROM $table WHERE $where";
-	    $result = $this->SQLQuery($local_query) or die(mysql_error());
+	    $result = $this->SQLQuery($local_query) or die(mysqli_error($this->db_link));
 	    $i = 0;
-	    while($row = mysql_fetch_row($result))
+			// failed sql query
+			if (!is_array($result)) return (true);
+	    while($row = mysqli_fetch_row($result))
 	    {
 	        set_time_limit(60); // HaRa
 	        $table_list = "(";
 	
-	        for($j=0; $j<mysql_num_fields($result);$j++)
-	            $table_list .= "`".mysql_field_name($result,$j)."`, ";
-	
+           for($j=0; $j<mysqli_num_fields($result);$j++)
+           {
+             $fieldInfo = mysqli_fetch_field_direct($result,$j);
+             $table_list .= "`".$fieldInfo->name."`, ";
+           }
+
 	        $table_list = substr($table_list,0,-2);
 	        $table_list .= ")";
 	
@@ -179,7 +187,7 @@ class mysql {
 	        else
 	            $schema_insert = "INSERT INTO $table VALUES (";
 	
-	        for($j=0; $j<mysql_num_fields($result);$j++)
+	        for($j=0; $j<mysqli_num_fields($result);$j++)
 	        {
 	            if(!isset($row[$j]))
 	                $schema_insert .= " NULL,";
@@ -223,6 +231,10 @@ class mysql {
 		return $this->mysqlerrornb;
 	}
 
+	function getDBName() {
+		return $this->getSQLResult("SELECT database();");
+	}
+
 	function getSQLQuery() {
 		return $this->sqlquery;
 	}
@@ -230,51 +242,51 @@ class mysql {
 	function getSQLNumRows($query) {
 		if (!$result = $this->SQLQuery($query))
 			return False;
-		if (!is_resource($result))
+		if (!is_object($result))
 			return $result;
-		$numrows = mysql_num_rows($result);
+		$numrows = mysqli_num_rows($result);
 		return $numrows;
 	}
 
 	function SQLQuery($query, $insert=false) {
 		$this->sqlquery = $query;
-		if (!$this->connect_db($this->db_host)) {
-			$this->mysqlerror = "Error: ".mysql_error();
-			$this->mysqlerrornb = mysql_errno();
-			return False;
-		}
-		$result = mysql_query($query); 
+      $link = $this->connect_db($this->db_host);
+      if (!$link) {
+         $this->mysqlerror = "Connect Error: " . mysqli_connect_errno();
+         return False;
+      }
+		$result = mysqli_query($link, $query); 
 		if (!$result) {
-			$this->mysqlerror = "Error: ".mysql_error();
-			$this->mysqlerrornb = mysql_errno();
+			$this->mysqlerror = "Error: ".mysqli_error($link);
+			$this->mysqlerrornb = mysqli_errno($link);
 			return False;
 		}
 		if ($insert)
-			$res = mysql_insert_id();
+			$res = mysqli_insert_id($link);
 		else
 			$res = $result;
 		//$this->close_db();
 		return $res;
 	}
 
-	function getSQLResult($query, $fetch=MYSQL_ASSOC) {
-		if (!$result = $this->SQLQuery($query))
-			return False;
-		if (!is_resource($result))
+	function getSQLResult($query, $fetch=MYSQLI_ASSOC) {
+		$result = $this->SQLQuery($query);
+		if (!is_object($result)) {
 			return $result;
+		}
 		$data = array();
-		while ($row = mysql_fetch_array($result, $fetch))
+		while ($row = mysqli_fetch_array($result, $fetch))
 			$data[] = $row;
 		return $data;
 	}
 
 	function SQLQueries($queries) {
-		$this->connect_db($this->db_host);
+		$link = $this->connect_db($this->db_host);
 		$q = (is_array($queries)) ? $queries : array($queries);
 		foreach($q as $v) {
-			mysql_query($v) or die("Error: $v".mysql_error());
+			mysqli_query($link, $v) or die("Error: $v".mysqli_error($link));
 		}
-		$this->close_db();
+		$this->close_db($link);
 		return(true);
 	}
 
@@ -338,10 +350,10 @@ class mysql {
 		$q = "SELECT $field from `$table` "
 			."WHERE $sql";
 		$res = $this->SQLQuery($q);
-		if ($res && mysql_num_rows($res)>0) {
+		if ($res && mysqli_num_rows($res)>0) {
 			if ($return_id) {
 				if ($pKey) {
-					$result=mysql_fetch_array($res);
+					$result=mysqli_fetch_array($res);
 					return $result[$pKey];
 				}
 			}
@@ -434,7 +446,7 @@ class mysql {
 		$prikey=false;
 		if ($table && $this->SQLTableExists($table)) {
 			$R = $this->SQLQuery("SHOW FIELDS FROM `$table`");
-			while ($r = mysql_fetch_array($R))
+			while ($r = mysqli_fetch_array($R))
 				if ($r['Key']=='PRI') {
 					$prikey = $r['Field'];
 					break;
@@ -447,7 +459,7 @@ class mysql {
 		$fields = array();
 		if ($table && $this->SQLTableExists($table)) {
 			$R = $this->SQLQuery("SHOW FIELDS FROM `$table`");
-			while ($r = mysql_fetch_array($R))
+			while ($r = mysqli_fetch_array($R))
 				$fields[] = $r['Field'];
 		}
 		return $fields;
@@ -473,7 +485,7 @@ class mysql {
 		$fields = array();
 		if ($table) {
 			$R = $this->SQLQuery("SHOW FIELDS FROM `$table`");
-			while ($r = mysql_fetch_array($R))
+			while ($r = mysqli_fetch_array($R))
 				$fields[$r['Field']] = $r['Type'];
 		}
 		return $fields;
@@ -482,7 +494,8 @@ class mysql {
 	function getTables() {
 		$tables = array();
 		$R = $this->SQLQuery("SHOW TABLES ");
-		while ($row = mysql_fetch_row($R))
+		if ($R == false) return $tables;
+		while ($row = mysqli_fetch_row($R))
 			$tables[] = $row[0];
 
 		return $tables;
@@ -521,7 +534,7 @@ class mysql {
 			.' where '.$wherestr;
 		$R = $this->SQLQuery($q);
 		$ids = array();
-		while ($r = mysql_fetch_array($R))
+		while ($r = mysqli_fetch_array($R))
 			$ids[] = $r['id'];
 
 		if (count($ids)==1)

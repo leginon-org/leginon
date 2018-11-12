@@ -1,8 +1,8 @@
 # COPYRIGHT:
-# The Leginon software is Copyright 2003
-# The Scripps Research Institute, La Jolla, CA
+# The Appion software is Copyright under
+# Apache License, Version 2.0
 # For terms of the license agreement
-# see http://ami.scripps.edu/software/leginon-license
+# see  http://appion.org
 
 import sinedon.data
 import leginon.leginondata
@@ -128,6 +128,7 @@ class ApSelectionRunData(Data):
 			('path', ApPathData),
 			('session', leginon.leginondata.SessionData),
 			('description', str),
+			('program', str),
 			('params', ApSelectionParamsData),
 			('dogparams', ApDogParamsData),
 			('manparams', ApManualParamsData),
@@ -350,6 +351,9 @@ class ApAceRunData(Data):
 			('ctftilt_params', ApCtfTiltParamsData),
 			('xmipp_ctf_params', ApXmippCtfParamsData),
 			('ace2_params', ApAce2ParamsData),
+			('ctffind4_params', ApCtfFind4ParamsData),
+			('transferred', bool),
+			('transfer_params', ApAceTransferParamsData),
 			('session', leginon.leginondata.SessionData),
 			('path', ApPathData),
 			('name', str),
@@ -418,6 +422,33 @@ class ApCtfTiltParamsData(Data):
 		)
 	typemap = classmethod(typemap)
 
+class ApCtfFind4ParamsData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('bestdb', bool),
+			('ampcontrast', float),
+			('fieldsize', int),
+			('cs', float),
+			('resmin', float),
+			('defstep', float),
+			('shift_phase', bool),
+			('min_phase_shift', float),
+			('max_phase_shift', float),
+			('phase_search_step', float),
+			('local_refine', bool),
+		)
+	typemap = classmethod(typemap)
+
+class ApAceTransferParamsData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('frompreset', str),
+			('topreset', str),
+			('criteria', str),
+			('run', ApAceRunData),
+		)
+	typemap = classmethod(typemap)
+
 class ApCtfData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
@@ -428,7 +459,8 @@ class ApCtfData(Data):
 			('amplitude_contrast', float),  # sqrt(1-A^2)sin + A*cos format
 			('defocus1', float),  # in negative meters for underfocus |def1| < |def2|
 			('defocus2', float),  # in negative meters for underfocus
-			('angle_astigmatism', float),  # in counter-clockwise degrees from x-axis
+			('angle_astigmatism', float),  # in counter-clockwise degrees from x-axis (degrees)
+			('ctffind4_resolution', float),  # ctffind4 good fit resolution
 			('confidence', float),  # classic confidence
 			('confidence_d', float),  # classic confidence
 			('confidence_30_10', float),  # defined as confidence between 1/30 and 1/10 Angstroms
@@ -441,22 +473,14 @@ class ApCtfData(Data):
 			('graph2', str),  # 1d plot showing fit
 			('graph3', str),  # raw native powerspectra from software 
 			('graph4', str),  # raw native 1d plot from software 
+			('localplot', str), # 2D plot for local CTF estimation
+			('localCTFstarfile', str), # local CTF output file
 			('ctfvalues_file', str),  # used for ace2correct
 			('cross_correlation', float),  # direct from ctffind/ctftilt
 			('tilt_angle', float),  # from ctftilt
 			('tilt_axis_angle', float),  # from ctftilt
 			('mat_file', str),  # from ACE1
-			('snr', float),  # from ACE1
-			('noise1', float),  # from ACE1
-			('noise2', float),  # from ACE1
-			('noise3', float),  # from ACE1
-			('noise4', float),  # from ACE1
-			('envelope1', float),  # from ACE1
-			('envelope2', float),  # from ACE1
-			('envelope3', float),  # from ACE1
-			('envelope4', float),  # from ACE1
-			('lowercutoff', float),  # from ACE1
-			('uppercutoff', float),  # from ACE1
+			('extra_phase_shift', float), #phase plate phase shift addition (radians)
 		)
 	typemap = classmethod(typemap)
 
@@ -522,6 +546,7 @@ class ApStackData(Data):
 			('substackname', str),
 			('pixelsize', float),
 			('centered', bool),
+			('radial_averaged', bool),
 			('junksorted', bool),
 			('beamtilt_corrected', bool),
 			('mask', int),
@@ -585,9 +610,10 @@ class ApStackParamsData(ApParticleExtractorData):
 			('fileType', str),
 			('inverted', bool),
 			('normalized', bool),
-			('xmipp-norm', float),
+			('normalizemethod', str),
 			('lowpass', float),
 			('highpass', float),
+			('pixlimit', float),
 			('startframe', int),
 			('nframe', int),
 			('driftlimit', float),
@@ -713,6 +739,8 @@ class ApDDStackParamsData(Data):
 			('bin', int),
 			('unaligned_ddstackrun', ApDDStackRunData),
 			('stack', ApStackData),
+			('method', str),
+			('de_aligner', ApDEAlignerParamsData),
 		)
 	typemap = classmethod(typemap)
 
@@ -722,6 +750,65 @@ class ApDDAlignImagePairData(Data):
 			('source', leginon.leginondata.AcquisitionImageData),
 			('result', leginon.leginondata.AcquisitionImageData),
 			('ddstackrun', ApDDStackRunData),
+		)
+	typemap = classmethod(typemap)
+
+class ApDEAlignerParamsData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('alignment_correct', bool),
+			('alignment_quanta', int),
+			('radiationdamage_compensate', bool),
+			('radiationdamage_multiplier', float),
+			('output_sumranges', str)
+		)
+	typemap = classmethod(typemap)
+
+class ApDDFrameTrajectoryData(Data):
+	'''
+	Retake of ApFrameAlignTrajectory. Save typically 10 frames
+	plus the last frame which is just enough to view the
+	trend to save space.
+	'''
+	def typemap(cls):
+		return Data.typemap() + (
+			('image', leginon.leginondata.AcquisitionImageData),
+			('particle', ApStackParticleData ),
+			('ddstackrun', ApDDStackRunData ),
+			('pos_x', list), #pixels relative to reference frame of the first 10 frames
+			('pos_y', list), #pixels relative to reference frame of the first 10 frames
+			('last_x', float), #pixels relative to reference frame
+			('last_y', float), #pixels relative to reference frame
+			('number_of_positions', int), #number of frames in the alignment
+			('reference_index', int) #reference frame index, base=0
+		)
+	typemap = classmethod(typemap)
+
+class ApFrameAlignTrajectory(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('image', leginon.leginondata.AcquisitionImageData),
+			('particle', ApStackParticleData ),
+			('ddstackrun', ApDDStackRunData ),
+			('xshift', list), #pixels relative to the next frame
+			('yshift', list) #pixels relative to the next frame
+		)
+	typemap = classmethod(typemap)
+
+class ApDDAlignStatsData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('image', leginon.leginondata.AcquisitionImageData),
+			('ddstackrun', ApDDStackRunData),
+			('trajectory', ApDDFrameTrajectoryData),
+			('apix', float), #angstroms per pixel
+			('top_shift1_value', float), #pixels
+			('top_shift2_value', float), #pixels
+			('top_shift3_value', float), #pixels
+			('top_shift1_index', int), #base-0
+			('top_shift2_index', int), #base-0
+			('top_shift3_index', int), #base-0
+			('median_shift_value', float), #pixels
 		)
 	typemap = classmethod(typemap)
 
@@ -1928,6 +2015,7 @@ class ApProtomoRefinementParamsData(Data):
 	# ## this needs to be expanded to include all protomo2 params
 	typemap = classmethod(typemap)
 
+# ApProtomoALignerParamsData is retired
 class ApProtomoAlignerParamsData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
@@ -2225,5 +2313,28 @@ class ApHelicalCoordData(Data):
 			('xcoord', float),
 			('ycoord', float),
 			('initialang', float),
+		)
+	typemap = classmethod(typemap)
+
+class ApSEMData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('image', leginon.leginondata.AcquisitionImageData),
+			('date', str),
+			('hv', float),
+			('beam', str),
+			('hfw', float),
+			('aperture_diameter', float),
+			('beam_current', float),
+			('dynamic_focus_is_on', str),
+			('stage_ta', float),
+			('tilt_correction_angle', float),
+			('dwell_time', float),
+			('pixel_width', float),
+			('integrate', str),
+			('working_distance', float),
+			('resolution_x', int),
+			('resolution_y', int),
+			('z_slice', str),
 		)
 	typemap = classmethod(typemap)

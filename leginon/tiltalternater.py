@@ -1,9 +1,9 @@
 #
 # COPYRIGHT:
-#	   The Leginon software is Copyright 2003
-#	   The Scripps Research Institute, La Jolla, CA
+#	   The Leginon software is Copyright under
+#	   Apache License, Version 2.0
 #	   For terms of the license agreement
-#	   see  http://ami.scripps.edu/software/leginon-license
+#	   see  http://leginon.org
 #
 import math
 import acquisition
@@ -11,13 +11,18 @@ import leginondata
 import gui.wx.TiltAlternater
 
 class TiltAlternater(acquisition.Acquisition):
+	'''
+	Node class that set stage tilt angle according to a list at
+	each target it received in the target list.  Optionally return
+	to the tilt of the parent image at the end of processing.
+	'''
 	panelclass = gui.wx.TiltAlternater.Panel
 	settingsclass = leginondata.TiltAlternaterSettingsData
-	defaultsettings = acquisition.Acquisition.defaultsettings
+	defaultsettings = dict(acquisition.Acquisition.defaultsettings)
 	defaultsettings.update({
 		'use tilts': False,
 		'reset per targetlist': False,
-		'tilts': '(0,)',
+		'tilts': '(0,)', # Issue #5687. defined as string. too late to change to tuple
 	})
 
 	eventinputs = acquisition.Acquisition.eventinputs
@@ -41,6 +46,7 @@ class TiltAlternater(acquisition.Acquisition):
 	def processTargetList(self, newdata):
 		self.tilts = self.convertDegreeTiltsToRadianList(self.settings['tilts'])
 		super(TiltAlternater, self).processTargetList(newdata)
+		# at the end restored to parent tilt
 		if self.settings['use tilts'] and len(self.tilts) > 0:
 			parent_tilt = self.getParentTilt(newdata)
 			self.instrument.tem.setStagePosition({'a':parent_tilt})
@@ -52,6 +58,9 @@ class TiltAlternater(acquisition.Acquisition):
 			self.tiltindex = self.tiltindex % len(self.tilts)
 			tilt = self.tilts[self.tiltindex]
 			self.instrument.tem.setStagePosition({'a':tilt})
+			super(TiltAlternater, self).processTargetData(targetdata, attempt)
+		else:
+			# process as normal
 			super(TiltAlternater, self).processTargetData(targetdata, attempt)
 		self.tiltindex += 1
 

@@ -15,6 +15,7 @@ debug_log = None
 #debug_log = 'gatansocket.log'
 
 # enum function codes as in GatanSocket.cpp and SocketPathway.cpp
+# need to match exactly both in number and order
 enum_gs = [
 	'GS_ExecuteScript',
 	'GS_SetDebugMode',
@@ -43,6 +44,12 @@ enum_gs = [
 	'GS_SetupFileSaving',
 	'GS_GetFileSaveResult',
 	'GS_SetupFileSaving2',
+	'GS_GetDefectList',
+	'GS_SetK2Parameters2',
+	'GS_StopContinuousCamera',
+	'GS_GetPluginVersion',
+	'GS_GetLastError',
+	'GS_FreeK2GainReference',
 ]
 # lookup table of function name to function code, starting with 1
 enum_gs = dict([(x,y) for (y,x) in enumerate(enum_gs,1)])
@@ -136,6 +143,7 @@ class GatanSocket(object):
 		else:
 			raise ValueError('need to specify a port to GatanSocket instance, or set environment variable SERIALEMCCD_PORT')
 		self.save_frames = False
+		self.num_grab_sum = 0
 		self.connect()
 
 		self.script_functions = [ 
@@ -151,6 +159,8 @@ class GatanSocket(object):
 			('IFCDoAlignZeroLoss', 'AlignEnergyFilterZeroLossPeak'),
 			('IFGetSlitIn', 'GetEnergyFilter'),
 			('IFSetSlitIn', 'SetEnergyFilter'),
+			('IFGetEnergyLoss', 'GetEnergyFilterOffset'),
+			('IFSetEnergyLoss', 'SetEnergyFilterOffset'),
 			('IFGetSlitWidth', 'GetEnergyFilterWidth'),
 			('IFSetSlitWidth', 'SetEnergyFilterWidth'),
 			('GT_CenterZLP', 'AlignEnergyFilterZeroLossPeak'),
@@ -159,13 +169,13 @@ class GatanSocket(object):
 		for name, method_name in self.script_functions:
 			if self.hasScriptFunction(name):
 				self.filter_functions[method_name] = name
-		if 'SetEnergeFilter' in self.filter_functions.keys() and self.filter_functions['SetEnergyFilter'] == 'IFSetSlitIn':
-			self.wait_for_filter = '; IFWaitForFilter()'
+		if 'SetEnergyFilter' in self.filter_functions.keys() and self.filter_functions['SetEnergyFilter'] == 'IFSetSlitIn':
+			self.wait_for_filter = 'IFWaitForFilter();'
 		else:
 			self.wait_for_filter = ''
 
 	def hasScriptFunction(self, name):
-		script = 'if(DoesFunctionExist("%s")) Exit(1.0) else Exit(-1.0)'
+		script = 'if ( DoesFunctionExist("%s") ) { Exit(1.0); } else { Exit(-1.0); }'
 		script %= name
 		result = self.ExecuteGetDoubleScript(script)
 		return result > 0.0
@@ -237,6 +247,9 @@ class GatanSocket(object):
 	def GetNumberOfCameras(self):
 		return self.GetLong('GS_GetNumberOfCameras')
 
+	def GetPluginVersion(self):
+		return self.GetLong('GS_GetPluginVersion')
+
 	def IsCameraInserted(self, camera):
 		funcCode = enum_gs['GS_IsCameraInserted']
 		message_send = Message(longargs=(funcCode,camera))
@@ -296,14 +309,24 @@ class GatanSocket(object):
 		message_recv = Message(longargs=(0,)) # just return code
 		self.ExchangeMessages(message_send, message_recv)
 
+	def setNumGrabSum(self, earlyReturnFrameCount, earlyReturnRamGrabs):
+		# pack RamGrabs and earlyReturnFrameCount in one double
+		self.num_grab_sum = (2**16) * earlyReturnRamGrabs + earlyReturnFrameCount
+
+	def getNumGrabSum(self):
+		return self.num_grab_sum
+
 	@logwrap
-	def SetupFileSaving(self, rotationFlip, dirname, rootname, filePerImage):
+	def SetupFileSaving(self, rotationFlip, dirname, rootname, filePerImage, doEarlyReturn, earlyReturnFrameCount=0,earlyReturnRamGrabs=0, lzwtiff=False):
 		pixelSize = 1.0
-		if False:
-			# compressed tiff file saving
-			flag = 3
+		self.setNumGrabSum(earlyReturnFrameCount, earlyReturnRamGrabs)
+		if self.save_frames and (doEarlyReturn or lzwtiff):
+			# early return flag
+			flag = 128*int(doEarlyReturn) + 8*int(lzwtiff)
+			numGrabSum = self.getNumGrabSum()
+			# set values to pass
 			longs = [enum_gs['GS_SetupFileSaving2'], rotationFlip, flag,]
-			dbls = [pixelSize,0.,0.,0.,0.,]
+			dbls = [pixelSize,numGrabSum,0.,0.,0.,]
 		else:
 			longs = [enum_gs['GS_SetupFileSaving'], rotationFlip,]
 			dbls = [pixelSize,]
@@ -333,10 +356,14 @@ class GatanSocket(object):
 		message_recv = Message(longargs=(0,))
 		self.ExchangeMessages(message_send, message_recv)
 		
+	def UpdateK2HardwareDarkReference(self, cameraid):
+		function_name = 'K2_updateHardwareDarkReference'
+		return self.ExecuteSendCameraObjectionFunction(function_name, cameraid)
+
 	def GetEnergyFilter(self):
 		if 'GetEnergyFilter' not in self.filter_functions.keys():
 			return -1.0
-		script = 'if(%s()) Exit(1.0) else Exit(-1.0)' % (self.filter_functions['GetEnergyFilter'],)
+		script = 'if ( %s() ) { Exit(1.0); } else { Exit(-1.0); }' % (self.filter_functions['GetEnergyFilter'],)
 		return self.ExecuteGetDoubleScript(script)
 
 	def SetEnergyFilter(self, value):
@@ -346,7 +373,7 @@ class GatanSocket(object):
 			i = 1
 		else:
 			i = 0
-		script = '%s(%d) %s' % (self.filter_functions['SetEnergyFilter'], i, self.wait_for_filter)
+		script = '%s(%d); %s' % (self.filter_functions['SetEnergyFilter'], i, self.wait_for_filter)
 		return self.ExecuteSendScript(script)
 
 	def GetEnergyFilterWidth(self):
@@ -358,11 +385,23 @@ class GatanSocket(object):
 	def SetEnergyFilterWidth(self, value):
 		if 'SetEnergyFilterWidth' not in self.filter_functions.keys():
 			return -1.0
-		script = 'if(%s(%f)) Exit(1.0) else Exit(-1.0)' % (self.filter_functions['SetEnergyFilterWidth'], value)
+		script = 'if ( %s(%f) ) { Exit(1.0); } else { Exit(-1.0); }' % (self.filter_functions['SetEnergyFilterWidth'], value)
+		return self.ExecuteSendScript(script)
+
+	def GetEnergyFilterOffset(self):
+		if 'GetEnergyFilterOffset' not in self.filter_functions.keys():
+			return 0.0
+		script = 'Exit(%s())' % (self.filter_functions['GetEnergyFilterOffset'],)
+		return self.ExecuteGetDoubleScript(script)
+
+	def SetEnergyFilterOffset(self, value):
+		if 'SetEnergyFilterOffset' not in self.filter_functions.keys():
+			return -1.0
+		script = 'if ( %s(%f) ) { Exit(1.0); } else { Exit(-1.0); }' % (self.filter_functions['SetEnergyFilterOffset'], value)
 		return self.ExecuteSendScript(script)
 
 	def AlignEnergyFilterZeroLossPeak(self):
-		script = 'if(%s()) (%s; Exit(1.0)} else Exit(-1.0)' % (self.filter_functions['AlignEnergyFilterZeroLossPeak'], self.wait_for_filter)
+		script = ' if ( %s() ) { %s Exit(1.0); } else { Exit(-1.0); }' % (self.filter_functions['AlignEnergyFilterZeroLossPeak'], self.wait_for_filter)
 		return self.ExecuteGetDoubleScript(script)
 
 	@logwrap
@@ -446,6 +485,42 @@ class GatanSocket(object):
 				remain -= len_recv
 				received += len_recv
 		return imArray
+
+	def ExecuteSendCameraObjectionFunction(self, function_name, camera_id=0):
+		# first longargs is error code. Error if > 0
+		return self.ExecuteGetLongCameraObjectFunction(function_name, camera_id)
+
+	def ExecuteGetLongCameraObjectFunction(self,function_name, camera_id=0):
+		'''
+		Execute DM script function that requires camera object as input and output one long integer.
+		'''
+		recv_longargs_init = (0,)
+		result = self.ExecuteCameraObjectFunction(function_name, camera_id, recv_longargs_init=recv_longargs_init)
+		if result is False:
+			return 1
+		return result.array['longargs'][0]
+
+	def ExecuteGetDoubleCameraObjectFunction(self,function_name, camera_id=0):
+		'''
+		Execute DM script function that requires camera object as input and output double floating point number.
+		'''
+		recv_dblargs_init = (0,)
+		result = self.ExecuteCameraObjectFunction(function_name, camera_id, recv_dblargs_init=recv_dblargs_init)
+		if result is False:
+			return -999.0
+		return result.array['dblargs'][0]
+
+	def ExecuteCameraObjectFunction(self,function_name, camera_id=0, recv_longargs_init=(0,), recv_dblargs_init=(0.0,), recv_longarray_init=[]):
+		'''
+		Execute DM script function that requires camera object as input.
+		'''
+		if not self.hasScriptFunction(function_name):
+			# unsuccessful
+			return False
+		fullcommand = "Object manager = CM_GetCameraManager();\n Object cameraList = CM_GetCameras(manager);\n Object camera = ObjectAt(cameraList,%d);\n " % (camera_id)
+		fullcommand += "%s(camera);\n" % (function_name)
+		result = self.ExecuteScript(fullcommand, camera_id, recv_longargs_init, recv_dblargs_init, recv_longarray_init) 
+		return result
 
 	def ExecuteSendScript(self, command_line, select_camera=0):
 		recv_longargs_init = (0,)

@@ -1,0 +1,27 @@
+/*----------------------------------------------------------------------------*
+*
+*  guigtkconfig.h  -  configuration
+*
+*----------------------------------------------------------------------------*/
+
+#ifndef guigtkconfig_h_
+#define guigtkconfig_h_
+
+#include "guimodulebase.h"
+
+
+/* build identification */
+
+MODULE-PRFX GUIGTK
+"i3guigtk"
+"2.4"
+"Copyright © 2012 Hanspeter Winkler"
+
+
+/* module codes */
+
+#define GuigtkModuleCode          ( GuigtkModuleBase | 0x0100 )
+#define GuigtkDisplayModuleCode   ( GuigtkModuleBase | 0x0200 )
+
+
+#endif

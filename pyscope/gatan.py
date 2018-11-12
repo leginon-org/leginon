@@ -1,9 +1,9 @@
 #
 # COPYRIGHT:
-#	   The Leginon software is Copyright 2003
-#	   The Scripps Research Institute, La Jolla, CA
+#	   The Leginon software is Copyright under
+#	   Apache License, Version 2.0
 #	   For terms of the license agreement
-#	   see  http://ami.scripps.edu/software/leginon-license
+#	   see  http://leginon.org
 #
 
 import ccdcamera
@@ -19,6 +19,7 @@ try:
 	com_module = 'comtypes'
 	client_module = comtypes.client
 except ImportError:
+	print 'comarray no longer available. Please install comtypes'
 	import pythoncom
 	import win32com.client
 	import comarray
@@ -36,6 +37,16 @@ def get_tecnaiccd():
 			pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
 			client_module.tecnaiccd = client_module.dynamic.Dispatch('TecnaiCCD.GatanCamera.2')
 		elif com_module == 'comtypes':
+			try:
+				comtypes.CoInitializeEx(comtypes.COINIT_MULTITHREADED)
+			except WindowsError:
+				'''
+				ConinitializeEx can not change thread property when the module directly
+				creating instance in python command gatan.Gatan().
+				When access remotely through Leginon client, Coinitialize is needed and
+				does not give error.
+				'''
+				comtypes.CoInitialize()
 			client_module.tecnaiccd = client_module.CreateObject('TecnaiCCD.GatanCamera.2')
 	return client_module.tecnaiccd
 
@@ -212,7 +223,7 @@ class Gatan(ccdcamera.CCDCamera):
 		inserted = self.getInserted()
 		if not inserted and value:
 			self.camera.Insert()
-			time.sleep(6)
+			time.sleep(10)
 		elif inserted and not value:
 			self.camera.Retract()
 		else:
@@ -328,3 +339,6 @@ class Gatan3(Gatan):
 	name = 'Gatan3'
 	cameraid = 3
 
+class Orius(Gatan):
+	name = 'Orius'
+	cameraid = 0

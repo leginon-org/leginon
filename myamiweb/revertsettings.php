@@ -1,10 +1,10 @@
 <?php
 
 /**
- *	The Leginon software is Copyright 2003 
- *	The Scripps Research Institute, La Jolla, CA
+ *	The Leginon software is Copyright under 
+ *	Apache License, Version 2.0
  *	For terms of the license agreement
- *	see  http://ami.scripps.edu/software/leginon-license
+ *	see  http://leginon.org
  */
 
 require_once ("inc/leginon.inc");
@@ -90,7 +90,7 @@ if ($_POST['orig']) {
 function init() {
 }
 </script>
-<h3><? echo $title ?></h3>
+<h3><?php echo $title ?></h3>
 <div align="center">
 <?php
 $code_string = '';
@@ -103,7 +103,7 @@ if ($_POST) {
 } else {
 ?>
 <form method="POST" action="<?php $_SERVER['PHP_SELF']?>" >
-<?
+<?php
 	$q = "select u.`DEF_id` as userId, u.* "
 			.",u.username "
 			.",concat(u.firstname,' ',u.lastname) as `full name` "
@@ -119,7 +119,7 @@ if ($_POST) {
 	if ($is_admin) {
 ?>
 		<select name="userId">
-<?
+<?php
 			echo "<option value='default' > -- select user -- </option>";
 			foreach($users as $user) {
 				if ($user['username'] == 'administrator') {
@@ -140,7 +140,7 @@ if ($_POST) {
 		<br/>
 		<br/>
 		<select name="sessionId">
-<?
+<?php
 			echo "<option value='default' > -- select a session if you want to revert to it -- </option>";
 			foreach($sessions as $session) {
 				if (!is_numeric($session['id'])) continue;
@@ -156,24 +156,24 @@ if ($_POST) {
 		<br/>
 		<br/>
 		<input type="submit" name="def" value="Revert Node Settings" >
-<?
+<?php
 
 // Administrator revert to the original
 		if (privilege('users') > 3) {
 ?>
 			<h3>            OR
 			<h3>Revert the administrator's Node Settings to the original installation values.</h3>
-			<input type="hidden" name="adminId" value= "<? echo $admin_user['userId'] ?>" >
+			<input type="hidden" name="adminId" value= "<?php echo $admin_user['userId'] ?>" >
 			<input type="submit" name="orig" value="Revert to Original" >
 		
-<?
+<?php
 		}
 	} else {
 		echo "No valid user for this operation";
 	} ?>
 </form>
-<? } ?>
+<?php } ?>
 </div>
-<?
+<?php
 admin_footer();
 ?>

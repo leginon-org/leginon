@@ -182,6 +182,7 @@ camera_params = (
 	('nframes', int),
 	('save frames', bool),
 	('align frames', bool),
+	('tiff frames', bool),
 	('align filter', str),
 	('frames name', str),
 	('use frames', tuple),
@@ -1352,6 +1353,7 @@ class PresetsManagerSettingsData(SettingsData):
 			('stage always', bool),
 			('cycle', bool),
 			('optimize cycle', bool),
+			('import random', bool),
 			('mag only', bool),
 			('apply offset', bool),
 			('disable stage for image shift', bool),
@@ -1875,6 +1877,8 @@ class BeamTiltImagerSettingsData(AcquisitionSettingsData):
 			('tableau binning', int),
 			('tableau split', int),
 			('correlation type', str),
+			('do auto coma', bool),
+			('auto coma limit', float),
 		)
 	typemap = classmethod(typemap)
 
@@ -1996,6 +2000,14 @@ class MoveAcquisitionSettingsData(AcquisitionSettingsData):
 			('imaging delay', float),  #seconds
 			('tilt to', float),		#degrees
 			('total move time', float),  #seconds
+			('nsteps', int),
+		)
+	typemap = classmethod(typemap)
+
+class DefocusSequenceSettingsData(AcquisitionSettingsData):
+	def typemap(cls):
+		return AcquisitionSettingsData.typemap() + (
+			('step size', float),  #meter
 			('nsteps', int),
 		)
 	typemap = classmethod(typemap)
@@ -2134,6 +2146,7 @@ class ManualAcquisitionSettingsData(SettingsData):
 			('correct image', bool),
 			('save image', bool),
 			('loop pause time', float),
+			('max loop', int),
 			('image label', str),
 			('low dose', bool),
 			('low dose pause time', float),
@@ -2141,6 +2154,9 @@ class ManualAcquisitionSettingsData(SettingsData):
 			('defocus1', float),
 			('defocus2switch', bool),
 			('defocus2', float),
+			('do defocus series', bool),
+			('defocus start', float),
+			('defocus step', float),
 			('dark', bool),
 			('force annotate', bool),
 			('reduced params', bool),
@@ -2745,6 +2761,13 @@ class AutoFillerSettingsData(ConditionerSettingsData):
 			('column fill end', float),
 			('loader fill start', float),
 			('loader fill end', float),
+			('delay dark current ref', int),
+		)
+	typemap = classmethod(typemap)
+
+class TEMControllerSettingsData(SettingsData):
+	def typemap(cls):
+		return SettingsData.typemap() + (
 		)
 	typemap = classmethod(typemap)
 
@@ -2873,4 +2896,11 @@ class ZeroLossIceThicknessSettingsData(SettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class BlackStripeSettingsData(SettingsData):
+	def typemap(cls):
+		return SettingsData.typemap() + (
+			('process', bool),
+			('pause', bool),
+		)
+	typemap = classmethod(typemap)
 

@@ -1,6 +1,3 @@
-# standard lib
-import os
-
 # 3rd party
 import numpy
 

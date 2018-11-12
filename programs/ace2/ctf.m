@@ -613,6 +613,7 @@ f64 getTEMLambda( f64 volts ) {
 	
 	f64 lambda = t1/sqrt(volts+t2*volts*volts);
 	
+	fprintf(stderr,"\n\t lambda is %2.2e pm \n",lambda);
 	return lambda;
 	
 }
@@ -1020,7 +1021,7 @@ f64 positionForPeak( f64 c[], u32 peak_num ) {
 	
 }
 
-ArrayP g2DCTF( f64 df1, f64 df2, f64 angleastig, u32 rows, u32 cols, f64 apix, f64 cs, f64 kv, f64 ampconst ) {
+ArrayP g2DCTF( f64 df1, f64 df2, f64 angleastig, u32 rows, u32 cols, f64 apix, f64 cs, f64 kv, f64 ampconst, f64 phase_shift  ) {
 	/*
 	This function is only used by ace2correct
 	Generates CTF and the ace2correct uses that information to:
@@ -1057,7 +1058,17 @@ ArrayP g2DCTF( f64 df1, f64 df2, f64 angleastig, u32 rows, u32 cols, f64 apix, f
 	f64 diffdf = (df1-df2)/2.0;
 
 	f64 B = sqrt(1.0 - ampconst*ampconst);
-	f64 A = ampconst;
+	f64 A = ampconst;// ensures A^2+B^2=1, and A cos g  + B sin g has maximum of 1;
+
+	//FILE * fp = NULL;
+	//fprintf(fp,"Angstoms per Pixel: %le\n",phase_shift);
+
+	if (phase_shift != 0){
+		f64 phase_shift_New= phase_shift+ asin(ampconst);
+		A = sin(phase_shift_New);
+		// could use A= ampconst *cos(phase_shift) + sqrt(1-ampconst^2)*sin(phase_shift);
+		B = cos(phase_shift_New);
+	}
 
 	#pragma omp for
 	for(r=0;r<rows;r++) {

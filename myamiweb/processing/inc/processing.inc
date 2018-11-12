@@ -2,9 +2,9 @@
 
 /**
  *	The Leginon software is Copyright 2006
- *	The Scripps Research Institute, La Jolla, CA
+ *	Apache License, Version 2.0
  *	For terms of the license agreement see
- *	@licence http://ami.scripps.edu/software/leginon-license
+ *	@licence http://leginon.org
  */
 /**
  *	Query definition to access all leginon data
@@ -95,32 +95,56 @@ function getHosts(){
 
 function getSelectedProcessingHost() 
 {
+	if ($_POST['changehostname']) {
+		// clusterParamForm may change hostname rather than processinghost
+		$_POST['processinghost'] = $_POST['changehostname'];
+	} 
 	if ($_POST['processinghost']) {
+		// $_SESSION['processinghost'] is changed according to $_POST after
+		// using and is not reset.  This sets it so it won't have conflict
+		// with the default.
 		$_SESSION['processinghost'] = $_POST['processinghost'];
 	}
 	return $_SESSION['processinghost'];
 }
 
+function getSelectedHostArray() {
+	$hostname = getSelectedProcessingHost();
+	$proc_list = (array)getHosts();
+	$hostArray = array();
+	foreach ($proc_list as $host) {
+		if ($host['host'] == $hostname) {
+			$hostArray = $host;
+			break;
+		}
+	}
+	return $hostArray;
+}
+
 function getHostForm() {
 	$h=array();
-	$selected_host=$_POST['processinghost'];
+	$selected_host= getSelectedProcessingHost();
 	$proc_list = (array)getHosts();
 	$hostArray = $proc_list[0];
 
-	// only list hosts if there are more than 1
+	// only show host selection if there are more than 1
 	if (count($proc_list) > 1){
+			
 		foreach ($proc_list as $host) {
-			if ($host['host'] == $_POST['processinghost']) {
+			$s = "";
+			if ($host['host'] == $selected_host) {
+				$s = "selected";
 				$hostArray = $host;
 			}
-			$s = ($host['host'] == $_POST['processinghost']) ? "selected" : "";
+
 			$h[]="<option value='".$host['host']."' ".$s." >".$host['host']."</option>\n";
 		}
 		$html="<select name=\"processinghost\" onchange='this.form.submit()'>\n";
 		$html.=join("\n",$h);
 		$html.="</select>";
 	} else {
-		$html="<input type='hidden' name=\"processinghost\" value='".$proc_list[0]['host']."'>\n";
+		$html="<b>".$hostArray['host'].":</b>\n";
+		$html.="<input type='hidden' name=\"processinghost\" value='".$proc_list[0]['host']."'>\n";
 	}
 	
 	// TODO: would be nice to change the javascript so that the entire page is not reloaded when new 
@@ -147,8 +171,13 @@ function getHostForm() {
 	return $html;
 }
 
-function getSubmitForm($name="Run", $displayhost=true, $warning=false) {
-	$html="<input type='submit' name='process' value='Just Show Command' onclick='pleasewait()'>\n";
+function getSubmitForm($name="Run", $displayhost=true, $warning=false, $button="On") {
+	if ($button == "On") {
+		if ( $_POST['testimage'] )
+			# Refresh Test Results avoids resubmit to cluster that would rerun the test
+			$html = "<input type='submit' name='process' value='Refresh Test Results' onclick='pleasewait()'>\n";
+		$html.="<input type='submit' name='process' value='Just Show Command' onclick='pleasewait()'>\n";
+	}
 	if ($displayhost && $_SESSION['username']) {
 		$html.=getHostForm();
 	}
@@ -156,7 +185,13 @@ function getSubmitForm($name="Run", $displayhost=true, $warning=false) {
 		$html.="<br/><font class='apcomment'>Submission will NOT run, only output a command that you can copy and paste into a unix shell</font>";
 	}
 	else if ($_SESSION['loggedin']) {
-		$html.="  <input type='submit' name='process' value='$name' onclick='pleasewait()'>\n";
+		$hostarray = getSelectedHostArray();
+		if (!$hostarray['nojobqueue'])
+			$long_name = $name.' with Job Scheduler';
+			$html.="  <input type='submit' name='process' value='$long_name' onclick='pleasewait()'>\n";
+
+		if ($hostarray['allowdirectrun'])
+			$html.="  <input type='submit' name='process' value='Run Directly on Host' onclick='pleasewait()'>\n";
 	}
 	return $html;
 }
@@ -171,13 +206,15 @@ function getStackSize($stackdata) {
 	$stackimgfile = $stackdata['path']."/".substr($stackdata['name'], 0, -4).".img";
 	else
 	$stackimgfile = $stackdata['path']."/".$stackdata['name'];
-	if (file_exists($stackimgfile)) {
-		$fsize = (int) filesize($stackimgfile);
-		if ($fsize > 1073741824)
-		$size = sprintf("%.2f GB", $fsize/1073741824);
-		else
-		$size = sprintf("%.1f MB", $fsize/1048576);
-	}
+	if (file_exists($stackimgfile))
+		return (displayFileSize((int) filesize($stackimgfile)));
+}
+
+function displayFileSize($fsize) {
+	if ($fsize > 1073741824)
+	$size = sprintf("%.2f GB", $fsize/1073741824);
+	else
+	$size = sprintf("%.1f MB", $fsize/1048576);
 	return $size;
 }
 
@@ -191,7 +228,7 @@ function apdivtitle($title) {
 }
 
 function processing_header($title,$heading=false,$headerstuff=false,$pleaseWait=false,$showmenu=true,$printDiv=false, 
-							$guideURL="http://ami.scripps.edu/redmine/projects/appion/wiki/Appion_Processing") 
+							$guideURL="http://emg.nysbc.org/redmine/projects/appion/wiki/Appion_Processing") 
 {
 	$expId = $_GET['expId'];
 	if (!is_numeric($expId) || $expId == 0) {
@@ -318,7 +355,7 @@ function processing_header($title,$heading=false,$headerstuff=false,$pleaseWait=
 	$html.= "<ul>\n";
 	$html.= "<div style='float: right; padding-right:10px;'>\n";
 	$html.= "<li><a href='procsummary.php?expId=$expId'>[Appion Stats]</a></li>\n";
-	$html.= "<li><font size=+1><b><a href='$guideURL'>[User Guide]</a></b></font></li>\n";
+	$html.= "<li><font size=+1><b><a target='_blank' href='$guideURL'>[User Guide]</a></b></font></li>\n";
 	$html.= "</div>\n";
 	$html.= "<li><b>Project:</font></b> ".$proj_link."</li>\n";
 	if ($session_link) $html.= "<li><b>Session:</b> ".$session_link."</li>\n";
@@ -401,14 +438,13 @@ Password: <input type="password" name="password">
 function checkLogin() {
 	// if everything is cool, then return nothing
 	if (!$_SESSION['username']) {
-		if (!$_POST['username'] || !$_POST['password'])		
-		return("Please enter your username and password to server ");
-		// Do not authenticate username & password on webserver, this assumes
-		//the user has access to the webserver.  Until we fix this properly 
-		//just ensure that a username and password have been provided.
-		//if (!check_ssh($_SERVER['SERVER_ADDR'],$_POST['username'],$_POST['password']))
-		//return("Authentication failed to server " . $_SERVER['SERVER_ADDR']);
-		
+		if (!$_POST['username'] || !$_POST['password'])	
+			return("Please enter your username and password to server ");
+		$proc_list = (array)getHosts();
+		//Comment 2 lines below if you have multiple hosts with different user authetication.
+		$first_processing_host = $proc_list[0]['host'];		
+		if (!check_ssh($first_processing_host,$_POST['username'],$_POST['password']))
+			return("Authentication failed to server " . $first_processing_host);
 		## save username and password to the session
 		$_SESSION['username']=$_POST['username'];
 		$_SESSION['password']=$_POST['password'];
@@ -443,9 +479,34 @@ function getSessionList($projectId,$sessionId){
 
 // TODO: what if the cluster does not use qstat? Moab uses mstat or some thing like that.
 function checkClusterJobs($processhost, $user, $pass) {
-	$cmd = "qstat -au ".$user." | egrep '^[0-9]'";
-	$subjobs = exec_over_ssh($processhost, $user, $pass, $cmd, true, $port=22, $max_time=10);
+	$cluster = checkClusterType($user);
+	if ($cluster == 'sge') {
+		$cmd = "qstat -u ".$user." | egrep '^[0-9]'";
+		$subjobs = exec_over_ssh($processhost, $user, $pass, $cmd, true, $port=22, $max_time=10);
+#		print_r($subjobs);
+	}
+	else {
+		$cmd = "qstat -au ".$user." | egrep '^[0-9]'";
+		$subjobs = exec_over_ssh($processhost, $user, $pass, $cmd, true, $port=22, $max_time=10);
+	}
 	return $subjobs;
+}
+
+function checkClusterType($user) {
+	$appioncfg = "~".$user."/.appion.cfg";
+#	$appioncfg = "/data2/log-l/.appion.cfg";
+//	echo $appioncfg;
+	if (file_exists($appioncfg)) {
+		$contents = file_get_contents($appioncfg);
+		$contents = explode("\n", $contents);
+		foreach($contents as $line) {
+			if (strpos($line,'ProcessingHostType')!== false) {
+				$str = explode("=", $line);
+				$cluster = $str[1];
+			}
+		}
+	}
+	return strtolower($cluster);
 }
 
 function checkRequiredFileError($path,$filename) {
@@ -489,6 +550,14 @@ function getNumberOfProcsPerNode( $processingHost )
 	return $ppn;
 }
 
+function getMaxNumberOfProcsPerNode( $processingHost ) 
+{
+	$cluster = new Cluster( $processingHost );
+	$ppn = $cluster->getPpnMax();
+	
+	return $ppn;
+}
+
 function getNumberOfRequiredNodes($nproc, $ppn) 
 {
 	if ($nproc < $ppn) {
@@ -514,6 +583,13 @@ function getNumberOfRequiredNodes($nproc, $ppn)
 //*****************************************************************************
 function addAppionWrapper($command, $processhost=false) 
 {
+		$wrapper = getAppionWrapper($processhost);
+		if ($wrapper) $command = $wrapper." ".$command;
+		return $command;
+}
+
+function getAppionWrapper($processhost=false) 
+{
 	if ( USE_APPION_WRAPPER ) {
 		if ($processhost === false) {
 			$processhost = getSelectedProcessingHost();
@@ -521,9 +597,8 @@ function addAppionWrapper($command, $processhost=false)
 		$cluster = new Cluster( $processhost );
 		$wrapper = $cluster->getWrapperPath();
 		$wrapper = $wrapper ? $wrapper : APPION_WRAPPER_PATH;
-		$command = $wrapper." ".$command;
 	}
-	return $command;
+	return $wrapper;
 }
 
 
@@ -542,11 +617,11 @@ function showOrSubmitCommand($command, $headinfo, $jobtype, $nproc, $testimg=Fal
 	*/
 	$expId=$_GET['expId'];
 	// uploadimage jobtype need to be handled differently since it has none of these
-	if ($jobtype != 'uploadimage' && $jobtype != 'etomorecon') {
+	if ($jobtype != 'uploadimage' && $jobtype != 'etomorecon' && $jobtype !='repair') {
 		// get required inputs
 		if (!is_numeric($expId) || $expId == 0) 
 			return "<B>ERROR:</B> undefined expId";
-		$allow_processing = checkExptAdminPrivilege($expId,'data');
+		$allow_processing = hasExptAdminPrivilege($expId,'data');
 		$runname=$_POST['runname'];
 		if (empty($runname))
 			return "<B>ERROR:</B> undefined runname";
@@ -575,7 +650,7 @@ function showOrSubmitCommand($command, $headinfo, $jobtype, $nproc, $testimg=Fal
 			$projectId = $_GET['projectId'];
 			$allow_processing = checkProjectExptAdminPrivilege($projectId);
 		} else {
-			$allow_processing = checkExptAdminPrivilege($expId,'data');
+			$allow_processing = hasExptAdminPrivilege($expId,'data');
 		}
 	}
 	if (!$allow_processing)
@@ -602,8 +677,32 @@ function showOrSubmitCommand($command, $headinfo, $jobtype, $nproc, $testimg=Fal
 	// Get the processing host
 	$processhost = getSelectedProcessingHost();
 
+
+	if ($_POST['process'] == "Refresh Test Results" && $testimg) {		
+		// if we are testing an image, return to the parameter page 
+		return;
+	}	
+
+	// simple ssh in and run.
+	if ($_POST['process'] == "Run Directly on Host" && $jobtype != 'uploadimage') {
+		// Option 1: selected the run button
+		$user = $_SESSION['username'];
+		$password = $_SESSION['password'];
+		if (!($user && $password)) {
+			return "<B>ERROR:</B> Enter a user name and password";
+		}
+		$errors = submitAppionCommand($command, $outdir, $runname, $expId, $jobtype, $processhost, $testimg);
+		
+		// if errors:
+		if ($errors) {
+			return "<B>ERROR:</B> $errors";
+		} else if ($testimg) {
+			return;
+		}
+		exit;
+
 	// until uploadimage works with appionJob submission, it is not allowed to do so
-	if ($_POST['process'] != "Just Show Command" && $jobtype != 'uploadimage') {
+	}	elseif ($_POST['process'] != "Just Show Command" && $jobtype != 'uploadimage') {
 		// Option 1: selected the run button
 		$user = $_SESSION['username'];
 		$password = $_SESSION['password'];
@@ -730,8 +829,16 @@ function justShowCommandTable($command, $processhost, $skip_command=false) {
 
 function addProcessingHostParams( $command, $processhost, $nproc, $ppn, $nodes, $walltime, $cputime, $queue )
 {
-	if ($ppn < 1 && !preg_match("/--ppn=/", $command) ) {
-		$ppn = getNumberOfProcsPerNode($processhost);
+	if (!preg_match("/--ppn=/", $command) ) {
+		if ($ppn < 1) {
+			// set to use default ppn if 0
+			$ppn = getNumberOfProcsPerNode($processhost);
+		}
+		$ppnmax = getMaxNumberOfProcsPerNode($processhost);
+		if ($ppn >  $ppnmax) {
+			// set to use max ppn if very large
+			$ppn = $ppnmax;
+		}
 	}
 	if ($nodes < 1 && !preg_match("/--nodes=/", $command) ) {
 		list($nodes, $ppn) = getNumberOfRequiredNodes($nproc, $ppn);
@@ -791,8 +898,47 @@ function addJobSubmitParams( $command, $processhost, $nproc, $ppn, $nodes, $wall
 }
 
 /**************************************/
+function submitAppionCommand($command, $outdir, $runname, $expId, $jobtype, $processinghost, $testimg=False) {
+	$user = $_SESSION['username'];
+	$pass = $_SESSION['password'];
+
+	# TODO create $outdir
+	$logdir = $outdir.'/'.'direct_runlog';
+	$no_error1 = makeSubDirs($processhost, $user, $pass, $logdir);
+
+	// Add the Appion wrapper to support muliple installations of Appion
+	$wrappedcommand =  addAppionWrapper($command, $processhost);
+	$logpath = $logdir."/".$runname.".log";
+	$appion_logpath = $outdir."/".$runname."/".$runname.".appionsub.log";
+	$final_command = "nohup ".$wrappedcommand." >& ".$logpath;
+	// uploadimage is run directly through ssh, not webcaller.py and qsub
+	$no_error2 = exec_over_ssh($processhost, $user, $pass, $final_command, TRUE);
+	$msg = "<B>Command submitted to ".$processinghost." through ssh on ".$outdir.".</B>";
+	if (!$testimg) {
+		processing_header("Appion Background Submission","Appion Background Submission");
+		echo $msg;
+		echo "<p></p>\n";
+		echo $final_command;
+		echo "<p></p>\n";
+		echo justShowCommandTable($command, $processhost, true);
+	processing_footer();
+	exit;
+	}
+	$no_error3 = linkLogInRunDir($processhost, $user, $pass, $logpath, $appionlogpath);
+	if ($no_error1 === false || $no_error2 === false || $no_error3 === false ){
+		$errMsg = "Could not run command directly in $outdir from $processhost: ";
+		$errMsg .= pconnError();
+		return $errMsg;
+	}
+	if ($testimg) return;
+	processing_footer();
+	exit;
+
+}
+
+/**************************************/
 function submitAppionJob($command, $outdir, $runname, $expId, $jobtype, $testimg=False,
-$xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0, $walltime="240", $cputime=False) {
+$xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0, $walltime="96", $cputime=False) {
 	global $DATA_DIRS;
 
 	$allow_processing = checkExptAdminPrivilege($expId,'data');
@@ -848,22 +994,20 @@ $xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0, $walltime="240", $cputime=
 	// is this used anymore? - neil
 	if ($xtra) $runname = "$runname.$xtra";
 
-	// create run directory on processing host only.  Do not do anything on
-	// the webserver, doing so requires making poor assumptions. 
-	$cmd = "mkdir -p $rundir;";
-	$rvalue = exec_over_ssh($processhost, $user, $pass, $cmd, False);
-	if ($rvalue === false ){
-		$errMsg = "Could not create run directory on $processhost: ";
-		$errMsg .= pconnError();
-		return $errMsg;
+	makeSubDirs($processhost, $user, $pass, $rundir);
+	
+	if ($testimg) {
+		//submit directly to head node on cluster if testing 1 image
+		$cmd = "cd $rundir; $command; exit;";
+		$jobdata = exec_over_ssh($processhost, $user, $pass, $cmd, True, $port=22, $max_time=160);
+		if ( empty($jobdata) ) {		
+			$errMsg .= "Job submission to $processhost failed for command:<br> <font color=black size='-1'>$command</font> <br> ";
+			$errMsg .= pconnError();
+			return $errMsg;
+		} else {
+			return;
+		}
 	}
-	// check that the directory was created successfully
-	$fileExists = file_exists($rundir);
-  	if ($fileExists===false) {
-  		$errMsg = "Warning: The output directory (<font color=black>$rundir</font>) may not have been created on $processhost.  <br>";
-  		// Don't return yet, perhaps we don't have access to the dir from the web server.
-  		// This message will be prepended to a later occuring error.
-  	}
 
 
 	// Set names of cluster job file and output log
@@ -916,7 +1060,7 @@ $xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0, $walltime="240", $cputime=
 	$jobnum = $matches[0][0];
 	if (!is_numeric($jobnum)) {
 		echo "</table><p>\n";
-		echo "ERROR in job submission. Check ".$rundir." to ensure you have write access to this directory. You can also copy the command from above into ".$processhost." terminal for more info. </br></br>Note for systems administrators: ensure the ,.appio.cfg configuration file is correct (http://ami.scripps.edu/redmine/projects/appion/wiki/Configure_appioncfg)\n".$jobdata."\n".$matches[0][0]."\n";
+		echo "ERROR in job submission. Check ".$rundir." to ensure you have write access to this directory. You can also copy the command from above into ".$processhost." terminal for more info. </br></br>Note for systems administrators: ensure the ,.appio.cfg configuration file is correct (http://emg.nysbc.org/redmine/projects/appion/wiki/Configure_appioncfg)\n".$jobdata."\n".$matches[0][0]."\n";
 		processing_footer();
 		exit;
 	}
@@ -954,19 +1098,22 @@ $xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0, $walltime="240", $cputime=
 /**************************************/
 function writeTestResults($jpg,$ccclist,$bin,$process_str='')
 {
-	// First, see if we are just showing the command
+	// First, see if we are just showing the command or refreshing the results
 	if ($process_str === '') {
 		$process_str = getProcessString();
 	}
-	$showcmd = preg_match('/[Ss]how/',$process_str);
-	
+	$showcmd = preg_match('/[Ss]how/',$process_str) || preg_match('/[Rr]un Directly/',$process_str);
+	if ( !$showcmd )	{
+		$showcmd = preg_match('/[Rr]efresh/',$process_str);
+	}
+
 	// Remove any white space in the image name
 	$jpg = preg_replace('/\s+/','',$jpg);
 	
 	clearstatcache(); // clear cache
 	$fileExists = is_file($jpg);
   	if ( ($fileExists===false) && $showcmd ) {
-		return "<font color='#990000'>The test results ($jpg) are not ready for display. Refresh the page after the command is run successfully. </font><br />\n";
+		return "<font color='#990000'>The test results ($jpg) are not ready for display. Use <b>Refresh Test Results</b> button below to display it after the command is run successfully. </font><br />\n";
   	}
 	
 	
@@ -986,15 +1133,14 @@ function writeTestResults($jpg,$ccclist,$bin,$process_str='')
 	// Wait for 1. the file to exist, 2. an existing file to be modified, or 3. timer to run out
 	if (!$showcmd) {
 		do {
-  			clearstatcache(); // filemtime() and file_exists() results are cached, clear it.
+  		clearstatcache(); // filemtime() and file_exists() results are cached, clear it.
 			$fileExists = is_file($jpg);
-  			if ($fileExists) {
+  		if ($fileExists) {
 				$file_time = filemtime($jpg);
 				$mod_time = abs($start_time - $file_time);
-  			}
-
+  		}
 			$curr_wait_time = time() - $start_time;	
-
+			if ($curr_wait_time > $max_time) break;
 		} while ( (($fileExists===false) && ($curr_wait_time < $max_time )) || (($fileExists===true) && ($mod_time > $max_mod_time)) );
 	}
   
@@ -1003,7 +1149,7 @@ function writeTestResults($jpg,$ccclist,$bin,$process_str='')
   	if ($fileExists===false) {
 		$base = basename($jpg);
 		$dir = dirname($jpg);
-		return "<font color='#990000' size='+2'>An Error occurred - the image $base was not found in folder $dir.<br /> Processing may be taking longer than expected. Refresh this page when the image is available to display.</font><br />\n";
+		return "<font color='#990000' >The image $base was not found in folder $dir.<br /> Processing may be taking longer than expected. Click <b>Refresh Test Results</b> when the image is available to display.</font><br />\n";
 	}
 
 	// The results are ready, display them.
@@ -1120,6 +1266,15 @@ function updateDescription($table, $editid, $text) {
 	$desc = html_entity_decode($text, ENT_QUOTES);
 	$desc = trim($desc);
 	$particle->updateDescription($table, $editid, $desc);
+}
+
+function hasPatternInArrayKeys($post_array,$pattern='/updateDesc/') {
+	$has_pattern = false;
+	if (is_array($post_array) && count($post_array)) {
+		$keys = array_keys($post_array);
+		foreach ($keys as $k) if (preg_match($pattern,$k)) { $has_pattern=true; break; };
+	}
+	return $has_pattern;
 }
 
 /**************************************/
@@ -1314,6 +1469,27 @@ function showReference( $method )
 function referenceBox($title, $year, $authorlist, $journal, $volume=false, $issue=false, $pmid=false, $pmcid=false, $doi=false, $logo=false) 
 {
 	return html_elements::referenceBox($title, $year, $authorlist, $journal, $volume, $issue, $pmid, $pmcid, $doi, $logo);
+}
+
+function	makeSubDirs($processhost, $user, $pass, $rundir) {
+	// create run directory on processing host only.  Do not do anything on
+	// the webserver, doing so requires making poor assumptions. 
+	$cmd = "mkdir -p $rundir;";
+	$rvalue = exec_over_ssh($processhost, $user, $pass, $cmd, False);
+	if ($rvalue === false ){
+		$errMsg = "Could not create run directory on $processhost: ";
+		$errMsg .= pconnError();
+		return $errMsg;
+	}
+}
+
+function	linkLogInRunDir($processhost, $user, $pass, $logpath, $appionlogpath) {
+	$rm_command = "rm -f ".$appionlogpath;
+	# ok if not successful because it means it does not exist, yet
+	exec_over_ssh($processhost, $user, $pass, $rm_command, TRUE);
+	$link_command = "ln -s ".$logpath." ".$appionlogpath;
+	$fcheck = exec_over_ssh($processhost, $user, $pass, $link_command, TRUE);
+	return $fcheck;
 }
 
 ?>

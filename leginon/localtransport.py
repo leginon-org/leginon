@@ -1,9 +1,9 @@
 #
 # COPYRIGHT:
-#       The Leginon software is Copyright 2003
-#       The Scripps Research Institute, La Jolla, CA
+#       The Leginon software is Copyright under
+#       Apache License, Version 2.0
 #       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
+#       see  http://leginon.org
 #
 import datatransport
 
@@ -27,7 +27,7 @@ class Server(object):
 			return self.datahandler.handle(request)
 		except AttributeError:
 			if self.datahandler is None:
-				raise TransportError('error handling request, no handler')
+				raise TransportError('error handling local request, no handler')
 			else:
 				raise
 

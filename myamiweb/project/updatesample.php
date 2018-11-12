@@ -113,16 +113,16 @@ $newnumberstr=$sample->format_number($cursample['number']);
 project_header("Sample $title");
 ?>
 
-<a href="<?=$_GET['ln'];?>">[ &laquo; back ]</a>
+<a href="<?php echo $_GET['ln'] ;?>">[ &laquo; back ]</a>
 <p>
 <font color=red>*</font>
 <font face="Arial, Helvetica, sans-serif" size="2">: required fields</font>
 </p>
-<?
+<?php
 require_once "inc/aform.php";
 ?>
 <link href="css/aform.css" rel="stylesheet" type="text/css" />
-<?
+<?php
 $form=new form();
 $form->setPrefix("sa");
 $form->action=$_SERVER['REQUEST_URI'];

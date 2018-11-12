@@ -1,9 +1,9 @@
 #
 # COPYRIGHT:
-#	   The Leginon software is Copyright 2003
-#	   The Scripps Research Institute, La Jolla, CA
+#	   The Leginon software is Copyright under
+#	   Apache License, Version 2.0
 #	   For terms of the license agreement
-#	   see  http://ami.scripps.edu/software/leginon-license
+#	   see  http://leginon.org
 #
 import acquisition
 import node, leginondata
@@ -21,7 +21,7 @@ import player
 class ManualFocusChecker(acquisition.Acquisition):
 	panelclass = gui.wx.Focuser.Panel
 	settingsclass = leginondata.AcquisitionSettingsData
-	defaultsettings = acquisition.Acquisition.defaultsettings
+	defaultsettings = dict(acquisition.Acquisition.defaultsettings)
 
 	eventinputs = acquisition.Acquisition.eventinputs
 	eventoutputs = acquisition.Acquisition.eventoutputs
@@ -101,21 +101,30 @@ class ManualFocusChecker(acquisition.Acquisition):
 		correction = self.settings['correct image']
 		self.manualchecklock.acquire()
 		if correction:
-			imdata = self.acquireCorrectedCameraImageData()
+			imdata = self.acquireCorrectedCameraImageData(force_no_frames=True)
 		else:
-			imdata = self.acquireCameraImageData()
-		imarray = imdata['image']
+			imdata = self.acquireCameraImageData(force_no_frames=True)
 		self.manualchecklock.release()
-		pow = imagefun.power(imarray, self.maskradius)
-		self.man_power = pow.astype(numpy.float32)
-		self.man_image = imarray.astype(numpy.float32)
-		self.panel.setManualImage(self.man_image, 'Image')
-		self.panel.setManualImage(self.man_power, 'Power')
+		if imdata is not None:
+			# None means bad acquisition
+			imarray = imdata['image']
+			pow = imagefun.power(imarray, self.maskradius)
+			self.man_power = pow.astype(numpy.float32)
+			self.man_image = imarray.astype(numpy.float32)
+			self.panel.setManualImage(self.man_image, 'Image')
+			self.panel.setManualImage(self.man_power, 'Power')
+		else:
+			self.logger.error('manual focus image acquisition failed')
 		#sleep if too fast in simulation
 		safetime = 1.0
 		t1 = time.time()
 		if t1-t0 < safetime:
 			time.sleep(safetime-(t1-t0))
+
+	def getTEMCsValue(self):
+		scopedata = self.instrument.getData(leginondata.ScopeEMData)
+		cs = scopedata['tem']['cs']
+		return cs
 
 	def manualCheckLoop(self, setting, emtarget=None, focusresult=None):
 		## go to preset and target
@@ -124,7 +133,8 @@ class ManualFocusChecker(acquisition.Acquisition):
 			self.presetsclient.toScope(presetname, emtarget)
 		pixelsize,center = self.getReciprocalPixelSizeFromPreset(presetname)
 		self.ht = self.instrument.tem.HighTension
-		self.panel.onNewPixelSize(pixelsize,center,self.ht)
+		self.cs = self.getTEMCsValue()
+		self.panel.onNewPixelSize(pixelsize,center,self.ht,self.cs)
 		self.logger.info('Starting manual focus loop, please confirm defocus...')
 		self.beep()
 		self.manualplayer.play()

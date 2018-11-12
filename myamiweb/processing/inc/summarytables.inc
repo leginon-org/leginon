@@ -1,9 +1,9 @@
 <?php
 /**
- *  The Leginon software is Copyright 2003 
- *  The Scripps Research Institute, La Jolla, CA
+ *  The Leginon software is Copyright under 
+ *  Apache License, Version 2.0
  *  For terms of the license agreement
- *  see  http://ami.scripps.edu/software/leginon-license
+ *  see  http://leginon.org
  *
  *	summary tables for common appion objects
  */
@@ -15,6 +15,111 @@ require_once "inc/viewer.inc";
 require_once "inc/processing.inc";
 
 $jmol = false;
+
+/****************************************
+****************************************/
+function refine3dsummarytable($selectionid, $mini=false, $showOptions=True) {
+	$expId = $_GET['expId'];
+	$particle = new particledata();
+	$selectiontype = $particle->getSelectionParams($selectionid, true);
+	$selectiondatas = $particle->getSelectionParams($selectionid);
+	$selectiondata = $selectiondatas[0];
+	$selectionstats = $particle->getStats($selectionid);
+	$preset = $selectionstats['preset'];
+	//echo print_r($selectionstats)."<br/>\n";
+	//echo print_r($selectiondata)."<br/>\n";
+
+	if ($_POST['hideItem'.$selectionid] == 'hide') {
+		$particle->updateHide('ApSelectionRunData', $selectionid, '1');
+		$selectiondata['hidden'] = 1;
+	} elseif ($_POST['unhideItem'.$selectionid] == 'unhide') {
+		$particle->updateHide('ApSelectionRunData', $selectionid, '0');
+		$selectiondata['hidden'] = 0;
+	}
+
+	$j = "3d Refine Info: <span class='aptitle' >"
+		."<a href='relion3drefinereport.php?expId=$expId&rId=$selectionid'>"
+		.$selectiondata['name']."</a></span> (ID: $selectionid)\n";
+	if ($selectiondata['hidden'] == 1) {
+		$j.= " <font color='#cc0000'>HIDDEN</font>\n";
+		if ($showOptions) $j.= " <input class='edit' type='submit' name='unhideItem".$selectionid."' value='unhide'>\n";
+		$display_keys['hidden']="<font color='#cc0000'>HIDDEN</font>\n";
+	}
+	elseif ($showOptions) $j.= " <input class='edit' type='submit' name='hideItem".$selectionid."' value='hide'>\n";
+	if ($_SESSION['username'] && $showOptions) $j.="<input class='edit' type='button' onClick='parent.location=\"dropparticles.php?expId=$expId&partId=$selectionid\"' value='delete'>\n";
+
+	$selectiontable.= apdivtitle($j);
+	//echo $j."<br/>\n";
+
+	$selectiontable.= "<table border='0'>\n";
+
+	// Need to get the date/time from the SelectionRunDataTable rather than the params table. refs #1171
+	$selectionRunData = $particle->getSelectionRunData($selectionid);
+	$display_keys['date time'] = $selectionRunData['DEF_timestamp'];
+
+	// may be different than $expId
+	$selectsessionid = $selectiondata['REF|leginondata|SessionData|session'];
+	if($selectsessionid != $expId) {
+		$selectsessiondata = $particle->getSessionData($selectsessionid);
+		//echo print_r($selectsessiondata)."<br/>\n";
+		$display_keys['session'] = $selectsessiondata['name']." (id: $selectsessionid)";
+	}
+	$display_keys['method'] = $selectiontype;
+	if ($preset)
+		$display_keys['preset'] = $preset;
+	if ($selectiondata['path'])
+		$display_keys['path'] = $selectiondata['path'];
+
+	// Show number of particles
+	if ($selectionstats['totparticles'] > 0) {
+		$dlink .= "(<font size='-2'><a href='downloadparticledata.php?expId=$expId&pSelectionId=$selectionid&preset=$preset'>\n";
+		$dlink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download coordinates'>";
+		$dlink .= "  &nbsp;download coordinates\n";
+		$dlink .= "</a></font>)\n";
+	}
+	$display_keys['# particles'] = commafy($selectionstats['totparticles'])." $dlink";
+	if ($selectionstats['totparticles'] > 0) {
+		$display_keys['# images'] = commafy($selectionstats['num'])." ("
+			.round($selectionstats['totparticles']/$selectionstats['num'],1)." part/img)";
+		$display_keys['view picks'] = ""
+			."<a href='multiimgassessor.php?expId=$expId&pickId=$selectionid'>"
+			."view picks in multi-assessor</a>";
+	}
+	if ($selectiondata['trace']) {
+		if ($selectionstats['total_object_traced'] > 0) {
+			$dlink .= "<a href='analyzeTracedObject.php?expId=$expId&selectionId=$selectionid'>\n";
+			$dlink .= "  &nbsp;Analyze traced objects\n";
+			$dlink .= "</a>\n";
+		}
+		$display_keys['# traced objects'] = commafy($selectionstats['total_object_traced'])." $dlink";
+	}
+	if (!$mini) {
+		if ($selectiondata['diam'])
+			$display_keys['particle diam'] = $selectiondata['diam'];
+		if ($selectiondata['bin'])
+			$display_keys['binning'] = $selectiondata['bin'];
+		if ($selectiondata['threshold']) {
+			$display_keys['threshold'] = $selectiondata['manual_thresh'];
+			if ($selectiondata['max_threshold'])
+				$display_keys['threshold'] .= " (".$selectiondata['max_threshold'].")";
+		}
+		if ($selectiondata['lp_filt']) {
+			$display_keys['filters'] = $selectiondata['lp_filt']." &Aring; &ndash; ".$selectiondata['hp_filt']." &Aring;";
+			if ($selectiondata['median'])
+				$display_keys['filters'] .= " (".$selectiondata['median']." median)";
+		}
+		$display_keys['thresh range'] = sprintf("%.4f &ndash; %.4f", $selectionstats['min'], $selectionstats['max']);
+		$display_keys['thresh mean'] = sprintf("%.4f &plusmn; %.4f", $selectionstats['avg'], $selectionstats['stddev']);
+	}
+
+	foreach($display_keys as $k=>$v) {
+	        $selectiontable.= formatHtmlRow($k,$v);
+	}
+	$selectiontable.= "</table>\n";
+	$selectiontable.= "<p>\n";
+	return $selectiontable;
+}
+
 
 /****************************************
 ****************************************/
@@ -169,7 +274,7 @@ function stacksummarytable($stackid, $mini=false, $tiny=false, $showOptions=True
 	$downloadLink .= "</a></font>)\n";
 	$j.= $downloadLink;
 	## link to list ctf values
-	if ($particle->hasCtfData($expId))
+	if ($particle->hasCtfData($expId) && $showOptions)
 		$j.= "<input class='edit' type='button' onClick='window.open(\"listCTFvalues.php?expId=$expId&sId=$stackid\")' value = 'list per-particle CTF info'>\n";
 
 	## Only allow bake for stacks created from particle selection
@@ -204,7 +309,13 @@ function stacksummarytable($stackid, $mini=false, $tiny=false, $showOptions=True
 		$stacktable.= "<img src='loadimg.php?filename=$stackavg&s=150&coff=1' height='150'><br/>\n";
 		$stacktable.= "<i>averaged stack image</i>\n";
 		if ($showOptions) {
-			if (!$centered) $stacktable.= "<br /><a href='centerStack.php?expId=$expId&sId=$stackid'>[Center Particles]</a>\n";
+			if (!$centered) {
+				$stacktable.= "<br /><a href='centerStack.php?expId=$expId&sId=$stackid'>[Center Particles]</a>\n";
+			} else {
+				$stacktable.= "<br /><a href='radialAverageStack.php?expId=$expId&sId=$stackid'>[Radial Average Particles]</a>\n";
+			}
+			//$stacktable.= "<br /><a href='runAppionLoop.php?form=learningStackCleaner&expId=$expId&stackId=$stackid'>[Learning Stack Cleaner]</a>\n";
+			$stacktable.= "<br /><a href='learningStackCleaner.php?expId=$expId&stackId=$stackid'>[Learning Stack Cleaner]</a>\n";
 			if (!$junksorted) $stacktable.= "<br /><a href='sortJunk.php?expId=$expId&sId=$stackid&junksort=1'>[Sort Junk]</a>\n";
 			if ($junksorted) $stacktable.= "<br /><a href='viewstack.php?file=$stackfile&expId=$expId&stackId=$stackid&junksort=1'>[Apply Junk Cutoff]</a>\n";
 			$stacktable.= "<br/><a href='subStack.php?expId=$expId&sId=$stackid'>[Create Substack]</a>\n";
@@ -277,25 +388,34 @@ function stacksummarytable($stackid, $mini=false, $tiny=false, $showOptions=True
 		// Number images used to make stack
 		$display_keys['# images used']=$particle->getNumStackImages($stackid);
 		// Get filesize
-		$display_keys['file size'] = getStackSize($stackdata);
+		$filesize = getStackSize($stackdata);
+		if (!$filesize && $showOptions) {
+			$missing = True;
+			$fsize = displayFileSize(4*$boxsz*$numpart);
+			$fsize = "Generate Missing File: (".$fsize.")";
+			$filesize = "<input class='edit' type='button' onClick='parent.location=\"generateMissingStack.php?expId=$expId&stackId=$stackid\"' value='$fsize'>";
+		}
+		$display_keys['file size'] = $filesize;
 	}
 
 
-	// provide a link to download a stack
-	if (substr($stackdata['name'], -4) == ".hed") {
-		$imgfile = $stackdata['path']."/".substr($stackdata['name'], 0, -4).".img";
-		$hedfile = $stackdata['path']."/".substr($stackdata['name'], 0, -4).".hed";
-		$stacklink .= "<font size='-2'><a href='download.php?expId=$expId&file=$hedfile'>\n";
-		$stacklink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download hed file'>hed\n";
-		$stacklink .= "</a>\n";
-		$stacklink .= "&nbsp;<a href='download.php?expId=$expId&file=$imgfile'>\n";
-		$stacklink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download img file'>img\n";
-		$stacklink .= "</a></font>\n";
-	} else {
-		$ext = substr($stackdata['name'], -3);
-		$stacklink .= "<font size='-2'><a href='download.php?expId=$expId&file=$stackfile'>\n";
-		$stacklink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download stack'>$ext\n";
-		$stacklink .= "</a></font>\n";
+	if ($missing != True) {
+		// provide a link to download a stack
+		if (substr($stackdata['name'], -4) == ".hed") {
+			$imgfile = $stackdata['path']."/".substr($stackdata['name'], 0, -4).".img";
+			$hedfile = $stackdata['path']."/".substr($stackdata['name'], 0, -4).".hed";
+			$stacklink .= "<font size='-2'><a href='download.php?expId=$expId&file=$hedfile'>\n";
+			$stacklink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download hed file'>hed\n";
+			$stacklink .= "</a>\n";
+			$stacklink .= "&nbsp;<a href='download.php?expId=$expId&file=$imgfile'>\n";
+			$stacklink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download img file'>img\n";
+			$stacklink .= "</a></font>\n";
+		} else {
+			$ext = substr($stackdata['name'], -3);
+			$stacklink .= "<font size='-2'><a href='download.php?expId=$expId&file=$stackfile'>\n";
+			$stacklink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download stack'>$ext\n";
+			$stacklink .= "</a></font>\n";
+		}
 	}
 
 	if ($mini) {
@@ -432,10 +552,10 @@ function alignstacksummarytable($alignstackid, $mini=false, $showOptions=True) {
 		$stacktable.= "<table border='0'>\n";
 		$stacktable.= "<tr><td>\n";
 		if ($mini) {
-			$stacktable.= "<img src='loadimg.php?filename=$stackavg&h=60' height='60'><br/>\n";
+			$stacktable.= "<img src='loadimg.php?filename=$stackavg&s=60' height='60'><br/>\n";
 			$stacktable.= "<i>avg image</i>\n";
 		} else {
-			$stacktable.= "<img src='loadimg.php?filename=$stackavg&h=120' height='120'><br/>\n";
+			$stacktable.= "<img src='loadimg.php?filename=$stackavg&s=120' height='120'><br/>\n";
 			$stacktable.= "<i>averaged stack image</i>\n";
 		}
 		$stacktable.= "</td>\n";
@@ -445,7 +565,7 @@ function alignstacksummarytable($alignstackid, $mini=false, $showOptions=True) {
 			$stacktable.= "<a href='aligngraph.php?expId=$expId&alignid=$alignstackid&type=$type'>\n";
 			if ($mini && $numpart < 1000)
 				$stacktable.= "<img border='0' src='aligngraph.php?expId=$expId"
-					."&alignid=$alignstackid&h=60&type=$type' height='60'>\n";
+					."&alignid=$alignstackid&s=60&type=$type' height='60'>\n";
 			elseif ($numpart < 500)
 				$stacktable.= "<img border='0' src='aligngraph.php?expId=$expId"
 					."&alignid=$alignstackid&h=120&type=$type' height='120'>\n";
@@ -498,6 +618,8 @@ function alignstacksummarytable($alignstackid, $mini=false, $showOptions=True) {
 	if ($stackdata['refstackfile'] && file_exists($refstack))
 		$display_keys['reference stack'] = "<a target='stackview' HREF='viewstack.php?"
 			."file=$refstack&expId=$expId&ps=$mpix&alignId=$alignstackid&refs=1'>".$stackdata['refstackfile']."</a>\n";
+		if (count(explode('rmaxlike',$stackdata['runname'])) > 1)
+			$display_keys['replace reference stack made before Nov, 2016'] = "<a HREF='runAppionLoop.php?expId=$expId&form=replaceRelion2DRefs&astack=$alignstackid'> click here </a>\n";
 	// if toplogy run, show links to last node file
 	if ($stackdata['REF|ApTopolRepRunData|topreprun']) {
 		$nodefiles = glob($stackdata['path']."/classes*.hed");
@@ -654,7 +776,7 @@ function stackInfoForRecipe($stackid) {
 	if (file_exists($stackavg)) {
 		$s.= "<tr>\n";
 		$s.= "<td rowspan='30' align='center' valign='top'>\n";
-		$s.= "<img src='loadimg.php?filename=$stackavg&h=60' height='60'>\n";
+		$s.= "<img src='loadimg.php?filename=$stackavg&s=60' height='60'>\n";
 		$s.= "</td>\n";
 	}
 	$s.= "<td>\n";
@@ -683,7 +805,7 @@ function alignInfoForRecipe($astackid) {
 	if (file_exists($stackavg)) {
 		$s.= "<tr>\n";
 		$s.= "<td rowspan='30' align='center' valign='top'>\n";
-		$s.= "<img src='loadimg.php?filename=$stackavg&h=60' height='60'>\n";
+		$s.= "<img src='loadimg.php?filename=$stackavg&s=60' height='60'>\n";
 		$s.= "</td>\n";
 	}
 	$s.= "<td>\n";
@@ -914,6 +1036,7 @@ function clustersummarytable($clusterrunid, $mini=false) {
 		}
 		foreach ($clusterdatas as $clusterdata) {
 			$clusterid = $clusterdata['clusterid'];
+			$clusterpixelsize = $clusterdata['pixelsize'] * 1e-10; // Angstrom ????
 			$clusteravgfile = $clusterdata['path']."/".$clusterdata['avg_imagicfile'];
 			$clustervarfile = $clusterdata['path']."/".$clusterdata['var_imagicfile'];
 			if ($clusterdata['REF|ApImagicAlignAnalysisData|imagicMSArun']) {
@@ -926,7 +1049,7 @@ function clustersummarytable($clusterrunid, $mini=false) {
 					$level = substr($matches[0],-2,2);
 				}
 				$clustertable .= "<li><span>"
-					."<a target='stackview' href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clusteravgfile'>"
+					."<a target='stackview' href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clusteravgfile&ps=$clusterpixelsize'>"
 					.$clusterdata['num_classes']." Class Averages, level ".$level.":</a> (ID $clusterid)&nbsp;"
 					."</span></li>\n";
 			} elseif ($clusterdata['REF|ApSIMPLEClusterRunData|simpleparams']) {
@@ -1033,7 +1156,11 @@ function modelsummarytable($modelid, $mini=false) {
 			$modeltable .= "<img src='loadimg.php?filename=$allpngs[0]&s=120' height='120' border='0'></a>\n";
 		}
 	}
-
+	$modelroot = substr($modeldata['name'], 0, -4);
+	$mrcfile = $modeldata['path']."/".$modelroot.".mrc";
+	if (file_exists($mrcfile)) {
+	    $modeltable .=  "<div style='text-align:center;'><a target='_blank' href='../ngl/webapp.php?expId=$expId&filename=$mrcfile'>View in NGL Viewer</a></div>\n";
+	}
 	$modeltable .= "</td></tr>\n";
 	// show data
 	foreach($display_keys as $k=>$v) {

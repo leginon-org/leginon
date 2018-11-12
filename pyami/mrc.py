@@ -11,7 +11,7 @@ MRC I/O functions:
 		Read MRC file into a numpy ndarray object.
       filename - the MRC filename
 
-  mmap(filename)  
+  mmap(filename)
     Open MRC as a memory mapped file.  This is the most efficient way
     to read data if you only need to access part of a large MRC file.
     Only the parts you actually access are read from the disk into memory.
@@ -32,14 +32,16 @@ cache_size = 10 * 64 * 1024 * 1024
 read_cache = resultcache.ResultCache(cache_size)
 
 ## mapping of MRC mode to numpy type
+# mode 0 is defined to int8 as in MRC2010
 mrc2numpy = {
-	0: numpy.uint8,
+	0: numpy.int8,
 	1: numpy.int16,
 	2: numpy.float32,
-#	3:  complex made of two int16.  No such thing in numpy
+# 3 is complex made of two int16.  No such thing in numpy
 #     however, we could manually build a complex array by reading two
 #     int16 arrays somehow.
 	4: numpy.complex64,
+	5: numpy.uint8,		# UCSF Image uint8
 
 	6: numpy.uint16,    # according to UCSF
 }
@@ -51,19 +53,20 @@ mrcmaptype = {
 	2: 'real space',
 	3: 'transform',
 	4: 'transform',
+	5: 'real space',
 	6: 'real space',
 }
 
 ## mapping of numpy type to MRC mode
 numpy2mrc = {
 	## convert these to int8
-	numpy.uint8: 0,
+	numpy.int8: 0,
 	numpy.bool: 0,
 	numpy.bool_: 0,
 
 	## convert these to int16
 	numpy.int16: 1,
-	numpy.int8: 1,
+	numpy.uint8: 1, # Do not want to convert to mode 5
 
 	## convert these to float32
 	numpy.float32: 2,
@@ -116,7 +119,8 @@ header_fields = (
 	('nsymbt', 'int32'),
 	('extra1', 'string', 8),
 	('exttype', 'string', 4),
-	('extra2', 'string', 88),
+	('nversion', 'int32'),
+	('extra2', 'string', 84),
 	('xorigin', 'float32'),
 	('yorigin', 'float32'),
 	('zorigin', 'float32'),
@@ -292,7 +296,7 @@ the header data.
 
 def parseHeader(headerbytes):
 	'''
-Parse the 1024 byte MRC header into a header dictionary.
+	Parse the 1024 byte MRC header into a header dictionary.
 	'''
 	## header is comprised of Int32, Float32, and text labels.
 	itype = numpy.dtype('Int32')
@@ -321,7 +325,19 @@ Parse the 1024 byte MRC header into a header dictionary.
 		type = field[1]
 		if type == 'string':
 			length = field[2]
-			newheader[name] = headerbytes[pos:pos+length]
+			full_string = headerbytes[pos:pos+length]
+			newheader[name] = full_string
+			# refs #4547 need to keep trailing zeros in other strings such as
+			# machine stamp to keep it from scrambled when written.
+			if 'label' in name:
+				# remove trailing zeros(1) to make the label string more readable
+				full_string = headerbytes[pos:pos+length]
+				first_zeros = full_string.find(zeros(1))
+				newheader[name] = ''
+				if first_zeros > 0:
+					newheader[name] = full_string[:first_zeros]
+				elif first_zeros < 0:
+					newheader[name] = full_string
 		else:
 			length = 4
 			word = pos/4
@@ -364,6 +380,8 @@ def updateHeaderDefaults(header):
 	header['amax'] = 0.0
 	header['amean'] = 0.0
 	header['rms'] = 0.0
+	header['nversion'] = 20140
+	header['exttype'] = 'MRCO'
 
 def updateHeaderUsingArray(header, a, calc_stats=True, reset_origin=True, mz=None):
 	'''
@@ -416,7 +434,7 @@ def updateHeaderUsingArray(header, a, calc_stats=True, reset_origin=True, mz=Non
 		header['nxstart'] = 0
 		header['nystart'] = 0
 		header['nzstart'] = 0
-	else:	
+	else:
 		header['nxstart'] = nx / -2
 		header['nystart'] = ny / -2
 		header['nzstart'] = nz / -2
@@ -497,13 +515,14 @@ def readDataFromFile(fobj, headerdict, zslice=None):
 	'''
 	bytes_per_pixel = headerdict['dtype'].itemsize
 	framesize = bytes_per_pixel * headerdict['nx'] * headerdict['ny']
+	header_bytes = 1024 + headerdict['nsymbt']
 	if zslice is None:
-		start = 1024  # right after header
+		start = header_bytes  # right after header
 		shape = headerdict['shape']
 	else:
-		start = 1024 + zslice * framesize
+		start = header_bytes + zslice * framesize
 		shape = headerdict['shape'][-2:]  # only a 2-D slice
-	datalen = reduce(numpy.multiply, shape)
+	datalen = numpy.prod(shape)
 	fobj.seek(start)
 	a = numpy.fromfile(fobj, dtype=headerdict['dtype'], count=datalen)
 	a.shape = shape
@@ -570,34 +589,53 @@ def extendedHeader(tilt):
 	return newheader
 
 def stack(inputfiles, tilts, outputfile):
+	'''
+	Stack single 2D image files into stack. if tilts is None, it
+	creates MRCO stack. Otherwise, tilts is a list of tilt and must
+	match the number of inputfiles. The tilt values are put into extended
+	header in IMOD style.
+	'''
 	# read first image to use as main header
 	firstheader = readHeaderFromFile(inputfiles[0])
-	newheader = mainStackHeader(firstheader, len(tilts))
+	newheader = mainStackHeader(firstheader, len(inputfiles))
 
 	# mrc2014 convention
-	newheader['mz'] = 1
+	if not newheader['mz']:
+		# In case mz is not defined
+		newheader['mz'] = newheader['nz']
 	newheader['zlen'] = newheader['zlen'] * newheader['mz'] / newheader['nz']
 
 	# write main header
-	headerbytes = makeHeaderData(newheader, header_fields=header_fields_stack)
+	if tilts:
+		headerbytes = makeHeaderData(newheader, header_fields=header_fields_stack)
+	else:
+		# no extended header
+		newheader['nsymbt']=0
+		newheader['exttype'] = 'MRCO'
+		headerbytes = makeHeaderData(newheader, header_fields=header_fields)
 	f = open(outputfile, 'wb')
 	f.write(headerbytes)
 
-	# write zeros for all extended headers
-	extended_length = len(tilts) * 88
-	f.write(zeros(extended_length))
+	if tilts:
+		# write zeros for all extended headers
+		extended_length = len(tilts) * 88
+		f.write(zeros(extended_length))
 
-	# write extended headers and data
-	extheaderpos = 1024
-	for inputfile, tilt in zip(inputfiles, tilts):
-		data = read(inputfile)
+		# write extended headers and data
+		extheaderpos = 1024
+		for inputfile, tilt in zip(inputfiles, tilts):
+			data = read(inputfile)
 
-		f.seek(extheaderpos)
-		extheaderpos += 88
-		newheader = extendedHeader(tilt)
-		headerbytes = makeHeaderData(newheader, header_fields=header_fields_extended)
-		f.write(headerbytes)
-		appendArray(data, f)
+			f.seek(extheaderpos)
+			extheaderpos += 88
+			newheader = extendedHeader(tilt)
+			headerbytes = makeHeaderData(newheader, header_fields=header_fields_extended)
+			f.write(headerbytes)
+			appendArray(data, f)
+	else:
+		for inputfile in inputfiles:
+			data = read(inputfile)
+			appendArray(data, f)
 	f.close()
 
 def appendArray(a, f):
@@ -620,6 +658,54 @@ def appendArray(a, f):
 	for start in range(0, b.size, items_per_write):
 		end = start + items_per_write
 		b[start:end].tofile(f)
+
+def substackFromMRCStack(mrcstack, outfile, listfile, excludeList=False):
+	'''
+	f=/path/to/stack.mrc, list=EMAN-style list, numbering starts with 0, writes output mrc stack
+	'''
+	# read list, EMAN-style, one line per integer, numbersing starts with 0
+	l = open(listfile, "r")
+	llines = l.readlines()
+	locs = [int(line.strip()) for line in llines]
+	locs.sort()
+	l.close()
+
+	# get number of particles
+	header = read_file_header(mrcstack)
+	npart = header['shape'][0]
+	print npart
+
+	# decide whether included or excluded
+	if excludeList is True:
+		### arrange list
+		included = []
+		for j in range(npart):
+			if j not in locs:
+				included.append(j)
+	else:
+		included = locs
+
+	# read each individual particle and append to new mrc
+	i = 0
+	for include in included:
+		if i == 0:
+			a = read(mrcstack, zslice=include)
+			write(a, outfile)
+		else:
+			a = read(mrcstack, zslice=include)
+			append(a, outfile)
+		if i % 1000 == 0:
+			print "written %d images to stack" % i
+		i+=1
+
+
+def invert(in_mrc, out_mrc):
+	'''
+	invert an mrc image, puts image into memory, so use wisely if image is a large stack
+	'''
+	a = read(in_mrc)
+	a = a*-1
+	write(a, out_mrc)
 
 def update_file_header(filename, headerdict):
 	'''
@@ -671,7 +757,7 @@ def append(a, filename, calc_stats=True):
 	if calc_stats:
 		for key in ('amin', 'amax', 'amean', 'rms'):
 			oldheader[key] = sliceheader[key]
-	
+
 	headerbytes = makeHeaderData(oldheader)
 	f.seek(0)
 	f.write(headerbytes)
@@ -686,15 +772,15 @@ Read the X,Y,Z coordinates for the origin
 	'''
 	h = readHeaderFromFile(filename)
 	origin = {
-		'xorigin': h['xorigin'], 
-		'yorigin': h['yorigin'], 
+		'xorigin': h['xorigin'],
+		'yorigin': h['yorigin'],
 		'zorigin': h['zorigin'],
 	}
 	return origin
 
 def read(filename, zslice=None):
 	'''
-Read the MRC file given by filename, return numpy ndarray object
+	Read the MRC file given by filename, return numpy ndarray object
 	'''
 	a = read_cache.get(filename)
 	if a is None:
@@ -763,7 +849,7 @@ def saveSumStack(filename,outfile,dtype=numpy.float32):
 	a = sumStack(filename,dtype)
 	write(a, outfile)
 
-def averageStack(filename):
+def averageStack(filename,dtype=numpy.float32):
 	h = readHeaderFromFile(filename)
 	nslices = h['nz']
 	for i in range(nslices):
@@ -776,7 +862,7 @@ def averageStack(filename):
 
 def saveAverageStack(filename,outfile,dtype=numpy.float32):
 	a = averageStack(filename,dtype)
-	mrc.write(a, outfile)
+	write(a, outfile)
 
 def testHeader():
 	infilename = sys.argv[1]
@@ -798,6 +884,22 @@ def updateFilePixelSize(filename,pixeldict={}):
 		axislen = '%slen' % (axis)
 		h[axislen] = h[naxis] * pixeldict[axis]
 	update_file_header(filename, h)
+
+
+def readFilePixelSize(filename):
+	'''
+	function to read mrc header xlen so that pixel size calculated
+	from xlen / nx becomes the new pixel size in Angstrom. Valid keys
+	in pixeldict are 'x','y','z'.
+	'''
+	h = readHeaderFromFile(filename)
+	keys = ('x', 'y', 'z',)
+	pixeldict = {}
+	for axis in keys:
+		naxis = 'n%s' % (axis)
+		axislen = '%slen' % (axis)
+		pixeldict[axis] = h[axislen] / float(h[naxis])
+	return pixeldict
 
 def testWrite():
 	a = numpy.zeros((16,16), numpy.float32)
@@ -847,6 +949,23 @@ def test_update_header():
 
 def fix_file_machine_stamp(filename):
 	update_file_header(filename,{'byteorder':byteorderstr[sys.byteorder]})
+
+def appendFileLabel(filename,labelstring):
+	h = readHeaderFromFile(filename)
+	nlabels = h['nlabels']
+	nextlabelname = 'label%d' % nlabels
+	if nlabels == 10:
+		raise ValueError('All labels are used')
+	if h[nextlabelname]:
+		raise RunTimeError('Next label indicated by NLABL is not empty')
+	if len(labelstring) > 80:
+		raise ValueError('Input string too long to fit in one label. Max length=80')
+	update_file_header(filename,
+				{'label%d' % nlabels:labelstring,'nlabels':nlabels+1})
+
+def readAllFileLabels(filename):
+	h = readHeaderFromFile(filename)
+	return map((lambda x:h['label%d' % x]),range(10))
 
 if __name__ == '__main__':
 	#testHeader()

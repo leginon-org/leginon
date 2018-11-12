@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
-# The Leginon software is Copyright 2004
-# The Scripps Research Institute, La Jolla, CA
+# The Leginon software is Copyright under
+# Apache License, Version 2.0
 # For terms of the license agreement
-# see http://ami.scripps.edu/software/leginon-license
+# see http://leginon.org
 #
 # $Source: /ami/sw/cvsroot/pyleginon/leginon.gui.wx/Focuser.py,v $
 # $Revision: 1.60 $
@@ -155,13 +155,14 @@ class Panel(leginon.gui.wx.Acquisition.Panel):
 	def onAlignRotationCenter(self, evt):
 		self.align_dialog.Show()
 
-	def onNewPixelSize(self, pixelsize,center,hightension):
+	def onNewPixelSize(self, pixelsize,center,hightension,cs):
 		self.manualdialog.center = center
-		self.manualdialog.onNewPixelSize(pixelsize,center,hightension)
+		self.manualdialog.onNewPixelSize(pixelsize,center,hightension,cs)
 
 class SettingsDialog(leginon.gui.wx.Acquisition.SettingsDialog):
 	def initialize(self):
-		return ScrolledSettings(self,self.scrsize,False,self.show_basic)
+		scrolling = not self.show_basic
+		return ScrolledSettings(self,self.scrsize,scrolling,self.show_basic)
 
 class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 	def initialize(self):
@@ -182,6 +183,7 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		newrow,newcol = self.createMeltTimeEntry((newrow,0))
 		newrow,newcol = self.createAcquireFinalCheckBox((newrow,0))
 		newrow,newcol = self.createBeamTiltSettleTimeEntry((newrow,0))
+		newrow,newcol = self.createOnPhasePlateCheckBox((newrow,0))
 
 
 		sbsz.Add(self.szmain, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 5)
@@ -246,6 +248,15 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		total_length = (1,2)
 		self.szmain.Add(label, start_position, (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.szmain.Add(melt_sizer, (start_position[0],start_position[1]+1), (1, 1), wx.ALIGN_CENTER)
+		return start_position[0]+total_length[0],start_position[1]+total_length[1]
+
+	def createOnPhasePlateCheckBox(self,start_position):
+		self.widgets['on phase plate'] = \
+				wx.CheckBox(self, -1, 'Use Special Beam Tilts for Phase Plate')
+
+		total_length = (1,2)
+		self.szmain.Add(self.widgets['on phase plate'], start_position, (1, 2),
+				  wx.ALIGN_CENTER)
 		return start_position[0]+total_length[0],start_position[1]+total_length[1]
 	
 class MeasureTiltAxisDialog(wx.Dialog):

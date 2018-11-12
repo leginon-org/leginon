@@ -1,9 +1,9 @@
 <!--
 -
 - Application XML-Dump
-- http://ami.scripps.edu/ 
+- http://emg.nysbc.org/ 
 -
-- Application :MSI-Raster (3.0)
+- Application :MSI-Raster
 - Version     :0
 - Date : 08/17/2012
 -
@@ -32,6 +32,10 @@
     <field 
       name="version" 
       type="int(20)" 
+    />
+    <field 
+      name="hide" 
+      type="tinyint(1)" 
     />
     <key>PRIMARY KEY (`DEF_id`)</key>
     <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
@@ -115,8 +119,9 @@
     <sqltable name="ApplicationData" >
         <field name="DEF_id" >4</field>
         <field name="DEF_timestamp" >2012-08-17 14:09:04</field>
-        <field name="name" >MSI-Raster (3.0)</field>
+        <field name="name" >MSI-Raster</field>
         <field name="version" >0</field>
+        <field name="hide" >0</field>
     </sqltable>
   <!-- BindingSpecData -->
     <sqltable name="BindingSpecData" >

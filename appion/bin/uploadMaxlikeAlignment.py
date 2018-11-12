@@ -13,6 +13,7 @@ import cPickle
 #appion
 from appionlib import appionScript
 from appionlib import apDisplay
+from appionlib import starFile
 from appionlib import apFile
 from appionlib import apParam
 from appionlib import apStack
@@ -24,6 +25,7 @@ from appionlib import appiondata
 from appionlib import apProject
 from appionlib import apFourier
 from pyami import spider
+from pyami import mrc
 
 #=====================
 #=====================
@@ -35,10 +37,8 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 			help="Maximum likelihood jobid", metavar="#")
 		self.parser.add_option("-t", "--timestamp", dest="timestamp",
 			help="Timestamp of files, e.g. 08nov02b35", metavar="CODE")
-
 		self.parser.add_option("--no-sort", dest="sort", default=True,
 			action="store_false", help="Do not sort files into nice folders")
-
 
 	#=====================
 	def checkConflicts(self):
@@ -60,6 +60,9 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		logfiles = glob.glob("*it*.log")
 		for logfile in logfiles:
 			m = re.search("it0*([0-9]*).log$", logfile)
+			if not m: #handle a case when logfile is like blahmaskitonmaxlike7.appionsub.log
+			 	apDisplay.printWarning('No match for re.search("it0*([0-9]*).log$" in '+logfile)
+			 	continue
 			iternum = int(m.groups()[0])
 			if iternum > lastiter:
 				lastiter = iternum
@@ -68,6 +71,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 
 	#=====================
 	def getTimestamp(self):
+		timestamp = None
 		if self.params["jobid"] is not None:
 			jobdata = appiondata.ApMaxLikeJobData.direct_query(self.params["jobid"])
 			timestamp = jobdata['timestamp']
@@ -221,7 +225,6 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		xor = (a and not b) or (b and not a)
 		return bool(xor)
 
-
 	#=====================
 	def wrap360(self, theta):
 		f = theta % 360
@@ -342,9 +345,12 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 			if partdict['refnum']  in self.resdict:
 				refq['ssnr_resolution'] = self.resdict[partdict['refnum']]
 			reffile = os.path.join(self.params['rundir'], refq['mrcfile'])
-			if not os.path.isfile(reffile):
-				emancmd = "proc2d "+refbase+".xmp "+refbase+".mrc"
-				apEMAN.executeEmanCmd(emancmd, verbose=False)
+			## convert SPIDER to MRC format
+			refdata = spider.read(refbase+".xmp")
+			mrc.write(refdata, refbase+".mrc")
+			#if not os.path.isfile(reffile):
+			#	emancmd = "proc2d "+refbase+".xmp "+refbase+".mrc"
+			#	apEMAN.executeEmanCmd(emancmd, verbose=False)
 			if not os.path.isfile(reffile):
 				apDisplay.printError("could not find reference file: "+reffile)
 
@@ -364,7 +370,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 			### insert
 			if self.params['commit'] is True:
 				inserted += 1
-				alignpartq.insert()
+				alignpartq.insert(force=True)
 
 		apDisplay.printColor("\ninserted "+str(inserted)+" of "+str(count)+" particles into the database in "
 			+apDisplay.timeString(time.time()-t0), "cyan")

@@ -1,9 +1,9 @@
 #
 # COPYRIGHT:
-#	   The Leginon software is Copyright 2003
-#	   The Scripps Research Institute, La Jolla, CA
+#	   The Leginon software is Copyright under
+#	   Apache License, Version 2.0
 #	   For terms of the license agreement
-#	   see  http://ami.scripps.edu/software/leginon-license
+#	   see  http://leginon.org
 #
 debug = False
 """
@@ -166,6 +166,7 @@ import pyami.mrc
 import os
 import dbconfig
 import cPickle
+import time
 from pyami import weakattr
 
 def getDBDK(mod, conf=None):
@@ -186,7 +187,9 @@ class SQLDict(object):
 			db	= "DB_NAME"
 			passwd	= "DB_PASS"
 		"""
-
+		if 'port' in kwargs:
+			kwargs['port'] = int(kwargs['port'])
+		self.kwargs = kwargs
 		try:
 			self.db = sqldb.connect(**kwargs)
 			self.connected = True
@@ -195,10 +198,28 @@ class SQLDict(object):
 			self.connected = False
 			self.sqlexception = e
 			raise
+		if 'engine' in kwargs:
+			self.engine = kwargs['engine']
+		else:
+			self.engine = None
 
 	def ping(self):
-		if self.db.stat() == 'MySQL server has gone away':
-			self.db = sqldb.connect(**self.db.kwargs)
+		try:
+			if self.db.stat() == 'MySQL server has gone away':
+				self.db = sqldb.connect(**self.db.kwargs)
+		except (MySQLdb.ProgrammingError, MySQLdb.OperationalError), e:
+			# self.db.stat function gives error when connection is not available.
+			errno = e.args[0]
+			## some version of mysqlpython parses the exception differently
+			if not isinstance(errno, int):
+				errno = errno.args[0]
+			## 2006:  MySQL server has gone away
+			if errno in (2006,):
+				ctime = time.strftime("%H:%M:%S")
+				print "reconnecting at %s after MySQL server has gone away error" % (ctime,)
+				self.db = sqldb.connect(**self.kwargs)
+			else:
+				raise
 
 	def connect_kwargs(self):
 		return dict(self.db.kwargs)
@@ -234,7 +255,7 @@ class SQLDict(object):
 		[{'Field': 'id', 'Type': 'int(16)', 'Key': 'PRIMARY', 'Extra':'auto_increment'},
 		{'Field': 'Name', 'Type': 'VARCHAR(50)'}])
 		"""
-		return _createSQLTable(self.db, table, definition)
+		return _createSQLTable(self.db, table, definition, self.engine)
 
 	def diffSQLTable(self, table, data_definition):
 		"""
@@ -263,6 +284,7 @@ class SQLDict(object):
 		self.db.ping()
 		cur = self.db.cursor(cursorclass=MySQLdb.cursors.DictCursor)
 		cur.execute(query)
+		cur.close()
 
 class _Table:
 
@@ -736,10 +758,11 @@ class _multipleQueries:
 
 class _createSQLTable:
 
-		def __init__(self, db, table, definition):
+		def __init__(self, db, table, definition, engine=None):
 			self.db = db
 			self.table = table
 			self.definition = definition
+			self.engine = engine
 			self.create()
 
 		def _cursor(self):
@@ -747,13 +770,28 @@ class _createSQLTable:
 			return self.db.cursor(cursorclass=MySQLdb.cursors.DictCursor)
 
 		def create(self):
-			q = sqlexpr.CreateTable(self.table, self.definition).sqlRepr()
+			table_exist = self.hasTable()
+			if table_exist:
+				# Check if new field added
+				self._checkTable()
+				return
+			q = sqlexpr.CreateTable(self.table, self.definition, self.engine).sqlRepr()
 			c = self._cursor()
 			if debug:
 				print q
 			c.execute(q)
 			c.close()
 			self._checkTable()
+
+		def hasTable(self):
+			q = sqlexpr.HasTable(self.table).sqlRepr()
+			if debug:
+				print q
+			c = self._cursor()
+			c.execute(q)
+			results = c.fetchall()
+			c.close()
+			return bool(results)
 
 		def formatDescription(self, description):
 			newdict = {}
@@ -1229,6 +1267,9 @@ def matrix2dict(matrix, name=None):
 			raise ValueError("Wrong shape: must be at least 2x1 or 1x2")
 	except AttributeError:
 		raise TypeError("Must be numpy array") 
+	# force numpy.matrix to numpy.ndarray
+	matrix = numpy.array(matrix)
+
 	d={}
 	i=0
 	for row in matrix:

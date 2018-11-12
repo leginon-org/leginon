@@ -1,9 +1,9 @@
 <?php
 /**
- *	The Leginon software is Copyright 2003 
- *	The Scripps Research Institute, La Jolla, CA
+ *	The Leginon software is Copyright under 
+ *	Apache License, Version 2.0
  *	For terms of the license agreement
- *	see  http://ami.scripps.edu/software/leginon-license
+ *	see  http://leginon.org
  *
  *	Simple viewer to view a image using mrcmodule
  */
@@ -75,6 +75,20 @@ echo "  Kerden SOM stands for 'Kernel Probability Density Estimator Self-Organiz
 	."<br/><br/>";
 echo "</td></tr>";
 
+//----Xmipp Rotational Kerden SOM Analysis----//
+
+echo "<tr><td width='100' align='center'>\n";
+echo "  <img src='img/xmipp_logo.png' width='64'>\n";
+echo "</td><td>\n";
+echo "  <h3><a href='runRotKerDenSom.php?expId=$expId&alignId=$alignId'>Xmipp Rotational Kerden Self-Organizing Map</a></h3>";
+echo "  This function applies the Kerden SOM to rotational symmetric particles. "
+	."This is especially useful for classifying particles with difference cyclic symmetries."
+	."For more information, please see the following "
+	."<a href='http://xmipp.cnb.csic.es/twiki/bin/view/Xmipp/RotationalSpectraClassification'>Xmipp webpage"
+	."&nbsp;<img border='0' src='img/external.png'></a>. "
+	."<br/><br/>";
+echo "</td></tr>";
+
 //----IMAGIC Multivariate Statistical Analysis----//
 
 if (!HIDE_IMAGIC) {
@@ -91,39 +105,9 @@ if (!HIDE_IMAGIC) {
 	echo "</td></tr>";
 }
 
-echo "<tr><td width='100' align='center'>\n";
-echo "  <img src='img/xmipp_logo.png' width='64'>\n";
-echo "</td><td>\n";
-echo "  <h3><a href='runRotKerDenSom.php?expId=$expId&alignId=$alignId'>Xmipp Rotational Kerden Self-Organizing Map</a></h3>";
-echo "  This function applies the Kerden SOM to rotational symmetric particles. "
-	."This is especially useful for classifying particles with difference cyclic symmetries."
-	."For more information, please see the following "
-	."<a href='http://xmipp.cnb.csic.es/twiki/bin/view/Xmipp/RotationalSpectraClassification'>Xmipp webpage"
-	."&nbsp;<img border='0' src='img/external.png'></a>. "
-	."<br/><br/>";
-echo "</td></tr>";
 
+// ----Cluster by Affinity Propagation---- removed in 3.3 //
 
-// ----Cluster by Affinity Propagation----//
-
-// This feature works on small stacks but not large ones. 
-if (!HIDE_FEATURE)
-{
-	echo "<tr><td width='100' align='center'>\n";
-	echo "  <img src='img/affinityprop.png' width='64'>\n";
-	echo "</td><td>\n";
-	echo "  <h3><a href='runAffinityProp.php?expId=$expId&alignId=$alignId'>Cluster by Affinity Propagation</a></h3>";
-	echo "  An algorithm that identifies exemplars among data points and forms clusters of data points"
-		." around these exemplars. It operates by simultaneously considering all data point as potential"
-		." exemplars and exchanging messages between data points until a good set of exemplars and "
-		." clusters emerges, please see the following "
-		."<a href='http://www.psi.toronto.edu/affinitypropagation/'>affinity propagation webpage"
-		."&nbsp;<img border='0' src='img/external.png'></a> and "
-		."<a href='http://www.psi.toronto.edu/affinitypropagation/faq.html'>FAQ"
-		."&nbsp;<img border='0' src='img/external.png'></a>. "
-		."<br/><br/>";
-	echo "</td></tr>";
-}
 
 echo "</table>";
 

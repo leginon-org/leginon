@@ -1,9 +1,9 @@
 <?php
 /**
- *      The Leginon software is Copyright 2003 
- *      The Scripps Research Institute, La Jolla, CA
+ *      The Leginon software is Copyright under 
+ *      Apache License, Version 2.0
  *      For terms of the license agreement
- *      see  http://ami.scripps.edu/software/leginon-license
+ *      see  http://leginon.org
  *
  *      Form for starting iterative classification &  alignment of a stack
  */
@@ -148,6 +148,11 @@ function createAlignmentForm($extra=false, $title='edIterAlign.py Launcher', $he
 	// set max last ring radius
 	$javascript .= "	var bestbin = Math.floor(stackArray[2]/100);\n";
 	$javascript .= "	var radius = Math.floor(stackArray[2]/3*bestbin);\n";
+	//number of references is the square root of the number of particles divided by 10
+	$javascript .= "	var bestref = Math.floor(Math.log(stackArray[3])/2)*2;\n";
+	$javascript .= "	if (bestref < 2) {\n";
+	$javascript .= "		var bestref = 2 ;}\n";
+	$javascript .= "	document.viewerform.numref.value = bestref;\n";
 	$javascript .= "	document.viewerform.bin.value = bestbin;\n";
 	$javascript .= "	document.viewerform.radius.value = radius;\n";
 	// set particle & mask radius and lp

@@ -8,6 +8,7 @@ import math
 import numpy
 import shutil
 #appion
+import sinedon.directq
 from appionlib import appionScript
 from appionlib import apStack
 from appionlib import apDisplay
@@ -47,6 +48,11 @@ class subStackScript(appionScript.AppionScript):
 			help="save discarded particles into a stack", action="store_true")
 		self.parser.add_option("--exclude-from", dest="excludefrom", default=False,
 			help="converts a keepfile into an exclude file", action="store_true")
+		self.parser.add_option("--write-file", dest='writefile', default=False,
+			help="write the substack file to disk", action="store_true")
+
+	def isCL2D(self, alignstackdata):
+		return (alignstackdata['alignrun']['cl2drun'] or alignstackdata['alignrun']['xmipp3cl2drun'])
 
 	#=====================
 	def checkConflicts(self):
@@ -68,6 +74,12 @@ class subStackScript(appionScript.AppionScript):
 			self.clusterstackdata = appiondata.ApClusteringStackData.direct_query(self.params['clusterid'])
 			self.alignstackdata = self.clusterstackdata['clusterrun']['alignstack']
 			self.params['stackid'] = self.alignstackdata['stack'].dbid
+
+		# Issue #3566
+		if self.params['minscore'] and self.isCL2D(self.alignstackdata):
+			apDisplay.printError("CL2d classification does not output alignment parameters.  Can not use minscore to remove particles.")
+		if self.params['maxshift'] and self.isCL2D(self.alignstackdata):
+			apDisplay.printError("CL2d classification does not output alignment parameters.  Can not use maxshift to remove particles.")
 
 		### check and make sure we got the stack id
 		if self.params['stackid'] is None:
@@ -123,15 +135,32 @@ class subStackScript(appionScript.AppionScript):
 		### get particles from align or cluster stack
 		apDisplay.printMsg("Querying database for particles")
 		q0 = time.time()
+
 		if self.params['alignid'] is not None:
-			alignpartq =  appiondata.ApAlignParticleData()
-			alignpartq['alignstack'] = self.alignstackdata
-			particles = alignpartq.query()
+			# DIRECT SQL STUFF
+			sqlcmd = "SELECT " + \
+				"apd.partnum, " + \
+				"apd.xshift, apd.yshift, " + \
+				"apd.rotation, apd.mirror, " + \
+				"apd.spread, apd.correlation, " + \
+				"apd.score, apd.bad, " + \
+				"spd.particleNumber, " + \
+				"ard.refnum "+ \
+				"FROM ApAlignParticleData apd " + \
+				"LEFT JOIN ApStackParticleData spd ON " + \
+				"(apd.`REF|ApStackParticleData|stackpart` = spd.DEF_id) " + \
+				"LEFT JOIN ApAlignReferenceData ard ON" + \
+				"(apd.`REF|ApAlignReferenceData|ref` = ard.DEF_id) " + \
+				"WHERE `REF|ApAlignStackData|alignstack` = %i"%(self.params['alignid'])
+			# These are AlignParticles
+			particles = sinedon.directq.complexMysqlQuery('appiondata',sqlcmd)
+
 		elif self.params['clusterid'] is not None:
 			clusterpartq = appiondata.ApClusteringParticleData()
 			clusterpartq['clusterstack'] = self.clusterstackdata
+			# These are ClusteringParticles
 			particles = clusterpartq.query()
-		apDisplay.printMsg("Complete in "+apDisplay.timeString(time.time()-q0))
+		apDisplay.printMsg("Completed in %s\n"%(apDisplay.timeString(time.time()-q0)))
 
 		### write included particles to text file
 		includeParticle = []
@@ -139,35 +168,60 @@ class subStackScript(appionScript.AppionScript):
 		badscore = 0
 		badshift = 0
 		badspread = 0
+
 		f = open("test.log", "w")
 		count = 0
+		t0 = time.time()
+		apDisplay.printMsg("Parsing particle information")
+
+		# find out if there is alignparticle info:
+		is_cluster_p = False
+		# alignparticle is a key of any particle in particles if the latter is
+		# a CluateringParticle
+		if 'alignparticle' in particles[0]:
+			is_cluster_p = True
+
 		for part in particles:
 			count += 1
-			#partnum = part['partnum']-1
-			if 'alignparticle' in part:
+			if is_cluster_p:
+				# alignpart is an item of ClusteringParticle
 				alignpart = part['alignparticle']
-				classnum = int(part['refnum'])-1
+				try:
+					classnum = int(part['refnum'])-1
+				except:
+					apDisplay.printWarning("particle %d was not put into any class" % (part['partnum']))
+				emanstackpartnum = alignpart['stackpart']['particleNumber']-1
 			else:
+				# particle has info from AlignedParticle as results of direct query
 				alignpart = part
-				classnum = int(part['ref']['refnum'])-1
-			emanstackpartnum = alignpart['stackpart']['particleNumber']-1
+				try:
+					classnum = int(alignpart['refnum'])-1
+				except:
+					apDisplay.printWarning("particle %d was not put into any class" % (part['partnum']))
+					classnum = None
+				emanstackpartnum = int(alignpart['particleNumber'])-1
 
 			### check shift
 			if self.params['maxshift'] is not None:
 				shift = math.hypot(alignpart['xshift'], alignpart['yshift'])
 				if shift > self.params['maxshift']:
 					excludeParticle += 1
-					f.write("%d\t%d\t%d\texclude\n"%(count, emanstackpartnum, classnum))
+					if classnum is not None:
+						f.write("%d\t%d\t%d\texclude\n"%(count, emanstackpartnum, classnum))
+					else:
+						f.write("%d\t%d\texclude\n"%(count, emanstackpartnum))
 					badshift += 1
 					continue
-
 
 			if self.params['minscore'] is not None:
 				### check score
 				if ( alignpart['score'] is not None
 				 and alignpart['score'] < self.params['minscore'] ):
 					excludeParticle += 1
-					f.write("%d\t%d\t%d\texclude\n"%(count, emanstackpartnum, classnum))
+					if classnum is not None:
+						f.write("%d\t%d\t%d\texclude\n"%(count, emanstackpartnum, classnum))
+					else:
+						f.write("%d\t%d\texclude\n"%(count, emanstackpartnum))
 					badscore += 1
 					continue
 
@@ -175,21 +229,29 @@ class subStackScript(appionScript.AppionScript):
 				if ( alignpart['spread'] is not None
 				 and alignpart['spread'] < self.params['minscore'] ):
 					excludeParticle += 1
-					f.write("%d\t%d\t%d\texclude\n"%(count, emanstackpartnum, classnum))
+					if classnum is not None:
+						f.write("%d\t%d\t%d\texclude\n"%(count, emanstackpartnum, classnum))
+					else:
+						f.write("%d\t%d\texclude\n"%(count, emanstackpartnum))
 					badspread += 1
 					continue
 
-			if includelist and classnum in includelist:
-				includeParticle.append(emanstackpartnum)
-				f.write("%d\t%d\t%d\tinclude\n"%(count, emanstackpartnum, classnum))
-			elif excludelist and not classnum in excludelist:
-				includeParticle.append(emanstackpartnum)
-				f.write("%d\t%d\t%d\tinclude\n"%(count, emanstackpartnum, classnum))
+			if classnum is not None:
+				if includelist and (classnum in includelist):
+					includeParticle.append(emanstackpartnum)
+					f.write("%d\t%d\t%d\tinclude\n"%(count, emanstackpartnum, classnum))
+				elif excludelist and not (classnum in excludelist):
+					includeParticle.append(emanstackpartnum)
+					f.write("%d\t%d\t%d\tinclude\n"%(count, emanstackpartnum, classnum))
+				else:
+					excludeParticle += 1
+					f.write("%d\t%d\t%d\texclude\n"%(count, emanstackpartnum, classnum))
 			else:
 				excludeParticle += 1
-				f.write("%d\t%d\t%d\texclude\n"%(count, emanstackpartnum, classnum))
-
+				f.write("%d\t%d\texclude\n"%(count, emanstackpartnum))
+			
 		f.close()
+
 		includeParticle.sort()
 		if badshift > 0:
 			apDisplay.printMsg("%d paricles had a large shift"%(badshift))
@@ -197,9 +259,8 @@ class subStackScript(appionScript.AppionScript):
 			apDisplay.printMsg("%d paricles had a low score"%(badscore))
 		if badspread > 0:
 			apDisplay.printMsg("%d paricles had a low spread"%(badspread))
+		apDisplay.printMsg("Completed in %s\n"%(apDisplay.timeString(time.time()-t0)))
 		apDisplay.printMsg("Keeping "+str(len(includeParticle))+" and excluding "+str(excludeParticle)+" particles")
-
-		#print includeParticle
 
 		### write kept particles to file
 		self.params['keepfile'] = os.path.join(self.params['rundir'], "keepfile-"+self.timestamp+".list")
@@ -218,18 +279,36 @@ class subStackScript(appionScript.AppionScript):
 			self.params['description'] += ( " ... %d particle substack with %s classes included"
 				% (numparticles, self.params['keepclasslist']))
 
-		### create the new sub stack
-		apStack.makeNewStack(oldstack, newstack, self.params['keepfile'], bad=self.params['savebad'])
+		outavg = os.path.join(self.params['rundir'],"average.mrc")
 
-		if not os.path.isfile(newstack):
+		### create the new sub stack
+		# first check if virtual stack
+		if not os.path.isfile(oldstack):
+			vstackdata=apStack.getVirtualStackParticlesFromId(self.params['stackid'])
+			vparts = vstackdata['particles']
+			oldstack = vstackdata['filename']
+			# get subset of virtualstack
+			vpartlist = [int(vparts[p]['particleNumber'])-1 for p in includeParticle]
+
+			if self.params['writefile'] is True:
+				apStack.makeNewStack(oldstack, newstack, vpartlist, bad=self.params['savebad'])
+			#apStack.averageStack partlist starts at 1
+			avgpartlist = [p+1 for p in vpartlist]
+			apStack.averageStack(stack=oldstack,outfile=outavg,partlist=avgpartlist)
+		else:
+			if self.params['writefile'] is True:
+				apStack.makeNewStack(oldstack, newstack, self.params['keepfile'], bad=self.params['savebad'])
+			#apStack.averageStack partlist starts at 1
+			avgpartlist = [p+1 for p in includeParticle]
+			apStack.averageStack(stack=oldstack,outfile=outavg,partlist=avgpartlist)
+
+		if self.params['writefile'] is True and not os.path.isfile(newstack):
 			apDisplay.printError("No stack was created")
 
-		apStack.averageStack(stack=newstack)
 		if self.params['commit'] is True:
-			apStack.commitSubStack(self.params)
+			apStack.commitSubStack(self.params,included=includeParticle)
 			newstackid = apStack.getStackIdFromPath(newstack)
 			apStackMeanPlot.makeStackMeanPlot(newstackid, gridpoints=4)
-
 
 
 #=====================

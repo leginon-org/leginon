@@ -1,10 +1,10 @@
 <?php
 
 /**
- *	The Leginon software is Copyright 2003 
- *	The Scripps Research Institute, La Jolla, CA
+ *	The Leginon software is Copyright under 
+ *	Apache License, Version 2.0
  *	For terms of the license agreement
- *	see  http://ami.scripps.edu/software/leginon-license
+ *	see  http://leginon.org
  */
 
 require_once ("inc/leginon.inc");
@@ -164,13 +164,14 @@ fileHeader();
 $aliases = array('edge lpf','template lpf','lpf');
 $user_id = $leginondata->getAdminUserId();
 $extratables = array('LowPassFilterSettingsData','BlobFinderSettingsData','FocusSequenceData');
+
 //Tables
 if ($show_tables) {
 	foreach ($extratables as $table) {
-		echo $table?></br><?;
+		echo $table; ?></br><?php 
 	}
 	foreach (array_keys($nodenames) as $table) {
-		echo $table?></br><?;
+		echo $table; ?></br><?php 
 	}
 }
 //Default values

@@ -2,11 +2,15 @@
 
 #
 # COPYRIGHT:
-#       The Leginon software is Copyright 2003
-#       The Scripps Research Institute, La Jolla, CA
+#       The Leginon software is Copyright under
+#       Apache License, Version 2.0
 #       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
+#       see  http://leginon.org
 #
+
+# testing before start
+import configcheck
+configcheck.testBeforeStart()
 
 from leginon import leginondata
 import event
@@ -92,11 +96,18 @@ class Launcher(node.Node):
 		except ValueError:
 			pass # ???
 
+def getPrimaryPort(hostname):
+	r = leginondata.ClientPortData(hostname=hostname).query()
+	if not r:
+		return 55555
+	else:
+		return r[0]['primary port']
+
 if __name__ == '__main__':
-	import socket
+	from pyami import mysocket
 	import sys
 
-	hostname = socket.gethostname().lower()
+	hostname = mysocket.gethostname().lower()
 	launchername = hostname
 
 	managerlocation = {}
@@ -112,7 +123,8 @@ if __name__ == '__main__':
 			args, kwargs = (launchername,), {'tcpport': int(sys.argv[1])}
 	except IndexError:
 		try:
-			args, kwargs = (launchername,), {'tcpport': 55555}
+			port  = getPrimaryPort(launchername)
+			args, kwargs = (launchername,), {'tcpport': port}
 		except:
 			args, kwargs = (launchername,), {}
 	l = leginon.gui.wx.Launcher.App(*args, **kwargs)

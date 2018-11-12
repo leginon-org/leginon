@@ -1,9 +1,9 @@
 #
 # COPYRIGHT:
-#	   The Leginon software is Copyright 2003
-#	   The Scripps Research Institute, La Jolla, CA
+#	   The Leginon software is Copyright under
+#	   Apache License, Version 2.0
 #	   For terms of the license agreement
-#	   see  http://ami.scripps.edu/software/leginon-license
+#	   see  http://leginon.org
 #
 from leginon import leginondata
 import acquisition
@@ -79,7 +79,7 @@ def targetPoints(targets):
 class TiltTracker(acquisition.Acquisition):
 	panelclass = gui.wx.TiltTracker.Panel
 	settingsclass = leginondata.TiltTrackerSettingsData
-	defaultsettings = acquisition.Acquisition.defaultsettings
+	defaultsettings = dict(acquisition.Acquisition.defaultsettings)
 	defaultsettings.update({
 		'activation interval': 1,
 		'tilts': '(-45, 0)',
@@ -306,7 +306,9 @@ class TiltTracker(acquisition.Acquisition):
 				time.sleep(pausetime)
 			self.logger.info('Acquire intermediate tilted parent image')
 			#print 'acquire intertilt'
-			imagenew = self.acquireCorrectedCameraImageData()
+			imagenew = self.acquireCorrectedCameraImageData(force_no_frames=True)
+			if imagedata is None:
+				return None,None
 			arraynew = numpy.asarray(imagenew['image'], dtype=numpy.float32)
 			if medfilt > 1:
 				arraynew = ndimage.median_filter(arraynew, size=medfilt)
@@ -623,13 +625,17 @@ class TiltTracker(acquisition.Acquisition):
 
 	#====================
 	def acquireImage(self):
+		'''
+		Simple acquireImage with current preset, returning only
+		the image array.  Used in testAcquire.
+		'''
 		errstr = 'Acquire image failed: %s'
 		if self.presetsclient.getCurrentPreset() is None:
 			self.logger.error('Preset is unknown')
 			return
 
 		try:
-			imagedata = self.acquireCorrectedCameraImageData()
+			imagedata = self.acquireCorrectedCameraImageData(force_no_frames=True)
 		except:
 			self.logger.error(errstr % 'unable to get corrected image')
 			return

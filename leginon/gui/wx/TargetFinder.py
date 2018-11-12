@@ -1,7 +1,7 @@
-# The Leginon software is Copyright 2004
-# The Scripps Research Institute, La Jolla, CA
+# The Leginon software is Copyright under
+# Apache License, Version 2.0
 # For terms of the license agreement
-# see http://ami.scripps.edu/software/leginon-license
+# see http://leginon.org
 #
 # $Source: /ami/sw/cvsroot/pyleginon/leginon.gui.wx/TargetFinder.py,v $
 # $Revision: 1.19 $
@@ -16,6 +16,7 @@ import leginon.gui.wx.Node
 import leginon.gui.wx.Settings
 import leginon.gui.wx.ToolBar
 import leginon.gui.wx.ImagePanelTools
+from leginon.gui.wx.Choice import Choice
 
 hide_incomplete = False
 
@@ -29,6 +30,7 @@ class Panel(leginon.gui.wx.Node.Panel):
 													'play',
 													shortHelpString='Submit Targets')
 		self.Bind(leginon.gui.wx.Events.EVT_SUBMIT_TARGETS, self.onSubmitTargets)
+		self.toolbar.AddNullSpacer()
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SUBMIT_QUEUE,
 													'send_queue_out',
 													shortHelpString='Submit Queued Targets')
@@ -79,6 +81,9 @@ class Panel(leginon.gui.wx.Node.Panel):
 	def initialize(self):
 		pass
 
+	def getSelectionToolNames(self):
+		return self.imagepanel.getSelectionToolNames()
+
 	def getTargetPositions(self, typename):
 		return self.imagepanel.getTargetPositions(typename)
 
@@ -107,6 +112,10 @@ class Panel(leginon.gui.wx.Node.Panel):
 		evt = leginon.gui.wx.Events.SubmitTargetsEvent()
 		self.GetEventHandler().AddPendingEvent(evt)
 
+	def onNewTiltAxis(self, angle):
+		idcevt = leginon.gui.wx.ImagePanelTools.ImageNewTiltAxisEvent(self.imagepanel, angle)
+		self.imagepanel.GetEventHandler().AddPendingEvent(idcevt)
+
 
 class SettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
@@ -129,6 +138,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 																	'Allow for user verification of selected targets')
 		self.widgets['queue'] = wx.CheckBox(self, -1,
 																							'Queue up targets')
+		self.Bind(wx.EVT_CHECKBOX, self.onUserCheckbox, self.widgets['user check'])
 		self.Bind(wx.EVT_CHECKBOX, self.onQueueCheckbox, self.widgets['queue'])
 		sz = wx.GridBagSizer(5, 5)
 		sz.Add(self.widgets['user check'], (0, 0), (1, 1),
@@ -138,41 +148,73 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz.Add(self.widgets['queue'], (1, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 		return sz
+
+	def createCheckMethodSizer(self):
+		checkmethods = self.node.getCheckMethods()
+		self.widgets['check method'] = Choice(self, -1, choices=checkmethods)
+		szcheckmethod = wx.GridBagSizer(5, 5)
+		szcheckmethod.Add(wx.StaticText(self, -1, '   Check from'),
+										(0, 0), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL)
+		szcheckmethod.Add(self.widgets['check method'],
+										(0, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL)
+		return szcheckmethod
 
 	def addSettings(self):
 		#self.widgets['wait for done'] = wx.CheckBox(self, -1,
 		#			'Wait for another node to process targets before marking them done')
 		self.widgets['user check'] = wx.CheckBox(self, -1,
 																	'Allow for user verification of selected targets')
+		#checkmethodsz = self.createCheckMethodSizer()
 		self.widgets['queue'] = wx.CheckBox(self, -1,
 																							'Queue up targets')
 		self.widgets['queue drift'] = wx.CheckBox(self, -1, 'Declare drift when queue submitted')
 		self.widgets['sort target'] = wx.CheckBox(self, -1, 'Sort targets by shortest path')
-		self.widgets['allow append'] = wx.CheckBox(self, -1, 'Allow target finding on old images')
+		#self.widgets['allow append'] = wx.CheckBox(self, -1, 'Allow target finding on old images')
+		self.widgets['multifocus'] = wx.CheckBox(self, -1, 'Use all focus targets for averaging')
+		self.widgets['allow no focus'] = wx.CheckBox(self, -1, 'Do not require focus targets in user verification')
+		self.Bind(wx.EVT_CHECKBOX, self.onUserCheckbox, self.widgets['user check'])
 		self.Bind(wx.EVT_CHECKBOX, self.onQueueCheckbox, self.widgets['queue'])
 
 		sz = wx.GridBagSizer(5, 5)
 		sz.Add(self.widgets['user check'], (0, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
+		#sz.Add(checkmethodsz, (1, 0), (1, 1),
+		#				wx.ALIGN_CENTER_VERTICAL)
 		#sz.Add(self.widgets['wait for done'], (1, 0), (1, 1),
 		#				wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['queue'], (1, 0), (1, 1),
+		sz.Add(self.widgets['queue'], (2, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['queue drift'], (2, 0), (1, 1),
+		sz.Add(self.widgets['queue drift'], (3, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['sort target'], (3, 0), (1, 1),
+		sz.Add(self.widgets['sort target'], (4, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		if not hide_incomplete:
-			sz.Add(self.widgets['allow append'], (4, 0), (1, 1),
-							wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['multifocus'], (5, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['allow no focus'], (6, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		#if not hide_incomplete:
+		#	sz.Add(self.widgets['allow append'], (7, 0), (1, 1),
+		#					wx.ALIGN_CENTER_VERTICAL)
 
 		return sz
 
+	def onUserCheckbox(self, evt):
+		state = evt.IsChecked()
+		# This event affects user verification status
+		combined_state = state and not self.widgets['queue'].GetValue()
+		self.panel.setUserVerificationStatus(combined_state)
+
 	def onQueueCheckbox(self, evt):
 		state = evt.IsChecked()
+		# This event affects user verification status
+		combined_state = not state and self.widgets['user check'].GetValue()
+		self.panel.setUserVerificationStatus(combined_state)
 		parent = self.panel
 		parent.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT_QUEUE, state)
 		evt.Skip()
+		self.node.onQueueCheckBox(state)
 
 if __name__ == '__main__':
 	class App(wx.App):

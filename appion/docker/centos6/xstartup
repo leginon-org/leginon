@@ -1,0 +1,13 @@
+#!/bin/sh
+
+xsetroot -solid grey
+vncconfig -iconic &
+xterm -geometry 110x24+10+10 -ls -title "Welcome to Appion" &
+xterm -geometry 110x24+10-100 -ls -title "Welcome to Appion" &
+#firefox --geometry 550x350+600+10 --browser --no-remote http://127.0.0.1/
+#firefox --silent --width 800 --height 700 --browser --no-remote &
+#http://reddit.com/r/buildapc &
+
+fbpanel &
+
+exec fluxbox

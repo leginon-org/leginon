@@ -23,6 +23,8 @@ if ($_GET['tid']) {
 
 $sessionId = ($_POST['sessionId']) ? $_POST['sessionId'] : $sessionId;
 $tiltSeriesId = ($_POST['tiltSeriesId']) ? $_POST['tiltSeriesId'] : $tiltSeriesId;
+$alabel= ($_POST['alignlabel']) ? $_POST['alignlabel'] : '';
+
 $showmodel = ($_POST['showmodel']== 'on') ? 'CHECKED' : '';
 if ($_POST['action']=='Mark for Deletion') {
 	$tomography->setTiltSeriesDeletionStatus($tiltSeriesId,'marked');
@@ -37,6 +39,8 @@ $sessions = $tomography->getTiltSeriesSessions();
 if ($sessionId == NULL) {
     $sessionId = $sessions[0]['id'];
 }
+
+if ( is_numeric(SESSION_LIMIT) && count($sessions) > SESSION_LIMIT) $sessions=array_slice($sessions,0,SESSION_LIMIT);
 
 $sessionSelector = $tomography->getSessionSelector($sessions, $sessionId);
 
@@ -92,7 +96,7 @@ function init() {
 		<a href="summary.php?sessionId=<?php echo $sessionId; ?>">Summary</a>
 		</td><td width=200 align=right>
 		<b>show model parameters:</b>
-		<input type='checkbox' name='showmodel' <?=$showmodel?> onClick="submit()">
+		<input type='checkbox' name='showmodel' <?php echo $showmodel; ?> onClick="submit()">
 	</td></tr>
 </table>
 </div>
@@ -106,7 +110,8 @@ function init() {
 <?php
 echo $tiltSeriesSelector.'<br>';
 if($tiltSeriesId != NULL) {
-	echo "<a href=stack.php?tiltSeriesId=$tiltSeriesId&tiltSeriesNumber=$tiltSeriesNumber>Download MRC stack</a><br>";
+	echo "<a href=stack.php?tiltSeriesId=$tiltSeriesId&tiltSeriesNumber=$tiltSeriesNumber&alignlabel=".$alabel.">Download MRC stack</a><br>";
+	echo "align label: <INPUT TYPE='text' NAME='alignlabel' SIZE='4' VALUE='".$alabel."'>\n";
 	echo '</td><td>';
 	echo '<table><tr><td colspan=2>';
 	thumbnails($tiltSeriesId, $tomography);
@@ -119,8 +124,8 @@ if($tiltSeriesId != NULL) {
 	} else {
 		$state = ($deletestatus== 'marked') ? 'Remove from Deletion List' : 'Mark for Deletion';
 		?>
-		<input type="submit" name="action" value="<?=$state?>">
-		<?
+		<input type="submit" name="action" value="<?php echo $state; ?>">
+		<?php
 	} 
 	echo '</td></tr></table>';
 	echo '</td></tr>';
@@ -129,13 +134,13 @@ if($tiltSeriesId != NULL) {
 	<tr><td><?php echo $images[0]; ?></td></tr>
 	<tr><td><?php echo $images[1]; ?></td></tr>
 	<tr><td><?php echo $images[2]; ?></td></tr>
-<? 
+<?php
 if ($showmodel) {
 ?>
 	<tr><td><?php echo $images[3]; ?></td></tr>
 	<tr><td><?php echo $images[4]; ?></td></tr>
 	<tr><td><?php echo $images[5]; ?></td></tr>
-<? } ?>
+<?php } ?>
 <!--- <tr><td><?php echo $images[6]; ?></td></tr> --->
 <?php
 if($tiltSeriesId != NULL) {

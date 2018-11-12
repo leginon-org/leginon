@@ -1,10 +1,12 @@
 #
 # COPYRIGHT:
-#       The Leginon software is Copyright 2003
-#       The Scripps Research Institute, La Jolla, CA
+#       The Leginon software is Copyright under
+#       Apache License, Version 2.0
 #       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
+#       see  http://leginon.org
 #
+import time
+
 import node, event, leginondata
 import gui.wx.Calibrator
 import instrument
@@ -52,9 +54,9 @@ class Calibrator(node.Node):
 			return None
 		return ht
 
-	def currentState(self):
+	def currentState(self,dataclass=leginondata.ScopeEMData):
 		try:
-			dat = self.instrument.getData(leginondata.ScopeEMData)
+			dat = self.instrument.getData(dataclass)
 		except:
 			return None
 		return dat
@@ -90,14 +92,14 @@ class Calibrator(node.Node):
 			self.panel.acquisitionDone()
 			return
 		try:
-			imagedata = self.acquireCorrectedCameraImageData()
+			imagedata = self.acquireCorrectedCameraImageData(force_no_frames=True)
 		except Exception, e:
 			self.logger.exception('Acquisition failed: %s' % e)
 			self.panel.acquisitionDone()
 			return
 
 		if imagedata is None:
-			self.messagelog.error('Acquisition failed')
+			self.logger.error('Acquisition failed')
 			self.panel.acquisitionDone()
 			return
 
@@ -136,3 +138,18 @@ class Calibrator(node.Node):
 		acquisitionimagedata.attachPixelSize()
 		acquisitionimagedata.insert(force=True)
 		return acquisitionimagedata
+
+class ScreenCalibrator(Calibrator):
+
+	def screenDown(self):
+		# check if screen is down
+		self.instrument.MainScreenPosition = 'down'
+		time.sleep(1)
+		self.logger.info('Main scren lowered')
+
+	def screenUp(self):
+		# check if screen is down
+		self.instrument.MainScreenPosition = 'up'
+		time.sleep(1)
+		self.logger.info('Main scren lifted')
+

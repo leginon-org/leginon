@@ -1,7 +1,7 @@
-# The Leginon software is Copyright 2004
-# The Scripps Research Institute, La Jolla, CA
+# The Leginon software is Copyright under
+# Apache License, Version 2.0
 # For terms of the license agreement
-# see http://ami.scripps.edu/software/leginon-license
+# see http://leginon.org
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ToolBar.py,v $
 # $Revision: 1.38 $
@@ -67,7 +67,7 @@ ID_NEXT = 10049
 ID_PREVIOUS = 10050
 ID_MEASURE_TILT_AXIS = 10051
 ID_ALIGN = 10052
-ID_CALC_PIXEL = 10053
+ID_SCALE_MATRIX = 10053
 ID_MEASURE_COMAFREE = 10054
 ID_BEGIN = 10055
 ID_END = 10056
@@ -77,6 +77,11 @@ ID_RESET_Z = 10059
 ID_RESET_ALPHA = 10060
 ID_SEND_PRESET = 10061
 ID_GET_PRESET = 10062
+ID_ABORT_ONE_TARGET = 10063
+ID_REMOTE = 10064
+ID_LIGHT_ON = 10065
+ID_LIGHT_OFF = 10066
+ID_NULL = 10067
 
 class ToolBar(wx.ToolBar):
 	def __init__(self, parent):
@@ -90,19 +95,32 @@ class ToolBar(wx.ToolBar):
 		self.spacer = wx.Control(self, -1, style=wx.NO_BORDER)
 		self.AddControl(self.spacer)
 		#print self.ToolSize()
-		size = wx.Size(16,16)
+		self.tool_bitmap_size = wx.Size(16,16)
 		#self.setSize(size)
+
+	def AddNullSpacer(self):
+		bitmap = '%s.png' % 'null'
+		image = wx.Image(leginon.icons.getPath(bitmap))
+		image.ConvertAlphaToMask(64)
+		image.Rescale(self.tool_bitmap_size.width, self.tool_bitmap_size.height)
+		bitmap = wx.BitmapFromImage(image)
+		wx.ToolBar.AddTool(self, ID_NULL, bitmap)
+		self.EnableTool(ID_NULL, False)
 
 	def AddTool(self, id, bitmap, **kwargs):
 		bitmap = '%s.png' % bitmap
 		image = wx.Image(leginon.icons.getPath(bitmap))
 		image.ConvertAlphaToMask(64)
+		image.Rescale(self.tool_bitmap_size.width, self.tool_bitmap_size.height)
 		bitmap = wx.BitmapFromImage(image)
 		wx.ToolBar.AddTool(self, id, bitmap, **kwargs)
 
 	def InsertTool(self, pos, id, bitmap, **kwargs):
 		bitmap = '%s.png' % bitmap
-		bitmap = wx.BitmapFromImage(wx.Image(leginon.icons.getPath(bitmap)))
+		image = wx.Image(leginon.icons.getPath(bitmap))
+		image.ConvertAlphaToMask(64)
+		image.Rescale(self.tool_bitmap_size.width, self.tool_bitmap_size.height)
+		bitmap = wx.BitmapFromImage(image)
 		wx.ToolBar.InsertTool(self, pos, id, bitmap, **kwargs)
 
 	def RemoveTool(self, id):

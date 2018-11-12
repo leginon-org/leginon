@@ -7,7 +7,6 @@ import numpy
 import shutil
 import random
 import cPickle
-import MySQLdb
 ## appion
 from appionlib import appionScript
 from appionlib import apStack
@@ -23,8 +22,7 @@ class fakeStackScript(appionScript.AppionScript):
 	#=====================
 	def onInit(self):
 		self.dbconf = sinedon.getConfig('appiondata')
-		self.db     = MySQLdb.connect(**self.dbconf)
-		self.db.autocommit(True)
+		self.db     = sinedon.sqldb.connect(**self.dbconf)
 		self.cursor = self.db.cursor()
 
 	#=====================

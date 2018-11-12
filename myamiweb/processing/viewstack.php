@@ -1,10 +1,10 @@
 <?php
 
 /**
- *	The Leginon software is Copyright 2003 
- *	The Scripps Research Institute, La Jolla, CA
+ *	The Leginon software is Copyright under 
+ *	Apache License, Version 2.0
  *	For terms of the license agreement
- *	see  http://ami.scripps.edu/software/leginon-license
+ *	see  http://leginon.org
  */
 
 require_once "inc/particledata.inc";
@@ -14,7 +14,7 @@ require_once "inc/viewer.inc";
 require_once "inc/processing.inc";
 require_once "inc/viewstack.inc";
 require_once "inc/imagerequest.inc";
-require_once "inc/viewstack.inc";
+//require_once "inc/viewstack.inc";
 
 $filename=$_GET['file'];
 $expId =$_GET['expId'];
@@ -44,6 +44,7 @@ $updateheader=($_GET['uh']==1) ? 1 : 0;
 $pixelsize=(is_numeric($_GET['ps'])) ? trim($_GET['ps']) : 0;
 
 $particle = new particledata();
+
 $maxangle = $particle->getMaxTiltAngle($expId);
 
 if ($reconId) {
@@ -67,6 +68,9 @@ if ($reconId) {
 }
 if ($alignId) {
 	$classnumber=$particle->getAlignParticleNumber($alignId);
+	// line below used for CL2D, where mysql query returns particles that weren't assigned to any class
+	// as empty array with classNumber null
+	if (is_null($classnumber[0]["classNumber"])) $classnumber = array_slice($classnumber,1);
 	$helical = $particle->hasHelicalInfo($alignId);
 } elseif ($clusterId) {
 	$classnumber=$particle->getClusteringParticleNumber($clusterId);
@@ -105,12 +109,14 @@ if ($subStackClassesString != "") {
 		
 		if ($clusterIdForSubstack) {
 			$stack=$particle->getRawStackFromCluster($clusterIdForSubstack);
+			$stackId = $stack['DEF_id'];
 			$subprtls=$particle->getSubsetParticlesFromCluster($clusterIdForSubstack, $subStackClasses);
 			for ($i=0;$i<count($subprtls);$i++) {
 				$subprtls[$i]['p'] = intval($subprtls[$i]['p'])-1;
 			}
 		} elseif ($alignIdForSubstack) {
 			$stack=$particle->getRawStackFromAlign($alignIdForSubstack);
+			$stackId = $stack['DEF_id'];
 			$subprtls=$particle->getSubsetParticlesFromAlign($alignIdForSubstack, $subStackClasses);
 			for ($i=0;$i<count($subprtls);$i++) {
 				$subprtls[$i]['p'] = intval($subprtls[$i]['p'])-1;
@@ -122,7 +128,26 @@ if ($subStackClassesString != "") {
 	
 	$numbad = count($subprtls);
 }
-
+$virtualfilename = False;
+if (!file_exists($filename) && $stackId){
+	# no file found, see if it's a virtual stack
+	$orig_stackdata = $particle->getVirtualStackData($stackId);
+	if ($orig_stackdata) {
+		$virtualfilename = $filename;
+		$substack = True;
+		$filename = $orig_stackdata['filename'];
+		$particles = $orig_stackdata['particles'];
+		# set number if particles in subset if not already set
+		$numbad = ($numbad) ? $numbad : count($particles);
+		# add particles to subset array
+		for ($i=0;$i<$numbad;$i++) {
+			# if showing a subset of a virtual stack:
+			if ($subprtls) $plist[$i]['p'] = intval($particles[$subprtls[$i]['p']])-1;	
+			else $plist[$i]['p'] = intval($particles[$i])-1;
+		}
+		$subprtls = $plist;
+	}	
+}
 function getimagicfilenames($file) {
 	$file = substr($file, 0, -3);
 	$file_hed = $file."hed";
@@ -135,6 +160,8 @@ if (preg_match("%.spi$%", $filename)) {
 } else if (preg_match("%.hdf5$%", $filename)) {
 	$file_hed=$file_img=$filename;
 } else if (preg_match("%.mrc$%", $filename)) {
+	$file_hed=$file_img=$filename;
+} else if (preg_match("%.mrcs$%", $filename)) {
 	$file_hed=$file_img=$filename;
 } else {
 	list($file_hed, $file_img)=getimagicfilenames($filename);
@@ -171,14 +198,14 @@ echo stackViewer($file_hed, $file_img, $n_images, $stackoptions);
 ?>
 
 <script type="text/javascript">
-var expId="<?=$expId?>"
-var sessionname="<?=$sessionname?>"
-var filename="<?=$filename?>"
-var stackId="<?=$stackId?>"
-var clusterId="<?=$clusterId?>"
-var templateStackId="<?=$templateStackId?>"
-var alignId="<?=$alignId?>"
-var refs="<?=$refs?>"
+var expId="<?php echo $expId; ?>"
+var sessionname="<?php echo $sessionname; ?>"
+var filename="<?php echo $filename; ?>"
+var stackId="<?php echo $stackId; ?>"
+var clusterId="<?php echo $clusterId; ?>"
+var templateStackId="<?php echo $templateStackId; ?>"
+var alignId="<?php echo $alignId; ?>"
+var refs="<?php echo $refs; ?>"
 
 <?php
 if ($alignId || $clusterId) {
@@ -366,8 +393,9 @@ function showHelicalInfo() {
 </script>
 </head>
 <body onload='load()'>
-<?
-echo "stack: $file_hed";
+<?php
+$printfilename = ($virtualfilename) ? $virtualfilename : $file_hed;
+echo "stack: $printfilename";
 echo "<br \>";
 echo "#images: $n_images";
 echo "<br \>";
@@ -376,7 +404,7 @@ $lastimg=($_POST['endimg']) ? $_POST['endimg'] : $defendimg;
 ?>
 
 from: <input id="startimg" type="text" alt="Start" value="0" size="10">
-to: <input id="endimg" type="text" alt="End" value="<?=$lastimg?>" size="10">
+to: <input id="endimg" type="text" alt="End" value="<?php echo $lastimg?>" size="10">
 binning: <select id="binning">
 		<option value="1">1</option>
 		<option value="2">2</option>
@@ -393,7 +421,7 @@ quality: <select id="quality">
 info:<input type="checkbox" checked id="info" >
 scale bar:<input type="checkbox" id="scalebar" >
 <input id="loadbutton" type="button" alt="Load" value="Load" onclick="load();">
-<?
+<?php
 
 
 //Buttons for inclusion
@@ -456,7 +484,7 @@ echo "</td></tr></table>\n";
 
 <br />
 <br />
-<div class="scrollpane">
+<div class="stackpane">
    <div id="wholemap">
    </div>
 </div>

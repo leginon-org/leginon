@@ -86,23 +86,30 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 					wx.ALIGN_LEFT|wx.FIXED_MINSIZE)
 		label = wx.StaticText(self, -1, 'degree(s)')
 		tiltsz.Add(label, (0, 8), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		tilt_ordersz = self.createTiltOrderSelector()
+
 		tiltsbsz.Add(tiltsz, 0, wx.EXPAND|wx.ALL, 5)
+		tiltsbsz.Add(tilt_ordersz, 0, wx.EXPAND|wx.ALL, 5)
+
 		#expsz
 		self.widgets['dose'] = FloatEntry(self, -1, min=0.0,
 													allownone=False,
 													chars=7,
 													value='200.0')
-		expsz = wx.GridBagSizer(5, 10)
+		self.expsz = wx.GridBagSizer(5, 10)
+		pos = self.createUsePresetExposureCheckBox('expsz', (0,0))
 		label = wx.StaticText(self, -1, 'Total dose')
-		expsz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		expsz.Add(self.widgets['dose'], (0, 1), (1, 1),
+		self.expsz.Add(label, (pos[0], 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.expsz.Add(self.widgets['dose'], (pos[0], 1), (1, 1),
 					wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.FIXED_MINSIZE)
 		label = wx.StaticText(self, -1, 'e-/A^2')
-		expsz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		self.expsz.Add(label, (pos[0], 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 
-		expsz.AddGrowableCol(0)
-		expsz.AddGrowableRow(0)
-		expsbsz.Add(expsz, 1, wx.EXPAND|wx.ALL, 5)
+		self.expsz.AddGrowableCol(0)
+		self.expsz.AddGrowableRow(0)
+		self.expsz.AddGrowableRow(1)
+		expsbsz.Add(self.expsz, 1, wx.EXPAND|wx.ALL, 5)
 		#misc
 		self.widgets['integer'] = wx.CheckBox(self, -1, 'Scale by')
 		self.widgets['intscale'] = FloatEntry(self, -1, min=0.0,
@@ -141,6 +148,25 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		sz.AddGrowableCol(0)
 		sz.AddGrowableCol(1)
 		return sz
+
+	def createUsePresetExposureCheckBox(self, sz_name, start_position):
+		self.widgets['use preset exposure'] = \
+				wx.CheckBox(self, -1, 'Always use preset exposure time')
+		total_length = (1,2)
+		sz = getattr(self,sz_name)
+		sz.Add(self.widgets['use preset exposure'], start_position, (1, 2),
+				  wx.ALIGN_LEFT)
+		return start_position[0]+total_length[0],start_position[1]+total_length[1]
+
+	def createTiltOrderSelector(self):
+		tilt_order_choices = self.getTiltOrderChoices()
+		self.widgets['tilt order'] = wx.Choice(self, -1, choices=tilt_order_choices)
+		sztilt_order = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Tilt order of the tilt direction groups:')
+		sztilt_order.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sztilt_order.Add(self.widgets['tilt order'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sztilt_order.AddGrowableCol(1)
+		return sztilt_order
 
 	def addTomoSettings(self):
 		tiltsb = wx.StaticBox(self, -1, 'Tilt')
@@ -197,13 +223,19 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 					wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		label = wx.StaticText(self, -1, 'degree(s)')
 		tiltsz.Add(label, (0, 8), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		# tilt order
+		tilt_ordersz = self.createTiltOrderSelector()
+		tiltsz.Add(tilt_ordersz, (1, 0), (1, 9), wx.EXPAND)
+
+		# addon tilts
 		addonsizer = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'List of Extra Tilts to Collect (in degrees)')
 		addonsizer.Add(label, (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
 		self.widgets['addon tilts'] = Entry(self, -1, chars=45, style=wx.ALIGN_RIGHT|wx.EXPAND)
 		addonsizer.Add(self.widgets['addon tilts'], (0,2), (1,7), wx.EXPAND)
 		addonsizer.AddGrowableCol(2)
-		tiltsz.Add(addonsizer, (1, 0), (1, 9), wx.EXPAND)
+		tiltsz.Add(addonsizer, (2, 0), (1, 9), wx.EXPAND)
 
 		tiltoptsz.Add(tiltsz, (1, 0), (2, 9), wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
 		equalslopesz = wx.GridBagSizer(0, 5)
@@ -231,15 +263,16 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 															chars=5,
 															value='2.0')
 
-		expsz = wx.GridBagSizer(5, 10)
+		self.expsz = wx.GridBagSizer(5, 10)
+		pos = self.createUsePresetExposureCheckBox('expsz', (0,0))
 		label = wx.StaticText(self, -1, 'Total dose')
-		expsz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		expsz.Add(self.widgets['dose'], (0, 1), (1, 1),
+		self.expsz.Add(label, (pos[0], 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.expsz.Add(self.widgets['dose'], (pos[0], 1), (1, 1),
 					wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.FIXED_MINSIZE)
 		label = wx.StaticText(self, -1, 'e-/A^2')
-		expsz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		self.expsz.Add(label, (pos[0], 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		label = wx.StaticText(self, -1, 'Exposure time')
-		expsz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.expsz.Add(label, (pos[0]+1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		exptsz = wx.GridBagSizer(0,0)
 		label = wx.StaticText(self, -1, 'Min.')
@@ -253,13 +286,13 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		label = wx.StaticText(self, -1, 'seconds')
 		exptsz.Add(label, (0, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
-		expsz.Add(exptsz, (1, 1), (1, 2), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		self.expsz.Add(exptsz, (pos[0]+1, 1), (1, 2), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 
-		expsz.AddGrowableCol(0)
-		expsz.AddGrowableRow(0)
-		expsz.AddGrowableRow(1)
+		self.expsz.AddGrowableCol(0)
+		self.expsz.AddGrowableRow(0)
+		self.expsz.AddGrowableRow(1)
 
-		expsbsz.Add(expsz, 1, wx.EXPAND|wx.ALL, 5)
+		expsbsz.Add(self.expsz, 1, wx.EXPAND|wx.ALL, 5)
 
 		self.widgets['run buffer cycle'] = wx.CheckBox(self, -1, 'Run buffer cycle')
 		self.widgets['align zero loss peak'] = wx.CheckBox(self, -1, 'Align zero loss peak')
@@ -362,6 +395,7 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		self.widgets['fixed model'] = wx.CheckBox(self, -1, 'Keep the tilt axis parameters fixed')
 		self.widgets['use z0'] = wx.CheckBox(self, -1, 'Initialize z0 with current model')
 		self.widgets['fit data points'] = IntEntry(self, -1, min=4, allownone=False, chars=5, value='4')
+		self.widgets['fit data points2'] = IntEntry(self, -1, min=4, allownone=False, chars=5, value='4')
 
 		magsz = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Initialize with the model of')
@@ -427,12 +461,7 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		label = wx.StaticText(self, -1, 'um of z0 jump between models' )
 		zsz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
-		fsz = wx.GridBagSizer(5, 5)
-		label = wx.StaticText(self, -1, 'Smooth' )
-		fsz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		fsz.Add(self.widgets['fit data points'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		label = wx.StaticText(self, -1, 'tilts (>=4) for defocus prediction' )
-		fsz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		fsz = self.createFitDataPointsSizer()
 
 		modelsz = wx.GridBagSizer(5, 5)
 		modelsz.Add(magsz, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
@@ -440,7 +469,7 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		modelsz.Add(zsz, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		modelsz.Add(self.widgets['fixed model'], (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		modelsz.Add(self.widgets['use z0'], (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		modelsz.Add(fsz, (5, 0), (1, 1), wx.ALIGN_RIGHT)
+		modelsz.Add(fsz, (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		modelbsz.Add(modelsz, 1, wx.ALL|wx.ALIGN_CENTER, 5)
 		modelsz.AddGrowableCol(0)
@@ -460,6 +489,24 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		self.Bind(wx.EVT_CHECKBOX, self.onFixedModel, self.widgets['fixed model'])
 		return sz
 
+	def createFitDataPointsSizer(self):
+		fb = wx.StaticBox(self, -1, 'xy smooth fit')
+		fbsz = wx.StaticBoxSizer(fb, wx.VERTICAL)
+		fsz = wx.GridBagSizer(2, 2)
+		label = wx.StaticText(self, -1, 'Number of data points used in fitting:' )
+		fsz.Add(label, (0, 0), (2, 1), wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, '+d')
+		fsz.Add(label, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		fsz.Add(self.widgets['fit data points'],
+				   (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, '-d')
+		fsz.Add(label, (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		fsz.Add(self.widgets['fit data points2'],
+				   (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		fbsz.Add(fsz, 1, wx.ALL|wx.ALIGN_CENTER, 5)
+		fsz.AddGrowableCol(0)
+		return fbsz
+
 	def onFixedModel(self, evt):
 		state = evt.IsChecked()
 		self.widgets['fit data points'].Enable(state)
@@ -473,11 +520,17 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 			choices.extend( [str(int(m)) for m in mags])
 			return choices
 
+	def getTiltOrderChoices(self):
+		choices = ['sequential','alternate','swing']
+		return choices
+
 class Panel(leginon.gui.wx.Acquisition.Panel):
 	settingsdialogclass = SettingsDialog
 	def __init__(self, *args, **kwargs):
 		leginon.gui.wx.Acquisition.Panel.__init__(self, *args, **kwargs)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_BROWSE_IMAGES, False)
+		self.toolbar.InsertTool(5, leginon.gui.wx.ToolBar.ID_ABORT_ONE_TARGET,
+						'stopone', shortHelpString='Abort single tilt series')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_CHECK_DOSE,
 							 'dose',
 							 shortHelpString='Check dose')
@@ -498,6 +551,9 @@ class Panel(leginon.gui.wx.Acquisition.Panel):
 		self.toolbar.Bind(wx.EVT_TOOL,
 						  self.onCheckDose,
 						  id=leginon.gui.wx.ToolBar.ID_CHECK_DOSE)
+		self.toolbar.Bind(wx.EVT_TOOL,
+						  self.onStopTargetTool,
+						  id=leginon.gui.wx.ToolBar.ID_ABORT_ONE_TARGET)
 
 	def onCheckDose(self, evt):
 		threading.Thread(target=self.node.checkDose).start()

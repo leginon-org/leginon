@@ -1,9 +1,9 @@
 #
 # COPYRIGHT:
-#       The Leginon software is Copyright 2003
-#       The Scripps Research Institute, La Jolla, CA
+#       The Leginon software is Copyright under
+#       Apache License, Version 2.0
 #       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
+#       see  http://leginon.org
 #
 import calibrator
 import calibrationclient
@@ -20,7 +20,7 @@ class PixelSizeCalibrator(calibrator.Calibrator):
 	'''
 	panelclass = gui.wx.PixelSizeCalibrator.Panel
 	settingsclass = leginondata.PixelSizeCalibratorSettingsData
-	defaultsettings = calibrator.Calibrator.defaultsettings
+	defaultsettings = dict(calibrator.Calibrator.defaultsettings)
 	defaultsettings.update({
 		'lattice a': 69.0,
 		'lattice b': 173.5,
@@ -126,7 +126,7 @@ class PixelSizeCalibrator(calibrator.Calibrator):
 		caldata['session'] = self.session
 		caldata['tem'] = temdata
 		caldata['ccdcamera'] = camdata
-		self.publish(caldata, database=True)
+		self.publish(caldata, database=True, dbforce=True)
 
 	def calculatePixelSize(self):
 		if self.shape is None:

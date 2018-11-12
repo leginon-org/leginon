@@ -1,7 +1,7 @@
-# The Leginon software is Copyright 2004
-# The Scripps Research Institute, La Jolla, CA
+# The Leginon software is Copyright under
+# Apache License, Version 2.0
 # For terms of the license agreement
-# see http://ami.scripps.edu/software/leginon-license
+# see http://leginon.org
 #
 # $Source: /ami/sw/cvsroot/pyleginon/leginon.gui.wx/Node.py,v $
 # $Revision: 1.30 $
@@ -37,7 +37,7 @@ class Panel(wx.lib.scrolledpanel.ScrolledPanel):
 		wx.lib.scrolledpanel.ScrolledPanel.__init__(self, parent, id, **kwargs)
 
 		self.toolbar = parent.getToolBar()
-
+		self.manualcheck = False
 		self.szmain = wx.GridBagSizer(5, 5)
 
 		self.messagelog = leginon.gui.wx.MessageLog.MessageLog(parent.swmessage, self)
@@ -117,5 +117,9 @@ class Panel(wx.lib.scrolledpanel.ScrolledPanel):
 	def setStatus(self, status):
 		level = 'STATUS'
 		evt = leginon.gui.wx.Events.StatusUpdatedEvent(self, level, status)
+		self.GetEventHandler().AddPendingEvent(evt)
+
+	def setUserVerificationStatus(self, status):
+		evt = leginon.gui.wx.Events.UserVerificationUpdatedEvent(self, status)
 		self.GetEventHandler().AddPendingEvent(evt)
 

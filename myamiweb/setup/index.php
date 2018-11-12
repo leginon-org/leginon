@@ -11,7 +11,6 @@ require_once('setupUtils.inc');
 	
 	$required_exts = array('gd' => '<b>\'gd\'</b> module is required for the php mrc module.', 
 // 						   'mrc' => '<b>\'mrc\'</b> module is required for displaying mrc images.', 
-						   'mysql' => '<b>\'mysql\'</b> module is required for connecting to the mysql database.', 
 						   'mysqli' => '<b>\'mysqli\'</b> module is required for connecting to the mysql database.', 
 						   'ssh2' => '<b>\'ssh2\'</b> module is required for connecting to the processing host or cluster.');
 	
@@ -93,7 +92,7 @@ require_once('setupUtils.inc');
 		
 		if(!empty($phpModulesMessages)){
 			echo "There are some php module(s) missing. Please install the missing module(s) before you start.<br />
-				  For more information please check <a target='_blank' href='http://ami.scripps.edu/redmine/projects/appion/wiki/Download_additional_Software_(CentOS_Specific)'>
+				  For more information please check <a target='_blank' href='http://emg.nysbc.org/redmine/projects/appion/wiki/Download_additional_Software_(CentOS_Specific)'>
 				  Install Complete list of additional packages</a>.<br /><br />";
 			foreach($phpModulesMessages as $message)
 				echo $message . '<br />';

@@ -1,10 +1,10 @@
 <?php
 
 /**
- *	The Leginon software is Copyright 2003 
- *	The Scripps Research Institute, La Jolla, CA
+ *	The Leginon software is Copyright under 
+ *	Apache License, Version 2.0
  *	For terms of the license agreement
- *	see  http://ami.scripps.edu/software/leginon-license
+ *	see  http://leginon.org
  */
 
 require_once "inc/admin.inc";
@@ -40,7 +40,7 @@ if ($in == 0) $selectedmodelId = $models[0][DEF_id];
 admin_header();
 ?>
 <h3>View Goniometer</h3>
-<form name="goniometerform" method="POST" action="<?php echo $_SERVER['PHP_SELF'];?>">
+<form name="goniometerform" method="POST" action="<?php echo $_SERVER['PHP_SELF']; ?>">
 <select name="host" onChange="javascript:document.goniometerform.submit()">
 <?php
 foreach($validhosts as $host) {

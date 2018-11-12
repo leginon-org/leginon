@@ -1,10 +1,10 @@
 <?php
 
 /**
- *	The Leginon software is Copyright 2003 
- *	The Scripps Research Institute, La Jolla, CA
+ *	The Leginon software is Copyright under 
+ *	Apache License, Version 2.0
  *	For terms of the license agreement
- *	see  http://ami.scripps.edu/software/leginon-license
+ *	see  http://leginon.org
  */
 
 if (ENABLE_LOGIN) {
@@ -23,7 +23,7 @@ define('PROJECT_DB', $PROJECT_DB);
 setsession();
 
 function setDatabase($expId="") {
-	$leginondata= new leginondata;
+	global $leginondata;
 	if (!$expId) {
 		$expId= ($_POST['sessionId']) ? $_POST['sessionId'] : $_GET['expId'];
 	}
@@ -65,6 +65,7 @@ class project {
 	}
 
 	function checkDBConnection() {
+		$this->mysql->checkDBConnection();
 		return $this->mysql->checkDBConnection();
 	}
 
@@ -151,7 +152,8 @@ class project {
 				."FROM ".DB_PROJECT.".projects as projects "
 				."WHERE projects.`DEF_id` IN ($sharedProjectsQuery) "
 				."OR projects.`DEF_id` IN ($ownedProjectsQuery) "
-				."GROUP BY `DEF_id` ";
+				."GROUP BY `DEF_id` "
+				."ORDER by projects.`name` ";
 		$myprojects = $this->mysql->getSQLResult($q);
 		}
 		

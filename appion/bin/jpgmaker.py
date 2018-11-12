@@ -34,6 +34,8 @@ class MrcToJpgLoop(filterLoop.FilterLoop):
 			help="Minimum pixel value", metavar="FLOAT")
 		self.parser.add_option("--max", dest="max", type="float",
 			help="Maximum pixel value", metavar="FLOAT")
+		self.parser.add_option("--stdval", dest="stdval", type="float", default=5,
+			help="standard deviation multiplier (default=5)")
 		self.parser.add_option("--imgsize", dest="imgsize", type="int", default=512,
 			help="Maximum image size", metavar="INT")
 		self.parser.add_option("--quality", dest="quality", type="int", default=70,
@@ -63,7 +65,7 @@ class MrcToJpgLoop(filterLoop.FilterLoop):
 			maxdim/=2
 		bin = int(math.ceil(float(maxdim/self.params['imgsize'])))	
 		array = imagefun.bin(array,bin)
-		jpg.write(array, outfile, min=imgmin, max=imgmax, quality=self.params['quality'])
+		jpg.write(array, outfile, min=imgmin, max=imgmax, quality=self.params['quality'], stdval=self.params['stdval'])
 
 if __name__ == '__main__':
 	imgLoop = MrcToJpgLoop()

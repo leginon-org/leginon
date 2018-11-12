@@ -1,9 +1,9 @@
 #
 # COPYRIGHT:
-#      The Leginon software is Copyright 2003
-#      The Scripps Research Institute, La Jolla, CA
+#      The Leginon software is Copyright under
+#      Apache License, Version 2.0
 #      For terms of the license agreement
-#      see  http://ami.scripps.edu/software/leginon-license
+#      see  http://leginon.org
 #
 
 #import array
@@ -658,6 +658,12 @@ class TietzF416(Tietz):
 	def getBinnedMultiplier(self):
 		binning = self.getBinning()
 		return binning['x']*binning['y']
+
+	def getCalulateNormOnDark(self):
+		return False
+
+	def requireRecentDarkOnBright(self):
+		return True
 
 class TietzF816(Tietz):
 	name = 'Tietz F816'

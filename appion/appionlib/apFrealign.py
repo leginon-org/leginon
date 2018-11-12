@@ -1,5 +1,6 @@
 #python
 import os
+import copy
 import math
 import numpy
 import shutil
@@ -131,6 +132,10 @@ def parseFrealign9ParamFile(paramfile,test=False):
 			paramdict['change'] = float(sline[15])
 		except:
 			paramdict['change'] = 0.0
+		try:
+			paramdict['stackpartnum'] = float(sline[16])
+		except:
+			paramdict['stackpartnum'] = None
 
 		partdict[paramdict['partnum']] = paramdict
 		# test mode returns only two particles
@@ -139,7 +144,7 @@ def parseFrealign9ParamFile(paramfile,test=False):
 	f.close()
 
 	if len(partdict) < 2:
-		apDislay.printError("No particles found in parameter file %s" % (paramfile))
+		apDisplay.printError("No particles found in parameter file %s" % (paramfile))
 
 	apDisplay.printMsg("Processed %d particles" % (len(partdict)))
 	return partdict
@@ -199,8 +204,10 @@ def generateParticleParams(params,modeldata,initparfile='params.0.par',extended=
 	params['inpar']=os.path.join(params['rundir'],initparfile)
 	apDisplay.printMsg("Creating parameter file: "+params['inpar'])
 	params['mode']=3
-	stackdata=getStackParticlesInOrder(params)
-	first_imageid = stackdata[0]['particle']['image'].dbid
+	stackpdata=getStackParticlesInOrder(params)
+	first_imageid = stackpdata[0]['particle']['image'].dbid
+	# set magnification with first image
+	frealign_mag = getFrealignStyleParticleMagnification(stackpdata[0],params['bin'])
 	f=open(params['inpar'],'w')
 	params['noClassification']=0
 	if params['reconiterid']:
@@ -213,10 +220,11 @@ def generateParticleParams(params,modeldata,initparfile='params.0.par',extended=
 		print "Writing out particle parameters"
 		
 	if 'last' not in params:
-		params['last'] = len(stackdata)
-	for i, particle in enumerate(stackdata[:params['last']]):
+		params['last'] = len(stackpdata)
+	for i, particle in enumerate(stackpdata[:params['last']]):
 		# defaults
 		particleparams = initializeParticleParams(i)
+		particleparams['mag'] = frealign_mag
 		# for helical reconstructions, film is helix number
 		if particle['particle']['helixnum']:
 			imgid=particle['particle']['image'].dbid
@@ -584,17 +592,16 @@ def getStackParticleEulersForIteration(params,pnum):
 
 	# find particle in reference stack
 	refstackid = apStack.getStackIdFromIterationId(params['reconiterid'],msg=False)
-	refstackp = apStack.getStackParticleFromParticleId(particleid,refstackid, nodie=True)
+	refstackp = apStack.getStackParticleFromParticleId(particleid,refstackid, noDie=True)
 	if not refstackp:
 		apDisplay.printWarning('No classification for stack particle %d in reconstruction iteration id: %d' % (pnum, params['reconiterid']))
 		params['noClassification']+=1
 		if params['noClassification'] > (float(params['last'])*0.10):
 			apDisplay.printError('More than 10% of the particles have no classification, use a different reference reconstruction')
 		pclass={}
-		pclass['eulers']={}
-		pclass['eulers']['euler1']=0.0
-		pclass['eulers']['euler2']=0.0
-		pclass['inplane_rotation']=0.0
+		pclass['euler1']=0.0
+		pclass['euler2']=0.0
+		pclass['euler3']=0.0
 		pclass['mirror']=False
 		pclass['shiftx']=0.0
 		pclass['shifty']=0.0
@@ -686,6 +693,49 @@ def combineMultipleJobs(params):
 	createFrealignJob(params,combinejobname,mode=0,invol=params['itervol'],inpar=paramname)
 	proc = subprocess.Popen('csh '+combinejobname, shell=True)
 	proc.wait()
+
+
+#===============
+def readFrealign9_06ParamLine(dict_value, occdef=100, logpdef=5000, sigmadef=1, scoredef=50.0, changedef=0):
+	### code for general usage
+	partnum = dict_value['partnum']
+	psi = dict_value['psi']
+	theta = dict_value['theta']
+	phi = dict_value['phi']
+	shx = dict_value['shiftx'] 
+	shy = dict_value['shifty']
+	mag = dict_value['mag']
+	micnum = dict_value['micn']
+	dx = dict_value['defx']
+	dy = dict_value['defy']
+	ast = dict_value['astig']
+	try:
+		occ = dict_value['occ']
+	except:
+		occ = occdef
+	try:
+		logp = dict_value['logp']
+	except:
+		logp = logpdef
+	try:
+		sigma = p['sigma']
+	except:
+		sigma = sigmadef
+	try:
+		score = p['score']
+	except:
+		score = scoredef
+	try:
+		change = p['change']
+	except:
+		change = changedef
+	
+	d = {
+		'i':partnum,'psi':psi,'theta':theta,'phi':phi,'shx':shx,'shy':shy,'mag':mag,'micn':micnum,
+		'dx':dx,'dy':dy,'ast':ast,'occ':occ,'logp':logp,'sigma':sigma,'score':score,'change':change
+	}
+	return d 
+
 
 #===============
 def scale_parfile_frealign8(infile, outfile, mult, newmag=0):
@@ -780,12 +830,16 @@ def scale_parfile_frealign9_03(infile, outfile, mult, newmag=0):
 	ff.close()
 
 #=================
-def frealign8_to_frealign9(infile, outfile, apix, occ=0, logp=5000, sigma=1, score=50.0, change=0):
+def frealign8_to_frealign9(infile, outfile, apix, occ=100, logp=5000, sigma=1, score=50.0, change=0):
 	''' modified for version 9.06 and above, character spaces for version <9.06 is different for logp value '''
+
 	### output file
 	ff = open(outfile, "w")
-	ff.write("%s%8s%8s%8s%10s%10s%8s%6s%9s%9s%8s%8s%10s%11s%8s%8s\n" \
-		% ("C      ","PSI","THETA","PHI","SHX","SHY","MAG","FILM","DF1","DF2","ANGAST","OCC","-LogP","SIGMA","SCORE","CHANGE"))
+	line="%s%8s%8s%8s%10s%10s%8s%6s%9s%9s%8s%8s%10s%11s%8s%8s" \
+		% ("C      ","PSI","THETA","PHI","SHX","SHY","MAG","FILM","DF1","DF2","ANGAST","OCC","-LogP","SIGMA","SCORE","CHANGE")
+	standard_line_length = len(line)
+	ff.write(line+'\n')
+
 	### read & write params
 	params = parseFrealignParamFile(infile)
 	for i,p in enumerate(params):
@@ -802,8 +856,16 @@ def frealign8_to_frealign9(infile, outfile, apix, occ=0, logp=5000, sigma=1, sco
 		dx = float(p['defoc1'])
 		dy = float(p['defoc2'])
 		ast = float(p['astang'])
-		ff.write("%7d%8.2f%8.2f%8.2f%10.2f%10.2f%8d%6d%9.1f%9.1f%8.2f%8.2f%10d%11.4f%8.2f%8.2f\n" \
-			% (partnum, psi, theta, phi, shx, shy, mag, film, dx, dy, ast, occ, logp, sigma, score, change))
+		# Transfer stack particle number if exists for appion database
+		if 'stackpartnum' in p.keys():
+			stackpartnum = int(p['stackpartnum'])
+		else:
+			stackpartnum = None
+		line = "%7d%8.2f%8.2f%8.2f%10.2f%10.2f%8d%6d%9.1f%9.1f%8.2f%8.2f%10d%11.4f%8.2f%8.2f" \
+			% (partnum, psi, theta, phi, shx, shy, mag, film, dx, dy, ast, occ, logp, sigma, score, change)
+		if stackpartnum is not None:
+			line += '%8d' % (stackpartnum)
+		ff.write(line+'\n')
 	ff.close()
 
 #=================
@@ -1108,7 +1170,7 @@ def exclude_classes_from_frealign9_parfiles(inparfilebase, outlist, minocc, *cla
 	inparfilebase is the base name of the parameter file, w/ iteration number, but w/o class number
 	e.g. for parameter file input_20_r1.par, inparfilebase is input_20
 	
-	classlist refers to a list with class numbers (starting with 1), e.g. [0,1,4]
+	classlist refers to a list with class numbers (starting with 1), e.g. [1,4,6]
 
 	outlist is a list containing the particle numbers within the relevant classes (starts with 0)
 	'''
@@ -1262,18 +1324,45 @@ def average_value_frealign9(inparfile, *values):
 			vlist.append(params[i+1][v])
 		print "average %s:" % (v), numpy.average(vlist)
 
-def Relion_to_Frealign8(starfile, parfile, mag):
+
+#=================
+def replace_CTFs_Frealign9(inparfile, outparfile, ctffile):
+	### CTF file with values dx dy astig in three columns
+
+	params = parseFrealign9ParamFile(inparfile)
+	f = open(ctffile, "r")
+	flines = f.readlines()
+	fstrip = [l.strip().split() for l in flines]
+	f.close()
+
+	ff = open(outparfile, "w")
+	ff.write("%s%8s%8s%8s%10s%10s%8s%6s%9s%9s%8s%8s%10s%11s%8s%8s\n" \
+		% ("C      ","PSI","THETA","PHI","SHX","SHY","MAG","FILM","DF1","DF2","ANGAST","OCC","-LogP","SIGMA","SCORE","CHANGE"))
+
+	for i,p in params.iteritems(): # note that i starts with 1 for Frealign params
+		# i starts with 0 for numbering
+		p['defx']  = float(fstrip[i-1][0])
+		p['defy']  = float(fstrip[i-1][1])
+		p['astig'] = float(fstrip[i-1][2])
+		ff.write("%7d%8.2f%8.2f%8.2f%10.2f%10.2f%8d%6d%9.1f%9.1f%8.2f%8.2f%10d%11.4f%8.2f%8.2f\n" \
+			% (p['partnum'], p['psi'], p['theta'], p['phi'], p['shiftx'], p['shifty'], p['mag'], p['micn'], 
+			p['defx'], p['defy'], p['astig'], p['occ'], p['logp'], p['sigma'], p['score'], p['change']))
+	ff.close()
+
+
+#==================
+def Relion_to_Frealign8(starfile, parfile, mag=None):
 	star = starFile.StarFile(starfile)
 	star.read()
 	dataBlock = star.getDataBlock("data_images")
 	loopDict  = dataBlock.getLoopDict()
 	
 	### write Frealign8 file
-	ff = open(frealignfile, "w")
+	ff = open(parfile, "w")
 	ff.write("%s%8s%8s%8s%8s%8s%8s%6s%9s%9s%8s\n" \
 		% ("C      ","PSI","THETA","PHI","SHX","SHY","MAG","FILM","DF1","DF2","ANGAST"))
 
-	olddx = 0
+	oldastig = 0
 	micn = 0
 	for i in range(len(loopDict)):
 		if i % 1000 == 0:
@@ -1285,15 +1374,186 @@ def Relion_to_Frealign8(starfile, parfile, mag):
 		shiftx = float(loopDict[i]['_rlnOriginX']) * -1
 		shifty = float(loopDict[i]['_rlnOriginY']) * -1
 		dx = float(loopDict[i]['_rlnDefocusU'])
-		dy = float(loopDict[i]['_rlnDefocusU'])
+		dy = float(loopDict[i]['_rlnDefocusV'])
 		astig = float(loopDict[i]['_rlnDefocusAngle'])
+
+		if mag is None:
+			try:
+				mag = float(loopDict[i]['_rlnMagnification'])
+			except:
+				apDisplay.printError("magnification not specified, need to specify magnification")
 
 		phi, theta, psi = apEulerCalc.convertXmippEulersToFrealign(rlnrot, rlntilt, rlnpsi)
 
-		if dx != olddx:
+		if astig != oldastig:
 			micn += 1
-			olddx = dx
+			oldastig = astig
 
 		ff.write("%7d%8.2f%8.2f%8.2f%8.2f%8.2f%8d%6d%9.1f%9.1f%8.2f\n" \
 			% (i+1, psi, theta, phi, shiftx, shifty, mag, micn, dx, dy, astig))
 	ff.close()
+
+#==================
+def Relion_to_Frealign9(starfile, parfile, apix, mag=None, occ=100, logp=5000, sigma=1, score=50.0, change=0):
+	star = starFile.StarFile(starfile)
+	star.read()
+	dataBlock = star.getDataBlock("data_images")
+	loopDict  = dataBlock.getLoopDict()
+	
+	### write Frealign8 file
+	ff = open(parfile, "w")
+	ff.write("%s%8s%8s%8s%10s%10s%8s%6s%9s%9s%8s%8s%10s%11s%8s%8s\n" \
+		% ("C      ","PSI","THETA","PHI","SHX","SHY","MAG","FILM","DF1","DF2","ANGAST","OCC","-LogP","SIGMA","SCORE","CHANGE"))
+
+	oldastig = 0
+	micn = 0
+	for i in range(len(loopDict)):
+		if i % 1000 == 0:
+			print "done with %d particles" % i
+
+		rlnrot = float(loopDict[i]['_rlnAngleRot'])
+		rlntilt = float(loopDict[i]['_rlnAngleTilt'])
+		rlnpsi = float(loopDict[i]['_rlnAnglePsi'])
+		shiftx = float(loopDict[i]['_rlnOriginX']) * -1
+		shifty = float(loopDict[i]['_rlnOriginY']) * -1
+		dx = float(loopDict[i]['_rlnDefocusU'])
+		dy = float(loopDict[i]['_rlnDefocusV'])
+		astig = float(loopDict[i]['_rlnDefocusAngle'])
+		if mag is None:
+			try:
+				mag = float(loopDict[i]['_rlnMagnification'])
+			except:
+				apDisplay.printError("magnification not specified, need to specify magnification")
+
+		phi, theta, psi = apEulerCalc.convertXmippEulersToFrealign(rlnrot, rlntilt, rlnpsi)
+		Fx = shiftx * apix
+		Fy = shifty * apix
+
+		if astig != oldastig:
+			micn += 1
+			oldastig = astig
+
+		ff.write("%7d%8.2f%8.2f%8.2f%10.2f%10.2f%8d%6d%9.1f%9.1f%8.2f%8.2f%10d%11.4f%8.2f%8.2f\n" \
+			% (i+1, psi, theta, phi, Fx, Fy, mag, micn, dx, dy, astig, occ, logp, sigma, score, change))
+	ff.close()
+
+#==================
+def randomize_Frealign9_parfile_occupancies(parfile, n, logp=5000, sigma=1, score=50.0, change=0):
+	'''
+		parfile is input parameter file, in frealign9 format, without class number, e.g. RQC_0.par
+		n is number of output .par files to generate
+	'''
+
+	params = parseFrealign9ParamFile(parfile)
+	npart = len(params)
+
+	splitparams = []
+	for i in range(n):
+		splitparams.append(copy.deepcopy(params))
+
+	for i in range(npart): # note that i starts with 1 for Frealign params
+		# i starts with 0 for numbering
+		rand_occ_sample = numpy.random.dirichlet((1,)*n)
+		for j in range(n):
+			splitparams[j][i+1]['occ'] = rand_occ_sample[j]*100
+
+	### write params
+	for j in range(n):
+		outparfile = "%s_r%d.par" % (parfile[:-4], (j+1))	
+		ff = open(outparfile, "w")
+		ff.write("%s%8s%8s%8s%10s%10s%8s%6s%9s%9s%8s%8s%10s%11s%8s%8s\n" \
+			% ("C      ","PSI","THETA","PHI","SHX","SHY","MAG","FILM","DF1","DF2","ANGAST","OCC","-LogP","SIGMA","SCORE","CHANGE"))
+		for i in range(npart):
+			ff.write("%7d%8.2f%8.2f%8.2f%10.2f%10.2f%8d%6d%9.1f%9.1f%8.2f%8.2f%10d%11.4f%8.2f%8.2f\n" \
+				% (	splitparams[j][i+1]['partnum'], 
+					splitparams[j][i+1]['psi'], 
+					splitparams[j][i+1]['theta'], 
+					splitparams[j][i+1]['phi'], 
+					splitparams[j][i+1]['shiftx'], 
+					splitparams[j][i+1]['shifty'], 
+					splitparams[j][i+1]['mag'], 
+					splitparams[j][i+1]['micn'], 
+					splitparams[j][i+1]['defx'], 
+					splitparams[j][i+1]['defy'], 
+					splitparams[j][i+1]['astig'], 
+					splitparams[j][i+1]['occ'], 
+					splitparams[j][i+1]['logp'], 
+					splitparams[j][i+1]['sigma'], 
+					splitparams[j][i+1]['score'], 
+					splitparams[j][i+1]['change']
+				)
+			)
+		ff.close()
+
+#==================
+def combine_best_multimodel_parfiles_into_one(outparfile, *parfiles):
+
+	ff = open(outparfile, "w")
+	ff.write("%s%8s%8s%8s%10s%10s%8s%6s%9s%9s%8s%8s%10s%11s%8s%8s\n" \
+		% ("C      ","PSI","THETA","PHI","SHX","SHY","MAG","FILM","DF1","DF2","ANGAST","OCC","-LogP","SIGMA","SCORE","CHANGE"))
+
+	allparams = []
+	for parfile in parfiles:	
+		allparams.append(parseFrealign9ParamFile(parfile))
+	npart = len(allparams[0])
+
+	for i in range(npart):
+		bestocc = -1
+		bestm = -1
+		for j in range(len(allparams)):
+			occ = allparams[j][i+1]['occ']
+			if occ > bestocc:
+				bestocc = occ
+				bestm = j
+		ff.write("%7d%8.2f%8.2f%8.2f%10.2f%10.2f%8d%6d%9.1f%9.1f%8.2f%8.2f%10d%11.4f%8.2f%8.2f\n" \
+			% (	
+				allparams[bestm][i+1]['partnum'],
+				allparams[bestm][i+1]['psi'],
+				allparams[bestm][i+1]['theta'],
+				allparams[bestm][i+1]['phi'],
+				allparams[bestm][i+1]['shiftx'],
+				allparams[bestm][i+1]['shifty'],
+				allparams[bestm][i+1]['mag'],
+				allparams[bestm][i+1]['micn'],
+				allparams[bestm][i+1]['defx'],
+				allparams[bestm][i+1]['defy'],
+				allparams[bestm][i+1]['astig'],
+				100,
+#				allparams[bestm][i+1]['occ'],
+				allparams[bestm][i+1]['logp'],
+				allparams[bestm][i+1]['sigma'],
+				allparams[bestm][i+1]['score'],
+				allparams[bestm][i+1]['change']
+			)
+		)
+
+	ff.close()
+	return
+
+def frealign9_to_spider(inparfile, outspifile):
+        ### set params
+        params = parseFrealign9ParamFile(inparfile)
+	first = 0
+	last = len(params)
+        of = open(outspifile, "w")
+        for i in range(first, last):
+                rot = float(params[i+1]['phi'])
+                theta = float(params[i+1]['theta'])
+                psi = float(params[i+1]['psi'])
+                shx = float(params[i+1]['shiftx'])
+                shy = float(params[i+1]['shifty'])
+                of.write("%10.3f%10.3f%10.3f%10.3f%10.3f\n" % (rot, theta, psi, shx, shy))
+        of.close()
+
+def getFrealignStyleParticleMagnification(stackpdata,refinestack_bin):
+	stackbin = apStack.getStackBinningFromStackId(stackpdata['stack'].dbid)
+	totalbin =  stackbin * refinestack_bin
+	imgdata = stackpdata['particle']['image']
+	apix = apDatabase.getPixelSize(imgdata) # in angstroms
+	
+	senser_pixel = imgdata['camera']['pixel size']['x']
+	if senser_pixel is None:
+		senser_pixel = apix*1e-10 / imgdata['scope']['magnification']
+		
+	camera_pixel = senser_pixel*imgdata['camera']['binning']['x'] # in meters
+	return camera_pixel / (apix * 1e-10 * totalbin)

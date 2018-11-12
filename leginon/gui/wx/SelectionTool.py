@@ -1,8 +1,8 @@
-#!/usr/bin/python -O
-# The Leginon software is Copyright 2004
-# The Scripps Research Institute, La Jolla, CA
+#!/usr/bin/env python -O
+# The Leginon software is Copyright under
+# Apache License, Version 2.0
 # For terms of the license agreement
-# see http://ami.scripps.edu/software/leginon-license
+# see http://leginon.org
 #
 # $Source: /ami/sw/cvsroot/pyleginon/leginon.gui.wx/SelectionTool.py,v $
 # $Revision: 1.4 $
@@ -13,10 +13,10 @@
 # $Locker:  $
 #
 # COPYRIGHT:
-#       The Leginon software is Copyright 2003
-#       The Scripps Research Institute, La Jolla, CA
+#       The Leginon software is Copyright under
+#       Apache License, Version 2.0
 #       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
+#       see  http://leginon.org
 #
 
 import wx
@@ -102,6 +102,10 @@ class SelectionTool(wx.Panel):
 			return False
 
 	#--------------------
+	def getTypeNames(self):
+		return self.tools.keys()
+
+	#--------------------
 	def _getTypeTool(self, name):
 		try:
 			return self.tools[name]
@@ -162,6 +166,11 @@ class SelectionTool(wx.Panel):
 				self.parent.setImage(image)
 			else:
 				self.parent.setImage(None)
+
+	#--------------------
+	def setEnableSettings(self,name,value=True):
+		tool = self._getTypeTool(name)
+		tool.enableToggleButton('settings',value)
 
 	#--------------------
 	def onDisplay(self, evt):
@@ -265,8 +274,11 @@ class SelectionTool(wx.Panel):
 
 	#--------------------
 	def getTargetPositions(self, name):
-		return self._getTypeTool(name).targettype.getTargetPositions()
-
+		try:
+			return self._getTypeTool(name).targettype.getTargetPositions()
+		except ValueError, KeyError:
+			# no target type, Issue #5619
+			return []
 	#--------------------
 	def isTargeting(self, name):
 		tool = self._getTypeTool(name)

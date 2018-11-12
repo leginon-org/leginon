@@ -1,10 +1,10 @@
 <?php
 
 /**
- *	The Leginon software is Copyright 2003 
- *	The Scripps Research Institute, La Jolla, CA
+ *	The Leginon software is Copyright under 
+ *	Apache License, Version 2.0
  *	For terms of the license agreement
- *	see  http://ami.scripps.edu/software/leginon-license
+ *	see  http://leginon.org
  */
 
 //--------------------------------------------------------------------------------------
@@ -19,11 +19,14 @@ class BasicForm
 	protected $formParams; 			// the current user selected or modified parameter set
 	protected $pubKeyList;
 	protected $filesToCopy;			// an array of filenames that should be copied to remote rundir
+	protected $showPreForm;			// a boolean to set whether to generate preform instead normal form
 	
 	function __construct() 
 	{
 		$this->formParams = $this->createFormParams();
 		$this->setPublications();
+		$this->setLogoImagePath();
+		$this->setShowPreForm(false);
 	}	
 	
 	function __destruct() 
@@ -31,6 +34,7 @@ class BasicForm
 		unset( $this->formParams );
 		unset( $this->defaultParamSets );
 		unset( $this->pubKeyList );
+		unset( $this->logoImagePath );
 	}
 	
 	// extending classes should use this to set the 
@@ -55,6 +59,14 @@ class BasicForm
 		}
 		
 		return $html;
+	}
+	
+	// extending classes should use this to set the 
+	// logo image path relative to processing directory 
+	// for example, 'img/dogpicker.jpg'
+	protected function setLogoImagePath($relative_path='')
+	{
+		$this->logoImagePath = $relative_path;
 	}
 	
 	// Override this function if your form needs to copy files to a remote server
@@ -216,8 +228,28 @@ class BasicForm
 	{
 		$this->formParams->disableAllParams();
 	}
+
+	// Use empty named parameter to determine if the preform should be shown instead
+	// of the normal form
+	public function setShowPreForm($flag=false) {
+		if ($flag)	{
+			$this->showPreForm = (empty($_POST)) ? true:false;
+		} else {
+			$this->showPreForm = false;
+		};
+	}
+
+	public function generateSequenceForm() {
+		if ($this->showPreForm) {
+				return $this->generatePreForm();
+		} else {
+		return $this->generateForm();
+		}
+	}
 	
 	public function generateForm() {}
+	
+	public function generatePreForm() {}
 	
 	public function generateReport( $title="", $width=650 )
 	{
@@ -315,6 +347,7 @@ class BasicForm
 		if ( $value === '' ) {
 			$value = $this->formParams->getParamValue( $paramName );
 		}
+
 		if ( $value !== '' ) {
 			// if the value is 'on' it is just a flag, with no value specified
 			if ( $value == 'on') $flagString = "--".$flagName;

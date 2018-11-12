@@ -1,7 +1,7 @@
-# The Leginon software is Copyright 2004
-# The Scripps Research Institute, La Jolla, CA
+# The Leginon software is Copyright under
+# Apache License, Version 2.0
 # For terms of the license agreement
-# see http://ami.scripps.edu/software/leginon-license
+# see http://leginon.org
 #
 # $Source: /ami/sw/cvsroot/pyleginon/leginon.gui.wx/Corrector.py,v $
 # $Revision: 1.56 $
@@ -150,7 +150,7 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PLUS,'plus',shortHelpString='Add Region To Bad Pixel List')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_STAGE_LOCATIONS,'stagelocations',shortHelpString='Add Extreme Points To Bad Pixel List')
-		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_REFRESH,'display',shortHelpString='Display Normalization Image')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_REFRESH,'display',shortHelpString='Display Specified Image')
 
 		# settings
 		self.szplan = self._getStaticBoxSizer('Plan', (0, 0), (1, 1), wx.ALIGN_TOP)
@@ -222,6 +222,9 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		self.Bind(wx.EVT_BUTTON, self.onGrabPixels, self.bgrabpixels)
 		self.Bind(wx.EVT_BUTTON, self.onClearPixels, self.bclearpixels)
 
+		# disable acquire until user checks the settings
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ACQUIRE, False)
+
 	def onSetImage(self, evt):
 		leginon.gui.wx.Node.Panel.onSetImage(self, evt)
 
@@ -242,6 +245,7 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 	def onSettingsTool(self, evt):
 		self.resetInstruments()
 		self.settingsdialog.ShowModal()
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ACQUIRE, True)
 		plan = self.node.retrieveCorrectorPlanFromSettings()
 		self.setPlan(plan)
 
@@ -409,7 +413,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.widgets['combine'] = Choice(self, -1, choices=['median', 'average'])
 		self.widgets['store series'] = wx.CheckBox(self, -1, 'Save all images')
 
-		self.widgets['camera settings'] = leginon.gui.wx.Camera.CameraPanel(self)
+		self.widgets['camera settings'] = leginon.gui.wx.Camera.CameraPanel(self, hide_frames=True)
 		self.widgets['camera settings'].setGeometryLimits({'size':self.node.instrument.camerasize,'binnings':self.node.instrument.camerabinnings,'binmethod':self.node.instrument.camerabinmethod})
 		#self.widgets['clip min'] = FloatEntry(self, -1, chars=6)
 		#self.widgets['clip max'] = FloatEntry(self, -1, chars=6)
@@ -437,6 +441,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		szref.Add(self.widgets['combine'], (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 
 		szref.Add(self.widgets['store series'], (2,0), (1,2))
+		self.widgets['store series'].Disable()
 
 		sbszref.Add(szref, 1, wx.ALIGN_CENTER|wx.EXPAND|wx.ALL, 3)
 

@@ -1,4 +1,4 @@
-<?
+<?php
 require_once("inc/project.inc.php");
 require_once("inc/leginon.inc");
 require_once("inc/share.inc.php");
@@ -13,9 +13,9 @@ checkProjectAccessPrivilege($projectId);
 $is_admin = checkProjectAdminPrivilege($projectId);
 ?>
 
-<form method="POST" name="projectform" action="<?=$_SERVER['REQUEST_URI'] ?>">
+<form method="POST" name="projectform" action="<?php $_SERVER['REQUEST_URI'] ?>">
 <input type="hidden" name="projectId" value="">
-<?
+<?php
 if ($is_admin) {
 // --- add something for admin only
 }
@@ -23,7 +23,7 @@ if ($is_admin) {
 <h3>Selected Project</h3>
 
 <table class="tableborder" border="1" valign="top">
-<?
+<?php
 	$info = $project->getProjectInfo($projectId);
 	$keys_to_display = array('Name');
 	foreach ($info as $k=>$v) {
@@ -41,23 +41,35 @@ if ($is_admin) {
 ?>
 </table>
 <h3>Select an owner to add to this project:</h3>
-<?
+<?php
 	if ($is_admin) {
 ?>
 <p>
 <img src="img/info.png"> Users with no password set won't be listed; go
-to <a class="header" href="<? echo BASE_URL.'user.php'; ?>">[user]</a> to update user's profile.
+to <a class="header" href="<?php echo BASE_URL.'user.php'; ?>">[user]</a> to update user's profile.
 </p>
-<?
+<?php
 	};
 	$db = $project->mysql;
-	$userId = $_POST['userId'];
+	$loginId = getLoginUserId();
+	$userId = $_POST['userId']; //User to add
 	if ($_POST['bt']=="add") {
 		if ($userId && $projectId) {
 			$project->addProjectOwner($userId, $projectId);
 		}
 	} else if ($_POST['bt']=="del" && $_POST['ck']) {
-		$project->removeProjectOwner($_POST['ck'], $projectId);
+		$is_self = false;
+		if ($loginId !== true && privilege('projects') < 4) {
+			foreach ($_POST['ck'] as $cki) {
+				if ($cki == $loginId ) $is_self = true;
+			}
+		}
+		if ( $is_self ) {
+			$error = "<p> Error: Can not remove self. Ask for administrative asistance. </p>";
+		} else {
+			$project->removeProjectOwner($_POST['ck'], $projectId);
+			$error = '';
+		}
 	}
 
 
@@ -72,7 +84,7 @@ to <a class="header" href="<? echo BASE_URL.'user.php'; ?>">[user]</a> to update
 	$bt_add= "<input class='bt1' type='submit' name='bt' value='add'>";
 	?>
 	<select name="userId">
-	<?
+	<?php
 		echo "<option value='default' > -- select user -- </option>";
 		foreach($users as $user) {
 			$s = ($user['userId']==$_POST['userId']) ? "selected" : "";
@@ -87,7 +99,7 @@ to <a class="header" href="<? echo BASE_URL.'user.php'; ?>">[user]</a> to update
 		}
 	?>
 	</select>
-	<?
+	<?php
 	echo $bt_add;
 	if ($ln=$_GET['ln']) {
 		echo "<a class=\"header\" href=\"$ln\"> Back to project list</a>";
@@ -99,9 +111,10 @@ to <a class="header" href="<? echo BASE_URL.'user.php'; ?>">[user]</a> to update
 	$owners = $project->getProjectOwners($projectId);
 	echo "<br>";
 	echo "Project owned by: <br>";
-#	$bt_del = "<input class='bt1' type='submit' name='bt' value='del'>";
+	$bt_del = "<input class='bt1' type='submit' name='bt' value='del'>";
 	echo "<table>";
 	if ($owners) {
+		$loginId = getLoginUserId();
 		foreach ($owners as $v) {
 			$ck = "<input type='checkbox' name='ck[]' value='".$v['userId']."'>";
 			$cuser = ($v['lastname']||$v['firstname']) ? $v['firstname']." ".$v['lastname']:$v['username'];
@@ -109,17 +122,24 @@ to <a class="header" href="<? echo BASE_URL.'user.php'; ?>">[user]</a> to update
 			echo "<td>";
 			echo " - ".$cuser;
 			echo "</td>";
-			if ($is_admin) {
+			if ($is_admin && count($owners) >= 1) {
 				echo "<td>";
-#				echo $ck;
+				if ($loginId !== true && privilege('projects') < 4 && count($owners)==1) {
+					//Do not allow removing last owner when a user is logged in
+					//with lower project administrator privilege.
+					echo '';
+				} else {
+					echo $ck;
+				}
 				echo "</td>";
 			}
 			echo "</tr>";
 		}
 		echo "</table>";
 		echo "<br>";
-		if ($is_admin) {
-#			echo "delete selected: ".$bt_del;
+		if ($is_admin && count($owners) >= 1) {
+			echo $error;
+			echo "delete selected: ".$bt_del;
 		}
 	}
 	echo "<pre>";
@@ -128,6 +148,6 @@ to <a class="header" href="<? echo BASE_URL.'user.php'; ?>">[user]</a> to update
 	
 ?>
 </form>
-<?
+<?php
 project_footer();
 ?>

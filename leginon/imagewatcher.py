@@ -2,10 +2,10 @@
 
 #
 # COPYRIGHT:
-#       The Leginon software is Copyright 2003
-#       The Scripps Research Institute, La Jolla, CA
+#       The Leginon software is Copyright under
+#       Apache License, Version 2.0
 #       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
+#       see  http://leginon.org
 #
 
 from leginon import leginondata
@@ -32,6 +32,9 @@ class ImageWatcher(watcher.Watcher):
 			imageid = self.currentimagedata.dbid
 		initializer = {'imageid': imageid, 'status': status}
 		oevent = event.ImageProcessDoneEvent(initializer=initializer)
+		self.outputEvent(oevent)
+		# notify manager this node has been busy
+		oevent = event.NodeBusyNotificationEvent()
 		self.outputEvent(oevent)
 
 	def processData(self, idata):

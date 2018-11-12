@@ -1,10 +1,10 @@
 <?php
 
 /**
- *	The Leginon software is Copyright 2003 
- *	The Scripps Research Institute, La Jolla, CA
+ *	The Leginon software is Copyright under 
+ *	Apache License, Version 2.0
  *	For terms of the license agreement
- *	see  http://ami.scripps.edu/software/leginon-license
+ *	see  http://leginon.org
  */
 
 require_once "inc/leginon.inc";
@@ -27,7 +27,7 @@ $text = ($_GET['text']) ? $t: $defaulttext;
 <hr/>
 <p>
 	<h3> Your access to the page was denied </h3>
-	<h4> <? echo $text ?> </h4>
+	<h4> <?php echo $text; ?> </h4>
 	<h4> Use your browser to return to the last allowed page. </h4>
 </p>
 <?php

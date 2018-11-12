@@ -2,11 +2,15 @@
 
 #
 # COPYRIGHT:
-#	The Leginon software is Copyright 2003
-#	The Scripps Research Institute, La Jolla, CA
+#	The Leginon software is Copyright under
+#	Apache License, Version 2.0
 #	For terms of the license agreement
-#	see  http://ami.scripps.edu/software/leginon-license
+#	see  http://leginon.org
 #
+
+# testing before start
+import configcheck
+configcheck.testBeforeStart()
 
 import pyami.quietscipy
 import sinedon.data as data
@@ -18,7 +22,6 @@ import leginon.project
 try:
 	# This is a local file
 	import leginon.configmatch
-	print leginon.configmatch
 	matchconfigs=True
 except:
 	matchconfigs=False

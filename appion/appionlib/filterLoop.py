@@ -2,8 +2,6 @@
 
 #pythonlib
 import os
-import sys
-import re
 import time
 #appion
 from appionlib import appionLoop2
@@ -11,7 +9,6 @@ from appionlib import appionScript
 from appionlib import apImage
 from appionlib import apFile
 from appionlib import apDisplay
-from appionlib import apDatabase
 
 class FilterLoop(appionLoop2.AppionLoop):
 	#######################################################
@@ -76,16 +73,14 @@ class FilterLoop(appionLoop2.AppionLoop):
 		setup like this to override things
 		"""
 		self.filtimgpath = os.path.join(self.params['rundir'], imgdata['filename']+'.dwn.mrc')
-
 		if os.path.isfile(self.filtimgpath) and self.params['continue'] is True:
 			apDisplay.printMsg("reading filtered image from mrc file")
 			self.filtarray = apImage.mrcToArray(self.filtimgpath, msg=False)
 		else:
-			self.filtarray = apImage.preProcessImage(imgdata['image'], apix=self.params['apix'], params=self.params)
+			self.imgFilter.readParamsDict(self.params)
+			self.filtarray = self.imgFilter.processImage(imgdata['image'])
 			apImage.arrayToMrc(self.filtarray, self.filtimgpath)
-
 		peaktree = self.processImage(imgdata, self.filtarray)
-
 		return peaktree
 
 	#=====================
@@ -95,15 +90,15 @@ class FilterLoop(appionLoop2.AppionLoop):
 		"""
 		appionLoop2.AppionLoop.setupGlobalParserOptions(self)
 		### Input value options
-		self.parser.add_option("--lowpass", "--lp", dest="lowpass", type="float",
+		self.parser.add_option("--lowpass", "--lp", "--lpval", dest="lowpass", type="float",
 			help="Low pass filter radius in Angstroms", metavar="FLOAT")
-		self.parser.add_option("--highpass", "--hp", dest="highpass", type="float",
+		self.parser.add_option("--highpass", "--hp", "--hpval", dest="highpass", type="float",
 			help="High pass filter radius in Angstroms", metavar="FLOAT")
-		self.parser.add_option("--median", dest="median", type="int",
+		self.parser.add_option("--median", "--medianval", dest="median", type="int",
 			help="Median filter radius in Pixels", metavar="INT")
 		self.parser.add_option("--pixlimit", dest="pixlimit", type="float",
 			help="Limit pixel values to within <pixlimit> standard deviations", metavar="FLOAT")
-		self.parser.add_option("--bin", "--shrink", "--binby", dest="bin", type="int", default=4,
+		self.parser.add_option("--bin","--binval", "--shrink", "--binby", dest="bin", type="int", default=4,
 			help="Bin the image", metavar="INT")
 		### True / False options
 		self.parser.add_option("--invert", dest="invert", default=False,
@@ -119,6 +114,7 @@ class FilterLoop(appionLoop2.AppionLoop):
 		put in any conflicting parameters
 		"""
 		self.proct0 = time.time()
+		self.imgFilter = apImage.ImageFilter()
 		appionLoop2.AppionLoop.checkGlobalConflicts(self)
 		return
 

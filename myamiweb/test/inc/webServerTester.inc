@@ -79,7 +79,7 @@ class WebServerTester
 				throw new Exception("!!! WARNING !!! JPEG support is not enabled for the GD php extension. For more info about installing the jpeg library, see: http://www.php.net/manual/en/image.requirements.php");
 			}
 		} else {
-			throw new Exception("!!! WARNING !!! The php-gd library is not installed. Find more info here: http://ami.scripps.edu/redmine/projects/appion/wiki/Install_Web_Server_Prerequisites");
+			throw new Exception("!!! WARNING !!! The php-gd library is not installed. Find more info here: http://emg.nysbc.org/redmine/projects/appion/wiki/Install_Web_Server_Prerequisites");
 		}
 		
 		return $this->modules->getModuleSetting('gd');
@@ -94,7 +94,7 @@ class WebServerTester
 	{
 		if (!extension_loaded('ssh2'))
 		{
-			throw new Exception("!!! WARNING !!! The php ssh2 extension is NOT loaded. See http://ami.scripps.edu/redmine/projects/appion/wiki/Install_SSH_module_for_PHP.");
+			throw new Exception("!!! WARNING !!! The php ssh2 extension is NOT loaded. See http://emg.nysbc.org/redmine/projects/appion/wiki/Install_SSH_module_for_PHP.");
 		}
 		return true;
 	}
@@ -112,10 +112,10 @@ class WebServerTester
 			$fftwEnabled = $this->modules->getModuleSetting('mrc','FFTW3 support');
 			
 			if ($fftwEnabled != 'enabled') {
-				throw new Exception("!!! WARNING !!! FFTW3 is not enabled for the MRC php extension. For more info see: http://ami.scripps.edu/redmine/projects/appion/wiki/Install_Web_Server_Prerequisites");
+				throw new Exception("!!! WARNING !!! FFTW3 is not enabled for the MRC php extension. For more info see: http://emg.nysbc.org/redmine/projects/appion/wiki/Install_Web_Server_Prerequisites");
 			}
 		} else {
-			throw new Exception("!!! WARNING !!! MRC php extension is not loaded. For more info see: http://ami.scripps.edu/redmine/projects/appion/wiki/Install_the_MRC_PHP_Extension");
+			throw new Exception("!!! WARNING !!! MRC php extension is not loaded. For more info see: http://emg.nysbc.org/redmine/projects/appion/wiki/Install_the_MRC_PHP_Extension");
 		}
 		
 		return $this->modules->getModuleSetting('mrc');

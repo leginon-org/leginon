@@ -65,13 +65,13 @@ class Viewer(wx.Panel):
 
     def onMotion(self, evt):
         if self.tools.isShown(self.tools.infotool):
-            x, y, value = self.numarrayplugin.getXYValue(evt.m_x, evt.m_y)
+            x, y, value = self.numarrayplugin.getXYValue(evt.X, evt.Y)
             tooltip = '(%d, %d)' % (x, y)
             if value is not None:
                 tooltip += ' %g' % value
-            self.tooltipplugin.setXYText(wx.Point(evt.m_x, evt.m_y), tooltip)
+            self.tooltipplugin.setXYText(wx.Point(evt.X, evt.Y), tooltip)
         if self.tools.displaytool.magnifier:
-            self.magnifierplugin.setXY(wx.Point(evt.m_x, evt.m_y))
+            self.magnifierplugin.setXY(wx.Point(evt.X, evt.Y))
 
     def getNumpy(self):
         return self.numarrayplugin.getNumpy()
@@ -86,14 +86,15 @@ class Viewer(wx.Panel):
             extrema = (min, max)
             mean = array.mean()
             std = array.std()
-            imagemin = mean - 3 * std
-            imagemax = mean + 3 * std
+            imagemin = mean - 2 * std
+            imagemax = mean + 2 * std
             if use_extrema:
 						    contrastlimit = extrema
             else:
 						    contrastlimit = (imagemin,imagemax)
-        self.numarrayplugin.setValueRange(contrastlimit)
         self.numarrayplugin.setNumpy(array)
+				# Issue #4251 value range must be set after numpy is set since setNumpy set it to exterma
+        self.numarrayplugin.setValueRange(contrastlimit)
         self.tools.infotool.setStatistics(array)
         self.tools.valuescalebitmap.updateParameters(extrema=extrema,
                                                       fromrange=contrastlimit)

@@ -5,7 +5,7 @@ require_once 'inc/login.inc';
 #login_header();
 
 function redux_request_string($request_string) {
-	$address = "http://bnc16.scripps.edu";
+	$address = "http://noone.edu";
 	$port = 55123;
 	$msg = $request_string."\n";   // new line indicates end of request
 	$reduxsock = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);

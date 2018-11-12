@@ -7,6 +7,7 @@ import time
 import math
 import numpy
 ### appion
+import sinedon.directq
 from pyami import mrc
 from pyami import mem
 from appionlib import apDatabase
@@ -15,9 +16,9 @@ from appionlib import apEMAN
 from appionlib import apDisplay
 from appionlib import appiondata
 from appionlib import apFile
-from appionlib import apParam
 from appionlib import apScriptLog
 from appionlib.apCtf import ctftools
+from appionlib.StackClass import stackTools
 
 debug = False
 
@@ -27,9 +28,15 @@ debug = False
 ####
 
 #===============
-def makeNewStack(oldstack, newstack, listfile=None, remove=False, bad=False):
+def makeNewStack(oldstack, newstack, partlist=None, remove=False, bad=False):
+	"""
+	selects particular particles from a stack
+
+	this is essentially subStack
+	"""
 	if not os.path.isfile(oldstack):
 		apDisplay.printWarning("could not find old stack: "+oldstack)
+
 	if os.path.isfile(newstack):
 		if remove is True:
 			apDisplay.printWarning("removing old stack: "+newstack)
@@ -38,30 +45,90 @@ def makeNewStack(oldstack, newstack, listfile=None, remove=False, bad=False):
 		else:
 			apDisplay.printError("new stack already exists: "+newstack)
 	apDisplay.printMsg("creating a new stack\n\t"+newstack+
-		"\nfrom the oldstack\n\t"+oldstack+"\nusing list file\n\t"+str(listfile))
-	emancmd = "proc2d "+oldstack+" "+newstack
-	if listfile is not None:
-		emancmd += " list="+listfile
-	apEMAN.executeEmanCmd(emancmd, verbose=True)
-	if bad is True and listfile is not None:
+		"\nfrom the oldstack\n\t"+oldstack+"\n")
+
+	if isinstance(partlist, str) and os.path.exists(partlist):
+		listfile = partlist
+		#note: eman particle list files start at 0, appion particle lists start at 1
+		partlist = emanLstFileToPartList(listfile)
+
+	stackTools.createSubStack(oldstack, newstack, partlist, msg=True)
+
+	if bad is True and partlist is not None:
 		### run only if num bad particles < num good particles
 		newstacknumpart = apFile.numImagesInStack(newstack)
 		oldstacknumpart = apFile.numImagesInStack(oldstack)
 		if newstacknumpart > oldstacknumpart/2:
 			### create bad.hed stack with all bad particles
 			badstack = os.path.join(os.path.dirname(newstack), "bad.hed")
-			emancmd = "proc2d %s %s exclude=%s"%(oldstack, badstack, listfile)
-			apEMAN.executeEmanCmd(emancmd, verbose=True)
+			badlist = list(set(range(1, oldstacknumpart+1)) - set(partlist))
+			stackTools.createSubStack(oldstack, badstack, badlist, msg=True)
 		else:
 			apDisplay.printMsg("Rejecting more particles than keeping, not creating a bad stack")
 	return
+
+#===============
+def emanLstFileToPartList(listfile):
+	f = open(listfile, "r")
+	partlist = []
+	for line in f:
+		sline = line.strip()
+		partnum = None
+		try:
+			#eman starts at 0, appion starts at 1
+			partnum = int(sline) + 1
+		except ValueError:
+			pass
+		if partnum is not None:
+			partlist.append(partnum)
+	return partlist
+
+#===============
+def getVirtualStackParticlesFromId(stackid, msg=True):
+	"""
+	virtual stacks do not have stack files on disk, rather are
+	subsets of existing stacks. This function retrieves the original
+	particles based on the particledata.
+	returns oldstackid, filename, particle list
+	"""
+
+	if msg is True:
+		apDisplay.printMsg("Querying original particles from stackid="+str(stackid))
+
+	stackdata = getOnlyStackData(stackid, msg=False)
+	try:
+		oldstackid = stackdata['oldstack'].dbid
+	except:
+		apDisplay.printError("Virtual stack: %i does not have original stack information")
+
+	# first find original stack that has a file associated with it
+	orig_stack = None
+	while orig_stack is None:
+		orig_stackdata = getOnlyStackData(oldstackid, msg=False)
+		orig_stackfile = os.path.join(orig_stackdata['path']['path'], orig_stackdata['name'])
+		if not os.path.isfile(orig_stackfile):
+			oldstackid=orig_stackdata['oldstack'].dbid
+		else:
+			apDisplay.printMsg("original stackid: %i"%oldstackid)
+			orig_stack=oldstackid
+
+	sqlcmd = "SELECT s1.* FROM ApStackParticleData s1 "+ \
+		"LEFT JOIN ApStackParticleData s2 ON " + \
+		"(s1.`REF|ApParticleData|particle`=s2.`REF|ApParticleData|particle`) " + \
+		"WHERE (s1.`REF|ApStackData|stack`=" + str(orig_stack) + \
+		" AND s2.`REF|ApStackData|stack`=" + str(stackid) + \
+		") ORDER BY s1.particleNumber"
+
+	pinfo = sinedon.directq.complexMysqlQuery('appiondata',sqlcmd)
+
+	apDisplay.printColor("Original stack: %s"%orig_stackfile,"cyan")
+	return {'stackid':orig_stack, 'filename':orig_stackfile, 'particles':pinfo}
 
 #===============
 def checkDefocPairFromStackId(stackId):
 	# returns True if stack was made with defocal pairs
 	runsindata = getRunsInStack(stackId)
 	return runsindata[0]['stackRun']['stackParams']['defocpair']
-
 
 #===============
 def getStackParticlesFromId(stackid, msg=True):
@@ -84,7 +151,6 @@ def getStackParticlesFromId(stackid, msg=True):
 
 #===============
 def getNumberStackParticlesFromId(stackid, msg=True):
-	t0 = time.time()
 	stackdata = appiondata.ApStackData.direct_query(stackid)
 	stackpath = os.path.join(stackdata['path']['path'], stackdata['name'])
 	numpart = apFile.numImagesInStack(stackpath)
@@ -94,7 +160,6 @@ def getNumberStackParticlesFromId(stackid, msg=True):
 def getImageIdsFromStack(stackid, msg=True):
 	if stackid < 1:
 		return []
-	t0 = time.time()
 	stackdata = appiondata.ApStackData.direct_query(stackid)
 	stackq=appiondata.ApStackParticleData()
 	stackq['stack'] = stackdata
@@ -144,10 +209,6 @@ def getOnlyStackData(stackid, msg=True):
 	stackdata = appiondata.ApStackData.direct_query(stackid)
 	if not stackdata:
 		apDisplay.printError("Stack ID: "+str(stackid)+" does not exist in the database")
-	stackpath = os.path.join(stackdata['path']['path'], stackdata['name'])
-	# stack file is not checked in case it is archieved away
-	#if not os.path.isfile(stackpath):
-	#	apDisplay.printError("Could not find stack file: "+stackpath)
 	if msg is True:
 		sys.stderr.write("Old stack info: ")
 		apDisplay.printColor("'"+stackdata['description']+"'","cyan")
@@ -238,7 +299,9 @@ def checkForPreviousStack(stackname, stackpath=None):
 	stackq['name'] = os.path.basename(stackname)
 	stackdata = stackq.query(results=1)
 	if stackdata:
-		apDisplay.printError("A stack with name "+stackname+" and path "+spath+" already exists!")
+		sdbid = stackdata[0].dbid
+		apDisplay.printError("A stack with name "+stackname+" (id: "+ \
+			str(sdbid)+") and path "+spath+" already exists!")
 	return
 
 #===============
@@ -260,17 +323,11 @@ def getStackIdFromRecon(reconrunid, msg=True):
 	return stackid
 
 #===============
-def averageStack(stack="start.hed", outfile="average.mrc", msg=True):
-	if msg is True:
-		apDisplay.printMsg("averaging stack for summary web page")
-	stackfile = os.path.abspath(stack)
-	if not os.path.isfile(stackfile):
-		apDisplay.printWarning("could not create stack average, average.mrc")
-		return False
-	avgmrc = os.path.join(os.path.dirname(stackfile), outfile)
-	emancmd = ( "proc2d "+stackfile+" "+avgmrc+" average" )
-	apEMAN.executeEmanCmd(emancmd, verbose=msg)
-	return True
+def averageStack(stack="start.hed", outfile="average.mrc", partlist=None, msg=True):
+	"""
+	partlist starts at 1
+	"""
+	return stackTools.averageStack(stack, outfile, partlist, msg)
 
 #======================
 def getParticleContrastFromStackId(stackId):
@@ -355,7 +412,7 @@ def centerParticles(stack, mask=None, maxshift=None):
 	return
 
 #===============
-def commitSubStack(params, newname=False, centered=False, oldstackparts=None, sorted=False):
+def commitSubStack(params, newname=False, centered=False, oldstackparts=None, sorted=False, radial_averaged=False, included=None):
 	"""
 	commit a substack to database
 
@@ -365,10 +422,14 @@ def commitSubStack(params, newname=False, centered=False, oldstackparts=None, so
 		commit
 		rundir
 		keepfile
+	'included' param is a list of included particles, starting at 0
 	"""
 
+	t0 = time.time()
 	oldstackdata = getOnlyStackData(params['stackid'], msg=False)
+	apDisplay.printColor("got old stackdata in "+apDisplay.timeString(time.time()-t0),"cyan")
 
+	t0 = time.time()
 	#create new stack data
 	stackq = appiondata.ApStackData()
 	stackq['path'] = appiondata.ApPathData(path=os.path.abspath(params['rundir']))
@@ -393,6 +454,8 @@ def commitSubStack(params, newname=False, centered=False, oldstackparts=None, so
 		stackq['beamtilt_corrected'] = params['correctbeamtilt']
 	if sorted is True:
 		stackq['junksorted'] = True
+	if radial_averaged is True:
+		stackq['radial_averaged'] = True
 	if centered is True:
 		stackq['centered'] = True
 		if 'mask' in params:
@@ -402,61 +465,110 @@ def commitSubStack(params, newname=False, centered=False, oldstackparts=None, so
 
 	## insert now before datamanager cleans up referenced data
 	stackq.insert()
+	apDisplay.printMsg("created new stackdata in %s\n"%(apDisplay.timeString(time.time()-t0)))
 
-	#Insert particles
-	listfile = params['keepfile']
+	newstackid = stackq.dbid
 
-	### read list and sort
-	f=open(listfile,'r')
-	listfilelines = []
-	for line in f:
-		sline = line.strip()
-		if re.match("[0-9]+", sline):
-			listfilelines.append(int(sline.split()[0])+1)
-		else:
-			apDisplay.printWarning("Line in listfile is not int: "+str(line))
-	listfilelines.sort()
-	total = len(listfilelines)
-	f.close()
+	t0 = time.time()
+	# get list of included particles
+	apDisplay.printMsg("Getting list of particles to include")
+
+	if included:
+		listfilelines = [p+1 for p in included]
+	else:
+		### read list
+		listfilelines = []
+		listfile = params['keepfile']
+
+		f=open(listfile,'r')
+		for line in f:
+			sline = line.strip()
+			if re.match("[0-9]+", sline):
+				listfilelines.append(int(sline.split()[0])+1)
+			else:
+				apDisplay.printWarning("Line in listfile is not int: "+str(line))
+		f.close()
+		listfilelines.sort()
+
+	apDisplay.printMsg("Completed in "+apDisplay.timeString(time.time()-t0)+"\n")
 
 	## index old stack particles by number
+	apDisplay.printMsg("Retrieving original stack information")
+	t0 = time.time()
 	part_by_number = {}
-	if oldstackparts is not None:
-		for part in oldstackparts:
-			part_by_number[part['particleNumber']] = part
+	
+	# get stack data from original particles
+	if not oldstackparts:
+		sqlcmd = "SELECT * FROM ApStackParticleData " + \
+			"WHERE `REF|ApStackData|stack` = %i"%(params['stackid'])
+		# This result gives dictionary, not data object
+		oldstackparts = sinedon.directq.complexMysqlQuery('appiondata',sqlcmd)
 
-	apDisplay.printMsg("Inserting stack particles")
+	for part in oldstackparts:
+		part_by_number[part['particleNumber']] = part
+
+	apDisplay.printMsg("Completed in "+apDisplay.timeString(time.time()-t0)+"\n")
+	
+	apDisplay.printMsg("Assembling database insertion command")
+	t0 = time.time()
 	count = 0
 	newpartnum = 1
+
+	partlistvals = []	 
 	for origpartnum in listfilelines:
 		count += 1
-		if count % 100 == 0:
-			sys.stderr.write("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b")
-			sys.stderr.write(str(count)+" of "+(str(total))+" complete")
+		oldstackpartdata = part_by_number[origpartnum]
+		sqlParams = ['particleNumber','REF|ApStackData|stack']
+		vals = [newpartnum,newstackid]
+		for k,v in oldstackpartdata.iteritems():
+			# First need to convert the keys to column names
+			k = sinedon.directq.datakeyToSqlColumnName(oldstackpartdata,k)
+			if k in ['DEF_id', 
+				'DEF_timestamp', 
+				'particleNumber', 
+				'REF|ApStackData|stack']:
+				continue
+			sqlParams.append(k)
+			# oldstackpartdata can either be sinedon data object
+			# as passed through the function call
+			# or a pure dictionary from directq.complexMysqlQuery
+			# In the latter case v is just a long integer, not
+			# data reference.
+			if 'REF|' in k and hasattr(v,'dbid'):
+				# if it is a sinedon data object
+				v = v.dbid
+			vals.append(v)
+		valstr = "('"+"','".join(str(x) for x in vals)+"')"
+		# sql understand Null without string quote, not 'None'
+		valstr = valstr.replace("'None'","Null")
+		partlistvals.append(valstr)
 
-		# Find corresponding particle in old stack
-		# Use previously queried particles if possible, otherwise
-		# do new query here (very slow if millions of prtls in DB)
-		try:
-			oldstackpartdata = part_by_number[origpartnum]
-		except KeyError:
-			oldstackpartdata = getStackParticle(params['stackid'], origpartnum)
-
-		# Insert particle
-		newstackq = appiondata.ApStackParticleData()
-		newstackq.update(oldstackpartdata)
-		newstackq['particleNumber'] = newpartnum
-		newstackq['stack'] = stackq
-		if params['commit'] is True:
-			newstackq.insert()
 		newpartnum += 1
+
+	apDisplay.printMsg("Inserting particle information into database")
+
+	sqlstart = "INSERT INTO `ApStackParticleData` (`" + \
+		"`,`".join(sqlParams)+ "`) VALUES "
+	# break up command into groups of 100K inserts
+	# this is a workaround for the max_allowed_packet at 16MB
+	n = 100000
+	sqlinserts = [partlistvals[i:i+n] \
+		for i in range(0, len(partlistvals), n)]
+
+	if params['commit'] is True:
+		for sqlinsert in sqlinserts:
+			sqlcmd=sqlstart+",".join(sqlinsert)
+			sinedon.directq.complexMysqlQuery('appiondata',sqlcmd)
+
 	sys.stderr.write("\n")
 	if newpartnum == 0:
 		apDisplay.printError("No particles were inserted for the stack")
 
-	apDisplay.printMsg("Inserted "+str(newpartnum-1)+" stack particles into the database")
+	apDisplay.printColor("Inserted "+str(newpartnum-1)+ \
+		" stack particles into the database in "+ \
+		apDisplay.timeString(time.time()-t0),"cyan")
 
-	apDisplay.printMsg("Inserting Runs in Stack")
+	apDisplay.printMsg("\nInserting Runs in Stack")
 	runsinstack = getRunsInStack(params['stackid'])
 	for run in runsinstack:
 		newrunsq = appiondata.ApRunsInStackData()
@@ -465,10 +577,40 @@ def commitSubStack(params, newname=False, centered=False, oldstackparts=None, so
 		if params['commit'] is True:
 			newrunsq.insert()
 		else:
-			apDisplay.printWarning("Not commiting to the database")
+			apDisplay.printWarning("Not committing to the database")
 
 	apDisplay.printMsg("finished")
 	return
+
+def stackPartListToSQLInsertString(stackpartlist, stackid, stackrunid):
+	"""
+	Creates an insert command MySQL using stack particle values
+	
+	designed to have a faster insert into the database
+	insert all particles from one micrograph in one step
+	
+	each dict in the stackpartlist, must contain partnum, mean, and stdev
+	"""
+	sqlstring = ( "INSERT INTO ApStackParticleData ("
+	 + "`REF|ApStackData|stack`, "
+	 + "`REF|ApStackRunData|stackRun`, "
+	 + "`REF|ApParticleData|particle`, "
+	 + "particleNumber, mean, stdev ) VALUES \n" )
+	count = 0
+	#INSERT INTO tbl_name (a,b,c) VALUES(1,2,3),(4,5,6),(7,8,9);
+	for stackpartvals in stackpartlist:
+		if count > 0:
+			sqlstring += ", "
+		count += 1
+		valuestr = "( %d, %d"%(stackid, stackrunid)
+		valuestr += ", %d"%(stackpartvals['particleid'])
+		valuestr += ", %d"%(stackpartvals['particlenum'])
+		valuestr += ", %.8f"%(stackpartvals['mean'])
+		valuestr += ", %.8f"%(stackpartvals['stdev'])
+		valuestr += ")"
+		sqlstring += valuestr
+	sqlstring += ";"
+	return sqlstring
 
 #===============
 def commitMaskedStack(params, oldstackparts, newname=False):
@@ -550,6 +692,11 @@ def commitMaskedStack(params, oldstackparts, newname=False):
 	apDisplay.printMsg("finished")
 	return
 
+def getStackBinningFromStackId(stackId):
+	runsindata = getRunsInStack(stackId)
+	stackbin = runsindata[0]['stackRun']['stackParams']['bin']
+	return stackbin
+
 #===============
 def getStackPixelSizeFromStackId(stackId, msg=True):
 	"""
@@ -567,12 +714,17 @@ def getStackPixelSizeFromStackId(stackId, msg=True):
 	apDisplay.printWarning("Getting stack pixel size from leginon DB, not tested on defocal pairs")
 	stackpart = getOneParticleFromStackId(stackId, msg=msg)
 	imgapix = apDatabase.getPixelSize(stackpart['particle']['image'])
-	runsindata = getRunsInStack(stackId)
-	stackbin = runsindata[0]['stackRun']['stackParams']['bin']
+	stackbin = getStackBinningFromStackId(stackId)
 	stackapix = imgapix*stackbin
 	if msg is True:
 		apDisplay.printMsg("Stack "+str(stackId)+" pixel size: "+str(round(stackapix,3)))
 	return stackapix
+
+#===============
+def getMicrographPixelSizeFromStackId(stackid, msg=True):
+	stackPart = getStackParticlesFromId(stackid, msg=True)[0]
+	pixelsize = apDatabase.getPixelSize(stackPart['particle']['image'])       
+	return pixelsize
 
 #===============
 def getStackBoxsize(stackId, msg=True):
@@ -727,24 +879,24 @@ def getStackParticleFromParticleId(particleid, stackid, noDie=False):
 	return stackpnum[0]
 
 #===============
-def getImageParticles(imagedata,stackid,noDie=True):
+def getImageParticles(imagedata, stackid, noDie=True):
 	"""
 	Provided a Stack Id & imagedata, to find particles
 	"""
 	particleq = appiondata.ApParticleData(image=imagedata)
 
-	stackpdata = appiondata.ApStackParticleData()
-	stackpdata['particle'] = particleq
-	stackpdata['stack'] = appiondata.ApStackData.direct_query(stackid)
-	stackps = stackpdata.query()
+	stackpartq = appiondata.ApStackParticleData()
+	stackpartq['particle'] = particleq
+	stackpartq['stack'] = appiondata.ApStackData.direct_query(stackid)
+	stackpartdata = stackpartq.query()
 	particles = []
-	if not stackps:
+	if not stackpartdata:
 		if noDie is True:
-			return particles,None
-		apDisplay.printError("partnum="+str(particleid)+" was not found in stackid="+str(stackid))
-	for stackp in stackps:
-		particles.append(stackp['particle'])
-	return particles,stackps
+			return particles, None
+		apDisplay.printError("no stack particles were found for stackid=%d and image"%(stackid))
+	for stackpart in stackpartdata:
+		particles.append(stackpart['particle'])
+	return particles,stackpartdata
 
 #===============
 def findSubStackConditionData(stackdata):
@@ -841,7 +993,6 @@ class Stack(object):
         self._format         = None
         self._inverted       = None
         self._normalized     = None
-        self._xmippnorm      = None
         self._defocpair      = None
         self._lowpass        = None
         self._highpass       = None
@@ -902,7 +1053,6 @@ class Stack(object):
         self.format         = originalStackParamData['fileType']
         self.inverted       = originalStackParamData['inverted']
         self.normalized     = originalStackParamData['normalized']
-        self.xmippnorm      = originalStackParamData['xmipp-norm']
         self.defocpair      = originalStackParamData['defocpair']
         self.lowpass        = originalStackParamData['lowpass']
         self.highpass       = originalStackParamData['highpass']
@@ -1013,10 +1163,6 @@ class Stack(object):
         if self._normalized is None: self.setStackRunDataParams()
         return self._normalized
     
-    def get_xmippnorm(self):
-        if self._xmippnorm is None: self.setStackRunDataParams()
-        return self._xmippnorm
-    
     def get_defocpair(self):
         if self._defocpair is None: self.setStackRunDataParams()
         return self._defocpair
@@ -1063,7 +1209,6 @@ class Stack(object):
     def set_format(self, format): self._format = format
     def set_inverted(self, inverted): self._inverted = inverted
     def set_normalized(self, normalized): self._normalized = normalized
-    def set_xmippnorm(self, xmippnorm): self._xmippnorm = xmippnorm
     def set_defocpair(self, defocpair): self._defocpair = defocpair
     def set_lowpass(self, lowpass): self._lowpass = lowpass
     def set_highpass(self, highpass): self._highpass = highpass
@@ -1093,7 +1238,6 @@ class Stack(object):
     format          = property( get_format, set_format, doc="The name of this stack." )
     inverted        = property( get_inverted, set_inverted, doc="The name of this stack." )
     normalized      = property( get_normalized, set_normalized, doc="The name of this stack." )
-    xmippnorm       = property( get_xmippnorm, set_xmippnorm, doc="The name of this stack." )
     defocpair       = property( get_defocpair, set_defocpair, doc="The name of this stack." )
     lowpass         = property( get_lowpass, set_lowpass, doc="The name of this stack." )
     highpass        = property( get_highpass, set_highpass, doc="The name of this stack." )

@@ -1,9 +1,9 @@
 #
 # COPYRIGHT:
-#       The Leginon software is Copyright 2003
-#       The Scripps Research Institute, La Jolla, CA
+#       The Leginon software is Copyright under
+#       Apache License, Version 2.0
 #       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
+#       see  http://leginon.org
 #
 
 from leginon import leginondata
@@ -13,7 +13,7 @@ import gui.wx.StigAcquisition
 class StigAcquisition(acquisition.Acquisition):
 	panelclass = gui.wx.StigAcquisition.Panel
 	settingsclass = leginondata.StigAcquisitionSettingsData
-	defaultsettings = acquisition.Acquisition.defaultsettings
+	defaultsettings = dict(acquisition.Acquisition.defaultsettings)
 	defaultsettings.update({
 		'stig0x': 0.0,
 		'stig0y': 0.0,

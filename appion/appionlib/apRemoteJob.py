@@ -42,6 +42,8 @@ class RemoteJob(basicScript.BasicScript):
 			help="Number of nodes requested for multi-node capable tasks", metavar="#")
 		self.parser.add_option("--ppn", dest="ppn", type="int", default=4,
 			help="Number Processors per node", metavar="#")
+		self.parser.add_option("--nproc", dest="nproc", type="int", default=1,
+			help="Number Processors", metavar="#")
 		self.parser.add_option("--mem", dest="mem", type="int", default=4,
 			help="Maximum memory per node", metavar="#")
 		self.parser.add_option("--walltime", dest="walltime", type="int", default=24,

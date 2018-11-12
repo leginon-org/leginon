@@ -19,7 +19,7 @@ $img = imagecreatefromstring($imgstr);
 
 // --- create png image
 header("Content-type: image/jpeg");
-imagejpeg($img, '', $quality);
+imagejpeg($img, NULL, $quality);
 // --- destroy resources in memory
 imagedestroy($img);
 

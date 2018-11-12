@@ -1,3 +1,4 @@
+from __future__ import division
 import os
 import time
 import math
@@ -11,7 +12,11 @@ try:
 except:
 	no_wx = True
 import leginon.leginondata
-from pyami import arraystats, mrc, imagefun, numpil,correlator, peakfinder
+from pyami import arraystats, mrc, imagefun, correlator, peakfinder
+try:
+	from pyami import numpil
+except:
+	pass
 from appionlib import appiondata
 try:
 	import node
@@ -93,51 +98,132 @@ def getFilename(tiltserieslist):
 	seriesname += '+'.join(names)
 	return seriesname
 
-def getFirstImage(tiltseries):
+def getFirstImage(tiltseries, ddstackid=None):
 	tiltlist = [tiltseries,]
-	imagelist = getImageList(tiltlist)
+	imagelist = getImageList(tiltlist, ddstackid)
 	return imagelist[0]
 
-def getImageList(tiltserieslist):
-	imagelist = []
-	for tiltseriesdata in tiltserieslist:
-		imquery = leginon.leginondata.AcquisitionImageData()
-		imquery['tilt series'] = tiltseriesdata
-		## query, but don't read image files yet, or else run out of memory
-		subimagelist = imquery.query(readimages=False)
-		## list is reverse chronological, so reverse it
-		subimagelist.reverse()
-		realist = []
-		imagelist.extend(subimagelist)
-	for imagedata in imagelist:
-		if imagedata['label'] != 'projection':
-			realist.append(imagedata)
-	return realist
+def getDDStackRunData(ddstackid):
+	if not ddstackid:
+		return None
+	return appiondata.ApDDStackRunData().direct_query(ddstackid)
 
-def orderImageList(imagelist):
-	'''This is complex because the two start tilt images are often sorted wrong if
-			just use alpha tilt.  Therefore, a fake alpha tilt value is created based
-			on the tilt image collected next in time
+def getImageList(tiltserieslist, ddstackid=None, appion_protomo=False):
 	'''
+	Get ImageList in the order of data collection based on ddstackdata if specified
+	'''
+	imagelist = []
+	if appion_protomo:
+		for tiltseriesdata in tiltserieslist:
+			imquery = leginon.leginondata.AcquisitionImageData()
+			imquery['tilt series'] = tiltseriesdata
+			## query, but don't read image files yet, or else run out of memory
+			subimagelist = imquery.query(readimages=False)
+			## list is reverse chronological, so reverse it
+			subimagelist.reverse()
+			realist = []
+			imagelist.extend(subimagelist)
+		for imagedata in imagelist:
+			if imagedata['label'] != 'projection':
+				realist.append(imagedata)
+		return realist
+	else:
+		ddstackrundata = getDDStackRunData(ddstackid)
+		# first run find the unaligned images in the order of the collection
+		for tiltseriesdata in tiltserieslist:
+			sessiondata = tiltseriesdata['session']
+			cquery = leginon.leginondata.CameraEMData(session=sessiondata)
+			cquery['align frames'] = False
+			imquery = leginon.leginondata.AcquisitionImageData(camera=cquery)
+			imquery['tilt series'] = tiltseriesdata
+			## query, but don't read image files yet, or else run out of memory
+			subimagelist = imquery.query(readimages=False)
+			## list is reverse chronological, so reverse it
+			subimagelist.reverse()
+			imagelist.extend(subimagelist)
+		unaligned_realist = []
+		for imagedata in imagelist:
+			if imagedata['label'] != 'projection':
+				unaligned_realist.append(imagedata)
+		if ddstackrundata is None:
+			apDisplay.printMsg('Loaded %d images starting from %s.mrc' % (len(unaligned_realist),unaligned_realist[0]['filename']))
+			return unaligned_realist
+	
+		# find aligned images
+		aligned_list = []
+		apDisplay.printMsg('Searching for aligned images in ddstackid= %d'%(ddstackrundata.dbid,))
+		for image in unaligned_realist:
+			try:
+				pair = appiondata.ApDDAlignImagePairData(source=image,ddstackrun=ddstackrundata).query()[0]
+			except:
+				ValueError('no aligned image of %s from ddstack run id %d' % (apDisplay.short(image['filename']), ddstackrundata.dbid))
+			aligned_list.append(pair['result'])
+		apDisplay.printMsg('Loaded %d images starting from %s.mrc' % (len(aligned_list),aligned_list[0]['filename']))
+		return aligned_list
+
+def getImageDose(imagedata):
+	try:
+		dose = imagedata['preset']['dose']*(10**-20)*imagedata['camera']['exposure time']/imagedata['preset']['exposure time']
+	except:
+		try:
+			dose = imagedata['preset']['dose']*(10**-20)
+			if dose == 0:
+				apDisplay.printWarning("Dose was 0 in the database for image %s. Setting dose to 1 e-/A^2" % imagedata['filename'])
+				dose=1
+		except:
+			apDisplay.printWarning("Dose not found in the database for image %s. Setting dose to 1 e-/A^2" % imagedata['filename'])
+			dose=1
+	return dose
+
+def getAccumulatedDoses(imagelist):
+	doselist = map((lambda x:getImageDose(x)),imagelist)
+	dosearray = numpy.array(doselist)
+	cumarray = numpy.cumsum(dosearray)
+	return cumarray.tolist()
+
+def orderImageList(frame_tiltdata, non_frame_tiltdata=None, frame_aligned="True", export=False):
+	'''This is complex because the two start tilt images are often sorted wrong if
+	just use alpha tilt.  Therefore, a fake alpha tilt value is created based
+	on the tilt image collected next in time
+	'''
+	if (frame_aligned == "True") or (frame_aligned == True):
+		imagelist = frame_tiltdata
+	else:
+		imagelist = non_frame_tiltdata
+	dose_imagelist = non_frame_tiltdata #Frame aligned images don't have the correct dose...
 	if not imagelist:
 		apDisplay.printWarning('No images in image list.')
 		return
+	if not dose_imagelist:
+		dose_imagelist = imagelist
 	mrc_files = []
 	imagepath = imagelist[0]['session']['image path']
 	tiltseries = imagelist[0]['tilt series']
 	start_tilt = tiltseries['tilt start']
+	if start_tilt == tiltseries['tilt max'] or start_tilt == tiltseries['tilt min']:
+		# Assume tilts are incremental
+		tiltkeys = map((lambda x: math.degrees(x['scope']['stage position']['a'])),imagelist)
+		
+		accumulate_dose = getAccumulatedDoses(imagelist)
+		return tiltkeys,imagelist,accumulate_dose,mrc_files,int(len(tiltkeys)*0.5)
 	if start_tilt is None:
 		start_tilt = math.degrees(imagelist[0]['scope']['stage position']['a'])
 	tiltangledict = {}
+	tiltangledict2 = {}
 	reftilts = []
+	accumulated_dose=0
 	for i,imagedata in enumerate(imagelist):
-		tilt = imagedata['scope']['stage position']['a']*180/3.14159
-
+		imagedata_editable=dict(imagedata)  #Making an explicit copy of imagedata so that it can be added to. This doesn't copy the dictionaries inside this dictionary, but it's good enough
+		tilt = imagedata['scope']['stage position']['a']*180/math.pi
+		
+		accumulated_dose=accumulated_dose+getImageDose(imagedata)
+		imagedata_editable['accumulated dose'] = accumulated_dose
+		
 		if tilt < start_tilt+0.02 and tilt > start_tilt-0.02:
 			if len(imagelist) >= 2:
 				qimage = leginon.leginondata.AcquisitionImageData()
 				nextimagedata = imagelist[i+1]
-				nexttilt = nextimagedata['scope']['stage position']['a']*180/3.14159
+				nexttilt = nextimagedata['scope']['stage position']['a']*180/math.pi
 				direction = (nexttilt - tilt)
 				# switch group in getCorrelationPeak not here
 				tilt = tilt+0.02*direction
@@ -145,52 +231,78 @@ def orderImageList(imagelist):
 			else:
 				reftilts.append(tilt)
 		tiltangledict[tilt] = imagedata
-	tiltkeys = tiltangledict.keys()
-	tiltkeys.sort()
+		tiltangledict2[tilt] = imagedata_editable
+	
+	dose_list=[]
+	for i,dose_imagedata in enumerate(dose_imagelist):
+		dose_list.append(getImageDose(dose_imagedata))
+	
+	tiltkeys = tiltangledict.keys(); tiltkeys2 = tiltangledict2.keys()
+	tiltkeys.sort(); tiltkeys2.sort()
 	ordered_imagelist = []
+	accumulated_dose_list=[]
+	defocus_list=[]
 	for key in tiltkeys:
 		imagedata = tiltangledict[key]
+		imagedata_editable = tiltangledict2[key]
 		mrc_name = imagedata['filename'] + '.mrc'
 		fullname = os.path.join(imagepath, mrc_name)
 		mrc_files.append(fullname)
 		ordered_imagelist.append(imagedata)
+		accumulated_dose_list.append(imagedata_editable['accumulated dose'])
+		defocus_list.append(imagedata['scope']['defocus']*1000000)
 	if len(reftilts) > 2:
 		apDisplay.printError('Got too many images at the start tilt')
 	refimg = tiltkeys.index(max(reftilts))
 	#cut down for testing
 	testing = False
 	if not testing:
-		return tiltkeys,ordered_imagelist,mrc_files,refimg
+		if export == False:
+			return tiltkeys,ordered_imagelist,accumulated_dose_list,mrc_files,refimg
+		else:
+			return tiltkeys,ordered_imagelist,dose_list,accumulated_dose_list,mrc_files,refimg,defocus_list,apDatabase.getPixelSize(imagedata),dose_imagedata['scope']['magnification']
 	else:
+		# testing with half the data
 		print len(tiltkeys),refimg
 		cut = refimg-1
 		cut2 = len(tiltkeys) -refimg -1
 		cutlist = ordered_imagelist[cut:-cut2]
 		cuttilts = tiltkeys[cut:-cut2]
 		cutfiles = mrc_files[cut:-cut2]
+		cutdoses = accumulated_dose_list[cut:-cut2]
 		refimg = refimg - cut 
 		print len(cutlist),refimg
-		return cuttilts,cutlist,cutfiles,refimg
+		return cuttilts,cutlist,cutdoses,cutfiles,refimg
 
 def getCorrelatorBinning(imageshape):
-	origsize = max((imageshape[1],imageshape[0]))
-	max_newsize = 512
-	if origsize > max_newsize:
-		## new size can be bigger than origsize, no binning needed
-		bin = origsize / max_newsize
-		remain = origsize % max_newsize
-		while remain:
-			bin += 1
-			remain = origsize % bin
-			newsize = float(origsize) / bin
-		correlation_bin = bin
-	else:
-		correlation_bin = 1
-	return correlation_bin
+		minsize = min(imageshape)
+		if minsize > 512:
+			correlation_bin = calcBinning(minsize, 256, 512)
+		else:
+			correlation_bin = 1
+		if correlation_bin is None:
+			# use a non-dividable number and crop in the correlator
+			correlation_bin = int(math.ceil(minsize / 512.0))
+		return correlation_bin
 	
+def calcBinning(origsize, min_newsize, max_newsize):
+	## new size can be bigger than origsize, no binning needed
+	if max_newsize >= origsize:
+		return 1
+	## try to find binning that will make new image size <= newsize
+	bin = origsize / max_newsize
+	remain = origsize % max_newsize
+	while remain:
+		bin += 1
+		remain = origsize % bin
+		newsize = float(origsize) / bin
+		if newsize < min_newsize:
+			return None
+	return bin
+
 def writeTiltSeriesStack(stackdir,stackname,ordered_mrc_files,apix=1):
 		stackpath = os.path.join(stackdir, stackname)
-		print stackpath
+		apDisplay.printMsg('stack path: %s' % (stackpath,))
 		apixdict = {'x':apix,'y':apix}
 		if os.path.exists(stackpath):
 			stheader = mrc.readHeaderFromFile(stackpath)
@@ -240,11 +352,35 @@ def alignZeroShiftImages(imagedata1,imagedata2,bin):
 		array1 = imagedata1['image']
 		array2 = imagedata2['image']
 		if bin != 1:
-			array1 = imagefun.bin(array1, bin)
-			array2 = imagefun.bin(array2, bin)
+			# To accomodate non-square, hard to bin K2 images,
+			# we crop the images to doable size first
+			s = array1.shape
+			minsize = min(s)
+			size = int(minsize / bin) # floored
+			f = map((lambda x: int((x-size*bin)/2)),s) #offsets
+			array1 = imagefun.bin(array1[f[0]:f[0]+size*bin,f[1]:f[1]+size*bin], bin)
+			array2 = imagefun.bin(array2[f[0]:f[0]+size*bin,f[1]:f[1]+size*bin], bin)
 		shift = simpleCorrelation(array1,array2)
 		peak = {'x':-shift[1]*bin,'y':shift[0]*bin}
 		
+	# x (row) shift on image coordinate is of opposite sign
+	return {'shiftx':-peak['x'], 'shifty':peak['y']}
+
+def alignImages(imagedata1,imagedata2):
+	"""Align neighboring images in a tilt series"""
+	# phase correlation
+	array1 = imagedata1['image']
+	array2 = imagedata2['image']
+	# To accomodate non-square, hard to FFT images, we crop the images to doable size first
+	s = array1.shape
+	minsize = min(s)
+	size = int(minsize)
+	f = map((lambda x: int((x-size)/2)),s) #offsets
+	array1 = imagefun.bin(array1[f[0]:f[0]+size,f[1]:f[1]+size], 1)
+	array2 = imagefun.bin(array2[f[0]:f[0]+size,f[1]:f[1]+size], 1)
+	shift = simpleCorrelation(array1,array2)
+	peak = {'x':-shift[1],'y':shift[0]}
+	
 	# x (row) shift on image coordinate is of opposite sign
 	return {'shiftx':-peak['x'], 'shifty':peak['y']}
 
@@ -267,6 +403,15 @@ def shiftHalfSeries(zeroshift,globalshifts, refimg):
 
 def getGlobalShift(ordered_imagelist, corr_bin, refimg):
 	apDisplay.printMsg("getting global shift values")
+	globalshifts = []
+	for i, imagedata in enumerate(ordered_imagelist):
+		globalshifts.append(getPredictionPeakForImage(imagedata))
+	zeroshift = alignZeroShiftImages(ordered_imagelist[refimg],ordered_imagelist[refimg-1],corr_bin)
+	globalshifts = shiftHalfSeries(zeroshift, globalshifts, refimg)
+	return globalshifts
+		
+def getGlobalShifts(ordered_imagelist, corr_bin, refimg):
+	apDisplay.printMsg("getting global shift values for all images")
 	globalshifts = []
 	for i, imagedata in enumerate(ordered_imagelist):
 		globalshifts.append(getPredictionPeakForImage(imagedata))
@@ -370,6 +515,17 @@ def getTomographySettings(sessiondata,tiltdata):
 		return qtomo.direct_query(settingsid)
 
 def getTomoPixelSize(imagedata):
+	'''
+	Get tomography tilt series image pixelsize through the same emtarget
+	'''
+	if imagedata['emtarget'] is None:
+		# uploaded images has no emtarget.  This will cause the next query looks
+		# for all images in the database
+		if imagedata['label'] != 'projection':
+			return apDatabase.getPixelSize(imagedata)
+		else:
+			# Should not trust projection pixel size since it can be different
+			return None
 	imageq = leginon.leginondata.AcquisitionImageData(emtarget=imagedata['emtarget'])
 	imageresults = imageq.query(readimages=False)
 	for tomoimagedata in imageresults:
@@ -395,16 +551,27 @@ def getAverageAzimuthFromSeries(imgtree):
 	
 	predict1=apDatabase.getPredictionDataForImage(imgtree[0])
 	predict2=apDatabase.getPredictionDataForImage(imgtree[-1])
-	phi1=predict1[0]['predicted position']['phi']*180/math.pi
-	phi2=predict2[0]['predicted position']['phi']*180/math.pi
+	try:
+		try:
+			phi1=predict1[0]['predicted position']['phi']*180/math.pi
+			phi2=predict2[0]['predicted position']['phi']*180/math.pi
+		except:  #Tilt-series was uploaded
+			phi1=phi2=imgtree[0]['scope']['stage position']['phi']
+	except:  #Phi was not recorded
+		apDisplay.printWarning("Azimuth was not recorded. Setting azimuth to -90 degrees, relative to the x-axis.")
+		phi1=phi2=0
 	
 	###Azimuth is determined from phi. In protomo tilt axis is measured from x where phi is from y
 	###Note there is a mirror between how Leginon reads images vs how protomo does
-	azimuth=90-((phi1+phi2)/2)
-	apDisplay.printMsg(("Azimuth is %f" % azimuth))
+	try:
+		azimuth = -(90-((phi1+phi2)/2))   # Made negative because now images are y-flipped because Protomo
+	except:  #Phi was not recorded
+		apDisplay.printWarning("Azimuth was not recorded. Setting azimuth to -90 degrees, relative to the x-axis.")
+		azimuth = -90
+	apDisplay.printMsg(("Azimuth is %f (relative to y-flipped images)" % azimuth))
 	return azimuth
 
-def	insertImodXcorr(rotation,filtersigma1,filterradius,filtersigma2):
+def insertImodXcorr(rotation,filtersigma1,filterradius,filtersigma2):
 	paramsq = appiondata.ApImodXcorrParamsData()
 	paramsq['RotationAngle'] = rotation
 	paramsq['FilterSigma1'] = filtersigma1

@@ -2,9 +2,9 @@
 
 /**
  *	The Leginon software is Copyright 2006
- *	The Scripps Research Institute, La Jolla, CA
+ *	Apache License, Version 2.0
  *	For terms of the license agreement see
- *	@licence http://ami.scripps.edu/software/leginon-license
+ *	@licence http://leginon.org
  */
 /**
  *
@@ -30,8 +30,7 @@ function stackViewer($file_hed,$file_img,$n_images,$stackoptions=array()) {
 		border: 1px solid #000000;
 	}
 
-	div.scrollpane {
-		height: 600px;
+	div.stackpane {
 		overflow: auto;
 		border: 1px solid #666;
 		background-color: #ccc;

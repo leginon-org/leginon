@@ -1,9 +1,9 @@
 #
 # COPYRIGHT:
-#       The Leginon software is Copyright 2003
-#       The Scripps Research Institute, La Jolla, CA
+#       The Leginon software is Copyright under
+#       Apache License, Version 2.0
 #       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
+#       see  http://leginon.org
 #
 
 import threading
@@ -29,6 +29,7 @@ class PlateGridEntry(gridentry.GridEntry):
 	settingsclass = leginondata.PlateGridEntrySettingsData
 	defaultsettings = {
 		'grid name': None,
+		'stage z': 0.0,
 		'plate name': None,
 		'grid format name': None,
 		'plate format name': None,

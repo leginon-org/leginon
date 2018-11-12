@@ -1,0 +1,5 @@
+[config]
+slack_token: #add slack authentication token here
+default_channel: #add slack channel name here
+virtualenv_path: #add virtualenv path here
+

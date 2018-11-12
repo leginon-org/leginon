@@ -32,6 +32,10 @@ def getSymmetryDataFromName(symtext='c1', msg=True):
 		symtext = symtext.lower().strip()
 		if symtext == "i":
 			symtext = "icos"
+
+                if symtext == "o":
+                        symtext = "Oct"
+
 		symdataq = appiondata.ApSymmetryData(eman_name=symtext)
 	symdatas = symdataq.query()
 	if not symdatas:

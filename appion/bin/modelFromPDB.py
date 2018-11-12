@@ -166,9 +166,12 @@ class modelFromPDB(appionScript.AppionScript):
 		pdbfile = self.params['name']+".pdb"
 
 		### download data to memory
-		data = urllib.urlretrieve(url)[0]
-		### uncompress data
-		g = gzip.open(data, 'r').read()
+		try:
+			data = urllib.urlretrieve(url)[0]
+			### uncompress data
+			g = gzip.open(data, 'r').read()
+		except:
+			apDisplay.printError('pdb file selected not available. Check PDB website')
 		### dump data to file
 		f = open(pdbfile, 'w')
 		f.write(g)

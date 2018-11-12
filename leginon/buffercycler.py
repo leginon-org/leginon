@@ -13,7 +13,11 @@ class BufferCycler(conditioner.Conditioner):
 	# Define the class for node settings
 	settingsclass = leginondata.BufferCyclerSettingsData
 	# Inherit the default settings from the parent class, Conditioner
-	defaultsettings = conditioner.Conditioner.defaultsettings
+	defaultsettings = dict(conditioner.Conditioner.defaultsettings)
+	defaultsettings.update({
+			'repeat time': 600,
+			'trip value': 18.0,
+	})
 	# Inherit the eventinputs
 	eventinputs = conditioner.Conditioner.eventinputs
 
@@ -23,11 +27,21 @@ class BufferCycler(conditioner.Conditioner):
 		'''
 		self.addCType('buffer_cycle')
 
+	def isAboveTripValue(self):
+		'''
+		only fix condition if above a defined monitored value
+		'''
+		pressure = self.instrument.tem.BufferTankPressure
+		self.logger.info("Buffer Tank Gauge value: %.4e" % pressure)
+		return pressure > self.settings['trip value'] and self.settings['trip value'] > 0
+
 	def _fixCondition(self, condition_type):
 		'''
 		Define what to do
 		'''
 		self.runBufferCycle()
+		pressure = self.instrument.tem.BufferTankPressure
+		self.logger.info("Buffer Tank Gauge value after cycleing: %.4e" % pressure)
 
 	def runBufferCycle(self):
 		try:

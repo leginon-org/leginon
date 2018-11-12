@@ -1,9 +1,9 @@
 <?php
 /**
- *      The Leginon software is Copyright 2003 
- *      The Scripps Research Institute, La Jolla, CA
+ *      The Leginon software is Copyright under 
+ *      Apache License, Version 2.0
  *      For terms of the license agreement
- *      see  http://ami.scripps.edu/software/leginon-license
+ *      see  http://leginon.org
  *
  *      Simple viewer to view a image using mrcmodule
  */
@@ -119,6 +119,10 @@ function createSpiderCoranClassifyForm($extra=false, $title='coranClassify.py La
 	if ($selectAlignId) {
 		echo "<input type='hidden' name='stackval' value='$selectAlignId'>\n";
 		echo alignstacksummarytable($selectAlignId, true);
+		$totprtls = $particle->getNumAlignStackParticles($selectAlignId);
+		if ($totprtls > 50000)
+			echo "<p>
+				<FONT COLOR='RED'><B>Warning: Coran Classification with more than 50,000 will likely fail </B></FONT>\n";
 		$alignstack = $particle->getAlignStackParams($selectAlignId);
 		$defaultmaskrad = (int) ($alignstack['boxsize']/3)*$alignstack['pixelsize'];
 		$defaultbin = (int) floor($alignstack['boxsize']/32);
@@ -149,6 +153,8 @@ function createSpiderCoranClassifyForm($extra=false, $title='coranClassify.py La
 			echo " $boxsz pixels)</OPTION>\n";
 		}
 		echo "</SELECT>\n";
+		echo "<p>
+			<FONT COLOR='RED'><B>Warning: Coran Classification with more than 50,000 will likely fail </B></FONT>\n";
 	} else {
 		echo"
 		<FONT COLOR='RED'><B>No Aligned Stacks for this Session</B></FONT>\n";

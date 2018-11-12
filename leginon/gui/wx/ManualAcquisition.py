@@ -1,14 +1,14 @@
-# The Leginon software is Copyright 2004
-# The Scripps Research Institute, La Jolla, CA
+# The Leginon software is Copyright under
+# Apache License, Version 2.0
 # For terms of the license agreement
-# see http://ami.scripps.edu/software/leginon-license
+# see http://leginon.org
 #
 
 import wx
 import threading
 
 import leginon.gui.wx.Camera
-from leginon.gui.wx.Entry import Entry, FloatEntry
+from leginon.gui.wx.Entry import Entry, FloatEntry, IntEntry
 import leginon.gui.wx.Events
 import leginon.gui.wx.ImagePanel
 import leginon.gui.wx.TargetPanel
@@ -223,9 +223,9 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		self._acquisitionEnable(False)
 		self.node.acquisitionLoopStop()
 
-	def onNewPixelSize(self, pixelsize,center,hightension):
+	def onNewPixelSize(self, pixelsize,center,hightension,cs):
 		self.manualdialog.center = center
-		self.manualdialog.onNewPixelSize(pixelsize,center,hightension)
+		self.manualdialog.onNewPixelSize(pixelsize,center,hightension,cs)
 
 class GridDialog(wx.Dialog):
 	def __init__(self, parent):
@@ -324,8 +324,6 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def addBasicSettings(self):
 		sb = wx.StaticBox(self, -1, 'Low Dose')
 		sbszlowdose = wx.StaticBoxSizer(sb, wx.VERTICAL)
-		sb = wx.StaticBox(self, -1, 'Defocus Pair')
-		sbszdefocus = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		self.instrumentselection = leginon.gui.wx.Instrument.SelectionPanel(self)
 		self.panel.setInstrumentSelection(self.instrumentselection)
@@ -345,35 +343,79 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz.Add(self.widgets['camera settings'], (1, 0), (1, 3), wx.EXPAND)
 		sz.AddGrowableCol(1)
 
-		szdefocus= wx.GridBagSizer(5, 5)
-		label = wx.StaticText(self, -1,'(leave both unchecked to use current defocus)')
-		szdefocus.Add(label, (0,0), (1,2))
-		self.widgets['defocus1switch'] = wx.CheckBox(self, -1, 'Defocus 1')
-		szdefocus.Add(self.widgets['defocus1switch'], (1,0), (1,1))
-		self.widgets['defocus1'] = FloatEntry(self, -1, chars=6)
-		szdefocus.Add(self.widgets['defocus1'], (1,1), (1,1))
-		self.widgets['defocus2switch'] = wx.CheckBox(self, -1, 'Defocus 2')
-		szdefocus.Add(self.widgets['defocus2switch'], (2,0), (1,1))
-		self.widgets['defocus2'] = FloatEntry(self, -1, chars=6)
-		szdefocus.Add(self.widgets['defocus2'], (2,1), (1,1))
-		sbszdefocus.Add(szdefocus, 1, wx.EXPAND|wx.ALL, 5)
-
 		sb2 = wx.GridBagSizer(5,5)
+		sbszloop = self.createLoopBoxSizer()
 		sb2.Add(sbszlowdose,(0,0),(1,1), wx.EXPAND)
-		sb2.Add(sbszdefocus,(1,0),(1,1), wx.EXPAND)
+		sb2.Add(sbszloop,(1,0),(1,1), wx.EXPAND)
 
 		sba = wx.GridBagSizer(5,5)
 		sba.Add(sz,(0,0),(1,1))
 		sba.Add(sb2,(0,1),(1,1))
 		return sba
 
+	def createLoopBoxSizer(self):
+		sb = wx.StaticBox(self, -1, 'Loop')
+		sbszloop = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		sbszloop.Add(self.createLoopPauseSizer(),1, wx.EXPAND|wx.ALL, 5)
+		sbszloop.Add(self.createMaxLoopSizer(),1, wx.EXPAND|wx.ALL, 5)
+		sbszloop.Add(self.createDefocusBoxSizer(),4, wx.EXPAND|wx.ALL, 5)
+		return sbszloop
+
+	def createLoopPauseSizer(self):
+		self.widgets['loop pause time'] = FloatEntry(self, -1, min=0.0, chars=4)
+		szpause = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1,'Pause')
+		szpause.Add(label, (0,0), (1,1))
+		szpause.Add(self.widgets['loop pause time'], (0,1), (1,1))
+		label = wx.StaticText(self, -1,'seconds between step')
+		szpause.Add(label, (0,2), (1,1))
+		return szpause
+
+	def createMaxLoopSizer(self):
+		self.widgets['max loop'] = IntEntry(self, -1, min=0, chars=4)
+		sz = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1,'Number of Loops')
+		sz.Add(label, (0,0), (1,1))
+		sz.Add(self.widgets['max loop'], (0,1), (1,1))
+		label = wx.StaticText(self, -1,'to execute')
+		sz.Add(label, (0,2), (1,1))
+		return sz
+
+	def createDefocusBoxSizer(self):
+		sbdefocus = wx.StaticBox(self, -1, 'Defocus Series')
+		sbsz = wx.StaticBoxSizer(sbdefocus, wx.VERTICAL)
+
+		self.widgets['do defocus series'] = wx.CheckBox(self, -1, 'Change defocus at each acquisition')
+		self.widgets['defocus start'] = FloatEntry(self, -1, chars=6)
+		self.widgets['defocus step'] = FloatEntry(self, -1, chars=6)
+		szdefocus= wx.GridBagSizer(5, 5)
+		szdefocus.Add(self.widgets['do defocus series'], (0,0), (1,1))
+		# defocus start
+		szstart= wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1,'Start at')
+		szstart.Add(label, (0,0), (1,1))
+		szstart.Add(self.widgets['defocus start'], (0,1), (1,1))
+		label = wx.StaticText(self, -1,'meters')
+		szstart.Add(label, (0,2), (1,1))
+		# defocus step
+		szstep= wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1,'Step up by')
+		szstep.Add(label, (0,0), (1,1))
+		szstep.Add(self.widgets['defocus step'], (0,1), (1,1))
+		label = wx.StaticText(self, -1,'meters')
+		szstep.Add(label, (0,2), (1,1))
+
+		sbsz.Add(szdefocus, 1, wx.EXPAND|wx.ALL, 5)
+		sbsz.Add(szstart, 1, wx.EXPAND|wx.ALL, 5)
+		sbsz.Add(szstep, 1, wx.EXPAND|wx.ALL, 5)
+		return sbsz
+
+
 	def addSettings(self):
 		sb = wx.StaticBox(self, -1, 'Main Screen')
 		sbszscreen = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sb = wx.StaticBox(self, -1, 'Low Dose')
 		sbszlowdose = wx.StaticBoxSizer(sb, wx.VERTICAL)
-		sb = wx.StaticBox(self, -1, 'Defocus Pair')
-		sbszdefocus = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		self.instrumentselection = leginon.gui.wx.Instrument.SelectionPanel(self)
 		self.panel.setInstrumentSelection(self.instrumentselection)
@@ -387,7 +429,6 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.widgets['save image'] = wx.CheckBox(self, -1,
 																							'Save image to the database')
 		self.widgets['image label'] = Entry(self, -1, chars=12)
-		self.widgets['loop pause time'] = FloatEntry(self, -1, min=0.0, chars=4)
 		self.widgets['low dose'] = wx.CheckBox(self, -1, 'Use low dose')
 		self.widgets['low dose pause time'] = FloatEntry(self, -1, min=0.0, chars=4)
 
@@ -424,41 +465,24 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 
 		sb2 = wx.GridBagSizer(5,5)
 	
-		szdefocus= wx.GridBagSizer(5, 5)
-		label = wx.StaticText(self, -1,'(leave both unchecked to use current defocus)')
-		szdefocus.Add(label, (0,0), (1,2))
-		self.widgets['defocus1switch'] = wx.CheckBox(self, -1, 'Defocus 1')
-		szdefocus.Add(self.widgets['defocus1switch'], (1,0), (1,1))
-		self.widgets['defocus1'] = FloatEntry(self, -1, chars=6)
-		szdefocus.Add(self.widgets['defocus1'], (1,1), (1,1))
-		self.widgets['defocus2switch'] = wx.CheckBox(self, -1, 'Defocus 2')
-		szdefocus.Add(self.widgets['defocus2switch'], (2,0), (1,1))
-		self.widgets['defocus2'] = FloatEntry(self, -1, chars=6)
-		szdefocus.Add(self.widgets['defocus2'], (2,1), (1,1))
-		sbszdefocus.Add(szdefocus, 1, wx.EXPAND|wx.ALL, 5)
+		sbszloop = self.createLoopBoxSizer()
 		sb2.Add(sbszscreen,(0,0),(1,3), wx.EXPAND)
 		sb2.Add(sbszlowdose,(1,0),(1,3), wx.EXPAND)
-		sb2.Add(sbszdefocus,(2,0),(1,3), wx.EXPAND)
+		sb2.Add(sbszloop,(2,0),(1,3), wx.EXPAND)
 
-		label = wx.StaticText(self, -1, 'Loop pause')
-		sb2.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sb2.Add(self.widgets['loop pause time'], (3, 1), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.FIXED_MINSIZE)
-		label = wx.StaticText(self, -1, 'seconds')
-		sb2.Add(label, (3, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		label = wx.StaticText(self, -1, 'Label')
-		sb2.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sb2.Add(self.widgets['image label'], (4, 1), (1, 1),
+		sb2.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sb2.Add(self.widgets['image label'], (3, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.FIXED_MINSIZE)
 		sb2.AddGrowableCol(1)
 		self.widgets['dark'] = wx.CheckBox(self, -1, 'Dark Exposure')
-		sb2.Add(self.widgets['dark'], (5,0), (1,1))
+		sb2.Add(self.widgets['dark'], (4,0), (1,1))
 
 		self.widgets['force annotate'] = wx.CheckBox(self, -1, 'Always Annotate Saved Images')
-		sb2.Add(self.widgets['force annotate'], (6,0), (1,1))
+		sb2.Add(self.widgets['force annotate'], (5,0), (1,1))
 
 		self.widgets['reduced params'] = wx.CheckBox(self, -1, 'Reduced EM Parameter Set (for slow TEMs)')
-		sb2.Add(self.widgets['reduced params'], (7,0), (1,1))
+		sb2.Add(self.widgets['reduced params'], (6,0), (1,1))
 
 		sba = wx.GridBagSizer(5,5)
 		# put the two sizers in columns
@@ -622,8 +646,8 @@ class ManualFocusDialog(wx.MiniFrame):
 	def onSetImage(self, evt):
 		self.imagepanel.setImageType(evt.typename, evt.image)
 
-	def onNewPixelSize(self, pixelsize,center,hightension):
-		idcevt = leginon.gui.wx.ImagePanelTools.ImageNewPixelSizeEvent(self.imagepanel, pixelsize,center,hightension)
+	def onNewPixelSize(self, pixelsize,center,hightension,cs):
+		idcevt = leginon.gui.wx.ImagePanelTools.ImageNewPixelSizeEvent(self.imagepanel, pixelsize,center,hightension,cs)
 		self.imagepanel.GetEventHandler().AddPendingEvent(idcevt)
 		self.center = center
 

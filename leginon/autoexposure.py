@@ -1,9 +1,9 @@
 #
 # COPYRIGHT:
-#	   The Leginon software is Copyright 2003
-#	   The Scripps Research Institute, La Jolla, CA
+#	   The Leginon software is Copyright under
+#	   Apache License, Version 2.0
 #	   For terms of the license agreement
-#	   see  http://ami.scripps.edu/software/leginon-license
+#	   see  http://leginon.org
 #
 import acquisition
 import node, leginondata
@@ -19,7 +19,7 @@ import player
 class AutoExposure(acquisition.Acquisition):
 	panelclass = gui.wx.AutoExposure.Panel
 	settingsclass = leginondata.AutoExposureSettingsData
-	defaultsettings = acquisition.Acquisition.defaultsettings
+	defaultsettings = dict(acquisition.Acquisition.defaultsettings)
 	defaultsettings.update({
 		'process target type': 'meter',
 		'mean intensity': 50000,

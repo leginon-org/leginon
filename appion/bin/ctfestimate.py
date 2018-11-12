@@ -3,11 +3,9 @@
 #pythonlib
 import os
 import re
-import sys
 import math
 import time
 import shutil
-import cPickle
 import subprocess
 #appion
 from appionlib import apFile
@@ -42,6 +40,10 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		self.logdir = os.path.join(self.params['rundir'], "logfiles")
 		apParam.createDirectory(self.logdir, warning=False)
 		self.ctfprgmexe = self.getCtfProgPath()
+
+		# check and process more often because it is slower than data collection
+		self.setWaitSleepMin(1)
+		self.setProcessBatchCount(1)
 		return
 
 	#======================
@@ -138,20 +140,55 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		TiltR: angular range for initial coarse search 
 		"""
 
+		if self.params['ctftilt'] is True:
+			imgshape = imgdata['image'].shape
+			modtest = 2 * self.params['bin']
+			# workaround ctftilt bug. Refs #3550
+			if imgshape[0] % modtest or imgshape[1] % modtest and self.params['fieldsize'] > 256:
+				apDisplay.printWarning("Image shape has non-zero modulo for %d. Reduce fieldsize to 256 to avoid Segmentation Fault in CTFTILT" % modtest)
+				self.params['fieldsize'] = 256
+
 		#get Defocus in Angstroms
 		self.ctfvalues = {}
-		nominal = abs(imgdata['scope']['defocus']*-1.0e10)
-		ctfvalue = ctfdb.getBestCtfByResolution(imgdata)
-		if ctfvalue is not None:
-			bestdef = abs(ctfvalue['defocus1']+ctfvalue['defocus2'])/2.0*1.0e10
-		else:
+		if self.params['nominal'] is not None:
+			nominal = abs(self.params['nominal']*1e4)
+			apDisplay.printWarning("overriding CTF value with user nominal value %.1f A"%(nominal))
+			ctfvalue = None
 			bestdef = nominal
+		else:
+			nominal = abs(imgdata['scope']['defocus']*-1.0e10)
+			ctfvalue = ctfdb.getBestCtfByResolution(imgdata)
+			if ctfvalue is not None:
+				"""
+				## CTFFIND V3.5 (7-March-2012) prefers the smaller of the two values for astigmatic images
+				I found that say you have an image with 1.1um and 1.5um defocus astigmatism. If you give 
+				CTFFIND the average value of 1.3um for the defocus and 0.4um astig (dast) then it will 
+				try to fit 1.3um and 1.8um, so you need to give it the minimum value (1.1um) for it to 
+				fit 1.1um and 1.5um.
+				"""
+				bestdef = min(ctfvalue['defocus1'],ctfvalue['defocus2'])*1.0e10
+			else:
+				bestdef = nominal
+	
 		if ctfvalue is not None and self.params['bestdb'] is True:
-			bestampcontrast = ctfvalue['amplitude_contrast']
-			beststigdiff = abs(ctfvalue['defocus1'] - ctfvalue['defocus2'])*1e10
+			bestampcontrast = round(ctfvalue['amplitude_contrast'],3)
+			beststigdiff = round(abs(ctfvalue['defocus1'] - ctfvalue['defocus2'])*1e10,1)
+			if beststigdiff < 10:
+				#fit is astigmatic, still allow stig
+				beststigdiff = self.params['dast']
 		else:
 			bestampcontrast = self.params['amp'+self.params['medium']]
 			beststigdiff = self.params['dast']
+
+		imageresmax = self.params['resmax']
+		if ctfvalue is not None and self.params['bestdb'] is True:
+			### set res max from resolution_80_percent
+			gmean = (ctfvalue['resolution_80_percent']*ctfvalue['resolution_50_percent']*self.params['resmax'])**(1/3.)
+			if gmean < self.params['resmin']:
+				# replace only if valid Issue #3291, #3547     
+				imageresmax = round(gmean,2)
+				apDisplay.printColor("Setting resmax to the geometric mean of resolution values", "purple")
+
 		# dstep is the physical detector pixel size
 		dstep = None
 		if 'camera' in imgdata and imgdata['camera'] and imgdata['camera']['pixel size']:
@@ -179,7 +216,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 
 			'box': self.params['fieldsize'],
 			'resmin': self.params['resmin'],
-			'resmax': self.params['resmax'],
+			'resmax': imageresmax,
 			'defstep': self.params['defstep'], #round(defocus/32.0, 1),
 			'dast': beststigdiff,
 		}
@@ -201,9 +238,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			return
 		### create local link to image
 		if not os.path.exists(inputparams['input']):
-			cmd = "ln -s "+inputparams['orig']+" "+inputparams['input']+"\n"
-			proc = subprocess.Popen(cmd, shell=True)
-			proc.wait()
+			os.symlink(inputparams['orig'], inputparams['input'])
 
 		### make standard input for ctf estimation
 		line1cmd = inputparams['input']+"\n"
@@ -295,8 +330,12 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		### write to log file
 		f = open("ctfvalues.log", "a")
 		f.write("=== "+imgdata['filename']+" ===\n")
+		if not self.ctfvalues:
+			nominaldf =  imgdata['scope']['defocus']
+		else:
+			nominaldf = self.ctfvalues['nominal']
 		line1 = ("nominal=%.1e, bestdef=%.1e," %
-			( self.ctfvalues['nominal'], self.ctfvalues['defocusinit']))
+			( nominaldf, self.ctfvalues['defocusinit']))
 		if self.params['ctftilt'] is True:
 			self.ctfvalues['origtiltang'] = tiltang
 			line1+=" tilt=%.1f,"%tiltang
@@ -354,8 +393,11 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			if not (runnames[0]['ctftilt_params'] == paramq):
 				for i in runnames[0]['ctftilt_params']:
 					if runnames[0]['ctftilt_params'][i] != paramq[i]:
+						# float value such as cs of 4.1 is not quite equal
+						if type(paramq[i]) == type(1.0) and abs(runnames[0]['ctftilt_params'][i]-paramq[i]) < 0.00001:
+							continue
 						apDisplay.printWarning("the value for parameter '"+str(i)+"' is different from before")
-				apDisplay.printError("All parameters for a single CTF estimation run must be identical! \n"+\
+						apDisplay.printError("All parameters for a single CTF estimation run must be identical! \n"+\
 						     "please check your parameter settings.")
 			self.ctfrun = runnames[0]
 			return False
@@ -381,11 +423,9 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			help="fieldsize, default=256", metavar="#")
 		self.parser.add_option("--medium", dest="medium", default="carbon",
 			help="sample medium, default=carbon", metavar="MEDIUM")
-		self.parser.add_option("--nominal", dest="nominal",
-			help="nominal")
-		self.parser.add_option("--newnominal", dest="newnominal", default=False,
-			action="store_true", help="newnominal")
-		self.parser.add_option("--resmin", dest="resmin", type="float", default=100.0,
+		self.parser.add_option("--nominal", dest="nominal", type="float",
+			help="nominal override value (in microns, absolute value)")
+		self.parser.add_option("--resmin", dest="resmin", type="float", default=50.0,
 			help="Low resolution end of data to be fitted", metavar="#")
 		self.parser.add_option("--resmax", dest="resmax", type="float", default=15.0,
 			help="High resolution end of data to be fitted", metavar="#")

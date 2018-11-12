@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
-# The Leginon software is Copyright 2004
-# The Scripps Research Institute, La Jolla, CA
+# The Leginon software is Copyright under
+# Apache License, Version 2.0
 # For terms of the license agreement
-# see http://ami.scripps.edu/software/leginon-license
+# see http://leginon.org
 #
 # $Source: /ami/sw/cvsroot/pyleginon/version.py,v $
 # $Revision: 1.3 $
@@ -16,6 +16,7 @@
 import subprocess
 import os.path
 import inspect
+from pyami import gitlib
 
 def OLDgetVersion():
 	name = cvsname[7:-2]
@@ -57,18 +58,47 @@ def OLDgetVersion():
 
 	return version
 
-def getSVNInfo(module_path=''):
+def getShellResult(cmd):
+	svninfo = ''
+	svnerror = ''
+	try:
+		p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		svninfo,svnerror = p.communicate()
+	except Exception,e: 
+		print str(e)
+	return svninfo,svnerror
+
+def changeToModulePath(module_path=''):
 	if not module_path:
 		module_path = getInstalledLocation()
 	module_path = os.path.abspath(module_path)
 	currentpath = os.getcwd()
 	os.chdir(module_path)
-	try:
-		p = subprocess.Popen('svn info', shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-		svninfo,svnerror = p.communicate()
-		os.chdir(currentpath)
-	except:
-		raise
+	return currentpath
+
+def getGITBranch(module_path=''):
+	revertpath = changeToModulePath(module_path)
+	return gitlib.getCurrentBranch()
+	#branch = getTextVersion()
+		
+def getGITHash(module_path=''):
+	revertpath = changeToModulePath(module_path)
+	return gitlib.getMostRecentCommitID()
+
+def getVersion(module_path=''):
+	# myami svn frozen before revision 20000
+	return gitlib.getCurrentCommitCount()
+
+def getGITInfo(module_path):
+	info = {}
+	info['Branch'] = getGITBranch(module_path)
+	info['Hash'] = getGITHash(module_path)
+	info['Revision'] = getVersion(module_path)
+
+def getSVNInfo(module_path=''):
+	revertpath = changeToModulePath(module_path='')
+	svninfo, svnerror = getShellResult('svn info')
+	os.chdir(revertpath)
 	# releases have no svn info
 	if svnerror:
 		return {}
@@ -80,9 +110,9 @@ def getSVNInfo(module_path=''):
 	return infodict
 
 def getTextVersion():
-	return 'pre3.0'
+	return 'pre3.4'
 
-def getVersion(module_path=''):
+def getSVNVersion(module_path=''):
 	svninfo = getSVNInfo(module_path)
 	if 'Revision' in svninfo.keys():
 		version = svninfo['Revision']
@@ -117,5 +147,5 @@ def getInstalledLocation():
 
 if __name__ == '__main__':
 	print getVersion()
-	print getSVNBranch()
+	print getGITBranch()
 	print getInstalledLocation()

@@ -1,7 +1,7 @@
-# The Leginon software is Copyright 2004
-# The Scripps Research Institute, La Jolla, CA
+# The Leginon software is Copyright under
+# Apache License, Version 2.0
 # For terms of the license agreement
-# see http://ami.scripps.edu/software/leginon-license
+# see http://leginon.org
 #
 # $Source: /ami/sw/cvsroot/pyleginon/leginon.gui.wx/Settings.py,v $
 # $Revision: 1.29 $
@@ -176,11 +176,16 @@ class Dialog(wx.Dialog):
 	def Show(self, show):
 		if show:
 			self.getNodeSettings()
+			self.onShow()
 		return wx.Dialog.Show(self, show)
 
 	def ShowModal(self):
 		self.getNodeSettings()
+		self.onShow()
 		return wx.Dialog.ShowModal(self)
+
+	def onShow(self):
+		pass
 
 	def bindSettings(self, widgets):
 		for widget in widgets.values():

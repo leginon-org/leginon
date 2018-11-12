@@ -28,8 +28,7 @@ $n_images=$info['count']+1;
 		border: 1px solid #000000;
 	}
 
-	div.scrollpane {
-		height: 400px;
+	div.stackpane {
 		overflow: auto;
 		border: 1px solid #666;
 		background-color: #ccc;
@@ -39,9 +38,9 @@ $n_images=$info['count']+1;
 <script src="js/prototype.js"></script>
 <script>
 
-var file_hed="<?=$file_hed?>"
-var file_img="<?=$file_img?>"
-var n_images="<?=$n_images?>"
+var file_hed="<?php $file_hed?>"
+var file_img="<?php $file_img?>"
+var n_images="<?php $n_images?>"
 
 function displaystack(startImg, endImg, force) {
 	var wholemap = $('wholemap')
@@ -100,9 +99,9 @@ function setImage() {
 </script>
 </head>
 <body>
-<form name="myf" method="POST" action="<?=$_SERVER['PHP_SELF']?>">
+<form name="myf" method="POST" action="<?php echo $_SERVER['PHP_SELF'] ?>">
 <select name="file" size="5" onChange="setImage()">
-<?
+<?php
 foreach($filenames as $f) {
 	$s = ($f==$filename) ? "selected" : "";
 	echo "<option value='".$f."' $s >".$f."</option>\n";
@@ -110,7 +109,7 @@ foreach($filenames as $f) {
 ?>
 </select>
 </form>
-<?
+<?php
 echo "stack: $file_hed";
 echo "<br \>";
 echo "#images: $n_images";
@@ -120,7 +119,7 @@ echo $lastimg;
 ?>
 
 from: <input id="startimg" type="text" alt="Start" value="0" size="10">
-to: <input id="endimg" type="text" alt="End" value="<?=$lastimg?>" size="10">
+to: <input id="endimg" type="text" alt="End" value="<?php echo $lastimg ?>" size="10">
 binning: <select id="binning">
 		<option value="1">1</option>
 		<option value="2">2</option>
@@ -135,7 +134,7 @@ quality: <select id="quality">
 <input id="loadbutton" type="button" alt="Load" value="Load" onclick="load();">
 <br />
 <br />
-<div class="scrollpane">
+<div class="stackpane">
    <div id="wholemap">
    </div>
 </div>

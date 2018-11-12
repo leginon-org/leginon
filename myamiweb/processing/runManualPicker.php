@@ -1,9 +1,9 @@
 <?php
 /**
- *  The Leginon software is Copyright 2003 
- *  The Scripps Research Institute, La Jolla, CA
+ *  The Leginon software is Copyright under 
+ *  Apache License, Version 2.0
  *  For terms of the license agreement
- *  see  http://ami.scripps.edu/software/leginon-license
+ *  see  http://leginon.org
  *
  *  Simple viewer to view a image using mrcmodule
  */
@@ -80,10 +80,14 @@ function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $
                          if (document.viewerform.testimage.checked){
                                  document.viewerform.testfilename.disabled=false;
                                  document.viewerform.testfilename.value='';
+                                 document.viewerform.commit.disabled=true;
+                                 document.viewerform.commit.checked=false;
                          }  
                          else {
                                  document.viewerform.testfilename.disabled=true;
                                  document.viewerform.testfilename.value='mrc file name';
+                                 document.viewerform.commit.disabled=false;
+                                 document.viewerform.commit.checked=true;
                          }
                  }
                  function disableHsteps(){
@@ -100,7 +104,7 @@ function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $
   $javafunctions .= writeJavaPopupFunctions('appion');
   processing_header($title="Manual Picker Launcher", $heading="Manual Particle Selection and Editing", 
   					$headerstuff=$javafunctions, $pleaseWait=false, $showmenu=true, $printDiv=false, 
-					$guideURL="http://ami.scripps.edu/redmine/projects/appion/wiki/Manual_Picking");
+					$guideURL="http://emg.nysbc.org/redmine/projects/appion/wiki/Manual_Picking");
   if ($extra) {
     echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
   }
@@ -130,12 +134,12 @@ function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $
 
   createAppionLoopTable($sessiondata, $defrunname, "extract");
 	?>
-	<font style="font-weight: bold"><?=docpop("picklabel", "Particle Labels");?></font>
+	<font style="font-weight: bold"><?php  echo  docpop("picklabel", "Particle Labels"); ?></font>
 	<p>
 	Label: <input type="text" name="picklabel" value="particle">
 	<input type="submit" name="addpicklabel" value="Add">
 	</p>
-<?php
+	<?php
 	$picklabels = (array)$_SESSION['picklabels'];
 		
 	if ($picklabels) {

@@ -25,7 +25,6 @@ from appionlib import appiondata
 from appionlib import apImagicFile
 from appionlib import apProject
 import sinedon
-import MySQLdb
 
 #=====================
 #=====================
@@ -174,7 +173,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		if self.params['commit'] is False:
 			return
 		config = sinedon.getConfig('appiondata')
-		dbc = MySQLdb.Connect(**config)
+		dbc = sinedon.sqldb.connect(**config)
 		dbc.autocommit(True)
 		cursor = dbc.cursor()
 		query = (

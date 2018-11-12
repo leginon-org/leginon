@@ -86,8 +86,10 @@ $confirm=new Confirm();
 $where=array("projectId"=>$projectId);
 $confirms=$confirm->getConfirms($where, array('confirmId', 'confirmnum'));
 $confirmlist[0]=$confirm->format_number(0);
-foreach($confirms as $c) {
-	$confirmlist[$c['confirmId']]=$confirm->format_number($c['confirmnum']);
+if ($confirms & count($confirms) > 0) {
+	foreach($confirms as $c) {
+		$confirmlist[$c['confirmId']]=$confirm->format_number($c['confirmnum']);
+	}
 }
 
 if ($packageId) {
@@ -102,17 +104,16 @@ foreach($map as $k=>$v) {
 $newnumberstr=$package->format_number($curpackage['number']);
 }
 	
-
 project_header("Package $title");
 ?>
 
-<a href="<?=$_GET['ln'];?>">[ &laquo; back ]</a>
+<a href="<?php echo $_GET['ln']; ?>">[ &laquo; back ]</a>
 <p>
 <font color=red>*</font>
 <font face="Arial, Helvetica, sans-serif" size="2">: required fields</font>
 </p>
 <link href="css/aform.css" rel="stylesheet" type="text/css" />
-<?
+<?php
 
 $form=new form();
 $form->action=$_SERVER['REQUEST_URI'];

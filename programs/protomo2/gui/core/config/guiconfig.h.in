@@ -1,0 +1,26 @@
+/*----------------------------------------------------------------------------*
+*
+*  guiconfig.h  -  configuration
+*
+*----------------------------------------------------------------------------*/
+
+#ifndef guiconfig_h_
+#define guiconfig_h_
+
+#include "guimodulebase.h"
+
+
+/* build identification */
+
+MODULE-PRFX GUI
+"i3gui"
+"2.4"
+"Copyright © 2012 Hanspeter Winkler"
+
+
+/* module codes */
+
+#define GraphModuleCode  ( GuiModuleBase | 0x0100 )
+
+
+#endif

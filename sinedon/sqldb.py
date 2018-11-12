@@ -1,15 +1,18 @@
 #
 # COPYRIGHT:
-#       The Leginon software is Copyright 2003
-#       The Scripps Research Institute, La Jolla, CA
+#       The Leginon software is Copyright under
+#       Apache License, Version 2.0
 #       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
+#       see  http://leginon.org
 #
 "MySQL module for pyLeginon"
 import MySQLdb
 
 def connect(**kwargs):
-	c = MySQLdb.connect(**kwargs)
+	newkwargs = kwargs.copy()
+	if 'engine' in newkwargs:
+		del newkwargs['engine']
+	c = MySQLdb.connect(**newkwargs)
 	c.autocommit(True)
 	c.kwargs = dict(kwargs)
 	return c

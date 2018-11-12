@@ -1,0 +1,37 @@
+export TERMCOLOR='1;34'
+if [ $UID == 0 ]
+then
+  PS1="\[\e[1;31m\]\u\[\e[0m\]@\[\e[${TERMCOLOR}m\]\h\[\e[0m\] \W] "
+else
+  PS1="\[\e[1;32m\]\u\[\e[0m\]@\[\e[${TERMCOLOR}m\]\h\[\e[0m\] \W] "
+fi
+
+umask 002
+
+export APPIONPATH=/emg/sw/myami/appion
+export LEGINONPATH=/emg/sw/myami/leginon
+export EMANDIR=/emg/sw/eman1
+export EMAN2DIR=/emg/sw/eman2
+export RELIONDIR=/emg/sw/relion
+export XMIPPDIR=/emg/sw/xmipp
+export MPIPATH=/usr/lib64/openmpi
+export GRIGPATH=/emg/sw/grigorieff
+
+export SPIDERDIR=/emg/sw/spider
+export SPBIN_DIR=${SPIDERDIR}/bin/
+export SPPROC_DIR=${SPIDERDIR}/proc/
+export SPMAN_DIR=${SPIDERDIR}/man/
+
+export PATH=/usr/bin:/bin:${APPIONPATH}/bin:${LEGINONPATH}:${EMANDIR}/bin:${XMIPPDIR}/bin:${SPIDERDIR}/bin:
+export PATH=${PATH}:${GRIGPATH}/bin:${MPIPATH}/bin:${EMAN2DIR}/bin:${RELIONDIR}/bin
+export PYTHONPATH=${EMANDIR}/lib:${EMAN2DIR}/lib:${EMAN2DIR}/bin
+export LD_LIBRARY_PATH=${EMANDIR}/lib:${XMIPPDIR}/lib:${MPIPATH}/lib:${EMAN2DIR}/lib:${RELIONDIR}/lib
+
+export EDITOR=nano
+export TERM=xterm
+export HISTSIZE=10000
+export HISTFILESIZE=200000
+
+alias dsort="du -sk * | sort -n | tail -50"
+alias ddir="du -sk */ | sort -n | tail -n 50"
+alias ls="ls --color=auto"

@@ -1,7 +1,7 @@
-# The Leginon software is Copyright 2004
-# The Scripps Research Institute, La Jolla, CA
+# The Leginon software is Copyright under
+# Apache License, Version 2.0
 # For terms of the license agreement
-# see http://ami.scripps.edu/software/leginon-license
+# see http://leginon.org
 #
 
 import threading
@@ -148,7 +148,6 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 
 	def onSendPresetTool(self,evt):
 		presetname = self.preset_choices.GetStringSelection()
-		print 'sending %s' % presetname
 		self._acquisitionEnable(False)
 		args = (presetname,)
 		threading.Thread(target=self.node.uiSendPreset,args=args).start()

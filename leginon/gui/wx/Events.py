@@ -1,7 +1,7 @@
-# The Leginon software is Copyright 2004
-# The Scripps Research Institute, La Jolla, CA
+# The Leginon software is Copyright under
+# Apache License, Version 2.0
 # For terms of the license agreement
-# see http://ami.scripps.edu/software/leginon-license
+# see http://leginon.org
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Events.py,v $
 # $Revision: 1.27 $
@@ -67,6 +67,8 @@ eventFactory('Get BeamTilt Done')
 eventFactory('Set BeamTilt Done')
 eventFactory('Measurement Done')
 eventFactory('Coma Measurement Done')
+eventFactory('Read Ab Free State')
+eventFactory('Read State Done')
 eventFactory('Submit Targets')
 eventFactory('Targets Submitted')
 eventFactory('Enable Play Button')
@@ -103,16 +105,26 @@ eventFactory('Remove CCDCamera', attributes=['name'], command=True)
 eventFactory('Set CCDCamera', attributes=['name'], command=True)
 eventFactory('Set CCDCameras', attributes=['names'], command=True)
 eventFactory('CCDCamera Change', attributes=['name'], command=True)
+# MCV events
+eventFactory('Get Display Pressure', attributes=['unit','values'])
+eventFactory('Get Display Grid Loader Slot States', attributes=['values'])
+eventFactory('Get Display Aperture States', attributes=['values'])
+eventFactory('Update Grid Slot Selector', attributes=['values'])
+eventFactory('Update Aperture Selector', attributes=['values','current'])
+
+
 
 PlayerEventType = wx.NewEventType()
 SetImageEventType = wx.NewEventType()
 SetTargetsEventType = wx.NewEventType()
 StatusUpdatedEventType = wx.NewEventType()
+UserVerificationUpdatedEventType = wx.NewEventType()
 
 EVT_PLAYER = wx.PyEventBinder(PlayerEventType)
 EVT_SET_IMAGE = wx.PyEventBinder(SetImageEventType)
 EVT_SET_TARGETS = wx.PyEventBinder(SetTargetsEventType)
 EVT_STATUS_UPDATED = wx.PyEventBinder(StatusUpdatedEventType)
+EVT_USER_VERIFICATION_UPDATED = wx.PyEventBinder(UserVerificationUpdatedEventType)
 
 class PlayerEvent(wx.PyEvent):
 	def __init__(self, state):
@@ -140,5 +152,11 @@ class StatusUpdatedEvent(wx.PyCommandEvent):
 		wx.PyCommandEvent.__init__(self, StatusUpdatedEventType, source.GetId())
 		self.SetEventObject(source)
 		self.level = level
+		self.status = status
+
+class UserVerificationUpdatedEvent(wx.PyCommandEvent):
+	def __init__(self, source, status=None):
+		wx.PyCommandEvent.__init__(self, UserVerificationUpdatedEventType, source.GetId())
+		self.SetEventObject(source)
 		self.status = status
 

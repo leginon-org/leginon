@@ -1,10 +1,10 @@
 <?php
 
 /**
- *	The Leginon software is Copyright 2003 
- *	The Scripps Research Institute, La Jolla, CA
+ *	The Leginon software is Copyright under 
+ *	Apache License, Version 2.0
  *	For terms of the license agreement see
- *	@license http://ami.scripps.edu/software/leginon-license
+ *	@license http://leginon.org
  */
 
 /**
@@ -58,8 +58,15 @@ class XMLImport {
 			if ($v['tag']=='field') {
 				$fname = $v['attributes']['name'];
 				$ftype = $v['attributes']['type'];
-				$fdefault = empty($v['attributes']['default']) ? '' : $v['attributes']['default'];
+				if ($v['attributes']['default'] == "0") {
+					// 0 default for integer is considered as empty.
+					// treat it properly here to set default
+					$fdefault = "default '0'";
+				} else {
+					$fdefault = empty($v['attributes']['default']) ? '' : $v['attributes']['default'];
+				}
 				$fdefault = (!empty($fdefault) && strpos(strtolower($fdefault),'default')===false) ? 'default '.$fdefault : $fdefault;
+
 				$fnull = (empty($fdefault) && empty($v['attributes']['null'])) ? 'null' : $v['attributes']['null'];
 				$fextra = empty($v['attributes']['extra']) ? '' : $v['attributes']['extra'];
 				$fields[] = "`$fname` $ftype $fnull $fdefault $fextra";

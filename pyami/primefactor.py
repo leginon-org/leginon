@@ -50,16 +50,14 @@ def getAllEvenPrimes(maxn=1028):
 
 #====================
 def getNextEvenPrime(num=400):
-	goodones = []
-	n = num
+	n = int(num)
 	while not isGoodStack(n) and n < 10000:
 		n += 1
 	return n
 
 #====================
 def getPrevEvenPrime(num=400):
-	goodones = []
-	n = num
+	n = int(num)
 	while not isGoodStack(n) and n > 1:
 		n -= 1
 	return n
@@ -75,7 +73,8 @@ def isGoodPrime(num=4, power_of_4_rule=True):
 	"""
 	Boxsize rules:
 	(1) no prime factor greater than 11
-	(2) if greater than 4^x, must be multiple of 2^x, 
+	(2) if greater than 4^x, must be multiple of 2^x,
+	(3) no prime factor greater than sqrt(num)
 	"""
 	#print numa
 	if power_of_4_rule:
@@ -91,8 +90,13 @@ def isGoodPrime(num=4, power_of_4_rule=True):
 
 	### get prime factors and find maximum
 	factors = prime_factors(num)
-	if max(factors) > maxprime:
+	maxfactor = max(factors)
+	if maxfactor > maxprime:
 		return False
+
+	if maxfactor > math.sqrt(num):
+		return False
+
 	return True
 
 #====================
@@ -111,4 +115,4 @@ if __name__ == "__main__":
 		print "Use %d or %d instead"%(prev,next)
 	else:
 		print getAllPrimes()
-			
+

@@ -154,7 +154,30 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 		defocus = -(abs(ctfvalue['defocus1'])+abs(ctfvalue['defocus2']))/2
 		return defocus, ctfvalue['amplitude_contrast']
 
-	#=======================
+	def checkCtfRes50Params(self, ctfvalue, shortname):
+		'''
+		This can either be appion resolution_50_percent or ctffind4_resolution determined by ctfsorttype
+		'''
+		# ctffind4 resolution estimation is approximately equivalent to resolution_50_percent.
+		# gtf equal phase resolution usually gives higher resolution estimate than ctffind4 result although
+		# saved in the same field of ctfvalue.
+		if self.params['ctfsorttype'] == 'resPkg':
+			inspectkey = 'ctffind4_resolution'
+		else:
+			inspectkey = 'resolution_50_percent'
+		if not inspectkey in ctfvalue.keys() or ctfvalue[inspectkey] is None:
+			apDisplay.printColor("%s: no 0.5 resolution found"%(shortname), "cyan")
+			return False
+		if self.params['ctfres50max'] and ctfvalue[inspectkey] > self.params['ctfres50max']:
+			apDisplay.printColor("%s is above resolution threshold %.2f > %.2f"
+				%(shortname, ctfvalue[inspectkey], self.params['ctfres50max']), "cyan")
+			return False
+		if self.params['ctfres50min'] and ctfvalue[inspectkey] < self.params['ctfres50min']:
+			apDisplay.printColor("%s is below resolution threshold %.2f > %.2f"
+				%(shortname, ctfvalue[inspectkey], self.params['ctfres50min']), "cyan")
+			return False
+
+#=======================
 	def checkCtfParams(self, imgdata):
 		shortname = apDisplay.short(imgdata['filename'])
 		ctfvalue = self.getBestCtfValue(imgdata)
@@ -185,16 +208,7 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 
 		### check resolution requirement for CTF fit at 0.5 threshold
 		if self.params['ctfres50min'] is not None or self.params['ctfres50max'] is not None:
-			if not 'resolution_50_percent' in ctfvalue.keys() or ctfvalue['resolution_50_percent'] is None:
-				apDisplay.printColor("%s: no 0.5 resolution found"%(shortname), "cyan")
-				return False
-			if self.params['ctfres50max'] and ctfvalue['resolution_50_percent'] > self.params['ctfres50max']:
-				apDisplay.printColor("%s is above resolution threshold %.2f > %.2f"
-					%(shortname, ctfvalue['resolution_50_percent'], self.params['ctfres50max']), "cyan")
-				return False
-			if self.params['ctfres50min'] and ctfvalue['resolution_50_percent'] < self.params['ctfres50min']:
-				apDisplay.printColor("%s is below resolution threshold %.2f > %.2f"
-					%(shortname, ctfvalue['resolution_50_percent'], self.params['ctfres50min']), "cyan")
+			if self.checkCtfRes50Params(ctfvalue, shortname) is False:
 				return False
 
 		if self.params['mindefocus'] is not None or self.params['maxdefocus'] is not None:
@@ -284,8 +298,8 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 		self.ctfestopts = ('ace2', 'ctffind')
 
 		### values
-		self.parser.add_option("--bin", dest="bin", type="int", default=1,
-			help="Bin the particles after extracting", metavar="#")
+		self.parser.add_option("--bin", dest="bin", type="float", default=1,
+			help="Bin the particles after extracting (can be float if making a RELION stack)", metavar="#")
 		self.parser.add_option("--ctfcutoff", dest="ctfcutoff", type="float",
 			help="CTF confidence cut off")
 		self.parser.add_option("--ctfres80min", dest="ctfres80min", type="float",
@@ -340,6 +354,8 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 			action="store_true", help="Do not delete CTF corrected MRC files when finishing")
 		self.parser.add_option("--usedownmrc", dest="usedownmrc", default=False,
 			action="store_true", help="Use existing *.down.mrc in processing")
+		self.parser.add_option("--no-ctf", dest="noctf", default=False,
+			action="store_true", help="Don't consider any CTF information")
 
 		### option based
 		self.parser.add_option("--ctfmethod", dest="ctfmethod",
@@ -365,6 +381,7 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 		if self.params['maskassess'] is not None and not self.params['checkmask']:
 			apDisplay.printMsg("running mask assess")
 			self.params['checkmask'] = True
+		if 'localCTF' in self.params.keys() and self.params['localCTF']: self.params['ctfmethod']='localctf'
 
 	def checkIsDD(self):
 		apDisplay.printWarning('Checking for dd')
@@ -372,10 +389,14 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 			self.is_dd_stack = True
 			self.is_dd = True
 		else:
-			if self.params['preset'] and '-a' in self.params['preset'] and (self.params['nframe'] or self.params['driftlimit'] > 0):
+			# using string search in preset name "-" to check IsDD. New preset name in session does not allow
+			# "-" as defined in presets.py
+			if self.params['preset'] and '-' in self.params['preset'] and (self.params['nframe'] or self.params['driftlimit'] > 0):
 				self.is_dd = True
 				self.is_dd_stack = True
-			elif self.params['mrcnames'] and self.params['mrcnames'].split(',')[0] and '-a' in self.params['mrcnames'].split(',')[0] and (self.params['nframe'] or self.params['driftlimit'] > 0):
+			# using string search "-" in filename.  This may be a problem if grid or session name
+			# contains "-"
+			elif self.params['mrcnames'] and self.params['mrcnames'].split(',')[0] and '-' in self.params['mrcnames'].split(',')[0] and (self.params['nframe'] or self.params['driftlimit'] > 0):
 				self.is_dd = True
 				self.is_dd_stack = True
 			elif self.params['nframe']:
@@ -447,9 +468,10 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 		# check to see if image is rejected by other criteria
 		if self.rejectImage(imgdata) is False:
 			return False
-		# check CTF parameters for image and skip if criteria is not met
-		if self.checkCtfParams(imgdata) is False:
-			return False
+		if 'boxfiles' in self.params.keys() and not self.params['boxfiles'] and 'noctf' in self.params.keys() and self.params['noctf'] is not True:
+			# check CTF parameters for image and skip if criteria is not met
+			if self.checkCtfParams(imgdata) is False:
+				return False
 		return None
 
 	#=======================
@@ -464,7 +486,7 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 				apDisplay.printWarning('%s skipped for no-frame-saved\n ' % imgdata['filename'])
 				return
 			self.dd.setImageData(imgdata)
-			self.framelist = self.dd.getFrameList(self.params)
+			self.framelist = self.dd.getFrameListFromParams(self.params)
 			if not self.framelist:
 				apDisplay.printWarning('image rejected because no frame passes drift limit test')
 				return
@@ -570,7 +592,7 @@ class ParticleBoxLoop(ParticleExtractLoop):
 		imgdims = imgdata['camera']['dimension']
 		newpartdatas = []
 		for partdata in partdatas:
-			start_x,start_y = apBoxer.getBoxStartPosition(imgdata,self.half_box,partdata, shiftdata)
+			start_x,start_y = apBoxer.getBoxStartPosition(self.half_box, partdata, shiftdata)
 			if apBoxer.checkBoxInImage(imgdims,start_x,start_y,self.boxsize):
 				newpartdatas.append(partdata)
 		return newpartdatas

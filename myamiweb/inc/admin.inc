@@ -1,10 +1,10 @@
 <?php
 
 /**
- *	The Leginon software is Copyright 2003 
- *	The Scripps Research Institute, La Jolla, CA
+ *	The Leginon software is Copyright under 
+ *	Apache License, Version 2.0
  *	For terms of the license agreement
- *	see  http://ami.scripps.edu/software/leginon-license
+ *	see  http://leginon.org
  */
 require_once('inc/leginon.inc');
 
@@ -25,7 +25,8 @@ if (privilege('users')>2)
 	$link->addlink('user.php','Users','', 'user', '');
 if (privilege('users')>1)
 	$link->addlink('revertsettings.php','Revert Settings','', 'calibration', '');
-#$link->addlink('addcal.php','Calibrations','', 'calibration', '');
+if (privilege('groups')>3) 
+	$link->addlink('updateinstrument.php','Instruments','', 'tem_tecnai_icon', '');
 if (privilege('groups')>2)
 	$link->addlink('addapp.php','Applications','', 'application', '');
 if (privilege('data')>1)
@@ -179,10 +180,10 @@ function makeSettingsCode($dest_user_id,$latest_timestamp=false,$session_user_id
 	//Tables
 	if ($show_tables) {
 		foreach ($extratables as $table) {
-			echo $table?></br><?;
+			echo $table?></br><?php ;
 		}
 		foreach (array_keys($nodenames) as $table) {
-			echo $table?></br><?;
+			echo $table?></br><?php ;
 		}
 	}
 	//Default values

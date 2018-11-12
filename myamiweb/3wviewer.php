@@ -8,7 +8,17 @@ if (defined('PROCESSING')) {
 }
 
 // --- get Predefined Variables form GET or POST method --- //
-list($projectId, $sessionId, $imageId, $preset, $runId) = getPredefinedVars();
+list($projectId, $sessionId, $imageId, $preset, $runId, $scopeId) = getPredefinedVars();
+
+if (is_null($sessionId)){
+	$_SESSION['unlimited_images'] = false;
+	$limit = 100;
+}
+elseif ($sessionId=='-1' || !empty($_SESSION['unlimited_images'])){
+	$limit = 0;
+	$_SESSION['unlimited_images'] = true;
+}
+else  $limit = 100;
 
 // --- Set sessionId
 $lastId = $leginondata->getLastSessionId();
@@ -17,11 +27,14 @@ $sessionId = (empty($sessionId)) ? $lastId : $sessionId;
 $sessioninfo=$leginondata->getSessionInfo($sessionId);
 $session=$sessioninfo['Name'];
 
+$scopes = $leginondata->getScopesForSelection();
+$scopeId = (empty($scopeId)) ? false:$scopeId;
+
 $projectdata = new project();
 $projectdb = $projectdata->checkDBConnection();
 
 if(!$sessions) {
-	$sessions = $leginondata->getSessions('description', $projectId);
+	$sessions = $leginondata->getSessions('description', $projectId, '', $scopeId);
 }
 
 if($projectdb) {
@@ -31,6 +44,8 @@ if($projectdb) {
 		$sessionId = $sessions[0]['id'];
 	}
 }
+
+if ( is_numeric(SESSION_LIMIT) && count($sessions) > SESSION_LIMIT) $sessions=array_slice($sessions,0,SESSION_LIMIT);
 
 $jsdata='';
 if ($ptcl) {
@@ -76,7 +91,9 @@ if($projectdb && !empty($sessions)) {
 }
 $viewer->setSessionId($sessionId);
 $viewer->setImageId($imageId);
-$viewer->addSessionSelector($sessions);
+$viewer->addSessionSelector($sessions, $limit);
+$viewer->setScopeId($scopeId);
+$viewer->addScopeSelector($scopes);
 $viewer->addFileSelector($filenames);
 $viewer->setNbViewPerRow('2');
 $viewer->addjs($jsdata);
@@ -99,6 +116,7 @@ $view2->setSize(512);
 $view2->setSpan(2,2);
 $view2->displayDeqIcon(true);
 $view2->displayDDIcon(true);
+$view2->displayComment(true); 
 $viewer->add($view2);
 
 $view3 = new view('View 3', 'v3');

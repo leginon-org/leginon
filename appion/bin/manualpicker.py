@@ -606,6 +606,7 @@ class ManualPicker(particleLoop2.ParticleLoop):
 		#print self.params
 		count = 0
 		total = len(self.imgtree)
+		t0 = time.time()
 		for imgdata in self.imgtree:
 			count += 1
 			imgpath = os.path.join(self.params['rundir'], imgdata['filename']+'.dwn.mrc')
@@ -620,6 +621,7 @@ class ManualPicker(particleLoop2.ParticleLoop):
 
 			if count % 60 == 0:
 				sys.stderr.write(" %d left\n" % (total-count))
+		apDisplay.printColor("Completed image processing in %s"%(apDisplay.timeString(time.time()-t0)), "cyan")
 
 	def showAssessedMask(self,imgfile,imgdata):
 		self.filename = imgfile

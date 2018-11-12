@@ -1,40 +1,47 @@
 #!/usr/bin/env python
 import numpy
-import imagefun
-import arraystats
 import sys
-import scipy.ndimage
+import os
 
 class NumRaw(object):
 	'''
 	This reader is based on FEI Falcon intermediate frame RAW format
 	'''
 	def __init__(self,filepath):
+		self.filebytes = os.path.getsize(filepath)
 		self.fobj = open(filepath)
 		self.defineHeader()
 		self.header = self.parseHeader()
 
 	def defineHeader(self):
-		self.numheader_offset = 13
-		self.numheader_type = numpy.int32
-		self.data_offset = 49
-		self.data_type = numpy.int32
+		self.header_offset = 13 # in bytes
+		self.header_type = numpy.int32
 		self.header_keys = [1,'nx','ny','channels','bits','encoding','offset','stride_x','stride_y']
 
+	def getDataType(self,headerdict):
+		'''
+		Get data type based on header
+		'''
+		bits = headerdict['bits']
+		if bits == 32:
+			self.data_type = numpy.int32
+		else:
+			self.data_type = numpy.int16
+		return self.data_type
+
 	def parseHeader(self):
-		self.fobj.seek(self.numheader_offset)
-		datalen = (self.data_offset - self.numheader_offset) / numpy.dtype(self.numheader_type).itemsize
-		if datalen != len(self.header_keys):
-			print 'ERROR datalen ', datalen, '!= header keys len'
-			return False
-		# make headerdict
+		self.fobj.seek(self.header_offset)
+		datalen = len(self.header_keys)
 		headerdict = {}
 
-		header_values = numpy.fromfile(self.fobj, dtype=self.data_type, count=datalen).tolist()
+		header_values = numpy.fromfile(self.fobj, dtype=self.header_type, count=datalen).tolist()
 		for i,k in enumerate(self.header_keys):
 			headerdict[k] = header_values[i]
-		headerdict['dtype'] = numpy.dtype(self.data_type)
-		headerdict['shape'] = (headerdict['ny'],headerdict['ny'])
+
+		self.data_offset = self.header_offset + numpy.dtype(self.header_type).itemsize * len(self.header_keys) + headerdict['offset']
+		# additional headers
+		headerdict['dtype'] = numpy.dtype(self.getDataType(headerdict))
+		headerdict['shape'] = (headerdict['ny'],headerdict['nx'])
 		return headerdict
 
 	def readDataFromFile(self, fobj, headerdict, zslice=None):
@@ -53,12 +60,12 @@ class NumRaw(object):
 		datalen = reduce(numpy.multiply, shape)
 		fobj.seek(start)
 		a = numpy.fromfile(fobj, dtype=headerdict['dtype'], count=datalen)
-		a.shape = shape
+		a = numpy.reshape(a,shape)
 		return a
 
 def read(imfile):
 	'''
-	Read imagefile, then convert to a int32 numpy array.
+	Read imagefile, then convert to a numpy array.
 	'''
 	reader = NumRaw(imfile)
 	h = reader.parseHeader()
@@ -67,7 +74,7 @@ def read(imfile):
 
 def readHeaderFromFile(imfile):
 	reader = NumRaw(imfile)
-	return reader.header
+	return reader.parseHeader()
 
 if __name__ == '__main__':
 	a = read('n0.raw')

@@ -88,7 +88,7 @@ echo "<p>";
 $minPhpVersion = "5.3.0";
 
 // upper bound, exclusive. If it must be 5.2.x but not 5.3.x, the maxPhpVersion is 5.3.
-$maxPhpVersion = "5.4.0"; 
+$maxPhpVersion = "5.7.0"; 
 
 try
 {
@@ -118,7 +118,7 @@ echo "</p>";
 echo "<h3>php.ini check:</h3>";
 echo "<p>";
 echo "Use the table below to ensure your php.ini settings are correct. <br />";
-echo "<a target='_blank' href='http://ami.scripps.edu/redmine/projects/appion/wiki/Configure_phpini'>[More info about php.ini settings]</a> <br />";
+echo "<a target='_blank' href='http://emg.nysbc.org/redmine/projects/appion/wiki/Configure_phpini'>[More info about php.ini settings]</a> <br />";
 echo "<p>";
 
 // These are constant values based on what AMI recommends for the php.ini settings
@@ -186,32 +186,32 @@ $memoryLimitFont      = ($memoryLimit      != $memoryLimitRec)      ? $errorColo
 	</tr>
 	<tr>
 		<td>error_reporting</td>
-		<td><? echo "<font color='".$errorReportingFont."'>".$errorReportingText."</font>"; ?></td>
+		<td><?php echo "<font color='".$errorReportingFont."'>".$errorReportingText."</font>"; ?></td>
 		<td>E_ALL & ~E_NOTICE & ~E_WARNING & ~E_DEPRECATED</td>
 	</tr>
 	<tr>
 		<td>display_errors</td>
-		<td><? echo "<font color='".$displayErrorsFont."'>".$displayErrors."</font>"; ?></td>
+		<td><?php echo "<font color='".$displayErrorsFont."'>".$displayErrors."</font>"; ?></td>
 		<td>On</td>
 	</tr>
 		<td>register_argc_argv</td>
-		<td><? echo "<font color='".$registerArgcArgvFont."'>".$registerArgcArgv."</font>"; ?></td>
+		<td><?php echo "<font color='".$registerArgcArgvFont."'>".$registerArgcArgv."</font>"; ?></td>
 		<td>On</td>
 	</tr>
 		<td>short_open_tag</td>
-		<td><? echo "<font color='".$shortOpenTagFont."'>".$shortOpenTag."</font>"; ?></td>
+		<td><?php echo "<font color='".$shortOpenTagFont."'>".$shortOpenTag."</font>"; ?></td>
 		<td>On</td>
 	</tr>
 		<td>max_execution_time</td>
-		<td><? echo "<font color='".$maxExeTimeFont."'>".$maxExeTime."</font>"; ?></td>
+		<td><?php echo "<font color='".$maxExeTimeFont."'>".$maxExeTime."</font>"; ?></td>
 		<td>300</td>
 	</tr>
 		<td>max_input_time</td>
-		<td><? echo "<font color='".$maxInputTimeFont."'>".$maxInputTime."</font>"; ?></td>
+		<td><?php echo "<font color='".$maxInputTimeFont."'>".$maxInputTime."</font>"; ?></td>
 		<td>300</td>
 	</tr>
 		<td>memory_limit</td>
-		<td><? echo "<font color='".$memoryLimitFont."'>".$memoryLimit."</font>"; ?></td>
+		<td><?php echo "<font color='".$memoryLimitFont."'>".$memoryLimit."</font>"; ?></td>
 		<td>256M (minimum)</td>
 	</tr>
 </table>
@@ -262,7 +262,7 @@ echo "</p>";
 <h3>Display Images:</h3>
 <p><font color='red'>Please confirm that 2 images are visible below.</font> <br />
 Don't see them? For more info visit:
-<a target='_blank' href='http://ami.scripps.edu/redmine/projects/appion/wiki/Install_Redux_image_server'>[Install the Redux Image Server]</a>
+<a target='_blank' href='http://emg.nysbc.org/redmine/projects/appion/wiki/Install_Redux_image_server'>[Install the Redux Image Server]</a>
 <br />
 <br />
 

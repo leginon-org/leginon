@@ -1,0 +1,56 @@
+/*----------------------------------------------------------------------------*
+*
+*  coreconfig.h  -  configuration
+*
+*----------------------------------------------------------------------------*/
+
+#ifndef coreconfig_h_
+#define coreconfig_h_
+
+#include "modulebase.h"
+
+
+/* build identification */
+
+MODULE-PRFX CORE
+"i3d"
+"2.4"
+"Copyright © 2012 Hanspeter Winkler"
+
+
+/* build specific */
+
+#define BUILDPRFX "I3"
+
+
+/* module codes */
+
+#define BaseModuleCode         ( CoreModuleBase | 0x0100 )
+#define ThreadModuleCode       ( CoreModuleBase | 0x0200 )
+#define StringsModuleCode      ( CoreModuleBase | 0x0300 )
+#define StringParseModuleCode  ( CoreModuleBase | 0x0400 )
+#define StringFormatModuleCode ( CoreModuleBase | 0x0500 )
+#define StringTableModuleCode  ( CoreModuleBase | 0x0600 )
+#define MatModuleCode          ( CoreModuleBase | 0x0700 )
+#define SeqModuleCode          ( CoreModuleBase | 0x0800 )
+#define TransfModuleCode       ( CoreModuleBase | 0x0900 )
+#define ChecksumModuleCode     ( CoreModuleBase | 0x0a00 )
+#define ParseModuleCode        ( CoreModuleBase | 0x0b00 )
+
+
+/* core */
+
+#define Debug ( 0 )
+#define debug ( 0 )
+#define runcheck ( 0 )
+#define argcheck( cond ) ( 0 )
+
+
+/* bug fix */
+
+#ifndef ARG_MAX
+  #define ARG_MAX 4096
+#endif
+
+
+#endif

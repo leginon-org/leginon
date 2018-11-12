@@ -32,6 +32,8 @@ u32        typeFromMRCType( u32 type ) {
 		return TYPE_NULL;
 		case MRC_MODE_FLOAT_COMPLEX:
 		return TYPE_C32;
+		case MRC_MODE_UNSIGNED_BYTE:
+		return TYPE_U08;
 		case MRC_MODE_UNSIGNED_SHORT:
 		return TYPE_U16;
 		default:

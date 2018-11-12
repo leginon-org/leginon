@@ -218,15 +218,15 @@ class project {
 	function checkProjectExistsbyName($name) {
 		$q="SELECT DEF_id FROM projects WHERE name='$name'";
 		$RprojectInfo = $this->mysql->SQLQuery($q);
-		$projectInfo = mysql_fetch_array($RprojectInfo);
+		$projectInfo = mysqli_fetch_array($RprojectInfo);
 		return $projectInfo['DEF_id'];
 	}
 
 	function checkProjectExistsbyId($projectId) {
 		$q=' SELECT DEF_id FROM projects WHERE DEF_id="'.$projectId.'"';
 		$RprojectInfo = $this->mysql->SQLQuery($q);
-		echo mysql_error();
-		$projectInfo = mysql_fetch_array($RprojectInfo);
+		echo mysqli_error($this->mysql->db_link);
+		$projectInfo = mysqli_fetch_array($RprojectInfo);
 		$id = $projectInfo['DEF_id'];
 		if(empty($id))
 			return false;
@@ -259,7 +259,7 @@ class project {
 		  ."funding as 'Funding'  FROM projects "
 		  ."WHERE DEF_id='$projectId'";
 		$RprojectInfo = $this->mysql->SQLQuery($q);
-		$info = mysql_fetch_array($RprojectInfo, MYSQL_ASSOC);
+		$info = mysqli_fetch_array($RprojectInfo, MYSQLI_ASSOC);
 		return $info;
 	}
 
@@ -311,7 +311,7 @@ class project {
 			."WHERE username='".$login."' "
 			."and projectId='".$projectId."' " ;
 		$RpId = $this->mysql->SQLQuery($q);
-		$n = mysql_num_rows($RpId);
+		$n = mysqli_num_rows($RpId);
 		if ($n > 0)
 			return False;
 		$q = "INSERT INTO pis "
@@ -329,7 +329,7 @@ class project {
 			."WHERE username='".$login."' "
 			."and projectId='".$projectId."' " ;
 		$RpId = $this->mysql->SQLQuery($q);
-		$n = mysql_num_rows($RpId);
+		$n = mysqli_num_rows($RpId);
 		if ($n > 0)
 			return False;
 		$q = "INSERT INTO associates "
@@ -418,7 +418,7 @@ class project {
 			$q = "DELETE FROM projectowners "
 				."WHERE `REF|leginondata|UserData|user` = ".$userId." "
 				."and `REF|projects|project`= ".$projectId." ";
-			#$this->mysql->SQLQuery($q, true);
+			$this->mysql->SQLQuery($q, true);
 		}
 		return true;
 	}

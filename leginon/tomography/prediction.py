@@ -3,40 +3,53 @@ import scipy
 import scipy.optimize
 from scipy.linalg import lstsq
 
+def debug_print(msg):
+	#print msg
+	pass
+
 class TiltSeries(object):
 	def __init__(self):
 		self.tilt_groups = []
 
 	def addTiltGroup(self, tilt_group):
 		self.tilt_groups.append(tilt_group)
+		self.current_group = self.tilt_groups[-1]
+		self.current_group_index = len(self.tilt_groups)-1
 
 	def __len__(self):
 		return len(self.tilt_groups)
 
 	def getCurrentTiltGroup(self):
 		if self.tilt_groups:
-			return self.tilt_groups[-1]
+			return self.current_group
 		else:
-			return TiltGroup()
+			newgroup = TiltGroup()
+			self.addTiltGroup(newgroup)
+			self.current_group = self.tilt_groups[-1]
+			return self.current_group
+
+	def setCurrentTiltGroup(self, index):
+		if len(self.tilt_groups) <= index:
+			raise ValueError
+		self.current_group = self.tilt_groups[index]
+		self.current_group_index = index
+
+	def getCurrentTiltGroupIndex(self):
+		return self.current_group_index
 
 class TiltGroup(object):
+	'''
+	TiltGroup has a range of tilts.
+	'''
 	def __init__(self):
 		self.tilts = []
 		self.xs = []
 		self.ys = []
-		self.is_plus_tilt = False
 
 	def addTilt(self, tilt, x, y):
 		self.tilts.append(tilt)
 		self.xs.append(x)
 		self.ys.append(y)
-		self.is_plus_tilt = self.getTiltDirection(self.tilts)
-
-	def getTiltDirection(self,tilts):
-		if tilts[-1] > 0:
-			return True
-		else:
-			return False
 
 	def __len__(self):
 		return len(self.tilts)
@@ -45,15 +58,18 @@ class Prediction(object):
 	def __init__(self):
 		self.tilt_series_list = []
 		self.tilt_series_pixel_size_list = []
-		self.parameters = [0, 0, 0]
+		self.parameters = [[0, 0, 0],[0, 0, 0]]
+		self.initial_params = [[0, 0, 0],[0, 0, 0]]
 		self.image_pixel_size = 2e-9
 		self.ucenter_limit = 2e-6
-		self.fitdata = 4
+		self.fitdata = [4,4]
+		self.fixed_model = True
+		self.valid_tilt_series_list = []
 
 	def resetTiltSeriesList(self):
 		self.tilt_series_list = []
 		self.tilt_series_pixel_size_list = []
-		self.parameters = [0, 0, 0]
+		self.parameters = [[0, 0, 0],[0, 0, 0]]
 
 	def addTiltSeries(self, tilt_series):
 		self.tilt_series_list.append(tilt_series)
@@ -67,7 +83,14 @@ class Prediction(object):
 		self.addTiltSeries(tilt_series)
 
 	def getCurrentTiltSeries(self):
-		return self.valid_tilt_series_list[-1]
+		if self.valid_tilt_series_list:
+			return self.valid_tilt_series_list[-1]
+		# FIX ME not sure this works right
+		debug_print('found no valid tilt series, make a new one')
+		self.newTiltSeries()
+		self.newTiltGroup()
+		self.newTiltGroup()
+		return self.tilt_series_list[-1]
 
 	def getValidTiltSeriesList(self):
 		self.valid_tilt_series_list = []
@@ -81,11 +104,18 @@ class Prediction(object):
 			if self.tilt_series_pixel_size_list[i] == current_pixel_size:
 				self.valid_tilt_series_list.append(tilt_series)
 				self.valid_tilt_series_pixel_size_list.append(self.image_pixel_size)
+			else:
+				debug_print('invaid tilt series: index %d' % i)
+				debug_print('  %d groups in it' % len(tilt_series.tilt_groups))
+				for g in tilt_series.tilt_groups:
+					debug_print(g.tilts)
 
 	def newTiltGroup(self):
 		tilt_series = self.getCurrentTiltSeries()
-		if tilt_series.tilt_groups and len(tilt_series.tilt_groups[-1]) < 1:
-			return
+		# Fix me: WHY prevent adding new group if nothing is there ?
+		#if tilt_series.tilt_groups and len(tilt_series.tilt_groups[-1]) < 1:
+		#	print 'previous tilt group has no value, tiltgroup not added. But why?'
+		#	return
 		tilt_group = TiltGroup()
 		tilt_series.addTiltGroup(tilt_group)
 
@@ -93,53 +123,97 @@ class Prediction(object):
 		tilt_series = self.getCurrentTiltSeries()
 		return tilt_series.getCurrentTiltGroup()
 
+	def setCurrentTiltGroup(self, index):
+		tilt_series = self.getCurrentTiltSeries()
+		return tilt_series.setCurrentTiltGroup(index)
+
+	def getCurrentTiltGroupIndex(self):
+		tilt_series = self.getCurrentTiltSeries()
+		g = tilt_series.getCurrentTiltGroupIndex()
+		return g
+
 	def addPosition(self, tilt, position):
 		tilt_group = self.getCurrentTiltGroup()
-		if len(tilt_group) > 0:
-			origin = {'x': tilt_group.xs[0],
-					  'y': tilt_group.ys[0]}
-			previous = {'x': tilt_group.xs[-1],
-						'y': tilt_group.ys[-1]}
 		tilt_group.addTilt(tilt, position['x'], position['y'])
 
-	def getCurrentParameters(self):
-			
-		return tuple(self.parameters[:2] + [self.parameters[-1]])
+	def setParameters(self, index, params):
+		self.parameters[index] = params
 
-	def predict(self, tilt):
-		n_start_fit = 3 
-		tilt_series = self.getCurrentTiltSeries()
-		tilt_group = self.getCurrentTiltGroup()
-		current_tilt_direction = tilt_group.is_plus_tilt
-		n_tilt_series = len(self.valid_tilt_series_list)
-		n_tilt_groups = len(tilt_series)
-		n_tilts = len(tilt_group)
+	def setFixedParameters(self, index, params):
+		'''
+		Set initial params for model that does not change through the tilt series.
+		This should only be set once.
+		'''
+		self.initial_params[index] = params
+
+	def getFixedParameters(self):
+		'''
+		Get initial params for model that does not change through the tilt series
+		'''
+		index = self.getCurrentTiltGroupIndex()
+		return self.initial_params[index]
+
+	def getCurrentParameters(self):
+		'''
+		get most recent LeastSquaredModel fit results.
+		'''
+		i = self.getCurrentTiltGroupIndex()
+		# The returned values are phi, optical_axis, z0
+		return tuple(self.parameters[i][:2] + [self.parameters[i][-1]])
+
+
+	def getMinMaxTiltsOfTiltSeriesList(self, tiltgroup_index):
 		n = []
 		gmaxtilt = []
 		gmintilt = []
 		for s in self.valid_tilt_series_list:
-			for g in s.tilt_groups:
-				if g.is_plus_tilt is not current_tilt_direction:
-					continue
-				n.append(len(g))
-				# old tilts may be aborted before start and therefore tilts=[]
-				if len(g.tilts) > 0:
-					gmaxtilt.append(max(g.tilts))
-					gmintilt.append(min(g.tilts))
-		maxtilt = max(gmaxtilt)
-		mintilt = min(gmintilt)
+			g = s.tilt_groups[tiltgroup_index]
+			n.append(len(g))
+			# old tilts may be aborted before start and therefore tilts=[]
+			if len(g.tilts) > 0:
+				gmaxtilt.append(max(g.tilts))
+				gmintilt.append(min(g.tilts))
+		# default maxtilt/mintilt to 0.0 so that the fit uses fix model
+		if gmaxtilt:
+			maxtilt = max(gmaxtilt)
+		else:
+			maxtilt = 0.0
+		if gmintilt:
+			mintilt = max(gmintilt)
+		else:
+			mintilt = 0.0
+		return mintilt, maxtilt
+
+	def predict(self, tilt):
+		debug_print(' ')
+		debug_print('Predicting %.2f' % math.degrees(tilt))
+
+		tilt_series = self.getCurrentTiltSeries()
+		tilt_group = self.getCurrentTiltGroup()
+		current_group_index = self.getCurrentTiltGroupIndex()
+		n_start_fit = self.fitdata[current_group_index]
+		n_smooth_fit = self.fitdata[current_group_index]
+		n_tilt_series = len(self.valid_tilt_series_list)
+		n_tilt_groups = len(tilt_series)
+		n_tilts = len(tilt_group.tilts)
+
+		#####
 		parameters = self.getCurrentParameters()
+		debug_print('z0 at start of prediction %.2f' % parameters[-1])
+		debug_print('using %d tilts' % n_tilts)
+		debug_print('tilts are: %s' % tilt_group.tilts)
 		if n_tilts < 1:
 			raise RuntimeError
-		elif n_tilts < 2:
-			if len(self.tilt_series_list) != len(self.valid_tilt_series_list):
-				print "%s out of %s tilt series are used in prediction" %(len(self.valid_tilt_series_list),len(self.tilt_series_list))
+		elif n_tilts < n_start_fit and not parameters[-1] == 0.0 and not self.fixed_model:
+			debug_print('set to input value since no fit, yet')
+			# one tilt : set to the input value
+			# x, y, z unchanged
 			x, y = tilt_group.xs[-1], tilt_group.ys[-1]
 			z = 0.0
-		# calculate real z correction with current parameters 
 		elif n_tilts < n_start_fit:
-			x, y = tilt_group.xs[-1], tilt_group.ys[-1]
-			
+			debug_print('set use input model as prediction')
+			# number of tilts not enough to calculate modeled position.
+			# calculate real z correction with current parameters
 			x0 = tilt_group.xs[0]
 			y0 = tilt_group.ys[0]
 			tilt0 = tilt_group.tilts[0]
@@ -147,6 +221,9 @@ class Prediction(object):
 			sin_tilts = scipy.sin(scipy.array([tilt0, tilt]))
 			parameters = self.getCurrentParameters()
 			args_list = [(cos_tilts, sin_tilts, x0, y0, None, None)]
+
+			if len(self.tilt_series_list) != len(self.valid_tilt_series_list):
+				debug_print("%s out of %s tilt series are used in prediction" %(len(self.valid_tilt_series_list),len(self.tilt_series_list)))
 			result = self.model(parameters, args_list)
 			z0 = parameters[2]
 			z = result[-1][-1][2] - z0
@@ -154,26 +231,36 @@ class Prediction(object):
 			y = result[-1][-1][1]
 
 		else:
+			# fitting is possible
 			if n_tilts != n_start_fit:
 				self.forcemodel = False
 			else:
+				# When it is fitted the first time, force the prediction
+				# to be used if it has the same trend as the earlier tilts.
+				# Otherwise it would slip off too much.
 				r2 = [0,0]
 				r2[0] = abs(self._getCorrelationCoefficient(tilt_group.tilts[1:], tilt_group.xs[1:]))
 				r2[1] = abs(self._getCorrelationCoefficient(tilt_group.tilts[1:], tilt_group.ys[1:]))
 				r2xy = abs(self._getCorrelationCoefficient(tilt_group.xs[1:], tilt_group.ys[1:]))
 				if max(r2) > 0.95 and r2xy > 0.95 and not self.fixed_model:
 					self.forcemodel = True
+					debug_print('force to use fitted model')
 				else:
+					debug_print( 'trend is not strong: %.4f, %.4f <=0.95' % (max(r2), r2xy))
+					debug_print('or fixed model (%s) is True' % (self.fixed_model))
 					self.forcemodel = False
 			# x,y is only a smooth polynomial fit
 			x, y = self.leastSquaresXY(tilt_group.tilts,
 								  tilt_group.xs,
 								  tilt_group.ys,
-								  tilt)
-		#	tilt_group.addTilt(tilt, x, y)
+								  tilt,
+									n_smooth_fit)
 			## calculate optical axis tilt and offset
+			mintilt, maxtilt = self.getMinMaxTiltsOfTiltSeriesList(current_group_index)
 			if (abs(maxtilt) < math.radians(30) and abs(mintilt) < math.radians(30)):
 				## optical axis offset fit is not reliable at small tilts
+				## calculate new model parameters to get new z0
+				## and then revert the fixed_model option value
 				orig_fixed_model = self.fixed_model
 				self.fixed_model = True
 				self.calculate()
@@ -181,10 +268,8 @@ class Prediction(object):
 			else:
 				self.calculate()
 
-		#	del tilt_group.tilts[-1]
-		#	del tilt_group.xs[-1]
-		#	del tilt_group.ys[-1]
 
+			# use the tilt and tilt0 x,y values to calculate the model z0
 			x0 = tilt_group.xs[0]
 			y0 = tilt_group.ys[0]
 			tilt0 = tilt_group.tilts[0]
@@ -192,31 +277,46 @@ class Prediction(object):
 			sin_tilts = scipy.sin(scipy.array([tilt0, tilt]))
 			parameters = self.getCurrentParameters()
 			args_list = [(cos_tilts, sin_tilts, x0, y0, None, None)]
+			debug_print("parameters go in model (%.4f,%.4f,%.1f)" % parameters)
 			result = self.model(parameters, args_list)
 			z0 = result[-1][0][2]
+			debug_print("model result z0 in pixels: %.1f" % z0)
+			debug_print("model results %s " % result)
 			z = result[-1][-1][2] - z0
 
-		phi,offset = self.convertparams(self.parameters[0],self.parameters[1])
+		# self.parameters may be altered after model fit.
+		phi, optical_axis, z0 = self.getCurrentParameters()
+		debug_print("z0s of all tilt series: %s" % self.parameters[current_group_index])
+		debug_print("currentparameters z0 %s" % z0)
+		phi,offset = self.convertparams(phi,optical_axis)
 		result = {
 			'x': float(x),
 			'y': float(y),
 			'z': float(z),
 			'phi': float(phi),
 			'optical axis': float(offset),
-			'z0': float(self.parameters[-1]),
+			'z0': float(self.parameters[current_group_index][-1]),
 		}
+		debug_print('calculate result: %s' % result)
 		return result
 
 	def convertparams(self, phi, offset):
+		# convert to consistent convention
 		if math.cos(phi) < 0:
 			offset = -offset
 		phi = math.atan(math.tan(phi))
 		return phi,offset
 
 	def calculate(self):
+		'''
+		calculate new model parameters through fitting of previous tilt series
+		'''
 		tilt_group = self.getCurrentTiltGroup()
+		tilt_group_index = self.getCurrentTiltGroupIndex()
+		# do nothing if not enough tilts in tilt_group
 		if len(tilt_group) < 3:
 			return
+		# use maximal of 8 previous tilt series for fitting
 		if len(self.valid_tilt_series_list) > 8:
 			tilt_series_list = self.valid_tilt_series_list[-8:]
 		else:
@@ -225,9 +325,12 @@ class Prediction(object):
 		# Use the old, good parameter if the fitting result suggest a very large tilt axis z offset
 		# max_delta_z0 should be larger than the z eucentric error ucenter_error in meters
 		max_delta_z0 =  self.ucenter_limit / self.image_pixel_size
-		if self.forcemodel or (fitparameters[-1]-self.parameters[-1])**2 <= max_delta_z0**2:
-			self.parameters = fitparameters
+		debug_print('z diffi %.1f, %.1f' % (fitparameters[-1],self.parameters[tilt_group_index][-1]))
+		debug_print('max_delta_z0 %.1f' % max_delta_z0)
+		if self.forcemodel or (fitparameters[-1]-self.parameters[tilt_group_index][-1])**2 <= max_delta_z0**2:
+			self.parameters[tilt_group_index] = fitparameters
 		else:
+			debug_print('model not used for update: %s' % fitparameters)
 			pass
 		return
 
@@ -249,6 +352,11 @@ class Prediction(object):
 		return r2
 
 	def acceptableindices(self,list,min,max,datalimit):
+		'''
+		Return indices for a list only item values in the range of min and max.
+		When there are fewer items that pass the criteria than datalimit, try
+		to include more at the end of the list
+		'''
 		array = scipy.array(list)
 		larger = scipy.where(array >= min)
 		smaller = scipy.where(array <= max)
@@ -265,14 +373,13 @@ class Prediction(object):
 	def leastSquaresModel(self, tilt_series_list):
 		phi, optical_axis, z0 = self.getCurrentParameters()
 		if self.fixed_model == True:
-			phi = self.phi0
-			optical_axis = self.offset0
+			phi, optical_axis, z0 = self.getFixedParameters()
 		parameters = [phi, optical_axis]
 		args_list = []
 		current_tilt_group = self.getCurrentTiltGroup()
-		current_tilt_direction = current_tilt_group.is_plus_tilt
+		current_group_index = self.getCurrentTiltGroupIndex()
 		current_tilt = current_tilt_group.tilts[-1]
-		datalimit = self.fitdata
+		datalimit = self.fitdata[current_group_index]
 		if len(current_tilt_group) >= datalimit:
 			previous_tilts = current_tilt_group.tilts[-datalimit:]
 		else:
@@ -286,42 +393,47 @@ class Prediction(object):
 			tolerance = 1.62
 		tiltmin = min(previous_tilts) - tolerance
 		tiltmax = max(previous_tilts) + tolerance
-		for tilt_series in tilt_series_list:
-			for tilt_group in tilt_series.tilt_groups:
-				if len(tilt_group.tilts) == 0  or len(tilt_group.xs) != len(tilt_group.tilts) or len(tilt_group.ys) != len(tilt_group.tilts):
-					break
-				# wrong direction tilt group should not be included in the fit
-				elif tilt_group.is_plus_tilt is not current_tilt_direction:
-					continue
-				parameters.extend([0])
-				
-				acceptableindices = self.acceptableindices(tilt_group.tilts,tiltmin,tiltmax,datalimit)
-				goodtilts = []
-				goodxs = []
-				goodys = []
-				for i in acceptableindices:
-					goodtilts.append(tilt_group.tilts[i])
-					goodxs.append(tilt_group.xs[i])
-					goodys.append(tilt_group.ys[i])
-				tilts = scipy.array(goodtilts)
-				cos_tilts = scipy.cos(tilts)
-				sin_tilts = scipy.sin(tilts)
+		for s, tilt_series in enumerate(tilt_series_list):
+			debug_print('leastSquareModel: series number %d' % (s,))
+			tilt_group = tilt_series.tilt_groups[current_group_index]
+			if len(tilt_group.tilts) == 0  or len(tilt_group.xs) != len(tilt_group.tilts) or len(tilt_group.ys) != len(tilt_group.tilts):
+				# invalid tilt_group, skip
+				debug_print('skipped: series number %d with %d tilts' % (s,len(tilt_group.tilts)))
+				continue
+			debug_print('leastSquareModel use tilt_group index %d' % (current_group_index,))
+			parameters.extend([0])
+			
+			acceptableindices = self.acceptableindices(tilt_group.tilts,tiltmin,tiltmax,datalimit)
+			goodtilts = []
+			goodxs = []
+			goodys = []
+			for i in acceptableindices:
+				goodtilts.append(tilt_group.tilts[i])
+				goodxs.append(tilt_group.xs[i])
+				goodys.append(tilt_group.ys[i])
+			tilts = scipy.array(goodtilts)
+			cos_tilts = scipy.cos(tilts)
+			sin_tilts = scipy.sin(tilts)
 
-				x0 = tilt_group.xs[0]
-				y0 = tilt_group.ys[0]
+			x0 = tilt_group.xs[0]
+			y0 = tilt_group.ys[0]
 
-				x = scipy.array(goodxs)
-				y = scipy.array(goodys)
+			x = scipy.array(goodxs)
+			y = scipy.array(goodys)
 
-				args_list.append((cos_tilts, sin_tilts, x0, y0, x, y))
+			args_list.append((cos_tilts, sin_tilts, x0, y0, x, y))
 
-				# leastsq function gives improper parameters error if too many input data array are empty
-				# This happens if 6 or more preceeding tilt series have much lower end tilt angle
-				# than the current. We will ignore them.
-				if cos_tilts.size < 1:
-					args_list.pop()
-					parameters.pop()
-
+			# leastsq function gives improper parameters error if too many input data array are empty
+			# This happens if 6 or more preceeding tilt series have much lower end tilt angle
+			# than the current. We will ignore them.
+			if cos_tilts.size < 1:
+				args_list.pop()
+				parameters.pop()
+				debug_print('popped: series number %d' % (s,))
+			else:
+				debug_print('%d tilts are included for fitting from series %d' % (len(goodtilts),s))
+		# There should be at least one tilt series (current one) left at this point
+		debug_print('%d tilt series left for fitting' % len(args_list))
 		args = (args_list,)
 		kwargs = {
 			'args': args,
@@ -340,12 +452,14 @@ class Prediction(object):
 		phi = parameters[0]
 		optical_axis = parameters[1]
 		if self.fixed_model == True:
-			phi = self.phi0
-			optical_axis = self.offset0
+			phi, optical_axis, z0 = self.getFixedParameters()
 		zs = scipy.array(parameters[2:], scipy.dtype('d'))
 		return phi, optical_axis, zs
 
 	def model(self, parameters, args_list):
+		'''
+		x, y positions according to phi, optical axis and each zs
+		'''
 		phi, optical_axis, zs = self.getParameters(parameters)
 		sin_phi = scipy.sin(phi)
 		cos_phi = scipy.cos(phi)
@@ -368,7 +482,9 @@ class Prediction(object):
 		return position_groups
 
 	def residuals(self, parameters, args_list):
-		# residual_list is the values which sum of squares is to be minimized
+		'''
+		Calculate residual list which sum of squares is to be minimized.
+		'''
 		residuals_list = []
 		position_groups = self.model(parameters, args_list)
 		for i, positions in enumerate(position_groups):
@@ -378,6 +494,7 @@ class Prediction(object):
 			residuals[:, 0] = x
 			residuals[:, 1] = y
 			residuals -= positions[:, :2]
+			# put in list
 			residuals_list.extend(residuals[:, 0])
 			residuals_list.extend(residuals[:, 1])
 		residuals_list = scipy.array(residuals_list, scipy.dtype('d'))
@@ -400,8 +517,8 @@ class Prediction(object):
 			position += x[j]*tilt**j
 		return position
 
-	def leastSquaresXY(self, tilts, xs, ys, tilt, n=5):
-		n = self.fitdata + 1
+	def leastSquaresXY(self, tilts, xs, ys, tilt, n_smooth_fit=4):
+		n = n_smooth_fit+1
 		position = scipy.zeros(2, scipy.dtype('d'))
 		for i, positions in enumerate((xs, ys)):
 			position[i] = self._leastSquaresXY(tilts[-n:], positions[-n:], tilt)

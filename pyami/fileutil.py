@@ -3,6 +3,7 @@ import inspect
 import os
 import sys
 import errno
+import imp
 
 def getMyFilename(up=1):
 	'''
@@ -43,7 +44,7 @@ def mkdirs(newdir):
 			raise
 	os.umask(originalumask)
 
-def get_config_dirs(module=None):
+def get_config_dirs(module=None, package_name=None):
 	'''
 	Determine a list of directories where config files may be located.
 	One of the directories will be the installed module directory, but
@@ -60,21 +61,45 @@ def get_config_dirs(module=None):
 
 	# installed module directory, specified by argument, or auto detected
 	if module is None:
-		# not this function, but the caller of this function, so up=2
-		installed_dir = getMyDir(up=2)
+		if package_name is None:
+			# not this function, but the caller of this function, so up=2
+			installed_dir = getMyDir(up=2)
+		else:
+			package_path = imp.find_module(package_name)[1]
+			installed_dir = os.path.abspath(package_path)
 	else:
 		installed_dir = os.path.dirname(os.path.abspath(module.__file__))
 
 	# user home dir
 	user_dir = os.path.expanduser('~')
 
-	return [system_dir, installed_dir, user_dir]
+	confdirs = [system_dir, installed_dir, user_dir]
+	# module config environment variable
+	installed_dir_basename = os.path.basename(installed_dir)
+	config_environ_name = '%s_CFG_PATH' % (installed_dir_basename.upper())
+	if os.environ.has_key(config_environ_name):
+		confdirs.append(os.environ[config_environ_name])#added to have an option to have mutiple sinedon.cfg files
+	return confdirs
 
 def open_if_not_exists(filename):
 	'''Creates a new file for read/write access.  Raises exception if file exists'''
 	fd = os.open(filename, os.O_CREAT|os.O_EXCL|os.O_RDWR)
 	f = os.fdopen(fd, 'r+')
 	return f
+
+def check_exist_one_file(filenames):
+	one_exists = False
+	for filename in filenames:
+		if os.path.exists(filename):
+			one_exists = True
+	if not one_exists:
+		msg = 'please configure at least one of these:  %s' % (filenames,)
+		if sys.platform == 'win32':
+			print msg
+			raw_input('hit return key to exit')
+			sys.exit()
+		else:
+			raise IOError(msg)
 
 if __name__ == '__main__':
 	print getMyFilename()

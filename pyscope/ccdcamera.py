@@ -1,7 +1,7 @@
-# The Leginon software is Copyright 2004
-# The Scripps Research Institute, La Jolla, CA
+# The Leginon software is Copyright under
+# Apache License, Version 2.0
 # For terms of the license agreement
-# see http://ami.scripps.edu/software/leginon-license
+# see http://leginon.org
 #
 
 import time
@@ -311,6 +311,12 @@ This method returns that multiplier, M.  In the standard case, returns 1.0.
 	def getSystemGainDarkCorrected(self):
 		return False
 
+	def getCalulateNormOnDark(self):
+		return True
+
+	def requireRecentDarkOnBright(self):
+		return False
+
 	def getFrameFlip(self):
 		# flip before? rotation
 		return False
@@ -318,3 +324,57 @@ This method returns that multiplier, M.  In the standard case, returns 1.0.
 	def getFrameRotate(self):
 		# rotation in multiple of 90 degrees
 		return 0
+
+	def getSaveLzwTiffFrames(self):
+		# Lzw Tiff file saving for frames
+		return False
+
+	def requireRecentDarkCurrentReferenceOnBright(self):
+		return False
+	
+	def getRetractable(self):
+		raise NotImplementedError
+
+	def setInserted(self, value):
+		raise NotImplementedError
+
+	def getInserted(self):
+		raise NotImplementedError
+
+	def _midNightDelay(self, delay_start, delay_length, force_insert=0):
+		'''
+		Sleep for delay_length of minutes starting at delay_start in minutes
+		before midnight.  To prevent camera automatically retract and thus
+		release its shutter control, a retractable camera will be inserted
+		at force_insert interval.
+		'''
+		if delay_start is None or delay_length is None or delay_length < 1:
+			# timing not defined or length is zero
+			return
+		ctime = time.strftime("%H:%M:%S")
+		h,m,s = map((lambda x: int(x)),ctime.split(':'))
+		if h < 12:
+			h += 12
+		else:
+			h -= 12
+		second_since_noon = (h*60+m)*60+s
+		delay_start_time = (12*60-delay_start)*60
+		delay_end_time = (12*60-delay_start+delay_length)*60
+		if second_since_noon > delay_end_time or second_since_noon < delay_start_time:
+			return
+		sleep_time = delay_end_time - second_since_noon
+		print 'Sleeping started at %s for %d seconds' % (ctime, int(sleep_time))
+		sleep_start = time.time()
+		remain_time = sleep_time - (time.time() - sleep_start)
+		if force_insert > 0 and self.getRetractable():
+			while remain_time > force_insert*60:
+				time.sleep(force_insert*60)
+				self.setInserted(True)
+				remain_time = sleep_time - (time.time() - sleep_start)
+				print 'force inserted', remain_time
+				continue
+			# finish with the remain_time
+			time.sleep(remain_time)
+			return
+		# just sleep if not retractable
+		time.sleep(sleep_time)

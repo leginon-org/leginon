@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 #
 # COPYRIGHT:
-#       The Leginon software is Copyright 2003
-#       The Scripps Research Institute, La Jolla, CA
+#       The Leginon software is Copyright under
+#       Apache License, Version 2.0
 #       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
+#       see  http://leginon.org
 #
 """
 importexport: this Module allows to Import/Export Leginon II applications
@@ -35,7 +35,7 @@ class XMLApplicationExport:
 		header = '<!--'+self.crlf \
 			+ '-' + self.crlf \
 			+ '- Application XML-Dump' + self.crlf \
-			+ '- http://ami.scripps.edu/ ' + self.crlf \
+			+ '- http://emg.nysbc.org/ ' + self.crlf \
 			+ '-' + self.crlf \
 			+ '- Application :' + str(name) + self.crlf \
 			+ '- Version     :' + str(version) + self.crlf \

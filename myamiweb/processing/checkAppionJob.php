@@ -77,7 +77,13 @@ function checkJobs($showjob=False,$showall=False,$extra=False) {
 	if ($queue) {
 		echo "<p>Jobs currently running on the <b>$c</b> cluster:<p>\n";
 		$list = streamToArray($queue);
-		$dispkeys = array('Job ID','User','Queue','Jobname','SessId','NDS','TSK','ReqMem','ReqTime','S','ElapTime');
+		$cluster = checkClusterType($user);
+		if ($cluster == "sge") {
+			$dispkeys = array('Job ID','Priority','Name','User','State','Submit/Start Date','Start time','Queue','Slots');
+		}
+		else {
+			$dispkeys = array('Job ID','User','Queue','Jobname','SessId','NDS','TSK','ReqMem','ReqTime','S','ElapTime');
+		}
 		echo "<table class='tableborder' border=1 cellspacing=0, cellpadding=5>\n";
 		echo "<tr>\n";
 		foreach ($dispkeys as $key) {
@@ -123,7 +129,8 @@ function checkJobs($showjob=False,$showall=False,$extra=False) {
 				echo "Show last <input type='text' name='tail' size='4' value='$tail'> lines of log file<br />\n";
 				echo "<input type='submit' name='checkjob' value='Update Status'><br />\n";
 				echo "$logfile:</td></tr>\n";
-				echo "<tr><td bgcolor='#000000'>\n";
+				//Issue #4614 Display background in grey as a workaround of bad color assignment
+				echo "<tr><td bgcolor='#808080'>\n";
 				echo "<pre>\n";
 				echo "<font color='white' size='-1'>\n";
 				foreach ($statinfo as $l) {
@@ -210,12 +217,20 @@ function convertToColors($j) {
 	foreach ($j as $i) {
 		//$i = removebackspace($i);
 		$i = trim($i);
+		$i = preg_replace("%\033\[(0;)?31m%","<font style='color:red'>", $i);
+		$i = preg_replace("%\033\[(0;)?32m%","<font style='color:lime'>", $i);
+		$i = preg_replace("%\033\[(0;)?33m%","<font style='color:yellow'>", $i);
+		$i = preg_replace("%\033\[(0;)?34m%","<font style='color:blue'>", $i);
+		$i = preg_replace("%\033\[(0;)?35m%","<font style='color:magenta'>", $i);
+		$i = preg_replace("%\033\[(0;)?36m%","<font style='color:cyan'>", $i);
+		$i = preg_replace("%\033\[(0;)?37m%","<font style='color:silver'>", $i);
 		$i = preg_replace("%\033\[(1;)?31m%","<font style='color:red'>", $i);
-		$i = preg_replace("%\033\[(1;)?32m%","<font style='color:green'>", $i);
+		$i = preg_replace("%\033\[(1;)?32m%","<font style='color:lime'>", $i);
 		$i = preg_replace("%\033\[(1;)?33m%","<font style='color:yellow'>", $i);
 		$i = preg_replace("%\033\[(1;)?34m%","<font style='color:blue'>", $i);
 		$i = preg_replace("%\033\[(1;)?35m%","<font style='color:magenta'>", $i);
 		$i = preg_replace("%\033\[(1;)?36m%","<font style='color:cyan'>", $i);
+		$i = preg_replace("%\033\[(1;)?37m%","<font style='color:white'>", $i);
 		$i = preg_replace("%\033\[(1;)?0m%","</font>", $i);
 		$line .= "$i ";
 		// make sure line doesn't get too long:

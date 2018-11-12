@@ -6,7 +6,9 @@ import glob
 import subprocess
 import shutil
 from appionlib import apDisplay
+from appionlib import apRelion
 from pyami import mrc
+from pyami import fileutil
 
 ####
 # This is a low-level file with NO database connections
@@ -132,7 +134,7 @@ def stackSize(filename, msg=False):
 	return size
 
 #===============
-def getBoxSize(filename, msg=False):
+def getBoxSize(filename, msg=True):
 	"""
 	return boxsize of stack in pixels
 	"""
@@ -140,6 +142,20 @@ def getBoxSize(filename, msg=False):
 		if msg is True:
 			apDisplay.printWarning("file does not exist")
 		return (1,1,1)
+	if filename[-4:] == '.hed' or filename[-4:] == '.img':
+		root=os.path.splitext(filename)[0]
+		headerfilename=root + ".hed"
+		from appionlib import apImagicFile
+		headerdict = apImagicFile.readImagicHeader(headerfilename)
+		shape = (headerdict['rows'], headerdict['lines'], headerdict['nimg'])
+		return shape
+	if filename[-4:] == '.mrc':
+		headerdict = mrc.parseHeader(filename)
+		shape = headerdict['shape']
+		if len(shape) == 2:
+			return (shape[0], shape[1], 1)
+		elif len(shape) == 3:
+			return shape
 	proc = subprocess.Popen("iminfo %s"%(filename), shell=True, stdout=subprocess.PIPE)
 	proc.wait()
 	lines = ""
@@ -167,12 +183,12 @@ def getBoxSize(filename, msg=False):
 		apDisplay.printWarning("failed to get boxsize: "+lines)
 	return (1,1,1)
 
-
 #===============
 def numImagesInStack(imgfile, boxsize=None):
 	"""
-	Find the number of images in an 
-	IMAGIC stack based on the filesize
+	Find the number of images in a stack:
+	IMAGIC: based on the filesize
+	RELION: based on lines in star file
 	"""
 	if not os.path.isfile(imgfile):
 		return 0
@@ -188,8 +204,10 @@ def numImagesInStack(imgfile, boxsize=None):
 			apDisplay.printError("boxsize is required for SPIDER stacks")
 		imgmem = boxsize*(boxsize+2)*4
 		numimg = int('%d' % (os.stat(imgfile)[6]/imgmem))
+	elif imgfile.endswith(".star"):
+		return len(apRelion.getPartsFromStar(imgfile))
 	else:
-		apDisplay.printError("numImagesInStack() requires an IMAGIC or SPIDER stacks")
+		apDisplay.printError("numImagesInStack() requires an IMAGIC, SPIDER, or RELION stack")
 	return numimg
 
 def safeSymLink(source, destination):
@@ -238,6 +256,56 @@ def replaceUniqueLinePatternInTxtFile(filepath,search_string,new_linetext):
 def getMrcFileShape(mrcpath):
 	header = mrc.readHeaderFromFile(mrcpath)
 	return header['shape']
+
+def rsync(from_path, to_dir, remove_sent=False, delay=0):
+	'''
+	perform rsync with from_path and to under to_dir.
+	Can impose a delay before execution.
+	'''
+	if not to_dir:
+		return
+	fileutil.mkdirs(to_dir)
+	cmd = makeRsyncCommand(from_path, to_dir, remove_sent)
+	print cmd
+	time.sleep(delay)
+	proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+	(output, error) = proc.communicate()
+
+def makeRsyncCommand(from_path, to_dir, remove_sent=False):
+	#rsync command handles both file and directory
+	remove_sent_text = ''
+	if remove_sent:
+		# remove-sent-files flag
+		remove_sent_text = '--remove-sent-files '
+	cmd = 'rsync -av %s%s %s' % (remove_sent_text, from_path, to_dir)
+	return cmd
+
+def compress_and_rsync(from_path, to_dir, remove_sent=False, delay=0):
+	'''
+	compress file at from_path to be put under to_dir. from_path can be
+	a directory and this will compress files in there to a subdirectory of
+	the same basename.
+	'''
+	time.sleep(delay)
+
+	if os.path.isdir(from_path):
+		basename = os.path.basename(from_path)
+		wild_card = '/*'
+		#bzip2 command need to modify from_path to allow directory
+		bzip2_from_path = from_path+wild_card
+		rsync_from_path = from_path
+	else:
+		bzip2_from_path = from_path
+		rsync_from_path = from_path+'.bz2'
+	# bzip2 only compresses file, not directory
+	cmd = 'pbzip2 -k -p1 %s' % (bzip2_from_path)
+	if to_dir:
+		rsync_cmd = makeRsyncCommand(rsync_from_path, to_dir, remove_sent)
+		cmd += '; '+rsync_cmd	
+	print cmd
+	proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+	(output, error) = proc.communicate()
+
 ####
 # This is a low-level file with NO database connections
 # Please keep it this way

@@ -19,37 +19,43 @@ if (!$appiondb->hasParticleData($sessionId)) {
 	exit;
 }
 
-if ($preset == 'ef'){
+//this seems so arbitrary, but no reason to remove it
+if ($preset == 'ef') {
 	$data[] = "particle#\tx_coord\ty_coord\timage_name\tpImage#\tshiftX\tshiftY\n";
 	$partdatas = $appiondb->getParticlesDataWithDeforcusPair($particleSelectionId);
-} 
-else{ 
-	$data[] = "particle#\tx_coord\ty_coord\timage_name\n";
+} else {
+	$data[] = "particle#\tx_coord\ty_coord\thelix_num\timage_name\n";
 	$partdatas = $appiondb->getParticles($particleSelectionId);
 }
 
 //echo "</br>\n";
 
 foreach ($partdatas as $partdata) {
-
-	switch($preset){
-		case 'ef':
-			$data[] = sprintf("%d\t%d\t%d\t%s\t%d\t%d\t%d\n",
-				$partdata['DEF_id'],
-				$partdata['xcoord'],
-				$partdata['ycoord'],
-				$partdata['filename'],
-				$partdata['pImage'],
-				$partdata['shiftx'],
-				$partdata['shifty']);			
-			break;
-		default:
-			$data[] = sprintf("%d\t%d\t%d\t%s\n",
-				$partdata['DEF_id'],
-				$partdata['xcoord'],
-				$partdata['ycoord'],
-				$partdata['filename']);
-			break;
+	if ($preset == 'ef'){
+		$data[] = sprintf("%d\t%d\t%d\t%s\t%d\t%d\t%d\n",
+			$partdata['DEF_id'],
+			$partdata['xcoord'],
+			$partdata['ycoord'],
+			$partdata['filename'],
+			$partdata['pImage'],
+			$partdata['shiftx'],
+			$partdata['shifty']
+		);
+	} elseif ($partdata['helixnum']) {
+		$data[] = sprintf("%d\t%d\t%d\t%d\t%s\n",
+			$partdata['DEF_id'],
+			$partdata['xcoord'],
+			$partdata['ycoord'],
+			$partdata['helixnum'],
+			$partdata['filename']
+		);
+	} else {
+		$data[] = sprintf("%d\t%d\t%d\t%s\n",
+			$partdata['DEF_id'],
+			$partdata['xcoord'],
+			$partdata['ycoord'],
+			$partdata['filename']
+		);
 	}
 }
 
@@ -59,12 +65,12 @@ foreach ($data as $line) {
 }
 //echo "filesize $size";
 
-header("Content-Type: application/text");
+header("Content-Type: text/plain");
 header("Content-Type: application/force-download");
 header("Content-Type: application/download");
 header("Content-Transfer-Encoding: binary");
 header("Content-Length: $size");
-$downname = sprintf("particledata-%04d_%04d.dat", $sessionId, $particleSelectionId);
+$downname = sprintf("particledata-%05d_%03d.csv", $sessionId, $particleSelectionId);
 header("Content-Disposition: attachment; filename=$downname;");
 
 foreach ($data as $line) {

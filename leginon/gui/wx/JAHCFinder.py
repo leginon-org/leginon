@@ -1,7 +1,7 @@
-# The Leginon software is Copyright 2004
-# The Scripps Research Institute, La Jolla, CA
+# The Leginon software is Copyright under
+# Apache License, Version 2.0
 # For terms of the license agreement
-# see http://ami.scripps.edu/software/leginon-license
+# see http://leginon.org
 #
 
 import wx
@@ -10,22 +10,19 @@ import threading
 
 import leginon.gui.wx.TargetPanel
 import leginon.gui.wx.Settings
-import leginon.gui.wx.TargetFinder
+import leginon.gui.wx.AutoTargetFinder
 import leginon.gui.wx.Rings
 from leginon.gui.wx.Choice import Choice
 from leginon.gui.wx.Entry import Entry, IntEntry, FloatEntry
 import leginon.gui.wx.TargetTemplate
 import leginon.gui.wx.ToolBar
 
-class Panel(leginon.gui.wx.TargetFinder.Panel):
+class Panel(leginon.gui.wx.AutoTargetFinder.Panel):
 	icon = 'holefinder'
 	def initialize(self):
-		leginon.gui.wx.TargetFinder.Panel.initialize(self)
-		self.SettingsDialog = SettingsDialog
+		leginon.gui.wx.AutoTargetFinder.Panel.initialize(self)
+		self.SettingsDialog = leginon.gui.wx.AutoTargetFinder.SettingsDialog
 
-		self.imagepanel = leginon.gui.wx.TargetPanel.TargetImagePanel(self, -1)
-		self.imagepanel.addTypeTool('Original', display=True, settings=True)
-		self.imagepanel.selectiontool.setDisplayed('Original', True)
 		self.imagepanel.addTypeTool('Template', display=True, settings=True)
 		self.imagepanel.addTypeTool('Threshold', display=True, settings=True)
 		self.imagepanel.addTargetTool('Blobs', wx.Colour(0, 255, 255), target=True, settings=True, shape='o')
@@ -34,7 +31,8 @@ class Panel(leginon.gui.wx.TargetFinder.Panel):
 		self.imagepanel.addTargetTool('focus', wx.BLUE, target=True, settings=True)
 		self.imagepanel.addTargetTool('preview', wx.Colour(255, 128, 255), target=True)
 		self.imagepanel.addTargetTool('done', wx.RED)
-		self.imagepanel.selectiontool.setDisplayed('Blobs', True)
+		self.imagepanel.selectiontool.setDisplayed('Blobs', False)
+		self.imagepanel.selectiontool.setDisplayed('Lattice', True)
 		self.imagepanel.selectiontool.setDisplayed('acquisition', True)
 		self.imagepanel.selectiontool.setDisplayed('focus', True)
 		self.imagepanel.selectiontool.setDisplayed('done', True)
@@ -44,14 +42,9 @@ class Panel(leginon.gui.wx.TargetFinder.Panel):
 		self.szmain.AddGrowableRow(1)
 		self.szmain.AddGrowableCol(0)
 
-	def onSettingsTool(self, evt):
-		dialog = SettingsDialog(self,show_basic=True)
-		dialog.ShowModal()
-		dialog.Destroy()
-
 	def onImageSettings(self, evt):
 		if evt.name == 'Original':
-			dialog = OriginalSettingsDialog(self)
+			dialog = leginon.gui.wx.AutoTargetFinder.OriginalSettingsDialog(self)
 			if dialog.ShowModal() == wx.ID_OK:
 				filename = self.node.settings['image filename']
 				self.node.readImage(filename)
@@ -71,30 +64,8 @@ class Panel(leginon.gui.wx.TargetFinder.Panel):
 		elif evt.name == 'focus':
 			dialog = FinalSettingsDialog(self)
 
-		dialog.ShowModal()
-		dialog.Destroy()
-
-
-class OriginalSettingsDialog(leginon.gui.wx.Settings.Dialog):
-	def initialize(self):
-		return OriginalScrolledSettings(self,self.scrsize,False)
-
-class OriginalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
-	def initialize(self):
-		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
-		sb = wx.StaticBox(self, -1, 'Original Image')
-		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
-
-		self.widgets['image filename'] = filebrowse.FileBrowseButton(self, -1)
-		self.widgets['image filename'].SetMinSize((500,50))
-		self.dialog.bok.SetLabel('&Load')
-
-		sz = wx.GridBagSizer(5, 5)
-		sz.Add(self.widgets['image filename'], (0, 0), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_CENTER_HORIZONTAL)
-
-		sbsz.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
-		return [sbsz]
+		# modeless display
+		dialog.Show(True)
 
 class TemplateSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
@@ -103,68 +74,10 @@ class TemplateSettingsDialog(leginon.gui.wx.Settings.Dialog):
 class TemplateScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
 		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
-		sb = wx.StaticBox(self, -1, 'Low Pass Filter (Phase Correlation)')
-		sbszlpf = wx.StaticBoxSizer(sb, wx.VERTICAL)
-		sb = wx.StaticBox(self, -1, 'Template Correlation')
-		sbsztemplate = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
-		self.widgets['template lpf'] = {}
-		self.widgets['template lpf']['sigma'] = FloatEntry(self, -1,
-																												min=0.0, chars=4)
-
-		szlpf = wx.GridBagSizer(5, 5)
-		label = wx.StaticText(self, -1, 'Sigma:')
-		szlpf.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szlpf.Add(self.widgets['template lpf']['sigma'], (0, 1), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
-		szlpf.AddGrowableCol(1)
-
-		sbszlpf.Add(szlpf, 1, wx.EXPAND|wx.ALL, 5)
-
-		self.widgets['template filename'] = Entry(self, -1, chars=12)
-		self.widgets['file diameter'] = IntEntry(self, -1, chars=4)
-		self.widgets['template diameter'] = IntEntry(self, -1, chars=4)
-
-		self.widgets['template type'] = Choice(self, -1, choices=self.node.cortypes)
-		self.widgets['template image min'] = FloatEntry(self, -1,
-																												 chars=4)
-
-		szcor = wx.GridBagSizer(5, 5)
-		label = wx.StaticText(self, -1, 'Use')
-		szcor.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szcor.Add(self.widgets['template type'], (0, 1), (1, 1),
-							wx.ALIGN_CENTER_VERTICAL)
-		label = wx.StaticText(self, -1, 'correlation')
-		szcor.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-
-		szcorlimit = wx.GridBagSizer(5, 5)
-		label = wx.StaticText(self, -1, 'Fill image values below')
-		szcorlimit.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szcorlimit.Add(self.widgets['template image min'], (0, 1), (1, 1),
-							wx.ALIGN_CENTER_VERTICAL)
-		label = wx.StaticText(self, -1, 'with mean before correlation')
-		szcorlimit.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-
-		sztemplate = wx.GridBagSizer(5, 5)
-		sztemplate.Add(szcor, (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
-		sztemplate.Add(szcorlimit, (1, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
-
-		label = wx.StaticText(self, -1, 'Template Filename')
-		sztemplate.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sztemplate.Add(self.widgets['template filename'], (2, 1), (1, 1),
-										wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
-
-		label = wx.StaticText(self, -1, 'Original Template Diameter')
-		sztemplate.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sztemplate.Add(self.widgets['file diameter'], (3, 1), (1, 1),
-										wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
-
-		label = wx.StaticText(self, -1, 'Final Template Diameter')
-		sztemplate.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sztemplate.Add(self.widgets['template diameter'], (4, 1), (1, 1),
-										wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
-
-		sbsztemplate.Add(sztemplate, 1, wx.EXPAND|wx.ALL, 5)
+		sbsztemplate = self.createTemplateCorrelationBox()
+		sbszmultihole = self.createTemplateMultiHoleBox()
+		sbszlpf = self.createTemplateLPFBox()
 
 		self.btest = wx.Button(self, -1, 'Test')
 		szbutton = wx.GridBagSizer(5, 5)
@@ -174,11 +87,149 @@ class TemplateScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 
 		self.Bind(wx.EVT_BUTTON, self.onTestButton, self.btest)
 
-		return [sbsztemplate, sbszlpf, szbutton]
+		return [sbsztemplate, sbszmultihole, sbszlpf, szbutton]
+
+	def createTemplateLPFBox(self):
+		sb = wx.StaticBox(self, -1, 'Low Pass Filter (Phase Correlation)')
+		sbszlpf = wx.StaticBoxSizer(sb, wx.VERTICAL)
+
+		self.widgets['template lpf'] = {}
+		self.widgets['template lpf']['sigma'] = FloatEntry(self, -1,
+																												min=0.0, chars=4)
+		szlpf = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Sigma:')
+		szlpf.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szlpf.Add(self.widgets['template lpf']['sigma'], (0, 1), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		szlpf.AddGrowableCol(1)
+
+		sbszlpf.Add(szlpf, 1, wx.EXPAND|wx.ALL, 5)
+
+		return sbszlpf
+
+	def createTemplateCorrelationBox(self):
+		sb = wx.StaticBox(self, -1, 'Template Correlation')
+		sbsztemplate = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		sz = wx.GridBagSizer(5, 5)
+		newrow,newcol = self.createTemplateCorrelationChoice(sz, (0,0))
+		newrow,newcol = self.createTemplateMinEntry(sz, (newrow,0))
+		newrow,newcol = self.createTemplateInvertCheckBox(sz, (newrow,0))
+		newrow,newcol = self.createTemplateFilenameEntry(sz, (newrow,0))
+		newrow,newcol = self.createTemplateOriginalDiameterEntry(sz, (newrow,0))
+		newrow,newcol = self.createTemplateDiameterEntry(sz, (newrow,0))
+		sbsztemplate.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
+		return sbsztemplate
+
+	def createTemplateMultiHoleBox(self):
+		sb = wx.StaticBox(self, -1, 'Multiple Hole Template')
+		sbsztemplate = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		sz = wx.GridBagSizer(5, 5)
+		newrow,newcol = self.createTemplateMultipleEntry(sz, (0,0))
+		newrow,newcol = self.createMultiHoleSpacingEntry(sz, (newrow,0))
+		newrow,newcol = self.createMultiHoleAngleEntry(sz, (newrow,0))
+		sbsztemplate.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
+		return sbsztemplate
+
+	def addToSizer(self,sz, item, start_position, total_length,align=wx.ALIGN_LEFT):	
+		# sz is changed in-place.  Therefore, must be named such where this function is called.
+		sz.Add(item, start_position, total_length,
+				  align)
+		return start_position[0]+total_length[0],start_position[1]+total_length[1]
+
+	def createTemplateCorrelationChoice(self, sz, start_position):
+		# define widget
+		self.widgets['template type'] = Choice(self, -1, choices=self.node.cortypes)
+		# make sizer
+		szcor = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Use')
+		szcor.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szcor.Add(self.widgets['template type'], (0, 1), (1, 1),
+							wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'correlation')
+		szcor.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		# add to main
+		total_length = (1,2)
+		return self.addToSizer(sz, szcor, start_position, total_length)
+
+	def createTemplateFilenameEntry(self, sz, start_position):
+		# define widget
+		self.widgets['template filename'] = Entry(self, -1, chars=20)
+		label = wx.StaticText(self, -1, 'Template Filename')
+		# add to main
+		newrow,newcol = self.addToSizer(sz, label, start_position, (1,1))
+		newrow,newcol = self.addToSizer(sz, self.widgets['template filename'], (start_position[0],newcol), (1,2), wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+		return newrow, newcol
+
+	def createTemplateInvertCheckBox(self, sz, start_position):
+		self.widgets['template invert'] = wx.CheckBox(self, -1,
+			'invert template for correlation')
+		return self.addToSizer(sz, self.widgets['template invert'], (start_position[0],0), (1,2))
+
+	def	createTemplateOriginalDiameterEntry(self, sz, start_position):
+		self.widgets['file diameter'] = IntEntry(self, -1, chars=4)
+		label = wx.StaticText(self, -1, 'Original Template Diameter')
+		# add to main
+		newrow, newcol = self.addToSizer(sz, label, start_position, (1,1))
+		return self.addToSizer(sz, self.widgets['file diameter'], (start_position[0],newcol), (1,1), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+
+	def	createTemplateDiameterEntry(self, sz, start_position):
+		self.widgets['template diameter'] = IntEntry(self, -1, chars=4)
+		label = wx.StaticText(self, -1, 'Final Template Diameter')
+		# add to main
+		newrow, newcol = self.addToSizer(sz, label, start_position, (1,1))
+		return self.addToSizer(sz, self.widgets['template diameter'], (start_position[0],newcol), (1,1), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+
+	def	createTemplateMinEntry(self, sz, start_position):
+		self.widgets['template image min'] = FloatEntry(self, -1,
+																												min=0.0, chars=8)
+		# make local sizer
+		szcorlimit = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Fill image values below')
+		szcorlimit.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szcorlimit.Add(self.widgets['template image min'], (0, 1), (1, 1),
+							wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'with mean before correlation')
+		szcorlimit.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		# fill sizer
+		return self.addToSizer(sz, szcorlimit, start_position, (1,3))
+
+	def	createTemplateMultipleEntry(self, sz, start_position):
+		self.widgets['template multiple'] = IntEntry(self, -1, chars=4)
+		label = wx.StaticText(self, -1, 'Number of holes in template')
+		# add to main
+		newrow, newcol = self.addToSizer(sz, label, start_position, (1,1))
+		return self.addToSizer(sz, self.widgets['template multiple'], (start_position[0],newcol), (1,1), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+
+	def	createMultiHoleSpacingEntry(self, sz, start_position):
+		self.widgets['multihole spacing'] = FloatEntry(self, -1,
+																												min=0.0, chars=8)
+		sz1 = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Hole lattice spacing')
+		sz1.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz1.Add(self.widgets['multihole spacing'], (0, 1), (1, 1),
+							wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'pixels')
+		sz1.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		# fill sizer
+		return self.addToSizer(sz, sz1, start_position, (1,3))
+
+	def	createMultiHoleAngleEntry(self, sz, start_position):
+		self.widgets['multihole angle'] = FloatEntry(self, -1, chars=8)
+		sz1 = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Hole lattice angle')
+		sz1.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz1.Add(self.widgets['multihole angle'], (0, 1), (1, 1),
+							wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'degrees')
+		sz1.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		# fill sizer
+		return self.addToSizer(sz, sz1, start_position, (1,3))
 
 	def onTestButton(self, evt):
 		self.dialog.setNodeSettings()
 		self.node.correlateTemplate()
+		self.panel.imagepanel.showTypeToolDisplays(['Template'])
 
 class ThresholdSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
@@ -218,6 +269,7 @@ class ThresholdScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def onTestButton(self, evt):
 		self.dialog.setNodeSettings()
 		self.node.threshold()
+		self.panel.imagepanel.showTypeToolDisplays(['Threshold'])
 
 class BlobsSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
@@ -273,11 +325,15 @@ class BlobsScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def onTestButton(self, evt):
 		self.dialog.setNodeSettings()
 		self.node.findBlobs()
+		self.panel.imagepanel.showTypeToolDisplays(['Blobs'])
 
 class LatticeSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return LatticeScrolledSettings(self,self.scrsize,False)
 
+	def onShow(self):
+		self.panel.imagepanel.showTypeToolDisplays(['Original'])
+		
 class LatticeScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
 		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
@@ -286,9 +342,9 @@ class LatticeScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sb = wx.StaticBox(self, -1, 'Hole Statistics')
 		sbszstats = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
-		self.widgets['lattice spacing'] = FloatEntry(self, -1, chars=6)
-		self.widgets['lattice tolerance'] = FloatEntry(self, -1, chars=6)
-		self.widgets['lattice hole radius'] = FloatEntry(self, -1, chars=6)
+		self.widgets['lattice spacing'] = FloatEntry(self, -1, min=0.0, chars=6)
+		self.widgets['lattice tolerance'] = FloatEntry(self, -1, min=0.0, chars=6)
+		self.widgets['lattice hole radius'] = FloatEntry(self, -1, min=0.0, chars=6)
 		self.widgets['lattice zero thickness'] = FloatEntry(self, -1, chars=6)
 		extendlabel = wx.StaticText(self, -1, 'Extend Lattice')
 		self.widgets['lattice extend'] = Choice(self, -1, choices=self.node.extendtypes)
@@ -338,6 +394,8 @@ class LatticeScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def onTestButton(self, evt):
 		self.dialog.setNodeSettings()
 		self.node.fitLattice()
+		self.panel.imagepanel.hideTypeToolDisplays(['Blobs','acquisition','focus'])
+		self.panel.imagepanel.showTypeToolDisplays(['Lattice'])
 
 class FinalSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
@@ -356,6 +414,7 @@ class FinalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.widgets['ice min mean'] = FloatEntry(self, -1, chars=6)
 		self.widgets['ice max mean'] = FloatEntry(self, -1, chars=6)
 		self.widgets['ice max std'] = FloatEntry(self, -1, chars=6)
+		self.widgets['ice min std'] = FloatEntry(self, -1, chars=6)
 		self.widgets['focus hole'] = Choice(self, -1, choices=self.node.focustypes)
 		self.widgets['target template'] = wx.CheckBox(self, -1,
 			'Use target template')
@@ -379,13 +438,19 @@ class FinalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		szice.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szice.Add(self.widgets['ice max mean'], (1, 1), (1, 1),
 										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
-		label = wx.StaticText(self, -1, 'Max. stdev.:')
+		label = wx.StaticText(self, -1, 'Min. stdev.:')
 		szice.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szice.Add(self.widgets['ice max std'], (2, 1), (1, 1),
+		szice.Add(self.widgets['ice min std'], (2, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		label = wx.StaticText(self, -1, 'Max. stdev.:')
+		szice.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szice.Add(self.widgets['ice max std'], (3, 1), (1, 1),
 										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		label = wx.StaticText(self, -1, 'Focus hole selection:')
-		szice.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szice.Add(self.widgets['focus hole'], (3, 1), (1, 1),
+		szice.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szice.Add(self.widgets['focus hole'], (4, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		szice.Add(self.createFocusOffsetSizer(), (5,0), (1,2),
 										wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 		szice.AddGrowableCol(1)
 
@@ -439,9 +504,24 @@ class FinalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 
 		return [sbszice, sbsztt, szbutton]
 
+	def createFocusOffsetSizer(self):
+		# set widgets
+		self.widgets['focus offset row'] = IntEntry(self, -1, chars=4)
+		self.widgets['focus offset col'] = IntEntry(self, -1, chars=4)
+		# make sizer
+		sz_offset = wx.BoxSizer(wx.HORIZONTAL)
+		sz_offset.Add(wx.StaticText(self, -1, 'Focus offset x:'),0,wx.ALIGN_CENTER_VERTICAL)
+		sz_offset.Add(self.widgets['focus offset col'])
+		sz_offset.AddSpacer(10)
+		sz_offset.Add(wx.StaticText(self, -1, 'y:'),0,wx.ALIGN_CENTER_VERTICAL)
+		sz_offset.Add(self.widgets['focus offset row'])
+		return sz_offset
+
 	def onTestButton(self, evt):
 		self.dialog.setNodeSettings()
 		threading.Thread(target=self.node.ice).start()
+		self.panel.imagepanel.hideTypeToolDisplays(['Blobs','Template','Threshold'])
+		self.panel.imagepanel.showTypeToolDisplays(['acquisition','focus','Original'])
 
 	def onClearButton(self, evt):
 		self.dialog.setNodeSettings()
@@ -449,34 +529,6 @@ class FinalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.node.clearTargets('acquisition')
 		self.node.clearTargets('focus')
 
-class SettingsDialog(leginon.gui.wx.TargetFinder.SettingsDialog):
-	def initialize(self):
-		return ScrolledSettings(self,self.scrsize,False,self.show_basic)
-
-class ScrolledSettings(leginon.gui.wx.TargetFinder.ScrolledSettings):
-	def initialize(self):
-		tfsd = leginon.gui.wx.TargetFinder.ScrolledSettings.initialize(self)
-		if self.show_basic:
-			return tfsd
-		else:
-			sb = wx.StaticBox(self, -1, 'Hole Finder Settings')
-			sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
-
-			self.widgets['skip'] = wx.CheckBox(self, -1, 'Skip automated hole finder')
-			self.widgets['focus interval'] = IntEntry(self, -1, chars=6)
-			sz = wx.GridBagSizer(5, 5)
-			sz.Add(self.widgets['skip'], (0, 0), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
-
-			label = wx.StaticText(self, -1, 'Focus every')
-			sz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-			sz.Add(self.widgets['focus interval'], (1, 1), (1, 1),
-										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
-			label = wx.StaticText(self, -1, 'image')
-			sz.Add(label, (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-
-			sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
-			return tfsd + [sbsz]
 
 
 if __name__ == '__main__':

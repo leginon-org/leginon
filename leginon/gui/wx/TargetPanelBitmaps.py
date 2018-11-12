@@ -1,8 +1,8 @@
-#!/usr/bin/python -O
-# The Leginon software is Copyright 2004
-# The Scripps Research Institute, La Jolla, CA
+#!/usr/bin/env python -O
+# The Leginon software is Copyright under
+# Apache License, Version 2.0
 # For terms of the license agreement
-# see http://ami.scripps.edu/software/leginon-license
+# see http://leginon.org
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/TargetPanelBitmaps.py,v $
 # $Revision: 1.8 $
@@ -12,10 +12,10 @@
 # $State: Exp $
 # $Locker:  $
 # COPYRIGHT:
-#       The Leginon software is Copyright 2003
-#       The Scripps Research Institute, La Jolla, CA
+#       The Leginon software is Copyright under
+#       Apache License, Version 2.0
 #       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
+#       see  http://leginon.org
 #
 
 import wx

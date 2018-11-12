@@ -44,6 +44,14 @@ void mrc_to_float(MRC *mrc, float *pdata_array) {
 
          }
          break;
+         case MRC_MODE_UNSIGNED_BYTE:
+         {
+                unsigned char *data_array_char = (unsigned char *)mrc->pbyData;
+                for (i = 0; i < n; ++i) {
+                        pdata_array[i] = (float)data_array_ushort[i];
+                }
+         }
+         break;
          case MRC_MODE_UNSIGNED_SHORT:
          {
                 unsigned short *data_array_ushort = (unsigned short *)mrc->pbyData;

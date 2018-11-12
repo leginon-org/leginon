@@ -1,9 +1,9 @@
 <?php
 /**
- *	The Leginon software is Copyright 2003 
- *	The Scripps Research Institute, La Jolla, CA
+ *	The Leginon software is Copyright under 
+ *	Apache License, Version 2.0
  *	For terms of the license agreement
- *	see  http://ami.scripps.edu/software/leginon-license
+ *	see  http://leginon.org
  *
  *	Simple viewer to view a image using mrcmodule
  */
@@ -36,15 +36,15 @@ function createMaskitonForm($extra=false, $title='Maskiton Launcher', $heading='
 	$stackval 	= $_POST['stackval'];
 
 	processing_header($title,$heading,$javascript, $pleaseWait=false, $showmenu=true, $printDiv=false, 
-						$guideURL="http://ami.scripps.edu/redmine/projects/appion/wiki/Maskiton");
+						$guideURL="http://emg.nysbc.org/redmine/projects/appion/wiki/Maskiton");
 	// write out errors, if any came up:
 	if ($extra) {
 		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 	}
 	
 	// This stopped working. Users need to upload a stack to the maskiton server to work with it.
-	//echo "<Iframe src='http://maskiton.scripps.edu/masking.html?projectid=$projectId&stackid=$stackval' width='800' height='800'></Iframe><br /><br />\n";
-	echo "<Iframe src='http://maskiton.scripps.edu/' width='800' height='800'></Iframe><br /><br />\n";
+	//echo "<Iframe src='http://maskiton.nysbc.org/masking.html?projectid=$projectId&stackid=$stackval' width='800' height='800'></Iframe><br /><br />\n";
+	echo "<Iframe src='http://maskiton.nysbc.org/' width='800' height='800'></Iframe><br /><br />\n";
 	
 	processing_footer();
 }

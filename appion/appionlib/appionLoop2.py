@@ -1,25 +1,22 @@
-#!/usr/bin/python -O
-
-import pyami.quietscipy
+#!/usr/bin/env python 
 
 #builtin
-import sys
 import os
-import re
+import sys
 import time
 import math
 import random
 import cPickle
-import glob
 #appion
 from appionlib import apDisplay
 from appionlib import apDatabase
 from appionlib import apImage
 from appionlib import apParam
 from appionlib import apProject
-#leginon
 from appionlib import appionScript
+#leginon
 from pyami import mem
+from pyami import fileutil
 
 class AppionLoop(appionScript.AppionScript):
 	#=====================
@@ -37,6 +34,7 @@ class AppionLoop(appionScript.AppionScript):
 		#self.specialCreateOutputDirs()
 		self._initializeDoneDict()
 		self.result_dirs={}
+		self.bad_images = []
 		self.sleep_minutes = 6
 		self.process_batch_count = 10
 
@@ -64,6 +62,7 @@ class AppionLoop(appionScript.AppionScript):
 		### get images from database
 		self._getAllImages()
 		os.chdir(self.params['rundir'])
+		self.stats['startimage'] = time.time()
 		self.preLoopFunctions()
 		### start the loop
 		self.notdone=True
@@ -105,32 +104,40 @@ class AppionLoop(appionScript.AppionScript):
 					apDisplay.printWarning("IMAGE FAILED; nothing inserted into database")
 					self.badprocess = False
 					self.stats['lastpeaks'] = 0
-
 				### FINISH with custom functions
 
-				self._writeDoneDict(imgdata['filename'])
-				if self.params['parallel']:
-					self.unlockParallel(imgdata.dbid)
-
-				loadavg = os.getloadavg()[0]
-				if loadavg > 2.0:
-					apDisplay.printMsg("Load average is high "+str(round(loadavg,2)))
-					loadsquared = loadavg*loadavg
-					apDisplay.printMsg("Sleeping %.1f seconds"%(loadavg))
-					time.sleep(loadavg)
-					apDisplay.printMsg("New load average "+str(round(os.getloadavg()[0],2)))
-
-				self._printSummary()
-
-				if self.params['limit'] is not None and self.stats['count'] > self.params['limit']:
-					apDisplay.printWarning("reached image limit of "+str(self.params['limit'])+"; now stopping")
-
+				self.finishLoopOneImage(imgdata)
 				#END LOOP OVER IMAGES
 			if self.notdone is True:
 				self.notdone = self._waitForMoreImages()
 			#END NOTDONE LOOP
+
 		self.postLoopFunctions()
 		self.close()
+
+	#=====================
+	def finishLoopOneImage(self, imgdata):
+		'''
+		Things to do after an image is processed whether commit or not
+		'''
+		self._writeDoneDict(imgdata['filename'])
+		if self.params['parallel']:
+			self.unlockParallel(imgdata.dbid)
+
+	# 				loadavg = os.getloadavg()[0]
+	# 				if loadavg > 2.0:
+	# 					apDisplay.printMsg("Load average is high "+str(round(loadavg,2)))
+	# 					loadsquared = loadavg*loadavg
+	# 					apDisplay.printMsg("Sleeping %.1f seconds"%(loadavg))
+	# 					time.sleep(loadavg)
+	# 					apDisplay.printMsg("New load average "+str(round(os.getloadavg()[0],2)))
+
+		self._printSummary()
+		self._advanceStatsCount()
+
+		# This just print. It does not really do anything
+		if self.params['limit'] is not None and self.stats['totalcount'] > self.params['limit']:
+			apDisplay.printWarning("reached image limit of "+str(self.params['limit'])+"; now stopping")
 
 	#=====================
 	def loopProcessImage(self, imgdata):
@@ -236,6 +243,10 @@ class AppionLoop(appionScript.AppionScript):
 
 	#=====================
 	def commitResultsToDatabase(self, imgdata, results):
+		"""
+		Results are a dictionary of sinedon data instance with new values
+		need to be inserted.
+		"""
 		if results is not None and len(results) > 0:
 			resulttypes = results.keys()
 			for resulttype in resulttypes:
@@ -317,6 +328,10 @@ class AppionLoop(appionScript.AppionScript):
 			default="all", type="choice", choices=self.tiltoptions,
 			help="Only process images with specific tilt angles, options: "+str(self.tiltoptions))
 
+		self.parser.add_option("--startimgid", dest="startimgid", type="int",
+			help="Only process images at and after <startimgid> ")
+		self.parser.add_option("--endimgid", dest="endimgid", type="int",
+			help="Only process images at and before <endimgid> ")
 		### True / False options
 		self.parser.add_option("--continue", dest="continue", default=True,
 			action="store_true", help="Continue processing run from last image")
@@ -415,6 +430,9 @@ class AppionLoop(appionScript.AppionScript):
 		"""
 		reads or creates a done dictionary
 		"""
+		#Lock DoneDict file
+		self._lockDoneDict()
+
 		self.donedictfile = os.path.join(self.params['rundir'] , self.functionname+".donedict")
 		if os.path.isfile(self.donedictfile) and self.params['continue'] == True:
 			### unpickle previously done dictionary
@@ -422,16 +440,21 @@ class AppionLoop(appionScript.AppionScript):
 			f = open(self.donedictfile,'r')
 			self.donedict = cPickle.load(f)
 			f.close()
-			if not 'commit' in self.donedict or self.donedict['commit'] == self.params['commit']:
-				### all is well
+			try:
+				if self.donedict['commit'] == self.params['commit']:
+					### all is well
+					apDisplay.printMsg("Found "+str(len(self.donedict))+" done dictionary entries")
+					#Unlock DoneDict file
+					self._unlockDoneDict()
+					return
+				elif self.donedict['commit'] is True and self.params['commit'] is not True:
+					### die
+					apDisplay.printError("Commit flag was enabled and is now disabled, create a new runname")
+				else:
+					### set up fresh dictionary
+					apDisplay.printWarning("'--commit' flag was changed, creating new done dictionary")
+			except KeyError:
 				apDisplay.printMsg("Found "+str(len(self.donedict))+" done dictionary entries")
-				return
-			elif self.donedict['commit'] is True and self.params['commit'] is not True:
-				### die
-				apDisplay.printError("Commit flag was enabled and is now disabled, create a new runname")
-			else:
-				### set up fresh dictionary
-				apDisplay.printWarning("'--commit' flag was changed, creating new done dictionary")
 
 		### set up fresh dictionary
 		self.donedict = {}
@@ -442,6 +465,38 @@ class AppionLoop(appionScript.AppionScript):
 		f = open(self.donedictfile, 'w', 0666)
 		cPickle.dump(self.donedict, f)
 		f.close()
+
+		#Unlock DoneDict file
+		self._unlockDoneDict()
+
+		return
+
+	#=====================
+	def _lockDoneDict(self):
+		#Lock DoneDict file
+		locallock = False
+		totaltime = 0
+		while(not locallock):
+			try:
+				fileutil.open_if_not_exists('%s%s' % (self.lockname,"donedict")).close()
+				locallock = True
+			except OSError:
+				#file is locked
+				apDisplay.printMsg("waiting for donedict to become unlocked")
+				totaltime += 0.1
+				time.sleep(0.1)
+				if totaltime > 10:
+					self._unlockDoneDict()
+					apDisplay.printError('Parallel lock failed')
+		return
+
+	#=====================
+	def _unlockDoneDict(self):
+		#Unlock DoneDict file
+		try:
+			os.remove('%s%s' % (self.lockname,"donedict"))
+		except OSError:
+			apDisplay.printError('Parallel unlock failed')
 		return
 
 	#=====================
@@ -449,15 +504,24 @@ class AppionLoop(appionScript.AppionScript):
 		"""
 		reloads done dictionary
 		"""
+		#Lock DoneDict file
+		self._lockDoneDict()
+
 		f = open(self.donedictfile,'r')
 		self.donedict = cPickle.load(f)
 		f.close()
+
+		#Unlock DoneDict file
+		self._unlockDoneDict()
 
 	#=====================
 	def _writeDoneDict(self, imgname=None):
 		"""
 		write finished image (imgname) to done dictionary
 		"""
+		#Lock DoneDict file
+		self._lockDoneDict()
+
 		### reload donedict from file just in case two runs are running
 		f = open(self.donedictfile,'r')
 		self.donedict = cPickle.load(f)
@@ -473,8 +537,14 @@ class AppionLoop(appionScript.AppionScript):
 		cPickle.dump(self.donedict, f)
 		f.close()
 
+		#Unlock DoneDict file
+		self._unlockDoneDict()
+
 	#=====================
 	def _getAllImages(self):
+		"""
+		get all images whether rejected or not and then remove rejected, done images and limited by number
+		"""
 		startt = time.time()
 		if self.params['mrcnames'] is not None:
 			mrcfileroot = self.params['mrcnames'].split(",")
@@ -518,6 +588,8 @@ class AppionLoop(appionScript.AppionScript):
 				self.imgtree = self.imgtree[:lim]
 		if len(self.imgtree) > 0:
 			self.params['apix'] = apDatabase.getPixelSize(self.imgtree[0])
+
+		# When all images are processed or rejected or done,		# self.imgtree becomes zero and the loop stops
 		self.stats['imagecount'] = len(self.imgtree)
 
 	#=====================
@@ -536,13 +608,14 @@ class AppionLoop(appionScript.AppionScript):
 		try:
 			self.donedict[imgname]
 			if not self.stats['lastimageskipped']:
-				sys.stderr.write("skipping images\n")
+				sys.stderr.write("skipping already processed images\n")
 			elif self.stats['skipcount'] % 80 == 0:
 				sys.stderr.write(".\n")
 			else:
 				sys.stderr.write(".")
 			self.stats['lastimageskipped'] = True
 			self.stats['skipcount'] += 1
+			apDisplay.printDebug( "_alreadyProcessed adding to count, skipcount" )
 			self.stats['count'] += 1
 			return True
 		except:
@@ -564,6 +637,7 @@ class AppionLoop(appionScript.AppionScript):
 				apDisplay.printMsg('%s locked by another parallel run in the rundir' % (apDisplay.shortenImageName(imgdata['filename'])))
 				return False
 		#calc images left
+		apDisplay.printDebug('_startLoop imagecount=%d, count=%d' % (self.stats['imagecount'], self.stats['count']))
 		self.stats['imagesleft'] = self.stats['imagecount'] - self.stats['count']
 
 		#only if an image was processed last
@@ -608,20 +682,27 @@ class AppionLoop(appionScript.AppionScript):
 
 		return True
 
+	def _advanceStatsCount(self):
+		# self.stats['count'] is reset when images are skipped or processed by the last waitForMoreImage.
+		# self.stats['totalcount'] advances for in every image processed in this instance,
+		self.stats['count'] += 1
+		self.stats['totalcount'] += 1
+
 	#=====================
 	def _printSummary(self):
 		"""
 		print summary statistics on last image
-		"""
+		"""	
 		### COP OUT
 		if self.params['background'] is True:
-			self.stats['count'] += 1
+			apDisplay.printDebug( 'printSummary backgroun adding to stats count and totalcount')
 			return
 
 		### THIS NEEDS TO BECOME MUCH MORE GENERAL, e.g. Peaks
 		tdiff = time.time()-self.stats['startimage']
 		if not self.params['continue'] or tdiff > 0.1:
-			count = self.stats['count']
+			count = self.stats['totalcount'] + 1
+			apDisplay.printDebug('printSummary set local count to stats totalcount=%d' % (count))
 			#if(count != self.stats['lastcount']):
 			sys.stderr.write("\n\tSUMMARY: "+self.functionname+"\n")
 			self._printLine()
@@ -645,16 +726,19 @@ class AppionLoop(appionScript.AppionScript):
 			timesum = self.stats['timesum']
 			timesumsq = self.stats['timesumsq']
 			if(count > 1):
-				timeavg = float(timesum)/float(count)
-				timestdev = math.sqrt(float(count*timesumsq - timesum**2) / float(count*(count-1)))
-				timeremain = (float(timeavg)+float(timestdev))*self.stats['imagesleft']
-				sys.stderr.write("\tAVG TIME: \t"+apDisplay.timeString(timeavg,timestdev)+"\n")
-				#print "\t(- TOTAL:",apDisplay.timeString(timesum)," -)"
-				if(self.stats['imagesleft'] > 0):
-					sys.stderr.write("\t(- REMAINING TIME: "+apDisplay.timeString(timeremain)+" for "
-						+str(self.stats['imagesleft'])+" images -)\n")
+				try:
+					timeavg = float(timesum)/float(count)
+					timestdev = math.sqrt(float(count*timesumsq - timesum**2) / float(count*(count-1)))
+					timeremain = (float(timeavg)+float(timestdev))*(self.stats['imagesleft']-1)
+					sys.stderr.write("\tAVG TIME: \t"+apDisplay.timeString(timeavg,timestdev)+"\n")
+					#print "\t(- TOTAL:",apDisplay.timeString(timesum)," -)"
+					if(self.stats['imagesleft']-1  > 0):
+						sys.stderr.write("\t(- REMAINING TIME: "+apDisplay.timeString(timeremain)+" for "
+							+str(self.stats['imagesleft']-1)+" images -)\n")
+				except ValueError:
+					apDisplay.printWarning('Value Error in printSummary at count=%d' % count)
 			#print "\tMEM: ",(mem.active()-startmem)/1024,"M (",(mem.active()-startmem)/(1024*count),"M)"
-			self.stats['count'] += 1
+			apDisplay.printDebug( 'printSummary adding to stats count')
 			self._printLine()
 
 	#=====================
@@ -666,10 +750,9 @@ class AppionLoop(appionScript.AppionScript):
 		#self.stats['memlist'].append(mem.mySize()/1024)
 		self.stats['memlist'].append(mem.active())
 		memfree = mem.free()
-		swapfree = mem.swapfree()
 		minavailmem = 64*1024; # 64 MB, size of one image
 		if(memfree < minavailmem):
-			apDisplay.printWarning("Memory is low ("+str(int(memfree/1024))+"MB): there is probably a memory leak")
+			apDisplay.printDebug("Memory is low ("+str(int(memfree/1024))+"MB): there is probably a memory leak")
 
 		if(self.stats['count'] > 15):
 			memlist = self.stats['memlist'][-15:]
@@ -692,23 +775,27 @@ class AppionLoop(appionScript.AppionScript):
 			memleak = rho*slope
 			###
 			if(self.stats['memleak'] > 3 and slope > 20 and memleak > 512 and gain > 2048):
-				apDisplay.printWarning("Memory leak of "+str(round(memleak,2))+"MB")
+				apDisplay.printDebug("Memory leak of "+str(round(memleak,2))+"MB")
 			elif(memleak > 32):
 				self.stats['memleak'] += 1
-				apDisplay.printWarning("substantial memory leak "+str(round(memleak,2))+"MB")
+				apDisplay.printDebug("substantial memory leak "+str(round(memleak,2))+"MB")
 				print "(",str(n),round(slope,5),round(rho,5),round(gain,2),")"
 
+	#=====================
 	def skipTestOnImage(self,imgdata):
 		imgname = imgdata['filename']
 		skip = False
 		reason = None
-		#tiltskip is default to None since it might not need evaluation
-		tiltskip = None
-
-		if imgname in self.donedict:
-			skip = True
-			reason = 'done'
-		elif self.reprocessImage(imgdata) is False:
+		# Check if in donedict first. This means rejected images that
+		# was last tested will not be called rejected, but done
+		# This speeds up this function when rerun but means past image
+		# status can not be reverted.
+		try:
+			self.donedict[imgname]
+			return True, 'done'
+		except KeyError:
+			pass
+		if self.reprocessImage(imgdata) is False:
 			self._writeDoneDict(imgname)
 			reason = 'reproc'
 			skip = True
@@ -722,6 +809,16 @@ class AppionLoop(appionScript.AppionScript):
 				status=apDatabase.getSiblingImgCompleteStatus(imgdata)
 			else:
 				status=apDatabase.getImgCompleteStatus(imgdata) 
+
+			if self.params['startimgid'] and imgdata.dbid < self.params['startimgid']:
+				reason = 'reject'
+				skip = True
+				return skip, reason
+
+			if self.params['endimgid'] and imgdata.dbid > self.params['endimgid']:
+				reason = 'reject'
+				skip = True
+				return skip, reason
 
 			if self.params['norejects'] is True and status is False:
 				reason = 'reject'
@@ -754,6 +851,7 @@ class AppionLoop(appionScript.AppionScript):
 #=====================
 	def _removeProcessedImages(self):
 		startlen = len(self.imgtree)
+		self.stats['imagecount'] = startlen
 		donecount = 0
 		reproccount = 0
 		rejectcount = 0
@@ -761,6 +859,10 @@ class AppionLoop(appionScript.AppionScript):
 		self.stats['skipcount'] = 0
 		newimgtree = []
 		count = 0
+		apDisplay.printDebug("_removeProcessedImages reset count=0")
+		apDisplay.printDebug("previously tested rejected images are count as done")
+		self.stats['count'] = 0
+		t0 = time.time()
 		for imgdata in self.imgtree:
 			count += 1
 			if count % 10 == 0:
@@ -771,12 +873,13 @@ class AppionLoop(appionScript.AppionScript):
 				if reason == 'reproc':
 					reproccount += 1
 				elif reason == 'reject' or reason == 'tilt':
+					apDisplay.printDebug('writing rejected images to donedict. Can not revert')
 					self._writeDoneDict(imgname)
 					rejectcount += 1
 
 			if skip is True:
 				if self.stats['skipcount'] == 0:
-					sys.stderr.write("skipping images\n")
+					sys.stderr.write("skipping processed images\n")
 				elif self.stats['skipcount'] % 80 == 0:
 					sys.stderr.write(".\n")
 				else:
@@ -784,9 +887,14 @@ class AppionLoop(appionScript.AppionScript):
 				self.stats['skipcount'] += 1
 			else:
 				newimgtree.append(imgdata)
+			donecount = self.stats['skipcount'] - reproccount - rejectcount
 		sys.stderr.write("\n")
+		apDisplay.printMsg("finished skipping in %s"%(apDisplay.timeString(time.time()-t0)))
 		if self.stats['skipcount'] > 0:
+			# reset imgtree to values without skipped ones.
 			self.imgtree = newimgtree
+			self.stats['count'] = 0
+			apDisplay.printDebug( 'removeProcessed reset imgtree len=%d and count=%d' % (len(self.imgtree), self.stats['count']))
 			sys.stderr.write("\n")
 			apDisplay.printWarning("skipped "+str(self.stats['skipcount'])+" of "+str(startlen)+" images")
 			apDisplay.printMsg("[[ "+str(reproccount)+" no reprocess "
@@ -801,11 +909,12 @@ class AppionLoop(appionScript.AppionScript):
 	#=====================
 	def _waitForMoreImages(self):
 		"""
-		pauses 10 mins and then checks for more images to process
+		pauses and then checks for more images to process
+		return boolean for loop not done
 		"""
 		### SKIP MESSAGE
 		if(self.stats['skipcount'] > 0):
-			apDisplay.printWarning("Images already processed and were therefore skipped (total "+str(self.stats['skipcount'])+" skipped).")
+			apDisplay.printWarning("skipped total of "+str(self.stats['skipcount'])+" images.")
 			apDisplay.printMsg("to process them again, remove \'continue\' option and run "+self.functionname+" again.")
 			self.stats['skipcount'] = 0
 
@@ -849,6 +958,12 @@ class AppionLoop(appionScript.AppionScript):
 		self.stats['imagecount'] = len(self.imgtree)
 		self.stats['imagesleft'] = self.stats['imagecount'] - self.stats['count']
 		return True
+
+	def setBadImage(self,imgdata):
+		# set current image as bad image
+		self.bad_images.append(imgdata.dbid)
+		apDisplay.printWarning("Program did not produce valid results. Should hide the image if the problem persists")
+		sys.stderr.write("Failed %s \n" % (imgdata['filename'],))
 
 	#=====================
 	def close(self):

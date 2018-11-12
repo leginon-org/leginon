@@ -135,12 +135,12 @@ class MakeDDParticleMovieLoop(apParticleExtractor.ParticleBoxLoop):
 		imgdata = partdatas[0]['image']
 		for start_frame in range(self.firstframe,self.nframe-self.frameavg-self.firstframe+1,self.framestep):
 			if self.is_dd_frame:
-				corrected = self.dd.correctFrameImage(start_frame,self.frameavg)
+				corrected = self.dd.correctFrameImage([start_frame,],self.frameavg)
 			else:
 				ddstackdir,stackfile = self.getDDStackDirFile(imgdata)
 				corrected = self.dd.getDDStackFrameSumImage(start_frame,self.frameavg)
 			for p,partdata in enumerate(partdatas):
-				col_start,row_start = apBoxer.getBoxStartPosition(imgdata,self.half_box,partdata, shiftdata)
+				col_start,row_start = apBoxer.getBoxStartPosition(self.half_box, partdata, shiftdata)
 				row_end = row_start + self.boxsize
 				col_end = col_start + self.boxsize
 				array = corrected[row_start:row_end,col_start:col_end]

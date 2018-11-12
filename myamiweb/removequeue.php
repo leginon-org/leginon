@@ -1,10 +1,10 @@
 <?php
 
 /**
- *	The Leginon software is Copyright 2003 
- *	The Scripps Research Institute, La Jolla, CA
+ *	The Leginon software is Copyright under 
+ *	Apache License, Version 2.0
  *	For terms of the license agreement
- *	see  http://ami.scripps.edu/software/leginon-license
+ *	see  http://leginon.org
  */
 
 require_once "inc/leginon.inc";
@@ -15,7 +15,7 @@ function getSessionByImage($imageId) {
 		.'a . `REF|SessionData|session` as session FROM `AcquisitionImageData` a '
 		.'WHERE a . `DEF_id` = '.$imageId.' ';
 	list($r) = $leginondata->mysql->getSQLResult($q);
-	return $r;
+	return $r['session'];
 }
 
 function getDeQueuedTargetListIdsByImage($imageId) {
@@ -226,7 +226,7 @@ function createForm() {
 	?>
 <html>
 	<head>
-		<title><?=$title; ?> queue remover</title>
+		<title> queue remover</title>
 		<link rel="stylesheet" type="text/css" href="css/viewer.css"> 
 		<STYLE type="text/css">
 			 DIV.comment_section { text-align: justify; 
@@ -257,44 +257,44 @@ function createForm() {
 						<tr>
 							<td>total target list =
 							</td>
-							<td> <? echo count($imagetls); ?>
+							<td> <?php echo count($imagetls); ?>
 							</td>
 						</tr>
 						<tr>
 							<td>total dequeued image target list =
 							</td>
-							<td> <? echo count($dqimagetls); ?>
+							<td> <?php echo count($dqimagetls); ?>
 							</td>
 						</tr>
 					</table>
 				</td>
 				<TD ALIGN='RIGHT' VALIGN='BOTTOM'>
- <FORM name='removeform' method='POST' ACTION='<?$formAction?>' >
+ <FORM name='removeform' method='POST' ACTION='<?php echo $formAction; ?>' >
 					<input type='submit' name='remove' value='Remove Active'><BR>
 	</FORM>
 				</TD>
 			</tr>
 			<tr valign="top">
 				 <td colspan="4"> 
-	 <?php echo divtitle("Active Target List");?>
+	 <?php echo divtitle("Active Target List"); ?>
 		<table width=100% class='tableborder' cellspacing='1' cellpadding='2'>
 			<tr>
 				<td>
-	<?
+	<?php
 	if (count($aborting)>0) {
 		foreach ($aborting as $deq) {
 			$targetimage = $leginondata->getTargetListInfo($deq['REF|ImageTargetListData|list']);
 			if ($targetimage[0]['count']) {
 			echo $targetimage[0]['count'];
 			?></td><td> targets from 
-			</td><td><?
+			</td><td><?php
 			echo $targetimage[0]['filename'].".mrc";
 	?>
 				</td>
 			</tr>
 			<tr>
 				<td>
-	<?
+	<?php
 			}
 		}
 	} else {
@@ -307,7 +307,7 @@ function createForm() {
 	</td></tr></table>
 	</body>
 </html>
-<?
+<?php
 }
 
 function runQueueRemover() {

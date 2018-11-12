@@ -9,7 +9,8 @@
 #define MRC_MODE_FLOAT           2
 #define MRC_MODE_SHORT_COMPLEX   3
 #define MRC_MODE_FLOAT_COMPLEX   4
-#define MRC_MODE_UNSIGNED_SHORT  5
+#define MRC_MODE_UNSIGNED_BYTE   5
+#define MRC_MODE_UNSIGNED_SHORT  6
 
 #define MRC_COUNT          856    /* Number of freads for a complete header */
 #define MRC_USERS           25

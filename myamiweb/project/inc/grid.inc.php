@@ -1,4 +1,4 @@
-<?
+<?php
 class grid extends abstractgridbox {
 
 	function grid($mysql=""){

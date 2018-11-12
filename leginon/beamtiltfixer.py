@@ -1,9 +1,9 @@
 #
 # COPYRIGHT:
-#	   The Leginon software is Copyright 2003
-#	   The Scripps Research Institute, La Jolla, CA
+#	   The Leginon software is Copyright under
+#	   Apache License, Version 2.0
 #	   For terms of the license agreement
-#	   see  http://ami.scripps.edu/software/leginon-license
+#	   see  http://leginon.org
 #
 import acquisition
 import node
@@ -13,7 +13,7 @@ import threading
 import event
 import time
 import math
-from pyami import correlator, peakfinder, imagefun, numpil,arraystats,fftfun
+from pyami import correlator, peakfinder, imagefun, numpil,arraystats
 import numpy
 from scipy import ndimage
 import copy
@@ -27,7 +27,7 @@ import os
 class BeamTiltFixer(acquisition.Acquisition):
 	panelclass = gui.wx.BeamTiltFixer.Panel
 	settingsclass = leginondata.BeamTiltFixerSettingsData
-	defaultsettings = acquisition.Acquisition.defaultsettings
+	defaultsettings = dict(acquisition.Acquisition.defaultsettings)
 	defaultsettings.update({
 		'process target type': 'acquisition',
 		'beam tilt': 0.005,

@@ -1,15 +1,15 @@
 #
 # COPYRIGHT:
-#       The Leginon software is Copyright 2003
-#       The Scripps Research Institute, La Jolla, CA
+#       The Leginon software is Copyright under
+#       Apache License, Version 2.0
 #       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
+#       see  http://leginon.org
 #
 
 import cPickle as pickle
-import socket
 import SocketServer
 import threading
+from pyami import mysocket
 
 class ExitException(Exception):
 	pass
@@ -62,7 +62,7 @@ class Server(object):
 		self.exitevent = threading.Event()
 		self.exitedevent = threading.Event()
 		self.datamanager = datamanager
-		self.hostname = socket.gethostname().lower()
+		self.hostname = mysocket.gethostname().lower()
 
 	def start(self):
 		self.thread = threading.Thread(name='socket server thread',

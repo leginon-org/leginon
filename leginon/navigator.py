@@ -1,7 +1,7 @@
-# The Leginon software is Copyright 2004
-# The Scripps Research Institute, La Jolla, CA
+# The Leginon software is Copyright under
+# Apache License, Version 2.0
 # For terms of the license agreement
-# see http://ami.scripps.edu/software/leginon-license
+# see http://leginon.org
 #
 # $Source: /ami/sw/cvsroot/pyleginon/navigator.py,v $
 # $Revision: 1.130 $
@@ -130,6 +130,7 @@ class Navigator(node.Node):
 		final_imageshift = ev['final image shift']
 		use_target_z = ev['use target z']
 		self.logger.info('handling %s request from %s' % (movetype, nodename,))
+		# This is the parent image
 		imagedata = targetdata['image']
 		self.newImage(imagedata)
 		preset = imagedata['preset']
@@ -236,16 +237,18 @@ class Navigator(node.Node):
 			self.panel.navigateDone()
 			return True
 
+		# Display the movement applied
 		if movetype.endswith('stage position'):
-			moveparam = 'stage position'
+			moveparams = ['stage position',]
 		elif movetype == 'image beam shift':
-			moveparam = 'image shift'
+			moveparams = ['image shift','beam shift']
 		else:
-			moveparam = movetype
-		scopeshift = {'moveparam': moveparam, 'x':None, 'y':None}
-		for axis in ('x','y'):
-			scopeshift[axis] = newstate[moveparam][axis] - scope[moveparam][axis]
-		self.logger.info('change in %(moveparam)s: %(x).4e, %(y).4e' % scopeshift)
+			moveparams = [movetype,]
+		for moveparam in moveparams:
+			scopeshift = {'moveparam': moveparam, 'x':None, 'y':None}
+			for axis in ('x','y'):
+				scopeshift[axis] = newstate[moveparam][axis] - scope[moveparam][axis]
+			self.logger.info('change in %(moveparam)s: %(x).4e, %(y).4e' % scopeshift)
 
 		# Avoid changing stage z according to imagedata here since it is handled 
 		# before the move
@@ -265,6 +268,10 @@ class Navigator(node.Node):
 		return False
 
 	def move_away_move_back(self, label, moves, distance, angle=None):
+		'''
+		Test reproducibility of the stage from position of a given distance.
+		'''
+		self.logger.info('start reproducibility test')
 		# initial move
 		origstage = self.instrument.tem.StagePosition
 		origx = origstage['x']
@@ -277,9 +284,13 @@ class Navigator(node.Node):
 		deltay = distance * numpy.sin(rangle)
 		tmpx = origx + deltax
 		tmpy = origy + deltay
+		self.logger.info('moving away...')
 		self.instrument.tem.StagePosition = {'x': tmpx, 'y': tmpy}
+		self.logger.info('settling...')
 		time.sleep(2)
+		self.logger.info('moving back...')
 		self.instrument.tem.StagePosition = {'x': origx, 'y': origy}
+		self.logger.info('settling...')
 		time.sleep(2)
 		self.acquireImage()
 
@@ -299,13 +310,16 @@ class Navigator(node.Node):
 			deltay = distance * numpy.sin(rangle)
 			tmpx = origx + deltax
 			tmpy = origy + deltay
+			self.logger.info('moving away...')
 			self.instrument.tem.StagePosition = {'x': tmpx, 'y': tmpy}
+			self.logger.info('settling...')
 			time.sleep(2)
+			self.logger.info('moving back...')
 			self.instrument.tem.StagePosition = {'x': origx, 'y': origy}
+			self.logger.info('settling...')
 			time.sleep(2)
 			self.reacquireImage()
 			r,c,dist = self.checkMoveError()
-			self.logger.info('move error: pixels: %s, %s, %.3em,' % (r,c,dist,))
 			repdata = leginondata.StageReproducibilityData()
 			repdata['session'] = self.session
 			repdata['label'] = label
@@ -315,6 +329,7 @@ class Navigator(node.Node):
 			repdata['error pixels c'] = c
 			repdata['error meters'] = dist
 			repdata.insert(force=True)
+		self.logger.info('reproducibility test done')
 
 	def cycleToPreset(self, preset=None, keep_shift=False):
 		if preset is None:
@@ -342,26 +357,26 @@ class Navigator(node.Node):
 			if self.outofbounds(target, shape):
 				self.logger.info('target out of bounds, so cannot check error')
 				self.setStatus('idle')
+				# Why reacquire if it can not check error ?
 				self.reacquireImage()
 				return 'error'
 			if self.settings['cycle each']:
 				self.cycleToPreset(preset)
 			self.reacquireImage()
 			r,c,dist = self.checkMoveError()
-			self.logger.info('move error: pixels: %s, %s, %.3em,' % (r,c,dist,))
 
 			if precision:
 				self.logger.info('checking that move error is less than %.3e' % (precision,))
 				while dist > precision:
 					time.sleep(0.2)
 					self._move(r, c, movetype)
+					self.logger.info('settling...')
 					time.sleep(2.0)
 					if self.settings['cycle each']:
 						self.cycleToPreset(preset)
 					self.reacquireImage()
 					lastdist = dist
 					r,c,dist = self.checkMoveError()
-					self.logger.info('move error: pixels: %s, %s, %.3em,' % (r,c,dist,))
 					if dist > lastdist:
 						self.logger.info('error got worse')
 						if dist > accept_precision:
@@ -371,7 +386,7 @@ class Navigator(node.Node):
 						break
 
 				# final image shift
-				if status != 'error' and movetype != 'image shift' and final_imageshift:
+				if status != 'error' and 'shift' not in movetype and final_imageshift:
 					self.logger.info('making final correction with image shift')
 					self._move(r, c, 'image shift')
 					
@@ -393,6 +408,7 @@ class Navigator(node.Node):
 		#maxerror = self.settings['max error']
 		#limit = (int(maxerror*2), int(maxerror*2))
 
+		self.logger.info('Checking move error...')
 		oldshape = self.oldimagedata['image'].shape
 		limit = oldshape
 		location = oldshape[0]/2.0-0.5+self.origmove[0], oldshape[1]/2.0-0.5+self.origmove[1]
@@ -400,17 +416,23 @@ class Navigator(node.Node):
 		im1 = imagefun.crop_at(self.origimagedata['image'], location, limit, mode='constant', cval=0.0)
 		im2 = imagefun.crop_at(self.newimagedata['image'], 'center', limit)
 
-		pc = correlator.phase_correlate(im2, im1, zero=False)
-		pc = scipy.ndimage.gaussian_filter(pc,1)
-		subpixelpeak = self.peakfinder.subpixelPeak(newimage=pc, guess=(0.5,0.5), limit=limit)
-		res = self.peakfinder.getResults()
-		unsignedpixelpeak = res['unsigned pixel peak']
+		try:
+			pc = correlator.phase_correlate(im2, im1, zero=False)
+			pc = scipy.ndimage.gaussian_filter(pc,1)
+			subpixelpeak = self.peakfinder.subpixelPeak(newimage=pc, guess=(0.5,0.5), limit=limit)
+			res = self.peakfinder.getResults()
+			unsignedpixelpeak = res['unsigned pixel peak']
+		except Exception, e:
+			self.logger.warning(e)
+			self.logger.warning('Error in finding shift, assume no move error')
+			unsignedpixelpeak = (0,0)
+			subpixelpeak = (0,0)
+
 		peaktargets = [(unsignedpixelpeak[1], unsignedpixelpeak[0])]
 		r_error = subpixelpeak[0]
 		c_error = subpixelpeak[1]
 
 		self.setImage(pc, 'Correlation')
-		peaktargets = [(unsignedpixelpeak[1], unsignedpixelpeak[0])]
 		self.setTargets(peaktargets, 'Peak')
 
 		## calculate error distance
@@ -419,13 +441,18 @@ class Navigator(node.Node):
 		mag = scope['magnification']
 		tem = scope['tem']
 		ccdcamera = camera['ccdcamera']
-		pixelsize = self.pcal.retrievePixelSize(tem, ccdcamera, mag)
+		try:
+			pixelsize = self.pcal.retrievePixelSize(tem, ccdcamera, mag)
+		except:
+			self.logger.error('Pixel size unknown, assume no error')
+			return 0, 0, 0.0
 		cbin = camera['binning']['x']
 		rbin = camera['binning']['y']
 		rpix = r_error * rbin
 		cpix = c_error * cbin
 		pixdist = math.hypot(rpix,cpix)
 		distance = pixdist * pixelsize
+		self.logger.info('move error: pixels: %s, %s, %.3em,' % (r_error,c_error,distance,))
 
 		return r_error, c_error, distance
 
@@ -478,6 +505,8 @@ class Navigator(node.Node):
 			except ValueError, e:
 				self.logger.error('Cannot set instruments: %s' % (e,))
 				return
+			except instrument.NotAvailableError, e:
+				self.logger.error('%s' % (e,))
 			try:
 				self.instrument.ccdcamera.Settings = self.settings['camera settings']
 			except Exception, e:
@@ -491,23 +520,43 @@ class Navigator(node.Node):
 				return
 		self._acquireImage()
 
+	def _restoreSaveFrames(self):
+			# Bug #3614 fi
+			try:
+				self.instrument.ccdcamera.SaveRawFrames = self.was_save_frames
+			except:
+				pass
+
+	def _setWasSaveFrames(self):
+		try:
+			self.was_save_frames = self.instrument.ccdcamera.SaveRawFrames
+		except:
+			self.was_save_frames = False
+
 	def _acquireImage(self, channel=0):
 		#Must set to the camera to be used by now.
+		self._setWasSaveFrames()
 		try:
 			self.instrument.ccdcamera.SaveRawFrames = False
 		except:
 			pass
+		self.logger.info('Pausing before acquire...')
 		time.sleep(self.settings['pause time'])
 		try:
-			imagedata = self.acquireCorrectedCameraImageData(channel=channel)
+			self.logger.info('Acquiring...')
+			imagedata = self.acquireCorrectedCameraImageData(channel=channel,force_no_frames=True)
+			self.logger.info('Acquired')
 		except:
 			self.logger.error('unable to get corrected image')
+			self._restoreSaveFrames()
 			return
 
 		if imagedata is None:
 			self.logger.error('Acquire image failed')
+			self._restoreSaveFrames()
 			return
 
+		self._restoreSaveFrames()
 		self.newImage(imagedata)
 		return imagedata
 
@@ -664,8 +713,10 @@ class Navigator(node.Node):
 	def _toScope(self,name, stagedict):
 		try:
 			self.instrument.tem.StagePosition = stagedict
+		except KeyError:
+			self.logger.exception('instrument key %s not available' % (stagedict.keys(),))
 		except:
-			self.logger.exception(errstr % 'unable to set instrument')
+			self.logger.exception('unable to set instrument')
 		else:
 			self.logger.info('Moved to location %s' % (name,))
 

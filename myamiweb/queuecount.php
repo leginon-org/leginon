@@ -9,10 +9,10 @@
 <?php
 
 /**
- *	The Leginon software is Copyright 2003 
- *	The Scripps Research Institute, La Jolla, CA
+ *	The Leginon software is Copyright under 
+ *	Apache License, Version 2.0
  *	For terms of the license agreement
- *	see  http://ami.scripps.edu/software/leginon-license
+ *	see  http://leginon.org
  *
  */
 
@@ -37,7 +37,8 @@ function getSessionSelector($sessions, $sessionId=NULL) {
 		return $selector;
 }
 
-function printResult($qresult,$qtype='',$ttype='') {
+function printResult($qresult,$qtype='',$ttype='', $is_queue=true) {
+	if ($qresult === false) return;
 	if ($qresult[2] == 0) return;
 	$pretext = $qresult[0];
 	$totalNew = $qresult[1];
@@ -50,14 +51,16 @@ function printResult($qresult,$qtype='',$ttype='') {
 	$esthour = (int) floor(($esttime%86400) / 3600);
 	$estminute = (int) floor(($esttime%3600) / 60);
 	$estsecond = (int) floor($esttime%60);
+	$queuetext = ($is_queue) ? 'queue': 'targetlist';
 ?>
+	<tr>
 	<td>
-		<p> <h3> <? echo $qtype ?> </h3></p>
-		<p> total <?php echo $ttype ?> targets in queue <? echo $pretext.$totalNew ?> </p>
-		<p> <h4> unprocessed queue= <? echo $totalActive  ?></h4></p>
-		<p> avg time so far = <? echo (int)($avgtime) ?> s</p>
+		<p> <h3> <?php echo $qtype ?> </h3></p>
+		<p> total <?php echo $ttype ?> targets in <?php echo $queuetext.' '.$pretext.$totalNew ?> </p>
+		<p> <h4> unprocessed = <?php echo $totalActive  ?></h4></p>
+		<p> avg time so far = <?php echo (int)($avgtime) ?> s</p>
 		<p> <h4> estimated time for the remaining targets  = 
-	<? 
+	<?php
 	if ($estday > 0)
 		echo "$estday days, $esthour hours\n";
 	elseif ($esthour > 0)
@@ -66,8 +69,8 @@ function printResult($qresult,$qtype='',$ttype='') {
 		echo "$estminute minutes, $estsecond seconds\n";
 	?> <h4></p>
 	</td>
-	</tr><tr>
-<? return;
+	</tr>
+<?php return;
 	}
 // --- Set sessionId
 $selected_sessionId = ($_GET['expId']);
@@ -87,12 +90,11 @@ if (!$selected_sessionId) {
 	<table>
 	<tr><td> <?php if (!$selected_sessionId) echo 'Session '.$sessionSelector; ?></td>
 	</tr>
-	<tr>
-<?
+<?php
 // --- Get nodes with queue
 $qtypes = $leginondata->getQueueTypes($sessionId);
 if (!$qtypes) {
-	?><td><h4>No queuing in this session</h4></td><?
+	?><tr><td><h4>No queuing in this session</h4></td></tr><?php
 } else {
 	arsort($qtypes);
 	// Change details to true to see acquisition and focus separately for debuging
@@ -111,6 +113,17 @@ if (!$qtypes) {
 
 	} 
 }
+{
+	$countbynode = $leginondata->getNonQueueCountResults($sessionId);
+	if (is_array($countbynode) && count($countbynode)) {
+		$nodenames = array_keys($countbynode);
+		rsort($nodenames);
+		foreach ($nodenames as $alias) {
+			$data = $countbynode[$alias];
+			printResult($data,$alias,'',false);
+		}
+	}
+}
 ?>
-</tr></table>
+</table>
 </form> </body></html>

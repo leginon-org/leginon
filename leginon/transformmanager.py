@@ -2,10 +2,10 @@
 
 #
 # COPYRIGHT:
-#       The Leginon software is Copyright 2003
-#       The Scripps Research Institute, La Jolla, CA
+#       The Leginon software is Copyright under
+#       Apache License, Version 2.0
 #       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
+#       see  http://leginon.org
 #
 
 import node
@@ -88,7 +88,7 @@ class TargetTransformer(targethandler.TargetHandler, imagehandler.ImageHandler):
 		try:
 			matrix = reg.registerImageData(image1,image2)
 		except Exception, exc:
-			self.logger.warning('Registration type "%s" failed: %s' % (regtype, exc))
+			self.logger.warning('Registration type "%s" failed: %s' % (regtype, exc.message))
 			reg = self.registrations['identity']
 			self.logger.warning('Targets will not be transformed.')
 			matrix = reg.registerImageData(image1,image2)
@@ -225,11 +225,12 @@ class TransformManager(node.Node, TargetTransformer):
 		'registration': 'correlation',
 		'threshold': 3e-10,
 		'pause time': 2.5,
-		'min mag': 300,
+		'min mag': 140,
 		'camera settings': cameraclient.default_settings,
 	}
 	eventinputs = node.Node.eventinputs + presets.PresetsClient.eventinputs \
-								+ [event.TransformTargetEvent] \
+								+ [event.TransformTargetEvent,
+										event.PhasePlateUsagePublishEvent,] \
 								+ navigator.NavigatorClient.eventinputs
 	eventoutputs = node.Node.eventoutputs + presets.PresetsClient.eventoutputs \
 								+ [event.TransformTargetDoneEvent] \
@@ -252,8 +253,10 @@ class TransformManager(node.Node, TargetTransformer):
 		self.presetsclient = presets.PresetsClient(self)
 		self.navclient = navigator.NavigatorClient(self)
 		self.target_to_transform = None
+		self.pp_used = None
 
 		self.addEventInput(event.TransformTargetEvent, self.handleTransformTargetEvent)
+		self.addEventInput(event.PhasePlateUsagePublishEvent, self.handlePhasePlateUsage)
 
 		self.registrations = {
 			'correlation': transformregistration.CorrelationRegistration(self),
@@ -372,26 +375,33 @@ class TransformManager(node.Node, TargetTransformer):
 		moverdata = imagedata['mover']
 		#### move and change preset
 		movetype = imagedata['emtarget']['movetype']
+		oldimage_target_type = imagedata['target']['type']
 		# If mover is not known, use presets manager
-		if moverdata is None or not use_parent_mover:
+		if moverdata is None or not use_parent_mover or oldimage_target_type == 'simulated':
 			movefunction = 'presets manager'
 		else:
 			movefunction = moverdata['mover']
 		keep_shift = False
-		if movetype == 'image shift' and movefunction == 'navigator':
-			self.logger.warning('Navigator cannot be used for image shift, using Presets Manager instead')
+		if 'image shift' in movetype and movefunction == 'navigator':
+			self.logger.warning('Navigator cannot be used for %s, using Presets Manager instead' % (movetype,))
 			movefunction = 'presets manager'
 		self.setStatus('waiting')
 
 		if movefunction == 'navigator':
+			preset_client_emtarget = emtarget
 			emtarget = None
 			if targetdata['type'] != 'simulated':
 				precision = moverdata['move precision']
 				accept_precision = moverdata['accept precision']
 				# Use current z in navigator move like in presetsclient
+				# z should be set in acquisition node when it start processing the target list or when self.moveToLastFocusedStageZ is called
 				status = self.navclient.moveToTarget(targetdata, movetype, precision, accept_precision, final_imageshift=False,use_current_z=True)
+				# iterative move may fail when it fails tolerance
 				if status == 'error':
-					return status
+					# use presets manager instead
+					emtarget = preset_client_emtarget
+					self.logger.warning('Reacquire with navigator failed. Use presets magner to complete')
+		# send preset with emtarget
 		self.presetsclient.toScope(presetname, emtarget, keep_shift=False)
 		stagenow = self.instrument.tem.StagePosition
 		msg = 'reacquire imageMoveAndPreset end z %.6f' % stagenow['z']
@@ -428,15 +438,24 @@ class TransformManager(node.Node, TargetTransformer):
 		presetname = oldpresetdata['name']
 		channel = int(oldimage['correction channel']==0)
 		self._moveToLastFocusedStageZ()
-		self.imageMoveAndPreset(oldimage,emtarget,use_parent_mover)
+		stagenow = self.instrument.tem.StagePosition
+		msg = 'after moveToLastFocusedStageZ z %.6f' % stagenow['z']
+		self.logger.debug(msg)
+		# z is not changed within imageMoveAndPreset
+		status = self.imageMoveAndPreset(oldimage,emtarget,use_parent_mover)
+
 		targetdata = emtarget['target']
 		# extra wait for falcon protector or normalization
-		self.logger.info('Wait for %.1f second before reaquire' % self.settings['pause time'])
+		self.logger.info('Wait for %.1f second before reacquire' % self.settings['pause time'])
 		time.sleep(self.settings['pause time'])
 		try:
 			imagedata = self.acquireCorrectedCameraImageData(channel)
-		except Exception, exc:
-			self.logger.error('Reacquire image failed: %s' % (exc,))
+		except Exception, e:
+			self.logger.error('Reacquire image failed: %s' % (e.message))
+			return None
+		if imagedata is None:
+			self.logger.error('Reacquire image failed')
+			return None
 		# The preset used does not always have the original preset's parameters such as image shift
 		currentpresetdata = self.presetsclient.getCurrentPreset()
 		## convert CameraImageData to AcquisitionImageData
@@ -448,6 +467,7 @@ class TransformManager(node.Node, TargetTransformer):
 		# rct filenaming becomes corrupted
 		imagedata = leginondata.AcquisitionImageData(initializer=imagedata, preset=currentpresetdata, label=self.name, target=targetdata, list=oldimage['list'], emtarget=emtarget, pixels=pixels, pixeltype=pixeltype,grid=oldimage['grid'],mover=oldimage['mover'],spotmap=oldimage['spotmap'])
 		version = self.recentImageVersion(oldimage)
+		imagedata['phase plate'] = self.pp_used
 		imagedata['version'] = version + 1
 		## set the 'filename' value
 		if imagedata['label'] == 'RCT':
@@ -484,7 +504,15 @@ class TransformManager(node.Node, TargetTransformer):
 				version = im['version']
 		return version
 
+	def handlePhasePlateUsage(self, ev):
+		pp_used = ev['data']
+		if pp_used:
+			self.pp_used = pp_used
+
 	def handleTransformTargetEvent(self, ev):
+		stagenow = self.instrument.tem.StagePosition
+		msg = 'handleTransformTargetEvent starting z %.6f' % stagenow['z']
+		self.logger.debug(msg)
 		self.setStatus('processing')
 		oldtarget = ev['target']
 		level = ev['level']
@@ -513,6 +541,7 @@ class TransformManager(node.Node, TargetTransformer):
 		newimagedata['list'] = oldimagedata['list']
 		newimagedata['emtarget'] = oldimagedata['emtarget']
 		newimagedata['version'] = oldimagedata['version'] + 1
+		newimagedata['phase plate'] = self.pp_used
 		dim = newimagedata['camera']['dimension']
 		newimagedata['pixels'] = dim['x'] * dim['y']
 		newimagedata['pixeltype'] = str(newimagedata['image'].dtype)
@@ -534,76 +563,7 @@ class TransformManager(node.Node, TargetTransformer):
 
 	def uiDeclareDrift(self):
 		self.declareTransform('manual')
-
-	def acquireImage(self, channel=0, correct=True):
-		self.startTimer('drift acquire')
-		if correct:
-			imagedata = self.acquireCorrectedCameraImageData(channel)
-		else:
-			imagedata = self.acquireCameraImageData()
-		if imagedata is not None:
-			self.setImage(imagedata['image'], 'Image')
-		self.stopTimer('drift acquire')
-		return imagedata
-
-	def peak2shift(self, peak, shape):
-		shift = list(peak)
-		half = shape[0] / 2, shape[1] / 2
-		if peak[0] > half[0]:
-			shift[0] = peak[0] - shape[0]
-		if peak[1] > half[1]:
-			shift[1] = peak[1] - shape[1]
-		return tuple(shift)
-
-	def measureDrift(self):
-		## configure camera
-		self.instrument.ccdcamera.Settings = self.settings['camera settings']
-		mag = self.instrument.tem.Magnification
-		tem = self.instrument.getTEMData()
-		cam = self.instrument.getCCDCameraData()
-		pixsize = self.pixsizeclient.retrievePixelSize(tem, cam, mag)
-		self.logger.info('Pixel size %s' % (pixsize,))
-
-		## acquire first image
-		imagedata = self.acquireImage(0)
-		numdata = imagedata['image']
-		t0 = imagedata['scope']['system time']
-		self.correlator.insertImage(numdata)
-
-		# make sure we have waited at least "pause time" before acquire
-		t1 = self.instrument.tem.SystemTime
-		dt = t1 - t0
-		pausetime = self.settings['pause time']
-		if dt < pausetime:
-			thispause = pausetime - dt
-			self.startTimer('drift pause')
-			time.sleep(thispause)
-			self.stopTimer('drift pause')
-		
-		## acquire next image
-		imagedata = self.acquireImage(1)
-		numdata = imagedata['image']
-		t1 = imagedata['scope']['system time']
-		self.correlator.insertImage(numdata)
-
-		## do correlation
-		pc = self.correlator.phaseCorrelate()
-		pc = scipy.ndimage.gaussian_filter(pc,1)
-		peak = self.peakfinder.subpixelPeak(newimage=pc)
-		rows,cols = self.peak2shift(peak, pc.shape)
-		dist = math.hypot(rows,cols)
-
-		self.setImage(pc, 'Correlation')
-		#self.setTargets([(peak[1],peak[0])], 'Peak')
-
-		## calculate drift 
-		meters = dist * pixsize
-		self.logger.info('Pixel distance %s, (%.2e meters)' % (dist, meters))
-		# rely on system time of EM node
-		seconds = t1 - t0
-		self.logger.info('Seconds %s' % seconds)
-		current_drift = meters / seconds
-		self.logger.info('Drift rate: %.2e' % (current_drift,))
+		self.logger.info('Drift Declared')
 
 	def displayTarget(self, targetdata):
 		halfrows = targetdata['image']['camera']['dimension']['y'] / 2

@@ -1,7 +1,7 @@
-# The Leginon software is Copyright 2004
-# The Scripps Research Institute, La Jolla, CA
+# The Leginon software is Copyright under
+# Apache License, Version 2.0
 # For terms of the license agreement
-# see http://ami.scripps.edu/software/leginon-license
+# see http://leginon.org
 #
 # $Source: /ami/sw/cvsroot/pyleginon/leginon.gui.wx/MosaicClickTargetFinder.py,v $
 # $Revision: 1.36 $
@@ -14,6 +14,7 @@
 import wx
 from leginon.gui.wx.Choice import Choice
 from leginon.gui.wx.Entry import IntEntry, FloatEntry
+import leginon.gui.wx.MosaicAligner
 import leginon.gui.wx.Settings
 import leginon.gui.wx.TargetFinder
 import leginon.gui.wx.ImagePanelTools
@@ -26,6 +27,9 @@ class Panel(leginon.gui.wx.ClickTargetFinder.Panel):
 	icon = 'atlastarget'
 	def initialize(self):
 		leginon.gui.wx.ClickTargetFinder.Panel.initialize(self)
+		self.imagepanel.selectiontool.setEnableSettings('acquisition', False)
+		self.imagepanel.selectiontool.setDisplayed('focus', False)
+		self.imagepanel.selectiontool.setEnableSettings('focus', False)
 
 		self.toolbar.InsertSeparator(4)
 
@@ -43,8 +47,12 @@ class Panel(leginon.gui.wx.ClickTargetFinder.Panel):
 
 	def addOtherTools(self):
 		self.toolbar.InsertSeparator(10)
-		self.toolbar.InsertTool(11, leginon.gui.wx.ToolBar.ID_FIND_SQUARES,
+		self.toolbar.InsertTool(11, leginon.gui.wx.ToolBar.ID_ALIGN,
+			'alignpresets', shortHelpString='Transfer targets')
+		self.toolbar.InsertTool(12, leginon.gui.wx.ToolBar.ID_FIND_SQUARES,
 			'squarefinder',shortHelpString='Find Squares')
+		self.imagepanel.addTargetTool('Blobs', wx.Colour(0, 255, 255), shape='o')
+		self.imagepanel.selectiontool.setDisplayed('Blobs', True)
 		self.imagepanel.addTypeTool('Filtered', display=True, settings=True)
 		self.imagepanel.addTypeTool('Thresholded', display=True, settings=True)
 
@@ -60,19 +68,23 @@ class Panel(leginon.gui.wx.ClickTargetFinder.Panel):
 											id=leginon.gui.wx.ToolBar.ID_CURRENT_POSITION)
 
 		self.Bind(leginon.gui.wx.ImagePanelTools.EVT_SETTINGS, self.onImageSettings)
+		self.addOtherBindings()
 
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SETTINGS, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, False)
 
 	def addOtherBindings(self):
+		self.toolbar.Bind(wx.EVT_TOOL, self.onTransferTargetsButton,
+											id=leginon.gui.wx.ToolBar.ID_ALIGN)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onFindSquaresButton,
 											id=leginon.gui.wx.ToolBar.ID_FIND_SQUARES)
 
 	def onSubmitTool(self, evt):
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, False)
 		threading.Thread(target=self._onSubmitTool, args=(evt,)).start()
 
 	def _onSubmitTool(self, evt):
 		self.node.submitTargets()
-		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, True)
 
 	def onTargetsSubmitted(self, evt):
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, True)
@@ -86,8 +98,10 @@ class Panel(leginon.gui.wx.ClickTargetFinder.Panel):
 			if selection:
 				self.node.setMosaicName(selection)
 				self.node.loadMosaicTiles(selection)
+				self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, True)
 		elif result == wx.ID_RESET:
 			self.node.clearTiles()
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, False)
 		dialog.Destroy()
 
 	def onMosaicButton(self, evt):
@@ -115,9 +129,19 @@ class Panel(leginon.gui.wx.ClickTargetFinder.Panel):
 			dialog.ShowModal()
 			dialog.Destroy()
 
+	def onTransferTargetsButton(self, evt):
+		if not self.node.getMosaicName():
+			threading.Thread(target=self.node.logger.error, args=['Need to load mosaic to use this.']).start()
+			return
+		dialog = leginon.gui.wx.MosaicAligner.AlignDialog(self, self.node)
+		dialog.ShowModal()
+		dialog.Destroy()
+
 	def onFindSquaresButton(self, evt):
-		#self.node.findSquares()
 		threading.Thread(target=self.node.findSquares).start()
+
+	def doneTargetList(self):
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, True)
 
 class TilesDialog(wx.Dialog):
 	def __init__(self, parent, choices):

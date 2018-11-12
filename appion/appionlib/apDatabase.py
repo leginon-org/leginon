@@ -26,12 +26,13 @@ splitdb = True
 data.holdImages(False)
 
 #================
-def getSpecificImagesFromDB(imglist, sessiondata=None):
-	print "Querying database for "+str(len(imglist))+" specific images ... "
+def getSpecificImagesFromDB(imglist, sessiondata=None, msg=True):
+	if msg is True:
+		print "Querying database for "+str(len(imglist))+" specific images ... "
 	imgtree=[]
 	for imgname in imglist:
-		if imgname[-4:] == ".mrc" or imgname[-4:] == ".box" or imgname[-4:] == ".pos":
-			imgname = imgname[:-4]
+		if os.path.splitext(imgname)[-1] in [".mrc",".box",".pos",".star"]:
+			imgname = os.path.splitext(imgname)[0]
 		if '/' in imgname:
 			imgname = os.path.basename(imgname)
 		if sessiondata is not None:
@@ -39,47 +40,36 @@ def getSpecificImagesFromDB(imglist, sessiondata=None):
 			imgquery = leginon.leginondata.AcquisitionImageData(filename=imgname, session=sessiondata)
 		else:
 			imgquery = leginon.leginondata.AcquisitionImageData(filename=imgname)
-		imgres   = imgquery.query(readimages=False, results=1)
+		imgres = imgquery.query(readimages=False, results=1)
 		if len(imgres) >= 1:
 			imgtree.append(imgres[0])
 		else:
 			print imgres
-			apDisplay.printError("Could not find image: "+imgname)
+			apDisplay.printWarning("Could not find image: "+imgname)
 	return imgtree
 
 #================
-def getSpecificImagesFromSession(imglist, sessionname):
-	print "Querying database for "+str(len(imglist))+" specific images ... "
+def getSpecificImagesFromSession(imglist, sessionname, msg=True):
 	sessiondata = getSessionDataFromSessionName(sessionname)
-	imgtree=[]
-	for imgname in imglist:
-		if imgname[-4:] == ".mrc" or imgname[-4:] == ".box":
-			imgname = imgname[:-4]
-		if '/' in imgname:
-			imgname = os.path.basename(imgname)
-		imgquery = leginon.leginondata.AcquisitionImageData()
-		imgquery['filename'] = imgname
-		imgquery['session'] = sessiondata
-		imgres   = imgquery.query(readimages=False, results=1)
-		if len(imgres) >= 1:
-			imgtree.append(imgres[0])
-		else:
-			print imgres
-			apDisplay.printError("Could not find image: "+imgname)
-	return imgtree
+	return getSpecificImagesFromDB(imglist, sessiondata, msg)
 
 #================
-def getImagesFromDB(session, preset):
+def getImagesFromDB(session, preset, msg=True):
 	"""
 	returns list of image names from DB
 	"""
-	apDisplay.printMsg("Querying database for preset '"+preset+"' images from session '"+session+"' ... ")
+	t0 = time.time()
+	if msg is True:
+		apDisplay.printMsg("Querying database for preset '"+preset+"' images from session '"+session+"' ... ")
 	if preset != 'manual':
 		sessionq = leginon.leginondata.SessionData(name=session)
-		presetq=leginon.leginondata.PresetData(name=preset)
+		sessiondata = sessionq.query(results=1)[0]
+		presetq = leginon.leginondata.PresetData()
+		presetq['name'] = preset
+		presetq['session'] = sessiondata
 		imgquery = leginon.leginondata.AcquisitionImageData()
 		imgquery['preset']  = presetq
-		imgquery['session'] = sessionq
+		imgquery['session'] = sessiondata
 		imgtree = imgquery.query(readimages=False)
 	else:
 		allimgtree = getAllImagesFromDB(session)
@@ -94,6 +84,8 @@ def getImagesFromDB(session, preset):
 	"""
 	#for img in imgtree:
 		#img.holdimages=False
+	if msg is True:
+		apDisplay.printMsg("%d images received in %s"%(len(imgtree), apDisplay.timeString(time.time()-t0)))
 	return imgtree
 
 #================
@@ -114,7 +106,8 @@ def getImageDataFromSpecificImageId(imageid):
 	if imagedata:
 		return imagedata
 	else:
-		apDisplay.printError('Image (id=%d) does not exist' % (imageid))
+		apDisplay.printWarning('Image (id=%d) does not exist' % (imageid))
+		return None
 
 #================
 def getRefImageDataFromSpecificImageId(reftype,imageid):
@@ -156,8 +149,9 @@ def getSessionDataFromSessionId(sessionid):
 	return sessioninfo
 
 #================
-def getSessionDataFromSessionName(sessionname):
-	apDisplay.printMsg("Looking up session, "+sessionname)
+def getSessionDataFromSessionName(sessionname, msg=True):
+	if msg is True:
+		apDisplay.printMsg("Looking up session, "+sessionname)
 	sessionq = leginon.leginondata.SessionData(name=sessionname)
 	sessioninfo = sessionq.query(readimages=False, results=1)
 	if sessioninfo:
@@ -536,18 +530,19 @@ def setImgViewerStatus(imgdata, status=None, msg=True):
 	elif status is True:
 		statusVal = 'exemplar'
 	else:
-		print "skipping set viewer status"
-		return
+		#print "skipping set viewer status"
+		#return
+		statusVal = None
 
 	currentstatus = getImgViewerStatus(imgdata)
 
-	if currentstatus is None:
+	if currentstatus is None and statusVal:
 		#insert new
 		statusq = leginon.leginondata.ViewerImageStatus()
 		statusq['image'] = imgdata
 		statusq['status'] = statusVal
 		statusq.insert()
-	elif currentstatus != status:
+	elif currentstatus != status and statusVal:
 		#update column
 		dbconf=sinedon.getConfig('leginondata')
 		db=sinedon.sqldb.sqlDB(**dbconf)
@@ -555,6 +550,14 @@ def setImgViewerStatus(imgdata, status=None, msg=True):
 			+"SET status = '"+statusVal
 			+ ("' WHERE `REF|AcquisitionImageData|image`=%d" % (imgdata.dbid,)))
 		db.execute(q)
+	elif currentstatus is False and statusVal is None:
+		dbconf=sinedon.getConfig('leginondata')
+		db=sinedon.sqldb.sqlDB(**dbconf)
+		q= ( "DELETE FROM "+dbconf['db']+".`ViewerImageStatus` "
+			+ (" WHERE `REF|AcquisitionImageData|image`=%d" % (imgdata.dbid,)))
+		db.execute(q)
+	elif currentstatus is True and statusVal is None:
+		apDisplay.printWarning('Currently not handle status change from EXEMPLAR to DEFAULT')
 
 	#check assessment
 	if msg is True:
@@ -577,6 +580,40 @@ def checkMag(imgdata,goodmag):
 		return True
 	else:
 		return False
+
+#================
+def getCameraDimsFromSessionPresetName(sessionname, presetname):
+	''' return x & y dims for preset '''
+	sessiondata = leginon.leginondata.SessionData(name=sessionname).query()[0]
+	presetdata = leginon.leginondata.PresetData(name=presetname,session=sessiondata).query(results=1)[0]
+	return presetdata['dimension']['x'], presetdata['dimension']['y']
+
+#================
+def getDoseFromSessionPresetNames(sessionname, presetname):
+	''' returns dose, in electrons per Angstrom '''
+	sessiondata = leginon.leginondata.SessionData(name=sessionname).query()[0]
+	presetdata = leginon.leginondata.PresetData(name=presetname,session=sessiondata).query(results=1)[0]
+	dose = presetdata['dose']
+	if not dose:
+		raise apDisplay.printError("dose not available for %s session and preset %s" % (sessionname,presetname))
+	return dose / 1e20
+
+#================
+def getDoseFromImageData(imgdata):
+	''' returns dose, in electrons per Angstrom '''
+	try:
+		dose = imgdata['preset']['dose']
+		return dose / 1e20
+	except:
+		# fails either because no preset or no dose
+		apDisplay.printWarning("dose not available for this image")
+		return None
+
+#================
+def getDimensionsFromImageData(imgdata):
+	''' returns dictionary, x & y dimensions, for image '''
+	# There is always reference to CameraEMData
+	return imgdata['camera']['dimension']
 
 #================
 def checkInspectDB(imgdata):

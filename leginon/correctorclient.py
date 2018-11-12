@@ -2,10 +2,10 @@
 
 #
 # COPYRIGHT:
-#       The Leginon software is Copyright 2003
-#       The Scripps Research Institute, La Jolla, CA
+#       The Leginon software is Copyright under
+#       Apache License, Version 2.0
 #       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
+#       see  http://leginon.org
 #
 
 from leginon import leginondata
@@ -19,7 +19,14 @@ import leginon.session
 import leginon.leginonconfig
 import os
 import sys
-import numextension
+try:
+	import numextension
+except:
+	# Issue #5466
+	print "numextension not loaded."
+	print "You must have it installed if using Leginon"
+	print "Appion mostly use functions not involving this and hence o.k."
+	print "Recalculate Dark with Gram-Schmidt process will fail in frame gain/dark correction (seldon used)"
 
 ref_cache = {}
 idcounter = itertools.cycle(range(100))
@@ -30,7 +37,14 @@ class CorrectorClient(cameraclient.CameraClient):
 		self.max_badpixels = 800
 
 	def acquireCorrectedCameraImageData(self, channel=0, **kwargs):
+		'''Acquire a gain/dark corrected image from the currently
+		configured CCD camera. Exceptions are caught,add to logger,
+		and this method returns None
+		'''
 		imagedata = self.acquireCameraImageData(**kwargs)
+		if imagedata is None:
+			# error acquiring image already caught and handled
+			return None
 		self.correctCameraImageData(imagedata, channel)
 		return imagedata
 
@@ -53,6 +67,7 @@ class CorrectorClient(cameraclient.CameraClient):
 		for key in ('tem', 'high tension'):
 			imagetemp['scope'][key] = scopedata[key]
 		imagetemp['channel'] = channel
+		refimageq = imagetemp.copy()
 		try:
 			ref = imagetemp.query(results=1)
 		except Exception, e:
@@ -64,6 +79,14 @@ class CorrectorClient(cameraclient.CameraClient):
 		else:
 			return None
 
+		ref_path = leginon.leginonconfig.mapPath(leginon.leginonconfig.REF_PATH)
+		'''
+		Reference path is used to restrict where the image come from so that
+		this will not try to access a file on an unmounted disk which freezes the program.
+		'''
+		if ref_path and ref_path not in ref['session']['image path']:
+			self.logger.warning('Searching only reference in %s' % ref_path)
+			ref = self.researchReferenceOnlyInPath(refimageq, ref_path)
 		if ref['image'] is None:
 			return None
 
@@ -73,6 +96,15 @@ class CorrectorClient(cameraclient.CameraClient):
 			self.logger.error('%s: bad shape: %s' % (ref['filename'], shape,))
 			return None
 		return ref
+
+	def researchReferenceOnlyInPath(self, refimageq, ref_path):
+		results = refimageq.query(timelimit='-90 0:0:0')
+		for r in results:
+			if ref_path in r['session']['image path']:
+				self.logger.info('Use reference in %s' % (r['session']['image path']))
+				return r
+		self.logger.warning('Found none in the last 90 days')
+		return {'image':None}
 
 	def getBrightImageFromNorm(self,normdata):
 		'''
@@ -528,7 +560,12 @@ class CorrectorClient(cameraclient.CameraClient):
 		if session_name is None:
 			raise RuntimeError('no reference session name determined')
 
-		directory = leginon.leginonconfig.mapPath(leginon.leginonconfig.IMAGE_PATH)
+		ref_directory = leginon.leginonconfig.mapPath(leginon.leginonconfig.REF_PATH)
+		if ref_directory is None:
+			directory = leginon.leginonconfig.mapPath(leginon.leginonconfig.IMAGE_PATH)
+		else:
+			directory = leginon.leginonconfig.mapPath(leginon.leginonconfig.REF_PATH)
+
 		imagedirectory = os.path.join(leginon.leginonconfig.unmapPath(directory), session_name, 'rawdata').replace('\\', '/')
 
 		initializer = {
@@ -551,8 +588,17 @@ class CorrectorClient(cameraclient.CameraClient):
 		# find one that is writable
 		refsession = None
 		for r in refsessions:
+			# some modified database may have emptied the old session
+			if not r['session']:
+				continue
 			impath = r['session']['image path']
+			# restrict to ref path if specified.  Useful when disk access to old data
+			# is not available
+			default_directory = leginon.leginonconfig.mapPath(leginon.leginonconfig.REF_PATH)
+			if default_directory is not None and default_directory not in impath:
+				continue
 			if os.access(impath, os.W_OK):
+				# checking access on a disk that is unmounted will hang here.
 				refsession = r
 				break
 
@@ -641,3 +687,21 @@ class CorrectorClient(cameraclient.CameraClient):
 		f = '%s_%s_%02d_%s_%s_%s' % (sessionname, timestamp, nextid, shapestr, type, channel)
 		return f
 
+	def hasRecentDarkCurrentReferenceSaved(self, trip_value=21600, ccdcamera=None):
+		'''
+		Check if dark current reference is recently updated.
+		Default is 6 hours but should be set to smaller number when bright images
+		are about to be acquired.
+		'''
+		import datetime
+		if not ccdcamera:
+			ccdcamera = self.instrument.getCCDCameraData()
+		print ccdcamera
+		camera_host = ccdcamera['hostname']
+		# query by hostname since different modes of camera is count as different cameras
+		darks = leginondata.CameraDarkCurrentUpdatedData(hostname=camera_host).query(results=1)
+		if darks:
+			dark = darks[0]
+			# compare timestamps
+			return datetime.datetime.now() - dark.timestamp <= datetime.timedelta(seconds=trip_value)
+		return False

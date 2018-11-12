@@ -224,16 +224,20 @@ class PostProcScript(appionScript.AppionScript):
 				apix=self.params['apix'], mass=self.params['mass'], outfile=outfile)
 			curfile = outfile
 		else :
-			### just run proc3d
 			curfile = self.params['file']
-			emancmd = "proc3d "+self.params['file']+" "
 		
-		emancmd = "proc3d "+curfile+" "
-
 		if self.params['median'] is not None:
+			# Issue 4367 fix
+			outfile = os.path.join( self.params['rundir'], "median-filter%d.mrc" % (self.params['median'],) )
+			apDisplay.printMsg("Applying median filter:")
+			apDisplay.printMsg("  save to %s" % (outfile,))
 			data = mrc.read(curfile)
 			data = ndimage.median_filter(data, size=self.params['median'])
-			mrc.write(data, curfile)
+			mrc.write(data, outfile)
+			curfile = outfile
+
+		### run proc3d
+		emancmd = "proc3d "+curfile+" "
 
 		emancmd+="apix=%s " %self.params['apix']
 		if self.params['lp'] is not None:

@@ -1,10 +1,10 @@
 <?php
 
 /**
- *	The Leginon software is Copyright 2003 
- *	The Scripps Research Institute, La Jolla, CA
+ *	The Leginon software is Copyright under 
+ *	Apache License, Version 2.0
  *	For terms of the license agreement
- *	see  http://ami.scripps.edu/software/leginon-license
+ *	see  http://leginon.org
  */
 
 ?>
@@ -34,7 +34,7 @@ require_once "inc/project.inc";
 <table cellpadding="0" cellspacing="0">
 <tr valign="top">
 <td>
-<?
+<?php
 //----Define what to display in array $p
 $p[]='gridId';
 $p[]='mag';
@@ -84,7 +84,7 @@ if ($imgId) {
 			}
 			else if ($k=='exposure time') {
 				if( empty($v) && !empty($imageinfo['exposure time']))
-					$v = $imageinfo['exposure time'];
+  				$v = $imageinfo['exposure time'];
 				if(!empty($v) && $showexptime)
 					echo " <b>$k:</b> ",($leginondata->formatExposuretime($v));
 			}
@@ -94,6 +94,14 @@ if ($imgId) {
 		echo $str_tilt;
 		echo "&nbsp;<img src='imgangle.php?a=".$angle."'>";
 	}
+	//Phase Plate
+	if ($imageinfo['pp_usageId']) {
+		$ppinfo = $leginondata->getPhasePlateInfo($imageinfo['pp_usageId']);
+		$str_pp = " <b> pp:</b> ".$ppinfo['phase plate number'].'-'.$ppinfo['patch position'];
+		echo $str_pp;
+	}
+	// Next Line
+	// Filename
 	echo " <font size='-2'>";
 	if ($viewfilename)
 		echo " <br/>".$filename['filename'];
@@ -130,6 +138,19 @@ if ($imgId) {
 			}
 		echo "<br /><b>particle labels:</b> ".join(', ', $formatlabels);
 
+	} else {
+		$format_timestamp = '<span style="color:20B2AA">'.$imageinfo['timestamp'].'</span>';
+		$zlp_thickness = $leginondata->getZeroLossIceThicknessfromImage($sessionId,$imgId);
+		$obj_thickness = $leginondata->getObjIceThicknessfromImage($sessionId,$imgId);
+  		$obj_thickness = $obj_thickness[0];
+  		$zlp_thickness = $zlp_thickness[0];
+		echo "<br />".$format_timestamp;
+		if ( !empty($zlp_thickness['thickness'])) {
+			echo "&nbsp &nbsp <b>ZLP Thickness:</b> ",intval($zlp_thickness['thickness']), " nm";
+		}
+		if ( !empty($obj_thickness['thickness'])) {
+			echo "&nbsp &nbsp <b>ALS Thickness:</b> ",intval($obj_thickness['thickness']), " nm";
+		}
 	}
 	echo "</font>";
 }

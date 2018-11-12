@@ -1,9 +1,9 @@
 <?php
 /**
- *	The Leginon software is Copyright 2003 
- *	The Scripps Research Institute, La Jolla, CA
+ *	The Leginon software is Copyright under 
+ *	Apache License, Version 2.0
  *	For terms of the license agreement
- *	see  http://ami.scripps.edu/software/leginon-license
+ *	see  http://leginon.org
  *
  */
 
@@ -38,7 +38,7 @@ echo "<form name='templateform' method='post' action='$formAction'>\n";
 
 $particle = new particledata();
 $alltomoaligns = $particle->getTomoAlignmentRunsFromSession($sessionId, True);
-if ($_POST) {
+if (hasPatternInArrayKeys($_POST,'/updateDesc/')) {
 	foreach ($alltomoaligns as $t)
 		$particle->updateTableDescriptionAndHiding($_POST,'ApTomoAlignmentRunData',$t['alignrun id']);
 }

@@ -1,7 +1,7 @@
-# The Leginon software is Copyright 2004
-# The Scripps Research Institute, La Jolla, CA
+# The Leginon software is Copyright under
+# Apache License, Version 2.0
 # For terms of the license agreement
-# see http://ami.scripps.edu/software/leginon-license
+# see http://leginon.org
 #
 
 import wx
@@ -37,12 +37,14 @@ class SelectorItem(object):
 		self.name = name
 		self.data = data
 		self.items = []
+		self.is_user_check = False
 
 		self.panel = wx.Panel(parent, -1)
 		self.panel.SetBackgroundColour(wx.WHITE)
 		self.sz = wx.GridBagSizer(0, 3)
 		self.sz.SetEmptyCellSize((16, 16))
 
+		# icon is the first item
 		if icon is not None:
 			bitmap = getBitmap(icon)
 			sb = wx.StaticBitmap(self.panel, -1, bitmap)
@@ -50,11 +52,14 @@ class SelectorItem(object):
 		else:
 			self.items.append(wx.StaticBitmap(self.panel, -1))
 
+		# node name is the second item
 		showname = '_'.join(name.split())
 		label = wx.StaticText(self.panel, -1, showname)
 		self.items.append(label)
 
+		# status is the third item
 		self.items.append(wx.StaticBitmap(self.panel, -1))
+		# process is the fourth item
 		self.items.append(leginon.gui.wx.Processing.Throbber(self.panel))
 		self.items[-1].SetBackgroundColour(wx.WHITE)
 
@@ -84,19 +89,16 @@ class SelectorItem(object):
 	def setSelected(self, selected):
 		color = wx.Colour(180,250,205)
 		if selected:
-			for item in self.items:
-				if item is None:
-					continue
-				item.SetBackgroundColour(color)
 			self.panel.SetBackgroundColour(color)
+			if not self.is_user_check:
+				self.setUserVerificationStatusColor(color)
 			self.items[1].SetForegroundColour(wx.Colour(200,0,0))
 		else:
-			for item in self.items:
-				if item is None:
-					continue
-				item.SetBackgroundColour(wx.WHITE)
 			self.panel.SetBackgroundColour(wx.WHITE)
+			if not self.is_user_check:
+				self.setUserVerificationStatusColor(wx.WHITE)
 			self.items[1].SetForegroundColour(wx.BLACK)
+		self.panel.Refresh()
 		self.items[1].Refresh()
 
 	def setBitmap(self, index, name):
@@ -104,6 +106,20 @@ class SelectorItem(object):
 
 	def setStatus(self, value):
 		self.items[3].set(value)
+
+	def setUserVerificationStatusColor(self, color):
+		for i in (0,2,3):
+			self.items[i].SetBackgroundColour(color)
+			self.items[i].Refresh()
+
+	def setUserVerificationStatus(self, value):
+		# set background color on all items except the text
+		if value:
+			# CentOS only takes wx.REF not orange wx.Colour(255,140,0)
+			self.setUserVerificationStatusColor(wx.Colour(255,140,0))
+		else:
+			self.setUserVerificationStatusColor(wx.WHITE)
+		self.is_user_check = value
 
 class Selector(wx.lib.scrolledpanel.ScrolledPanel):
 	def __init__(self, parent):

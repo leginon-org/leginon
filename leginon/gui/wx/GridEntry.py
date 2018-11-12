@@ -1,7 +1,7 @@
-# The Leginon software is Copyright 2004
-# The Scripps Research Institute, La Jolla, CA
+# The Leginon software is Copyright under
+# Apache License, Version 2.0
 # For terms of the license agreement
-# see http://ami.scripps.edu/software/leginon-license
+# see http://leginon.org
 #
 
 from leginon.gui.wx.Entry import Entry, FloatEntry
@@ -199,9 +199,27 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sb = wx.StaticBox(self, -1, 'Grid Entry')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sz = wx.GridBagSizer(5, 5)
-		label = wx.StaticText(self, -1, 'No Settings')
-		sz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szstagez = self.createStageZSizer()
+		sz.Add(szstagez, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sbsz.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
 
 		return [sbsz]
 
+	def createStageZSizer(self):
+		# pause time
+		self.widgets['stage z'] = FloatEntry(self, -1,
+																		min=0.0,
+																		allownone=False,
+																		chars=8,
+																		value='0.0')
+		sz = wx.GridBagSizer(5, 5)
+		sz.Add(wx.StaticText(self, -1, 'Set stage z to'),
+								(0, 0), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['stage z'],
+								(0, 1), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		sz.Add(wx.StaticText(self, -1, 'meters before making grid atlas'),
+								(0, 2), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL)
+		return sz

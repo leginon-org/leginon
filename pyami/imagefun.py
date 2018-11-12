@@ -1,9 +1,9 @@
 #
 # COPYRIGHT:
-#			 The Leginon software is Copyright 2003
-#			 The Scripps Research Institute, La Jolla, CA
+#			 The Leginon software is Copyright under
+#			 Apache License, Version 2.0
 #			 For terms of the license agreement
-#			 see	http://ami.scripps.edu/software/leginon-license
+#			 see	http://leginon.org
 #
 
 import numpy
@@ -88,6 +88,14 @@ def linearscale(input, boundfrom, boundto, extrema=None):
 
 	return output
 
+def phase_spectrum(a):
+	fft = ffteng.transform(a)
+	phase = numpy.angle(fft, deg=True)
+	### neil half pixel shift or powerspectra are not centered!
+	phase = scipy.ndimage.interpolation.shift(phase, (-1, -1), order=1, mode='wrap')
+	phase = swap_quadrants(phase)
+	return phase
+
 def power(a, mask_radius=1.0, thresh=3):
 	fft = ffteng.transform(a)
 	pow = numpy.absolute(fft)
@@ -97,6 +105,9 @@ def power(a, mask_radius=1.0, thresh=3):
 		pow = numpy.log(pow)
 	except OverflowError:
 		pow = numpy.log(pow+1e-20)
+	except:
+		print 'numpy.log failed, bypass'
+		pass
 	pow = swap_quadrants(pow)
 
 	mask_radius = int(mask_radius / 100.0 * pow.shape[0])
@@ -104,6 +115,7 @@ def power(a, mask_radius=1.0, thresh=3):
 		center_mask(pow, mask_radius)
 
 	return clip_power(pow,thresh)
+
 
 def clip_power(pow,thresh=3):
 	m = arraystats.mean(pow)
@@ -116,7 +128,7 @@ def clip_power(pow,thresh=3):
 
 def filled_sphere(shape, radius, center=None):
 	"""
-	creates a spherical mask of defined radius and center 
+	creates a spherical mask of defined radius and center
 	in an array of the provided shape
 	with value of 0 inside the sphere and 1 outside the sphere
 	"""
@@ -133,13 +145,14 @@ def filled_sphere(shape, radius, center=None):
 		return c
 	return numpy.fromfunction(func, shape)
 
-
-def filled_circle(shape, radius, center=None):
+def filled_circle(shape, radius=None, center=None):
 	"""
-	creates a circle mask of defined radius and center 
+	creates a circle mask of defined radius and center
 	in an array of the provided shape
 	with value of 0 inside the circle and 1 outside the circle
 	"""
+	if radius is None:
+		radius = min(shape)/2
 	r2 = radius*radius
 	if center is None:
 		### set to center of array
@@ -160,6 +173,18 @@ def fromRadialFunction(funcrad, shape, **kwargs):
 		cc = c - center_c
 		rad = numpy.hypot(rr,cc)
 		return funcrad(rad, **kwargs)
+	result = numpy.fromfunction(funcrc, shape, **kwargs)
+	return result
+
+def fromPolarBinFunction(funcpolar, shape, **kwargs):
+	center_r = (shape[0] - 1)/2.0
+	center_c = (shape[1] - 1)/2.0
+	def funcrc(r, c, **kwargs):
+		rr = r - center_r
+		cc = c - center_c
+		rad = numpy.hypot(rr,cc)
+		phi = numpy.arctan2(rr,cc)
+		return funcpolar(rad, phi, **kwargs)
 	result = numpy.fromfunction(funcrc, shape, **kwargs)
 	return result
 
@@ -248,7 +273,7 @@ def near_center(shape, blobs, n):
 	'''
 	filter out no more than n blobs that are closest to image center
 	'''
-	
+
 	# create distance mapping
 	imcenter = shape[0]/2, shape[1]/2
 	distmap = {}
@@ -312,7 +337,7 @@ def moment_of_inertia(input, labels, index = None):
 	values are used where labels is larger than zero.
 	"""
 	input = numpy.asarray(input)
-	if labels == None:
+	if labels is None:
 		raise RuntimeError, 'labels are needed'
 	if labels.shape != input.shape:
 		raise RuntimeError, 'input and labels shape are not equal'
@@ -431,7 +456,6 @@ def bin2m(a, factor):
 	oldshape = a.shape
 	newshape = numpy.asarray(oldshape)/factor
 	tmpshape = (newshape[0], factor, newshape[1], factor)
-	f = factor * factor
 	binned = stats.median(stats.median(numpy.reshape(a, tmpshape), 1), 2)
 	return binned
 
@@ -441,11 +465,31 @@ def bin2f(a, factor):
 	'''
 	fft = ffteng.transform(a)
 	fft = numpy.fft.fftshift(fft)
-	half = fft.shape[0]/2
 	xstart = int( fft.shape[0]/2 * (1 - 1.0/factor))
 	xend   = int( fft.shape[0]/2 * (1 + 1.0/factor))
 	ystart = int( fft.shape[1]/2 * (1 - 1.0/factor))
 	yend   = int( fft.shape[1]/2 * (1 + 1.0/factor))
+	#print ("%d:%d  ,  %d:%d\n"%(xstart,xend,ystart,yend,))
+	cutfft = fft[xstart:xend, ystart:yend]
+	cutfft = numpy.fft.fftshift(cutfft)
+	#print cutfft.shape, fft.shape
+	binned = ffteng.itransform(cutfft)/float(factor**2)
+	return binned
+
+def fourier_scale(a, boxsize):
+	'''
+	Scaling in Fourier space
+	'''
+	fft = ffteng.transform(a)
+	fft = numpy.fft.fftshift(fft)
+	initboxsize = max(a.shape)
+	if initboxsize == boxsize:
+		return a
+	factor = initboxsize/float(boxsize)
+	xstart = int( fft.shape[0]/2 - boxsize/2 )
+	xend   = int( fft.shape[0]/2 + boxsize/2 )
+	ystart = int( fft.shape[1]/2 - boxsize/2 )
+	yend   = int( fft.shape[1]/2 + boxsize/2 )
 	#print ("%d:%d  ,  %d:%d\n"%(xstart,xend,ystart,yend,))
 	cutfft = fft[xstart:xend, ystart:yend]
 	cutfft = numpy.fft.fftshift(cutfft)
@@ -632,3 +676,196 @@ def taper(im, boundary):
 		for i in range(1,boundary):
 			im[sign*i] = (im[sign*i]*0.1 + im[sign*i-sign]*0.9)
 			im[:,sign*i] = (im[:,sign*i]*0.1 + im[:,sign*i-sign]*0.9)
+
+def polarBin(input, nbins_r, nbins_t):
+	'''
+Polar binning of a real space image.  The polar transform is centered at
+the center of the image
+input: an image
+nbins_r: number of radial bins.
+nbins_t: the number of angular bins.
+Returns:  (bins, r_centers, t_centers)
+     where:
+          bins: result 2-D image with r on the first axis, t on the second axis
+          r_centers: The sequence of radial values represented in the bins
+          t_centers: The sequence of angular values represented in the bins
+	'''
+	## Full radial range (result will have empty bins):
+	r_min = 0.0
+	r_max = numpy.hypot(input.shape[0] / 2.0, input.shape[1] / 2.0)
+
+	r_bins,r_inc = numpy.linspace(r_min, r_max, num=nbins_r+1, retstep=True)
+	# excluding r_min
+	r_centers = r_bins[1:] - r_inc/2.0
+
+	## Full angular range from -pi to pi
+	t_min = -numpy.pi
+	t_max = numpy.pi
+	t_bins,t_inc = numpy.linspace(t_min, t_max, num=nbins_t+1, retstep=True)
+	t_centers = t_bins[1:] - t_inc/2.0
+
+	## Determine coordinates on center
+	indices = numpy.indices(input.shape)
+	center_row = int((input.shape[0]+1) / 2 ) # integer division intended
+	center_col = int((input.shape[1]+1) / 2 ) # integer division intended
+	indices[0][:] -= center_row
+	indices[:][1] -= center_col
+
+	## Determine r,theta polar coords of each row,column coord.
+	r_indices = numpy.hypot(*indices)
+	t_indices = numpy.arctan2(*indices)
+
+	## split up image into bins by radius and angle
+	r_labels = numpy.digitize(r_indices.flat, r_bins) - 1
+	r_labels.shape = r_indices.shape
+	t_labels = numpy.digitize(t_indices.flat, t_bins) - 1
+	t_labels.shape = t_indices.shape
+
+	## combine r_labels and t_labels into full set of labels:
+	rt_labels = nbins_t * r_labels + t_labels + 1
+
+	## calculate mean value of each bin
+	rt_bins = scipy.ndimage.mean(input, rt_labels, numpy.arange(nbins_r*nbins_t)+1)
+
+	## turn result into 2-D array
+	rt_bins = numpy.asarray(rt_bins)
+	rt_bins.shape = nbins_r, nbins_t
+
+	# interpolate NaN in the array which came from bins with no item
+	for tbin in range(nbins_t):
+		rt = rt_bins[:,tbin]
+		nan_indices = numpy.where(numpy.isnan(rt))
+		if not nan_indices:
+			continue
+		ind = numpy.where(~numpy.isnan(rt))[0]
+		values = rt[ind]
+		for nan_ind in numpy.where(numpy.isnan(rt))[0]:
+			good_value = numpy.interp(nan_ind, ind, values, left=values[0], right=values[-1])
+			rt[nan_ind] = good_value
+		rt_bins[:,tbin] = rt
+	return rt_bins, r_centers, t_centers
+
+def radialAverageImage(a):
+	'''
+	Make radial average image of the same shape. Origin of the polar transform is
+	at the center of the image
+	'''
+	bins =  min(a.shape)
+	# doing one bin in angle
+	nbins_t = 1
+	pbin, r_center, t_center = polarBin(a, bins, nbins_t)
+	radial_avg = pbin[:,0]
+
+	def radial_value(rho, **kwargs):
+		return numpy.interp(rho, r_center, radial_avg, right=radial_avg[-1])
+
+	return fromRadialFunction(radial_value, a.shape)
+
+def flipImageTopBottom(imagearray):
+	return numpy.flipud(imagearray)
+
+def flipImageLeftRight(imagearray):
+	return numpy.fliplr(imagearray)
+
+def rotateImage90Degrees(imagearray,ntimes=1):
+	'''
+	Rotation without interpolation. Rotation is clockwise.
+	'''
+	return numpy.rot90(imagearray,ntimes)
+
+def clipImage(imagearray,npixels):
+	'''
+	Clips a given image from the center by npixels and returns a new clipped array with new dimensions
+	'''
+	return imagearray[npixels:-npixels,npixels:-npixels]
+
+def padImage(imagearray, npixels):
+	'''
+	Pads a given image by npixels and returns a new padded array with new dimensions. The new pixels are given the mean value of imagearray.
+	'''
+	#Note this can be done more efficiently in  numpy 1.10 and greater with numpy.fill or numpy.full
+	newshape=[n+(2*npixels) for n in imagearray.shape]
+	newarray=numpy.ones(newshape,dtype=imagearray.dtype)
+	#mean=imagearray.mean()
+	#### There is a bug in numpy 1.6 where mean doesn't work for 8K images. Instead using edge mean for now
+	stats=edgeStats(imagearray)
+	mean=stats['mean']
+	newarray=newarray*mean
+	newarray[npixels:-npixels,npixels:-npixels]=imagearray
+	return newarray
+
+def clipAndPadImage(imagearray,npixels):
+	'''
+	Clips an image by npixels and pads it back out to its original dimensions substituting the pixels at the edges with the mean
+	'''
+	newarray=clipImage(imagearray,npixels)
+	newarray=padImage(newarray,npixels)
+	return newarray
+
+def edgeStats(imagearray):
+	'''
+	Returns the mean and standard deviation for the edge pixels of imagearray
+	'''
+	edgepix=numpy.append(imagearray[0,0:],imagearray[-1,0:])
+	edgepix=numpy.append(edgepix,imagearray[0:,0])
+	edgepix=numpy.append(edgepix,imagearray[0:,-1])
+	#print edgepix
+	mean=edgepix.mean()
+	std=edgepix.std()
+	return {'mean':mean,'std':std}
+
+###############################################
+# functions for correcting raw images
+###############################################
+
+def normalizeImageArray(rawarray, darkarray, normarray, darkscale=1, badrowlist=None, badcolumnlist=None):
+	if darkscale is not 1:
+		darkarray=darkarray/darkscale
+	diff = rawarray - darkarray
+	r = diff * normarray
+	## remove nan and inf
+	r = numpy.where(numpy.isfinite(r), r, 0)
+	if badrowlist is not None or badcolumnlist is not None:
+		r = replaceBadRowsAndColumns(r,badrowlist,badcolumnlist)
+	return r
+
+def normalizeFromDarkAndBright(rawarray, darkarray, brightarray, scale=1, badrowlist=None, badcolumnlist=None, border=None):
+	if scale is not 1:
+		darkarray=darkarray/scale
+		brightarray=brightarray/scale
+	bminusd=(brightarray-darkarray)
+	m=bminusd.mean()
+	gain=m/bminusd
+	correctedarray=(rawarray-darkarray)*gain
+	## remove nan and inf
+	correctedarray = numpy.where(numpy.isfinite(correctedarray), correctedarray, 0)
+	if badrowlist is not None or badcolumnlist is not None:
+		correctedarray = replaceBadRowsAndColumns(correctedarray,badrowlist,badcolumnlist)
+	if border is not None:
+		correctedarray = clipAndPadImage(correctedarray,border)
+	return correctedarray
+
+def replaceBadRowsAndColumns(imagearray,badrowlist=[], badcolumnlist=[]):
+	def _getGoodNeighbors(badindividual, badlist, maxallowed):
+		for n in badlist:
+			lowerneighbor=n-1
+			higherneighbor=n+1
+			while lowerneighbor in badlist:
+				lowerneighbor -=1
+			while higherneighbor in badlist:
+				higherneighbor +=1
+			if lowerneighbor <= 0 :
+				lowerneighbor=higherneighbor
+			if higherneighbor >= maxallowed:
+				higherneighbor=lowerneighbor
+		return (lowerneighbor,higherneighbor)
+	for badrow in badrowlist:
+		lowerneighbor,higherneighbor=_getGoodNeighbors(badrow,badrowlist,imagearray.shape[1])
+		newrow=(imagearray[lowerneighbor,:] + imagearray[higherneighbor,:])/2
+		imagearray[badrow,:]=newrow
+	for badcol in badcolumnlist:
+		lowerneighbor,higherneighbor=_getGoodNeighbors(badcol,badcolumnlist,imagearray.shape[0])
+		newcol=(imagearray[:,lowerneighbor] + imagearray[:,higherneighbor])/2
+		imagearray[:,badcol]=newcol
+	return imagearray
+

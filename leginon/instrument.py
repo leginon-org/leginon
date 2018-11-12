@@ -1,7 +1,7 @@
-# The Leginon software is Copyright 2004
-# The Scripps Research Institute, La Jolla, CA
+# The Leginon software is Copyright under
+# Apache License, Version 2.0
 # For terms of the license agreement
-# see http://ami.scripps.edu/software/leginon-license
+# see http://leginon.org
 #
 # $Source: /ami/sw/cvsroot/pyleginon/instrument.py,v $
 # $Revision: 1.38 $
@@ -14,6 +14,10 @@
 from leginon import leginondata
 import remotecall
 import gui.wx.Events
+import time
+
+# global variable to log last instrument setData or getData method call
+last_set_get = time.time()
 
 class InstrumentError(Exception):
 	pass
@@ -128,6 +132,7 @@ class Proxy(object):
 				cs = 2.0e-3
 			instrumentdata['cs'] = cs
 			dbinstrumentdata = instrumentdata
+			dbinstrumentdata['hidden'] = False
 			dbinstrumentdata.insert()
 		return dbinstrumentdata
 
@@ -183,6 +188,7 @@ class Proxy(object):
 			dbinstrumentdata = results[0]
 		else:
 			dbinstrumentdata = instrumentdata
+			dbinstrumentdata['hidden'] = False
 			dbinstrumentdata.insert()
 		return dbinstrumentdata
 
@@ -229,6 +235,7 @@ class Proxy(object):
 		raise ValueError
 
 	def getData(self, dataclass, temname=None, ccdcameraname=None):
+		self.updateLastSetGetTime()
 		if issubclass(dataclass, leginondata.ScopeEMData):
 			if temname is None:
 				proxy = self.tem
@@ -325,12 +332,29 @@ class Proxy(object):
 			attributes.append(attribute)
 			args.append((instance[key],))
 		results = proxy.multiCall(attributes, types, args)
+		self.updateLastSetGetTime()
 		for result in results:
 			try:
 				if isinstance(result, Exception):
 					raise result
 			except AttributeError:
 				pass
+
+	def updateLastSetGetTime(self):
+		'''
+		update global last_set_get attribute time to indicate that
+		the instrument is active.
+		'''
+		t = time.time()
+		global last_set_get
+		last_set_get = t
+
+	def getLastSetGetTime(self):
+		'''
+		get the time a method on the instrument was last set or get
+		'''
+		global last_set_get
+		return last_set_get
 
 class TEM(remotecall.Locker):
 	def getDatabaseType(self):
@@ -364,17 +388,7 @@ parametermapping = (
 	('main screen position', 'MainScreenPosition'),
 	('main screen magnification', 'MainScreenMagnification'),
 	('small screen position', 'SmallScreenPosition'),
-	('film stock', 'FilmStock'),
-	('film exposure number', 'FilmExposureNumber'),
-	('pre film exposure', 'preFilmExposure'),
-	('post film exposure', 'postFilmExposure'),
-	('film exposure type', 'FilmExposureType'),
-	('film exposure time', 'FilmExposureTime'),
-	('film manual exposure time', 'FilmManualExposureTime'),
-	('film automatic exposure time', 'FilmAutomaticExposureTime'),
-	('film text', 'FilmText'),
-	('film user code', 'FilmUserCode'),
-	('film date type', 'FilmDateType'),
+	# JEOL functions
 	('objective current', 'ObjectiveCurrent'),
 	('exp wait time', 'ExpWaitTime'),
 	('tem energy filtered', 'EnergyFiltered'),
@@ -383,7 +397,6 @@ parametermapping = (
 	('aperture size', 'ApertureSize'),
 	# not used
 	#('beam blank', 'BeamBlank'),
-	#('film exposure', 'filmExposure'),
 	#('low dose', 'LowDose'),
 	#('low dose mode', 'LowDoseMode'),
 	#('turbo pump', 'TurboPump'),
@@ -407,6 +420,7 @@ parametermapping = (
 	('energy filter width', 'EnergyFilterWidth'),
 	('nframes', 'NumberOfFrames'),
 	('align frames', 'AlignFrames'),
+	('tiff frames', 'SaveLzwTiffFrames'),
 	('align filter', 'AlignFilter'),
 	('save frames', 'SaveRawFrames'),
 	('frames name', 'PreviousRawFramesName'),

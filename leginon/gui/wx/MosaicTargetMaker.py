@@ -1,7 +1,7 @@
-# The Leginon software is Copyright 2004
-# The Scripps Research Institute, La Jolla, CA
+# The Leginon software is Copyright under
+# Apache License, Version 2.0
 # For terms of the license agreement
-# see http://ami.scripps.edu/software/leginon-license
+# see http://leginon.org
 #
 
 import re
@@ -90,16 +90,20 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Image Acquisition')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		self.szmain = wx.GridBagSizer(5, 5)
+
 		if self.show_basic:
-			sz = self.addBasicSettings()
+			self.addBasicSettings()
 		else:
-			sz = self.addSettings()
-		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.EXPAND|wx.ALL, 5)
+			self.addSettings()
+		sbsz.Add(self.szmain, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 		return [sbsz]
 
-		return ScrolledSettings(self,self.scrsize,False)
-
 	def addBasicSettings(self):
+		newrow,newcol = self.createPresetSelector((0,0))
+		newrow,newcol = self.createAlphaTiltEntry((newrow,0))
+
+	def createPresetSelector(self, start_position):
 		sz = wx.GridBagSizer(5, 10)
 		# preset
 		presets = self.node.presetsclient.getPresetNames()
@@ -141,19 +145,44 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 						wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
 		'''
 
-		return sz
+		# add to main
+		total_length = (3,2)
+		self.szmain.Add(sz, start_position, total_length,
+				  wx.ALIGN_CENTER)
+		return start_position[0]+total_length[0],start_position[1]+total_length[1]
+
+	def createAlphaTiltEntry(self,start_position):
+		# define widget
+		self.widgets['alpha tilt'] = FloatEntry(self, -1, min=-80.0, allownone=True, max=80.0, chars=5, value='0.0')
+		# make sizer
+		sz = wx.GridBagSizer(5, 5)
+		sz.Add(wx.StaticText(self, -1, 'Collect atlas at'),
+								(0, 0), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['alpha tilt'],
+								(0, 1), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		sz.Add(wx.StaticText(self, -1, 'degree tilt'),
+								(0, 2), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL)
+		# add to main
+		total_length = (1,1)
+		self.szmain.Add(sz, start_position, total_length,
+				  wx.ALIGN_CENTER)
+		return start_position[0]+total_length[0],start_position[1]+total_length[1]
 
 	def addSettings(self):
-		presets = self.node.presetsclient.getPresetNames()
-		self.widgets['preset'] = PresetChoice(self, -1)
-		self.widgets['preset'].setChoices(presets)
-		self.widgets['label'] = Entry(self, -1, allowspaces=False)
-		self.widgets['radius'] = FloatEntry(self, -1, min=0.0, chars=6)
+		newrow,newcol = self.createPresetSelector((0,0))
+		newrow,newcol = self.createAlphaTiltEntry((newrow,0))
+		newrow,newcol = self.createAdvancedSizer((newrow,0))
+
+	def createAdvancedSizer(self, start_position):
 		self.widgets['max size'] = IntEntry(self, -1, chars=6)
 		self.widgets['max targets'] = IntEntry(self, -1, chars=6)
 		self.widgets['overlap'] = FloatEntry(self, -1, max=100.0, chars=6)
 		self.widgets['mosaic center'] = Choice(self, -1, choices=['stage center', 'current position'])
 		self.widgets['ignore request'] = wx.CheckBox(self, -1, 'Ignore Request to Make Targets from Others')
+		self.widgets['use spiral path'] = wx.CheckBox(self, -1, 'Spiral from center')
 
 		#szradius = wx.GridBagSizer(5, 5)
 		#szradius.Add(self.widgets['radius'], (0, 0), (1, 1),
@@ -162,53 +191,37 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		#szradius.Add(label, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		sz = wx.GridBagSizer(5, 10)
-
-		label = wx.StaticText(self, -1, 'Preset:')
-		sz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['preset'], (0, 1), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
-
-		label = wx.StaticText(self, -1, 'Label:')
-		sz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['label'], (1, 1), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
-
-		label = wx.StaticText(self, -1, 'Radius:')
-		sz.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		#sz.Add(szradius, (2, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		sz.Add(self.widgets['radius'], (2, 1), (1, 1),
-										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
-		label = wx.StaticText(self, -1, 'm')
-		sz.Add(label, (2, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-
 		label = wx.StaticText(self, -1, 'Max size:')
-		sz.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['max size'], (3, 1), (1, 1),
+		sz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['max size'], (0, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
 
 		label = wx.StaticText(self, -1, 'Max targets:')
-		sz.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['max targets'], (4, 1), (1, 1),
+		sz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['max targets'], (1, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
 
 		label = wx.StaticText(self, -1, 'Overlap:')
-		sz.Add(label, (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['overlap'], (5, 1), (1, 1),
+		sz.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['overlap'], (2, 1), (1, 1),
 										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		label = wx.StaticText(self, -1, '%')
-		sz.Add(label, (5, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(label, (2, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		label = wx.StaticText(self, -1, 'Mosaic Center:')
-		sz.Add(label, (6, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['mosaic center'], (6, 1), (1, 1),
+		sz.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['mosaic center'], (3, 1), (1, 1),
 										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		sz.Add(self.widgets['use spiral path'], (4, 0), (1, 3), wx.ALIGN_CENTER_VERTICAL)
 
-		sz.Add(self.widgets['ignore request'], (7, 0), (1, 3), wx.ALIGN_CENTER_VERTICAL)
-
+		sz.Add(self.widgets['ignore request'], (5, 0), (1, 3), wx.ALIGN_CENTER_VERTICAL)
 
 		sz.AddGrowableCol(1)
-
-		return sz
+		# add to main
+		total_length = (1,1)
+		self.szmain.Add(sz, start_position, total_length,
+				  wx.ALIGN_CENTER)
+		return start_position[0]+total_length[0],start_position[1]+total_length[1]
 
 if __name__ == '__main__':
 	class App(wx.App):

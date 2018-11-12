@@ -1,9 +1,9 @@
-<?
+<?php
 /**
- *	The Leginon software is Copyright 2003 
- *	The Scripps Research Institute, La Jolla, CA
+ *	The Leginon software is Copyright under 
+ *	Apache License, Version 2.0
  *	For terms of the license agreement
- *	see  http://ami.scripps.edu/software/leginon-license
+ *	see  http://leginon.org
  *
  *	Simple viewer to view a image using mrcmodule
  */
@@ -48,7 +48,7 @@ echo '<a class="header" href="'.BASE_URL.'test/checkwebserver.php"> [Troubleshoo
 
 ?>
 <a class="header" target="xmldata" href="test/viewerdata.xml">View XML data &raquo;</a>
-<?
+<?php
 $viewer->display();
 login_footer();
 ?>

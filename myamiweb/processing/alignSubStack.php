@@ -1,9 +1,9 @@
 <?php
 /**
- *      The Leginon software is Copyright 2003 
- *      The Scripps Research Institute, La Jolla, CA
+ *      The Leginon software is Copyright under 
+ *      Apache License, Version 2.0
  *      For terms of the license agreement
- *      see  http://ami.scripps.edu/software/leginon-license
+ *      see  http://leginon.org
  *
  *      Simple viewer to view a image using mrcmodule
  */
@@ -64,6 +64,7 @@ function createAlignSubStackForm($extra=false, $title='subStack.py Launcher', $h
 	if (!$description) $description = $_POST['description'];
 	$runname = ($_POST['runname']) ? $_POST['runname'] : $defrunname;
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';		
+	$writefilecheck = ($_POST['writefile'] =='on') ? 'checked' : '';
 	$savebadcheck = ($_POST['savebad']=='on') ? 'checked' : '';		
 	$maxshift = $_POST['maxshift'] ? $_POST['maxshift'] : '';
 	$minscore = $_POST['minscore'] ? $_POST['minscore'] : '';
@@ -208,9 +209,11 @@ function createAlignSubStackForm($extra=false, $title='subStack.py Launcher', $h
 	echo "<textarea name='description' rows='2' cols='60'>$description</textarea>\n";
 	echo "<br/>\n";
 	echo "<br/>\n";
-
+	echo "<input type='checkbox' name='writefile' $writefilecheck>\n";
+	echo docpop('writefile','<b>Write file to disk</b>');
+	echo "<br/>\n";
 	echo "<input type='checkbox' name='commit' $commitcheck>\n";
-	echo docpop('commit','<b>Commit stack to database');
+	echo docpop('commit','<b>Commit stack to database</b>');
 	echo "<br/>\n";
 	echo "</td>
   </tr>
@@ -245,6 +248,7 @@ function runSubStack() {
 	$maxshift=$_POST['maxshift'];
 	$minscore=$_POST['minscore'];
 	$description=$_POST['description'];
+	$writefile = $_POST['writefile'];
 
 	/* *******************
 	PART 2: Check for conflicts, if there is an error display the form again
@@ -257,7 +261,16 @@ function runSubStack() {
 		createAlignSubStackForm("<B>ERROR:</B> You cannot have both included and excluded classes");
 	if (!$include && !$exclude && !is_numeric($include) && !is_numeric($exclude))
 		createAlignSubStackForm("<B>ERROR:</B> You must specify one of either included and excluded classes");
-
+	if ($maxshift || $minscore) {
+		//query the database for parameters
+		$particle = new particledata();
+		if ($clusterId)
+			$this_alignId = $particle->getAlignStackIdFromClusterId($clusterId);
+		if ($alignId) $this_alignId = $alignId;
+		$alignparams = $particle->getAlignStackParams ($this_alignId);
+		if (strpos($alignparams['package'],'cl2d') !== false) 
+			createAlignSubStackForm("<B>ERROR:</B> CL2D method does not output alignment values. You must not specify maximum alignment shift nor minimum score");
+	}
 	/* *******************
 	PART 3: Create program command
 	******************** */
@@ -283,6 +296,7 @@ function runSubStack() {
 		$command.="--max-shift=$maxshift ";
 	if ($savebad=='on')
 		$command .="--save-bad ";
+	$command.= ($writefile=='on') ? "--write-file " : "";
 	$command.= ($commit=='on') ? "--commit " : "--no-commit ";
 
 	/* *******************

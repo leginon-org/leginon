@@ -24,7 +24,11 @@ class TargetHandler(object):
 
 	def handleTransformTargetDoneEvent(self, evt):
 		self.transformedtarget = evt['target']
-		self.logger.info('got back a transformed target')
+		if hasattr(self.transformedtarget,'dbid'):
+			dbidtext = '%d' % self.transformedtarget.dbid
+		else:
+			dbidtext = 'None'
+		self.logger.info('got back a transformed target with id= %s' % dbidtext)
 		self.transformtargetevent.set()
 
 	def requestTransformTarget(self, targetdata):
@@ -52,8 +56,24 @@ class TargetHandler(object):
 		self.logger.info('%s done with target list ID: %s, status: %s' % (self.name, listid, status))
 		e = event.TargetListDoneEvent(targetlistid=listid, status=status, targetlist=targetlistdata)
 		self.outputEvent(e)
+		# mosaic quilt finder and mosaic target finder
+		# should not do this to count done targets after the first submit is done
+		self.insertDoneTargetList(targetlistdata)
+
+	def insertDoneTargetList(self, targetlistdata):
+		if targetlistdata['node'] and self.name == targetlistdata['node']['alias']:
+			q = leginondata.DoneImageTargetListData(session=self.session,list=targetlistdata)
+			q.insert()
+			self.logger.debug('targetlist %d is inserted as done' % (targetlistdata.dbid))
+		else:
+			self.logger.debug('targetlist %d is not insert as done' % (targetlistdata.dbid))
+		return
 
 	def researchTargets(self, **kwargs):
+		'''
+		This gives back all targets matching kwargs. They are sorted
+		by list, number, version, status.
+		'''
 		targetquery = leginondata.AcquisitionImageTargetData(**kwargs)
 		targets = targetquery.query()
 		# organize by list, number, version, status
@@ -87,12 +107,12 @@ class TargetHandler(object):
 		for targetlist in tls:
 			numbers = organized[targetlist].keys()
 			numbers.sort()
-			for number in numbers:
-				statuses = organized[targetlist][number]['targets'].keys()
+			for n in numbers:
+				statuses = organized[targetlist][n]['targets'].keys()
 				## take only most recent status in this order:
 				for status in ('done', 'aborted', 'processing', 'new'):
-					if status in organized[targetlist][number]['targets']:
-						final.append(organized[targetlist][number]['targets'][status])
+					if status in organized[targetlist][n]['targets']:
+						final.append(organized[targetlist][n]['targets'][status])
 						break
 		return final
 
@@ -136,9 +156,12 @@ class TargetHandler(object):
 	def queueIdleFinish(self):
 		if not self.queueidleactive:
 			return
-		self.instrument.tem.ColumnValvePosition = 'closed'
-		print 'column valves closed and exiting leginon'
-		self.logger.warning('column valves closed')
+		try:
+			self.instrument.tem.ColumnValvePosition = 'closed'
+			self.logger.warning('column valves closed')
+		except:
+			# This fails when tem is not available, likely after Leginon is half closed.
+			pass
 		if self.settings['emission off']:
 			self.instrument.tem.Emission = False
 			self.logger.warning('emission switched off')
@@ -179,10 +202,11 @@ class TargetHandler(object):
 
 			# process all target lists in the queue
 			for targetlist in active:
-				state = self.player.wait()
+				state = self.clearBeamPath()
 				if state == 'stopqueue' or self.inDequeued(targetlist):
 					self.logger.info('Queue aborted, skipping target list')
 				else:
+					# FIX ME: empty targetlist does not need to revert Z.
 					self.revertTargetListZ(targetlist)
 					self.processTargetList(targetlist)
 					state = self.player.wait()
@@ -234,7 +258,7 @@ class TargetHandler(object):
 			queuedata = self.getQueue()
 		else:
 			queuedata = None
-		listdata = leginondata.ImageTargetListData(session=self.session, label=label, mosaic=mosaic, image=image, queue=queuedata, sublist=sublist)
+		listdata = leginondata.ImageTargetListData(session=self.session, label=label, mosaic=mosaic, image=image, queue=queuedata, sublist=sublist, node=self.this_node)
 		return listdata
 
 	def getQueue(self, label=None):
@@ -335,6 +359,7 @@ class TargetHandler(object):
 		except Exception, e:
 			self.logger.error('getting scopedata failed: %s' % (e))
 			raise
+		self.targetlist_reset_tilt = scopedata['stage position']['a']
 		scopedata.friendly_update(preset)
 		lastnumber = self.lastTargetNumber(session=self.session, type='simulated')
 		nextnumber = lastnumber + 1
@@ -370,6 +395,13 @@ class TargetHandler(object):
 	def markTargetsDone(self, targets):
 		for target in targets:
 			self.reportTargetStatus(target, 'done')
+
+	def clearBeamPath(self):
+		'''
+		Check column valve and any other obstacles for the beam
+		to reach the camera.Simply pass player state here.
+		'''
+		return self.player.state()
 
 class TargetWaitHandler(TargetHandler):
 	eventinputs = TargetHandler.eventinputs + [event.TargetListDoneEvent]

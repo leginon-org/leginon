@@ -143,7 +143,7 @@ privilege:<font color="red">*</font>
 		}
 		?>
 	</select>
-<?
+<?php
 	} else {
 	echo array_search($f_privilegeId,$privileges);
 	}
@@ -152,7 +152,7 @@ privilege:<font color="red">*</font>
 </tr>
 <tr>
 <td>
-<?
+<?php
 if ($is_admin) {
 echo ' 
 	<input type="hidden" name="bt_action" value = "" >

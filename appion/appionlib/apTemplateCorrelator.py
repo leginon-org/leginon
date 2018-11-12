@@ -2,8 +2,6 @@
 
 #pythonlib
 import os
-import sys
-import re
 import time
 #appion
 from appionlib import particleLoop2
@@ -15,7 +13,10 @@ from appionlib import appiondata
 from appionlib import apPeaks
 from appionlib import apParam
 from appionlib import apImage
+#pyami
+from pyami import primefactor
 
+safe_dimensions=[2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768]
 
 class TemplateCorrelationLoop(particleLoop2.ParticleLoop):
 	##=======================
@@ -23,7 +24,7 @@ class TemplateCorrelationLoop(particleLoop2.ParticleLoop):
 		### check if we have a previous selection run
 		selectrunq = appiondata.ApSelectionRunData()
 		selectrunq['name'] = self.params['runname']
-		selectrunq['session'] = sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
+		selectrunq['session'] = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
 		rundatas = selectrunq.query(results=1)
 		if not rundatas:
 			return True
@@ -60,19 +61,19 @@ class TemplateCorrelationLoop(particleLoop2.ParticleLoop):
 	### COMMON FUNCTIONS
 	##################################################
 	def setupParserOptions(self):
-		self.parser.add_option("--template-list", dest="templateliststr",
+		self.parser.add_option("--template-list", "--template_list", dest="templateliststr",
 			help="Template Ids", metavar="#,#" )
-		self.parser.add_option("--range-list", dest="rangeliststr",
+		self.parser.add_option("--range-list", "--range_list", dest="rangeliststr",
 			help="Start, end, and increment angles: e.g. 0,360,10x0,180,5", metavar="#,#,#x#,#,#")
 
 		### True / False options
-		self.parser.add_option("--thread-findem", dest="threadfindem", default=True,
+		self.parser.add_option("--thread-findem", "--thread_findem", dest="threadfindem", default=True,
 			action="store_true", help="Run findem crosscorrelation in threads")
-		self.parser.add_option("--no-thread-findem", dest="threadfindem", default=True,
+		self.parser.add_option("--no-thread-findem", "--no_thread_findem", dest="threadfindem", default=True,
 			action="store_false", help="Run findem crosscorrelation in threads")
 		self.parser.add_option("--spectral", dest="spectral", default=False,
 			action="store_true", help="Use spectral correlation instead of normal correlation")
-		self.parser.add_option("--use-mirrors", dest="templatemirrors", default=False,
+		self.parser.add_option("--use-mirrors", "--use_mirrors", dest="templatemirrors", default=False,
 			action="store_true", help="Use mirrors as additional templates")
 		return
 
@@ -152,6 +153,7 @@ class TemplateCorrelationLoop(particleLoop2.ParticleLoop):
 
 	##=======================
 	def processImage(self, imgdata, filtarray):
+
 		if abs(self.params['apix'] - self.params['templateapix']) > 0.01:
 			#rescale templates, apix has changed
 			apTemplate.getTemplates(self.params)
@@ -160,7 +162,26 @@ class TemplateCorrelationLoop(particleLoop2.ParticleLoop):
 
 		### save filter image to .dwn.mrc
 		imgpath = os.path.join(self.params['rundir'], imgdata['filename']+".dwn.mrc")
-		apImage.arrayToMrc(filtarray, imgpath, msg=False)
+
+		### findem cannot handle images with primefactors greater than 30
+		if filtarray.shape[0] not in safe_dimensions or filtarray.shape[1] not in safe_dimensions:
+			newshape = []
+			for dim in filtarray.shape:
+				newdim = dim-1
+				#double check that newdim is even
+				if newdim % 2 != 0:
+					newdim -= 1
+				while max(primefactor.prime_factors(newdim)) > 30:
+					newdim -= 2
+				if dim == newdim:
+					print primefactor.prime_factors(newdim)
+					apDisplay.printMsg("trimming image from %d to %d in one dimension for findem"%(dim, newdim))
+				newshape.append(newdim)
+			if filtarray.shape != tuple(newshape):
+				apDisplay.printMsg("trimming image from %dx%d to %dx%d for findem"
+					%(filtarray.shape[0], filtarray.shape[1], newshape[0], newshape[1],))
+				filtarray = apImage.imagefilter.frame_cut(filtarray, newshape)
+			apImage.imagefile.arrayToMrc(filtarray, imgpath, msg=False)
 
 		### run FindEM
 		looptdiff = time.time()-self.proct0
@@ -187,6 +208,7 @@ class TemplateCorrelationLoop(particleLoop2.ParticleLoop):
 	##=======================
 	def commitToDatabase(self, imgdata, rundata):
 		#insert template rotation data
+
 		for i, templateid in enumerate(self.params['templateIds']):
 			templaterunq = appiondata.ApTemplateRunData()
 			templaterunq['selectionrun'] = rundata

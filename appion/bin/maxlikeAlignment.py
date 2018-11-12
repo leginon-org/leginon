@@ -2,43 +2,39 @@
 #
 import os
 import time
-import sys
-import random
 import math
-import shutil
 import glob
 import cPickle
 import subprocess
+import numpy
+from pyami import spider
 #appion
 from appionlib import appionScript
 from appionlib import apDisplay
 from appionlib import apFile
-import numpy
-from appionlib import apTemplate
 from appionlib import apStack
 from appionlib import apParam
 from appionlib import apXmipp
 from appionlib import apImage
-from pyami import spider
 from appionlib import appiondata
 from appionlib import apImagicFile
 from appionlib import apProject
+from appionlib import proc2dLib
 import sinedon
-import MySQLdb
 
 #=====================
 #=====================
 class MaximumLikelihoodScript(appionScript.AppionScript):
-
 	#=====================
 	def setupParserOptions(self):
-
-
 		self.parser.set_usage("Usage: %prog --stack=ID [ --num-part=# ]")
 		self.parser.add_option("-N", "--num-part", dest="numpart", type="int",
 			help="Number of particles to use", metavar="#")
 		self.parser.add_option("-s", "--stack", dest="stackid", type="int",
 			help="Stack database id", metavar="ID#")
+
+		self.parser.add_option("--nompi", dest='usempi', default=True,
+			action="store_false", help="Disable MPI and run on single host")
 
 		self.parser.add_option("--clip", dest="clipsize", type="int",
 			help="Clip size in pixels (reduced box size)", metavar="#")
@@ -82,6 +78,8 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 
 		self.parser.add_option( "--student", dest="student", default=False,
 			action="store_true", help="Use student's T-distribution instead of Gaussian")
+		self.parser.add_option("--invert", default=False,
+			action="store_true", help="Invert before alignment")
 
 		### choices
 		self.fastmodes = ( "normal", "narrow", "wide" )
@@ -97,6 +95,8 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 	def checkConflicts(self):
 		if self.params['stackid'] is None:
 			apDisplay.printError("stack id was not defined")
+		self.projectid = apProject.getProjectIdFromStackId(self.params['stackid'])
+
 		#if self.params['description'] is None:
 		#	apDisplay.printError("run description was not defined")
 		if self.params['numrefs'] is None:
@@ -111,9 +111,18 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		if self.params['numpart'] > maxparticles:
 			apDisplay.printError("too many particles requested, max: "
 				+ str(maxparticles) + " requested: " + str(self.params['numpart']))
-		stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
-		stackfile = os.path.join(stackdata['path']['path'], stackdata['name'])
-		if self.params['numpart'] > apFile.numImagesInStack(stackfile):
+		self.stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
+		stackfile = os.path.join(self.stackdata['path']['path'], self.stackdata['name'])
+		# check for virtual stack
+		self.params['virtualdata'] = None
+		if not os.path.isfile(stackfile):
+			vstackdata = apStack.getVirtualStackParticlesFromId(self.params['stackid'])
+			npart = len(vstackdata['particles'])
+			self.params['virtualdata'] = vstackdata
+		else:
+			npart = apFile.numImagesInStack(stackfile)
+
+		if self.params['numpart'] > npart:
 			apDisplay.printError("trying to use more particles "+str(self.params['numpart'])
 				+" than available "+str(apFile.numImagesInStack(stackfile)))
 
@@ -129,7 +138,6 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 
 	#=====================
 	def setRunDir(self):
-		self.stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
 		path = self.stackdata['path']['path']
 		uppath = os.path.abspath(os.path.join(path, "../.."))
 		self.params['rundir'] = os.path.join(uppath, "align", self.params['runname'])
@@ -156,7 +164,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			alignrundata = alignrunq.query(results=1)
 			if maxjobdatas[0]['finished'] is True or alignrundata:
 				apDisplay.printError("This run name already exists as finished in the database, please change the runname")
-		maxjobq['REF|projectdata|projects|project'] = apProject.getProjectIdFromStackId(self.params['stackid'])
+		maxjobq['REF|projectdata|projects|project'] = self.projectid
 		maxjobq['timestamp'] = self.timestamp
 		maxjobq['finished'] = False
 		maxjobq['hidden'] = False
@@ -171,7 +179,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		if self.params['commit'] is False:
 			return
 		config = sinedon.getConfig('appiondata')
-		dbc = MySQLdb.Connect(**config)
+		dbc = sinedon.sqldb.connect(**config)
 		dbc.autocommit(True)
 		cursor = dbc.cursor()
 		query = (
@@ -182,6 +190,19 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		cursor.execute(query)
 		cursor.close()
 		dbc.close()
+
+	#=====================
+	def runUploadScript(self):
+		if self.params['commit'] is False:
+			return
+		uploadcmd = "uploadMaxlikeAlignment.py "
+		uploadcmd += " -p %d "%(self.projectid)
+		uploadcmd += " -j %s "%(self.params['maxlikejobid'])
+		uploadcmd += " -R %s "%(self.params['rundir'])
+		uploadcmd += " -n %s "%(self.params['runname'])
+		print uploadcmd
+		proc = subprocess.Popen(uploadcmd, shell=True)
+		proc.communicate()
 
 	#=====================
 	def estimateIterTime(self):
@@ -207,6 +228,8 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 
 	#=====================
 	def checkMPI(self):
+		if self.params['usempi'] is False:
+			return None
 		mpiexe = apParam.getExecPath("mpirun")
 		if mpiexe is None:
 			return None
@@ -222,6 +245,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			return mpiexe
 
 	#=====================
+	"""
 	def writeClusterJobFile(self):
 		if self.params['nproc'] is None:
 			nproc = 128
@@ -323,6 +347,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		apDisplay.printMsg("rsync -vaP particles.tar cluster:"+rundir+"/")
 		apDisplay.printColor("ready to run job on cluster", "cyan")
 		sys.exit(1)
+	"""
 
 	#=====================
 	def writeXmippLog(self, text):
@@ -356,28 +381,55 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 	def start(self):
 		self.insertMaxLikeJob()
 		self.stack = {}
-		self.stack['data'] = apStack.getOnlyStackData(self.params['stackid'])
 		self.stack['apix'] = apStack.getStackPixelSizeFromStackId(self.params['stackid'])
-		self.stack['part'] = apStack.getOneParticleFromStackId(self.params['stackid'])
 		self.stack['boxsize'] = apStack.getStackBoxsize(self.params['stackid'])
-		self.stack['file'] = os.path.join(self.stack['data']['path']['path'], self.stack['data']['name'])
+		self.stack['file'] = os.path.join(self.stackdata['path']['path'], self.stackdata['name'])
+		if self.params['virtualdata'] is not None:
+			self.stack['file'] = self.params['virtualdata']['filename']
+		else:
+			self.stack['file'] = os.path.join(self.stackdata['path']['path'], self.stackdata['name'])
+
 		self.estimateIterTime()
 		self.dumpParameters()
 
 		### process stack to local file
 		self.params['localstack'] = os.path.join(self.params['rundir'], self.timestamp+".hed")
-		proccmd = "proc2d "+self.stack['file']+" "+self.params['localstack']+" apix="+str(self.stack['apix'])
-		if self.params['bin'] > 1 or self.params['clipsize'] is not None:
+
+		a = proc2dLib.RunProc2d()
+		a.setValue('infile',self.stack['file'])
+		a.setValue('outfile',self.params['localstack'])
+		a.setValue('apix',self.stack['apix'])
+		a.setValue('bin',self.params['bin'])
+		a.setValue('last',self.params['numpart']-1)
+		a.setValue('append',False)
+
+		if self.params['lowpass'] is not None and self.params['lowpass'] > 1:
+			a.setValue('lowpass',self.params['lowpass'])
+		if self.params['highpass'] is not None and self.params['highpass'] > 1:
+			a.setValue('highpass',self.params['highpass'])
+		if self.params['invert'] is True:
+			a.setValue('invert') is True
+
+		if self.params['virtualdata'] is not None:
+			vparts = self.params['virtualdata']['particles']
+			plist = [int(p['particleNumber'])-1 for p in vparts]
+			a.setValue('list',plist)
+
+		# clip not yet implemented
+		if self.params['clipsize'] is not None:
 			clipsize = int(self.clipsize)*self.params['bin']
 			if clipsize % 2 == 1:
 				clipsize += 1 ### making sure that clipped boxsize is even
-			proccmd += " shrink=%d clip=%d,%d "%(self.params['bin'],clipsize,clipsize)
-		proccmd += " last="+str(self.params['numpart']-1)
-		if self.params['highpass'] is not None and self.params['highpass'] > 1:
-			proccmd += " hp="+str(self.params['highpass'])
-		if self.params['lowpass'] is not None and self.params['lowpass'] > 1:
-			proccmd += " lp="+str(self.params['lowpass'])
-		apParam.runCmd(proccmd, "EMAN", verbose=True)
+			a.setValue('clip',clipsize)
+
+		if self.params['virtualdata'] is not None:
+			vparts = self.params['virtualdata']['particles']
+			plist = [int(p['particleNumber'])-1 for p in vparts]
+			a.setValue('list',plist)
+
+		#run proc2d
+		a.run()
+
 		if self.params['numpart'] != apFile.numImagesInStack(self.params['localstack']):
 			apDisplay.printError("Missing particles in stack")
 
@@ -430,9 +482,13 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			nproc = nproc = apParam.getNumProcessors()
 		else:
 			nproc = self.params['nproc']
-		mpirun = self.checkMPI()
+
 		self.estimateIterTime()
-		if nproc > 2 and mpirun is not None:
+		if self.params['usempi'] is True and nproc > 2:
+			mpirun = self.checkMPI()
+			if mpirun is None:
+				apDisplay.printError("There is no MPI installed")
+
 			### use multi-processor
 			apDisplay.printColor("Using "+str(nproc)+" processors!", "green")
 			xmippexe = apParam.getExecPath("xmipp_mpi_ml_align2d", die=True)
@@ -450,7 +506,8 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 
 		### minor post-processing
 		self.createReferenceStack()
-		self.readyUploadFlag()
+		#self.readyUploadFlag()
+		self.runUploadScript()
 		self.dumpParameters()
 
 #=====================

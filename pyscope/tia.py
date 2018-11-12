@@ -17,6 +17,10 @@ comtypes.client.tiaccd = connection
 def get_tiaccd():
 	global connection
 	if connection.esv is None:
+		try:
+			comtypes.CoInitializeEx(comtypes.COINIT_MULTITHREADED)
+		except:
+			comtypes.CoInitialize()
 		connection.esv = comtypes.client.CreateObject('ESVision.Application')
 		connection.acqman = connection.esv.AcquisitionManager()
 		connection.ccd = connection.esv.CcdServer()
@@ -236,13 +240,24 @@ acquisition.
 			self.selectSetup()
 			self.custom_setup()
 			self.finalizeSetup()
-			t0 = time.time()
+		except:
+			raise RuntimeError('Error setting camera acquisition parameters')
+
+		t0 = time.time()
+
+		try:
 			self.acqman.Acquire()
 			t1 = time.time()
 			self.exposure_timestamp = (t1 + t0) / 2.0
 			arr = self.im.Data.Array
+		except:
+			raise RuntimeError('Camera Acquisition Error in getting array')
+
+		try:
 			arr.shape = (self.dimension['y'],self.dimension['x'])
 			arr = numpy.flipud(arr)
+		except AttributeError, e:
+			print 'comtypes did not return an numpy 2D array, but %s' % (type(arr))
 		except Exception, e:
 			print e
 			arr = None
@@ -273,6 +288,7 @@ acquisition.
 		return False
 
 class TIA_Eagle(TIA):
+	name = 'Eagle'
 	camera_name = 'BM-Eagle'
 # Note:  only known to work with 4kx4k Eagle.
 # Multiplier, "M" determined by acquiring a series of dark/bright pairs
@@ -294,6 +310,7 @@ class TIA_Eagle(TIA):
 			return 7.8
 
 class TIA_Falcon(TIA):
+	name = 'Falcon'
 	camera_name = 'BM-Falcon'
 	binning_limits = [1,2,4]
 
@@ -417,7 +434,11 @@ class TIA_Falcon(TIA):
 		if self.save_frames:
 			self.frameconfig.makeRealConfigFromExposureTime(movie_exposure_second,self.equal_distr_frame_number,self.start_frame_number)
 		else:
-			self.frameconfig.makeDummyConfig(movie_exposure_second)
+			try:
+				self.frameconfig.makeDummyConfig(movie_exposure_second)
+			except:
+				# In case falconframe.py is not set up right
+				pass
 
 	def getSystemGainDarkCorrected(self):
 		return True
@@ -435,6 +456,17 @@ class TIA_Falcon(TIA):
 		return 3
 
 class TIA_Orius(TIA):
+	name = 'Orius'
+	camera_name = 'BM-Orius'
+
+class FakeK2(TIA):
+	'''
+	This is used when the scope has both TIA controled camera and K2 or other
+	non-TIA controlable camera.  By pretending that there is a TIA camera,
+	BM-Orius in this case, K2 can control the shutter when BM-Orius is inserted
+	through TIA.
+	'''
+	name = 'FakeK2'
 	camera_name = 'BM-Orius'
 
 class TIA_Ceta(TIA):
@@ -446,4 +478,74 @@ class TIA_Ceta(TIA):
 
 	def getPixelSize(self):
 		return {'x': 1.4e-5, 'y': 1.4e-5}
+
+class TIA_Falcon3(TIA_Falcon):
+	name = 'Falcon3'
+	camera_name = 'BM-Falcon'
+	binning_limits = [1,2,4]
+
+	'''
+	Note 11/09/17
+	When Frames per fraction is not 0, the frame files overwrites the
+	same filename in LostandFound.  Therefore, if the frames file saving
+	is not finished, An error "Acquisition Label must be unique" show up.
+	This happens in Focus node often.
+	'''
+	def setFullCameraSetup(self):
+		# workaround to offset image problem
+		no_crop = {'x':0,'y':0}
+		self.setOffset(no_crop)
+		camsize = self.getCameraSize()
+		binning = self.getBinning()
+		full_dim = {'x': camsize['x']/binning['x'],'y':camsize['y']/binning['y']}
+		original_dim = self.getDimension()
+		self.setDimension(full_dim)
+		return original_dim
+
+	def _getImage(self):
+		crop = self.getOffset()
+		original_dimension = self.setFullCameraSetup()
+		'''
+		Copied from TIA class Acquire an image using the setup for this ESVision client.
+		'''
+		try:
+			self.selectSetup()
+			self.custom_setup()
+			self.finalizeSetup()
+		except:
+			raise RuntimeError('Error setting camera acquisition parameters')
+
+		t0 = time.time()
+
+		try:
+			self.acqman.Acquire()
+			t1 = time.time()
+			self.exposure_timestamp = (t1 + t0) / 2.0
+			arr = self.im.Data.Array
+		except:
+			raise RuntimeError('Camera Acquisition Error in getting array')
+
+		try:
+			arr.shape = (self.dimension['y'],self.dimension['x'])
+			arr = numpy.flipud(arr)
+		except AttributeError, e:
+			print 'comtypes did not return an numpy 2D array, but %s' % (type(arr))
+		except Exception, e:
+			print e
+			arr = None
+
+		image = arr
+		if type(image).__module__!='numpy':
+			return image
+		# workaround to offset image problem
+		self.setOffset(crop)
+		self.setDimension(original_dimension)
+		startx = self.getOffset()['x']
+		starty = self.getOffset()['y']
+		if startx != 0 or starty != 0:
+			endx = self.dimension['x'] + startx
+			endy = self.dimension['y'] + starty
+			image = image[starty:endy,startx:endx]
+		print 'modified shape',image.shape
+		return image
 

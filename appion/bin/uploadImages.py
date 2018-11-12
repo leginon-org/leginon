@@ -8,11 +8,13 @@ import string
 import shutil
 import leginon.leginondata
 import leginon.projectdata
-from pyami import mrc
+import leginon.ddinfo
+from pyami import mrc, fileutil
 from appionlib import appionScript
 from appionlib import apDisplay
 from appionlib import apParam
 from appionlib import apFile
+from appionlib import apDBImage
 
 #=====================
 #=====================
@@ -41,17 +43,26 @@ class UploadImages(appionScript.AppionScript):
 
 		self.parser.add_option("--angle-list", dest="angleliststr",
 			help="List of angles in radians to apply to tilt series", metavar="#,#,#")
+		self.parser.add_option("--dose-list", dest="doseliststr",
+			help="List of doses in e-/A^2 to apply to tilt series", metavar="#,#,#")
 		self.parser.add_option("--defocus-list", dest="defocusliststr",
 			help="List of defoci in meters to apply to defocal series", metavar="#,#,#")
 		self.parser.add_option("--defocus", dest="defocus", type="float",
 			help="Defocus in meters to apply to all images", metavar="#.#e#")
 		self.parser.add_option("--invert", dest="invert", default=False,
 			action="store_true", help="Invert image density")
+		self.parser.add_option("--azimuth", dest="azimuth", type="float",
+			help="Tilt azimuth from y-axis in degrees", metavar="#.#")
 
 		self.uploadtypes = ('tiltseries', 'defocalseries', 'normal')
 		self.parser.add_option("--type", dest="uploadtype", default="normal",
 			type="choice", choices=self.uploadtypes,
 			help="Type of upload to perform: "+str(self.uploadtypes), metavar="..")
+
+		self.parser.add_option("--norm", dest="normimg", type="string", metavar="PATH",
+			help="normalization image to apply to each upload")
+		self.parser.add_option("--dark", dest="darkimg", type="string", metavar="PATH",
+			help="dark image to apply to each upload frame")
 
 	#=====================
 	def checkConflicts(self):
@@ -70,13 +81,13 @@ class UploadImages(appionScript.AppionScript):
 		if self.params['mpix'] is None:
 			apDisplay.printError("Please provide a pixel size (in meters), e.g., --pixelsize=1.3e-10")
 
-		### series only valid with non-normal uplaods
+		### series only valid with non-normal uploads
 		if self.params['seriessize'] is None and self.params['uploadtype'] != "normal":
 			apDisplay.printError("If using tilt or defocal series, please provide --images-per-series")
 		if self.params['seriessize'] > 1 and self.params['uploadtype'] == "normal":
 			apDisplay.printError("If using normal mode, do NOT provide --images-per-series")
 
-		### angleliststr only valid with tiltseries uplaods
+		### angleliststr only valid with tiltseries uploads
 		if self.params['angleliststr'] is None and self.params['uploadtype'] == "tiltseries":
 			apDisplay.printError("If using tilt series, please provide --angle-list")
 		if self.params['angleliststr'] is not None and self.params['uploadtype'] != "tiltseries":
@@ -85,8 +96,15 @@ class UploadImages(appionScript.AppionScript):
 			self.anglelist = self.convertStringToList(self.params['angleliststr'])
 			if len(self.anglelist) != self.params['seriessize']:
 				apDisplay.printError("'images-per-tilt-series' and 'angle-list' have different lengths")
+		### doseliststr only valid with tiltseries uploads
+		if self.params['doseliststr'] is not None and self.params['uploadtype'] != "tiltseries":
+			apDisplay.printError("If not using tilt series, do NOT provide --dose-list")
+		if self.params['doseliststr'] is not None:
+			self.doselist = self.convertStringToList(self.params['doseliststr'])
+			if len(self.doselist) != self.params['seriessize']:
+				apDisplay.printError("'images-per-tilt-series' and 'dose-list' have different lengths")
 
-		### defocusliststr only valid with non-normal uplaods
+		### defocusliststr only valid with non-normal uploads
 		if self.params['defocus'] is not None and self.params['defocusliststr'] is not None:
 			apDisplay.printError("Please provide only one of --defocus or --defocus-list")
 		if self.params['defocus'] is None and self.params['defocusliststr'] is None:
@@ -125,11 +143,19 @@ class UploadImages(appionScript.AppionScript):
 		### set leginon dir if undefined
 		if self.params['leginondir'] is None:
 			try:
-				self.params['leginondir'] = leginon.leginonconfig.IMAGE_PATH
+				self.params['leginondir'] = leginon.leginonconfig.unmapPath(leginon.leginonconfig.IMAGE_PATH).replace('\\','/')
 			except AttributeError:
 				apDisplay.printError("Please provide a leginon output directory, "
 					+"e.g., --leginon-output-dir=/data/leginon")
 		self.leginonimagedir = os.path.join(self.params['leginondir'], self.params['sessionname'], 'rawdata')
+		self.leginonframedir = leginon.ddinfo.getRawFrameSessionPathFromSessionPath(self.leginonimagedir)
+
+		# norm and dark images
+		if self.params['normimg'] is not None:
+			if not os.path.exists(self.params['normimg']):
+				apDisplay.printError("specified image path for normalization '%s' does not exist\n"%self.params['normimg'])
+		if self.params['normimg'] is None and self.params['darkimg'] is not None:
+			apDisplay.printError("Only dark but not normalization image is not enough forcorrection")
 
 	#=====================
 	def convertStringToList(self, string):
@@ -167,6 +193,9 @@ class UploadImages(appionScript.AppionScript):
 		if not sessiondatas:
 			return self.params['runname']
 
+		apDisplay.printColor("Found session name with runname %s, creating new name"%(self.params['runname']), "blue")
+		print sessiondatas[0]
+
 		for char in string.lowercase:
 			sessionname = self.timestamp+char
 			sessionq = leginon.leginondata.SessionData()
@@ -186,8 +215,10 @@ class UploadImages(appionScript.AppionScript):
 		sessionq = leginon.leginondata.SessionData()
 		sessionq['name'] = self.params['sessionname']
 		sessionq['image path'] = self.leginonimagedir
+		sessionq['frame path'] = self.leginonframedir
 		sessionq['comment'] = self.params['description']
 		sessionq['user'] = userdata
+		sessionq['hidden'] = False
 
 		projectdata = leginon.projectdata.projects.direct_query(self.params['projectid'])
 
@@ -232,6 +263,34 @@ class UploadImages(appionScript.AppionScript):
 		mrclist.sort()
 		return mrclist
 
+	def makeScopeEMData(self):
+		### setup scope data
+		scopedata = leginon.leginondata.ScopeEMData()
+		scopedata['session'] = self.sessiondata
+		scopedata['tem'] = self.temdata
+		scopedata['magnification'] = self.params['magnification']
+		scopedata['high tension'] = self.params['kv']*1000
+		scopedata['defocus'] = 0.0
+		scopedata['stage position'] = { 'x': 0.0, 'y': 0.0, 'z': 0.0, 'a': 0.0, }
+		return scopedata
+
+	def makeCameraEMData(self,dimension={'x':1,'y':1}, nframes=1):
+		### setup camera data
+		cameradata = leginon.leginondata.CameraEMData()
+		cameradata['session'] = self.sessiondata
+		cameradata['ccdcamera'] = self.camdata
+		cameradata['dimension'] = dimension
+		cameradata['binning'] = {'x': 1, 'y': 1}
+		cameradata['frame time'] = 100.0
+		cameradata['nframes'] = nframes
+		cameradata['save frames'] = False
+		cameradata['exposure time'] = 100.0
+		# sensor pixel size in meter is required for frealign preparation Bug #4088
+		sensor_pixelsize = self.params['magnification'] * self.params['mpix']
+		cameradata['pixel size'] = {'x':sensor_pixelsize,'y':sensor_pixelsize}
+
+		return cameradata
+
 	#=====================
 	def setDefocalTargetData(self, seriescount):
 		if self.params['uploadtype'] != "defocalseries":
@@ -245,21 +304,9 @@ class UploadImages(appionScript.AppionScript):
 		targetpresetdata['magnification'] = self.params['magnification']
 		targetpresetdata['name'] = 'target'
 
-		### setup camera data
-		targetcameradata = leginon.leginondata.CameraEMData()
-		targetcameradata['session'] = self.sessiondata
-		targetcameradata['ccdcamera'] = self.camdata
-		targetcameradata['dimension'] = {'x': 1, 'y': 1}
-		targetcameradata['binning'] = {'x': 1, 'y': 1}
+		targetcameradata = self.makeCameraEMData()
 
-		### setup scope data
-		targetscopedata = leginon.leginondata.ScopeEMData()
-		targetscopedata['session'] = self.sessiondata
-		targetscopedata['tem'] = self.temdata
-		targetscopedata['magnification'] = self.params['magnification']
-		targetscopedata['high tension'] = self.params['kv']*1000
-		targetscopedata['defocus'] = 0.0
-		targetscopedata['stage position'] = { 'x': 0.0, 'y': 0.0, 'z': 0.0, 'a': 0.0, }
+		targetscopedata = self.makeScopeEMData()
 
 		### setup image data
 		targetimgdata = leginon.leginondata.AcquisitionImageData()
@@ -310,6 +357,17 @@ class UploadImages(appionScript.AppionScript):
 		return 0.0
 
 	#=====================
+	def getDose(self, numinseries):
+		"""
+		get dose from list, if no list return empty
+
+		Note: numinseries starts at 1
+		"""
+		if self.params['doseliststr'] is not None:
+			return self.doselist[numinseries-1]
+		return
+
+	#=====================
 	def getImageDefocus(self, numinseries):
 		"""
 		get defocus from list, if no list return 'defocus' variable
@@ -321,7 +379,7 @@ class UploadImages(appionScript.AppionScript):
 		return self.params['defocus']
 
 	#=====================
-	def uploadImageInformation(self, imagearray, newimagepath, dims, seriescount, numinseries):
+	def uploadImageInformation(self, imagearray, newimagepath, dims, seriescount, numinseries, nframes):
 		### setup scope data
 		scopedata = leginon.leginondata.ScopeEMData()
 		scopedata['session'] = self.sessiondata
@@ -337,6 +395,8 @@ class UploadImages(appionScript.AppionScript):
 			'z': 0.0,
 			'a': self.getTiltAngle(numinseries),
 		}
+		if self.params['uploadtype'] == "tiltseries":
+			scopedata['stage position']['phi'] = self.params['azimuth']
 
 		### setup camera data
 		cameradata = leginon.leginondata.CameraEMData()
@@ -344,6 +404,10 @@ class UploadImages(appionScript.AppionScript):
 		cameradata['ccdcamera'] = self.camdata
 		cameradata['dimension'] = dims
 		cameradata['binning'] = {'x': 1, 'y': 1}
+		cameradata['save frames'] = (nframes > 1)
+		cameradata['nframes'] = nframes
+		cameradata['frame time'] = 100.0
+		cameradata['exposure time'] = cameradata['frame time'] * nframes
 
 		### setup camera data
 		presetdata = leginon.leginondata.PresetData()
@@ -351,6 +415,11 @@ class UploadImages(appionScript.AppionScript):
 		presetdata['tem'] = self.temdata
 		presetdata['ccdcamera'] = self.camdata
 		presetdata['magnification'] = self.params['magnification']
+		try:
+			self.params['doseliststr']
+			presetdata['dose'] = self.getDose(numinseries)*(10**20)
+		except:
+			pass
 
 		presetname = 'upload'
 		# defocal series have different preset for each member
@@ -378,6 +447,10 @@ class UploadImages(appionScript.AppionScript):
 
 		### use this for tilt series data
 		imgdata['tilt series'] = self.getTiltSeries(seriescount)
+
+		# references
+		for key in self.refdata.keys():
+			imgdata[key] = self.refdata[key]
 
 		if self.params['commit'] is True:
 			imgdata.insert()
@@ -414,9 +487,14 @@ class UploadImages(appionScript.AppionScript):
 	def newImagePath(self, mrcfile, numinseries):
 		extension = os.path.splitext(mrcfile)[1]
 		rootname = os.path.splitext(os.path.basename(mrcfile))[0]
-		newname = self.params['sessionname']+"_"+rootname+"_"+str(numinseries)+extension
+		newroot = rootname+"_"+str(numinseries)
+		if not newroot.startswith(self.params['sessionname']):
+			newroot = self.params['sessionname']+"_"+newroot
+		newname = newroot+extension
+		newframename = newroot+'.frames'+extension
 		newimagepath = os.path.join(self.leginonimagedir, newname)
-		return newimagepath
+		newframepath = os.path.join(self.leginonframedir, newframename)
+		return newimagepath, newframepath
 
 	#=====================
 	def readFile(self, oldmrcfile):
@@ -434,19 +512,100 @@ class UploadImages(appionScript.AppionScript):
 		y = int(mrcheader['ny'].astype(numpy.uint16))
 		return {'x': x, 'y': y}
 
+	def getNumberOfFrames(self, mrcfile):
+		mrcheader = mrc.readHeaderFromFile(mrcfile)
+		return max(1,int(mrcheader['nz'].astype(numpy.uint16)))
+
+	def makeFrameDir(self,newdir):
+		fileutil.mkdirs(newdir)
+
+	def copyFrames(self,source,destination):
+		apFile.safeCopy(source, destination)
+		
+	def unstack(self,mrc_stack):
+		apDisplay.printMsg("Unstacking mrc stack. A temporary extraction directory will be made using the stack name prefix.")
+		prefix = os.path.splitext(os.path.basename(mrc_stack))[0]
+		stack_path = os.path.dirname(os.path.abspath(mrc_stack))
+		temp_image_dir = "%s/%s_tmp" % (stack_path, prefix)
+		os.system('mkdir %s 2>/dev/null' % temp_image_dir)
+		stack = mrc.read(mrc_stack)
+		for tilt_image in range(1,len(stack)+1):
+			mrc.write(stack[tilt_image-1],"%s/%s_%04d.mrc" % (temp_image_dir, prefix, tilt_image))
+		return temp_image_dir
+		
+	def prepareImageForUpload(self,origfilepath,newframepath=None,nframes=1):	
+		### In order to obey the rule of first save image then insert 
+		### database record, image need to be read as numpy array, not copied
+		### single image should not overload memory
+		apDisplay.printMsg("Reading original image: "+origfilepath)
+		if nframes <= 1:
+			imagearray = mrc.read(origfilepath)
+		else:
+			apDisplay.printMsg('Summing %d frames for image upload' % nframes)
+			imagearray = mrc.sumStack(origfilepath)
+			apDisplay.printMsg('Copying frame stack %s to %s' % (origfilepath,newframepath))
+			self.copyFrames(origfilepath,newframepath)
+		return imagearray
+
+	def uploadRefImage(self,reftype,refpath):
+		if refpath is None:
+			nframes = 1
+			if reftype == 'dark':
+				imagearray = numpy.zeros((self.dims['y'],self.dims['x']))
+			else:
+				apDisplay.printError('It is only o.k. to fake dark reference')
+		else:
+			nframes = self.getNumberOfFrames(refpath)
+			imagearray = self.prepareImageForUpload(refpath,None,nframes)
+		scopedata = self.makeScopeEMData()
+		cameradata = self.makeCameraEMData(dimension=self.dims,nframes=nframes)
+		imagedata = {'image':imagearray,'scope':scopedata,'camera':cameradata}	
+		self.refdata[reftype] = self.c_client.storeCorrectorImageData(imagedata, reftype, 0)
+
+	def correctImage(self,rawarray,nframes):
+		if 'norm' in self.refdata.keys() and self.refdata['norm']:
+			normarray = self.refdata['norm']['image']
+			if 'dark' in self.refdata.keys() and self.refdata['dark']:
+				darkarray = self.refdata['dark']['image']*nframes/self.refdata['dark']['camera']['nframes']
+			else:
+				darkarray = numpy.zeros(rawarray.shape)
+			apDisplay.printMsg('Normalizing image before upload')
+			return self.c_client.normalizeImageArray(rawarray, darkarray, normarray, is_counting=False)
+		else:
+			# no norm/dark to correct
+			return rawarray
+
+	def startInit(self):
+		"""
+		Initialization of variables
+		"""
+		self.refdata = {}
+		### try and get the appion instruments
+		self.getAppionInstruments()
+		### create new session, so we have a place to store the log file
+		self.createNewSession()
+		# For gain/dark corrections
+		self.c_client = apDBImage.ApCorrectorClient(self.sessiondata,True)
+
 	#=====================
 	def start(self):
 		"""
 		This is the core of your function.
 		You decide what happens here!
 		"""
-		### try and get the appion instruments
-		self.getAppionInstruments()
+		self.startInit()
 
-		### create new session, so we have a place to store the log file
-		self.createNewSession()
-
-		mrclist = self.getImagesInDirectory(self.params['imagedir'])
+		if self.params['normimg']:
+			# need at least normimg to upload reference. darkimg can be faked
+			self.dims = self.getImageDimensions(self.params['normimg'])
+			# self.dims is only defined with normimg is present
+			self.uploadRefImage('norm', self.params['normimg'])
+			self.uploadRefImage('dark', self.params['darkimg'])
+		if os.path.isfile(self.params['imagedir']):
+			temp_image_dir = self.unstack(self.params['imagedir'])
+			mrclist = self.getImagesInDirectory(temp_image_dir)
+		else:
+			mrclist = self.getImagesInDirectory(self.params['imagedir'])
 
 		for i in range(min(len(mrclist),6)):
 			print mrclist[i]
@@ -456,20 +615,27 @@ class UploadImages(appionScript.AppionScript):
 		count = 1
 		t0 = time.time()
 		for mrcfile in mrclist:
+			if not os.path.isfile(mrcfile):
+				continue
 			### rename image
-			newimagepath = self.newImagePath(mrcfile, numinseries)
+			newimagepath, newframepath = self.newImagePath(mrcfile, numinseries)
 
 			### get image dimensions
 			dims = self.getImageDimensions(mrcfile)
-
+			nframes = self.getNumberOfFrames(mrcfile)
+			if nframes > 1:
+				self.makeFrameDir(self.leginonframedir)
 			### set pixel size in database
 			self.updatePixelSizeCalibration()
 
-			## read the file. images should be small enough to read into memory
-			imagearray = self.readFile(mrcfile)
+			## read the image/summed file into memory and copy frames if available
+			imagearray = self.prepareImageForUpload(mrcfile,newframepath,nframes)
+
+			## do gain/dark correction if needed
+			imagearray = self.correctImage(imagearray,nframes)
 
 			### upload image
-			self.uploadImageInformation(imagearray, newimagepath, dims, seriescount, numinseries)
+			self.uploadImageInformation(imagearray, newimagepath, dims, seriescount, numinseries, nframes)
 
 			### counting
 			numinseries += 1
@@ -487,6 +653,9 @@ class UploadImages(appionScript.AppionScript):
 				%(len(mrclist)-count, len(mrclist), apDisplay.timeString(esttime)))
 			### counting
 			count += 1
+		
+		if os.path.isfile(self.params['imagedir']):
+			shutil.rmtree(temp_image_dir)
 
 #=====================
 #=====================

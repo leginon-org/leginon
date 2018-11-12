@@ -1,10 +1,10 @@
 <?php
 
 /**
- *	The Leginon software is Copyright 2003 
- *	The Scripps Research Institute, La Jolla, CA
+ *	The Leginon software is Copyright under 
+ *	Apache License, Version 2.0
  *	For terms of the license agreement
- *	see  http://ami.scripps.edu/software/leginon-license
+ *	see  http://leginon.org
  */
 
 require_once "inc/leginon.inc";
@@ -21,12 +21,13 @@ $link->addlink('rctviewer.php','RCT','', 'rct');
 $link->addlink('2wayviewer.php','2 Way Viewer','', 'viewer');
 $link->addlink('tomo/','Tomography','', 'tomo_icon_3');
 $link->addlink('dualview.php','Dual Viewer','', 'dual_view');
+$link->addlink('fileviewer.php','File Listing','', 'file');
 $link->addlink('template.php', 'Hole Template viewer','', 'template');
 
 if (privilege('groups') > 3 ) 
 	$link->addlink('admin.php','Administration','', 'admin');
 if (privilege('projects') >= 2 ) 
-	$link->addlink('project','Project DB','', 'project');
+	$link->addlink('project/project.php','Project DB','', 'project');
 if (privilege('users') >= 2 && privilege('groups') <= 3) 
 	$link->addlink('admin.php','Miscellaneous','', 'admin');
 
@@ -42,7 +43,7 @@ login_header(PROJECT_TITLE,'','',true);
 	function preSearch()
 	{
 		var q = $F('query');
-		var url = '<?=$baseurl?>getsessioninfo.php';
+		var url = '<?php echo $baseurl; ?>getsessioninfo.php';
 		var pars = 'q=' + q;
 		$('result').innerHTML = "Searching...";
 		var myAjax = new Ajax.Request( url, { method: 'get', parameters: pars, onComplete: showResponse });

@@ -2,7 +2,7 @@
 import databinder
 import time
 import event
-import socket
+from pyami import mysocket
 import datatransport
 
 class Logger(object):
@@ -26,7 +26,7 @@ def printData(d):
    e = event.NodeAvailableEvent(location=myloc, destination=managerhost)
    client.send(e)
 
-myhostname = socket.gethostname().lower()
+myhostname = mysocket.gethostname().lower()
 
 for myport in range(49152,65536):
    try:
@@ -37,7 +37,9 @@ for myport in range(49152,65536):
 
 db.addBinding(myhostname, event.SetManagerEvent, printData)
 
-print 'ACCEPTING CONNECTIONS AT:  %s:%s' % (myhostname, myport)
+print '---------------------'
+print 'ACCEPTING CONNECTIONS AT:  %s:%s address %s' % (myhostname, myport, mysocket.gethostbyname(myhostname))
+print '---------------------'
 
 raw_input('hit enter to kill')
 db.exit()

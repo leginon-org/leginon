@@ -1,10 +1,10 @@
 <?php
 
 /**
- *	The Leginon software is Copyright 2003 
- *	The Scripps Research Institute, La Jolla, CA
+ *	The Leginon software is Copyright under 
+ *	Apache License, Version 2.0
  *	For terms of the license agreement
- *	see  http://ami.scripps.edu/software/leginon-license
+ *	see  http://leginon.org
  */
 
 
@@ -70,7 +70,7 @@ if ($g) {
         if ($t=='png')
                 imagepng($img);
         else
-                imagejpeg($img,'',$quality);
+                imagejpeg($img,Null,$quality);
 	imagedestroy($img);
 } else {
 	Header("Content-type: image/png");

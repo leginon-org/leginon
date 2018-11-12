@@ -1,9 +1,9 @@
 #
 # COPYRIGHT:
-#       The Leginon software is Copyright 2003
-#       The Scripps Research Institute, La Jolla, CA
+#       The Leginon software is Copyright under
+#       Apache License, Version 2.0
 #       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
+#       see  http://leginon.org
 #
 
 from leginon import leginondata
@@ -22,6 +22,7 @@ class GridEntry(node.Node):
 	settingsclass = leginondata.GridEntrySettingsData
 	defaultsettings = {
 		'grid name': None,
+		'stage z': 0.0,
 	}
 
 	def __init__(self, id, session, managerlocation, **kwargs):
@@ -97,8 +98,12 @@ class GridEntry(node.Node):
 
 	def submitGrid(self):
 		gridname = self.settings['grid name']
+		stagez = self.settings['stage z']
+		if stagez is None:
+			stagez = 0.0
 		evt = event.MakeTargetListEvent()
 		evt['grid'] = self.makeGridData(gridname)
+		evt['stagez'] = stagez
 		if evt['grid'] is None:
 			self.logger.error('Data collection event not sent')
 		else:

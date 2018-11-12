@@ -2,10 +2,10 @@
 
 #
 # COPYRIGHT:
-#       The Leginon software is Copyright 2003
-#       The Scripps Research Institute, La Jolla, CA
+#       The Leginon software is Copyright under
+#       Apache License, Version 2.0
 #       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
+#       see  http://leginon.org
 #
 
 from leginon import leginondata
@@ -62,6 +62,8 @@ class HoleFinder(targetfinder.TargetFinder):
 		'focus max mean thickness': 0.5,
 		'focus max stdev thickness': 0.5,
 		'focus interval': 1,
+		'focus offset row': 0,
+		'focus offset col': 0,
 	})
 	def __init__(self, id, session, managerlocation, **kwargs):
 		targetfinder.TargetFinder.__init__(self, id, session, managerlocation, **kwargs)
@@ -117,7 +119,11 @@ class HoleFinder(targetfinder.TargetFinder):
 		lowpasssig = lpfsettings['sigma']
 		edgethresh = self.settings['edge threshold']
 		self.hf.configure_edges(filter=filt, size=n, sigma=sig, absvalue=ab, lpsig=lowpasssig, thresh=edgethresh, edges=edges)
-		self.hf.find_edges()
+		try:
+			self.hf.find_edges()
+		except Exception, e:
+			self.logger.error(e)
+			return
 		# convert to Float32 to prevent seg fault
 		self.setImage(self.hf['edges'], 'Edge')
 
@@ -130,7 +136,11 @@ class HoleFinder(targetfinder.TargetFinder):
 			radring = (ring[0] / 2.0, ring[1] / 2.0)
 			radlist.append(radring)
 		self.hf.configure_template(ring_list=radlist)
-		self.hf.create_template()
+		try:
+			self.hf.create_template()
+		except Exception, e:
+			self.logger.error(e)
+			return
 		cortype = self.settings['template type']
 		lpfsettings = self.settings['template lpf']
 		corsigma = lpfsettings['sigma']
@@ -139,14 +149,22 @@ class HoleFinder(targetfinder.TargetFinder):
 		else:
 			corfilt = None
 		self.hf.configure_correlation(cortype, corfilt)
-		self.hf.correlate_template()
+		try:
+			self.hf.correlate_template()
+		except Exception, e:
+			self.logger.error(e)
+			return
 		self.setImage(self.hf['correlation'], 'Template')
 
 	def threshold(self):
 		self.logger.info('threshold')
 		tvalue = self.settings['threshold']
 		self.hf.configure_threshold(tvalue)
-		self.hf.threshold_correlation()
+		try:
+			self.hf.threshold_correlation()
+		except Exception, e:
+			self.logger.error(e)
+			return
 		# convert to Float32 to prevent seg fault
 		self.setImage(self.hf['threshold'], 'Threshold')
 
@@ -157,26 +175,17 @@ class HoleFinder(targetfinder.TargetFinder):
 			centers.append((c[1],c[0]))
 		return centers
 
-	def blobStatsTargets(self, blobs):
-		targets = []
-		for blob in blobs:
-			target = {}
-			target['x'] = blob.stats['center'][1]
-			target['y'] = blob.stats['center'][0]
-			target['stats'] = ordereddict.OrderedDict()
-			target['stats']['Size'] = blob.stats['n']
-			target['stats']['Mean'] = blob.stats['mean']
-			target['stats']['Std. Dev.'] = blob.stats['stddev']
-			targets.append(target)
-		return targets
-
 	def findBlobs(self):
 		self.logger.info('find blobs')
 		border = self.settings['blobs border']
 		blobsize = self.settings['blobs max size']
 		maxblobs = self.settings['blobs max']
 		self.hf.configure_blobs(border=border, maxblobsize=blobsize, maxblobs=maxblobs)
-		self.hf.find_blobs()
+		try:
+			self.hf.find_blobs()
+		except Exception, e:
+			self.logger.error(e)
+			return
 		blobs = self.hf['blobs']
 		targets = self.blobStatsTargets(blobs)
 		self.logger.info('Number of blobs: %s' % (len(targets),))
@@ -208,7 +217,11 @@ class HoleFinder(targetfinder.TargetFinder):
 		lattol = self.settings['lattice tolerance']
 
 		self.hf.configure_lattice(spacing=latspace, tolerance=lattol)
-		self.hf.blobs_to_lattice()
+		try:
+			self.hf.blobs_to_lattice()
+		except Exception, e:
+			self.logger.error(e)
+			return
 		self.logger.info('Number of lattice blobs: %s' % (len(self.hf['holes']),))
 		self.latticeHoleStats()
 
@@ -217,7 +230,11 @@ class HoleFinder(targetfinder.TargetFinder):
 		i0 = self.settings['lattice zero thickness']
 		self.icecalc.set_i0(i0)
 		self.hf.configure_holestats(radius=r)
-		self.hf.calc_holestats()
+		try:
+			self.hf.calc_holestats()
+		except Exception, e:
+			self.logger.error(e)
+			return
 		holes = self.hf['holes']
 		targets = self.holeStatsTargets(holes)
 		self.setTargets(targets, 'Lattice')
@@ -229,7 +246,11 @@ class HoleFinder(targetfinder.TargetFinder):
 		tmax = self.settings['ice max mean']
 		tstd = self.settings['ice max std']
 		self.hf.configure_ice(i0=i0,tmin=tmin,tmax=tmax,tstd=tstd)
-		self.hf.calc_ice()
+		try:
+			self.hf.calc_ice()
+		except Exception, e:
+			self.logger.error(e)
+			return
 		goodholes = self.hf['holes2']
 		centers = self.blobCenters(goodholes)
 		allcenters = self.blobCenters(self.hf['holes'])
@@ -252,7 +273,7 @@ class HoleFinder(targetfinder.TargetFinder):
 					self.logger.info('need more than one hole if you want to focus on one of them')
 					centers = []
 				elif onehole == 'Any Hole':
-					fochole = self.focus_on_hole(centers, allcenters)
+					fochole = self.focus_on_hole(centers, allcenters, True)
 					focus_points.append(fochole)
 				elif onehole == 'Good Hole':
 					if len(centers) < 2:
@@ -260,7 +281,7 @@ class HoleFinder(targetfinder.TargetFinder):
 						centers = []
 					else:
 						## use only good centers
-						fochole = self.focus_on_hole(centers, centers)
+						fochole = self.focus_on_hole(centers, centers, True)
 						focus_points.append(fochole)
 
 		self.logger.info('Holes with good ice: %s' % (len(centers),))
@@ -294,7 +315,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		cy /= len(points)
 		return cx,cy
 
-	def focus_on_hole(self, good, all):
+	def focus_on_hole(self, good, all, apply_offset=False):
 		cx,cy = self.centroid(all)
 		focpoint = None
 
@@ -314,6 +335,8 @@ class HoleFinder(targetfinder.TargetFinder):
 				if dist < closest_dist:
 					closest_dist = dist
 					closest_point = point
+			if apply_offset:
+				closest_point = self.offsetFocus(closest_point)
 			return closest_point
 
 		## now use a good hole for focus
@@ -326,7 +349,12 @@ class HoleFinder(targetfinder.TargetFinder):
 				closest_dist = dist
 				closest_point = point
 		good.remove(closest_point)
+		if apply_offset:
+			closest_point = self.offsetFocus(closest_point)
 		return closest_point
+
+	def offsetFocus(self, point):
+			return point[0]+self.settings['focus offset col'],point[1]+self.settings['focus offset row']
 
 	def bypass(self):
 		self.setTargets([], 'acquisition', block=True)
@@ -468,7 +496,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		## user part
 		if self.settings['user check'] or autofailed:
 			while True:
-				self.waitForUserCheck()
+				self.waitForInteraction(imdata)
 				ptargets = self.processPreviewTargets(imdata, targetlist)
 				if not ptargets:
 					break

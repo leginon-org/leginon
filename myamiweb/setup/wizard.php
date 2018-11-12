@@ -29,8 +29,8 @@
 			<p>#main</p>
 		</div>
 		<div id="footer">
-			<p>The Scripps Research Institute. National Resource for 
-			   Automated Molecular Microscopy (<a style="text-decoration:none" href="http://nramm.scripps.edu">NRAMM</a>)</p>
+			<p>New York Biology Center. National Resource for 
+			   Automated Molecular Microscopy (<a style="text-decoration:none" href="http://nramm.nysbc.org">NRAMM</a>)</p>
 		</div>
 	</div>
 </body>
