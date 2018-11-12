@@ -15,6 +15,7 @@ import _mysql_exceptions
 import MySQLdb.constants.CR
 
 debug = False
+columns_created = {}
 
 class DatabaseError(Exception):
 	pass
