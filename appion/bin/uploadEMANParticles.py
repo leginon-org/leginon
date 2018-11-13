@@ -143,6 +143,7 @@ class UploadParticles(appionScript.AppionScript):
 				ycoord = float(cols[1]) * self.params['bin']
 			elif self.params['coordtype'] == "relion":
 				if len(cols)<3: continue
+				if line.startswith("#"): continue
 				xcoord = int(round(float(cols[labels.index("_rlnCoordinateX")])))
 				ycoord = int(round(float(cols[labels.index("_rlnCoordinateY")])))
 			else:
