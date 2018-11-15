@@ -75,8 +75,9 @@ class RemoteStatusbar(RemoteServer):
 class RemoteToolbar(RemoteServer):
 	def __init__(self, logger, sessiondata, node, remotedata_base):
 		super(RemoteToolbar,self).__init__(logger, sessiondata, node)
-		self.datafile_base = os.path.join(remotedata_base,self.node_name,'toolbar')
+		self.datafile_base = os.path.join(remotedata_base,'toolbar')
 		pyami.fileutil.mkdirs(self.datafile_base)
+		self.node_dir = os.path.join(self.datafile_base, self.node_name)
 		self.tools = {}
 
 	def addClickTool(self,name, handling_attr_name, help_string=''):
@@ -97,7 +98,8 @@ class Tool(object):
 		self.name = name
 		self.handling_attr = getattr(self.toolbar.node, handling_attr_name)
 		self.help_string = help_string
-		self.data_path = os.path.join(self.toolbar.datafile_base,name)
+		self.data_path = os.path.join(self.toolbar.node_dir,name)
+		pyami.fileutil.mkdirs(self.data_path)
 			
 class ClickTool(Tool):
 	'''
@@ -108,6 +110,7 @@ class ClickTool(Tool):
 		super(ClickTool,self).__init__(parent, name, handling_attr_name, help_string)
 		triggerfile = 'click'
 		self.triggerpath = os.path.join(self.data_path, triggerfile)
+		print 'click tracking initialized, triggered by the presence of %s' % self.triggerpath
 		self.activate()
 
 	def deActivate(self):
@@ -127,7 +130,6 @@ class ClickTool(Tool):
 		Track triggerpath existance if active
 		'''
 		while self.active:
-			print 'click tracking active'
 			if os.path.isfile(self.triggerpath):
 				self.handling_attr()
 				os.remove(self.triggerpath)
@@ -137,7 +139,7 @@ class RemoteTargetingServer(RemoteServer):
 	def __init__(self, logger, sessiondata, node, remotedata_base):
 		super(RemoteTargetingServer,self).__init__(logger, sessiondata, node)
 		self.targetnames = []
-		self.datafile_base = os.path.join(remotedata_base,self.node_name,'targeting')
+		self.datafile_base = os.path.join(remotedata_base,'targeting',self.node_name)
 		pyami.fileutil.mkdirs(self.datafile_base)
 		self.targefilepath = None
 		self.excluded_targetnames = ['Blobs','preview']

@@ -23,6 +23,7 @@ import os.path
 import itertools
 import math
 import logging
+import remoteserver
 
 class TEMController(node.Node):
 	panelclass = gui.wx.TEMController.Panel
@@ -42,6 +43,7 @@ class TEMController(node.Node):
 		self.loaded_grid_slot = None
 		self.grid_slot_numbers = []
 		self.grid_slot_names = []
+		self.remote_toolbar = remoteserver.RemoteToolbar(self.logger, session, self, self.remote.remotedata_base)
 		self.start()
 
 	def onInitialized(self):
@@ -51,6 +53,8 @@ class TEMController(node.Node):
 		# This may not give results since instrument may not be loaded, yet
 		self.grid_slot_numbers = self.researchLoadableGridSlots()
 		self.grid_slot_names = map((lambda x:'%d' % (x,)),self.grid_slot_numbers)
+		self.remote_toolbar.addClickTool('pause','uiPause','pause process')
+		self.remote_toolbar.addClickTool('play','uiContinue','continue process')
 
 	def _toScope(self,name, stagedict):
 		try:
