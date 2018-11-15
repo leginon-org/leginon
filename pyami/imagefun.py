@@ -829,7 +829,7 @@ def normalizeImageArray(rawarray, darkarray, normarray, darkscale=1, badrowlist=
 		r = replaceBadRowsAndColumns(r,badrowlist,badcolumnlist)
 	return r
 
-def normalizeFromDarkAndBright(rawarray, darkarray, brightarray, scale=1, badrowlist=None, badcolumnlist=None, clip=None):
+def normalizeFromDarkAndBright(rawarray, darkarray, brightarray, scale=1, badrowlist=None, badcolumnlist=None, border=None):
 	if scale is not 1:
 		darkarray=darkarray/scale
 		brightarray=brightarray/scale
@@ -841,8 +841,8 @@ def normalizeFromDarkAndBright(rawarray, darkarray, brightarray, scale=1, badrow
 	correctedarray = numpy.where(numpy.isfinite(correctedarray), correctedarray, 0)
 	if badrowlist is not None or badcolumnlist is not None:
 		correctedarray = replaceBadRowsAndColumns(correctedarray,badrowlist,badcolumnlist)
-	if clip is not None:
-		correctedarray = clipAndPadImage(correctedarray,clip)
+	if border is not None:
+		correctedarray = clipAndPadImage(correctedarray,border)
 	return correctedarray
 
 def replaceBadRowsAndColumns(imagearray,badrowlist=[], badcolumnlist=[]):
@@ -856,7 +856,7 @@ def replaceBadRowsAndColumns(imagearray,badrowlist=[], badcolumnlist=[]):
 				higherneighbor +=1
 			if lowerneighbor <= 0 :
 				lowerneighbor=higherneighbor
-			if higherneighbor <= maxallowed:
+			if higherneighbor >= maxallowed:
 				higherneighbor=lowerneighbor
 		return (lowerneighbor,higherneighbor)
 	for badrow in badrowlist:

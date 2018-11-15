@@ -1112,6 +1112,8 @@ class particledata {
 			."c.`defocusinit`, "
 			."c.`amplitude_contrast`, "
 			."c.`angle_astigmatism`, "
+			."cos(c.`angle_astigmatism`*3.14159/180)*(c.`defocus1`-c.`defocus2`)/2 as astig_x, "
+			."sin(c.`angle_astigmatism`*3.14159/180)*(c.`defocus1`-c.`defocus2`)/2 as astig_y, "
 			.$phase_shift_select
 			."c.`REF|ApAceRunData|acerun`, "  //Needed in checking if there is result.
 			."c.`noise1`, "
@@ -1256,6 +1258,8 @@ class particledata {
 			."    unix_timestamp(s.`DEF_timestamp`) as unix_timestamp, "
 			."		2*ABS(ctf.defocus1-ctf.defocus2)/(ctf.defocus1+ctf.defocus2) AS difference_from_mean, "
 			."		(ctf.`defocus1`+ctf.`defocus2`)/2+s.`defocus` as difference_from_nom, "
+			."    cos(2*ctf.`angle_astigmatism`*3.14159/180)*(ctf.`defocus1`-ctf.`defocus2`)/2 as astig_x, "
+			."    sin(2*ctf.`angle_astigmatism`*3.14159/180)*(ctf.`defocus1`-ctf.`defocus2`)/2 as astig_y, "
 			.$this->getAppionConfidenceScoreSelect('ctf').", "
 			.$this->getAppionResolutionSelect('ctf').", "
 			."		ctf.* "
@@ -6244,7 +6248,7 @@ function simplify($e) {
 function displayCTFstats($stats, $display_keys) {
 	if (!is_array($stats) || !is_array($display_keys))
 		return ;
-	$html = "<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>";
+	$html = "<table class='paleBlueRows'>";
 	foreach($stats as  $field=>$data) {
 		$field_shown = ($field == 'resolution_appion') ? "resolution<br/><br>highest of res(pkg),<br/>res(0.5),res(0.8)": $field;
 		$field_shown = ($field == 'ctffind4_resolution') ? "package resolution": $field;

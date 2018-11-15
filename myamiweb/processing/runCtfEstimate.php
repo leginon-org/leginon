@@ -233,7 +233,7 @@ function createCtfFindForm($extra=false) {
 
 	// set defaults and check posted values
 	$form_fieldsz = ($_POST['fieldsize']) ? $_POST['fieldsize'] : 512;
-	$form_bin = ($_POST['binval']) ? $_POST['binval'] : 2;
+	$form_bin = ($_POST['binval']) ? $_POST['binval'] : 1;
 	$form_ampc = ($_POST['ampcarbon']) ? $_POST['ampcarbon'] : '0.15';
 	$form_ampi = ($_POST['ampice']) ? $_POST['ampice'] : '0.07';
 	$form_resmin = ($_POST['resmin']) ? $_POST['resmin'] : '100';

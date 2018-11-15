@@ -69,6 +69,8 @@ class Node(correctorclient.CorrectorClient):
 		self.name = name
 		self.this_node = None
 		self.panel = panel
+		self.node_status = 'idle'
+		self.before_pause_node_status = 'idle'
 		self.tem_hostname = ''
 		
 		self.initializeLogger()
@@ -534,6 +536,9 @@ class Node(correctorclient.CorrectorClient):
 		'''
 		if True:
 			self.remote_status.setStatus(status)
+		if status == 'user input':
+			self.before_pause_node_status = copy.copy(self.node_status)
+		self.node_status = status
 		self.panel.setStatus(status)
 
 	def declareDrift(self, type):

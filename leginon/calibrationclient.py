@@ -1023,22 +1023,22 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			return False
 		return True
 
-	def calculateImageShiftComaMatrix(self,tdata,xydata):
+	def calculateImageShiftAberrationMatrix(self,tdata,xydata):
 		''' Fit the beam tilt vector induced by image shift 
 				to a straight line on individual axis.  
 				Strickly speaking we should use orthogonal distance regression.''' 
 		ordered_axes = ['x','y']
 		matrix = numpy.zeros((2,2))
-		coma0 = {'x':0.0,'y':0.0}
+		ab0 = {'x':0.0,'y':0.0}
 		for index1, axis1 in enumerate(ordered_axes):
 			data = xydata[axis1]
-			for axis2 in data.keys():
+			for axis2 in ordered_axes:
 				(slope,t_intercept) = scipy.polyfit(numpy.array(tdata[axis1]),numpy.array(xydata[axis1][axis2]),1)
 				index2 = ordered_axes.index(axis2)
-				matrix[index1,index2] = slope
-				coma0[axis2] += t_intercept
-			coma0[axis2] /= len(ordered_axes)
-		return matrix, coma0
+				matrix[index2,index1] = slope
+				ab0[axis2] += t_intercept
+			ab0[axis2] /= len(ordered_axes)
+		return matrix, ab0
 
 	def measureComaFree(self, tilt_value, settle, raise_error=False):
 		tem = self.instrument.getTEMData()
@@ -1100,35 +1100,29 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			self.node.logger.debug("std %5.2f,  %5.2f" %(xarray.std()*1000,yarray.std()*1000))
 			return xarray,yarray
 
-	def transformImageShiftToBeamTilt(self, imageshift, tem, cam, ht, zerobeamtilt, mag):
-		newbeamtilt = {}
+	def transformImageShiftToBeamTilt(self, imageshift, tem, cam, ht, zero, mag):
 		par = 'image-shift coma'
-		try:
-			# not to query specific mag for now
-			probe = self.instrument.tem.ProbeMode
-			matrix = self.retrieveMatrix(tem, cam, 'image-shift coma', ht, None, probe)
-		except NoMatrixCalibrationError:
-			raise RuntimeError('missing %s calibration matrix' % par)
-		self.node.logger.debug("Image Shift ( %5.2f, %5.2f)" % (imageshift['x']*1e6,imageshift['y']*1e6))
-		shiftvect = numpy.array((imageshift['x'], imageshift['y']))
-		change = numpy.dot(matrix, shiftvect)
-		newbeamtilt['x'] = zerobeamtilt['x'] - change[0]
-		newbeamtilt['y'] = zerobeamtilt['y'] - change[1]
-		self.node.logger.debug("Beam Tilt Correction ( %5.2f, %5.2f)" % (change[0]*1e3,change[1]*1e3))
-		self.node.logger.debug("Beam Tilt ( %5.2f, %5.2f)" % (newbeamtilt['x']*1e3,newbeamtilt['y']*1e3))
-		return newbeamtilt
+		new = self._transformImageShiftToNewPar(imageshift, tem, cam, ht, zero, mag, par)
+		self.node.logger.debug("Beam Tilt ( %5.2f, %5.2f) mrad" % (new['x']*1e3,new['y']*1e3))
+		return new
 
 	def transformImageShiftToObjStig(self, imageshift, tem, cam, ht, zero, mag):
 		par = 'image-shift stig'
 		new = self._transformImageShiftToNewPar(imageshift, tem, cam, ht, zero, mag, par)
+		self.node.logger.debug("Obj Stig ( %5.2f, %5.2f) * 1e-3" % (new['x']*1e3,new['y']*1e3))
 		return new
 
 	def transformImageShiftToDefocus(self, imageshift, tem, cam, ht, defoc0, mag):
 		par = 'image-shift defocus'
 		zero = {'x':defoc0,'y':0}
-		new = self._transformImageShiftToNewPar(imageshift, tem, cam, ht, zero, mag, par)
-		defoc1 = new['x']
-		return defoc1
+		try:
+			new = self._transformImageShiftToNewPar(imageshift, tem, cam, ht, zero, mag, par)
+			defoc1 = new['x']
+			self.node.logger.debug("Defocus %5.2f um" % (defoc1*1e6,))
+			return defoc1
+		except:
+			self.node.logger.warning('image-shift defocus not calibrated, ignore such correction.')
+			return defoc0
 
 	def _transformImageShiftToNewPar(self, imageshift, tem, cam, ht, zero, mag, par):
 		new = {}
@@ -1143,8 +1137,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		change = numpy.dot(matrix, shiftvect)
 		new['x'] = zero['x'] - change[0]
 		new['y'] = zero['y'] - change[1]
-		self.node.logger.debug("%s Correction ( %5.2f, %5.2f)" % (par, change[0]*1e3,change[1]*1e3))
-		self.node.logger.debug("Obj Stig ( %5.2f, %5.2f)" % (new['x']*1e3,new['y']*1e3))
+		self.node.logger.debug("Change ( %5.2f, %5.2f) * 1e-3" % (new['x']*1e3,new['y']*1e3))
 		return new
 
 	def correctImageShiftComa(self):

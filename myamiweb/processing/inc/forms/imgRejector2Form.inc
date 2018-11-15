@@ -157,6 +157,7 @@ class ImgRejector2Form extends BasicLayoutForm
 		} else {
 			if ($postArray['checkice'])
 				$msg .= '<B>ERROR:</B>Currently need ctf estimation to check ice crystal<br/>';	
+		}
 		return $msg;
 	}
 

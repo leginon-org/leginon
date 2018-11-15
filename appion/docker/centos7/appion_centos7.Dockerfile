@@ -3,12 +3,11 @@ MAINTAINER Neil Voss <vossman77@gmail.com>
 
 ### install epel
 RUN yum -y install epel-release
-RUN yum -y install dnf
-RUN dnf -y upgrade \
-  && dnf -y install wget epel-release sudo passwd rsync tar openssh-clients && dnf -y clean all
+RUN yum -y upgrade \
+  && yum -y install wget epel-release sudo passwd rsync tar openssh-clients && yum -y clean all
 
 ### install software
-RUN dnf -y upgrade && dnf -y install \
+RUN yum -y upgrade && yum -y install \
  python-tools python-devel python-matplotlib \
  ImageMagick grace gnuplot bash-completion colordiff \
  wxPython numpy scipy python-imaging python2-pip  \
@@ -22,12 +21,12 @@ RUN dnf -y upgrade && dnf -y install \
  libssh2-devel mlocate nano elinks file \
  python-configparser h5py git pyflakes \
  gtkglext-libs pangox-compat `#protomo specific pkgs` \
- numactl && dnf -y clean all
+ numactl && yum -y clean all
 
 RUN sed -i.bak 's/max_allowed_packet = [0-9]*M/max_allowed_packet = 24M/' /etc/nanorc
 
 ## Appion specific installs
-#RUN dnf -y upgrade && dnf -y install mozilla-adblockplus firefox dbus && dnf -y clean all
+#RUN yum -y upgrade && yum -y install mozilla-adblockplus firefox dbus && yum -y clean all
 RUN dbus-uuidgen > /var/lib/dbus/machine-id
 RUN pip install --upgrade pip
 RUN pip install joblib pyfftw3 fs==0.5.4 scikit-learn==0.18.2
@@ -48,13 +47,13 @@ RUN chmod 444 /var/www/html/info.php && echo 'chmod info.php'
 EXPOSE 80
 
 ### MariaDB setup
-RUN cp -fv /usr/share/mysql/my-huge.cnf /etc/my.cnf
+#RUN cp -fv /usr/share/mysql/my-huge.cnf /etc/my.cnf
 RUN sed -i.bak 's/max_allowed_packet = [0-9]*M/max_allowed_packet = 24M/' /etc/my.cnf
 RUN mysql_install_db --user=mysql --ldata=/var/lib/mysql/
 #EXPOSE 3306
 
 ### Myami setup
-RUN git clone http://emg.nysbc.org/git/myami.git /emg/sw/myami/
+RUN git clone -b myami-3.3 http://emg.nysbc.org/git/myami.git /emg/sw/myami/
 RUN ln -sv /emg/sw/myami/myamiweb /var/www/html/ami
 RUN ln -sv /emg/sw/myami/myamiweb /var/www/html/myamiweb
 
@@ -64,7 +63,7 @@ COPY instruments.cfg /etc/myami/instruments.cfg
 COPY appion.cfg /etc/myami/appion.cfg
 COPY redux.cfg /etc/myami/redux.cfg
 COPY config.php /emg/sw/myami/myamiweb/config.php
-COPY docker.sql /emg/sw/docker.sql
+COPY docker-innodb.sql /emg/sw/docker.sql
 COPY particledata.dat /emg/sw/particledata.dat
 RUN mkdir -p /var/cache/myami/redux/ && chmod 777 /var/cache/myami/redux/
 RUN ln -sv /emg/sw/myami/appion/appionlib /usr/lib64/python2.7/site-packages/
@@ -127,15 +126,15 @@ ADD TGZ/protomo2-centos7-docker.tgz /emg/sw/
 ADD TGZ/ffmpeg-git-64bit-static.tar.xz /emg/sw/
 
 ### Trying to do VNC
-#RUN dnf -y upgrade && dnf -y install  \
+#RUN yum -y upgrade && yum -y install  \
 # ftp://ftp.pbone.net/mirror/ftp.scientificlinux.org/linux/scientific/6.5/x86_64/os/Packages/xorg-x11-twm-1.0.3-5.1.el6.x86_64.rpm \
-# && dnf -y clean all
-RUN dnf -y upgrade && dnf -y install \
+# && yum -y clean all
+RUN yum -y upgrade && yum -y install \
  tigervnc-server xterm xsetroot fluxbox \
  xorg-x11-xinit xorg-x11-font-utils xorg-x11-fonts-Type1 xorg-x11-xauth  \
  libX11-common libX11 dbus-x11 xorg-x11-server-utils xorg-x11-xkb-utils \
  xorg-x11-fonts-75dpi xorg-x11-fonts-100dpi xorg-x11-fonts-misc \
- && dnf -y clean all
+ && yum -y clean all
 
 ### Change to local user
 #RUN mkdir -p /home/appionuser

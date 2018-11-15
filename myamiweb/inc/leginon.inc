@@ -286,7 +286,8 @@ class leginondata {
 		$q="select "
 		."i.`DEF_id` as `InstrumentId`, "
 		."i.`name`, "
-		."i.`hostname` "
+		."i.`hostname`, "
+		."i.`description` "
 		."from `SessionData` s "
 		."left join AcquisitionImageData a on (a.`REF|SessionData|session`=s.`DEF_id`) "
 		."left join ScopeEMData sc on (sc.`DEF_id`=a.`REF|ScopeEMData|scope`) "
@@ -302,7 +303,7 @@ class leginondata {
 		foreach ($scopeinfo as $info) {
 			$names[] = $info['name'];
 			$ids[] = $info['InstrumentId'];
-			$hosts[] = $info['hostname'];
+			$hosts[] = ($info['description']) ? $info['description']:$info['hostname'];
 		}
 		$name_str = implode(', ',$names);
 		$scopeid_str = implode(', ',$ids);
@@ -440,7 +441,7 @@ class leginondata {
 	}
 
 	function getScopes($hostname=false, $real_only=false) {
-		$q="select `DEF_id` as id, name, hostname from `InstrumentData` "
+		$q="select `DEF_id` as id, name, hostname, description from `InstrumentData` "
 			." where (cs is not null)";
 		if (!empty($hostname)) $q .= " and hostname='$hostname'";
 		if (!empty($real_only)) $q .= " and not name like 'Sim%' and not name like 'Appion%' and hidden != 1";
@@ -450,11 +451,11 @@ class leginondata {
 	function getScopesForSelection() {
 		$scopes = $this->getScopes(false,true);
 		if ( !is_array($scopes)) return false;
-		$allscopes = array('id'=>false,'name'=>'all microscopes');
+		$allscopes = array('id'=>false,'name'=>'all microscopes', 'description'=>false);
 		array_unshift( $scopes, $allscopes);
 		return $scopes;
 	}
-
+	
 	function getSummary($expId, $presetname=false, $hidden=false) {
 	/*
 		$q="select if (isnull(p.name), '"
@@ -469,7 +470,7 @@ class leginondata {
 			$hiddenjoin = "left join `ViewerImageStatus` r on (r.`REF|AcquisitionImageData|image`=a.DEF_id) ";
 			$hiddenwhere = "and (r.DEF_id is NULL or (r.status <>'hidden' and r.status <> 'trash') ";
 		}
-		$q="SELECT p.name, count(a.`DEF_id`) as nb, p.magnification "
+		$q="SELECT p.DEF_id as presetId, p.name, count(a.`DEF_id`) as nb, p.magnification "
 			.",p.dose, min(p.defocus) as defocusmin, max(p.defocus) as defocusmax"
 			." FROM AcquisitionImageData a "
 			.$hiddenjoin
@@ -483,6 +484,39 @@ class leginondata {
 		return $this->mysql->getSQLResult($q);
 	}
 
+	function getImageInfoFromPreset($presetId) {
+		$q = 'SELECT DEF_id '
+			.' FROM AcquisitionImageData AS i '
+			.' WHERE i.`REF|PresetData|preset` = '.$presetId
+			.' ORDER BY RAND() LIMIT 1';
+		$imgIds = $this->mysql->getSQLResult($q);
+		$imgId = $imgIds[0]['DEF_id'];
+		$imageinfo = $this->getImageInfo($imgId);
+		return $imageinfo;
+	}
+
+	function getAllPresetData($presetId) {
+		$q = 'SELECT * '
+			.' FROM PresetData AS p '
+			.' WHERE p.DEF_id = '.$presetId
+			.' LIMIT 1';
+		$datas = $this->mysql->getSQLResult($q);
+		return $datas[0];
+	}
+
+	function getMinMaxDefocusForPreset($presetName, $sessionId) {
+		$q = 'SELECT MIN(s.defocus) AS mindef, MAX(s.defocus) AS maxdef'
+			.' FROM AcquisitionImageData AS i '
+			.' LEFT JOIN ScopeEMData AS s '
+			.' ON (s.DEF_id = i.`REF|ScopeEMData|scope`) '
+			.' LEFT JOIN PresetData AS p '
+			.' ON (p.DEF_id = i.`REF|PresetData|preset`) '
+			." WHERE p.`name` = '".$presetName."'"
+			.' AND p.`REF|SessionData|session` = '.$sessionId;
+		$datas = $this->mysql->getSQLResult($q);
+		return $datas[0];
+	}
+	
 	function getUsers($order=null) {
 		return $this->getAll('UserData', $order);
 	}
@@ -759,7 +793,7 @@ class leginondata {
 			."`p`.`SUBD|dimension|y`, `p`.`SUBD|binning|x`, `p`.`SUBD|binning|y`, "
 			."`p`.`SUBD|offset|x`, `p`.`SUBD|offset|y`, `p`.`exposure time`, "
 			."`p`.`removed`, `p`.`hasref`, `p`.`dose`, `p`.`number`, "
-			."`p`.`film`, `p`.`REF|InstrumentData|tem`, `p`.`REF|InstrumentData|ccdcamera` "
+			."`p`.`REF|InstrumentData|tem`, `p`.`REF|InstrumentData|ccdcamera` "
 			."FROM "
 			."`AcquisitionImageData` AS `a` "
 			."LEFT JOIN `PresetData` AS `p` ON (`p`.`DEF_id`=`a`.`REF|PresetData|preset`) "
@@ -1275,6 +1309,10 @@ class leginondata {
 		if (!$types=$this->mysql->getSQLResult($q))
 			$types = array();
 		return $types;
+	}
+
+	function getIsMagDependentMatrix($mtype) {
+		return (substr($mtype,0,11) === "image-shift") ? false:true;
 	}
 
 	function getImageFFT($imgId) {
@@ -3005,7 +3043,9 @@ class leginondata {
 		$q = "SELECT "
 			."date_format(h.`DEF_timestamp`, '%Y-%d-%m %T') as `timestamp`, "
 			."a.filename as filename, "
-			.'`h`.`thickness-mean` '
+			.'`h`.`thickness-mean`, '
+			.'`h`.`good` AS `good`, '
+			.'`a`.`DEF_id` AS `image_id` '
 			.'FROM '
 			.'`HoleStatsData` AS `h` '
 			.'LEFT JOIN `HoleFinderPrefsData` AS `pref` ON (`pref`.`DEF_id`=`h`.`REF|HoleFinderPrefsData|prefs`) '

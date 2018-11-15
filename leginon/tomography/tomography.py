@@ -225,7 +225,11 @@ class Tomography(leginon.acquisition.Acquisition):
 		collect.exposures = exposures
 		collect.prediction = self.prediction
 		collect.setStatus = self.setStatus
+		collect.reset_tilt = self.targetlist_reset_tilt
 
+		self.logger.info('Set stage position alpha to %.2f degrees according to targetlist' % math.degrees(self.targetlist_reset_tilt))
+		self.instrument.tem.StagePosition = {'a': self.targetlist_reset_tilt}
+		time.sleep(self.settings['tilt pause time'])
 		try:
 			collect.start()
 		except leginon.tomography.collection.Abort:

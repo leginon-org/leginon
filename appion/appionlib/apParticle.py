@@ -12,7 +12,8 @@ from appionlib import appiondata
 from appionlib import apDatabase
 from appionlib import apDisplay
 from appionlib import apDefocalPairs
-
+#sinedon
+from sinedon import connections
 ####
 # This is a database connections file with no file functions
 # Please keep it this way
@@ -224,7 +225,7 @@ def insertParticlePeakPairs(peaktree1, peaktree2, peakerrors, imgdata1, imgdata2
 	return
 
 #===========================
-def insertParticlePeaks(peaktree, imgdata, runname, msg=False):
+def insertParticlePeaks(peaktree, imgdata, runname, msg=False, query=False):
 	"""
 	takes an image data object (imgdata) and inserts particles into DB from peaktree
 	"""
@@ -278,10 +279,49 @@ def insertParticlePeaks(peaktree, imgdata, runname, msg=False):
 
 		### INSERT VALUES
 		if peakhasarea is True:
-			presult = particlesq.query()
+			if query:
+				presult = particlesq.query()
+			else:
+				presult = False
 			if not presult:
 				count+=1
 				particlesq.insert()
+	if msg is True:
+		apDisplay.printMsg("inserted "+str(count)+" of "+str(len(peaktree))+" peaks into database"
+			+" in "+apDisplay.timeString(time.time()-t0))
+	return
+
+#===========================
+def fastInsertParticlePeaks(peaktree, imgdata, runname, msg=False):
+	"""
+	takes an image data object (imgdata) and inserts particles into DB from peaktree
+	"""
+	#INFO
+	sessiondata = imgdata['session']
+
+	#GET RUN DATA
+	runq=appiondata.ApSelectionRunData()
+	runq['name'] = runname
+	runq['session'] = sessiondata
+	selectionruns=runq.query(results=1)
+
+	if not selectionruns:
+		apDisplay.printError("could not find selection run in database")
+
+	mysql_string = """INSERT INTO `ApParticleData` (`xcoord`, `ycoord`, `diameter`, `peakarea`,`REF|leginondata|AcquisitionImageData|image`, `REF|ApSelectionRunData|selectionrun`) VALUES (%s, %s, %s, %s, %s, %s)"""
+	values_list = []
+	### WRITE PARTICLES TO DATABASE
+	count = 0
+	t0 = time.time()
+	for peakdict in peaktree:
+		values_list.append((peakdict['xcoord'], peakdict['ycoord'], peakdict['diameter'], peakdict['peakarea'], imgdata.dbid, selectionruns[0].dbid))
+		
+	db = connections.getConnection('appionlib.appiondata')
+	cursor = db.dbd.db.cursor()
+	cursor.executemany(mysql_string, values_list)
+	db.dbd.db.commit()
+	cursor.close()
+	count = len(values_list)    
 	if msg is True:
 		apDisplay.printMsg("inserted "+str(count)+" of "+str(len(peaktree))+" peaks into database"
 			+" in "+apDisplay.timeString(time.time()-t0))

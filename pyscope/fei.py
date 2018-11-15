@@ -50,7 +50,9 @@ class Tecnai(tem.TEM):
 		#self.special_submode_mags = {380:('EFTEM',3)}
 		self.projection_submode_map = self.special_submode_mags.copy()
 		
-		self.correctedstage = True
+		self.correctedstage = self.getFeiConfig('stage','do_stage_xyz_backlash')
+		self.corrected_alpha_stage = self.getFeiConfig('stage','do_stage_alpha_backlash')
+		self.alpha_backlash_delta = self.getFeiConfig('stage','stage_alpha_backlash_angle_delta')
 		self.normalize_all_after_mag_setting = self.getFeiConfig('optics','force_normalize_all_after_mag_setting')
 		try:
 			com_module.CoInitializeEx(com_module.COINIT_MULTITHREADED)
@@ -201,25 +203,47 @@ class Tecnai(tem.TEM):
 		value = self.checkStagePosition(value)
 		if not value:
 			return
+		# calculate pre-position
+		prevalue = {}
+		prevalue2 = {}
+		# correct xyz
 		if self.correctedstage:
 			delta = self.getXYZStageBacklashDelta()
-			relax = self.getXYStageRelaxDistance()
-			stagenow = self.getStagePosition()
-			# calculate pre-position
-			prevalue = {}
-			prevalue2 = {}
 			for axis in ('x','y','z'):
 				if axis in value:
 					prevalue[axis] = value[axis] - delta
+		# relax xy
+		relax = self.getXYStageRelaxDistance()
+		if abs(relax) > 1e-9:
 			for axis in ('x','y'):
 				if axis in value:
 					prevalue2[axis] = value[axis] + relax
-			if delta and prevalue:
-				self._setStagePosition(prevalue)
-				time.sleep(0.2)
-			if abs(relax) > 1e-9 and prevalue2:
-				self._setStagePosition(prevalue)
-				time.sleep(0.2)
+		# preposition a
+		if self.corrected_alpha_stage:
+			# alpha tilt backlash only in one direction
+			alpha_delta_degrees = self.alpha_backlash_delta
+			if 'a' in value.keys():
+					axis = 'a'
+					prevalue[axis] = value[axis] - alpha_delta_degrees*3.14159/180.0
+		if prevalue:
+			# set all axes in value
+			for axis in value.keys():
+				if axis not in prevalue.keys():
+					prevalue[axis] = value[axis]
+					# skip those requiring no further change
+					del value[axis]
+			self._setStagePosition(prevalue)
+			time.sleep(0.2)
+		# set all remaining axes in the remaining value
+		if abs(relax) > 1e-9 and prevalue2:
+			for axis in value.keys():
+				if axis not in prevalue2.keys():
+					prevalue2[axis] = value[axis]
+					# skip those requiring no further change
+					del value[axis]
+			self._setStagePosition(prevalue2)
+			time.sleep(0.2)
+		# final position
 		return self._setStagePosition(value)
 
 	def setStageSpeed(self, value):
@@ -353,6 +377,9 @@ class Tecnai(tem.TEM):
 		else:
 			raise ValueError
 		setattr(self.tecnai.Illumination, self.intensity_prop, intensity)
+		# sleep for intensity change
+		if self.getFeiConfig('camera','extra_protector_sleep_time'):
+			time.sleep(1)
 
 	def getDarkFieldMode(self):
 		if self.tecnai.Illumination.DFMode == self.tem_constants.dfOff:
@@ -1558,7 +1585,7 @@ class Tecnai(tem.TEM):
 		amc = self.tecnai.ApertureMechanismCollection
 		# TO DO: better to use ID for obj aperture (4)
 		index = self._getApertureMechanismIndex(name)
-		if index == False:
+		if index is False:
 			raise ValueError('Aperture mechanism %s does not exist' % name)
 		am = amc.Item(index)
 		return am
@@ -1675,8 +1702,6 @@ class Krios(Tecnai):
 	use_normalization = True
 	def __init__(self):
 		Tecnai.__init__(self)
-		self.correctedstage = self.getFeiConfig('stage','krios_add_stage_backlash')
-		self.corrected_alpha_stage = self.getFeiConfig('stage','krios_add_stage_backlash')
 
 	def normalizeProjectionForMagnificationChange(self, new_mag_index):
 		'''
@@ -1685,40 +1710,6 @@ class Krios(Tecnai):
 		This is done because Titan does not have submode 2 See Issue #3986
 		'''
 		pass
-
-	def setStagePosition(self, value):
-		'''
-		Krios setStagePosition
-		'''
-		# pre-position x and y (maybe others later)
-		value = self.checkStagePosition(value)
-		if not value:
-			return
-		if self.correctedstage:
-			delta = self.getXYZStageBacklashDelta()
-			relax = self.getXYStageRelaxDistance()
-			stagenow = self.getStagePosition()
-			# calculate pre-position
-			prevalue = {}
-			prevalue2 = value.copy()
-			for axis in ('x','y','z'):
-				if axis in value:
-					prevalue[axis] = value[axis] - delta
-			for axis in ('x','y'):
-				if axis in value:
-					prevalue2[axis] = value[axis] + relax
-			# alpha tilt backlash only in one direction
-			alpha_delta_degrees = 3.0
-			if 'a' in value.keys() and self.corrected_alpha_stage:
-					axis = 'a'
-					prevalue[axis] = value[axis] - alpha_delta_degrees*3.14159/180.0
-			if prevalue and delta:
-				self._setStagePosition(prevalue)
-				time.sleep(0.2)
-			if abs(relax) > 1e-9 and prevalue2:
-				self._setStagePosition(prevalue2)
-				time.sleep(0.2)
-		return self._setStagePosition(value)
 
 	def hasAutoAperture(self):
 		return self.getUseAutoAperture()

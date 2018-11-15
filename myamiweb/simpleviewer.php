@@ -20,6 +20,8 @@ $sessions = $leginondata->getSessions('description');
 $imageId= $leginondata->getLastFilenameId($sessionId);
 $datatypes = $leginondata->getDataTypes($sessionId);
 
+if ( is_numeric(SESSION_LIMIT) && count($sessions) > SESSION_LIMIT) $sessions=array_slice($sessions,0,SESSION_LIMIT);
+
 $viewer = new viewer();
 $viewer->setSessionId($sessionId);
 $viewer->setImageId($imageId);

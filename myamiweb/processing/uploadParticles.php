@@ -110,7 +110,7 @@ $title='uploadParticles.py Launcher', $heading='Upload particle selection') {
 	$emanfiledisable = (!$_POST['filetype'] || $_POST['filetype'] == 'eman') ? '' : 'DISABLED';
 	$emanboxfiles = ($_POST['emanboxfiles']) ? $_POST['emanboxfiles'] : '';
 	echo "<INPUT TYPE='radio' NAME='filetype' onclick='emanappion(\"eman\")' $emanfilecheck value='eman'>\n";
-	echo docpop('emanboxfiles', "EMAN box or Xmipp picking file(s) with path");
+	echo docpop('emanboxfiles', "Relion star or EMAN box or Xmipp picking file(s) with path");
 	echo " <i>(wild cards are acceptable)</i>:";
 	echo " <br> \n";
 	echo "<INPUT TYPE='text' NAME='emanboxfiles' VALUE='$emanboxfiles' SIZE='55' $emanfiledisable/>\n";

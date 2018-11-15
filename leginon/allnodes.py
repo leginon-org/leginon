@@ -281,6 +281,8 @@ noderegistry.registerNodeClass(TEMController,classtype)
 from icethicknessEF import IcethicknessEF
 noderegistry.registerNodeClass(IcethicknessEF,classtype)
 
+from blackstripedetector import BlackStripeDetector
+noderegistry.registerNodeClass(BlackStripeDetector,classtype)
 ##############################
 # Finale
 ##############################

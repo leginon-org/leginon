@@ -242,7 +242,11 @@ class Tilts(object):
 		if self.tilt_order == 'sequential':
 			self.makeSequentialTiltOrder(group_order)
 		elif self.tilt_order == 'alternate':
-			self.makeAlternateTiltOrder(group_order)
+			# 0,1,-1,-2,2,3,-3,-4 alternate increment. Wim Hagen scheme
+			self.makeAlternateTiltOrder(group_order, False)
+		elif self.tilt_order == 'swing':
+			# 0,1,-1,2,-2,3,-3 always switch direction
+			self.makeAlternateTiltOrder(group_order, True)
 
 
 	def makeSequentialTiltOrder(self, group_order):
@@ -257,7 +261,7 @@ class Tilts(object):
 				if len(self.tilts[group_order[0]]) > 2 and len(g) > 0:
 					self.target_adjust_indices.append(self.index_sequence.index((g_index,0)))
 
-	def makeAlternateTiltOrder(self, group_order):
+	def makeAlternateTiltOrder(self, group_order, always_switch_direction=False):
 			# assuming group[0][0] = group[1][0]
 			added_next_one = False
 			i = 0
@@ -266,12 +270,21 @@ class Tilts(object):
 				self.index_sequence.append((group,i))
 				self.tilt_sequence.append(self.tilts[group][i])
 				if i+1 < len(self.tilts[group]):
-					self.index_sequence.append((group,i+1))
-					self.tilt_sequence.append(self.tilts[group][i+1])
-					added_next_one = True
+					if not always_switch_direction:
+						self.index_sequence.append((group,i+1))
+						self.tilt_sequence.append(self.tilts[group][i+1])
+						added_next_one = True
+					else:
+						# add tilt in the other group at the same index
+						other_group = int(not bool(group))
+						if i < len(self.tilts[other_group]) and i > 0:
+							# no need to acquire another image at start angle.
+							self.index_sequence.append((other_group,i))
+							self.tilt_sequence.append(self.tilts[other_group][i])
 				else:
 					added_next_one = False
-				group = int(not bool(group))
+				if not always_switch_direction:
+					group = int(not bool(group))
 				i += 1
 			if added_next_one:
 				i += 1
@@ -284,11 +297,11 @@ class Tilts(object):
 
 if __name__ == '__main__':
 	kwargs = {
-		'equally_sloped': True,
+		'equally_sloped': False,
 		'min': math.radians(-60),
 		'max': math.radians(40),
-		'start': math.radians(10),
-		'step': math.radians(-5),
+		'start': math.radians(0),
+		'step': math.radians(5),
 		'n': 10,
 		'add_on': [],
 		'tilt_order': 'alternate',

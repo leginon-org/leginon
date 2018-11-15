@@ -95,25 +95,48 @@ function getHosts(){
 
 function getSelectedProcessingHost() 
 {
+	if ($_POST['changehostname']) {
+		// clusterParamForm may change hostname rather than processinghost
+		$_POST['processinghost'] = $_POST['changehostname'];
+	} 
 	if ($_POST['processinghost']) {
+		// $_SESSION['processinghost'] is changed according to $_POST after
+		// using and is not reset.  This sets it so it won't have conflict
+		// with the default.
 		$_SESSION['processinghost'] = $_POST['processinghost'];
 	}
 	return $_SESSION['processinghost'];
 }
 
+function getSelectedHostArray() {
+	$hostname = getSelectedProcessingHost();
+	$proc_list = (array)getHosts();
+	$hostArray = array();
+	foreach ($proc_list as $host) {
+		if ($host['host'] == $hostname) {
+			$hostArray = $host;
+			break;
+		}
+	}
+	return $hostArray;
+}
+
 function getHostForm() {
 	$h=array();
-	$selected_host=$_POST['processinghost'];
+	$selected_host= getSelectedProcessingHost();
 	$proc_list = (array)getHosts();
 	$hostArray = $proc_list[0];
 
 	// only show host selection if there are more than 1
 	if (count($proc_list) > 1){
+			
 		foreach ($proc_list as $host) {
-			if ($host['host'] == $_POST['processinghost']) {
+			$s = "";
+			if ($host['host'] == $selected_host) {
+				$s = "selected";
 				$hostArray = $host;
 			}
-			$s = ($host['host'] == $_POST['processinghost']) ? "selected" : "";
+
 			$h[]="<option value='".$host['host']."' ".$s." >".$host['host']."</option>\n";
 		}
 		$html="<select name=\"processinghost\" onchange='this.form.submit()'>\n";
@@ -162,7 +185,13 @@ function getSubmitForm($name="Run", $displayhost=true, $warning=false, $button="
 		$html.="<br/><font class='apcomment'>Submission will NOT run, only output a command that you can copy and paste into a unix shell</font>";
 	}
 	else if ($_SESSION['loggedin']) {
-		$html.="  <input type='submit' name='process' value='$name' onclick='pleasewait()'>\n";
+		$hostarray = getSelectedHostArray();
+		if (!$hostarray['nojobqueue'])
+			$long_name = $name.' with Job Scheduler';
+			$html.="  <input type='submit' name='process' value='$long_name' onclick='pleasewait()'>\n";
+
+		if ($hostarray['allowdirectrun'])
+			$html.="  <input type='submit' name='process' value='Run Directly on Host' onclick='pleasewait()'>\n";
 	}
 	return $html;
 }
@@ -648,13 +677,32 @@ function showOrSubmitCommand($command, $headinfo, $jobtype, $nproc, $testimg=Fal
 	// Get the processing host
 	$processhost = getSelectedProcessingHost();
 
+
 	if ($_POST['process'] == "Refresh Test Results" && $testimg) {		
 		// if we are testing an image, return to the parameter page 
 		return;
 	}	
 
+	// simple ssh in and run.
+	if ($_POST['process'] == "Run Directly on Host" && $jobtype != 'uploadimage') {
+		// Option 1: selected the run button
+		$user = $_SESSION['username'];
+		$password = $_SESSION['password'];
+		if (!($user && $password)) {
+			return "<B>ERROR:</B> Enter a user name and password";
+		}
+		$errors = submitAppionCommand($command, $outdir, $runname, $expId, $jobtype, $processhost, $testimg);
+		
+		// if errors:
+		if ($errors) {
+			return "<B>ERROR:</B> $errors";
+		} else if ($testimg) {
+			return;
+		}
+		exit;
+
 	// until uploadimage works with appionJob submission, it is not allowed to do so
-	if ($_POST['process'] != "Just Show Command" && $jobtype != 'uploadimage') {
+	}	elseif ($_POST['process'] != "Just Show Command" && $jobtype != 'uploadimage') {
 		// Option 1: selected the run button
 		$user = $_SESSION['username'];
 		$password = $_SESSION['password'];
@@ -850,6 +898,45 @@ function addJobSubmitParams( $command, $processhost, $nproc, $ppn, $nodes, $wall
 }
 
 /**************************************/
+function submitAppionCommand($command, $outdir, $runname, $expId, $jobtype, $processinghost, $testimg=False) {
+	$user = $_SESSION['username'];
+	$pass = $_SESSION['password'];
+
+	# TODO create $outdir
+	$logdir = $outdir.'/'.'direct_runlog';
+	$no_error1 = makeSubDirs($processhost, $user, $pass, $logdir);
+
+	// Add the Appion wrapper to support muliple installations of Appion
+	$wrappedcommand =  addAppionWrapper($command, $processhost);
+	$logpath = $logdir."/".$runname.".log";
+	$appion_logpath = $outdir."/".$runname."/".$runname.".appionsub.log";
+	$final_command = "nohup ".$wrappedcommand." >& ".$logpath;
+	// uploadimage is run directly through ssh, not webcaller.py and qsub
+	$no_error2 = exec_over_ssh($processhost, $user, $pass, $final_command, TRUE);
+	$msg = "<B>Command submitted to ".$processinghost." through ssh on ".$outdir.".</B>";
+	if (!$testimg) {
+		processing_header("Appion Background Submission","Appion Background Submission");
+		echo $msg;
+		echo "<p></p>\n";
+		echo $final_command;
+		echo "<p></p>\n";
+		echo justShowCommandTable($command, $processhost, true);
+	processing_footer();
+	exit;
+	}
+	$no_error3 = linkLogInRunDir($processhost, $user, $pass, $logpath, $appionlogpath);
+	if ($no_error1 === false || $no_error2 === false || $no_error3 === false ){
+		$errMsg = "Could not run command directly in $outdir from $processhost: ";
+		$errMsg .= pconnError();
+		return $errMsg;
+	}
+	if ($testimg) return;
+	processing_footer();
+	exit;
+
+}
+
+/**************************************/
 function submitAppionJob($command, $outdir, $runname, $expId, $jobtype, $testimg=False,
 $xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0, $walltime="96", $cputime=False) {
 	global $DATA_DIRS;
@@ -907,22 +994,7 @@ $xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0, $walltime="96", $cputime=F
 	// is this used anymore? - neil
 	if ($xtra) $runname = "$runname.$xtra";
 
-	// create run directory on processing host only.  Do not do anything on
-	// the webserver, doing so requires making poor assumptions. 
-	$cmd = "mkdir -p $rundir;";
-	$rvalue = exec_over_ssh($processhost, $user, $pass, $cmd, False);
-	if ($rvalue === false ){
-		$errMsg = "Could not create run directory on $processhost: ";
-		$errMsg .= pconnError();
-		return $errMsg;
-	}
-	// check that the directory was created successfully
-	$fileExists = file_exists($rundir);
-  	if ($fileExists===false) {
-  		$errMsg = "Warning: The output directory (<font color=black>$rundir</font>) may not have been created on $processhost.  <br>";
-  		// Don't return yet, perhaps we don't have access to the dir from the web server.
-  		// This message will be prepended to a later occuring error.
-  	}
+	makeSubDirs($processhost, $user, $pass, $rundir);
 	
 	if ($testimg) {
 		//submit directly to head node on cluster if testing 1 image
@@ -1030,7 +1102,7 @@ function writeTestResults($jpg,$ccclist,$bin,$process_str='')
 	if ($process_str === '') {
 		$process_str = getProcessString();
 	}
-	$showcmd = preg_match('/[Ss]how/',$process_str);
+	$showcmd = preg_match('/[Ss]how/',$process_str) || preg_match('/[Rr]un Directly/',$process_str);
 	if ( !$showcmd )	{
 		$showcmd = preg_match('/[Rr]efresh/',$process_str);
 	}
@@ -1397,6 +1469,27 @@ function showReference( $method )
 function referenceBox($title, $year, $authorlist, $journal, $volume=false, $issue=false, $pmid=false, $pmcid=false, $doi=false, $logo=false) 
 {
 	return html_elements::referenceBox($title, $year, $authorlist, $journal, $volume, $issue, $pmid, $pmcid, $doi, $logo);
+}
+
+function	makeSubDirs($processhost, $user, $pass, $rundir) {
+	// create run directory on processing host only.  Do not do anything on
+	// the webserver, doing so requires making poor assumptions. 
+	$cmd = "mkdir -p $rundir;";
+	$rvalue = exec_over_ssh($processhost, $user, $pass, $cmd, False);
+	if ($rvalue === false ){
+		$errMsg = "Could not create run directory on $processhost: ";
+		$errMsg .= pconnError();
+		return $errMsg;
+	}
+}
+
+function	linkLogInRunDir($processhost, $user, $pass, $logpath, $appionlogpath) {
+	$rm_command = "rm -f ".$appionlogpath;
+	# ok if not successful because it means it does not exist, yet
+	exec_over_ssh($processhost, $user, $pass, $rm_command, TRUE);
+	$link_command = "ln -s ".$logpath." ".$appionlogpath;
+	$fcheck = exec_over_ssh($processhost, $user, $pass, $link_command, TRUE);
+	return $fcheck;
 }
 
 ?>

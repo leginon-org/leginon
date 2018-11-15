@@ -61,9 +61,9 @@ class setLeginonDefaultValues {
 		$data["settling time"] = "0.5";
 		$data["comafree beam tilt"] = "0.005";
 		$data["comafree misalign"] = "0.002";
-		$data["imageshift coma tilt"] = "0.005";
-		$data["imageshift coma step"] = "-1e-06";
-		$data["imageshift coma number"] = "1";
+		$data["imageshift coma tilt"] = "0.010";
+		$data["imageshift coma step"] = "5e-06";
+		$data["imageshift coma number"] = "2";
 		$data["imageshift coma repeat"] = "1";
 		$data["SUBD|instruments|ccdcamera"] = "None";
 		$data["SUBD|instruments|tem"] = "None";

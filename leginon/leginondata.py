@@ -182,6 +182,7 @@ camera_params = (
 	('nframes', int),
 	('save frames', bool),
 	('align frames', bool),
+	('tiff frames', bool),
 	('align filter', str),
 	('frames name', str),
 	('use frames', tuple),
@@ -2760,6 +2761,7 @@ class AutoFillerSettingsData(ConditionerSettingsData):
 			('column fill end', float),
 			('loader fill start', float),
 			('loader fill end', float),
+			('delay dark current ref', int),
 		)
 	typemap = classmethod(typemap)
 
@@ -2888,4 +2890,11 @@ class ZeroLossIceThicknessSettingsData(SettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class BlackStripeSettingsData(SettingsData):
+	def typemap(cls):
+		return SettingsData.typemap() + (
+			('process', bool),
+			('pause', bool),
+		)
+	typemap = classmethod(typemap)
 

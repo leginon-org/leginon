@@ -21,12 +21,13 @@ class Collection(object):
 		self.correlator[1] = None
 		self.instrument_state = None
 		self.theta = 0.0
+		self.reset_tilt = 0.0
 
 	def saveInstrumentState(self):
 		self.instrument_state = self.instrument.getData(leginon.leginondata.ScopeEMData)
 		a_state = self.instrument_state['stage position']['a']
-		if abs(a_state - self.tilts[0][0]) > math.radians(1):
-			self.logger.error('instrument state saved to %.1f degrees. The last tilt did not return properly.' % math.degrees(a_state))
+		if abs(a_state - self.reset_tilt) > math.radians(1):
+			self.logger.error('instrument state saved to %.1f degrees, not %.1f. The last tilt did not return properly.' % (math.degrees(a_state), math.degrees(self.reset_tilt)))
 
 	def restoreInstrumentState(self):
 		keys = ['stage position', 'defocus', 'image shift', 'magnification']
@@ -207,7 +208,7 @@ class Collection(object):
 		m = 'Initial defocus: %g meters.'
 		self.logger.info(m % defocus0)
 
-		if self.tilt_order == 'alternate' and len(tilts) > 1:
+		if self.tilt_order in ('alternate','swing') and len(tilts) > 1:
 			# duplicate the first tilt to the other tilt group
 			other_group = int(not seq0[0])
 			self.prediction.setCurrentTiltGroup(other_group)
@@ -356,7 +357,7 @@ class Collection(object):
 					time.sleep(1.0)
 
 			if seq_index == 0: 
-				if self.tilt_order == 'alternate':
+				if self.tilt_order in ('alternate','swing'):
 					other_group = int(not seq[0])
 					fake_corr_image = self.correlator[other_group].correlate(tilt_series_image_data, self.settings['use tilt'], channel=channel, wiener=False, taper=0)
 		

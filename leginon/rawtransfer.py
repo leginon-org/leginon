@@ -12,8 +12,8 @@ import pyami.fileutil, pyami.mrc
 
 next_time_start = 0
 mtime = 0
-time_expire = 300  # ignore anything older than 5 minutes
-expired_names = {} # directories that should not be transferred
+query_day_limit = 30 # ignore database query for older dates
+expired_names = ['.DS_Store',] # files that should not be transferred
 check_interval = 20  # seconds between checking for new frames
 
 class RawTransfer(object):
@@ -57,7 +57,10 @@ class RawTransfer(object):
 			help="Camera computer hostname in leginondb, e.g. --camera_host=gatank2")
 		parser.add_option("--destination_head", dest="dest_path_head",
 			help="Specific head destination frame path to transfer if multiple frame transfer is run for one source to frame paths not all mounted on the same computer, e.g. --destination_head=/data1", metavar="PATH", default='')
+		parser.add_option("--path_mode", dest="mode_str", 
+			help="recursive session permission modification by chmod if specified, default means not to modify e.g. --path_mode=g-w,o-rw")
 		parser.add_option("--check_interval", dest="check_interval", help="Seconds between checking for new frames", type="int", default=check_interval)
+		parser.add_option("--check_days", dest="check_days", help="Number of days to query database", type="int", default=query_day_limit)
 
 		# parsing options
 		(options, optargs) = parser.parse_args(sys.argv[1:])
@@ -96,12 +99,14 @@ class RawTransfer(object):
 		return self.getAndValidatePath('dest_path_head')
 
 	def query_image_by_frames_name(self,name,cam_host):
+		# speed up query by adding time limit Issue #6127
+		time_limit = '-%d 0:0:0' % self.params['check_days']
 		qccd = leginon.leginondata.InstrumentData(hostname=cam_host)
 		qcam = leginon.leginondata.CameraEMData(ccdcamera=qccd)
 		qcam['frames name'] = name
 		for cls in self.image_classes:
 			qim = cls(camera=qcam)
-			results = qim.query()
+			results = qim.query(timelimit=time_limit)
 			if results:
 				if len(results) > 1:
 					# fix for issue #3967. Not to work on the aligned images
@@ -202,7 +207,15 @@ class RawTransfer(object):
 			p = subprocess.Popen(cmd, shell=True)
 			p.wait()
 
-	def transfer(self, src, dst, uid, gid, method):
+	def changeMode(self,path,mode_str='g-w,o-rw'):
+		if not self.is_win32:
+			# only works on linux
+			cmd = 'chmod -R %s %s' % (mode_str, path)
+			print cmd
+			p = subprocess.Popen(cmd, shell=True)
+			p.wait()
+
+	def transfer(self, src, dst, uid, gid, method, mode_str):
 		'''
 		This function at minimal organize and rename the time-stamped file
 		to match the Leginon session and integrated image.  If the source is
@@ -221,6 +234,8 @@ class RawTransfer(object):
 		self._transfer(src,dst,method)
 
 		self.changeOwnership(uid,gid,sessionpath)
+		if mode_str:
+			self.changeMode(sessionpath, mode_str)
 
 		self.cleanUp(src,method)
 
@@ -239,31 +254,39 @@ class RawTransfer(object):
 			frames_path = leginon.ddinfo.getRawFrameSessionPathFromSessionPath(image_path)
 		return frames_path
 
-	def run_once(self,parent_src_path,cam_host,dest_head,method):
+	def run_once(self,parent_src_path,cam_host,dest_head,method,mode_str):
 		global next_time_start
-		global time_expire
 		global mtime
 		names = os.listdir(parent_src_path)
-		time.sleep(10)  # wait for any current writes to finish
+		#time.sleep(10)  # wait for any current writes to finish
 		time_start = next_time_start
 		for name in names:
 			src_path = os.path.join(parent_src_path, name)
 			_, ext = os.path.splitext(name)
+			# skip expired dirs, mrcs
+			if name in expired_names:
+				continue
+			print '**checking', src_path
+			# check access instead of wait for files to write. Speeds up interval
+			try:
+				if not os.access(src_path, os.R_OK):
+					print 'not ready. Deferring to next iteration'
+					continue
+			except Exception as e:
+					# There maybe other reason for it to fail.
+					print 'error checking access: %s' % e
+					continue
 			## skip empty directories
 			if os.path.isdir(src_path) and not os.listdir(src_path):
 				# maybe delete empty dir too?
 				continue
 
-			# skip expired dirs, mrcs
-			if name in expired_names:
-				continue
 			# ignore irrelevent source files or folders
-			# gatan k2 summit data ends with '.mrc'
+			# gatan k2 summit data ends with '.mrc' or 'tif'
 			# de folder starts with '20'
 			# falcon mrchack stacks ends with '.mrcs'
-			if not ext.startswith('.mrc') and  ext != '.frames' and not name.startswith('20'):
+			if not ext.startswith('.mrc') and not ext != 'tif' and  ext != '.frames' and not name.startswith('20'):
 				continue
-			print '**running', src_path
 
 			# adjust next expiration timer to most recent time
 			if mtime > next_time_start:
@@ -274,6 +297,11 @@ class RawTransfer(object):
 				ext_len = len(ext)
 				frames_name = name[:-ext_len]
 				dst_suffix = '.frames.mrc'
+			elif ext.startswith('.tif'):
+				# tiff format
+				ext_len = len(ext)
+				frames_name = name[:-ext_len]
+				dst_suffix = '.frames.tif'
 			else:
 				frames_name = name
 				dst_suffix = '.frames'
@@ -291,6 +319,7 @@ class RawTransfer(object):
 				print '    Destination frame path does not starts with %s. Skipped' % (dest_head)
 				continue
 
+			print '**running', src_path
 			if self.refcopy:
 				self.refcopy.setFrameDir(frames_path)
 
@@ -322,14 +351,14 @@ class RawTransfer(object):
 				self.cleanUp(src_path,method)
 				return
 			# do actual copy and delete
-			self.transfer(src_path, dst_path, uid, gid,method)
+			self.transfer(src_path, dst_path, uid, gid, method, mode_str)
 			# de only
 			leginon.ddinfo.saveImageDDinfoToDatabase(imdata,os.path.join(dst_path,'info.txt'))
 			# falcon3 only, xml file transfer
 			xml_src_path = src_path.replace('mrc','xml')
 			xml_dst_path = dst_path.replace('mrc','xml')
 			if os.path.exists(xml_src_path):
-				self.transfer(xml_src_path, xml_dst_path, uid, gid,method)
+				self.transfer(xml_src_path, xml_dst_path, uid, gid, method, mode_str)
 
 	def run(self):
 		self.params = self.parseParams()
@@ -340,7 +369,7 @@ class RawTransfer(object):
 			print "Limit processing to destination frame path started with %s" % (dst_head)
 		while True:
 			print 'Iterating...'
-			self.run_once(src_path,self.params['camera_host'],dst_head,method=self.params['method'])
+			self.run_once(src_path,self.params['camera_host'],dst_head,method=self.params['method'], mode_str=self.params['mode_str'])
 			print 'Sleeping...'
 			time.sleep(check_interval)
 

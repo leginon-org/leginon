@@ -143,8 +143,8 @@ if ($ctfrundatas) {
 
 			$fields = array('defocus1', 'defocus2', 
 				//'confidence', 'confidence_d', 
-				'angle_astigmatism', 'amplitude_contrast',  
-				'extra_phase_shift', 
+				'angle_astigmatism', 'astig_distribution',
+				'extra_phase_shift',
 				'resolution_80_percent', 'resolution_50_percent', 'ctffind4_resolution');
 			$stats = $ctf->getCTFStats($fields, $expId);
 			$display_ctf=false;
@@ -245,10 +245,10 @@ if ($ctfrundatas) {
 		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
 			."w=800&h=600&hg=1&expId=$expId&s=1&f=angle_astigmatism' alt='please wait...'></a>\n";
 	echo "</td></tr><tr><td>\n";
-		echo "<h3>Amplitude Contrast</h3>";
-		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&xmin=0.0&f=amplitude_contrast'>\n";
-		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
-			."w=800&h=600&hg=1&expId=$expId&s=1&xmin=0.0&f=amplitude_contrast' alt='please wait...'></a>\n";
+		echo "<h3>Astigmatism Distribution</h3>";
+		echo "<a href='ctfgraph.php?hg=0&expId=$expId&s=1&f=astig_distribution'>\n";
+		echo "<img border='0' width='200' height='200' src='ctfgraph.php?"
+			."w=600&h=600&hg=0&expId=$expId&s=1&f=astig_distribution' alt='please wait...'></a>\n";
 	echo "</td><td>\n";
 		echo "<h3>Extra Phase Shift</h3>";
 		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&xmin=0&xmax=180&f=extra_phase_shift'>\n";
