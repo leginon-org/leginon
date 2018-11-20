@@ -430,8 +430,8 @@
     <sqltable name="NodeSpecData" >
         <field name="DEF_id" >2314</field>
         <field name="DEF_timestamp" >2016-10-03 00:58:31</field>
-        <field name="class string" >ImageRotationCalibrator</field>
-        <field name="alias" >Rotation</field>
+        <field name="class string" >ScaleRotationCalibrator</field>
+        <field name="alias" >Scale Rotation</field>
         <field name="launcher alias" >main</field>
         <field name="SEQ|dependencies" >[]</field>
         <field name="REF|ApplicationData|application" >116</field>

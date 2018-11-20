@@ -1461,7 +1461,7 @@ class ImageShiftCalibrationClient(SimpleMatrixCalibrationClient):
 		pixel_shift = numpy.dot(matrix_inv, physicalpos)
 		return pixel_shift
 
-class ImageRotationCalibrationClient(ImageShiftCalibrationClient):
+class ImageScaleRotationCalibrationClient(ImageShiftCalibrationClient):
 	mover = False
 	def __init__(self, node):
 		ImageShiftCalibrationClient.__init__(self, node)
@@ -1518,7 +1518,12 @@ class ImageRotationCalibrationClient(ImageShiftCalibrationClient):
 			ht = self.instrument.tem.HighTension
 		queryinstance['magnification'] = mag
 		queryinstance['high tension'] = ht
-		caldatalist = self.node.research(datainstance=queryinstance, results=1)
+		if mag is None:
+			# get all.  Used in calibration
+			caldatalist = self.node.research(datainstance=queryinstance)
+		else:
+			# get the last one at the mag.
+			caldatalist = self.node.research(datainstance=queryinstance, results=1)
 		return caldatalist
 
 	def retrieveImageRotation(self, tem, ccdcamera, mag, ht=None):

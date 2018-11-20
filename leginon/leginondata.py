@@ -2044,7 +2044,7 @@ class PixelSizeCalibratorSettingsData(CalibratorSettingsData):
 		)
 	typemap = classmethod(typemap)
 
-class ImageRotationCalibratorSettingsData(CalibratorSettingsData):
+class ScaleRotationCalibratorSettingsData(CalibratorSettingsData):
 	def typemap(cls):
 		return CalibratorSettingsData.typemap()
 	typemap = classmethod(typemap)
