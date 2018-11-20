@@ -193,11 +193,8 @@ noderegistry.registerNodeClass(BeamTiltCalibrator,classtype)
 from pixelsizecalibrator import PixelSizeCalibrator
 noderegistry.registerNodeClass(PixelSizeCalibrator,classtype)
 
-from imagerotationcalibrator import ImageRotationCalibrator
-noderegistry.registerNodeClass(ImageRotationCalibrator,classtype)
-
-from imagescalecalibrator import ImageScaleAdditionCalibrator
-noderegistry.registerNodeClass(ImageScaleAdditionCalibrator,classtype)
+from scalerotationcalibrator import ScaleRotationCalibrator
+noderegistry.registerNodeClass(ScaleRotationCalibrator,classtype)
 
 from dosecalibrator import DoseCalibrator
 noderegistry.registerNodeClass(DoseCalibrator,classtype)

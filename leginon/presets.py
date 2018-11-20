@@ -269,7 +269,7 @@ class PresetsManager(node.Node):
 			'beam tilt':calibrationclient.BeamTiltCalibrationClient(self),
 			'modeled stage':calibrationclient.ModeledStageCalibrationClient(self),
 			'beam size':calibrationclient.BeamSizeCalibrationClient(self),
-			'image rotation':calibrationclient.ImageRotationCalibrationClient(self),
+			'scale rotation':calibrationclient.ImageScaleRotationCalibrationClient(self),
 		}
 		self.dosecal = calibrationclient.DoseCalibrationClient(self)
 		import navigator
@@ -1591,7 +1591,7 @@ class PresetsManager(node.Node):
 				# magnification and camera (if camera is different)
 				# Transform pixelvect1 at magnification to new magnification according to image-shift matrix
 				# include a relative  image rotation and scale addition to the transform
-				pixvect2 = self.calclients['image rotation'].pixelToPixel(old_tem,old_ccdcamera,new_tem, new_ccdcamera, ht,oldpreset['magnification'],newpreset['magnification'],pixvect1)
+				pixvect2 = self.calclients['scale rotation'].pixelToPixel(old_tem,old_ccdcamera,new_tem, new_ccdcamera, ht,oldpreset['magnification'],newpreset['magnification'],pixvect1)
 				# transform to the binned pixelsift
 				pixelshift2 = {'row':pixvect2[0] / newpreset['binning']['y'],'col':pixvect2[1] / newpreset['binning']['x']}
 				newscope = self.calclients['image'].transform(pixelshift2, fakescope2, fakecam2)
