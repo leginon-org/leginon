@@ -475,7 +475,7 @@ class authlib{
 		//The part from configuration
 		$expire = (COOKIE_TIME) ? time()+COOKIE_TIME : 0;
 
-		$cookie = $this->cookieEncrypt("$username:$timestamp:$id");
+		$cookie = $this->cookieEncrypt("$username~$timestamp~$id");
                 setcookie(PROJECT_NAME,$cookie, COOKIE_TIME);
 
 		return 2;
@@ -490,7 +490,7 @@ class authlib{
                         setcookie(PROJECT_NAME, "", time()-3600);
                         return false;
                 }
-		$session_vars = explode(":", $cookie);
+		$session_vars = explode("~", $cookie);
 		$username = $session_vars[0];
 		$id = $session_vars[2];
 
