@@ -177,7 +177,7 @@
         <field name="DEF_timestamp" >2016-10-25 07:59:34</field>
         <field name="event class string" >PresetChangedEvent</field>
         <field name="from node alias" >Presets Manager</field>
-        <field name="to node alias" >Rotation</field>
+        <field name="to node alias" >Scale Rotation</field>
         <field name="REF|ApplicationData|application" >118</field>
     </sqltable>
     <sqltable name="BindingSpecData" >
