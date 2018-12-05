@@ -190,7 +190,8 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 		## beam tilt scale
 		btilt = setting['tilt']
 		# relative beam tilt dict
-		btilt1dict = 	self.btcalclient.getFirstBeamTiltDeltaXY(btilt,self.settings['on phase plate'])
+		presetdata = self.presetsclient.getPresetFromDB(target_presetname)
+		btilt1dict = 	self.btcalclient.getFirstBeamTiltDeltaXY(btilt, presetdata['probe'], self.settings['on phase plate'])
 		### Drift check
 		if setting['check drift']:
 			driftthresh = setting['drift threshold']
@@ -506,8 +507,11 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 		btilt_deltas = None
 		for setting in self.focus_sequence:
 			if setting['switch'] and setting['focus method']=='Beam Tilt':
+				presetname = setting['preset name']
+				presetdata = self.presetsclient.getPresetFromDB(presetname)
+				probe_mode = presetdata['probe']
 				btilt_scale = setting['tilt']
-				btilt_deltas = self.btcalclient.getBeamTiltDeltaPair(btilt_scale, self.settings['on phase plate'])
+				btilt_deltas = self.btcalclient.getBeamTiltDeltaPair(btilt_scale, probe=probe_mode, self.settings['on phase plate'])
 				break
 		return btilt_deltas
 

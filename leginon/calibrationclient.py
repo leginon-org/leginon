@@ -684,11 +684,11 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		bt1['y'] += bt_delta['y']
 		return bt1
 
-	def getFirstBeamTiltDeltaXY(self, scale, on_phase_plate = False):
-		btilts = self.getBeamTiltDeltaPair(scale, on_phase_plate)
+	def getFirstBeamTiltDeltaXY(self, scale, probe=None, on_phase_plate = False):
+		btilts = self.getBeamTiltDeltaPair(scale, probe, on_phase_plate)
 		return btilts[0]
 
-	def getBeamTiltDeltaPair(self, scale, on_phase_plate = False):
+	def getBeamTiltDeltaPair(self, scale, probe=None, on_phase_plate = False):
 		"""
 		Get a list of two beam tilt delta dictionary in radians.
 		This may be the default values or the one saved in the database.
@@ -700,21 +700,21 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		if not on_phase_plate:
 			# use default
 			return [btilt1,btilt2]
-		btilts = self.getPhasePlateBeamTilts(scale)
+		btilts = self.getPhasePlateBeamTilts(scale, probe)
 		if not btilts:
 			# failed to get valid btilts, use default
 			return [btilt1,btilt2]
 		else:
 			return btilts
 
-	def getPhasePlateBeamTilts(self, scale):
+	def getPhasePlateBeamTilts(self, scale, probe=None):
 		"""
 		Get from database a list of two special beam tilt delta dictionary in radians.
 		i.e. [{'x':-0.01,'y':0},{'x':0.01,'y':0}]
 		"""
 		tem = self.instrument.getTEMData()
-		rotation = self.retrievePhasePlateBeamTiltRotation(tem)
-		ppbeamtilt_vectors = self.retrievePhasePlateBeamTiltVectors(tem)
+		rotation = self.retrievePhasePlateBeamTiltRotation(tem, probe)
+		ppbeamtilt_vectors = self.retrievePhasePlateBeamTiltVectors(tem, probe)
 		# NoCalibrationError is raised at this point if no vectors
 		btilts = []
 		if ppbeamtilt_vectors is not None:
@@ -753,7 +753,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		# Focuser node that calls this need to know the type of error
 		fmatrix = self.retrieveMatrix(tem, cam, 'defocus', ht, mag, probe)
 
-		tilt_deltas = self.getBeamTiltDeltaPair(tilt_value, on_phase_plate)
+		tilt_deltas = self.getBeamTiltDeltaPair(tilt_value, probe, on_phase_plate)
 		all_tilt_deltas = [tilt_deltas,]
 		## only do stig if stig matrices exist
 		amatrix = bmatrix = None
