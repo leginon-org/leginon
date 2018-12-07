@@ -186,6 +186,10 @@ define('EXCLUDED_PROJECTS',"");
 // --- hide testing tools related to specific data sets. --- //
 define('HIDE_TEST_TOOLS', true);
 
+// --- cryoSPARC host name and port number. --- //
+//define('CRYOSPARC', "yourhost");
+define('CRYOSPARC_PORT', "39001");
+
 // --- A startup message may be shown to the user --- //
 define('STARTUP_MESSAGE', "");
 
