@@ -413,7 +413,9 @@ class MotionCor2_UCSF(DDFrameAligner):
 				temp.append(line)
 				found = True
 		shifts = []
-		
+
+		if not found:
+			apDisplay.printError('%s did not run successfully.  Please check %s for error'	% (self.executable, log2))
 		for l in temp: 
 			m = re.match("...... Frame", l)
 			if m:

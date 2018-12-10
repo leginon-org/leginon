@@ -53,12 +53,15 @@
 ## and real instruments at same time.  Replace the following with your real
 ## instruments.
 
+## simpar configuration is used to load pre-saved sim cam according to sim tem.
+## See Feature Issue #6415
 [Sim TEM]
 class: simtem.SimTEM
 cs: 2.0e-3
-
+#simpar: /path/to/simpar.json/
 [Sim Cam]
 class: simccdcamera2.SimCCDCamera
 zplane: 50
 width: 4096
 height: 4096
+#simpar: /path/to/simpar.json/

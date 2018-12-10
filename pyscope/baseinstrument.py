@@ -11,6 +11,14 @@ class BaseInstrument(object):
 	def __init__(self):
 		pass
 
+	def initConfig(self):
+		# This import can not be at the module level due to circulated argument
+		import config
+		self.config_name = config.getNameByClass(self.__class__)
+		if self.config_name is None:
+			raise RuntimeError('%s was not found in your instruments.cfg' % (self.__class__.__name__,))
+		self.conf = config.getConfigured()[self.config_name]
+
 	def getSystemTime(self):
 		return time.time()
 
