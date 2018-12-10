@@ -159,8 +159,11 @@ noderegistry.registerNodeClass(AutoExposure,classtype)
 from baker import Baker
 noderegistry.registerNodeClass(Baker,classtype)
 
-from moveacquisition import MoveAcquisition
-noderegistry.registerNodeClass(MoveAcquisition,classtype)
+from movealphaacquisition import MoveAlphaAcquisition
+noderegistry.registerNodeClass(MoveAlphaAcquisition,classtype)
+
+from movexyacquisition import MoveXYAcquisition
+noderegistry.registerNodeClass(MoveXYAcquisition,classtype)
 
 from tiltlistalternater import TiltListAlternater
 noderegistry.registerNodeClass(TiltListAlternater,classtype)

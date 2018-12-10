@@ -1998,8 +1998,20 @@ class MoveAcquisitionSettingsData(AcquisitionSettingsData):
 		return AcquisitionSettingsData.typemap() + (
 			('acquire during move', bool),
 			('imaging delay', float),  #seconds
-			('tilt to', float),		#degrees
+			('move to', list),		#list of degrees or (x,y) tuple in um
 			('total move time', float),  #seconds
+		)
+	typemap = classmethod(typemap)
+
+class MoveXYAcquisitionSettingsData(MoveAcquisitionSettingsData):
+	def typemap(cls):
+		return MoveAcquisitionSettingsData.typemap() # "move to" is list of tuple
+	typemap = classmethod(typemap)
+
+class MoveAlphaAcquisitionSettingsData(MoveAcquisitionSettingsData):
+	def typemap(cls):
+		return MoveAcquisitionSettingsData.typemap() + (
+			('tilt to', float),		#degrees
 			('nsteps', int),
 		)
 	typemap = classmethod(typemap)
