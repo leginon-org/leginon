@@ -21,9 +21,8 @@ class MoveAcquisition(acquisition.Acquisition):
 	defaultsettings.update({
 		'acquire during move': False,
 		'imaging delay': 0.0,
-		'tilt to': 0.0,
+		'move to': (0.0,),
 		'total move time': 0.0,
-		'nsteps': 1,
 	})
 
 	eventinputs = acquisition.Acquisition.eventinputs
@@ -34,27 +33,37 @@ class MoveAcquisition(acquisition.Acquisition):
 		self.move_done_event = threading.Event()
 		self.step_done_event = threading.Event()
 
-	def getParentTilt(self,targetdata):
+		# base class  move alpha
+		# subclass may change this.
+		self.move_params = ('a',)
+
+	def getParentValue(self,targetdata):
+		'''
+		Get parent value in case a reset is required.
+		'''
+		parent_values = {}
 		try:
-			parent_tilt = targetdata['image']['scope']['stage position']['a']
+			parent_position = targetdata['image']['scope']['stage position']
 		except:
 			# use current tilt as default
-			p0 = self.instrument.tem.StagePosition
-			parent_tilt = p0['a']
-		return parent_tilt
+			parent_position  = self.instrument.tem.StagePosition
+		for k in self.move_params:
+			parent_values[k] = parent_position[k]
+		return parent_values
 
-	def setStageTilt(self,angle):
-		self.instrument.tem.StagePosition = {'a':angle}
-		self.logger.info('Set stage alpha to %.1f degrees' % (math.degrees(angle)))
-
+	def _setStageValue(self, valuedict):
+		self.instrument.tem.StagePosition = valuedict
+			
 	def processTargetData(self, targetdata, attempt=None):
 		self.move_done_event.clear()
 		if self.settings['acquire during move']:
-			tilt0 = self.getParentTilt(targetdata)
-			self.setStageTilt(tilt0)
+			p0dict = self.getParentValue(targetdata)
+			self._setStageValue(p0dict)
+			# move is started during acquire function call.
 			super(MoveAcquisition, self).processTargetData(targetdata, attempt)
+			# need to wait for all moves are completed.
 			self.waitMoveDone()
-			self.setStageTilt(tilt0)
+			self._setStageValue(p0dict)
 		else:
 			# process as normal
 			super(MoveAcquisition, self).processTargetData(targetdata, attempt)
@@ -130,11 +139,15 @@ class MoveAcquisition(acquisition.Acquisition):
 		else:
 			defaultchannel = channel
 
-		# Start a separate thread to tilt
-		tilt = math.radians(self.settings['tilt to'])
+		# Move thread is started
+		try:
+			self.startMoveThread()
+		except:
+			status == 'error'
+			self.logger.warning('Move failed. skipping acquisition at this target')
+			return status
+		# delay imaging a bit if needed
 		delay = self.settings['imaging delay']
-		t1 = threading.Thread(target=self.moveToTilt, args=(tilt,))
-		t1.start()
 		time.sleep(delay)
 		# Do normal acquisition
 		args = (presetdata, emtarget, defaultchannel)
@@ -147,25 +160,79 @@ class MoveAcquisition(acquisition.Acquisition):
 			self.acquirePublishDisplayWait(*args)
 		return status
 
+	def calculateMoveTimes(self):
+		'''
+		Calculate needed move values to apply and step times.
+		'''
+		move_settings = self.settings['move to'] # list of tuples
+		move_values = []
+		step_times = []
+		nsteps = len(move_settings)
+		try:
+			for move in move_settings:
+				if len(move) > 2:
+					# set step time if present
+					step_time = move[2]
+					move = move[:2]
+				else:
+					step_time = self.settings['total move time'] / nsteps
+				step_times.append(step_time)
+				move_values.append(self.moveToSettingToValue(move))
+		except Exception, e:
+			raise ValueError('Move to values invalid:%s' % (e,))
+		if nsteps < 1:
+			raise ValueError('Need at least one move')
+		return map((lambda x: (move_values[x],step_times[x])), range(nsteps))
+
+	def startMoveThread(self):
+		'''
+		 Start a separate thread to move.
+		'''
+		move_times = self.calculateMoveTimes()
+		t1 = threading.Thread(target=self.moveToValue, args=(move_times,))
+		t1.start()
+
 	def waitAtStep(self, step_time):
 		time.sleep(step_time)
 		self.step_done_event.set()
 
-	def moveToTilt(self,tilt):
-		nsteps = self.settings['nsteps']
-		step_time = self.settings['total move time'] / nsteps
-
-		p0 = self.instrument.tem.StagePosition
-		tilt_increment = (tilt - p0['a']) / nsteps
-		self.logger.info('start tilting')
-		for i in range(nsteps):
+	def moveToValue(self, move_times):
+		'''
+		Move to values with minimal step time.
+		move_times = tuples of (move_to_values_in_setting_unit, step)
+		'''
+		p0 =self.getStageValue()
+		self.logger.info('start moving')
+		for move,step_time in move_times:
 			# spend step_time at each tilt
 			self.step_done_event.clear()
-			new_tilt = p0['a'] + tilt_increment * (i+1)
 			t3 = threading.Thread(target=self.waitAtStep, args=(step_time,))
 			t3.start()
-			self.instrument.tem.StagePosition = {'a':new_tilt}
-			p = self.instrument.tem.StagePosition
+			self.setStageValue(move)
 			self.waitStepDone()
-		self.logger.info('tilt of %.1f degrees reached' % math.degrees(tilt))
+			self.logFinal(move) # log intermediate move
+		self.logFinal(move_times[-1][0]) # log last move value
+		self.setStageValue(p0)
 		self.move_done_event.set()
+
+	##### Subclasses need to overwrite these if need different behavior#####
+	def getStageValue(self):
+		position = self.instrument.tem.StagePosition
+		value = position['a']
+		return value
+
+	def setStageValue(self,value):
+		'''
+		Set stage position defined by the
+		subclass.
+		'''
+		# Value is alpha in radians n this case
+		valuedict = {'a': value}
+		return self._setStageValue(valuedict)
+
+	def logFinal(self, value):
+		self.logger.info('tilt of %.1f degrees reached' % math.degrees(value))
+
+	def moveToSettingToValue(self,setting):
+		return math.radians(setting)
+
