@@ -13,6 +13,7 @@
 
 import wx
 import re
+from ast import literal_eval
 
 EntryEventType = wx.NewEventType()
 
@@ -169,7 +170,6 @@ class TypeSequenceEntry(TypeEntry):
 		return ', '.join(map(str, value))
 
 	def stringToValue(self, string):
-		print 'STRING', string
 		if string == '':
 			return None
 		strings = string.split(',')
@@ -220,6 +220,14 @@ class FloatEntry(NumberEntry):
 
 class FloatSequenceEntry(TypeSequenceEntry):
 	_type = float
+
+class TupleSequenceEntry(TypeSequenceEntry):
+	_type = tuple
+
+	def stringToValue(self, string):
+		if string == '':
+			return ()
+		return literal_eval(string)
 
 if __name__ == '__main__':
 	class App(wx.App):
