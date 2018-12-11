@@ -236,6 +236,7 @@ class CameraClient(object):
 
 		self.readout_done_event.set()
 		if imagedata['image'] is None or imagedata['image'].shape == (0,0):
+			# image of wrong shape will still go through. Error raised at normalization
 			raise RuntimeError('No valid image returned. Check camera software/hardware')
 		return imagedata
 
