@@ -308,7 +308,8 @@ class TEM(baseinstrument.BaseInstrument):
 		# valid values: imaging or diffraction
 		return 'imaging'
 
-	def setProjectionMode(self):
+	def setProjectionMode(self, value):
+		# valid values: imaging or diffraction
 		raise NotImplementedError()
 
 	def getVacuumStatus(self):
