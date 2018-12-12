@@ -956,25 +956,25 @@ class Tecnai(tem.TEM):
 			setattr(pos, key.upper(), value)
 			axis_I = tom_axes[key.upper()]
 
-		try:
-			self.tom.Stage.GotoWithSpeed(axis_I, getattr(pos,key.upper()))
-		except com_module.COMError, e:
-			if self.getDebugStage():
-				print datetime.datetime.now()
-				print 'COMError in going to %s' % (position,)
 			try:
-				# used to parse e into (hr, msg, exc, arg)
-				# but Issue 4794 got 'need more than 3 values to unpack' error'.
-				# simplify the error handling so that it can be raised with messge.
-				msg = e.text
-				raise ValueError('Stage.Goto failed: %s' % (msg,))
+				self.tom.Stage.GotoWithSpeed(axis_I, getattr(pos,key.upper()))
+			except com_module.COMError, e:
+				if self.getDebugStage():
+					print datetime.datetime.now()
+					print 'COMError in going to %s' % (position,)
+				try:
+					# used to parse e into (hr, msg, exc, arg)
+					# but Issue 4794 got 'need more than 3 values to unpack' error'.
+					# simplify the error handling so that it can be raised with messge.
+					msg = e.text
+					raise ValueError('Stage.Goto failed: %s' % (msg,))
+				except:
+					raise ValueError('COMError in _setStagePosition: %s' % (e,))
 			except:
-				raise ValueError('COMError in _setStagePosition: %s' % (e,))
-		except:
-			if self.getDebugStage():
-				print datetime.datetime.now()
-				print 'Other error in going to %s' % (position,)
-			raise RuntimeError('_setStagePosition Unknown error')
+				if self.getDebugStage():
+					print datetime.datetime.now()
+					print 'Other error in going to %s' % (position,)
+				raise RuntimeError('_setStagePosition Unknown error')
 		self.waitForStageReady('after setting %s' % (position,))
 
 	def setDirectStagePosition(self,value):
