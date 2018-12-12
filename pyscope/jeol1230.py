@@ -963,15 +963,15 @@ class Jeol1230(tem.TEM):
 		return NotImplementedError()
 
 	# not implimented
-	def getDiffractionMode(self):
+	def getProjectionMode(self):
 		if Debug == True:
-			print 'from jeol1230.py getDiffractionMode'
+			print 'from jeol1230.py getProjectionMode'
 		return NotImplementedError()
 
 	# not implimented
-	def setDiffractionMode(self, mode):
+	def setProjectionMode(self, mode):
 		if Debug == True:
-			print 'from jeol1230.py setDiffractionMode'
+			print 'from jeol1230.py setProjectionMode'
 		return NotImplementedError()
 
 	# not implimented

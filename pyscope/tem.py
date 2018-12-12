@@ -47,7 +47,7 @@ class TEM(baseinstrument.BaseInstrument):
 		{'name': 'CorrectedStagePosition', 'type': 'property'},
 		{'name': 'DarkFieldMode', 'type': 'property'},
 		{'name': 'Defocus', 'type': 'property'},
-		{'name': 'DiffractionMode', 'type': 'property'},
+		{'name': 'ProjectionMode', 'type': 'property'},
 		{'name': 'Emission', 'type': 'property'},
 		{'name': 'ExternalShutter', 'type': 'property'},
 		{'name': 'FilmDateType', 'type': 'property'},
@@ -304,11 +304,11 @@ class TEM(baseinstrument.BaseInstrument):
 		# equivalent to normal movement by default
 		self.setStagePosition(value)
 
-	def getDiffractionMode(self):
+	def getProjectionMode(self):
 		# valid values: imaging or diffraction
 		return 'imaging'
 
-	def setDiffractionMode(self):
+	def setProjectionMode(self):
 		raise NotImplementedError()
 
 	def getVacuumStatus(self):

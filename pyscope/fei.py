@@ -1051,7 +1051,7 @@ class Tecnai(tem.TEM):
 		except:
 			raise RuntimerError('Unknown error')
 	
-	def getDiffractionMode(self):
+	def getProjectionMode(self):
 		if self.tecnai.Projection.Mode == self.tem_constants.pmImaging:
 			return 'imaging'
 		elif self.tecnai.Projection.Mode == self.tem_constants.pmDiffraction:
@@ -1059,7 +1059,7 @@ class Tecnai(tem.TEM):
 		else:
 			raise SystemError
 		
-	def setDiffractionMode(self, mode):
+	def setProjectionMode(self, mode):
 		if mode == 'imaging':
 			self.tecnai.Projection.Mode = self.tem_constants.pmImaging
 		elif mode == 'diffraction':
