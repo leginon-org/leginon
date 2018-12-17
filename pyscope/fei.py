@@ -41,6 +41,11 @@ class MagnificationsUninitialized(Exception):
 class Tecnai(tem.TEM):
 	name = 'Tecnai'
 	use_normalization = False
+	projection_mode = 'imaging'
+	# attribute name for getMagnification function.
+	# either 'Magnification' or 'CameraLength'
+	mag_attr_name = 'Magnification'
+
 	def __init__(self):
 		tem.TEM.__init__(self)
 		self.projection_submodes = {1:'LM',2:'Mi',3:'SA',4:'Mh',5:'LAD',6:'D'}
@@ -698,7 +703,7 @@ class Tecnai(tem.TEM):
 
 	def getMagnification(self, index=None):
 		if index is None:
-			return int(round(self.tecnai.Projection.Magnification))
+			return int(round(getattr(self.tecnai.Projection,self.mag_attrname))
 		elif not self.getMagnificationsInitialized():
 			raise MagnificationsUninitialized
 		else:
@@ -708,7 +713,7 @@ class Tecnai(tem.TEM):
 				raise ValueError('invalid magnification index')
 
 	def getMainScreenMagnification(self):
-		return int(round(self.tecnai.Projection.Magnification*self.mainscreenscale))
+		return int(round(getattr(self.tecnai.Projection, self.mag_attrname)*self.mainscreenscale))
 
 	def getMainScreenScale(self):
 		return self.mainscreenscale
@@ -781,7 +786,7 @@ class Tecnai(tem.TEM):
 
 	def getMagnificationIndex(self, magnification=None):
 		if magnification is None:
-			return self.tecnai.Projection.MagnificationIndex - 1
+			return getattr(self.tecnai.Projection,self.mag_attr_name+'Index') - 1
 		elif not self.getMagnificationsInitialized():
 			raise MagnificationsUninitialized
 		else:
@@ -791,7 +796,7 @@ class Tecnai(tem.TEM):
 				raise ValueError('invalid magnification')
 
 	def setMagnificationIndex(self, value):
-		self.tecnai.Projection.MagnificationIndex = value + 1
+		setattr(self.tecnai.Projection,self.mag_attr_name+'Index', value + 1)
 
 	def getMagnifications(self):
 		return self.magnifications
@@ -1059,7 +1064,10 @@ class Tecnai(tem.TEM):
 		else:
 			raise SystemError
 		
-	def setProjectionMode(self, mode):
+	def setProjectionMode(self, fakemode):
+		# Always set to the class projection_mode.  This is a work around to
+		# proxy not knowing the projection_mode of the instrument.
+		mode = self.projection_mode
 		if mode == 'imaging':
 			self.tecnai.Projection.Mode = self.tem_constants.pmImaging
 		elif mode == 'diffraction':
@@ -1815,3 +1823,15 @@ class Glacios(Arctica):
 	name = 'Glacios'
 	use_normalization = True
 
+#### Diffraction Instrument
+class DiffrTecnai(Tecnai):
+	name = 'DiffrTecnai'
+	use_normalization = False
+	projection_mode = 'diffraction'
+	mag_attr_name = 'CameraLength'
+
+class DiffrGlacios(Glacios):
+	name = 'DiffrGlacios'
+	use_normalization = True
+	projection_mode = 'diffraction'
+	mag_attr_name = 'CameraLength'
