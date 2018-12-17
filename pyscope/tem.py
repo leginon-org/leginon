@@ -69,6 +69,7 @@ class TEM(baseinstrument.BaseInstrument):
 		{'name': 'Magnification', 'type': 'property'},
 		{'name': 'MainScreenPosition', 'type': 'property'},
 		{'name': 'ProbeMode', 'type': 'property'},
+		{'name': 'ProjectionMode', 'type': 'property'},
 		{'name': 'RawImageShift', 'type': 'property'},
 		{'name': 'Shutter', 'type': 'property'},
 		{'name': 'SpotSize', 'type': 'property'},
@@ -93,6 +94,7 @@ class TEM(baseinstrument.BaseInstrument):
 		{'name': 'EnergyFilterWidth', 'type': 'property'},
 	)
 	projection_lens_program = 'TEM'
+	projection_mode = 'imaging'
 	def __init__(self):
 		baseinstrument.BaseInstrument.__init__(self)
 		self.initConfig()

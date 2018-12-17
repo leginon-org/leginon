@@ -24,6 +24,7 @@ STAGE_DEBUG = False
 
 class SimTEM(tem.TEM):
 	name = 'SimTEM'
+	projection_mode = 'imaging'
 	def __init__(self):
 		tem.TEM.__init__(self)
 
@@ -416,6 +417,11 @@ class SimTEM(tem.TEM):
 	def getProbeModes(self):
 		return list(self.probe_modes)
 
+	def setProjectionMode(self, value):
+		# This is a fake value set.  It forces the projection mode defined by
+		# the class.
+		print 'fake setting to projection mode %s' % (self.projection_mode,)
+
 	def getMainScreenPositions(self):
 		return list(self.main_screen_positions)
 
@@ -581,3 +587,23 @@ class SimTEM300(SimTEM):
 		SimTEM.__init__(self)
 
 		self.high_tension = 300000.0
+
+class SimDiffrTEM(SimTEM):
+	name = 'SimDiffrTEM'
+	projection_mode = 'diffraction'
+	def __init__(self):
+		SimTEM.__init__(self)
+
+		self.magnifications = [
+			70,
+			120.0,
+			520.0,
+			1200.0,
+			5200.0,
+			27000.0,
+			52000.0,
+		]
+		self.high_tension = 120000.0
+
+	def getProjectionMode(self):
+		return self.projection_mode

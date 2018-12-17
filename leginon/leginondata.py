@@ -52,6 +52,7 @@ class MagnificationsData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('instrument', InstrumentData),
+			('projection mode', str),
 			('magnifications', list),
 		)
 	typemap = classmethod(typemap)
@@ -130,6 +131,7 @@ class EMData(InSessionData):
 	typemap = classmethod(typemap)
 
 scope_params = (
+	('projection mode', str),
 	('magnification', int),
 	('spot size', int),
 	('intensity', float),
@@ -204,6 +206,7 @@ class ScopeEMData(EMData):
 	typemap = classmethod(typemap)
 
 manacqparams = (
+	'projection mode',
 	'magnification',
 	'spot size',
 	'intensity',
@@ -357,6 +360,7 @@ class CameraSensitivityCalibrationData(CalibrationData):
 class MagDependentCalibrationData(CalibrationData):
 	def typemap(cls):
 		return CalibrationData.typemap() + (
+			('projection mode', str),
 			('magnification', int),
 			('high tension', int),
 		)
@@ -525,6 +529,7 @@ class PresetData(InSessionData):
 		return InSessionData.typemap() + (
 			('number', int),
 			('name', str),
+			('projection mode', str),
 			('magnification', int),
 			('spot size', int),
 			('intensity', float),
@@ -591,6 +596,7 @@ class NewPresetData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
 			('name', str),
+			('projection mode', str),
 			('magnification', int),
 			('spot size', int),
 			('intensity', float),
