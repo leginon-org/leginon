@@ -45,6 +45,7 @@ class Tecnai(tem.TEM):
 	# attribute name for getMagnification function.
 	# either 'Magnification' or 'CameraLength'
 	mag_attr_name = 'Magnification'
+	mag_scale = 1
 
 	def __init__(self):
 		tem.TEM.__init__(self)
@@ -703,7 +704,7 @@ class Tecnai(tem.TEM):
 
 	def getMagnification(self, index=None):
 		if index is None:
-			return int(round(getattr(self.tecnai.Projection,self.mag_attrname))
+			return int(round(getattr(self.tecnai.Projection,self.mag_attr_name)*self.mag_scale))
 		elif not self.getMagnificationsInitialized():
 			raise MagnificationsUninitialized
 		else:
@@ -713,7 +714,7 @@ class Tecnai(tem.TEM):
 				raise ValueError('invalid magnification index')
 
 	def getMainScreenMagnification(self):
-		return int(round(getattr(self.tecnai.Projection, self.mag_attrname)*self.mainscreenscale))
+		return int(round(getattr(self.tecnai.Projection, self.mag_attr_name)*self.mainscreenscale))
 
 	def getMainScreenScale(self):
 		return self.mainscreenscale
@@ -1829,9 +1830,11 @@ class DiffrTecnai(Tecnai):
 	use_normalization = False
 	projection_mode = 'diffraction'
 	mag_attr_name = 'CameraLength'
+	mag_scale = 1000
 
 class DiffrGlacios(Glacios):
 	name = 'DiffrGlacios'
 	use_normalization = True
 	projection_mode = 'diffraction'
 	mag_attr_name = 'CameraLength'
+	mag_scale = 1000
