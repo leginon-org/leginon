@@ -46,6 +46,7 @@ class TEM(baseinstrument.BaseInstrument):
 		{'name': 'ColumnValvePosition', 'type': 'property'},
 		{'name': 'CorrectedStagePosition', 'type': 'property'},
 		{'name': 'DarkFieldMode', 'type': 'property'},
+		{'name': 'DiffractionShift', 'type': 'property'},
 		{'name': 'Defocus', 'type': 'property'},
 		{'name': 'ProjectionMode', 'type': 'property'},
 		{'name': 'Emission', 'type': 'property'},

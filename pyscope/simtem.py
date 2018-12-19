@@ -94,6 +94,7 @@ class SimTEM(tem.TEM):
 
 		self.beam_tilt = {'x': 0.0, 'y': 0.0}
 		self.beam_shift = {'x': 0.0, 'y': 0.0}
+		self.diffraction_shift = {'x': 0.0, 'y': 0.0}
 		self.image_shift = {'x': 0.0, 'y': 0.0}
 		self.raw_image_shift = {'x': 0.0, 'y': 0.0}
 
@@ -315,6 +316,16 @@ class SimTEM(tem.TEM):
 		for axis in self.beam_shift.keys():
 			try:
 				self.beam_shift[axis] = value[axis]
+			except KeyError:
+				pass
+	
+	def getDiffractionShift(self):
+		return copy.copy(self.diffraction_shift)
+	
+	def setDiffractionShift(self, value):
+		for axis in self.diffraction_shift.keys():
+			try:
+				self.diffraction_shift[axis] = value[axis]
 			except KeyError:
 				pass
 	

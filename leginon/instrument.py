@@ -382,6 +382,7 @@ parametermapping = (
 	('intensity', 'Intensity'),
 	('beam shift', 'BeamShift'),
 	('image shift', 'ImageShift'),
+	('diffraction shift', 'DiffractionShift'),
 	('focus', 'Focus'),
 	('defocus', 'Defocus'),
 	('reset defocus', 'resetDefocus'),

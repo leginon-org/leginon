@@ -661,6 +661,42 @@ class Tecnai(tem.TEM):
 		except KeyError:
 			pass
 		self.tecnai.Projection.ImageBeamShift = vec
+
+	def getDiffractionShift(self):
+		value = {'x': None, 'y': None}
+		try:
+			value['x'] = float(self.tecnai.Projection.DiffractionShift.X)
+			value['y'] = float(self.tecnai.Projection.DiffractionShift.Y)
+		except:
+			# return None if has exception
+			pass
+		return value
+	
+	def setDiffractionShift(self, vector, relative = 'absolute'):
+		if relative == 'relative':
+			try:
+				vector['x'] += self.tecnai.Projection.DiffractionShift.X
+			except KeyError:
+				pass
+			try:
+				vector['y'] += self.tecnai.Projection.DiffractionShift.Y
+			except KeyError:
+				pass
+		elif relative == 'absolute':
+			pass
+		else:
+			raise ValueError
+		
+		vec = self.tecnai.Projection.DiffractionShift
+		try:
+			vec.X = vector['x']
+		except KeyError:
+			pass
+		try:
+			vec.Y = vector['y']
+		except KeyError:
+			pass
+		self.tecnai.Projection.DiffractionShift = vec
 	
 	def getRawImageShift(self):
 		value = {'x': None, 'y': None}
