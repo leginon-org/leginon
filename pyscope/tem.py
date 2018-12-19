@@ -329,3 +329,15 @@ class TEM(baseinstrument.BaseInstrument):
 
 	def setApertureSelection(self, aperture_mechanism, name):
 		return False
+
+	def setStageSpeed(self, value):
+		# do nothing.
+		pass
+
+	def getStageSpeed(self):
+		# do nothing.
+		pass
+
+	def resetStageSpeed(self, value):
+		# do nothing.
+		pass

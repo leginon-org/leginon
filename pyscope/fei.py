@@ -46,6 +46,7 @@ class Tecnai(tem.TEM):
 	# either 'Magnification' or 'CameraLength'
 	mag_attr_name = 'Magnification'
 	mag_scale = 1
+	default_stage_speed = 1.0
 
 	def __init__(self):
 		tem.TEM.__init__(self)
@@ -98,6 +99,7 @@ class Tecnai(tem.TEM):
 			self.exposure = None
 
 		self.magnifications = []
+		self.stage_speed = self.default_stage_speed
 		self.mainscreenscale = 44000.0 / 50000.0
 
 		## figure out which intensity property to use
@@ -252,8 +254,16 @@ class Tecnai(tem.TEM):
 		# final position
 		return self._setStagePosition(value)
 
+	def resetStageSpeed(self):
+		self.stage_speed = self.default_stage_speed
+		if self.tom:
+			self.tom.Stage.Speed = self.default_stage_speed
+
 	def setStageSpeed(self, value):
 		# 0.0 to 1.0 with 1.0 the highest speed
+		if value > 1.0 or value < 0.0:
+			raise ValueError('Stage speed must be between 0.0 and 1.0')
+		self.stage_speed = value
 		if self.tom:
 			self.tom.Stage.Speed = value
 
@@ -261,7 +271,7 @@ class Tecnai(tem.TEM):
 		if self.tom:
 			return self.tom.Stage.Speed
 		else:
-			return 1.0
+			return self.stage_speed
 
 	def normalizeLens(self, lens = 'all'):
 		if lens == 'all':
@@ -916,7 +926,13 @@ class Tecnai(tem.TEM):
 		if axes == 0:
 			return
 		try:
-			self.tecnai.Stage.Goto(pos, axes)
+			if self.stage_speed == self.default_stage_speed:
+				self.tecnai.Stage.Goto(pos, axes)
+			else:
+				# Low speed move needs to be done on individual axis
+				for key, value in position.items():
+					single_axis = getattr(self.tem_constants, 'axis' + key.upper())
+					self.tecnai.Stage.GotoWithSpeed(pos, single_axis, self.stage_speed)
 		except com_module.COMError, e:
 			if self.getDebugStage():
 				print datetime.datetime.now()
