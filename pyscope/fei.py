@@ -819,7 +819,10 @@ class Tecnai(tem.TEM):
 				mag = int(mag)
 			except:
 				raise TypeError
-	
+
+		# set mag index to SA mode for if changing to diffraction
+		if self.projection_mode == 'diffraction' and self.getProjectionMode() != self.projection_mode:
+			self.setPreDiffractionMagnification()
 		try:
 			index = self.magnifications.index(mag)
 		except ValueError:
@@ -829,6 +832,31 @@ class Tecnai(tem.TEM):
 		self.setMagnificationIndex(index)
 		if self.normalize_all_after_mag_setting:
 			self.normalizeLens('all')
+		return
+
+	def setPreDiffractionMagnification(self):
+		'''
+		Set to an SA magnification index so that diffraction mode change
+		goes into D not LAD mode.
+		'''
+		if self.getProjectionMode() != 'imaging':
+			raise ValueError('Not in imaging mode')
+		index = self.getFeiConfig('optics','pre_diffraction_sa_magnification_index')
+		# handle not configured
+		if index is None or index == -1:
+			submode_map = self.getProjectionSubModeMap()
+			for i, mag in enumerate(self.magnifications):
+				try:
+					name = submode_map[mag][0]
+				except KeyError, e:
+					raise ValueError('Magnification %d not found in Projection Sub map' % (mag,))
+				if name == 'SA':
+					index = i
+					break
+		self.tecnai.Projection.MagnificationIndex = Index
+		name = self.getProjectionSubModeName()
+		if name != 'SA':
+			raise ValueError('PRE_DIFFRACTION_SA_MAGNIFICATION_INDEX not in SA mode')
 		return
 
 	def getMagnificationIndex(self, magnification=None):
