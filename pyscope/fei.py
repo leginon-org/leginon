@@ -820,9 +820,9 @@ class Tecnai(tem.TEM):
 			except:
 				raise TypeError
 
-		# set mag index to SA mode for if changing to diffraction
-		if self.projection_mode == 'diffraction' and self.getProjectionMode() != self.projection_mode:
-			self.setPreDiffractionMagnification()
+		# set  projection mode if changing.
+		if self.getProjectionMode() != self.projection_mode:
+			self.setProjectionMode(None)
 		try:
 			index = self.magnifications.index(mag)
 		except ValueError:
@@ -844,16 +844,8 @@ class Tecnai(tem.TEM):
 		index = self.getFeiConfig('optics','pre_diffraction_sa_magnification_index')
 		# handle not configured
 		if index is None or index == -1:
-			submode_map = self.getProjectionSubModeMap()
-			for i, mag in enumerate(self.magnifications):
-				try:
-					name = submode_map[mag][0]
-				except KeyError, e:
-					raise ValueError('Magnification %d not found in Projection Sub map' % (mag,))
-				if name == 'SA':
-					index = i
-					break
-		self.tecnai.Projection.MagnificationIndex = Index
+			raise ValueError('Must set PRE_DIFFRACTION_SA_MAGNIFICATION to a valid mag index')
+		self.tecnai.Projection.MagnificationIndex = index
 		name = self.getProjectionSubModeName()
 		if name != 'SA':
 			raise ValueError('PRE_DIFFRACTION_SA_MAGNIFICATION_INDEX not in SA mode')
@@ -1152,6 +1144,8 @@ class Tecnai(tem.TEM):
 		if mode == 'imaging':
 			self.tecnai.Projection.Mode = self.tem_constants.pmImaging
 		elif mode == 'diffraction':
+			if self.getProjectionMode() != mode:
+				self.setPreDiffractionMagnification()
 			self.tecnai.Projection.Mode = self.tem_constants.pmDiffraction
 		else:
 			raise ValueError
