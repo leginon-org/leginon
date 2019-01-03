@@ -255,12 +255,14 @@ class mysql {
 	 	else 
 	 		$link = $this->db_link;
         if (!$link) {
-      	  gc_collect_cycles();
-      	  $link = $this->connect_db($this->db_host);
-      	  if (!$link) {
-	         $this->mysqlerror = "Connect Error: " . mysqli_connect_errno();
-	         return False;
-      	  }
+        	error_log("DB Connect Error. Trying again...");
+      	  	gc_collect_cycles();
+      	  	$link = $this->connect_db($this->db_host);
+      	  	if (!$link) {
+	        	$this->mysqlerror = "Connect Error: " . mysqli_connect_errno();
+	        	error_log($this->mysqlerror);
+	         	return False;
+      	  	}
         }
 		$result = mysqli_query($link, $query); 
 		if (!$result) {
