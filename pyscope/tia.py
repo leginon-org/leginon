@@ -217,6 +217,9 @@ acquisition.
 		pass
 
 	def getImage(self):
+		while self.acqman.IsAcquiring:
+			print 'tia waiting'
+			time.sleep(0.1)
 		try:
 			## scan mode to spot so CCD can be setup on scope with STEM
 			self.esv.ScanningServer().ScanMode = 0
@@ -240,6 +243,7 @@ acquisition.
 			self.selectSetup()
 			self.custom_setup()
 			self.finalizeSetup()
+			print 'setup completed'
 		except:
 			raise RuntimeError('Error setting camera acquisition parameters')
 
@@ -250,6 +254,7 @@ acquisition.
 			t1 = time.time()
 			self.exposure_timestamp = (t1 + t0) / 2.0
 			arr = self.im.Data.Array
+			print 'got array'
 		except:
 			raise RuntimeError('Camera Acquisition Error in getting array')
 
