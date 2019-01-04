@@ -4,7 +4,7 @@ import time
 
 # Change this to False to avoid automated screen lifting
 AUTO_SCREEN_UP = True
-AUTO_COLUMN_VALVE_OPEN = True
+AUTO_COLUMN_VALVE_OPEN = False
 
 default_settings = leginondata.CameraSettingsData()
 default_settings['dimension'] = {'x': 1024, 'y': 1024}
@@ -206,7 +206,7 @@ class CameraClient(object):
 		'''Acquire a raw image from the currently configured CCD camera
 			Exceptions are raised
 		'''
-		self.prepareToAcquire(allow_retracted,exposure_type=type)
+		#self.prepareToAcquire(allow_retracted,exposure_type=type)
 		if force_no_frames:
 			try:
 				self.instrument.ccdcamera.SaveRawFrames = False
@@ -221,7 +221,16 @@ class CameraClient(object):
 		## acquire image, get new scope/camera params
 		#cameradata_before = self.instrument.getData(leginondata.CameraEMData)
 		self.startExposureTimer()
+		timage = threading.Thread(target=self.liveImage)
+		t0 = time.time()
+		timage.start()
+		time.sleep(6)
+		print 'main start',t0
+		self.instrument.setCCDCamera('Ceta')
 		imagedata['image'] = self.instrument.ccdcamera.Image
+		print 'main end',time.time()-t0
+		timage.join()
+		print 'thread joined', time.time()-t0
 		# get scope data after acquiring image so that scope can be simultaneously
 		# controlled. refs #6437
 		scopedata = self.instrument.getData(scopeclass)
@@ -239,6 +248,19 @@ class CameraClient(object):
 			# image of wrong shape will still go through. Error raised at normalization
 			raise RuntimeError('No valid image returned. Check camera software/hardware')
 		return imagedata
+
+	def liveImage(self):
+		try:
+			t0 = time.time()
+			for i in range(2):
+				t0l = time.time()
+				print 'live%d start' %i,t0
+				self.instrument.setCCDCamera('Ceta2')
+				image = self.instrument.ccdcamera.Image
+				print i, image.mean()
+				print 'live%d end' %i,time.time()-t0
+		except:
+			print 'Failed live Ceta2 test'
 
 	def requireRecentDarkCurrentReferenceOnBright(self):
 		# select camera before calling this function
