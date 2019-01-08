@@ -16,7 +16,7 @@ class ModuleConfigParser(object):
 
 
 	def newHierarchyDict(self,keys,value):
-		d = map((lambda x:{}),range(len(keys)+1))
+		d = list(map((lambda x:{}),range(len(keys)+1)))
 		d[0] = value
 		keys.reverse()
 		for i in range(len(keys)):
