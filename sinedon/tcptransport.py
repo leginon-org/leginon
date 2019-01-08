@@ -40,7 +40,7 @@ class Server(socketstreamtransport.Server, SocketServer.ThreadingTCPServer):
 					exception = False
 					break
 				except socket.error as e:
-					en, string = e
+					en, string = e.errno, e.strerror
 					if en == errno.EADDRINUSE:
 						port += 1
 					else:
