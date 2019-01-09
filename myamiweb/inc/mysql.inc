@@ -250,10 +250,12 @@ class mysql {
 
 	function SQLQuery($query, $insert=false) {
 		$this->sqlquery = $query;
-		if (!$this->db_link->server_info)
+		if (!$this->db_link->server_info) {
       		$link = $this->connect_db($this->db_host);
-	 	else 
+		}
+	 	else { 
 	 		$link = $this->db_link;
+	 	}
         if (!$link) {
         	error_log("DB Connect Error. Trying again...");
       	  	gc_collect_cycles();
