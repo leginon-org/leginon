@@ -6237,6 +6237,34 @@ class particledata {
 			foreach ($samplecommand as $c) $s[$c['name']] = $c['value'];
 		return $s;
 	}
+	function insetCryosparcJob($expId, $projectId, $jobId) {
+	    if (!$this->mysql->SQLTableExists("cryosparc")){
+	        $query = "CREATE TABLE IF NOT EXISTS cryosparc (
+	            id INT AUTO_INCREMENT,
+	            expId VARCHAR(255) NOT NULL,
+	            projectId VARCHAR(255) NOT NULL,
+	            jobId VARCHAR(255) NOT NULL,
+	            PRIMARY KEY (id));";
+	        $this->mysql->SQLQuery($query);
+	        
+	    }
+	    $data['expId']=$expId;
+	    $data['projectId']=$projectId;
+	    $data['jobId']=$jobId;
+	    return $this->mysql->SQLInsert('cryosparc',$data);
+	}
+	
+	function getCryosparcJobs($expId, $id=false) {
+	    $q = "SELECT * from cryosparc WHERE expId = $expId";
+	    if ($id) $q.= " AND id = $id";
+	    return $this->mysql->getSQLResult($q);
+	}
+	
+	function deleteCryosparcJob($expId, $id) {
+	    $where['id']=$id;
+	    $where['expId']=$expId;
+	    $this->mysql->SQLDelete("cryosparc", $where);
+	}
 }
 
 // For euler angles, takes alpha beta gamma and returns a,b,c, maybe?

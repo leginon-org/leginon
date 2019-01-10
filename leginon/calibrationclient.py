@@ -684,11 +684,11 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		bt1['y'] += bt_delta['y']
 		return bt1
 
-	def getFirstBeamTiltDeltaXY(self, scale, on_phase_plate = False):
-		btilts = self.getBeamTiltDeltaPair(scale, on_phase_plate)
+	def getFirstBeamTiltDeltaXY(self, scale, probe=None, on_phase_plate = False):
+		btilts = self.getBeamTiltDeltaPair(scale, probe, on_phase_plate)
 		return btilts[0]
 
-	def getBeamTiltDeltaPair(self, scale, on_phase_plate = False):
+	def getBeamTiltDeltaPair(self, scale, probe=None, on_phase_plate = False):
 		"""
 		Get a list of two beam tilt delta dictionary in radians.
 		This may be the default values or the one saved in the database.
@@ -700,21 +700,21 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		if not on_phase_plate:
 			# use default
 			return [btilt1,btilt2]
-		btilts = self.getPhasePlateBeamTilts(scale)
+		btilts = self.getPhasePlateBeamTilts(scale, probe)
 		if not btilts:
 			# failed to get valid btilts, use default
 			return [btilt1,btilt2]
 		else:
 			return btilts
 
-	def getPhasePlateBeamTilts(self, scale):
+	def getPhasePlateBeamTilts(self, scale, probe=None):
 		"""
 		Get from database a list of two special beam tilt delta dictionary in radians.
 		i.e. [{'x':-0.01,'y':0},{'x':0.01,'y':0}]
 		"""
 		tem = self.instrument.getTEMData()
-		rotation = self.retrievePhasePlateBeamTiltRotation(tem)
-		ppbeamtilt_vectors = self.retrievePhasePlateBeamTiltVectors(tem)
+		rotation = self.retrievePhasePlateBeamTiltRotation(tem, probe)
+		ppbeamtilt_vectors = self.retrievePhasePlateBeamTiltVectors(tem, probe)
 		# NoCalibrationError is raised at this point if no vectors
 		btilts = []
 		if ppbeamtilt_vectors is not None:
@@ -753,7 +753,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		# Focuser node that calls this need to know the type of error
 		fmatrix = self.retrieveMatrix(tem, cam, 'defocus', ht, mag, probe)
 
-		tilt_deltas = self.getBeamTiltDeltaPair(tilt_value, on_phase_plate)
+		tilt_deltas = self.getBeamTiltDeltaPair(tilt_value, probe, on_phase_plate)
 		all_tilt_deltas = [tilt_deltas,]
 		## only do stig if stig matrices exist
 		amatrix = bmatrix = None
@@ -1461,7 +1461,7 @@ class ImageShiftCalibrationClient(SimpleMatrixCalibrationClient):
 		pixel_shift = numpy.dot(matrix_inv, physicalpos)
 		return pixel_shift
 
-class ImageRotationCalibrationClient(ImageShiftCalibrationClient):
+class ImageScaleRotationCalibrationClient(ImageShiftCalibrationClient):
 	mover = False
 	def __init__(self, node):
 		ImageShiftCalibrationClient.__init__(self, node)
@@ -1504,24 +1504,26 @@ class ImageRotationCalibrationClient(ImageShiftCalibrationClient):
 				raise RuntimeError('Failed retrieving last values')
 		return last.values()
 
-	def researchImageScaleAddition(self, tem, ccdcamera, mag=None, ht=None, probe=None):
+	def researchImageScaleAddition(self, tem, ccdcamera, mag=None, ht=None):
 		queryinstance = leginondata.ImageScaleAdditionCalibrationData()
-		return self.researchCalibration(queryinstance, tem, ccdcamera, mag, ht, probe)
+		return self.researchCalibration(queryinstance, tem, ccdcamera, mag, ht)
 
-	def researchImageRotation(self, tem, ccdcamera, mag=None, ht=None, probe=None):
+	def researchImageRotation(self, tem, ccdcamera, mag=None, ht=None):
 		queryinstance = leginondata.ImageRotationCalibrationData()
-		return self.researchCalibration(queryinstance, tem, ccdcamera, mag, ht, probe)
+		return self.researchCalibration(queryinstance, tem, ccdcamera, mag, ht)
 
-	def researchCalibration(self, queryinstance, tem, ccdcamera, mag, ht, probe):
+	def researchCalibration(self, queryinstance, tem, ccdcamera, mag, ht):
 		self.setDBInstruments(queryinstance,tem,ccdcamera)
 		if ht is None:
 			ht = self.instrument.tem.HighTension
-		if probe is None:
-			probe = self.instrument.tem.ProbeMode
 		queryinstance['magnification'] = mag
 		queryinstance['high tension'] = ht
-		queryinstance['probe'] = probe
-		caldatalist = self.node.research(datainstance=queryinstance, results=1)
+		if mag is None:
+			# get all.  Used in calibration
+			caldatalist = self.node.research(datainstance=queryinstance)
+		else:
+			# get the last one at the mag.
+			caldatalist = self.node.research(datainstance=queryinstance, results=1)
 		return caldatalist
 
 	def retrieveImageRotation(self, tem, ccdcamera, mag, ht=None):

@@ -9,6 +9,8 @@ import math
 import tem
 import threading
 import time
+import json
+import os
 
 import itertools
 
@@ -114,6 +116,35 @@ class SimTEM(tem.TEM):
 		self.is_init = True
 
 		self.aperture_selection = {'objective':'','condenser2':'70','selected area':'open'}
+		print self.conf
+		if 'simpar' in self.conf and self.conf['simpar'] and os.path.isdir(self.conf['simpar']):
+			self.simpar_dir = self.conf['simpar']
+			self.resetSimPar()
+		else:
+			self.simpar_dir = None
+
+	def resetSimPar(self):
+		if self.simpar_dir:
+			# reset to empty file
+			f = open(os.path.join(self.simpar_dir,'simpar.json'),'w')
+			f.close()
+
+	def saveSimPar(self,key,value):
+		if self.simpar_dir:
+			# open the file or both read and write and thus locked from others
+			f = open(os.path.join(self.simpar_dir,'simpar.json'),'r+')
+			try:
+				self.all_simpar = json.loads(f.read())
+			except ValueError:
+				self.all_simpar = {}
+			self.all_simpar[key] = value
+			# move pointer back to the start
+			f.seek(0)
+			jstr = json.dumps(self.all_simpar, indent=2, separators=(',',':'))
+			f.write(jstr)
+			# truncate extra old stuff
+			f.truncate()
+			f.close()
 
 	def printStageDebug(self,msg):
 		if STAGE_DEBUG:
@@ -335,6 +366,7 @@ class SimTEM(tem.TEM):
 	def setMagnification(self, value):
 		try:
 			self.magnification_index = self.magnifications.index(float(value))
+			self.saveSimPar('magnification', value)
 		except ValueError:
 			raise ValueError('invalid magnification')
 

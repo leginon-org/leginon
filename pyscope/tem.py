@@ -6,7 +6,6 @@
 #
 
 import baseinstrument
-import config
 
 class TEM(baseinstrument.BaseInstrument):
 	name = None
@@ -96,8 +95,8 @@ class TEM(baseinstrument.BaseInstrument):
 	projection_lens_program = 'TEM'
 	def __init__(self):
 		baseinstrument.BaseInstrument.__init__(self)
-		self.config_name = config.getNameByClass(self.__class__)
-		self.cs = config.getConfigured()[self.config_name]['cs']
+		self.initConfig()
+		self.cs = self.conf['cs']
 		self.projection_submode_map = {}
 		self.grid_inventory = {}
 

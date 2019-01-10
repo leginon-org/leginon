@@ -831,7 +831,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.reportStatus('acquisition', 'image acquired')
 		self.stopTimer('acquire getData')
 		if imagedata is None:
-			raise BadImageAcquireBypass('failed acquire camera image')
+			raise BadImageAcquirePause('failed acquire camera image')
 		if imagedata['image'] is None:
 			raise BadImageAcquirePause('Acquired array is None. Possible camera problem')
 
