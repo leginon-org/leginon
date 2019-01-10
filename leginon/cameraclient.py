@@ -5,6 +5,8 @@ import time
 # Change this to False to avoid automated screen lifting
 AUTO_SCREEN_UP = True
 AUTO_COLUMN_VALVE_OPEN = False
+# parallel imaging test
+PARALLEL_IMAGING = False
 
 default_settings = leginondata.CameraSettingsData()
 default_settings['dimension'] = {'x': 1024, 'y': 1024}
@@ -221,16 +223,10 @@ class CameraClient(object):
 		## acquire image, get new scope/camera params
 		#cameradata_before = self.instrument.getData(leginondata.CameraEMData)
 		self.startExposureTimer()
-		timage = threading.Thread(target=self.liveImage)
-		t0 = time.time()
-		timage.start()
-		time.sleep(6)
-		print 'main start',t0
-		self.instrument.setCCDCamera('Ceta')
-		imagedata['image'] = self.instrument.ccdcamera.Image
-		print 'main end',time.time()-t0
-		timage.join()
-		print 'thread joined', time.time()-t0
+		if PARALLEL_IMAGING:
+			imagedata['image'] = self.parallelImaging()
+		else:
+			imagedata['image'] = self.instrument.ccdcamera.Image
 		# get scope data after acquiring image so that scope can be simultaneously
 		# controlled. refs #6437
 		scopedata = self.instrument.getData(scopeclass)
@@ -248,6 +244,19 @@ class CameraClient(object):
 			# image of wrong shape will still go through. Error raised at normalization
 			raise RuntimeError('No valid image returned. Check camera software/hardware')
 		return imagedata
+
+	def parallelImaging(self):
+		timage = threading.Thread(target=self.liveImage)
+		t0 = time.time()
+		timage.start()
+		time.sleep(6)
+		print 'main start',t0
+		self.instrument.setCCDCamera('Ceta')
+		array = self.instrument.ccdcamera.Image
+		print 'main end',time.time()-t0
+		timage.join()
+		print 'thread joined', time.time()-t0
+		return array
 
 	def liveImage(self):
 		try:
