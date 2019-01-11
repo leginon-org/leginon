@@ -1531,7 +1531,11 @@ class PresetsManager(node.Node):
 		mystage = dict(emtargetdata['stage position'])
 		myimage = dict(emtargetdata['image shift'])
 		mybeam = dict(emtargetdata['beam shift'])
-		mydiffraction = dict(emtargetdata['diffraction shift'])
+		# TODO Find out when diffraction shift is or is not in emtargetdata
+		if emtargetdata['diffraction shift']:
+			mydiffraction = dict(emtargetdata['diffraction shift'])
+		else:
+			mydiffraction = None
 
 ## This should be unnecessary if we have a check for minimum stage movement
 ## (currently in pyscope).  It was a way to prevent moving the stage between
@@ -1630,14 +1634,16 @@ class PresetsManager(node.Node):
 			mybeam['x'] = newpreset['beam shift']['x']
 			mybeam['y'] = newpreset['beam shift']['y']
 		# diffraction shift 
-		if emtargetdata['movetype'] == 'diffraction shift':
+		if mydiffraction and emtargetdata['movetype'] == 'diffraction shift':
 			mydiffraction['x'] -= oldpreset['diffraction shift']['x']
 			mydiffraction['x'] += newpreset['diffraction shift']['x']
 			mydiffraction['y'] -= oldpreset['diffraction shift']['y']
 			mydiffraction['y'] += newpreset['diffraction shift']['y']
 		else:
-			mydiffraction['x'] = newpreset['beam shift']['x']
-			mydiffraction['y'] = newpreset['beam shift']['y']
+			if newpreset['diffraction shift']:
+				mydiffraction = {}
+				mydiffraction['x'] = newpreset['diffraction shift']['x']
+				mydiffraction['y'] = newpreset['diffraction shift']['y']
 
 		mymin = newpreset['defocus range min']
 		mymax = newpreset['defocus range max']
