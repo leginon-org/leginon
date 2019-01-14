@@ -318,7 +318,9 @@ class RawTransfer(object):
 			imdata = self.query_image_by_frames_name(frames_name,cam_host)
 			if imdata is None:
 				print '%s not from a saved image' % (frames_name)
-				self.cleanUp(src_path,method)
+				# TODO sometimes this query happens before the imagedata is queriable.
+				# Need to have a delay before remove.  Until then, not to clean up.
+				#self.cleanUp(src_path,method)
 				continue
 			image_path = imdata['session']['image path']
 			frames_path = self.getSessionFramePath(imdata)
