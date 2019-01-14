@@ -3,6 +3,7 @@
 import os
 import sys
 import shutil
+import filecmp
 import subprocess
 import time
 import numpy
@@ -144,6 +145,7 @@ class RawTransfer(object):
 			# remove empty .frames dir from source
 			# does not work on Windows
 			abspath = os.path.abspath(src)
+			print 'clean up %s from linux' % (abspath)
 			dirpath,basename = os.path.split(abspath)
 			if os.path.isdir(src):
 				cmd = 'find %s -type d -empty -prune -exec rmdir --ignore-fail-on-non-empty -p \{\} \;' % (basename,)
@@ -156,9 +158,14 @@ class RawTransfer(object):
 				cmd = 'rm -f %s' % abspath
 				print cmd
 				p = subprocess.Popen(cmd, shell=True, cwd=dirpath)
+				p.wait()
 
 		else:
-			self.removeEmptyFolders(os.path.abspath(src))
+			if os.path.isfile(src):
+				print 'os.remove(%s)' % src
+				os.remove(src)
+			else:
+				self.removeEmptyFolders(os.path.abspath(src))
 
 	def copy_and_delete(self,src, dst):
 		'''
@@ -310,6 +317,8 @@ class RawTransfer(object):
 					src_path = src_path + os.sep
 			imdata = self.query_image_by_frames_name(frames_name,cam_host)
 			if imdata is None:
+				print '%s not from a saved image' % (frames_name)
+				self.cleanUp(src_path,method)
 				continue
 			image_path = imdata['session']['image path']
 			frames_path = self.getSessionFramePath(imdata)
@@ -346,10 +355,16 @@ class RawTransfer(object):
 			# skip  and clean up finished ones. Needed when the
 			# destination user lost write privilege temporarily.
 			if os.path.exists(dst_path):
-				# TO DO ? Probably should check size
-				print 'Destination path %s exists, cleaning up' % dst_path
-				self.cleanUp(src_path,method)
-				return
+				if os.path.isfile(dst_path):
+					# check files to be identical.
+					if filecmp.cmp(src_path, dst_path):
+						print 'Destination path %s is good, cleaning up source' % dst_path
+						os.remove(src_path)
+						return
+					else:
+						print 'Destination path %s not good, redo transfer' % dst_path
+						self.cleanUp(dst_path,method)
+				#TODO: directory ?
 			# do actual copy and delete
 			self.transfer(src_path, dst_path, uid, gid, method, mode_str)
 			# de only
