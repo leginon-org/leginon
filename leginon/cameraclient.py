@@ -225,6 +225,10 @@ class CameraClient(object):
 		# get scope data after acquiring image so that scope can be simultaneously
 		# controlled. refs #6437
 		scopedata = self.instrument.getData(scopeclass)
+		try:
+			scopedata['intended defocus'] = self.intended_defocus
+		except AttributeError:
+			self.logger.warning('Intended defocus not defined')
 		imagedata['scope'] = scopedata
 		cameradata_after = self.instrument.getData(leginondata.CameraEMData)
 		## only using cameradata_after, not cameradata_before

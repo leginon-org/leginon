@@ -15,6 +15,7 @@ class TEM(baseinstrument.BaseInstrument):
 		{'name': 'ProjectionPressure', 'type': 'property'},
 		{'name': 'BufferTankPressure', 'type': 'property'},
 		{'name': 'ColumnValvePositions', 'type': 'property'},
+		{'name': 'IntendedDefocus', 'type': 'property'},
 		{'name': 'ExternalShutterStates', 'type': 'property'},
 		{'name': 'FilmAutomaticExposureTime', 'type': 'property'},
 		{'name': 'FilmDateTypes', 'type': 'property'},
@@ -108,6 +109,10 @@ class TEM(baseinstrument.BaseInstrument):
 
 	def exposeSpecimenNotCamera(self,seconds):
 		raise NotImplementedError()
+
+	def getIntendedDefocus(self):
+		# Value to be filled in by acquisition. Default to current defocus
+		return self.getDefocus()
 
 	def getProbeMode(self):
 		return 'default'
