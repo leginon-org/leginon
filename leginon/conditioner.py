@@ -11,6 +11,7 @@ import time
 import itertools
 
 PAUSE_ON_ERROR = True
+EARLY_WARNING_FOR_REFILL = False
 
 class Conditioner(node.Node):
 	'''
@@ -33,6 +34,9 @@ class Conditioner(node.Node):
 		self.addEventInput(event.FixConditionEvent, self.handleFixConditionEvent)
 		self.instrument = instrument.Proxy(self.objectservice, self.session,
 																				self.panel)
+		self.onInit()
+
+	def onInit(self):
 		self.conditionlist = []
 		# TO DO: choose ctypes used in the node. Set to all for now
 		self.ctypes = []
@@ -227,6 +231,11 @@ class AutoNitrogenFiller(Conditioner):
 	})
 	eventinputs = node.Node.eventinputs + [event.FixConditionEvent]
 
+	def onInit(self):
+		super(AutoNitrogenFiller, self).onInit()
+		# initialize these to 0 so that it does not trigger early warning.
+		self.loader_level_before = 0
+		self.column_level_before = 0
 
 	def getFillerModes(self):
 		return ['both cold','column cold, loader RT','column RT, loader cold','both RT']
@@ -253,6 +262,9 @@ class AutoNitrogenFiller(Conditioner):
 		Check refrigerant levels and refill if necessary
 		'''
 		loader_level,column_level = self.getRefrigerantLevels()
+		# catch only if the levels are going down
+		loader_delta = max((self.loader_level_before - loader_level, 0))
+		column_delta = max((self.column_level_before - column_level, 0))
 		self.loader_level_before = loader_level
 		self.column_level_before = column_level
 		check_loader = self.settings['autofiller mode'] in ['both cold','column RT, loader cold']
@@ -264,6 +276,11 @@ class AutoNitrogenFiller(Conditioner):
 		elif check_loader and loader_level <= self.settings['loader fill start']:
 			self.logger.info('Runing autofiller for loader')
 			force_fill = True
+		# Give a fake error for checking
+		if not force_fill and EARLY_WARNING_FOR_REFILL:
+			if (check_column and column_level <= self.settings['column fill start']+column_delta) or (check_loader and loader_level <= self.settings['loader fill start']+loader_delta):
+				self.logger.error('DEBUG: Runing autofiller soon. Go and observe it')
+
 		self.logger.debug('force_fill_state is %s' % (force_fill,))
 		return force_fill
 
@@ -329,6 +346,8 @@ class AutoNitrogenFiller(Conditioner):
 			if self.requireRecentDarkCurrentReferenceOnBright():
 				need_update = True
 				self.logger.info('%s requires dark current reference. Processing...' % name)
+				# TODO: What if there are multiple K2/K3 ?  Need to break now because
+				# Super and Counting are the same physical camera.
 				break
 		if need_update:
 			self.updateCameraDarkCurrentReference()
