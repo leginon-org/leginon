@@ -11,7 +11,7 @@ import time
 import itertools
 
 PAUSE_ON_ERROR = True
-EARLY_WARNING_FOR_REFILL = False
+EARLY_WARNING_FOR_REFILL = True
 
 class Conditioner(node.Node):
 	'''
