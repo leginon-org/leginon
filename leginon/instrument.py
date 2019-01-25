@@ -317,9 +317,9 @@ class Proxy(object):
 		types = []
 		args = []
 		for key, attribute in parametermapping:
-			# force set of projection mode
 			if key =='projection mode':
-				print 'tem proxy',proxy
+				# force set of projection mode
+				pass
 			else:
 				if key not in instance or instance[key] is None:
 					continue
