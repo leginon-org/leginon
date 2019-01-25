@@ -673,6 +673,9 @@ class Tecnai(tem.TEM):
 		return value
 	
 	def setDiffractionShift(self, vector, relative = 'absolute'):
+		if vector['x'] is None or vector['y'] is None:
+			print 'diffraction shift not defined. No change.'
+			return
 		if relative == 'relative':
 			try:
 				vector['x'] += self.tecnai.Projection.DiffractionShift.X
@@ -924,6 +927,8 @@ class Tecnai(tem.TEM):
 		return value
 
 	def waitForStageReady(self,position_log,timeout=10):
+		print 'waitForStageReady disabled'
+		return
 		t0 = time.time()
 		trials = 0
 		while self.tecnai.Stage.Status in (2,3,4):
