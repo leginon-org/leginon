@@ -16,6 +16,7 @@ mtime = 0
 query_day_limit = 30 # ignore database query for older dates
 expired_names = ['.DS_Store',] # files that should not be transferred
 check_interval = 20  # seconds between checking for new frames
+max_image_query_delay = 300 # seconds before an image query by CameraEMData.'frames name' should be queryable.
 
 class RawTransfer(object):
 	def __init__(self):
@@ -119,6 +120,14 @@ class RawTransfer(object):
 					# If there is just one, transfer regardlessly.
 					return results[0]
 		return None
+
+	def isRecentCreation(self,path):
+		ctime = os.path.getctime(path)
+		t0 = time.time()
+		is_recent =  t0 - ctime <= max_image_query_delay
+		if not is_recent:
+			print 'File was created %d minutes ago. Should be in database by now if ever.' % (int((t0-ctime)/60)),)
+		return is_recent
 
 	def removeEmptyFolders(self,path):
 		if not os.path.isdir(path):
@@ -292,7 +301,7 @@ class RawTransfer(object):
 			# gatan k2 summit data ends with '.mrc' or 'tif'
 			# de folder starts with '20'
 			# falcon mrchack stacks ends with '.mrcs'
-			if not ext.startswith('.mrc') and not ext != 'tif' and  ext != '.frames' and not name.startswith('20'):
+			if not ext.startswith('.mrc') and ext != 'tif' and  ext != '.frames' and not name.startswith('20'):
 				continue
 
 			# adjust next expiration timer to most recent time
@@ -313,14 +322,15 @@ class RawTransfer(object):
 				frames_name = name
 				dst_suffix = '.frames'
 				## ensure a trailing / on directory
-				if src_path[-1] != os.sep:
+				if os.path.isdir(src_path) and src_path[-1] != os.sep:
 					src_path = src_path + os.sep
 			imdata = self.query_image_by_frames_name(frames_name,cam_host)
 			if imdata is None:
 				print '%s not from a saved image' % (frames_name)
 				# TODO sometimes this query happens before the imagedata is queriable.
-				# Need to have a delay before remove.  Until then, not to clean up.
-				#self.cleanUp(src_path,method)
+				# Need to have a delay before remove.
+				if not self.isRecentCreation(src_path):
+					self.cleanUp(src_path,method)
 				continue
 			image_path = imdata['session']['image path']
 			frames_path = self.getSessionFramePath(imdata)
