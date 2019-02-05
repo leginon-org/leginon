@@ -126,7 +126,7 @@ class RawTransfer(object):
 		t0 = time.time()
 		is_recent =  t0 - ctime <= max_image_query_delay
 		if not is_recent:
-			print 'File was created %d minutes ago. Should be in database by now if ever.' % (int((t0-ctime)/60)),)
+			print 'File was created %d minutes ago. Should be in database by now if ever.' % (int((t0-ctime)/60),)
 		return is_recent
 
 	def removeEmptyFolders(self,path):
