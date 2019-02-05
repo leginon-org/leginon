@@ -3,6 +3,7 @@
 import os
 import sys
 import shutil
+import filecmp
 import subprocess
 import time
 import numpy
@@ -15,6 +16,7 @@ mtime = 0
 query_day_limit = 30 # ignore database query for older dates
 expired_names = ['.DS_Store',] # files that should not be transferred
 check_interval = 20  # seconds between checking for new frames
+max_image_query_delay = 300 # seconds before an image query by CameraEMData.'frames name' should be queryable.
 
 class RawTransfer(object):
 	def __init__(self):
@@ -119,6 +121,14 @@ class RawTransfer(object):
 					return results[0]
 		return None
 
+	def isRecentCreation(self,path):
+		ctime = os.path.getctime(path)
+		t0 = time.time()
+		is_recent =  t0 - ctime <= max_image_query_delay
+		if not is_recent:
+			print 'File was created %d minutes ago. Should be in database by now if ever.' % (int((t0-ctime)/60),)
+		return is_recent
+
 	def removeEmptyFolders(self,path):
 		if not os.path.isdir(path):
 			return
@@ -144,6 +154,7 @@ class RawTransfer(object):
 			# remove empty .frames dir from source
 			# does not work on Windows
 			abspath = os.path.abspath(src)
+			print 'clean up %s from linux' % (abspath)
 			dirpath,basename = os.path.split(abspath)
 			if os.path.isdir(src):
 				cmd = 'find %s -type d -empty -prune -exec rmdir --ignore-fail-on-non-empty -p \{\} \;' % (basename,)
@@ -156,9 +167,14 @@ class RawTransfer(object):
 				cmd = 'rm -f %s' % abspath
 				print cmd
 				p = subprocess.Popen(cmd, shell=True, cwd=dirpath)
+				p.wait()
 
 		else:
-			self.removeEmptyFolders(os.path.abspath(src))
+			if os.path.isfile(src):
+				print 'os.remove(%s)' % src
+				os.remove(src)
+			else:
+				self.removeEmptyFolders(os.path.abspath(src))
 
 	def copy_and_delete(self,src, dst):
 		'''
@@ -285,7 +301,7 @@ class RawTransfer(object):
 			# gatan k2 summit data ends with '.mrc' or 'tif'
 			# de folder starts with '20'
 			# falcon mrchack stacks ends with '.mrcs'
-			if not ext.startswith('.mrc') and not ext != 'tif' and  ext != '.frames' and not name.startswith('20'):
+			if not ext.startswith('.mrc') and ext != 'tif' and  ext != '.frames' and not name.startswith('20'):
 				continue
 
 			# adjust next expiration timer to most recent time
@@ -306,10 +322,15 @@ class RawTransfer(object):
 				frames_name = name
 				dst_suffix = '.frames'
 				## ensure a trailing / on directory
-				if src_path[-1] != os.sep:
+				if os.path.isdir(src_path) and src_path[-1] != os.sep:
 					src_path = src_path + os.sep
 			imdata = self.query_image_by_frames_name(frames_name,cam_host)
 			if imdata is None:
+				print '%s not from a saved image' % (frames_name)
+				# TODO sometimes this query happens before the imagedata is queriable.
+				# Need to have a delay before remove.
+				if not self.isRecentCreation(src_path):
+					self.cleanUp(src_path,method)
 				continue
 			image_path = imdata['session']['image path']
 			frames_path = self.getSessionFramePath(imdata)
@@ -346,10 +367,16 @@ class RawTransfer(object):
 			# skip  and clean up finished ones. Needed when the
 			# destination user lost write privilege temporarily.
 			if os.path.exists(dst_path):
-				# TO DO ? Probably should check size
-				print 'Destination path %s exists, cleaning up' % dst_path
-				self.cleanUp(src_path,method)
-				return
+				if os.path.isfile(dst_path):
+					# check files to be identical.
+					if filecmp.cmp(src_path, dst_path):
+						print 'Destination path %s is good, cleaning up source' % dst_path
+						os.remove(src_path)
+						return
+					else:
+						print 'Destination path %s not good, redo transfer' % dst_path
+						self.cleanUp(dst_path,method)
+				#TODO: directory ?
 			# do actual copy and delete
 			self.transfer(src_path, dst_path, uid, gid, method, mode_str)
 			# de only

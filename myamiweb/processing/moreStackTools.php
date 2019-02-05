@@ -1,0 +1,67 @@
+<?php
+/**
+ *	The Leginon software is Copyright under 
+ *	Apache License, Version 2.0
+ *	For terms of the license agreement
+ *	see  http://leginon.org
+ *
+ *	Simple viewer to view a image using mrcmodule
+ */
+
+require_once "inc/particledata.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
+require_once "inc/processing.inc";
+#require_once "inc/displaytables.inc";
+
+$expId = $_GET['expId'];
+$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
+
+processing_header("More Stack Tools","More Stack Tools Page", $javascript,False);
+
+echo "<table border='1' class='tableborder'>";
+
+echo "<tr><td>";
+echo "  <h3><a href='runMakeStack2.php?expId=$expId'>Make a New Stack</a></h3>";
+echo "  create a stack from a particle picking run ";
+echo "</td></tr>";
+
+echo "<tr><td>";
+echo "  <h3><a href='runCombineStacks.php?expId=$expId'>Combine Stacks</a></h3>";
+echo "  combine stacks from different sessions into one large stack.";
+echo "</td></tr>";
+
+echo "<tr><td>";
+echo "  <h3><a href='runStackIntoPicks.php?expId=$expId'>Convert Stack into Particle Picks</a></h3>";
+echo "  take an existing stack and create a particle picking run. "
+	." This is good for creating a new stack based on an existing stack with a bigger boxsize .";
+echo "</td></tr>";
+
+echo "<tr><td>";
+echo "  <h3><a href='stacksummary.php?expId=$expId&mean=1'>View Stacks</a></h3>";
+echo "  view a list of the available stacks where you can center the particles"
+	." or filter the stack based on the mean and standard deviation";
+echo "</td></tr>";
+
+echo "<tr><td>";
+echo "  <h3><a href='alignSubStack.php?expId=$expId'>Alignment SubStack</a></h3>";
+echo "  make a substack based on an alignment or classification. "
+	."It is easier to select from stack viewer of class averages";
+echo "</td></tr>";
+
+echo "<tr><td>";
+echo "  <h3><a href='runAppionLoop.php?expId=$expId&form=deParticleAlignForm'>Run DE particle stack alignment</a></h3>";
+echo "  DE has written a particle alignment script. This depends on particle stacks. ";
+echo "</td></tr>";
+
+if (!HIDE_FEATURE)
+{
+	echo "<tr><td>";
+	echo "  <h3><a href='jumpSubStack.php?expId=$expId'>Jumpers SubStack</a></h3>";
+	echo "  make a substack based on particle 'jumpers' from a reconstruction.";
+	echo "</td></tr>";
+}
+echo "</table>";
+processing_footer();
+exit;
+
