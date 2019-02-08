@@ -30,7 +30,7 @@ exec(cmd)
 #=====================
 class CL2D(appionScript.AppionScript):
 
-	execFile = "xmipp_classify_CL2D"
+	execFile = "xmipp_mpi_classify_CL2D"
 	#=====================
 	def setupParserOptions(self):
 		self.parser.set_usage("Usage: %prog --stack=ID [ --num-part=# ]")
@@ -621,7 +621,7 @@ class CL2D(appionScript.AppionScript):
  		Nlevels=glob.glob("level_*")
  		for level in Nlevels:
  			digits = level.split("_")[1]
- 			xmipp_sort = apParam.getExecPath("xmipp_image_sort", die=True)
+ 			xmipp_sort = apParam.getExecPath("xmipp_mpi_image_sort", die=True)
  			mpiruncmd = self.mpirun+" -np "+str(self.params['nproc'])+" "+xmipp_sort +" -i "+\
  			 			level+"/part"+self.params['timestamp']+"*xmd --oroot "+ level+"/part"+self.params['timestamp']+"sorted"
  			apParam.runCmd(mpiruncmd, package="Xmipp 3", verbose=True, showcmd=True, logfile="xmipp.std")
