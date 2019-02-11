@@ -176,7 +176,9 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 		time.sleep(self.exposure_time)
 		t1 = time.time()
 		self.exposure_timestamp = (t1 + t0) / 2.0
+		self.getSimImage(shape)
 
+	def getSimImage(self,shape):
 		if not self.simpar_dir:
 			return self.getSyntheticImage(shape)
 		else:
@@ -218,20 +220,19 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 			# rgb channels
 			image = image.sum(2)
 		binning = int(this_imagefile[3])
-		print 'input', image.shape
 		#TODO restore binning
 		zoom_factor = float(binning) / self.binning['x']
-		print zoom_factor
 		if zoom_factor > 1:
+			print 'zoom',zoom_factor
 			image = ndimage.zoom(image, zoom_factor)
 		if zoom_factor < 1:
+			print 'zoom',zoom_factor
 			image = imagefun.bin(image, int(1.0/zoom_factor))
 		#TODo restore corping
 		if image.shape[0] > shape[0]:
 			image = image[self.offset['y']:shape[0]+self.offset['y'],:]
 		if image.shape[1] > shape[1]:
 			image = image[:,self.offset['x']:shape[1]+self.offset['x']]
-		print image.shape
 		return image
 
 	def getSyntheticImage(self,shape):
@@ -387,7 +388,7 @@ class SimFrameCamera(SimCCDCamera):
 			self.rawframesname = time.strftime('frames_%Y%m%d_%H%M%S')
 			self.rawframesname += '_%02d' % (idcounter.next(),)
 		else:
-			return self.getSyntheticImage(shape)
+			return self.getSimImage(shape)
 		sum = numpy.zeros(shape, numpy.float32)
 
 		for i in range(nframes):
@@ -414,7 +415,7 @@ class SimFrameCamera(SimCCDCamera):
 				self.debug_print('PRINT %d' %i)
 				sum += frame
 
-		return sum
+		return self.getSimImage(shape)
 
 	
 	def getNumberOfFrames(self):
@@ -657,7 +658,7 @@ class SimK3Camera(SimFrameCamera):
 		time.sleep(self.exposure_time)
 		t1 = time.time()
 		self.exposure_timestamp = (t1 + t0) / 2.0
-		image = self.getSyntheticImage(shape)
+		image = self.getSimImage(shape)
 		image = self._modifyImageShape(image)
 		return image
 		
@@ -717,7 +718,6 @@ class SimK3Camera(SimFrameCamera):
 		added_binning = self.binning['x'] / self.acq_binning
 		if added_binning > 1:
 			image = imagefun_bin(image, added_binning)
-			print 'binned', image.shape
 		image = self._cropImage(image)
 		self.debug_print('modified shape %s' % (image.shape,))
 		return image
