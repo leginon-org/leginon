@@ -66,6 +66,13 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 			raise AttributeError('attribute not supported')
 		return object.__getattribute__(self, attr_name)
 
+	def getSystemGainDarkCorrected(self):
+		# Default to not do gain dark correction if have simulated images
+		if self.simpar_dir is None:
+			return False
+		else:
+			return True
+
 	def getRetractable(self):
 		return True
 
@@ -176,10 +183,10 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 		time.sleep(self.exposure_time)
 		t1 = time.time()
 		self.exposure_timestamp = (t1 + t0) / 2.0
-		self.getSimImage(shape)
+		return self.getSimImage(shape)
 
 	def getSimImage(self,shape):
-		if not self.simpar_dir:
+		if not self.simpar_dir or self.exposure_type == 'dark':
 			return self.getSyntheticImage(shape)
 		else:
 			return self.getSimParImage(shape)
