@@ -226,6 +226,9 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 		mag_dir = os.path.join(self.simpar_dir,mag_str)
 		if not this_bin_files:
 			return self.getSyntheticImage(shape)
+		# Files are not sorted by name in os.listdir
+		this_bin_files.sort()
+		# Loop through images to load
 		self.current_image_count[mag][required_bin] += 1
 		if self.current_image_count[mag][required_bin] > len(this_bin_files)-1:
 			self.current_image_count[mag] [required_bin]= 0
@@ -234,11 +237,23 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 		if len(image.shape) == 3:
 			# rgb channels
 			image = image.sum(2)
-		#TODo restore corping
+		#corping
+		need_padding = False
 		if image.shape[0] > shape[0]:
 			image = image[self.offset['y']:shape[0]+self.offset['y'],:]
+		elif image.shape[0] < shape[0]:
+			need_padding = True
 		if image.shape[1] > shape[1]:
 			image = image[:,self.offset['x']:shape[1]+self.offset['x']]
+		elif image.shape[1] < shape[1]:
+			need_padding = True
+		if need_padding:
+			mean = image.mean()
+			sigma = image.std()
+			off = ((shape[0]-image.shape[0])//2, (shape[1]-image.shape[1])//2)
+			new = numpy.random.normal(mean, sigma, shape)
+			new[off[0]:off[0]+image.shape[0],off[1]:off[1]+image.shape[1]] = image
+			image = new
 		return image
 
 	def getSyntheticImage(self,shape):
