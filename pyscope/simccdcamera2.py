@@ -213,28 +213,27 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 		mag_str = '%d' % mag
 		# images are saved under the magnification value in simpar.json
 		files = os.listdir(os.path.join(self.simpar_dir,mag_str))
+		required_bin = self.binning['x']
+		this_bin_files = []
+		for f in files:
+			this_bin = int(f[3])
+			if mag not in self.current_image_count:
+				self.current_image_count[mag]={}
+			if this_bin not in self.current_image_count[mag]:
+				self.current_image_count[mag][this_bin]=-1
+			if this_bin == required_bin:
+				this_bin_files.append(f)
 		mag_dir = os.path.join(self.simpar_dir,mag_str)
-		if not files:
+		if not this_bin_files:
 			return self.getSyntheticImage(shape)
-		if mag not in self.current_image_count:
-			self.current_image_count[mag]=-1
-		self.current_image_count[mag] += 1
-		if self.current_image_count[mag] > len(files)-1:
-			self.current_image_count[mag] = 0
-		this_imagefile = files[self.current_image_count[mag]]
+		self.current_image_count[mag][required_bin] += 1
+		if self.current_image_count[mag][required_bin] > len(this_bin_files)-1:
+			self.current_image_count[mag] [required_bin]= 0
+		this_imagefile = this_bin_files[self.current_image_count[mag][required_bin]]
 		image = numpil.read(os.path.join(mag_dir,this_imagefile))
 		if len(image.shape) == 3:
 			# rgb channels
 			image = image.sum(2)
-		binning = int(this_imagefile[3])
-		#TODO restore binning
-		zoom_factor = float(binning) / self.binning['x']
-		if zoom_factor > 1:
-			print 'zoom',zoom_factor
-			image = ndimage.zoom(image, zoom_factor)
-		if zoom_factor < 1:
-			print 'zoom',zoom_factor
-			image = imagefun.bin(image, int(1.0/zoom_factor))
 		#TODo restore corping
 		if image.shape[0] > shape[0]:
 			image = image[self.offset['y']:shape[0]+self.offset['y'],:]
