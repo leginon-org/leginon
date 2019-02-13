@@ -13,7 +13,7 @@ import pyami.fileutil, pyami.mrc
 
 next_time_start = 0
 mtime = 0
-query_day_limit = 30 # ignore database query for older dates
+query_day_limit = 10 # ignore database query for older dates
 expired_names = ['.DS_Store',] # files that should not be transferred
 check_interval = 20  # seconds between checking for new frames
 max_image_query_delay = 1200 # seconds before an image query by CameraEMData.'frames name' should be queryable. Need to account for difference in the clocks of the camera computer and where this script is running.
@@ -284,7 +284,7 @@ class RawTransfer(object):
 		global next_time_start
 		global mtime
 		names = os.listdir(parent_src_path)
-		#time.sleep(10)  # wait for any current writes to finish
+		time.sleep(10)  # wait for any current writes to finish
 		time_start = next_time_start
 		for name in names:
 			src_path = os.path.join(parent_src_path, name)
