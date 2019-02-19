@@ -39,23 +39,31 @@ $filepath = $leginondata->getFilenameFromId($imgId,true);
 $imagerequest = new imageRequester();
 $fileinfo = $imagerequest->requestInfo($filepath);
 $range = 3;
+// mrc or redux cache
 if ($fileinfo && !$_GET['np'] && !$_GET['xp']) {
 	// allow external overwrite
 	$minpix = $fileinfo->amean - $range * $fileinfo->rms;
 	$maxpix = $fileinfo->amean + $range * $fileinfo->rms;
 }
 
-if (!$fileinfo) {
-	$sessioninfo = $leginondata->getSessionInfoFromImage($imgId);
-	$sessionname = $sessioninfo['name'];
-	// Try cached image
-	$filepath = useCache($filepath, $sessionname, false, true);
-	$fileinfo = $imagerequest->requestInfo($filepath);
-}
-
 $nb_bars = 40;
 if ($_GET['tf']==1) {
+	// first attempt to get histogram.  This will succeed if
+	// file exists or is in redux cache
 	$data = $imagerequest->requestHistdata($filepath, $nb_bars, $minpix, $maxpix);
+
+	if (!$data) {
+		// Try cached jpg image
+		$sessioninfo = $leginondata->getSessionInfoFromImage($imgId);
+		$sessionname = $sessioninfo['name'];
+		$filepath = useCache($filepath, $sessionname, false, true);
+		// cached jpg default min/max is 0/255.
+		$data = $imagerequest->requestHistdata($filepath, $nb_bars, $minpix, $maxpix);
+	}
+}
+
+//handle extra values
+if ($_GET['tf']==1) {
 	if (count($data[1]) > count($data[0])) array_pop($data[1]);
 	$datax = $data[1];
 	$datay = $data[0];
