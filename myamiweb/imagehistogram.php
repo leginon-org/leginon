@@ -15,6 +15,7 @@ require_once "inc/histogram.inc";
 require_once "inc/leginon.inc";
 require_once "inc/image.inc";
 require_once "inc/imagerequest.inc";
+require_once "inc/cachedb.inc";
 
 if(!$imgId=$_GET['id']) {
 	$img = blankimage(200,60);
@@ -24,6 +25,7 @@ if(!$imgId=$_GET['id']) {
 	exit;
 }
 $preset=$_GET['preset'];
+//default works for jpg images
 $minpix = ($_GET['np']) ? $_GET['np'] : 0;
 $maxpix = ($_GET['xp']) ? $_GET['xp'] : 255;
 
@@ -37,14 +39,35 @@ $filepath = $leginondata->getFilenameFromId($imgId,true);
 $imagerequest = new imageRequester();
 $fileinfo = $imagerequest->requestInfo($filepath);
 $range = 3;
-$minpix = $fileinfo->amean - $range * $fileinfo->rms;
-$maxpix = $fileinfo->amean + $range * $fileinfo->rms;
+if ($fileinfo && !$_GET['np'] && !$_GET['xp']) {
+	// allow external overwrite
+	$minpix = $fileinfo->amean - $range * $fileinfo->rms;
+	$maxpix = $fileinfo->amean + $range * $fileinfo->rms;
+}
+
+if (!$fileinfo) {
+	$sessioninfo = $leginondata->getSessionInfoFromImage($imgId);
+	$sessionname = $sessioninfo['name'];
+	// Try cached image
+	$filepath = useCache($filepath, $sessionname, false, true);
+	$fileinfo = $imagerequest->requestInfo($filepath);
+}
+
 $nb_bars = 40;
 if ($_GET['tf']==1) {
 	$data = $imagerequest->requestHistdata($filepath, $nb_bars, $minpix, $maxpix);
 	if (count($data[1]) > count($data[0])) array_pop($data[1]);
 	$datax = $data[1];
 	$datay = $data[0];
+}
+
+if (!is_array($data) || !is_array($data[1]) || count($data[1]) < 2) {
+       // Display blank if not have enough data
+       $img = blankimage(200,60);
+       header("Content-type: image/png");
+       imagepng($img);
+       imagedestroy($img);
+       exit;
 }
 
 if ($_GET['rp']==1) {
