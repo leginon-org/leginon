@@ -4,6 +4,7 @@ import os
 import socket
 import shutil
 import numpy
+import glob
 
 #pyami
 from pyami import fileutil
@@ -12,6 +13,7 @@ from pyami import mrc
 from appionlib import apDisplay
 from appionlib import apDDStackMaker
 from appionlib import apDDFrameAligner
+from appionlib import apDDResult
 from appionlib import apFile
 
 class AlignStackLoop(apDDStackMaker.FrameStackLoop):
@@ -248,6 +250,30 @@ class AlignStackLoop(apDDStackMaker.FrameStackLoop):
 			# Doing the alignment
 			self.framealigner.alignFrameStack()
 
+	def commitAlignStats(self, aligned_imgdata):
+		try:
+			ddr = apDDResult.DDResults(aligned_imgdata)
+			xydict = ddr.getFrameTrajectoryFromLog()
+		except Exception as e:
+			apDisplay.printError('Can not commit alignmnet stats: %s' % e) 
+		trajdata = ddr.saveFrameTrajectory(ddr.ddstackrun, xydict)
+		ddr.saveAlignStats(ddr.ddstackrun, trajdata)
+
+	def loopCleanUp(self, imgdata):
+		'''
+		Clean up within AppionLoop.  This is executed after commitToDatabase,
+		and is used to remove align corrected mrc files.
+		'''
+		super(AlignStackLoop, self).loopCleanUp(imgdata)
+		if self.aligned_imagedata != None and self.params['commit']:
+			pattern = imgdata['filename']+'_c*.mrc'
+			temp_pattern = 'temp%s.gpuid_%d_sum_*.mrc' % (self.hostname, self.dd.gpuid)
+			mrcs_to_delete = glob.glob(pattern)
+			mrcs_to_delete.extend(glob.glob(temp_pattern))
+			if mrcs_to_delete:
+				apDisplay.printWarning('Deleting temporary results after upload')
+			for filename in mrcs_to_delete:
+				apFile.removeFile(filename, False)
 
 if __name__ == '__main__':
 	makeStack = AlignStackLoop()

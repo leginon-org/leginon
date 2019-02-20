@@ -1,12 +1,15 @@
 import copy
 import ccdcamera
 import numpy
+from scipy import ndimage
 import random
 random.seed()
 import time
+import json
 import remote
 import os
-from pyami import mrc, imagefun
+
+from pyami import mrc, imagefun, numpil
 import itertools
 from pyscope import falconframe
 
@@ -52,11 +55,23 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 					'setEnergyFilterWidth',
 					'alignEnergyFilterZeroLossPeak',
 			]
+		if 'simpar' in self.conf and self.conf['simpar'] and os.path.isdir(self.conf['simpar']):
+			self.simpar_dir = self.conf['simpar']
+		else:
+			self.simpar_dir = None
+		self.current_image_count = {}
 
 	def __getattribute__(self, attr_name):
 		if attr_name in object.__getattribute__(self, 'unsupported'):
 			raise AttributeError('attribute not supported')
 		return object.__getattribute__(self, attr_name)
+
+	def getSystemGainDarkCorrected(self):
+		# Default to not do gain dark correction if have simulated images
+		if self.simpar_dir is None:
+			return False
+		else:
+			return True
 
 	def getRetractable(self):
 		return True
@@ -168,9 +183,79 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 		time.sleep(self.exposure_time)
 		t1 = time.time()
 		self.exposure_timestamp = (t1 + t0) / 2.0
+		return self.getSimImage(shape)
 
-		return self.getSyntheticImage(shape)
-	
+	def getSimImage(self,shape):
+		if not self.simpar_dir or self.exposure_type == 'dark':
+			return self.getSyntheticImage(shape)
+		else:
+			return self.getSimParImage(shape)
+
+	def getAllSimPar(self):	
+		f = open(os.path.join(self.simpar_dir,'simpar.json'),'r+')
+		try:
+			all_simpar = json.loads(f.read())
+		except ValueError:
+			all_simpar = {}
+		return all_simpar
+
+	def getSimParImage(self,shape):
+		'''
+		Return images saved in advanced according to sim tem parameters.
+		The jpg images should be use full camera with binning identified
+		in the filename such as 'bin4_0.jpg'. '_0' identify the first of
+    the number of images the function pulled from iteratively. 
+		'''
+		all_simpar = self.getAllSimPar()
+		if not all_simpar:
+			return self.getSyntheticImage(shape)
+		mag = int(all_simpar['magnification'])
+		mag_str = '%d' % mag
+		# images are saved under the magnification value in simpar.json
+		files = os.listdir(os.path.join(self.simpar_dir,mag_str))
+		required_bin = self.binning['x']
+		this_bin_files = []
+		for f in files:
+			this_bin = int(f[3])
+			if mag not in self.current_image_count:
+				self.current_image_count[mag]={}
+			if this_bin not in self.current_image_count[mag]:
+				self.current_image_count[mag][this_bin]=-1
+			if this_bin == required_bin:
+				this_bin_files.append(f)
+		mag_dir = os.path.join(self.simpar_dir,mag_str)
+		if not this_bin_files:
+			return self.getSyntheticImage(shape)
+		# Files are not sorted by name in os.listdir
+		this_bin_files.sort()
+		# Loop through images to load
+		self.current_image_count[mag][required_bin] += 1
+		if self.current_image_count[mag][required_bin] > len(this_bin_files)-1:
+			self.current_image_count[mag] [required_bin]= 0
+		this_imagefile = this_bin_files[self.current_image_count[mag][required_bin]]
+		image = numpil.read(os.path.join(mag_dir,this_imagefile))
+		if len(image.shape) == 3:
+			# rgb channels
+			image = image.sum(2)
+		#corping
+		need_padding = False
+		if image.shape[0] > shape[0]:
+			image = image[self.offset['y']:shape[0]+self.offset['y'],:]
+		elif image.shape[0] < shape[0]:
+			need_padding = True
+		if image.shape[1] > shape[1]:
+			image = image[:,self.offset['x']:shape[1]+self.offset['x']]
+		elif image.shape[1] < shape[1]:
+			need_padding = True
+		if need_padding:
+			mean = image.mean()
+			sigma = image.std()
+			off = ((shape[0]-image.shape[0])//2, (shape[1]-image.shape[1])//2)
+			new = numpy.random.normal(mean, sigma, shape)
+			new[off[0]:off[0]+image.shape[0],off[1]:off[1]+image.shape[1]] = image
+			image = new
+		return image
+
 	def getSyntheticImage(self,shape):
 		dark_mean = 1.0
 		bright_scale = 10
@@ -324,7 +409,7 @@ class SimFrameCamera(SimCCDCamera):
 			self.rawframesname = time.strftime('frames_%Y%m%d_%H%M%S')
 			self.rawframesname += '_%02d' % (idcounter.next(),)
 		else:
-			return self.getSyntheticImage(shape)
+			return self.getSimImage(shape)
 		sum = numpy.zeros(shape, numpy.float32)
 
 		for i in range(nframes):
@@ -351,7 +436,7 @@ class SimFrameCamera(SimCCDCamera):
 				self.debug_print('PRINT %d' %i)
 				sum += frame
 
-		return sum
+		return self.getSimImage(shape)
 
 	
 	def getNumberOfFrames(self):
@@ -594,7 +679,7 @@ class SimK3Camera(SimFrameCamera):
 		time.sleep(self.exposure_time)
 		t1 = time.time()
 		self.exposure_timestamp = (t1 + t0) / 2.0
-		image = self.getSyntheticImage(shape)
+		image = self.getSimImage(shape)
 		image = self._modifyImageShape(image)
 		return image
 		
@@ -654,7 +739,6 @@ class SimK3Camera(SimFrameCamera):
 		added_binning = self.binning['x'] / self.acq_binning
 		if added_binning > 1:
 			image = imagefun_bin(image, added_binning)
-			print 'binned', image.shape
 		image = self._cropImage(image)
 		self.debug_print('modified shape %s' % (image.shape,))
 		return image

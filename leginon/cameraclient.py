@@ -160,6 +160,17 @@ class CameraClient(object):
 		pass
 
 	def prepareToAcquire(self,allow_retracted=False,exposure_type='normal'):
+		'''
+		Preparation before acquiring the image. Overwritable by subclasses
+		such as MoveAcquisition to skip the real prepartion.
+		'''
+		self._prepareToAcquire(allow_retracted, exposure_type)
+
+	def _prepareToAcquire(self,allow_retracted=False,exposure_type='normal'):
+		'''
+		Make sure the camera and scope is in the condition for acquiring
+		the image.
+		'''
 		t1 = threading.Thread(target=self.positionCamera(allow_retracted=allow_retracted))
 		if AUTO_SCREEN_UP:
 			t2 = threading.Thread(target=self.liftScreenBeforeExposure(exposure_type))
@@ -173,6 +184,12 @@ class CameraClient(object):
 
 		while t1.isAlive() or t2.isAlive() or t3.isAlive():
 			time.sleep(0.5)
+		## make sure shutter override is activated
+		try:
+			self.instrument.tem.ShutterControl = True
+		except:
+			# maybe tem has no such function
+			pass
 
 	def acquireCameraImageData(self, scopeclass=leginondata.ScopeEMData, allow_retracted=False, type='normal', force_no_frames=False):
 		'''Acquire a raw image from the currently configured CCD camera
@@ -201,19 +218,18 @@ class CameraClient(object):
 		imagedata = leginondata.CameraImageData()
 		imagedata['session'] = self.session
 
-		## make sure shutter override is activated
-		try:
-			self.instrument.tem.ShutterControl = True
-		except:
-			# maybe tem has no such function
-			pass
-
 		## acquire image, get new scope/camera params
-		scopedata = self.instrument.getData(scopeclass)
 		#cameradata_before = self.instrument.getData(leginondata.CameraEMData)
-		imagedata['scope'] = scopedata
 		self.startExposureTimer()
 		imagedata['image'] = self.instrument.ccdcamera.Image
+		# get scope data after acquiring image so that scope can be simultaneously
+		# controlled. refs #6437
+		scopedata = self.instrument.getData(scopeclass)
+		try:
+			scopedata['intended defocus'] = self.intended_defocus
+		except AttributeError:
+			self.logger.warning('Intended defocus not defined')
+		imagedata['scope'] = scopedata
 		cameradata_after = self.instrument.getData(leginondata.CameraEMData)
 		## only using cameradata_after, not cameradata_before
 		imagedata['camera'] = cameradata_after
@@ -224,6 +240,7 @@ class CameraClient(object):
 
 		self.readout_done_event.set()
 		if imagedata['image'] is None or imagedata['image'].shape == (0,0):
+			# image of wrong shape will still go through. Error raised at normalization
 			raise RuntimeError('No valid image returned. Check camera software/hardware')
 		return imagedata
 

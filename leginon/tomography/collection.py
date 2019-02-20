@@ -21,12 +21,13 @@ class Collection(object):
 		self.correlator[1] = None
 		self.instrument_state = None
 		self.theta = 0.0
+		self.reset_tilt = 0.0
 
 	def saveInstrumentState(self):
 		self.instrument_state = self.instrument.getData(leginon.leginondata.ScopeEMData)
 		a_state = self.instrument_state['stage position']['a']
-		if abs(a_state - self.tilts[0][0]) > math.radians(1):
-			self.logger.error('instrument state saved to %.1f degrees. The last tilt did not return properly.' % math.degrees(a_state))
+		if abs(a_state - self.reset_tilt) > math.radians(1):
+			self.logger.error('instrument state saved to %.1f degrees, not %.1f. The last tilt did not return properly.' % (math.degrees(a_state), math.degrees(self.reset_tilt)))
 
 	def restoreInstrumentState(self):
 		keys = ['stage position', 'defocus', 'image shift', 'magnification']

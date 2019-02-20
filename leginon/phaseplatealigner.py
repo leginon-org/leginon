@@ -116,7 +116,8 @@ class PhasePlateAligner(referencecounter.ReferenceCounter):
 			btilt_scale = self.settings['tilt charge angle']
 			# Beam Till Delta will be based on database PPBeamTiltRotationData
 			# and PPBeamTiltVectorData calibration.
-			btilt_deltas = self.btcalclient.getBeamTiltDeltaPair(btilt_scale, True)
+			probe = self.instrument.tem.ProbeMode
+			btilt_deltas = self.btcalclient.getBeamTiltDeltaPair(btilt_scale, probe, True)
 			if len(btilt_deltas) != 2:
 				raise
 			bt1 = self.btcalclient.modifyBeamTilt(bt0,btilt_deltas[0])

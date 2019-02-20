@@ -38,8 +38,9 @@ class DDStackLoop(appionLoop2.AppionLoop):
 		# Dosefgpu_driftcoor options
 		self.parser.add_option("--alignoffset", dest="fod", type="int", default=2,
 			help="number of frame offset in alignment in dosefgpu_driftcorr")
-		self.parser.add_option("--alignbfactor", dest="bft", type="float", default=100.0,
-			help="alignment B-factor in pix^2 in dosefgpu_driftcorr")
+		self.parser.add_option("--alignbfactor", dest="bft", type="float", default=(500.0,150.0),
+			help="alignment B-factor in pix^2 in dosefgpu_driftcorr", nargs=2)
+		
 		self.parser.add_option("--alignccbox", dest="pbx", type="int", default=128,
 			help="alignment CC search box size in dosefgpu_driftcorr")
 
@@ -82,11 +83,20 @@ class DDStackLoop(appionLoop2.AppionLoop):
 		self.aligned_imagedata = None
 		self.aligned_dw_imagedata = None
 
+	def commitAlignStats(self, aligned_imgdata):
+		'''
+		commit align stats. Only do so if performing alignment using ApDDAlignStackMaker
+		'''
+		pass
+
 	def commitToDatabase(self,imgdata):
 		if self.aligned_imagedata != None:
 			apDisplay.printMsg('Uploading aligned image as %s' % self.aligned_imagedata['filename'])
 			q = appiondata.ApDDAlignImagePairData(source=imgdata,result=self.aligned_imagedata,ddstackrun=self.rundata)
 			q.insert()
+			# Issue #6155 need new query to get timestamp
+			self.aligned_imagedata = leginondata.AcquisitionImageData().direct_query(q['result'].dbid)
+			self.commitAlignStats(self.aligned_imagedata)
 			transferALSThickness(q['source'],q['result'])
 			transferZLPThickness(q['source'],q['result'])
 	
@@ -94,6 +104,8 @@ class DDStackLoop(appionLoop2.AppionLoop):
 			apDisplay.printMsg('Uploading aligned image as %s' % self.aligned_dw_imagedata['filename'])
 			q = appiondata.ApDDAlignImagePairData(source=imgdata,result=self.aligned_dw_imagedata,ddstackrun=self.rundata)
 			q.insert()
+			# Issue #6155 need new query to get timestamp
+			self.aligned_dw_imagedata = leginondata.AcquisitionImageData().direct_query(q['result'].dbid)
 			transferALSThickness(q['source'],q['result'])
 			transferZLPThickness(q['source'],q['result'])
 

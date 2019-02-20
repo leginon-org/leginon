@@ -959,6 +959,17 @@ if (is_numeric($expId)) {
 		'name'=>"<a href='uploadmodel.php?expId=$sessionId'>Upload model</a>",
 		'result'=>$result,
 	);
+	
+	if (defined("CRYOSPARC")) {
+	    $jobs = $particle->getCryosparcJobs($sessionId);
+	    $result = (!$jobs) ? "" :
+	    "<a href='cryosparc.php?expId=$sessionId'>".count($jobs)." available</a>";
+	    $nruns[] = array(
+	        'name'=>"<a href='cryosparc.php?expId=$sessionId'>cryoSPARC</a>",
+	        'result'=>$result,
+	    );
+	    
+	}
 
 	$data[] = array(
 		'action' => array($action, $celloption),

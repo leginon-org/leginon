@@ -247,10 +247,15 @@ class Tecnai(tem.TEM):
 		return self._setStagePosition(value)
 
 	def setStageSpeed(self, value):
-		self.tom.Stage.Speed = value
+		# 0.0 to 1.0 with 1.0 the highest speed
+		if self.tom:
+			self.tom.Stage.Speed = value
 
 	def getStageSpeed(self):
-		return self.tom.Stage.Speed
+		if self.tom:
+			return self.tom.Stage.Speed
+		else:
+			return 1.0
 
 	def normalizeLens(self, lens = 'all'):
 		if lens == 'all':
@@ -869,6 +874,12 @@ class Tecnai(tem.TEM):
 			print 'took extra %.1f seconds to get to ready status' % (donetime)
 
 	def _setStagePosition(self, position, relative = 'absolute'):
+		if False:
+			return self._setTomStagePosition(position, relative)
+		else:
+			return self._setTemStagePosition(position, relative)
+
+	def _setTemStagePosition(self, position, relative = 'absolute'):
 #		tolerance = 1.0e-4
 #		polltime = 0.01
 
@@ -917,6 +928,53 @@ class Tecnai(tem.TEM):
 				print datetime.datetime.now()
 				print 'Other error in going to %s' % (position,)
 			raise RuntimeError('_setStagePosition Unknown error')
+		self.waitForStageReady('after setting %s' % (position,))
+
+	def _setTomStagePosition(self, position, relative = 'absolute'):
+#		tolerance = 1.0e-4
+#		polltime = 0.01
+
+		self.waitForStageReady('before setting %s' % (position,))
+		if relative == 'relative':
+			for key in position:
+				position[key] += getattr(self.tecnai.Stage.Position, key.upper())
+		elif relative != 'absolute':
+			raise ValueError
+		
+		pos = self.tecnai.Stage.Position
+
+		axes = 0
+		stage_limits = self.getStageLimits()
+		tom_axes = {'X':0,'Y':1,'Z':2,'A':3}
+		for key, value in position.items():
+			if use_nidaq and key == 'b':
+				deg = value / 3.14159 * 180.0
+				nidaq.setBeta(deg)
+				continue
+			if key in stage_limits.keys() and (value < stage_limits[key][0] or value > stage_limits[key][1]):
+				raise ValueError('position %s beyond stage limit at %.2e' % (key, value))
+			setattr(pos, key.upper(), value)
+			axis_I = tom_axes[key.upper()]
+
+			try:
+				self.tom.Stage.GotoWithSpeed(axis_I, getattr(pos,key.upper()))
+			except com_module.COMError, e:
+				if self.getDebugStage():
+					print datetime.datetime.now()
+					print 'COMError in going to %s' % (position,)
+				try:
+					# used to parse e into (hr, msg, exc, arg)
+					# but Issue 4794 got 'need more than 3 values to unpack' error'.
+					# simplify the error handling so that it can be raised with messge.
+					msg = e.text
+					raise ValueError('Stage.Goto failed: %s' % (msg,))
+				except:
+					raise ValueError('COMError in _setStagePosition: %s' % (e,))
+			except:
+				if self.getDebugStage():
+					print datetime.datetime.now()
+					print 'Other error in going to %s' % (position,)
+				raise RuntimeError('_setStagePosition Unknown error')
 		self.waitForStageReady('after setting %s' % (position,))
 
 	def setDirectStagePosition(self,value):
@@ -993,7 +1051,7 @@ class Tecnai(tem.TEM):
 		except:
 			raise RuntimerError('Unknown error')
 	
-	def getDiffractionMode(self):
+	def getProjectionMode(self):
 		if self.tecnai.Projection.Mode == self.tem_constants.pmImaging:
 			return 'imaging'
 		elif self.tecnai.Projection.Mode == self.tem_constants.pmDiffraction:
@@ -1001,7 +1059,7 @@ class Tecnai(tem.TEM):
 		else:
 			raise SystemError
 		
-	def setDiffractionMode(self, mode):
+	def setProjectionMode(self, mode):
 		if mode == 'imaging':
 			self.tecnai.Projection.Mode = self.tem_constants.pmImaging
 		elif mode == 'diffraction':

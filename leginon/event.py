@@ -129,6 +129,44 @@ class NodeBusyNotificationEvent(NotificationEvent):
 	'Event sent by node such as Tomography to restart timeout timer'
 	pass
 
+class ManagerPauseAvailableEvent(NotificationEvent):
+	'''Event sent by node such as Acquisition when it is in a pausable status
+	to allow manager to pause it'''
+	pass
+
+class ManagerPauseNotAvailableEvent(NotificationEvent):
+	'''Event sent by node such as Acquisition when it is in idle status
+	to prevent manager from pausing it'''
+	pass
+
+class ManagerContinueAvailableEvent(NotificationEvent):
+	'Event sent by node such as Acquisition when it is in a paused status'
+	pass
+
+class ManagerPauseEvent(NotificationEvent):
+	'''Event sent by node to notify the manager to do a general pause
+	'''
+	pass
+
+class ManagerContinueEvent(NotificationEvent):
+	'''Event sent by node to notify the manager to resume a general pause
+	'''
+	def typemap(cls):
+		return NotificationEvent.typemap() + (
+			('all', bool),  # Set to continue all or the last.
+		)
+	typemap = classmethod(typemap)
+
+class PauseEvent(NotificationEvent):
+	'''Event sent by the manager to do a general pause
+	'''
+	pass
+
+class ContinueEvent(NotificationEvent):
+	'''Event sent by the manager to resume a general pause
+	'''
+	pass
+
 class TargetListDoneEvent(NotificationEvent):
 	'Event indicating target list is done'
 	def typemap(cls):

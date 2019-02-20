@@ -6,7 +6,6 @@
 #
 
 import baseinstrument
-import config
 
 class TEM(baseinstrument.BaseInstrument):
 	name = None
@@ -16,6 +15,7 @@ class TEM(baseinstrument.BaseInstrument):
 		{'name': 'ProjectionPressure', 'type': 'property'},
 		{'name': 'BufferTankPressure', 'type': 'property'},
 		{'name': 'ColumnValvePositions', 'type': 'property'},
+		{'name': 'IntendedDefocus', 'type': 'property'},
 		{'name': 'ExternalShutterStates', 'type': 'property'},
 		{'name': 'FilmAutomaticExposureTime', 'type': 'property'},
 		{'name': 'FilmDateTypes', 'type': 'property'},
@@ -48,7 +48,7 @@ class TEM(baseinstrument.BaseInstrument):
 		{'name': 'CorrectedStagePosition', 'type': 'property'},
 		{'name': 'DarkFieldMode', 'type': 'property'},
 		{'name': 'Defocus', 'type': 'property'},
-		{'name': 'DiffractionMode', 'type': 'property'},
+		{'name': 'ProjectionMode', 'type': 'property'},
 		{'name': 'Emission', 'type': 'property'},
 		{'name': 'ExternalShutter', 'type': 'property'},
 		{'name': 'FilmDateType', 'type': 'property'},
@@ -96,8 +96,8 @@ class TEM(baseinstrument.BaseInstrument):
 	projection_lens_program = 'TEM'
 	def __init__(self):
 		baseinstrument.BaseInstrument.__init__(self)
-		self.config_name = config.getNameByClass(self.__class__)
-		self.cs = config.getConfigured()[self.config_name]['cs']
+		self.initConfig()
+		self.cs = self.conf['cs']
 		self.projection_submode_map = {}
 		self.grid_inventory = {}
 
@@ -109,6 +109,10 @@ class TEM(baseinstrument.BaseInstrument):
 
 	def exposeSpecimenNotCamera(self,seconds):
 		raise NotImplementedError()
+
+	def getIntendedDefocus(self):
+		# Value to be filled in by acquisition. Default to current defocus
+		return self.getDefocus()
 
 	def getProbeMode(self):
 		return 'default'
@@ -305,11 +309,12 @@ class TEM(baseinstrument.BaseInstrument):
 		# equivalent to normal movement by default
 		self.setStagePosition(value)
 
-	def getDiffractionMode(self):
+	def getProjectionMode(self):
 		# valid values: imaging or diffraction
 		return 'imaging'
 
-	def setDiffractionMode(self):
+	def setProjectionMode(self, value):
+		# valid values: imaging or diffraction
 		raise NotImplementedError()
 
 	def getVacuumStatus(self):

@@ -14,7 +14,6 @@ connections = {}
 
 def getConnection(modulename='leginondata'):
 	if not modulename in connections.keys():
-		print('connecting')
 		param = dbconfig.getConfig(modulename)
 		connections[modulename] = sqldb.sqlDB(**param)
 	return connections[modulename]

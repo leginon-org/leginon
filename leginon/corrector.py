@@ -379,56 +379,6 @@ class Corrector(imagewatcher.ImageWatcher):
 		normdata['bright'] = bright
 		self.storeCorrectorImageData(normdata, 'norm', channel)
 
-	def uiAutoAcquireReferences(self):
-		binning = self.autobinning.get()
-		autoexptime = self.autoexptime.get()
-		targetmean = self.autotarget.get()
-		self.autoAcquireReferences(binning, targetmean, autoexptime)
-
-	def autoAcquireReferences(self, binning, targetmean, initial_exp):
-		'''
-		for a given binning, figure out the proper exposure time
-		which gives the desired mean pixel value
-		'''
-		config = {
-			'dimension':{'x':256, 'y':256},
-			'binning':{'x':binning, 'y':binning},
-			'auto offset': True,
-			'exposure time': 0,
-		}
-
-		raise NotImplementedError('need to work out the details of configuring the camera here')
-
-		im = self.acquireCameraImageData(force_no_frames=True)['image']
-		mean = darkmean = arraystats.mean(im)
-		self.displayImage(im)
-		self.logger.info('Dark reference mean: %s' % str(darkmean))
-
-		target_exp = 0
-		trial_exp = initial_exp
-		tolerance = 100
-		minmean = targetmean - tolerance
-		maxmean = targetmean + tolerance
-
-		tries = 5
-		for i in range(tries):
-			config = { 'exposure time': trial_exp }
-			raise NotImplementedError('need to work out the details of configuring the camera here')
-			im = self.acquireCameraImageData(force_no_frames=True)['image']
-			mean = arraystats.mean(im)
-			self.displayImage(im)
-			self.logger.info('Image mean: %s' % str(mean))
-
-			if minmean <= mean <= maxmean:
-				i = -1
-				break
-			else:
-				slope = (mean - darkmean) / trial_exp
-				trial_exp = (targetmean - darkmean) / slope
-
-		if i == tries-1:
-			self.logger.info('Failed to find target mean after %s tries' % (tries,))
-
 	def onAddPoints(self):
 		imageshown = self.currentimage
 		plan = self.retrieveCorrectorPlanFromSettings()

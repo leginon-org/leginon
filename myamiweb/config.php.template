@@ -131,6 +131,9 @@ define('ENABLE_CACHE', false);
 // --- define('CACHE_PATH', "/srv/www/cache/"); --- //
 define('CACHE_PATH', "");
 
+// --- limit session to be displayed ---//
+define('SESSION_LIMIT', 3000);
+
 // --- define Flash player base url --- //
 define('FLASHPLAYER_URL', "/flashplayer/");
 
@@ -182,6 +185,10 @@ define('EXCLUDED_PROJECTS',"");
 
 // --- hide testing tools related to specific data sets. --- //
 define('HIDE_TEST_TOOLS', true);
+
+// --- cryoSPARC host name and port number. --- //
+//define('CRYOSPARC', "yourhost");
+define('CRYOSPARC_PORT', "39001");
 
 // --- A startup message may be shown to the user --- //
 define('STARTUP_MESSAGE', "");

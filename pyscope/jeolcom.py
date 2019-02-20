@@ -1280,7 +1280,7 @@ class Jeol(tem.TEM):
 		else:
 			raise ValueError
    
-	def getDiffractionMode(self):
+	def getProjectionMode(self):
 		mode, result = self.eos3.GetFunctionMode()
 		if mode in (FUNCTION_MODES['lowmag'], FUNCTION_MODES['mag1']):
 			return "imaging"
@@ -1289,7 +1289,7 @@ class Jeol(tem.TEM):
 		else:
 			raise SystemError
 
-	def setDiffractionMode(self, mode):
+	def setProjectionMode(self, mode):
 		if mode == "imaging":
 			result = self.eos3.SelectFunctionMode(FUNCTION_MODES['mag1'])
 		elif mode == "diffraction":

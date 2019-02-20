@@ -395,6 +395,8 @@ parametermapping = (
 	('tem energy filter', 'EnergyFilter'),
 	('tem energy filter width', 'EnergyFilterWidth'),
 	('aperture size', 'ApertureSize'),
+	# metadata not really on the scope but saved with the scope data
+	('intended defocus', 'IntendedDefocus'),
 	# not used
 	#('beam blank', 'BeamBlank'),
 	#('low dose', 'LowDose'),

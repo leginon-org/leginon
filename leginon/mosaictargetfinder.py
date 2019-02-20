@@ -125,6 +125,8 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 			self.logger.debug('create final')
 			self.createMosaicImage()
 			self.logger.debug('done create final')
+		# trigger activation of submit button in the gui.
+		self.panel.doneTargetList()
 
 	def getTargetDataList(self, typename):
 		'''

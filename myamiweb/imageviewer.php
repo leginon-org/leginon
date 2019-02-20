@@ -4,7 +4,7 @@ require_once "inc/viewer.inc";
 require_once "inc/project.inc";
 require_once "inc/cachedb.inc";
 if (defined('PROCESSING')) {
-	//$ptcl = (require_once "inc/particledata.inc") ? true : false;
+	$ptcl = (require_once "inc/particledata.inc") ? true : false;
 }
 
 // --- get Predefined Variables form GET or POST method --- //
@@ -44,6 +44,8 @@ if($projectdb) {
 		$sessionId = $sessions[0]['id'];
 	}
 }
+
+if ( is_numeric(SESSION_LIMIT) && count($sessions) > SESSION_LIMIT) $sessions=array_slice($sessions,0,SESSION_LIMIT);
 
 $jsdata='';
 if ($ptcl) {
