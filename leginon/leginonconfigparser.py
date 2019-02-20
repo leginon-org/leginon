@@ -7,10 +7,12 @@
 #
 
 import os
-import ConfigParser
+# Python3 has configparser but not ConfigParser module
+# Python2 has ConfigParser but not configparser module
+import configparser
 import pyami.fileutil
 
-leginonconfigparser = ConfigParser.SafeConfigParser()
+leginonconfigparser = configparser.SafeConfigParser()
 confdirs = pyami.fileutil.get_config_dirs()
 conf_files = [os.path.join(confdir, 'leginon.cfg') for confdir in confdirs]
 pyami.fileutil.check_exist_one_file(conf_files)

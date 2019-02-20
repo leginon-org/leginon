@@ -4,12 +4,12 @@
 # For terms of the license agreement
 # see http://leginon.org
 
-import leginonconfig
+from leginon import leginonconfig
 import sinedon.newdict
 import sinedon.data
 import os
 from pyami import weakattr
-import projectdata
+from leginon import projectdata
 
 Data = sinedon.data.Data
 

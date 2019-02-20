@@ -8,7 +8,7 @@
 
 import errno
 import os
-import leginonconfigparser
+from leginon import leginonconfigparser
 import sys
 import inspect
 
@@ -56,14 +56,15 @@ def validatePath(path):
 # Here is a replacement for os.mkdirs that won't complain if dir
 # already exists (from Python Cookbook, Recipe 4.17)
 def mkdirs(newdir):
-	originalumask = os.umask(02)
+	# python 2.7 02 is octa but python 3 need to say 0o2
+	originalumask = os.umask(0o2)
 	try:
 		## makedirs sometimes raises permission exception before exists exception
 		## check for exists first
 		if os.path.exists(newdir):
 			return
 		os.makedirs(newdir)
-	except OSError, err:
+	except OSError as err:
 		os.umask(originalumask)
 		if err.errno != errno.EEXIST or not os.path.isdir(newdir) and os.path.splitdrive(newdir)[1]:
 			raise

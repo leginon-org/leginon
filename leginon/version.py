@@ -64,8 +64,8 @@ def getShellResult(cmd):
 	try:
 		p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 		svninfo,svnerror = p.communicate()
-	except Exception,e: 
-		print str(e)
+	except Exception as e: 
+		print(str(e))
 	return svninfo,svnerror
 
 def changeToModulePath(module_path=''):
@@ -146,6 +146,6 @@ def getInstalledLocation():
 	return dirname
 
 if __name__ == '__main__':
-	print getVersion()
-	print getGITBranch()
-	print getInstalledLocation()
+	print(getVersion())
+	print(getGITBranch())
+	print(getInstalledLocation())

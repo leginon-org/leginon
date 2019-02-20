@@ -11,6 +11,6 @@
 # $State: Exp $
 # $Locker:  $
 
-import version
+from leginon import version
 __version__ = version.getVersion()
 

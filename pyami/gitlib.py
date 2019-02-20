@@ -63,7 +63,7 @@ def _getAvailableTags(cmd):
 	proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	stdout, stderr = proc.communicate()
 	if len(stderr) > 0:
-		print "Warning: git version is possibly too old for tag option --merged. Trying getAvailableTagsForBranchOLDGit()"
+		print("Warning: git version is possibly too old for tag option --merged. Trying getAvailableTagsForBranchOLDGit()")
 		return getAvailableTagsForBranchOLDGit()
 	result = stdout.strip()
 	return result.split()
@@ -124,19 +124,19 @@ def getMostRecentCommitTime():
 	return result
 
 if __name__ == '__main__':
-	print "getCurrentCommitCount()", getCurrentCommitCount()
-	print "getCurrentBranch()", getCurrentBranch()
-	print "getVersion()", getVersion()
+	print("getCurrentCommitCount()", getCurrentCommitCount())
+	print("getCurrentBranch()", getCurrentBranch())
+	print("getVersion()", getVersion())
 	try:
-		print "getAvailableTagsForBranch()", getAvailableTagsForBranch()
+		print("getAvailableTagsForBranch()", getAvailableTagsForBranch())
 	except NotImplementedError:
-		print "FAIL"
-		print "getAvailableTagsForBranchOLDGit()", getAvailableTagsForBranchOLDGit()
-	print "getMostRecentCommitID()", getMostRecentCommitID()
-	print "getMostRecentCommitTime()", getMostRecentCommitTime()
-	print "isCommitInCurrentBranch('5a14f0b7')", isCommitInCurrentBranch('5a14f0b7')
+		print("FAIL")
+		print("getAvailableTagsForBranchOLDGit()", getAvailableTagsForBranchOLDGit())
+	print("getMostRecentCommitID()", getMostRecentCommitID())
+	print("getMostRecentCommitTime()", getMostRecentCommitTime())
+	print("isCommitInCurrentBranch('5a14f0b7')", isCommitInCurrentBranch('5a14f0b7'))
 	taglist = getAllTags()
 	for tagname in taglist:
 		commitid = getCommitIDfromTag(tagname)
 		result = isCommitInCurrentBranch(commitid)
-		print tagname, result
+		print(tagname, result)
