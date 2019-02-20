@@ -447,7 +447,6 @@ class Node(correctorclient.CorrectorClient):
 				raise PublishError('no DBDataKeeper to publish data to.')
 			except Exception:
 				raise
-
 		### publish event
 		if pubevent:
 			if pubeventclass is None:

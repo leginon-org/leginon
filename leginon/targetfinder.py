@@ -24,6 +24,7 @@ import pyami.quietscipy
 import scipy.ndimage as nd
 import gui.wx.TargetFinder
 import gui.wx.ClickTargetFinder
+import gui.wx.TomoClickTargetFinder
 import gui.wx.MosaicClickTargetFinder
 import os
 import shortpath
@@ -33,6 +34,7 @@ import raster
 import presets
 import time
 import version
+import leginon.leginondata
 
 try:
 	set = set
@@ -77,6 +79,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			'beam size':
 												calibrationclient.BeamSizeCalibrationClient(self)
 		}
+		
 		self.parent_imageid = None
 		self.current_image_pixelsize = None
 		self.focusing_targetlist = None
@@ -85,6 +88,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		self.targetimagevector = (0,0)
 		self.targetbeamradius = 0
 		self.resetLastFocusedTargetList(None)
+
 		self.remote = remoteserver.RemoteServerMaster(self.logger, session, self)
 		self.remote.targets.setTargetNames(self.targetnames)
 		self.onQueueCheckBox(self.settings['queue'])
@@ -387,7 +391,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		imagearray = imagedata['image']
 		imageshape = imagearray.shape
 		imagetargets = self.getTargetsFromPanel(typename, imageshape)
-
+		
 		if not imagetargets:
 			return
 		if self.settings['sort target']:
@@ -475,15 +479,17 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			# no previous list, so create one and fill it with targets
 			targetlist = self.newTargetList(image=imagedata, queue=self.settings['queue'])
 			db = True
+
 		if self.settings['allow append'] or len(previouslists)==0:
 			self.findTargets(imagedata, targetlist)
 		self.logger.debug('Publishing targetlist...')
-
+		
 		## if queue is turned on, do not notify other nodes of each target list publish
 		if self.settings['queue']:
 			pubevent = False
 		else:
 			pubevent = True
+			
 		self.publish(targetlist, database=db, pubevent=pubevent)
 		self.logger.debug('Published targetlist %s' % (targetlist.dbid,))
 
@@ -660,13 +666,14 @@ class ClickTargetFinder(TargetFinder):
 		self.panel.targetsSubmitted()
 		self.setStatus('processing')
 		self.logger.info('Publishing targets...')
+
 		for i in self.targetnames:
 			if i == 'reference':
 				self.publishReferenceTarget(imdata)
 			else:
 				self.publishTargets(imdata, i, targetlist)
 		self.logger.info('all targets published')
-		self.setStatus('idle')
+		self.setStatus('idle')				
 
 	def publishReferenceTarget(self, image_data):
 		try:
@@ -683,4 +690,124 @@ class ClickTargetFinder(TargetFinder):
 			self.logger.error('Submitting reference target failed')
 		else:
 			self.logger.info('Reference target submitted')
+			
+class TomoClickTargetFinder(ClickTargetFinder):
+	targetnames = ['preview', 'reference', 'focus', 'acquisition','track']
+	panelclass = gui.wx.TomoClickTargetFinder.Panel
+	eventoutputs = TargetFinder.eventoutputs + [event.ReferenceTargetPublishEvent]
+	settingsclass = leginondata.TomoClickTargetFinderSettingsData
+	
+	def __init__(self, id, session, managerlocation, **kwargs):
+		self.defaultsettings.update({'auto focus target': True,
+									'focus target offset': 3e-6,
+									'track target offset': 3e-6
+									})
+		ClickTargetFinder.__init__(self, id, session, managerlocation, **kwargs)
+		self.userpause = threading.Event()
+		
+		if self.__class__ == TomoClickTargetFinder:
+			self.start()
+
+	def publishTargets(self, imagedata, typename, targetlist):
+		'''
+		Publish specific type of targets on ImagePanel bound to an 
+		AcquisitionImageData and TargetListData
+		'''
+		if typename == 'acquisition':
+			self.publishTomoTargets(imagedata, typename, targetlist)
+		elif typename == 'focus' or typename == 'track':
+			pass
+		else: 
+			return super(TomoClickTargetFinder, self).publishTargets(imagedata, typename, targetlist)
+	
+	def getTrackPreset(self):
+		# TODO: hard coded. We want to get this as a user input in the future. 
+		return 'track'
+	
+	def publishTomoTargets(self,imagedata, typename, targetlist):
+		'''
+		Publish Tomography targets and relationship between acquisition, focus, and track.
+		'''
+		# (1) Get all acquisition targets. 
+		# (2) Publish them. 
+		# (3) Get track offset and preset name. 
+		# (4) If each acquisition target gets a focus target, input offset.
+		# (5) Make and publish TomoTargetOffsetData for this target list
+		# (6) If there is only one focus target for this targetlist, publish to database.
+
+		assert(typename == 'acquisition')
+		imagearray = imagedata['image']
+		imageshape = imagearray.shape
+		imagetargets = self.panel.getTargets('acquisition')											# (1)
+		if not imagetargets:
+			return
+		# advance to next target number
+		lastnumber = self.lastTargetNumber(image=imagedata, session=self.session)
+		number = lastnumber + 1
+		for imagetarget in imagetargets:															
+			acquisition_td = self.getNewTargetForImage(imagedata,imageshape,imagetarget,targetlist,number)
+			self.publish(acquisition_td, database=True)												# (2)
+			number += 1
+
+		trackoffset = self.getTrackOffset()															# (3)
+		trackpreset = self.getTrackPreset()	
+		if self.panel.imagepanel.isAutoFocus():														# (4)	
+			focusoffset = self.getFocusOffset()
+		else:
+			focusoffset = (None,None)				# single focus target for this targetlist 
+		offset_td = leginondata.TomoTargetOffsetData(list=targetlist,focusoffset=focusoffset,		
+											trackoffset=trackoffset,trackpreset=trackpreset)		# (5)
+		self.publish(offset_td, database=True)
+		
+		if not self.panel.imagepanel.isAutoFocus():													# (6)
+			focustarget = self.panel.getTargets('focus')
+			assert len(focustarget) == 1
+			focustarget = focustarget[0]
+			focus_td = self.getNewTargetForImage(imagedata,imageshape,focustarget,targetlist,number)
+			self.publish(focus_td, database=True)												
+			number += 1
+		else:
+			pass
+		
+	def getNewTargetForImage(self,imagedata, imageshape, target_obj, targetlist, number):
+		typename = target_obj.type.name
+		column, row = target_obj.position
+		drow = row - imageshape[0]/2
+		dcol = column - imageshape[1]/2
+		targetdata = self.newTargetForImage(imagedata, drow, dcol, type=typename, list=targetlist, number=number,last_focused=self.last_focused)
+		return targetdata
+			
+	def getTrackOffset(self, offset=None):
+		imagedata = self.currentimagedata
+		tem = imagedata['scope']['tem']
+		ccd = imagedata['camera']['ccdcamera']
+		mag = imagedata['scope']['magnification']
+		ht = imagedata['scope']['high tension']
+		# offset in physical coordinates along y axis
+		if offset is None:				# Use node settings offset
+			stageoffset = [0,self.settings['track target offset']]
+		else:							# Use some other offset. Needed if node settings have not been updated yet. 
+			stageoffset = [0,offset]	# TODO: this might have to be reversed. [row,col] Here I am assuming taht the tilt axis is along x axis. 
+		args = (tem,ccd,'image shift',ht,mag,stageoffset)
+		pixeloffset = self.calclients['image shift'].positionToPixel(*args)	# offset in camera coordinates along tilt axis
+		pixeloffset[0] /= imagedata['camera']['binning']['x']
+		pixeloffset[1] /= imagedata['camera']['binning']['y']
+		# this is somehow off by a factor of 2 for simcam. Not to do with binning I think. 
+		return pixeloffset
+			
+	def getFocusOffset(self, offset=None):
+		imagedata = self.currentimagedata
+		tem = imagedata['scope']['tem']
+		ccd = imagedata['camera']['ccdcamera']
+		mag = imagedata['scope']['magnification']
+		ht = imagedata['scope']['high tension']
+		if offset is None:			
+			stageoffset = [0,self.settings['focus target offset']]
+		else:
+			stageoffset = [0,offset]	
+		args = (tem,ccd,'image shift',ht,mag,stageoffset)
+		pixeloffset = self.calclients['image shift'].positionToPixel(*args)	
+		pixeloffset[0] /= imagedata['camera']['binning']['x']
+		pixeloffset[1] /= imagedata['camera']['binning']['y']
+		return pixeloffset
 

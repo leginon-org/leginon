@@ -459,13 +459,215 @@ class TargetOutputPanel(TargetImagePanel):
 		for target in targets:
 			print '%s\t%s' % (target.x, target.y)
 		wx.Exit()
+		
+		
+class TomoTargetImagePanel(TargetImagePanel):
+	def __init__(self, parent, id, disable=False, imagesize=(512,512), mode="horizontal"):
+		TargetImagePanel.__init__(self, parent, id, imagesize, mode)
+		self.targetmap = {}				# keeps account of relationship between acquition, focus, and track targets
+	
+	def getTargetMap(self):
+		return self.targetmap
+	
+	def clearTargetMap(self):			# remove all targets
+		self.targetmap = {}
+	
+	def clearAcquitionTargetMap(self, acquisition_t):
+		self.targetmap.pop(acquisition_t)
+	
+	def clearFocusTargetMap(self):		# remove focus targets
+		for key in self.targetmap.keys():
+			self.targetmap[key]['focus'] = None
+			
+	def clearTrackTargetMap(self):		# remove track targets
+		for key in self.targetmap.keys():
+			self.targetmap[key]['track'] = None
+			
+	def addFocusTargetMap(self, focus_t, acquisition_t):	# add focus target to a given acquisition target
+		self.targetmap[acquisition_t]['focus'] = focus_t
+		
+	def addFocusTargetMapAll(self, focus_t):							# add focus target to all acquisition targets
+		for key in self.targetmap.keys():
+			self.targetmap[key]['focus'] = focus_t
+	
+	def addTrackTargetMap(self, track_t, acquisition_t):
+		self.targetmap[acquisition_t]['track'] = track_t
+			
+	def isAutoFocus(self):
+		return self.parent.node.settings['auto focus target']
+	
+	def getTrackType(self):
+		if hasattr(self,'tracktype'):
+			return self.tracktype
+		else:
+			tracktype = [key for key in self.targets.keys() if key.name =='track']
+			self.tracktype = tracktype[0]
+			return self.tracktype
 
+	def getFocusType(self):
+		if hasattr(self,'focustype'):
+			return self.focustype
+		else:
+			focustype = [key for key in self.targets.keys() if key.name =='focus']	
+			self.focustype = focustype[0]
+			return self.focustype
+		
+	def getAcquisitionType(self):
+		if hasattr(self,'acquisition'):
+			return self.acquisitiontype
+		else:
+			acquisitiontype = [key for key in self.targets.keys() if key.name =='acquisition']
+			self.acquisitiontype = acquisitiontype[0]
+			return self.acquisitiontype
+
+	#--------------------
+	def _onLeftClick(self, evt):
+		if self.selectedtype is not None:
+			if self.selectedtype.name == 'track':
+				pass
+			
+			elif self.selectedtype.name == 'focus':
+				# (1) if AutoFocus, pass
+				# (2) if not, remove all association with acquisition target in 
+				# (3) remove all focus targets
+				# (4) make new focus target
+				# (5) associate new focus target with acquition targets
+				if self.isAutoFocus():									# (1)
+					pass
+				else:
+					focustype = self.getFocusType()
+					self.clearFocusTargetMap()							# (2)
+					self.clearTargetType(focustype)						# (3)
+					x, y = self.view2image((evt.GetX(), evt.GetY()))
+					self.addTarget('focus', x, y)						# (4)
+					focus_t = self.getTargets('focus')[0]
+					self.addFocusTargetMapAll(focus_t)					# (5)
+					
+			elif self.selectedtype.name == 'acquisition':
+				x, y = self.view2image((evt.GetX(), evt.GetY()))
+				self.addTarget(self.selectedtype.name, x, y)
+				acquisition_t = self.getTargets('acquisition')[-1]
+				assert(acquisition_t.position == (x,y))	
+				self.targetmap[acquisition_t] = {'focus':None,'track':None}	
+				x_, y_ = self.getTrackPosition(x,y)						# add tracking target
+				self.addTarget('track', x_, y_)
+				track_t = self.getTargets('track')[-1]
+				self.addTrackTargetMap(track_t,acquisition_t)
+				
+				if self.isAutoFocus():
+					x_, y_ = self.getFocusPosition(x,y)
+					self.addTarget('focus', x_, y_)
+					focus_t = self.getTargets('focus')[-1]
+					self.addFocusTargetMap(focus_t,acquisition_t)
+				else:
+					focus_ts = self.getTargets('focus')
+					assert(len(focus_ts) <= 1)
+					if len(focus_ts) == 0:
+						pass
+					elif len(focus_ts) == 1:
+						self.addFocusTargetMap(focus_ts[0],acquisition_t)
+					else:
+						raise Exception
+			else:
+				pass
+			
+	#--------------------
+	def _onRightClick(self, evt):
+		if self.selectedtarget is not None:
+			if self.selectedtarget.type.name == 'track':
+				pass
+			elif self.selectedtarget.type.name == 'focus':
+				if self.isAutoFocus():
+					pass
+				else:
+					if self.selectedtype == self.selectedtarget.type:
+						self.clearFocusTargetMap()					# clear association
+						self.deleteTarget(self.selectedtarget)		# remove focus target
+			else:
+
+				if self.selectedtype == self.selectedtarget.type and self.selectedtype.name == 'acquisition':
+					if self.isAutoFocus():							# only delete focus target if it belongs only to this target
+						focus_t = self.targetmap[self.selectedtarget]['focus']
+						self.deleteTarget(focus_t)
+					track_t = self.targetmap[self.selectedtarget]['track']
+					self.deleteTarget(track_t)
+					self.clearAcquitionTargetMap(self.selectedtarget)
+					self.deleteTarget(self.selectedtarget)
+					
+	#--------------------
+	def _onShiftRightClick(self, evt):
+		if self.selectedtarget is not None :
+			if self.selectedtarget.type.name == 'track':
+				pass
+			elif self.selectedtarget.type.name == 'focus':
+				if self.isAutoFocus():
+					pass
+				else:
+					if self.selectedtype == self.selectedtarget.type:
+						self.clearFocusTargetMap()						# clear association
+						self.deleteTarget(self.selectedtarget)			# remove focus target
+			else:
+				if self.selectedtype == self.selectedtarget.type and self.selectedtype == 'acquisition':
+					self.clearTargetMap()
+					self.clearTargetType(self.selectedtype)
+					self.clearTargetType(self.getTrackType())
+					if self.isAutoFocus():
+						self.clearTargetType(self.getFocusType())
+	
+	def resetFocusTargets(self,state,offset):
+		# redraw focus targets
+		# (1) remove all targets
+		# (2) if state is True, add targets with value
+		# (3) display if set to display in target tool
+		focustype = self.getFocusType()
+		self.clearFocusTargetMap()
+		self.clearTargetType(focustype)				
+		
+		if not state:								# user defined focus spot
+			pass
+		else:
+			acquisition_ts = self.getTargets('acquisition')
+			for aq_t in acquisition_ts:
+				x, y = aq_t.position						# this is relative to current camera and binning
+				x_, y_ = self.getFocusPosition(x, y, offset)
+				self.addTarget('focus', x_, y_)
+				focus_t = self.getTargets('focus')[-1]
+				self.addFocusTargetMap(focus_t, aq_t)
+		
+	def resetTrackTargets(self,offset):
+		# redraw tracking targets
+		# (1) remove all targets
+		# (2) display if set to display in target tool
+
+		tracktype = self.getTrackType()
+		self.clearTrackTargetMap()
+		self.clearTargetType(tracktype)
+		acquisition_ts = self.getTargets('acquisition')
+		for aq_t in acquisition_ts:
+			x, y = aq_t.position
+			x_, y_ = self.getTrackPosition(x, y, offset)
+			self.addTarget('track', x_, y_)
+			track_t = self.getTargets('track')[-1]
+			self.addTrackTargetMap(track_t, aq_t)
+				
+	#--------------------
+	def _onShiftCtrlRightClick(self, evt):
+		self.clearAllTargetTypes()
+	
+	def getTrackPosition(self, x, y, offset=None):
+		dx,dy = self.parent.node.getTrackOffset(offset)
+		return (x+dx,y+dy)
+
+	def getFocusPosition(self, x, y, offset=None):
+		dx,dy = self.parent.node.getFocusOffset(offset)
+		return (x+dx,y+dy)
 
 if __name__ == '__main__':
 	import sys
 	import numpy
 	from pyami import mrc 
-
+	import pdb
+	
 	try:
 		filename = sys.argv[1]
 	except IndexError:
@@ -497,7 +699,7 @@ if __name__ == '__main__':
 			self.SetTopWindow(frame)
 			frame.Show(True)
 			return True
-
+	pdb.set_trace()
 	array = None
 	if filename is None:
 		filename = raw_input('Enter file path: ')

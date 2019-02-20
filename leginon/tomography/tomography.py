@@ -78,13 +78,16 @@ class Tomography(leginon.acquisition.Acquisition):
 				leginon.calibrationclient.PixelSizeCalibrationClient(self)
 		self.calclients['beam tilt'] = \
 				leginon.calibrationclient.BeamTiltCalibrationClient(self)
+		self.calclients['image shift'] = \
+			leginon.calibrationclient.ImageShiftCalibrationClient(self)
 		self.btcalclient = self.calclients['beam tilt'] 
+		# TODO: add pixel to pixel calibration client. 
 
 		self.tilts = leginon.tomography.tilts.Tilts()
 		self.exposure = leginon.tomography.exposure.Exposure()
-		self.prediction = leginon.tomography.prediction.Prediction()
+		#self.prediction = leginon.tomography.prediction.Prediction()
+		self.prediction = leginon.tomography.prediction.Prediction_2()
 		self.loadPredictionInfo()
-
 		self.updateTilts()
 		self.start()
 
@@ -186,7 +189,7 @@ class Tomography(leginon.acquisition.Acquisition):
 			self.logger.error('Calibration error: %s' % e) 
 			return 'failed'
 		high_tension, pixel_size = calibrations
-
+				
 		self.logger.info('Pixel size: %g meters.' % pixel_size)
 
 		# TODO: error check
@@ -194,18 +197,19 @@ class Tomography(leginon.acquisition.Acquisition):
 			self.update()
 		except LimitError:
 			return 'failed'
+		
 
 		tilts = self.tilts.getTilts()
 		exposures = self.exposure.getExposures()
 		tilt_index_sequence = self.tilts.getIndexSequence()
 		target_adjust_points = self.tilts.getTargetAdjustIndices()
-
+		
 		# based on tilt group
 		n_groups = len(tilts) 
 		for g in range(n_groups):
 			self.initGoodPredictionInfo(presetdata, g)
-
-		collect = leginon.tomography.collection.Collection()
+		
+		collect = self.getCollectionObject(target)
 		collect.node = self
 		collect.session = self.session
 		collect.logger = self.logger
@@ -241,6 +245,9 @@ class Tomography(leginon.acquisition.Acquisition):
 		#self.publishDisplayWait(imagedata)
 
 		return 'ok'
+	
+	def getCollectionObject(self,target):
+		return leginon.tomography.collection.Collection()
 
 	def getPixelPosition(self, move_type, position=None):
 		scope_data = self.instrument.getData(leginon.leginondata.ScopeEMData)
@@ -387,8 +394,8 @@ class Tomography(leginon.acquisition.Acquisition):
 				self.moveAndPreset(presetdata, emtarget)
 			else:
 				self.presetsclient.toScope(preset_name)
-				self.setImageShiftOffset(isoffset)
-
+				self.setImageShiftOffset(isoffset)				# apply image shift to instrument. 
+			
 			## find shift between image0, image1
 			pc = correlator.phase_correlate(imagedata0['image'], imagedata1['image'], False)
 			peakinfo = peakfinder.findSubpixelPeak(pc, lpf=1.5)
@@ -404,7 +411,7 @@ class Tomography(leginon.acquisition.Acquisition):
 			oldishift = self.instrument.tem.ImageShift
 			newishift = {'x': oldishift['x'] + ishiftx, 'y': oldishift['y'] + ishifty}
 			self.logger.info('adjusting imageshift after backlash: dx,dy = %s,%s' % (ishiftx,ishifty))
-			self.instrument.tem.ImageShift = newishift
+			self.instrument.tem.ImageShift = newishift			
 
 	def initGoodPredictionInfo(self,presetdata=None, tiltgroup=0):
 		# FIX ME: This can be simplified now that we define tilt group in prediction
@@ -569,6 +576,7 @@ class Tomography(leginon.acquisition.Acquisition):
 		settings = {}
 		positions = {}
 		image_pixel_sizes = {}
+		
 		for result in results:
 			key = result.dbid
 			series_ids.append(key)
@@ -582,7 +590,7 @@ class Tomography(leginon.acquisition.Acquisition):
 		query_data = leginon.leginondata.TomographyPredictionData(initializer=initializer)
 		results = self.research(query_data)
 		results.reverse()
-
+				
 		# Load Prediction sorted by tilt series 
 		for result in results:
 			image = result.special_getitem('image', True, readimages=False)
@@ -616,7 +624,7 @@ class Tomography(leginon.acquisition.Acquisition):
 			for tilt_group in tilt_series.tilt_groups:
 				n_points += len(tilt_group)
 		m = 'Loaded %d points from %d previous series' % (n_points, n_groups)
-		self.logger.info(m)
+		self.logger.info(m)		
 
 	def measureDose(self, preset_name):
 		request_data = leginon.leginondata.MeasureDoseData()
@@ -652,6 +660,7 @@ class Tomography(leginon.acquisition.Acquisition):
 		stig = False
 		correct_tilt = True
 		correlation_type = 'phase'
+		
 		settle = 0.5
 		image0 = None
 
@@ -665,4 +674,235 @@ class Tomography(leginon.acquisition.Acquisition):
 		delta_defocus = result['defocus']
 		fit = result['min']
 		return delta_defocus, fit
+	
+class Tomography_2(Tomography):
+	def __init__(self, *args, **kwargs):
+		Tomography.__init__(self, *args, **kwargs)
+	
+	def getCollectionObject(self,target):
+		collect = leginon.tomography.collection.Collection_2()
+		offsetdata = self.researchTargetOffset(target['list'])
+		if offsetdata:
+			collect.offset = offsetdata
+		return collect
+	
+	def loadPredictionInfo(self):
+		pass
+	
+	def initGoodPredictionInfo(self,presetdata=None, tiltgroup=0):
+		pass
+	
+	def researchTargetOffset(self, targetlist):
+		# (1) Get targetlist and query
+		# (2) Match 'target' dbid with target dbid. 
+		targetquery = leginon.leginondata.TomoTargetOffsetData(list=targetlist)
+		targetoffset = targetquery.query()		 	# targetoffset should not be modified so shouldn't have to look for most recent version.
+		if len(targetoffset) == 1:
+			return targetoffset[0]
+		else:
+			return None								# Should be able to find targetoffset
+	
+	def newFocusTargetForImageFromTarget(self, imagedata, target, offset):
+		# (1) Get position of acquisition target.
+		# (2) Apply offset.
+		# (3) Make new 
+		dcol = target['delta column'] + offset[0]
+		drow = target['delta row'] + offset[1]
+		targetdata = self.newTarget(image=imagedata, scope=imagedata['scope'], \
+								camera=imagedata['camera'], preset=imagedata['preset'], \
+								drow=drow, dcol=dcol, session=self.session, type='focus')
+		return targetdata
+
+
+	def makeNewFocusTarget(self, target, offset, targetlist):
+		# (1) Get parent image.
+		# (2) Get and publish new version of parent image. 
+		# (3) Make new focus target attach to targetlist.
+		parentimage = target.special_getitem('image',readimages=False,dereference=True)			# (1) 
+		newimagedata = self.copyImage(parentimage)												# (2) 
+		focus_td = self.newFocusTargetForImageFromTarget(newimagedata, target, offset)			# (3)		# (3)
+		focus_td['list'] = targetlist															
+		return focus_td
+
+	def markTargetsFailed(self, targets):
+		for target in targets:
+			self.reportTargetStatus(target, 'failed')
+				
+	def copyImage(self, oldimage):
+		# copied from targetrepeater
+		imagedata = leginon.leginondata.AcquisitionImageData()
+		imagedata.update(oldimage)
+		version = self.recentImageVersion(oldimage)
+		imagedata['version'] = version + 1
+		imagedata['filename'] = None
+		imagedata['image'] = oldimage['image']
+		## set the 'filename' value
+		if imagedata['label'] == 'RCT':
+			rctacquisition.setImageFilename(imagedata)
+		else:
+			self.setImageFilename(imagedata)
+		self.logger.info('Publishing new copied image...')
+		self.publish(imagedata, database=True)
+		return imagedata
+
+	def recentImageVersion(self, imagedata):
+		# copied from targetrepeater
+		# find most recent version of this image
+		p = leginon.leginondata.PresetData(name=imagedata['preset']['name'])
+		q = leginon.leginondata.AcquisitionImageData()
+		q['session'] = imagedata['session']
+		q['target'] = imagedata['target']
+		q['list'] = imagedata['list']
+		q['preset'] = p
+		allimages = q.query()
+		version = 0
+		for im in allimages:
+			if im['version'] > version:
+				version = im['version']
+		return version
+
+	def processGoodTargets(self, good_targets):
+		# (1) Get offsetdata for this targetlist
+		# (2) Determine if we want to focus. 
+		# (3) Get new targetlist, publish to DB. 
+		# (2) Get new focus target.
+		# (3) Reject focus target.
+		# (4) If focus successful, proceed to acquisiton. If not, report target done, move on to next acquisition target. 
+		targetlist = good_targets[0]['list']					# Get targetlist for these targets
+		offsetdata = self.researchTargetOffset(targetlist)									# (1)
+		if not offsetdata:										# somehow couldn't find offsetdata
+			self.logger.info('Could not find TomoTargetOffsetData for target: %i' % target.dbid)
+			self.markTargetsFailed(good_targets, 'failed')
+			return
+		focusoffset = offsetdata['focusoffset']		
+		dofocus = not None in focusoffset													# (2)
+		for i, target in enumerate(good_targets):
+			if dofocus:
+				waitrejects = self.settings['wait for rejects']
+				if waitrejects:																
+					self.logger.info('Making new targetlist for focus target')
+					focustargetlist = self.newTargetList()										# (3)
+
+					self.logger.info('Publishing new targetlist')
+					self.publish(focustargetlist,database=True, dbforce=True)
+					self.logger.info('Making new focus target for acquisition target: %i' \
+									% target.dbid)
+
+					focustarget = self.makeNewFocusTarget(target,focusoffset,focustargetlist)	# (2)		
+					self.logger.info('Publishing new focus target')
+					self.publish(focustarget,database=True)
+					self.logger.info('Rejecting new targetlist')
+
+					rejectstatus = self.rejectTargets(focustargetlist)							# (3)
+					if rejectstatus != 'success':
+						## report my status as reject status may not be a good idea
+						##all the time. This means if rejects were aborted
+						## then this whole target list was aborted
+						self.logger.debug('Passed targets not processed, aborting current target list')
+						self.reportTargetListDone(targetlist, rejectstatus)
+						self.setStatus('idle')
+						if rejectstatus != 'aborted':
+							return
+					
+					self.logger.info('Passed target processed, processing current target')
+				else:
+					self.logger.info('Skipping focus target for acquisition target: %i' % target.dbid)
+					
+			# target adjustment may have changed the tilt.
+			if self.getIsResetTiltInList() and self.is_firstimage:
+				# ? Do we need to reset on every target ?
+				self.logger.info('Tilting to %.2f degrees on first good target.' % (self.targetlist_reset_tilt*180.0/math.pi))
+				self.instrument.tem.setDirectStagePosition({'a':self.targetlist_reset_tilt})
+			self.goodnumber = i
+			self.logger.debug('target %s status %s' % (i, target['status'],))
+			# ...
+			if self.player.state() == 'pause':
+				self.logger.info('paused after resetTiltInList')
+				self.setStatus('user input')
+				# FIX ME: if player does not wait, why should it pause ?
+			state = self.clearBeamPath()
+			self.setStatus('processing')
+			# abort
+			if state in ('stop', 'stopqueue'):
+				self.logger.info('Aborting current target list')
+				targetliststatus = 'aborted'
+				self.reportTargetStatus(target, 'aborted')
+				## continue so that remaining targets are marked as done also
+				continue
+
+			# if this target is done, skip it
+			if target['status'] in ('done', 'aborted'):
+				self.logger.info('Target has been done, processing next target')
+				continue
+				
+			adjustedtarget = self.reportTargetStatus(target, 'processing')
+
+			# this while loop allows target to repeat
+			process_status = 'repeat'
+			attempt = 0
+			while process_status == 'repeat':
+				attempt += 1
+
+				# now have processTargetData work on it
+				self.startTimer('processTargetData')
+				try:
+					self.logger.info('Processing target id %d' % adjustedtarget.dbid)
+					process_status = self.processTargetData(adjustedtarget, attempt=attempt)
+				except BypassException, e:
+					self.logger.error(str(e) + '... Bypass this target and pretend it is done')
+					process_status = 'bypass'
+				except PauseRestartException, e:
+					self.player.pause()
+					self.logger.error(str(e) + '... Fix it, then resubmit targets from previous step to repeat')
+					self.beep()
+					process_status = 'repeat'
+				except PauseRepeatException, e:
+					#TODO: NoMoveCalibration is a subclass of this. It is not handled now.
+					self.player.pause()
+					self.logger.error(str(e) + '... Fix it, then press play to repeat target')
+					self.beep()
+					process_status = 'repeat'
+				except node.PublishError, e:
+					self.player.pause()
+					self.logger.exception('Saving image failed: %s' % e)
+					process_status = 'repeat'
+				except Exception, e:
+					self.logger.exception('Process target failed: %s' % e)
+					process_status = 'exception'
+				finally:
+					self.resetComaCorrection()
+	
+				self.stopTimer('processTargetData')
+
+				if process_status == 'repeat':
+					# Do not report targetstatus so that it can repeat even if
+					# restart Leginon
+					pass
+				elif process_status != 'exception':
+					self.reportTargetStatus(adjustedtarget, 'done')
+				else:
+					# set targetlist status to abort if exception not user fixable
+					targetliststatus = 'aborted'
+					self.reportTargetStatus(adjustedtarget, 'aborted')
+
+				# pause check after a good target processing
+				state =  self.pauseCheck('paused after processTargetData')
+				self.setStatus('processing')
+				if state in ('stop', 'stopqueue'):
+					self.logger.info('Aborted')
+					break
+				if state in ('stoptarget',):
+					self.logger.info('Aborted this target. continue to next')
+					self.reportTargetStatus(adjustedtarget, 'aborted')
+					self.player.play()
+
+				# end of target repeat loop
+			# next target is not a first-image
+			self.is_firstimage = False
+	
+if __name__ == '__main__':
+	import cPickle as pickle
+	tomoargs = pickle.load(open('tomoargs.p','rb'))
+	tomonode = Tomography('Tomography',tomoargs,None) 
+	pdb.set_trace()
 

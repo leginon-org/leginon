@@ -73,7 +73,6 @@ class Manager(node.Node):
 	objectserviceclass = remotecall.ManagerObjectService
 	def __init__(self, session, tcpport=None, **kwargs):
 		self.clients = {}
-
 		self.name = 'Manager'
 		self.initializeLogger()
 
@@ -83,7 +82,7 @@ class Manager(node.Node):
 		mydatabinder = DataBinder(self, databinderlogger, tcpport=tcpport)
 		node.Node.__init__(self, self.name, session, otherdatabinder=mydatabinder,
 												**kwargs)
-
+		
 		self.objectservice = self.objectserviceclass(self)
 
 		self.launcher = None
@@ -161,14 +160,12 @@ class Manager(node.Node):
 		t = threading.Thread(name='create launcher thread',
 													target=self.createLauncher)
 		t.start()
-
 		for client in clients:
 			port = self.getPrimaryPort(client)
 			try:
 				self.addLauncher(client, port)
 			except Exception, e:
 				self.logger.warning('Failed to add launcher: %s' % e)
-
 		if prevapp:
 			threading.Thread(target=self.launchPreviousApp).start()
 
@@ -518,7 +515,6 @@ class Manager(node.Node):
 		Event handler for registering a node with the manager.  Initializes a
 		client for the node and adds information regarding the node's location.
 		'''
-
 		name = evt['node']
 		location = evt['location']
 		classname = evt['nodeclass']
@@ -1036,6 +1032,7 @@ class Manager(node.Node):
 
 		return nodeorder
 
+
 def depth(parent, map):
 	l = [parent]
 	for child in map[parent]:
@@ -1045,6 +1042,10 @@ def depth(parent, map):
 if __name__ == '__main__':
 	import sys
 	import time
+	import pdb
+	from leginon.gui.wx import Manager
+	from leginon import manager
+	from leginon import leginondata
 
 	try:
 		session = sys.argv[1]
@@ -1052,6 +1053,6 @@ if __name__ == '__main__':
 		session = time.strftime('%Y-%m-%d-%H-%M')
 
 	initializer = {'name': session}
-	m = Manager(('manager',), leginondata.SessionData(initializer=initializer))
+	m = manager.Manager(('manager',), leginondata.SessionData(initializer=initializer))
 	m.start()
 

@@ -116,7 +116,6 @@ class Panel(leginon.gui.wx.Node.Panel):
 		idcevt = leginon.gui.wx.ImagePanelTools.ImageNewTiltAxisEvent(self.imagepanel, angle)
 		self.imagepanel.GetEventHandler().AddPendingEvent(idcevt)
 
-
 class SettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return ScrolledSettings(self,self.scrsize,False,self.show_basic)
@@ -217,8 +216,10 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.node.onQueueCheckBox(state)
 
 if __name__ == '__main__':
+	import pdb
 	class App(wx.App):
 		def OnInit(self):
+			pdb.set_trace()
 			frame = wx.Frame(None, -1, 'Target Finder Test')
 			panel = Panel(frame)
 			frame.Fit()

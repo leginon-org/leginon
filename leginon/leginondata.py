@@ -1029,6 +1029,27 @@ class ImageTargetListData(InSessionData):
 			('node', NodeSpecData),
 		)
 	typemap = classmethod(typemap)
+	
+
+class TomoTargetOffsetData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('list', ImageTargetListData),
+			('focusoffset', tuple),
+			('trackoffset', tuple),
+			('trackpreset', str),
+		)
+	typemap = classmethod(typemap)
+
+class GroupData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('name', str),
+			('description', str),
+			('privilege', projectdata.privileges),
+		)
+	typemap = classmethod(typemap)
+
 
 class DequeuedImageTargetListData(InSessionData):
 	def typemap(cls):
@@ -1480,6 +1501,15 @@ class ClickTargetFinderSettingsData(TargetFinderSettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class TomoClickTargetFinderSettingsData(ClickTargetFinderSettingsData):
+	def typemap(cls):
+		return ClickTargetFinderSettingsData.typemap() + (
+			('auto focus target', bool),
+			('focus target offset', float),
+			('track target offset', float)
+		)
+	typemap = classmethod(typemap)
+	
 class MatlabTargetFinderSettingsData(TargetFinderSettingsData):
 	def typemap(cls):
 		return TargetFinderSettingsData.typemap() + (
@@ -1810,6 +1840,13 @@ class TargetWatcherSettingsData(SettingsData):
 			('park after list', bool),
 			('clear beam path', bool),
 		)
+	typemap = classmethod(typemap)
+	
+class TargetMapHandlerSettingsData(SettingsData):
+	def typemap(cls):
+		return SettingsData.typemap() + (
+			('process target type', str),
+	)
 	typemap = classmethod(typemap)
 
 class AcquisitionSettingsData(TargetWatcherSettingsData):

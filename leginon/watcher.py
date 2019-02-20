@@ -29,8 +29,6 @@ class Watcher(node.Node):
 		self.ignoreevents = False
 
 	def handleEvent(self, pubevent):
-		if self.ignoreevents:
-			return
 		self.handlelock.acquire(1)
 		self.processEvent(pubevent)
 		self.handlelock.release()

@@ -193,7 +193,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 											+ navigator.NavigatorClient.eventoutputs
 
 	def __init__(self, id, session, managerlocation, **kwargs):
-
 		targetwatcher.TargetWatcher.__init__(self, id, session, managerlocation, **kwargs)
 
 		self.addEventInput(event.AcquisitionImagePublishEvent, self.handleDriftImage)
@@ -308,6 +307,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.imagelistdata = leginondata.ImageListData(session=self.session,
 																						targets=newdata)
 		self.publish(self.imagelistdata, database=True)
+
 		targetwatcher.TargetWatcher.processData(self, newdata)
 		self.publish(self.imagelistdata, pubevent=True)
 		self.logger.info('Acquisition.processData done')
@@ -481,6 +481,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.preTargetSetup()
 		# process target begins
 		presetnames = self.settings['preset order']
+
 		ret = 'ok'
 		self.onTarget = False
 		for preset_index, newpresetname in enumerate(presetnames):
@@ -491,6 +492,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 				if self.settings['drift between'] and self.goodnumber > 0:
 						self.declareDrift('between targets')
 				targetonimage = targetdata['delta column'],targetdata['delta row']
+					
+
 				targetdata = self.adjustTargetForTransform(targetdata)
 				self.logger.info('target adjusted by (%.1f,%.1f) (column, row)' % (targetdata['delta column']-targetonimage[0],targetdata['delta row']-targetonimage[1]))
 			offset = {'x':self.settings['target offset col'],'y':self.settings['target offset row']}
@@ -575,6 +578,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		necessary, and cause problems if used between different
 		magnification modes (LM, M, SA).
 		'''
+
 		emtargetdata = leginondata.EMTargetData()
 		if targetdata is not None:
 			# get relevant info from target data
@@ -1036,7 +1040,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.publishStats(imagedata)
 		self.stopTimer('publish stats')
 		self.reportStatus('output', 'Stats published...')
-
+	
 		image_array = imagedata['image']
 		if self.settings['display image'] and isinstance(image_array, numpy.ndarray):
 			self.reportStatus('output', 'Displaying image...')

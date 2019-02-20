@@ -118,7 +118,7 @@ class Application(object):
 			return []
 		return map(lambda nsd: nsd['alias'], self.nodespecs)
 
-	def launch(self):
+	def launch(self):		
 		if not hasattr(self.node, 'addEventDistmap'):
 			raise RuntimeError('application node unable to launch')
 		threads = []
