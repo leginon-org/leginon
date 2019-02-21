@@ -63,6 +63,12 @@ class UploadImages(appionScript.AppionScript):
 			help="normalization image to apply to each upload")
 		self.parser.add_option("--dark", dest="darkimg", type="string", metavar="PATH",
 			help="dark image to apply to each upload frame")
+		# option: give sessionname
+		self.parser.add_option("--session", dest="sessionname", type="string", metavar="NAME",
+			help="session name")
+		# link to parent image
+		self.parser.add_option("--parentid", dest="target_parent", type="int", metavar="ID",
+			help="parent image id to link to as a target")
 
 	#=====================
 	def checkConflicts(self):
@@ -116,8 +122,11 @@ class UploadImages(appionScript.AppionScript):
 			if len(self.defocuslist) != self.params['seriessize']:
 				apDisplay.printError("'images-per-tilt-series' and 'defocus-list' have different lengths")
 
+		if self.params['defocus'] == 0:
+			# ok if use 0.0 or 0
+			pass
 		### check for negative defoci
-		if self.params['defocus'] is not None and self.params['defocus'] > 0:
+		elif self.params['defocus'] is not None and self.params['defocus'] > 0:
 			apDisplay.printWarning("defocus is being switched to negative, %.3f"
 				%(self.params['defocus']))
 			self.params['defocus'] *= -1.0
@@ -125,6 +134,7 @@ class UploadImages(appionScript.AppionScript):
 				apDisplay.printError("defocus must be in microns, %.3f"
 					%(self.params['defocus']))
 		elif self.params['defocus'] is None:
+			# use defocuslist
 			newlist = []
 			for defocus in self.defocuslist:
 				if defocus > 0:
@@ -207,6 +217,11 @@ class UploadImages(appionScript.AppionScript):
 
 	#=====================
 	def createNewSession(self):
+		if self.params['sessionname']:
+			r = leginon.leginondata.SessionData(name=self.params['sessionname']).query()
+			if r:
+				self.sessiondata = r[0]
+				return
 		apDisplay.printColor("Creating a new session", "cyan")
 
 		### get user data
@@ -335,6 +350,42 @@ class UploadImages(appionScript.AppionScript):
 		return targetdata
 
 	#=====================
+	def linkTargetParent(self,parentimage):
+		'''
+		Include a fake target that links a parent image with the uploads.
+		All images are set as the same target
+		'''
+		if parentimage['session'].dbid != self.sessiondata.dbid:
+			apDisplay.printWarning('parent image not in session.  Will not link target to it')
+			return None
+		# get targetlist for parent
+		r = leginon.leginondata.ImageTargetListData(image=parentimage).query(results=1)
+		if not r:
+			return None
+		targetlist = r[0]
+		# get newest target number.  Usually there is no target in this list.
+		# otherwise won't be doing this.
+		r = leginon.leginondata.AcquisitionImageTargetData(list=targetlist).query()
+		newest_number = 0
+		for t in r:
+			if newest_number < t['number']:
+				newest_number = t['number']
+		### setup target data
+		targetdata = leginon.leginondata.AcquisitionImageTargetData()
+		targetdata['session'] = self.sessiondata
+		targetdata['image'] = parentimage
+		targetdata['scope'] = parentimage['scope']
+		targetdata['camera'] = parentimage['camera']
+		targetdata['preset'] = parentimage['preset']
+		targetdata['type'] = "acquisition"
+		targetdata['version'] = 0
+		targetdata['delta column'] = 0
+		targetdata['delta row'] = 0
+		targetdata['number'] = newest_number + 1
+		targetdata['status'] = "done"
+		return targetdata
+
+	#=====================
 	def getTiltSeries(self, seriescount):
 		if self.params['uploadtype'] != "tiltseries":
 			return None
@@ -442,8 +493,12 @@ class UploadImages(appionScript.AppionScript):
 		### use real imagearray to ensure that file is saved before database insert
 		imgdata['image'] = imagearray
 
-		### use this for defocal group data
-		imgdata['target'] = self.setDefocalTargetData(seriescount)
+		if self.params['target_parent']:
+			parentimage = leginon.leginondata.AcquisitionImageData().direct_query(self.params['target_parent'])
+			imgdata['target'] = self.linkTargetParent(parentimage)
+		else:
+			### use this for defocal group data
+			imgdata['target'] = self.setDefocalTargetData(seriescount)
 
 		### use this for tilt series data
 		imgdata['tilt series'] = self.getTiltSeries(seriescount)
