@@ -13,10 +13,10 @@ import pyami.fileutil, pyami.mrc
 
 next_time_start = 0
 mtime = 0
-query_day_limit = 30 # ignore database query for older dates
+query_day_limit = 10 # ignore database query for older dates
 expired_names = ['.DS_Store',] # files that should not be transferred
 check_interval = 20  # seconds between checking for new frames
-max_image_query_delay = 300 # seconds before an image query by CameraEMData.'frames name' should be queryable.
+max_image_query_delay = 1200 # seconds before an image query by CameraEMData.'frames name' should be queryable. Need to account for difference in the clocks of the camera computer and where this script is running.
 
 class RawTransfer(object):
 	def __init__(self):
@@ -63,6 +63,7 @@ class RawTransfer(object):
 			help="recursive session permission modification by chmod if specified, default means not to modify e.g. --path_mode=g-w,o-rw")
 		parser.add_option("--check_interval", dest="check_interval", help="Seconds between checking for new frames", type="int", default=check_interval)
 		parser.add_option("--check_days", dest="check_days", help="Number of days to query database", type="int", default=query_day_limit)
+		parser.add_option("--cleanup_delay_minutes", dest="cleanup_delay_minutes", help="Delay non-database recorded images clean up by this. default is 20 min", type="float", default=max_image_query_delay/60.0)
 
 		# parsing options
 		(options, optargs) = parser.parse_args(sys.argv[1:])
@@ -122,9 +123,24 @@ class RawTransfer(object):
 		return None
 
 	def isRecentCreation(self,path):
+<<<<<<< HEAD
 		ctime = os.path.getctime(path)
 		t0 = time.time()
 		is_recent =  t0 - ctime <= max_image_query_delay
+=======
+		'''
+		This is called after a file is not found in the database CameraEMData.
+		A created frames should be recorded in the database in seconds.
+		If not, it is a rouge one and should not be kept for more checking
+		since too much checking slow the workflow down.
+		The default time is 20 minutes now and is much longer than it needs to.
+		But if the Windows and Linux clocks are not synced, it will appears to
+		be longer.
+		'''
+		ctime = os.path.getctime(path)
+		t0 = time.time()
+		is_recent =  t0 - ctime <= self.params['cleanup_delay_minutes']*60
+>>>>>>> origin/trunk
 		if not is_recent:
 			print 'File was created %d minutes ago. Should be in database by now if ever.' % (int((t0-ctime)/60),)
 		return is_recent
@@ -274,7 +290,7 @@ class RawTransfer(object):
 		global next_time_start
 		global mtime
 		names = os.listdir(parent_src_path)
-		#time.sleep(10)  # wait for any current writes to finish
+		time.sleep(10)  # wait for any current writes to finish
 		time_start = next_time_start
 		for name in names:
 			src_path = os.path.join(parent_src_path, name)

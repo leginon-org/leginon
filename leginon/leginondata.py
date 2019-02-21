@@ -138,6 +138,7 @@ scope_params = (
 	('image shift', dict),
 	('beam shift', dict),
 	('diffraction shift', dict),
+	('intended defocus', float),
 	('defocus', float),
 	('focus', float),
 	('reset defocus', int),

@@ -118,7 +118,6 @@ class SimTEM(tem.TEM):
 		self.is_init = True
 
 		self.aperture_selection = {'objective':'','condenser2':'70','selected area':'open'}
-		print self.conf
 		if 'simpar' in self.conf and self.conf['simpar'] and os.path.isdir(self.conf['simpar']):
 			self.simpar_dir = self.conf['simpar']
 			self.resetSimPar()
@@ -195,7 +194,7 @@ class SimTEM(tem.TEM):
 				try:
 					self.stage_position[axis] = value[axis]
 				except KeyError:
-					pass
+					continue
 		self.printStageDebug('----------')
 
 	def setDirectStagePosition(self,value):
