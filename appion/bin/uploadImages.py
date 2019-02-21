@@ -505,7 +505,10 @@ class UploadImages(appionScript.AppionScript):
 		cameradata['exposure time'] = cameradata['frame time'] * nframes
 
 		### setup camera data
-		presetdata = leginon.leginondata.PresetData()
+		if self.preset_image and self.preset_image['preset']:
+			presetdata = leginon.leginondata.PresetData(initializer=self.preset_image['preset'])
+		else:
+			presetdata = leginon.leginondata.PresetData()
 		presetdata['session'] = self.sessiondata
 		presetdata['tem'] = self.temdata
 		presetdata['ccdcamera'] = self.camdata
