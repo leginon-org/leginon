@@ -479,6 +479,8 @@ class UploadImages(appionScript.AppionScript):
 			scopedata['high tension'] = self.params['kv']*1000
 		else:
 			scopedata = leginon.leginondata.ScopeEMData(initializer=self.preset_image['scope'])
+			# update system time to now so they are shown in order of upload.
+			scopedata['system time'] = time.time()
 		### these are dynamic variables
 		scopedata['defocus'] = self.getImageDefocus(numinseries)
 		scopedata['stage position'] = {
@@ -502,7 +504,8 @@ class UploadImages(appionScript.AppionScript):
 		cameradata['dimension'] = dims
 		cameradata['save frames'] = (nframes > 1)
 		cameradata['nframes'] = nframes
-		cameradata['exposure time'] = cameradata['frame time'] * nframes
+		if cameradata['frame time']:
+			cameradata['exposure time'] = cameradata['frame time'] * nframes
 
 		### setup camera data
 		if self.preset_image and self.preset_image['preset']:
