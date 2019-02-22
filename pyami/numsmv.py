@@ -11,7 +11,7 @@ This only modify the size1 and size2 from the standard header.
 
 def getHeaderText(shape):
 	# standard header must be 512 bytes
-	text='{\nHEADER_BYTES=  512;\nBEAM_CENTER_X=0;\nBEAM_CENTER_Y=0;\nBIN=1x1;\nBYTE_ORDER=little_endian;\nDATE=Thu Jan  1 00:00:00 1970;\nDETECTOR_SN=unknown;\nDIM=2;\nDISTANCE=760;\nOSC_RANGE=nan;\nOSC_START=nan;\nPHI=nan;\nSIZE1=2048;\nSIZE2=2048;\nIMAGE_PEDESTAL=0;\nPIXEL_SIZE=0;\nTIME=nan;\nWAVELENGTH=nan;\nTWOTHETA=0;\nTYPE=unsigned_short;\n}\n                                                                                                                                                                                               \n'
+	text='{\nHEADER_BYTES=  512;\nBEAM_CENTER_X=0;\nBEAM_CENTER_Y=0;\nBIN=1x1;\nBYTE_ORDER=little_endian;\nDATE=Thu Jan  1 00:00:00 1970;\nDETECTOR_SN=unknown;\nDIM=2;\nDISTANCE=850;\nOSC_RANGE=0.868;\nOSC_START=nan;\nPHI=nan;\nSIZE1=2048;\nSIZE2=2048;\nIMAGE_PEDESTAL=0;\nPIXEL_SIZE=28;\nTIME=nan;\nWAVELENGTH=0.025;\nTWOTHETA=0;\nTYPE=unsigned_short;\n}\n                                                                                                                                                                                          \n'
 	size1_start=text.find('SIZE1=')+len('SIZE1=')
 	size2_start=text.find('SIZE2=')+len('SIZE2=')
 	# UNKNOWN which is width or height. all known smv are squares
