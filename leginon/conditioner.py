@@ -227,7 +227,7 @@ class AutoNitrogenFiller(Conditioner):
 		'column fill end': 70,
 		'loader fill start': 17,
 		'loader fill end': 70,
-		'delay dark current ref': 90,
+		'delay dark current ref': 120,
 	})
 	eventinputs = node.Node.eventinputs + [event.FixConditionEvent]
 
