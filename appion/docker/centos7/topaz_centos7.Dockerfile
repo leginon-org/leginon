@@ -91,6 +91,11 @@ RUN cp -v /emg/sw/myami/redux/init.d/reduxd /etc/init.d/reduxd
 COPY findem-docker-centos7/findem64.exe /emg/sw/myami/appion/bin/
 WORKDIR /emg/sw/myami/
 
+### EMAN 1
+ADD TGZ/eman-linux-x86_64-cluster-1.9.tar.gz /emg/sw
+RUN mv -v /emg/sw/EMAN /emg/sw/eman1
+RUN ln -sv /emg/sw/eman1/lib/libpyEM.so.ucs4.py2.6 /emg/sw/eman1/lib/libpyEM.so #FIX ME
+
 ### RELION
 ADD TGZ/relion-1.4.tgz /emg/sw/
 
