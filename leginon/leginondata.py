@@ -1037,7 +1037,7 @@ class TomoTargetOffsetData(InSessionData):
 			('list', ImageTargetListData),
 			('focusoffset', tuple),
 			('trackoffset', tuple),
-			('trackpreset', str),
+			#('trackpreset', str),
 		)
 	typemap = classmethod(typemap)
 

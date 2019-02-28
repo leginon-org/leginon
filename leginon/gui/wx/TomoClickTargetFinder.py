@@ -32,10 +32,8 @@ class Panel(leginon.gui.wx.TargetFinder.Panel):
         self.imagepanel.selectiontool.setDisplayed('acquisition', True)
         self.imagepanel.addTargetTool('focus', wx.BLUE, target=True, settings=True)
         self.imagepanel.selectiontool.setDisplayed('focus', True)
-        
         self.imagepanel.addTargetTool('track', wx.Colour(128, 0, 128), target=True, settings=True)
         self.imagepanel.selectiontool.setDisplayed('track', True)
-                
         self.imagepanel.addTargetTool('reference', wx.Colour(128, 0, 128), target=True, unique=True)
         self.imagepanel.selectiontool.setDisplayed('reference', True)
         self.imagepanel.addTargetTool('done', wx.Colour(218, 0, 0), numbers=True)
@@ -91,7 +89,7 @@ class TomoScrolledSettings(leginon.gui.wx.TargetFinder.ScrolledSettings):
         self.Bind(leginon.gui.wx.Entry.EVT_ENTRY, self.onFocusTargetOffset,self.widgets['focus target offset'])
         self.Bind(leginon.gui.wx.Entry.EVT_ENTRY, self.onTrackTargetOffset,self.widgets['track target offset'])
 
-        sz = wx.GridBagSizer(8, 8)
+        sz = wx.GridBagSizer(11, 11)
         sz.Add(self.widgets['user check'], (0, 0), (1, 1),
                         wx.ALIGN_CENTER_VERTICAL)
         #sz.Add(checkmethodsz, (1, 0), (1, 1),
@@ -110,12 +108,15 @@ class TomoScrolledSettings(leginon.gui.wx.TargetFinder.ScrolledSettings):
                         wx.ALIGN_CENTER_VERTICAL)
         sz.Add(self.widgets['auto focus target'], (7, 0), (1, 1),
                         wx.ALIGN_CENTER_VERTICAL)
-        sz.Add(self.widgets['focus target offset'], (8, 0), (1, 1),
+        focus_label = wx.StaticText(self, -1, 'focus target offset in meters')
+        sz.Add(focus_label, (8, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        sz.Add(self.widgets['focus target offset'], (9, 0), (1, 1), 
                         wx.ALIGN_CENTER_VERTICAL)
-        #sz.Add(self.widgets['auto track target'], (9, 0), (1, 1),
-        #                wx.ALIGN_CENTER_VERTICAL)
-        sz.Add(self.widgets['track target offset'], (9, 0), (1, 1),
+        track_label = wx.StaticText(self, -1, 'track target offset in meters')
+        sz.Add(track_label, (10, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        sz.Add(self.widgets['track target offset'], (11, 0), (1, 1),
                         wx.ALIGN_CENTER_VERTICAL)
+
         #if not hide_incomplete:
         #    sz.Add(self.widgets['allow append'], (7, 0), (1, 1),
         #                    wx.ALIGN_CENTER_VERTICAL)

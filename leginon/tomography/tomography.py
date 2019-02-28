@@ -14,6 +14,11 @@ import leginon.tomography.tilts
 import leginon.tomography.exposure
 import leginon.tomography.prediction
 
+from leginon.targetwatcher import PauseRepeatException
+from leginon.targetwatcher import PauseRestartException
+from leginon.targetwatcher import BypassException
+from leginon.node import PublishError
+
 class CalibrationError(Exception):
 	pass
 
@@ -86,10 +91,13 @@ class Tomography(leginon.acquisition.Acquisition):
 		self.tilts = leginon.tomography.tilts.Tilts()
 		self.exposure = leginon.tomography.exposure.Exposure()
 		#self.prediction = leginon.tomography.prediction.Prediction()
-		self.prediction = leginon.tomography.prediction.Prediction_2()
+		self.prediction = self.getPredictionObject()
 		self.loadPredictionInfo()
 		self.updateTilts()
 		self.start()
+
+	def getPredictionObject(self):
+		return leginon.tomography.prediction.Prediction()
 
 	def updateTilts(self):
 		'''
@@ -217,6 +225,7 @@ class Tomography(leginon.acquisition.Acquisition):
 		collect.settings = self.settings.copy()
 		collect.preset = presetdata
 		collect.target = target
+		collect.parentpreset = target['preset']
 		collect.emtarget = emtarget
 		collect.viewer = self.panel.viewer
 		collect.player = self.player
@@ -230,6 +239,7 @@ class Tomography(leginon.acquisition.Acquisition):
 		collect.prediction = self.prediction
 		collect.setStatus = self.setStatus
 		collect.reset_tilt = self.targetlist_reset_tilt
+		#TODO add tracking preset to this....
 
 		self.logger.info('Set stage position alpha to %.2f degrees according to targetlist' % math.degrees(self.targetlist_reset_tilt))
 		self.instrument.tem.StagePosition = {'a': self.targetlist_reset_tilt}
@@ -679,17 +689,25 @@ class Tomography_2(Tomography):
 	def __init__(self, *args, **kwargs):
 		Tomography.__init__(self, *args, **kwargs)
 	
+	def getPredictionObject(self):
+		return leginon.tomography.prediction.Prediction_2()
+	
 	def getCollectionObject(self,target):
 		collect = leginon.tomography.collection.Collection_2()
 		offsetdata = self.researchTargetOffset(target['list'])
 		if offsetdata:
 			collect.offset = offsetdata
+			# TODO: in future, the preset data should be set already in offsetdata, not just the name. 
+			collect.trackpreset = \
+				self.node.presetsclient.getPresetByName(offsetdata['trackpreset'])
 		return collect
 	
-	def loadPredictionInfo(self):
+	def loadPredictionInfo(self):	
+		# dummy function since we don't need previous history	
 		pass
 	
 	def initGoodPredictionInfo(self,presetdata=None, tiltgroup=0):
+		# dummy function since we don't need previous history
 		pass
 	
 	def researchTargetOffset(self, targetlist):
@@ -706,8 +724,8 @@ class Tomography_2(Tomography):
 		# (1) Get position of acquisition target.
 		# (2) Apply offset.
 		# (3) Make new 
-		dcol = target['delta column'] + offset[0]
-		drow = target['delta row'] + offset[1]
+		dcol = target['delta column'] + offset[1]
+		drow = target['delta row'] + offset[0]
 		targetdata = self.newTarget(image=imagedata, scope=imagedata['scope'], \
 								camera=imagedata['camera'], preset=imagedata['preset'], \
 								drow=drow, dcol=dcol, session=self.session, type='focus')
@@ -768,16 +786,33 @@ class Tomography_2(Tomography):
 		# (2) Get new focus target.
 		# (3) Reject focus target.
 		# (4) If focus successful, proceed to acquisiton. If not, report target done, move on to next acquisition target. 
-		targetlist = good_targets[0]['list']					# Get targetlist for these targets
-		offsetdata = self.researchTargetOffset(targetlist)									# (1)
-		if not offsetdata:										# somehow couldn't find offsetdata
-			self.logger.info('Could not find TomoTargetOffsetData for target: %i' % target.dbid)
-			self.markTargetsFailed(good_targets, 'failed')
-			return
-		focusoffset = offsetdata['focusoffset']		
-		dofocus = not None in focusoffset													# (2)
+		
 		for i, target in enumerate(good_targets):
-			if dofocus:
+			if self.player.state() == 'pause':
+				self.logger.info('paused after resetTiltInList')
+				self.setStatus('user input')
+				# FIX ME: if player does not wait, why should it pause ?
+			state = self.clearBeamPath()
+			self.setStatus('processing')
+			# abort
+			if state in ('stop', 'stopqueue'):
+				self.logger.info('Aborting current target list')
+				targetliststatus = 'aborted'
+				self.reportTargetStatus(target, 'aborted')
+				## continue so that remaining targets are marked as done also
+				continue
+			
+			targetlist = good_targets[0]['list']					# Get targetlist for these targets
+			offsetdata = self.researchTargetOffset(targetlist)									# (1)
+			if not offsetdata:										# somehow couldn't find offsetdata
+				self.logger.info('Could not find TomoTargetOffsetData for target: %i' % target.dbid)
+				self.markTargetsFailed(good_targets, 'failed')
+				# This will go back to ~ line 325 in processTargetList in targetwatcher.py
+				# Targetlist status will be reported as success. A bit strange??
+				return
+			focusoffset = offsetdata['focusoffset']		
+			dofocus = not None in focusoffset	
+			if dofocus:			# We have a focus spot for each acquisition target. 
 				waitrejects = self.settings['wait for rejects']
 				if waitrejects:																
 					self.logger.info('Making new targetlist for focus target')
@@ -787,7 +822,7 @@ class Tomography_2(Tomography):
 					self.publish(focustargetlist,database=True, dbforce=True)
 					self.logger.info('Making new focus target for acquisition target: %i' \
 									% target.dbid)
-
+					#TODO: something not working below
 					focustarget = self.makeNewFocusTarget(target,focusoffset,focustargetlist)	# (2)		
 					self.logger.info('Publishing new focus target')
 					self.publish(focustarget,database=True)
@@ -795,15 +830,9 @@ class Tomography_2(Tomography):
 
 					rejectstatus = self.rejectTargets(focustargetlist)							# (3)
 					if rejectstatus != 'success':
-						## report my status as reject status may not be a good idea
-						##all the time. This means if rejects were aborted
-						## then this whole target list was aborted
-						self.logger.debug('Passed targets not processed, aborting current target list')
-						self.reportTargetListDone(targetlist, rejectstatus)
-						self.setStatus('idle')
-						if rejectstatus != 'aborted':
-							return
-					
+						# Focusing didn't work out. Report status, and move to next target.  
+						self.reportTargetStatus(target, 'aborted')
+						continue
 					self.logger.info('Passed target processed, processing current target')
 				else:
 					self.logger.info('Skipping focus target for acquisition target: %i' % target.dbid)
@@ -836,6 +865,8 @@ class Tomography_2(Tomography):
 				continue
 				
 			adjustedtarget = self.reportTargetStatus(target, 'processing')
+			
+			import rpdb2; rpdb2.start_embedded_debugger("asdf")
 
 			# this while loop allows target to repeat
 			process_status = 'repeat'
@@ -862,7 +893,7 @@ class Tomography_2(Tomography):
 					self.logger.error(str(e) + '... Fix it, then press play to repeat target')
 					self.beep()
 					process_status = 'repeat'
-				except node.PublishError, e:
+				except PublishError, e:
 					self.player.pause()
 					self.logger.exception('Saving image failed: %s' % e)
 					process_status = 'repeat'

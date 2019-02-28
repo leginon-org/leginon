@@ -220,7 +220,6 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		targetlist = self.researchTargets(list=newdata)
 		listid = newdata.dbid
 		self.logger.debug('TargetWatcher will process %s targets in list %s' % (len(targetlist), listid))
-				
 		completed_targets, good_targets, rejects = self.sortTargetsByType(targetlist, mytargettype)
 
 		# There may not be good targets but only rejected
@@ -291,18 +290,23 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		
 		waitrejects = rejects and self.settings['wait for rejects']
 		if waitrejects:
+
 			# FIX ME: If autofocus involves stage tilt and self.targetlist_reset_tilt
 			# is at high tilt, it is better not to tilt first but if autofocus does
 			# not involve that, it needs to be tilted now.
 			rejectstatus = self.rejectTargets(newdata) # will stay until node gives back a done
 			if rejectstatus != 'success':
 				## report my status as reject status may not be a good idea
-				##all the time. This means if rejects were aborted
+				## all the time. This means if rejects were aborted
 				## then this whole target list was aborted
 				self.logger.debug('Passed targets not processed, aborting current target list')
 				self.reportTargetListDone(newdata, rejectstatus)
 				self.setStatus('idle')
-				if rejectstatus != 'aborted':
+				# Anchi, at focus node, if it fails, I think it still reports success since 
+				# line ~ 324 is always true. This is a bit dangerous for tomo.
+				# If focusing fails, there is not reason to move on, since tracking with likely
+				# be very off. 
+				if rejectstatus != 'aborted':	 
 					return
 			self.logger.info('Passed targets processed, processing current target list')
 

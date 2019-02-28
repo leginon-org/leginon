@@ -500,17 +500,25 @@ class TomoTargetImagePanel(TargetImagePanel):
 		if hasattr(self,'tracktype'):
 			return self.tracktype
 		else:
+			# TODO: this is sketchy
 			tracktype = [key for key in self.targets.keys() if key.name =='track']
-			self.tracktype = tracktype[0]
-			return self.tracktype
+			if tracktype:
+				self.tracktype = tracktype[0]
+				return self.tracktype
+			else:
+				return None			
 
 	def getFocusType(self):
 		if hasattr(self,'focustype'):
 			return self.focustype
 		else:
-			focustype = [key for key in self.targets.keys() if key.name =='focus']	
-			self.focustype = focustype[0]
-			return self.focustype
+			# TODO: this is sketchy
+			focustype = [key for key in self.targets.keys() if key.name =='focus']
+			if focustype:	
+				self.focustype = focustype[0]
+				return self.focustype
+			else:
+				return None
 		
 	def getAcquisitionType(self):
 		if hasattr(self,'acquisition'):
@@ -611,7 +619,7 @@ class TomoTargetImagePanel(TargetImagePanel):
 					self.clearTargetMap()
 					self.clearTargetType(self.selectedtype)
 					self.clearTargetType(self.getTrackType())
-					if self.isAutoFocus():
+					if self.isAutoFocus() and self.getFocusType():	# TODO: this is sketchy
 						self.clearTargetType(self.getFocusType())
 	
 	def resetFocusTargets(self,state,offset):
@@ -655,11 +663,11 @@ class TomoTargetImagePanel(TargetImagePanel):
 		self.clearAllTargetTypes()
 	
 	def getTrackPosition(self, x, y, offset=None):
-		dx,dy = self.parent.node.getTrackOffset(offset)
+		dy,dx = self.parent.node.getTrackOffset(offset)
 		return (x+dx,y+dy)
 
 	def getFocusPosition(self, x, y, offset=None):
-		dx,dy = self.parent.node.getFocusOffset(offset)
+		dy,dx = self.parent.node.getFocusOffset(offset)
 		return (x+dx,y+dy)
 
 if __name__ == '__main__':

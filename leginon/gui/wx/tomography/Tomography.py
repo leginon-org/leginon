@@ -66,6 +66,10 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 												allownone=False,
 												chars=7,
 												value='0.0')
+		
+		#presets = self.node.presetsclient.getPresetNames()
+		#self.widgets['track preset'] = EditPresetOrder(self, -1)
+		#self.widgets['preset order'].setChoices(presets)
 
 		tiltsz = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Min.')

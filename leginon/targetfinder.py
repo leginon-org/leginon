@@ -77,7 +77,8 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			'modeled stage position':
 												calibrationclient.ModeledStageCalibrationClient(self),
 			'beam size':
-												calibrationclient.BeamSizeCalibrationClient(self)
+												calibrationclient.BeamSizeCalibrationClient(self),
+											
 		}
 		
 		self.parent_imageid = None
@@ -543,6 +544,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		return is_new
 
 	def setTargetImageVector(self,imagedata):
+
 		try:
 			cam_length_on_image,beam_diameter_on_image = self.getAcquisitionTargetDimensions(imagedata)
 			self._setTargetImageVector(cam_length_on_image,beam_diameter_on_image)
@@ -550,6 +552,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			pass
 
 	def _setTargetImageVector(self,cam_length_on_image,beam_diameter_on_image):
+
 		self.targetbeamradius = beam_diameter_on_image / 2
 		self.targetimagevector = (cam_length_on_image,0)
 
@@ -580,6 +583,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		if not self.current_image_pixelsize:
 			self.logger.error('No image to calculate exposure area')
 			return
+		
 		cam_length_on_image,beam_diameter_on_image = self._getAcquisitionTargetDimensions(self.current_image_pixelsize)
 		self._setTargetImageVector(cam_length_on_image,beam_diameter_on_image)
 
@@ -601,8 +605,8 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			acqsettings = results[0]
 			# use first preset in preset order for display
 			presetlist = acqsettings['preset order']
-			presetname = presetlist[0]
-			# get image dimension of the target preset
+			presetnamer = presetlist[0]
+			# get image dimenzsion of the target preset
 			acq_dim = self.presetsclient.getPresetImageDimension(presetname)
 			dim_on_image = []
 			for axis in ('x','y'):
@@ -703,10 +707,22 @@ class TomoClickTargetFinder(ClickTargetFinder):
 									'track target offset': 3e-6
 									})
 		ClickTargetFinder.__init__(self, id, session, managerlocation, **kwargs)
+		self.calclients['pixel size'] = \
+				leginon.calibrationclient.PixelSizeCalibrationClient(self)
 		self.userpause = threading.Event()
 		
 		if self.__class__ == TomoClickTargetFinder:
 			self.start()
+			
+	def handleApplicationEvent(self,evt):
+		'''
+		Find the Acquisition class or its subclass instance bound
+		to this node upon application loading.
+		'''
+		super(TargetFinder,self).handleApplicationEvent(evt)
+		app = evt['application']
+		self.last_acq_node = appclient.getLastNodeThruBinding(app,self.name,'AcquisitionImagePublishEvent','Acquisition')
+		self.next_acq_node = appclient.getNextNodeThruBinding(app,self.name,'ImageTargetListPublishEvent','Acquisition')
 
 	def publishTargets(self, imagedata, typename, targetlist):
 		'''
@@ -734,6 +750,7 @@ class TomoClickTargetFinder(ClickTargetFinder):
 		# (4) If each acquisition target gets a focus target, input offset.
 		# (5) Make and publish TomoTargetOffsetData for this target list
 		# (6) If there is only one focus target for this targetlist, publish to database.
+		#import rpdb2; rpdb2.start_embedded_debugger("asdf")
 
 		assert(typename == 'acquisition')
 		imagearray = imagedata['image']
@@ -750,13 +767,13 @@ class TomoClickTargetFinder(ClickTargetFinder):
 			number += 1
 
 		trackoffset = self.getTrackOffset()															# (3)
-		trackpreset = self.getTrackPreset()	
+		#trackpreset = self.getTrackPreset()	
 		if self.panel.imagepanel.isAutoFocus():														# (4)	
 			focusoffset = self.getFocusOffset()
 		else:
 			focusoffset = (None,None)				# single focus target for this targetlist 
 		offset_td = leginondata.TomoTargetOffsetData(list=targetlist,focusoffset=focusoffset,		
-											trackoffset=trackoffset,trackpreset=trackpreset)		# (5)
+											trackoffset=trackoffset) #,trackpreset=trackpreset)		# (5)
 		self.publish(offset_td, database=True)
 		
 		if not self.panel.imagepanel.isAutoFocus():													# (6)
@@ -776,38 +793,42 @@ class TomoClickTargetFinder(ClickTargetFinder):
 		dcol = column - imageshape[1]/2
 		targetdata = self.newTargetForImage(imagedata, drow, dcol, type=typename, list=targetlist, number=number,last_focused=self.last_focused)
 		return targetdata
-			
+
 	def getTrackOffset(self, offset=None):
 		imagedata = self.currentimagedata
 		tem = imagedata['scope']['tem']
 		ccd = imagedata['camera']['ccdcamera']
 		mag = imagedata['scope']['magnification']
 		ht = imagedata['scope']['high tension']
-		# offset in physical coordinates along y axis
+		# get image pixel size assume equal binning in both x and y
+		args = (mag, tem, ccd)
+		image_pixel_size = self.calclients['pixel size'].getPixelSize(*args) * imagedata['camera']['binning']['x']
+		# get tilt angle in radians
+		args = (tem, ccd, 'stage position', ht, mag, None)
+		thetax, thetay = self.calclients['stage position'].getAngles(*args)
 		if offset is None:				# Use node settings offset
-			stageoffset = [0,self.settings['track target offset']]
-		else:							# Use some other offset. Needed if node settings have not been updated yet. 
-			stageoffset = [0,offset]	# TODO: this might have to be reversed. [row,col] Here I am assuming taht the tilt axis is along x axis. 
-		args = (tem,ccd,'image shift',ht,mag,stageoffset)
-		pixeloffset = self.calclients['image shift'].positionToPixel(*args)	# offset in camera coordinates along tilt axis
-		pixeloffset[0] /= imagedata['camera']['binning']['x']
-		pixeloffset[1] /= imagedata['camera']['binning']['y']
-		# this is somehow off by a factor of 2 for simcam. Not to do with binning I think. 
+			offset = self.settings['track target offset'] 
+		image_pixel_offset = offset / image_pixel_size
+		# This should be in row, col or y,x order
+		pixeloffset = [image_pixel_offset * numpy.sin(thetax), image_pixel_offset * numpy.cos(thetax)]
 		return pixeloffset
-			
+
 	def getFocusOffset(self, offset=None):
 		imagedata = self.currentimagedata
 		tem = imagedata['scope']['tem']
 		ccd = imagedata['camera']['ccdcamera']
 		mag = imagedata['scope']['magnification']
 		ht = imagedata['scope']['high tension']
-		if offset is None:			
-			stageoffset = [0,self.settings['focus target offset']]
-		else:
-			stageoffset = [0,offset]	
-		args = (tem,ccd,'image shift',ht,mag,stageoffset)
-		pixeloffset = self.calclients['image shift'].positionToPixel(*args)	
-		pixeloffset[0] /= imagedata['camera']['binning']['x']
-		pixeloffset[1] /= imagedata['camera']['binning']['y']
+		# get image pixel size assume equal binning in both x and y
+		args = (mag, tem, ccd)
+		image_pixel_size = self.calclients['pixel size'].getPixelSize(*args) * imagedata['camera']['binning']['x']
+		# get tilt angle in radians
+		args = (tem, ccd, 'stage position', ht, mag, None)
+		thetax, thetay = self.calclients['stage position'].getAngles(*args)
+		if offset is None:				# Use node settings offset
+			offset = self.settings['focus target offset'] 
+		image_pixel_offset = offset / image_pixel_size
+		# This should be in row, col or y,x order
+		pixeloffset = [image_pixel_offset * numpy.sin(thetax), image_pixel_offset * numpy.cos(thetax)]
 		return pixeloffset
 

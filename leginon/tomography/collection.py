@@ -590,6 +590,7 @@ class Collection_2(Collection):
 		# tilts and exposures are grouped
 		# sequence is the 2 element tuple used to choose the tilt and the exposure
 		image_pixel_size = self.pixel_size*self.preset['binning']['x']
+		import rpdb2; rpdb2.start_embedded_debugger("asdf")
 
 		seq0 = sequence[0]
 		tilt0 = tilts[seq0[0]][seq0[1]]
@@ -631,7 +632,7 @@ class Collection_2(Collection):
 					self.update_istot(seq0,position0)							
 					self.trackingImg = self.getTrackingImg()					# get first tracking image	
 					self.reset_ntrack(seq)			
-					self.return2Tomo()											# return to tomo preset
+					#self.return2Tomo()											# return to tomo preset
 					
 					# add first tracking image into correlator buffer
 					self.correlator[seq[0]+2].reset()							# clear buffer
@@ -908,6 +909,7 @@ class Collection_2(Collection):
 			presetname = self.offset['trackpreset']
 			self.change2Track()												# (1) 
 			imagedata = self.node.acquireCorrectedCameraImageData(0)		# (2)
+			self.viewer.addImage(imagedata['image'])
 			self.return2Tomo(isoffset)
 		except:
 			raise TrackingImgError
@@ -925,9 +927,10 @@ class Collection_2(Collection):
 		# (7) Call self.node.moveAndPreset
 		
 		mypreset = self.preset
-		parentpreset = self.target['preset']
-		trackpreset_name = self.offset['trackpreset']
-		trackpreset = self.node.presetsclient.getPresetByName(trackpreset_name)
+		parentpreset = self.parentpreset
+		trackpreset = self.trackpreset
+		#trackpreset_name = self.offset['trackpreset']
+		#trackpreset = self.node.presetsclient.getPresetByName(trackpreset_name)
 		
 		myoffset = self.node.getImageShiftOffset()		# current image shift coordinates at tomo preset	
 		trackoffset = self.offset['trackoffset']		# pixels relative to parent preset
@@ -956,7 +959,6 @@ class Collection_2(Collection):
 		track_mag = trackpreset['magnification']
 		ht = self.node.instrument.tem.HighTension
 		
-		import rpdb2; rpdb2.start_embedded_debugger("asdf")
 		# x,y dict input col, row, dict output
 		p1 = self.node.calclients['image shift'].itransform(myoffset, myscope, mycam)
 		p1_row = p1['row'] 
@@ -985,7 +987,7 @@ class Collection_2(Collection):
 			return self.trackoffset
 		else:
 			parentpreset = self.target['preset']
-			trackpreset = self.node.presetsclient.getPresetByName(self.offset['trackpreset'])
+			trackpreset = self.trackpreset
 			
 			trackoffset = self.offset['trackoffset']		# pixels relative to parent preset
 			
@@ -1018,6 +1020,33 @@ class Collection_2(Collection):
 				parent_ccdcamera,track_tem, track_ccdcamera, ht,parent_mag,track_mag,p1_vec)
 			self.trackoffset = p2_vec
 			return p2_vec
+
+	def getTomoOffset(self, offset):
+		# Get is offset to be applied once the scope has been sent back to tomo preset
+		# after tracking. 
+		mypreset = self.preset
+		trackpreset = self.trackpreset
+
+		track_tem = trackpreset['tem']
+		track_ccdcamera = trackpreset['ccdcamera']
+		track_mag = trackpreset['magnification']
+		
+		my_tem = mypreset['tem']
+		my_ccdcamera = mypreset['ccdcamera']
+		my_mag = mypreset['magnification']
+		
+		# row, col list or array input, row, col array out
+		p1_row = offset[0] * trackpreset['binning']['y']
+		p1_col = offset[1] * trackpreset['binning']['x']
+		p1_vec = numpy.array([p1_row,p1_col])
+		# image shift coil rotation
+		p1_vec = self.imageRotationTransform(p1_vec, trackpreset, mypreset)
+		# magnification and camera (if camera is different)
+		# Transform pixelvect1 at magnification to new magnification according to image-shift matrix
+		# include a relative  image rotation and scale addition to the transform
+		p2_vec = self.calclients['image rotation'].pixelToPixel(track_tem,
+			track_ccdcamera,my_tem, my_ccdcamera, ht,track_mag,my_mag,p1_vec)
+		return p2_vec
 	
 	def track(self,tilt,seq):
 		try:
@@ -1041,10 +1070,10 @@ class Collection_2(Collection):
 			
 			# need to convert from tracking coordinates to exposure coordinates. 
 			mypreset = self.preset
-			parentpreset = self.target['image']['preset']	# TODO: change this to get tracking preset. 
-			tem1 = parentpreset['tem']
-			ccdcamera1 = parentpreset['ccdcamera']
-			mag1 = parentpreset['magnification']
+			trackpreset = self.trackpreset	
+			tem1 = trackpreset['tem']
+			ccdcamera1 = trackpreset['ccdcamera']
+			mag1 = trackpreset['magnification']
 			tem2 = mypreset['tem']
 			ccdcamera2 = mypreset['ccdcamera']
 			mag2 = mypreset['magnification']
@@ -1052,6 +1081,8 @@ class Collection_2(Collection):
 			p1 = [correlation['x'], correlation['y']]
 			
 			print "CORRELATION x: %f y: %f" %(correlation['x'], correlation['y'])
+			#TODO: we need to account for binning on both track and tomo, also rotation. 
+			
 			p2 = self.node.calclients['image shift'].pixelToPixel(tem1, ccdcamera1, tem2, ccdcamera2, ht, mag1, mag2, p1)
 			correlation['x'] = p2[0]
 			correlation['y'] = p2[1]
