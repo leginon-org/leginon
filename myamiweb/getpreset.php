@@ -59,14 +59,15 @@ if ($imgId) {
 	}
 	list($filename) = $leginondata->getFilename($imgId);
 	$presets = $leginondata->getPresets($imgId, $p);
-	if (is_array($presets))
+	if (is_array($presets)) {
+		$is_diffraction = $imageinfo['is_diffraction'];
 		foreach($presets as $k=>$v)
 
 			if ($k=='defocus')
 				echo " <b>$k:</b> ",($leginondata->formatDefocus($v));
 			else if ($k=='pixelsize') {
 				$v *= $imageinfo['binning'];
-				echo " <b>$k:</b> ",($leginondata->formatPixelsize($v));
+				echo " <b>$k:</b> ",($leginondata->formatPixelsize($v,$is_diffraction));
 			}
 			else if ($k=='tilt' && (abs($v) > 1 || $showtilt)) {
 				$angle=$v;
@@ -90,6 +91,7 @@ if ($imgId) {
 			}
 			else
 				echo " <b>$k:</b> $v";
+	}
 	if ($str_tilt) {
 		echo $str_tilt;
 		echo "&nbsp;<img src='imgangle.php?a=".$angle."'>";

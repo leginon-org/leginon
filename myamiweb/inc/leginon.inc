@@ -1491,6 +1491,8 @@ class leginondata {
 			."order by pi.`DEF_id` desc"; 
 		$Rimageinfo = $this->mysql->SQLQuery($q);
 		$imageinfo = mysqli_fetch_array($Rimageinfo,MYSQLI_ASSOC);
+		// All diffraction mode instrument should have 'Diffr' as a part of the name
+		$imageinfo['is_diffraction'] = (strpos($imageinfo['scope'],'Diffr')!== false) ? true: false;
 		return $imageinfo;
 	}
 
@@ -3115,8 +3117,11 @@ class leginondata {
 		return $defocus;
 	}
 
-	function formatPixelsize(&$pixelsize) {
-		$pixelsize = format_angstrom_number($pixelsize);
+	function formatPixelsize(&$pixelsize, $is_diffraction=false) {
+		if (!$is_diffraction)
+			$pixelsize = format_angstrom_number($pixelsize);
+		else
+			$pixelsize = format_reciprocal_nano_number($pixelsize);
 		return $pixelsize;
 	}
 
