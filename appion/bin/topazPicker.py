@@ -97,6 +97,7 @@ class TopazPicker(appionScript.AppionScript):
 		print self.params.keys()
 		cmd += " --projectid=%d "%(self.params['projectid'])
 		cmd += " --expid=%d "%(self.params['expid'])
+		cmd += " --selectionid=%d "%(self.params['selectionid'])
 		cmd += " --session='%s' "%(self.params['sessionname'])
 		cmd += " --preset='%s' "%(self.params['preset'])
 		cmd += " --runname='preprocess' "
@@ -108,6 +109,7 @@ class TopazPicker(appionScript.AppionScript):
 		if limit is True:
 			#only process an few images for training
 			cmd += " --limit=%d "%(self.params['numimages'])
+			cmd += " --require-particles "
 
 		### filter parameters
 		cmd += " --bin=%d "%(self.params['bin'])
@@ -126,6 +128,7 @@ class TopazPicker(appionScript.AppionScript):
 			cmd += " --planereg "
 		### this has to be True
 		cmd += " --keepall "
+		cmd += " --shuffle "
 		cmd += " --no-wait "
 		print("")
 		apDisplay.printColor(cmd, "cyan")
