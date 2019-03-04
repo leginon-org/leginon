@@ -1,10 +1,15 @@
 #!/usr/bin/env python
 
 import os
+import sys
+import glob
+import subprocess
 from appionlib import apDisplay
+from appionlib import apDatabase
 from appionlib import apParticle
-from appionlib import filterLoop
 from appionlib import appionScript
+
+#topazPicker.py -p 1 -S 2 -n testing
 
 #=====================
 #=====================
@@ -22,16 +27,12 @@ class TopazPicker(appionScript.AppionScript):
 			help="the particle selection id", metavar="#")
 
 		### Topaz Parameters
-		self.parser.add_option("--num-images", dest="numimages", type="int", default=30,
+		self.parser.add_option("--num-images", dest="numimages", type="int", default=6,
 			help="Number of micrographs to use for training purposes", metavar="#")
 		self.parser.add_option("--threshold", dest="threshold", type="float", default=0.01,
 			help="Threshold for particle cutoff, higher number -> less particles", metavar="#")
-		
-		### True/False flags
-		self.parser.add_option("--do-it", dest="doit", default=True,
-			action="store_true", help="Do it")
-		self.parser.add_option("--do-not-do-it", dest="doit", default=True,
-			action="store_false", help="Do not do it")
+		self.parser.add_option("--test-set", dest="testset", type="int", default=33,
+			help="Integer percentage of micrographs to put into the test set, default=33%", metavar="#")
 
 		### Image Filters (copied from filterLoop.y)
 		self.parser.add_option("--lowpass", "--lp", "--lpval", dest="lowpass", type="float",
@@ -49,8 +50,6 @@ class TopazPicker(appionScript.AppionScript):
 			action="store_true", help="Invert image density before processing")
 		self.parser.add_option("--planereg", dest="planereg", default=False,
 			action="store_true", help="Fit a 2d plane regression to the data and subtract")
-		self.parser.add_option("--keepall", dest="keepall", default=False,
-			action="store_true", help="Do not delete .dwn.mrc files when finishing")
 
 	#=====================
 	def checkConflicts(self):
@@ -60,6 +59,7 @@ class TopazPicker(appionScript.AppionScript):
 		#print(self.particledata.keys())
 		#print(self.particledata['image'].keys())
 		self.sessiondata = self.particledata['image']['session']
+		self.params['expid'] = self.particledata['image']['session'].dbid
 		self.params['sessionname'] = self.sessiondata['name']
 		print("Session Name: %s"%(self.params['sessionname']))
 		self.presetdata = self.particledata['image']['preset']
@@ -92,6 +92,98 @@ class TopazPicker(appionScript.AppionScript):
 		return
 
 	#=====================
+	def preProcessImages(self, limit=True):
+		cmd = "topazPreProcessImages.py "
+		print self.params.keys()
+		cmd += " --projectid=%d "%(self.params['projectid'])
+		cmd += " --expid=%d "%(self.params['expid'])
+		cmd += " --session='%s' "%(self.params['sessionname'])
+		cmd += " --preset='%s' "%(self.params['preset'])
+		cmd += " --runname='preprocess' "
+		self.preprocessdir = os.path.join(self.params['rundir'], "preprocess")
+		cmd += " --rundir='%s' "%(self.preprocessdir)
+
+		### KEY FLAG: usually run this twice once with limit
+		###   and after training run again to process the rest
+		if limit is True:
+			#only process an few images for training
+			cmd += " --limit=%d "%(self.params['numimages'])
+
+		### filter parameters
+		cmd += " --bin=%d "%(self.params['bin'])
+		if self.params['lowpass'] is not None:
+			cmd += " --lowpass=%f "%(self.params['lowpass'])
+		if self.params['highpass'] is not None:
+			cmd += " --highpass=%f "%(self.params['highpass'])
+		if self.params['median'] is not None:
+			cmd += " --median=%d "%(self.params['median'])
+		if self.params['pixlimit'] is not None:
+			cmd += " --pixlimit=%f "%(self.params['pixlimit'])
+
+		if self.params['invert'] is True:
+			cmd += " --invert "
+		if self.params['planereg'] is True:
+			cmd += " --planereg "
+		### this has to be True
+		cmd += " --keepall "
+		cmd += " --no-wait "
+		print("")
+		apDisplay.printColor(cmd, "cyan")
+		proc = subprocess.Popen(cmd, shell=True)
+		proc.communicate()
+		for i in range(3):
+			print("")
+
+#=====================
+	def writeCoordinatesFile(self):
+		self.particle_coordinates_file = "particle_coordinates.csv"
+		self.training_images = glob.glob(os.path.join(self.preprocessdir, "*.mrc"))
+		imglist = []
+		for imagefilename in self.training_images:
+			basename = os.path.basename(imagefilename)
+			imgname = basename.split(".")[0]
+			imglist.append(imgname)
+		imgtree = apDatabase.getSpecificImagesFromDB(imglist, self.sessiondata)
+
+		f = open(self.particle_coordinates_file, "w")
+		f.write("image_name\tx_coord\ty_coord\n")
+		for i in range(len(imgtree)):
+			imgdata = imgtree[i]
+			imagefilename = self.training_images[i]
+			basename = os.path.basename(imagefilename)
+			print basename, imgdata['filename']
+			particles = apParticle.getParticles(imgdata, self.params['selectionid'])
+			print("Found %d particles"%(len(particles)))
+			#print(particles[0].keys())
+			for partdata in particles:
+				f.write("%s\t%d\t%d\n"
+					%(basename,
+						partdata['xcoord']/self.params['bin'],
+						partdata['ycoord']/self.params['bin'],
+					))
+		f.close()
+		sys.exit(1)
+
+	#=====================
+	def trainTopaz(self):
+		cmd = ("topaz/scripts/train_test_split.py "
+		+" --images all_filtered_images.txt "
+		+" --targets all_scaled_coord.txt -n 10")
+		
+		cmd = ("topaz train "
+		+" --train-images all_filtered_images_train.txt "
+		+" --test-images all_filtered_images_test.txt "
+		+" --train-targets all_scaled_coord_train.txt "
+		+" --test-targets all_scaled_coord_test.txt")
+		
+		cmd = ("topaz train"
+		+" --train-images all_filtered_images_train.txt "
+		+" --test-images all_filtered_images_test.txt "
+		+" --train-targets all_scaled_coord_train.txt "
+		+" --test-targets all_scaled_coord_test.txt "
+		+" --pi 0.035 ")
+
+	#=====================
 	def start(self):
 		"""
 		This is the core of your function.
@@ -100,34 +192,8 @@ class TopazPicker(appionScript.AppionScript):
 		apDisplay.printMsg("\n\n")
 		### get info about the stack
 		apDisplay.printMsg("Information about particle selection id %d"%(self.params['selectionid']))
-		filterloop = MiniFilterLoop()
-		filterloop.params = self.params
-		filterloop.params['limit'] = self.params['numimages']
-		
-		filterloop.run()
-
-#=====================
-#=====================
-#=====================
-class MiniFilterLoop(filterLoop.FilterLoop):
-	def setupParserOptions(self):
-		return
-	def checkConflicts(self):
-		return
-	def commitToDatabase(self):
-		return
-	def setupGlobalParserOptions(self):
-		#Neil hack, not recommended
-		return
-	def setParams(self,optargs,useglobalparams=True):
-		#Neil hack, not recommended
-		return
-	def checkGlobalConflicts(self):
-		#Neil hack, not recommended
-		return
-	def processImage(self, imgdict, filtarray):
-		from pyami import mrc
-		mrc.write(filtarray, apDisplay.short(imgdict['filename'])+"_sm.mrc")
+		self.preProcessImages(limit=True)
+		self.writeCoordinatesFile()
 
 #=====================
 #=====================
