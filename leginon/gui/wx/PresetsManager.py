@@ -1668,6 +1668,9 @@ class ImportDialog(wx.Dialog):
 			q = leginon.leginondata.PresetData(session=sessiondata,name=presetname)
 			newestpreset = q.query(results=1)[0]
 			if newestpreset['tem'].dbid not in tems:
+				# Diffraction tem is not considered
+				if 'Diffr' in newestpreset['tem']['name']:
+					continue
 				if len(tems) < 1:
 					tems.append(newestpreset['tem'].dbid)
 				else:
