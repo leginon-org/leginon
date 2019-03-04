@@ -173,7 +173,6 @@ class DriftManager(watcher.Watcher):
 		tem = imagedata['scope']['tem']
 		ccd = imagedata['camera']['ccdcamera']
 		pixsize = self.pixsizeclient.retrievePixelSize(tem, ccd, mag)
-		self.logger.info('Pixel size at %sx is %s' % (mag, pixsize))
 
 		if threshold is None:
 			requested = False
@@ -232,6 +231,7 @@ class DriftManager(watcher.Watcher):
 			self.setImage(pc, 'Correlation')
 			self.setTargets([(peak[1],peak[0])], 'Peak')
 
+			self.logger.info('Pixel size is %s after binning' % (pixsize*binning))
 			## calculate drift 
 			meters = dist * binning * pixsize
 			rowmeters = rows * binning * pixsize
