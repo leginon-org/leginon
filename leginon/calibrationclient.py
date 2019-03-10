@@ -116,7 +116,7 @@ class CalibrationClient(object):
 		except RuntimeError, e:
 			self.node.logger.error('Failed tilt correction: %s' % (e))
 
-	def acquireImage(self, scope, settle=0.0, correct_tilt=False, corchannel=0):
+	def acquireImage(self, scope, settle=0.0, correct_tilt=False, corchannel=0, display=True):
 		if scope is not None:
 			newemdata = leginondata.ScopeEMData(initializer=scope)
 			self.instrument.setData(newemdata)
@@ -133,7 +133,8 @@ class CalibrationClient(object):
 			self.correctTilt(imagedata)
 		newscope = imagedata['scope']
 
-		self.node.setImage(imagedata['image'], 'Image')
+		if display:
+			self.node.setImage(imagedata['image'], 'Image')
 
 		return imagedata
 

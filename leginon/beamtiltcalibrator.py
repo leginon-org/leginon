@@ -11,11 +11,16 @@
 # $State: Exp $
 # $Locker:  $
 
+
 import numpy
+import math
 import threading
 import calibrator
 import calibrationclient
 from leginon import leginondata
+from pyami import imagefun
+from leginon import tableau
+from leginon import player
 import gui.wx.BeamTiltCalibrator
 import time
 
@@ -53,6 +58,8 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		self.parameter = 'defocus'
 		self.dialog_done = threading.Event()
 		self.ab_types = ['beam tilt','stig','defocus']
+		self.sites = 4
+		self.manualplayer = player.Player()
 
 		self.calibration_clients = {
 			'beam tilt': calibrationclient.BeamTiltCalibrationClient(self),
@@ -191,12 +198,12 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 					self.instrument.tem.Stigmator = {'objective':newstate['stig']}
 					'''
 					# For TESTING ---END HERE
-					newstate = self.readAbFree()
+					newstate = self.readAbFree(state['image shift'])
 					if abs(shift) > 1e-7:
 						while abs(newstate['beam tilt']['x']-self.state0['beam tilt']['x']) < 1e-4 or abs(newstate['beam tilt']['y']-self.state0['beam tilt']['y']) < 1e-4:
 							self.logger.error('Beam tilt has not changed. Will cause calibration failure.')
 							self.logger.info('Please repeat the measurement or Cancel in the dialog....')
-							newstate = self.readAbFree()
+							newstate = self.readAbFree(state['image shift'])
 					# reset to original state for the original shift to be consistent.
 					self.resetState()
 					self.instrument.tem.ImageShift = shift0
@@ -246,10 +253,10 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		newstate = self.readAbFree()
 		return newstate['beam tilt']['x'], newstate['beam tilt']['y']
 
-	def readAbFree(self):
+	def readAbFree(self, imageshift=None):
 		# trigger opening dialog. Let it fail and caught by the caller
 		self.dialog_done.clear()
-		self.panel.readAbFreeState()
+		self.panel.readAbFreeState(imageshift)
 		# wait for dialog to close
 		self.dialog_done.wait()
 		if not self.value_accepted:
@@ -689,3 +696,155 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		client = self.calibration_clients['eucentric focus']
 		client.publishEucentricFocus(high_tension, magnification, probe, eucentric_focus)
 
+#--------manual coma-free dialog
+	def getBeamTiltList(self):
+		tiltlist = []
+		anglelist = []
+		radlist = []
+
+		tiltlist.append({'x':0.0,'y':0.0})
+		anglelist.append(None)
+
+		self.sites = 4
+		angleinc = 2*3.14159/self.sites
+		startangle = 0
+		for i in range(0,self.sites):
+			tilt = self.settings['imageshift coma tilt']
+			angle = i * angleinc + startangle
+			anglelist.append(angle)
+			bt = {}
+			bt['x']=math.cos(angle)*tilt
+			bt['y']=math.sin(angle)*tilt
+			tiltlist.append(bt)
+		return tiltlist, anglelist
+
+	def initTableau(self):
+		self.tableauimages = []
+		self.tableauangles = []
+		self.tableaurads = []
+		self.tabimage = None
+
+	def binPower(self, image, binning=1):
+		pow = imagefun.power(image)
+		binned = imagefun.bin(pow, binning)
+		return binned
+
+	def acquireTableauImages(self):
+		oldbt = self.instrument.tem.BeamTilt
+		oldstig = self.instrument.tem.Stigmator['objective']
+		tiltlist,anglelist = self.getBeamTiltList()
+		rad = 1 #radius step.  Fixed at 1 for this
+
+		## initialize a new tableau
+		self.initTableau()
+		ht = self.instrument.tem.HighTension
+		scope = leginondata.ScopeEMData(tem=self.instrument.getTEMData())
+		for i, bt in enumerate(tiltlist):
+			scope['beam tilt'] = bt
+			# acquire image with scope state but not display in node image panel
+			imagedata = self.btcalclient.acquireImage(scope, settle=0.0, correct_tilt=False, corchannel=0, display=False)
+			self.setManualComaFreeImage(imagedata['image'])
+			self.insertTableau(imagedata, anglelist[i], rad)
+			self.renderTableau()
+		self.instrument.tem.BeamTilt = oldbt
+
+	def setManualComaFreeImage(self,imagearray):
+		self.panel.setManualComaFreeImage(imagearray, 'Image')
+
+	def insertTableau(self, imagedata, angle, rad):
+		image = imagedata['image']
+		binning = 4
+		binned = self.binPower(image, binning)
+		self.tableauimages.append(binned)
+		self.tableauangles.append(angle)
+		self.tableaurads.append(rad)
+
+	def renderTableau(self):
+		if not self.tableauimages:
+			return
+		size = self.tableauimages[0].shape[0]
+		radinc = numpy.sqrt(2 * size * size)
+		tab = tableau.Tableau()
+		for i,im in enumerate(self.tableauimages):
+			ang = self.tableauangles[i]
+			rad = radinc * self.tableaurads[i]
+			tab.insertImage(im, angle=ang, radius=rad)
+		self.tabimage,self.tabscale = tab.render()
+		self.displayTableau()
+
+	def displayTableau(self):
+		self.panel.setManualComaFreeImage(self.tabimage, 'Tableau')
+
+	def applyTiltChange(self, deltabt):
+			oldbt = self.instrument.tem.BeamTilt
+			self.logger.info('Old beam tilt: %.4f, %.4f' % (oldbt['x'],oldbt['y'],))
+			newbt = {'x': oldbt['x'] + deltabt['x'], 'y': oldbt['y'] + deltabt['y']}
+			self.instrument.tem.BeamTilt = newbt
+			self.logger.info('New beam tilt: %.4f, %.4f' % (newbt['x'],newbt['y'],))
+
+	def applyTiltChangeAndReacquireTableau(self,deltabt):
+			self.applyTiltChange(deltabt)
+			self.acquireTableauImages()
+			newbt = self.instrument.tem.BeamTilt
+			self.logger.info('Final beam tilt: %.4f, %.4f' % (newbt['x'],newbt['y'],))
+
+	def navigate(self, xy):
+		'''
+		Calculate the new beam tilt center and then aquire new tableau images.
+		This is triggered by clicking at a position in  ManualComaFree_Dialog Tableau Image.
+		'''
+		clickrow = xy[1]
+		clickcol = xy[0]
+		try:
+			clickshape = self.tabimage.shape
+		except:
+			self.logger.warning('Can not navigate without a tableau image')
+			return
+		# calculate delta from image center
+		centerr = clickshape[0] / 2.0 - 0.5
+		centerc = clickshape[1] / 2.0 - 0.5
+		deltarow = clickrow - centerr
+		deltacol = clickcol - centerc
+		bt = {}
+		if self.tabscale is not None:
+			bt['x'] = deltacol * self.settings['imageshift coma tilt']/self.tabscale
+			bt['y'] = -deltarow * self.settings['imageshift coma tilt']/self.tabscale
+			self.applyTiltChangeAndReacquireTableau(bt)
+		else:
+			self.logger.warning('need more than one beam tilt images in tableau to navigate')
+
+	#--------------Manual Focus---------------
+	def acquireManualFocusImage(self):
+		scope={}
+		# acquire image but not display in node image panel
+		imagedata = self.btcalclient.acquireImage(scope, settle=0.0, correct_tilt=False, corchannel=0, display=False)
+		# thread to make it possible to acquire the next image before this one is displayed.
+		threading.Thread(target=self.setManualFocusImage(imagedata['image'])).start()
+
+	def setManualFocusImage(self,imagearray):
+		self.maskradius = 0.01
+		self.panel.setManualFocusImage(imagearray, 'Image')
+		power = imagefun.power(imagearray, self.maskradius)
+		self.man_power = power.astype(numpy.float32)
+		self.panel.setManualFocusImage(self.man_power, 'Power')
+
+	def manualFocusLoop(self):
+		## go to preset and target
+		#pixelsize,center = self.getReciprocalPixelSizeFromPreset(presetname)
+		#self.ht = self.instrument.tem.HighTension
+		#self.cs = self.getTEMCsValue()
+		#self.panel.onNewPixelSize(pixelsize,center,self.ht,self.cs)
+		self.logger.info('Starting manual focus loop...')
+		self.beep()
+		self.manualplayer.play()
+		#self.onManualCheck()
+		while True:
+			state = self.manualplayer.state()
+			if state == 'stop':
+				break
+			elif state == 'pause':
+				if self.manualplayer.wait() == 'stop':
+					break
+			# acquire image, show image and power spectrum
+			# allow user to adjust defocus and stig
+			self.acquireManualFocusImage()

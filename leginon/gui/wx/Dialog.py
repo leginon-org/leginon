@@ -15,8 +15,8 @@ import wx
 
 class Dialog(wx.Dialog):
 	def __init__(self, parent, title, subtitle='',
-			style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER,pos=wx.DefaultPosition):
-		wx.Dialog.__init__(self, parent, -1, title, style=style,pos=pos)
+			style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER,pos=wx.DefaultPosition, size=wx.DefaultSize):
+		wx.Dialog.__init__(self, parent, -1, title, style=style,pos=pos, size=size)
 
 		self.parent = parent
 		if subtitle:
@@ -30,6 +30,13 @@ class Dialog(wx.Dialog):
 		self.szbuttons = wx.GridBagSizer(5, 5)
 		self.szbuttons.AddGrowableCol(0)
 
+		self.szbottom = wx.GridBagSizer(5, 5)
+		self.progress = wx.StaticText(self, -1, '')
+		self.szbottom.Add(self.progress, (0,0),(1,1), wx.LEFT)
+		self.szbottom.Add(self.szbuttons, (0,1),(1,1), wx.RIGHT|wx.EXPAND)
+		self.szbottom.AddGrowableCol(0)
+		self.szbottom.AddGrowableCol(1)
+
 		if subtitle:
 			self.sbsz.Add(self.sz, 1, wx.EXPAND|wx.ALL, 5)
 			self.mainsz = self.sbsz
@@ -38,8 +45,9 @@ class Dialog(wx.Dialog):
 
 		self.szdialog = wx.GridBagSizer(5, 5)
 		self.szdialog.Add(self.mainsz, (0, 0), (1, 1), wx.EXPAND|wx.ALL, 10)
-		self.szdialog.Add(self.szbuttons, (1, 0), (1, 1), wx.EXPAND|wx.ALL, 10)
+		self.szdialog.Add(self.szbottom, (1, 0), (1, 1), wx.EXPAND|wx.ALL, 10)
 		self.szdialog.AddGrowableRow(0)
+		self.szdialog.AddGrowableRow(1)
 		self.szdialog.AddGrowableCol(0)
 
 		self.onInitialize()
@@ -59,6 +67,9 @@ class Dialog(wx.Dialog):
 				flags = wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT
 		self.szbuttons.Add(self.buttons[label], (0, col), (1, 1), flags)
 		return self.buttons[label]
+
+	def setProgress(self, text):
+		self.progress.SetLabel(text)
 
 class ConfirmationDialog(Dialog):
 	def onInitialize(self):

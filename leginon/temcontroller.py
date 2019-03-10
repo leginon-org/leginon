@@ -120,7 +120,7 @@ class TEMController(node.Node):
 			return False
 
 	def uiOpenColumnValve(self):
-		self.onContinue('event')
+		self.uiContinue()
 		self.setStatus('processing')
 		self.safeOpenColumnValve()
 		self.panel.setTEMParamDone()
