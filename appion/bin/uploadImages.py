@@ -311,6 +311,7 @@ class UploadImages(appionScript.AppionScript):
 	#=====================
 	def getImagesInDirectory(self, directory):
 		searchstring = os.path.join(directory, "*.mrc")
+		apDisplay.printMsg("searching for %s" % searchstring)
 		mrclist = glob.glob(searchstring)
 		if len(mrclist) == 0:
 			apDisplay.printError("Did not find any images to upload")
