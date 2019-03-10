@@ -317,17 +317,17 @@ class SimTEM(tem.TEM):
 				self.beam_shift[axis] = value[axis]
 			except KeyError:
 				pass
-	
+
 	def getDiffractionShift(self):
 		return copy.copy(self.diffraction_shift)
-	
+
 	def setDiffractionShift(self, value):
 		for axis in self.diffraction_shift.keys():
 			try:
 				self.diffraction_shift[axis] = value[axis]
 			except KeyError:
 				pass
-	
+
 	def getImageShift(self):
 		return copy.copy(self.image_shift)
 	
@@ -337,23 +337,23 @@ class SimTEM(tem.TEM):
 				self.image_shift[axis] = value[axis]
 			except KeyError:
 				pass
-	
+
 	def getRawImageShift(self):
 		return copy.copy(self.raw_image_shift)
-	
+
 	def setRawImageShift(self, value):
 		for axis in self.raw_image_shift.keys():
 			try:
 				self.raw_image_shift[axis] = value[axis]
 			except KeyError:
 				pass
-	
+
 	def getDefocus(self):
 		return self.focus - self.zero_defocus
-	
+
 	def setDefocus(self, value):
 		self.focus = value + self.zero_defocus
-	
+
 	def resetDefocus(self):
 		self.zero_defocus = self.focus
 

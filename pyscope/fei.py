@@ -101,6 +101,7 @@ class Tecnai(tem.TEM):
 		self.magnifications = []
 		self.stage_speed = self.default_stage_speed
 		self.mainscreenscale = 44000.0 / 50000.0
+		self.wait_for_stage_ready = True
 
 		## figure out which intensity property to use
 		## try to move this to installation
@@ -671,7 +672,7 @@ class Tecnai(tem.TEM):
 			# return None if has exception
 			pass
 		return value
-	
+
 	def setDiffractionShift(self, vector, relative = 'absolute'):
 		if vector['x'] is None or vector['y'] is None:
 			print 'diffraction shift not defined. No change.'
@@ -689,7 +690,7 @@ class Tecnai(tem.TEM):
 			pass
 		else:
 			raise ValueError
-		
+		# Real setting part
 		vec = self.tecnai.Projection.DiffractionShift
 		try:
 			vec.X = vector['x']
@@ -700,7 +701,7 @@ class Tecnai(tem.TEM):
 		except KeyError:
 			pass
 		self.tecnai.Projection.DiffractionShift = vec
-	
+
 	def getRawImageShift(self):
 		value = {'x': None, 'y': None}
 		value['x'] = float(self.tecnai.Projection.ImageShift.X)
@@ -926,9 +927,15 @@ class Tecnai(tem.TEM):
 				pass
 		return value
 
+	def setWaitForStageReady(self, value):
+		self.wait_for_stage_ready = value
+
+	def getWaitForStageReady(self):
+		return self.wait_for_stage_ready
+
 	def waitForStageReady(self,position_log,timeout=10):
-		print 'waitForStageReady disabled'
-		return
+		if not self.wait_for_stage_ready:
+			return
 		t0 = time.time()
 		trials = 0
 		while self.tecnai.Stage.Status in (2,3,4):
