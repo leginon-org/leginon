@@ -259,6 +259,7 @@ class AlignZeroLossPeak(ReferenceTimer):
 		try:
 			self.at_reference_target = True
 			self.moveToTarget(self.checkpreset['name'])
+			self.declareDrift('stage')
 		except Exception, e:
 			self.logger.error('Error moving to target, %s' % e)
 			return
