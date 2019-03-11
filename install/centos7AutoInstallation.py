@@ -1128,8 +1128,7 @@ endif
 		
 	def installMyamiWeb(self):
 		gitMyamiwebDir = os.path.join(self.gitMyamiDir, "myamiweb")
-		centosWebDir = "/var/www/html"
-		self.runCommand("cp -rf %s %s" % (gitMyamiwebDir, centosWebDir))
+		self.runCommand("cp -rf %s %s" % (gitMyamiwebDir, self.centosWebDir))
 
 	def editMyamiWebConfig(self):
 	
@@ -1230,6 +1229,10 @@ endif
 			timezone = "America/Los_Angeles" 
 		self.timezone = timezone
 
+		questionText = "Are your camera and scope controlled by the same computer ? For example, Gatan K2 uses a different computer from the TFS scope."
+		self.doUpload2ClientApps = not self.getBooleanInput(questionText)
+
+		
 		questionText = "Would you like to download demo GroEL images and upload them to this installation?"
 		self.doDownloadSampleImages = self.getBooleanInput(questionText)
 		
@@ -1275,6 +1278,27 @@ endif
 		self.writeToLog("Registration Key confirmed.")
 		return True
 
+	def copyLeginonApps(self):
+		# web installation script may not be able to read leginon application xml files.
+		# copy them under web home to avoid the problem.
+		fromdir = os.path.join(self.gitMyamiDir, 'leginon', 'applications')
+		todir = os.path.join(self.centosWebDir, 'leginon')
+		# Default location
+		self.leginon_app_dir = fromdir
+		if not os.path.isdir(todir):
+			os.mkdir(todir)
+		resultdir = os.path.join(todir,'applications')
+		if os.path.isdir(resultdir):
+			try:
+				shutil.rmtree(resultdir)
+				shutil.copytree(fromdir, resultdir)
+			except Exception as e:
+				print "Copying Leginon applications file to web server failed:"
+				print e
+				return False
+		self.leginon_app_dir = resultdir
+		return True
+
 	def run(self):
 		self.currentDir = os.getcwd()
 		self.logFilename = 'installation.log'
@@ -1290,6 +1314,8 @@ endif
 		self.csValue = 2.0
 		self.imagesDir = '/myamiImages'
 
+		# CentOS default
+		self.centosWebDir = "/var/www/html"
 		self.setReleaseDependantValues()
 
 		self.hostname = self.getServerName()
@@ -1344,7 +1370,6 @@ endif
 
 		if (self.doInstallExternalPackages):
 			self.installExternalPackages()
-					
 
 		self.writeToLog("Installation Complete.")
 
@@ -1364,8 +1389,13 @@ endif
 				print("========================")
 				print("Torque job server installation failed. Use command copy and paste method to run")
 				print("========================")
-				
-		setupURL = "http://localhost/myamiweb/setup/autoInstallSetup.php?password=" + self.serverRootPass + "&myamidir=" + self.gitMyamiDir + "&uploadsample=" + "%d" % int(self.doDownloadSampleImages)
+
+		result = self.copyLeginonApps()	
+		if result is False:
+			sys.exit(1)
+
+		app_version = 1+int(self.doUpload2ClientApps)
+		setupURL = "http://localhost/myamiweb/setup/autoInstallSetup.php?password=" + self.serverRootPass + "&myamidir=" + self.leginon_app_dir + "&appv=" + app_version + "&uploadsample=" + "%d" % int(self.doDownloadSampleImages)
 		setupOpened = None
 		try:
 			setupOpened = webbrowser.open_new(setupURL)
