@@ -742,7 +742,8 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		ht = self.instrument.tem.HighTension
 		scope = leginondata.ScopeEMData(tem=self.instrument.getTEMData())
 		for i, bt in enumerate(tiltlist):
-			scope['beam tilt'] = bt
+			newbt = {'x': oldbt['x'] + bt['x'], 'y': oldbt['y'] + bt['y']}
+			scope['beam tilt'] = newbt
 			# acquire image with scope state but not display in node image panel
 			imagedata = self.btcalclient.acquireImage(scope, settle=0.0, correct_tilt=False, corchannel=0, display=False)
 			self.setManualComaFreeImage(imagedata['image'])
