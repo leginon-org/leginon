@@ -37,6 +37,7 @@ $template->wizardFooter();
  */
 
 $dir = ($_GET['myamidir']) ? $_GET['myamidir']:'/tmp/myami/';
+$app_version = ($_GET['appv']) ? (int) $_GET['appv']:1;
 $dir .= 'leginon/applications/';
 
 if(is_dir($dir)){
@@ -51,12 +52,15 @@ if(is_dir($dir)){
 			if(!preg_match("/.xml/", $filename))
 				continue;
 
-			//don't import 'Advanced', 'Robot' or 'SimuTomography'
-			if(preg_match("/Advanced/", $filename) || preg_match("/Robot/", $filename) || preg_match("/SimuTomography/", $filename))
+			//don't import 'Advanced', 'Robot' or 'SimuTomography', 'J-', 'Typhone', 'Section3step'
+			if(preg_match("/Advanced/", $filename) || preg_match("/Robot/", $filename) || preg_match("/SimuTomography/", $filename) || preg_match("/J-/", $filename) || preg_match("/Typhon/", $filename) || preg_match("/Section3step/", $filename))
 				continue;
-			else
+			else {
+				if ($app_version == 2 && !preg_match("/2/", $filename)) continue;
+				if ($app_version == 1 && preg_match("/2/", $filename)) continue;
 				// import application to database.
 				$leginondata->importApplication($dir.$filename);
+			}
 		}
 	}
 }
