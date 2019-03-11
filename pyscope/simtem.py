@@ -580,3 +580,25 @@ class SimTEM300(SimTEM):
 		SimTEM.__init__(self)
 
 		self.high_tension = 300000.0
+
+		self.magnifications = [
+			1550.0,
+			2250.0,
+			3600.0,
+			130000.0
+		]
+		self.magnification_index = 0
+
+		self.probe_modes = [
+			'micro',
+			'nano',
+		]
+
+	def findMagnifications(self):
+		# fake finding magnifications and set projection submod mappings
+		self.setProjectionSubModeMap({})
+		for mag in self.magnifications:
+			if mag < 2000:
+				self.addProjectionSubModeMap(mag,'LM',0)
+			else:
+				self.addProjectionSubModeMap(mag,'SA',1)
