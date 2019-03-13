@@ -111,7 +111,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		app = evt['application']
 		self.last_acq_node = appclient.getLastNodeThruBinding(app,self.name,'AcquisitionImagePublishEvent','Acquisition')
 		self.next_acq_node = appclient.getNextNodeThruBinding(app,self.name,'ImageTargetListPublishEvent','Acquisition')
-
+		
 	def checkSettings(self,settings):
 		'''
 		Check that depth-first tree travelsal won't break
@@ -458,6 +458,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 
 		self.setTargetImageVector(imagedata)
 		self.setImageTiltAxis(imagedata)
+		self.setOtherImageVector(imagedata)		# this is used by tomoCickTargetFinder
 
 		# check if there is already a target list for this image
 		# or any other versions of this image (all from same target/preset)
@@ -543,16 +544,17 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			self.parent_imageid = None
 		return is_new
 
-	def setTargetImageVector(self,imagedata):
-
+	def setTargetImageVector(self, imagedata):
 		try:
 			cam_length_on_image,beam_diameter_on_image = self.getAcquisitionTargetDimensions(imagedata)
 			self._setTargetImageVector(cam_length_on_image,beam_diameter_on_image)
 		except:
 			pass
+		
+	def setOtherImageVector(self, imagedata):	# Dummy function used by tomoClickTargetFinder
+		pass
 
 	def _setTargetImageVector(self,cam_length_on_image,beam_diameter_on_image):
-
 		self.targetbeamradius = beam_diameter_on_image / 2
 		self.targetimagevector = (cam_length_on_image,0)
 
@@ -572,7 +574,8 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 	def getTargetImageVector(self):
 		return self.targetimagevector
 
-	def getTargetBeamRadius(self):
+	def getTargetBeamRadius(self):		#TODO change below hardcode
+		#return 30
 		return self.targetbeamradius
 
 	def uiRefreshTargetImageVector(self):
@@ -583,7 +586,6 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		if not self.current_image_pixelsize:
 			self.logger.error('No image to calculate exposure area')
 			return
-		
 		cam_length_on_image,beam_diameter_on_image = self._getAcquisitionTargetDimensions(self.current_image_pixelsize)
 		self._setTargetImageVector(cam_length_on_image,beam_diameter_on_image)
 
@@ -605,7 +607,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			acqsettings = results[0]
 			# use first preset in preset order for display
 			presetlist = acqsettings['preset order']
-			presetnamer = presetlist[0]
+			presetname = presetlist[0]
 			# get image dimenzsion of the target preset
 			acq_dim = self.presetsclient.getPresetImageDimension(presetname)
 			dim_on_image = []
@@ -700,29 +702,175 @@ class TomoClickTargetFinder(ClickTargetFinder):
 	panelclass = gui.wx.TomoClickTargetFinder.Panel
 	eventoutputs = TargetFinder.eventoutputs + [event.ReferenceTargetPublishEvent]
 	settingsclass = leginondata.TomoClickTargetFinderSettingsData
-	
-	def __init__(self, id, session, managerlocation, **kwargs):
-		self.defaultsettings.update({'auto focus target': True,
+	defaultsettings = ClickTargetFinder.defaultsettings
+	defaultsettings.update({'auto focus target': True,
 									'focus target offset': 3e-6,
 									'track target offset': 3e-6
 									})
+	def __init__(self, id, session, managerlocation, **kwargs):
+
 		ClickTargetFinder.__init__(self, id, session, managerlocation, **kwargs)
 		self.calclients['pixel size'] = \
 				leginon.calibrationclient.PixelSizeCalibrationClient(self)
+		self.trackimagevector = (0,0)
+		self.trackbeamradius = 0	
+		self.focus_node = None
+		self.focusimagevector = (0,0)
+		self.focusbeamradius = 0
 		self.userpause = threading.Event()
 		
 		if self.__class__ == TomoClickTargetFinder:
 			self.start()
-			
+
+	def getTrackImageVector(self):
+		return self.trackimagevector
+
+	def getTrackBeamRadius(self):
+		#return 10
+		return self.trackbeamradius
+
+	def getFocusImageVector(self):
+		return self.focusimagevector
+
+	def getFocusBeamRadius(self):
+		#return 20
+		return self.focusbeamradius
+	
 	def handleApplicationEvent(self,evt):
-		'''
-		Find the Acquisition class or its subclass instance bound
-		to this node upon application loading.
-		'''
-		super(TargetFinder,self).handleApplicationEvent(evt)
+		super(TomoClickTargetFinder,self).handleApplicationEvent(evt)
 		app = evt['application']
-		self.last_acq_node = appclient.getLastNodeThruBinding(app,self.name,'AcquisitionImagePublishEvent','Acquisition')
-		self.next_acq_node = appclient.getNextNodeThruBinding(app,self.name,'ImageTargetListPublishEvent','Acquisition')
+		# get focus node used for getting beam parameters
+		self.focus_node = self.getFocusNodeThruBinding(app,self.next_acq_node['alias'],'ImageTargetListPublishEvent','Focuser')
+	
+	def getFocusNodeThruBinding(self,appdata,from_node_alias,binding_name,next_node_baseclass_name):
+		# Copied from appclient.
+		# Slight modification since Tomograpy node is bound to to both 
+		# Tomo Focus and Tomo Preview by ImageTargetListPublishEvent
+		'''
+		Use the binding in the application to get the next node of a defined base class.
+		'''
+		# Not to do  global import so that it does not import when the module is loaded
+		import noderegistry
+		next_class = noderegistry.getNodeClass(next_node_baseclass_name)
+		# Try 10 iteration before giving up
+		for iter in range(10):
+			q = leginondata.BindingSpecData(application=appdata)
+			q['event class string'] = binding_name
+			q['from node alias'] = from_node_alias
+			r = q.query()
+			if not r:
+				# no node bound by the binding
+				return None
+			for i in range(len(r)):
+				next_alias = r[i]['to node alias']
+				q = leginondata.NodeSpecData(application=appdata,alias=next_alias)
+				r = q.query()
+				if r:
+					for nextnodedata in r:
+						if issubclass(noderegistry.getNodeClass(nextnodedata['class string']),next_class):
+							return nextnodedata
+					# next bound node is a filter.  Try again from there.
+					from_node_alias = next_alias
+					continue		
+
+	def setOtherImageVector(self, imagedata):
+		try:
+			cam_length_on_image,beam_diameter_on_image = self._getTrackTargetDimensions(self.current_image_pixelsize)
+			self._setTrackImageVector(cam_length_on_image,beam_diameter_on_image)
+			cam_length_on_image,beam_diameter_on_image = self._getFocusTargetDimensions(self.current_image_pixelsize)
+			self._setFocusImageVector(cam_length_on_image,beam_diameter_on_image)
+		except:
+			pass
+		
+	def getTrackTargetDimensions(self, imagedata):
+		'''
+		Get next track target image size and beam diameter displayed on imagedata
+		'''
+		if not self.next_acq_node:
+			return 0,0
+		image_pixelsize = self.calclients['image shift'].getImagePixelSize(imagedata)
+		self.current_image_pixelsize = image_pixelsize
+		return self._getTrackTargetDimensions(image_pixelsize)
+	
+	def getFocusTragetDimensions(self, imagedata):
+		'''
+		Get next focus target image size and beam diameter displayed on imagedata
+		'''
+		if not self.focus_node:
+			return 0,0
+		image_pixelsize = self.calclients['image shift'].getImagePixelSize(imagedata)
+		self.current_image_pixelsize = image_pixelsize
+		return self._getFocusTargetDimensions(image_pixelsize)
+			
+	def uiRefreshTargetImageVector(self):
+		'''
+		refresh target image vector and beam size when ui exposure target panel tool
+		is toggled on.
+		'''
+		super(TomoClickTargetFinder, self).uiRefreshTargetImageVector()
+		cam_length_on_image,beam_diameter_on_image = self._getTrackTargetDimensions(self.current_image_pixelsize)
+		self._setTrackImageVector(cam_length_on_image,beam_diameter_on_image)
+		cam_length_on_image,beam_diameter_on_image = self._getFocusTargetDimensions(self.current_image_pixelsize)
+		self._setFocusImageVector(cam_length_on_image,beam_diameter_on_image)
+	
+	def _setTrackImageVector(self,cam_length_on_image,beam_diameter_on_image):
+		self.trackbeamradius = beam_diameter_on_image / 2
+		self.trackimagevector = (cam_length_on_image,0)
+
+	def _getTrackTargetDimensions(self,image_pixelsize):
+		try:
+			# get settings for the next Acquisition node
+			settingsclassname = self.next_acq_node['class string']+'SettingsData'
+			results= self.reseachDBSettings(getattr(leginondata,settingsclassname),self.next_acq_node['alias'])
+			acqsettings = results[0]
+			# use first preset in preset order for display
+			presetname = acqsettings['trackpreset']
+			# get image dimenzsion of the target preset
+			acq_dim = self.presetsclient.getPresetImageDimension(presetname)
+			dim_on_image = []
+			for axis in ('x','y'):
+				dim_on_image.append(int(acq_dim[axis]/image_pixelsize[axis]))
+			# get Beam diameter on image
+			acq_presetdata = self.presetsclient.getPresetFromDB(presetname)
+			beam_diameter = self.calclients['beam size'].getBeamSize(acq_presetdata)
+			if beam_diameter is None:
+				# handle no beam size calibration
+				beam_diameter = 0
+			beam_diameter_on_image = int(beam_diameter/min(image_pixelsize.values()))
+			return max(dim_on_image), beam_diameter_on_image
+		except:
+			# Set Length to 0 in case of any exception
+			return 0,0
+		
+	def _setFocusImageVector(self,cam_length_on_image,beam_diameter_on_image):
+		self.focusbeamradius = beam_diameter_on_image / 2
+		self.focusimagevector = (cam_length_on_image,0)
+
+	def _getFocusTargetDimensions(self,image_pixelsize):
+		try:
+			# get settings for the next Acquisition node
+			settingsclassname = self.focus_node['class string']+'SettingsData'
+			results= self.reseachDBSettings(getattr(leginondata,settingsclassname),self.focus_node['alias'])
+			acqsettings = results[0]
+			# use first preset in preset order for display
+			presetlist = acqsettings['preset order']
+			presetname = presetlist[-1]		# Get the last one, usually last is beamshift
+			# get image dimenzsion of the target preset
+			acq_dim = self.presetsclient.getPresetImageDimension(presetname)
+			dim_on_image = []
+			for axis in ('x','y'):
+				dim_on_image.append(int(acq_dim[axis]/image_pixelsize[axis]))
+			# get Beam diameter on image
+			acq_presetdata = self.presetsclient.getPresetFromDB(presetname)
+			beam_diameter = self.calclients['beam size'].getBeamSize(acq_presetdata)
+			if beam_diameter is None:
+				# handle no beam size calibration
+				beam_diameter = 0
+			beam_diameter_on_image = int(beam_diameter/min(image_pixelsize.values()))
+			return max(dim_on_image), beam_diameter_on_image
+		except:
+			# Set Length to 0 in case of any exception
+			return 0,0
 
 	def publishTargets(self, imagedata, typename, targetlist):
 		'''
@@ -736,9 +884,9 @@ class TomoClickTargetFinder(ClickTargetFinder):
 		else: 
 			return super(TomoClickTargetFinder, self).publishTargets(imagedata, typename, targetlist)
 	
-	def getTrackPreset(self):
-		# TODO: hard coded. We want to get this as a user input in the future. 
-		return 'track'
+	#def getTrackPreset(self):
+	#	# TODO: hard coded. We want to get this as a user input in the future. 
+	#	return 'track'
 	
 	def publishTomoTargets(self,imagedata, typename, targetlist):
 		'''
@@ -778,13 +926,14 @@ class TomoClickTargetFinder(ClickTargetFinder):
 		
 		if not self.panel.imagepanel.isAutoFocus():													# (6)
 			focustarget = self.panel.getTargets('focus')
-			assert len(focustarget) == 1
-			focustarget = focustarget[0]
-			focus_td = self.getNewTargetForImage(imagedata,imageshape,focustarget,targetlist,number)
-			self.publish(focus_td, database=True)												
-			number += 1
-		else:
-			pass
+			if focustarget:
+				focustarget = focustarget[0]
+				focus_td = self.getNewTargetForImage(imagedata,imageshape,focustarget,targetlist,number)
+				self.publish(focus_td, database=True)												
+				number += 1
+			else:
+				pass
+
 		
 	def getNewTargetForImage(self,imagedata, imageshape, target_obj, targetlist, number):
 		typename = target_obj.type.name

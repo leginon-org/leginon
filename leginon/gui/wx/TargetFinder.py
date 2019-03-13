@@ -39,8 +39,6 @@ class Panel(leginon.gui.wx.Node.Panel):
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SETTINGS, False)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, False)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT_QUEUE, False)
-
-
 		self.initialize()
 
 		self.SetSizer(self.szmain)

@@ -566,7 +566,6 @@ class Collection_2(Collection):
 		self.logger.info('Starting tilt collection (%d angles)...' % len(sequence))
 		self.logger.info('Removing tilt backlash...')
 		try:
-			#pass
 			self.node.removeStageAlphaBacklash(tilts, sequence, self.preset['name'], self.target, self.emtarget)
 		except Exception, e:
 			self.logger.error('Failed to remove backlash: %s.' % e)
@@ -590,7 +589,6 @@ class Collection_2(Collection):
 		# tilts and exposures are grouped
 		# sequence is the 2 element tuple used to choose the tilt and the exposure
 		image_pixel_size = self.pixel_size*self.preset['binning']['x']
-		import rpdb2; rpdb2.start_embedded_debugger("asdf")
 
 		seq0 = sequence[0]
 		tilt0 = tilts[seq0[0]][seq0[1]]
@@ -624,7 +622,9 @@ class Collection_2(Collection):
 				channel = self.correlator[seq[0]].getChannel()
 				self.prediction.setCurrentTiltGroup(seq[0])
 				ispredict = self.prediction.ispredict()							# can we rely on prediction? 
-								
+				
+				#import rpdb2; rpdb2.start_embedded_debugger("asdf")
+	
 				if seq_index == 0:	
 					self.logger.info('Starting tilt angle: %g degrees.' % math.degrees(tilt))
 					predicted_position = position0								# first position
@@ -903,10 +903,10 @@ class Collection_2(Collection):
 	def getTrackingImg(self,maxtries=5):
 		# (1) Change to tracking preset, taking into acount current position and offset.
 		# (2) Take an image.
+
 		isoffset = self.node.getImageShiftOffset()
 		try:
 			self.logger.info('Acquiring tracking image.')
-			presetname = self.offset['trackpreset']
 			self.change2Track()												# (1) 
 			imagedata = self.node.acquireCorrectedCameraImageData(0)		# (2)
 			self.viewer.addImage(imagedata['image'])
@@ -924,8 +924,6 @@ class Collection_2(Collection):
 		# (4) Add offset pixels.
 		# (5) Make new image target.
 		# (6) Turn into em target.
-		# (7) Call self.node.moveAndPreset
-		
 		mypreset = self.preset
 		parentpreset = self.parentpreset
 		trackpreset = self.trackpreset
@@ -959,30 +957,36 @@ class Collection_2(Collection):
 		track_mag = trackpreset['magnification']
 		ht = self.node.instrument.tem.HighTension
 		
-		# x,y dict input col, row, dict output
-		p1 = self.node.calclients['image shift'].itransform(myoffset, myscope, mycam)
-		p1_row = p1['row'] 
-		p1_col = p1['col'] 
+		# x,y dict input col, row, dict output, binned
+		p1_shift = self.node.calclients['image shift'].itransform(myoffset, myscope, mycam)		# binned
+		p1_row = p1_shift['row'] * mypreset['binning']['y']		# unbinned
+		p1_col = p1_shift['col'] * mypreset['binning']['x']
 		# row, col list or array input, row, col array out
-		p1_vec = numpy.array((pixrow, pixcol))
+		p1_vec = numpy.array((p1_row, p1_col))
 		# image shift coil rotation
-		p1_vec = self.imageRotationTransform(p1_vec,mypreset,trackpreset)
+		p1_vec = self.node.imageRotationTransform(p1_vec,mypreset,trackpreset,ht)	# unbinned
 		# magnification and camera (if camera is different)
 		# Transform pixelvect1 at magnification to new magnification according to image-shift matrix
 		# include a relative  image rotation and scale addition to the transform
-		p2_vec = self.calclients['image rotation'].pixelToPixel(my_tem,\
-			my_ccdcamera,track_tem, track_ccdcamera, ht,my_mag,track_mag,p1_vec)
+		p2_vec = self.node.calclients['image rotation'].pixelToPixel(my_tem,\
+			my_ccdcamera,track_tem, track_ccdcamera, ht,my_mag,track_mag,p1_vec)	# unbinned
 		
-		p3_vec = self.getTrackOffset()
-		p4_vec = p2_vec + p3_vec	# offset in pixels to be applied once we change to track preset
-		isoffset_pix = {'row':p4_vec[0],'col':p4_vec[1]}
-		isoffset = self.node.calclients['image shift'].itransform(isoffset_pix, trackscope, trackcam)
-		self.node.presetsclient.toScope(trackpreset_name)
+		p2_shift = {'row':p2_vec[0] / trackpreset['binning']['y'],
+					'col':p2_vec[1] / trackpreset['binning']['x']}
+		
+		p3_shift = self.getTrackOffset() 	# binned at track preset
+		# offset in binned pixels to be applied once we change to track preset
+		isoffset_shift = {'row':p2_shift['row'] + -p3_shift['row'],
+							'col':p2_shift['col'] + -p3_shift['col']}
+
+		isoffset = self.node.calclients['image shift'].transform(isoffset_shift, trackscope, trackcam)['image shift']
+		self.node.presetsclient.toScope(self.trackpreset['name'])
 		self.node.setImageShiftOffset(isoffset)				
 	
 	def getTrackOffset(self):
 		# Get is offset to be applied once the scope has been sent to track preset.
 		# This is in addition to is offset going from tomo to track. 
+
 		if self.trackoffset:
 			return self.trackoffset
 		else:
@@ -1006,20 +1010,25 @@ class Collection_2(Collection):
 			track_tem = trackpreset['tem']
 			track_ccdcamera = trackpreset['ccdcamera']
 			track_mag = trackpreset['magnification']
+			ht = self.node.instrument.tem.HighTension
 			
+			#import rpdb2; rpdb2.start_embedded_debugger("asdf")
+
 			# row, col list or array input, row, col array out
 			p1_row = trackoffset[0] * parentpreset['binning']['y']
 			p1_col = trackoffset[1] * parentpreset['binning']['x']
 			p1_vec = numpy.array([p1_row,p1_col])
 			# image shift coil rotation
-			p1_vec = self.imageRotationTransform(p1_vec,parentpreset,trackpreset)
+			p1_vec = self.node.imageRotationTransform(p1_vec,parentpreset,trackpreset,ht)
 			# magnification and camera (if camera is different)
 			# Transform pixelvect1 at magnification to new magnification according to image-shift matrix
 			# include a relative  image rotation and scale addition to the transform
-			p2_vec = self.calclients['image rotation'].pixelToPixel(parent_tem,
+			p2_vec = self.node.calclients['image rotation'].pixelToPixel(parent_tem,
 				parent_ccdcamera,track_tem, track_ccdcamera, ht,parent_mag,track_mag,p1_vec)
-			self.trackoffset = p2_vec
-			return p2_vec
+			p2_shift = {'row':p2_vec[0] / trackpreset['binning']['y'],
+					'col':p2_vec[1] / trackpreset['binning']['x']}
+			self.trackoffset = p2_shift
+			return p2_shift
 
 	def getTomoOffset(self, offset):
 		# Get is offset to be applied once the scope has been sent back to tomo preset
@@ -1046,10 +1055,12 @@ class Collection_2(Collection):
 		# include a relative  image rotation and scale addition to the transform
 		p2_vec = self.calclients['image rotation'].pixelToPixel(track_tem,
 			track_ccdcamera,my_tem, my_ccdcamera, ht,track_mag,my_mag,p1_vec)
+
 		return p2_vec
 	
 	def track(self,tilt,seq):
 		try:
+
 			channel = self.correlator[seq[0]].getChannel()
 			trackingImg = self.getTrackingImg()
 			# Cross correlate with previous tracking image. 
@@ -1082,10 +1093,45 @@ class Collection_2(Collection):
 			
 			print "CORRELATION x: %f y: %f" %(correlation['x'], correlation['y'])
 			#TODO: we need to account for binning on both track and tomo, also rotation. 
+
+			myscope = leginon.leginondata.ScopeEMData()
+			myscope.friendly_update(mypreset)
+			mycam = leginon.leginondata.CameraEMData()
+			mycam.friendly_update(mypreset)
+
+			trackscope = leginon.leginondata.ScopeEMData()
+			trackscope.friendly_update(trackpreset)
+			trackcam = leginon.leginondata.CameraEMData()
+			trackcam.friendly_update(trackpreset)
+	
+			my_tem = mypreset['tem']
+			my_ccdcamera = mypreset['ccdcamera']
+			my_mag = mypreset['magnification']
+
+			track_tem = trackpreset['tem']
+			track_ccdcamera = trackpreset['ccdcamera']
+			track_mag = trackpreset['magnification']
+			ht = self.node.instrument.tem.HighTension
 			
-			p2 = self.node.calclients['image shift'].pixelToPixel(tem1, ccdcamera1, tem2, ccdcamera2, ht, mag1, mag2, p1)
-			correlation['x'] = p2[0]
-			correlation['y'] = p2[1]
+			# x,y dict input col, row, dict output, binned
+			p1_row = correlation['y'] * trackpreset['binning']['y']		# unbinned
+			p1_col = correlation['x'] * trackpreset['binning']['x']
+			# row, col list or array input, row, col array out
+			p1_vec = numpy.array((p1_row, p1_col))
+			# image shift coil rotation
+			p1_vec = self.node.imageRotationTransform(p1_vec,trackpreset,mypreset,ht)	# unbinned
+			# magnification and camera (if camera is different)
+			# Transform pixelvect1 at magnification to new magnification according to image-shift matrix
+			# include a relative  image rotation and scale addition to the transform
+			p2_vec = self.node.calclients['image rotation'].pixelToPixel(track_tem, track_ccdcamera, \
+								my_tem, my_ccdcamera, ht, track_mag, my_mag, p1_vec)	# unbinned
+			
+			p2_shift = {'row':p2_vec[0] / mypreset['binning']['y'],
+						'col':p2_vec[1] / mypreset['binning']['x']}
+						
+			#p2 = self.node.calclients['image shift'].pixelToPixel(tem1, ccdcamera1, tem2, ccdcamera2, ht, mag1, mag2, p1)
+			correlation['x'] = p2_shift['row']
+			correlation['y'] = p2_shift['col']
 			print "CORRELATION after pixelToPixel x: %f y: %f" %(correlation['x'], correlation['y'])
 			
 			result = {
@@ -1095,7 +1141,7 @@ class Collection_2(Collection):
 			}
 			self.reset_ntrack(seq)
 		except Exception as e :
-			if e.__class__.name == 'TrackingImageError':
+			if e.__class__.__name__ == 'TrackingImageError':
 				raise TrackingImageError
 			else:
 				raise TrackingError

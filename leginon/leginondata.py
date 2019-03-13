@@ -2320,6 +2320,12 @@ class TomographySettingsData(AcquisitionSettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class Tomography_2SettingsData(TomographySettingsData):
+	def typemap(cls):
+		return TomographySettingsData.typemap() + (
+			('trackpreset', str),
+		)
+	typemap = classmethod(typemap)
 class TomographySimuSettingsData(AcquisitionSettingsData):
 	def typemap(cls):
 		return AcquisitionSettingsData.typemap() + (

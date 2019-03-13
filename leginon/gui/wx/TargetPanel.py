@@ -168,7 +168,6 @@ class TargetImagePanel(leginon.gui.wx.ImagePanel.ImagePanel):
 	#--------------------
 	def drawTargets(self, dc):
 		scale = self.getScale()
-
 		for type in self.order:
 			targets = self.targets[type]
 			if targets:
@@ -182,7 +181,7 @@ class TargetImagePanel(leginon.gui.wx.ImagePanel.ImagePanel):
 					elif type.shape == 'area':
 						self.drawImageArea(dc, type.color, targets)
 					elif type.shape == 'exp':
-						self.drawImageExposure(dc, type.color, targets)
+						self.drawImageExposure(dc, type.color, targets, typename=type.name)
 					else:
 						self._drawTargets(dc, type.bitmaps['default'], targets, scale)
 
@@ -261,7 +260,7 @@ class TargetImagePanel(leginon.gui.wx.ImagePanel.ImagePanel):
 			dc.DrawLine(p1[0]-dia[1], p1[1]+dia[0], p1[0]+dia[0], p1[1]+dia[1])
 			dc.DrawLine(p1[0]+dia[1], p1[1]-dia[0], p1[0]+dia[0], p1[1]+dia[1])
 
-	def drawImageExposure(self, dc, color, targets):
+	def drawImageExposure(self, dc, color, targets, typename=None):
 		scale = self.getScale()
 		dc.SetPen(wx.Pen(color, 1))
 		dc.SetBrush(wx.Brush(color, wx.SOLID))
@@ -464,8 +463,37 @@ class TargetOutputPanel(TargetImagePanel):
 class TomoTargetImagePanel(TargetImagePanel):
 	def __init__(self, parent, id, disable=False, imagesize=(512,512), mode="horizontal"):
 		TargetImagePanel.__init__(self, parent, id, imagesize, mode)
+		self.trackimagevector = (0,0)
+		self.trackbeamradius = None
+		self.focusimagevector = (0,0)
+		self.focusbeamradius = None
 		self.targetmap = {}				# keeps account of relationship between acquition, focus, and track targets
-	
+
+	def drawImageExposure(self, dc, color, targets, typename=None):
+		scale = self.getScale()
+		dc.SetPen(wx.Pen(color, 1))
+		dc.SetBrush(wx.Brush(color, wx.SOLID))
+		scaledpoints = [(target.x,target.y) for target in targets]
+		if typename == 'track':
+			imagevector = self.trackimagevector
+			beamradius = self.trackbeamradius
+		elif typename == 'focus':
+			imagevector = self.focusimagevector
+			beamradius = self.focusbeamradius
+		else:
+			imagevector = self.imagevector
+			beamradius = self.beamradius
+			
+		dia = (scale[0]*(imagevector[0]/2+imagevector[1]/2), scale[1]*(imagevector[0]/2-imagevector[1]/2))
+		for p1 in scaledpoints:
+			p1 = self.image2view(p1)
+			dc.DrawLine(p1[0]-dia[0], p1[1]-dia[1], p1[0]+dia[1], p1[1]-dia[0])
+			dc.DrawLine(p1[0]-dia[0], p1[1]-dia[1], p1[0]-dia[1], p1[1]+dia[0])
+			dc.DrawLine(p1[0]-dia[1], p1[1]+dia[0], p1[0]+dia[0], p1[1]+dia[1])
+			dc.DrawLine(p1[0]+dia[1], p1[1]-dia[0], p1[0]+dia[0], p1[1]+dia[1])
+			if beamradius:
+				self.drawEmptyCircle(dc,p1[0],p1[1],scale[0]*beamradius)
+				
 	def getTargetMap(self):
 		return self.targetmap
 	

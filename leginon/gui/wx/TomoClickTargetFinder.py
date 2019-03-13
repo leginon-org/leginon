@@ -30,9 +30,9 @@ class Panel(leginon.gui.wx.TargetFinder.Panel):
         self.imagepanel.selectiontool.setDisplayed('preview', True)
         self.imagepanel.addTargetTool('acquisition', wx.GREEN, target=True, settings=True, numbers=True,exp=True)
         self.imagepanel.selectiontool.setDisplayed('acquisition', True)
-        self.imagepanel.addTargetTool('focus', wx.BLUE, target=True, settings=True)
+        self.imagepanel.addTargetTool('focus', wx.BLUE, target=True, settings=True,exp=True)
         self.imagepanel.selectiontool.setDisplayed('focus', True)
-        self.imagepanel.addTargetTool('track', wx.Colour(128, 0, 128), target=True, settings=True)
+        self.imagepanel.addTargetTool('track', wx.Colour(128, 0, 128), target=True, settings=True, exp=True)
         self.imagepanel.selectiontool.setDisplayed('track', True)
         self.imagepanel.addTargetTool('reference', wx.Colour(128, 0, 128), target=True, unique=True)
         self.imagepanel.selectiontool.setDisplayed('reference', True)
@@ -45,6 +45,17 @@ class Panel(leginon.gui.wx.TargetFinder.Panel):
         self.szmain.Add(self.imagepanel, (1, 0), (1, 1), wx.EXPAND)
         self.szmain.AddGrowableRow(1)
         self.szmain.AddGrowableCol(0)
+
+    def onSetImage(self, evt):
+        super(Panel,self).onSetImage(evt)       # This sets acquisition vector and beam radius
+        try:                                    # Now for focus and track beams
+            self.imagepanel.trackimagevector = self.node.getTrackImageVector()
+            self.imagepanel.trackbeamradius = self.node.getTrackBeamRadius()
+            self.imagepanel.focusimagevector = self.node.getFocusImageVector()
+            self.imagepanel.focusbeamradius = self.node.getFocusBeamRadius()
+        except AttributeError:
+            # This function is called on initialization and self.node would be None
+            pass
             
     def setFocusTargets(self,state,value):
         self.imagepanel.resetFocusTargets(state,value)

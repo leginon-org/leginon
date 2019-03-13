@@ -1,5 +1,6 @@
 import math
 import time
+import numpy
 
 from pyami import correlator, peakfinder
 
@@ -216,7 +217,7 @@ class Tomography(leginon.acquisition.Acquisition):
 		n_groups = len(tilts) 
 		for g in range(n_groups):
 			self.initGoodPredictionInfo(presetdata, g)
-		
+
 		collect = self.getCollectionObject(target)
 		collect.node = self
 		collect.session = self.session
@@ -660,6 +661,7 @@ class Tomography(leginon.acquisition.Acquisition):
 		if self.settings['measure dose']:
 			self.measureDose(preset_name)
 		try:
+
 			leginon.acquisition.Acquisition.processTargetData(self, *args, **kwargs)
 		except Exception, e:
 			raise
@@ -686,8 +688,17 @@ class Tomography(leginon.acquisition.Acquisition):
 		return delta_defocus, fit
 	
 class Tomography_2(Tomography):
+	settingsclass = leginon.leginondata.Tomography_2SettingsData
+	defaultsettings = Tomography.defaultsettings
+	defaultsettings.update({
+		'trackpreset': 'track'
+	})
+	
 	def __init__(self, *args, **kwargs):
 		Tomography.__init__(self, *args, **kwargs)
+		self.calclients['image rotation'] = \
+			leginon.calibrationclient.ImageRotationCalibrationClient(self)
+		self.calclients['stage'] = leginon.calibrationclient.StageCalibrationClient(self)
 	
 	def getPredictionObject(self):
 		return leginon.tomography.prediction.Prediction_2()
@@ -699,7 +710,7 @@ class Tomography_2(Tomography):
 			collect.offset = offsetdata
 			# TODO: in future, the preset data should be set already in offsetdata, not just the name. 
 			collect.trackpreset = \
-				self.node.presetsclient.getPresetByName(offsetdata['trackpreset'])
+				self.presetsclient.getPresetByName(self.settings['trackpreset'])
 		return collect
 	
 	def loadPredictionInfo(self):	
@@ -763,6 +774,21 @@ class Tomography_2(Tomography):
 		self.publish(imagedata, database=True)
 		return imagedata
 
+	def imageRotationTransform(self,pixvect, preset1,preset2,ht):
+		'''
+		Pixel vector need to be rotated to account for the rotation of
+		specimen image rotation on the camera and the rotation of
+		image shift coil relative to the specimen
+		'''
+		imageshift_axis_rotation = self.calclients['image shift'].calculateCalibrationAngleDifference(preset1['tem'],preset1['ccdcamera'],preset2['tem'], preset2['ccdcamera'], ht,preset1['magnification'],preset2['magnification'])
+		stage_axis_rotation = self.calclients['stage'].calculateCalibrationAngleDifference(preset1['tem'],preset1['ccdcamera'],preset2['tem'], preset2['ccdcamera'], ht,preset1['magnification'],preset2['magnification'])
+		# This is the rotation needs to be applied to the pixvect of preset1
+		a = stage_axis_rotation - imageshift_axis_rotation
+		m = numpy.matrix([[numpy.cos(a),numpy.sin(a)],[-numpy.sin(a),numpy.cos(a)]])
+		rotated_vect = numpy.dot(pixvect,numpy.asarray(m))
+		self.logger.info('Adjust for coil rotation: rotate %s to %s' % (pixvect, rotated_vect))
+		return rotated_vect
+	
 	def recentImageVersion(self, imagedata):
 		# copied from targetrepeater
 		# find most recent version of this image
@@ -822,7 +848,6 @@ class Tomography_2(Tomography):
 					self.publish(focustargetlist,database=True, dbforce=True)
 					self.logger.info('Making new focus target for acquisition target: %i' \
 									% target.dbid)
-					#TODO: something not working below
 					focustarget = self.makeNewFocusTarget(target,focusoffset,focustargetlist)	# (2)		
 					self.logger.info('Publishing new focus target')
 					self.publish(focustarget,database=True)
@@ -866,7 +891,6 @@ class Tomography_2(Tomography):
 				
 			adjustedtarget = self.reportTargetStatus(target, 'processing')
 			
-			import rpdb2; rpdb2.start_embedded_debugger("asdf")
 
 			# this while loop allows target to repeat
 			process_status = 'repeat'
