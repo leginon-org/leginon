@@ -1820,6 +1820,8 @@ class PresetsManager(node.Node):
 
 		refmag = self.presets[refname]['magnification']
 		self.refpreset = refname
+		# default firstrightpreset refs #6812
+		self.firstrightpreset = refname
 		try:
 			refindex = mags.index(refmag)
 		except ValueError:

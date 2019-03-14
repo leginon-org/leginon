@@ -233,7 +233,7 @@ class CameraClient(object):
 		try:
 			scopedata['intended defocus'] = self.intended_defocus
 		except AttributeError:
-			self.logger.warning('Intended defocus not defined')
+			scopedata['intended defocus'] = scopedata['defocus']
 		imagedata['scope'] = scopedata
 		cameradata_after = self.instrument.getData(leginondata.CameraEMData)
 		## only using cameradata_after, not cameradata_before

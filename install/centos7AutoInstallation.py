@@ -647,55 +647,54 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 
 
 
-        def installFFmpeg(self):
+	def installFFmpeg(self):
 
-                print "Installing FFmpeg"
-                self.writeToLog("--- Start install FFmpeg")
-                use_local = "/usr/local"
-                cwd = cwd = os.getcwd()
+		print "Installing FFmpeg"
+		self.writeToLog("--- Start install FFmpeg")
+		use_local = "/usr/local"
+		cwd = cwd = os.getcwd()
 
-                ffmpegName = "ffmpeg-git-32bit-static"
-                ffmpegtarFileName = ffmpegName + ".tar.xz"
-                ffmpegtarFileLocation = "http://emg.nysbc.org/redmine/attachments/download/4674/ffmpeg-git-32bit-static.tar.xz"
+		ffmpegName = "ffmpeg-git-32bit-static"
+		ffmpegtarFileName = ffmpegName + ".tar.xz"
+		ffmpegtarFileLocation = "http://emg.nysbc.org/redmine/attachments/download/4674/ffmpeg-git-32bit-static.tar.xz"
 
-                command = "wget -c " + ffmpegtarFileLocation
-                self.runCommand(command)
-                command = "tar -xvf " + ffmpegtarFileName
-                self.runCommand(command)
-                print "-------------Done downloading ffmpeg with wget.------------"
+		command = "wget -c " + ffmpegtarFileLocation
+		self.runCommand(command)
+		command = "tar -xvf " + ffmpegtarFileName
+		self.runCommand(command)
+		print "-------------Done downloading ffmpeg with wget.------------"
 
-              
 
-                #ffmpeg tar is compilied daily at http://johnvansickle.com/ffmpeg/. The git static version compiled on 11/11/2015 was used for this ffmpeg installation. The extracted folder name contains the datestamp; make sure to change the datestamp in the extracted folder name if using a newer version of ffmpeg from the johnvansickle site.
+		#ffmpeg tar is compilied daily at http://johnvansickle.com/ffmpeg/. The git static version compiled on 11/11/2015 was used for this ffmpeg installation. The extracted folder name contains the datestamp; make sure to change the datestamp in the extracted folder name if using a newer version of ffmpeg from the johnvansickle site.
 
-                self.runCommand("mv ffmpeg-git-20151111-32bit-static ffmpeg")
-                newDir = os.path.join(use_local,"ffmpeg")
-                command = "mv ffmpeg "+newDir
-                self.runCommand(command)
-                os.chdir(newDir)             
-                command = "./ffmpeg"
-                self.runCommand("./ffmpeg")
+		self.runCommand("mv ffmpeg-git-20151111-32bit-static ffmpeg")
+		newDir = os.path.join(use_local,"ffmpeg")
+		command = "mv ffmpeg "+newDir
+		self.runCommand(command)
+		os.chdir(newDir)	 
+		command = "./ffmpeg"
+		self.runCommand("./ffmpeg")
 
-                #
-                #set environment variables
-                #
-                bashFile = "ffmpeg.sh"
-                cShellFile = "ffmpeg.csh"
-                profileDir = "/etc/profile.d/"
+		#
+		#set environment variables
+		#
+		bashFile = "ffmpeg.sh"
+		cShellFile = "ffmpeg.csh"
+		profileDir = "/etc/profile.d/"
 
-                print "---------------Create bash and csh scripts---------"
-                #For BASH, create an ffmpeg.sh
-                f = open(bashFile, 'w')
-                f.write('''export FFMPEGDIR="/usr/local/ffmpeg"
+		print "---------------Create bash and csh scripts---------"
+		#For BASH, create an ffmpeg.sh
+		f = open(bashFile, 'w')
+		f.write('''export FFMPEGDIR="/usr/local/ffmpeg"
 export PATH=${PATH}:${FFMPEGDIR}''')
 
-                f.close()
+		f.close()
 
-                # For C shell, create an ffmpeg.sh
+		# For C shell, create an ffmpeg.sh
 
-                f=open(cShellFile,'w')
+		f=open(cShellFile,'w')
 
-                f.write('''setenv FFMPEGDIR="/usr/local/ffmpeg"
+		f.write('''setenv FFMPEGDIR="/usr/local/ffmpeg"
 setenv PATH ${FFMPEGDIR}:${PATH}
 if ($?LD_LIBRARY_PATH) then
         setenv LD_LIBRARY_PATH "${LD_LIBRARY_PATH}:${FFMPEGDIR}"
@@ -703,16 +702,13 @@ else
         setenv LD_LIBRARY_PATH "${FFMPEGDIR}"
 endif''')
 
-                f.close()
-                #add them to the global /etc/profile.d/ folder
-                self.writeToLog("--- Adding ffmpeg.sh and ffmpeg.csh to /etc/profile.d/.")
-                shutil.copy(bashFile, profileDir + bashFile)
-                shutil.copy(cShellFile, profileDir + cShellFile)
-                os.chmod(profileDir + bashFile, 0755)
-                os.chmod(profileDir + cShellFile,0755)
-
-
-
+		f.close()
+		#add them to the global /etc/profile.d/ folder
+		self.writeToLog("--- Adding ffmpeg.sh and ffmpeg.csh to /etc/profile.d/.")
+		shutil.copy(bashFile, profileDir + bashFile)
+		shutil.copy(cShellFile, profileDir + cShellFile)
+		os.chmod(profileDir + bashFile, 0755)
+		os.chmod(profileDir + cShellFile,0755)
 
 	def installProtomo(self):
 		self.writeToLog("--- Start install Protomo")
@@ -1128,8 +1124,7 @@ endif
 		
 	def installMyamiWeb(self):
 		gitMyamiwebDir = os.path.join(self.gitMyamiDir, "myamiweb")
-		centosWebDir = "/var/www/html"
-		self.runCommand("cp -rf %s %s" % (gitMyamiwebDir, centosWebDir))
+		self.runCommand("cp -rf %s %s" % (gitMyamiwebDir, self.centosWebDir))
 
 	def editMyamiWebConfig(self):
 	
@@ -1230,6 +1225,10 @@ endif
 			timezone = "America/Los_Angeles" 
 		self.timezone = timezone
 
+		questionText = "Are your camera and scope controlled by the same computer ? For example, Gatan K2 uses a different computer from the TFS scope."
+		self.doUpload2ClientApps = not self.getBooleanInput(questionText)
+
+		
 		questionText = "Would you like to download demo GroEL images and upload them to this installation?"
 		self.doDownloadSampleImages = self.getBooleanInput(questionText)
 		
@@ -1275,6 +1274,27 @@ endif
 		self.writeToLog("Registration Key confirmed.")
 		return True
 
+	def copyLeginonApps(self):
+		# web installation script may not be able to read leginon application xml files.
+		# copy them under web home to avoid the problem.
+		fromdir = os.path.join(self.gitMyamiDir, 'leginon', 'applications')
+		todir = os.path.join(self.centosWebDir, 'leginon')
+		# Default location
+		self.leginon_app_dir = fromdir
+		if not os.path.isdir(todir):
+			os.mkdir(todir)
+		resultdir = os.path.join(todir,'applications')
+		if os.path.isdir(resultdir):
+			try:
+				shutil.rmtree(resultdir)
+				shutil.copytree(fromdir, resultdir)
+			except Exception as e:
+				print "Copying Leginon applications file to web server failed:"
+				print e
+				return False
+		self.leginon_app_dir = resultdir
+		return True
+
 	def run(self):
 		self.currentDir = os.getcwd()
 		self.logFilename = 'installation.log'
@@ -1290,6 +1310,8 @@ endif
 		self.csValue = 2.0
 		self.imagesDir = '/myamiImages'
 
+		# CentOS default
+		self.centosWebDir = "/var/www/html"
 		self.setReleaseDependantValues()
 
 		self.hostname = self.getServerName()
@@ -1344,7 +1366,6 @@ endif
 
 		if (self.doInstallExternalPackages):
 			self.installExternalPackages()
-					
 
 		self.writeToLog("Installation Complete.")
 
@@ -1364,8 +1385,13 @@ endif
 				print("========================")
 				print("Torque job server installation failed. Use command copy and paste method to run")
 				print("========================")
-				
-		setupURL = "http://localhost/myamiweb/setup/autoInstallSetup.php?password=" + self.serverRootPass + "&myamidir=" + self.gitMyamiDir + "&uploadsample=" + "%d" % int(self.doDownloadSampleImages)
+
+		result = self.copyLeginonApps()	
+		if result is False:
+			sys.exit(1)
+
+		app_version = 1+int(self.doUpload2ClientApps)
+		setupURL = "http://localhost/myamiweb/setup/autoInstallSetup.php?password=" + self.serverRootPass + "&myamidir=" + self.leginon_app_dir + "&appv=" + app_version + "&uploadsample=" + "%d" % int(self.doDownloadSampleImages)
 		setupOpened = None
 		try:
 			setupOpened = webbrowser.open_new(setupURL)
