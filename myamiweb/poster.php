@@ -26,7 +26,7 @@ echo "<link rel='stylesheet' href='css/neiladd.css' />";
 echo '<center>';
 echo '<table cellspacing="0">';
 
-if (strpos($sessioninfo['Purpose'], 'nccat') !== false){
+if (stripos($sessioninfo['Purpose'], 'nccat') !== false){
 	echo '<tr style="background-color:#d4e0ee; color:black;font-size:18px;font-weight:bold;">';
 	echo '<td><a href="http://nccat.nysbc.org/" target="_blank"><img src="./img/nccat_logo.png" width="75" height="75"></a></td>';
 	echo '<td style="padding: 0 5px 0 5px;">NCCAT Operations<br>';
