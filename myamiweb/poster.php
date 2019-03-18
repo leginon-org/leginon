@@ -18,7 +18,7 @@ $imageinfo = $leginondata->getImageInfoFromPreset(end($summary)['presetId']);
 $instrumentinfo = $leginondata->getInstrumentInfo($sessioninfo['InstrumentId']);
 
 echo "<link rel='stylesheet' href='css/neiladd.css' />";
-
+echo "<title>".$sessioninfo['Name']." Report</title>";
 //echo '<pre>'; print_r($sessioninfo); echo '</pre>';
 //echo '<pre>'; print_r($imageinfo); echo '</pre>';
 //echo '<pre>'; print_r($summary); echo '</pre>';
@@ -170,11 +170,68 @@ if (!empty($icethicknessobj)) {
 } else {
 	echo "no Objective Scattering Ice Thickness information available";
 }
-$imageinfo = $leginondata->getImageInfoFromPreset($summary[0]['presetId']);
+$gr_imageinfo = $leginondata->getImageInfoFromPreset($summary[0]['presetId']);
 echo divtitle("Atlas");
-echo "<img border='0' src='getimg.php?session=$expId&id=".$imageinfo['imageId']."&preset=atlas&t=80&sb=1&flt=default&fftbin=a&binning=auto&m=1&r=-1&opt=2&lj=1&psel=2&pcb=d&autoscale=s;5&conly=1&s=500'>";
+echo "<img border='0' src='getimg.php?session=$expId&id=".$gr_imageinfo['imageId']."&preset=atlas&t=80&sb=1&flt=default&fftbin=a&binning=auto&m=1&r=-1&opt=2&lj=1&psel=2&pcb=d&autoscale=s;5&conly=1&s=500'>";
 
 echo '</td>';
+echo '</tr>';
+echo '<tr>';
+echo '<td colspan=2>';
+echo divtitle("Experimental setup");
+
+echo '<table width=99% class="paleBlueRows" style="border-spacing: 45px 0px">';
+
+echo '<tr>';
+echo '<td>';
+echo 'TEM: <div style="float:right ">'.$imageinfo['scope'].'</div>';
+echo '</td>';
+echo '<td>';
+echo 'Camera: <div style="float:right ">'.$imageinfo['camera'].'</div>';
+echo '</td>';
+echo '</tr>';
+echo '<tr>';
+echo '<td>';
+echo 'Magnification: <div style="float:right ">'.$imageinfo['magnification'].'</div>';
+echo '</td>';
+echo '<td>';
+echo 'Dimension: <div style="float:right ">'.$imageinfo['dimx'].' x '.$imageinfo['dimy'].'</div>';
+echo '</td>';
+echo '</tr>';
+echo '<tr>';
+echo '<td>';
+echo 'High tension (kV): <div style="float:right ">'.intval($imageinfo['high tension']/1000).'</div>';
+echo '</td>';
+echo '<td>';
+echo 'Binning: <div style="float:right ">'.$imageinfo['binning'].' x '.$imageinfo['binning'].'</div>';
+echo '</td>';
+echo '</tr>';
+echo '<tr>';
+echo '<td>';
+echo 'Exposure time (ms): <div style="float:right ">'.$imageinfo['exposure time'].'</div>';
+echo '</td>';
+echo '<td>';
+echo 'Pixel size (Å): <div style="float:right ">'.number_format($imageinfo['pixelsize']*1e10,4).'</div>';
+echo '</td>';
+echo '</tr>';
+echo '<tr>';
+echo '<td>';
+$presetdata = $leginondata->getAllPresetData($maxpresetid);
+echo 'Dose rate (e<sup>-</sup>/&Aring;<sup>2</sup>/s): <div style="float:right ">'.number_format($maxpresetarray['dose']/$presetdata['exposure time']/1e17, 2).'</div>';
+echo '</td>';
+echo '<td>';
+echo 'Frame rate (ms): <div style="float:right ">'.number_format($presetdata['frame time'],2).'</div>';
+echo '</td>';
+echo '</tr>';
+echo '<tr>';
+echo '<td>';
+echo 'Total dose (e<sup>-</sup>/&Aring;<sup>2</sup>): <div style="float:right ">'.number_format($maxpresetarray['dose']/1e20,2).'</div>';
+echo '</td>';
+echo '<td>';
+echo 'Total frames: <div style="float:right ">'.intval(round($presetdata['exposure time']/$presetdata['frame time'],0)).'</div>';
+echo '</td>';
+echo '</tr>';
+echo '<table>';
 echo '</tr>';
 echo '<tr>';
 echo '<td colspan=2>';
