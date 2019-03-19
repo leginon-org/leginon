@@ -179,9 +179,8 @@ echo '</tr>';
 echo '<tr>';
 echo '<td colspan=2>';
 echo divtitle("Experimental setup");
-
+$presetdata = $leginondata->getAllPresetData($maxpresetid);
 echo '<table width=99% class="paleBlueRows" style="border-spacing: 45px 0px">';
-
 echo '<tr>';
 echo '<td>';
 echo 'TEM: <div style="float:right ">'.$imageinfo['scope'].'</div>';
@@ -195,7 +194,7 @@ echo '<td>';
 echo 'Magnification: <div style="float:right ">'.$imageinfo['magnification'].'</div>';
 echo '</td>';
 echo '<td>';
-echo 'Dimension: <div style="float:right ">'.$imageinfo['dimx'].' x '.$imageinfo['dimy'].'</div>';
+echo 'Dimension: <div style="float:right ">'.$presetdata['SUBD|dimension|x'].' x '.$presetdata['SUBD|dimension|y'].'</div>';
 echo '</td>';
 echo '</tr>';
 echo '<tr>';
@@ -203,21 +202,55 @@ echo '<td>';
 echo 'High tension (kV): <div style="float:right ">'.intval($imageinfo['high tension']/1000).'</div>';
 echo '</td>';
 echo '<td>';
-echo 'Binning: <div style="float:right ">'.$imageinfo['binning'].' x '.$imageinfo['binning'].'</div>';
+echo 'Offset: <div style="float:right ">('.$presetdata['SUBD|offset|x'].', '.$presetdata['SUBD|offset|y'].')</div>';
 echo '</td>';
 echo '</tr>';
 echo '<tr>';
 echo '<td>';
+echo 'Defocus (µm): <div style="float:right ">'.$presetdata['defocus'].'</div>';
+echo '</td>';
+echo '<td>';
+echo 'Binning: <div style="float:right ">'.$presetdata['SUBD|binning|x'].' x '.$presetdata['SUBD|binning|y'].'</div>';
+echo '</td>';
+echo '</tr>';
+
+echo '<tr>';
+echo '<td>';
+echo 'Spot size: <div style="float:right ">'.$presetdata['spot size'].'</div>';
+echo '</td>';
+echo '<td>';
 echo 'Exposure time (ms): <div style="float:right ">'.$imageinfo['exposure time'].'</div>';
+echo '</td>';
+echo '</tr>';
+echo '<tr>';
+echo '<td>';
+echo 'Intensity: <div style="float:right ">'.$presetdata['intensity'].'</div>';
 echo '</td>';
 echo '<td>';
 echo 'Pixel size (Å): <div style="float:right ">'.number_format($imageinfo['pixelsize']*1e10,4).'</div>';
 echo '</td>';
 echo '</tr>';
+
 echo '<tr>';
 echo '<td>';
-$presetdata = $leginondata->getAllPresetData($maxpresetid);
+echo 'Image shift: <div style="float:right ">('.$presetdata['SUBD|image shift|x'].', '.$presetdata['SUBD|image shift|y'].')</div>';
+echo '</td>';
+echo '<td>';
 echo 'Dose rate (e<sup>-</sup>/&Aring;<sup>2</sup>/s): <div style="float:right ">'.number_format($maxpresetarray['dose']/$presetdata['exposure time']/1e17, 2).'</div>';
+echo '</td>';
+echo '</tr>';
+echo '<tr>';
+echo '<td>';
+echo 'Beam shift: <div style="float:right ">('.$presetdata['SUBD|beam shift|x'].', '.$presetdata['SUBD|beam shift|y'].')</div>';
+echo '</td>';
+echo '<td>';
+echo 'Total dose (e<sup>-</sup>/&Aring;<sup>2</sup>): <div style="float:right ">'.number_format($maxpresetarray['dose']/1e20,2).'</div>';
+echo '</td>';
+echo '</tr>';
+$x = ($presetdata['energy filter']== 1) ? "yes": "no";
+echo '<tr>';
+echo '<td>';
+echo 'Energy filtered: <div style="float:right ">'.$x.'</div>';
 echo '</td>';
 echo '<td>';
 echo 'Frame rate (ms): <div style="float:right ">'.number_format($presetdata['frame time'],2).'</div>';
@@ -225,26 +258,40 @@ echo '</td>';
 echo '</tr>';
 echo '<tr>';
 echo '<td>';
-echo 'Total dose (e<sup>-</sup>/&Aring;<sup>2</sup>): <div style="float:right ">'.number_format($maxpresetarray['dose']/1e20,2).'</div>';
+$x = ($presetdata['energy filter']== 1) ? $presetdata['energy filter width']: "None";
+echo 'Energy filter width: <div style="float:right ">'.$x.'</div>';
 echo '</td>';
 echo '<td>';
 echo 'Total frames: <div style="float:right ">'.intval(round($presetdata['exposure time']/$presetdata['frame time'],0)).'</div>';
 echo '</td>';
 echo '</tr>';
+
 echo '<table>';
 echo '</tr>';
 echo '<tr>';
 echo '<td colspan=2>';
+echo divtitle("Acknowledgement");
+echo '<div style="padding:10px">'
+.' Some of this work was performed at the National'
+.' Center for CryoEM Access and Training (NCCAT) and the Simons'
+.' Electron Microscopy Center located at the New York Structural Biology'
+.' Center, supported by the NIH Common Fund Transformative High'
+.' Resolution Cryo-Electron Microscopy program (U24 GM129539), and by'
+.' grants from the Simons Foundation (SF349247) and NY State.</div>';
+echo '</td>';
+echo '</tr>';
+
+echo '<tr>';
+echo '<td colspan=2>';
 echo divtitle("References");
 echo '<div style="padding:10px;">Leginon: Suloway, C., Pulokas, J., Fellmann, D., Cheng, A., Guerra, F., Quispe, J.,'
-.'Stagg, S., Potter, C.S., Carragher, B., 2005. Automated molecular microscopy: the'
-.'new Leginon system. J Struct Biol 151, 41-60.'
-.'https://doi.org/10.1016/j.jsb.2005.03.010</div>';
-echo '<br>';
+.' Stagg, S., Potter, C.S., Carragher, B., 2005. Automated molecular microscopy: the'
+.' new Leginon system. J Struct Biol 151, 41-60.'
+.' https://doi.org/10.1016/j.jsb.2005.03.010</div>';
 echo '<div style="padding:10px;">Appion: Lander, G.C.; Stagg, S.M., Voss, N.R., Cheng, A., Fellmann, D., Pulokas,'
-.'J., Yoshioka, C., Irving, C., Mulder, A., Lau, P.W., et al. (2009). "Appion: an'
-.'integrated, database-driven pipeline to facilitate EM image processing.". Journal of'
-.'Structural Biology 166: 95-102. PMID 19263523.</div>';
+.' J., Yoshioka, C., Irving, C., Mulder, A., Lau, P.W., et al. (2009). "Appion: an'
+.' integrated, database-driven pipeline to facilitate EM image processing.". Journal of'
+.' Structural Biology 166: 95-102. PMID 19263523.</div>';
 echo '</td>';
 echo '</tr>';
 echo '</table>';
