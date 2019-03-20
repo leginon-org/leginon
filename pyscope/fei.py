@@ -675,7 +675,8 @@ class Tecnai(tem.TEM):
 
 	def setDiffractionShift(self, vector, relative = 'absolute'):
 		if vector['x'] is None or vector['y'] is None:
-			print 'diffraction shift not defined. No change.'
+			if self.getDebugAll():
+				print 'diffraction shift not defined. No change.'
 			return
 		if relative == 'relative':
 			try:
