@@ -1190,6 +1190,17 @@ class PresetsManager(node.Node):
 		self.updatePreset(presetname, params)
 		self.acquireDoseImage(presetname)
 
+	def calcDoseFromCameraDoseRate(self, presetname, camera_dose_rate, image_mean):
+		preset = self.presetByName(presetname)
+		time_second = preset['exposure time'] /1000.0
+		# TODO: need to handle binnings : SUM or AVERAGE.
+		# Falcon3 give values per frame not sum is also going to be a problem.
+		sensitivity = image_mean / (camera_dose_rate*time_second*preset['binning']['x']*preset['binning']['y'])
+		ht = self.instrument.tem.HighTension
+		self.dosecal.storeSensitivity(ht, sensitivity,tem=preset['tem'],ccdcamera=preset['ccdcamera'])
+		self.logger.info('Camera sensitivity saved as %.3f counts/e and %d kV' %(sensitivity,ht/1000))
+		self.acquireDoseImage(presetname)
+
 	def cancelDoseMeasure(self,presetname):
 		if self.old_time is None:
 			return
