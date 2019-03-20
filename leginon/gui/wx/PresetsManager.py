@@ -779,6 +779,20 @@ class DoseDialog(leginon.gui.wx.Dialog.Dialog):
 		szmatch.Add(label, (0, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL )
 		self.sz.Add(szmatch, (1,0),(1,1), wx.ALIGN_RIGHT)
 
+		# set with camera dose rate
+		szcdr = wx.GridBagSizer(5, 5)
+		self.bcdr_set = wx.Button(self, -1, 'Set')
+		self.bcdr_set.Enable(True)
+		szcdr.Add(self.bcdr_set,(0,0),(1,1), wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'with camera value of ')
+		szcdr.Add(label, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL )
+		self.cdr_value = FloatEntry(self, -1, min=0,value='1', chars=5)
+		szcdr.Add(self.cdr_value, (0, 2), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'e/unbinned_pixel/s')
+		szcdr.Add(label, (0, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL )
+		self.sz.Add(szcdr, (2,0),(1,1), wx.ALIGN_RIGHT)
+
 		self.szbuttons.Add(self.doselabel, (0, 0), (1, 1),
 								wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 		bsave = wx.Button(self, wx.ID_OK, 'YES')
@@ -794,6 +808,7 @@ class DoseDialog(leginon.gui.wx.Dialog.Dialog):
 								wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 
 		self.Bind(wx.EVT_BUTTON, self.onMatchDose, self.bmatch)
+		self.Bind(wx.EVT_BUTTON, self.onSetCameraDoseRate, self.bcdr_set)
 		self.Bind(wx.EVT_BUTTON, self.onCancel, bcancel)
 		self.Bind(wx.EVT_CLOSE, self.onCancel)
 
@@ -824,6 +839,12 @@ class DoseDialog(leginon.gui.wx.Dialog.Dialog):
 	def onMatchDose(self,evt):
 		dose_to_match = self.dose_to_match.GetValue()
 		self.parent.onMatchDose(dose_to_match * 1e20,self.doses[0])
+
+	def onSetCameraDoseRate(self,evt):
+		camera_dose_rate = self.cdr_value.GetValue() # electron pre pixel pre second
+		if 'mean' in self.image.stats.keys():
+			mean = self.image.stats['mean']
+			self.parent.onSetCameraDoseRate(camera_dose_rate, mean)
 
 	def onCancel(self,evt):
 		self.parent.onCancelDoseMeasure()
@@ -958,6 +979,10 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 	def onMatchDose(self, dose_to_match, dose):
 		presetname = self.presets.getSelectedPreset()
 		self.node.matchDose(presetname, dose_to_match, dose)	
+
+	def onSetCameraDoseRate(self, camera_dose_rate, image_mean):
+		presetname = self.presets.getSelectedPreset()
+		self.node.calcDoseFromCameraDoseRate(presetname, camera_dose_rate, image_mean)	
 
 	def onCancelDoseMeasure(self):
 		presetname = self.presets.getSelectedPreset()
