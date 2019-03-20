@@ -200,7 +200,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 					# For TESTING ---END HERE
 					newstate = self.readAbFree(state['image shift'])
 					if abs(shift) > 1e-7:
-						while abs(newstate['beam tilt']['x']-self.state0['beam tilt']['x']) < 1e-4 or abs(newstate['beam tilt']['y']-self.state0['beam tilt']['y']) < 1e-4:
+						while abs(newstate['beam tilt']['x']-self.state0['beam tilt']['x']) < 1e-5 or abs(newstate['beam tilt']['y']-self.state0['beam tilt']['y']) < 1e-5:
 							self.logger.error('Beam tilt has not changed. Will cause calibration failure.')
 							self.logger.info('Please repeat the measurement or Cancel in the dialog....')
 							newstate = self.readAbFree(state['image shift'])
