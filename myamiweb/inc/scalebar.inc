@@ -25,17 +25,36 @@ class ScaleBar {
 			'5mm' => 5e-3
 		);
 
+	var $rec_scales = array (
+			// This is hacked so that a value of 1e-9 distance from center 
+			// to corresponds to 1 nm-1 so it is best expressed in nm-1 unit
+			// The unit subscript of "-1" is added during display
+			'100 um'  => 1e-10,
+			'200 um'  => 2e-10,
+			'500 um'  => 5e-10,
+			'1 nm'  => 1e-9,
+			'2 nm'  => 2e-9,
+			'5 nm'  => 5e-9,
+			'10 nm'  => 10e-9,
+			'20 nm'  => 20e-9,
+			'50 nm'  => 50e-9,
+			'100 nm'  => 100e-9,
+			'200 nm'  => 200e-9,
+			'500 nm'  => 500e-9
+		);
+
 	var $labelfontsize=4;
 	var $offsetbarX=10;
 	var $offsetbarY=20;
 
-	function ScaleBar($img, $size, $value, $imgheight=0) {
+	function ScaleBar($img, $size, $value, $imgheight=0, $is_diffraction=false) {
 		// --- value should be in meter --- //
 		if ($imgheight==0) $imgheight=$size;
 		$this->img = $img;
 		$this->size = $size;
 		$this->imgheight = $imgheight;
 		$this->value = $value;
+		$this->is_diffraction = $is_diffraction;
 		$this->findScale();
 		$this->setColor(255,255,255);
 	}
@@ -46,12 +65,16 @@ class ScaleBar {
 		$label = "";
 		if (!$this->value)
 			$this->value = 1;
-		foreach ($this->scales as $this->label=>$scale) {
+		$scales_used = ($this->is_diffraction) ? $this->rec_scales: $this->scales;
+		foreach ($scales_used as $this->label=>$scale) {
 			$this->nbpixels = $scale/$this->value;
 			$r = $this->size/$this->nbpixels;
 			if ($r > 2 && $r <5) {
 				break;
 			}
+		}
+		if ($this->nbpixels <1) {
+			$this->label = $this->value;
 		}
 	}
 
@@ -87,8 +110,13 @@ class ScaleBar {
 		if ($this->size > 2000) {
 		    $this->labelfontsize = 85;
 		    $barY2 = $barY2 + 10;
-		    $font = '/usr/share/fonts/dejavu/DejaVuSans-Bold.ttf';
+		    $font = dirname(__FILE__).'/fonts/DejaVuSans-Bold.ttf';
 		    imagettftext($this->img, $this->labelfontsize, 0,  $offsetbarlabelX, $offsetbarlabelY-100, $this->color, $font, $this->label);
+				if ($this->is_diffraction) {
+					// add inverse sign to diffraction scale
+					$extra_xoffset = strlen($this->label)*$this->labelfontsize*1;
+					imagettftext($this->img, $this->labelfontsize*0.7, 0,  $offsetbarlabelX+$extra_xoffset, $offsetbarlabelY-100-$this->labelfontsize*0.5, $this->color, $font, "-1");
+				}
 		    # main bar
 		    imagefilledrectangle($this->img,$barX1+100, $barY1-100, $barX2+100, $barY2-100,$this->color);
 		    
@@ -99,6 +127,14 @@ class ScaleBar {
     			$offsetbarlabelY+1, $this->label,$black);
     		imagestring($this->img, $this->labelfontsize, $offsetbarlabelX,
     			$offsetbarlabelY, $this->label,$this->color);
+				if ($this->is_diffraction) {
+					$extra_xoffset = strlen($this->label)*$this->labelfontsize*2;
+					// add inverse sign to diffraction scale
+					imagestring($this->img, $this->labelfontsize*0.8, $offsetbarlabelX+1+$extra_xoffset,
+						$offsetbarlabelY+1-$this->labelfontsize*0.5, '-1',$black);
+					imagestring($this->img, $this->labelfontsize*0.8, $offsetbarlabelX+$extra_xoffset,
+						$offsetbarlabelY-$this->labelfontsize*0.5, '-1',$this->color);
+				}
     		ImageRectangle($this->img,$barX1-1, $barY1, $barX2+1, $barY2+1,$black);
     		ImageRectangle($this->img,$barX1, $barY1, $barX2, $barY2,$this->color);
 		}

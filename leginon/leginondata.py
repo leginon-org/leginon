@@ -52,6 +52,7 @@ class MagnificationsData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('instrument', InstrumentData),
+			('projection mode', str),
 			('magnifications', list),
 		)
 	typemap = classmethod(typemap)
@@ -130,11 +131,13 @@ class EMData(InSessionData):
 	typemap = classmethod(typemap)
 
 scope_params = (
+	('projection mode', str),
 	('magnification', int),
 	('spot size', int),
 	('intensity', float),
 	('image shift', dict),
 	('beam shift', dict),
+	('diffraction shift', dict),
 	('intended defocus', float),
 	('defocus', float),
 	('focus', float),
@@ -205,10 +208,12 @@ class ScopeEMData(EMData):
 	typemap = classmethod(typemap)
 
 manacqparams = (
+	'projection mode',
 	'magnification',
 	'spot size',
 	'intensity',
 	'image shift',
+	'diffraction shift',
 	'beam shift',
 	'stage position',
 	'high tension',
@@ -358,6 +363,7 @@ class CameraSensitivityCalibrationData(CalibrationData):
 class MagDependentCalibrationData(CalibrationData):
 	def typemap(cls):
 		return CalibrationData.typemap() + (
+			('projection mode', str),
 			('magnification', int),
 			('high tension', int),
 		)
@@ -526,11 +532,13 @@ class PresetData(InSessionData):
 		return InSessionData.typemap() + (
 			('number', int),
 			('name', str),
+			('projection mode', str),
 			('magnification', int),
 			('spot size', int),
 			('intensity', float),
 			('image shift', dict),
 			('beam shift', dict),
+			('diffraction shift', dict),
 			('defocus', float),
 			('defocus range min', float),
 			('defocus range max', float),
@@ -592,11 +600,13 @@ class NewPresetData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
 			('name', str),
+			('projection mode', str),
 			('magnification', int),
 			('spot size', int),
 			('intensity', float),
 			('image shift', dict),
 			('beam shift', dict),
+			('diffraction shift', dict),
 			('defocus', float),
 			('dimension', dict),
 			('binning', dict),
@@ -1081,6 +1091,7 @@ class EMTargetData(InSessionData):
 			('movetype', str),
 			('image shift', dict),
 			('beam shift', dict),
+			('diffraction shift', dict),
 			('stage position', dict),
 			('target', AcquisitionImageTargetData),
 			('delta z', float),
@@ -2130,7 +2141,7 @@ class BeamTiltCalibratorSettingsData(CalibratorSettingsData):
 		
 class MatrixCalibratorSettingsData(CalibratorSettingsData):
 	def typemap(cls):
-		parameters = ['image shift', 'beam shift', 'stage position']
+		parameters = ['image shift', 'beam shift', 'diffraction shift', 'stage position']
 		parameterstypemap = []
 		for parameter in parameters:
 			parameterstypemap.append(('%s tolerance' % parameter, float))

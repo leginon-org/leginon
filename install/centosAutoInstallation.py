@@ -15,7 +15,7 @@ class CentosInstallation(object):
 
 	def setReleaseDependantValues(self):
 		# need to change to branch when release
-		self.gitCmd = "git clone -b trunk http://emg.nysbc.org/git/myami " + self.gitMyamiDir
+		self.gitCmd = "git clone -b myami-beta http://emg.nysbc.org/git/myami " + self.gitMyamiDir
 		# redhat release related values
 		self.redhatRelease = '6.8' # currently used to decide the name of the epel download.
 		self.torqueLibPath = '/var/lib/torque/'

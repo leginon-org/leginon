@@ -41,6 +41,13 @@ class MagnificationsUninitialized(Exception):
 class Tecnai(tem.TEM):
 	name = 'Tecnai'
 	use_normalization = False
+	projection_mode = 'imaging'
+	# attribute name for getMagnification function.
+	# either 'Magnification' or 'CameraLength'
+	mag_attr_name = 'Magnification'
+	mag_scale = 1
+	default_stage_speed = 1.0
+
 	def __init__(self):
 		tem.TEM.__init__(self)
 		self.projection_submodes = {1:'LM',2:'Mi',3:'SA',4:'Mh',5:'LAD',6:'D'}
@@ -92,7 +99,9 @@ class Tecnai(tem.TEM):
 			self.exposure = None
 
 		self.magnifications = []
+		self.stage_speed = self.default_stage_speed
 		self.mainscreenscale = 44000.0 / 50000.0
+		self.wait_for_stage_ready = True
 
 		## figure out which intensity property to use
 		## try to move this to installation
@@ -246,8 +255,16 @@ class Tecnai(tem.TEM):
 		# final position
 		return self._setStagePosition(value)
 
+	def resetStageSpeed(self):
+		self.stage_speed = self.default_stage_speed
+		if self.tom:
+			self.tom.Stage.Speed = self.default_stage_speed
+
 	def setStageSpeed(self, value):
 		# 0.0 to 1.0 with 1.0 the highest speed
+		if value > 1.0 or value < 0.0:
+			raise ValueError('Stage speed must be between 0.0 and 1.0')
+		self.stage_speed = value
 		if self.tom:
 			self.tom.Stage.Speed = value
 
@@ -255,7 +272,7 @@ class Tecnai(tem.TEM):
 		if self.tom:
 			return self.tom.Stage.Speed
 		else:
-			return 1.0
+			return self.stage_speed
 
 	def normalizeLens(self, lens = 'all'):
 		if lens == 'all':
@@ -645,7 +662,47 @@ class Tecnai(tem.TEM):
 		except KeyError:
 			pass
 		self.tecnai.Projection.ImageBeamShift = vec
-	
+
+	def getDiffractionShift(self):
+		value = {'x': None, 'y': None}
+		try:
+			value['x'] = float(self.tecnai.Projection.DiffractionShift.X)
+			value['y'] = float(self.tecnai.Projection.DiffractionShift.Y)
+		except:
+			# return None if has exception
+			pass
+		return value
+
+	def setDiffractionShift(self, vector, relative = 'absolute'):
+		if vector['x'] is None or vector['y'] is None:
+			if self.getDebugAll():
+				print 'diffraction shift not defined. No change.'
+			return
+		if relative == 'relative':
+			try:
+				vector['x'] += self.tecnai.Projection.DiffractionShift.X
+			except KeyError:
+				pass
+			try:
+				vector['y'] += self.tecnai.Projection.DiffractionShift.Y
+			except KeyError:
+				pass
+		elif relative == 'absolute':
+			pass
+		else:
+			raise ValueError
+		# Real setting part
+		vec = self.tecnai.Projection.DiffractionShift
+		try:
+			vec.X = vector['x']
+		except KeyError:
+			pass
+		try:
+			vec.Y = vector['y']
+		except KeyError:
+			pass
+		self.tecnai.Projection.DiffractionShift = vec
+
 	def getRawImageShift(self):
 		value = {'x': None, 'y': None}
 		value['x'] = float(self.tecnai.Projection.ImageShift.X)
@@ -698,7 +755,7 @@ class Tecnai(tem.TEM):
 
 	def getMagnification(self, index=None):
 		if index is None:
-			return int(round(self.tecnai.Projection.Magnification))
+			return int(round(getattr(self.tecnai.Projection,self.mag_attr_name)*self.mag_scale))
 		elif not self.getMagnificationsInitialized():
 			raise MagnificationsUninitialized
 		else:
@@ -708,7 +765,7 @@ class Tecnai(tem.TEM):
 				raise ValueError('invalid magnification index')
 
 	def getMainScreenMagnification(self):
-		return int(round(self.tecnai.Projection.Magnification*self.mainscreenscale))
+		return int(round(getattr(self.tecnai.Projection, self.mag_attr_name)*self.mainscreenscale))
 
 	def getMainScreenScale(self):
 		return self.mainscreenscale
@@ -767,7 +824,10 @@ class Tecnai(tem.TEM):
 				mag = int(mag)
 			except:
 				raise TypeError
-	
+
+		# set  projection mode if changing.
+		if self.getProjectionMode() != self.projection_mode:
+			self.setProjectionMode(None)
 		try:
 			index = self.magnifications.index(mag)
 		except ValueError:
@@ -779,9 +839,26 @@ class Tecnai(tem.TEM):
 			self.normalizeLens('all')
 		return
 
+	def setPreDiffractionMagnification(self):
+		'''
+		Set to an SA magnification index so that diffraction mode change
+		goes into D not LAD mode.
+		'''
+		if self.getProjectionMode() != 'imaging':
+			raise ValueError('Not in imaging mode')
+		index = self.getFeiConfig('optics','pre_diffraction_sa_magnification_index')
+		# handle not configured
+		if index is None or index == -1:
+			raise ValueError('Must set PRE_DIFFRACTION_SA_MAGNIFICATION to a valid mag index')
+		self.tecnai.Projection.MagnificationIndex = index
+		name = self.getProjectionSubModeName()
+		if name != 'SA':
+			raise ValueError('PRE_DIFFRACTION_SA_MAGNIFICATION_INDEX not in SA mode')
+		return
+
 	def getMagnificationIndex(self, magnification=None):
 		if magnification is None:
-			return self.tecnai.Projection.MagnificationIndex - 1
+			return getattr(self.tecnai.Projection,self.mag_attr_name+'Index') - 1
 		elif not self.getMagnificationsInitialized():
 			raise MagnificationsUninitialized
 		else:
@@ -791,7 +868,7 @@ class Tecnai(tem.TEM):
 				raise ValueError('invalid magnification')
 
 	def setMagnificationIndex(self, value):
-		self.tecnai.Projection.MagnificationIndex = value + 1
+		setattr(self.tecnai.Projection,self.mag_attr_name+'Index', value + 1)
 
 	def getMagnifications(self):
 		return self.magnifications
@@ -851,7 +928,15 @@ class Tecnai(tem.TEM):
 				pass
 		return value
 
+	def setWaitForStageReady(self, value):
+		self.wait_for_stage_ready = value
+
+	def getWaitForStageReady(self):
+		return self.wait_for_stage_ready
+
 	def waitForStageReady(self,position_log,timeout=10):
+		if not self.wait_for_stage_ready:
+			return
 		t0 = time.time()
 		trials = 0
 		while self.tecnai.Stage.Status in (2,3,4):
@@ -910,7 +995,13 @@ class Tecnai(tem.TEM):
 		if axes == 0:
 			return
 		try:
-			self.tecnai.Stage.Goto(pos, axes)
+			if self.stage_speed == self.default_stage_speed:
+				self.tecnai.Stage.Goto(pos, axes)
+			else:
+				# Low speed move needs to be done on individual axis
+				for key, value in position.items():
+					single_axis = getattr(self.tem_constants, 'axis' + key.upper())
+					self.tecnai.Stage.GotoWithSpeed(pos, single_axis, self.stage_speed)
 		except com_module.COMError, e:
 			if self.getDebugStage():
 				print datetime.datetime.now()
@@ -1059,10 +1150,15 @@ class Tecnai(tem.TEM):
 		else:
 			raise SystemError
 		
-	def setProjectionMode(self, mode):
+	def setProjectionMode(self, fakemode):
+		# Always set to the class projection_mode.  This is a work around to
+		# proxy not knowing the projection_mode of the instrument.
+		mode = self.projection_mode
 		if mode == 'imaging':
 			self.tecnai.Projection.Mode = self.tem_constants.pmImaging
 		elif mode == 'diffraction':
+			if self.getProjectionMode() != mode:
+				self.setPreDiffractionMagnification()
 			self.tecnai.Projection.Mode = self.tem_constants.pmDiffraction
 		else:
 			raise ValueError
@@ -1815,3 +1911,17 @@ class Glacios(Arctica):
 	name = 'Glacios'
 	use_normalization = True
 
+#### Diffraction Instrument
+class DiffrTecnai(Tecnai):
+	name = 'DiffrTecnai'
+	use_normalization = False
+	projection_mode = 'diffraction'
+	mag_attr_name = 'CameraLength'
+	mag_scale = 1000
+
+class DiffrGlacios(Glacios):
+	name = 'DiffrGlacios'
+	use_normalization = True
+	projection_mode = 'diffraction'
+	mag_attr_name = 'CameraLength'
+	mag_scale = 1000

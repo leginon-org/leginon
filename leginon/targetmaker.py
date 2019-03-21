@@ -101,6 +101,9 @@ class MosaicTargetMaker(TargetMaker):
 		self.panel.atlasPublished()
 
 	def checkLabel(self, label):
+		if label is not None and label != '' and not label.isalnum():
+			if not ''.join(''.join(label.split('_')).split('-')).isalnum():
+				raise AtlasError('Only alpha numeric and "-" and "_" are allowed as label')
 		targetlist = self.newTargetList(mosaic=True, label=label)
 		targets = self.researchTargets(session=self.session, list=targetlist)
 		if targets:

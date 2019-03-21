@@ -547,7 +547,14 @@ class Jeol1230(tem.TEM):
 					self.jeol1230lib.setBeamShift(axis, target[axis])
 		return True
 
-	# get image shift in meter
+	def getDiffractionShift(self):
+		# place holder. Not implemented
+		return {'x':0.0,'y':0.0}
+
+	def setDiffractionShift(self):
+		# get diffraction shift in meter. Not implemented
+		pass
+
 	def getImageShift(self):
 		if Debug == True:
 			print 'from jeol1230.py getImageShift'

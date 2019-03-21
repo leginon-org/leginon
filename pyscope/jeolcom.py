@@ -504,6 +504,14 @@ class Jeol(tem.TEM):
 		if self.getJeolConfig('tem option','cl3_relaxation_mag') and self.relax_beam:
 			self.relaxBeam()
  
+	def getDiffractionShift(self):
+		# place holder. Not implemented
+		return {'x':0.0,'y':0.0}
+
+	def setDiffractionShift(self):
+		# get diffraction shift in meter. Not implemented
+		pass
+
 	def getImageShift(self):
 		scale = self.getScale('imageshift')
 		neutral = self.getNeutral('imageshift')

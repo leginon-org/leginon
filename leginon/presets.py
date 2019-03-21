@@ -266,6 +266,7 @@ class PresetsManager(node.Node):
 			'image':calibrationclient.ImageShiftCalibrationClient(self),
 			'stage':calibrationclient.StageCalibrationClient(self),
 			'beam':calibrationclient.BeamShiftCalibrationClient(self),
+			'diffraction':calibrationclient.DiffractionShiftCalibrationClient(self),
 			'beam tilt':calibrationclient.BeamTiltCalibrationClient(self),
 			'modeled stage':calibrationclient.ModeledStageCalibrationClient(self),
 			'beam size':calibrationclient.BeamSizeCalibrationClient(self),
@@ -968,7 +969,7 @@ class PresetsManager(node.Node):
 			return
 		# refs #3255 retry if image shift or beam shift parameters are not gotten 
 		trys = 0
-		while trys < 3 and (newpreset['image shift']['x'] is None or newpreset['beam shift']['x'] is None):
+		while trys < 3 and (newpreset['image shift']['x'] is None or newpreset['beam shift']['x'] is None or newpreset['diffraction shift']['x'] is None):
 			self.logger.info('scope parameters not complete, retry....')
 			newpreset = self._fromScope(newname, temname, camname, None, copybeam)
 			trys += 1
@@ -1005,11 +1006,12 @@ class PresetsManager(node.Node):
 		# dependent on HT
 		if ht is None:
 			message = 'Unknown (cannot get current high tension)'
-			modmagtime = beamtime = imagetime = stagetime = defocustime = message
+			modmagtime = beamtime = diffractiontime = imagetime = stagetime = defocustime = message
 		else:
 			stagetime = self.calclients['stage'].time(tem, cam, ht, mag, 'stage position')
 			imagetime = self.calclients['image'].time(tem, cam, ht, mag, 'image shift')
 			beamtime = self.calclients['beam'].time(tem, cam, ht, mag, 'beam shift')
+			diffractiontime = self.calclients['diffraction'].time(tem, cam, ht, mag, 'diffraction shift')
 			defocustime = self.calclients['beam tilt'].time(tem, cam, ht, mag, 'defocus',probe)
 			modmagtimex = self.calclients['modeled stage'].timeMagCalibration(tem, cam, ht,
 																																			mag, 'x')
@@ -1022,6 +1024,7 @@ class PresetsManager(node.Node):
 			'image shift': str(imagetime),
 			'stage': str(stagetime),
 			'beam': str(beamtime),
+			'diffraction': str(diffractiontime),
 			'modeled stage': str(modtime),
 			'modeled stage mag only': str(modmagtime),
 			'defocus': str(defocustime),
@@ -1188,6 +1191,17 @@ class PresetsManager(node.Node):
 
 		params = {'exposure time': new_time}
 		self.updatePreset(presetname, params)
+		self.acquireDoseImage(presetname)
+
+	def calcDoseFromCameraDoseRate(self, presetname, camera_dose_rate, image_mean):
+		preset = self.presetByName(presetname)
+		time_second = preset['exposure time'] /1000.0
+		# TODO: need to handle binnings : SUM or AVERAGE.
+		# Falcon3 give values per frame not sum is also going to be a problem.
+		sensitivity = image_mean / (camera_dose_rate*time_second*preset['binning']['x']*preset['binning']['y'])
+		ht = self.instrument.tem.HighTension
+		self.dosecal.storeSensitivity(ht, sensitivity,tem=preset['tem'],ccdcamera=preset['ccdcamera'])
+		self.logger.info('Camera sensitivity saved as %.3f counts/e and %d kV' %(sensitivity,ht/1000))
 		self.acquireDoseImage(presetname)
 
 	def cancelDoseMeasure(self,presetname):
@@ -1528,6 +1542,11 @@ class PresetsManager(node.Node):
 		mystage = dict(emtargetdata['stage position'])
 		myimage = dict(emtargetdata['image shift'])
 		mybeam = dict(emtargetdata['beam shift'])
+		# TODO Find out when diffraction shift is or is not in emtargetdata
+		if emtargetdata['diffraction shift']:
+			mydiffraction = dict(emtargetdata['diffraction shift'])
+		else:
+			mydiffraction = None
 
 ## This should be unnecessary if we have a check for minimum stage movement
 ## (currently in pyscope).  It was a way to prevent moving the stage between
@@ -1625,6 +1644,17 @@ class PresetsManager(node.Node):
 		else:
 			mybeam['x'] = newpreset['beam shift']['x']
 			mybeam['y'] = newpreset['beam shift']['y']
+		# diffraction shift 
+		if mydiffraction and emtargetdata['movetype'] == 'diffraction shift':
+			mydiffraction['x'] -= oldpreset['diffraction shift']['x']
+			mydiffraction['x'] += newpreset['diffraction shift']['x']
+			mydiffraction['y'] -= oldpreset['diffraction shift']['y']
+			mydiffraction['y'] += newpreset['diffraction shift']['y']
+		else:
+			if newpreset['diffraction shift']:
+				mydiffraction = {}
+				mydiffraction['x'] = newpreset['diffraction shift']['x']
+				mydiffraction['y'] = newpreset['diffraction shift']['y']
 
 		mymin = newpreset['defocus range min']
 		mymax = newpreset['defocus range max']
@@ -1640,6 +1670,7 @@ class PresetsManager(node.Node):
 		scopedata.friendly_update(newpreset)
 		scopedata['image shift'] = myimage
 		scopedata['beam shift'] = mybeam
+		scopedata['diffraction shift'] = mydiffraction
 		# Disable stage move if movetype does not requires it.
 		if self.settings['disable stage for image shift'] and  (emtargetdata['movetype'] == 'image beam shift' or emtargetdata['movetype'] == 'image shift'):
 				self.logger.info('disable stage movement')
@@ -1800,6 +1831,8 @@ class PresetsManager(node.Node):
 
 		refmag = self.presets[refname]['magnification']
 		self.refpreset = refname
+		# default firstrightpreset refs #6812
+		self.firstrightpreset = refname
 		try:
 			refindex = mags.index(refmag)
 		except ValueError:

@@ -240,6 +240,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.screencurrent_bound = False
 		self.alignzlp_warned = False
 		self.beamtilt0 = None
+		self.paused_by_gui = False
 
 		self.duplicatetypes = ['acquisition', 'focus']
 		self.presetlocktypes = ['acquisition', 'target', 'target list']
@@ -1057,6 +1058,11 @@ class Acquisition(targetwatcher.TargetWatcher):
 		'''
 		Manager continues the paused status
 		'''
+		if self.paused_by_gui:
+			self.logger.info('Paused through local gui, skip workflow continuing')
+			return
+		# Only continue that was paused by Manager. This way, local expert user can still
+		# pause intentionally at a place.
 		#self.panel.playerEvent('play')
 		self.player.play()
 		self.setStatus(self.before_pause_node_status)

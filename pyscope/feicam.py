@@ -243,8 +243,6 @@ class FeiCam(ccdcamera.CCDCamera):
 		return {'x':binned_full_off['x']-limit_off['x']/self.binning['x'],'y':binned_full_off['x']-limit_off['y']/self.binning['y']}
 
 	def finalizeSetup(self):
-		# Default not to align
-		self.camera_settings.AlignImage = False
 		# final bin
 		binning = self.binning
 
@@ -423,6 +421,14 @@ class FeiCam(ccdcamera.CCDCamera):
 	def getEnergyFiltered(self):
 		return False
 
+class Ceta(FeiCam):
+	name = 'Ceta'
+	camera_name = 'BM-Ceta'
+	binning_limits = [1,2,4]
+
+	def getSystemGainDarkCorrected(self):
+		return True
+
 class Falcon3(FeiCam):
 	name = 'Falcon3'
 	camera_name = 'BM-Falcon'
@@ -515,6 +521,8 @@ class Falcon3(FeiCam):
 		self.camera_settings.ElectronCounting = value
 
 	def custom_setup(self):
+		# Default not to align
+		self.camera_settings.AlignImage = False
 		if self.extra_protector_sleep_time:
 			time.sleep(self.extra_protector_sleep_time)
 		if self.getDebugCamera():

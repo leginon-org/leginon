@@ -39,7 +39,7 @@ $package = new Package();
 	$map["notified"]="f18";
 	$map["note"]="f19";
 
-// --- find next package number --- // 
+// --- find next package number --- //
 
 $newnumber=$package->getNextNumber($projectId);
 $newnumberstr=$package->format_number($newnumber);
@@ -48,7 +48,7 @@ if ($_POST ) {
 	$data_from_post=from_POST_values(array_values($map));
 
 	foreach($map as $k=>$v) {
-		if (preg_match("date$", $k)) {
+		if (preg_match("%date$%", $k)) {
 			$$k=mysql::format_date($data_from_post[$v]);
 		} else {
 			$$k=$data_from_post[$v];
@@ -59,7 +59,7 @@ if ($_POST ) {
 		$confirmId=null;
 	}
 
-	if ($_POST['btsubmit']=='add') {
+	if (strpos($_POST['btsubmit'],'add')!==false) {
 		$number=$newnumber;
 		$packageId = $package->addPackage($projectId, $confirmId, $number, $label, $expdate, $expcarrier, $carriernumber, $expnumaliquots, $sampledescription, $expnote, $arrivedate, $arrivetime, $condition, $shipmethod, $temp, $numaliquots, $notified, $note);
 
@@ -71,14 +71,27 @@ if ($_POST ) {
 	if ($_POST['btsubmit']=='add' || $_POST['btsubmit']=='update') {
 		redirect($_GET['ln']);
 	}
-} 
+
+	if ($_POST['btdelete']=='delete') {
+    	if ( $package->deletePackage($packageId) )
+    		redirect($_GET['ln']);
+    }
+	if (strpos($_POST['btsubmit'],'duplicate for next')!==false) {
+		$defaults = $data_from_post;
+		$packageId = null;
+	}
+
+
+}
 
 if (empty($packageId) || !($package->checkPackageExistsbyId($packageId))) {
 	$title='- new package';
 	$action='add';
+	$action2='add and duplicate for next';
 } else {
 	$title='- update package: '.$curpackage['Name'];
 	$action='update';
+	$action2='duplicate for next';
 
 }
 
@@ -86,10 +99,8 @@ $confirm=new Confirm();
 $where=array("projectId"=>$projectId);
 $confirms=$confirm->getConfirms($where, array('confirmId', 'confirmnum'));
 $confirmlist[0]=$confirm->format_number(0);
-if ($confirms & count($confirms) > 0) {
-	foreach($confirms as $c) {
-		$confirmlist[$c['confirmId']]=$confirm->format_number($c['confirmnum']);
-	}
+foreach($confirms as $c) {
+	$confirmlist[$c['confirmId']]=$confirm->format_number($c['confirmnum']);
 }
 
 if ($packageId) {
@@ -103,17 +114,18 @@ foreach($map as $k=>$v) {
 }
 $newnumberstr=$package->format_number($curpackage['number']);
 }
-	
+
+
 project_header("Package $title");
 ?>
 
-<a href="<?php echo $_GET['ln']; ?>">[ &laquo; back ]</a>
+<a href="<?=$_GET['ln'];?>">[ &laquo; back ]</a>
 <p>
 <font color=red>*</font>
 <font face="Arial, Helvetica, sans-serif" size="2">: required fields</font>
 </p>
 <link href="css/aform.css" rel="stylesheet" type="text/css" />
-<?php
+<?
 
 $form=new form();
 $form->action=$_SERVER['REQUEST_URI'];
@@ -131,18 +143,20 @@ $form->addField("Carrier number", 20, false);
 $form->addField("Expected number of aliquots", 20, false);
 $form->addTextArea("Sample description", 4, 50, false);
 $form->addTextArea("Carrier Note", 2, 20);
-if ($packageId) {
+//if ($packageId) {
 $form->addDate("Date of sample arrival", 20, true);
 $form->addTime("Time of sample arrival", 20, true);
-$form->addField("Condition of package", 20, true, "Good, fair, poor");
-$form->addTextArea("Shipping method", 2, 20, true, "Room temp, ice packs, dry ice");
+$form->addDataList("Condition of package", array(Good, Fair, Poor), 20, true);
+$form->addDataList("Shipping method", array("Room temp", "Ice packs", "Dry ice", "Wet ice", "Cold gel packs", "Hand delivered"), 20, true);
 $form->addField("Expected sample temperature maintained", 20, true, "Yes/No");
 $form->addField("Number of aliquots", 20, true);
 $form->addField("Sender was notified", 20, false, "Yes/No");
 $form->addTextArea("Note", 2, 20);
-}
+//}
 
 $form->addSubmit("btsubmit", $action);
+$form->addSubmit("btsubmit", $action2);
+$form->addSubmit("btdelete", "delete");
 // $form->add('<input type="button" onclick="validate()" />');
 
 

@@ -3,6 +3,9 @@ import ccdcamera
 import numpy
 import time
 import falconframe
+
+DEBUG = False
+
 ## create a single connection to TIA COM object.
 ## Muliple calls to get_tiaccd will return the same connection.
 ## Store the handle in the com module, which is safer than in
@@ -64,6 +67,10 @@ class TIA(ccdcamera.CCDCamera):
 		self.offset = {'x':0, 'y':0}
 		self.exposure = 500.0
 		self.exposuretype = 'normal'
+
+	def debug_print(self, msg):
+		if DEBUG:
+			print(msg)
 
 	def getCameraModelName(self):
 		return self.camera_name
@@ -137,7 +144,7 @@ exposure is the exposure time in seconds
 				self.ccd.IntegrationTime = exposure
 			self.updateImageDisplay()
 		except:
-			print 'could not set', kwargs
+			self.debug_print('could not set %s' % (kwargs,))
 
 	def getConfig(self, param):
 		self.selectSetup()
@@ -217,6 +224,9 @@ acquisition.
 		pass
 
 	def getImage(self):
+		# make sure acquisition is finished.  Will give COM Error if not
+		while self.acqman.IsAcquiring:
+			time.sleep(0.1)
 		try:
 			## scan mode to spot so CCD can be setup on scope with STEM
 			self.esv.ScanningServer().ScanMode = 0
@@ -250,6 +260,7 @@ acquisition.
 			t1 = time.time()
 			self.exposure_timestamp = (t1 + t0) / 2.0
 			arr = self.im.Data.Array
+			self.debug_print('got array')
 		except:
 			raise RuntimeError('Camera Acquisition Error in getting array')
 
@@ -257,9 +268,9 @@ acquisition.
 			arr.shape = (self.dimension['y'],self.dimension['x'])
 			arr = numpy.flipud(arr)
 		except AttributeError, e:
-			print 'comtypes did not return an numpy 2D array, but %s' % (type(arr))
+			self.debug_print('comtypes did not return an numpy 2D array, but %s' % (type(arr)))
 		except Exception, e:
-			print e
+			self.debug_print(e)
 			arr = None
 		return arr
 
@@ -529,9 +540,9 @@ class TIA_Falcon3(TIA_Falcon):
 			arr.shape = (self.dimension['y'],self.dimension['x'])
 			arr = numpy.flipud(arr)
 		except AttributeError, e:
-			print 'comtypes did not return an numpy 2D array, but %s' % (type(arr))
+			self.debug_print('comtypes did not return an numpy 2D array, but %s' % (type(arr)))
 		except Exception, e:
-			print e
+			self.debug_print(e)
 			arr = None
 
 		image = arr
@@ -546,6 +557,6 @@ class TIA_Falcon3(TIA_Falcon):
 			endx = self.dimension['x'] + startx
 			endy = self.dimension['y'] + starty
 			image = image[starty:endy,startx:endx]
-		print 'modified shape',image.shape
+		self.debug_print('modified shape %s' % (image.shape,))
 		return image
 

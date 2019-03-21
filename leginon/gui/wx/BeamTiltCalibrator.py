@@ -9,6 +9,8 @@ import wx
 import numpy
 
 import leginon.gui.wx.Calibrator
+import leginon.gui.wx.ManualComaFree
+import leginon.gui.wx.ManualFocus
 import leginon.gui.wx.MatrixCalibrator
 import leginon.gui.wx.Dialog
 from leginon.gui.wx.Entry import FloatEntry, IntEntry
@@ -110,7 +112,10 @@ class Panel(leginon.gui.wx.Calibrator.Panel):
 		self.measure_dialog = MeasureDialog(self)
 		self.comafree_dialog = MeasureComafreeDialog(self)
 		self.align_dialog = AlignRotationCenterDialog(self)
+		self.manualcomafree_dialog = leginon.gui.wx.ManualComaFree.ManualComaFreeDialog(self)
+		self.manualfocus_dialog = leginon.gui.wx.ManualFocus.SimpleManualFocusDialog(self)
 		self.read_aberration_free_dialog = ReadAberrationFreeDialog(self)
+		self.dialog_done = threading.Event()
 
 		self.Bind(leginon.gui.wx.Events.EVT_EDIT_MATRIX, self.onEditMatrix)
 		self.Bind(leginon.gui.wx.Events.EVT_EDIT_FOCUS_CALIBRATION, self.onEditFocusCalibration)
@@ -229,10 +234,11 @@ class Panel(leginon.gui.wx.Calibrator.Panel):
 		evt.state = state
 		self.GetEventHandler().AddPendingEvent(evt)
 
-	def readAbFreeState(self):
+	def readAbFreeState(self,imageshift=None):
 		# This is called from a sub thread.  It therefore need to
 		# initiate dialog through an event
 		evt = leginon.gui.wx.Events.ReadAbFreeStateEvent()
+		evt.shift = imageshift
 		self.GetEventHandler().AddPendingEvent(evt)
 
 	def onReadAbFreeState(self, evt):
@@ -240,12 +246,26 @@ class Panel(leginon.gui.wx.Calibrator.Panel):
 		Handle ReadAbFreeState event by opening the dialog and then
 		respond accordingly after closing.
 		'''
+		if evt.shift:
+			text = 'Image Shift x= %.1f um, y= %.1f um' % (evt.shift['x']*1e6, evt.shift['y']*1e6)
+		else:
+			text = ''
+		self.read_aberration_free_dialog.setSubtitle(text)
 		if self.read_aberration_free_dialog.ShowModal() != wx.ID_OK:
 			is_ok = False
 		else:
 			is_ok = True
 		threading.Thread(target=self.node.guiReadAbFreeStateDone, args=(is_ok,)).start()
 
+	def setManualComaFreeImage(self, image, typename, stats={}):
+		evt = leginon.gui.wx.Events.SetImageEvent(image, typename, stats)
+		self.manualcomafree_dialog.GetEventHandler().AddPendingEvent(evt)
+
+	def setManualFocusImage(self, image, typename, stats={}):
+		evt = leginon.gui.wx.Events.SetImageEvent(image, typename, stats)
+		self.manualfocus_dialog.GetEventHandler().AddPendingEvent(evt)
+
+#-----------
 	def onEucentricFocusToScope(self, evt):
 		self.instrumentEnable(False)
 		threading.Thread(target=self.node.eucentricFocusToScope).start()
@@ -501,21 +521,32 @@ class ReadAberrationFreeDialog(wx.Dialog):
 
 		wx.Dialog.__init__(self, parent, -1, 'Aberration Free State')
 
+		self.subtitle = wx.StaticText(self, -1, '')
+		self.align = wx.Button(self, -1, 'Align ComaFree Manually')
+		self.livefft = wx.Button(self, -1, 'View Live FFT')
 		self.read = wx.Button(self, -1, 'Read Values')
 		self.reset = wx.Button(self, -1, 'Reset Values')
 		self.bok = wx.Button(self, wx.ID_OK, '&OK')
 		self.bcancel = wx.Button(self, wx.ID_CANCEL, '&Cancel')
+		self.manualcomafree_dialog = self.panel.manualcomafree_dialog
+		self.manualfocus_dialog = self.panel.manualfocus_dialog
 
+		self.livefft.Enable(True)
+		self.align.Enable(True)
 		self.read.Enable(True)
 		self.reset.Enable(True)
+		self.Bind(wx.EVT_BUTTON, self.onManualFocusButton, self.livefft)
+		self.Bind(wx.EVT_BUTTON, self.onAlignButton, self.align)
 		self.Bind(wx.EVT_BUTTON, self.onReadButton, self.read)
 		self.Bind(wx.EVT_BUTTON, self.onResetButton, self.reset)
-		self.Bind(wx.EVT_BUTTON, self.onSet, self.bok)
+		self.Bind(wx.EVT_BUTTON, self.onOKButton, self.bok)
 		self.Bind(wx.EVT_BUTTON, self.onSet, self.bcancel)
 
 		szbutton = wx.GridBagSizer(5, 5)
-		szbutton.Add(self.read, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
-		szbutton.Add(self.reset, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+		szbutton.Add(self.livefft, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+		szbutton.Add(self.align, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+		szbutton.Add(self.read, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+		szbutton.Add(self.reset, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
 
 		sbsz = wx.GridBagSizer(5, 5)
 
@@ -531,25 +562,41 @@ class ReadAberrationFreeDialog(wx.Dialog):
 
 		startrow = 0
 		for key in self.aberrations1d+self.aberrations2d:
-			startrow = self.AddResultSizer(startrow,key)
+			startrow = self.addResultSizer(startrow,key)
 		self.szresult.AddGrowableCol(1)
 
-		#sbsz.Add(self.szresult, (0,0), (1,1), wx.EXPAND|wx.ALL, 10)
+		# BoxSizer
+		sb = wx.StaticBox(self, -1, '')
+		self.sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		self.subtitle = wx.StaticText(self, -1, '')
+		self.sbsz.Add(self.subtitle, 1, wx.EXPAND|wx.ALL, 5)
+		sz = wx.GridBagSizer(5, 5)
+		sz.Add(szbutton, (0, 0), (2, 1), wx.ALIGN_CENTER_VERTICAL|wx.EXPAND|wx.ALL, 10)
+		sz.Add(self.szresult, (0, 1), (2, 2), wx.EXPAND|wx.ALL, 10)
+
 		self.sizer = wx.GridBagSizer(5, 5)
-		self.sizer.Add(szbutton, (0, 0), (2, 1), wx.ALIGN_CENTER_VERTICAL|wx.EXPAND|wx.ALL, 10)
-		self.sizer.Add(self.szresult, (0, 1), (2, 2), wx.EXPAND|wx.ALL, 10)
-		self.sizer.Add(self.bok, (3, 0), (1, 1), wx.EXPAND|wx.ALL, 10)
-		self.sizer.Add(self.bcancel, (3, 1), (1, 1), wx.EXPAND|wx.ALL, 10)
-		self.sizer.AddGrowableRow(0)
+		self.sizer.Add(self.sbsz, (0, 0), (1, 3), wx.EXPAND|wx.ALL, 10)
+		self.sizer.Add(sz, (1, 0), (2, 3), wx.EXPAND|wx.ALL, 10)
+
+		csizer = wx.GridBagSizer(5, 5)
+
+		csizer.Add(self.bok, (0, 0), (1, 1), wx.EXPAND|wx.ALL, 5)
+		csizer.Add(self.bcancel, (0, 1), (1, 1), wx.EXPAND|wx.ALL, 5)
+		self.sizer.Add(csizer, (3, 0), (1, 3), wx.ALIGN_RIGHT|wx.ALL, 10)
+
 		self.sizer.AddGrowableRow(1)
 		self.sizer.AddGrowableRow(2)
+		self.sizer.AddGrowableRow(3)
 		self.sizer.AddGrowableCol(0)
 		self.sizer.AddGrowableCol(1)
 		self.sizer.AddGrowableCol(2)
 
 		self.SetSizerAndFit(self.sizer)
 
-	def AddResultSizer(self, row, key):
+	def setSubtitle(self, text):
+		self.subtitle.SetLabel(text)
+
+	def addResultSizer(self, row, key):
 		nextrow = row + 0
 		label = wx.StaticText(self, -1, key)
 		self.szresult.Add(label, (nextrow, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
@@ -568,8 +615,28 @@ class ReadAberrationFreeDialog(wx.Dialog):
 			self.szresult.AddGrowableRow(r)
 		return nextrow
 
+	def onOKButton(self, evt):
+		self.panel.dialog_done.set()
+		evt.Skip()
+
 	def onSet(self, evt):
 		evt.Skip()
+
+	def onAlignButton(self, evt):
+		threading.Thread(target=self.node.acquireTableauImages).start()
+		if self.manualcomafree_dialog.ShowModal() !=wx.ID_OK:
+			self.onResetButton(evt=None)
+		else:
+			self.onReadButton(evt=None)
+
+	def onManualFocusButton(self, evt):
+		threading.Thread(target=self.node.manualFocusLoop).start()
+		state = self.manualfocus_dialog.ShowModal()
+		self.node.manualplayer.stop()
+		if state != wx.ID_OK:
+			self.onResetButton(evt=None)
+		else:
+			self.onReadButton(evt=None)
 
 	def onReadButton(self, evt):
 		self.panel._calibrationEnable(False)

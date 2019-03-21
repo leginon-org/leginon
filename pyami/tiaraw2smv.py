@@ -9,15 +9,19 @@ offset_txt = raw_input('Data offset value (default=200 is added to the input val
 if offset_txt == '':
 	offset = 200
 else:
-	offset = int(truncation_txt)
+	offset = int(offset_txt)
 
 from pyami import tiaraw, numsmv
 
 import os
 import sys
+digits=3
 test_filename = '%s_%03d.bin' % (input_pattern, 1)
 if not os.path.isfile(test_filename):
-	sys.exit('%s does not exist!' % test_filename)
+	test_filename = '%s_%02d.bin' % (input_pattern, 1)
+	if not os.path.isfile(test_filename):
+		sys.exit('%s does not exist!' % test_filename)
+	digits=2
 
 import glob
 filelist = glob.glob('%s_*.bin' % (input_pattern,))
@@ -31,7 +35,10 @@ def read(fobj,start,shape,dtype):
 		return a
 
 for i in range(total):
-	in_name='%s_%03d.bin' % (input_pattern, i+1)
+	if digits==3:
+		in_name='%s_%03d.bin' % (input_pattern, i+1)
+	elif digits==2:
+		in_name='%s_%02d.bin' % (input_pattern, i+1)
 	out_name='%s_%03d.img' % (output_pattern, i+1)
 	data = tiaraw.read(in_name)
 	numsmv.write(data,out_name, offset=offset)

@@ -22,6 +22,15 @@ var scales={
 	'5mm' : 5e-3
 }
 
+var rec_scales = {
+	'0.1 nm-1': 1e-10,
+	'0.2 nm-1': 2e-10,
+	'0.5 nm-1': 5e-10,
+	'1 nm-1': 1e-9,
+	'2 nm-1': 2e-9,
+	'5 nm-1': 5e-9
+}
+
 var inverse_scales = {
 	'1/1&Aring;': 1e-10,
 	'1/2&Aring;'  : 2e-10,
@@ -57,11 +66,16 @@ var inverse_scales = {
 	'1/7mm' : 7e-3
 }
 	
-function findScale(imgsize, pixelsize) {
+function findScale(imgsize, pixelsize, is_diffr) {
 	nbpixels=1
 	if (pixelsize < 1) {
-		for (var key in scales) {
-			scale=scales[key]
+		if (is_diffr) {
+			scales_used = rec_scales
+		} else {
+			scales_used = scales
+		}
+		for (var key in scales_used) {
+			scale=scales_used[key]
 			nbpixels = scale/pixelsize
 			r = imgsize/nbpixels;
 			if (r > 2 && r <5) {

@@ -625,8 +625,9 @@ class CL2D(appionScript.AppionScript):
  			mpiruncmd = self.mpirun+" -np "+str(self.params['nproc'])+" "+xmipp_sort +" -i "+\
  			 			level+"/part"+self.params['timestamp']+"*xmd --oroot "+ level+"/part"+self.params['timestamp']+"sorted"
  			apParam.runCmd(mpiruncmd, package="Xmipp 3", verbose=True, showcmd=True, logfile="xmipp.std")
+ 			apParam.runCmd("xmipp_metadata_utilities -i "+level+"/part"+self.params['timestamp']+"sorted*xmd --operate drop_column 'image'", package="Xmipp 3", verbose=True) 			
  			apParam.runCmd("xmipp_image_convert -i "+level+"/part"+self.params['timestamp']+"sorted*xmd -o part"
- 						+self.params['timestamp']+"_level_"+digits+"_.hed", package="Xmipp 3", verbose=True)
+ 						+self.params['timestamp']+"_level_"+digits+"_.hed --label 'imageOriginal'", package="Xmipp 3", verbose=True)
  			
  		if self.params['align']:
 			apParam.runCmd("xmipp_transform_geometry -i images.xmd -o %s_aligned.stk --apply_transform" % self.params['timestamp'], package="Xmipp 3", verbose=True)

@@ -317,8 +317,12 @@ class Proxy(object):
 		types = []
 		args = []
 		for key, attribute in parametermapping:
-			if key not in instance or instance[key] is None:
-				continue
+			if key =='projection mode':
+				# force set of projection mode
+				pass
+			else:
+				if key not in instance or instance[key] is None:
+					continue
 			attributetypes = proxy.getAttributeTypes(attribute)
 			if not attributetypes:
 				continue
@@ -330,7 +334,10 @@ class Proxy(object):
 				continue
 			keys.append(key)
 			attributes.append(attribute)
-			args.append((instance[key],))
+			if key !='projection mode':
+				args.append((instance[key],))
+			else:
+				args.append(('fake',))
 		results = proxy.multiCall(attributes, types, args)
 		self.updateLastSetGetTime()
 		for result in results:
@@ -369,11 +376,13 @@ parametermapping = (
 	# The order should base on dependency
 	('system time', 'SystemTime'),
 	('probe mode','ProbeMode'),
+	('projection mode','ProjectionMode'),
 	('magnification', 'Magnification'),
 	('spot size', 'SpotSize'),
 	('intensity', 'Intensity'),
 	('beam shift', 'BeamShift'),
 	('image shift', 'ImageShift'),
+	('diffraction shift', 'DiffractionShift'),
 	('focus', 'Focus'),
 	('defocus', 'Defocus'),
 	('reset defocus', 'resetDefocus'),

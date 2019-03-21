@@ -47,6 +47,7 @@ class TEM(baseinstrument.BaseInstrument):
 		{'name': 'ColumnValvePosition', 'type': 'property'},
 		{'name': 'CorrectedStagePosition', 'type': 'property'},
 		{'name': 'DarkFieldMode', 'type': 'property'},
+		{'name': 'DiffractionShift', 'type': 'property'},
 		{'name': 'Defocus', 'type': 'property'},
 		{'name': 'ProjectionMode', 'type': 'property'},
 		{'name': 'Emission', 'type': 'property'},
@@ -70,6 +71,7 @@ class TEM(baseinstrument.BaseInstrument):
 		{'name': 'Magnification', 'type': 'property'},
 		{'name': 'MainScreenPosition', 'type': 'property'},
 		{'name': 'ProbeMode', 'type': 'property'},
+		{'name': 'ProjectionMode', 'type': 'property'},
 		{'name': 'RawImageShift', 'type': 'property'},
 		{'name': 'Shutter', 'type': 'property'},
 		{'name': 'SpotSize', 'type': 'property'},
@@ -94,6 +96,7 @@ class TEM(baseinstrument.BaseInstrument):
 		{'name': 'EnergyFilterWidth', 'type': 'property'},
 	)
 	projection_lens_program = 'TEM'
+	projection_mode = 'imaging'
 	def __init__(self):
 		baseinstrument.BaseInstrument.__init__(self)
 		self.initConfig()
@@ -332,3 +335,15 @@ class TEM(baseinstrument.BaseInstrument):
 
 	def setApertureSelection(self, aperture_mechanism, name):
 		return False
+
+	def setStageSpeed(self, value):
+		# do nothing.
+		pass
+
+	def getStageSpeed(self):
+		# do nothing.
+		pass
+
+	def resetStageSpeed(self, value):
+		# do nothing.
+		pass

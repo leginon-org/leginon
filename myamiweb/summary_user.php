@@ -98,7 +98,7 @@ function init() {
  </td>
 </tr>
 <tr><td colspan=3><br/></td></tr>
-<?php ($currentproject) ? '<tr><td><span class="datafield0">Project: </span>'.$proj_link.'</td></tr>' :'' ?>
+<?php $proj_html=($currentproject) ? '<tr><td><span class="datafield0">Project: </span>'.$proj_link.'</td></tr>'."\n" :''; echo $proj_html ?>
 
 
 <?php
