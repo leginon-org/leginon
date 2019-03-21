@@ -1,17 +1,12 @@
 #!/usr/bin/env python
 '''
-This is for converting Ceta TIA raw output to SMV format.
+This is for converting Ceta TIA raw output to 32-bit float mrc format.
 '''
-print('''This converts a series of TIA raw output *.bin to smv format''')
+print('''This converts a series of TIA raw output *.bin to mrc format''')
 input_pattern= raw_input('Enter bin file prefix prior to _001.bin, for example: ')
-output_pattern=raw_input('Enter smv file prefix: ')
-offset_txt = raw_input('Data offset value (default=200 is added to the input value): ')
-if offset_txt == '':
-	offset = 200
-else:
-	offset = int(offset_txt)
+output_pattern=raw_input('Enter mrc file prefix: ')
 
-from pyami import tiaraw, numsmv
+from pyami import tiaraw, mrc
 
 import os
 import sys
@@ -39,7 +34,7 @@ for i in range(total):
 		in_name='%s_%03d.bin' % (input_pattern, i+1)
 	elif digits==2:
 		in_name='%s_%02d.bin' % (input_pattern, i+1)
-	out_name='%s_%03d.img' % (output_pattern, i+1)
+	out_name='%s_%03d.mrc' % (output_pattern, i+1)
 	data = tiaraw.read(in_name)
-	numsmv.write(data,out_name, offset=offset)
+	mrc.write(data,out_name)
 

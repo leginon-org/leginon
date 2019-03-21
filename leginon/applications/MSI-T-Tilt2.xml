@@ -1151,6 +1151,32 @@
         <field name="SEQ|dependencies" >[]</field>
         <field name="REF|ApplicationData|application" >167</field>
     </sqltable>
+  <!-- TEMControl -->
+    <sqltable name="NodeSpecData" >
+        <field name="DEF_id" >170</field>
+        <field name="DEF_timestamp" >2018-01-04 22:36:37</field>
+        <field name="class string" >TEMController</field>
+        <field name="alias" >Scope Control</field>
+        <field name="launcher alias" >main</field>
+        <field name="SEQ|dependencies" >[]</field>
+        <field name="REF|ApplicationData|application" >8</field>
+    </sqltable>
+    <sqltable name="BindingSpecData" >
+        <field name="DEF_id" >604</field>
+        <field name="DEF_timestamp" >2018-01-04 22:36:37</field>
+        <field name="event class string" >ChangePresetEvent</field>
+        <field name="from node alias" >Scope Control</field>
+        <field name="to node alias" >Presets Manager</field>
+        <field name="REF|ApplicationData|application" >8</field>
+    </sqltable>
+    <sqltable name="BindingSpecData" >
+        <field name="DEF_id" >605</field>
+        <field name="DEF_timestamp" >2018-01-04 22:36:37</field>
+        <field name="event class string" >PresetChangedEvent</field>
+        <field name="from node alias" >Presets Manager</field>
+        <field name="to node alias" >Scope Control</field>
+        <field name="REF|ApplicationData|application" >8</field>
+    </sqltable>
 
  </data>
 </applicationdump>

@@ -61,6 +61,7 @@ class ImagePanel(wx.Panel):
 		self.drawlast = False
 		self.movecount = 0
 		self.parent = parent
+		self.stats = {}
 
 		# get size of image panel (image display dimensions)
 		if type(imagesize) != tuple:
@@ -323,6 +324,7 @@ class ImagePanel(wx.Panel):
 		elif isinstance(imagedata, Image.Image):
 			self.setPILImage(imagedata)
 			stats = arraystats.all(imagedata)
+			self.stats = stats.copy()
 			self.statspanel.set(stats)
 			self.sizer.SetItemMinSize(self.statspanel, self.statspanel.GetSize())
 			self.sizer.Layout()
@@ -390,6 +392,7 @@ class ImagePanel(wx.Panel):
 		self.imagedata = numericimage
 
 		stats = arraystats.all(self.imagedata)
+		self.stats = stats.copy()
 		self.statspanel.set(stats)
 		self.sizer.SetItemMinSize(self.statspanel, self.statspanel.GetSize())
 
@@ -417,6 +420,7 @@ class ImagePanel(wx.Panel):
 
 	#--------------------
 	def clearImage(self):
+		self.stats = {}
 		self.contrasttool.setRange(None)
 		self.imagedata = None
 		self.setBitmap()
