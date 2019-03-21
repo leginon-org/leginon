@@ -213,4 +213,7 @@ define('SERVER_PORT', "55123");
 
 $TEST_SESSIONS = array();
 
+//used in [user results]  and [poster] 
+//define ('ACKNOWLEDGEMENTS', '');
+
 ?>
