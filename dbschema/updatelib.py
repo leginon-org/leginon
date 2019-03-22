@@ -304,11 +304,11 @@ class UpdateLib:
 
 		## hack for python 2.6, yuck
 		module_name = "schema-r%s"%(str(schema_number))
-		my_module = getattr(__import__("updates", fromlist=[module_name]), module_name)
 		try:
+			my_module = getattr(__import__("updates", fromlist=[module_name]), module_name)
 			my_class = my_module.SchemaUpdate()
 		except AttributeError:
-			# this module needs updating
+			# this module does not exist. no update
 			return False
 		if my_class.reRunOnBranchUpgrade is False:
 			print "reRunOnBranchUpgrade"
