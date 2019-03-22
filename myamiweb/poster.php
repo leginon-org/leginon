@@ -31,11 +31,15 @@ if (stripos($sessioninfo['Purpose'], 'nccat') !== false){
 	echo '<td><a href="http://nccat.nysbc.org/" target="_blank"><img src="./img/nccat_logo.png" width="75" height="75"></a></td>';
 	echo '<td style="padding: 0 5px 0 5px;">NCCAT Operations<br>';
 }
-else {
+elseif (defined("SEMC")) {
  	echo '<tr style="background-color:#475e7a;color:white;font-size:18px;font-weight:bold;">';
  	echo '<td><a href="http://semc.nysbc.org/" target="_blank"><img src="./img/semc_logo.png" width="75" height="75"></a></td>';
  	echo '<td style="padding: 0 5px 0 5px;">SEMC Operations<br>';
 }
+else{
+	echo '<tr><td>';
+}
+
 if ($instrumentinfo[0]['description']) echo str_replace('-EF','',$instrumentinfo[0]['description']);
 else echo $instrumentinfo[0]['name'].' '.$instrumentinfo[0]['hostname'];
 echo '<br>'.$sessioninfo['Purpose'];
@@ -202,15 +206,18 @@ echo '<td>';
 echo 'High tension (kV): <div style="float:right ">'.intval($imageinfo['high tension']/1000).'</div>';
 echo '</td>';
 echo '<td>';
-echo 'Offset: <div style="float:right ">('.$presetdata['SUBD|offset|x'].', '.$presetdata['SUBD|offset|y'].')</div>';
+echo 'Binning: <div style="float:right ">'.$presetdata['SUBD|binning|x'].' x '.$presetdata['SUBD|binning|y'].'</div>';
 echo '</td>';
 echo '</tr>';
 echo '<tr>';
 echo '<td>';
-echo 'Defocus (µm): <div style="float:right ">'.$presetdata['defocus'].'</div>';
+$defdata = $leginondata->getMinMaxDefocusForPreset($presetdata['name'], $expId);
+$defmin = number_format(-1e6*$defdata['maxdef'], 1);
+$defmax = number_format(-1e6*$defdata['mindef'], 1);
+echo 'Defocus range (µm): <div style="float:right ">'.$defmin.' - '.$defmax .'</div>';
 echo '</td>';
 echo '<td>';
-echo 'Binning: <div style="float:right ">'.$presetdata['SUBD|binning|x'].' x '.$presetdata['SUBD|binning|y'].'</div>';
+echo 'Exposure time (ms): <div style="float:right ">'.$imageinfo['exposure time'].'</div>';
 echo '</td>';
 echo '</tr>';
 
@@ -219,7 +226,7 @@ echo '<td>';
 echo 'Spot size: <div style="float:right ">'.$presetdata['spot size'].'</div>';
 echo '</td>';
 echo '<td>';
-echo 'Exposure time (ms): <div style="float:right ">'.$imageinfo['exposure time'].'</div>';
+echo 'Pixel size (Å): <div style="float:right ">'.number_format($imageinfo['pixelsize']*1e10,4).'</div>';
 echo '</td>';
 echo '</tr>';
 echo '<tr>';
@@ -227,36 +234,30 @@ echo '<td>';
 echo 'Intensity: <div style="float:right ">'.$presetdata['intensity'].'</div>';
 echo '</td>';
 echo '<td>';
-echo 'Pixel size (Å): <div style="float:right ">'.number_format($imageinfo['pixelsize']*1e10,4).'</div>';
+echo 'Dose rate (e<sup>-</sup>/&Aring;<sup>2</sup>/s): <div style="float:right ">'.number_format($maxpresetarray['dose']/$presetdata['exposure time']/1e17, 2).'</div>';
 echo '</td>';
 echo '</tr>';
 
 echo '<tr>';
 echo '<td>';
-echo 'Image shift: <div style="float:right ">('.$presetdata['SUBD|image shift|x'].', '.$presetdata['SUBD|image shift|y'].')</div>';
-echo '</td>';
-echo '<td>';
-echo 'Dose rate (e<sup>-</sup>/&Aring;<sup>2</sup>/s): <div style="float:right ">'.number_format($maxpresetarray['dose']/$presetdata['exposure time']/1e17, 2).'</div>';
-echo '</td>';
-echo '</tr>';
-echo '<tr>';
-echo '<td>';
-echo 'Beam shift: <div style="float:right ">('.$presetdata['SUBD|beam shift|x'].', '.$presetdata['SUBD|beam shift|y'].')</div>';
+echo 'Cs (mm): <div style="float:right ">'.number_format($instrumentinfo[0]['cs']*1000,3).'</div>';
 echo '</td>';
 echo '<td>';
 echo 'Total dose (e<sup>-</sup>/&Aring;<sup>2</sup>): <div style="float:right ">'.number_format($maxpresetarray['dose']/1e20,2).'</div>';
 echo '</td>';
 echo '</tr>';
+echo '<tr>';
+
 $x = ($presetdata['energy filter']== 1) ? "yes": "no";
 echo '<tr>';
 echo '<td>';
 echo 'Energy filtered: <div style="float:right ">'.$x.'</div>';
 echo '</td>';
+
 echo '<td>';
 echo 'Frame rate (ms): <div style="float:right ">'.number_format($presetdata['frame time'],2).'</div>';
 echo '</td>';
 echo '</tr>';
-echo '<tr>';
 echo '<td>';
 $x = ($presetdata['energy filter']== 1) ? $presetdata['energy filter width']: "None";
 echo 'Energy filter width: <div style="float:right ">'.$x.'</div>';
@@ -267,20 +268,31 @@ echo '</td>';
 echo '</tr>';
 
 echo '<table>';
-echo '</tr>';
-echo '<tr>';
-echo '<td colspan=2>';
-echo divtitle("Acknowledgement");
-echo '<div style="padding:10px">'
-.' Some of this work was performed at the National'
-.' Center for CryoEM Access and Training (NCCAT) and the Simons'
-.' Electron Microscopy Center located at the New York Structural Biology'
-.' Center, supported by the NIH Common Fund Transformative High'
-.' Resolution Cryo-Electron Microscopy program (U24 GM129539), and by'
-.' grants from the Simons Foundation (SF349247) and NY State.</div>';
-echo '</td>';
-echo '</tr>';
 
+if (stripos($sessioninfo['Purpose'], 'nccat') !== false){
+	echo '<tr>';
+	echo '<td colspan=2>';
+	echo divtitle("Acknowledgement");
+	echo '<div style="padding:10px">'
+	.' Some of this work was performed at the National'
+	.' Center for CryoEM Access and Training (NCCAT) and the Simons'
+	.' Electron Microscopy Center located at the New York Structural Biology'
+	.' Center, supported by the NIH Common Fund Transformative High'
+	.' Resolution Cryo-Electron Microscopy program (U24 GM129539), and by'
+	.' grants from the Simons Foundation (SF349247) and NY State.</div>';
+	echo '</td>';
+	echo '</tr>';
+}
+elseif (defined("ACKNOWLEDGEMENTS")) {
+	echo '<tr>';
+	echo '<td colspan=2>';
+	echo divtitle("Acknowledgement");
+	echo '<div style="padding:10px">';
+	echo ACKNOWLEDGEMENTS;
+	echo '</div>';
+	echo '</td>';
+	echo '</tr>';											
+}
 echo '<tr>';
 echo '<td colspan=2>';
 echo divtitle("References");
