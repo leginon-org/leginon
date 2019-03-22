@@ -969,7 +969,8 @@ class PresetsManager(node.Node):
 			return
 		# refs #3255 retry if image shift or beam shift parameters are not gotten 
 		trys = 0
-		while trys < 3 and (newpreset['image shift']['x'] is None or newpreset['beam shift']['x'] is None or newpreset['diffraction shift']['x'] is None):
+		# refs #7018 more layers of vailidation for diffraction shift for back compatibility.
+		while trys < 3 and (newpreset['image shift']['x'] is None or newpreset['beam shift']['x'] is None or ('diffraction shift' in newpreset.keys() and newpreset['diffraction shift'] is not None and newpreset['diffraction shift']['x'] is None)):
 			self.logger.info('scope parameters not complete, retry....')
 			newpreset = self._fromScope(newname, temname, camname, None, copybeam)
 			trys += 1
@@ -1543,7 +1544,7 @@ class PresetsManager(node.Node):
 		myimage = dict(emtargetdata['image shift'])
 		mybeam = dict(emtargetdata['beam shift'])
 		# TODO Find out when diffraction shift is or is not in emtargetdata
-		if emtargetdata['diffraction shift']:
+		if 'diffraction shift' in emtargetdata.keys() and emtargetdata['diffraction shift']:
 			mydiffraction = dict(emtargetdata['diffraction shift'])
 		else:
 			mydiffraction = None
