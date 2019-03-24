@@ -378,9 +378,9 @@ parametermapping = (
 	('high tension', 'HighTension'),
 	('probe mode','ProbeMode'),
 	('spot size', 'SpotSize'), # spot size is probe mode dependent
-	('intensity', 'Intensity'),
 	('projection mode','ProjectionMode'),
 	('magnification', 'Magnification'), # perform normalize all lens at this step if needed.
+	('intensity', 'Intensity'),
 	('beam shift', 'BeamShift'), # allowed beam shift is limited by magnification
 	('image shift', 'ImageShift'),
 	('diffraction shift', 'DiffractionShift'),
