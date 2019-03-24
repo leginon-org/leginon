@@ -375,12 +375,13 @@ parametermapping = (
 	# ScopeEM
 	# The order should base on dependency
 	('system time', 'SystemTime'),
+	('high tension', 'HighTension'),
 	('probe mode','ProbeMode'),
-	('projection mode','ProjectionMode'),
-	('magnification', 'Magnification'),
-	('spot size', 'SpotSize'),
+	('spot size', 'SpotSize'), # spot size is probe mode dependent
 	('intensity', 'Intensity'),
-	('beam shift', 'BeamShift'),
+	('projection mode','ProjectionMode'),
+	('magnification', 'Magnification'), # perform normalize all lens at this step if needed.
+	('beam shift', 'BeamShift'), # allowed beam shift is limited by magnification
 	('image shift', 'ImageShift'),
 	('diffraction shift', 'DiffractionShift'),
 	('focus', 'Focus'),
@@ -393,7 +394,6 @@ parametermapping = (
 	('corrected stage position', 'CorrectedStagePosition'),
 	('stage position', 'StagePosition'),
 	('column pressure', 'ColumnPressure'),
-	('high tension', 'HighTension'),
 	('main screen position', 'MainScreenPosition'),
 	('main screen magnification', 'MainScreenMagnification'),
 	('small screen position', 'SmallScreenPosition'),
