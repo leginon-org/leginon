@@ -4,7 +4,7 @@ import time
 
 # Change this to False to avoid automated screen lifting
 AUTO_SCREEN_UP = True
-AUTO_COLUMN_VALVE_OPEN = False
+AUTO_COLUMN_VALVE_OPEN = True
 # parallel imaging test
 PARALLEL_IMAGING = False
 
@@ -208,7 +208,7 @@ class CameraClient(object):
 		'''Acquire a raw image from the currently configured CCD camera
 			Exceptions are raised
 		'''
-		#self.prepareToAcquire(allow_retracted,exposure_type=type)
+		self.prepareToAcquire(allow_retracted,exposure_type=type)
 		if force_no_frames:
 			try:
 				self.instrument.ccdcamera.SaveRawFrames = False
