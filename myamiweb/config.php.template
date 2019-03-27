@@ -216,4 +216,8 @@ $TEST_SESSIONS = array();
 //used in [user results]  and [poster] 
 //define ('ACKNOWLEDGEMENTS', '');
 
+//show LOI views set to true if want them displayed.  May consume much resource if too many
+//of users do so at the same time.
+define('SHOW_LOI_VIEWS', false);
+
 ?>
