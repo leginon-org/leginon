@@ -95,7 +95,7 @@ var filename="<?php echo $filename; ?>"
 
 var pixsize=<?php echo $display_pixelsize; ?>;
 
-var is_diffr=<?php echo $is_diffraction; ?>;
+var is_diffr=<?php echo (int) $is_diffraction; ?>;
 
 var fftflag=<?php echo $fftflag; ?>
 
