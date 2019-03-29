@@ -12,7 +12,8 @@ $imgId = $newimage['id'];
 $imageinfo = $leginondata->getImageInfo($imgId);
 $sessionId = $imageinfo['sessionId'];
 if (!$sessionId) {
-	$sessionId = $leginondata->getSessionInfoFromImage($imgId);
+	$sessionInfo = $leginondata->getSessionInfoFromImage($imgId);
+	$sessionId = $sessionInfo['sessionId'];
 }
 $path = $leginondata->getImagePath($sessionId);
 
