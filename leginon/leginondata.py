@@ -1891,6 +1891,7 @@ class BeamTiltImagerSettingsData(AcquisitionSettingsData):
 			('correlation type', str),
 			('do auto coma', bool),
 			('auto coma limit', float),
+			('auto coma count limit', int),
 		)
 	typemap = classmethod(typemap)
 
