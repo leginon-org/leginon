@@ -6,8 +6,9 @@ CAMERA = False
 
 [optics]
 # Lens normalization is usually set in TUI but there are cases that
-# they are not active through scripting call. This force the normalization.
-FORCE_NORMALIZE_ALL_LENS_AFTER_MAG_SETTING = False
+# they are not desirable, for example on Talos column. This force
+# the normalization after setting mag, spotsize, or beamsize differently.
+FORCE_NORMALIZE_ALL_AFTER_SETTING = True
 
 # This scale convert beam tilt readout in radian to 
 # Tecnai or TEM Scripting Illumination.RotationCenter value

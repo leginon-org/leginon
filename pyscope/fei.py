@@ -60,7 +60,7 @@ class Tecnai(tem.TEM):
 		self.correctedstage = self.getFeiConfig('stage','do_stage_xyz_backlash')
 		self.corrected_alpha_stage = self.getFeiConfig('stage','do_stage_alpha_backlash')
 		self.alpha_backlash_delta = self.getFeiConfig('stage','stage_alpha_backlash_angle_delta')
-		self.normalize_all_after_mag_setting = self.getFeiConfig('optics','force_normalize_all_after_mag_setting')
+		self.normalize_all_after_setting = self.getFeiConfig('optics','force_normalize_all_after_setting')
 		try:
 			com_module.CoInitializeEx(com_module.COINIT_MULTITHREADED)
 		except:
@@ -102,6 +102,9 @@ class Tecnai(tem.TEM):
 		self.stage_speed = self.default_stage_speed
 		self.mainscreenscale = 44000.0 / 50000.0
 		self.wait_for_stage_ready = True
+		self.mag_changed = False
+		self.spotsize_changed = False
+		self.int_changed = False
 
 		## figure out which intensity property to use
 		## try to move this to installation
@@ -398,7 +401,21 @@ class Tecnai(tem.TEM):
 			pass
 		else:
 			raise ValueError
+		prev_int = self.getIntensity()
+		if prev_int != intensity:
+			self.int_changed = True
 		setattr(self.tecnai.Illumination, self.intensity_prop, intensity)
+		# Normalizations
+		if self.normalize_all_after_setting:
+			if self.mag_changed or self.spotsize_changed or self.int_changed:
+				if self.getDebugAll():
+					print 'normalize all'
+				self.normalizeLens('all')
+		#reset changed flag
+		self.mag_changed = False
+		self.spotsize_changed = False
+		self.int_changed = False
+
 		# sleep for intensity change
 		if self.getFeiConfig('camera','extra_protector_sleep_time'):
 			time.sleep(1)
@@ -554,9 +571,11 @@ class Tecnai(tem.TEM):
 			pass
 		else:
 			raise ValueError
-		
-		self.tecnai.Illumination.SpotsizeIndex = ss
-	
+		prev = self.getSpotSize()
+		if prev != ss:
+			self.tecnai.Illumination.SpotsizeIndex = ss
+			self.spotsize_changed = True
+
 	def getBeamTilt(self):
 		value = {'x': None, 'y': None}
 		value['x'] = float(self.tecnai.Illumination.RotationCenter.X) / self.getRotationCenterScale()
@@ -789,30 +808,6 @@ class Tecnai(tem.TEM):
 		else:
 			return self.special_submode_mags[mag][0]
 
-	def normalizeProjectionForMagnificationChange(self, new_mag_index):
-		'''
-		Normalize objective and projector if submode indices are
-		not adjacent.  This is necessary because of a lack of feature
-		in the normalization options from TUI. Insert this before
-		new magnification is set.
-		'''
-		try:
-			# This assumes that we are still at the old mag.
-			old_submode_index = self.tecnai.Projection.SubMode
-		except:
-			raise ValueError('can not get projection submode')
-		self.setMagnificationIndex(new_mag_index)
-		new_submode_index = self.getProjectionSubModeIndex()
-		if abs(old_submode_index - new_submode_index) > 1:
-		#if True:
-			# normalizeLens function returns after it finishes
-			self.normalizeLens('allprojection')
-		else:
-			# mag settings returns before normalization initiated
-			# from TUI is finished
-			time.sleep(2)
-		return
-
 	def setMagnification(self, mag):
 		if not self.getMagnificationsInitialized():
 			raise MagnificationsUninitialized
@@ -832,11 +827,19 @@ class Tecnai(tem.TEM):
 			index = self.magnifications.index(mag)
 		except ValueError:
 			raise ValueError('invalid magnification')
-		if self.use_normalization:
-			self.normalizeProjectionForMagnificationChange(index)
-		self.setMagnificationIndex(index)
-		if self.normalize_all_after_mag_setting:
-			self.normalizeLens('all')
+		try:
+			prev_index = self.getMagnificationIndex()
+		except ValueError:
+			# none of the valid index
+			prev_index = -1
+		need_proj_norm = False
+		if prev_index != index:
+			# This makes defocus accuracy better like a objective 
+			# normalization. This assumes that defocus will be set
+			# after this not before.
+			self.tecnai.Projection.Focus = 0.0
+			self.setMagnificationIndex(index)
+			self.mag_changed = True
 		return
 
 	def setPreDiffractionMagnification(self):
@@ -891,7 +894,7 @@ class Tecnai(tem.TEM):
 			self.registerProjectionSubMode(mag)
 			previousindex = index
 			index += 1
-		print self.getProjectionSubModeMap()
+		self.getProjectionSubModeMap()
 		self.setMagnifications(magnifications)
 		self.setMagnificationIndex(savedindex)
 
@@ -902,7 +905,6 @@ class Tecnai(tem.TEM):
 		'''
 		mode_id = self.getProjectionSubModeIndex()
 		name = self.getProjectionSubModeName()
-		print mag, mode_id,name
 		if mode_id not in self.projection_submodes.keys():
 			raise ValueError('unknown projection submode')
 		self.projection_submode_map[mag] = (name,mode_id)
@@ -1857,14 +1859,6 @@ class Krios(Tecnai):
 	def __init__(self):
 		Tecnai.__init__(self)
 
-	def normalizeProjectionForMagnificationChange(self, new_mag_index):
-		'''
-		Overwrite projection lens normalization on Titan Krios to do nothing
-		even if it is advisable to use normalization on the instrument.
-		This is done because Titan does not have submode 2 See Issue #3986
-		'''
-		pass
-
 	def hasAutoAperture(self):
 		return self.getUseAutoAperture()
 
@@ -1874,13 +1868,6 @@ class Halo(Tecnai):
 	'''
 	name = 'Halo'
 	use_normalization = True
-	def normalizeProjectionForMagnificationChange(self, new_mag_index):
-		'''
-		Overwrite projection lens normalization to do nothing
-		even if it is advisable to use normalization on the instrument.
-		This is done because Titan does not have submode 2 See Issue #3986
-		'''
-		pass
 
 	def getRefrigerantLevel(self,id=0):
 		'''
@@ -1893,15 +1880,15 @@ class EFKrios(Krios):
 	use_normalization = True
 	projection_lens_program = 'EFTEM'
 
-class Arctica(Tecnai):
-	name = 'Arctica'
+class Talos(Tecnai):
+	name = 'Talos'
 	use_normalization = True
 
 	def hasAutoAperture(self):
 		return self.getUseAutoAperture()
 
-class Talos(Tecnai):
-	name = 'Talos'
+class Arctica(Talos):
+	name = 'Arctica'
 	use_normalization = True
 
 	def hasAutoAperture(self):
