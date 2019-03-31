@@ -42,7 +42,6 @@ class Proxy(object):
 		self.objectservice = objectservice
 		self.objectservice._addDescriptionHandler(add=self.onAddDescription,
 																							remove=self.onRemoveDescription)
-		self.is_talos_column = None # not set yet
 
 	def onAddDescription(self, nodename, name, description, types):
 		if 'TEM' in types:
@@ -290,7 +289,6 @@ class Proxy(object):
 		return instance
 
 	def setData(self, instance, temname=None, ccdcameraname=None):
-		is_tem_instance = False
 		if isinstance(instance, leginondata.ScopeEMData):
 			if temname is None:
 				proxy = self.tem
@@ -299,7 +297,6 @@ class Proxy(object):
 					proxy = self.tems[temname]
 				except KeyError:
 					raise NotAvailableError('TEM \'%s\' not available' % temname)
-			is_tem_instance = True
 		elif isinstance(instance, leginondata.CameraEMData):
 			if ccdcameraname is None:
 				proxy = self.ccdcamera
@@ -319,8 +316,6 @@ class Proxy(object):
 		attributes = []
 		types = []
 		args = []
-		spotsize_index = -1
-		mag_index = -1
 		for key, attribute in parametermapping:
 			if key =='projection mode':
 				# force set of projection mode
@@ -343,14 +338,6 @@ class Proxy(object):
 				args.append((instance[key],))
 			else:
 				args.append(('fake',))
-			if key == 'spot size':
-				spotsize_index = len(keys)-1
-			if key == 'magnification':
-				mag_index = len(keys)-1
-		if is_tem_instance and spotsize_index+mag_index > 0 and self.isTalosColumn(proxy):
-			# To efficiently change presets on talos column, spotsize needs to be set before
-			# magnification.  See Issue #7076. This is an ugly workaround.
-			attributes, types, args = self.reorder(attributes, types, args, mag_index, spotsize_index)
 		results = proxy.multiCall(attributes, types, args)
 		self.updateLastSetGetTime()
 		for result in results:
@@ -359,35 +346,6 @@ class Proxy(object):
 					raise result
 			except AttributeError:
 				pass
-
-	def isTalosColumn(self, proxy):
-		temname = proxy._name
-		if self.is_talos_column is not None:
-			return self.is_talos_column
-		if temname.endswith('Talos') or temname.endswith('Arctica') or temname.endswith('Glacios'):
-			self.is_talos_column = True
-			return True
-		self.is_talos_column = False
-		return False
-
-	def reorder(self, attributes, types, args, mag_index, spotsize_index):
-		'''
-		reorder the lists to be sent through proxy so that we know spotsize is changed or not
-		when extra normalization can be done during setMagnification. See Issue #7076
-		'''
-		if spotsize_index != mag_index + 1:
-			raise ValueError('set spot size must be right after set magnification')
-		def reorder(mylist, i):
-			if len(mylist) > i+2:
-				after = mylist[i+2:]
-			else:
-				after = []
-			if i == 0:
-				before = []
-			else:
-				before = mylist[:i]
-			return before+[mylist[i+1],mylist[i]]+after
-		return reorder(attributes, mag_index), reorder(types, mag_index), reorder(args, mag_index)
 
 	def updateLastSetGetTime(self):
 		'''
@@ -420,9 +378,9 @@ parametermapping = (
 	('high tension', 'HighTension'),
 	('probe mode','ProbeMode'),
 	('projection mode','ProjectionMode'),
-	('magnification', 'Magnification'), # perform normalize all lens at this step if needed.
-	('spot size', 'SpotSize'), # keep this with Magnification for reordering
-	('intensity', 'Intensity'),
+	('magnification', 'Magnification'), # this change may trigger normalization.
+	('spot size', 'SpotSize'), # this change may trigger normalization.
+	('intensity', 'Intensity'), # perform normalize all lens at this step if needed
 	('beam shift', 'BeamShift'), # allowed beam shift is limited by magnification
 	('image shift', 'ImageShift'),
 	('diffraction shift', 'DiffractionShift'),
