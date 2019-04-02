@@ -297,6 +297,8 @@ class FeiCam(ccdcamera.CCDCamera):
 		self.csa.Wait()
 		if self.getDebugCamera():
 			print 'done waiting before acquire'
+		retry = False
+		reason = ''
 		try:
 			self.im = self.csa.Acquire()
 			t1 = time.time()
@@ -305,16 +307,23 @@ class FeiCam(ccdcamera.CCDCamera):
 			if self.getDebugCamera():
 				print 'Camera acquire:',e
 				print self.camera_settings.ExposureTime
-			if self.getAlignFrames() and self.getSaveRawFrames():
+			if self.getSaveRawFrames() and 'Timeout' in e.text:
+				# dose fractionation queue may timeout on the server. The next acquisition
+				# is independent enough that we allow it to retry.
+				reason = 'Falcon WaitForImageReady Timeout'
+				retry = True
+			if self.getAlignFrames() and self.getSaveRawFrames() and 'The parameter is incorrect' in e.text:
 				# dose fractionation definition range list is modified by the program.
 				#framecount = self.dfd.Count
 				#for i in range(framecount):
 				#	print '%d,%d' % (self.dfd[i].Begin, self.dfd[i].End)
+				reason='Parameter Correction for internal alignment'
+				retry = True
+			if retry == True:
 				try:
-					if 'The parameter is incorrect' in e.text:
-						self.im = self.csa.Acquire()
+					self.im = self.csa.Acquire()
 				except Exception, e:
-					raise RuntimeError('Error camera acquiring: %s' % (e,))
+					raise RuntimeError('Error camera acquiring after retry: %s--%s' % (reason,e,))
 			else:
 				raise RuntimeError('Error camera acquiring: %s' % (e,))
 		try:
