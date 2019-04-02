@@ -27,6 +27,7 @@ class CCDCamera(baseinstrument.BaseInstrument):
 		{'name': 'ExposureType', 'type': 'property'},
 		{'name': 'Offset', 'type': 'property'},
 		{'name': 'ExposureTimestamp', 'type': 'property'},
+		{'name': 'IntensityAveraged', 'type': 'property'},
 		## optional:
 		{'name': 'EnergyFilter', 'type': 'property'},
 		{'name': 'EnergyFilterWidth', 'type': 'property'},
@@ -54,6 +55,11 @@ class CCDCamera(baseinstrument.BaseInstrument):
 
 	def getCameraModelName(self):
 		return self.name
+
+	def getIntensityAveraged(self):
+		# Returns True if canera array value is averaged and thus does not increase value
+		# for longer exposure time.
+		return False
 
 	def calculateCenteredGeometry(self, dimension, binning):
 		camerasize = self.getCameraSize()

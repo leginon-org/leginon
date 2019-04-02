@@ -466,6 +466,10 @@ class DoseCalibrationClient(CalibrationClient):
 		sensitivity = self.retrieveSensitivity(ht, tem, ccdcamera)
 		self.node.logger.debug('Sensitivity %.2f' % sensitivity)
 		mean_counts = binmult * arraystats.mean(numdata) / (binningx*binningy)
+		intensity_averaged = imagedata['camera']['intensity averaged']
+		if intensity_averaged:
+			# multiplied by exp_time to get total counts for the exposure time.
+			mean_counts = mean_counts * exp_time
 		self.node.logger.debug('Mean counts %.1f' % mean_counts)
 		pixel_totaldose = mean_counts / sensitivity
 		return pixel_totaldose
