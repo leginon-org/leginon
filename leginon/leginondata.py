@@ -177,6 +177,7 @@ camera_params = (
 	('exposure time', float),
 	('exposure type', str),
 	('exposure timestamp', float),
+	('intensity averaged', bool),
 	('inserted', bool),
 	('dump', bool),
 	('pixel size', dict),

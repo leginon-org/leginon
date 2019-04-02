@@ -53,6 +53,7 @@ def get_feiadv_sim():
 class FeiCam(ccdcamera.CCDCamera):
 	name = 'FEICAM'
 	camera_name = 'FEI_CAM'
+	intensity_averaged = False
 
 	def __init__(self):
 		self.unsupported = []
@@ -110,6 +111,9 @@ class FeiCam(ccdcamera.CCDCamera):
 
 	def getCameraModelName(self):
 		return self.camera_name
+
+	def getIntensityAveraged(self):
+		return self.intensity_averaged
 
 	def setDimension(self, value):
 		self.dimension = value
@@ -361,6 +365,8 @@ class FeiCam(ccdcamera.CCDCamera):
 				print 'croping %s to offset %s and dim %s failed' %(self.limit_dim, self.readout_offset,self.dimension)
 			raise
 		# TO DO: Maybe need to scale ?
+		if SIMULATION and self.getIntensityAveraged():
+			arr = arr / (self.getExposureTime()/1000.0)
 		return arr
 
 	def getMetaDataDict(self,meta_obj):
@@ -425,6 +431,7 @@ class Ceta(FeiCam):
 	name = 'Ceta'
 	camera_name = 'BM-Ceta'
 	binning_limits = [1,2,4]
+	intensity_averaged = False
 
 	def getSystemGainDarkCorrected(self):
 		return True
@@ -434,6 +441,9 @@ class Falcon3(FeiCam):
 	camera_name = 'BM-Falcon'
 	binning_limits = [1,2,4]
 	electron_counting = False
+	# non-counting Falcon3 is the only camera that returns array aleady averaged by frame
+	# to keep values in more reasonable range.
+	intensity_averaged = True
 
 	def __init__(self):
 		super(Falcon3,self).__init__()
@@ -585,3 +595,4 @@ class Falcon3EC(Falcon3):
 	camera_name = 'BM-Falcon'
 	binning_limits = [1,2,4]
 	electron_counting = True
+	intensity_averaged = False

@@ -424,6 +424,7 @@ parametermapping = (
 	('exposure time', 'ExposureTime'),
 	('exposure type', 'ExposureType'),
 	('exposure timestamp', 'ExposureTimestamp'),
+	('intensity averaged', 'IntensityAveraged'),
 	('inserted', 'Inserted'),
 	('pixel size', 'PixelSize'),
 	('energy filtered', 'EnergyFiltered'),

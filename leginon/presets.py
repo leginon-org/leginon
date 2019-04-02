@@ -1186,7 +1186,8 @@ class PresetsManager(node.Node):
 		old_time = camdata0['exposure time']
 		self.old_time = old_time
 		new_time = old_time * dose_to_match / old_dose
-		if new_time > 5000.0 or new_time <= 1.0:
+		# maximal exposure time of Falcon3EC is now the limit
+		if new_time > 60000.0 or new_time <= 1.0:
 			self.logger.warning('Ignore unreasonable exposure time at %.1f ms' % float(new_time))
 			new_time = old_time
 
@@ -1196,9 +1197,11 @@ class PresetsManager(node.Node):
 
 	def calcDoseFromCameraDoseRate(self, presetname, camera_dose_rate, image_mean):
 		preset = self.presetByName(presetname)
-		time_second = preset['exposure time'] /1000.0
-		# TODO: need to handle binnings : SUM or AVERAGE.
-		# Falcon3 give values per frame not sum is also going to be a problem.
+		# Falcon3 non-counting mode gives values per frame not sum. Use through Leginon as per second.
+		intensity_averaged = self.instrument.ccdcamera.IntensityAveraged
+		time_second = 1.0
+		if not intensity_averaged:
+			time_second = preset['exposure time'] /1000.0
 		sensitivity = image_mean / (camera_dose_rate*time_second*preset['binning']['x']*preset['binning']['y'])
 		ht = self.instrument.tem.HighTension
 		self.dosecal.storeSensitivity(ht, sensitivity,tem=preset['tem'],ccdcamera=preset['ccdcamera'])
