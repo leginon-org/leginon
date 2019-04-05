@@ -19,10 +19,32 @@ $instrumentinfo = $leginondata->getInstrumentInfo($sessioninfo['InstrumentId']);
 
 echo "<link rel='stylesheet' href='css/neiladd.css' />";
 echo "<title>".$sessioninfo['Name']." Report</title>";
+echo '<script src="tinymce/tinymce.min.js"></script>';
+echo '<script type="text/javascript">';
+$text = <<<EOT
+tinymce.init({
+    selector: "textarea#mytextarea",
+    plugins: [
+         "advlist autolink link image lists charmap print preview hr anchor pagebreak",
+         "searchreplace wordcount visualblocks visualchars insertdatetime media nonbreaking",
+         "table contextmenu directionality emoticons paste textcolor responsivefilemanager code"
+   ],
+   toolbar1: "undo redo | bold italic underline | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | styleselect",
+   toolbar2: "| responsivefilemanager | link unlink anchor | image media | forecolor backcolor  | print preview code ",
+   image_advtab: true ,
+EOT;
+echo $text;
+echo 'external_filemanager_path:"'.BASE_URL.'filemanager/",'
+   .' filemanager_title:"Responsive Filemanager" ,'
+   .' external_plugins: { "filemanager" : "'.BASE_URL.'filemanager/plugin.min.js"}'
+ .' });';
+echo '</script>';
+	
 //echo '<pre>'; print_r($sessioninfo); echo '</pre>';
 //echo '<pre>'; print_r($imageinfo); echo '</pre>';
 //echo '<pre>'; print_r($summary); echo '</pre>';
 //echo '<pre>'; print_r($instrumentinfo); echo '</pre>';
+echo PHP_EOL;
 echo '<center>';
 echo '<table cellspacing="0">';
 
@@ -148,6 +170,34 @@ $fields = array('defocus1', 'defocus2',
 		'resolution_80_percent', 'resolution_50_percent', 'ctffind4_resolution');
 $stats = $ctf->getCTFStats($fields, $expId);
 		
+$mytextarea = "";
+if($_SERVER['REQUEST_METHOD'] === 'POST'){
+		if (!$ctf->mysql->SQLTableExists("poster")){
+			$query = "CREATE TABLE IF NOT EXISTS poster (
+            expId INT(11) NOT NULL,
+            textarea TEXT NOT NULL,
+			PRIMARY KEY (expId));";
+			$ctf->mysql->SQLQuery($query);
+		}
+		$data['expId']=$expId;
+		$data['textarea']=$_POST['mytext'];
+		$mytextarea = $_POST['mytext'];
+		
+		$q = "SELECT textarea from poster WHERE expId = $expId";
+		$r = $ctf->mysql->getSQLResult($q);
+		if ($r) {
+			$ctf->mysql->SQLUpdate('poster',$data);
+		}
+		else{
+			$ctf->mysql->SQLInsert('poster',$data);
+		}
+		
+}
+elseif ($ctf->mysql->SQLTableExists("poster")){
+	$q = "SELECT textarea from poster WHERE expId = $expId";
+	$mytextarea= $ctf->mysql->getSQLResult($q)[0]['textarea'];	
+}
+
 echo displayCTFstats($stats, $display_keys);
 echo "<center><a href='./processing/ctfgraph.php?hg=1&expId=$expId&s=1&f=defocus1'>\n";
 echo "<img border='0' width='500' height='300' src='./processing/ctfgraph.php?"
@@ -174,6 +224,7 @@ if (!empty($icethicknessobj)) {
 } else {
 	echo "no Objective Scattering Ice Thickness information available";
 }
+
 $gr_imageinfo = $leginondata->getImageInfoFromPreset($summary[0]['presetId']);
 echo divtitle("Atlas");
 echo "<img border='0' src='getimg.php?session=$expId&id=".$gr_imageinfo['imageId']."&preset=atlas&t=80&sb=1&flt=default&fftbin=a&binning=auto&m=1&r=-1&opt=2&lj=1&psel=2&pcb=d&autoscale=s;5&conly=1&s=500'>";
@@ -268,6 +319,15 @@ echo '</td>';
 echo '</tr>';
 
 echo '<table>';
+
+echo '<tr>';
+echo '<td colspan=2>';
+echo '<form method="post">';
+echo '<textarea id="mytextarea" name="mytext">'.$mytextarea.'</textarea>';
+echo '<input type="submit" value="Save" />';
+echo '</form>';
+echo '</td>';
+echo '</tr>';
 
 if (stripos($sessioninfo['Purpose'], 'nccat') !== false){
 	echo '<tr>';
