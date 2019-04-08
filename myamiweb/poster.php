@@ -19,6 +19,8 @@ $instrumentinfo = $leginondata->getInstrumentInfo($sessioninfo['InstrumentId']);
 
 echo "<link rel='stylesheet' href='css/neiladd.css' />";
 echo "<title>".$sessioninfo['Name']." Report</title>";
+echo '<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.5.3/jspdf.debug.js" integrity="sha384-NaWTHo/8YCBYJ59830LTz/P4aQZK1sS0SneOgAvhsIl3zBu8r9RevNg5lHCHAuQ/" crossorigin="anonymous"></script>';
+echo '<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.4.1/html2canvas.js"></script>';
 echo '<script src="tinymce/tinymce.min.js"></script>';
 echo '<script type="text/javascript">';
 $text = <<<EOT
@@ -420,6 +422,24 @@ echo '</table>';
 // echo '</td>';
 // echo '</tr>';
 // echo '</table>';
+echo '</td>';
+echo '</tr>';
+echo '</table>';
 
+$text = <<<EOT
+<script type="text/javascript">
+function PDFFromHTML() {
+var doc = new jsPDF('p','pt','a4');
+doc.addHTML(document.body,function() {
+    doc.save('{$sessioninfo['Name']}_report.pdf');
+});
+};
+
+EOT;
+echo $text;
+//echo 'doc.output("dataurlnewwindow");}';
+//echo 'doc.save("'.$sessioninfo['Name'].'_report.pdf");}';
+echo '</script>';
+echo '<a class="button" href="javascript:PDFFromHTML()">Download PDF</a>';
 echo '</center>';
 ?>
