@@ -123,11 +123,6 @@ class RawTransfer(object):
 		return None
 
 	def isRecentCreation(self,path):
-<<<<<<< HEAD
-		ctime = os.path.getctime(path)
-		t0 = time.time()
-		is_recent =  t0 - ctime <= max_image_query_delay
-=======
 		'''
 		This is called after a file is not found in the database CameraEMData.
 		A created frames should be recorded in the database in seconds.
@@ -140,7 +135,6 @@ class RawTransfer(object):
 		ctime = os.path.getctime(path)
 		t0 = time.time()
 		is_recent =  t0 - ctime <= self.params['cleanup_delay_minutes']*60
->>>>>>> origin/trunk
 		if not is_recent:
 			print 'File was created %d minutes ago. Should be in database by now if ever.' % (int((t0-ctime)/60),)
 		return is_recent
