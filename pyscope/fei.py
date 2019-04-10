@@ -809,7 +809,6 @@ class Tecnai(tem.TEM):
 			self.registerProjectionSubMode(mag)
 			previousindex = index
 			index += 1
-		print self.getProjectionSubModeMap()
 		self.setMagnifications(magnifications)
 		self.setMagnificationIndex(savedindex)
 
