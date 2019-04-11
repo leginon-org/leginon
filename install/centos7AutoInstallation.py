@@ -15,7 +15,7 @@ class CentosInstallation(object):
 
 	def setReleaseDependantValues(self):
 		# need to change to branch when release
-		self.gitCmd = "git clone -b myami-beta http://emg.nysbc.org/git/myami " + self.gitMyamiDir
+		self.gitCmd = "git clone -b trunk http://emg.nysbc.org/git/myami " + self.gitMyamiDir
 		# redhat release related values
 		self.torqueLibPath = '/var/lib/torque/'
 
@@ -181,6 +181,29 @@ class CentosInstallation(object):
 		self.writeToLog("#===================================================\n")
 		return stdoutResult
 
+	def validateCommandOutput(self, cmd, pattern='', happy=True):
+		'''
+		run a command and then search the output for pattern string.
+		if found and happy is True then return True.  If found but happy is false
+		then return False.
+		'''
+		proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		stdoutResult = proc.stdout.read()
+		stderrResult = proc.stderr.read()
+		print stdoutResult, stderrResult
+		sys.stderr.write(stderrResult)
+		returncode = proc.wait()
+		found=False
+		if pattern:
+			if pattern in stderrResult or pattern in stdoutResult:
+				found = True
+		else:
+			if not (stdoutResult or stderrResult):
+				found = True
+		if (found and happy) or (not found and not happy):
+					return True
+		return False
+
 	def yumInstall(self, packagelist):
 		
 		if not packagelist:
@@ -310,18 +333,20 @@ class CentosInstallation(object):
 		self.mariadbYumInstall()
 		self.writeToLog("--- MariaDB is installed through yum on CentOs 7")
 		# turn on auto mysql start
-		self.runCommand("systemctl enable mariadb")
-		# stop mysql server (if it's running)
-		self.runCommand("systemctl stop mariadb")
+		if self.validateCommandOutput('systemctl status mariadb', pattern='loaded', happy=False):
+			# enable and start
+			self.runCommand("systemctl enable mariadb")
+		elif self.validateCommandOutput('systemctl status mariadb', pattern='inactive', happy=False):
+			# stop mysql server (if it's running)
+			self.runCommand("systemctl stop mariadb")
 		# start mysql server
 		self.runCommand("chown -R mysql:mysql  /var/lib/mysql")
 		
-		#https://stackoverflow.com/questions/33510184/change-mysql-root-password-on-centos7
-		#os.system('systemctl set-environment MYSQLD_OPTS="--skip-grant-tables"')
 		# TO DO: Need to find a good my.cnf for mariadb
 		self.updateMyCnf()
-		os.system("mysqld_safe --skip-grant-tables &")
-		#os.system("systemctl start mariadb")
+		# start without skip-grant-tables so that password can be changed
+		# and users can be added later
+		os.system("systemctl start mariadb")
 		mysql_is_active = False
 		t0 = time.time()
 		while not mysql_is_active and time.time() - t0 < 30.0:
@@ -330,8 +355,25 @@ class CentosInstallation(object):
 		if time.time() - t0 >= 30.0:
 			return False
 
+		# set mysql root password
+		self.writeToLog("#===================================================")
+		if self.validateCommandOutput('mysqladmin -u root -p%s ping' % self.dbPass, pattern='failed', happy=True):
+			self.writeToLog("Changing mysql root password to %s" % self.dbPass)
+			if self.validateCommandOutput('mysqladmin -u root ping', pattern='failed', happy=False):
+				os.system("mysqladmin -u root password %s" % self.dbPass)
+				os.system("mysqladmin -u root flush-privileges")
+			else:
+				print '===========Manual intervention needed================='
+				print 'mysql password is neither none nor serverRoorPass'
+				print "You need to run these command manually"
+				print "mysqladmin -u root -p password %s" % self.dbPass
+				print "mysqladmin -u root -p flush-privileges"
+				return False
+		else:
+			self.writeToLog("mysql root password is %s" % self.dbPass)
+
 		# run database setup script.
-		cmd = os.path.join(self.gitMyamiDir, 'install/newDBsetup.php -L %s -P %s -H %s -U %s -E %s' % (self.leginonDB, self.projectDB, self.dbHost, self.dbUser, self.adminEmail))
+		cmd = os.path.join(self.gitMyamiDir, 'install/newDBsetup.php -L %s -P %s -H %s -U %s -S %s -E %s' % (self.leginonDB, self.projectDB, self.dbHost, self.dbUser, self.dbPass, self.adminEmail))
 		cmd = 'php ' + cmd
 
 		self.writeToLog("#===================================================")
@@ -832,7 +874,7 @@ endif
 
 	def processServerYumInstall(self):
 
-		packagelist = ['wget','sudo','rsync','passwd','tar','firefox','git','ImageMagick', 'MySQL-python', 'compat-gcc-34-g77', 'compat-libf2c-34', 'compat-libgfortran-41', 'fftw3-devel', 'gcc-c++', 'gcc-gfortran', 'gcc-objc', 'gnuplot', 'grace', 'gsl-devel', 'libtiff-devel', 'netpbm-progs', 'numpy', 'openmpi-devel', 'opencv-python', 'python-devel', 'python-imaging', 'python-matplotlib', 'python-tools', 'scipy', 'wxPython', 'xorg-x11-server-Xvfb', 'libjpeg-devel', 'zlib-devel', 'unzip']
+		packagelist = ['vim','wget','sudo','rsync','passwd','tar','firefox','git','ImageMagick', 'MySQL-python', 'compat-gcc-34-g77', 'compat-libf2c-34', 'compat-libgfortran-41', 'fftw3-devel', 'gcc-c++', 'gcc-gfortran', 'gcc-objc', 'gnuplot', 'grace', 'gsl-devel', 'libtiff-devel', 'netpbm-progs', 'numpy', 'openmpi-devel', 'opencv-python', 'python-devel', 'python-imaging', 'python-matplotlib', 'python-tools', 'scipy', 'wxPython', 'xorg-x11-server-Xvfb', 'libjpeg-devel', 'zlib-devel', 'unzip']
 		self.yumInstall(packagelist)
 
 	def enableTorqueComputeNode(self):
@@ -894,7 +936,7 @@ endif
 
 		for line in inf:
 			if line.startswith('path:'):
-				outf.write('path: %s/leginon\n' % (self.imagesDir))
+				outf.write('path: %sleginon\n' % (self.imagesDir))
 			else:
 				outf.write(line)
 		inf.close()
@@ -914,6 +956,8 @@ endif
 		for line in inf:
 			if line.startswith('user: usr_object'):
 				outf.write('user: root\n')
+			elif line.startswith('passwd:'):
+				outf.write('passwd: %s\n' % self.dbPass)
 			else:
 				outf.write(line)
 		inf.close()
@@ -1266,6 +1310,44 @@ endif
 		self.leginon_app_rootdir = self.centosWebDir
 		return True
 
+	def setupData(self):
+		'''
+		Run autoInstallSetup.php that upload defaults and applications.
+		'''
+		app_version = 1+int(self.doUpload2ClientApps)
+		setupURL = "http://localhost/myamiweb/setup/autoInstallSetup.php?password=" + self.serverRootPass + "&myamidir=" + self.leginon_app_rootdir + "&appv=%d" % app_version + "&uploadsample=" + "%d" % int(self.doDownloadSampleImages)
+		myamiwebOpened = None
+		# To get the included path correctly in php command, we need to cd to where the file is.
+		cmd = "php autoInstallSetup.php -password%s -myamidir%s -appv%d -uploadsample%d" % (self.serverRootPass, self.leginon_app_rootdir, app_version, int(self.doDownloadSampleImages))
+		curdir = os.getcwd()
+		websetupdir = os.path.join(self.centosWebDir, 'myamiweb','setup')
+		os.chdir(websetupdir)
+		print("========================")
+		print("Running %s" % cmd)
+		myamiwebUrl = 'http://localhost/myamiweb'
+		try:
+			if self.validateCommandOutput(cmd, pattern='Failed', happy=True):
+				# if failed to upload applications
+				raise RuntimeError(cmd)
+			myamiwebOpened = webbrowser.open_new(myamiwebUrl)
+		except:
+			print("ERROR: Failed to run Myamiweb setup script.")
+			print("You may try running " + setupURL + " in your web browser. ")
+			print(sys.exc_info()[0])
+			self.writeToLog("ERROR: Failed to run Myamiweb setup script (autoInstallSetup.php). ")
+			os.chdir(curdir)
+			return False
+		else:
+			if ( myamiwebOpened ):
+				self.writeToLog("Myamiweb Started.")
+			else:
+				print("ERROR: Failed to open myamiweb in browser.")
+				print("You may open with %s your web browser. " % (myamiwebUrl,))
+				self.writeToLog("ERROR: Failed to open Myamiweb. ")
+				return False
+		os.chdir(curdir)
+		return True
+
 	def run(self):
 		self.currentDir = os.getcwd()
 		self.logFilename = 'installation.log'
@@ -1273,16 +1355,17 @@ endif
 		self.enableLogin = 'false'
 		self.dbHost = 'localhost'
 		self.dbUser = 'root'
+		# dbPass will be changed to serverRootPass during setupDBServer.
 		self.dbPass = ''
 		self.serverRootPass = ''
 		self.leginonDB = 'leginondb'
 		self.projectDB = 'projectdb'
 		self.adminEmail = ''
 		self.csValue = 2.0
-		self.imagesDir = '/myamiImages'
+		self.imagesDir = '/myamiImages/'
 
 		# CentOS default
-		self.centosWebDir = "/var/www/html"
+		self.centosWebDir = "/var/www/html/"
 		self.setReleaseDependantValues()
 
 		self.hostname = self.getServerName()
@@ -1309,12 +1392,15 @@ endif
 		result = self.getDefaultValues()
 		if result is False:
 			sys.exit(1)
+
+		self.getMyami()
 	
 		if self.doInstallJobServerPackages:	
 			result = self.setupJobServer()
 			if result is False:
 				self.failedInstallJobServer = True
 		
+		self.dbPass = self.serverRootPass
 		result = self.setupProcessServer()
 		if result is False:
 			sys.exit(1)
@@ -1339,9 +1425,13 @@ endif
 		print("Installation Complete.")
 		print("Appion will launch in your web browser momentarily.")
 		print("You may launch Leginon with the following command: start-leginon.py")
-		print("IMPORTANT: To view images in the web browser, you must first start the Redux server.")
+		print("IMPORTANT: To view images in the web browser, you may need to start the Redux server.")
 		print("Start the Redux Server with the following command: /sbin/service reduxd start")
 		print("========================")
+		if self.validateCommandOutput('systemctl status reduxd', pattern='loaded', happy=False):
+			self.runCommand("systemctl enable reduxd")
+		else:
+			self.runCommand("systemctl restart reduxd")
 
 		if self.doInstallJobServerPackages:	
 			if self.failedInstallJobServer == False:
@@ -1356,24 +1446,10 @@ endif
 		if result is False:
 			sys.exit(1)
 
-		app_version = 1+int(self.doUpload2ClientApps)
-		setupURL = "http://localhost/myamiweb/setup/autoInstallSetup.php?password=" + self.serverRootPass + "&myamidir=" + self.leginon_app_rootdir + "&appv=" + app_version + "&uploadsample=" + "%d" % int(self.doDownloadSampleImages)
-		setupOpened = None
-		try:
-			setupOpened = webbrowser.open_new(setupURL)
-		except:
-			print("ERROR: Failed to run Myamiweb setup script.")
-			print("You may try running " + setupURL + " in your web browser. ")
-			print(sys.exc_info()[0])
-			self.writeToLog("ERROR: Failed to run Myamiweb setup script (autoInstallSetup.php). ")
-		else:
-			if ( setupOpened ):
-				self.writeToLog("Myamiweb Started.")
-			else:
-				print("ERROR: Failed to run Myamiweb setup script.")
-				print("You may try running " + setupURL + " in your web browser. ")
-				self.writeToLog("ERROR: Failed to run Myamiweb setup script (autoInstallSetup.php). ")
-		
+		result = self.setupData()
+		if result is False:
+			sys.exit(1)
+
 		subprocess.Popen("start-leginon.py")
 		self.writeToLog("Leginon Started")
 		
