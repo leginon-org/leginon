@@ -65,6 +65,14 @@ if(is_dir($dir)){
 	}
 }
 
+/* Check if applications got imported
+*/
+$apps = $leginondat->getApplications();
+if (empty($apps)) {
+	echo "Failed to import applications";
+	echo "Check files in ".$dir."for version ".$app_version;
+	exit(1);
+}
 /*
 * create projects
 */
