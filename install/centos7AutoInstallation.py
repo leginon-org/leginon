@@ -264,13 +264,13 @@ class CentosInstallation(object):
 	def processServerExtraPythonPackageInstall(self):
 		self.runCommand("yum install -y python-pip")
 		self.runCommand("pip install joblib==0.10.3")		
+		self.runCommand("pip install slackclient==1.0.0")
 
 	def setupWebServer(self):
 		self.writeToLog("--- Start install Web Server")
 		#myamiweb yum packages
 		packagelist = ['php-pecl-ssh2','php-mongodb.noarch', 'mod_ssl', 'fftw3-devel','git','python-imaging','python-devel','mod_python','scipy','httpd', 'libssh2-devel', 'php', 'php-mysql', 'phpMyAdmin.noarch', 'php-devel', 'php-gd', ]
 		self.yumInstall(packagelist)
-		self.runCommand("easy_install fs==0.5 PyFFTW3")
 
 		# Redux Server is on Web server for now.
 		self.installReduxServer()
@@ -828,7 +828,7 @@ endif
 
 	def processServerYumInstall(self):
 
-		packagelist = ['ImageMagick', 'MySQL-python', 'compat-gcc-34-g77', 'compat-libf2c-34', 'compat-libgfortran-41', 'fftw3-devel', 'gcc-c++', 'gcc-gfortran', 'gcc-objc', 'gnuplot', 'grace', 'gsl-devel', 'libtiff-devel', 'netpbm-progs', 'numpy', 'openmpi-devel', 'opencv-python', 'python-devel', 'python-imaging', 'python-matplotlib', 'python-tools', 'scipy', 'wxPython', 'xorg-x11-server-Xvfb', 'libjpeg-devel', 'zlib-devel', 'unzip']
+		packagelist = ['wget','sudo','rsync','passwd','tar','firefox','git','ImageMagick', 'MySQL-python', 'compat-gcc-34-g77', 'compat-libf2c-34', 'compat-libgfortran-41', 'fftw3-devel', 'gcc-c++', 'gcc-gfortran', 'gcc-objc', 'gnuplot', 'grace', 'gsl-devel', 'libtiff-devel', 'netpbm-progs', 'numpy', 'openmpi-devel', 'opencv-python', 'python-devel', 'python-imaging', 'python-matplotlib', 'python-tools', 'scipy', 'wxPython', 'xorg-x11-server-Xvfb', 'libjpeg-devel', 'zlib-devel', 'unzip']
 		self.yumInstall(packagelist)
 
 	def enableTorqueComputeNode(self):
@@ -1014,46 +1014,13 @@ endif
 		outf.close()
 		os.remove('/etc/httpd/conf/httpd.conf-tmp')
 
-	def installPhpMrc(self):
-		
-		if os.path.isfile('/etc/php.d/mrc.ini'):
-			return
-
-		phpmrcdir = os.path.join(self.gitMyamiDir, "programs/php_mrc")
-		os.chdir(phpmrcdir)
-		self.runCommand("phpize")
-		self.runCommand("./configure")
-		self.runCommand("make")
-		module = os.path.join(phpmrcdir, "modules/mrc.so")
-
-		if not os.path.isfile(module):
-			self.writeToLog("ERROR: mrc.so failed")
-			sys.exit(1)
-
-		self.runCommand("make install")
-		f = open("/etc/php.d/mrc.ini", "w")
-		f.write("; Enable mrc extension module\n")
-		f.write("extension=mrc.so\n")
-		f.close()
-		os.chdir(self.currentDir)
-
 	def installReduxServer(self):
 		# Redux prerequisits: python, numpy, scipy, pil, pyfilesystem, fftw3, pyfftw, pyami, numextension
 		#redux yum packages
 		packagelist = [ 'fftw-devel', 'numpy', 'python-devel', 'python-imaging', 'scipy', ]
 		self.yumInstall(packagelist)
 		# Most are installed as on processingServer
-		packagelist = [
-			{
-				# Python fs
-				'targzFileName':'fs-0.4.0.tar.gz',
-				'fileLocation':'https://pypi.python.org/packages/08/c3/9a6e3c7bd2755e3383c84388c1e01113bddafa8008a0aa4af64996ab4470/',
-				'unpackDirName':'fs-0.4.0',
-			}
-		]
-
-		for p in packagelist:
-			self.installPythonPackage(p['targzFileName'], p['fileLocation'], p['unpackDirName'])
+		self.runCommand("easy_install fs==0.5 PyFFTW3")
 
 		# Setup the redux config file.
 		self.editReduxConfig()
@@ -1154,7 +1121,7 @@ endif
 			elif "addplugin(\"processing\");" in line:
 				outf.write("addplugin(\"processing\");\n")
 			elif "// $PROCESSING_HOSTS[]" in line:
-				outf.write("$PROCESSING_HOSTS[] = array('host' => '%s', 'nproc' => %d,'nodesmax' => '1','ppndef' => '1','ppnmax' => '1','reconpn' => '1','walltimedef' => '48','walltimemax' => '240','cputimedef' => '1000','cputimemax' => '10000','memorymax' => '','appionbin' => '/usr/','appionlibdir' => '/usr/lib/python2.4/site-packages/','baseoutdir' => '/appion','localhelperhost' => 'localhost','dirsep' => '/','wrapperpath' => '','loginmethod' => 'USERPASSWORD','loginusername' => '','passphrase' => '','publickey' => '','privatekey' => ''	);\n"%(self.dbHost, self.nproc))
+				outf.write("$PROCESSING_HOSTS[] = array('host' => '%s', 'nproc' => %d,'nodesmax' => '1','ppndef' => '1','ppnmax' => '1','reconpn' => '1','walltimedef' => '48','walltimemax' => '240','cputimedef' => '1000','cputimemax' => '10000','memorymax' => '','appionbin' => '/usr/','appionlibdir' => '/usr/lib/python2.7/site-packages/','baseoutdir' => '/appion','localhelperhost' => 'localhost','dirsep' => '/','wrapperpath' => '','loginmethod' => 'USERPASSWORD','loginusername' => '','passphrase' => '','publickey' => '','privatekey' => ''	);\n"%(self.dbHost, self.nproc))
 			elif "// $CLUSTER_CONFIGS[]" in line:
 				outf.write("$CLUSTER_CONFIGS[] = 'default_cluster';\n")
 			elif line.startswith("define('TEMP_IMAGES_DIR', "):
@@ -1280,7 +1247,7 @@ endif
 		fromdir = os.path.join(self.gitMyamiDir, 'leginon', 'applications')
 		todir = os.path.join(self.centosWebDir, 'leginon')
 		# Default location
-		self.leginon_app_dir = fromdir
+		self.leginon_app_rootdir = self.gitMyamiDir
 		if not os.path.isdir(todir):
 			os.mkdir(todir)
 		resultdir = os.path.join(todir,'applications')
@@ -1292,7 +1259,7 @@ endif
 				print "Copying Leginon applications file to web server failed:"
 				print e
 				return False
-		self.leginon_app_dir = resultdir
+		self.leginon_app_rootdir = self.centosWebDir
 		return True
 
 	def run(self):
@@ -1338,11 +1305,6 @@ endif
 		result = self.getDefaultValues()
 		if result is False:
 			sys.exit(1)
-		
-
-		self.yumUpdate()
-		self.yumInstall(['git'])
-		self.getMyami()
 	
 		if self.doInstallJobServerPackages:	
 			result = self.setupJobServer()
@@ -1391,7 +1353,7 @@ endif
 			sys.exit(1)
 
 		app_version = 1+int(self.doUpload2ClientApps)
-		setupURL = "http://localhost/myamiweb/setup/autoInstallSetup.php?password=" + self.serverRootPass + "&myamidir=" + self.leginon_app_dir + "&appv=" + app_version + "&uploadsample=" + "%d" % int(self.doDownloadSampleImages)
+		setupURL = "http://localhost/myamiweb/setup/autoInstallSetup.php?password=" + self.serverRootPass + "&myamidir=" + self.leginon_app_rootdir + "&appv=" + app_version + "&uploadsample=" + "%d" % int(self.doDownloadSampleImages)
 		setupOpened = None
 		try:
 			setupOpened = webbrowser.open_new(setupURL)
