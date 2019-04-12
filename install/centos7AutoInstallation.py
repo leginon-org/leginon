@@ -872,7 +872,7 @@ endif
 
 	def processServerYumInstall(self):
 		# pre-requist and utility
-		packagelist= ['epel-release','vim','wget','sudo','rsync','passwd','tar','firefox','mlocate','unzip']
+		packagelist= ['epel-release','vim','wget','sudo','rsync','passwd','tar','firefox','mlocate','unzip','dbus-x11']
 		self.yumInstall(packagelist)
 
 		packagelist = ['ImageMagick', 'MySQL-python', 'compat-libf2c-34', 'compat-libgfortran-41', 'fftw3-devel', 'gcc-c++', 'gcc-gfortran', 'gcc-objc', 'gnuplot', 'grace', 'gsl-devel', 'libtiff-devel', 'netpbm-progs', 'numpy', 'openmpi-devel', 'opencv-python', 'python-devel', 'python-imaging', 'python-matplotlib', 'python-tools', 'scipy', 'wxPython', 'xorg-x11-server-Xvfb', 'libjpeg-devel', 'zlib-devel']
