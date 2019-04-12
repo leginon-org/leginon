@@ -371,7 +371,7 @@ class ScaleCalibrator(object):
 			screen_shift = 0.01 # 1 cm
 			self.measureShift(self.calibrations[effect_type][1],screen_shift)
 		raw_input('hit any key to return to MAG1')
-		self.tem.setDiffractionMode('imaging')
+		self.tem.setProjectionMode('imaging')
 
 	def calibrateAll(self):
 		self.calibrateInImageMode()
@@ -392,7 +392,7 @@ class JeolScaleCalibrator(ScaleCalibrator):
 		self.is_cap_prefix = True
 		self.tem = jeolcom.Jeol()
 		# set to MAG1 first
-		self.tem.setDiffractionMode('imaging')
+		self.tem.setProjectionMode('imaging')
 		self.tem.findMagnifications()
 		self.last_mag = 0
 
@@ -459,7 +459,7 @@ class JeolScaleCalibrator(ScaleCalibrator):
 
 	def getDiffractionCalibrationRequired(self):
 		self.logger.info('Switching to Diffraction Mode')
-		self.tem.setDiffractionMode('diffraction')
+		self.tem.setProjectionMode('diffraction')
 		self.submode = self.tem.getProjectionSubModeName().upper()
 		raw_input('Adjust camera length to the desired value >=100 cm, Hit any key when done')
 		self.mag = self.tem.getMagnification()

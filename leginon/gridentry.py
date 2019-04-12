@@ -34,6 +34,10 @@ class GridEntry(node.Node):
 		self.start()
 
 	def publishNewEMGrid(self,newgrid):
+		try:
+			checkGridName(newgrid)
+		except ValueError, e:
+			raise
 		emgridq = leginondata.EMGridData()
 		emgridq['name'] = newgrid
 		emgridq['project'] = self.projectid
@@ -96,8 +100,21 @@ class GridEntry(node.Node):
 		self.publish(griddata, database=True)
 		return griddata
 
+	def checkGridName(self, label):
+		if label is not None and label != '' and not label.isalnum():
+			if not ''.join(''.join(label.split('_')).split('-')).isalnum():
+				raise ValueError('Only alpha numeric and "-" and "_" are allowed as grid name')
+		return
+
 	def submitGrid(self):
 		gridname = self.settings['grid name']
+		try:
+			checkGridName(gridname)
+		except ValueError, e:
+			self.logger.error(e)
+			self.logger.error('Data collection event not sent')
+			return
+
 		stagez = self.settings['stage z']
 		if stagez is None:
 			stagez = 0.0

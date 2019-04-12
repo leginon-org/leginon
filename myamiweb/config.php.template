@@ -183,6 +183,10 @@ define('EXCLUDED_PROJECTS',"");
 // --- hide testing tools related to specific data sets. --- //
 define('HIDE_TEST_TOOLS', true);
 
+// --- cryoSPARC host name and port number. --- //
+//define('CRYOSPARC', "yourhost");
+define('CRYOSPARC_PORT', "39001");
+
 // --- A startup message may be shown to the user --- //
 define('STARTUP_MESSAGE', "");
 
@@ -205,5 +209,12 @@ define('SERVER_PORT', "55123");
 // ---	);
 
 $TEST_SESSIONS = array();
+
+//used in [user results]  and [poster] 
+//define ('ACKNOWLEDGEMENTS', '');
+
+//show LOI views set to true if want them displayed.  May consume much resource if too many
+//of users do so at the same time.
+define('SHOW_LOI_VIEWS', false);
 
 ?>

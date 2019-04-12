@@ -173,6 +173,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 										event.ImageProcessDoneEvent,
 										event.AcquisitionImagePublishEvent,
 										event.PhasePlateUsagePublishEvent,
+										event.PauseEvent,
+										event.ContinueEvent,
 									] \
 								+ presets.PresetsClient.eventinputs \
 								+ navigator.NavigatorClient.eventinputs
@@ -189,6 +191,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 											event.ScreenCurrentLoggerPublishEvent,
 											event.PhasePlatePublishEvent,
 											event.NodeBusyNotificationEvent,
+											event.ManagerPauseAvailableEvent,
+											event.ManagerPauseNotAvailableEvent,
+											event.ManagerContinueAvailableEvent,
 											event.ImageListPublishEvent, event.ReferenceTargetPublishEvent] \
 											+ navigator.NavigatorClient.eventoutputs
 
@@ -200,6 +205,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.addEventInput(event.ImageProcessDoneEvent, self.handleImageProcessDone)
 		self.addEventInput(event.MakeTargetListEvent, self.setGrid)
 		self.addEventInput(event.PhasePlateUsagePublishEvent, self.handlePhasePlateUsage)
+		self.addEventInput(event.PauseEvent, self.handlePause)
+		self.addEventInput(event.ContinueEvent, self.handleContinue
+)
 		self.driftdone = threading.Event()
 		self.driftimagedone = threading.Event()
 		self.instrument = instrument.Proxy(self.objectservice, self.session)
@@ -230,6 +238,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.phaseplate_bound = False
 		self.screencurrent_bound = False
 		self.alignzlp_warned = False
+		self.beamtilt0 = None
+		self.paused_by_gui = False
 
 		self.duplicatetypes = ['acquisition', 'focus']
 		self.presetlocktypes = ['acquisition', 'target', 'target list']
@@ -742,6 +752,12 @@ class Acquisition(targetwatcher.TargetWatcher):
 					# Give presetsclient time to unlock navigator changePreset request
 					time.sleep(0.5)
 			self.presetsclient.toScope(presetname, emtarget, keep_shift=keep_shift)
+			try:
+				# Random defocus is set in presetsclient.  This is the easiestt
+				# way to get it.  Could be better.
+				self.intended_defocus = self.instrument.tem.Defocus - emtarget['delta z']
+			except:
+				self.intended_defocus = self.instrument.tem.Defocus
 			# DO this the second time give an effect of normalization. Removed defocus and beam shift hysteresis on Talos
 			if presetdata['tem']['hostname'] == 'talos-20taf2c':
 				self.presetsclient.toScope(presetname, emtarget, keep_shift=keep_shift)
@@ -814,7 +830,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.reportStatus('acquisition', 'image acquired')
 		self.stopTimer('acquire getData')
 		if imagedata is None:
-			raise BadImageAcquireBypass('failed acquire camera image')
+			raise BadImageAcquirePause('failed acquire camera image')
 		if imagedata['image'] is None:
 			raise BadImageAcquirePause('Acquired array is None. Possible camera problem')
 
@@ -998,6 +1014,45 @@ class Acquisition(targetwatcher.TargetWatcher):
 			Notify Manager that the node is doing something so it does not timeout.
 			'''
 			self.outputEvent(event.NodeBusyNotificationEvent())
+
+	def notifyManagerPauseAvailable(self):
+		'''
+		Notify Manager that the node is doing something so it does not timeout.
+		'''
+		self.outputEvent(event.ManagerPauseAvailableEvent())
+
+	def notifyManagerPauseNotAvailable(self):
+		'''
+		Notify Manager that the node is doing something so it does not timeout.
+		'''
+		self.outputEvent(event.ManagerPauseNotAvailableEvent())
+
+	def notifyManagerContinueAvailable(self):
+		'''
+		Notify Manager that the node is doing something so it does not timeout.
+		'''
+		self.outputEvent(event.ManagerContinueAvailableEvent())
+
+	def handlePause(self, evt):
+		'''
+		Manager doing the pause
+		'''
+		#self.panel.playerEvent('pause')
+		self.player.pause()
+		self.setStatus('user input')
+
+	def handleContinue(self, evt):
+		'''
+		Manager continues the paused status
+		'''
+		if self.paused_by_gui:
+			self.logger.info('Paused through local gui, skip workflow continuing')
+			return
+		# Only continue that was paused by Manager. This way, local expert user can still
+		# pause intentionally at a place.
+		#self.panel.playerEvent('play')
+		self.player.play()
+		self.setStatus(self.before_pause_node_status)
 
 	def publishDisplayWait(self, imagedata):
 		'''

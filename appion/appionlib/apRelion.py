@@ -178,6 +178,7 @@ def getStarFileColumnLabels(starfile):
 	# and correspond to the data
 	labels=[]
 	for line in open(starfile):
+		if line.startswith("#"): continue
 		l = line.strip().split()
 		if line[:4]=="_rln":
 			labels.append(l[0])

@@ -473,10 +473,11 @@ class authlib{
 		//The part from the database
 		list ($id,$timestamp) = mysqli_fetch_row($query);
 		//The part from configuration
-		$hash = md5($this->secret.$timestamp);
 		$expire = (COOKIE_TIME) ? time()+COOKIE_TIME : 0;
 
-		setcookie(PROJECT_NAME, "$username:$hash:$id", COOKIE_TIME);
+		$cookie = $this->cookieEncrypt("$username~$timestamp~$id");
+                setcookie(PROJECT_NAME,$cookie, COOKIE_TIME);
+
 		return 2;
 		
 	}
@@ -484,8 +485,12 @@ class authlib{
 	function is_logged () {
 
 		global $_COOKIE;
-		$cookie = $_COOKIE[PROJECT_NAME];
-		$session_vars = explode(":", $cookie);
+		$cookie = $this->CookieDecrypt($_COOKIE[PROJECT_NAME]);
+                if($cookie === null){
+                        setcookie(PROJECT_NAME, "", time()-3600);
+                        return false;
+                }
+		$session_vars = explode("~", $cookie);
 		$username = $session_vars[0];
 		$id = $session_vars[2];
 
@@ -504,14 +509,12 @@ class authlib{
 		}
 		//The part from the database
 		list ($id, $timestamp, $privilege) = mysqli_fetch_row($query);
-		//The part from configuration
-		$hash = md5($this->secret.$timestamp);
 
-		if ($hash != $session_vars[1] || $id != $session_vars[2]) {
-			return false;
-		} else {
-			return array($session_vars[0], $id, $privilege);
-		}
+                if ($timestamp != $session_vars[1] || $id != $session_vars[2]) {
+                        return false;
+                } else {
+                        return array($session_vars[0], $id, $privilege);
+                }
 
 	}
 
@@ -872,6 +875,31 @@ class authlib{
 			return false;
 		}
 		return true;
+	}
+
+	function CookieEncrypt($plaintext) {
+	    $password = $this->secret;
+	    $method = "AES-256-CBC";
+	    $key = hash('sha256', $password, true);
+	    $iv = openssl_random_pseudo_bytes(16);
+	
+	    $ciphertext = openssl_encrypt($plaintext, $method, $key, OPENSSL_RAW_DATA, $iv);
+	    $hash = hash_hmac('sha256', $ciphertext, $key, true);
+	
+	    return base64_encode($iv . $hash . $ciphertext);
+	}
+
+	function CookieDecrypt($ivHashCiphertext) {
+	    $password = $this->secret;
+	    $method = "AES-256-CBC";
+	    $ivHashCiphertext = base64_decode($ivHashCiphertext);
+	    $iv = substr($ivHashCiphertext, 0, 16);
+	    $hash = substr($ivHashCiphertext, 16, 32);
+	    $ciphertext = substr($ivHashCiphertext, 48);
+	    $key = hash('sha256', $password, true);
+
+	    if (hash_hmac('sha256', $ciphertext, $key, true) !== $hash) return null;
+	    return openssl_decrypt($ciphertext, $method, $key, OPENSSL_RAW_DATA, $iv);
 	}
 
 }

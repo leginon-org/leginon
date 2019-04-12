@@ -118,6 +118,7 @@ class TEMController(node.Node):
 			return False
 
 	def uiOpenColumnValve(self):
+		self.uiContinue()
 		self.setStatus('processing')
 		self.safeOpenColumnValve()
 		self.panel.setTEMParamDone()
@@ -155,7 +156,7 @@ class TEMController(node.Node):
 		if not self.instrument.tem:
 			self.logger.error('No instrument set. Send a preset first')
 			return False
-		if self.instrument.tem.DiffractionMode != 'imaging':
+		if self.instrument.tem.ProjectionMode != 'imaging':
 			self.logger.error('Presets are mapped to imaging mode only. Set on scope gui to imaging mode first')
 			return False
 		return True

@@ -63,6 +63,40 @@ class ManualFocusSettingsDialog(leginon.gui.wx.Dialog.Dialog):
 		label = wx.StaticText(self, -1, 'm')
 		self.sz.Add(label, (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
+class SimpleManualFocusDialog(leginon.gui.wx.Dialog.ConfirmationDialog):
+	'''
+	Manual Focus Dialog that does not contain most tools.  This is also a real dialog, not
+	wx.Frame
+	'''
+	def __init__(self, parent, title='Manual Focus'):
+		self.node = parent.node
+		self.center = (256,256)
+		super(SimpleManualFocusDialog,self).__init__(parent, title, size=wx.Size(750,750),
+			style=wx.DEFAULT_FRAME_STYLE|wx.RESIZE_BORDER|wx.FRAME_FLOAT_ON_PARENT)
+
+	def onInitialize(self):
+		super(SimpleManualFocusDialog,self).onInitialize()
+		self.imagepanel = leginon.gui.wx.TargetPanel.FFTTargetImagePanel(self, -1,imagesize=(612,512))
+		self.imagepanel.addTypeTool('Image', display=True)
+		self.imagepanel.addTypeTool('Power', display=True)
+		self.imagepanel.selectiontool.setDisplayed('Power', True)
+		self.mainsz.Add(self.imagepanel, (0, 0), (1, 1), wx.EXPAND)
+		self.mainsz.AddGrowableRow(0)
+		self.mainsz.AddGrowableCol(0)
+		#self.SetSizerAndFit(self.mainsz)
+		self.SetAutoLayout(True)
+		self.Layout()
+		# Bingings
+		self.Bind(wx.EVT_CLOSE, self.onClose)
+		self.Bind(leginon.gui.wx.Events.EVT_SET_IMAGE, self.onSetImage)
+
+	def onClose(self, evt):
+		self.node.manualplayer.stop()
+		evt.Skip(True)
+
+	def onSetImage(self, evt):
+		self.imagepanel.setImageType(evt.typename, evt.image)
+
 class ManualFocusDialog(wx.Frame):
 	def __init__(self, parent, node, title='Manual Focus'):
 		wx.Frame.__init__(self, parent, -1, title, size=(650,600),

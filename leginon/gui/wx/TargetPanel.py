@@ -50,7 +50,7 @@ targettype_colors = {
 class TargetImagePanel(leginon.gui.wx.ImagePanel.ImagePanel):
 	def __init__(self, parent, id, callback=None, 
 			tool=True, imagesize=(512, 512), mode="horizontal"):
-		leginon.gui.wx.ImagePanel.ImagePanel.__init__(self, parent, id, imagesize, mode)
+		super(TargetImagePanel,self).__init__(parent, id, imagesize, mode)
 		self.order = []
 		self.reverseorder = []
 		self.targets = {}
@@ -400,8 +400,8 @@ class TargetImagePanel(leginon.gui.wx.ImagePanel.ImagePanel):
 
 
 class ClickAndTargetImagePanel(TargetImagePanel):
-	def __init__(self, parent, id, disable=False, imagesize=(512,512),mode="horizontal"):
-		TargetImagePanel.__init__(self, parent, id, imagesize, mode)
+	def __init__(self, parent, id, disable=False, imagesize=(512,512), mode="horizontal"):
+		super(ClickAndTargetImagePanel,self).__init__(parent, id, imagesize, mode)
 		if mode == "vertical":
 			self.clicktool = self.addTool(leginon.gui.wx.ImagePanelTools.ClickTool(self, self.toolsizer, disable))
 		else:
@@ -409,6 +409,7 @@ class ClickAndTargetImagePanel(TargetImagePanel):
 		self.Bind(leginon.gui.wx.ImagePanel.EVT_IMAGE_CLICK_DONE, self.onImageClickDone)
 		self.sizer.Layout()
 		self.Fit()
+		#self.SetSizerAndFit(self.sizer)
 
 	#--------------------
 	def onImageClickDone(self, evt):
@@ -416,7 +417,7 @@ class ClickAndTargetImagePanel(TargetImagePanel):
 
 class ShapeTargetImagePanel(TargetImagePanel):
 	def __init__(self, parent, id, disable=False, imagesize=(512,512), mode="horizontal"):
-		TargetImagePanel.__init__(self, parent, id, imagesize, mode)
+		super(ShapeTargetImagePanel, self).__init__(parent, id, imagesize, mode)
 		self.addTool(leginon.gui.wx.ImagePanelTools.FitShapeTool(self, self.toolsizer))
 		self.panel.Bind(wx.EVT_MOTION, self.OnMotion)
 		self.sizer.Layout()
@@ -424,7 +425,7 @@ class ShapeTargetImagePanel(TargetImagePanel):
 
 class TraceTargetImagePanel(TargetImagePanel):
 	def __init__(self, parent, id, disable=False, imagesize=(512,512), mode="horizontal"):
-		TargetImagePanel.__init__(self, parent, id, imagesize, mode)
+		super(TraceTargetImagePanel, self).__init__(parent, id, imagesize, mode)
 		self.tracetool = leginon.gui.wx.ImagePanelTools.TraceTool(self, self.toolsizer)
 		self.addTool(self.tracetool)
 		self.panel.Bind(wx.EVT_MOTION, self.OnMotion)
@@ -434,7 +435,7 @@ class TraceTargetImagePanel(TargetImagePanel):
 ##################################
 class FFTTargetImagePanel(TargetImagePanel):
 	def __init__(self, parent, id, disable=False, imagesize=(512,512), mode="horizontal"):
-		TargetImagePanel.__init__(self, parent, id, imagesize, mode)
+		super(FFTTargetImagePanel, self).__init__(parent, id, imagesize, mode)
 		self.addTool(leginon.gui.wx.ImagePanelTools.ResolutionTool(self, self.toolsizer))
 		self.addTool(leginon.gui.wx.ImagePanelTools.FitShapeTool(self, self.toolsizer))
 		self.panel.Bind(wx.EVT_MOTION, self.OnMotion)
@@ -447,7 +448,7 @@ class FFTTargetImagePanel(TargetImagePanel):
 
 class TargetOutputPanel(TargetImagePanel):
 	def __init__(self, parent, id, callback=None, imagesize=(512,512), tool=True):
-		TargetImagePanel.__init__(self, parent, id, callback=callback, imagesize=imagesize, tool=tool)
+		super(TargetOutputPanel, self).__init__(self, parent, id, callback=callback, imagesize=imagesize, tool=tool)
 
 		self.quit = wx.Button(self, -1, 'Quit')
 		self.Bind(wx.EVT_BUTTON, self.onQuit, self.quit)

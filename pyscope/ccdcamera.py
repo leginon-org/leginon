@@ -7,7 +7,6 @@
 import time
 import threading
 import baseinstrument
-import config
 
 class GeometryError(Exception):
 	pass
@@ -28,6 +27,7 @@ class CCDCamera(baseinstrument.BaseInstrument):
 		{'name': 'ExposureType', 'type': 'property'},
 		{'name': 'Offset', 'type': 'property'},
 		{'name': 'ExposureTimestamp', 'type': 'property'},
+		{'name': 'IntensityAveraged', 'type': 'property'},
 		## optional:
 		{'name': 'EnergyFilter', 'type': 'property'},
 		{'name': 'EnergyFilterWidth', 'type': 'property'},
@@ -37,13 +37,10 @@ class CCDCamera(baseinstrument.BaseInstrument):
 
 	def __init__(self):
 		baseinstrument.BaseInstrument.__init__(self)
-		self.config_name = config.getNameByClass(self.__class__)
-		if self.config_name is None:
-			raise RuntimeError('%s was not found in your instruments.cfg' % (self.__class__.__name__,))
-		conf = config.getConfigured()[self.config_name]
-		self.zplane = conf['zplane']
-		if 'height' in conf and 'width' in conf:
-			self.configured_size = {'x': conf['width'], 'y': conf['height']}
+		self.initConfig()
+		self.zplane = self.conf['zplane']
+		if 'height' in self.conf and 'width' in self.conf:
+			self.configured_size = {'x': self.conf['width'], 'y': self.conf['height']}
 		else:
 			self.configured_size = None
 		self.buffer = {}
@@ -58,6 +55,11 @@ class CCDCamera(baseinstrument.BaseInstrument):
 
 	def getCameraModelName(self):
 		return self.name
+
+	def getIntensityAveraged(self):
+		# Returns True if canera array value is averaged and thus does not increase value
+		# for longer exposure time.
+		return False
 
 	def calculateCenteredGeometry(self, dimension, binning):
 		camerasize = self.getCameraSize()

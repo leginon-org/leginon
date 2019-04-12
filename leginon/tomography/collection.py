@@ -378,12 +378,8 @@ class Collection(object):
 			phi,offset = self.prediction.convertparams(phi,optical_axis)
 			correlation = self.correlator[seq[0]].getShift(False)
 
-			raw_correlation = self.correlator[seq[0]].getShift(True)
-			s = (raw_correlation['x'], raw_correlation['y'])
-			self.viewer.setXC(correlation_image, s)
-			
-			#if self.settings['use tilt']:
-			#	correlation = self.correlator[seq[0]].tiltShift(tilt,correlation,phi)
+			if self.settings['use tilt']:
+				correlation = self.correlator[seq[0]].tiltShift(tilt,correlation,phi)
 
 			position = {
 				'x': predicted_position['x'] - correlation['x'],
@@ -403,9 +399,11 @@ class Collection(object):
 								  position['y'],
 								  position['x']*image_pixel_size,
 								  position['y']*image_pixel_size))
-			
-			#if self.settings['use tilt']:
-			#	raw_correlation = self.correlator[seq[0]].tiltShift(tilt,raw_correlation,phi)
+			raw_correlation = self.correlator[seq[0]].getShift(True)
+			s = (raw_correlation['x'], raw_correlation['y'])
+			self.viewer.setXC(correlation_image, s)
+			if self.settings['use tilt']:
+				raw_correlation = self.correlator[seq[0]].tiltShift(tilt,raw_correlation,phi)
 
 			self.checkAbort()
 

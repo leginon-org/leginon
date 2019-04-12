@@ -30,7 +30,7 @@ exec(cmd)
 #=====================
 class CL2D(appionScript.AppionScript):
 
-	execFile = "xmipp_classify_CL2D"
+	execFile = "xmipp_mpi_classify_CL2D"
 	#=====================
 	def setupParserOptions(self):
 		self.parser.set_usage("Usage: %prog --stack=ID [ --num-part=# ]")
@@ -621,12 +621,13 @@ class CL2D(appionScript.AppionScript):
  		Nlevels=glob.glob("level_*")
  		for level in Nlevels:
  			digits = level.split("_")[1]
- 			xmipp_sort = apParam.getExecPath("xmipp_image_sort", die=True)
+ 			xmipp_sort = apParam.getExecPath("xmipp_mpi_image_sort", die=True)
  			mpiruncmd = self.mpirun+" -np "+str(self.params['nproc'])+" "+xmipp_sort +" -i "+\
  			 			level+"/part"+self.params['timestamp']+"*xmd --oroot "+ level+"/part"+self.params['timestamp']+"sorted"
  			apParam.runCmd(mpiruncmd, package="Xmipp 3", verbose=True, showcmd=True, logfile="xmipp.std")
+ 			apParam.runCmd("xmipp_metadata_utilities -i "+level+"/part"+self.params['timestamp']+"sorted*xmd --operate drop_column 'image'", package="Xmipp 3", verbose=True) 			
  			apParam.runCmd("xmipp_image_convert -i "+level+"/part"+self.params['timestamp']+"sorted*xmd -o part"
- 						+self.params['timestamp']+"_level_"+digits+"_.hed", package="Xmipp 3", verbose=True)
+ 						+self.params['timestamp']+"_level_"+digits+"_.hed --label 'imageOriginal'", package="Xmipp 3", verbose=True)
  			
  		if self.params['align']:
 			apParam.runCmd("xmipp_transform_geometry -i images.xmd -o %s_aligned.stk --apply_transform" % self.params['timestamp'], package="Xmipp 3", verbose=True)
