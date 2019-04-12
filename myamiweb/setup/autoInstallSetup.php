@@ -65,7 +65,6 @@ if(is_dir($dir)){
 				if ($app_version == 2 && !preg_match("/2/", $filename)) continue;
 				if ($app_version == 1 && preg_match("/2/", $filename)) continue;
 				// import application to database.
-echo $filename." ";
 				$leginondata->importApplication($dir.$filename);
 			}
 		}
