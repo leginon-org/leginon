@@ -1303,11 +1303,16 @@ endif
 		if os.path.isdir(resultdir):
 			try:
 				shutil.rmtree(resultdir)
-				shutil.copytree(fromdir, resultdir)
 			except Exception as e:
-				print "Copying Leginon applications file to web server failed:"
+				print "Removing  failed:" % resultdir
 				print e
 				return False
+		try:
+			shutil.copytree(fromdir, resultdir)
+		except Exception as e:
+			print "Copying Leginon applications file to web server failed:"
+			print e
+			return False
 		self.leginon_app_rootdir = self.centosWebDir
 		return True
 
