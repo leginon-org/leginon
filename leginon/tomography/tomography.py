@@ -87,16 +87,18 @@ class Tomography(leginon.acquisition.Acquisition):
 		self.calclients['image shift'] = \
 			leginon.calibrationclient.ImageShiftCalibrationClient(self)
 		self.btcalclient = self.calclients['beam tilt'] 
-		# TODO: add pixel to pixel calibration client. 
-
 		self.tilts = leginon.tomography.tilts.Tilts()
-		self.exposure = leginon.tomography.exposure.Exposure()
+		self.exposure = self.getExposureObject()
+		#self.exposure = leginon.tomography.exposure.Exposure()
 		#self.prediction = leginon.tomography.prediction.Prediction()
 		self.prediction = self.getPredictionObject()
 		self.loadPredictionInfo()
 		self.updateTilts()
 		self.start()
 
+	def getExposureObject(self):
+		return leginon.tomography.exposure.Exposure()
+		 
 	def getPredictionObject(self):
 		return leginon.tomography.prediction.Prediction()
 
@@ -207,7 +209,8 @@ class Tomography(leginon.acquisition.Acquisition):
 		except LimitError:
 			return 'failed'
 		
-
+		#import rpdb2; rpdb2.start_embedded_debugger("asdf")
+		
 		tilts = self.tilts.getTilts()
 		exposures = self.exposure.getExposures()
 		tilt_index_sequence = self.tilts.getIndexSequence()
@@ -691,15 +694,69 @@ class Tomography_2(Tomography):
 	settingsclass = leginon.leginondata.Tomography_2SettingsData
 	defaultsettings = Tomography.defaultsettings
 	defaultsettings.update({
-		'trackpreset': 'track'
+		'track preset': '',
+		'cosine dose': True,
+		'full track': False
 	})
-	
+	panelclass = leginon.gui.wx.tomography.Tomography.Panel_2
+
 	def __init__(self, *args, **kwargs):
 		Tomography.__init__(self, *args, **kwargs)
 		self.calclients['image rotation'] = \
 			leginon.calibrationclient.ImageRotationCalibrationClient(self)
 		self.calclients['stage'] = leginon.calibrationclient.StageCalibrationClient(self)
-	
+
+	def updateExposures(self):
+		'''
+		Update exposure values for data collection from settings
+		Should be done after updateTilts.
+		'''
+		tilts = self.tilts.getTilts()
+
+		total_dose = numpy.inf 		#self.settings['dose']
+		exposure_min = 0			#self.settings['min exposure']
+		exposure_max = numpy.inf 	#self.settings['max exposure']
+
+		dose = 0.0
+		exposure_time = 0.0
+		try:
+			name = self.settings['preset order'][-1]
+			preset = self.presetsclient.getPresetFromDB(name)
+		except (IndexError, ValueError):
+			pass
+		else:
+			if preset['dose'] is not None:
+				dose = preset['dose']*1e-20
+			exposure_time = preset['exposure time']/1000.0
+
+		try:
+			self.exposure.update(total_dose=total_dose,
+								 tilts=tilts,
+								 dose=dose,
+								 exposure=exposure_time,
+								 exposure_min=exposure_min,
+								 exposure_max=exposure_max,
+								 fixed_exposure= not self.settings['cosine dose'],)
+		except leginon.tomography.exposure.LimitError, e:
+			self.logger.warning('Exposure dose out of range: %s.' % e)
+			self.logger.warning('Adjust total exposure dose Or')
+			msg = self.exposure.getExposureTimeLimits()
+			self.logger.warning(msg)
+			raise LimitError('Exposure limit error')
+		except leginon.tomography.exposure.Default, e:
+			self.logger.warning('Using preset exposure time: %s.' % e)
+		else:
+			try:
+				exposure_range = self.exposure.getExposureRange()
+			except ValueError:
+				pass
+			else:
+				s = 'Exposure time range: %g to %g seconds.' % exposure_range
+				self.logger.info(s)
+
+	def getExposureObject(self):
+		return leginon.tomography.exposure.Exposure_2()
+			
 	def getPredictionObject(self):
 		return leginon.tomography.prediction.Prediction_2()
 	
@@ -708,9 +765,9 @@ class Tomography_2(Tomography):
 		offsetdata = self.researchTargetOffset(target['list'])
 		if offsetdata:
 			collect.offset = offsetdata
-			# TODO: in future, the preset data should be set already in offsetdata, not just the name. 
 			collect.trackpreset = \
-				self.presetsclient.getPresetByName(self.settings['trackpreset'])
+				self.presetsclient.getPresetByName(self.settings['track preset'])
+			collect.fulltrack = self.settings['full track']
 		return collect
 	
 	def loadPredictionInfo(self):	
@@ -891,7 +948,6 @@ class Tomography_2(Tomography):
 				
 			adjustedtarget = self.reportTargetStatus(target, 'processing')
 			
-
 			# this while loop allows target to repeat
 			process_status = 'repeat'
 			attempt = 0

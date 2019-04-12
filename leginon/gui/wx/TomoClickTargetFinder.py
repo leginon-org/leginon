@@ -94,13 +94,24 @@ class TomoScrolledSettings(leginon.gui.wx.TargetFinder.ScrolledSettings):
         self.widgets['focus target offset'] = leginon.gui.wx.Entry.FloatEntry(self, -1) 
         self.widgets['track target offset'] = leginon.gui.wx.Entry.FloatEntry(self, -1)
         
+        self.widgets['tomo beam diameter'] = leginon.gui.wx.Entry.FloatEntry(self, -1)
+        self.widgets['focus beam diameter'] = leginon.gui.wx.Entry.FloatEntry(self, -1) 
+        self.widgets['track beam diameter'] = leginon.gui.wx.Entry.FloatEntry(self, -1)
+        
+        self.widgets['stretch tomo beam'] = wx.CheckBox(self,-1,
+                                                'Stretch tomo beam size along tilt axis')
+        self.widgets['stretch focus beam'] = wx.CheckBox(self,-1,
+                                                'Stretch focus beam size along tilt axis')
+        self.widgets['stretch track beam'] = wx.CheckBox(self,-1,
+                                                'Stretch track beam size along tilt axis')
+
         self.Bind(wx.EVT_CHECKBOX, self.onUserCheckbox, self.widgets['user check'])
         self.Bind(wx.EVT_CHECKBOX, self.onQueueCheckbox, self.widgets['queue'])
         self.Bind(wx.EVT_CHECKBOX, self.onAutoFocusTargetCheckbox,self.widgets['auto focus target'])
         self.Bind(leginon.gui.wx.Entry.EVT_ENTRY, self.onFocusTargetOffset,self.widgets['focus target offset'])
         self.Bind(leginon.gui.wx.Entry.EVT_ENTRY, self.onTrackTargetOffset,self.widgets['track target offset'])
 
-        sz = wx.GridBagSizer(11, 11)
+        sz = wx.GridBagSizer(15, 15)
         sz.Add(self.widgets['user check'], (0, 0), (1, 1),
                         wx.ALIGN_CENTER_VERTICAL)
         #sz.Add(checkmethodsz, (1, 0), (1, 1),
@@ -119,15 +130,41 @@ class TomoScrolledSettings(leginon.gui.wx.TargetFinder.ScrolledSettings):
                         wx.ALIGN_CENTER_VERTICAL)
         sz.Add(self.widgets['auto focus target'], (7, 0), (1, 1),
                         wx.ALIGN_CENTER_VERTICAL)
+        
         focus_label = wx.StaticText(self, -1, 'focus target offset in meters')
-        sz.Add(focus_label, (8, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-        sz.Add(self.widgets['focus target offset'], (9, 0), (1, 1), 
-                        wx.ALIGN_CENTER_VERTICAL)
+        sz.Add(focus_label, (8, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.LEFT,10)
+        sz.Add(self.widgets['focus target offset'], (8, 1), (1, 1), 
+               wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+        
         track_label = wx.StaticText(self, -1, 'track target offset in meters')
-        sz.Add(track_label, (10, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-        sz.Add(self.widgets['track target offset'], (11, 0), (1, 1),
+        sz.Add(track_label, (9, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.LEFT,10)
+        sz.Add(self.widgets['track target offset'], (9, 1), (1, 1),
+                        wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+        
+        tomo_beam_label = wx.StaticText(self, -1, 'diameter of tomo beam in meters')
+        sz.Add(tomo_beam_label, (10, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.LEFT,10)
+        sz.Add(self.widgets['tomo beam diameter'], (10, 1), (1, 1),
+                        wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+        
+        focus_beam_label = wx.StaticText(self, -1, 'diameter of focus beam in meters')
+        sz.Add(focus_beam_label, (11, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.LEFT,10)
+        sz.Add(self.widgets['focus beam diameter'], (11, 1), (1, 1),
+                        wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+        
+        track_beam_label = wx.StaticText(self, -1, 'diameter of track beam in meters')
+        sz.Add(track_beam_label, (12, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.LEFT,10)
+        sz.Add(self.widgets['track beam diameter'], (12, 1), (1, 1),
+                        wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+
+        sz.Add(self.widgets['stretch tomo beam'], (13, 0), (1, 1),
                         wx.ALIGN_CENTER_VERTICAL)
 
+        sz.Add(self.widgets['stretch focus beam'], (14, 0), (1, 1),
+                        wx.ALIGN_CENTER_VERTICAL)
+        
+        sz.Add(self.widgets['stretch track beam'], (15, 0), (1, 1),
+                        wx.ALIGN_CENTER_VERTICAL)
+        
         #if not hide_incomplete:
         #    sz.Add(self.widgets['allow append'], (7, 0), (1, 1),
         #                    wx.ALIGN_CENTER_VERTICAL)

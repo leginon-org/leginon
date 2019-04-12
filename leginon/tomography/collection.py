@@ -473,6 +473,8 @@ class Collection_2(Collection):
 		self.ntrack = {0:0,1:0}									# number of iterations last tracking image was taken
 		self.ntrackmax = 4										# maximum number of iterations before we have to take another tracking image
 		self.offset = None
+		self.trackpreset = None
+		self.fulltrack = False
 		
 	def initialize(self):
 		self.logger.info('Initializing...')
@@ -564,6 +566,7 @@ class Collection_2(Collection):
 	
 	def loop(self, tilts, exposures, sequence):
 		self.logger.info('Starting tilt collection (%d angles)...' % len(sequence))
+		
 		self.logger.info('Removing tilt backlash...')
 		try:
 			self.node.removeStageAlphaBacklash(tilts, sequence, self.preset['name'], self.target, self.emtarget)
@@ -571,7 +574,7 @@ class Collection_2(Collection):
 			self.logger.error('Failed to remove backlash: %s.' % e)
 			self.finalize()
 			raise
-		
+	
 		dim = min(self.preset['dimension'].values())		# get dimension of image at exposure preset. 
 		self.prediction.setcutoff(math.sqrt(2)*dim*0.02)	# set prediction threshold at 5% of image size
 		self.checkAbort()
@@ -617,22 +620,20 @@ class Collection_2(Collection):
 			self.checkAbort()
 			seq = sequence[seq_index]
 			tilt = tilts[seq[0]][seq[1]]
-		
+
 			try:
 				channel = self.correlator[seq[0]].getChannel()
 				self.prediction.setCurrentTiltGroup(seq[0])
 				ispredict = self.prediction.ispredict()							# can we rely on prediction? 
-				
-				#import rpdb2; rpdb2.start_embedded_debugger("asdf")
-	
+					
 				if seq_index == 0:	
 					self.logger.info('Starting tilt angle: %g degrees.' % math.degrees(tilt))
+					self.tilt(tilt)
 					predicted_position = position0								# first position
 					predicted_position['z'] = 0 								# assumes that eucentric error z0 is 0.  
 					self.update_istot(seq0,position0)							
 					self.trackingImg = self.getTrackingImg()					# get first tracking image	
 					self.reset_ntrack(seq)			
-					#self.return2Tomo()											# return to tomo preset
 					
 					# add first tracking image into correlator buffer
 					self.correlator[seq[0]+2].reset()							# clear buffer
@@ -645,7 +646,7 @@ class Collection_2(Collection):
 							fake_corr_image = self.correlator[other_group+2].correlate(self.trackingImg,\
 								self.settings['use tilt'], channel=channel, wiener=False, taper=0,corrtype='phase')	
 							self.reset_ntrack((other_group,0))
-				elif True or not ispredict:		
+				elif self.fulltrack or not ispredict:		
 					print "****TRACKING****"											 
 					# tilt to current tilt angle. 
 					self.tilt(tilt)
@@ -654,12 +655,10 @@ class Collection_2(Collection):
 					#tracked_shift['x'] *= numpy.cos(tilt)
 					istot = self.get_istot(seq)								# history of previous shifts
 					
-					#tracked_shift['x'] *= numpy.cos(tilt)
-
 					predicted_position = {}
 					# tracked_shift has to be corrected by total image shifts applied up to now
-					predicted_position['x'] = -tracked_shift['x'] + sum(istot['x'])
-					predicted_position['y'] = -tracked_shift['y'] + sum(istot['y'])
+					predicted_position['x'] = tracked_shift['x'] + sum(istot['x'])
+					predicted_position['y'] = tracked_shift['y'] + sum(istot['y'])
 					
 					# TODO: actually implement something for z heights
 					predicted_position['z'] = tracked_shift['z'] 
@@ -672,13 +671,13 @@ class Collection_2(Collection):
 					print "****PREDICTING****"
 					self.tilt(tilt)
 					predicted_position = self.prediction.predict(tilt,seq)		# predict shift with linear model.
-					if not self.istrackimg():							
-						self.ntrack += 1
+					if not self.dotrackimg(seq):							
+						self.ntrack[seq[0]] += 1
 					else:														# we need to take a tracking image every so often
 						self.trackingImg = self.getTrackingImg()
 						trackingcorrelation_image = self.correlator[seq[0]+2].correlate(self.trackingImg,\
 								self.settings['use tilt'], channel=channel, wiener=False, taper=0)	
-						self.reset_ntrack()
+						self.reset_ntrack(seq)
 						
 					print 'previous x: %f, y: %f' %(position['x'],position['y'])
 					print 'predicted x: %f, y: %f' %(predicted_position['x'],predicted_position['y'])
@@ -903,7 +902,6 @@ class Collection_2(Collection):
 	def getTrackingImg(self,maxtries=5):
 		# (1) Change to tracking preset, taking into acount current position and offset.
 		# (2) Take an image.
-
 		isoffset = self.node.getImageShiftOffset()
 		try:
 			self.logger.info('Acquiring tracking image.')
@@ -917,23 +915,21 @@ class Collection_2(Collection):
 	
 	def change2Track(self):
 		# This function follows the procedure in presets.PresetManager.targetToScope
-		# (1) Get current image shift offset.
-		# (2) Turn into tomo preset pixels.
-		# (3) Convert tomo to track preset pixels.
-		# (4) Convert offset from parent preset 
-		# (4) Add offset pixels.
-		# (5) Make new image target.
-		# (6) Turn into em target.
+		# (1) Get current image shift offset relative to tomo preset.
+		# (2) Convert to track preset pixels.
+		# (3) Convert track offset from parent preset .
+		# (4) Combine both is.
+		# (5) Send to scope. 
+		
 		mypreset = self.preset
 		parentpreset = self.parentpreset
 		trackpreset = self.trackpreset
 		#trackpreset_name = self.offset['trackpreset']
 		#trackpreset = self.node.presetsclient.getPresetByName(trackpreset_name)
 		
-		myoffset = self.node.getImageShiftOffset()		# current image shift coordinates at tomo preset	
-		trackoffset = self.offset['trackoffset']		# pixels relative to parent preset
+		myoffset = self.node.getImageShiftOffset()		# (1)
 		
-		myscope = leginon.leginondata.ScopeEMData()
+		myscope = leginon.leginondata.ScopeEMData()		
 		myscope.friendly_update(mypreset)
 		mycam = leginon.leginondata.CameraEMData()
 		mycam.friendly_update(mypreset)
@@ -971,17 +967,17 @@ class Collection_2(Collection):
 		p2_vec = self.node.calclients['image rotation'].pixelToPixel(my_tem,\
 			my_ccdcamera,track_tem, track_ccdcamera, ht,my_mag,track_mag,p1_vec)	# unbinned
 		
-		p2_shift = {'row':p2_vec[0] / trackpreset['binning']['y'],
+		p2_shift = {'row':p2_vec[0] / trackpreset['binning']['y'],					# (2)
 					'col':p2_vec[1] / trackpreset['binning']['x']}
-		
-		p3_shift = self.getTrackOffset() 	# binned at track preset
+																							
+		p3_shift = self.getTrackOffset() 											# (3) binned at track preset 	
 		# offset in binned pixels to be applied once we change to track preset
-		isoffset_shift = {'row':p2_shift['row'] + -p3_shift['row'],
-							'col':p2_shift['col'] + -p3_shift['col']}
+		isoffset_shift = {'row':p2_shift['row'] + -p3_shift['row'],					
+							'col':p2_shift['col'] + -p3_shift['col']}				# (4)
 
 		isoffset = self.node.calclients['image shift'].transform(isoffset_shift, trackscope, trackcam)['image shift']
 		self.node.presetsclient.toScope(self.trackpreset['name'])
-		self.node.setImageShiftOffset(isoffset)				
+		self.node.setImageShiftOffset(isoffset)										# (5)	
 	
 	def getTrackOffset(self):
 		# Get is offset to be applied once the scope has been sent to track preset.
@@ -1011,9 +1007,6 @@ class Collection_2(Collection):
 			track_ccdcamera = trackpreset['ccdcamera']
 			track_mag = trackpreset['magnification']
 			ht = self.node.instrument.tem.HighTension
-			
-			#import rpdb2; rpdb2.start_embedded_debugger("asdf")
-
 			# row, col list or array input, row, col array out
 			p1_row = trackoffset[0] * parentpreset['binning']['y']
 			p1_col = trackoffset[1] * parentpreset['binning']['x']
@@ -1055,12 +1048,11 @@ class Collection_2(Collection):
 		# include a relative  image rotation and scale addition to the transform
 		p2_vec = self.calclients['image rotation'].pixelToPixel(track_tem,
 			track_ccdcamera,my_tem, my_ccdcamera, ht,track_mag,my_mag,p1_vec)
-
 		return p2_vec
 	
 	def track(self,tilt,seq):
 		try:
-
+			
 			channel = self.correlator[seq[0]].getChannel()
 			trackingImg = self.getTrackingImg()
 			# Cross correlate with previous tracking image. 
@@ -1128,15 +1120,14 @@ class Collection_2(Collection):
 			
 			p2_shift = {'row':p2_vec[0] / mypreset['binning']['y'],
 						'col':p2_vec[1] / mypreset['binning']['x']}
-						
-			#p2 = self.node.calclients['image shift'].pixelToPixel(tem1, ccdcamera1, tem2, ccdcamera2, ht, mag1, mag2, p1)
-			correlation['x'] = p2_shift['row']
-			correlation['y'] = p2_shift['col']
+			
+			correlation['x'] = p2_shift['col']
+			correlation['y'] = p2_shift['row']
 			print "CORRELATION after pixelToPixel x: %f y: %f" %(correlation['x'], correlation['y'])
 			
 			result = {
-				'x': correlation['x'],			# This is in exposure pixels. 
-				'y': correlation['y'],
+				'x': -correlation['x'],			# This is in exposure pixels. 
+				'y': -correlation['y'],
 				'z': 0,		#TODO: need to predict z from eucentric error and optical axis offset and shift during tilt? 
 			}
 			self.reset_ntrack(seq)

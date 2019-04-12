@@ -1506,7 +1506,13 @@ class TomoClickTargetFinderSettingsData(ClickTargetFinderSettingsData):
 		return ClickTargetFinderSettingsData.typemap() + (
 			('auto focus target', bool),
 			('focus target offset', float),
-			('track target offset', float)
+			('track target offset', float),
+			('tomo beam diameter', float),
+			('focus beam diameter', float),
+			('track beam diameter', float),
+			('stretch tomo beam', bool),
+			('stretch focus beam', bool),
+			('stretch track beam', bool),
 		)
 	typemap = classmethod(typemap)
 	
@@ -2323,7 +2329,9 @@ class TomographySettingsData(AcquisitionSettingsData):
 class Tomography_2SettingsData(TomographySettingsData):
 	def typemap(cls):
 		return TomographySettingsData.typemap() + (
-			('trackpreset', str),
+			('track preset', str),
+			('cosine dose', bool),
+			('full track', bool)
 		)
 	typemap = classmethod(typemap)
 class TomographySimuSettingsData(AcquisitionSettingsData):

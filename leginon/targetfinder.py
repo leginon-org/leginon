@@ -598,7 +598,15 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		image_pixelsize = self.calclients['image shift'].getImagePixelSize(imagedata)
 		self.current_image_pixelsize = image_pixelsize
 		return self._getAcquisitionTargetDimensions(image_pixelsize)
-
+	
+	def getTiltRange(self):
+		if not self.next_acq_node:
+			return None
+		settingsclassname = self.next_acq_node['class string']+'SettingsData'
+		results= self.reseachDBSettings(getattr(leginondata,settingsclassname),self.next_acq_node['alias'])
+		acqsettings = results[0]
+		return (acqsettings['tilt min'],acqsettings['tilt max'])
+		
 	def _getAcquisitionTargetDimensions(self,image_pixelsize):
 		try:
 			# get settings for the next Acquisition node
@@ -618,7 +626,8 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			beam_diameter = self.calclients['beam size'].getBeamSize(acq_presetdata)
 			if beam_diameter is None:
 				# handle no beam size calibration
-				beam_diameter = 0
+				#beam_diameter = 0
+				beam_diameter = self.settings['tomo beam diameter']
 			beam_diameter_on_image = int(beam_diameter/min(image_pixelsize.values()))
 			return max(dim_on_image), beam_diameter_on_image
 		except:
@@ -705,7 +714,13 @@ class TomoClickTargetFinder(ClickTargetFinder):
 	defaultsettings = ClickTargetFinder.defaultsettings
 	defaultsettings.update({'auto focus target': True,
 									'focus target offset': 3e-6,
-									'track target offset': 3e-6
+									'track target offset': 3e-6,
+									'tomo beam diameter':  0e-6,
+									'focus beam diameter': 0e-6,
+									'track beam diameter': 0e-6,
+									'stretch tomo beam': True,
+									'stretch focus beam': True,
+									'stretch track beam': True
 									})
 	def __init__(self, id, session, managerlocation, **kwargs):
 
@@ -721,7 +736,7 @@ class TomoClickTargetFinder(ClickTargetFinder):
 		
 		if self.__class__ == TomoClickTargetFinder:
 			self.start()
-
+			
 	def getTrackImageVector(self):
 		return self.trackimagevector
 
@@ -824,7 +839,7 @@ class TomoClickTargetFinder(ClickTargetFinder):
 			results= self.reseachDBSettings(getattr(leginondata,settingsclassname),self.next_acq_node['alias'])
 			acqsettings = results[0]
 			# use first preset in preset order for display
-			presetname = acqsettings['trackpreset']
+			presetname = acqsettings['track preset']
 			# get image dimenzsion of the target preset
 			acq_dim = self.presetsclient.getPresetImageDimension(presetname)
 			dim_on_image = []
@@ -835,7 +850,8 @@ class TomoClickTargetFinder(ClickTargetFinder):
 			beam_diameter = self.calclients['beam size'].getBeamSize(acq_presetdata)
 			if beam_diameter is None:
 				# handle no beam size calibration
-				beam_diameter = 0
+				#beam_diameter = 0
+				beam_diameter = self.settings['track beam diameter']
 			beam_diameter_on_image = int(beam_diameter/min(image_pixelsize.values()))
 			return max(dim_on_image), beam_diameter_on_image
 		except:
@@ -865,7 +881,8 @@ class TomoClickTargetFinder(ClickTargetFinder):
 			beam_diameter = self.calclients['beam size'].getBeamSize(acq_presetdata)
 			if beam_diameter is None:
 				# handle no beam size calibration
-				beam_diameter = 0
+				#beam_diameter = 0
+				beam_diameter = self.settings['focus beam diameter']
 			beam_diameter_on_image = int(beam_diameter/min(image_pixelsize.values()))
 			return max(dim_on_image), beam_diameter_on_image
 		except:
@@ -898,7 +915,6 @@ class TomoClickTargetFinder(ClickTargetFinder):
 		# (4) If each acquisition target gets a focus target, input offset.
 		# (5) Make and publish TomoTargetOffsetData for this target list
 		# (6) If there is only one focus target for this targetlist, publish to database.
-		#import rpdb2; rpdb2.start_embedded_debugger("asdf")
 
 		assert(typename == 'acquisition')
 		imagearray = imagedata['image']
@@ -915,7 +931,6 @@ class TomoClickTargetFinder(ClickTargetFinder):
 			number += 1
 
 		trackoffset = self.getTrackOffset()															# (3)
-		#trackpreset = self.getTrackPreset()	
 		if self.panel.imagepanel.isAutoFocus():														# (4)	
 			focusoffset = self.getFocusOffset()
 		else:
@@ -980,4 +995,15 @@ class TomoClickTargetFinder(ClickTargetFinder):
 		# This should be in row, col or y,x order
 		pixeloffset = [image_pixel_offset * numpy.sin(thetax), image_pixel_offset * numpy.cos(thetax)]
 		return pixeloffset
+	
+	def getTiltAxis(self):
+		# get tilt axis angle in radians
+		imagedata = self.currentimagedata
+		tem = imagedata['scope']['tem']
+		ccd = imagedata['camera']['ccdcamera']
+		mag = imagedata['scope']['magnification']
+		ht = imagedata['scope']['high tension']
+		args = (tem, ccd, 'stage position', ht, mag, None)
+		thetax, thetay = self.calclients['stage position'].getAngles(*args)
+		return thetax
 

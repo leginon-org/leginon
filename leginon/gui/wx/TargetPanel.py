@@ -28,6 +28,7 @@ import wx
 import leginon.gui.wx.ImagePanel
 import leginon.gui.wx.ImagePanelTools
 import leginon.gui.wx.TargetPanelTools
+import numpy as n
 
 ### colors that should be used globally
 targettype_colors = {
@@ -477,23 +478,53 @@ class TomoTargetImagePanel(TargetImagePanel):
 		if typename == 'track':
 			imagevector = self.trackimagevector
 			beamradius = self.trackbeamradius
+			stretch = self.parent.node.settings['stretch track beam']
 		elif typename == 'focus':
 			imagevector = self.focusimagevector
 			beamradius = self.focusbeamradius
+			stretch = self.parent.node.settings['stretch focus beam']
 		else:
 			imagevector = self.imagevector
 			beamradius = self.beamradius
-			
-		dia = (scale[0]*(imagevector[0]/2+imagevector[1]/2), scale[1]*(imagevector[0]/2-imagevector[1]/2))
-		for p1 in scaledpoints:
-			p1 = self.image2view(p1)
-			dc.DrawLine(p1[0]-dia[0], p1[1]-dia[1], p1[0]+dia[1], p1[1]-dia[0])
-			dc.DrawLine(p1[0]-dia[0], p1[1]-dia[1], p1[0]-dia[1], p1[1]+dia[0])
-			dc.DrawLine(p1[0]-dia[1], p1[1]+dia[0], p1[0]+dia[0], p1[1]+dia[1])
-			dc.DrawLine(p1[0]+dia[1], p1[1]-dia[0], p1[0]+dia[0], p1[1]+dia[1])
-			if beamradius:
-				self.drawEmptyCircle(dc,p1[0],p1[1],scale[0]*beamradius)
-				
+			stretch = self.parent.node.settings['stretch tomo beam']
+		
+		if stretch:
+			tiltrange = n.deg2rad(self.parent.node.getTiltRange())
+			tiltang = n.abs(tiltrange[0] - tiltrange[1]) / 2
+			tiltaxis = self.parent.node.getTiltAxis()
+		else:
+			tiltrange = None
+		
+		if stretch and not tiltrange is None: 
+			for p in scaledpoints:
+				p = self.image2view(p)
+				if beamradius:
+					radn = 1/n.cos(tiltang)*beamradius
+					radm = beamradius
+					self.drawEmptyEllipse(dc,p[1],p[0],radn,radm,tiltaxis + n.pi/2)
+		else:
+			dia = (scale[0]*(imagevector[0]/2+imagevector[1]/2), scale[1]*(imagevector[0]/2-imagevector[1]/2))
+			for p1 in scaledpoints:
+				p1 = self.image2view(p1)
+				dc.DrawLine(p1[0]-dia[0], p1[1]-dia[1], p1[0]+dia[1], p1[1]-dia[0])
+				dc.DrawLine(p1[0]-dia[0], p1[1]-dia[1], p1[0]-dia[1], p1[1]+dia[0])
+				dc.DrawLine(p1[0]-dia[1], p1[1]+dia[0], p1[0]+dia[0], p1[1]+dia[1])
+				dc.DrawLine(p1[0]+dia[1], p1[1]-dia[0], p1[0]+dia[0], p1[1]+dia[1])
+				if beamradius:
+					self.drawEmptyCircle(dc,p1[0],p1[1],scale[0]*beamradius)
+
+	
+	def drawEmptyEllipse(self,dc,row,col,radm,radn,ang,n_points=500):
+		assert (radm >= radn)
+		c = n.cos(ang)
+		s = n.sin(ang)
+		the = n.linspace(0,2*n.pi,n_points)
+		x=radm*n.cos(the)*c-s*radn*n.sin(the)+col;
+		y=radm*n.cos(the)*s+c*radn*n.sin(the)+row;
+		#p= radm*n.cos(the)*c-s*radn*n.sin(the)+col,radm*n.cos(the)*s+c*radn*n.sin(the)+row)
+		for i,j in zip(x,y):
+			dc.DrawPoint(i,j)
+
 	def getTargetMap(self):
 		return self.targetmap
 	
@@ -537,6 +568,7 @@ class TomoTargetImagePanel(TargetImagePanel):
 				return None			
 
 	def getFocusType(self):
+		
 		if hasattr(self,'focustype'):
 			return self.focustype
 		else:
@@ -656,35 +688,40 @@ class TomoTargetImagePanel(TargetImagePanel):
 		# (2) if state is True, add targets with value
 		# (3) display if set to display in target tool
 		focustype = self.getFocusType()
-		self.clearFocusTargetMap()
-		self.clearTargetType(focustype)				
-		
-		if not state:								# user defined focus spot
-			pass
+		if focustype:
+			self.clearFocusTargetMap()
+			self.clearTargetType(focustype)				
+			
+			if not state:								# user defined focus spot
+				pass
+			else:
+				acquisition_ts = self.getTargets('acquisition')
+				for aq_t in acquisition_ts:
+					x, y = aq_t.position						# this is relative to current camera and binning
+					x_, y_ = self.getFocusPosition(x, y, offset)
+					self.addTarget('focus', x_, y_)
+					focus_t = self.getTargets('focus')[-1]
+					self.addFocusTargetMap(focus_t, aq_t)
 		else:
-			acquisition_ts = self.getTargets('acquisition')
-			for aq_t in acquisition_ts:
-				x, y = aq_t.position						# this is relative to current camera and binning
-				x_, y_ = self.getFocusPosition(x, y, offset)
-				self.addTarget('focus', x_, y_)
-				focus_t = self.getTargets('focus')[-1]
-				self.addFocusTargetMap(focus_t, aq_t)
+			pass
 		
 	def resetTrackTargets(self,offset):
 		# redraw tracking targets
 		# (1) remove all targets
 		# (2) display if set to display in target tool
-
 		tracktype = self.getTrackType()
-		self.clearTrackTargetMap()
-		self.clearTargetType(tracktype)
-		acquisition_ts = self.getTargets('acquisition')
-		for aq_t in acquisition_ts:
-			x, y = aq_t.position
-			x_, y_ = self.getTrackPosition(x, y, offset)
-			self.addTarget('track', x_, y_)
-			track_t = self.getTargets('track')[-1]
-			self.addTrackTargetMap(track_t, aq_t)
+		if tracktype:
+			self.clearTrackTargetMap()
+			self.clearTargetType(tracktype)
+			acquisition_ts = self.getTargets('acquisition')
+			for aq_t in acquisition_ts:
+				x, y = aq_t.position
+				x_, y_ = self.getTrackPosition(x, y, offset)
+				self.addTarget('track', x_, y_)
+				track_t = self.getTargets('track')[-1]
+				self.addTrackTargetMap(track_t, aq_t)
+		else:
+			pass
 				
 	#--------------------
 	def _onShiftCtrlRightClick(self, evt):
