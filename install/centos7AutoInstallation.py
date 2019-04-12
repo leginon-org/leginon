@@ -130,7 +130,7 @@ class CentosInstallation(object):
 		originalUmask = os.umask(0)
 		
 		if not os.path.exists(self.imagesDir):
-			self.writeToLog("create images folder - /myamiImages")
+			self.writeToLog("create images folder - %s" % (self.imagesDir))
 			os.makedirs(self.imagesDir, 0777)
 		else:
 			os.chmod(self.imagesDir, 0777)
@@ -152,6 +152,8 @@ class CentosInstallation(object):
 		print "Updating system files...."
 		self.runCommand("rpm -Uvh https://dl.fedoraproject.org/pub/epel/epel-release-latest-%s.noarch.rpm" % (self.redhatMajorRelease))
 
+		# epel-release include wxPython and other requirement
+		self.runCommand("yum -y install epel-release")
 		self.runCommand("yum -y update yum*")
 
 		self.yumInstall(['yum-fastestmirror.noarch', 'yum-utils.noarch'])
@@ -285,7 +287,7 @@ class CentosInstallation(object):
 		self.linkMpiRun()
 
 	def processServerExtraPythonPackageInstall(self):
-		self.runCommand("yum install -y python-pip")
+		self.runCommand("yum install -y python2-pip")
 		self.runCommand("pip install joblib==0.10.3")		
 		self.runCommand("pip install slackclient==1.0.0")
 
@@ -873,8 +875,11 @@ endif
 
 
 	def processServerYumInstall(self):
+		# pre-requist and utility
+		packagelist= ['epel-release','vim','wget','sudo','rsync','passwd','tar','firefox','mlocate','unzip']
+		self.yumInstall(packagelist)
 
-		packagelist = ['vim','wget','sudo','rsync','passwd','tar','firefox','git','ImageMagick', 'MySQL-python', 'compat-gcc-34-g77', 'compat-libf2c-34', 'compat-libgfortran-41', 'fftw3-devel', 'gcc-c++', 'gcc-gfortran', 'gcc-objc', 'gnuplot', 'grace', 'gsl-devel', 'libtiff-devel', 'netpbm-progs', 'numpy', 'openmpi-devel', 'opencv-python', 'python-devel', 'python-imaging', 'python-matplotlib', 'python-tools', 'scipy', 'wxPython', 'xorg-x11-server-Xvfb', 'libjpeg-devel', 'zlib-devel', 'unzip']
+		packagelist = ['ImageMagick', 'MySQL-python', 'compat-libf2c-34', 'compat-libgfortran-41', 'fftw3-devel', 'gcc-c++', 'gcc-gfortran', 'gcc-objc', 'gnuplot', 'grace', 'gsl-devel', 'libtiff-devel', 'netpbm-progs', 'numpy', 'openmpi-devel', 'opencv-python', 'python-devel', 'python-imaging', 'python-matplotlib', 'python-tools', 'scipy', 'wxPython', 'xorg-x11-server-Xvfb', 'libjpeg-devel', 'zlib-devel']
 		self.yumInstall(packagelist)
 
 	def enableTorqueComputeNode(self):
@@ -1193,9 +1198,9 @@ endif
 		#TODO: handle "git: is already a working copy for a different URL" case
 
 
-                if os.path.exists('/tmp/myami/'):
+                if os.path.exists(self.gitMyamiDir):
 
-                        shutil.rmtree('/tmp/myami/')
+                        shutil.rmtree(self.gitMyamiDir)
 
 		self.runCommand(self.gitCmd)
 
@@ -1318,7 +1323,7 @@ endif
 		setupURL = "http://localhost/myamiweb/setup/autoInstallSetup.php?password=" + self.serverRootPass + "&myamidir=" + self.leginon_app_rootdir + "&appv=%d" % app_version + "&uploadsample=" + "%d" % int(self.doDownloadSampleImages)
 		myamiwebOpened = None
 		# To get the included path correctly in php command, we need to cd to where the file is.
-		cmd = "php autoInstallSetup.php -password%s -myamidir%s -appv%d -uploadsample%d" % (self.serverRootPass, self.leginon_app_rootdir, app_version, int(self.doDownloadSampleImages))
+		cmd = "php autoInstallSetup.php --password %s --myamidir %s --appv %d --uploadsample %d" % (self.serverRootPass, self.leginon_app_rootdir, app_version, int(self.doDownloadSampleImages))
 		curdir = os.getcwd()
 		websetupdir = os.path.join(self.centosWebDir, 'myamiweb','setup')
 		os.chdir(websetupdir)
@@ -1365,7 +1370,7 @@ endif
 		self.imagesDir = '/myamiImages/'
 
 		# CentOS default
-		self.centosWebDir = "/var/www/html/"
+		self.centosWebDir = "/var/www/html/" # must include the trailing '/
 		self.setReleaseDependantValues()
 
 		self.hostname = self.getServerName()
@@ -1393,6 +1398,8 @@ endif
 		if result is False:
 			sys.exit(1)
 
+		self.yumUpdate() #Basic system update and epel-release installation before anything else
+		self.yumInstall(['git',])
 		self.getMyami()
 	
 		if self.doInstallJobServerPackages:	
