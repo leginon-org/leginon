@@ -14,7 +14,11 @@ require_once("../config.php");
 require_once("../inc/leginon.inc");
 require_once("../project/inc/project.inc.php");
 
-$uploadsample = $_GET['uploadsample'];
+//php command options
+$longopts = array("password:","myamidir:","appv:","uploadsample:");
+$options = getopt('',$longopts);
+
+$uploadsample = (is_null($_GET['uploadsample'])) ? $options['uploadsample']: $_GET['uploadsample'];
 if ($uploadsample) {
 	require_once("inc/ssh.inc");
 }
@@ -36,8 +40,10 @@ $template->wizardFooter();
  * make sure the xml files are in the myami download location.
  */
 
-$dir = ($_GET['myamidir']) ? $_GET['myamidir']:'/tmp/myami/';
-$app_version = ($_GET['appv']) ? (int) $_GET['appv']:1;
+$password = (is_null($_GET['password'])) ? ((is_null($options['password'])) ? '':$options['password']): $_GET['password'];
+$dir = (is_null($_GET['myamidir'])) ? ((is_null($options['myamidir'])) ? '/tmp/myami/':$options['myamidir']): $_GET['myamidir'];
+$app_version = (is_null($_GET['appv'])) ? ((is_null($options['appv'])) ? 1:$options['appv']): $_GET['appv'];
+$app_version = (int) $app_version;
 $dir .= 'leginon/applications/';
 
 if(is_dir($dir)){
@@ -59,6 +65,7 @@ if(is_dir($dir)){
 				if ($app_version == 2 && !preg_match("/2/", $filename)) continue;
 				if ($app_version == 1 && preg_match("/2/", $filename)) continue;
 				// import application to database.
+echo $filename." ";
 				$leginondata->importApplication($dir.$filename);
 			}
 		}
@@ -127,7 +134,7 @@ if ($uploadsample) {
 	* Ask user instead of hard code
 	*/
 	$command = 'imageloader.py --projectid='.$selectedprojectId.' --session=sample --dir=/tmp/images --filetype=mrc --apix=0.82 --binx=1 --biny=1 --df=-1.5 --mag=100000 --kv=120 --description="Sample Session" --jobtype=uploadimage';
-	exec_over_ssh("localhost", "root", $_GET['password'], $command, TRUE);
+	exec_over_ssh("localhost", "root", $password, $command, TRUE);
 
 	// wait 5 seconds for uploadimage to run
 	sleep(5);
