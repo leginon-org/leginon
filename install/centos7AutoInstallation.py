@@ -334,9 +334,7 @@ class CentosInstallation(object):
 		self.writeToLog("--- Start Setting up Database Server")
 		self.mariadbYumInstall()
 		self.writeToLog("--- MariaDB is installed through yum on CentOs 7")
-		#https://stackoverflow.com/questions/33510184/change-mysql-root-password-on-centos7
-		os.system('systemctl set-environment MYSQLD_OPTS="--skip-grant-tables"')
-		
+				
 		# turn on auto mysql start
 		if self.validateCommandOutput('systemctl status mariadb', pattern='loaded', happy=False):
 			# enable and start
