@@ -335,12 +335,12 @@ class CentosInstallation(object):
 		self.mariadbYumInstall()
 		self.writeToLog("--- MariaDB is installed through yum on CentOs 7")
 		# turn on auto mysql start
-		if self.validateCommandOutput('systemctl status mysqld', pattern='loaded', happy=False):
+		if self.validateCommandOutput('systemctl status mariadb', pattern='loaded', happy=False):
 			# enable and start
-			self.runCommand("systemctl enable mysqld")
-		elif self.validateCommandOutput('systemctl status mysqld', pattern='inactive', happy=False):
+			self.runCommand("systemctl enable mariadb")
+		elif self.validateCommandOutput('systemctl status mariadb', pattern='inactive', happy=False):
 			# stop mysql server (if it's running)
-			self.runCommand("systemctl stop mysqld")
+			self.runCommand("systemctl stop mariadb")
 		# start mysql server
 		self.runCommand("chown -R mysql:mysql  /var/lib/mysql")
 		
@@ -348,7 +348,7 @@ class CentosInstallation(object):
 		self.updateMyCnf()
 		# start without skip-grant-tables so that password can be changed
 		# and users can be added later
-		os.system("systemctl start mysqld")
+		os.system("systemctl start mariadb")
 		mysql_is_active = False
 		t0 = time.time()
 		while not mysql_is_active and time.time() - t0 < 30.0:
