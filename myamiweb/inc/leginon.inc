@@ -2661,8 +2661,11 @@ class leginondata {
 
 		$q="SELECT "
 		."UNIX_TIMESTAMP(`a`.`DEF_timestamp`) as `unix_timestamp` , "
-		."`a`.`DEF_timestamp` as `timestamp` , `s`.`min`, `s`.`max`, "
+		."`a`.`DEF_timestamp` as `timestamp` , "
+		."CONCAT(`a`.`filename`,'.mrc') AS filename, "
+		."`s`.`min`, `s`.`max`, "
 		."`s`.`REF|AcquisitionImageData|image` as `imageId`, "
+		."`s`.`REF|AcquisitionImageData|image` as `image_id`, "
 		."`s`.`stdev`, `s`.`mean` "
 		.$preselect 
 		."FROM "
@@ -2815,6 +2818,8 @@ class leginondata {
 		."UNIX_TIMESTAMP(`a`.`DEF_timestamp`) AS `unix_timestamp`, "
 		."`a`.`DEF_timestamp` AS `timestamp`, "
 		."`p`.`name`, "
+		."a.`DEF_id` AS image_id, "
+		."CONCAT(`a`.`filename`,'.mrc') AS filename, "
 		."`s`.`SUBD|".$fieldname."|x` AS `".$displayname."_x`, "
 		."`s`.`SUBD|".$fieldname."|y` AS `".$displayname."_y` "
 		.$qz
@@ -2850,7 +2855,8 @@ class leginondata {
 
 	function getObjIceThickness($sessionId) {
  		$q="SELECT "
-		. "a.DEF_id AS DEF_id, UNIX_TIMESTAMP(a.DEF_timestamp) AS unix_timestamp, filename, thickness, z.mfp, z.intensity, z.`vacuum intensity` "
+		. "a.DEF_id AS DEF_id, UNIX_TIMESTAMP(a.DEF_timestamp) AS unix_timestamp, "
+		. "CONCAT(a.filename,'.mrc') AS filename, z.thickness, z.mfp, z.intensity, z.`vacuum intensity` "
 		. "FROM "
 		. "AcquisitionImageData AS a INNER JOIN  SessionData AS s "
 		. "ON a.`REF|SessionData|session` = s.DEF_id "
@@ -3012,6 +3018,7 @@ class leginondata {
 		function getRelatedStats($sessionId, $preset) {
 		$q="SELECT "
 			."`a`.`DEF_id` as `Id`, "
+			."CONCAT(`a`.`filename`,'.mrc') AS filename, "
 			."`istats`.`mean`, "
 			."`h`.`DEF_id` as `prefId`, "
 			."`parent`.`DEF_id` as `parentId`, "
@@ -3044,7 +3051,7 @@ class leginondata {
 	function getIceThickness($sessionId, $preset) {
 		$q = "SELECT "
 			."date_format(h.`DEF_timestamp`, '%Y-%d-%m %T') as `timestamp`, "
-			."a.filename as filename, "
+			."CONCAT(`a`.`filename`,'.mrc') AS filename, "
 			.'`h`.`thickness-mean`, '
 			.'`h`.`good` AS `good`, '
 			.'`a`.`DEF_id` AS `image_id` '

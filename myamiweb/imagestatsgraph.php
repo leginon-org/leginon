@@ -35,7 +35,8 @@ $dbemgraph->lineplot=false;
 $dbemgraph->title="Pixel $data_name for preset $preset";
 $dbemgraph->yaxistitle="pixel $data_name";
 if ($viewdata) {
-	$dbemgraph->dumpData(array('timestamp', $data_name));
+	$keys = array('image_id','timestamp','filename',$data_name);
+	$dbemgraph->dumpData($keys);
 }
 if ($histogram) {
 	$dbemgraph->histogram=true;
