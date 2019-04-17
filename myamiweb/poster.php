@@ -48,16 +48,16 @@ echo '</script>';
 //echo '<pre>'; print_r($instrumentinfo); echo '</pre>';
 echo PHP_EOL;
 echo '<center>';
-echo '<table cellspacing="0">';
+echo '<table cellspacing="0" width=100% >';
 
 if (stripos($sessioninfo['Purpose'], 'nccat') !== false){
 	echo '<tr style="background-color:#d4e0ee; color:black;font-size:18px;font-weight:bold;">';
-	echo '<td><a href="http://nccat.nysbc.org/" target="_blank"><img src="./img/nccat_logo.png" width="75" height="75"></a></td>';
+	echo '<td style="padding: 0 5px 0 50px;"><a href="http://nccat.nysbc.org/" target="_blank"><img src="./img/nccat_logo.png" width="75" height="75"></a></td>';
 	echo '<td style="padding: 0 5px 0 5px;">NCCAT Operations<br>';
 }
 elseif (defined("SEMC")) {
  	echo '<tr style="background-color:#475e7a;color:white;font-size:18px;font-weight:bold;">';
- 	echo '<td><a href="http://semc.nysbc.org/" target="_blank"><img src="./img/semc_logo.png" width="75" height="75"></a></td>';
+ 	echo '<td style="padding: 0 5px 0 50px;"><a href="http://semc.nysbc.org/" target="_blank"><img src="./img/semc_logo.png" width="75" height="75"></a></td>';
  	echo '<td style="padding: 0 5px 0 5px;">SEMC Operations<br>';
 }
 else{
