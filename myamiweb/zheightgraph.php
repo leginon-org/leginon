@@ -39,12 +39,15 @@ foreach($data1 as $data) {
 	$focId = $data['foc_resultId'];
 	if (empty($focId)) continue;
 	$position = $leginondata->getStagePositionFromScopeReference($focId,'FocuserResultData');
-	$position2 = $leginondata->getStagePositionFromScopeReference($data['imageId'],'AcquisitionImageData');
+	// position2 is the position of the parent image before auto focusing.
+	// This is not used now.  It should give the same position result as posistion
+	//$position2 = $leginondata->getStagePositionFromScopeReference($data['imageId'],'AcquisitionImageData');
 	//Not sure whether should add defocus correction value to ScopeEMData reference
 	//Or not. Not to use for now.
 	//$position['stage_z'] += $data['defocus'];
 	$position['defocus'] = $data['defocus'];
-	$position['imageId'] = $data['imageId'];
+	$position['parent_imageId'] = $data['imageId'];
+	$position['filename'] = $data['filename'];
 	$position['unix_timestamp'] = $data['unix_timestamp'];
 	$zmax = ($position['stage_z'] > $zmax) ? $position['stage_z']:$zmax;
 	$zmin = ($position['stage_z'] < $zmin) ? $position['stage_z']:$zmin;
@@ -52,7 +55,7 @@ foreach($data1 as $data) {
 }
 
 if ($viewdata) {
-	$keys = array("stage_x","stage_y","stage_z","defocus","imageId");
+	$keys = array("stage_x","stage_y","stage_z","defocus","parent_imageId","filename");
 	echo dumpData($positions, $keys);
 	exit;
 }

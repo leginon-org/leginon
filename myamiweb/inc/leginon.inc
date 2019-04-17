@@ -2792,15 +2792,23 @@ class leginondata {
 	}
 
 	function getStagePositionFromScopeReference($Id,$table='AcquisitionImageData') {
+		if ($table =='AcquisitionImageData') {
+			$select_filename = ",a.`DEF_id` AS parent_imageId, a.`MRC|image` AS filename ";
+			$join_filename = "";
+		} else {
+			$select_filename = ",a2.`DEF_id` AS parent_imageId, a2.`MRC|image` AS filename ";
+			$join_filename = " left join AcquisitionImageTargetData t on t.`DEF_id`=a.`REF|AcquisitionImageTargetData|target` left join AcquisitionImageData a2 on a2.`DEF_id`=t.`REF|AcquisitionImageData|image` ";
+		}
 		$q="SELECT "
-			."UNIX_TIMESTAMP(`a`.`DEF_timestamp`) AS `unix_timestamp`, "
-			."a.`DEF_id` AS imageId "
+			."UNIX_TIMESTAMP(`a`.`DEF_timestamp`) AS `unix_timestamp` "
+			.$select_filename
 			.",s.`SUBD|stage position|x` AS stage_x "
 			.",s.`SUBD|stage position|y` AS stage_y "
 			.",s.`SUBD|stage position|z` AS stage_z "
 			."FROM `".$table."` a "
 			."LEFT JOIN `ScopeEMData` s "
 			."ON a.`REF|ScopeEMData|scope` = s.`DEF_id` "
+			.$join_filename
 			."WHERE a.`DEF_id`=".$Id ;
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0];
