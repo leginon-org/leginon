@@ -456,10 +456,12 @@ class Acquisition(targetwatcher.TargetWatcher):
 		'''
 		Send align ZLP  request
 		'''
+		self.setStatus('waiting')
 		request_data = leginondata.AlignZeroLossPeakData()
 		request_data['session'] = self.session
 		request_data['preset'] = preset_name
 		self.publish(request_data, database=True, pubevent=True, wait=True)
+		self.setStatus('processing')
 
 	def measureScreenCurrent(self, preset_name): 
 		'''
