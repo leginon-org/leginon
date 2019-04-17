@@ -1582,7 +1582,7 @@ function viewer_menu($sessionId) {
 		$str.='<a class="header" target="processing" href="processing/index.php?expId='.$sessionId.'">[processing]</a> ';
 		$str.='<a class="header" target="make jpgs" href="processing/runJpgMaker.php?expId='.$sessionId.'">[make jpgs]</a> ';
 	}
-	$str .= '<a class="header" target="poster" href="poster.php?expId='.$sessionId.'">[poster]</a> ';
+	$str .= '<a class="header" target="poster" href="poster.php?expId='.$sessionId.'">[report]</a> ';
 	echo $str;
 }
 
