@@ -45,7 +45,7 @@ def sendFakeEmail(msg):
 
 class N2Monitor(object):
 	def __init__(self, logger):
-		self.t = instrumenttype.getInstrumentTypeInstance('camera')
+		self.t = instrumenttype.getInstrumentTypeInstance('tem')
 		self.logger = logger
 		self.alarm_tripped = 0
 		self.lock = True
