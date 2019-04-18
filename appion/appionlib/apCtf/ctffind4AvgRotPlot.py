@@ -156,7 +156,7 @@ def createPlot(avgrotfile):
 		pyplot.savefig(output, format="png", dpi=300, orientation='landscape', pad_inches=0.0)
 	except:
 		import subprocess
-		prog = subprocess.Popen("rm -rf ~/.matplotlib", stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		prog = subprocess.Popen("rm -rf ~/.matplotlib", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
 		out, err = prog.communicate()
 		pyplot.savefig(output, format="png", dpi=300, orientation='landscape', pad_inches=0.0)
 	return output
