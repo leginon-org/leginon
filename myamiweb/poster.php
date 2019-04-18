@@ -333,7 +333,6 @@ echo '</tr>';
 echo '<tr>';
 echo '<td colspan=2>';
 echo divtitle("Experimental Methods");
-$dunno = "<span style='font-weight: bold; color: #aa0000'>????</span>";
 $microscope = $imageinfo['scope'];
 $kv = intval($imageinfo['high tension']/1000);
 $camera = $imageinfo['camera'];
@@ -355,7 +354,7 @@ echo "<p>";
 echo "$microscope operated at $kv kV with a $camera imaging system collected at $magX nominal magnification.
 The calibrated pixel size of $pixelsize &Aring; was used for processing.";
 
-echo "</p>><p>";
+echo "</p><p>";
 
 echo "Movies were collected using Leginon (Suloway et al., 2005) at a dose
 rate of $dosepersec e<sup>-</sup>/&Aring;<sup>2</sup>/s with a total exposure of $exposure seconds,
