@@ -330,6 +330,44 @@ echo '<input type="submit" value="Save" />';
 echo '</form>';
 echo '</td>';
 echo '</tr>';
+echo '<tr>';
+echo '<td colspan=2>';
+echo divtitle("Experimental Methods");
+$dunno = "<span style='font-weight: bold; color: #aa0000'>????</span>";
+$microscope = $imageinfo['scope'];
+$kv = intval($imageinfo['high tension']/1000);
+$camera = $imageinfo['camera'];
+$pixelsize = number_format($imageinfo['pixelsize']*1e10,4); ;
+$mag = number_format($presetdata['magnification'],0);
+$dosepersec = number_format($maxpresetarray['dose']/$presetdata['exposure time']/1e17, 2);
+$exposure = number_format($presetdata['exposure time']/1000,2);
+$totaldose = number_format($maxpresetarray['dose']/1e20,2);
+$frametime = number_format($presetdata['frame time']/1000,2);
+$numframes = intval(round($presetdata['exposure time']/$presetdata['frame time'],0));
+$numimages = $maxpresetarray['nb'];
+$defmin = number_format(-1e6*$defdata['maxdef'], 1);
+$defmax = number_format(-1e6*$defdata['mindef'], 1);
+
+echo opendivbubble();
+
+echo "<p>";
+
+echo "$microscope operated at $kv kV with a $camera imaging system collected at $magX nominal magnification.
+The calibrated pixel size of $pixelsize &Aring; was used for processing.";
+
+echo "</p>><p>";
+
+echo "Movies were collected using Leginon (Suloway et al., 2005) at a dose
+rate of $dosepersec e<sup>-</sup>/&Aring;<sup>2</sup>/s with a total exposure of $exposure seconds,
+for an acculumlated dose of $totaldose e<sup>-</sup>/&Aring;<sup>2</sup>. Intermediate frames were recorded
+every $frametime seconds for a total of $numframes frames per micrograph. A total of $numimages images were
+collected at a nominal defocus range of $defmin &ndash; $defmax &mu;m.";
+
+echo "</p>";
+
+echo '</div>';
+echo '</td>';
+echo '</tr>';
 
 if (stripos($sessioninfo['Purpose'], 'nccat') !== false){
 	echo '<tr>';
