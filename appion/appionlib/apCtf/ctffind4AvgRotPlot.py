@@ -152,6 +152,9 @@ def createPlot(avgrotfile):
 	pyplot.legend()
 
 	setPyPlotXLabels(xdatasq, maxloc=1/maxResolutionToShow**2, square=True)
-	pyplot.savefig(output, format="png", dpi=300, orientation='landscape', pad_inches=0.0)
-	
+	try:
+		pyplot.savefig(output, format="png", dpi=300, orientation='landscape', pad_inches=0.0)
+	except:
+		os.system("rm -rf ~/.matplotlib")
+		pyplot.savefig(output, format="png", dpi=300, orientation='landscape', pad_inches=0.0)
 	return output
