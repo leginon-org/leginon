@@ -505,11 +505,14 @@ class SimTEM(tem.TEM):
 		return True
 
 	def runAutoFiller(self):
-		self.addRefrigerant(1)
+		self.autofiller_busy = True
+		self.ventRefrigerant()
+		self.addRefrigerant(4)
 		if self.level0 <=40 or self.level1 <=40:
 			self.autofiller_busy = True
 			raise RuntimeError('Force fill failed')
 		self.addRefrigerant(4)
+		self.autofiller_busy = False
 
 	def resetAutoFillerError(self):
 		self.autofiller_busy = False
@@ -530,12 +533,24 @@ class SimTEM(tem.TEM):
 			print 'using', self.level0, self.level1
 			time.sleep(4)
 
+	def ventRefrigerant(self):
+		self.level0 -= 10
+		self.level1 -= 10
+		print 'venting', self.level0, self.level1
+		time.sleep(2)
+
 	def addRefrigerant(self,cycle):
 		for i in range(cycle):
 			self.level0 += 20
 			self.level1 += 20
 			print 'adding', self.level0, self.level1
 			time.sleep(2)
+
+	def getAutoFillerRemainingTime(self):
+		if simu_autofiller:
+			return min(self.level0, self.level1)
+		else:
+			return -60
 
 	def exposeSpecimenNotCamera(self,seconds):
 		time.sleep(seconds)

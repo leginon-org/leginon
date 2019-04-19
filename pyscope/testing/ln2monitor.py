@@ -1,15 +1,18 @@
 
 TESTING = False
-LOADER_TRIP_LEVEL = 2.0 # percentage
+LOADER_TRIP_LEVEL = 5.0 # percentage
 COLUMN_TRIP_LEVEL = 22.0 # percentage
+RECOVER_TIME = 5*60 # expected recover time during fill
 
 default_interval = 10*60 # 10 minutes
 snooze_interval = 60*60 # snooze 60 minutes
-silent_alarm = 3 # number of time to sound alarm before silent itself
+silent_alarm = 2 # number of time to sound alarm before silent itself
 
 if TESTING:
-	default_interval = 1
-	snooze_interval = 10
+	default_interval = 5
+	snooze_interval = 2
+	RECOVER_TIME = 2 # expected recover time during fill
+
 import time
 import datetime
 import threading
@@ -59,41 +62,56 @@ class N2Monitor(object):
 			self.check_interval = default_interval
 			while self.lock:
 				try:
-					now_str =datetime.datetime.today().isoformat().split('.')[0]
+					now_str = self.getNowStr()
 					if self.t.getAutoFillerRemainingTime() < -30:
 						# autofiller is not set to cool.
 						self.status = 'idle'
 						self.logger.SetLabel('%s Status: %s' % (now_str,self.status))
 						time.sleep(snooze_interval)
 						continue
-					self.checkLevel(now_str)
+					self.checkLevel()
 				except Exception as e:
 					sendEmail('Error: %s' % (e,))
 
-	def isLowLevel(self, loader_level, column_level):
-		return loader_level <= LOADER_TRIP_LEVEL or  column_level <= COLUMN_TRIP_LEVEL
+	def isLowLevel(self):
+		if self.loader_level > LOADER_TRIP_LEVEL and  self.column_level > COLUMN_TRIP_LEVEL:
+			return False
+		else:
+			# LN2 level drops during fill.  Check again after expected recovery
+			if self.t.isAutoFillerBusy():
+				if TESTING:
+					print 'wait for recheck'
+				time.sleep(RECOVER_TIME)
+			self.loader_level = self.t.getRefrigerantLevel(0)
+			self.column_level = self.t.getRefrigerantLevel(1)
+			return self.loader_level <= LOADER_TRIP_LEVEL or  self.column_level <= COLUMN_TRIP_LEVEL
 
-	def checkLevel(self, now_str):
-		loader_level = self.t.getRefrigerantLevel(0)
-		column_level = self.t.getRefrigerantLevel(0)
+	def getNowStr(self):
+		return datetime.datetime.today().isoformat().split('.')[0]
+
+	def checkLevel(self):
+		self.loader_level = self.t.getRefrigerantLevel(0)
+		self.column_level = self.t.getRefrigerantLevel(1)
 		self.status = 'ok'
-		if not self.isLowLevel(loader_level, column_level):
+		if self.loader_level > LOADER_TRIP_LEVEL and  self.column_level > COLUMN_TRIP_LEVEL:
 			# reset check interval to default if recover
 			self.check_interval = default_interval
-		if self.isLowLevel(loader_level, column_level):
-			sendEmail('%s Low leavel alarm:\nAutoloader level at %d and Column level at %d' % (self.t.name, loader_level, column_level))
+		if self.isLowLevel():
+			sendEmail('%s Low level alarm @ %s\nAutoloader level at %d and Column level at %d' % (self.t.name, self.getNowStr(), self.loader_level, self.column_level))
 			self.status = 'low'
 			self.alarm_tripped += 1
 			if self.alarm_tripped >=silent_alarm:
-				# snooze a while before recheck
+				# snooze longer
 				self.check_interval = snooze_interval
 				self.alarm_tripped = 0
 			else:
-				if TESTING and self.check_interval == snooze_interval:
-					self.t.runAutoFiller()
-		self.logger.SetLabel('%s Status: %s' % (now_str,self.status))
+				if TESTING and self.check_interval == snooze_interval and not self.t.isAutoFillerBusy():
+					tt=threading.Thread(target=self.t.runAutoFiller)
+					tt.start()
+		self.logger.SetLabel('%s Status: %s' % (self.getNowStr(),self.status))
 		time.sleep(self.check_interval)
 
+# ---------gui---------------
 import wx
 class Frame(wx.Frame):
 	def __init__(self, title):
@@ -110,6 +128,8 @@ class Frame(wx.Frame):
 		sz.AddGrowableCol(0)
 		self.SetAutoLayout(True)
 		self.panel.SetSizerAndFit(sz)
+
+
 		self.panel.Centre()
 		self.panel.Layout()
 
