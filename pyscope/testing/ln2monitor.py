@@ -1,5 +1,5 @@
 
-TESTING = False
+TESTING = True
 LOADER_TRIP_LEVEL = 5.0 # percentage
 COLUMN_TRIP_LEVEL = 22.0 # percentage
 RECOVER_TIME = 5*60 # expected recover time during fill
@@ -61,6 +61,7 @@ class N2Monitor(object):
 		else:
 			self.check_interval = default_interval
 			while self.lock:
+				print 'while'
 				try:
 					now_str = self.getNowStr()
 					if self.t.getAutoFillerRemainingTime() == -60:
@@ -71,7 +72,10 @@ class N2Monitor(object):
 						continue
 					self.checkLevel()
 				except Exception as e:
-					sendEmail('Error: %s' % (e,))
+					print e
+					self.logger.SetLabel(e)
+					break
+		return
 
 	def isLowLevel(self):
 		if self.loader_level > LOADER_TRIP_LEVEL and  self.column_level > COLUMN_TRIP_LEVEL:
@@ -107,20 +111,21 @@ class N2Monitor(object):
 			else:
 				if TESTING and self.check_interval == snooze_interval and not self.t.isAutoFillerBusy():
 					tt=threading.Thread(target=self.t.runAutoFiller)
+					tt.setDaemon(True)
 					tt.start()
 		self.logger.SetLabel('%s Status: %s' % (self.getNowStr(),self.status))
 		time.sleep(self.check_interval)
 
 # ---------gui---------------
 import wx
-class Frame(wx.Frame):
+class MyFrame(wx.Frame):
 	def __init__(self, title):
 		wx.Frame.__init__(self, None, title=title, pos=(150,150), size=(300,100))
 
 		self.panel = wx.Panel(self,-1)
 		sz = wx.GridBagSizer(5, 5)
-		heading = wx.StaticText(self, -1, "Most Recent Status")
-		self.m_text = wx.StaticText(self, -1, "0000-00-00 00:00:00 Status: Idle")
+		heading = wx.StaticText(self.panel, -1, "Most Recent Status")
+		self.m_text = wx.StaticText(self.panel, -1, "0000-00-00 00:00:00 Status: Idle")
 		#self.m_text.SetSize((300,100))
 		sz.Add(heading,(0,0),(1,1),wx.EXPAND|wx.CENTER|wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.m_text,(1,0),(1,1),wx.EXPAND|wx.CENTER|wx.ALIGN_CENTER_VERTICAL)
@@ -139,15 +144,17 @@ class Frame(wx.Frame):
 		self.Bind(wx.EVT_CLOSE, self.onClose())
 
 	def onShow(self):
+		print 'onShow'
 		t = threading.Thread(target=self.monitor.loop, name='monitor')
 		t.daemon = True
 		t.start()
 
 	def onClose(self):
+		print 'onClose'
 		self.monitor.lock = True
 
 if __name__=='__main__':
 	app = wx.App()
-	top = Frame("N2 Monitor")
+	top = MyFrame("N2 Monitor")
 	top.Show()
 	app.MainLoop()
