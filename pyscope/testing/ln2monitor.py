@@ -63,8 +63,8 @@ class N2Monitor(object):
 			while self.lock:
 				try:
 					now_str = self.getNowStr()
-					if self.t.getAutoFillerRemainingTime() < -30:
-						# autofiller is not set to cool.
+					if self.t.getAutoFillerRemainingTime() == -60:
+						# when autofiller is set to both room temperature, this value is -60
 						self.status = 'idle'
 						self.logger.SetLabel('%s Status: %s' % (now_str,self.status))
 						time.sleep(snooze_interval)
