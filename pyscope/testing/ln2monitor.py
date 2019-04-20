@@ -16,6 +16,15 @@ if TESTING:
 import time
 import datetime
 import threading
+try:
+	# wxpython 2.8
+	from wx.lib.pubsub import Publisher
+	pub = Publisher()
+	is_wx28 = True
+except:
+	# wxpython 2.9 and up
+	from wx.lib.pubsub import pub 
+	is_wx28 = False
 from pyscope import instrumenttype
 
 import smtplib
@@ -47,16 +56,15 @@ def sendFakeEmail(msg):
 	print msg
 
 class N2Monitor(object):
-	def __init__(self, logger):
+	def __init__(self):
 		self.t = instrumenttype.getInstrumentTypeInstance('tem')
-		self.logger = logger
 		self.alarm_tripped = 0
 		self.lock = True
 		self.status = 'ok'
 
 	def loop(self):
 		if not self.t.hasAutoFiller():
-			self.logger.setLabel('Does not have auto filler. Nothing to monitor')
+			self.sendLabel('Does not have auto filler. Nothing to monitor')
 			time.sleep(10)
 		else:
 			self.check_interval = default_interval
@@ -67,15 +75,26 @@ class N2Monitor(object):
 					if self.t.getAutoFillerRemainingTime() == -60:
 						# when autofiller is set to both room temperature, this value is -60
 						self.status = 'idle'
-						self.logger.SetLabel('%s Status: %s' % (now_str,self.status))
+						self.sendLabel('%s Status: %s' % (now_str,self.status))
 						time.sleep(snooze_interval)
 						continue
 					self.checkLevel()
 				except Exception as e:
+					self.lock = False
 					print e
-					self.logger.SetLabel(e)
 					break
 		return
+
+	def sendLabel(self, text):
+		# thread safe way to update wx value
+		wx.CallAfter(self._sendLabel, text)
+
+	def _sendLabel(self, text):
+		# thread safe way to update wx value
+		if is_wx28:
+			pub.sendMessage("update", text)
+		else:
+			pub.sendMessage("update", msg=text)
 
 	def isLowLevel(self):
 		if self.loader_level > LOADER_TRIP_LEVEL and  self.column_level > COLUMN_TRIP_LEVEL:
@@ -100,20 +119,23 @@ class N2Monitor(object):
 		if self.loader_level > LOADER_TRIP_LEVEL and  self.column_level > COLUMN_TRIP_LEVEL:
 			# reset check interval to default if recover
 			self.check_interval = default_interval
+			if self.alarm_tripped:
+				print 'reset'
+				self.alarm_tripped = 0
 		if self.isLowLevel():
-			sendEmail('%s Low level alarm @ %s\nAutoloader level at %d and Column level at %d' % (self.t.name, self.getNowStr(), self.loader_level, self.column_level))
-			self.status = 'low'
 			self.alarm_tripped += 1
+			if self.alarm_tripped == 1:
+				sendEmail('%s Low level alarm @ %s\nAutoloader level at %d and Column level at %d' % (self.t.name, self.getNowStr(), self.loader_level, self.column_level))
+			self.status = 'low'
 			if self.alarm_tripped >=silent_alarm:
 				# snooze longer
 				self.check_interval = snooze_interval
-				self.alarm_tripped = 0
-			else:
-				if TESTING and self.check_interval == snooze_interval and not self.t.isAutoFillerBusy():
+				print 'start to snooze'
+				if TESTING and not self.t.isAutoFillerBusy():
 					tt=threading.Thread(target=self.t.runAutoFiller)
-					tt.setDaemon(True)
+					tt.daemon = True
 					tt.start()
-		self.logger.SetLabel('%s Status: %s' % (self.getNowStr(),self.status))
+		self.sendLabel('%s Status: %s' % (self.getNowStr(),self.status))
 		time.sleep(self.check_interval)
 
 # ---------gui---------------
@@ -124,13 +146,17 @@ class MyFrame(wx.Frame):
 
 		self.panel = wx.Panel(self,-1)
 		sz = wx.GridBagSizer(5, 5)
-		heading = wx.StaticText(self.panel, -1, "Most Recent Status")
+		if TESTING:
+			alarm='Testing'
+		else:
+			alarm='Emailing'
+		heading = wx.StaticText(self.panel, -1, "State:")
+		alarm_type = wx.StaticText(self.panel, -1, "Alarm:%s" % alarm)
 		self.m_text = wx.StaticText(self.panel, -1, "0000-00-00 00:00:00 Status: Idle")
 		#self.m_text.SetSize((300,100))
-		sz.Add(heading,(0,0),(1,1),wx.EXPAND|wx.CENTER|wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.m_text,(1,0),(1,1),wx.EXPAND|wx.CENTER|wx.ALIGN_CENTER_VERTICAL)
-
-		sz.AddGrowableCol(0)
+		sz.Add(heading,(0,0),(1,1),wx.LEFT|wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(alarm_type,(0,1),(1,1),wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.m_text,(1,0),(1,2),wx.EXPAND|wx.CENTER|wx.ALIGN_CENTER_VERTICAL)
 		self.SetAutoLayout(True)
 		self.panel.SetSizerAndFit(sz)
 
@@ -138,23 +164,30 @@ class MyFrame(wx.Frame):
 		self.panel.Centre()
 		self.panel.Layout()
 
-		self.monitor = N2Monitor(self.m_text)
+		pub.subscribe(self.updateLabel, "update")
+
+		self.monitor = N2Monitor()
 		
 		self.Bind(wx.EVT_SHOW, self.onShow())
-		self.Bind(wx.EVT_CLOSE, self.onClose())
+
+	def updateLabel(self, msg):
+		if is_wx28:
+			text = msg.data
+		else:
+			text = msg
+		self.m_text.SetLabel(text)
 
 	def onShow(self):
-		print 'onShow'
 		t = threading.Thread(target=self.monitor.loop, name='monitor')
 		t.daemon = True
 		t.start()
 
-	def onClose(self):
-		print 'onClose'
-		self.monitor.lock = True
-
 if __name__=='__main__':
-	app = wx.App()
+	# redirect=False sends stdout/stderr to console.  Needed on Windows to make
+	# sure threads are stopped when MyFrame is closed.  Otherwise the
+	# stdout window keeps the thread alive and cause problem when the thread
+	# is trying to update the dead MyFrame.
+	app = wx.App(redirect=False)
 	top = MyFrame("N2 Monitor")
 	top.Show()
 	app.MainLoop()
