@@ -9,6 +9,7 @@ from leginon import instrument
 from leginon import player
 import time
 import itertools
+import datetime
 
 PAUSE_ON_ERROR = True
 EARLY_WARNING_FOR_REFILL = True
@@ -228,6 +229,8 @@ class AutoNitrogenFiller(Conditioner):
 		'loader fill start': 17,
 		'loader fill end': 70,
 		'delay dark current ref': 120,
+		'start dark current ref hr': 0,
+		'end dark current ref hr': 24,
 	})
 	eventinputs = node.Node.eventinputs + [event.FixConditionEvent]
 
@@ -302,12 +305,30 @@ class AutoNitrogenFiller(Conditioner):
 		t1 = threading.Thread(target=self.runNitrogenFiller)
 		t1.start()
 		# Dark Current Reference Update if needed
-		self.logger.info('Waiting for %d seconds before running camera dark current reference update' % (self.settings['delay dark current ref']))
-		time.sleep(self.settings['delay dark current ref'])
-		self.runCameraDarkCurrentReferenceUpdate()
+		if self.withinGoodHours():
+			self.logger.info('Waiting for %d seconds before running camera dark current reference update' % (self.settings['delay dark current ref']))
+			time.sleep(self.settings['delay dark current ref'])
+			self.runCameraDarkCurrentReferenceUpdate()
+		else:
+			self.logger.info('Outside the good hours to acquire camera dark current reference. Skipped')
 		t1.join()
 
 		filler_status = self.monitorRefillWithIsBusy()
+
+	def withinGoodHours(self):
+		'''
+		Acquire Dark Current Reference may cause camera to misbehave such as black stripe.
+		This makes it possible to limit the time it performs this to day time.
+		'''
+		within_good_hours = False
+		if self.settings['start dark current ref hr'] == self.settings['end dark current ref hr']:
+			return False
+		my_hour = datetime.datetime.today().hour
+		self.logger.info('Current hour of day: %d' % my_hour)
+		if self.settings['start dark current ref hr'] <= my_hour and my_hour < self.settings['end dark current ref hr']:
+			self.logger.info('Within the good hours to perform dark current reference acquisition')
+			within_good_hours = True
+		return within_good_hours
 
 	def runNitrogenFiller(self):
 		try:

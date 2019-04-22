@@ -2764,6 +2764,8 @@ class AutoFillerSettingsData(ConditionerSettingsData):
 			('loader fill start', float),
 			('loader fill end', float),
 			('delay dark current ref', int),
+			('start dark current ref hr', int),
+			('end dark current ref hr', int),
 		)
 	typemap = classmethod(typemap)
 
