@@ -1980,6 +1980,15 @@ class FocuserSettingsData(SingleFocuserSettingsData):
 		return SingleFocuserSettingsData.typemap()
 	typemap = classmethod(typemap)
 
+class DiffrFocuserSettingsData(FocuserSettingsData):
+	def typemap(cls):
+		return FocuserSettingsData.typemap() + (
+			('tilt start', float), # degrees
+			('tilt range', float), # degrees
+			('tilt speed', float), # degrees per second
+		)
+	typemap = classmethod(typemap)
+
 class AutoExposureSettingsData(AcquisitionSettingsData):
 	def typemap(cls):
 		return AcquisitionSettingsData.typemap() + (

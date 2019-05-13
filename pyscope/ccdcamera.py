@@ -28,6 +28,9 @@ class CCDCamera(baseinstrument.BaseInstrument):
 		{'name': 'Offset', 'type': 'property'},
 		{'name': 'ExposureTimestamp', 'type': 'property'},
 		{'name': 'IntensityAveraged', 'type': 'property'},
+		## methods:
+		{'name': 'startMovie', 'type': 'property'},
+		{'name': 'stopMovie', 'type': 'property'},
 		## optional:
 		{'name': 'EnergyFilter', 'type': 'property'},
 		{'name': 'EnergyFilterWidth', 'type': 'property'},
@@ -342,6 +345,12 @@ This method returns that multiplier, M.  In the standard case, returns 1.0.
 
 	def getInserted(self):
 		raise NotImplementedError
+
+	def startMovie(self,filename):
+		pass
+
+	def stopMovie(self,filename):
+		pass
 
 	def _midNightDelay(self, delay_start, delay_length, force_insert=0):
 		'''

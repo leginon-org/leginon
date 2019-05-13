@@ -6,6 +6,7 @@
 #
 
 import baseinstrument
+import math
 
 class TEM(baseinstrument.BaseInstrument):
 	name = None
@@ -39,11 +40,13 @@ class TEM(baseinstrument.BaseInstrument):
 		{'name': 'VacuumStatus', 'type': 'property'},
 		{'name': 'BeamBlankedDuringCameraExchange', 'type': 'property'},
 		{'name': 'ProjectionSubModeName', 'type': 'property'},
+		{'name': 'StageLimits', 'type': 'property'},
 
 		######## get/set
 		{'name': 'BeamBlank', 'type': 'property'},
 		{'name': 'BeamShift', 'type': 'property'},
 		{'name': 'BeamTilt', 'type': 'property'},
+		{'name': 'BeamStopPosition', 'type': 'property'},
 		{'name': 'ColumnValvePosition', 'type': 'property'},
 		{'name': 'CorrectedStagePosition', 'type': 'property'},
 		{'name': 'DarkFieldMode', 'type': 'property'},
@@ -347,3 +350,12 @@ class TEM(baseinstrument.BaseInstrument):
 	def resetStageSpeed(self, value):
 		# do nothing.
 		pass
+
+	def getStageLimits(self):
+		limits =  {
+								'x':(-0.001,0.001),
+								'y':(-0.001,0.001),
+								'z':(-0.0004,0.0004),
+								'a':(math.radians(-70),math.radians(70)),
+		}
+		return limits
