@@ -104,6 +104,5 @@ class DiffrFocuser(singlefocuser.SingleFocuser):
 		self.instrument.ccdcamera.stopMovie(filename)
 
 	def pauseForUser(self):
-		self.setStatus('idle')
-		self.setStatus('user input')
+		# just need to set player. Status will follow it in TargetWatcher.pauseCheck
 		self.player.pause()
