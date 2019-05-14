@@ -1,4 +1,7 @@
 #import comtypes.client
+import os
+import subprocess
+
 import ccdcamera
 import time
 import simscripting
@@ -268,6 +271,11 @@ class FeiCam(ccdcamera.CCDCamera):
 	def getImage(self):
 		# The following is copied from ccdcamera.CCDCamera since
 		# super (or self.as_super as used in de.py) does not work in proxy call
+		t0 = time.time()
+		# BUG: IsActive only detect correctly with frame saving, not
+		# camera availability
+		while self.csa.IsActive:
+			time.sleep(0.1)
 		if self.readoutcallback:
 			name = str(time.time())
 			self.registerCallback(name, self.readoutcallback)
@@ -435,6 +443,20 @@ class FeiCam(ccdcamera.CCDCamera):
 
 	def getEnergyFiltered(self):
 		return False
+
+	def startMovie(self, filename):
+		self._clickAcquire()
+
+	def stopMovie(self, filename):
+		self._clickAcquire()
+		print 'movie name: %s' % filename
+
+	def _clickAcquire(self):
+		exepath = self.getFeiConfig('camera','autoit_tui_acquire_exe_path')
+		if exepath and os.path.isfile(exepath):
+			subprocess.call(exepath)
+		else:
+			raise NotImplementedError()
 
 class Ceta(FeiCam):
 	name = 'Ceta'

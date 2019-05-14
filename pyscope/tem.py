@@ -46,7 +46,7 @@ class TEM(baseinstrument.BaseInstrument):
 		{'name': 'BeamBlank', 'type': 'property'},
 		{'name': 'BeamShift', 'type': 'property'},
 		{'name': 'BeamTilt', 'type': 'property'},
-		{'name': 'BeamStopPosition', 'type': 'property'},
+		{'name': 'BeamstopPosition', 'type': 'property'},
 		{'name': 'ColumnValvePosition', 'type': 'property'},
 		{'name': 'CorrectedStagePosition', 'type': 'property'},
 		{'name': 'DarkFieldMode', 'type': 'property'},

@@ -36,7 +36,13 @@ EXTRA_PROTECTOR_SLEEP_TIME = 0
 [phase plate]
 # Location of next phase plate AutoIt executable
 AUTOIT_EXE_PATH = C:\Program Files\AutoIt3\nextphaseplate.exe
+# Location of tui acquire start/stop AutoIt executable
+AUTOIT_TUI_ACQUIRE_EXE_PATH = to_be_added
 
+[beamstop]
+# Location of beamstop AutoIt executable
+AUTOIT_IN_EXE_PATH =  to_be_added
+AUTOIT_OUT_EXE_PATH = to_be_added
 [stage]
 # Some Krios stage needs backlash.
 DO_STAGE_XYZ_BACKLASH = True

@@ -29,8 +29,8 @@ class CCDCamera(baseinstrument.BaseInstrument):
 		{'name': 'ExposureTimestamp', 'type': 'property'},
 		{'name': 'IntensityAveraged', 'type': 'property'},
 		## methods:
-		{'name': 'startMovie', 'type': 'property'},
-		{'name': 'stopMovie', 'type': 'property'},
+		{'name': 'startMovie', 'type': 'method'},
+		{'name': 'stopMovie', 'type': 'method'},
 		## optional:
 		{'name': 'EnergyFilter', 'type': 'property'},
 		{'name': 'EnergyFilterWidth', 'type': 'property'},

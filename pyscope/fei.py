@@ -162,6 +162,15 @@ class Tecnai(tem.TEM):
 	def getAutoitExePath(self):
 		return self.getFeiConfig('phase plate','autoit_exe_path')
 
+	def getAutoitBeamstopInExePath(self):
+		return self.getFeiConfig('beamstop','autoit_in_exe_path')
+
+	def getAutoitBeamstopOutExePath(self):
+		return self.getFeiConfig('beamstop','autoit_out_exe_path')
+
+	def getAutoitBeamstopHalfwayExePath(self):
+		return self.getFeiConfig('beamstop','autoit_halfway_exe_path')
+
 	def getRotationCenterScale(self):
 		return self.getFeiConfig('optics','rotation_center_scale')
 
@@ -1853,6 +1862,19 @@ class Tecnai(tem.TEM):
 		# aperture already selected will return immediately.
 		return bool(status)
 
+	def setBeamstopPosition(self, value):
+		"""
+		Possible values: ('in','out','halfway')
+		Tecnically tecnai has no software control on this.
+		"""
+		valuecap = value[0].upper()+value[1:]
+		methodname = 'getAutoitBeamstop%sExePath' % (valuecap)
+		exepath = getattr(self,methodname)()
+		if exepath and os.path.isfile(exepath):
+			subprocess.call(exepath)
+			time.sleep(2.0)
+		else:
+			pass
 class Krios(Tecnai):
 	name = 'Krios'
 	use_normalization = True
