@@ -42,8 +42,13 @@ class DiffrFocuser(singlefocuser.SingleFocuser):
 			self.tiltAndWait(emtarget)
 		except:
 			self.logger.info('Return to %.1f deg tilt' % (math.degrees(self.tilt0)))
-			self.instrument.tem.StagePosition={'a':self.tilt0}
+			self.returnToOriginalTilt()
 			raise
+
+	def returnToOriginalTilt(self):
+		self.instrument.tem.BeamstopPosition = 'out'
+		self.instrument.tem.StageSpeed = 1.0
+		self.instrument.tem.StagePosition={'a':self.tilt0}
 
 	def tiltAndWait(self, emtarget):
 		position0 = self.instrument.tem.StagePosition
@@ -52,8 +57,9 @@ class DiffrFocuser(singlefocuser.SingleFocuser):
 		self.start_radian = math.radians(self.settings['tilt start'])
 		self.end_radian = math.radians(self.settings['tilt range']+self.settings['tilt start'])
 		limits = self.instrument.tem.StageLimits
-		if self.end_radian > limits['a'][1] or self.start_radian < limits['a'][0]:
-			raise acquisition.BadImageStatsPause('Tilt angle out of range')
+		print limits, self.start_radian
+		#if self.end_radian > limits['a'][1] or self.start_radian < limits['a'][0]:
+		#	raise acquisition.BadImageStatsPause('Tilt angle out of range')
 
 		tilt_time = self.settings['tilt speed']*self.settings['tilt range']
 		if tilt_time >= 3*60:
@@ -66,12 +72,13 @@ class DiffrFocuser(singlefocuser.SingleFocuser):
 		t.daemen = True
 		t.start()
 		filename = self.getTiltMovieFilename(emtarget)
+		self.instrument.tem.BeamstopPosition = 'in'
 		self.startMovieCollection(filename)
 		t.join()
 		self.logger.info('End tilting')
 		self.stopMovieCollection(filename)
 		self.logger.info('Return to %.1f deg tilt' % (math.degrees(self.tilt0)))
-		self.instrument.tem.StagePosition={'a':self.tilt0}
+		self.returnToOriginalTilt()
 		self.pauseForUser()
 
 	def getTiltMovieFilename(self, emtarget):
@@ -84,18 +91,19 @@ class DiffrFocuser(singlefocuser.SingleFocuser):
 		return filename
 
 	def tiltWithSpeed(self):
+		time.sleep(0.5)
 		self.instrument.tem.StageSpeed = self.settings['tilt speed']*0.1
 		self.instrument.tem.StagePosition = {'a':self.end_radian}
-		time.sleep(10)
 
 	def startMovieCollection(self, filename):
 		self.logger.info('Start movie collection')
-		#self.instrument.ccdcamera.startMovie = filename
+		self.instrument.ccdcamera.startMovie(filename)
 
 	def stopMovieCollection(self, filename):
 		self.logger.info('Stop movie collection')
-		#self.instrument.ccdcamera.stopMovie = filename
+		self.instrument.ccdcamera.stopMovie(filename)
 
 	def pauseForUser(self):
+		self.setStatus('idle')
 		self.setStatus('user input')
 		self.player.pause()
