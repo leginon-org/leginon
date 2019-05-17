@@ -2935,3 +2935,13 @@ class BlackStripeSettingsData(SettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class DiffractionSeriesData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('tilt start', float),
+			('tilt range', float),
+			('tilt speed', float),
+			('parent', AcquisitionImageData),
+			('preset', PresetData),
+		)
+	typemap = classmethod(typemap)

@@ -40,6 +40,7 @@ class DiffrFocuser(singlefocuser.SingleFocuser):
 	def acquirePublishDisplayWait(self, presetdata, emtarget, channel):
 		try:
 			self.tiltAndWait(emtarget)
+			self.saveDiffractionSeriesData(presetdata,emtarget)
 		except:
 			self.logger.info('Return to %.1f deg tilt' % (math.degrees(self.tilt0)))
 			self.returnToOriginalTilt()
@@ -79,7 +80,14 @@ class DiffrFocuser(singlefocuser.SingleFocuser):
 		self.stopMovieCollection(filename)
 		self.logger.info('Return to %.1f deg tilt' % (math.degrees(self.tilt0)))
 		self.returnToOriginalTilt()
-		self.pauseForUser()
+		#self.pauseForUser()
+
+	def saveDiffractionSeriesData(self, presetdata, emtarget):
+		q = leginondata.DiffractionSeriesData(preset=presetdata, parent=emtarget['image'])
+		q['tilt start'] = self.settings['tilt start']
+		q['tilt range'] = self.settings['tilt range']
+		q['tilt speed'] = self.settings['tilt speed']
+		q.insert()
 
 	def getTiltMovieFilename(self, emtarget):
 		parent_id = emtarget['target']['image'].dbid
@@ -92,7 +100,8 @@ class DiffrFocuser(singlefocuser.SingleFocuser):
 
 	def tiltWithSpeed(self):
 		time.sleep(0.5)
-		self.instrument.tem.StageSpeed = self.settings['tilt speed']*0.1
+		# temporarily set with known conversion
+		self.instrument.tem.StageSpeed = self.settings['tilt speed']/29.78
 		self.instrument.tem.StagePosition = {'a':self.end_radian}
 
 	def startMovieCollection(self, filename):
