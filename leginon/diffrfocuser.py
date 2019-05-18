@@ -39,7 +39,7 @@ class DiffrFocuser(singlefocuser.SingleFocuser):
 
 	def acquirePublishDisplayWait(self, presetdata, emtarget, channel):
 		try:
-			self.tiltAndWait(emtarget)
+			self.tiltAndWait(presetdata,emtarget)
 			self.saveDiffractionSeriesData(presetdata,emtarget)
 		except:
 			self.logger.info('Return to %.1f deg tilt' % (math.degrees(self.tilt0)))
@@ -51,7 +51,7 @@ class DiffrFocuser(singlefocuser.SingleFocuser):
 		self.instrument.tem.StageSpeed = 1.0
 		self.instrument.tem.StagePosition={'a':self.tilt0}
 
-	def tiltAndWait(self, emtarget):
+	def tiltAndWait(self, presetdata, emtarget):
 		position0 = self.instrument.tem.StagePosition
 		self.tilt0 = position0['a']
 
@@ -74,7 +74,7 @@ class DiffrFocuser(singlefocuser.SingleFocuser):
 		t.start()
 		filename = self.getTiltMovieFilename(emtarget)
 		self.instrument.tem.BeamstopPosition = 'in'
-		self.startMovieCollection(filename)
+		self.startMovieCollection(presetdata['exposure time'])
 		t.join()
 		self.logger.info('End tilting')
 		self.stopMovieCollection(filename)
@@ -83,7 +83,8 @@ class DiffrFocuser(singlefocuser.SingleFocuser):
 		#self.pauseForUser()
 
 	def saveDiffractionSeriesData(self, presetdata, emtarget):
-		q = leginondata.DiffractionSeriesData(preset=presetdata, parent=emtarget['image'])
+		q = leginondata.DiffractionSeriesData(session=self.session, preset=presetdata)
+		q['parent'] = emtarget['target']['image']
 		q['tilt start'] = self.settings['tilt start']
 		q['tilt range'] = self.settings['tilt range']
 		q['tilt speed'] = self.settings['tilt speed']
@@ -104,9 +105,10 @@ class DiffrFocuser(singlefocuser.SingleFocuser):
 		self.instrument.tem.StageSpeed = self.settings['tilt speed']/29.78
 		self.instrument.tem.StagePosition = {'a':self.end_radian}
 
-	def startMovieCollection(self, filename):
+	def startMovieCollection(self, exposure_time):
 		self.logger.info('Start movie collection')
-		self.instrument.ccdcamera.startMovie(filename)
+		# exposure_time is in ms
+		self.instrument.ccdcamera.startMovie(exposure_time)
 
 	def stopMovieCollection(self, filename):
 		self.logger.info('Stop movie collection')

@@ -346,7 +346,7 @@ This method returns that multiplier, M.  In the standard case, returns 1.0.
 	def getInserted(self):
 		raise NotImplementedError
 
-	def startMovie(self,filename):
+	def startMovie(self,exposure_time_ms):
 		pass
 
 	def stopMovie(self,filename):
