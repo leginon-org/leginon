@@ -105,14 +105,14 @@ class DiffrFocuser(singlefocuser.SingleFocuser):
 		self.instrument.tem.StageSpeed = self.settings['tilt speed']/29.78
 		self.instrument.tem.StagePosition = {'a':self.end_radian}
 
-	def startMovieCollection(self, exposure_time):
+	def startMovieCollection(self, filename, exposure_time):
 		self.logger.info('Start movie collection')
 		# exposure_time is in ms
-		self.instrument.ccdcamera.startMovie(exposure_time)
+		self.instrument.ccdcamera.startMovie(filename, exposure_time)
 
-	def stopMovieCollection(self, filename):
+	def stopMovieCollection(self, filename, exposure_time):
 		self.logger.info('Stop movie collection')
-		self.instrument.ccdcamera.stopMovie(filename)
+		self.instrument.ccdcamera.stopMovie(filename, exposure_time)
 
 	def pauseForUser(self):
 		# just need to set player. Status will follow it in TargetWatcher.pauseCheck

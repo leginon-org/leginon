@@ -444,12 +444,13 @@ class FeiCam(ccdcamera.CCDCamera):
 	def getEnergyFiltered(self):
 		return False
 
-	def startMovie(self, exposure_time_ms):
+	def startMovie(self, filename, exposure_time_ms):
 		exposure_time_s = exposure_time_ms/1000.0
 		self._clickAcquire(exposure_time_s)
 
-	def stopMovie(self, filename):
-		self._clickAcquire()
+	def stopMovie(self, filename, exposure_time_ms):
+		exposure_time_s = exposure_time_ms/1000.0
+		self._clickAcquire(exposure_time_s)
 		print 'movie name: %s' % filename
 
 	def _clickAcquire(self, exposure_time_s=None):
