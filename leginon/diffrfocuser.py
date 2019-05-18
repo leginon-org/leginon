@@ -74,10 +74,10 @@ class DiffrFocuser(singlefocuser.SingleFocuser):
 		t.start()
 		filename = self.getTiltMovieFilename(emtarget)
 		self.instrument.tem.BeamstopPosition = 'in'
-		self.startMovieCollection(presetdata['exposure time'])
+		self.startMovieCollection(filename, presetdata['exposure time'])
 		t.join()
 		self.logger.info('End tilting')
-		self.stopMovieCollection(filename)
+		self.stopMovieCollection(filename, presetdata['exposure time'])
 		self.logger.info('Return to %.1f deg tilt' % (math.degrees(self.tilt0)))
 		self.returnToOriginalTilt()
 		#self.pauseForUser()
