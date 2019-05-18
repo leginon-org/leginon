@@ -456,7 +456,7 @@ class FeiCam(ccdcamera.CCDCamera):
 		# default is not checking
 		exepath = self.getFeiConfig('camera','autoit_tui_acquire_exe_path')
 		if exepath and os.path.isfile(exepath):
-			if exposure_time is not None:
+			if exposure_time_s is not None:
 				subprocess.call("%s %.3f" % (exepath, exposure_time_s))
 			else:
 				subprocess.call(exepath)
