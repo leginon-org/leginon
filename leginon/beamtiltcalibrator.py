@@ -192,6 +192,18 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 					except:
 						self.logger.warning('use original beam tilt to start')
 						no_cal = True
+					try:
+						if no_cal == False:
+							self.btcalclient.correctImageShiftObjStig()
+							self.logger.warning('Apply obj stig delta from last image-shift stig calibration to start')
+					except:
+						self.logger.warning('use original stig to start')
+					try:
+						if no_cal == False:
+							self.btcalclient.correctImageShiftDefocus()
+							self.logger.warning('Apply defocus delta from last image-shift defocus calibration to start')
+					except:
+						self.logger.warning('use original defocus to start')
 					# For TESTING ---START HERE
 					'''
 					newstate = self.getFakeValues(axis, i)
