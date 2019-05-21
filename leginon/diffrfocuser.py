@@ -85,6 +85,7 @@ class DiffrFocuser(singlefocuser.SingleFocuser):
 	def saveDiffractionSeriesData(self, presetdata, emtarget):
 		q = leginondata.DiffractionSeriesData(session=self.session, preset=presetdata)
 		q['parent'] = emtarget['target']['image']
+		q['emtarget'] = emtarget
 		q['tilt start'] = self.settings['tilt start']
 		q['tilt range'] = self.settings['tilt range']
 		q['tilt speed'] = self.settings['tilt speed']

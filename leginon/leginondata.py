@@ -2943,5 +2943,6 @@ class DiffractionSeriesData(InSessionData):
 			('tilt speed', float),
 			('parent', AcquisitionImageData),
 			('preset', PresetData),
+			('emtarget', EMTargetData),
 		)
 	typemap = classmethod(typemap)
