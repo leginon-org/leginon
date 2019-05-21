@@ -93,10 +93,8 @@ class DiffrFocuser(singlefocuser.SingleFocuser):
 
 	def getTiltMovieFilename(self, emtarget):
 		parent_id = emtarget['target']['image'].dbid
-		tiltstr = '%d' % (int(round(self.settings['tilt start'])))
-		if tiltstr.startswith('-'):
-			tiltstr = tiltstr.replace('-','m')
-		filename = '%d_%s.bin' % (parent_id, tiltstr)
+		target_number = emtarget['target']['number']
+		filename = '%d_%d.bin' % (parent_id, target_number)
 		self.logger.info('tilt movie should be named: %s' % filename)
 		return filename
 
