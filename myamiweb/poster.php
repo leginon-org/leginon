@@ -36,6 +36,8 @@ tinymce.init({
    image_advtab: true ,
 EOT;
 echo $text;
+$inline = $_GET["inline"];
+if ($inline) echo 'inline: true,';
 echo 'external_filemanager_path:"'.BASE_URL.'filemanager/",'
    .' filemanager_title:"Responsive Filemanager" ,'
    .' external_plugins: { "filemanager" : "'.BASE_URL.'filemanager/plugin.min.js"}'
@@ -325,8 +327,14 @@ echo '<table>';
 echo '<tr>';
 echo '<td colspan=2>';
 echo '<form method="post">';
-echo '<textarea id="mytextarea" name="mytext">'.$mytextarea.'</textarea>';
-echo '<input type="submit" value="Save" />';
+if ($inline) echo '<div ';
+else echo '<textarea ';
+echo 'id="mytextarea" name="mytext">'.$mytextarea;
+if ($inline) echo '</div>';
+else {
+	echo '</textarea>';
+	echo '<input type="submit" value="Save" />';
+}
 echo '</form>';
 echo '</td>';
 echo '</tr>';
@@ -467,16 +475,18 @@ $text = <<<EOT
 <script type="text/javascript">
 function PDFFromHTML() {
 var doc = new jsPDF('p','pt','a4');
+//var iframe = document.getElementById("mytextarea_ifr");
+//document.body.appendChild(iframe);
 doc.addHTML(document.body,function() {
     doc.save('{$sessioninfo['Name']}_report.pdf');
 });
 };
-
 EOT;
 echo $text;
 //echo 'doc.output("dataurlnewwindow");}';
 //echo 'doc.save("'.$sessioninfo['Name'].'_report.pdf");}';
+if ($inline) echo 'PDFFromHTML()';
 echo '</script>';
-echo '<a class="button" href="javascript:PDFFromHTML()">Download PDF</a>';
+if (!$inline) echo '<a class="button" href="'.$_SERVER['PHP_SELF'].'?expId='.$expId.'&inline=1">Download PDF</a>';
 echo '</center>';
 ?>
