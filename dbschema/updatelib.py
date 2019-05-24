@@ -143,7 +143,7 @@ class UpdateLib:
 				# schema-r14380 in myami-2.0 and schema-r14891 in later are equivalent
 				branch_reset_revision = 14891
 			else:
-				raise ValueError("Unknown branch name")
+				branch_reset_revision = 18034
 		return branch_reset_revision
 
 	def getPackageVersion(self):
