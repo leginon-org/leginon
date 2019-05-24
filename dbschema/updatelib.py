@@ -86,6 +86,9 @@ class UpdateLib:
 		if branch_name == 'trunk' or branch_name == 'myami-beta':
 			schema_revisions = [12857,13713,14077,14891,15069,15497,15526,15653,16182,16607,17035,17111,17224,17561,17562,17617,17812,17813,17916,18000,18034,19470, 20369]
 			appion_only_revisions = [15248,15251,15293,15961,16412,16446,17035,17311,17982]
+		elif branch_name == 'myami-3.4':
+			schema_revisions = [12857,13713,14077,14891,15069,15497,15526,15653,16182,16607,17035,17111,17224,17561,17562,17617,17812,17813,17916,18000,18034,19470,20369]
+			appion_only_revisions = [15248,15251,15293,15961,16412,16446,17035,17311,17982]
 		elif branch_name == 'myami-3.3':
 			schema_revisions = [12857,13713,14077,14891,15069,15497,15526,15653,16182,16607,17035,17111,17224,17561,17562,17617,17812,17813,17916,18000,18034,19470,20369]
 			appion_only_revisions = [15248,15251,15293,15961,16412,16446,17035,17311,17982]
@@ -143,7 +146,7 @@ class UpdateLib:
 				# schema-r14380 in myami-2.0 and schema-r14891 in later are equivalent
 				branch_reset_revision = 14891
 			else:
-				raise ValueError("Unknown branch name")
+				branch_reset_revision = 18034
 		return branch_reset_revision
 
 	def getPackageVersion(self):
