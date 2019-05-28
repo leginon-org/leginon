@@ -14,7 +14,8 @@ $sessioninfo=$leginondata->getSessionInfo($sessionId);
 $session=$sessioninfo['Name'];
 
 $summary=$leginondata->getSummary($sessionId);
-$imageinfo = $leginondata->getImageInfoFromPreset(end($summary)['presetId']);
+$end_summary = end($summary);
+$imageinfo = $leginondata->getImageInfoFromPreset($end_summary['presetId']);
 $instrumentinfo = $leginondata->getInstrumentInfo($sessioninfo['InstrumentId']);
 
 echo "<link rel='stylesheet' href='css/neiladd.css' />";
