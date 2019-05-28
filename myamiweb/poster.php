@@ -200,7 +200,8 @@ if($_SERVER['REQUEST_METHOD'] === 'POST'){
 }
 elseif ($ctf->mysql->SQLTableExists("poster")){
 	$q = "SELECT textarea from poster WHERE expId = $expId";
-	$mytextarea= $ctf->mysql->getSQLResult($q)[0]['textarea'];	
+	$t = $ctf->mysql->getSQLResult($q);
+	$mytextarea= t[0]['textarea'];	
 }
 
 echo displayCTFstats($stats, $display_keys);
