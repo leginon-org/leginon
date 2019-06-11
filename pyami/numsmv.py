@@ -29,7 +29,7 @@ HEADER_FIELDS = (
 	# imaging geometry
 	('DISTANCE', float, 1000.0, '{:7.1f}'), #mm
 	('WAVELENGTH', float, 0.025014041, '{:12.8f}'), # angstrom
-	('PIXEL_SIZE', float, 0.014, '{:8.3f}'), # mm
+	('PIXEL_SIZE', float, 0.028, '{:8.3f}'), # mm
 	('OSC_RANGE', float, 1.000, '{:8.3f}'), #degrees. Can this be negative ?
 	('OSC_START', float, 0.000, '{:8.3f}'), #degrees
 	('BEAM_CENTER_X', int, 0, '{:>4}'),
@@ -40,7 +40,8 @@ HEADER_FIELDS = (
 	('TIME', float, 1.0, '{0}'), # seconds
 	('ACC_TIME', int, 1000, '{0}'), # milliseconds
 	# detector identity
-	('BIN', tuple, (2,2), '{0[0]:1}x{0[1]:1}'),
+	# assume detector is native at BIN 2x2 because Dials does not read BIN.
+	('BIN', tuple, (1,1), '{0[0]:1}x{0[1]:1}'),
 	('ADC', str, 'fast', '{0}'),
 	# ADSC info
 	('BIN_TYPE', str, 'HW', '{0}'),
