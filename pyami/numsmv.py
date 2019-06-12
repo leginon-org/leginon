@@ -121,7 +121,10 @@ def validate_and_convert(key, value):
 		return 1
 	# Parsing Bin
 	if key == 'BIN':
-		bits = value.split('x')
+		if isinstance(value, tuple):
+			bits = value
+		else:
+			bits = value.split('x')
 		if len(bits) != 2:
 			raise ValueError('BIN not in format like 1x1 but %s' % (value,))
 		try:
