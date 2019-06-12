@@ -29,8 +29,7 @@ checkExptAccessPrivilege($expId,'data');
 $projectdata = new project();
 $projectdb = $projectdata->checkDBConnection();
 if($projectdb) {
-	$currentproject = $projectdata->getProjectFromSession($sessioninfo
-['Name']);
+	$currentproject = $projectdata->getProjectFromSession($sessioninfo['Name']);
 	$proj_link= '<a class="header" target="project" href="'.PROJECT_URL."getproject.php?projectId=".$currentproject['projectId'].'">'.$currentproject['name'].'</a>';
 }
 
@@ -71,7 +70,7 @@ function init() {
 	<?php echo divtitle("Summary of $title Experiment"); ?>
 	</td>
 </tr>
-	<?php ($currentproject) ? '<tr><td><span class="datafield0">Project: </span>'.$proj_link.'</td></tr>' :'' ?>
+	<?php $proj_html=($currentproject) ? '<tr><td><span class="datafield0">Project: </span>'.$proj_link.'</td></tr>'."\n" :''; echo $proj_html; ?>
 <tr valign="top">
 	<td>
 <?php

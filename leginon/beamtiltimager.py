@@ -45,6 +45,7 @@ class BeamTiltImager(manualfocuschecker.ManualFocusChecker):
 		'tableau split': 8,
 		'do coma limit': True,
 		'auto coma limit': 2e-6,
+		'auto coma count limit': 3,
 	})
 
 	eventinputs = manualfocuschecker.ManualFocusChecker.eventinputs
@@ -296,7 +297,7 @@ class BeamTiltImager(manualfocuschecker.ManualFocusChecker):
 
 	def autoComaCorrection(self):
 		self.auto_count = 0
-		count_limit = 2
+		count_limit = self.settings['auto coma count limit']
 		c21 = None
 		deltabt = None
 		# auto coma correction loop
@@ -317,6 +318,7 @@ class BeamTiltImager(manualfocuschecker.ManualFocusChecker):
 			self.setComaStig0()
 			self.auto_count += 1
 		self.logger.error('auto coma failed to reach threshold in %d triales' % (count_limit))
+		self.logger.info('beam tilt left at the result of the last iteration')
 
 	def simulateTarget(self):
 		if not self.settings['do auto coma']:

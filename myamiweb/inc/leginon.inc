@@ -1491,6 +1491,8 @@ class leginondata {
 			."order by pi.`DEF_id` desc"; 
 		$Rimageinfo = $this->mysql->SQLQuery($q);
 		$imageinfo = mysqli_fetch_array($Rimageinfo,MYSQLI_ASSOC);
+		// All diffraction mode instrument should have 'Diffr' as a part of the name
+		$imageinfo['is_diffraction'] = (strpos($imageinfo['scope'],'Diffr')!== false) ? true: false;
 		return $imageinfo;
 	}
 
@@ -2659,8 +2661,11 @@ class leginondata {
 
 		$q="SELECT "
 		."UNIX_TIMESTAMP(`a`.`DEF_timestamp`) as `unix_timestamp` , "
-		."`a`.`DEF_timestamp` as `timestamp` , `s`.`min`, `s`.`max`, "
+		."`a`.`DEF_timestamp` as `timestamp` , "
+		."CONCAT(`a`.`filename`,'.mrc') AS filename, "
+		."`s`.`min`, `s`.`max`, "
 		."`s`.`REF|AcquisitionImageData|image` as `imageId`, "
+		."`s`.`REF|AcquisitionImageData|image` as `image_id`, "
 		."`s`.`stdev`, `s`.`mean` "
 		.$preselect 
 		."FROM "
@@ -2790,15 +2795,23 @@ class leginondata {
 	}
 
 	function getStagePositionFromScopeReference($Id,$table='AcquisitionImageData') {
+		if ($table =='AcquisitionImageData') {
+			$select_filename = ",a.`DEF_id` AS parent_imageId, a.`MRC|image` AS filename ";
+			$join_filename = "";
+		} else {
+			$select_filename = ",a2.`DEF_id` AS parent_imageId, a2.`MRC|image` AS filename ";
+			$join_filename = " left join AcquisitionImageTargetData t on t.`DEF_id`=a.`REF|AcquisitionImageTargetData|target` left join AcquisitionImageData a2 on a2.`DEF_id`=t.`REF|AcquisitionImageData|image` ";
+		}
 		$q="SELECT "
-			."UNIX_TIMESTAMP(`a`.`DEF_timestamp`) AS `unix_timestamp`, "
-			."a.`DEF_id` AS imageId "
+			."UNIX_TIMESTAMP(`a`.`DEF_timestamp`) AS `unix_timestamp` "
+			.$select_filename
 			.",s.`SUBD|stage position|x` AS stage_x "
 			.",s.`SUBD|stage position|y` AS stage_y "
 			.",s.`SUBD|stage position|z` AS stage_z "
 			."FROM `".$table."` a "
 			."LEFT JOIN `ScopeEMData` s "
 			."ON a.`REF|ScopeEMData|scope` = s.`DEF_id` "
+			.$join_filename
 			."WHERE a.`DEF_id`=".$Id ;
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0];
@@ -2813,6 +2826,8 @@ class leginondata {
 		."UNIX_TIMESTAMP(`a`.`DEF_timestamp`) AS `unix_timestamp`, "
 		."`a`.`DEF_timestamp` AS `timestamp`, "
 		."`p`.`name`, "
+		."a.`DEF_id` AS image_id, "
+		."CONCAT(`a`.`filename`,'.mrc') AS filename, "
 		."`s`.`SUBD|".$fieldname."|x` AS `".$displayname."_x`, "
 		."`s`.`SUBD|".$fieldname."|y` AS `".$displayname."_y` "
 		.$qz
@@ -2848,7 +2863,8 @@ class leginondata {
 
 	function getObjIceThickness($sessionId) {
  		$q="SELECT "
-		. "a.DEF_id AS DEF_id, UNIX_TIMESTAMP(a.DEF_timestamp) AS unix_timestamp, filename, thickness, z.mfp, z.intensity, z.`vacuum intensity` "
+		. "a.DEF_id AS DEF_id, UNIX_TIMESTAMP(a.DEF_timestamp) AS unix_timestamp, "
+		. "CONCAT(a.filename,'.mrc') AS filename, z.thickness, z.mfp, z.intensity, z.`vacuum intensity` "
 		. "FROM "
 		. "AcquisitionImageData AS a INNER JOIN  SessionData AS s "
 		. "ON a.`REF|SessionData|session` = s.DEF_id "
@@ -3010,6 +3026,7 @@ class leginondata {
 		function getRelatedStats($sessionId, $preset) {
 		$q="SELECT "
 			."`a`.`DEF_id` as `Id`, "
+			."CONCAT(`a`.`filename`,'.mrc') AS filename, "
 			."`istats`.`mean`, "
 			."`h`.`DEF_id` as `prefId`, "
 			."`parent`.`DEF_id` as `parentId`, "
@@ -3042,7 +3059,7 @@ class leginondata {
 	function getIceThickness($sessionId, $preset) {
 		$q = "SELECT "
 			."date_format(h.`DEF_timestamp`, '%Y-%d-%m %T') as `timestamp`, "
-			."a.filename as filename, "
+			."CONCAT(`a`.`filename`,'.mrc') AS filename, "
 			.'`h`.`thickness-mean`, '
 			.'`h`.`good` AS `good`, '
 			.'`a`.`DEF_id` AS `image_id` '
@@ -3115,8 +3132,11 @@ class leginondata {
 		return $defocus;
 	}
 
-	function formatPixelsize(&$pixelsize) {
-		$pixelsize = format_angstrom_number($pixelsize);
+	function formatPixelsize(&$pixelsize, $is_diffraction=false) {
+		if (!$is_diffraction)
+			$pixelsize = format_angstrom_number($pixelsize);
+		else
+			$pixelsize = format_reciprocal_nano_number($pixelsize);
 		return $pixelsize;
 	}
 

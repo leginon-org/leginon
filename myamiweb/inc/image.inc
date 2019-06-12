@@ -224,7 +224,7 @@ function getImageFromRequester($pic,$imginfo,$p) {
 	}
 	$display_pixelsize = getDisplayPixelSize($img,$imginfo,$p['fft'],$p['fftbin'],$prefftDim,$p['iscache']);
 	if ($p['scalebar']) 
-		$img = addScaleBarRingToImage($img,$display_pixelsize,$p['fft'],$p['fftbin']);
+		$img = addScaleBarRingToImage($img,$display_pixelsize,$p['fft'],$p['fftbin'],$imginfo['is_diffraction']);
 
 	// This is for future implementation of radialplot overlay.
 	if (false && $p['fft']) {
@@ -314,14 +314,14 @@ function addRadialPlotToImage($img,$values,$display_pixelsize,$fftbintype) {
 	return $img;
 }
 
-function addScaleBarRingToImage($img,$display_pixelsize,$isfft,$fftbintype) {
+function addScaleBarRingToImage($img,$display_pixelsize,$isfft,$fftbintype,$is_diffraction=false) {
 	// create image overlay on image object
 	$overlay = new imageOverlay($img);
 
 	$xyDim = array(imagesx($img),imagesy($img));
 	// display scale bar //
 	if (!$isfft) {
-		$overlay->addScaleBar($display_pixelsize,$xyDim);
+		$overlay->addScaleBar($display_pixelsize,$xyDim,$is_diffraction);
 	} else {
 		$overlay->addScaleRing($display_pixelsize,$xyDim,$fftbintype);
 	}
@@ -780,7 +780,7 @@ class Mosaic {
 		if ($this->displayscalebar) {
 			$size = ($max_row - $min_row)/$ratio;
 			$value = $imageinfo[0]['pixelsize']*$imageinfo[0]['binning']*$ratio;
-			$scalebar = new ScaleBar($img, $size, $value);
+			$scalebar = new ScaleBar($img, $size, $value, $imageinfo[0]['is_diffraction']);
 			$scalebar->display($img_h);
 		}
 		if ($this->loadtime) {

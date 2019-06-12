@@ -113,6 +113,7 @@ class AlignZeroLossPeak(ReferenceTimer):
 			goto_preset = self.settings['check preset']
 		try:
 			self.moveToTarget(goto_preset)
+			self.declareDrift('stage')
 		except Exception, e:
 			self.logger.error('Error moving to target, %s' % e)
 			self.moveBack(position0)
@@ -258,6 +259,7 @@ class AlignZeroLossPeak(ReferenceTimer):
 		try:
 			self.at_reference_target = True
 			self.moveToTarget(self.checkpreset['name'])
+			self.declareDrift('stage')
 		except Exception, e:
 			self.logger.error('Error moving to target, %s' % e)
 			return

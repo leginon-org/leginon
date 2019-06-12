@@ -240,6 +240,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.screencurrent_bound = False
 		self.alignzlp_warned = False
 		self.beamtilt0 = None
+		self.paused_by_gui = False
 
 		self.duplicatetypes = ['acquisition', 'focus']
 		self.presetlocktypes = ['acquisition', 'target', 'target list']
@@ -455,10 +456,12 @@ class Acquisition(targetwatcher.TargetWatcher):
 		'''
 		Send align ZLP  request
 		'''
+		self.setStatus('waiting')
 		request_data = leginondata.AlignZeroLossPeakData()
 		request_data['session'] = self.session
 		request_data['preset'] = preset_name
 		self.publish(request_data, database=True, pubevent=True, wait=True)
+		self.setStatus('processing')
 
 	def measureScreenCurrent(self, preset_name): 
 		'''
@@ -759,6 +762,12 @@ class Acquisition(targetwatcher.TargetWatcher):
 					# Give presetsclient time to unlock navigator changePreset request
 					time.sleep(0.5)
 			self.presetsclient.toScope(presetname, emtarget, keep_shift=keep_shift)
+			try:
+				# Random defocus is set in presetsclient.  This is the easiestt
+				# way to get it.  Could be better.
+				self.intended_defocus = self.instrument.tem.Defocus - emtarget['delta z']
+			except:
+				self.intended_defocus = self.instrument.tem.Defocus
 			# DO this the second time give an effect of normalization. Removed defocus and beam shift hysteresis on Talos
 			if presetdata['tem']['hostname'] == 'talos-20taf2c':
 				self.presetsclient.toScope(presetname, emtarget, keep_shift=keep_shift)
@@ -831,7 +840,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.reportStatus('acquisition', 'image acquired')
 		self.stopTimer('acquire getData')
 		if imagedata is None:
-			raise BadImageAcquireBypass('failed acquire camera image')
+			raise BadImageAcquirePause('failed acquire camera image')
 		if imagedata['image'] is None:
 			raise BadImageAcquirePause('Acquired array is None. Possible camera problem')
 
@@ -1051,6 +1060,11 @@ class Acquisition(targetwatcher.TargetWatcher):
 		'''
 		Manager continues the paused status
 		'''
+		if self.paused_by_gui:
+			self.logger.info('Paused through local gui, skip workflow continuing')
+			return
+		# Only continue that was paused by Manager. This way, local expert user can still
+		# pause intentionally at a place.
 		#self.panel.playerEvent('play')
 		self.player.play()
 		self.setStatus(self.before_pause_node_status)

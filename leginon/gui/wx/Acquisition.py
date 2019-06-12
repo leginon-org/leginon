@@ -538,6 +538,7 @@ class Panel(leginon.gui.wx.Node.Panel):
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, False)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT_QUEUE, False)
+		self.node.paused_by_gui = False
 		self.node.player.play()
 
 	def onPauseTool(self, evt):
@@ -545,6 +546,7 @@ class Panel(leginon.gui.wx.Node.Panel):
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, False)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT_QUEUE, False)
+		self.node.paused_by_gui = True
 		self.node.player.pause()
 
 	def onStopTargetTool(self, evt):
@@ -552,6 +554,7 @@ class Panel(leginon.gui.wx.Node.Panel):
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, False)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT_QUEUE, False)
+		self.node.paused_by_gui = False
 		self.node.player.stoptarget()
 
 	def onStopTool(self, evt):
@@ -559,6 +562,7 @@ class Panel(leginon.gui.wx.Node.Panel):
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, False)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT_QUEUE, False)
+		self.node.paused_by_gui = False
 		self.node.player.stop()
 
 	def onStopQueueTool(self, evt):
@@ -566,6 +570,7 @@ class Panel(leginon.gui.wx.Node.Panel):
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, False)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT_QUEUE, False)
+		self.node.paused_by_gui = False
 		self.node.player.stopqueue()
 
 	def onPlayer(self, evt):

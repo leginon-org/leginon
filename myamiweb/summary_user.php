@@ -9,7 +9,6 @@
 
 require_once "inc/leginon.inc";
 require_once "inc/project.inc";
-
 login_header(PROJECT_TITLE);
 
 if (defined('PROCESSING')) {
@@ -99,7 +98,7 @@ function init() {
  </td>
 </tr>
 <tr><td colspan=3><br/></td></tr>
-<?php ($currentproject) ? '<tr><td><span class="datafield0">Project: </span>'.$proj_link.'</td></tr>' :'' ?>
+<?php $proj_html=($currentproject) ? '<tr><td><span class="datafield0">Project: </span>'.$proj_link.'</td></tr>'."\n" :''; echo $proj_html ?>
 
 
 <?php
@@ -488,32 +487,25 @@ collected at a nominal defocus range of $defmin &ndash; $defmax &mu;m.";
 echo "</p>";
 echo "</div>";
 
-// echo divtitle("Acknowledgements");
-
-// echo "";
-
-// echo opendivbubble();
-
-// echo '<table style="margin=50px; border=1px;" ><tr><td>
-// <p style="font-size: 125%">
-// <b>Any use of the resources at SEMC requires acknowledgement of use of the resources in publications as follows:</b>
-// <br/>
-// “Some of this work was performed at the Simons Electron Microscopy Center and National Resource for
-// Automated Molecular Microscopy located at the New York Structural Biology Center, supported by grants
-// from the Simons Foundation (SF349247), NYSTAR, and the NIH National Institute of General
-// Medical Sciences (GM103310) with additional support from Agouron Institute (F00316), NIH (OD019994),
-// and NIH (RR029300)"
-// </p>
-// </td></tr></table>
-// ';
-// echo "</div>";
-
-
-// echo "<br/><br/>";
-
-// echo "</td></tr>";
-
-
+if (defined("ACKNOWLEDGEMENTS")) {
+	echo divtitle("Acknowledgements");
+	
+	echo "";
+	
+	echo opendivbubble();
+	
+	echo '<table style="margin=50px; border=1px;" ><tr><td>
+	<p style="font-size: 125%">';
+	
+	echo ACKNOWLEDGEMENTS;
+	echo '</p>
+	</td></tr></table>';
+	echo "</div>";
+	
+	
+	echo "<br/><br/>";
+	echo "</td></tr>";
+}
 ?>
 
 </td>

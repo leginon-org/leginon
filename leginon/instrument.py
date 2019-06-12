@@ -317,8 +317,12 @@ class Proxy(object):
 		types = []
 		args = []
 		for key, attribute in parametermapping:
-			if key not in instance or instance[key] is None:
-				continue
+			if key =='projection mode':
+				# force set of projection mode
+				pass
+			else:
+				if key not in instance or instance[key] is None:
+					continue
 			attributetypes = proxy.getAttributeTypes(attribute)
 			if not attributetypes:
 				continue
@@ -330,7 +334,10 @@ class Proxy(object):
 				continue
 			keys.append(key)
 			attributes.append(attribute)
-			args.append((instance[key],))
+			if key !='projection mode':
+				args.append((instance[key],))
+			else:
+				args.append(('fake',))
 		results = proxy.multiCall(attributes, types, args)
 		self.updateLastSetGetTime()
 		for result in results:
@@ -368,12 +375,15 @@ parametermapping = (
 	# ScopeEM
 	# The order should base on dependency
 	('system time', 'SystemTime'),
+	('high tension', 'HighTension'),
 	('probe mode','ProbeMode'),
-	('magnification', 'Magnification'),
-	('spot size', 'SpotSize'),
-	('intensity', 'Intensity'),
-	('beam shift', 'BeamShift'),
+	('projection mode','ProjectionMode'),
+	('magnification', 'Magnification'), # this change may trigger normalization.
+	('spot size', 'SpotSize'), # this change may trigger normalization.
+	('intensity', 'Intensity'), # perform normalize all lens at this step if needed
+	('beam shift', 'BeamShift'), # allowed beam shift is limited by magnification
 	('image shift', 'ImageShift'),
+	('diffraction shift', 'DiffractionShift'),
 	('focus', 'Focus'),
 	('defocus', 'Defocus'),
 	('reset defocus', 'resetDefocus'),
@@ -384,7 +394,6 @@ parametermapping = (
 	('corrected stage position', 'CorrectedStagePosition'),
 	('stage position', 'StagePosition'),
 	('column pressure', 'ColumnPressure'),
-	('high tension', 'HighTension'),
 	('main screen position', 'MainScreenPosition'),
 	('main screen magnification', 'MainScreenMagnification'),
 	('small screen position', 'SmallScreenPosition'),
@@ -395,6 +404,8 @@ parametermapping = (
 	('tem energy filter', 'EnergyFilter'),
 	('tem energy filter width', 'EnergyFilterWidth'),
 	('aperture size', 'ApertureSize'),
+	# metadata not really on the scope but saved with the scope data
+	('intended defocus', 'IntendedDefocus'),
 	# not used
 	#('beam blank', 'BeamBlank'),
 	#('low dose', 'LowDose'),
@@ -413,6 +424,7 @@ parametermapping = (
 	('exposure time', 'ExposureTime'),
 	('exposure type', 'ExposureType'),
 	('exposure timestamp', 'ExposureTimestamp'),
+	('intensity averaged', 'IntensityAveraged'),
 	('inserted', 'Inserted'),
 	('pixel size', 'PixelSize'),
 	('energy filtered', 'EnergyFiltered'),

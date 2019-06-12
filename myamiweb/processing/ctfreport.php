@@ -156,10 +156,10 @@ if ($ctfrundatas) {
 					$p = $leginondata->getPresetFromImageId($imageId);
 					$stats[$field][$k]['preset'] = $p['name'];
 					if (!in_array($p['name'],$preset_names)) $preset_names[]=$p['name'];
-					$cdf = '<a href="ctfgraph.php?hg=1&expId='
-							.$expId.'&rId='.$ctfrunid.'&f='.$field.'&preset='.$p['name'].'">'
-						.'<img border="0" src="ctfgraph.php?w=100&hg=1&expId='
-							.$expId.'&rId='.$ctfrunid.'&f='.$field.'&preset='.$p['name'].'"></a>';
+					$cdp = 'expId='
+              .$expId.'&rId='.$ctfrunid.'&f='.$field.'&preset='.$p['name'];
+					$cdf = '<a href="ctfgraph.php?hg=1&'.$cdp.'">'
+						.'<img border="0" src="ctfgraph.php?w=100&hg=1&'.$cdp.'"></a>';
 					$stats[$field][$k]['img'] = $cdf;
 				}
 			}
@@ -223,11 +223,13 @@ if ($ctfrundatas) {
 	// Row 0
 	echo "<tr><td>\n";
 		echo "<h3>Defocus 1</h3>";
+		echo "<a href='ctfgraph.php?vd=1&hg=1&expId=$expId&s=1&f=defocus1'>[data]</a><br>\n";
 		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&f=defocus1'>\n";
 		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
 			."w=800&h=600&hg=1&expId=$expId&s=1&xmax=7e-6&f=defocus1' alt='please wait...'></a>\n";
 	echo "</td><td>\n";
 		echo "<h3>Defocus 2</h3>";
+		echo "<a href='ctfgraph.php?vd=1&hg=1&expId=$expId&s=1&f=defocus2'>[data]</a><br>\n";
 		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&f=defocus2'>\n";
 		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
 			."w=800&h=600&hg=1&expId=$expId&s=1&xmax=7e-6&f=defocus2' alt='please wait...'></a>\n";
@@ -241,16 +243,19 @@ if ($ctfrundatas) {
 				."hg=0&expId=$expId&f=difference_from_mean&preset=$preset' alt='please wait...'></a>\n";
 	echo "</td><td>\n";
 		echo "<h3>Angle Astigmatism</h3>";
+		echo "<a href='ctfgraph.php?vd=1&hg=1&expId=$expId&s=1&f=angle_astigmatism'>[data]</a><br>\n";
 		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&f=angle_astigmatism'>\n";
 		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
 			."w=800&h=600&hg=1&expId=$expId&s=1&f=angle_astigmatism' alt='please wait...'></a>\n";
 	echo "</td></tr><tr><td>\n";
 		echo "<h3>Astigmatism Distribution</h3>";
+		echo "<a href='ctfgraph.php?vd=1&hg=1&expId=$expId&s=1&f=astig_distribution'>[data]</a><br>\n";
 		echo "<a href='ctfgraph.php?hg=0&expId=$expId&s=1&f=astig_distribution'>\n";
 		echo "<img border='0' width='200' height='200' src='ctfgraph.php?"
 			."w=600&h=600&hg=0&expId=$expId&s=1&f=astig_distribution' alt='please wait...'></a>\n";
 	echo "</td><td>\n";
 		echo "<h3>Extra Phase Shift</h3>";
+		echo "<a href='ctfgraph.php?vd=1&hg=1&expId=$expId&s=1&f=extra_phase_shift'>[data]</a><br>\n";
 		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&xmin=0&xmax=180&f=extra_phase_shift'>\n";
 		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
 			."w=800&h=600&hg=0&expId=$expId&s=1&xmin=-90&xmax=90&f=extra_phase_shift' alt='please wait...'></a>\n";

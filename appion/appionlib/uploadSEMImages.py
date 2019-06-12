@@ -16,6 +16,7 @@ from PIL import Image
 import re
 from math import pi,cos
 import subprocess
+import string
 cmd = os.popen("csh -c 'modulecmd python load imod'")
 exec(cmd)
 

@@ -504,6 +504,14 @@ class Jeol(tem.TEM):
 		if self.getJeolConfig('tem option','cl3_relaxation_mag') and self.relax_beam:
 			self.relaxBeam()
  
+	def getDiffractionShift(self):
+		# place holder. Not implemented
+		return {'x':0.0,'y':0.0}
+
+	def setDiffractionShift(self):
+		# get diffraction shift in meter. Not implemented
+		pass
+
 	def getImageShift(self):
 		scale = self.getScale('imageshift')
 		neutral = self.getNeutral('imageshift')
@@ -1280,7 +1288,7 @@ class Jeol(tem.TEM):
 		else:
 			raise ValueError
    
-	def getDiffractionMode(self):
+	def getProjectionMode(self):
 		mode, result = self.eos3.GetFunctionMode()
 		if mode in (FUNCTION_MODES['lowmag'], FUNCTION_MODES['mag1']):
 			return "imaging"
@@ -1289,7 +1297,7 @@ class Jeol(tem.TEM):
 		else:
 			raise SystemError
 
-	def setDiffractionMode(self, mode):
+	def setProjectionMode(self, mode):
 		if mode == "imaging":
 			result = self.eos3.SelectFunctionMode(FUNCTION_MODES['mag1'])
 		elif mode == "diffraction":
