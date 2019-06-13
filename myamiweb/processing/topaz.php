@@ -881,7 +881,7 @@ function toggle(divID) {
 //if ($_SESSION['loggedin']) {
 	if ($_POST['process']) {
 		if (isset($_POST['preprocess'])){
-			$command = "topaz preprocess ";
+			$command = "runTopaz.py topaz preprocess ";
 			$command .= $_POST['input1'];
 			$command .= ' --scale '.$_POST['scale1'];
 			$command .= ' --num-workers '.$_POST['numworkers1'];
