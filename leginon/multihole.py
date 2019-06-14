@@ -89,8 +89,8 @@ class TemplateConvolver(object):
 		single_shape = self.single.shape
 		rows = lattice_vectors[:,0]
 		cols = lattice_vectors[:,1]
-		row_size = rows.max() - rows.min()
-		col_size = cols.max() - cols.min()
+		row_size = int(rows.max() - rows.min())
+		col_size = int(cols.max() - cols.min())
 		return row_size+single_shape[0],col_size+single_shape[1]
 
 	def setConfig(self, npoint, spacing, angle, single_scale):
