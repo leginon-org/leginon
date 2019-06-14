@@ -293,6 +293,14 @@ class CL2D(appionScript.AppionScript):
 
 	#=====================
 	def getClassificationAtLevel(self,level):
+		sortedDict = {}
+		fh=open("level_%02d/part"%level+self.params['timestamp']+"sorted.xmd")
+		txt = fh.read()
+		fh.close()
+		lines = txt.splitlines()
+		for i,j in enumerate(lines[8:]):
+			classNumber = int(j.split()[0])-1
+			sortedDict[classNumber] = i
 		D = {}
 		xmipplist = []
 		classSel = "level_%02d/part"%level+self.params['timestamp']+"_classes.xmd"
@@ -310,6 +318,7 @@ class CL2D(appionScript.AppionScript):
 				listOfParticles.append(particleNumber)
 				xmipplist.append(int(particleNumber))
 			classNumber=int(lines[0].split("_images")[0])-1 
+			classNumber = sortedDict[classNumber]
 			D[classNumber]=listOfParticles
 		
 		fh.close()
@@ -621,19 +630,26 @@ class CL2D(appionScript.AppionScript):
  		Nlevels=glob.glob("level_*")
  		for level in Nlevels:
  			digits = level.split("_")[1]
- 			xmipp_sort = apParam.getExecPath("xmipp_mpi_image_sort", die=True)
+ 			xmipp_sort = apParam.getExecPath("xmipp_image_sort", die=True)
  			mpiruncmd = self.mpirun+" -np "+str(self.params['nproc'])+" "+xmipp_sort +" -i "+\
  			 			level+"/part"+self.params['timestamp']+"*xmd --oroot "+ level+"/part"+self.params['timestamp']+"sorted"
  			apParam.runCmd(mpiruncmd, package="Xmipp 3", verbose=True, showcmd=True, logfile="xmipp.std")
- 			apParam.runCmd("xmipp_metadata_utilities -i "+level+"/part"+self.params['timestamp']+"sorted*xmd --operate drop_column 'image'", package="Xmipp 3", verbose=True) 			
+ 			apParam.runCmd("xmipp_metadata_utilities -i "+level+"/part"+self.params['timestamp']+"sorted*xmd --operate drop_column 'image'")
  			apParam.runCmd("xmipp_image_convert -i "+level+"/part"+self.params['timestamp']+"sorted*xmd -o part"
  						+self.params['timestamp']+"_level_"+digits+"_.hed --label 'imageOriginal'", package="Xmipp 3", verbose=True)
  			
  		if self.params['align']:
-			apParam.runCmd("xmipp_transform_geometry -i images.xmd -o %s_aligned.stk --apply_transform" % self.params['timestamp'], package="Xmipp 3", verbose=True)
- 			apParam.runCmd("xmipp_image_convert -i %s_aligned.xmd -o alignedStack.hed" % self.params['timestamp'], package="Xmipp 3", verbose=True)
-			apFile.removeFile("%s_aligned.xmd" % self.params['timestamp'])
-			apFile.removeFile("%s_aligned.stk" % self.params['timestamp'])
+ 			if os.path.exists('images.xmd'):
+				apParam.runCmd("xmipp_transform_geometry -i images.xmd -o %s_aligned.stk --apply_transform" % self.params['timestamp'], package="Xmipp 3", verbose=True)
+	 			apParam.runCmd("xmipp_image_convert -i %s_aligned.xmd -o alignedStack.hed" % self.params['timestamp'], package="Xmipp 3", verbose=True)
+				apFile.removeFile("%s_aligned.xmd" % self.params['timestamp'])
+				apFile.removeFile("%s_aligned.stk" % self.params['timestamp'])
+			else:
+				apDisplay.printWarning("images.xmd doesn't exists.")
+				basename = "part"+self.params['timestamp']+"_level_00_"
+				from shutil import copyfile
+				copyfile(basename+".hed", "alignedStack.hed")
+				copyfile(basename+".img", "alignedStack.img")
  		
  		self.parseOutput()
  		apParam.dumpParameters(self.params, "cl2d-"+self.params['timestamp']+"-params.pickle")
