@@ -762,6 +762,12 @@ class Acquisition(targetwatcher.TargetWatcher):
 					# Give presetsclient time to unlock navigator changePreset request
 					time.sleep(0.5)
 			self.presetsclient.toScope(presetname, emtarget, keep_shift=keep_shift)
+			try:
+				# Random defocus is set in presetsclient.  This is the easiestt
+				# way to get it.  Could be better.
+				self.intended_defocus = self.instrument.tem.Defocus - emtarget['delta z']
+			except:
+				self.intended_defocus = self.instrument.tem.Defocus
 			# DO this the second time give an effect of normalization. Removed defocus and beam shift hysteresis on Talos
 			if presetdata['tem']['hostname'] == 'talos-20taf2c':
 				self.presetsclient.toScope(presetname, emtarget, keep_shift=keep_shift)

@@ -15,6 +15,7 @@ class TEM(baseinstrument.BaseInstrument):
 		{'name': 'ProjectionPressure', 'type': 'property'},
 		{'name': 'BufferTankPressure', 'type': 'property'},
 		{'name': 'ColumnValvePositions', 'type': 'property'},
+		{'name': 'IntendedDefocus', 'type': 'property'},
 		{'name': 'ExternalShutterStates', 'type': 'property'},
 		{'name': 'FilmAutomaticExposureTime', 'type': 'property'},
 		{'name': 'FilmDateTypes', 'type': 'property'},
@@ -46,8 +47,9 @@ class TEM(baseinstrument.BaseInstrument):
 		{'name': 'ColumnValvePosition', 'type': 'property'},
 		{'name': 'CorrectedStagePosition', 'type': 'property'},
 		{'name': 'DarkFieldMode', 'type': 'property'},
+		{'name': 'DiffractionShift', 'type': 'property'},
 		{'name': 'Defocus', 'type': 'property'},
-		{'name': 'DiffractionMode', 'type': 'property'},
+		{'name': 'ProjectionMode', 'type': 'property'},
 		{'name': 'Emission', 'type': 'property'},
 		{'name': 'ExternalShutter', 'type': 'property'},
 		{'name': 'FilmDateType', 'type': 'property'},
@@ -69,6 +71,7 @@ class TEM(baseinstrument.BaseInstrument):
 		{'name': 'Magnification', 'type': 'property'},
 		{'name': 'MainScreenPosition', 'type': 'property'},
 		{'name': 'ProbeMode', 'type': 'property'},
+		{'name': 'ProjectionMode', 'type': 'property'},
 		{'name': 'RawImageShift', 'type': 'property'},
 		{'name': 'Shutter', 'type': 'property'},
 		{'name': 'SpotSize', 'type': 'property'},
@@ -93,6 +96,7 @@ class TEM(baseinstrument.BaseInstrument):
 		{'name': 'EnergyFilterWidth', 'type': 'property'},
 	)
 	projection_lens_program = 'TEM'
+	projection_mode = 'imaging'
 	def __init__(self):
 		baseinstrument.BaseInstrument.__init__(self)
 		self.initConfig()
@@ -108,6 +112,10 @@ class TEM(baseinstrument.BaseInstrument):
 
 	def exposeSpecimenNotCamera(self,seconds):
 		raise NotImplementedError()
+
+	def getIntendedDefocus(self):
+		# Value to be filled in by acquisition. Default to current defocus
+		return self.getDefocus()
 
 	def getProbeMode(self):
 		return 'default'
@@ -304,11 +312,12 @@ class TEM(baseinstrument.BaseInstrument):
 		# equivalent to normal movement by default
 		self.setStagePosition(value)
 
-	def getDiffractionMode(self):
+	def getProjectionMode(self):
 		# valid values: imaging or diffraction
 		return 'imaging'
 
-	def setDiffractionMode(self):
+	def setProjectionMode(self, value):
+		# valid values: imaging or diffraction
 		raise NotImplementedError()
 
 	def getVacuumStatus(self):
@@ -326,3 +335,15 @@ class TEM(baseinstrument.BaseInstrument):
 
 	def setApertureSelection(self, aperture_mechanism, name):
 		return False
+
+	def setStageSpeed(self, value):
+		# do nothing.
+		pass
+
+	def getStageSpeed(self):
+		# do nothing.
+		pass
+
+	def resetStageSpeed(self, value):
+		# do nothing.
+		pass
