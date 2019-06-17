@@ -24,6 +24,7 @@ STAGE_DEBUG = False
 
 class SimTEM(tem.TEM):
 	name = 'SimTEM'
+	projection_mode = 'imaging'
 	def __init__(self):
 		tem.TEM.__init__(self)
 
@@ -93,6 +94,7 @@ class SimTEM(tem.TEM):
 
 		self.beam_tilt = {'x': 0.0, 'y': 0.0}
 		self.beam_shift = {'x': 0.0, 'y': 0.0}
+		self.diffraction_shift = {'x': 0.0, 'y': 0.0}
 		self.image_shift = {'x': 0.0, 'y': 0.0}
 		self.raw_image_shift = {'x': 0.0, 'y': 0.0}
 
@@ -315,7 +317,17 @@ class SimTEM(tem.TEM):
 				self.beam_shift[axis] = value[axis]
 			except KeyError:
 				pass
-	
+
+	def getDiffractionShift(self):
+		return copy.copy(self.diffraction_shift)
+
+	def setDiffractionShift(self, value):
+		for axis in self.diffraction_shift.keys():
+			try:
+				self.diffraction_shift[axis] = value[axis]
+			except KeyError:
+				pass
+
 	def getImageShift(self):
 		return copy.copy(self.image_shift)
 	
@@ -325,23 +337,23 @@ class SimTEM(tem.TEM):
 				self.image_shift[axis] = value[axis]
 			except KeyError:
 				pass
-	
+
 	def getRawImageShift(self):
 		return copy.copy(self.raw_image_shift)
-	
+
 	def setRawImageShift(self, value):
 		for axis in self.raw_image_shift.keys():
 			try:
 				self.raw_image_shift[axis] = value[axis]
 			except KeyError:
 				pass
-	
+
 	def getDefocus(self):
 		return self.focus - self.zero_defocus
-	
+
 	def setDefocus(self, value):
 		self.focus = value + self.zero_defocus
-	
+
 	def resetDefocus(self):
 		self.zero_defocus = self.focus
 
@@ -414,6 +426,11 @@ class SimTEM(tem.TEM):
 
 	def getProbeModes(self):
 		return list(self.probe_modes)
+
+	def setProjectionMode(self, value):
+		# This is a fake value set.  It forces the projection mode defined by
+		# the class.
+		print 'fake setting to projection mode %s' % (self.projection_mode,)
 
 	def getMainScreenPositions(self):
 		return list(self.main_screen_positions)
@@ -488,11 +505,14 @@ class SimTEM(tem.TEM):
 		return True
 
 	def runAutoFiller(self):
-		self.addRefrigerant(1)
+		self.autofiller_busy = True
+		self.ventRefrigerant()
+		self.addRefrigerant(4)
 		if self.level0 <=40 or self.level1 <=40:
 			self.autofiller_busy = True
 			raise RuntimeError('Force fill failed')
 		self.addRefrigerant(4)
+		self.autofiller_busy = False
 
 	def resetAutoFillerError(self):
 		self.autofiller_busy = False
@@ -513,12 +533,24 @@ class SimTEM(tem.TEM):
 			print 'using', self.level0, self.level1
 			time.sleep(4)
 
+	def ventRefrigerant(self):
+		self.level0 -= 10
+		self.level1 -= 10
+		print 'venting', self.level0, self.level1
+		time.sleep(2)
+
 	def addRefrigerant(self,cycle):
 		for i in range(cycle):
 			self.level0 += 20
 			self.level1 += 20
 			print 'adding', self.level0, self.level1
 			time.sleep(2)
+
+	def getAutoFillerRemainingTime(self):
+		if simu_autofiller:
+			return min(self.level0, self.level1)
+		else:
+			return -60
 
 	def exposeSpecimenNotCamera(self,seconds):
 		time.sleep(seconds)
@@ -602,3 +634,23 @@ class SimTEM300(SimTEM):
 				self.addProjectionSubModeMap(mag,'LM',0)
 			else:
 				self.addProjectionSubModeMap(mag,'SA',1)
+
+class SimDiffrTEM(SimTEM):
+	name = 'SimDiffrTEM'
+	projection_mode = 'diffraction'
+	def __init__(self):
+		SimTEM.__init__(self)
+
+		self.magnifications = [
+			70,
+			120.0,
+			520.0,
+			1200.0,
+			5200.0,
+			27000.0,
+			52000.0,
+		]
+		self.high_tension = 120000.0
+
+	def getProjectionMode(self):
+		return self.projection_mode

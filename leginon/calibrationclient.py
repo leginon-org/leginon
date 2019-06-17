@@ -1621,6 +1621,14 @@ class BeamShiftCalibrationClient(SimpleMatrixCalibrationClient):
 	def parameter(self):
 		return 'beam shift'
 
+class DiffractionShiftCalibrationClient(SimpleMatrixCalibrationClient):
+	mover = False
+	def __init__(self, node):
+		SimpleMatrixCalibrationClient.__init__(self, node)
+
+	def parameter(self):
+		return 'diffraction shift'
+
 class ImageBeamShiftCalibrationClient(ImageShiftCalibrationClient):
 	def __init__(self, node):
 		ImageShiftCalibrationClient.__init__(self, node)

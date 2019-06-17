@@ -940,7 +940,6 @@ function submitAppionCommand($command, $outdir, $runname, $expId, $jobtype, $pro
 function submitAppionJob($command, $outdir, $runname, $expId, $jobtype, $testimg=False,
 $xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0, $walltime="96", $cputime=False) {
 	global $DATA_DIRS;
-
 	$allow_processing = checkExptAdminPrivilege($expId,'data');
 	if (!$allow_processing) return "processing not allowed by this user for experiment id: $expId";
 

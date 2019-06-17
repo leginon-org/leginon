@@ -27,6 +27,9 @@ class DataJsonLoader(object):
 					if type(kwargs[key][0]) == type([]):
 						# json export saves coordinate tuple as list.  Need to change back in import
 						kwargs[key] = map((lambda x: tuple(x)),kwargs[key])
+			if realkey not in q.keys():
+				print 'missing key %s' % (realkey)
+				continue
 			q[realkey] = kwargs[key]
 		return q
 
