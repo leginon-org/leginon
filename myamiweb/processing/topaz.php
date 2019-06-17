@@ -902,13 +902,26 @@ function toggle(divID) {
 			else {
 				echo '<script> $(document).ready(function() { popenTab("Picking"); });</script>';
 				echo "<center><h4>Submitted Preprocessing Job</h4></center>";
+				$inputCount =  count(glob($_POST['input1']));
+				for ($x = 0; $x <= 100; $x++) {
+					$fileList = glob($_POST['output1']."*.png");
+					if (count($fileList) == $inputCount) {
+						echo "<div>All output files are ready.</div>";
+						break;
+					}
+					else{
+						sleep(1);
+					}
+				}
+				if ($x == 100) {
+					echo "<div>Hit Enter in URL bar and click on Pick | Analyze link when preprocessing is done.</div>";
+				}
 			}
 		}
 	}
 //}
 	
 ?>
- 
     <!--
         SVG icon set definitions
         Material icons downloaded from https://material.io/icons
@@ -1078,7 +1091,7 @@ function toggle(divID) {
 	  </td></tr>
 	  <tr title="Output directory (type: string; full path)"><td><hl4><span><font size="3" color="white">Output folder</font></span></hl4>
 	  </td><td><input name="output1" id="output1" class="preprocessing_inputs" style="width:30em" 
-	  value="<?php echo getBaseAppionPath($sessioninfo)?>/topaz/preprocessed/"></td></tr>
+	  value="<?php $output1 = getBaseAppionPath($sessioninfo).'/topaz/preprocessed/'; echo $output1?>"></td></tr>
 	  <tr title="Number of CPU cores to use for parallel image downsampling. -1 means use all CPUs (type: integer)"><td><hl4><span><font size="3" color="white">Number of CPUs</font></span></hl4></td><td><input name="numworkers1" id="numworkers1" class="preprocessing_inputs" style="width:3em" value="-1"></td></tr>
 	  <tr title="Rescaling factor for image downsampling. Recommended: Downsample such that the resulting pixelsize is about 8 angstroms; usually 4, 8, or 16 depending on pixelsize and particle size (e.g. a 4k x 4k image downsampled by 4 results in a 1k x 1k image)&#013;&#013;Note: Your particle must have a diameter (longest dimension) of 30 pixels or less after downsampling (type: even integer)"><td><hl4><span><font size="3" color="white">Scale factor</font></span></hl4></td><td><input name="scale1" id="scale1" class="preprocessing_inputs" style="width:3em" value="8"></td></tr>
 	  </table>
@@ -1665,7 +1678,6 @@ POSSIBILITY OF SUCH DAMAGE.
         </div>
       </div> <!-- end of display_area -->
     </div> <!-- end of middle_panel -->
-
 	<div id="Training" class="tabcontent" style="overflow-x:hidden;">
       <div class="top_panel" id="ui_top_panel">
         <div class="menubar">
@@ -2209,7 +2221,14 @@ function _via_init() {
       await _via_load_submodules();
     }, 100);
   }
-
+  <?php 
+  		$fileList = glob($output1."*.png");
+  		foreach ($fileList as $filename) {
+  			echo "project_file_add_url('download.php?expId=".$expId."&file=".$filename."');\n";
+  		}
+  		
+  ?>
+  update_img_fn_list();
 }
 
 function _via_init_reg_canvas_context() {
@@ -11094,8 +11113,7 @@ if ( ! _via_is_debug_mode ) {
 }
 
     </script>
-    <script type="text/javascript">
-      //<!--AUTO_INSERT_VIA_TEST_JS_HERE-->
+    <script>
     </script>
 
     <!-- scripts code debugging
