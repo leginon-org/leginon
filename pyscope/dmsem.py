@@ -482,6 +482,19 @@ class GatanUltraScan(DMSEM):
 	binning_limits = [1,2,4,8]
 	binmethod = 'exact'
 
+class GatanRio9(DMSEM):
+	name = 'GatanRio9'
+	try:
+		cameraid = configs['rio9']['camera_id']
+	except:
+		pass
+	binning_limits = [1,2]
+	binmethod = 'exact'
+
+	def getPixelSize(self):
+		## TODO: move to config file:
+		return {'x': 9e-6, 'y': 9e-6}
+
 
 class GatanK2Base(DMSEM):
 	name = 'GatanK2Base'
