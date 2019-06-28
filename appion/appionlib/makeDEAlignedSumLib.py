@@ -414,6 +414,9 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 		kev = imgdata['scope']['high tension'] / 1000
 		apix = apDatabase.getPixelSize(imgdata)
 		nframes = imgdata['camera']['nframes']
+		framespathname = targetdict['framespathname']		
+		if not nframes:
+			nframes = len(glob.glob(os.path.join(framespathname, '*')))-1
 		try:
 			dose = apDatabase.getDoseFromImageData(imgdata)
 		except:
@@ -432,10 +435,14 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 				if self.params['post_counting_gain'] is not None:
 					self.params['gainreference_framecount'] = 1
 				else:
+					if not brightnframes:
+						brightnframes = nframes
 					self.params['gainreference_framecount'] = brightnframes
 			if 'darkref' in targetdict:
 				self.params['darkreference_filename'] = targetdict['darkref']
 				darknframes = imgdata['dark']['camera']['nframes']
+				if not darknframes:
+					darknframes = nframes  
 				self.params['darkreference_framecount'] = darknframes
 		
 		if self.params['override_bad_pixs'] is False:
@@ -475,7 +482,7 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 				command.append(option)
 
 		command.append(targetdict['outpath'])
-		framespathname = targetdict['framespathname']
+
 
 		#check to see if there are frames in the path
 		if self.params['input_type'] == 'directories':
