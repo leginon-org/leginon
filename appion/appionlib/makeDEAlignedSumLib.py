@@ -436,13 +436,13 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 					self.params['gainreference_framecount'] = 1
 				else:
 					if not brightnframes:
-						brightnframes = nframes
+						brightnframes = 1
 					self.params['gainreference_framecount'] = brightnframes
 			if 'darkref' in targetdict:
 				self.params['darkreference_filename'] = targetdict['darkref']
 				darknframes = imgdata['dark']['camera']['nframes']
 				if not darknframes:
-					darknframes = nframes  
+					darknframes = 1  
 				self.params['darkreference_framecount'] = darknframes
 		
 		if self.params['override_bad_pixs'] is False:
