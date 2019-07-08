@@ -62,7 +62,10 @@ class DiffrFocuser(singlefocuser.SingleFocuser):
 		#if self.end_radian > limits['a'][1] or self.start_radian < limits['a'][0]:
 		#	raise acquisition.BadImageStatsPause('Tilt angle out of range')
 
-		tilt_time = self.settings['tilt speed']*self.settings['tilt range']
+		if self.settings['tilt speed'] < 0.01 or self.settings['tilt speed'] > 25:
+			self.logger.error('Invalid tilt speed.')
+			return
+		tilt_time = self.settings['tilt range']/ self.settings['tilt speed']
 		if tilt_time >= 3*60:
 			raise acquisition.BadImageStatsPause('Tilt time too long')
 		# go to start
