@@ -53,7 +53,7 @@ import datetime
 import re
 import string
 import sqldict
-import MySQLdb
+import pymysql as MySQLdb
 import newdict
 import cPickle
 import dbconfig
