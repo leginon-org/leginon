@@ -817,11 +817,24 @@ class _createSQLTable:
 				definition.append(self.formatDescription(col))
 
 			addcolumns = [col for col in definition if col not in describe]
-
+			extracolumns = [col for col in describe if col not in definition]
 			for column in addcolumns:
+				need_change = False
 				queries = []
 				column['Null'] = 'YES'
-				q = sqlexpr.AlterTable(self.table, column, 'ADD').sqlRepr()
+				if extracolumns:
+					# description is the existing db schema.
+					# #7752 handle the case when the sinedon definition has changed.
+					# Found in CorrectorSettingsData where isdefault is set 0 as default
+					# from myamiweb/xml/leginonDBSchema.xml while sinedon default
+					# is Null.
+					for extra_col in extracolumns:
+						if column['Field'] == extra_col['Field']:
+							q = sqlexpr.AlterTable(self.table, column, 'CHANGE').sqlRepr()
+							need_change = True
+							break
+				if not need_change:
+					q = sqlexpr.AlterTable(self.table, column, 'ADD').sqlRepr()
 				queries.append(q)
 				l = re.findall('^REF\%s' %(sep,),column['Field'])
 				if l:
