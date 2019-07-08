@@ -156,7 +156,7 @@ import datetime
 import re
 import numpy
 import math
-import MySQLdb.cursors
+import pymysql as MySQLdb
 from types import *
 import newdict
 import data
@@ -201,8 +201,7 @@ class SQLDict(object):
 
 	def ping(self):
 		try:
-			if self.db.stat() == 'MySQL server has gone away':
-				self.db = sqldb.connect(**self.db.kwargs)
+			self.db.ping(reconnect=True)
 		except (MySQLdb.ProgrammingError, MySQLdb.OperationalError), e:
 			# self.db.stat function gives error when connection is not available.
 			errno = e.args[0]
@@ -452,7 +451,7 @@ class _Cursor:
 
 	def __init__(self, db, load, columns):
 		db.ping()
-		self.cursor = db.cursor(cursorclass=MySQLdb.cursors.DictCursor)
+		self.cursor = db.cursor(cursor=MySQLdb.cursors.DictCursor)
 		self.columns = columns
 		self.load = load
 		self.db = db
@@ -543,7 +542,7 @@ class _multipleQueries:
 
 	def _cursor(self):
 		self.db.ping()
-		return self.db.cursor(cursorclass=MySQLdb.cursors.DictCursor)
+		return self.db.cursor(cursor=MySQLdb.cursors.DictCursor)
 
 	def execute(self):
 		for key,query in self.queries.items():
@@ -758,7 +757,7 @@ class _createSQLTable:
 
 		def _cursor(self):
 			self.db.ping()
-			return self.db.cursor(cursorclass=MySQLdb.cursors.DictCursor)
+			return self.db.cursor(cursor=MySQLdb.cursors.DictCursor)
 
 		def create(self):
 			table_exist = self.hasTable()

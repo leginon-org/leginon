@@ -6,7 +6,7 @@
 #       see  http://leginon.org
 #
 "MySQL module for pyLeginon"
-import MySQLdb
+import pymysql as MySQLdb
 
 def connect(**kwargs):
 	newkwargs = kwargs.copy()
@@ -32,7 +32,7 @@ class sqlDB(object):
 	"""
 	def __init__(self, **kwargs):
 		self.dbConnection = connect(**kwargs)
-		self.c = self.dbConnection.cursor(cursorclass=MySQLdb.cursors.DictCursor)
+		self.c = self.dbConnection.cursor(cursor=MySQLdb.cursors.DictCursor)
 
 	def selectone(self, strSQL, param=None):
 		'Execute a query and return the first row.'
