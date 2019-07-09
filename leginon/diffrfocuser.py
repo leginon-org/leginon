@@ -37,6 +37,27 @@ class DiffrFocuser(singlefocuser.SingleFocuser):
 			parent_tilt = 0.0
 		return parent_tilt
 
+	def validateSettings(self):
+		'''
+		A chance for subclass to abort processTargetData.
+		'''
+		self.start_radian = math.radians(self.settings['tilt start'])
+		self.end_radian = math.radians(self.settings['tilt range']+self.settings['tilt start'])
+		limits = (math.radians(-72.0),math.radians(72.0))
+		if self.start_radian < limits[0] or self.start_radian > limits[1]:
+			raise acquisition.InvalidSettings('Start tilt %.1f deg is out of range' % (math.degrees(self.start_radian)))
+		if self.end_radian < limits[0] or self.end_radian > limits[1]:
+			raise acquisition.InvalidSettings('End tilt %.1f deg is out of range.' % (math.degrees(self.end_radian)))
+		
+		#if self.end_radian > limits['a'][1] or self.start_radian < limits['a'][0]:
+		#	raise acquisition.BadImageStatsPause('Tilt angle out of range')
+
+		if self.settings['tilt speed'] < 0.01 or self.settings['tilt speed'] > 25:
+			raise acquisition.InvalidSettings('Invalid tilt speed %.3f' % (self.settings['tilt speed']))
+		tilt_time = abs(self.settings['tilt range']) / self.settings['tilt speed']
+		if tilt_time >= 3*60:
+			raise acquisition.InvalidSettings('Tilt time %.1f s is too long' % (tilt_time))
+
 	def acquirePublishDisplayWait(self, presetdata, emtarget, channel):
 		try:
 			self.tiltAndWait(presetdata,emtarget)
@@ -55,25 +76,7 @@ class DiffrFocuser(singlefocuser.SingleFocuser):
 		position0 = self.instrument.tem.StagePosition
 		self.tilt0 = position0['a']
 
-		self.start_radian = math.radians(self.settings['tilt start'])
-		self.end_radian = math.radians(self.settings['tilt range']+self.settings['tilt start'])
-		limits = (math.radians(-72.0),math.radians(72.0))
-		if self.start_radians < limits[0] or self.start_radians > limits[1]:
-			self.logger.error('Start tilt %.1 deg is out of range' % (math.degrees(self.start_radian)))
-			return
-		if self.end_radians < limits[0] or self.end_radians > limits[1]:
-			self.logger.error('End tilt %.1 deg is out of range' % (math.degrees(self.end_radian)))
-			return
-		
-		#if self.end_radian > limits['a'][1] or self.start_radian < limits['a'][0]:
-		#	raise acquisition.BadImageStatsPause('Tilt angle out of range')
 
-		if self.settings['tilt speed'] < 0.01 or self.settings['tilt speed'] > 25:
-			self.logger.error('Invalid tilt speed.')
-			return
-		tilt_time = abs(self.settings['tilt range'])/ self.settings['tilt speed']
-		if tilt_time >= 3*60:
-			raise acquisition.BadImageStatsPause('Tilt time too long')
 		# go to start
 		self.logger.info('Tilting to %s degrees to start' % self.settings['tilt start'])
 		self.instrument.tem.StagePosition={'a':self.start_radian}

@@ -42,6 +42,9 @@ class NoMoveCalibration(targetwatcher.PauseRepeatException):
 class InvalidPresetsSequence(targetwatcher.PauseRepeatException):
 	pass
 
+class InvalidSettings(targetwatcher.PauseRepeatException):
+	pass
+
 class BadImageStatsPause(targetwatcher.PauseRepeatException):
 	pass
 
@@ -481,12 +484,24 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.tuneEnergyFilter(zlp_preset_name)
 		self.monitorScreenCurrent(zlp_preset_name)
 
+	def validateSettings(self):
+		'''
+		A chance for subclass to abort processTargetData.
+		'''
+		pass
+
 	def processTargetData(self, targetdata, attempt=None):
 		'''
 		This is called by TargetWatcher.processData when targets available
 		If called with targetdata=None, this simulates what occurs at
 		a target (going to presets, acquiring images, etc.)
 		'''
+		# validate any bad settings that requires aborting now.
+		try:
+			self.validateSettings()
+		except Exception, e:
+			self.logger.error(str(e))
+			raise
 		# need to validate presets before preTargetSetup because they need
 		# to use preset, too, even though not the same target.
 		try:
