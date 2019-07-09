@@ -2946,3 +2946,20 @@ class DiffractionSeriesData(InSessionData):
 			('emtarget', EMTargetData),
 		)
 	typemap = classmethod(typemap)
+
+class CameraLengthCalibrationData(CalibrationData):
+	def typemap(cls):
+		return CalibrationData.typemap() + (
+			('magnification', int),
+			('camera length', float), #meters
+			('comment', str),
+		)
+	typemap = classmethod(typemap)
+
+class CameraLengthCalibratorSettingsData(CalibratorSettingsData):
+	def typemap(cls):
+		return CalibratorSettingsData.typemap() + (
+			('d spacing', float),
+			('distance', float),
+		)
+	typemap = classmethod(typemap)

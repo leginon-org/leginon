@@ -31,7 +31,7 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 		self.unsupported = []
 		super(SimCCDCamera,self).__init__()
 		self.debug = DEBUG
-		self.pixel_size = {'x': 2.5e-5, 'y': 2.5e-5}
+		self.pixel_size = {'x': 1.4e-5, 'y': 1.4e-5}
 		self.exposure_types = ['normal', 'dark', 'bias']
 
 		self.binning = {'x': 1, 'y': 1}
@@ -622,6 +622,7 @@ class SimK2CountingCamera(SimFrameCamera):
 		super(SimK2CountingCamera,self).__init__()
 		self.binning_limits = [1,2,4,8]
 		self.binmethod = 'floor'
+		self.pixel_size = {'x': 5e-6, 'y': 5e-6}
 
 	def getFrameFlip(self):
 		# flip before? rotation
@@ -637,6 +638,8 @@ class SimK2SuperResCamera(SimFrameCamera):
 		super(SimK2SuperResCamera,self).__init__()
 		self.binning_limits = [1]
 		self.binmethod = 'floor'
+		self.pixel_size = {'x': 2.5e-6, 'y': 2.5e-6}
+
 
 def imagefun_bin(image, binning0, binning1=0):
 	return imagefun.bin(image, binning0)
@@ -649,6 +652,7 @@ class SimK3Camera(SimFrameCamera):
 		self.binmethod = 'floor'
 		self.camsize = self.getCameraSize()
 		self.tempoffset = dict(self.offset)
+		self.pixel_size = {'x': 2.5e-6, 'y': 2.5e-6}
 
 	def getSystemGainDarkCorrected(self):
 		return True

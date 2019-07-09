@@ -35,6 +35,9 @@ class Abort(Exception):
 class NoPixelSizeError(Exception):
 	pass
 
+class NoCameraLengthError(Exception):
+	pass
+
 class NoCalibrationError(Exception):
 	def __init__(self, *args, **kwargs):
 		if 'state' in kwargs:
@@ -517,6 +520,53 @@ class PixelSizeCalibrationClient(CalibrationClient):
 				mag = caldata['magnification']
 			except:
 				raise RuntimeError('Failed retrieving last pixelsize')
+			if mag not in last:
+				last[mag] = caldata
+		return last.values()
+
+
+class CameraLengthCalibrationClient(CalibrationClient):
+	'''
+	basic CalibrationClient for accessing a type of calibration involving
+	a matrix at a certain magnification
+	'''
+	def __init__(self, node):
+		CalibrationClient.__init__(self, node)
+
+	def researchCameraLengthData(self, tem, ccdcamera, mag):
+		queryinstance = leginondata.CameraLengthCalibrationData()
+		queryinstance['magnification'] = mag
+		self.setDBInstruments(queryinstance,tem,ccdcamera)
+		caldatalist = self.node.research(datainstance=queryinstance)
+		return caldatalist
+
+	def retrieveCameraLength(self, tem, ccdcamera, mag):
+		'''
+		finds the requested pixel size using magnification
+		'''
+		caldatalist = self.researchCameraLengthData(tem, ccdcamera, mag)
+		if len(caldatalist) < 1:
+			raise NoCameraLengthError()
+		caldata = caldatalist[0]
+		pixelsize = caldata['camera length']
+		return pixelsize
+
+	def time(self, tem, ccdcamera, mag):
+		pdata = self.researchCameraLengthData(tem, ccdcamera, mag)
+		if len(pdata) < 1:
+			timeinfo = None
+		else:
+			timeinfo = pdata[0].timestamp
+		return timeinfo
+
+	def retrieveLastCameraLengths(self, tem, camera):
+		caldatalist = self.researchCameraLengthData(tem, camera, None)
+		last = {}
+		for caldata in caldatalist:
+			try:
+				mag = caldata['magnification']
+			except:
+				raise RuntimeError('Failed retrieving last camera length')
 			if mag not in last:
 				last[mag] = caldata
 		return last.values()

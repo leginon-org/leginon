@@ -199,6 +199,9 @@ noderegistry.registerNodeClass(BeamTiltCalibrator,classtype)
 from pixelsizecalibrator import PixelSizeCalibrator
 noderegistry.registerNodeClass(PixelSizeCalibrator,classtype)
 
+from cameralengthcalibrator import CameraLengthCalibrator
+noderegistry.registerNodeClass(CameraLengthCalibrator,classtype)
+
 from scalerotationcalibrator import ScaleRotationCalibrator
 noderegistry.registerNodeClass(ScaleRotationCalibrator,classtype)
 

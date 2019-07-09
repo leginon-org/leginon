@@ -109,6 +109,7 @@ class SimTEM(tem.TEM):
 		self.emission = 'on'
 		self.BeamBlank = 'off'
 		self.buffer_pressure = 30.0
+		self.beamstop_position = 'out'
 
 		self.energy_filter = False
 		self.energy_filter_width = 0.0
@@ -605,6 +606,12 @@ class SimTEM(tem.TEM):
 
 	def retractApertureMechanism(self, aperture_mechanism):
 		return setApertureSelection(aperture_mechanism, 'open')
+
+	def getBeamstopPosition(self):
+		return self.beamstop_position
+
+	def setBeamstopPosition(self, value):
+		self.beamstop_position = value
 
 class SimTEM300(SimTEM):
 	name = 'SimTEM300'
