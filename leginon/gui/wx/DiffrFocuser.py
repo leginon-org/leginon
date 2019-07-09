@@ -74,7 +74,7 @@ class ScrolledSettings(leginon.gui.wx.Focuser.ScrolledSettings):
 		return start_position[0]+total_length[0],start_position[1]+total_length[1]
 
 	def createTiltRangeEntry(self,start_position):
-		self.widgets['tilt range'] = FloatEntry(self, -1, min=0.0, allownone=False, chars=6, value='114.0')
+		self.widgets['tilt range'] = FloatEntry(self, -1, min=-140.0, max=140.0, allownone=False, chars=6, value='114.0')
 		tilt_sizer = wx.GridBagSizer(5, 5)
 		tilt_sizer.Add(self.widgets['tilt range'], (0, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)

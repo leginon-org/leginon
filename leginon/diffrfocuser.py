@@ -57,15 +57,21 @@ class DiffrFocuser(singlefocuser.SingleFocuser):
 
 		self.start_radian = math.radians(self.settings['tilt start'])
 		self.end_radian = math.radians(self.settings['tilt range']+self.settings['tilt start'])
-		limits = self.instrument.tem.StageLimits
-		print limits, self.start_radian
+		limits = (math.radians(-72.0),math.radians(72.0))
+		if self.start_radians < limits[0] or self.start_radians > limits[1]:
+			self.logger.error('Start tilt %.1 deg is out of range' % (math.degrees(self.start_radian)))
+			return
+		if self.end_radians < limits[0] or self.end_radians > limits[1]:
+			self.logger.error('End tilt %.1 deg is out of range' % (math.degrees(self.end_radian)))
+			return
+		
 		#if self.end_radian > limits['a'][1] or self.start_radian < limits['a'][0]:
 		#	raise acquisition.BadImageStatsPause('Tilt angle out of range')
 
 		if self.settings['tilt speed'] < 0.01 or self.settings['tilt speed'] > 25:
 			self.logger.error('Invalid tilt speed.')
 			return
-		tilt_time = self.settings['tilt range']/ self.settings['tilt speed']
+		tilt_time = abs(self.settings['tilt range'])/ self.settings['tilt speed']
 		if tilt_time >= 3*60:
 			raise acquisition.BadImageStatsPause('Tilt time too long')
 		# go to start
