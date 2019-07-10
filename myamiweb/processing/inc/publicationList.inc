@@ -456,4 +456,13 @@ $PUBLICATIONS['ctffind4'] = array(
 'doi' => '10.1016/j.jsb.2015.08.008',
 'pages' => '216-21');
 
+$PUBLICATIONS['topaz'] = array(
+		'title' => 'Positive-unlabeled convolutional neural networks for particle picking in cryo-electron micrographs',
+		'year' => '2018',
+		'authorlist' => 'epler T, Morin A, Noble AJ, Brasch J, Shapiro L, Berger B.',
+		'journal' => 'Res Comput Mol Biol.',
+		'volume' => ';10812',
+		'pmid' => '29707703',
+		'pages' => '245-247');
+
 ?>
