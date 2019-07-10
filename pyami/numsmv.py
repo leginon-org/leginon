@@ -32,8 +32,8 @@ HEADER_FIELDS = (
 	('PIXEL_SIZE', float, 0.028, '{:8.3f}'), # mm
 	('OSC_RANGE', float, 1.000, '{:8.3f}'), #degrees. Can this be negative ?
 	('OSC_START', float, 0.000, '{:8.3f}'), #degrees
-	('BEAM_CENTER_X', int, 0, '{:>4}'),
-	('BEAM_CENTER_Y', int, 0, '{:>4}'),
+	('BEAM_CENTER_X', float, 0.000, '{:8.3f}'), # mm
+	('BEAM_CENTER_Y', float, 0.000, '{:8.3f}'), # mm
 	('PHI', float, 0.000, '{:8.3f}'), #spindle angle in degrees same as OSC_START ?
 	('TWOTHETA', float, 0.0, '{:8.3f}'), # detector angle to beam normal plane in degrees
 	# timing
