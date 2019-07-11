@@ -33,18 +33,12 @@ class TopazDenoiser(appionLoop2.AppionLoop):
 		return
 
 	def processImage(self, imgdata):
-		self.image_list.append(imgdata)
-		
-	def postLoopFunctions(self):
-		if not self.image_list: return
 		command = "topaz denoise "
-		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
-		image_path = sessiondata['image path']
+		
+		image_path = imgdata['session']['image path']
 		out_path = self.params['rundir']
-		input_images = ''
-		for item in self.image_list:
-			input_images += os.path.join(image_path, item.filename()) +' '
-		command += input_images
+
+		command += os.path.join(image_path, imgdata.filename())
 		command += " --format mrc"
 		command += " --bin "+str(self.params['bin'])
 		command += " --patch-size "+str(self.params['patchsize'])
@@ -55,25 +49,25 @@ class TopazDenoiser(appionLoop2.AppionLoop):
 		apDisplay.printMsg(out)
 		apDisplay.printMsg(err)
 		
-		preset = self.image_list[0]['preset'].copy()
-		pr_postfix = "_"+self.params['denoiselabel']+"_td"
+		preset = imgdata['preset'].copy()
+		pr_postfix = "_"+self.params['denoiselabel']
 		preset['name'] += pr_postfix
 		preset.insert()
-		for item in self.image_list:
-			filename = item.filename()
-			out_file = os.path.join(out_path, filename)
-			if os.path.exists(out_file):
-				parts = os.path.splitext(filename)
-				dest_file = parts[0]+pr_postfix+parts[1]
-				dst = os.path.join(image_path, dest_file)
-				shutil.move(out_file, dst)
-				imdata = item.copy()
-				imdata['preset'] = preset
-				image = imdata.items()[1][1]
-				image.filename = dest_file
-				imdata['image'] = image
-				imdata['filename'] = parts[0]+pr_postfix
-				imdata.insert()  
+
+		filename = imgdata.filename()
+		out_file = os.path.join(out_path, filename)
+		if os.path.exists(out_file):
+			parts = os.path.splitext(filename)
+			dest_file = parts[0]+pr_postfix+parts[1]
+			dst = os.path.join(image_path, dest_file)
+			shutil.move(out_file, dst)
+			imdata = imgdata.copy()
+			imdata['preset'] = preset
+			image = imdata.items()[1][1]
+			image.filename = dest_file
+			imdata['image'] = image
+			imdata['filename'] = parts[0]+pr_postfix
+			imdata.insert()  
 
 	def commitToDatabase(self, imgdata):
 		pass
