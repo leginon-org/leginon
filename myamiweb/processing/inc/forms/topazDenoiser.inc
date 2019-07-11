@@ -11,7 +11,7 @@ require_once "basicLoopForm.inc";
 class topazDenoiser extends BasicLoopForm
 
 {
-	function __construct(  $expId, $errorHTML='', $infoHTML='',$bin=2 ,$denoiselabel='a', $patchsize=-1, $patchpadding=128)
+	function __construct(  $expId, $errorHTML='', $infoHTML='',$bin=1, $denoiselabel='td', $patchsize=2048, $patchpadding=128)
 	{
 		parent::__construct($expId, $errorHTML, $infoHTML);
 		
