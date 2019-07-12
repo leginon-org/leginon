@@ -11,7 +11,7 @@ require_once "basicLoopForm.inc";
 class topazDenoiser extends BasicLoopForm
 
 {
-	function __construct(  $expId, $errorHTML='', $infoHTML='',$bin=1, $denoiselabel='td', $patchsize=2048, $patchpadding=128)
+	function __construct(  $expId, $errorHTML='', $infoHTML='',$bin=1, $denoiselabel='td', $patchsize=2048, $patchpadding=128, $device=0)
 	{
 		parent::__construct($expId, $errorHTML, $infoHTML);
 		
@@ -32,7 +32,9 @@ class topazDenoiser extends BasicLoopForm
 		$this->setShowDesc( True ); // Flag to hide the description field of the run parameters.
 		
 		//------ Set Parameters specific to the program that requires this new form -----//
-		$params = $this->getFormParams();	
+		$params = $this->getFormParams();
+		$params->setHelpSection( "topazDenoise" );
+		$params->addParam( "device", $device, "device" );
 		$params->addParam( "bin", $bin, "binning" );
 		$params->addParam( "denoiselabel", $denoiselabel, "append label to denoised image" );
 		$params->addParam( "patchsize", $patchsize, "patch size" );
@@ -53,6 +55,9 @@ class topazDenoiser extends BasicLoopForm
 		$fieldSize = 4;
 		
 		$html .= "<b>Topaz denoiser params:</b><br />\n";
+		$html.= $params->insertTextFieldInRow( "device", $fieldSize );
+		$html.= "<br/>\n";
+		
 		$html.= $params->insertTextFieldInRow( "bin", $fieldSize );
 		$html.= "<br/>\n";
 		$html.= $params->insertTextFieldInRow( "denoiselabel", $fieldSize );
