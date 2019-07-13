@@ -344,7 +344,6 @@ class _Table:
 
 			whereFormat = sqlexpr.AND_EQUAL(equalpairs)
 			whereFormatNULL = sqlexpr.AND_IS(nullfields)
-
 			if whereFormatNULL:
 				if whereFormat:
 					whereFormat = sqlexpr.AND(whereFormatNULL,whereFormat)
@@ -785,15 +784,6 @@ class _createSQLTable:
 
 		def formatDescription(self, description):
 			newdict = {}
-			newdict['Field'] = description['Field']
-			if description.has_key('Default'):
-				newdict['Default'] = description['Default']
-				if description['Default']=='CURRENT_TIMESTAMP':
-					newdict['Default'] = None
-				elif description['Default']=='NULL':
-					newdict['Default'] = None
-			else:
-				newdict['Default'] = None
 			typestr = description['Type'].upper()
 			try:
 				if re.findall('^TIMESTAMP', typestr):
@@ -802,6 +792,21 @@ class _createSQLTable:
 			except ValueError:
 				pass
 			newdict['Type'] = typestr
+			if newdict['Type'] == 'TIMESTAMP':
+				if not description.has_key('Default'):
+					# Fixing Issue #7798 by force timestamp default
+					# to current_timestamp().
+					# This way it matches with what is described
+					# in the database and prevent it from altering
+					# the table
+					description['Default']='current_timestamp()'
+			newdict['Field'] = description['Field']
+			if description.has_key('Default'):
+				newdict['Default'] = description['Default']
+				if description['Default']=='NULL':
+					newdict['Default'] = None
+			else:
+				newdict['Default'] = None
 			return newdict
 
 		def _checkTable(self):
@@ -819,23 +824,18 @@ class _createSQLTable:
 			addcolumns = [col for col in definition if col not in describe]
 			extracolumns = [col for col in describe if col not in definition]
 			for column in addcolumns:
-				need_change = False
+				not_to_add = False
 				queries = []
 				column['Null'] = 'YES'
-				if extracolumns:
+				if extracolumns and column['Field'] in map((lambda x: x['Field']),extracolumns):
 					# description is the existing db schema.
 					# #7752 handle the case when the sinedon definition has changed.
-					# Found in CorrectorSettingsData where isdefault is set 0 as default
-					# from myamiweb/xml/leginonDBSchema.xml while sinedon default
-					# is Null.
-					for extra_col in extracolumns:
-						if column['Field'] == extra_col['Field']:
-							q = sqlexpr.AlterTable(self.table, column, 'CHANGE').sqlRepr()
-							need_change = True
-							break
-				if not need_change:
+					# pymysql would try to add and gives duplicated column error.
+					# Avoid doing add if The field is in both definition and describe
+					not_to_add = True
+				if not not_to_add:
 					q = sqlexpr.AlterTable(self.table, column, 'ADD').sqlRepr()
-				queries.append(q)
+					queries.append(q)
 				l = re.findall('^REF\%s' %(sep,),column['Field'])
 				if l:
 					q = sqlexpr.AlterTableIndex(self.table, column).sqlRepr()
@@ -903,6 +903,8 @@ class _diffSQLTable(_createSQLTable):
 				column['Null']='YES'
 				altertype = 'ADD'
 				if [col for col in describe if col['Field']==column['Field']]:
+					if column['Type'] == 'timestamp':
+						print('TODO: time stamp default might cause problem with pymysql')
 					altertype = 'CHANGE'
 				q = sqlexpr.AlterTable(self.table, column, altertype).sqlRepr()
 				queries.append(q)
