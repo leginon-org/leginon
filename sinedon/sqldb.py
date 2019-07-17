@@ -6,20 +6,20 @@
 #       see  http://leginon.org
 #
 "MySQL module for pyLeginon"
-import pymysql as MySQLdb
+import pymysql as pymysql
 
 def connect(**kwargs):
 	newkwargs = kwargs.copy()
 	if 'engine' in newkwargs:
 		del newkwargs['engine']
-	c = MySQLdb.connect(**newkwargs)
+	c = pymysql.connect(**newkwargs)
 	c.autocommit(True)
 	c.kwargs = dict(kwargs)
 	return c
 
 def escape(anystring):
 	'addslashes to any quotes if necessary'
-	return MySQLdb.escape_string(anystring)
+	return pymysql.escape_string(anystring)
 
 def addbackquotes(anystring):
 	return "`%s`" % (anystring,)
@@ -32,7 +32,7 @@ class sqlDB(object):
 	"""
 	def __init__(self, **kwargs):
 		self.dbConnection = connect(**kwargs)
-		self.c = self.dbConnection.cursor(cursor=MySQLdb.cursors.DictCursor)
+		self.c = self.dbConnection.cursor(cursor=pymysql.cursors.DictCursor)
 
 	def selectone(self, strSQL, param=None):
 		'Execute a query and return the first row.'

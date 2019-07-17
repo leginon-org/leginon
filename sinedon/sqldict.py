@@ -156,7 +156,8 @@ import datetime
 import re
 import numpy
 import math
-import pymysql as MySQLdb
+import pymysql
+import pymysql.err
 from types import *
 import newdict
 import data
@@ -202,7 +203,7 @@ class SQLDict(object):
 	def ping(self):
 		try:
 			self.db.ping(reconnect=True)
-		except (MySQLdb.ProgrammingError, MySQLdb.OperationalError), e:
+		except (pymysql.err.ProgrammingError, pymysql.err.OperationalError), e:
 			# self.db.stat function gives error when connection is not available.
 			errno = e.args[0]
 			## some version of mysqlpython parses the exception differently
@@ -277,7 +278,7 @@ class SQLDict(object):
 		query = str(sqlexpr.Delete(tablename, where))
 		print 'QUERY', query
 		self.db.ping()
-		cur = self.db.cursor(cursorclass=MySQLdb.cursors.DictCursor)
+		cur = self.db.cursor(cursorclass=pymysql.cursors.DictCursor)
 		cur.execute(query)
 		cur.close()
 
@@ -450,7 +451,7 @@ class _Cursor:
 
 	def __init__(self, db, load, columns):
 		db.ping()
-		self.cursor = db.cursor(cursor=MySQLdb.cursors.DictCursor)
+		self.cursor = db.cursor(cursor=pymysql.cursors.DictCursor)
 		self.columns = columns
 		self.load = load
 		self.db = db
@@ -541,7 +542,7 @@ class _multipleQueries:
 
 	def _cursor(self):
 		self.db.ping()
-		return self.db.cursor(cursor=MySQLdb.cursors.DictCursor)
+		return self.db.cursor(cursor=pymysql.cursors.DictCursor)
 
 	def execute(self):
 		for key,query in self.queries.items():
@@ -555,13 +556,13 @@ class _multipleQueries:
 				## print '-----------------------------------------------'
 				## print 'query =', query
 				c.execute(query)
-			except (MySQLdb.ProgrammingError, MySQLdb.OperationalError), e:
+			except (pymysql.err.InternalError, pymysql.err.ProgrammingError, pymysql.err.OperationalError), e:
 				errno = e.args[0]
 				## some version of mysqlpython parses the exception differently
 				if not isinstance(errno, int):
 					errno = errno.args[0]
-				## 1146:  table does not exist
-				## 1054:  column does not exist
+				## ProgrammingError 1146:  table does not exist
+				## InternalError 1054:  column does not exist
 				if errno in (1146, 1054):
 					pass
 					#print 'non-fatal query error:', e
@@ -756,7 +757,7 @@ class _createSQLTable:
 
 		def _cursor(self):
 			self.db.ping()
-			return self.db.cursor(cursor=MySQLdb.cursors.DictCursor)
+			return self.db.cursor(cursor=pymysql.cursors.DictCursor)
 
 		def create(self):
 			table_exist = self.hasTable()
@@ -845,7 +846,9 @@ class _createSQLTable:
 						if debug:
 							print q
 						c.execute(q)
-				except MySQLdb.OperationalError, e:
+				except pymysql.err.OperationalError, e:
+					if debug:
+						print e
 					pass
 			c.close()
 
