@@ -149,6 +149,11 @@ if hasattr(PIL, 'PILLOW_VERSION'):
 	if int(PIL.PILLOW_VERSION[0]) >= 3:
 		Image2.fromstring = Image.frombytes
 
+def tiff2numpy_array(filename, section):
+	im = PIL.Image.open(filename)
+	im.seek(section)
+	return numpy.array(im)
+
 if __name__ == '__main__':
 	a = textArray('Hello')
 	write(a, 'hello.png')
