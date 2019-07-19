@@ -283,8 +283,8 @@ class RemoteTargetingServer(RemoteServer):
 			if len(bits) != 3:
 				continue
 			tname = bits[0]
-			x = int(bits[1])
-			y = int(bits[2])
+			x = int(float(bits[1]))
+			y = int(float(bits[2]))
 			if tname in self.targetnames:
 				xys[tname].append((x,y)) 		
 		return xys
