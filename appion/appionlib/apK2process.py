@@ -65,7 +65,8 @@ class GatanK2Processing(apDDprocess.DDFrameProcessing):
 		Load from rawframe_path (a stack file) the chosen frame of the current image.
 		'''
 		if self.extname == 'tif':
-			apDisplay.printError('Loading one tif frame not Implemented')
+			from pyami.numpil import tiff2numpy_array
+			return tiff2numpy_array(rawframe_path,frame_number)
 		try:
 			# the frames are binned too now ?
 			bin = {'x':1,'y':1}
