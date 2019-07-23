@@ -12,6 +12,9 @@ VERBOSITY = 0
 [k2]
 # Camera ID
 CAMERA_ID = 0
+# The shutter that is normally closed.  Only open during acquisition.
+# Find it in GMS camera configuration (1 or 2)
+ACQUISITION_SHUTTER_NUMBER = 1
 # the value in DM camera config
 FLIP = True
 # multiple of 90 degrees (i.e. put 1 if 90 degrees, 3 if 270 degrees)
