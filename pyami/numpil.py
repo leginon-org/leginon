@@ -152,7 +152,7 @@ if hasattr(PIL, 'PILLOW_VERSION'):
 def tiff2numpy_array(filename, section):
 	im = PIL.Image.open(filename)
 	im.seek(section)
-	return numpy.array(im)
+	return numpy.array(im.convert('L'))
 
 if __name__ == '__main__':
 	a = textArray('Hello')
