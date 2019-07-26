@@ -16,6 +16,9 @@ from appionlib import apDatabase
 from appionlib import appiondata
 from appionlib import appionLoop2
 from appionlib import apDDLoop
+from appionlib import apK2process
+
+from pyami import mrc
 class TopazDenoiser(appionLoop2.AppionLoop):
 
 	#======================
@@ -25,6 +28,8 @@ class TopazDenoiser(appionLoop2.AppionLoop):
 		self.parser.add_option('--denoiselabel', dest='denoiselabel', default='a', metavar='CHAR')
 		self.parser.add_option('--bin', dest='bin', type="int", default=2, metavar="#")
 		self.parser.add_option('--device', dest='device', type="int", metavar="#")
+		self.parser.add_option('--earlyreturn', dest='earlyreturn', action="store_true")
+		
 	def setProcessingDirName(self):
 		self.processdirname = "topaz_denois"
 
@@ -37,8 +42,20 @@ class TopazDenoiser(appionLoop2.AppionLoop):
 		
 		image_path = imgdata['session']['image path']
 		out_path = self.params['rundir']
-
-		command += os.path.join(image_path, imgdata.filename())
+		correctedImagePath = ""
+		if self.params['earlyreturn']:
+			if not imgdata['use frames']:
+				apDisplay.printMsg(imgdata.filename()+ " does not have frames.")
+			else:
+				dd = apK2process.GatanK2Processing()
+				dd.setImageData(imgdata)
+				correctedImage = dd.correctFrameImage(imgdata['use frames'])
+				correctedImagePath = os.path.join(os.path.split(out_path)[0],imgdata.filename())
+				mrc.write(correctedImage, correctedImagePath)				 
+		if not correctedImagePath: 
+			command += os.path.join(image_path, imgdata.filename())
+		else:
+			command += correctedImagePath
 		command += " --format mrc"
 		command += " --bin "+str(self.params['bin'])
 		command += " --patch-size "+str(self.params['patchsize'])
@@ -73,6 +90,8 @@ class TopazDenoiser(appionLoop2.AppionLoop):
 			result.insert()  
 			apDDLoop.transferALSThickness(imgdata, result)
 			apDDLoop.transferZLPThickness(imgdata, result)
+		if correctedImagePath:
+			os.remove(correctedImagePath)
 			
 	def commitToDatabase(self, imgdata):
 		pass

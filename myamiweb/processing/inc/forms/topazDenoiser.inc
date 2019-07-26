@@ -11,7 +11,7 @@ require_once "basicLoopForm.inc";
 class topazDenoiser extends BasicLoopForm
 
 {
-	function __construct(  $expId, $errorHTML='', $infoHTML='',$bin=1, $denoiselabel='td', $patchsize=1536, $patchpadding=128, $device=0)
+	function __construct(  $expId, $errorHTML='', $infoHTML='',$bin=1, $denoiselabel='td', $patchsize=1536, $patchpadding=128, $device=0, $earlyreturn=False)
 	{
 		parent::__construct($expId, $errorHTML, $infoHTML);
 		
@@ -39,6 +39,7 @@ class topazDenoiser extends BasicLoopForm
 		$params->addParam( "denoiselabel", $denoiselabel, "append label to denoised image" );
 		$params->addParam( "patchsize", $patchsize, "patch size" );
 		$params->addParam( "patchpadding", $patchpadding, "patch padding" );
+		$params->addParam( "earlyreturn", $earlyreturn, "early return" );
 	}
 		
 	public function addValidations()
@@ -60,14 +61,19 @@ class topazDenoiser extends BasicLoopForm
 		
 		$html.= $params->insertTextFieldInRow( "bin", $fieldSize );
 		$html.= "<br/>\n";
+		
 		$html.= $params->insertTextFieldInRow( "denoiselabel", $fieldSize );
 		$html.= "<br/>\n";
+		$html.= "<hr>\n";
 		
 		$html.= $params->insertTextFieldInRow( "patchsize", $fieldSize );
 		$html.= "<br/>\n";
 
 		$html.= $params->insertTextFieldInRow( "patchpadding", $fieldSize );
 		$html.= "<br/>\n";
+		$html.= $params->insertCheckboxField( "earlyreturn" );
+		$html.= "<br/>\n";
+		
 		$html.= "<script>var select = document.getElementsByName('preset')[0];select.selectedIndex = select.options.length-1;</script>";
 		
 		return $html;
