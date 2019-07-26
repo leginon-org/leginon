@@ -1054,6 +1054,7 @@ var help = {
 		
 	'topazDenoise' : {
 		'device' : 'Positive integers for GPU id, set to -1 to force CPU (default: 0).',
+		'earlyreturn':'Sum and gain correct frames before denoising.', 
 	},
 }
 
