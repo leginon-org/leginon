@@ -52,8 +52,8 @@ class Collection(object):
 		self.instrument.setData(instrument_state)
 
 	def start(self):
-
 		result = self.initialize()
+
 		if not result:
 			self.finalize()
 			return
@@ -272,6 +272,7 @@ class Collection(object):
 								  predicted_position['x']*image_pixel_size,
 								  predicted_position['y']*image_pixel_size))
 			self.logger.info('Predicted defocus: %g meters.' % defocus)
+
 			self.node.setDefocus(defocus)
 
 			if self.settings['measure defocus']:
@@ -459,12 +460,11 @@ class Collection(object):
 			raise Abort
 
 class Collection_2(Collection):
-	
 	def __init__(self):
 		super(Collection_2,self).__init__()
 		self.doPredict = None
 		self.trackingImg = None
-		self.correlator[2] = None								# tracking correlator used in Collection_2
+		self.correlator[2] = None			# tracking correlator used in Collection_2
 		self.correlator[3] = None
 
 		self.istot = {0:{'x':[],'y':[]},1:{'x':[],'y':[]}} 		# accumulated image shift 	
@@ -476,7 +476,9 @@ class Collection_2(Collection):
 		
 	def initialize(self):
 		self.logger.info('Initializing...')
+
 		self.logger.info('Calibrations loaded.')
+
 		self.saveInstrumentState()
 		self.logger.info('Instrument state saved.')
 
@@ -511,6 +513,7 @@ class Collection_2(Collection):
 		
 		if self.settings['run buffer cycle']:
 			self.runBufferCycle()
+
 		return True
 	
 	def get_istot(self,seq):
@@ -558,30 +561,10 @@ class Collection_2(Collection):
 		self.setStatus('idle')
 
 		self.viewer.clearImages()
-		self.viewer.clearTrackImages()
-
-	def adjust4Swing(self):
-		self.restoreInstrumentState()
-		if True:
-			self.logger.info('Adjust target for the other tilt group...')
-			try:
-				self.emtarget, status = self.node.adjusttarget(self.preset['name'], self.target, self.emtarget)
-			except Exception, e:
-				self.logger.error('Failed to adjust target: %s.' % e)
-				self.finalize()
-				raise
-			if status == 'error':
-				self.finalize()
-
-		status = self.node.moveAndPreset(self.preset, self.emtarget)
-		
-		if status == 'error':
-			self.logger.warning('Move failed.')
-			
-		return
 	
 	def loop(self, tilts, exposures, sequence):
 		self.logger.info('Starting tilt collection (%d angles)...' % len(sequence))
+		
 		self.logger.info('Removing tilt backlash...')
 		try:
 			self.node.removeStageAlphaBacklash(tilts, sequence, self.preset['name'], self.target, self.emtarget)
@@ -589,15 +572,13 @@ class Collection_2(Collection):
 			self.logger.error('Failed to remove backlash: %s.' % e)
 			self.finalize()
 			raise
-
-		# setup predictor and limits
+	
 		dim = min(self.preset['dimension'].values())		# get dimension of image at exposure preset. 
-		tolerance = min(self.settings['tolerance'],0.2)		
-		self.prediction.setcutoff(dim*tolerance)			# set prediction threshold at % of image size
-		self.prediction.set_maxfitpoints(self.settings['maxfitpoints'] )
+		self.prediction.setcutoff(dim*0.05)	# set prediction threshold at 5% of image size
 		self.checkAbort()
 
 		self._loop(tilts, exposures, sequence)
+		
 		self.logger.info('Collection loop completed.')
 
 		
@@ -614,7 +595,7 @@ class Collection_2(Collection):
 		tilt0 = tilts[seq0[0]][seq0[1]]
 		position0 = self.node.getPixelPosition('image shift')
 		defocus0 = self.node.getDefocus()
-
+		
 		m = 'Initial feature position: %g, %g pixels.'
 		self.logger.info(m % (position0['x'], position0['y']))
 		m = 'Initial defocus: %g meters.'
@@ -634,11 +615,9 @@ class Collection_2(Collection):
 		
 		abort_loop = False
 		for seq_index in range(len(sequence)):
-			
 			self.checkAbort()
 			seq = sequence[seq_index]
 			tilt = tilts[seq[0]][seq[1]]
-			#import rpdb2; rpdb2.start_embedded_debugger("asdf")
 
 			try:
 				channel = self.correlator[seq[0]].getChannel()
@@ -649,69 +628,66 @@ class Collection_2(Collection):
 					self.logger.info('Starting tilt angle: %g degrees.' % math.degrees(tilt))
 					self.tilt(tilt)
 					predicted_position = position0								# first position
-					predicted_position['z'] = self.preset['defocus']/image_pixel_size # assumes that eucentric error z0 is 0.  
-					self.update_istot(seq0,position0)	
-					self.trackingImg = self.getTrackingImg(seq0)			# get first tracking image
+					predicted_position['z'] = 0 								# assumes that eucentric error z0 is 0.  
+					self.update_istot(seq0,position0)							
+					self.trackingImg = self.getTrackingImg()					# get first tracking image	
 					self.reset_ntrack(seq)			
+					
+					# add first tracking image into correlator buffer
 					self.correlator[seq[0]+2].reset()							# clear buffer
 					# The next line adds the first tracking image to the correlator and returns None. 
 					firstcorrelation_image = self.correlator[seq[0]+2].correlate(self.trackingImg,\
 								self.settings['use tilt'], channel=channel, wiener=False, taper=0,corrtype='phase')	
-
-					if self.tilt_order in ('alternate','swing'):
-						other_group = int(not seq[0])
-						fake_corr_image = self.correlator[other_group+2].correlate(self.trackingImg,\
-							self.settings['use tilt'], channel=channel, wiener=False, taper=0,corrtype='phase')	
-						self.reset_ntrack((other_group,0))
-						
-				elif self.fulltrack or not ispredict:	
-						
-					print "****TRACKING****"	
-					istot = self.get_istot(seq)		# history of previous shifts
-															 
+					if seq_index == 0: 
+						if self.tilt_order in ('alternate','swing'):
+							other_group = int(not seq[0])
+							fake_corr_image = self.correlator[other_group+2].correlate(self.trackingImg,\
+								self.settings['use tilt'], channel=channel, wiener=False, taper=0,corrtype='phase')	
+							self.reset_ntrack((other_group,0))
+				elif self.fulltrack or not ispredict:		
+					print "****TRACKING****"											 
 					# tilt to current tilt angle. 
 					self.tilt(tilt)
 					# acquire tracking image, correlate with previous tracking image. 		
 					tracked_shift = self.track(tilt,seq)						# this is in pixels for exposure mag. 
-
-					#position = {'x':sum(istot['x']),'y':sum(istot['x'])}
-
+					istot = self.get_istot(seq)									# history of previous shifts
+					
 					predicted_position = {}
 					# tracked_shift has to be corrected by total image shifts applied up to now
 					predicted_position['x'] = tracked_shift['x'] + sum(istot['x'])
 					predicted_position['y'] = tracked_shift['y'] + sum(istot['y'])
+					
 					# TODO: actually implement something for z heights
-					predicted_position['z'] = tracked_shift['z'] + self.preset['defocus']/image_pixel_size
+					predicted_position['z'] = tracked_shift['z'] 
 					print 'previous x: %f, y: %f' %(position['x'],position['y'])
 					print 'tracked x: %f, y: %f' %(predicted_position['x'],predicted_position['y'])
-					print 'tracked shift x: %f, y: %f' %(tracked_shift['x'],tracked_shift['y'])
+					print 'tracked shift x: %f, y: %f' %(predicted_position['x']-position['x'],predicted_position['y']-position['y'])
 					print 
 				else:
 					# tilt to current tilt angle. 
 					print "****PREDICTING****"
-					istot = self.get_istot(seq)									# history of previous shifts
-					
 					self.tilt(tilt)
 					predicted_shift = self.prediction.predict(tilt,seq)
-					#position = {'x':sum(istot['x']),'y':sum(istot['x'])}
-					
 					predicted_position = {}
 					# tracked_shift has to be corrected by total image shifts applied up to now
-					predicted_position['x'] = predicted_shift['x'] + sum(istot['x'])
-					predicted_position['y'] = predicted_shift['y'] + sum(istot['y'])
-					# TODO: actually implement something for z heights
-					predicted_position['z'] = predicted_shift['z'] + self.preset['defocus']/image_pixel_size
+					predicted_position['x'] = tracked_shift['x'] + sum(istot['x'])
+					predicted_position['y'] = tracked_shift['y'] + sum(istot['y'])
+					predicted_position['z'] = tracked_shift['z'] 
 
-					# determine if we need to take a tracking image
-					if self.dotrackimg(seq):
-						self.trackingImg = self.getTrackingImg(seq)
+					##predicted_position = self.prediction.predict(tilt,seq)		# predict shift with linear model.
+					
+					"""
+					if not self.dotrackimg(seq):							
+						self.ntrack[seq[0]] += 1
+					else:														# we need to take a tracking image every so often
+						self.trackingImg = self.getTrackingImg()
 						trackingcorrelation_image = self.correlator[seq[0]+2].correlate(self.trackingImg,\
-							self.settings['use tilt'], channel=channel, wiener=False, taper=0)	
+								self.settings['use tilt'], channel=channel, wiener=False, taper=0)	
 						self.reset_ntrack(seq)
-						
+					"""	
 					print 'previous x: %f, y: %f' %(position['x'],position['y'])
 					print 'predicted x: %f, y: %f' %(predicted_position['x'],predicted_position['y'])
-					print 'predicted shift x: %f, y: %f' %(predicted_shift['x'], predicted_shift['y'])
+					print 'predicted shift x: %f, y: %f' %(predicted_position['x']-position['x'], predicted_position['y']-position['y'])
 					print 
 					
 			except TrackingError:
@@ -721,6 +697,7 @@ class Collection_2(Collection):
 				self.logger.error('Failed to predict. Aborting tilt series')
 				raise Abort
 			except Exception:
+				print "Caught exception\n"
 				traceback.print_exc()
 				self.finalize()
 				raise Abort	
@@ -729,29 +706,37 @@ class Collection_2(Collection):
 			predicted_shift = {}
 			predicted_shift['x'] = predicted_position['x'] - position['x']
 			predicted_shift['y'] = predicted_position['y'] - position['y']
-			predicted_shift['z'] = predicted_position['z'] - self.preset['defocus']/image_pixel_size
 			
 			self.update_istot(seq,predicted_shift)								# add to total image shift
-			
-			"""
-			# TODO: implement something below for z. 
+			print "istot_x: %f: istot_y: %f" \
+					%(sum(self.get_istot(seq)['x']),sum(self.get_istot(seq)['y']))
 			# undo defocus from last tilt
 			predicted_shift['z'] = -defocus
+
 			defocus = defocus0 + predicted_position['z']*image_pixel_size		# currently, predicted z is set to initial z0, which is assumed to be 0
 			self.logger.info('defocus0: %g meters,sintilt: %g' % (defocus0,math.sin(tilt)))
 			# apply new defocus
 			predicted_shift['z'] += defocus
-			"""
+			
 			try:
 				self.node.setPosition('image shift', predicted_position)
 			except Exception, e:
 				self.logger.error('Calibration error: %s' % e) 
 				self.finalize()
 				raise Fail
+
+			if ispredict: 
+				m = 'Predicted position: %g, %g pixels, %g, %g meters.'
+			else: 
+				m = 'Tracked position: %g, %g pixels, %g, %g meters.'
+			self.logger.info(m % (predicted_position['x'],
+								  predicted_position['y'],
+								  predicted_position['x']*image_pixel_size,
+								  predicted_position['y']*image_pixel_size))			
+			self.logger.info('Predicted defocus: %g meters.' % defocus)
+
+			self.node.setDefocus(defocus)
 			
-			self.node.setDefocus(predicted_position['z']*image_pixel_size)
-			
-			"""
 			#TODO: implement defocus measurement 
 			if self.settings['measure defocus']:
 				defocus_measurement = self.node.measureDefocus()
@@ -762,16 +747,14 @@ class Collection_2(Collection):
 			else:
 				measured_defocus = None
 				measured_fit = None
-			"""
-			#TODO: implement something for this!!
-			measured_defocus = None
-			measured_fit = None
+			
 			self.checkAbort()
 			
 			exposure = exposures[seq[0]][seq[1]]
 			m = 'Acquiring image (%g second exposure)...' % exposure
 			self.logger.info(m)
 			self.instrument.ccdcamera.ExposureTime = int(exposure*1000)
+
 			self.checkAbort()
 
 			self.logger.info('Pausing for %.1f seconds before starting acquiring' % self.settings['tilt pause time']) 
@@ -779,11 +762,9 @@ class Collection_2(Collection):
 
 			image_data = self.node.acquireCorrectedCameraImageData(channel)
 			if image_data is None:
-				self.logger.info('Image not acquired, aborting series...')
 				self.finalize()
 				raise Fail
-			else:
-				self.logger.info('Image acquired.')
+			self.logger.info('Image acquired.')
 
 			image_mean = image_data['image'].mean()
 			if self.settings['integer']:
@@ -816,13 +797,19 @@ class Collection_2(Collection):
 					time.sleep(1.0)
 			filename = tilt_series_image_data['filename']
 			self.logger.info('Image saved (filename: \'%s\').' % filename)
+
 			self.checkAbort()
 			
 			image = image_data['image']
 			self.viewer.addImage(image)
+
 			self.checkAbort()
 			
-			self.logger.info('Correlating image with previous tilt...')	
+			self.logger.info('Correlating image with previous tilt...')
+			"""
+			phi, optical_axis, z0 = self.prediction.getCurrentParameters()
+			phi,offset = self.prediction.convertparams(phi,optical_axis)
+			"""		
 			while True:
 				try:
 					correlation_image = self.correlator[seq[0]].correlate(tilt_series_image_data, self.settings['use tilt'], channel=channel, wiener=False, taper=0)
@@ -839,25 +826,24 @@ class Collection_2(Collection):
 					fake_corr_image = self.correlator[other_group].correlate(tilt_series_image_data, self.settings['use tilt'], channel=channel, wiener=False, taper=0)
 		
 			raw_correlation = self.correlator[seq[0]].getShift(True)					# get raw correlation
-			correlation = self.correlator[seq[0]].getShift(False)						# get relative correlation
+			correlation = self.correlator[seq[0]].getShift(False)						# get raw correlation
 			s = (raw_correlation['x'], raw_correlation['y'])
 			self.viewer.setXC(correlation_image, s)
-			
-			# TODO: look into making the next 2 lines do something
 			#if self.settings['use tilt']:
 			#	correlation = self.correlator[seq[0]].tiltShift(tilt,correlation,phi)
 			measured_position = {														# measured position 
 				'x': predicted_position['x'] - (correlation['x']),	
-				'y': predicted_position['y'] - (correlation['y'])
+				'y': predicted_position['y'] - (correlation['y']),
 			}
+			
 			measured_shift = {
 				'x': predicted_shift['x'] - (correlation['x']),
 				'y': predicted_shift['y'] - (correlation['y'])}
+			
 			position = {																# current image shift position 
 				'x': predicted_position['x'],	
-				'y': predicted_position['y']
+				'y': predicted_position['y'],
 			}
-			
 			print "****AFTER IMAGE CORRELATION****"
 			if ispredict:
 				print 'predicted x: %f, y: %f' %(predicted_position['x'],predicted_position['y'])
@@ -865,36 +851,66 @@ class Collection_2(Collection):
 				print 'tracked x: %f, y: %f' %(predicted_position['x'],predicted_position['y'])
 			print 'correlation x: %f, y: %f' %((correlation['x']),(correlation['y']))
 			print 'measured position x: %f, y: %f' %(measured_position['x'],measured_position['y'])
-			print 'measured shift x: %f, y: %f' %(measured_shift['x'],measured_shift['y'])
+			print
 
 			if not ispredict:
 				predicted_shift = self.prediction.predict(tilt,seq)						# still predict position, just don't rely on it. 				
-				self.prediction.addPosition(tilt, measured_shift, predicted_shift) 		# Add measured and predicted position. 
+
+				print 'predicted x:' 
+				print predicted_position['x']
+				print 'predicted y:' 
+				print predicted_position['y']
+				self.prediction.addPosition(tilt, measured_shift, predicted_shift) 	# Add measured and predicted position. 
+				
 			else:
+				predicted_shift = self.prediction.predict(tilt,seq)					# Without adjusting for accumulated correlation shifts.  				
 				self.prediction.addPosition(tilt, measured_shift, predicted_shift)
-				# figure out if we need to take a tracking image before tilting
-				ispredict = self.prediction.ispredict()								
+				
+				ispredict = self.prediction.ispredict()								# Can we predict next? 
 				if not ispredict:
-					self.trackingImg = self.getTrackingImg(seq)
+					self.trackingImg = self.getTrackingImg()
 					trackingcorrelation_image = self.correlator[seq[0]+2].correlate(self.trackingImg,\
 						self.settings['use tilt'], channel=channel, wiener=False, taper=0)	
 					self.reset_ntrack(seq)			
 
+			"""
+			if not ispredict:
+				predicted_position = self.prediction.predict(tilt,seq)						# still predict position, just don't rely on it. 				
+
+				print 'predicted x:' 
+				print predicted_position['x']
+				print 'predicted y:' 
+				print predicted_position['y']
+				self.prediction.addPosition(tilt, measured_position, predicted_position) 	# Add measured and predicted position. 
+				
+			else:
+				predicted_position = self.prediction.predict(tilt,seq)						# Without adjusting for accumulated correlation shifts.  				
+				self.prediction.addPosition(tilt, measured_position, predicted_position)
+				
+				self.trackingImg = self.getTrackingImg()
+				trackingcorrelation_image = self.correlator[seq[0]+2].correlate(self.trackingImg,\
+					self.settings['use tilt'], channel=channel, wiener=False, taper=0)	
+				self.reset_ntrack(seq)
+			"""
 			m = 'Correlated shift from feature: %g, %g pixels, %g, %g meters.'
 			self.logger.info(m % (correlation['x'],
 								  correlation['y'],
 								  correlation['x']*image_pixel_size,
 								  correlation['y']*image_pixel_size))
+
 			m = 'Feature position: %g, %g pixels, %g, %g meters.'
 			self.logger.info(m % (position['x'],
 								  position['y'],
 								  position['x']*image_pixel_size,
 								  position['y']*image_pixel_size))
+			
 			#if self.settings['use tilt']:
 			#	raw_correlation = self.correlator[seq[0]].tiltShift(tilt,raw_correlation,phi)
 
 			self.checkAbort()
+
 			time.sleep(3.0)
+
 			self.checkAbort()
 
 			args = (
@@ -916,38 +932,19 @@ class Collection_2(Collection):
 			if abort_loop:
 				self.restoreInstrumentState()
 				break
+		
 		self.viewer.clearImages()
-		self.viewer.clearTrackImages()
 		self.reset_is(seq)
 
-	def getTrackingImg(self,seq,maxtries=5):
+	def getTrackingImg(self,maxtries=5):
 		# (1) Change to tracking preset, taking into acount current position and offset.
 		# (2) Take an image.
-		"""
-		if self.tilt_order == 'swing':
-			is_0 = self.node.getPixelPosition('image shift')
-			istot = {'x':[is_0['x']],'y':[is_0['y']]}
-		else:
-			istot = self.get_istot(seq)	
-		"""
-		#istot = self.get_istot(seq)											# history of previous shifts
-		#position = {'x':sum(istot['x']),'y':sum(istot['y'])}
-		"""
-		position = self.node.getPixelPosition('image shift')
-		try:
-			self.node.setPosition('image shift', position)
-		except Exception, e:
-			self.logger.error('Calibration error: %s' % e) 
-			self.finalize()
-			raise Fail	
-		"""
 		isoffset = self.node.getImageShiftOffset()
-			
 		try:
 			self.logger.info('Acquiring tracking image.')
 			self.change2Track()												# (1) 
 			imagedata = self.node.acquireCorrectedCameraImageData(0)		# (2)
-			self.viewer.addTrackingImage(imagedata['image'])
+			self.viewer.addImage(imagedata['image'])
 			self.return2Tomo(isoffset)
 		except:
 			raise TrackingImgError
@@ -964,6 +961,8 @@ class Collection_2(Collection):
 		mypreset = self.preset
 		parentpreset = self.parentpreset
 		trackpreset = self.trackpreset
+		#trackpreset_name = self.offset['trackpreset']
+		#trackpreset = self.node.presetsclient.getPresetByName(trackpreset_name)
 		
 		myoffset = self.node.getImageShiftOffset()		# (1)
 		
@@ -1090,8 +1089,9 @@ class Collection_2(Collection):
 	
 	def track(self,tilt,seq):
 		try:
+			
 			channel = self.correlator[seq[0]].getChannel()
-			trackingImg = self.getTrackingImg(seq)
+			trackingImg = self.getTrackingImg()
 			# Cross correlate with previous tracking image. 
 			self.logger.info('Correlating with previous tracking image.')
 			assert self.trackingImg is not None		# make sure we have a previous tracking image to compare to. 
@@ -1099,14 +1099,11 @@ class Collection_2(Collection):
 			
 			correlation_image = self.correlator[seq[0]+2].correlate(trackingImg, \
 								self.settings['use tilt'], channel=channel, wiener=False, taper=0,corrtype='phase')
+				
+			phi, optical_axis, z0 = self.prediction.getCurrentParameters()
+			phi, offset = self.prediction.convertparams(phi,optical_axis)
 			raw_correlation = self.correlator[seq[0]+2].getShift(True)						# get raw correlation
 			correlation = self.correlator[seq[0]+2].getShift(False)
-
-
-			s = (raw_correlation['x'], raw_correlation['y'])
-			self.viewer.setXC_track(correlation_image, s)
-			
-			# TODO: look into making the next 2 lines do something
 			#if self.settings['use tilt']:													# This does not do anything. 
 			#	correlation = self.correlator[seq[0]+2].tiltShift(tilt,correlation,phi)		# TODO: unstretch image. 
 			self.trackingImg = trackingImg			
@@ -1123,7 +1120,8 @@ class Collection_2(Collection):
 			ht = self.instrument.tem.HighTension	
 			p1 = [correlation['x'], correlation['y']]
 			
-			##print "CORRELATION x: %f y: %f" %(correlation['x'], correlation['y'])
+			print "CORRELATION x: %f y: %f" %(correlation['x'], correlation['y'])
+			#TODO: we need to account for binning on both track and tomo, also rotation. 
 
 			myscope = leginon.leginondata.ScopeEMData()
 			myscope.friendly_update(mypreset)
@@ -1162,7 +1160,7 @@ class Collection_2(Collection):
 			
 			correlation['x'] = p2_shift['col']
 			correlation['y'] = p2_shift['row']
-			##print "CORRELATION after pixelToPixel x: %f y: %f" %(correlation['x'], correlation['y'])
+			print "CORRELATION after pixelToPixel x: %f y: %f" %(correlation['x'], correlation['y'])
 			
 			result = {
 				'x': -correlation['x'],			# This is in exposure pixels. 
@@ -1178,7 +1176,6 @@ class Collection_2(Collection):
 		return result		
 	
 	def tilt(self, ang):
-		# Tilt to next angle
 		try:
 			s = 'Tilting stage to next angle (%g degrees)...' % math.degrees(ang)
 			self.logger.info(s)
@@ -1194,13 +1191,7 @@ class Collection_2(Collection):
 		self.node.presetsclient.toScope(self.preset['name'])
 		self.node.setImageShiftOffset(isoffset)				# apply image shift to instrument. 
 	
-	def sendImageShift(position):
-		try:
-			self.node.setPosition('image shift', position)
-		except Exception, e:
-			self.logger.error('Calibration error: %s' % e) 
-			self.finalize()
-			raise Fail
+	
 	
 	
 	

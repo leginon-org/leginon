@@ -2357,7 +2357,9 @@ class Tomography_2SettingsData(TomographySettingsData):
 		return TomographySettingsData.typemap() + (
 			('track preset', str),
 			('cosine dose', bool),
-			('full track', bool)
+			('full track', bool),
+			('tolerance', float),
+			('maxfitpoints', int),
 		)
 	typemap = classmethod(typemap)
 class TomographySimuSettingsData(AcquisitionSettingsData):

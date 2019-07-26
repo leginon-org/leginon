@@ -203,14 +203,11 @@ class Tomography(leginon.acquisition.Acquisition):
 				
 		self.logger.info('Pixel size: %g meters.' % pixel_size)
 
-		# TODO: error check
 		try:
 			self.update()
 		except LimitError:
 			return 'failed'
-		
-		#import rpdb2; rpdb2.start_embedded_debugger("asdf")
-		
+
 		tilts = self.tilts.getTilts()
 		exposures = self.exposure.getExposures()
 		tilt_index_sequence = self.tilts.getIndexSequence()
@@ -696,14 +693,16 @@ class Tomography_2(Tomography):
 	defaultsettings.update({
 		'track preset': '',
 		'cosine dose': True,
-		'full track': False
+		'full track': False,
+		'tolerance': 0.05,
+		'maxfitpoints': 10
 	})
 	panelclass = leginon.gui.wx.tomography.Tomography.Panel_2
 
 	def __init__(self, *args, **kwargs):
 		Tomography.__init__(self, *args, **kwargs)
 		self.calclients['image rotation'] = \
-			leginon.calibrationclient.ImageRotationCalibrationClient(self)
+			leginon.calibrationclient.ImageScaleRotationCalibrationClient(self)
 		self.calclients['stage'] = leginon.calibrationclient.StageCalibrationClient(self)
 
 	def updateExposures(self):

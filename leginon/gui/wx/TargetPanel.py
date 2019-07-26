@@ -515,7 +515,7 @@ class TomoTargetImagePanel(TargetImagePanel):
 					self.drawEmptyCircle(dc,p1[0],p1[1],scale[0]*beamradius)
 
 	
-	def drawEmptyEllipse(self,dc,row,col,radm,radn,ang,n_points=500):
+	def drawEmptyEllipse(self,dc,row,col,radm,radn,ang,n_points=1000):
 		assert (radm >= radn)
 		c = n.cos(ang)
 		s = n.sin(ang)

@@ -3,7 +3,6 @@ import scipy
 import scipy.optimize
 from scipy.linalg import lstsq
 from scipy.stats import linregress
-import matplotlib.pyplot as plt
 import numpy as np
 
 class PredictionError(Exception):
@@ -569,6 +568,7 @@ class Prediction_2(Prediction):
 		self.cutoff = cutoff 
 	
 	def set_maxfitpoints(self,maxpoints):
+		self.maxfitpoints = max(4,maxpoints)
 		if maxpoints > 4:
 			self.maxfitpoints = maxpoints
 		else:
@@ -597,7 +597,6 @@ class Prediction_2(Prediction):
 		return False
 	
 	def ispredict(self):
-		# TODO: need to incorporate information about accumulated image shift
 		# Determine if we can predict. 
 		tilt_group = self.getCurrentTiltGroup()
 		current_group_index = self.getCurrentTiltGroupIndex()
@@ -605,7 +604,7 @@ class Prediction_2(Prediction):
 		n_tilts = len(tilt_group.tilts)			# this is how many tilts have been processed
 
 		if n_tilts < 3 or n_tilts < n_start_fit or \
-			(not self.reliablefit()): # can't use prediction until at least 3 tilts have been processed. 
+			(not self.reliablefit()): 			# can't use prediction until at least 3 tilts have been processed. 
 			return False
 		else:
 			return True
@@ -632,8 +631,8 @@ class Prediction_2(Prediction):
 		print "Std_error:"		
 		print np.sqrt(sum(np.array(fit_values['std_error'])**2))
 		print "Previous error: %f" % error
-
 		print
+		
 		if np.sqrt(sum(np.array(fit_values['std_error'])**2)) < self.cutoff and error < self.cutoff:
 			return True
 		else:
@@ -720,37 +719,7 @@ class Prediction_2(Prediction):
 			traceback.print_exc()
 			print "OIHEOIHEOIHE"
 			rpdb.set_trace()
-			print 
-	
-		"""
-		### plot results ###
-		s = np.array(sequence)
-		xfit, = plt.plot(s, xi+xs*s)
-		#yfit, = plt.plot(s, yi+ys*s)
-		xdat, = plt.plot(s, x, 'ro')
-		#ydat, = plt.plot(s, y, 'bs')
-		#plt.legend([xfit,yfit,xdat,ydat],['xfit','yfit','xdat','ydat'])
-		plt.legend([xfit,xdat],['xfit','xdat'])
-		
-		if nfitpoints< 3:
-			print 'slope: %f, intercept: %f, cutoff: %f' %(xs,xi,self.cutoff)
-		else:
-			print 'slope: %f, intercept: %f, std_error: %f, cutoff: %f' %(xs,xi,n.sqrt(xstd**2+ystd**2),self.cutoff)
-
-		plt.show()
-		
-		pdb.set_trace()
-		"""
-		"""
-		sequence = range(1,n_tilts+1)
-		xs = tilt_group.xs
-		ys = tilt_group.ys
-		pdb.set_trace()
-		xslope, xintercept = linregress(sequence,xs)[:2]
-		yslope, yintercept = linregress(sequence,ys)[:2]
-		xstd = np.sum([(xs[j]-xintercept-xslope*sequence[j])**2 for j in range(len(sequence))])/(len(sequence)-2)
-		ystd = np.sum([(ys[j]-yintercept-yslope*sequence[j])**2 for j in range(len(sequence))])/(len(sequence)-2)
-		"""		
+			print 	
 		
 		return {'slope':(xslope,yslope), 'intercept':(xintercept,yintercept), 'std_error':(xstd,ystd)}
 	
@@ -767,7 +736,6 @@ class Prediction_2(Prediction):
 		n_tilt_groups = len(tilt_series)
 		n_tilts = len(tilt_group.tilts)
 
-		#####
 		parameters = self.getCurrentParameters()
 		debug_print('z0 at start of prediction %.2f' % parameters[-1])
 		debug_print('using %d tilts' % n_tilts)

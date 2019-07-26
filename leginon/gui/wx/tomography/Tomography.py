@@ -588,6 +588,19 @@ class ScrolledSettings_2(ScrolledSettings):
 		self.widgets['track preset'] = leginon.gui.wx.Presets.PresetChoice(self, -1)
 		self.widgets['track preset'].setChoices(self.presetnames)
 		self.widgets['full track'] =  wx.CheckBox(self, -1, 'Full tracking')
+		
+		self.widgets['tolerance'] = FloatEntry(self, -1, 
+												allownone=False,
+												chars=7,
+												value='0.05',
+												min=0.0, 
+												max=1.0)
+		self.widgets['maxfitpoints'] = IntEntry(self, -1,
+												allownone=False,
+												chars=7,
+												value='10',
+												min=0,
+												max=None)
 
 		tracksz = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Track preset:')
@@ -596,8 +609,23 @@ class ScrolledSettings_2(ScrolledSettings):
 				wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		tracksz.Add(self.widgets['full track'], (0, 3), (1, 1),
 				wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		tracksbsz.Add(tracksz, 0, wx.EXPAND|wx.ALL, 5)
 		
+		tracksz_t = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Fraction of image dimension error allowed for precition')
+		tracksz_t.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 10)
+		tracksz_t.Add(self.widgets['tolerance'], (0, 1), (1, 1),
+				wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		
+		tracksz_m = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Maximum points to consider for prediction')
+		tracksz_m.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 10)
+		tracksz_m.Add(self.widgets['maxfitpoints'], (0, 1), (1, 1),
+				wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+				
+		tracksbsz.Add(tracksz, 0, wx.EXPAND|wx.ALL, 5)
+		tracksbsz.Add(tracksz_t, 0, wx.EXPAND|wx.ALL, 5)
+		tracksbsz.Add(tracksz_m, 0, wx.EXPAND|wx.ALL, 5)
+
 		# tiltsbsz
 		self.widgets['tilt min'] = FloatEntry(self, -1,
 											   allownone=False,
@@ -737,10 +765,10 @@ class ScrolledSettings_2(ScrolledSettings):
 		bcsbsz = wx.StaticBoxSizer(bcsb, wx.VERTICAL)
 		miscsb = wx.StaticBox(self, -1, 'Misc.')
 		miscsbsz = wx.StaticBoxSizer(miscsb, wx.VERTICAL)
-		#modelb = wx.StaticBox(self, -1, 'Model')
-		#modelbsz = wx.StaticBoxSizer(modelb, wx.VERTICAL)
-		#optb = wx.StaticBox(self, -1, 'Custom Tilt Axis Model in +/- Directions(d)')
-		#optbsz = wx.StaticBoxSizer(optb, wx.VERTICAL)
+		modelb = wx.StaticBox(self, -1, 'Model')
+		modelbsz = wx.StaticBoxSizer(modelb, wx.VERTICAL)
+		optb = wx.StaticBox(self, -1, 'Custom Tilt Axis Model in +/- Directions(d)')
+		optbsz = wx.StaticBoxSizer(optb, wx.VERTICAL)
 
 		# tracksbsz
 		self.presetnames = self.node.presetsclient.getPresetNames()
@@ -960,7 +988,7 @@ class ScrolledSettings_2(ScrolledSettings):
 		#miscsz.Add(tapersz, (7, 0), (1, 1), wx.ALIGN_CENTER)
 		miscsz.Add(self.widgets['measure defocus'], (6, 0), (1, 1), wx.ALIGN_CENTER)
 		miscsbsz.Add(miscsz, 1, wx.ALL|wx.ALIGN_CENTER, 5)
-		"""
+		
 		modelmags = self.getMagChoices()
 		self.widgets['model mag'] = wx.Choice(self, -1, choices=modelmags)
 		self.widgets['phi'] = FloatEntry(self, -1, allownone=False,
@@ -977,8 +1005,10 @@ class ScrolledSettings_2(ScrolledSettings):
 			chars=6, value='0.0')
 		self.widgets['z0 error'] = FloatEntry(self, -1, min=0.0,
 			allownone=False, chars=6, value='2e-6')
+		
 		self.widgets['fixed model'] = wx.CheckBox(self, -1, 'Keep the tilt axis parameters fixed')
 		self.widgets['use z0'] = wx.CheckBox(self, -1, 'Initialize z0 with current model')
+		
 		self.widgets['fit data points'] = IntEntry(self, -1, min=4, allownone=False, chars=5, value='4')
 		self.widgets['fit data points2'] = IntEntry(self, -1, min=4, allownone=False, chars=5, value='4')
 
@@ -1047,32 +1077,36 @@ class ScrolledSettings_2(ScrolledSettings):
 		zsz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		fsz = self.createFitDataPointsSizer()
-
+		
 		modelsz = wx.GridBagSizer(5, 5)
+		
 		modelsz.Add(magsz, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		modelsz.Add(optbsz, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		modelsz.Add(zsz, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		
 		modelsz.Add(self.widgets['fixed model'], (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		modelsz.Add(self.widgets['use z0'], (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		
 		modelsz.Add(fsz, (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-
+		
 		modelbsz.Add(modelsz, 1, wx.ALL|wx.ALIGN_CENTER, 5)
+		
 		modelsz.AddGrowableCol(0)
-		"""
+		
 		sz = wx.GridBagSizer(5, 5)
 		sz.Add(tracksbsz, (0, 0), (1, 2), wx.EXPAND)
 		sz.Add(tiltsbsz, (1, 0), (1, 2), wx.EXPAND)
 		sz.Add(expsbsz, (2, 0), (1, 1), wx.EXPAND)
 		sz.Add(bcsbsz, (2, 1), (1, 1), wx.EXPAND)
 		sz.Add(miscsbsz, (3, 0), (1, 1), wx.EXPAND)
-		#sz.Add(modelbsz, (2, 1), (1, 1), wx.EXPAND)
+		sz.Add(modelbsz, (3, 1), (1, 1), wx.EXPAND)
 		sz.AddGrowableRow(0)
 		sz.AddGrowableRow(1)
 		sz.AddGrowableRow(2)
 		sz.AddGrowableCol(0)
 		sz.AddGrowableCol(1)
 
-		#self.Bind(wx.EVT_CHECKBOX, self.onFixedModel, self.widgets['fixed model'])
+		self.Bind(wx.EVT_CHECKBOX, self.onFixedModel, self.widgets['fixed model'])
 
 		return sz
 
@@ -1115,3 +1149,9 @@ class Panel_2(Panel):
 	settingsdialogclass = SettingsDialog_2
 	def __init__(self, *args, **kwargs):
 		Panel.__init__(self,*args, **kwargs)
+		
+	def addImagePanel(self):
+		self.viewer = TomoViewer.Viewer_2(self, -1)
+		self.szmain.Add(self.viewer, (1, 0), (1, 1), wx.EXPAND)
+
+
