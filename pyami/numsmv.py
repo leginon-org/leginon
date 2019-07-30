@@ -54,6 +54,7 @@ HEADER_FIELDS = (
 #	('IMAGE_PEDESTAL', int, 0, '{:0}'), # where did I get this ?
 )
 
+DEPRECATED_KEYS = ['IMAGE_PEDESTAL',]
 # (header_value, numpy_dtype, number_of_bytes)
 TYPE_MAP = [('unsigned_short', numpy.uint16, 2),]
 
@@ -162,6 +163,8 @@ def parseHeader(headerbytes):
 					value = validate_and_convert(key, value_str)
 					headerdict[key] = value
 				except Exception as e:
+					if key in DEPRECATED_KEYS:
+						continue
 					print('Invalid parsing: "%s" with error-\n  %s' % (l,e))
 					sys.exit(1)
 	return headerdict
