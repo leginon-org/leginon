@@ -100,18 +100,17 @@ class leginondata {
 	function getSessions($comment="", $projectId=false, $like="", $temId=false, $camId=false) {
 		if (isset($this->sessions) and !is_numeric($temId))	{
 			return $this->sessions;
-		}
-		else {
+		} else {
 			$comment="description";
 			if ($like)
-				$wherelike = "and s.`name` like '$like' ";
+				$wherelike = "AND s.`name` LIKE '$like' ";
 
 			$selectcomment = ($comment) ?
 					"if (length(s.comment)>0, concat(s.name,' - ',s.comment), s.name)" : "s.name";
-
-			$joinproject = "left join ".DB_PROJECT.".`projectexperiments` p "
-				."on s.`DEF_id` = p.`REF|leginondata|SessionData|session` ";
 			$privilege_level = privilege('data');
+
+			$joinproject = "LEFT JOIN ".DB_PROJECT.".`projectexperiments` AS p "
+				."on s.`DEF_id` = p.`REF|leginondata|SessionData|session` ";
 			if ($privilege_level > 2 && !is_numeric($projectId)) {
 				// save time with one less join when it is not necessary
 				$joinproject = ' ';
@@ -121,6 +120,8 @@ class leginondata {
 			} else {
 				$whereproject = ' ';
 			}
+
+			// These two filters, require us to go through each image, rather than sorting sessions = SLOW
 			if (is_numeric($temId)) {
 				$jointem = "left join ScopeEMData scope on (scope.`DEF_id` = a.`REF|ScopeEMData|scope`) ";
 				$wheretem = "and scope.`REF|InstrumentData|tem` = ".$temId." ";
@@ -136,51 +137,55 @@ class leginondata {
 				$wherecam = ' ';
 			}
 
-			$where = "where s.`hidden` != 1 ";
-			if (is_numeric($camId) or is_numeric($temId) or is_numeric($projectId) or $privilege_level <=2) {
+			// BASE QUERIES
+			$where = "WHERE s.`hidden` != 1 ";
+			$q = "SELECT s.DEF_id as `id`, ".$selectcomment." as `name`, s.comment as `comment`, "
+				."s.name as `name_org`, s.`DEF_timestamp` as `stimestamp` ";
 
-				$q="select s.DEF_id as `id`, ".$selectcomment." as `name`, s.comment as `comment`, "
-					."s.name as `name_org`, s.`DEF_timestamp` as `stimestamp` "
-					."from ".DB_LEGINON.".AcquisitionImageData a "
-					."left join SessionData s on (s.`DEF_id` = a.`REF|SessionData|session`) ";
-					$q .= $joinproject;
-					$q .= $jointem.$joincam;
-					$where .= " and a.`REF|SessionData|Session` IS NOT NULL ";
-					$where .= $whereproject;
-					$where .= $wheretem.$wherecam;
-					$grouporder = " "
-						."group by a.`REF|SessionData|session` "
-						."order by s.DEF_timestamp DESC ";
-			}
-			else {
-				// exclude ones without images saved
-				$q="select s.DEF_id as `id`, ".$selectcomment." as `name`, s.comment as `comment`, "
-				."s.name as `name_org`, s.`DEF_timestamp` as `stimestamp` "
-				."from SessionData s ";
+			if (is_numeric($camId) or is_numeric($temId)) {
+				// This form of the query is VERY SLOW ~30-60 seconds
+				// excludes Sessions without images saved
+				// These two filters, require us to go through each image, rather than sorting sessions = SLOW
+				$q .= "FROM ".DB_LEGINON.".AcquisitionImageData AS a "
+					."LEFT JOIN SessionData AS s ON (s.`DEF_id` = a.`REF|SessionData|session`) ";
+				$q .= $jointem.$joincam;
+				$where .= " and a.`REF|SessionData|Session` IS NOT NULL ";
+				$where .= $wheretem.$wherecam;
 				$grouporder = " "
-					."order by s.DEF_timestamp DESC ";
+					."GROUP BY a.`REF|SessionData|session` "
+					."ORDER BY s.DEF_timestamp DESC ";
+			} else {
+				// This form of the query is VERY FAST ~0.01 seconds
+				// includes Sessions without images saved
+				$q .= "FROM SessionData AS s ";
+				$grouporder = "ORDER BY s.DEF_timestamp DESC ";
+			}
+
+			// add project filter
+			if (is_numeric($projectId)) {
+				$q .= $joinproject;
+				$where .= $whereproject;
 			}
 
 			if ($privilege_level <=2) {
+				// add project restriction by user; requires the UNION of two queries
 				$userId = getLoginUserId();
-				//project owners
-				$q1 = "left join ".DB_PROJECT.".`projectowners` o "
-					."on p.`REF|projects|project` = o.`REF|projects|project` ";
-				$where1 .= " "
-					."and o.`REF|leginondata|UserData|user` = ".$userId." "
-				." ";
+				// project owners
+				$q1 = " LEFT JOIN ".DB_PROJECT.".`projectowners` AS o "
+					."ON p.`REF|projects|project` = o.`REF|projects|project` ";
+				$where1 .= " AND o.`REF|leginondata|UserData|user` = ".$userId." ";
 				$where1 = $where.$where1.$wherelike;
 				$q1 = $q.$q1.$where1.$grouporder;
-				//share experiments
-				$q2 = "left join ".DB_PROJECT.".`shareexperiments` sh "
-					."on ( s.`DEF_id` = sh.`REF|leginondata|SessionData|experiment`) ";
-				$where2 = "and sh.`REF|leginondata|UserData|user` = ".$userId." "
-					." ";
+				// share experiments
+				$q2 = " LEFT JOIN ".DB_PROJECT.".`shareexperiments` AS sh "
+					."ON ( s.`DEF_id` = sh.`REF|leginondata|SessionData|experiment`) ";
+				$where2 = " AND sh.`REF|leginondata|UserData|user` = ".$userId." ";
 				$where2 = $where.$where2.$wherelike;
 				$q2 = $q.$q2.$where2.$grouporder;
-				//combine
-				$q = "(".$q1.") union (".$q2.") order by `stimestamp` DESC";
+				// combine
+				$q = "(".$q1.") UNION (".$q2.") ORDER BY `stimestamp` DESC";
 			} else {
+				// no filter; show all content
 				$q .= $where.$wherelike.$grouporder;
 			}
 			$this->sessions = $this->mysql->getSQLResult($q);
