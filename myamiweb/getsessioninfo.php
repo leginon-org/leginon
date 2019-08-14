@@ -25,10 +25,10 @@ if(empty($_GET['q'])) {
     $q = "select s.DEF_id as id, s.name,s.comment,count(a.`DEF_id`) as `nb` from SessionData s ";
     $q .= "left join AcquisitionImageData a ";
     $q .= "on (a.`REF|SessionData|session`=s.`DEF_id`) ";
-		$q .= "where ".join(' AND ', $sql_where);
-		$q .= " group by a.`REF|SessionData|session` ";
-		$q .= " order by s.`DEF_id` desc ";
-		$r = $db->getSQLResult($q);
+    $q .= "where ".join(' AND ', $sql_where);
+    $q .= " group by a.`REF|SessionData|session` ";
+    $q .= " order by s.`DEF_id` desc ";
+    $r = $db->getSQLResult($q);
     if($r) {
 		echo count($r)." match".((count($r)>1)?"es":"")."<br>";
 	foreach ($r as $row) {
@@ -45,4 +45,4 @@ if(empty($_GET['q'])) {
 }
 
 
-?> 
+?>
