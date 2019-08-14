@@ -377,16 +377,14 @@ class leginondata {
 
 	function getSessionDuration($sessionid) {
 		$q="SELECT "
-			."UNIX_TIMESTAMP(img.`DEF_timestamp`) AS `start` "
+			."MIN(UNIX_TIMESTAMP(img.`DEF_timestamp`)) AS `start` "
 			."FROM `AcquisitionImageData` AS img "
-			."WHERE `REF|SessionData|session` = '$sessionid' "
-			."ORDER BY img.`DEF_timestamp` ASC LIMIT 1";
+			."WHERE `REF|SessionData|session` = '$sessionid' ";
 		$startinfo = $this->mysql->getSQLResult($q);
 		$q="SELECT "
-			."UNIX_TIMESTAMP(img.`DEF_timestamp`) AS `end` "
+			."MAX(UNIX_TIMESTAMP(img.`DEF_timestamp`)) AS `end` "
 			."FROM `AcquisitionImageData` AS img "
-			."WHERE `REF|SessionData|session` = '$sessionid' "
-			."ORDER BY img.`DEF_timestamp` DESC LIMIT 1";
+			."WHERE `REF|SessionData|session` = '$sessionid' ";
 		$endinfo = $this->mysql->getSQLResult($q);
 		$totalsecs = $endinfo[0]['end'] - $startinfo[0]['start'];
 		return $totalsecs;
