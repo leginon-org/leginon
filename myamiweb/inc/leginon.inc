@@ -162,7 +162,7 @@ class leginondata {
 			}
 
 			// add project filter
-			if (is_numeric($projectId)) {
+			if (is_numeric($projectId) or $privilege_level <=2 ) {
 				$q .= $joinproject;
 				$where .= $whereproject;
 			}
