@@ -123,15 +123,15 @@ class leginondata {
 
 			// These two filters, require us to go through each image, rather than sorting sessions = SLOW
 			if (is_numeric($temId)) {
-				$jointem = "left join ScopeEMData scope on (scope.`DEF_id` = a.`REF|ScopeEMData|scope`) ";
-				$wheretem = "and scope.`REF|InstrumentData|tem` = ".$temId." ";
+				$jointem = "LEFT JOIN ".DB_LEGINON.".ScopeEMData scope on (scope.`DEF_id` = a.`REF|ScopeEMData|scope`) ";
+				$wheretem = "AND scope.`REF|InstrumentData|tem` = ".$temId." ";
 			} else {
 				$jointem = ' ';
 				$wheretem = ' ';
 			}
 			if (is_numeric($camId)) {
-				$joincam = "left join CameraEMData c on (c.`DEF_id` = a.`REF|CameraEMData|camera`) ";
-				$wherecam = "and c.`REF|InstrumentData|ccdcamera` = ".$camId." ";
+				$joincam = "LEFT JOIN ".DB_LEGINON.".CameraEMData c on (c.`DEF_id` = a.`REF|CameraEMData|camera`) ";
+				$wherecam = "AND c.`REF|InstrumentData|ccdcamera` = ".$camId." ";
 			} else {
 				$joincam = ' ';
 				$wherecam = ' ';
@@ -139,15 +139,15 @@ class leginondata {
 
 			// BASE QUERIES
 			$where = "WHERE s.`hidden` != 1 ";
-			$q = "SELECT s.DEF_id as `id`, ".$selectcomment." as `name`, s.comment as `comment`, "
-				."s.name as `name_org`, s.`DEF_timestamp` as `stimestamp` ";
+			$q = "SELECT s.DEF_id AS `id`, ".$selectcomment." AS `name`, s.comment AS `comment`, "
+				."s.name AS `name_org`, s.`DEF_timestamp` AS `stimestamp` ";
 
 			if (is_numeric($camId) or is_numeric($temId)) {
 				// This form of the query is VERY SLOW ~30-60 seconds
 				// excludes Sessions without images saved
 				// These two filters, require us to go through each image, rather than sorting sessions = SLOW
 				$q .= "FROM ".DB_LEGINON.".AcquisitionImageData AS a "
-					."LEFT JOIN SessionData AS s ON (s.`DEF_id` = a.`REF|SessionData|session`) ";
+					."LEFT JOIN ".DB_LEGINON.".SessionData AS s ON (s.`DEF_id` = a.`REF|SessionData|session`) ";
 				$q .= $jointem.$joincam;
 				$where .= " and a.`REF|SessionData|Session` IS NOT NULL ";
 				$where .= $wheretem.$wherecam;
@@ -157,12 +157,12 @@ class leginondata {
 			} else {
 				// This form of the query is VERY FAST ~0.01 seconds
 				// includes Sessions without images saved
-				$q .= "FROM SessionData AS s ";
+				$q .= "FROM ".DB_LEGINON.".SessionData AS s ";
 				$grouporder = "ORDER BY s.DEF_timestamp DESC ";
 			}
 
 			// add project filter
-			if (is_numeric($projectId) or $privilege_level <=2 ) {
+			if (is_numeric($projectId) or $privilege_level <=2) {
 				$q .= $joinproject;
 				$where .= $whereproject;
 			}
