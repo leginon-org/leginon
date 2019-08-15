@@ -1293,7 +1293,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 						f.write(line)
 						continue
 					for i in range(len(labels)):
-						if i>0 and i<(len(labels)-1): f.write(" ")
+						if i>0 and i<(len(labels)): f.write(" ")
 						if labels[i] in ("_rlnMicrographName","_rlnImageName"):
 							f.write(l[i])
 						elif labels[i] == "_rlnDetectorPixelSize":
