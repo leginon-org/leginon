@@ -82,7 +82,11 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 
 			# get original micrograph & ctfimage
 			rel_line = "micrographs/%s "%(imgdata['filename']+".mrc")
-			dstep = imgdata['camera']['pixel size']['x']*1e6
+			try:
+				dstep = imgdata['camera']['pixel size']['x']*1e6
+			except:
+				apDisplay.printWarning('can not get dstep from image for star file. Use 5 um') 
+				dstep = 5.0
 			mag = dstep/self.params['apix']*1e4
 			rel_line+= "%13.6f%13.6f"%(mag,dstep)
 
