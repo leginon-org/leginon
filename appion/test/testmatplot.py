@@ -6,6 +6,9 @@ from matplotlib import use
 use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
+print('numpy version is %s' % np.__version__)
+import matplotlib
+print('matplotlib version is %s' % matplotlib.__version__)
 
 class TestMatPlotLib(object):
 	def run(self):
@@ -17,6 +20,9 @@ class TestMatPlotLib(object):
 		self.plotGridContour(map_array,fbase)
 
 	def plotGridContour(self,GD1,fbase):
+		pngfile = os.path.join(fbase+".png")
+		if os.path.isfile(pngfile):
+			os.remove(pngfile)
 		imgx = GD1.shape[1]
 		imgy = GD1.shape[0]
 		# use plasma color map if available:
@@ -40,9 +46,12 @@ class TestMatPlotLib(object):
 		plt.gca().xaxis.set_major_locator(plt.NullLocator())
 		plt.gca().yaxis.set_major_locator(plt.NullLocator())
 
-		pngfile = os.path.join(fbase+".png")
 		plt.savefig(pngfile,bbox_inches='tight',pad_inches=0)
 		plt.close()
+		if os.path.isfile(pngfile):
+			print('Writing Contour image as %s: Pass' % (pngfile,))
+		else:
+			print('Writing Contour image as %s: Fail' % (pngfile,))
 
 if __name__=='__main__':
 	app = TestMatPlotLib()
