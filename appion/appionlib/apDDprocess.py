@@ -1068,6 +1068,38 @@ class DDFrameProcessing(DirectDetectorProcessing):
 	def makeCorrectedFrameStack(self, use_full_raw_area=False):
 		return self.makeCorrectedFrameStack_cpu(use_full_raw_area)
 
+	def makeModifiedDefectMrc(self):
+		self.setCameraInfo(1,self.use_full_raw_area)
+		a = self.c_client.getDefectMap(self.camerainfo)
+		frame_flip, frame_rotate = self.getImageFrameOrientation()
+		# flip and rotate map_array.  Therefore, do the oposite of
+		# frames
+		if frame_flip:
+			if frame_rotate and frame_rotate == 2:
+				# Faster to just flip left-right than up-down flip + rotate
+				apDisplay.printColor("flipping the frame left-right",'blue')
+				a = numpy.fliplr(a)
+				frame_rotate = 0
+				# reset flip
+				frame_flip = 0
+				self.frame_modified = True
+		if frame_rotate:
+			apDisplay.printColor("rotating the frame by %d degrees" % (frame_rotate*90,),'blue')
+			a = numpy.rot90(a,4-frame_rotate)
+			self.frame_modified = True
+		if frame_flip:
+			apDisplay.printColor("flipping the frame up-down",'blue')
+			a = numpy.flipud(a)
+		a = a[offset['y']:crop_end['y'],offset['x']:crop_end['x']]
+		if bin['x'] > 1:
+			if bin['x'] == bin['y']:
+				a = imagefun.bin(a,bin['x'])
+			else:
+				apDisplay.printError("Binnings in x,y are different")
+		frameprocess_dir = os.path.dirname(self.tempframestackpath)
+		self.defect_map_path = os.path.join(frameprocess_dir,'defect-%s-%d.mrc' % (self.hostname,self.gpuid))
+		mrc.write(a, self.deftect_map)
+
 	def makeDarkNormMrcs(self):
 		self.setupDarkNormMrcs(False)
 

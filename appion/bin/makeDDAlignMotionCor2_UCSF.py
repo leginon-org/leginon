@@ -72,9 +72,9 @@ class MotionCor2UCSFAlignStackLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop)
 		return bintext
 
 	def isUseFrameAlignerFlat(self):
-		has_bad_pixels =  self.dd.hasBadPixels()
+		has_bad_pixels = False
 		is_align = self.isAlign()
-		has_non_zero_dark = self.dd.hasNonZeroDark()
+		has_non_zero_dark = False
 		apDisplay.printMsg('frame flip debug: has_bad_pixel %s, is_align %s, has_non_zero_dark %s' % (has_bad_pixels, is_align, has_non_zero_dark))
 		if has_bad_pixels or not is_align or has_non_zero_dark:
 			self.dd.setUseFrameAlignerFlat(False)
