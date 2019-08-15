@@ -1070,7 +1070,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 
 	def makeModifiedDefectMrc(self):
 		self.setCameraInfo(1,self.use_full_raw_area)
-		a = self.c_client.getDefectMap(self.camerainfo)
+		a = self.c_client.getCameraDefectMap(self.camerainfo)
 		frame_flip, frame_rotate = self.getImageFrameOrientation()
 		# flip and rotate map_array.  Therefore, do the oposite of
 		# frames
@@ -1090,15 +1090,9 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		if frame_flip:
 			apDisplay.printColor("flipping the frame up-down",'blue')
 			a = numpy.flipud(a)
-		a = a[offset['y']:crop_end['y'],offset['x']:crop_end['x']]
-		if bin['x'] > 1:
-			if bin['x'] == bin['y']:
-				a = imagefun.bin(a,bin['x'])
-			else:
-				apDisplay.printError("Binnings in x,y are different")
 		frameprocess_dir = os.path.dirname(self.tempframestackpath)
 		self.defect_map_path = os.path.join(frameprocess_dir,'defect-%s-%d.mrc' % (self.hostname,self.gpuid))
-		mrc.write(a, self.deftect_map)
+		mrc.write(a, self.defect_map_path)
 
 	def makeDarkNormMrcs(self):
 		self.setupDarkNormMrcs(False)
