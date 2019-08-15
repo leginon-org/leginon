@@ -841,7 +841,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		if len(imgstackmemmap.shape) < 3:
 			imgstackmemmap = imgstackmemmap.reshape(1, imgstackmemmap.shape[0], imgstackmemmap.shape[1])
 		if self.params['debug'] is True:
-			print "imgstackmemmap.shape", imgstackmemmap.shape
+			apDisplay.printMsg("imgstackmemmap.shape %s"%imgstackmemmap.shape)
 		apix = self.params['apix'] #apDatabase.getPixelSize(imgdata)
 
 		boxshape = (self.boxsize, self.boxsize)
@@ -1276,7 +1276,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			labels = apRelion.getStarFileColumnLabels(rootname+".star")
 			for line in open(rootname+".star"):
 				l = line.strip().split()
-				if len(l)<3: continue
+				if (len(l)<3 or line.startswith("#")): continue
 				dpixsize = float(l[labels.index("_rlnDetectorPixelSize")])
 				mag = float(l[labels.index("_rlnMagnification")])
 				apix = dpixsize/mag*1e4
@@ -1293,7 +1293,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 				f = open(rootname+".star",'w')
 				for line in open(rootname+".backup.star"):
 					l = line.strip().split()
-					if len(l)<3:
+					if (len(l)<3 or line.startswith("#")):
 						f.write(line)
 						continue
 					for i in range(len(labels)):
