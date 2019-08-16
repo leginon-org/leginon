@@ -81,7 +81,12 @@ class DMSEM(ccdcamera.CCDCamera):
 		self.float_scale = 1000.0
 		# shutter control
 		self.shutter_id = self.getAcquisitionShutter()
-		self.camera.SetShutterNormallyClosed(self.cameraid,self.shutter_id)
+		# TODO: semccd command SetShutterNormallyClosed also opens
+		# all other shutters.  If these are not set quite right,
+		# it can cause trouble. (Found in one case this other shuter
+		# uses reverse logic.
+		#self.camera.SetShutterNormallyClosed(self.cameraid,self.shutter_id)
+		#
 		# what to do in digital micrograph before handing back the image
 		# unprocessed, dark subtracted, gain normalized
 		#self.dm_processing = 'gain normalized'
