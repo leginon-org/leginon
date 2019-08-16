@@ -1094,6 +1094,9 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		self.defect_map_path = os.path.join(frameprocess_dir,'defect-%s-%d.mrc' % (self.hostname,self.gpuid))
 		mrc.write(a, self.defect_map_path)
 
+	def getModifiedDefectMrcPath(self):
+		return self.defect_map_path
+
 	def makeDarkNormMrcs(self):
 		self.setupDarkNormMrcs(False)
 
