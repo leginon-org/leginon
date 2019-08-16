@@ -110,11 +110,6 @@ class AlignStackLoop(apDDStackMaker.FrameStackLoop):
 				gain_ref = self.dd.getNormRefMrcPath()
 				per_frame_dark_ref = self.dd.getDarkRefMrcPath()
 				self.framealigner.setGainDarkCmd(gain_ref, per_frame_dark_ref)
-				# defect handling
-				# defect map here needs to be of the orientation of the frames
-				self.dd.makeModifiedDefectMrc()
-				modified_defect_map_path = self.dd.getModifiedDefectMrcPath()
-				self.framealigner.setDefectMapCmd(modified_defect_map_path)
 
 	def isAlign(self):
 		return self.params['align']
