@@ -114,6 +114,11 @@ class MotionCor2UCSFAlignStackLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop)
 			self.dd.setUseFrameAlignerRotate(frame_rotate)
 			self.framealigner.setGainYFlip(frame_flip)
 			self.framealigner.setGainRotate(frame_rotate)
+			# defect handling
+			# defect map here needs to be of the orientation of the frames
+			self.dd.makeModifiedDefectMrc()
+			modified_defect_map_path = self.dd.getModifiedDefectMrcPath()
+			self.framealigner.setDefectMapCmd(modified_defect_map_path)
 		else:
 			self.dd.setUseFrameAlignerYFlip(False)
 			self.dd.setUseFrameAlignerRotate(0)

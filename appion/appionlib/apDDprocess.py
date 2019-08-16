@@ -683,9 +683,8 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		return False, 0
 
 	def getImageFrameOrientation(self):
-		frame_flip = self.image['camera']['frame flip']
+		frame_flip = bool(self.image['camera']['frame flip'])
 		frame_rotate = self.image['camera']['frame rotate']
-		apDisplay.printDebug('frame flip %s, frame_rotate %s' % (frame_flip,frame_rotate))
 		if frame_rotate is None:
 			# old data have no orientation record
 			frame_flip,frame_rotate = self.handleOldFrameOrientation()
