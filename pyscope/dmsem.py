@@ -515,6 +515,7 @@ class GatanRio9(DMSEM):
 		## TODO: move to config file:
 		return {'x': 9e-6, 'y': 9e-6}
 
+
 class GatanK2Base(DMSEM):
 	name = 'GatanK2Base'
 	config_opt_name = 'k2'

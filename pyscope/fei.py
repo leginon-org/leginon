@@ -87,8 +87,8 @@ class Tecnai(tem.TEM):
 
 		try:
 			self.lowdose = comtypes.client.CreateObject('LDServer.LdSrv')
-		except com_module.COMError, (hr, msg, exc, arg):
-			print 'unable to initialize low dose interface, %s' % msg
+		except:
+			print 'unable to initialize low dose interface'
 			self.lowdose = None
 
 		try:
