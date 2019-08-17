@@ -1555,6 +1555,7 @@ class TemplateTargetFinderSettingsData(TargetFinderSettingsData):
 			('focus stats radius', int),
 			('focus min mean thickness', float),
 			('focus max mean thickness', float),
+			('focus min stdev thickness', float),
 			('focus max stdev thickness', float),
 			('focus interval', int),
 			('focus offset row', int),
