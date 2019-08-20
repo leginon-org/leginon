@@ -5,10 +5,10 @@ import os
 from leginon import leginondata
 from pyami import jsonfun
 '''
-	This program shows sql statement required to insert calibrations
-	into leginon database of dest_database_host based on the existing
-	calibration on the source_database_host.  The latter is in sinedon.cfg
-	Usage: showcal.py source_database_hostname source_camera_hosthame camera_name
+	This program creates sql statement and insert presets
+	into leginon database of dest_database_host based on the json file
+	Usage: import_leginon_presets.py dest_database_hostname tem_camera_preset_json_file
+	Requirement: preset_(tem_name)+(camera_hostname)+(camera_name).json
 '''
 pixelsize_scale = 1
 
@@ -44,7 +44,7 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 
 	def validateInput(self, params):
 		if len(params) != 3:
-			print "Usage import_leginon_presets.py database_hostname camera_cal_json_file"
+			print "Usage import_leginon_presets.py database_hostname tem_camera_presets_json_file"
 			self.close(1)
 		database_hostname = leginondata.sinedon.getConfig('leginondata')['host']
 		if params[1] != database_hostname:

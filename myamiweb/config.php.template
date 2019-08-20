@@ -131,6 +131,9 @@ define('ENABLE_CACHE', false);
 // --- define('CACHE_PATH', "/srv/www/cache/"); --- //
 define('CACHE_PATH', "");
 
+// --- limit session to be displayed ---//
+define('SESSION_LIMIT', 3000);
+
 // --- define Flash player base url --- //
 define('FLASHPLAYER_URL', "/flashplayer/");
 
