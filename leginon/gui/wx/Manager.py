@@ -331,9 +331,9 @@ class Frame(wx.Frame):
 			else:
 				threading.Thread(name='wx.manager runApplication',
 												target=self.manager.runApplication,
-												args=(app,)).start()					
+												args=(app,)).start()
 		dialog.Destroy()
-	
+
 	def onMenuKillApplication(self, evt):
 		threading.Thread(name='wx.manager killApplication',
 											target=self.manager.killApplication).start()

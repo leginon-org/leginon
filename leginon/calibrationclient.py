@@ -415,7 +415,7 @@ class DoseCalibrationClient(CalibrationClient):
 
 	def dose_from_imagedata(self, imagedata):
 		'''
-		dose in number of electrons per meter^2 in the duration of exposure time
+		dose in number of electrons per meter^2 in the duration of exposure time.
 		'''
 		pixel_totaldose = self.pixel_totaldose_from_imagedata(imagedata)
 		tem,ccdcamera = self.getTemCCDCameraFromImageData(imagedata)
