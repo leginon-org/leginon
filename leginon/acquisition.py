@@ -444,10 +444,12 @@ class Acquisition(targetwatcher.TargetWatcher):
 		'''
 		Send align ZLP  request
 		'''
+		self.setStatus('waiting')
 		request_data = leginondata.AlignZeroLossPeakData()
 		request_data['session'] = self.session
 		request_data['preset'] = preset_name
 		self.publish(request_data, database=True, pubevent=True, wait=True)
+		self.setStatus('processing')
 
 	def measureScreenCurrent(self, preset_name): 
 		'''
@@ -1260,7 +1262,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		x = numpy.array(xlist)
 		y = numpy.array(ylist)
 		A = numpy.vstack([x,numpy.ones(len(x))]).T
-		return numpy.linalg.lstsq(A,y)[0]
+		return numpy.linalg.lstsq(A,y, rcond=-1)[0]
 
 	def publishImage(self, imdata):
 		self.publish(imdata, pubevent=True)

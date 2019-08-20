@@ -850,7 +850,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			mt.append(m)
 		M = numpy.concatenate(mt, 0)
 
-		solution = numpy.linalg.lstsq(M, v)
+		solution = numpy.linalg.lstsq(M, v, rcond=-1)
 
 		result = {'defocus': solution[0][0], 'min': float(solution[1][0])}
 		if len(solution[0]) == 3:
@@ -1145,21 +1145,30 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		self.node.logger.debug("Change ( %5.2f, %5.2f) * 1e-3" % (new['x']*1e3,new['y']*1e3))
 		return new
 
-	def correctImageShiftComa(self):
+	def getScopeState(self, attr_name):
 		tem = self.instrument.getTEMData()
 		cam = self.instrument.getCCDCameraData()
 		ht = self.instrument.tem.HighTension
 		mag = self.instrument.tem.Magnification
 		shift0 = self.instrument.tem.ImageShift
-		scopestate = leginondata.ScopeEMData(tem=tem,magnification=mag)
-		camerastate = leginondata.CameraEMData(ccdcamera=cam)
-		tilt0 = self.instrument.tem.BeamTilt
-		scopestate['high tension'] = ht
-		scopestate['image shift'] = shift0
-		scopestate['beam tilt'] = tilt0
-		beamtilt = scopestate['beam tilt']
-		beamtilt = self.transformImageShiftToBeamTilt(shift0, tem, cam, ht, beamtilt, mag)
+		param0 = getattr(self.instrument.tem, attr_name)
+		return shift0, tem, cam, ht, param0, mag
+
+	def correctImageShiftComa(self):
+		shift0, tem, cam, ht, beamtilt0, mag = self.getScopeState('BeamTilt')
+		beamtilt = self.transformImageShiftToBeamTilt(shift0, tem, cam, ht, beamtilt0, mag)
 		self.setBeamTilt(beamtilt)
+
+	def correctImageShiftObjStig(self):
+		shift0, tem, cam, ht, allstigs0, mag = self.getScopeState('Stigmator')
+		objstig0 = allstigs0['objective']
+		objstig = self.transformImageShiftToObjStig(shift0, tem, cam, ht, objstig0, mag)
+		self.instrument.tem.Stigmator={'objective':objstig}
+
+	def correctImageShiftDefocus(self):
+		shift0, tem, cam, ht, defocus0, mag = self.getScopeState('Defocus')
+		defocus = self.transformImageShiftToDefocus(shift0, tem, cam, ht, defocus0, mag)
+		self.instrument.tem.Defocus = defocus
 
 	def alignRotationCenter(self, defocus1, defocus2):
 		bt = self.measureRotationCenter(defocus1, defocus2, correlation_type=None, settle=0.5)

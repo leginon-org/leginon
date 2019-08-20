@@ -334,6 +334,7 @@ class CentosInstallation(object):
 		self.writeToLog("--- Start Setting up Database Server")
 		self.mariadbYumInstall()
 		self.writeToLog("--- MariaDB is installed through yum on CentOs 7")
+				
 		# turn on auto mysql start
 		if self.validateCommandOutput('systemctl status mariadb', pattern='loaded', happy=False):
 			# enable and start
@@ -872,7 +873,7 @@ endif
 
 	def processServerYumInstall(self):
 		# pre-requist and utility
-		packagelist= ['epel-release','vim','wget','sudo','rsync','passwd','tar','firefox','mlocate','unzip']
+		packagelist= ['epel-release','vim','wget','sudo','rsync','passwd','tar','firefox','mlocate','unzip','bzip2','dbus-x11']
 		self.yumInstall(packagelist)
 
 		packagelist = ['ImageMagick', 'MySQL-python', 'compat-libf2c-34', 'compat-libgfortran-41', 'fftw3-devel', 'gcc-c++', 'gcc-gfortran', 'gcc-objc', 'gnuplot', 'grace', 'gsl-devel', 'libtiff-devel', 'netpbm-progs', 'numpy', 'openmpi-devel', 'opencv-python', 'python-devel', 'python-imaging', 'python-matplotlib', 'python-tools', 'scipy', 'wxPython', 'xorg-x11-server-Xvfb', 'libjpeg-devel', 'zlib-devel']
@@ -1248,11 +1249,13 @@ endif
 		questionText = "Would you like to download demo GroEL images and upload them to this installation?"
 		self.doDownloadSampleImages = self.getBooleanInput(questionText)
 		
-		questionText = "Would you like to install EMAN, Xmipp, Spider, and Protomo at this time?"
-		self.doInstallExternalPackages = self.getBooleanInput(questionText)
+		#questionText = "Would you like to install EMAN, Xmipp, Spider, and Protomo at this time?"
+		#self.doInstallExternalPackages = self.getBooleanInput(questionText)
+		self.doInstallExternalPackages = False
 		
-		questionText = "Would you like to install Torque for Job server at this time?"
-		self.doInstallJobServerPackages = self.getBooleanInput(questionText)
+		#questionText = "Would you like to install Torque for Job server at this time?"
+		#self.doInstallJobServerPackages = self.getBooleanInput(questionText)
+		self.doInstallJobServerPackages = False
 		self.failedInstallJobServer = False
 	
 	def getBooleanInput(self, questionText = ''):

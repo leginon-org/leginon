@@ -448,7 +448,7 @@ class FFTTargetImagePanel(TargetImagePanel):
 
 class TargetOutputPanel(TargetImagePanel):
 	def __init__(self, parent, id, callback=None, imagesize=(512,512), tool=True):
-		super(TargetOutputPanel, self).__init__(self, parent, id, callback=callback, imagesize=imagesize, tool=tool)
+		super(TargetOutputPanel, self).__init__(parent, id, callback=callback, imagesize=imagesize, tool=tool)
 
 		self.quit = wx.Button(self, -1, 'Quit')
 		self.Bind(wx.EVT_BUTTON, self.onQuit, self.quit)

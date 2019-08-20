@@ -404,9 +404,9 @@
       default="DEFAULT NULL" 
     />
     <key>PRIMARY KEY (`DEF_id`)</key>
-    <key>KEY `project` (`REF|projects|project`)</key>
+    <key>KEY `REF|projects|project` (`REF|projects|project`)</key>
     <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
-    <key>KEY `session` (`REF|leginondata|SessionData|session`)</key>
+    <key>KEY `REF|leginondata|SessionData|session` (`REF|leginondata|SessionData|session`)</key>
   </sqltable>
   <sqltable name="shareexperiments" >
     <field 
