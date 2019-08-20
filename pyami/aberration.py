@@ -120,7 +120,7 @@ class AberrationEstimator(object):
 		'''
 		# plug-in cs value to increase data/parameter ratio
 		a, b = self.removeKnownTerm(tiltmatrix, ctfmatrix,True, self.cs)
-		A, residual, rank, s = numpy.linalg.lstsq(a,b)
+		A, residual, rank, s = numpy.linalg.lstsq(a,b, rcond=-1)
 		return A, residual
 
 	def mapAberration(self,A):
