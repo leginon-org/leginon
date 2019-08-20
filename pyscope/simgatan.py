@@ -101,7 +101,7 @@ class SimGatan(object):
 		print 'AlignEnergeFileterZeroLossPeak'
 		time.sleep(2)
 
-	def GetImage(self, processing, height, width, binning, top, left, bottom, right, exposure, shutter=0, shutterDelay=0.0):
+	def GetImage(self, processing, height, width, binning, top, left, bottom, right, exposure, shutterDelay):
 		self.exposure_type= processing
 		self.exposure_time = exposure/1000.0
 		print '**Acquire Parameters**'
@@ -110,7 +110,6 @@ class SimGatan(object):
 		print 'acquire binning', binning
 		print 'boundary rows: %d:%d, cols: %d:%d' % (top,bottom,left,right)
 		print 'exposure %s' % (exposure,)
-		print 'shutter id %d' % (shutter,)
 		return self.getSyntheticImage((height, width))
 
 	def getSyntheticImage(self,shape):

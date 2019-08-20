@@ -405,11 +405,12 @@ class GatanSocket(object):
 		return self.ExecuteGetDoubleScript(script)
 
 	@logwrap
-	def GetImage(self, processing, height, width, binning, top, left, bottom, right, exposure, shutter=0, shutterDelay=0.0):
+	def GetImage(self, processing, height, width, binning, top, left, bottom, right, exposure, shutterDelay):
 
 		arrSize = width * height
 
 		# TODO: need to figure out what these should be
+		shutter = 0
 		divideBy2 = 0
 		corrections = 0
 		settling = 0.0

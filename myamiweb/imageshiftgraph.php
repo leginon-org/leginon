@@ -42,7 +42,7 @@ $dbemgraph->title=$fieldname." for preset $preset";
 $dbemgraph->yaxistitle=$axes[1]." (mrad)";
 
 if ($viewdata) {
-	$dbemgraph->dumpData(array('image_id', 'filename', $display_x, $display_y));
+	$dbemgraph->dumpData(array($display_x, $display_y));
 }
 if ($histogram) {
 	$dbemgraph->histogram=true;

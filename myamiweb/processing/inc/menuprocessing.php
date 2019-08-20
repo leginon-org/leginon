@@ -269,20 +269,6 @@ if (is_numeric($expId)) {
 		'newrun' => array($nruns, $celloption),
 	);
 
-	/* Topaz Denoiser */
-	$action = "Denoiser";
-	$nruns=array();
-	$nruns[] = array(
-			'name'=>"<a href='runAppionLoop.php?expId=$sessionId&form=topazDenoiser'>Topaz Denoiser</a>",
-	);
-	
-	$data[] = array(
-			'action' => array($action, $celloption),
-			'newrun' => array($nruns, $celloption),
-	);
-	
-	
-	
 	/*
 	**
 	** Object selection

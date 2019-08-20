@@ -191,6 +191,7 @@ def getColumnFromRelionLine(line,col):
 	l = line.strip().split()
 	if (len(l)<col+1 or l[0][:4]=="_rln" or l[0] in ['data_','loop_']):
 		return None
+	print l
 	return l[col]
 	
 def getMrcParticleFilesFromStar(starfile):

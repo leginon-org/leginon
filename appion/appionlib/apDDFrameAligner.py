@@ -14,7 +14,6 @@ class DDFrameAligner(object):
 		self.save_aligned_stack = True
 		self.is_use_frame_aligner_sum = True
 		self.stack_binning = 1
-		self.defect_map_cmd = ''
 
 	def getExecutableName(self):
 		return self.executable
@@ -27,13 +26,6 @@ class DDFrameAligner(object):
 		cmd = ''
 		self.gain_dark_cmd = cmd
 
-	def setDefectMapCmd(self,defect_path):
-		'''
-		If the program can handle defect map, put in here the option
-		string to add to the main command.
-		'''
-		cmd = ''
-		self.defect_map_cmd = cmd
 
 	def isGainDarkCorrected(self):
 		'''
@@ -239,21 +231,11 @@ class MotionCor2_UCSF(DDFrameAligner):
 		'''
 		cmd = ''
 		if dark_path:
-			cmd += " -Dark %s" % dark_path
+			apDisplay.printWarning('MotionCor2 does not handle dark reference. Assumes zero')
 		if norm_path:
 			cmd += " -Gain %s" % norm_path
 		self.gain_dark_cmd = cmd
 		apDisplay.printMsg('Gain Dark Command Option: %s' % cmd)
-
-	def setDefectMapCmd(self,defect_path):
-		'''
-		Handle defect map
-		'''
-		cmd = ''
-		if defect_path:
-			cmd += " -DefectMap %s" % defect_path
-		self.defect_map_cmd = cmd
-		apDisplay.printMsg('DefectMap Command Option: %s' % cmd)
 
 	def getInputCommand(self):
 		if self.framestackpath.endswith('.tif'):
@@ -353,9 +335,6 @@ class MotionCor2_UCSF(DDFrameAligner):
 		
 		# gain dark references
 		cmd += self.gain_dark_cmd
-
-		# defect references
-		cmd += self.defect_map_cmd
 
 		# gain gemetry modification
 		cmd += ' -FlipGain %d ' % self.alignparams['FlipGain']

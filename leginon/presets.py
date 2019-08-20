@@ -36,9 +36,6 @@ SPECIAL_TRANSFORM = False
 class PresetChangeError(Exception):
 	pass
 
-class DataAccessError(Exception):
-	pass
-
 class CurrentPresetData(leginondata.Data):
 	def typemap(cls):
 		t = leginondata.Data.typemap()
@@ -669,17 +666,14 @@ class PresetsManager(node.Node):
 
 		self.logger.info(beginmessage)
 
-		try:
-			if presetdata['tem'] is None:
-				message = 'Preset change failed: no TEM selected for this preset'
-				self.logger.error(message)
-				raise PresetChangeError(message)
-			if presetdata['ccdcamera'] is None:
-				message = 'Preset change failed: no CCD camera selection for this preset'
-				self.logger.error(message)
-				raise PresetChangeError(message)
-		except DataAccessError as e:
-			raise PresetChangeError(e)
+		if presetdata['tem'] is None:
+			message = 'Preset change failed: no TEM selected for this preset'
+			self.logger.error(message)
+			raise PresetChangeError(message)
+		if presetdata['ccdcamera'] is None:
+			message = 'Preset change failed: no CCD camera selection for this preset'
+			self.logger.error(message)
+			raise PresetChangeError(message)
 		
 		if presetdata['tem']['name'] in self.instrument.getTEMNames():
 			try:

@@ -60,10 +60,8 @@ class CameraControl(object):
 		self.cameralock.release()
 
 	def initialize(self):
-		try:
-			pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
-		except:
-			pythoncom.CoInitialize()
+		pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
+
 		try:
 			self.camera = win32com.client.Dispatch('CAMC4.Camera')		
 		except pywintypes.com_error, e:

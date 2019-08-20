@@ -87,8 +87,8 @@ class Tecnai(tem.TEM):
 
 		try:
 			self.lowdose = comtypes.client.CreateObject('LDServer.LdSrv')
-		except:
-			print 'unable to initialize low dose interface'
+		except com_module.COMError, (hr, msg, exc, arg):
+			print 'unable to initialize low dose interface, %s' % msg
 			self.lowdose = None
 
 		try:
@@ -1103,7 +1103,7 @@ class Tecnai(tem.TEM):
 			# No extended error information, assuming low dose is disenabled
 			raise RuntimeError('Low dose is not enabled')
 		except:
-			raise RuntimeError('Unknown error')
+			raise RuntimerError('Unknown error')
 
 	def getLowDoseModes(self):
 		return ['exposure', 'focus1', 'focus2', 'search', 'unknown', 'disabled']
@@ -1124,7 +1124,7 @@ class Tecnai(tem.TEM):
 			# No extended error information, assuming low dose is disenabled
 			raise RuntimeError('Low dose is not enabled')
 		except:
-			raise RuntimeError('Unknown error')
+			raise RuntimerError('Unknown error')
 		
 	def setLowDoseMode(self, mode):
 		try:
@@ -1142,7 +1142,7 @@ class Tecnai(tem.TEM):
 			# No extended error information, assuming low dose is disenabled
 			raise RuntimeError('Low dose is not enabled')
 		except:
-			raise RuntimeError('Unknown error')
+			raise RuntimerError('Unknown error')
 	
 	def getProjectionMode(self):
 		if self.tecnai.Projection.Mode == self.tem_constants.pmImaging:
@@ -1558,7 +1558,7 @@ class Tecnai(tem.TEM):
 			# No extended error information, assuming low dose is disenabled
 			raise RuntimeError('runBufferCycle COMError: no extended error information')
 		except:
-			raise RuntimeError('runBufferCycle Unknown error')
+			raise RuntimerError('runBufferCycle Unknown error')
 
 	def setEmission(self, value):
 		self.tom.Gun.Emission = value
@@ -1646,8 +1646,7 @@ class Tecnai(tem.TEM):
 
 	def getAutoFillerRemainingTime(self):
 		'''
-		Get remaining time from instrument. Unit is second.
-		If it is not set to cool, the value is -60.
+		Get remaining time from instrument. TO DO: need to find unit
 		'''
 		try:
 			remain_sec = self.tecnai.TemperatureControl.DewarsRemainingTime

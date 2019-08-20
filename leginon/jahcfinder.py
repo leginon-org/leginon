@@ -66,7 +66,6 @@ class JAHCFinder(targetfinder.TargetFinder):
 		'focus stats radius': 10,
 		'focus min mean thickness': 0.05,
 		'focus max mean thickness': 0.5,
-		'focus min stdev thickness': 0.0,
 		'focus max stdev thickness': 0.5,
 		'focus interval': 1,
 		'focus offset row': 0,
@@ -451,10 +450,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 					rad = self.settings['focus stats radius']
 					tmin = self.settings['focus min mean thickness']
 					tmax = self.settings['focus max mean thickness']
-					tstdmin = self.settings['focus min stdev thickness']
 					tstdmax = self.settings['focus max stdev thickness']
-					if tstdmin is None:
-						tstdmin = 0.0
 					coord = target[1], target[0]
 					stats = self.hf.get_hole_stats(self.hf['original'], coord, rad)
 					if stats is None:
@@ -463,7 +459,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 					tm = self.icecalc.get_thickness(stats['mean'])
 					ts = self.icecalc.get_stdev_thickness(stats['std'], stats['mean'])
 					self.logger.info('template point %s stats:  mean: %s, stdev: %s' % (vect, tm, ts))
-					if (tmin <= tm <= tmax) and (ts >= tstdmin) and (ts < tstdmax):
+					if (tmin <= tm <= tmax) and (ts < tstdmax):
 						self.logger.info('template point %s passed thickness test' % (vect,))
 						newtargets['focus'].append(target)
 						break

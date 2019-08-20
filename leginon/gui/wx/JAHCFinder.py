@@ -427,7 +427,6 @@ class FinalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.widgets['focus stats radius'] = IntEntry(self, -1, chars=6)
 		self.widgets['focus min mean thickness'] = FloatEntry(self, -1, chars=6)
 		self.widgets['focus max mean thickness'] = FloatEntry(self, -1, chars=6)
-		self.widgets['focus min stdev thickness'] = FloatEntry(self, -1, chars=6)
 		self.widgets['focus max stdev thickness'] = FloatEntry(self, -1, chars=6)
 
 		szice = wx.GridBagSizer(5, 5)
@@ -472,13 +471,9 @@ class FinalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		szftt.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szftt.Add(self.widgets['focus max mean thickness'], (3, 1), (1, 1),
 										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
-		label = wx.StaticText(self, -1, 'Min. std. thickness:')
-		szftt.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szftt.Add(self.widgets['focus min stdev thickness'], (4, 1), (1, 1),
-										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		label = wx.StaticText(self, -1, 'Max. std. thickness:')
-		szftt.Add(label, (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szftt.Add(self.widgets['focus max stdev thickness'], (5, 1), (1, 1),
+		szftt.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szftt.Add(self.widgets['focus max stdev thickness'], (4, 1), (1, 1),
 										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		szftt.AddGrowableCol(1)
 

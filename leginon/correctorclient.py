@@ -472,20 +472,6 @@ class CorrectorClient(cameraclient.CameraClient):
 		else:
 			return {'rows': [], 'columns': [], 'pixels': [], 'despike': False, 'despike size': 11, 'despike threshold': 3.5}
 
-	def getCameraDefectMap(self, cameradata):
-		plan, plandata = self.retrieveCorrectorPlan(cameradata)
-		dx = cameradata['dimension']['x']
-		dy = cameradata['dimension']['y']
-		map_array = numpy.zeros((dy,dx),dtype=numpy.int8)
-		for r in plan['rows']:
-			map_array[r,:] = 1
-		for c in plan['columns']:
-			map_array[c,:] = 1
-		for p in plan['pixels']:
-			px, py = p
-			map_array[py,px] = 1
-		return map_array
-
 	def fixBadPixels(self, image, plan):
 		badrows = plan['rows']
 		badcols = plan['columns']

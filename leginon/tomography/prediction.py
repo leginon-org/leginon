@@ -515,7 +515,7 @@ class Prediction(object):
 			for j in range(n):
 				a[i, j] = v**j
 			b[i] = positions[i]
-		x, resids, rank, s = lstsq(a, b, rcond=-1)
+		x, resids, rank, s = lstsq(a, b)
 		position = 0
 		for j in range(n):
 			position += x[j]*tilt**j

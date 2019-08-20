@@ -467,7 +467,7 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 		# The map array should be in the same orientation as the array in AcquisitionImageData['image'] 
 		self.plotGridContour(map_array,fbase)
 
-	def makeMapArrayWithGriddata(self,starpath,labels,imgx,imgy,dimx,dimy):
+	def makeMapArrayWithGriddata(self,starpath, labels, imgx, imgy, dimx,dimy):
 		matrix = [[np.nan for x in range(imgx)] for y in range(imgy)]
 		for line in open(starpath):
 			l = line.strip().split()
@@ -514,7 +514,6 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 		ratioy = float(imgx)*dimy/dimx/totaly
 		# interpolation by zoom
 		GD1 = ndimage.interpolation.zoom(matrix, (ratioy,ratiox), order=3) 
-
 		apDisplay.printMsg('local map displayed in %d, %d (x,y)' % (GD1.shape[1],GD1.shape[0]))
 		return GD1
 
@@ -559,7 +558,7 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 			matrix = np.ma.masked_invalid(matrix)
 			return matrix	
 		else:
-			apDisplay.printError('There are more defocus values than the grid')
+			apDisplay.printError('There are more defocus value than the grid')
 
 	def plotGridContour(self,GD1,fbase):
 		imgx = GD1.shape[1]

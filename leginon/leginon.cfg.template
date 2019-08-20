@@ -43,8 +43,6 @@ fullname:
 # password entered in GUI
 #[Email]
 #host: smtp.yourdomain.com
-#port: smtp port
-#user: login-user@yourdomain.com
-#password: login-user password
+#user: user@yourdomain.com
 #from: user@yourdomain.com
 #to: user@yourdomain.com

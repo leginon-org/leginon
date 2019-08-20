@@ -58,8 +58,6 @@ class ScrolledSettings(leginon.gui.wx.Conditioner.ScrolledSettings):
 		self.createColumnFillEndEntry((4,0))
 		self.createGridLoaderFillStartEntry((5,0))
 		self.createGridLoaderFillEndEntry((6,0))
-		self.createDelayDarkCurrentRefEntry((7,0))
-		self.createDarkCurrentRefHourEntry((8,0))
 
 	def addBindings(self):
 		super(ScrolledSettings,self).addBindings()
@@ -175,49 +173,3 @@ class ScrolledSettings(leginon.gui.wx.Conditioner.ScrolledSettings):
 			self.mode.Enable(True)
 			self.onAutofillerModeChoice()
 
-	def createDelayDarkCurrentRefEntry(self,start_position):
-		self.widgets['delay dark current ref'] = IntEntry(self, -1,
-																		min=0,
-																		allownone=False,
-																		chars=4,
-																		value='60')
-		szcolstart = wx.GridBagSizer(5, 5)
-		szcolstart.Add(wx.StaticText(self, -1, 'Delay acquiring dark current ref by '),
-								(0, 0), (1, 1),
-								wx.ALIGN_CENTER_VERTICAL)
-		szcolstart.Add(self.widgets['delay dark current ref'],
-								(0, 1), (1, 1),
-								wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		szcolstart.Add(wx.StaticText(self, -1, 'seconds'),
-								(0, 2), (1, 1),
-								wx.ALIGN_CENTER_VERTICAL)
-		self.sz.Add(szcolstart, start_position, (1, 2), wx.ALIGN_LEFT|wx.ALL)
-
-	def createDarkCurrentRefHourEntry(self,start_position):
-		self.widgets['start dark current ref hr'] = IntEntry(self, -1,
-																		min=0, max=24,
-																		allownone=False,
-																		chars=4,
-																		value='0')
-		self.widgets['end dark current ref hr'] = IntEntry(self, -1,
-																		min=0, max=24,
-																		allownone=False,
-																		chars=4,
-																		value='24')
-		szcolstart = wx.GridBagSizer(5, 5)
-		szcolstart.Add(wx.StaticText(self, -1, 'Acquiring dark ref only between '),
-								(0, 0), (1, 1),
-								wx.ALIGN_CENTER_VERTICAL)
-		szcolstart.Add(self.widgets['start dark current ref hr'],
-								(0, 1), (1, 1),
-								wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		szcolstart.Add(wx.StaticText(self, -1, 'and'),
-								(0, 2), (1, 1),
-								wx.ALIGN_CENTER_VERTICAL)
-		szcolstart.Add(self.widgets['end dark current ref hr'],
-								(0, 3), (1, 1),
-								wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		szcolstart.Add(wx.StaticText(self, -1, 'hours'),
-								(0, 4), (1, 1),
-								wx.ALIGN_CENTER_VERTICAL)
-		self.sz.Add(szcolstart, start_position, (1, 2), wx.ALIGN_LEFT|wx.ALL)

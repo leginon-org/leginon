@@ -236,35 +236,9 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 
 	def moveBack(self,position0):
 		self.logger.info('Returning to the original position....')
-		try:
-			self.instrument.tem.StagePosition = position0
-		except ValueError as e:
-			self.logger.error('Error setting position back. %s' % e)
-			self.handleFailToMoveBack(position0)
-		except RuntimeError as e:
-			self.logger.error('%s' % (e,))
-			self.handleFailToMoveBack(position0)
-		# need to pause if failed to move back
-		self.player.wait()
+		self.instrument.tem.StagePosition = position0
 		self.at_reference_target = False
-		self.setStatus('processing')
 		self.pauseBeforeReturn()
-
-	def handleFailToMoveBack(self, position):
-		self.player.pause()
-		self.panel.playerEvent('play')
-		self.setStatus('user input')
-		moves = []
-		keys = position.keys()
-		keys.sort()
-		for k in keys:
-			if k not in ('a','b'):
-				moves.append('%s: %.1f um' % (k,position[k]*1e6))
-			else:
-				moves.append('%s: %.1f degs' % (k,position[k]*180.0/3.14159))
-		position_str = ','.join(moves)
-		self.logger.error('Stage error. Manually move required to continue by clicking STOP tool')
-		self.logger.error('Position to move to: %s' % position_str)
 
 	def moveAndExecute(self, request_data):
 		'''
