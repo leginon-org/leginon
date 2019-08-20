@@ -88,7 +88,7 @@ class BeamSizeCalibrator(calibrator.ScreenCalibrator):
 		x = numpy.array(map((lambda x: x[0]),self.beamvalues[spotsize]))
 		y = numpy.array(map((lambda x: x[1]),self.beamvalues[spotsize]))
 		A = numpy.vstack([x,numpy.ones(len(x))]).T
-		return numpy.linalg.lstsq(A,y)[0]
+		return numpy.linalg.lstsq(A,y, rcond=-1)[0]
 
 	def setC2Size(self, temdata,size):
 		c2sizedata = leginondata.C2ApertureSizeData(session=self.session,tem=temdata,size=size).insert()

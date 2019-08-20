@@ -14,7 +14,8 @@ $sessioninfo=$leginondata->getSessionInfo($sessionId);
 $session=$sessioninfo['Name'];
 
 $summary=$leginondata->getSummary($sessionId);
-$imageinfo = $leginondata->getImageInfoFromPreset(end($summary)['presetId']);
+$end_summary = end($summary);
+$imageinfo = $leginondata->getImageInfoFromPreset($end_summary['presetId']);
 $instrumentinfo = $leginondata->getInstrumentInfo($sessioninfo['InstrumentId']);
 
 echo "<link rel='stylesheet' href='css/neiladd.css' />";
@@ -36,6 +37,8 @@ tinymce.init({
    image_advtab: true ,
 EOT;
 echo $text;
+$inline = $_GET["inline"];
+if ($inline) echo 'inline: true,';
 echo 'external_filemanager_path:"'.BASE_URL.'filemanager/",'
    .' filemanager_title:"Responsive Filemanager" ,'
    .' external_plugins: { "filemanager" : "'.BASE_URL.'filemanager/plugin.min.js"}'
@@ -48,16 +51,16 @@ echo '</script>';
 //echo '<pre>'; print_r($instrumentinfo); echo '</pre>';
 echo PHP_EOL;
 echo '<center>';
-echo '<table cellspacing="0">';
+echo '<table cellspacing="0" width=100% >';
 
 if (stripos($sessioninfo['Purpose'], 'nccat') !== false){
 	echo '<tr style="background-color:#d4e0ee; color:black;font-size:18px;font-weight:bold;">';
-	echo '<td><a href="http://nccat.nysbc.org/" target="_blank"><img src="./img/nccat_logo.png" width="75" height="75"></a></td>';
+	echo '<td style="padding: 0 5px 0 50px;"><a href="http://nccat.nysbc.org/" target="_blank"><img src="./img/nccat_logo.png" width="75" height="75"></a></td>';
 	echo '<td style="padding: 0 5px 0 5px;">NCCAT Operations<br>';
 }
 elseif (defined("SEMC")) {
  	echo '<tr style="background-color:#475e7a;color:white;font-size:18px;font-weight:bold;">';
- 	echo '<td><a href="http://semc.nysbc.org/" target="_blank"><img src="./img/semc_logo.png" width="75" height="75"></a></td>';
+ 	echo '<td style="padding: 0 5px 0 50px;"><a href="http://semc.nysbc.org/" target="_blank"><img src="./img/semc_logo.png" width="75" height="75"></a></td>';
  	echo '<td style="padding: 0 5px 0 5px;">SEMC Operations<br>';
 }
 else{
@@ -197,7 +200,8 @@ if($_SERVER['REQUEST_METHOD'] === 'POST'){
 }
 elseif ($ctf->mysql->SQLTableExists("poster")){
 	$q = "SELECT textarea from poster WHERE expId = $expId";
-	$mytextarea= $ctf->mysql->getSQLResult($q)[0]['textarea'];	
+	$t = $ctf->mysql->getSQLResult($q);
+	$mytextarea= $t[0]['textarea'];	
 }
 
 echo displayCTFstats($stats, $display_keys);
@@ -325,9 +329,52 @@ echo '<table>';
 echo '<tr>';
 echo '<td colspan=2>';
 echo '<form method="post">';
-echo '<textarea id="mytextarea" name="mytext">'.$mytextarea.'</textarea>';
-echo '<input type="submit" value="Save" />';
+if ($inline) echo '<div ';
+else echo '<textarea ';
+echo 'id="mytextarea" name="mytext">'.$mytextarea;
+if ($inline) echo '</div>';
+else {
+	echo '</textarea>';
+	echo '<input type="submit" value="Save" />';
+}
 echo '</form>';
+echo '</td>';
+echo '</tr>';
+echo '<tr>';
+echo '<td colspan=2>';
+echo divtitle("Experimental Methods");
+$microscope = $imageinfo['scope'];
+$kv = intval($imageinfo['high tension']/1000);
+$camera = $imageinfo['camera'];
+$pixelsize = number_format($imageinfo['pixelsize']*1e10,4); ;
+$mag = number_format($presetdata['magnification'],0);
+$dosepersec = number_format($maxpresetarray['dose']/$presetdata['exposure time']/1e17, 2);
+$exposure = number_format($presetdata['exposure time']/1000,2);
+$totaldose = number_format($maxpresetarray['dose']/1e20,2);
+$frametime = number_format($presetdata['frame time']/1000,2);
+$numframes = intval(round($presetdata['exposure time']/$presetdata['frame time'],0));
+$numimages = $maxpresetarray['nb'];
+$defmin = number_format(-1e6*$defdata['maxdef'], 1);
+$defmax = number_format(-1e6*$defdata['mindef'], 1);
+
+echo opendivbubble();
+
+echo "<p>";
+
+echo "$microscope operated at $kv kV with a $camera imaging system collected at $magX nominal magnification.
+The calibrated pixel size of $pixelsize &Aring; was used for processing.";
+
+echo "</p><p>";
+
+echo "Movies were collected using Leginon (Suloway et al., 2005) at a dose
+rate of $dosepersec e<sup>-</sup>/&Aring;<sup>2</sup>/s with a total exposure of $exposure seconds,
+for an acculumlated dose of $totaldose e<sup>-</sup>/&Aring;<sup>2</sup>. Intermediate frames were recorded
+every $frametime seconds for a total of $numframes frames per micrograph. A total of $numimages images were
+collected at a nominal defocus range of $defmin &ndash; $defmax &mu;m.";
+
+echo "</p>";
+
+echo '</div>';
 echo '</td>';
 echo '</tr>';
 
@@ -430,16 +477,18 @@ $text = <<<EOT
 <script type="text/javascript">
 function PDFFromHTML() {
 var doc = new jsPDF('p','pt','a4');
+//var iframe = document.getElementById("mytextarea_ifr");
+//document.body.appendChild(iframe);
 doc.addHTML(document.body,function() {
     doc.save('{$sessioninfo['Name']}_report.pdf');
 });
 };
-
 EOT;
 echo $text;
 //echo 'doc.output("dataurlnewwindow");}';
 //echo 'doc.save("'.$sessioninfo['Name'].'_report.pdf");}';
+if ($inline) echo 'PDFFromHTML()';
 echo '</script>';
-echo '<a class="button" href="javascript:PDFFromHTML()">Download PDF</a>';
+if (!$inline) echo '<a class="button" href="'.$_SERVER['PHP_SELF'].'?expId='.$expId.'&inline=1">Download PDF</a>';
 echo '</center>';
 ?>
