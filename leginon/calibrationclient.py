@@ -850,7 +850,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			mt.append(m)
 		M = numpy.concatenate(mt, 0)
 
-		solution = numpy.linalg.lstsq(M, v)
+		solution = numpy.linalg.lstsq(M, v, rcond=-1)
 
 		result = {'defocus': solution[0][0], 'min': float(solution[1][0])}
 		if len(solution[0]) == 3:
