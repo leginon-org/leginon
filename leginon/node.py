@@ -68,6 +68,8 @@ class Node(correctorclient.CorrectorClient):
 		self.name = name
 		self.this_node = None
 		self.panel = panel
+		self.node_status = 'idle'
+		self.before_pause_node_status = 'idle'
 		self.tem_hostname = ''
 		
 		self.initializeLogger()
@@ -468,6 +470,7 @@ class Node(correctorclient.CorrectorClient):
 				raise PublishError('no DBDataKeeper to publish data to.')
 			except Exception:
 				raise
+
 		### publish event
 		if pubevent:
 			if pubeventclass is None:
@@ -544,6 +547,9 @@ class Node(correctorclient.CorrectorClient):
 		self.beep()
 
 	def setStatus(self, status):
+		if status == 'user input':
+			self.before_pause_node_status = copy.copy(self.node_status)
+		self.node_status = status
 		self.panel.setStatus(status)
 
 	def declareDrift(self, type):

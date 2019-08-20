@@ -219,6 +219,7 @@ class VirtualStageTilter(object):
 		xpixel = self.stageToPixel(stagematrix, 1.0, 0.0)
 		ypixel1 = self.stageToPixel(stagematrix, 0.0, 1.0)
 		ypixel2 = stretch*ypixel1[0], stretch*ypixel1[1]
+		
 		it = self.maketrans(0,0,xpixel[0],xpixel[1],ypixel1[0],ypixel1[1],0,0,xpixel[0],xpixel[1],ypixel2[0],ypixel2[1])
 
 		## create transform matrix
@@ -341,12 +342,7 @@ class VirtualStageTilter(object):
 
 		if abs(alpha) < self.alpha_threshold:
 			return im, numpy.matrix(numpy.identity(2)),(0.0,0.0)
-		
-		
 		stagematrix = self.getStageMatrix(tem, cam, ht, mag)
-		#import cPickle as pickle
-		#stagematrix = pickle.load(open('stagematrix_f20_62000','rb'))
-		
 		# mat is the rotation matrix only
 		mat = self.affine_transform_matrix(stagematrix, alpha)
 		scope = imagedata['scope']

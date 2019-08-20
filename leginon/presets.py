@@ -1526,6 +1526,7 @@ class PresetsManager(node.Node):
 		be tightly coupled.
 		Stage position is always xy only
 		'''
+
 		## first cycle through presets before sending the final one
 		if self.currentpreset is None or self.currentpreset['name'] != newpresetname:
 			self.blankOn()

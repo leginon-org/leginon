@@ -181,7 +181,6 @@ class TargetHandler(object):
 		this is run in a thread to watch for and handle queue updates
 		'''
 		while 1:
-
 			# wait for a queue update
 			self.setStatus('idle')
 			

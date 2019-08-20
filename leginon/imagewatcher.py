@@ -37,7 +37,7 @@ class ImageWatcher(watcher.Watcher):
 		oevent = event.NodeBusyNotificationEvent()
 		self.outputEvent(oevent)
 
-	def processData(self, idata):		
+	def processData(self, idata):
 		if isinstance(idata, leginondata.ImageData):
 			self.setStatus('processing')
 			self.logger.debug('Imagewathcer.processData (ImageData)')
