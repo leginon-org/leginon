@@ -430,7 +430,8 @@ class SimTEM(tem.TEM):
 	def setProjectionMode(self, value):
 		# This is a fake value set.  It forces the projection mode defined by
 		# the class.
-		print 'fake setting to projection mode %s' % (self.projection_mode,)
+		#print 'fake setting to projection mode %s' % (self.projection_mode,)
+		pass
 
 	def getMainScreenPositions(self):
 		return list(self.main_screen_positions)

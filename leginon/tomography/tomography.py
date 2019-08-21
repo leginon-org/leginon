@@ -52,7 +52,7 @@ class Tomography(leginon.acquisition.Acquisition):
 		'intscale': 10,
 #		'pausegroup': False,
 		'model mag': 'this preset and lower mags',
-		'z0 error': 2e-6,
+		'z0 error': 2.0, #um
 		'phi': 0.0,
 		'phi2': 0.0,
 		'offset': 0.0,
