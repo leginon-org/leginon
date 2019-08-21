@@ -391,7 +391,7 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		self.widgets['z02'] = FloatEntry(self, -1, allownone=False,
 			chars=6, value='0.0')
 		self.widgets['z0 error'] = FloatEntry(self, -1, min=0.0,
-			allownone=False, chars=6, value='2e-6')
+			allownone=False, chars=6, value='2.0')
 		self.widgets['fixed model'] = wx.CheckBox(self, -1, 'Keep the tilt axis parameters fixed')
 		self.widgets['use z0'] = wx.CheckBox(self, -1, 'Initialize z0 with current model')
 		self.widgets['fit data points'] = IntEntry(self, -1, min=4, allownone=False, chars=5, value='4')
