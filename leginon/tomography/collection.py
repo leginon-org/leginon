@@ -357,7 +357,9 @@ class Collection(object):
 			self.checkAbort()
 			
 			self.logger.info('Correlating image with previous tilt...')
-			self.correlator.setTiltAxis(predicted_position['phi'])
+			# TODO: This got uncommented out in 87f3dd8b. an index is added to fix
+			# attribute error. However, tiltcorrelation is not doing anything really.
+			self.correlator[seq[0]].setTiltAxis(predicted_position['phi'])
 			while True:
 				try:
 					correlation_image = self.correlator[seq[0]].correlate(tilt_series_image_data, self.settings['use tilt'], channel=channel, wiener=False, taper=0)

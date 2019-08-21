@@ -51,7 +51,6 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 	eventoutputs = watcher.Watcher.eventoutputs + targethandler.TargetHandler.eventoutputs + [event.TargetListDoneEvent]
 
 	def __init__(self, id, session, managerlocation, **kwargs):
-		#self.id = id			# added just for debugging. needs to be deleted. 
 		watchfor = [event.ImageTargetListPublishEvent, event.QueuePublishEvent]
 		watcher.Watcher.__init__(self, id, session, managerlocation, watchfor,
 															**kwargs)
