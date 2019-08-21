@@ -689,7 +689,7 @@ class Tomography(leginon.acquisition.Acquisition):
 	
 class Tomography_2(Tomography):
 	settingsclass = leginon.leginondata.Tomography_2SettingsData
-	defaultsettings = Tomography.defaultsettings
+	defaultsettings = dict(Tomography.defaultsettings)
 	defaultsettings.update({
 		'track preset': '',
 		'cosine dose': True,

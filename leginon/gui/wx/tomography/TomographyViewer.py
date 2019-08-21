@@ -139,9 +139,9 @@ class Viewer_2(Viewer):
             evt = events.FitToPageEvent(self)
             v.tools.sizescaler.GetEventHandler().AddPendingEvent(evt)
 
-        self.sizer.AddGrowableRow(1)
         for i, v in enumerate(self.trackviewers):
             self.sizer.Add(v, (1, i), (1, 1), wx.EXPAND)  
+        self.sizer.AddGrowableRow(1)
     
     def clearTrackImages(self, *args, **kwargs):
         evt = ImageEvent('_clearTrackImages', args, kwargs)

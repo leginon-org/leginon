@@ -711,7 +711,7 @@ class TomoClickTargetFinder(ClickTargetFinder):
 	panelclass = gui.wx.TomoClickTargetFinder.Panel
 	eventoutputs = TargetFinder.eventoutputs + [event.ReferenceTargetPublishEvent]
 	settingsclass = leginondata.TomoClickTargetFinderSettingsData
-	defaultsettings = ClickTargetFinder.defaultsettings
+	defaultsettings = dict(ClickTargetFinder.defaultsettings)
 	defaultsettings.update({'auto focus target': True,
 									'focus target offset': 3e-6,
 									'track target offset': 3e-6,
@@ -779,9 +779,9 @@ class TomoClickTargetFinder(ClickTargetFinder):
 			for i in range(len(r)):
 				next_alias = r[i]['to node alias']
 				q = leginondata.NodeSpecData(application=appdata,alias=next_alias)
-				r = q.query()
-				if r:
-					for nextnodedata in r:
+				next_bound_r = q.query()
+				if next_bound_r:
+					for nextnodedata in next_bound_r:
 						if issubclass(noderegistry.getNodeClass(nextnodedata['class string']),next_class):
 							return nextnodedata
 					# next bound node is a filter.  Try again from there.
