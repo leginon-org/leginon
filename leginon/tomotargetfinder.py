@@ -105,7 +105,6 @@ class TomoClickTargetFinder(targetfinder.ClickTargetFinder):
 			if not r:
 				# no node bound by the binding
 				return None
-			print r
 			for i in range(len(r)):
 				next_alias = r[i]['to node alias']
 				q = leginondata.NodeSpecData(application=appdata,alias=next_alias)

@@ -236,7 +236,6 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		self.setStatus('processing')
 		# targetxys are target coordinates in x, y grouped by targetnames
 		targetxys = self.remote.targets.getInTargets()
-		print 'remote targets',targetxys
 
 		self.displayRemoteTargetXYs(targetxys)
 		preview_targets = self.panel.getTargetPositions('preview')
