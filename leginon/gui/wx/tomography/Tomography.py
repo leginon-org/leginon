@@ -1149,6 +1149,10 @@ class Panel2(Panel):
 	settingsdialogclass = SettingsDialog2
 	def __init__(self, *args, **kwargs):
 		Panel.__init__(self,*args, **kwargs)
+		self.toolbar.RemoveTool(leginon.gui.wx.ToolBar.ID_SIMULATE_TARGET)
+		self.toolbar.RemoveTool(leginon.gui.wx.ToolBar.ID_SIMULATE_TARGET_LOOP)
+		self.toolbar.RemoveTool(leginon.gui.wx.ToolBar.ID_SIMULATE_TARGET_LOOP_STOP)
+		self.toolbar.RemoveTool(leginon.gui.wx.ToolBar.ID_BROWSE_IMAGES)
 		
 	def addImagePanel(self):
 		self.viewer = TomoViewer.Viewer2(self, -1)
