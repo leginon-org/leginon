@@ -460,13 +460,13 @@ class Collection(object):
 			self.finalize()
 			raise Abort
 
-class Collection_2(Collection):
+class Collection2(Collection):
 	
 	def __init__(self):
-		super(Collection_2,self).__init__()
+		super(Collection2,self).__init__()
 		self.doPredict = None
 		self.trackingImg = None
-		self.correlator[2] = None								# tracking correlator used in Collection_2
+		self.correlator[2] = None								# tracking correlator used in Collection2
 		self.correlator[3] = None
 
 		self.istot = {0:{'x':[],'y':[]},1:{'x':[],'y':[]}} 		# accumulated image shift 	

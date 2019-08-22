@@ -528,25 +528,25 @@ class Prediction(object):
 			position[i] = self._leastSquaresXY(tilts[-n:], positions[-n:], tilt)
 		return position
 	
-class TiltSeries_2(TiltSeries):
+class TiltSeries2(TiltSeries):
 	def __init__(self):
-		super(TiltSeries_2,self).__init__()
+		super(TiltSeries2,self).__init__()
 
 	def getCurrentTiltGroup(self):
 		if self.tilt_groups:
 			return self.current_group
 		else:
-			newgroup = TiltGroup_2()
+			newgroup = TiltGroup2()
 			self.addTiltGroup(newgroup)
 			self.current_group = self.tilt_groups[-1]
 			return self.current_group
 
-class TiltGroup_2(TiltGroup):
+class TiltGroup2(TiltGroup):
 	'''
 	TiltGroup has a range of tilts.
 	'''
 	def __init__(self):
-		super(TiltGroup_2,self).__init__()
+		super(TiltGroup2,self).__init__()
 		self.pxs = []
 		self.pys = []
 	
@@ -557,10 +557,10 @@ class TiltGroup_2(TiltGroup):
 		self.pxs.append(px)						# predicted positions
 		self.pys.append(py)
 
-class Prediction_2(Prediction):
+class Prediction2(Prediction):
 	
 	def __init__(self):
-		super(Prediction_2,self).__init__()
+		super(Prediction2,self).__init__()
 		self.cutoff = None						# acceptable tolerance 
 		self.maxfitpoints = 10 					# maximum number of points to consider for fitting. has to be at least 3
 		
@@ -578,12 +578,12 @@ class Prediction_2(Prediction):
 		# override function comment out the next two lines guarantees a new tilt series. 
 		#if self.tilt_series_list and len(self.tilt_series_list[-1]) < 1:		
 		#	return
-		tilt_series = TiltSeries_2()
+		tilt_series = TiltSeries2()
 		self.addTiltSeries(tilt_series)
 
 	def newTiltGroup(self):
 		tilt_series = self.getCurrentTiltSeries()
-		tilt_group = TiltGroup_2()
+		tilt_group = TiltGroup2()
 		tilt_series.addTiltGroup(tilt_group)
 		
 	def addPosition(self, tilt, position, predicted = None):
@@ -806,7 +806,7 @@ if __name__ == "__main__":
 						{'x': 975.676954, 'y': 85.903463}]
 
 
-	pred = Prediction_2()
+	pred = Prediction2()
 	pred.setcutoff(cutoff)
 	#pred.set_maxfitpoints(maxfitpoints)
 	

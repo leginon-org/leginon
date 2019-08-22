@@ -46,7 +46,7 @@ class Viewer(wx.Panel):
         self.Bind(EVT_IMAGE, self.onImage)
 
     def addOtherViewers(self):
-        # dummy function needed for Viewer_2    
+        # dummy function needed for Viewer2
         pass
 
     def onImage(self, evt):
@@ -119,19 +119,19 @@ class Viewer(wx.Panel):
             self.imageviewer1.setNumpy(image2)
             self.imageviewer2.setNumpy(image)
 
-class Viewer_2(Viewer):
+class Viewer2(Viewer):
     def __init__(self, *args, **kwargs):
-        super(Viewer_2,self).__init__(*args, **kwargs)
+        super(Viewer2,self).__init__(*args, **kwargs)
   
     def addOtherViewers(self):
         self.trackviewer1 = viewer.Viewer(self, -1)
         self.trackviewer2 = viewer.Viewer(self, -1)
-        self.xcviewer_2 = viewer.Viewer(self, -1)
+        self.xcviewer2 = viewer.Viewer(self, -1)
         
         self.trackviewers = (
             self.trackviewer1,
             self.trackviewer2,
-            self.xcviewer_2
+            self.xcviewer2
         )
 
         for v in self.trackviewers:

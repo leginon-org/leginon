@@ -565,13 +565,13 @@ class Panel(leginon.gui.wx.Acquisition.Panel):
 	def onResetTiltSeriesList(self, evt):
 		self.node.resetTiltSeriesList()
 
-class SettingsDialog_2(leginon.gui.wx.Acquisition.SettingsDialog):
+class SettingsDialog2(leginon.gui.wx.Acquisition.SettingsDialog):
 	def initialize(self):
 		scrolling = not self.show_basic
-		return ScrolledSettings_2(self,self.scrsize,scrolling,self.show_basic)
+		return ScrolledSettings2(self,self.scrsize,scrolling,self.show_basic)
 
 	
-class ScrolledSettings_2(ScrolledSettings):
+class ScrolledSettings2(ScrolledSettings):
 
 	def addTomoBasicSettings(self):
 		tracksb = wx.StaticBox(self, -1, 'Track')
@@ -1145,13 +1145,13 @@ class ScrolledSettings_2(ScrolledSettings):
 		choices = ['sequential','alternate','swing']
 		return choices
 
-class Panel_2(Panel):
-	settingsdialogclass = SettingsDialog_2
+class Panel2(Panel):
+	settingsdialogclass = SettingsDialog2
 	def __init__(self, *args, **kwargs):
 		Panel.__init__(self,*args, **kwargs)
 		
 	def addImagePanel(self):
-		self.viewer = TomoViewer.Viewer_2(self, -1)
+		self.viewer = TomoViewer.Viewer2(self, -1)
 		self.szmain.Add(self.viewer, (1, 0), (1, 1), wx.EXPAND)
 
 

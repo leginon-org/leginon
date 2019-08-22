@@ -156,7 +156,7 @@ class Exposure:
             raise ValueError
         return min(exposures), max(exposures)
 
-class Exposure_2(Exposure):
+class Exposure2(Exposure):
     
     def __init__(self, total_dose=0.0, tilts=[], dose=0.0, exposure=0.0,
                        exposure_min=None, exposure_max=None, fixed_exposure=False):

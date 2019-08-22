@@ -687,8 +687,8 @@ class Tomography(leginon.acquisition.Acquisition):
 		fit = result['min']
 		return delta_defocus, fit
 	
-class Tomography_2(Tomography):
-	settingsclass = leginon.leginondata.Tomography_2SettingsData
+class Tomography2(Tomography):
+	settingsclass = leginon.leginondata.Tomography2SettingsData
 	defaultsettings = dict(Tomography.defaultsettings)
 	defaultsettings.update({
 		'track preset': '',
@@ -697,7 +697,7 @@ class Tomography_2(Tomography):
 		'tolerance': 0.05,
 		'maxfitpoints': 10
 	})
-	panelclass = leginon.gui.wx.tomography.Tomography.Panel_2
+	panelclass = leginon.gui.wx.tomography.Tomography.Panel2
 
 	def __init__(self, *args, **kwargs):
 		Tomography.__init__(self, *args, **kwargs)
@@ -754,13 +754,13 @@ class Tomography_2(Tomography):
 				self.logger.info(s)
 
 	def getExposureObject(self):
-		return leginon.tomography.exposure.Exposure_2()
+		return leginon.tomography.exposure.Exposure2()
 			
 	def getPredictionObject(self):
-		return leginon.tomography.prediction.Prediction_2()
+		return leginon.tomography.prediction.Prediction2()
 	
 	def getCollectionObject(self,target):
-		collect = leginon.tomography.collection.Collection_2()
+		collect = leginon.tomography.collection.Collection2()
 		offsetdata = self.researchTargetOffset(target['list'])
 		if offsetdata:
 			collect.offset = offsetdata

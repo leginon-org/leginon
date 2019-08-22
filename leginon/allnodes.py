@@ -102,8 +102,8 @@ noderegistry.registerNodeClass(TomoClickTargetFinder,classtype)
 from tomography.tomography import Tomography
 noderegistry.registerNodeClass(Tomography,classtype)
 
-from tomography.tomography import Tomography_2
-noderegistry.registerNodeClass(Tomography_2,classtype)
+from tomography.tomography import Tomography2
+noderegistry.registerNodeClass(Tomography2,classtype)
 
 from acquisition import Acquisition
 noderegistry.registerNodeClass(Acquisition,classtype)
