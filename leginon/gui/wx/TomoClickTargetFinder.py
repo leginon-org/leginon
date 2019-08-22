@@ -74,11 +74,28 @@ class TomoSettingsDialog(leginon.gui.wx.Settings.Dialog):
 
 class TomoScrolledSettings(leginon.gui.wx.TargetFinder.ScrolledSettings):
 
+
+    def addBasicSettings(self):
+      	#self.widgets['user check'] = wx.CheckBox(self, -1,
+        #                            'Allow for user verification of selected targets')
+    	  self.widgets['queue'] = wx.CheckBox(self, -1,
+                                                'Queue up targets')
+    	  #self.Bind(wx.EVT_CHECKBOX, self.onUserCheckbox, self.widgets['user check'])
+    	  self.Bind(wx.EVT_CHECKBOX, self.onQueueCheckbox, self.widgets['queue'])
+    	  sz = wx.GridBagSizer(5, 5)
+    	  #sz.Add(self.widgets['user check'], (0, 0), (1, 1),
+        #    	wx.ALIGN_CENTER_VERTICAL)
+    	  #sz.Add(self.widgets['wait for done'], (1, 0), (1, 1),
+        #        wx.ALIGN_CENTER_VERTICAL)
+    	  sz.Add(self.widgets['queue'], (1, 0), (1, 1),
+            	wx.ALIGN_CENTER_VERTICAL)
+    	  return sz
+
     def addSettings(self):
         #self.widgets['wait for done'] = wx.CheckBox(self, -1,
         #            'Wait for another node to process targets before marking them done')
-        self.widgets['user check'] = wx.CheckBox(self, -1,
-                                                                    'Allow for user verification of selected targets')
+        #self.widgets['user check'] = wx.CheckBox(self, -1,
+        #                                                            'Allow for user verification of selected targets')
         #checkmethodsz = self.createCheckMethodSizer()
         self.widgets['queue'] = wx.CheckBox(self, -1,
                                                                                             'Queue up targets')
@@ -105,15 +122,15 @@ class TomoScrolledSettings(leginon.gui.wx.TargetFinder.ScrolledSettings):
         self.widgets['stretch track beam'] = wx.CheckBox(self,-1,
                                                 'Stretch track beam size along tilt axis')
 
-        self.Bind(wx.EVT_CHECKBOX, self.onUserCheckbox, self.widgets['user check'])
+        #self.Bind(wx.EVT_CHECKBOX, self.onUserCheckbox, self.widgets['user check'])
         self.Bind(wx.EVT_CHECKBOX, self.onQueueCheckbox, self.widgets['queue'])
         self.Bind(wx.EVT_CHECKBOX, self.onAutoFocusTargetCheckbox,self.widgets['auto focus target'])
         self.Bind(leginon.gui.wx.Entry.EVT_ENTRY, self.onFocusTargetOffset,self.widgets['focus target offset'])
         self.Bind(leginon.gui.wx.Entry.EVT_ENTRY, self.onTrackTargetOffset,self.widgets['track target offset'])
 
         sz = wx.GridBagSizer(15, 15)
-        sz.Add(self.widgets['user check'], (0, 0), (1, 1),
-                        wx.ALIGN_CENTER_VERTICAL)
+        #sz.Add(self.widgets['user check'], (0, 0), (1, 1),
+        #                wx.ALIGN_CENTER_VERTICAL)
         #sz.Add(checkmethodsz, (1, 0), (1, 1),
         #                wx.ALIGN_CENTER_VERTICAL)
         #sz.Add(self.widgets['wait for done'], (1, 0), (1, 1),
