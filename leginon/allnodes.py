@@ -96,7 +96,7 @@ noderegistry.registerNodeClass(TargetFinder,classtype)
 from targetfinder import ClickTargetFinder
 noderegistry.registerNodeClass(ClickTargetFinder,classtype)
 
-from targetfinder import TomoClickTargetFinder
+from tomotargetfinder import TomoClickTargetFinder
 noderegistry.registerNodeClass(TomoClickTargetFinder,classtype)
 
 from tomography.tomography import Tomography
