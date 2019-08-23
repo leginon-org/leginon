@@ -79,10 +79,17 @@ class TomoClickTargetFinder(targetfinder.ClickTargetFinder):
 			return (0.0,0.0)
 
 	def handleApplicationEvent(self,evt):
-		super(TomoClickTargetFinder,self).handleApplicationEvent(evt)
-		app = evt['application']
+		i = 0
+		# Try a few times because tomo node may not load fast enough
+		# and it really needs focus node.
+		while not self.next_acq_node and i < 10:
+			super(TomoClickTargetFinder,self).handleApplicationEvent(evt)
+			i += 1
+			time.sleep(1.0)
 		if not self.next_acq_node:
-			self.logger.Error('next_acq_node unknown')
+			self.logger.error('next_acq_node unknown')
+			return
+		app = evt['application']
 		# get focus node used for getting beam parameters
 		self.focus_node = self.getFocusNodeThruBinding(app,self.next_acq_node['alias'],'ImageTargetListPublishEvent','Focuser')
 	
