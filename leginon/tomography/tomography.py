@@ -493,10 +493,13 @@ class Tomography(leginon.acquisition.Acquisition):
 						if model_error_limit < raw_correlation_binning:
 							model_error_limit = raw_correlation_binning
 						paramdict = predictinfo['predicted position']
-						if paramdict['phi']==0 and paramdict['optical axis']==0 and paramdict['z0']==0:
+						# If only Tomography2 tracking was run previously, models are not in paramdict
+						if 'phi' not in paramdict.keys():
 							continue
 						# Tomography2 tracking leaves these as None.  They are not useful
 						if paramdict['phi'] is None and paramdict['optical axis'] is None and paramdict['z0'] is None:
+							continue
+						if paramdict['phi']==0 and paramdict['optical axis']==0 and paramdict['z0']==0:
 							continue
 						cor = predictinfo['correlation']
 						dist = math.hypot(cor['x'],cor['y'])
