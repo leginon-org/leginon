@@ -638,7 +638,8 @@ class TomoTargetImagePanel(TargetImagePanel):
 					else:
 						raise Exception
 			else:
-				pass
+				x, y = self.view2image((evt.GetX(), evt.GetY()))
+				self.addTarget(self.selectedtype.name, x, y)
 			
 	#--------------------
 	def _onRightClick(self, evt):
@@ -652,16 +653,16 @@ class TomoTargetImagePanel(TargetImagePanel):
 					if self.selectedtype == self.selectedtarget.type:
 						self.clearFocusTargetMap()					# clear association
 						self.deleteTarget(self.selectedtarget)		# remove focus target
-			else:
-
-				if self.selectedtype == self.selectedtarget.type and self.selectedtype.name == 'acquisition':
+			elif self.selectedtype == self.selectedtarget.type:
+				if self.selectedtype.name == 'acquisition':
 					if self.isAutoFocus():							# only delete focus target if it belongs only to this target
 						focus_t = self.targetmap[self.selectedtarget]['focus']
 						self.deleteTarget(focus_t)
 					track_t = self.targetmap[self.selectedtarget]['track']
 					self.deleteTarget(track_t)
 					self.clearAcquitionTargetMap(self.selectedtarget)
-					self.deleteTarget(self.selectedtarget)
+				# any matched type. i.e., all except focus and track
+				self.deleteTarget(self.selectedtarget)
 					
 	#--------------------
 	def _onShiftRightClick(self, evt):
@@ -676,13 +677,15 @@ class TomoTargetImagePanel(TargetImagePanel):
 						self.clearFocusTargetMap()						# clear association
 						self.deleteTarget(self.selectedtarget)			# remove focus target
 			else:
-				if self.selectedtype == self.selectedtarget.type and self.selectedtype == 'acquisition':
-					self.clearTargetMap()
+				if self.selectedtype == self.selectedtarget.type:
+					if self.selectedtype.name == 'acquisition':
+						self.clearTargetMap()
+						self.clearTargetType(self.getTrackType())
+						if self.isAutoFocus() and self.getFocusType():	# TODO: this is sketchy
+							self.clearTargetType(self.getFocusType())
+					# any matched type. i.e., all except focus and track
 					self.clearTargetType(self.selectedtype)
-					self.clearTargetType(self.getTrackType())
-					if self.isAutoFocus() and self.getFocusType():	# TODO: this is sketchy
-						self.clearTargetType(self.getFocusType())
-	
+
 	def resetFocusTargets(self,state,offset):
 		# redraw focus targets
 		# (1) remove all targets
