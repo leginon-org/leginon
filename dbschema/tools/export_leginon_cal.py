@@ -181,6 +181,23 @@ class CalibrationJsonMaker(jsonfun.DataJsonMaker):
 			print 'Adding Phase Plate Beam Tilt Vectors for %s probe' % (probe)
 			self.publish(results)
 
+	def printBeamSizeQuery(self, probe):
+		if probe is None:
+			return
+		q = leginondata.BeamSizeCalibrationData(tem=self.tem)
+		q['probe mode'] = probe
+		results = q.query()
+		if results:
+			all_types = []
+			newest_type_results = []
+			for r in results:
+				key = '%d-%d' % (r['c2 size'],r['spot size'])
+				if key not in all_types:
+					all_types.append(key)
+					newest_type_results.append(r)
+			print 'Adding BeamSizeCalibration for %s probe' % (probe)
+			self.publish(newest_type_results)
+
 	def run(self):
 		mags = self.getMags()
 		print self.cam.dbid
@@ -199,6 +216,7 @@ class CalibrationJsonMaker(jsonfun.DataJsonMaker):
 			self.printRotationCenterQueries(mags,p)
 			self.printPPBeamTiltVectorsQuery(p)
 			self.printPPBeamTiltRotationQuery(p)
+			self.printBeamSizeQuery(p)
 		json_filename = 'cal_%s+%s+%s.json' % (self.tem['name'],self.cam['hostname'],self.cam['name'])
 		self.writeJsonFile(json_filename)
 
