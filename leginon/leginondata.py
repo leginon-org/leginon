@@ -676,6 +676,7 @@ class CameraImageData(ImageData):
 			('bright', BrightImageData),
 			('norm', NormImageData),
 			('use frames', tuple),
+			('denoised', bool), #used to default it to not denoised
 		)
 	typemap = classmethod(typemap)
 
