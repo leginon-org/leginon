@@ -399,7 +399,12 @@ function addAppionOverlays($leginondata,$img,$childinfo,$imginfo,$p) {
 		$diam_scalefactor = 1/$apix;
 		if (!$diam || $diam == $selectionparams['diam']) {
 			// apply scaling if not applied before
-			$diam = $selectionparams['diam'] * $diam_scalefactor;
+			if (!$selectionparams['diam']){
+				$diam = $particleinfo[0]['diameter'] * 10*$diam_scalefactor;
+			}
+			else {
+				$diam = $selectionparams['diam'] * $diam_scalefactor;
+			}
 		} elseif ($diam) {
 			$diam = $diam * $diam_scalefactor;
 		}
@@ -518,7 +523,7 @@ function getParticles($sessionId,$ptclsel,$newptcl,$imginfo,$binning) {
 		$particleinfo=$particledata->getParticlesFromImageId($particlerun, $imginfo['imageId']);
 		list($selectionparams)=$particledata->getSelectionParams($particlerun);
 		if (!$diam) {
-			$diam = $selectionparams['diam'];
+			$diam = $selectionparams['diam'];		
 		}
 		$selectionparams['runId'] = $particlerun;
 		$labeldata=array();
