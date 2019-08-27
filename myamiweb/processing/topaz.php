@@ -880,7 +880,7 @@ function toggle(divID) {
 	}
 	echo $html;
 	//var_dump($_POST);
-if ($_SESSION['loggedin']) {
+//if ($_SESSION['loggedin']) {
 	if ($_POST['process']) {
 		if (isset($_POST['preprocess'])){
 			$command = "runTopaz.py topaz preprocess ";
@@ -899,7 +899,7 @@ if ($_SESSION['loggedin']) {
 			$errors = submitJob($command);
 			if ($errors) {
 				echo '<script> $(document).ready(function() { popenTab("Preprocessing"); });</script>';
-				echo "<center><h4>Error Submitted Preprocessing Job: ".$errors."</h4></center>";
+				echo "<center><h4>".$errors."</h4></center>";
 			}
 			else {
 				echo '<script> $(document).ready(function() { popenTab("Picking"); });</script>';
@@ -940,6 +940,7 @@ if ($_SESSION['loggedin']) {
 			$command .= $_POST['trainimages2'];
 			$command .= ' --train-targets '.$_POST['traintargets2'];
 			$command .= ' --output '.$_POST['output2'].'results.txt';
+			$command .= ' --save-prefix '.$_POST['output2'];
 			$command .= ' --radius '.$_POST['radius2'];
 			$command .= ' --autoencoder '.$_POST['autoencoder2'];
 			$command .= ' --num-epochs '.$_POST['numepochs2'];
@@ -965,15 +966,14 @@ if ($_SESSION['loggedin']) {
 			$path_parts = pathinfo($_POST['output2']);
 			$_POST['runname'] = $path_parts['basename'];
 			$_POST['outdir'] = $path_parts['dirname'];
-			$_POST['queue'] = 'gpu';
 			$errors = submitJob($command);
 			if ($errors) {
 				echo '<script> $(document).ready(function() { popenTab("Training"); });</script>';
-				echo "<center><h4>Error Submitted Training Job: ".$errors."</h4></center>";
+				echo "<center><h4>".$errors."</h4></center>";
 			}
 			else {
 				echo '<script> $(document).ready(function() { popenTab("Extracting"); });</script>';
-				echo "<center><h4>Submitted Training Job</h4></center>";
+				echo "<center><h4>Submitted Training Job</h4><br><h4>Hit Enter in URL bar and select Extract when the training job is complete.</h4></center>";
 				$inputCount =  count(glob($_POST['input1']));
 				for ($x = 0; $x <= 100; $x++) {
 					$fileList = glob($_POST['output2']."*");
@@ -986,9 +986,35 @@ if ($_SESSION['loggedin']) {
 				}
 			}
 		}
+		elseif (isset($_POST['extract'])){
+			$command = "runTopaz.py topaz extract ";
+			$command .= $_POST['input4'];
+			$command .= ' --model '.$_POST['model4'];
+			$command .= ' --radius '.$_POST['radius4'];
+			$command .= ' --output '.$_POST['output4'];
+			$command .= ' --up-scale '.$_POST['upscale4'];
+			$command .= ' --num-workers '.$_POST['numworkers4'];
+			$command .= ' --device '.$_POST['device4'];
+			$command .= ' --threshold '.$_POST['threshold4'];
+			$command .= ' --min-radius '.$_POST['minradius4'];
+			$command .= ' --max-radius '.$_POST['maxradius4'];
+			$command .= ' --step-radius '.$_POST['stepradius4'];
+			$path_parts = pathinfo($_POST['output4']);
+			$_POST['runname'] = "extract";
+			$_POST['outdir'] = $path_parts['dirname'];
+			$errors = submitJob($command);
+			echo '<script> $(document).ready(function() { popenTab("Extracting"); });</script>';
+			if ($errors) {
+
+				echo "<center><h4>".$errors."</h4></center>";
+			}
+			else {
+				//redirect
+			}
+		}
 		
 	}
-}
+//}
 	
 ?>
     <!--
@@ -1780,7 +1806,8 @@ echo "</form>\n";
 	  <tr title="Path to input micrographs for training (type: string; full path)"><td><hl2><span><font size="3" color="white">Training images folder</font></span></hl2></td><td><input id="trainimages2" name="trainimages2" class="training_inputs" style="width:30em" value="<?php  echo $output1?>"></td></tr>
 	  <tr title="Training particles in CSV, star, or tab-delimited format (type: string; full file path)"><td><hl2><span><font size="3" color="white">Training particles</font></span></hl2></td><td><input id="traintargets2" name="traintargets2" class="training_inputs" style="width:30em" value="<?php  echo $picks_dest?>"></td></tr>
 	  <tr title="Output folder to write the train/test curve and models for each epoch (type: string; full file path)"><td><hl2><span><font size="3" color="white">Output</font></span></hl2></td><td><input id="output2" name="output2" class="training_inputs" style="width:30em" value="<?php  echo $output2?>"></td></tr>
-	  <tr title="Pixel radius around particle centers to consider (type: integer)"><td><hl4><span><font size="3" color="white">Particle radius</font></span></hl4></td><td><input id="radius2" name="radius2" class="training_inputs" style="width:3em" value="3"></td></tr>
+	  <tr title="Queue"><td><hl4><span><font size="3" color="white">Queue</font></span></hl4></td><td><input id="queue2" name="queue" class="training_inputs" style="width:3em" value="gpu1"></td></tr>
+	  <tr title="Pixel radius around particle centers to consider (type: integer)"><td><hl4><span><font size="3" color="white">Particle radius</font></span></hl4></td><td><input id="radius2" name="radius2" class="training_inputs" style="width:3em" value="3"></td></tr>	
 	  <tr title="Augment the method with an autoencoder where the weight is on the reconstruction error (type: float)"><td><hl4><span><font size="3" color="white">Autoencoder</font></span></hl4></td><td><input id="autoencoder2" name="autoencoder2" class="training_inputs" style="width:3em" value="0"></td></tr>
 	  <tr title="Number of training epochs (type: integer)"><td><hl4><span><font size="3" color="white">Number of epochs</font></span></hl4></td><td><input id="numepochs2" name="numepochs2" class="training_inputs" style="width:3em" value="10"></td></tr>
 	  <tr title="Device to use for processing. Non-negative numbers correspond to GPU IDs. Negative numbers correspond to CPU extraction (type: integer)"><td><hl4><span><font size="3" color="white">GPU/CPU Device</font></span></hl4></td><td><input id="device2" name="device2" class="training_inputs" style="width:3em" value="0"></td></tr>
@@ -1794,7 +1821,7 @@ echo "</form>\n";
 		<div class="content">
 		  <table style="height:23.5em">
 		  <tr title="Which fold out the k-folds will be used as the test dataset (type: integer)"><td><hl8><span><font size="3" color="white">Fold</font></span></hl8></td><td><input id="fold2" name="fold2" class="training_inputs" style="width:3em" value="0"></td></tr>
-		  <tr title="Sets the image extension if loading images from (options: .mrc, .tiff, or .png; include the '.') (type: string)"><td><hl8><span><font size="3" color="white">Image extension</font></span></hl8></td><td><input id="imageext2" name="imageext2" class="training_inputs" style="width:3em" value=".png></td></tr>
+		  <tr title="Sets the image extension if loading images from (options: .mrc, .tiff, or .png; include the '.') (type: string)"><td><hl8><span><font size="3" color="white">Image extension</font></span></hl8></td><td><input id="imageext2" name="imageext2" class="training_inputs" style="width:3em" value=".png"></td></tr>
 		  <tr title="Number of units model parameter (type: integer)"><td><hl8><span><font size="3" color="white">Units</font></span></hl8></td><td><input id="units2" name="units2" class="training_inputs" style="width:3em" value="32"></td></tr>
 		  <tr title="Dropout rate model parameter (type: float)"><td><hl8><span><font size="3" color="white">Dropout</font></span></hl8></td><td><input id="dropout2" name="dropout2" class="training_inputs" style="width:3em" value="0.0"></td></tr>
 		  <tr title="Use batch norm in the model (type: on/off)"><td><hl8><span><font size="3" color="white">Batch norm</font></span></hl8></td><td><input id="bn2" name="bn2" class="training_inputs" style="width:3em" value="on"></td></tr>
@@ -1811,7 +1838,7 @@ echo "</form>\n";
 		</span>
 	  <br/><br/><strong>Command:</strong><br/><hr width="20%"><br>
 	  <code><span id="cmd_copy2" class="tab0"><div id="result2" style="display: inline-block; border: none; max-width: 90%; background-color: white; padding: 6px; border-radius: 10px;">
-	  topaz train --train-images <?php echo $output1?> --train-targets <?php  echo $picks_dest?> --k-fold 5 --fold 0 --radius 3 --model resnet8 --image-ext .png --units 32 --dropout 0.0 --bn on --unit-scaling 2 --ngf 32 --method GE-binomial --autoencoder 0 --num-particles 300 --l2 0 --learning-rate 0.0002 --minibatch-size 256 --minibatch-balance 0.0625 --epoch-size 5000 --num-epochs 10 --num-workers -1 --test-batch-size 1 --device 0 --save-prefix <?php echo $output2?>model --output <?php echo $output2?>results.txt
+	  topaz train --train-images <?php echo $output1?> --train-targets <?php  echo $picks_dest?> --k-fold 5 --fold 0 --radius 3 --model resnet8 --image-ext .png --units 32 --dropout 0.0 --bn on --unit-scaling 2 --ngf 32 --method GE-binomial --autoencoder 0 --num-particles 300 --l2 0 --learning-rate 0.0002 --minibatch-size 256 --minibatch-balance 0.0625 --epoch-size 5000 --num-epochs 10 --num-workers -1 --test-batch-size 1 --device 0 --save-prefix <?php echo $output2?> --output <?php echo $output2?>results.txt
 	  </div></span></code>
 <?php 
 echo '<input type="hidden" name="train" value=""/>';
@@ -1863,6 +1890,7 @@ echo "</form>\n";
 		</ul>
         </div> <!-- end of menubar -->
       </div> <!-- endof #top_panel -->
+<?php echo "<FORM NAME='preprocess' method='POST' ACTION='$formAction'>\n"; ?>      
 	  <span class="tab1"><table><tr><td><span class="extracting_logo"></span></td><td><h2>&nbsp&nbsp&nbspTopaz Picks Extraction Command Generator</h2></td></tr></table></span>
 	  <span class="tab2"><p style=line-height:1.3>Create commands for extracting and converting particle coordinates.
 	  <br><br><br><br><strong>Parameters:&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp</strong>
@@ -1871,21 +1899,23 @@ echo "</form>\n";
 	  <hl7><span style="-moz-user-select: none; -webkit-user-select: none; -ms-user-select:none; user-select:none;-o-user-select:none;" unselectable="on" onselectstart="return false;" onmousedown="return false;"><font size="2.25" color="white">Rarely modify</font></span></hl7></p>
 	  <hr width="20%">
 	  <br><table style="height:12.5em">
-	  <tr title="Input micrographs for extracting (type: string; full path with wildcard for mrc/tiff/png files)"><td><hl2><span><font size="3" color="white">Input micrographs</font></span></hl2></td><td><input id="input4" class="extracting_inputs" style="width:30em" value="/path/to/preprocessed/images/*.mrc"></td></tr>
-	  <tr title="Path to network model from training (type: string; full path)"><td><hl2><span><font size="3" color="white">Model</font></span></hl2></td><td><input id="model4" class="extracting_inputs" style="width:30em" value="/path/to/model_epoch##.sav"></td></tr>
-	  <tr title="Basename for output files. A .star and a Topaz .txt file will be written (type: string; full file path without extension)"><td><hl2><span><font size="3" color="white">Output filenames</font></span></hl2></td><td><input id="output4" class="extracting_inputs" style="width:30em" value="/path/to/extracted/particles"></td></tr>
-	  <tr title="Pixel radius of the region to extract (type: integer)"><td><hl4><span><font size="3" color="white">Particle radius</font></span></hl4></td><td><input id="radius4" class="extracting_inputs" style="width:3em" value="8"></td></tr>
-	  <tr title="Upscale the pick coordinates by this factor. '1' means no scaling (type: integer)"><td><hl4><span><font size="3" color="white">Upscale picks</font></span></hl4></td><td><input id="upscale4" class="extracting_inputs" style="width:3em" value="1"></td></tr>
-	  <tr title="Number of CPU cores to use for extraction. -1 means use all CPUs (type: integer)"><td><hl4><span><font size="3" color="white">Number of CPUs</font></span></hl4></td><td><input id="numworkers4" class="extracting_inputs" style="width:3em" value="-1"></td></tr>
-	  <tr title="Device to use for processing. Non-negative numbers correspond to GPU IDs. Negative numbers correspond to CPU extraction (type: integer)"><td><hl4><span><font size="3" color="white">GPU/CPU Device</font></span></hl4></td><td><input id="device4" class="extracting_inputs" style="width:3em" value="0"></td></tr>
+	  <tr title="Input micrographs for extracting (type: string; full path with wildcard for mrc/tiff/png files)"><td><hl2><span><font size="3" color="white">Input micrographs</font></span></hl2></td><td><input id="input4" name="input4" class="extracting_inputs" style="width:30em" value="<?php  echo $output1?>*.mrc"></td></tr>
+	  <tr title="Path to network model from training (type: string; full path)"><td><hl2><span><font size="3" color="white">Model</font></span></hl2></td><td><input id="model4" name="model4" class="extracting_inputs" style="width:30em" 
+	  value="<?php $fileList = glob($output2."*.sav"); natsort($fileList);  echo end($fileList)?>"></td></tr>
+	  <tr title="Basename for output files. A .star and a Topaz .txt file will be written (type: string; full file path without extension)"><td><hl2><span><font size="3" color="white">Output filenames</font></span></hl2></td><td><input id="output4" name="output4" class="extracting_inputs" style="width:30em" value="<?php  echo $outDir?>particles"></td></tr>
+<tr title="Queue"><td><hl4><span><font size="3" color="white">Queue</font></span></hl4></td><td><input id="queue2" name="queue" class="training_inputs" style="width:3em" value="gpu1"></td></tr>
+	  <tr title="Pixel radius of the region to extract (type: integer)"><td><hl4><span><font size="3" color="white">Particle radius</font></span></hl4></td><td><input id="radius4" name="radius4" class="extracting_inputs" style="width:3em" value="8"></td></tr>
+	  <tr title="Upscale the pick coordinates by this factor. '1' means no scaling (type: integer)"><td><hl4><span><font size="3" color="white">Upscale picks</font></span></hl4></td><td><input id="upscale4" name="upscale4" class="extracting_inputs" style="width:3em" value="1"></td></tr>
+	  <tr title="Number of CPU cores to use for extraction. -1 means use all CPUs (type: integer)"><td><hl4><span><font size="3" color="white">Number of CPUs</font></span></hl4></td><td><input id="numworkers4" name="numworkers4" class="extracting_inputs" style="width:3em" value="-1"></td></tr>
+	  <tr title="Device to use for processing. Non-negative numbers correspond to GPU IDs. Negative numbers correspond to CPU extraction (type: integer)"><td><hl4><span><font size="3" color="white">GPU/CPU Device</font></span></hl4></td><td><input id="device4" name="device4" class="extracting_inputs" style="width:3em" value="0"></td></tr>
 	  </table>
 	  <br><section><details><summary class="collapsibleoptions" style="-moz-user-select: none; -webkit-user-select: none; -ms-user-select:none; user-select:none;-o-user-select:none;" unselectable="on" onselectstart="return false;" onmousedown="return false;">Advanced options</summary></br>
 		<div class="content">
 		  <table style="height:7.2em">
-		  <tr title="Lower Topaz score threshold for extraction (type: float)"><td><hl8><span><font size="3" color="white">Threshold</font></span></hl8></td><td><input id="threshold4" class="extracting_inputs" style="width:3em" value="0.5"></td></tr>
-		  <tr title="Minimum radius for region extraction when tuning the radius parameter (type: integer)"><td><hl8><span><font size="3" color="white">Minimum radius</font></span></hl8></td><td><input id="minradius4" class="extracting_inputs" style="width:3em" value="5"></td></tr>
-		  <tr title="Maximum radius for region extraction when tuning the radius parameter (type: integer)"><td><hl8><span><font size="3" color="white">Maximum radius</font></span></hl8></td><td><input id="maxradius4" class="extracting_inputs" style="width:3em" value="100"></td></tr>
-		  <tr title="Grid size when searching for optimal radius parameter (type: integer)"><td><hl8><span><font size="3" color="white">Step radius</font></span></hl8></td><td><input id="stepradius4" class="extracting_inputs" style="width:3em" value="5"></td></tr>
+		  <tr title="Lower Topaz score threshold for extraction (type: float)"><td><hl8><span><font size="3" color="white">Threshold</font></span></hl8></td><td><input id="threshold4" name="threshold4" class="extracting_inputs" style="width:3em" value="0.5"></td></tr>
+		  <tr title="Minimum radius for region extraction when tuning the radius parameter (type: integer)"><td><hl8><span><font size="3" color="white">Minimum radius</font></span></hl8></td><td><input id="minradius4" name="minradius4" class="extracting_inputs" style="width:3em" value="5"></td></tr>
+		  <tr title="Maximum radius for region extraction when tuning the radius parameter (type: integer)"><td><hl8><span><font size="3" color="white">Maximum radius</font></span></hl8></td><td><input id="maxradius4" name="maxradius4" class="extracting_inputs" style="width:3em" value="100"></td></tr>
+		  <tr title="Grid size when searching for optimal radius parameter (type: integer)"><td><hl8><span><font size="3" color="white">Step radius</font></span></hl8></td><td><input id="stepradius4" name="stepradius4"  class="extracting_inputs" style="width:3em" value="5"></td></tr>
 		  </table>
 		</details></summary>
 		</span>
@@ -1894,6 +1924,17 @@ echo "</form>\n";
 	  topaz extract /path/to/preprocessed/images/*.mrc --model /path/to/model_epoch##.sav --radius 8 --threshold 0.5 --up-scale 1 --min-radius 5 --max-radius 100 --step-radius 5 --num-workers -1 --device 0 --output /path/to/extracted/particles.txt<br><br>
 	  topaz convert /path/to/extracted/particles.txt --verbose 1 --output /path/to/extracted/particles.star
 	  </div></span></code>
+<?php 
+echo '<input type="hidden" name="extract" value=""/>';
+if ($_SESSION['loggedin']) {
+	echo '<center><input type="submit" name="process" value="Extract"></center>';
+}
+else {
+	echo "<center>Login to Submit This Job</center>";
+}
+echo "</form>\n";
+?>	  
+
 	  </div>
 	</div>
 
