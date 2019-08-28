@@ -461,8 +461,16 @@ function format_nano_number($data) {
 	return number_format(($data/1e-9), 3,'.','').' nm';
 }
 
+function format_reciprocal_nano_number($data) {
+	return number_format(($data/1e-9), 3,'.','').' nm<sup>-1</sup>';
+}
+
 function format_angstrom_number($data) {
 	return number_format(($data/1e-10), 2,'.','').' &Aring;';
+}
+
+function format_reciprocal_angstrom_number($data) {
+	return number_format(($data/1e-8), 2,'.','').' &Aring;<sup>-1</sup>';
 }
 
 function formatnumber2decimal($number) {

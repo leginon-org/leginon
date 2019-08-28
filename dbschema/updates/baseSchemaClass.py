@@ -233,6 +233,10 @@ class SchemaUpdate(object):
 		upgradedb = self.getUpgradeDB(sinedon_module_name)
 		upgradedb.addColumn(class_name, key, upgradedb.bool)
 
+	def addFloatColumn(self, sinedon_module_name, class_name, key):
+		upgradedb = self.getUpgradeDB(sinedon_module_name)
+		upgradedb.addColumn(class_name, key, upgradedb.float)
+
 if __name__ == "__main__":
 	update = SchemaUpdate(backup=False)
 	update.run()

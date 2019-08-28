@@ -1971,6 +1971,9 @@ class particledata {
 				."left join ApSelectionRunData r on (s.`DEF_id` = r.`REF|ApTiltAlignParamsData|tiltparams`) ";
 			$type = "Tilt Picker";
 		}
+		else{
+			$type=$r['program'];
+		}
 		$q .= "LEFT JOIN ApPathData AS path "
 			." ON (path.`DEF_id` = r.`REF|ApPathData|path`) ";
 

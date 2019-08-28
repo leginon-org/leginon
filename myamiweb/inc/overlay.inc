@@ -23,12 +23,12 @@ class imageOverlay {
 		$this->red = imagecolorallocate($this->img, 255,0,0);
 	}
 
-	function addScaleBar($pixelsize,$xyDim) {
+	function addScaleBar($pixelsize,$xyDim, $is_diffraction=false) {
 		if ($pixelsize) {
 			$size = ($xyDim[0]) ? $xyDim[0]: 1;
 			$value = $pixelsize;
 			$imgheight = $xyDim[1];
-			$scalebar = new ScaleBar($this->img, $size, $value, $imgheight);
+			$scalebar = new ScaleBar($this->img, $size, $value, $imgheight, $is_diffraction);
 			$scalebar->display();
 		}
 	}

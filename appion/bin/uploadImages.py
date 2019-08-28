@@ -63,6 +63,14 @@ class UploadImages(appionScript.AppionScript):
 			help="normalization image to apply to each upload")
 		self.parser.add_option("--dark", dest="darkimg", type="string", metavar="PATH",
 			help="dark image to apply to each upload frame")
+		# option: give sessionname
+		self.parser.add_option("--session", dest="sessionname", type="string", metavar="NAME",
+			help="session name")
+		# link to parent image
+		self.parser.add_option("--parentid", dest="target_parent", type="int", metavar="ID",
+			help="parent image id in the session to link to as a target")
+		self.parser.add_option("--presetimgid", dest="preset_imgid", type="int", metavar="ID",
+			help="An image id in the session to propogate imaging condition on instead of Appion Instrument")
 
 	#=====================
 	def checkConflicts(self):
@@ -72,14 +80,15 @@ class UploadImages(appionScript.AppionScript):
 			apDisplay.printError("Please provide a image directory, e.g., --imagedir=/path/to/files/")
 			if not os.path.isdir(self.params['imagedir']):
 				apDisplay.printError("Image directory '%s' does not exist"%(self.params['imagedir']))
-		if self.params['kv'] is None:
-			apDisplay.printError("Please provide a high tension (in kV), e.g., --kv=120")
-			if self.params['kv'] > 1000:
-				apDisplay.printError("High tension must be in kilovolts (e.g., --kv=120)")
-		if self.params['magnification'] is None:
-			apDisplay.printError("Please provide a magnification, e.g., --mag=50000")		
-		if self.params['mpix'] is None:
-			apDisplay.printError("Please provide a pixel size (in meters), e.g., --pixelsize=1.3e-10")
+		if self.params['preset_imgid'] is None:
+			if self.params['kv'] is None:
+				apDisplay.printError("Please provide a high tension (in kV), e.g., --kv=120")
+				if self.params['kv'] > 1000:
+					apDisplay.printError("High tension must be in kilovolts (e.g., --kv=120)")
+			if self.params['magnification'] is None:
+				apDisplay.printError("Please provide a magnification, e.g., --mag=50000")		
+			if self.params['mpix'] is None:
+				apDisplay.printError("Please provide a pixel size (in meters), e.g., --pixelsize=1.3e-10")
 
 		### series only valid with non-normal uploads
 		if self.params['seriessize'] is None and self.params['uploadtype'] != "normal":
@@ -116,8 +125,11 @@ class UploadImages(appionScript.AppionScript):
 			if len(self.defocuslist) != self.params['seriessize']:
 				apDisplay.printError("'images-per-tilt-series' and 'defocus-list' have different lengths")
 
+		if self.params['defocus'] == 0:
+			# ok if use 0.0 or 0
+			pass
 		### check for negative defoci
-		if self.params['defocus'] is not None and self.params['defocus'] > 0:
+		elif self.params['defocus'] is not None and self.params['defocus'] > 0:
 			apDisplay.printWarning("defocus is being switched to negative, %.3f"
 				%(self.params['defocus']))
 			self.params['defocus'] *= -1.0
@@ -125,6 +137,7 @@ class UploadImages(appionScript.AppionScript):
 				apDisplay.printError("defocus must be in microns, %.3f"
 					%(self.params['defocus']))
 		elif self.params['defocus'] is None:
+			# use defocuslist
 			newlist = []
 			for defocus in self.defocuslist:
 				if defocus > 0:
@@ -139,6 +152,11 @@ class UploadImages(appionScript.AppionScript):
 		### set session name if undefined
 		if not 'sessionname' in self.params or self.params['sessionname'] is None:
 			self.params['sessionname'] = self.getUnusedSessionName()
+		if self.params['preset_imgid']:
+			# Validate that preset_image is in the session
+			in_session = self.isImageIdInSession(self.params['preset_imgid'], self.params['sessionname'])
+			if not in_session:
+				apDisplay.printError("Preset image must be in the session named %s " % (self.params['sessionname'],))
 
 		### set leginon dir if undefined
 		if self.params['leginondir'] is None:
@@ -185,6 +203,16 @@ class UploadImages(appionScript.AppionScript):
 		return userdatas[0]
 
 	#=====================
+	def isImageIdInSession(self, imageid, sessionname):
+		r = leginon.leginondata.SessionData(name=sessionname).query()
+		if r:
+			image = leginon.leginondata.AcquisitionImageData().direct_query(imageid)
+			apDisplay.printColor('Preset image is set to %s' % (image['filename']),'cyan')
+			if image['session'].dbid == r[0].dbid:
+				return True
+		return False
+
+	#=====================
 	def getUnusedSessionName(self):
 		### get standard appion time stamp, e.g., 10jun30
 		sessionq = leginon.leginondata.SessionData()
@@ -204,6 +232,15 @@ class UploadImages(appionScript.AppionScript):
 			if not sessiondatas:
 				break
 		return sessionname
+
+	#=====================
+	def setSession(self):
+		if self.params['sessionname']:
+			r = leginon.leginondata.SessionData(name=self.params['sessionname']).query()
+			if r:
+				self.sessiondata = r[0]
+				return
+		self.createNewSession()
 
 	#=====================
 	def createNewSession(self):
@@ -241,7 +278,24 @@ class UploadImages(appionScript.AppionScript):
 		self.params['rundir'] = self.leginonimagedir
 
 	#=====================
-	def getAppionInstruments(self):
+	def setPresetImage(self):
+		if self.params['preset_imgid']:
+			# set instrument according to self.preset_image
+			self.preset_image = leginon.leginondata.AcquisitionImageData().direct_query(self.params['preset_imgid'])
+			return
+		return None
+
+	#=====================
+	def setInstruments(self):
+		if self.preset_image:
+			self.temdata = self.preset_image['scope']['tem']
+			self.camdata = self.preset_image['camera']['ccdcamera']
+			return
+		# set appion instruments
+		return self.setAppionInstruments()
+
+	#=====================
+	def setAppionInstruments(self):
 		instrumentq = leginon.leginondata.InstrumentData()
 		instrumentq['hostname'] = "appion"
 		instrumentq['name'] = "AppionTEM"
@@ -257,6 +311,7 @@ class UploadImages(appionScript.AppionScript):
 	#=====================
 	def getImagesInDirectory(self, directory):
 		searchstring = os.path.join(directory, "*.mrc")
+		apDisplay.printMsg("searching for %s" % searchstring)
 		mrclist = glob.glob(searchstring)
 		if len(mrclist) == 0:
 			apDisplay.printError("Did not find any images to upload")
@@ -308,7 +363,7 @@ class UploadImages(appionScript.AppionScript):
 
 		targetscopedata = self.makeScopeEMData()
 
-		### setup image data
+		### setup target parent image data
 		targetimgdata = leginon.leginondata.AcquisitionImageData()
 		targetimgdata['session'] = self.sessiondata
 		targetimgdata['scope'] = targetscopedata
@@ -332,6 +387,42 @@ class UploadImages(appionScript.AppionScript):
 		targetdata['number'] = seriescount
 		targetdata['status'] = "done"
 
+		return targetdata
+
+	#=====================
+	def linkTargetParent(self,parentimage):
+		'''
+		Include a fake target that links a parent image with the uploads.
+		All images are set as the same target
+		'''
+		if parentimage['session'].dbid != self.sessiondata.dbid:
+			apDisplay.printWarning('parent image not in session.  Will not link target to it')
+			return None
+		# get targetlist for parent
+		r = leginon.leginondata.ImageTargetListData(image=parentimage).query(results=1)
+		if not r:
+			return None
+		targetlist = r[0]
+		# get newest target number.  Usually there is no target in this list.
+		# otherwise won't be doing this.
+		r = leginon.leginondata.AcquisitionImageTargetData(list=targetlist).query()
+		newest_number = 0
+		for t in r:
+			if newest_number < t['number']:
+				newest_number = t['number']
+		### setup target data
+		targetdata = leginon.leginondata.AcquisitionImageTargetData()
+		targetdata['session'] = self.sessiondata
+		targetdata['image'] = parentimage
+		targetdata['scope'] = parentimage['scope']
+		targetdata['camera'] = parentimage['camera']
+		targetdata['preset'] = parentimage['preset']
+		targetdata['type'] = "acquisition"
+		targetdata['version'] = 0
+		targetdata['delta column'] = 0
+		targetdata['delta row'] = 0
+		targetdata['number'] = newest_number + 1
+		targetdata['status'] = "done"
 		return targetdata
 
 	#=====================
@@ -381,12 +472,16 @@ class UploadImages(appionScript.AppionScript):
 	#=====================
 	def uploadImageInformation(self, imagearray, newimagepath, dims, seriescount, numinseries, nframes):
 		### setup scope data
-		scopedata = leginon.leginondata.ScopeEMData()
-		scopedata['session'] = self.sessiondata
-		scopedata['tem'] = self.temdata
-		scopedata['magnification'] = self.params['magnification']
-		scopedata['high tension'] = self.params['kv']*1000
-
+		if not self.preset_image:
+			scopedata = leginon.leginondata.ScopeEMData()
+			scopedata['session'] = self.sessiondata
+			scopedata['tem'] = self.temdata
+			scopedata['magnification'] = self.params['magnification']
+			scopedata['high tension'] = self.params['kv']*1000
+		else:
+			scopedata = leginon.leginondata.ScopeEMData(initializer=self.preset_image['scope'])
+			# update system time to now so they are shown in order of upload.
+			scopedata['system time'] = time.time()
 		### these are dynamic variables
 		scopedata['defocus'] = self.getImageDefocus(numinseries)
 		scopedata['stage position'] = {
@@ -399,22 +494,33 @@ class UploadImages(appionScript.AppionScript):
 			scopedata['stage position']['phi'] = self.params['azimuth']
 
 		### setup camera data
-		cameradata = leginon.leginondata.CameraEMData()
+		if not self.preset_image:
+			cameradata = leginon.leginondata.CameraEMData()
+			cameradata['binning'] = {'x': 1, 'y': 1}
+			cameradata['frame time'] = 100.0
+		else:
+			cameradata = leginon.leginondata.CameraEMData(initializer=self.preset_image['camera'])
 		cameradata['session'] = self.sessiondata
 		cameradata['ccdcamera'] = self.camdata
 		cameradata['dimension'] = dims
-		cameradata['binning'] = {'x': 1, 'y': 1}
 		cameradata['save frames'] = (nframes > 1)
 		cameradata['nframes'] = nframes
-		cameradata['frame time'] = 100.0
-		cameradata['exposure time'] = cameradata['frame time'] * nframes
+		if cameradata['frame time']:
+			cameradata['exposure time'] = cameradata['frame time'] * nframes
 
 		### setup camera data
-		presetdata = leginon.leginondata.PresetData()
+		if self.preset_image and self.preset_image['preset']:
+			presetdata = leginon.leginondata.PresetData(initializer=self.preset_image['preset'])
+		else:
+			presetdata = leginon.leginondata.PresetData()
 		presetdata['session'] = self.sessiondata
 		presetdata['tem'] = self.temdata
 		presetdata['ccdcamera'] = self.camdata
-		presetdata['magnification'] = self.params['magnification']
+		if not self.preset_image:
+			presetdata['magnification'] = self.params['magnification']
+		else:
+			presetdata['magnification'] = self.preset_image['scope']['magnification']
+
 		try:
 			self.params['doseliststr']
 			presetdata['dose'] = self.getDose(numinseries)*(10**20)
@@ -442,8 +548,12 @@ class UploadImages(appionScript.AppionScript):
 		### use real imagearray to ensure that file is saved before database insert
 		imgdata['image'] = imagearray
 
-		### use this for defocal group data
-		imgdata['target'] = self.setDefocalTargetData(seriescount)
+		if self.params['target_parent']:
+			parentimage = leginon.leginondata.AcquisitionImageData().direct_query(self.params['target_parent'])
+			imgdata['target'] = self.linkTargetParent(parentimage)
+		else:
+			### use this for defocal group data
+			imgdata['target'] = self.setDefocalTargetData(seriescount)
 
 		### use this for tilt series data
 		imgdata['tilt series'] = self.getTiltSeries(seriescount)
@@ -462,6 +572,10 @@ class UploadImages(appionScript.AppionScript):
 		instruments before the image is published.  Later query will look up the
 		pixelsize calibration closest and before the published image 
 		"""
+		if self.preset_image:
+			# no need to update
+			apDisplay.printWarning('Using preset image pixel size')
+			return False
 		pixelcalibrationq = leginon.leginondata.PixelSizeCalibrationData()
 		pixelcalibrationq['magnification'] = self.params['magnification']
 		pixelcalibrationq['tem'] = self.temdata
@@ -579,11 +693,14 @@ class UploadImages(appionScript.AppionScript):
 		"""
 		Initialization of variables
 		"""
+		# reference data for gain/dark correction
 		self.refdata = {}
-		### try and get the appion instruments
-		self.getAppionInstruments()
-		### create new session, so we have a place to store the log file
-		self.createNewSession()
+		# imagedata to base scope and camera data on
+		self.setPresetImage()
+		### try and get the appion instruments unless base_preset is set
+		self.setInstruments()
+		### create new session or set old session,
+		self.setSession()
 		# For gain/dark corrections
 		self.c_client = apDBImage.ApCorrectorClient(self.sessiondata,True)
 

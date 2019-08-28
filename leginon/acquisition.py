@@ -456,10 +456,12 @@ class Acquisition(targetwatcher.TargetWatcher):
 		'''
 		Send align ZLP  request
 		'''
+		self.setStatus('waiting')
 		request_data = leginondata.AlignZeroLossPeakData()
 		request_data['session'] = self.session
 		request_data['preset'] = preset_name
 		self.publish(request_data, database=True, pubevent=True, wait=True)
+		self.setStatus('processing')
 
 	def measureScreenCurrent(self, preset_name): 
 		'''
@@ -760,6 +762,12 @@ class Acquisition(targetwatcher.TargetWatcher):
 					# Give presetsclient time to unlock navigator changePreset request
 					time.sleep(0.5)
 			self.presetsclient.toScope(presetname, emtarget, keep_shift=keep_shift)
+			try:
+				# Random defocus is set in presetsclient.  This is the easiestt
+				# way to get it.  Could be better.
+				self.intended_defocus = self.instrument.tem.Defocus - emtarget['delta z']
+			except:
+				self.intended_defocus = self.instrument.tem.Defocus
 			# DO this the second time give an effect of normalization. Removed defocus and beam shift hysteresis on Talos
 			if presetdata['tem']['hostname'] == 'talos-20taf2c':
 				self.presetsclient.toScope(presetname, emtarget, keep_shift=keep_shift)
@@ -1267,7 +1275,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		x = numpy.array(xlist)
 		y = numpy.array(ylist)
 		A = numpy.vstack([x,numpy.ones(len(x))]).T
-		return numpy.linalg.lstsq(A,y)[0]
+		return numpy.linalg.lstsq(A,y, rcond=-1)[0]
 
 	def publishImage(self, imdata):
 		self.publish(imdata, pubevent=True)

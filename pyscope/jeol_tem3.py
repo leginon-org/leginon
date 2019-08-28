@@ -816,7 +816,7 @@ class Jeol(tem.TEM):
 		else:
 			raise ValueError
     
-	def getDiffractionMode(self):
+	def getProjectionMode(self):
 		mode = ToTEM.GetFunctionMode()
 		if mode == 0:
 			return "imaging"
@@ -827,7 +827,7 @@ class Jeol(tem.TEM):
 		else:
 			raise SystemError
 	
-	def setDiffractionMode(self, mode):
+	def setProjectionMode(self, mode):
 		if mode == "imaging":
 			ToTEM.SelectFunctionMode(0)
 		elif mode == "diffraction":

@@ -213,7 +213,7 @@ if (is_array($imageinfo)) {
 				echo formatHtmlRow($k, $leginondata->formatDefocus($v));
 			else if ($k=='pixelsize') {
 				$v *= $imageinfo['binning'];
-				echo formatHtmlRow($k, $leginondata->formatPixelsize($v));
+				echo formatHtmlRow($k, $leginondata->formatPixelsize($v, $imageinfo['is_diffraction']));
 			}
 			else if ($k=='dose') {
 				if (!empty($v))

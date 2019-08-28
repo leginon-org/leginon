@@ -36,6 +36,9 @@ SPECIAL_TRANSFORM = False
 class PresetChangeError(Exception):
 	pass
 
+class DataAccessError(Exception):
+	pass
+
 class CurrentPresetData(leginondata.Data):
 	def typemap(cls):
 		t = leginondata.Data.typemap()
@@ -266,6 +269,7 @@ class PresetsManager(node.Node):
 			'image':calibrationclient.ImageShiftCalibrationClient(self),
 			'stage':calibrationclient.StageCalibrationClient(self),
 			'beam':calibrationclient.BeamShiftCalibrationClient(self),
+			'diffraction':calibrationclient.DiffractionShiftCalibrationClient(self),
 			'beam tilt':calibrationclient.BeamTiltCalibrationClient(self),
 			'modeled stage':calibrationclient.ModeledStageCalibrationClient(self),
 			'beam size':calibrationclient.BeamSizeCalibrationClient(self),
@@ -665,14 +669,17 @@ class PresetsManager(node.Node):
 
 		self.logger.info(beginmessage)
 
-		if presetdata['tem'] is None:
-			message = 'Preset change failed: no TEM selected for this preset'
-			self.logger.error(message)
-			raise PresetChangeError(message)
-		if presetdata['ccdcamera'] is None:
-			message = 'Preset change failed: no CCD camera selection for this preset'
-			self.logger.error(message)
-			raise PresetChangeError(message)
+		try:
+			if presetdata['tem'] is None:
+				message = 'Preset change failed: no TEM selected for this preset'
+				self.logger.error(message)
+				raise PresetChangeError(message)
+			if presetdata['ccdcamera'] is None:
+				message = 'Preset change failed: no CCD camera selection for this preset'
+				self.logger.error(message)
+				raise PresetChangeError(message)
+		except DataAccessError as e:
+			raise PresetChangeError(e)
 		
 		if presetdata['tem']['name'] in self.instrument.getTEMNames():
 			try:
@@ -968,7 +975,8 @@ class PresetsManager(node.Node):
 			return
 		# refs #3255 retry if image shift or beam shift parameters are not gotten 
 		trys = 0
-		while trys < 3 and (newpreset['image shift']['x'] is None or newpreset['beam shift']['x'] is None):
+		# refs #7018 more layers of vailidation for diffraction shift for back compatibility.
+		while trys < 3 and (newpreset['image shift']['x'] is None or newpreset['beam shift']['x'] is None or ('diffraction shift' in newpreset.keys() and newpreset['diffraction shift'] is not None and newpreset['diffraction shift']['x'] is None)):
 			self.logger.info('scope parameters not complete, retry....')
 			newpreset = self._fromScope(newname, temname, camname, None, copybeam)
 			trys += 1
@@ -1005,11 +1013,12 @@ class PresetsManager(node.Node):
 		# dependent on HT
 		if ht is None:
 			message = 'Unknown (cannot get current high tension)'
-			modmagtime = beamtime = imagetime = stagetime = defocustime = message
+			modmagtime = beamtime = diffractiontime = imagetime = stagetime = defocustime = message
 		else:
 			stagetime = self.calclients['stage'].time(tem, cam, ht, mag, 'stage position')
 			imagetime = self.calclients['image'].time(tem, cam, ht, mag, 'image shift')
 			beamtime = self.calclients['beam'].time(tem, cam, ht, mag, 'beam shift')
+			diffractiontime = self.calclients['diffraction'].time(tem, cam, ht, mag, 'diffraction shift')
 			defocustime = self.calclients['beam tilt'].time(tem, cam, ht, mag, 'defocus',probe)
 			modmagtimex = self.calclients['modeled stage'].timeMagCalibration(tem, cam, ht,
 																																			mag, 'x')
@@ -1022,6 +1031,7 @@ class PresetsManager(node.Node):
 			'image shift': str(imagetime),
 			'stage': str(stagetime),
 			'beam': str(beamtime),
+			'diffraction': str(diffractiontime),
 			'modeled stage': str(modtime),
 			'modeled stage mag only': str(modmagtime),
 			'defocus': str(defocustime),
@@ -1182,7 +1192,8 @@ class PresetsManager(node.Node):
 		old_time = camdata0['exposure time']
 		self.old_time = old_time
 		new_time = old_time * dose_to_match / old_dose
-		if new_time > 5000.0 or new_time <= 1.0:
+		# maximal exposure time of Falcon3EC is now the limit
+		if new_time > 60000.0 or new_time <= 1.0:
 			self.logger.warning('Ignore unreasonable exposure time at %.1f ms' % float(new_time))
 			new_time = old_time
 
@@ -1192,9 +1203,11 @@ class PresetsManager(node.Node):
 
 	def calcDoseFromCameraDoseRate(self, presetname, camera_dose_rate, image_mean):
 		preset = self.presetByName(presetname)
-		time_second = preset['exposure time'] /1000.0
-		# TODO: need to handle binnings : SUM or AVERAGE.
-		# Falcon3 give values per frame not sum is also going to be a problem.
+		# Falcon3 non-counting mode gives values per frame not sum. Use through Leginon as per second.
+		intensity_averaged = self.instrument.ccdcamera.IntensityAveraged
+		time_second = 1.0
+		if not intensity_averaged:
+			time_second = preset['exposure time'] /1000.0
 		sensitivity = image_mean / (camera_dose_rate*time_second*preset['binning']['x']*preset['binning']['y'])
 		ht = self.instrument.tem.HighTension
 		self.dosecal.storeSensitivity(ht, sensitivity,tem=preset['tem'],ccdcamera=preset['ccdcamera'])
@@ -1539,6 +1552,11 @@ class PresetsManager(node.Node):
 		mystage = dict(emtargetdata['stage position'])
 		myimage = dict(emtargetdata['image shift'])
 		mybeam = dict(emtargetdata['beam shift'])
+		# TODO Find out when diffraction shift is or is not in emtargetdata
+		if 'diffraction shift' in emtargetdata.keys() and emtargetdata['diffraction shift']:
+			mydiffraction = dict(emtargetdata['diffraction shift'])
+		else:
+			mydiffraction = None
 
 ## This should be unnecessary if we have a check for minimum stage movement
 ## (currently in pyscope).  It was a way to prevent moving the stage between
@@ -1636,6 +1654,17 @@ class PresetsManager(node.Node):
 		else:
 			mybeam['x'] = newpreset['beam shift']['x']
 			mybeam['y'] = newpreset['beam shift']['y']
+		# diffraction shift 
+		if mydiffraction and emtargetdata['movetype'] == 'diffraction shift':
+			mydiffraction['x'] -= oldpreset['diffraction shift']['x']
+			mydiffraction['x'] += newpreset['diffraction shift']['x']
+			mydiffraction['y'] -= oldpreset['diffraction shift']['y']
+			mydiffraction['y'] += newpreset['diffraction shift']['y']
+		else:
+			if newpreset['diffraction shift']:
+				mydiffraction = {}
+				mydiffraction['x'] = newpreset['diffraction shift']['x']
+				mydiffraction['y'] = newpreset['diffraction shift']['y']
 
 		mymin = newpreset['defocus range min']
 		mymax = newpreset['defocus range max']
@@ -1651,6 +1680,7 @@ class PresetsManager(node.Node):
 		scopedata.friendly_update(newpreset)
 		scopedata['image shift'] = myimage
 		scopedata['beam shift'] = mybeam
+		scopedata['diffraction shift'] = mydiffraction
 		# Disable stage move if movetype does not requires it.
 		if self.settings['disable stage for image shift'] and  (emtargetdata['movetype'] == 'image beam shift' or emtargetdata['movetype'] == 'image shift'):
 				self.logger.info('disable stage movement')

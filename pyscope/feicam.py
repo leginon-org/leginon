@@ -53,6 +53,7 @@ def get_feiadv_sim():
 class FeiCam(ccdcamera.CCDCamera):
 	name = 'FEICAM'
 	camera_name = 'FEI_CAM'
+	intensity_averaged = False
 
 	def __init__(self):
 		self.unsupported = []
@@ -110,6 +111,9 @@ class FeiCam(ccdcamera.CCDCamera):
 
 	def getCameraModelName(self):
 		return self.camera_name
+
+	def getIntensityAveraged(self):
+		return self.intensity_averaged
 
 	def setDimension(self, value):
 		self.dimension = value
@@ -243,8 +247,6 @@ class FeiCam(ccdcamera.CCDCamera):
 		return {'x':binned_full_off['x']-limit_off['x']/self.binning['x'],'y':binned_full_off['x']-limit_off['y']/self.binning['y']}
 
 	def finalizeSetup(self):
-		# Default not to align
-		self.camera_settings.AlignImage = False
 		# final bin
 		binning = self.binning
 
@@ -293,6 +295,8 @@ class FeiCam(ccdcamera.CCDCamera):
 		self.csa.Wait()
 		if self.getDebugCamera():
 			print 'done waiting before acquire'
+		retry = False
+		reason = ''
 		try:
 			self.im = self.csa.Acquire()
 			t1 = time.time()
@@ -301,16 +305,23 @@ class FeiCam(ccdcamera.CCDCamera):
 			if self.getDebugCamera():
 				print 'Camera acquire:',e
 				print self.camera_settings.ExposureTime
-			if self.getAlignFrames() and self.getSaveRawFrames():
+			if self.getSaveRawFrames() and 'Timeout' in e.text:
+				# dose fractionation queue may timeout on the server. The next acquisition
+				# is independent enough that we allow it to retry.
+				reason = 'Falcon WaitForImageReady Timeout'
+				retry = True
+			if self.getAlignFrames() and self.getSaveRawFrames() and 'The parameter is incorrect' in e.text:
 				# dose fractionation definition range list is modified by the program.
 				#framecount = self.dfd.Count
 				#for i in range(framecount):
 				#	print '%d,%d' % (self.dfd[i].Begin, self.dfd[i].End)
+				reason='Parameter Correction for internal alignment'
+				retry = True
+			if retry == True:
 				try:
-					if 'The parameter is incorrect' in e.text:
-						self.im = self.csa.Acquire()
+					self.im = self.csa.Acquire()
 				except Exception, e:
-					raise RuntimeError('Error camera acquiring: %s' % (e,))
+					raise RuntimeError('Error camera acquiring after retry: %s--%s' % (reason,e,))
 			else:
 				raise RuntimeError('Error camera acquiring: %s' % (e,))
 		try:
@@ -363,6 +374,8 @@ class FeiCam(ccdcamera.CCDCamera):
 				print 'croping %s to offset %s and dim %s failed' %(self.limit_dim, self.readout_offset,self.dimension)
 			raise
 		# TO DO: Maybe need to scale ?
+		if SIMULATION and self.getIntensityAveraged():
+			arr = arr / (self.getExposureTime()/1000.0)
 		return arr
 
 	def getMetaDataDict(self,meta_obj):
@@ -423,11 +436,23 @@ class FeiCam(ccdcamera.CCDCamera):
 	def getEnergyFiltered(self):
 		return False
 
+class Ceta(FeiCam):
+	name = 'Ceta'
+	camera_name = 'BM-Ceta'
+	binning_limits = [1,2,4]
+	intensity_averaged = False
+
+	def getSystemGainDarkCorrected(self):
+		return True
+
 class Falcon3(FeiCam):
 	name = 'Falcon3'
 	camera_name = 'BM-Falcon'
 	binning_limits = [1,2,4]
 	electron_counting = False
+	# non-counting Falcon3 is the only camera that returns array aleady averaged by frame
+	# to keep values in more reasonable range.
+	intensity_averaged = True
 
 	def __init__(self):
 		super(Falcon3,self).__init__()
@@ -515,6 +540,8 @@ class Falcon3(FeiCam):
 		self.camera_settings.ElectronCounting = value
 
 	def custom_setup(self):
+		# Default not to align
+		self.camera_settings.AlignImage = False
 		if self.extra_protector_sleep_time:
 			time.sleep(self.extra_protector_sleep_time)
 		if self.getDebugCamera():
@@ -577,3 +604,4 @@ class Falcon3EC(Falcon3):
 	camera_name = 'BM-Falcon'
 	binning_limits = [1,2,4]
 	electron_counting = True
+	intensity_averaged = False

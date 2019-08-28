@@ -1,12 +1,11 @@
-#!/usr/bin/env python
-from pyscope import simccdcamera2
+from pyscope import feicam
 from pyami import mrc
 import time
 '''
 This script is used to test camera acquisition time
 '''
 # Change the class initiated here to your camera
-c = simccdcamera2.SimCCDCamera()
+c = feicam.Falcon3()
 # Define test condition here
 exposure_time_ms = 1000
 binning = 2

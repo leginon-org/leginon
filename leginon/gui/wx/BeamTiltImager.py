@@ -192,6 +192,10 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		label = wx.StaticText(self, -1, 'Auto Coma C21 accpetance threshold (m):')
 		sizer.Add(label, (9, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sizer.Add(self.widgets['auto coma limit'], (9, 1), (1, 1), wx.ALIGN_CENTER)
+		self.widgets['auto coma count limit'] = IntEntry(self, -1, min=1, allownone=False, chars=4, value='3')
+		label = wx.StaticText(self, -1, 'Auto Coma Correction iteration number limit:')
+		sizer.Add(label, (10, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sizer.Add(self.widgets['auto coma count limit'], (10, 1), (1, 1), wx.ALIGN_CENTER)
 		
 		sbsz.Add(sizer, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 5)
 		self.widgets['tableau type'].Bind(wx.EVT_CHOICE, self.onTableauTypeChoice)

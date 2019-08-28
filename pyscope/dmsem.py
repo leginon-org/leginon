@@ -49,6 +49,7 @@ configs = moduleconfig.getConfigured('dmsem.cfg')
 
 class DMSEM(ccdcamera.CCDCamera):
 	ed_mode = None
+	config_opt_name = 'dm'
 	filter_method_names = [
 			'getEnergyFilter',
 			'setEnergyFilter',
@@ -70,7 +71,6 @@ class DMSEM(ccdcamera.CCDCamera):
 
 		if not self.getEnergyFiltered():
 			self.unsupported.extend(self.filter_method_names)
-		self.bblankerid = 0
 		self.binning = {'x': 1, 'y': 1}
 		self.offset = {'x': 0, 'y': 0}
 		self.acqoffset = {'x': 0, 'y': 0}
@@ -79,6 +79,14 @@ class DMSEM(ccdcamera.CCDCamera):
 		self.exposuretype = 'normal'
 		self.user_exposure_ms = 100
 		self.float_scale = 1000.0
+		# shutter control
+		self.shutter_id = self.getAcquisitionShutter()
+		# TODO: semccd command SetShutterNormallyClosed also opens
+		# all other shutters.  If these are not set quite right,
+		# it can cause trouble. (Found in one case this other shuter
+		# uses reverse logic.
+		#self.camera.SetShutterNormallyClosed(self.cameraid,self.shutter_id)
+		#
 		# what to do in digital micrograph before handing back the image
 		# unprocessed, dark subtracted, gain normalized
 		#self.dm_processing = 'gain normalized'
@@ -173,6 +181,14 @@ class DMSEM(ccdcamera.CCDCamera):
 			return True
 		return False
 
+	def getAcquisitionShutter(self):
+		number = self.getDmsemConfig(self.config_opt_name,itemname='acquisition_shutter_number')
+		if number is None or number == 1:
+			shutter_id = 0
+		else:
+			shutter_id = 1
+		return shutter_id
+
 	def needConfigDimensionFlip(self,height,width):
 		# DM 2.3.0 and up needs camera dimension input in its original
 		# orientation regardless of rotation when dose fractionation is used.
@@ -254,6 +270,7 @@ class DMSEM(ccdcamera.CCDCamera):
 			'bottom': bottom,
 			'right': right,
 			'exposure': self.getRealExposureTime(),
+			'shutter': self.shutter_id,
 			'shutterDelay': shutter_delay,
 		}
 		self.debug_print('DM acqire shape (%d, %d)' % (height,width))
@@ -466,8 +483,9 @@ class DMSEM(ccdcamera.CCDCamera):
 
 class GatanOrius(DMSEM):
 	name = 'GatanOrius'
+	config_opt_name = 'orius'
 	try:
-		cameraid = configs['orius']['camera_id']
+		cameraid = configs[config_opt_name]['camera_id']
 	except:
 		pass
 	binning_limits = [1,2,4]
@@ -475,19 +493,36 @@ class GatanOrius(DMSEM):
 
 class GatanUltraScan(DMSEM):
 	name = 'GatanUltraScan'
+	config_opt_name = 'orius'
 	try:
-		cameraid = configs['ultrascan']['camera_id']
+		cameraid = configs[config_opt_name]['camera_id']
 	except:
 		pass
 	binning_limits = [1,2,4,8]
 	binmethod = 'exact'
 
+class GatanRio9(DMSEM):
+	name = 'GatanRio9'
+	config_opt_name = 'rio9'
+	try:
+		cameraid = configs[config_opt_name]['camera_id']
+	except:
+		pass
+	binning_limits = [1,2]
+	binmethod = 'exact'
+
+	def getPixelSize(self):
+		## TODO: move to config file:
+		return {'x': 9e-6, 'y': 9e-6}
+
 
 class GatanK2Base(DMSEM):
 	name = 'GatanK2Base'
+	config_opt_name = 'k2'
 	try:
-		cameraid = configs['k2']['camera_id']
+		cameraid = configs[config_opt_name]['camera_id']
 	except:
+		raise
 		pass
 	# our name mapped to SerialEM plugin value
 	readmodes = {'linear': 0, 'counting': 1, 'super resolution': 2}
@@ -763,6 +798,14 @@ class GatanK3(GatanK2Base):
 	binning_limits = [1,2,4,8]
 	soft_crop = True
 	name = 'GatanK3'
+	config_opt_name = 'k3'
+	try:
+		# Not yet transition to always use k3
+		cameraid = configs[config_opt_name]['camera_id']
+		if cameraid is None:
+			cameraid = configs['k2']['camera_id']
+	except:
+		pass
 	readmodes = {'linear': 3, 'super resolution': 4}
 	ed_mode = 'super resolution'
 	if simulation:

@@ -367,7 +367,8 @@ class CentosInstallation(object):
 		self.setupPyscopeCfg(pyscopeDir)
 
 		os.chdir(self.currentDir)		
-		self.enableTorqueComputeNode()
+		if self.doInstallJobServerPackages:
+			self.enableTorqueComputeNode()
 		return True
 
 	def setupJobServer(self):
@@ -1200,6 +1201,10 @@ endif
 		questionText = "Would you like to install EMAN, Xmipp, Spider, and Protomo at this time?"
 		self.doInstallExternalPackages = self.getBooleanInput(questionText)
 		
+		questionText = "Would you like to install Torque for Job server at this time?"
+		self.doInstallJobServerPackages = self.getBooleanInput(questionText)
+		self.failedInstallJobServer = False
+
 	def getBooleanInput(self, questionText = ''):
 		'''
 		Return boolean True/False depending on Y/N input from user.
@@ -1282,9 +1287,10 @@ endif
 		self.yumInstall(['git'])
 		self.getMyami()
 		
-		result = self.setupJobServer()
-		if result is False:
-			sys.exit(1)
+		if self.doInstallJobServerPackages:
+			result = self.setupJobServer()
+			if result is False:
+				self.failedInstallJobServer = True
 		
 		result = self.setupProcessServer()
 		if result is False:
@@ -1316,7 +1322,14 @@ endif
 		print("========================")
 
 		# Start the Torque server
-		self.runCommand("/etc/init.d/pbs_server start")
+		if self.doInstallJobServerPackages:	
+			if self.failedInstallJobServer == False:
+				# Start the Torque server
+				self.runCommand("systemctl start pbs_server")
+			else:
+				print("========================")
+				print("Torque job server installation failed. Use command copy and paste method to run")
+				print("========================")
 				
 		setupURL = "http://localhost/myamiweb/setup/autoInstallSetup.php?password=" + self.serverRootPass + "&myamidir=" + self.gitMyamiDir + "&uploadsample=" + "%d" % int(self.doDownloadSampleImages)
 		setupOpened = None

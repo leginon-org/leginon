@@ -188,8 +188,22 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 					try:
 						self.btcalclient.correctImageShiftComa()
 						self.logger.warning('Apply beam tilt delta from last image-shift coma calibration to start')
+						no_cal = False
 					except:
 						self.logger.warning('use original beam tilt to start')
+						no_cal = True
+					try:
+						if no_cal == False:
+							self.btcalclient.correctImageShiftObjStig()
+							self.logger.warning('Apply obj stig delta from last image-shift stig calibration to start')
+					except:
+						self.logger.warning('use original stig to start')
+					try:
+						if no_cal == False:
+							self.btcalclient.correctImageShiftDefocus()
+							self.logger.warning('Apply defocus delta from last image-shift defocus calibration to start')
+					except:
+						self.logger.warning('use original defocus to start')
 					# For TESTING ---START HERE
 					'''
 					newstate = self.getFakeValues(axis, i)
@@ -200,7 +214,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 					# For TESTING ---END HERE
 					newstate = self.readAbFree(state['image shift'])
 					if abs(shift) > 1e-7:
-						while abs(newstate['beam tilt']['x']-self.state0['beam tilt']['x']) < 1e-5 or abs(newstate['beam tilt']['y']-self.state0['beam tilt']['y']) < 1e-5:
+						while no_cal and abs(newstate['beam tilt']['x']-self.state0['beam tilt']['x']) < 1e-5 or abs(newstate['beam tilt']['y']-self.state0['beam tilt']['y']) < 1e-5:
 							self.logger.error('Beam tilt has not changed. Will cause calibration failure.')
 							self.logger.info('Please repeat the measurement or Cancel in the dialog....')
 							newstate = self.readAbFree(state['image shift'])
@@ -740,7 +754,8 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		ht = self.instrument.tem.HighTension
 		scope = leginondata.ScopeEMData(tem=self.instrument.getTEMData())
 		for i, bt in enumerate(tiltlist):
-			scope['beam tilt'] = bt
+			newbt = {'x': oldbt['x'] + bt['x'], 'y': oldbt['y'] + bt['y']}
+			scope['beam tilt'] = newbt
 			# acquire image with scope state but not display in node image panel
 			imagedata = self.btcalclient.acquireImage(scope, settle=0.0, correct_tilt=False, corchannel=0, display=False)
 			self.setManualComaFreeImage(imagedata['image'])

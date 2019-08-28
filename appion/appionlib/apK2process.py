@@ -40,12 +40,11 @@ class GatanK2Processing(apDDprocess.DDFrameProcessing):
 		RawFrameDir here is actually the filename with mrc extension.
 		'''
 		if self.getRawFrameType() == 'singles':
-			print 'singles'
 			# back compatibility pre-3.0
 			return super(GatanK2Processing,self).getRawFrameDirFromImage(imagedata)
-		# strip off DOS path in rawframe directory name if included
-		rawframename = imagedata['camera']['frames name'].split('\\')[-1]
-		if not rawframename:
+		# check if frames are saved
+		save_frames = imagedata['camera']['save frames']
+		if not save_frames:
 			apDisplay.printWarning('No Raw Frame Saved for %s' % imagedata['filename'])
 		session_frame_path = self.getSessionFramePathFromImage(imagedata)
 		# frame stackfile is image filename plus '.frames.mrc'
@@ -65,7 +64,8 @@ class GatanK2Processing(apDDprocess.DDFrameProcessing):
 		Load from rawframe_path (a stack file) the chosen frame of the current image.
 		'''
 		if self.extname == 'tif':
-			apDisplay.printError('Loading one tif frame not Implemented')
+			from pyami.numpil import tiff2numpy_array
+			return tiff2numpy_array(rawframe_path,frame_number)
 		try:
 			# the frames are binned too now ?
 			bin = {'x':1,'y':1}

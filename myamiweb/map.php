@@ -73,6 +73,9 @@ $iscache = ($lj) ? true:false;
 // This is a hack to make default binning and default binorder (a) works
 $prefftxyDim = array($imginfo['dimx'],$imginfo['dimy']);
 
+// check if it is diffraction pattern;
+$is_diffraction = $imginfo['is_diffraction'];
+
 $display_pixelsize = $imageUtil->getDisplayPixelSize($imginfo['pixelsize'],$imginfo['binning'],$imginfo['dimx'],$imgwidth,$fftflag,$binorder,$prefftxyDim[0],$iscache);
 $filename = $imginfo['filename'];
 //image width is used as the first factor to determine display size
@@ -91,6 +94,8 @@ MAP: <?php echo $filename; ?>
 var filename="<?php echo $filename; ?>"
 
 var pixsize=<?php echo $display_pixelsize; ?>;
+
+var is_diffr=<?php echo (int) $is_diffraction; ?>;
 
 var fftflag=<?php echo $fftflag; ?>
 
@@ -152,7 +157,7 @@ function init() {
 }
 
 function setScalebar() {
-	scalebardata=findScale(jssize, pixsize)
+	scalebardata=findScale(jssize, pixsize, is_diffr)
 	if (scale=document.getElementById("divscale")) {
 		scale.style.width=scalebardata[0]
 		scalebarlabel=document.getElementById("divscalebarlabel")
@@ -336,9 +341,13 @@ function formatpixsize(val) {
 		if (fftflag > 0) {
 			val *=1e-10
 			val = 1 / val
-			
 		} else {
-			val /= 1e-10
+			if (is_diffr > 0) {
+				val /= 1e-8
+				val = 1/ val
+			} else {
+				val /= 1e-10
+			}
 		}
 		return val.toFixed(1)+" &Aring"
 }

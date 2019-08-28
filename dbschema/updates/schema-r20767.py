@@ -9,6 +9,8 @@ class SchemaUpdate(baseSchemaClass.SchemaUpdate):
 	'''
 	This schema insert ApDDAlignFrameStats and ApFrameAlignTrajectory
 	Issue #6143
+	This is not executed for any version because it takes a very long time
+	to do.
 	'''
 
 	#######################################################################
