@@ -20,10 +20,16 @@ from leginon import leginondata
 
 from appionlib import apParam
 import os, csv
-particles = sys.argv[-23]
+break_item = False
+for item in sys.argv:
+    if break_item: break
+    if item.startswith("--output"):
+        break_item= True
+particles = item
 basedir =  os.path.split(particles)[0]
 preprocessed = os.path.join(basedir, "preprocessed")
 prep = os.path.join(preprocessed, 'preprocessed.appionsub.job')
+
 txt = open(prep).read()
 scale = float(txt.split('--scale')[1].split()[0])
 train = os.path.join(basedir, "train", 'train.appionsub.job')
