@@ -65,10 +65,6 @@ runq['name'] = runname
 runq['session'] = sessiondata
 runq['program'] = "Topaz"
 runq['path'] = pathdata
-manparams = appiondata.ApSelectionParamsData()
-manparams['diam'] = diameter
-manparams['bin'] = 1
-runq['params'] = manparams
 runq.insert()
 
 for filename in imageDict:

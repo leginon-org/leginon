@@ -1009,7 +1009,7 @@ function toggle(divID) {
 				echo "<center><h4>".$errors."</h4></center>";
 			}
 			else {
-				//redirect
+				echo "<center><h4>Open ".$session_link." and click on <img src='../img/ptcl_bt_off.gif' alt='P'> to see latest Topaz picks. </h4></center>";
 			}
 		}
 		
