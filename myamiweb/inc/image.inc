@@ -400,7 +400,7 @@ function addAppionOverlays($leginondata,$img,$childinfo,$imginfo,$p) {
 		if (!$diam || $diam == $selectionparams['diam']) {
 			// apply scaling if not applied before
 			if (!$selectionparams['diam']){
-				$diam = $particleinfo[0]['diameter'] * 10*$diam_scalefactor;
+				$diam = 2*$particleinfo[0]['diameter']/$display_bin;
 			}
 			else {
 				$diam = $selectionparams['diam'] * $diam_scalefactor;
