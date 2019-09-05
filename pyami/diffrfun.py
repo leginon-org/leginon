@@ -57,7 +57,9 @@ def _getEndArray(thresh_array, m2):
 	end[:,:a_center[1]+m2]=0
 	if end[:,-1].sum() > a_shape[0]*0.002:
 		# end touch the edge
-		m2_end = _getValueStart(end[0,:],False)-a_center[1]
+		touch_index = _getValueStart(end[0,:],False)
+		if touch_index is not None:
+			m2_end = touch_index-a_center[1]
 		# here we check if a 10*d by 10*d area at the near corners has non-zero values.
 		# push the mask boundary further if so.
 		while end[:10*d,a_center[1]+m2_end:a_center[1]+m2_end+10*d].sum() > 0 or end[-10*d:-1,a_center[1]+m2_end:a_center[1]+m2_end+10*d].sum() > 0:
@@ -96,9 +98,11 @@ def findCenter(a):
 		# half masksize
 		masksize = int(m_factor*a_shape_min)
 		m2 = masksize//2
-		if m_factor < 0.3:
+		if m_factor < 0.2:
 			# diffraction images with rings closer to origin is stronger
 			scale=5
+		elif 0.2 <= m_factor and m_factor < 0.3:
+			scale=4
 		else:
 			scale=3
 		thresh_array, is_clean_around_mask = makeBeamStopMask(a, m2, scale)
@@ -190,13 +194,17 @@ def calibrate(a, ht, cam_psize, image_bin):
 
 def test(a, ht, cam_psize, image_bin):
 	cam_lengths, center, radial_values = calibrate(a, ht, cam_psize, image_bin)
-	avg_cam_length = numpy.array(cam_lengths).mean()
-	std_cam_length_str = ''
-	if len(cam_lengths) > 1:
-		std_cam_length_str = '+/-%.3f' % (numpy.array(cam_lengths).std())
-	edge_res = getCompleteResolution(a, center, avg_cam_length, ht, cam_psize,image_bin)
 	print('center(pixels): x=%.1f, y=%.1f' % (center[1],center[0]))
-	print('cam_length(m) = %.3f%s (n=%d) edge_res(Angs) = %.2f' % (avg_cam_length, std_cam_length_str, len(cam_lengths), edge_res*1e10))
+	if cam_lengths:
+		avg_cam_length = numpy.array(cam_lengths).mean()
+		std_cam_length_str = ''
+		if len(cam_lengths) > 1:
+			std_cam_length = numpy.array(cam_lengths).std()
+			std_cam_length_str = '+/-%.3f' % (std_cam_length)
+			if std_cam_length > 0.05:
+				print('suspecious', center, cam_lengths)
+		edge_res = getCompleteResolution(a, center, avg_cam_length, ht, cam_psize,image_bin)
+		print('cam_length(m) = %.3f%s (n=%d) edge_res(Angs) = %.2f' % (avg_cam_length, std_cam_length_str, len(cam_lengths), edge_res*1e10))
 	try:
 		plot(radial_values)
 	except:
@@ -211,5 +219,5 @@ def plot(values):
 if __name__=='__main__':
 	import sys
 	imagename = sys.argv[1]
-	a = mrc.read('/Users/acheng/Downloads/%s.mrc' % (imagename))
+	a = mrc.read('/data/leginon/g19aug30c/rawdata/%s.mrc' % (imagename))
 	test(a, 200000, 1.4e-5, 2)
