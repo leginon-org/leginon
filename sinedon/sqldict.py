@@ -352,7 +352,6 @@ class _Table:
 					whereFormat = whereFormatNULL
 
 			qsel = sqlexpr.SelectAll(self.table, where=whereFormat).sqlRepr()
-			## print qsel
 			try:
 				c.execute(qsel)
 				result=c.fetchone()
@@ -362,7 +361,7 @@ class _Table:
 		if force or not result:
 			q = sqlexpr.Insert(self.table, v).sqlRepr()
 			if debug:
-				print q
+				print 'insert q',q
 			c.execute(q)
 			## try the new lastrowid attribute first,
 			## then try the old insert_id() method
@@ -837,10 +836,13 @@ class _createSQLTable:
 				if not not_to_add:
 					q = sqlexpr.AlterTable(self.table, column, 'ADD').sqlRepr()
 					queries.append(q)
-				l = re.findall('^REF\%s' %(sep,),column['Field'])
-				if l:
-					q = sqlexpr.AlterTableIndex(self.table, column).sqlRepr()
-					queries.append(q)
+					# only add index if column is added
+					l = re.findall('^REF\%s' %(sep,),column['Field'])
+					if l:
+						q = sqlexpr.AlterTableIndex(self.table, column).sqlRepr()
+						if debug:
+							print 'add index when adding a column', q
+						queries.append(q)
 				try:
 					for q in queries:
 						if debug:
