@@ -16,11 +16,14 @@ def makeBeamStopMask(a, m2, scale):
 	has significant intensity
 	'''
 	a_center = (a.shape[0]//2, a.shape[1]//2)
-	a[a_center[0]-m2:a_center[0]+m2,:a_center[1]+m2]=0
+	# TODO: make it a round shape
+	a[a_center[0]-m2*0.5:a_center[0]+m2*0.5,:a_center[1]+m2]=0
+	a[a_center[0]-m2:a_center[0]+m2,a_center[1]-m2*0.5:a_center[1]+m2*0.5]=0
+	a[a_center[0]-m2*0.7:a_center[0]+m2*0.7,a_center[1]-m2*0.7:a_center[1]+m2*0.7]=0
 	t = a.mean()+scale*a.std()
 	thresh_array = numpy.where(a < t, 0, 1)
 	d = 10 #dilating distance for clearance test.
-	around = thresh_array[a_center[0]-m2-d:a_center[0]+m2+d,a_center[1]-m2-d:a_center[1]+d]
+	around = thresh_array[a_center[0]-m2-d:a_center[0]+m2+d,a_center[1]-m2-d:a_center[1]+m2+d]
 	if around.sum() > 0.1*m2:
 		# The surrounding area has significant intensity
 		return thresh_array, False
@@ -94,15 +97,18 @@ def findCenter(a):
 	last_c = (a.shape[0]/2.0, a.shape[1]/2.0)
 	# mask beam stop and low resolution
 	a_shape_min = min(a.shape)
-	for m_factor in (0.1,0.15,0.2,0.3,0.5):
+	# fine steps.
+	for m_factor in (0.15,0.175,0.2,0.225,0.25,0.275,0.3,0.35,0.375):
 		# half masksize
 		masksize = int(m_factor*a_shape_min)
 		m2 = masksize//2
 		if m_factor < 0.2:
 			# diffraction images with rings closer to origin is stronger
 			scale=5
-		elif 0.2 <= m_factor and m_factor < 0.3:
+		elif 0.2 <= m_factor and m_factor < 0.25:
 			scale=4
+		elif 0.25 <= m_factor and m_factor < 0.275:
+			scale=3.5
 		else:
 			scale=3
 		thresh_array, is_clean_around_mask = makeBeamStopMask(a, m2, scale)
@@ -218,6 +224,6 @@ def plot(values):
 
 if __name__=='__main__':
 	import sys
-	imagename = sys.argv[1]
-	a = mrc.read('/data/leginon/g19aug30c/rawdata/%s.mrc' % (imagename))
+	imagepath = sys.argv[1]
+	a = mrc.read(imagepath)
 	test(a, 200000, 1.4e-5, 2)
