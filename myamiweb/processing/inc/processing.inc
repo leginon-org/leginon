@@ -1096,7 +1096,7 @@ $xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0, $walltime="96", $cputime=F
 
 /**************************************/
 function submitJob($command, $jobtype, $testimg=False,
-		$xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0, $walltime="96", $cputime=False) {
+		$xvfb=False, $xtra=False, $nproc=12, $ppn=12, $nodes=1, $walltime="96", $cputime=False) {
 			global $DATA_DIRS;
 	
 	$expId=$_GET['expId'];
@@ -1175,23 +1175,14 @@ function submitJob($command, $jobtype, $testimg=False,
 	// These should match the names being assigned on the python side where the files are created
 	$jobfile = "$runname.appionsub.job";
 	$logfile = "$runname.appionsub.log";
-	
-	// insert cluster job data and set job as queued
-	$particle = new particleData();
-	$jobid = $particle->insertClusterJobData($processhost, $rundir, '', $rundir, $jobfile, $expId, $jobtype, $user);
-	
-	// Add the job id to the command string
-	$command .= "--jobid=$jobid ";
-	
-	$apcmd = $command;
-	//$cmd = "cd $rundir; $apcmd;\n";
-	$cmd = $apcmd;
+
 	
 	// submit job to cluster
-	$jobdata = exec_over_ssh($processhost, $user, $pass, $cmd, True, $port=22, $max_time=20);
+	$jobdata = exec_over_ssh($processhost, $user, $pass, $command, True, $port=22, $max_time=20);
 	if ( empty($jobdata) ) {
 		$errMsg .= "Error: Job submission to $processhost failed. <br>  ";
 		$errMsg .= pconnError();
+		$errMsg .= "Command: $command";
 		return $errMsg;
 	}
 }

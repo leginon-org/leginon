@@ -70,7 +70,7 @@ class TopazDenoiser(appionLoop2.AppionLoop):
 		apDisplay.printMsg(err)
 		
 		preset = imgdata['preset'].copy()
-		pr_postfix = "_"+self.params['denoiselabel']
+		pr_postfix = "-"+self.params['denoiselabel'] # derived preset starts with "-"
 		preset['name'] += pr_postfix
 		preset.insert()
 
@@ -87,6 +87,7 @@ class TopazDenoiser(appionLoop2.AppionLoop):
 			image.filename = dest_file
 			result['image'] = image
 			result['filename'] = parts[0]+pr_postfix
+			result['denoised'] = True
 			result.insert()  
 			apDDLoop.transferALSThickness(imgdata, result)
 			apDDLoop.transferZLPThickness(imgdata, result)
