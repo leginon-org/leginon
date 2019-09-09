@@ -929,6 +929,10 @@ if (is_numeric($expId)) {
 	$nruns[] = array(
 		'name'=>"<a href='uploadimage.php?expId=$sessionId'>Upload more images</a>",
 	);
+	} else {
+	$nruns[] = array(
+		'name'=>"<a href='uploadimage.php?expId=$sessionId'>Upload images</a>",
+	);
 	}
 
 	$nruns[] = array(
