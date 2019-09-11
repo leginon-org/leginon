@@ -643,7 +643,8 @@ class leginondata {
 		rsort($pmpix);
 		$datatypes = array();
 		foreach ($pmpix as $a) {
-			$datatypes[] = explode('|',$a)[1];
+			$bits = explode('|',$a);
+			$datatypes[] = $bits[1];
 		}
 		return $datatypes;
 	}
