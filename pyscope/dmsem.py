@@ -99,6 +99,7 @@ class DMSEM(ccdcamera.CCDCamera):
 		self.readout_delay_ms = 0
 		self.align_frames = False
 		self.align_filter = 'None'
+		self.use_cds = False
 		raw_frame_dir = self.getDmsemConfig('k2','raw_frame_dir')
 		self.info_print('Frames are saved to %s' % (raw_frame_dir,))
 
@@ -481,6 +482,12 @@ class DMSEM(ccdcamera.CCDCamera):
 		if result < 0.0:
 			raise RuntimeError('unable to align energy filter zero loss peak')
 
+	def setUseCds(self,value):
+		self.use_cds = bool(value)
+
+	def getUseCds(self):
+		return self.use_cds
+
 class GatanOrius(DMSEM):
 	name = 'GatanOrius'
 	config_opt_name = 'orius'
@@ -603,6 +610,7 @@ class GatanK2Base(DMSEM):
 			'alignFrames': self.align_frames,
 			'saveFrames': self.save_frames,
 			'filt': self.align_filter,
+			'useCds': self.use_cds,
 		}
 		return params
 
@@ -818,6 +826,7 @@ class GatanK3(GatanK2Base):
 		self.dosefrac_frame_time = 0.013
 		self.record_precision = 0.013
 		self.user_exposure_ms = 13
+		self.use_cds = False
 		self.dm_processing = self.getDmProcessing()
 
 	def getDmProcessing(self):

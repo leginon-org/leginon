@@ -75,7 +75,7 @@ class PresetsClient(object):
 
 	def isPresetNameToAvoid(self,pname):
 		'''
-		Avoid derived presets. '-' is used for aligned dd sum image.
+		Avoid derived presets. '-' is used for aligned dd sum image and denoised image.
 		'Zproj' is the projection of full tomogram
 		'''
 		presets_to_avoid = ['-','Zproj']
