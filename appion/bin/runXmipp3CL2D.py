@@ -84,10 +84,10 @@ class CL2D(appionScript.AppionScript):
 			apDisplay.printError("stack id was not defined")
 		if self.params['numrefs'] is None:
 			apDisplay.printError("a number of classes was not provided")
-		maxparticles = 500000
-		if self.params['numpart'] > maxparticles:
-			apDisplay.printError("too many particles requested, max: "
-				+ str(maxparticles) + " requested: " + str(self.params['numpart']))
+# 		maxparticles = 500000
+# 		if self.params['numpart'] > maxparticles:
+# 			apDisplay.printError("too many particles requested, max: "
+# 				+ str(maxparticles) + " requested: " + str(self.params['numpart']))
 		self.stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
 		stackfile = os.path.join(self.stackdata['path']['path'], self.stackdata['name'])
 		# check for virtual stack
