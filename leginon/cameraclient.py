@@ -243,6 +243,9 @@ class CameraClient(object):
 		## CameraEMData for multiple versions of AcquisitionImageData
 		imagedata['use frames'] = cameradata_after['use frames']
 
+		## default denoised to False so that we can set that flag if performed.
+		imagedata['denoised'] = False
+
 		self.readout_done_event.set()
 		if imagedata['image'] is None or imagedata['image'].shape == (0,0):
 			# image of wrong shape will still go through. Error raised at normalization
