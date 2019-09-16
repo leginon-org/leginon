@@ -10,8 +10,10 @@ class imageUtil{
 	 */
 	function getDefaultImageSize($isfft) {
 		if ($isfft)
-			// imcache size before fft
-			return 4096;
+			// imcache are created with binning after fft
+			// use a very big number here so that it is always larger than the
+			// image.
+			return 20000;
 		return 1024;
 	}
 
@@ -108,8 +110,9 @@ class imageUtil{
 	}
 
 	function getCacheFFTDisplayPixelSize($calpixelsize,$camera_binning,$db_dimx,$display_dimx,$prefft_dimx) {
+		//CacheFFT binning is default to after transform
 		$source_pixelsize = 1 / ($calpixelsize*$camera_binning*$db_dimx);
-		$post_fft_binning = $prefft_dimx / $display_dimx;
+		$post_fft_binning = $db_dimx / $display_dimx;
 		return  $source_pixelsize * $post_fft_binning;
 	}
 
