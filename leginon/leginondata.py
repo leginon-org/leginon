@@ -199,6 +199,7 @@ camera_params = (
 	('readout delay', int),
 	('gain index', int),
 	('system corrected', bool),
+	('use cds', bool),
 )
 
 class ScopeEMData(EMData):
@@ -533,6 +534,11 @@ class PresetData(InSessionData):
 		return InSessionData.typemap() + (
 			('number', int),
 			('name', str),
+			('skip', bool),
+			('removed', bool),
+			('hasref', bool),
+			# tem
+			('tem', InstrumentData),
 			('projection mode', str),
 			('magnification', int),
 			('spot size', int),
@@ -540,25 +546,23 @@ class PresetData(InSessionData):
 			('image shift', dict),
 			('beam shift', dict),
 			('diffraction shift', dict),
+			('aperture size', dict),
 			('defocus', float),
 			('defocus range min', float),
 			('defocus range max', float),
+			('dose', float),
+			('tem energy filter', bool),
+			('tem energy filter width', float),
+			('probe mode', str),
+			# camera
+			('ccdcamera', InstrumentData),
+			('exposure time', float),
 			('dimension', dict),
 			('binning', dict),
 			('offset', dict),
-			('exposure time', float),
-			('removed', bool),
-			('hasref', bool),
-			('dose', float),
-			('tem', InstrumentData),
-			('ccdcamera', InstrumentData),
-			('tem energy filter', bool),
-			('tem energy filter width', float),
 			('energy filter', bool),
 			('energy filter width', float),
-			('aperture size', dict),
 			('pre exposure', float),
-			('skip', bool),
 			('alt channel', bool),
 			('save frames', bool),
 			('frame time', float),
@@ -566,7 +570,7 @@ class PresetData(InSessionData):
 			('align filter', str),
 			('use frames', tuple),
 			('readout delay', int),
-			('probe mode', str),
+			('use cds', bool), # K3 only
 		)
 	typemap = classmethod(typemap)
 
