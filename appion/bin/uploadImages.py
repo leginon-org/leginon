@@ -339,7 +339,11 @@ class UploadImages(appionScript.AppionScript):
 		scopedata['magnification'] = self.params['magnification']
 		scopedata['high tension'] = self.params['kv']*1000
 		scopedata['defocus'] = 0.0
+		# These are queried in myamiweb as imageinfo.  Need to be defined
+		# so that the first upload will populate the column
 		scopedata['stage position'] = { 'x': 0.0, 'y': 0.0, 'z': 0.0, 'a': 0.0, }
+		scopedata['image shift'] = { 'x': 0.0, 'y': 0.0 }
+		scopedata['beam tilt'] = { 'x': 0.0, 'y': 0.0 }
 		return scopedata
 
 	def makeCameraEMData(self,dimension={'x':1,'y':1}, nframes=1):
