@@ -334,7 +334,12 @@ else echo '<textarea ';
 if (empty($mytextarea)) {
 	$outDir = getBaseAppionPath($sessioninfo).'/csLIVE/*.png';
 	foreach (glob($outDir) as $filename) {
-		$mytextarea .="<img src='processing/download.php?expId=".$expId."&file=".$filename."'/><br>"; 
+		if (strpos($filename, '2dclasses')) {
+			$mytextarea .="<img width='100%' src='processing/download.php?expId=".$expId."&file=".$filename."'/><br>";
+		}
+		else {
+			$mytextarea .="<img src='processing/download.php?expId=".$expId."&file=".$filename."'/><br>";
+		}
 	}
 }
 echo 'id="mytextarea" name="mytext">'.$mytextarea;
