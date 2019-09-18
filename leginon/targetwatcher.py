@@ -215,12 +215,10 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 	def processTargetList(self, newdata):
 		self.setStatus('processing')
 		mytargettype = self.settings['process target type']
-
 		### get targets that belong to this target list
 		targetlist = self.researchTargets(list=newdata)
 		listid = newdata.dbid
 		self.logger.debug('TargetWatcher will process %s targets in list %s' % (len(targetlist), listid))
-
 		completed_targets, good_targets, rejects = self.sortTargetsByType(targetlist, mytargettype)
 
 		# There may not be good targets but only rejected
@@ -243,7 +241,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			# pause and abort check before reference and rejected targets are sent away
 			state = self.pauseCheck('paused before reject targets are published')
 			self.setStatus('processing')
-			if state in ('stop', 'stopqueue'):
+			if state in ('stop', 'stopqueue'):			# When user stops at this node
 				targetliststatus = 'aborted'
 				# If I report targets done then rejected target are also done.  Which make
 				# them unrestartable What to do???????
@@ -256,7 +254,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			self.targetlist_reset_tilt = self.getTiltForList(newdata)
 			# There was a set self.targetlist_reset_tilt in the old code.
 			# start conditioner
-			condition_status = 'repeat'
+			condition_status = 'repeat'					# don't need a target
 			while condition_status == 'repeat':
 				try:
 					self.setStatus('waiting')
@@ -274,7 +272,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 
 			# processReference.  FIX ME, when it comes back, need to move more
 			# accurately than just send the position.
-			if self.settings['wait for reference']:
+			if self.settings['wait for reference']:				#For example ZLP alignment
 				self.setStatus('waiting')
 				self.processReferenceTarget()
 				self.setStatus('processing')
@@ -288,20 +286,26 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			self.instrument.tem.setStagePosition({'z':original_position['z']})
 			self.logger.info('Processing %d %s targets...' % (len(good_targets), mytargettype))
 		# republish the rejects and wait for them to complete
+		
 		waitrejects = rejects and self.settings['wait for rejects']
 		if waitrejects:
+
 			# FIX ME: If autofocus involves stage tilt and self.targetlist_reset_tilt
 			# is at high tilt, it is better not to tilt first but if autofocus does
 			# not involve that, it needs to be tilted now.
-			rejectstatus = self.rejectTargets(newdata)
+			rejectstatus = self.rejectTargets(newdata) # will stay until node gives back a done
 			if rejectstatus != 'success':
 				## report my status as reject status may not be a good idea
-				##all the time. This means if rejects were aborted
+				## all the time. This means if rejects were aborted
 				## then this whole target list was aborted
 				self.logger.debug('Passed targets not processed, aborting current target list')
 				self.reportTargetListDone(newdata, rejectstatus)
 				self.setStatus('idle')
-				if rejectstatus != 'aborted':
+				# Anchi, at focus node, if it fails, I think it still reports success since 
+				# line ~ 324 is always true. This is a bit dangerous for tomo.
+				# If focusing fails, there is not reason to move on, since tracking with likely
+				# be very off. 
+				if rejectstatus != 'aborted':	 
 					return
 			self.logger.info('Passed targets processed, processing current target list')
 

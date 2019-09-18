@@ -78,7 +78,7 @@ else {
 }
 
 $dbemgraph->lineplot=False;
-$dbemgraph->title="Ice Thickness histogram using aperture limited scattering";
+$dbemgraph->title="Ice Thickness using aperture limited scattering";
 $dbemgraph->yaxistitle="Thickness /nm";
 
 if ($viewdata) {

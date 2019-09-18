@@ -277,14 +277,27 @@ class GatanSocket(object):
 		self.ExchangeMessages(message_send, message_recv)
 
 	@logwrap
-	def SetK2Parameters(self, readMode, scaling, hardwareProc, doseFrac, frameTime, alignFrames, saveFrames, filt=''):
-		funcCode = enum_gs['GS_SetK2Parameters']
-
+	def SetK2Parameters(self, readMode, scaling, hardwareProc, doseFrac, frameTime, alignFrames, saveFrames, filt='', useCds=False):
+		funcCode = enum_gs['GS_SetK2Parameters2']
+		# rotation and flip for non-frame saving image. It is the same definition
+		# as in SetFileSaving2
+		# if set to 0, it takes what GMS has.
+		rotationFlip = 0
 		self.save_frames = saveFrames
+
+		# flags
+		flags = 0
+		flags += int(useCds)*2**6
+		# settings of unused flags
+		#anti_alis
+		reducedSizes = 0
+		fullSizes = 0
 
 		# filter name
 		filt_str = filt + '\0'
 		extra = len(filt_str) % 4
+		# filtSize: length of numpy array to pass. This is determined
+		# in Message class. No need to specify here.
 		if extra:
 			npad = 4 - extra
 			filt_str = filt_str + npad * '\0'
@@ -294,6 +307,8 @@ class GatanSocket(object):
 			funcCode,
 			readMode,
 			hardwareProc,
+			rotationFlip,
+			flags,
 		]
 		bools = [
 			doseFrac,
@@ -303,6 +318,10 @@ class GatanSocket(object):
 		doubles = [
 			scaling,
 			frameTime,
+			reducedSizes,
+			fullSizes,
+			0.0, #dummy3
+			0.0, #dummy4
 		]
 
 		message_send = Message(longargs=longs, boolargs=bools, dblargs=doubles, longarray=longarray)
@@ -405,12 +424,11 @@ class GatanSocket(object):
 		return self.ExecuteGetDoubleScript(script)
 
 	@logwrap
-	def GetImage(self, processing, height, width, binning, top, left, bottom, right, exposure, shutterDelay):
+	def GetImage(self, processing, height, width, binning, top, left, bottom, right, exposure, shutter=0, shutterDelay=0.0):
 
 		arrSize = width * height
 
 		# TODO: need to figure out what these should be
-		shutter = 0
 		divideBy2 = 0
 		corrections = 0
 		settling = 0.0

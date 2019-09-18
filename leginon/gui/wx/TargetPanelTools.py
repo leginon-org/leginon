@@ -175,6 +175,16 @@ class TargetTypeTool(leginon.gui.wx.ImagePanelTools.TypeTool):
 		self.parent.parent.parent.node.uiRefreshTargetImageVector()
 		self.parent.parent.imagevector = self.parent.parent.parent.node.getTargetImageVector()
 		self.parent.parent.beamradius = self.parent.parent.parent.node.getTargetBeamRadius()
+		# Below if used by TomoTargetImagePanel
+		if hasattr(self.parent.parent,'trackimagevector'):
+			self.parent.parent.trackimagevector = self.parent.parent.parent.node.getTrackImageVector()
+		if hasattr(self.parent.parent,'trackbeamradius'):
+			self.parent.parent.trackbeamradius = self.parent.parent.parent.node.getTrackBeamRadius()
+		if hasattr(self.parent.parent,'focusimagevector'):
+			self.parent.parent.focusimagevector = self.parent.parent.parent.node.getFocusImageVector()
+		if hasattr(self.parent.parent,'focusimagevector'):
+			self.parent.parent.focusbeamradius = self.parent.parent.parent.node.getFocusBeamRadius()
+		
 		# set and show targets
 		self.exptype.setTargets(self.targettype.getTargets())
 		evt = ShowExposureEvent(evt.GetEventObject(), self.name, evt.GetIsDown())

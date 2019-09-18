@@ -52,21 +52,22 @@ def writeParticlesToStar(imgdata, boxsize, partdatas, shiftdata, boxfile, ctfdat
 
 	gridDu=None
 	
-	# for local ctf estimation:
+	# for local ctf estimation
 	if ctfdata is not None:
 		if ctfdata['localCTFstarfile'] is not None and localCTF is True:
 			t0 = time.time()
 			apDisplay.printMsg("Determining local CTF values...")
 
 			localctf = os.path.join(ctfdata['acerun']['path']['path'],ctfdata['localCTFstarfile'])
-			matDu = [[numpy.nan for y in range(imgdims['y'])] for x in range(imgdims['x'])]	
-			matDv = [[numpy.nan for y in range(imgdims['y'])] for x in range(imgdims['x'])]	
+			# we usually estimate local CTF later in RELION, so we'll zoom from a binned by 8 image
+			matDu = [[numpy.nan for y in range(int(math.ceil(imgdims['y']/8.0)))] for x in range(int(math.ceil(imgdims['x']/8.0)))]
+			matDv = [[numpy.nan for y in range(int(math.ceil(imgdims['y']/8.0)))] for x in range(int(math.ceil(imgdims['x']/8.0)))]
 			labels = apRelion.getStarFileColumnLabels(localctf)
 			for line in open(localctf):
 				l = line.strip().split()
 				if len(l)<3: continue
-				x = int(float(l[labels.index("_rlnCoordinateX")]))
-				y = int(float(l[labels.index("_rlnCoordinateY")]))
+				x = int(float(l[labels.index("_rlnCoordinateX")]))/8
+				y = int(float(l[labels.index("_rlnCoordinateY")]))/8
 				du = float(l[labels.index("_rlnDefocusU")])
 				dv = float(l[labels.index("_rlnDefocusV")])
 				da = float(l[labels.index("_rlnDefocusAngle")])
@@ -91,6 +92,7 @@ def writeParticlesToStar(imgdata, boxsize, partdatas, shiftdata, boxfile, ctfdat
 				gridDu = griddata((x1,y1),newDu.ravel(),(xx,yy),method='cubic')
 			except:
 				apDisplay.printError("Cannot estimate local CTF without griddata")
+
 			x1 = xx[~matDv.mask]
 			y1 = yy[~matDv.mask]
 			newDv = matDv[~matDv.mask]
@@ -122,8 +124,8 @@ def writeParticlesToStar(imgdata, boxsize, partdatas, shiftdata, boxfile, ctfdat
 		xcoord = partdata['xcoord']
 		ycoord = partdata['ycoord']
 		if gridDu is not None:
-			du = gridDu[xcoord][ycoord]
-			dv = gridDv[xcoord][ycoord]
+			du = gridDu[xcoord/8][ycoord/8]
+			dv = gridDv[xcoord/8][ycoord/8]
 		else:
 			du = c['defU']
 			dv = c['defV']
@@ -132,8 +134,8 @@ def writeParticlesToStar(imgdata, boxsize, partdatas, shiftdata, boxfile, ctfdat
 		f.write("%12.6f %12.6f "%(xcoord,ycoord))
 		if ctfdata:
 			if gridDu is not None:
-				du = gridDu[xcoord][ycoord]
-				dv = gridDv[xcoord][ycoord]
+				du = gridDu[xcoord/8][ycoord/8]
+				dv = gridDv[xcoord/8][ycoord/8]
 			else:
 				du = c['defU']
 				dv = c['defV']
@@ -332,7 +334,7 @@ def boxMaskStack(bmstackf, partdatas, box, xmask, ymask, falloff, imask=None, no
 		if norotate is True:
 			rotatemask = maskarray
 		else:
-			angle = (-partdatas[i]['angle'])-90
+			angle = (partdatas[i]['angle'])-90
 			rotatemask = ndimage.rotate(maskarray, angle=angle, reshape=False, order=1)
 		maskedparts.append(rotatemask)
 

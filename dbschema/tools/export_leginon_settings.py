@@ -126,7 +126,7 @@ class SettingsJsonMaker(DataJsonMaker):
 				return r2
 
 	def exportFocusSequenceSettings(self, allalias):
-		print 'exporting Focus Sequence Settings....'
+		print 'checking Focus Sequence Settings....'
 		if 'Focuser' not in allalias.keys():
 			return
 		sequence_names = []
@@ -170,13 +170,12 @@ class SettingsJsonMaker(DataJsonMaker):
 			if not settingsname:
 				continue
 			if classname in aliaskeys:
-				print 'importing %s Settings....' % (classname,)
+				print 'checking %s Settings....' % (classname,)
 				# allalias[classname] may have duplicates
 				for node_name in (set(allalias[classname])):
 					if self.node_name_prefix and not node_name.startswith(self.node_name_prefix):
 						continue
 					try:
-						print '...node name: %s' % (node_name)
 						results = self.researchSettings(settingsname,name=node_name)
 					except:
 						if classname not in self.bad_settings_class:
@@ -215,6 +214,7 @@ class SettingsJsonMaker(DataJsonMaker):
 		session_name = source_session['name']
 		print "****Session %s ****" % (session_name)
 		self.exportSettings(appname)
+		print "%d settings are found with app=%s and node-prefix=%s" % (len(self.alldata), appname, self.node_name_prefix)
 		if appname:
 			jsonfilename = '%s+%s.json' % (session_name,appname)
 		else:

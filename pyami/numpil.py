@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from PIL import Image
 from PIL import ImageDraw
+from PIL import ImageSequence
 import numpy
 import imagefun
 import arraystats
@@ -67,7 +68,7 @@ def readInfo(imfile):
 	info = {}
 	info.update(im.info)
 	info['nx'], info['ny'] = im.size
-	info['nz'] = 1
+	info['nz'] = sum(1 for e in ImageSequence.Iterator(im))
 	return info
 
 def write(a, imfile=None, format=None, limits=None, writefloat=False):
@@ -142,17 +143,27 @@ def pil_image_tostring(obj, encoder_name="raw", *args):
 def fromstring(data, decoder_name="raw", *args):
 	return getattr(Image, getPilFromStringFuncName())(data,decoder_name, *args)
 
+def sumTiffStack(filename):
+	im = Image.open(filename)
+	imitr = ImageSequence.Iterator(im)
+	for i, frame in enumerate(imitr):
+		if i == 0:
+			a = numpy.array(frame.convert('L'))
+		else:
+			a += numpy.array(frame.convert('L'))
+	return a
+
+def tiff2numpy_array(filename, section):
+	im = PIL.Image.open(filename)
+	im.seek(section)
+	return numpy.array(im.convert('L'))
+
 Image2 = Image
 ###temporary hack for FSU
 import PIL
 if hasattr(PIL, 'PILLOW_VERSION'):
 	if int(PIL.PILLOW_VERSION[0]) >= 3:
 		Image2.fromstring = Image.frombytes
-
-def tiff2numpy_array(filename, section):
-	im = PIL.Image.open(filename)
-	im.seek(section)
-	return numpy.array(im)
 
 if __name__ == '__main__':
 	a = textArray('Hello')
