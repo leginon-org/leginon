@@ -331,6 +331,12 @@ echo '<td colspan=2>';
 echo '<form method="post">';
 if ($inline) echo '<div ';
 else echo '<textarea ';
+if (empty($mytextarea)) {
+	$outDir = getBaseAppionPath($sessioninfo).'/csLIVE/*.png';
+	foreach (glob($outDir) as $filename) {
+		$mytextarea .="<img src='processing/download.php?expId=".$expId."&file=".$filename."'/><br>"; 
+	}
+}
 echo 'id="mytextarea" name="mytext">'.$mytextarea;
 if ($inline) echo '</div>';
 else {
