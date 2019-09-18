@@ -150,61 +150,75 @@ function display($id) {
     $results = $cursor->toArray();
     $out_text = '';
     $fcs = '';
+    $classes = '';
     foreach ($results as $result){
         if (strpos($result->text, "FSC Iteration") !== false){
             $fcs = $result;
         }
+        elseif (strpos($result->text, "2D classes for iteration") !== false){
+        	$classes = $result;
+        }
         $out_text .= $result->text.'<br>';
     }
-    echo "<table border=1 CLASS=tableborder CELLPADDING=15>
-        <tr><td>";
-
-    echo '
-    <!-- NGL -->
-    <script src="../ngl/js/ngl.js"></script>
-
-    <!-- UI -->
-    <script src="../ngl/js/lib/signals.min.js"></script>
-    <script src="../ngl/js/lib/tether.min.js"></script>
-    <script src="../ngl/js/lib/colorpicker.min.js"></script>
-    <script src="../ngl/js/ui/ui.js"></script>
-    <script src="../ngl/js/ui/ui.extra.js"></script>
-    <script src="../ngl/js/ui/ui.ngl.js"></script>
-    <script src="../ngl/js/gui.js"></script>
-
-    <!-- EXTRA -->
-    <script src="../ngl/js/plugins.js"></script>
-
-    <script>
-        NGL.cssDirectory = "../ngl/css/";
-        var stage;
-        document.addEventListener( "DOMContentLoaded", function(){
-            stage = new NGL.Stage("viewport");
-                
-            var oReq = new XMLHttpRequest();    
-            
-            oReq.open("GET", "../proxy.php?csurl=http://'.CRYOSPARC.':39000/download_result_file/'.$job[0][projectId].'/'.$job[0][jobId].'.volume.map", true);
-            oReq.responseType = "arraybuffer";            
-            oReq.onload = function(oEvent) {
-              var blob = new Blob([oReq.response],  { type: "application/octet-binary"} );
-              var filename = "'.$job[0][jobId].'";
-              stage.loadFile(blob, {ext: "mrc", name: filename}).then(function (component) {
-            	  component.addRepresentation("surface");
-            	  component.autoView();
-            	});
-              
-            };
-            oReq.send();            
-            } );            
-
-    </script>
-    <div id="viewport" style="width:500px; height:300px;"></div>';
-    echo "<p style='text-align:center'><a href='http://".CRYOSPARC.":39000/download_result_file/".$job[0][projectId]."/".$job[0][jobId].".volume.map'>Download Map</a></p>";
-    echo "</td><td><img src='http://".CRYOSPARC.":39000/file/".$fcs->imgfiles[0]->fileid."'>";
-    echo "</td></tr></table>";
+    if ($fcs) {
+	    echo "<table border=1 CLASS=tableborder CELLPADDING=15>
+	        <tr><td>";
+	
+	    echo '
+	    <!-- NGL -->
+	    <script src="../ngl/js/ngl.js"></script>
+	
+	    <!-- UI -->
+	    <script src="../ngl/js/lib/signals.min.js"></script>
+	    <script src="../ngl/js/lib/tether.min.js"></script>
+	    <script src="../ngl/js/lib/colorpicker.min.js"></script>
+	    <script src="../ngl/js/ui/ui.js"></script>
+	    <script src="../ngl/js/ui/ui.extra.js"></script>
+	    <script src="../ngl/js/ui/ui.ngl.js"></script>
+	    <script src="../ngl/js/gui.js"></script>
+	
+	    <!-- EXTRA -->
+	    <script src="../ngl/js/plugins.js"></script>
+	
+	    <script>
+	        NGL.cssDirectory = "../ngl/css/";
+	        var stage;
+	        document.addEventListener( "DOMContentLoaded", function(){
+	            stage = new NGL.Stage("viewport");
+	                
+	            var oReq = new XMLHttpRequest();    
+	            
+	            oReq.open("GET", "../proxy.php?csurl=http://'.CRYOSPARC.':39000/download_result_file/'.$job[0][projectId].'/'.$job[0][jobId].'.volume.map", true);
+	            oReq.responseType = "arraybuffer";            
+	            oReq.onload = function(oEvent) {
+	              var blob = new Blob([oReq.response],  { type: "application/octet-binary"} );
+	              var filename = "'.$job[0][jobId].'";
+	              stage.loadFile(blob, {ext: "mrc", name: filename}).then(function (component) {
+	            	  component.addRepresentation("surface");
+	            	  component.autoView();
+	            	});
+	              
+	            };
+	            oReq.send();            
+	            } );            
+	
+	    </script>
+	    <div id="viewport" style="width:500px; height:300px;"></div>';
+	    echo "<p style='text-align:center'><a href='http://".CRYOSPARC.":39000/download_result_file/".$job[0][projectId]."/".$job[0][jobId].".volume.map'>Download Map</a></p>";
+	    echo "</td><td><img src='http://".CRYOSPARC.":39000/file/".$fcs->imgfiles[0]->fileid."'>";
+	    echo "</td></tr></table>";
+	    $return_array = array("fsc.png"=>"http://".CRYOSPARC.":39000/file/".$fcs->imgfiles[0]->fileid);
+    }
+    else{
+    	echo "<table border=1 CLASS=tableborder CELLPADDING=15>
+	        <tr><td>";
+    	echo "<img width='100%' src='http://".CRYOSPARC.":39000/file/".$classes->imgfiles[0]->fileid."'>";
+    	echo "</td></tr></table>";
+    	$return_array = array("2dclasses.png"=>"http://".CRYOSPARC.":39000/file/".$classes->imgfiles[0]->fileid);
+    }
     echo "<h1>CryoSPARC Output</h1>"; 
     echo $out_text;
-    return array("fsc.png"=>"http://".CRYOSPARC.":39000/file/".$fcs->imgfiles[0]->fileid);
+    return $return_array;
 }
 
 function delete($id) {
