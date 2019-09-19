@@ -1769,6 +1769,7 @@ class Parameters(wx.StaticBoxSizer):
 			('binning', 'Binning:'),
 			('exposure time', 'Exposure time (ms):'),
 			('save frames', 'Save raw frames:'),
+			#('use cds', 'Use CDS (K3):'),
 			('dose', 'Dose (e/A^2):'),
 			('pre exposure', 'Pre-Exposure (s):'),
 			('skip', 'Skip when cycling:'),

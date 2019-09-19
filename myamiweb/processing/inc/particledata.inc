@@ -6240,13 +6240,14 @@ class particledata {
 			foreach ($samplecommand as $c) $s[$c['name']] = $c['value'];
 		return $s;
 	}
-	function insetCryosparcJob($expId, $projectId, $jobId) {
+	function insetCryosparcJob($expId, $projectId, $jobId, $IP) {
 	    if (!$this->mysql->SQLTableExists("cryosparc")){
 	        $query = "CREATE TABLE IF NOT EXISTS cryosparc (
 	            id INT AUTO_INCREMENT,
 	            expId VARCHAR(255) NOT NULL,
 	            projectId VARCHAR(255) NOT NULL,
 	            jobId VARCHAR(255) NOT NULL,
+				IP VARCHAR(255) NOT NULL,
 	            PRIMARY KEY (id));";
 	        $this->mysql->SQLQuery($query);
 	        
@@ -6254,6 +6255,7 @@ class particledata {
 	    $data['expId']=$expId;
 	    $data['projectId']=$projectId;
 	    $data['jobId']=$jobId;
+	    $data['IP']=$IP;
 	    return $this->mysql->SQLInsert('cryosparc',$data);
 	}
 	

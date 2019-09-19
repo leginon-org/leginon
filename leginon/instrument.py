@@ -446,5 +446,6 @@ parametermapping = (
 	('binned multiplier', 'BinnedMultiplier'),
 	('gain index', 'GainIndex'),
 	('system corrected', 'SystemGainDarkCorrected'),
+	('use cds', 'UseCds'),
 )
 
