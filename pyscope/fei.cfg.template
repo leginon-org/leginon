@@ -38,6 +38,8 @@ EXTRA_PROTECTOR_SLEEP_TIME = 0
 AUTOIT_EXE_PATH = C:\Program Files\AutoIt3\nextphaseplate.exe
 # Location of tui acquire start/stop AutoIt executable
 AUTOIT_TUI_ACQUIRE_EXE_PATH = to_be_added
+# Location of tia movie series export AutoIt executable
+AUTOIT_TIA_EXPORT_SERIES_EXE_PATH = to_be_added
 
 [beamstop]
 # Location of beamstop AutoIt executable

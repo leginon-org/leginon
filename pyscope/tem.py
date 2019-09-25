@@ -40,7 +40,6 @@ class TEM(baseinstrument.BaseInstrument):
 		{'name': 'VacuumStatus', 'type': 'property'},
 		{'name': 'BeamBlankedDuringCameraExchange', 'type': 'property'},
 		{'name': 'ProjectionSubModeName', 'type': 'property'},
-		{'name': 'StageLimits', 'type': 'property'},
 
 		######## get/set
 		{'name': 'BeamBlank', 'type': 'property'},
@@ -93,6 +92,7 @@ class TEM(baseinstrument.BaseInstrument):
 		{'name': 'relaxBeam', 'type': 'method'},
 		{'name': 'runBufferCycle', 'type': 'method'},
 		{'name': 'nextPhasePlate', 'type': 'method'},
+		{'name': 'getStageLimits', 'type': 'method'},
 
 		## optional:
 		{'name': 'EnergyFilter', 'type': 'property'},

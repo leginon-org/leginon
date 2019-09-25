@@ -40,7 +40,7 @@ def get_feiadv():
 			comtypes.CoInitializeEx(comtypes.COINIT_MULTITHREADED)
 		except:
 			comtypes.CoInitialize()
-		connection.instr = comtypes.client.CreateObject('TEMAdvancedScripting.AdvancedInstrument.1')
+		connection.instr = comtypes.client.CreateObject('TEMAdvancedScripting.AdvancedInstrument.2')
 		connection.acq = connection.instr.Acquisitions
 		connection.csa = connection.acq.CameraSingleAcquisition
 		connection.cameras = connection.csa.SupportedCameras
@@ -452,6 +452,18 @@ class FeiCam(ccdcamera.CCDCamera):
 		exposure_time_s = exposure_time_ms/1000.0
 		self._clickAcquire(exposure_time_s)
 		print 'movie name: %s' % filename
+		self._saveMovie(filename)
+
+	def _saveMovie(self, filename=''):
+		exepath = self.getFeiConfig('camera','autoit_tia_export_series_exe_path')
+		if exepath and os.path.isfile(exepath):
+			if filename:
+				target_code = filename.split('.bin')[0]
+				subprocess.call("%s %s" % (exepath, target_code))
+			else:
+				raise ValueError('movie saving filename not provided')
+		else:
+			raise NotImplementedError()
 
 	def _clickAcquire(self, exposure_time_s=None):
 		# default is not checking
@@ -498,6 +510,7 @@ class Falcon3(FeiCam):
 	def initFrameConfig(self):
 		self.frameconfig = falconframe.FalconFrameRangeListMaker(False)
 		falcon_image_storage = self.camera_settings.PathToImageStorage #read only
+		falcon_image_storage = 'z:\\TEMScripting\\BM-Falcon\\'
 		print 'Falcon Image Storage Server Path is ', falcon_image_storage
 		sub_frame_dir = self.getFeiConfig('camera','frame_subpath')
 		try:
