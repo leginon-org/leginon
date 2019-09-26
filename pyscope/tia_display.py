@@ -30,10 +30,6 @@ class TIA(object):
 		self._connectToESVision()
 		self.initSettings()
 
-	def __getattr__(self, name):
-		# When asked for self.camera, instead return self._camera, but only
-		# after setting the current camera id
-
 	def initSettings(self):
 		pass
 
@@ -55,8 +51,19 @@ class TIA(object):
 		return self.esv.DisplayWindowNames()
 
 	def closeDisplayWindow(self, name):
-		if name in self.getDisplayWindowNames:
+		if name in self.getDisplayWindowNames():
 			self.esv.CloseDisplayWindow(name)
 		else:
 			raise ValueError('Display Window %s does not exist. Can not close' % name)
 
+def closeActiveDisplayWindow():
+	c=get_tia
+	c.esv.CloseDisplayWindow(c.esv.ActiveDisplayWindow().Name)
+
+if __name__=='__main__':
+	t=TIA()
+	all_dispwins = t.getDisplayWindowNames()
+	for i, name in enumerate(all_dispwins):
+		this = t.getActiveDisplayWindow()
+		print this.Name
+		t.closeDisplayWindow(name)

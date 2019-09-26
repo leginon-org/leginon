@@ -452,6 +452,7 @@ class FeiCam(ccdcamera.CCDCamera):
 		exposure_time_s = exposure_time_ms/1000.0
 		self._clickAcquire(exposure_time_s)
 		print 'movie name: %s' % filename
+		time.sleep(exposure_time_s)
 		self._saveMovie(filename)
 
 	def _saveMovie(self, filename=''):
