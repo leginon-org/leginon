@@ -47,10 +47,10 @@ If $CmdLine[0] > 0 Then
    $PresetTime = Number($CmdLine[1])
 Else
    $PresetTime = 1.0
-   If Number($exptime) <> $PresetTime Then
-	  ControlSetText($my_window,"", "Edit1",$PresetTime)
-	  ControlClick($my_window,"", "[CLASS:editenter;INSTANCE:1]")
-   EndIf
+EndIf
+If Number($exptime) <> $PresetTime Then
+   ControlSetText($my_window,"", "Edit1",$PresetTime)
+   ControlClick($my_window,"", "[CLASS:editenter;INSTANCE:1]")
 EndIf
 
 ; preset settings

@@ -8,6 +8,7 @@ Local $my_window = "TEM Imaging & Analysis"
 WinActivate($my_window)
 WinWaitActive($my_window, "", 5)
 $after = WinActive($my_window)
+Sleep(1000)
 If $after <> 0 Then
    ExportSeries()
    SetExportParameters()
@@ -22,6 +23,7 @@ Func ExportSeries()
    ; This only works if Export Series Shortcut is expanded
    Local $aExportPos[2] = [47, 273]
    MouseClick($MOUSE_CLICK_LEFT, $aWinPos[0]+$aExportPos[0],$aWinPos[1]+$aExportPos[1])
+   Sleep(1000)
    ;Select current series to exported. only one choice. Just click ok
    $my_control = "[CLASS:Button;INSTANCE:1]"
    ControlClick("Select Series to Export","",$my_control)
