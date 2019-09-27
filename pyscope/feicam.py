@@ -6,6 +6,7 @@ import ccdcamera
 import time
 import simscripting
 import falconframe
+from pyscope import tia_display
 from pyami import moduleconfig
 
 SIMULATION = False
@@ -67,6 +68,7 @@ class FeiCam(ccdcamera.CCDCamera):
 		self.setCameraBinnings()
 		self.setReadoutLimits()
 		self.initSettings()
+		self.tia_display = tia_display.TIA()
 
 	def __getattr__(self, name):
 		# When asked for self.camera, instead return self._camera, but only
@@ -99,6 +101,7 @@ class FeiCam(ccdcamera.CCDCamera):
 		self.exposuretype = 'normal'
 		self.start_frame_number = 1
 		self.end_frame_number = None
+		self.display_name = None
 
 	def setReadoutLimits(self):
 		readout_dicts = {READOUT_FULL:1,READOUT_HALF:2,READOUT_QUARTER:4}
@@ -446,11 +449,17 @@ class FeiCam(ccdcamera.CCDCamera):
 
 	def startMovie(self, filename, exposure_time_ms):
 		exposure_time_s = exposure_time_ms/1000.0
+		if self.display_name:
+			try:
+				self.tia_display.closeDisplayWindow(self.display_name)
+			except ValueError, e:
+				print 'TIA display %s can not be closed' % self.display_name
 		self._clickAcquire(exposure_time_s)
 
 	def stopMovie(self, filename, exposure_time_ms):
 		exposure_time_s = exposure_time_ms/1000.0
 		self._clickAcquire(exposure_time_s)
+		self.display_name = self.tia_display.getActiveDisplayWindowName()
 		print 'movie name: %s' % filename
 		time.sleep(exposure_time_s)
 		self._saveMovie(filename)
@@ -459,8 +468,8 @@ class FeiCam(ccdcamera.CCDCamera):
 		exepath = self.getFeiConfig('camera','autoit_tia_export_series_exe_path')
 		if exepath and os.path.isfile(exepath):
 			if filename:
-				target_code = filename.split('.bin')[0]
-				subprocess.call("%s %s" % (exepath, target_code))
+				self.target_code = filename.split('.bin')[0]
+				subprocess.call("%s %s" % (exepath, self.target_code))
 			else:
 				raise ValueError('movie saving filename not provided')
 		else:

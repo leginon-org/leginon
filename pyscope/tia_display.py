@@ -47,6 +47,13 @@ class TIA(object):
 	def getActiveDisplayWindow(self):
 		return self.esv.ActiveDisplayWindow()
 
+	def getActoveDisplayWindowName(self):
+		dispwin = self.getActiveDisplayWindow()
+		if not dispwin:
+			return None
+		else:
+			return dispwin.Name
+
 	def getDisplayWindowNames(self):
 		return self.esv.DisplayWindowNames()
 
