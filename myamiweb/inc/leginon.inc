@@ -3331,7 +3331,7 @@ class leginondata {
 			.' from `AcquisitionImageData` a '
 			.'LEFT JOIN `SessionData` s ON a.`REF|SessionData|session`=s.`DEF_id` '
 			.'LEFT JOIN `viewer_del_image` v ON v.`imageId`=a.`DEF_id` '
-			.'WHERE v.`status`=CONVERT( _utf8 "marked" USING latin1 ) COLLATE latin1_swedish_ci ';
+			.'WHERE v.`status`="marked" ';
 		$results = $this->mysql->getSQLResult($query);
 		$filearray = array();
 		if ($results) {
@@ -3358,7 +3358,7 @@ class leginondata {
 			."where "
 			."`q`.`REF|SessionData|session`=".$sessionId." "
 			."AND "
-			."`q`.`label` LIKE CONVERT(_utf8 '".$qtype."' USING latin1) COLLATE latin1_swedish_ci "
+			."`q`.`label` LIKE '".$qtype."' "
 			."order by doneid desc limit ".$limit." "
 			."";
 		return $this->mysql->getSQLResult($q);
@@ -3383,7 +3383,7 @@ class leginondata {
 		if ($qtype)
 			$whereqtype = ""
 			."AND "
-			."`q`.`label` LIKE CONVERT(_utf8 '".$qtype."' USING latin1) COLLATE latin1_swedish_ci ";
+			."`q`.`label` LIKE '".$qtype."' ";
 		$q="SELECT distinct "
 			."itlist.`DEF_id` as itlid "
 			."FROM "
@@ -3457,8 +3457,8 @@ class leginondata {
 			."LEFT JOIN `ImageTargetListData` AS `itlist` ON" ."(`itlist`.`DEF_id`=`t`.`REF|ImageTargetListData|list`) "
 			."WHERE "
 			." t.`REF|ImageTargetListData|list` = ".$targetlistId." "
-			."AND t.`type` LIKE CONVERT(_utf8 '".$targettype."' USING latin1) COLLATE "."latin1_swedish_ci "
-			."AND t.`status` LIKE CONVERT(_utf8 '".$status."' USING latin1) COLLATE " ."latin1_swedish_ci "
+			."AND t.`type` LIKE  '".$targettype."' "
+			."AND t.`status` LIKE '".$status."' "
 			//."AND t.`version` = 0 "
 			."GROUP BY t.`number` "
 			."";
@@ -3597,8 +3597,8 @@ class leginondata {
 			."		LEFT JOIN `ImageTargetListData` AS `itlist` ON" ."(`itlist`.`DEF_id`=`t`.`REF|ImageTargetListData|list`) "
 			."	WHERE "
 			."		t.`REF|SessionData|session` = ".$sessionId." "
-			."		AND t.`type` LIKE CONVERT(_utf8 '".$targettype."' USING latin1) COLLATE "."latin1_swedish_ci "
-			."		AND t.`status` LIKE CONVERT(_utf8 'processing' USING latin1) COLLATE " ."latin1_swedish_ci "
+			."		AND t.`type` LIKE '".$targettype."' "
+			."		AND t.`status` LIKE 'processing' "
 			."		AND itlist.`REF|NodeSpecData|node` = ".$nodeId." "
 			."	group by t.`REF|AcquisitionImageData|image`) AS proc, "
 			."	(SELECT "
@@ -3610,8 +3610,8 @@ class leginondata {
 			."		LEFT JOIN `ImageTargetListData` AS `itlist` ON" ."(`itlist`.`DEF_id`=`t`.`REF|ImageTargetListData|list`) "
 			."	WHERE "
 			."		t.`REF|SessionData|session` = ".$sessionId." "
-			."		AND t.`type` LIKE CONVERT(_utf8 '".$targettype."' USING latin1) COLLATE "."latin1_swedish_ci "
-			."		AND t.`status` LIKE CONVERT(_utf8 'done' USING latin1) COLLATE "."latin1_swedish_ci "
+			."		AND t.`type` LIKE '".$targettype."' "
+			."		AND t.`status` LIKE 'done' "
 			."		AND itlist.`REF|NodeSpecData|node` = ".$nodeId." "
 			."	group by t.`REF|AcquisitionImageData|image`) AS done "
 			."WHERE "
@@ -3639,10 +3639,9 @@ class leginondata {
 			."		LEFT JOIN `QueueData` AS `q` ON (`q`.`DEF_id`=`itlist`.`REF|QueueData|queue`) "
 			."	WHERE "
 			."		q.`REF|SessionData|session` = ".$sessionId." "
-			."		AND t.`type` LIKE CONVERT(_utf8 '".$targettype."' USING latin1) COLLATE "."latin1_swedish_ci "
-			."		AND t.`status` LIKE CONVERT(_utf8 'processing' USING latin1) COLLATE " ."latin1_swedish_ci "
-			."		AND q.`label` LIKE CONVERT(_utf8 '".$qtype."' USING latin1) COLLATE "
-			."				latin1_swedish_ci "
+			."		AND t.`type` LIKE '".$targettype."' "
+			."		AND t.`status` LIKE 'processing' "
+			."		AND q.`label` LIKE '".$qtype."' "
 			."	group by t.`REF|AcquisitionImageData|image`) AS proc, "
 			."	(SELECT "
 			."		max(UNIX_timestamp(`t`.`DEF_timestamp`)) as time, "
@@ -3654,10 +3653,9 @@ class leginondata {
 			."		LEFT JOIN `QueueData` AS `q` ON (`q`.`DEF_id`=`itlist`.`REF|QueueData|queue`) "
 			."	WHERE "
 			."		q.`REF|SessionData|session` = ".$sessionId." "
-			."		AND t.`type` LIKE CONVERT(_utf8 '".$targettype."' USING latin1) COLLATE "."latin1_swedish_ci "
-			."		AND t.`status` LIKE CONVERT(_utf8 'done' USING latin1) COLLATE "."latin1_swedish_ci "
-			."		AND q.`label` LIKE CONVERT(_utf8 '".$qtype."' USING latin1) COLLATE "
-			."latin1_swedish_ci "
+			."		AND t.`type` LIKE '".$targettype."' "
+			."		AND t.`status` LIKE 'done' "
+			."		AND q.`label` LIKE '".$qtype."'  "
 			."	group by t.`REF|AcquisitionImageData|image`) AS done "
 			."WHERE "
 			."	proc.QueueOn=done.QueueOn "
