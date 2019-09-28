@@ -1290,7 +1290,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		x = numpy.array(xlist)
 		y = numpy.array(ylist)
 		A = numpy.vstack([x,numpy.ones(len(x))]).T
-		return numpy.linalg.lstsq(A,y)[0]
+		return numpy.linalg.lstsq(A,y, rcond=-1)[0]
 
 	def publishImage(self, imdata):
 		self.publish(imdata, pubevent=True)

@@ -280,7 +280,7 @@ class GonModel:
 			## this loop searches for the best period in the current range
 			for period in numpy.arange(minp, maxp+incp, incp):
 				a = self.design_matrix(gondata,terms,period)
-				x,resids,rank,s = numpy.linalg.lstsq(a,b)
+				x,resids,rank,s = numpy.linalg.lstsq(a,b,rcond=-1)
 				try:
 					resids0 = resids[0]
 				except IndexError:

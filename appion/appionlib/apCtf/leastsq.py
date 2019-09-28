@@ -34,7 +34,7 @@ def numpyLeastSquares(X, Y):
 	if checkMatrixSizes(X, Y) is False:
 		return None
 
-	beta, res, rank, s = numpy.linalg.lstsq(X, Y)
+	beta, res, rank, s = numpy.linalg.lstsq(X, Y, rcond=-1)
 
 	apDisplay.printMsg("numpyLeastSquares completed in %s"
 		%(apDisplay.timeString(time.time()-t0)))
@@ -50,7 +50,7 @@ def numpyLeastSquaresW(X, Y, W):
 
 	WX = numpy.transpose( W * numpy.transpose(X) )
 
-	beta, res, rank, s = numpy.linalg.lstsq(WX, Y)
+	beta, res, rank, s = numpy.linalg.lstsq(WX, Y, rcond=-1)
 
 	apDisplay.printMsg("numpyLeastSquares completed in %s"
 		%(apDisplay.timeString(time.time()-t0)))

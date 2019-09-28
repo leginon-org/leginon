@@ -199,6 +199,7 @@ camera_params = (
 	('readout delay', int),
 	('gain index', int),
 	('system corrected', bool),
+	('use cds', bool),
 )
 
 class ScopeEMData(EMData):
@@ -533,6 +534,11 @@ class PresetData(InSessionData):
 		return InSessionData.typemap() + (
 			('number', int),
 			('name', str),
+			('skip', bool),
+			('removed', bool),
+			('hasref', bool),
+			# tem
+			('tem', InstrumentData),
 			('projection mode', str),
 			('magnification', int),
 			('spot size', int),
@@ -540,25 +546,23 @@ class PresetData(InSessionData):
 			('image shift', dict),
 			('beam shift', dict),
 			('diffraction shift', dict),
+			('aperture size', dict),
 			('defocus', float),
 			('defocus range min', float),
 			('defocus range max', float),
+			('dose', float),
+			('tem energy filter', bool),
+			('tem energy filter width', float),
+			('probe mode', str),
+			# camera
+			('ccdcamera', InstrumentData),
+			('exposure time', float),
 			('dimension', dict),
 			('binning', dict),
 			('offset', dict),
-			('exposure time', float),
-			('removed', bool),
-			('hasref', bool),
-			('dose', float),
-			('tem', InstrumentData),
-			('ccdcamera', InstrumentData),
-			('tem energy filter', bool),
-			('tem energy filter width', float),
 			('energy filter', bool),
 			('energy filter width', float),
-			('aperture size', dict),
 			('pre exposure', float),
-			('skip', bool),
 			('alt channel', bool),
 			('save frames', bool),
 			('frame time', float),
@@ -566,7 +570,7 @@ class PresetData(InSessionData):
 			('align filter', str),
 			('use frames', tuple),
 			('readout delay', int),
-			('probe mode', str),
+			('use cds', bool), # K3 only
 		)
 	typemap = classmethod(typemap)
 
@@ -676,6 +680,7 @@ class CameraImageData(ImageData):
 			('bright', BrightImageData),
 			('norm', NormImageData),
 			('use frames', tuple),
+			('denoised', bool), #used to default it to not denoised
 		)
 	typemap = classmethod(typemap)
 
@@ -1041,6 +1046,27 @@ class ImageTargetListData(InSessionData):
 			('node', NodeSpecData),
 		)
 	typemap = classmethod(typemap)
+	
+
+class TomoTargetOffsetData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('list', ImageTargetListData),
+			('focusoffset', tuple),
+			('trackoffset', tuple),
+			#('trackpreset', str),
+		)
+	typemap = classmethod(typemap)
+
+class GroupData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('name', str),
+			('description', str),
+			('privilege', projectdata.privileges),
+		)
+	typemap = classmethod(typemap)
+
 
 class DequeuedImageTargetListData(InSessionData):
 	def typemap(cls):
@@ -1493,6 +1519,21 @@ class ClickTargetFinderSettingsData(TargetFinderSettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class TomoClickTargetFinderSettingsData(ClickTargetFinderSettingsData):
+	def typemap(cls):
+		return ClickTargetFinderSettingsData.typemap() + (
+			('auto focus target', bool),
+			('focus target offset', float),
+			('track target offset', float),
+			('tomo beam diameter', float),
+			('focus beam diameter', float),
+			('track beam diameter', float),
+			('stretch tomo beam', bool),
+			('stretch focus beam', bool),
+			('stretch track beam', bool),
+		)
+	typemap = classmethod(typemap)
+	
 class MatlabTargetFinderSettingsData(TargetFinderSettingsData):
 	def typemap(cls):
 		return TargetFinderSettingsData.typemap() + (
@@ -1555,6 +1596,7 @@ class TemplateTargetFinderSettingsData(TargetFinderSettingsData):
 			('focus stats radius', int),
 			('focus min mean thickness', float),
 			('focus max mean thickness', float),
+			('focus min stdev thickness', float),
 			('focus max stdev thickness', float),
 			('focus interval', int),
 			('focus offset row', int),
@@ -1823,6 +1865,13 @@ class TargetWatcherSettingsData(SettingsData):
 			('park after list', bool),
 			('clear beam path', bool),
 		)
+	typemap = classmethod(typemap)
+	
+class TargetMapHandlerSettingsData(SettingsData):
+	def typemap(cls):
+		return SettingsData.typemap() + (
+			('process target type', str),
+	)
 	typemap = classmethod(typemap)
 
 class AcquisitionSettingsData(TargetWatcherSettingsData):
@@ -2318,6 +2367,16 @@ class TomographySettingsData(AcquisitionSettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class Tomography2SettingsData(TomographySettingsData):
+	def typemap(cls):
+		return TomographySettingsData.typemap() + (
+			('track preset', str),
+			('cosine dose', bool),
+			('full track', bool),
+			('tolerance', float),
+			('maxfitpoints', int),
+		)
+	typemap = classmethod(typemap)
 class TomographySimuSettingsData(AcquisitionSettingsData):
 	def typemap(cls):
 		return AcquisitionSettingsData.typemap() + (

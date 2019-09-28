@@ -1050,7 +1050,11 @@ var help = {
 		'zeromasking' : ' Mask surrounding background in particles to zero (by default the solvent area is filled with random noise)',
 		'correctnorm' : 'Perform normalisation error correction'
 
-	}
+	},
 		
+	'topazDenoise' : {
+		'device' : 'Positive integers for GPU id, set to -1 to force CPU (default: 0).',
+		'earlyreturn':'Sum and gain correct frames before denoising.', 
+	},
 }
 

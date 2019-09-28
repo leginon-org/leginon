@@ -269,6 +269,20 @@ if (is_numeric($expId)) {
 		'newrun' => array($nruns, $celloption),
 	);
 
+	/* Topaz Denoiser */
+	$action = "Denoiser";
+	$nruns=array();
+	$nruns[] = array(
+			'name'=>"<a href='runAppionLoop.php?expId=$sessionId&form=topazDenoiser'>Topaz Denoiser</a>",
+	);
+	
+	$data[] = array(
+			'action' => array($action, $celloption),
+			'newrun' => array($nruns, $celloption),
+	);
+	
+	
+	
 	/*
 	**
 	** Object selection
@@ -914,6 +928,10 @@ if (is_numeric($expId)) {
 	if ($leginondata->onlyUploadedImagesInSession($sessionId)) {
 	$nruns[] = array(
 		'name'=>"<a href='uploadimage.php?expId=$sessionId'>Upload more images</a>",
+	);
+	} else {
+	$nruns[] = array(
+		'name'=>"<a href='uploadimage.php?expId=$sessionId'>Upload images</a>",
 	);
 	}
 

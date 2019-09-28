@@ -75,8 +75,10 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			'modeled stage position':
 												calibrationclient.ModeledStageCalibrationClient(self),
 			'beam size':
-												calibrationclient.BeamSizeCalibrationClient(self)
+												calibrationclient.BeamSizeCalibrationClient(self),
+											
 		}
+
 		self.parent_imageid = None
 		self.current_image_pixelsize = None
 		self.focusing_targetlist = None
@@ -85,6 +87,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		self.targetimagevector = (0,0)
 		self.targetbeamradius = 0
 		self.resetLastFocusedTargetList(None)
+
 		self.remote = remoteserver.RemoteServerMaster(self.logger, session, self)
 		self.remote.targets.setTargetNames(self.targetnames)
 		self.onQueueCheckBox(self.settings['queue'])
@@ -233,7 +236,6 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		self.setStatus('processing')
 		# targetxys are target coordinates in x, y grouped by targetnames
 		targetxys = self.remote.targets.getInTargets()
-		print 'remote targets',targetxys
 
 		self.displayRemoteTargetXYs(targetxys)
 		preview_targets = self.panel.getTargetPositions('preview')
@@ -453,6 +455,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 
 		self.setTargetImageVector(imagedata)
 		self.setImageTiltAxis(imagedata)
+		self.setOtherImageVector(imagedata)		# this is used by tomoCickTargetFinder
 
 		# check if there is already a target list for this image
 		# or any other versions of this image (all from same target/preset)
@@ -475,6 +478,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			# no previous list, so create one and fill it with targets
 			targetlist = self.newTargetList(image=imagedata, queue=self.settings['queue'])
 			db = True
+
 		if self.settings['allow append'] or len(previouslists)==0:
 			self.findTargets(imagedata, targetlist)
 		self.logger.debug('Publishing targetlist...')
@@ -484,6 +488,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			pubevent = False
 		else:
 			pubevent = True
+			
 		self.publish(targetlist, database=db, pubevent=pubevent)
 		self.logger.debug('Published targetlist %s' % (targetlist.dbid,))
 
@@ -536,12 +541,15 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			self.parent_imageid = None
 		return is_new
 
-	def setTargetImageVector(self,imagedata):
+	def setTargetImageVector(self, imagedata):
 		try:
 			cam_length_on_image,beam_diameter_on_image = self.getAcquisitionTargetDimensions(imagedata)
 			self._setTargetImageVector(cam_length_on_image,beam_diameter_on_image)
 		except:
 			pass
+		
+	def setOtherImageVector(self, imagedata):	# Dummy function used by tomoClickTargetFinder
+		pass
 
 	def _setTargetImageVector(self,cam_length_on_image,beam_diameter_on_image):
 		self.targetbeamradius = beam_diameter_on_image / 2
@@ -603,15 +611,22 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 				dim_on_image.append(int(acq_dim[axis]/image_pixelsize[axis]))
 			# get Beam diameter on image
 			acq_presetdata = self.presetsclient.getPresetFromDB(presetname)
-			beam_diameter = self.calclients['beam size'].getBeamSize(acq_presetdata)
-			if beam_diameter is None:
-				# handle no beam size calibration
-				beam_diameter = 0
+			beam_diameter = self.getBeamDiameter(acq_presetdata)
 			beam_diameter_on_image = int(beam_diameter/min(image_pixelsize.values()))
 			return max(dim_on_image), beam_diameter_on_image
 		except:
 			# Set Length to 0 in case of any exception
 			return 0,0
+
+	def getBeamDiameter(self, presetdata):
+		'''
+		Get physical beam diameter in meters from preset if possible.
+		'''
+		beam_diameter = self.calclients['beam size'].getBeamSize(presetdata)
+		if beam_diameter is None:
+			# handle no beam size calibration
+			beam_diameter = 0
+		return beam_diameter
 
 	def onQueueCheckBox(self, state):
 		'''
@@ -660,6 +675,7 @@ class ClickTargetFinder(TargetFinder):
 		self.panel.targetsSubmitted()
 		self.setStatus('processing')
 		self.logger.info('Publishing targets...')
+
 		for i in self.targetnames:
 			if i == 'reference':
 				self.publishReferenceTarget(imdata)

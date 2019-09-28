@@ -940,7 +940,6 @@ function submitAppionCommand($command, $outdir, $runname, $expId, $jobtype, $pro
 function submitAppionJob($command, $outdir, $runname, $expId, $jobtype, $testimg=False,
 $xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0, $walltime="96", $cputime=False) {
 	global $DATA_DIRS;
-
 	$allow_processing = checkExptAdminPrivilege($expId,'data');
 	if (!$allow_processing) return "processing not allowed by this user for experiment id: $expId";
 
@@ -1093,6 +1092,99 @@ $xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0, $walltime="96", $cputime=F
 	echo "<p><font color='#990000'>do NOT hit 'reload' -- it will re-submit job</font><p>\n";
 	processing_footer();
 	exit;
+}
+
+/**************************************/
+function submitJob($command, $jobtype, $testimg=False,
+		$xvfb=False, $xtra=False, $nproc=12, $ppn=12, $nodes=1, $walltime="96", $cputime=False) {
+			global $DATA_DIRS;
+	
+	$expId=$_GET['expId'];
+	$runname=$_POST['runname'];
+	$outdir=$_POST['outdir'];
+	$processhost = getSelectedProcessingHost();
+	$webserver = $_SERVER['SERVER_ADDR'];
+	$user = $_SESSION['username'];
+	$pass = $_SESSION['password'];
+	$queue = $_POST['queue'];
+	// set rundir from runname and outdir
+	if (substr($outdir,-1,1)!='/')
+		$outdir.='/';
+	$rundir = $outdir.$runname;
+	$projectid = getProjectId();
+	// add space to end, if necessary
+	if (substr($command,-1,1)!=' ')
+		$command.=' ';
+	// in the future maybe remove if statements
+	if (!preg_match("/--rundir=/", $command) && !empty($rundir))
+		$command .= "--rundir=$rundir ";
+	if (!preg_match("/--runname=/", $command) && !empty($runname))
+		$command .= "--runname=$runname ";
+	if (!preg_match("/--expid=/", $command) && !empty($expId))
+		$command .= "--expid=$expId ";
+	if (!preg_match("/--projectid=/", $command))
+		$command .= "--projectid=$projectid ";
+											
+	// Add parameters that are only needed if submitting the job from the web server
+	$command = addJobSubmitParams( $command, $processhost, $nproc, $ppn, $nodes, $walltime, $cputime, $queue );
+	
+	//Check if filesystem is full
+	$cmd = "df $outdir";
+	$fscheck = exec_over_ssh($processhost,$user,$pass,$cmd,True);
+	if ($fscheck === false ){
+		$errMsg = "Could not determine if filesystem space is available for $outdir from $processhost: ";
+		$errMsg .= pconnError();
+		return $errMsg;
+	}
+	$fsbits = preg_split("% %", trim($fscheck));
+	foreach ($fsbits as $fsbit) {
+		if (preg_match("/^[0-9]+%$/", $fsbit))
+			$percent = (float) preg_replace("/%/", "", $fsbit);
+	}
+	if ($percent && $percent >= 98) {
+		$error = "Filesystem is $percent% full, please change output directory<br/>\n";
+		$error .= "<font size='-2'>$outdir</font>";
+		return $error;
+	}
+	
+	// make sure outdir ends with '/' and append run name
+	if (substr($outdir,-1,1)!='/') $outdir.='/';
+	$rundir = $outdir.$runname;
+	
+	// check to make sure the rundir is a valid directory
+	if ($DATA_DIRS) {
+		$ingood = False;
+		foreach ( $DATA_DIRS as $gooddisk)
+			if (!$gooddisk) {
+				$ingood = True;
+			} else {
+				$ingood = (preg_match('%'.$gooddisk.'%',$rundir))? True: $ingood;
+			}
+			if (!$ingood)
+				return 'could not create directory '.$rundir.'<br/> try using '.implode(' or ',$DATA_DIRS);
+	}
+	
+	// if more than one job running in the directory (like
+	// classification of ref free)
+	// is this used anymore? - neil
+	if ($xtra) $runname = "$runname.$xtra";
+	
+	makeSubDirs($processhost, $user, $pass, $rundir);
+		
+	// Set names of cluster job file and output log
+	// These should match the names being assigned on the python side where the files are created
+	$jobfile = "$runname.appionsub.job";
+	$logfile = "$runname.appionsub.log";
+
+	
+	// submit job to cluster
+	$jobdata = exec_over_ssh($processhost, $user, $pass, $command, True, $port=22, $max_time=20);
+	if ( empty($jobdata) ) {
+		$errMsg .= "Error: Job submission to $processhost failed. <br>  ";
+		$errMsg .= pconnError();
+		$errMsg .= "Command: $command";
+		return $errMsg;
+	}
 }
 
 /**************************************/

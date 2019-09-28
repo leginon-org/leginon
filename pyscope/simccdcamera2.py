@@ -662,6 +662,12 @@ class SimK3Camera(SimFrameCamera):
 		self.offset = dict(value)
 		self.tempoffset = {'x':0,'y':0}
 
+	def setUseCds(self,value):
+		self.use_cds = bool(value)
+
+	def getUseCds(self):
+		return self.use_cds
+
 	def _getImage(self):
 		if not self.validateGeometry():
 			raise ValueError('invalid image geometry')

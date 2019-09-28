@@ -36,6 +36,7 @@ class CCDCamera(baseinstrument.BaseInstrument):
 		{'name': 'EnergyFilterWidth', 'type': 'property'},
 		{'name': 'FrameFlip', 'type': 'property'},
 		{'name': 'FrameRotate', 'type': 'property'},
+		{'name': 'UseCds', 'type': 'property'},
 	)
 
 	def __init__(self):
@@ -52,6 +53,7 @@ class CCDCamera(baseinstrument.BaseInstrument):
 		self.readoutcallback = None
 		self.callbacks = {}
 		self.exposure_timestamp = None
+		self.use_cds = False
 
 	def getZplane(self):
 		return self.zplane

@@ -9,7 +9,7 @@ import shutil
 import leginon.leginondata
 import leginon.projectdata
 import leginon.ddinfo
-from pyami import mrc, fileutil
+from pyami import mrc, fileutil, numpil
 from appionlib import appionScript
 from appionlib import apDisplay
 from appionlib import apParam
@@ -279,6 +279,7 @@ class UploadImages(appionScript.AppionScript):
 
 	#=====================
 	def setPresetImage(self):
+		self.preset_image = None
 		if self.params['preset_imgid']:
 			# set instrument according to self.preset_image
 			self.preset_image = leginon.leginondata.AcquisitionImageData().direct_query(self.params['preset_imgid'])
@@ -308,13 +309,25 @@ class UploadImages(appionScript.AppionScript):
 		self.camdata = instrumentq
 		return
 
+	def getFileFormat(self, path):
+		extension = os.path.splitext(path)[1]
+		if extension in ('.mrc', '.mrcs'):
+			return 'mrc'
+		if extension in ('.tiff', '.tif'):
+			return 'tif'
+		return extension[1:]
+
 	#=====================
 	def getImagesInDirectory(self, directory):
-		searchstring = os.path.join(directory, "*.mrc")
+		searchstring = os.path.join(directory, "*.mrc*")
 		apDisplay.printMsg("searching for %s" % searchstring)
 		mrclist = glob.glob(searchstring)
 		if len(mrclist) == 0:
-			apDisplay.printError("Did not find any images to upload")
+			searchstring = os.path.join(directory, "*.tif*")
+			apDisplay.printMsg("searching for %s" % searchstring)
+			mrclist = glob.glob(searchstring)
+			if len(mrclist) == 0:
+				apDisplay.printError("Did not find any images to upload")
 		mrclist.sort()
 		return mrclist
 
@@ -326,7 +339,11 @@ class UploadImages(appionScript.AppionScript):
 		scopedata['magnification'] = self.params['magnification']
 		scopedata['high tension'] = self.params['kv']*1000
 		scopedata['defocus'] = 0.0
+		# These are queried in myamiweb as imageinfo.  Need to be defined
+		# so that the first upload will populate the column
 		scopedata['stage position'] = { 'x': 0.0, 'y': 0.0, 'z': 0.0, 'a': 0.0, }
+		scopedata['image shift'] = { 'x': 0.0, 'y': 0.0 }
+		scopedata['beam tilt'] = { 'x': 0.0, 'y': 0.0 }
 		return scopedata
 
 	def makeCameraEMData(self,dimension={'x':1,'y':1}, nframes=1):
@@ -599,12 +616,21 @@ class UploadImages(appionScript.AppionScript):
 
 	#=====================
 	def newImagePath(self, mrcfile, numinseries):
+		'''
+		Returns full path for uploaded image and frames
+		'''
 		extension = os.path.splitext(mrcfile)[1]
+		# input may be an absolute path or local filename
 		rootname = os.path.splitext(os.path.basename(mrcfile))[0]
+		# handle name containing .frames
+		if rootname.endswith('.frames'):
+			rootname = rootname[:-7]
 		newroot = rootname+"_"+str(numinseries)
 		if not newroot.startswith(self.params['sessionname']):
 			newroot = self.params['sessionname']+"_"+newroot
-		newname = newroot+extension
+		# image file name is always mrc
+		newname = newroot+'.mrc'
+		# frame name includes .frames and the original extension
 		newframename = newroot+'.frames'+extension
 		newimagepath = os.path.join(self.leginonimagedir, newname)
 		newframepath = os.path.join(self.leginonframedir, newframename)
@@ -621,14 +647,40 @@ class UploadImages(appionScript.AppionScript):
 
 	#=====================
 	def getImageDimensions(self, mrcfile):
+		'''
+		Returns dictionary of x,y dimension for an mrc or tif image/image stack
+		'''
+		if self.getFileFormat(mrcfile) == 'mrc':
+			return self._getMrcImageDimensions(mrcfile)
+		else:
+			return self._getTifImageDimensions(mrcfile)
+
+	def _getMrcImageDimensions(self, mrcfile):
 		mrcheader = mrc.readHeaderFromFile(mrcfile)
 		x = int(mrcheader['nx'].astype(numpy.uint16))
 		y = int(mrcheader['ny'].astype(numpy.uint16))
 		return {'x': x, 'y': y}
 
+	def _getTifImageDimensions(self, tiffile):
+		info = numpil.readInfo(tiffile)
+		return {'x':info['nx'],'y':info['ny']}
+
 	def getNumberOfFrames(self, mrcfile):
+		'''
+		Returns number of frames of an mrc or tif image/image stack
+		'''
+		if self.getFileFormat(mrcfile) == 'mrc':
+			return self._getMrcNumberOfFrames(mrcfile)
+		else:
+			return self._getTifNumberOfFrames(mrcfile)
+
+	def _getMrcNumberOfFrames(self, mrcfile):
 		mrcheader = mrc.readHeaderFromFile(mrcfile)
 		return max(1,int(mrcheader['nz'].astype(numpy.uint16)))
+
+	def _getTifNumberOfFrames(self, tiffile):
+		info = numpil.readInfo(tiffile)
+		return max(1,info['nz'])
 
 	def makeFrameDir(self,newdir):
 		fileutil.mkdirs(newdir)
@@ -642,6 +694,7 @@ class UploadImages(appionScript.AppionScript):
 		stack_path = os.path.dirname(os.path.abspath(mrc_stack))
 		temp_image_dir = "%s/%s_tmp" % (stack_path, prefix)
 		os.system('mkdir %s 2>/dev/null' % temp_image_dir)
+		# Only for mrc
 		stack = mrc.read(mrc_stack)
 		for tilt_image in range(1,len(stack)+1):
 			mrc.write(stack[tilt_image-1],"%s/%s_%04d.mrc" % (temp_image_dir, prefix, tilt_image))
@@ -652,11 +705,20 @@ class UploadImages(appionScript.AppionScript):
 		### database record, image need to be read as numpy array, not copied
 		### single image should not overload memory
 		apDisplay.printMsg("Reading original image: "+origfilepath)
+		input_format = self.getFileFormat(origfilepath)
 		if nframes <= 1:
-			imagearray = mrc.read(origfilepath)
+			if input_format == 'mrc':
+				imagearray = mrc.read(origfilepath)
+			elif input_format == 'tif':
+				imagearray = numpil.read(origfilepath)
 		else:
 			apDisplay.printMsg('Summing %d frames for image upload' % nframes)
-			imagearray = mrc.sumStack(origfilepath)
+			if input_format == 'mrc':
+				imagearray = mrc.sumStack(origfilepath)
+			elif input_format == 'tif':
+				imagearray = numpil.sumTiffStack(origfilepath)
+			else:
+				apDisplay.printError('Do not know how to handle %s' % (input_format,))
 			apDisplay.printMsg('Copying frame stack %s to %s' % (origfilepath,newframepath))
 			self.copyFrames(origfilepath,newframepath)
 		return imagearray
@@ -736,7 +798,6 @@ class UploadImages(appionScript.AppionScript):
 				continue
 			### rename image
 			newimagepath, newframepath = self.newImagePath(mrcfile, numinseries)
-
 			### get image dimensions
 			dims = self.getImageDimensions(mrcfile)
 			nframes = self.getNumberOfFrames(mrcfile)

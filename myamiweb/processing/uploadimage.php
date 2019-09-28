@@ -458,7 +458,7 @@ function runUploadImage() {
 
 			if ($has_session) {
 				if ($uploadtype !== 'tiltseries'){
-					if (!$leginon->onlyUploadedImagesInSession($has_session[0]['DEF_id'])) {
+					if (false) {
 						createUploadImageForm($errormsg."Session contains images not from  'appion' Host is not available for uploading more images");
 					}	
 				}
