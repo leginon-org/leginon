@@ -174,7 +174,7 @@ Func getFeiConfigModuleLines($configpath, $module)
 EndFunc
 
 Func GetFeiConfigSelections($configpath,$module,$key)
-   Local $aListNames[5]
+   Local $aListNames[10] ; In case there are 6 phase plates.
    Local $aLines = getFeiConfigModuleLines($configpath, $module)
    For $i = 0 to UBound($aLines)-1
 	  Local $sLine = $aLines[$i]
