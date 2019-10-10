@@ -91,6 +91,14 @@ class AlignZeroLossPeak(ReferenceTimer):
 		self.setStatus('idle')
 		self.panel.playerEvent('stop')
 
+	def _getTestPreset(self):
+		'''
+		Use Check Preset
+		'''
+		self.logger.info('Use check preset for testing instead of current preset')
+		check_preset_name = self.settings['check preset']
+		return self.presets_client.getPresetFromDB(check_preset_name)
+
 	def setCheckPreset(self):
 		# set check preset and send to scope
 		check_preset_name = self.settings['check preset']
