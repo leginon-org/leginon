@@ -350,21 +350,17 @@ class EmMenuF416(ccdcamera.CCDCamera):
 
 	def startMovie(self, filename, exposure_time_ms):
 		exposure_time_s = exposure_time_ms/1000.0
-		self._clickAcquire(exposure_time_s)
+		try:
+			self.finalizeSetup()
+			self.custom_setup()
+		except Exception, e:
+			if self.getDebugCamera():
+				print 'Camera setup',e
+			raise RuntimeError('Error setting camera parameters: %s' % (e,))
+		self.vp1.StartContinuous()
 
 	def stopMovie(self, filename, exposure_time_ms):
 		exposure_time_s = exposure_time_ms/1000.0
-		self._clickAcquire(exposure_time_s)
+		self.vp1.StopContinuous()
 		print 'movie name: %s' % filename
-
-	def _clickAcquire(self, exposure_time_s=None):
-		# default is not checking
-		exepath = self.getTvipsConfig('camera','autoit_tui_acquire_exe_path')
-		if exepath and os.path.isfile(exepath):
-			if exposure_time_s is not None:
-				subprocess.call("%s %.3f" % (exepath, exposure_time_s))
-			else:
-				subprocess.call(exepath)
-		else:
-			raise NotImplementedError()
 
