@@ -1759,6 +1759,8 @@ class Tecnai(tem.TEM):
 		if mechanism_name == 'condenser':
 			# always look up condenser 2 value
 			mechanism_name = 'condenser_2'
+		if mechanism_name not in self.getFeiConfig('aperture').keys():
+			return 'unknown'
 		exepath = self.getFeiConfig('aperture','autoit_aperture_selection_exe_path')
 		if exepath and os.path.isfile(exepath):
 			cmd = '%s "%s" %s %s get' % (exepath,configpath,self.column_type, mechanism_name)
