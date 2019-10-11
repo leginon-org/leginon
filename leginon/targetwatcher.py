@@ -226,15 +226,17 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		# define it now regardless.
 		original_position = self.instrument.tem.getStagePosition()
 		self.targetlist_reset_tilt = original_position['a']
-		if self.settings['retract obj aperture']:
+		if self.settings['set aperture']:
 			# get aperture selection only if need to avoid error in accessing info.
 			try:
 				self.obj_aperture_reset_value = self.instrument.tem.getApertureSelection('objective')
+				self.c2_aperture_reset_value = self.instrument.tem.getApertureSelection('condenser')
 			except Exception, e:
 				self.logger.error(e)
-				self.logger.error('Please retract objective aperture manually and continue')
+				self.logger.error('Please set aperture manually and continue')
 				self.player.pause()
 				self.obj_aperture_reset_value = 'unknown'
+				self.c2_aperture_reset_value = 'unknown'
 			
 		if good_targets:
 			# Things to do before reject targets are published.
@@ -317,50 +319,56 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		self.logger.info('Parent tilt %.2f degrees.' % (self.targetlist_reset_tilt*180.0/math.pi))
 		# process the good ones
 		retract_successful = False
-		if self.isNeedRetractObjectiveAperture(good_targets):
-			retract_successful = self.retractObjectiveAperture()
+		if self.isNeedSetApertures(good_targets):
+			retract_successful = self.setApertures()
 
 		targetliststatus = 'success'
 		self.processGoodTargets(good_targets)
 
 		self.reportTargetListDone(newdata, targetliststatus)
 		if retract_successful:
-			self.putBackObjectiveAperture()
+			self.putBackApertures()
 
 		if self.settings['park after list']:
 			self.park()
 		self.setStatus('idle')
 
-	def isNeedRetractObjectiveAperture(self,good_targets):
-		want_to = good_targets and self.settings['retract obj aperture']
+	def isNeedSetApertures(self,good_targets):
+		want_to = good_targets and self.settings['set aperture']
 		if not want_to:
 			return False
-		can_do = self.obj_aperture_reset_value and self.obj_aperture_reset_value not in ('unknown','open')
-		if want_to and not can_do:
-			if self.obj_aperture_reset_value != 'open':
-				self.logger.warning('Objective aperture not in a restorable state. Skip retraction')
-			else:
-				self.logger.warning('Objective aperture already retracted. Skip retraction')
+		obj_to_set = self.settings['objective aperture']
+		c2_to_set = self.settings['c2 aperture']
+		if self.obj_aperture_reset_value == 'unknown' or self.obj_aperture_reset_value == 'unknown':
+			self.logger.warning('Objective aperture not in a restorable state. Skip setting aperture')
+			return False
+		can_do = self.obj_aperture_reset_value not in (obj_to_set,) or self.c2_aperture_reset_value != c2_to_set
+		return can_do
 
-		return want_to and can_do
-
-	def retractObjectiveAperture(self):
-		retract_ap_successful = False
-		self.logger.info('Retracting objective aperture....')
+	def setApertures(self):
+		set_ap_successful = False
+		new_obj_ap = self.settings['objective aperture']
+		new_c2_ap = self.settings['c2 aperture']
+		self.logger.info('Setting apertures....')
 		try:
-			state = self.instrument.tem.setApertureSelection('objective','open')
-			self.logger.info('Objective aperture retracted')
-			retract_ap_successful = True
+			state1 = self.instrument.tem.setApertureSelection('objective',new_obj_ap)
+			self.logger.info('Objective aperture set to %s' % new_obj_ap)
+			state2 = self.instrument.tem.setApertureSelection('condenser',new_c2_ap)
+			self.logger.info('Condenser aperture set to %s' % new_c2_ap)
+			set_ap_successful = state1 and state2
 		except Exception, e:
 			self.logger.error(e)
-		return retract_ap_successful
+		return set_ap_successful
 
-	def putBackObjectiveAperture(self):
+	def putBackApertures(self):
 		self.logger.info('Inserting objective aperture....')
-		value = self.obj_aperture_reset_value
+		new_obj_ap = self.obj_aperture_reset_value
+		new_c2_ap = self.c2_aperture_reset_value
 		try:
-			state = self.instrument.tem.setApertureSelection('objective',value)
-			self.logger.info('%s um objective aperture inserted' % (value,))
+			state1 = self.instrument.tem.setApertureSelection('objective',new_obj_ap)
+			self.logger.info('objective aperture set to %s' % (new_obj_ap,))
+			state2 = self.instrument.tem.setApertureSelection('condenser',new_c2_ap)
+			self.logger.info('Condenser aperture set to %s' % new_c2_ap)
 		except Exception, e:
 			self.logger.error(e)
 

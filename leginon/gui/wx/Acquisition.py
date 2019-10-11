@@ -10,7 +10,7 @@ import threading
 import leginon.gui.wx.Node
 import leginon.gui.wx.Settings
 from leginon.gui.wx.Choice import Choice
-from leginon.gui.wx.Entry import FloatEntry, EVT_ENTRY, IntEntry
+from leginon.gui.wx.Entry import Entry, FloatEntry, EVT_ENTRY, IntEntry
 from leginon.gui.wx.Presets import EditPresetOrder, EVT_PRESET_ORDER_CHANGED
 import leginon.gui.wx.Events
 import leginon.gui.wx.ImagePanel
@@ -385,13 +385,23 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 						wx.ALIGN_CENTER_VERTICAL)
 		return sz_beampath
 
-	def createRetractObjApertureSizer(self):
-		self.widgets['retract obj aperture'] = wx.CheckBox(self, -1, 'Retract objective aperture while imaging')
+	def createSetApertureSizer(self):
+		self.widgets['set aperture'] = wx.CheckBox(self, -1, 'set these apertures while imaging')
+		self.widgets['objective aperture'] = Entry(self, -1)
+		self.widgets['c2 aperture'] = Entry(self, -1)
 		# mskr sizer
-		sz_obj_ap = wx.GridBagSizer(0, 0)
-		sz_obj_ap.Add(self.widgets['retract obj aperture'], (0, 0), (1, 1),
+		sz_aps = wx.GridBagSizer(0, 0)
+		sz_aps.Add(self.widgets['set aperture'], (0, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		return sz_obj_ap
+		label1 = wx.StaticText(self, -1, 'condenser:')
+		sz_aps.Add(label1, (1, 0), (1, 1),wx.ALIGN_RIGHT)
+		sz_aps.Add(self.widgets['c2 aperture'], (1, 1), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		label2 = wx.StaticText(self, -1, 'objective:')
+		sz_aps.Add(label2, (2, 0), (1, 1),wx.ALIGN_RIGHT)
+		sz_aps.Add(self.widgets['objective aperture'], (2, 1), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		return sz_aps
 
 	def addSettings(self):
 		# move type
@@ -405,7 +415,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz_emission = self.createEmissionSizer()
 		sz_tilt = self.createTiltSizer()
 		sz_beampath = self.createClearBeamPathSizer()
-		sz_obj_ap = self.createRetractObjApertureSizer()
+		sz_obj_ap = self.createSetApertureSizer()
 		sbszsim = self.createSimulatedTargetLoopBoxSizer()
 
 		# misc

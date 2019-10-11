@@ -110,6 +110,7 @@ eventFactory('Get Display Pressure', attributes=['unit','values'])
 eventFactory('Get Display Grid Loader Slot States', attributes=['values'])
 eventFactory('Get Display Aperture States', attributes=['values'])
 eventFactory('Update Grid Slot Selector', attributes=['values'])
+eventFactory('Update Mechanism Selector', attributes=['values','current'])
 eventFactory('Update Aperture Selector', attributes=['values','current'])
 
 
