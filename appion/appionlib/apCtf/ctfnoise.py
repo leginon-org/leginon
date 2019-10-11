@@ -27,7 +27,7 @@ class CtfNoise(object):
 
 		refinefitparams = scipy.optimize.fmin_cobyla( self.modelFitFun, initfitparams,
 			args=(xdata, ctfdata, noiseModel), cons=[contraintFunction,],
-			consargs=(xdata, ctfdata, noiseModel), iprint=0, maxfun=maxfun)
+			consargs=(xdata, ctfdata, noiseModel), maxfun=maxfun)
 
 		return refinefitparams
 
@@ -631,7 +631,7 @@ class CtfNoise(object):
 		if self.debug: print "RHO begin", rhobeg
 		fitparams = scipy.optimize.fmin_cobyla( self.modelFitFun, midfitparams,
 			args=(xdata, ctfdata), cons=[contraintFunction,],
-			consargs=(xdata, ctfdata), rhobeg=rhobeg, rhoend=rhobeg/1e4, iprint=0, maxfun=1e6)
+			consargs=(xdata, ctfdata), rhobeg=rhobeg, rhoend=rhobeg/1e4, maxfun=1e6)
 		if self.debug is True:
 			print ( "final parameters (%.4e, %.4e, %.4e, %.4e, %.4e)"
 				%(fitparams[0], fitparams[1], fitparams[2], fitparams[3], fitparams[4]))

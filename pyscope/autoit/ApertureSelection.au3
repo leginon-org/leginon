@@ -40,14 +40,14 @@ WinWaitActive($my_title, "", 5)
 $after = WinActive($my_title)
 Global $sFeiConfigPath = "c:\Program Files (x86)\myami\fei.cfg"
 ; Set Default
-Local $tem = 'talos'
+Local $sTem = 'titan'
 Local $sMechanism = 'objective'
-Local $action = 'set'
+Local $action = 'get'
 Local $sSelection = 'open'
 ; Set from command line
 If $CmdLine[0] > 0 Then
    $sFeiConfigPath = $CmdLine[1]
-   $tem = $CmdLine[2]
+   $sTem = $CmdLine[2]
    $sMechanism = $CmdLine[3]
    $action = $CmdLine[4]
    If $action == 'set' Then
@@ -56,7 +56,8 @@ If $CmdLine[0] > 0 Then
 EndIf
 
 ;Deciding instance indices for button and combobox
-Local $aInstanceIndices = GetInstanceIndices($tem, $sMechanism)
+Local $hasAutoC3 = GetFeiConfigHasAutoC3($sFeiConfigPath)
+Local $aInstanceIndices = GetInstanceIndices($sTem, $hasAutoC3, $sMechanism)
 ;Running get or set
 If $action = 'get' Then
    Local $result = GetApertureSelection($aInstanceIndices)
@@ -73,24 +74,27 @@ ElseIf $action = 'set' Then
 
 EndIf
 
-Func GetInstanceIndices($tem, $mechanism)
+Func GetInstanceIndices($sTem, $hasAutoC3, $mechanism)
    ;ComboBox and Button instance indices depends on the gui. Can get this information using AutoIt Window Info program
    ;Two common tem gui choices.
-   If StringLower($tem) = 'talos' Then
+   If $sTem = 'titan' Then
+	  ;MsgBox(0,'this',$hasAutoC3)
  	  Global $aMechanisms[] = ['condenser_2','objective','selected_area']
 	  Global $aSelections = GetFeiConfigSelections($sFeiConfigPath,"aperture",$mechanism)
-	  ; 2 condenser system with condenser_2 not retractable
+	  If $hasAutoC3 Then
+		 ; 3 auto condenser aperture system with condenser_2 not retractable
+		 Local $aComboBoxInstances[] = [2,4,5]
+		 Local $aButtonInstances[] = [-1,4,6]
+	  Else
+		 Local $aComboBoxInstances[] = [2,3,4]
+		 Local $aButtonInstances[] = [-1,3,5]
+	  EndIf
+   Else
+ 	  Global $aMechanisms[] = ['condenser_2','objective','selected_area']
+	  Global $aSelections = GetFeiConfigSelections($sFeiConfigPath,"aperture",$mechanism)
+	  ; C3 not exist or is manual so that it does not have button to activate nor combobox
 	  Local $aComboBoxInstances[] = [1,2,3]
 	  Local $aButtonInstances[] = [-1,2,4]
-   ElseIf StringLower($tem) = 'titan' Then
- 	  Global $aMechanisms[] = ['condenser_2','objective','selected_area']
-	  Global $aSelections = GetFeiConfigSelections($sFeiConfigPath,"aperture",$mechanism)
-	  ; 3 condenser system
-	  Local $aComboBoxInstances[] = [2,4,5]
-	  Local $aButtonInstances[] = [-1,4,6]
-   Else
-	  _WriteError($tem & " aperture interface layout unknown")
-	  Exit
    EndIf
 
     ;Decide which one
@@ -141,6 +145,7 @@ Func SetApertureSelection($aIndices, $sSelection)
 EndFunc
 
 Func getFeiConfigModuleLines($configpath, $module)
+   ; Read lines under a module in fei.cfg
    Local $h2 = FileOpen($configpath, 0)
    If $h2 == -1 Then
 	  _WriteError("can not open " & $configpath)
@@ -173,8 +178,26 @@ Func getFeiConfigModuleLines($configpath, $module)
    Return $Lines
 EndFunc
 
+Func GetFeiConfigHasAutoC3($configpath)
+   ;Get boolean value of aperture:has_auto_c3 from fei.cfg
+   Local $key = 'has_auto_c3'
+   Local $aLines = getFeiConfigModuleLines($configpath, 'aperture')
+   Local $hasAutoC3 = False
+   For $i = 0 to UBound($aLines)-1
+	  Local $sLine = $aLines[$i]
+	  Local $aBits = StringSplit($sLine,"=",2)
+	  $sKey = StringStripWS($aBits[0],8); strip
+	  If StringLower($sKey) == StringLower($key) Then
+		 If StringLower(StringStripWS($aBits[1],8)) = 'true' Then
+			$hasAutoC3 = True
+		 EndIf
+	  EndIf
+   Next
+   return $hasAutoC3
+EndFunc
+
 Func GetFeiConfigSelections($configpath,$module,$key)
-   Local $aListNames[5]
+   Local $aListNames[10] ; In case there are 6 phase plates.
    Local $aLines = getFeiConfigModuleLines($configpath, $module)
    For $i = 0 to UBound($aLines)-1
 	  Local $sLine = $aLines[$i]

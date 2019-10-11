@@ -118,7 +118,7 @@ class SimTEM(tem.TEM):
 		self.loaded_slot_number = None
 		self.is_init = True
 
-		self.aperture_selection = {'objective':'','condenser2':'70','selected area':'open'}
+		self.aperture_selection = {'objective':'100','condenser_2':'70','selected_area':'open'}
 		if 'simpar' in self.conf and self.conf['simpar'] and os.path.isdir(self.conf['simpar']):
 			self.simpar_dir = self.conf['simpar']
 			self.resetSimPar()
@@ -589,21 +589,28 @@ class SimTEM(tem.TEM):
 		'''
 		Names of the available aperture mechanism
 		'''
-		return ['condenser2', 'objective', 'selected area']
+		return ['condenser_2', 'objective', 'selected_area']
 
 	def getApertureSelections(self, aperture_mechanism):
 		if aperture_mechanism == 'objective':
 			return ['open','100']
-		if aperture_mechanism == 'condenser2':
-			return ['open','100']
+		if aperture_mechanism == 'condenser_2' or aperture_mechanism == 'condenser':
+			return ['150','100','70']
 		return ['open']
 
 	def getApertureSelection(self, aperture_mechanism):
+		if aperture_mechanism == 'condenser':
+			aperture_mechanism = 'condenser_2'
 		return self.aperture_selection[aperture_mechanism]
 
 	def setApertureSelection(self, aperture_mechanism, name):
+		if aperture_mechanism == 'condenser':
+			aperture_mechanism = 'condenser_2'
+		if name not in self.getApertureSelections(aperture_mechanism):
+			self.aperture_selection[aperture_mechanism] = 'unknown'
+			return False
 		self.aperture_selection[aperture_mechanism] = name
-		return False
+		return True
 
 	def retractApertureMechanism(self, aperture_mechanism):
 		return setApertureSelection(aperture_mechanism, 'open')

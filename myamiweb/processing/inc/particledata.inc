@@ -6385,6 +6385,9 @@ function getBaseAppionPath($sessioninfo,$new_base='appion') {
 			if ($parent_addition_number > 0) {
 				// add extra directory division prior to sessionname
 				$addition_parts = array_splice($parts,$session_index-APPION_PARENT_ADDITION,APPION_PARENT_ADDITION);
+				if ($_SESSION['username']){
+					$addition_parts[0] = $_SESSION['username']; #for topaz and reporting http://emg.nysbc.org/redmine/issues/7962#note-5
+				}					
 				$appion_path = Path::formatEndPath(Path::formatEndPath($appion_path).implode(DS,$addition_parts));
 			}
 		} else {

@@ -294,7 +294,7 @@ class CentosInstallation(object):
 	def setupWebServer(self):
 		self.writeToLog("--- Start install Web Server")
 		#myamiweb yum packages
-		packagelist = ['php-pecl-ssh2','php-mongodb.noarch', 'mod_ssl', 'fftw3-devel','git','python-imaging','python-devel','mod_python','scipy','httpd', 'libssh2-devel', 'php', 'php-mysql', 'phpMyAdmin.noarch', 'php-devel', 'php-gd', ]
+		packagelist = ['php-pecl-ssh2','php-mongodb.noarch', 'mod_ssl', 'fftw-devel','git','python-imaging','python-devel','mod_python','scipy','httpd', 'libssh2-devel', 'php', 'php-mysql', 'phpMyAdmin.noarch', 'php-devel', 'php-gd', ]
 		self.yumInstall(packagelist)
 
 		# Redux Server is on Web server for now.
@@ -876,7 +876,7 @@ endif
 		packagelist= ['epel-release','vim','wget','sudo','rsync','passwd','tar','firefox','mlocate','unzip','bzip2','dbus-x11']
 		self.yumInstall(packagelist)
 
-		packagelist = ['ImageMagick', 'MySQL-python', 'compat-libf2c-34', 'compat-libgfortran-41', 'fftw3-devel', 'gcc-c++', 'gcc-gfortran', 'gcc-objc', 'gnuplot', 'grace', 'gsl-devel', 'libtiff-devel', 'netpbm-progs', 'numpy', 'openmpi-devel', 'opencv-python', 'python-devel', 'python-imaging', 'python-matplotlib', 'python-tools', 'scipy', 'wxPython', 'xorg-x11-server-Xvfb', 'libjpeg-devel', 'zlib-devel']
+		packagelist = ['ImageMagick', 'MySQL-python', 'compat-libf2c-34', 'compat-libgfortran-41', 'fftw-devel', 'gcc-c++', 'gcc-gfortran', 'gcc-objc', 'gnuplot', 'grace', 'gsl-devel', 'libtiff-devel', 'netpbm-progs', 'numpy', 'openmpi-devel', 'opencv-python', 'python-devel', 'python-imaging', 'python-matplotlib', 'python-tools', 'scipy', 'wxPython', 'xorg-x11-server-Xvfb', 'libjpeg-devel', 'zlib-devel']
 		self.yumInstall(packagelist)
 
 	def enableTorqueComputeNode(self):
