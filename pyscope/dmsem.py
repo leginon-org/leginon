@@ -864,3 +864,8 @@ class GatanK3(GatanK2Base):
 				image = image.reshape(self.acqparams['height'],self.acqparams['width'])
 				print 'WARNING: image reshaped', image.shape
 		return image
+
+	def getPixelSize(self):
+		# pixel size on Gatan K3 as super resolution.  TODO: need confirmation.
+		return {'x': 2.5e-6, 'y': 2.5e-6}
+
