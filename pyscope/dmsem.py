@@ -304,6 +304,14 @@ class DMSEM(ccdcamera.CCDCamera):
 		self.debug_print('received shape %s' %(image.shape,))
 
 		if self.save_frames or self.align_frames:
+			if self.getDoEarlyReturn():
+				if self.getEarlyReturnFormat() == '8x8':
+					if self.getEarlyReturnFrameCount() > 0:
+						#fake 8x8 image with the same mean and standard deviation for fast transfer
+						fake_image = self.base_fake_image*image.std() + numpy.ones((8,8))
+					else:
+						fake_image = numpy.zeros((8,8))
+					return fake_image
 			image = self._modifyImageOrientation(image)
 		image = self._modifyImageShape(image)
 		self.debug_print('final shape %s' %(image.shape,))
@@ -540,6 +548,24 @@ class GatanK2Base(DMSEM):
 	filePerImage = False
 
 	k2_max_ram_for_stack_gb = 12 # maximal ram for ram grabs
+	# base fake image of 8x8 shape, mean=0,0 and std=1.0
+	base_fake_image = numpy.array(
+[[-1.19424753,  1.4246904 , -0.93985889,  0.60135849,  0.27857971,
+        -1.65301365,  1.04678336, -1.52532131],
+       [-1.31055292, -1.64913688, -0.02365123,  0.66956679, -0.65988101,
+         0.9513427 , -0.13423738,  0.33800944],
+       [-1.1071589 ,  0.88239252,  0.10997026, -1.18640795,  0.61022063,
+         0.81224024, -0.16747269,  0.00719223],
+       [-0.90773998,  1.7711954 , -0.22341715,  1.77620855, -1.31179014,
+         0.41032037,  0.0359722 ,  0.54127201],
+       [-0.93403768, -0.68054982,  0.91282793, -0.3759068 , -0.90186899,
+         0.25927322,  0.45464985,  0.45113749],
+       [ 0.90185984,  0.61578781, -0.6812698 , -0.51314294,  1.5032234 ,
+        -0.65909159,  2.16388489, -0.68847963],
+       [-0.85829773, -2.44494674, -0.50517834,  0.6213358 ,  0.9792851 ,
+         0.44794129,  0.76906529,  1.45588215],
+       [ 0.43612393, -0.27890367, -0.11642871, -0.15955607, -2.52247377,
+         0.62344606,  0.42410922,  1.02661867]])
 
 	def __init__(self):
 		super(GatanK2Base, self).__init__()
@@ -679,6 +705,10 @@ class GatanK2Base(DMSEM):
 
 	def getDoEarlyReturn(self):
 		return bool(self.getDmsemConfig('k2','do_early_return'))
+
+	def getEarlyReturnFormat(self):
+		# valid values: 8x8, 256x256
+		return self.getDmsemConfig('k2','early_return_format')
 
 	def getSaveLzwTiffFrames(self):
 		return bool(self.getDmsemConfig('k2','save_lzw_tiff_frames'))
@@ -864,3 +894,8 @@ class GatanK3(GatanK2Base):
 				image = image.reshape(self.acqparams['height'],self.acqparams['width'])
 				print 'WARNING: image reshaped', image.shape
 		return image
+
+	def getPixelSize(self):
+		# pixel size on Gatan K3 as super resolution.  TODO: need confirmation.
+		return {'x': 2.5e-6, 'y': 2.5e-6}
+

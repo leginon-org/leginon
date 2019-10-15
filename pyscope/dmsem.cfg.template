@@ -25,6 +25,11 @@ RAW_FRAME_DIR = D:\frames\
 DO_EARLY_RETURN = False
 # max number of frames to sum when return early
 EARLY_RETURN_FRAME_COUNT = 0
+# the format of the early return sum:
+# full: returns the early_return_frame sum as is at full size.
+# 8x8: returns an 8x8 fake image that has the mean and standard deviation of the sum.
+# 256x256: returns a 256x256 binned image of the sum image
+EARLY_RETURN_FORMAT = full
 # save movies as lzw compressed tiff
 SAVE_LZW_TIFF_FRAMES = False
 

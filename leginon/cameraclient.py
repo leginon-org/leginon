@@ -193,6 +193,16 @@ class CameraClient(object):
 			# maybe tem has no such function
 			pass
 
+	def isFakeImage(self, imagearray):
+		'''
+		Fake image transfer from camera to reduce transfer time.
+		General only gives 8x8 image with the mean and standard
+		deviation of the real array.
+		'''
+		if imagearray.shape == (8,8):
+			return True
+		return False
+
 	def acquireCameraImageData(self, scopeclass=leginondata.ScopeEMData, allow_retracted=False, type='normal', force_no_frames=False):
 		'''Acquire a raw image from the currently configured CCD camera
 		Exceptions are caught and return None
@@ -250,6 +260,8 @@ class CameraClient(object):
 		if imagedata['image'] is None or imagedata['image'].shape == (0,0):
 			# image of wrong shape will still go through. Error raised at normalization
 			raise RuntimeError('No valid image returned. Check camera software/hardware')
+		if self.isFakeImage(imagedata['image']):
+			self.logger.warning('Early return gives back fake images to save time')
 		return imagedata
 
 	def parallelImaging(self):
