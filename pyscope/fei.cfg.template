@@ -25,6 +25,17 @@ PRE_DIFFRACTION_SA_MAGNIFICATION_INDEX = 0
 # not all versions of microscope software allows auto aperture control
 # from scripting level.
 USE_AUTO_APERTURE = False
+# AutoIt Automation
+AUTOIT_APERTURE_SELECTION_EXE_PATH = c:\Users\supervisor\Desktop\Anchi\AutoItScripts\ApertureSelection.exe
+# Does the Titan column has automated c3 aperture ?  This affects the id of the
+# gui button for AutoIt script. 
+HAS_AUTO_C3 = True
+# Individual aperture selections.  If retractable, add open at the end of the list
+# Note: can not handle multiple apertures of the same name.
+CONDENSER_2 = 150, 100, 50, 20
+OBJECTIVE = 100, 70, 50, open
+# Optional selected area aperture control. comment or remove the line to deactivate it.
+SELECTED_AREA = 200,100, 40, 10, open
 
 [camera]
 # Falcon protector causes certain delays

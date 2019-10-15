@@ -100,6 +100,7 @@ function createForm($extra=false) {
     }
 }
 
+$class_info = ""; 
 // --- parse data and process on submit
 function runProgram() {
     
@@ -134,8 +135,11 @@ function runProgram() {
     	foreach ($my_array as $key => $value) {
     		$cmd .= "; wget ".$value." -O ".$key;
     	}
-    	//var_dump($cmd);
-    	exec_over_ssh($processhost, $user, $pass, $cmd, true);
+    	global $class_info;
+    	if ($class_info) {
+    		$cmd .= "; echo ".$class_info." > class_info";
+    	}
+    	$r = exec_over_ssh($processhost, $user, $pass, $cmd, true);
     	echo "<h4>Saved files at ".$outDir."</h4>";
     }
     
@@ -151,12 +155,27 @@ function display($id) {
     $out_text = '';
     $fcs = '';
     $classes = '';
+    $box_size = '';
+    $pixel_size = '';
+    $nparticles = '';
     foreach ($results as $result){
         if (strpos($result->text, "FSC Iteration") !== false){
             $fcs = $result;
         }
         elseif (strpos($result->text, "2D classes for iteration") !== false){
         	$classes = $result;
+        }
+        elseif (strpos($result->text, "2D classes for iteration") !== false){
+        	$classes = $result;
+        }
+        elseif (strpos($result->text, "Particle box size:") !== false){
+        	$box_size = $result;
+        }
+        elseif (strpos($result->text, "Particle pixel size:") !== false){
+        	$pixel_size = $result;
+        }
+        elseif (strpos($result->text, "Found ") !== false){
+        	$nparticles = $result;
         }
         $out_text .= $result->text.'<br>';
     }
@@ -215,6 +234,9 @@ function display($id) {
     	echo "<img width='100%' src='http://".CRYOSPARC.":39000/file/".$classes->imgfiles[0]->fileid."'>";
     	echo "</td></tr></table>";
     	$return_array = array("2dclasses.png"=>"http://".CRYOSPARC.":39000/file/".$classes->imgfiles[0]->fileid);
+    	global $class_info;
+    	$class_info =  $box_size->text.$pixel_size->text.$nparticles->text;
+    	$class_info =  str_replace("\n", "\t==", $class_info);
     }
     echo "<h1>CryoSPARC Output</h1>"; 
     echo $out_text;
