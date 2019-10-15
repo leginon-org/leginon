@@ -341,6 +341,12 @@ if (empty($mytextarea)) {
 			$mytextarea .="<img src='processing/download.php?expId=".$expId."&file=".$filename."'/><br>";
 		}
 	}
+	$class_file = getBaseAppionPath($sessioninfo).'/csLIVE/class_info';
+	if (file_exists($class_file)) {
+		$file = file_get_contents($class_file);
+		$file = str_replace("==", "<br>", $file);
+		$mytextarea .="<h5>2D Classes Info</h5>".$file;
+	}
 }
 echo 'id="mytextarea" name="mytext">'.$mytextarea;
 if ($inline) echo '</div>';
