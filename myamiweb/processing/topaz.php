@@ -62,13 +62,11 @@
 			$(this).on('keyup', function() {
 				var scale1 = $('#scale1').val() == '' ? '8' : $('#scale1').val();
 				var numworkers1 = $('#numworkers1').val() == '' ? '-1' : $('#numworkers1').val();
-				var pixelsampling1 = $('#pixelsampling1').val() == '' ? '25' : $('#pixelsampling1').val();
 				var format1 = $('#format1').val() == '' ? 'mrc,png' : $('#format1').val();
 				var niters1 = $('#niters1').val() == '' ? '200' : $('#niters1').val();
-				var seed1 = $('#seed1').val() == '' ? '1' : $('#seed1').val();
 				var output1 = $('#output1').val() == '' ? '/path/to/output/preprocessed/images/' : $('#output1').val();
 				var input1 = $('#input1').val() == '' ? '/path/to/input/images/*.mrc' : $('#input1').val();
-				$('#result1').html("topaz preprocess " + input1 + " --scale " + scale1 + " --num-workers " + numworkers1 + " --format " + format1 + " --pixel-sampling " + pixelsampling1 + " --niters " + niters1 + " --seed " + seed1 + " --verbose --destdir " + output1);
+				$('#result1').html("topaz preprocess " + input1 + " --scale " + scale1 + " --num-workers " + numworkers1 + " --format " + format1 + " --niters " + niters1 + " --verbose --destdir " + output1);
 			});
 		});
 	});
@@ -888,9 +886,7 @@ function toggle(divID) {
 			$command .= ' --scale '.$_POST['scale1'];
 			$command .= ' --num-workers '.$_POST['numworkers1'];
 			$command .= ' --format '.$_POST['format1'];
-			$command .= ' --pixel-sampling '.$_POST['pixelsampling1'];
 			$command .= ' --niters '.$_POST['niters1'];
-			$command .= ' --seed '.$_POST['seed1'];
 			$command .= ' --verbose --destdir '.$_POST['output1'];
 			$path_parts = pathinfo($_POST['output1']);
 			$_POST['runname'] = $path_parts['basename'];
@@ -1195,15 +1191,13 @@ function toggle(divID) {
 		<div class="content">
 		  <table style="height:7.3em">
 		  <tr title="Output formate for preprocessed images (any combination of options: mrc,tiff,png) (type: string)"><td><hl8><span><font size="3" color="white">Output format</font></span></hl8></td><td><input name="format1" id="format1" class="preprocessing_inputs" style="width:6em" value="mrc,png"></td></tr>
-		  <tr title="Pixel sampling factor for model fit (type: integer)"><td><hl8><span><font size="3" color="white">Pixel sampling</font></span></hl8></td><td><input name="pixelsampling1" id="pixelsampling1" class="preprocessing_inputs" style="width:3em" value="25"></td></tr>
 		  <tr title="Number of iterations to run for model fit (type: integer)"><td><hl8><span><font size="3" color="white">Number of iterations</font></span></hl8></td><td><input name="niters1" id="niters1" class="preprocessing_inputs" style="width:3em" value="200"></td></tr>
-		  <tr title="Random seed for model initialization (type: integer)"><td><hl8><span><font size="3" color="white">Random seed</font></span></hl8></td><td><input name="seed1" id="seed1" class="preprocessing_inputs" style="width:3em" value="1"></td></tr>
 		  </table>
 		</details></summary>
 		</span>
 	  <br/><br/><strong>Command:</strong><br/><hr width="20%"><br>
 	  <code><span class="tab0"><div id="result1" style="display: inline-block; border: none; max-width: 90%; background-color: white; padding: 6px; border-radius: 10px;">
-	  topaz preprocess <?php echo $sessiondata['info']['Image path'].'/*';  if (end($presets) != "upload") echo end($presets);?>.mrc --scale 8 --num-workers -1 --format mrc,png --pixel-sampling 25 --niters 200 --seed 1  --verbose --destdir <?php echo $outDir?>preprocessed/
+	  topaz preprocess <?php echo $sessiondata['info']['Image path'].'/*';  if (end($presets) != "upload") echo end($presets);?>.mrc --scale 8 --num-workers -1 --format mrc,png  --niters 200 --verbose --destdir <?php echo $outDir?>preprocessed/
 	  </div></span></code>
 	  
 <?php 
@@ -1877,7 +1871,7 @@ echo "</form>\n";
 	  </table></span>
 	  <br/>
 	  <code><span class="tab2"><div id="result3">
-	  topaz preprocess --scale 8 --num-workers ## --pixel-sampling 200 --niters 100 --seed 1  --verbose -o /path/to/output/preprocessed/images/ /path/to/input/images/*.mrc
+	  topaz preprocess --scale 8 --num-workers ## --niters 100  --verbose -o /path/to/output/preprocessed/images/ /path/to/input/images/*.mrc
 	  </div></span></code>
 	</div>
 -->
