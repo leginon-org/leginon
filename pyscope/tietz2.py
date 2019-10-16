@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 import ccdcamera
 import time
+import os
+import shutil
 
 from pyami import moduleconfig
 
@@ -53,6 +55,7 @@ class EmMenuF416(ccdcamera.CCDCamera):
 		self.unsupported = []
 		ccdcamera.CCDCamera.__init__(self)
 		self.save_frames = False
+		self.nframes = 1
 		self._connectToEMMENUScripting()
 		# set binning first so we can use it
 		self.initSettings()
@@ -82,7 +85,7 @@ class EmMenuF416(ccdcamera.CCDCamera):
 
 	def initSettings(self):
 		self.dimension = self.getCameraSize()
-		self.binning = {'x':4, 'y':4}
+		self.binning = {'x':1, 'y':1}
 		self.offset = {'x':0, 'y':0}
 		self.exposure = 500.0
 		self.exposuretype = 'normal'
@@ -135,14 +138,13 @@ class EmMenuF416(ccdcamera.CCDCamera):
 
 	def _connectToEMMENUScripting(self):
 		'''
-		Connects to the ESVision COM server
+		Connects to the COM server
 		'''
 		if SIMULATION:
 			connection = get_emmenu_sim()
 		else:
 			connection = get_emmenu()
 		self.instr = connection.instr
-		print(self.instr)
 		vps = connection.instr.Viewports
 		if vps.Count < 1:
 			# TODO : How to get a new view pointer ?
@@ -154,14 +156,14 @@ class EmMenuF416(ccdcamera.CCDCamera):
 			raise ValueError('%s not found' % self.camera_name)
 		# set attributes
 		self.camera = this_camera
+		self.vp1.Configuration = 'Leginon'
 		self.camera_settings = self._getConfigObject(self.vp1.Configuration)
 
 	def setConfig(self, **kwargs):
 		'''
 		Set commera settings.
-		readout is an index 0:Full,1:Half, 2:Quarter.
-		Binning is calculated from that.
 		exposure is the exposure time in seconds
+		dimension is after binning
 
 		'''
 		try:
@@ -173,6 +175,10 @@ class EmMenuF416(ccdcamera.CCDCamera):
 				# binning can only be set by supported binning objects
 				b_index = self.binning_limits.index(binning['x'])
 				self.camera_settings.BinningX = self.binning_limits[b_index]
+			if 'dimension' in kwargs:
+				dimension = kwargs['dimension']
+				self.camera_settings.DimensionX = dimension['x']
+				self.camera_settings.DimensionY = dimension['y']
 			if 'unbinoff' in kwargs:
 				offset = kwargs['unbinoff']
 				self.camera_settings.CCDOffsetX = offset['x']
@@ -206,21 +212,35 @@ class EmMenuF416(ccdcamera.CCDCamera):
 	def finalizeSetup(self):
 		# final bin
 		binning = self.binning
+		dimension = self.dimension
 
 		# final range
-		unbindim = {'x':self.dimension['x']*binning['x'], 'y':self.dimension['y']*binning['y']}
 		unbinoff = {'x':self.offset['x']*binning['x'], 'y':self.offset['y']*binning['y']}
 		# tvips set exposure in ms
 		exposure = int(self.exposure)
 
 		# send it to camera
-		self.setConfig(binning= binning, unbinoff=unbinoff, exposure=exposure)
+		self.setConfig(binning= binning, unbinoff=unbinoff, exposure=exposure,dimension=dimension)
 
 	def custom_setup(self):
 		'''
 		Camrea specific setup
 		'''
 		pass
+
+	def imageSetup(self):
+		self.camera_settings.UseRollingShutter=False
+		self.camera_settings.SeriesNumberOfImages=1
+
+	def setNumberOfFrames(self, value):
+		self.nframes = int(value)
+
+	def getNumberOfFrames(self):
+		return self.nframes
+
+	def movieSetup(self):
+		self.camera_settings.UseRollingShutter=True
+		self.camera_settings.SeriesNumberOfImages=self.getNumberOfFrames() 
 
 	def getImage(self):
 		# The following is copied from ccdcamera.CCDCamera since
@@ -238,9 +258,12 @@ class EmMenuF416(ccdcamera.CCDCamera):
 		Acquire an image using the setup for this client.
 		'''
 		try:
+			self.imageSetup()
 			self.finalizeSetup()
 			self.custom_setup()
-			pass
+			# configurations must be updated with these settings.
+			self.instr.CameraConfigurations.Update()
+			print('configurations updated')
 		except Exception, e:
 			if self.getDebugCamera():
 				print 'Camera setup',e
@@ -348,19 +371,36 @@ class EmMenuF416(ccdcamera.CCDCamera):
 	def getEnergyFiltered(self):
 		return False
 
+	def getRecorderFilename(self):
+		return 'Images_001.tvips'
+	
+	def getRecorderDir(self):
+		return 'C:\\Temp\\'
+
 	def startMovie(self, filename, exposure_time_ms):
 		exposure_time_s = exposure_time_ms/1000.0
 		try:
+			self.movieSetup()
 			self.finalizeSetup()
 			self.custom_setup()
+			# configurations must be updated with these settings.
+			self.instr.CameraConfigurations.Update()
 		except Exception, e:
 			if self.getDebugCamera():
 				print 'Camera setup',e
 			raise RuntimeError('Error setting camera parameters: %s' % (e,))
+		recorder_path = os.path.join(self.getRecorderDir(),self.getRecorderFilename())
+		if os.path.isfile(recorderpath):
+			os.remove(recorderpath)
 		self.vp1.StartContinuous()
+		self.vp1.StartRecorder()
 
 	def stopMovie(self, filename, exposure_time_ms):
 		exposure_time_s = exposure_time_ms/1000.0
+		self.vp1.StopRecorder()
 		self.vp1.StopContinuous()
+		recorder_path = os.path.join(self.getRecorderDir(),self.getRecorderFilename())
+		new_path = os.path.join(self.getRecorderDir(),filename)
+		shutil.move(recorder_path,new_path)
 		print 'movie name: %s' % filename
 
