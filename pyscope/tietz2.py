@@ -175,6 +175,8 @@ class EmMenuF416(ccdcamera.CCDCamera):
 				# binning can only be set by supported binning objects
 				b_index = self.binning_limits.index(binning['x'])
 				self.camera_settings.BinningX = self.binning_limits[b_index]
+				b_index = self.binning_limits.index(binning['y'])
+				self.camera_settings.BinningY = self.binning_limits[b_index]
 			if 'dimension' in kwargs:
 				dimension = kwargs['dimension']
 				self.camera_settings.DimensionX = dimension['x']
@@ -372,10 +374,10 @@ class EmMenuF416(ccdcamera.CCDCamera):
 		return False
 
 	def getRecorderFilename(self):
-		return 'Images_001.tvips'
+		return self.getTvipsConfig('recorder','default_filename')
 	
 	def getRecorderDir(self):
-		return 'C:\\Temp\\'
+		return self.getTvipsConfig('recorder','directory')
 
 	def startMovie(self, filename, exposure_time_ms):
 		exposure_time_s = exposure_time_ms/1000.0
@@ -390,8 +392,8 @@ class EmMenuF416(ccdcamera.CCDCamera):
 				print 'Camera setup',e
 			raise RuntimeError('Error setting camera parameters: %s' % (e,))
 		recorder_path = os.path.join(self.getRecorderDir(),self.getRecorderFilename())
-		if os.path.isfile(recorderpath):
-			os.remove(recorderpath)
+		if os.path.isfile(recorder_path):
+			os.remove(recorder_path)
 		self.vp1.StartContinuous()
 		self.vp1.StartRecorder()
 
