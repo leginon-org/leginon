@@ -369,7 +369,7 @@ class CorrectorClient(cameraclient.CameraClient):
 			fake_dark = darkarray.mean()*numpy.ones((8,8))
 			fake_norm = numpy.ones((8,8))
 			r = self.normalizeImageArray(rawarray,fake_dark,fake_norm, 'GatanK2' in cameradata['ccdcamera']['name'])
-			imagedata['image'] = r
+		imagedata['image'] = r
 		imagedata['dark'] = dark
 		imagedata['bright'] = norm['bright']
 		imagedata['norm'] = norm
