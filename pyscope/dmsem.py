@@ -308,7 +308,7 @@ class DMSEM(ccdcamera.CCDCamera):
 				if self.getEarlyReturnFormat() == '8x8':
 					if self.getEarlyReturnFrameCount() > 0:
 						#fake 8x8 image with the same mean and standard deviation for fast transfer
-						fake_image = self.base_fake_image*image.std() + numpy.ones((8,8))
+						fake_image = self.base_fake_image*image.std() + image.mean*numpy.ones((8,8))
 					else:
 						fake_image = numpy.zeros((8,8))
 					return fake_image
