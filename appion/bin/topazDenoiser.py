@@ -26,7 +26,6 @@ class TopazDenoiser(appionLoop2.AppionLoop):
 		self.parser.add_option("--patchsize", dest="patchsize", type="int", default=-1, metavar="#")
 		self.parser.add_option("--patchpadding", dest="patchpadding", type="int", default=128, metavar="#")		
 		self.parser.add_option('--denoiselabel', dest='denoiselabel', default='a', metavar='CHAR')
-		self.parser.add_option('--bin', dest='bin', type="int", default=2, metavar="#")
 		self.parser.add_option('--device', dest='device', type="int", metavar="#")
 		self.parser.add_option('--earlyreturn', dest='earlyreturn', action="store_true")
 		
@@ -57,7 +56,6 @@ class TopazDenoiser(appionLoop2.AppionLoop):
 		else:
 			command += correctedImagePath
 		command += " --format mrc"
-		command += " --bin "+str(self.params['bin'])
 		command += " --patch-size "+str(self.params['patchsize'])
 		command += " --patch-padding "+str(self.params['patchpadding'])
 		command += " --output "+out_path

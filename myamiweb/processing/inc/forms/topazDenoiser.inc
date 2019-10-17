@@ -35,7 +35,6 @@ class topazDenoiser extends BasicLoopForm
 		$params = $this->getFormParams();
 		$params->setHelpSection( "topazDenoise" );
 		$params->addParam( "device", $device, "device" );
-		$params->addParam( "bin", $bin, "binning" );
 		$params->addParam( "denoiselabel", $denoiselabel, "append label to denoised image" );
 		$params->addParam( "patchsize", $patchsize, "patch size" );
 		$params->addParam( "patchpadding", $patchpadding, "patch padding" );
@@ -46,7 +45,6 @@ class topazDenoiser extends BasicLoopForm
 	{
 		$params = $this->getFormParams();
 		// Validations
-		$params->addValidation( "bin", "float" );
 	}
 
 	public function generateAdditionalFormRight()
@@ -57,9 +55,6 @@ class topazDenoiser extends BasicLoopForm
 		
 		$html .= "<b>Topaz denoiser params:</b><br />\n";
 		$html.= $params->insertTextFieldInRow( "device", $fieldSize );
-		$html.= "<br/>\n";
-		
-		$html.= $params->insertTextFieldInRow( "bin", $fieldSize );
 		$html.= "<br/>\n";
 		
 		$html.= $params->insertTextFieldInRow( "denoiselabel", $fieldSize );
