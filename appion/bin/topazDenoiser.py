@@ -56,6 +56,7 @@ class TopazDenoiser(appionLoop2.AppionLoop):
 		else:
 			command += correctedImagePath
 		command += " --format mrc"
+		command += " --model unet"		
 		command += " --patch-size "+str(self.params['patchsize'])
 		command += " --patch-padding "+str(self.params['patchpadding'])
 		command += " --output "+out_path
