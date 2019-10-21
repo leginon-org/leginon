@@ -2418,6 +2418,8 @@ class BeamSizeCalibrationClient(CalibrationClient):
 			intensity_delta = intensity - intercept
 			beamsize = intensity_delta / slope
 			return beamsize
+		else:
+			self.node.logger.debug('missing beam size calibration for tem id:%d, spot size:%d, and %s probe' % (scopedata['tem'].dbid, scopedata['spot size'], scopedata['probe mode']))
 
 	def getIlluminatedArea(self,scopedata):
 		beam_diameter = self.getBeamSize(scopedata) 
