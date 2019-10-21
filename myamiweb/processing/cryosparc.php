@@ -57,6 +57,16 @@ function createForm($extra=false) {
         <TABLE BORDER=0 CLASS=tableborder CELLPADDING=15>
         <tr>
         <td>";
+        //echo "<label for='hosts'>Select a host: </label>";
+        echo "<select id='hosts' name='hosts' >";
+        global $CRYOSPARC_HOSTS;
+        foreach ($CRYOSPARC_HOSTS as $array) {
+        	foreach($array as $key => $value)
+        		echo "<option value='".$value."'>".$key." - ".$value."</option>";
+        }
+        
+        echo "</select>";
+        echo "</td><td>";
         echo "<label for='projectId'>Project ID: </label>";
         echo "<input type='text' id='project' name='projectId' size='6'>";
         echo "</td>
@@ -81,6 +91,7 @@ function createForm($extra=false) {
         echo "<h3>Available CryoSPARC Jobs</h3>";
         echo"<TABLE BORDER=1 CLASS=tableborder CELLPADDING=15>
         <tr>
+		<th>Host IP</th>
         <th>Project ID</th>
         <th>Job ID</th>
         <th></th>
@@ -90,6 +101,7 @@ function createForm($extra=false) {
         foreach ($jobs as $job){
             $id = $job[id];
             echo "<tr>
+			<td>$job[IP]</td>
             <td>$job[projectId]</td>
             <td>$job[jobId]</td>
             <td><a href='$phpself?expId=$expId&id=$id'>Summary</a></td>
@@ -110,11 +122,12 @@ function runProgram() {
     $expId = $_GET['expId'];
     $projectId = $_POST['projectId'];
     $jobId = $_POST['jobId'];
+    $host = $_POST['hosts'];
     if (!$projectId || !$jobId){
         createForm("Please provide a valid cryoSPARC project and job id");
         exit;
     }
-    $manager = new MongoDB\Driver\Manager("mongodb://".CRYOSPARC.":".CRYOSPARC_PORT);
+    $manager = new MongoDB\Driver\Manager("mongodb://".$host.":".CRYOSPARC_PORT);
     $query = new MongoDB\Driver\Query(array('project_uid' => "$projectId", 'job_uid' => "$jobId"));
     $cursor = $manager->executeQuery('meteor.events', $query);
     $results = $cursor->toArray();
@@ -123,7 +136,7 @@ function runProgram() {
         exit;
     }
     $particle = new particledata();
-    $id = $particle->insetCryosparcJob($expId, $projectId, $jobId, CRYOSPARC);
+    $id = $particle->insetCryosparcJob($expId, $projectId, $jobId, $host);
     $my_array = display($id);
     if ($_SESSION['loggedin']) {
     	global $outDir;
@@ -146,9 +159,10 @@ function runProgram() {
 }
 
 function display($id) {
-    $manager = new MongoDB\Driver\Manager("mongodb://".CRYOSPARC.":".CRYOSPARC_PORT);
+    
     $particle = new particledata();
     $job = $particle->getCryosparcJobs($_GET['expId'], $id);
+    $manager = new MongoDB\Driver\Manager("mongodb://".$job[0][IP].":".CRYOSPARC_PORT);
     $query = new MongoDB\Driver\Query(array('project_uid' => $job[0][projectId], 'job_uid' => $job[0][jobId]));
     $cursor = $manager->executeQuery('meteor.events', $query);
     $results = $cursor->toArray();
@@ -223,17 +237,17 @@ function display($id) {
 	
 	    </script>
 	    <div id="viewport" style="width:500px; height:300px;"></div>';
-	    echo "<p style='text-align:center'><a href='http://".CRYOSPARC.":39000/download_result_file/".$job[0][projectId]."/".$job[0][jobId].".volume.map'>Download Map</a></p>";
-	    echo "</td><td><img src='http://".CRYOSPARC.":39000/file/".$fcs->imgfiles[0]->fileid."'>";
+	    echo "<p style='text-align:center'><a href='http://".$job[0][IP].":39000/download_result_file/".$job[0][projectId]."/".$job[0][jobId].".volume.map'>Download Map</a></p>";
+	    echo "</td><td><img src='http://".$job[0][IP].":39000/file/".$fcs->imgfiles[0]->fileid."'>";
 	    echo "</td></tr></table>";
-	    $return_array = array("fsc.png"=>"http://".CRYOSPARC.":39000/file/".$fcs->imgfiles[0]->fileid);
+	    $return_array = array("fsc.png"=>"http://".$job[0][IP].":39000/file/".$fcs->imgfiles[0]->fileid);
     }
     else{
     	echo "<table border=1 CLASS=tableborder CELLPADDING=15>
 	        <tr><td>";
-    	echo "<img width='100%' src='http://".CRYOSPARC.":39000/file/".$classes->imgfiles[0]->fileid."'>";
+    	echo "<img width='100%' src='http://".$job[0][IP].":39000/file/".$classes->imgfiles[0]->fileid."'>";
     	echo "</td></tr></table>";
-    	$return_array = array("2dclasses.png"=>"http://".CRYOSPARC.":39000/file/".$classes->imgfiles[0]->fileid);
+    	$return_array = array("2dclasses.png"=>"http://".$job[0][IP].":39000/file/".$classes->imgfiles[0]->fileid);
     	global $class_info;
     	$class_info =  $box_size->text.$pixel_size->text.$nparticles->text;
     	$class_info =  str_replace("\n", "\t==", $class_info);
