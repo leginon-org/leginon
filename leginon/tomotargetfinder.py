@@ -38,25 +38,25 @@ class TomoClickTargetFinder(targetfinder.ClickTargetFinder):
 		targetfinder.ClickTargetFinder.__init__(self, id, session, managerlocation, **kwargs)
 		self.calclients['pixel size'] = \
 				leginon.calibrationclient.PixelSizeCalibrationClient(self)
-		self.trackimagevector = (0,0)
+		self.trackimagevectors = {'x':(0,0),'y':(0,0)}
 		self.trackbeamradius = 0	
 		self.focus_node = None
-		self.focusimagevector = (0,0)
+		self.focusimagevectors = {'x':(0,0),'y':(0,0)}
 		self.focusbeamradius = 0
 		self.userpause = threading.Event()
 		
 		if self.__class__ == TomoClickTargetFinder:
 			self.start()
 			
-	def getTrackImageVector(self):
-		return self.trackimagevector
+	def getTrackImageVectors(self):
+		return self.trackimagevectors
 
 	def getTrackBeamRadius(self):
 		#return 10
 		return self.trackbeamradius
 
-	def getFocusImageVector(self):
-		return self.focusimagevector
+	def getFocusImageVectors(self):
+		return self.focusimagevectors
 
 	def getFocusBeamRadius(self):
 		#return 20
@@ -124,12 +124,12 @@ class TomoClickTargetFinder(targetfinder.ClickTargetFinder):
 					from_node_alias = next_alias
 					continue		
 
-	def setOtherImageVector(self, imagedata):
+	def setOtherImageVectors(self, imagedata):
 		try:
 			cam_length_on_image,beam_diameter_on_image = self._getTrackTargetDimensions(self.current_image_pixelsize)
-			self._setTrackImageVector(cam_length_on_image,beam_diameter_on_image)
+			self._setTrackImageVectors(cam_length_on_image,beam_diameter_on_image)
 			cam_length_on_image,beam_diameter_on_image = self._getFocusTargetDimensions(self.current_image_pixelsize)
-			self._setFocusImageVector(cam_length_on_image,beam_diameter_on_image)
+			self._setFocusImageVectors(cam_length_on_image,beam_diameter_on_image)
 		except:
 			pass
 		
@@ -163,20 +163,20 @@ class TomoClickTargetFinder(targetfinder.ClickTargetFinder):
 		self.current_image_pixelsize = image_pixelsize
 		return self._getFocusTargetDimensions(image_pixelsize)
 			
-	def uiRefreshTargetImageVector(self):
+	def uiRefreshTargetImageVectors(self):
 		'''
 		refresh target image vector and beam size when ui exposure target panel tool
 		is toggled on.
 		'''
-		super(TomoClickTargetFinder, self).uiRefreshTargetImageVector()
+		super(TomoClickTargetFinder, self).uiRefreshTargetImageVectors()
 		cam_length_on_image,beam_diameter_on_image = self._getTrackTargetDimensions(self.current_image_pixelsize)
-		self._setTrackImageVector(cam_length_on_image,beam_diameter_on_image)
+		self._setTrackImageVectors(cam_length_on_image,beam_diameter_on_image)
 		cam_length_on_image,beam_diameter_on_image = self._getFocusTargetDimensions(self.current_image_pixelsize)
-		self._setFocusImageVector(cam_length_on_image,beam_diameter_on_image)
+		self._setFocusImageVectors(cam_length_on_image,beam_diameter_on_image)
 	
-	def _setTrackImageVector(self,cam_length_on_image,beam_diameter_on_image):
+	def _setTrackImageVectors(self,cam_length_on_image,beam_diameter_on_image):
 		self.trackbeamradius = beam_diameter_on_image / 2
-		self.trackimagevector = (cam_length_on_image,0)
+		self.trackimagevectors = {'x':(cam_length_on_image,0),'y':(0,cam_length_on_image)}
 
 	def _getTrackTargetDimensions(self,image_pixelsize):
 		try:
@@ -204,9 +204,9 @@ class TomoClickTargetFinder(targetfinder.ClickTargetFinder):
 			# Set Length to 0 in case of any exception
 			return 0,0
 		
-	def _setFocusImageVector(self,cam_length_on_image,beam_diameter_on_image):
+	def _setFocusImageVectors(self,cam_length_on_image,beam_diameter_on_image):
 		self.focusbeamradius = beam_diameter_on_image / 2
-		self.focusimagevector = (cam_length_on_image,0)
+		self.focusimagevectors = {'x':(cam_length_on_image,0),'y':(0,cam_length_on_image)}
 
 	def _getFocusTargetDimensions(self,image_pixelsize):
 		try:

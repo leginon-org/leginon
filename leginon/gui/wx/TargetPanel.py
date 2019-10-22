@@ -255,6 +255,10 @@ class TargetImagePanel(leginon.gui.wx.ImagePanel.ImagePanel):
 		scale = self.getScale()
 		scaledpoints = [(target.x,target.y) for target in targets]
 		imagevectors = self.imagevectors
+		self._drawArea(dc, imagevectors, scaledpoints)
+
+	def _drawArea(self, dc, imagevectors, scaledpoints):
+		scale = self.getScale()
 		#print 'imagevectors', imagevectors
 		# vector1 (+,+) corner
 		v1 = (scale[0]*(imagevectors['x'][0]/2+imagevectors['y'][0]/2), scale[1]*(imagevectors['x'][1]/2+imagevectors['y'][1]/2))
@@ -489,18 +493,15 @@ class TomoTargetImagePanel(TargetImagePanel):
 		dc.SetBrush(wx.Brush(color, wx.SOLID))
 		scaledpoints = [(target.x,target.y) for target in targets]
 		if typename == 'track':
-			# Leave it to use x axis for KK
-			imagevector = self.trackimagevectors['x']
+			imagevectors = self.trackimagevectors
 			beamradius = self.trackbeamradius
 			stretch = self.parent.node.settings['stretch track beam']
 		elif typename == 'focus':
-			# Leave it to use x axis for KK
-			imagevector = self.focusimagevectors['x']
+			imagevectors = self.focusimagevectors
 			beamradius = self.focusbeamradius
 			stretch = self.parent.node.settings['stretch focus beam']
 		else:
-			# Leave it to use x axis for KK
-			imagevector = self.imagevectors['x']
+			imagevectors = self.imagevectors
 			beamradius = self.beamradius
 			stretch = self.parent.node.settings['stretch tomo beam']
 		
@@ -519,17 +520,12 @@ class TomoTargetImagePanel(TargetImagePanel):
 					radm = beamradius
 					self.drawEmptyEllipse(dc,p[1],p[0],radn,radm,tiltaxis + n.pi/2)
 		else:
-			dia = (scale[0]*(imagevector[0]/2+imagevector[1]/2), scale[1]*(imagevector[0]/2-imagevector[1]/2))
+			self._drawArea(dc, imagevectors, scaledpoints)
 			for p1 in scaledpoints:
 				p1 = self.image2view(p1)
-				dc.DrawLine(p1[0]-dia[0], p1[1]-dia[1], p1[0]+dia[1], p1[1]-dia[0])
-				dc.DrawLine(p1[0]-dia[0], p1[1]-dia[1], p1[0]-dia[1], p1[1]+dia[0])
-				dc.DrawLine(p1[0]-dia[1], p1[1]+dia[0], p1[0]+dia[0], p1[1]+dia[1])
-				dc.DrawLine(p1[0]+dia[1], p1[1]-dia[0], p1[0]+dia[0], p1[1]+dia[1])
 				if beamradius:
 					self.drawEmptyCircle(dc,p1[0],p1[1],scale[0]*beamradius)
 
-	
 	def drawEmptyEllipse(self,dc,row,col,radm,radn,ang,n_points=1000):
 		assert (radm >= radn)
 		c = n.cos(ang)

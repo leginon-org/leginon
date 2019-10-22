@@ -455,7 +455,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 
 		self.setTargetImageVectors(imagedata)
 		self.setImageTiltAxis(imagedata)
-		self.setOtherImageVector(imagedata)		# this is used by tomoCickTargetFinder
+		self.setOtherImageVectors(imagedata)		# this is used by tomoCickTargetFinder
 
 		# check if there is already a target list for this image
 		# or any other versions of this image (all from same target/preset)
@@ -548,7 +548,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		except:
 			pass
 		
-	def setOtherImageVector(self, imagedata):	# Dummy function used by tomoClickTargetFinder
+	def setOtherImageVectors(self, imagedata):	# Dummy function used by tomoClickTargetFinder
 		pass
 
 	def _setTargetImageVectors(self,cam_vectors_on_image,beam_diameter_on_image):

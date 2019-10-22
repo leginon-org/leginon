@@ -176,11 +176,11 @@ class TargetTypeTool(leginon.gui.wx.ImagePanelTools.TypeTool):
 		self.parent.parent.imagevectors = self.parent.parent.parent.node.getTargetImageVectors()
 		self.parent.parent.beamradius = self.parent.parent.parent.node.getTargetBeamRadius()
 		# Below if used by TomoTargetImagePanel
-		if hasattr(self.parent.parent,'trackimagevector'):
+		if hasattr(self.parent.parent,'trackimagevectors'):
 			self.parent.parent.trackimagevectors = self.parent.parent.parent.node.getTrackImageVectors()
 		if hasattr(self.parent.parent,'trackbeamradius'):
 			self.parent.parent.trackbeamradius = self.parent.parent.parent.node.getTrackBeamRadius()
-		if hasattr(self.parent.parent,'focusimagevector'):
+		if hasattr(self.parent.parent,'focusimagevectors'):
 			self.parent.parent.focusimagevectors = self.parent.parent.parent.node.getFocusImageVectors()
 		if hasattr(self.parent.parent,'focusbeamradius'):
 			self.parent.parent.focusbeamradius = self.parent.parent.parent.node.getFocusBeamRadius()
