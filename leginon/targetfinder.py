@@ -605,17 +605,19 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 
 	def getPresetAxisVector(self, preset1, axis):
 		'''
-		Use presets to get vector for preset1 on current image at specified axis
+		Use presets to get (x,y) vector for preset1 on current image at specified axis
 		'''
 		length = preset1['dimension'][axis]*preset1['binning'][axis]
 		if axis == 'x':
-			p1 = (length,0)
-		else:
+			# (row, col)
 			p1 = (0,length)
+		else:
+			p1 = (length,0)
 		preset2 = self.currentimagedata['preset']
 		ht = self.currentimagedata['scope']['high tension']
 		p2 = self.calclients['stage position'].pixelToPixel(preset1['tem'], preset1['ccdcamera'], preset2['tem'], preset2['ccdcamera'], ht, preset1['magnification'], preset2['magnification'], p1)
-		return int(p2[0]/preset2['binning']['x']), int(p2[1]/preset2['binning']['y'])
+		# result is of pixelToPixel is (row, col) but we want the return to be (x,y) 
+		return int(p2[1]/preset2['binning']['x']), int(p2[0]/preset2['binning']['y'])
 
 	def _getTargetDisplayInfo(self,image_pixelsize):
 		try:
