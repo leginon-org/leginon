@@ -615,7 +615,14 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			p1 = (length,0)
 		preset2 = self.currentimagedata['preset']
 		ht = self.currentimagedata['scope']['high tension']
-		p2 = self.calclients['stage position'].pixelToPixel(preset1['tem'], preset1['ccdcamera'], preset2['tem'], preset2['ccdcamera'], ht, preset1['magnification'], preset2['magnification'], p1)
+		try:
+			p2 = self.calclients['stage position'].pixelToPixel(preset1['tem'], preset1['ccdcamera'], preset2['tem'], preset2['ccdcamera'], ht, preset1['magnification'], preset2['magnification'], p1)
+		except calibrationclient.NoMatrixCalibrationError, e:
+			# If no stage position calibration, uses image shift
+			p2 = self.calclients['image shift'].pixelToPixel(preset1['tem'], preset1['ccdcamera'], preset2['tem'], preset2['ccdcamera'], ht, preset1['magnification'], preset2['magnification'], p1)
+		except:
+			self.logger.warning('Can not map preset area on the parent image')
+			p2 = tuple(p1)
 		# result is of pixelToPixel is (row, col) but we want the return to be (x,y) 
 		return int(p2[1]/preset2['binning']['x']), int(p2[0]/preset2['binning']['y'])
 
