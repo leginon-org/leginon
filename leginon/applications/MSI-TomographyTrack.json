@@ -110,7 +110,7 @@
       "tilt start":0.0,
       "first pause time":0.0,
       "fit data points2":4,
-      "retract obj aperture":false,
+      "set aperture":false,
       "cosine dose":true,
       "move type":"stage position",
       "equally sloped":false
