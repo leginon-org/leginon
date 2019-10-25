@@ -49,9 +49,9 @@ class Panel(leginon.gui.wx.TargetFinder.Panel):
     def onSetImage(self, evt):
         super(Panel,self).onSetImage(evt)       # This sets acquisition vector and beam radius
         try:                                    # Now for focus and track beams
-            self.imagepanel.trackimagevector = self.node.getTrackImageVector()
+            self.imagepanel.trackimagevectors = self.node.getTrackImageVectors()
             self.imagepanel.trackbeamradius = self.node.getTrackBeamRadius()
-            self.imagepanel.focusimagevector = self.node.getFocusImageVector()
+            self.imagepanel.focusimagevectors = self.node.getFocusImageVectors()
             self.imagepanel.focusbeamradius = self.node.getFocusBeamRadius()
         except AttributeError:
             # This function is called on initialization and self.node would be None
