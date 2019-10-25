@@ -57,7 +57,8 @@ class TargetImagePanel(leginon.gui.wx.ImagePanel.ImagePanel):
 		self.selectedtype = None
 		self.selectedtarget = None
 		self.box = 0
-		self.imagevector = (0,0)
+		# image vectors is dictionary of image x and y axis vectors in image pixels
+		self.imagevectors = {'x':(0,0), 'y':(0,0)}
 		self.beamradius = None
 
 	#--------------------
@@ -248,34 +249,48 @@ class TargetImagePanel(leginon.gui.wx.ImagePanel.ImagePanel):
 
 	#--------------------
 	def drawImageArea(self, dc, color, targets):
-		scale = self.getScale()
+		# general
 		dc.SetPen(wx.Pen(color, 1))
 		dc.SetBrush(wx.Brush(color, wx.SOLID))
+		scale = self.getScale()
 		scaledpoints = [(target.x,target.y) for target in targets]
-		imagevector = self.imagevector
-		dia = (scale[0]*(imagevector[0]/2+imagevector[1]/2), scale[1]*(imagevector[0]/2-imagevector[1]/2))
+		imagevectors = self.imagevectors
+		self._drawArea(dc, imagevectors, scaledpoints)
+
+	def _drawArea(self, dc, imagevectors, scaledpoints):
+		scale = self.getScale()
+		#print 'imagevectors', imagevectors
+		# vector1 (+,+) corner
+		v1 = (scale[0]*(imagevectors['x'][0]/2+imagevectors['y'][0]/2), scale[1]*(imagevectors['x'][1]/2+imagevectors['y'][1]/2))
+		# vector2 (+,-) corner
+		v2 = (scale[0]*(imagevectors['x'][0]/2-imagevectors['y'][0]/2), scale[1]*(imagevectors['x'][1]/2-imagevectors['y'][1]/2))
 		for p1 in scaledpoints:
 			p1 = self.image2view(p1)
-			dc.DrawLine(p1[0]-dia[0], p1[1]-dia[1], p1[0]+dia[1], p1[1]-dia[0])
-			dc.DrawLine(p1[0]-dia[0], p1[1]-dia[1], p1[0]-dia[1], p1[1]+dia[0])
-			dc.DrawLine(p1[0]-dia[1], p1[1]+dia[0], p1[0]+dia[0], p1[1]+dia[1])
-			dc.DrawLine(p1[0]+dia[1], p1[1]-dia[0], p1[0]+dia[0], p1[1]+dia[1])
+			dc.DrawLine(p1[0]-v1[0], p1[1]-v1[1], p1[0]-v2[0], p1[1]-v2[1])
+			dc.DrawLine(p1[0]-v2[0], p1[1]-v2[1], p1[0]+v1[0], p1[1]+v1[1])
+			dc.DrawLine(p1[0]+v1[0], p1[1]+v1[1], p1[0]+v2[0], p1[1]+v2[1])
+			dc.DrawLine(p1[0]+v2[0], p1[1]+v2[1], p1[0]-v1[0], p1[1]-v1[1])
+
+	def drawBeamSize(self, dc, color, targets):
+		# general
+		dc.SetPen(wx.Pen(color, 1))
+		dc.SetBrush(wx.Brush(color, wx.SOLID))
+		scale = self.getScale()
+		scaledpoints = [(target.x,target.y) for target in targets]
+		# beam size
+		if self.beamradius:
+			for p1 in scaledpoints:
+				p1 = self.image2view(p1)
+				self.drawEmptyCircle(dc,p1[0],p1[1],scale[0]*self.beamradius)
 
 	def drawImageExposure(self, dc, color, targets, typename=None):
-		scale = self.getScale()
-		dc.SetPen(wx.Pen(color, 1))
-		dc.SetBrush(wx.Brush(color, wx.SOLID))
-		scaledpoints = [(target.x,target.y) for target in targets]
-		imagevector = self.imagevector
-		dia = (scale[0]*(imagevector[0]/2+imagevector[1]/2), scale[1]*(imagevector[0]/2-imagevector[1]/2))
-		for p1 in scaledpoints:
-			p1 = self.image2view(p1)
-			dc.DrawLine(p1[0]-dia[0], p1[1]-dia[1], p1[0]+dia[1], p1[1]-dia[0])
-			dc.DrawLine(p1[0]-dia[0], p1[1]-dia[1], p1[0]-dia[1], p1[1]+dia[0])
-			dc.DrawLine(p1[0]-dia[1], p1[1]+dia[0], p1[0]+dia[0], p1[1]+dia[1])
-			dc.DrawLine(p1[0]+dia[1], p1[1]-dia[0], p1[0]+dia[0], p1[1]+dia[1])
-			if self.beamradius:
-				self.drawEmptyCircle(dc,p1[0],p1[1],scale[0]*self.beamradius)
+		'''
+		Exp tool type calls this to show both area and beam size
+		'''
+		# area
+		self.drawImageArea(dc, color, targets)
+		self.drawBeamSize(dc, color, targets)
+
 
 	def drawEmptyCircle(self,dc,row,col,radius):
 		'''
@@ -465,9 +480,10 @@ class TargetOutputPanel(TargetImagePanel):
 class TomoTargetImagePanel(TargetImagePanel):
 	def __init__(self, parent, id, disable=False, imagesize=(512,512), mode="horizontal"):
 		TargetImagePanel.__init__(self, parent, id, imagesize, mode)
-		self.trackimagevector = (0,0)
+		# image vectors is dictionary of image x and y axis vectors in image pixels
+		self.trackimagevectors = {'x':(0,0),'y':(0,0)}
 		self.trackbeamradius = None
-		self.focusimagevector = (0,0)
+		self.focusimagevectors = {'x':(0,0),'y':(0,0)}
 		self.focusbeamradius = None
 		self.targetmap = {}				# keeps account of relationship between acquition, focus, and track targets
 
@@ -477,15 +493,15 @@ class TomoTargetImagePanel(TargetImagePanel):
 		dc.SetBrush(wx.Brush(color, wx.SOLID))
 		scaledpoints = [(target.x,target.y) for target in targets]
 		if typename == 'track':
-			imagevector = self.trackimagevector
+			imagevectors = self.trackimagevectors
 			beamradius = self.trackbeamradius
 			stretch = self.parent.node.settings['stretch track beam']
 		elif typename == 'focus':
-			imagevector = self.focusimagevector
+			imagevectors = self.focusimagevectors
 			beamradius = self.focusbeamradius
 			stretch = self.parent.node.settings['stretch focus beam']
 		else:
-			imagevector = self.imagevector
+			imagevectors = self.imagevectors
 			beamradius = self.beamradius
 			stretch = self.parent.node.settings['stretch tomo beam']
 		
@@ -504,17 +520,12 @@ class TomoTargetImagePanel(TargetImagePanel):
 					radm = beamradius
 					self.drawEmptyEllipse(dc,p[1],p[0],radn,radm,tiltaxis + n.pi/2)
 		else:
-			dia = (scale[0]*(imagevector[0]/2+imagevector[1]/2), scale[1]*(imagevector[0]/2-imagevector[1]/2))
+			self._drawArea(dc, imagevectors, scaledpoints)
 			for p1 in scaledpoints:
 				p1 = self.image2view(p1)
-				dc.DrawLine(p1[0]-dia[0], p1[1]-dia[1], p1[0]+dia[1], p1[1]-dia[0])
-				dc.DrawLine(p1[0]-dia[0], p1[1]-dia[1], p1[0]-dia[1], p1[1]+dia[0])
-				dc.DrawLine(p1[0]-dia[1], p1[1]+dia[0], p1[0]+dia[0], p1[1]+dia[1])
-				dc.DrawLine(p1[0]+dia[1], p1[1]-dia[0], p1[0]+dia[0], p1[1]+dia[1])
 				if beamradius:
 					self.drawEmptyCircle(dc,p1[0],p1[1],scale[0]*beamradius)
 
-	
 	def drawEmptyEllipse(self,dc,row,col,radm,radn,ang,n_points=1000):
 		assert (radm >= radn)
 		c = n.cos(ang)

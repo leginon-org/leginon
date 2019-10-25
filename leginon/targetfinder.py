@@ -84,7 +84,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		self.focusing_targetlist = None
 		self.last_acq_node = None
 		self.next_acq_node = None
-		self.targetimagevector = (0,0)
+		self.targetimagevectors = {'x':(0,0),'y':(0,0)}
 		self.targetbeamradius = 0
 		self.resetLastFocusedTargetList(None)
 
@@ -453,9 +453,9 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		for target_name in self.targetnames:
 			self.setTargets([], target_name, block=True)
 
-		self.setTargetImageVector(imagedata)
+		self.setTargetImageVectors(imagedata)
 		self.setImageTiltAxis(imagedata)
-		self.setOtherImageVector(imagedata)		# this is used by tomoCickTargetFinder
+		self.setOtherImageVectors(imagedata)		# this is used by tomoCickTargetFinder
 
 		# check if there is already a target list for this image
 		# or any other versions of this image (all from same target/preset)
@@ -541,19 +541,19 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			self.parent_imageid = None
 		return is_new
 
-	def setTargetImageVector(self, imagedata):
+	def setTargetImageVectors(self, imagedata):
 		try:
-			cam_length_on_image,beam_diameter_on_image = self.getAcquisitionTargetDimensions(imagedata)
-			self._setTargetImageVector(cam_length_on_image,beam_diameter_on_image)
+			cam_vectors_on_image,beam_diameter_on_image = self.getTargetDisplayInfo(imagedata)
+			self._setTargetImageVectors(cam_vectors_on_image,beam_diameter_on_image)
 		except:
 			pass
 		
-	def setOtherImageVector(self, imagedata):	# Dummy function used by tomoClickTargetFinder
+	def setOtherImageVectors(self, imagedata):	# Dummy function used by tomoClickTargetFinder
 		pass
 
-	def _setTargetImageVector(self,cam_length_on_image,beam_diameter_on_image):
+	def _setTargetImageVectors(self,cam_vectors_on_image,beam_diameter_on_image):
 		self.targetbeamradius = beam_diameter_on_image / 2
-		self.targetimagevector = (cam_length_on_image,0)
+		self.targetimagevectors = cam_vectors_on_image
 
 	def setImageTiltAxis(self, imagedata):
 		try:
@@ -568,34 +568,65 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		except:
 			raise
 
-	def getTargetImageVector(self):
-		return self.targetimagevector
+	def getTargetImageVectors(self):
+		# need this so gui can get the values from the first image set
+		# without clicking ui because it is activated before having
+		# images.
+		if self.currentimagedata:
+			self.updateTargetImageVectors()
+		return self.targetimagevectors
 
 	def getTargetBeamRadius(self):
 		return self.targetbeamradius
 
-	def uiRefreshTargetImageVector(self):
+	def uiRefreshTargetImageVectors(self):
 		'''
 		refresh target image vector and beam size when ui exposure target panel tool
 		is toggled on.
 		'''
-		if not self.current_image_pixelsize:
-			self.logger.error('No image to calculate exposure area')
-			return
-		cam_length_on_image,beam_diameter_on_image = self._getAcquisitionTargetDimensions(self.current_image_pixelsize)
-		self._setTargetImageVector(cam_length_on_image,beam_diameter_on_image)
+		self.updateTargetImageVectors()
 
-	def getAcquisitionTargetDimensions(self,imagedata):
+	def updateTargetImageVectors(self):
+		if not self.current_image_pixelsize:
+			# FIXME: happends for mosaic image
+			return
+		cam_vectors_on_image,beam_diameter_on_image = self._getTargetDisplayInfo(self.current_image_pixelsize)
+		self._setTargetImageVectors(cam_vectors_on_image,beam_diameter_on_image)
+
+	def getTargetDisplayInfo(self,imagedata):
 		'''
 		Get next acquisition target image size and beam diameter displayed on imagedata
 		'''
 		if not self.next_acq_node:
-			return 0,0
+			return {'x':(0,0),'y':(0,0)},0
 		image_pixelsize = self.calclients['image shift'].getImagePixelSize(imagedata)
 		self.current_image_pixelsize = image_pixelsize
-		return self._getAcquisitionTargetDimensions(image_pixelsize)
+		return self._getTargetDisplayInfo(image_pixelsize)
 
-	def _getAcquisitionTargetDimensions(self,image_pixelsize):
+	def getPresetAxisVector(self, preset1, axis):
+		'''
+		Use presets to get (x,y) vector for preset1 on current image at specified axis
+		'''
+		length = preset1['dimension'][axis]*preset1['binning'][axis]
+		if axis == 'x':
+			# (row, col)
+			p1 = (0,length)
+		else:
+			p1 = (length,0)
+		preset2 = self.currentimagedata['preset']
+		ht = self.currentimagedata['scope']['high tension']
+		try:
+			p2 = self.calclients['stage position'].pixelToPixel(preset1['tem'], preset1['ccdcamera'], preset2['tem'], preset2['ccdcamera'], ht, preset1['magnification'], preset2['magnification'], p1)
+		except calibrationclient.NoMatrixCalibrationError, e:
+			# If no stage position calibration, uses image shift
+			p2 = self.calclients['image shift'].pixelToPixel(preset1['tem'], preset1['ccdcamera'], preset2['tem'], preset2['ccdcamera'], ht, preset1['magnification'], preset2['magnification'], p1)
+		except:
+			self.logger.warning('Can not map preset area on the parent image')
+			p2 = tuple(p1)
+		# result is of pixelToPixel is (row, col) but we want the return to be (x,y) 
+		return int(p2[1]/preset2['binning']['x']), int(p2[0]/preset2['binning']['y'])
+
+	def _getTargetDisplayInfo(self,image_pixelsize):
 		try:
 			# get settings for the next Acquisition node
 			settingsclassname = self.next_acq_node['class string']+'SettingsData'
@@ -604,19 +635,19 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			# use first preset in preset order for display
 			presetlist = acqsettings['preset order']
 			presetname = presetlist[0]
-			# get image dimension of the target preset
-			acq_dim = self.presetsclient.getPresetImageDimension(presetname)
-			dim_on_image = []
-			for axis in ('x','y'):
-				dim_on_image.append(int(acq_dim[axis]/image_pixelsize[axis]))
-			# get Beam diameter on image
 			acq_presetdata = self.presetsclient.getPresetFromDB(presetname)
+			parent_presetdata = self.currentimagedata['preset']
+			# get next acquisition pixel vectors on the image
+			vectors = {}
+			for axis in ('x','y'):
+				vectors[axis] = self.getPresetAxisVector(acq_presetdata, axis)
+			# get Beam diameter on image
 			beam_diameter = self.getBeamDiameter(acq_presetdata)
 			beam_diameter_on_image = int(beam_diameter/min(image_pixelsize.values()))
-			return max(dim_on_image), beam_diameter_on_image
+			return vectors, beam_diameter_on_image
 		except:
 			# Set Length to 0 in case of any exception
-			return 0,0
+			return {'x':(0,0),'y':(0,0)},0
 
 	def getBeamDiameter(self, presetdata):
 		'''
