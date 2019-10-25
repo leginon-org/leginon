@@ -983,9 +983,9 @@ function toggle(divID) {
 			}
 		}
 		elseif (isset($_POST['extract'])){
-			$command = "runTopaz.py topaz extract ";
+			$command = 'runTopaz.py topaz extract "';
 			$command .= $_POST['input4'];
-			$command .= ' --model '.$_POST['model4'];
+			$command .= '" --model '.$_POST['model4'];
 			$command .= ' --radius '.$_POST['radius4'];
 			$command .= ' --output '.$_POST['output4'];
 			$command .= ' --up-scale '.$_POST['upscale4'];
