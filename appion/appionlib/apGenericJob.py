@@ -16,6 +16,7 @@ class genericJob(object):
 		self.projectId = 0 
 		self.rundir =""	  
 		self.queue = ""
+		self.jobType = "generic"
 		self.launch_as_shell = False
 		if optList:
 			newOptList=self.setJobAttributes(optList)
