@@ -588,7 +588,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 
 	def updateTargetImageVectors(self):
 		if not self.current_image_pixelsize:
-			self.logger.error('No image to calculate exposure area')
+			# FIXME: happends for mosaic image
 			return
 		cam_vectors_on_image,beam_diameter_on_image = self._getTargetDisplayInfo(self.current_image_pixelsize)
 		self._setTargetImageVectors(cam_vectors_on_image,beam_diameter_on_image)
