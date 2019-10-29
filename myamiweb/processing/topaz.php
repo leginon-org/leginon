@@ -892,7 +892,6 @@ function toggle(divID) {
 			$_POST['runname'] = $path_parts['basename'];
 			$_POST['outdir'] = $path_parts['dirname'];
 			//$errors = showOrSubmitCommand($command);
-			var_dump($command);
 			$errors = submitJob($command);
 			if ($errors) {
 				echo '<script> $(document).ready(function() { popenTab("Preprocessing"); });</script>';
@@ -984,9 +983,9 @@ function toggle(divID) {
 			}
 		}
 		elseif (isset($_POST['extract'])){
-			$command = 'runTopaz.py topaz extract "';
-			$command .= $_POST['input4'];
-			$command .= '" --model '.$_POST['model4'];
+			$command = 'runTopaz.py topaz extract ';
+			$command .= $command .= str_replace("*", '"\*"',$_POST['input4']);
+			$command .= ' --model '.$_POST['model4'];
 			$command .= ' --radius '.$_POST['radius4'];
 			$command .= ' --output '.$_POST['output4'];
 			$command .= ' --up-scale '.$_POST['upscale4'];
