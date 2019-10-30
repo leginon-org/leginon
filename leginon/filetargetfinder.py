@@ -42,7 +42,8 @@ class FileTargetFinder(targetfinder.ClickTargetFinder):
 		for target_name in self.targetnames:
 			self.setTargets([], target_name, block=True)
 
-		self.setTargetImageVector(imagedata)
+		self.currentimagedata = imagedata
+		self.setTargetImageVectors(imagedata)
 		# check if there is already a target list for this image
 		# or any other versions of this image (all from same target/preset)
 		# exclude sublists (like rejected target lists)
