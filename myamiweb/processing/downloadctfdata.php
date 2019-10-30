@@ -68,7 +68,7 @@ foreach ($ctfdatas as $ctfdata) {
 		$p = $leginon->getPresetFromImageId($imgid);
 		if ($preset != $p['name'] ) continue;
 	if ($relion >= 1) {
-		$data_string=sprintf("micrographs/%s.mrc micrographs/%s.ctf:mrc %.6f %.6f %.6f %.6f %.6f %.6f %.6f %.6f %.6f",
+		$data_string=sprintf("Micrographs/%s.mrc Micrographs/%s.ctf:mrc %.6f %.6f %.6f %.6f %.6f %.6f %.6f %.6f %.6f",
 			$filename,
 			$filename,
 			$ctfdata['defocus1']*1e10,

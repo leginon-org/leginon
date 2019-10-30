@@ -62,11 +62,13 @@ class Panel(leginon.gui.wx.Node.Panel):
 
 	def onSetImage(self, evt):
 		super(Panel,self).onSetImage(evt)
+		# This function is called on initialization and self.node would be None
+		if self.node is None:
+			return
 		try:
 			self.imagepanel.imagevectors = self.node.getTargetImageVectors()
 			self.imagepanel.beamradius = self.node.getTargetBeamRadius()
 		except AttributeError:
-			# This function is called on initialization and self.node would be None
 			pass
 
 	def onImageSettings(self, evt):
