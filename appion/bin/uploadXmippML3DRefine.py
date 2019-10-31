@@ -301,10 +301,10 @@ class uploadXmippML3DScript(reconUploader.generalReconUploader):
 				n = classes_per_volume
 			else:
 				n = int(float(ml3dsplitlines[i*2+1][7])) % classes_per_volume
-			phi = float(ml3dsplitlines[i*2+1][2]))
-			theta = float(ml3dsplitlines[i*2+1][3]))
-			psi = float(ml3dsplitlines[i*2+1][4]))
-			mirror = bool(float(ml3dsplitlines[i*2+1][8])))
+			phi = float(ml3dsplitlines[i*2+1][2])
+			theta = float(ml3dsplitlines[i*2+1][3])
+			psi = float(ml3dsplitlines[i*2+1][4])
+			mirror = bool(float(ml3dsplitlines[i*2+1][8]))
 			if mirror is True:
 				phi, theta, psi = apXmipp.calculate_equivalent_Eulers_without_flip(phi, theta, psi)
 			particledataf.write("%9d" % (int(ml3dsplitlines[i*2][1][-10:-4])+1)) ### NOTE: IT IS IMPORTANT TO START WITH 1, OTHERWISE STACKMAPPING IS WRONG!!!

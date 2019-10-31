@@ -1494,8 +1494,8 @@ class ImageShiftCalibrationClient(SimpleMatrixCalibrationClient):
 		'''
 		Using physical position as a global coordinate system, we can
 		do pixel to pixel transforms between mags.
-		This function will calculate a pixel vector at mag2, given
-		a pixel vector at mag1.
+		This function will calculate a (row,col) pixel vector at mag2, given
+		a (row,col) pixel vector at mag1.
 		For image shift, this means: the physical image shift values in meters
 		need to be properly calibrated for this to work right
 		'''
@@ -1618,8 +1618,8 @@ class ImageScaleRotationCalibrationClient(ImageShiftCalibrationClient):
 		'''
 		Using physical position as a global coordinate system, we can
 		do pixel to pixel transforms between mags.
-		This function will calculate a pixel vector at mag2, given
-		a pixel vector at mag1.
+		This function will calculate a (row, col) pixel vector at mag2, given
+		a (row, col) pixel vector at mag1.
 		For image shift, this means: the physical image shift values in meters
 		need to be properly calibrated for this to work right
 		'''
@@ -1702,14 +1702,14 @@ class StageCalibrationClient(SimpleMatrixCalibrationClient):
 		'''
 		Using stage position as a global coordinate system, we can
 		do pixel to pixel transforms between mags.
-		This function will calculate a pixel vector at mag2, given
-		a pixel vector at mag1.
+		This function will calculate a (row, col) pixel vector at mag2, given
+		a (row, col) pixel vector at mag1.
 		'''
 		par = self.parameter()
 		matrix1 = self.retrieveMatrix(tem1, ccdcamera1, par, ht, mag1)
 		matrix2 = self.retrieveMatrix(tem2, ccdcamera2, par, ht, mag2)
 		matrix2inv = numpy.linalg.inv(matrix2)
-		p1 = numpy.array(p1)
+		p1 = numpy.array(p1) #[row, col]
 		stagepos = numpy.dot(matrix1, p1)
 		p2 = numpy.dot(matrix2inv, stagepos)
 		return p2
@@ -2066,8 +2066,8 @@ class ModeledStageCalibrationClient(MatrixCalibrationClient):
 		'''
 		Using stage position as a global coordinate system, we can
 		do pixel to pixel transforms between mags.
-		This function will calculate a pixel vector at mag2, given
-		a pixel vector at mag1.
+		This function will calculate a (row, col) pixel vector at mag2, given
+		a (row, col) pixel vector at mag1.
 		'''
 
 		scope = leginondata.ScopeEMData()
@@ -2468,6 +2468,8 @@ class BeamSizeCalibrationClient(CalibrationClient):
 			intensity_delta = intensity - intercept
 			beamsize = intensity_delta / slope
 			return beamsize
+		else:
+			self.node.logger.debug('missing beam size calibration for tem id:%d, spot size:%d, and %s probe' % (scopedata['tem'].dbid, scopedata['spot size'], scopedata['probe mode']))
 
 	def getIlluminatedArea(self,scopedata):
 		beam_diameter = self.getBeamSize(scopedata) 

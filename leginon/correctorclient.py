@@ -362,8 +362,14 @@ class CorrectorClient(cameraclient.CameraClient):
 		rawarray = imagedata['image']
 		darkarray = self.prepareDark(dark, imagedata)
 		normarray = norm['image']
-		r = self.normalizeImageArray(rawarray,darkarray,normarray, 'GatanK2' in cameradata['ccdcamera']['name'])
-		imagedata['image'] = r	
+		if not self.isFakeImage(imagedata['image']):
+			r = self.normalizeImageArray(rawarray,darkarray,normarray, 'GatanK2' in cameradata['ccdcamera']['name'])
+		else:
+			# normalize the fake array, too.
+			fake_dark = darkarray.mean()*numpy.ones((8,8))
+			fake_norm = numpy.ones((8,8))
+			r = self.normalizeImageArray(rawarray,fake_dark,fake_norm, 'GatanK2' in cameradata['ccdcamera']['name'])
+		imagedata['image'] = r
 		imagedata['dark'] = dark
 		imagedata['bright'] = norm['bright']
 		imagedata['norm'] = norm
@@ -406,8 +412,6 @@ class CorrectorClient(cameraclient.CameraClient):
 		'''
 		this puts an image through a pipeline of corrections
 		'''
-		if imagedata['image'] is None:
-			return
 		if not 'system corrected' in imagedata['camera'].keys() or not imagedata['camera']['system corrected']:
 			try:
 				self.normalizeCameraImageData(imagedata, channel)
@@ -420,6 +424,11 @@ class CorrectorClient(cameraclient.CameraClient):
 		plan, plandata = self.retrieveCorrectorPlan(cameradata)
 		# save corrector plan for easy post-processing of raw frames
 		imagedata['corrector plan'] = plandata
+		# Escape if image is None
+		if imagedata['image'] is None or self.isFakeImage(imagedata['image']):
+			# in-place change.  Nothing to return
+			return
+		# correct plan
 		if plan is not None:
 			self.fixBadPixels(imagedata['image'], plan)
 
