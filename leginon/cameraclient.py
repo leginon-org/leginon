@@ -184,7 +184,12 @@ class CameraClient(object):
 		else:
 			t3 = threading.Thread(target=self.dummy())
 
-		while t1.isAlive() or t2.isAlive() or t3.isAlive():
+		if self.instrument.tem.ProjectionMode == 'diffraction':
+			t4 = threading.Thread(target=self.insertBeamstop())
+		else:
+			t4 = threading.Thread(target=self.dummy())
+
+		while t1.isAlive() or t2.isAlive() or t3.isAlive() or t4.isAlive():
 			time.sleep(0.5)
 		## make sure shutter override is activated
 		try:
@@ -192,6 +197,27 @@ class CameraClient(object):
 		except:
 			# maybe tem has no such function
 			pass
+
+	def doAfterAcquire(self):
+		'''
+		Things to do after acquiring the image. Overwritable by subclasses
+		such as MoveAcquisition to skip the real action.
+		'''
+		self._doAfterAcquire()
+
+	def _doAfterAcquire(self):
+		'''
+		Things to do after each image acquisition.  This can slow things
+		down. Since it will try to do it every time.
+		'''
+		if self.instrument.tem.ProjectionMode == 'diffraction':
+			self.removeBeamstop()
+
+	def insertBeamstop(self):
+		self.instrument.tem.BeamstopPosition = 'in'
+
+	def removeBeamstop(self):
+		self.instrument.tem.BeamstopPosition = 'out'
 
 	def acquireCameraImageData(self, scopeclass=leginondata.ScopeEMData, allow_retracted=False, type='normal', force_no_frames=False):
 		'''Acquire a raw image from the currently configured CCD camera
@@ -227,6 +253,7 @@ class CameraClient(object):
 			imagedata['image'] = self.parallelImaging()
 		else:
 			imagedata['image'] = self.instrument.ccdcamera.Image
+		self.doAfterAcquire()
 		# get scope data after acquiring image so that scope can be simultaneously
 		# controlled. refs #6437
 		scopedata = self.instrument.getData(scopeclass)

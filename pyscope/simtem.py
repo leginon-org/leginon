@@ -69,6 +69,7 @@ class SimTEM(tem.TEM):
 		self.stage_position = {}
 		for axis in self.stage_axes:
 			self.stage_position[axis] = 0.0
+		self.speed_fraction = 1.0
 
 		self.screen_current = 0.000001
 		self.intensity_range = (0.0, 1.0)
@@ -212,6 +213,9 @@ class SimTEM(tem.TEM):
 					bigenough[axis] = position[axis]
 		return bigenough
 
+	def setStageSpeed(self, value):
+		self.speed_fraction = value
+
 	def setStagePosition(self, value):
 		self.printStageDebug(value.keys())
 		value = self.checkStagePosition(value)
@@ -265,6 +269,8 @@ class SimTEM(tem.TEM):
 		if abs(relax) > 1e-9 and prevalue2:
 			self._setStagePosition(prevalue2)
 			time.sleep(0.2)
+		if self.speed_fraction < 1.0:
+			time.sleep(1/self.speed_fraction)
 		return self._setStagePosition(value)
 
 	def normalizeLens(self, lens='all'):
@@ -619,6 +625,7 @@ class SimTEM(tem.TEM):
 		return self.beamstop_position
 
 	def setBeamstopPosition(self, value):
+		print 'beamstop set to %s' % (value,)
 		self.beamstop_position = value
 
 class SimTEM300(SimTEM):
