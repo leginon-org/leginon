@@ -71,6 +71,7 @@ class MoveAcquisition(acquisition.Acquisition):
 			super(MoveAcquisition, self).processTargetData(targetdata, attempt)
 			# need to wait for all moves are completed.
 			self.waitMoveDone()
+			self.instrument.tem.StageSpeed = 1.0
 			self._setStageValue(p0dict)
 		else:
 			# process as normal
@@ -165,6 +166,7 @@ class MoveAcquisition(acquisition.Acquisition):
 			t2 = threading.Thread(target=self.acquirePublishDisplayWait, args=args)
 			t2.start()
 			self.waitExposureDone()
+			t2.join()
 		else:
 			self.acquirePublishDisplayWait(*args)
 		return status
@@ -198,11 +200,12 @@ class MoveAcquisition(acquisition.Acquisition):
 		 Start a separate thread to move.
 		'''
 		move_times = self.calculateMoveTimes()
-		t1 = threading.Thread(target=self.moveToValue, args=(move_times,))
-		t1.start()
+		self.t1 = threading.Thread(target=self.moveToValue, args=(move_times,))
+		self.t1.start()
 
 	def waitAtStep(self, step_time):
 		time.sleep(step_time)
+		self.t1.join()
 		self.step_done_event.set()
 
 	def moveToValue(self, move_times):
@@ -219,8 +222,11 @@ class MoveAcquisition(acquisition.Acquisition):
 			t3.start()
 			self.setStageValue(move)
 			self.waitStepDone()
+			t3.join()
 			self.logFinal(move) # log intermediate move
 		self.logFinal(move_times[-1][0]) # log last move value
+		self.instrument.tem.StageSpeed = 1.0
+		# ??? WHy here ?
 		self.setStageValue(p0)
 		self.move_done_event.set()
 
