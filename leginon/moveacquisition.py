@@ -40,10 +40,15 @@ class MoveAcquisition(acquisition.Acquisition):
 	def prepareToAcquire(self,allow_retracted=False,exposure_type='normal'):
 		'''
 		Overwrite prepareToAcquire in cameraclient.py to not to do anything
-		since they would be blocked by scope movement.
+		if moving since they would be blocked by scope movement.
+		Do these before moving instead.
 		'''
-		self.logger.info('Bypassed acquisition preparation')
-		pass
+		if not self.settings['acquire during move']:
+			# process as normal
+			return super(MoveAcquisition, self).prepareToAcquire(allow_retracted, exposure_type)
+		else:
+			self.logger.info('Bypassed acquisition preparation')
+			pass
 
 	def getParentValue(self,targetdata):
 		'''
@@ -123,12 +128,10 @@ class MoveAcquisition(acquisition.Acquisition):
 		self.logger.info('pausing for %s s' % (pausetime,))
 
 		self.startTimer('pause')
-		# not sure if need to thread.
-		t = threading.Thread(target=self._prepareToAcquire)
-		t.start()
 		time.sleep(pausetime)
-		t.join()
 		self.stopTimer('pause')
+		# not sure if need to thread. Will insert the camera
+		self._prepareToAcquire()
 		# the next image will not be first even if repeated
 		self.is_firstimage = False
 

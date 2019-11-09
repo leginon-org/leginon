@@ -185,6 +185,7 @@ class CameraClient(object):
 			t3 = threading.Thread(target=self.dummy())
 
 		if self.instrument.tem.ProjectionMode == 'diffraction':
+			self.logger.info('Inserting beam stop')
 			t4 = threading.Thread(target=self.insertBeamstop())
 		else:
 			t4 = threading.Thread(target=self.dummy())
@@ -211,6 +212,7 @@ class CameraClient(object):
 		down. Since it will try to do it every time.
 		'''
 		if self.instrument.tem.ProjectionMode == 'diffraction':
+			self.logger.info('Retracting beam stop')
 			self.removeBeamstop()
 
 	def insertBeamstop(self):
