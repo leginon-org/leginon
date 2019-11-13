@@ -424,6 +424,9 @@ class HoleFinder(object):
 		else:
 			self.__update_result('holes', holes)
 
+	def updateHoles(self, holes):
+		self.__update_result('holes', holes)
+
 	def mark_holes(self):
 		if self.__results['holes'] is None or self.__results['original'] is None:
 			raise RuntimeError('need original image and holes before marking holes')
