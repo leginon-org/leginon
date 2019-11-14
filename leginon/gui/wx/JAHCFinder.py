@@ -418,6 +418,8 @@ class FinalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.widgets['focus hole'] = Choice(self, -1, choices=self.node.focustypes)
 		self.widgets['target template'] = wx.CheckBox(self, -1,
 			'Use target template')
+		self.widgets['filter ice on convolved'] = wx.CheckBox(self, -1,
+			'Apply ice thickness threshold on template-convolved acquisiton targets')
 		self.widgets['focus template'] = leginon.gui.wx.TargetTemplate.Panel(self,
 			'Focus Target Template', autofill=True)
 		self.widgets['acquisition template'] = leginon.gui.wx.TargetTemplate.Panel(self,
@@ -486,12 +488,13 @@ class FinalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 
 		sztt = wx.GridBagSizer(5, 5)
 		sztt.Add(self.widgets['target template'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sztt.Add(sbszftt, (1, 0), (3, 1), wx.ALIGN_CENTER)
-		sztt.Add(self.widgets['focus template'], (0, 1), (2, 1), wx.ALIGN_CENTER|wx.EXPAND)
-		sztt.Add(self.widgets['acquisition template'], (2, 1), (2, 1), wx.ALIGN_CENTER|wx.EXPAND)
+		sztt.Add(self.widgets['filter ice on convolved'], (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sztt.Add(sbszftt, (2, 0), (4, 1), wx.ALIGN_CENTER)
+		sztt.Add(self.widgets['focus template'], (0, 1), (3, 1), wx.ALIGN_CENTER|wx.EXPAND)
+		sztt.Add(self.widgets['acquisition template'], (3, 1), (2, 1), wx.ALIGN_CENTER|wx.EXPAND)
 		sztt.AddGrowableCol(1)
 		sztt.AddGrowableRow(0)
-		sztt.AddGrowableRow(2)
+		sztt.AddGrowableRow(5)
 
 		sbsztt.Add(sztt, 1, wx.EXPAND|wx.ALL, 5)
 

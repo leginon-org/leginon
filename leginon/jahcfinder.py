@@ -71,6 +71,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 		'focus interval': 1,
 		'focus offset row': 0,
 		'focus offset col': 0,
+		'filter ice on convolved': False,
 	})
 	extendtypes = ['off', 'full', '3x3']
 	targetnames = targetfinder.TargetFinder.targetnames + ['Blobs']
@@ -245,20 +246,48 @@ class JAHCFinder(targetfinder.TargetFinder):
 		except Exception, e:
 			self.logger.error(e)
 			return
+		targets = self. getTargetsWithStats(r)
+		if targets is not None:
+			self.logger.info('Number of lattice blobs: %s' % (len(targets),))
+			self.setTargets(targets, 'Lattice')
 
-		self.hf.configure_holestats(radius=r)
+	def getTargetsWithStats(self, stats_radius):
+		self.hf.configure_holestats(radius=stats_radius)
 		try:
 			self.hf.calc_holestats()
 		except Exception, e:
 			self.logger.error(e)
 			return
-
 		holes = self.hf['holes']
 		targets = self.holeStatsTargets(holes)
-		self.logger.info('Number of lattice blobs: %s' % (len(targets),))
-		self.setTargets(targets, 'Lattice')
+		return targets
 
 	def ice(self):
+		orig_holes = self.hf['holes']
+		centers, focus_points = self.filterIceForFocus()
+		acq_points, focus_points = self.makeConvolvedPoints(centers, focus_points)
+		all_acq_numbers = len(acq_points)
+		if self.settings['filter ice on convolved']:
+			# self.hf['holes'] are changed to acq_points in iceOnConvolved.
+			acq_points = self.iceOnConvolved(acq_points)
+		# display and save preferences and hole stats
+		self.setTargets(acq_points, 'acquisition', block=True)
+		self.setTargets(focus_points, 'focus', block=True)
+		self.logger.info('Acquisition Targets: %s' % (len(acq_points),))
+		self.logger.info('Focus Targets: %s' % (len(focus_points),))
+		if type(self.currentimagedata) == type(leginondata.AcquisitionImageData()):
+			hfprefs = self.storeHoleFinderPrefsData(self.currentimagedata)
+			self.storeHoleStatsData(hfprefs)
+		if self.settings['filter ice on convolved']:
+			# return self.hf['holes'] to lattice result so that it can be reused for adjusting
+			# parameters
+			self.hf.updateHoles(orig_holes)
+
+	def filterIce(self):
+		'''
+		Filter hf['holes'] by ice thickness stats.  The results are in
+		hf['holes2']
+		'''
 		self.logger.info('limit thickness')
 		i0 = self.settings['lattice zero thickness']
 		tmin = self.settings['ice min mean']
@@ -271,6 +300,9 @@ class JAHCFinder(targetfinder.TargetFinder):
 		except Exception, e:
 			self.logger.error(e)
 			return
+
+	def filterIceForFocus(self):
+		self.filterIce()
 		goodholes = self.hf['holes2']
 		centers = self.blobCenters(goodholes)
 		allcenters = self.blobCenters(self.hf['holes'])
@@ -306,7 +338,13 @@ class JAHCFinder(targetfinder.TargetFinder):
 						fochole = self.focus_on_hole(centers, centers, True)
 						focus_points.append(fochole)
 
-		self.logger.info('Holes with good ice: %s' % (len(centers),))
+		if not self.settings['filter ice on convolved']:
+			self.logger.info('Holes with good ice: %s' % (len(centers),))
+			return centers, focus_points
+		else:
+			return allcenters, focus_points
+
+	def makeConvolvedPoints(self, centers, focus_points):
 		# takes x,y instead of row,col
 		if self.settings['target template']:
 			newtargets = self.applyTargetTemplate(centers)
@@ -318,13 +356,25 @@ class JAHCFinder(targetfinder.TargetFinder):
 		if len(focus_points) > 1 and self.settings['focus template thickness']:
 			focpoint = self.focus_on_hole(focus_points,focus_points, False)
 			focus_points = [focpoint]
-		self.setTargets(acq_points, 'acquisition', block=True)
-		self.setTargets(focus_points, 'focus', block=True)
-		self.logger.info('Acquisition Targets: %s' % (len(acq_points),))
-		self.logger.info('Focus Targets: %s' % (len(focus_points),))
-		if type(self.currentimagedata) == type(leginondata.AcquisitionImageData()):
-			hfprefs = self.storeHoleFinderPrefsData(self.currentimagedata)
-			self.storeHoleStatsData(hfprefs)
+		return acq_points, focus_points
+
+	def iceOnConvolved(self, centers):
+		'''
+		Filter target centers with ice thickness threshold.
+		'''
+		sw_centers = self.hf.swapxy(centers)
+		holes = self.hf.points_to_blobs(sw_centers)
+		self.hf.updateHoles(holes)
+		r = self.settings['lattice hole radius']
+		targets = self. getTargetsWithStats(r)
+		if targets is not None:
+			self.logger.info('Potential targets with stats: %s' % (len(targets),))
+			self.setTargets(targets, 'acquisition')
+		self.filterIce()
+		goodholes = self.hf['holes2']
+		targets = self.holeStatsTargets(goodholes)
+		self.logger.info('Convolved acquisition targets rejected: %d' % (len(centers)-len(targets),))
+		return targets
 
 	def centerCarbon(self, points):
 		temppoints = points
