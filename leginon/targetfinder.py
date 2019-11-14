@@ -504,6 +504,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			self.declareDrift('submit queue')
 		queue = self.getQueue()
 		self.publish(queue, pubevent=True)
+		self.logger.info('queue submitted')
 
 	def notifyUserSubmit(self):
 		message = 'Waiting for user to submit targets...'
