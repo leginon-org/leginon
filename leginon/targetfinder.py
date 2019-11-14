@@ -453,6 +453,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		for target_name in self.targetnames:
 			self.setTargets([], target_name, block=True)
 
+		self.currentimagedata = imagedata
 		self.setTargetImageVectors(imagedata)
 		self.setImageTiltAxis(imagedata)
 		self.setOtherImageVectors(imagedata)		# this is used by tomoCickTargetFinder
@@ -503,6 +504,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			self.declareDrift('submit queue')
 		queue = self.getQueue()
 		self.publish(queue, pubevent=True)
+		self.logger.info('queue submitted')
 
 	def notifyUserSubmit(self):
 		message = 'Waiting for user to submit targets...'
@@ -588,9 +590,13 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 
 	def updateTargetImageVectors(self):
 		if not self.current_image_pixelsize:
-			# FIXME: happends for mosaic image
-			return
-		cam_vectors_on_image,beam_diameter_on_image = self._getTargetDisplayInfo(self.current_image_pixelsize)
+			if not self.currentimagedata:
+				# no current_imagedata. probably just initialized.
+				return
+			cam_vectors_on_image,beam_diameter_on_image = self.getTargetDisplayInfo(self.currentimagedata)
+		else:
+			# no need to get info through imagedata query again.
+			cam_vectors_on_image,beam_diameter_on_image = self._getTargetDisplayInfo(self.current_image_pixelsize)
 		self._setTargetImageVectors(cam_vectors_on_image,beam_diameter_on_image)
 
 	def getTargetDisplayInfo(self,imagedata):
@@ -657,6 +663,8 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		if beam_diameter is None:
 			# handle no beam size calibration
 			beam_diameter = 0
+		else:
+			self.logger.debug('beam diameter for preset %s is %.2e m' % (presetdata['name'],beam_diameter))
 		return beam_diameter
 
 	def onQueueCheckBox(self, state):

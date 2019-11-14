@@ -881,8 +881,8 @@ function toggle(divID) {
 //if ($_SESSION['loggedin']) {
 	if ($_POST['process']) {
 		if (isset($_POST['preprocess'])){
-			$command = "runTopaz.py topaz preprocess ";
-			$command .= $_POST['input1'];
+			$command = 'runTopaz.py topaz preprocess ';
+			$command .= str_replace("*", '"\*"',$_POST['input1']);
 			$command .= ' --scale '.$_POST['scale1'];
 			$command .= ' --num-workers '.$_POST['numworkers1'];
 			$command .= ' --format '.$_POST['format1'];
@@ -983,8 +983,8 @@ function toggle(divID) {
 			}
 		}
 		elseif (isset($_POST['extract'])){
-			$command = "runTopaz.py topaz extract ";
-			$command .= $_POST['input4'];
+			$command = 'runTopaz.py topaz extract ';
+			$command .= $command .= str_replace("*", '"\*"',$_POST['input4']);
 			$command .= ' --model '.$_POST['model4'];
 			$command .= ' --radius '.$_POST['radius4'];
 			$command .= ' --output '.$_POST['output4'];
