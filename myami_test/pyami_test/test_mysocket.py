@@ -28,10 +28,18 @@ class TestIpMapping(unittest.TestCase):
 		return address
 		
 	def testMapping(self):
-		for m in self.host_maps:
-			msg = 'Incorrect pyami.cfg ip mapping for %s' % (m)
+		'''
+		Test that the address in pyami.cfg is mapped to the assigned hostname.
+		'''
+		for name in self.host_maps.keys():
+			addr = self.host_maps[name]
+			msg = 'Incorrect pyami.cfg host mapping for %s' % (addr)
 			self.longMessage = True
-			self.assertEqual(pyami.mysocket.gethostbyname(m),socket.gethostbyname(m),msg=msg)
+			try:
+				socket_hostname = socket.gethostbyaddr(addr)[0]
+			except:
+				socket_hostname = 'unknonw hostname'
+			self.assertEqual(socket_hostname,name,msg=msg)
 
 	def runTest(self):
 		'''
