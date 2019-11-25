@@ -3008,6 +3008,14 @@ class DiffractionSeriesData(InSessionData):
 		)
 	typemap = classmethod(typemap)
 
+class DeletedDiffractionSeriesData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('series', DiffractionSeriesData),
+			('comment', str),
+		)
+	typemap = classmethod(typemap)
+
 class CameraLengthCalibrationData(CalibrationData):
 	def typemap(cls):
 		return CalibrationData.typemap() + (
