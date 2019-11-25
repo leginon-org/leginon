@@ -3032,3 +3032,10 @@ class CameraLengthCalibratorSettingsData(CalibratorSettingsData):
 			('distance', float),
 		)
 	typemap = classmethod(typemap)
+
+class BeamstopCenterData(CalibrationData):
+	def typemap(cls):
+		return CalibrationData.typemap() + (
+			('beam center', dict), # mm as defined in smv file header
+		)
+	typemap = classmethod(typemap)

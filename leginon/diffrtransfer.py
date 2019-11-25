@@ -241,6 +241,11 @@ class DiffractionUpload(object):
 
 	def getBeamCenterMM(self, imagedata):
 		beam_center = {}
+		tem = imagedata['scope']['tem']
+		cam = imagedata['camera']['ccdcamera']
+		r = leginondata.BeamstopCenterData(tem=tem, ccdcamera=cam).query(results=1)
+		if r:
+			return r[0]
 		for axis in ('x','y'):
 			pixel_size = imagedata['camera']['binning'][axis]*imagedata['camera']['pixel size'][axis]
 			beam_center[axis] = 1000 * pixel_size * imagedata['camera']['dimension'][axis] / 2.0
@@ -256,9 +261,10 @@ class DiffractionUpload(object):
 		smv_dict['PIXEL_SIZE'] = imagedata['camera']['pixel size']['x']*imagedata['camera']['binning']['x'] * 1000.0
 		smv_dict['ACC_TIME'] = imagedata['camera']['exposure time'] # milli-seconds
 		smv_dict['TIME'] = smv_dict['ACC_TIME'] / 1000.0  # rolling shutter sec
-		# beam center is around zero (probably in pixels)
-		smv_dict['BEAM_CENTER_X'] = 28.644
-		smv_dict['BEAM_CENTER_Y'] = 27.972
+		# beam center is around zero (in mm from ?? corner)
+		beam_center = self.getBeamCenterMM()
+		smv_dict['BEAM_CENTER_X'] = beam_center['x']
+		smv_dict['BEAM_CENTER_Y'] = beam_center['y']
 		return smv_dict
 
 	def saveSMV(self,imagedata, smv_path, iter_number, offset):
