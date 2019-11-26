@@ -884,6 +884,11 @@ class GatanK3(GatanK2Base):
 	def getSystemGainDarkCorrected(self):
 		return self.dm_processing == 'gain normalized'
 
+	def requireRecentDarkCurrentReferenceOnBright(self):
+		# K3 no longer need hardware dark ? In fact, the scripting call does nothing.
+		# Is it really o.k. ?
+		return False
+
 	def getFrameFlip(self):
 		'''
 		Frame Flip is defined as up-down flip.
