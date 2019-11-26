@@ -348,8 +348,8 @@ def loop(check_path, check_interval,no_wait=False):
 					print('Checking series %d_%d for completeness' % (hl_id, target_number))
 					last_count = image_count
 					# robocopy minimal monitor cycle is 1 min
-					print('Wait 60 second in case series writing is not finished - current count=%d' % image_count)
-					time.sleep(60)
+					print('Wait 70 second in case series writing is not finished - current count=%d' % image_count)
+					time.sleep(70)
 					image_count = len(glob.glob(groups[k]))
 			print('Processing series %d_%d' % (hl_id, target_number))
 			try:
