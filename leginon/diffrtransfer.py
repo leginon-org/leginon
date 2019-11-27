@@ -245,11 +245,11 @@ class DiffractionUpload(object):
 		cam = imagedata['camera']['ccdcamera']
 		r = leginondata.BeamstopCenterData(tem=tem, ccdcamera=cam).query(results=1)
 		if r:
-			return r[0]
+			return r[0]['beam center']
 		for axis in ('x','y'):
 			pixel_size = imagedata['camera']['binning'][axis]*imagedata['camera']['pixel size'][axis]
 			beam_center[axis] = 1000 * pixel_size * imagedata['camera']['dimension'][axis] / 2.0
-		return beam_center['beam center']
+		return beam_center
 
 	def getLeginonInfoDict(self, imagedata):
 		smv_dict={}
