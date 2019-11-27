@@ -249,7 +249,7 @@ class DiffractionUpload(object):
 		for axis in ('x','y'):
 			pixel_size = imagedata['camera']['binning'][axis]*imagedata['camera']['pixel size'][axis]
 			beam_center[axis] = 1000 * pixel_size * imagedata['camera']['dimension'][axis] / 2.0
-		return beam_center
+		return beam_center['beam center']
 
 	def getLeginonInfoDict(self, imagedata):
 		smv_dict={}
@@ -262,7 +262,7 @@ class DiffractionUpload(object):
 		smv_dict['ACC_TIME'] = imagedata['camera']['exposure time'] # milli-seconds
 		smv_dict['TIME'] = smv_dict['ACC_TIME'] / 1000.0  # rolling shutter sec
 		# beam center is around zero (in mm from ?? corner)
-		beam_center = self.getBeamCenterMM()
+		beam_center = self.getBeamCenterMM(imagedata)
 		smv_dict['BEAM_CENTER_X'] = beam_center['x']
 		smv_dict['BEAM_CENTER_Y'] = beam_center['y']
 		return smv_dict
