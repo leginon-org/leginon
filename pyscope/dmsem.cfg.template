@@ -39,8 +39,8 @@ SAVE_LZW_TIFF_FRAMES = False
 # K3 only configuration
 [k3]
 # K3 processing mode. 'gain normalized' or 'dark subtracted'
-DM_PROCESSING = gain normalized
-#DM_PROCESSING = dark subtracted
+#DM_PROCESSING = gain normalized
+DM_PROCESSING = dark subtracted
 
 ### Orius configuration if exists
 [orius]
