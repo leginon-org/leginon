@@ -33,7 +33,7 @@ class SimGatan(object):
 	def SetShutterNormallyClosed(self, camera, shutter):
 		pass
 
-	def SetK2Parameters(self, readMode, scaling, hardwareProc, doseFrac, frameTime, alignFrames, saveFrames, filt=''):
+	def SetK2Parameters(self, readMode, scaling, hardwareProc, doseFrac, frameTime, alignFrames, saveFrames, filt='', useCds=False):
 		self.save_frames = saveFrames
 		print '**K2 Parameters**'
 		print 'readMode', readMode
