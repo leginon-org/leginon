@@ -59,6 +59,12 @@ class DiffrFocuser(singlefocuser.SingleFocuser):
 			raise acquisition.InvalidSettings('Tilt time %.1f s is too long' % (tilt_time))
 
 	def acquirePublishDisplayWait(self, presetdata, emtarget, channel):
+		'''
+		Replace base class acquirePublishDisplayWait.  This does not
+		set self.imagedata. Therefore it does not publish nor display
+		any image.  It just save diffraction  series meta data so that
+		the movie can be uploaded automatically.
+		'''
 		try:
 			self.tiltAndWait(presetdata,emtarget)
 			self.saveDiffractionSeriesData(presetdata,emtarget)
@@ -69,7 +75,7 @@ class DiffrFocuser(singlefocuser.SingleFocuser):
 
 	def returnToOriginalTilt(self):
 		self.instrument.tem.BeamstopPosition = 'out'
-		self.instrument.tem.StageSpeed = 1.0
+		self.instrument.tem.StageSpeed = 50.0 # top speed in degrees per second
 		self.instrument.tem.StagePosition={'a':self.tilt0}
 
 	def tiltAndWait(self, presetdata, emtarget):
@@ -112,8 +118,8 @@ class DiffrFocuser(singlefocuser.SingleFocuser):
 
 	def tiltWithSpeed(self):
 		time.sleep(0.5)
-		# temporarily set with known conversion
-		self.instrument.tem.StageSpeed = self.settings['tilt speed']/29.78
+		# set in degrees per second
+		self.instrument.tem.StageSpeed = self.settings['tilt speed']
 		self.instrument.tem.StagePosition = {'a':self.end_radian}
 
 	def startMovieCollection(self, filename, exposure_time):

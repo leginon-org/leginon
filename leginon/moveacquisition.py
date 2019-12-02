@@ -76,7 +76,8 @@ class MoveAcquisition(acquisition.Acquisition):
 			super(MoveAcquisition, self).processTargetData(targetdata, attempt)
 			# need to wait for all moves are completed.
 			self.waitMoveDone()
-			self.instrument.tem.StageSpeed = 1.0
+			#TODO generalize for all movement
+			self.instrument.tem.StageSpeed = 50.0 # top speed in degrees per second
 			self._setStageValue(p0dict)
 		else:
 			# process as normal
@@ -228,7 +229,8 @@ class MoveAcquisition(acquisition.Acquisition):
 			t3.join()
 			self.logFinal(move) # log intermediate move
 		self.logFinal(move_times[-1][0]) # log last move value
-		self.instrument.tem.StageSpeed = 1.0
+		#TODO generalize for all movement
+		self.instrument.tem.StageSpeed = 50.0 # top speed in degrees per second
 		# ??? WHy here ?
 		self.setStageValue(p0)
 		self.move_done_event.set()
