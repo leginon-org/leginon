@@ -48,7 +48,8 @@ class Tecnai(tem.TEM):
 	# either 'Magnification' or 'CameraLength'
 	mag_attr_name = 'Magnification'
 	mag_scale = 1
-	default_stage_speed = 1.0
+	stage_top_speed = 29.78
+	default_stage_speed_fraction = 1.0
 
 	def __init__(self):
 		tem.TEM.__init__(self)
@@ -101,7 +102,8 @@ class Tecnai(tem.TEM):
 			self.exposure = None
 
 		self.magnifications = []
-		self.stage_speed = self.default_stage_speed
+		self.speed_deg_per_second = self.stage_top_speed
+		self.stage_speed_fraction = self.default_stage_speed_fraction
 		self.mainscreenscale = 44000.0 / 50000.0
 		self.wait_for_stage_ready = True
 		self.mag_changed = False
@@ -270,23 +272,22 @@ class Tecnai(tem.TEM):
 		return self._setStagePosition(value)
 
 	def resetStageSpeed(self):
-		self.stage_speed = self.default_stage_speed
+		self.stage_speed_fraction = self.default_stage_speed_fraction
 		if self.tom:
-			self.tom.Stage.Speed = self.default_stage_speed
+			self.tom.Stage.Speed = self.default_stage_speed_fraction
 
 	def setStageSpeed(self, value):
-		# 0.0 to 1.0 with 1.0 the highest speed
-		if value > 1.0 or value < 0.0:
-			raise ValueError('Stage speed must be between 0.0 and 1.0')
-		self.stage_speed = value
+		self.speed_deg_per_second = value
+		self.stage_speed_fraction = min(value/self.stage_top_speed,1.0)
 		if self.tom:
-			self.tom.Stage.Speed = value
+			# tom-monikar needs to set speed first while temscripting set speed in gotowithspeed call.
+			self.tom.Stage.Speed = self.stage_speed_fraction
 
 	def getStageSpeed(self):
 		if self.tom:
-			return self.tom.Stage.Speed
+			return self.tom.Stage.Speed * self.stage_top_speed
 		else:
-			return self.stage_speed
+			return self.stage_speed_fraction * self.stage_top_speed
 
 	def normalizeLens(self, lens = 'all'):
 		if lens == 'all':
@@ -1008,13 +1009,13 @@ class Tecnai(tem.TEM):
 		if axes == 0:
 			return
 		try:
-			if self.stage_speed == self.default_stage_speed:
+			if self.stage_speed_fraction == self.default_stage_speed_fraction:
 				self.tecnai.Stage.Goto(pos, axes)
 			else:
 				# Low speed move needs to be done on individual axis
 				for key, value in position.items():
 					single_axis = getattr(self.tem_constants, 'axis' + key.upper())
-					self.tecnai.Stage.GotoWithSpeed(pos, single_axis, self.stage_speed)
+					self.tecnai.Stage.GotoWithSpeed(pos, single_axis, self.stage_speed_fraction)
 		except com_module.COMError, e:
 			if self.getDebugStage():
 				print datetime.datetime.now()

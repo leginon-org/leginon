@@ -52,12 +52,13 @@ class MoveAlphaAcquisition(moveacquisition.MoveAcquisition):
 		for move,step_time in move_times:
 			# temporarily set with known conversion
 			degrees_per_second = math.degrees(move-p0)/step_time
-			print 'speed', degrees_per_second
-			self.instrument.tem.StageSpeed = degrees_per_second/29.78
+			self.instrument.tem.StageSpeed = degrees_per_second
 			self.instrument.tem.StagePosition = {'a':move}
 			self.logFinal(move) # log intermediate move
 		self.logger.info('done moving')
-		self.instrument.tem.StageSpeed = 1.0
+		# as high speed as possible.  Will be set to top speed by tem
+		self.instrument.tem.StageSpeed = 50.0
+		self.logger.info('moving back to the original')
 		self.setStageValue(p0)
 		self.move_done_event.set()
 
