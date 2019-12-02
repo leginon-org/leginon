@@ -52,7 +52,7 @@ class MoveAlphaAcquisition(moveacquisition.MoveAcquisition):
 		for move,step_time in move_times:
 			# temporarily set with known conversion
 			degrees_per_second = math.degrees(move-p0)/step_time
-			self.instrument.tem.StageSpeed = degrees_per_second
+			self.instrument.tem.StageSpeed = abs(degrees_per_second)
 			self.instrument.tem.StagePosition = {'a':move}
 			self.logFinal(move) # log intermediate move
 		self.logger.info('done moving')

@@ -119,7 +119,7 @@ class DiffrFocuser(singlefocuser.SingleFocuser):
 	def tiltWithSpeed(self):
 		time.sleep(0.5)
 		# set in degrees per second
-		self.instrument.tem.StageSpeed = self.settings['tilt speed']
+		self.instrument.tem.StageSpeed = abs(self.settings['tilt speed'])
 		self.instrument.tem.StagePosition = {'a':self.end_radian}
 
 	def startMovieCollection(self, filename, exposure_time):
