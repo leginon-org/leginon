@@ -5,6 +5,7 @@ from scipy import ndimage
 import random
 random.seed()
 import time
+import math
 import json
 import remote
 import os
@@ -295,6 +296,18 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 
 	def getPixelSize(self):
 		return dict(self.pixel_size)
+
+	def startMovie(self,filename, exposure_time_ms):
+		self.movie_start_time = time.time()
+
+	def stopMovie(self, filename, exposure_time_ms):
+		self.series_length = math.ceil((time.time() -self.movie_start_time)/(0.001*exposure_time_ms))
+		for i in range(int(self.series_length)):
+			target_code = filename.split('.bin')[0]
+			frame_path = os.path.join(FRAME_DIR,'%s_%03d.bin' % (target_code, i+1))
+			f = open(frame_path,'w')
+			f.write('data\n')
+			f.close()
 
 class SimFrameCamera(SimCCDCamera):
 	name = 'SimFrameCamera'

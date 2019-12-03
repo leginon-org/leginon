@@ -1,6 +1,7 @@
 #import comtypes.client
 import os
 import subprocess
+import glob
 
 import ccdcamera
 import time
@@ -463,6 +464,7 @@ class FeiCam(ccdcamera.CCDCamera):
 		print 'movie name: %s' % filename
 		time.sleep(exposure_time_s)
 		self._saveMovie(filename)
+		self.series_length = self._findSeriesLength()
 
 	def _saveMovie(self, filename=''):
 		exepath = self.getFeiConfig('camera','autoit_tia_export_series_exe_path')
@@ -475,6 +477,13 @@ class FeiCam(ccdcamera.CCDCamera):
 		else:
 			raise NotImplementedError()
 
+	def _findSeriesLength(self):
+		data_dir = self.getFeiConfig('camera','tia_exported_data_dir')
+		pattern = os.path.join(data_dir, '%s*.bin' % (self.target_code,))
+		length = len(glob.glob(pattern))
+		return length
+
+		
 	def _clickAcquire(self, exposure_time_s=None):
 		# default is not checking
 		exepath = self.getFeiConfig('camera','autoit_tui_acquire_exe_path')

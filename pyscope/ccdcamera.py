@@ -54,6 +54,7 @@ class CCDCamera(baseinstrument.BaseInstrument):
 		self.callbacks = {}
 		self.exposure_timestamp = None
 		self.use_cds = False
+		self.series_length = 1
 
 	def getZplane(self):
 		return self.zplane
@@ -352,7 +353,12 @@ This method returns that multiplier, M.  In the standard case, returns 1.0.
 		pass
 
 	def stopMovie(self,filename, exposure_time_ms):
+		# set series_length
+		self.series_length = 1
 		pass
+
+	def getSeriesLength(self):
+		return self.series_length
 
 	def _midNightDelay(self, delay_start, delay_length, force_insert=0):
 		'''
