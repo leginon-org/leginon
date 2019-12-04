@@ -256,6 +256,7 @@ class PresetsManager(node.Node):
 		'import random': False,
 	}
 	eventinputs = node.Node.eventinputs + [event.ChangePresetEvent, event.MeasureDoseEvent, event.UpdatePresetEvent]
+	eventinputs.append(event.IdleNotificationEvent)
 	eventoutputs = node.Node.eventoutputs + [event.PresetChangedEvent, event.PresetPublishEvent, event.DoseMeasuredEvent, event.MoveToTargetEvent, event.ActivateNotificationEvent, event.DeactivateNotificationEvent]
 
 	def __init__(self, name, session, managerlocation, **kwargs):
@@ -303,6 +304,7 @@ class PresetsManager(node.Node):
 		self.addEventInput(event.ChangePresetEvent, self.changePreset)
 		self.addEventInput(event.MeasureDoseEvent, self.measureDose)
 		self.addEventInput(event.UpdatePresetEvent, self.handleUpdatePresetEvent)
+		self.addEventInput(event.IdleNotificationEvent, self.handleIdleTimedOutEvent)
 
 		## this will fill in UI with current session presets
 		self.getPresetsFromDB()
@@ -332,7 +334,7 @@ class PresetsManager(node.Node):
 			self.idleactive = True
 			tem_hostname = self.getTemHostname()
 			self.outputEvent(event.ActivateNotificationEvent(tem_host=tem_hostname))
-			self.logger.info('Instrument error notification activated')
+			self.logger.info('Idle and Instrument error notification activated')
 
 	def lock(self, n):
 		'''many nodes could be waiting for a lock.  It is undefined which
@@ -2075,6 +2077,23 @@ class PresetsManager(node.Node):
 		newbeamshift = {'beam shift': self.new_beamshift}
 		newpreset = self.updatePreset(presetname, newbeamshift)
 		self.updateSameMagPresets(presetname,'beam shift')
+
+	def handleIdleTimedOutEvent(self, evt):
+		temname = None
+		self.logger.info('Idled for too long.  Finishing....')
+		try:
+			presetname = self.currentpreset['name']
+			temname = self.currentpreset['tem']['name']
+		except:
+			first_preset = self.presets[self.presets.keys()[0]]
+			temname = first_preset['tem']['name']
+		if temname:
+			self.instrument.getTEM(temname).ColumnValvePosition = 'closed'
+			self.logger.info('Column valve closed')
+		else:
+			self.logger.error('No valid preset to set tem to close column valve')
+		# deactivate idle and error notification
+		self.toggleInstrumentTimeout()
 
 	def handleUpdatePresetEvent(self, evt):
 		presetname = evt['name']

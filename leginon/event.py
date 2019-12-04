@@ -129,6 +129,10 @@ class NodeBusyNotificationEvent(NotificationEvent):
 	'Event sent by node such as Tomography to restart timeout timer'
 	pass
 
+class IdleNotificationEvent(NotificationEvent):
+	'Event sent to presets manager from manager to notify that Idle is timed out'
+	pass
+
 class ManagerPauseAvailableEvent(NotificationEvent):
 	'''Event sent by node such as Acquisition when it is in a pausable status
 	to allow manager to pause it'''
