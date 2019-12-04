@@ -255,7 +255,7 @@ class PresetsManager(node.Node):
 		'idle minute': 30.0,
 		'import random': False,
 	}
-	eventinputs = node.Node.eventinputs + [event.ChangePresetEvent, event.MeasureDoseEvent, event.UpdatePresetEvent, event.IdleTimerPauseEvent, event.IdleTimerRestartEvent]
+	eventinputs = node.Node.eventinputs + [event.ChangePresetEvent, event.MeasureDoseEvent, event.UpdatePresetEvent]
 	eventoutputs = node.Node.eventoutputs + [event.PresetChangedEvent, event.PresetPublishEvent, event.DoseMeasuredEvent, event.MoveToTargetEvent, event.ActivateNotificationEvent, event.DeactivateNotificationEvent]
 
 	def __init__(self, name, session, managerlocation, **kwargs):
@@ -299,57 +299,14 @@ class PresetsManager(node.Node):
 
 		# timeout thread
 		self.idleactive = False
-		self.idle_timer_pause_done = {}
-		self.idle_timer_paused = {}
-		self.startInstrumentUsageTracker()
 
 		self.addEventInput(event.ChangePresetEvent, self.changePreset)
 		self.addEventInput(event.MeasureDoseEvent, self.measureDose)
 		self.addEventInput(event.UpdatePresetEvent, self.handleUpdatePresetEvent)
-		self.addEventInput(event.IdleTimerPauseEvent, self.handleIdleTimerPauseEvent)
-		self.addEventInput(event.IdleTimerRestartEvent, self.handleIdleTimerRestartEvent)
 
 		## this will fill in UI with current session presets
 		self.getPresetsFromDB()
 		self.start()
-
-	def startInstrumentUsageTracker(self):
-		t = threading.Thread(target=self.usageTracker)
-		t.setDaemon(True)
-		t.start()
-
-	def isAnyIdleTimerPaused(self):
-		'''
-		Find all nodes that sent IdleTimerPauseEvent but not yet sending
-		IdleTimerRestartEvent.  Some node classes such as AutoN2Filler
-		takes a long time to return.
-		'''
-		any_paused = []
-		for key in self.idle_timer_paused.keys():
-			if self.idle_timer_paused[key] is True:
-				any_paused.append(key)
-		return any_paused
-
-	def usageTracker(self):
-		'''
-		this is run in a thread to watch for instrument last set or get time
-		'''
-		last_set_get_time = self.instrument.getLastSetGetTime()
-		while self.idleactive:
-			paused_fromnode = self.isAnyIdleTimerPaused()
-			for node in paused_fromnode:
-				# Some node classes such as AutoN2Filler do not set instrument
-				# but can take a long time to come back.
-				# These need to wait
-				self.idle_timer_pause_done[node].wait()
-				self.idle_timer_pause_done[node].clear()
-				self.idle_timer_paused[node] = False
-			## idletime before giving up
-			last_set_get_time = self.instrument.getLastSetGetTime()
-			if self.idleactive and time.time() - last_set_get_time > 60*self.settings['idle minute']:
-				self.instrumentIdleFinish()
-				# close valves, stop doing everything or quit
-			time.sleep(10)
 
 	def instrumentIdleFinish(self):
 		'''
@@ -372,14 +329,10 @@ class PresetsManager(node.Node):
 			#self.logger.info('Instrument timeout deactivated')
 			self.logger.info('Instrument error notification deactivated')
 		else:
-			# update first then start tracking
-			self.instrument.updateLastSetGetTime()
 			self.idleactive = True
 			tem_hostname = self.getTemHostname()
 			self.outputEvent(event.ActivateNotificationEvent(tem_host=tem_hostname))
 			self.logger.info('Instrument error notification activated')
-			# FIX ME: this tracker does not work, yet. Often timeout too early.
-			#self.startInstrumentUsageTracker()
 
 	def lock(self, n):
 		'''many nodes could be waiting for a lock.  It is undefined which
@@ -2132,20 +2085,6 @@ class PresetsManager(node.Node):
 		self.logger.info('completed update to %s' % (presetname,))
 		self.confirmEvent(evt)
 	
-	def handleIdleTimerPauseEvent(self, evt):
-		node = evt['node']
-		self.idle_timer_paused[node] = True
-		self.idle_timer_pause_done[node] = threading.Event()
-		self.logger.info('%s requested idle timer pause' % (node,))
-
-	def handleIdleTimerRestartEvent(self, evt):
-		node = evt['node']
-		self.logger.info('%s requested idle timer restart' % (node,))
-		self.instrument.updateLastSetGetTime()
-		if node in self.isAnyIdleTimerPaused():
-			self.idle_timer_paused[node] = False
-			self.idle_timer_pause_done[node].set()
-
 	def isLensSeriesChange(self,mag1,mag2):
 		# This is used in specialTransform to restrict the magnifications at
 		# which the transform is applied

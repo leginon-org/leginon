@@ -28,7 +28,7 @@ class Conditioner(node.Node):
 		'repeat time': 0,
 	})
 	eventinputs = node.Node.eventinputs + [event.FixConditionEvent]
-	eventoutputs = [event.IdleTimerPauseEvent, event.IdleTimerRestartEvent]
+	eventoutputs = []
 
 	def __init__(self, *args, **kwargs):
 		node.Node.__init__(self, *args, **kwargs)
@@ -118,8 +118,6 @@ class Conditioner(node.Node):
 			return
 		self.player.play()
 		try:
-			evt1 = event.IdleTimerPauseEvent()
-			self.outputEvent(evt1, wait=False)
 			self._handleFixConditionEvent(evt)
 			status = 'ok'
 		except RuntimeError, e:
@@ -128,11 +126,6 @@ class Conditioner(node.Node):
 		except Exception, e:
 			self.logger.info('handling exception %s' %(e.args[0]))
 			status='exception'
-		try:
-			evt2 = event.IdleTimerRestartEvent()
-			self.outputEvent(evt2, wait=False)
-		except Exception, e:
-			self.logger.warning('handling exception for restarting idle timer %s' %(e.args[0]))
 		self.confirmEvent(evt, status=status)
 		self.setStatus('idle')
 		self.player.stop()
@@ -212,8 +205,6 @@ class Conditioner(node.Node):
 		for ctype in self.ctypes:
 			self.testprint('ctype %s' % ctype)
 			self.fixCondition(ctype)
-		evt = event.IdleTimerRestartEvent()
-		self.outputEvent(evt, wait=False)
 		self.player.stop()
 		self.setStatus('idle')
 

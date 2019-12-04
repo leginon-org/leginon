@@ -359,13 +359,14 @@ class UnlockEvent(ControlEvent):
 	'Event that signals an unlock'
 	pass
 
-class IdleTimerPauseEvent(LockEvent):
-	'Event that pause the idle timer so it does not timeout'
-	pass
+# See Issue 8367 These are no longer used.
+#class IdleTimerPauseEvent(LockEvent):
+#	'Event that pause the idle timer so it does not timeout'
+#	pass
 
-class IdleTimerRestartEvent(UnlockEvent):
-	'Event that restart the idle timer countdown'
-	pass
+#class IdleTimerRestartEvent(UnlockEvent):
+#	'Event that restart the idle timer countdown'
+#	pass
 
 class QueueGridEvent(ControlEvent):
 	def typemap(cls):
