@@ -843,8 +843,13 @@ class CtfDisplay(object):
 			bottom=0.08, left=0.07, top=0.95, right=0.965, )
 		self.plotsfile = apDisplay.short(self.imgname)+"-plots.png"
 		apDisplay.printMsg("Saving 1D graph to file %s"%(self.plotsfile))
-		pyplot.savefig(self.plotsfile, format="png", dpi=300, orientation='landscape', pad_inches=0.0)
-
+		try:
+			pyplot.savefig(self.plotsfile, format="png", dpi=300, orientation='landscape', pad_inches=0.0)
+		except:
+			output = self.plotsfile
+                	pyplot.savefig(output[:-3]+"jpg", format="jpg", dpi=300, orientation='landscape', pad_inches=0.0)
+	                os.system("convert "+output[:-3]+"jpg "+output)
+        	        os.remove(output[:-3]+"jpg")
 		if self.debug is True:
 			print "Showing results"
 			#pyplot.show()

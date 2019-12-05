@@ -1201,7 +1201,6 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		self.widgets['pause time'] = FloatEntry(self, -1, min=0.0, chars=4)
-		self.widgets['idle minute'] = FloatEntry(self, -1, min=0.0, chars=4)
 #		self.widgets['xy only'] = wx.CheckBox(self, -1,
 #																					'Move stage x and y axes only')
 #		self.widgets['stage always'] = wx.CheckBox(self, -1,
@@ -1223,22 +1222,20 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 
 		szpausetime = self.createPauseTimeSizer()
 
-		szidletime = self.createIdleMinuteSizer()
 #		sz.Add(self.widgets['xy only'], (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 #		sz.Add(self.widgets['stage always'], (1, 0), (1, 1),
 #						wx.ALIGN_CENTER_VERTICAL)
 		sz = wx.GridBagSizer(5, 10)
 		sz.Add(szpausetime, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(szidletime, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['cycle'], (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['optimize cycle'], (3, 0), (1, 1),
+		sz.Add(self.widgets['cycle'], (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['optimize cycle'], (2, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['import random'], (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['mag only'], (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['apply offset'], (6, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['blank'], (7, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(szsmallsize, (8, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['disable stage for image shift'], (9, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['import random'], (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['mag only'], (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['apply offset'], (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['blank'], (6, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(szsmallsize, (7, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['disable stage for image shift'], (8, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		sbsz.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
 
@@ -1251,16 +1248,6 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		szpausetime.Add(self.widgets['pause time'], (0, 1), (1, 1),
 										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		label = wx.StaticText(self, -1, 'seconds between preset changes')
-		szpausetime.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		return szpausetime
-
-	def createIdleMinuteSizer(self):
-		szpausetime = wx.GridBagSizer(5, 5)
-		label = wx.StaticText(self, -1, 'Wait for')
-		szpausetime.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szpausetime.Add(self.widgets['idle minute'], (0, 1), (1, 1),
-										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		label = wx.StaticText(self, -1, 'minutes before instrument idle time out')
 		szpausetime.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		return szpausetime
 

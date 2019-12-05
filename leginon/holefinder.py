@@ -64,6 +64,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		'focus interval': 1,
 		'focus offset row': 0,
 		'focus offset col': 0,
+		'filter ice on convolved': False,
 	})
 	def __init__(self, id, session, managerlocation, **kwargs):
 		targetfinder.TargetFinder.__init__(self, id, session, managerlocation, **kwargs)

@@ -182,6 +182,20 @@ class DMSEM(ccdcamera.CCDCamera):
 			return True
 		return False
 
+	def isSEMCCD2019orUp(self):
+		year = self.getDmsemConfig('semccd',itemname='semccd_plugin_year')
+		if year:
+			return int(year) >= 2019
+		# default to false for back compatibility
+		return False
+
+	def getFrameSavingRotateFlipDefault(self):
+		'''
+		SEMCCD has always default this to 0 until sometime in May 2019.  Users reported that
+		the orientation changed on K2 installation with GMS 2.
+		'''
+		return int(self.isSEMCCD2019orUp())
+
 	def getAcquisitionShutter(self):
 		number = self.getDmsemConfig(self.config_opt_name,itemname='acquisition_shutter_number')
 		if number is None or number == 1:
@@ -349,7 +363,7 @@ class DMSEM(ccdcamera.CCDCamera):
 		return image
 
 	def _modifyImageOrientation(self, image):
-		if not self.isDM231orUp():
+		if self.isSEMCCD2019orUp() or not self.isDM231orUp():
 			k2_rotate = self.getDmsemConfig('k2','rotate')
 			k2_flip = self.getDmsemConfig('k2','flip')
 			if k2_rotate:
@@ -661,7 +675,7 @@ class GatanK2Base(DMSEM):
 			fileroot = self.frames_name
 
 		# 0 means takes what DM gives
-		rot_flip = 0
+		rot_flip = self.getFrameSavingRotateFlipDefault()
 		if not self.isDM231orUp():
 			# Backward compatibility
 			flip = int(not self.getDmsemConfig('k2','flip'))  # 0=none, 4=flip columns before rot, 8=flip after
@@ -869,6 +883,26 @@ class GatanK3(GatanK2Base):
 
 	def getSystemGainDarkCorrected(self):
 		return self.dm_processing == 'gain normalized'
+
+	def requireRecentDarkCurrentReferenceOnBright(self):
+		# K3 no longer need hardware dark ? In fact, the scripting call does nothing.
+		# Is it really o.k. ?
+		return False
+
+	def getFrameFlip(self):
+		'''
+		Frame Flip is defined as up-down flip.
+		GMS2.32 and DMSEMCCD3.31.dll 2019Aug version requires no flip
+		'''
+		return False
+
+	def getFrameSavingRotateFlipDefault(self):
+		'''
+		SEMCCD has always default this to 0 until sometime in May 2019.  Users reported that
+		the orientation changed on K2 installation with GMS 2 but seems to be back to normal
+		on K3 installations.
+		'''
+		return 0
 
 	def getAcqBinning(self):
 		# K3 SerialEMCCD native is in super resolution

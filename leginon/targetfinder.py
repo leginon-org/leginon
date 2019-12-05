@@ -503,7 +503,9 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		if self.settings['queue drift']:
 			self.declareDrift('submit queue')
 		queue = self.getQueue()
+		# The queue may already exists, i.e., some targets were previously submitted
 		self.publish(queue, pubevent=True)
+		self.logger.info('queue submitted')
 
 	def notifyUserSubmit(self):
 		message = 'Waiting for user to submit targets...'
@@ -604,7 +606,11 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		'''
 		if not self.next_acq_node:
 			return {'x':(0,0),'y':(0,0)},0
-		image_pixelsize = self.calclients['image shift'].getImagePixelSize(imagedata)
+		try:
+			image_pixelsize = self.calclients['image shift'].getImagePixelSize(imagedata)
+		except KeyError:
+			# not imagedata but an image was loaded for testing
+			return {'x':(0,0),'y':(0,0)},0
 		self.current_image_pixelsize = image_pixelsize
 		return self._getTargetDisplayInfo(image_pixelsize)
 

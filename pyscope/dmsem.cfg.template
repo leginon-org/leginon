@@ -3,12 +3,15 @@
 # DM Version
 DM_VERSION = 2.31.734.0
 
+### semccd plugin info
+[semccd]
+SEMCCD_PLUGIN_YEAR = 2019
 #Logger
 [logger]
 #verbosity 1=info, 2=debug
 VERBOSITY = 0
 
-### K2 or K3 Summit configuration through SERIALEMCCD plugin
+### K2 or K3 Summit configuration through SEMCCD plugin
 [k2]
 # Camera ID
 CAMERA_ID = 0
@@ -36,8 +39,8 @@ SAVE_LZW_TIFF_FRAMES = False
 # K3 only configuration
 [k3]
 # K3 processing mode. 'gain normalized' or 'dark subtracted'
-DM_PROCESSING = gain normalized
-#DM_PROCESSING = dark subtracted
+#DM_PROCESSING = gain normalized
+DM_PROCESSING = dark subtracted
 
 ### Orius configuration if exists
 [orius]

@@ -1601,6 +1601,7 @@ class TemplateTargetFinderSettingsData(TargetFinderSettingsData):
 			('focus interval', int),
 			('focus offset row', int),
 			('focus offset col', int),
+			('filter ice on convolved', bool),
 		)
 	typemap = classmethod(typemap)
 
