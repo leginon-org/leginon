@@ -218,6 +218,10 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 				'x': FloatEntry(self, -1, chars=9),
 				'y': FloatEntry(self, -1, chars=9),
 			},
+			'diffraction shift': {
+				'x': FloatEntry(self, -1, chars=9),
+				'y': FloatEntry(self, -1, chars=9),
+			},
 			'tem energy filter width': FloatEntry(self, -1, chars=6),
 			'energy filter width': FloatEntry(self, -1, chars=6),
 			'pre exposure': FloatEntry(self, -1, chars=6),
@@ -242,6 +246,7 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 				'intensity',
 				'image shift',
 				'beam shift',
+				'diffraction shift',
 				'energy filter',
 				'energy filter width',
 				'probe mode',
@@ -282,6 +287,7 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
     		('intensity', 'Intensity'),
     		('image shift', 'Image shift'),
     		('beam shift', 'Beam shift'),
+    		('diffraction shift', 'Diffr shift'),
     		('tem energy filter width', 'Energy filter width'),
 				('probe mode', 'Probe Mode'),
     		('ccdcamera', 'Digital Camera'),
@@ -335,21 +341,25 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 		sizer.Add(self.floats['beam shift']['x'], (8, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		sizer.Add(self.floats['beam shift']['y'], (8, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		sizer.Add(self._buttons['tem']['beam shift'], (8, 3), (1, 1), wx.ALIGN_CENTER)
-		sizer.Add(self.labels['probe mode'], (9, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sizer.Add(self.choices['probe mode'], (9, 1), (1, 2), wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
-		sizer.Add(self._buttons['tem']['probe mode'], (9, 3), (1, 1), wx.ALIGN_CENTER)
-		sizer.Add(self.bools['tem energy filter'], (10, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+		sizer.Add(self.labels['diffraction shift'], (9, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sizer.Add(self.floats['diffraction shift']['x'], (9, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		sizer.Add(self.floats['diffraction shift']['y'], (9, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		sizer.Add(self._buttons['tem']['diffraction shift'], (9, 3), (1, 1), wx.ALIGN_CENTER)
+		sizer.Add(self.labels['probe mode'], (10, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sizer.Add(self.choices['probe mode'], (10, 1), (1, 2), wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+		sizer.Add(self._buttons['tem']['probe mode'], (10, 3), (1, 1), wx.ALIGN_CENTER)
+		sizer.Add(self.bools['tem energy filter'], (11, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
 
-		sizer.Add(self._buttons['tem']['energy filter'], (10, 3), (1, 1), wx.ALIGN_CENTER)
+		sizer.Add(self._buttons['tem']['energy filter'], (11, 3), (1, 1), wx.ALIGN_CENTER)
 
-		sizer.Add(self.labels['tem energy filter width'], (11, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sizer.Add(self.floats['tem energy filter width'], (11, 1), (1, 2), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
-		sizer.Add(self._buttons['tem']['energy filter width'], (11, 3), (1, 1), wx.ALIGN_CENTER)
+		sizer.Add(self.labels['tem energy filter width'], (12, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sizer.Add(self.floats['tem energy filter width'], (12, 1), (1, 2), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+		sizer.Add(self._buttons['tem']['energy filter width'], (12, 3), (1, 1), wx.ALIGN_CENTER)
 
 		self.initializeApertureSelection()
 
-		sizer.Add(self.bools['skip'], (13, 0), (1, 4), wx.ALIGN_LEFT)
-		sizer.Add(self.bools['alt channel'], (14, 0), (1, 4), wx.ALIGN_LEFT)
+		sizer.Add(self.bools['skip'], (14, 0), (1, 4), wx.ALIGN_LEFT)
+		sizer.Add(self.bools['alt channel'], (15, 0), (1, 4), wx.ALIGN_LEFT)
 
 		sizer.Add(self.labels['ccdcamera'], (0, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sizer.Add(self.choices['ccdcamera'], (0, 6), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.EXPAND)
@@ -545,7 +555,7 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 			except KeyError:
 				pass
 
-		for key in ['image shift', 'beam shift']:
+		for key in ['image shift', 'beam shift', 'diffraction shift']:
 			for axis in ['x', 'y']:
 				try:
 					self.floats[key][axis].SetValue(parameters[key][axis])
@@ -618,7 +628,7 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 				value = float(value)
 			parameters[key] = value
 
-		for key in ['image shift', 'beam shift']:
+		for key in ['image shift', 'beam shift', 'diffraction shift']:
 			parameters[key] = {}
 			for axis in ['x', 'y']:
 				value = self.floats[key][axis].GetValue()
@@ -1760,6 +1770,7 @@ class Parameters(wx.StaticBoxSizer):
 			('intensity', 'Intensity:'),
 			('image shift', 'Image shift:'),
 			('beam shift', 'Beam shift:'),
+			('diffraction shift', 'Diffraction shift:'),
 			('tem energy filter', 'Energy filtered:'),
 			('tem energy filter width', 'Energy filter width:'),
 			('energy filter', 'Energy filtered:'),
@@ -1797,12 +1808,14 @@ class Parameters(wx.StaticBoxSizer):
 		sz.Add(self.values['image shift'], (6, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 		sz.Add(self.labels['beam shift'], (7, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.values['beam shift'], (7, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		sz.Add(self.labels['tem energy filter'], (8, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.values['tem energy filter'], (8, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		sz.Add(self.labels['tem energy filter width'], (9, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.values['tem energy filter width'], (9, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		sz.Add(self.labels['skip'], (10, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.values['skip'], (10, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz.Add(self.labels['diffraction shift'], (8, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.values['diffraction shift'], (8, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz.Add(self.labels['tem energy filter'], (9, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.values['tem energy filter'], (9, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz.Add(self.labels['tem energy filter width'], (10, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.values['tem energy filter width'], (10, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz.Add(self.labels['skip'], (11, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.values['skip'], (11, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 
 		sz.Add(self.labels['ccdcamera'], (0, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.values['ccdcamera'], (0, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
@@ -1879,7 +1892,7 @@ class Parameters(wx.StaticBoxSizer):
 				s = '(%s, %s)' % tuple(r)
 			self.values['defocus range'].SetLabel(s)
 
-			for key in ['image shift', 'beam shift']:
+			for key in ['image shift', 'beam shift', 'diffraction shift']:
 				try:
 					s = '(%g, %g)' % (parameters[key]['x'], parameters[key]['y'])
 				except TypeError:
@@ -1974,6 +1987,7 @@ class SelectParameters(Parameters):
 		selected['intesity'] = self.lblintensity.GetValue()
 		selected['image shift'] = self.lblimageshift.GetValue()
 		selected['beam shift'] = self.lblbeamshift.GetValue()
+		selected['diffraction shift'] = self.lblbeamshift.GetValue()
 		selected['tem energy filter'] = self.lbltemenergyfilter.GetValue()
 		selected['tem energy filter width'] = self.lbltemenergyfilterwidth.GetValue()
 		selected['energy filter'] = self.lblenergyfilter.GetValue()
@@ -1994,6 +2008,7 @@ class SelectParameters(Parameters):
 		self.lblimageshift.SetValue(
 															parameters is None or 'image shift' in parameters)
 		self.lblbeamshift.SetValue(parameters is None or 'beam shift' in parameters)
+		self.lblbeamshift.SetValue(parameters is None or 'diffraction shift' in parameters)
 		self.lbltemenergyfilter.SetValue(parameters is None or 'tem energy filter' in parameters)
 		self.lbltemenergyfilterwidth.SetValue(parameters is None or 'tem energy filter width' in parameters)
 		self.lblenergyfilter.SetValue(parameters is None or 'energy filter' in parameters)
@@ -2110,6 +2125,7 @@ if __name__ == '__main__':
 				'intensity': 0.0,
 				'image shift': {'x': 0.0, 'y': 0.0},
 				'beam shift': {'x': 0.0, 'y': 0.0},
+				'diffraction shift': {'x': 0.0, 'y': 0.0},
 				'dimension': {'x': 1024, 'y': 1024},
 				'offset': {'x': 0, 'y': 0},
 				'binning': {'x': 1, 'y': 1},
