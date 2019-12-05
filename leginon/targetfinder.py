@@ -503,6 +503,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		if self.settings['queue drift']:
 			self.declareDrift('submit queue')
 		queue = self.getQueue()
+		# The queue may already exists, i.e., some targets were previously submitted
 		self.publish(queue, pubevent=True)
 		self.logger.info('queue submitted')
 
