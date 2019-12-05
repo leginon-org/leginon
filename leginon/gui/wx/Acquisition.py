@@ -577,12 +577,23 @@ class Panel(leginon.gui.wx.Node.Panel):
 		self.node.player.stop()
 
 	def onStopQueueTool(self, evt):
-		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, False)
-		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, False)
-		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
-		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT_QUEUE, False)
-		self.node.paused_by_gui = False
-		self.node.player.stopqueue()
+		number_of_targets = self.node.getQueueTargetListToDo()
+		if number_of_targets:
+			msg = 'Are you sure you want to abort targets in %d parent images ?' % (number_of_targets)
+			title = 'Abort all targets in Queue'
+		else:
+			msg = 'No targetlist in queue now.\n Are you sure you want to abort future target list ?'
+			title = 'Abort future targets in Queue'
+		dialog = wx.MessageDialog(self, msg,title, wx.YES|wx.NO)
+		result = dialog.ShowModal()
+		dialog.Destroy()
+		if result == wx.ID_YES:
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, False)
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, False)
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT_QUEUE, False)
+			self.node.paused_by_gui = False
+			self.node.player.stopqueue()
 
 	def onPlayer(self, evt):
 		if evt.state == 'play':

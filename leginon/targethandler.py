@@ -117,6 +117,7 @@ class TargetHandler(object):
 		return final
 
 	def startQueueProcessor(self):
+		self.total_queue_left_in_loop = 0
 		t = threading.Thread(target=self.queueProcessor)
 		t.setDaemon(True)
 		t.start()
@@ -189,6 +190,7 @@ class TargetHandler(object):
 				idletime = 20
 			else:
 				idletime = None
+			# wait here for TargetFinder.publishQueue() to start processing
 			self.queueupdate.wait(idletime)
 			if not self.queueupdate.isSet():
 				self.queueIdleFinish()
@@ -199,7 +201,7 @@ class TargetHandler(object):
 			self.logger.info('received queue update')
 
 			active = self.getListsInQueue(self.getQueue())
-
+			self.total_queue_left_in_loop = len(active)
 			# process all target lists in the queue
 			for targetlist in active:
 				state = self.clearBeamPath()
@@ -212,6 +214,7 @@ class TargetHandler(object):
 					state = self.player.wait()
 					if state != 'stopqueue':
 						self.player.play()
+				self.total_queue_left_in_loop -= 1
 				donetargetlist = leginondata.DequeuedImageTargetListData(session=self.session, list=targetlist, queue=self.targetlistqueue)
 				self.publish(donetargetlist, database=True)
 			self.player.play()
@@ -262,9 +265,15 @@ class TargetHandler(object):
 		return listdata
 
 	def getQueue(self, label=None):
+		'''
+		This returns the QueueData for this session and label.
+		'''
 		if hasattr(self,'targetlistqueue'):
+			# This is set to the Targeting node QueueData if the queue has been published there.
 			return self.targetlistqueue
 		if label is None:
+			# This is wrong. Acquisition node name is not the label we want.
+			# However, it has not caused problem, it seems.
 			label = self.name
 		queuequery = leginondata.QueueData(session=self.session, label=label)
 		queues = self.research(datainstance=queuequery)
@@ -273,6 +282,7 @@ class TargetHandler(object):
 		else:
 			newqueue = leginondata.QueueData(session=self.session, label=label)
 			self.publish(newqueue, database=True)
+			self.logger.info('Made new queue with label %s' % label)
 			self.targetlistqueue = newqueue
 		return self.targetlistqueue
 
@@ -402,6 +412,21 @@ class TargetHandler(object):
 		to reach the camera.Simply pass player state here.
 		'''
 		return self.player.state()
+
+	def getQueueTargetListToDo(self):
+		'''
+		Get unprocessed targetlist. This is used in Stop Queue MessageDialog.
+		'''
+		if not hasattr(self,'targetlistqueue') or self.targetlistqueue['label'] == self.name:
+			# no queue is published to here yet after the node is created.
+			return 0
+		if not self.queueupdate.isSet() and self.total_queue_left_in_loop:
+			# in the loop of processing active targetlists
+			return self.total_queue_left_in_loop
+		# not in the loop
+		# include ones not sent to process but submitted.
+		active = self.getListsInQueue(self.targetlistqueue)
+		return len(active)
 
 class TargetWaitHandler(TargetHandler):
 	eventinputs = TargetHandler.eventinputs + [event.TargetListDoneEvent]
