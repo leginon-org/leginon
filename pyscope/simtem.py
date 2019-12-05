@@ -69,7 +69,8 @@ class SimTEM(tem.TEM):
 		self.stage_position = {}
 		for axis in self.stage_axes:
 			self.stage_position[axis] = 0.0
-		self.speed_fraction = 1.0
+		self.stage_top_speed = 29.78
+		self.stage_speed_fraction = 1.0
 
 		self.screen_current = 0.000001
 		self.intensity_range = (0.0, 1.0)
@@ -214,7 +215,11 @@ class SimTEM(tem.TEM):
 		return bigenough
 
 	def setStageSpeed(self, value):
-		self.speed_fraction = value
+		self.speed_deg_per_second = value
+		self.stage_speed_fraction = min(value/self.stage_top_speed,1.0)
+
+	def getStageSpeed(self):
+			return self.stage_speed_fraction * self.stage_top_speed
 
 	def setStagePosition(self, value):
 		self.printStageDebug(value.keys())
@@ -269,8 +274,11 @@ class SimTEM(tem.TEM):
 		if abs(relax) > 1e-9 and prevalue2:
 			self._setStagePosition(prevalue2)
 			time.sleep(0.2)
-		if self.speed_fraction < 1.0:
-			time.sleep(1/self.speed_fraction)
+		if self.stage_speed_fraction < 1.0:
+			if 'a' in value.keys():
+				alpha_delta = math.degrees(abs(value['a']-stagenow['a']))
+				move_time = alpha_delta * self.stage_speed_fraction*self.stage_top_speed
+				time.sleep(max(move_time,0.2))
 		return self._setStagePosition(value)
 
 	def normalizeLens(self, lens='all'):
@@ -639,6 +647,7 @@ class SimTEM300(SimTEM):
 			1550.0,
 			2250.0,
 			3600.0,
+			4800.0,
 			130000.0
 		]
 		self.magnification_index = 0
