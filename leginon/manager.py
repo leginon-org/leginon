@@ -786,6 +786,8 @@ class Manager(node.Node):
 		timeout = self.timeout_minutes*60.0
 		msg = 'Leginon has been idle for %.1f minutes' % self.timeout_minutes
 		self.slackNotification(msg)
+		evt = event.IdleNotificationEvent(destination='')
+		self.distributeEvents(evt)
 		self.timer = False
 
 	def restartTimeoutTimer(self):

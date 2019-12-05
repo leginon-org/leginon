@@ -984,7 +984,7 @@ function toggle(divID) {
 		}
 		elseif (isset($_POST['extract'])){
 			$command = 'runTopaz.py topaz extract ';
-			$command .= $command .= str_replace("*", '"\*"',$_POST['input4']);
+			$command .= str_replace("*", '"\*"',$_POST['input4']);
 			$command .= ' --model '.$_POST['model4'];
 			$command .= ' --radius '.$_POST['radius4'];
 			$command .= ' --output '.$_POST['output4'];
