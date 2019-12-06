@@ -125,12 +125,12 @@ class SettingsJsonMaker(DataJsonMaker):
 			if r2:
 				return r2
 
-	def exportFocusSequenceSettings(self, allalias):
+	def exportFocusSequenceSettings(self, allalias, node_classname):
 		print 'checking Focus Sequence Settings....'
 		if 'Focuser' not in allalias.keys():
 			return
 		sequence_names = []
-		focuser_aliases = allalias['Focuser']
+		focuser_aliases = allalias[node_classname]
 		focuser_aliases.sort()
 		for node_name in (focuser_aliases):
 			if self.node_name_prefix and not node_name.startswith(self.node_name_prefix):
@@ -145,7 +145,7 @@ class SettingsJsonMaker(DataJsonMaker):
 					if s not in sequence_names:
 						# only keep the first of the multiple settings in the session
 						sequence_names.append(s)
-		for node_name in (allalias['Focuser']):
+		for node_name in (allalias[node_classname]):
 			for seq_name in sequence_names:
 				results = self.researchSettings('FocusSettingData',node_name=node_name,name=seq_name)
 				self.publish(results)
@@ -183,7 +183,8 @@ class SettingsJsonMaker(DataJsonMaker):
 							self.bad_settings_class.append(classname)
 					self.publish(results)
 		# FocusSequence and FocusSettings needs a different importing method
-		self.exportFocusSequenceSettings(allalias)
+		self.exportFocusSequenceSettings(allalias, 'Focuser')
+		self.exportFocusSequenceSettings(allalias, 'DiffrFocuser')
 
 	def exportSettings(self,appname=None):
 		'''
