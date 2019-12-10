@@ -44,15 +44,15 @@ HAS_FALCON_PROTECTOR = True
 FRAME_SUBPATH = leginonframes
 # Falcon protector may be too slow
 EXTRA_PROTECTOR_SLEEP_TIME = 0
-[phase plate]
-# Location of next phase plate AutoIt executable
-AUTOIT_EXE_PATH = C:\Program Files\AutoIt3\nextphaseplate.exe
 # Location of tui acquire start/stop AutoIt executable
 AUTOIT_TUI_ACQUIRE_EXE_PATH = to_be_added
 # Location of tia movie series export AutoIt executable
 AUTOIT_TIA_EXPORT_SERIES_EXE_PATH = to_be_added
 # Location of tia movie series export AutoIt executable
 AUTOIT_TIA_EXPORTED_DATA_DIR = C:\Users\supervisor\Documents\FEI\TIA\Exported Data
+[phase plate]
+# Location of next phase plate AutoIt executable
+AUTOIT_EXE_PATH = C:\Program Files\AutoIt3\nextphaseplate.exe
 
 [beamstop]
 # Location of beamstop AutoIt executable

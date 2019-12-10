@@ -1861,6 +1861,7 @@ class Tecnai(tem.TEM):
 			time.sleep(2.0)
 		else:
 			pass
+
 class Krios(Tecnai):
 	name = 'Krios'
 	column_type = 'titan'
@@ -1921,9 +1922,33 @@ class DiffrTecnai(Tecnai):
 	mag_attr_name = 'CameraLength'
 	mag_scale = 1000
 
+class DiffrArctica(Arctica):
+	name = 'DiffrArctica'
+	column_type = 'talos'
+	use_normalization = True
+	projection_mode = 'diffraction'
+	mag_attr_name = 'CameraLength'
+	mag_scale = 1000
+
 class DiffrGlacios(Glacios):
 	name = 'DiffrGlacios'
 	column_type = 'talos'
+	use_normalization = True
+	projection_mode = 'diffraction'
+	mag_attr_name = 'CameraLength'
+	mag_scale = 1000
+
+class DiffrKrios(Krios):
+	name = 'DiffrKrios'
+	column_type = 'titan'
+	use_normalization = True
+	projection_mode = 'diffraction'
+	mag_attr_name = 'CameraLength'
+	mag_scale = 1000
+
+class DiffrHalo(Halo):
+	name = 'DiffrHalo'
+	column_type = 'titan'
 	use_normalization = True
 	projection_mode = 'diffraction'
 	mag_attr_name = 'CameraLength'
