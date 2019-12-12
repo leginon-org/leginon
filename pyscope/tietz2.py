@@ -3,6 +3,7 @@ import ccdcamera
 import time
 import os
 import shutil
+import glob
 
 from pyami import moduleconfig
 
@@ -59,6 +60,7 @@ class EmMenuF416(ccdcamera.CCDCamera):
 		self._connectToEMMENUScripting()
 		# set binning first so we can use it
 		self.initSettings()
+		self.movie_aborted = False
 
 	def __getattr__(self, name):
 		# When asked for self.camera, instead return self._camera, but only
@@ -380,6 +382,9 @@ class EmMenuF416(ccdcamera.CCDCamera):
 		return self.getTvipsConfig('recorder','directory')
 
 	def startMovie(self, filename, exposure_time_ms):
+		if self.binning['x'] < 2 or self.dimension['x'] > self.getCameraSize()['x'] / 2.0:
+			self.movie_aborted = True
+			raise ValueError('Camera binning or dimension too large for movie collection')
 		exposure_time_s = exposure_time_ms/1000.0
 		try:
 			self.movieSetup()
@@ -388,6 +393,7 @@ class EmMenuF416(ccdcamera.CCDCamera):
 			# configurations must be updated with these settings.
 			self.instr.CameraConfigurations.Update()
 		except Exception, e:
+			self.movie_aborted = True
 			if self.getDebugCamera():
 				print 'Camera setup',e
 			raise RuntimeError('Error setting camera parameters: %s' % (e,))
@@ -396,13 +402,20 @@ class EmMenuF416(ccdcamera.CCDCamera):
 			os.remove(recorder_path)
 		self.vp1.StartContinuous()
 		self.vp1.StartRecorder()
+		self.movie_aborted = False
 
 	def stopMovie(self, filename, exposure_time_ms):
+		if self.movie_aborted:
+			return
 		exposure_time_s = exposure_time_ms/1000.0
 		self.vp1.StopRecorder()
 		self.vp1.StopContinuous()
 		recorder_path = os.path.join(self.getRecorderDir(),self.getRecorderFilename())
-		new_path = os.path.join(self.getRecorderDir(),filename)
-		shutil.move(recorder_path,new_path)
+		files = glob.glob(recorder_path+'*.tvips')
+		self.target_code = filename.split('.')[0]
+		new_path = os.path.join(self.getRecorderDir(),self.target_code)
+		os.mkdir(new_path)
+		for f in files:
+			shutil.move(f,new_path)
 		print 'movie name: %s' % filename
 
