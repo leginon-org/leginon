@@ -397,8 +397,6 @@ class ColumnSpec(dict):
 				colargs = {}
 				colargs['name'] = self['Field']
 				colargs['type'] = self['Type']
-				if self['Type'] == 'timestamp':
-					self['Default'] = 'current_timestamp()'
 
 				if self['Null'] == 'YES':
 						colargs['null'] = 1
