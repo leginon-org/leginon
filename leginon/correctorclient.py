@@ -447,7 +447,7 @@ class CorrectorClient(cameraclient.CameraClient):
 		final = numpy.asarray(clipped, numpy.float32)
 		return final
 		'''
-	def reseachCorrectorPlan(self, cameradata):
+	def researchCorrectorPlan(self, cameradata):
 		qcamera = leginondata.CameraEMData()
 		# Fix Me: Ignore gain index for now because camera setting does not have it when theplan is saved.
 		for key in ('ccdcamera','dimension','binning','offset'):
@@ -462,7 +462,7 @@ class CorrectorClient(cameraclient.CameraClient):
 			return None
 
 	def retrieveCorrectorPlan(self, cameradata):
-		plandata = self.reseachCorrectorPlan(cameradata)
+		plandata = self.researchCorrectorPlan(cameradata)
 		return self.formatCorrectorPlan(plandata), plandata
 
 	def formatCorrectorPlan(self, plandata=None):
