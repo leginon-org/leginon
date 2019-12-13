@@ -1552,6 +1552,8 @@ def dataSQLColumns(data_instance, fail=True):
 			'Field': 'DEF_timestamp',
 			'Type': 'timestamp',
 			'Key': 'INDEX',
+			#refs #8387 mysql 8 does not default this to current_timestamp
+			'Default': 'current_timestamp()',
 			'Index': ['DEF_timestamp']
 	})
 
