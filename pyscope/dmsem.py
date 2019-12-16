@@ -182,6 +182,12 @@ class DMSEM(ccdcamera.CCDCamera):
 			return True
 		return False
 
+	def isDM332orUp(self):
+		version_id,version_string = self.getDMVersion()
+		if version_id and version_id >= 50302:
+			return True
+		return False
+
 	def isSEMCCD2019orUp(self):
 		year = self.getDmsemConfig('semccd',itemname='semccd_plugin_year')
 		if year:
@@ -274,6 +280,7 @@ class DMSEM(ccdcamera.CCDCamera):
 		shutter_delay = -self.readout_delay_ms / 1000.0
 
 		acq_binning, left, top, right, bottom, width, height = self.getAcqBinningAndROI()
+		correction_flags = self.getCorrectionFlags()
 
 		acqparams = {
 			'processing': processing,
@@ -285,6 +292,7 @@ class DMSEM(ccdcamera.CCDCamera):
 			'bottom': bottom,
 			'right': right,
 			'exposure': self.getRealExposureTime(),
+			'corrections': correction_flags,
 			'shutter': self.shutter_id,
 			'shutterDelay': shutter_delay,
 		}
@@ -443,6 +451,22 @@ class DMSEM(ccdcamera.CCDCamera):
 			minor = remainder // 100
 			sub = remainder % 100
 		return (version_long,'%d.%d.%d' % (major,minor,sub))
+
+	def getCorrectionFlags(self):
+		'''
+		Binnary Correction flag sum in GMS.  See Feature #8391.
+		GMS3.3.2 has pre-counting correction which is superior.
+		SerialEM always do this correction
+		but Leginon 3.4 and earlier does not.
+		David M. said SerialEM default is 49 for K2 and 1 for K3.
+		49 means defect,bias, and quadrant (to be the same as Ultrascan).
+		I don't think the latter two needs applying in counting.
+		'''
+		if self.isDM332orUp():
+			return 1 # defect correction only.
+		else:
+			# keep it zero to be back compatible.
+			return 0
 
 	def hasScriptFunction(self, name):
 		return self.camera.hasScriptFunction(name)
