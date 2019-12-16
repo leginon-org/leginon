@@ -406,7 +406,11 @@ class DMSEM(ccdcamera.CCDCamera):
 		else:
 			return
 		## TODO:  determine necessary settling time:
-		time.sleep(5)
+		insert_delay_s = self.getDmsemConfig(self.config_opt_name,itemname='camera_insert_delay')
+		if insert_delay_s:
+			time.sleep(insert_delay_s)
+		else:
+			time.sleep(5)
 
 	def getInserted(self):
 		return self.camera.IsCameraInserted(self.cameraid)
