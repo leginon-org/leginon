@@ -16,9 +16,31 @@ logevents = False
 # Set to None if it is an optional configuration
 REF_PATH = None
 
+def replaceEnvironmentVariables(path):
+	'''
+	replace ${VAR_NAME} with the value of
+	the environment variable named VAR_NAME.
+	this restricts the path name not to include
+	'${' nor '}'.
+	'''
+	while '}' in path:
+		front = path.split('}')[0]
+		back = '}'.join(path.split('}')[1:])
+		if '${' in front:
+			var_name = front.split('${')[1]
+			front = front.split('${')[0]
+			new_bit = os.getenv(var_name)
+			if new_bit is None:
+				new_bit = ''
+			path = front+new_bit+back
+		else:
+			raise ValueError('input contains "}" but not "${" to do variable replacement')
+	return path
+
 pathmapping = {}
 if sys.platform == 'win32':
 	def mapPath(path):
+			path = replaceEnvironmentVariables(path)
 			if not pathmapping or path is None:
 				return path
 			for key, value in pathmapping.items():
@@ -29,6 +51,7 @@ if sys.platform == 'win32':
 			return os.path.normpath(path)
 
 	def unmapPath(path):
+			path = replaceEnvironmentVariables(path)
 			if not pathmapping or path is None:
 				return path
 			for key, value in pathmapping.items():
@@ -38,8 +61,11 @@ if sys.platform == 'win32':
 			return os.path.normpath(path)
 else:
 	def mapPath(path):
+		path = replaceEnvironmentVariables(path)
 		return path
+
 	def unmapPath(path):
+		path = replaceEnvironmentVariables(path)
 		return path
 
 def validatePath(path):
@@ -73,18 +99,18 @@ def mkdirs(newdir):
 class LeginonConfigError(Exception):
 	pass
 
-leginonconfigparser = leginonconfigparser.leginonconfigparser
+lconfigparser = leginonconfigparser.leginonconfigparser
 
 # drive mapping
-if leginonconfigparser.has_section('Drive Mapping'):
-	drives = leginonconfigparser.options('Drive Mapping')
+if lconfigparser.has_section('Drive Mapping'):
+	drives = lconfigparser.options('Drive Mapping')
 	for drive in drives:
 		drivepath = drive.upper() + ':'
-		pathmapping[drivepath] = leginonconfigparser.get('Drive Mapping', drive)
+		pathmapping[drivepath] = lconfigparser.get('Drive Mapping', drive)
 
 # image path
-if leginonconfigparser.has_section('Images'):
-	IMAGE_PATH = leginonconfigparser.get('Images', 'path')
+if lconfigparser.has_section('Images'):
+	IMAGE_PATH = lconfigparser.get('Images', 'path')
 else:
 	sys.stderr.write('Warning:  You have not configured Images path in leginon.cfg!  Using current directory.\n')
 	IMAGE_PATH = os.path.abspath(os.curdir)
@@ -93,25 +119,25 @@ else:
 
 # optional reference path.  Will restrict research and create of
 # reference sessions to these is specified
-if leginonconfigparser.has_section('References'):
-	REF_PATH = leginonconfigparser.get('References', 'path')
+if lconfigparser.has_section('References'):
+	REF_PATH = lconfigparser.get('References', 'path')
 
 # project
 try:
-	default_project = leginonconfigparser.get('Project', 'default')
+	default_project = lconfigparser.get('Project', 'default')
 except:
 	default_project = None
 
 # user
 try:
-	USERNAME = leginonconfigparser.get('User', 'fullname')
+	USERNAME = lconfigparser.get('User', 'fullname')
 except:
 	USERNAME = ''
 
 try:
-	emailhost = leginonconfigparser.get('Email', 'host')
-	emailuser = leginonconfigparser.get('Email', 'user')
-	emailfrom = leginonconfigparser.get('Email', 'from')
-	emailto = leginonconfigparser.get('Email', 'to')
+	emailhost = lconfigparser.get('Email', 'host')
+	emailuser = lconfigparser.get('Email', 'user')
+	emailfrom = lconfigparser.get('Email', 'from')
+	emailto = lconfigparser.get('Email', 'to')
 except:
 	emailhost = emailuser = emailfrom = emailto = None
