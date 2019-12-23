@@ -466,7 +466,7 @@ function format_reciprocal_nano_number($data) {
 }
 
 function format_angstrom_number($data) {
-	return number_format(($data/1e-10), 2,'.','').' &Aring;';
+	return number_format(($data/1e-10), 3,'.','').' &Aring;';
 }
 
 function format_reciprocal_angstrom_number($data) {

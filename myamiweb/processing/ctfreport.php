@@ -304,7 +304,7 @@ if ($ctfrundatas) {
 	// Row 3
 	echo "<tr><td>\n";
 		echo "<h3>Software Package Resolution</h3>\n";
-		echo "<a href='ctfgraph.php?hg=0&expId=$expId&s=1&f=ctffind4_resolution&ctff=$ctff'>\n";
+		echo "<a href='ctfgraph.php?hg=0&expId=$expId&s=1&xmin=1&xmax=30&f=ctffind4_resolution&ctff=$ctff'>\n";
 		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
 			."w=800&h=600&hg=1&expId=$expId&s=1&f=ctffind4_resolution&ctff=$ctff'></a>\n";
 	echo "</td><td>\n";
