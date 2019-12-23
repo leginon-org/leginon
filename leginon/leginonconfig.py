@@ -23,6 +23,9 @@ def replaceEnvironmentVariables(path):
 	this restricts the path name not to include
 	'${' nor '}'.
 	'''
+	if path is None:
+		# new object has no path #8406
+		return path
 	while '}' in path:
 		front = path.split('}')[0]
 		back = '}'.join(path.split('}')[1:])
