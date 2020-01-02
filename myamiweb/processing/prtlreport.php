@@ -24,14 +24,16 @@ processing_header("Particle Selection Results", "Particle Selection Results", $j
 
 $particle = new particledata();
 if ($particle->hasParticleData($expId)) {
+	echo "<form name='stackform' method='post' action='$formAction'>\n";
 	//$display_keys = array ( 'totparticles', 'numimgs', 'min', 'max', 'avg', 'stddev', 'img');
 	$display_keys = array ( 'preset','totparticles', 'numimgs', 'min', 'max', 'avg', 'stddev');
-	$selectionruns=$particle->getParticleRunIds($expId);
+	$selectionruns=$particle->getParticleRunIds($expId, true);
 	foreach ($selectionruns as $selectionrun) {
 		//print_r($selectionrun);
 		$selectionid = $selectionrun['DEF_id'];
 		echo pickingsummarytable($selectionid, true);
 	}
+	echo "</form>";
 } else {
 	echo "<font color='#cc3333' size='+2'>No particle information available</font>\n<hr/>\n";
 }
