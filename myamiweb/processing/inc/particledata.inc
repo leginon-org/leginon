@@ -1945,7 +1945,7 @@ class particledata {
 
 		//print_r ($r);
 		//echo $r['REF|ApSelectionParamsData|params'];
-		$q = "select s.*, r.name, path.path AS path, r.`REF|leginondata|SessionData|session` ";
+		$q = "select s.*, r.name, path.path AS path, r.`REF|leginondata|SessionData|session`, r.`hidden` ";
 
 		if ($r['REF|ApSelectionParamsData|params']) {
 			$selectionparamid=$r['REF|ApSelectionParamsData|params'];
