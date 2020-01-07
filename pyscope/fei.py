@@ -161,8 +161,12 @@ class Tecnai(tem.TEM):
 	def getHasFalconProtector(self):
 		return self.getFeiConfig('camera','has_falcon_protector')
 
-	def getAutoitExePath(self):
-		return self.getFeiConfig('phase plate','autoit_exe_path')
+	def getAutoitPhasePlateExePath(self):
+		value = self.getFeiConfig('phase plate','autoit_phase_plate_exe_path')
+		if not value:
+			# back compatibility pre 3.5
+			value=self.getFeiConfig('phase plate','autoit_exe_path')
+		return value
 
 	def getRotationCenterScale(self):
 		return self.getFeiConfig('optics','rotation_center_scale')
@@ -1666,8 +1670,8 @@ class Tecnai(tem.TEM):
 		return self.tecnai.TemperatureControl.RefrigerantLevel(id)
 
 	def nextPhasePlate(self):
-		if os.path.isfile(self.getAutoitExePath()):
-			subprocess.call(self.getAutoitExePath())
+		if os.path.isfile(self.getAutoitPhasePlateExePath()):
+			subprocess.call(self.getAutoitPhasePlateExePath())
 		else:
 			pass
 

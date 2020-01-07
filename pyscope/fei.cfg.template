@@ -46,7 +46,7 @@ FRAME_SUBPATH = leginonframes
 EXTRA_PROTECTOR_SLEEP_TIME = 0
 [phase plate]
 # Location of next phase plate AutoIt executable
-AUTOIT_EXE_PATH = C:\Program Files\AutoIt3\nextphaseplate.exe
+AUTOIT_PHASE_PLATE_EXE_PATH = C:\Program Files\AutoIt3\NextPhasePlate.exe
 
 [stage]
 # Some Krios stage needs backlash.
