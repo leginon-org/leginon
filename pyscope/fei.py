@@ -1672,6 +1672,7 @@ class Tecnai(tem.TEM):
 	def nextPhasePlate(self):
 		if os.path.isfile(self.getAutoitPhasePlateExePath()):
 			subprocess.call(self.getAutoitPhasePlateExePath())
+			error = self._checkAutoItError()
 		else:
 			pass
 
@@ -1820,7 +1821,7 @@ class Tecnai(tem.TEM):
 			return False
 		exepath = self.getFeiConfig('aperture','autoit_aperture_selection_exe_path')
 		if exepath and os.path.isfile(exepath):
-			cmd = '%s "%s" %s %s set %s' % (exepath,configpath,self.column_type, mechanism_name,name)
+			cmd = '%s "%s" %s %s set "%s"' % (exepath,configpath,self.column_type, mechanism_name,name)
 			subprocess.call(cmd)
 			error = self._checkAutoItError()
 			return True

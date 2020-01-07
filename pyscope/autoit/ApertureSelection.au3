@@ -42,8 +42,8 @@ Global $sFeiConfigPath = "c:\Program Files (x86)\myami\fei.cfg"
 ; Set Default
 Local $sTem = 'titan'
 Local $sMechanism = 'objective'
-Local $action = 'get'
-Local $sSelection = 'open'
+Local $action = 'set'
+Local $sSelection = '100'
 ; Set from command line
 If $CmdLine[0] > 0 Then
    $sFeiConfigPath = $CmdLine[1]
@@ -62,7 +62,7 @@ Local $aInstanceIndices = GetInstanceIndices($sTem, $hasAutoC3, $sMechanism)
 If $action = 'get' Then
    Local $result = GetApertureSelection($aInstanceIndices)
    If $CmdLine[0] = 0 Then
-	  MsgBox(0,'selected aperture',$result)
+	  MsgBox(0,'selected aperture',$sMechanism & ", " & $result)
    EndIf
    _WriteResult($result)
 ElseIf $action = 'set' Then
@@ -123,6 +123,7 @@ Func SetApertureSelection($aIndices, $sSelection)
    Local $iButtonInst = $aIndices[0]
    Local $iComboInst = $aIndices[1]
    Local $tText = ControlGetText($my_title,"","[CLASS:ComboBox;INSTANCE:" & $iComboInst & "]")
+   Local $iTry = 0
 
    ; Select aperture position
    If _ArraySearch($aSelections, $sSelection) = -1 Then
@@ -133,14 +134,19 @@ Func SetApertureSelection($aIndices, $sSelection)
 	  $sPosition = "[none]"
 	  If $tText <> "[none]" Then
 		 ControlClick($my_title,"","[CLASS:Button;INSTANCE:" & $iButtonInst & "]")
+		 ;MsgBox(0,'button',$iButtonInst)
 		 ;long sleep to wait for the combobox to change to [none]
 		 Sleep(10000)
 	  EndIf
    Else
-	  If $sSelection <> $tText Then
+	  ;Try multiple times since combobox selection does not always works when the selection is not adjacent
+	  While $sSelection <> $tText Or $iTry >=10
 		 ControlSend($my_title,"","[CLASS:ComboBox;INSTANCE:" & $iComboInst & "]",$sSelection)
-		 Sleep(8000)
-	  EndIf
+		 Sleep(2000)
+		 $tText = ControlGetText($my_title,"","[CLASS:ComboBox;INSTANCE:" & $iComboInst & "]")
+		 ;MsgBox(0,'tries',$iTry & " " & $sSelection & " ? " & $tText)
+		 $iTry += 1
+	  WEnd
    EndIf
 EndFunc
 
@@ -186,9 +192,9 @@ Func GetFeiConfigHasAutoC3($configpath)
    For $i = 0 to UBound($aLines)-1
 	  Local $sLine = $aLines[$i]
 	  Local $aBits = StringSplit($sLine,"=",2)
-	  $sKey = StringStripWS($aBits[0],8); strip
+	  $sKey = StringStripWS($aBits[0],3); strip leading and trailing white spaces
 	  If StringLower($sKey) == StringLower($key) Then
-		 If StringLower(StringStripWS($aBits[1],8)) = 'true' Then
+		 If StringLower(StringStripWS($aBits[1],3)) = 'true' Then
 			$hasAutoC3 = True
 		 EndIf
 	  EndIf
@@ -202,11 +208,13 @@ Func GetFeiConfigSelections($configpath,$module,$key)
    For $i = 0 to UBound($aLines)-1
 	  Local $sLine = $aLines[$i]
 	  Local $aBits = StringSplit($sLine,"=",2)
-	  $sKey = StringStripWS($aBits[0],8); stripes all white spaces
+	  $sKey = StringStripWS($aBits[0],3); strip leading and trailing white spaces
+
 	  If StringLower($sKey) == StringLower($key) Then
 		 Local $aList = StringSplit($aBits[1],",",2)
 		 For $i = 0 to UBound($aList)-1
-			$aListNames[$i] = StringStripWS($aList[$i],8)
+			$aListNames[$i] = StringStripWS($aList[$i],3); strip leading and trailing white spaces
+			;MsgBox(0,'config value',$sKey & ' ' & $i & ' ' & $aListNames[$i])
 		 Next
 	  EndIf
    Next
