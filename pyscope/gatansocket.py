@@ -379,6 +379,10 @@ class GatanSocket(object):
 		function_name = 'K2_updateHardwareDarkReference'
 		return self.ExecuteSendCameraObjectionFunction(function_name, cameraid)
 
+	def PrepareDarkReference(self, cameraid):
+		function_name = 'CM_PrepareDarkReference'
+		return self.ExecuteSendCameraObjectionFunction(function_name, cameraid)
+
 	def GetEnergyFilter(self):
 		if 'GetEnergyFilter' not in self.filter_functions.keys():
 			return -1.0
