@@ -1314,7 +1314,7 @@ class particledata {
 		foreach ($fields as $field) {
 			if (!in_array($field, $dbfields))
 				continue;
-			$selects[$field] = "c.`REF|leginondata|AcquisitionImageData|image` AS id, "
+			$selects[$field] = "max(c.`REF|leginondata|AcquisitionImageData|image`) AS id, "
 					//."s.defocus, "
 					. "count(c.DEF_id) AS `nb`, "
 					. "min(c.`$field`) AS `min`, "

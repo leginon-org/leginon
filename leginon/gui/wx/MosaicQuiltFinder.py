@@ -163,6 +163,9 @@ class Panel(leginon.gui.wx.ClickTargetFinder.Panel):
 	def doneTargetList(self):
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, True)
 
+	def doneTargetDisplay(self):
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, True)
+
 class TilesDialog(wx.Dialog):
 	def __init__(self, parent, choices):
 		wx.Dialog.__init__(self, parent, -1, 'Tiles')

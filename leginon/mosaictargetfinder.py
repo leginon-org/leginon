@@ -416,6 +416,9 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 			n += len(targets[type])
 		ndone = len(donetargets)
 		self.logger.info('displayed %s targets (%s done)' % (n+ndone, ndone))
+		# trigger activation of submit button in the gui. Won't get here
+		# without mosaic.
+		self.panel.doneTargetDisplay()
 
 	def getMosaicImageList(self, targetlist):
 		self.logger.debug('in getMosaicImageList')
