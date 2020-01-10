@@ -913,8 +913,13 @@ class GatanK3(GatanK2Base):
 		return self.dm_processing == 'gain normalized'
 
 	def requireRecentDarkCurrentReferenceOnBright(self):
-		# K3 no longer need hardware dark ? In fact, the scripting call does nothing.
-		# Is it really o.k. ?
+		return True
+
+	def updateDarkCurrentReference(self):
+		r = self.camera.PrepareDarkReference(self.cameraid)
+		if r > 0:
+			# has error
+			return True
 		return False
 
 	def getFrameFlip(self):
