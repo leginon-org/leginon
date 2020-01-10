@@ -41,8 +41,6 @@ SAVE_LZW_TIFF_FRAMES = False
 # K3 processing mode. 'gain normalized' or 'dark subtracted'
 #DM_PROCESSING = gain normalized
 DM_PROCESSING = dark subtracted
-# K3 insertion is slower than other camera
-CAMERA_INSERT_DELAY = 10
 
 ### Orius configuration if exists
 [orius]
