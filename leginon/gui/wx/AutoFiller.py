@@ -186,7 +186,7 @@ class ScrolledSettings(leginon.gui.wx.Conditioner.ScrolledSettings):
 		sz_time = wx.GridBagSizer(1, 4)
 		label1 = wx.StaticText(self, -1, '* Wait for at least')
 		self.widgets['dark current ref repeat time'] = IntEntry(self, -1, chars=6, min = 0)
-		label2 = wx.StaticText(self, -1, 'seconds before repeating acquiring dark current reference')
+		label2 = wx.StaticText(self, -1, 'seconds before acquiring dark current reference again')
 		sz_time.Add(label1, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz_time.Add(self.widgets['dark current ref repeat time'], (0, 1), (1, 1), wx.EXPAND)
 		sz_time.Add(label2, (0, 2), (1, 2), wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)

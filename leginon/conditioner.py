@@ -256,7 +256,7 @@ class AutoNitrogenFiller(Conditioner):
 	def _repeatCondition(self, condition_type):
 		if not self.settings['extra dark current ref']:
 			return super(AutoNitrogenFiller, self)._repeatCondition(condition_type)
-		time_delta = time.time() - self.last_dark_update
+		time_delta = int(time.time() - self.last_dark_update)
 		if time_delta >= self.settings['dark current ref repeat time']:
 			self.checkAndRunCameraDarkCurrentReferenceUpdate()
 		else:
@@ -314,7 +314,11 @@ class AutoNitrogenFiller(Conditioner):
 		time.sleep(0.1)
 		t1 = threading.Thread(target=self.runNitrogenFiller)
 		t1.start()
-		self.checkAndRunCameraDarkCurrentReferenceUpdate()
+		time_delta = int(time.time() - self.last_dark_update)
+		if self.settings['extra dark current ref'] and time_delta < self.settings['dark current ref repeat time']:
+			self.logger.info('dark current ref not expired. %d seconds since last' % (time_delta))
+		else:
+			self.checkAndRunCameraDarkCurrentReferenceUpdate()
 		t1.join()
 
 		filler_status = self.monitorRefillWithIsBusy()
@@ -322,8 +326,6 @@ class AutoNitrogenFiller(Conditioner):
 	def checkAndRunCameraDarkCurrentReferenceUpdate(self):
 		# Dark Current Reference Update if needed
 		if self.withinGoodHours():
-			self.logger.info('Waiting for %d seconds before running camera dark current reference update' % (self.settings['delay dark current ref']))
-			time.sleep(self.settings['delay dark current ref'])
 			self.runCameraDarkCurrentReferenceUpdate()
 		else:
 			self.logger.info('Outside the good hours to acquire camera dark current reference. Skipped')
@@ -384,6 +386,8 @@ class AutoNitrogenFiller(Conditioner):
 				# Super and Counting are the same physical camera.
 				break
 		if need_update:
+			self.logger.info('Waiting for %d seconds before running camera dark current reference update' % (self.settings['delay dark current ref']))
+			time.sleep(self.settings['delay dark current ref'])
 			self.updateCameraDarkCurrentReference()
 		self.last_dark_update = time.time()
 		
