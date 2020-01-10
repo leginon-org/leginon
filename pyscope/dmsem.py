@@ -405,12 +405,13 @@ class DMSEM(ccdcamera.CCDCamera):
 			self.camera.InsertCamera(self.cameraid, value)
 		else:
 			return
-		## TODO:  determine necessary settling time:
-		insert_delay_s = self.getDmsemConfig(self.config_opt_name,itemname='camera_insert_delay')
-		if insert_delay_s:
-			time.sleep(insert_delay_s)
-		else:
-			time.sleep(5)
+		t0=time.time()
+		MAX_DELAY = 90 # 90 seconds
+		while inserted != value and time.time()-t0 < MAX_DELAY:
+			time.sleep(1)
+			inserted = self.getInserted()
+		if time.time()-t0 >= MAX_DELAY:
+			raise RuntimeError('Can not set inserted state of the camera to %s' % (value,))
 
 	def getInserted(self):
 		return self.camera.IsCameraInserted(self.cameraid)
@@ -913,8 +914,13 @@ class GatanK3(GatanK2Base):
 		return self.dm_processing == 'gain normalized'
 
 	def requireRecentDarkCurrentReferenceOnBright(self):
-		# K3 no longer need hardware dark ? In fact, the scripting call does nothing.
-		# Is it really o.k. ?
+		return True
+
+	def updateDarkCurrentReference(self):
+		r = self.camera.PrepareDarkReference(self.cameraid)
+		if r > 0:
+			# has error
+			return True
 		return False
 
 	def getFrameFlip(self):
