@@ -2830,7 +2830,7 @@ class ConditionerSettingsData(SettingsData):
 	def typemap(cls):
 		return SettingsData.typemap() + (
 			('bypass', bool),
-			('repeat time', int),
+			('repeat time', int), # seconds
 		)
 	typemap = classmethod(typemap)
 
@@ -2852,6 +2852,8 @@ class AutoFillerSettingsData(ConditionerSettingsData):
 			('delay dark current ref', int),
 			('start dark current ref hr', int),
 			('end dark current ref hr', int),
+			('extra dark current ref', bool),
+			('dark current ref repeat time', int), # seconds
 		)
 	typemap = classmethod(typemap)
 
