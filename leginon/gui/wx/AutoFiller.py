@@ -49,17 +49,20 @@ class SettingsDialog(leginon.gui.wx.Settings.Dialog):
 
 class ScrolledSettings(leginon.gui.wx.Conditioner.ScrolledSettings):
 	def getTitle(self):
-		return 'N2 Autofiller'
+		return 'N2 Autofiller and Dark Current Correction'
 
 	def addSettings(self):
 		super(ScrolledSettings,self).addSettings()
-		self.createAutofillerModeSelector((2,0))	
-		self.createColumnFillStartEntry((3,0))
-		self.createColumnFillEndEntry((4,0))
-		self.createGridLoaderFillStartEntry((5,0))
-		self.createGridLoaderFillEndEntry((6,0))
-		self.createDelayDarkCurrentRefEntry((7,0))
-		self.createDarkCurrentRefHourEntry((8,0))
+		self.createExtraDarkCurrentRefCheckBox((2,0))
+		self.createDarkCurrentRefRepeatTimeEntry((3,0))
+		self.sz.Add(wx.StaticLine(self,-1),(4,0),(1,2), wx.EXPAND|wx.TOP|wx.BOTTOM)
+		self.createAutofillerModeSelector((5,0))
+		self.createColumnFillStartEntry((6,0))
+		self.createColumnFillEndEntry((7,0))
+		self.createGridLoaderFillStartEntry((8,0))
+		self.createGridLoaderFillEndEntry((9,0))
+		self.createDelayDarkCurrentRefEntry((11,0))
+		self.createDarkCurrentRefHourEntry((12,0))
 
 	def addBindings(self):
 		super(ScrolledSettings,self).addBindings()
@@ -174,6 +177,20 @@ class ScrolledSettings(leginon.gui.wx.Conditioner.ScrolledSettings):
 				self.mode.SetSelection(n)
 			self.mode.Enable(True)
 			self.onAutofillerModeChoice()
+
+	def createExtraDarkCurrentRefCheckBox(self,start_position):
+		self.widgets['extra dark current ref'] = wx.CheckBox(self, -1, 'Acquire Dark Current ALSO between fills')
+		self.sz.Add(self.widgets['extra dark current ref'], start_position, (1, 2), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT)
+
+	def createDarkCurrentRefRepeatTimeEntry(self,start_position):
+		sz_time = wx.GridBagSizer(1, 4)
+		label1 = wx.StaticText(self, -1, '* Wait for at least')
+		self.widgets['dark current ref repeat time'] = IntEntry(self, -1, chars=6, min = 0)
+		label2 = wx.StaticText(self, -1, 'seconds before acquiring dark current reference again')
+		sz_time.Add(label1, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz_time.Add(self.widgets['dark current ref repeat time'], (0, 1), (1, 1), wx.EXPAND)
+		sz_time.Add(label2, (0, 2), (1, 2), wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+		self.sz.Add(sz_time, start_position, (1, 2), wx.ALIGN_LEFT|wx.ALL)
 
 	def createDelayDarkCurrentRefEntry(self,start_position):
 		self.widgets['delay dark current ref'] = IntEntry(self, -1,
