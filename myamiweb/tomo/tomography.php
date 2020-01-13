@@ -12,6 +12,7 @@ class Tomography {
 
 	function getTiltSeriesSessions() {
 		$query = 'SELECT DISTINCT(s.`DEF_id`) AS `id`, '
+			.'UNIX_TIMESTAMP(DATE(s.`DEF_timestamp`)) AS time, '
 			.'s.name AS name, '
 			.'s.comment AS comment '
 			.'FROM SessionData s '
@@ -19,7 +20,7 @@ class Tomography {
 			.'ON (s.`DEF_id` = t.`REF|SessionData|Session`) '
 			.'WHERE t.`REF|SessionData|Session` <> "NULL" '
 			.'AND t.`tilt step` <> "NULL" '
-			.'ORDER BY s.DEF_timestamp DESC;';
+			.'ORDER BY time DESC;';
 		$tiltsessions = $this->mysql->getSQLResult($query);
 		if (count($tiltsessions) && privilege('data') <= 2) {
 			$valid_sessions = $this->leginon->getSessions();
@@ -66,7 +67,7 @@ class Tomography {
 		} else if ($stop != NULL) {
 			$query .= "<= $stop ";
 		}
-		$query .= 'ORDER BY DEF_timestamp;';
+		$query .= 'ORDER BY timestamp;';
 		return $this->mysql->getSQLResult($query);
 	}
 
@@ -79,7 +80,7 @@ class Tomography {
 			.'`number` '
 			.'FROM `TiltSeriesData` '
 			."WHERE `REF|SessionData|session`='$sessionId' "
-			.'ORDER BY DEF_timestamp;';
+			.'ORDER BY timestamp;';
 		return $this->mysql->getSQLResult($query);
 	}
 
@@ -248,7 +249,7 @@ class Tomography {
 			.'AND p1.magnification=p2.magnification '
 			.'AND p1.`REF|InstrumentData|tem`=p2.`REF|InstrumentData|tem` '
 			.'AND p1.`REF|InstrumentData|ccdcamera`=p2.`REF|InstrumentData|ccdcamera`) '
-			.'ORDER BY s.`SUBD|stage position|a`;';
+			.'ORDER BY alpha;';
 		return $this->mysql->getSQLResult($query);
 	}
 
