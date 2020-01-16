@@ -39,7 +39,7 @@ if ($summary) {
 	if ($storedCTFinfo) {
 		$ctfinfo = json_decode(file_get_contents($storedCTFinfo), true);
 	}
-	else $ctfinfo = $ctf->getBestCtfInfoByResolution($sessionId, $minimum);
+	else $ctfinfo = $ctf->getRandomCtfInfoByResolution($sessionId, $minimum);
 	
 } else {
 	$runId= ($_GET[rId]);
