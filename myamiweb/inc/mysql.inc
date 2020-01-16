@@ -317,7 +317,7 @@ class mysql {
 			return $value[0];
 		};
 
-		$r = mysqli_fetch_all($result, MYSQLI_NUM);
+		$r = @mysqli_fetch_all($result, MYSQLI_NUM);
 		$r = array_map($callback,$r);
 		$joined = implode("','",$r);
 		return "('".$joined."') ";
