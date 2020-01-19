@@ -101,7 +101,10 @@ class SimGatan(object):
 		print 'AlignEnergeFileterZeroLossPeak'
 		time.sleep(2)
 
-	def GetImage(self, processing, height, width, binning, top, left, bottom, right, exposure, , corrections, shutter=0, shutterDelay=0.0):
+	def PrepareDarkReference(self, cameraid):
+		return 0
+
+	def GetImage(self, processing, height, width, binning, top, left, bottom, right, exposure, corrections, shutter=0, shutterDelay=0.0):
 		self.exposure_type= processing
 		self.exposure_time = exposure/1000.0
 		print '**Acquire Parameters**'
