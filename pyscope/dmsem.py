@@ -800,7 +800,12 @@ class GatanK2Base(DMSEM):
 		'''
 		Frame Flip is defined as up-down flip
 		'''
-		return self.isDM231orUp()
+		overwrite = self.getDmsemConfig('k2','overwrite_frame_orientation')
+		if not overwrite:
+			return self.isDM231orUp()
+		else:
+			my_frame_flip = self.getDmsemConfig('k2','frame_flip_to_overwrite_with')
+			return my_frame_flip
 
 	def getFrameRotate(self):
 		'''
@@ -926,9 +931,14 @@ class GatanK3(GatanK2Base):
 	def getFrameFlip(self):
 		'''
 		Frame Flip is defined as up-down flip.
-		GMS2.32 and DMSEMCCD3.31.dll 2019Aug version requires no flip
+		K3 requires no flip in most cases.
 		'''
-		return False
+		overwrite = self.getDmsemConfig('k2','overwrite_frame_orientation')
+		if not overwrite:
+			return False
+		else:
+			my_frame_flip = self.getDmsemConfig('k2','frame_flip_to_overwrite_with')
+			return my_frame_flip
 
 	def getFrameSavingRotateFlipDefault(self):
 		'''
