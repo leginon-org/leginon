@@ -329,11 +329,12 @@ class PresetsManager(node.Node):
 			self.idleactive = False
 			self.outputEvent(event.DeactivateNotificationEvent())
 			#self.logger.info('Instrument timeout deactivated')
-			self.logger.info('Instrument error notification deactivated')
+			self.logger.info('Idle and Instrument error notification deactivated')
 		else:
 			self.idleactive = True
 			tem_hostname = self.getTemHostname()
-			self.outputEvent(event.ActivateNotificationEvent(tem_host=tem_hostname))
+			timeout_minutes = self.settings['idle minute']
+			self.outputEvent(event.ActivateNotificationEvent(tem_host=tem_hostname, timeout_minutes=timeout_minutes))
 			self.logger.info('Idle and Instrument error notification activated')
 
 	def lock(self, n):

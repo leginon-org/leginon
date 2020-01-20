@@ -657,6 +657,37 @@ class ImageData(InSessionData):
 			raise RuntimeError('"filename" not set for this image')
 		return self['filename'] + '.mrc'
 
+	def imagereadable(self):
+		'''
+		return boolean.
+		'''
+		try:
+			filepath = os.path.join(self.getpath(),self.filename())
+		except:
+			# filename not yet set
+			return False
+		return os.access(filepath, os.F_OK) and os.access(filepath, os.R_OK)
+
+	def imageshape(self):
+		'''
+		return shape of the image array without reading the mrc file.
+		None is returned if no image or mrc file.
+		'''
+		if self.dbid is None:
+			# not yet saved, the array is still in memory
+			if self['image'] is not None:
+				return self['image'].shape
+			else:
+				return None
+		from pyami import mrc
+		try:
+			# get shape from mrc header
+			filepath = os.path.join(self.getpath(),self.filename())
+			h = mrc.readHeaderFromFile(filepath)
+			return h['shape'] # (row, col)
+		except:
+			return None
+
 ## this is not so important now that mosaics are created dynamically in
 ## DB viewer
 class MosaicImageData(ImageData):
