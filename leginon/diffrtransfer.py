@@ -36,7 +36,10 @@ class DiffractionUpload(object):
 		diffr_preset = self.diffr_series['preset']
 		upload_presetq = leginondata.PresetData(initializer=diffr_preset)
 		upload_presetq['name'] = 'upload'
-		ntilt = len(self.bin_files)+1
+		if not self.diffr_series['series length']:
+			raise ValueError('Old data without series length can not be accurately assessed')
+		# fudge factor +1 is needed to get better match in the reality.
+		ntilt = self.diffr_series['series length'] + 1
 		ms_per_tilt = 1000*abs(self.diffr_series['tilt range']) / (ntilt*self.diffr_series['tilt speed'])
 		# use calculated tilt frame time if sufficiently different from DF preset
 		if abs(ms_per_tilt-diffr_preset['exposure time']) > 20:
@@ -347,9 +350,9 @@ def loop(check_path, check_interval,no_wait=False):
 				while image_count != last_count:
 					print('Checking series %d_%d for completeness' % (hl_id, target_number))
 					last_count = image_count
-					# robocopy minimal monitor cycle is 1 min
-					print('Wait 70 second in case series writing is not finished - current count=%d' % image_count)
-					time.sleep(70)
+					# shutil.mv should be done quickly
+					print('Wait 5 second in case series writing is not finished - current count=%d' % image_count)
+					time.sleep(5)
 					image_count = len(glob.glob(groups[k]))
 			print('Processing series %d_%d' % (hl_id, target_number))
 			try:
@@ -357,6 +360,8 @@ def loop(check_path, check_interval,no_wait=False):
 				app.run()
 			except ValueError as e:
 				handleBadFiles(check_path, k, groups[k], e)
+		if no_wait:
+			break
 		print 'Sleeping...'
 		time.sleep(check_interval)
 

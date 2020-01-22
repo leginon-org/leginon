@@ -464,6 +464,21 @@ class FeiCam(ccdcamera.CCDCamera):
 		print 'movie name: %s' % filename
 		time.sleep(exposure_time_s)
 		self._saveMovie(filename)
+		self._waitForSaveMoveDone()
+		self._moveMovie()
+
+	def _waitForSaveMoveDone(self):
+		timeout = 120
+		t0 = time.time()
+		current_length = 0
+		last_series_length = current_length
+		while current_length < 2 or last_series_length < current_length:
+			if time.time()-t0 > timeout:
+				raise ValueError('Movie saving failed. File saving not finished after %d seconds.' % timeout)
+			time.sleep(1.0)
+			last_series_length = current_length
+			current_length = self._findSeriesLength()
+		# final value
 		self.series_length = self._findSeriesLength()
 
 	def _saveMovie(self, filename=''):
@@ -471,19 +486,40 @@ class FeiCam(ccdcamera.CCDCamera):
 		if exepath and os.path.isfile(exepath):
 			if filename:
 				self.target_code = filename.split('.bin')[0]
+				# self.series_length should be 0 at this point
+				self.series_length = self._findSeriesLength()
 				subprocess.call("%s %s" % (exepath, self.target_code))
 			else:
 				raise ValueError('movie saving filename not provided')
 		else:
 			raise NotImplementedError()
 
+	def _moveMovie(self):
+		data_dir = self.getFeiConfig('camera','tia_exported_data_dir')
+		new_dir = self.getFeiConfig('camera','tia_exported_network_dir')
+		if not new_dir:
+			return
+		if not os.path.isdir(new_dir):
+			raise ValueError('TIA exported data network Directory %s is not a directory' % (new_dir,))
+		if data_dir == new_dir:
+			# nothing to do
+			return
+		else:
+			if not self.target_code:
+				raise ValueError('movie target code not yet set')
+			pattern = os.path.join(data_dir, '%s*.bin' % (self.target_code,))
+			files = glob.glob(pattern)
+			for f in files:
+				shutil.move(f, new_dir)
+
 	def _findSeriesLength(self):
+		if not self.target_code:
+			raise ValueError('movie target code not yet set')
 		data_dir = self.getFeiConfig('camera','tia_exported_data_dir')
 		pattern = os.path.join(data_dir, '%s*.bin' % (self.target_code,))
 		length = len(glob.glob(pattern))
 		return length
 
-		
 	def _clickAcquire(self, exposure_time_s=None):
 		# default is not checking
 		exepath = self.getFeiConfig('camera','autoit_tui_acquire_exe_path')

@@ -3006,6 +3006,7 @@ class DiffractionSeriesData(InSessionData):
 			('parent', AcquisitionImageData),
 			('preset', PresetData),
 			('emtarget', EMTargetData),
+			('series length', int),
 		)
 	typemap = classmethod(typemap)
 

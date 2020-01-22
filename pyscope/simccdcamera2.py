@@ -9,6 +9,9 @@ import math
 import json
 import remote
 import os
+import glob
+import threading
+import shutil
 
 from pyami import mrc, imagefun, numpil
 import itertools
@@ -301,13 +304,57 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 		self.movie_start_time = time.time()
 
 	def stopMovie(self, filename, exposure_time_ms):
-		self.series_length = math.ceil((time.time() -self.movie_start_time)/(0.001*exposure_time_ms))
-		for i in range(int(self.series_length)):
-			target_code = filename.split('.bin')[0]
-			frame_path = os.path.join(FRAME_DIR,'%s_%03d.bin' % (target_code, i+1))
+		series_length = math.ceil((time.time() -self.movie_start_time)/(0.001*exposure_time_ms))
+		self.series_length = 0
+		self.target_code = filename.split('.bin')[0]
+		t = threading.Thread(target=self._saveMovie, args=[series_length,])
+		t.start()
+		self._waitForSaveMoveDone()
+		self._moveMovie()
+
+	def _moveMovie(self):
+		data_dir = './'
+		pattern = os.path.join(data_dir, '%s*.bin' % (self.target_code,))
+		new_dir = '' # do not move
+		if not new_dir:
+			return
+		if not os.path.isdir(new_dir):
+			raise ValueError('TIA exported data network Directory %s is not a directory' % (new_dir,))
+		if data_dir == new_dir:
+			# nothing to do
+			return
+		else:
+			pattern = os.path.join(data_dir, '%s*.bin' % (self.target_code,))
+			files = glob.glob(pattern)
+			for f in files:
+				shutil.move(f, new_dir)
+
+	def _saveMovie(self, series_length):
+		for i in range(int(series_length)):
+			frame_path = os.path.join(FRAME_DIR,'%s_%03d.bin' % (self.target_code, i+1))
 			f = open(frame_path,'w')
 			f.write('data\n')
 			f.close()
+			time.sleep(0.5)
+
+	def _waitForSaveMoveDone(self):
+		timeout = 120
+		t0 = time.time()
+		current_length = 0
+		last_series_length = current_length
+		while current_length < 2 or last_series_length < current_length:
+			if time.time()-t0 > timeout:
+				raise ValueError('Movie saving failed. File saving not finished after %d seconds.' % timeout)
+			time.sleep(1.0)
+			last_series_length = current_length
+			current_length = self._findSeriesLength()
+		# final value
+		self.series_length = self._findSeriesLength()
+
+	def _findSeriesLength(self):
+		pattern = os.path.join(FRAME_DIR,'%s_*' % (self.target_code,))
+		length = len(glob.glob(pattern))
+		return length
 
 class SimFrameCamera(SimCCDCamera):
 	name = 'SimFrameCamera'
