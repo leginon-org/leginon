@@ -107,6 +107,7 @@ class DiffrFocuser(singlefocuser.SingleFocuser):
 		q['tilt start'] = self.settings['tilt start']
 		q['tilt range'] = self.settings['tilt range']
 		q['tilt speed'] = self.settings['tilt speed']
+		q['series length'] = self.instrument.ccdcamera.SeriesLength
 		q.insert()
 
 	def getTiltMovieFilename(self, emtarget):

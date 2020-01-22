@@ -28,6 +28,7 @@ class CCDCamera(baseinstrument.BaseInstrument):
 		{'name': 'Offset', 'type': 'property'},
 		{'name': 'ExposureTimestamp', 'type': 'property'},
 		{'name': 'IntensityAveraged', 'type': 'property'},
+		{'name': 'SeriesLength', 'type': 'property'},
 		## methods:
 		{'name': 'startMovie', 'type': 'method'},
 		{'name': 'stopMovie', 'type': 'method'},
@@ -54,7 +55,7 @@ class CCDCamera(baseinstrument.BaseInstrument):
 		self.callbacks = {}
 		self.exposure_timestamp = None
 		self.use_cds = False
-		self.series_length = 1
+		self.series_length = 0
 
 	def getZplane(self):
 		return self.zplane
