@@ -973,7 +973,7 @@ class Tecnai(tem.TEM):
 			print 'took extra %.1f seconds to get to ready status' % (donetime)
 
 	def _setStagePosition(self, position, relative = 'absolute'):
-		if False:
+		if self.tom is not None and self.column_type=='tecnai':
 			return self._setTomStagePosition(position, relative)
 		else:
 			return self._setTemStagePosition(position, relative)
