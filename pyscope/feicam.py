@@ -2,6 +2,7 @@
 import os
 import subprocess
 import glob
+import shutil
 
 import ccdcamera
 import time
@@ -496,7 +497,7 @@ class FeiCam(ccdcamera.CCDCamera):
 
 	def _moveMovie(self):
 		data_dir = self.getFeiConfig('camera','tia_exported_data_dir')
-		new_dir = self.getFeiConfig('camera','tia_exported_network_dir')
+		new_dir = self.getFeiConfig('camera','tia_exported_data_network_dir')
 		if not new_dir:
 			return
 		if not os.path.isdir(new_dir):
