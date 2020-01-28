@@ -66,7 +66,7 @@ class XMLImport {
 					$fdefault = empty($v['attributes']['default']) ? '' : $v['attributes']['default'];
 				}
 				$fdefault = (!empty($fdefault) && strpos(strtolower($fdefault),'default')===false) ? 'default '.$fdefault : $fdefault;
-
+				if ($fdefault=="DEFAULT 'CURRENT_TIMESTAMP'") $fdefault="DEFAULT CURRENT_TIMESTAMP";
 				$fnull = (empty($fdefault) && empty($v['attributes']['null'])) ? 'null' : $v['attributes']['null'];
 				$fextra = empty($v['attributes']['extra']) ? '' : $v['attributes']['extra'];
 				$fields[] = "`$fname` $ftype $fnull $fdefault $fextra";

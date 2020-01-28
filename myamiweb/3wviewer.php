@@ -10,6 +10,16 @@ if (defined('PROCESSING')) {
 // --- get Predefined Variables form GET or POST method --- //
 list($projectId, $sessionId, $imageId, $preset, $runId, $scopeId) = getPredefinedVars();
 
+if (is_null($sessionId)){
+	$_SESSION['unlimited_images'] = false;
+	$limit = 100;
+}
+elseif ($sessionId=='-1' || !empty($_SESSION['unlimited_images'])){
+	$limit = 0;
+	$_SESSION['unlimited_images'] = true;
+}
+else  $limit = 100;
+
 // --- Set sessionId
 $lastId = $leginondata->getLastSessionId();
 $sessionId = (empty($sessionId)) ? $lastId : $sessionId;
@@ -34,6 +44,8 @@ if($projectdb) {
 		$sessionId = $sessions[0]['id'];
 	}
 }
+
+if ( is_numeric(SESSION_LIMIT) && count($sessions) > SESSION_LIMIT) $sessions=array_slice($sessions,0,SESSION_LIMIT);
 
 $jsdata='';
 if ($ptcl) {
@@ -79,7 +91,7 @@ if($projectdb && !empty($sessions)) {
 }
 $viewer->setSessionId($sessionId);
 $viewer->setImageId($imageId);
-$viewer->addSessionSelector($sessions);
+$viewer->addSessionSelector($sessions, $limit);
 $viewer->setScopeId($scopeId);
 $viewer->addScopeSelector($scopes);
 $viewer->addFileSelector($filenames);

@@ -53,6 +53,7 @@ def get_feiadv_sim():
 class FeiCam(ccdcamera.CCDCamera):
 	name = 'FEICAM'
 	camera_name = 'FEI_CAM'
+	intensity_averaged = False
 
 	def __init__(self):
 		self.unsupported = []
@@ -84,6 +85,9 @@ class FeiCam(ccdcamera.CCDCamera):
 				return None
 			return configs[optionname][itemname]
 
+	def getDebugCamera(self):
+		return self.getFeiConfig('debug','all') or self.getFeiConfig('debug','camera')
+
 	def initSettings(self):
 		self.dimension = self.getCameraSize()
 		self.binning = {'x':1, 'y':1}
@@ -107,6 +111,9 @@ class FeiCam(ccdcamera.CCDCamera):
 
 	def getCameraModelName(self):
 		return self.camera_name
+
+	def getIntensityAveraged(self):
+		return self.intensity_averaged
 
 	def setDimension(self, value):
 		self.dimension = value
@@ -268,7 +275,6 @@ class FeiCam(ccdcamera.CCDCamera):
 		else:
 			result=self._getImage()
 			self.csa.Wait()
-			print 'done waiting after acquire'
 			return result
 
 	def _getImage(self):
@@ -278,32 +284,68 @@ class FeiCam(ccdcamera.CCDCamera):
 		try:
 			self.finalizeSetup()
 			self.custom_setup()
-		except:
-			raise
-			raise RuntimeError('Error setting camera acquisition parameters')
+		except Exception, e:
+			if self.getDebugCamera():
+				print 'Camera setup',e
+			raise RuntimeError('Error setting camera parameters: %s' % (e,))
 
 		t0 = time.time()
 
 		#TODO: Check if this is going to be an issue
 		self.csa.Wait()
-		print 'done waiting before acquire'
+		if self.getDebugCamera():
+			print 'done waiting before acquire'
+		retry = False
+		reason = ''
 		try:
 			self.im = self.csa.Acquire()
-			print 'acquire call is back'
 			t1 = time.time()
 			self.exposure_timestamp = (t1 + t0) / 2.0
+		except Exception, e:
+			if self.getDebugCamera():
+				print 'Camera acquire:',e
+				print self.camera_settings.ExposureTime
+			if self.getSaveRawFrames() and 'Timeout' in e.text:
+				# dose fractionation queue may timeout on the server. The next acquisition
+				# is independent enough that we allow it to retry.
+				reason = 'Falcon WaitForImageReady Timeout'
+				retry = True
+			if self.getAlignFrames() and self.getSaveRawFrames() and 'The parameter is incorrect' in e.text:
+				# dose fractionation definition range list is modified by the program.
+				#framecount = self.dfd.Count
+				#for i in range(framecount):
+				#	print '%d,%d' % (self.dfd[i].Begin, self.dfd[i].End)
+				reason='Parameter Correction for internal alignment'
+				retry = True
+			if retry == True:
+				try:
+					self.im = self.csa.Acquire()
+				except Exception, e:
+					raise RuntimeError('Error camera acquiring after retry: %s--%s' % (reason,e,))
+			else:
+				raise RuntimeError('Error camera acquiring: %s' % (e,))
+		try:
 			arr = self.im.AsSafeArray
-		except:
-			raise
-			#raise RuntimeError('Camera Acquisition Error in getting array')
+		except Exception, e:
+			if self.getDebugCamera():
+				print 'Camera array:',e
+			raise RuntimeError('Camera Error in getting array: %s' % (e,))
 		if isinstance(arr,type(None)):
-			print 'No array in memory'
+			if self.getDebugCamera():
+				print 'No array in memory, yet. Try again.'
 			self.csa.Wait()
-			arr = self.im.AsSafeArray
+			try:
+				arr = self.im.AsSafeArray
+			except Exception, e:
+				if self.getDebugCamera():
+					print 'Camera array 2nd try:',e
+				raise RuntimeError('Camera Error in getting array: %s' % (e,))
 		if not SIMULATION:
 			self.image_metadata = self.getMetaDataDict(self.im.MetaData)
 		else:
 			self.image_metadata = {}
+		if self.getDebugCamera():
+			print 'got arr and to modify'
 		arr = self.modifyImage(arr)
 		return arr
 
@@ -313,9 +355,12 @@ class FeiCam(ccdcamera.CCDCamera):
 		try:
 			arr = arr.reshape((self.limit_dim[rk]['y']/self.binning['y'],self.limit_dim[rk]['x']/self.binning['x']))
 		except AttributeError, e:
-			print 'comtypes did not return an numpy 2D array, but %s' % (type(arr))
+			if self.getDebugCamera():
+				print 'comtypes did not return an numpy 2D array, but %s' % (type(arr))
 		except Exception, e:
 			arr = None
+			if self.getDebugCamera():
+				print 'modify array error',e
 			raise
 		#Offset to apply to get back the requested area
 		readout_offset = self.getReadoutOffset(rk, self.offset)
@@ -325,10 +370,12 @@ class FeiCam(ccdcamera.CCDCamera):
 			if self.dimension['y'] < arr.shape[0]:
 				arr=arr[readout_offset['y']:readout_offset['y']+self.dimension['y'],:]
 		except Exception, e:
-			print 'croping %s to offset %s and dim %s failed' %(self.limit_dim, self.readout_offset,self.dimension)
+			if self.getDebugCamera():
+				print 'croping %s to offset %s and dim %s failed' %(self.limit_dim, self.readout_offset,self.dimension)
 			raise
-			arr = None
 		# TO DO: Maybe need to scale ?
+		if SIMULATION and self.getIntensityAveraged():
+			arr = arr / (self.getExposureTime()/1000.0)
 		return arr
 
 	def getMetaDataDict(self,meta_obj):
@@ -389,11 +436,23 @@ class FeiCam(ccdcamera.CCDCamera):
 	def getEnergyFiltered(self):
 		return False
 
+class Ceta(FeiCam):
+	name = 'Ceta'
+	camera_name = 'BM-Ceta'
+	binning_limits = [1,2,4]
+	intensity_averaged = False
+
+	def getSystemGainDarkCorrected(self):
+		return True
+
 class Falcon3(FeiCam):
 	name = 'Falcon3'
 	camera_name = 'BM-Falcon'
 	binning_limits = [1,2,4]
 	electron_counting = False
+	# non-counting Falcon3 is the only camera that returns array aleady averaged by frame
+	# to keep values in more reasonable range.
+	intensity_averaged = True
 
 	def __init__(self):
 		super(Falcon3,self).__init__()
@@ -418,6 +477,7 @@ class Falcon3(FeiCam):
 			self.frameconfig.setBaseFramePath(sub_frame_dir)
 		except:
 			raise
+		self.extra_protector_sleep_time = self.getFeiConfig('camera','extra_protector_sleep_time')
 
 	def setInserted(self, value):
 		super(Falcon3,self).setInserted(value)
@@ -480,16 +540,27 @@ class Falcon3(FeiCam):
 		self.camera_settings.ElectronCounting = value
 
 	def custom_setup(self):
-		print 'is counting: ', self.electron_counting
+		# Default not to align
+		self.camera_settings.AlignImage = False
+		if self.extra_protector_sleep_time:
+			time.sleep(self.extra_protector_sleep_time)
+		if self.getDebugCamera():
+			print 'is counting: ', self.electron_counting
 		self.setElectronCounting(self.electron_counting)
 		self.calculateMovieExposure()
 		movie_exposure_second = self.movie_exposure/1000.0
 		self.camera_settings.ExposureTime = movie_exposure_second
+		if self.save_frames:
+			self.camera_settings.AlignImage = self.align_frames
 		max_nframes = self.camera_settings.CalculateNumberOfFrames()
+		if self.getDebugCamera():
+			print 'n base frames', max_nframes
 		frame_time_second = self.dosefrac_frame_time
 		if self.save_frames:
 			# Use all available frames
 			rangelist = self.frameconfig.makeRangeListFromNumberOfBaseFramesAndFrameTime(max_nframes,frame_time_second)
+			if self.getDebugCamera():
+				print 'rangelist', rangelist
 			if rangelist:
 				# modify frame time in case of uneven bins
 				self.dosefrac_frame_time = movie_exposure_second / len(rangelist)
@@ -522,8 +593,15 @@ class Falcon3(FeiCam):
 		nframes = self.getNumberOfFrames()
 		return tuple(range(nframes))
 
+	def setAlignFrames(self, value):
+		self.align_frames = bool(value)
+
+	def getAlignFrames(self):
+		return self.align_frames
+
 class Falcon3EC(Falcon3):
 	name = 'Falcon3EC'
 	camera_name = 'BM-Falcon'
 	binning_limits = [1,2,4]
 	electron_counting = True
+	intensity_averaged = False

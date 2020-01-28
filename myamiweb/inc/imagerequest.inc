@@ -48,7 +48,7 @@ class imageRequester {
 	}
 
 	function requestInfo($filepath,$frame=0) {
-		if (empty($filepath) || !is_file($filepath)) return false;
+		//Let redux find info even if from imcache dir
 		$redux = new redux($filepath, 'JSON');
 		$redux->setFrameValue($frame);
 		$redux->setInfo(true);

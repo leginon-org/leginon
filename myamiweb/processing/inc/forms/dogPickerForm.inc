@@ -102,8 +102,11 @@ class DogPickerForm extends MathParticleForm
 		$pathToMaps = Path::join($outdir, $runname, "maps");
 
 		// Fix me, Not the best way to get binning
-		$bin = $_POST['bin'];		
-		if ($_POST['process'] != "Just Show Command") {
+		$bin = $_POST['bin'];
+		$check_str = 'with Job Scheduler';
+		$check_str_len = strlen($check_str);
+		$full_len = strlen($_POST['process']);
+		if ($_POST['process'] && $full_len >= strlen($scheduler_str) && substr_compare($_POST['process'], $check_str, $full_len-$check_str_len, $check_str_len)) {
 			$filePattern = $testjpg."*.jpg";
 			$pathPattern = Path::join($pathToMaps, $filePattern);
 			$dogmaplist = glob($pathPattern);

@@ -19,6 +19,7 @@ import sys
 from pyami import arraystats, imagefun, mrc, ccd
 import polygon
 import time
+import datetime
 import os
 import cameraclient
 
@@ -54,6 +55,7 @@ class Corrector(imagewatcher.ImageWatcher):
 	def __init__(self, name, session, managerlocation, **kwargs):
 		imagewatcher.ImageWatcher.__init__(self, name, session, managerlocation, **kwargs)
 		self.instrument = instrument.Proxy(self.objectservice, self.session, self.panel)
+		self.clock_diff = datetime.timedelta()
 		self.start()
 
 	def retrieveCorrectorImageFromSettings(self, reftype, channel):
@@ -271,17 +273,23 @@ class Corrector(imagewatcher.ImageWatcher):
 					self.logger.warning('Camera host pyscope update recommended')
 					return True
 
-	def hasRecentDarkSaved(self, channel):
-		trip_value = 100 # seconds
+	def getRecentDarkTimeStamp(self, channel):
 		dark = self.retrieveCorrectorImageFromSettings('dark', channel)
-		import datetime
 		if dark:
 			if dark.timestamp is None:
 				# dark image collected just now are in cache and has no timestamp.
 				# Query it from database since retrieveCorrectorImage will use cached if there.
 				dark = leginondata.DarkImageData().direct_query(dark.dbid)
-			# compare timestamps
-			return datetime.datetime.now() - dark.timestamp <= datetime.timedelta(seconds=trip_value)
+			return dark.timestamp
+		return False
+
+	def hasRecentDarkSaved(self, channel):
+		trip_value = 600 # seconds
+		dark_timestamp = self.getRecentDarkTimeStamp(channel)
+		if dark_timestamp:
+		# compare timestamps
+			time_diff = datetime.datetime.now() - dark_timestamp - self.clock_diff
+			return time_diff <= datetime.timedelta(seconds=trip_value)
 		return False
 
 	def requireRecentDarkOnBright(self):
@@ -322,7 +330,13 @@ class Corrector(imagewatcher.ImageWatcher):
 			return None
 		if refimagedata is None:
 			return None
-
+		if typekey == 'dark':
+			dark_timestamp = self.getRecentDarkTimeStamp(channel)
+			try:
+				self.clock_diff = datetime.datetime.now() - dark_timestamp
+			except:
+				self.warning('Can not determine clock difference between database and this machine.  Assume zero')
+				pass
 		refarray = refimagedata['image']
 		if refimagedata is not None and self.needCalcNorm(type):
 			self.logger.info('Got reference image, calculating normalization')
@@ -378,56 +392,6 @@ class Corrector(imagewatcher.ImageWatcher):
 		normdata['dark'] = dark
 		normdata['bright'] = bright
 		self.storeCorrectorImageData(normdata, 'norm', channel)
-
-	def uiAutoAcquireReferences(self):
-		binning = self.autobinning.get()
-		autoexptime = self.autoexptime.get()
-		targetmean = self.autotarget.get()
-		self.autoAcquireReferences(binning, targetmean, autoexptime)
-
-	def autoAcquireReferences(self, binning, targetmean, initial_exp):
-		'''
-		for a given binning, figure out the proper exposure time
-		which gives the desired mean pixel value
-		'''
-		config = {
-			'dimension':{'x':256, 'y':256},
-			'binning':{'x':binning, 'y':binning},
-			'auto offset': True,
-			'exposure time': 0,
-		}
-
-		raise NotImplementedError('need to work out the details of configuring the camera here')
-
-		im = self.acquireCameraImageData(force_no_frames=True)['image']
-		mean = darkmean = arraystats.mean(im)
-		self.displayImage(im)
-		self.logger.info('Dark reference mean: %s' % str(darkmean))
-
-		target_exp = 0
-		trial_exp = initial_exp
-		tolerance = 100
-		minmean = targetmean - tolerance
-		maxmean = targetmean + tolerance
-
-		tries = 5
-		for i in range(tries):
-			config = { 'exposure time': trial_exp }
-			raise NotImplementedError('need to work out the details of configuring the camera here')
-			im = self.acquireCameraImageData(force_no_frames=True)['image']
-			mean = arraystats.mean(im)
-			self.displayImage(im)
-			self.logger.info('Image mean: %s' % str(mean))
-
-			if minmean <= mean <= maxmean:
-				i = -1
-				break
-			else:
-				slope = (mean - darkmean) / trial_exp
-				trial_exp = (targetmean - darkmean) / slope
-
-		if i == tries-1:
-			self.logger.info('Failed to find target mean after %s tries' % (tries,))
 
 	def onAddPoints(self):
 		imageshown = self.currentimage

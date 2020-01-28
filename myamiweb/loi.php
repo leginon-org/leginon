@@ -39,6 +39,8 @@ if($projectdb) {
 	}
 }
 
+if ( is_numeric(SESSION_LIMIT) && count($sessions) > SESSION_LIMIT) $sessions=array_slice($sessions,0,SESSION_LIMIT);
+
 $viewer = new viewer();
 $viewer->setSessionId($sessionId);
 $viewer->setImageId($imageId);
@@ -49,17 +51,20 @@ $viewer->addQueueCountBox();
 
 $javascript = $viewer->getJavascript();
 
-$v=1;
-foreach ($datatypes as $datatype) {
-	$name = "v$v";
-	$title= "View $v";
-	$view = new view($title, $name);
-	$view->displayDeqIcon(true);
-	$view->setDataTypes($datatypes);
-	$view->selectDataType($datatype);
-	$view->setCacheOnly(false);
-	$viewer->add($view);
-	$v++;
+# commenting out the image display since nobody seems to need it anymore
+if (defined('SHOW_LOI_VIEWS') && SHOW_LOI_VIEWS == true) {
+	$v=1;
+	foreach ($datatypes as $datatype) {
+		$name = "v$v";
+		$title= "View $v";
+		$view = new view($title, $name);
+		$view->displayDeqIcon(true);
+		$view->setDataTypes($datatypes);
+		$view->selectDataType($datatype);
+		$view->setCacheOnly(false);
+		$viewer->add($view);
+		$v++;
+	}
 }
 
 $javascript .= $viewer->getJavascriptInit();

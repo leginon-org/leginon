@@ -276,12 +276,23 @@ class dropdown {
 
 function divtitle($title) {
 	$htmlstr = '
-	<div style="padding: 4px; border:1px solid black; background-color:#CCCCFF">
-	<b>'.$title.'</b> 
+	<div style="border-radius: 2px; margin: 2px; padding: 6px; border:2px solid #696969; background-color:#D4E0EE; 
+	 font-family: Helvetica,Arial,sans-serif; font-weight: normal; color: #3F4F4F; font-size: 120%; ">
+	'.$title.'
 	</div>
 	';
 	return $htmlstr;
 }
+
+function opendivbubble() {
+	$htmlstr = '
+	<div style="border-radius: 10px; margin: 10px; padding: 6px; border:2px solid #B9B9B9; background-color:#F8FAFF; 
+	 font-family: Helvetica,Arial,sans-serif; font-weight: normal; color: #3F4F4F; font-size: 100%;
+	 line-height: 150%; ">
+	';
+	return $htmlstr;
+}
+
 
 function getFileSize($filename, $precision, $unit="") {
 	if (!is_file($filename))
@@ -450,8 +461,16 @@ function format_nano_number($data) {
 	return number_format(($data/1e-9), 3,'.','').' nm';
 }
 
+function format_reciprocal_nano_number($data) {
+	return number_format(($data/1e-9), 3,'.','').' nm<sup>-1</sup>';
+}
+
 function format_angstrom_number($data) {
-	return number_format(($data/1e-10), 2,'.','').' &Aring;';
+	return number_format(($data/1e-10), 3,'.','').' &Aring;';
+}
+
+function format_reciprocal_angstrom_number($data) {
+	return number_format(($data/1e-8), 2,'.','').' &Aring;<sup>-1</sup>';
 }
 
 function formatnumber2decimal($number) {

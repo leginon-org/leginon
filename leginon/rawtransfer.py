@@ -3,6 +3,7 @@
 import os
 import sys
 import shutil
+import filecmp
 import subprocess
 import time
 import numpy
@@ -12,9 +13,10 @@ import pyami.fileutil, pyami.mrc
 
 next_time_start = 0
 mtime = 0
-time_expire = 300  # ignore anything older than 5 minutes
-expired_names = {} # directories that should not be transferred
+query_day_limit = 10 # ignore database query for older dates
+expired_names = ['.DS_Store',] # files that should not be transferred
 check_interval = 20  # seconds between checking for new frames
+max_image_query_delay = 1200 # seconds before an image query by CameraEMData.'frames name' should be queryable. Need to account for difference in the clocks of the camera computer and where this script is running.
 
 class RawTransfer(object):
 	def __init__(self):
@@ -57,7 +59,11 @@ class RawTransfer(object):
 			help="Camera computer hostname in leginondb, e.g. --camera_host=gatank2")
 		parser.add_option("--destination_head", dest="dest_path_head",
 			help="Specific head destination frame path to transfer if multiple frame transfer is run for one source to frame paths not all mounted on the same computer, e.g. --destination_head=/data1", metavar="PATH", default='')
+		parser.add_option("--path_mode", dest="mode_str", 
+			help="recursive session permission modification by chmod if specified, default means not to modify e.g. --path_mode=g-w,o-rw")
 		parser.add_option("--check_interval", dest="check_interval", help="Seconds between checking for new frames", type="int", default=check_interval)
+		parser.add_option("--check_days", dest="check_days", help="Number of days to query database", type="int", default=query_day_limit)
+		parser.add_option("--cleanup_delay_minutes", dest="cleanup_delay_minutes", help="Delay non-database recorded images clean up by this. default is 20 min", type="float", default=max_image_query_delay/60.0)
 
 		# parsing options
 		(options, optargs) = parser.parse_args(sys.argv[1:])
@@ -96,12 +102,14 @@ class RawTransfer(object):
 		return self.getAndValidatePath('dest_path_head')
 
 	def query_image_by_frames_name(self,name,cam_host):
+		# speed up query by adding time limit Issue #6127
+		time_limit = '-%d 0:0:0' % self.params['check_days']
 		qccd = leginon.leginondata.InstrumentData(hostname=cam_host)
 		qcam = leginon.leginondata.CameraEMData(ccdcamera=qccd)
 		qcam['frames name'] = name
 		for cls in self.image_classes:
 			qim = cls(camera=qcam)
-			results = qim.query()
+			results = qim.query(timelimit=time_limit)
 			if results:
 				if len(results) > 1:
 					# fix for issue #3967. Not to work on the aligned images
@@ -113,6 +121,23 @@ class RawTransfer(object):
 					# If there is just one, transfer regardlessly.
 					return results[0]
 		return None
+
+	def isRecentCreation(self,path):
+		'''
+		This is called after a file is not found in the database CameraEMData.
+		A created frames should be recorded in the database in seconds.
+		If not, it is a rouge one and should not be kept for more checking
+		since too much checking slow the workflow down.
+		The default time is 20 minutes now and is much longer than it needs to.
+		But if the Windows and Linux clocks are not synced, it will appears to
+		be longer.
+		'''
+		ctime = os.path.getctime(path)
+		t0 = time.time()
+		is_recent =  t0 - ctime <= self.params['cleanup_delay_minutes']*60
+		if not is_recent:
+			print 'File was created %d minutes ago. Should be in database by now if ever.' % (int((t0-ctime)/60),)
+		return is_recent
 
 	def removeEmptyFolders(self,path):
 		if not os.path.isdir(path):
@@ -139,6 +164,7 @@ class RawTransfer(object):
 			# remove empty .frames dir from source
 			# does not work on Windows
 			abspath = os.path.abspath(src)
+			print 'clean up %s from linux' % (abspath)
 			dirpath,basename = os.path.split(abspath)
 			if os.path.isdir(src):
 				cmd = 'find %s -type d -empty -prune -exec rmdir --ignore-fail-on-non-empty -p \{\} \;' % (basename,)
@@ -151,9 +177,14 @@ class RawTransfer(object):
 				cmd = 'rm -f %s' % abspath
 				print cmd
 				p = subprocess.Popen(cmd, shell=True, cwd=dirpath)
+				p.wait()
 
 		else:
-			self.removeEmptyFolders(os.path.abspath(src))
+			if os.path.isfile(src):
+				print 'os.remove(%s)' % src
+				os.remove(src)
+			else:
+				self.removeEmptyFolders(os.path.abspath(src))
 
 	def copy_and_delete(self,src, dst):
 		'''
@@ -202,7 +233,15 @@ class RawTransfer(object):
 			p = subprocess.Popen(cmd, shell=True)
 			p.wait()
 
-	def transfer(self, src, dst, uid, gid, method):
+	def changeMode(self,path,mode_str='g-w,o-rw'):
+		if not self.is_win32:
+			# only works on linux
+			cmd = 'chmod -R %s %s' % (mode_str, path)
+			print cmd
+			p = subprocess.Popen(cmd, shell=True)
+			p.wait()
+
+	def transfer(self, src, dst, uid, gid, method, mode_str):
 		'''
 		This function at minimal organize and rename the time-stamped file
 		to match the Leginon session and integrated image.  If the source is
@@ -221,6 +260,8 @@ class RawTransfer(object):
 		self._transfer(src,dst,method)
 
 		self.changeOwnership(uid,gid,sessionpath)
+		if mode_str:
+			self.changeMode(sessionpath, mode_str)
 
 		self.cleanUp(src,method)
 
@@ -239,9 +280,8 @@ class RawTransfer(object):
 			frames_path = leginon.ddinfo.getRawFrameSessionPathFromSessionPath(image_path)
 		return frames_path
 
-	def run_once(self,parent_src_path,cam_host,dest_head,method):
+	def run_once(self,parent_src_path,cam_host,dest_head,method,mode_str):
 		global next_time_start
-		global time_expire
 		global mtime
 		names = os.listdir(parent_src_path)
 		time.sleep(10)  # wait for any current writes to finish
@@ -249,21 +289,30 @@ class RawTransfer(object):
 		for name in names:
 			src_path = os.path.join(parent_src_path, name)
 			_, ext = os.path.splitext(name)
+			# skip expired dirs, mrcs
+			if name in expired_names:
+				continue
+			print '**checking', src_path
+			# check access instead of wait for files to write. Speeds up interval
+			try:
+				if not os.access(src_path, os.R_OK):
+					print 'not ready. Deferring to next iteration'
+					continue
+			except Exception as e:
+					# There maybe other reason for it to fail.
+					print 'error checking access: %s' % e
+					continue
 			## skip empty directories
 			if os.path.isdir(src_path) and not os.listdir(src_path):
 				# maybe delete empty dir too?
 				continue
 
-			# skip expired dirs, mrcs
-			if name in expired_names:
-				continue
 			# ignore irrelevent source files or folders
-			# gatan k2 summit data ends with '.mrc'
+			# gatan k2 summit data ends with '.mrc' or 'tif'
 			# de folder starts with '20'
 			# falcon mrchack stacks ends with '.mrcs'
-			if not ext.startswith('.mrc') and  ext != '.frames' and not name.startswith('20'):
+			if not ext.startswith('.mrc') and ext != 'tif' and  ext != '.frames' and not name.startswith('20'):
 				continue
-			print '**running', src_path
 
 			# adjust next expiration timer to most recent time
 			if mtime > next_time_start:
@@ -274,14 +323,24 @@ class RawTransfer(object):
 				ext_len = len(ext)
 				frames_name = name[:-ext_len]
 				dst_suffix = '.frames.mrc'
+			elif ext.startswith('.tif'):
+				# tiff format
+				ext_len = len(ext)
+				frames_name = name[:-ext_len]
+				dst_suffix = '.frames.tif'
 			else:
 				frames_name = name
 				dst_suffix = '.frames'
 				## ensure a trailing / on directory
-				if src_path[-1] != os.sep:
+				if os.path.isdir(src_path) and src_path[-1] != os.sep:
 					src_path = src_path + os.sep
 			imdata = self.query_image_by_frames_name(frames_name,cam_host)
 			if imdata is None:
+				print '%s not from a saved image' % (frames_name)
+				# TODO sometimes this query happens before the imagedata is queriable.
+				# Need to have a delay before remove.
+				if not self.isRecentCreation(src_path):
+					self.cleanUp(src_path,method)
 				continue
 			image_path = imdata['session']['image path']
 			frames_path = self.getSessionFramePath(imdata)
@@ -291,6 +350,7 @@ class RawTransfer(object):
 				print '    Destination frame path does not starts with %s. Skipped' % (dest_head)
 				continue
 
+			print '**running', src_path
 			if self.refcopy:
 				self.refcopy.setFrameDir(frames_path)
 
@@ -317,19 +377,25 @@ class RawTransfer(object):
 			# skip  and clean up finished ones. Needed when the
 			# destination user lost write privilege temporarily.
 			if os.path.exists(dst_path):
-				# TO DO ? Probably should check size
-				print 'Destination path %s exists, cleaning up' % dst_path
-				self.cleanUp(src_path,method)
-				return
+				if os.path.isfile(dst_path):
+					# check files to be identical.
+					if filecmp.cmp(src_path, dst_path):
+						print 'Destination path %s is good, cleaning up source' % dst_path
+						os.remove(src_path)
+						return
+					else:
+						print 'Destination path %s not good, redo transfer' % dst_path
+						self.cleanUp(dst_path,method)
+				#TODO: directory ?
 			# do actual copy and delete
-			self.transfer(src_path, dst_path, uid, gid,method)
+			self.transfer(src_path, dst_path, uid, gid, method, mode_str)
 			# de only
 			leginon.ddinfo.saveImageDDinfoToDatabase(imdata,os.path.join(dst_path,'info.txt'))
 			# falcon3 only, xml file transfer
 			xml_src_path = src_path.replace('mrc','xml')
 			xml_dst_path = dst_path.replace('mrc','xml')
 			if os.path.exists(xml_src_path):
-				self.transfer(xml_src_path, xml_dst_path, uid, gid,method)
+				self.transfer(xml_src_path, xml_dst_path, uid, gid, method, mode_str)
 
 	def run(self):
 		self.params = self.parseParams()
@@ -340,7 +406,7 @@ class RawTransfer(object):
 			print "Limit processing to destination frame path started with %s" % (dst_head)
 		while True:
 			print 'Iterating...'
-			self.run_once(src_path,self.params['camera_host'],dst_head,method=self.params['method'])
+			self.run_once(src_path,self.params['camera_host'],dst_head,method=self.params['method'], mode_str=self.params['mode_str'])
 			print 'Sleeping...'
 			time.sleep(check_interval)
 

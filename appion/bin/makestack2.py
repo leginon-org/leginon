@@ -82,7 +82,11 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 
 			# get original micrograph & ctfimage
 			rel_line = "micrographs/%s "%(imgdata['filename']+".mrc")
-			dstep = imgdata['camera']['pixel size']['x']*1e6
+			try:
+				dstep = imgdata['camera']['pixel size']['x']*1e6
+			except:
+				apDisplay.printWarning('can not get dstep from image for star file. Use 5 um') 
+				dstep = 5.0
 			mag = dstep/self.params['apix']*1e4
 			rel_line+= "%13.6f%13.6f"%(mag,dstep)
 
@@ -837,7 +841,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		if len(imgstackmemmap.shape) < 3:
 			imgstackmemmap = imgstackmemmap.reshape(1, imgstackmemmap.shape[0], imgstackmemmap.shape[1])
 		if self.params['debug'] is True:
-			print "imgstackmemmap.shape", imgstackmemmap.shape
+			apDisplay.printMsg("imgstackmemmap.shape %s"%imgstackmemmap.shape)
 		apix = self.params['apix'] #apDatabase.getPixelSize(imgdata)
 
 		boxshape = (self.boxsize, self.boxsize)
@@ -1272,7 +1276,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			labels = apRelion.getStarFileColumnLabels(rootname+".star")
 			for line in open(rootname+".star"):
 				l = line.strip().split()
-				if len(l)<3: continue
+				if (len(l)<3 or line.startswith("#")): continue
 				dpixsize = float(l[labels.index("_rlnDetectorPixelSize")])
 				mag = float(l[labels.index("_rlnMagnification")])
 				apix = dpixsize/mag*1e4
@@ -1289,11 +1293,11 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 				f = open(rootname+".star",'w')
 				for line in open(rootname+".backup.star"):
 					l = line.strip().split()
-					if len(l)<3:
+					if (len(l)<3 or line.startswith("#")):
 						f.write(line)
 						continue
 					for i in range(len(labels)):
-						if i>0 and i<(len(labels)-1): f.write(" ")
+						if i>0 and i<(len(labels)): f.write(" ")
 						if labels[i] in ("_rlnMicrographName","_rlnImageName"):
 							f.write(l[i])
 						elif labels[i] == "_rlnDetectorPixelSize":

@@ -68,6 +68,8 @@ class Node(correctorclient.CorrectorClient):
 		self.name = name
 		self.this_node = None
 		self.panel = panel
+		self.node_status = 'idle'
+		self.before_pause_node_status = 'idle'
 		self.tem_hostname = ''
 		
 		self.initializeLogger()
@@ -171,10 +173,17 @@ class Node(correctorclient.CorrectorClient):
 			del self.settings['session']
 			del self.settings['name']
 
+		# get current admin settings
+		admin_settings = self.getDBAdminSettings(self.settingsclass, self.name)
+
 		# check if None in any fields
 		for key,value in self.settings.items():
 			if value is None:
-				if key in self.defaultsettings:
+				if key in admin_settings and admin_settings[key] is not None:
+					# use current admin settings if possible
+					self.settings[key] = copy.deepcopy(admin_settings[key])
+				elif key in self.defaultsettings:
+					# use default value of the node
 					self.settings[key] = copy.deepcopy(self.defaultsettings[key])
 
 	def reseachDBSettings(self, settingsclass, inst_alias, user=None):
@@ -184,12 +193,26 @@ class Node(correctorclient.CorrectorClient):
 		qsession = leginondata.SessionData(initializer={'user': user})
 		qdata = settingsclass(initializer={'session': qsession,
 																						'name': inst_alias})
-		settings = self.research(qdata, results=1)
+		settings_list = self.research(qdata, results=1)
 		# if that failed, try to load default settings from DB
-		if not settings:
-			qdata = settingsclass(initializer={'isdefault': True, 'name': self.name})
-			settings = self.research(qdata, results=1)
-		return settings
+		if not settings_list:
+			# try admin settings.
+			settings = self.getDBAdminSettings(settingsclass, inst_alias)
+			if settings:
+				settings_list = [settings,]
+		return settings_list
+
+	def getDBAdminSettings(self, settingsclass, inst_alias):
+		"""
+		Get one administrator settings for the node instance.
+		Returns empty dictionary if not found.
+		"""
+		admin_settings = {}
+		qdata = settingsclass(initializer={'isdefault': True, 'name': inst_alias})
+		results = self.research(qdata, results=1)
+		if results:
+			admin_settings = results[0]
+		return admin_settings
 
 	def loadSettingsByID(self, id):
 		if not hasattr(self, 'settingsclass'):
@@ -524,6 +547,9 @@ class Node(correctorclient.CorrectorClient):
 		self.beep()
 
 	def setStatus(self, status):
+		if status == 'user input':
+			self.before_pause_node_status = copy.copy(self.node_status)
+		self.node_status = status
 		self.panel.setStatus(status)
 
 	def declareDrift(self, type):

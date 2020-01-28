@@ -269,6 +269,20 @@ if (is_numeric($expId)) {
 		'newrun' => array($nruns, $celloption),
 	);
 
+	/* Topaz Denoiser */
+	$action = "Denoiser";
+	$nruns=array();
+	$nruns[] = array(
+			'name'=>"<a href='runAppionLoop.php?expId=$sessionId&form=topazDenoiser'>Topaz Denoiser</a>",
+	);
+	
+	$data[] = array(
+			'action' => array($action, $celloption),
+			'newrun' => array($nruns, $celloption),
+	);
+	
+	
+	
 	/*
 	**
 	** Object selection
@@ -915,6 +929,10 @@ if (is_numeric($expId)) {
 	$nruns[] = array(
 		'name'=>"<a href='uploadimage.php?expId=$sessionId'>Upload more images</a>",
 	);
+	} else {
+	$nruns[] = array(
+		'name'=>"<a href='uploadimage.php?expId=$sessionId'>Upload images</a>",
+	);
 	}
 
 	$nruns[] = array(
@@ -959,6 +977,17 @@ if (is_numeric($expId)) {
 		'name'=>"<a href='uploadmodel.php?expId=$sessionId'>Upload model</a>",
 		'result'=>$result,
 	);
+	
+	if (defined("CRYOSPARC")) {
+	    $jobs = $particle->getCryosparcJobs($sessionId);
+	    $result = (!$jobs) ? "" :
+	    "<a href='cryosparc.php?expId=$sessionId'>".count($jobs)." available</a>";
+	    $nruns[] = array(
+	        'name'=>"<a href='cryosparc.php?expId=$sessionId'>cryoSPARC</a>",
+	        'result'=>$result,
+	    );
+	    
+	}
 
 	$data[] = array(
 		'action' => array($action, $celloption),

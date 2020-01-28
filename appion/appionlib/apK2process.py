@@ -16,6 +16,7 @@ class GatanK2Processing(apDDprocess.DDFrameProcessing):
 	def __init__(self,wait_for_new=False):
 		super(GatanK2Processing,self).__init__(wait_for_new)
 		self.setDefaultDimension(3710,3838)
+		self.rawframetype = 'stack'
 		self.correct_dark_gain = True
 		self.correct_frame_mask = False
 		
@@ -39,16 +40,15 @@ class GatanK2Processing(apDDprocess.DDFrameProcessing):
 		RawFrameDir here is actually the filename with mrc extension.
 		'''
 		if self.getRawFrameType() == 'singles':
-			print 'singles'
 			# back compatibility pre-3.0
 			return super(GatanK2Processing,self).getRawFrameDirFromImage(imagedata)
-		# strip off DOS path in rawframe directory name if included
-		rawframename = imagedata['camera']['frames name'].split('\\')[-1]
-		if not rawframename:
+		# check if frames are saved
+		save_frames = imagedata['camera']['save frames']
+		if not save_frames:
 			apDisplay.printWarning('No Raw Frame Saved for %s' % imagedata['filename'])
 		session_frame_path = self.getSessionFramePathFromImage(imagedata)
 		# frame stackfile is image filename plus '.frames.mrc'
-		rawframedir = os.path.join(session_frame_path,'%s.frames.mrc' % imagedata['filename'])
+		rawframedir = os.path.join(session_frame_path,'%s.frames.%s' % (imagedata['filename'],self.extname))
 		if not self.waitForPathExist(rawframedir,30):
 			apDisplay.printError('Raw Frame Dir %s does not exist.' % rawframedir)
 		apDisplay.printMsg('K2 Raw Frame Dir from image is %s' % (rawframedir,))
@@ -63,8 +63,12 @@ class GatanK2Processing(apDDprocess.DDFrameProcessing):
 		'''
 		Load from rawframe_path (a stack file) the chosen frame of the current image.
 		'''
+		if self.extname == 'tif':
+			from pyami.numpil import tiff2numpy_array
+			return tiff2numpy_array(rawframe_path,frame_number)
 		try:
-			bin = self.camerainfo['binning']
+			# the frames are binned too now ?
+			bin = {'x':1,'y':1}
 			offset = self.camerainfo['offset']
 			dimension = self.camerainfo['dimension']
 		except:
@@ -166,6 +170,10 @@ class GatanK2Processing(apDDprocess.DDFrameProcessing):
 			refdata = self.c_client.researchCorrectorImageData(reftype, scopedata, self.camerainfo, channel)
 		return refdata
 
+class GatanK3Processing(GatanK2Processing):
+	def __init__(self,wait_for_new=False):
+		super(GatanK3Processing,self).__init__(wait_for_new)
+		self.setDefaultDimension(8184,11520)
 
 if __name__ == '__main__':
         dd = GatanK2Processing()

@@ -779,6 +779,20 @@ class DoseDialog(leginon.gui.wx.Dialog.Dialog):
 		szmatch.Add(label, (0, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL )
 		self.sz.Add(szmatch, (1,0),(1,1), wx.ALIGN_RIGHT)
 
+		# set with camera dose rate
+		szcdr = wx.GridBagSizer(5, 5)
+		self.bcdr_set = wx.Button(self, -1, 'Set')
+		self.bcdr_set.Enable(True)
+		szcdr.Add(self.bcdr_set,(0,0),(1,1), wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'with camera value of ')
+		szcdr.Add(label, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL )
+		self.cdr_value = FloatEntry(self, -1, min=0,value='1', chars=5)
+		szcdr.Add(self.cdr_value, (0, 2), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'e/unbinned_pixel/s')
+		szcdr.Add(label, (0, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL )
+		self.sz.Add(szcdr, (2,0),(1,1), wx.ALIGN_RIGHT)
+
 		self.szbuttons.Add(self.doselabel, (0, 0), (1, 1),
 								wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 		bsave = wx.Button(self, wx.ID_OK, 'YES')
@@ -794,6 +808,7 @@ class DoseDialog(leginon.gui.wx.Dialog.Dialog):
 								wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 
 		self.Bind(wx.EVT_BUTTON, self.onMatchDose, self.bmatch)
+		self.Bind(wx.EVT_BUTTON, self.onSetCameraDoseRate, self.bcdr_set)
 		self.Bind(wx.EVT_BUTTON, self.onCancel, bcancel)
 		self.Bind(wx.EVT_CLOSE, self.onCancel)
 
@@ -824,6 +839,12 @@ class DoseDialog(leginon.gui.wx.Dialog.Dialog):
 	def onMatchDose(self,evt):
 		dose_to_match = self.dose_to_match.GetValue()
 		self.parent.onMatchDose(dose_to_match * 1e20,self.doses[0])
+
+	def onSetCameraDoseRate(self,evt):
+		camera_dose_rate = self.cdr_value.GetValue() # electron pre pixel pre second
+		if 'mean' in self.image.stats.keys():
+			mean = self.image.stats['mean']
+			self.parent.onSetCameraDoseRate(camera_dose_rate, mean)
 
 	def onCancel(self,evt):
 		self.parent.onCancelDoseMeasure()
@@ -958,6 +979,10 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 	def onMatchDose(self, dose_to_match, dose):
 		presetname = self.presets.getSelectedPreset()
 		self.node.matchDose(presetname, dose_to_match, dose)	
+
+	def onSetCameraDoseRate(self, camera_dose_rate, image_mean):
+		presetname = self.presets.getSelectedPreset()
+		self.node.calcDoseFromCameraDoseRate(presetname, camera_dose_rate, image_mean)	
 
 	def onCancelDoseMeasure(self):
 		presetname = self.presets.getSelectedPreset()
@@ -1166,7 +1191,6 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		self.widgets['pause time'] = FloatEntry(self, -1, min=0.0, chars=4)
-		self.widgets['idle minute'] = FloatEntry(self, -1, min=0.0, chars=4)
 #		self.widgets['xy only'] = wx.CheckBox(self, -1,
 #																					'Move stage x and y axes only')
 #		self.widgets['stage always'] = wx.CheckBox(self, -1,
@@ -1185,25 +1209,27 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.widgets['smallsize'] = IntEntry(self, -1, chars=6)
 		szsmallsize.Add(smallsizelab)
 		szsmallsize.Add(self.widgets['smallsize'])
-
+		self.widgets['idle minute'] = FloatEntry(self, -1, min=0.0, chars=4)
+		# complex sizers
 		szpausetime = self.createPauseTimeSizer()
+		szidleminute = self.createIdleMinuteSizer()
 
-		szidletime = self.createIdleMinuteSizer()
 #		sz.Add(self.widgets['xy only'], (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 #		sz.Add(self.widgets['stage always'], (1, 0), (1, 1),
 #						wx.ALIGN_CENTER_VERTICAL)
 		sz = wx.GridBagSizer(5, 10)
 		sz.Add(szpausetime, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(szidletime, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['cycle'], (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['optimize cycle'], (3, 0), (1, 1),
+		sz.Add(self.widgets['cycle'], (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['optimize cycle'], (2, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['import random'], (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['mag only'], (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['apply offset'], (6, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['blank'], (7, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(szsmallsize, (8, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['disable stage for image shift'], (9, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['import random'], (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['mag only'], (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['apply offset'], (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['blank'], (6, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(szsmallsize, (7, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['disable stage for image shift'], (8, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(wx.StaticLine(self,-1),(9,0),(1,1), wx.EXPAND|wx.TOP|wx.BOTTOM)
+		sz.Add(szidleminute, (10, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		sbsz.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
 
@@ -1220,14 +1246,14 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		return szpausetime
 
 	def createIdleMinuteSizer(self):
-		szpausetime = wx.GridBagSizer(5, 5)
-		label = wx.StaticText(self, -1, 'Wait for')
-		szpausetime.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szpausetime.Add(self.widgets['idle minute'], (0, 1), (1, 1),
+		szidle = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Wait')
+		szidle.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szidle.Add(self.widgets['idle minute'], (0, 1), (1, 1),
 										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		label = wx.StaticText(self, -1, 'minutes before instrument idle time out')
-		szpausetime.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		return szpausetime
+		label = wx.StaticText(self, -1, 'minutes before declaring idle timeout')
+		szidle.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		return szidle
 
 class NewDialog(wx.Dialog):
 	def __init__(self, parent, node):
@@ -1668,6 +1694,9 @@ class ImportDialog(wx.Dialog):
 			q = leginon.leginondata.PresetData(session=sessiondata,name=presetname)
 			newestpreset = q.query(results=1)[0]
 			if newestpreset['tem'].dbid not in tems:
+				# Diffraction tem is not considered
+				if 'Diffr' in newestpreset['tem']['name']:
+					continue
 				if len(tems) < 1:
 					tems.append(newestpreset['tem'].dbid)
 				else:
@@ -1741,6 +1770,7 @@ class Parameters(wx.StaticBoxSizer):
 			('binning', 'Binning:'),
 			('exposure time', 'Exposure time (ms):'),
 			('save frames', 'Save raw frames:'),
+			#('use cds', 'Use CDS (K3):'),
 			('dose', 'Dose (e/A^2):'),
 			('pre exposure', 'Pre-Exposure (s):'),
 			('skip', 'Skip when cycling:'),

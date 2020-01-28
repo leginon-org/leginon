@@ -31,7 +31,9 @@ class TEMController(node.Node):
 	}
 	eventinputs = node.Node.eventinputs + presets.PresetsClient.eventinputs
 	eventinputs.append(event.LoadAutoLoaderGridEvent)
-	eventoutputs = node.Node.eventoutputs + presets.PresetsClient.eventoutputs
+	eventoutputs = node.Node.eventoutputs + presets.PresetsClient.eventoutputs \
+									+ [event.ManagerPauseEvent, event.ManagerContinueEvent,
+										]
 
 	def __init__(self, id, session, managerlocation, **kwargs):
 		node.Node.__init__(self, id, session, managerlocation, **kwargs)
@@ -132,6 +134,7 @@ class TEMController(node.Node):
 			return False
 
 	def uiOpenColumnValve(self):
+		self.uiContinue()
 		self.setStatus('processing')
 		self.safeOpenColumnValve()
 		self.panel.setTEMParamDone()
@@ -169,7 +172,7 @@ class TEMController(node.Node):
 		if not self.instrument.tem:
 			self.logger.error('No instrument set. Send a preset first')
 			return False
-		if self.instrument.tem.DiffractionMode != 'imaging':
+		if self.instrument.tem.ProjectionMode != 'imaging':
 			self.logger.error('Presets are mapped to imaging mode only. Set on scope gui to imaging mode first')
 			return False
 		return True
@@ -376,9 +379,9 @@ class TEMController(node.Node):
 		self.panel.setTEMParamDone()
 		return is_success
 
-	def getApertureNames(self):
+	def getApertureNames(self,mechanism):
 		try:
-			names = self.instrument.tem.getApertureSelections('objective')
+			names = self.instrument.tem.getApertureSelections(mechanism)
 		except:
 			names = []
 		return names
@@ -391,21 +394,24 @@ class TEMController(node.Node):
 			unit = ''
 		return unit
 
-	def selectObjAperture(self,name):
+	def selectAperture(self,mechanism, name):
 		unit = self.getApertureNameUnit(name)
-		self.logger.info('Changing objective aperture to %s %s' % (name,unit))
+		self.logger.info('Changing %s aperture to %s %s' % (mechanism,name,unit))
 		is_success = False
 		try:
-			self.instrument.tem.setApertureSelection('objective',name)
+			self.instrument.tem.setApertureSelection(mechanism,name)
 			is_success = True
 		except Exception, e:
 			self.logger.error(e)
 		if is_success == True:
-			self.logger.info('Objective aperture changed to %s %s' % (name,unit))
+			self.logger.info('%s aperture changed to %s %s' % (mechanism,name,unit))
 		self.panel.setTEMParamDone()
 
 	def getApertureMechanisms(self):
-		return self.instrument.tem.getApertureMechanisms()
+		try:
+			return self.instrument.tem.getApertureMechanisms()
+		except:
+			return []
 
 	def getApertureStatesToDisplay(self):
 		names = self.getApertureMechanisms()
@@ -427,7 +433,22 @@ class TEMController(node.Node):
 			name_states[name] = state
 		return name_states
 
+	def uiPause(self):
+		'''
+		Pause all acquisition class nodes that are not idle.
+		'''
+		self.logger.info('Pausing workflow')
+		self.outputEvent(event.ManagerPauseEvent())
 
+	def uiContinue(self):
+		'''
+		Continue all paused acquisition class nodes.  This should
+		only be used if all pauses are ok to continue.
+		'''
+		self.logger.info('Continuing workflow')
+		# Send the event to manager to continue all paused nodes.
+		self.outputEvent(event.ManagerContinueEvent(all=True))
+		
 if __name__ == '__main__':
 	id = ('navigator',)
 	n = Navigator(id, None)

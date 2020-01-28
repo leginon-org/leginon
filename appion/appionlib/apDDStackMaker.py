@@ -81,12 +81,14 @@ class FrameStackLoop(apDDLoop.DDStackLoop):
 		self.dd.setCycleReferenceChannels(self.params['cyclechannels'])
 		self.dd.clip=self.params['clip']
 		self.first_image = True
+		self.dd.last_correct_dark_gain = None
+		self.last_correct_dark_gain = None
 		if self.params['override_db'] is True:
 			self.dd.override_db = True
 			self.dd.badcols = [int(n) for n in self.params['bad_cols'].split(',')]
 			self.dd.badrows = [int(n) for n in self.params['bad_rows'].split(',')]
 			self.dd.flipgain = self.params['flipgain']
-			
+
 		# specification that is not default
 		if self.params['framepath']:
 			self.dd.setForcedFrameSessionPath(self.params['framepath'])
@@ -113,6 +115,7 @@ class FrameStackLoop(apDDLoop.DDStackLoop):
 			return
 
 		### set processing image
+		self.dd.last_correct_dark_gain = self.last_correct_dark_gain
 		try:
 			self.dd.setImageData(imgdata)
 		except Exception, e:
@@ -138,7 +141,7 @@ class FrameStackLoop(apDDLoop.DDStackLoop):
 		apDisplay.printColor('frame stack path are cleaned up before start', 'blue')
 
 		if not self.isUseFrameAlignerFlat():
-			apDisplay.printError('frame flip debug: Should be set to use frame aligner flat')
+			apDisplay.printWarning('frame flip debug: Set to gain/dark correct each frame')
 			### make stack named as self.dd.tempframestackpath
 			self.dd.makeCorrectedFrameStack(self.params['rawarea'])
 		else:
@@ -156,6 +159,7 @@ class FrameStackLoop(apDDLoop.DDStackLoop):
 		if self.params['commit']:
 			self.postProcessOriginalFrames(imgdata)
 			self.postProcessReferences(imgdata)
+		self.last_correct_dark_gain = bool(self.dd.correct_dark_gain)
 
 	def	getUseBufferFromImage(self, imgdata):
 		db_use_buffer = ddinfo.getUseBufferFromImage(imgdata)

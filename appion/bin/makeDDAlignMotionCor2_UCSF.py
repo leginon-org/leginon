@@ -42,8 +42,11 @@ class MotionCor2UCSFAlignStackLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop)
 		self.parser.add_option("--MaskSizerows",dest="MaskSizerows",metavar="#",type=float,default="1.0",
 			help="The Y size of subarea that will be used for alignment, default 1.0 corresponding full size.")
 
-		self.parser.add_option("--Bft",dest="Bft",metavar="#",type=float,default=100,
-                        help=" B-Factor for alignment, default 100.")
+		self.parser.add_option("--Bft_global",dest="Bft_global",metavar="#",type=float,default=500.0,
+                        help=" Global B-Factor for alignment, default 500.0.")
+
+		self.parser.add_option("--Bft_local",dest="Bft_local",metavar="#",type=float,default=150.0,
+                        help=" Global B-Factor for alignment, default 150.0.")
 
 		self.parser.add_option("--force_cpu_flat", dest="force_cpu_flat", default=False,
 			action="store_true", help="Use cpu to make frame flat field corrrection")
@@ -69,9 +72,9 @@ class MotionCor2UCSFAlignStackLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop)
 		return bintext
 
 	def isUseFrameAlignerFlat(self):
-		has_bad_pixels =  self.dd.hasBadPixels()
+		has_bad_pixels = False
 		is_align = self.isAlign()
-		has_non_zero_dark = self.dd.hasNonZeroDark()
+		has_non_zero_dark = False
 		apDisplay.printMsg('frame flip debug: has_bad_pixel %s, is_align %s, has_non_zero_dark %s' % (has_bad_pixels, is_align, has_non_zero_dark))
 		if has_bad_pixels or not is_align or has_non_zero_dark:
 			self.dd.setUseFrameAlignerFlat(False)
@@ -111,6 +114,12 @@ class MotionCor2UCSFAlignStackLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop)
 			self.dd.setUseFrameAlignerRotate(frame_rotate)
 			self.framealigner.setGainYFlip(frame_flip)
 			self.framealigner.setGainRotate(frame_rotate)
+			if self.dd.hasBadPixels():
+				# defect handling
+				# defect map here needs to be of the orientation of the frames
+				self.dd.makeModifiedDefectMrc()
+				modified_defect_map_path = self.dd.getModifiedDefectMrcPath()
+				self.framealigner.setDefectMapCmd(modified_defect_map_path)
 		else:
 			self.dd.setUseFrameAlignerYFlip(False)
 			self.dd.setUseFrameAlignerRotate(0)

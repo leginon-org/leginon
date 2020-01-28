@@ -9,6 +9,8 @@ import math
 import tem
 import threading
 import time
+import json
+import os
 
 import itertools
 
@@ -18,9 +20,11 @@ except:
 	nidaq = None
 
 simu_autofiller = False
+STAGE_DEBUG = False
 
 class SimTEM(tem.TEM):
 	name = 'SimTEM'
+	projection_mode = 'imaging'
 	def __init__(self):
 		tem.TEM.__init__(self)
 
@@ -43,6 +47,9 @@ class SimTEM(tem.TEM):
 		]
 		self.probe_mode_index = 0
 
+		self.correctedstage = False
+		self.corrected_alpha_stage = False
+		self.alpha_backlash_delta = 3.0
 		self.stage_axes = ['x', 'y', 'z', 'a']
 		if nidaq is not None:
 			self.stage_axes.append('b')
@@ -51,6 +58,13 @@ class SimTEM(tem.TEM):
 			'y': (-1e-3, 1e-3),
 			'z': (-5e-4, 5e-4),
 			'a': (-math.pi/2, math.pi/2),
+		}
+		self.minimum_stage = {
+			'x':5e-8,
+			'y':5e-8,
+			'z':5e-8,
+			'a':math.radians(0.01),
+			'b':1e-4,
 		}
 		self.stage_position = {}
 		for axis in self.stage_axes:
@@ -80,6 +94,7 @@ class SimTEM(tem.TEM):
 
 		self.beam_tilt = {'x': 0.0, 'y': 0.0}
 		self.beam_shift = {'x': 0.0, 'y': 0.0}
+		self.diffraction_shift = {'x': 0.0, 'y': 0.0}
 		self.image_shift = {'x': 0.0, 'y': 0.0}
 		self.raw_image_shift = {'x': 0.0, 'y': 0.0}
 
@@ -102,7 +117,39 @@ class SimTEM(tem.TEM):
 		self.loaded_slot_number = None
 		self.is_init = True
 
-		self.aperture_selection = {'objective':'','condenser2':'70','selected area':'open'}
+		self.aperture_selection = {'objective':'100','condenser_2':'70','selected_area':'open'}
+		if 'simpar' in self.conf and self.conf['simpar'] and os.path.isdir(self.conf['simpar']):
+			self.simpar_dir = self.conf['simpar']
+			self.resetSimPar()
+		else:
+			self.simpar_dir = None
+
+	def resetSimPar(self):
+		if self.simpar_dir:
+			# reset to empty file
+			f = open(os.path.join(self.simpar_dir,'simpar.json'),'w')
+			f.close()
+
+	def saveSimPar(self,key,value):
+		if self.simpar_dir:
+			# open the file or both read and write and thus locked from others
+			f = open(os.path.join(self.simpar_dir,'simpar.json'),'r+')
+			try:
+				self.all_simpar = json.loads(f.read())
+			except ValueError:
+				self.all_simpar = {}
+			self.all_simpar[key] = value
+			# move pointer back to the start
+			f.seek(0)
+			jstr = json.dumps(self.all_simpar, indent=2, separators=(',',':'))
+			f.write(jstr)
+			# truncate extra old stuff
+			f.truncate()
+			f.close()
+
+	def printStageDebug(self,msg):
+		if STAGE_DEBUG:
+			print msg
 
 	def resetRefrigerant(self):
 		self.autofiller_busy = False
@@ -139,7 +186,34 @@ class SimTEM(tem.TEM):
 			pass	
 		return copy.copy(self.stage_position)
 
+	def _setStagePosition(self,value):
+		keys = value.keys()
+		keys.sort()
+		for axis in keys:
+				self.printStageDebug('%s: %s' % (axis, value[axis]))
+				try:
+					self.stage_position[axis] = value[axis]
+				except KeyError:
+					continue
+		self.printStageDebug('----------')
+
+	def setDirectStagePosition(self,value):
+		self._setStagePosition(value)
+
+	def checkStagePosition(self, position):
+		current = self.getStagePosition()
+		bigenough = {}
+		minimum_stage = self.minimum_stage
+		for axis in ('x', 'y', 'z', 'a', 'b'):
+			if axis in position:
+				delta = abs(position[axis] - current[axis])
+				if delta > minimum_stage[axis]:
+					bigenough[axis] = position[axis]
+		return bigenough
+
 	def setStagePosition(self, value):
+		self.printStageDebug(value.keys())
+		value = self.checkStagePosition(value)
 		for axis in self.stage_axes:
 			if axis == 'b':
 				pass
@@ -159,11 +233,38 @@ class SimTEM(tem.TEM):
 					nidaq.setBeta(value['b'])
 				except:
 					print 'exception, beta not set'
-			else:
-				try:
-					self.stage_position[axis] = value[axis]
-				except KeyError:
-					pass
+		# calculate pre-position
+		prevalue = {}
+		prevalue2 = {}
+		stagenow = self.getStagePosition()
+		if self.correctedstage:
+			delta = 2e-6
+			for axis in ('x','y','z'):
+				if axis in value:
+					prevalue[axis] = value[axis] - delta
+		relax = 0
+		if abs(relax) > 1e-9:
+			for axis in ('x','y'):
+				if axis in value:
+					prevalue2[axis] = value[axis] + relax
+		if self.corrected_alpha_stage: 
+			# alpha tilt backlash only in one direction
+			alpha_delta_degrees = self.alpha_backlash_delta
+			if 'a' in value.keys():
+					axis = 'a'
+					prevalue[axis] = value[axis] - alpha_delta_degrees*3.14159/180.0
+		if prevalue:
+			# set all axes in prevalue
+			for axis in value.keys():
+				if axis not in prevalue.keys():
+					prevalue[axis] = value[axis]
+					del value[axis]
+			self._setStagePosition(prevalue)
+			time.sleep(0.2)
+		if abs(relax) > 1e-9 and prevalue2:
+			self._setStagePosition(prevalue2)
+			time.sleep(0.2)
+		return self._setStagePosition(value)
 
 	def normalizeLens(self, lens='all'):
 		pass
@@ -216,7 +317,17 @@ class SimTEM(tem.TEM):
 				self.beam_shift[axis] = value[axis]
 			except KeyError:
 				pass
-	
+
+	def getDiffractionShift(self):
+		return copy.copy(self.diffraction_shift)
+
+	def setDiffractionShift(self, value):
+		for axis in self.diffraction_shift.keys():
+			try:
+				self.diffraction_shift[axis] = value[axis]
+			except KeyError:
+				pass
+
 	def getImageShift(self):
 		return copy.copy(self.image_shift)
 	
@@ -226,23 +337,23 @@ class SimTEM(tem.TEM):
 				self.image_shift[axis] = value[axis]
 			except KeyError:
 				pass
-	
+
 	def getRawImageShift(self):
 		return copy.copy(self.raw_image_shift)
-	
+
 	def setRawImageShift(self, value):
 		for axis in self.raw_image_shift.keys():
 			try:
 				self.raw_image_shift[axis] = value[axis]
 			except KeyError:
 				pass
-	
+
 	def getDefocus(self):
 		return self.focus - self.zero_defocus
-	
+
 	def setDefocus(self, value):
 		self.focus = value + self.zero_defocus
-	
+
 	def resetDefocus(self):
 		self.zero_defocus = self.focus
 
@@ -266,6 +377,7 @@ class SimTEM(tem.TEM):
 	def setMagnification(self, value):
 		try:
 			self.magnification_index = self.magnifications.index(float(value))
+			self.saveSimPar('magnification', value)
 		except ValueError:
 			raise ValueError('invalid magnification')
 
@@ -314,6 +426,12 @@ class SimTEM(tem.TEM):
 
 	def getProbeModes(self):
 		return list(self.probe_modes)
+
+	def setProjectionMode(self, value):
+		# This is a fake value set.  It forces the projection mode defined by
+		# the class.
+		#print 'fake setting to projection mode %s' % (self.projection_mode,)
+		pass
 
 	def getMainScreenPositions(self):
 		return list(self.main_screen_positions)
@@ -388,11 +506,14 @@ class SimTEM(tem.TEM):
 		return True
 
 	def runAutoFiller(self):
-		self.addRefrigerant(1)
+		self.autofiller_busy = True
+		self.ventRefrigerant()
+		self.addRefrigerant(4)
 		if self.level0 <=40 or self.level1 <=40:
 			self.autofiller_busy = True
 			raise RuntimeError('Force fill failed')
 		self.addRefrigerant(4)
+		self.autofiller_busy = False
 
 	def resetAutoFillerError(self):
 		self.autofiller_busy = False
@@ -413,12 +534,24 @@ class SimTEM(tem.TEM):
 			print 'using', self.level0, self.level1
 			time.sleep(4)
 
+	def ventRefrigerant(self):
+		self.level0 -= 10
+		self.level1 -= 10
+		print 'venting', self.level0, self.level1
+		time.sleep(2)
+
 	def addRefrigerant(self,cycle):
 		for i in range(cycle):
 			self.level0 += 20
 			self.level1 += 20
 			print 'adding', self.level0, self.level1
 			time.sleep(2)
+
+	def getAutoFillerRemainingTime(self):
+		if simu_autofiller:
+			return min(self.level0, self.level1)
+		else:
+			return -60
 
 	def exposeSpecimenNotCamera(self,seconds):
 		time.sleep(seconds)
@@ -455,21 +588,28 @@ class SimTEM(tem.TEM):
 		'''
 		Names of the available aperture mechanism
 		'''
-		return ['condenser2', 'objective', 'selected area']
+		return ['condenser_2', 'objective', 'selected_area']
 
 	def getApertureSelections(self, aperture_mechanism):
 		if aperture_mechanism == 'objective':
 			return ['open','100']
-		if aperture_mechanism == 'condenser2':
-			return ['open','100']
+		if aperture_mechanism == 'condenser_2' or aperture_mechanism == 'condenser':
+			return ['150','100','70']
 		return ['open']
 
 	def getApertureSelection(self, aperture_mechanism):
+		if aperture_mechanism == 'condenser':
+			aperture_mechanism = 'condenser_2'
 		return self.aperture_selection[aperture_mechanism]
 
 	def setApertureSelection(self, aperture_mechanism, name):
+		if aperture_mechanism == 'condenser':
+			aperture_mechanism = 'condenser_2'
+		if name not in self.getApertureSelections(aperture_mechanism):
+			self.aperture_selection[aperture_mechanism] = 'unknown'
+			return False
 		self.aperture_selection[aperture_mechanism] = name
-		return False
+		return True
 
 	def retractApertureMechanism(self, aperture_mechanism):
 		return setApertureSelection(aperture_mechanism, 'open')
@@ -480,3 +620,45 @@ class SimTEM300(SimTEM):
 		SimTEM.__init__(self)
 
 		self.high_tension = 300000.0
+
+		self.magnifications = [
+			1550.0,
+			2250.0,
+			3600.0,
+			130000.0
+		]
+		self.magnification_index = 0
+
+		self.probe_modes = [
+			'micro',
+			'nano',
+		]
+
+	def findMagnifications(self):
+		# fake finding magnifications and set projection submod mappings
+		self.setProjectionSubModeMap({})
+		for mag in self.magnifications:
+			if mag < 2000:
+				self.addProjectionSubModeMap(mag,'LM',0)
+			else:
+				self.addProjectionSubModeMap(mag,'SA',1)
+
+class SimDiffrTEM(SimTEM):
+	name = 'SimDiffrTEM'
+	projection_mode = 'diffraction'
+	def __init__(self):
+		SimTEM.__init__(self)
+
+		self.magnifications = [
+			70,
+			120.0,
+			520.0,
+			1200.0,
+			5200.0,
+			27000.0,
+			52000.0,
+		]
+		self.high_tension = 120000.0
+
+	def getProjectionMode(self):
+		return self.projection_mode

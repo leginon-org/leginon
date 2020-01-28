@@ -1,0 +1,52 @@
+{
+	"makeDDAlignMotionCor2_UCSF.py" : {
+		"jobtype" : "makeddrawframestack",
+		"basedir" : "ddstack",
+		"runname" : "ddstack"
+	},		
+	"makeDDAlignMotionCorr_Purdue.py" : {
+		"jobtype" : "makeddrawframestack",
+		"basedir" : "ddstack",
+		"runname" : "ddstack"
+	},
+	"gctf.py" : {
+		"jobtype" : "gctf",
+		"basedir" : "ctf",
+		"runname" : "gctfrun"
+	},
+	"ctffind4.py" : {
+		"jobtype" : "ctfestimate",
+		"basedir" : "ctf",
+		"runname" : "ctffind4run"
+	},
+	"ctfestimate.py" : {
+		"jobtype" : "ctfestimate",
+		"basedir" : "ctf",
+		"runname" : "ctffindrun"
+	},
+	"simpleCtfRefine.py" : {
+		"jobtype" : "ctfestimate",
+		"basedir" : "ctf",
+		"runname" : "ctfRefine"
+	},
+	"dogPicker.py" : {
+		"jobtype" : "dogpicker",
+		"basedir" : "extract",
+		"runname" : "dogrun"
+	},
+	"templateCorrelator.py" : {
+		"jobtype" : "templatecorrelator",
+		"basedir" : "extract",
+		"runname" : "tmplrun"
+	},
+	"makestack2.py" : {
+		"jobtype" : "makestack",
+		"basedir" : "stacks",
+		"runname" : "stack"
+	},
+	"quickStack.py" : {
+		"jobtype" : "makestack",
+		"basedir" : "stacks",
+		"runname" : "qstack"
+	}
+}

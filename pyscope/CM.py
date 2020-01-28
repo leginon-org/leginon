@@ -1210,18 +1210,18 @@ class CM(tem.TEM):
 		else:
 			raise ValueError
 
-	# get/setDiffractionMode is not critical for low dose purpose,
+	# get/setProjectionMode is not critical for low dose purpose,
 	# they should be able to be implemented with cmlib.CMLIB.get/setMode
 	# though the meaning of get/setMode is not well documented
-	def getDiffractionMode(self):
+	def getProjectionMode(self):
 		if Debug == True:
-			print 'from getDiffractionMode'
+			print 'from getProjectionMode'
 		return NotImplementedError()
 		
 		
-	def setDiffractionMode(self, mode):
+	def setProjectionMode(self, mode):
 		if Debug == True:
-			print 'from setDiffractionMode'
+			print 'from setProjectionMode'
 		return NotImplementedError()
 
 

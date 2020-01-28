@@ -5,6 +5,8 @@ import time
 # Change this to False to avoid automated screen lifting
 AUTO_SCREEN_UP = True
 AUTO_COLUMN_VALVE_OPEN = True
+# parallel imaging test
+PARALLEL_IMAGING = False
 
 default_settings = leginondata.CameraSettingsData()
 default_settings['dimension'] = {'x': 1024, 'y': 1024}
@@ -160,6 +162,17 @@ class CameraClient(object):
 		pass
 
 	def prepareToAcquire(self,allow_retracted=False,exposure_type='normal'):
+		'''
+		Preparation before acquiring the image. Overwritable by subclasses
+		such as MoveAcquisition to skip the real prepartion.
+		'''
+		self._prepareToAcquire(allow_retracted, exposure_type)
+
+	def _prepareToAcquire(self,allow_retracted=False,exposure_type='normal'):
+		'''
+		Make sure the camera and scope is in the condition for acquiring
+		the image.
+		'''
 		t1 = threading.Thread(target=self.positionCamera(allow_retracted=allow_retracted))
 		if AUTO_SCREEN_UP:
 			t2 = threading.Thread(target=self.liftScreenBeforeExposure(exposure_type))
@@ -173,6 +186,33 @@ class CameraClient(object):
 
 		while t1.isAlive() or t2.isAlive() or t3.isAlive():
 			time.sleep(0.5)
+		## make sure shutter override is activated
+		try:
+			self.instrument.tem.ShutterControl = True
+		except:
+			# maybe tem has no such function
+			pass
+
+	def isFakeImageArray(self, imagearray):
+		'''
+		Fake image transfer from camera to reduce transfer time.
+		General only gives 8x8 image with the mean and standard
+		deviation of the real array.
+		'''
+		if imagearray.shape == (8,8):
+			return True
+		return False
+
+	def isFakeImageObj(self, imagedata):
+		'''
+		Same rule as isFakeImageArray but get shape from
+		sinedon imagedata object without loading the array
+		to get shape and save the read time on large image.
+		'''
+		shape = imagedata.imageshape()
+		if shape == (8,8):
+			return True
+		return False
 
 	def acquireCameraImageData(self, scopeclass=leginondata.ScopeEMData, allow_retracted=False, type='normal', force_no_frames=False):
 		'''Acquire a raw image from the currently configured CCD camera
@@ -201,19 +241,21 @@ class CameraClient(object):
 		imagedata = leginondata.CameraImageData()
 		imagedata['session'] = self.session
 
-		## make sure shutter override is activated
-		try:
-			self.instrument.tem.ShutterControl = True
-		except:
-			# maybe tem has no such function
-			pass
-
 		## acquire image, get new scope/camera params
-		scopedata = self.instrument.getData(scopeclass)
 		#cameradata_before = self.instrument.getData(leginondata.CameraEMData)
-		imagedata['scope'] = scopedata
 		self.startExposureTimer()
-		imagedata['image'] = self.instrument.ccdcamera.Image
+		if PARALLEL_IMAGING:
+			imagedata['image'] = self.parallelImaging()
+		else:
+			imagedata['image'] = self.instrument.ccdcamera.Image
+		# get scope data after acquiring image so that scope can be simultaneously
+		# controlled. refs #6437
+		scopedata = self.instrument.getData(scopeclass)
+		try:
+			scopedata['intended defocus'] = self.intended_defocus
+		except AttributeError:
+			scopedata['intended defocus'] = scopedata['defocus']
+		imagedata['scope'] = scopedata
 		cameradata_after = self.instrument.getData(leginondata.CameraEMData)
 		## only using cameradata_after, not cameradata_before
 		imagedata['camera'] = cameradata_after
@@ -222,10 +264,43 @@ class CameraClient(object):
 		## CameraEMData for multiple versions of AcquisitionImageData
 		imagedata['use frames'] = cameradata_after['use frames']
 
+		## default denoised to False so that we can set that flag if performed.
+		imagedata['denoised'] = False
+
 		self.readout_done_event.set()
 		if imagedata['image'] is None or imagedata['image'].shape == (0,0):
+			# image of wrong shape will still go through. Error raised at normalization
 			raise RuntimeError('No valid image returned. Check camera software/hardware')
+		# image array still in memory.  This should not take extra time.
+		if self.isFakeImageArray(imagedata['image']):
+			self.logger.warning('Early return gives back fake images to save time')
 		return imagedata
+
+	def parallelImaging(self):
+		timage = threading.Thread(target=self.liveImage)
+		t0 = time.time()
+		timage.start()
+		time.sleep(6)
+		print 'main start',t0
+		self.instrument.setCCDCamera('Ceta')
+		array = self.instrument.ccdcamera.Image
+		print 'main end',time.time()-t0
+		timage.join()
+		print 'thread joined', time.time()-t0
+		return array
+
+	def liveImage(self):
+		try:
+			t0 = time.time()
+			for i in range(2):
+				t0l = time.time()
+				print 'live%d start' %i,t0
+				self.instrument.setCCDCamera('Ceta2')
+				image = self.instrument.ccdcamera.Image
+				print i, image.mean()
+				print 'live%d end' %i,time.time()-t0
+		except:
+			print 'Failed live Ceta2 test'
 
 	def requireRecentDarkCurrentReferenceOnBright(self):
 		# select camera before calling this function

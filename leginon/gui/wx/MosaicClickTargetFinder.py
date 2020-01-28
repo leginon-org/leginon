@@ -71,6 +71,7 @@ class Panel(leginon.gui.wx.ClickTargetFinder.Panel):
 		self.addOtherBindings()
 
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SETTINGS, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, False)
 
 	def addOtherBindings(self):
 		self.toolbar.Bind(wx.EVT_TOOL, self.onTransferTargetsButton,
@@ -97,8 +98,10 @@ class Panel(leginon.gui.wx.ClickTargetFinder.Panel):
 			if selection:
 				self.node.setMosaicName(selection)
 				self.node.loadMosaicTiles(selection)
+				self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, True)
 		elif result == wx.ID_RESET:
 			self.node.clearTiles()
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, False)
 		dialog.Destroy()
 
 	def onMosaicButton(self, evt):
@@ -136,6 +139,12 @@ class Panel(leginon.gui.wx.ClickTargetFinder.Panel):
 
 	def onFindSquaresButton(self, evt):
 		threading.Thread(target=self.node.findSquares).start()
+
+	def doneTargetList(self):
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, True)
+
+	def doneTargetDisplay(self):
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, True)
 
 class TilesDialog(wx.Dialog):
 	def __init__(self, parent, choices):

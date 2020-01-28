@@ -34,6 +34,7 @@ attributes = {
 	leginon.gui.wx.Entry.IntEntry: ('GetValue', 'SetValue', leginon.gui.wx.Entry.EVT_ENTRY),
 	leginon.gui.wx.Entry.FloatEntry: ('GetValue', 'SetValue', leginon.gui.wx.Entry.EVT_ENTRY),
 	leginon.gui.wx.Entry.FloatSequenceEntry: ('GetValue', 'SetValue', leginon.gui.wx.Entry.EVT_ENTRY),
+	leginon.gui.wx.Entry.TupleSequenceEntry: ('GetValue', 'SetValue', leginon.gui.wx.Entry.EVT_ENTRY),
 	leginon.gui.wx.Presets.PresetChoice:
 		('GetStringSelection', 'SetStringSelection',
 			leginon.gui.wx.Presets.EVT_PRESET_CHOICE),

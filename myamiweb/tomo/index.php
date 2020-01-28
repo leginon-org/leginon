@@ -40,6 +40,8 @@ if ($sessionId == NULL) {
     $sessionId = $sessions[0]['id'];
 }
 
+if ( is_numeric(SESSION_LIMIT) && count($sessions) > SESSION_LIMIT) $sessions=array_slice($sessions,0,SESSION_LIMIT);
+
 $sessionSelector = $tomography->getSessionSelector($sessions, $sessionId);
 
 $tiltSeries = $tomography->getTiltSeries($sessionId);

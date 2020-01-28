@@ -34,13 +34,22 @@ except ImportError:
 	pass
 
 configs = moduleconfig.getConfigured('fei.cfg')
+configpath = moduleconfig.getConfigPath('fei.cfg')
 
 class MagnificationsUninitialized(Exception):
 	pass
 
 class Tecnai(tem.TEM):
 	name = 'Tecnai'
+	column_type = 'tecnai'
 	use_normalization = False
+	projection_mode = 'imaging'
+	# attribute name for getMagnification function.
+	# either 'Magnification' or 'CameraLength'
+	mag_attr_name = 'Magnification'
+	mag_scale = 1
+	default_stage_speed = 1.0
+
 	def __init__(self):
 		tem.TEM.__init__(self)
 		self.projection_submodes = {1:'LM',2:'Mi',3:'SA',4:'Mh',5:'LAD',6:'D'}
@@ -50,8 +59,10 @@ class Tecnai(tem.TEM):
 		#self.special_submode_mags = {380:('EFTEM',3)}
 		self.projection_submode_map = self.special_submode_mags.copy()
 		
-		self.correctedstage = True
-		self.normalize_all_after_mag_setting = self.getFeiConfig('optics','force_normalize_all_after_mag_setting')
+		self.correctedstage = self.getFeiConfig('stage','do_stage_xyz_backlash')
+		self.corrected_alpha_stage = self.getFeiConfig('stage','do_stage_alpha_backlash')
+		self.alpha_backlash_delta = self.getFeiConfig('stage','stage_alpha_backlash_angle_delta')
+		self.normalize_all_after_setting = self.getFeiConfig('optics','force_normalize_all_after_setting')
 		try:
 			com_module.CoInitializeEx(com_module.COINIT_MULTITHREADED)
 		except:
@@ -78,8 +89,8 @@ class Tecnai(tem.TEM):
 
 		try:
 			self.lowdose = comtypes.client.CreateObject('LDServer.LdSrv')
-		except com_module.COMError, (hr, msg, exc, arg):
-			print 'unable to initialize low dose interface, %s' % msg
+		except:
+			print 'unable to initialize low dose interface'
 			self.lowdose = None
 
 		try:
@@ -90,7 +101,12 @@ class Tecnai(tem.TEM):
 			self.exposure = None
 
 		self.magnifications = []
+		self.stage_speed = self.default_stage_speed
 		self.mainscreenscale = 44000.0 / 50000.0
+		self.wait_for_stage_ready = True
+		self.mag_changed = False
+		self.spotsize_changed = False
+		self.int_changed = False
 
 		## figure out which intensity property to use
 		## try to move this to installation
@@ -145,8 +161,12 @@ class Tecnai(tem.TEM):
 	def getHasFalconProtector(self):
 		return self.getFeiConfig('camera','has_falcon_protector')
 
-	def getAutoitExePath(self):
-		return self.getFeiConfig('phase plate','autoit_exe_path')
+	def getAutoitPhasePlateExePath(self):
+		value = self.getFeiConfig('phase plate','autoit_phase_plate_exe_path')
+		if not value:
+			# back compatibility pre 3.5
+			value=self.getFeiConfig('phase plate','autoit_exe_path')
+		return value
 
 	def getRotationCenterScale(self):
 		return self.getFeiConfig('optics','rotation_center_scale')
@@ -201,32 +221,67 @@ class Tecnai(tem.TEM):
 		value = self.checkStagePosition(value)
 		if not value:
 			return
+		# calculate pre-position
+		prevalue = {}
+		prevalue2 = {}
+		# correct xyz
 		if self.correctedstage:
 			delta = self.getXYZStageBacklashDelta()
-			relax = self.getXYStageRelaxDistance()
-			stagenow = self.getStagePosition()
-			# calculate pre-position
-			prevalue = {}
-			prevalue2 = {}
 			for axis in ('x','y','z'):
 				if axis in value:
 					prevalue[axis] = value[axis] - delta
+		# relax xy
+		relax = self.getXYStageRelaxDistance()
+		if abs(relax) > 1e-9:
 			for axis in ('x','y'):
 				if axis in value:
 					prevalue2[axis] = value[axis] + relax
-			if delta and prevalue:
-				self._setStagePosition(prevalue)
-				time.sleep(0.2)
-			if abs(relax) > 1e-9 and prevalue2:
-				self._setStagePosition(prevalue)
-				time.sleep(0.2)
+		# preposition a
+		if self.corrected_alpha_stage:
+			# alpha tilt backlash only in one direction
+			alpha_delta_degrees = self.alpha_backlash_delta
+			if 'a' in value.keys():
+					axis = 'a'
+					prevalue[axis] = value[axis] - alpha_delta_degrees*3.14159/180.0
+		if prevalue:
+			# set all axes in value
+			for axis in value.keys():
+				if axis not in prevalue.keys():
+					prevalue[axis] = value[axis]
+					# skip those requiring no further change
+					del value[axis]
+			self._setStagePosition(prevalue)
+			time.sleep(0.2)
+		# set all remaining axes in the remaining value
+		if abs(relax) > 1e-9 and prevalue2:
+			for axis in value.keys():
+				if axis not in prevalue2.keys():
+					prevalue2[axis] = value[axis]
+					# skip those requiring no further change
+					del value[axis]
+			self._setStagePosition(prevalue2)
+			time.sleep(0.2)
+		# final position
 		return self._setStagePosition(value)
 
+	def resetStageSpeed(self):
+		self.stage_speed = self.default_stage_speed
+		if self.tom:
+			self.tom.Stage.Speed = self.default_stage_speed
+
 	def setStageSpeed(self, value):
-		self.tom.Stage.Speed = value
+		# 0.0 to 1.0 with 1.0 the highest speed
+		if value > 1.0 or value < 0.0:
+			raise ValueError('Stage speed must be between 0.0 and 1.0')
+		self.stage_speed = value
+		if self.tom:
+			self.tom.Stage.Speed = value
 
 	def getStageSpeed(self):
-		return self.tom.Stage.Speed
+		if self.tom:
+			return self.tom.Stage.Speed
+		else:
+			return self.stage_speed
 
 	def normalizeLens(self, lens = 'all'):
 		if lens == 'all':
@@ -352,7 +407,24 @@ class Tecnai(tem.TEM):
 			pass
 		else:
 			raise ValueError
+		prev_int = self.getIntensity()
+		if prev_int != intensity:
+			self.int_changed = True
 		setattr(self.tecnai.Illumination, self.intensity_prop, intensity)
+		# Normalizations
+		if self.normalize_all_after_setting:
+			if self.mag_changed or self.spotsize_changed or self.int_changed:
+				if self.getDebugAll():
+					print 'normalize all'
+				self.normalizeLens('all')
+		#reset changed flag
+		self.mag_changed = False
+		self.spotsize_changed = False
+		self.int_changed = False
+
+		# sleep for intensity change
+		if self.getFeiConfig('camera','extra_protector_sleep_time'):
+			time.sleep(1)
 
 	def getDarkFieldMode(self):
 		if self.tecnai.Illumination.DFMode == self.tem_constants.dfOff:
@@ -505,9 +577,11 @@ class Tecnai(tem.TEM):
 			pass
 		else:
 			raise ValueError
-		
-		self.tecnai.Illumination.SpotsizeIndex = ss
-	
+		prev = self.getSpotSize()
+		if prev != ss:
+			self.tecnai.Illumination.SpotsizeIndex = ss
+			self.spotsize_changed = True
+
 	def getBeamTilt(self):
 		value = {'x': None, 'y': None}
 		value['x'] = float(self.tecnai.Illumination.RotationCenter.X) / self.getRotationCenterScale()
@@ -613,7 +687,47 @@ class Tecnai(tem.TEM):
 		except KeyError:
 			pass
 		self.tecnai.Projection.ImageBeamShift = vec
-	
+
+	def getDiffractionShift(self):
+		value = {'x': None, 'y': None}
+		try:
+			value['x'] = float(self.tecnai.Projection.DiffractionShift.X)
+			value['y'] = float(self.tecnai.Projection.DiffractionShift.Y)
+		except:
+			# return None if has exception
+			pass
+		return value
+
+	def setDiffractionShift(self, vector, relative = 'absolute'):
+		if vector['x'] is None or vector['y'] is None:
+			if self.getDebugAll():
+				print 'diffraction shift not defined. No change.'
+			return
+		if relative == 'relative':
+			try:
+				vector['x'] += self.tecnai.Projection.DiffractionShift.X
+			except KeyError:
+				pass
+			try:
+				vector['y'] += self.tecnai.Projection.DiffractionShift.Y
+			except KeyError:
+				pass
+		elif relative == 'absolute':
+			pass
+		else:
+			raise ValueError
+		# Real setting part
+		vec = self.tecnai.Projection.DiffractionShift
+		try:
+			vec.X = vector['x']
+		except KeyError:
+			pass
+		try:
+			vec.Y = vector['y']
+		except KeyError:
+			pass
+		self.tecnai.Projection.DiffractionShift = vec
+
 	def getRawImageShift(self):
 		value = {'x': None, 'y': None}
 		value['x'] = float(self.tecnai.Projection.ImageShift.X)
@@ -666,7 +780,7 @@ class Tecnai(tem.TEM):
 
 	def getMagnification(self, index=None):
 		if index is None:
-			return int(round(self.tecnai.Projection.Magnification))
+			return int(round(getattr(self.tecnai.Projection,self.mag_attr_name)*self.mag_scale))
 		elif not self.getMagnificationsInitialized():
 			raise MagnificationsUninitialized
 		else:
@@ -676,7 +790,7 @@ class Tecnai(tem.TEM):
 				raise ValueError('invalid magnification index')
 
 	def getMainScreenMagnification(self):
-		return int(round(self.tecnai.Projection.Magnification*self.mainscreenscale))
+		return int(round(getattr(self.tecnai.Projection, self.mag_attr_name)*self.mainscreenscale))
 
 	def getMainScreenScale(self):
 		return self.mainscreenscale
@@ -700,30 +814,6 @@ class Tecnai(tem.TEM):
 		else:
 			return self.special_submode_mags[mag][0]
 
-	def normalizeProjectionForMagnificationChange(self, new_mag_index):
-		'''
-		Normalize objective and projector if submode indices are
-		not adjacent.  This is necessary because of a lack of feature
-		in the normalization options from TUI. Insert this before
-		new magnification is set.
-		'''
-		try:
-			# This assumes that we are still at the old mag.
-			old_submode_index = self.tecnai.Projection.SubMode
-		except:
-			raise ValueError('can not get projection submode')
-		self.setMagnificationIndex(new_mag_index)
-		new_submode_index = self.getProjectionSubModeIndex()
-		if abs(old_submode_index - new_submode_index) > 1:
-		#if True:
-			# normalizeLens function returns after it finishes
-			self.normalizeLens('allprojection')
-		else:
-			# mag settings returns before normalization initiated
-			# from TUI is finished
-			time.sleep(2)
-		return
-
 	def setMagnification(self, mag):
 		if not self.getMagnificationsInitialized():
 			raise MagnificationsUninitialized
@@ -735,21 +825,49 @@ class Tecnai(tem.TEM):
 				mag = int(mag)
 			except:
 				raise TypeError
-	
+
+		# set  projection mode if changing.
+		if self.getProjectionMode() != self.projection_mode:
+			self.setProjectionMode(None)
 		try:
 			index = self.magnifications.index(mag)
 		except ValueError:
 			raise ValueError('invalid magnification')
-		if self.use_normalization:
-			self.normalizeProjectionForMagnificationChange(index)
-		self.setMagnificationIndex(index)
-		if self.normalize_all_after_mag_setting:
-			self.normalizeLens('all')
+		try:
+			prev_index = self.getMagnificationIndex()
+		except ValueError:
+			# none of the valid index
+			prev_index = -1
+		need_proj_norm = False
+		if prev_index != index:
+			# This makes defocus accuracy better like a objective 
+			# normalization. This assumes that defocus will be set
+			# after this not before.
+			self.tecnai.Projection.Focus = 0.0
+			self.setMagnificationIndex(index)
+			self.mag_changed = True
+		return
+
+	def setPreDiffractionMagnification(self):
+		'''
+		Set to an SA magnification index so that diffraction mode change
+		goes into D not LAD mode.
+		'''
+		if self.getProjectionMode() != 'imaging':
+			raise ValueError('Not in imaging mode')
+		index = self.getFeiConfig('optics','pre_diffraction_sa_magnification_index')
+		# handle not configured
+		if index is None or index == -1:
+			raise ValueError('Must set PRE_DIFFRACTION_SA_MAGNIFICATION to a valid mag index')
+		self.tecnai.Projection.MagnificationIndex = index
+		name = self.getProjectionSubModeName()
+		if name != 'SA':
+			raise ValueError('PRE_DIFFRACTION_SA_MAGNIFICATION_INDEX not in SA mode')
 		return
 
 	def getMagnificationIndex(self, magnification=None):
 		if magnification is None:
-			return self.tecnai.Projection.MagnificationIndex - 1
+			return getattr(self.tecnai.Projection,self.mag_attr_name+'Index') - 1
 		elif not self.getMagnificationsInitialized():
 			raise MagnificationsUninitialized
 		else:
@@ -759,7 +877,7 @@ class Tecnai(tem.TEM):
 				raise ValueError('invalid magnification')
 
 	def setMagnificationIndex(self, value):
-		self.tecnai.Projection.MagnificationIndex = value + 1
+		setattr(self.tecnai.Projection,self.mag_attr_name+'Index', value + 1)
 
 	def getMagnifications(self):
 		return self.magnifications
@@ -782,7 +900,7 @@ class Tecnai(tem.TEM):
 			self.registerProjectionSubMode(mag)
 			previousindex = index
 			index += 1
-		print self.getProjectionSubModeMap()
+		self.getProjectionSubModeMap()
 		self.setMagnifications(magnifications)
 		self.setMagnificationIndex(savedindex)
 
@@ -793,7 +911,6 @@ class Tecnai(tem.TEM):
 		'''
 		mode_id = self.getProjectionSubModeIndex()
 		name = self.getProjectionSubModeName()
-		print mag, mode_id,name
 		if mode_id not in self.projection_submodes.keys():
 			raise ValueError('unknown projection submode')
 		self.projection_submode_map[mag] = (name,mode_id)
@@ -819,7 +936,15 @@ class Tecnai(tem.TEM):
 				pass
 		return value
 
+	def setWaitForStageReady(self, value):
+		self.wait_for_stage_ready = value
+
+	def getWaitForStageReady(self):
+		return self.wait_for_stage_ready
+
 	def waitForStageReady(self,position_log,timeout=10):
+		if not self.wait_for_stage_ready:
+			return
 		t0 = time.time()
 		trials = 0
 		while self.tecnai.Stage.Status in (2,3,4):
@@ -842,6 +967,12 @@ class Tecnai(tem.TEM):
 			print 'took extra %.1f seconds to get to ready status' % (donetime)
 
 	def _setStagePosition(self, position, relative = 'absolute'):
+		if False:
+			return self._setTomStagePosition(position, relative)
+		else:
+			return self._setTemStagePosition(position, relative)
+
+	def _setTemStagePosition(self, position, relative = 'absolute'):
 #		tolerance = 1.0e-4
 #		polltime = 0.01
 
@@ -872,7 +1003,13 @@ class Tecnai(tem.TEM):
 		if axes == 0:
 			return
 		try:
-			self.tecnai.Stage.Goto(pos, axes)
+			if self.stage_speed == self.default_stage_speed:
+				self.tecnai.Stage.Goto(pos, axes)
+			else:
+				# Low speed move needs to be done on individual axis
+				for key, value in position.items():
+					single_axis = getattr(self.tem_constants, 'axis' + key.upper())
+					self.tecnai.Stage.GotoWithSpeed(pos, single_axis, self.stage_speed)
 		except com_module.COMError, e:
 			if self.getDebugStage():
 				print datetime.datetime.now()
@@ -890,6 +1027,53 @@ class Tecnai(tem.TEM):
 				print datetime.datetime.now()
 				print 'Other error in going to %s' % (position,)
 			raise RuntimeError('_setStagePosition Unknown error')
+		self.waitForStageReady('after setting %s' % (position,))
+
+	def _setTomStagePosition(self, position, relative = 'absolute'):
+#		tolerance = 1.0e-4
+#		polltime = 0.01
+
+		self.waitForStageReady('before setting %s' % (position,))
+		if relative == 'relative':
+			for key in position:
+				position[key] += getattr(self.tecnai.Stage.Position, key.upper())
+		elif relative != 'absolute':
+			raise ValueError
+		
+		pos = self.tecnai.Stage.Position
+
+		axes = 0
+		stage_limits = self.getStageLimits()
+		tom_axes = {'X':0,'Y':1,'Z':2,'A':3}
+		for key, value in position.items():
+			if use_nidaq and key == 'b':
+				deg = value / 3.14159 * 180.0
+				nidaq.setBeta(deg)
+				continue
+			if key in stage_limits.keys() and (value < stage_limits[key][0] or value > stage_limits[key][1]):
+				raise ValueError('position %s beyond stage limit at %.2e' % (key, value))
+			setattr(pos, key.upper(), value)
+			axis_I = tom_axes[key.upper()]
+
+			try:
+				self.tom.Stage.GotoWithSpeed(axis_I, getattr(pos,key.upper()))
+			except com_module.COMError, e:
+				if self.getDebugStage():
+					print datetime.datetime.now()
+					print 'COMError in going to %s' % (position,)
+				try:
+					# used to parse e into (hr, msg, exc, arg)
+					# but Issue 4794 got 'need more than 3 values to unpack' error'.
+					# simplify the error handling so that it can be raised with messge.
+					msg = e.text
+					raise ValueError('Stage.Goto failed: %s' % (msg,))
+				except:
+					raise ValueError('COMError in _setStagePosition: %s' % (e,))
+			except:
+				if self.getDebugStage():
+					print datetime.datetime.now()
+					print 'Other error in going to %s' % (position,)
+				raise RuntimeError('_setStagePosition Unknown error')
 		self.waitForStageReady('after setting %s' % (position,))
 
 	def setDirectStagePosition(self,value):
@@ -925,7 +1109,7 @@ class Tecnai(tem.TEM):
 			# No extended error information, assuming low dose is disenabled
 			raise RuntimeError('Low dose is not enabled')
 		except:
-			raise RuntimerError('Unknown error')
+			raise RuntimeError('Unknown error')
 
 	def getLowDoseModes(self):
 		return ['exposure', 'focus1', 'focus2', 'search', 'unknown', 'disabled']
@@ -946,7 +1130,7 @@ class Tecnai(tem.TEM):
 			# No extended error information, assuming low dose is disenabled
 			raise RuntimeError('Low dose is not enabled')
 		except:
-			raise RuntimerError('Unknown error')
+			raise RuntimeError('Unknown error')
 		
 	def setLowDoseMode(self, mode):
 		try:
@@ -964,9 +1148,9 @@ class Tecnai(tem.TEM):
 			# No extended error information, assuming low dose is disenabled
 			raise RuntimeError('Low dose is not enabled')
 		except:
-			raise RuntimerError('Unknown error')
+			raise RuntimeError('Unknown error')
 	
-	def getDiffractionMode(self):
+	def getProjectionMode(self):
 		if self.tecnai.Projection.Mode == self.tem_constants.pmImaging:
 			return 'imaging'
 		elif self.tecnai.Projection.Mode == self.tem_constants.pmDiffraction:
@@ -974,10 +1158,15 @@ class Tecnai(tem.TEM):
 		else:
 			raise SystemError
 		
-	def setDiffractionMode(self, mode):
+	def setProjectionMode(self, fakemode):
+		# Always set to the class projection_mode.  This is a work around to
+		# proxy not knowing the projection_mode of the instrument.
+		mode = self.projection_mode
 		if mode == 'imaging':
 			self.tecnai.Projection.Mode = self.tem_constants.pmImaging
 		elif mode == 'diffraction':
+			if self.getProjectionMode() != mode:
+				self.setPreDiffractionMagnification()
 			self.tecnai.Projection.Mode = self.tem_constants.pmDiffraction
 		else:
 			raise ValueError
@@ -1375,7 +1564,7 @@ class Tecnai(tem.TEM):
 			# No extended error information, assuming low dose is disenabled
 			raise RuntimeError('runBufferCycle COMError: no extended error information')
 		except:
-			raise RuntimerError('runBufferCycle Unknown error')
+			raise RuntimeError('runBufferCycle Unknown error')
 
 	def setEmission(self, value):
 		self.tom.Gun.Emission = value
@@ -1463,7 +1652,8 @@ class Tecnai(tem.TEM):
 
 	def getAutoFillerRemainingTime(self):
 		'''
-		Get remaining time from instrument. TO DO: need to find unit
+		Get remaining time from instrument. Unit is second.
+		If it is not set to cool, the value is -60.
 		'''
 		try:
 			remain_sec = self.tecnai.TemperatureControl.DewarsRemainingTime
@@ -1480,8 +1670,9 @@ class Tecnai(tem.TEM):
 		return self.tecnai.TemperatureControl.RefrigerantLevel(id)
 
 	def nextPhasePlate(self):
-		if os.path.isfile(self.getAutoitExePath()):
-			subprocess.call(self.getAutoitExePath())
+		if os.path.isfile(self.getAutoitPhasePlateExePath()):
+			subprocess.call(self.getAutoitPhasePlateExePath())
+			error = self._checkAutoItError()
 		else:
 			pass
 
@@ -1543,63 +1734,24 @@ class Tecnai(tem.TEM):
 		'''
 		Retract aperture mechanism.
 		'''
-		am = self._getApertureMechanismObj(name)
-		if am.State == 3:
-			# already retracted mechanism can not be retracted again.
-			return False	# successful
-		if am.State != 1:
-			raise RuntimeError('Aperture not in a retractable state')
-		status = am.Retract()
-		return bool(status)
-
-	def _getApertureMechanismObj(self, name):
-		if not self.hasAutoAperture():
-			raise ValueError('No automated aperture')
-		amc = self.tecnai.ApertureMechanismCollection
-		# TO DO: better to use ID for obj aperture (4)
-		index = self._getApertureMechanismIndex(name)
-		if index == False:
-			raise ValueError('Aperture mechanism %s does not exist' % name)
-		am = amc.Item(index)
-		return am
-
-	def _getApertureMechanismIndex(self, name):
-		'''
-		Get index of aperture mechanism in ApertureMechanismCollection
-		'''
-		if not self.hasAutoAperture() or name not in self.aperture_mechanism_indexmap.keys():
-			return False
-		amc = self.tecnai.ApertureMechanismCollection
-		count = amc.Count
-		for i in range(count):
-			if amc.Item(i).Id == self.aperture_mechanism_indexmap[name]:
-				return i
+		return self.setApertureSelection(mechanism_name, 'open')
 
 	def getApertureMechanisms(self):
 		'''
 		Names of the available aperture mechanism
 		'''
-		return ['condenser2', 'objective', 'selected area']
-
-	def _getApertureObjsOfMechanismName(self,mechanism_name):
-		'''
-		All aperture objects on an aperture mechanism.
-		'''
-		# get aperture objects
-		am = self._getApertureMechanismObj(mechanism_name)
-		ac = am.ApertureCollection
-		count = ac.Count
-		apertures = map((lambda x: ac.Item(x)),range(count))
-		return apertures
+		return ['condenser_2', 'objective', 'selected_area']
 
 	def getApertureSelections(self, mechanism_name):
 		'''
-		get valid selection for an aperture mechanism to be used in gui.
+		get valid selection for an aperture mechanism to be used in gui,including "open" if available.
 		'''
-		names = self.getApertureNames(mechanism_name)
-		am = self._getApertureMechanismObj(mechanism_name)
-		if am.IsRetractable:
-			names.insert(0,'open')
+		if mechanism_name == 'condenser':
+			# always look up condenser 2 value
+			mechanism_name = 'condenser_2'
+		names = self.getFeiConfig('aperture',mechanism_name)
+		# This may be string or integer.
+		names = list(map((lambda x: str(x)),names))
 		return names
 
 	def getApertureSelection(self, mechanism_name):
@@ -1607,42 +1759,72 @@ class Tecnai(tem.TEM):
 		Get current aperture selection of specified aperture mechanism
 		as string name in um or as open.
 		'''
-		am = self._getApertureMechanismObj(mechanism_name)
-		state = am.State
-		if state == 3:
-			return 'open'
-		if state == 1:
-			a = am.SelectedAperture
-			return a.Name
+		if not self.getUseAutoAperture():
+			return 'unknown'
+		if mechanism_name == 'condenser':
+			# always look up condenser 2 value
+			mechanism_name = 'condenser_2'
+		if mechanism_name not in self.getFeiConfig('aperture').keys():
+			return 'unknown'
+		exepath = self.getFeiConfig('aperture','autoit_aperture_selection_exe_path')
+		if exepath and os.path.isfile(exepath):
+			cmd = '%s "%s" %s %s get' % (exepath,configpath,self.column_type, mechanism_name)
+			subprocess.call(cmd)
+			error = self._checkAutoItError()
+			result = self._getAutoItResult()
+			if result:
+				return result
 		# all counted as invalid state
 		return 'unknown'
+
+	def _checkAutoItError(self, error_filename='autoit_error.log'):
+		errorpath = os.path.join(os.getcwd(),error_filename)
+		if not os.path.isfile(errorpath):
+			return
+		f = open(errorpath)
+		msglist = f.readlines()
+		f.close()
+		# cleanup after read
+		os.remove(errorpath)
+		if msglist:
+			raise ValueError(msglist[0].split('\n')[0])
+
+	def _getAutoItResult(self, result_filename='autoit_result.log'):
+		resultpath = os.path.join(os.getcwd(),result_filename)
+		if not os.path.isfile(resultpath):
+			# the result is None
+			return
+		f = open(resultpath)
+		msglist = f.readlines()
+		f.close()
+		os.remove(resultpath)
+		if msglist:
+			return msglist[0].split('\n')[0]
 
 	def setApertureSelection(self, mechanism_name, name):
 		'''
 		Set Aperture selection of a aperture mechanism with aperture name.
 		Aperture name 'open' means retracted aperture. Size string in
 		unit of um is used as the name for that aperture.
+		return True if change is made
 		'''
+		if not self.getUseAutoAperture():
+			return False
+		if mechanism_name == 'condenser':
+			# always look up condenser 2 value
+			mechanism_name = 'condenser_2'
 		selections = self.getApertureSelections(mechanism_name)
 		if name not in selections:
 			raise ValueError('Invalid selection: %s' % name)
 		if name == '' or name is None:
 			# nothing to do
 			return False
-		if name == 'open':
-			try:
-				has_error = self.retractApertureMechanism(mechanism_name)
-				if has_error:
-					raise RuntimeError('Fail to retract %s' % mechanism_name)
-			except RuntimeError, e:
-				raise
-		else:
-			try:
-				has_error = self.insertSelectedApertureMechanism(mechanism_name, name)
-				if has_error:
-					raise RuntimeError('Fail to select %s on %s aperture' % (name,mechanism_name))
-			except RuntimeError, e:
-				raise
+		exepath = self.getFeiConfig('aperture','autoit_aperture_selection_exe_path')
+		if exepath and os.path.isfile(exepath):
+			cmd = '%s "%s" %s %s set "%s"' % (exepath,configpath,self.column_type, mechanism_name,name)
+			subprocess.call(cmd)
+			error = self._checkAutoItError()
+			return True
 		return False
 
 	def getApertureNames(self, mechanism_name):
@@ -1659,66 +1841,14 @@ class Tecnai(tem.TEM):
 		'''
 		Insert an aperture selected for a mechanism.
 		'''
-		am = self._getApertureMechanismObj(mechanism_name)
-		names = self.getApertureNames(mechanism_name)
-		if aperture_name not in names:
-			raise ValueError('No apeture of the name %s on %s' %(aperture_name, mechanism_name))
-		if am.State != 1 and am.State != 3 :
-			raise RuntimeError('Aperture not in a controlable state')
-		aps = self._getApertureObjsOfMechanismName(mechanism_name)
-		status = am.SelectAperture(aps[names.index(aperture_name)])
-		# aperture already selected will return immediately.
-		return bool(status)
+		return self.setApertureSelection(mechanism_name, aperturn_name)
 
 class Krios(Tecnai):
 	name = 'Krios'
+	column_type = 'titan'
 	use_normalization = True
 	def __init__(self):
 		Tecnai.__init__(self)
-		self.correctedstage = self.getFeiConfig('stage','krios_add_stage_backlash')
-		self.corrected_alpha_stage = self.getFeiConfig('stage','krios_add_stage_backlash')
-
-	def normalizeProjectionForMagnificationChange(self, new_mag_index):
-		'''
-		Overwrite projection lens normalization on Titan Krios to do nothing
-		even if it is advisable to use normalization on the instrument.
-		This is done because Titan does not have submode 2 See Issue #3986
-		'''
-		pass
-
-	def setStagePosition(self, value):
-		'''
-		Krios setStagePosition
-		'''
-		# pre-position x and y (maybe others later)
-		value = self.checkStagePosition(value)
-		if not value:
-			return
-		if self.correctedstage:
-			delta = self.getXYZStageBacklashDelta()
-			relax = self.getXYStageRelaxDistance()
-			stagenow = self.getStagePosition()
-			# calculate pre-position
-			prevalue = {}
-			prevalue2 = value.copy()
-			for axis in ('x','y','z'):
-				if axis in value:
-					prevalue[axis] = value[axis] - delta
-			for axis in ('x','y'):
-				if axis in value:
-					prevalue2[axis] = value[axis] + relax
-			# alpha tilt backlash only in one direction
-			alpha_delta_degrees = 3.0
-			if 'a' in value.keys() and self.corrected_alpha_stage:
-					axis = 'a'
-					prevalue[axis] = value[axis] - alpha_delta_degrees*3.14159/180.0
-			if prevalue and delta:
-				self._setStagePosition(prevalue)
-				time.sleep(0.2)
-			if abs(relax) > 1e-9 and prevalue2:
-				self._setStagePosition(prevalue2)
-				time.sleep(0.2)
-		return self._setStagePosition(value)
 
 	def hasAutoAperture(self):
 		return self.getUseAutoAperture()
@@ -1728,14 +1858,8 @@ class Halo(Tecnai):
 	Titan Halo has Titan 3 condensor system but side-entry holder.
 	'''
 	name = 'Halo'
+	column_type = 'titan'
 	use_normalization = True
-	def normalizeProjectionForMagnificationChange(self, new_mag_index):
-		'''
-		Overwrite projection lens normalization to do nothing
-		even if it is advisable to use normalization on the instrument.
-		This is done because Titan does not have submode 2 See Issue #3986
-		'''
-		pass
 
 	def getRefrigerantLevel(self,id=0):
 		'''
@@ -1745,18 +1869,21 @@ class Halo(Tecnai):
 
 class EFKrios(Krios):
 	name = 'EF-Krios'
+	column_type = 'titan'
 	use_normalization = True
 	projection_lens_program = 'EFTEM'
 
-class Arctica(Tecnai):
-	name = 'Arctica'
+class Talos(Tecnai):
+	name = 'Talos'
+	column_type = 'talos'
 	use_normalization = True
 
 	def hasAutoAperture(self):
 		return self.getUseAutoAperture()
 
-class Talos(Tecnai):
-	name = 'Talos'
+class Arctica(Talos):
+	name = 'Arctica'
+	column_type = 'talos'
 	use_normalization = True
 
 	def hasAutoAperture(self):
@@ -1764,5 +1891,22 @@ class Talos(Tecnai):
 
 class Glacios(Arctica):
 	name = 'Glacios'
+	column_type = 'talos'
 	use_normalization = True
 
+#### Diffraction Instrument
+class DiffrTecnai(Tecnai):
+	name = 'DiffrTecnai'
+	column_type = 'talos'
+	use_normalization = False
+	projection_mode = 'diffraction'
+	mag_attr_name = 'CameraLength'
+	mag_scale = 1000
+
+class DiffrGlacios(Glacios):
+	name = 'DiffrGlacios'
+	column_type = 'talos'
+	use_normalization = True
+	projection_mode = 'diffraction'
+	mag_attr_name = 'CameraLength'
+	mag_scale = 1000

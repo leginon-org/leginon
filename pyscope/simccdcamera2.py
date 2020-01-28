@@ -1,12 +1,15 @@
 import copy
 import ccdcamera
 import numpy
+from scipy import ndimage
 import random
 random.seed()
 import time
+import json
 import remote
 import os
-from pyami import mrc
+
+from pyami import mrc, imagefun, numpil
 import itertools
 from pyscope import falconframe
 
@@ -52,11 +55,23 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 					'setEnergyFilterWidth',
 					'alignEnergyFilterZeroLossPeak',
 			]
+		if 'simpar' in self.conf and self.conf['simpar'] and os.path.isdir(self.conf['simpar']):
+			self.simpar_dir = self.conf['simpar']
+		else:
+			self.simpar_dir = None
+		self.current_image_count = {}
 
 	def __getattribute__(self, attr_name):
 		if attr_name in object.__getattribute__(self, 'unsupported'):
 			raise AttributeError('attribute not supported')
 		return object.__getattribute__(self, attr_name)
+
+	def getSystemGainDarkCorrected(self):
+		# Default to not do gain dark correction if have simulated images
+		if self.simpar_dir is None:
+			return False
+		else:
+			return True
 
 	def getRetractable(self):
 		return True
@@ -168,9 +183,79 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 		time.sleep(self.exposure_time)
 		t1 = time.time()
 		self.exposure_timestamp = (t1 + t0) / 2.0
+		return self.getSimImage(shape)
 
-		return self.getSyntheticImage(shape)
-	
+	def getSimImage(self,shape):
+		if not self.simpar_dir or self.exposure_type == 'dark':
+			return self.getSyntheticImage(shape)
+		else:
+			return self.getSimParImage(shape)
+
+	def getAllSimPar(self):	
+		f = open(os.path.join(self.simpar_dir,'simpar.json'),'r+')
+		try:
+			all_simpar = json.loads(f.read())
+		except ValueError:
+			all_simpar = {}
+		return all_simpar
+
+	def getSimParImage(self,shape):
+		'''
+		Return images saved in advanced according to sim tem parameters.
+		The jpg images should be use full camera with binning identified
+		in the filename such as 'bin4_0.jpg'. '_0' identify the first of
+    the number of images the function pulled from iteratively. 
+		'''
+		all_simpar = self.getAllSimPar()
+		if not all_simpar:
+			return self.getSyntheticImage(shape)
+		mag = int(all_simpar['magnification'])
+		mag_str = '%d' % mag
+		# images are saved under the magnification value in simpar.json
+		files = os.listdir(os.path.join(self.simpar_dir,mag_str))
+		required_bin = self.binning['x']
+		this_bin_files = []
+		for f in files:
+			this_bin = int(f[3])
+			if mag not in self.current_image_count:
+				self.current_image_count[mag]={}
+			if this_bin not in self.current_image_count[mag]:
+				self.current_image_count[mag][this_bin]=-1
+			if this_bin == required_bin:
+				this_bin_files.append(f)
+		mag_dir = os.path.join(self.simpar_dir,mag_str)
+		if not this_bin_files:
+			return self.getSyntheticImage(shape)
+		# Files are not sorted by name in os.listdir
+		this_bin_files.sort()
+		# Loop through images to load
+		self.current_image_count[mag][required_bin] += 1
+		if self.current_image_count[mag][required_bin] > len(this_bin_files)-1:
+			self.current_image_count[mag] [required_bin]= 0
+		this_imagefile = this_bin_files[self.current_image_count[mag][required_bin]]
+		image = numpil.read(os.path.join(mag_dir,this_imagefile))
+		if len(image.shape) == 3:
+			# rgb channels
+			image = image.sum(2)
+		#corping
+		need_padding = False
+		if image.shape[0] > shape[0]:
+			image = image[self.offset['y']:shape[0]+self.offset['y'],:]
+		elif image.shape[0] < shape[0]:
+			need_padding = True
+		if image.shape[1] > shape[1]:
+			image = image[:,self.offset['x']:shape[1]+self.offset['x']]
+		elif image.shape[1] < shape[1]:
+			need_padding = True
+		if need_padding:
+			mean = image.mean()
+			sigma = image.std()
+			off = ((shape[0]-image.shape[0])//2, (shape[1]-image.shape[1])//2)
+			new = numpy.random.normal(mean, sigma, shape)
+			new[off[0]:off[0]+image.shape[0],off[1]:off[1]+image.shape[1]] = image
+			image = new
+		return image
+
 	def getSyntheticImage(self,shape):
 		dark_mean = 1.0
 		bright_scale = 10
@@ -324,7 +409,7 @@ class SimFrameCamera(SimCCDCamera):
 			self.rawframesname = time.strftime('frames_%Y%m%d_%H%M%S')
 			self.rawframesname += '_%02d' % (idcounter.next(),)
 		else:
-			return self.getSyntheticImage(shape)
+			return self.getSimImage(shape)
 		sum = numpy.zeros(shape, numpy.float32)
 
 		for i in range(nframes):
@@ -351,7 +436,7 @@ class SimFrameCamera(SimCCDCamera):
 				self.debug_print('PRINT %d' %i)
 				sum += frame
 
-		return sum
+		return self.getSimImage(shape)
 
 	
 	def getNumberOfFrames(self):
@@ -552,3 +637,114 @@ class SimK2SuperResCamera(SimFrameCamera):
 		super(SimK2SuperResCamera,self).__init__()
 		self.binning_limits = [1]
 		self.binmethod = 'floor'
+
+def imagefun_bin(image, binning0, binning1=0):
+	return imagefun.bin(image, binning0)
+
+class SimK3Camera(SimFrameCamera):
+	name = 'SimK3Camera'
+	def __init__(self):
+		super(SimK3Camera,self).__init__()
+		self.binning_limits = [1,2,4,8]
+		self.binmethod = 'floor'
+		self.camsize = self.getCameraSize()
+		self.tempoffset = dict(self.offset)
+
+	def getSystemGainDarkCorrected(self):
+		return True
+
+	def setOffset(self, value):
+		# Work around
+		self.offset = dict(value)
+		self.tempoffset = {'x':0,'y':0}
+
+	def setUseCds(self,value):
+		self.use_cds = bool(value)
+
+	def getUseCds(self):
+		return self.use_cds
+
+	def _getImage(self):
+		if not self.validateGeometry():
+			raise ValueError('invalid image geometry')
+
+		for axis in ['x', 'y']:
+			if self.dimension[axis] * self.binning[axis] > self.getCameraSize()[axis]:
+				raise ValueError('invalid dimension/binning combination')
+
+		acqparams = self.calculateAcquireParams()
+		self.acqparams = acqparams
+
+		columns = self.acqparams['width']
+		rows = self.acqparams['height']
+
+		shape = (rows, columns)
+
+		t0 = time.time()
+		## exposure time
+		time.sleep(self.exposure_time)
+		t1 = time.time()
+		self.exposure_timestamp = (t1 + t0) / 2.0
+		image = self.getSimImage(shape)
+		image = self._modifyImageShape(image)
+		return image
+		
+	def needConfigDimensionFlip(self, height,width):
+		return False
+
+	def calculateAcquireParams(self):
+		acq_binning, left, top, right, bottom, width, height = self.getAcqBinningAndROI()
+		return {'width':width, 'height':height}
+
+	def getAcqBinning(self):
+		self.acq_binning = self.binning['x']
+		if self.binning['x'] > 2:
+			#K3 can only bin from super resolution by 1 or 2.
+			self.acq_binning = 2
+		# bin scale is 1 always
+		return self.acq_binning, 1
+
+	def getAcqBinningAndROI(self):
+		acq_binning, binscale = self.getAcqBinning()
+		height = self.camsize['y'] / acq_binning
+		width = self.camsize['x'] / acq_binning
+		if self.needConfigDimensionFlip(height,width):
+			tmpheight = height
+			height = width
+			width = tmpheight
+		left = self.tempoffset['x'] / binscale
+		top = self.tempoffset['y'] / binscale
+		right = left + width
+		bottom = top + height
+		return acq_binning, left, top, right, bottom, width, height
+
+	def _cropImage(self, image):
+		# default no modification
+		startx = self.getOffset()['x']
+		starty = self.getOffset()['y']
+		if startx != 0 or starty != 0:
+			endx = self.dimension['x'] + startx
+			endy = self.dimension['y'] + starty
+			image = image[starty:endy,startx:endx]
+			print 'cropped', image.shape
+		return image
+
+	def _modifyImageShape(self, image):
+		print 'recieved', image.shape
+		# TODO: Found image shape returned incorrectly in simulation.
+		# Leave this here for now.
+		if self.acqparams['width']*self.acqparams['height'] != image.shape[0]*image.shape[1]:
+			print 'ERROR: image not in the right shape'
+			return image
+		else:
+			# simulator binned image when saving frames has wrong shape
+			if self.acqparams['width'] != image.shape[1]:
+				image = image.reshape(self.acqparams['height'],self.acqparams['width'])
+				print 'WARNING: image reshaped', image.shape
+		# K3 can not bin more than 2. Bin it here.
+		added_binning = self.binning['x'] / self.acq_binning
+		if added_binning > 1:
+			image = imagefun_bin(image, added_binning)
+		image = self._cropImage(image)
+		self.debug_print('modified shape %s' % (image.shape,))
+		return image

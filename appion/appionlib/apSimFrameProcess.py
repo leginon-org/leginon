@@ -40,7 +40,7 @@ class SimFrameProcessing(apDDprocess.DDFrameProcessing):
 		'''
 		rawframe_basepath = self.getSessionFramePathFromImage(imagedata)
 		# frame stackfile is image filename plus '.frames.mrc'
-		rawframedir = os.path.join(rawframe_basepath,'%s.frames.mrc' % imagedata['filename'])
+		rawframedir = os.path.join(rawframe_basepath,'%s.frames.%s' % (imagedata['filename'],self.extname))
 		if not self.waitForPathExist(rawframedir,30):
 			apDisplay.printError('Raw Frame Dir %s does not exist.' % rawframedir)
 		return rawframedir
@@ -50,7 +50,8 @@ class SimFrameProcessing(apDDprocess.DDFrameProcessing):
 		Load from rawframe_path (a stack file) the chosen frame of the current image.
 		'''
 		try:
-			bin = self.camerainfo['binning']
+			# the frames are binned too now ?
+			bin = {'x':1,'y':1}
 			offset = self.camerainfo['offset']
 			dimension = self.camerainfo['dimension']
 		except:

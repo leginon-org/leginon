@@ -108,6 +108,9 @@ class Manager(node.Node):
 		self.autorun = False
 		self.autogridslot = None
 		self.autostagez = None
+		# manager pause
+		self.pausable_nodes = []
+		self.paused_nodes = []
 
 		# ready nodes, someday 'initialized' nodes
 		self.initializednodescondition = threading.Condition()
@@ -130,6 +133,11 @@ class Manager(node.Node):
 		self.addEventInput(event.ActivateNotificationEvent, self.handleNotificationStatus)
 		self.addEventInput(event.DeactivateNotificationEvent, self.handleNotificationStatus)
 		self.addEventInput(event.NodeBusyNotificationEvent, self.handleNodeBusyNotification)
+		self.addEventInput(event.ManagerPauseAvailableEvent, self.handleManagerPauseAvailable)
+		self.addEventInput(event.ManagerPauseNotAvailableEvent, self.handleManagerPauseNotAvailable)
+		self.addEventInput(event.ManagerContinueAvailableEvent, self.handleManagerContinueAvailable)
+		self.addEventInput(event.ManagerPauseEvent, self.handleManagerPause)
+		self.addEventInput(event.ManagerContinueEvent, self.handleManagerContinue)
 		# this makes every received event get distributed
 		self.addEventInput(event.Event, self.distributeEvents)
 
@@ -304,6 +312,22 @@ class Manager(node.Node):
 			self.logger.info(str(eventclass) + ': ' + str(fromnodename) + ' to '
 												+ str(tonodename) + ' no such binding')
 			return
+
+
+	def sendManagerNotificationEvent(self, to_node, ievent):
+		'''
+		Send a manager initiated event to a specific node. Unlike broadcast,
+		this is specific, but also requires no node-to-node binding.
+		'''
+		try:
+			eventcopy = copy.copy(ievent)
+			eventcopy['destination'] = to_node
+			self.clients[to_node].send(eventcopy)
+		except datatransport.TransportError:
+			### bad client, get rid of it
+			self.logger.error('Cannot send from manager to node ' + str(to_node))
+			raise
+		self.logEvent(ievent, 'sent by manager to %s' % (to_node,))
 
 	def broadcastToNode(self, nodename):
 		to_node = nodename
@@ -730,6 +754,34 @@ class Manager(node.Node):
 			# group into another function
 			self.removeNode(nodename)
 
+	def handleManagerPauseAvailable(self, ievent):
+		self._addPausableNode(ievent['node'])
+		self._removePausedNode(ievent['node'])
+
+	def handleManagerPauseNotAvailable(self, ievent):
+		self._removePausableNode(ievent['node'])
+		self._removePausedNode(ievent['node'])
+
+	def handleManagerPause(self, ievent):
+		for to_node in self.pausable_nodes:
+			out = event.PauseEvent()
+			self.sendManagerNotificationEvent(to_node, out)
+
+	def handleManagerContinueAvailable(self, ievent):
+		self._removePausableNode(ievent['node'])
+		self._addPausedNode(ievent['node'])
+
+	def handleManagerContinue(self, ievent):
+
+		if len(self.paused_nodes) >= 1:
+			self.logger.warning('Continue the most recently paused node')
+			to_nodes = self.paused_nodes
+			if not ievent['all']:
+				to_nodes = [self.paused_nodes[-1],]
+			for to_node in to_nodes:
+				out = event.ContinueEvent()
+				self.sendManagerNotificationEvent(to_node, out)
+
 	# Timeout Timer
 	def handleNodeBusyNotification(self, ievent):
 		self.restartTimeoutTimer()
@@ -744,6 +796,8 @@ class Manager(node.Node):
 		timeout = self.timeout_minutes*60.0
 		msg = 'Leginon has been idle for %.1f minutes' % self.timeout_minutes
 		self.slackNotification(msg)
+		evt = event.IdleNotificationEvent(destination='')
+		self.distributeEvents(evt)
 		self.timer = False
 
 	def restartTimeoutTimer(self):
@@ -782,7 +836,29 @@ class Manager(node.Node):
 		self.timer = threading.Timer(timeout,self.slackTimeoutNotification)
 		self.timer.start()
 		if self.timer_debug:
-			print 'timer started'
+			print 'timer started with timout set to %.0f sec' % timeout
+
+	def _addPausableNode(self, nodename):
+		if nodename not in self.pausable_nodes:
+			self.pausable_nodes.append(nodename)
+
+	def _removePausableNode(self, nodename):
+		try:
+			self.pausable_nodes.remove(nodename)
+		except ValueError:
+			# not in the list
+			pass
+
+	def _addPausedNode(self, nodename):
+		if nodename not in self.paused_nodes:
+			self.paused_nodes.append(nodename)
+
+	def _removePausedNode(self, nodename):
+		try:
+			self.paused_nodes.remove(nodename)
+		except ValueError:
+			# not in the list
+			pass
 
 	# Node Error Notification
 	def handleNodeLogError(self, ievent):
@@ -794,6 +870,7 @@ class Manager(node.Node):
 		nodename = ievent['node']
 		if isinstance(ievent, event.ActivateNotificationEvent):
 			self.tem_host = ievent['tem_host']
+			self.timeout_minutes = ievent['timeout_minutes']
 			# reset
 			self.notifyerror = True
 			# first allow timer to restart, if was set to false by completing a timeout

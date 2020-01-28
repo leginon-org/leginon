@@ -277,3 +277,16 @@ display: inline;
 .hidden { display: none; }
 .unhidden { display: block; }
 
+table.paleBlueRows {
+  border: 1px solid #FFFFFF;
+  background: #F8FAFF;
+  margin: 10px;
+}
+table.paleBlueRows td, table.paleBlueRows th {
+  border: 1px solid #C9C9C9;
+  padding: 3px;
+}
+
+table.paleBlueRows tr:nth-child(even) {
+  background: #D4E0EE;
+}

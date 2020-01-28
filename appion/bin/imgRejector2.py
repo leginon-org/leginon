@@ -293,7 +293,13 @@ class ImageRejector2(appionScript.AppionScript):
 		before_std = qr_bins[icer-3:icer-1].std()
 		at = qr_bins[icer]
 		after = qr_bins[icer+2]
-		after_std = qr_bins[icer+2:icer+4].std()
+		after1_std = qr_bins[icer+2:icer+4].std()
+		if rbin > icer+4:
+			# shift out more since the ring may be too strong.
+			after2_std = qr_bins[icer+3:icer+5].std()
+		else:
+			after2_std = after1+std
+		after_std = min(after1_std, after2_std)
 		apDisplay.printMsg('Std deviation intensity around ice crystal resolution are: %.3f and %.3f' % (before_std, after_std))
 		apDisplay.printMsg('Ice crystal resolution mean intensity above background: %.3f' % (at-(before+after)/2))
 		return at-(before+after)/2 > self.params['icemax']* max((before_std,after_std,min_std))

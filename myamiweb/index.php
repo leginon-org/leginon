@@ -21,6 +21,7 @@ $link->addlink('rctviewer.php','RCT','', 'rct');
 $link->addlink('2wayviewer.php','2 Way Viewer','', 'viewer');
 $link->addlink('tomo/','Tomography','', 'tomo_icon_3');
 $link->addlink('dualview.php','Dual Viewer','', 'dual_view');
+$link->addlink('fileviewer.php','File Listing','', 'file');
 $link->addlink('template.php', 'Hole Template viewer','', 'template');
 
 if (privilege('groups') > 3 ) 
@@ -64,13 +65,13 @@ login_header(PROJECT_TITLE,'','',true);
 <p>
 		<?php echo $link->Display(); ?>
 </p>
-		<?php if (HIDE_FEATURE === false) { ?>
+		<?php #if (HIDE_FEATURE === false) { ?>
 <label for="query"><strong>Session finder:</strong>&nbsp;
 <input style="border: 1px solid #bdcebb;" type="text" name="search" autocomplete="off" id="query" onKeyUp="preSearch()" />
 </label>
 <p>
 <div style="border: 1px solid #bdcebb; padding-left: 5px" id="result">&nbsp;</div>
 </p>
-<?php }
+<?php #}
 login_footer();
 ?>

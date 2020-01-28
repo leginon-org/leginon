@@ -59,7 +59,7 @@ class Panel(leginon.gui.wx.ClickTargetFinder.Panel):
 		self.toolbar.InsertTool(9, leginon.gui.wx.ToolBar.ID_CURRENT_POSITION,
 			'currentposition', shortHelpString='Show Position')
 		self.addOtherTools()
-		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, True)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, False)
 
 	def addOtherTools(self):
 		self.toolbar.InsertSeparator(10)
@@ -113,8 +113,10 @@ class Panel(leginon.gui.wx.ClickTargetFinder.Panel):
 			if selection:
 				self.node.setMosaicName(selection)
 				self.node.loadMosaicTiles(selection)
+				self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, True)
 		elif result == wx.ID_RESET:
 			self.node.clearTiles()
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, False)
 		dialog.Destroy()
 
 	def onMosaicButton(self, evt):
@@ -157,6 +159,12 @@ class Panel(leginon.gui.wx.ClickTargetFinder.Panel):
 
 	def squaresFound(self):
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_FIND_SQUARES, True)
+
+	def doneTargetList(self):
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, True)
+
+	def doneTargetDisplay(self):
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, True)
 
 class TilesDialog(wx.Dialog):
 	def __init__(self, parent, choices):

@@ -101,7 +101,10 @@ except:
 	print '    *** Could not import PIL Image module.'
 	print '      You must install Python Imaging Library version %s or greater' % (minstr,)
 else:
-	mystr = Image.VERSION
+	if hasattr(Image, 'VERSION'):
+		mystr = Image.VERSION
+	else:
+		mystr = Image.__version__
 	mypilver = map(int, mystr.split('.'))
 	print '    PIL version: %s' % (mystr,)
 	if versionAtLeast(mypilver, minpilver):

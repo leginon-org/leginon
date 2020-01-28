@@ -81,6 +81,13 @@ def parse():
 			log = None
 		configured[name]['log'] = log
 		configured[name]['class'] = cls
+		# A directory to pass simulated scope parameter to camera
+		try:
+			simpar_str = configparser.get(name, 'simpar')
+			simpar_value = simpar_str
+		except:
+			simpar_value = None
+		configured[name]['simpar'] = simpar_value
 
 	return configured, temclasses, cameraclasses
 

@@ -39,8 +39,6 @@ class Panel(leginon.gui.wx.Node.Panel):
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SETTINGS, False)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, False)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT_QUEUE, False)
-
-
 		self.initialize()
 
 		self.SetSizer(self.szmain)
@@ -59,16 +57,18 @@ class Panel(leginon.gui.wx.Node.Panel):
 		self.Bind(leginon.gui.wx.ImagePanelTools.EVT_SETTINGS, self.onImageSettings)
 		queue = self.node.settings['queue']
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT_QUEUE, queue)
-		self.imagepanel.imagevector = self.node.getTargetImageVector()
+		self.imagepanel.imagevectors = self.node.getTargetImageVectors()
 		self.imagepanel.beamradius = self.node.getTargetBeamRadius()
 
 	def onSetImage(self, evt):
 		super(Panel,self).onSetImage(evt)
+		# This function is called on initialization and self.node would be None
+		if self.node is None:
+			return
 		try:
-			self.imagepanel.imagevector = self.node.getTargetImageVector()
+			self.imagepanel.imagevectors = self.node.getTargetImageVectors()
 			self.imagepanel.beamradius = self.node.getTargetBeamRadius()
 		except AttributeError:
-			# This function is called on initialization and self.node would be None
 			pass
 
 	def onImageSettings(self, evt):
@@ -115,7 +115,6 @@ class Panel(leginon.gui.wx.Node.Panel):
 	def onNewTiltAxis(self, angle):
 		idcevt = leginon.gui.wx.ImagePanelTools.ImageNewTiltAxisEvent(self.imagepanel, angle)
 		self.imagepanel.GetEventHandler().AddPendingEvent(idcevt)
-
 
 class SettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
@@ -217,8 +216,10 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.node.onQueueCheckBox(state)
 
 if __name__ == '__main__':
+	import pdb
 	class App(wx.App):
 		def OnInit(self):
+			pdb.set_trace()
 			frame = wx.Frame(None, -1, 'Target Finder Test')
 			panel = Panel(frame)
 			frame.Fit()

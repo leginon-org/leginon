@@ -116,7 +116,7 @@ class CalibrationClient(object):
 		except RuntimeError, e:
 			self.node.logger.error('Failed tilt correction: %s' % (e))
 
-	def acquireImage(self, scope, settle=0.0, correct_tilt=False, corchannel=0):
+	def acquireImage(self, scope, settle=0.0, correct_tilt=False, corchannel=0, display=True):
 		if scope is not None:
 			newemdata = leginondata.ScopeEMData(initializer=scope)
 			self.instrument.setData(newemdata)
@@ -133,7 +133,8 @@ class CalibrationClient(object):
 			self.correctTilt(imagedata)
 		newscope = imagedata['scope']
 
-		self.node.setImage(imagedata['image'], 'Image')
+		if display:
+			self.node.setImage(imagedata['image'], 'Image')
 
 		return imagedata
 
@@ -465,6 +466,10 @@ class DoseCalibrationClient(CalibrationClient):
 		sensitivity = self.retrieveSensitivity(ht, tem, ccdcamera)
 		self.node.logger.debug('Sensitivity %.2f' % sensitivity)
 		mean_counts = binmult * arraystats.mean(numdata) / (binningx*binningy)
+		intensity_averaged = imagedata['camera']['intensity averaged']
+		if intensity_averaged:
+			# multiplied by exp_time to get total counts for the exposure time.
+			mean_counts = mean_counts * exp_time
 		self.node.logger.debug('Mean counts %.1f' % mean_counts)
 		pixel_totaldose = mean_counts / sensitivity
 		return pixel_totaldose
@@ -684,11 +689,11 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		bt1['y'] += bt_delta['y']
 		return bt1
 
-	def getFirstBeamTiltDeltaXY(self, scale, on_phase_plate = False):
-		btilts = self.getBeamTiltDeltaPair(scale, on_phase_plate)
+	def getFirstBeamTiltDeltaXY(self, scale, probe=None, on_phase_plate = False):
+		btilts = self.getBeamTiltDeltaPair(scale, probe, on_phase_plate)
 		return btilts[0]
 
-	def getBeamTiltDeltaPair(self, scale, on_phase_plate = False):
+	def getBeamTiltDeltaPair(self, scale, probe=None, on_phase_plate = False):
 		"""
 		Get a list of two beam tilt delta dictionary in radians.
 		This may be the default values or the one saved in the database.
@@ -700,21 +705,21 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		if not on_phase_plate:
 			# use default
 			return [btilt1,btilt2]
-		btilts = self.getPhasePlateBeamTilts(scale)
+		btilts = self.getPhasePlateBeamTilts(scale, probe)
 		if not btilts:
 			# failed to get valid btilts, use default
 			return [btilt1,btilt2]
 		else:
 			return btilts
 
-	def getPhasePlateBeamTilts(self, scale):
+	def getPhasePlateBeamTilts(self, scale, probe=None):
 		"""
 		Get from database a list of two special beam tilt delta dictionary in radians.
 		i.e. [{'x':-0.01,'y':0},{'x':0.01,'y':0}]
 		"""
 		tem = self.instrument.getTEMData()
-		rotation = self.retrievePhasePlateBeamTiltRotation(tem)
-		ppbeamtilt_vectors = self.retrievePhasePlateBeamTiltVectors(tem)
+		rotation = self.retrievePhasePlateBeamTiltRotation(tem, probe)
+		ppbeamtilt_vectors = self.retrievePhasePlateBeamTiltVectors(tem, probe)
 		# NoCalibrationError is raised at this point if no vectors
 		btilts = []
 		if ppbeamtilt_vectors is not None:
@@ -753,7 +758,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		# Focuser node that calls this need to know the type of error
 		fmatrix = self.retrieveMatrix(tem, cam, 'defocus', ht, mag, probe)
 
-		tilt_deltas = self.getBeamTiltDeltaPair(tilt_value, on_phase_plate)
+		tilt_deltas = self.getBeamTiltDeltaPair(tilt_value, probe, on_phase_plate)
 		all_tilt_deltas = [tilt_deltas,]
 		## only do stig if stig matrices exist
 		amatrix = bmatrix = None
@@ -845,7 +850,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			mt.append(m)
 		M = numpy.concatenate(mt, 0)
 
-		solution = numpy.linalg.lstsq(M, v)
+		solution = numpy.linalg.lstsq(M, v, rcond=-1)
 
 		result = {'defocus': solution[0][0], 'min': float(solution[1][0])}
 		if len(solution[0]) == 3:
@@ -1023,22 +1028,22 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			return False
 		return True
 
-	def calculateImageShiftComaMatrix(self,tdata,xydata):
+	def calculateImageShiftAberrationMatrix(self,tdata,xydata):
 		''' Fit the beam tilt vector induced by image shift 
 				to a straight line on individual axis.  
 				Strickly speaking we should use orthogonal distance regression.''' 
 		ordered_axes = ['x','y']
 		matrix = numpy.zeros((2,2))
-		coma0 = {'x':0.0,'y':0.0}
+		ab0 = {'x':0.0,'y':0.0}
 		for index1, axis1 in enumerate(ordered_axes):
 			data = xydata[axis1]
-			for axis2 in data.keys():
+			for axis2 in ordered_axes:
 				(slope,t_intercept) = scipy.polyfit(numpy.array(tdata[axis1]),numpy.array(xydata[axis1][axis2]),1)
 				index2 = ordered_axes.index(axis2)
-				matrix[index1,index2] = slope
-				coma0[axis2] += t_intercept
-			coma0[axis2] /= len(ordered_axes)
-		return matrix, coma0
+				matrix[index2,index1] = slope
+				ab0[axis2] += t_intercept
+			ab0[axis2] /= len(ordered_axes)
+		return matrix, ab0
 
 	def measureComaFree(self, tilt_value, settle, raise_error=False):
 		tem = self.instrument.getTEMData()
@@ -1100,35 +1105,29 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			self.node.logger.debug("std %5.2f,  %5.2f" %(xarray.std()*1000,yarray.std()*1000))
 			return xarray,yarray
 
-	def transformImageShiftToBeamTilt(self, imageshift, tem, cam, ht, zerobeamtilt, mag):
-		newbeamtilt = {}
+	def transformImageShiftToBeamTilt(self, imageshift, tem, cam, ht, zero, mag):
 		par = 'image-shift coma'
-		try:
-			# not to query specific mag for now
-			probe = self.instrument.tem.ProbeMode
-			matrix = self.retrieveMatrix(tem, cam, 'image-shift coma', ht, None, probe)
-		except NoMatrixCalibrationError:
-			raise RuntimeError('missing %s calibration matrix' % par)
-		self.node.logger.debug("Image Shift ( %5.2f, %5.2f)" % (imageshift['x']*1e6,imageshift['y']*1e6))
-		shiftvect = numpy.array((imageshift['x'], imageshift['y']))
-		change = numpy.dot(matrix, shiftvect)
-		newbeamtilt['x'] = zerobeamtilt['x'] - change[0]
-		newbeamtilt['y'] = zerobeamtilt['y'] - change[1]
-		self.node.logger.debug("Beam Tilt Correction ( %5.2f, %5.2f)" % (change[0]*1e3,change[1]*1e3))
-		self.node.logger.debug("Beam Tilt ( %5.2f, %5.2f)" % (newbeamtilt['x']*1e3,newbeamtilt['y']*1e3))
-		return newbeamtilt
+		new = self._transformImageShiftToNewPar(imageshift, tem, cam, ht, zero, mag, par)
+		self.node.logger.debug("Beam Tilt ( %5.2f, %5.2f) mrad" % (new['x']*1e3,new['y']*1e3))
+		return new
 
 	def transformImageShiftToObjStig(self, imageshift, tem, cam, ht, zero, mag):
 		par = 'image-shift stig'
 		new = self._transformImageShiftToNewPar(imageshift, tem, cam, ht, zero, mag, par)
+		self.node.logger.debug("Obj Stig ( %5.2f, %5.2f) * 1e-3" % (new['x']*1e3,new['y']*1e3))
 		return new
 
 	def transformImageShiftToDefocus(self, imageshift, tem, cam, ht, defoc0, mag):
 		par = 'image-shift defocus'
 		zero = {'x':defoc0,'y':0}
-		new = self._transformImageShiftToNewPar(imageshift, tem, cam, ht, zero, mag, par)
-		defoc1 = new['x']
-		return defoc1
+		try:
+			new = self._transformImageShiftToNewPar(imageshift, tem, cam, ht, zero, mag, par)
+			defoc1 = new['x']
+			self.node.logger.debug("Defocus %5.2f um" % (defoc1*1e6,))
+			return defoc1
+		except:
+			self.node.logger.warning('image-shift defocus not calibrated, ignore such correction.')
+			return defoc0
 
 	def _transformImageShiftToNewPar(self, imageshift, tem, cam, ht, zero, mag, par):
 		new = {}
@@ -1143,25 +1142,33 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		change = numpy.dot(matrix, shiftvect)
 		new['x'] = zero['x'] - change[0]
 		new['y'] = zero['y'] - change[1]
-		self.node.logger.debug("%s Correction ( %5.2f, %5.2f)" % (par, change[0]*1e3,change[1]*1e3))
-		self.node.logger.debug("Obj Stig ( %5.2f, %5.2f)" % (new['x']*1e3,new['y']*1e3))
+		self.node.logger.debug("Change ( %5.2f, %5.2f) * 1e-3" % (new['x']*1e3,new['y']*1e3))
 		return new
 
-	def correctImageShiftComa(self):
+	def getScopeState(self, attr_name):
 		tem = self.instrument.getTEMData()
 		cam = self.instrument.getCCDCameraData()
 		ht = self.instrument.tem.HighTension
 		mag = self.instrument.tem.Magnification
 		shift0 = self.instrument.tem.ImageShift
-		scopestate = leginondata.ScopeEMData(tem=tem,magnification=mag)
-		camerastate = leginondata.CameraEMData(ccdcamera=cam)
-		tilt0 = self.instrument.tem.BeamTilt
-		scopestate['high tension'] = ht
-		scopestate['image shift'] = shift0
-		scopestate['beam tilt'] = tilt0
-		beamtilt = scopestate['beam tilt']
-		beamtilt = self.transformImageShiftToBeamTilt(shift0, tem, cam, ht, beamtilt, mag)
+		param0 = getattr(self.instrument.tem, attr_name)
+		return shift0, tem, cam, ht, param0, mag
+
+	def correctImageShiftComa(self):
+		shift0, tem, cam, ht, beamtilt0, mag = self.getScopeState('BeamTilt')
+		beamtilt = self.transformImageShiftToBeamTilt(shift0, tem, cam, ht, beamtilt0, mag)
 		self.setBeamTilt(beamtilt)
+
+	def correctImageShiftObjStig(self):
+		shift0, tem, cam, ht, allstigs0, mag = self.getScopeState('Stigmator')
+		objstig0 = allstigs0['objective']
+		objstig = self.transformImageShiftToObjStig(shift0, tem, cam, ht, objstig0, mag)
+		self.instrument.tem.Stigmator={'objective':objstig}
+
+	def correctImageShiftDefocus(self):
+		shift0, tem, cam, ht, defocus0, mag = self.getScopeState('Defocus')
+		defocus = self.transformImageShiftToDefocus(shift0, tem, cam, ht, defocus0, mag)
+		self.instrument.tem.Defocus = defocus
 
 	def alignRotationCenter(self, defocus1, defocus2):
 		bt = self.measureRotationCenter(defocus1, defocus2, correlation_type=None, settle=0.5)
@@ -1437,8 +1444,8 @@ class ImageShiftCalibrationClient(SimpleMatrixCalibrationClient):
 		'''
 		Using physical position as a global coordinate system, we can
 		do pixel to pixel transforms between mags.
-		This function will calculate a pixel vector at mag2, given
-		a pixel vector at mag1.
+		This function will calculate a (row,col) pixel vector at mag2, given
+		a (row,col) pixel vector at mag1.
 		For image shift, this means: the physical image shift values in meters
 		need to be properly calibrated for this to work right
 		'''
@@ -1468,7 +1475,7 @@ class ImageShiftCalibrationClient(SimpleMatrixCalibrationClient):
 		pixel_shift = numpy.dot(matrix_inv, physicalpos)
 		return pixel_shift
 
-class ImageRotationCalibrationClient(ImageShiftCalibrationClient):
+class ImageScaleRotationCalibrationClient(ImageShiftCalibrationClient):
 	mover = False
 	def __init__(self, node):
 		ImageShiftCalibrationClient.__init__(self, node)
@@ -1511,24 +1518,26 @@ class ImageRotationCalibrationClient(ImageShiftCalibrationClient):
 				raise RuntimeError('Failed retrieving last values')
 		return last.values()
 
-	def researchImageScaleAddition(self, tem, ccdcamera, mag=None, ht=None, probe=None):
+	def researchImageScaleAddition(self, tem, ccdcamera, mag=None, ht=None):
 		queryinstance = leginondata.ImageScaleAdditionCalibrationData()
-		return self.researchCalibration(queryinstance, tem, ccdcamera, mag, ht, probe)
+		return self.researchCalibration(queryinstance, tem, ccdcamera, mag, ht)
 
-	def researchImageRotation(self, tem, ccdcamera, mag=None, ht=None, probe=None):
+	def researchImageRotation(self, tem, ccdcamera, mag=None, ht=None):
 		queryinstance = leginondata.ImageRotationCalibrationData()
-		return self.researchCalibration(queryinstance, tem, ccdcamera, mag, ht, probe)
+		return self.researchCalibration(queryinstance, tem, ccdcamera, mag, ht)
 
-	def researchCalibration(self, queryinstance, tem, ccdcamera, mag, ht, probe):
+	def researchCalibration(self, queryinstance, tem, ccdcamera, mag, ht):
 		self.setDBInstruments(queryinstance,tem,ccdcamera)
 		if ht is None:
 			ht = self.instrument.tem.HighTension
-		if probe is None:
-			probe = self.instrument.tem.ProbeMode
 		queryinstance['magnification'] = mag
 		queryinstance['high tension'] = ht
-		queryinstance['probe'] = probe
-		caldatalist = self.node.research(datainstance=queryinstance, results=1)
+		if mag is None:
+			# get all.  Used in calibration
+			caldatalist = self.node.research(datainstance=queryinstance)
+		else:
+			# get the last one at the mag.
+			caldatalist = self.node.research(datainstance=queryinstance, results=1)
 		return caldatalist
 
 	def retrieveImageRotation(self, tem, ccdcamera, mag, ht=None):
@@ -1559,8 +1568,8 @@ class ImageRotationCalibrationClient(ImageShiftCalibrationClient):
 		'''
 		Using physical position as a global coordinate system, we can
 		do pixel to pixel transforms between mags.
-		This function will calculate a pixel vector at mag2, given
-		a pixel vector at mag1.
+		This function will calculate a (row, col) pixel vector at mag2, given
+		a (row, col) pixel vector at mag1.
 		For image shift, this means: the physical image shift values in meters
 		need to be properly calibrated for this to work right
 		'''
@@ -1612,6 +1621,14 @@ class BeamShiftCalibrationClient(SimpleMatrixCalibrationClient):
 	def parameter(self):
 		return 'beam shift'
 
+class DiffractionShiftCalibrationClient(SimpleMatrixCalibrationClient):
+	mover = False
+	def __init__(self, node):
+		SimpleMatrixCalibrationClient.__init__(self, node)
+
+	def parameter(self):
+		return 'diffraction shift'
+
 class ImageBeamShiftCalibrationClient(ImageShiftCalibrationClient):
 	def __init__(self, node):
 		ImageShiftCalibrationClient.__init__(self, node)
@@ -1635,14 +1652,14 @@ class StageCalibrationClient(SimpleMatrixCalibrationClient):
 		'''
 		Using stage position as a global coordinate system, we can
 		do pixel to pixel transforms between mags.
-		This function will calculate a pixel vector at mag2, given
-		a pixel vector at mag1.
+		This function will calculate a (row, col) pixel vector at mag2, given
+		a (row, col) pixel vector at mag1.
 		'''
 		par = self.parameter()
 		matrix1 = self.retrieveMatrix(tem1, ccdcamera1, par, ht, mag1)
 		matrix2 = self.retrieveMatrix(tem2, ccdcamera2, par, ht, mag2)
 		matrix2inv = numpy.linalg.inv(matrix2)
-		p1 = numpy.array(p1)
+		p1 = numpy.array(p1) #[row, col]
 		stagepos = numpy.dot(matrix1, p1)
 		p2 = numpy.dot(matrix2inv, stagepos)
 		return p2
@@ -1999,8 +2016,8 @@ class ModeledStageCalibrationClient(MatrixCalibrationClient):
 		'''
 		Using stage position as a global coordinate system, we can
 		do pixel to pixel transforms between mags.
-		This function will calculate a pixel vector at mag2, given
-		a pixel vector at mag1.
+		This function will calculate a (row, col) pixel vector at mag2, given
+		a (row, col) pixel vector at mag1.
 		'''
 
 		scope = leginondata.ScopeEMData()
@@ -2401,6 +2418,8 @@ class BeamSizeCalibrationClient(CalibrationClient):
 			intensity_delta = intensity - intercept
 			beamsize = intensity_delta / slope
 			return beamsize
+		else:
+			self.node.logger.debug('missing beam size calibration for tem id:%d, spot size:%d, and %s probe' % (scopedata['tem'].dbid, scopedata['spot size'], scopedata['probe mode']))
 
 	def getIlluminatedArea(self,scopedata):
 		beam_diameter = self.getBeamSize(scopedata) 

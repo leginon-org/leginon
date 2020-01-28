@@ -117,7 +117,7 @@ define('WEBSERVICE_URL', false);
 // --- if the login and passphrase are false/null	-- //
 // --- the username and password that the user   	-- //
 // --- logs into appion with will be used.			-- //
-// $PROCESSING_HOSTS[] = array('host' => 'myhost.inst.edu',	'nproc' => 32,'nodesdef' => '4','nodesmax' => '280','ppndef' => '32','ppnmax' => '32','reconpn' => '16','walltimedef' => '48','walltimemax' => '240','cputimedef' => '1536','cputimemax' => '10000','memorymax' => '','appionbin' => 'bin/','appionlibdir' => 'appion/','baseoutdir' => 'appion','localhelperhost' => '','dirsep' => '/','wrapperpath' => 'appion','loginmethod' => 'SHAREDKEY','loginusername' => '','passphrase' => '','publickey' => 'rsa.pub','privatekey' => 'rsa','gpus' => array( '0.0' => 'device 0: Tesla', '1' => 'device 1', '2' => 'device 2'), 'queues' => array('bigmem','myami')	);
+// $PROCESSING_HOSTS[] = array('host' => 'myhost.inst.edu',	'nproc' => 32,'nodesdef' => '4','nodesmax' => '280','ppndef' => '32','ppnmax' => '32','reconpn' => '16','walltimedef' => '48','walltimemax' => '240','cputimedef' => '1536','cputimemax' => '10000','memorymax' => '','appionbin' => 'bin/','appionlibdir' => 'appion/','baseoutdir' => 'appion','localhelperhost' => '','dirsep' => '/','wrapperpath' => 'appion','loginmethod' => 'SHAREDKEY','loginusername' => '','passphrase' => '','publickey' => 'rsa.pub','privatekey' => 'rsa','gpus' => array( '0.0' => 'device 0: Tesla', '1' => 'device 1', '2' => 'device 2'), 'queues' => array('bigmem','myami'), 'noqueuing' => false, 'allowdirectrun' => false	);
 
 
 // --- Restrict file server if you want --- //
@@ -130,6 +130,9 @@ define('ENABLE_CACHE', false);
 // --- please make sure the apache user has read access to this folder --- //
 // --- define('CACHE_PATH', "/srv/www/cache/"); --- //
 define('CACHE_PATH', "");
+
+// --- limit session to be displayed ---//
+define('SESSION_LIMIT', 3000);
 
 // --- define Flash player base url --- //
 define('FLASHPLAYER_URL', "/flashplayer/");
@@ -183,6 +186,10 @@ define('EXCLUDED_PROJECTS',"");
 // --- hide testing tools related to specific data sets. --- //
 define('HIDE_TEST_TOOLS', true);
 
+// --- cryoSPARC host name and port number. --- //
+//define('CRYOSPARC', "yourhost");
+define('CRYOSPARC_PORT', "39001");
+
 // --- A startup message may be shown to the user --- //
 define('STARTUP_MESSAGE', "");
 
@@ -205,5 +212,12 @@ define('SERVER_PORT', "55123");
 // ---	);
 
 $TEST_SESSIONS = array();
+
+//used in [user results]  and [poster] 
+//define ('ACKNOWLEDGEMENTS', '');
+
+//show LOI views set to true if want them displayed.  May consume much resource if too many
+//of users do so at the same time.
+define('SHOW_LOI_VIEWS', false);
 
 ?>

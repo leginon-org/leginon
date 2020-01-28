@@ -16,10 +16,14 @@ class DataJsonMaker(object):
 		'''
 		Make SQL query of leginondata from class name and keyword arguments.
 		'''
+		underline_exceptions = ['process_obj_thickness',]
 		q = getattr(leginondata,classname)()
 		for key in kwargs.keys():
-			# leginondata keys never contains '_'
-			realkey = key.replace('_',' ')
+			if key not in underline_exceptions:
+				# leginondata keys almost never contains '_'
+				realkey = key.replace('_',' ')
+			else:
+				realkey = key
 			q[realkey] = kwargs[key]
 		return q
 
@@ -122,7 +126,7 @@ class SettingsJsonMaker(DataJsonMaker):
 				return r2
 
 	def exportFocusSequenceSettings(self, allalias):
-		print 'exporting Focus Sequence Settings....'
+		print 'checking Focus Sequence Settings....'
 		if 'Focuser' not in allalias.keys():
 			return
 		sequence_names = []
@@ -155,6 +159,7 @@ class SettingsJsonMaker(DataJsonMaker):
 				'BufferCycler':'BufferCyclerSettingsData',
 				'EM':None,
 				'FileNames':'ImageProcessorSettingsData',
+				'IcethicknessEF': 'ZeroLossIceThicknessSettingsData',
 		}
 		aliaskeys = allalias.keys()
 		aliaskeys.sort()
@@ -165,13 +170,12 @@ class SettingsJsonMaker(DataJsonMaker):
 			if not settingsname:
 				continue
 			if classname in aliaskeys:
-				print 'importing %s Settings....' % (classname,)
+				print 'checking %s Settings....' % (classname,)
 				# allalias[classname] may have duplicates
 				for node_name in (set(allalias[classname])):
 					if self.node_name_prefix and not node_name.startswith(self.node_name_prefix):
 						continue
 					try:
-						print '...node name: %s' % (node_name)
 						results = self.researchSettings(settingsname,name=node_name)
 					except:
 						if classname not in self.bad_settings_class:
@@ -210,6 +214,7 @@ class SettingsJsonMaker(DataJsonMaker):
 		session_name = source_session['name']
 		print "****Session %s ****" % (session_name)
 		self.exportSettings(appname)
+		print "%d settings are found with app=%s and node-prefix=%s" % (len(self.alldata), appname, self.node_name_prefix)
 		if appname:
 			jsonfilename = '%s+%s.json' % (session_name,appname)
 		else:

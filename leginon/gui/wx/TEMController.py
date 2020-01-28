@@ -34,6 +34,8 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_LIGHT_OFF,
 													'light_off',
 													shortHelpString='Close Column Valves')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PLAY, 'play', shortHelpString='Continue Last')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PAUSE, 'pause', shortHelpString='Pause All')
 		self.toolbar.AddSeparator()
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_RESET_XY, 'xy',
 													shortHelpString='Reset stage X,Y to 0,0')
@@ -45,6 +47,7 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		self.pressure_order = ['column','projection','buffer tank']
 		self.sz_pressure = TEMParameters(self,'Gauge Pressure', self.pressure_order)
 		self.szmain.Add(self.sz_pressure, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.current_mechanism = 'objective'
 		self.current_aperture = ''
 		self.sz_aperture = TEMParameters(self,'Aperture State', [])
 		self.szmain.Add(self.sz_aperture, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
@@ -64,6 +67,7 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		leginon.gui.wx.Instrument.SelectionMixin.onNodeInitialized(self)
 		# These need to be here because self.node is not defined in __init__
 		self.insertApertureSelector(3)
+		self.insertMechanismSelector(3)
 		self.insertGridSlotSelector(3)
 		self.insertPresetSelector(3)
 		# ToolBar Events
@@ -76,7 +80,7 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onLoadGridTool,
 											id=leginon.gui.wx.ToolBar.ID_INSERT)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSetApertureTool,
-											id=leginon.gui.wx.ToolBar.ID_PLAY)
+											id=leginon.gui.wx.ToolBar.ID_CALIBRATE)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
 											id=leginon.gui.wx.ToolBar.ID_SETTINGS)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onRefreshTool,
@@ -87,6 +91,11 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 											id=leginon.gui.wx.ToolBar.ID_LIGHT_OFF)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onResetXY,
 											id=leginon.gui.wx.ToolBar.ID_RESET_XY)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onPlay,
+											id=leginon.gui.wx.ToolBar.ID_PLAY)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onPause,
+											id=leginon.gui.wx.ToolBar.ID_PAUSE)
+		self.Bind(leginon.gui.wx.Events.EVT_PLAYER, self.onPlayer)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onResetZ,
 											id=leginon.gui.wx.ToolBar.ID_RESET_Z)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onResetAlpha,
@@ -96,7 +105,9 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		self.Bind(leginon.gui.wx.Events.EVT_GET_DISPLAY_GRID_LOADER_SLOT_STATES, self.onDisplayGridLoaderSlotStates)
 		self.Bind(leginon.gui.wx.Events.EVT_GET_DISPLAY_APERTURE_STATES, self.onDisplayApertureStates)
 		self.Bind(leginon.gui.wx.Events.EVT_UPDATE_GRID_SLOT_SELECTOR, self.onUpdateGridSlotSelector)
+		self.Bind(leginon.gui.wx.Events.EVT_UPDATE_MECHANISM_SELECTOR, self.onUpdateMechanismSelector)
 		self.Bind(leginon.gui.wx.Events.EVT_UPDATE_APERTURE_SELECTOR, self.onUpdateApertureSelector)
+		self.mechanism_choices.Bind(wx.EVT_CHOICE, self.onSetMechanismTool,self.mechanism_choices)
 
 	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self,show_basic=True)
@@ -121,6 +132,7 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		self.addDisplayGridLoaderSlotStatesEvent()
 		self.addUpdateGridSlotSelectorEvent()
 		self.addDisplayApertureStatesEvent()
+		self.addUpdateMechanismSelectorEvent()
 		self.addUpdateApertureSelectorEvent()
 
 	#=============Preset Selector and Set  ========================
@@ -267,6 +279,23 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		self.displayGridLoaderSlotStates()
 		self.enableAll(True)
 
+	#===========WORKFLOW CONTROL===================
+	def onPlay(self, evt):
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, True)
+		threading.Thread(target=self.node.uiContinue).start()
+
+	def onPause(self, evt):
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, False)
+		threading.Thread(target=self.node.uiPause).start()
+
+	def onPlayer(self, evt):
+		if evt.state == 'play':
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, False)
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, True)
+		elif evt.state == 'pause':
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, True)
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, False)
+
 	#===========STAGE CONTROL===================
 	def onResetXY(self, evt):
 		self.node.onResetXY()
@@ -277,10 +306,61 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 	def onResetAlpha(self, evt):
 		self.node.onResetAlpha()
 
-	#=========OBJECTIVE APERTURE SELECTOR============================
+	#=========APERTURE MECHANISM SELECTOR============================
+	def getApertureMechanisms(self):
+		self.mechanism_names = self.node.getApertureMechanisms()
+
+	def insertMechanismSelector(self,position):
+		'''
+		Create Choice Sizer
+		'''
+		self.getApertureMechanisms()
+		self.mechanism_choices = Choice(self.toolbar, -1, choices=self.mechanism_names)
+		# Insert in reverse order
+		self.toolbar.InsertControl(position,self.mechanism_choices)
+		if not self.mechanism_names:
+			# this tool is created first by ApertureSelector
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_CALIBRATE, False)
+		return
+
+	def addUpdateMechanismSelectorEvent(self):
+		# MCV model create event to publish
+		self.getApertureMechanisms()
+		if not self.mechanism_names:
+			# Do nothing
+			return
+		evt = leginon.gui.wx.Events.UpdateMechanismSelectorEvent()
+		evt.values = self.mechanism_names
+		evt.current = self.current_mechanism
+		self.GetEventHandler().AddPendingEvent(evt)
+
+	def onUpdateMechanismSelector(self, evt):
+		names = evt.values
+		current = evt.current
+		self.setMechanismChoices(names)
+		self.setMechanismChoice(current)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_CALIBRATE, bool(names))
+
+	def setMechanismChoices(self,names):
+		# This part is needed for wxpython 2.8.  It can be replaced by Set function in 3.0
+		self.mechanism_choices.Clear()
+		for name in names:
+			self.mechanism_choices.Append(name)
+
+	def setMechanismChoice(self,current_choice):
+		if not self.mechanism_names:
+			return
+		if current_choice in self.mechanism_names:
+			self.mechanism_choices.SetStringSelection(current_choice)
+
+	def onSetMechanismTool(self,evt):
+		self.current_mechanism = evt.GetString().lower()
+		self.addUpdateApertureSelectorEvent()
+
+	#=========APERTURE SELECTOR============================
 	def getApertureSelectionNames(self):
 		# This needs to be done after self.node is set.
-		self.aperture_names = self.node.getApertureNames()
+		self.aperture_names = self.node.getApertureNames(self.current_mechanism)
 		# Use a different list to include default before knowing which state it is in.
 		self.aperture_selection_names = list(self.aperture_names)
 
@@ -292,12 +372,12 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		self.aperture_choices = Choice(self.toolbar, -1, choices=self.aperture_selection_names)
 		# Insert in reverse order
 		self.toolbar.InsertSeparator(position)
-		self.toolbar.InsertTool(position, leginon.gui.wx.ToolBar.ID_PLAY,
+		self.toolbar.InsertTool(position, leginon.gui.wx.ToolBar.ID_CALIBRATE,
 													'instrumentset',
 												shortHelpString='Send objective aperture selection to scope')
 		self.toolbar.InsertControl(position,self.aperture_choices)
 		if not self.aperture_selection_names:
-			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, False)
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_CALIBRATE, False)
 		return
 
 	def addUpdateApertureSelectorEvent(self):
@@ -316,7 +396,7 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		current = evt.current
 		self.setApertureChoices(names)
 		self.setApertureChoice(current)
-		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, bool(names))
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_CALIBRATE, bool(names))
 
 	def setApertureChoices(self,names):
 		# This part is needed for wxpython 2.8.  It can be replaced by Set function in 3.0
@@ -331,9 +411,10 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 			self.aperture_choices.SetStringSelection(current_choice)
 
 	def onSetApertureTool(self,evt):
+		self.current_mechanism = self.mechanism_choices.GetStringSelection()
 		self.current_aperture = self.aperture_choices.GetStringSelection()
-		args = (self.current_aperture,)
-		threading.Thread(target=self.node.selectObjAperture,args=args).start()
+		args = (self.current_mechanism, self.current_aperture,)
+		threading.Thread(target=self.node.selectAperture,args=args).start()
 
 	#=============PRESSURE DISPLAY=====================
 	def addDisplayPressureEvent(self):

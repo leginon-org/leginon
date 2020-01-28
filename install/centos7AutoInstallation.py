@@ -9,13 +9,13 @@ import webbrowser
 import stat
 import time
 import hashlib
-
+import getpass
 
 class CentosInstallation(object):
 
 	def setReleaseDependantValues(self):
 		# need to change to branch when release
-		self.gitCmd = "git clone http://emg.nysbc.org/git/myami " + self.gitMyamiDir
+		self.gitCmd = "git clone -b trunk https://emg.nysbc.org/git/myami " + self.gitMyamiDir
 		# redhat release related values
 		self.torqueLibPath = '/var/lib/torque/'
 
@@ -119,7 +119,7 @@ class CentosInstallation(object):
 		
 		if not returnValue:
 			print("========================")
-			print("ERROR: Please disable SELinux before running this auto installation. Visit http://emg.nysbc.org/redmine/projects/appion/wiki/Install_Appion_and_Leginon_using_the_auto-installation_tool .")
+			print("ERROR: Please disable SELinux before running this auto installation. Visit https://emg.nysbc.org/redmine/projects/appion/wiki/Install_Appion_and_Leginon_using_the_auto-installation_tool .")
 			print("Exiting installation...")
 			print("========================")
 			return False
@@ -130,7 +130,7 @@ class CentosInstallation(object):
 		originalUmask = os.umask(0)
 		
 		if not os.path.exists(self.imagesDir):
-			self.writeToLog("create images folder - /myamiImages")
+			self.writeToLog("create images folder - %s" % (self.imagesDir))
 			os.makedirs(self.imagesDir, 0777)
 		else:
 			os.chmod(self.imagesDir, 0777)
@@ -152,6 +152,8 @@ class CentosInstallation(object):
 		print "Updating system files...."
 		self.runCommand("rpm -Uvh https://dl.fedoraproject.org/pub/epel/epel-release-latest-%s.noarch.rpm" % (self.redhatMajorRelease))
 
+		# epel-release include wxPython and other requirement
+		self.runCommand("yum -y install epel-release")
 		self.runCommand("yum -y update yum*")
 
 		self.yumInstall(['yum-fastestmirror.noarch', 'yum-utils.noarch'])
@@ -180,6 +182,29 @@ class CentosInstallation(object):
 			self.writeToLog(stderrResult)
 		self.writeToLog("#===================================================\n")
 		return stdoutResult
+
+	def validateCommandOutput(self, cmd, pattern='', happy=True):
+		'''
+		run a command and then search the output for pattern string.
+		if found and happy is True then return True.  If found but happy is false
+		then return False.
+		'''
+		proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		stdoutResult = proc.stdout.read()
+		stderrResult = proc.stderr.read()
+		print stdoutResult, stderrResult
+		sys.stderr.write(stderrResult)
+		returncode = proc.wait()
+		found=False
+		if pattern:
+			if pattern in stderrResult or pattern in stdoutResult:
+				found = True
+		else:
+			if not (stdoutResult or stderrResult):
+				found = True
+		if (found and happy) or (not found and not happy):
+					return True
+		return False
 
 	def yumInstall(self, packagelist):
 		
@@ -262,15 +287,15 @@ class CentosInstallation(object):
 		self.linkMpiRun()
 
 	def processServerExtraPythonPackageInstall(self):
-		self.runCommand("yum install -y python-pip")
+		self.runCommand("yum install -y python2-pip")
 		self.runCommand("pip install joblib==0.10.3")		
+		self.runCommand("pip install slackclient==1.0.0")
 
 	def setupWebServer(self):
 		self.writeToLog("--- Start install Web Server")
 		#myamiweb yum packages
-		packagelist = ['php-pecl-ssh2','mod_ssl', 'fftw3-devel','git','python-imaging','python-devel','mod_python','scipy','httpd', 'libssh2-devel', 'php', 'php-mysql', 'phpMyAdmin.noarch', 'php-devel', 'php-gd', ]
+		packagelist = ['php-pecl-ssh2','php-mongodb.noarch', 'mod_ssl', 'fftw-devel','git','python-imaging','python-devel','mod_python','scipy','httpd', 'libssh2-devel', 'php', 'php-mysql', 'phpMyAdmin.noarch', 'php-devel', 'php-gd', ]
 		self.yumInstall(packagelist)
-		self.runCommand("easy_install fs PyFFTW3")
 
 		# Redux Server is on Web server for now.
 		self.installReduxServer()
@@ -309,19 +334,22 @@ class CentosInstallation(object):
 		self.writeToLog("--- Start Setting up Database Server")
 		self.mariadbYumInstall()
 		self.writeToLog("--- MariaDB is installed through yum on CentOs 7")
+				
 		# turn on auto mysql start
-		self.runCommand("systemctl enable mariadb")
-		# stop mysql server (if it's running)
-		self.runCommand("systemctl stop mariadb")
+		if self.validateCommandOutput('systemctl status mariadb', pattern='loaded', happy=False):
+			# enable and start
+			self.runCommand("systemctl enable mariadb")
+		elif self.validateCommandOutput('systemctl status mariadb', pattern='inactive', happy=False):
+			# stop mysql server (if it's running)
+			self.runCommand("systemctl stop mariadb")
 		# start mysql server
 		self.runCommand("chown -R mysql:mysql  /var/lib/mysql")
 		
-		#https://stackoverflow.com/questions/33510184/change-mysql-root-password-on-centos7
-		#os.system('systemctl set-environment MYSQLD_OPTS="--skip-grant-tables"')
 		# TO DO: Need to find a good my.cnf for mariadb
 		self.updateMyCnf()
-		os.system("mysqld_safe --skip-grant-tables &")
-		#os.system("systemctl start mariadb")
+		# start without skip-grant-tables so that password can be changed
+		# and users can be added later
+		os.system("systemctl start mariadb")
 		mysql_is_active = False
 		t0 = time.time()
 		while not mysql_is_active and time.time() - t0 < 30.0:
@@ -330,14 +358,33 @@ class CentosInstallation(object):
 		if time.time() - t0 >= 30.0:
 			return False
 
+		# set mysql root password
+		self.writeToLog("#===================================================")
+		if self.validateCommandOutput('mysqladmin -u root -p%s ping' % self.dbPass, pattern='failed', happy=True):
+			self.writeToLog("Changing mysql root password to %s" % self.dbPass)
+			if self.validateCommandOutput('mysqladmin -u root ping', pattern='failed', happy=False):
+				os.system("mysqladmin -u root password %s" % self.dbPass)
+				os.system("mysqladmin -u root flush-privileges")
+			else:
+				print '===========Manual intervention needed================='
+				print 'mysql password is neither none nor serverRoorPass'
+				print "You need to run these command manually"
+				print "mysqladmin -u root -p password %s" % 'your_host_root_passwd'
+				print "mysqladmin -u root -p flush-privileges"
+				return False
+		else:
+			self.writeToLog("mysql root password is %s" % self.dbPass)
+
 		# run database setup script.
-		cmd = os.path.join(self.gitMyamiDir, 'install/newDBsetup.php -L %s -P %s -H %s -U %s -E %s' % (self.leginonDB, self.projectDB, self.dbHost, self.dbUser, self.adminEmail))
+		cmd = os.path.join(self.gitMyamiDir, 'install/newDBsetup.php -L %s -P %s -H %s -U %s -S %s -E %s' % (self.leginonDB, self.projectDB, self.dbHost, self.dbUser, self.dbPass, self.adminEmail))
+		print_cmd = os.path.join(self.gitMyamiDir, 'install/newDBsetup.php -L %s -P %s -H %s -U %s -S %s -E %s' % (self.leginonDB, self.projectDB, self.dbHost, self.dbUser, 'your_host_passwd', self.adminEmail))
 		cmd = 'php ' + cmd
+		print_cmd = 'php ' + print_cmd
 
 		self.writeToLog("#===================================================")
 		self.writeToLog("Run the following Command:")
 		self.writeToLog("%s" % (cmd,))
-		print cmd + '\n'
+		print print_cmd + '\n'
 		print 'Please wait......(This may take a few minutes.)\n'
 		proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 		proc.communicate()
@@ -450,10 +497,10 @@ class CentosInstallation(object):
 		
 		# select 32 or 64 bit file to download
 		if self.machine == "i686" or self.machine == "i386" :
-			fileLocation = "http://emg.nysbc.org/redmine/attachments/download/632/eman-linux-x86-cluster-1.9.tar.gz"
+			fileLocation = "https://emg.nysbc.org/redmine/attachments/download/632/eman-linux-x86-cluster-1.9.tar.gz"
 			fileName = "eman-linux-x86-cluster-1.9.tar.gz"
 		else :
-			fileLocation = "http://emg.nysbc.org/redmine/attachments/download/631/eman-linux-x86_64-cluster-1.9.tar.gz"
+			fileLocation = "https://emg.nysbc.org/redmine/attachments/download/631/eman-linux-x86_64-cluster-1.9.tar.gz"
 			fileName = "eman-linux-x86_64-cluster-1.9.tar.gz"
 
 		# download the tar file and unzip it
@@ -500,7 +547,7 @@ class CentosInstallation(object):
 	def installSpider(self):
 		self.writeToLog("--- Start install Spider")
 		
-		fileLocation = "http://emg.nysbc.org/redmine/attachments/download/638/spidersmall.18.10.tar.gz"
+		fileLocation = "https://emg.nysbc.org/redmine/attachments/download/638/spidersmall.18.10.tar.gz"
 		fileName = "spidersmall.18.10.tar.gz"
 
 		# download the tar file and unzip it
@@ -563,7 +610,7 @@ setenv SPBIN_DIR ${SPIDERDIR}/bin/''')
 		
 		dirName = "Xmipp-2.4-src"
 		tarFileName = dirName + ".tar.gz"
-		tarFileLocation = "http://emg.nysbc.org/redmine/attachments/download/636/" + tarFileName
+		tarFileLocation = "https://emg.nysbc.org/redmine/attachments/download/636/" + tarFileName
 
 		# download the source code tar file and unzip it
 		command = "wget -c " + tarFileLocation
@@ -647,55 +694,54 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 
 
 
-        def installFFmpeg(self):
+	def installFFmpeg(self):
 
-                print "Installing FFmpeg"
-                self.writeToLog("--- Start install FFmpeg")
-                use_local = "/usr/local"
-                cwd = cwd = os.getcwd()
+		print "Installing FFmpeg"
+		self.writeToLog("--- Start install FFmpeg")
+		use_local = "/usr/local"
+		cwd = cwd = os.getcwd()
 
-                ffmpegName = "ffmpeg-git-32bit-static"
-                ffmpegtarFileName = ffmpegName + ".tar.xz"
-                ffmpegtarFileLocation = "http://emg.nysbc.org/redmine/attachments/download/4674/ffmpeg-git-32bit-static.tar.xz"
+		ffmpegName = "ffmpeg-git-32bit-static"
+		ffmpegtarFileName = ffmpegName + ".tar.xz"
+		ffmpegtarFileLocation = "https://emg.nysbc.org/redmine/attachments/download/4674/ffmpeg-git-32bit-static.tar.xz"
 
-                command = "wget -c " + ffmpegtarFileLocation
-                self.runCommand(command)
-                command = "tar -xvf " + ffmpegtarFileName
-                self.runCommand(command)
-                print "-------------Done downloading ffmpeg with wget.------------"
+		command = "wget -c " + ffmpegtarFileLocation
+		self.runCommand(command)
+		command = "tar -xvf " + ffmpegtarFileName
+		self.runCommand(command)
+		print "-------------Done downloading ffmpeg with wget.------------"
 
-              
 
-                #ffmpeg tar is compilied daily at http://johnvansickle.com/ffmpeg/. The git static version compiled on 11/11/2015 was used for this ffmpeg installation. The extracted folder name contains the datestamp; make sure to change the datestamp in the extracted folder name if using a newer version of ffmpeg from the johnvansickle site.
+		#ffmpeg tar is compilied daily at http://johnvansickle.com/ffmpeg/. The git static version compiled on 11/11/2015 was used for this ffmpeg installation. The extracted folder name contains the datestamp; make sure to change the datestamp in the extracted folder name if using a newer version of ffmpeg from the johnvansickle site.
 
-                self.runCommand("mv ffmpeg-git-20151111-32bit-static ffmpeg")
-                newDir = os.path.join(use_local,"ffmpeg")
-                command = "mv ffmpeg "+newDir
-                self.runCommand(command)
-                os.chdir(newDir)             
-                command = "./ffmpeg"
-                self.runCommand("./ffmpeg")
+		self.runCommand("mv ffmpeg-git-20151111-32bit-static ffmpeg")
+		newDir = os.path.join(use_local,"ffmpeg")
+		command = "mv ffmpeg "+newDir
+		self.runCommand(command)
+		os.chdir(newDir)	 
+		command = "./ffmpeg"
+		self.runCommand("./ffmpeg")
 
-                #
-                #set environment variables
-                #
-                bashFile = "ffmpeg.sh"
-                cShellFile = "ffmpeg.csh"
-                profileDir = "/etc/profile.d/"
+		#
+		#set environment variables
+		#
+		bashFile = "ffmpeg.sh"
+		cShellFile = "ffmpeg.csh"
+		profileDir = "/etc/profile.d/"
 
-                print "---------------Create bash and csh scripts---------"
-                #For BASH, create an ffmpeg.sh
-                f = open(bashFile, 'w')
-                f.write('''export FFMPEGDIR="/usr/local/ffmpeg"
+		print "---------------Create bash and csh scripts---------"
+		#For BASH, create an ffmpeg.sh
+		f = open(bashFile, 'w')
+		f.write('''export FFMPEGDIR="/usr/local/ffmpeg"
 export PATH=${PATH}:${FFMPEGDIR}''')
 
-                f.close()
+		f.close()
 
-                # For C shell, create an ffmpeg.sh
+		# For C shell, create an ffmpeg.sh
 
-                f=open(cShellFile,'w')
+		f=open(cShellFile,'w')
 
-                f.write('''setenv FFMPEGDIR="/usr/local/ffmpeg"
+		f.write('''setenv FFMPEGDIR="/usr/local/ffmpeg"
 setenv PATH ${FFMPEGDIR}:${PATH}
 if ($?LD_LIBRARY_PATH) then
         setenv LD_LIBRARY_PATH "${LD_LIBRARY_PATH}:${FFMPEGDIR}"
@@ -703,16 +749,13 @@ else
         setenv LD_LIBRARY_PATH "${FFMPEGDIR}"
 endif''')
 
-                f.close()
-                #add them to the global /etc/profile.d/ folder
-                self.writeToLog("--- Adding ffmpeg.sh and ffmpeg.csh to /etc/profile.d/.")
-                shutil.copy(bashFile, profileDir + bashFile)
-                shutil.copy(cShellFile, profileDir + cShellFile)
-                os.chmod(profileDir + bashFile, 0755)
-                os.chmod(profileDir + cShellFile,0755)
-
-
-
+		f.close()
+		#add them to the global /etc/profile.d/ folder
+		self.writeToLog("--- Adding ffmpeg.sh and ffmpeg.csh to /etc/profile.d/.")
+		shutil.copy(bashFile, profileDir + bashFile)
+		shutil.copy(cShellFile, profileDir + cShellFile)
+		os.chmod(profileDir + bashFile, 0755)
+		os.chmod(profileDir + cShellFile,0755)
 
 	def installProtomo(self):
 		self.writeToLog("--- Start install Protomo")
@@ -720,7 +763,7 @@ endif''')
 		cwd = os.getcwd()
 		protomoVer = "protomo-2.4.1"
 		zipFileName = protomoVer + ".zip"
-		zipFileLocation = "http://emg.nysbc.org/redmine/attachments/download/4147/" + zipFileName
+		zipFileLocation = "https://emg.nysbc.org/redmine/attachments/download/4147/" + zipFileName
 		
 		# download the source code tar file and unzip it
 		command = "wget -c " + zipFileLocation
@@ -797,7 +840,7 @@ endif
 	def installFrealign(self):
 		self.writeToLog("--- Start install Frealign")
 		
-		fileLocation = "http://emg.nysbc.org/redmine/attachments/download/740/frealign_v8.09_110505.tar.gz"
+		fileLocation = "https://emg.nysbc.org/redmine/attachments/download/740/frealign_v8.09_110505.tar.gz"
 		fileName = "frealign_v8.09_110505.tar.gz"
 
 		# download the tar file and unzip it
@@ -831,8 +874,11 @@ endif
 
 
 	def processServerYumInstall(self):
+		# pre-requist and utility
+		packagelist= ['epel-release','vim','wget','sudo','rsync','passwd','tar','firefox','mlocate','unzip','bzip2','dbus-x11']
+		self.yumInstall(packagelist)
 
-		packagelist = ['ImageMagick', 'MySQL-python', 'compat-gcc-34-g77', 'fftw3-devel', 'gcc-c++', 'gcc-gfortran', 'gcc-objc', 'gnuplot', 'grace', 'gsl-devel', 'libtiff-devel', 'netpbm-progs', 'numpy', 'openmpi-devel', 'opencv-python', 'python-devel', 'python-imaging', 'python-matplotlib', 'python-tools', 'scipy', 'wxPython', 'xorg-x11-server-Xvfb', 'libjpeg-devel', 'zlib-devel', 'unzip']
+		packagelist = ['ImageMagick', 'MySQL-python', 'compat-libf2c-34', 'compat-libgfortran-41', 'fftw-devel', 'gcc-c++', 'gcc-gfortran', 'gcc-objc', 'gnuplot', 'grace', 'gsl-devel', 'libtiff-devel', 'netpbm-progs', 'numpy', 'openmpi-devel', 'opencv-python', 'python-devel', 'python-imaging', 'python-matplotlib', 'python-tools', 'scipy', 'wxPython', 'xorg-x11-server-Xvfb', 'libjpeg-devel', 'zlib-devel']
 		self.yumInstall(packagelist)
 
 	def enableTorqueComputeNode(self):
@@ -894,7 +940,7 @@ endif
 
 		for line in inf:
 			if line.startswith('path:'):
-				outf.write('path: %s/leginon\n' % (self.imagesDir))
+				outf.write('path: %sleginon\n' % (self.imagesDir))
 			else:
 				outf.write(line)
 		inf.close()
@@ -914,6 +960,8 @@ endif
 		for line in inf:
 			if line.startswith('user: usr_object'):
 				outf.write('user: root\n')
+			elif line.startswith('passwd:'):
+				outf.write('passwd: %s\n' % self.dbPass)
 			else:
 				outf.write(line)
 		inf.close()
@@ -1018,46 +1066,13 @@ endif
 		outf.close()
 		os.remove('/etc/httpd/conf/httpd.conf-tmp')
 
-	def installPhpMrc(self):
-		
-		if os.path.isfile('/etc/php.d/mrc.ini'):
-			return
-
-		phpmrcdir = os.path.join(self.gitMyamiDir, "programs/php_mrc")
-		os.chdir(phpmrcdir)
-		self.runCommand("phpize")
-		self.runCommand("./configure")
-		self.runCommand("make")
-		module = os.path.join(phpmrcdir, "modules/mrc.so")
-
-		if not os.path.isfile(module):
-			self.writeToLog("ERROR: mrc.so failed")
-			sys.exit(1)
-
-		self.runCommand("make install")
-		f = open("/etc/php.d/mrc.ini", "w")
-		f.write("; Enable mrc extension module\n")
-		f.write("extension=mrc.so\n")
-		f.close()
-		os.chdir(self.currentDir)
-
 	def installReduxServer(self):
 		# Redux prerequisits: python, numpy, scipy, pil, pyfilesystem, fftw3, pyfftw, pyami, numextension
 		#redux yum packages
 		packagelist = [ 'fftw-devel', 'numpy', 'python-devel', 'python-imaging', 'scipy', ]
 		self.yumInstall(packagelist)
 		# Most are installed as on processingServer
-		packagelist = [
-			{
-				# Python fs
-				'targzFileName':'fs-0.4.0.tar.gz',
-				'fileLocation':'https://pypi.python.org/packages/08/c3/9a6e3c7bd2755e3383c84388c1e01113bddafa8008a0aa4af64996ab4470/',
-				'unpackDirName':'fs-0.4.0',
-			}
-		]
-
-		for p in packagelist:
-			self.installPythonPackage(p['targzFileName'], p['fileLocation'], p['unpackDirName'])
+		self.runCommand("easy_install fs==0.5 PyFFTW3")
 
 		# Setup the redux config file.
 		self.editReduxConfig()
@@ -1128,8 +1143,7 @@ endif
 		
 	def installMyamiWeb(self):
 		gitMyamiwebDir = os.path.join(self.gitMyamiDir, "myamiweb")
-		centosWebDir = "/var/www/html"
-		self.runCommand("cp -rf %s %s" % (gitMyamiwebDir, centosWebDir))
+		self.runCommand("cp -rf %s %s" % (gitMyamiwebDir, self.centosWebDir))
 
 	def editMyamiWebConfig(self):
 	
@@ -1159,7 +1173,7 @@ endif
 			elif "addplugin(\"processing\");" in line:
 				outf.write("addplugin(\"processing\");\n")
 			elif "// $PROCESSING_HOSTS[]" in line:
-				outf.write("$PROCESSING_HOSTS[] = array('host' => '%s', 'nproc' => %d,'nodesmax' => '1','ppndef' => '1','ppnmax' => '1','reconpn' => '1','walltimedef' => '48','walltimemax' => '240','cputimedef' => '1000','cputimemax' => '10000','memorymax' => '','appionbin' => '/usr/','appionlibdir' => '/usr/lib/python2.4/site-packages/','baseoutdir' => '/appion','localhelperhost' => 'localhost','dirsep' => '/','wrapperpath' => '','loginmethod' => 'USERPASSWORD','loginusername' => '','passphrase' => '','publickey' => '','privatekey' => ''	);\n"%(self.dbHost, self.nproc))
+				outf.write("$PROCESSING_HOSTS[] = array('host' => '%s', 'nproc' => %d,'nodesmax' => '1','ppndef' => '1','ppnmax' => '1','reconpn' => '1','walltimedef' => '48','walltimemax' => '240','cputimedef' => '1000','cputimemax' => '10000','memorymax' => '','appionbin' => '/usr/','appionlibdir' => '/usr/lib/python2.7/site-packages/','baseoutdir' => '/appion','localhelperhost' => 'localhost','dirsep' => '/','wrapperpath' => '','loginmethod' => 'USERPASSWORD','loginusername' => '','passphrase' => '','publickey' => '','privatekey' => ''	);\n"%(self.dbHost, self.nproc))
 			elif "// $CLUSTER_CONFIGS[]" in line:
 				outf.write("$CLUSTER_CONFIGS[] = 'default_cluster';\n")
 			elif line.startswith("define('TEMP_IMAGES_DIR', "):
@@ -1183,9 +1197,9 @@ endif
 		#TODO: handle "git: is already a working copy for a different URL" case
 
 
-                if os.path.exists('/tmp/myami/'):
+                if os.path.exists(self.gitMyamiDir):
 
-                        shutil.rmtree('/tmp/myami/')
+                        shutil.rmtree(self.gitMyamiDir)
 
 		self.runCommand(self.gitCmd)
 
@@ -1199,7 +1213,7 @@ endif
 		print "===================================="
 		print ""
 		
-		value = raw_input("Please enter the registration key. You must be registered at http://emg.nysbc.org/redmine to recieve a registration key: ")
+		value = raw_input("Please enter the registration key. You must be registered at https://emg.nysbc.org/redmine to recieve a registration key: ")
 		value = value.strip()
 
 		self.regKey = value
@@ -1218,7 +1232,7 @@ endif
 		self.adminEmail   = value
 		
 		# Set the root password		
-		password              = raw_input("Please enter the system root password: ")
+		password              = getpass.getpass("Please enter the system root password: ")
 		password              = password.strip()
 		self.serverRootPass   = password
 		
@@ -1230,14 +1244,20 @@ endif
 			timezone = "America/Los_Angeles" 
 		self.timezone = timezone
 
+		questionText = "Are your camera and scope controlled by the same computer ? For example, Gatan K2 uses a different computer from the TFS scope."
+		self.doUpload2ClientApps = not self.getBooleanInput(questionText)
+
+		
 		questionText = "Would you like to download demo GroEL images and upload them to this installation?"
 		self.doDownloadSampleImages = self.getBooleanInput(questionText)
 		
-		questionText = "Would you like to install EMAN, Xmipp, Spider, and Protomo at this time?"
-		self.doInstallExternalPackages = self.getBooleanInput(questionText)
+		#questionText = "Would you like to install EMAN, Xmipp, Spider, and Protomo at this time?"
+		#self.doInstallExternalPackages = self.getBooleanInput(questionText)
+		self.doInstallExternalPackages = False
 		
-		questionText = "Would you like to install Torque for Job server at this time?"
-		self.doInstallJobServerPackages = self.getBooleanInput(questionText)
+		#questionText = "Would you like to install Torque for Job server at this time?"
+		#self.doInstallJobServerPackages = self.getBooleanInput(questionText)
+		self.doInstallJobServerPackages = False
 		self.failedInstallJobServer = False
 	
 	def getBooleanInput(self, questionText = ''):
@@ -1257,7 +1277,7 @@ endif
 	
 	def downloadSampleImages(self):
 	   
-		getImageCmd = "wget -P/tmp/images http://emg.nysbc.org/redmine/attachments/download/112/06jul12a_00015gr_00028sq_00004hl_00002en.mrc http://emg.nysbc.org/redmine/attachments/download/113/06jul12a_00015gr_00028sq_00023hl_00002en.mrc http://emg.nysbc.org/redmine/attachments/download/114/06jul12a_00015gr_00028sq_00023hl_00004en.mrc http://emg.nysbc.org/redmine/attachments/download/115/06jul12a_00022gr_00013sq_00002hl_00004en.mrc http://emg.nysbc.org/redmine/attachments/download/116/06jul12a_00022gr_00013sq_00003hl_00005en.mrc http://emg.nysbc.org/redmine/attachments/download/109/06jul12a_00022gr_00037sq_00025hl_00004en.mrc http://emg.nysbc.org/redmine/attachments/download/110/06jul12a_00022gr_00037sq_00025hl_00005en.mrc http://emg.nysbc.org/redmine/attachments/download/111/06jul12a_00035gr_00063sq_00012hl_00004en.mrc"
+		getImageCmd = "wget -P/tmp/images https://emg.nysbc.org/redmine/attachments/download/112/06jul12a_00015gr_00028sq_00004hl_00002en.mrc https://emg.nysbc.org/redmine/attachments/download/113/06jul12a_00015gr_00028sq_00023hl_00002en.mrc https://emg.nysbc.org/redmine/attachments/download/114/06jul12a_00015gr_00028sq_00023hl_00004en.mrc https://emg.nysbc.org/redmine/attachments/download/115/06jul12a_00022gr_00013sq_00002hl_00004en.mrc https://emg.nysbc.org/redmine/attachments/download/116/06jul12a_00022gr_00013sq_00003hl_00005en.mrc https://emg.nysbc.org/redmine/attachments/download/109/06jul12a_00022gr_00037sq_00025hl_00004en.mrc https://emg.nysbc.org/redmine/attachments/download/110/06jul12a_00022gr_00037sq_00025hl_00005en.mrc https://emg.nysbc.org/redmine/attachments/download/111/06jul12a_00035gr_00063sq_00012hl_00004en.mrc"
 
 		print getImageCmd
 		proc = subprocess.Popen(getImageCmd, shell=True)
@@ -1275,6 +1295,70 @@ endif
 		self.writeToLog("Registration Key confirmed.")
 		return True
 
+	def copyLeginonApps(self):
+		# web installation script may not be able to read leginon application xml files.
+		# copy them under web home to avoid the problem.
+		fromdir = os.path.join(self.gitMyamiDir, 'leginon', 'applications')
+		todir = os.path.join(self.centosWebDir, 'leginon')
+		# Default location
+		self.leginon_app_rootdir = self.gitMyamiDir
+		if not os.path.isdir(todir):
+			os.mkdir(todir)
+		resultdir = os.path.join(todir,'applications')
+		if os.path.isdir(resultdir):
+			try:
+				shutil.rmtree(resultdir)
+			except Exception as e:
+				print "Removing  failed:" % resultdir
+				print e
+				return False
+		try:
+			shutil.copytree(fromdir, resultdir)
+		except Exception as e:
+			print "Copying Leginon applications file to web server failed:"
+			print e
+			return False
+		self.leginon_app_rootdir = self.centosWebDir
+		return True
+
+	def setupData(self):
+		'''
+		Run autoInstallSetup.php that upload defaults and applications.
+		'''
+		app_version = 1+int(self.doUpload2ClientApps)
+		setupURL = "http://localhost/myamiweb/setup/autoInstallSetup.php?password=" + self.serverRootPass + "&myamidir=" + self.leginon_app_rootdir + "&appv=%d" % app_version + "&uploadsample=" + "%d" % int(self.doDownloadSampleImages)
+		myamiwebOpened = None
+		# To get the included path correctly in php command, we need to cd to where the file is.
+		cmd = "php autoInstallSetup.php --password %s --myamidir %s --appv %d --uploadsample %d" % (self.serverRootPass, self.leginon_app_rootdir, app_version, int(self.doDownloadSampleImages))
+		curdir = os.getcwd()
+		websetupdir = os.path.join(self.centosWebDir, 'myamiweb','setup')
+		os.chdir(websetupdir)
+		print("========================")
+		print("Running %s" % cmd)
+		myamiwebUrl = 'http://localhost/myamiweb'
+		try:
+			if self.validateCommandOutput(cmd, pattern='Failed', happy=True):
+				# if failed to upload applications
+				raise RuntimeError(cmd)
+			myamiwebOpened = webbrowser.open_new(myamiwebUrl)
+		except:
+			print("ERROR: Failed to run Myamiweb setup script.")
+			print("You may try running " + setupURL + " in your web browser. ")
+			print(sys.exc_info()[0])
+			self.writeToLog("ERROR: Failed to run Myamiweb setup script (autoInstallSetup.php). ")
+			os.chdir(curdir)
+			return False
+		else:
+			if ( myamiwebOpened ):
+				self.writeToLog("Myamiweb Started.")
+			else:
+				print("ERROR: Failed to open myamiweb in browser.")
+				print("You may open with %s your web browser. " % (myamiwebUrl,))
+				self.writeToLog("ERROR: Failed to open Myamiweb. ")
+				return False
+		os.chdir(curdir)
+		return True
+
 	def run(self):
 		self.currentDir = os.getcwd()
 		self.logFilename = 'installation.log'
@@ -1282,14 +1366,17 @@ endif
 		self.enableLogin = 'false'
 		self.dbHost = 'localhost'
 		self.dbUser = 'root'
+		# dbPass will be changed to serverRootPass during setupDBServer.
 		self.dbPass = ''
 		self.serverRootPass = ''
 		self.leginonDB = 'leginondb'
 		self.projectDB = 'projectdb'
 		self.adminEmail = ''
 		self.csValue = 2.0
-		self.imagesDir = '/myamiImages'
+		self.imagesDir = '/myamiImages/'
 
+		# CentOS default
+		self.centosWebDir = "/var/www/html/" # must include the trailing '/
 		self.setReleaseDependantValues()
 
 		self.hostname = self.getServerName()
@@ -1316,10 +1403,9 @@ endif
 		result = self.getDefaultValues()
 		if result is False:
 			sys.exit(1)
-		
 
-		self.yumUpdate()
-		self.yumInstall(['git'])
+		self.yumUpdate() #Basic system update and epel-release installation before anything else
+		self.yumInstall(['git',])
 		self.getMyami()
 	
 		if self.doInstallJobServerPackages:	
@@ -1327,6 +1413,7 @@ endif
 			if result is False:
 				self.failedInstallJobServer = True
 		
+		self.dbPass = self.serverRootPass
 		result = self.setupProcessServer()
 		if result is False:
 			sys.exit(1)
@@ -1344,7 +1431,6 @@ endif
 
 		if (self.doInstallExternalPackages):
 			self.installExternalPackages()
-					
 
 		self.writeToLog("Installation Complete.")
 
@@ -1352,9 +1438,13 @@ endif
 		print("Installation Complete.")
 		print("Appion will launch in your web browser momentarily.")
 		print("You may launch Leginon with the following command: start-leginon.py")
-		print("IMPORTANT: To view images in the web browser, you must first start the Redux server.")
+		print("IMPORTANT: To view images in the web browser, you may need to start the Redux server.")
 		print("Start the Redux Server with the following command: /sbin/service reduxd start")
 		print("========================")
+		if self.validateCommandOutput('systemctl status reduxd', pattern='loaded', happy=False):
+			self.runCommand("systemctl enable reduxd")
+		else:
+			self.runCommand("systemctl restart reduxd")
 
 		if self.doInstallJobServerPackages:	
 			if self.failedInstallJobServer == False:
@@ -1364,24 +1454,15 @@ endif
 				print("========================")
 				print("Torque job server installation failed. Use command copy and paste method to run")
 				print("========================")
-				
-		setupURL = "http://localhost/myamiweb/setup/autoInstallSetup.php?password=" + self.serverRootPass + "&myamidir=" + self.gitMyamiDir + "&uploadsample=" + "%d" % int(self.doDownloadSampleImages)
-		setupOpened = None
-		try:
-			setupOpened = webbrowser.open_new(setupURL)
-		except:
-			print("ERROR: Failed to run Myamiweb setup script.")
-			print("You may try running " + setupURL + " in your web browser. ")
-			print(sys.exc_info()[0])
-			self.writeToLog("ERROR: Failed to run Myamiweb setup script (autoInstallSetup.php). ")
-		else:
-			if ( setupOpened ):
-				self.writeToLog("Myamiweb Started.")
-			else:
-				print("ERROR: Failed to run Myamiweb setup script.")
-				print("You may try running " + setupURL + " in your web browser. ")
-				self.writeToLog("ERROR: Failed to run Myamiweb setup script (autoInstallSetup.php). ")
-		
+
+		result = self.copyLeginonApps()	
+		if result is False:
+			sys.exit(1)
+
+		result = self.setupData()
+		if result is False:
+			sys.exit(1)
+
 		subprocess.Popen("start-leginon.py")
 		self.writeToLog("Leginon Started")
 		

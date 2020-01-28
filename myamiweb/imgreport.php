@@ -213,7 +213,7 @@ if (is_array($imageinfo)) {
 				echo formatHtmlRow($k, $leginondata->formatDefocus($v));
 			else if ($k=='pixelsize') {
 				$v *= $imageinfo['binning'];
-				echo formatHtmlRow($k, $leginondata->formatPixelsize($v));
+				echo formatHtmlRow($k, $leginondata->formatPixelsize($v, $imageinfo['is_diffraction']));
 			}
 			else if ($k=='dose') {
 				if (!empty($v))
@@ -402,7 +402,8 @@ echo divtitle("Calibrations");
 <?php
 foreach ($types as $type) {
 	$t = $type['type'];
-	$m = $leginondata->getImageMatrixCalibration($imgId, $t);
+	$is_magd = $leginondata->getIsMagDependentMatrix($t);
+	$m = $leginondata->getImageMatrixCalibration($imgId, $t, $is_magd);
 	if (!$m) continue;
 	$matrix = displayMatrix(matrix(
 			$leginondata->formatMatrixValue($m[a11]),

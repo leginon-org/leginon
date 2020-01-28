@@ -10,6 +10,15 @@ if (defined('PROCESSING')) {
 // --- get Predefined Variables form GET or POST method --- //
 list($projectId, $sessionId, $imageId, $preset, $runId, $scopeId) = getPredefinedVars();
 
+if (is_null($sessionId)){
+    $_SESSION['unlimited_images'] = false;
+    $limit = 100;
+}
+elseif ($sessionId=='-1' || !empty($_SESSION['unlimited_images'])){
+    $limit = 0;
+    $_SESSION['unlimited_images'] = true;
+}
+else  $limit = 100;
 // --- Set sessionId
 $lastId = $leginondata->getLastSessionId();
 $sessionId = (empty($sessionId)) ? $lastId : $sessionId;
@@ -38,6 +47,8 @@ if($projectdb) {
 		$sessionId = $sessions[0]['id'];
 	}
 }
+
+if ( is_numeric(SESSION_LIMIT) && count($sessions) > SESSION_LIMIT) $sessions=array_slice($sessions,0,SESSION_LIMIT);
 
 $jsdata='';
 if ($ptcl) {
@@ -83,10 +94,10 @@ if($projectdb && !empty($sessions)) {
 }
 $viewer->setSessionId($sessionId);
 $viewer->setImageId($imageId);
-$viewer->addSessionSelector($sessions);
+$viewer->addSessionSelector($sessions, $limit);
 $viewer->setScopeId($scopeId);
 $viewer->addScopeSelector($scopes);
-$viewer->addFileSelector($filenames);
+//$viewer->addFileSelector($filenames);
 $viewer->setNbViewPerRow('1');
 $viewer->addjs($jsdata);
 $pl_refresh_time=".5";
@@ -95,19 +106,19 @@ $playbackcontrol=$viewer->getPlaybackControl();
 $javascript = $viewer->getJavascript();
 
 
-$view1 = new view('Main View', 'v1');
+$view1 = new fileview('Data Selection', 'v1');
 $view1->setControl();
 $view1->setDataTypes($datatypes);
 $view1->setSize(100);
+
 $viewer->add($view1);
 
 
 $javascript .= $viewer->getJavascriptInit();
-login_header('image viewer', $javascript, 'initviewer()');
+login_header('file listing', $javascript, 'initviewer()');
 viewer_menu($sessionId);
 $viewer->display();
 
-echo "<p>files</p>";
 foreach ($filenames as $f) {
 	echo "<p>".$f['name']."</p>";
 }

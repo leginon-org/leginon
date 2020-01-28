@@ -178,6 +178,7 @@ def getStarFileColumnLabels(starfile):
 	# and correspond to the data
 	labels=[]
 	for line in open(starfile):
+		if line.startswith("#"): continue
 		l = line.strip().split()
 		if line[:4]=="_rln":
 			labels.append(l[0])
@@ -190,7 +191,6 @@ def getColumnFromRelionLine(line,col):
 	l = line.strip().split()
 	if (len(l)<col+1 or l[0][:4]=="_rln" or l[0] in ['data_','loop_']):
 		return None
-	print l
 	return l[col]
 	
 def getMrcParticleFilesFromStar(starfile):

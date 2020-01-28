@@ -3,6 +3,7 @@
 #pythonlib
 import os
 import time
+import sys
 #appion
 from appionlib import particleLoop2
 from appionlib import apFindEM
@@ -13,7 +14,8 @@ from appionlib import appiondata
 from appionlib import apPeaks
 from appionlib import apParam
 from appionlib import apImage
-#pyami
+
+#pyami 
 from pyami import primefactor
 
 safe_dimensions=[2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768]
@@ -153,7 +155,6 @@ class TemplateCorrelationLoop(particleLoop2.ParticleLoop):
 
 	##=======================
 	def processImage(self, imgdata, filtarray):
-
 		if abs(self.params['apix'] - self.params['templateapix']) > 0.01:
 			#rescale templates, apix has changed
 			apTemplate.getTemplates(self.params)
@@ -180,6 +181,7 @@ class TemplateCorrelationLoop(particleLoop2.ParticleLoop):
 			if filtarray.shape != tuple(newshape):
 				apDisplay.printMsg("trimming image from %dx%d to %dx%d for findem"
 					%(filtarray.shape[0], filtarray.shape[1], newshape[0], newshape[1],))
+#				sys.exit()
 				filtarray = apImage.imagefilter.frame_cut(filtarray, newshape)
 			apImage.imagefile.arrayToMrc(filtarray, imgpath, msg=False)
 
@@ -194,10 +196,24 @@ class TemplateCorrelationLoop(particleLoop2.ParticleLoop):
 
 		### run Template Correlation program
 		cclist = self.runTemplateCorrelator(imgdata)
-
+		
 		### find peaks in map
 		peaktree  = self.findPeaks(imgdata, cclist)
-
+		#print peaktree
+		origx=imgdata['camera']['dimension']['x']
+		origy=imgdata['camera']['dimension']['y']
+		
+		newx=cclist[0].shape[1]*self.params['bin']
+		newy=cclist[0].shape[0]*self.params['bin']
+		trimx=origx-newx
+		trimy=origy-newy
+		if trimx > 1 or trimy > 1:
+			apDisplay.printMsg('shifting picks back to untrimmed dimensions')
+			shiftx=trimx//2
+			shifty=trimy//2
+			for peak in peaktree:
+				peak['xcoord']=peak['xcoord']+shiftx
+				peak['ycoord']=peak['ycoord']+shifty
 		return peaktree
 
 	##=======================

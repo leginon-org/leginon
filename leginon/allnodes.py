@@ -96,8 +96,14 @@ noderegistry.registerNodeClass(TargetFinder,classtype)
 from targetfinder import ClickTargetFinder
 noderegistry.registerNodeClass(ClickTargetFinder,classtype)
 
+from tomotargetfinder import TomoClickTargetFinder
+noderegistry.registerNodeClass(TomoClickTargetFinder,classtype)
+
 from tomography.tomography import Tomography
 noderegistry.registerNodeClass(Tomography,classtype)
+
+from tomography.tomography import Tomography2
+noderegistry.registerNodeClass(Tomography2,classtype)
 
 from acquisition import Acquisition
 noderegistry.registerNodeClass(Acquisition,classtype)
@@ -159,8 +165,11 @@ noderegistry.registerNodeClass(AutoExposure,classtype)
 from baker import Baker
 noderegistry.registerNodeClass(Baker,classtype)
 
-from moveacquisition import MoveAcquisition
-noderegistry.registerNodeClass(MoveAcquisition,classtype)
+from movealphaacquisition import MoveAlphaAcquisition
+noderegistry.registerNodeClass(MoveAlphaAcquisition,classtype)
+
+from movexyacquisition import MoveXYAcquisition
+noderegistry.registerNodeClass(MoveXYAcquisition,classtype)
 
 from tiltlistalternater import TiltListAlternater
 noderegistry.registerNodeClass(TiltListAlternater,classtype)
@@ -193,11 +202,8 @@ noderegistry.registerNodeClass(BeamTiltCalibrator,classtype)
 from pixelsizecalibrator import PixelSizeCalibrator
 noderegistry.registerNodeClass(PixelSizeCalibrator,classtype)
 
-from imagerotationcalibrator import ImageRotationCalibrator
-noderegistry.registerNodeClass(ImageRotationCalibrator,classtype)
-
-from imagescalecalibrator import ImageScaleAdditionCalibrator
-noderegistry.registerNodeClass(ImageScaleAdditionCalibrator,classtype)
+from scalerotationcalibrator import ScaleRotationCalibrator
+noderegistry.registerNodeClass(ScaleRotationCalibrator,classtype)
 
 from dosecalibrator import DoseCalibrator
 noderegistry.registerNodeClass(DoseCalibrator,classtype)
@@ -281,6 +287,8 @@ noderegistry.registerNodeClass(TEMController,classtype)
 from icethicknessEF import IcethicknessEF
 noderegistry.registerNodeClass(IcethicknessEF,classtype)
 
+from blackstripedetector import BlackStripeDetector
+noderegistry.registerNodeClass(BlackStripeDetector,classtype)
 ##############################
 # Finale
 ##############################

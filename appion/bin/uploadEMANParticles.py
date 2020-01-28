@@ -143,6 +143,7 @@ class UploadParticles(appionScript.AppionScript):
 				ycoord = float(cols[1]) * self.params['bin']
 			elif self.params['coordtype'] == "relion":
 				if len(cols)<3: continue
+				if line.startswith("#"): continue
 				xcoord = int(round(float(cols[labels.index("_rlnCoordinateX")])))
 				ycoord = int(round(float(cols[labels.index("_rlnCoordinateY")])))
 			else:
@@ -177,7 +178,7 @@ class UploadParticles(appionScript.AppionScript):
 				apDisplay.printError("Session and Image do not match "+imgdata['filename'])	
 
 			peaktree = self.boxFileToPeakTree(imgdata)
-			apParticle.insertParticlePeaks(peaktree, imgdata, self.params['runname'], msg=True)
+			apParticle.fastInsertParticlePeaks(peaktree, imgdata, self.params['runname'], msg=True)
 
 if __name__ == '__main__':
 	uploadpart = UploadParticles()

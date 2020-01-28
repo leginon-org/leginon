@@ -16,9 +16,6 @@ import remotecall
 import gui.wx.Events
 import time
 
-# global variable to log last instrument setData or getData method call
-last_set_get = time.time()
-
 class InstrumentError(Exception):
 	pass
 
@@ -235,7 +232,6 @@ class Proxy(object):
 		raise ValueError
 
 	def getData(self, dataclass, temname=None, ccdcameraname=None):
-		self.updateLastSetGetTime()
 		if issubclass(dataclass, leginondata.ScopeEMData):
 			if temname is None:
 				proxy = self.tem
@@ -317,8 +313,12 @@ class Proxy(object):
 		types = []
 		args = []
 		for key, attribute in parametermapping:
-			if key not in instance or instance[key] is None:
-				continue
+			if key =='projection mode':
+				# force set of projection mode
+				pass
+			else:
+				if key not in instance or instance[key] is None:
+					continue
 			attributetypes = proxy.getAttributeTypes(attribute)
 			if not attributetypes:
 				continue
@@ -330,31 +330,17 @@ class Proxy(object):
 				continue
 			keys.append(key)
 			attributes.append(attribute)
-			args.append((instance[key],))
+			if key !='projection mode':
+				args.append((instance[key],))
+			else:
+				args.append(('fake',))
 		results = proxy.multiCall(attributes, types, args)
-		self.updateLastSetGetTime()
 		for result in results:
 			try:
 				if isinstance(result, Exception):
 					raise result
 			except AttributeError:
 				pass
-
-	def updateLastSetGetTime(self):
-		'''
-		update global last_set_get attribute time to indicate that
-		the instrument is active.
-		'''
-		t = time.time()
-		global last_set_get
-		last_set_get = t
-
-	def getLastSetGetTime(self):
-		'''
-		get the time a method on the instrument was last set or get
-		'''
-		global last_set_get
-		return last_set_get
 
 class TEM(remotecall.Locker):
 	def getDatabaseType(self):
@@ -368,12 +354,15 @@ parametermapping = (
 	# ScopeEM
 	# The order should base on dependency
 	('system time', 'SystemTime'),
+	('high tension', 'HighTension'),
 	('probe mode','ProbeMode'),
-	('magnification', 'Magnification'),
-	('spot size', 'SpotSize'),
-	('intensity', 'Intensity'),
-	('beam shift', 'BeamShift'),
+	('projection mode','ProjectionMode'),
+	('magnification', 'Magnification'), # this change may trigger normalization.
+	('spot size', 'SpotSize'), # this change may trigger normalization.
+	('intensity', 'Intensity'), # perform normalize all lens at this step if needed
+	('beam shift', 'BeamShift'), # allowed beam shift is limited by magnification
 	('image shift', 'ImageShift'),
+	('diffraction shift', 'DiffractionShift'),
 	('focus', 'Focus'),
 	('defocus', 'Defocus'),
 	('reset defocus', 'resetDefocus'),
@@ -384,7 +373,6 @@ parametermapping = (
 	('corrected stage position', 'CorrectedStagePosition'),
 	('stage position', 'StagePosition'),
 	('column pressure', 'ColumnPressure'),
-	('high tension', 'HighTension'),
 	('main screen position', 'MainScreenPosition'),
 	('main screen magnification', 'MainScreenMagnification'),
 	('small screen position', 'SmallScreenPosition'),
@@ -395,6 +383,8 @@ parametermapping = (
 	('tem energy filter', 'EnergyFilter'),
 	('tem energy filter width', 'EnergyFilterWidth'),
 	('aperture size', 'ApertureSize'),
+	# metadata not really on the scope but saved with the scope data
+	('intended defocus', 'IntendedDefocus'),
 	# not used
 	#('beam blank', 'BeamBlank'),
 	#('low dose', 'LowDose'),
@@ -413,6 +403,7 @@ parametermapping = (
 	('exposure time', 'ExposureTime'),
 	('exposure type', 'ExposureType'),
 	('exposure timestamp', 'ExposureTimestamp'),
+	('intensity averaged', 'IntensityAveraged'),
 	('inserted', 'Inserted'),
 	('pixel size', 'PixelSize'),
 	('energy filtered', 'EnergyFiltered'),
@@ -420,6 +411,7 @@ parametermapping = (
 	('energy filter width', 'EnergyFilterWidth'),
 	('nframes', 'NumberOfFrames'),
 	('align frames', 'AlignFrames'),
+	('tiff frames', 'SaveLzwTiffFrames'),
 	('align filter', 'AlignFilter'),
 	('save frames', 'SaveRawFrames'),
 	('frames name', 'PreviousRawFramesName'),
@@ -433,5 +425,6 @@ parametermapping = (
 	('binned multiplier', 'BinnedMultiplier'),
 	('gain index', 'GainIndex'),
 	('system corrected', 'SystemGainDarkCorrected'),
+	('use cds', 'UseCds'),
 )
 

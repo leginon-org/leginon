@@ -107,7 +107,7 @@ class Correlator(object):
 		self.channel = channel
 		if corrtype == 'phase':
 			try:
-				pc = self.correlation.phaseCorrelate(wiener=wiener)
+				pc = self.correlation.phaseCorrelate(zero=True,wiener=wiener)
 			except correlator.MissingImageError:
 				return
 		else:
@@ -117,14 +117,11 @@ class Correlator(object):
 				return
 
 		peak = self.peakfinder.subpixelPeak(newimage=pc)
-		rows, columns = self.peak2shift(peak, pc.shape)
-
-
+		rows, columns = self.peak2shift(peak, pc.shape) 
 		self.raw_shift = {'x': columns, 'y': rows}
-
+		
 		self.shift['x'] -= self.raw_shift['x']*self.correlation_binning
 		self.shift['y'] += self.raw_shift['y']*self.correlation_binning
-
 		pc = self.swapQuadrants(pc)
 
 		return pc
@@ -146,28 +143,69 @@ class Correlator(object):
 		return shift
 
 if __name__ == '__main__':
-	import numpy.random
-	_correlator = Correlator(None, 2,1.5)
+	import numpy as n
+	import pdb
+	import matplotlib.pyplot as plt
+	import cPickle as pickle
+	from pyami import correlator, peakfinder, imagefun
 
-	size = 16
-	camdim = {'x': 4096,'y':4096}
-	offset = (400 + 64, 400 + 64)
-	image = numpy.random.random((camdim['y'], camdim['x']))
-	camdata = leginon.leginondata.CameraEMData()
-	camdata['binning'] = {'x':1,'y':1}
-	image[offset[0]:offset[0] + size, offset[1]:offset[1] + size] += 16
-	imagedata = leginon.leginondata.AcquisitionImageData()
-	imagedata['image'] = image
-	imagedata['camera'] = camdata
-	_correlator.correlate(imagedata, False)
+	import leginon.leginondata
+	import leginon.tiltcorrector
+		
+	stagematrix = pickle.load(open('stagematrix_f20_62000','rb'))
+	inverse_matrix = numpy.linalg.inv(stagematrix)
 
-	offset = (150 + 64, 50 + 64)
-	image = numpy.random.random((camdim['y'], camdim['x']))
-	image[offset[0]:offset[0] + size, offset[1]:offset[1] + size] += 16
-	imagedata = leginon.leginondata.AcquisitionImageData()
-	imagedata['image'] = image
-	imagedata['camera'] = camdata
-	_correlator.correlate(imagedata, False)
+	
+	def calcBinning(origsize, min_newsize, max_newsize):
+		## new size can be bigger than origsize, no binning needed
+		if max_newsize >= origsize:
+			return 1
+		## try to find binning that will make new image size <= newsize
+		bin = origsize / max_newsize
+		remain = origsize % max_newsize
+		while remain:
+			bin += 1
+			remain = origsize % bin
+			newsize = float(origsize) / bin
+			if newsize < min_newsize:
+				return None
+		return bin
+	
+	imgs = pickle.load(open('imgs_1.p','rb'))
+	lpf = 1.5
+	# bin down images for correlation
+	imageshape = imgs[0]['image'].shape
+	# use minsize since tiltcorrelator needs it square, will crop the image in there.
+	minsize = min((imageshape[0],imageshape[1]))
+	if minsize > 512:
+		correlation_bin = calcBinning(minsize, 256, 512)
+	else:
+		correlation_bin = 1
+	if correlation_bin is None:
+		# use a non-dividable number and crop in the correlator
+		correlation_bin = int(math.ceil(minsize / 512.0))
+	
+	correlator_ = Correlator(None, None, correlation_bin, lpf)
+	
+	for img in imgs:
+		correlation_image = correlator_.correlate(img, \
+			True, channel=0, wiener=False, taper=0,corrtype='phase')												
+		raw_correlation = correlator_.getShift(True)						# get raw correlation
+		correlation = correlator_.getShift(False)
+		print "correlation x: %f, y: %f" %(correlation['x'],correlation['y'])
+	
+	im_0 = correlator_.correlation.buffer[0]['fft']
+	im_1 = correlator_.correlation.buffer[1]['fft']
 
-	print _correlator.getShift(True)
+	correlator_.reset()
+	correlator_.correlate(imgs[0], \
+				True, channel=0, wiener=False, taper=0,corrtype='phase')
+	correlator_.correlate(imgs[4], \
+				True, channel=0, wiener=False, taper=0,corrtype='phase')
+				
+	#correlation_image = correlator_.correlate(imgs[-1], \
+	#			True, channel=0, wiener=False, taper=0,corrtype='phase')
+	
+	correlation = correlator_.getShift(False)
+	print "correlation x: %f, y: %f" %(correlation['x'],correlation['y'])
 

@@ -36,6 +36,9 @@ SPECIAL_TRANSFORM = False
 class PresetChangeError(Exception):
 	pass
 
+class DataAccessError(Exception):
+	pass
+
 class CurrentPresetData(leginondata.Data):
 	def typemap(cls):
 		t = leginondata.Data.typemap()
@@ -72,7 +75,7 @@ class PresetsClient(object):
 
 	def isPresetNameToAvoid(self,pname):
 		'''
-		Avoid derived presets. '-' is used for aligned dd sum image.
+		Avoid derived presets. '-' is used for aligned dd sum image and denoised image.
 		'Zproj' is the projection of full tomogram
 		'''
 		presets_to_avoid = ['-','Zproj']
@@ -252,7 +255,8 @@ class PresetsManager(node.Node):
 		'idle minute': 30.0,
 		'import random': False,
 	}
-	eventinputs = node.Node.eventinputs + [event.ChangePresetEvent, event.MeasureDoseEvent, event.UpdatePresetEvent, event.IdleTimerPauseEvent, event.IdleTimerRestartEvent]
+	eventinputs = node.Node.eventinputs + [event.ChangePresetEvent, event.MeasureDoseEvent, event.UpdatePresetEvent]
+	eventinputs.append(event.IdleNotificationEvent)
 	eventoutputs = node.Node.eventoutputs + [event.PresetChangedEvent, event.PresetPublishEvent, event.DoseMeasuredEvent, event.MoveToTargetEvent, event.ActivateNotificationEvent, event.DeactivateNotificationEvent]
 
 	def __init__(self, name, session, managerlocation, **kwargs):
@@ -266,10 +270,11 @@ class PresetsManager(node.Node):
 			'image':calibrationclient.ImageShiftCalibrationClient(self),
 			'stage':calibrationclient.StageCalibrationClient(self),
 			'beam':calibrationclient.BeamShiftCalibrationClient(self),
+			'diffraction':calibrationclient.DiffractionShiftCalibrationClient(self),
 			'beam tilt':calibrationclient.BeamTiltCalibrationClient(self),
 			'modeled stage':calibrationclient.ModeledStageCalibrationClient(self),
 			'beam size':calibrationclient.BeamSizeCalibrationClient(self),
-			'image rotation':calibrationclient.ImageRotationCalibrationClient(self),
+			'scale rotation':calibrationclient.ImageScaleRotationCalibrationClient(self),
 		}
 		self.dosecal = calibrationclient.DoseCalibrationClient(self)
 		import navigator
@@ -295,57 +300,15 @@ class PresetsManager(node.Node):
 
 		# timeout thread
 		self.idleactive = False
-		self.idle_timer_pause_done = {}
-		self.idle_timer_paused = {}
-		self.startInstrumentUsageTracker()
 
 		self.addEventInput(event.ChangePresetEvent, self.changePreset)
 		self.addEventInput(event.MeasureDoseEvent, self.measureDose)
 		self.addEventInput(event.UpdatePresetEvent, self.handleUpdatePresetEvent)
-		self.addEventInput(event.IdleTimerPauseEvent, self.handleIdleTimerPauseEvent)
-		self.addEventInput(event.IdleTimerRestartEvent, self.handleIdleTimerRestartEvent)
+		self.addEventInput(event.IdleNotificationEvent, self.handleIdleTimedOutEvent)
 
 		## this will fill in UI with current session presets
 		self.getPresetsFromDB()
 		self.start()
-
-	def startInstrumentUsageTracker(self):
-		t = threading.Thread(target=self.usageTracker)
-		t.setDaemon(True)
-		t.start()
-
-	def isAnyIdleTimerPaused(self):
-		'''
-		Find all nodes that sent IdleTimerPauseEvent but not yet sending
-		IdleTimerRestartEvent.  Some node classes such as AutoN2Filler
-		takes a long time to return.
-		'''
-		any_paused = []
-		for key in self.idle_timer_paused.keys():
-			if self.idle_timer_paused[key] is True:
-				any_paused.append(key)
-		return any_paused
-
-	def usageTracker(self):
-		'''
-		this is run in a thread to watch for instrument last set or get time
-		'''
-		last_set_get_time = self.instrument.getLastSetGetTime()
-		while self.idleactive:
-			paused_fromnode = self.isAnyIdleTimerPaused()
-			for node in paused_fromnode:
-				# Some node classes such as AutoN2Filler do not set instrument
-				# but can take a long time to come back.
-				# These need to wait
-				self.idle_timer_pause_done[node].wait()
-				self.idle_timer_pause_done[node].clear()
-				self.idle_timer_paused[node] = False
-			## idletime before giving up
-			last_set_get_time = self.instrument.getLastSetGetTime()
-			if self.idleactive and time.time() - last_set_get_time > 60*self.settings['idle minute']:
-				self.instrumentIdleFinish()
-				# close valves, stop doing everything or quit
-			time.sleep(10)
 
 	def instrumentIdleFinish(self):
 		'''
@@ -366,16 +329,13 @@ class PresetsManager(node.Node):
 			self.idleactive = False
 			self.outputEvent(event.DeactivateNotificationEvent())
 			#self.logger.info('Instrument timeout deactivated')
-			self.logger.info('Instrument error notification deactivated')
+			self.logger.info('Idle and Instrument error notification deactivated')
 		else:
-			# update first then start tracking
-			self.instrument.updateLastSetGetTime()
 			self.idleactive = True
 			tem_hostname = self.getTemHostname()
-			self.outputEvent(event.ActivateNotificationEvent(tem_host=tem_hostname))
-			self.logger.info('Instrument error notification activated')
-			# FIX ME: this tracker does not work, yet. Often timeout too early.
-			#self.startInstrumentUsageTracker()
+			timeout_minutes = self.settings['idle minute']
+			self.outputEvent(event.ActivateNotificationEvent(tem_host=tem_hostname, timeout_minutes=timeout_minutes))
+			self.logger.info('Idle and Instrument error notification activated')
 
 	def lock(self, n):
 		'''many nodes could be waiting for a lock.  It is undefined which
@@ -665,14 +625,17 @@ class PresetsManager(node.Node):
 
 		self.logger.info(beginmessage)
 
-		if presetdata['tem'] is None:
-			message = 'Preset change failed: no TEM selected for this preset'
-			self.logger.error(message)
-			raise PresetChangeError(message)
-		if presetdata['ccdcamera'] is None:
-			message = 'Preset change failed: no CCD camera selection for this preset'
-			self.logger.error(message)
-			raise PresetChangeError(message)
+		try:
+			if presetdata['tem'] is None:
+				message = 'Preset change failed: no TEM selected for this preset'
+				self.logger.error(message)
+				raise PresetChangeError(message)
+			if presetdata['ccdcamera'] is None:
+				message = 'Preset change failed: no CCD camera selection for this preset'
+				self.logger.error(message)
+				raise PresetChangeError(message)
+		except DataAccessError as e:
+			raise PresetChangeError(e)
 		
 		if presetdata['tem']['name'] in self.instrument.getTEMNames():
 			try:
@@ -968,7 +931,8 @@ class PresetsManager(node.Node):
 			return
 		# refs #3255 retry if image shift or beam shift parameters are not gotten 
 		trys = 0
-		while trys < 3 and (newpreset['image shift']['x'] is None or newpreset['beam shift']['x'] is None):
+		# refs #7018 more layers of vailidation for diffraction shift for back compatibility.
+		while trys < 3 and (newpreset['image shift']['x'] is None or newpreset['beam shift']['x'] is None or ('diffraction shift' in newpreset.keys() and newpreset['diffraction shift'] is not None and newpreset['diffraction shift']['x'] is None)):
 			self.logger.info('scope parameters not complete, retry....')
 			newpreset = self._fromScope(newname, temname, camname, None, copybeam)
 			trys += 1
@@ -1005,11 +969,12 @@ class PresetsManager(node.Node):
 		# dependent on HT
 		if ht is None:
 			message = 'Unknown (cannot get current high tension)'
-			modmagtime = beamtime = imagetime = stagetime = defocustime = message
+			modmagtime = beamtime = diffractiontime = imagetime = stagetime = defocustime = message
 		else:
 			stagetime = self.calclients['stage'].time(tem, cam, ht, mag, 'stage position')
 			imagetime = self.calclients['image'].time(tem, cam, ht, mag, 'image shift')
 			beamtime = self.calclients['beam'].time(tem, cam, ht, mag, 'beam shift')
+			diffractiontime = self.calclients['diffraction'].time(tem, cam, ht, mag, 'diffraction shift')
 			defocustime = self.calclients['beam tilt'].time(tem, cam, ht, mag, 'defocus',probe)
 			modmagtimex = self.calclients['modeled stage'].timeMagCalibration(tem, cam, ht,
 																																			mag, 'x')
@@ -1022,6 +987,7 @@ class PresetsManager(node.Node):
 			'image shift': str(imagetime),
 			'stage': str(stagetime),
 			'beam': str(beamtime),
+			'diffraction': str(diffractiontime),
 			'modeled stage': str(modtime),
 			'modeled stage mag only': str(modmagtime),
 			'defocus': str(defocustime),
@@ -1182,12 +1148,26 @@ class PresetsManager(node.Node):
 		old_time = camdata0['exposure time']
 		self.old_time = old_time
 		new_time = old_time * dose_to_match / old_dose
-		if new_time > 5000.0 or new_time <= 1.0:
+		# maximal exposure time of Falcon3EC is now the limit
+		if new_time > 60000.0 or new_time <= 1.0:
 			self.logger.warning('Ignore unreasonable exposure time at %.1f ms' % float(new_time))
 			new_time = old_time
 
 		params = {'exposure time': new_time}
 		self.updatePreset(presetname, params)
+		self.acquireDoseImage(presetname)
+
+	def calcDoseFromCameraDoseRate(self, presetname, camera_dose_rate, image_mean):
+		preset = self.presetByName(presetname)
+		# Falcon3 non-counting mode gives values per frame not sum. Use through Leginon as per second.
+		intensity_averaged = self.instrument.ccdcamera.IntensityAveraged
+		time_second = 1.0
+		if not intensity_averaged:
+			time_second = preset['exposure time'] /1000.0
+		sensitivity = image_mean / (camera_dose_rate*time_second*preset['binning']['x']*preset['binning']['y'])
+		ht = self.instrument.tem.HighTension
+		self.dosecal.storeSensitivity(ht, sensitivity,tem=preset['tem'],ccdcamera=preset['ccdcamera'])
+		self.logger.info('Camera sensitivity saved as %.3f counts/e and %d kV' %(sensitivity,ht/1000))
 		self.acquireDoseImage(presetname)
 
 	def cancelDoseMeasure(self,presetname):
@@ -1528,6 +1508,11 @@ class PresetsManager(node.Node):
 		mystage = dict(emtargetdata['stage position'])
 		myimage = dict(emtargetdata['image shift'])
 		mybeam = dict(emtargetdata['beam shift'])
+		# TODO Find out when diffraction shift is or is not in emtargetdata
+		if 'diffraction shift' in emtargetdata.keys() and emtargetdata['diffraction shift']:
+			mydiffraction = dict(emtargetdata['diffraction shift'])
+		else:
+			mydiffraction = None
 
 ## This should be unnecessary if we have a check for minimum stage movement
 ## (currently in pyscope).  It was a way to prevent moving the stage between
@@ -1591,7 +1576,7 @@ class PresetsManager(node.Node):
 				# magnification and camera (if camera is different)
 				# Transform pixelvect1 at magnification to new magnification according to image-shift matrix
 				# include a relative  image rotation and scale addition to the transform
-				pixvect2 = self.calclients['image rotation'].pixelToPixel(old_tem,old_ccdcamera,new_tem, new_ccdcamera, ht,oldpreset['magnification'],newpreset['magnification'],pixvect1)
+				pixvect2 = self.calclients['scale rotation'].pixelToPixel(old_tem,old_ccdcamera,new_tem, new_ccdcamera, ht,oldpreset['magnification'],newpreset['magnification'],pixvect1)
 				# transform to the binned pixelsift
 				pixelshift2 = {'row':pixvect2[0] / newpreset['binning']['y'],'col':pixvect2[1] / newpreset['binning']['x']}
 				newscope = self.calclients['image'].transform(pixelshift2, fakescope2, fakecam2)
@@ -1625,6 +1610,17 @@ class PresetsManager(node.Node):
 		else:
 			mybeam['x'] = newpreset['beam shift']['x']
 			mybeam['y'] = newpreset['beam shift']['y']
+		# diffraction shift 
+		if mydiffraction and emtargetdata['movetype'] == 'diffraction shift':
+			mydiffraction['x'] -= oldpreset['diffraction shift']['x']
+			mydiffraction['x'] += newpreset['diffraction shift']['x']
+			mydiffraction['y'] -= oldpreset['diffraction shift']['y']
+			mydiffraction['y'] += newpreset['diffraction shift']['y']
+		else:
+			if newpreset['diffraction shift']:
+				mydiffraction = {}
+				mydiffraction['x'] = newpreset['diffraction shift']['x']
+				mydiffraction['y'] = newpreset['diffraction shift']['y']
 
 		mymin = newpreset['defocus range min']
 		mymax = newpreset['defocus range max']
@@ -1640,6 +1636,7 @@ class PresetsManager(node.Node):
 		scopedata.friendly_update(newpreset)
 		scopedata['image shift'] = myimage
 		scopedata['beam shift'] = mybeam
+		scopedata['diffraction shift'] = mydiffraction
 		# Disable stage move if movetype does not requires it.
 		if self.settings['disable stage for image shift'] and  (emtargetdata['movetype'] == 'image beam shift' or emtargetdata['movetype'] == 'image shift'):
 				self.logger.info('disable stage movement')
@@ -1800,6 +1797,8 @@ class PresetsManager(node.Node):
 
 		refmag = self.presets[refname]['magnification']
 		self.refpreset = refname
+		# default firstrightpreset refs #6812
+		self.firstrightpreset = refname
 		try:
 			refindex = mags.index(refmag)
 		except ValueError:
@@ -2080,6 +2079,23 @@ class PresetsManager(node.Node):
 		newpreset = self.updatePreset(presetname, newbeamshift)
 		self.updateSameMagPresets(presetname,'beam shift')
 
+	def handleIdleTimedOutEvent(self, evt):
+		temname = None
+		self.logger.info('Idled for too long.  Finishing....')
+		try:
+			presetname = self.currentpreset['name']
+			temname = self.currentpreset['tem']['name']
+		except:
+			first_preset = self.presets[self.presets.keys()[0]]
+			temname = first_preset['tem']['name']
+		if temname:
+			self.instrument.getTEM(temname).ColumnValvePosition = 'closed'
+			self.logger.info('Column valve closed')
+		else:
+			self.logger.error('No valid preset to set tem to close column valve')
+		# deactivate idle and error notification
+		self.toggleInstrumentTimeout()
+
 	def handleUpdatePresetEvent(self, evt):
 		presetname = evt['name']
 		params = evt['params']
@@ -2089,20 +2105,6 @@ class PresetsManager(node.Node):
 		self.logger.info('completed update to %s' % (presetname,))
 		self.confirmEvent(evt)
 	
-	def handleIdleTimerPauseEvent(self, evt):
-		node = evt['node']
-		self.idle_timer_paused[node] = True
-		self.idle_timer_pause_done[node] = threading.Event()
-		self.logger.info('%s requested idle timer pause' % (node,))
-
-	def handleIdleTimerRestartEvent(self, evt):
-		node = evt['node']
-		self.logger.info('%s requested idle timer restart' % (node,))
-		self.instrument.updateLastSetGetTime()
-		if node in self.isAnyIdleTimerPaused():
-			self.idle_timer_paused[node] = False
-			self.idle_timer_pause_done[node].set()
-
 	def isLensSeriesChange(self,mag1,mag2):
 		# This is used in specialTransform to restrict the magnifications at
 		# which the transform is applied

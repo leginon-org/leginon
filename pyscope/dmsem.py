@@ -11,15 +11,30 @@
 import ccdcamera
 import sys
 import time
-import gatansocket
 import numpy
 import itertools
 import os
 from pyami import moduleconfig
+import numextension
 
 simulation = False
 if simulation:
 	print 'USING SIMULATION SETTINGS'
+	import simgatan
+else:
+	import gatansocket
+
+def imagefun_bin(image, binning0, binning1=0):
+	'''
+	Binning using numextension as implemented in pyami/imagefun.
+	bin function in pyami/imagefun.py is copied here so
+	that we don't have to import other unnecessary modules
+	'''
+	if binning1 == 0:
+		binning1 = binning0
+	if binning0==1 and binning1==1:
+		return image
+	return numextension.bin(image, binning0, binning1)
 
 # only one connection will be shared among all classes
 def connect():
@@ -27,10 +42,14 @@ def connect():
 		gatansocket.myGS = gatansocket.GatanSocket()
 	return gatansocket.myGS
 
+def simconnect():
+	return simgatan.SimGatan()
+
 configs = moduleconfig.getConfigured('dmsem.cfg')
 
 class DMSEM(ccdcamera.CCDCamera):
 	ed_mode = None
+	config_opt_name = 'dm'
 	filter_method_names = [
 			'getEnergyFilter',
 			'setEnergyFilter',
@@ -41,7 +60,10 @@ class DMSEM(ccdcamera.CCDCamera):
 
 	def __init__(self):
 		self.unsupported = []
-		self.camera = connect()
+		if not simulation:
+			self.camera = connect()
+		else:
+			self.camera = simconnect()
 
 		self.idcounter = itertools.cycle(range(100))
 
@@ -49,15 +71,22 @@ class DMSEM(ccdcamera.CCDCamera):
 
 		if not self.getEnergyFiltered():
 			self.unsupported.extend(self.filter_method_names)
-		self.bblankerid = 0
 		self.binning = {'x': 1, 'y': 1}
 		self.offset = {'x': 0, 'y': 0}
-		self.tempoffset = dict(self.offset)
+		self.acqoffset = {'x': 0, 'y': 0}
 		self.camsize = self.getCameraSize()
 		self.dimension = {'x': self.camsize['x'], 'y': self.camsize['y']}
 		self.exposuretype = 'normal'
 		self.user_exposure_ms = 100
 		self.float_scale = 1000.0
+		# shutter control
+		self.shutter_id = self.getAcquisitionShutter()
+		# TODO: semccd command SetShutterNormallyClosed also opens
+		# all other shutters.  If these are not set quite right,
+		# it can cause trouble. (Found in one case this other shuter
+		# uses reverse logic.
+		#self.camera.SetShutterNormallyClosed(self.cameraid,self.shutter_id)
+		#
 		# what to do in digital micrograph before handing back the image
 		# unprocessed, dark subtracted, gain normalized
 		#self.dm_processing = 'gain normalized'
@@ -70,6 +99,7 @@ class DMSEM(ccdcamera.CCDCamera):
 		self.readout_delay_ms = 0
 		self.align_frames = False
 		self.align_filter = 'None'
+		self.use_cds = False
 		raw_frame_dir = self.getDmsemConfig('k2','raw_frame_dir')
 		self.info_print('Frames are saved to %s' % (raw_frame_dir,))
 
@@ -104,7 +134,6 @@ class DMSEM(ccdcamera.CCDCamera):
 	def setOffset(self, value):
 		# Work around
 		self.offset = dict(value)
-		self.tempoffset = {'x':0,'y':0}
 
 	def getDimension(self):
 		return dict(self.dimension)
@@ -118,7 +147,7 @@ class DMSEM(ccdcamera.CCDCamera):
 
 	def setBinning(self, value):
 		if value['x'] != value['y']:
-			raise ValueError('multiple binning dimesions not supported')
+			raise ValueError('multiple binning dimensions not supported')
 		self.binning = dict(value)
 
 	def getRealExposureTime(self):
@@ -153,6 +182,34 @@ class DMSEM(ccdcamera.CCDCamera):
 			return True
 		return False
 
+	def isDM332orUp(self):
+		version_id,version_string = self.getDMVersion()
+		if version_id and version_id >= 50302:
+			return True
+		return False
+
+	def isSEMCCD2019orUp(self):
+		year = self.getDmsemConfig('semccd',itemname='semccd_plugin_year')
+		if year:
+			return int(year) >= 2019
+		# default to false for back compatibility
+		return False
+
+	def getFrameSavingRotateFlipDefault(self):
+		'''
+		SEMCCD has always default this to 0 until sometime in May 2019.  Users reported that
+		the orientation changed on K2 installation with GMS 2.
+		'''
+		return int(self.isSEMCCD2019orUp())
+
+	def getAcquisitionShutter(self):
+		number = self.getDmsemConfig(self.config_opt_name,itemname='acquisition_shutter_number')
+		if number is None or number == 1:
+			shutter_id = 0
+		else:
+			shutter_id = 1
+		return shutter_id
+
 	def needConfigDimensionFlip(self,height,width):
 		# DM 2.3.0 and up needs camera dimension input in its original
 		# orientation regardless of rotation when dose fractionation is used.
@@ -162,7 +219,57 @@ class DMSEM(ccdcamera.CCDCamera):
 
 		return False
 
+	def getAcqBinning(self):
+		'''
+		Camera binning given for acquisition is based on physical pixel,
+		regardless of ed mode usually.
+		'''
+		physical_binning = self.binning['x']
+		if self.ed_mode != 'super resolution':
+			binscale = 1
+		else:
+			binscale = 2
+			if self.binning['x'] > 1:
+				# physical binning is half super resolution binning except when the latter is 1
+				physical_binning /= binscale
+		return physical_binning, binscale
+
+	def getAcqDimension(self, acq_binning, binscale):
+		acq_dimension = self.camsize.copy()
+		physical_binning = binscale * acq_binning
+		acq_dimension['x'] = acq_dimension['x']/physical_binning
+		acq_dimension['y'] = acq_dimension['y']/physical_binning
+		return acq_dimension
+
+	def getAcqOffset(self, acq_binning, binscale):
+		# all software offset for now
+		acq_offset = self.acqoffset.copy()
+		return acq_offset
+
+	def getAcqBinningAndROI(self):
+		'''
+		Calculating the acquisition boundary and binning to send
+		to Gatan socket.
+		'''
+		acq_binning, binscale = self.getAcqBinning()
+		acq_dimension = self.getAcqDimension(acq_binning,binscale)
+		acq_offset = self.getAcqOffset(acq_binning,binscale)
+		height = acq_offset['y']+acq_dimension['y']
+		width = acq_offset['x']+acq_dimension['x']
+		if self.needConfigDimensionFlip(height,width):
+			tmpheight = height
+			height = width
+			width = tmpheight
+		left = acq_offset['x']
+		top = acq_offset['y']
+		bottom = top + height
+		right = left + width
+		return acq_binning, left, top, right, bottom, width, height
+
 	def calculateAcquireParams(self):
+		'''
+		Return acquisition parameters to be sent.
+		'''
 		exptype = self.getExposureType()
 		if exptype == 'dark':
 			processing = 'dark'
@@ -172,31 +279,21 @@ class DMSEM(ccdcamera.CCDCamera):
 		# I think it's negative...
 		shutter_delay = -self.readout_delay_ms / 1000.0
 
-		physical_binning = self.binning['x']
-		if self.ed_mode != 'super resolution':
-			binscale = 1
-		else:
-			binscale = 2
-			if self.binning['x'] > 1:
-				# physical binning is half super resolution binning except when the latter is 1
-				physical_binning /= binscale
+		acq_binning, left, top, right, bottom, width, height = self.getAcqBinningAndROI()
+		correction_flags = self.getCorrectionFlags()
 
-		height = self.offset['y']+self.dimension['y']
-		width = self.offset['x']+self.dimension['x']
-		if self.needConfigDimensionFlip(height,width):
-			tmpheight = height
-			height = width
-			width = tmpheight
 		acqparams = {
 			'processing': processing,
 			'height': height,
 			'width': width,
-			'binning': physical_binning,
-			'top': self.tempoffset['y'] / binscale,
-			'left': self.tempoffset['x'] / binscale,
-			'bottom': height / binscale,
-			'right': width / binscale,
+			'binning': acq_binning,
+			'top': top,
+			'left': left,
+			'bottom': bottom,
+			'right': right,
 			'exposure': self.getRealExposureTime(),
+			'corrections': correction_flags,
+			'shutter': self.shutter_id,
 			'shutterDelay': shutter_delay,
 		}
 		self.debug_print('DM acqire shape (%d, %d)' % (height,width))
@@ -217,7 +314,7 @@ class DMSEM(ccdcamera.CCDCamera):
 		self.camera.SelectCamera(self.cameraid)
 		self.custom_setup()
 		acqparams = self.calculateAcquireParams()
-
+		self.acqparams = acqparams
 		t0 = time.time()
 		image = self.camera.GetImage(**acqparams)
 		t1 = time.time()
@@ -227,32 +324,69 @@ class DMSEM(ccdcamera.CCDCamera):
 			self.modifyDarkImage(image)
 		# workaround dose fractionation image rotate-flip not applied problem
 		self.debug_print('received shape %s' %(image.shape,))
+
 		if self.save_frames or self.align_frames:
-			if not self.isDM231orUp():
-				k2_rotate = self.getDmsemConfig('k2','rotate')
-				k2_flip = self.getDmsemConfig('k2','flip')
-				if k2_rotate:
-					image = numpy.rot90(image,4-k2_rotate)
-				if k2_flip:
-					image = numpy.fliplr(image)
-		# workaround to offset image problem
-		startx = self.getOffset()['x']
-		starty = self.getOffset()['y']
-		if startx != 0 or starty != 0:
-			endx = self.dimension['x'] + startx
-			endy = self.dimension['y'] + starty
-			image = image[starty:endy,startx:endx]
-		self.debug_print('modified shape %s' % (image.shape,))
+			if self.getDoEarlyReturn():
+				if self.getEarlyReturnFormat() == '8x8':
+					if self.getEarlyReturnFrameCount() > 0:
+						#fake 8x8 image with the same mean and standard deviation for fast transfer
+						fake_image = self.base_fake_image*image.std() + image.mean()*numpy.ones((8,8))
+					else:
+						fake_image = numpy.zeros((8,8))
+					return fake_image
+			image = self._modifyImageOrientation(image)
+		image = self._modifyImageShape(image)
+		self.debug_print('final shape %s' %(image.shape,))
 
 		if self.dm_processing == 'gain normalized' and self.ed_mode in ('counting','super resolution'):
 			image = numpy.asarray(image, dtype=numpy.float32)
 			image /= self.float_scale
 		return image
 
+	def _fixBadShape(self, image):
+		# no need to change normally.
+		return image
+
+	def _modifyImageShape(self, image):
+		image = self._fixBadShape(image)
+		acq_binning, binscale = self.getAcqBinning()
+		added_binning = self.binning['x'] / acq_binning
+		if added_binning > 1:
+			# software binning
+			image = imagefun_bin(image, added_binning)
+			self.debug_print('software binned %s' % (image.shape,))
+		image = self._cropImage(image)
+		return image
+
+	def _cropImage(self, image):
+		# default no modification
+		startx = self.getOffset()['x']
+		starty = self.getOffset()['y']
+		if startx != 0 or starty != 0:
+			endx = self.dimension['x'] + startx
+			endy = self.dimension['y'] + starty
+			image = image[starty:endy,startx:endx]
+			self.debug_print('software cropped [%d:%d,%d:%d]' % (starty,endy,startx,endx))
+			self.debug_print('software cropped %s' % (image.shape,))
+		return image
+
+	def _modifyImageOrientation(self, image):
+		if self.isSEMCCD2019orUp() or not self.isDM231orUp():
+			k2_rotate = self.getDmsemConfig('k2','rotate')
+			k2_flip = self.getDmsemConfig('k2','flip')
+			if k2_rotate:
+				self.debug_print('rotate image %s' % (image.shape,))
+				image = numpy.rot90(image,4-k2_rotate)
+			if k2_flip:
+				self.debug_print('flip image %s' % (image.shape,))
+				image = numpy.fliplr(image)
+		return image
+
 	def modifyDarkImage(self,image):
 		'''
 		in-place modification of image array
 		'''
+		# non-counting camera default to be as-is.
 		return
 
 	def getPixelSize(self):
@@ -271,8 +405,13 @@ class DMSEM(ccdcamera.CCDCamera):
 			self.camera.InsertCamera(self.cameraid, value)
 		else:
 			return
-		## TODO:  determine necessary settling time:
-		time.sleep(5)
+		t0=time.time()
+		MAX_DELAY = 90 # 90 seconds
+		while inserted != value and time.time()-t0 < MAX_DELAY:
+			time.sleep(1)
+			inserted = self.getInserted()
+		if time.time()-t0 >= MAX_DELAY:
+			raise RuntimeError('Can not set inserted state of the camera to %s' % (value,))
 
 	def getInserted(self):
 		return self.camera.IsCameraInserted(self.cameraid)
@@ -317,6 +456,22 @@ class DMSEM(ccdcamera.CCDCamera):
 			minor = remainder // 100
 			sub = remainder % 100
 		return (version_long,'%d.%d.%d' % (major,minor,sub))
+
+	def getCorrectionFlags(self):
+		'''
+		Binnary Correction flag sum in GMS.  See Feature #8391.
+		GMS3.3.2 has pre-counting correction which is superior.
+		SerialEM always do this correction
+		but Leginon 3.4 and earlier does not.
+		David M. said SerialEM default is 49 for K2 and 1 for K3.
+		49 means defect,bias, and quadrant (to be the same as Ultrascan).
+		I don't think the latter two needs applying in counting.
+		'''
+		if self.isDM332orUp():
+			return 1 # defect correction only.
+		else:
+			# keep it zero to be back compatible.
+			return 0
 
 	def hasScriptFunction(self, name):
 		return self.camera.hasScriptFunction(name)
@@ -378,10 +533,17 @@ class DMSEM(ccdcamera.CCDCamera):
 		if result < 0.0:
 			raise RuntimeError('unable to align energy filter zero loss peak')
 
+	def setUseCds(self,value):
+		self.use_cds = bool(value)
+
+	def getUseCds(self):
+		return self.use_cds
+
 class GatanOrius(DMSEM):
 	name = 'GatanOrius'
+	config_opt_name = 'orius'
 	try:
-		cameraid = configs['orius']['camera_id']
+		cameraid = configs[config_opt_name]['camera_id']
 	except:
 		pass
 	binning_limits = [1,2,4]
@@ -389,19 +551,36 @@ class GatanOrius(DMSEM):
 
 class GatanUltraScan(DMSEM):
 	name = 'GatanUltraScan'
+	config_opt_name = 'orius'
 	try:
-		cameraid = configs['ultrascan']['camera_id']
+		cameraid = configs[config_opt_name]['camera_id']
 	except:
 		pass
 	binning_limits = [1,2,4,8]
 	binmethod = 'exact'
 
+class GatanRio9(DMSEM):
+	name = 'GatanRio9'
+	config_opt_name = 'rio9'
+	try:
+		cameraid = configs[config_opt_name]['camera_id']
+	except:
+		pass
+	binning_limits = [1,2]
+	binmethod = 'exact'
+
+	def getPixelSize(self):
+		## TODO: move to config file:
+		return {'x': 9e-6, 'y': 9e-6}
+
 
 class GatanK2Base(DMSEM):
 	name = 'GatanK2Base'
+	config_opt_name = 'k2'
 	try:
-		cameraid = configs['k2']['camera_id']
+		cameraid = configs[config_opt_name]['camera_id']
 	except:
+		raise
 		pass
 	# our name mapped to SerialEM plugin value
 	readmodes = {'linear': 0, 'counting': 1, 'super resolution': 2}
@@ -412,6 +591,24 @@ class GatanK2Base(DMSEM):
 	filePerImage = False
 
 	k2_max_ram_for_stack_gb = 12 # maximal ram for ram grabs
+	# base fake image of 8x8 shape, mean=0,0 and std=1.0
+	base_fake_image = numpy.array(
+[[-1.19424753,  1.4246904 , -0.93985889,  0.60135849,  0.27857971,
+        -1.65301365,  1.04678336, -1.52532131],
+       [-1.31055292, -1.64913688, -0.02365123,  0.66956679, -0.65988101,
+         0.9513427 , -0.13423738,  0.33800944],
+       [-1.1071589 ,  0.88239252,  0.10997026, -1.18640795,  0.61022063,
+         0.81224024, -0.16747269,  0.00719223],
+       [-0.90773998,  1.7711954 , -0.22341715,  1.77620855, -1.31179014,
+         0.41032037,  0.0359722 ,  0.54127201],
+       [-0.93403768, -0.68054982,  0.91282793, -0.3759068 , -0.90186899,
+         0.25927322,  0.45464985,  0.45113749],
+       [ 0.90185984,  0.61578781, -0.6812698 , -0.51314294,  1.5032234 ,
+        -0.65909159,  2.16388489, -0.68847963],
+       [-0.85829773, -2.44494674, -0.50517834,  0.6213358 ,  0.9792851 ,
+         0.44794129,  0.76906529,  1.45588215],
+       [ 0.43612393, -0.27890367, -0.11642871, -0.15955607, -2.52247377,
+         0.62344606,  0.42410922,  1.02661867]])
 
 	def __init__(self):
 		super(GatanK2Base, self).__init__()
@@ -419,6 +616,9 @@ class GatanK2Base(DMSEM):
 		self.setEarlyReturnFrameCount(None)
 
 	def custom_setup(self):
+		'''
+		K2 specific setup.
+		'''
 		#self.camera.SetShutterNormallyClosed(self.cameraid,self.bblankerid)
 		if self.ed_mode != 'base':
 			k2params = self.calculateK2Params()
@@ -479,6 +679,7 @@ class GatanK2Base(DMSEM):
 			'alignFrames': self.align_frames,
 			'saveFrames': self.save_frames,
 			'filt': self.align_filter,
+			'useCds': self.use_cds,
 		}
 		return params
 
@@ -503,7 +704,7 @@ class GatanK2Base(DMSEM):
 			fileroot = self.frames_name
 
 		# 0 means takes what DM gives
-		rot_flip = 0
+		rot_flip = self.getFrameSavingRotateFlipDefault()
 		if not self.isDM231orUp():
 			# Backward compatibility
 			flip = int(not self.getDmsemConfig('k2','flip'))  # 0=none, 4=flip columns before rot, 8=flip after
@@ -547,6 +748,10 @@ class GatanK2Base(DMSEM):
 
 	def getDoEarlyReturn(self):
 		return bool(self.getDmsemConfig('k2','do_early_return'))
+
+	def getEarlyReturnFormat(self):
+		# valid values: 8x8, 256x256
+		return self.getDmsemConfig('k2','early_return_format')
 
 	def getSaveLzwTiffFrames(self):
 		return bool(self.getDmsemConfig('k2','save_lzw_tiff_frames'))
@@ -595,7 +800,12 @@ class GatanK2Base(DMSEM):
 		'''
 		Frame Flip is defined as up-down flip
 		'''
-		return self.isDM231orUp()
+		overwrite = self.getDmsemConfig('k2','overwrite_frame_orientation')
+		if not overwrite:
+			return self.isDM231orUp()
+		else:
+			my_frame_flip = self.getDmsemConfig('k2','frame_flip_to_overwrite_with')
+			return my_frame_flip
 
 	def getFrameRotate(self):
 		'''
@@ -628,6 +838,9 @@ class GatanK2Counting(GatanK2Base):
 		hw_proc = 'dark+gain'
 
 	def modifyDarkImage(self,image):
+		'''
+		in-place modification of image array
+		'''
 		if self.isDM231orUp():
 			image[:,:] = 0
 
@@ -641,12 +854,126 @@ class GatanK2Super(GatanK2Base):
 	else:
 		hw_proc = 'dark+gain'
 
+	def calculateAcquireParams(self):
+		'''
+		Return K2 super resolution acquisition parameters to be sent.
+		Super resolution camera need to send camera boundary in physical size
+		but ask for an image at super resolution size.
+		'''
+		acqparams = super(GatanK2Super,self).calculateAcquireParams()
+		# K2 SerialEMCCD native is in counting
+		acq_binning, binscale = self.getAcqBinning()
+		acqparams['height'] *= binscale
+		acqparams['width'] *= binscale
+		return acqparams
+
 	def modifyDarkImage(self,image):
+		'''
+		in-place modification of image array
+		'''
 		if self.isDM231orUp():
 			image[:,:] = 0
 
 	def getPixelSize(self):
 		## TODO: move to config file:
 		# pixel size on Gatan K2
+		return {'x': 2.5e-6, 'y': 2.5e-6}
+
+class GatanK3(GatanK2Base):
+	# K3 camsize is in super resolution
+	binning_limits = [1,2,4,8]
+	soft_crop = True
+	name = 'GatanK3'
+	config_opt_name = 'k3'
+	try:
+		# Not yet transition to always use k3
+		cameraid = configs[config_opt_name]['camera_id']
+		if cameraid is None:
+			cameraid = configs['k2']['camera_id']
+	except:
+		pass
+	readmodes = {'linear': 3, 'super resolution': 4}
+	ed_mode = 'super resolution'
+	if simulation:
+		hw_proc = 'none'
+	else:
+		hw_proc = 'dark+gain'
+
+	def __init__(self):
+		super(GatanK3, self).__init__()
+		self.dosefrac_frame_time = 0.013
+		self.record_precision = 0.013
+		self.user_exposure_ms = 13
+		self.use_cds = False
+		self.dm_processing = self.getDmProcessing()
+
+	def getDmProcessing(self):
+		value = self.getDmsemConfig('k3','dm_processing')
+		if value == 'dark subtracted':
+			return value
+		else:
+			# default
+			return 'gain normalized'
+
+	def getSystemGainDarkCorrected(self):
+		return self.dm_processing == 'gain normalized'
+
+	def requireRecentDarkCurrentReferenceOnBright(self):
+		return True
+
+	def updateDarkCurrentReference(self):
+		r = self.camera.PrepareDarkReference(self.cameraid)
+		if r > 0:
+			# has error
+			return True
+		return False
+
+	def getFrameFlip(self):
+		'''
+		Frame Flip is defined as up-down flip.
+		K3 requires no flip in most cases.
+		'''
+		overwrite = self.getDmsemConfig('k2','overwrite_frame_orientation')
+		if not overwrite:
+			return False
+		else:
+			my_frame_flip = self.getDmsemConfig('k2','frame_flip_to_overwrite_with')
+			return my_frame_flip
+
+	def getFrameSavingRotateFlipDefault(self):
+		'''
+		SEMCCD has always default this to 0 until sometime in May 2019.  Users reported that
+		the orientation changed on K2 installation with GMS 2 but seems to be back to normal
+		on K3 installations.
+		'''
+		return 0
+
+	def getAcqBinning(self):
+		# K3 SerialEMCCD native is in super resolution
+		acq_binning = self.binning['x']
+		if self.binning['x'] > 2:
+			#K3 can only bin from super resolution by 1 or 2.
+			acq_binning = 2
+		# bin scale is always 1
+		return acq_binning, 1
+
+	def modifyDarkImage(self,image):
+		image[:,:] = 0
+
+	def _fixBadShape(self, image):
+		# TODO: Found image shape returned incorrectly in simulation.
+		# Leave this here for now.
+		if self.acqparams['width']*self.acqparams['height'] != image.shape[0]*image.shape[1]:
+			print 'ERROR: image not in the right shape'
+			return image
+		else:
+			# simulator binned image when saving frames has wrong shape
+			if self.acqparams['width'] != image.shape[1]:
+				image = image.reshape(self.acqparams['height'],self.acqparams['width'])
+				print 'WARNING: image reshaped', image.shape
+		return image
+
+	def getPixelSize(self):
+		# pixel size on Gatan K3 as super resolution.  TODO: need confirmation.
 		return {'x': 2.5e-6, 'y': 2.5e-6}
 

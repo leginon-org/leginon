@@ -5,10 +5,10 @@ import os
 from leginon import leginondata
 from pyami import jsonfun
 '''
-	This program shows sql statement required to insert calibrations
-	into leginon database of dest_database_host based on the existing
-	calibration on the source_database_host.  The latter is in sinedon.cfg
-	Usage: showcal.py source_database_hostname source_camera_hosthame camera_name
+	This program creates sql statement and insert presets
+	into leginon database of dest_database_host based on the json file
+	Usage: import_leginon_presets.py dest_database_hostname tem_camera_preset_json_file
+	Requirement: preset_(tem_name)+(camera_hostname)+(camera_name).json
 '''
 pixelsize_scale = 1
 
@@ -44,7 +44,7 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 
 	def validateInput(self, params):
 		if len(params) != 3:
-			print "Usage import_leginon_presets.py database_hostname camera_cal_json_file"
+			print "Usage import_leginon_presets.py database_hostname tem_camera_presets_json_file"
 			self.close(1)
 		database_hostname = leginondata.sinedon.getConfig('leginondata')['host']
 		if params[1] != database_hostname:
@@ -76,6 +76,7 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 		if r:
 			return r[0]['tem']
 		else:
+			print "No tem/camera pair with pixel size calibration found"
 			results = leginondata.InstrumentData().query()
 			tems = []
 			for r in results:
@@ -88,6 +89,18 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 			print "  No tem found"
 			sys.exit()
 
+	def isTemInSessionPreset(self, session):
+		'''
+		Check if the session uses the tem for this import.
+		Leginon PresetsManager does not allow preset to be imported
+		from a session with more than one tem.
+		'''
+		presets = leginondata.PresetData(session=session).query()
+		for p in presets:
+			if p['tem'] == self.temdata:
+				return True
+		return False
+		
 	def setSessionData(self):
 		# find administrator user
 		ur = leginondata.UserData(username='administrator').query()
@@ -99,15 +112,16 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 			self.close(True)
 		q = leginondata.SessionData(user=admin_user)
 		r = q.query(results=1)
-		if r:
-			# use any existing session.
+		if r and self.isTemInSessionPreset(r[0]):
+			# use recent existing session.
 			self.session = r[0]
 		else:
+			q = leginondata.SessionData(user=admin_user)
 			q['name']='presetimport'
 			q['comment'] = 'import presets from json'
 			q['hidden'] = True
-			r.insert()
-			self.session = r
+			q.insert()
+			self.session = q
 		print 'Using Session %s to import' % self.session['name']
 
 	def printQuery(self, q):

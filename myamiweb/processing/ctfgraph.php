@@ -8,7 +8,7 @@
  */
 
 require_once "inc/particledata.inc";
-require_once "inc/leginon.inc";
+//require_once "inc/leginon.inc";
 require_once "inc/project.inc";
 
 require_once "inc/graph.inc";
@@ -30,11 +30,20 @@ $xmin = ($_GET['xmin']) ? $_GET['xmin'] : false;
 $xmax = ($_GET['xmax']) ? $_GET['xmax'] : false;
 $color = ($_GET['color']) ? $_GET['color'] : false;
 $pp = ($_GET['pp']) ? $_GET['pp'] : false; // phase plate test summary
+$storedCTFinfo = $_GET['ctff'];
+
 $ctf = new particledata();
 
 //If summary is true, get only the data with the best confidence
 if ($summary) {
-	$ctfinfo = $ctf->getBestCtfInfoByResolution($sessionId, $minimum);
+	if ($storedCTFinfo) {
+		$ctfinfo = json_decode(file_get_contents($storedCTFinfo), true);
+	}
+	//See Issue #8481 about why this is implemented
+	// And #8482 on why it is reverted to use the old one
+	//else $ctfinfo = $ctf->getRandomCtfInfoByResolution($sessionId, $minimum);
+	else $ctfinfo = $ctf->getBestCtfInfoByResolution($sessionId, $minimum);
+	
 } else {
 	$runId= ($_GET[rId]);
 	$ctfinfo = $ctf->getCtfInfo($runId);
@@ -70,6 +79,8 @@ foreach($ctfinfo as $t) {
 		continue;
 
 	$imageid = $t['imageid'];
+	$imageinfo = $leginondata->getMinimalImageInfo($t['imageid']);
+
 	if ($pp ) {
 		$ppinfo = $ctf->getPhasePlateInfoFromImageId($imageid);
 		if ($ppinfo && $ppinfo['pp_number'] != $pp ) continue;
@@ -77,12 +88,11 @@ foreach($ctfinfo as $t) {
 	$data[$imageid] = $value;
 	$where[] = "DEF_id=".$id;
 	if ($f!='astig_distribution') {
-		$ndata[]=array('unix_timestamp' => $t['unix_timestamp'], "$f"=>$value);
+		$ndata[]=array('unix_timestamp' => $t['unix_timestamp'], 'image_id' => $t['imageid'], 'filename'=>$imageinfo['filename'], "$f"=>$value);
 	} else {
-		$ndata[]=array('astig_x' => $t['astig_x'], "astig_y"=>$t['astig_y']);
+		$ndata[]=array('unix_timestamp' => $t['unix_timestamp'], 'image_id' => $t['imageid'], 'filename'=>$imageinfo['filename'], 'astig_x' => $t['astig_x'], "astig_y"=>$t['astig_y']);
 	}
 }
-
 if ($f == 'astig_distribution') {
 	$display_x = 'astig_x';
 	$display_y = 'astig_y';
@@ -113,7 +123,7 @@ $ytitle = ($cutoff) ? $ytitle.' avg defocus (um)' : $ytitle.$yunit;
 $dbemgraph->yaxistitle= $ytitle;
 
 if ($viewdata) {
-	$dbemgraph->dumpData(array($display_x, $display_y));
+	$dbemgraph->dumpData(array('unix_timestamp','image_id','filename',$display_x, $display_y));
 }
 if ($histogram) {
 	$dbemgraph->histogram=true;
@@ -140,5 +150,4 @@ if ($f == 'astig_distribution') {
 }
 $dbemgraph->dim($width,$height);
 $dbemgraph->graph();
-
 ?>

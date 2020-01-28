@@ -45,6 +45,7 @@ class BeamTiltImager(manualfocuschecker.ManualFocusChecker):
 		'tableau split': 8,
 		'do coma limit': True,
 		'auto coma limit': 2e-6,
+		'auto coma count limit': 3,
 	})
 
 	eventinputs = manualfocuschecker.ManualFocusChecker.eventinputs
@@ -69,7 +70,7 @@ class BeamTiltImager(manualfocuschecker.ManualFocusChecker):
 		self.ht = None
 		self.cs = None
 		# ace2 is not used for now.
-		self.ace = self.getCtfEstimator()
+		self.ace = None
 		self.auto_count = 0
 
 	def alignRotationCenter(self, defocus1, defocus2):
@@ -177,7 +178,7 @@ class BeamTiltImager(manualfocuschecker.ManualFocusChecker):
 
 	def catchBadSettings(self,presetdata):
 		if 'beam tilt' in self.settings['tableau type']:
-			if (presetdata['dimension']['x'] > 1024 or presetdata['dimension']['y'] > 1024):
+			if (presetdata['dimension']['x'] > 2048 or presetdata['dimension']['y'] > 2048):
 				self.logger.error('Analysis will be too slow: Reduce preset image dimension')
 				return 'error'
 		# Bad image binning will cause error
@@ -263,14 +264,17 @@ class BeamTiltImager(manualfocuschecker.ManualFocusChecker):
 				self.splitTableau(imagedata)
 			elif 'beam tilt series' in self.settings['tableau type']:
 				if 'power' in self.settings['tableau type'] and self.settings['do auto coma']:
+					if not self.ace:
+						self.ace = self.getCtfEstimator()
 					if not TESTING:
 						ctfresult = self.getImageCtfResult(imagedata)
 					else:
 						ctfresult = self.getSimulatedImageCtfResult(imagedata)
-					if ctfresult['ctffind4_resolution'] > 5.0:
-						self.logger.error('ctf fitting bad resolution=%.1f Angstrom' % ctfresult['ctffind4_resolution'])
-					else:
-						self.abe.addData(bt,ctfresult)
+					if ctfresult:
+						if ctfresult['ctffind4_resolution'] > 5.0:
+							self.logger.error('ctf fitting bad resolution=%.1f Angstrom' % ctfresult['ctffind4_resolution'])
+						else:
+							self.abe.addData(bt,ctfresult)
 				self.insertTableau(imagedata, angle, rad)
 			if self.settings['tableau type'] == 'beam tilt series-image':
 				try:
@@ -293,7 +297,7 @@ class BeamTiltImager(manualfocuschecker.ManualFocusChecker):
 
 	def autoComaCorrection(self):
 		self.auto_count = 0
-		count_limit = 2
+		count_limit = self.settings['auto coma count limit']
 		c21 = None
 		deltabt = None
 		# auto coma correction loop
@@ -314,6 +318,7 @@ class BeamTiltImager(manualfocuschecker.ManualFocusChecker):
 			self.setComaStig0()
 			self.auto_count += 1
 		self.logger.error('auto coma failed to reach threshold in %d triales' % (count_limit))
+		self.logger.info('beam tilt left at the result of the last iteration')
 
 	def simulateTarget(self):
 		if not self.settings['do auto coma']:
@@ -440,13 +445,16 @@ class BeamTiltImager(manualfocuschecker.ManualFocusChecker):
 	def getACEPath(self, exename):
 		aceexe = subprocess.Popen("which "+exename, shell=True, stdout=subprocess.PIPE).stdout.read().strip()
 		if not os.path.isfile(aceexe):
-			self.logger.warning(exename+" was not found in path. No ctf estimation")
+			self.logger.error(exename+" was not found in path. No ctf estimation")
 			return None
 		return aceexe
 
 	def getImageCtfResult(self, imagedata):
 		if self.ace:
-			return self.ace.runOneImageData(imagedata)
+			try:
+				return self.ace.runOneImageData(imagedata)
+			except Exception, e:
+				self.logger.error('Error estimating ctf: %s' % e)
 
 	def getSimulatedImageCtfResult(self, imagedata):
 			'''

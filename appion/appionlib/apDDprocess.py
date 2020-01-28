@@ -36,6 +36,9 @@ def initializeDDFrameprocess(sessionname,wait_flag=False):
 	if 'GatanK2' in dcamdata['name']:
 		from appionlib import apK2process
 		return apK2process.GatanK2Processing(wait_flag)
+	elif 'GatanK3' in dcamdata['name']:
+		from appionlib import apK2process
+		return apK2process.GatanK3Processing(wait_flag)
 	elif 'DE' in dcamdata['name']:
 		from appionlib import apDEprocess
 		return apDEprocess.DEProcessing(wait_flag)
@@ -66,6 +69,7 @@ class DirectDetectorProcessing(object):
 		self.altchannel_cycler = itertools.cycle([False,True])
 		self.frame_modified = False
 		self.setForcedFrameSessionPath(None)
+		self.last_correct_dark_gain = None
 
 	def setImageId(self,imageid):
 		from leginon import leginondata
@@ -86,6 +90,7 @@ class DirectDetectorProcessing(object):
 		'''
 		self.image = imagedata
 		# dark/gain corrected stack is saved here
+		self.extname = self.getRawFrameStackExtension(imagedata)
 		self.setFrameStackPath()
 
 	def getImageData(self):
@@ -98,16 +103,26 @@ class DirectDetectorProcessing(object):
 		'''
 		imagename = self.image['filename']
 
+		source_imagedata = self.image
 		if self.image['camera']['align frames']:
 			# Use pair data to find the align source image
 			result = self.getAlignImagePairData(None,query_source=False)
 			if result is False:
-				# This means that frames were aligned by camera algorithm and frame stack was not saved
-				return False
-			source_imagedata = result['source']
+				# This means that frames were aligned by camera algorithm and  wwith frame stack saved
+				source_imagedata = self.image
+			else:
+				source_imagedata = result['source']
 			imagename = source_imagedata['filename']
-		self.tempframestackpath = os.path.join(self.tempdir,imagename+'_st.mrc')
+		# input
+		self.tempframestackpath = os.path.join(self.tempdir,imagename+'_st.'+self.extname)
+		# output
 		self.framestackpath = os.path.join(self.rundir,imagename+'_st.mrc')
+
+	def getRawFrameStackExtension(self,imagedata):
+		self.extname = 'mrc'
+		if imagedata['camera']['tiff frames']:
+			self.extname = 'tif'
+		return self.extname
 		
 	def getFrameStackPath(self,temp=False):
 		if not temp:
@@ -393,7 +408,9 @@ class DDFrameProcessing(DirectDetectorProcessing):
 
 	def getBufferFrameSessionPathFromImage(self, imagedata):
 		session_frame_path = ddinfo.getBufferFrameSessionPathFromImage(imagedata)
-		if session_frame_path is False or self.getAllAlignImagePairData(None,query_source=True):
+		if session_frame_path is False:
+			return False
+		if self.getAllAlignImagePairData(None,query_source=True):
 			# Transfer to permanent location is automatic
 			apDisplay.printWarning('Alignment already run. frames moved from buffer')
 			return False
@@ -484,6 +501,8 @@ class DDFrameProcessing(DirectDetectorProcessing):
 
 	def getRefImageData(self,reftype):
 		refdata = self._getRefImageData(reftype)
+		if not refdata:
+			return
 		if self.getUseAlternativeChannelReference():
 			oldrefname = refdata['filename']
 			refdata = self.c_client.getAlternativeChannelReference(reftype,refdata)
@@ -493,7 +512,10 @@ class DDFrameProcessing(DirectDetectorProcessing):
 	def _getRefImageData(self,reftype):
 		imagedata = self.getCorrectedImageData()
 		if not self.use_full_raw_area:
-			refdata = imagedata[reftype]
+			try:
+				refdata = imagedata[reftype]
+			except:
+				return None
 			#if self.image.dbid <= 1815252 and self.image.dbid >= 1815060:
 				# special case to back correct images with bad references
 				#refdata = apDatabase.getRefImageDataFromSpecificImageId(reftype,1815281)
@@ -568,6 +590,8 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		camerainfo['offset'] = offset
 		camerainfo['dimension'] = dimension
 		camerainfo['nframe'] = nframe
+		# set to True first
+		self.correct_dark_gain = True
 		camerainfo['norm'] = self.getRefImageData('norm')
 		if not camerainfo['norm']:
 			self.correct_dark_gain = False
@@ -584,9 +608,6 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			if debug:
 				self.log.write( 'first frame image to be processed\n ')
 			return True
-		# no need to change condition if no dark/gain correction will be made
-		if not self.correct_dark_gain:
-			return False
 		# return True all the time to use Gram-Schmidt process to calculate darkarray scale
 		if self.use_GS:
 			return True
@@ -596,6 +617,9 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			if debug:
 				self.log.write( 'fail norm %d vs %d test\n ' % (self.camerainfo['norm'].dbid,current_norm.dbid))
 			return True
+		if self.last_correct_dark_gain is None or self.last_correct_dark_gain != self.correct_dark_gain:
+			return True
+
 		if self.use_full_raw_area != new_use_full_raw_area:
 			if debug:
 				self.log.write('fail full raw_area %s test\n ' % (new_use_full_raw_area))
@@ -617,7 +641,8 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		Load from rawframe_dir the chosen frame of the current image.
 		'''
 		try:
-			bin = self.camerainfo['binning']
+			# the frames are binned too now ?
+			bin = {'x':1,'y':1}
 			offset = self.camerainfo['offset']
 			dimension = self.camerainfo['dimension']
 		except:
@@ -658,9 +683,8 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		return False, 0
 
 	def getImageFrameOrientation(self):
-		frame_flip = self.image['camera']['frame flip']
+		frame_flip = bool(self.image['camera']['frame flip'])
 		frame_rotate = self.image['camera']['frame rotate']
-		apDisplay.printDebug('frame flip %s, frame_rotate %s' % (frame_flip,frame_rotate))
 		if frame_rotate is None:
 			# old data have no orientation record
 			frame_flip,frame_rotate = self.handleOldFrameOrientation()
@@ -850,8 +874,9 @@ class DDFrameProcessing(DirectDetectorProcessing):
 
 		# BAD PIXEL FIXING
 		plan = self.getCorrectorPlan(self.camerainfo)
-		apDisplay.printMsg('Fixing bad pixel, columns, and rows')
-		self.c_client.fixBadPixels(corrected,plan)
+		if plan is not None:
+			apDisplay.printMsg('Fixing bad pixel, columns, and rows')
+			self.c_client.fixBadPixels(corrected,plan)
 		#Clipping is turned off to avoid artifacts in analog DD
 		#apDisplay.printMsg('Cliping corrected image')
 		#corrected = numpy.clip(corrected,0,10000)
@@ -994,7 +1019,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		half_way_frame = int(total_frames // 2)
 		first = 0
 		frameprocess_dir = os.path.dirname(self.tempframestackpath)
-		rawframestack_path = os.path.join(frameprocess_dir,self.image['filename']+'_raw_st.mrc')
+		rawframestack_path = os.path.join(frameprocess_dir,self.image['filename']+'_raw_st.'+self.extname)
 		apDisplay.printMsg('Making raw frame stack and saving it to %s' % (rawframestack_path,))
 		for start_frame in range(first,first+total_frames):
 			array = self.loadOneRawFrame(rawframe_dir,start_frame)
@@ -1042,6 +1067,35 @@ class DDFrameProcessing(DirectDetectorProcessing):
 	def makeCorrectedFrameStack(self, use_full_raw_area=False):
 		return self.makeCorrectedFrameStack_cpu(use_full_raw_area)
 
+	def makeModifiedDefectMrc(self):
+		self.setCameraInfo(1,self.use_full_raw_area)
+		a = self.c_client.getCameraDefectMap(self.camerainfo)
+		frame_flip, frame_rotate = self.getImageFrameOrientation()
+		# flip and rotate map_array.  Therefore, do the oposite of
+		# frames
+		if frame_flip:
+			if frame_rotate and frame_rotate == 2:
+				# Faster to just flip left-right than up-down flip + rotate
+				apDisplay.printColor("flipping the frame left-right",'blue')
+				a = numpy.fliplr(a)
+				frame_rotate = 0
+				# reset flip
+				frame_flip = 0
+				self.frame_modified = True
+		if frame_rotate:
+			apDisplay.printColor("rotating the frame by %d degrees" % (frame_rotate*90,),'blue')
+			a = numpy.rot90(a,4-frame_rotate)
+			self.frame_modified = True
+		if frame_flip:
+			apDisplay.printColor("flipping the frame up-down",'blue')
+			a = numpy.flipud(a)
+		frameprocess_dir = os.path.dirname(self.tempframestackpath)
+		self.defect_map_path = os.path.join(frameprocess_dir,'defect-%s-%d.mrc' % (self.hostname,self.gpuid))
+		mrc.write(a, self.defect_map_path)
+
+	def getModifiedDefectMrcPath(self):
+		return self.defect_map_path
+
 	def makeDarkNormMrcs(self):
 		self.setupDarkNormMrcs(False)
 
@@ -1049,7 +1103,8 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		'''
 		Creates local reference files for gain/dark-correcting the stack of frames
 		'''
-		if not self.correct_dark_gain:
+		apDisplay.printMsg('Will setupDarkNormMrcs make dark/gain? %s' % (self.correct_dark_gain,))
+		if not self.correct_dark_gain or self.getRefImageData('norm') is None: 
 			self.dark_path = None
 			self.norm_path = None
 			return
@@ -1059,6 +1114,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			apDisplay.displayError('use_full_raw_area when image is cropped is not implemented for gpu')
 		frameprocess_dir = os.path.dirname(self.tempframestackpath)
 		get_new_refs = self.__conditionChanged(1,use_full_raw_area)
+		apDisplay.printMsg('decide to get new refs based on condition change ? %s' % (get_new_refs,))
 		# o.k. to set attribute now that condition change is checked
 		self.use_full_raw_area = use_full_raw_area
 		# at least write dark and norm image once
@@ -1219,9 +1275,16 @@ class DDFrameProcessing(DirectDetectorProcessing):
 
 	def setNewBinning(self,bin):
 		'''
-		Camera binning of the stack.
+		further binning of the stack.
 		'''
 		self.stack_binning = bin
+
+	def getStackBinning(self):
+		'''
+		TO DO: replace getNewBinning every where to this.
+		because we will assume the stack has the camera binning.
+		'''
+		return self.stack_binning
 
 	def getNewBinning(self):
 		return self.stack_binning
@@ -1250,16 +1313,14 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		else:
 			dims = camdata['dimension']
 		camerasize = {}
-		newbin = self.getNewBinning()
+		added_bin = self.getStackBinning()
+		old_bin = camdata['binning']['x']
+		newbin = old_bin * added_bin
 		t = self.getTrimingEdge()
 		for axis in ('x','y'):
-			if camdata['binning'][axis] != 1 or camdata['offset'][axis] != 0:
-				apDisplay.printError('Starting image must be unbinned and at full dimension for now')
-			if newbin < camdata['binning'][axis]:
-				apDisplay.displayError('can not change to smaller binning')
 			camerasize[axis] = (camdata['offset'][axis]*2+camdata['dimension'][axis])*camdata['binning'][axis]
 			camdata['dimension'][axis] = dims[axis] * camdata['binning'][axis] / newbin - 2*t / newbin
-			camdata['binning'][axis] = newbin
+			camdata['binning'][axis] = added_bin*old_bin
 			camdata['offset'][axis] = (camerasize[axis]/newbin -camdata['dimension'][axis])/2
 		framelist = self.getAlignedSumFrameList()
 		if framelist:

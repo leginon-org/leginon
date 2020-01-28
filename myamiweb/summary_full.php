@@ -29,8 +29,7 @@ checkExptAccessPrivilege($expId,'data');
 $projectdata = new project();
 $projectdb = $projectdata->checkDBConnection();
 if($projectdb) {
-	$currentproject = $projectdata->getProjectFromSession($sessioninfo
-['Name']);
+	$currentproject = $projectdata->getProjectFromSession($sessioninfo['Name']);
 	$proj_link= '<a class="header" target="project" href="'.PROJECT_URL."getproject.php?projectId=".$currentproject['projectId'].'">'.$currentproject['name'].'</a>';
 }
 
@@ -71,7 +70,7 @@ function init() {
 	<?php echo divtitle("Summary of $title Experiment"); ?>
 	</td>
 </tr>
-	<?php ($currentproject) ? '<tr><td><span class="datafield0">Project: </span>'.$proj_link.'</td></tr>' :'' ?>
+	<?php $proj_html=($currentproject) ? '<tr><td><span class="datafield0">Project: </span>'.$proj_link.'</td></tr>'."\n" :''; echo $proj_html; ?>
 <tr valign="top">
 	<td>
 <?php
@@ -305,14 +304,14 @@ $icethicknesszlp = $leginondata->getZeroLossIceThickness($expId); # see if anyth
 		echo "<a href='zlp_icegraph.php?Id=$expId&vdata=1'>[data]</a>";
 		echo "<a href='zlp_icegraph.php?Id=$expId&vs=1'>[sql]</a><br>";
 		//echo "<a href='zlp_icegraph.php?Id=$expId?h=256'>";
-		echo "<a href='zlp_icegraph.php?Id=$expId&w=1024&h=512'>";
+		echo "<a href='zlp_icegraph.php?Id=$expId&w=1024&h=512&truncate=true'>";
 		echo "<img border='0' src='zlp_icegraph.php?Id=$expId&w=512&h=256'>";
 		echo "</a>\n";
 		echo "</td>\n";
 		echo "</tr>\n";
 		echo "<tr>";
 		echo "<td>";
-		echo "<a href='zlp_icegraph2.php?Id=$expId&w=1024&h=512'>";
+		echo "<a href='zlp_icegraph2.php?Id=$expId&w=1024&h=512&truncate=true'>";
 		echo "<img border='0' src='zlp_icegraph2.php?Id=$expId&w=512&h=256'>";
 		echo "</a>\n";
 		echo "</td>\n";
@@ -326,7 +325,7 @@ $icethicknesszlp = $leginondata->getZeroLossIceThickness($expId); # see if anyth
 $icethicknessobj = $leginondata->getObjIceThickness($expId); # see if anything was collected
 	echo "<tr>";
 	echo "<td colspan='2'>";
-	echo divtitle("Objective Scattering Ice Thickness");
+	echo divtitle("Aperture Limited Scattering Ice Thickness");
 	if (!empty($icethicknessobj)) {
 		echo "<table border='0'>\n";
 		echo "<tr>";
@@ -340,7 +339,7 @@ $icethicknessobj = $leginondata->getObjIceThickness($expId); # see if anything w
 		echo "<a href='obj_icegraph.php?Id=$expId&vdata=1'>[data]</a>";
 		echo "<a href='obj_icegraph.php?Id=$expId&vs=1'>[sql]</a><br>";
 		//echo "<a href='zlp_icegraph.php?Id=$expId?h=256'>";
-		echo "<a href='obj_icegraph.php?Id=$expId&w=1024&h=512'>";
+		echo "<a href='obj_icegraph.php?Id=$expId&w=1024&h=512&truncate=true'>";
 		echo "<img border='0' src='obj_icegraph.php?Id=$expId&w=512&h=256'>";
 		echo "</a>\n";
 		echo "</td>\n";
@@ -348,7 +347,7 @@ $icethicknessobj = $leginondata->getObjIceThickness($expId); # see if anything w
 
 		echo "<tr>";
 		echo "<td>";
-		echo "<a href='obj_icegraph2.php?Id=$expId&w=1024&h=512'>";
+		echo "<a href='obj_icegraph2.php?Id=$expId&w=1024&h=512&truncate=true'>";
 		echo "<img border='0' src='obj_icegraph2.php?Id=$expId&w=512&h=256'>";
 		echo "</a>\n";
 		echo "</td>\n";
@@ -357,19 +356,38 @@ $icethicknessobj = $leginondata->getObjIceThickness($expId); # see if anything w
 		echo "</table>\n";
 
 	} else { 
-		echo "no Objective Scattering Ice Thickness information available";
+		echo "no Aperture Limited Scattering Ice Thickness information available";
 		echo "<a href='obj_icegraph.php?Id=$expId&vdata=1'>[data]</a>";
 		echo "<a href='obj_icegraph.php?Id=$expId&vs=1'>[sql]</a><br>";
 
 		echo "</td>";
 
 		}
-
-
-
 ?>
 </tr>
 <?php
+
+	echo "<tr>";
+	echo "<td colspan='2'>";
+	echo divtitle("Relate Holefinder Ice Thickness to Measured Ice Thickness ");
+	if (!empty($icethicknesspresets)) {
+	echo "<table border='0'>\n";
+	echo "<tr>";
+	foreach($icethicknesspresets as $preset) {
+		echo "<td>";
+		echo "<a href='holeice_to_alsice_graph.php?Id=$expId&vdata=1&preset=".$preset['name']."'>[data]</a>";
+		echo "<a href='holeice_to_alsice_graph.php?Id=$expId&vs=1&preset=".$preset['name']."'>[sql]</a><br>";
+		echo "<a href='holeice_to_alsice_graph.php?Id=$expId&w=1024&h=512&preset=".$preset['name']."'>";
+		echo "<img border='0' src='holeice_to_alsice_graph.php?Id=$expId&w=700&h=500&preset=".$preset['name']."'>";
+		echo "</a>\n";
+		echo "</td>\n";
+	}
+	echo "</tr>\n";
+	echo "</table>\n";
+} else echo "no Holefinder Ice Thickness information available";
+	echo "</td>";
+
+
 $imageshiftpresets = $leginondata->getImageShiftPresets($expId);
 echo "<tr>";
 echo "<td colspan='2'>";

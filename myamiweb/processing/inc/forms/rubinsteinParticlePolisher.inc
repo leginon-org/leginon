@@ -271,7 +271,7 @@ class rubinsteinParticlePolisher extends BasicLayoutForm
 		$stackid = $params->getParamValue( "stackid" );
 		$micrographs_per_job = $params->getParamValue('micrographs_per_job');
 
-		if ($_POST['process'] != 'Just Show Command')
+		if ($_POST['process'] == 'Submit Command to Job Scheduler')
 			$msg .="<B>Error: </B> This needs to be run from head node with job scheduler with pasted command.<br>";
 
 		if($particleradius==='')

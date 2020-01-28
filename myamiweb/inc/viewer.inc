@@ -111,7 +111,7 @@ class viewer {
 		$this->addfiltersel = $filterselector;
 	}
 
-	function addSessionSelector($sessions=array(), $limit=0) {
+	function addSessionSelector($sessions=array(), $limit=100) {
 		$selector = '<select name="sessionId" onchange="newexp()">'.$this->crlf;
 		$i = 0;
 		foreach ((array)$sessions as $session) {
@@ -137,8 +137,9 @@ class viewer {
 			$selector = '<select name="scopeId" onchange="newexp()">'.$this->crlf;
 			foreach ((array)$scopes as $scope) {
 				if ($scope[id]==$this->scopeId) $s='selected'; else $s='';
+				$scope_alias = ($scope[description]) ? $scope[description]: $scope[hostname].'-'.$scope[name];
 				$selector .= '<option value='.$scope[id].' '.$s.' >'
-						.$scope[hostname].'-'.$scope[name].'</option>'.$this->crlf; 
+						.$scope_alias.'</option>'.$this->crlf;
 			}
 			$selector .= '</select>';
 			$selector .= '<input type="hidden" name="scopeIdmemo" value="'.$this->scopeId.'">';
@@ -571,7 +572,7 @@ class view {
 	var $displayview='true';
 	var $params;
 
-	function view($title, $name) {
+	function __construct($title, $name) {
 		global $VIEWNB;
 		$this->viewnb = $VIEWNB++;
 		$this->title = $title;
@@ -580,6 +581,15 @@ class view {
 		$this->displayPresets(true);
 		$this->displayComment(false);
 
+		$this->__initializeTools();
+		$this->__setDefaultDisplays();
+		$this->__setScripts();
+		$this->__setDefaultStates();
+		$this->__setJSNames();
+		$this->__setStatesFromRequest();
+	}
+
+	function __initializeTools() {
 		// initialize tools
 		$this->btdownload = new button('download'.$this->name, 'dwd');
 		$this->btdownload->setLink('download.php','');
@@ -587,23 +597,25 @@ class view {
 		$this->btinfo = new button('info'.$this->name, 'info');
 		$this->btinfo->setLink('imgreport.php','imginfo');
 		$this->btscale = new toggleButton($this->name.'scale', 'scale');
-		$this->btscale->onToggle($name.'btscaleaction');
+		$this->btscale->onToggle($this->name.'btscaleaction');
 		$this->bttarget = new toggleButton($this->name.'target', 'target');
-		$this->bttarget->onToggle($name.'bttargetaction');
+		$this->bttarget->onToggle($this->name.'bttargetaction');
 		$this->bttag = new toggleButton($this->name.'tag', 'tag');
-		$this->bttag->onToggle($name.'bttagaction');
+		$this->bttag->onToggle($this->name.'bttagaction');
 		$this->btfft = new toggleButton($this->name.'fft', 'fft');
-		$this->btfft->onToggle($name.'btfftaction'); 
+		$this->btfft->onToggle($this->name.'btfftaction'); 
 		$this->btclose = new toggleButton($this->name.'close', 'open', 'close');
-		$this->btclose->onToggle($name.'btcloseaction'); 
+		$this->btclose->onToggle($this->name.'btcloseaction'); 
 		$this->btnptcl = new toggleButton($this->name.'nptcl', 'ptcl');
-		$this->btnptcl->onToggle($name.'btnptclaction');
+		$this->btnptcl->onToggle($this->name.'btnptclaction');
 		$this->btace = new toggleButton($this->name.'ace', 'ace');
-		$this->btace->onToggle($name.'btaceaction'); 
+		$this->btace->onToggle($this->name.'btaceaction'); 
 		$this->btdeq = new button('deq'.$this->name, 'deq');
 		$this->btdd = new toggleButton($this->name.'dd', 'drift');
-		$this->btdd->onToggle($name.'btddaction');
+		$this->btdd->onToggle($this->name.'btddaction');
+	}
 
+	function __setDefaultDisplays() {
 		// default
 		$this->displayscaleicon = true;
 		$this->displayscaleicon = true;
@@ -624,14 +636,22 @@ class view {
 		$this->displayhideallbt = true;
 		$this->displaynextbt = true;
 		$this->displayexemplarbt = true;
+		$this->displaygradient = true;
+		$this->displayimage = true;
 		$this->framecolor = ' class="bgcolor1" ';
 		$this->menucolor = ' class="bgimg1" ';
+	}
+
+	function __setScripts() {
 		$this->presetscript = 'getpreset.php';
 		$this->reportscript = 'imgreport.php';
 		$this->dwdscript = 'download.php';
 		$this->histoscript = 'imagehistogram.php';
 		$this->imagescript = 'getimg.php';
 		$this->commentscript = 'getcomment.php';
+	}
+
+	function __setDefaultStates() {
 		$this->scale_st = "false";
 		$this->target_st = "false";
 		$this->tag_st = "false";
@@ -663,6 +683,9 @@ class view {
 		// tag?
 		$this->jstagpar1 = "1";
 		$this->jstagpar2 = "1";
+	}
+
+	function __setJSNames() {
 		if ($_POST) {
 			$this->jstagpar1 = ($_REQUEST[$this->name.'tagp1']) ? "1" : $_POST[$this->name.'tagp1'];
 			$this->jstagpar2 = ($_REQUEST[$this->name.'tagp2']) ? "1" : "0";
@@ -687,7 +710,9 @@ class view {
 		$this->bttargetmemo = $this->name.'target_bt_st';
 		$this->btscalememo = $this->name.'scale_bt_st';
 		$this->btddmemo = $this->name.'dd_bt_st';
+	}
 
+	function __setStatesFromRequest() {
 		// set options through javascript
 		if ($ptcl=$_REQUEST[$this->ptclselmemo])
 			$this->ptclsel = $ptcl;
@@ -803,7 +828,8 @@ class view {
 	}
 
 	function displayPresets($state) {
-		$this->displaypreset= $state;
+		$this->displaypresetselection= $state;
+		$this->displaypresetinfo= $state;
 	}
 
 	function displayHideBt($state) {
@@ -1110,6 +1136,28 @@ class view {
 		$this->commentscript= $scriptname;
 	}
 
+	function getDownloadHtml() {
+		$htmlframe = '
+			<td width="15">'
+			.$this->btdownload->display().$this->crlf;
+			$htmlframe .= '</td><td width="9">';
+			$downimg='<img alt="menu" src="img/menudown1.gif" border="0">';
+			$closedownimg='<img alt="close" src="img/close_bt_off.gif" border="0">';
+			$dwdmenu = new dropdown($downimg, $this->name."dwd");
+			$dwdmenu->closeval=$closedownimg;
+			$dwdmenu->height="";
+			$dwdmenu->width="";
+			$formats=array("mrc", "tiff", "jpeg");
+			foreach ($formats as $format) {
+				$sel = ($this->jsdwdformat==$format) ? "checked" : "";
+				$dwdformats[]='<input type="radio" name="'.$this->name.'dwdformat1" id="'.$this->name.'dwdparam1" value="'.$format.'" '.$sel.' onClick="setFormat(\''.$this->name.'\', \''.$format.'\')">'.$format;
+			}
+			$dwdform=join("<br />", $dwdformats);
+			$dwdmenu->setContent($dwdform);
+			$htmlframe.=$dwdmenu->display();
+		return $htmlframe;
+	}
+
 	function display() {
 		$iconwidth=15;
 		$datatypes = $this->datatypes;
@@ -1189,24 +1237,7 @@ class view {
 			.'</td> ';
 		}
 		if ($this->displaydownloadicon) {
-		$htmlframe .= '
-			<td width="15">'
-			.$this->btdownload->display().$this->crlf;
-			$htmlframe .= '</td><td width="9">';
-			$downimg='<img alt="menu" src="img/menudown1.gif" border="0">';
-			$closedownimg='<img alt="close" src="img/close_bt_off.gif" border="0">';
-			$dwdmenu = new dropdown($downimg, $name."dwd");
-			$dwdmenu->closeval=$closedownimg;
-			$dwdmenu->height="";
-			$dwdmenu->width="";
-			$formats=array("mrc", "tiff", "jpeg");
-			foreach ($formats as $format) {
-				$sel = ($this->jsdwdformat==$format) ? "checked" : "";
-				$dwdformats[]='<input type="radio" name="'.$name.'dwdformat1" id="'.$name.'dwdparam1" value="'.$format.'" '.$sel.' onClick="setFormat(\''.$name.'\', \''.$format.'\')">'.$format;
-			}
-			$dwdform=join("<br />", $dwdformats);
-			$dwdmenu->setContent($dwdform);
-			$htmlframe.=$dwdmenu->display();
+			$htmlframe .= $this->getDownloadHtml();
 		}
 		if ($this->displayinfoicon) {
 		$htmlframe .= '
@@ -1229,11 +1260,11 @@ class view {
 			$htmlframe .= '</td><td width="9">';
 			$downimg='<img alt="menu" src="img/menudown1.gif" border="0">';
 			$closedownimg='<img alt="close" src="img/close_bt_off.gif" border="0">';
-			$acemenu = new dropdown($downimg, $name."ace");
+			$acemenu = new dropdown($downimg, $this->name."ace");
 			$acemenu->closeval=$closedownimg;
 			$acemenu->height="";
 			$acemenu->width="";
-			$aceform=getAceViewerForm($name, $this->params['aceruns']);
+			$aceform=getAceViewerForm($this->name, $this->params['aceruns']);
 			$acemenu->setContent($aceform);
 			$htmlframe.=$acemenu->display();
 		$htmlframe .= '
@@ -1338,7 +1369,7 @@ class view {
 			<table class="bgcolor0" border="0" cellspacing="0" cellpadding="0">
 		';
 		// --- begin option table
-		if (is_array($datatypes) || $this->displayadjustlink || $this->displaypreset ) {
+		if (is_array($datatypes) || $this->displayadjustlink || $this->displaypresetselection ) {
 		$htmlframe .='
 			 <tr>
 				<td width="'.$this->size.'">
@@ -1368,15 +1399,8 @@ class view {
 				$htmlframe .= "<td>$export_icon</td>";
 			}
 		}
-		$htmlframe .= '
-						<td valign="center">
-				';
-		$param = "left=0,top=".($this->viewnb*180).",height=400,width=330";
-		$url = "adjust.php?name=$name&displayname=$this->title";
-		$htmlframe .= "<div id='".$this->name."imgstat'>";
-		$htmlframe .='
-			<a href="javascript:popUpAdjust(\''.$url.'\',\''.$name.'\',\''.$param.'\');">
-		';
+
+		// Scale and gradient display and setting
 		$settings_icon = '<img alt="setting" class="setting" src="img/settings.png" >';
 //		$quality = (is_numeric($this->quality)) ? "jpg".$this->quality : $this->quality;
 //		$filter = ($this->filter=='default') ? "no filter": "filter:".$this->filter;
@@ -1385,9 +1409,20 @@ class view {
 		$gradoptions = "h=12&w=100&dm=1".$minpix.$maxpix;
 		$gradient = "img/dfe/grad.php?".$gradoptions;
 		$imgstatus = "<img alt='gradient' name='".$this->name."imgstatgrad' border='0' src='".$gradient."'> ".$settings_icon;
-		$htmlframe .= $imgstatus;
-		$htmlframe .='
+		if ($this->displaygradient) {
+			$htmlframe .= '
+						<td valign="center">
+				';
+			$param = "left=0,top=".($this->viewnb*180).",height=400,width=330";
+			$url = "adjust.php?name=$name&displayname=$this->title";
+			$htmlframe .= "<div id='".$this->name."imgstat'>";
+			$htmlframe .='
+			<a href="javascript:popUpAdjust(\''.$url.'\',\''.$name.'\',\''.$param.'\');">
+		';
+			$htmlframe .= $imgstatus;
+			$htmlframe .='
 			</a></div></td>';
+		}
 
 		// Various image status buttons
 		$thispreset = $_POST[$this->name.'pre'];
@@ -1437,13 +1472,13 @@ class view {
 		$htmlframe .= '
 				</td>
 			 </tr>';
-		if ($this->displaypreset) {
+		if ($this->displaypresetinfo) {
 			$htmlframe .= '
 				 <tr>
 					<td>
 			<iframe name="'.$this->name.'if" 
 	      src="'.$this->presetscript.'"
-				frameborder="0" width="'.$this->size.'" height="50"
+				frameborder="0" width="'.$this->size.'" height="60"
 				marginheight="1" marginwidth="5"
 				scrolling="no" ></iframe>
 			';
@@ -1463,19 +1498,21 @@ class view {
 			.'</tr>';
 		}
 	} // --- end option row
-
-	$htmlframe .= '<tr>
-			<td  width="'.$this->size.'">';
-	$htmlframe .= '
-<div><div id="loadingdiv'.$this->name.'" style="position:absolute; z-index:69; visibility: hidden"><h4> Loading <img alt="progress" src="img/progress_1.gif"></h4></div></div>
-		';
+	if ($this->displayimage) {
+		$htmlframe .= '<tr>
+				<td  width="'.$this->size.'">';
+		$htmlframe .= '
+	<div><div id="loadingdiv'.$this->name.'" style="position:absolute; z-index:69; visibility: hidden"><h4> Loading <img alt="progress" src="img/progress_1.gif"></h4></div></div>
+			';
 		$htmlframe .= '
 			<a href="javascript:void(0)" id="'.$this->name.'href">'.
 			'<img alt="empty" name="'.$this->name.'img" src="img/empty.gif" border="0" hspace="0" vspace="0" width="'.$this->size.'" ></a>'; 
 
 		$htmlframe .= '
 				</td>
-			 </tr>
+			 </tr>';
+		}
+		$htmlframe .= '
 			</table>';
 		}
 		$htmlframe .= '
@@ -1484,6 +1521,39 @@ class view {
 		</table> 
 		';	
 		return $htmlframe;
+	}
+}
+
+class fileview extends view
+{
+	function __construct($title, $name) {
+		parent::__construct($title, $name);
+	}
+
+	function __setDefaultDisplays() {
+		parent::__setDefaultDisplays();
+		$this->displayscaleicon = false;
+		$this->displayscaleicon = false;
+		$this->displaytargeticon = false;
+		$this->displaytagicon = false;
+		$this->displaynptclicon = false;
+		$this->displayffticon = false;
+		$this->displayaceicon = false;
+		$this->displayinfoicon = false;
+		$this->displayparticleicon = false;
+		$this->displaydownloadicon = false;
+		$this->displaydeqicon = false;
+		$this->displayddicon = false;
+		$this->displaycloseicon = false;
+		$this->displayadjustlink = false;
+		$this->displayexportlink = false;
+		$this->displayhidebt = false;
+		$this->displayhideallbt = false;
+		$this->displaynextbt = false;
+		$this->displayexemplarbt = false;
+		$this->displaygradient = false;
+		$this->displayimage = false;
+		$this->displaypresetinfo = false;
 	}
 }
 
@@ -1505,11 +1575,14 @@ function add_comment_box($name) {
 }
 
 function viewer_menu($sessionId) {
-	$str = '<a class="header" target="summary" href="summary.php?expId='.$sessionId.'">[summary]</a> ';
+	$str = ' ';
+	$str .= '<a class="header" target="summary" href="summary.php?expId='.$sessionId.'">[summary]</a> ';
+	$str .= '<a class="header" target="summary" href="summary_user.php?expId='.$sessionId.'">[user results]</a> ';
 	if (defined('PROCESSING')) {
 		$str.='<a class="header" target="processing" href="processing/index.php?expId='.$sessionId.'">[processing]</a> ';
-		$str.='<a class="header" target="make jpgs" href="processing/runJpgMaker.php?expId='.$sessionId.'">[make jpgs]</a>';
+		$str.='<a class="header" target="make jpgs" href="processing/runJpgMaker.php?expId='.$sessionId.'">[make jpgs]</a> ';
 	}
+	$str .= '<a class="header" target="poster" href="poster.php?expId='.$sessionId.'">[report]</a> ';
 	echo $str;
 }
 
