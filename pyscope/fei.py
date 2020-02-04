@@ -1916,7 +1916,7 @@ class Glacios(Arctica):
 #### Diffraction Instrument
 class DiffrTecnai(Tecnai):
 	name = 'DiffrTecnai'
-	column_type = 'talos'
+	column_type = 'tecnai'
 	use_normalization = False
 	projection_mode = 'diffraction'
 	mag_attr_name = 'CameraLength'
