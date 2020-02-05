@@ -4,6 +4,7 @@ import time
 import os
 import shutil
 import glob
+import numpy
 
 from pyami import moduleconfig
 
@@ -297,25 +298,12 @@ class EmMenuF416(ccdcamera.CCDCamera):
 			raise RuntimeError('Camera Error in getting array: %s' % (e,))
 		if self.getDebugCamera():
 			print 'got arr and to modify'
-		#arr = self.modifyImage(arr)
+		arr = self.modifyImage(arr)
 		return arr
 
 	def modifyImage(self, arr):
-		# reshape to 2D
-		try:
-			arr = arr.reshape((self.limit_dim[rk]['y']/self.binning['y'],self.limit_dim[rk]['x']/self.binning['x']))
-		except AttributeError, e:
-			if self.getDebugCamera():
-				print 'comtypes did not return an numpy 2D array, but %s' % (type(arr))
-		except Exception, e:
-			arr = None
-			if self.getDebugCamera():
-				print 'modify array error',e
-			raise
-		# TO DO: Maybe need to scale ?
-		if SIMULATION and self.getIntensityAveraged():
-			arr = arr / (self.getExposureTime()/1000.0)
-		return arr
+		# transpose
+		return numpy.transpose(arr)
 
 	def getMetaDataDict(self,meta_obj):
 		mdict = {}
