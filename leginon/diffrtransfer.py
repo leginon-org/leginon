@@ -3,9 +3,10 @@ import sys, os, glob, time
 import shutil
 import math
 import subprocess
+import numpy
 
 from leginon import leginondata
-from pyami import tiaraw, mrc, numsmv
+from pyami import tiaraw, mrc, numsmv, tvips
 
 DEBUG = False
 check_interval = 40  # seconds between checking for new frames
@@ -134,50 +135,39 @@ class DiffractionUpload(object):
 		smv_rootdir = self.session['image path'].replace('rawdata', 'diffraction')
 		bin_dir = os.path.join(bin_rootdir, self.code)
 		smv_dir = os.path.join(smv_rootdir, self.code)
-		uid = self.uid
-		gid = self.gid
 		#creating directories
-		for new_dir in (bin_rootdir,bin_dir,smv_rootdir, smv_dir):
-			if not os.path.isdir(new_dir):
-				os.mkdir(new_dir)
-			self.changeOwnership(uid, gid, new_dir)
-		mins = []
-		self.new_bin_files=[]
-		print('Copying bin files to session/diffraction_raw....')
-		for i, f in enumerate(self.bin_files):
-			old_path = f
-			basename = os.path.basename(old_path)
-			iter_name = '%03d' % (int(basename.split('_')[-1][:-4]),)
-			bin_name = '%s_%s_%s_%s.bin' % (self.session['name'],self.code, self.gun_length_str, iter_name)
-			bin_path = os.path.join(bin_dir, bin_name)
-			self.new_bin_files.append(bin_path)
-			#print('copying %s to %s' % (old_path, bin_path))
-			shutil.copy(f, bin_path)
-			numarray = tiaraw.read(bin_path)
-			mins.append(numarray.min())
-		# get overall data minimums for offsetting
-		# smv files that is unsigned.
-		min_value =  min(mins)
-		# Don't allow offset by more than 2000
-		if min_value < -2000:
-			print('Data minimum is %.1f. smv Offset is cut to 2000' % min_value)
-			min_value = -2000
-		print('Offset for smv files=%s' % (-min_value,))
-		for i, bin_path in enumerate(self.new_bin_files):
-			basename = os.path.basename(bin_path)
-			print('converting %s' % (basename,))
-			# mrc upload
-			imagedata = self.uploadMrcFromBin(bin_path, i)
+		for new_dir in (bin_rootdir,smv_rootdir, smv_dir):
+			self.makeNewDirForUser(new_dir)
+		self.handleRawBin(bin_dir, smv_dir)
+
+	def handleRawBin(self, bin_dir, smv_dir):
+		'''
+		handle raw files from camera.  OverWritten by subclass.
+		1. copy self.bin_files on source-path to bin_dir
+		2. upload to leginon
+		3. convert leginon imagedata to smv use self.imageDataToSmv
+		4. clean up origina with cleanUp(self.bin_files)
+		'''
+		print bin_dir, smv_dir
+
+	def imageDataToSmv(self, imagedata, smv_dir, min_value):
+			basename = imagedata['filename']
 			mrc_path = os.path.join(self.session['image path'],imagedata['filename']+'.mrc')
 			# smv
-			iter_name = '%03d' % (int(basename.split('_')[-1][:-4]),)
+			iter_number1 = int(basename.split('_')[-1])
+			iter_name = '%03d' % (iter_number1,)
 			smv_name = '%s_%s_%s_%s.img' % (self.session['name'],self.code, self.gun_length_str, iter_name)
 			smv_path = os.path.join(smv_dir, smv_name)
-			self.saveSMV(imagedata, smv_path, i, -min_value)
-			self.changeOwnership(uid, gid, bin_path)
-			self.changeOwnership(uid, gid, mrc_path)
-			self.changeOwnership(uid, gid, smv_path)
-		self.cleanUp(self.bin_files)
+			self.saveSMV(imagedata, smv_path, -min_value)
+			self.changeOwnership(mrc_path)
+			self.changeOwnership(smv_path)
+
+	def makeNewDirForUser(self, new_dir):
+		uid = self.uid
+		gid = self.gid
+		if not os.path.isdir(new_dir):
+			os.mkdir(new_dir)
+		self.changeOwnership(new_dir)
 
 	def getUserGroup(self):
 		image_path = self.session['image path']
@@ -186,9 +176,9 @@ class DiffractionUpload(object):
 		gid = stat.st_gid
 		return uid, gid
 
-	def changeOwnership(self,uid,gid,dirname):
+	def changeOwnership(self,dirname):
 		# change ownership of desintation directory and contents
-		cmd = 'chown -R %s:%s %s' % (uid, gid, dirname)
+		cmd = 'chown -R %s:%s %s' % (self.uid, self.gid, dirname)
 		print(cmd)
 		p = subprocess.Popen(cmd, shell=True)
 		p.wait()
@@ -202,18 +192,12 @@ class DiffractionUpload(object):
 
 	def cleanUp(self, paths=[]):
 		for p in paths:
-			os.remove(p)
+			if not os.path.isdir(p):
+				os.remove(p)
+			else:
+				shutil.rmtree(p)
 
-	def uploadMrcFromBin(self, bin_path, iter_number):
-		# upload mrc files
-		dirname = os.path.dirname(bin_path)
-		bin_name = os.path.basename(bin_path)
-		mrc_name = bin_name.replace('.bin','.mrc')
-		numarray = tiaraw.read(bin_path)
-		imagedata = self.insertImage(numarray, mrc_name, iter_number)
-		return imagedata
-
-	def insertImage(self, a, mrc_name, iter_number):
+	def insertImage(self, a, mrc_name, iter_number0):
 		if self.dfimage:
 			imagedata = leginondata.AcquisitionImageData(initializer=self.dfimage)
 		imagedata = leginondata.AcquisitionImageData(session=self.session)
@@ -229,10 +213,10 @@ class DiffractionUpload(object):
 		imagedata['scope'] = self.makeScopeEMData()
 		imagedata['camera'] = self.makeCameraEMData()
 		# assume that we miss imaging the first tilt step
-		tilt_degrees = self.diffr_series['tilt start'] + (iter_number+1)*self.diffr_series['tilt speed']*self.preset['exposure time']/1000.0
+		tilt_degrees = self.diffr_series['tilt start'] + (iter_number0+1)*self.diffr_series['tilt speed']*self.preset['exposure time']/1000.0
 		imagedata['scope']['stage position']['a'] = math.radians(tilt_degrees)
-		if iter_number == 0 or iter_number == len(self.bin_files)-1:
-			print '%d tilt %.2f' % (iter_number,tilt_degrees)
+		if iter_number0 == 0 or iter_number0 == len(self.bin_files)-1:
+			print '%d tilt %.2f' % (iter_number0,tilt_degrees)
 		imagedata.insert()
 		return imagedata
 
@@ -254,8 +238,29 @@ class DiffractionUpload(object):
 			beam_center[axis] = 1000 * pixel_size * imagedata['camera']['dimension'][axis] / 2.0
 		return beam_center
 
+	def getCameraGain(self, imagedata):
+		ccdcamera = imagedata['camera']['ccdcamera']
+		ht = imagedata['scope']['high tension']
+		q = leginondata.CameraSensitivityCalibrationData(ccdcamera=ccdcamera)
+		q['high tension'] = ht
+		r = q.query(results=1)
+		if r:
+			# gain should be sum of the binning factors.
+			# TODO: account for different camera binning count ?
+			return r[0]['sensitivity']
+		else:
+			# no calibration.  Assume 1
+			return 1.0
+
+	def getDataProtocolName(self, imagedata):
+		return "nan" #default to unknown
+
 	def getLeginonInfoDict(self, imagedata):
 		smv_dict={}
+		# camera info
+		smv_dict['GAIN'] = self.getCameraGain(imagedata)
+		smv_dict['BEAMLINE'] = self.getDataProtocolName(imagedata)
+		# collection info
 		smv_dict['OSC_START'] = math.degrees(imagedata['scope']['stage position']['a'])
 		smv_dict['OSC_RANGE'] = self.delta_tilt_degrees
 		smv_dict['PHI'] = smv_dict['OSC_START'] # rolling shutter
@@ -270,12 +275,96 @@ class DiffractionUpload(object):
 		smv_dict['BEAM_CENTER_Y'] = beam_center['y']
 		return smv_dict
 
-	def saveSMV(self,imagedata, smv_path, iter_number, offset):
+	def saveSMV(self,imagedata, smv_path, offset):
 		smv_dict = self.getLeginonInfoDict(imagedata)
 		file_basename = os.path.basename(smv_path)
 		a = imagedata['image']
 		numsmv.write(a, smv_path,offset,smv_dict)
 		print('saved to %s' % (smv_path,))
+
+class TvipsMovieUpload(DiffractionUpload):
+	def getDataProtocolName(self, imagedata):
+		return "TVIPS_F416_EMMENU"
+
+	def handleRawBin(self, new_set_dir, smv_dir):
+		'''
+		Tvips Image set has the structure
+		hlImageId_targetNumber/Image%03d.tvips
+		new_set_dir is the hlImageId_targetNumber directory
+		'''
+		# there should only be one directory in self.bin_files
+		f = self.bin_files[0]
+		if f[-1] !='/':
+			f += '/'
+		pattern = f+'*.tvips'
+		image_files = glob.glob(pattern)
+		self.makeNewDirForUser(new_set_dir)
+		# safer to do individually in case of interuption.
+		for f in image_files:
+			shutil.copy(f, new_set_dir)
+		min_value = 0
+		nz = tvips.readHeaderFromFile(new_set_dir)['nz']
+		for i in range(nz):
+			imagedata = self.uploadMrcFromTvipsSet(new_set_dir, i)
+			self.imageDataToSmv(imagedata, smv_dir, min_value)
+		self.cleanUp(self.bin_files)
+
+	def uploadMrcFromTvipsSet(self, set_dir, iter_number):
+		# upload mrc files
+		iter_name = '%d' % (iter_number+1)
+		mrc_name = '%s_%s_%s_%s.mrc' % (self.session['name'],self.code, self.gun_length_str, iter_name)
+		# iter_number is base 0
+		numarray = tvips.read(set_dir, iter_number)
+		numarray = numpy.where(numarray < -1, -1, numarray)
+		imagedata = self.insertImage(numarray, mrc_name, iter_number)
+		return imagedata
+
+class TiaMovieUpload(DiffractionUpload):
+	def getDataProtocolName(self, imagedata):
+		return "CETAD_TUI"
+
+	def handleRawBin(self, bin_dir, smv_dir):
+		self.makeNewDirForUser(bin_dir)
+
+		mins = []
+		self.new_bin_files=[]
+		print('Copying bin files to session/diffraction_raw....')
+		for i, f in enumerate(self.bin_files):
+			old_path = f
+			basename = os.path.basename(old_path)
+			iter_name = '%03d' % (int(basename.split('_')[-1][:-4]),)
+			bin_name = '%s_%s_%s_%s.bin' % (self.session['name'],self.code, self.gun_length_str, iter_name)
+			bin_path = os.path.join(bin_dir, bin_name)
+			self.new_bin_files.append(bin_path)
+			#print('copying %s to %s' % (old_path, bin_path))
+			shutil.copy(f, bin_path)
+			self.changeOwnership(bin_path)
+			numarray = tiaraw.read(bin_path)
+			mins.append(numarray.min())
+		# get overall data minimums for offsetting
+		# smv files that is unsigned.
+		min_value =  min(mins)
+		# Don't allow offset by more than 2000
+		if min_value < -2000:
+			print('Data minimum is %.1f. smv Offset is cut to 2000' % min_value)
+			min_value = -2000
+		print('Offset for smv files=%s' % (-min_value,))
+		for i, bin_path in enumerate(self.new_bin_files):
+			basename = os.path.basename(bin_path)
+			print('converting %s' % (basename,))
+			# mrc upload
+			imagedata = self.uploadMrcFromBin(bin_path, i)
+			self.imageDataToSmv(imagedata, smv_dir, min_value)
+		self.cleanUp(self.bin_files)
+
+	def uploadMrcFromBin(self, bin_path, iter_number):
+		# upload mrc files
+		dirname = os.path.dirname(bin_path)
+		bin_name = os.path.basename(bin_path)
+		mrc_name = bin_name.replace('.bin','.mrc')
+		numarray = tiaraw.read(bin_path)
+		imagedata = self.insertImage(numarray, mrc_name, iter_number)
+		return imagedata
 
 def slackNotification(msg):
 	import socket
@@ -300,7 +389,18 @@ def handleBadFiles(datapath, code, file_pattern, error=''):
 	msg = "microed invalid file pattern %s are moved to %s" % (os.path.basename(file_pattern), newpath)
 	print(msg)
 	#slackNotification(msg)
-	
+
+def decodeTvipsImageSet(f):
+	bits = os.path.splitext(os.path.basename(f))[0].split('_')
+	file_pattern = f
+	return file_pattern
+
+def decodeTiaRaw(f):
+	bits = os.path.splitext(os.path.basename(f))[0].split('_')
+	# files have the format of %d_%d_%03d.bin
+	file_pattern = os.path.join(os.path.dirname(f),'_'.join(bits[:-1]))+'*.bin'
+	return file_pattern
+
 def checkAllImages(datapath):
 	'''
 	Check all images in datapath for parent_target.bin files and
@@ -308,35 +408,52 @@ def checkAllImages(datapath):
 	'''
 	if datapath[-1] !='/':
 		datapath += '/'
-	pattern = datapath + '*.bin'
-	files = glob.glob(pattern)
+	pattern = datapath + '*_*'
+	paths = glob.glob(pattern)
+	#bad
+	bad_pattern = datapath + 'bad*_*'
+	bad_paths = glob.glob(bad_pattern)
+	pathset = set(paths)
+	pathset.difference_update(bad_paths)
 	groups = {}
 	bad_groups = {}
-	for f in files:
+	movie_format = ''
+	for f in pathset:
+		valid_target_code = True
 		bits = os.path.splitext(os.path.basename(f))[0].split('_')
-		if bits[1] not in '123456789' or len(bits[1])!=1:
-			code = '%s_%s' % (bits[0],bits[1])
-			has_target_number = False
+		if not bits[1].isdigit():
+			print 'bad name %s', os.path.splitext(os.path.basename(f))[0]
+			valid_target_code = False
+			code = '_'.join(bits[:2])
 		else:
 			target_number=int(bits[1])
-			has_target_number = True
 			code = '%s_%d' % (bits[0],target_number)
-		file_pattern = os.path.join(os.path.dirname(f),'_'.join(bits[:-1]))+'*.bin'
-		if not has_target_number:
+		# different formats
+		if os.path.isdir(f):
+			movie_format = 'Tvips'
+			file_pattern = decodeTvipsImageSet(f)
+			# tvips imageset directory
+		else:
+			# tiaraw files
+			movie_format = 'Tia'
+			file_pattern = decodeTiaRaw(f)
+		# divide in groups
+		if not valid_target_code:
 			if code not in bad_groups.keys():
 				bad_groups[code]=file_pattern
 			continue
 		if code not in groups.keys():
 			groups[code]=file_pattern
+		print code
 	# handle bad images at the end to get all patterned file
 	for c in bad_groups.keys():
 		handleBadFiles(datapath, c, bad_groups[c])
-	return groups
+	return groups, movie_format
 
 def loop(check_path, check_interval,no_wait=False):
 	while True:
 		print 'Iterating...'
-		groups = checkAllImages(check_path)
+		groups, movie_format = checkAllImages(check_path)
 		sorted_keys = list(groups.keys())
 		sorted_keys.sort()
 		for k in sorted_keys:
@@ -356,9 +473,15 @@ def loop(check_path, check_interval,no_wait=False):
 					image_count = len(glob.glob(groups[k]))
 			print('Processing series %d_%d' % (hl_id, target_number))
 			try:
-				app = DiffractionUpload(hl_id,target_number,groups[k])
+				if movie_format == 'Tia':
+					app = TiaMovieUpload(hl_id,target_number,groups[k])
+				elif movie_format == 'Tvips':
+					app = TvipsMovieUpload(hl_id,target_number,groups[k])
+				else:
+					app = DiffractionUpload(hl_id,target_number,groups[k])
 				app.run()
 			except ValueError as e:
+				raise
 				handleBadFiles(check_path, k, groups[k], e)
 		if no_wait:
 			break
@@ -396,8 +519,11 @@ def parseParams():
 	check_interval = options.check_interval
 	return params
 
+def test(check_path, check_interval=10):
+	groups, movie_format = checkAllImages(check_path)
 
 if __name__=='__main__':
 	params = parseParams()
 	print "Look into directory %s" % params['source_path']
+	#test(params['source_path'])
 	loop(params['source_path'], params['check_interval'], params['no_wait'])
