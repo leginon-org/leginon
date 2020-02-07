@@ -6,7 +6,7 @@ import shutil
 import glob
 import numpy
 
-from pyami import moduleconfig
+from pyami import moduleconfig, tvips
 
 SIMULATION = False
 class EMMENUScriptingConnection(object):
@@ -400,10 +400,12 @@ class EmMenuF416(ccdcamera.CCDCamera):
 		self.vp1.StopContinuous()
 		recorder_path = os.path.join(self.getRecorderDir(),self.getRecorderFilename())
 		files = glob.glob(recorder_path+'*.tvips')
+		# move Image*.tvips files into taret_code directory
 		self.target_code = filename.split('.')[0]
 		new_path = os.path.join(self.getRecorderDir(),self.target_code)
 		os.mkdir(new_path)
 		for f in files:
 			shutil.move(f,new_path)
+		self.series_length = tvips.readHeaderFromFile(new_path)
 		print 'movie name: %s' % filename
 
