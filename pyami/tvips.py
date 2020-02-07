@@ -13,10 +13,10 @@ class Tvips(object):
 	data_types = {8: numpy.int8, 16:numpy.int16}
 	series_header_bytes = 256
 	def __init__(self,folderpath):
+		if not os.path.isdir(folderpath):
+			raise ValueError('Folder %s does not exists' % (folderpath,))
 		pattern = os.path.join(folderpath,'*')
-		print pattern
 		files = glob.glob(pattern)
-		print files
 		files.sort()
 		self.imagesets = files
 		for imagesetpath in files:
@@ -27,12 +27,14 @@ class Tvips(object):
 				self.defineHeader()
 				self.header = self.parseHeader()
 				self.fobj.close()
-				# set z length
+				# set z length in the image
 				self.header['mzs'] = [(self.filebytes - self.series_header_bytes) // self.image_bytes,]
 			else:
+				#When Image_000 is too large, it makes additional ones.
+				# append z length in the image
 				self.header['mzs'].append(self.filebytes // self.image_bytes)
+			# add up length from each Image file.
 			self.header['nz'] = sum(self.header['mzs'])
-			print 'imagesetpath', imagesetpath, self.img_header_offset
 
 	def defineHeader(self):
 		self.header_offset = 0 # in bytes
@@ -54,7 +56,6 @@ class Tvips(object):
 		headerdict = {}
 		# data first 48 items are 32-bit integer
 		int_values = numpy.fromfile(self.fobj, dtype=numpy.int32, count=48).tolist()
-		print int_values
 		headerdict['dtype'] = numpy.dtype(self.getDataType(int_values[4]))
 		headerdict['pixel_bytes'] = int_values[4] // 8 
 		headerdict['nx'] = int_values[2]
@@ -109,10 +110,7 @@ class Tvips(object):
 			raise ValueError('z slice selected is not accessible.')
 		fobj, start = self.getImageHeaderStart(z)
 		# shift to data
-		print start
 		start += self.img_header_offset
-		print self.img_header_offset
-		print start
 		shape = self.header['shape']
 		datalen = reduce(numpy.multiply, shape)
 		fobj.seek(start, 0)
@@ -141,7 +139,8 @@ def readImageHeaderFromFile(imfolder, z=0):
 	return reader.parseImageHeader(z)
 
 if __name__ == '__main__':
-	filepath = '15687437_1'
-	a = read(filepath, 4)
-	print a.max(), a.min()
+	filepath = raw_input('Enter the path to the tvips imageset folder: ') 
+	a = read(filepath, 0)
+	print('First image Max:',a.max(), 'Min:',a.min())
+	print('Series Header')
 	print readHeaderFromFile(filepath)
