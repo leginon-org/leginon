@@ -3,6 +3,7 @@ import os
 import subprocess
 import glob
 import shutil
+import sys
 
 import ccdcamera
 import time
@@ -37,7 +38,11 @@ configs = moduleconfig.getConfigured('fei.cfg')
 ## Store the handle in the com module, which is safer than in
 ## this module due to multiple imports.
 def chooseTEMAdvancedScriptName():
-	version_text = configs['tfs_software_version']
+	if 'version' not in configs.keys() or 'tfs_software_version' not in configs['version'].keys():
+		print 'Need version section in fei.cfg. Please update it'
+		raw_input('Hit return to exit')
+		sys.exit(0)
+	version_text = configs['version']['tfs_software_version']
 	bits = version_text.split('.')
 	if len(bits) != 3 or not bits[1].isdigit():
 		print 'Unrecognized Version number, not in the format of %d.%d.%d'
