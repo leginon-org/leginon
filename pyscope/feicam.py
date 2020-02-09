@@ -37,7 +37,7 @@ configs = moduleconfig.getConfigured('fei.cfg')
 ## Muliple calls to get_feiadv will return the same connection.
 ## Store the handle in the com module, which is safer than in
 ## this module due to multiple imports.
-def chooseTEMAdvancedScriptName():
+def chooseTEMAdvancedScriptingName():
 	if 'version' not in configs.keys() or 'tfs_software_version' not in configs['version'].keys():
 		print 'Need version section in fei.cfg. Please update it'
 		raw_input('Hit return to exit')
