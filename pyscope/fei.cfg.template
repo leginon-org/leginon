@@ -4,6 +4,9 @@ ALL = False
 STAGE = False
 CAMERA = False
 
+[version]
+SOFTWARE_TYPE = Titan
+TFS_SOFTWARE_VERSION = 2.15.2
 [optics]
 # Lens normalization is usually set in TUI but there are cases that
 # they are not desirable, for example on Talos column. This force

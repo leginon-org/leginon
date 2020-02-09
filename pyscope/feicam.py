@@ -36,6 +36,18 @@ configs = moduleconfig.getConfigured('fei.cfg')
 ## Muliple calls to get_feiadv will return the same connection.
 ## Store the handle in the com module, which is safer than in
 ## this module due to multiple imports.
+def chooseTEMAdvancedScriptName():
+	version_text = configs['tfs_software_version']
+	bits = version_text.split('.')
+	if len(bits) != 3 or not bits[1].isdigit():
+		print 'Unrecognized Version number, not in the format of %d.%d.%d'
+		raw_input('Hit return to exit')
+	minor_version = int(bits[1])
+	if minor_version < 15:
+		return '2'
+	else:
+		return '1'
+
 def get_feiadv():
 	global connection
 	if connection.instr is None:
@@ -43,7 +55,8 @@ def get_feiadv():
 			comtypes.CoInitializeEx(comtypes.COINIT_MULTITHREADED)
 		except:
 			comtypes.CoInitialize()
-		connection.instr = comtypes.client.CreateObject('TEMAdvancedScripting.AdvancedInstrument.2')
+		type_name = 'TEMAdvancedScripting.AdvancedInstrument.' + chooseTEMAdvancedScriptingName()
+		connection.instr = comtypes.client.CreateObject(type_name)
 		connection.acq = connection.instr.Acquisitions
 		connection.csa = connection.acq.CameraSingleAcquisition
 		connection.cameras = connection.csa.SupportedCameras
