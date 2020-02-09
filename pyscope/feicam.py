@@ -48,7 +48,7 @@ def chooseTEMAdvancedScriptingName():
 		print 'Unrecognized Version number, not in the format of %d.%d.%d'
 		raw_input('Hit return to exit')
 	minor_version = int(bits[1])
-	if minor_version < 15:
+	if minor_version >= 15:
 		return '2'
 	else:
 		return '1'
