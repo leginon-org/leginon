@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 '''
-This defines a client class to interface with the socket based DM plugin.
+This defines a client class to interface with the socket based HT7800 interface.
 '''
 
 import os
@@ -12,49 +12,8 @@ import numpy
 ## Set to None to avoid saving a log.
 ## for example:
 debug_log = None
-#debug_log = 'gatansocket.log'
+#debug_log = 'hitachisocket.log'
 
-ARGS_BUFFER_SIZE = 1024
-MAX_LONG_ARGS = 16
-MAX_DBL_ARGS = 8
-MAX_BOOL_ARGS = 8
-sArgsBuffer = numpy.zeros(ARGS_BUFFER_SIZE, dtype=numpy.byte)
-
-class Message(object):
-	'''
-Information packet to send and receive on the socket.
-Initialize with the sequences of args (longs, bools, doubles)
-and optional long array.
-	'''
-#Strings are packaged as long array using numpy.frombuffer(buffer,numpy.int_)
-# and can be converted back with longarray.tostring()
-	eof_marker = '\r'
-	def __init__(self, msg):
-		self.msg = msg
-
-	def pack(self):
-		'''
-		add EOF
-		'''
-		return self.msg + self.eof_marker
-
-	def unpack(self, buf):
-		'''
-		unpack buffer into our data structure
-		'''
-		line = buf.split(self.eof_marker)
-		return line
-
-def log(message):
-	global debug_log
-	if debug_log is None:
-		return
-	f = open(debug_log, 'a')
-	line = '%f\t%s\n' % (time.time(), message)
-	f.write(line)
-	f.close()
-
-## decorator for socket send and recv calls, so they can make log
 def logwrap(func):
 	def newfunc(*args, **kwargs):
 		log('%s\t%s\t%s' % (func,args,kwargs))
@@ -130,12 +89,11 @@ class HitachiSocket(object):
 			elif t == 'bool':
 				args[i] = '%d' % int(args[i])
 			elif t == 'hexdec':
-				args[i] = "{0:0{1}X}".format(int(args[i],16),6)
+				args[i] = "{0:0{1}X}".format(int(args[i],16),6) # format to 000FFF, for example
 			else:
 				pass
 		arg_string = ','.join(args)
 		self.sendMessage(cmd+' '+arg_string)
-		print arg_string
 		# expect any data to include '8001, "NG."'
 		data_string = self.recvMessage(recv_min_length)
 		data = data_string.split(',')
@@ -175,17 +133,6 @@ class HitachiSocket(object):
 			return data[0]
 		else:
 			return data
-
-	def SendLongGetLong(self, funcName, longarg):
-		'''common class of function with one long arg
-		that returns a single long'''
-		funcCode = enum_gs[funcName]
-		message_send = Message(longargs=(funcCode,longarg))
-		# First recieved message longargs is error code
-		message_recv = Message(longargs=(0,0))
-		self.ExchangeMessages(message_send, message_recv)
-		result = message_recv.array['longargs'][1]
-		return result
 
 if __name__=='__main__':
 	try:
