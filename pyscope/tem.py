@@ -347,7 +347,7 @@ class TEM(baseinstrument.BaseInstrument):
 		# do nothing.
 		pass
 
-	def resetStageSpeed(self, value):
+	def resetStageSpeed(self):
 		# do nothing.
 		pass
 
