@@ -199,7 +199,6 @@ class CameraClient(object):
 			# maybe tem has no such function
 			pass
 
-<<<<<<< HEAD
 	def doAfterAcquire(self):
 		'''
 		Things to do after acquiring the image. Overwritable by subclasses
