@@ -21,7 +21,7 @@ class Tvips(object):
 		self.imagesets = files
 		for imagesetpath in files:
 			self.filebytes = os.path.getsize(imagesetpath)
-			if 'Image_000' in imagesetpath:
+			if '_000.tvips' in imagesetpath:
 				#first image has series header
 				self.fobj = open(imagesetpath)
 				self.defineHeader()
