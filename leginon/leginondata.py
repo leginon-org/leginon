@@ -452,6 +452,16 @@ class ImageScaleAdditionCalibrationData(BeamProbeDependentCalibrationData):
 		)
 	typemap = classmethod(typemap)
 
+class StageSpeedCalibrationData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('tem', InstrumentData),
+			('axis', str), # only a axis now
+			('slope', float),		# delta-time / speed-in-degrees-per-second
+			('intercept', float), # time in seconds
+		)
+	typemap = classmethod(typemap)
+
 class MoveTestData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (

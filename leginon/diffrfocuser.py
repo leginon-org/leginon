@@ -13,6 +13,7 @@ import singlefocuser
 import acquisition
 import leginondata
 import gui.wx.DiffrFocuser
+import calibrationclient
 
 class DiffrFocuser(singlefocuser.SingleFocuser):
 	panelclass = gui.wx.DiffrFocuser.Panel
@@ -29,6 +30,7 @@ class DiffrFocuser(singlefocuser.SingleFocuser):
 
 	def __init__(self, id, session, managerlocation, **kwargs):
 		singlefocuser.SingleFocuser.__init__(self, id, session, managerlocation, **kwargs)
+		self.speed_cal_client = calibrationclient.StageSpeedClient(self)
 
 	def getParentTilt(self,targetdata):
 		if targetdata['image']:
@@ -119,8 +121,12 @@ class DiffrFocuser(singlefocuser.SingleFocuser):
 
 	def tiltWithSpeed(self):
 		time.sleep(0.5)
+		speed = abs(self.settings['tilt speed'])
+		corrected_speed = self.speed_cal_client.getCorrectedTiltSpeed(None, speed, self.settings['tilt range'])
+		if corrected_speed != speed:
+			self.logger.info('Using corrected speed of %.4f degrees/seconds')
 		# set in degrees per second
-		self.instrument.tem.StageSpeed = abs(self.settings['tilt speed'])
+		self.instrument.tem.StageSpeed = corrected_speed
 		self.instrument.tem.StagePosition = {'a':self.end_radian}
 
 	def startMovieCollection(self, filename, exposure_time):

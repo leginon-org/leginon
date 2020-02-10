@@ -37,6 +37,7 @@ class DiffractionUpload(object):
 		diffr_preset = self.diffr_series['preset']
 		upload_presetq = leginondata.PresetData(initializer=diffr_preset)
 		upload_presetq['name'] = 'upload'
+		'''
 		if not self.diffr_series['series length']:
 			raise ValueError('Old data without series length can not be accurately assessed')
 		# fudge factor +1 is needed to get better match in the reality.
@@ -47,6 +48,7 @@ class DiffractionUpload(object):
 			print('ms_per_tilt=%.0f preset_exposure_time=%.0f' % (ms_per_tilt, diffr_preset['exposure time']))
 			upload_presetq['exposure time'] = ms_per_tilt
 		#upload_presetq.insert() # will return existing preset
+		'''
 		return upload_presetq
 
 	def getGunLength(self, file_pattern):
@@ -213,7 +215,14 @@ class DiffractionUpload(object):
 		imagedata['scope'] = self.makeScopeEMData()
 		imagedata['camera'] = self.makeCameraEMData()
 		# assume that we miss imaging the first tilt step
-		tilt_degrees = self.diffr_series['tilt start'] + (iter_number0+1)*self.diffr_series['tilt speed']*self.preset['exposure time']/1000.0
+		tilt_degrees = self.diffr_series['tilt start'] + (iter_number0)*self.diffr_series['tilt speed']*self.preset['exposure time']/1000.0
+		end_tilt_degrees =  self.diffr_series['tilt start'] + self.diffr_series['tilt range']
+		if end_tilt_degrees > self.diffr_series['tilt start'] and tilt_degrees > end_tilt_degrees:
+			# positive tilt has stopped
+			tilt_degrees = end_tilt_degrees
+		elif end_tilt_degrees < self.diffr_series['tilt start'] and tilt_degrees < end_tilt_degrees:
+			# negative tilt has stopped
+			tilt_degrees = end_tilt_degrees
 		imagedata['scope']['stage position']['a'] = math.radians(tilt_degrees)
 		if iter_number0 == 0 or iter_number0 == len(self.bin_files)-1:
 			print '%d tilt %.2f' % (iter_number0,tilt_degrees)

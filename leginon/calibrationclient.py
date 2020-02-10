@@ -1714,6 +1714,41 @@ class StageCalibrationClient(SimpleMatrixCalibrationClient):
 		p2 = numpy.dot(matrix2inv, stagepos)
 		return p2
 
+class StageSpeedClient(CalibrationClient):
+	def __init__(self, node):
+		CalibrationClient.__init__(self, node)
+
+	#TODO fit data of rate vs actual_time-expected_time and then save
+	# slope and intercept.
+
+	def researchStageSpeedCorrection(self, tem, axis):
+		caldata = leginondata.StageSpeedCalibrationData(axis=axis)
+		if tem is None:
+			caldata['tem'] = self.instrument.getTEMData()
+		else:
+			caldata['tem'] = tem
+		results = caldata.query(results=1)
+		if results:
+			return results[0]['slope'], results[0]['intercept']
+		else:
+			return None, None
+
+	def getCorrectedTiltSpeed(self, tem, speed, target_angle):
+		'''
+		speed in degrees per second.
+		target_angle in degrees.
+		'''
+		slope, intercept = self.researchStageSpeedCorrection(tem, 'a')
+		if slope is None:
+			return speed
+		a = slope
+		b = intercept - target_angle/speed
+		c = target_angle
+		if b*b -4*a*c < 0:
+			return speed
+		new_speed = (-b - math.sqrt(b*b -4*a*c))/ (2*a)
+		return new_speed
+
 class StageTiltCalibrationClient(StageCalibrationClient):
 	def __init__(self, node):
 		StageCalibrationClient.__init__(self, node)
