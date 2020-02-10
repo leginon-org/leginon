@@ -277,7 +277,7 @@ class SimTEM(tem.TEM):
 		if self.stage_speed_fraction < 1.0:
 			if 'a' in value.keys():
 				alpha_delta = math.degrees(abs(value['a']-stagenow['a']))
-				move_time = alpha_delta * self.stage_speed_fraction*self.stage_top_speed
+				move_time = alpha_delta / (self.stage_speed_fraction*self.stage_top_speed)
 				time.sleep(max(move_time,0.2))
 		return self._setStagePosition(value)
 
