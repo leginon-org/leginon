@@ -58,7 +58,7 @@ TIA_EXPORTED_DATA_NETWORK_DIR = C:\Users\supervisor\Documents\FEI\TIA\Exported D
 
 [phase plate]
 # Location of next phase plate AutoIt executable
-AUTOIT_EXE_PATH = C:\Program Files\AutoIt3\nextphaseplate.exe
+AUTOIT_PHASE_PLATE_EXE_PATH = C:\Program Files\AutoIt3\NextPhasePlate.exe
 
 [beamstop]
 # Location of beamstop AutoIt executable

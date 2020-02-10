@@ -597,7 +597,7 @@ class leginondata {
 	}
 
 	function getDataTypes($sessionId, $allpresets=true) {
-		$q="select distinct name FROM AcquisitionImageData a "
+		$q="select distinct name, magnification FROM AcquisitionImageData a "
 			." left join PresetData p on (p.DEF_id=a.`REF|PresetData|preset`) "
 			." where a.`REF|SessionData|session` = '$sessionId' "
 			." group by name, magnification "
@@ -619,7 +619,7 @@ class leginondata {
 			the preset by pixel size. since lower magnification is not
 			always the image with lowest imaging area with multiple camera.
 		*/
-		$q="select distinct name, p.`DEF_id` as pid FROM AcquisitionImageData a "
+		$q="select distinct name, magnification, p.`DEF_id` as pid FROM AcquisitionImageData a "
 			." left join PresetData p on (p.DEF_id=a.`REF|PresetData|preset`) "
 			." where a.`REF|SessionData|session` = '$sessionId' "
 			." group by name, magnification "

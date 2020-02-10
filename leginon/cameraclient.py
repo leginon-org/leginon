@@ -199,6 +199,7 @@ class CameraClient(object):
 			# maybe tem has no such function
 			pass
 
+<<<<<<< HEAD
 	def doAfterAcquire(self):
 		'''
 		Things to do after acquiring the image. Overwritable by subclasses
@@ -221,13 +222,24 @@ class CameraClient(object):
 	def removeBeamstop(self):
 		self.instrument.tem.BeamstopPosition = 'out'
 
-	def isFakeImage(self, imagearray):
+	def isFakeImageArray(self, imagearray):
 		'''
 		Fake image transfer from camera to reduce transfer time.
 		General only gives 8x8 image with the mean and standard
 		deviation of the real array.
 		'''
 		if imagearray.shape == (8,8):
+			return True
+		return False
+
+	def isFakeImageObj(self, imagedata):
+		'''
+		Same rule as isFakeImageArray but get shape from
+		sinedon imagedata object without loading the array
+		to get shape and save the read time on large image.
+		'''
+		shape = imagedata.imageshape()
+		if shape == (8,8):
 			return True
 		return False
 
@@ -289,7 +301,8 @@ class CameraClient(object):
 		if imagedata['image'] is None or imagedata['image'].shape == (0,0):
 			# image of wrong shape will still go through. Error raised at normalization
 			raise RuntimeError('No valid image returned. Check camera software/hardware')
-		if self.isFakeImage(imagedata['image']):
+		# image array still in memory.  This should not take extra time.
+		if self.isFakeImageArray(imagedata['image']):
 			self.logger.warning('Early return gives back fake images to save time')
 		return imagedata
 

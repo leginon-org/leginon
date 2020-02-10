@@ -40,6 +40,19 @@ class particledata {
 					PARTICLE_DB);
 	}
 
+	function isFullGroupMode () {
+		$mysql_server_version = $this->mysql->getServerInfo();
+		$bits = explode('.',$mysql_server_version);
+		if (is_array($bits) && count($bits) == 3)
+			$version = floatval($bits[0].'.'.$bits[1]);
+		# mysql server version
+		if ($version >= 5.7) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
 	function getPathFromId ($pathId) {
 		$q = "SELECT "
 			."p.path AS path "
@@ -1239,6 +1252,69 @@ class particledata {
 		return $q;
 	}
 
+	function getRandomImageIdListInSession($sessionId, $imagelimit=false) {
+		$q = ""
+			."		SELECT a.`DEF_id` from ".DB_LEGINON.".`AcquisitionImageData` AS a  "
+			." INNER JOIN ".DB_LEGINON.".`ScopeEMData` AS s "
+			." ON a.`REF|ScopeEMData|scope` = s.`DEF_id` "
+			." LEFT JOIN ".DB_LEGINON.".`ViewerImageStatus` AS v "
+			." ON a.`DEF_id` = v.`REF|AcquisitionImageData|image` "
+			."		WHERE a.`REF|SessionData|session`='$sessionId'  "
+			."	AND  "
+			."  ABS(s.`SUBD|stage position|a`) < 0.9  "
+			."	AND  "
+			." ( v.status IS NULL OR v.status != 'hidden' ) "
+			." ORDER BY RAND() LIMIT ".$imagelimit." ";
+		// returns a comma separated number list string
+		// good for IN statement
+		$r_str = $this->mysql-> getSQLResultNumList($q);
+		return $r_str;
+	}
+
+	function getRandomCtfInfoByResolution($sessionId, $limit=false) {
+		// Query that is meant for ctf graph where it does not need
+		// to be accurate.
+		// Group By will pick up any value from different column but is fast.
+		//
+		$imageids = $this->getRandomImageIdListInSession($sessionId, $imagelimit=2000);
+		$ctfq = " "
+			."	SELECT  "
+			." ctf.`REF|leginondata|AcquisitionImageData|image` as imageid, "
+			// GROUP BY in mysql 5.7 and up need agregated values
+			." MAX(ctf.`DEF_id`) as ctfid "
+			."	FROM ".PARTICLE_DB.".`ApCtfData` AS ctf "
+			."	where ";
+			$ctfq .= "	ctf.`REF|leginondata|AcquisitionImageData|image` IN  "
+			.$imageids
+			." GROUP BY ctf.`REF|leginondata|AcquisitionImageData|image` "
+			." ";
+		// main query
+		$q = "SELECT ctfdata.*, "
+			."		i.`filename`, "
+			."		p.`name`, "
+			."		s.`defocus`, "
+			."		s.`defocus` AS nominal_defocus, "
+			."		2*ABS(ctfdata.defocus1-ctfdata.defocus2)/(ctfdata.defocus1+ctfdata.defocus2) AS difference_from_mean, "
+			."		(ctfdata.`defocus1`+ctfdata.`defocus2`)/2 as defocus_mean, "
+			."    cos(2*ctfdata.`angle_astigmatism`*3.14159/180)*(ctfdata.`defocus1`-ctfdata.`defocus2`)/2 as astig_x, "
+			."    sin(2*ctfdata.`angle_astigmatism`*3.14159/180)*(ctfdata.`defocus1`-ctfdata.`defocus2`)/2 as astig_y, "
+			."		(ctfdata.`defocus1`+ctfdata.`defocus2`)/2+s.`defocus` as difference_from_nom, "
+			.$this->getAppionConfidenceScoreSelect('ctfdata').", "
+			.$this->getAppionResolutionSelect('ctfdata').", "
+			// ScopeEMData timestamp is not changed after DD frame alignment
+			."    unix_timestamp(s.`DEF_timestamp`) as unix_timestamp "
+			." FROM ("
+			.$ctfq
+			.") ctfids  "
+			."	INNER JOIN ".PARTICLE_DB.".`ApCtfData` AS ctfdata ON (ctfids.`ctfid` = ctfdata.`DEF_id`) "
+			."	LEFT JOIN ".DB_LEGINON.".`AcquisitionImageData` AS i ON (i.`DEF_id` = ctfids.`imageid`) "
+			."	LEFT JOIN ".DB_LEGINON.".`PresetData` AS p ON (p.DEF_id = i.`REF|PresetData|preset`) "
+			." LEFT JOIN ".DB_LEGINON.".`ScopeEMData` AS s ON (i.`REF|ScopeEMData|scope` = s.`DEF_id`) "
+			." ORDER BY unix_timestamp ";
+		//echo $q."<br/><br/>\n";
+		return $this->mysql->getSQLResult($q);
+	}
+
 	function getBestCtfInfoByResolution($sessionId, $limit=false) {
 		// This is used in download, report and aceimage display.
 		// This should be the standard. 
@@ -1314,7 +1390,7 @@ class particledata {
 		foreach ($fields as $field) {
 			if (!in_array($field, $dbfields))
 				continue;
-			$selects[$field] = "c.`REF|leginondata|AcquisitionImageData|image` AS id, "
+			$selects[$field] = "max(c.`REF|leginondata|AcquisitionImageData|image`) AS id, "
 					//."s.defocus, "
 					. "count(c.DEF_id) AS `nb`, "
 					. "min(c.`$field`) AS `min`, "
@@ -1945,7 +2021,7 @@ class particledata {
 
 		//print_r ($r);
 		//echo $r['REF|ApSelectionParamsData|params'];
-		$q = "select s.*, r.name, path.path AS path, r.`REF|leginondata|SessionData|session` ";
+		$q = "select s.*, r.name, path.path AS path, r.`REF|leginondata|SessionData|session`, r.`hidden` ";
 
 		if ($r['REF|ApSelectionParamsData|params']) {
 			$selectionparamid=$r['REF|ApSelectionParamsData|params'];

@@ -63,7 +63,7 @@ class TestCorrector(unittest.TestCase):
 		print(plandict)
 		print('format corrector plan took %.2f seconds' % (time.time()-t0))
 		# Escape if image is None
-		if self.imagedata['image'] is None or self.c_client.isFakeImage(self.imagedata['image']):
+		if self.imagedata.imageshape() is None or self.c_client.isFakeImageObj(self.imagedata):
 			# in-place change.  Nothing to return
 			print('fake image requires no bad pixel fixing')
 			print('****')
@@ -99,8 +99,42 @@ class TestCorrector(unittest.TestCase):
 	def _testNormalizeImage(self):
 		t0 = time.time()
 		channel = 0
-		self.c_client.normalizeCameraImageData(self.imagedata, channel)
-		print('normalize image took %.2f seconds' % (time.time()-t0))
+		cameradata = self.imagedata['camera']
+		scopedata = self.imagedata['scope']
+		dark = self.c_client.retrieveCorrectorImageData('dark', scopedata, cameradata, channel)
+		print('retrieve dark image took %.2f seconds' % (time.time()-t0))
+		t0 = time.time()
+		norm = self.c_client.retrieveCorrectorImageData('norm', scopedata, cameradata, channel)
+		print('retrieve norm image took %.2f seconds' % (time.time()-t0))
+		if dark is None or norm is None:
+			self.c_client.logger.warning('Cannot find references, image will not be normalized')
+			return False
+		t0 = time.time()
+		rawarray = self.imagedata['image']
+		print('read imagedata image took %.2f seconds' % (time.time()-t0))
+		if not self.c_client.isFakeImageObj(self.imagedata):
+			t0 = time.time()
+			darkarray = self.c_client.prepareDark(dark, self.imagedata)
+			print('prepare dose-matched dark image took %.2f seconds' % (time.time()-t0))
+			t0 = time.time()
+			normarray = norm['image']
+			print('link normarry took %.2f seconds' % (time.time()-t0))
+			t0 = time.time()
+			r = self.c_client.normalizeImageArray(rawarray,darkarray,normarray, 'GatanK2' in cameradata['ccdcamera']['name'])
+			print('doing array normalization took %.2f seconds' % (time.time()-t0))
+		else:
+			# normalize the fake array, too.
+			fake_dark = numpy.zeros((8,8))
+			fake_norm = numpy.ones((8,8))
+			r = self.c_client.normalizeImageArray(rawarray,fake_dark,fake_norm, 'GatanK2' in cameradata['ccdcamera']['name'])
+			print('doing fake 8x8 array normalization took %.2f seconds' % (time.time()-t0))
+		t0 = time.time()
+		self.imagedata['image'] = r
+		self.imagedata['dark'] = dark
+		self.imagedata['bright'] = norm['bright']
+		self.imagedata['norm'] = norm
+		self.imagedata['correction channel'] = channel
+		print('assign final imagedata values took %.2f seconds' % (time.time()-t0))
 		print('****')
 		return True
 

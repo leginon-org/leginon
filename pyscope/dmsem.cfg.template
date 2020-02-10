@@ -22,6 +22,9 @@ ACQUISITION_SHUTTER_NUMBER = 1
 FLIP = True
 # multiple of 90 degrees (i.e. put 1 if 90 degrees, 3 if 270 degrees)
 ROTATE = 1 
+# overwrite frame orientation if the above DM camera config does not give correct frame orientation.
+OVERWRITE_FRAME_ORIENTATION = False
+FRAME_FLIP_TO_OVERWRITE_WITH = True
 # raw frame base directory. Use '\' as path separator
 RAW_FRAME_DIR = D:\frames\
 # return camera call before file is saved

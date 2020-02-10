@@ -182,6 +182,12 @@ class DMSEM(ccdcamera.CCDCamera):
 			return True
 		return False
 
+	def isDM332orUp(self):
+		version_id,version_string = self.getDMVersion()
+		if version_id and version_id >= 50302:
+			return True
+		return False
+
 	def isSEMCCD2019orUp(self):
 		year = self.getDmsemConfig('semccd',itemname='semccd_plugin_year')
 		if year:
@@ -274,6 +280,7 @@ class DMSEM(ccdcamera.CCDCamera):
 		shutter_delay = -self.readout_delay_ms / 1000.0
 
 		acq_binning, left, top, right, bottom, width, height = self.getAcqBinningAndROI()
+		correction_flags = self.getCorrectionFlags()
 
 		acqparams = {
 			'processing': processing,
@@ -285,6 +292,7 @@ class DMSEM(ccdcamera.CCDCamera):
 			'bottom': bottom,
 			'right': right,
 			'exposure': self.getRealExposureTime(),
+			'corrections': correction_flags,
 			'shutter': self.shutter_id,
 			'shutterDelay': shutter_delay,
 		}
@@ -397,8 +405,13 @@ class DMSEM(ccdcamera.CCDCamera):
 			self.camera.InsertCamera(self.cameraid, value)
 		else:
 			return
-		## TODO:  determine necessary settling time:
-		time.sleep(5)
+		t0=time.time()
+		MAX_DELAY = 90 # 90 seconds
+		while inserted != value and time.time()-t0 < MAX_DELAY:
+			time.sleep(1)
+			inserted = self.getInserted()
+		if time.time()-t0 >= MAX_DELAY:
+			raise RuntimeError('Can not set inserted state of the camera to %s' % (value,))
 
 	def getInserted(self):
 		return self.camera.IsCameraInserted(self.cameraid)
@@ -443,6 +456,22 @@ class DMSEM(ccdcamera.CCDCamera):
 			minor = remainder // 100
 			sub = remainder % 100
 		return (version_long,'%d.%d.%d' % (major,minor,sub))
+
+	def getCorrectionFlags(self):
+		'''
+		Binnary Correction flag sum in GMS.  See Feature #8391.
+		GMS3.3.2 has pre-counting correction which is superior.
+		SerialEM always do this correction
+		but Leginon 3.4 and earlier does not.
+		David M. said SerialEM default is 49 for K2 and 1 for K3.
+		49 means defect,bias, and quadrant (to be the same as Ultrascan).
+		I don't think the latter two needs applying in counting.
+		'''
+		if self.isDM332orUp():
+			return 1 # defect correction only.
+		else:
+			# keep it zero to be back compatible.
+			return 0
 
 	def hasScriptFunction(self, name):
 		return self.camera.hasScriptFunction(name)
@@ -771,7 +800,12 @@ class GatanK2Base(DMSEM):
 		'''
 		Frame Flip is defined as up-down flip
 		'''
-		return self.isDM231orUp()
+		overwrite = self.getDmsemConfig('k2','overwrite_frame_orientation')
+		if not overwrite:
+			return self.isDM231orUp()
+		else:
+			my_frame_flip = self.getDmsemConfig('k2','frame_flip_to_overwrite_with')
+			return my_frame_flip
 
 	def getFrameRotate(self):
 		'''
@@ -885,16 +919,26 @@ class GatanK3(GatanK2Base):
 		return self.dm_processing == 'gain normalized'
 
 	def requireRecentDarkCurrentReferenceOnBright(self):
-		# K3 no longer need hardware dark ? In fact, the scripting call does nothing.
-		# Is it really o.k. ?
+		return True
+
+	def updateDarkCurrentReference(self):
+		r = self.camera.PrepareDarkReference(self.cameraid)
+		if r > 0:
+			# has error
+			return True
 		return False
 
 	def getFrameFlip(self):
 		'''
 		Frame Flip is defined as up-down flip.
-		GMS2.32 and DMSEMCCD3.31.dll 2019Aug version requires no flip
+		K3 requires no flip in most cases.
 		'''
-		return False
+		overwrite = self.getDmsemConfig('k2','overwrite_frame_orientation')
+		if not overwrite:
+			return False
+		else:
+			my_frame_flip = self.getDmsemConfig('k2','frame_flip_to_overwrite_with')
+			return my_frame_flip
 
 	def getFrameSavingRotateFlipDefault(self):
 		'''

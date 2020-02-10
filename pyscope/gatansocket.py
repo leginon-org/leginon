@@ -379,6 +379,10 @@ class GatanSocket(object):
 		function_name = 'K2_updateHardwareDarkReference'
 		return self.ExecuteSendCameraObjectionFunction(function_name, cameraid)
 
+	def PrepareDarkReference(self, cameraid):
+		function_name = 'CM_PrepareDarkReference'
+		return self.ExecuteSendCameraObjectionFunction(function_name, cameraid)
+
 	def GetEnergyFilter(self):
 		if 'GetEnergyFilter' not in self.filter_functions.keys():
 			return -1.0
@@ -424,13 +428,12 @@ class GatanSocket(object):
 		return self.ExecuteGetDoubleScript(script)
 
 	@logwrap
-	def GetImage(self, processing, height, width, binning, top, left, bottom, right, exposure, shutter=0, shutterDelay=0.0):
+	def GetImage(self, processing, height, width, binning, top, left, bottom, right, exposure, corrections, shutter=0, shutterDelay=0.0):
 
 		arrSize = width * height
 
 		# TODO: need to figure out what these should be
 		divideBy2 = 0
-		corrections = 0
 		settling = 0.0
 
 		# prepare args for message

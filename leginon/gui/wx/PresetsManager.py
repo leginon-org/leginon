@@ -1219,8 +1219,10 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.widgets['smallsize'] = IntEntry(self, -1, chars=6)
 		szsmallsize.Add(smallsizelab)
 		szsmallsize.Add(self.widgets['smallsize'])
-
+		self.widgets['idle minute'] = FloatEntry(self, -1, min=0.0, chars=4)
+		# complex sizers
 		szpausetime = self.createPauseTimeSizer()
+		szidleminute = self.createIdleMinuteSizer()
 
 #		sz.Add(self.widgets['xy only'], (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 #		sz.Add(self.widgets['stage always'], (1, 0), (1, 1),
@@ -1236,6 +1238,8 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz.Add(self.widgets['blank'], (6, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(szsmallsize, (7, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['disable stage for image shift'], (8, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(wx.StaticLine(self,-1),(9,0),(1,1), wx.EXPAND|wx.TOP|wx.BOTTOM)
+		sz.Add(szidleminute, (10, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		sbsz.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
 
@@ -1250,6 +1254,16 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		label = wx.StaticText(self, -1, 'seconds between preset changes')
 		szpausetime.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		return szpausetime
+
+	def createIdleMinuteSizer(self):
+		szidle = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Wait')
+		szidle.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szidle.Add(self.widgets['idle minute'], (0, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'minutes before declaring idle timeout')
+		szidle.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		return szidle
 
 class NewDialog(wx.Dialog):
 	def __init__(self, parent, node):

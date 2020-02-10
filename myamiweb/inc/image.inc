@@ -776,6 +776,11 @@ class Mosaic {
 						$cdy = $dst_y;
 						$cnb =$k+1;
 					}
+					// show grid target number at top left corner.
+					$cdx_any = $dst_x+1;
+					$cdy_any = $dst_y;
+					$cnb_any =$k+1;
+					imagestringshadow($img, 4, $cdx_any, $cdy_any, $cnb_any, $blue);
 				}
 			}
 		}
