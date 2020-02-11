@@ -452,6 +452,16 @@ class ImageScaleAdditionCalibrationData(BeamProbeDependentCalibrationData):
 		)
 	typemap = classmethod(typemap)
 
+class StageSpeedCalibrationData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('tem', InstrumentData),
+			('axis', str), # only a axis now
+			('slope', float),		# delta-time / speed-in-degrees-per-second
+			('intercept', float), # time in seconds
+		)
+	typemap = classmethod(typemap)
+
 class MoveTestData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
@@ -2063,6 +2073,15 @@ class FocuserSettingsData(SingleFocuserSettingsData):
 		return SingleFocuserSettingsData.typemap()
 	typemap = classmethod(typemap)
 
+class DiffrFocuserSettingsData(FocuserSettingsData):
+	def typemap(cls):
+		return FocuserSettingsData.typemap() + (
+			('tilt start', float), # degrees
+			('tilt range', float), # degrees
+			('tilt speed', float), # degrees per second
+		)
+	typemap = classmethod(typemap)
+
 class AutoExposureSettingsData(AcquisitionSettingsData):
 	def typemap(cls):
 		return AcquisitionSettingsData.typemap() + (
@@ -3021,3 +3040,47 @@ class BlackStripeSettingsData(SettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class DiffractionSeriesData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('tilt start', float),
+			('tilt range', float),
+			('tilt speed', float),
+			('parent', AcquisitionImageData),
+			('preset', PresetData),
+			('emtarget', EMTargetData),
+			('series length', int),
+		)
+	typemap = classmethod(typemap)
+
+class DeletedDiffractionSeriesData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('series', DiffractionSeriesData),
+			('comment', str),
+		)
+	typemap = classmethod(typemap)
+
+class CameraLengthCalibrationData(CalibrationData):
+	def typemap(cls):
+		return CalibrationData.typemap() + (
+			('magnification', int),
+			('camera length', float), #meters
+			('comment', str),
+		)
+	typemap = classmethod(typemap)
+
+class CameraLengthCalibratorSettingsData(CalibratorSettingsData):
+	def typemap(cls):
+		return CalibratorSettingsData.typemap() + (
+			('d spacing', float),
+			('distance', float),
+		)
+	typemap = classmethod(typemap)
+
+class BeamstopCenterData(CalibrationData):
+	def typemap(cls):
+		return CalibrationData.typemap() + (
+			('beam center', dict), # mm as defined in smv file header
+		)
+	typemap = classmethod(typemap)

@@ -40,10 +40,15 @@ class MoveAcquisition(acquisition.Acquisition):
 	def prepareToAcquire(self,allow_retracted=False,exposure_type='normal'):
 		'''
 		Overwrite prepareToAcquire in cameraclient.py to not to do anything
-		since they would be blocked by scope movement.
+		if moving since they would be blocked by scope movement.
+		Do these before moving instead.
 		'''
-		self.logger.info('Bypassed acquisition preparation')
-		pass
+		if not self.settings['acquire during move']:
+			# process as normal
+			return super(MoveAcquisition, self).prepareToAcquire(allow_retracted, exposure_type)
+		else:
+			self.logger.info('Bypassed acquisition preparation')
+			pass
 
 	def getParentValue(self,targetdata):
 		'''
@@ -71,6 +76,8 @@ class MoveAcquisition(acquisition.Acquisition):
 			super(MoveAcquisition, self).processTargetData(targetdata, attempt)
 			# need to wait for all moves are completed.
 			self.waitMoveDone()
+			#TODO generalize for all movement
+			self.instrument.tem.StageSpeed = 50.0 # top speed in degrees per second
 			self._setStageValue(p0dict)
 		else:
 			# process as normal
@@ -122,12 +129,10 @@ class MoveAcquisition(acquisition.Acquisition):
 		self.logger.info('pausing for %s s' % (pausetime,))
 
 		self.startTimer('pause')
-		# not sure if need to thread.
-		t = threading.Thread(target=self._prepareToAcquire)
-		t.start()
 		time.sleep(pausetime)
-		t.join()
 		self.stopTimer('pause')
+		# not sure if need to thread. Will insert the camera
+		self._prepareToAcquire()
 		# the next image will not be first even if repeated
 		self.is_firstimage = False
 
@@ -165,6 +170,7 @@ class MoveAcquisition(acquisition.Acquisition):
 			t2 = threading.Thread(target=self.acquirePublishDisplayWait, args=args)
 			t2.start()
 			self.waitExposureDone()
+			t2.join()
 		else:
 			self.acquirePublishDisplayWait(*args)
 		return status
@@ -198,11 +204,12 @@ class MoveAcquisition(acquisition.Acquisition):
 		 Start a separate thread to move.
 		'''
 		move_times = self.calculateMoveTimes()
-		t1 = threading.Thread(target=self.moveToValue, args=(move_times,))
-		t1.start()
+		self.t1 = threading.Thread(target=self.moveToValue, args=(move_times,))
+		self.t1.start()
 
 	def waitAtStep(self, step_time):
 		time.sleep(step_time)
+		self.t1.join()
 		self.step_done_event.set()
 
 	def moveToValue(self, move_times):
@@ -219,8 +226,12 @@ class MoveAcquisition(acquisition.Acquisition):
 			t3.start()
 			self.setStageValue(move)
 			self.waitStepDone()
+			t3.join()
 			self.logFinal(move) # log intermediate move
 		self.logFinal(move_times[-1][0]) # log last move value
+		#TODO generalize for all movement
+		self.instrument.tem.StageSpeed = 50.0 # top speed in degrees per second
+		# ??? WHy here ?
 		self.setStageValue(p0)
 		self.move_done_event.set()
 

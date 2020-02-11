@@ -10,6 +10,12 @@ if offset_txt == '':
 	offset = 200
 else:
 	offset = int(offset_txt)
+gain_txt = raw_input('Camera Gain counts/electron (default 28 for CetaD): ')
+if gain_txt == '':
+	gain = 28.0
+else:
+	gain = float(gain)
+header_dict = {'BEAMLINE': 'CETAD_TUI', 'GAIN':gain}
 
 from pyami import tiaraw, numsmv
 
@@ -41,5 +47,5 @@ for i in range(total):
 		in_name='%s_%02d.bin' % (input_pattern, i+1)
 	out_name='%s_%03d.img' % (output_pattern, i+1)
 	data = tiaraw.read(in_name)
-	numsmv.write(data,out_name, offset=offset)
+	numsmv.write(data,out_name, offset=offset, header_updates=header_dict)
 
