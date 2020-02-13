@@ -136,9 +136,9 @@ if (!empty($summary)) {
 			$apix = number_format($pixelsize,3);
 		}
 		$dims = $imageinfo['dimx'].'x'.$imageinfo['dimy'];
-		if ($imageinfo['binning'] == 1) {
+		//if ($imageinfo['binning'] == 1) {
 			$presetscore = $imageinfo['dimx']*$imageinfo['dimy']*$s['nb']/$pixelsize;
-		} else { $presetscore=0; }
+		//} else { $presetscore=0; }
 		if ($presetscore > $maxpresetscore) {
 			$maxpresetscore = $presetscore;
 			$maxpresetid = $s['presetId'];
@@ -331,6 +331,23 @@ echo '<td colspan=2>';
 echo '<form method="post">';
 if ($inline) echo '<div ';
 else echo '<textarea ';
+if (empty($mytextarea)) {
+	$outDir = getBaseAppionPath($sessioninfo).'/csLIVE/*.png';
+	foreach (glob($outDir) as $filename) {
+		if (strpos($filename, '2dclasses')) {
+			$mytextarea .="<img width='100%' src='processing/download.php?expId=".$expId."&file=".$filename."'/><br>";
+		}
+		else {
+			$mytextarea .="<img src='processing/download.php?expId=".$expId."&file=".$filename."'/><br>";
+		}
+	}
+	$class_file = getBaseAppionPath($sessioninfo).'/csLIVE/class_info';
+	if (file_exists($class_file)) {
+		$file = file_get_contents($class_file);
+		$file = str_replace("==", "<br>", $file);
+		$mytextarea .="<h5>2D Classes Info</h5>".$file;
+	}
+}
 echo 'id="mytextarea" name="mytext">'.$mytextarea;
 if ($inline) echo '</div>';
 else {
@@ -361,14 +378,14 @@ echo opendivbubble();
 
 echo "<p>";
 
-echo "$microscope operated at $kv kV with a $camera imaging system collected at $magX nominal magnification.
+echo "$microscope operated at $kv kV with a $camera imaging system collected at {$mag}X nominal magnification.
 The calibrated pixel size of $pixelsize &Aring; was used for processing.";
 
 echo "</p><p>";
 
 echo "Movies were collected using Leginon (Suloway et al., 2005) at a dose
 rate of $dosepersec e<sup>-</sup>/&Aring;<sup>2</sup>/s with a total exposure of $exposure seconds,
-for an acculumlated dose of $totaldose e<sup>-</sup>/&Aring;<sup>2</sup>. Intermediate frames were recorded
+for an accumulated dose of $totaldose e<sup>-</sup>/&Aring;<sup>2</sup>. Intermediate frames were recorded
 every $frametime seconds for a total of $numframes frames per micrograph. A total of $numimages images were
 collected at a nominal defocus range of $defmin &ndash; $defmax &mu;m.";
 

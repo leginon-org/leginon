@@ -34,19 +34,22 @@ except ImportError:
 	pass
 
 configs = moduleconfig.getConfigured('fei.cfg')
+configpath = moduleconfig.getConfigPath('fei.cfg')
 
 class MagnificationsUninitialized(Exception):
 	pass
 
 class Tecnai(tem.TEM):
 	name = 'Tecnai'
+	column_type = 'tecnai'
 	use_normalization = False
 	projection_mode = 'imaging'
 	# attribute name for getMagnification function.
 	# either 'Magnification' or 'CameraLength'
 	mag_attr_name = 'Magnification'
 	mag_scale = 1
-	default_stage_speed = 1.0
+	stage_top_speed = 29.78
+	default_stage_speed_fraction = 1.0
 
 	def __init__(self):
 		tem.TEM.__init__(self)
@@ -99,7 +102,8 @@ class Tecnai(tem.TEM):
 			self.exposure = None
 
 		self.magnifications = []
-		self.stage_speed = self.default_stage_speed
+		self.speed_deg_per_second = self.stage_top_speed
+		self.stage_speed_fraction = self.default_stage_speed_fraction
 		self.mainscreenscale = 44000.0 / 50000.0
 		self.wait_for_stage_ready = True
 		self.mag_changed = False
@@ -159,8 +163,21 @@ class Tecnai(tem.TEM):
 	def getHasFalconProtector(self):
 		return self.getFeiConfig('camera','has_falcon_protector')
 
-	def getAutoitExePath(self):
-		return self.getFeiConfig('phase plate','autoit_exe_path')
+	def getAutoitPhasePlateExePath(self):
+		value = self.getFeiConfig('phase plate','autoit_phase_plate_exe_path')
+		if not value:
+			# back compatibility pre 3.5
+			value=self.getFeiConfig('phase plate','autoit_exe_path')
+		return value
+
+	def getAutoitBeamstopInExePath(self):
+		return self.getFeiConfig('beamstop','autoit_in_exe_path')
+
+	def getAutoitBeamstopOutExePath(self):
+		return self.getFeiConfig('beamstop','autoit_out_exe_path')
+
+	def getAutoitBeamstopHalfwayExePath(self):
+		return self.getFeiConfig('beamstop','autoit_halfway_exe_path')
 
 	def getRotationCenterScale(self):
 		return self.getFeiConfig('optics','rotation_center_scale')
@@ -259,23 +276,22 @@ class Tecnai(tem.TEM):
 		return self._setStagePosition(value)
 
 	def resetStageSpeed(self):
-		self.stage_speed = self.default_stage_speed
+		self.stage_speed_fraction = self.default_stage_speed_fraction
 		if self.tom:
-			self.tom.Stage.Speed = self.default_stage_speed
+			self.tom.Stage.Speed = self.default_stage_speed_fraction
 
 	def setStageSpeed(self, value):
-		# 0.0 to 1.0 with 1.0 the highest speed
-		if value > 1.0 or value < 0.0:
-			raise ValueError('Stage speed must be between 0.0 and 1.0')
-		self.stage_speed = value
+		self.speed_deg_per_second = value
+		self.stage_speed_fraction = min(value/self.stage_top_speed,1.0)
 		if self.tom:
-			self.tom.Stage.Speed = value
+			# tom-monikar needs to set speed first while temscripting set speed in gotowithspeed call.
+			self.tom.Stage.Speed = self.stage_speed_fraction
 
 	def getStageSpeed(self):
 		if self.tom:
-			return self.tom.Stage.Speed
+			return self.tom.Stage.Speed * self.stage_top_speed
 		else:
-			return self.stage_speed
+			return self.stage_speed_fraction * self.stage_top_speed
 
 	def normalizeLens(self, lens = 'all'):
 		if lens == 'all':
@@ -961,7 +977,7 @@ class Tecnai(tem.TEM):
 			print 'took extra %.1f seconds to get to ready status' % (donetime)
 
 	def _setStagePosition(self, position, relative = 'absolute'):
-		if False:
+		if self.tom is not None and self.column_type=='tecnai':
 			return self._setTomStagePosition(position, relative)
 		else:
 			return self._setTemStagePosition(position, relative)
@@ -997,13 +1013,13 @@ class Tecnai(tem.TEM):
 		if axes == 0:
 			return
 		try:
-			if self.stage_speed == self.default_stage_speed:
+			if self.stage_speed_fraction == self.default_stage_speed_fraction:
 				self.tecnai.Stage.Goto(pos, axes)
 			else:
 				# Low speed move needs to be done on individual axis
 				for key, value in position.items():
 					single_axis = getattr(self.tem_constants, 'axis' + key.upper())
-					self.tecnai.Stage.GotoWithSpeed(pos, single_axis, self.stage_speed)
+					self.tecnai.Stage.GotoWithSpeed(pos, single_axis, self.stage_speed_fraction)
 		except com_module.COMError, e:
 			if self.getDebugStage():
 				print datetime.datetime.now()
@@ -1664,8 +1680,9 @@ class Tecnai(tem.TEM):
 		return self.tecnai.TemperatureControl.RefrigerantLevel(id)
 
 	def nextPhasePlate(self):
-		if os.path.isfile(self.getAutoitExePath()):
-			subprocess.call(self.getAutoitExePath())
+		if os.path.isfile(self.getAutoitPhasePlateExePath()):
+			subprocess.call(self.getAutoitPhasePlateExePath())
+			error = self._checkAutoItError()
 		else:
 			pass
 
@@ -1727,63 +1744,24 @@ class Tecnai(tem.TEM):
 		'''
 		Retract aperture mechanism.
 		'''
-		am = self._getApertureMechanismObj(name)
-		if am.State == 3:
-			# already retracted mechanism can not be retracted again.
-			return False	# successful
-		if am.State != 1:
-			raise RuntimeError('Aperture not in a retractable state')
-		status = am.Retract()
-		return bool(status)
-
-	def _getApertureMechanismObj(self, name):
-		if not self.hasAutoAperture():
-			raise ValueError('No automated aperture')
-		amc = self.tecnai.ApertureMechanismCollection
-		# TO DO: better to use ID for obj aperture (4)
-		index = self._getApertureMechanismIndex(name)
-		if index is False:
-			raise ValueError('Aperture mechanism %s does not exist' % name)
-		am = amc.Item(index)
-		return am
-
-	def _getApertureMechanismIndex(self, name):
-		'''
-		Get index of aperture mechanism in ApertureMechanismCollection
-		'''
-		if not self.hasAutoAperture() or name not in self.aperture_mechanism_indexmap.keys():
-			return False
-		amc = self.tecnai.ApertureMechanismCollection
-		count = amc.Count
-		for i in range(count):
-			if amc.Item(i).Id == self.aperture_mechanism_indexmap[name]:
-				return i
+		return self.setApertureSelection(mechanism_name, 'open')
 
 	def getApertureMechanisms(self):
 		'''
 		Names of the available aperture mechanism
 		'''
-		return ['condenser2', 'objective', 'selected area']
-
-	def _getApertureObjsOfMechanismName(self,mechanism_name):
-		'''
-		All aperture objects on an aperture mechanism.
-		'''
-		# get aperture objects
-		am = self._getApertureMechanismObj(mechanism_name)
-		ac = am.ApertureCollection
-		count = ac.Count
-		apertures = map((lambda x: ac.Item(x)),range(count))
-		return apertures
+		return ['condenser_2', 'objective', 'selected_area']
 
 	def getApertureSelections(self, mechanism_name):
 		'''
-		get valid selection for an aperture mechanism to be used in gui.
+		get valid selection for an aperture mechanism to be used in gui,including "open" if available.
 		'''
-		names = self.getApertureNames(mechanism_name)
-		am = self._getApertureMechanismObj(mechanism_name)
-		if am.IsRetractable:
-			names.insert(0,'open')
+		if mechanism_name == 'condenser':
+			# always look up condenser 2 value
+			mechanism_name = 'condenser_2'
+		names = self.getFeiConfig('aperture',mechanism_name)
+		# This may be string or integer.
+		names = list(map((lambda x: str(x)),names))
 		return names
 
 	def getApertureSelection(self, mechanism_name):
@@ -1791,42 +1769,72 @@ class Tecnai(tem.TEM):
 		Get current aperture selection of specified aperture mechanism
 		as string name in um or as open.
 		'''
-		am = self._getApertureMechanismObj(mechanism_name)
-		state = am.State
-		if state == 3:
-			return 'open'
-		if state == 1:
-			a = am.SelectedAperture
-			return a.Name
+		if not self.getUseAutoAperture():
+			return 'unknown'
+		if mechanism_name == 'condenser':
+			# always look up condenser 2 value
+			mechanism_name = 'condenser_2'
+		if mechanism_name not in self.getFeiConfig('aperture').keys():
+			return 'unknown'
+		exepath = self.getFeiConfig('aperture','autoit_aperture_selection_exe_path')
+		if exepath and os.path.isfile(exepath):
+			cmd = '%s "%s" %s %s get' % (exepath,configpath,self.column_type, mechanism_name)
+			subprocess.call(cmd)
+			error = self._checkAutoItError()
+			result = self._getAutoItResult()
+			if result:
+				return result
 		# all counted as invalid state
 		return 'unknown'
+
+	def _checkAutoItError(self, error_filename='autoit_error.log'):
+		errorpath = os.path.join(os.getcwd(),error_filename)
+		if not os.path.isfile(errorpath):
+			return
+		f = open(errorpath)
+		msglist = f.readlines()
+		f.close()
+		# cleanup after read
+		os.remove(errorpath)
+		if msglist:
+			raise ValueError(msglist[0].split('\n')[0])
+
+	def _getAutoItResult(self, result_filename='autoit_result.log'):
+		resultpath = os.path.join(os.getcwd(),result_filename)
+		if not os.path.isfile(resultpath):
+			# the result is None
+			return
+		f = open(resultpath)
+		msglist = f.readlines()
+		f.close()
+		os.remove(resultpath)
+		if msglist:
+			return msglist[0].split('\n')[0]
 
 	def setApertureSelection(self, mechanism_name, name):
 		'''
 		Set Aperture selection of a aperture mechanism with aperture name.
 		Aperture name 'open' means retracted aperture. Size string in
 		unit of um is used as the name for that aperture.
+		return True if change is made
 		'''
+		if not self.getUseAutoAperture():
+			return False
+		if mechanism_name == 'condenser':
+			# always look up condenser 2 value
+			mechanism_name = 'condenser_2'
 		selections = self.getApertureSelections(mechanism_name)
 		if name not in selections:
 			raise ValueError('Invalid selection: %s' % name)
 		if name == '' or name is None:
 			# nothing to do
 			return False
-		if name == 'open':
-			try:
-				has_error = self.retractApertureMechanism(mechanism_name)
-				if has_error:
-					raise RuntimeError('Fail to retract %s' % mechanism_name)
-			except RuntimeError, e:
-				raise
-		else:
-			try:
-				has_error = self.insertSelectedApertureMechanism(mechanism_name, name)
-				if has_error:
-					raise RuntimeError('Fail to select %s on %s aperture' % (name,mechanism_name))
-			except RuntimeError, e:
-				raise
+		exepath = self.getFeiConfig('aperture','autoit_aperture_selection_exe_path')
+		if exepath and os.path.isfile(exepath):
+			cmd = '%s "%s" %s %s set "%s"' % (exepath,configpath,self.column_type, mechanism_name,name)
+			subprocess.call(cmd)
+			error = self._checkAutoItError()
+			return True
 		return False
 
 	def getApertureNames(self, mechanism_name):
@@ -1843,19 +1851,25 @@ class Tecnai(tem.TEM):
 		'''
 		Insert an aperture selected for a mechanism.
 		'''
-		am = self._getApertureMechanismObj(mechanism_name)
-		names = self.getApertureNames(mechanism_name)
-		if aperture_name not in names:
-			raise ValueError('No apeture of the name %s on %s' %(aperture_name, mechanism_name))
-		if am.State != 1 and am.State != 3 :
-			raise RuntimeError('Aperture not in a controlable state')
-		aps = self._getApertureObjsOfMechanismName(mechanism_name)
-		status = am.SelectAperture(aps[names.index(aperture_name)])
-		# aperture already selected will return immediately.
-		return bool(status)
+		return self.setApertureSelection(mechanism_name, aperturn_name)
+
+	def setBeamstopPosition(self, value):
+		"""
+		Possible values: ('in','out','halfway')
+		Tecnically tecnai has no software control on this.
+		"""
+		valuecap = value[0].upper()+value[1:]
+		methodname = 'getAutoitBeamstop%sExePath' % (valuecap)
+		exepath = getattr(self,methodname)()
+		if exepath and os.path.isfile(exepath):
+			subprocess.call(exepath)
+			time.sleep(2.0)
+		else:
+			pass
 
 class Krios(Tecnai):
 	name = 'Krios'
+	column_type = 'titan'
 	use_normalization = True
 	def __init__(self):
 		Tecnai.__init__(self)
@@ -1868,6 +1882,7 @@ class Halo(Tecnai):
 	Titan Halo has Titan 3 condensor system but side-entry holder.
 	'''
 	name = 'Halo'
+	column_type = 'titan'
 	use_normalization = True
 
 	def getRefrigerantLevel(self,id=0):
@@ -1878,11 +1893,13 @@ class Halo(Tecnai):
 
 class EFKrios(Krios):
 	name = 'EF-Krios'
+	column_type = 'titan'
 	use_normalization = True
 	projection_lens_program = 'EFTEM'
 
 class Talos(Tecnai):
 	name = 'Talos'
+	column_type = 'talos'
 	use_normalization = True
 
 	def hasAutoAperture(self):
@@ -1890,6 +1907,7 @@ class Talos(Tecnai):
 
 class Arctica(Talos):
 	name = 'Arctica'
+	column_type = 'talos'
 	use_normalization = True
 
 	def hasAutoAperture(self):
@@ -1897,18 +1915,45 @@ class Arctica(Talos):
 
 class Glacios(Arctica):
 	name = 'Glacios'
+	column_type = 'talos'
 	use_normalization = True
 
 #### Diffraction Instrument
 class DiffrTecnai(Tecnai):
 	name = 'DiffrTecnai'
+	column_type = 'tecnai'
 	use_normalization = False
+	projection_mode = 'diffraction'
+	mag_attr_name = 'CameraLength'
+	mag_scale = 1000
+
+class DiffrArctica(Arctica):
+	name = 'DiffrArctica'
+	column_type = 'talos'
+	use_normalization = True
 	projection_mode = 'diffraction'
 	mag_attr_name = 'CameraLength'
 	mag_scale = 1000
 
 class DiffrGlacios(Glacios):
 	name = 'DiffrGlacios'
+	column_type = 'talos'
+	use_normalization = True
+	projection_mode = 'diffraction'
+	mag_attr_name = 'CameraLength'
+	mag_scale = 1000
+
+class DiffrKrios(Krios):
+	name = 'DiffrKrios'
+	column_type = 'titan'
+	use_normalization = True
+	projection_mode = 'diffraction'
+	mag_attr_name = 'CameraLength'
+	mag_scale = 1000
+
+class DiffrHalo(Halo):
+	name = 'DiffrHalo'
+	column_type = 'titan'
 	use_normalization = True
 	projection_mode = 'diffraction'
 	mag_attr_name = 'CameraLength'

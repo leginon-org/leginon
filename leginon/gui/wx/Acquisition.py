@@ -10,7 +10,7 @@ import threading
 import leginon.gui.wx.Node
 import leginon.gui.wx.Settings
 from leginon.gui.wx.Choice import Choice
-from leginon.gui.wx.Entry import FloatEntry, EVT_ENTRY, IntEntry
+from leginon.gui.wx.Entry import Entry, FloatEntry, EVT_ENTRY, IntEntry
 from leginon.gui.wx.Presets import EditPresetOrder, EVT_PRESET_ORDER_CHANGED
 import leginon.gui.wx.Events
 import leginon.gui.wx.ImagePanel
@@ -385,13 +385,23 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 						wx.ALIGN_CENTER_VERTICAL)
 		return sz_beampath
 
-	def createRetractObjApertureSizer(self):
-		self.widgets['retract obj aperture'] = wx.CheckBox(self, -1, 'Retract objective aperture while imaging')
+	def createSetApertureSizer(self):
+		self.widgets['set aperture'] = wx.CheckBox(self, -1, 'set these apertures while imaging')
+		self.widgets['objective aperture'] = Entry(self, -1)
+		self.widgets['c2 aperture'] = Entry(self, -1)
 		# mskr sizer
-		sz_obj_ap = wx.GridBagSizer(0, 0)
-		sz_obj_ap.Add(self.widgets['retract obj aperture'], (0, 0), (1, 1),
+		sz_aps = wx.GridBagSizer(0, 0)
+		sz_aps.Add(self.widgets['set aperture'], (0, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		return sz_obj_ap
+		label1 = wx.StaticText(self, -1, 'condenser:')
+		sz_aps.Add(label1, (1, 0), (1, 1),wx.ALIGN_RIGHT)
+		sz_aps.Add(self.widgets['c2 aperture'], (1, 1), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		label2 = wx.StaticText(self, -1, 'objective:')
+		sz_aps.Add(label2, (2, 0), (1, 1),wx.ALIGN_RIGHT)
+		sz_aps.Add(self.widgets['objective aperture'], (2, 1), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		return sz_aps
 
 	def addSettings(self):
 		# move type
@@ -405,7 +415,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz_emission = self.createEmissionSizer()
 		sz_tilt = self.createTiltSizer()
 		sz_beampath = self.createClearBeamPathSizer()
-		sz_obj_ap = self.createRetractObjApertureSizer()
+		sz_obj_ap = self.createSetApertureSizer()
 		sbszsim = self.createSimulatedTargetLoopBoxSizer()
 
 		# misc
@@ -467,7 +477,8 @@ class Panel(leginon.gui.wx.Node.Panel):
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PAUSE, 'pause', shortHelpString='Pause')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ABORT, 'stop', shortHelpString='Abort')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ABORT_QUEUE, 'stop_queue', shortHelpString='Abort Queue')
-		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_EXTRACT, 'clock', shortHelpString='Toggle queue timeout')
+		# hide toggle queue timeout since it is old and confuses new user
+		#self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_EXTRACT, 'clock', shortHelpString='Toggle queue timeout')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SIMULATE_TARGET, 'simulatetarget', shortHelpString='Simulate Target')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SIMULATE_TARGET_LOOP, 'simulatetargetloop', shortHelpString='Simulate Target Loop')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SIMULATE_TARGET_LOOP_STOP, 'simulatetargetloopstop', shortHelpString='Stop Simulate Target Loop')
@@ -514,7 +525,7 @@ class Panel(leginon.gui.wx.Node.Panel):
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSimulateTargetLoopStopTool,
 											id=leginon.gui.wx.ToolBar.ID_SIMULATE_TARGET_LOOP_STOP)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onBrowseImagesTool, id=leginon.gui.wx.ToolBar.ID_BROWSE_IMAGES)
-		self.toolbar.Bind(wx.EVT_TOOL, self.onToggleQueueTimeout, id=leginon.gui.wx.ToolBar.ID_EXTRACT)
+		#self.toolbar.Bind(wx.EVT_TOOL, self.onToggleQueueTimeout, id=leginon.gui.wx.ToolBar.ID_EXTRACT)
 
 	def onToggleQueueTimeout(self, evt):
 		self.node.toggleQueueTimeout()
@@ -566,12 +577,23 @@ class Panel(leginon.gui.wx.Node.Panel):
 		self.node.player.stop()
 
 	def onStopQueueTool(self, evt):
-		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, False)
-		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, False)
-		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
-		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT_QUEUE, False)
-		self.node.paused_by_gui = False
-		self.node.player.stopqueue()
+		number_of_targets = self.node.getQueueTargetListToDo()
+		if number_of_targets:
+			msg = 'Are you sure you want to abort targets in %d parent images ?' % (number_of_targets)
+			title = 'Abort all targets in Queue'
+		else:
+			msg = 'No targetlist in queue now.\n Are you sure you want to abort future target list ?'
+			title = 'Abort future targets in Queue'
+		dialog = wx.MessageDialog(self, msg,title, wx.YES|wx.NO)
+		result = dialog.ShowModal()
+		dialog.Destroy()
+		if result == wx.ID_YES:
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, False)
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, False)
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT_QUEUE, False)
+			self.node.paused_by_gui = False
+			self.node.player.stopqueue()
 
 	def onPlayer(self, evt):
 		if evt.state == 'play':

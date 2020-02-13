@@ -304,7 +304,7 @@ if ($ctfrundatas) {
 	// Row 3
 	echo "<tr><td>\n";
 		echo "<h3>Software Package Resolution</h3>\n";
-		echo "<a href='ctfgraph.php?hg=0&expId=$expId&s=1&f=ctffind4_resolution&ctff=$ctff'>\n";
+		echo "<a href='ctfgraph.php?hg=0&expId=$expId&s=1&xmin=1&xmax=30&f=ctffind4_resolution&ctff=$ctff'>\n";
 		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
 			."w=800&h=600&hg=1&expId=$expId&s=1&f=ctffind4_resolution&ctff=$ctff'></a>\n";
 	echo "</td><td>\n";
@@ -380,7 +380,7 @@ if ($ctfrundatas) {
 	$ctfdownlink = "<h3>";
 	$ctfdownlink = "<h3>";
 	$ctfdownlink .= "<a href='downloadctfdata.php?expId=$expId&preset=$preset&runId=$runId&relion=2'>\n";
-	$ctfdownlink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download star file for Relion 2.0 or VLION'>&nbsp;download star file for Relion 2.0 or VLION\n";
+	$ctfdownlink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download star file for Relion 3 without beam tilt values'>&nbsp;download star file for Relion 3 without beam tilt values\n";
 	$ctfdownlink .= "</a></h3>\n";
 	echo $ctfdownlink;
 

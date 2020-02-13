@@ -32,28 +32,34 @@ HEADER_FIELDS = (
 	('PIXEL_SIZE', float, 0.028, '{:8.3f}'), # mm
 	('OSC_RANGE', float, 1.000, '{:8.3f}'), #degrees. Can this be negative ?
 	('OSC_START', float, 0.000, '{:8.3f}'), #degrees
-	('BEAM_CENTER_X', int, 0, '{:>4}'),
-	('BEAM_CENTER_Y', int, 0, '{:>4}'),
+	('BEAM_CENTER_X', float, 0.000, '{:8.3f}'), # mm
+	('BEAM_CENTER_Y', float, 0.000, '{:8.3f}'), # mm
 	('PHI', float, 0.000, '{:8.3f}'), #spindle angle in degrees same as OSC_START ?
 	('TWOTHETA', float, 0.0, '{:8.3f}'), # detector angle to beam normal plane in degrees
 	# timing
 	('TIME', float, 1.0, '{0}'), # seconds
 	('ACC_TIME', int, 1000, '{0}'), # milliseconds
 	# detector identity
+	# DIALS wants GAIN not be 1 to signal that this is an integration camera
+	# and automatically set background.model=simple
+	('GAIN', float, 1.00, '{:8.2f}'),
 	# assume detector is native at BIN 2x2 because Dials does not read BIN.
 	('BIN', tuple, (1,1), '{0[0]:1}x{0[1]:1}'),
 	('ADC', str, 'fast', '{0}'),
 	# ADSC info
 	('BIN_TYPE', str, 'HW', '{0}'),
 	('CREV', int, 1, '{:>3}'),
-	('DETECTOR_SN', int, 1, '{0}'),
-	# APS info
+	#('DETECTOR_SN', int, 1, '{0}'),
+	# setup info
 	('BEAMLINE', str, 'nan', '{0}'),
 	# pthers
 	('DATE', datetime.datetime, datetime.datetime.today(), '{0}'), #UNIX date in current timezone
 #	('IMAGE_PEDESTAL', int, 0, '{:0}'), # where did I get this ?
+	# my own keys for my record
+	('LEGINON_OFFSET', float, 0.0, '{:7.1f}'),#offset added when converting float32 mrc file to smv
 )
 
+DEPRECATED_KEYS = ['IMAGE_PEDESTAL', 'DETECTOR_SN']
 # (header_value, numpy_dtype, number_of_bytes)
 TYPE_MAP = [('unsigned_short', numpy.uint16, 2),]
 
@@ -162,6 +168,8 @@ def parseHeader(headerbytes):
 					value = validate_and_convert(key, value_str)
 					headerdict[key] = value
 				except Exception as e:
+					if key in DEPRECATED_KEYS:
+						continue
 					print('Invalid parsing: "%s" with error-\n  %s' % (l,e))
 					sys.exit(1)
 	return headerdict

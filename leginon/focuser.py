@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from leginon import singlefocuser, manualfocuschecker
+from leginon import acquisition, singlefocuser, manualfocuschecker
 import gui.wx.Focuser
 from leginon import leginondata
 from leginon import node, targetwatcher
@@ -234,10 +234,12 @@ class Focuser(singlefocuser.SingleFocuser):
 		# aquire and save the focus image
 		# only needed at the last target
 		if status != 'repeat' and self.settings['acquire final'] and  self.is_last_target_and_focus_step:
-			self.clearBeamPath()
-			manualfocuschecker.ManualFocusChecker.acquire(self, presetdata, emtarget)
-
+			self.acquireFinal(presetdata, emtarget)
 		return status
+
+	def acquireFinal(self, presetdata, emtarget):
+		self.clearBeamPath()
+		manualfocuschecker.ManualFocusChecker.acquire(self, presetdata, emtarget)
 
 	def processFocusSetting(self, setting, emtarget=None):
 		"""

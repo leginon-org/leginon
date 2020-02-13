@@ -35,6 +35,9 @@ class Abort(Exception):
 class NoPixelSizeError(Exception):
 	pass
 
+class NoCameraLengthError(Exception):
+	pass
+
 class NoCalibrationError(Exception):
 	def __init__(self, *args, **kwargs):
 		if 'state' in kwargs:
@@ -522,6 +525,53 @@ class PixelSizeCalibrationClient(CalibrationClient):
 		return last.values()
 
 
+class CameraLengthCalibrationClient(CalibrationClient):
+	'''
+	basic CalibrationClient for accessing a type of calibration involving
+	a matrix at a certain magnification
+	'''
+	def __init__(self, node):
+		CalibrationClient.__init__(self, node)
+
+	def researchCameraLengthData(self, tem, ccdcamera, mag):
+		queryinstance = leginondata.CameraLengthCalibrationData()
+		queryinstance['magnification'] = mag
+		self.setDBInstruments(queryinstance,tem,ccdcamera)
+		caldatalist = self.node.research(datainstance=queryinstance)
+		return caldatalist
+
+	def retrieveCameraLength(self, tem, ccdcamera, mag):
+		'''
+		finds the requested pixel size using magnification
+		'''
+		caldatalist = self.researchCameraLengthData(tem, ccdcamera, mag)
+		if len(caldatalist) < 1:
+			raise NoCameraLengthError()
+		caldata = caldatalist[0]
+		pixelsize = caldata['camera length']
+		return pixelsize
+
+	def time(self, tem, ccdcamera, mag):
+		pdata = self.researchCameraLengthData(tem, ccdcamera, mag)
+		if len(pdata) < 1:
+			timeinfo = None
+		else:
+			timeinfo = pdata[0].timestamp
+		return timeinfo
+
+	def retrieveLastCameraLengths(self, tem, camera):
+		caldatalist = self.researchCameraLengthData(tem, camera, None)
+		last = {}
+		for caldata in caldatalist:
+			try:
+				mag = caldata['magnification']
+			except:
+				raise RuntimeError('Failed retrieving last camera length')
+			if mag not in last:
+				last[mag] = caldata
+		return last.values()
+
+
 class MatrixCalibrationClient(CalibrationClient):
 	'''
 	basic CalibrationClient for accessing a type of calibration involving
@@ -850,7 +900,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			mt.append(m)
 		M = numpy.concatenate(mt, 0)
 
-		solution = numpy.linalg.lstsq(M, v)
+		solution = numpy.linalg.lstsq(M, v, rcond=-1)
 
 		result = {'defocus': solution[0][0], 'min': float(solution[1][0])}
 		if len(solution[0]) == 3:
@@ -1444,8 +1494,8 @@ class ImageShiftCalibrationClient(SimpleMatrixCalibrationClient):
 		'''
 		Using physical position as a global coordinate system, we can
 		do pixel to pixel transforms between mags.
-		This function will calculate a pixel vector at mag2, given
-		a pixel vector at mag1.
+		This function will calculate a (row,col) pixel vector at mag2, given
+		a (row,col) pixel vector at mag1.
 		For image shift, this means: the physical image shift values in meters
 		need to be properly calibrated for this to work right
 		'''
@@ -1568,8 +1618,8 @@ class ImageScaleRotationCalibrationClient(ImageShiftCalibrationClient):
 		'''
 		Using physical position as a global coordinate system, we can
 		do pixel to pixel transforms between mags.
-		This function will calculate a pixel vector at mag2, given
-		a pixel vector at mag1.
+		This function will calculate a (row, col) pixel vector at mag2, given
+		a (row, col) pixel vector at mag1.
 		For image shift, this means: the physical image shift values in meters
 		need to be properly calibrated for this to work right
 		'''
@@ -1652,17 +1702,52 @@ class StageCalibrationClient(SimpleMatrixCalibrationClient):
 		'''
 		Using stage position as a global coordinate system, we can
 		do pixel to pixel transforms between mags.
-		This function will calculate a pixel vector at mag2, given
-		a pixel vector at mag1.
+		This function will calculate a (row, col) pixel vector at mag2, given
+		a (row, col) pixel vector at mag1.
 		'''
 		par = self.parameter()
 		matrix1 = self.retrieveMatrix(tem1, ccdcamera1, par, ht, mag1)
 		matrix2 = self.retrieveMatrix(tem2, ccdcamera2, par, ht, mag2)
 		matrix2inv = numpy.linalg.inv(matrix2)
-		p1 = numpy.array(p1)
+		p1 = numpy.array(p1) #[row, col]
 		stagepos = numpy.dot(matrix1, p1)
 		p2 = numpy.dot(matrix2inv, stagepos)
 		return p2
+
+class StageSpeedClient(CalibrationClient):
+	def __init__(self, node):
+		CalibrationClient.__init__(self, node)
+
+	#TODO fit data of rate vs actual_time-expected_time and then save
+	# slope and intercept.
+
+	def researchStageSpeedCorrection(self, tem, axis):
+		caldata = leginondata.StageSpeedCalibrationData(axis=axis)
+		if tem is None:
+			caldata['tem'] = self.instrument.getTEMData()
+		else:
+			caldata['tem'] = tem
+		results = caldata.query(results=1)
+		if results:
+			return results[0]['slope'], results[0]['intercept']
+		else:
+			return None, None
+
+	def getCorrectedTiltSpeed(self, tem, speed, target_angle):
+		'''
+		speed in degrees per second.
+		target_angle in degrees.
+		'''
+		slope, intercept = self.researchStageSpeedCorrection(tem, 'a')
+		if slope is None:
+			return speed
+		a = slope
+		b = intercept - target_angle/speed
+		c = target_angle
+		if b*b -4*a*c < 0:
+			return speed
+		new_speed = (-b - math.sqrt(b*b -4*a*c))/ (2*a)
+		return new_speed
 
 class StageTiltCalibrationClient(StageCalibrationClient):
 	def __init__(self, node):
@@ -2016,8 +2101,8 @@ class ModeledStageCalibrationClient(MatrixCalibrationClient):
 		'''
 		Using stage position as a global coordinate system, we can
 		do pixel to pixel transforms between mags.
-		This function will calculate a pixel vector at mag2, given
-		a pixel vector at mag1.
+		This function will calculate a (row, col) pixel vector at mag2, given
+		a (row, col) pixel vector at mag1.
 		'''
 
 		scope = leginondata.ScopeEMData()
@@ -2418,6 +2503,8 @@ class BeamSizeCalibrationClient(CalibrationClient):
 			intensity_delta = intensity - intercept
 			beamsize = intensity_delta / slope
 			return beamsize
+		else:
+			self.node.logger.debug('missing beam size calibration for tem id:%d, spot size:%d, and %s probe' % (scopedata['tem'].dbid, scopedata['spot size'], scopedata['probe mode']))
 
 	def getIlluminatedArea(self,scopedata):
 		beam_diameter = self.getBeamSize(scopedata) 

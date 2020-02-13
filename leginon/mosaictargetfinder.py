@@ -79,7 +79,9 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 			'image shift': calibrationclient.ImageShiftCalibrationClient(self),
 			'stage position': calibrationclient.StageCalibrationClient(self),
 			'modeled stage position':
-												calibrationclient.ModeledStageCalibrationClient(self)
+												calibrationclient.ModeledStageCalibrationClient(self),
+			'beam size':
+												calibrationclient.BeamSizeCalibrationClient(self),
 		}
 		self.images = {
 			'Original': None,
@@ -153,6 +155,16 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		# update self.existing_position_targets,  This is still a bit strange.
 		for coord_tuple in displayedtargetdata:
 			self.existing_position_targets[coord_tuple] = displayedtargetdata[coord_tuple]
+
+	def _getTargetDisplayInfo(self,image_pixelsize):
+		vectors, beam_diameter_on_image = super(MosaicClickTargetFinder, self)._getTargetDisplayInfo(image_pixelsize)
+		if self.mosaic and self.mosaic.scale:
+			scale = self.mosaic.scale
+		else:
+			scale = 1
+		scaled_vectors = {'x':(scale*vectors['x'][0],scale*vectors['x'][1]),'y':(scale*vectors['y'][0],scale*vectors['y'][1])}
+		beam_diameter_on_image *= scale
+		return scaled_vectors, beam_diameter_on_image
 
 	def getDisplayedReferenceTarget(self):
 		try:
@@ -411,6 +423,9 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 			n += len(targets[type])
 		ndone = len(donetargets)
 		self.logger.info('displayed %s targets (%s done)' % (n+ndone, ndone))
+		# trigger activation of submit button in the gui. Won't get here
+		# without mosaic.
+		self.panel.doneTargetDisplay()
 
 	def getMosaicImageList(self, targetlist):
 		self.logger.debug('in getMosaicImageList')
@@ -455,6 +470,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.publish(tiledata, database=True)
 		self.setMosaicNameFromImageList(imagelist)
 		self.logger.debug('published MosaicTileData')
+		self.currentimagedata = imagedata
 		self.addTile(imagedata)
 
 		if self.settings['create on tile change'] == 'all':
@@ -572,6 +588,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 			imagedata = tile['image']
 			recent_imagedata = self.researchImages(list=imagedata['list'],target=imagedata['target'])[-1]
 			self.addTile(recent_imagedata)
+			self.currentimagedata = recent_imagedata
 		self.reference_target = self.getReferenceTarget()
 		self.logger.info('Mosaic loaded (%i of %i images loaded successfully)' % (i+1, ntotal))
 		if self.settings['create on tile change'] in ('all', 'final'):

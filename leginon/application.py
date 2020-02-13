@@ -105,6 +105,9 @@ class Application(object):
 		try:
 			eventclass = getattr(event, bs['event class string'])
 		except:
+			# no longer want these event bindings
+			if bs['event class string'] in ['IdleTimerPauseEvent','IdleTimerRestartEvent']:
+				return
 			raise ValueError('cannot get event class for binding: %s' % (bs['event class string'],))
 		try:
 			fromnode = bs['from node alias']
@@ -124,6 +127,9 @@ class Application(object):
 		threads = []
 		for bindingspec in self.bindingspecs:
 			args = self.bindingSpec2Args(bindingspec)
+			if not args:
+				# ignored deplicated events
+				continue
 			apply(self.node.addEventDistmap, args)
 		nodeclasses = map(lambda ns: (ns['alias'], ns['class string']),
 											self.nodespecs)

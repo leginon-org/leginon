@@ -118,6 +118,7 @@ class ActivateNotificationEvent(NotificationEvent):
 	def typemap(cls):
 		return NotificationEvent.typemap() + (
 			('tem_host', str),
+			('timeout_minutes', float),
 		)
 	typemap = classmethod(typemap)
 
@@ -127,6 +128,10 @@ class DeactivateNotificationEvent(NotificationEvent):
 
 class NodeBusyNotificationEvent(NotificationEvent):
 	'Event sent by node such as Tomography to restart timeout timer'
+	pass
+
+class IdleNotificationEvent(NotificationEvent):
+	'Event sent to presets manager from manager to notify that Idle is timed out'
 	pass
 
 class ManagerPauseAvailableEvent(NotificationEvent):
@@ -359,13 +364,14 @@ class UnlockEvent(ControlEvent):
 	'Event that signals an unlock'
 	pass
 
-class IdleTimerPauseEvent(LockEvent):
-	'Event that pause the idle timer so it does not timeout'
-	pass
+# See Issue 8367 These are no longer used.
+#class IdleTimerPauseEvent(LockEvent):
+#	'Event that pause the idle timer so it does not timeout'
+#	pass
 
-class IdleTimerRestartEvent(UnlockEvent):
-	'Event that restart the idle timer countdown'
-	pass
+#class IdleTimerRestartEvent(UnlockEvent):
+#	'Event that restart the idle timer countdown'
+#	pass
 
 class QueueGridEvent(ControlEvent):
 	def typemap(cls):

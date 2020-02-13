@@ -369,9 +369,9 @@ class TEMController(node.Node):
 		self.panel.setTEMParamDone()
 		return is_success
 
-	def getApertureNames(self):
+	def getApertureNames(self,mechanism):
 		try:
-			names = self.instrument.tem.getApertureSelections('objective')
+			names = self.instrument.tem.getApertureSelections(mechanism)
 		except:
 			names = []
 		return names
@@ -384,21 +384,24 @@ class TEMController(node.Node):
 			unit = ''
 		return unit
 
-	def selectObjAperture(self,name):
+	def selectAperture(self,mechanism, name):
 		unit = self.getApertureNameUnit(name)
-		self.logger.info('Changing objective aperture to %s %s' % (name,unit))
+		self.logger.info('Changing %s aperture to %s %s' % (mechanism,name,unit))
 		is_success = False
 		try:
-			self.instrument.tem.setApertureSelection('objective',name)
+			self.instrument.tem.setApertureSelection(mechanism,name)
 			is_success = True
 		except Exception, e:
 			self.logger.error(e)
 		if is_success == True:
-			self.logger.info('Objective aperture changed to %s %s' % (name,unit))
+			self.logger.info('%s aperture changed to %s %s' % (mechanism,name,unit))
 		self.panel.setTEMParamDone()
 
 	def getApertureMechanisms(self):
-		return self.instrument.tem.getApertureMechanisms()
+		try:
+			return self.instrument.tem.getApertureMechanisms()
+		except:
+			return []
 
 	def getApertureStatesToDisplay(self):
 		names = self.getApertureMechanisms()

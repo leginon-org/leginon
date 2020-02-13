@@ -1104,7 +1104,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		Creates local reference files for gain/dark-correcting the stack of frames
 		'''
 		apDisplay.printMsg('Will setupDarkNormMrcs make dark/gain? %s' % (self.correct_dark_gain,))
-		if not self.correct_dark_gain:
+		if not self.correct_dark_gain or self.getRefImageData('norm') is None: 
 			self.dark_path = None
 			self.norm_path = None
 			return

@@ -99,6 +99,7 @@ class DMSEM(ccdcamera.CCDCamera):
 		self.readout_delay_ms = 0
 		self.align_frames = False
 		self.align_filter = 'None'
+		self.use_cds = False
 		raw_frame_dir = self.getDmsemConfig('k2','raw_frame_dir')
 		self.info_print('Frames are saved to %s' % (raw_frame_dir,))
 
@@ -181,6 +182,26 @@ class DMSEM(ccdcamera.CCDCamera):
 			return True
 		return False
 
+	def isDM332orUp(self):
+		version_id,version_string = self.getDMVersion()
+		if version_id and version_id >= 50302:
+			return True
+		return False
+
+	def isSEMCCD2019orUp(self):
+		year = self.getDmsemConfig('semccd',itemname='semccd_plugin_year')
+		if year:
+			return int(year) >= 2019
+		# default to false for back compatibility
+		return False
+
+	def getFrameSavingRotateFlipDefault(self):
+		'''
+		SEMCCD has always default this to 0 until sometime in May 2019.  Users reported that
+		the orientation changed on K2 installation with GMS 2.
+		'''
+		return int(self.isSEMCCD2019orUp())
+
 	def getAcquisitionShutter(self):
 		number = self.getDmsemConfig(self.config_opt_name,itemname='acquisition_shutter_number')
 		if number is None or number == 1:
@@ -259,6 +280,7 @@ class DMSEM(ccdcamera.CCDCamera):
 		shutter_delay = -self.readout_delay_ms / 1000.0
 
 		acq_binning, left, top, right, bottom, width, height = self.getAcqBinningAndROI()
+		correction_flags = self.getCorrectionFlags()
 
 		acqparams = {
 			'processing': processing,
@@ -270,6 +292,7 @@ class DMSEM(ccdcamera.CCDCamera):
 			'bottom': bottom,
 			'right': right,
 			'exposure': self.getRealExposureTime(),
+			'corrections': correction_flags,
 			'shutter': self.shutter_id,
 			'shutterDelay': shutter_delay,
 		}
@@ -303,6 +326,14 @@ class DMSEM(ccdcamera.CCDCamera):
 		self.debug_print('received shape %s' %(image.shape,))
 
 		if self.save_frames or self.align_frames:
+			if self.getDoEarlyReturn():
+				if self.getEarlyReturnFormat() == '8x8':
+					if self.getEarlyReturnFrameCount() > 0:
+						#fake 8x8 image with the same mean and standard deviation for fast transfer
+						fake_image = self.base_fake_image*image.std() + image.mean()*numpy.ones((8,8))
+					else:
+						fake_image = numpy.zeros((8,8))
+					return fake_image
 			image = self._modifyImageOrientation(image)
 		image = self._modifyImageShape(image)
 		self.debug_print('final shape %s' %(image.shape,))
@@ -340,7 +371,7 @@ class DMSEM(ccdcamera.CCDCamera):
 		return image
 
 	def _modifyImageOrientation(self, image):
-		if not self.isDM231orUp():
+		if self.isSEMCCD2019orUp() or not self.isDM231orUp():
 			k2_rotate = self.getDmsemConfig('k2','rotate')
 			k2_flip = self.getDmsemConfig('k2','flip')
 			if k2_rotate:
@@ -374,8 +405,13 @@ class DMSEM(ccdcamera.CCDCamera):
 			self.camera.InsertCamera(self.cameraid, value)
 		else:
 			return
-		## TODO:  determine necessary settling time:
-		time.sleep(5)
+		t0=time.time()
+		MAX_DELAY = 90 # 90 seconds
+		while inserted != value and time.time()-t0 < MAX_DELAY:
+			time.sleep(1)
+			inserted = self.getInserted()
+		if time.time()-t0 >= MAX_DELAY:
+			raise RuntimeError('Can not set inserted state of the camera to %s' % (value,))
 
 	def getInserted(self):
 		return self.camera.IsCameraInserted(self.cameraid)
@@ -420,6 +456,22 @@ class DMSEM(ccdcamera.CCDCamera):
 			minor = remainder // 100
 			sub = remainder % 100
 		return (version_long,'%d.%d.%d' % (major,minor,sub))
+
+	def getCorrectionFlags(self):
+		'''
+		Binnary Correction flag sum in GMS.  See Feature #8391.
+		GMS3.3.2 has pre-counting correction which is superior.
+		SerialEM always do this correction
+		but Leginon 3.4 and earlier does not.
+		David M. said SerialEM default is 49 for K2 and 1 for K3.
+		49 means defect,bias, and quadrant (to be the same as Ultrascan).
+		I don't think the latter two needs applying in counting.
+		'''
+		if self.isDM332orUp():
+			return 1 # defect correction only.
+		else:
+			# keep it zero to be back compatible.
+			return 0
 
 	def hasScriptFunction(self, name):
 		return self.camera.hasScriptFunction(name)
@@ -481,6 +533,12 @@ class DMSEM(ccdcamera.CCDCamera):
 		if result < 0.0:
 			raise RuntimeError('unable to align energy filter zero loss peak')
 
+	def setUseCds(self,value):
+		self.use_cds = bool(value)
+
+	def getUseCds(self):
+		return self.use_cds
+
 class GatanOrius(DMSEM):
 	name = 'GatanOrius'
 	config_opt_name = 'orius'
@@ -533,6 +591,24 @@ class GatanK2Base(DMSEM):
 	filePerImage = False
 
 	k2_max_ram_for_stack_gb = 12 # maximal ram for ram grabs
+	# base fake image of 8x8 shape, mean=0,0 and std=1.0
+	base_fake_image = numpy.array(
+[[-1.19424753,  1.4246904 , -0.93985889,  0.60135849,  0.27857971,
+        -1.65301365,  1.04678336, -1.52532131],
+       [-1.31055292, -1.64913688, -0.02365123,  0.66956679, -0.65988101,
+         0.9513427 , -0.13423738,  0.33800944],
+       [-1.1071589 ,  0.88239252,  0.10997026, -1.18640795,  0.61022063,
+         0.81224024, -0.16747269,  0.00719223],
+       [-0.90773998,  1.7711954 , -0.22341715,  1.77620855, -1.31179014,
+         0.41032037,  0.0359722 ,  0.54127201],
+       [-0.93403768, -0.68054982,  0.91282793, -0.3759068 , -0.90186899,
+         0.25927322,  0.45464985,  0.45113749],
+       [ 0.90185984,  0.61578781, -0.6812698 , -0.51314294,  1.5032234 ,
+        -0.65909159,  2.16388489, -0.68847963],
+       [-0.85829773, -2.44494674, -0.50517834,  0.6213358 ,  0.9792851 ,
+         0.44794129,  0.76906529,  1.45588215],
+       [ 0.43612393, -0.27890367, -0.11642871, -0.15955607, -2.52247377,
+         0.62344606,  0.42410922,  1.02661867]])
 
 	def __init__(self):
 		super(GatanK2Base, self).__init__()
@@ -603,6 +679,7 @@ class GatanK2Base(DMSEM):
 			'alignFrames': self.align_frames,
 			'saveFrames': self.save_frames,
 			'filt': self.align_filter,
+			'useCds': self.use_cds,
 		}
 		return params
 
@@ -627,7 +704,7 @@ class GatanK2Base(DMSEM):
 			fileroot = self.frames_name
 
 		# 0 means takes what DM gives
-		rot_flip = 0
+		rot_flip = self.getFrameSavingRotateFlipDefault()
 		if not self.isDM231orUp():
 			# Backward compatibility
 			flip = int(not self.getDmsemConfig('k2','flip'))  # 0=none, 4=flip columns before rot, 8=flip after
@@ -671,6 +748,10 @@ class GatanK2Base(DMSEM):
 
 	def getDoEarlyReturn(self):
 		return bool(self.getDmsemConfig('k2','do_early_return'))
+
+	def getEarlyReturnFormat(self):
+		# valid values: 8x8, 256x256
+		return self.getDmsemConfig('k2','early_return_format')
 
 	def getSaveLzwTiffFrames(self):
 		return bool(self.getDmsemConfig('k2','save_lzw_tiff_frames'))
@@ -719,7 +800,12 @@ class GatanK2Base(DMSEM):
 		'''
 		Frame Flip is defined as up-down flip
 		'''
-		return self.isDM231orUp()
+		overwrite = self.getDmsemConfig('k2','overwrite_frame_orientation')
+		if not overwrite:
+			return self.isDM231orUp()
+		else:
+			my_frame_flip = self.getDmsemConfig('k2','frame_flip_to_overwrite_with')
+			return my_frame_flip
 
 	def getFrameRotate(self):
 		'''
@@ -818,6 +904,7 @@ class GatanK3(GatanK2Base):
 		self.dosefrac_frame_time = 0.013
 		self.record_precision = 0.013
 		self.user_exposure_ms = 13
+		self.use_cds = False
 		self.dm_processing = self.getDmProcessing()
 
 	def getDmProcessing(self):
@@ -830,6 +917,36 @@ class GatanK3(GatanK2Base):
 
 	def getSystemGainDarkCorrected(self):
 		return self.dm_processing == 'gain normalized'
+
+	def requireRecentDarkCurrentReferenceOnBright(self):
+		return True
+
+	def updateDarkCurrentReference(self):
+		r = self.camera.PrepareDarkReference(self.cameraid)
+		if r > 0:
+			# has error
+			return True
+		return False
+
+	def getFrameFlip(self):
+		'''
+		Frame Flip is defined as up-down flip.
+		K3 requires no flip in most cases.
+		'''
+		overwrite = self.getDmsemConfig('k2','overwrite_frame_orientation')
+		if not overwrite:
+			return False
+		else:
+			my_frame_flip = self.getDmsemConfig('k2','frame_flip_to_overwrite_with')
+			return my_frame_flip
+
+	def getFrameSavingRotateFlipDefault(self):
+		'''
+		SEMCCD has always default this to 0 until sometime in May 2019.  Users reported that
+		the orientation changed on K2 installation with GMS 2 but seems to be back to normal
+		on K3 installations.
+		'''
+		return 0
 
 	def getAcqBinning(self):
 		# K3 SerialEMCCD native is in super resolution
@@ -855,3 +972,8 @@ class GatanK3(GatanK2Base):
 				image = image.reshape(self.acqparams['height'],self.acqparams['width'])
 				print 'WARNING: image reshaped', image.shape
 		return image
+
+	def getPixelSize(self):
+		# pixel size on Gatan K3 as super resolution.  TODO: need confirmation.
+		return {'x': 2.5e-6, 'y': 2.5e-6}
+

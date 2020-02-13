@@ -360,11 +360,19 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 			self.setStatus('idle')
 			self.logger.info('Done testing')
 
+	def _getTestPreset(self):
+		'''
+		Test Preset is normally the current preset
+		'''
+		self.logger.info('Use current preset for testing')
+		preset = self.presets_client.getCurrentPreset()
+		return preset
+
 	def _testRun(self):
 		preset_name = None
 		pause_time = self.settings['pause time']
 		# must have preset
-		preset = self.presets_client.getCurrentPreset()
+		preset = self._getTestPreset()
 		if not (preset and preset['name']):
 			self.logger.error('No current preset. Send desired preset for testing first')
 			return

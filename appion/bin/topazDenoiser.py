@@ -26,7 +26,6 @@ class TopazDenoiser(appionLoop2.AppionLoop):
 		self.parser.add_option("--patchsize", dest="patchsize", type="int", default=-1, metavar="#")
 		self.parser.add_option("--patchpadding", dest="patchpadding", type="int", default=128, metavar="#")		
 		self.parser.add_option('--denoiselabel', dest='denoiselabel', default='a', metavar='CHAR')
-		self.parser.add_option('--bin', dest='bin', type="int", default=2, metavar="#")
 		self.parser.add_option('--device', dest='device', type="int", metavar="#")
 		self.parser.add_option('--earlyreturn', dest='earlyreturn', action="store_true")
 		
@@ -38,7 +37,7 @@ class TopazDenoiser(appionLoop2.AppionLoop):
 		return
 
 	def processImage(self, imgdata):
-		command = "topaz denoise "
+		command = "topaz-dev denoise "
 		
 		image_path = imgdata['session']['image path']
 		out_path = self.params['rundir']
@@ -57,7 +56,7 @@ class TopazDenoiser(appionLoop2.AppionLoop):
 		else:
 			command += correctedImagePath
 		command += " --format mrc"
-		command += " --bin "+str(self.params['bin'])
+		command += " --model unet"		
 		command += " --patch-size "+str(self.params['patchsize'])
 		command += " --patch-padding "+str(self.params['patchpadding'])
 		command += " --output "+out_path
@@ -70,7 +69,7 @@ class TopazDenoiser(appionLoop2.AppionLoop):
 		apDisplay.printMsg(err)
 		
 		preset = imgdata['preset'].copy()
-		pr_postfix = "_"+self.params['denoiselabel']
+		pr_postfix = "-"+self.params['denoiselabel'] # derived preset starts with "-"
 		preset['name'] += pr_postfix
 		preset.insert()
 
@@ -87,6 +86,7 @@ class TopazDenoiser(appionLoop2.AppionLoop):
 			image.filename = dest_file
 			result['image'] = image
 			result['filename'] = parts[0]+pr_postfix
+			result['denoised'] = True
 			result.insert()  
 			apDDLoop.transferALSThickness(imgdata, result)
 			apDDLoop.transferZLPThickness(imgdata, result)

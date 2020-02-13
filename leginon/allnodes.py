@@ -96,8 +96,14 @@ noderegistry.registerNodeClass(TargetFinder,classtype)
 from targetfinder import ClickTargetFinder
 noderegistry.registerNodeClass(ClickTargetFinder,classtype)
 
+from tomotargetfinder import TomoClickTargetFinder
+noderegistry.registerNodeClass(TomoClickTargetFinder,classtype)
+
 from tomography.tomography import Tomography
 noderegistry.registerNodeClass(Tomography,classtype)
+
+from tomography.tomography import Tomography2
+noderegistry.registerNodeClass(Tomography2,classtype)
 
 from acquisition import Acquisition
 noderegistry.registerNodeClass(Acquisition,classtype)
@@ -107,6 +113,9 @@ noderegistry.registerNodeClass(Focuser,classtype)
 
 from singlefocuser import SingleFocuser
 noderegistry.registerNodeClass(SingleFocuser,classtype)
+
+from diffrfocuser import DiffrFocuser
+noderegistry.registerNodeClass(DiffrFocuser,classtype)
 
 from rctacquisition import RCTAcquisition
 noderegistry.registerNodeClass(RCTAcquisition,classtype)
@@ -195,6 +204,9 @@ noderegistry.registerNodeClass(BeamTiltCalibrator,classtype)
 
 from pixelsizecalibrator import PixelSizeCalibrator
 noderegistry.registerNodeClass(PixelSizeCalibrator,classtype)
+
+from cameralengthcalibrator import CameraLengthCalibrator
+noderegistry.registerNodeClass(CameraLengthCalibrator,classtype)
 
 from scalerotationcalibrator import ScaleRotationCalibrator
 noderegistry.registerNodeClass(ScaleRotationCalibrator,classtype)

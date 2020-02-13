@@ -597,19 +597,55 @@ class leginondata {
 	}
 
 	function getDataTypes($sessionId, $allpresets=true) {
-		$q="select distinct name FROM AcquisitionImageData a "
+		$q="select distinct name, magnification FROM AcquisitionImageData a "
 			." left join PresetData p on (p.DEF_id=a.`REF|PresetData|preset`) "
 			." where a.`REF|SessionData|session` = '$sessionId' "
 			." group by name, magnification "
 			." order by magnification";
 		$Rdatatypes = $this->mysql->getSQLResult($q);
+		$datatypes = array();
 		if ($Rdatatypes)
-		foreach ($Rdatatypes as $d) {
-			if ($d['name'])
-				$datatypes[]=$d['name'];
+			foreach ($Rdatatypes as $d) {
+				if ($d['name'])
+					$datatypes[]=$d['name'];
 		}
 		if ($allpresets)
 			$datatypes[]=$this->manualtype;
+		return $datatypes;
+	}
+
+	function getDataTypesOrderedByImagingSize($sessionId) {
+		/* Special getDataType used to get atlas.  Need to sort
+			the preset by pixel size. since lower magnification is not
+			always the image with lowest imaging area with multiple camera.
+		*/
+		$q="select distinct name, magnification, p.`DEF_id` as pid FROM AcquisitionImageData a "
+			." left join PresetData p on (p.DEF_id=a.`REF|PresetData|preset`) "
+			." where a.`REF|SessionData|session` = '$sessionId' "
+			." group by name, magnification "
+			." order by magnification";
+		$Rdatatypes = $this->mysql->getSQLResult($q);
+
+		$pmpix = array();
+		//code $pmpix in pico meter with leading zeroes so it is easier to sort and decode
+		foreach ($Rdatatypes as $d) {
+			$q = "select p.name as name, ppi.pixelsize*p.`SUBD|dimension|x`*p.`SUBD|binning|x`*1e12 as pixelsize from PresetData p "
+				."cross join PixelSizeCalibrationData ppi on "
+				."(p.`REF|InstrumentData|tem`= ppi.`REF|InstrumentData|tem` and "
+				."p.magnification = ppi.magnification and "
+				."p.`REF|InstrumentData|ccdcamera` = ppi.`REF|InstrumentData|ccdcamera` "
+				."and ppi.`DEF_timestamp` < p.`DEF_timestamp` ) "
+				."where p.`DEF_id`=".$d['pid']." order by ppi.`DEF_timestamp` DESC limit 1; ";
+			$results = $this->mysql->getSQLResult($q);
+			//code $pmpix in pico meter with leading zero so it is easier to sort and decode
+			$pmpix[] = sprintf('%012d', (int) $results[0]['pixelsize']).'|'.$d['name'];
+		}
+		rsort($pmpix);
+		$datatypes = array();
+		foreach ($pmpix as $a) {
+			$bits = explode('|',$a);
+			$datatypes[] = $bits[1];
+		}
 		return $datatypes;
 	}
 
@@ -3295,7 +3331,7 @@ class leginondata {
 			.' from `AcquisitionImageData` a '
 			.'LEFT JOIN `SessionData` s ON a.`REF|SessionData|session`=s.`DEF_id` '
 			.'LEFT JOIN `viewer_del_image` v ON v.`imageId`=a.`DEF_id` '
-			.'WHERE v.`status`=CONVERT( _utf8 "marked" USING latin1 ) COLLATE latin1_swedish_ci ';
+			.'WHERE v.`status`="marked" ';
 		$results = $this->mysql->getSQLResult($query);
 		$filearray = array();
 		if ($results) {
@@ -3322,7 +3358,7 @@ class leginondata {
 			."where "
 			."`q`.`REF|SessionData|session`=".$sessionId." "
 			."AND "
-			."`q`.`label` LIKE CONVERT(_utf8 '".$qtype."' USING latin1) COLLATE latin1_swedish_ci "
+			."`q`.`label` LIKE '".$qtype."' "
 			."order by doneid desc limit ".$limit." "
 			."";
 		return $this->mysql->getSQLResult($q);
@@ -3347,7 +3383,7 @@ class leginondata {
 		if ($qtype)
 			$whereqtype = ""
 			."AND "
-			."`q`.`label` LIKE CONVERT(_utf8 '".$qtype."' USING latin1) COLLATE latin1_swedish_ci ";
+			."`q`.`label` LIKE '".$qtype."' ";
 		$q="SELECT distinct "
 			."itlist.`DEF_id` as itlid "
 			."FROM "
@@ -3421,8 +3457,8 @@ class leginondata {
 			."LEFT JOIN `ImageTargetListData` AS `itlist` ON" ."(`itlist`.`DEF_id`=`t`.`REF|ImageTargetListData|list`) "
 			."WHERE "
 			." t.`REF|ImageTargetListData|list` = ".$targetlistId." "
-			."AND t.`type` LIKE CONVERT(_utf8 '".$targettype."' USING latin1) COLLATE "."latin1_swedish_ci "
-			."AND t.`status` LIKE CONVERT(_utf8 '".$status."' USING latin1) COLLATE " ."latin1_swedish_ci "
+			."AND t.`type` LIKE  '".$targettype."' "
+			."AND t.`status` LIKE '".$status."' "
 			//."AND t.`version` = 0 "
 			."GROUP BY t.`number` "
 			."";
@@ -3561,8 +3597,8 @@ class leginondata {
 			."		LEFT JOIN `ImageTargetListData` AS `itlist` ON" ."(`itlist`.`DEF_id`=`t`.`REF|ImageTargetListData|list`) "
 			."	WHERE "
 			."		t.`REF|SessionData|session` = ".$sessionId." "
-			."		AND t.`type` LIKE CONVERT(_utf8 '".$targettype."' USING latin1) COLLATE "."latin1_swedish_ci "
-			."		AND t.`status` LIKE CONVERT(_utf8 'processing' USING latin1) COLLATE " ."latin1_swedish_ci "
+			."		AND t.`type` LIKE '".$targettype."' "
+			."		AND t.`status` LIKE 'processing' "
 			."		AND itlist.`REF|NodeSpecData|node` = ".$nodeId." "
 			."	group by t.`REF|AcquisitionImageData|image`) AS proc, "
 			."	(SELECT "
@@ -3574,8 +3610,8 @@ class leginondata {
 			."		LEFT JOIN `ImageTargetListData` AS `itlist` ON" ."(`itlist`.`DEF_id`=`t`.`REF|ImageTargetListData|list`) "
 			."	WHERE "
 			."		t.`REF|SessionData|session` = ".$sessionId." "
-			."		AND t.`type` LIKE CONVERT(_utf8 '".$targettype."' USING latin1) COLLATE "."latin1_swedish_ci "
-			."		AND t.`status` LIKE CONVERT(_utf8 'done' USING latin1) COLLATE "."latin1_swedish_ci "
+			."		AND t.`type` LIKE '".$targettype."' "
+			."		AND t.`status` LIKE 'done' "
 			."		AND itlist.`REF|NodeSpecData|node` = ".$nodeId." "
 			."	group by t.`REF|AcquisitionImageData|image`) AS done "
 			."WHERE "
@@ -3603,10 +3639,9 @@ class leginondata {
 			."		LEFT JOIN `QueueData` AS `q` ON (`q`.`DEF_id`=`itlist`.`REF|QueueData|queue`) "
 			."	WHERE "
 			."		q.`REF|SessionData|session` = ".$sessionId." "
-			."		AND t.`type` LIKE CONVERT(_utf8 '".$targettype."' USING latin1) COLLATE "."latin1_swedish_ci "
-			."		AND t.`status` LIKE CONVERT(_utf8 'processing' USING latin1) COLLATE " ."latin1_swedish_ci "
-			."		AND q.`label` LIKE CONVERT(_utf8 '".$qtype."' USING latin1) COLLATE "
-			."				latin1_swedish_ci "
+			."		AND t.`type` LIKE '".$targettype."' "
+			."		AND t.`status` LIKE 'processing' "
+			."		AND q.`label` LIKE '".$qtype."' "
 			."	group by t.`REF|AcquisitionImageData|image`) AS proc, "
 			."	(SELECT "
 			."		max(UNIX_timestamp(`t`.`DEF_timestamp`)) as time, "
@@ -3618,10 +3653,9 @@ class leginondata {
 			."		LEFT JOIN `QueueData` AS `q` ON (`q`.`DEF_id`=`itlist`.`REF|QueueData|queue`) "
 			."	WHERE "
 			."		q.`REF|SessionData|session` = ".$sessionId." "
-			."		AND t.`type` LIKE CONVERT(_utf8 '".$targettype."' USING latin1) COLLATE "."latin1_swedish_ci "
-			."		AND t.`status` LIKE CONVERT(_utf8 'done' USING latin1) COLLATE "."latin1_swedish_ci "
-			."		AND q.`label` LIKE CONVERT(_utf8 '".$qtype."' USING latin1) COLLATE "
-			."latin1_swedish_ci "
+			."		AND t.`type` LIKE '".$targettype."' "
+			."		AND t.`status` LIKE 'done' "
+			."		AND q.`label` LIKE '".$qtype."'  "
 			."	group by t.`REF|AcquisitionImageData|image`) AS done "
 			."WHERE "
 			."	proc.QueueOn=done.QueueOn "

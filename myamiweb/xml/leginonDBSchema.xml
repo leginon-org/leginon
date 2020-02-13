@@ -39,6 +39,7 @@
 		<field name="target offset row" type="int(20)" />
 		<field name="target offset col" type="int(20)" />
 		<field name="correct image shift coma" type="tinyint(1)" default="0" />
+		<field name="set aperture" type="tinyint(1)" default="0" />
 		<field 
 			name="pause between time" 
 			type="DOUBLE" 
@@ -199,6 +200,7 @@
 		<field name="target offset row" type="int(20)" />
 		<field name="target offset col" type="int(20)" />
 		<field name="correct image shift coma" type="tinyint(1)" default="0" />
+		<field name="set aperture" type="tinyint(1)" default="0" />
 		<field 
 			name="pause between time" 
 			type="DOUBLE" 
@@ -497,6 +499,7 @@
 		<field name="target offset row" type="int(20)" />
 		<field name="target offset col" type="int(20)" />
 		<field name="correct image shift coma" type="tinyint(1)" default="0" />
+		<field name="set aperture" type="tinyint(1)" default="0" />
 		<field 
 			name="pause between time" 
 			type="DOUBLE" 
@@ -948,6 +951,7 @@
 		<field name="target offset col" type="int(20)" />
 		<field name="correct image shift coma" type="tinyint(1)" default="0" />
 		<field name="phase plate number" type="int(20)" />
+		<field name="set aperture" type="tinyint(1)" default="0" />
 		<field 
 			name="pause between time" 
 			type="DOUBLE" 
@@ -1014,6 +1018,7 @@
 		<field name="total test positions" type="int(20)" />
 		<field name="current position" type="int(20)" />
 		<field name="start position" type="int(20)" />
+		<field name="set aperture" type="tinyint(1)" default="0" />
 		<field 
 			name="pause between time" 
 			type="DOUBLE" 
@@ -1122,6 +1127,7 @@
 		<field name="target offset row" type="int(20)" />
 		<field name="target offset col" type="int(20)" />
 		<field name="correct image shift coma" type="tinyint(1)" default="0" />
+		<field name="set aperture" type="tinyint(1)" default="0" />
 		<field 
 			name="pause between time" 
 			type="DOUBLE" 
@@ -1348,6 +1354,7 @@
 		<field name="target offset row" type="int(20)" />
 		<field name="target offset col" type="int(20)" />
 		<field name="correct image shift coma" type="tinyint(1)" default="0" />
+		<field name="set aperture" type="tinyint(1)" default="0" />
 		<field 
 			name="pause between time" 
 			type="DOUBLE" 
@@ -1659,6 +1666,7 @@
 			null="NULL" 
 			default="0" 
 		/> 
+		<field name="set aperture" type="tinyint(1)" default="0" />
 		<field 
 			name="park after target" 
 			type="TINYINT(1)" 

@@ -28,11 +28,16 @@ class CCDCamera(baseinstrument.BaseInstrument):
 		{'name': 'Offset', 'type': 'property'},
 		{'name': 'ExposureTimestamp', 'type': 'property'},
 		{'name': 'IntensityAveraged', 'type': 'property'},
+		{'name': 'SeriesLength', 'type': 'property'},
+		## methods:
+		{'name': 'startMovie', 'type': 'method'},
+		{'name': 'stopMovie', 'type': 'method'},
 		## optional:
 		{'name': 'EnergyFilter', 'type': 'property'},
 		{'name': 'EnergyFilterWidth', 'type': 'property'},
 		{'name': 'FrameFlip', 'type': 'property'},
 		{'name': 'FrameRotate', 'type': 'property'},
+		{'name': 'UseCds', 'type': 'property'},
 	)
 
 	def __init__(self):
@@ -49,6 +54,8 @@ class CCDCamera(baseinstrument.BaseInstrument):
 		self.readoutcallback = None
 		self.callbacks = {}
 		self.exposure_timestamp = None
+		self.use_cds = False
+		self.series_length = 0
 
 	def getZplane(self):
 		return self.zplane
@@ -342,6 +349,17 @@ This method returns that multiplier, M.  In the standard case, returns 1.0.
 
 	def getInserted(self):
 		raise NotImplementedError
+
+	def startMovie(self,filename, exposure_time_ms):
+		pass
+
+	def stopMovie(self,filename, exposure_time_ms):
+		# set series_length
+		self.series_length = 1
+		pass
+
+	def getSeriesLength(self):
+		return self.series_length
 
 	def _midNightDelay(self, delay_start, delay_length, force_insert=0):
 		'''

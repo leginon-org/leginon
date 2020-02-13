@@ -5,9 +5,13 @@ from scipy import ndimage
 import random
 random.seed()
 import time
+import math
 import json
 import remote
 import os
+import glob
+import threading
+import shutil
 
 from pyami import mrc, imagefun, numpil
 import itertools
@@ -31,7 +35,7 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 		self.unsupported = []
 		super(SimCCDCamera,self).__init__()
 		self.debug = DEBUG
-		self.pixel_size = {'x': 2.5e-5, 'y': 2.5e-5}
+		self.pixel_size = {'x': 1.4e-5, 'y': 1.4e-5}
 		self.exposure_types = ['normal', 'dark', 'bias']
 
 		self.binning = {'x': 1, 'y': 1}
@@ -295,6 +299,62 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 
 	def getPixelSize(self):
 		return dict(self.pixel_size)
+
+	def startMovie(self,filename, exposure_time_ms):
+		self.movie_start_time = time.time()
+
+	def stopMovie(self, filename, exposure_time_ms):
+		series_length = math.ceil((time.time() -self.movie_start_time)/(0.001*exposure_time_ms))
+		self.series_length = 0
+		self.target_code = filename.split('.bin')[0]
+		t = threading.Thread(target=self._saveMovie, args=[series_length,])
+		t.start()
+		self._waitForSaveMoveDone()
+		self._moveMovie()
+
+	def _moveMovie(self):
+		data_dir = './'
+		pattern = os.path.join(data_dir, '%s*.bin' % (self.target_code,))
+		new_dir = '' # do not move
+		if not new_dir:
+			return
+		if not os.path.isdir(new_dir):
+			raise ValueError('TIA exported data network Directory %s is not a directory' % (new_dir,))
+		if data_dir == new_dir:
+			# nothing to do
+			return
+		else:
+			pattern = os.path.join(data_dir, '%s*.bin' % (self.target_code,))
+			files = glob.glob(pattern)
+			for f in files:
+				shutil.move(f, new_dir)
+
+	def _saveMovie(self, series_length):
+		for i in range(int(series_length)):
+			frame_path = os.path.join(FRAME_DIR,'%s_%03d.bin' % (self.target_code, i+1))
+			f = open(frame_path,'w')
+			f.write('data\n')
+			f.close()
+			time.sleep(0.5)
+
+	def _waitForSaveMoveDone(self):
+		timeout = 120
+		t0 = time.time()
+		current_length = 0
+		last_series_length = current_length
+		while current_length < 2 or last_series_length < current_length:
+			if time.time()-t0 > timeout:
+				raise ValueError('Movie saving failed. File saving not finished after %d seconds.' % timeout)
+			time.sleep(1.0)
+			last_series_length = current_length
+			current_length = self._findSeriesLength()
+		# final value
+		self.series_length = self._findSeriesLength()
+
+	def _findSeriesLength(self):
+		pattern = os.path.join(FRAME_DIR,'%s_*' % (self.target_code,))
+		length = len(glob.glob(pattern))
+		return length
 
 class SimFrameCamera(SimCCDCamera):
 	name = 'SimFrameCamera'
@@ -622,6 +682,7 @@ class SimK2CountingCamera(SimFrameCamera):
 		super(SimK2CountingCamera,self).__init__()
 		self.binning_limits = [1,2,4,8]
 		self.binmethod = 'floor'
+		self.pixel_size = {'x': 5e-6, 'y': 5e-6}
 
 	def getFrameFlip(self):
 		# flip before? rotation
@@ -637,6 +698,8 @@ class SimK2SuperResCamera(SimFrameCamera):
 		super(SimK2SuperResCamera,self).__init__()
 		self.binning_limits = [1]
 		self.binmethod = 'floor'
+		self.pixel_size = {'x': 2.5e-6, 'y': 2.5e-6}
+
 
 def imagefun_bin(image, binning0, binning1=0):
 	return imagefun.bin(image, binning0)
@@ -649,6 +712,7 @@ class SimK3Camera(SimFrameCamera):
 		self.binmethod = 'floor'
 		self.camsize = self.getCameraSize()
 		self.tempoffset = dict(self.offset)
+		self.pixel_size = {'x': 2.5e-6, 'y': 2.5e-6}
 
 	def getSystemGainDarkCorrected(self):
 		return True
@@ -657,6 +721,12 @@ class SimK3Camera(SimFrameCamera):
 		# Work around
 		self.offset = dict(value)
 		self.tempoffset = {'x':0,'y':0}
+
+	def setUseCds(self,value):
+		self.use_cds = bool(value)
+
+	def getUseCds(self):
+		return self.use_cds
 
 	def _getImage(self):
 		if not self.validateGeometry():

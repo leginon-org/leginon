@@ -172,9 +172,19 @@ class TargetTypeTool(leginon.gui.wx.ImagePanelTools.TypeTool):
 			self.togglebuttons['exp'].SetValue(False)
 			return
 		# get new image vector and beam size
-		self.parent.parent.parent.node.uiRefreshTargetImageVector()
-		self.parent.parent.imagevector = self.parent.parent.parent.node.getTargetImageVector()
+		self.parent.parent.parent.node.uiRefreshTargetImageVectors()
+		self.parent.parent.imagevectors = self.parent.parent.parent.node.getTargetImageVectors()
 		self.parent.parent.beamradius = self.parent.parent.parent.node.getTargetBeamRadius()
+		# Below if used by TomoTargetImagePanel
+		if hasattr(self.parent.parent,'trackimagevectors'):
+			self.parent.parent.trackimagevectors = self.parent.parent.parent.node.getTrackImageVectors()
+		if hasattr(self.parent.parent,'trackbeamradius'):
+			self.parent.parent.trackbeamradius = self.parent.parent.parent.node.getTrackBeamRadius()
+		if hasattr(self.parent.parent,'focusimagevectors'):
+			self.parent.parent.focusimagevectors = self.parent.parent.parent.node.getFocusImageVectors()
+		if hasattr(self.parent.parent,'focusbeamradius'):
+			self.parent.parent.focusbeamradius = self.parent.parent.parent.node.getFocusBeamRadius()
+		
 		# set and show targets
 		self.exptype.setTargets(self.targettype.getTargets())
 		evt = ShowExposureEvent(evt.GetEventObject(), self.name, evt.GetIsDown())
