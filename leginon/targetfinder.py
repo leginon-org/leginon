@@ -87,8 +87,8 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		self.targetimagevectors = {'x':(0,0),'y':(0,0)}
 		self.targetbeamradius = 0
 		self.resetLastFocusedTargetList(None)
-		self.remote_targeting = remoteserver.RemoteTargetingServer(self.logger, session, self, self.remote.remotedata_base)
-		self.remote_toolbar = remoteserver.RemoteToolbar(self.logger, session, self, self.remote.remotedata_base)
+		self.remote_targeting = remoteserver.RemoteTargetingServer(self.logger, session, self, self.remote.leginon_base)
+		self.remote_toolbar = remoteserver.RemoteToolbar(self.logger, session, self, self.remote.leginon_base)
 		self.remote_targeting.setTargetNames(self.targetnames)
 
 		self.onQueueCheckBox(self.settings['queue'])

@@ -119,7 +119,7 @@ class Node(correctorclient.CorrectorClient):
 		# Manager is also a node subclass but does not need status report
 		if self.name not in ('Manager','Launcher'):
 			self.remote = remoteserver.RemoteServerMaster(self.logger, session, self)
-			self.remote_status = remoteserver.RemoteStatusbar(self.logger, session, self, self.remote.remotedata_base)
+			self.remote_status = remoteserver.RemoteStatusbar(self.logger, session, self, self.remote.leginon_base)
 
 	def setHasLogError(self, value, message):
 		if value:

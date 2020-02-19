@@ -12,13 +12,18 @@ import os
 import shutil
 import time
 import threading
+import requests
+import json
 
 from leginon import leginondata
+import pyami.moduleconfig
 import pyami.fileutil
 import pyami.jpg
-import gui.wx.ClickTargetFinder
 
 SLEEP_TIME = 5
+
+# get configuration from remote.cfg
+configs = pyami.moduleconfig.getConfigured('remote.cfg')
 
 class RemoteServerMaster(object):
 	'''
@@ -29,8 +34,8 @@ class RemoteServerMaster(object):
 		self.session = sessiondata
 		self.node = node
 		
-		self.remotedata_base = os.path.join(os.path.dirname(sessiondata['image path']),'remote')
-		pyami.fileutil.mkdirs(self.remotedata_base)
+		self.leginon_base = os.path.join(os.path.dirname(sessiondata['image path']),'remote')
+		pyami.fileutil.mkdirs(self.leginon_base)
 
 class RemoteServer(object):
 	def __init__(self, logger, sessiondata, node):
@@ -38,14 +43,26 @@ class RemoteServer(object):
 		self.session = sessiondata
 		self.node = node
 		self.node_name = node.name.replace(' ','_')
-		self.remote_passcode = sessiondata['remote passcode']
+		self.remote_id_list = [sessiondata['name'],]
+
+	def postRequest(self, ajax_name, data):
+		url = configs['web server']['url']
+		if not ajax_name.endswith('/'):
+			ajax_name += '/'
+		url = os.path.join(url, ajax_name)
+		answer = requests.post(url=url, data=json.dumps(data))
+		if answer.ok:
+			return json.loads(answer.text)
+		else:
+			self.logger.error('Error communicating with webserver for leginon-remote: code %s' % (answer.status_code))
 
 class RemoteStatusbar(RemoteServer):
-	def __init__(self, logger, sessiondata, node, remotedata_base):
+	def __init__(self, logger, sessiondata, node, leginon_base):
 		super(RemoteStatusbar,self).__init__(logger, sessiondata, node)
-		self.datafile_base = os.path.join(remotedata_base,'statusbar')
+		self.datafile_base = os.path.join(leginon_base,'statusbar')
 		pyami.fileutil.mkdirs(self.datafile_base)
 		self.node_dir = os.path.join(self.datafile_base, self.node_name)
+		self.remote_id_list.extend(['statusbar', self.node_name])
 
 	def setStatus(self, status):
 		if not issubclass(self.node.settingsclass, leginondata.AcquisitionSettingsData):
@@ -73,11 +90,12 @@ class RemoteStatusbar(RemoteServer):
 			pyami.fileutil.remove_all_files_in_dir(self.node_dir)
 
 class RemoteToolbar(RemoteServer):
-	def __init__(self, logger, sessiondata, node, remotedata_base):
+	def __init__(self, logger, sessiondata, node, leginon_base):
 		super(RemoteToolbar,self).__init__(logger, sessiondata, node)
-		self.datafile_base = os.path.join(remotedata_base,'toolbar')
+		self.datafile_base = os.path.join(leginon_base,'toolbar')
 		pyami.fileutil.mkdirs(self.datafile_base)
 		self.node_dir = os.path.join(self.datafile_base, self.node_name)
+		self.remote_id_list.extend(['toolbar', self.node_name])
 		self.tools = {}
 
 	def addClickTool(self,name, handling_attr_name, help_string=''):
@@ -100,6 +118,13 @@ class Tool(object):
 		self.help_string = help_string
 		self.data_path = os.path.join(self.toolbar.node_dir,name)
 		pyami.fileutil.mkdirs(self.data_path)
+		# basic data for a tool in the toolbar to send to remote
+		self.tool_data = {
+				'session': self.toolbar.session['name'],
+				'node': self.toolbar.node_name,
+				'tool': self.name,
+				'value': None
+		}
 			
 class ClickTool(Tool):
 	'''
@@ -109,8 +134,9 @@ class ClickTool(Tool):
 	def __init__(self, parent, name, handling_attr_name, help_string):
 		super(ClickTool,self).__init__(parent, name, handling_attr_name, help_string)
 		triggerfile = 'click'
+		self.tool_data['value'] = 'click'
 		self.triggerpath = os.path.join(self.data_path, triggerfile)
-		print 'click tracking initialized, triggered by the presence of %s' % self.triggerpath
+		self.toolbar.logger.debug('click tracking initialized for %s tool triggered by the presence of %s' % (self.name,self.triggerpath))
 		self.activate()
 
 	def deActivate(self):
@@ -130,17 +156,38 @@ class ClickTool(Tool):
 		Track triggerpath existance if active
 		'''
 		while self.active:
-			if os.path.isfile(self.triggerpath):
+			if self.hasRemoteTrigger():
 				self.handling_attr()
-				os.remove(self.triggerpath)
+				time.sleep(1)
+				self.resetTrigger()
+				time.sleep(1)
 			time.sleep(SLEEP_TIME)		
 
+	def hasRemoteTrigger(self):
+		'''
+		Check if clicked is set on the remote tool using a web request.
+		'''
+		ajax_name = 'ajax_get_tool_clicked'
+		response = self.toolbar.postRequest(ajax_name,self.tool_data)
+		if response:
+			return response['is_clicked']
+		return False
+
+	def resetTrigger(self):
+		'''
+		Reset clicked-trigger on the remote tool using a web request.
+		'''
+		ajax_name = 'ajax_set_tool_unclicked'
+		response = self.toolbar.postRequest(ajax_name,self.tool_data)
+		return False
+
 class RemoteTargetingServer(RemoteServer):
-	def __init__(self, logger, sessiondata, node, remotedata_base):
+	def __init__(self, logger, sessiondata, node, leginon_base):
 		super(RemoteTargetingServer,self).__init__(logger, sessiondata, node)
 		self.targetnames = []
-		self.datafile_base = os.path.join(remotedata_base,'targeting',self.node_name)
+		self.datafile_base = os.path.join(leginon_base,'targeting',self.node_name)
 		pyami.fileutil.mkdirs(self.datafile_base)
+		self.remote_id_list.extend(['targeting', self.node_name])
 		self.targefilepath = None
 		self.excluded_targetnames = ['Blobs','preview']
 		self.readonly_targetnames = ['done']
@@ -269,10 +316,6 @@ class RemoteTargetingServer(RemoteServer):
 		lines = infile.readlines()
 		infile.close()
 
-		#passcode_in_file = lines[0][:-1]
-		#if passcode_in_file != self.remote_passcode:
-		#	self.resetTargets()
-		#	raise ValueError('Passcode not matching. Targets removed')
 		xys = {}
 		for n in self.targetnames:
 			xys[n] = []

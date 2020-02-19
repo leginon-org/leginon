@@ -43,7 +43,7 @@ class TEMController(node.Node):
 		self.loaded_grid_slot = None
 		self.grid_slot_numbers = []
 		self.grid_slot_names = []
-		self.remote_toolbar = remoteserver.RemoteToolbar(self.logger, session, self, self.remote.remotedata_base)
+		self.remote_toolbar = remoteserver.RemoteToolbar(self.logger, session, self, self.remote.leginon_base)
 		self.start()
 
 	def onInitialized(self):
