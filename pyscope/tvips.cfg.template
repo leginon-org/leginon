@@ -1,0 +1,8 @@
+#####################################################################
+## This config file describes TVIPS F416 configuration that can not
+## be set through scripting.  These configurations must match
+## EMMENU configuration
+## 
+[recorder]
+DIRECTORY = C:\Temp\
+DEFAULT_FILENAME = Image

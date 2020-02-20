@@ -4,6 +4,9 @@ ALL = False
 STAGE = False
 CAMERA = False
 
+[version]
+SOFTWARE_TYPE = Titan
+TFS_SOFTWARE_VERSION = 2.15.2
 [optics]
 # Lens normalization is usually set in TUI but there are cases that
 # they are not desirable, for example on Talos column. This force
@@ -44,10 +47,23 @@ HAS_FALCON_PROTECTOR = True
 FRAME_SUBPATH = leginonframes
 # Falcon protector may be too slow
 EXTRA_PROTECTOR_SLEEP_TIME = 0
+# Location of tui acquire start/stop AutoIt executable
+AUTOIT_TUI_ACQUIRE_EXE_PATH = to_be_added
+# Location of tia movie series export AutoIt executable
+AUTOIT_TIA_EXPORT_SERIES_EXE_PATH = to_be_added
+# Location of tia movie series export AutoIt executable
+AUTOIT_TIA_EXPORTED_DATA_DIR = C:\Users\supervisor\Documents\FEI\TIA\Exported Data
+# Network mounted directory to move TIA_EXPORTED_DATA to. This is the source path for leginon/diffrtransfer.py
+TIA_EXPORTED_DATA_NETWORK_DIR = C:\Users\supervisor\Documents\FEI\TIA\Exported Data
+
 [phase plate]
 # Location of next phase plate AutoIt executable
 AUTOIT_PHASE_PLATE_EXE_PATH = C:\Program Files\AutoIt3\NextPhasePlate.exe
 
+[beamstop]
+# Location of beamstop AutoIt executable
+AUTOIT_IN_EXE_PATH =  to_be_added
+AUTOIT_OUT_EXE_PATH = to_be_added
 [stage]
 # Some Krios stage needs backlash.
 DO_STAGE_XYZ_BACKLASH = True
