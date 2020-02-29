@@ -44,17 +44,80 @@ class RemoteServer(object):
 		self.node = node
 		self.node_name = node.name.replace(' ','_')
 		self.remote_id_list = [sessiondata['name'],]
+		self.leg_remote_auth = (configs['leginon auth']['username'],configs['leginon auth']['password'])
 
-	def postRequest(self, ajax_name, data):
+	def _makeUrl(self, router_name,pk=None,param_str=None):
+		'''Make url according to the config and input.
+		'''
 		url = configs['web server']['url']
-		if not ajax_name.endswith('/'):
-			ajax_name += '/'
-		url = os.path.join(url, ajax_name)
-		answer = requests.post(url=url, data=json.dumps(data))
+		if not router_name.endswith('/'):
+			router_name += '/'
+		url = os.path.join(url, router_name)
+		if pk is not None:
+			url += '%d/' % pk
+		if param_str is not None:
+			url += '?'+param_str
+		return url
+
+	def _processResponse(self, answer):
+		'''Convert json string to json style data
+		'''
 		if answer.ok:
+			if not answer.text:
+				return None
 			return json.loads(answer.text)
 		else:
 			self.logger.error('Error communicating with webserver for leginon-remote: code %s' % (answer.status_code))
+
+	def _processDataToSend(self, data):
+		'''
+		Process data before sending. For example, add session_name.
+		'''
+		if not 'session_name' in data.keys():
+			data['session_name'] = self.session['name']
+		return data
+
+	def _processParamsToSend(self, data):
+		params = []
+		for k in data.keys():
+			v='%s=%s' % (k,data[k],)
+			params.append(v)
+		return '&'.join(params)
+
+	def delete(self, router_name, pk):
+		'''
+		Delect causes a distroy of the data defined by the ModelViewSet and pk
+		'''
+		url = self._makeUrl(router_name, pk=pk)
+		answer = requests.delete(url=url, auth=self.leg_remote_auth)
+		return self._processResponse(answer)
+
+	def patch(self, router_name, pk, data):
+		'''
+		Patch causes an update of the data defined by the ModelViewSet
+		'''
+		url = self._makeUrl(router_name, pk=pk)
+		answer = requests.post(url=url, json=data, auth=self.leg_remote_auth)
+		return self._processResponse(answer)
+
+	def get(self, router_name, data):
+		'''
+		Get causes a filtered get of the data defined by the ModelViewSet
+		Returns a list of filtered data dict
+		'''
+		param_str = self._processParamsToSend(data)
+		url = self._makeUrl(router_name, param_str=param_str)
+		answer = requests.get(url=url, auth=self.leg_remote_auth)
+		return self._processResponse(answer)
+
+	def post(self, router_name, data):
+		'''
+		Post causes a create of the data defined by the ModelViewSet
+		'''
+		url = self._makeUrl(router_name)
+		data = self._processDataToSend(data)
+		answer = requests.post(url=url, json=data, auth=self.leg_remote_auth)
+		return self._processResponse(answer)
 
 class RemoteStatusbar(RemoteServer):
 	def __init__(self, logger, sessiondata, node, leginon_base):
@@ -120,10 +183,9 @@ class Tool(object):
 		pyami.fileutil.mkdirs(self.data_path)
 		# basic data for a tool in the toolbar to send to remote
 		self.tool_data = {
-				'session': self.toolbar.session['name'],
+				'session_name': self.toolbar.session['name'],
 				'node': self.toolbar.node_name,
 				'tool': self.name,
-				'value': None
 		}
 			
 class ClickTool(Tool):
@@ -131,13 +193,14 @@ class ClickTool(Tool):
 	Click tool calls a handling attribute from the node when it is triggered
 	by the existance of the file at triggerpath.
 	'''
+	router_name = 'click'
+	trigger_file = 'click'
 	def __init__(self, parent, name, handling_attr_name, help_string):
 		super(ClickTool,self).__init__(parent, name, handling_attr_name, help_string)
-		triggerfile = 'click'
-		self.tool_data['value'] = 'click'
-		self.triggerpath = os.path.join(self.data_path, triggerfile)
+		self.triggerpath = os.path.join(self.data_path, self.trigger_file)
 		self.toolbar.logger.debug('click tracking initialized for %s tool triggered by the presence of %s' % (self.name,self.triggerpath))
 		self.activate()
+		response = self.toolbar.get(self.router_name,self.tool_data)
 
 	def deActivate(self):
 		self.active = False
@@ -167,18 +230,20 @@ class ClickTool(Tool):
 		'''
 		Check if clicked is set on the remote tool using a web request.
 		'''
-		ajax_name = 'ajax_get_tool_clicked'
-		response = self.toolbar.postRequest(ajax_name,self.tool_data)
+		response = self.toolbar.get(self.router_name,self.tool_data)
 		if response:
-			return response['is_clicked']
+			return True
 		return False
 
 	def resetTrigger(self):
 		'''
 		Reset clicked-trigger on the remote tool using a web request.
 		'''
-		ajax_name = 'ajax_set_tool_unclicked'
-		response = self.toolbar.postRequest(ajax_name,self.tool_data)
+		response = self.toolbar.get(self.router_name,self.tool_data)
+		if not response:
+			return False
+		pk = response[0]['pk']
+		response = self.toolbar.delete(self.router_name,pk)
 		return False
 
 class RemoteTargetingServer(RemoteServer):
