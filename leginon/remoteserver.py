@@ -97,7 +97,7 @@ class RemoteServer(object):
 		Patch causes an update of the data defined by the ModelViewSet
 		'''
 		url = self._makeUrl(router_name, pk=pk)
-		answer = requests.post(url=url, json=data, auth=self.leg_remote_auth)
+		answer = requests.patch(url=url, json=data, auth=self.leg_remote_auth)
 		return self._processResponse(answer)
 
 	def get(self, router_name, data):
@@ -120,37 +120,28 @@ class RemoteServer(object):
 		return self._processResponse(answer)
 
 class RemoteStatusbar(RemoteServer):
+	router_name = 'status'
 	def __init__(self, logger, sessiondata, node, leginon_base):
 		super(RemoteStatusbar,self).__init__(logger, sessiondata, node)
-		self.datafile_base = os.path.join(leginon_base,'statusbar')
-		pyami.fileutil.mkdirs(self.datafile_base)
-		self.node_dir = os.path.join(self.datafile_base, self.node_name)
-		self.remote_id_list.extend(['statusbar', self.node_name])
+		self.data = {
+				'session_name': self.session['name'],
+				'node': self.node_name
+		}
 
 	def setStatus(self, status):
 		if not issubclass(self.node.settingsclass, leginondata.AcquisitionSettingsData):
 			return
-		if status in ('processing','user input','waiting'):
-			self.setActiveStatus(status)
-		else:
-			self.setStandbyStatus()
-
-	def setStandbyStatus(self):
-		self._writeStatusToFile(None)
-
-	def setActiveStatus(self, status):
 		status_str='_'.join(status.split())
-		self._writeStatusToFile(status_str)
-
-	def _writeStatusToFile(self, status):
-		if not os.path.isdir(self.node_dir):
-			pyami.fileutil.mkdirs(self.node_dir)
-		if status:
-			self.status_path = os.path.join(self.node_dir,status)
-			f = open(self.status_path,'w')
-			f.close()
+		results = self.get(self.router_name, self.data)
+		if status in ('processing','user input','waiting'):
+			if results:
+				return self.patch(self.router_name, results[0]['pk'], {'value':status_str})
+			data = self.data.copy()
+			data.update({'value':status_str})
+			return self.post(self.router_name, data)
 		else:
-			pyami.fileutil.remove_all_files_in_dir(self.node_dir)
+			if results:
+				self.delete(self.router_name, results[0]['pk'])
 
 class RemoteToolbar(RemoteServer):
 	def __init__(self, logger, sessiondata, node, leginon_base):
