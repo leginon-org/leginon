@@ -4,6 +4,7 @@ import shutil
 import math
 import subprocess
 import numpy
+import datetime
 
 from leginon import leginondata
 from pyami import tiaraw, mrc, numsmv, tvips
@@ -67,12 +68,24 @@ class DiffractionUpload(object):
 		return r
 
 	def getDiffractionSeries(self, target_number):
-		q = leginondata.DiffractionSeriesData(parent=self.hldata)
-		r = q.query()
-		if len(r) >= 1:
-			for ds in r:
-				if ds['emtarget']['target']['number'] == target_number:
-					return ds
+		'''
+		query diffraction series for the data.
+		'''
+		limit = 10
+		trials = 0
+		while trials < limit:
+			# multiple trials.  This may be called right after the movies
+			# are saved, even before DiffractionSeries is saved.
+			# give it multiple chances to do this in case of delay.
+			q = leginondata.DiffractionSeriesData(parent=self.hldata)
+			r = q.query()
+			if len(r) >= 1:
+				for ds in r:
+					if ds['emtarget']['target']['number'] == target_number:
+						return ds
+			trials += 1
+			print 'failed trial %d @ %s' % (trials, datetime.datetime.now().ctime())
+			time.sleep(2.0)
 		raise ValueError('can not find matching target %d on %s with image_id=%d' % (target_number, self.hldata['filename'], self.hldata.dbid))
 
 	def queryTarget(self, target_number):
