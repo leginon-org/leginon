@@ -5,6 +5,7 @@ import json
 import numpy
 import sinedon
 from sinedon import dbconfig
+from pyami import mrc
 
 class DataJsonLoader(object):
 	def __init__(self, sinedon_data_module):
@@ -27,6 +28,12 @@ class DataJsonLoader(object):
 					if type(kwargs[key][0]) == type([]):
 						# json export saves coordinate tuple as list.  Need to change back in import
 						kwargs[key] = map((lambda x: tuple(x)),kwargs[key])
+			if key == 'image':
+				mrc_filename = kwargs['filename']+'.mrc'
+				try:
+					mrc.read(mrc_filename)
+				except:
+					raise ValueError('%s can not be loaded') % (mrc_filename,)
 			q[realkey] = kwargs[key]
 		return q
 
@@ -35,6 +42,7 @@ class DataJsonLoader(object):
 		self.alldata = json.loads(f.read())
 		# convert list of list to numpy 2D array
 		for i,datadict in enumerate(self.alldata):
+			# The first level is the class name
 			classname = datadict.keys()[0]
 			# field and value
 			for key in datadict[classname]:
@@ -87,18 +95,30 @@ class DataJsonMaker(object):
 			
 		for r in results:
 			classname = r.__class__.__name__
-			data = {}
-			for k in r.keys():
-				if k not in self.ignorelist:
-					# also ignore any reference ?
-					if hasattr(r[k],'dbid'):
-						pass
-					else:
-						if type(r[k]).__module__=='numpy':
-							data[k] = r[k].tolist()
-						else:
-							data[k] = r[k]
+			data = self.makeClassDict(r)
 			self.alldata.append({classname:data})
+
+	def makeClassDict(self, r):
+		if r is None:
+			return None
+		classname = r.__class__.__name__
+		data = {}
+		for k in r.keys():
+			if k not in self.ignorelist:
+				# also ignore any reference ?
+				if hasattr(r[k],'dbid'):
+					pass
+				else:
+					if type(r[k]).__module__=='numpy':
+						if 'image' in k and 'filename' in r.keys():
+							mrc_filename = r['filename']+'.mrc'
+							mrc.write(r[k], mrc_filename)
+							data[k] = 'MRC|%s' % mrc_filename
+						else:
+							data[k] = r[k].tolist()
+					else:
+						data[k] = r[k]
+		return data
 
 	def writeJsonFile(self,filename='test.json'):
 		print 'writing %d records into %s' % (len(self.alldata),filename)
