@@ -217,7 +217,7 @@ class CalibrationJsonMaker(jsonfun.DataJsonMaker):
 			self.printPPBeamTiltVectorsQuery(p)
 			self.printPPBeamTiltRotationQuery(p)
 			self.printBeamSizeQuery(p)
-		json_filename = 'cal_%s+%s+%s.json' % (self.tem['name'],self.cam['hostname'],self.cam['name'])
+		json_filename = 'cal_%s+%s+%s+%s.json' % (self.tem['hostname'],self.tem['name'],self.cam['hostname'],self.cam['name'])
 		self.writeJsonFile(json_filename)
 
 	def close(self, status=0):

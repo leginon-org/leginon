@@ -21,10 +21,10 @@ def convertStringToSQL(value):
 
 class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 	def __init__(self,params):
-		tem_name, cam_hostname, camera_name = self.validateInput(params)
+		tem_host, tem_name, cam_hostname, camera_name = self.validateInput(params)
 		super(CalibrationJsonLoader,self).__init__(leginondata)
 		self.cameradata = self.getCameraInstrumentData(cam_hostname,camera_name)
-		self.temdata = self.getTemInstrumentData(tem_name)
+		self.temdata = self.getTemInstrumentData(tem_host,tem_name)
 		self.setSessionData()
 
 	def insertAllData(self):
@@ -59,8 +59,8 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 			raise ValueError('can not find %s to import' % params[2])
 		self.jsonfile = params[2]
 		digicam_key = self.jsonfile.split('cal_')[-1].split('.json')[0]
-		temname, cam_host, cameraname = digicam_key.split('+')
-		return temname, cam_host, cameraname
+		temhost, temname, cam_host, cameraname = digicam_key.split('+')
+		return temhost, temname, cam_host, cameraname
 
 	def getCameraInstrumentData(self, hostname,camname):
 		results = leginondata.InstrumentData(hostname=hostname,name=camname).query(results=1)
@@ -84,31 +84,17 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 				all_tems.append(r)
 		return all_tems
 
-	def getTemInstrumentData(self, tem_name):
+	def getTemInstrumentData(self, tem_host, tem_name):
 		all_tems = self.getTemsByName(tem_name)
 		if len(all_tems) == 1:
 			return all_tems[0]
 		print map((lambda x: x['hostname']),all_tems)
-		temq = leginondata.InstrumentData(name=tem_name)
+		temq = leginondata.InstrumentData(hostname=tem_host,name=tem_name)
 		r = leginondata.PixelSizeCalibrationData(tem=temq, ccdcamera=self.cameradata).query(results=1)
 		ptemid = None # tem with pixel calibration is checked first.
 		if r:
 			t = r[0]['tem']
-			answer = raw_input(' Is %s %s the tem to import calibration ? Y/y/N/n ' % (t['hostname'], t['name']))
-			if answer.lower() == 'y':
-				return t
-			ptemid = t.dbid
-		# check the rest
-		other_tems = []
-		for r in all_tems:
-			if ptemid is None or ptemid!=r.dbid:
-				other_tems.append(r)
-		if len(other_tems) == 1:
-			return other_tems[0]
-		for t in other_tems:
-			answer = raw_input(' Is %s %s the tem to import calibration ? Y/y/N/n ' % (t['hostname'], t['name']))
-			if answer.lower() == 'y':
-				return t
+			return t
 		print "  No tem found"
 		sys.exit()
 
