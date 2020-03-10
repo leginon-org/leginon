@@ -330,20 +330,20 @@ class ImageLoader(appionLoop2.AppionLoop):
 		self.stats['waittime'] = 0
 		return True
 
-	def newImagePath(self, mrcfile):
+	def newImagePath(self, rootname, frames_extension):
 		'''
-		Returns full path for uploaded image and frames
+		Returns full path for uploaded image and frames.
+		rootname is determined by setNewFilename.
+		frames_extension may be mrc or tif and need to be retained.
 		'''
-		extension = os.path.splitext(mrcfile)[1]
 		# input may be an absolute path or local filename
-		rootname = os.path.splitext(os.path.basename(mrcfile))[0]
 		# handle name containing .frames
 		if rootname.endswith('.frames'):
 			rootname = rootname[:-7]
-		# image file name is always mrc
+		# sum image file name is always mrc
 		newname = rootname+'.mrc'
 		# frame name includes .frames and the original extension
-		newframename = rootname+'.frames'+extension
+		newframename = rootname+'.frames'+frames_extension
 		newimagepath = os.path.join(self.session['image path'], newname)
 		if self.session['frame path']:
 			newframepath = os.path.join(self.session['frame path'], newframename)
@@ -394,6 +394,7 @@ class ImageLoader(appionLoop2.AppionLoop):
 		apFile.safeCopy(source, destination)
 
 	def getFileFormat(self, path):
+		# last bit of split with '.'. The result also prepend '.'
 		extension = os.path.splitext(path)[1]
 		if extension in ('.mrc', '.mrcs'):
 			return 'mrc'
@@ -444,7 +445,8 @@ class ImageLoader(appionLoop2.AppionLoop):
 		"""	
 		self.updatePixelSizeCalibration(imginfo)
 		origimgfilepath = imginfo['original filepath']
-		newimgfilepath, newframepath = self.newImagePath(origimgfilepath)
+		extension = '.'+self.getFileFormat(origimgfilepath)
+		newimgfilepath, newframepath = self.newImagePath(imginfo['filename'], extension)
 
 		nframes = self.getNumberOfFrames(origimgfilepath)
 		if nframes > 1:
@@ -456,6 +458,7 @@ class ImageLoader(appionLoop2.AppionLoop):
 
 		imagearray = self.correctImage(imagearray,nframes)
 		imgdata = self.makeImageData(imagearray,imginfo,nframes)
+		apDisplay.printMsg('Sum image is saved as %s.mrc' % imgdata['filename'])
 		if self.isTomoTilts():
 			self.makeTomographyPredictionData(imgdata)
 		pixeldata = None
@@ -537,7 +540,7 @@ class ImageLoader(appionLoop2.AppionLoop):
 		# instead of specifying a batch script file, the same values
 		# are applied to all images for upload
 		batchinfo = []
-		imgdir = os.path.join(self.params['imgdir'],"*."+self.params['filetype'])
+		imgdir = os.path.join(self.params['imgdir'],"*."+self.params['filetype']+"*")
 		upfiles = glob.glob(imgdir)
 		if not upfiles:
 			apDisplay.printError("No images for upload in '%s'"%self.params['imgdir'])
@@ -823,6 +826,9 @@ class ImageLoader(appionLoop2.AppionLoop):
 			apDisplay.printMsg("Sleeping 1 second")
 			time.sleep(1.0)
 
+	def close(self):
+		apDisplay.printWarning('Frame upload makes a copy of the original. You may want to clean up the original to save the space.')
+		super(ImageLoader, self).close()
 #=====================
 #=====================
 #=====================

@@ -37,7 +37,7 @@ class HitachiSocket(object):
 
 	def connect(self):
 		# recommended by Gatan to use localhost IP to avoid using tcp
-		self.sock = socket.create_connection(('127.0.0.1',self.port))
+		self.sock = socket.create_connection((self.host,self.port))
 
 	def disconnect(self):
 		self.sock.shutdown(socket.SHUT_RDWR)
