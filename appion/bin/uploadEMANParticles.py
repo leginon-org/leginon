@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env/python
 
 #python
 import re
@@ -80,24 +80,32 @@ class UploadParticles(appionScript.AppionScript):
 		if len(filelist) == 0:
 			apDisplay.printError("No images specified: %s"%(os.path.abspath(self.params['files'])))
 		boxfiles=[]
-		for filename in filelist:
-			if not os.path.isfile(filename):	
-				apDisplay.printError("Could not find file: "+filename)
-				continue
-
+		if len(filelist) == 1:
+			self.params['coordtype'] = "relion"
+			filename = self.params['files']
 			boxfile = os.path.join(self.params['rundir'], os.path.basename(filename))
-			if filename[-4:] == ".pos":
-				self.params['coordtype'] = "xmipp"
-			elif filename[-5:] == ".star":
-				self.params['coordtype'] = "relion"
-				self.params['suffix'] = self.params['files'].split("*")[-1]
-				boxfile = os.path.join(self.params['rundir'],os.path.basename(filename[:-len(self.params['suffix'])])+".star")
-			elif filename[-4:] != ".box":
-				apDisplay.printWarning("File is not a boxfile: "+filename)
-
-			apDisplay.printMsg("Copying file to "+boxfile)
+			apDisplay.printMsg("Copying file "+filename + " to "+boxfile)
 			shutil.copy(filename, boxfile)
 			boxfiles.append(boxfile)
+		else:
+			for filename in filelist:
+				if not os.path.isfile(filename):	
+					apDisplay.printError("Could not find file: "+filename)
+					continue
+
+				boxfile = os.path.join(self.params['rundir'], os.path.basename(filename))
+				if filename[-4:] == ".pos":
+					self.params['coordtype'] = "xmipp"
+				elif filename[-5:] == ".star":
+					self.params['coordtype'] = "relion"
+					self.params['suffix'] = self.params['files'].split("*")[-1]
+					boxfile = os.path.join(self.params['rundir'],os.path.basename(filename[:-len(self.params['suffix'])])+".star")
+				elif filename[-4:] != ".box":
+					apDisplay.printWarning("File is not a boxfile: "+filename)
+
+				apDisplay.printMsg("Copying file to "+boxfile)
+				shutil.copy(filename, boxfile)
+				boxfiles.append(boxfile)
 
 		return boxfiles
 
@@ -159,26 +167,73 @@ class UploadParticles(appionScript.AppionScript):
 		return peaktree
 
 	#===========================
+	def parseSingleStarfile(self, starfile):
+		apDisplay.printMsg("Parsing a single star file, assuming filenames in starfile")
+		if self.params['coordtype'] != "relion":
+			apDisplay.printError("Single file upload must be a star file")
+		if not os.path.isfile(starfile):
+			apDisplay.printError("Could not find file "+starfile)
+		labels = apRelion.getStarFileColumnLabels(starfile)
+		f = open(starfile, "r")
+		bigpeaktree = {}
+		for line in f:
+			cols = line.strip().split()
+			if len(cols)<3: continue
+			if line.startswith("#"): continue
+			xcoord = int(round(float(cols[labels.index("_rlnCoordinateX")])))
+			ycoord = int(round(float(cols[labels.index("_rlnCoordinateY")])))
+			micrographname=cols[labels.index("_rlnMicrographName")]
+			filename = os.path.splitext(micrographname)[0]
+			peakdict = {
+				'diameter': self.params['diam'],
+				'xcoord': xcoord,
+				'ycoord': ycoord,
+				'peakarea': 10,
+			}
+			if filename not in bigpeaktree:
+				bigpeaktree[filename]=[]
+			bigpeaktree[filename].append(peakdict)
+		return bigpeaktree
+
+	#===========================
 	def start(self):
 		apDisplay.printMsg("Getting box files")
 		boxfiles = self.getBoxFiles()
+		
+		if len(boxfiles) > 1:
+			apDisplay.printMsg("Getting image data from database")
+			imgtree = apDatabase.getSpecificImagesFromDB(boxfiles)
+			if imgtree[0]['session']['name'] != self.sessiondata['name']:
+				apDisplay.printError("Session and Image do not match "+imgtree[0]['filename'])	
 
-		apDisplay.printMsg("Getting image data from database")
-		imgtree = apDatabase.getSpecificImagesFromDB(boxfiles)
-		if imgtree[0]['session']['name'] != self.sessiondata['name']:
-			apDisplay.printError("Session and Image do not match "+imgtree[0]['filename'])	
+			### insert params for manual picking
+			rundata = self.insertManualParams()
 
-		### insert params for manual picking
-		rundata = self.insertManualParams()
+			# upload Particles
+			for imgdata in imgtree:
+				### check session
+				if imgdata['session']['name'] != self.sessiondata['name']:
+					apDisplay.printError("Session and Image do not match "+imgdata['filename'])	
 
-		# upload Particles
-		for imgdata in imgtree:
-			### check session
-			if imgdata['session']['name'] != self.sessiondata['name']:
-				apDisplay.printError("Session and Image do not match "+imgdata['filename'])	
+				peaktree = self.boxFileToPeakTree(imgdata)
+				apParticle.fastInsertParticlePeaks(peaktree, imgdata, self.params['runname'], msg=True)
+		else:
+			# Assumption is that if only one file is selected, it is a starfile which lists data for all micrographs
+			starfiletree = self.parseSingleStarfile(boxfiles[0])
+			imagelist = starfiletree.keys()
+			imgtree = apDatabase.getSpecificImagesFromDB(imagelist)
+			if imgtree[0]['session']['name'] != self.sessiondata['name']:
+				apDisplay.printError("Session and Image do not match "+imgtree[0]['filename'])	
 
-			peaktree = self.boxFileToPeakTree(imgdata)
-			apParticle.fastInsertParticlePeaks(peaktree, imgdata, self.params['runname'], msg=True)
+			### insert params for manual picking
+			rundata = self.insertManualParams()
+			# upload Particles
+			for imgdata in imgtree:
+				### check session
+				if imgdata['session']['name'] != self.sessiondata['name']:
+					apDisplay.printError("Session and Image do not match "+imgdata['filename'])	
+				peaktree = starfiletree[imgdata['filename']]
+				apParticle.fastInsertParticlePeaks(peaktree, imgdata, self.params['runname'], msg=True)
 
 if __name__ == '__main__':
 	uploadpart = UploadParticles()
