@@ -109,7 +109,7 @@ class SettingsJsonMaker(DataJsonMaker):
 				digicam_name = p['ccdcamera']['name']
 				digicam_hostname = p['ccdcamera']['hostname']
 				digi_key = digicam_hostname+'_'+digicam_name
-				digi_key = '%s+%s+%s' % (p['tem']['name'],digicam_hostname,digicam_name)
+				digi_key = '%s+%s+%s+%s' % (p['tem']['hostname'],p['tem']['name'],digicam_hostname,digicam_name)
 				if digi_key not in all_digicam_presets.keys():
 					all_digicam_presets[digi_key] = []
 				all_digicam_presets[digi_key].append(p)

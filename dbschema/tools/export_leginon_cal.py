@@ -12,23 +12,28 @@ from pyami import jsonfun
 pixelsize_scale = 1
 
 class CalibrationJsonMaker(jsonfun.DataJsonMaker):
-	def __init__(self,params):
+	def __init__(self,params, interactive=False):
+		self.interactive = interactive
 		super(CalibrationJsonMaker,self).__init__(leginondata)
 		try:
 			self.validateInput(params)
 		except ValueError, e:
-			print "Error: %s" % e.message
+			print "Error: %s" % e
 			self.close(1)
 
 	def validateInput(self, params):
-		if len(params) != 4:
-			print "Usage export_leginon_cal.py source_database_hostname source_camera_hosthame camera_name"
+		if len(params) < 4:
+			print "Usage export_leginon_cal.py source_database_hostname source_camera_hosthame camera_name (source_tem_name)"
 			self.close(1)
 		database_hostname = leginondata.sinedon.getConfig('leginondata')['host']
 		if params[1] != database_hostname:
 			raise ValueError('leginondata in sinedon.cfg not set to %s' % params[1])
 		self.cam = self.getSourceCameraInstrumentData(params[2],params[3])
-		self.tem = self.getSourceTemInstrumentData(self.cam)
+		if len(params) > 4:
+			tem_name = params[4]
+		else:
+			tem_name = None
+		self.tem = self.getSourceTemInstrumentData(self.cam, tem_name)
 
 	def getSourceCameraInstrumentData(self, from_hostname,from_camname):
 		kwargs = {'hostname':from_hostname,'name':from_camname}
@@ -46,9 +51,9 @@ class CalibrationJsonMaker(jsonfun.DataJsonMaker):
 		sourcecam = result
 		return sourcecam
 
-	def getSourceTemInstrumentData(self, sourcecam):
+	def getSourceTemInstrumentData(self, sourcecam, sourcetem_name=None):
 		'''
-		Get the most recent TEM connected to the camera that has PixelSizeCalibration
+		Get TEM connected to the camera that has PixelSizeCalibration
 		'''
 		allcaldata = leginondata.PixelSizeCalibrationData(ccdcamera=sourcecam).query()
 		if not allcaldata:
@@ -56,13 +61,19 @@ class CalibrationJsonMaker(jsonfun.DataJsonMaker):
 		temids = []
 		for c in allcaldata:
 			if c['tem'] and c['tem'].dbid not in temids:
+				if sourcetem_name and c['tem']['name']!=sourcetem_name:
+					continue
 				temids.append(c['tem'].dbid)
 		for id in temids:
 			tem = leginondata.InstrumentData().direct_query(id)
-			answer = raw_input('Gather calibration associated with tem  %s on host %s ? (Y/y or N/n)' % (tem['name'], tem['hostname']))
-			if answer.lower() in 'y':
+			if len(temids) == 1:
 				temdata = tem
-				break
+			else:
+				# more than one possibility
+				answer = raw_input('Gather calibration associated with tem  %s on host %s ? (Y/y or N/n)' % (tem['name'], tem['hostname']))
+				if answer.lower() in 'y':
+					temdata = tem
+					break
 		try:		
 			print "Using tem id=%d on %s named %s" % (temdata.dbid, temdata['hostname'], temdata['name'])
 			return temdata
@@ -224,10 +235,11 @@ class CalibrationJsonMaker(jsonfun.DataJsonMaker):
 		if status:
 			print "Exit with Error"
 			sys.exit(1)
-		raw_input('hit enter when ready to quit')
+		if self.interactive:
+			raw_input('hit enter when ready to quit')
 
 if __name__=='__main__':
-	app = CalibrationJsonMaker(sys.argv)
+	app = CalibrationJsonMaker(sys.argv, interactive=False)
 	app.run()
 	app.close()
 	 

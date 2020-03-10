@@ -21,6 +21,7 @@ def convertStringToSQL(value):
 class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 	def __init__(self,params):
 		tem_hostname, tem_name, cam_hostname, camera_name = self.validateInput(params)
+		print tem_hostname, tem_name
 		super(CalibrationJsonLoader,self).__init__(leginondata)
 		self.data = {}
 		self.setSessionData()
@@ -86,7 +87,7 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 		if not os.path.exists(params[2]):
 			raise ValueError('can not find %s to import' % params[2])
 		self.jsonfile = params[2]
-		digicam_key = self.jsonfile.split('cal_')[-1].split('.json')[0]
+		digicam_key = self.jsonfile.split('ref_')[-1].split('.json')[0]
 		temhost, temname, cam_host, cameraname = digicam_key.split('+')
 		return temhost, temname, cam_host, cameraname
 
@@ -104,8 +105,8 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 		cam = results[0]
 		return cam
 
-	def getTemsByName(self, tem_name):
-		results = leginondata.InstrumentData(name=tem_name).query()
+	def getTemsByHostAndName(self, tem_hostname, tem_name):
+		results = leginondata.InstrumentData(hostname=tem_hostname, name=tem_name).query()
 		all_tems = []
 		for r in results:
 			if r['cs']:
@@ -113,7 +114,7 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 		return all_tems
 
 	def getTemInstrumentData(self, tem_hostname, tem_name):
-		all_tems = self.getTemsByName(tem_name)
+		all_tems = self.getTemsByHostAndName(tem_hostname,tem_name)
 		if len(all_tems) == 1:
 			return all_tems[0]
 		print map((lambda x: x['hostname']),all_tems)

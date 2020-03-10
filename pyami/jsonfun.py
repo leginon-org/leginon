@@ -121,6 +121,9 @@ class DataJsonMaker(object):
 		return data
 
 	def writeJsonFile(self,filename='test.json'):
+		if len(self.alldata) == 0:
+			print 'no data to save, Skipping %s....' % (filename,)
+			return
 		print 'writing %d records into %s' % (len(self.alldata),filename)
 		jstr = json.dumps(self.alldata, indent=2, separators=(',',':'))
 		f = open(filename,'w')

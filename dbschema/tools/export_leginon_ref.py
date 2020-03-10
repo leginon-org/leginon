@@ -68,9 +68,13 @@ class ReferenceJsonMaker(jsonfun.DataJsonMaker):
 					offset_channels.append('%d-%d' % (r['camera']['offset']['x'],r['channel']))
 					normids.append(r.dbid)
 			print "bin and number of normids", b, normids
+			print 'offset and channel: ', offset_channels
 			for dbid in normids:
 				normdata = leginondata.NormImageData().direct_query(dbid)
-				self.publishNormData(normdata)
+				try:
+					self.publishNormData(normdata)
+				except IOError as e:
+					print e
 
 	def modifyReferenceDict(self, datadict, name, file_prefix, plandict, camdict, scopedict):
 		'''
@@ -94,6 +98,7 @@ class ReferenceJsonMaker(jsonfun.DataJsonMaker):
 		save brigh, dark, norm images in the same name scheme
 		'''
 		if not self.tem:
+			# This effectively assign tem to th most recent tem used to get references.
 			self.tem = normdata['scope']['tem']
 		file_prefix = '%d' % normdata.dbid
 		camdict = self.makeClassDict(normdata['camera'])
@@ -126,7 +131,6 @@ class ReferenceJsonMaker(jsonfun.DataJsonMaker):
 		if status:
 			print "Exit with Error"
 			sys.exit(1)
-		raw_input('hit enter when ready to quit')
 
 if __name__=='__main__':
 	app = ReferenceJsonMaker(sys.argv)
