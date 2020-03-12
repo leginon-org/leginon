@@ -6,6 +6,8 @@ name while in the process of creating a session.
 import os.path
 import time
 
+from pyami import moduleconfig
+
 import leginon.leginondata
 import leginon.projectdata
 import leginon.leginonconfig
@@ -74,8 +76,14 @@ class Reservation(object):
 
 def suggestName():
 	session_name = '<cannot suggest a name>'
+	try:
+		prefix = moduleconfig.getConfigured('leginon_session.cfg', 'leginon')['name']['prefix']
+	except IOError as e:
+		prefix = ''
+	except KeyError:
+		raise ValueError('session prefix needs to be in "name" section and item "prefix"')
 	for suffix in 'abcdefghijklmnopqrstuvwxyz':
-		maybe_name = time.strftime('%y%b%d'+suffix).lower()
+		maybe_name = prefix + time.strftime('%y%b%d'+suffix).lower()
 		try:
 			makeReservation(maybe_name)
 		except ReservationFailed:
