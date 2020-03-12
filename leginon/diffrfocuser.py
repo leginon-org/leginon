@@ -70,6 +70,7 @@ class DiffrFocuser(singlefocuser.SingleFocuser):
 		try:
 			self.tiltAndWait(presetdata,emtarget)
 			self.saveDiffractionSeriesData(presetdata,emtarget)
+			self.notifyNodeBusy()
 		except:
 			self.logger.info('Return to %.1f deg tilt' % (math.degrees(self.tilt0)))
 			self.returnToOriginalTilt()
