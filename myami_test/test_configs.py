@@ -22,10 +22,26 @@ class TestConfigs(unittest.TestCase):
 			self.instrument_error = e
 			return False
 
+	def testSession(self):
+		self.session_error = 'No'
+		self.assertTrue(self._testSession(), msg=self.session_error)
+
+	def _testSession(self):
+		try:
+			pyami.moduleconfig.getConfigured('leginon_session.cfg', package='leginon')['name']['prefix']
+		except IOError:
+			# optional config file
+			return True
+		except KeyError, e:
+			self.session_error = 'Existing leginon_session.cfg does not have "prefix" item in "name" section'
+			return False
+		return True
+
 	def runTest(self):
 		self.testSinedon()
 		self.testLeginon()
 		self.testInstruments()
+		self.testSession()
 
 def runTestCases():
 	'''
