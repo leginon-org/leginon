@@ -283,7 +283,7 @@ echo '<td>';
 echo 'Spot size: <div style="float:right ">'.$presetdata['spot size'].'</div>';
 echo '</td>';
 echo '<td>';
-echo 'Pixel size (Å): <div style="float:right ">'.number_format($imageinfo['pixelsize']*1e10,4).'</div>';
+echo 'Pixel size (Å): <div style="float:right ">'.number_format($imageinfo['pixelsize']*$presetdata['SUBD|binning|x']*1e10,4).'</div>';
 echo '</td>';
 echo '</tr>';
 echo '<tr>';
