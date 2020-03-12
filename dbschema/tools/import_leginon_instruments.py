@@ -107,7 +107,6 @@ class ClientJsonLoader(jsonfun.DataJsonLoader):
 			self.insertAllData()
 
 	def close(self, status):
-		raw_input('hit enter when ready to quit')
 		if status:
 			print "Exit with Error"
 			sys.exit(1)
