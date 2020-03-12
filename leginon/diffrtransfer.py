@@ -503,7 +503,8 @@ def loop(check_path, check_interval,no_wait=False):
 					app = DiffractionUpload(hl_id,target_number,groups[k])
 				app.run()
 			except ValueError as e:
-				raise
+				# no diffraction series saved.  For example, where there is a leginon side
+				# crash while the movie is being recorded.
 				handleBadFiles(check_path, k, groups[k], e)
 		if no_wait:
 			break
