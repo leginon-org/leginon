@@ -162,6 +162,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		'low mean': 50,
 		'bad stats response': 'Continue',
 		'bad stats type': 'Mean',
+		'reacquire when failed': False,
 		'recheck pause time': 10,
 		'emission off': False,
 		'target offset row': 0,
@@ -246,6 +247,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.alignzlp_warned = False
 		self.beamtilt0 = None
 		self.paused_by_gui = False
+		self.retry_count = 0
 
 		self.duplicatetypes = ['acquisition', 'focus']
 		self.presetlocktypes = ['acquisition', 'target', 'target list']
@@ -850,12 +852,16 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.reportStatus('acquisition', 'acquiring image...')
 		self.startTimer('acquire getData')
 		correctimage = self.settings['correct image']
-		if correctimage:
-			imagedata = self.acquireCorrectedCameraImageData(channel=channel)
-		else:
-			imagedata = self.acquireCameraImageData()
+		imagedata = self._acquireCameraImage(correctimage, channel)
 		self.reportStatus('acquisition', 'image acquired')
 		self.stopTimer('acquire getData')
+		retry_limit = 3
+		while self.settings['reacquire when failed'] and (imagedata is None or imagedata['image'] is None) and self.retry_count < retry_limit:
+			self.retry_count += 1
+			self.logger.info('pause %d seconds before retry' % self.settings['recheck pause time'])
+			time.sleep(self.settings['recheck pause time'])
+			self.logger.warning('reaquiring image trial %d' % self.retry_count)
+			imagedata = self._acquireCameraImage(correctimage, channel)
 		if imagedata is None:
 			raise BadImageAcquirePause('failed acquire camera image')
 		if imagedata['image'] is None:
@@ -889,6 +895,13 @@ class Acquisition(targetwatcher.TargetWatcher):
 		## store EMData to DB to prevent referencing errors
 		self.publish(imagedata['scope'], database=True)
 		self.publish(imagedata['camera'], database=True)
+		return imagedata
+
+	def _acquireCameraImage(self, correctimage, channel):
+		if correctimage:
+			imagedata = self.acquireCorrectedCameraImageData(channel=channel)
+		else:
+			imagedata = self.acquireCameraImageData()
 		return imagedata
 
 	def preAcquire(self, presetdata, emtarget=None, channel=None, reduce_pause=False):
@@ -983,6 +996,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			print tnum, 'APDW START'
 			t0 = time.time()
 
+		self.retry_count = 0
 		imagedata = self.acquireCCD(presetdata, emtarget, channel=channel)
 
 		self.imagedata = imagedata
@@ -1127,6 +1141,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.publishStats(imagedata)
 		self.stopTimer('publish stats')
 		self.reportStatus('output', 'Stats published...')
+		if self.retry_count >= 1:
+			self.logger.error('image %s was acquired %d times.' % (imagedata['filename'], self.retry_count+1))
 
 		image_array = imagedata['image']
 		if self.settings['display image'] and isinstance(image_array, numpy.ndarray):
@@ -1190,10 +1206,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.instrument.ccdcamera.SaveRawFrames = False
 		except:
 			isSaveRawFrames = False
-		if correctimage:
-			imagedata = self.acquireCorrectedCameraImageData(channel=0)
-		else:
-			imagedata = self.acquireCameraImageData()
+		imagedata = self._acquireCameraImage(correctimage, 0)
 		# Restore frame saving
 		try:
 			self.instrument.ccdcamera.SaveRawFrames = isSaveRawFrames
