@@ -299,6 +299,7 @@ class DiffractionUpload(object):
 
 	def saveSMV(self,imagedata, smv_path, offset):
 		smv_dict = self.getLeginonInfoDict(imagedata)
+		smv_dict['LEGINON_OFFSET'] = offset
 		file_basename = os.path.basename(smv_path)
 		a = imagedata['image']
 		numsmv.write(a, smv_path,offset,smv_dict)
