@@ -87,6 +87,7 @@ class DiffrFocuser(singlefocuser.SingleFocuser):
 
 
 		# go to start
+		self.instrument.tem.BeamstopPosition = 'in'
 		self.logger.info('Tilting to %s degrees to start' % self.settings['tilt start'])
 		self.instrument.tem.StagePosition={'a':self.start_radian}
 		self.logger.info('Start tilting')
@@ -94,7 +95,6 @@ class DiffrFocuser(singlefocuser.SingleFocuser):
 		t.daemen = True
 		t.start()
 		filename = self.getTiltMovieFilename(emtarget)
-		self.instrument.tem.BeamstopPosition = 'in'
 		self.startMovieCollection(filename, presetdata['exposure time'])
 		t.join()
 		self.logger.info('End tilting')
