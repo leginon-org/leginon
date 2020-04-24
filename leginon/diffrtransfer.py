@@ -288,6 +288,7 @@ class DiffractionUpload(object):
 		smv_dict['PHI'] = smv_dict['OSC_START'] # rolling shutter
 		smv_dict['DISTANCE'] = self.getCameraLengthMM(imagedata)
 		# pixel size needs to be after binning and in mm
+		smv_dict['BIN'] = (imagedata['camera']['binning']['x'],imagedata['camera']['binning']['y'])
 		smv_dict['PIXEL_SIZE'] = imagedata['camera']['pixel size']['x']*imagedata['camera']['binning']['x'] * 1000.0
 		smv_dict['ACC_TIME'] = imagedata['camera']['exposure time'] # milli-seconds
 		smv_dict['TIME'] = smv_dict['ACC_TIME'] / 1000.0  # rolling shutter sec
