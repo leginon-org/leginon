@@ -199,13 +199,14 @@ def updateHeader(headerdict, key, value):
 #-----END of Header functions
 #-----START of Data functions
 def getDataBytesPerPixel(header_type_string):
+	print header_type_string
 	types = map((lambda x: x[0]),TYPE_MAP)
-	i = TYPE_MAP.index(header_type)
+	i = types.index(header_type_string)
 	return TYPE_MAP[i][2]
 
 def getDataNumpyType(header_type_string):
 	types = map((lambda x: x[0]),TYPE_MAP)
-	i = TYPE_MAP.index(header_type)
+	i = types.index(header_type_string)
 	return TYPE_MAP[i][1]
 
 def readDataFromFileObj(fobj, headerdict):
