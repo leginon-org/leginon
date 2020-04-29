@@ -70,7 +70,6 @@ class DiffrFocuser(singlefocuser.SingleFocuser):
 		try:
 			self.tiltAndWait(presetdata,emtarget)
 			self.saveDiffractionSeriesData(presetdata,emtarget)
-			self.notifyNodeBusy()
 		except:
 			self.logger.info('Return to %.1f deg tilt' % (math.degrees(self.tilt0)))
 			self.returnToOriginalTilt()
@@ -125,17 +124,21 @@ class DiffrFocuser(singlefocuser.SingleFocuser):
 		speed = abs(self.settings['tilt speed'])
 		corrected_speed = self.speed_cal_client.getCorrectedTiltSpeed(None, speed, self.settings['tilt range'])
 		if corrected_speed != speed:
-			self.logger.info('Using corrected speed of %.4f degrees/seconds')
+			self.logger.info('Using corrected speed of %.4f degrees/seconds' % corrected_speed)
 		# set in degrees per second
 		self.instrument.tem.StageSpeed = corrected_speed
 		self.instrument.tem.StagePosition = {'a':self.end_radian}
 
 	def startMovieCollection(self, filename, exposure_time):
+		# notify both start and stop so it does not timeout easily
+		self.notifyNodeBusy()
 		self.logger.info('Start movie collection')
 		# exposure_time is in ms
 		self.instrument.ccdcamera.startMovie(filename, exposure_time)
 
 	def stopMovieCollection(self, filename, exposure_time):
+		# notify both start and stop
+		self.notifyNodeBusy()
 		self.logger.info('Stop movie collection')
 		self.instrument.ccdcamera.stopMovie(filename, exposure_time)
 
