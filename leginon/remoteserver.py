@@ -36,15 +36,77 @@ class RemoteServerMaster(object):
 		
 		self.leginon_base = os.path.join(os.path.dirname(sessiondata['image path']),'remote')
 		pyami.fileutil.mkdirs(self.leginon_base)
+		# django media
 
-class RemoteServer(object):
-	def __init__(self, logger, sessiondata, node):
-		self.logger = logger
+class RemoteSessionServer(object):
+	def __init__(self, logger, sessiondata):
+		self.logger = logger # if logger is not valid, it will print to terminal
 		self.session = sessiondata
-		self.node = node
-		self.node_name = node.name.replace(' ','_')
-		self.remote_id_list = [sessiondata['name'],]
 		self.leg_remote_auth = (configs['leginon auth']['username'],configs['leginon auth']['password'])
+		self.remote_server_active = True
+		self.session_pk = self.setSession()
+		if self.session_pk is False:
+			# connection error.
+			self.remote_server_active = False
+
+	def setSession(self):
+		router_name = 'api/sessions'
+		l_search = '/leginon'
+		replace_pattern = l_search.join(self.session['image path'].split('/leginon/')[:-1])
+		media_session_rawdata_path = self.session['image path'].replace(replace_pattern,'/media')
+		media_session_path = os.path.dirname(media_session_rawdata_path)
+		self.media_base = os.path.join(media_session_path,'remote')
+		# data
+		data = {
+				'name':self.session['name'],
+				'leginon_session_db_id': self.session.dbid,
+		}
+		try:
+			results = self.get(router_name, data)
+		except requests.ConnectionError:
+			return False
+		patch_dict ={'path':media_session_path}
+		data.update({'path':media_session_path})
+		if not results:
+			pk = self.post(router_name, data)['id']
+		else:
+			pk = results[0]['id']
+			self.patch(router_name, pk, patch_dict)
+		return pk
+
+	def clearRemoteNodes(self):
+		'''
+		Clear date in the session so that it can restart cleanly.
+		'''
+		# remove images first because it uses references of targeting session_nodes
+		self._clearRemoteImages()
+		self._clearRemoteTargetingNodes()
+		routers = ['remote/status','remote/toolbar','remote/click']
+		for name in routers:
+			self._clearRemoteByPk(name)
+
+	def _clearRemoteByPk(self, router_name):
+		results = self.get(router_name,{'session_name':self.session['name']})
+		if not results:
+			return
+		for r in results:
+			self.delete(router_name, r['pk'])
+
+	def _clearRemoteTargetingNodes(self):
+		router_name = 'api/session_nodes'
+		session_pk = self.get('api/sessions',{'name':self.session['name']})[0]['id']
+		results = self.get(router_name,{'session':session_pk})
+		if not results:
+			return
+		for r in results:
+			self.delete(router_name, r['id'])
+
+	def _clearRemoteImages(self):
+		router_name = 'api/images'
+		results = self.get(router_name,{})
+		for r in results:
+			if r['name'].startswith(self.session['name']):
+				self.delete(router_name,r['id'])
 
 	def _makeUrl(self, router_name,pk=None,param_str=None):
 		'''Make url according to the config and input.
@@ -67,11 +129,15 @@ class RemoteServer(object):
 				return None
 			return json.loads(answer.text)
 		else:
-			self.logger.error('Error communicating with webserver for leginon-remote: code %s' % (answer.status_code))
+			try:
+				self.logger.error('Error communicating with webserver for leginon-remote: code %s' % (answer.status_code))
+			except AttributeError:
+				# display in the terminal if logger is not ready
+				print('Error before logger is up in communication to leginon-remote: %s %s' % (answer.status_code, answer.reason))
 
 	def _processDataToSend(self, data):
 		'''
-		Process data before sending. For example, add session_name.
+		Process data before sending for POST. For example, add session_name.
 		'''
 		if not 'session_name' in data.keys():
 			data['session_name'] = self.session['name']
@@ -88,6 +154,8 @@ class RemoteServer(object):
 		'''
 		Delect causes a distroy of the data defined by the ModelViewSet and pk
 		'''
+		if not self.remote_server_active:
+			return
 		url = self._makeUrl(router_name, pk=pk)
 		answer = requests.delete(url=url, auth=self.leg_remote_auth)
 		return self._processResponse(answer)
@@ -96,6 +164,8 @@ class RemoteServer(object):
 		'''
 		Patch causes an update of the data defined by the ModelViewSet
 		'''
+		if not self.remote_server_active:
+			return
 		url = self._makeUrl(router_name, pk=pk)
 		answer = requests.patch(url=url, json=data, auth=self.leg_remote_auth)
 		return self._processResponse(answer)
@@ -105,27 +175,52 @@ class RemoteServer(object):
 		Get causes a filtered get of the data defined by the ModelViewSet
 		Returns a list of filtered data dict
 		'''
+		if not self.remote_server_active:
+			return False
 		param_str = self._processParamsToSend(data)
 		url = self._makeUrl(router_name, param_str=param_str)
 		answer = requests.get(url=url, auth=self.leg_remote_auth)
-		return self._processResponse(answer)
+		#print 'got answer from ', url
+		queryset = self._processResponse(answer)
+		if hasattr(queryset,'keys') and 'results' in queryset.keys():
+			return queryset['results']
+		return queryset
 
 	def post(self, router_name, data):
 		'''
 		Post causes a create of the data defined by the ModelViewSet
 		'''
+		if not self.remote_server_active:
+			return False
 		url = self._makeUrl(router_name)
-		data = self._processDataToSend(data)
+		if router_name in ('remote/click','remote/status'):
+			data = self._processDataToSend(data)
+		#print('post url ',url)
 		answer = requests.post(url=url, json=data, auth=self.leg_remote_auth)
+		#print 'got answer from post', url
 		return self._processResponse(answer)
 
-class RemoteStatusbar(RemoteServer):
-	router_name = 'status'
+	def userHasControl(self):
+		if self.remote_server_active:
+			session_pk = self.get('api/sessions',{'name':self.session['name']})[0]['id']
+			controlled_by_user = self.get('api/microscopes',{'session':session_pk})[0]['controlled_by_user']
+			return controlled_by_user
+		else:
+			return False
+
+class RemoteNodeServer(RemoteSessionServer):
+	def __init__(self, logger, sessiondata, node):
+		super(RemoteNodeServer,self).__init__(logger, sessiondata)
+		self.node = node
+		self.node_name = node.name.replace(' ','_')
+
+class RemoteStatusbar(RemoteNodeServer):
+	router_name = 'remote/status'
 	def __init__(self, logger, sessiondata, node, leginon_base):
 		super(RemoteStatusbar,self).__init__(logger, sessiondata, node)
 		self.data = {
 				'session_name': self.session['name'],
-				'node': self.node_name
+				'node': self.node_name,
 		}
 
 	def setStatus(self, status):
@@ -141,28 +236,47 @@ class RemoteStatusbar(RemoteServer):
 			return self.post(self.router_name, data)
 		else:
 			if results:
+				self.logger.debug(results)
 				self.delete(self.router_name, results[0]['pk'])
 
-class RemoteToolbar(RemoteServer):
+class RemoteToolbar(RemoteNodeServer):
+	router_name = 'remote/toolbar'
 	def __init__(self, logger, sessiondata, node, leginon_base):
 		super(RemoteToolbar,self).__init__(logger, sessiondata, node)
-		self.datafile_base = os.path.join(leginon_base,'toolbar')
-		pyami.fileutil.mkdirs(self.datafile_base)
-		self.node_dir = os.path.join(self.datafile_base, self.node_name)
-		self.remote_id_list.extend(['toolbar', self.node_name])
 		self.tools = {}
+		self.tool_configs = {}
 
 	def addClickTool(self,name, handling_attr_name, help_string=''):
-		if name not in self.tools:
-			self.tools[name] = ClickTool(self, name, handling_attr_name, help_string)
-		else:
-			self.tools[name].activate()
+		self.tools[name] = ClickTool(self, name, handling_attr_name, help_string)
+		self.tool_configs[name] = self.tools[name].tool_config
 
 	def removeClickTool(self, name):
 		if name in self.tools:
 			self.tools[name].deActivate()
-			time.sleep(SLEEP_TIME)
+			time.sleep(1)
 			self.tools.pop(name)
+			self.tool_configs.pop(name)
+
+	def finalizeToolbar(self):
+		self.data = {
+				'session_name': self.session['name'],
+				'node': self.node_name,
+		}
+		patch_dict = {'tools':self.tool_configs}
+		results = self.get(self.router_name, self.data)
+		if results:
+			# patch existing toolbar
+			return self.patch(self.router_name, results[0]['pk'], patch_dict)
+		# insert new toolbar
+		data = self.data.copy()
+		data.update(patch_dict)
+		return self.post(self.router_name, data)
+
+	def exit(self):
+		for name in self.tools.keys():
+			# deactivate first to stop tracking
+			self.tools[name].deActivate()
+			time.sleep(1)
 
 class Tool(object):
 	def __init__(self, parent, name, handling_attr_name, help_string):
@@ -170,8 +284,8 @@ class Tool(object):
 		self.name = name
 		self.handling_attr = getattr(self.toolbar.node, handling_attr_name)
 		self.help_string = help_string
-		self.data_path = os.path.join(self.toolbar.node_dir,name)
-		pyami.fileutil.mkdirs(self.data_path)
+		# tool configuration to be included in NodeToolbar post
+		self.tool_config = {'type': None, 'choices':()}
 		# basic data for a tool in the toolbar to send to remote
 		self.tool_data = {
 				'session_name': self.toolbar.session['name'],
@@ -182,14 +296,13 @@ class Tool(object):
 class ClickTool(Tool):
 	'''
 	Click tool calls a handling attribute from the node when it is triggered
-	by the existance of the file at triggerpath.
+	by the existance of the specified ClickToolValue in leginon-remote
 	'''
-	router_name = 'click'
-	trigger_file = 'click'
+	router_name = 'remote/click'
 	def __init__(self, parent, name, handling_attr_name, help_string):
 		super(ClickTool,self).__init__(parent, name, handling_attr_name, help_string)
-		self.triggerpath = os.path.join(self.data_path, self.trigger_file)
-		self.toolbar.logger.debug('click tracking initialized for %s tool triggered by the presence of %s' % (self.name,self.triggerpath))
+		self.tool_config.update({'type':'click','choices':(False, True)})
+		self.toolbar.logger.debug('click tracking config: %s' % self.tool_config)
 		self.activate()
 		response = self.toolbar.get(self.router_name,self.tool_data)
 
@@ -212,10 +325,9 @@ class ClickTool(Tool):
 		while self.active:
 			if self.hasRemoteTrigger():
 				self.handling_attr()
-				time.sleep(1)
 				self.resetTrigger()
-				time.sleep(1)
-			time.sleep(SLEEP_TIME)		
+			time.sleep(SLEEP_TIME)
+		print "click tracking of %s.%s deactivated" % (self.toolbar.node_name, self.name)
 
 	def hasRemoteTrigger(self):
 		'''
@@ -237,69 +349,113 @@ class ClickTool(Tool):
 		response = self.toolbar.delete(self.router_name,pk)
 		return False
 
-class RemoteTargetingServer(RemoteServer):
+class RemoteTargetingServer(RemoteNodeServer):
+	route_name = 'api/images'
 	def __init__(self, logger, sessiondata, node, leginon_base):
 		super(RemoteTargetingServer,self).__init__(logger, sessiondata, node)
-		self.targetnames = []
+		self.target_types = []
+		# where leginon saves the image
 		self.datafile_base = os.path.join(leginon_base,'targeting',self.node_name)
+		# where leginon-remote thinks it is looking for the image
+		self.media_datafile_base = os.path.join(self.media_base,'targeting',self.node_name)
 		pyami.fileutil.mkdirs(self.datafile_base)
-		self.remote_id_list.extend(['targeting', self.node_name])
 		self.targefilepath = None
-		self.excluded_targetnames = ['Blobs','preview']
-		self.readonly_targetnames = ['done']
-		self.writeonly_targetnames = []
+		self.excluded_target_types = ['Blobs','preview']
+		self.readonly_target_types = ['done']
+		self.writeonly_target_types = []
+		self.router_name = 'api/images'
+		self.session_node_pk = None
+		self.image_pk = None
+		self.active = False
 
-	def setTargetNames(self,targetnames):
+	def setTargetTypes(self,target_types):
 		'''
 		set names of target types to be displayed and edited by the remote client.
+		This is called from leginon.TargetFinder instances.
 		'''
-		self.targetnames = targetnames
+		if not self.remote_server_active:
+			return
 		# remove those not useful to be picked remotely
-		for name in self.excluded_targetnames:
-			if name in targetnames:
-				targetnames.remove(name)
+		route_name = 'api/session_nodes'
+		for name in self.excluded_target_types:
+			if name in target_types:
+				target_types.remove(name)
 
-		self.out_targetnamesfilepath = os.path.join(self.datafile_base,'targetnames')
-		self.setTargetPermission(targetnames)
-		self._writeTargetNames(targetnames)
+		for target_name in target_types:
+				target_type_data = {}
+				target_type_data['name']=target_name
+				target_type_data['access_type']= self.getAccessType(target_name)
+				self.target_types.append(target_type_data)
+		data = {}
+		data['target_types'] = self.target_types
+		r = self.get(route_name,{'session':self.session_pk,'name':self.node_name})
+		if r:
+			session_node_pk = r[0]['id']
+			# just update
+			response = self.patch(route_name, r[0]['id'], data)
+		else:
+			# insert new one
+			data['name'] = self.node_name
+			data['session'] = self.session_pk
+			result = self.post(route_name, data)
+			session_node_pk = result['id']
+		# save for later use
+		self.session_node_pk = session_node_pk
+		return
 
-	def setTargetPermission(self, targetnames):
-		self.permissions = {}
-		for name in targetnames:
-			if name not in self.writeonly_targetnames:
-				self.permissions[name]='r' # all are readable
-			else:
-				self.permissions[name]=''
-			if name not in self.readonly_targetnames:
-				self.permissions[name]+='w' # all are readable
+	def getAccessType(self, name):
+			permission='r' # all are readable
+			if name not in self.readonly_target_types:
+				permission+='w' # all are readable
+			return permission
 
-	def _writeTargetNames(self, targetnames):
-		'''
-		Write target names and permission. File will be overwritten.
-		'''
-		f = open(self.out_targetnamesfilepath,'w')
-		lines = []
-		for name in targetnames:
-			line = '%s,%s' % (name, self.permissions[name])
-			lines.append(line)
-		f.write('\n'.join(lines))
-		f.close()
-	
 	def setImage(self, imagedata):
 		'''
 		set the image to define targets on.
 		'''
 		self.imagedata = imagedata
+		# write image
 		image_base = os.path.join(self.datafile_base,'%06d' % imagedata.dbid)
 		pyami.fileutil.mkdirs(image_base)
 		self.out_jpgfilepath = os.path.join(image_base,'image.jpg')
-		self.out_targetfilepath = os.path.join(image_base,'outtargets')
-		self.in_targetfilepath = os.path.join(image_base,'intargets')
-
 		self._writeOutJpgFile()
+		# set path for leginon-remote to find
+		media_image_base = os.path.join(self.media_datafile_base,'%06d' % imagedata.dbid)
+		self.media_out_jpgfilepath = os.path.join(media_image_base,'image.jpg')
+
+		# create data
+		data = {
+				'name': imagedata['filename'],
+				'targets': {},
+				'targets_confirmed': False,
+				'node': self.session_node_pk,
+		}
+		r = self.get(self.route_name,{'node':data['node'],'name':data['name']})
+		patch_dict = {'path': self.media_out_jpgfilepath}
+		if r:
+			pk = r[0]['id']
+			result = self.patch(self.route_name, pk, patch_dict)
+			# do nothing. setTargets will do the patch
+		else:
+			# insert new one
+			data.update(patch_dict)
+			result = self.post(self.route_name, data)
+			pk = result['id']
+		self.image_pk = pk
+		self.active = True
+
+	def getImagePk(self):
+		'''
+		get current image primary key (id) in leginon-remote database.
+		'''
+		return self.image_pk
 
 	def unsetImage(self, imagedata):
-		self.resetTargets()
+		'''
+		Remove image_base directory and its content. This is called after
+		the confirmed targets are handled by leginon.
+		'''
+		result = self.delete(self.route_name, self.image_pk)
 		image_base = os.path.join(self.datafile_base,'%06d' % imagedata.dbid)
 		shutil.rmtree(image_base)
 		self.imagedata = None
@@ -313,7 +469,8 @@ class RemoteTargetingServer(RemoteServer):
 		'''
 		# dictionary { targetname:(x,y), }. x,y are floats to keep the precision
 		self.outtargets = xytargets
-		self._writeTargetsToFile(xytargets)
+		target_data = self._makeTargetData(xytargets)
+		self.patch(self.router_name, self.image_pk, {'targets': target_data})
 
 	def getJpgFilePath(self):
 		t = self.out_jpgfilepath
@@ -321,80 +478,63 @@ class RemoteTargetingServer(RemoteServer):
 			raise ValueError('Image JPG File Path not set')
 		return t
 
-	def getOutTargetFilePath(self):
-		t = self.out_targetfilepath
-		if t is None:
-			raise ValueError('Target File Path not set')
-		return t
+	def _makeTargetData(self, xy_tuple_targets):
+		'''
+		make target data for leginon-remote Image object
+		'''
+		target_data = {}
+		# dictionary { targetname:(x,y), }. x,y are floats to keep the precision
+		for name in xy_tuple_targets.keys():
+			target_data[name] = []
+			for xy in xy_tuple_targets[name]:
+				targetdict = {'x':xy[0],'y':xy[1]}
+				target_data[name].append(targetdict)
+		return target_data
 
-	def getInTargetFilePath(self):
-		t = self.in_targetfilepath
-		if t is None:
-			raise ValueError('Target File Path not set')
-		return t
-
-	def _writeTargetsToFile(self, targets):
+	def _getTargetData(self):
 		'''
-		Write targets to file
+		wait for leginon-remote Image object targets_confirmed to be True
+		and read targets from it.
 		'''
-		f = open(self.out_targetfilepath,'w')
-		for name in targets.keys():
-			for xy in targets[name]:
-				line = ','.join([name,'%d' % xy[0],'%d' % xy[1]])
-				line +='\n'
-				f.write(line)
-		f.close()
-
-	def _readTargetsFromFile(self):
-		'''
-		wait for target file to appear and read targets from it.
-		'''
-		while not os.path.isfile(self.in_targetfilepath):
+		filter_params = {
+				'id': self.image_pk,
+				'targets_confirmed': True,
+		}
+		while self.active and not self.get(self.route_name, filter_params):
+			if not self.userHasControl():
+				# stop waiting
+				return False
 			time.sleep(SLEEP_TIME)
-		print 'Found file'
-		if not os.access(self.in_targetfilepath, os.R_OK):
-			raise ValueError('%s not readable' % self.in_targetfilepath)
+		if not self.active:
+			return False
+		# get image object. Should always have one result.
+		results = self.get(self.route_name, filter_params)
 		try:
-			xys = self._readTargetNameXYs()
-			return xys
+			# convert coordinates to tuple
+			target_data = results[0]['targets']
+			xy_tuple_targets = {}
+			for name in target_data.keys():
+				xy_tuple_targets[name] = []
+				for targetdict in target_data[name]:
+					xy_tuple = (targetdict['x'], targetdict['y'])
+					xy_tuple_targets[name].append(targetdict)
+			return xy_tuple_targets
 		except Exception,e:
 			self.logger.error(e)
 			raise
 			# return False causes this function to be called again
 			return False
 
-	def _readTargetNameXYs(self):
-		'''
-		Read targets from file and organize them into a dictionary
-		according to targetnames.
-		'''
-		infile = open(self.in_targetfilepath)
-		lines = infile.readlines()
-		infile.close()
-
-		xys = {}
-		for n in self.targetnames:
-			xys[n] = []
-
-		for l in lines[:]:
-			# strip one regardless of the form
-			bits = l[:-1].split(',')
-			if len(bits) != 3:
-				continue
-			tname = bits[0]
-			x = int(float(bits[1]))
-			y = int(float(bits[2]))
-			if tname in self.targetnames:
-				xys[tname].append((x,y)) 		
-		return xys
-
 	def getInTargets(self):
 		'''
 		Wait until it gets a list of xy tuple for each targetname
 		'''
 		xys = False
-		while xys is False:
-			xys = self._readTargetsFromFile()
+		while xys is False or not self.active:
+			xys = self._getTargetData()
+			if not self.userHasControl():
+				# stop waiting and declare failed
+				return False
 		xys = self.filterInTargets(xys)
 		return xys
 
@@ -402,15 +542,12 @@ class RemoteTargetingServer(RemoteServer):
 		'''
 		Remove non-writable targets
 		'''
+		if xys is False:
+			return
 		for tname in xys.keys():
-			if 'w' not in self.permissions[tname]:
+			if 'w' not in self.getAccessType(tname):
 				del xys[tname]
 		return xys
 
-	def resetTargets(self):
-		'''
-		Remove target file once they are handled by TargetFinder
-		'''
-		if not os.access(self.in_targetfilepath, os.W_OK):
-			raise ValueError('%s not writable.' % self.in_targetfilepath)
-		os.remove(self.in_targetfilepath)
+	def exit(self):
+		self.active = False

@@ -89,7 +89,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		self.resetLastFocusedTargetList(None)
 		self.remote_targeting = remoteserver.RemoteTargetingServer(self.logger, session, self, self.remote.leginon_base)
 		self.remote_toolbar = remoteserver.RemoteToolbar(self.logger, session, self, self.remote.leginon_base)
-		self.remote_targeting.setTargetNames(self.targetnames)
+		self.remote_targeting.setTargetTypes(self.targetnames)
 
 		self.onQueueCheckBox(self.settings['queue'])
 		# assumes needing focus. Overwritten by subclasses
@@ -100,6 +100,11 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		# self.panel is now made
 		combined_state = self.settings['user check'] and not self.settings['queue']
 		self.setUserVerificationStatus(combined_state)
+
+	def exit(self):
+		self.remote_targeting.exit()
+		self.remote_toolbar.exit()
+		super(TargetFinder, self).exit()
 
 	def handleApplicationEvent(self,evt):
 		'''
@@ -225,19 +230,29 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		'''
 		if imdata is None:
 			return
+		if not self.remote_targeting.userHasControl():
+			self.logger.warning('remote user has not given control. Use local check')
+			return self.waitForUserCheck()
 		self.setStatus('user input')
 		self.twobeeps()
 		xytargets = self.getPanelTargets(imdata['image'].shape)
 		# put stuff in OutBox
 		self.remote_targeting.setImage(imdata)
 		self.remote_targeting.setOutTargets(xytargets)
+		remote_image_pk = self.remote_targeting.getImagePk()
 		# wait and get stuff from InBox
-		targetfile = self.remote_targeting.getInTargetFilePath()
-		self.logger.info('Waiting for targets in data file %s' % targetfile)
+		self.logger.info('Waiting for targets from remote %s' % remote_image_pk)
 		self.setStatus('processing')
 		# targetxys are target coordinates in x, y grouped by targetnames
 		targetxys = self.remote_targeting.getInTargets()
-
+		if targetxys is False:
+			# targetxys returns False only if remote session is deactivated
+			# by disabling "controlled_by_user" in microscope model after
+			# setting the image to allow remote targeting.
+			self.logger.error('remote control terminated by administrator')
+			self.remote_targeting.unsetImage(imdata)
+			# Do local user check instead.
+			return self.waitForUserCheck()
 		self.displayRemoteTargetXYs(targetxys)
 		preview_targets = self.panel.getTargetPositions('preview')
 		if not preview_targets:
@@ -685,6 +700,8 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			else:
 				if 'queue' in self.remote_toolbar.tools:
 					self.remote_toolbar.tools['queue'].deActivate()
+			# finalize toolbar and send to leginon-remote
+			self.remote_toolbar.finalizeToolbar()
 
 	def blobStatsTargets(self, blobs):
 		targets = []

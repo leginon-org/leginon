@@ -55,6 +55,12 @@ class TEMController(node.Node):
 		self.grid_slot_names = map((lambda x:'%d' % (x,)),self.grid_slot_numbers)
 		self.remote_toolbar.addClickTool('pause','uiPause','pause process')
 		self.remote_toolbar.addClickTool('play','uiContinue','continue process')
+		# finalize toolbar and send to leginon-remote
+		self.remote_toolbar.finalizeToolbar()
+
+	def exit(self):
+		self.remote_toolbar.exit()
+		super(TEMController, self).exit()
 
 	def _toScope(self,name, stagedict):
 		try:
