@@ -31,13 +31,13 @@ class SimTEM(tem.TEM):
 		self.high_tension = 120000.0
 
 		self.magnifications = [
-			50.0,
-			100.0,
-			500.0,
-			1000.0,
-			5000.0,
-			25000.0,
-			50000.0,
+			50,
+			100,
+			500,
+			1000,
+			5000,
+			25000,
+			50000,
 		]
 		self.magnification_index = 0
 
@@ -391,7 +391,7 @@ class SimTEM(tem.TEM):
 
 	def setMagnification(self, value):
 		try:
-			self.magnification_index = self.magnifications.index(float(value))
+			self.magnification_index = self.magnifications.index(value)
 			self.saveSimPar('magnification', value)
 		except ValueError:
 			raise ValueError('invalid magnification')
@@ -644,11 +644,11 @@ class SimTEM300(SimTEM):
 		self.high_tension = 300000.0
 
 		self.magnifications = [
-			1550.0,
-			2250.0,
-			3600.0,
-			4800.0,
-			130000.0
+			1550,
+			2250,
+			3600,
+			4800,
+			130000
 		]
 		self.magnification_index = 0
 
@@ -674,12 +674,12 @@ class SimDiffrTEM(SimTEM):
 
 		self.magnifications = [
 			70,
-			120.0,
-			520.0,
-			1200.0,
-			5200.0,
-			27000.0,
-			52000.0,
+			120,
+			520,
+			1200,
+			5200,
+			27000,
+			52000,
 		]
 		self.high_tension = 120000.0
 

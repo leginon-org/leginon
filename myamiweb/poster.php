@@ -136,9 +136,9 @@ if (!empty($summary)) {
 			$apix = number_format($pixelsize,3);
 		}
 		$dims = $imageinfo['dimx'].'x'.$imageinfo['dimy'];
-		if ($imageinfo['binning'] == 1) {
+		//if ($imageinfo['binning'] == 1) {
 			$presetscore = $imageinfo['dimx']*$imageinfo['dimy']*$s['nb']/$pixelsize;
-		} else { $presetscore=0; }
+		//} else { $presetscore=0; }
 		if ($presetscore > $maxpresetscore) {
 			$maxpresetscore = $presetscore;
 			$maxpresetid = $s['presetId'];
@@ -283,7 +283,7 @@ echo '<td>';
 echo 'Spot size: <div style="float:right ">'.$presetdata['spot size'].'</div>';
 echo '</td>';
 echo '<td>';
-echo 'Pixel size (Å): <div style="float:right ">'.number_format($imageinfo['pixelsize']*1e10,4).'</div>';
+echo 'Pixel size (Å): <div style="float:right ">'.number_format($imageinfo['pixelsize']*$presetdata['SUBD|binning|x']*1e10,4).'</div>';
 echo '</td>';
 echo '</tr>';
 echo '<tr>';

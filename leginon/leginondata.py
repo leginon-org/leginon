@@ -1949,6 +1949,7 @@ class AcquisitionSettingsData(TargetWatcherSettingsData):
 			('reset tilt', bool),
 			('bad stats response', str),
 			('bad stats type', str),
+			('reacquire when failed', bool),
 			('recheck pause time', int),
 			('high mean', float),
 			('low mean', float),
