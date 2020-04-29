@@ -169,6 +169,16 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz_range.Add(wx.StaticText(self, -1, 'is NOT'), (0,2),(1,1), wx.ALIGN_LEFT)
 		return sz_range
 
+	def createReacquireSizer(self):
+		sbsim = wx.StaticBox(self, -1, 'Reacquire rule for failed images')
+		sbszsim = wx.StaticBoxSizer(sbsim, wx.VERTICAL)
+		szsim = wx.GridBagSizer(5, 5)
+		self.widgets['reacquire when failed'] = wx.CheckBox(self, -1, 'Reacquire 3 times before pause')
+		szsim.Add(self.widgets['reacquire when failed'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szsim.Add(self.createBadRecheckSizer(), (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sbszsim.Add(szsim, 0, wx.ALIGN_CENTER)
+		return sbszsim
+
 	def createBadRecheckSizer(self):
 		# recheck
 		self.widgets['recheck pause time'] = IntEntry(self, -1, chars=8)
@@ -177,7 +187,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz_recheck.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz_recheck.Add(self.widgets['recheck pause time'], (0, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		label = wx.StaticText(self, -1, 'second if recheck')
+		label = wx.StaticText(self, -1, 'secs before reacquiring')
 		sz_recheck.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		return sz_recheck
 
@@ -188,7 +198,6 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz_response = self.createBadResponseSizer()
 		sz_range = self.createBadRangeSizer()
 		sz_evaluate = self.createBadEvaluateSizer()
-		sz_recheck = self.createBadRecheckSizer()
 		# bad stats email
 		passwordbut = wx.Button(self, -1, 'Enter Email Password')
 		self.Bind(wx.EVT_BUTTON, self.onEnterPassword, passwordbut)
@@ -197,7 +206,6 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sbsz_evaluate.Add(sz_range, 0, wx.ALIGN_CENTER|wx.ALL,0)
 		sbsz_evaluate.Add(sz_evaluate, 0, wx.ALIGN_CENTER|wx.ALL,0)
 		sbsz_evaluate.Add(passwordbut, 0, wx.ALIGN_CENTER|wx.ALL, 3)
-		sbsz_evaluate.Add(sz_recheck, 0, wx.ALIGN_CENTER|wx.ALL, 3)
 		return sbsz_evaluate
 
 	def createTransformSizer(self):
@@ -258,6 +266,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz_misc.Add(self.widgets['park after target'])
 		sz_misc.Add(self.widgets['park after list'])
 		sz_misc.Add(self.createBadStatsEvaluateResponseBoxSizer())
+		sz_misc.Add(self.createReacquireSizer())
 		return sz_misc
 
 	def createSimulatedTargetLoopBoxSizer(self):

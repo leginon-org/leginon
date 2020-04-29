@@ -180,10 +180,11 @@ class Collection(object):
 			try:
 				self.emtarget, status = self.node.adjusttarget(self.preset['name'], self.target, self.emtarget)
 			except Exception, e:
-				self.logger.error('Failed to adjust target: %s.' % e)
+				self.logger.error('Aborting because of target adjusting exception: %s.' % e)
 				self.finalize()
 				raise
 			if status == 'error':
+				raise RuntimeError('Target adjustment status is error. Aborting....')
 				self.finalize()
 		return
 
@@ -573,6 +574,7 @@ class Collection2(Collection):
 				self.finalize()
 				raise
 			if status == 'error':
+				raise RuntimeError('Target adjustment status is error. Aborting....')
 				self.finalize()
 
 		status = self.node.moveAndPreset(self.preset, self.emtarget)

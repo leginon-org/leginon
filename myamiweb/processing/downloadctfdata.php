@@ -44,9 +44,10 @@ if ($relion >= 1) {
 
 	if ($relion >= 2)
 		$data[] = "_rlnPhaseShift #12\n";
+		$data[] = "_rlnCtfMaxResolution #13\n";
 	if ($relion >= 3) {
-		$data[] = "_rlnBeamTiltX #13\n";
-		$data[] = "_rlnBeamTiltY #14\n";
+		$data[] = "_rlnBeamTiltX #14\n";
+		$data[] = "_rlnBeamTiltY #15\n";
 	}
 	# get image info for last image,
 	# assume same for all the rest
@@ -68,7 +69,7 @@ foreach ($ctfdatas as $ctfdata) {
 		$p = $leginon->getPresetFromImageId($imgid);
 		if ($preset != $p['name'] ) continue;
 	if ($relion >= 1) {
-		$data_string=sprintf("Micrographs/%s.mrc Micrographs/%s.ctf:mrc %.6f %.6f %.6f %.6f %.6f %.6f %.6f %.6f %.6f",
+		$data_string=sprintf("micrographs/%s.mrc micrographs/%s.ctf:mrc %.6f %.6f %.6f %.6f %.6f %.6f %.6f %.6f %.6f",
 			$filename,
 			$filename,
 			$ctfdata['defocus1']*1e10,
@@ -81,7 +82,13 @@ foreach ($ctfdatas as $ctfdata) {
 			$pixelsize,
 			$ctfdata['confidence']
 			);
-		if ( $relion >= 2 ) $data_string .= sprintf(" %6f", $ctfdata['extra_phase_shift'] * 180.0/3.14159); #degrees
+		if ( $relion >= 2 ) {
+			$data_string .= sprintf(" %6f", $ctfdata['extra_phase_shift'] * 180.0/3.14159); #degrees
+			$ctf50 = ($ctfdata['resolution_50_percent'] >0 )? $ctfdata['resolution_50_percent'] : 100 ; #make it 100A res in case of failure
+                        $ctfpack = ($ctfdata['ctffind4_resolution'] > 0)? $ctfdata['ctffind4_resolution'] : 101 ; #make it 101A res in case of failure
+                        $ctfbest = ($ctf50 < $ctfpack)? $ctf50 : $ctfpack;   # take the best of the two values
+                        $data_string .= sprintf(" %6f", $ctfbest); # add back
+		}
 		if ( $relion >= 3 ) {
 			$beamtiltdata = $leginon->getImageBeamTilt($imgid);
 			$data_string .= sprintf(" %.6f", $beamtiltdata['1'] * 1000); #mrad
