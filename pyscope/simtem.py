@@ -685,3 +685,11 @@ class SimDiffrTEM(SimTEM):
 
 	def getProjectionMode(self):
 		return self.projection_mode
+
+class SimDiffrTEM300(SimDiffrTEM):
+	name = 'SimDiffrTEM300'
+	projection_mode = 'diffraction'
+	def __init__(self):
+		SimDiffrTEM.__init__(self)
+		# to use with SimTEM300
+		self.high_tension = 300000.0
