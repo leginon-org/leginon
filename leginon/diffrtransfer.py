@@ -4,6 +4,7 @@ import shutil
 import math
 import subprocess
 import numpy
+import datetime
 
 from leginon import leginondata
 from pyami import tiaraw, mrc, numsmv, tvips
@@ -67,12 +68,24 @@ class DiffractionUpload(object):
 		return r
 
 	def getDiffractionSeries(self, target_number):
-		q = leginondata.DiffractionSeriesData(parent=self.hldata)
-		r = q.query()
-		if len(r) >= 1:
-			for ds in r:
-				if ds['emtarget']['target']['number'] == target_number:
-					return ds
+		'''
+		query diffraction series for the data.
+		'''
+		limit = 10
+		trials = 0
+		while trials < limit:
+			# multiple trials.  This may be called right after the movies
+			# are saved, even before DiffractionSeries is saved.
+			# give it multiple chances to do this in case of delay.
+			q = leginondata.DiffractionSeriesData(parent=self.hldata)
+			r = q.query()
+			if len(r) >= 1:
+				for ds in r:
+					if ds['emtarget']['target']['number'] == target_number:
+						return ds
+			trials += 1
+			print 'failed trial %d @ %s' % (trials, datetime.datetime.now().ctime())
+			time.sleep(2.0)
 		raise ValueError('can not find matching target %d on %s with image_id=%d' % (target_number, self.hldata['filename'], self.hldata.dbid))
 
 	def queryTarget(self, target_number):
@@ -275,6 +288,7 @@ class DiffractionUpload(object):
 		smv_dict['PHI'] = smv_dict['OSC_START'] # rolling shutter
 		smv_dict['DISTANCE'] = self.getCameraLengthMM(imagedata)
 		# pixel size needs to be after binning and in mm
+		smv_dict['BIN'] = (imagedata['camera']['binning']['x'],imagedata['camera']['binning']['y'])
 		smv_dict['PIXEL_SIZE'] = imagedata['camera']['pixel size']['x']*imagedata['camera']['binning']['x'] * 1000.0
 		smv_dict['ACC_TIME'] = imagedata['camera']['exposure time'] # milli-seconds
 		smv_dict['TIME'] = smv_dict['ACC_TIME'] / 1000.0  # rolling shutter sec
@@ -286,6 +300,7 @@ class DiffractionUpload(object):
 
 	def saveSMV(self,imagedata, smv_path, offset):
 		smv_dict = self.getLeginonInfoDict(imagedata)
+		smv_dict['LEGINON_OFFSET'] = offset
 		file_basename = os.path.basename(smv_path)
 		a = imagedata['image']
 		numsmv.write(a, smv_path,offset,smv_dict)
@@ -490,7 +505,8 @@ def loop(check_path, check_interval,no_wait=False):
 					app = DiffractionUpload(hl_id,target_number,groups[k])
 				app.run()
 			except ValueError as e:
-				raise
+				# no diffraction series saved.  For example, where there is a leginon side
+				# crash while the movie is being recorded.
 				handleBadFiles(check_path, k, groups[k], e)
 		if no_wait:
 			break

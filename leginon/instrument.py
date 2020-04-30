@@ -114,6 +114,7 @@ class Proxy(object):
 		#print dbtype
 		try:
 			instrumentdata['hostname'] = self.tems[name].Hostname
+			instrumentdata['hidden'] = False
 		except:
 			raise RuntimeError('unable to get TEM hostname')
 		results = instrumentdata.query(results=1)
@@ -177,6 +178,7 @@ class Proxy(object):
 		#print dbtype
 		try:
 			instrumentdata['hostname'] = self.ccdcameras[name].Hostname
+			instrumentdata['hidden'] = False
 		except:
 			raise RuntimeError('unable to get Camera hostname')
 		results = instrumentdata.query(results=1)
