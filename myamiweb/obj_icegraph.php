@@ -39,7 +39,7 @@ $thicknessdata = $leginondata->getObjIceThickness($sessionId);
 
 # filter out the duplicates here
 foreach($thicknessdata as $t) {
-	if ( !preg_match('/-[a-z].mrc$/',$t['filename'] ) and ( !preg_match('/-DW.mrc$/',$t['filename']))) {
+	if ( !preg_match('/-[a-z](\.mrc)?$/',$t['filename'] ) and ( !preg_match('/-(DW|td)(\.mrc)?$/',$t['filename']))) {
 		$data[] = $t['thickness'];
 		$filtered_thicknessdata[] = $t;
 	}

@@ -24,8 +24,13 @@ $height=$_GET['h'];
 
 $thicknessdata = $leginondata->getIceThickness($sessionId, $preset);
 $alsthicknessdata = $leginondata->getObjIceThickness($sessionId);
-
-
+# filter out the duplicates here
+foreach($alsthicknessdata as $t) {
+	if ( !preg_match('/-[a-z](\.mrc)?$/',$t['filename'] ) and ( !preg_match('/-(DW|td)(\.mrc)?$/',$t['filename']))) {
+		$data[] = $t['thickness'];
+		$filtered_thicknessdata[] = $t;
+	}
+}
 
 	$hlthick = array();
 	$hlcount = array();
@@ -57,7 +62,8 @@ $alsthicknessdata = $leginondata->getObjIceThickness($sessionId);
 #	echo "als_thickness ParentID <br>";
 # determine average calculated thickness for all images coming from the same hole
 #
-	foreach($alsthicknessdata as $t) {
+	#foreach($alsthicknessdata as $t) {
+	foreach($filtered_thicknessdata as $t) {
 		$thick['als'] = $t['thickness'];
 		$p = $leginondata->getParent($t['DEF_id']) ;
 		$thick['hl'] = $thdata[$p['parentId']];
