@@ -20,10 +20,19 @@ class Throbber(wx.lib.throbber.Throbber):
 		self.ToggleOverlay(False)
 
 	def set(self, value):
-		if value == 'user input' and not self.showOverlay:
-			self.ToggleOverlay(True)
+		if value != 'remote':
+			self.overlay = leginon.gui.wx.Icons.icon('userinput')
+		else:
+			# use remote icon as overlay
+			self.overlay = leginon.gui.wx.Icons.icon('remote')
+		# display overlay if user input or remote
+		if (value == 'user input' or value == 'remote'):
+			if not self.showOverlay:
+				self.ToggleOverlay(True)
 		elif self.showOverlay:
 			self.ToggleOverlay(False)
+		else:
+			pass
 
 		if value == 'processing':
 			self.SetToolTip(wx.ToolTip('Processing...'))
@@ -36,6 +45,9 @@ class Throbber(wx.lib.throbber.Throbber):
 			self.SetToolTip(wx.ToolTip('Waiting for user input...'))
 			self.OnTimer(None)
 			self.Stop()
+		elif value == 'remote':
+			self.SetToolTip(wx.ToolTip('Waiting for remote input...'))
+			self.Rest()
 		elif value == 'idle':
 			self.SetToolTip(None)
 			self.Rest()

@@ -89,6 +89,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		self.resetLastFocusedTargetList(None)
 		self.remote_targeting = remoteserver.RemoteTargetingServer(self.logger, session, self, self.remote.leginon_base)
 		self.remote_toolbar = remoteserver.RemoteToolbar(self.logger, session, self, self.remote.leginon_base)
+		self.remote_queue_count = remoteserver.RemoteQueueCount(self.logger, session, self, self.remote.leginon_base)
 		self.remote_targeting.setTargetTypes(self.targetnames)
 
 		self.onQueueCheckBox(self.settings['queue'])
@@ -192,9 +193,10 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		# to be at the time of its processing, i.e., afected by z adjustment during
 		# and after the interaction.
 		valid_selection = False
+		remote_error_message = ''
 		while not valid_selection:
 			if self.settings['check method'] == 'remote':
-				self.waitForRemoteCheck(imagedata)
+				self.waitForRemoteCheck(imagedata, remote_error_message)
 			else:
 				# default
 				self.waitForUserCheck()
@@ -203,8 +205,11 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 				has_foc = self.hasTargetTypeOnPanel('focus')
 				if not has_aqu or has_foc:
 					valid_selection = True
+					remote_error_message = ''
 				else:
-					self.logger.error('Must have a focus target')
+					msg = 'Must have a focus target'
+					self.logger.error(msg)
+					remote_error_message = msg
 			else:
 				break
 
@@ -224,7 +229,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		self.userpause.wait()
 		self.setStatus('processing')
 
-	def waitForRemoteCheck(self,imdata):
+	def waitForRemoteCheck(self,imdata, msg):
 		'''
 		Remote service target confirmation
 		'''
@@ -233,16 +238,16 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		if not self.remote_targeting.userHasControl():
 			self.logger.warning('remote user has not given control. Use local check')
 			return self.waitForUserCheck()
-		self.setStatus('user input')
+		#self.setStatus('user input')
 		self.twobeeps()
 		xytargets = self.getPanelTargets(imdata['image'].shape)
 		# put stuff in OutBox
-		self.remote_targeting.setImage(imdata)
+		self.remote_targeting.setImage(imdata, msg)
 		self.remote_targeting.setOutTargets(xytargets)
 		remote_image_pk = self.remote_targeting.getImagePk()
 		# wait and get stuff from InBox
 		self.logger.info('Waiting for targets from remote %s' % remote_image_pk)
-		self.setStatus('processing')
+		self.setStatus('remote')
 		# targetxys are target coordinates in x, y grouped by targetnames
 		targetxys = self.remote_targeting.getInTargets()
 		if targetxys is False:
@@ -312,6 +317,13 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			# clear all targets displayed so that target server can set them again
 			self.clearAllTargets()
 
+	def sendQueueCount(self):
+			# get count and set to remote_queue
+			queue = self.getQueue()
+			active = self.getListsInQueue(queue)
+			count = len(active)
+			self.remote_queue_count.setQueueCount(count)
+
 	def processImageListData(self, imagelistdata):
 		if 'images' not in imagelistdata or imagelistdata['images'] is None:
 			return
@@ -325,6 +337,8 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			self.logger.info("will append targets")
 			for imagedata in images:
 				self.findTargets(imagedata, targetlist)
+				if self.settings['queue']:
+					self.sendQueueCount()
 		self.makeTargetListEvent(targetlist)
 		if self.settings['queue']:
 			self.logger.info('Queue is on... not generating event')
@@ -500,6 +514,8 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 
 		if self.settings['allow append'] or len(previouslists)==0:
 			self.findTargets(imagedata, targetlist)
+			if self.settings['queue']:
+				self.sendQueueCount()
 		self.logger.debug('Publishing targetlist...')
 
 		## if queue is turned on, do not notify other nodes of each target list publish

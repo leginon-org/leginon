@@ -224,11 +224,19 @@ class RemoteStatusbar(RemoteNodeServer):
 		}
 
 	def setStatus(self, status):
-		if not issubclass(self.node.settingsclass, leginondata.AcquisitionSettingsData):
+		is_acquisition = issubclass(self.node.settingsclass, leginondata.AcquisitionSettingsData)
+		is_targetfinder = issubclass(self.node.settingsclass, leginondata.TargetFinderSettingsData)
+		if (not is_acquisition and not is_targetfinder):
 			return
 		status_str='_'.join(status.split())
+		# map to different strings to put them at the front of alpha beta sort
+		if status == 'remote':
+			status_str='need_remote_input'
+		if is_acquisition and status == 'user input':
+			# user input status in acquisition node means paused locally.
+			status_str='paused'
 		results = self.get(self.router_name, self.data)
-		if status in ('processing','user input','waiting'):
+		if status in ('processing','user input','waiting','remote'):
 			if results:
 				return self.patch(self.router_name, results[0]['pk'], {'value':status_str})
 			data = self.data.copy()
@@ -238,6 +246,26 @@ class RemoteStatusbar(RemoteNodeServer):
 			if results:
 				self.logger.debug(results)
 				self.delete(self.router_name, results[0]['pk'])
+
+class RemoteQueueCount(RemoteNodeServer):
+	router_name = 'remote/queue'
+	def __init__(self, logger, sessiondata, node, leginon_base):
+		super(RemoteQueueCount,self).__init__(logger, sessiondata, node)
+
+	def setQueueCount(self, count):
+		self.data = {
+				'session_name': self.session['name'],
+				'node': self.node_name,
+		}
+		patch_dict = {'count':count}
+		results = self.get(self.router_name, self.data)
+		if results:
+			# patch existing toolbar
+			return self.patch(self.router_name, results[0]['pk'], patch_dict)
+		# insert new toolbar
+		data = self.data.copy()
+		data.update(patch_dict)
+		return self.post(self.router_name, data)
 
 class RemoteToolbar(RemoteNodeServer):
 	router_name = 'remote/toolbar'
@@ -327,7 +355,7 @@ class ClickTool(Tool):
 				self.handling_attr()
 				self.resetTrigger()
 			time.sleep(SLEEP_TIME)
-		print "click tracking of %s.%s deactivated" % (self.toolbar.node_name, self.name)
+		#print "click tracking of %s.%s deactivated" % (self.toolbar.node_name, self.name)
 
 	def hasRemoteTrigger(self):
 		'''
@@ -409,7 +437,7 @@ class RemoteTargetingServer(RemoteNodeServer):
 				permission+='w' # all are readable
 			return permission
 
-	def setImage(self, imagedata):
+	def setImage(self, imagedata, msg=''):
 		'''
 		set the image to define targets on.
 		'''
@@ -431,7 +459,7 @@ class RemoteTargetingServer(RemoteNodeServer):
 				'node': self.session_node_pk,
 		}
 		r = self.get(self.route_name,{'node':data['node'],'name':data['name']})
-		patch_dict = {'path': self.media_out_jpgfilepath}
+		patch_dict = {'path': self.media_out_jpgfilepath,'message':msg}
 		if r:
 			pk = r[0]['id']
 			result = self.patch(self.route_name, pk, patch_dict)

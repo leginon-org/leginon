@@ -177,6 +177,10 @@ class TargetHandler(object):
 			self.queueupdate.set()
 			self.logger.info('Queue timeout activated')
 
+	def postQueueCount(self, count):
+		# implemented in TargetWatcher
+		raise NotImplementedError()
+
 	def queueProcessor(self):
 		'''
 		this is run in a thread to watch for and handle queue updates
@@ -201,6 +205,7 @@ class TargetHandler(object):
 			self.logger.info('received queue update')
 
 			active = self.getListsInQueue(self.getQueue())
+			self.postQueueCount(len(active))
 			self.total_queue_left_in_loop = len(active)
 			# process all target lists in the queue
 			for targetlist in active:
@@ -215,6 +220,7 @@ class TargetHandler(object):
 					if state != 'stopqueue':
 						self.player.play()
 				self.total_queue_left_in_loop -= 1
+				self.postQueueCount(self.total_queue_left_in_loop)
 				donetargetlist = leginondata.DequeuedImageTargetListData(session=self.session, list=targetlist, queue=self.targetlistqueue)
 				self.publish(donetargetlist, database=True)
 			self.player.play()
@@ -267,6 +273,7 @@ class TargetHandler(object):
 	def getQueue(self, label=None):
 		'''
 		This returns the QueueData for this session and label.
+		self.targetlistqueue is set during this call
 		'''
 		if hasattr(self,'targetlistqueue'):
 			# This is set to the Targeting node QueueData if the queue has been published there.
