@@ -111,6 +111,10 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.clearTiles()
 
 		self.reference_target = None
+		if self.settings['check method'] == 'remote':
+			self.remote_toolbar.addClickTool('refresh','refreshRemoteTargets','refresh atlas to submit more')
+			# finalize toolbar and send to leginon-remote
+			self.remote_toolbar.finalizeToolbar()
 
 		if self.__class__ == MosaicClickTargetFinder:
 			self.start()
@@ -201,7 +205,9 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		if self.settings['check method'] == 'remote':
 			self.sendTargetsToRemote()
 			self.waitForTargetsFromRemote()
+		self.finishSubmitTarget()
 
+	def finishSubmitTarget(self):
 		# create target list
 		self.logger.info('Submitting targets...')
 		self.getTargetDataList('acquisition')
@@ -223,9 +229,6 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 			else:
 				self.logger.info('Reference target submitted on %s' % self.getMosaicLabel())
 		self.logger.info('Done target submission')
-		if self.settings['check method'] == 'remote':
-			# just remove intargets, not the image tree
-			self.remote_targeting.resetTargets()
 		# trigger onTargetsSubmitted in the gui.
 		self.panel.targetsSubmitted()
 
@@ -291,6 +294,18 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 					self.targetlist = targets[0]['list']
 				self.targetmap[id][type] = targets
 		self.reference_target = self.getReferenceTarget()
+
+	def refreshRemoteTargets(self):
+		if self.settings['check method'] == 'remote':
+			self.displayDatabaseTargets()
+			# Send targets to remote and wait for submission
+			# self.existing_position_targets becomes empty on the second
+			# submit if not refreshed. 
+			self.refreshDatabaseDisplayedTargets()
+			self.sendTargetsToRemote()
+			self.waitForTargetsFromRemote()
+			self.finishSubmitTarget()
+
 
 	def refreshCurrentPosition(self):
 		self.updateCurrentPosition()
@@ -496,7 +511,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		mosaicimagedata['list'] = self.mosaicimagelist
 		mosaicimagedata['image'] = self.mosaicimage
 		mosaicimagedata['scale'] = self.mosaicimagescale
-		filename = 'mosaic'
+		filename = '%s_mosaic' % self.session['name'] # include name for remote to clear on session
 		lab = self.mosaicimagelist['targets']['label']
 		if lab:
 			filename = filename + '_' + lab
@@ -678,6 +693,9 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.setImage(None, 'Image')
 		self.mosaicimage = None
 		self.mosaicimagescale = None
+		#clear remote mosaic image
+		if self.mosaicimagedata:
+			self.remote_targeting.unsetImage(self.mosaicimagedata)
 		self.mosaicimagedata = None
 
 	def uiPublishMosaicImage(self):
@@ -941,15 +959,12 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		# put stuff in OutBox
 		self.remote_targeting.setImage(self.mosaicimagedata)
 		self.remote_targeting.setOutTargets(xytargets)
-		# wait and get stuff from InBox
-		targetfile = self.remote_targeting.getInTargetFilePath()
-		self.logger.info('Waiting for targets in data file %s' % targetfile)
-		self.setStatus('processing')
 
 	def waitForTargetsFromRemote(self):
+		self.logger.info('Waiting for remote targets')
+		self.setStatus('remote')
 		# targetxys are target coordinates in x, y grouped by targetnames
 		targetxys = self.remote_targeting.getInTargets()
-		print 'remote targets',targetxys
 
 		self.displayRemoteTargetXYs(targetxys)
 		preview_targets = self.panel.getTargetPositions('preview')

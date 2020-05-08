@@ -71,7 +71,7 @@ class Panel(leginon.gui.wx.ClickTargetFinder.Panel):
 		self.Bind(leginon.gui.wx.ImagePanelTools.EVT_SETTINGS, self.onImageSettings)
 		self.addOtherBindings()
 
-		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SETTINGS, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SETTINGS, True)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, False)
 
 	def addOtherBindings(self):

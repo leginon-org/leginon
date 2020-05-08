@@ -498,7 +498,7 @@ class RemoteTargetingServer(RemoteNodeServer):
 		# dictionary { targetname:(x,y), }. x,y are floats to keep the precision
 		self.outtargets = xytargets
 		target_data = self._makeTargetData(xytargets)
-		self.patch(self.router_name, self.image_pk, {'targets': target_data})
+		self.patch(self.router_name, self.image_pk, {'targets': target_data,'targets_confirmed':False})
 
 	def getJpgFilePath(self):
 		t = self.out_jpgfilepath
