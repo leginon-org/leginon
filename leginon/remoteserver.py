@@ -94,7 +94,10 @@ class RemoteSessionServer(object):
 
 	def _clearRemoteTargetingNodes(self):
 		router_name = 'api/session_nodes'
-		session_pk = self.get('api/sessions',{'name':self.session['name']})[0]['id']
+		s_results = self.get('api/sessions',{'name':self.session['name']})
+		if not s_results:
+			return
+		session_pk = s_results[0]['id']
 		results = self.get(router_name,{'session':session_pk})
 		if not results:
 			return
@@ -104,6 +107,8 @@ class RemoteSessionServer(object):
 	def _clearRemoteImages(self):
 		router_name = 'api/images'
 		results = self.get(router_name,{})
+		if not results:
+			return
 		for r in results:
 			if r['name'].startswith(self.session['name']):
 				self.delete(router_name,r['id'])
@@ -152,9 +157,9 @@ class RemoteSessionServer(object):
 
 	def delete(self, router_name, pk):
 		'''
-		Delect causes a distroy of the data defined by the ModelViewSet and pk
+		Delete causes a distroy of the data defined by the ModelViewSet and pk
 		'''
-		if not self.remote_server_active:
+		if not self.remote_server_active or not pk:
 			return
 		url = self._makeUrl(router_name, pk=pk)
 		answer = requests.delete(url=url, auth=self.leg_remote_auth)
@@ -164,7 +169,7 @@ class RemoteSessionServer(object):
 		'''
 		Patch causes an update of the data defined by the ModelViewSet
 		'''
-		if not self.remote_server_active:
+		if not self.remote_server_active or not pk or not data:
 			return
 		url = self._makeUrl(router_name, pk=pk)
 		answer = requests.patch(url=url, json=data, auth=self.leg_remote_auth)
@@ -190,7 +195,7 @@ class RemoteSessionServer(object):
 		'''
 		Post causes a create of the data defined by the ModelViewSet
 		'''
-		if not self.remote_server_active:
+		if not self.remote_server_active or not data:
 			return False
 		url = self._makeUrl(router_name)
 		if router_name in ('remote/click','remote/status'):
@@ -226,7 +231,12 @@ class RemoteStatusbar(RemoteNodeServer):
 	def setStatus(self, status):
 		is_acquisition = issubclass(self.node.settingsclass, leginondata.AcquisitionSettingsData)
 		is_targetfinder = issubclass(self.node.settingsclass, leginondata.TargetFinderSettingsData)
-		if (not is_acquisition and not is_targetfinder):
+		is_conditioner = issubclass(self.node.settingsclass, leginondata.ConditionerSettingsData)
+		is_reference = issubclass(self.node.settingsclass, leginondata.ReferenceSettingsData)
+		is_ice_t = issubclass(self.node.settingsclass, leginondata.ZeroLossIceThicknessSettingsData)
+		any_above = is_acquisition or is_targetfinder or is_conditioner or is_reference or is_ice_t
+
+		if not any_above:
 			return
 		status_str='_'.join(status.split())
 		# map to different strings to put them at the front of alpha beta sort
@@ -235,6 +245,8 @@ class RemoteStatusbar(RemoteNodeServer):
 		if is_acquisition and status == 'user input':
 			# user input status in acquisition node means paused locally.
 			status_str='paused'
+		if not (is_acquisition or is_targetfinder) and status == 'processing':
+			status_str='busy'
 		results = self.get(self.router_name, self.data)
 		if status in ('processing','user input','waiting','remote'):
 			if results:
@@ -485,7 +497,11 @@ class RemoteTargetingServer(RemoteNodeServer):
 		'''
 		result = self.delete(self.route_name, self.image_pk)
 		image_base = os.path.join(self.datafile_base,'%06d' % imagedata.dbid)
-		shutil.rmtree(image_base)
+		try:
+			shutil.rmtree(image_base)
+		except:
+			# ok if file does not exist. Something else has already removed it.
+			pass
 		self.imagedata = None
 
 	def _writeOutJpgFile(self):
@@ -525,7 +541,7 @@ class RemoteTargetingServer(RemoteNodeServer):
 		and read targets from it.
 		'''
 		filter_params = {
-				'id': self.image_pk,
+				'node__id': self.session_node_pk,
 				'targets_confirmed': True,
 		}
 		while self.active and not self.get(self.route_name, filter_params):

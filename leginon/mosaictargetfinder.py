@@ -203,8 +203,11 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		# submit if not refreshed. 
 		self.refreshDatabaseDisplayedTargets()
 		if self.settings['check method'] == 'remote':
-			self.sendTargetsToRemote()
-			self.waitForTargetsFromRemote()
+			if not self.remote_targeting.userHasControl():
+				self.logger.warning('remote user has not given control. Use local check')
+			else:
+				self.sendTargetsToRemote()
+				self.waitForTargetsFromRemote()
 		self.finishSubmitTarget()
 
 	def finishSubmitTarget(self):
@@ -965,8 +968,11 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.setStatus('remote')
 		# targetxys are target coordinates in x, y grouped by targetnames
 		targetxys = self.remote_targeting.getInTargets()
-
-		self.displayRemoteTargetXYs(targetxys)
+		# targetxys returns False if remote control is terminated by remote administrator
+		if targetxys is not False:
+			self.displayRemoteTargetXYs(targetxys)
+		else:
+			self.logger.error('remote targeting terminated by administrator. Use local targets.')
 		preview_targets = self.panel.getTargetPositions('preview')
 		if preview_targets:
 			self.logger.error('can not handle preview with remote')
