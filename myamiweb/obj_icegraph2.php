@@ -37,7 +37,7 @@ $truncated= ($_GET['truncate']) ? $_GET['truncate'] : false;
 $thicknessdata = $leginondata->getObjIceThickness($sessionId);
 
 foreach($thicknessdata as $t) {
-	if ( !preg_match('/-[a-z]$/',$t['filename'] ) and ( !preg_match('/-DW$/',$t['filename']))) {
+	if ( !preg_match('/-[a-z].mrc$/',$t['filename'] ) and ( !preg_match('/-DW.mrc$/',$t['filename']))) {
 		$data[] = $t['thickness'];
 		$filtered_thicknessdata[] = $t;
 	}

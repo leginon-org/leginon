@@ -37,7 +37,10 @@ $height=$_GET['h'];
 $thicknessdata = $leginondata->getZeroLossIceThickness($sessionId);
 
 foreach($thicknessdata as $t) {
-	$data[] = $t['thickness'];
+	if ( !preg_match('/-[a-z](\.mrc)?$/',$t['filename'] ) and ( !preg_match('/-(DW|td)(\.mrc)?$/',$t['filename']))) {
+		$data[] = $t['thickness'];
+		$filtered_thicknessdata[] = $t;
+	}
 }
 $mean = mean($data);
 
@@ -53,7 +56,7 @@ if ($viewsql) {
 }
 if ($viewdata) {
 	$keys = array("unix_timestamp", "filename", "slit mean", "no slit mean", "thickness");
-	echo dumpData($thicknessdata, $keys);
+	echo dumpData($filtered_thicknessdata, $keys);
 	exit;
 }
 
@@ -63,21 +66,21 @@ $axes = array($display_x,$display_y);
 if ($histogram == true && $histaxis == 'x') 
 	$axes = array($display_y,$display_x);
 if ($truncated != true && count($data) >1) {
-	$dbemgraph= new dbemgraph($thicknessdata, $axes[0], $axes[1]);
+	$dbemgraph= new dbemgraph($filtered_thicknessdata, $axes[0], $axes[1]);
 }
 else {
-	foreach($thicknessdata as $t) {
+	foreach($filtered_thicknessdata as $t) {
 		if (abs($t['thickness'] - $mean) <= $limit) {$truncateddata[] = $t;}
 	}
 	$dbemgraph= new dbemgraph($truncateddata, $axes[0], $axes[1]);
 }
 $dbemgraph->lineplot=False;
-$dbemgraph->title="Ice Thickness histogram using zero loss peak";
+$dbemgraph->title="Ice Thickness using zero loss peak";
 $dbemgraph->yaxistitle="Thickness /nm";
 
 if ($viewdata) {
 	$keys = array("unix_timestamp", "thickness");
-	echo dumpData($thicknessdata, $keys);
+	echo dumpData($filtered_thicknessdata, $keys);
 	$dbemgraph->dumpData(array($display_x, $display_y));
 }
 if ($histogram) {
