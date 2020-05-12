@@ -23,7 +23,11 @@ import pyami.jpg
 SLEEP_TIME = 5
 
 # get configuration from remote.cfg
-configs = pyami.moduleconfig.getConfigured('remote.cfg')
+try:
+	configs = pyami.moduleconfig.getConfigured('remote.cfg')
+except:
+	# Don't want it to crash here.
+	print 'remote.cfg does not exist. Remote disabled'
 
 class RemoteServerMaster(object):
 	'''
@@ -42,11 +46,16 @@ class RemoteSessionServer(object):
 	def __init__(self, logger, sessiondata):
 		self.logger = logger # if logger is not valid, it will print to terminal
 		self.session = sessiondata
-		self.leg_remote_auth = (configs['leginon auth']['username'],configs['leginon auth']['password'])
-		self.remote_server_active = True
+		try:
+			self.leg_remote_auth = (configs['leginon auth']['username'],configs['leginon auth']['password'])
+			self.remote_server_active = True
+		except:
+			self.leg_remote_auth = ('','')
+			self.remote_server_active = False
+		# This is the first attempt to connect to remote.
 		self.session_pk = self.setSession()
 		if self.session_pk is False:
-			# connection error.
+			# connection or missing remote.cfg error.
 			self.remote_server_active = False
 
 	def setSession(self):
@@ -61,14 +70,21 @@ class RemoteSessionServer(object):
 				'name':self.session['name'],
 				'leginon_session_db_id': self.session.dbid,
 		}
+		# find out if session is already there
 		try:
 			results = self.get(router_name, data)
 		except requests.ConnectionError:
 			return False
+		if results is False:
+			# False is returned from get if remote.cfg is not set, or unauthorized
+			return False
 		patch_dict ={'path':media_session_path}
 		data.update({'path':media_session_path})
 		if not results:
-			pk = self.post(router_name, data)['id']
+			p_result = self.post(router_name, data)
+			if p_result is False:
+				return False
+			pk = p_result['id']
 		else:
 			pk = results[0]['id']
 			self.patch(router_name, pk, patch_dict)
@@ -131,7 +147,7 @@ class RemoteSessionServer(object):
 		'''
 		if answer.ok:
 			if not answer.text:
-				return None
+				return False
 			return json.loads(answer.text)
 		else:
 			try:
@@ -139,6 +155,7 @@ class RemoteSessionServer(object):
 			except AttributeError:
 				# display in the terminal if logger is not ready
 				print('Error before logger is up in communication to leginon-remote: %s %s' % (answer.status_code, answer.reason))
+			return False
 
 	def _processDataToSend(self, data):
 		'''
@@ -188,7 +205,9 @@ class RemoteSessionServer(object):
 		#print 'got answer from ', url
 		queryset = self._processResponse(answer)
 		if hasattr(queryset,'keys') and 'results' in queryset.keys():
+			# success results
 			return queryset['results']
+		# with error this will be False
 		return queryset
 
 	def post(self, router_name, data):
