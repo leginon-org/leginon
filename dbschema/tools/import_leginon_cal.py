@@ -90,12 +90,12 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 			return all_tems[0]
 		print map((lambda x: x['hostname']),all_tems)
 		temq = leginondata.InstrumentData(hostname=tem_host,name=tem_name)
-		r = leginondata.PixelSizeCalibrationData(tem=temq, ccdcamera=self.cameradata).query(results=1)
-		ptemid = None # tem with pixel calibration is checked first.
-		if r:
-			t = r[0]['tem']
+		r = temq.query()
+		#ptemid = None # tem with pixel calibration is checked first.
+		if len(r)==1:
+			t = r[0]
 			return t
-		print "  No tem found"
+		print "  %d tem found matching host %s named %s" % (len(r),tem_host, tem_name) 
 		sys.exit()
 
 	def setSessionData(self):
