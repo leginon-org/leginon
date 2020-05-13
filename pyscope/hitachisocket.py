@@ -13,6 +13,8 @@ import numpy
 ## for example:
 debug_log = None
 #debug_log = 'hitachisocket.log'
+def log(msg):
+        pass
 
 def logwrap(func):
 	def newfunc(*args, **kwargs):
@@ -21,7 +23,7 @@ def logwrap(func):
 			result = func(*args, **kwargs)
 		except Exception, exc:
 			log('EXCEPTION: %s' % (exc,))
-			raise
+			#raise
 		return result
 	return newfunc
 
@@ -68,7 +70,7 @@ class HitachiSocket(object):
 				break
 			else:
 				recv_text += one_recv
-		print recv_text
+		#print recv_text
 		return recv_text
 
 	def runSetCommand(self, sub_code, ext_code, args=[], data_types=[]):
@@ -133,20 +135,32 @@ class HitachiSocket(object):
 			return data[0]
 		else:
 			return data
-
-if __name__=='__main__':
-	try:
-		h = HitachiSocket('127.0.0.1',12068)
+def test1(h):
 		# Stage get in submicron
 		print h.runGetCommand('StageXY', 'Position',['int','int'])
 		# Stage set, non-blocking.  need to monitor for done
-		h.runSetCommand('StageXY', 'Move',[100,100],['int','int'])
+		h.runSetCommand('StageXY', 'Move',[0,0],['int','int'])
 		# Example for getting hexdec numbers and convert to decimal
 		hexdecs = h.runGetCommand('Coil', 'IS',['hexdec','hexdec'])
 		print 'result item0 in decimal:%d' % (int(hexdecs[0],16),)
 		print 'result itme1 in hexdec %s' % (hexdecs[1],)
 		# Example for sending a hexdec pair with FF as ID for expansion
 		h.runSetCommand('Coil','IS',['FF',hexdecs[1],hexdecs[0]],['str','hexdec','hexdec'])
+
+def test2(h):
+	print h.runGetCommand('Column','Magnification',['int',])
+	print h.runSetCommand('Column','Magnification',[100000,],['int',])
+	while True:
+		mag = h.runGetCommand('Column','Magnification',['int',])
+		print mag
+		if mag == 100000:
+			break
+	print h.runGetCommand('Column','Mode',['hexdec',])
+
+if __name__=='__main__':
+	try:
+		h = HitachiSocket('192.168.10.1',12068)
+		test2(h)
 	except Exception as e:
 		print e
 	finally:
