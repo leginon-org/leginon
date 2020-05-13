@@ -27,6 +27,9 @@ def logwrap(func):
 		return result
 	return newfunc
 
+
+SET_GET_REPLACEMENTS = {'Move':'Position'}
+
 class HitachiSocket(object):
 	eof_marker = "\r"
 	def __init__(self, host='', port=None):
@@ -141,8 +144,8 @@ class HitachiSocket(object):
 		self.runSetCommand(sub_code,ext_code,list(value_list),type_list)
 		t0 = time.time()
 		get_ext_code = ext_code
-		if get_ext_code == 'Move':
-			get_ext_code = 'Position'
+		if get_ext_code in SET_GET_REPLACEMENTS.keys():
+			get_ext_code = SET_GET_REPLACEMENTS[get_ext_code]
 		while True:
 			result_list = self.runGetCommand(sub_code,get_ext_code,type_list)
 			if type(result_list) != type([]):
@@ -152,6 +155,33 @@ class HitachiSocket(object):
 			is_done = True
 			for i in range(len(value_list)):
 				is_done =  is_done and value_list[i] == result_list[i]
+			if is_done is True:
+				break
+			if time.time() - t0 > timeout:
+				raise RuntimeError('set %s.%s not reached requested value in %d seconds' % (sub_code, ext_code, timeout))
+		return
+
+	def runSetFloatAndWait(self, sub_code, ext_code, value_list, precision=0.1, timeout=60):
+		type_list = []
+		for v in value_list:
+			if type(v) != type(1.0):
+				raise ValueError('input must be integer type')
+			type_list.append('float')
+		# create a copy of value_list since args get modified in runSetComand and causes wait comparison fails
+		self.runSetCommand(sub_code,ext_code,list(value_list),type_list)
+		t0 = time.time()
+		get_ext_code = ext_code
+		if get_ext_code in SET_GET_REPLACEMENTS.keys():
+			get_ext_code = SET_GET_REPLACEMENTS[get_ext_code]
+		while True:
+			result_list = self.runGetCommand(sub_code,get_ext_code,type_list)
+			if type(result_list) != type([]):
+				result_list = [result_list,]
+			if len(result_list) != len(value_list):
+				raise RuntimeError('get values not the same length as input')
+			is_done = True
+			for i in range(len(value_list)):
+				is_done =  is_done and (value_list[i] - result_list[i]) <= precision
 			if is_done is True:
 				break
 			if time.time() - t0 > timeout:
