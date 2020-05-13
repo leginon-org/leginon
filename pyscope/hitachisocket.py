@@ -137,11 +137,17 @@ class HitachiSocket(object):
 			return data
 
 	def runSetAndWait(self, sub_code, ext_code, value_list, type_list, timeout=60):
-		self.runSetCommand(sub_code,ext_code,value_list,type_list)
+		# create a copy of value_list since args get modified in runSetComand and causes wait comparison fails
+		self.runSetCommand(sub_code,ext_code,list(value_list),type_list)
 		t0 = time.time()
+		get_ext_code = ext_code
+		if get_ext_code == 'Move':
+			get_ext_code = 'Position'
 		while True:
-			result_list = self.runGetCommand(sub_code,ext_code,type_list)
-			if len(result) != len(value_list):
+			result_list = self.runGetCommand(sub_code,get_ext_code,type_list)
+			if type(result_list) != type([]):
+				result_list = [result_list,]
+			if len(result_list) != len(value_list):
 				raise RuntimeError('get values not the same length as input')
 			is_done = True
 			for i in range(len(value_list)):
@@ -152,7 +158,7 @@ class HitachiSocket(object):
 				raise RuntimeError('set %s.%s not reached requested value in %d seconds' % (sub_code, ext_code, timeout))
 		return
 
-	def runSetIntAndWait(self, sub_code, ext_code, value_list, timeout=60):
+	def runSetIntAndWait(self, sub_code, ext_code, value_list, timeout=10):
 		type_list = []
 		for v in value_list:
 			if type(v) != type(1):
@@ -171,7 +177,7 @@ class HitachiSocket(object):
 	def runSetHexdecAndWait(self, sub_code, ext_code, value_list, timeout=60):
 		type_list = []
 		for v in value_list:
-			if type(v) != type(hex(int(17,16))) #hexdec string without 0x
+			if type(v) != type(hex(int(17,16))): #hexdec string without 0x
 				raise ValueError('input must be hexdec type')
 			type_list.append('hexdec')
 		return self.runSetAndWait(sub_code, ext_code, value_list, type_list, timeout)
@@ -189,8 +195,15 @@ def test1(h):
 		h.runSetCommand('Coil','IS',['FF',hexdecs[1],hexdecs[0]],['str','hexdec','hexdec'])
 
 def test2(h):
-	print h.runGetCommand('Column','Magnification',['int',])
-	print h.runSetIntAndWait('Column', 'Magnification', [100000,], timeout=60)
+	print h.runSetIntAndWait('Column', 'Magnification', [100000,]) 
+	time.sleep(2)
+	print h.runSetIntAndWait('Column', 'Magnification', [2000,]) 
+	time.sleep(2)
+	h.runSetIntAndWait('StageXY', 'Move',[2000,2000])
+	print h.runGetCommand('StageXY', 'Position',['int','int'])
+	time.sleep(2)
+	h.runSetIntAndWait('StageXY', 'Move',[0,0])
+	print h.runGetCommand('StageXY', 'Position',['int','int'])
 	print h.runGetCommand('Column','Mode',['hexdec',])
 
 if __name__=='__main__':
