@@ -135,6 +135,47 @@ class HitachiSocket(object):
 			return data[0]
 		else:
 			return data
+
+	def runSetAndWait(self, sub_code, ext_code, value_list, type_list, timeout=60):
+		self.runSetCommand(sub_code,ext_code,value_list,type_list)
+		t0 = time.time()
+		while True:
+			result_list = self.runGetCommand(sub_code,ext_code,type_list)
+			if len(result) != len(value_list):
+				raise RuntimeError('get values not the same length as input')
+			is_done = True
+			for i in range(len(value_list)):
+				is_done =  is_done and value_list[i] == result_list[i]
+			if is_done is True:
+				break
+			if time.time() - t0 > timeout:
+				raise RuntimeError('set %s.%s not reached requested value in %d seconds' % (sub_code, ext_code, timeout))
+		return
+
+	def runSetIntAndWait(self, sub_code, ext_code, value_list, timeout=60):
+		type_list = []
+		for v in value_list:
+			if type(v) != type(1):
+				raise ValueError('input must be integer type')
+			type_list.append('int')
+		return self.runSetAndWait(sub_code, ext_code, value_list, type_list, timeout)
+
+	def runSetBoolAndWait(self, sub_code, ext_code, value_list, timeout=60):
+		type_list = []
+		for v in value_list:
+			if type(v) != type(True):
+				raise ValueError('input must be boolean type')
+			type_list.append('bool')
+		return self.runSetAndWait(sub_code, ext_code, value_list, type_list, timeout)
+
+	def runSetHexdecAndWait(self, sub_code, ext_code, value_list, timeout=60):
+		type_list = []
+		for v in value_list:
+			if type(v) != type(hex(int(17,16))) #hexdec string without 0x
+				raise ValueError('input must be hexdec type')
+			type_list.append('hexdec')
+		return self.runSetAndWait(sub_code, ext_code, value_list, type_list, timeout)
+
 def test1(h):
 		# Stage get in submicron
 		print h.runGetCommand('StageXY', 'Position',['int','int'])
@@ -149,12 +190,7 @@ def test1(h):
 
 def test2(h):
 	print h.runGetCommand('Column','Magnification',['int',])
-	print h.runSetCommand('Column','Magnification',[100000,],['int',])
-	while True:
-		mag = h.runGetCommand('Column','Magnification',['int',])
-		print mag
-		if mag == 100000:
-			break
+	print h.runSetIntAndWait('Column', 'Magnification', [100000,], timeout=60)
 	print h.runGetCommand('Column','Mode',['hexdec',])
 
 if __name__=='__main__':
