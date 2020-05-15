@@ -16,23 +16,39 @@ from pyscope import hitachisocket
 
 STAGE_DEBUG = False
 
+class MagnificationsUninitialized(Exception):
+	pass
+
+
 class Hitachi(tem.TEM):
 	name = 'Hitachi'
 	projection_mode = 'imaging'
 	def __init__(self):
+		
 		tem.TEM.__init__(self)
 
-		self.h = hitachisocket.HitachiSocket('192.168.10.1',12068)
+		# use External control port
+		self.h = hitachisocket.HitachiSocket('192.168.10.1',12069)
 
-		self.high_tension = 100000.0
-
+		self.low_mag_mags = [50,100,200,300,400]# ignore 500 and above so that separation is easier.
+		self.zoom1_mags = [
+			500,700,1000,1200,1500,2000,2500,3000,4000,
+			5000,6000,7000,8000,10000,12000,15000,20000,25000,30000,
+			40000,50000,60000,70000,80000,100000,120000,150000,200000
+			]
 		self.magnifications = []
 		self.magnification_index = 0
 
 		self.probe_modes = [
 			'micro',
-			'nano',
+			'fine',
+			'low mag',
 		]
+		self.probe_mode_index_cap = {
+			'micro': 30,
+			'fine': 40,
+			'low mag':50,
+		}
 		self.probe_mode_index = 0
 
 		self.correctedstage = False
@@ -43,18 +59,17 @@ class Hitachi(tem.TEM):
 			'x': (-1e-3, 1e-3),
 			'y': (-1e-3, 1e-3),
 			'z': (-5e-4, 5e-4),
-			'a': (-math.pi/2, math.pi/2),
+			'a': (-math.radians(70.0), math.radians(70.0)),
+			'b': (-math.radians(60.0), math.radians(60.0)),
 		}
 		self.minimum_stage = {
 			'x':5e-8,
 			'y':5e-8,
 			'z':5e-8,
-			'a':math.radians(0.01),
-			'b':1e-4,
+			'a':math.radians(0.1),
+			'b':math.radians(0.1),
 		}
-		self.stage_position = {}
-		for axis in self.stage_axes:
-			self.stage_position[axis] = 0.0
+		#TODO: we do no know the top speed for htt
 		self.stage_top_speed = 29.78/127 # top speed is translated to 127
 		# 40 to 127
 		self.stage_speed_decimal = 100
@@ -93,12 +108,10 @@ class Hitachi(tem.TEM):
 		self.main_screen_scale = 1.0
 
 		self.main_screen_positions = ['up', 'down']
-		self.main_screen_position = self.main_screen_positions[0]
 		self.columnvalveposition = 'open'
 		self.emission = 'on'
 		self.BeamBlank = 'off'
 		self.buffer_pressure = 30.0
-		self.beamstop_position = 'out'
 
 		self.energy_filter = False
 		self.energy_filter_width = 0.0
@@ -106,7 +119,9 @@ class Hitachi(tem.TEM):
 		self.loaded_slot_number = None
 		self.is_init = True
 
-		self.aperture_selection = {'objective':'100','condenser_2':'70','selected_area':'open'}
+		self.aperture_mechanism_map = {'condenser2':'COND_APT','objective':'OBJ_APT','selected area':'SA_APT'}
+		self.aperture_selection = {'objective':'100','condenser_2':'unknown','selected_area':'open'}
+		self.beamstop_positions = ['out','in'] # index of this list is API value to set
 
 	def printStageDebug(self,msg):
 		if STAGE_DEBUG:
@@ -116,46 +131,61 @@ class Hitachi(tem.TEM):
 		return ['open', 'closed']
 
 	def getColumnValvePosition(self):
-		return self.getColumnValvePositions()[1-self.h.runGetCommand('EvacValve','GV',['int',]))
+		return self.getColumnValvePositions()[1-self.h.runGetCommand('EvacValve','GV',['int',])]
 
 	def setColumnValvePosition(self, state):
 		try:
 			valid_index = self.getColumnValvePositions().index(state)
-			self.h.runSetIntAndWait('EvacValve','GV', 1-valid_index)
+			self.h.runSetIntAndWait('EvacValve','GV', [1-valid_index,])
 		except ValueError:
 			raise RuntimeError('invalid column valve position %s' % (state,))
 		except:
 			raise RuntimeError('column valve position failed to set to %s' % (state,))
 
 	def getHighTension(self):
-		# convert float in kV from htt SDK to V
-		return 1000*self.h.runGetCommand('HighVoltage','Value',['float',]))
+		# convert float in kV from htt API to integer in V
+		return int(1000*self.h.runGetCommand('HighVoltage','Value',['float',]))
 
 	def setHighTension(self, value):
+		if value % 1000:
+			raise ValueError('API Only accepts value at precision of kV')
 		kv_value = int(value/1000.0) # takes only integer in kV
-		self.h.runSetCommand('HighVoltage','Value',[kv_value,],['int',]))
-		self.high_tension = value
+		self.h.runSetCommand('HighVoltage','Value',[kv_value,],['int',])
+		while True:
+			if int(self.getHighTensions()) == value:
+				break
 
 	def getStagePosition(self):
-		return copy.copy(self.stage_position)
+		xy_submicron = self.h.runGetCommand('StageXY','Position', ['int','int'])
+		a_degrees = self.h.runGetCommand('StageTilt','Position', ['float',])
+		z_submicron = self.h.runGetCommand('StageZ','Position', ['int',])
+		position = {
+			'x': xy_submicron[0]*1e-7,
+			'y': xy_submicron[1]*1e-7, 
+			'z': z_submicron*1e-7,
+			'a': math.radians(a_degrees),
+			'b': 0.0,
+		}
+		return position
 
 	def _setStagePosition(self,value):
 		keys = value.keys()
 		keys.sort()
 		keys.reverse()
 		if 'z' in keys:
-			z_submicron = int(value['z']*1e6)
-			self.h.runSetIntAndWait('StageZ','Move', z_submicron)
+			z_submicron = int(value['z']*1e7)
+			self.h.runSetIntAndWait('StageZ','Move', [z_submicron,])
 		if 'x' in keys or 'y' in keys:
 			set_xy = self.h.runGetCommand('StageXY','Position', ['int','int'])
 			if 'x' in keys:
-				set_xy[0] = int(value['x']*1e6)
+				set_xy[0] = int(value['x']*1e7)
 			if 'y' in keys:
-				set_xy[1] = int(value['y']*1e6)
+				set_xy[1] = int(value['y']*1e7)
+			print 'set to', set_xy
 			self.h.runSetIntAndWait('StageXY','Move', set_xy)
 		if 'a' in keys:
 			a_degree = math.degrees(value['a'])
-			self.h.runSetFloatAndWait('StageTilt','Move', a_degree)
+			self.h.runSetFloatAndWait('StageTilt','Move', [a_degree,])
 		self.printStageDebug('----------')
 
 	def setDirectStagePosition(self,value):
@@ -173,6 +203,7 @@ class Hitachi(tem.TEM):
 		return bigenough
 
 	def setStageSpeed(self, value):
+		# disabled for now. Tilting speed default is rather slow.
 		return
 		# only for stage tilt.  Don't know the scale yet.
 		self.stage_speed_decimal = int(min(value/self.stage_top_speed,127))
@@ -182,7 +213,7 @@ class Hitachi(tem.TEM):
 		self.speed_deg_per_second = value
 
 	def getStageSpeed(self):
-		# hitachi SDK does not have a get for stage speed.
+		# hitachi API does not have a get for stage speed.
 		if hasattr(self, 'stage_speed_decimal'):
 			return self.stage_speed_decimal * self.stage_top_speed
 		else:
@@ -247,6 +278,8 @@ class Hitachi(tem.TEM):
 		return self.screen_current
 	
 	def getIntensity(self):
+		hexdec = h.runGetCommand('Lens', 'C2',['hexdec',])
+		print 'result item0 in decimal:%d' % (int(hexdec,16),)
 		return self.intensity
 	
 	def setIntensity(self, value):
@@ -333,11 +366,14 @@ class Hitachi(tem.TEM):
 
 	def getMagnification(self, index=None):
 		if index is None:
-			index = self.magnification_index
-		try:
-			return self.magnifications[index]
-		except IndexError:
-			raise ValueError('invalid magnification')
+			return self.h.runGetCommand('Column','Magnification',['int',])
+		elif not self.getMagnificationsInitialized():
+			raise MagnificationsUninitialized
+		else:
+			try:
+				return self.magnifications[index]
+			except IndexError:
+				raise ValueError('invalid magnification index')
 
 	def getMainScreenMagnification(self, index=None):
 		return self.main_screen_scale*self.getMagnification(index=index)
@@ -348,12 +384,39 @@ class Hitachi(tem.TEM):
 	def setMainScreenScale(self, value):
 		self.main_screen_scale = value
 
-	def setMagnification(self, value):
+	def setMagnification(self, mag):
+		if not self.getMagnificationsInitialized():
+			raise MagnificationsUninitialized
+
 		try:
-			self.magnification_index = self.magnifications.index(value)
-			self.saveSimPar('magnification', value)
+			mag = int(round(mag))
+		except TypeError:
+			try:
+				mag = int(mag)
+			except:
+				raise TypeError
+
+		# set  projection mode if changing.
+		if self.getProjectionMode() != self.projection_mode:
+			self.setProjectionMode(None)
+		try:
+			index = self.magnifications.index(mag)
 		except ValueError:
 			raise ValueError('invalid magnification')
+		try:
+			prev_index = self.getMagnificationIndex()
+		except ValueError:
+			# none of the valid index
+			prev_index = -1
+		need_proj_norm = False
+		if prev_index != index:
+			# This makes defocus accuracy better like a objective 
+			# normalization. This assumes that defocus will be set
+			# after this not before.
+			# TODO self.tecnai.Projection.Focus = 0.0
+			self.setMagnificationIndex(index)
+			self.mag_changed = True
+		return
 
 	def getMagnificationIndex(self, magnification=None):
 		if magnification is not None:
@@ -363,16 +426,20 @@ class Hitachi(tem.TEM):
 	def setMagnificationIndex(self, value):
 		if value < 0 or value >= len(self.magnifications):
 			raise ValueError('invalid magnification index')
-		self.magnification_index = value
+		self.getProbeMode()
+		mag = self.magnifications[value]
+		self.h.runSetIntAndWait('Column','Magnification', [mag,])
 
 	def findMagnifications(self):
 		# fake finding magnifications and set projection submod mappings
 		self.setProjectionSubModeMap({})
-		for mag in self.magnifications:
-			if mag < 5000:
-				self.addProjectionSubModeMap(mag,'mode0',0)
+		self.magnifications = list(self.low_mag_mags)
+		self.magnifications.extend(self.zoom1_mags)
+		for i, mag in enumerate(self.magnifications):
+			if i < len(self.low_mag_mags):
+				self.addProjectionSubModeMap(mag,'LowMag',0)
 			else:
-				self.addProjectionSubModeMap(mag,'mode1',1)
+				self.addProjectionSubModeMap(mag,'Zoom-1',1)
 
 	def getMagnifications(self):
 		return list(self.magnifications)
@@ -380,24 +447,56 @@ class Hitachi(tem.TEM):
 	def setMagnifications(self, magnifications):
 		self.magnifications = magnifications
 
-		self.magnifications = magnifications
-
 	def getMagnificationsInitialized(self):
-		return True
+		if self.magnifications:
+			return True
+		else:
+			return False
+
+	def _getColumnModes(self):
+		mode_h, submode_h = self.h.runGetCommand('Column','Mode',['hexdec','hexdec'])
+		mode_d = int(mode_h,16)
+		submode_d = int(submode_h,16)
+		return mode_d, submode_d
 
 	def getProbeMode(self):
-		index = self.probe_mode_index
-		try:
-			return self.probe_modes[index]
-		except IndexError:
-			raise ValueError('invalid probe mode')
+		mode_d, submode_d = self._getColumnModes()
+		for probe in self.probe_modes:
+			# find the first probe that passes
+			if mode_d < self.probe_mode_index_cap[probe]:
+				return probe
+		raise ValueError('probe mode found not registered')
 
 	def setProbeMode(self, value):
+		new_probe = str(value)
 		try:
-			self.probe_mode_index = self.probe_modes.index(str(value))
+			new_probe_index = self.probe_modes.index(new_probe)
 		except ValueError:
 			raise ValueError('invalid probe mode')
-
+		prev_probe = self.getProbeMode()
+		if prev_probe == new_probe:
+			return
+		prev_probe_index = self.probe_modes.index(str(prev_probe))
+		base = 0
+		prev_mode_d, prev_submode_d = self._getColumnModes()
+		if prev_probe_index > 0:
+			base = self.probe_mode_index_cap[self.probe_modes[prev_probe_index-1]]
+		spot_index= prev_mode_d - base
+		new_base = 0
+		if new_probe_index > 0:
+			new_base = self.probe_mode_index_cap[self.probe_modes[new_probe_index-1]]
+		new_mode_d = new_base+spot_index
+		new_mode_h = hex(new_mode_d)
+		hex_length = 2 #mode code length
+		submodes = {
+			'micro': hex(int('00',16)),
+			'fine': hex(int('00',16)),
+			'low mag': hex(int('0e',16)),
+		}
+		submode_h = submodes[new_probe]
+		print prev_mode_d
+		print new_mode_h, submode_h
+		self.h.runSetHexdecAndWait('Column','Mode',[new_mode_h, submode_h],['hexdec','hexdec'],hex_length=hex_length)
 	def getProbeModes(self):
 		return list(self.probe_modes)
 
@@ -411,12 +510,15 @@ class Hitachi(tem.TEM):
 		return list(self.main_screen_positions)
 
 	def getMainScreenPosition(self):
-		return self.main_screen_position
+		return self.getMainScreenPositions()[self.h.runGetCommand('Screen','Position',['int',])]
 
 	def setMainScreenPosition(self, value):
-		if value not in self.main_screen_positions:
+		positions = self.getMainScreenPositions()
+		if value not in positions:
 			raise ValueError('invalid main screen position')
-		self.main_screen_position = value
+		apt_index = positions.index(value)
+		self.h.runSetIntAndWait('Screen','Position', [apt_index,])
+		#TODO: screen out returns much faster than gui indicates. May need sleep time
 
 	def getFocus(self):
 		return self.focus
@@ -458,12 +560,14 @@ class Hitachi(tem.TEM):
 		time.sleep(seconds)
 
 	def hasGridLoader(self):
-		return True
+		# 3 speciment holder is not a grid loader but similar.
+		# disabled for now.
+		return False
 
 	def getGridLoaderNumberOfSlots(self):
 		if not self.hasGridLoader():
 			return 0
-		return 4
+		return 3
 
 	def getGridLoaderSlotState(self, number):
 		if self.loaded_slot_number == number:
@@ -476,11 +580,13 @@ class Hitachi(tem.TEM):
 		return state
 
 	def _loadCartridge(self, number):
+		self.h.runSetIntAndWait('Stage','SpecimenNo',[number,])
 		self.loaded_slot_number = number
 		time.sleep(2)
 
 	def _unloadCartridge(self):
-		self.loaded_slot_number = None
+		# multi-specimen holder does not have unload
+		return
 
 	def getGridLoaderInventory(self):
 		self.getAllGridSlotStates()
@@ -489,36 +595,44 @@ class Hitachi(tem.TEM):
 		'''
 		Names of the available aperture mechanism
 		'''
-		return ['condenser_2', 'objective', 'selected_area']
+		return ['objective',]
 
 	def getApertureSelections(self, aperture_mechanism):
 		if aperture_mechanism == 'objective':
 			return ['open','100']
-		if aperture_mechanism == 'condenser_2' or aperture_mechanism == 'condenser':
-			return ['150','100','70']
-		return ['open']
+		return ['open',]
 
 	def getApertureSelection(self, aperture_mechanism):
-		if aperture_mechanism == 'condenser':
-			aperture_mechanism = 'condenser_2'
-		return self.aperture_selection[aperture_mechanism]
+		if aperture_mechanism not in self.getApertureMechanisms():
+			return 'unknown'
+		apt_api_name = self.aperture_mechanism_map[aperture_mechanism]
+		sel_names = self.getApertureSelections(aperture_mechanism)
+		sel_index = self.h.runGetCommand(apt_api_name,'Position',['int',])
+		return sel_names[sel_index]
 
 	def setApertureSelection(self, aperture_mechanism, name):
 		if aperture_mechanism == 'condenser':
 			aperture_mechanism = 'condenser_2'
 		if name not in self.getApertureSelections(aperture_mechanism):
-			self.aperture_selection[aperture_mechanism] = 'unknown'
+			# failed
 			return False
-		self.aperture_selection[aperture_mechanism] = name
+		apt_api_name = self.aperture_mechanism_map[aperture_mechanism]
+		apt_selections = self.getApertureSelections(aperture_mechanism)
+		apt_sel_index = apt_selections.index(name)
+		self.h.runSetIntAndWait(apt_api_name,'Position',[apt_sel_index,])
 		return True
 
 	def retractApertureMechanism(self, aperture_mechanism):
 		return setApertureSelection(aperture_mechanism, 'open')
 
 	def getBeamstopPosition(self):
-		return self.beamstop_position
+		p_index = self.h.runGetCommand('SpotMask','Position',['int',])
+		return self.beamstop_positions[p_index]
 
 	def setBeamstopPosition(self, value):
-		print 'beamstop set to %s' % (value,)
-		self.beamstop_position = value
+		try:
+			p_index = self.beamstop_positions.index(value)
+		except:
+			raise ValueError('invalid beamstop position setting %s' % (value,))
+		self.h.runSetIntAndWait('SpotMask','Position',[p_index,])
 
