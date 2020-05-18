@@ -642,7 +642,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			return {'x':(0,0),'y':(0,0)},0
 		try:
 			image_pixelsize = self.calclients['image shift'].getImagePixelSize(imagedata)
-		except KeyError:
+		except (KeyError, TypeError) as e:
 			# not imagedata but an image was loaded for testing
 			return {'x':(0,0),'y':(0,0)},0
 		self.current_image_pixelsize = image_pixelsize
