@@ -79,6 +79,16 @@ class Proxy(object):
 		except KeyError:
 			pass
 
+	def testNoneInHidden(self, datadict):
+		'''
+		Prevent insertion of instrument where hidden is null.
+		'''
+		q = leginondata.InstrumentData(initializer=datadict)
+		q['hidden'] = None
+		results = q.query(results=1)
+		if results and results[0]['hidden'] is None:
+			raise ValueError('Instrument %s on host %s has null hidden field. Database schema update required' % (datadict['name'],datadict['hostname']))
+
 	def getTEM(self, temname):
 		try:
 			return self.tems[temname]
@@ -129,6 +139,8 @@ class Proxy(object):
 			if cs is None:
 				cs = 2.0e-3
 			instrumentdata['cs'] = cs
+			# prevent old instrument with none value in hidden field to be reinserted
+			self.testNoneInHidden(instrumentdata)
 			dbinstrumentdata = instrumentdata
 			dbinstrumentdata['hidden'] = False
 			dbinstrumentdata.insert()
@@ -186,6 +198,8 @@ class Proxy(object):
 		if results:
 			dbinstrumentdata = results[0]
 		else:
+			# prevent old instrument with none value in hidden field to be reinserted
+			self.testNoneInHidden(instrumentdata)
 			dbinstrumentdata = instrumentdata
 			dbinstrumentdata['hidden'] = False
 			dbinstrumentdata.insert()
