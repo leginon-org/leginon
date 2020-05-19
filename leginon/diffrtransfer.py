@@ -166,7 +166,7 @@ class DiffractionUpload(object):
 		'''
 		print bin_dir, smv_dir
 
-	def imageDataToSmv(self, imagedata, smv_dir, min_value, median_of_mins):
+	def imageDataToSmv(self, imagedata, smv_dir, min_value, max_of_mins):
 			basename = imagedata['filename']
 			mrc_path = os.path.join(self.session['image path'],imagedata['filename']+'.mrc')
 			# smv
@@ -175,7 +175,7 @@ class DiffractionUpload(object):
 			smv_name = '%s_%s_%s_%s.img' % (self.session['name'],self.code, self.gun_length_str, iter_name)
 			smv_path = os.path.join(smv_dir, smv_name)
 			# pedestal is relative to the zero after offset is applied.
-			pedestal = -min_value + median_of_mins
+			pedestal = -min_value + max_of_mins
 			self.saveSMV(imagedata, smv_path, -min_value, pedestal)
 			self.changeOwnership(mrc_path)
 			self.changeOwnership(smv_path)
@@ -381,8 +381,8 @@ class TiaMovieUpload(DiffractionUpload):
 			self.changeOwnership(bin_path)
 			numarray = tiaraw.read(bin_path)
 			mins.append(numarray.min())
-		# get median of the minimums as pedestal
-		median_of_mins = numpy.median(numpy.array(mins))
+		# get max of the minimums as pedestal
+		max_of_mins = max(mins)
 		# get overall data minimums for offsetting
 		# smv files that is unsigned.
 		min_value =  min(mins)
@@ -396,7 +396,7 @@ class TiaMovieUpload(DiffractionUpload):
 			print('converting %s' % (basename,))
 			# mrc upload
 			imagedata = self.uploadMrcFromBin(bin_path, i)
-			self.imageDataToSmv(imagedata, smv_dir, min_value, median_of_mins)
+			self.imageDataToSmv(imagedata, smv_dir, min_value, max_of_mins)
 		self.cleanUp(self.bin_files)
 
 	def uploadMrcFromBin(self, bin_path, iter_number):
