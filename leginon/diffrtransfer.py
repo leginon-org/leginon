@@ -8,6 +8,7 @@ import datetime
 
 from leginon import leginondata
 from pyami import tiaraw, mrc, numsmv, tvips
+from pyami import arraystats
 
 DEBUG = False
 check_interval = 40  # seconds between checking for new frames
@@ -165,7 +166,7 @@ class DiffractionUpload(object):
 		'''
 		print bin_dir, smv_dir
 
-	def imageDataToSmv(self, imagedata, smv_dir, min_value):
+	def imageDataToSmv(self, imagedata, smv_dir, min_value, median_of_mins):
 			basename = imagedata['filename']
 			mrc_path = os.path.join(self.session['image path'],imagedata['filename']+'.mrc')
 			# smv
@@ -173,7 +174,9 @@ class DiffractionUpload(object):
 			iter_name = '%03d' % (iter_number1,)
 			smv_name = '%s_%s_%s_%s.img' % (self.session['name'],self.code, self.gun_length_str, iter_name)
 			smv_path = os.path.join(smv_dir, smv_name)
-			self.saveSMV(imagedata, smv_path, -min_value)
+			# pedestal is relative to the zero after offset is applied.
+			pedestal = -min_value + median_of_mins
+			self.saveSMV(imagedata, smv_path, -min_value, pedestal)
 			self.changeOwnership(mrc_path)
 			self.changeOwnership(smv_path)
 
@@ -242,6 +245,17 @@ class DiffractionUpload(object):
 		imagedata.insert()
 		return imagedata
 
+	def insertImageStats(self, numarray, imagedata):
+		allstats = arraystats.all(numarray)
+		statsdata = leginondata.AcquisitionImageStatsData()
+		statsdata['session'] = self.session
+		statsdata['min'] = allstats['min']
+		statsdata['max'] = allstats['max']
+		statsdata['mean'] = allstats['mean']
+		statsdata['stdev'] = allstats['std']
+		statsdata['image'] = imagedata
+		statsdata.insert()
+
 	def getCameraLengthMM(self, imagedata):
 		results = leginondata.CameraLengthCalibrationData(tem=imagedata['scope']['tem'],ccdcamera=imagedata['camera']['ccdcamera'], magnification=imagedata['scope']['magnification']).query(results=1)
 		if not results:
@@ -298,9 +312,10 @@ class DiffractionUpload(object):
 		smv_dict['BEAM_CENTER_Y'] = beam_center['y']
 		return smv_dict
 
-	def saveSMV(self,imagedata, smv_path, offset):
+	def saveSMV(self,imagedata, smv_path, offset, pedestal=0):
 		smv_dict = self.getLeginonInfoDict(imagedata)
 		smv_dict['LEGINON_OFFSET'] = offset
+		smv_dict['IMAGE_PEDESTAL'] = pedestal
 		file_basename = os.path.basename(smv_path)
 		a = imagedata['image']
 		numsmv.write(a, smv_path,offset,smv_dict)
@@ -341,6 +356,7 @@ class TvipsMovieUpload(DiffractionUpload):
 		numarray = tvips.read(set_dir, iter_number)
 		numarray = numpy.where(numarray < -1, -1, numarray)
 		imagedata = self.insertImage(numarray, mrc_name, iter_number)
+		self.insertImageStats(numarray, imagedata)
 		return imagedata
 
 class TiaMovieUpload(DiffractionUpload):
@@ -365,6 +381,8 @@ class TiaMovieUpload(DiffractionUpload):
 			self.changeOwnership(bin_path)
 			numarray = tiaraw.read(bin_path)
 			mins.append(numarray.min())
+		# get median of the minimums as pedestal
+		median_of_mins = numpy.median(numpy.array(mins))
 		# get overall data minimums for offsetting
 		# smv files that is unsigned.
 		min_value =  min(mins)
@@ -378,7 +396,7 @@ class TiaMovieUpload(DiffractionUpload):
 			print('converting %s' % (basename,))
 			# mrc upload
 			imagedata = self.uploadMrcFromBin(bin_path, i)
-			self.imageDataToSmv(imagedata, smv_dir, min_value)
+			self.imageDataToSmv(imagedata, smv_dir, min_value, median_of_mins)
 		self.cleanUp(self.bin_files)
 
 	def uploadMrcFromBin(self, bin_path, iter_number):
@@ -388,6 +406,7 @@ class TiaMovieUpload(DiffractionUpload):
 		mrc_name = bin_name.replace('.bin','.mrc')
 		numarray = tiaraw.read(bin_path)
 		imagedata = self.insertImage(numarray, mrc_name, iter_number)
+		self.insertImageStats(numarray, imagedata)
 		return imagedata
 
 def slackNotification(msg):
