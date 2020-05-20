@@ -11,6 +11,7 @@ import os
 
 import itertools
 
+from pyami import moduleconfig
 from pyscope import tem
 from pyscope import hitachisocket
 
@@ -19,6 +20,8 @@ STAGE_DEBUG = False
 class MagnificationsUninitialized(Exception):
 	pass
 
+
+configs = moduleconfig.getConfigured('hht.cfg')
 
 class Hitachi(tem.TEM):
 	name = 'Hitachi'
@@ -40,13 +43,17 @@ class Hitachi(tem.TEM):
 		self.magnification_index = 0
 
 		self.probe_modes = [
-			'micro',
-			'fine',
+			'micro-hc',
+			'micro-hr',
+			'fine-hc',
+			'fine-hr',
 			'low mag',
 		]
 		self.probe_mode_index_cap = {
-			'micro': 30,
-			'fine': 40,
+			'micro-hc': 15,
+			'micro-hr': 30,
+			'fine-hc': 35,
+			'fine-hr': 40,
 			'low mag':50,
 		}
 		self.probe_mode_index = 0
@@ -75,6 +82,11 @@ class Hitachi(tem.TEM):
 		self.stage_speed_decimal = 100
 
 		self.screen_current = 0.000001
+		# lens current range at HT 100 kV span 000000 - 3FFC00 
+		self.lens_hex_range = {
+			'OBJ':(0,1.94007),
+			'C2':(0,1.70002),
+		}
 		self.intensity_range = (0.0, 1.0)
 		self.intensity = 0.0
 
@@ -93,8 +105,6 @@ class Hitachi(tem.TEM):
 				},
 		}
 
-		self.spot_sizes = range(1, 5)
-		self.spot_size = self.spot_sizes[0]
 
 		self.beam_tilt = {'x': 0.0, 'y': 0.0}
 		self.beam_shift = {'x': 0.0, 'y': 0.0}
@@ -127,9 +137,27 @@ class Hitachi(tem.TEM):
 		if STAGE_DEBUG:
 			print msg
 
+	def getHitachiConfig(self,optionname,itemname=None):
+		if optionname not in configs.keys():
+			return None
+		if itemname is None:
+			return configs[optionname]
+		else:
+			if itemname not in configs[optionname]:
+				return None
+			return configs[optionname][itemname]
+
 	def getColumnValvePositions(self):
 		return ['open', 'closed']
 
+	def setIntensityZoom(self, value):
+		if self.getProbeMode() == 'low mag':
+			raise ('Can not set IntensityZoom in low mag mode')
+		if value is True:
+			self.h.runSetCommand('Columne','BrightnessLink',[])
+		else:
+			self.h.runSetCommand('Columne','BrightnessFree',[])
+		
 	def getColumnValvePosition(self):
 		return self.getColumnValvePositions()[1-self.h.runGetCommand('EvacValve','GV',['int',])]
 
@@ -147,6 +175,8 @@ class Hitachi(tem.TEM):
 		return int(1000*self.h.runGetCommand('HighVoltage','Value',['float',]))
 
 	def setHighTension(self, value):
+		if value != 100000:
+			raise ValueError('Currently only calibrated for 100 kV')
 		if value % 1000:
 			raise ValueError('API Only accepts value at precision of kV')
 		kv_value = int(value/1000.0) # takes only integer in kV
@@ -277,14 +307,78 @@ class Hitachi(tem.TEM):
 	def getScreenCurrent(self):
 		return self.screen_current
 	
+	def _scaleLensHexdecToCurrent(self,lens,hexdec):
+		m = self.lens_hex_range[lens]
+		d = int(hexdec,16)
+		return d*(m[1] - m[0])/int('3FFC00',16) + m[0]
+
+	def _scaleLensCurrentToHexdec(self, lens, current):
+		m = self.lens_hex_range[lens]
+		precision = (m[1]-m[0]) / int('3FFC00',16)
+		if current - m[0] < precision:
+			d = 0
+		else:
+			d = min(int(round((current - m[0])/precision)),int('3FFC00',16))
+		return hex(d)
+
+	def _scaleCoilHexdecToVector(self, coil, hex_x, hex_y):
+		xy = []
+		axes = ('x','y')
+		for i,v in enumerate((hex_x,hex_y)):
+			coil_scale_name = 'coil_%s_scale_%s' % (coil.lower(), axes[i])
+			m = self.getHitachiConfig('optics',coil_scale_name)
+			d = int(v,16)
+			print i, d
+			xy.append(d*(float(m[1] - m[0]))/int('3FFC00',16) + m[0])
+		return xy
+
+	def _scaleCoilVectorToHexdec(self, coil, x, y):
+		axes = ('x','y')
+		hex_xy = []
+		for i,v in enumerate((x,y)):
+			coil_scale_name = 'coil_%s_scale_%s' % (coil.lower(), axes[i])
+			m = self.getHitachiConfig('optics',coil_scale_name)
+			precision = float(m[1]-m[0]) / int('3FFC00',16)
+			if v - m[0] < precision:
+				d = 0
+			else:
+				d = min(int(round((v - m[0])/precision)),int('3FFC00',16))
+			hex_xy.append(hex(d))
+		print hex_xy
+		return hex_xy
+
+	def getLensCurrent(self, lens):
+		hexdec = self.h.runGetCommand('Lens', lens,['hexdec',])
+		current = self._scaleLensHexdecToCurrent(lens,hexdec)
+		return current
+
+	def setLensCurrent(self, lens, value):
+		'''
+		Current in Amp
+		'''
+		hexdec = self._scaleLensCurrentToHexdec(lens,value)
+		self.h.runSetCommand('Lens', lens, ['FF',hexdec,], ['str','hexdec',], [6,])
+
+	def getCoilVector(self, coil):
+		hexdec_x, hexdec_y = self.h.runGetCommand('Coil', coil,['hexdec','hexdec'])
+		x,y = self._scaleCoilHexdecToVector(coil,hexdec_x,hexdec_y)
+		return x, y
+
+	def setCoilVector(self, coil, x, y):
+		'''
+		x,y vector in meters
+		'''
+		hexdec_x, hexdec_y = self._scaleCoilVectorToHexdec(coil,x,y)
+		self.h.runSetCommand('Coil', coil, ['FF',hexdec_x,hexdec_y,], ['str','hexdec','hexdec',], [6,6])
+
 	def getIntensity(self):
-		hexdec = h.runGetCommand('Lens', 'C2',['hexdec',])
-		print 'result item0 in decimal:%d' % (int(hexdec,16),)
-		return self.intensity
+		'''
+		Return as lens current
+		'''
+		return self.getLensCurrent('C2')
 	
 	def setIntensity(self, value):
-		if value < self.intensity_range[0] or value > self.intensity_range[1]:
-			raise ValueError('invalid intensity')
+		self.setLensCurrent('C2', value)
 
 	def getStigmator(self):
 		return copy.deepcopy(self.stigmators)
@@ -298,13 +392,31 @@ class Hitachi(tem.TEM):
 					pass
 
 	def getSpotSize(self):
-		return self.spot_size
+		mode_d, submode_d = self._getColumnModes()
+		probe, spot = self._getProbeSpotFromColumnMode(mode_d)
+	
+		return spot
 	
 	def setSpotSize(self, value):
-		if value not in self.spot_sizes:
-			raise ValueError('invalid spot size')
-		self.spot_size = value
-	
+		prev_spot = self.getSpotSize()
+		if value == prev_spot:
+			return
+		probe = self.getProbeMode()
+		mode_d, submode_d = self._getColumnModes()
+		probe_index = self.probe_modes.index(probe)
+		spot_index = value - 1
+		base = 0
+		if probe_index > 0:
+			prev_probe = self.probe_modes[probe_index-1]
+			base = self.probe_mode_index_cap[prev_probe]
+		new_mode_d = base+spot_index
+		if new_mode_d >= self.probe_mode_index_cap[probe]:
+			raise ValueError('spot size assignment out of range for %s %s' %(probe, value))
+		new_mode_h = hex(new_mode_d)
+		hex_length = 2 #mode code length
+		submode_h = hex(submode_d)
+		self.h.runSetHexdecAndWait('Column','Mode',[new_mode_h, submode_h],['hexdec','hexdec'],hex_lengths=[hex_length,])
+
 	def getBeamTilt(self):
 		return copy.copy(self.beam_tilt)
 	
@@ -461,10 +573,18 @@ class Hitachi(tem.TEM):
 
 	def getProbeMode(self):
 		mode_d, submode_d = self._getColumnModes()
+		probe, spot = self._getProbeSpotFromColumnMode(mode_d)
+		return probe
+
+	def _getProbeSpotFromColumnMode(self, mode_d):
+		prev_probe_index_cap = 0
 		for probe in self.probe_modes:
 			# find the first probe that passes
 			if mode_d < self.probe_mode_index_cap[probe]:
-				return probe
+				print mode_d, prev_probe_index_cap, probe, self.probe_mode_index_cap[probe]
+				spot = mode_d - prev_probe_index_cap + 1
+				return probe, spot
+			prev_probe_index_cap = self.probe_mode_index_cap[probe]
 		raise ValueError('probe mode found not registered')
 
 	def setProbeMode(self, value):
@@ -481,22 +601,33 @@ class Hitachi(tem.TEM):
 		prev_mode_d, prev_submode_d = self._getColumnModes()
 		if prev_probe_index > 0:
 			base = self.probe_mode_index_cap[self.probe_modes[prev_probe_index-1]]
+		# set spot size to be the same as previous.
+		# TODO: this will be a problem changing between low mag and others.
 		spot_index= prev_mode_d - base
 		new_base = 0
 		if new_probe_index > 0:
 			new_base = self.probe_mode_index_cap[self.probe_modes[new_probe_index-1]]
+		new_probe_index_cap = self.probe_mode_index_cap[new_probe]
 		new_mode_d = new_base+spot_index
+		if new_mode_d >= new_probe_index_cap:
+			new_mode_d = new_probe_index_cap - 1
+			print "spot size assignment capped"
 		new_mode_h = hex(new_mode_d)
 		hex_length = 2 #mode code length
+		# imaging system
+		# match zoom-1 values here, but don't know how it should be.
 		submodes = {
-			'micro': hex(int('00',16)),
-			'fine': hex(int('00',16)),
+			'micro-hc': hex(int('00',16)),
+			'micro-hr': hex(int('02',16)),
+			'fine-hc': hex(int('00',16)), # not sure how this maps, assume zoom-1 for now
+			'fine-hr': hex(int('02',16)),
 			'low mag': hex(int('0e',16)),
 		}
 		submode_h = submodes[new_probe]
 		print prev_mode_d
 		print new_mode_h, submode_h
-		self.h.runSetHexdecAndWait('Column','Mode',[new_mode_h, submode_h],['hexdec','hexdec'],hex_length=hex_length)
+		self.h.runSetHexdecAndWait('Column','Mode',[new_mode_h, submode_h],['hexdec','hexdec'],hex_lengths=[hex_length,])
+
 	def getProbeModes(self):
 		return list(self.probe_modes)
 
@@ -521,10 +652,10 @@ class Hitachi(tem.TEM):
 		#TODO: screen out returns much faster than gui indicates. May need sleep time
 
 	def getFocus(self):
-		return self.focus
+		return self.getLensCurrent('OBJ')
 
 	def setFocus(self, value):
-		self.focus = value
+		self.setLensCurrent('OBJ', value)
 
 	def getBufferTankPressure(self):
 		return self.buffer_pressure

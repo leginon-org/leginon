@@ -76,7 +76,7 @@ class HitachiSocket(object):
 		#print recv_text
 		return recv_text
 
-	def runSetCommand(self, sub_code, ext_code, args=[], data_types=[],hex_length=6):
+	def runSetCommand(self, sub_code, ext_code, args=[], data_types=[],hex_lengths=[6,]):
 		'''
 		common class of function that sets data. Specify data types
 		for each value that returned
@@ -86,6 +86,7 @@ class HitachiSocket(object):
 		main_code = 'Set'
 		cmd = ' '.join([main_code, sub_code, ext_code])
 		recv_min_length = len(cmd)+1 # set command will be repeated in the recv'd message
+		hex_count = 0
 		for i,t in enumerate(data_types):
 			if t == 'int':
 				args[i] = '%d' % args[i]
@@ -94,8 +95,12 @@ class HitachiSocket(object):
 			elif t == 'bool':
 				args[i] = '%d' % int(args[i])
 			elif t == 'hexdec':
+				# use the last value if count is larger than number of input hex_lengths
+				hex_length = hex_lengths[min(hex_count, len(hex_lengths)-1)]
 				args[i] = "{0:0{1}X}".format(int(args[i],16),hex_length) # format to 000FFF, for example
+				hex_count += 1
 			else:
+				# string type
 				pass
 		arg_string = ','.join(args)
 		print 'send', arg_string, recv_min_length
@@ -140,9 +145,9 @@ class HitachiSocket(object):
 		else:
 			return data
 
-	def runSetAndWait(self, sub_code, ext_code, value_list, type_list, timeout=60, hex_length=6):
+	def runSetAndWait(self, sub_code, ext_code, value_list, type_list, timeout=60, hex_lengths=[6,]):
 		# create a copy of value_list since args get modified in runSetComand and causes wait comparison fails
-		self.runSetCommand(sub_code,ext_code,list(value_list),type_list, hex_length)
+		self.runSetCommand(sub_code,ext_code,list(value_list),type_list, hex_lengths)
 		t0 = time.time()
 		get_ext_code = ext_code
 		if get_ext_code in SET_GET_REPLACEMENTS.keys():
@@ -205,13 +210,13 @@ class HitachiSocket(object):
 			type_list.append('bool')
 		return self.runSetAndWait(sub_code, ext_code, value_list, type_list, timeout)
 
-	def runSetHexdecAndWait(self, sub_code, ext_code, value_list, timeout=60, hex_length=6):
+	def runSetHexdecAndWait(self, sub_code, ext_code, value_list, timeout=60, hex_lengths=[6,]):
 		type_list = []
 		for v in value_list:
 			if type(v) != type(hex(17)): #hexdec string without 0x
 				raise ValueError('input must be hexdec type')
 			type_list.append('hexdec')
-		return self.runSetAndWait(sub_code, ext_code, value_list, type_list, timeout, hex_length)
+		return self.runSetAndWait(sub_code, ext_code, value_list, type_list, timeout, hex_lengths)
 
 def test1(h):
 		# Stage get in submicron
