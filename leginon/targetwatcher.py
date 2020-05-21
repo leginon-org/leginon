@@ -288,6 +288,8 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 					self.logger.error('Conditioning failed. Continue without it')
 					condition_status = 'abort'
 				self.beep()
+			# pause but not stop
+			state = self.pauseCheck('paused after fix condition')
 
 			# processReference.  FIX ME, when it comes back, need to move more
 			# accurately than just send the position.
@@ -295,10 +297,14 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 				self.setStatus('waiting')
 				self.processReferenceTarget()
 				self.setStatus('processing')
+			# pause but not stop
+			state = self.pauseCheck('paused after reference processing')
 			# start alignment manager.  May replace reference in the future
 			self.setStatus('waiting')
 			self.fixAlignment()
 			self.setStatus('processing')
+			# pause but not stop
+			state = self.pauseCheck('paused after fix alignment')
 			# This will bright z to the value before reference targets and alignment
 			# fixing.
 			self.logger.info('Setting z to original z of %.2f um' % (original_position['z']*1e6))
@@ -327,6 +333,8 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 				if rejectstatus != 'aborted':	 
 					return
 			self.logger.info('Passed targets processed, processing current target list')
+			# pause but not stop
+			state = self.pauseCheck('paused after waiting for processing rejected targets')
 
 		# Experimental
 		if False:
