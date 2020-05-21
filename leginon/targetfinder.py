@@ -196,10 +196,14 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		remote_error_message = ''
 		while not valid_selection:
 			if self.settings['check method'] == 'remote':
+				self.terminated_remote = False
 				self.waitForRemoteCheck(imagedata, remote_error_message)
 			else:
 				# default
 				self.waitForUserCheck()
+			# return to remote if control is given back to the remote after removing remote control.
+			if self.terminated_remote and self.settings['check method'] == 'remote' and self.remote_targeting.userHasControl():
+				continue
 			if not self.settings['allow no focus']:
 				has_aqu = self.hasTargetTypeOnPanel('acquisition')
 				has_foc = self.hasTargetTypeOnPanel('focus')
@@ -257,6 +261,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			self.logger.error('remote control terminated by administrator')
 			self.remote_targeting.unsetImage(imdata)
 			# Do local user check instead.
+			self.terminated_remote = True
 			return self.waitForUserCheck()
 		self.displayRemoteTargetXYs(targetxys)
 		preview_targets = self.panel.getTargetPositions('preview')
@@ -749,6 +754,8 @@ class ClickTargetFinder(TargetFinder):
 		# display image
 		self.setImage(imdata['image'], 'Image')
 		while True:
+			self.current_interaction = self.settings['check method']
+			self.terminated_remote = False
 			self.waitForInteraction(imdata)
 			if not self.processPreviewTargets(imdata, targetlist):
 				break
