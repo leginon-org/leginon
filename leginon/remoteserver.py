@@ -49,8 +49,10 @@ class RemoteSessionServer(object):
 		try:
 			self.leg_remote_auth = (configs['leginon auth']['username'],configs['leginon auth']['password'])
 			self.remote_server_active = True
+			self.media_maps = configs['media maps']
 		except:
 			self.leg_remote_auth = ('','')
+			self.media_maps = {}
 			self.remote_server_active = False
 		# This is the first attempt to connect to remote.
 		self.session_pk = self.setSession()
@@ -60,10 +62,7 @@ class RemoteSessionServer(object):
 
 	def setSession(self):
 		router_name = 'api/sessions'
-		l_search = '/leginon'
-		replace_pattern = l_search.join(self.session['image path'].split('/leginon/')[:-1])
-		media_session_rawdata_path = self.session['image path'].replace(replace_pattern,'/media')
-		media_session_path = os.path.dirname(media_session_rawdata_path)
+		media_session_path = self.getMediaSessionPath()
 		self.media_base = os.path.join(media_session_path,'remote')
 		# data
 		data = {
@@ -89,6 +88,13 @@ class RemoteSessionServer(object):
 			pk = results[0]['id']
 			self.patch(router_name, pk, patch_dict)
 		return pk
+
+	def getMediaSessionPath(self):
+		media_session_rawdata_path = self.session['image path']
+		for k in self.media_maps.keys():
+			media_session_rawdata_path = self.session['image path'].replace(k,self.media_maps[k])
+		media_session_path = os.path.dirname(media_session_rawdata_path)
+		return media_session_path
 
 	def clearRemoteNodes(self):
 		'''
@@ -225,11 +231,16 @@ class RemoteSessionServer(object):
 		return self._processResponse(answer)
 
 	def userHasControl(self):
-		if self.remote_server_active:
-			session_pk = self.get('api/sessions',{'name':self.session['name']})[0]['id']
-			controlled_by_user = self.get('api/microscopes',{'session':session_pk})[0]['controlled_by_user']
-			return controlled_by_user
-		else:
+		try:
+			if self.remote_server_active:
+				session_pk = self.get('api/sessions',{'name':self.session['name']})[0]['id']
+				controlled_by_user = self.get('api/microscopes',{'session':session_pk})[0]['controlled_by_user']
+				return controlled_by_user
+			else:
+				return False
+		except requests.ConnectionError:
+			e = 'Connection to remote is lost'
+			self.logger.error(e)
 			return False
 
 class RemoteNodeServer(RemoteSessionServer):
@@ -247,24 +258,31 @@ class RemoteStatusbar(RemoteNodeServer):
 				'node': self.node_name,
 		}
 
-	def setStatus(self, status):
-		is_acquisition = issubclass(self.node.settingsclass, leginondata.AcquisitionSettingsData)
-		is_targetfinder = issubclass(self.node.settingsclass, leginondata.TargetFinderSettingsData)
-		is_conditioner = issubclass(self.node.settingsclass, leginondata.ConditionerSettingsData)
-		is_reference = issubclass(self.node.settingsclass, leginondata.ReferenceSettingsData)
-		is_ice_t = issubclass(self.node.settingsclass, leginondata.ZeroLossIceThicknessSettingsData)
-		any_above = is_acquisition or is_targetfinder or is_conditioner or is_reference or is_ice_t
+	def _isThisSubClass(self):
+		settingsdata_prefixes = ['Acquisition','TargetFinder','Conditioner','Reference','ZeroLossIceThickness',]
+		for name in settingsdata_prefixes:
+			if issubclass(self.node.settingsclass, getattr(leginondata, '%sSettingsData' % name)):
+				return name
 
-		if not any_above:
+	def setStatus(self, status):
+		this_subclass = self._isThisSubClass()
+		if this_subclass is None:
 			return
+		try:
+			self._setStatus(status, this_subclass)
+		except requests.ConnectionError:
+			e = 'Connection to remote is lost'
+			self.logger.error(e)
+
+	def _setStatus(self, status, this_subclass):
 		status_str='_'.join(status.split())
 		# map to different strings to put them at the front of alpha beta sort
 		if status == 'remote':
 			status_str='need_remote_input'
-		if is_acquisition and status == 'user input':
+		if this_subclass == 'Acquisition' and status == 'user input':
 			# user input status in acquisition node means paused locally.
 			status_str='paused'
-		if not (is_acquisition or is_targetfinder) and status == 'processing':
+		if this_subclass not in ('Acquisition', 'TargetFinder') and status == 'processing':
 			status_str='busy'
 		results = self.get(self.router_name, self.data)
 		if status in ('processing','user input','waiting','remote'):
@@ -284,6 +302,13 @@ class RemoteQueueCount(RemoteNodeServer):
 		super(RemoteQueueCount,self).__init__(logger, sessiondata, node)
 
 	def setQueueCount(self, count):
+		try:
+			self._setQueueCount(count)
+		except requests.ConnectionError:
+			e = 'Connection to remote is lost'
+			self.logger.error(e)
+
+	def _setQueueCount(self, count):
 		self.data = {
 				'session_name': self.session['name'],
 				'node': self.node_name,
@@ -381,6 +406,13 @@ class ClickTool(Tool):
 		'''
 		Track triggerpath existance if active
 		'''
+		try:
+			self._clickTracking()
+		except requests.ConnectionError:
+			e = 'Connection to remote is lost'
+			self.toolbar.logger.error(e)
+
+	def _clickTracking(self):
 		while self.active:
 			if self.hasRemoteTrigger():
 				self.handling_attr()
@@ -482,6 +514,13 @@ class RemoteTargetingServer(RemoteNodeServer):
 		media_image_base = os.path.join(self.media_datafile_base,'%06d' % imagedata.dbid)
 		self.media_out_jpgfilepath = os.path.join(media_image_base,'image.jpg')
 
+		try:
+			self._setImage(imagedata, msg)
+		except requests.ConnectionError:
+			e = 'Connection to remote is lost'
+			self.logger.error(e)
+
+	def _setImage(self, imagedata, msg=''):
 		# create data
 		data = {
 				'name': imagedata['filename'],
@@ -514,7 +553,12 @@ class RemoteTargetingServer(RemoteNodeServer):
 		Remove image_base directory and its content. This is called after
 		the confirmed targets are handled by leginon.
 		'''
-		result = self.delete(self.route_name, self.image_pk)
+		try:
+			result = self.delete(self.route_name, self.image_pk)
+		except requests.ConnectionError:
+			e = 'Connection to remote is lost'
+			self.logger.error(e)
+		# remove file regardless
 		image_base = os.path.join(self.datafile_base,'%06d' % imagedata.dbid)
 		try:
 			shutil.rmtree(image_base)
@@ -530,10 +574,14 @@ class RemoteTargetingServer(RemoteNodeServer):
 		'''
 		Set xy coordinates of targets to send to the remote client
 		'''
-		# dictionary { targetname:(x,y), }. x,y are floats to keep the precision
-		self.outtargets = xytargets
-		target_data = self._makeTargetData(xytargets)
-		self.patch(self.router_name, self.image_pk, {'targets': target_data,'targets_confirmed':False})
+		try:
+			# dictionary { targetname:(x,y), }. x,y are floats to keep the precision
+			self.outtargets = xytargets
+			target_data = self._makeTargetData(xytargets)
+			self.patch(self.router_name, self.image_pk, {'targets': target_data,'targets_confirmed':False})
+		except requests.ConnectionError:
+			e = 'Connection to remote is lost'
+			self.logger.error(e)
 
 	def getJpgFilePath(self):
 		t = self.out_jpgfilepath
@@ -584,7 +632,6 @@ class RemoteTargetingServer(RemoteNodeServer):
 			return xy_tuple_targets
 		except Exception,e:
 			self.logger.error(e)
-			raise
 			# return False causes this function to be called again
 			return False
 
@@ -592,6 +639,13 @@ class RemoteTargetingServer(RemoteNodeServer):
 		'''
 		Wait until it gets a list of xy tuple for each targetname
 		'''
+		try:
+			self._getInTargets()
+		except requests.ConnectionError:
+			e = 'Connection to remote is lost'
+			self.logger.error(e)
+
+	def _getInTargets(self):
 		xys = False
 		while xys is False or not self.active:
 			xys = self._getTargetData()
