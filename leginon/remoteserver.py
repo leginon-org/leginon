@@ -92,7 +92,15 @@ class RemoteSessionServer(object):
 	def getMediaSessionPath(self):
 		media_session_rawdata_path = self.session['image path']
 		for k in self.media_maps.keys():
-			media_session_rawdata_path = self.session['image path'].replace(k,self.media_maps[k])
+			# a bit complicated because module config key is all lower case
+			pattern_index = self.session['image path'].lower().find(k)
+			if pattern_index < 0:
+				continue
+			elif pattern_index == 0:
+				pref = ''
+			else:
+				pref = self.session['image path'][:pattern_index]
+			media_session_rawdata_path = pref+self.media_maps[k]+self.session['image path'][pattern_index+len(k):]
 		media_session_path = os.path.dirname(media_session_rawdata_path)
 		return media_session_path
 
@@ -640,10 +648,11 @@ class RemoteTargetingServer(RemoteNodeServer):
 		Wait until it gets a list of xy tuple for each targetname
 		'''
 		try:
-			self._getInTargets()
+			return self._getInTargets()
 		except requests.ConnectionError:
 			e = 'Connection to remote is lost'
 			self.logger.error(e)
+			return False
 
 	def _getInTargets(self):
 		xys = False
