@@ -179,6 +179,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		return self.newReferenceTarget(imagedata, delta_row, delta_column)
 
 	def submitTargets(self):
+		self.terminated_remote = False
 		self.userpause.set()
 		try:
 			if self.settings['autofinder']:
@@ -208,6 +209,11 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 			else:
 				self.sendTargetsToRemote()
 				self.waitForTargetsFromRemote()
+				if self.terminated_remote:
+					self.logger.warning('targets not submitted. Try again.')
+					# don't finish submit, so that it can be redone
+					self.panel.targetsSubmitted()
+					return
 		self.finishSubmitTarget()
 
 	def finishSubmitTarget(self):
@@ -973,6 +979,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 			self.displayRemoteTargetXYs(targetxys)
 		else:
 			self.logger.error('remote targeting terminated by administrator. Use local targets.')
+			self.terminated_remote = True
 		preview_targets = self.panel.getTargetPositions('preview')
 		if preview_targets:
 			self.logger.error('can not handle preview with remote')

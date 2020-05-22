@@ -194,6 +194,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		# and after the interaction.
 		valid_selection = False
 		remote_error_message = ''
+		self.terminated_remote = False
 		while not valid_selection:
 			if self.settings['check method'] == 'remote':
 				self.terminated_remote = False
