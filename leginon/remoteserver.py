@@ -18,7 +18,7 @@ import json
 from leginon import leginondata
 import pyami.moduleconfig
 import pyami.fileutil
-import pyami.jpg
+import pyami.numpil
 
 SLEEP_TIME = 5
 
@@ -576,7 +576,7 @@ class RemoteTargetingServer(RemoteNodeServer):
 		self.imagedata = None
 
 	def _writeOutJpgFile(self):
-		pyami.jpg.write(self.imagedata['image'],self.out_jpgfilepath)
+		pyami.numpil.write(self.imagedata['image'],self.out_jpgfilepathi, 'JPEG')
 
 	def setOutTargets(self, xytargets):
 		'''
