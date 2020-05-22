@@ -576,7 +576,7 @@ class RemoteTargetingServer(RemoteNodeServer):
 		self.imagedata = None
 
 	def _writeOutJpgFile(self):
-		pyami.numpil.write(self.imagedata['image'],self.out_jpgfilepathi, 'JPEG')
+		pyami.numpil.write(self.imagedata['image'],self.out_jpgfilepath, 'JPEG')
 
 	def setOutTargets(self, xytargets):
 		'''
