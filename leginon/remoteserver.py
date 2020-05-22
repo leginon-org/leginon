@@ -267,7 +267,7 @@ class RemoteStatusbar(RemoteNodeServer):
 		}
 
 	def _isThisSubClass(self):
-		settingsdata_prefixes = ['Acquisition','TargetFinder','Conditioner','Reference','ZeroLossIceThickness',]
+		settingsdata_prefixes = ['Acquisition','TargetFinder','Conditioner','Reference','ZeroLossIceThickness','PresetsManager']
 		for name in settingsdata_prefixes:
 			if issubclass(self.node.settingsclass, getattr(leginondata, '%sSettingsData' % name)):
 				return name
