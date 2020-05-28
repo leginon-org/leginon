@@ -384,8 +384,14 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz = wx.GridBagSizer(5, 5)
 		sz.Add(checkmethodsz, (1, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
+		self.Bind(wx.EVT_CHOICE, self.onChooseCheckMethod, self.widgets['check method'])
 
 		return sz
+
+	def onChooseCheckMethod(self, evt):
+		item_index = self.widgets['check method'].GetSelection()
+		if item_index != wx.NOT_FOUND:
+			self.node.uiChooseCheckMethod(self.widgets['check method'].GetString(item_index))
 
 if __name__ == '__main__':
 	class App(wx.App):

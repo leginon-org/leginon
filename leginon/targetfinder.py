@@ -714,16 +714,30 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 
 	def onQueueCheckBox(self, state):
 		'''
-		Start queue click tool tracking.
+		Start/Stop remote queue click tool tracking. Used at initialization
+		and gui settings change.
 		'''
-		if self.settings['check method'] == 'remote':
+		combined_state = (self.settings['check method'] == 'remote' and state)
+		self._setQueueTool(combined_state)
+
+	def _setQueueTool(self, state):
 			if state is True:
 				self.remote_toolbar.addClickTool('queue','publishQueue','process queue')
 			else:
 				if 'queue' in self.remote_toolbar.tools:
-					self.remote_toolbar.tools['queue'].deActivate()
+					self.remote_toolbar.removeClickTool('queue')
 			# finalize toolbar and send to leginon-remote
 			self.remote_toolbar.finalizeToolbar()
+
+	def uiChooseCheckMethod(self, method):
+		'''
+		handle gui check method choice.  Bypass using self.settings['check method']
+		because that is not yet set.
+		'''
+		if not self.remote_targeting.remote_server_active:
+			return
+		state = (method == 'remote' and self.settings['queue'])
+		self._setQueueTool(state)
 
 	def blobStatsTargets(self, blobs):
 		targets = []

@@ -111,10 +111,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.clearTiles()
 
 		self.reference_target = None
-		if self.settings['check method'] == 'remote':
-			self.remote_toolbar.addClickTool('refresh','refreshRemoteTargets','refresh atlas to submit more')
-			# finalize toolbar and send to leginon-remote
-			self.remote_toolbar.finalizeToolbar()
+		self.setRefreshTool(self.settings['check method']=='remote')
 
 		if self.__class__ == MosaicClickTargetFinder:
 			self.start()
@@ -207,9 +204,10 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 			if not self.remote_targeting.userHasControl():
 				self.logger.warning('remote user has not given control. Use local check')
 			else:
-				self.sendTargetsToRemote()
-				self.waitForTargetsFromRemote()
-				if self.terminated_remote:
+				success = self.sendTargetsToRemote()
+				if success:
+					self.waitForTargetsFromRemote()
+				if not success or self.terminated_remote:
 					self.logger.warning('targets not submitted. Try again.')
 					# don't finish submit, so that it can be redone
 					self.panel.targetsSubmitted()
@@ -311,9 +309,10 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 			# self.existing_position_targets becomes empty on the second
 			# submit if not refreshed. 
 			self.refreshDatabaseDisplayedTargets()
-			self.sendTargetsToRemote()
-			self.waitForTargetsFromRemote()
-			self.finishSubmitTarget()
+			success = self.sendTargetsToRemote()
+			if success:
+				self.waitForTargetsFromRemote()
+				self.finishSubmitTarget()
 
 
 	def refreshCurrentPosition(self):
@@ -955,19 +954,19 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		Remote service target without confirmation
 		'''
 		# 1. createMosaicImage
-		self.logger.warning('Sending mosaic image and targets to remote server here')
-		self.publishMosaicImage()
 		try:
+			self.publishMosaicImage()
 			mosaic_image_shape = self.mosaicimage.shape
 		except AttributeError:
 			self.logger.error('Need mosaic image to set targets')
-			return
+			return False
 		# 2. get displayed targets
 		xytargets = self.getPanelTargets(mosaic_image_shape)
 		# 3. send to remote server
 		# put stuff in OutBox
 		self.remote_targeting.setImage(self.mosaicimagedata)
 		self.remote_targeting.setOutTargets(xytargets)
+		return True
 
 	def waitForTargetsFromRemote(self):
 		self.logger.info('Waiting for remote targets')
@@ -984,3 +983,22 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		if preview_targets:
 			self.logger.error('can not handle preview with remote')
 		self.setStatus('idle')
+
+	def setRefreshTool(self, state):
+		if state is True:
+			self.remote_toolbar.addClickTool('refresh','refreshRemoteTargets','refresh atlas to submit more')
+		else:
+			if 'refresh' in self.remote_toolbar.tools:
+				self.remote_toolbar.removeClickTool('refresh')
+		# finalize toolbar and send to leginon-remote
+		self.remote_toolbar.finalizeToolbar()
+
+	def uiChooseCheckMethod(self, method):
+		'''
+		handle gui check method choice.  Bypass using self.settings['check method']
+		because that is not yet set.
+		'''
+		if not self.remote_targeting.remote_server_active:
+			return
+		state = (method == 'remote')
+		self.setRefreshTool(state)

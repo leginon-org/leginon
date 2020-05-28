@@ -176,6 +176,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.widgets['allow no focus'] = wx.CheckBox(self, -1, 'Do not require focus targets in user verification')
 		self.Bind(wx.EVT_CHECKBOX, self.onUserCheckbox, self.widgets['user check'])
 		self.Bind(wx.EVT_CHECKBOX, self.onQueueCheckbox, self.widgets['queue'])
+		self.Bind(wx.EVT_CHOICE, self.onChooseCheckMethod, self.widgets['check method'])
 
 		sz = wx.GridBagSizer(5, 5)
 		sz.Add(self.widgets['user check'], (0, 0), (1, 1),
@@ -215,6 +216,11 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		parent.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT_QUEUE, state)
 		evt.Skip()
 		self.node.onQueueCheckBox(state)
+
+	def onChooseCheckMethod(self, evt):
+		item_index = self.widgets['check method'].GetSelection()
+		if item_index != wx.NOT_FOUND:
+			self.node.uiChooseCheckMethod(self.widgets['check method'].GetString(item_index))
 
 if __name__ == '__main__':
 	import pdb
