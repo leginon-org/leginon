@@ -377,8 +377,8 @@ class Tool(object):
 		self.handling_attr = getattr(self.toolbar.node, handling_attr_name)
 		self.help_string = help_string
 		# tool configuration to be included in NodeToolbar post
-		self.tool_config = {'type': None, 'choices':()}
-		# basic data for a tool in the toolbar to send to remote
+		self.tool_config = {'type': None, 'choices':(), 'help':self.help_string}
+		# basic data for a tool in the toolbar to query on
 		self.tool_data = {
 				'session_name': self.toolbar.session['name'],
 				'node': self.toolbar.node_name,
