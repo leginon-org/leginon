@@ -203,6 +203,7 @@ class RemoteSessionServer(object):
 		if not self.remote_server_active or not pk or not data:
 			return
 		url = self._makeUrl(router_name, pk=pk)
+		#print(url, data)
 		answer = requests.patch(url=url, json=data, auth=self.leg_remote_auth)
 		return self._processResponse(answer)
 
@@ -295,9 +296,9 @@ class RemoteStatusbar(RemoteNodeServer):
 		results = self.get(self.router_name, self.data)
 		if status in ('processing','user input','waiting','remote'):
 			if results:
-				return self.patch(self.router_name, results[0]['pk'], {'value':status_str})
+				return self.patch(self.router_name, results[0]['pk'], {'value':status_str, 'node_order':self.node.node_order})
 			data = self.data.copy()
-			data.update({'value':status_str})
+			data.update({'value':status_str, 'node_order':self.node.node_order})
 			return self.post(self.router_name, data)
 		else:
 			if results:
@@ -338,8 +339,8 @@ class RemoteToolbar(RemoteNodeServer):
 		self.tools = {}
 		self.tool_configs = {}
 
-	def addClickTool(self,name, handling_attr_name, help_string=''):
-		self.tools[name] = ClickTool(self, name, handling_attr_name, help_string)
+	def addClickTool(self,name, handling_attr_name, help_string='',block_rule='none'):
+		self.tools[name] = ClickTool(self, name, handling_attr_name, help_string, block_rule)
 		self.tool_configs[name] = self.tools[name].tool_config
 
 	def removeClickTool(self, name):
@@ -354,7 +355,7 @@ class RemoteToolbar(RemoteNodeServer):
 				'session_name': self.session['name'],
 				'node': self.node_name,
 		}
-		patch_dict = {'tools':self.tool_configs}
+		patch_dict = {'tools':self.tool_configs,'node_order':self.node.node_order}
 		results = self.get(self.router_name, self.data)
 		if results:
 			# patch existing toolbar
@@ -384,16 +385,16 @@ class Tool(object):
 				'node': self.toolbar.node_name,
 				'tool': self.name,
 		}
-			
+
 class ClickTool(Tool):
 	'''
 	Click tool calls a handling attribute from the node when it is triggered
 	by the existance of the specified ClickToolValue in leginon-remote
 	'''
 	router_name = 'remote/click'
-	def __init__(self, parent, name, handling_attr_name, help_string):
+	def __init__(self, parent, name, handling_attr_name, help_string, block_rule='none'):
 		super(ClickTool,self).__init__(parent, name, handling_attr_name, help_string)
-		self.tool_config.update({'type':'click','choices':(False, True)})
+		self.tool_config.update({'type':'click','choices':(False, True),'block_rule':block_rule})
 		self.toolbar.logger.debug('click tracking config: %s' % self.tool_config)
 		self.activate()
 		response = self.toolbar.get(self.router_name,self.tool_data)
@@ -487,10 +488,10 @@ class RemoteTargetingServer(RemoteNodeServer):
 				self.target_types.append(target_type_data)
 		data = {}
 		data['target_types'] = self.target_types
+		data['node_order'] = self.node.node_order
 		r = self.get(route_name,{'session':self.session_pk,'name':self.node_name})
 		if r:
 			session_node_pk = r[0]['id']
-			# just update
 			response = self.patch(route_name, r[0]['id'], data)
 		else:
 			# insert new one
@@ -627,6 +628,7 @@ class RemoteTargetingServer(RemoteNodeServer):
 		if not self.active:
 			return False
 		# get image object. Should always have one result.
+		# NOTE this does not filter for the image.  It assumes the right image is there.
 		results = self.get(self.route_name, filter_params)
 		try:
 			# convert coordinates to tuple
@@ -659,8 +661,13 @@ class RemoteTargetingServer(RemoteNodeServer):
 		while xys is False or not self.active:
 			xys = self._getTargetData()
 			if not self.userHasControl():
+				# control taken away while waiting for target.
 				# stop waiting and declare failed
 				return False
+			# FIX ME: This will keep looping
+			# if node is exited but still waiting for remote InTargets.
+			time.sleep(0.5)
+			print 'looping checking targetdata and user has control with self.active=', self.active
 		xys = self.filterInTargets(xys)
 		return xys
 

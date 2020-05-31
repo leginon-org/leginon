@@ -986,7 +986,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 
 	def setRefreshTool(self, state):
 		if state is True:
-			self.remote_toolbar.addClickTool('refresh','refreshRemoteTargets','refresh atlas to submit more')
+			self.remote_toolbar.addClickTool('refresh','refreshRemoteTargets','refresh atlas to submit more','none')
 		else:
 			if 'refresh' in self.remote_toolbar.tools:
 				self.remote_toolbar.removeClickTool('refresh')

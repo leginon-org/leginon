@@ -722,7 +722,8 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 
 	def _setQueueTool(self, state):
 			if state is True:
-				self.remote_toolbar.addClickTool('queue','publishQueue','process queue')
+				# Block rule allows it to click up to the next node with queue activated.
+				self.remote_toolbar.addClickTool('queue','publishQueue','process queue','next')
 			else:
 				if 'queue' in self.remote_toolbar.tools:
 					self.remote_toolbar.removeClickTool('queue')

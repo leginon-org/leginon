@@ -65,13 +65,14 @@ class Node(correctorclient.CorrectorClient):
 
 	objectserviceclass = remotecall.NodeObjectService
 
-	def __init__(self, name, session, managerlocation=None, otherdatabinder=None, otherdbdatakeeper=None, tcpport=None, launcher=None, panel=None):
+	def __init__(self, name, session, managerlocation=None, otherdatabinder=None, otherdbdatakeeper=None, tcpport=None, launcher=None, panel=None, order=0):
 		self.name = name
 		self.this_node = None
 		self.panel = panel
 		self.node_status = 'idle'
 		self.before_pause_node_status = 'idle'
 		self.tem_hostname = ''
+		self.node_order = order
 		
 		self.initializeLogger()
 
