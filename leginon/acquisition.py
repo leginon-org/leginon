@@ -263,8 +263,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 		'''
 		if status == 'user input':
 			self.notifyManagerContinueAvailable()
-		elif status == 'idle':
-			self.notifyManagerPauseNotAvailable()
 		else:
 			self.notifyManagerPauseAvailable()
 		super(Acquisition, self).setStatus(status)

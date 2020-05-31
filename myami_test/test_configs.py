@@ -37,11 +37,36 @@ class TestConfigs(unittest.TestCase):
 			return False
 		return True
 
+	def testRemote(self):
+		self.remote_error = 'No'
+		self.assertTrue(self._testRemote(), msg=self.remote_error)
+
+	def _testRemote(self):
+		try:
+			configs = pyami.moduleconfig.getConfigured('remote.cfg', package='leginon')
+			import json
+			import requests
+			response = requests.get('%sapi/microscopes/' %(configs['web server']['url'],),auth=(configs['leginon auth']['username'],configs['leginon auth']['password']))
+			if not response.ok:
+				self.remote_error = 'REST request error: %s' %(response.reason)
+				return False
+		except IOError:
+			# optional config file
+			return True
+		except ImportError, e:
+			self.remote_error = 'Could not import required module. %s' %(e)
+			return False
+		except KeyError, e:
+			self.remote_error = 'Existing remote.cfg does not have required key: %s' %(e)
+			return False
+		return True
+
 	def runTest(self):
 		self.testSinedon()
 		self.testLeginon()
 		self.testInstruments()
 		self.testSession()
+		self.testRemote()
 
 def runTestCases():
 	'''

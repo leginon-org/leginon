@@ -16,6 +16,7 @@ import node
 import player
 import time
 import math
+import remoteserver
 
 class PauseRepeatException(Exception):
 	'''Raised within processTargetData method if the target should be
@@ -31,6 +32,10 @@ class BypassException(Exception):
 	'''Raised within processTargetData method if the target should be
 	bypassed'''
 	pass
+
+class FakeQueueNode(object):
+	def __init__(self,name):
+		self.name = '_'.join(name.split())
 
 class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 	'''
@@ -212,6 +217,18 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 				print '************** Loading new settings:', id
 				self.loadSettingsByID(id)
 
+	def postQueueCount(self, count):
+		if not hasattr(self, 'remote_queue_count'):
+			# when targetwatcher is first initiated, getQueue may fail if application
+			# is loaded out of order.  Safer to do it here.
+			queue = self.getQueue()
+			# queue_node_class only needs name and logger attribute.
+			queue_node_class = FakeQueueNode(queue['label'])
+			# routing logger to self
+			queue_node_class.logger = self.logger
+			self.remote_queue_count = remoteserver.RemoteQueueCount(self.logger, self.session, queue_node_class, self.remote.leginon_base)
+		self.remote_queue_count.setQueueCount(count)
+
 	def processTargetList(self, newdata):
 		self.setStatus('processing')
 		mytargettype = self.settings['process target type']
@@ -271,6 +288,8 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 					self.logger.error('Conditioning failed. Continue without it')
 					condition_status = 'abort'
 				self.beep()
+			# pause but not stop
+			state = self.pauseCheck('paused after fix condition')
 
 			# processReference.  FIX ME, when it comes back, need to move more
 			# accurately than just send the position.
@@ -278,10 +297,14 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 				self.setStatus('waiting')
 				self.processReferenceTarget()
 				self.setStatus('processing')
+			# pause but not stop
+			state = self.pauseCheck('paused after reference processing')
 			# start alignment manager.  May replace reference in the future
 			self.setStatus('waiting')
 			self.fixAlignment()
 			self.setStatus('processing')
+			# pause but not stop
+			state = self.pauseCheck('paused after fix alignment')
 			# This will bright z to the value before reference targets and alignment
 			# fixing.
 			self.logger.info('Setting z to original z of %.2f um' % (original_position['z']*1e6))
@@ -310,6 +333,8 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 				if rejectstatus != 'aborted':	 
 					return
 			self.logger.info('Passed targets processed, processing current target list')
+			# pause but not stop
+			state = self.pauseCheck('paused after waiting for processing rejected targets')
 
 		# Experimental
 		if False:
