@@ -53,9 +53,9 @@ class TEMController(node.Node):
 		# This may not give results since instrument may not be loaded, yet
 		self.grid_slot_numbers = self.researchLoadableGridSlots()
 		self.grid_slot_names = map((lambda x:'%d' % (x,)),self.grid_slot_numbers)
-		self.remote_toolbar.addClickTool('pause','uiPause','pause process')
-		self.remote_toolbar.addClickTool('play','uiContinue','continue after pause')
-		self.remote_toolbar.addClickTool('light_off','uiCloseColumnValve','close column valve')
+		self.remote_toolbar.addClickTool('pause','uiPause','pause process','none')
+		self.remote_toolbar.addClickTool('play','uiContinue','continue after pause','all')
+		self.remote_toolbar.addClickTool('light_off','uiCloseColumnValve','close column valve','all')
 		# finalize toolbar and send to leginon-remote
 		self.remote_toolbar.finalizeToolbar()
 
