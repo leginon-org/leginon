@@ -140,7 +140,7 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 			classname = datadict.keys()[0]
 			kwargs = datadict[classname]
 			if classname == 'ProjectionSubModeMappingData':
-				mags.append(float(kwargs['magnification']))
+				mags.append(int(kwargs['magnification']))
 		mags.sort()
 		print 'magnifications', mags
 		q = leginondata.MagnificationsData(instrument=self.temdata,magnifications=mags)
