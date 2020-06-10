@@ -251,6 +251,9 @@ class RemoteSessionServer(object):
 				return controlled_by_user
 			else:
 				return False
+		except IndexError:
+			self.logger.error('Session not assigned for remote')
+			return False
 		except requests.ConnectionError:
 			e = 'Connection to remote is lost'
 			self.logger.error(e)
@@ -656,6 +659,10 @@ class RemoteTargetingServer(RemoteNodeServer):
 		try:
 			return self._getInTargets()
 		except requests.ConnectionError:
+			e = 'Connection to remote is lost'
+			self.logger.error(e)
+			return False
+		except AttributeError:
 			e = 'Connection to remote is lost'
 			self.logger.error(e)
 			return False
