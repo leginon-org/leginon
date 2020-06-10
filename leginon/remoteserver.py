@@ -12,7 +12,11 @@ import os
 import shutil
 import time
 import threading
-import requests
+try:
+	import requests
+	NO_REQUESTS=False
+except:
+	NO_REQUESTS=True
 import json
 
 from leginon import leginondata

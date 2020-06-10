@@ -117,7 +117,7 @@ class Node(correctorclient.CorrectorClient):
 
 		self.initializeSettings()
 		# Manager is also a node subclass but does not need status report
-		if self.name not in ('Manager','Launcher'):
+		if not remoteserver.NO_REQUESTS and self.name not in ('Manager','Launcher') and session is not None:
 			self.remote = remoteserver.RemoteServerMaster(self.logger, session, self)
 			self.remote_status = remoteserver.RemoteStatusbar(self.logger, session, self, self.remote.leginon_base)
 
@@ -555,7 +555,7 @@ class Node(correctorclient.CorrectorClient):
 		'''
 		TO DO: Need a general remote master switch for local-remote switch.
 		'''
-		if True:
+		if hasattr(self,'remote_status'):
 			self.remote_status.setStatus(status)
 		if status == 'user input':
 			self.before_pause_node_status = copy.copy(self.node_status)
