@@ -187,7 +187,8 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		# and after the interaction.
 		valid_selection = False
 		while not valid_selection:
-			if self.settings['check method'] == 'remote':
+			if False:
+			#if self.settings['check method'] == 'remote':
 				self.waitForRemoteCheck(imagedata)
 			else:
 				# default
@@ -275,7 +276,8 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 				self.publish(targetlist, database=True, dbforce=True, pubevent=True)
 				self.waitForTargetListDone()
 				status = True
-				if self.settings['check method'] == 'remote':
+				if False:
+				#if self.settings['check method'] == 'remote':
 					# change status fo False if failed
 					status = self.resetRemoteToListen()
 				self.logger.info('Preview targets processed. Go back to waiting')
@@ -676,7 +678,8 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		'''
 		Start queue click tool tracking.
 		'''
-		if self.settings['check method'] == 'remote':
+		if False:
+		#if self.settings['check method'] == 'remote':
 			if state is True:
 				self.remote.toolbar.addClickTool('queue','publishQueue','process queue')
 			else:
