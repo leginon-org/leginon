@@ -54,12 +54,12 @@ HEADER_FIELDS = (
 	('BEAMLINE', str, 'nan', '{0}'),
 	# pthers
 	('DATE', datetime.datetime, datetime.datetime.today(), '{0}'), #UNIX date in current timezone
-#	('IMAGE_PEDESTAL', int, 0, '{:0}'), # where did I get this ?
+	('IMAGE_PEDESTAL', float, 0.0, '{:7.1f}'), # DIALS can take this. median of min values from all frames.
 	# my own keys for my record
 	('LEGINON_OFFSET', float, 0.0, '{:7.1f}'),#offset added when converting float32 mrc file to smv
 )
 
-DEPRECATED_KEYS = ['IMAGE_PEDESTAL', 'DETECTOR_SN']
+DEPRECATED_KEYS = ['DETECTOR_SN',]
 # (header_value, numpy_dtype, number_of_bytes)
 TYPE_MAP = [('unsigned_short', numpy.uint16, 2),]
 
@@ -278,6 +278,7 @@ def write(a, imfile=None, offset=0, header_updates={}):
 	headerdict = newHeader()
 	header_updates['SIZE1']=a.shape[0]
 	header_updates['SIZE2']=a.shape[1]
+	header_updates['LEGINON_OFFSET']=offset
 	for k in header_updates.keys():
 		v = header_updates[k]
 		headerdict = updateHeader(headerdict,k,v)
