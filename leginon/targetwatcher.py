@@ -219,15 +219,20 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 
 	def postQueueCount(self, count):
 		if not hasattr(self, 'remote_queue_count'):
-			# when targetwatcher is first initiated, getQueue may fail if application
-			# is loaded out of order.  Safer to do it here.
-			queue = self.getQueue()
-			# queue_node_class only needs name and logger attribute.
-			queue_node_class = FakeQueueNode(queue['label'])
-			# routing logger to self
-			queue_node_class.logger = self.logger
-			self.remote_queue_count = remoteserver.RemoteQueueCount(self.logger, self.session, queue_node_class, self.remote.leginon_base)
-		self.remote_queue_count.setQueueCount(count)
+			if self.remote:
+				# when targetwatcher is first initiated, getQueue may fail if application
+				# is loaded out of order.  Safer to do it here.
+				queue = self.getQueue()
+				# queue_node_class only needs name and logger attribute.
+				queue_node_class = FakeQueueNode(queue['label'])
+				# routing logger to self
+				queue_node_class.logger = self.logger
+				self.remote_queue_count = remoteserver.RemoteQueueCount(self.logger, self.session, queue_node_class, self.remote.leginon_base)
+			else:
+				# remoteserver.NO_REQUESTS=True
+				self.remote_queue_count = None
+		if self.remote_queue_count:
+			self.remote_queue_count.setQueueCount(count)
 
 	def processTargetList(self, newdata):
 		self.setStatus('processing')

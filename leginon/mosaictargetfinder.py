@@ -200,7 +200,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		# self.existing_position_targets becomes empty on the second
 		# submit if not refreshed. 
 		self.refreshDatabaseDisplayedTargets()
-		if self.settings['check method'] == 'remote':
+		if self.remote and self.settings['check method'] == 'remote':
 			if not self.remote_targeting.userHasControl():
 				self.logger.warning('remote user has not given control. Use local check')
 			else:
@@ -303,7 +303,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.reference_target = self.getReferenceTarget()
 
 	def refreshRemoteTargets(self):
-		if self.settings['check method'] == 'remote':
+		if self.remote and self.settings['check method'] == 'remote':
 			self.displayDatabaseTargets()
 			# Send targets to remote and wait for submission
 			# self.existing_position_targets becomes empty on the second
@@ -702,7 +702,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.mosaicimage = None
 		self.mosaicimagescale = None
 		#clear remote mosaic image
-		if self.mosaicimagedata:
+		if self.remote_targeting and self.mosaicimagedata:
 			self.remote_targeting.unsetImage(self.mosaicimagedata)
 		self.mosaicimagedata = None
 
@@ -985,6 +985,9 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.setStatus('idle')
 
 	def setRefreshTool(self, state):
+		if not self.remote_toolbar:
+			# requests not available or on the client so session is unknown
+			return
 		if state is True:
 			self.remote_toolbar.addClickTool('refresh','refreshRemoteTargets','refresh atlas to submit more','none')
 		else:
@@ -998,7 +1001,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		handle gui check method choice.  Bypass using self.settings['check method']
 		because that is not yet set.
 		'''
-		if not self.remote_targeting.remote_server_active:
+		if not self.remote_targeting or not self.remote_targeting.remote_server_active:
 			return
 		state = (method == 'remote')
 		self.setRefreshTool(state)
