@@ -280,6 +280,8 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			# start conditioner
 			condition_status = 'repeat'					# don't need a target
 			while condition_status == 'repeat':
+				if self.remote_pmlock:
+					self.remote_pmlock.setLock()
 				try:
 					self.setStatus('waiting')
 					self.fixCondition()
@@ -293,6 +295,8 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 					self.logger.error('Conditioning failed. Continue without it')
 					condition_status = 'abort'
 				self.beep()
+				if self.remote_pmlock:
+					self.remote_pmlock.setUnlock()
 			# pause but not stop
 			state = self.pauseCheck('paused after fix condition')
 
@@ -300,13 +304,21 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			# accurately than just send the position.
 			if self.settings['wait for reference']:				#For example ZLP alignment
 				self.setStatus('waiting')
+				if self.remote_pmlock:
+					self.remote_pmlock.setLock()
 				self.processReferenceTarget()
+				if self.remote_pmlock:
+					self.remote_pmlock.setUnlock()
 				self.setStatus('processing')
 			# pause but not stop
 			state = self.pauseCheck('paused after reference processing')
 			# start alignment manager.  May replace reference in the future
 			self.setStatus('waiting')
+			if self.remote_pmlock:
+				self.remote_pmlock.setLock()
 			self.fixAlignment()
+			if self.remote_pmlock:
+				self.remote_pmlock.setUnlock()
 			self.setStatus('processing')
 			# pause but not stop
 			state = self.pauseCheck('paused after fix alignment')
@@ -323,7 +335,11 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			# FIX ME: If autofocus involves stage tilt and self.targetlist_reset_tilt
 			# is at high tilt, it is better not to tilt first but if autofocus does
 			# not involve that, it needs to be tilted now.
+			if self.remote_pmlock:
+				self.remote_pmlock.setLock()
 			rejectstatus = self.rejectTargets(newdata) # will stay until node gives back a done
+			if self.remote_pmlock:
+				self.remote_pmlock.setUnlock()
 			if rejectstatus != 'success':
 				## report my status as reject status may not be a good idea
 				## all the time. This means if rejects were aborted

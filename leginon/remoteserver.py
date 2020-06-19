@@ -24,7 +24,7 @@ import pyami.moduleconfig
 import pyami.fileutil
 import pyami.numpil
 
-SLEEP_TIME = 5
+SLEEP_TIME = 2
 
 # get configuration from remote.cfg
 try:
@@ -115,7 +115,7 @@ class RemoteSessionServer(object):
 		# remove images first because it uses references of targeting session_nodes
 		self._clearRemoteImages()
 		self._clearRemoteTargetingNodes()
-		routers = ['remote/status','remote/toolbar','remote/click']
+		routers = ['remote/status','remote/toolbar','remote/click','remote/pmlock']
 		for name in routers:
 			self._clearRemoteByPk(name)
 
@@ -264,6 +264,28 @@ class RemoteNodeServer(RemoteSessionServer):
 		super(RemoteNodeServer,self).__init__(logger, sessiondata)
 		self.node = node
 		self.node_name = node.name.replace(' ','_')
+
+class PresetsManagerLock(RemoteNodeServer):
+	router_name = 'remote/pmlock'
+	def __init__(self, logger, sessiondata, node):
+		super(PresetsManagerLock,self).__init__(logger, sessiondata, node)
+		self.data = {
+				'session_name': self.session['name'],
+				'node_order': self.node.node_order,
+		}
+
+	def setLock(self):
+		results = self.get(self.router_name, self.data)
+		if results:
+			return
+		else:
+			return self.post(self.router_name, self.data)
+
+	def setUnlock(self):
+		results = self.get(self.router_name, self.data)
+		if results:
+			self.logger.debug(results)
+			self.delete(self.router_name, results[0]['pk'])
 
 class RemoteStatusbar(RemoteNodeServer):
 	router_name = 'remote/status'

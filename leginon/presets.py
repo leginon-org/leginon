@@ -146,6 +146,8 @@ class PresetsClient(object):
 		if not presetname:
 			self.node.logger.error('Invalid preset name')
 			return
+		if self.node.remote_pmlock:
+			self.node.remote_pmlock.setLock()
 		evt = event.ChangePresetEvent()
 		evt['name'] = presetname
 		evt['emtarget'] = emtarget
@@ -157,6 +159,8 @@ class PresetsClient(object):
 		self.pchanged[presetname].wait()
 		self.node.stopTimer('preset toScope')
 		self.node.logger.info('Preset change to \'%s\' completed.' % presetname)
+		if self.node.remote_pmlock:
+			self.node.remote_pmlock.setUnlock()
 
 	def presetchanged(self, ievent):
 		self.currentpreset = ievent['preset']
