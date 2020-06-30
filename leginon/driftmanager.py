@@ -226,6 +226,7 @@ class DriftManager(watcher.Watcher):
 				self.logger.error(e)
 				self.logger.warning('Failed correlation and/or peak finding, Set to zero shift')
 				rows,cols = (0,0)
+				peak = (0,0)
 			dist = math.hypot(rows,cols)
 
 			self.setImage(pc, 'Correlation')
