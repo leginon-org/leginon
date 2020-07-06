@@ -30,7 +30,6 @@ preset_order = ['gr','sq','hl','en']
 watch_for_ext = 'mrc'
 class RawTransfer(object):
 	def __init__(self):
-		self.is_win32 = sys.platform == 'win32'
 		# image classes that will be transferred
 		self.image_classes = [
 			leginon.leginondata.AcquisitionImageData,
@@ -160,22 +159,13 @@ class RawTransfer(object):
 		Use OptionParser to get parameters
 		'''
 		global check_interval
-		if len(sys.argv) == 1 and self.is_win32:
-			try:
-				from optparse_gui import OptionParser
-				use_gui = True
-			except:
-				raw_input('Need opparse_gui to enter options on Windows')
-				sys.exit()
-		else:
-			from optparse import OptionParser
-			use_gui = False
+		from optparse import OptionParser
 
 		parser = OptionParser()
 
 		# options
 		parser.add_option("--method", dest="method",
-			help="method to transfer, e.g. --method=mv", type="choice", choices=['mv','rsync','walk'], default='rsync' if sys.platform != 'win32' else "mv")
+			help="method to transfer, e.g. --method=rsync", type="choice", choices=['rsync','walk'], default='rsync')
 		parser.add_option("--source_path", dest="source_path",
 			help="Mounted parent path to transfer, e.g. --source_path=/mnt/ddframes", metavar="PATH")
 		parser.add_option("--destination_head_epu", dest="dest_path_head_epu",
@@ -188,7 +178,7 @@ class RawTransfer(object):
 		(options, optargs) = parser.parse_args(sys.argv[1:])
 		if len(optargs) > 0:
 			print "Unknown commandline options: "+str(optargs)
-		if not use_gui and len(sys.argv) < 2:
+		if len(sys.argv) < 2:
 			parser.print_help()
 			sys.exit()
 		params = {}
@@ -248,30 +238,24 @@ class RawTransfer(object):
 	def makeDir(self,dirname):
 		print('mkdirs %s'%dirname)
 		if not os.path.exists(dirname):
-			if not self.is_win32:
-				# this function preserves umask of the parent directory
-				pyami.fileutil.mkdirs(dirname)
-			else:
-				# use os.makedirs on 'win32' but it does not preserve umask
-				os.makedirs(dirname)
+			# this function preserves umask of the parent directory
+			pyami.fileutil.mkdirs(dirname)
 		elif os.path.isfile(dirname):
 			print("Error %s is a file"%dirname)
 
 	def changeOwnership(self,uid,gid,dirname):
 		# change ownership of desintation directory and contents
-		if not self.is_win32:
-			cmd = 'chown -R %s:%s %s' % (uid, gid, dirname)
-			print cmd
-			p = subprocess.Popen(cmd, shell=True)
-			p.wait()
+		cmd = 'chown -R %s:%s %s' % (uid, gid, dirname)
+		print cmd
+		p = subprocess.Popen(cmd, shell=True)
+		p.wait()
 
 	def changeMode(self,path,mode_str='g-w,o-rw'):
-		if not self.is_win32:
-			# only works on linux
-			cmd = 'chmod -R %s %s' % (mode_str, path)
-			print cmd
-			p = subprocess.Popen(cmd, shell=True)
-			p.wait()
+		# only works on linux
+		cmd = 'chmod -R %s %s' % (mode_str, path)
+		print cmd
+		p = subprocess.Popen(cmd, shell=True)
+		p.wait()
 
 	def transferOwner(self, dst, uid, gid, mode_str):
 		'''
