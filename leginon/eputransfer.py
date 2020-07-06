@@ -21,7 +21,7 @@ import leginon.leginondata
 import leginon.ddinfo
 import pyami.fileutil, pyami.mrc, pyami.xmlfun, pyami.numpil
 import sinedon.directq
-import epu_meta
+from leginon import epu_meta
 
 session_timeout = 60 # seconds before timeout
 check_interval = 60  # seconds between checking for new frames
