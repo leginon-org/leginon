@@ -3085,3 +3085,25 @@ class BeamstopCenterData(CalibrationData):
 			('beam center', dict), # mm as defined in smv file header
 		)
 	typemap = classmethod(typemap)
+
+#------EPU upload---------
+class EpuData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('name', str),
+			('preset name', str),
+			('datetime_string', str),
+			('version', int),
+			('image', AcquisitionImageData),
+			('parent', EpuData),
+		)
+	typemap = classmethod(typemap)
+
+class EpuMatrixData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('matrix', sinedon.newdict.DatabaseArrayType),
+			('preset name', str),
+			('magnification', int),
+		)
+	typemap = classmethod(typemap)

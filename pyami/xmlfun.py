@@ -8,7 +8,7 @@ import xml.dom.minidom
 #Submitter: Peter Neish (other recipes) 
 #**HEAVILY** modified by Neil
 
-def nodeToDict(node):
+def nodeToDict(node, listing_names=[]):
 	"""
 	nodeToDic() scans through the children of node and makes a
 	dictionary from the content.
@@ -31,14 +31,23 @@ def nodeToDict(node):
 			else:
 				xmldict.update({str(n.nodeName): None})
 		elif len(n.childNodes) > 0:
-			xmldict.update({str(n.nodeName): nodeToDict(n)})
+			if str(n.nodeName) not in listing_names:
+				# This is a problem for multiple entries that needs to be in a list
+				xmldict.update({str(n.nodeName): nodeToDict(n, listing_names)})
+			else:
+				if str(n.nodeName) in xmldict.keys():
+					if type(xmldict[str(n.nodeName)]) == type({}):
+						xmldict[str(n.nodeName)] = [xmldict[str(n.nodeName)],]
+				else:
+					xmldict[str(n.nodeName)] = []
+				xmldict[str(n.nodeName)].append(nodeToDict(n, listing_names))
 	return xmldict
 
-def readDictFromXml(filename):
+def readDictFromXml(filename, childindex=0, listing_names=[]):
 	if not os.path.isfile(filename):
 		raise IOError("Failed to open file "+filename+" for reading")
 	dom = xml.dom.minidom.parse(filename)
-	xmldict = nodeToDict(dom.childNodes[0])
+	xmldict = nodeToDict(dom.childNodes[childindex],listing_names)
 	return xmldict
 
 ### END BORROWED CODE
