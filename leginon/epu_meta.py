@@ -35,6 +35,9 @@ scope_em_data_map = {
 	'spot size':(['optics','SpotIndex'],{},'convertInt'),
 }
 
+applied_defocus_map = {'defocus':(['CustomData','a:KeyValueOfstringanyType','a:Value'],{},'convertFloat'),
+}
+
 camera_em_data_map = {
 	# sinedon_data_key:(epu_meta_keys, subkey_map,convertionAttribueName)
 	'exposure time':(['acquisition','camera','ExposureTime'],{},'convert2Ms'),
@@ -149,7 +152,10 @@ class EpuMetaMapping(MetaMapping):
 
 	def getScopeEMData(self, datadict):
 		# ScopeEMData is the scope parameter for an image
-		return self.dataMapping(datadict,scope_em_data_map)
+		scopemap = self.dataMapping(datadict,scope_em_data_map)
+		applied_defocus_dict = self.dataMapping(self.meta_data_dict,applied_defocus_map)
+		scopemap['defocus']=applied_defocus_dict['defocus']
+		return scopemap
 
 	def getCameraEMData(self, datadict):
 		# CameraEMData is the image parameter for an image
@@ -161,12 +167,12 @@ class EpuMetaMapping(MetaMapping):
 	def run(self):
 		#print self.getTemData(self.meta_data_dict['microscopeData'])
 		#print self.getCCDCameraData(self.meta_data_dict['microscopeData'])
-		#print self.getScopeEMData(self.meta_data_dict['microscopeData'])
+		print self.getScopeEMData(self.meta_data_dict['microscopeData'])
 		#print self.getCameraEMData(self.meta_data_dict['microscopeData'])
-		print self.getMatrix(self.meta_data_dict)
+		#print self.getMatrix(self.meta_data_dict)
 
 if __name__=='__main__':
-	xml_file='/Users/acheng/nis/epu_transfer/epu_data/WBG1G20JUN15M/Images-Disc1/GridSquare_15025733/GridSquare_20200615_184111.xml'
+	xml_file='/Users/acheng/nis/epu_transfer/epu_data/WBG1G20JUN15S/Images-Disc1/GridSquare_15025733/GridSquare_20200615_184111.xml'
 	#xml_file='/Users/acheng/nis/epu_transfer/epu_data/WBG1G20JUN15A/Images-Disc1/GridSquare_15025733/Data/FoilHole_15039809_Data_15029686_15029688_20200616_224220_Fractions.xml'
 	app = EpuMetaMapping()
 	app.setXmlFile(xml_file)
