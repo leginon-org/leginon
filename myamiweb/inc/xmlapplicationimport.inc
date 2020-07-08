@@ -68,7 +68,12 @@ class XMLImport {
 				$fdefault = (!empty($fdefault) && strpos(strtolower($fdefault),'default')===false) ? 'default '.$fdefault : $fdefault;
 				if ($fdefault=="DEFAULT 'CURRENT_TIMESTAMP'") $fdefault="DEFAULT CURRENT_TIMESTAMP";
 				$fnull = (empty($fdefault) && empty($v['attributes']['null'])) ? 'null' : $v['attributes']['null'];
-				$fextra = empty($v['attributes']['extra']) ? '' : $v['attributes']['extra'];
+				// refs #9187 mariadb output conversion to mysql 5.6 compatible
+				if ($fdefault=="DEFAULT CURRENT_TIMESTAMP" && $v['attributes']['extra'] && $v['attributes']['extra']=='DEFAULT_GENERATED') {
+					$fextra ="ON UPDATE CURRENT_TIMESTAMP ";
+				} else {
+					$fextra = empty($v['attributes']['extra']) ? '' : $v['attributes']['extra'];
+				}
 				$fields[] = "`$fname` $ftype $fnull $fdefault $fextra";
 				$fieldtypes[$fname] = $ftype;
 			}

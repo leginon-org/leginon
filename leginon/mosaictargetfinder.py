@@ -111,6 +111,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.clearTiles()
 
 		self.reference_target = None
+		self.setRefreshTool(self.settings['check method']=='remote')
 
 		if self.__class__ == MosaicClickTargetFinder:
 			self.start()
@@ -175,6 +176,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		return self.newReferenceTarget(imagedata, delta_row, delta_column)
 
 	def submitTargets(self):
+		self.terminated_remote = False
 		self.userpause.set()
 		try:
 			if self.settings['autofinder']:
@@ -198,6 +200,21 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		# self.existing_position_targets becomes empty on the second
 		# submit if not refreshed. 
 		self.refreshDatabaseDisplayedTargets()
+		if self.settings['check method'] == 'remote':
+			if not self.remote_targeting.userHasControl():
+				self.logger.warning('remote user has not given control. Use local check')
+			else:
+				success = self.sendTargetsToRemote()
+				if success:
+					self.waitForTargetsFromRemote()
+				if not success or self.terminated_remote:
+					self.logger.warning('targets not submitted. Try again.')
+					# don't finish submit, so that it can be redone
+					self.panel.targetsSubmitted()
+					return
+		self.finishSubmitTarget()
+
+	def finishSubmitTarget(self):
 		# create target list
 		self.logger.info('Submitting targets...')
 		self.getTargetDataList('acquisition')
@@ -284,6 +301,19 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 					self.targetlist = targets[0]['list']
 				self.targetmap[id][type] = targets
 		self.reference_target = self.getReferenceTarget()
+
+	def refreshRemoteTargets(self):
+		if self.settings['check method'] == 'remote':
+			self.displayDatabaseTargets()
+			# Send targets to remote and wait for submission
+			# self.existing_position_targets becomes empty on the second
+			# submit if not refreshed. 
+			self.refreshDatabaseDisplayedTargets()
+			success = self.sendTargetsToRemote()
+			if success:
+				self.waitForTargetsFromRemote()
+				self.finishSubmitTarget()
+
 
 	def refreshCurrentPosition(self):
 		self.updateCurrentPosition()
@@ -489,7 +519,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		mosaicimagedata['list'] = self.mosaicimagelist
 		mosaicimagedata['image'] = self.mosaicimage
 		mosaicimagedata['scale'] = self.mosaicimagescale
-		filename = 'mosaic'
+		filename = '%s_mosaic' % self.session['name'] # include name for remote to clear on session
 		lab = self.mosaicimagelist['targets']['label']
 		if lab:
 			filename = filename + '_' + lab
@@ -671,6 +701,9 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.setImage(None, 'Image')
 		self.mosaicimage = None
 		self.mosaicimagescale = None
+		#clear remote mosaic image
+		if self.mosaicimagedata:
+			self.remote_targeting.unsetImage(self.mosaicimagedata)
 		self.mosaicimagedata = None
 
 	def uiPublishMosaicImage(self):
@@ -915,3 +948,57 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 	def checkSettings(self,settings):
 		# always queuing. No need to check "wait for process" conflict
 		return []
+
+	def sendTargetsToRemote(self):
+		'''
+		Remote service target without confirmation
+		'''
+		# 1. createMosaicImage
+		try:
+			self.publishMosaicImage()
+			mosaic_image_shape = self.mosaicimage.shape
+		except AttributeError:
+			self.logger.error('Need mosaic image to set targets')
+			return False
+		# 2. get displayed targets
+		xytargets = self.getPanelTargets(mosaic_image_shape)
+		# 3. send to remote server
+		# put stuff in OutBox
+		self.remote_targeting.setImage(self.mosaicimagedata)
+		self.remote_targeting.setOutTargets(xytargets)
+		return True
+
+	def waitForTargetsFromRemote(self):
+		self.logger.info('Waiting for remote targets')
+		self.setStatus('remote')
+		# targetxys are target coordinates in x, y grouped by targetnames
+		targetxys = self.remote_targeting.getInTargets()
+		# targetxys returns False if remote control is terminated by remote administrator
+		if targetxys is not False:
+			self.displayRemoteTargetXYs(targetxys)
+		else:
+			self.logger.error('remote targeting terminated by administrator. Use local targets.')
+			self.terminated_remote = True
+		preview_targets = self.panel.getTargetPositions('preview')
+		if preview_targets:
+			self.logger.error('can not handle preview with remote')
+		self.setStatus('idle')
+
+	def setRefreshTool(self, state):
+		if state is True:
+			self.remote_toolbar.addClickTool('refresh','refreshRemoteTargets','refresh atlas to submit more')
+		else:
+			if 'refresh' in self.remote_toolbar.tools:
+				self.remote_toolbar.removeClickTool('refresh')
+		# finalize toolbar and send to leginon-remote
+		self.remote_toolbar.finalizeToolbar()
+
+	def uiChooseCheckMethod(self, method):
+		'''
+		handle gui check method choice.  Bypass using self.settings['check method']
+		because that is not yet set.
+		'''
+		if not self.remote_targeting.remote_server_active:
+			return
+		state = (method == 'remote')
+		self.setRefreshTool(state)

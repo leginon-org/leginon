@@ -1740,7 +1740,7 @@ class Tecnai(tem.TEM):
 	def hasAutoAperture(self):
 		return False
 
-	def retractApertureMechanism(self,name):
+	def retractApertureMechanism(self, mechanism_name):
 		'''
 		Retract aperture mechanism.
 		'''

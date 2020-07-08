@@ -514,7 +514,7 @@ class FeiCam(ccdcamera.CCDCamera):
 			raise NotImplementedError()
 
 	def _moveMovie(self):
-		data_dir = self.getFeiConfig('camera','tia_exported_data_dir')
+		data_dir = self.getFeiConfig('camera','autoit_tia_exported_data_dir')
 		new_dir = self.getFeiConfig('camera','tia_exported_data_network_dir')
 		if not new_dir:
 			return
@@ -534,7 +534,7 @@ class FeiCam(ccdcamera.CCDCamera):
 	def _findSeriesLength(self):
 		if not self.target_code:
 			raise ValueError('movie target code not yet set')
-		data_dir = self.getFeiConfig('camera','tia_exported_data_dir')
+		data_dir = self.getFeiConfig('camera','autoit_tia_exported_data_dir')
 		pattern = os.path.join(data_dir, '%s*.bin' % (self.target_code,))
 		length = len(glob.glob(pattern))
 		return length

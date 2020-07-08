@@ -27,6 +27,7 @@ import math
 import leginonconfig
 import os
 import correctorclient
+import remoteserver
 
 # testprinting for development
 testing = False
@@ -115,6 +116,10 @@ class Node(correctorclient.CorrectorClient):
 		correctorclient.CorrectorClient.__init__(self)
 
 		self.initializeSettings()
+		# Manager is also a node subclass but does not need status report
+		if not remoteserver.NO_REQUESTS and self.__class__.__name__ not in ('Manager','Launcher','EM') and session is not None:
+			self.remote = remoteserver.RemoteServerMaster(self.logger, session, self)
+			self.remote_status = remoteserver.RemoteStatusbar(self.logger, session, self, self.remote.leginon_base)
 
 	def setHasLogError(self, value, message):
 		if value:
@@ -547,6 +552,11 @@ class Node(correctorclient.CorrectorClient):
 		self.beep()
 
 	def setStatus(self, status):
+		'''
+		TO DO: Need a general remote master switch for local-remote switch.
+		'''
+		if hasattr(self,'remote_status'):
+			self.remote_status.setStatus(status)
 		if status == 'user input':
 			self.before_pause_node_status = copy.copy(self.node_status)
 		self.node_status = status

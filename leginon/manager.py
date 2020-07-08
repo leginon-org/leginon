@@ -30,6 +30,7 @@ import noderegistry
 import remotecall
 import time
 import sys
+import remoteserver
 
 class DataBinder(databinder.DataBinder):
 	def handleData(self, newdata):
@@ -977,6 +978,7 @@ class Manager(node.Node):
 		name = app.applicationdata['name']
 		nnodes = len(app.nodespecs)
 		self.applicationevent.clear()
+		self.clearRemoteNodes()
 		self.onApplicationStarting(name, nnodes)
 		self.application = app
 		initializer = {}
@@ -1113,6 +1115,10 @@ class Manager(node.Node):
 			nodeorder += nodes
 
 		return nodeorder
+
+	def clearRemoteNodes(self):
+		app = remoteserver.RemoteSessionServer(None, self.session)
+		app.clearRemoteNodes()
 
 def depth(parent, map):
 	l = [parent]
