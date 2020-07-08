@@ -369,8 +369,13 @@ class RemoteToolbar(RemoteNodeServer):
 		self.tool_configs = {}
 
 	def addClickTool(self,name, handling_attr_name, help_string='',block_rule='none'):
-		self.tools[name] = ClickTool(self, name, handling_attr_name, help_string, block_rule)
-		self.tool_configs[name] = self.tools[name].tool_config
+		if not name in self.tools.keys():
+			self.tools[name] = ClickTool(self, name, handling_attr_name, help_string, block_rule)
+			self.tool_configs[name] = self.tools[name].tool_config
+		else:
+			# reconnect after leginon-remote restarted
+			if not self.tools[name].active:
+				self.tools[name].activate()
 
 	def removeClickTool(self, name):
 		if name in self.tools:
@@ -425,6 +430,7 @@ class ClickTool(Tool):
 		super(ClickTool,self).__init__(parent, name, handling_attr_name, help_string)
 		self.tool_config.update({'type':'click','choices':(False, True),'block_rule':block_rule})
 		self.toolbar.logger.debug('click tracking config: %s' % self.tool_config)
+		self.active = False
 		self.activate()
 		response = self.toolbar.get(self.router_name,self.tool_data)
 
@@ -432,8 +438,9 @@ class ClickTool(Tool):
 		self.active = False
 
 	def activate(self):
-		self.active = True
-		self.startWaiting()
+		if not self.active:
+			self.active = True
+			self.startWaiting()
 
 	def startWaiting(self):
 		t = threading.Thread(target=self.clickTracking)
@@ -447,6 +454,7 @@ class ClickTool(Tool):
 		try:
 			self._clickTracking()
 		except requests.ConnectionError:
+			self.deActivate()
 			e = 'Connection to remote is lost'
 			self.toolbar.logger.error(e)
 
@@ -700,7 +708,7 @@ class RemoteTargetingServer(RemoteNodeServer):
 			# FIX ME: This will keep looping
 			# if node is exited but still waiting for remote InTargets.
 			time.sleep(0.5)
-			print 'looping checking targetdata and user has control with self.active=', self.active
+			# print 'looping checking targetdata and user has control with self.active=', self.active
 		xys = self.filterInTargets(xys)
 		return xys
 
