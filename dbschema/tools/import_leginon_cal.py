@@ -25,7 +25,16 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 		super(CalibrationJsonLoader,self).__init__(leginondata)
 		self.cameradata = self.getCameraInstrumentData(cam_hostname,camera_name)
 		self.temdata = self.getTemInstrumentData(tem_host,tem_name)
+		self.setProjectionSubModeOrder()
 		self.setSessionData()
+
+	def setProjectionSubModeOrder(self):
+		# all submode names
+		sub_mode_order = ['LM','Mi','SA','Mh','D'] # FEI
+		sub_mode_order.extend(['lowmag','mag1']) # JEOL
+		sub_mode_order.extend(['mode0','mode1']) # SimTEM
+		sub_mode_order.extend(['LowMag','Zoom-1']) # HT7800
+		self.sub_mode_order = sub_mode_order
 
 	def insertAllData(self):
 		for datadict in self.alldata:
@@ -121,13 +130,23 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 			self.session = q
 
 	def setMagnificationsData(self):
+		# see if there is a list from import_leginon_instruments.py
+		r = leginondata.MagnificationsData(instrument=self.temdata).query(results=1)
+		if r:
+			return r[0]
 		mags = []
+		modes = {}
 		for datadict in self.alldata:
 			classname = datadict.keys()[0]
 			kwargs = datadict[classname]
 			if classname == 'ProjectionSubModeMappingData':
-				mags.append(int(kwargs['magnification']))
-		mags.sort()
+				if kwargs['name'] not in modes.keys():
+					modes[kwargs['name']]=[]
+				# assumes that projection submode mapping was inserted in the right order.
+				modes[kwargs['name']].append(int(kwargs['magnification']))
+		for m in self.sub_mode_order:
+			if m in modes.keys():
+				mags.extend(modes[m])
 		print 'magnifications', mags
 		q = leginondata.MagnificationsData(instrument=self.temdata,magnifications=mags)
 		q.insert()
