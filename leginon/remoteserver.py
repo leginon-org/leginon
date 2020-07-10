@@ -243,7 +243,7 @@ class RemoteSessionServer(object):
 		#print 'got answer from post', url
 		return self._processResponse(answer)
 
-	def userHasControl(self):
+	def userHasControl(self, log_error=False):
 		try:
 			if self.remote_server_active:
 				session_pk = self.get('api/sessions',{'name':self.session['name']})[0]['id']
@@ -252,11 +252,17 @@ class RemoteSessionServer(object):
 			else:
 				return False
 		except IndexError:
-			self.logger.error('Session not assigned for remote')
+			if log_error:
+				self.logger.error('Session not assigned for remote')
 			return False
 		except requests.ConnectionError:
+			# always want to pass to leginon log
 			e = 'Connection to remote is lost'
 			self.logger.error(e)
+			return None
+		except TypeError:
+			if log_error:
+				self.logger.error('Failed to determinine microscope control')
 			return False
 
 class RemoteNodeServer(RemoteSessionServer):
@@ -275,6 +281,9 @@ class PresetsManagerLock(RemoteNodeServer):
 		}
 
 	def setLock(self):
+		if not self.userHasControl(log_error=False):
+			# do nothing
+			return
 		results = self.get(self.router_name, self.data)
 		if results:
 			return
@@ -282,6 +291,9 @@ class PresetsManagerLock(RemoteNodeServer):
 			return self.post(self.router_name, self.data)
 
 	def setUnlock(self):
+		if not self.userHasControl(log_error=False):
+			# do nothing
+			return
 		results = self.get(self.router_name, self.data)
 		if results:
 			self.logger.debug(results)
@@ -305,6 +317,9 @@ class RemoteStatusbar(RemoteNodeServer):
 	def setStatus(self, status):
 		this_subclass = self._isThisSubClass()
 		if this_subclass is None:
+			return
+		if not self.userHasControl(log_error=False):
+			# do nothing
 			return
 		try:
 			self._setStatus(status, this_subclass)
@@ -470,6 +485,10 @@ class ClickTool(Tool):
 		'''
 		Check if clicked is set on the remote tool using a web request.
 		'''
+		if self.toolbar.userHasControl(log_error=False) is False:
+			# slow down clickTracking, This reduces remote webserver activities
+			time.sleep(SLEEP_TIME)
+			return False
 		response = self.toolbar.get(self.router_name,self.tool_data)
 		if response:
 			return True
