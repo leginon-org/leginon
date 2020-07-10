@@ -65,13 +65,14 @@ class Node(correctorclient.CorrectorClient):
 
 	objectserviceclass = remotecall.NodeObjectService
 
-	def __init__(self, name, session, managerlocation=None, otherdatabinder=None, otherdbdatakeeper=None, tcpport=None, launcher=None, panel=None):
+	def __init__(self, name, session, managerlocation=None, otherdatabinder=None, otherdbdatakeeper=None, tcpport=None, launcher=None, panel=None, order=0):
 		self.name = name
 		self.this_node = None
 		self.panel = panel
 		self.node_status = 'idle'
 		self.before_pause_node_status = 'idle'
 		self.tem_hostname = ''
+		self.node_order = order
 		
 		self.initializeLogger()
 
@@ -120,6 +121,11 @@ class Node(correctorclient.CorrectorClient):
 		if not remoteserver.NO_REQUESTS and self.__class__.__name__ not in ('Manager','Launcher','EM') and session is not None:
 			self.remote = remoteserver.RemoteServerMaster(self.logger, session, self)
 			self.remote_status = remoteserver.RemoteStatusbar(self.logger, session, self, self.remote.leginon_base)
+			self.remote_pmlock = remoteserver.PresetsManagerLock(self.logger, session, self)
+		else:
+			self.remote = None
+			self.remote_status = None
+			self.remote_pmlock = None
 
 	def setHasLogError(self, value, message):
 		if value:
@@ -555,7 +561,7 @@ class Node(correctorclient.CorrectorClient):
 		'''
 		TO DO: Need a general remote master switch for local-remote switch.
 		'''
-		if hasattr(self,'remote_status'):
+		if self.remote_status:
 			self.remote_status.setStatus(status)
 		if status == 'user input':
 			self.before_pause_node_status = copy.copy(self.node_status)
