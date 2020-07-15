@@ -88,7 +88,7 @@ class TargetTransformer(targethandler.TargetHandler, imagehandler.ImageHandler):
 		try:
 			matrix = reg.registerImageData(image1,image2)
 		except Exception, exc:
-			self.logger.warning('Registration type "%s" failed: %s' % (regtype, exc.message))
+			self.logger.warning('Registration type "%s" failed: %s' % (regtype, exc))
 			reg = self.registrations['identity']
 			self.logger.warning('Targets will not be transformed.')
 			matrix = reg.registerImageData(image1,image2)
@@ -451,7 +451,7 @@ class TransformManager(node.Node, TargetTransformer):
 		try:
 			imagedata = self.acquireCorrectedCameraImageData(channel)
 		except Exception, e:
-			self.logger.error('Reacquire image failed: %s' % (e.message))
+			self.logger.error('Reacquire image failed: %s' % (e))
 			return None
 		if imagedata is None:
 			self.logger.error('Reacquire image failed')

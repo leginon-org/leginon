@@ -87,9 +87,16 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		self.targetimagevectors = {'x':(0,0),'y':(0,0)}
 		self.targetbeamradius = 0
 		self.resetLastFocusedTargetList(None)
+		if not remoteserver.NO_REQUESTS and session is not None:
+			self.remote_targeting = remoteserver.RemoteTargetingServer(self.logger, session, self, self.remote.leginon_base)
+			self.remote_toolbar = remoteserver.RemoteToolbar(self.logger, session, self, self.remote.leginon_base)
+			self.remote_queue_count = remoteserver.RemoteQueueCount(self.logger, session, self, self.remote.leginon_base)
+			self.remote_targeting.setTargetTypes(self.targetnames)
+		else:
+			self.remote_targeting = None
+			self.remote_toolbar = None
+			self.remote_queue_count = None
 
-		self.remote = remoteserver.RemoteServerMaster(self.logger, session, self)
-		self.remote.targets.setTargetNames(self.targetnames)
 		self.onQueueCheckBox(self.settings['queue'])
 		# assumes needing focus. Overwritten by subclasses
 		self.foc_activated = True
@@ -99,6 +106,12 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		# self.panel is now made
 		combined_state = self.settings['user check'] and not self.settings['queue']
 		self.setUserVerificationStatus(combined_state)
+
+	def exit(self):
+		if self.remote:
+			self.remote_targeting.exit()
+			self.remote_toolbar.exit()
+		super(TargetFinder, self).exit()
 
 	def handleApplicationEvent(self,evt):
 		'''
@@ -186,20 +199,28 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		# to be at the time of its processing, i.e., afected by z adjustment during
 		# and after the interaction.
 		valid_selection = False
+		remote_error_message = ''
+		self.terminated_remote = False
 		while not valid_selection:
-			if False:
-			#if self.settings['check method'] == 'remote':
-				self.waitForRemoteCheck(imagedata)
+			if self.settings['check method'] == 'remote' and self.remote:
+				self.terminated_remote = False
+				self.waitForRemoteCheck(imagedata, remote_error_message)
 			else:
 				# default
 				self.waitForUserCheck()
+			# return to remote if control is given back to the remote after removing remote control.
+			if self.terminated_remote and self.settings['check method'] == 'remote' and self.remote_targeting.userHasControl():
+				continue
 			if not self.settings['allow no focus']:
 				has_aqu = self.hasTargetTypeOnPanel('acquisition')
 				has_foc = self.hasTargetTypeOnPanel('focus')
 				if not has_aqu or has_foc:
 					valid_selection = True
+					remote_error_message = ''
 				else:
-					self.logger.error('Must have a focus target')
+					msg = 'Must have a focus target'
+					self.logger.error(msg)
+					remote_error_message = msg
 			else:
 				break
 
@@ -219,29 +240,40 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		self.userpause.wait()
 		self.setStatus('processing')
 
-	def waitForRemoteCheck(self,imdata):
+	def waitForRemoteCheck(self,imdata, msg):
 		'''
 		Remote service target confirmation
 		'''
 		if imdata is None:
 			return
-		self.setStatus('user input')
+		if not self.remote_targeting.userHasControl():
+			self.logger.warning('remote user has not given control. Use local check')
+			return self.waitForUserCheck()
+		#self.setStatus('user input')
 		self.twobeeps()
 		xytargets = self.getPanelTargets(imdata['image'].shape)
 		# put stuff in OutBox
-		self.remote.targets.setImage(imdata)
-		self.remote.targets.setOutTargets(xytargets)
+		self.remote_targeting.setImage(imdata, msg)
+		self.remote_targeting.setOutTargets(xytargets)
+		remote_image_pk = self.remote_targeting.getImagePk()
 		# wait and get stuff from InBox
-		targetfile = self.remote.targets.getInTargetFilePath()
-		self.logger.info('Waiting for targets in data file %s' % targetfile)
-		self.setStatus('processing')
+		self.logger.info('Waiting for targets from remote %s' % remote_image_pk)
+		self.setStatus('remote')
 		# targetxys are target coordinates in x, y grouped by targetnames
-		targetxys = self.remote.targets.getInTargets()
-
+		targetxys = self.remote_targeting.getInTargets()
+		if targetxys is False:
+			# targetxys returns False only if remote session is deactivated
+			# by disabling "controlled_by_user" in microscope model after
+			# setting the image to allow remote targeting.
+			self.logger.error('remote control terminated by administrator')
+			self.remote_targeting.unsetImage(imdata)
+			# Do local user check instead.
+			self.terminated_remote = True
+			return self.waitForUserCheck()
 		self.displayRemoteTargetXYs(targetxys)
 		preview_targets = self.panel.getTargetPositions('preview')
 		if not preview_targets:
-			self.remote.targets.unsetImage(imdata)
+			self.remote_targeting.unsetImage(imdata)
 		self.setStatus('idle')
 
 	def getPanelTargets(self,imageshape):
@@ -265,7 +297,9 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		Display all xytargets from remote target server on ImagePanel.
 		'''
 		for name in self.targetnames:
-			self.setTargets(xys[name], name, block=True)
+			if name in xys.keys():
+				# This will reset named targets
+				self.setTargets(xys[name], name, block=True)
 
 	def processPreviewTargets(self, imdata, targetlist):
 			preview_targets = self.panel.getTargetPositions('preview')
@@ -276,8 +310,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 				self.publish(targetlist, database=True, dbforce=True, pubevent=True)
 				self.waitForTargetListDone()
 				status = True
-				if False:
-				#if self.settings['check method'] == 'remote':
+				if self.remote and self.settings['check method'] == 'remote':
 					# change status fo False if failed
 					status = self.resetRemoteToListen()
 				self.logger.info('Preview targets processed. Go back to waiting')
@@ -287,7 +320,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		status = True
 		try:
 			# clear targetis set from the server
-			self.remote.targets.resetTargets()
+			self.remote_targeting.resetTargets()
 		except Exception, e:
 			# assumes no preview targets
 			self.logger.error(e)
@@ -295,6 +328,14 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		if not status:
 			# clear all targets displayed so that target server can set them again
 			self.clearAllTargets()
+
+	def sendQueueCount(self):
+			# get count and set to remote_queue
+			queue = self.getQueue()
+			active = self.getListsInQueue(queue)
+			count = len(active)
+			if self.remote:
+				self.remote_queue_count.setQueueCount(count)
 
 	def processImageListData(self, imagelistdata):
 		if 'images' not in imagelistdata or imagelistdata['images'] is None:
@@ -309,6 +350,8 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			self.logger.info("will append targets")
 			for imagedata in images:
 				self.findTargets(imagedata, targetlist)
+				if self.settings['queue']:
+					self.sendQueueCount()
 		self.makeTargetListEvent(targetlist)
 		if self.settings['queue']:
 			self.logger.info('Queue is on... not generating event')
@@ -484,6 +527,8 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 
 		if self.settings['allow append'] or len(previouslists)==0:
 			self.findTargets(imagedata, targetlist)
+			if self.settings['queue']:
+				self.sendQueueCount()
 		self.logger.debug('Publishing targetlist...')
 
 		## if queue is turned on, do not notify other nodes of each target list publish
@@ -610,7 +655,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			return {'x':(0,0),'y':(0,0)},0
 		try:
 			image_pixelsize = self.calclients['image shift'].getImagePixelSize(imagedata)
-		except KeyError:
+		except (KeyError, TypeError) as e:
 			# not imagedata but an image was loaded for testing
 			return {'x':(0,0),'y':(0,0)},0
 		self.current_image_pixelsize = image_pixelsize
@@ -676,15 +721,32 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 
 	def onQueueCheckBox(self, state):
 		'''
-		Start queue click tool tracking.
+		Start/Stop remote queue click tool tracking. Used at initialization
+		and gui settings change.
 		'''
-		if False:
-		#if self.settings['check method'] == 'remote':
+		combined_state = (self.settings['check method'] == 'remote' and state)
+		self._setQueueTool(combined_state)
+
+	def _setQueueTool(self, state):
+		if self.remote_toolbar:
 			if state is True:
-				self.remote.toolbar.addClickTool('queue','publishQueue','process queue')
+				# Block rule allows it to click up to the next node with queue activated.
+				self.remote_toolbar.addClickTool('queue','publishQueue','process queue','next')
 			else:
-				if 'queue' in self.remote.toolbar.tools:
-					self.remote.toolbar.tools['queue'].deActivate()
+				if 'queue' in self.remote_toolbar.tools:
+					self.remote_toolbar.removeClickTool('queue')
+			# finalize toolbar and send to leginon-remote
+			self.remote_toolbar.finalizeToolbar()
+
+	def uiChooseCheckMethod(self, method):
+		'''
+		handle gui check method choice.  Bypass using self.settings['check method']
+		because that is not yet set.
+		'''
+		if not self.remote or not self.remote_targeting.remote_server_active:
+			return
+		state = (method == 'remote' and self.settings['queue'])
+		self._setQueueTool(state)
 
 	def blobStatsTargets(self, blobs):
 		targets = []
@@ -716,6 +778,8 @@ class ClickTargetFinder(TargetFinder):
 		# display image
 		self.setImage(imdata['image'], 'Image')
 		while True:
+			self.current_interaction = self.settings['check method']
+			self.terminated_remote = False
 			self.waitForInteraction(imdata)
 			if not self.processPreviewTargets(imdata, targetlist):
 				break

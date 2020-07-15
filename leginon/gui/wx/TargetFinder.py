@@ -23,6 +23,7 @@ hide_incomplete = False
 class Panel(leginon.gui.wx.Node.Panel):
 	def __init__(self, *args, **kwargs):
 		leginon.gui.wx.Node.Panel.__init__(self, *args, **kwargs)
+		self.SettingsDialog = SettingsDialog
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SETTINGS,
 													'settings',
 													shortHelpString='Settings')
@@ -91,7 +92,7 @@ class Panel(leginon.gui.wx.Node.Panel):
 		return self.imagepanel.getTargets(typename)
 
 	def onSettingsTool(self, evt):
-		dialog = SettingsDialog(self,show_basic=True)
+		dialog = self.SettingsDialog(self,show_basic=True)
 		dialog.ShowModal()
 		dialog.Destroy()
 
@@ -165,7 +166,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		#			'Wait for another node to process targets before marking them done')
 		self.widgets['user check'] = wx.CheckBox(self, -1,
 																	'Allow for user verification of selected targets')
-		#checkmethodsz = self.createCheckMethodSizer()
+		checkmethodsz = self.createCheckMethodSizer()
 		self.widgets['queue'] = wx.CheckBox(self, -1,
 																							'Queue up targets')
 		self.widgets['queue drift'] = wx.CheckBox(self, -1, 'Declare drift when queue submitted')
@@ -175,12 +176,13 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.widgets['allow no focus'] = wx.CheckBox(self, -1, 'Do not require focus targets in user verification')
 		self.Bind(wx.EVT_CHECKBOX, self.onUserCheckbox, self.widgets['user check'])
 		self.Bind(wx.EVT_CHECKBOX, self.onQueueCheckbox, self.widgets['queue'])
+		self.Bind(wx.EVT_CHOICE, self.onChooseCheckMethod, self.widgets['check method'])
 
 		sz = wx.GridBagSizer(5, 5)
 		sz.Add(self.widgets['user check'], (0, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		#sz.Add(checkmethodsz, (1, 0), (1, 1),
-		#				wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(checkmethodsz, (1, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
 		#sz.Add(self.widgets['wait for done'], (1, 0), (1, 1),
 		#				wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['queue'], (2, 0), (1, 1),
@@ -214,6 +216,11 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		parent.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT_QUEUE, state)
 		evt.Skip()
 		self.node.onQueueCheckBox(state)
+
+	def onChooseCheckMethod(self, evt):
+		item_index = self.widgets['check method'].GetSelection()
+		if item_index != wx.NOT_FOUND:
+			self.node.uiChooseCheckMethod(self.widgets['check method'].GetString(item_index))
 
 if __name__ == '__main__':
 	import pdb

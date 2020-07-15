@@ -24,6 +24,7 @@ class Launcher(node.Node):
 																					event.NodeOrderEvent]
 	def __init__(self, name, session=None, **kwargs):
 		self.nodes = []
+		self.order = [name,] # at least has itself
 		node.Node.__init__(self, name, session, **kwargs)
 
 		self.addEventInput(event.CreateNodeEvent, self.onCreateNode)
@@ -52,7 +53,14 @@ class Launcher(node.Node):
 		self.publish(self.nodeclasses, pubevent=True)
 
 	def onNodeOrder(self, evt):
+		self.order = list(evt['order']) # make new copy of the list
 		self.panel.setOrder(evt['order'])
+
+	def getNodeOrder(self, nodename):
+		try:
+			return self.order.index(nodename)
+		except:
+			return 0
 
 	def onCreateNode(self, ievent):
 		targetclass = ievent['targetclass']
@@ -69,6 +77,7 @@ class Launcher(node.Node):
 		kwargs = {}
 		kwargs['launcher'] = self
 		kwargs['otherdatabinder'] = self.databinder
+		kwargs['order'] = self.getNodeOrder(nodename)
 
 		if nodeclass.panelclass is not None:
 			evt = leginon.gui.wx.Launcher.CreateNodePanelEvent(nodeclass, nodename)

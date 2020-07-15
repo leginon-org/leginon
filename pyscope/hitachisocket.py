@@ -13,6 +13,8 @@ import numpy
 ## for example:
 debug_log = None
 #debug_log = 'hitachisocket.log'
+def log(msg):
+        pass
 
 def logwrap(func):
 	def newfunc(*args, **kwargs):
@@ -21,9 +23,12 @@ def logwrap(func):
 			result = func(*args, **kwargs)
 		except Exception, exc:
 			log('EXCEPTION: %s' % (exc,))
-			raise
+			#raise
 		return result
 	return newfunc
+
+
+SET_GET_REPLACEMENTS = {'Move':'Position'}
 
 class HitachiSocket(object):
 	eof_marker = "\r"
@@ -68,10 +73,10 @@ class HitachiSocket(object):
 				break
 			else:
 				recv_text += one_recv
-		print recv_text
+		#print recv_text
 		return recv_text
 
-	def runSetCommand(self, sub_code, ext_code, args=[], data_types=[]):
+	def runSetCommand(self, sub_code, ext_code, args=[], data_types=[],hex_lengths=[6,]):
 		'''
 		common class of function that sets data. Specify data types
 		for each value that returned
@@ -81,6 +86,7 @@ class HitachiSocket(object):
 		main_code = 'Set'
 		cmd = ' '.join([main_code, sub_code, ext_code])
 		recv_min_length = len(cmd)+1 # set command will be repeated in the recv'd message
+		hex_count = 0
 		for i,t in enumerate(data_types):
 			if t == 'int':
 				args[i] = '%d' % args[i]
@@ -89,10 +95,15 @@ class HitachiSocket(object):
 			elif t == 'bool':
 				args[i] = '%d' % int(args[i])
 			elif t == 'hexdec':
-				args[i] = "{0:0{1}X}".format(int(args[i],16),6) # format to 000FFF, for example
+				# use the last value if count is larger than number of input hex_lengths
+				hex_length = hex_lengths[min(hex_count, len(hex_lengths)-1)]
+				args[i] = "{0:0{1}X}".format(int(args[i],16),hex_length) # format to 000FFF, for example
+				hex_count += 1
 			else:
+				# string type
 				pass
 		arg_string = ','.join(args)
+		print 'send', arg_string, recv_min_length
 		self.sendMessage(cmd+' '+arg_string)
 		# expect any data to include '8001, "NG."'
 		data_string = self.recvMessage(recv_min_length)
@@ -134,19 +145,107 @@ class HitachiSocket(object):
 		else:
 			return data
 
-if __name__=='__main__':
-	try:
-		h = HitachiSocket('127.0.0.1',12068)
+	def runSetAndWait(self, sub_code, ext_code, value_list, type_list, timeout=60, hex_lengths=[6,]):
+		# create a copy of value_list since args get modified in runSetComand and causes wait comparison fails
+		self.runSetCommand(sub_code,ext_code,list(value_list),type_list, hex_lengths)
+		t0 = time.time()
+		get_ext_code = ext_code
+		if get_ext_code in SET_GET_REPLACEMENTS.keys():
+			get_ext_code = SET_GET_REPLACEMENTS[get_ext_code]
+		while True:
+			result_list = self.runGetCommand(sub_code,get_ext_code,type_list)
+			if type(result_list) != type([]):
+				result_list = [result_list,]
+			if len(result_list) != len(value_list):
+				raise RuntimeError('get values not the same length as input')
+			is_done = True
+			for i in range(len(value_list)):
+				is_done =  is_done and value_list[i] == result_list[i]
+			if is_done is True:
+				break
+			if time.time() - t0 > timeout:
+				raise RuntimeError('set %s.%s not reached requested value in %d seconds' % (sub_code, ext_code, timeout))
+		return
+
+	def runSetFloatAndWait(self, sub_code, ext_code, value_list, precision=0.1, timeout=60):
+		type_list = []
+		for v in value_list:
+			if type(v) != type(1.0):
+				raise ValueError('input must be integer type')
+			type_list.append('float')
+		# create a copy of value_list since args get modified in runSetComand and causes wait comparison fails
+		self.runSetCommand(sub_code,ext_code,list(value_list),type_list)
+		t0 = time.time()
+		get_ext_code = ext_code
+		if get_ext_code in SET_GET_REPLACEMENTS.keys():
+			get_ext_code = SET_GET_REPLACEMENTS[get_ext_code]
+		while True:
+			result_list = self.runGetCommand(sub_code,get_ext_code,type_list)
+			if type(result_list) != type([]):
+				result_list = [result_list,]
+			if len(result_list) != len(value_list):
+				raise RuntimeError('get values not the same length as input')
+			is_done = True
+			for i in range(len(value_list)):
+				is_done =  is_done and abs(value_list[i] - result_list[i]) <= precision
+			if is_done is True:
+				break
+			if time.time() - t0 > timeout:
+				raise RuntimeError('set %s.%s not reached requested value in %d seconds' % (sub_code, ext_code, timeout))
+		return
+
+	def runSetIntAndWait(self, sub_code, ext_code, value_list, timeout=10):
+		type_list = []
+		for v in value_list:
+			if type(v) != type(1):
+				raise ValueError('input must be integer type')
+			type_list.append('int')
+		return self.runSetAndWait(sub_code, ext_code, value_list, type_list, timeout)
+
+	def runSetBoolAndWait(self, sub_code, ext_code, value_list, timeout=60):
+		type_list = []
+		for v in value_list:
+			if type(v) != type(True):
+				raise ValueError('input must be boolean type')
+			type_list.append('bool')
+		return self.runSetAndWait(sub_code, ext_code, value_list, type_list, timeout)
+
+	def runSetHexdecAndWait(self, sub_code, ext_code, value_list, timeout=60, hex_lengths=[6,]):
+		type_list = []
+		for v in value_list:
+			if type(v) != type(hex(17)): #hexdec string without 0x
+				raise ValueError('input must be hexdec type')
+			type_list.append('hexdec')
+		return self.runSetAndWait(sub_code, ext_code, value_list, type_list, timeout, hex_lengths)
+
+def test1(h):
 		# Stage get in submicron
 		print h.runGetCommand('StageXY', 'Position',['int','int'])
 		# Stage set, non-blocking.  need to monitor for done
-		h.runSetCommand('StageXY', 'Move',[100,100],['int','int'])
+		h.runSetCommand('StageXY', 'Move',[0,0],['int','int'])
 		# Example for getting hexdec numbers and convert to decimal
 		hexdecs = h.runGetCommand('Coil', 'IS',['hexdec','hexdec'])
 		print 'result item0 in decimal:%d' % (int(hexdecs[0],16),)
 		print 'result itme1 in hexdec %s' % (hexdecs[1],)
 		# Example for sending a hexdec pair with FF as ID for expansion
 		h.runSetCommand('Coil','IS',['FF',hexdecs[1],hexdecs[0]],['str','hexdec','hexdec'])
+
+def test2(h):
+	print h.runSetIntAndWait('Column', 'Magnification', [100000,]) 
+	time.sleep(2)
+	print h.runSetIntAndWait('Column', 'Magnification', [2000,]) 
+	time.sleep(2)
+	h.runSetIntAndWait('StageXY', 'Move',[2000,2000])
+	print h.runGetCommand('StageXY', 'Position',['int','int'])
+	time.sleep(2)
+	h.runSetIntAndWait('StageXY', 'Move',[0,0])
+	print h.runGetCommand('StageXY', 'Position',['int','int'])
+	print h.runGetCommand('Column','Mode',['hexdec',])
+
+if __name__=='__main__':
+	try:
+		h = HitachiSocket('192.168.10.1',12068)
+		test2(h)
 	except Exception as e:
 		print e
 	finally:

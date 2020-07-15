@@ -14,11 +14,10 @@ if (is_null($sessionId)){
 	$_SESSION['unlimited_images'] = false;
 	$limit = 100;
 }
-elseif ($sessionId=='-1' || !empty($_SESSION['unlimited_images'])){
+else{
 	$limit = 0;
 	$_SESSION['unlimited_images'] = true;
 }
-else  $limit = 100;
 
 // --- Set sessionId
 $lastId = $leginondata->getLastSessionId();

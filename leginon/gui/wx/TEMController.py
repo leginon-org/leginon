@@ -481,7 +481,13 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 
 	def addSettings(self):
 		sz = wx.GridBagSizer(5, 10)
+		but = wx.Button(self, -1, 'Reconnect Remote')
+		sz.Add(but, (0, 0), (1, 1), wx.ALIGN_RIGHT)
+		self.Bind(wx.EVT_BUTTON, self.onReconnect, but)
 		return sz
+
+	def onReconnect(self, evt):
+		self.node.uiClickReconnectRemote()
 
 class TEMParameters(wx.StaticBoxSizer):
 	def __init__(self, parent,title,order=[]):

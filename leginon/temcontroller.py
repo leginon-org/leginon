@@ -23,6 +23,7 @@ import os.path
 import itertools
 import math
 import logging
+import remoteserver
 
 class TEMController(node.Node):
 	panelclass = gui.wx.TEMController.Panel
@@ -42,6 +43,10 @@ class TEMController(node.Node):
 		self.loaded_grid_slot = None
 		self.grid_slot_numbers = []
 		self.grid_slot_names = []
+		if not remoteserver.NO_REQUESTS and session is not None:
+			self.remote_toolbar = remoteserver.RemoteToolbar(self.logger, session, self, self.remote.leginon_base)
+		else:
+			self.remote_toolbar = None
 		self.start()
 
 	def onInitialized(self):
@@ -51,6 +56,29 @@ class TEMController(node.Node):
 		# This may not give results since instrument may not be loaded, yet
 		self.grid_slot_numbers = self.researchLoadableGridSlots()
 		self.grid_slot_names = map((lambda x:'%d' % (x,)),self.grid_slot_numbers)
+		if self.remote_toolbar:
+			self._activateClickTools()
+
+	def exit(self):
+		if self.remote_toolbar:
+			self.remote_toolbar.exit()
+		super(TEMController, self).exit()
+
+	def _activateClickTools(self):
+			self.remote_toolbar.addClickTool('pause','uiPause','pause process','none')
+			self.remote_toolbar.addClickTool('play','uiContinue','continue after pause','all')
+			self.remote_toolbar.addClickTool('light_off','uiCloseColumnValve','close column valve','all')
+			# finalize toolbar and send to leginon-remote
+			self.remote_toolbar.finalizeToolbar()
+
+	def uiClickReconnectRemote(self):
+		'''
+		handle gui check method choice.  Bypass using self.settings['check method']
+		because that is not yet set.
+		'''
+		if not self.remote or not self.remote_toolbar.remote_server_active:
+			return
+		self._activateClickTools()
 
 	def _toScope(self,name, stagedict):
 		try:
