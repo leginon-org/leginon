@@ -244,9 +244,12 @@ def test2(h):
 
 if __name__=='__main__':
 	try:
+		make_it_fail
 		h = HitachiSocket('192.168.10.1',12068)
 		test2(h)
 	except Exception as e:
 		print e
+		h = HitachiSocket('127.0.0.1',12068)
+		test2(h)
 	finally:
 		raw_input('wait to exit')

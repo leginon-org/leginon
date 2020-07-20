@@ -1,3 +1,18 @@
 [optics]
+# first number maps 000000
+# second number maps 3FF00 
+# scale is the difference between the two values
+# convert shift clicks to value in meters
 COIL_BH_SCALE_X = 0.0,1.0
 COIL_BH_SCALE_Y = 0.0,1.0
+COIL_ISF_SCALE_X = 0.0,1.0
+COIL_ISF_SCALE_Y = 0.0,1.0
+COIL_CS_SCALE_X = 0.0,1.0
+COIL_CS_SCALE_Y = 0.0,1.0
+COIL_OS_SCALE_X = 0.0,1.0
+COIL_OS_SCALE_Y = 0.0,1.0
+COIL_IS_SCALE_X = 0.0,1.0
+COIL_IS_SCALE_Y = 0.0,1.0
+# convert tilt clicks to angle in radians
+COIL_BT_SCALE_X = 0.0,1.0
+COIL_BT_SCALE_Y = 0.0,1.0

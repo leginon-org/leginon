@@ -8,6 +8,7 @@ import copy
 import math
 import time
 import os
+import sys
 
 import itertools
 
@@ -15,7 +16,7 @@ from pyami import moduleconfig
 from pyscope import tem
 from pyscope import hitachisocket
 
-STAGE_DEBUG = False
+STAGE_DEBUG = True
 
 class MagnificationsUninitialized(Exception):
 	pass
@@ -30,8 +31,12 @@ class Hitachi(tem.TEM):
 		
 		tem.TEM.__init__(self)
 
-		# use External control port
-		self.h = hitachisocket.HitachiSocket('192.168.10.1',12069)
+		if sys.platform == 'win32':
+			# use External control port
+			self.h = hitachisocket.HitachiSocket('192.168.10.1',12069)
+		else:
+			# HitachiSimu
+			self.h = hitachisocket.HitachiSocket('127.0.0.1',12068)
 
 		self.low_mag_mags = [50,100,200,300,400]# ignore 500 and above so that separation is easier.
 		self.zoom1_mags = [
@@ -132,6 +137,8 @@ class Hitachi(tem.TEM):
 		self.aperture_mechanism_map = {'condenser2':'COND_APT','objective':'OBJ_APT','selected area':'SA_APT'}
 		self.aperture_selection = {'objective':'100','condenser_2':'unknown','selected_area':'open'}
 		self.beamstop_positions = ['out','in'] # index of this list is API value to set
+		self.coil_map = [('BT','beam_tilt'),('BH','beam_shift'),('ISF','image_shift'),('CS','condenser_stig'),('OS','objective_stig'),('IS','diffraction_stig')]
+		self.stig_coil_map = {'condenser':'CS','objective':'OS','diffraction':'IS'}
 
 	def printStageDebug(self,msg):
 		if STAGE_DEBUG:
@@ -154,9 +161,9 @@ class Hitachi(tem.TEM):
 		if self.getProbeMode() == 'low mag':
 			raise ('Can not set IntensityZoom in low mag mode')
 		if value is True:
-			self.h.runSetCommand('Columne','BrightnessLink',[])
+			self.h.runSetCommand('Column','BrightnessLink',[])
 		else:
-			self.h.runSetCommand('Columne','BrightnessFree',[])
+			self.h.runSetCommand('Column','BrightnessFree',[])
 		
 	def getColumnValvePosition(self):
 		return self.getColumnValvePositions()[1-self.h.runGetCommand('EvacValve','GV',['int',])]
@@ -381,15 +388,21 @@ class Hitachi(tem.TEM):
 		self.setLensCurrent('C2', value)
 
 	def getStigmator(self):
-		return copy.deepcopy(self.stigmators)
+		value = {}
+		for key in self.stig_coil_map.keys():
+			coil = self.stig_coil_map[key]
+			x,y = self.getCoilVector(coil)
+			value[key]={'x':x, 'y':y}
+		return value
 		
 	def setStigmator(self, value):
-		for key in self.stigmators.keys():
-			for axis in self.stigmators[key].keys():
-				try:
-					self.stigmators[key][axis] = value[key][axis]
-				except KeyError:
-					pass
+		new_values = self.getStigmator()
+		for stig in value.keys():
+			coil = self.stig_coil_map[stig]
+			v = value[stig]
+			for key in v.keys():
+				new_values[stig][key]=v[key]
+			self.setCoilVector(coil, new_values[stig]['x'], new_values[stig]['y'])
 
 	def getSpotSize(self):
 		mode_d, submode_d = self._getColumnModes()
@@ -418,54 +431,62 @@ class Hitachi(tem.TEM):
 		self.h.runSetHexdecAndWait('Column','Mode',[new_mode_h, submode_h],['hexdec','hexdec'],hex_lengths=[hex_length,])
 
 	def getBeamTilt(self):
-		return copy.copy(self.beam_tilt)
+		coil = 'BT'
+		x,y = self.getCoilVector(coil)
+		return {'x':x, 'y':y} #radians
 	
 	def setBeamTilt(self, value):
-		for axis in self.beam_tilt.keys():
-			try:
-				self.beam_tilt[axis] = value[axis]
-			except KeyError:
-				pass
+		new_value = self.getBeamTilt()
+		coil = 'BT'
+		for key in value.keys():
+			new_value[key]=value[key]
+		self.setCoilVector(coil, new_value['x'], new_value['y'])
 	
 	def getBeamShift(self):
-		return copy.copy(self.beam_shift)
+		coil = 'BH'
+		x,y = self.getCoilVector(coil)
+		return {'x':x, 'y':y} #radians
 
 	def setBeamShift(self, value):
-		for axis in self.beam_shift.keys():
-			try:
-				self.beam_shift[axis] = value[axis]
-			except KeyError:
-				pass
+		new_value = self.getBeamShift()
+		coil = 'BH'
+		for key in value.keys():
+			new_value[key]=value[key]
+		self.setCoilVector(coil, new_value['x'], new_value['y'])
 
 	def getDiffractionShift(self):
-		return copy.copy(self.diffraction_shift)
+		# place holder. Not implemented
+		return {'x':0.0,'y':0.0}
 
 	def setDiffractionShift(self, value):
-		for axis in self.diffraction_shift.keys():
-			try:
-				self.diffraction_shift[axis] = value[axis]
-			except KeyError:
-				pass
+		# place holder. Not implemented
+		pass
 
 	def getImageShift(self):
-		return copy.copy(self.image_shift)
+		coil = 'ISF'
+		x,y = self.getCoilVector(coil)
+		return {'x':x, 'y':y} #radians
 	
 	def setImageShift(self, value):
-		for axis in self.image_shift.keys():
-			try:
-				self.image_shift[axis] = value[axis]
-			except KeyError:
-				pass
+		new_value = self.getImageShift()
+		coil = 'ISF'
+		for key in value.keys():
+			new_value[key]=value[key]
+		self.setCoilVector(coil, new_value['x'], new_value['y'])
 
 	def getRawImageShift(self):
-		return copy.copy(self.raw_image_shift)
+		# TODO: Is this different from ImageShift ?
+		coil = 'ISF'
+		x,y = self.getCoilVector(coil)
+		return {'x':x, 'y':y} #radians
 
 	def setRawImageShift(self, value):
-		for axis in self.raw_image_shift.keys():
-			try:
-				self.raw_image_shift[axis] = value[axis]
-			except KeyError:
-				pass
+		# TODO: Is this different from ImageShift ?
+		new_value = self.getRawImageShift()
+		coil = 'ISF'
+		for key in value.keys():
+			new_value[key]=value[key]
+		self.setCoilVector(coil, new_value['x'], new_value['y'])
 
 	def getDefocus(self):
 		return self.focus - self.zero_defocus
