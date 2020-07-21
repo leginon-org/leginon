@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import socket
+import time
 
 eof_marker = "\r"
 
@@ -86,6 +87,7 @@ class HitachiSimu(object):
 					respond = self.makeResponse(text)
 					conn.send(respond)
 					text = ''
+					time.sleep(0.2)
 				else:
 					text += d
 		except KeyboardInterrupt:

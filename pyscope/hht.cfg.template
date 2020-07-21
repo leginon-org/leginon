@@ -16,3 +16,7 @@ COIL_IS_SCALE_Y = 0.0,1.0
 # convert tilt clicks to angle in radians
 COIL_BT_SCALE_X = 0.0,1.0
 COIL_BT_SCALE_Y = 0.0,1.0
+[defocus]
+FOCUS_OFFSET_PATH = C:\Users\tvips\Desktop\hht_focus_offset.txt
+REF_U_FOCUS_PATH = C:\Users\tvips\Desktop\hht_ufocus.txt
+REF_MAGNIFICATION = 8000

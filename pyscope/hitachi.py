@@ -118,7 +118,7 @@ class Hitachi(tem.TEM):
 		self.raw_image_shift = {'x': 0.0, 'y': 0.0}
 
 		self.focus = 0.0
-		self.zero_defocus = 0.0
+		self.zero_defocus = {}
 
 		self.main_screen_scale = 1.0
 
@@ -489,13 +489,25 @@ class Hitachi(tem.TEM):
 		self.setCoilVector(coil, new_value['x'], new_value['y'])
 
 	def getDefocus(self):
-		return self.focus - self.zero_defocus
+		focus = self.getFocus()
+		mag = self.getMagnification()
+		defocus = focus - self.zero_defocus[mag]
+		return defocus
 
 	def setDefocus(self, value):
-		self.focus = value + self.zero_defocus
+		mag = self.getMagnification()
+		focus = value + self.zero_defocus[mag]
+		self.setFocus(focus)
+		return 
 
 	def resetDefocus(self):
-		self.zero_defocus = self.focus
+		focus = self.getFocus()
+		mag = self.getMagnification()
+		focus_diff = focus - self.zero_defocus[mag]
+		for mag in self.magnifications:
+			self.zero_defocus[mag] += focus_diff
+		ref_mag = self.getHitachiConfig('defocus','ref_magnification')
+		self.saveEucentricFocusAtReference(self.zero_defocus[ref_mag])
 
 	def getMagnification(self, index=None):
 		if index is None:
@@ -573,6 +585,39 @@ class Hitachi(tem.TEM):
 				self.addProjectionSubModeMap(mag,'LowMag',0)
 			else:
 				self.addProjectionSubModeMap(mag,'Zoom-1',1)
+		self.initDefocusZero()
+
+	def initDefocusZero(self):
+		if not self.magnifications:
+			raise ValueError('Need Magnifications to correlate the table')
+		ref_ufocus = self.getEucentricFocusAtReference()
+		focus_offset_file = self.getHitachiConfig('defocus','focus_offset_path')
+		if focus_offset_file and os.path.isfile(focus_offset_file):
+			f = open(focus_offset_file)
+			lines = f.readlines()
+			mags = self.getMagnifications()
+			if len(mags) != len(lines):
+				raise ValueError('Focus offset file and Magnifications are not of the same length')
+			for l in lines:
+				bits = l.split('\n')[0].split('\t')
+				m = int(bits[0])
+				foc = float(bits[1])
+				self.zero_defocus[m] = foc + ref_ufocus
+		else:
+			raise RuntimeError('Please run hht_defocus.py first to get initial values')
+
+	def getEucentricFocusAtReference(self):
+		ufocus_path = self.getHitachiConfig('defocus','ref_u_focus_path')
+		f = open(ufocus_path)
+		lines = f.readlines()
+		ufocus = float(lines[0].split('\n')[0])
+		return ufocus
+
+	def saveEucentricFocusAtReference(self, value):
+		ufocus_path = self.getHitachiConfig('defocus','ref_u_focus_path')
+		f = open(ufocus_path,'w')
+		f.write('%9.6f\n' % value)
+		f.close()
 
 	def getMagnifications(self):
 		return list(self.magnifications)
