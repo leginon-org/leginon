@@ -24,6 +24,7 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 		super(CalibrationJsonLoader,self).__init__(leginondata)
 		self.cameradata = self.getCameraInstrumentData(cam_hostname,camera_name)
 		self.temdata = self.getTemInstrumentData(tem_hostname, tem_name)
+		self.session_name='preset-import-tem%dcam%d' % (self.temdata.dbid, self.cameradata.dbid)
 		self.setSessionData()
 
 	def insertAllData(self):
@@ -103,7 +104,7 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 			if p['tem'] == self.temdata:
 				return True
 		return False
-		
+
 	def setSessionData(self):
 		# find administrator user
 		ur = leginondata.UserData(username='administrator').query()
@@ -113,17 +114,18 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 			# do not process without administrator.
 			print " Need administrator user to import"
 			self.close(True)
-		q = leginondata.SessionData(user=admin_user)
-		r = q.query(results=1)
+		q = leginondata.SessionData(user=admin_user, name=self.session_name)
+		r = q.query(timelimit='-90 0:0:0') # twenty day limit
 		if r and self.isTemInSessionPreset(r[0]):
 			# use recent existing session.
 			self.session = r[0]
 		else:
 			q = leginondata.SessionData(user=admin_user)
-			q['name']='presetimport'
+			# make unique name so it won't stop the insert since this is not forced.
+			q['name']=self.session_name
 			q['comment'] = 'import presets from json'
 			q['hidden'] = True
-			q.insert()
+			q.insert(force=True)
 			self.session = q
 		print 'Using Session %s to import' % self.session['name']
 
