@@ -120,7 +120,7 @@ class Hitachi(tem.TEM):
 		self.raw_image_shift = {'x': 0.0, 'y': 0.0}
 
 		self.focus = 0.0
-		self.zero_defocus = {}
+		self.zero_defocus_current = {}
 
 		self.main_screen_scale = 1.0
 
@@ -493,23 +493,33 @@ class Hitachi(tem.TEM):
 	def getDefocus(self):
 		focus = self.getFocus()
 		mag = self.getMagnification()
-		defocus = focus - self.zero_defocus[mag]
+		defocus_current = focus - self.zero_defocus_current[mag]
+		lens_scale_name = 'lens_obj_current_defocus_scale'
+		m = self.getHitachiConfig('optics',lens_scale_name)
+		if not m :
+			raise RuntimeError('%s not set in hht.cfg') % lens_scale_name.upper()
+		defocus = defocus_current * m
 		return defocus
 
 	def setDefocus(self, value):
+		lens_scale_name = 'lens_obj_current_defocus_scale'
+		m = self.getHitachiConfig('optics',lens_scale_name)
+		if not m :
+			raise RuntimeError('%s not set in hht.cfg') % lens_scale_name.upper()
 		mag = self.getMagnification()
-		focus = value + self.zero_defocus[mag]
+		lens_current_value = value / m
+		focus = lens_current_value + self.zero_defocus_current[mag]
 		self.setFocus(focus)
 		return 
 
 	def resetDefocus(self):
 		focus = self.getFocus()
 		mag = self.getMagnification()
-		focus_diff = focus - self.zero_defocus[mag]
+		focus_diff = focus - self.zero_defocus_current[mag]
 		for mag in self.magnifications:
-			self.zero_defocus[mag] += focus_diff
+			self.zero_defocus_current[mag] += focus_diff
 		ref_mag = self.getHitachiConfig('defocus','ref_magnification')
-		self.saveEucentricFocusAtReference(self.zero_defocus[ref_mag])
+		self.saveEucentricFocusAtReference(self.zero_defocus_current[ref_mag])
 
 	def getMagnification(self, index=None):
 		if index is None:
@@ -633,7 +643,7 @@ class Hitachi(tem.TEM):
 				bits = l.split('\n')[0].split('\t')
 				m = int(bits[0])
 				foc = float(bits[1])
-				self.zero_defocus[m] = foc + ref_ufocus
+				self.zero_defocus_current[m] = foc + ref_ufocus
 		else:
 			raise RuntimeError('Please run hht_defocus.py first to get initial values')
 
