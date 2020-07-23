@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import sys
+import time
 from pyscope import hitachi
 try:
 	h = hitachi.Hitachi()
@@ -8,17 +9,29 @@ except Exception, e:
 	sys.exit(1)
 
 h.findMagnifications()
+# This saved current focus as eucentric.
+# focus change only affect the zoom-1 if already in zoom-1
+# and affect low-mag if already in low-mag. Low-mag scale is not in hitachi gui.
 mags = h.getMagnifications()
+h.setMagnification(4000)
 m0 = h.getMagnification()
+h.setDefocus(0)
 d0 = h.getDefocus()
+print 'D0', d0
 f0 = h.getFocus()
-h.setDefocus(1e-5)
+print 'F0', f0
+h.setDefocus(2e-5)
 d1 = h.getDefocus()
+print 'Defocus set to', d1
+print h.getFocus()
 for m in mags:
 	h.setMagnification(m)
 	d = h.getDefocus()
-	print '%d %.3f' % (m, d*1e-6)
+	f=h.getFocus()
+	print '%d %.3f %.6f' % (m, d*1e6, f)
 h.setMagnification(m0)
 h.setDefocus(d0)
-if f0 != h.getFocus():
+f0a=h.getFocus()
+print 'Return Focus', f0a
+if abs(f0 - f0a) > 3e-3:
 	raise ValueError('Focus did not return')
