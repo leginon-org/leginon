@@ -38,8 +38,10 @@ class Hitachi(tem.TEM):
 			# HitachiSimu
 			self.h = hitachisocket.HitachiSocket('127.0.0.1',12068)
 
-		self.low_mag_mags = [50,100,200,300,400]# ignore 500 and above so that separation is easier.
-		self.zoom1_mags = [
+		self.projection_submodes = {1:'LowMag',2:'Zoom-1'}  # Do this in order.  There is no mode_id in hitachi script. The keys here are for ordering.
+		self.submode_mags = {} # mag list by projection_submode id
+		self.submode_mags[1] = [50,100,200,300,400]# ignore 500 and above so that separation is easier.
+		self.submode_mags[2] = [
 			500,700,1000,1200,1500,2000,2500,3000,4000,
 			5000,6000,7000,8000,10000,12000,15000,20000,25000,30000,
 			40000,50000,60000,70000,80000,100000,120000,150000,200000
@@ -548,55 +550,84 @@ class Hitachi(tem.TEM):
 			index = self.magnifications.index(mag)
 		except ValueError:
 			raise ValueError('invalid magnification')
+		new_submode_name, new_submode_id = self.getProjectionSubModeMap()[mag]
 		try:
-			prev_index = self.getMagnificationIndex()
+			prev_mag = self.getMagnification()
+			prev_submode_name, prev_submode_id = self.getProjectionSubModeMap()[prev_mag]
 		except ValueError:
-			# none of the valid index
-			prev_index = -1
+			raise
 		need_proj_norm = False
-		if prev_index != index:
-			# This makes defocus accuracy better like a objective 
-			# normalization. This assumes that defocus will be set
-			# after this not before.
-			# TODO self.tecnai.Projection.Focus = 0.0
-			self.setMagnificationIndex(index)
-			self.mag_changed = True
+		if prev_mag != mag:
+			if prev_submode_id != new_submode_id:
+				if new_submode_id == 1: #LowMag
+					self.setProbeMode('low mag')
+				if new_submode_id == 2: #Zoom-1
+					self.setProbeMode('micro-hc') # TODO: Will this work ? We don't have spot size info. setProbeMode will consistently cap the spot size.
+			self._setMagnification(mag)
 		return
 
-	def getMagnificationIndex(self, magnification=None):
-		if magnification is not None:
-			return self.magnifications.index(magnification)
-		return self.magnification_index
-
-	def setMagnificationIndex(self, value):
-		if value < 0 or value >= len(self.magnifications):
-			raise ValueError('invalid magnification index')
-		self.getProbeMode()
-		mag = self.magnifications[value]
-		self.h.runSetIntAndWait('Column','Magnification', [mag,])
+	def _setMagnification(self, value):
+		self.h.runSetIntAndWait('Column','Magnification', [value,])
 
 	def findMagnifications(self):
 		# fake finding magnifications and set projection submod mappings
 		self.setProjectionSubModeMap({})
-		self.magnifications = list(self.low_mag_mags)
-		self.magnifications.extend(self.zoom1_mags)
-		for i, mag in enumerate(self.magnifications):
-			if i < len(self.low_mag_mags):
-				self.addProjectionSubModeMap(mag,'LowMag',0)
-			else:
-				self.addProjectionSubModeMap(mag,'Zoom-1',1)
+		submode_ids = self.projection_submodes.keys()
+		submode_ids.sort()
+		self.magnifications = []
+		for k in submode_ids:
+			for mag in self.submode_mags[k]:
+				self.addProjectionSubModeMap(mag,self.projection_submodes[k],k) #mag, mode_name, mode_id
+		self.setProjectionSubModeMags()
+		# set magnifications now that self.projection_submode_map is set
+		self.setMagnificationsFromProjectionSubModes()
 		self.initDefocusZero()
+
+	def setProjectionSubModeMap(self, mode_map):
+		'''
+		called by EM.py to set self.projetion_submode_map
+		self.projection_submode_map {mag:(mode_name,mode_id)}
+		and
+		self.submode_mags {mode_id:[mags]}
+		'''
+		self.projection_submode_map = mode_map
+		self.setProjectionSubModeMags()
+
+	def setMagnificationsFromProjectionSubModes(self):
+		'''
+		Make a sorted magnifications list
+		'''
+		mode_map = self.getProjectionSubModeMap()
+		mags = mode_map.keys()
+		mags.sort()
+		if self.magnifications and mags == self.magnifications:
+			# do not duplicate if exists already
+			return
+		self.magnifications = mags
+
+	def setProjectionSubModeMags(self):
+		'''
+		initialize a dictionary of submode_indices
+		mapped to sorted magnification list. Right now hitachi list is
+		hard-coded at initialization.  Since it is not clear how to step them through.
+		'''
+		# self.submode_mags key is mode_index, and item is sorted mag list
+		pass
 
 	def initDefocusZero(self):
 		if not self.magnifications:
 			raise ValueError('Need Magnifications to correlate the table')
-		ref_ufocus = self.getEucentricFocusAtReference()
+		try:
+			ref_ufocus = self.getEucentricFocusAtReference()
+		except IOError:
+			raise RuntimeError('Please run hht_defocus.py first to get initial values')
 		focus_offset_file = self.getHitachiConfig('defocus','focus_offset_path')
 		if focus_offset_file and os.path.isfile(focus_offset_file):
-			f = open(focus_offset_file)
+			f = open(focus_offset_file,'r')
 			lines = f.readlines()
 			mags = self.getMagnifications()
 			if len(mags) != len(lines):
+				f.close()
 				raise ValueError('Focus offset file and Magnifications are not of the same length')
 			for l in lines:
 				bits = l.split('\n')[0].split('\t')
@@ -611,6 +642,7 @@ class Hitachi(tem.TEM):
 		f = open(ufocus_path)
 		lines = f.readlines()
 		ufocus = float(lines[0].split('\n')[0])
+		f.close()
 		return ufocus
 
 	def saveEucentricFocusAtReference(self, value):
@@ -636,6 +668,23 @@ class Hitachi(tem.TEM):
 		mode_d = int(mode_h,16)
 		submode_d = int(submode_h,16)
 		return mode_d, submode_d
+
+	def _setColumnMode(self, mode_d):
+		mode_h = hex(mode_d)
+		hex_length = 2 #mode code length
+		# imaging system
+		# match zoom-1 values here, but don't know how it should be.
+		submodes = {
+			'micro-hc': hex(int('00',16)),
+			'micro-hr': hex(int('02',16)),
+			'fine-hc': hex(int('00',16)), # not sure how this maps, assume zoom-1 for now
+			'fine-hr': hex(int('02',16)),
+			'low mag': hex(int('0e',16)),
+		}
+		probe, spot = self._getProbeSpotFromColumnMode(mode_d)
+		submode_h = submodes[probe]
+		print mode_h, submode_h
+		self.h.runSetHexdecAndWait('Column','Mode',[mode_h, submode_h],['hexdec','hexdec'],hex_lengths=[hex_length,])
 
 	def getProbeMode(self):
 		mode_d, submode_d = self._getColumnModes()
@@ -668,31 +717,15 @@ class Hitachi(tem.TEM):
 		if prev_probe_index > 0:
 			base = self.probe_mode_index_cap[self.probe_modes[prev_probe_index-1]]
 		# set spot size to be the same as previous.
-		# TODO: this will be a problem changing between low mag and others.
+		# Set to the capped index per probe mode so that normalization is consistent.
 		spot_index= prev_mode_d - base
 		new_base = 0
 		if new_probe_index > 0:
 			new_base = self.probe_mode_index_cap[self.probe_modes[new_probe_index-1]]
 		new_probe_index_cap = self.probe_mode_index_cap[new_probe]
-		new_mode_d = new_base+spot_index
-		if new_mode_d >= new_probe_index_cap:
-			new_mode_d = new_probe_index_cap - 1
-			print "spot size assignment capped"
-		new_mode_h = hex(new_mode_d)
-		hex_length = 2 #mode code length
-		# imaging system
-		# match zoom-1 values here, but don't know how it should be.
-		submodes = {
-			'micro-hc': hex(int('00',16)),
-			'micro-hr': hex(int('02',16)),
-			'fine-hc': hex(int('00',16)), # not sure how this maps, assume zoom-1 for now
-			'fine-hr': hex(int('02',16)),
-			'low mag': hex(int('0e',16)),
-		}
-		submode_h = submodes[new_probe]
-		print prev_mode_d
-		print new_mode_h, submode_h
-		self.h.runSetHexdecAndWait('Column','Mode',[new_mode_h, submode_h],['hexdec','hexdec'],hex_lengths=[hex_length,])
+		new_mode_d = new_probe_index_cap - 1
+		print "spot size assignment capped"
+		self._setColumnMode(new_mode_d)
 
 	def getProbeModes(self):
 		return list(self.probe_modes)
