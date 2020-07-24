@@ -11,7 +11,7 @@ while Atlas is under source_path/session_name/Atlas
 import os
 import sys
 import shutil
-import filecmp
+import platform
 import subprocess
 import time
 import numpy
@@ -25,9 +25,16 @@ from leginon import epu_meta
 
 session_timeout = 60 # seconds before timeout
 check_interval = 60  # seconds between checking for new frames
+# production usage on linux
+watch_for_ext = 'mrc'
 
 preset_order = ['gr','sq','hl','en']
-watch_for_ext = 'mrc'
+if platform.system() == 'Darwin':
+	# testing on Mac OS
+	watch_for_ext = 'jpg'
+	session_timeout = 10 # seconds before timeout
+	check_interval = 10  # seconds between checking for new frames
+
 class RawTransfer(object):
 	def __init__(self):
 		# image classes that will be transferred
@@ -75,8 +82,11 @@ class RawTransfer(object):
 		if 'Data' == basedirname and basename.startswith('FoilHole'):
 			if watch_for_ext == 'mrc' and 'Fractions' not in basename:
 				# both fractions and sum have mrc files. only jpg for sum.
+				# don't want sum mrc
 				return
+			# standard mode has hl_name as the first part
 			hl_name = basename.split('_')[1]
+			# TODO fast mode has unrelated name. handle later
 			parent = hl_name
 			en_name = hl_name # TODO: what if multiple exposures in a hole ?
 			if en_name not in self.en.keys():
@@ -259,10 +269,9 @@ class RawTransfer(object):
 
 	def transferOwner(self, dst, uid, gid, mode_str):
 		'''
-		transfer ownership of the session path, whether it is frame or image or directory
-		containing them.
+		transfer ownership of the session path, whether the input is frame or image
+		or the directory (rawdata) containing them
 		'''
-
 		if os.path.isfile(dst):
 			# get path of the session, e.g. /data/frames/joeuser/17nov06a
 			dirname,basename = os.path.split(os.path.abspath(dst))
@@ -290,6 +299,23 @@ class RawTransfer(object):
 			frames_path = leginon.ddinfo.getBufferFrameSessionPathFromImage(imdata)
 		return frames_path
 
+	def addSavedAtlasList(self):
+		'''
+		Attempt to add atlas_list
+		'''
+		q = leginon.leginondata.ImageTargetListData(session=self.session,mosaic=True)
+		q['label'] = 'U'
+		r = q.query()
+		if r:
+			# atlas was saved in a previous round
+			# TODO: This is supposed to be the name of atlas in epu, so it is not always right.
+			atlas_name = self.session['name']
+			self.atlas_list.append(atlas_name)
+			# empty list here triggers loadTileShifts when sq images looking for closest tile to associate.
+			self.tiles[atlas_name] = []
+			self.tile_shifts[atlas_name] = []
+		# TODO: This does not handle screening Sample atlas
+
 	def upload(self):
 		'''
 		Upload the images recorded in this round of transfer.
@@ -297,6 +323,9 @@ class RawTransfer(object):
 		'''
 		sorted_epu_infopairs = self.sortEpuInfoPairs()
 		self.presets, self.preset_matrices = self.createPresets()
+		if not self.atlas_list:
+			# self.atlas_list is reset to empty after each run_once. This initiate them again.
+			self.addSavedAtlasList()
 		self.atlas_image_target_lists = self.makeAtlasImageTargetLists()
 
 		some_uploaded = False
@@ -372,16 +401,14 @@ class RawTransfer(object):
 
 	def getOwnership(self):
 		# determine user and group of leginon data
-		image_path = self.session['image path']
-		stat = os.stat(image_path)
+		# rawdata directory is not created if no image is saved in the session, yet.
+		session_path = self.session['image path'].replace('/rawdata','')
+		stat = os.stat(session_path)
 		uid = stat.st_uid
 		gid = stat.st_gid
 		return uid, gid
 
 	def createPresets(self):
-		'''
-		create presets and its transformation matrix.
-		'''
 		global preset_order
 		presets = {}
 		matrices = {}
@@ -389,7 +416,6 @@ class RawTransfer(object):
 			this_attr = getattr(self,p)
 			if not this_attr:
 				# some rounds of rsync might not have all presets when running live.
-				# use previously saved value.
 				presets[p] = self.getSavedPresetData(p)
 				matrices[p] = self.getSavedEpuMatrix(presets[p])
 			else:
@@ -400,6 +426,7 @@ class RawTransfer(object):
 					presets[p] = self._setPresetData(p)
 					matrices[p] = self.setEpuMatrixFromMeta(presets[p])
 				else:
+					# xml might not exists in the temp directory, yet
 					presets[p] = self.getSavedPresetData(p)
 					matrices[p] = self.getSavedEpuMatrix(presets[p])
 		return presets, matrices
@@ -436,7 +463,8 @@ class RawTransfer(object):
 		'''
 		Get EpuMatrix from xml file associated with the current image.
 		'''
-		matrix = self._getPresetMatrixFromMeta()
+
+		matrix = self._setPresetMatrixFromMeta()
 		# save matrix
 		q = leginon.leginondata.EpuMatrixData(session=self.session)
 		q['preset name'] = presetdata['name']
@@ -445,9 +473,9 @@ class RawTransfer(object):
 		q.insert()
 		return matrix
 
-	def _getPresetMatrixFromMeta(self):
+	def _setPresetMatrixFromMeta(self):
 		'''
-		Get and format transformation matrix based on meta_data_dict
+		Set preset transformation matrix based on meta_data_dict
 		'''
 		m_dict = self.meta.getMatrix(self.meta.meta_data_dict)['m']
 		matrix = numpy.array([[m_dict['m11'],m_dict['m12']],
@@ -498,23 +526,37 @@ class RawTransfer(object):
 			print 'already uploaded'
 			return
 		parent_imagedata = self.findParentImageData(epuinfo,presetdata['name'])
-		if parent_imagedata is False:
+		if parent_imagedata is False and presetdata['name'] != 'en':
 			#parent not uploaded. do this later.
 			return
+		if parent_imagedata in (None,False) and presetdata['name'] == 'en':
+			recent_hl_epudata = self.getClosestHlEpuData(epuinfo)
+			if not recent_hl_epudata:
+				# not any hl images yet
+				return
+			epuinfo[0] = recent_hl_epudata['name']
+			parent_imagedata = recent_hl_epudata['image']
+			print 'assign orphan en image to %s: v%d' %(epuinfo[0], recent_hl_epudata['version'])
 		scopedata = self.makeScopeEMData(epuinfo)
 		cameradata = self.makeCameraEMData(epuinfo)
-		targetdata = self.makeTargetData(epukey, epuinfo, scopedata, cameradata, parent_imagedata)
+		try:
+			targetdata = self.makeTargetData(epukey, epuinfo, scopedata, cameradata, parent_imagedata)
+		except ValueError, e:
+			print e
+			return
 		# ImageListData needed for myamiweb display of atlas
 		imagelistdata = self.getImageListData(targetdata)
-		# Filename
-		print self.makeFilename(targetdata,presetdata['name'])
+		new_filename = self.makeFilename(targetdata,presetdata['name'])
+		print new_filename
 		q=leginon.leginondata.AcquisitionImageData(session=self.session)
 		q['scope'] = scopedata
 		q['camera'] = cameradata
 		q['preset'] = presetdata
 		q['target'] = targetdata
 		q['list'] = imagelistdata
-		q['filename'] = self.makeFilename(targetdata,presetdata['name'])
+		q['filename'] = new_filename
+		if targetdata:
+			print 'inserting %s with target %d' % (q['filename'],q['target'].dbid)
 		# reading image
 		q['image'] = self.getImageArray(epuinfo[2],q)
 		q.insert()
@@ -524,6 +566,38 @@ class RawTransfer(object):
 			self. saveMosaicTile(q)
 		self.insertEpuData(epukey, epuinfo, q)
 		return q
+
+	def getClosestHlEpuData(self,epuinfo):
+		'''
+		Force assignment of en image to a hole already uploaded.
+		'''
+		qp = leginon.leginondata.PresetData(session=self.session,name='hl')
+		qt = leginon.leginondata.AcquisitionImageTargetData(session=self.session)
+		imq = leginon.leginondata.AcquisitionImageData(preset=qp, target=qt)
+		epu_results = leginon.leginondata.EpuData(image=imq).query()
+		epu_r = []
+		all_delta_list = []
+		for r in epu_results:
+			stage_hl = r['image']['scope']['stage position']
+			scopedict = self.meta.getScopeEMData(self.meta.meta_data_dict['microscopeData'])
+			stage_delta = scopedict['stage position']['x']-stage_hl['x'], scopedict['stage position']['y']-stage_hl['y']
+			all_delta_list.append(stage_delta)
+		if not all_delta_list:
+			return None
+		if len(all_delta_list) > 1:
+			deltas = numpy.array(all_delta_list).reshape((len(all_delta_list),2))
+			hypot = numpy.sum(deltas*deltas,axis=1)
+			closest_index = numpy.argmin(hypot)
+			best = epu_results[closest_index]
+		else:
+			best = epu_results[0]
+		# find most recent of it
+		newest = best
+		results = leginon.leginondata.EpuData(name=best['name'],session=self.session).query()
+		for r in results:
+			if r['version'] > best['version']:
+				newest = r
+		return newest
 
 	def setOwner(self, dst):
 		self.transferOwner(dst, self.uid, self.gid, self.params['mode_str'])
@@ -612,10 +686,20 @@ class RawTransfer(object):
 				if os.path.exists(new_meta_xml_file):
 					self.meta.setXmlFile(new_meta_xml_file)
 				else:
+					bits = new_meta_xml_file.split('/Images-Disc')
+					epu_session_name = bits[0].split('/')[-1]
+					# convention to save epu session under supfolder of the same session name
+					new_new_path = '%s/%s' % (bits[0],epu_session_name)
+					bits[0] = new_new_path
+					new_new_meta_xml_file = '/Images-Disc'.join(bits)
+					if os.path.exists(new_meta_xml_file):
+						self.meta.setXmlFile(new_meta_xml_file)
 					if self.method == 'walk':
-						# In walk method, the file should be there if ever.
+						# In walk method if xml file is not there, this one would be lost.
 						return False
-					raise ValueError('Can not find acquisition meta file as %s or %s' % (meta_xml_file, new_meta_xml_file))
+					# try again later.
+					print('Can not find acquisition meta file as %s or %s or %s' % (meta_xml_file, new_meta_xml_file, new_new_meta_xml_file))
+					return False
 		else:
 			wait_iter = 0
 			while not os.path.isfile(xml_file_path):
@@ -628,7 +712,7 @@ class RawTransfer(object):
 				time.sleep(1)
 				wait_iter += 1
 			self.meta.setXmlFile(xml_file_path)
-			return True
+		return True
 
 	def getInstrumentData(self, instrument_ref='tem'):
 		if instrument_ref == 'tem':
@@ -728,6 +812,8 @@ class RawTransfer(object):
 		qt['type']='acquisition'
 		qt['status']='done'
 		if parent_imagedata:
+			if preset_name == 'en' and parent_imagedata['target']['version']==0:
+				raise ValueError('en should come from higher version than 0')
 			pixel_shift = self.getTargetPixelShift(parent_imagedata, scopedata)
 			qt['delta row'] = pixel_shift[1]
 			qt['delta column'] = pixel_shift[0]
@@ -746,6 +832,7 @@ class RawTransfer(object):
 			bits = file_path.split('/')
 			if preset_name == 'gr' and bits[-2] == 'Atlas':
 				atlas_name = bits[-3]
+				print 'atals_name from path', atlas_name, file_path
 				if atlas_name in self.atlas_list:
 					# ImageTargetListData needed to display in myamiweb
 					qt['list'] = self.atlas_image_target_lists[atlas_name]
@@ -795,6 +882,7 @@ class RawTransfer(object):
 		relative to the center of the stage coordinates on the sample scale.
 		'''
 		session_atlas = None
+		print 'atlas_list before loading', self.atlas_list
 		for atlas_name in self.atlas_list:
 			if atlas_name.lower() == self.session['name']:
 				session_atlas = atlas_name
@@ -806,8 +894,10 @@ class RawTransfer(object):
 			# already uploaded in previous round.
 			self.loadTileShifts(atlas_name)
 			tile_shifts = self.tile_shifts[atlas_name]
+		print 'atlas_list after loadTileShifts', self.atlas_list
 		tile_length = len(tile_shifts)
 		if not tile_length:
+			print 'No tiles found'
 			raise RuntimeError('Can not find tiles')
 		# pixel_shift is numpy.matrix
 		pixel_shifts_array = numpy.array(tile_length*pixel_shift.tolist())
@@ -815,6 +905,10 @@ class RawTransfer(object):
 		sq=pixel_shifts_array.reshape((tile_length,2))
 		hypot = numpy.sum((tiles-sq)*(tiles-sq),axis=1)
 		on_tile_index = numpy.argmin(hypot)
+		print 'tile keys', self.tiles.keys()
+		print 'atlas_name', atlas_name
+		print self.tiles[atlas_name]
+		print 'index', on_tile_index
 		tile_epukey =  self.tiles[atlas_name][on_tile_index]
 		q = leginon.leginondata.EpuData(session=self.session, name=tile_epukey)
 		q['preset name'] = 'gr'
@@ -838,11 +932,20 @@ class RawTransfer(object):
 			for gr_image in tiles:
 				scopedata = gr_image['scope']
 				fake_parent_image = self.makeGridReferenceImageData()
+				print 'fake_parent', fake_parent_image
 				pixel_shift = self.getTargetPixelShift(fake_parent_image, scopedata)
 				# Save shifts for finding square image relation
+				r = leginon.leginondata.EpuData(session=self.session, image=gr_image).query(results=1)
+				if not r:
+					# Screening session may have non-epu atlas
+					continue
+				else:
+					epudata = r[0]
+				if epu_atlas_name not in self.atlas_list:
+					self.atlas_list.append(epu_atlas_name)
 				self.tile_shifts[epu_atlas_name].append(pixel_shift)
-				epudata = leginon.leginondata.EpuData(session=self.session, image=gr_image).query(results=1)[0]
 				self.tiles[epu_atlas_name].append(epudata['name'])
+		print 'loaded %d tiles for %s' % (len(self.tiles[epu_atlas_name]), epu_atlas_name)
 			
 	def getSimulatedTargetList(self, preset_name):
 		'''
@@ -860,6 +963,8 @@ class RawTransfer(object):
 		This is positioned at the center of the stage movement so each tile is marked on it virtually.
 		'''
 		p = self.presets['gr']
+		if p is None:
+			raise ValueError('session does not have gr preset to build grid reference image data')
 		scope = leginon.leginondata.ScopeEMData(session=self.session,tem=p['tem'])
 		scope['stage position'] = {'x':0.0,'y':0.0,'z':0.0,'a':0.0,'b':0.0}
 		scope.insert()
@@ -876,7 +981,7 @@ class RawTransfer(object):
 		'''
 		Get target pixel shift from the center of the parent image using
 		stage positions and transformation matrix.
-		''' 
+		'''
 		my_position = scopedata['stage position']
 		parent_position = parent_imagedata['scope']['stage position']
 		# Need 180 rotation. Why ?
@@ -961,11 +1066,11 @@ class RawTransfer(object):
 				time.sleep(5)
 				# 2. In a loop do rsync of the session dir to trigger watcher
 				self.copy(src_epu_session_path,dest_epu_head_path)
-				# On file_moved event add the fild info to a list for upload.
+				# On file_moved event add the file info to a list for upload.
 				#
 				# sort files by timestamp since rsync does not do so.  Need it sorted to display images in order.
 				self.upload()
-				# Stop observer if timeout
+				# Stop oberver if timeout
 				if time.time() - self.t0 > session_timeout:
 					print 'number of unique holes',len(self.hl.keys())
 					print 'en in %d holes ' % len(set(map((lambda x: x[0]),self.en.values())))
@@ -975,7 +1080,6 @@ class RawTransfer(object):
 		except KeyboardInterrupt:
 			self.observer.stop()
 			self.observer.join()
-
 
 	def walk(self,src_epu_session_path,dest_head):
 		'''
@@ -1013,9 +1117,9 @@ class RawTransfer(object):
 		valid_session_dbids.sort()
 		if limit_one and len(valid_session_dbids) > 1:
 			for dbid in valid_session_dbids[:-1]:
-				print 'Old EPU sessions are removed at the source: %s' % (valid_epu_sessions[dbid])
+				print 'Old EPU sessions can be removed at the source: %s' % (valid_epu_sessions[dbid])
 				clean_path = os.path.join(src_epu_path, valid_epu_sessions[dbid])
-				self.cleanUp(clean_path)
+				#self.cleanUp(clean_path)
 			valid_session_dbids = valid_session_dbids[-1:]
 		for dbid in valid_session_dbids:
 			valid_sessions.append((valid_epu_sessions[dbid],leginon.leginondata.SessionData().direct_query(dbid)))
@@ -1028,7 +1132,9 @@ class RawTransfer(object):
 		dst_head = self.get_dst_head()
 		if dst_head:
 			print "Limit processing to destination frame path started with %s" % (dst_head)
-		limit_one = False
+		#TODO reading through old sessions take too long.  Don't do them now.
+		# Need to make a flag to turn it on.
+		limit_one = True
 		iter_count = 0
 		while True:
 			print 'Iterating...'
@@ -1037,9 +1143,13 @@ class RawTransfer(object):
 				print 'Work only on the most recent Leginon session equivalent'
 			for valid_pair in valid_sessions:
 				epu_session_name, leginon_sessiondata = valid_pair
+
 				self.session = leginon_sessiondata
 				# find ownership once per session
 				self.uid, self.gid = self.getOwnership()
+				# rawdata directory is not created if no image is saved in leginon.
+				self.makeDir(self.session['image path']) # rawdata directory is not created if no image is saved in leginon.
+				self.setOwner(self.session['image path'])
 				src_epu_session_path = os.path.join(src_epu_path, epu_session_name)
 				if iter_count == 0 and self.params['method'] == 'walk':
 					self.walk(src_epu_session_path,dst_head)
