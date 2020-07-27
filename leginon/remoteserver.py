@@ -257,8 +257,9 @@ class RemoteSessionServer(object):
 			return False
 		except requests.ConnectionError:
 			# always want to pass to leginon log
-			e = 'Connection to remote is lost'
-			self.logger.error(e)
+			if log_error:
+				e = 'Connection to remote is lost'
+				self.logger.error(e)
 			return None
 		except TypeError:
 			if log_error:
@@ -325,7 +326,8 @@ class RemoteStatusbar(RemoteNodeServer):
 			self._setStatus(status, this_subclass)
 		except requests.ConnectionError:
 			e = 'Connection to remote is lost'
-			self.logger.error(e)
+			# not to log as this is not critical and has too many occurance.
+			#self.logger.error(e)
 
 	def _setStatus(self, status, this_subclass):
 		status_str='_'.join(status.split())
@@ -359,7 +361,8 @@ class RemoteQueueCount(RemoteNodeServer):
 			self._setQueueCount(count)
 		except requests.ConnectionError:
 			e = 'Connection to remote is lost'
-			self.logger.error(e)
+			# not to log as this is not critical and has too many occurance.
+			#self.logger.error(e)
 
 	def _setQueueCount(self, count):
 		self.data = {
