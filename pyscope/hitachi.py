@@ -38,7 +38,8 @@ class Hitachi(tem.TEM):
 			# HitachiSimu
 			self.h = hitachisocket.HitachiSocket('127.0.0.1',12068)
 
-		self.projection_submodes = {1:'LowMag',2:'Zoom-1'}  # Do this in order.  There is no mode_id in hitachi script. The keys here are for ordering.
+		self.projection_submodes = {1:'LowMag',2:'Zoom1'}  # Do this in order.  There is no mode_id in hitachi script. The keys here are for ordering.
+		self.projection_submode_ids = [1,2]  # Give it a fixed order
 		self.submode_mags = {} # mag list by projection_submode id
 		self.submode_mags[1] = [50,100,200,300,400]# ignore 500 and above so that separation is easier.
 		self.submode_mags[2] = [
@@ -494,7 +495,8 @@ class Hitachi(tem.TEM):
 		focus = self.getFocus()
 		mag = self.getMagnification()
 		defocus_current = focus - self.zero_defocus_current[mag]
-		lens_scale_name = 'lens_obj_current_defocus_scale'
+		submode_name = self.getProjectionSubModeName()
+		lens_scale_name = 'lens_%s_obj_current_defocus_scale' % (submode_name.lower())
 		m = self.getHitachiConfig('optics',lens_scale_name)
 		if not m :
 			raise RuntimeError('%s not set in hht.cfg') % lens_scale_name.upper()
@@ -502,7 +504,8 @@ class Hitachi(tem.TEM):
 		return defocus
 
 	def setDefocus(self, value):
-		lens_scale_name = 'lens_obj_current_defocus_scale'
+		submode_name = self.getProjectionSubModeName()
+		lens_scale_name = 'lens_%s_obj_current_defocus_scale' % (submode_name.lower())
 		m = self.getHitachiConfig('optics',lens_scale_name)
 		if not m :
 			raise RuntimeError('%s not set in hht.cfg') % lens_scale_name.upper()
@@ -515,11 +518,14 @@ class Hitachi(tem.TEM):
 	def resetDefocus(self):
 		focus = self.getFocus()
 		mag = self.getMagnification()
+		submode_id = self.getProjectionSubModeId()
+		submode_name = self.projection_submodes[submode_id]
 		focus_diff = focus - self.zero_defocus_current[mag]
-		for mag in self.magnifications:
+		# Only reset within its own projection submode
+		for mag in self.submode_mags[submode_id]:
 			self.zero_defocus_current[mag] += focus_diff
-		ref_mag = self.getHitachiConfig('defocus','ref_magnification')
-		self.saveEucentricFocusAtReference(self.zero_defocus_current[ref_mag])
+		ref_mag = self.getHitachiConfig('defocus','ref_%s_magnification' % submode_name.lower())
+		self.saveEucentricFocusAtReference(submode_name, self.zero_defocus_current[ref_mag])
 
 	def getMagnification(self, index=None):
 		if index is None:
@@ -569,9 +575,9 @@ class Hitachi(tem.TEM):
 		need_proj_norm = False
 		if prev_mag != mag:
 			if prev_submode_id != new_submode_id:
-				if new_submode_id == 1: #LowMag
+				if new_submode_id == 1: #Low-Mag
 					self.setProbeMode('low mag')
-				if new_submode_id == 2: #Zoom-1
+				if new_submode_id == 2: #Zoom1
 					self.setProbeMode('micro-hc') # TODO: Will this work ? We don't have spot size info. setProbeMode will consistently cap the spot size.
 			self._setMagnification(mag)
 		return
@@ -624,11 +630,29 @@ class Hitachi(tem.TEM):
 		# self.submode_mags key is mode_index, and item is sorted mag list
 		pass
 
+	def getProjectionSubModeIds(self):
+		'''
+		get ordered projection submode index. This is an internal assignment only for Hitachi module.
+		'''
+		return self.projection_submode_ids
+
+	def getOrderedProjectionSubModeNames(self):
+		'''
+		get projection submode names ordered by mode ids.
+		'''
+		names = []
+		for d in self.projection_submode_ids:
+			names.append(self.projection_submodes[d])
+		return names
+
 	def initDefocusZero(self):
 		if not self.magnifications:
 			raise ValueError('Need Magnifications to correlate the table')
+		ref_ufocus = {}
 		try:
-			ref_ufocus = self.getEucentricFocusAtReference()
+			for submode_id in self.projection_submode_ids:
+				submode_name = self.projection_submodes[submode_id]
+				ref_ufocus[submode_id] = self.getEucentricFocusAtReference(submode_name)
 		except IOError:
 			raise RuntimeError('Please run hht_defocus.py first to get initial values')
 		focus_offset_file = self.getHitachiConfig('defocus','focus_offset_path')
@@ -643,20 +667,22 @@ class Hitachi(tem.TEM):
 				bits = l.split('\n')[0].split('\t')
 				m = int(bits[0])
 				foc = float(bits[1])
-				self.zero_defocus_current[m] = foc + ref_ufocus
+				for submode_id in self.projection_submode_ids:
+					if m in self.submode_mags[submode_id]:
+						self.zero_defocus_current[m] = foc + ref_ufocus[submode_id]
 		else:
 			raise RuntimeError('Please run hht_defocus.py first to get initial values')
 
-	def getEucentricFocusAtReference(self):
-		ufocus_path = self.getHitachiConfig('defocus','ref_u_focus_path')
+	def getEucentricFocusAtReference(self, p_submode_name):
+		ufocus_path = self.getHitachiConfig('defocus','ref_%s_ufocus_path' % p_submode_name.lower())
 		f = open(ufocus_path)
 		lines = f.readlines()
 		ufocus = float(lines[0].split('\n')[0])
 		f.close()
 		return ufocus
 
-	def saveEucentricFocusAtReference(self, value):
-		ufocus_path = self.getHitachiConfig('defocus','ref_u_focus_path')
+	def saveEucentricFocusAtReference(self, p_submode_name, value):
+		ufocus_path = self.getHitachiConfig('defocus','ref_%s_ufocus_path' % p_submode_name.lower())
 		f = open(ufocus_path,'w')
 		f.write('%9.6f\n' % value)
 		f.close()

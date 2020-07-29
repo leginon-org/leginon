@@ -19,6 +19,10 @@ COIL_BT_SCALE_Y = 0.0,1.0
 # convert lens current to defocus in meters
 LENS_OBJ_CURRENT_DEFOCUS_SCALE = 0.00678682
 [defocus]
+# these pathes saves defocus and focus path. They must be read and write accessible
 FOCUS_OFFSET_PATH = C:\Users\tvips\Desktop\hht_focus_offset.txt
-REF_U_FOCUS_PATH = C:\Users\tvips\Desktop\hht_ufocus.txt
-REF_MAGNIFICATION = 8000
+REF_LOWMAG_UFOCUS_PATH = C:\Users\tvips\Desktop\hht_lowmag_ufocus.txt
+REF_ZOOM1_UFOCUS_PATH = C:\Users\tvips\Desktop\hht_zoom1_ufocus.txt
+# reference magnification for each projection submode
+REF_LOWMAG_MAGNIFICATION = 400
+REF_ZOOM1_MAGNIFICATION = 8000
