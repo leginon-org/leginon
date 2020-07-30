@@ -26,8 +26,8 @@ submode_names = h.getOrderedProjectionSubModeNames()
 submode_map=h.getProjectionSubModeMap()
 u_focus = {}
 for name in submode_names:
-	item_name = 'ref_%s_magnification' % (name.lower())
-	ref_mag = hitachi.configs['defocus'][item_name]
+	item_name = 'ref_magnification'
+	ref_mag = hitachi.configs['defocus'][item_name][name.lower()]
 	if not ref_mag in mags:
 		raise ValueError('Reference magnification %s not a valid magnification' % (ref_mag,))
 	ref_mag_index = mags.index(ref_mag)

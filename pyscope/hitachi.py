@@ -331,23 +331,29 @@ class Hitachi(tem.TEM):
 			d = min(int(round((current - m[0])/precision)),int('3FFC00',16))
 		return hex(d)
 
-	def _scaleCoilHexdecToVector(self, coil, hex_x, hex_y):
+	def _scaleCoilHexdecToVector(self, coil, submode_name, hex_x, hex_y):
 		xy = []
 		axes = ('x','y')
 		for i,v in enumerate((hex_x,hex_y)):
-			coil_scale_name = 'coil_%s_scale_%s' % (coil.lower(), axes[i])
-			m = self.getHitachiConfig('optics',coil_scale_name)
+			coil_scale_name = 'coil_%s_scale' % (coil.lower(),)
+			if coil.lower() != 'bt':
+				m = self.getHitachiConfig('optics',coil_scale_name)[submode_name.lower()][axes[i]]
+			else:
+				m = self.getHitachiConfig('optics',coil_scale_name)[axes[i]]
 			d = int(v,16)
 			print i, d
 			xy.append(d*(float(m[1] - m[0]))/int('3FFC00',16) + m[0])
 		return xy
 
-	def _scaleCoilVectorToHexdec(self, coil, x, y):
+	def _scaleCoilVectorToHexdec(self, coil, submode_name, x, y):
 		axes = ('x','y')
 		hex_xy = []
 		for i,v in enumerate((x,y)):
-			coil_scale_name = 'coil_%s_scale_%s' % (coil.lower(), axes[i])
-			m = self.getHitachiConfig('optics',coil_scale_name)
+			coil_scale_name = 'coil_%s_scale' % (coil.lower(),)
+			if coil.lower() != 'bt':
+				m = self.getHitachiConfig('optics',coil_scale_name)[submode_name.lower()][axes[i]]
+			else:
+				m = self.getHitachiConfig('optics',coil_scale_name)[axes[i]]
 			precision = float(m[1]-m[0]) / int('3FFC00',16)
 			if v - m[0] < precision:
 				d = 0
@@ -366,19 +372,21 @@ class Hitachi(tem.TEM):
 		'''
 		Current in Amp
 		'''
-		hexdec = self._scaleLensCurrentToHexdec(lens,value)
+		hexdec = self._scaleLensCurrentToHexdec(lens, value)
 		self.h.runSetCommand('Lens', lens, ['FF',hexdec,], ['str','hexdec',], [6,])
 
 	def getCoilVector(self, coil):
 		hexdec_x, hexdec_y = self.h.runGetCommand('Coil', coil,['hexdec','hexdec'])
-		x,y = self._scaleCoilHexdecToVector(coil,hexdec_x,hexdec_y)
+		submode_name = self.getProjectionSubModeName()
+		x,y = self._scaleCoilHexdecToVector(coil,submode_name,hexdec_x,hexdec_y)
 		return x, y
 
 	def setCoilVector(self, coil, x, y):
 		'''
 		x,y vector in meters
 		'''
-		hexdec_x, hexdec_y = self._scaleCoilVectorToHexdec(coil,x,y)
+		submode_name = self.getProjectionSubModeName()
+		hexdec_x, hexdec_y = self._scaleCoilVectorToHexdec(coil,submode_name,x,y)
 		self.h.runSetCommand('Coil', coil, ['FF',hexdec_x,hexdec_y,], ['str','hexdec','hexdec',], [6,6])
 
 	def getIntensity(self):
@@ -491,24 +499,36 @@ class Hitachi(tem.TEM):
 			new_value[key]=value[key]
 		self.setCoilVector(coil, new_value['x'], new_value['y'])
 
+	def getProjectorAlignShift(self):
+		coil = 'PA'
+		x,y = self.getCoilVector(coil)
+		return {'x':x, 'y':y} #radians
+
+	def setProjectorAlignShift(self, value):
+		new_value = self.getProjectorAlignShift()
+		coil = 'PA'
+		for key in value.keys():
+			new_value[key]=value[key]
+		self.setCoilVector(coil, new_value['x'], new_value['y'])
+
 	def getDefocus(self):
 		focus = self.getFocus()
 		mag = self.getMagnification()
 		defocus_current = focus - self.zero_defocus_current[mag]
 		submode_name = self.getProjectionSubModeName()
-		lens_scale_name = 'lens_%s_obj_current_defocus_scale' % (submode_name.lower())
-		m = self.getHitachiConfig('optics',lens_scale_name)
+		lens_scale_name = 'lens_obj_current_defocus_scale'
+		m = self.getHitachiConfig('optics',lens_scale_name)[submode_name.lower()]
 		if not m :
-			raise RuntimeError('%s not set in hht.cfg') % lens_scale_name.upper()
+			raise RuntimeError('%s%%%s not set in hht.cfg' % (lens_scale_name.upper(), submode_name.upper()))
 		defocus = defocus_current * m
 		return defocus
 
 	def setDefocus(self, value):
 		submode_name = self.getProjectionSubModeName()
-		lens_scale_name = 'lens_%s_obj_current_defocus_scale' % (submode_name.lower())
-		m = self.getHitachiConfig('optics',lens_scale_name)
+		lens_scale_name = 'lens_obj_current_defocus_scale'
+		m = self.getHitachiConfig('optics',lens_scale_name)[submode_name.lower()]
 		if not m :
-			raise RuntimeError('%s not set in hht.cfg') % lens_scale_name.upper()
+			raise RuntimeError('%s%%%s not set in hht.cfg' % (lens_scale_name.upper(), submode_name.upper()))
 		mag = self.getMagnification()
 		lens_current_value = value / m
 		focus = lens_current_value + self.zero_defocus_current[mag]
@@ -524,7 +544,7 @@ class Hitachi(tem.TEM):
 		# Only reset within its own projection submode
 		for mag in self.submode_mags[submode_id]:
 			self.zero_defocus_current[mag] += focus_diff
-		ref_mag = self.getHitachiConfig('defocus','ref_%s_magnification' % submode_name.lower())
+		ref_mag = self.getHitachiConfig('defocus','ref_magnification')[submode_name.lower()]
 		self.saveEucentricFocusAtReference(submode_name, self.zero_defocus_current[ref_mag])
 
 	def getMagnification(self, index=None):
@@ -674,7 +694,7 @@ class Hitachi(tem.TEM):
 			raise RuntimeError('Please run hht_defocus.py first to get initial values')
 
 	def getEucentricFocusAtReference(self, p_submode_name):
-		ufocus_path = self.getHitachiConfig('defocus','ref_%s_ufocus_path' % p_submode_name.lower())
+		ufocus_path = self.getHitachiConfig('defocus','ref_ufocus_path')[p_submode_name.lower()]
 		f = open(ufocus_path)
 		lines = f.readlines()
 		ufocus = float(lines[0].split('\n')[0])
@@ -682,7 +702,7 @@ class Hitachi(tem.TEM):
 		return ufocus
 
 	def saveEucentricFocusAtReference(self, p_submode_name, value):
-		ufocus_path = self.getHitachiConfig('defocus','ref_%s_ufocus_path' % p_submode_name.lower())
+		ufocus_path = self.getHitachiConfig('defocus','ref_ufocus_path')[p_submode_name.lower()]
 		f = open(ufocus_path,'w')
 		f.write('%9.6f\n' % value)
 		f.close()
@@ -873,7 +893,8 @@ class Hitachi(tem.TEM):
 			return 'unknown'
 		apt_api_name = self.aperture_mechanism_map[aperture_mechanism]
 		sel_names = self.getApertureSelections(aperture_mechanism)
-		sel_index = self.h.runGetCommand(apt_api_name,'Position',['int',])
+		sel_index = self.h.runGetCommand(apt_api_name,'Position',['int',])[0]
+		print sel_index
 		return sel_names[sel_index]
 
 	def setApertureSelection(self, aperture_mechanism, name):
