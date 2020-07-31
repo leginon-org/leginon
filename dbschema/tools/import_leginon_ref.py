@@ -69,7 +69,13 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 			classname = datadict.keys()[0]
 			kwargs = datadict[classname]
 			# 1. process camdata, scopedata, plandata
+			# export does not go further than child so the reference to InstrumentData
+			# is not in the keys and the import script won't insert if no key
+			# add instrument as key
+			kwargs['camera']['ccdcamera'] = None
 			self.data['camera'] = self.insertClass('CameraEMData', kwargs['camera'])
+			# add instrument as key
+			kwargs['scope']['tem'] = None
 			self.data['scope'] = self.insertClass('ScopeEMData', kwargs['scope'])
 			self.data['corrector plan'] = self.insertClass('CorrectorPlanData', kwargs['corrector plan'])
 			kwargs['dark']['image'] = None
