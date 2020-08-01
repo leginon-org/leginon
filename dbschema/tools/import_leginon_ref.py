@@ -40,7 +40,8 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 			q['tem'] = self.temdata
 		q['session'] = self.session
 		for k in self.data.keys():
-			if k in q.keys():
+			# don't want to associate corrector plan with others
+			if k in q.keys() and k not in ('corrector plan',):
 				q[k] = self.data[k]
 		if 'image' in q.keys() and 'filename' in q.keys():
 			mrc_name = q['filename']+'.mrc'
@@ -54,6 +55,11 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 			return None
 		datadict = self.addKnownData(datadict)
 		q = self.makequery(classname,datadict)
+		if 'Plan' in classname:
+			# JsonLoader treats list of list as array. convert to lists here.
+			q['bad_pixels'] =  datadict['bad_pixels'].tolist()
+			q['bad_rows'] =  datadict['bad_rows'].tolist()
+			q['bad_cols'] =  datadict['bad_cols'].tolist()
 		info = 'inserting  %s ' % (classname,)
 		if 'filename' in datadict.keys():
 			info += 'saving %dx%d %s.mrc in %s' % (datadict['camera']['dimension']['x'],datadict['camera']['dimension']['y'],datadict['filename'], self.session['name'])
@@ -65,23 +71,38 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 	def insertAllData(self):
 		for datadict in self.alldata:
 			self.data = {}
-			# classname is NormData
-			classname = datadict.keys()[0]
-			kwargs = datadict[classname]
-			# 1. process camdata, scopedata, plandata
-			# export does not go further than child so the reference to InstrumentData
-			# is not in the keys and the import script won't insert if no key
-			# add instrument as key
-			kwargs['camera']['ccdcamera'] = None
-			self.data['camera'] = self.insertClass('CameraEMData', kwargs['camera'])
-			# add instrument as key
-			kwargs['scope']['tem'] = None
-			self.data['scope'] = self.insertClass('ScopeEMData', kwargs['scope'])
-			self.data['corrector plan'] = self.insertClass('CorrectorPlanData', kwargs['corrector plan'])
-			kwargs['dark']['image'] = None
-			self.data['dark'] = self.insertClass('DarkImageData', kwargs['dark'])
-			self.data['bright'] = self.insertClass('BrightImageData', kwargs['bright'])
-			self.data['norm'] = self.insertClass('NormImageData', kwargs)
+			if 'NormImageData' in datadict.keys():
+				self.processNormImageData(datadict)
+			if 'CorrectorPlanData' in datadict.keys():
+				self.processCorrectorPlanData(datadict)
+
+	def processNormImageData(self, datadict):
+		# processing  NormImageData
+		classname = 'NormImageData'
+		kwargs = datadict[classname]
+		# process camdata, scopedata
+		# export does not go further than child so the reference to InstrumentData
+		# is not in the keys and the import script won't insert if no key
+		# add instrument as key
+		kwargs['camera']['ccdcamera'] = None
+		self.data['camera'] = self.insertClass('CameraEMData', kwargs['camera'])
+		# add instrument as key
+		kwargs['scope']['tem'] = None
+		self.data['scope'] = self.insertClass('ScopeEMData', kwargs['scope'])
+		kwargs['dark']['image'] = None
+		self.data['dark'] = self.insertClass('DarkImageData', kwargs['dark'])
+		self.data['bright'] = self.insertClass('BrightImageData', kwargs['bright'])
+		self.data['norm'] = self.insertClass('NormImageData', kwargs)
+
+	def processCorrectorPlanData(self, datadict):
+			# processing  CorrectorPlanData
+			classname = 'CorrectorPlanData'
+			if classname in datadict.keys():
+				kwargs = datadict[classname]
+				# add instrument as key
+				kwargs['camera']['ccdcamera'] = None
+				self.data['camera'] = self.insertClass('CameraEMData', kwargs['camera'])
+				self.data['corrector plan'] = self.insertClass('CorrectorPlanData', kwargs)
 
 	def validateInput(self, params):
 		if len(params) != 3:
