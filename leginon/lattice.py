@@ -142,6 +142,14 @@ class Lattice(object):
 				self.lattice_points_err[closest] = err
 				self.points.append(point)
 
+def pointsToFakeLattice(points):
+	# create a lattice instance that includes all points
+	if points:
+		lat = Lattice(points[0], 1, 0.0)
+		for point in points:
+			lat.points.append(point)
+		return lat
+
 def pointsToLattice(points, spacing, tolerance, first_is_center=False):
 	# create a lattice for every point, or if centerfirst, then only
 	# create a lattice with first point as center
