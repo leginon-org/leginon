@@ -158,12 +158,13 @@ class HoleFinder(object):
 			raise RuntimeError('need image %s before running external program' % (fromimage,))
 
 		diameter = self.extholes_config['hole diameter']
+		spacing =	self.extholes_config['spacing']
 		command = self.extholes_config['command']
 
 		# Put your function call here:
 		# use command to find holes using self.__results[fromimage] as input
 		# For example:
-		# holes_found = your_holefinder(self.__results[fromimage])
+		# holes_found = your_holefinder(self.__results[fromimage], diameter, spacing)
 
 		# Here is an example of the result. (row,col)
 		holes_found = [(120,100),(50,80),(20,30)] # list of (row,col) coordinates of the holes as output.
