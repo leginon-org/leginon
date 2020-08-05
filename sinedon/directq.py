@@ -8,8 +8,8 @@
 """
 
 import sinedon
-import MySQLdb
 import sqldb
+import _mysql_exceptions
 
 connections = {}
 
@@ -30,8 +30,11 @@ def ping(modulename,param):
 		db=db_obj.dbConnection
 		try:
 			if db.stat() == 'MySQL server has gone away':
+				print 'reconnect'
 				connections[modulename] = sqldb.sqlDB(**param)
-		except MySQLdb.InterfaceError as e:
+		except _mysql_exceptions.InterfaceError as e:
+			# pymysql.err.InterfaceError is not the same as _mysql_exceptions.InterfaceError
+			# use _mysql_exceptions to be safe
 			errno = e.args[0]
 			if errno == 0:
 				# connection closed
@@ -39,7 +42,7 @@ def ping(modulename,param):
 				connections[modulename] = sqldb.sqlDB(**param)
 			else:
 				raise
-		except (MySQLdb.ProgrammingError, MySQLdb.OperationalError) as e:
+		except (_mysql_exceptions.ProgrammingError, _mysql_exceptions.OperationalError) as e:
 			# db.stat function gives error when connection is not available.
 			errno = e.args[0]
 			## some version of mysqlpython parses the exception differently
@@ -48,7 +51,7 @@ def ping(modulename,param):
 			## 2006:  MySQL server has gone away
 			if errno in (2006,):
 				ctime = time.strftime("%H:%M:%S")
-				print "reconnecting at %s after MySQL server has gone away error" % (ctime,)
+				# print "reconnecting at %s after MySQL server has gone away error" % (ctime,)
 				connections[modulename] = sqldb.sqlDB(**param)
 			else:
 				raise
