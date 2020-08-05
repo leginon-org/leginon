@@ -501,21 +501,21 @@ class Acquisition(targetwatcher.TargetWatcher):
 		# validate any bad settings that requires aborting now.
 		try:
 			self.validateSettings()
-		except Exception, e:
+		except Exception as e:
 			self.logger.error(str(e))
 			raise
 		# need to validate presets before preTargetSetup because they need
 		# to use preset, too, even though not the same target.
 		try:
 			self.validatePresets()
-		except InvalidPresetsSequence, e:
+		except InvalidPresetsSequence as e:
 			if targetdata is None or targetdata['type'] == 'simulated':
 				## don't want to repeat in this case
 				self.logger.error(str(e))
 				return 'aborted'
 			else:
 				raise
-		except Exception, e:
+		except Exception as e:
 			self.logger.error(str(e))
 			raise
 
@@ -667,7 +667,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 				calclient = self.calclients[movetype]
 				try:
 					newscope = calclient.transform(pixelshift, targetscope, targetcamera)
-				except calibrationclient.NoMatrixCalibrationError, e:
+				except calibrationclient.NoMatrixCalibrationError as e:
 					raise NoMoveCalibration(e)
 
 				## if stage is tilted and moving by image shift,
@@ -676,7 +676,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 					calclient = self.calclients['stage position']
 					try:
 						tmpscope = calclient.transform(pixelshift, targetscope, targetcamera)
-					except calibrationclient.NoMatrixCalibrationError,e:
+					except calibrationclient.NoMatrixCalibrationError as e:
 						raise NoMoveCalibration(e)
 					ydiff = tmpscope['stage position']['y'] - targetscope['stage position']['y']
 					zdiff = ydiff * numpy.sin(targetscope['stage position']['a'])
@@ -803,7 +803,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 					beamtilt = beamtiltclient.transformImageShiftToBeamTilt(imageshift, tem, cam, ht, self.beamtilt0, mag)
 					self.instrument.tem.BeamTilt = beamtilt
 					self.logger.info("beam tilt for image acquired (%.4f,%.4f)" % (self.instrument.tem.BeamTilt['x'],self.instrument.tem.BeamTilt['y']))
-				except Exception, e:
+				except Exception as e:
 					self.resetComaCorrection()
 					raise NoMoveCalibration(e)
 				try:
@@ -811,7 +811,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 					self.instrument.tem.Stigmator = {'objective':stig}
 					stig1 = self.instrument.tem.getStigmator()['objective']
 					self.logger.info("objective stig for image acquired (%.4f,%.4f)" % (stig1['x']-self.stig0['x'],stig1['y']-self.stig0['y']))
-				except Exception, e:
+				except Exception as e:
 					self.resetComaCorrection()
 					raise NoMoveCalibration(e)
 				try:
@@ -819,7 +819,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 					self.instrument.tem.Defocus = defoc
 					defoc1 = self.instrument.tem.getDefocus()
 					self.logger.info("correcting defocus for image acquired by (%.4f) (um)" % ((defoc1-self.defoc0)*1e6))
-				except Exception, e:
+				except Exception as e:
 					self.resetComaCorrection()
 					raise NoMoveCalibration(e)
 
@@ -1029,14 +1029,19 @@ class Acquisition(targetwatcher.TargetWatcher):
 				# before the real reset values are set
 				self.logger.warning("Calling resetComaCorrection before it is known is not possible. No reset is done")
 				return
-			self.instrument.tem.BeamTilt = self.beamtilt0
-			self.instrument.tem.Stigmator = {'objective':self.stig0}
-			self.instrument.tem.Defocus = self.defoc0
-			self.logger.info("reset beam tilt to (%.4f,%.4f)" % (self.instrument.tem.BeamTilt['x'],self.instrument.tem.BeamTilt['y']))
-			stig1 = self.instrument.tem.getStigmator()['objective']
-			self.logger.info("reset object stig to (%.4f,%.4f)" % (stig1['x'],stig1['y']))
-			defoc1 = self.instrument.tem.getDefocus()
-			self.logger.info("reset defocus to (%.4f) um" % (defoc1*1e6))
+			try:
+				self.instrument.tem.BeamTilt = self.beamtilt0
+				self.instrument.tem.Stigmator = {'objective':self.stig0}
+				self.instrument.tem.Defocus = self.defoc0
+				self.logger.info("reset beam tilt to (%.4f,%.4f)" % (self.instrument.tem.BeamTilt['x'],self.instrument.tem.BeamTilt['y']))
+				stig1 = self.instrument.tem.getStigmator()['objective']
+				self.logger.info("reset object stig to (%.4f,%.4f)" % (stig1['x'],stig1['y']))
+				defoc1 = self.instrument.tem.getDefocus()
+				self.logger.info("reset defocus to (%.4f) um" % (defoc1*1e6))
+			except (TypeError, TransportError) as e:
+				# Don't raise, just report because this function is the escape route
+				# for other failures.
+				self.logger.error(e)
 
 	def parkAtHighMag(self):
 		# wait for at least for 30 seconds
@@ -1371,19 +1376,19 @@ class Acquisition(targetwatcher.TargetWatcher):
 		proctargetdata = self.reportTargetStatus(targetdata, 'processing')
 		try:
 			ret = self.processTargetData(targetdata=proctargetdata, attempt=1)
-		except BadImageStatsPause, e:
+		except BadImageStatsPause as e:
 			self.logger.error('processing target failed: %s' %e)
 			ret = 'aborted'
-		except BadImageAcquirePause, e:
+		except BadImageAcquirePause as e:
 			self.logger.error('processing target failed: %s' %e)
 			ret = 'aborted'
-		except BadImageAcquireBypass, e:
+		except BadImageAcquireBypass as e:
 			self.logger.error('processing target failed: %s' %e)
 			ret = 'aborted'
-		except BadImageStatsAbort, e:
+		except BadImageStatsAbort as e:
 			self.logger.error('processing target failed: %s' %e)
 			ret = 'aborted'
-		except Exception, e:
+		except Exception as e:
 			self.logger.error('processing target failed: %s' %e)
 			ret = 'aborted'
 		self.reportTargetStatus(proctargetdata, 'done')
@@ -1460,9 +1465,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 			original_position = self.instrument.tem.getStagePosition()
 			self.publish(request_data, database=True, pubevent=True, wait=True)
 			self.instrument.tem.setStagePosition({'z':original_position['z']})
-		except node.ConfirmationNoBinding, e:
+		except node.ConfirmationNoBinding as e:
 			self.logger.debug(e)
-		except Exception, e:
+		except Exception as e:
 			self.logger.error(e)
 
 	def fixAlignment(self):
@@ -1473,9 +1478,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 			original_position = self.instrument.tem.getStagePosition()
 			status = self.outputEvent(evt, wait=True)
 			self.instrument.tem.setStagePosition({'z':original_position['z']})
-		except node.ConfirmationNoBinding, e:
+		except node.ConfirmationNoBinding as e:
 			self.logger.debug(e)
-		except Exception, e:
+		except Exception as e:
 			self.logger.error(e)
 
 	def fixCondition(self):
@@ -1486,9 +1491,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 		try:
 			self.logger.info('Condition fixing before processing a target')
 			status = self.outputEvent(evt, wait=True)
-		except node.ConfirmationNoBinding, e:
+		except node.ConfirmationNoBinding as e:
 			self.logger.debug(e)
-		except Exception, e:
+		except Exception as e:
 			self.logger.error(e)
 
 		# Second part: Preset-required tuning before rejected targets.
