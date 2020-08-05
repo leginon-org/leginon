@@ -9,6 +9,7 @@
 
 require_once "inc/leginon.inc";
 require_once "inc/graph.inc";
+require_once "inc/stats.inc";
 
 $defaultId= 1445;
 $defaultpreset='enn';
@@ -112,13 +113,20 @@ if ($viewdata) {
 ####	#
 	$keys = array_keys($alscount);
 	echo "key     alsthickness hl thickness <br>";
+	$xdata = array();
+	$ydata=array();
 	foreach ($keys as $key) {
 		if (array_key_exists($key,$hlthick)) {
 			echo $key . " " . $alsthick[$key] . " " . $hlthick[$key] . "<br>";
 			$p = array('hl_thickness' => $hlthick[$key], 'als_thickness' => $alsthick[$key]) ;
 			$plt_thicknessdata2[]  = $p;
+			$xdata[] = $hlthick[$key];
+			$ydata[] = $alsthick[$key];
 		}
 	}
+	$trendarray = linear_regression($xdata,$ydata);
+	print "<br> LINEAR REGRESSION STATS";
+	printf( "<br> slope is %.2f, intercept is %.2f, correlation (r-squared) is %.3f",  $trendarray['slope'], $trendarray['intercept'], $trendarray['correlation'] ) ;
 
 ####
 	exit;

@@ -1703,6 +1703,14 @@ class JAHCFinderSettingsData(TemplateTargetFinderSettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class ExtHoleFinderSettingsData(TemplateTargetFinderSettingsData):
+	def typemap(cls):
+		return TemplateTargetFinderSettingsData.typemap() + (
+			('hole diameter', int),
+			('command', str),
+		)
+	typemap = classmethod(typemap)
+
 class DoGFinderSettingsData(HoleFinderSettingsData):
 	def typemap(cls):
 		return HoleFinderSettingsData.typemap() + (

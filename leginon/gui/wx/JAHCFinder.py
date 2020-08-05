@@ -350,18 +350,20 @@ class LatticeScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.widgets['lattice extend'] = Choice(self, -1, choices=self.node.extendtypes)
 
 		szlattice = wx.GridBagSizer(5, 5)
+		note = wx.StaticText(self, -1, '(Set spacing to 0 to accept all blobs)')
+		szlattice.Add(note, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		label = wx.StaticText(self, -1, 'Spacing:')
-		szlattice.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szlattice.Add(self.widgets['lattice spacing'], (0, 1), (1, 1),
+		szlattice.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szlattice.Add(self.widgets['lattice spacing'], (1, 1), (1, 1),
 										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 
 		label = wx.StaticText(self, -1, 'Tolerance:')
-		szlattice.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szlattice.Add(self.widgets['lattice tolerance'], (1, 1), (1, 1),
+		szlattice.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szlattice.Add(self.widgets['lattice tolerance'], (2, 1), (1, 1),
 										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 
-		szlattice.Add(extendlabel, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szlattice.Add(self.widgets['lattice extend'], (2, 1), (1, 1),
+		szlattice.Add(extendlabel, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szlattice.Add(self.widgets['lattice extend'], (3, 1), (1, 1),
 										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 
 		szlattice.AddGrowableCol(1)

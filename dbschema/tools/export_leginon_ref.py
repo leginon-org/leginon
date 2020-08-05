@@ -75,13 +75,41 @@ class ReferenceJsonMaker(jsonfun.DataJsonMaker):
 					self.publishNormData(normdata)
 				except IOError as e:
 					print e
+				if normdata['channel'] == 0:
+					# just do one channel
+					plandata = self.researchCorrectorPlan(normdata['camera'])
+					if plandata:
+						self.publishPlanData(plandata)
 
-	def modifyReferenceDict(self, datadict, name, file_prefix, plandict, camdict, scopedict):
+	def researchCorrectorPlan(self, cameradata):
+		'''
+		find corrector plan from camera parameters.  Copied from correctorclient.
+		'''
+		qcamera = leginondata.CameraEMData()
+		# Fix Me: Ignore gain index for now because camera setting does not have it when theplan is saved.
+		for key in ('ccdcamera','dimension','binning','offset'):
+			qcamera[key] = cameradata[key]
+		qplan = leginondata.CorrectorPlanData()
+		qplan['camera'] = qcamera
+		plandatalist = qplan.query()
+
+		if plandatalist:
+			return plandatalist[0]
+		else:
+			return None
+	def publishPlanData(self, plandata):
+		# TODO corrector plan does not come from normdata
+		if plandata is not None:
+			camdict = self.makeClassDict(plandata['camera'])
+			plandict = self.makeClassDict(plandata)
+			plandict['camera'] = camdict
+			self.alldata.append({'CorrectorPlanData':plandict})
+
+	def modifyReferenceDict(self, datadict, name, file_prefix, camdict, scopedict):
 		'''
 		create association between reference mrc images by moving the saved images under a
     consistent naming scheme.
 		'''
-		datadict['corrector plan'] = plandict
 		datadict['camera'] = camdict
 		datadict['scope'] = scopedict
 		# set value in referenced image to be the same as norm
@@ -103,19 +131,15 @@ class ReferenceJsonMaker(jsonfun.DataJsonMaker):
 		file_prefix = '%d' % normdata.dbid
 		camdict = self.makeClassDict(normdata['camera'])
 		scopedict = self.makeClassDict(normdata['scope'])
-		plandict = self.makeClassDict(normdata['corrector plan'])
-		if plandict is not None:
-			plandict['camera'] = camdict
-		#self.alldata.append({'CorrectorPlanData':plandict})
 		# set value in referenced image to be the same as norm
 		darkdict = self.makeClassDict(normdata['dark'])
-		darkdict = self.modifyReferenceDict(darkdict, 'dark', file_prefix, plandict, camdict, scopedict)
+		darkdict = self.modifyReferenceDict(darkdict, 'dark', file_prefix, camdict, scopedict)
 		#
 		brightdict = self.makeClassDict(normdata['bright'])
-		brightdict = self.modifyReferenceDict(brightdict, 'bright', file_prefix, plandict, camdict, scopedict)
+		brightdict = self.modifyReferenceDict(brightdict, 'bright', file_prefix, camdict, scopedict)
 		#
 		normdict = self.makeClassDict(normdata)
-		normdict = self.modifyReferenceDict(normdict, 'norm', file_prefix, plandict, camdict, scopedict)
+		normdict = self.modifyReferenceDict(normdict, 'norm', file_prefix, camdict, scopedict)
 		# make it into json format dictionaries in dictionary.
 		normdict['dark'] = darkdict
 		normdict['bright'] = brightdict
