@@ -146,8 +146,9 @@ def pointsToFakeLattice(points):
 	# create a lattice instance that includes all points
 	if points:
 		lat = Lattice(points[0], 1, 0.0)
-		for point in points:
-			lat.points.append(point)
+		if len(points) > 1:
+			for point in points[1:]:
+				lat.points.append(point)
 		return lat
 
 def pointsToLattice(points, spacing, tolerance, first_is_center=False):
