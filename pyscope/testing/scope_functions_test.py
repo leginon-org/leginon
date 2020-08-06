@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import time
 from pyami import moduleconfig
 from pyscope import instrumenttype
 search_for = 'TEM'
@@ -45,8 +46,10 @@ def testMethods(tem_inst):
 				result = getattr(tem_inst, attr_name)()
 				if 'set' in impls:
 					attr_name = 'set'+c['name']
+					t0 = time.time()
+					print attr_name
 					getattr(tem_inst, attr_name)(result)
-
+					print time.time()-t0
 			except Exception as e:
 				print 'Error testing %s: %s' % (attr_name,e)
 				error_count += 1
