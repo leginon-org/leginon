@@ -14,6 +14,7 @@ import shutil
 import platform
 import subprocess
 import time
+import datetime
 import numpy
 from watchdog.events import PatternMatchingEventHandler
 from watchdog.observers import Observer
@@ -21,10 +22,13 @@ import leginon.leginondata
 import leginon.ddinfo
 import pyami.fileutil, pyami.mrc, pyami.xmlfun, pyami.numpil
 import sinedon.directq
-from leginon import epu_meta
-
+try:
+	from leginon import epu_meta
+except ImportError:
+	# find it locally
+	import epu_meta
 session_timeout = 60 # seconds before timeout
-check_interval = 60  # seconds between checking for new frames
+check_interval = 120  # seconds between checking for new frames
 # production usage on linux
 watch_for_ext = 'mrc'
 
@@ -44,6 +48,7 @@ class RawTransfer(object):
 
 		self.session = None
 		self.watch_path = '.'
+		self.method = None
 		self.handler = self.createEventHandler()
 		self.t0 = time.time()
 		self.meta = epu_meta.EpuMetaMapping()
@@ -537,11 +542,13 @@ class RawTransfer(object):
 			epuinfo[0] = recent_hl_epudata['name']
 			parent_imagedata = recent_hl_epudata['image']
 			print 'assign orphan en image to %s: v%d' %(epuinfo[0], recent_hl_epudata['version'])
+		print epukey,epuinfo
 		scopedata = self.makeScopeEMData(epuinfo)
 		cameradata = self.makeCameraEMData(epuinfo)
 		try:
 			targetdata = self.makeTargetData(epukey, epuinfo, scopedata, cameradata, parent_imagedata)
 		except ValueError, e:
+			# give up and try later.
 			print e
 			return
 		# ImageListData needed for myamiweb display of atlas
@@ -663,6 +670,10 @@ class RawTransfer(object):
 		filename = '_'.join([parentname,target_name])
 		if targetdata['version'] > 0:
 			filename += '_v%02d' % targetdata['version']
+		# validate the name:
+		r = leginon.leginondata.AcquisitionImageData(session=self.session,filename=filename).query()
+		if r:
+			raise KeyboardInterrupt('Same file as image %d' % r[0].dbid)
 		return filename
 
 	def setMetaDict(self, epuinfo):
@@ -812,14 +823,16 @@ class RawTransfer(object):
 		qt['type']='acquisition'
 		qt['status']='done'
 		if parent_imagedata:
-			if preset_name == 'en' and parent_imagedata['target']['version']==0:
+			if self.method == 'copy' and preset_name == 'en' and parent_imagedata['target']['version']==0:
+				# different versions of hl images may not all get copied before its en.
 				raise ValueError('en should come from higher version than 0')
 			pixel_shift = self.getTargetPixelShift(parent_imagedata, scopedata)
 			qt['delta row'] = pixel_shift[1]
 			qt['delta column'] = pixel_shift[0]
-			qt['version'] = version
 			qt['image'] = parent_imagedata
-			qt['number'] = self.getTargetNumber(parent_imagedata, version)
+			new_number,new_version = self.getTargetNumberVersion(parent_imagedata, epukey, preset_name, version)
+			qt['number'] = new_number
+			qt['version'] = new_version
 			# need these to display footprint in viewer
 			qt['camera'] = parent_imagedata['camera']
 			qt['scope'] = parent_imagedata['scope']
@@ -861,7 +874,9 @@ class RawTransfer(object):
 					qt['image'] = parent_imagedata
 					qt['delta row'] = pixel_shift[1]
 					qt['delta column'] = pixel_shift[0]
-					qt['number']= self.getTargetNumber(parent_imagedata, qt['version'])
+					new_number, new_version= self.getTargetNumberVersion(parent_imagedata, epukey, preset_name, qt['version'])
+					qt['number'] = new_number
+					qt['version'] = new_version
 					pixel_shift = self.getTargetPixelShift(parent_imagedata, scopedata)
 					# need these to display footprint in viewer
 					qt['camera'] = parent_imagedata['camera']
@@ -1008,29 +1023,51 @@ class RawTransfer(object):
 		else:
 			return 1
 
-	def getTargetNumber(self, parent_imagedata, version):
+	def getTargetNumberVersion(self, parent_imagedata, epukey, preset_name, version):
 		'''
-		Get target number when parent is known.
+		Get target number and corrected version when parent is known.
 		'''
-		number = 0
+		epuq = leginon.leginondata.EpuData(name=epukey, session=self.session)
+		epuq['preset name']=preset_name
+		epus = epuq.query()
+		for e in epus:
+			if e['image']['target'] is None:
+				epus.remove(e)
+		if epus:
+			number = max(map((lambda x:x['image']['target']['number']),epus))
+			alt_number = min(map((lambda x:x['image']['target']['number']),epus))
+			if number != alt_number:
+				print map((lambda x:x['image']['filename']),epus)
+				raise ValueError('Bad previous insert')
+			latest_version = max(map((lambda x:x['image']['target']['version']),epus))
+			return number, latest_version+1
+		latest_number = 0
 		# find version 0 images of the same parent.
 		r = leginon.leginondata.AcquisitionImageTargetData(image=parent_imagedata,version=0).query()
 		if r:
+			latest_number = max(map((lambda x:x['number']),r))
 			if version == 0:
 				# version was set to zero in the earlier part of code to force target number incrementation.
-				return len(r)+1
+				return latest_number+1, 0
 			else:
 				# have non-zero version value. Must be the same the recent target.
-				return r[0]['number']
-		return 1
+				nr = leginon.leginondata.AcquisitionImageTargetData(image=parent_imagedata,number=latest_number).query()
+				latest_version = max(map((lambda x:x['version']),nr))
+				return latest_number, latest_version+1
+		return 1, 0
 
 	def alreadyUploaded(self, epukey, epuinfo, preset_name):
 		parent, version, file_path, datetime_string, preset_name = epuinfo
+		if parent:
+			pepuq = leginon.leginondata.EpuData(session=self.session,name=parent)
+		else:
+			pepuq = None
 		epuq = leginon.leginondata.EpuData(session=self.session)
+		epuq['parent'] = pepuq
 		epuq['name'] = epukey
 		epuq['preset name'] = preset_name
 		epuq['datetime_string'] = datetime_string
-		epuq['version'] = version
+		#epuq['version'] = version
 		r = epuq.query()
 		if r:
 			return r[0]
@@ -1098,7 +1135,7 @@ class RawTransfer(object):
 		self.upload()
 		print 'Done walking through existing tmp epu folder %s' % (self.watch_path)
 
-	def getValidEpuSessions(self, src_epu_path, limit_one):
+	def getValidEpuSessions(self, src_epu_path, limit_today):
 		'''
 		Get EPU sessions named after a Leginon session.
 		'''
@@ -1115,12 +1152,21 @@ class RawTransfer(object):
 				valid_epu_sessions[dbid] = name
 		# sort so that most recent is at the end
 		valid_session_dbids.sort()
-		if limit_one and len(valid_session_dbids) > 1:
-			for dbid in valid_session_dbids[:-1]:
-				print 'Old EPU sessions can be removed at the source: %s' % (valid_epu_sessions[dbid])
-				clean_path = os.path.join(src_epu_path, valid_epu_sessions[dbid])
-				#self.cleanUp(clean_path)
+		if limit_today and len(valid_session_dbids) > 1:
 			valid_session_dbids = valid_session_dbids[-1:]
+			for dbid in valid_session_dbids[:-1]:
+				this_session = leginon.leginondata.SessionData().direct_query(dbid)
+				images = leginon.leginondata.ScopeEMData(session=this_session).query(results=1)
+				if not images:
+					recent_timestamp = this_session.timestamp
+				else:
+					recent_timestamp = images[0].timestamp
+				if datetime.datetime.now()-recent_timestamp > datetime.timedelta(days=1):
+					print 'Old EPU sessions will be removed at the source: %s' % (valid_epu_sessions[dbid])
+					clean_path = os.path.join(src_epu_path, valid_epu_sessions[dbid])
+					self.cleanUp(clean_path)
+				else:
+					valid_session_dbids.append(dbid)
 		for dbid in valid_session_dbids:
 			valid_sessions.append((valid_epu_sessions[dbid],leginon.leginondata.SessionData().direct_query(dbid)))
 		return valid_sessions
@@ -1134,13 +1180,13 @@ class RawTransfer(object):
 			print "Limit processing to destination frame path started with %s" % (dst_head)
 		#TODO reading through old sessions take too long.  Don't do them now.
 		# Need to make a flag to turn it on.
-		limit_one = True
+		limit_today = False
 		iter_count = 0
 		while True:
 			print 'Iterating...'
-			valid_sessions = self.getValidEpuSessions(src_epu_path, limit_one)
-			if limit_one:
-				print 'Work only on the most recent Leginon session equivalent'
+			valid_sessions = self.getValidEpuSessions(src_epu_path, limit_today)
+			if limit_today:
+				print 'Work only on the %d most recent Leginon session equivalent' % (len(valid_sessions))
 			for valid_pair in valid_sessions:
 				epu_session_name, leginon_sessiondata = valid_pair
 
@@ -1158,7 +1204,7 @@ class RawTransfer(object):
 			iter_count += 1
 			print 'Sleeping after iteration %d...' % (iter_count)
 			time.sleep(check_interval)
-			limit_one = True
+			limit_today = True
 
 if __name__ == '__main__':
 		a = RawTransfer()
