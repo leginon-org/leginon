@@ -498,6 +498,10 @@ class DMSEM(ccdcamera.CCDCamera):
 		Enable/Disable post column energy filter
 		by retracting the slit
 		'''
+		# setEnergyFilter takes about 1.4 seconds even if in the same state.
+		# avoid it to save time.
+		if self.getEnergyFilter == value:
+			return
 		if value:
 			i = 1
 		else:
