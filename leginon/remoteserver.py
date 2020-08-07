@@ -24,7 +24,7 @@ import pyami.moduleconfig
 import pyami.fileutil
 import pyami.numpil
 
-SLEEP_TIME = 5
+SLEEP_TIME = 2
 
 # get configuration from remote.cfg
 try:
@@ -115,7 +115,7 @@ class RemoteSessionServer(object):
 		# remove images first because it uses references of targeting session_nodes
 		self._clearRemoteImages()
 		self._clearRemoteTargetingNodes()
-		routers = ['remote/status','remote/toolbar','remote/click']
+		routers = ['remote/status','remote/toolbar','remote/click','remote/pmlock']
 		for name in routers:
 			self._clearRemoteByPk(name)
 
@@ -207,6 +207,7 @@ class RemoteSessionServer(object):
 		if not self.remote_server_active or not pk or not data:
 			return
 		url = self._makeUrl(router_name, pk=pk)
+		#print(url, data)
 		answer = requests.patch(url=url, json=data, auth=self.leg_remote_auth)
 		return self._processResponse(answer)
 
@@ -242,7 +243,7 @@ class RemoteSessionServer(object):
 		#print 'got answer from post', url
 		return self._processResponse(answer)
 
-	def userHasControl(self):
+	def userHasControl(self, log_error=False):
 		try:
 			if self.remote_server_active:
 				session_pk = self.get('api/sessions',{'name':self.session['name']})[0]['id']
@@ -250,9 +251,19 @@ class RemoteSessionServer(object):
 				return controlled_by_user
 			else:
 				return False
+		except IndexError:
+			if log_error:
+				self.logger.error('Session not assigned for remote')
+			return False
 		except requests.ConnectionError:
-			e = 'Connection to remote is lost'
-			self.logger.error(e)
+			# always want to pass to leginon log
+			if log_error:
+				e = 'Connection to remote is lost'
+				self.logger.error(e)
+			return None
+		except TypeError:
+			if log_error:
+				self.logger.error('Failed to determinine microscope control')
 			return False
 
 class RemoteNodeServer(RemoteSessionServer):
@@ -260,6 +271,34 @@ class RemoteNodeServer(RemoteSessionServer):
 		super(RemoteNodeServer,self).__init__(logger, sessiondata)
 		self.node = node
 		self.node_name = node.name.replace(' ','_')
+
+class PresetsManagerLock(RemoteNodeServer):
+	router_name = 'remote/pmlock'
+	def __init__(self, logger, sessiondata, node):
+		super(PresetsManagerLock,self).__init__(logger, sessiondata, node)
+		self.data = {
+				'session_name': self.session['name'],
+				'node_order': self.node.node_order,
+		}
+
+	def setLock(self):
+		if not self.userHasControl(log_error=False):
+			# do nothing
+			return
+		results = self.get(self.router_name, self.data)
+		if results:
+			return
+		else:
+			return self.post(self.router_name, self.data)
+
+	def setUnlock(self):
+		if not self.userHasControl(log_error=False):
+			# do nothing
+			return
+		results = self.get(self.router_name, self.data)
+		if results:
+			self.logger.debug(results)
+			self.delete(self.router_name, results[0]['pk'])
 
 class RemoteStatusbar(RemoteNodeServer):
 	router_name = 'remote/status'
@@ -280,11 +319,15 @@ class RemoteStatusbar(RemoteNodeServer):
 		this_subclass = self._isThisSubClass()
 		if this_subclass is None:
 			return
+		if not self.userHasControl(log_error=False):
+			# do nothing
+			return
 		try:
 			self._setStatus(status, this_subclass)
 		except requests.ConnectionError:
 			e = 'Connection to remote is lost'
-			self.logger.error(e)
+			# not to log as this is not critical and has too many occurance.
+			#self.logger.error(e)
 
 	def _setStatus(self, status, this_subclass):
 		status_str='_'.join(status.split())
@@ -299,9 +342,9 @@ class RemoteStatusbar(RemoteNodeServer):
 		results = self.get(self.router_name, self.data)
 		if status in ('processing','user input','waiting','remote'):
 			if results:
-				return self.patch(self.router_name, results[0]['pk'], {'value':status_str})
+				return self.patch(self.router_name, results[0]['pk'], {'value':status_str, 'node_order':self.node.node_order})
 			data = self.data.copy()
-			data.update({'value':status_str})
+			data.update({'value':status_str, 'node_order':self.node.node_order})
 			return self.post(self.router_name, data)
 		else:
 			if results:
@@ -318,7 +361,8 @@ class RemoteQueueCount(RemoteNodeServer):
 			self._setQueueCount(count)
 		except requests.ConnectionError:
 			e = 'Connection to remote is lost'
-			self.logger.error(e)
+			# not to log as this is not critical and has too many occurance.
+			#self.logger.error(e)
 
 	def _setQueueCount(self, count):
 		self.data = {
@@ -342,9 +386,14 @@ class RemoteToolbar(RemoteNodeServer):
 		self.tools = {}
 		self.tool_configs = {}
 
-	def addClickTool(self,name, handling_attr_name, help_string=''):
-		self.tools[name] = ClickTool(self, name, handling_attr_name, help_string)
-		self.tool_configs[name] = self.tools[name].tool_config
+	def addClickTool(self,name, handling_attr_name, help_string='',block_rule='none'):
+		if not name in self.tools.keys():
+			self.tools[name] = ClickTool(self, name, handling_attr_name, help_string, block_rule)
+			self.tool_configs[name] = self.tools[name].tool_config
+		else:
+			# reconnect after leginon-remote restarted
+			if not self.tools[name].active:
+				self.tools[name].activate()
 
 	def removeClickTool(self, name):
 		if name in self.tools:
@@ -358,7 +407,7 @@ class RemoteToolbar(RemoteNodeServer):
 				'session_name': self.session['name'],
 				'node': self.node_name,
 		}
-		patch_dict = {'tools':self.tool_configs}
+		patch_dict = {'tools':self.tool_configs,'node_order':self.node.node_order}
 		results = self.get(self.router_name, self.data)
 		if results:
 			# patch existing toolbar
@@ -388,17 +437,18 @@ class Tool(object):
 				'node': self.toolbar.node_name,
 				'tool': self.name,
 		}
-			
+
 class ClickTool(Tool):
 	'''
 	Click tool calls a handling attribute from the node when it is triggered
 	by the existance of the specified ClickToolValue in leginon-remote
 	'''
 	router_name = 'remote/click'
-	def __init__(self, parent, name, handling_attr_name, help_string):
+	def __init__(self, parent, name, handling_attr_name, help_string, block_rule='none'):
 		super(ClickTool,self).__init__(parent, name, handling_attr_name, help_string)
-		self.tool_config.update({'type':'click','choices':(False, True)})
+		self.tool_config.update({'type':'click','choices':(False, True),'block_rule':block_rule})
 		self.toolbar.logger.debug('click tracking config: %s' % self.tool_config)
+		self.active = False
 		self.activate()
 		response = self.toolbar.get(self.router_name,self.tool_data)
 
@@ -406,8 +456,9 @@ class ClickTool(Tool):
 		self.active = False
 
 	def activate(self):
-		self.active = True
-		self.startWaiting()
+		if not self.active:
+			self.active = True
+			self.startWaiting()
 
 	def startWaiting(self):
 		t = threading.Thread(target=self.clickTracking)
@@ -421,6 +472,7 @@ class ClickTool(Tool):
 		try:
 			self._clickTracking()
 		except requests.ConnectionError:
+			self.deActivate()
 			e = 'Connection to remote is lost'
 			self.toolbar.logger.error(e)
 
@@ -436,6 +488,10 @@ class ClickTool(Tool):
 		'''
 		Check if clicked is set on the remote tool using a web request.
 		'''
+		if self.toolbar.userHasControl(log_error=False) is False:
+			# slow down clickTracking, This reduces remote webserver activities
+			time.sleep(SLEEP_TIME)
+			return False
 		response = self.toolbar.get(self.router_name,self.tool_data)
 		if response:
 			return True
@@ -491,10 +547,10 @@ class RemoteTargetingServer(RemoteNodeServer):
 				self.target_types.append(target_type_data)
 		data = {}
 		data['target_types'] = self.target_types
+		data['node_order'] = self.node.node_order
 		r = self.get(route_name,{'session':self.session_pk,'name':self.node_name})
 		if r:
 			session_node_pk = r[0]['id']
-			# just update
 			response = self.patch(route_name, r[0]['id'], data)
 		else:
 			# insert new one
@@ -631,6 +687,7 @@ class RemoteTargetingServer(RemoteNodeServer):
 		if not self.active:
 			return False
 		# get image object. Should always have one result.
+		# NOTE this does not filter for the image.  It assumes the right image is there.
 		results = self.get(self.route_name, filter_params)
 		try:
 			# convert coordinates to tuple
@@ -657,14 +714,23 @@ class RemoteTargetingServer(RemoteNodeServer):
 			e = 'Connection to remote is lost'
 			self.logger.error(e)
 			return False
+		except AttributeError:
+			e = 'Connection to remote is lost'
+			self.logger.error(e)
+			return False
 
 	def _getInTargets(self):
 		xys = False
 		while xys is False or not self.active:
 			xys = self._getTargetData()
 			if not self.userHasControl():
+				# control taken away while waiting for target.
 				# stop waiting and declare failed
 				return False
+			# FIX ME: This will keep looping
+			# if node is exited but still waiting for remote InTargets.
+			time.sleep(0.5)
+			# print 'looping checking targetdata and user has control with self.active=', self.active
 		xys = self.filterInTargets(xys)
 		return xys
 

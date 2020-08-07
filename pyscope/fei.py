@@ -406,6 +406,11 @@ class Tecnai(tem.TEM):
 	def setHighTension(self, ht):
 		self.tecnai.Gun.HTValue = float(ht)
 	
+	def getMinimumIntensityMovement(self):
+		value = self.getFeiConfig('optics','minimum_intensity_movement')
+		if value is None:
+			return 1e-8
+
 	def getIntensity(self):
 		intensity = getattr(self.tecnai.Illumination, self.intensity_prop)
 		return float(intensity)
@@ -418,23 +423,27 @@ class Tecnai(tem.TEM):
 		else:
 			raise ValueError
 		prev_int = self.getIntensity()
-		if prev_int != intensity:
+		intensity_step = self.getMinimumIntensityMovement()
+		if abs(prev_int-intensity) > intensity_step:
 			self.int_changed = True
-		setattr(self.tecnai.Illumination, self.intensity_prop, intensity)
+			setattr(self.tecnai.Illumination, self.intensity_prop, intensity)
+		else:
+			self.int_changed = False
 		# Normalizations
 		if self.normalize_all_after_setting:
 			if self.mag_changed or self.spotsize_changed or self.int_changed:
 				if self.getDebugAll():
 					print 'normalize all'
 				self.normalizeLens('all')
+		# sleep for intensity change
+		extra_sleep = self.getFeiConfig('camera','extra_protector_sleep_time')
+		if self.int_changed and extra_sleep:
+			time.sleep(extra_sleep)
 		#reset changed flag
 		self.mag_changed = False
 		self.spotsize_changed = False
 		self.int_changed = False
 
-		# sleep for intensity change
-		if self.getFeiConfig('camera','extra_protector_sleep_time'):
-			time.sleep(1)
 
 	def getDarkFieldMode(self):
 		if self.tecnai.Illumination.DFMode == self.tem_constants.dfOff:
@@ -477,6 +486,9 @@ class Tecnai(tem.TEM):
 			raise SystemError
 		
 	def setBeamBlank(self, bb):
+		if self.getBeamBlank() == bb:
+			# do nothing if already there
+			return
 		self._setBeamBlank(bb)
 		# Falcon protector delays the response of the blanker and 
 		# cause it to be out of sync
@@ -616,6 +628,9 @@ class Tecnai(tem.TEM):
 			raise ValueError
 		
 		vec = self.tecnai.Illumination.RotationCenter
+		if abs(vec.X-vector['x'])+abs(vec.Y-vector['y']) < 1e-6:
+			# 1 urad move is ignored.
+			return
 		try:
 			vec.X = vector['x'] * self.getRotationCenterScale()
 		except KeyError:
@@ -688,6 +703,9 @@ class Tecnai(tem.TEM):
 			raise ValueError
 		
 		vec = self.tecnai.Projection.ImageBeamShift
+		if abs(vec.X-vector['x'])+abs(vec.Y-vector['y']) < 1e-9:
+			# 1 nm move is ignored.
+			return
 		try:
 			vec.X = vector['x']
 		except KeyError:
@@ -920,10 +938,11 @@ class Tecnai(tem.TEM):
 		TEM Scripting orders magnificatiions by projection submode.
 		'''
 		mode_id = self.getProjectionSubModeIndex()
-		name = self.getProjectionSubModeName()
+		mode_name = self.getProjectionSubModeName()
 		if mode_id not in self.projection_submodes.keys():
 			raise ValueError('unknown projection submode')
-		self.projection_submode_map[mag] = (name,mode_id)
+		# FEI scopes don't have cases with the same mag in different mode, yet.
+		self.addProjectionSubModeMap(mag, mode_name, mode_id, overwrite=True)
 
 	def getStagePosition(self):
 		value = {'x':None,'y':None,'z':None,'a':None,'b':None}
@@ -1334,6 +1353,8 @@ class Tecnai(tem.TEM):
 			return 'up'
 
 	def setMainScreenPosition(self, mode):
+		if self.getMainScreenPosition() == mode:
+			return
 		if mode == 'up':
 			self.tecnai.Camera.MainScreen = self.tem_constants.spUp
 		elif mode == 'down':

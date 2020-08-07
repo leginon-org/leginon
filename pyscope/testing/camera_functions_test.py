@@ -2,7 +2,7 @@
 import time
 from pyami import moduleconfig
 from pyscope import instrumenttype
-search_for = 'TEM'
+search_for = 'Camera'
 
 def test(tem_inst, attr_name, arg=None):
 	if arg is None:
@@ -57,6 +57,5 @@ def testMethods(tem_inst):
 	print('Number of error found: %d' % (error_count,))
 
 t = instrumenttype.getInstrumentTypeInstance(search_for)
-t.findMagnifications()
 testMethods(t)
 raw_input('Finished. Hit return to quit')

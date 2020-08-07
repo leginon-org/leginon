@@ -745,6 +745,7 @@ class Mosaic {
 		$sessionId = $imageinfo[0]['sessionId'];
 		$squaresize = $imageinfo[0]['dimx']/$ratio;
 		$this->params['mrc'] = 1;
+		$this->params['loadjpg'] = 1;
 		$this->params['size'] = $squaresize;
 		$this->params['binning'] = ($ratio<1) ? 1 : $ratio;
 
