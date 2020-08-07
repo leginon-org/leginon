@@ -938,10 +938,11 @@ class Tecnai(tem.TEM):
 		TEM Scripting orders magnificatiions by projection submode.
 		'''
 		mode_id = self.getProjectionSubModeIndex()
-		name = self.getProjectionSubModeName()
+		mode_name = self.getProjectionSubModeName()
 		if mode_id not in self.projection_submodes.keys():
 			raise ValueError('unknown projection submode')
-		self.projection_submode_map[mag] = (name,mode_id)
+		# FEI scopes don't have cases with the same mag in different mode, yet.
+		self.addProjectionSubModeMap(mag, mode_name, mode_id, overwrite=True)
 
 	def getStagePosition(self):
 		value = {'x':None,'y':None,'z':None,'a':None,'b':None}
