@@ -500,7 +500,7 @@ class DMSEM(ccdcamera.CCDCamera):
 		'''
 		# setEnergyFilter takes about 1.4 seconds even if in the same state.
 		# avoid it to save time.
-		if self.getEnergyFilter == value:
+		if self.getEnergyFilter() == value:
 			return
 		if value:
 			i = 1
