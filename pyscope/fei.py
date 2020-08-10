@@ -703,7 +703,11 @@ class Tecnai(tem.TEM):
 			raise ValueError
 		
 		vec = self.tecnai.Projection.ImageBeamShift
-		if abs(vec.X-vector['x'])+abs(vec.Y-vector['y']) < 1e-9:
+		d = 0.0
+		for k in vector.keys():
+			temvalue = getattr(vec, k.upper)
+			d += abs(temvalue - vector[k])
+		if d < 1e-9:
 			# 1 nm move is ignored.
 			return
 		try:
