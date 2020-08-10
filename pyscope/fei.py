@@ -705,7 +705,7 @@ class Tecnai(tem.TEM):
 		vec = self.tecnai.Projection.ImageBeamShift
 		d = 0.0
 		for k in vector.keys():
-			temvalue = getattr(vec, k.upper)
+			temvalue = getattr(vec, k.upper())
 			d += abs(temvalue - vector[k])
 		if d < 1e-9:
 			# 1 nm move is ignored.
