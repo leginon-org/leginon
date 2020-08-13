@@ -27,6 +27,20 @@ configs = moduleconfig.getConfigured('hht.cfg')
 class Hitachi(tem.TEM):
 	name = 'Hitachi'
 	projection_mode = 'imaging'
+	projection_submodes = {1:'LowMag',2:'Zoom1'}  # Do this in order.  There is no mode_id in hitachi script. The keys here are for ordering.
+	projection_submode_ids = [1,2]  # Give it a fixed order
+	submode_mags = {} # mag list by projection_submode id
+	submode_mags[1] = [50,100,200,300,400]# ignore 500 and above so that separation is easier.
+	submode_mags[2] = [
+			500,700,1000,1200,1500,2000,2500,3000,4000,
+			5000,6000,7000,8000,10000,12000,15000,20000,25000,30000,
+			40000,50000,60000,70000,80000,100000,120000,150000,200000
+			]
+	# lens current range at HT 100 kV span 000000 - 3FFC00 
+	lens_hex_range = {
+		'OBJ':(0,1.94007),
+		'C2':(0,1.70002),
+	}
 	def __init__(self):
 		
 		tem.TEM.__init__(self)
@@ -38,15 +52,6 @@ class Hitachi(tem.TEM):
 			# HitachiSimu
 			self.h = hitachisocket.HitachiSocket('127.0.0.1',12068)
 
-		self.projection_submodes = {1:'LowMag',2:'Zoom1'}  # Do this in order.  There is no mode_id in hitachi script. The keys here are for ordering.
-		self.projection_submode_ids = [1,2]  # Give it a fixed order
-		self.submode_mags = {} # mag list by projection_submode id
-		self.submode_mags[1] = [50,100,200,300,400]# ignore 500 and above so that separation is easier.
-		self.submode_mags[2] = [
-			500,700,1000,1200,1500,2000,2500,3000,4000,
-			5000,6000,7000,8000,10000,12000,15000,20000,25000,30000,
-			40000,50000,60000,70000,80000,100000,120000,150000,200000
-			]
 		self.magnifications = []
 		self.magnification_index = 0
 
@@ -90,11 +95,6 @@ class Hitachi(tem.TEM):
 		self.stage_speed_decimal = 100
 
 		self.screen_current = 0.000001
-		# lens current range at HT 100 kV span 000000 - 3FFC00 
-		self.lens_hex_range = {
-			'OBJ':(0,1.94007),
-			'C2':(0,1.70002),
-		}
 		self.intensity_range = (0.0, 1.0)
 		self.intensity = 0.0
 
@@ -379,12 +379,14 @@ class Hitachi(tem.TEM):
 		hexdec_x, hexdec_y = self.h.runGetCommand('Coil', coil,['hexdec','hexdec'])
 		submode_name = self.getProjectionSubModeName()
 		x,y = self._scaleCoilHexdecToVector(coil,submode_name,hexdec_x,hexdec_y)
-		return x, y
+		return {'x':x, 'y':y}
 
-	def setCoilVector(self, coil, x, y):
+	def setCoilVector(self, coil, valuedict):
 		'''
 		x,y vector in meters
 		'''
+		x = valuedict['x']
+		y = valuedict['y']
 		submode_name = self.getProjectionSubModeName()
 		hexdec_x, hexdec_y = self._scaleCoilVectorToHexdec(coil,submode_name,x,y)
 		self.h.runSetCommand('Coil', coil, ['FF',hexdec_x,hexdec_y,], ['str','hexdec','hexdec',], [6,6])
@@ -402,8 +404,7 @@ class Hitachi(tem.TEM):
 		value = {}
 		for key in self.stig_coil_map.keys():
 			coil = self.stig_coil_map[key]
-			x,y = self.getCoilVector(coil)
-			value[key]={'x':x, 'y':y}
+			value[key] = self.getCoilVector(coil)
 		return value
 		
 	def setStigmator(self, value):
@@ -413,7 +414,7 @@ class Hitachi(tem.TEM):
 			v = value[stig]
 			for key in v.keys():
 				new_values[stig][key]=v[key]
-			self.setCoilVector(coil, new_values[stig]['x'], new_values[stig]['y'])
+			self.setCoilVector(coil, new_values[stig])
 
 	def getSpotSize(self):
 		mode_d, submode_d = self._getColumnModes()
@@ -443,27 +444,25 @@ class Hitachi(tem.TEM):
 
 	def getBeamTilt(self):
 		coil = 'BT'
-		x,y = self.getCoilVector(coil)
-		return {'x':x, 'y':y} #radians
+		return self.getCoilVector(coil) # radians
 	
 	def setBeamTilt(self, value):
 		new_value = self.getBeamTilt()
 		coil = 'BT'
 		for key in value.keys():
 			new_value[key]=value[key]
-		self.setCoilVector(coil, new_value['x'], new_value['y'])
+		self.setCoilVector(coil, new_value)
 	
 	def getBeamShift(self):
 		coil = 'BH'
-		x,y = self.getCoilVector(coil)
-		return {'x':x, 'y':y} #radians
+		return self.getCoilVector(coil) # meters
 
 	def setBeamShift(self, value):
 		new_value = self.getBeamShift()
 		coil = 'BH'
 		for key in value.keys():
 			new_value[key]=value[key]
-		self.setCoilVector(coil, new_value['x'], new_value['y'])
+		self.setCoilVector(coil, new_value)
 
 	def getDiffractionShift(self):
 		# place holder. Not implemented
@@ -473,43 +472,46 @@ class Hitachi(tem.TEM):
 		# place holder. Not implemented
 		pass
 
+	def getImageShiftCoil(self):
+		if self.getHitachiConfig('tem_option','use_pa_imageshift'):
+			return 'PA'
+		else:
+			return 'ISF'
+
 	def getImageShift(self):
-		coil = 'ISF'
-		x,y = self.getCoilVector(coil)
-		return {'x':x, 'y':y} #radians
+		coil = self.getImageShiftCoil()
+		return self.getCoilVector(coil)
 	
 	def setImageShift(self, value):
 		new_value = self.getImageShift()
-		coil = 'ISF'
+		coil = self.getImageShiftCoil()
 		for key in value.keys():
 			new_value[key]=value[key]
-		self.setCoilVector(coil, new_value['x'], new_value['y'])
+		self.setCoilVector(coil, new_value)
 
 	def getRawImageShift(self):
 		# TODO: Is this different from ImageShift ?
-		coil = 'ISF'
-		x,y = self.getCoilVector(coil)
-		return {'x':x, 'y':y} #radians
+		coil = self.getImageShiftCoil()
+		return self.getCoilVector(coil)
 
 	def setRawImageShift(self, value):
 		# TODO: Is this different from ImageShift ?
 		new_value = self.getRawImageShift()
-		coil = 'ISF'
+		coil = self.getImageShiftCoil()
 		for key in value.keys():
 			new_value[key]=value[key]
-		self.setCoilVector(coil, new_value['x'], new_value['y'])
+		self.setCoilVector(coil, new_value)
 
 	def getProjectorAlignShift(self):
 		coil = 'PA'
-		x,y = self.getCoilVector(coil)
-		return {'x':x, 'y':y} #radians
+		return self.getCoilVector(coil)
 
 	def setProjectorAlignShift(self, value):
 		new_value = self.getProjectorAlignShift()
 		coil = 'PA'
 		for key in value.keys():
 			new_value[key]=value[key]
-		self.setCoilVector(coil, new_value['x'], new_value['y'])
+		self.setCoilVector(coil, new_value)
 
 	def getDefocus(self):
 		focus = self.getFocus()
@@ -607,7 +609,7 @@ class Hitachi(tem.TEM):
 
 	def findMagnifications(self):
 		# fake finding magnifications and set projection submod mappings
-		self.setProjectionSubModeMap({})
+		self.projection_submode_map = {}
 		submode_ids = self.projection_submodes.keys()
 		submode_ids.sort()
 		self.magnifications = []
@@ -628,6 +630,8 @@ class Hitachi(tem.TEM):
 		'''
 		self.projection_submode_map = mode_map
 		self.setProjectionSubModeMags()
+		self.setMagnificationsFromProjectionSubModes()
+		self.initDefocusZero()
 
 	def setMagnificationsFromProjectionSubModes(self):
 		'''
@@ -922,4 +926,22 @@ class Hitachi(tem.TEM):
 		except:
 			raise ValueError('invalid beamstop position setting %s' % (value,))
 		self.h.runSetIntAndWait('SpotMask','Position',[p_index,])
+
+class HT7800(Hitachi):
+	name = 'HT7800'
+	projection_mode = 'imaging'
+	projection_submodes = {1:'LowMag',2:'Zoom1'}  # Do this in order.  There is no mode_id in hitachi script. The keys here are for ordering.
+	projection_submode_ids = [1,2]  # Give it a fixed order
+	submode_mags = {} # mag list by projection_submode id
+	submode_mags[1] = [50,100,200,300,400]# ignore 500 and above so that separation is easier.
+	submode_mags[2] = [
+			500,700,1000,1200,1500,2000,2500,3000,4000,
+			5000,6000,7000,8000,10000,12000,15000,20000,25000,30000,
+			40000,50000,60000,70000,80000,100000,120000,150000,200000
+			]
+	# lens current range at HT 100 kV span 000000 - 3FFC00 
+	lens_hex_range = {
+		'OBJ':(0,1.94007),
+		'C2':(0,1.70002),
+	}
 
