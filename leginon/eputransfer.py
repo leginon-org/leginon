@@ -31,6 +31,7 @@ session_timeout = 60 # seconds before timeout
 check_interval = 120  # seconds between checking for new frames
 # production usage on linux
 watch_for_ext = 'mrc'
+is_testing = False
 
 preset_order = ['gr','sq','hl','en']
 if platform.system() == 'Darwin':
@@ -38,9 +39,10 @@ if platform.system() == 'Darwin':
 	watch_for_ext = 'jpg'
 	session_timeout = 10 # seconds before timeout
 	check_interval = 10  # seconds between checking for new frames
+	is_testing = True
 
 class RawTransfer(object):
-	def __init__(self):
+	def __init__(self, is_testing):
 		# image classes that will be transferred
 		self.image_classes = [
 			leginon.leginondata.AcquisitionImageData,
@@ -54,6 +56,9 @@ class RawTransfer(object):
 		self.meta = epu_meta.EpuMetaMapping()
 		self.frame_meta = epu_meta.EpuFractionMapping()
 		self.resetForSession()
+		self.walked = []
+		self.most_recent_dbid = None
+		self.is_testing = is_testing
 
 	def resetForSession(self):
 		self.gr = {}
@@ -1133,9 +1138,10 @@ class RawTransfer(object):
 					file_path = os.path.join(root, f)
 					self.buildTree(file_path)
 		self.upload()
+		self.walked.append(self.session.dbid)
 		print 'Done walking through existing tmp epu folder %s' % (self.watch_path)
 
-	def getValidEpuSessions(self, src_epu_path, limit_today):
+	def getValidEpuSessionsAndBestMethods(self, src_epu_path, limit_today):
 		'''
 		Get EPU sessions named after a Leginon session.
 		'''
@@ -1152,23 +1158,55 @@ class RawTransfer(object):
 				valid_epu_sessions[dbid] = name
 		# sort so that most recent is at the end
 		valid_session_dbids.sort()
+		valid_dbids = {}
+		best_methods = ['copy',]*len(valid_session_dbids)
 		if limit_today and len(valid_session_dbids) > 1:
-			valid_session_dbids = valid_session_dbids[-1:]
-			for dbid in valid_session_dbids[:-1]:
+			# redetermine best methods
+			best_methods = []
+			for i, dbid in enumerate(valid_session_dbids):
 				this_session = leginon.leginondata.SessionData().direct_query(dbid)
 				images = leginon.leginondata.ScopeEMData(session=this_session).query(results=1)
 				if not images:
-					recent_timestamp = this_session.timestamp
+					# new session takes priority
+					recent_timedelta = datetime.datetime.now() - this_session.timestamp
+					valid_dbids[int(recent_timedelta.total_seconds())]=(dbid, 'copy')
+					best_methods = ['copy',]
+					break
 				else:
-					recent_timestamp = images[0].timestamp
-				if datetime.datetime.now()-recent_timestamp > datetime.timedelta(days=1):
+					recent_timedelta = datetime.datetime.now() - images[0].timestamp
+				print this_session['name'], recent_timedelta
+				walked_timeout_hr = 12
+				if recent_timedelta > datetime.timedelta(days=1):
 					print 'Old EPU sessions will be removed at the source: %s' % (valid_epu_sessions[dbid])
 					clean_path = os.path.join(src_epu_path, valid_epu_sessions[dbid])
 					self.cleanUp(clean_path)
+				elif recent_timedelta > datetime.timedelta(hours=walked_timeout_hr):
+					print 'walked', self.walked
+					if dbid in self.walked and (self.most_recent_dbid is not None and self.most_recent_dbid != dbid):
+						print '%d hr-old Walked EPU sessions will be removed at the source: %s' % (walked_timeout_hr,valid_epu_sessions[dbid])
+						clean_path = os.path.join(src_epu_path, valid_epu_sessions[dbid])
+						self.cleanUp(clean_path)
+						if dbid in self.walked:
+							self.walked.remove(dbid)
+					else:
+						valid_dbids[int((recent_timedelta.total_seconds())*100000)]=(dbid, 'walk')
 				else:
-					valid_session_dbids.append(dbid)
-		for dbid in valid_session_dbids:
-			valid_sessions.append((valid_epu_sessions[dbid],leginon.leginondata.SessionData().direct_query(dbid)))
+					valid_dbids[int((recent_timedelta.total_seconds())*100000)]=(dbid, 'copy')
+					if dbid in self.walked:
+						self.walked.remove(dbid)
+			keys = valid_dbids.keys()
+			# sort to have most_recent first
+			keys.sort()
+			valid_session_dbids = []
+			best_methods = []
+			for k in keys:
+				valid_session_dbids.append(valid_dbids[k][0])
+				best_methods.append(valid_dbids[k][1])
+		# make a list of sessiondata
+		for i, dbid in enumerate(valid_session_dbids):
+			if i == 0:
+				self.most_recent_dbid = dbid
+			valid_sessions.append((valid_epu_sessions[dbid],leginon.leginondata.SessionData().direct_query(dbid),best_methods[i]))
 		return valid_sessions
 
 	def run(self):
@@ -1178,17 +1216,16 @@ class RawTransfer(object):
 		dst_head = self.get_dst_head()
 		if dst_head:
 			print "Limit processing to destination frame path started with %s" % (dst_head)
-		#TODO reading through old sessions take too long.  Don't do them now.
 		# Need to make a flag to turn it on.
 		limit_today = False
 		iter_count = 0
 		while True:
 			print 'Iterating...'
-			valid_sessions = self.getValidEpuSessions(src_epu_path, limit_today)
+			valid_sessions = self.getValidEpuSessionsAndBestMethods(src_epu_path, limit_today)
 			if limit_today:
 				print 'Work only on the %d most recent Leginon session equivalent' % (len(valid_sessions))
 			for valid_pair in valid_sessions:
-				epu_session_name, leginon_sessiondata = valid_pair
+				epu_session_name, leginon_sessiondata, best_method = valid_pair
 
 				self.session = leginon_sessiondata
 				# find ownership once per session
@@ -1197,9 +1234,19 @@ class RawTransfer(object):
 				self.makeDir(self.session['image path']) # rawdata directory is not created if no image is saved in leginon.
 				self.setOwner(self.session['image path'])
 				src_epu_session_path = os.path.join(src_epu_path, epu_session_name)
-				if iter_count == 0 and self.params['method'] == 'walk':
-					self.walk(src_epu_session_path,dst_head)
-				self.run_once(src_epu_session_path,dst_head)
+				dbid = self.session.dbid
+				if (iter_count == 0 and self.params['method'] == 'walk') or best_method=='walk':
+					print 'walking %s' % self.session['name']
+					if not self.is_testing:
+						self.walk(src_epu_session_path,dst_head)
+					else:
+						self.walked.append(dbid)
+				else:
+					print 'copying %s' % self.session['name']
+					if dbid in self.walked:
+						self.walked.remove(dbid)
+					if not self.is_testing:
+						self.run_once(src_epu_session_path,dst_head)
 				self.resetForSession()
 			iter_count += 1
 			print 'Sleeping after iteration %d...' % (iter_count)
@@ -1207,5 +1254,5 @@ class RawTransfer(object):
 			limit_today = True
 
 if __name__ == '__main__':
-		a = RawTransfer()
+		a = RawTransfer(is_testing)
 		a.run()
