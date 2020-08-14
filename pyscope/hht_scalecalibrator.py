@@ -419,7 +419,7 @@ class HitachiScaleCalibrator(ScaleCalibrator):
 		# move_property scale that does not depend on submode
 		self.projection_submode_independent = ['C2',]
 		self.is_cap_prefix = True
-		self.tem = hitachi.Hitachi()
+		self.tem = hitachi.HT7800()
 		# set to MAG1 first
 		self.tem.setProjectionMode('imaging')
 		self.tem.findMagnifications()
