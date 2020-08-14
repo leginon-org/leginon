@@ -326,8 +326,12 @@ class DMSEM(ccdcamera.CCDCamera):
 		self.debug_print('received shape %s' %(image.shape,))
 
 		if self.save_frames or self.align_frames:
-			if self.getDoEarlyReturn():
-				if self.getEarlyReturnFormat() == '8x8':
+			if self.save8x8:
+				if not self.getDoEarlyReturn():
+					#fake 8x8 image with the same mean and standard deviation for fast transfer
+					fake_image = self.base_fake_image*image.std() + image.mean()*numpy.ones((8,8))
+					return fake_image
+				else:
 					if self.getEarlyReturnFrameCount() > 0:
 						#fake 8x8 image with the same mean and standard deviation for fast transfer
 						fake_image = self.base_fake_image*image.std() + image.mean()*numpy.ones((8,8))
@@ -618,6 +622,7 @@ class GatanK2Base(DMSEM):
 		super(GatanK2Base, self).__init__()
 		# set default return frame count.
 		self.setEarlyReturnFrameCount(None)
+		self.save8x8 = False
 
 	def custom_setup(self):
 		'''
@@ -670,6 +675,14 @@ class GatanK2Base(DMSEM):
 
 	def isDoseFracOn(self):
 		return self.save_frames or self.align_frames
+
+	def getFastSave(self):
+		# Fastsave saves a small image arrary for frame camera to reduce handling time.
+		return self.save8x8
+
+	def setFastSave(self, state):
+		# Fastsave saves a smaller image arrary for frame camera to reduce handling time.
+		self.save8x8 = state
 
 	def calculateK2Params(self):
 		frame_time = self.dosefrac_frame_time
@@ -752,10 +765,6 @@ class GatanK2Base(DMSEM):
 
 	def getDoEarlyReturn(self):
 		return bool(self.getDmsemConfig('k2','do_early_return'))
-
-	def getEarlyReturnFormat(self):
-		# valid values: 8x8, 256x256
-		return self.getDmsemConfig('k2','early_return_format')
 
 	def getSaveLzwTiffFrames(self):
 		return bool(self.getDmsemConfig('k2','save_lzw_tiff_frames'))

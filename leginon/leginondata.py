@@ -200,6 +200,7 @@ camera_params = (
 	('gain index', int),
 	('system corrected', bool),
 	('use cds', bool),
+	('fast save', bool),
 )
 
 class ScopeEMData(EMData):
@@ -580,6 +581,7 @@ class PresetData(InSessionData):
 			('align filter', str),
 			('use frames', tuple),
 			('readout delay', int),
+			('fast save', bool),
 			('use cds', bool), # K3 only
 		)
 	typemap = classmethod(typemap)
