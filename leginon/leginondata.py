@@ -1498,6 +1498,7 @@ class DriftManagerSettingsData(SettingsData):
 			('beam tilt', float),
 			('camera settings', CameraSettingsData),
 			('timeout', int),
+			('measure drift interval', int),
 		)
 	typemap = classmethod(typemap)
 

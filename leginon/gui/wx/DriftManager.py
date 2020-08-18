@@ -136,9 +136,21 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sztest.Add(self.widgets['camera settings'], (3, 0), (1, 1), wx.EXPAND)
 		sbsztest.Add(sztest, 0, wx.ALIGN_CENTER|wx.EXPAND|wx.ALL, 5)
 
+		#measure interval
+		self.widgets['measure drift interval'] = FloatEntry(self, -1, min=0.0, chars=4)
+		szloop = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Wait at least')
+		szloop.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szloop.Add(self.widgets['measure drift interval'], (0, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'seconds between looped drift measurement')
+		szloop.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		# assemble sz
 		sz = wx.GridBagSizer(5, 10)
 		sz.Add(szpause, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(sztimeout, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(szloop, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(sbsztest, (0, 1), (3, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALL,15)
 		return sz
 
