@@ -276,7 +276,8 @@ class leginondata {
 		."concat(u.firstname,' ',u.`lastname`) as User "
 		."from `SessionData` s "
 		."left join UserData u on (u.`DEF_id`=s.`REF|UserData|user`) "
-		."left join AcquisitionImageData a on (a.`REF|SessionData|session`=s.`DEF_id`) "
+		//New ScopeEMData does not get inserted when image is aligned.
+		."left join ScopeEMData a on (a.`REF|SessionData|session`=s.`DEF_id`) "
 		.$sqlwhere
 		."order by a.`DEF_timestamp` DESC limit 1";
 		$sessioninfo = $this->mysql->getSQLResult($q);
