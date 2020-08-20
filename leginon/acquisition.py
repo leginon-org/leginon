@@ -1038,7 +1038,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 				self.logger.info("reset object stig to (%.4f,%.4f)" % (stig1['x'],stig1['y']))
 				defoc1 = self.instrument.tem.getDefocus()
 				self.logger.info("reset defocus to (%.4f) um" % (defoc1*1e6))
-			except (TypeError, TransportError) as e:
+			except (TypeError, node.TransportError) as e:
 				# Don't raise, just report because this function is the escape route
 				# for other failures.
 				self.logger.error(e)
