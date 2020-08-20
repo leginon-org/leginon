@@ -10,7 +10,7 @@ SEMCCD_PLUGIN_YEAR = 2019
 [logger]
 #verbosity 1=info, 2=debug
 VERBOSITY = 0
-
+SAVE_LOG = False
 ### K2 or K3 Summit configuration through SEMCCD plugin
 [k2]
 # Camera ID
