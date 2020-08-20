@@ -21,8 +21,13 @@ simulation = False
 if simulation:
 	print 'USING SIMULATION SETTINGS'
 	import simgatan
+	logdir = os.getcwd()
 else:
 	import gatansocket
+	# on Windows
+	logdir = os.path.join(os.environ['USERPROFILE'],'Documents','myami_log')
+	if not os.path.isdir(logdir):
+		os.mkdir(logdir)
 
 def imagefun_bin(image, binning0, binning1=0):
 	'''
@@ -46,6 +51,12 @@ def simconnect():
 	return simgatan.SimGatan()
 
 configs = moduleconfig.getConfigured('dmsem.cfg')
+
+if 'save_log' in configs['logger'].keys() and configs['logger']['save_log'] is True:
+	logfile = os.path.join(logdir,time.strftime('%Y-%m-%d_%H_%M', time.localtime(time.time()))+'.log')
+	f=open(logfile,'w')
+	f.write('framename\ttime_delta\n')
+	f.close()
 
 class DMSEM(ccdcamera.CCDCamera):
 	ed_mode = None
@@ -118,6 +129,13 @@ class DMSEM(ccdcamera.CCDCamera):
 				return None
 			return configs[optionname][itemname]
 
+	def writeLog(self,line):
+		if not self.getDmsemConfig('logger', 'save_log'):
+			return
+		if logfile and os.path.isfile(logfile):
+			f = open(logfile,'a')
+			f.write(line)
+			f.close()
 	def info_print(self, msg):
 		v = self.getDmsemConfig('logger', 'verbosity')
 		if v is None or v > 0:
@@ -337,6 +355,7 @@ class DMSEM(ccdcamera.CCDCamera):
 						fake_image = self.base_fake_image*image.std() + image.mean()*numpy.ones((8,8))
 					else:
 						fake_image = numpy.zeros((8,8))
+					self.writeLog('%s\t%.3f\n' % (self.getPreviousRawFramesName(), time.time()-t0))
 					return fake_image
 			image = self._modifyImageOrientation(image)
 		image = self._modifyImageShape(image)
