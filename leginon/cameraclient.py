@@ -184,7 +184,13 @@ class CameraClient(object):
 		else:
 			t3 = threading.Thread(target=self.dummy())
 
-		while t1.isAlive() or t2.isAlive() or t3.isAlive():
+		if self.instrument.tem.ProjectionMode == 'diffraction':
+			self.logger.info('Inserting beam stop')
+			t4 = threading.Thread(target=self.insertBeamstop())
+		else:
+			t4 = threading.Thread(target=self.dummy())
+
+		while t1.isAlive() or t2.isAlive() or t3.isAlive() or t4.isAlive():
 			time.sleep(0.5)
 		## make sure shutter override is activated
 		try:
@@ -192,6 +198,49 @@ class CameraClient(object):
 		except:
 			# maybe tem has no such function
 			pass
+
+	def doAfterAcquire(self):
+		'''
+		Things to do after acquiring the image. Overwritable by subclasses
+		such as MoveAcquisition to skip the real action.
+		'''
+		self._doAfterAcquire()
+
+	def _doAfterAcquire(self):
+		'''
+		Things to do after each image acquisition.  This can slow things
+		down. Since it will try to do it every time.
+		'''
+		if self.instrument.tem.ProjectionMode == 'diffraction':
+			self.logger.info('Retracting beam stop')
+			self.removeBeamstop()
+
+	def insertBeamstop(self):
+		self.instrument.tem.BeamstopPosition = 'in'
+
+	def removeBeamstop(self):
+		self.instrument.tem.BeamstopPosition = 'out'
+
+	def isFakeImageArray(self, imagearray):
+		'''
+		Fake image transfer from camera to reduce transfer time.
+		General only gives 8x8 image with the mean and standard
+		deviation of the real array.
+		'''
+		if imagearray.shape == (8,8):
+			return True
+		return False
+
+	def isFakeImageObj(self, imagedata):
+		'''
+		Same rule as isFakeImageArray but get shape from
+		sinedon imagedata object without loading the array
+		to get shape and save the read time on large image.
+		'''
+		shape = imagedata.imageshape()
+		if shape == (8,8):
+			return True
+		return False
 
 	def acquireCameraImageData(self, scopeclass=leginondata.ScopeEMData, allow_retracted=False, type='normal', force_no_frames=False):
 		'''Acquire a raw image from the currently configured CCD camera
@@ -227,6 +276,7 @@ class CameraClient(object):
 			imagedata['image'] = self.parallelImaging()
 		else:
 			imagedata['image'] = self.instrument.ccdcamera.Image
+		self.doAfterAcquire()
 		# get scope data after acquiring image so that scope can be simultaneously
 		# controlled. refs #6437
 		scopedata = self.instrument.getData(scopeclass)
@@ -243,10 +293,16 @@ class CameraClient(object):
 		## CameraEMData for multiple versions of AcquisitionImageData
 		imagedata['use frames'] = cameradata_after['use frames']
 
+		## default denoised to False so that we can set that flag if performed.
+		imagedata['denoised'] = False
+
 		self.readout_done_event.set()
 		if imagedata['image'] is None or imagedata['image'].shape == (0,0):
 			# image of wrong shape will still go through. Error raised at normalization
 			raise RuntimeError('No valid image returned. Check camera software/hardware')
+		# image array still in memory.  This should not take extra time.
+		if self.isFakeImageArray(imagedata['image']):
+			self.logger.warning('Early return gives back fake images to save time')
 		return imagedata
 
 	def parallelImaging(self):

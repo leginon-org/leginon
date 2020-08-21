@@ -87,8 +87,8 @@ class TargetTransformer(targethandler.TargetHandler, imagehandler.ImageHandler):
 		# types until one works with confidence.
 		try:
 			matrix = reg.registerImageData(image1,image2)
-		except Exception, exc:
-			self.logger.warning('Registration type "%s" failed: %s' % (regtype, exc.message))
+		except Exception as exc:
+			self.logger.warning('Registration type "%s" failed: %s' % (regtype, exc))
 			reg = self.registrations['identity']
 			self.logger.warning('Targets will not be transformed.')
 			matrix = reg.registerImageData(image1,image2)
@@ -326,7 +326,7 @@ class TransformManager(node.Node, TargetTransformer):
 				calclient = self.calclients[movetype]
 				try:
 					newscope = calclient.transform(pixelshift, targetscope, targetcamera)
-				except calibrationclient.NoMatrixCalibrationError, e:
+				except calibrationclient.NoMatrixCalibrationError as e:
 					m = 'No calibration for acquisition move to target: %s'
 					self.logger.error(m % (e,))
 					raise NoMoveCalibration(m)
@@ -450,8 +450,8 @@ class TransformManager(node.Node, TargetTransformer):
 		time.sleep(self.settings['pause time'])
 		try:
 			imagedata = self.acquireCorrectedCameraImageData(channel)
-		except Exception, e:
-			self.logger.error('Reacquire image failed: %s' % (e.message))
+		except Exception as e:
+			self.logger.error('Reacquire image failed: %s' % (e))
 			return None
 		if imagedata is None:
 			self.logger.error('Reacquire image failed')
@@ -511,15 +511,22 @@ class TransformManager(node.Node, TargetTransformer):
 
 	def handleTransformTargetEvent(self, ev):
 		stagenow = self.instrument.tem.StagePosition
-		msg = 'handleTransformTargetEvent starting z %.6f' % stagenow['z']
-		self.logger.debug(msg)
-		self.setStatus('processing')
-		oldtarget = ev['target']
-		level = ev['level']
-		use_parent_mover = ev['use parent mover']
-		requestingnode = ev['node']
-		self.target_to_transform = oldtarget
-		newtarget = self.transformTarget(oldtarget, level, use_parent_mover)
+		try:
+			msg = 'handleTransformTargetEvent starting z %.6f' % stagenow['z']
+			self.logger.debug(msg)
+			self.setStatus('processing')
+			oldtarget = ev['target']
+			level = ev['level']
+			use_parent_mover = ev['use parent mover']
+			requestingnode = ev['node']
+			self.target_to_transform = oldtarget
+			newtarget = self.transformTarget(oldtarget, level, use_parent_mover)
+		except (TypeError,TransportError) as e:
+			# TypeError may occur if temserver crash and no info comes back from
+			# a call. Let it go and continue.
+			self.logger.error(e)
+			newtarget = ev['target']
+			requestingnode = ev['node']
 		evt = event.TransformTargetDoneEvent()
 		evt['target'] = newtarget
 		evt['destination'] = requestingnode

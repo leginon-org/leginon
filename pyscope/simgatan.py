@@ -33,7 +33,7 @@ class SimGatan(object):
 	def SetShutterNormallyClosed(self, camera, shutter):
 		pass
 
-	def SetK2Parameters(self, readMode, scaling, hardwareProc, doseFrac, frameTime, alignFrames, saveFrames, filt=''):
+	def SetK2Parameters(self, readMode, scaling, hardwareProc, doseFrac, frameTime, alignFrames, saveFrames, filt='', useCds=False):
 		self.save_frames = saveFrames
 		print '**K2 Parameters**'
 		print 'readMode', readMode
@@ -101,7 +101,10 @@ class SimGatan(object):
 		print 'AlignEnergeFileterZeroLossPeak'
 		time.sleep(2)
 
-	def GetImage(self, processing, height, width, binning, top, left, bottom, right, exposure, shutterDelay):
+	def PrepareDarkReference(self, cameraid):
+		return 0
+
+	def GetImage(self, processing, height, width, binning, top, left, bottom, right, exposure, corrections, shutter=0, shutterDelay=0.0):
 		self.exposure_type= processing
 		self.exposure_time = exposure/1000.0
 		print '**Acquire Parameters**'
@@ -110,6 +113,8 @@ class SimGatan(object):
 		print 'acquire binning', binning
 		print 'boundary rows: %d:%d, cols: %d:%d' % (top,bottom,left,right)
 		print 'exposure %s' % (exposure,)
+		print 'corrections %d' % (corrections,)
+		print 'shutter id %d' % (shutter,)
 		return self.getSyntheticImage((height, width))
 
 	def getSyntheticImage(self,shape):

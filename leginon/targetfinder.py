@@ -75,18 +75,28 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			'modeled stage position':
 												calibrationclient.ModeledStageCalibrationClient(self),
 			'beam size':
-												calibrationclient.BeamSizeCalibrationClient(self)
+												calibrationclient.BeamSizeCalibrationClient(self),
+											
 		}
+
 		self.parent_imageid = None
 		self.current_image_pixelsize = None
 		self.focusing_targetlist = None
 		self.last_acq_node = None
 		self.next_acq_node = None
-		self.targetimagevector = (0,0)
+		self.targetimagevectors = {'x':(0,0),'y':(0,0)}
 		self.targetbeamradius = 0
 		self.resetLastFocusedTargetList(None)
-		self.remote = remoteserver.RemoteServerMaster(self.logger, session, self)
-		self.remote.targets.setTargetNames(self.targetnames)
+		if not remoteserver.NO_REQUESTS and session is not None:
+			self.remote_targeting = remoteserver.RemoteTargetingServer(self.logger, session, self, self.remote.leginon_base)
+			self.remote_toolbar = remoteserver.RemoteToolbar(self.logger, session, self, self.remote.leginon_base)
+			self.remote_queue_count = remoteserver.RemoteQueueCount(self.logger, session, self, self.remote.leginon_base)
+			self.remote_targeting.setTargetTypes(self.targetnames)
+		else:
+			self.remote_targeting = None
+			self.remote_toolbar = None
+			self.remote_queue_count = None
+
 		self.onQueueCheckBox(self.settings['queue'])
 		# assumes needing focus. Overwritten by subclasses
 		self.foc_activated = True
@@ -96,6 +106,12 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		# self.panel is now made
 		combined_state = self.settings['user check'] and not self.settings['queue']
 		self.setUserVerificationStatus(combined_state)
+
+	def exit(self):
+		if self.remote:
+			self.remote_targeting.exit()
+			self.remote_toolbar.exit()
+		super(TargetFinder, self).exit()
 
 	def handleApplicationEvent(self,evt):
 		'''
@@ -183,19 +199,28 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		# to be at the time of its processing, i.e., afected by z adjustment during
 		# and after the interaction.
 		valid_selection = False
+		remote_error_message = ''
+		self.terminated_remote = False
 		while not valid_selection:
-			if self.settings['check method'] == 'remote':
-				self.waitForRemoteCheck(imagedata)
+			if self.settings['check method'] == 'remote' and self.remote:
+				self.terminated_remote = False
+				self.waitForRemoteCheck(imagedata, remote_error_message)
 			else:
 				# default
 				self.waitForUserCheck()
+			# return to remote if control is given back to the remote after removing remote control.
+			if self.terminated_remote and self.settings['check method'] == 'remote' and self.remote_targeting.userHasControl():
+				continue
 			if not self.settings['allow no focus']:
 				has_aqu = self.hasTargetTypeOnPanel('acquisition')
 				has_foc = self.hasTargetTypeOnPanel('focus')
 				if not has_aqu or has_foc:
 					valid_selection = True
+					remote_error_message = ''
 				else:
-					self.logger.error('Must have a focus target')
+					msg = 'Must have a focus target'
+					self.logger.error(msg)
+					remote_error_message = msg
 			else:
 				break
 
@@ -215,30 +240,40 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		self.userpause.wait()
 		self.setStatus('processing')
 
-	def waitForRemoteCheck(self,imdata):
+	def waitForRemoteCheck(self,imdata, msg):
 		'''
 		Remote service target confirmation
 		'''
 		if imdata is None:
 			return
-		self.setStatus('user input')
+		if not self.remote_targeting.userHasControl():
+			self.logger.warning('remote user has not given control. Use local check')
+			return self.waitForUserCheck()
+		#self.setStatus('user input')
 		self.twobeeps()
 		xytargets = self.getPanelTargets(imdata['image'].shape)
 		# put stuff in OutBox
-		self.remote.targets.setImage(imdata)
-		self.remote.targets.setOutTargets(xytargets)
+		self.remote_targeting.setImage(imdata, msg)
+		self.remote_targeting.setOutTargets(xytargets)
+		remote_image_pk = self.remote_targeting.getImagePk()
 		# wait and get stuff from InBox
-		targetfile = self.remote.targets.getInTargetFilePath()
-		self.logger.info('Waiting for targets in data file %s' % targetfile)
-		self.setStatus('processing')
+		self.logger.info('Waiting for targets from remote %s' % remote_image_pk)
+		self.setStatus('remote')
 		# targetxys are target coordinates in x, y grouped by targetnames
-		targetxys = self.remote.targets.getInTargets()
-		print 'remote targets',targetxys
-
+		targetxys = self.remote_targeting.getInTargets()
+		if targetxys is False:
+			# targetxys returns False only if remote session is deactivated
+			# by disabling "controlled_by_user" in microscope model after
+			# setting the image to allow remote targeting.
+			self.logger.error('remote control terminated by administrator')
+			self.remote_targeting.unsetImage(imdata)
+			# Do local user check instead.
+			self.terminated_remote = True
+			return self.waitForUserCheck()
 		self.displayRemoteTargetXYs(targetxys)
 		preview_targets = self.panel.getTargetPositions('preview')
 		if not preview_targets:
-			self.remote.targets.unsetImage(imdata)
+			self.remote_targeting.unsetImage(imdata)
 		self.setStatus('idle')
 
 	def getPanelTargets(self,imageshape):
@@ -262,7 +297,9 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		Display all xytargets from remote target server on ImagePanel.
 		'''
 		for name in self.targetnames:
-			self.setTargets(xys[name], name, block=True)
+			if name in xys.keys():
+				# This will reset named targets
+				self.setTargets(xys[name], name, block=True)
 
 	def processPreviewTargets(self, imdata, targetlist):
 			preview_targets = self.panel.getTargetPositions('preview')
@@ -273,7 +310,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 				self.publish(targetlist, database=True, dbforce=True, pubevent=True)
 				self.waitForTargetListDone()
 				status = True
-				if self.settings['check method'] == 'remote':
+				if self.remote and self.settings['check method'] == 'remote':
 					# change status fo False if failed
 					status = self.resetRemoteToListen()
 				self.logger.info('Preview targets processed. Go back to waiting')
@@ -283,7 +320,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		status = True
 		try:
 			# clear targetis set from the server
-			self.remote.targets.resetTargets()
+			self.remote_targeting.resetTargets()
 		except Exception, e:
 			# assumes no preview targets
 			self.logger.error(e)
@@ -291,6 +328,14 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		if not status:
 			# clear all targets displayed so that target server can set them again
 			self.clearAllTargets()
+
+	def sendQueueCount(self):
+			# get count and set to remote_queue
+			queue = self.getQueue()
+			active = self.getListsInQueue(queue)
+			count = len(active)
+			if self.remote:
+				self.remote_queue_count.setQueueCount(count)
 
 	def processImageListData(self, imagelistdata):
 		if 'images' not in imagelistdata or imagelistdata['images'] is None:
@@ -305,6 +350,8 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			self.logger.info("will append targets")
 			for imagedata in images:
 				self.findTargets(imagedata, targetlist)
+				if self.settings['queue']:
+					self.sendQueueCount()
 		self.makeTargetListEvent(targetlist)
 		if self.settings['queue']:
 			self.logger.info('Queue is on... not generating event')
@@ -451,8 +498,10 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		for target_name in self.targetnames:
 			self.setTargets([], target_name, block=True)
 
-		self.setTargetImageVector(imagedata)
+		self.currentimagedata = imagedata
+		self.setTargetImageVectors(imagedata)
 		self.setImageTiltAxis(imagedata)
+		self.setOtherImageVectors(imagedata)		# this is used by tomoCickTargetFinder
 
 		# check if there is already a target list for this image
 		# or any other versions of this image (all from same target/preset)
@@ -475,8 +524,11 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			# no previous list, so create one and fill it with targets
 			targetlist = self.newTargetList(image=imagedata, queue=self.settings['queue'])
 			db = True
+
 		if self.settings['allow append'] or len(previouslists)==0:
 			self.findTargets(imagedata, targetlist)
+			if self.settings['queue']:
+				self.sendQueueCount()
 		self.logger.debug('Publishing targetlist...')
 
 		## if queue is turned on, do not notify other nodes of each target list publish
@@ -484,6 +536,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			pubevent = False
 		else:
 			pubevent = True
+			
 		self.publish(targetlist, database=db, pubevent=pubevent)
 		self.logger.debug('Published targetlist %s' % (targetlist.dbid,))
 
@@ -497,7 +550,9 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		if self.settings['queue drift']:
 			self.declareDrift('submit queue')
 		queue = self.getQueue()
+		# The queue may already exists, i.e., some targets were previously submitted
 		self.publish(queue, pubevent=True)
+		self.logger.info('queue submitted')
 
 	def notifyUserSubmit(self):
 		message = 'Waiting for user to submit targets...'
@@ -536,16 +591,19 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			self.parent_imageid = None
 		return is_new
 
-	def setTargetImageVector(self,imagedata):
+	def setTargetImageVectors(self, imagedata):
 		try:
-			cam_length_on_image,beam_diameter_on_image = self.getAcquisitionTargetDimensions(imagedata)
-			self._setTargetImageVector(cam_length_on_image,beam_diameter_on_image)
+			cam_vectors_on_image,beam_diameter_on_image = self.getTargetDisplayInfo(imagedata)
+			self._setTargetImageVectors(cam_vectors_on_image,beam_diameter_on_image)
 		except:
 			pass
+		
+	def setOtherImageVectors(self, imagedata):	# Dummy function used by tomoClickTargetFinder
+		pass
 
-	def _setTargetImageVector(self,cam_length_on_image,beam_diameter_on_image):
+	def _setTargetImageVectors(self,cam_vectors_on_image,beam_diameter_on_image):
 		self.targetbeamradius = beam_diameter_on_image / 2
-		self.targetimagevector = (cam_length_on_image,0)
+		self.targetimagevectors = cam_vectors_on_image
 
 	def setImageTiltAxis(self, imagedata):
 		try:
@@ -560,34 +618,73 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		except:
 			raise
 
-	def getTargetImageVector(self):
-		return self.targetimagevector
+	def getTargetImageVectors(self):
+		# need this so gui can get the values from the first image set
+		# without clicking ui because it is activated before having
+		# images.
+		if self.currentimagedata:
+			self.updateTargetImageVectors()
+		return self.targetimagevectors
 
 	def getTargetBeamRadius(self):
 		return self.targetbeamradius
 
-	def uiRefreshTargetImageVector(self):
+	def uiRefreshTargetImageVectors(self):
 		'''
 		refresh target image vector and beam size when ui exposure target panel tool
 		is toggled on.
 		'''
-		if not self.current_image_pixelsize:
-			self.logger.error('No image to calculate exposure area')
-			return
-		cam_length_on_image,beam_diameter_on_image = self._getAcquisitionTargetDimensions(self.current_image_pixelsize)
-		self._setTargetImageVector(cam_length_on_image,beam_diameter_on_image)
+		self.updateTargetImageVectors()
 
-	def getAcquisitionTargetDimensions(self,imagedata):
+	def updateTargetImageVectors(self):
+		if not self.current_image_pixelsize:
+			if not self.currentimagedata:
+				# no current_imagedata. probably just initialized.
+				return
+			cam_vectors_on_image,beam_diameter_on_image = self.getTargetDisplayInfo(self.currentimagedata)
+		else:
+			# no need to get info through imagedata query again.
+			cam_vectors_on_image,beam_diameter_on_image = self._getTargetDisplayInfo(self.current_image_pixelsize)
+		self._setTargetImageVectors(cam_vectors_on_image,beam_diameter_on_image)
+
+	def getTargetDisplayInfo(self,imagedata):
 		'''
 		Get next acquisition target image size and beam diameter displayed on imagedata
 		'''
 		if not self.next_acq_node:
-			return 0,0
-		image_pixelsize = self.calclients['image shift'].getImagePixelSize(imagedata)
+			return {'x':(0,0),'y':(0,0)},0
+		try:
+			image_pixelsize = self.calclients['image shift'].getImagePixelSize(imagedata)
+		except (KeyError, TypeError) as e:
+			# not imagedata but an image was loaded for testing
+			return {'x':(0,0),'y':(0,0)},0
 		self.current_image_pixelsize = image_pixelsize
-		return self._getAcquisitionTargetDimensions(image_pixelsize)
+		return self._getTargetDisplayInfo(image_pixelsize)
 
-	def _getAcquisitionTargetDimensions(self,image_pixelsize):
+	def getPresetAxisVector(self, preset1, axis):
+		'''
+		Use presets to get (x,y) vector for preset1 on current image at specified axis
+		'''
+		length = preset1['dimension'][axis]*preset1['binning'][axis]
+		if axis == 'x':
+			# (row, col)
+			p1 = (0,length)
+		else:
+			p1 = (length,0)
+		preset2 = self.currentimagedata['preset']
+		ht = self.currentimagedata['scope']['high tension']
+		try:
+			p2 = self.calclients['stage position'].pixelToPixel(preset1['tem'], preset1['ccdcamera'], preset2['tem'], preset2['ccdcamera'], ht, preset1['magnification'], preset2['magnification'], p1)
+		except calibrationclient.NoMatrixCalibrationError, e:
+			# If no stage position calibration, uses image shift
+			p2 = self.calclients['image shift'].pixelToPixel(preset1['tem'], preset1['ccdcamera'], preset2['tem'], preset2['ccdcamera'], ht, preset1['magnification'], preset2['magnification'], p1)
+		except:
+			self.logger.warning('Can not map preset area on the parent image')
+			p2 = tuple(p1)
+		# result is of pixelToPixel is (row, col) but we want the return to be (x,y) 
+		return int(p2[1]/preset2['binning']['x']), int(p2[0]/preset2['binning']['y'])
+
+	def _getTargetDisplayInfo(self,image_pixelsize):
 		try:
 			# get settings for the next Acquisition node
 			settingsclassname = self.next_acq_node['class string']+'SettingsData'
@@ -596,33 +693,60 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			# use first preset in preset order for display
 			presetlist = acqsettings['preset order']
 			presetname = presetlist[0]
-			# get image dimension of the target preset
-			acq_dim = self.presetsclient.getPresetImageDimension(presetname)
-			dim_on_image = []
-			for axis in ('x','y'):
-				dim_on_image.append(int(acq_dim[axis]/image_pixelsize[axis]))
-			# get Beam diameter on image
 			acq_presetdata = self.presetsclient.getPresetFromDB(presetname)
-			beam_diameter = self.calclients['beam size'].getBeamSize(acq_presetdata)
-			if beam_diameter is None:
-				# handle no beam size calibration
-				beam_diameter = 0
+			parent_presetdata = self.currentimagedata['preset']
+			# get next acquisition pixel vectors on the image
+			vectors = {}
+			for axis in ('x','y'):
+				vectors[axis] = self.getPresetAxisVector(acq_presetdata, axis)
+			# get Beam diameter on image
+			beam_diameter = self.getBeamDiameter(acq_presetdata)
 			beam_diameter_on_image = int(beam_diameter/min(image_pixelsize.values()))
-			return max(dim_on_image), beam_diameter_on_image
+			return vectors, beam_diameter_on_image
 		except:
 			# Set Length to 0 in case of any exception
-			return 0,0
+			return {'x':(0,0),'y':(0,0)},0
+
+	def getBeamDiameter(self, presetdata):
+		'''
+		Get physical beam diameter in meters from preset if possible.
+		'''
+		beam_diameter = self.calclients['beam size'].getBeamSize(presetdata)
+		if beam_diameter is None:
+			# handle no beam size calibration
+			beam_diameter = 0
+		else:
+			self.logger.debug('beam diameter for preset %s is %.2e m' % (presetdata['name'],beam_diameter))
+		return beam_diameter
 
 	def onQueueCheckBox(self, state):
 		'''
-		Start queue click tool tracking.
+		Start/Stop remote queue click tool tracking. Used at initialization
+		and gui settings change.
 		'''
-		if self.settings['check method'] == 'remote':
+		combined_state = (self.settings['check method'] == 'remote' and state)
+		self._setQueueTool(combined_state)
+
+	def _setQueueTool(self, state):
+		if self.remote_toolbar:
 			if state is True:
-				self.remote.toolbar.addClickTool('queue','publishQueue','process queue')
+				# Block rule allows it to click up to the next node with queue activated.
+				self.remote_toolbar.addClickTool('queue','publishQueue','process queue','next')
 			else:
-				if 'queue' in self.remote.toolbar.tools:
-					self.remote.toolbar.tools['queue'].deActivate()
+				if 'queue' in self.remote_toolbar.tools:
+					self.remote_toolbar.removeClickTool('queue')
+			# finalize toolbar and send to leginon-remote
+			self.remote_toolbar.finalizeToolbar()
+
+	def uiChooseCheckMethod(self, method):
+		'''
+		handle gui check method choice.  Bypass using self.settings['check method']
+		because that is not yet set.
+		'''
+		if not self.remote or not self.remote_targeting.remote_server_active:
+			return
+		state = (method == 'remote' and self.settings['queue'])
+		self._setQueueTool(state)
 
 	def blobStatsTargets(self, blobs):
 		targets = []
@@ -654,12 +778,15 @@ class ClickTargetFinder(TargetFinder):
 		# display image
 		self.setImage(imdata['image'], 'Image')
 		while True:
+			self.current_interaction = self.settings['check method']
+			self.terminated_remote = False
 			self.waitForInteraction(imdata)
 			if not self.processPreviewTargets(imdata, targetlist):
 				break
 		self.panel.targetsSubmitted()
 		self.setStatus('processing')
 		self.logger.info('Publishing targets...')
+
 		for i in self.targetnames:
 			if i == 'reference':
 				self.publishReferenceTarget(imdata)

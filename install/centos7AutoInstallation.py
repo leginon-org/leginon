@@ -9,13 +9,13 @@ import webbrowser
 import stat
 import time
 import hashlib
-
+import getpass
 
 class CentosInstallation(object):
 
 	def setReleaseDependantValues(self):
 		# need to change to branch when release
-		self.gitCmd = "git clone -b trunk http://emg.nysbc.org/git/myami " + self.gitMyamiDir
+		self.gitCmd = "git clone -b trunk https://emg.nysbc.org/git/myami " + self.gitMyamiDir
 		# redhat release related values
 		self.torqueLibPath = '/var/lib/torque/'
 
@@ -119,7 +119,7 @@ class CentosInstallation(object):
 		
 		if not returnValue:
 			print("========================")
-			print("ERROR: Please disable SELinux before running this auto installation. Visit http://emg.nysbc.org/redmine/projects/appion/wiki/Install_Appion_and_Leginon_using_the_auto-installation_tool .")
+			print("ERROR: Please disable SELinux before running this auto installation. Visit https://emg.nysbc.org/redmine/projects/appion/wiki/Install_Appion_and_Leginon_using_the_auto-installation_tool .")
 			print("Exiting installation...")
 			print("========================")
 			return False
@@ -294,7 +294,7 @@ class CentosInstallation(object):
 	def setupWebServer(self):
 		self.writeToLog("--- Start install Web Server")
 		#myamiweb yum packages
-		packagelist = ['php-pecl-ssh2','php-mongodb.noarch', 'mod_ssl', 'fftw3-devel','git','python-imaging','python-devel','mod_python','scipy','httpd', 'libssh2-devel', 'php', 'php-mysql', 'phpMyAdmin.noarch', 'php-devel', 'php-gd', ]
+		packagelist = ['php-pecl-ssh2','php-mongodb.noarch', 'mod_ssl', 'fftw-devel','git','python-imaging','python-devel','mod_python','scipy','httpd', 'libssh2-devel', 'php', 'php-mysql', 'phpMyAdmin.noarch', 'php-devel', 'php-gd', ]
 		self.yumInstall(packagelist)
 
 		# Redux Server is on Web server for now.
@@ -369,7 +369,7 @@ class CentosInstallation(object):
 				print '===========Manual intervention needed================='
 				print 'mysql password is neither none nor serverRoorPass'
 				print "You need to run these command manually"
-				print "mysqladmin -u root -p password %s" % self.dbPass
+				print "mysqladmin -u root -p password %s" % 'your_host_root_passwd'
 				print "mysqladmin -u root -p flush-privileges"
 				return False
 		else:
@@ -377,12 +377,14 @@ class CentosInstallation(object):
 
 		# run database setup script.
 		cmd = os.path.join(self.gitMyamiDir, 'install/newDBsetup.php -L %s -P %s -H %s -U %s -S %s -E %s' % (self.leginonDB, self.projectDB, self.dbHost, self.dbUser, self.dbPass, self.adminEmail))
+		print_cmd = os.path.join(self.gitMyamiDir, 'install/newDBsetup.php -L %s -P %s -H %s -U %s -S %s -E %s' % (self.leginonDB, self.projectDB, self.dbHost, self.dbUser, 'your_host_passwd', self.adminEmail))
 		cmd = 'php ' + cmd
+		print_cmd = 'php ' + print_cmd
 
 		self.writeToLog("#===================================================")
 		self.writeToLog("Run the following Command:")
 		self.writeToLog("%s" % (cmd,))
-		print cmd + '\n'
+		print print_cmd + '\n'
 		print 'Please wait......(This may take a few minutes.)\n'
 		proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 		proc.communicate()
@@ -495,10 +497,10 @@ class CentosInstallation(object):
 		
 		# select 32 or 64 bit file to download
 		if self.machine == "i686" or self.machine == "i386" :
-			fileLocation = "http://emg.nysbc.org/redmine/attachments/download/632/eman-linux-x86-cluster-1.9.tar.gz"
+			fileLocation = "https://emg.nysbc.org/redmine/attachments/download/632/eman-linux-x86-cluster-1.9.tar.gz"
 			fileName = "eman-linux-x86-cluster-1.9.tar.gz"
 		else :
-			fileLocation = "http://emg.nysbc.org/redmine/attachments/download/631/eman-linux-x86_64-cluster-1.9.tar.gz"
+			fileLocation = "https://emg.nysbc.org/redmine/attachments/download/631/eman-linux-x86_64-cluster-1.9.tar.gz"
 			fileName = "eman-linux-x86_64-cluster-1.9.tar.gz"
 
 		# download the tar file and unzip it
@@ -545,7 +547,7 @@ class CentosInstallation(object):
 	def installSpider(self):
 		self.writeToLog("--- Start install Spider")
 		
-		fileLocation = "http://emg.nysbc.org/redmine/attachments/download/638/spidersmall.18.10.tar.gz"
+		fileLocation = "https://emg.nysbc.org/redmine/attachments/download/638/spidersmall.18.10.tar.gz"
 		fileName = "spidersmall.18.10.tar.gz"
 
 		# download the tar file and unzip it
@@ -608,7 +610,7 @@ setenv SPBIN_DIR ${SPIDERDIR}/bin/''')
 		
 		dirName = "Xmipp-2.4-src"
 		tarFileName = dirName + ".tar.gz"
-		tarFileLocation = "http://emg.nysbc.org/redmine/attachments/download/636/" + tarFileName
+		tarFileLocation = "https://emg.nysbc.org/redmine/attachments/download/636/" + tarFileName
 
 		# download the source code tar file and unzip it
 		command = "wget -c " + tarFileLocation
@@ -701,7 +703,7 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 
 		ffmpegName = "ffmpeg-git-32bit-static"
 		ffmpegtarFileName = ffmpegName + ".tar.xz"
-		ffmpegtarFileLocation = "http://emg.nysbc.org/redmine/attachments/download/4674/ffmpeg-git-32bit-static.tar.xz"
+		ffmpegtarFileLocation = "https://emg.nysbc.org/redmine/attachments/download/4674/ffmpeg-git-32bit-static.tar.xz"
 
 		command = "wget -c " + ffmpegtarFileLocation
 		self.runCommand(command)
@@ -761,7 +763,7 @@ endif''')
 		cwd = os.getcwd()
 		protomoVer = "protomo-2.4.1"
 		zipFileName = protomoVer + ".zip"
-		zipFileLocation = "http://emg.nysbc.org/redmine/attachments/download/4147/" + zipFileName
+		zipFileLocation = "https://emg.nysbc.org/redmine/attachments/download/4147/" + zipFileName
 		
 		# download the source code tar file and unzip it
 		command = "wget -c " + zipFileLocation
@@ -838,7 +840,7 @@ endif
 	def installFrealign(self):
 		self.writeToLog("--- Start install Frealign")
 		
-		fileLocation = "http://emg.nysbc.org/redmine/attachments/download/740/frealign_v8.09_110505.tar.gz"
+		fileLocation = "https://emg.nysbc.org/redmine/attachments/download/740/frealign_v8.09_110505.tar.gz"
 		fileName = "frealign_v8.09_110505.tar.gz"
 
 		# download the tar file and unzip it
@@ -876,7 +878,7 @@ endif
 		packagelist= ['epel-release','vim','wget','sudo','rsync','passwd','tar','firefox','mlocate','unzip','bzip2','dbus-x11']
 		self.yumInstall(packagelist)
 
-		packagelist = ['ImageMagick', 'MySQL-python', 'compat-libf2c-34', 'compat-libgfortran-41', 'fftw3-devel', 'gcc-c++', 'gcc-gfortran', 'gcc-objc', 'gnuplot', 'grace', 'gsl-devel', 'libtiff-devel', 'netpbm-progs', 'numpy', 'openmpi-devel', 'opencv-python', 'python-devel', 'python-imaging', 'python-matplotlib', 'python-tools', 'scipy', 'wxPython', 'xorg-x11-server-Xvfb', 'libjpeg-devel', 'zlib-devel']
+		packagelist = ['ImageMagick', 'MySQL-python', 'compat-libf2c-34', 'compat-libgfortran-41', 'fftw-devel', 'gcc-c++', 'gcc-gfortran', 'gcc-objc', 'gnuplot', 'grace', 'gsl-devel', 'libtiff-devel', 'netpbm-progs', 'numpy', 'openmpi-devel', 'opencv-python', 'python-devel', 'python-imaging', 'python-matplotlib', 'python-tools', 'scipy', 'wxPython', 'xorg-x11-server-Xvfb', 'libjpeg-devel', 'zlib-devel']
 		self.yumInstall(packagelist)
 
 	def enableTorqueComputeNode(self):
@@ -1211,7 +1213,7 @@ endif
 		print "===================================="
 		print ""
 		
-		value = raw_input("Please enter the registration key. You must be registered at http://emg.nysbc.org/redmine to recieve a registration key: ")
+		value = raw_input("Please enter the registration key. You must be registered at https://emg.nysbc.org/redmine to recieve a registration key: ")
 		value = value.strip()
 
 		self.regKey = value
@@ -1230,7 +1232,7 @@ endif
 		self.adminEmail   = value
 		
 		# Set the root password		
-		password              = raw_input("Please enter the system root password: ")
+		password              = getpass.getpass("Please enter the system root password: ")
 		password              = password.strip()
 		self.serverRootPass   = password
 		
@@ -1275,7 +1277,7 @@ endif
 	
 	def downloadSampleImages(self):
 	   
-		getImageCmd = "wget -P/tmp/images http://emg.nysbc.org/redmine/attachments/download/112/06jul12a_00015gr_00028sq_00004hl_00002en.mrc http://emg.nysbc.org/redmine/attachments/download/113/06jul12a_00015gr_00028sq_00023hl_00002en.mrc http://emg.nysbc.org/redmine/attachments/download/114/06jul12a_00015gr_00028sq_00023hl_00004en.mrc http://emg.nysbc.org/redmine/attachments/download/115/06jul12a_00022gr_00013sq_00002hl_00004en.mrc http://emg.nysbc.org/redmine/attachments/download/116/06jul12a_00022gr_00013sq_00003hl_00005en.mrc http://emg.nysbc.org/redmine/attachments/download/109/06jul12a_00022gr_00037sq_00025hl_00004en.mrc http://emg.nysbc.org/redmine/attachments/download/110/06jul12a_00022gr_00037sq_00025hl_00005en.mrc http://emg.nysbc.org/redmine/attachments/download/111/06jul12a_00035gr_00063sq_00012hl_00004en.mrc"
+		getImageCmd = "wget -P/tmp/images https://emg.nysbc.org/redmine/attachments/download/112/06jul12a_00015gr_00028sq_00004hl_00002en.mrc https://emg.nysbc.org/redmine/attachments/download/113/06jul12a_00015gr_00028sq_00023hl_00002en.mrc https://emg.nysbc.org/redmine/attachments/download/114/06jul12a_00015gr_00028sq_00023hl_00004en.mrc https://emg.nysbc.org/redmine/attachments/download/115/06jul12a_00022gr_00013sq_00002hl_00004en.mrc https://emg.nysbc.org/redmine/attachments/download/116/06jul12a_00022gr_00013sq_00003hl_00005en.mrc https://emg.nysbc.org/redmine/attachments/download/109/06jul12a_00022gr_00037sq_00025hl_00004en.mrc https://emg.nysbc.org/redmine/attachments/download/110/06jul12a_00022gr_00037sq_00025hl_00005en.mrc https://emg.nysbc.org/redmine/attachments/download/111/06jul12a_00035gr_00063sq_00012hl_00004en.mrc"
 
 		print getImageCmd
 		proc = subprocess.Popen(getImageCmd, shell=True)

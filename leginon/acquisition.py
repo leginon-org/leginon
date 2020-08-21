@@ -42,6 +42,9 @@ class NoMoveCalibration(targetwatcher.PauseRepeatException):
 class InvalidPresetsSequence(targetwatcher.PauseRepeatException):
 	pass
 
+class InvalidSettings(targetwatcher.PauseRepeatException):
+	pass
+
 class BadImageStatsPause(targetwatcher.PauseRepeatException):
 	pass
 
@@ -159,13 +162,16 @@ class Acquisition(targetwatcher.TargetWatcher):
 		'low mean': 50,
 		'bad stats response': 'Continue',
 		'bad stats type': 'Mean',
+		'reacquire when failed': False,
 		'recheck pause time': 10,
 		'emission off': False,
 		'target offset row': 0,
 		'target offset col': 0,
 		'correct image shift coma': False,
 		'park after target': False,
-		'retract obj aperture': False,
+		'set aperture': False,
+		'objective aperture': 'open',
+		'c2 aperture': '150',
 	})
 	eventinputs = targetwatcher.TargetWatcher.eventinputs \
 								+ [event.DriftMonitorResultEvent,
@@ -241,6 +247,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.alignzlp_warned = False
 		self.beamtilt0 = None
 		self.paused_by_gui = False
+		self.retry_count = 0
 
 		self.duplicatetypes = ['acquisition', 'focus']
 		self.presetlocktypes = ['acquisition', 'target', 'target list']
@@ -256,8 +263,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 		'''
 		if status == 'user input':
 			self.notifyManagerContinueAvailable()
-		elif status == 'idle':
-			self.notifyManagerPauseNotAvailable()
 		else:
 			self.notifyManagerPauseAvailable()
 		super(Acquisition, self).setStatus(status)
@@ -481,24 +486,36 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.tuneEnergyFilter(zlp_preset_name)
 		self.monitorScreenCurrent(zlp_preset_name)
 
+	def validateSettings(self):
+		'''
+		A chance for subclass to abort processTargetData.
+		'''
+		pass
+
 	def processTargetData(self, targetdata, attempt=None):
 		'''
 		This is called by TargetWatcher.processData when targets available
 		If called with targetdata=None, this simulates what occurs at
 		a target (going to presets, acquiring images, etc.)
 		'''
+		# validate any bad settings that requires aborting now.
+		try:
+			self.validateSettings()
+		except Exception as e:
+			self.logger.error(str(e))
+			raise
 		# need to validate presets before preTargetSetup because they need
 		# to use preset, too, even though not the same target.
 		try:
 			self.validatePresets()
-		except InvalidPresetsSequence, e:
+		except InvalidPresetsSequence as e:
 			if targetdata is None or targetdata['type'] == 'simulated':
 				## don't want to repeat in this case
 				self.logger.error(str(e))
 				return 'aborted'
 			else:
 				raise
-		except Exception, e:
+		except Exception as e:
 			self.logger.error(str(e))
 			raise
 
@@ -650,7 +667,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 				calclient = self.calclients[movetype]
 				try:
 					newscope = calclient.transform(pixelshift, targetscope, targetcamera)
-				except calibrationclient.NoMatrixCalibrationError, e:
+				except calibrationclient.NoMatrixCalibrationError as e:
 					raise NoMoveCalibration(e)
 
 				## if stage is tilted and moving by image shift,
@@ -659,7 +676,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 					calclient = self.calclients['stage position']
 					try:
 						tmpscope = calclient.transform(pixelshift, targetscope, targetcamera)
-					except calibrationclient.NoMatrixCalibrationError,e:
+					except calibrationclient.NoMatrixCalibrationError as e:
 						raise NoMoveCalibration(e)
 					ydiff = tmpscope['stage position']['y'] - targetscope['stage position']['y']
 					zdiff = ydiff * numpy.sin(targetscope['stage position']['a'])
@@ -786,7 +803,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 					beamtilt = beamtiltclient.transformImageShiftToBeamTilt(imageshift, tem, cam, ht, self.beamtilt0, mag)
 					self.instrument.tem.BeamTilt = beamtilt
 					self.logger.info("beam tilt for image acquired (%.4f,%.4f)" % (self.instrument.tem.BeamTilt['x'],self.instrument.tem.BeamTilt['y']))
-				except Exception, e:
+				except Exception as e:
 					self.resetComaCorrection()
 					raise NoMoveCalibration(e)
 				try:
@@ -794,7 +811,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 					self.instrument.tem.Stigmator = {'objective':stig}
 					stig1 = self.instrument.tem.getStigmator()['objective']
 					self.logger.info("objective stig for image acquired (%.4f,%.4f)" % (stig1['x']-self.stig0['x'],stig1['y']-self.stig0['y']))
-				except Exception, e:
+				except Exception as e:
 					self.resetComaCorrection()
 					raise NoMoveCalibration(e)
 				try:
@@ -802,7 +819,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 					self.instrument.tem.Defocus = defoc
 					defoc1 = self.instrument.tem.getDefocus()
 					self.logger.info("correcting defocus for image acquired by (%.4f) (um)" % ((defoc1-self.defoc0)*1e6))
-				except Exception, e:
+				except Exception as e:
 					self.resetComaCorrection()
 					raise NoMoveCalibration(e)
 
@@ -833,12 +850,16 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.reportStatus('acquisition', 'acquiring image...')
 		self.startTimer('acquire getData')
 		correctimage = self.settings['correct image']
-		if correctimage:
-			imagedata = self.acquireCorrectedCameraImageData(channel=channel)
-		else:
-			imagedata = self.acquireCameraImageData()
+		imagedata = self._acquireCameraImage(correctimage, channel)
 		self.reportStatus('acquisition', 'image acquired')
 		self.stopTimer('acquire getData')
+		retry_limit = 3
+		while self.settings['reacquire when failed'] and (imagedata is None or imagedata['image'] is None) and self.retry_count < retry_limit:
+			self.retry_count += 1
+			self.logger.info('pause %d seconds before retry' % self.settings['recheck pause time'])
+			time.sleep(self.settings['recheck pause time'])
+			self.logger.warning('reaquiring image trial %d' % self.retry_count)
+			imagedata = self._acquireCameraImage(correctimage, channel)
 		if imagedata is None:
 			raise BadImageAcquirePause('failed acquire camera image')
 		if imagedata['image'] is None:
@@ -872,6 +893,13 @@ class Acquisition(targetwatcher.TargetWatcher):
 		## store EMData to DB to prevent referencing errors
 		self.publish(imagedata['scope'], database=True)
 		self.publish(imagedata['camera'], database=True)
+		return imagedata
+
+	def _acquireCameraImage(self, correctimage, channel):
+		if correctimage:
+			imagedata = self.acquireCorrectedCameraImageData(channel=channel)
+		else:
+			imagedata = self.acquireCameraImageData()
 		return imagedata
 
 	def preAcquire(self, presetdata, emtarget=None, channel=None, reduce_pause=False):
@@ -966,6 +994,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			print tnum, 'APDW START'
 			t0 = time.time()
 
+		self.retry_count = 0
 		imagedata = self.acquireCCD(presetdata, emtarget, channel=channel)
 
 		self.imagedata = imagedata
@@ -1000,14 +1029,19 @@ class Acquisition(targetwatcher.TargetWatcher):
 				# before the real reset values are set
 				self.logger.warning("Calling resetComaCorrection before it is known is not possible. No reset is done")
 				return
-			self.instrument.tem.BeamTilt = self.beamtilt0
-			self.instrument.tem.Stigmator = {'objective':self.stig0}
-			self.instrument.tem.Defocus = self.defoc0
-			self.logger.info("reset beam tilt to (%.4f,%.4f)" % (self.instrument.tem.BeamTilt['x'],self.instrument.tem.BeamTilt['y']))
-			stig1 = self.instrument.tem.getStigmator()['objective']
-			self.logger.info("reset object stig to (%.4f,%.4f)" % (stig1['x'],stig1['y']))
-			defoc1 = self.instrument.tem.getDefocus()
-			self.logger.info("reset defocus to (%.4f) um" % (defoc1*1e6))
+			try:
+				self.instrument.tem.BeamTilt = self.beamtilt0
+				self.instrument.tem.Stigmator = {'objective':self.stig0}
+				self.instrument.tem.Defocus = self.defoc0
+				self.logger.info("reset beam tilt to (%.4f,%.4f)" % (self.instrument.tem.BeamTilt['x'],self.instrument.tem.BeamTilt['y']))
+				stig1 = self.instrument.tem.getStigmator()['objective']
+				self.logger.info("reset object stig to (%.4f,%.4f)" % (stig1['x'],stig1['y']))
+				defoc1 = self.instrument.tem.getDefocus()
+				self.logger.info("reset defocus to (%.4f) um" % (defoc1*1e6))
+			except (TypeError, node.TransportError) as e:
+				# Don't raise, just report because this function is the escape route
+				# for other failures.
+				self.logger.error(e)
 
 	def parkAtHighMag(self):
 		# wait for at least for 30 seconds
@@ -1110,6 +1144,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.publishStats(imagedata)
 		self.stopTimer('publish stats')
 		self.reportStatus('output', 'Stats published...')
+		if self.retry_count >= 1:
+			self.logger.error('image %s was acquired %d times.' % (imagedata['filename'], self.retry_count+1))
 
 		image_array = imagedata['image']
 		if self.settings['display image'] and isinstance(image_array, numpy.ndarray):
@@ -1173,10 +1209,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.instrument.ccdcamera.SaveRawFrames = False
 		except:
 			isSaveRawFrames = False
-		if correctimage:
-			imagedata = self.acquireCorrectedCameraImageData(channel=0)
-		else:
-			imagedata = self.acquireCameraImageData()
+		imagedata = self._acquireCameraImage(correctimage, 0)
 		# Restore frame saving
 		try:
 			self.instrument.ccdcamera.SaveRawFrames = isSaveRawFrames
@@ -1275,7 +1308,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		x = numpy.array(xlist)
 		y = numpy.array(ylist)
 		A = numpy.vstack([x,numpy.ones(len(x))]).T
-		return numpy.linalg.lstsq(A,y)[0]
+		return numpy.linalg.lstsq(A,y, rcond=-1)[0]
 
 	def publishImage(self, imdata):
 		self.publish(imdata, pubevent=True)
@@ -1343,19 +1376,19 @@ class Acquisition(targetwatcher.TargetWatcher):
 		proctargetdata = self.reportTargetStatus(targetdata, 'processing')
 		try:
 			ret = self.processTargetData(targetdata=proctargetdata, attempt=1)
-		except BadImageStatsPause, e:
+		except BadImageStatsPause as e:
 			self.logger.error('processing target failed: %s' %e)
 			ret = 'aborted'
-		except BadImageAcquirePause, e:
+		except BadImageAcquirePause as e:
 			self.logger.error('processing target failed: %s' %e)
 			ret = 'aborted'
-		except BadImageAcquireBypass, e:
+		except BadImageAcquireBypass as e:
 			self.logger.error('processing target failed: %s' %e)
 			ret = 'aborted'
-		except BadImageStatsAbort, e:
+		except BadImageStatsAbort as e:
 			self.logger.error('processing target failed: %s' %e)
 			ret = 'aborted'
-		except Exception, e:
+		except Exception as e:
 			self.logger.error('processing target failed: %s' %e)
 			ret = 'aborted'
 		self.reportTargetStatus(proctargetdata, 'done')
@@ -1432,9 +1465,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 			original_position = self.instrument.tem.getStagePosition()
 			self.publish(request_data, database=True, pubevent=True, wait=True)
 			self.instrument.tem.setStagePosition({'z':original_position['z']})
-		except node.ConfirmationNoBinding, e:
+		except node.ConfirmationNoBinding as e:
 			self.logger.debug(e)
-		except Exception, e:
+		except Exception as e:
 			self.logger.error(e)
 
 	def fixAlignment(self):
@@ -1445,9 +1478,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 			original_position = self.instrument.tem.getStagePosition()
 			status = self.outputEvent(evt, wait=True)
 			self.instrument.tem.setStagePosition({'z':original_position['z']})
-		except node.ConfirmationNoBinding, e:
+		except node.ConfirmationNoBinding as e:
 			self.logger.debug(e)
-		except Exception, e:
+		except Exception as e:
 			self.logger.error(e)
 
 	def fixCondition(self):
@@ -1458,9 +1491,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 		try:
 			self.logger.info('Condition fixing before processing a target')
 			status = self.outputEvent(evt, wait=True)
-		except node.ConfirmationNoBinding, e:
+		except node.ConfirmationNoBinding as e:
 			self.logger.debug(e)
-		except Exception, e:
+		except Exception as e:
 			self.logger.error(e)
 
 		# Second part: Preset-required tuning before rejected targets.

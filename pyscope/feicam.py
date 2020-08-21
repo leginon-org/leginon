@@ -1,8 +1,15 @@
 #import comtypes.client
+import os
+import subprocess
+import glob
+import shutil
+import sys
+
 import ccdcamera
 import time
 import simscripting
 import falconframe
+from pyscope import tia_display
 from pyami import moduleconfig
 
 SIMULATION = False
@@ -30,6 +37,22 @@ configs = moduleconfig.getConfigured('fei.cfg')
 ## Muliple calls to get_feiadv will return the same connection.
 ## Store the handle in the com module, which is safer than in
 ## this module due to multiple imports.
+def chooseTEMAdvancedScriptingName():
+	if 'version' not in configs.keys() or 'tfs_software_version' not in configs['version'].keys():
+		print 'Need version section in fei.cfg. Please update it'
+		raw_input('Hit return to exit')
+		sys.exit(0)
+	version_text = configs['version']['tfs_software_version']
+	bits = version_text.split('.')
+	if len(bits) != 3 or not bits[1].isdigit():
+		print 'Unrecognized Version number, not in the format of %d.%d.%d'
+		raw_input('Hit return to exit')
+	minor_version = int(bits[1])
+	if minor_version >= 15:
+		return '2'
+	else:
+		return '1'
+
 def get_feiadv():
 	global connection
 	if connection.instr is None:
@@ -37,7 +60,8 @@ def get_feiadv():
 			comtypes.CoInitializeEx(comtypes.COINIT_MULTITHREADED)
 		except:
 			comtypes.CoInitialize()
-		connection.instr = comtypes.client.CreateObject('TEMAdvancedScripting.AdvancedInstrument.1')
+		type_name = 'TEMAdvancedScripting.AdvancedInstrument.' + chooseTEMAdvancedScriptingName()
+		connection.instr = comtypes.client.CreateObject(type_name)
 		connection.acq = connection.instr.Acquisitions
 		connection.csa = connection.acq.CameraSingleAcquisition
 		connection.cameras = connection.csa.SupportedCameras
@@ -64,6 +88,7 @@ class FeiCam(ccdcamera.CCDCamera):
 		self.setCameraBinnings()
 		self.setReadoutLimits()
 		self.initSettings()
+		self.tia_display = tia_display.TIA()
 
 	def __getattr__(self, name):
 		# When asked for self.camera, instead return self._camera, but only
@@ -96,6 +121,7 @@ class FeiCam(ccdcamera.CCDCamera):
 		self.exposuretype = 'normal'
 		self.start_frame_number = 1
 		self.end_frame_number = None
+		self.display_name = None
 
 	def setReadoutLimits(self):
 		readout_dicts = {READOUT_FULL:1,READOUT_HALF:2,READOUT_QUARTER:4}
@@ -268,6 +294,11 @@ class FeiCam(ccdcamera.CCDCamera):
 	def getImage(self):
 		# The following is copied from ccdcamera.CCDCamera since
 		# super (or self.as_super as used in de.py) does not work in proxy call
+		t0 = time.time()
+		# BUG: IsActive only detect correctly with frame saving, not
+		# camera availability
+		while self.csa.IsActive:
+			time.sleep(0.1)
 		if self.readoutcallback:
 			name = str(time.time())
 			self.registerCallback(name, self.readoutcallback)
@@ -436,6 +467,89 @@ class FeiCam(ccdcamera.CCDCamera):
 	def getEnergyFiltered(self):
 		return False
 
+	def startMovie(self, filename, exposure_time_ms):
+		exposure_time_s = exposure_time_ms/1000.0
+		if self.display_name:
+			try:
+				self.tia_display.closeDisplayWindow(self.display_name)
+			except ValueError, e:
+				print 'TIA display %s can not be closed' % self.display_name
+		self._clickAcquire(exposure_time_s)
+
+	def stopMovie(self, filename, exposure_time_ms):
+		exposure_time_s = exposure_time_ms/1000.0
+		self._clickAcquire(exposure_time_s)
+		self.display_name = self.tia_display.getActiveDisplayWindowName()
+		print 'movie name: %s' % filename
+		time.sleep(exposure_time_s)
+		self._saveMovie(filename)
+		self._waitForSaveMoveDone()
+		self._moveMovie()
+
+	def _waitForSaveMoveDone(self):
+		timeout = 120
+		t0 = time.time()
+		current_length = 0
+		last_series_length = current_length
+		while current_length < 2 or last_series_length < current_length:
+			if time.time()-t0 > timeout:
+				raise ValueError('Movie saving failed. File saving not finished after %d seconds.' % timeout)
+			time.sleep(1.0)
+			last_series_length = current_length
+			current_length = self._findSeriesLength()
+		# final value
+		self.series_length = self._findSeriesLength()
+
+	def _saveMovie(self, filename=''):
+		exepath = self.getFeiConfig('camera','autoit_tia_export_series_exe_path')
+		if exepath and os.path.isfile(exepath):
+			if filename:
+				self.target_code = filename.split('.bin')[0]
+				# self.series_length should be 0 at this point
+				self.series_length = self._findSeriesLength()
+				subprocess.call("%s %s" % (exepath, self.target_code))
+			else:
+				raise ValueError('movie saving filename not provided')
+		else:
+			raise NotImplementedError()
+
+	def _moveMovie(self):
+		data_dir = self.getFeiConfig('camera','autoit_tia_exported_data_dir')
+		new_dir = self.getFeiConfig('camera','tia_exported_data_network_dir')
+		if not new_dir:
+			return
+		if not os.path.isdir(new_dir):
+			raise ValueError('TIA exported data network Directory %s is not a directory' % (new_dir,))
+		if data_dir == new_dir:
+			# nothing to do
+			return
+		else:
+			if not self.target_code:
+				raise ValueError('movie target code not yet set')
+			pattern = os.path.join(data_dir, '%s*.bin' % (self.target_code,))
+			files = glob.glob(pattern)
+			for f in files:
+				shutil.move(f, new_dir)
+
+	def _findSeriesLength(self):
+		if not self.target_code:
+			raise ValueError('movie target code not yet set')
+		data_dir = self.getFeiConfig('camera','autoit_tia_exported_data_dir')
+		pattern = os.path.join(data_dir, '%s*.bin' % (self.target_code,))
+		length = len(glob.glob(pattern))
+		return length
+
+	def _clickAcquire(self, exposure_time_s=None):
+		# default is not checking
+		exepath = self.getFeiConfig('camera','autoit_tui_acquire_exe_path')
+		if exepath and os.path.isfile(exepath):
+			if exposure_time_s is not None:
+				subprocess.call("%s %.3f" % (exepath, exposure_time_s))
+			else:
+				subprocess.call(exepath)
+		else:
+			raise NotImplementedError()
+
 class Ceta(FeiCam):
 	name = 'Ceta'
 	camera_name = 'BM-Ceta'
@@ -470,6 +584,7 @@ class Falcon3(FeiCam):
 	def initFrameConfig(self):
 		self.frameconfig = falconframe.FalconFrameRangeListMaker(False)
 		falcon_image_storage = self.camera_settings.PathToImageStorage #read only
+		falcon_image_storage = 'z:\\TEMScripting\\BM-Falcon\\'
 		print 'Falcon Image Storage Server Path is ', falcon_image_storage
 		sub_frame_dir = self.getFeiConfig('camera','frame_subpath')
 		try:

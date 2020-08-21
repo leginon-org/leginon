@@ -30,6 +30,7 @@ import noderegistry
 import remotecall
 import time
 import sys
+import remoteserver
 
 class DataBinder(databinder.DataBinder):
 	def handleData(self, newdata):
@@ -786,6 +787,8 @@ class Manager(node.Node):
 		timeout = self.timeout_minutes*60.0
 		msg = 'Leginon has been idle for %.1f minutes' % self.timeout_minutes
 		self.slackNotification(msg)
+		evt = event.IdleNotificationEvent(destination='')
+		self.distributeEvents(evt)
 		self.timer = False
 
 	def restartTimeoutTimer(self):
@@ -824,7 +827,7 @@ class Manager(node.Node):
 		self.timer = threading.Timer(timeout,self.slackTimeoutNotification)
 		self.timer.start()
 		if self.timer_debug:
-			print 'timer started'
+			print 'timer started with timout set to %.0f sec' % timeout
 
 	def _addPausableNode(self, nodename):
 		if nodename not in self.pausable_nodes:
@@ -858,6 +861,7 @@ class Manager(node.Node):
 		nodename = ievent['node']
 		if isinstance(ievent, event.ActivateNotificationEvent):
 			self.tem_host = ievent['tem_host']
+			self.timeout_minutes = ievent['timeout_minutes']
 			# reset
 			self.notifyerror = True
 			# first allow timer to restart, if was set to false by completing a timeout
@@ -974,6 +978,7 @@ class Manager(node.Node):
 		name = app.applicationdata['name']
 		nnodes = len(app.nodespecs)
 		self.applicationevent.clear()
+		self.clearRemoteNodes()
 		self.onApplicationStarting(name, nnodes)
 		self.application = app
 		initializer = {}
@@ -1110,6 +1115,10 @@ class Manager(node.Node):
 			nodeorder += nodes
 
 		return nodeorder
+
+	def clearRemoteNodes(self):
+		app = remoteserver.RemoteSessionServer(None, self.session)
+		app.clearRemoteNodes()
 
 def depth(parent, map):
 	l = [parent]

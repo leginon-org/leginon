@@ -16,9 +16,6 @@ import remotecall
 import gui.wx.Events
 import time
 
-# global variable to log last instrument setData or getData method call
-last_set_get = time.time()
-
 class InstrumentError(Exception):
 	pass
 
@@ -82,6 +79,16 @@ class Proxy(object):
 		except KeyError:
 			pass
 
+	def testNoneInHidden(self, datadict):
+		'''
+		Prevent insertion of instrument where hidden is null.
+		'''
+		q = leginondata.InstrumentData(initializer=datadict)
+		q['hidden'] = None
+		results = q.query(results=1)
+		if results and results[0]['hidden'] is None:
+			raise ValueError('Instrument %s on host %s has null hidden field. Database schema update required' % (datadict['name'],datadict['hostname']))
+
 	def getTEM(self, temname):
 		try:
 			return self.tems[temname]
@@ -117,6 +124,7 @@ class Proxy(object):
 		#print dbtype
 		try:
 			instrumentdata['hostname'] = self.tems[name].Hostname
+			instrumentdata['hidden'] = False
 		except:
 			raise RuntimeError('unable to get TEM hostname')
 		results = instrumentdata.query(results=1)
@@ -131,6 +139,8 @@ class Proxy(object):
 			if cs is None:
 				cs = 2.0e-3
 			instrumentdata['cs'] = cs
+			# prevent old instrument with none value in hidden field to be reinserted
+			self.testNoneInHidden(instrumentdata)
 			dbinstrumentdata = instrumentdata
 			dbinstrumentdata['hidden'] = False
 			dbinstrumentdata.insert()
@@ -180,6 +190,7 @@ class Proxy(object):
 		#print dbtype
 		try:
 			instrumentdata['hostname'] = self.ccdcameras[name].Hostname
+			instrumentdata['hidden'] = False
 		except:
 			raise RuntimeError('unable to get Camera hostname')
 		results = instrumentdata.query(results=1)
@@ -187,6 +198,8 @@ class Proxy(object):
 		if results:
 			dbinstrumentdata = results[0]
 		else:
+			# prevent old instrument with none value in hidden field to be reinserted
+			self.testNoneInHidden(instrumentdata)
 			dbinstrumentdata = instrumentdata
 			dbinstrumentdata['hidden'] = False
 			dbinstrumentdata.insert()
@@ -235,7 +248,6 @@ class Proxy(object):
 		raise ValueError
 
 	def getData(self, dataclass, temname=None, ccdcameraname=None):
-		self.updateLastSetGetTime()
 		if issubclass(dataclass, leginondata.ScopeEMData):
 			if temname is None:
 				proxy = self.tem
@@ -339,29 +351,12 @@ class Proxy(object):
 			else:
 				args.append(('fake',))
 		results = proxy.multiCall(attributes, types, args)
-		self.updateLastSetGetTime()
 		for result in results:
 			try:
 				if isinstance(result, Exception):
 					raise result
 			except AttributeError:
 				pass
-
-	def updateLastSetGetTime(self):
-		'''
-		update global last_set_get attribute time to indicate that
-		the instrument is active.
-		'''
-		t = time.time()
-		global last_set_get
-		last_set_get = t
-
-	def getLastSetGetTime(self):
-		'''
-		get the time a method on the instrument was last set or get
-		'''
-		global last_set_get
-		return last_set_get
 
 class TEM(remotecall.Locker):
 	def getDatabaseType(self):
@@ -446,5 +441,7 @@ parametermapping = (
 	('binned multiplier', 'BinnedMultiplier'),
 	('gain index', 'GainIndex'),
 	('system corrected', 'SystemGainDarkCorrected'),
+	('use cds', 'UseCds'),
+	('fast save', 'FastSave'),
 )
 

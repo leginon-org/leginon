@@ -30,11 +30,20 @@ $xmin = ($_GET['xmin']) ? $_GET['xmin'] : false;
 $xmax = ($_GET['xmax']) ? $_GET['xmax'] : false;
 $color = ($_GET['color']) ? $_GET['color'] : false;
 $pp = ($_GET['pp']) ? $_GET['pp'] : false; // phase plate test summary
+$storedCTFinfo = $_GET['ctff'];
+
 $ctf = new particledata();
 
 //If summary is true, get only the data with the best confidence
 if ($summary) {
-	$ctfinfo = $ctf->getBestCtfInfoByResolution($sessionId, $minimum);
+	if ($storedCTFinfo) {
+		$ctfinfo = json_decode(file_get_contents($storedCTFinfo), true);
+	}
+	//See Issue #8481 about why this is implemented
+	// And #8482 on why it is reverted to use the old one
+	//else $ctfinfo = $ctf->getRandomCtfInfoByResolution($sessionId, $minimum);
+	else $ctfinfo = $ctf->getBestCtfInfoByResolution($sessionId, $minimum);
+	
 } else {
 	$runId= ($_GET[rId]);
 	$ctfinfo = $ctf->getCtfInfo($runId);

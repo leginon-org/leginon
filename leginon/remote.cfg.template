@@ -1,0 +1,9 @@
+[web server]
+url: http://leginon-remote.org:8000/
+[leginon auth]
+# This user needs to have staff status on the django administration
+username: rest_username
+password: rest_password
+[media maps]
+/myamidata/leginon: /media/data1
+/myamidata2/leginon: /media/data2

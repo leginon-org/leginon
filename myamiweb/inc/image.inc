@@ -174,16 +174,23 @@ function getImageFromRequester($pic,$imginfo,$p) {
 	// binning is the scaled and loaded image size before fitting into the frame
 	$binning = $p['binning'];
 	$loadjpg = $p['loadjpg'];
+	// get loaded image info
+	$imgheaderinfo = $imagerequest->requestInfo($pic);
+	// because redux may receive imcache image which may have been binned, it
+	// is best to know its size from the loaded image
 	// find out the proper x, y for display
+	$dimlx = $imgheaderinfo->nx;
+	$dimly = $imgheaderinfo->ny;
+
 	$default_size = $imageUtil->getDefaultImageSize($p['fft']);
 	if ($frame_size)
-		$xyDim = $imageUtil->imageFitIn($dimx, $dimy, $frame_size);
+		$xyDim = $imageUtil->imageFitIn($dimlx, $dimly, $frame_size);
 	else
-		$xyDim = $imageUtil->imageBinning($dimx, $dimy, $binning, $default_size);
-	//Default prefftDim
-	$prefftDim = $xyDim;
+		$xyDim = $imageUtil->imageBinning($dimlx, $dimly, $binning, $default_size);
+	//Default prefftDim is the loaded image
+	// default fft binning method is binning after transform
+	$prefftDim = array($dimlx, $dimly);
 	//
-	$imgheaderinfo = $imagerequest->requestInfo($pic);
 	$iscalearray = getIntensityScale($p,$imgheaderinfo);
 	$scaletype = $iscalearray[0];
 	$arg1 = $iscalearray[1];
@@ -195,10 +202,11 @@ function getImageFromRequester($pic,$imginfo,$p) {
 	if (!$p['fft']) {
 		$imgstr = $imagerequest->requestImage($pic,'JPEG',$xyDim,$scaletype,$arg1,$arg2,$lpf_sigma,false,(bool)$p['fft'],false);
 	} else {
+		//power spectrum
 		if ($p['iscache']) {
 			//cached power spectrum image does not need further transform
+			$xyDim = array(max($xyDim),max($xyDim));
 			$imgstr = $imagerequest->requestImage($pic,'JPEG',$xyDim,$scaletype,$arg1,$arg2,$lpf_sigma,false,false,false);
-			$prefftDim = $imageUtil->imageBinning($dimx, $dimy, $binning, $default_size);
 		} else {
 			// fft
 			if (isBinBeforeFFT($p)) 
@@ -213,9 +221,11 @@ function getImageFromRequester($pic,$imginfo,$p) {
 		return makeBlankImageWithErrorMessage($imgstr);
 	}
 	if (!$p['iscache'] && isBinBeforeFFT($p)) {
-		//Fake prefft binning by resample
-		$src_coords = $imageUtil->getResampleCoordinates($dimx,$dimy,$xyDim, $binning, $default_size);
 		$tmpimg = imagecreatefromstring($imgstr);
+		//Fake prefft binning by resample
+		//Maps to a square array
+		$xyDim = array(max($xyDim),max($xyDim));
+		$src_coords = $imageUtil->getResampleCoordinates($dimx,$dimy,$xyDim, $binning, $default_size);
 		$img = imagecreatetruecolor($xyDim[0],$xyDim[1]);
 		imagecopyresampled($img,$tmpimg,0,0,$src_coords[0],$src_coords[1],$xyDim[0],$xyDim[1],$src_coords[2],$src_coords[3]);
 		imagedestroy($tmpimg);
@@ -344,7 +354,8 @@ function addAppionOverlays($leginondata,$img,$childinfo,$imginfo,$p) {
 	// create image overlay on image object
 	$overlay = new imageOverlay($img);
 
-	$prefftDim = getImageXYDimFromBinningParams($imginfo,$p);
+	// default fft binning method is binning after transform
+	$prefftDim = array($imginfo['dimx'],$imginfo['dimy']);
 	$display_pixelsize = getDisplayPixelSize($img,$imginfo,$p['fft'],$p['fftbin'],$prefftDim,$p['iscache']);
 	$debug_message = '';
 	$sessionId = $imginfo['sessionId'];
@@ -399,7 +410,12 @@ function addAppionOverlays($leginondata,$img,$childinfo,$imginfo,$p) {
 		$diam_scalefactor = 1/$apix;
 		if (!$diam || $diam == $selectionparams['diam']) {
 			// apply scaling if not applied before
-			$diam = $selectionparams['diam'] * $diam_scalefactor;
+			if (!$selectionparams['diam']){
+				$diam = 2*$particleinfo[0]['diameter']/$display_bin;
+			}
+			else {
+				$diam = $selectionparams['diam'] * $diam_scalefactor;
+			}
 		} elseif ($diam) {
 			$diam = $diam * $diam_scalefactor;
 		}
@@ -518,7 +534,7 @@ function getParticles($sessionId,$ptclsel,$newptcl,$imginfo,$binning) {
 		$particleinfo=$particledata->getParticlesFromImageId($particlerun, $imginfo['imageId']);
 		list($selectionparams)=$particledata->getSelectionParams($particlerun);
 		if (!$diam) {
-			$diam = $selectionparams['diam'];
+			$diam = $selectionparams['diam'];		
 		}
 		$selectionparams['runId'] = $particlerun;
 		$labeldata=array();
@@ -729,6 +745,7 @@ class Mosaic {
 		$sessionId = $imageinfo[0]['sessionId'];
 		$squaresize = $imageinfo[0]['dimx']/$ratio;
 		$this->params['mrc'] = 1;
+		$this->params['loadjpg'] = 1;
 		$this->params['size'] = $squaresize;
 		$this->params['binning'] = ($ratio<1) ? 1 : $ratio;
 
@@ -760,6 +777,11 @@ class Mosaic {
 						$cdy = $dst_y;
 						$cnb =$k+1;
 					}
+					// show grid target number at top left corner.
+					$cdx_any = $dst_x+1;
+					$cdy_any = $dst_y;
+					$cnb_any =$k+1;
+					imagestringshadow($img, 4, $cdx_any, $cdy_any, $cnb_any, $blue);
 				}
 			}
 		}

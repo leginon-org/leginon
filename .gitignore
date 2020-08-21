@@ -16,11 +16,16 @@ jeol.cfg
 *.dat
 *.old
 # build folders
+appion/build
 leginon/build
 pyami/build
 sinedon/build
 pyscope/build
 imageviewer/build
+redux/build
+myami_test/build
+modules/*/build
+slack/build
 #Eclipse project files
 .project
 .pydevproject

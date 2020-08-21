@@ -12,6 +12,7 @@ class ModuleConfigParser(object):
 		self.configured = {}
 		self.config_filename = filename
 		self.configfiles = None
+		self.configpath = None
 		self.package = package
 
 
@@ -91,7 +92,7 @@ class ModuleConfigParser(object):
 			newkeys.append(newkey)
 		return newkeys
 
-	def parse(self):
+	def getConfigPath(self):
 		#print "parsing %s...." % self.config_filename
 
 		# read instruments.cfg
@@ -101,12 +102,17 @@ class ModuleConfigParser(object):
 		for filename in filenames:
 			if os.path.exists(filename):
 				one_exists = True
+				self.configpath = filename
+				return filename
 		if not one_exists:
 			raise IOError('please configure at least one of these:  %s' % (filenames,))
+
+	def parse(self):
+		configpath = self.getConfigPath()
 		try:
-			self.configfiles = self.configparser.read(filenames)
+			self.configfiles = self.configparser.read([configpath,])
 		except:
-			raise IOError('error reading %s' % (filenames,))
+			raise IOError('error reading %s' % (configpath,))
 
 		# parse
 		names = self.configparser.sections()
@@ -121,6 +127,10 @@ class ModuleConfigParser(object):
 				self.addHierarchyValue(name,levels,value)
 		return self.configured
 
+def getConfigPath(config_file='jeol.cfg', package='pyscope'):
+	app = ModuleConfigParser(config_file, package=package)
+	configpath = app.getConfigPath()
+	return configpath
 
 def getConfigured(config_file='jeol.cfg', package='pyscope'):
 	app = ModuleConfigParser(config_file, package=package)

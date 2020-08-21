@@ -27,6 +27,7 @@ import math
 import leginonconfig
 import os
 import correctorclient
+import remoteserver
 
 # testprinting for development
 testing = False
@@ -41,6 +42,9 @@ class ConfirmationTimeout(Exception):
 	pass
 
 class ConfirmationNoBinding(Exception):
+	pass
+
+class TransportError(datatransport.TransportError):
 	pass
 
 import sys
@@ -64,13 +68,14 @@ class Node(correctorclient.CorrectorClient):
 
 	objectserviceclass = remotecall.NodeObjectService
 
-	def __init__(self, name, session, managerlocation=None, otherdatabinder=None, otherdbdatakeeper=None, tcpport=None, launcher=None, panel=None):
+	def __init__(self, name, session, managerlocation=None, otherdatabinder=None, otherdbdatakeeper=None, tcpport=None, launcher=None, panel=None, order=0):
 		self.name = name
 		self.this_node = None
 		self.panel = panel
 		self.node_status = 'idle'
 		self.before_pause_node_status = 'idle'
 		self.tem_hostname = ''
+		self.node_order = order
 		
 		self.initializeLogger()
 
@@ -115,6 +120,15 @@ class Node(correctorclient.CorrectorClient):
 		correctorclient.CorrectorClient.__init__(self)
 
 		self.initializeSettings()
+		# Manager is also a node subclass but does not need status report
+		if not remoteserver.NO_REQUESTS and self.__class__.__name__ not in ('Manager','Launcher','EM') and session is not None:
+			self.remote = remoteserver.RemoteServerMaster(self.logger, session, self)
+			self.remote_status = remoteserver.RemoteStatusbar(self.logger, session, self, self.remote.leginon_base)
+			self.remote_pmlock = remoteserver.PresetsManagerLock(self.logger, session, self)
+		else:
+			self.remote = None
+			self.remote_status = None
+			self.remote_pmlock = None
 
 	def setHasLogError(self, value, message):
 		if value:
@@ -316,7 +330,7 @@ class Node(correctorclient.CorrectorClient):
 			self.outputEvent(event.NodeUninitializedEvent(), wait=True,
 																										timeout=3.0)
 			self.outputEvent(event.NodeUnavailableEvent())
-		except (ConfirmationTimeout, datatransport.TransportError):
+		except (ConfirmationTimeout, TransportError):
 			pass
 		self.delEventInput()
 		if self.launcher is not None:
@@ -365,7 +379,7 @@ class Node(correctorclient.CorrectorClient):
 		try:
 			client.send(ievent)
 			#self.logEvent(ievent, status='%s eventToClient' % (self.name,))
-		except datatransport.TransportError:
+		except TransportError:
 			# make sure we don't wait for an event that failed
 			if wait:
 				eventwait.set()
@@ -547,6 +561,11 @@ class Node(correctorclient.CorrectorClient):
 		self.beep()
 
 	def setStatus(self, status):
+		'''
+		TO DO: Need a general remote master switch for local-remote switch.
+		'''
+		if self.remote_status:
+			self.remote_status.setStatus(status)
 		if status == 'user input':
 			self.before_pause_node_status = copy.copy(self.node_status)
 		self.node_status = status

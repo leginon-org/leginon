@@ -28,6 +28,7 @@ import wx
 import leginon.gui.wx.ImagePanel
 import leginon.gui.wx.ImagePanelTools
 import leginon.gui.wx.TargetPanelTools
+import numpy as n
 
 ### colors that should be used globally
 targettype_colors = {
@@ -56,7 +57,8 @@ class TargetImagePanel(leginon.gui.wx.ImagePanel.ImagePanel):
 		self.selectedtype = None
 		self.selectedtarget = None
 		self.box = 0
-		self.imagevector = (0,0)
+		# image vectors is dictionary of image x and y axis vectors in image pixels
+		self.imagevectors = {'x':(0,0), 'y':(0,0)}
 		self.beamradius = None
 
 	#--------------------
@@ -168,7 +170,6 @@ class TargetImagePanel(leginon.gui.wx.ImagePanel.ImagePanel):
 	#--------------------
 	def drawTargets(self, dc):
 		scale = self.getScale()
-
 		for type in self.order:
 			targets = self.targets[type]
 			if targets:
@@ -182,7 +183,7 @@ class TargetImagePanel(leginon.gui.wx.ImagePanel.ImagePanel):
 					elif type.shape == 'area':
 						self.drawImageArea(dc, type.color, targets)
 					elif type.shape == 'exp':
-						self.drawImageExposure(dc, type.color, targets)
+						self.drawImageExposure(dc, type.color, targets, typename=type.name)
 					else:
 						self._drawTargets(dc, type.bitmaps['default'], targets, scale)
 
@@ -248,34 +249,48 @@ class TargetImagePanel(leginon.gui.wx.ImagePanel.ImagePanel):
 
 	#--------------------
 	def drawImageArea(self, dc, color, targets):
-		scale = self.getScale()
+		# general
 		dc.SetPen(wx.Pen(color, 1))
 		dc.SetBrush(wx.Brush(color, wx.SOLID))
+		scale = self.getScale()
 		scaledpoints = [(target.x,target.y) for target in targets]
-		imagevector = self.imagevector
-		dia = (scale[0]*(imagevector[0]/2+imagevector[1]/2), scale[1]*(imagevector[0]/2-imagevector[1]/2))
-		for p1 in scaledpoints:
-			p1 = self.image2view(p1)
-			dc.DrawLine(p1[0]-dia[0], p1[1]-dia[1], p1[0]+dia[1], p1[1]-dia[0])
-			dc.DrawLine(p1[0]-dia[0], p1[1]-dia[1], p1[0]-dia[1], p1[1]+dia[0])
-			dc.DrawLine(p1[0]-dia[1], p1[1]+dia[0], p1[0]+dia[0], p1[1]+dia[1])
-			dc.DrawLine(p1[0]+dia[1], p1[1]-dia[0], p1[0]+dia[0], p1[1]+dia[1])
+		imagevectors = self.imagevectors
+		self._drawArea(dc, imagevectors, scaledpoints)
 
-	def drawImageExposure(self, dc, color, targets):
+	def _drawArea(self, dc, imagevectors, scaledpoints):
 		scale = self.getScale()
-		dc.SetPen(wx.Pen(color, 1))
-		dc.SetBrush(wx.Brush(color, wx.SOLID))
-		scaledpoints = [(target.x,target.y) for target in targets]
-		imagevector = self.imagevector
-		dia = (scale[0]*(imagevector[0]/2+imagevector[1]/2), scale[1]*(imagevector[0]/2-imagevector[1]/2))
+		#print 'imagevectors', imagevectors
+		# vector1 (+,+) corner
+		v1 = (scale[0]*(imagevectors['x'][0]/2+imagevectors['y'][0]/2), scale[1]*(imagevectors['x'][1]/2+imagevectors['y'][1]/2))
+		# vector2 (+,-) corner
+		v2 = (scale[0]*(imagevectors['x'][0]/2-imagevectors['y'][0]/2), scale[1]*(imagevectors['x'][1]/2-imagevectors['y'][1]/2))
 		for p1 in scaledpoints:
 			p1 = self.image2view(p1)
-			dc.DrawLine(p1[0]-dia[0], p1[1]-dia[1], p1[0]+dia[1], p1[1]-dia[0])
-			dc.DrawLine(p1[0]-dia[0], p1[1]-dia[1], p1[0]-dia[1], p1[1]+dia[0])
-			dc.DrawLine(p1[0]-dia[1], p1[1]+dia[0], p1[0]+dia[0], p1[1]+dia[1])
-			dc.DrawLine(p1[0]+dia[1], p1[1]-dia[0], p1[0]+dia[0], p1[1]+dia[1])
-			if self.beamradius:
+			dc.DrawLine(p1[0]-v1[0], p1[1]-v1[1], p1[0]-v2[0], p1[1]-v2[1])
+			dc.DrawLine(p1[0]-v2[0], p1[1]-v2[1], p1[0]+v1[0], p1[1]+v1[1])
+			dc.DrawLine(p1[0]+v1[0], p1[1]+v1[1], p1[0]+v2[0], p1[1]+v2[1])
+			dc.DrawLine(p1[0]+v2[0], p1[1]+v2[1], p1[0]-v1[0], p1[1]-v1[1])
+
+	def drawBeamSize(self, dc, color, targets):
+		# general
+		dc.SetPen(wx.Pen(color, 1))
+		dc.SetBrush(wx.Brush(color, wx.SOLID))
+		scale = self.getScale()
+		scaledpoints = [(target.x,target.y) for target in targets]
+		# beam size
+		if self.beamradius:
+			for p1 in scaledpoints:
+				p1 = self.image2view(p1)
 				self.drawEmptyCircle(dc,p1[0],p1[1],scale[0]*self.beamradius)
+
+	def drawImageExposure(self, dc, color, targets, typename=None):
+		'''
+		Exp tool type calls this to show both area and beam size
+		'''
+		# area
+		self.drawImageArea(dc, color, targets)
+		self.drawBeamSize(dc, color, targets)
+
 
 	def drawEmptyCircle(self,dc,row,col,radius):
 		'''
@@ -448,7 +463,7 @@ class FFTTargetImagePanel(TargetImagePanel):
 
 class TargetOutputPanel(TargetImagePanel):
 	def __init__(self, parent, id, callback=None, imagesize=(512,512), tool=True):
-		super(TargetOutputPanel, self).__init__(self, parent, id, callback=callback, imagesize=imagesize, tool=tool)
+		super(TargetOutputPanel, self).__init__(parent, id, callback=callback, imagesize=imagesize, tool=tool)
 
 		self.quit = wx.Button(self, -1, 'Quit')
 		self.Bind(wx.EVT_BUTTON, self.onQuit, self.quit)
@@ -460,13 +475,287 @@ class TargetOutputPanel(TargetImagePanel):
 		for target in targets:
 			print '%s\t%s' % (target.x, target.y)
 		wx.Exit()
+		
+		
+class TomoTargetImagePanel(TargetImagePanel):
+	def __init__(self, parent, id, disable=False, imagesize=(512,512), mode="horizontal"):
+		TargetImagePanel.__init__(self, parent, id, imagesize, mode)
+		# image vectors is dictionary of image x and y axis vectors in image pixels
+		self.trackimagevectors = {'x':(0,0),'y':(0,0)}
+		self.trackbeamradius = None
+		self.focusimagevectors = {'x':(0,0),'y':(0,0)}
+		self.focusbeamradius = None
+		self.targetmap = {}				# keeps account of relationship between acquition, focus, and track targets
 
+	def drawImageExposure(self, dc, color, targets, typename=None):
+		scale = self.getScale()
+		dc.SetPen(wx.Pen(color, 1))
+		dc.SetBrush(wx.Brush(color, wx.SOLID))
+		scaledpoints = [(target.x,target.y) for target in targets]
+		if typename == 'track':
+			imagevectors = self.trackimagevectors
+			beamradius = self.trackbeamradius
+			stretch = self.parent.node.settings['stretch track beam']
+		elif typename == 'focus':
+			imagevectors = self.focusimagevectors
+			beamradius = self.focusbeamradius
+			stretch = self.parent.node.settings['stretch focus beam']
+		else:
+			imagevectors = self.imagevectors
+			beamradius = self.beamradius
+			stretch = self.parent.node.settings['stretch tomo beam']
+		
+		if stretch:
+			tiltrange = n.deg2rad(self.parent.node.getTiltRange())
+			tiltang = n.abs(tiltrange[0] - tiltrange[1]) / 2
+			tiltaxis = self.parent.node.getTiltAxis()
+		else:
+			tiltrange = None
+		
+		if stretch and not tiltrange is None: 
+			for p in scaledpoints:
+				p = self.image2view(p)
+				if beamradius:
+					radn = 1/n.cos(tiltang)*beamradius
+					radm = beamradius
+					self.drawEmptyEllipse(dc,p[1],p[0],radn,radm,tiltaxis + n.pi/2)
+		else:
+			self._drawArea(dc, imagevectors, scaledpoints)
+			for p1 in scaledpoints:
+				p1 = self.image2view(p1)
+				if beamradius:
+					self.drawEmptyCircle(dc,p1[0],p1[1],scale[0]*beamradius)
+
+	def drawEmptyEllipse(self,dc,row,col,radm,radn,ang,n_points=1000):
+		assert (radm >= radn)
+		c = n.cos(ang)
+		s = n.sin(ang)
+		the = n.linspace(0,2*n.pi,n_points)
+		x=radm*n.cos(the)*c-s*radn*n.sin(the)+col;
+		y=radm*n.cos(the)*s+c*radn*n.sin(the)+row;
+		#p= radm*n.cos(the)*c-s*radn*n.sin(the)+col,radm*n.cos(the)*s+c*radn*n.sin(the)+row)
+		for i,j in zip(x,y):
+			dc.DrawPoint(i,j)
+
+	def getTargetMap(self):
+		return self.targetmap
+	
+	def clearTargetMap(self):			# remove all targets
+		self.targetmap = {}
+	
+	def clearAcquitionTargetMap(self, acquisition_t):
+		self.targetmap.pop(acquisition_t)
+	
+	def clearFocusTargetMap(self):		# remove focus targets
+		for key in self.targetmap.keys():
+			self.targetmap[key]['focus'] = None
+			
+	def clearTrackTargetMap(self):		# remove track targets
+		for key in self.targetmap.keys():
+			self.targetmap[key]['track'] = None
+			
+	def addFocusTargetMap(self, focus_t, acquisition_t):	# add focus target to a given acquisition target
+		self.targetmap[acquisition_t]['focus'] = focus_t
+		
+	def addFocusTargetMapAll(self, focus_t):							# add focus target to all acquisition targets
+		for key in self.targetmap.keys():
+			self.targetmap[key]['focus'] = focus_t
+	
+	def addTrackTargetMap(self, track_t, acquisition_t):
+		self.targetmap[acquisition_t]['track'] = track_t
+			
+	def isAutoFocus(self):
+		return self.parent.node.settings['auto focus target']
+	
+	def getTrackType(self):
+		if hasattr(self,'tracktype'):
+			return self.tracktype
+		else:
+			# TODO: this is sketchy
+			tracktype = [key for key in self.targets.keys() if key.name =='track']
+			if tracktype:
+				self.tracktype = tracktype[0]
+				return self.tracktype
+			else:
+				return None			
+
+	def getFocusType(self):
+		
+		if hasattr(self,'focustype'):
+			return self.focustype
+		else:
+			# TODO: this is sketchy
+			focustype = [key for key in self.targets.keys() if key.name =='focus']
+			if focustype:	
+				self.focustype = focustype[0]
+				return self.focustype
+			else:
+				return None
+		
+	def getAcquisitionType(self):
+		if hasattr(self,'acquisition'):
+			return self.acquisitiontype
+		else:
+			acquisitiontype = [key for key in self.targets.keys() if key.name =='acquisition']
+			self.acquisitiontype = acquisitiontype[0]
+			return self.acquisitiontype
+
+	#--------------------
+	def _onLeftClick(self, evt):
+		if self.selectedtype is not None:
+			if self.selectedtype.name == 'track':
+				pass
+			
+			elif self.selectedtype.name == 'focus':
+				# (1) if AutoFocus, pass
+				# (2) if not, remove all association with acquisition target in 
+				# (3) remove all focus targets
+				# (4) make new focus target
+				# (5) associate new focus target with acquition targets
+				if self.isAutoFocus():									# (1)
+					pass
+				else:
+					focustype = self.getFocusType()
+					self.clearFocusTargetMap()							# (2)
+					self.clearTargetType(focustype)						# (3)
+					x, y = self.view2image((evt.GetX(), evt.GetY()))
+					self.addTarget('focus', x, y)						# (4)
+					focus_t = self.getTargets('focus')[0]
+					self.addFocusTargetMapAll(focus_t)					# (5)
+					
+			elif self.selectedtype.name == 'acquisition':
+				x, y = self.view2image((evt.GetX(), evt.GetY()))
+				self.addTarget(self.selectedtype.name, x, y)
+				acquisition_t = self.getTargets('acquisition')[-1]
+				assert(acquisition_t.position == (x,y))	
+				self.targetmap[acquisition_t] = {'focus':None,'track':None}	
+				x_, y_ = self.getTrackPosition(x,y)						# add tracking target
+				self.addTarget('track', x_, y_)
+				track_t = self.getTargets('track')[-1]
+				self.addTrackTargetMap(track_t,acquisition_t)
+				
+				if self.isAutoFocus():
+					x_, y_ = self.getFocusPosition(x,y)
+					self.addTarget('focus', x_, y_)
+					focus_t = self.getTargets('focus')[-1]
+					self.addFocusTargetMap(focus_t,acquisition_t)
+				else:
+					focus_ts = self.getTargets('focus')
+					assert(len(focus_ts) <= 1)
+					if len(focus_ts) == 0:
+						pass
+					elif len(focus_ts) == 1:
+						self.addFocusTargetMap(focus_ts[0],acquisition_t)
+					else:
+						raise Exception
+			else:
+				x, y = self.view2image((evt.GetX(), evt.GetY()))
+				self.addTarget(self.selectedtype.name, x, y)
+			
+	#--------------------
+	def _onRightClick(self, evt):
+		if self.selectedtarget is not None:
+			if self.selectedtarget.type.name == 'track':
+				pass
+			elif self.selectedtarget.type.name == 'focus':
+				if self.isAutoFocus():
+					pass
+				else:
+					if self.selectedtype == self.selectedtarget.type:
+						self.clearFocusTargetMap()					# clear association
+						self.deleteTarget(self.selectedtarget)		# remove focus target
+			elif self.selectedtype == self.selectedtarget.type:
+				if self.selectedtype.name == 'acquisition':
+					if self.isAutoFocus():							# only delete focus target if it belongs only to this target
+						focus_t = self.targetmap[self.selectedtarget]['focus']
+						self.deleteTarget(focus_t)
+					track_t = self.targetmap[self.selectedtarget]['track']
+					self.deleteTarget(track_t)
+					self.clearAcquitionTargetMap(self.selectedtarget)
+				# any matched type. i.e., all except focus and track
+				self.deleteTarget(self.selectedtarget)
+					
+	#--------------------
+	def _onShiftRightClick(self, evt):
+		if self.selectedtarget is not None :
+			if self.selectedtarget.type.name == 'track':
+				pass
+			elif self.selectedtarget.type.name == 'focus':
+				if self.isAutoFocus():
+					pass
+				else:
+					if self.selectedtype == self.selectedtarget.type:
+						self.clearFocusTargetMap()						# clear association
+						self.deleteTarget(self.selectedtarget)			# remove focus target
+			else:
+				if self.selectedtype == self.selectedtarget.type:
+					if self.selectedtype.name == 'acquisition':
+						self.clearTargetMap()
+						self.clearTargetType(self.getTrackType())
+						if self.isAutoFocus() and self.getFocusType():	# TODO: this is sketchy
+							self.clearTargetType(self.getFocusType())
+					# any matched type. i.e., all except focus and track
+					self.clearTargetType(self.selectedtype)
+
+	def resetFocusTargets(self,state,offset):
+		# redraw focus targets
+		# (1) remove all targets
+		# (2) if state is True, add targets with value
+		# (3) display if set to display in target tool
+		focustype = self.getFocusType()
+		if focustype:
+			self.clearFocusTargetMap()
+			self.clearTargetType(focustype)				
+			
+			if not state:								# user defined focus spot
+				pass
+			else:
+				acquisition_ts = self.getTargets('acquisition')
+				for aq_t in acquisition_ts:
+					x, y = aq_t.position						# this is relative to current camera and binning
+					x_, y_ = self.getFocusPosition(x, y, offset)
+					self.addTarget('focus', x_, y_)
+					focus_t = self.getTargets('focus')[-1]
+					self.addFocusTargetMap(focus_t, aq_t)
+		else:
+			pass
+		
+	def resetTrackTargets(self,offset):
+		# redraw tracking targets
+		# (1) remove all targets
+		# (2) display if set to display in target tool
+		tracktype = self.getTrackType()
+		if tracktype:
+			self.clearTrackTargetMap()
+			self.clearTargetType(tracktype)
+			acquisition_ts = self.getTargets('acquisition')
+			for aq_t in acquisition_ts:
+				x, y = aq_t.position
+				x_, y_ = self.getTrackPosition(x, y, offset)
+				self.addTarget('track', x_, y_)
+				track_t = self.getTargets('track')[-1]
+				self.addTrackTargetMap(track_t, aq_t)
+		else:
+			pass
+				
+	#--------------------
+	def _onShiftCtrlRightClick(self, evt):
+		self.clearAllTargetTypes()
+	
+	def getTrackPosition(self, x, y, offset=None):
+		dy,dx = self.parent.node.getTrackOffset(offset)
+		return (x+dx,y+dy)
+
+	def getFocusPosition(self, x, y, offset=None):
+		dy,dx = self.parent.node.getFocusOffset(offset)
+		return (x+dx,y+dy)
 
 if __name__ == '__main__':
 	import sys
 	import numpy
 	from pyami import mrc 
-
+	import pdb
+	
 	try:
 		filename = sys.argv[1]
 	except IndexError:
@@ -498,7 +787,7 @@ if __name__ == '__main__':
 			self.SetTopWindow(frame)
 			frame.Show(True)
 			return True
-
+	pdb.set_trace()
 	array = None
 	if filename is None:
 		filename = raw_input('Enter file path: ')

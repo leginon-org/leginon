@@ -4,6 +4,9 @@ ALL = False
 STAGE = False
 CAMERA = False
 
+[version]
+SOFTWARE_TYPE = Titan
+TFS_SOFTWARE_VERSION = 2.15.2
 [optics]
 # Lens normalization is usually set in TUI but there are cases that
 # they are not desirable, for example on Talos column. This force
@@ -20,11 +23,27 @@ ROTATION_CENTER_SCALE = 1.0
 # if not defined or not valid, changing to diffraction mode will fail.
 PRE_DIFFRACTION_SA_MAGNIFICATION_INDEX = 0
 
+# smallest change in intensity allowed
+# titan pull this in meters as beam diameter
+# talos pull this in fraction of lens current
+MINIMUM_INTENSITY_MOVEMENT = 5.0e-8
+
 [aperture]
 # Disable control of auto apertures if not working or not available
 # not all versions of microscope software allows auto aperture control
 # from scripting level.
 USE_AUTO_APERTURE = False
+# AutoIt Automation
+AUTOIT_APERTURE_SELECTION_EXE_PATH = c:\Users\supervisor\Desktop\Anchi\AutoItScripts\ApertureSelection.exe
+# Does the Titan column has automated c3 aperture ?  This affects the id of the
+# gui button for AutoIt script. 
+HAS_AUTO_C3 = True
+# Individual aperture selections.  If retractable, add open at the end of the list
+# Note: can not handle multiple apertures of the same name.
+CONDENSER_2 = 150, 100, 50, 20
+OBJECTIVE = 100, 70, 50, open
+# Optional selected area aperture control. comment or remove the line to deactivate it.
+SELECTED_AREA = 200,100, 40, 10, open
 
 [camera]
 # Falcon protector causes certain delays
@@ -33,10 +52,23 @@ HAS_FALCON_PROTECTOR = True
 FRAME_SUBPATH = leginonframes
 # Falcon protector may be too slow
 EXTRA_PROTECTOR_SLEEP_TIME = 0
+# Location of tui acquire start/stop AutoIt executable
+AUTOIT_TUI_ACQUIRE_EXE_PATH = to_be_added
+# Location of tia movie series export AutoIt executable
+AUTOIT_TIA_EXPORT_SERIES_EXE_PATH = to_be_added
+# Location of tia movie series export AutoIt executable
+AUTOIT_TIA_EXPORTED_DATA_DIR = C:\Users\supervisor\Documents\FEI\TIA\Exported Data
+# Network mounted directory to move TIA_EXPORTED_DATA to. This is the source path for leginon/diffrtransfer.py
+TIA_EXPORTED_DATA_NETWORK_DIR = C:\Users\supervisor\Documents\FEI\TIA\Exported Data
+
 [phase plate]
 # Location of next phase plate AutoIt executable
-AUTOIT_EXE_PATH = C:\Program Files\AutoIt3\nextphaseplate.exe
+AUTOIT_PHASE_PLATE_EXE_PATH = C:\Program Files\AutoIt3\NextPhasePlate.exe
 
+[beamstop]
+# Location of beamstop AutoIt executable
+AUTOIT_IN_EXE_PATH =  to_be_added
+AUTOIT_OUT_EXE_PATH = to_be_added
 [stage]
 # Some Krios stage needs backlash.
 DO_STAGE_XYZ_BACKLASH = True

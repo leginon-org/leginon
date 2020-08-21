@@ -16,6 +16,7 @@ import node
 import player
 import time
 import math
+import remoteserver
 
 class PauseRepeatException(Exception):
 	'''Raised within processTargetData method if the target should be
@@ -31,6 +32,10 @@ class BypassException(Exception):
 	'''Raised within processTargetData method if the target should be
 	bypassed'''
 	pass
+
+class FakeQueueNode(object):
+	def __init__(self,name):
+		self.name = '_'.join(name.split())
 
 class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 	'''
@@ -212,15 +217,30 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 				print '************** Loading new settings:', id
 				self.loadSettingsByID(id)
 
+	def postQueueCount(self, count):
+		if not hasattr(self, 'remote_queue_count'):
+			if self.remote:
+				# when targetwatcher is first initiated, getQueue may fail if application
+				# is loaded out of order.  Safer to do it here.
+				queue = self.getQueue()
+				# queue_node_class only needs name and logger attribute.
+				queue_node_class = FakeQueueNode(queue['label'])
+				# routing logger to self
+				queue_node_class.logger = self.logger
+				self.remote_queue_count = remoteserver.RemoteQueueCount(self.logger, self.session, queue_node_class, self.remote.leginon_base)
+			else:
+				# remoteserver.NO_REQUESTS=True
+				self.remote_queue_count = None
+		if self.remote_queue_count:
+			self.remote_queue_count.setQueueCount(count)
+
 	def processTargetList(self, newdata):
 		self.setStatus('processing')
 		mytargettype = self.settings['process target type']
-
 		### get targets that belong to this target list
 		targetlist = self.researchTargets(list=newdata)
 		listid = newdata.dbid
 		self.logger.debug('TargetWatcher will process %s targets in list %s' % (len(targetlist), listid))
-
 		completed_targets, good_targets, rejects = self.sortTargetsByType(targetlist, mytargettype)
 
 		# There may not be good targets but only rejected
@@ -228,22 +248,24 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		# define it now regardless.
 		original_position = self.instrument.tem.getStagePosition()
 		self.targetlist_reset_tilt = original_position['a']
-		if self.settings['retract obj aperture']:
+		if self.settings['set aperture']:
 			# get aperture selection only if need to avoid error in accessing info.
 			try:
 				self.obj_aperture_reset_value = self.instrument.tem.getApertureSelection('objective')
+				self.c2_aperture_reset_value = self.instrument.tem.getApertureSelection('condenser')
 			except Exception, e:
 				self.logger.error(e)
-				self.logger.error('Please retract objective aperture manually and continue')
+				self.logger.error('Please set aperture manually and continue')
 				self.player.pause()
 				self.obj_aperture_reset_value = 'unknown'
+				self.c2_aperture_reset_value = 'unknown'
 			
 		if good_targets:
 			# Things to do before reject targets are published.
 			# pause and abort check before reference and rejected targets are sent away
 			state = self.pauseCheck('paused before reject targets are published')
 			self.setStatus('processing')
-			if state in ('stop', 'stopqueue'):
+			if state in ('stop', 'stopqueue'):			# When user stops at this node
 				targetliststatus = 'aborted'
 				# If I report targets done then rejected target are also done.  Which make
 				# them unrestartable What to do???????
@@ -256,8 +278,10 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			self.targetlist_reset_tilt = self.getTiltForList(newdata)
 			# There was a set self.targetlist_reset_tilt in the old code.
 			# start conditioner
-			condition_status = 'repeat'
+			condition_status = 'repeat'					# don't need a target
 			while condition_status == 'repeat':
+				if self.remote_pmlock:
+					self.remote_pmlock.setLock()
 				try:
 					self.setStatus('waiting')
 					self.fixCondition()
@@ -271,39 +295,67 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 					self.logger.error('Conditioning failed. Continue without it')
 					condition_status = 'abort'
 				self.beep()
+				if self.remote_pmlock:
+					self.remote_pmlock.setUnlock()
+			# pause but not stop
+			state = self.pauseCheck('paused after fix condition')
 
 			# processReference.  FIX ME, when it comes back, need to move more
 			# accurately than just send the position.
-			if self.settings['wait for reference']:
+			if self.settings['wait for reference']:				#For example ZLP alignment
 				self.setStatus('waiting')
+				if self.remote_pmlock:
+					self.remote_pmlock.setLock()
 				self.processReferenceTarget()
+				if self.remote_pmlock:
+					self.remote_pmlock.setUnlock()
 				self.setStatus('processing')
+			# pause but not stop
+			state = self.pauseCheck('paused after reference processing')
 			# start alignment manager.  May replace reference in the future
 			self.setStatus('waiting')
+			if self.remote_pmlock:
+				self.remote_pmlock.setLock()
 			self.fixAlignment()
+			if self.remote_pmlock:
+				self.remote_pmlock.setUnlock()
 			self.setStatus('processing')
+			# pause but not stop
+			state = self.pauseCheck('paused after fix alignment')
 			# This will bright z to the value before reference targets and alignment
 			# fixing.
 			self.logger.info('Setting z to original z of %.2f um' % (original_position['z']*1e6))
 			self.instrument.tem.setStagePosition({'z':original_position['z']})
 			self.logger.info('Processing %d %s targets...' % (len(good_targets), mytargettype))
 		# republish the rejects and wait for them to complete
+		
 		waitrejects = rejects and self.settings['wait for rejects']
 		if waitrejects:
+
 			# FIX ME: If autofocus involves stage tilt and self.targetlist_reset_tilt
 			# is at high tilt, it is better not to tilt first but if autofocus does
 			# not involve that, it needs to be tilted now.
-			rejectstatus = self.rejectTargets(newdata)
+			if self.remote_pmlock:
+				self.remote_pmlock.setLock()
+			rejectstatus = self.rejectTargets(newdata) # will stay until node gives back a done
+			if self.remote_pmlock:
+				self.remote_pmlock.setUnlock()
 			if rejectstatus != 'success':
 				## report my status as reject status may not be a good idea
-				##all the time. This means if rejects were aborted
+				## all the time. This means if rejects were aborted
 				## then this whole target list was aborted
 				self.logger.debug('Passed targets not processed, aborting current target list')
 				self.reportTargetListDone(newdata, rejectstatus)
 				self.setStatus('idle')
-				if rejectstatus != 'aborted':
+				# Anchi, at focus node, if it fails, I think it still reports success since 
+				# line ~ 324 is always true. This is a bit dangerous for tomo.
+				# If focusing fails, there is not reason to move on, since tracking with likely
+				# be very off. 
+				if rejectstatus != 'aborted':	 
 					return
 			self.logger.info('Passed targets processed, processing current target list')
+			# pause but not stop
+			state = self.pauseCheck('paused after waiting for processing rejected targets')
 
 		# Experimental
 		if False:
@@ -313,50 +365,56 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		self.logger.info('Parent tilt %.2f degrees.' % (self.targetlist_reset_tilt*180.0/math.pi))
 		# process the good ones
 		retract_successful = False
-		if self.isNeedRetractObjectiveAperture(good_targets):
-			retract_successful = self.retractObjectiveAperture()
+		if self.isNeedSetApertures(good_targets):
+			retract_successful = self.setApertures()
 
 		targetliststatus = 'success'
 		self.processGoodTargets(good_targets)
 
 		self.reportTargetListDone(newdata, targetliststatus)
 		if retract_successful:
-			self.putBackObjectiveAperture()
+			self.putBackApertures()
 
 		if self.settings['park after list']:
 			self.park()
 		self.setStatus('idle')
 
-	def isNeedRetractObjectiveAperture(self,good_targets):
-		want_to = good_targets and self.settings['retract obj aperture']
+	def isNeedSetApertures(self,good_targets):
+		want_to = good_targets and self.settings['set aperture']
 		if not want_to:
 			return False
-		can_do = self.obj_aperture_reset_value and self.obj_aperture_reset_value not in ('unknown','open')
-		if want_to and not can_do:
-			if self.obj_aperture_reset_value != 'open':
-				self.logger.warning('Objective aperture not in a restorable state. Skip retraction')
-			else:
-				self.logger.warning('Objective aperture already retracted. Skip retraction')
+		obj_to_set = self.settings['objective aperture']
+		c2_to_set = self.settings['c2 aperture']
+		if self.obj_aperture_reset_value == 'unknown' or self.obj_aperture_reset_value == 'unknown':
+			self.logger.warning('Objective aperture not in a restorable state. Skip setting aperture')
+			return False
+		can_do = self.obj_aperture_reset_value not in (obj_to_set,) or self.c2_aperture_reset_value != c2_to_set
+		return can_do
 
-		return want_to and can_do
-
-	def retractObjectiveAperture(self):
-		retract_ap_successful = False
-		self.logger.info('Retracting objective aperture....')
+	def setApertures(self):
+		set_ap_successful = False
+		new_obj_ap = self.settings['objective aperture']
+		new_c2_ap = self.settings['c2 aperture']
+		self.logger.info('Setting apertures....')
 		try:
-			state = self.instrument.tem.setApertureSelection('objective','open')
-			self.logger.info('Objective aperture retracted')
-			retract_ap_successful = True
+			state1 = self.instrument.tem.setApertureSelection('objective',new_obj_ap)
+			self.logger.info('Objective aperture set to %s' % new_obj_ap)
+			state2 = self.instrument.tem.setApertureSelection('condenser',new_c2_ap)
+			self.logger.info('Condenser aperture set to %s' % new_c2_ap)
+			set_ap_successful = state1 and state2
 		except Exception, e:
 			self.logger.error(e)
-		return retract_ap_successful
+		return set_ap_successful
 
-	def putBackObjectiveAperture(self):
+	def putBackApertures(self):
 		self.logger.info('Inserting objective aperture....')
-		value = self.obj_aperture_reset_value
+		new_obj_ap = self.obj_aperture_reset_value
+		new_c2_ap = self.c2_aperture_reset_value
 		try:
-			state = self.instrument.tem.setApertureSelection('objective',value)
-			self.logger.info('%s um objective aperture inserted' % (value,))
+			state1 = self.instrument.tem.setApertureSelection('objective',new_obj_ap)
+			self.logger.info('objective aperture set to %s' % (new_obj_ap,))
+			state2 = self.instrument.tem.setApertureSelection('condenser',new_c2_ap)
+			self.logger.info('Condenser aperture set to %s' % new_c2_ap)
 		except Exception, e:
 			self.logger.error(e)
 

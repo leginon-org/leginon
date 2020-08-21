@@ -21,11 +21,20 @@ def convertStringToSQL(value):
 
 class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 	def __init__(self,params):
-		tem_name, cam_hostname, camera_name = self.validateInput(params)
+		tem_host, tem_name, cam_hostname, camera_name = self.validateInput(params)
 		super(CalibrationJsonLoader,self).__init__(leginondata)
 		self.cameradata = self.getCameraInstrumentData(cam_hostname,camera_name)
-		self.temdata = self.getTemInstrumentData(tem_name)
+		self.temdata = self.getTemInstrumentData(tem_host,tem_name)
+		self.setProjectionSubModeOrder()
 		self.setSessionData()
+
+	def setProjectionSubModeOrder(self):
+		# all submode names
+		sub_mode_order = ['LM','Mi','SA','Mh','D'] # FEI
+		sub_mode_order.extend(['lowmag','mag1']) # JEOL
+		sub_mode_order.extend(['mode0','mode1']) # SimTEM
+		sub_mode_order.extend(['LowMag','Zoom-1']) # HT7800
+		self.sub_mode_order = sub_mode_order
 
 	def insertAllData(self):
 		for datadict in self.alldata:
@@ -59,8 +68,8 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 			raise ValueError('can not find %s to import' % params[2])
 		self.jsonfile = params[2]
 		digicam_key = self.jsonfile.split('cal_')[-1].split('.json')[0]
-		temname, cam_host, cameraname = digicam_key.split('+')
-		return temname, cam_host, cameraname
+		temhost, temname, cam_host, cameraname = digicam_key.split('+')
+		return temhost, temname, cam_host, cameraname
 
 	def getCameraInstrumentData(self, hostname,camname):
 		results = leginondata.InstrumentData(hostname=hostname,name=camname).query(results=1)
@@ -84,32 +93,18 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 				all_tems.append(r)
 		return all_tems
 
-	def getTemInstrumentData(self, tem_name):
+	def getTemInstrumentData(self, tem_host, tem_name):
 		all_tems = self.getTemsByName(tem_name)
 		if len(all_tems) == 1:
 			return all_tems[0]
 		print map((lambda x: x['hostname']),all_tems)
-		temq = leginondata.InstrumentData(name=tem_name)
-		r = leginondata.PixelSizeCalibrationData(tem=temq, ccdcamera=self.cameradata).query(results=1)
-		ptemid = None # tem with pixel calibration is checked first.
-		if r:
-			t = r[0]['tem']
-			answer = raw_input(' Is %s %s the tem to import calibration ? Y/y/N/n ' % (t['hostname'], t['name']))
-			if answer.lower() == 'y':
-				return t
-			ptemid = t.dbid
-		# check the rest
-		other_tems = []
-		for r in all_tems:
-			if ptemid is None or ptemid!=r.dbid:
-				other_tems.append(r)
-		if len(other_tems) == 1:
-			return other_tems[0]
-		for t in other_tems:
-			answer = raw_input(' Is %s %s the tem to import calibration ? Y/y/N/n ' % (t['hostname'], t['name']))
-			if answer.lower() == 'y':
-				return t
-		print "  No tem found"
+		temq = leginondata.InstrumentData(hostname=tem_host,name=tem_name)
+		r = temq.query()
+		#ptemid = None # tem with pixel calibration is checked first.
+		if len(r)==1:
+			t = r[0]
+			return t
+		print "  %d tem found matching host %s named %s" % (len(r),tem_host, tem_name) 
 		sys.exit()
 
 	def setSessionData(self):
@@ -135,13 +130,23 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 			self.session = q
 
 	def setMagnificationsData(self):
+		# see if there is a list from import_leginon_instruments.py
+		r = leginondata.MagnificationsData(instrument=self.temdata).query(results=1)
+		if r:
+			return r[0]
 		mags = []
+		modes = {}
 		for datadict in self.alldata:
 			classname = datadict.keys()[0]
 			kwargs = datadict[classname]
 			if classname == 'ProjectionSubModeMappingData':
-				mags.append(float(kwargs['magnification']))
-		mags.sort()
+				if kwargs['name'] not in modes.keys():
+					modes[kwargs['name']]=[]
+				# assumes that projection submode mapping was inserted in the right order.
+				modes[kwargs['name']].append(int(kwargs['magnification']))
+		for m in self.sub_mode_order:
+			if m in modes.keys():
+				mags.extend(modes[m])
 		print 'magnifications', mags
 		q = leginondata.MagnificationsData(instrument=self.temdata,magnifications=mags)
 		q.insert()
@@ -157,7 +162,6 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 		self.insertAllData()
 
 	def close(self, status):
-		raw_input('hit enter when ready to quit')
 		if status:
 			print "Exit with Error"
 			sys.exit(1)

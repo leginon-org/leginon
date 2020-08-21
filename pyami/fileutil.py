@@ -44,6 +44,24 @@ def mkdirs(newdir):
 			raise
 	os.umask(originalumask)
 
+def remove_all_files_in_dir(dirname):
+	'''
+	remove just files in the directory. Return counts of subdirectory.
+	If the input is not a directory, return -1
+	'''
+	subdir_count = 0
+	if os.path.isdir(dirname):
+		for f in os.listdir(dirname):
+			file_path = os.path.join(dirname,f)
+			if os.path.isfile(file_path):
+				os.unlink(file_path)
+			else:
+				subdir_count += 1
+				# directories are ignored.
+		return subdir_count
+	else:
+		return -1
+
 def get_config_dirs(module=None, package_name=None):
 	'''
 	Determine a list of directories where config files may be located.
