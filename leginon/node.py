@@ -44,9 +44,6 @@ class ConfirmationTimeout(Exception):
 class ConfirmationNoBinding(Exception):
 	pass
 
-class TransportError(datatransport.TransportError):
-	pass
-
 import sys
 if sys.platform == 'win32':
 	import winsound
@@ -330,7 +327,7 @@ class Node(correctorclient.CorrectorClient):
 			self.outputEvent(event.NodeUninitializedEvent(), wait=True,
 																										timeout=3.0)
 			self.outputEvent(event.NodeUnavailableEvent())
-		except (ConfirmationTimeout, TransportError):
+		except (ConfirmationTimeout, datatransport.TransportError):
 			pass
 		self.delEventInput()
 		if self.launcher is not None:
@@ -379,7 +376,7 @@ class Node(correctorclient.CorrectorClient):
 		try:
 			client.send(ievent)
 			#self.logEvent(ievent, status='%s eventToClient' % (self.name,))
-		except TransportError:
+		except datatransport.TransportError:
 			# make sure we don't wait for an event that failed
 			if wait:
 				eventwait.set()

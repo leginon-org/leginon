@@ -505,8 +505,11 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 					self.logger.exception('Process target failed: %s' % e)
 					process_status = 'exception'
 				finally:
-					self.resetComaCorrection()
-	
+					is_failed = self.resetComaCorrection()
+					if is_failed is True:
+						self.logger.warning('Failure here will repeat process target. Might double expose')
+						self.player.pause()
+						process_status = 'repeat'
 				self.stopTimer('processTargetData')
 
 				if process_status == 'repeat':

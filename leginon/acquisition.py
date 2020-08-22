@@ -885,7 +885,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 			pixeltype = str(imagedata['image'].dtype)
 		except:
 			self.logger.error('array not returned from camera')
-			self.resetComaCorrection()
+			is_failed = self.resetComaCorrection()
+			if is_failed:
+				raise BadImageAcquirePause('Failed reset coma correction. Not safe to continue automatically')
 			return
 		imagedata = leginondata.AcquisitionImageData(initializer=imagedata, preset=presetdata, label=self.name, target=targetdata, list=self.imagelistdata, emtarget=emtarget, pixels=pixels, pixeltype=pixeltype)
 		imagedata['phase plate'] = self.pp_used
@@ -980,7 +982,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.resetComaCorrection()
 			raise
 		finally:
-			self.resetComaCorrection()
+			is_failed = self.resetComaCorrection()
+			if is_failed:
+				self.player.pause()
 		return status
 
 	def acquirePublishDisplayWait(self, presetdata, emtarget, channel):
@@ -1021,6 +1025,12 @@ class Acquisition(targetwatcher.TargetWatcher):
 			print tnum, '************* TOTAL ***', ttt
 
 	def resetComaCorrection(self):
+		'''
+		Reset aberration correction values if possible.  This does not
+		raise error when failed but return is_failed boolean because it
+		is typically used as escape route for other failure during target
+		processing.
+		'''
 		# projection submode and probe mode must be the same as beamtilt0
 		# and stig0 when calling this.
 		if self.settings['correct image shift coma']:
@@ -1028,7 +1038,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 				# Exception during pre-acquire target processing may call this function.
 				# before the real reset values are set
 				self.logger.warning("Calling resetComaCorrection before it is known is not possible. No reset is done")
-				return
+				return False
 			try:
 				self.instrument.tem.BeamTilt = self.beamtilt0
 				self.instrument.tem.Stigmator = {'objective':self.stig0}
@@ -1038,10 +1048,13 @@ class Acquisition(targetwatcher.TargetWatcher):
 				self.logger.info("reset object stig to (%.4f,%.4f)" % (stig1['x'],stig1['y']))
 				defoc1 = self.instrument.tem.getDefocus()
 				self.logger.info("reset defocus to (%.4f) um" % (defoc1*1e6))
-			except (TypeError, node.TransportError) as e:
+			except Exception as e:
 				# Don't raise, just report because this function is the escape route
 				# for other failures.
+				self.logger.exception('Reset coma correction failed. Beam tilt and objective stig may be wrong')
 				self.logger.error(e)
+				# Fail to reset
+				return True
 
 	def parkAtHighMag(self):
 		# wait for at least for 30 seconds
