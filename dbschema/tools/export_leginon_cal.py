@@ -102,12 +102,12 @@ class CalibrationJsonMaker(jsonfun.DataJsonMaker):
 				print 'Adding PixeSize at %dx = %.3e' % (mag, results[0]['pixelsize'])
 				self.publish(results)
 
-	def printPixelSizeCalibrationQueries(self, mags):
-		#PixelSizeCalibrationData
+	def printCameraLengthCalibrationQueries(self, mags):
+		#CameraLengthCalibrationData
 		for mag in mags:
-			results = leginondata.PixelSizeCalibrationData(ccdcamera=self.cam,magnification=mag).query(results=1)
+			results = leginondata.CameraLengthCalibrationData(ccdcamera=self.cam,magnification=mag).query(results=1)
 			if results:
-				print 'Adding PixeSize at %dx = %.3e' % (mag, results[0]['pixelsize'])
+				print 'Adding CameraLength at %d mm = %.3e' % (mag, results[0]['camera length'])
 				self.publish(results)
 
 	def printStageModelCalibrationQueries(self, mags):
@@ -217,6 +217,7 @@ class CalibrationJsonMaker(jsonfun.DataJsonMaker):
 			self.close(1)
 		self.printMagSubmodeMap()
 		self.printPixelSizeCalibrationQueries(mags)
+		self.printCameraLengthCalibrationQueries(mags)
 		self.printCameraSensitivityQueries()
 		self.printStageModelCalibrationQueries(mags)
 		for p in (None,'micro','nano'):
