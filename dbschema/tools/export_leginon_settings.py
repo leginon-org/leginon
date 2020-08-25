@@ -127,7 +127,7 @@ class SettingsJsonMaker(DataJsonMaker):
 
 	def exportFocusSequenceSettings(self, allalias, node_classname):
 		print 'checking Focus Sequence Settings....'
-		if 'Focuser' not in allalias.keys():
+		if node_classname not in allalias.keys():
 			return
 		sequence_names = []
 		focuser_aliases = allalias[node_classname]

@@ -21,8 +21,13 @@ simulation = False
 if simulation:
 	print 'USING SIMULATION SETTINGS'
 	import simgatan
+	logdir = os.getcwd()
 else:
 	import gatansocket
+	# on Windows
+	logdir = os.path.join(os.environ['USERPROFILE'],'Documents','myami_log')
+	if not os.path.isdir(logdir):
+		os.mkdir(logdir)
 
 def imagefun_bin(image, binning0, binning1=0):
 	'''
@@ -46,6 +51,12 @@ def simconnect():
 	return simgatan.SimGatan()
 
 configs = moduleconfig.getConfigured('dmsem.cfg')
+
+if 'save_log' in configs['logger'].keys() and configs['logger']['save_log'] is True:
+	logfile = os.path.join(logdir,time.strftime('%Y-%m-%d_%H_%M', time.localtime(time.time()))+'.log')
+	f=open(logfile,'w')
+	f.write('framename\ttime_delta\n')
+	f.close()
 
 class DMSEM(ccdcamera.CCDCamera):
 	ed_mode = None
@@ -118,6 +129,13 @@ class DMSEM(ccdcamera.CCDCamera):
 				return None
 			return configs[optionname][itemname]
 
+	def writeLog(self,line):
+		if not self.getDmsemConfig('logger', 'save_log'):
+			return
+		if logfile and os.path.isfile(logfile):
+			f = open(logfile,'a')
+			f.write(line)
+			f.close()
 	def info_print(self, msg):
 		v = self.getDmsemConfig('logger', 'verbosity')
 		if v is None or v > 0:
@@ -326,13 +344,18 @@ class DMSEM(ccdcamera.CCDCamera):
 		self.debug_print('received shape %s' %(image.shape,))
 
 		if self.save_frames or self.align_frames:
-			if self.getDoEarlyReturn():
-				if self.getEarlyReturnFormat() == '8x8':
+			if self.save8x8:
+				if not self.getDoEarlyReturn():
+					#fake 8x8 image with the same mean and standard deviation for fast transfer
+					fake_image = self.base_fake_image*image.std() + image.mean()*numpy.ones((8,8))
+					return fake_image
+				else:
 					if self.getEarlyReturnFrameCount() > 0:
 						#fake 8x8 image with the same mean and standard deviation for fast transfer
 						fake_image = self.base_fake_image*image.std() + image.mean()*numpy.ones((8,8))
 					else:
 						fake_image = numpy.zeros((8,8))
+					self.writeLog('%s\t%.3f\n' % (self.getPreviousRawFramesName(), time.time()-t0))
 					return fake_image
 			image = self._modifyImageOrientation(image)
 		image = self._modifyImageShape(image)
@@ -498,6 +521,10 @@ class DMSEM(ccdcamera.CCDCamera):
 		Enable/Disable post column energy filter
 		by retracting the slit
 		'''
+		# setEnergyFilter takes about 1.4 seconds even if in the same state.
+		# avoid it to save time.
+		if self.getEnergyFilter() == value:
+			return
 		if value:
 			i = 1
 		else:
@@ -614,6 +641,7 @@ class GatanK2Base(DMSEM):
 		super(GatanK2Base, self).__init__()
 		# set default return frame count.
 		self.setEarlyReturnFrameCount(None)
+		self.save8x8 = False
 
 	def custom_setup(self):
 		'''
@@ -666,6 +694,14 @@ class GatanK2Base(DMSEM):
 
 	def isDoseFracOn(self):
 		return self.save_frames or self.align_frames
+
+	def getFastSave(self):
+		# Fastsave saves a small image arrary for frame camera to reduce handling time.
+		return self.save8x8
+
+	def setFastSave(self, state):
+		# Fastsave saves a smaller image arrary for frame camera to reduce handling time.
+		self.save8x8 = state
 
 	def calculateK2Params(self):
 		frame_time = self.dosefrac_frame_time
@@ -748,10 +784,6 @@ class GatanK2Base(DMSEM):
 
 	def getDoEarlyReturn(self):
 		return bool(self.getDmsemConfig('k2','do_early_return'))
-
-	def getEarlyReturnFormat(self):
-		# valid values: 8x8, 256x256
-		return self.getDmsemConfig('k2','early_return_format')
 
 	def getSaveLzwTiffFrames(self):
 		return bool(self.getDmsemConfig('k2','save_lzw_tiff_frames'))

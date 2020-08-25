@@ -91,7 +91,9 @@ class DefocusSequence(acquisition.Acquisition):
 			self.resetComaCorrection()
 			raise
 		finally:
-			self.resetComaCorrection()
+			is_failed = self.resetComaCorrection()
+			if is_failed:
+				self.player.pause()
 		return status
 
 	def setImageFilename(self, imagedata):
