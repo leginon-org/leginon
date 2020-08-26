@@ -23,8 +23,8 @@
 ; Script Start - Add your code below here
 #include <MsgBoxConstants.au3>
 #include <Array.au3>
-Global $error_log = @DesktopDir & "/autoit_error.log"
-Global $result_log = @DesktopDir & "/autoit_result.log"
+Global $error_log = @UserProfileDir & "myami_log/autoit_error.log"
+Global $result_log = @UserProfileDir & "myami_log/autoit_result.log"
 _ResetError()
 _ResetResult()
 

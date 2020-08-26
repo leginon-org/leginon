@@ -30,7 +30,11 @@ try:
 	import comtypes.client
 	com_module =  comtypes
 	import winerror
+	log_path = os.path.join(os.environ['USERPROFILE'],'myami_log')
+	if not os.path.isdir(log_path):
+		os.mkdir(log_path)
 except ImportError:
+	log_path = None
 	pass
 
 configs = moduleconfig.getConfigured('fei.cfg')
@@ -1788,7 +1792,10 @@ class Tecnai(tem.TEM):
 		return 'unknown'
 
 	def _checkAutoItError(self, error_filename='autoit_error.log'):
-		errorpath = os.path.join(os.getcwd(),error_filename)
+		if not log_path:
+			print 'no log path for autoit error passing'
+			return
+		errorpath = os.path.join(log_path,error_filename)
 		if not os.path.isfile(errorpath):
 			return
 		f = open(errorpath)
@@ -1800,7 +1807,10 @@ class Tecnai(tem.TEM):
 			raise ValueError(msglist[0].split('\n')[0])
 
 	def _getAutoItResult(self, result_filename='autoit_result.log'):
-		resultpath = os.path.join(os.getcwd(),result_filename)
+		if not log_path:
+			print 'no log path for autoit result passing'
+			return
+		resultpath = os.path.join(log_path,result_filename)
 		if not os.path.isfile(resultpath):
 			# the result is None
 			return
