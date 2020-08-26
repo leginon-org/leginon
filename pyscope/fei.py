@@ -285,7 +285,7 @@ class Tecnai(tem.TEM):
 			self.tom.Stage.Speed = self.default_stage_speed_fraction
 
 	def setStageSpeed(self, value):
-		self.speed_deg_per_second = value
+		self.speed_deg_per_second = float(value)
 		self.stage_speed_fraction = min(value/self.stage_top_speed,1.0)
 		if self.tom:
 			# tom-monikar needs to set speed first while temscripting set speed in gotowithspeed call.
