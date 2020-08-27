@@ -104,6 +104,7 @@ class CorrectorClient(cameraclient.CameraClient):
 		# This does not have time limit because it is usually used
 		# in cases you really need it such as disk failure and restoring
 		# from backup.
+		results = refimageq.query()
 		for r in results:
 			if ref_path in r['session']['image path']:
 				self.logger.info('Use reference in %s' % (r['session']['image path']))
