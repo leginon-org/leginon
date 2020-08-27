@@ -23,8 +23,8 @@
 ; Script Start - Add your code below here
 #include <MsgBoxConstants.au3>
 #include <Array.au3>
-Global $error_log = "autoit_error.log"
-Global $result_log = "autoit_result.log"
+Global $error_log = @UserProfileDir & "myami_log/autoit_error.log"
+Global $result_log = @UserProfileDir & "myami_log/autoit_result.log"
 _ResetError()
 _ResetResult()
 
@@ -38,9 +38,10 @@ $my_text = ""
 WinActivate($my_title)
 WinWaitActive($my_title, "", 5)
 $after = WinActive($my_title)
-Global $sFeiConfigPath = "c:\Program Files (x86)\myami\fei.cfg"
+Global $sFeiConfigPath = "c:\Program Files\myami\fei.cfg"
 ; Set Default
 Local $sTem = 'titan'
+Local $iSetSleepTime = 2000 ; ms
 Local $sMechanism = 'objective'
 Local $action = 'set'
 Local $sSelection = '100'
@@ -154,14 +155,18 @@ Func getFeiConfigModuleLines($configpath, $module)
    ; Read lines under a module in fei.cfg
    Local $h2 = FileOpen($configpath, 0)
    If $h2 == -1 Then
-	  _WriteError("can not open " & $configpath)
-	  Exit
+      $configx86path = StringReplace($configpath, "Program Files", "Program Files (x86)", 1)
+      $h2 = FileOpen($configx86path, 0)
+      If $h2 == -1 Then
+         _WriteError("can not open " & $configpath & " nor " & $contigx86path)
+         Exit
+      EndIf
    EndIf
    Local $bInModule = False
    ; declare array must have at least one item
    Local $Lines[1]=['dummy']
    While 1
-	  Local $sLine = FileReadLine($h2)
+      Local $sLine = FileReadLine($h2)
 	  If @error Then ExitLoop
 	  If StringLeft($sLine,1)=="[" AND StringRight($sLine,1)=="]" Then
 		 Local $modname = StringSplit(StringSplit($sLine,"]",2)[0],"[",2)[1]

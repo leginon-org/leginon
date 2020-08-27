@@ -30,7 +30,11 @@ try:
 	import comtypes.client
 	com_module =  comtypes
 	import winerror
+	log_path = os.path.join(os.environ['USERPROFILE'],'myami_log')
+	if not os.path.isdir(log_path):
+		os.mkdir(log_path)
 except ImportError:
+	log_path = None
 	pass
 
 configs = moduleconfig.getConfigured('fei.cfg')
@@ -281,7 +285,7 @@ class Tecnai(tem.TEM):
 			self.tom.Stage.Speed = self.default_stage_speed_fraction
 
 	def setStageSpeed(self, value):
-		self.speed_deg_per_second = value
+		self.speed_deg_per_second = float(value)
 		self.stage_speed_fraction = min(value/self.stage_top_speed,1.0)
 		if self.tom:
 			# tom-monikar needs to set speed first while temscripting set speed in gotowithspeed call.
@@ -644,8 +648,8 @@ class Tecnai(tem.TEM):
 	def getBeamShift(self):
 		value = {'x': None, 'y': None}
 		try:
-			value['x'] = float(self.tom.Illumination.BeamShiftPhysical.X)
-			value['y'] = float(self.tom.Illumination.BeamShiftPhysical.Y)
+			value['x'] = float(self.tecnai.Illumination.Shift.X)
+			value['y'] = float(self.tecnai.Illumination.Shift.Y)
 		except:
 			# return None if has exception
 			pass
@@ -654,11 +658,11 @@ class Tecnai(tem.TEM):
 	def setBeamShift(self, vector, relative = 'absolute'):
 		if relative == 'relative':
 			try:
-				vector['x'] += self.tom.Illumination.BeamShiftPhysical.X
+				vector['x'] += self.tecnai.Illumination.Shift.X
 			except KeyError:
 				pass
 			try:
-				vector['y'] += self.tom.Illumination.BeamShiftPhysical.Y
+				vector['y'] += self.tecnai.Illumination.Shift.Y
 			except KeyError:
 				pass
 		elif relative == 'absolute':
@@ -666,7 +670,7 @@ class Tecnai(tem.TEM):
 		else:
 			raise ValueError
 		
-		vec = self.tom.Illumination.BeamShiftPhysical
+		vec = self.tecnai.Illumination.Shift
 		try:
 			vec.X = vector['x']
 		except KeyError:
@@ -675,7 +679,7 @@ class Tecnai(tem.TEM):
 			vec.Y = vector['y']
 		except KeyError:
 			pass
-		self.tom.Illumination.BeamShiftPhysical = vec
+		self.tecnai.Illumination.Shift = vec
 	
 	def getImageShift(self):
 		value = {'x': None, 'y': None}
@@ -703,7 +707,11 @@ class Tecnai(tem.TEM):
 			raise ValueError
 		
 		vec = self.tecnai.Projection.ImageBeamShift
-		if abs(vec.X-vector['x'])+abs(vec.Y-vector['y']) < 1e-9:
+		d = 0.0
+		for k in vector.keys():
+			temvalue = getattr(vec, k.upper())
+			d += abs(temvalue - vector[k])
+		if d < 1e-9:
 			# 1 nm move is ignored.
 			return
 		try:
@@ -1598,10 +1606,12 @@ class Tecnai(tem.TEM):
 			raise RuntimeError('runBufferCycle Unknown error')
 
 	def setEmission(self, value):
-		self.tom.Gun.Emission = value
+		if self.tom:
+			self.tom.Gun.Emission = value
 
 	def getEmission(self):
-		return self.tom.Gun.Emission
+		if self.tom:
+			return self.tom.Gun.Emission
 
 	def getExpWaitTime(self):
 		try:
@@ -1809,7 +1819,10 @@ class Tecnai(tem.TEM):
 		return 'unknown'
 
 	def _checkAutoItError(self, error_filename='autoit_error.log'):
-		errorpath = os.path.join(os.getcwd(),error_filename)
+		if not log_path:
+			print 'no log path for autoit error passing'
+			return
+		errorpath = os.path.join(log_path,error_filename)
 		if not os.path.isfile(errorpath):
 			return
 		f = open(errorpath)
@@ -1821,7 +1834,10 @@ class Tecnai(tem.TEM):
 			raise ValueError(msglist[0].split('\n')[0])
 
 	def _getAutoItResult(self, result_filename='autoit_result.log'):
-		resultpath = os.path.join(os.getcwd(),result_filename)
+		if not log_path:
+			print 'no log path for autoit result passing'
+			return
+		resultpath = os.path.join(log_path,result_filename)
 		if not os.path.isfile(resultpath):
 			# the result is None
 			return
