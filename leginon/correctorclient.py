@@ -87,7 +87,7 @@ class CorrectorClient(cameraclient.CameraClient):
 		if ref_path and ref_path not in ref['session']['image path']:
 			self.logger.warning('Searching only reference in %s' % ref_path)
 			ref = self.researchReferenceOnlyInPath(refimageq, ref_path)
-		if not ref.imagereadable():
+		if not hasattr(ref,'imagereadable') or not ref.imagereadable():
 			return None
 
 		shape = ref.imageshape() # read shape without loading the array
@@ -98,12 +98,17 @@ class CorrectorClient(cameraclient.CameraClient):
 		return ref
 
 	def researchReferenceOnlyInPath(self, refimageq, ref_path):
-		results = refimageq.query(timelimit='-90 0:0:0')
+		'''
+		Find reference only below the specified path
+		'''
+		# This does not have time limit because it is usually used
+		# in cases you really need it such as disk failure and restoring
+		# from backup.
 		for r in results:
 			if ref_path in r['session']['image path']:
 				self.logger.info('Use reference in %s' % (r['session']['image path']))
 				return r
-		self.logger.warning('Found none in the last 90 days')
+		self.logger.warning('Found none in %s' % ref_path)
 		return {'image':None}
 
 	def getBrightImageFromNorm(self,normdata):
