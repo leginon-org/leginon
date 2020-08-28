@@ -749,6 +749,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.beamtilt0 = self.instrument.tem.getBeamTilt()
 		self.stig0 = self.instrument.tem.getStigmator()['objective']
 		self.defoc0 = self.instrument.tem.getDefocus()
+		self.probe0 = self.instrument.tem.getProbeMode()
 
 	def moveAndPreset(self, presetdata, emtarget):
 			'''
@@ -1032,12 +1033,19 @@ class Acquisition(targetwatcher.TargetWatcher):
 		processing.
 		'''
 		# projection submode and probe mode must be the same as beamtilt0
-		# and stig0 when calling this.
-		if self.settings['correct image shift coma']:
+		# and stig0 when calling thisi.
+		# Only need this if it is image shift.
+		# TODO: check projection submode and probe mode.
+		#Navigator move or target adjustment may make the these incorrect.
+		if 'shift' in self.settings['move type'] and self.settings['correct image shift coma']:
 			if self.beamtilt0 is None:
 				# Exception during pre-acquire target processing may call this function.
 				# before the real reset values are set
 				self.logger.warning("Calling resetComaCorrection before it is known is not possible. No reset is done")
+				return False
+			if self.probe0 != self.instrument.tem.getProbeMode():
+				mag = self.instrument.tem.getMagnification()
+				self.logger.error("Attempting to resetComaCorrection at %dx on a different probe mode is not doable." % mag)
 				return False
 			try:
 				self.instrument.tem.BeamTilt = self.beamtilt0

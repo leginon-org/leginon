@@ -106,10 +106,16 @@ def open_if_not_exists(filename):
 	return f
 
 def check_exist_one_file(filenames):
+	'''
+	This is used in configuration parsing. Since we don't combine configs but
+	use the last existing in the list, this function returns that one in a list.
+	'''
 	one_exists = False
+	filenames.reverse()
 	for filename in filenames:
 		if os.path.exists(filename):
 			one_exists = True
+			return [filename,]
 	if not one_exists:
 		msg = 'please configure at least one of these:  %s' % (filenames,)
 		if sys.platform == 'win32':
