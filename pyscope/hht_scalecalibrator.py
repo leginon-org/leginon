@@ -198,10 +198,8 @@ class ScaleCalibrator(object):
 					raw_input('Move %s %s axis by %d um ' %
 							(self.move_property,axis,self.physical_shift / 1e-6))
 		else:
-			raw_input('Move %s by %d um ' %
-					(self.move_property,self.physical_shift*1e6))
-		attr_name = self.getAttrNamePrefix(is_get=False)+self.move_property
-		value = self.getCurrentValue()
+			raw_input('Move %s with %s by %d um ' %
+					(self.move_property, self.effect_type,self.physical_shift*1e6))
   
 	def measureStageShift(self, property_name,xy_shift,z_shift,tiltangle_degrees):
 		try:
@@ -245,9 +243,12 @@ class ScaleCalibrator(object):
 
 	def calculateScaleAtAxis(self, pos0, pos1, axis=None):
 		if axis is None:
-			shift = pos1 - pos0 + 1
+			shift = pos1 - pos0
 		else:
-			shift = pos1[axis] - pos0[axis] + 1
+			shift = pos1[axis] - pos0[axis]
+		if abs(shift) < 1e-10:
+			self.logger.info('add 1 for simulated result....')
+			shift += 1
 		self.logger.info('physical shift effect = %.2e' % (self.getPhysicalShift()))
 		self.logger.info('measured digital shift = %d' % (shift))
 		if self.isBeamTilt():
@@ -383,6 +384,8 @@ class ScaleCalibrator(object):
 					screen_shift = 1e-5
 				else:
 					screen_shift = 0.01 # 1 cm
+					specimen_shift = screen_shift / (mag / self.mag_scale) # shift at specimen plane
+					self.logger.info('Screeen shift of %.2e cm = Specimen shift of %.2f um' % (screen_shift*100,specimen_shift*1e6))
 				self.measureShift(self.calibrations[effect_type][1],screen_shift)
 
 
@@ -538,9 +541,9 @@ class HitachiScaleCalibrator(ScaleCalibrator):
 
 	def getMoveClassName(self, config_name):
 		if config_name == 'lens':
-			return 'LensCurrent'
+			return 'LensCurrentRaw'
 		if config_name == 'coil':
-			return 'CoilVector'
+			return 'CoilVectorRaw'
 		else:
 			return config_name[0].upper()+config_name[1:]
 
@@ -569,6 +572,7 @@ class HitachiScaleCalibrator(ScaleCalibrator):
 			self.logger.error('Move property not set')
 		item_name = self.calibrations[self.effect_type][1]
 		value = self.get_move_class_instance(item_name)
+		print value
 		return value
 
 	def setValue(self,value):

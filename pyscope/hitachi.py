@@ -317,78 +317,116 @@ class Hitachi(tem.TEM):
 	def getScreenCurrent(self):
 		return self.screen_current
 	
-	def _scaleLensHexdecToCurrent(self,lens,hexdec):
+	def _scaleLensRawToCurrent(self,lens,d):
+		'''
+		decimal value scale to current with known range in hexdec.
+		'''
 		m = self.lens_hex_range[lens]
-		d = int(hexdec,16)
 		return d*(m[1] - m[0])/int('3FFC00',16) + m[0]
 
-	def _scaleLensCurrentToHexdec(self, lens, current):
+	def _scaleLensCurrentToRaw(self, lens, current):
+		'''
+		current scale to digital decimal value with known range in hexdec.
+		'''
 		m = self.lens_hex_range[lens]
 		precision = (m[1]-m[0]) / int('3FFC00',16)
 		if current - m[0] < precision:
 			d = 0
 		else:
 			d = min(int(round((current - m[0])/precision)),int('3FFC00',16))
-		return hex(d)
+		return d
 
-	def _scaleCoilHexdecToVector(self, coil, submode_name, hex_x, hex_y):
-		xy = []
-		axes = ('x','y')
-		for i,v in enumerate((hex_x,hex_y)):
+	def _scaleCoilRawToVector(self, coil, submode_name, xydict):
+		xy = {}
+		axes = xydict.keys()
+		for k in axes:
+			v = xydict[k]
 			coil_scale_name = 'coil_%s_scale' % (coil.lower(),)
 			if coil.lower() != 'bt':
-				m = self.getHitachiConfig('optics',coil_scale_name)[submode_name.lower()][axes[i]]
+				m = self.getHitachiConfig('optics',coil_scale_name)[submode_name.lower()][k]
 			else:
-				m = self.getHitachiConfig('optics',coil_scale_name)[axes[i]]
-			d = int(v,16)
-			print i, d
-			xy.append(d*(float(m[1] - m[0]))/int('3FFC00',16) + m[0])
+				m = self.getHitachiConfig('optics',coil_scale_name)[k]
+			xy[k] = (v*(float(m[1] - m[0]))/int('3FFC00',16) + m[0])
 		return xy
 
-	def _scaleCoilVectorToHexdec(self, coil, submode_name, x, y):
-		axes = ('x','y')
-		hex_xy = []
-		for i,v in enumerate((x,y)):
+	def _scaleCoilVectorToRaw(self, coil, submode_name, xydict):
+		axes = xydict.keys()
+		d_xy = {}
+		for k in axes:
+			v = xydict[k]
 			coil_scale_name = 'coil_%s_scale' % (coil.lower(),)
 			if coil.lower() != 'bt':
-				m = self.getHitachiConfig('optics',coil_scale_name)[submode_name.lower()][axes[i]]
+				m = self.getHitachiConfig('optics',coil_scale_name)[submode_name.lower()][k]
 			else:
-				m = self.getHitachiConfig('optics',coil_scale_name)[axes[i]]
+				m = self.getHitachiConfig('optics',coil_scale_name)[k]
 			precision = float(m[1]-m[0]) / int('3FFC00',16)
 			if v - m[0] < precision:
 				d = 0
 			else:
 				d = min(int(round((v - m[0])/precision)),int('3FFC00',16))
-			hex_xy.append(hex(d))
-		print hex_xy
-		return hex_xy
+			d_xy[k]= d
+		return d_xy
 
 	def getLensCurrent(self, lens):
-		hexdec = self.h.runGetCommand('Lens', lens,['hexdec',])
-		current = self._scaleLensHexdecToCurrent(lens,hexdec)
+		'''
+		Return current in Amp
+		'''
+		d_current = self.getLensCurrentRaw(lens)
+		current = self._scaleLensRawToCurrent(lens,d_current)
 		return current
+
+	def getLensCurrentRaw(self, lens):
+		'''
+		Return lens value in raw decimal clicks
+		'''
+		hexdec = self.h.runGetCommand('Lens', lens,['hexdec',])
+		return int(hexdec, 16)
 
 	def setLensCurrent(self, lens, value):
 		'''
-		Current in Amp
+		Set current in Amp
 		'''
-		hexdec = self._scaleLensCurrentToHexdec(lens, value)
+		d = self._scaleLensCurrentToRaw(lens, value)
+		self.setLensCurrentRaw(lens, d)
+
+	def setLensCurrentRaw(self, lens, d):
+		'''
+		Set lens value in raw decimal clicks
+		'''
+		hexdec = hex(d)
 		self.h.runSetCommand('Lens', lens, ['FF',hexdec,], ['str','hexdec',], [6,])
 
 	def getCoilVector(self, coil):
+		'''
+		Return coil xy vector dict in physical unit.
+		'''
+		d_xy = self.getCoilVectorRaw(coil)
+		submode_name = self.getProjectionSubModeName()
+		xydict = self._scaleCoilRawToVector(coil,submode_name,d_xy)
+		return xydict
+
+	def getCoilVectorRaw(self, coil):
+		'''
+		Return coil xy vector dict in raw decimal clicks.
+		'''
 		hexdec_x, hexdec_y = self.h.runGetCommand('Coil', coil,['hexdec','hexdec'])
 		submode_name = self.getProjectionSubModeName()
-		x,y = self._scaleCoilHexdecToVector(coil,submode_name,hexdec_x,hexdec_y)
-		return {'x':x, 'y':y}
+		d_xy = {'x':int(hexdec_x,16),'y':int(hexdec_y,16)}
+		return d_xy
 
 	def setCoilVector(self, coil, valuedict):
 		'''
-		x,y vector in meters
+		Set coil x,y vector in physical unit.
 		'''
-		x = valuedict['x']
-		y = valuedict['y']
 		submode_name = self.getProjectionSubModeName()
-		hexdec_x, hexdec_y = self._scaleCoilVectorToHexdec(coil,submode_name,x,y)
+		d_xy = self._scaleCoilVectorToRaw(coil,submode_name,valuedict)
+		self.setCoilVectorRaw(coil, d_xy)
+
+	def setCoilVectorRaw(self, coil, d_xy):
+		'''
+		Set coil x,y vector in raw decimal clicks.
+		'''
+		hexdec_x, hexdec_y = hex(d_xy['x']), hex(d_xy['y'])
 		self.h.runSetCommand('Coil', coil, ['FF',hexdec_x,hexdec_y,], ['str','hexdec','hexdec',], [6,6])
 
 	def getIntensity(self):
@@ -412,6 +450,7 @@ class Hitachi(tem.TEM):
 		for stig in value.keys():
 			coil = self.stig_coil_map[stig]
 			v = value[stig]
+			# must set both axes
 			for key in v.keys():
 				new_values[stig][key]=v[key]
 			self.setCoilVector(coil, new_values[stig])
@@ -513,12 +552,20 @@ class Hitachi(tem.TEM):
 			new_value[key]=value[key]
 		self.setCoilVector(coil, new_value)
 
+	def makeDefocusLensName(self,submode_name):
+		if submode_name.lower() != 'lowmag':
+			lens='obj'
+		else:
+			lens='i1'
+		lens_scale_name = 'lens_%s_current_defocus_scale' % (lens,)
+		return lens_scale_name
+
 	def getDefocus(self):
 		focus = self.getFocus()
 		mag = self.getMagnification()
 		defocus_current = focus - self.zero_defocus_current[mag]
 		submode_name = self.getProjectionSubModeName()
-		lens_scale_name = 'lens_obj_current_defocus_scale'
+		lens_scale_name = self.makeDefocusLensName(submode_name)
 		m = self.getHitachiConfig('optics',lens_scale_name)[submode_name.lower()]
 		if not m :
 			raise RuntimeError('%s%%%s not set in hht.cfg' % (lens_scale_name.upper(), submode_name.upper()))
@@ -527,7 +574,7 @@ class Hitachi(tem.TEM):
 
 	def setDefocus(self, value):
 		submode_name = self.getProjectionSubModeName()
-		lens_scale_name = 'lens_obj_current_defocus_scale'
+		lens_scale_name = self.makeDefocusLensName(submode_name)
 		m = self.getHitachiConfig('optics',lens_scale_name)[submode_name.lower()]
 		if not m :
 			raise RuntimeError('%s%%%s not set in hht.cfg' % (lens_scale_name.upper(), submode_name.upper()))

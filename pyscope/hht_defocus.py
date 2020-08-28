@@ -2,8 +2,17 @@
 import sys
 from pyscope import hitachi
 
+from pyscope import instrumenttype
+search_for = 'TEM'
+try:
+	h = instrumenttype.getInstrumentTypeInstance(search_for)
+	if h.__class__.__name__ not in ('Hitachi','HT7800'):
+		raise ValueError("TEM %s is not of Hitachi subclass" % h.__class__.__name__)
+except Exception, e:
+	print "Error", e
+	sys.exit(1)
+
 focus_offset_file = hitachi.configs['defocus']['focus_offset_path']
-h = hitachi.Hitachi()
 try:
 	h.findMagnifications()
 except (RuntimeError,IOError):
