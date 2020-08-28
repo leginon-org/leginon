@@ -442,5 +442,6 @@ parametermapping = (
 	('gain index', 'GainIndex'),
 	('system corrected', 'SystemGainDarkCorrected'),
 	('use cds', 'UseCds'),
+	('fast save', 'FastSave'),
 )
 

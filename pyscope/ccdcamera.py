@@ -38,6 +38,7 @@ class CCDCamera(baseinstrument.BaseInstrument):
 		{'name': 'FrameFlip', 'type': 'property'},
 		{'name': 'FrameRotate', 'type': 'property'},
 		{'name': 'UseCds', 'type': 'property'},
+		{'name': 'FastSave', 'type': 'property'},
 	)
 
 	def __init__(self):
@@ -398,3 +399,12 @@ This method returns that multiplier, M.  In the standard case, returns 1.0.
 			return
 		# just sleep if not retractable
 		time.sleep(sleep_time)
+
+	def getFastSave(self):
+		# Fastsave saves a small image arrary for frame camera to reduce handling time.
+		return False
+
+	def setFastSave(self, state):
+		# Fastsave saves a small image arrary for frame camera to reduce handling time.
+		pass
+
