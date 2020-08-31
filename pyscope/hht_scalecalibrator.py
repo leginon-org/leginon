@@ -188,15 +188,15 @@ class ScaleCalibrator(object):
 	def applyMovement(self,axis=None):
 		if axis:
 			if self.move_property != 'Pos':
-				raw_input('Move %s by %.1f cm on Main Screen in %s direction' %
-						(self.move_property,self.physical_shift*100, axis))
+				raw_input('Move %s by %.1f um on Main Screen in %s direction based on specimen image' %
+						(self.move_property,self.physical_shift*1e6, axis))
 			else:
 				if axis in ('a','b'):
 					raw_input('Move %s %s axis by %d degrees ' %
 							(self.move_property,axis,math.degrees(self.physical_shift)))
 				else:
 					raw_input('Move %s %s axis by %d um ' %
-							(self.move_property,axis,self.physical_shift / 1e-6))
+							(self.move_property,axis,self.physical_shift*1e6))
 		else:
 			raw_input('Move %s with %s by %d um ' %
 					(self.move_property, self.effect_type,self.physical_shift*1e6))
@@ -253,7 +253,7 @@ class ScaleCalibrator(object):
 		self.logger.info('measured digital shift = %d' % (shift))
 		if self.isBeamTilt():
 			cam_length = self.getCameraLength()
-			physicalshift_radians = math.atan(float(self.getPhysicalShift()) / (self.mag * cam_length))
+			physicalshift_radians = self.getPhysicalShift()
 			half_scale = physicalshift_radians*int('3FFC00',16)/2.0/shift
 			item_type = 'COIL'
 			item_name = '%s_%s_SCALE%%%s%%%s' % (item_type,self.move_property.upper(),self.getSubModeString(),axis.upper())
@@ -382,11 +382,12 @@ class ScaleCalibrator(object):
 					continue
 				elif effect_type == 'focus':
 					screen_shift = 1e-5
+					specimen_shift = screen_shift
 				else:
 					screen_shift = 0.01 # 1 cm
 					specimen_shift = screen_shift / (mag / self.mag_scale) # shift at specimen plane
 					self.logger.info('Screeen shift of %.2e cm = Specimen shift of %.2f um' % (screen_shift*100,specimen_shift*1e6))
-				self.measureShift(self.calibrations[effect_type][1],screen_shift)
+				self.measureShift(self.calibrations[effect_type][1],specimen_shift)
 
 
 	def calibrateInDiffractionMode(self):
@@ -397,8 +398,12 @@ class ScaleCalibrator(object):
 			self.effect_type = effect_type
 			self.current_calibration = self.calibrations[effect_type]
 			self.setMoveClassInstance(effect_type)
-			screen_shift = 0.01 # 1 cm
-			self.measureShift(self.calibrations[effect_type][1],screen_shift)
+			wavelength = fftfun.getElectronWavelength(self.tem.getHighTension())
+			cam_length = self.getCameraLength()
+			specimen_shift =  math.tan(wavelength/2.36e-10)*cam_length
+			self.logger.info('Move from origin to AgOs (111) reflection in this calibration'
+			self.logger.info('Screeen shift of %.2e cm = Beam tilt of %.2f mrad' % (screen_shift*100,specimen_shift*1e3))
+			self.measureShift(self.calibrations[effect_type][1],specimen_shift)
 		raw_input('hit any key to return to imaging mode')
 		self.tem.setProjectionMode('imaging')
 
