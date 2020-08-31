@@ -516,7 +516,10 @@ class Hitachi(tem.TEM):
 
 	def getImageShiftCoil(self):
 		if self.getHitachiConfig('tem_option','use_pa_imageshift'):
-			return 'PA'
+			if submode_name.lower() != 'lowmag':
+				return 'PA'
+			else:
+				return 'IA'
 		else:
 			return 'ISF'
 

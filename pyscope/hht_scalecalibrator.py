@@ -1,6 +1,7 @@
 #from pyscope import simtem
 import math
 from pyscope import hitachi
+from pyami import fftfun
 
 class Logger(object):
 	def __init__(self,filename):
@@ -402,7 +403,7 @@ class ScaleCalibrator(object):
 			cam_length = self.getCameraLength()
 			specimen_shift =  math.tan(wavelength/2.36e-10)*cam_length
 			self.logger.info('Move from origin to AgOs (111) reflection in this calibration')
-			self.logger.info('Screeen shift of %.2e cm = Beam tilt of %.2f mrad' % (screen_shift*100,specimen_shift*1e3))
+			self.logger.info('Screeen shift = Beam tilt of %.2f mrad' % (specimen_shift*1e3))
 			self.measureShift(self.calibrations[effect_type][1],specimen_shift)
 		raw_input('hit any key to return to imaging mode')
 		self.tem.setProjectionMode('imaging')
@@ -440,6 +441,9 @@ class HitachiScaleCalibrator(ScaleCalibrator):
 			self.logger.cfg('tem option','%s' % key.upper(),tem_options[key])
 		self.use_pla = self.tem.getHitachiConfig('tem option','use_pa_imageshift') 
 
+	def getImageShiftCoil(self):
+		return self.tem.getImageShiftCoil()
+
 	def getImagingEffectPropertyDict(self):
 		'''
 		Choose from TEM module the move property.
@@ -449,11 +453,12 @@ class HitachiScaleCalibrator(ScaleCalibrator):
 		self.all_configs = {
 				'lens': {
 						#'intensity': 'C2',
-						'focus':		{'ZOOM1':'OBJ', 'LOWMAG':'I1'},
+						# OBJ calibration is known. Don't know how to calibration lowmag
+						#'focus':		{'ZOOM1':'OBJ', 'LOWMAG':'I1'},
 				},
 				'coil':	{
 						'beamshift': 'BH',
-						'imageshift': {False:'ISF',True:'PA'},
+						'imageshift': {False:'ISF',True:self.getImageShiftCoil()},
 				},
 		}
 		self.configs = self.all_configs.copy()
@@ -468,7 +473,6 @@ class HitachiScaleCalibrator(ScaleCalibrator):
 						'beamtilt': 'BT',
 				},
 		}
-		self.configs = {}
 
 	def getCalibrationRequired(self,first=False,accept_all=False):
 		self.mag = self.tem.getMagnification()
