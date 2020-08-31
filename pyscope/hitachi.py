@@ -504,12 +504,15 @@ class Hitachi(tem.TEM):
 		self.setCoilVector(coil, new_value)
 
 	def getDiffractionShift(self):
-		# place holder. Not implemented
-		return {'x':0.0,'y':0.0}
+		coil = 'IA'
+		return self.getCoilVector(coil) # meters
 
 	def setDiffractionShift(self, value):
-		# place holder. Not implemented
-		pass
+		new_value = self.getBeamShift()
+		coil = 'IA'
+		for key in value.keys():
+			new_value[key]=value[key]
+		self.setCoilVector(coil, new_value)
 
 	def getImageShiftCoil(self):
 		if self.getHitachiConfig('tem_option','use_pa_imageshift'):
