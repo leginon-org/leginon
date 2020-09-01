@@ -60,14 +60,14 @@ class Hitachi(tem.TEM):
 			'micro-hr',
 			'fine-hc',
 			'fine-hr',
-			'low mag',
+			'low-mag',
 		]
 		self.probe_mode_index_cap = {
 			'micro-hc': 15,
 			'micro-hr': 30,
 			'fine-hc': 35,
 			'fine-hr': 40,
-			'low mag':50,
+			'low-mag':50,
 		}
 		self.probe_mode_index = 0
 
@@ -161,8 +161,8 @@ class Hitachi(tem.TEM):
 		return ['open', 'closed']
 
 	def setIntensityZoom(self, value):
-		if self.getProbeMode() == 'low mag':
-			raise ('Can not set IntensityZoom in low mag mode')
+		if self.getProbeMode() == 'low-mag':
+			raise ('Can not set IntensityZoom in low-mag mode')
 		if value is True:
 			self.h.runSetCommand('Column','BrightnessLink',[])
 		else:
@@ -336,29 +336,47 @@ class Hitachi(tem.TEM):
 			d = min(int(round((current - m[0])/precision)),int('3FFC00',16))
 		return d
 
-	def _scaleCoilRawToVector(self, coil, submode_name, xydict):
+	def _scaleCoilRawToVector(self, coil, xydict):
 		xy = {}
 		axes = xydict.keys()
 		for k in axes:
 			v = xydict[k]
-			coil_scale_name = 'coil_%s_scale' % (coil.lower(),)
-			if coil.lower() != 'bt':
-				m = self.getHitachiConfig('optics',coil_scale_name)[submode_name.lower()][k]
-			else:
-				m = self.getHitachiConfig('optics',coil_scale_name)[k]
+			m = self._getCoilScale(coil,k)
 			xy[k] = (v*(float(m[1] - m[0]))/int('3FFC00',16) + m[0])
 		return xy
 
-	def _scaleCoilVectorToRaw(self, coil, submode_name, xydict):
+	def _getCoilScale(self, coil, axis):
+		if coil in ('IA','PA'):
+			# deflectors in projection system is probe and mag dependent
+			mag = self.getMagnification()
+			coil_scale_name = 'coil_%s_%d_scale' % (coil.lower(), mag)
+			probe_mode_name = self.getProbeMode()
+			try:
+				m = self.getHitachiConfig('optics',coil_scale_name)[probe_mode_name.lower()][axis]
+			except TypeError:
+				coil_scale_name = 'coil_%s_scale' % (coil.lower(),)
+				try:
+					m = self.getHitachiConfig('optics',coil_scale_name)[probe_mode_name.lower()][axis]
+					ref_mag = self.getHitachiConfig('optics','probe_ref_magnification')[probe_mode_name.lower()]
+					m = (m[0]*float(mag)/ref_mag,m[1]*float(mag)/ref_mag)
+				except TypeError:
+					raise ValueError('No calibration for %s in %s' % (coil, probe_mode_name))
+		else:
+			coil_scale_name = 'coil_%s_scale' % (coil.lower())
+			if coil.lower() != 'bt':
+				submode_name = self.getProjectionSubModeName()
+				m = self.getHitachiConfig('optics',coil_scale_name)[submode_name.lower()][axis]
+			else:
+				# coils before projection.
+				m = self.getHitachiConfig('optics',coil_scale_name)[axis]
+		return m
+
+	def _scaleCoilVectorToRaw(self, coil, xydict):
 		axes = xydict.keys()
 		d_xy = {}
 		for k in axes:
 			v = xydict[k]
-			coil_scale_name = 'coil_%s_scale' % (coil.lower(),)
-			if coil.lower() != 'bt':
-				m = self.getHitachiConfig('optics',coil_scale_name)[submode_name.lower()][k]
-			else:
-				m = self.getHitachiConfig('optics',coil_scale_name)[k]
+			m = self._getCoilScale(coil,k)
 			precision = float(m[1]-m[0]) / int('3FFC00',16)
 			if v - m[0] < precision:
 				d = 0
@@ -401,8 +419,7 @@ class Hitachi(tem.TEM):
 		Return coil xy vector dict in physical unit.
 		'''
 		d_xy = self.getCoilVectorRaw(coil)
-		submode_name = self.getProjectionSubModeName()
-		xydict = self._scaleCoilRawToVector(coil,submode_name,d_xy)
+		xydict = self._scaleCoilRawToVector(coil,d_xy)
 		return xydict
 
 	def getCoilVectorRaw(self, coil):
@@ -410,16 +427,21 @@ class Hitachi(tem.TEM):
 		Return coil xy vector dict in raw decimal clicks.
 		'''
 		hexdec_x, hexdec_y = self.h.runGetCommand('Coil', coil,['hexdec','hexdec'])
-		submode_name = self.getProjectionSubModeName()
 		d_xy = {'x':int(hexdec_x,16),'y':int(hexdec_y,16)}
 		return d_xy
+
+	def setProjectionCoilVector(self, coil, valuedict):
+		'''
+		Set coil x,y vector in physical unit.
+		'''
+		d_xy = self._scaleProjectionCoilVectorToRaw(coil,valuedict)
+		self.setCoilVectorRaw(coil, d_xy)
 
 	def setCoilVector(self, coil, valuedict):
 		'''
 		Set coil x,y vector in physical unit.
 		'''
-		submode_name = self.getProjectionSubModeName()
-		d_xy = self._scaleCoilVectorToRaw(coil,submode_name,valuedict)
+		d_xy = self._scaleCoilVectorToRaw(coil,valuedict)
 		self.setCoilVectorRaw(coil, d_xy)
 
 	def setCoilVectorRaw(self, coil, d_xy):
@@ -651,7 +673,7 @@ class Hitachi(tem.TEM):
 		if prev_mag != mag:
 			if prev_submode_id != new_submode_id:
 				if new_submode_id == 1: #Low-Mag
-					self.setProbeMode('low mag')
+					self.setProbeMode('low-mag')
 				if new_submode_id == 2: #Zoom1
 					self.setProbeMode('micro-hc') # TODO: Will this work ? We don't have spot size info. setProbeMode will consistently cap the spot size.
 			self._setMagnification(mag)
@@ -792,7 +814,7 @@ class Hitachi(tem.TEM):
 			'micro-hr': hex(int('02',16)),
 			'fine-hc': hex(int('00',16)), # not sure how this maps, assume zoom-1 for now
 			'fine-hr': hex(int('02',16)),
-			'low mag': hex(int('0e',16)),
+			'low-mag': hex(int('0e',16)),
 		}
 		probe, spot = self._getProbeSpotFromColumnMode(mode_d)
 		submode_h = submodes[probe]

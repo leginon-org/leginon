@@ -267,12 +267,19 @@ class ScaleCalibrator(object):
 			# others clicks * scale = effect
 			half_scale = self.getPhysicalShift()*int('3FFC00',16)/2.0/shift
 			item_type = 'COIL'
-			item_name = '%s_%s_SCALE%%%s%%%s' % (item_type,self.move_property.upper(),self.getSubModeString(),axis.upper())
+			coil_name = self.move_property.upper()
+			if coil_name in ('IA','PA'):
+				item_name = '%s_%s_%d_SCALE%%%s%%%s' % (item_type,self.move_property.upper(),self.mag,self.getProbeModeString(),axis.upper())
+			else:
+				item_name = '%s_%s_SCALE%%%s%%%s' % (item_type,self.move_property.upper(),self.getSubModeString(),axis.upper())
 		self.logger.cfg('optic',
 				item_name,
 				'%.2e' % (-half_scale),
 				'%.2e' % (half_scale)
 		)
+
+	def getProbeModeString(self):
+		self.tem.getProbeMode().uppert()
 
 	def getSubModeString(self):
 		return self.subDivideMode(self.submode,self.mag)
