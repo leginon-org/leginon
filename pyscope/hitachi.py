@@ -346,7 +346,7 @@ class Hitachi(tem.TEM):
 		return xy
 
 	def _getCoilScale(self, coil, axis):
-		if coil in ('IA','PA'):
+		if coil in ('PA',):
 			# deflectors in projection system is probe and mag dependent
 			mag = self.getMagnification()
 			coil_scale_name = 'coil_%s_%d_scale' % (coil.lower(), mag)
@@ -358,7 +358,7 @@ class Hitachi(tem.TEM):
 				try:
 					m = self.getHitachiConfig('optics',coil_scale_name)[probe_mode_name.lower()][axis]
 					ref_mag = self.getHitachiConfig('optics','probe_ref_magnification')[probe_mode_name.lower()]
-					m = (m[0]*float(mag)/ref_mag,m[1]*float(mag)/ref_mag)
+					m = (m[0]*float(ref_mag)/mag,m[1]*float(ref_mag)/mag)
 				except TypeError:
 					raise ValueError('No calibration for %s in %s' % (coil, probe_mode_name))
 		else:
@@ -537,12 +537,15 @@ class Hitachi(tem.TEM):
 		self.setCoilVector(coil, new_value)
 
 	def getImageShiftCoil(self):
-		if self.getHitachiConfig('tem_option','use_pa_imageshift'):
+		if True:
+			# Use PA or IA
+			submode_name = self.getProjectionSubModeName()
 			if submode_name.lower() != 'lowmag':
 				return 'PA'
 			else:
 				return 'IA'
 		else:
+			# limit range
 			return 'ISF'
 
 	def getImageShift(self):

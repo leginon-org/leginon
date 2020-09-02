@@ -189,7 +189,7 @@ class ScaleCalibrator(object):
 	def applyMovement(self,axis=None):
 		if axis:
 			if self.move_property != 'Pos':
-				raw_input('Move %s by %.1f um on Main Screen in %s direction based on specimen image' %
+				raw_input('Move %s by %.2f um on Main Screen in %s direction based on specimen image' %
 						(self.move_property,self.physical_shift*1e6, axis))
 			else:
 				if axis in ('a','b'):
@@ -279,7 +279,7 @@ class ScaleCalibrator(object):
 		)
 
 	def getProbeModeString(self):
-		self.tem.getProbeMode().uppert()
+		return self.tem.getProbeMode().upper()
 
 	def getSubModeString(self):
 		return self.subDivideMode(self.submode,self.mag)
