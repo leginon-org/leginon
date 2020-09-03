@@ -36,6 +36,28 @@ class Hitachi(tem.TEM):
 			5000,6000,7000,8000,10000,12000,15000,20000,25000,30000,
 			40000,50000,60000,70000,80000,100000,120000,150000,200000
 			]
+	probe_modes = [
+			'micro-hc1',
+			'micro-hc2',
+			'micro-hc3',
+			'micro-hr1',
+			'micro-hr2',
+			'micro-hr3',
+			'fine-hc',
+			'fine-hr',
+			'low-mag',
+			] # in order of index cap
+
+	microhr_min_mag = 4000 # micro-hr mode has limited mag range
+
+	probe_mags = {}
+	probe_mags['low-mag'] = list(submode_mags[1])
+	probe_mags['micro-hc1'] = list(submode_mags[2])
+	probe_mags['micro-hc2'] = list(probe_mags['micro-hc1'])
+	probe_mags['micro-hc3'] = list(probe_mags['micro-hc1'])
+	probe_mags['micro-hr1'] = list(submode_mags[2][submode_mags[2].index(microhr_min_mag):])
+	probe_mags['micro-hr2'] = list(probe_mags['micro-hr1'])
+	probe_mags['micro-hr3'] = list(probe_mags['micro-hr1'])
 	# lens current range at HT 100 kV span 000000 - 3FFC00 
 	lens_hex_range = {
 		'OBJ':(0,1.94007),
@@ -55,16 +77,13 @@ class Hitachi(tem.TEM):
 		self.magnifications = []
 		self.magnification_index = 0
 
-		self.probe_modes = [
-			'micro-hc',
-			'micro-hr',
-			'fine-hc',
-			'fine-hr',
-			'low-mag',
-		]
 		self.probe_mode_index_cap = {
-			'micro-hc': 15,
-			'micro-hr': 30,
+			'micro-hc1': 5,
+			'micro-hc2': 10,
+			'micro-hc3': 15,
+			'micro-hr1': 20,
+			'micro-hr2': 25,
+			'micro-hr3': 30,
 			'fine-hc': 35,
 			'fine-hr': 40,
 			'low-mag':50,
@@ -142,6 +161,7 @@ class Hitachi(tem.TEM):
 		self.beamstop_positions = ['out','in'] # index of this list is API value to set
 		self.coil_map = [('BT','beam_tilt'),('BH','beam_shift'),('ISF','image_shift'),('CS','condenser_stig'),('OS','objective_stig'),('IS','diffraction_stig')]
 		self.stig_coil_map = {'condenser':'CS','objective':'OS','diffraction':'IS'}
+	
 
 	def printStageDebug(self,msg):
 		if STAGE_DEBUG:
@@ -530,7 +550,7 @@ class Hitachi(tem.TEM):
 		return self.getCoilVector(coil) # meters
 
 	def setDiffractionShift(self, value):
-		new_value = self.getBeamShift()
+		new_value = self.getDiffractionShift()
 		coil = 'IA'
 		for key in value.keys():
 			new_value[key]=value[key]
@@ -583,8 +603,8 @@ class Hitachi(tem.TEM):
 			new_value[key]=value[key]
 		self.setCoilVector(coil, new_value)
 
-	def makeDefocusLensName(self,submode_name):
-		if submode_name.lower() != 'lowmag':
+	def makeDefocusLensName(self,probe_name):
+		if probe_name.lower() != 'low-mag':
 			lens='obj'
 		else:
 			lens='i1'
@@ -594,38 +614,37 @@ class Hitachi(tem.TEM):
 	def getDefocus(self):
 		focus = self.getFocus()
 		mag = self.getMagnification()
-		defocus_current = focus - self.zero_defocus_current[mag]
-		submode_name = self.getProjectionSubModeName()
-		lens_scale_name = self.makeDefocusLensName(submode_name)
-		m = self.getHitachiConfig('optics',lens_scale_name)[submode_name.lower()]
+		probe = self.getProbeMode()
+		defocus_current = focus - self.zero_defocus_current[probe][mag]
+		lens_scale_name = self.makeDefocusLensName(probe)
+		m = self.getHitachiConfig('optics',lens_scale_name)[probe.lower()]
 		if not m :
-			raise RuntimeError('%s%%%s not set in hht.cfg' % (lens_scale_name.upper(), submode_name.upper()))
+			raise RuntimeError('%s%%%s not set in hht.cfg' % (lens_scale_name.upper(), probe.upper()))
 		defocus = defocus_current * m
 		return defocus
 
 	def setDefocus(self, value):
-		submode_name = self.getProjectionSubModeName()
-		lens_scale_name = self.makeDefocusLensName(submode_name)
-		m = self.getHitachiConfig('optics',lens_scale_name)[submode_name.lower()]
+		probe = self.getProbeMode()
+		lens_scale_name = self.makeDefocusLensName(probe)
+		m = self.getHitachiConfig('optics',lens_scale_name)[probe.lower()]
 		if not m :
-			raise RuntimeError('%s%%%s not set in hht.cfg' % (lens_scale_name.upper(), submode_name.upper()))
+			raise RuntimeError('%s%%%s not set in hht.cfg' % (lens_scale_name.upper(), probe.upper()))
 		mag = self.getMagnification()
 		lens_current_value = value / m
-		focus = lens_current_value + self.zero_defocus_current[mag]
+		focus = lens_current_value + self.zero_defocus_current[probe][mag]
 		self.setFocus(focus)
 		return 
 
 	def resetDefocus(self):
 		focus = self.getFocus()
 		mag = self.getMagnification()
-		submode_id = self.getProjectionSubModeId()
-		submode_name = self.projection_submodes[submode_id]
-		focus_diff = focus - self.zero_defocus_current[mag]
-		# Only reset within its own projection submode
-		for mag in self.submode_mags[submode_id]:
-			self.zero_defocus_current[mag] += focus_diff
-		ref_mag = self.getHitachiConfig('defocus','ref_magnification')[submode_name.lower()]
-		self.saveEucentricFocusAtReference(submode_name, self.zero_defocus_current[ref_mag])
+		probe = self.getProbeMode()
+		focus_diff = focus - self.zero_defocus_current[probe][mag]
+		# Only reset within its own probe mode
+		for mag in self.probe_mags[probe]:
+			self.zero_defocus_current[probe][mag] += focus_diff
+		ref_mag = self.getHitachiConfig('defocus','ref_magnification')[probe.lower()]
+		self.saveEucentricFocusAtReference(probe, self.zero_defocus_current[probe][ref_mag])
 
 	def getMagnification(self, index=None):
 		if index is None:
@@ -658,28 +677,17 @@ class Hitachi(tem.TEM):
 				mag = int(mag)
 			except:
 				raise TypeError
+		prev_mag = self.getMagnification()	
+		if prev_mag == mag:
+			return
 
 		# set  projection mode if changing.
-		if self.getProjectionMode() != self.projection_mode:
-			self.setProjectionMode(None)
 		try:
-			index = self.magnifications.index(mag)
-		except ValueError:
-			raise ValueError('invalid magnification')
-		new_submode_name, new_submode_id = self.getProjectionSubModeMap()[mag]
-		try:
-			prev_mag = self.getMagnification()
-			prev_submode_name, prev_submode_id = self.getProjectionSubModeMap()[prev_mag]
-		except ValueError:
-			raise
-		need_proj_norm = False
-		if prev_mag != mag:
-			if prev_submode_id != new_submode_id:
-				if new_submode_id == 1: #Low-Mag
-					self.setProbeMode('low-mag')
-				if new_submode_id == 2: #Zoom1
-					self.setProbeMode('micro-hc') # TODO: Will this work ? We don't have spot size info. setProbeMode will consistently cap the spot size.
-			self._setMagnification(mag)
+			prev_probe_mode = self.getProbeMode()
+			index = self.probe_mags[prev_probe_mode].index(mag)
+		except ValueError as e:
+			raise ValueError('invalid magnification for %s: %s' % (prev_probe_mode,e))
+		self._setMagnification(mag)
 		return
 
 	def _setMagnification(self, value):
@@ -751,40 +759,43 @@ class Hitachi(tem.TEM):
 		if not self.magnifications:
 			raise ValueError('Need Magnifications to correlate the table')
 		ref_ufocus = {}
+		probe_used = self.getProbeModes()
 		try:
-			for submode_id in self.projection_submode_ids:
-				submode_name = self.projection_submodes[submode_id]
-				ref_ufocus[submode_id] = self.getEucentricFocusAtReference(submode_name)
+			for probe_mode in probe_used:
+				ref_ufocus[probe_mode] = self.getEucentricFocusAtReference(probe_mode)
 		except IOError:
 			raise RuntimeError('Please run hht_defocus.py first to get initial values')
-		focus_offset_file = self.getHitachiConfig('defocus','focus_offset_path')
-		if focus_offset_file and os.path.isfile(focus_offset_file):
-			f = open(focus_offset_file,'r')
-			lines = f.readlines()
-			mags = self.getMagnifications()
-			if len(mags) != len(lines):
-				f.close()
-				raise ValueError('Focus offset file and Magnifications are not of the same length')
-			for l in lines:
-				bits = l.split('\n')[0].split('\t')
-				m = int(bits[0])
-				foc = float(bits[1])
-				for submode_id in self.projection_submode_ids:
-					if m in self.submode_mags[submode_id]:
-						self.zero_defocus_current[m] = foc + ref_ufocus[submode_id]
-		else:
-			raise RuntimeError('Please run hht_defocus.py first to get initial values')
+		for probe_mode in probe_used:
+			focus_offset_file = self.getHitachiConfig('defocus','focus_offset_path')[probe_mode]
+			if focus_offset_file and os.path.isfile(focus_offset_file):
+				f = open(focus_offset_file,'r')
+				lines = f.readlines()
+				mags = self.getMagnificationsInProbeMode(probe_mode)
+				if len(mags) != len(lines):
+					f.close()
+					raise ValueError('Focus offset file and Magnifications are not of the same length')
+				for l in lines:
+					bits = l.split('\n')[0].split('\t')
+					m = int(bits[0])
+					foc = float(bits[1])
+					for probe_mode in probe_used:
+						if m in self.probe_mags[probe_mode]:
+							if probe_mode not in self.zero_defocus_current.keys():
+								self.zero_defocus_current[probe_mode] = {}
+							self.zero_defocus_current[probe_mode][m] = foc + ref_ufocus[probe_mode]
+			else:
+				raise RuntimeError('Please run hht_defocus.py first to get initial values')
 
-	def getEucentricFocusAtReference(self, p_submode_name):
-		ufocus_path = self.getHitachiConfig('defocus','ref_ufocus_path')[p_submode_name.lower()]
+	def getEucentricFocusAtReference(self, probe_mode):
+		ufocus_path = self.getHitachiConfig('defocus','ref_ufocus_path')[probe_mode.lower()]
 		f = open(ufocus_path)
 		lines = f.readlines()
 		ufocus = float(lines[0].split('\n')[0])
 		f.close()
 		return ufocus
 
-	def saveEucentricFocusAtReference(self, p_submode_name, value):
-		ufocus_path = self.getHitachiConfig('defocus','ref_ufocus_path')[p_submode_name.lower()]
+	def saveEucentricFocusAtReference(self, probe_mode, value):
+		ufocus_path = self.getHitachiConfig('defocus','ref_ufocus_path')[probe_mode.lower()]
 		f = open(ufocus_path,'w')
 		f.write('%9.6f\n' % value)
 		f.close()
@@ -792,6 +803,9 @@ class Hitachi(tem.TEM):
 	def getMagnifications(self):
 		return list(self.magnifications)
 
+	def getMagnificationsInProbeMode(self, probe):
+		return self.probe_mags[probe]
+			
 	def setMagnifications(self, magnifications):
 		self.magnifications = magnifications
 
@@ -820,7 +834,11 @@ class Hitachi(tem.TEM):
 			'low-mag': hex(int('0e',16)),
 		}
 		probe, spot = self._getProbeSpotFromColumnMode(mode_d)
-		submode_h = submodes[probe]
+		if 'micro' in probe:
+			observation_name = probe[:-1]
+		else:
+			observation_name = probe
+		submode_h = submodes[observation_name]
 		print mode_h, submode_h
 		self.h.runSetHexdecAndWait('Column','Mode',[mode_h, submode_h],['hexdec','hexdec'],hex_lengths=[hex_length,])
 
@@ -846,6 +864,8 @@ class Hitachi(tem.TEM):
 			new_probe_index = self.probe_modes.index(new_probe)
 		except ValueError:
 			raise ValueError('invalid probe mode')
+		if new_probe not in self.getProbeModes():
+			raise ValueError('not a probe mode set to be used')
 		prev_probe = self.getProbeMode()
 		if prev_probe == new_probe:
 			return
@@ -866,7 +886,14 @@ class Hitachi(tem.TEM):
 		self._setColumnMode(new_mode_d)
 
 	def getProbeModes(self):
-		return list(self.probe_modes)
+		probe_used = self.getHitachiConfig('optics','probes_to_use')
+		if probe_used:
+			for p in probe_used:
+				if not p in self.probe_modes:
+					raise ValueError('%s set in hht.cfg %s%%%s is not available' % (p,'OPTICS','PROBES_TO_USE'))
+			return probe_used
+		else:
+			return list(self.probe_modes)
 
 	def setProjectionMode(self, value):
 		# This is a fake value set.  It forces the projection mode defined by

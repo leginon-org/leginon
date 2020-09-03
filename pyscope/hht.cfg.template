@@ -1,4 +1,8 @@
 [optics]
+#reference mag for each probe mode used
+PROBE_REF_MAGNIFICATION%LOW-MAG = 400
+PROBE_REF_MAGNIFICATION%MICRO-HC1 = 5000
+PROBE_REF_MAGNIFICATION%MICRO-HR1 = 40000
 # first number maps 000000
 # second number maps 3FF00 
 # scale is the difference between the two values
@@ -15,13 +19,10 @@ COIL_ISF_SCALE%ZOOM1%X = -1e-4,1e-4
 COIL_ISF_SCALE%ZOOM1%Y = -1e-4,1e-4
 COIL_IA_SCALE%ZOOM1%X = -8.7e-2,8.7e-2
 COIL_IA_SCALE%ZOOM1%Y = -8.7e-2,8.7e-2
-COIL_PA_SCALE%MICRO-HC%X = -2.2e-5,2.2e-5
-COIL_PA_SCALE%MICRO-HC%Y = -2.2e-5,2.2e-5
-COIL_PA_SCALE%MICRO-HR%X = -4.4e-6,4.4e-6
-COIL_PA_SCALE%MICRO-HR%Y = -4.4e-6,4.4e-6
-PROBE_REF_MAGNIFICATION%MICRO-HC = 5000
-PROBE_REF_MAGNIFICATION%LOW-MAG = 400
-PROBE_REF_MAGNIFICATION%MICRO-HR = 40000
+COIL_PA_SCALE%MICRO-HC1%X = -2.2e-5,2.2e-5
+COIL_PA_SCALE%MICRO-HC1%Y = -2.2e-5,2.2e-5
+COIL_PA_SCALE%MICRO-HR1%X = -4.4e-6,4.4e-6
+COIL_PA_SCALE%MICRO-HR1%Y = -4.4e-6,4.4e-6
 # convert tilt clicks to angle in radians
 COIL_BT_SCALE%LOWMAG%X = -2.32e-2,2.32e-2
 COIL_BT_SCALE%LOWMAG%Y = -2.32e-2,2.32e-2
@@ -46,10 +47,12 @@ COIL_BT_SCALE%Y = -0.5,0.5
 LENS_OBJ_CURRENT_DEFOCUS_SCALE%LOWMAG = 0.01
 LENS_OBJ_CURRENT_DEFOCUS_SCALE%ZOOM1 = 0.00678682
 [defocus]
-# these pathes saves defocus and focus path. They must be read and write accessible
+# these pathes saves defocus and focus path for probe modes. They must be read and write accessible
 FOCUS_OFFSET_PATH = C:\Users\tvips\Desktop\hht_focus_offset.txt
-REF_UFOCUS_PATH%LOWMAG = C:\Users\tvips\Desktop\hht_lowmag_ufocus.txt
-REF_UFOCUS_PATH%ZOOM1 = C:\Users\tvips\Desktop\hht_zoom1_ufocus.txt
-# reference magnification for each projection submode
-REF_MAGNIFICATION%LOWMAG = 400
-REF_MAGNIFICATION%ZOOM1 = 8000
+REF_UFOCUS_PATH%LOW-MAG = C:\Users\tvips\Desktop\hht_low-mag_ufocus.txt
+REF_UFOCUS_PATH%MICRO-HC1 = C:\Users\tvips\Desktop\hht_micro-hc1_ufocus.txt
+REF_UFOCUS_PATH%MICRO-HC2 = C:\Users\tvips\Desktop\hht_micro-hc1_ufocus.txt
+REF_UFOCUS_PATH%MICRO-HC3 = C:\Users\tvips\Desktop\hht_micro-hc1_ufocus.txt
+REF_UFOCUS_PATH%MICRO-HR1 = C:\Users\tvips\Desktop\hht_micro-hr1_ufocus.txt
+REF_UFOCUS_PATH%MICRO-HR2 = C:\Users\tvips\Desktop\hht_micro-hr1_ufocus.txt
+REF_UFOCUS_PATH%MICRO-HR3 = C:\Users\tvips\Desktop\hht_micro-hr1_ufocus.txt
