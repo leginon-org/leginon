@@ -111,8 +111,9 @@ def check_exist_one_file(filenames):
 	use the last existing in the list, this function returns that one in a list.
 	'''
 	one_exists = False
-	filenames.reverse()
-	for filename in filenames:
+	rev_filenames = list(filenames)
+	rev_filenames.reverse()
+	for filename in rev_filenames:
 		if os.path.exists(filename):
 			one_exists = True
 			return [filename,]
