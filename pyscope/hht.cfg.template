@@ -1,58 +1,90 @@
+[tem option]
+USE_PA_IMAGESHIFT = True
 [optics]
-#reference mag for each probe mode used
-PROBE_REF_MAGNIFICATION%LOW-MAG = 400
-PROBE_REF_MAGNIFICATION%MICRO-HC1 = 5000
-PROBE_REF_MAGNIFICATION%MICRO-HR1 = 40000
+OBSERVATION_PROBE_TO_USE%LOW-MAG = low-mag
+OBSERVATION_PROBE_TO_USE%MICRO-HC = micro-hc1
+OBSERVATION_PROBE_TO_USE%MICRO-HR = micro-hr1
+SUBMODES_TO_USE = lowmag,zoom1-hc,zoom1-hr
+#each magnification should be mapped to one imaging mode
+MAGS%LOWMAG = 50,100,200,300,400
+MAGS%ZOOM1-HC = 500,700,1000,1200,1500,2000,2500,3000,4000,5000,6000,7000
+MAGS%ZOOM1-HR = 4000,5000,6000,8000,10000,12000,20000,30000,40000,50000,60000,80000,100000,120000,150000,200000,300000,400000,500000,600000
+#reference mag for each column sub mode used
+REF_MAGNIFICATION%LOWMAG = 400
+REF_MAGNIFICATION%ZOOM1-HC = 5000
+REF_MAGNIFICATION%ZOOM1-HR = 40000
 # first number maps 000000
-# second number maps 3FF00 
+# second number maps 3FFC00 
 # scale is the difference between the two values
 # convert shift clicks to value in meters
-COIL_BH_SCALE%LOWMAG%X = -4e-4,4e-4
-COIL_BH_SCALE%LOWMAG%Y = -4e-4,4e-4
-COIL_ISF_SCALE%LOWMAG%X = -0.5,0.5
-COIL_ISF_SCALE%LOWMAG%Y = -0.5,0.5
+# Illumination system
+# probe mode low-mag
+COIL_BH_SCALE%LOW-MAG%X = -4e-4,4e-4
+COIL_BH_SCALE%LOW-MAG%Y = -4e-4,4e-4
+COIL_BT_SCALE%LOW-MAG%X = -2.32e-2,2.32e-2
+COIL_BT_SCALE%LOW-MAG%Y = -2.32e-2,2.32e-2
+# probe mode micro-hc
+COIL_BH_SCALE%MICRO-HC%X = -4e-4,4e-4
+COIL_BH_SCALE%MICRO-HC%Y = -4e-4,4e-4
+COIL_BT_SCALE%MICRO-HC%X = -2.32e-2,2.32e-2
+COIL_BT_SCALE%MICRO-HC%Y = -2.32e-2,2.32e-2
+# probe mode micro-hr
+COIL_BH_SCALE%MICRO-HR%X = -4e-4,4e-4
+COIL_BH_SCALE%MICRO-HR%Y = -4e-4,4e-4
+COIL_BT_SCALE%MICRO-HR%X = -2.32e-2,2.32e-2
+COIL_BT_SCALE%MICRO-HR%Y = -2.32e-2,2.32e-2
+# Imaging system
+# column submode lowmag
 COIL_IA_SCALE%LOWMAG%X = -7.5e-4,7.5e-4
 COIL_IA_SCALE%LOWMAG%Y = -7.5e-4,7.5e-4
-COIL_BH_SCALE%ZOOM1%X = -4e-4,4e-4
-COIL_BH_SCALE%ZOOM1%Y = -4e-4,4e-4
-COIL_ISF_SCALE%ZOOM1%X = -1e-4,1e-4
-COIL_ISF_SCALE%ZOOM1%Y = -1e-4,1e-4
-COIL_IA_SCALE%ZOOM1%X = -8.7e-2,8.7e-2
-COIL_IA_SCALE%ZOOM1%Y = -8.7e-2,8.7e-2
-COIL_PA_SCALE%MICRO-HC1%X = -2.2e-5,2.2e-5
-COIL_PA_SCALE%MICRO-HC1%Y = -2.2e-5,2.2e-5
-COIL_PA_SCALE%MICRO-HR1%X = -4.4e-6,4.4e-6
-COIL_PA_SCALE%MICRO-HR1%Y = -4.4e-6,4.4e-6
-# convert tilt clicks to angle in radians
-COIL_BT_SCALE%LOWMAG%X = -2.32e-2,2.32e-2
-COIL_BT_SCALE%LOWMAG%Y = -2.32e-2,2.32e-2
-COIL_BT_SCALE%ZOOM1%X = -2.32e-2,2.32e-2
-COIL_BT_SCALE%ZOOM1%Y = -2.32e-2,2.32e-2
-# stigmators
-COIL_CS_SCALE%LOWMAG%X = -0.5,0.5
-COIL_CS_SCALE%LOWMAG%Y = -0.5,0.5
+COIL_PA_SCALE%LOWMAG%X = -0.5,0.5
+COIL_PA_SCALE%LOWMAG%Y = -0.5,0.5
+COIL_BH_SCALE%LOWMAG%Y = -4e-4,4e-4
+# column submode zoom1-hc
+COIL_ISF_SCALE%ZOOM1-HC%X = -1e-4,1e-4
+COIL_ISF_SCALE%ZOOM1-HC%Y = -1e-4,1e-4
+COIL_IA_SCALE%ZOOM1-HC%X = -8.7e-2,8.7e-2
+COIL_IA_SCALE%ZOOM1-HC%Y = -8.7e-2,8.7e-2
+COIL_PA_SCALE%ZOOM1-HC%X = -2.2e-5,2.2e-5
+COIL_PA_SCALE%ZOOM1-HC%Y = -2.2e-6,2.2e-5
+# column submode zoom1-hr
+COIL_ISF_SCALE%ZOOM1-HR%X = -1e-4,1e-4
+COIL_ISF_SCALE%ZOOM1-HR%Y = -1e-4,1e-4
+COIL_IA_SCALE%ZOOM1-HR%X = -8.7e-2,8.7e-2
+COIL_IA_SCALE%ZOOM1-HR%Y = -8.7e-2,8.7e-2
+COIL_PA_SCALE%ZOOM1-HR%X = -4.4e-6,4.4e-6
+COIL_PA_SCALE%ZOOM1-HR%Y = -4.4e-6,4.4e-6
+# stigmators no need to calibrate
+COIL_CS_SCALE%LOW-MAG%X = -0.5,0.5
+COIL_CS_SCALE%LOW-MAG%Y = -0.5,0.5
 COIL_OS_SCALE%LOWMAG%X = -0.5,0.5
 COIL_OS_SCALE%LOWMAG%Y = -0.5,0.5
 COIL_IS_SCALE%LOWMAG%X = -0.5,0.5
 COIL_IS_SCALE%LOWMAG%Y = -0.5,0.5
-COIL_CS_SCALE%ZOOM1%X = -0.5,0.5
-COIL_CS_SCALE%ZOOM1%Y = -0.5,0.5
-COIL_OS_SCALE%ZOOM1%X = -0.5,0.5
-COIL_OS_SCALE%ZOOM1%Y = -0.5,0.5
-COIL_IS_SCALE%ZOOM1%X = -0.5,0.5
-COIL_IS_SCALE%ZOOM1%Y = -0.5,0.5
+COIL_CS_SCALE%MICRO-HC%X = -0.5,0.5
+COIL_CS_SCALE%MICRO-HC%Y = -0.5,0.5
+COIL_OS_SCALE%ZOOM1-HC%X = -0.5,0.5
+COIL_OS_SCALE%ZOOM1-HC%Y = -0.5,0.5
+COIL_IS_SCALE%ZOOM1-HC%X = -0.5,0.5
+COIL_IS_SCALE%ZOOM1-HC%Y = -0.5,0.5
+COIL_CS_SCALE%MICRO-HR%X = -0.5,0.5
+COIL_CS_SCALE%MICRO-HR%Y = -0.5,0.5
+COIL_OS_SCALE%ZOOM1-HR%X = -0.5,0.5
+COIL_OS_SCALE%ZOOM1-HR%Y = -0.5,0.5
+COIL_IS_SCALE%ZOOM1-HR%X = -0.5,0.5
+COIL_IS_SCALE%ZOOM1-HR%Y = -0.5,0.5
+# convert tilt clicks to angle in radians
 COIL_BT_SCALE%X = -0.5,0.5
 COIL_BT_SCALE%Y = -0.5,0.5
 # convert lens current to defocus in meters
-LENS_OBJ_CURRENT_DEFOCUS_SCALE%LOWMAG = 0.01
-LENS_OBJ_CURRENT_DEFOCUS_SCALE%ZOOM1 = 0.00678682
+LENS_I1_CURRENT_DEFOCUS_SCALE%LOWMAG = 0.01
+LENS_OBJ_CURRENT_DEFOCUS_SCALE%ZOOM1-HC = 0.00678682
+LENS_OBJ_CURRENT_DEFOCUS_SCALE%ZOOM1-HR = 0.00678682
 [defocus]
-# these pathes saves defocus and focus path for probe modes. They must be read and write accessible
-FOCUS_OFFSET_PATH = C:\Users\tvips\Desktop\hht_focus_offset.txt
-REF_UFOCUS_PATH%LOW-MAG = C:\Users\tvips\Desktop\hht_low-mag_ufocus.txt
-REF_UFOCUS_PATH%MICRO-HC1 = C:\Users\tvips\Desktop\hht_micro-hc1_ufocus.txt
-REF_UFOCUS_PATH%MICRO-HC2 = C:\Users\tvips\Desktop\hht_micro-hc1_ufocus.txt
-REF_UFOCUS_PATH%MICRO-HC3 = C:\Users\tvips\Desktop\hht_micro-hc1_ufocus.txt
-REF_UFOCUS_PATH%MICRO-HR1 = C:\Users\tvips\Desktop\hht_micro-hr1_ufocus.txt
-REF_UFOCUS_PATH%MICRO-HR2 = C:\Users\tvips\Desktop\hht_micro-hr1_ufocus.txt
-REF_UFOCUS_PATH%MICRO-HR3 = C:\Users\tvips\Desktop\hht_micro-hr1_ufocus.txt
+# these pathes saves defocus and focus path. They must be read and write accessible
+FOCUS_OFFSET_PATH%LOWMAG = /Users/my_name/hht_focus_offset_lowmag.txt
+FOCUS_OFFSET_PATH%ZOOM1-HC = /Users/my_name/hht_focus_offset_zoom1-hc.txt
+FOCUS_OFFSET_PATH%ZOOM1-HR = /Users/my_name/hht_focus_offset_zoom1-hr.txt
+REF_UFOCUS_PATH%LOWMAG = /Users/my_name/hht_ufocus_lowmag.txt
+REF_UFOCUS_PATH%ZOOM1-HC = /Users/my_name/hht_ufocus_zoom1-hc.txt
+REF_UFOCUS_PATH%ZOOM1-HR = /Users/my_name/hht_ufocus_zoom1-hr.txt

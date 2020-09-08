@@ -9,6 +9,7 @@ import math
 import time
 import os
 import sys
+import re
 
 import itertools
 
@@ -27,42 +28,27 @@ configs = moduleconfig.getConfigured('hht.cfg')
 class Hitachi(tem.TEM):
 	name = 'Hitachi'
 	projection_mode = 'imaging'
-	projection_submodes = {1:'LowMag',2:'Zoom1'}  # Do this in order.  There is no mode_id in hitachi script. The keys here are for ordering.
+	######
+	# The configuration below is a fake example. It does not represent any real instrument model
+	######
+	projection_submodes = {1:'lowmag',2:'zoom'}  # Do this in order.  There is no mode_id in hitachi script. The keys here are for ordering.
 	projection_submode_ids = [1,2]  # Give it a fixed order
-	submode_mags = {} # mag list by projection_submode id
-	submode_mags[1] = [50,100,200,300,400]# ignore 500 and above so that separation is easier.
-	submode_mags[2] = [
-			500,700,1000,1200,1500,2000,2500,3000,4000,
-			5000,6000,7000,8000,10000,12000,15000,20000,25000,30000,
-			40000,50000,60000,70000,80000,100000,120000,150000,200000
-			]
-	probe_modes = [
-			'micro-hc1',
-			'micro-hc2',
-			'micro-hc3',
-			'micro-hr1',
-			'micro-hr2',
-			'micro-hr3',
-			'fine-hc',
-			'fine-hr',
-			'low-mag',
+	obsv_probe_modes = [
+			'high-mag1',
+			'low-mag1',
 			] # in order of index cap
+	# See Appendix of SDK documentation for range for each scope model.
+	obsv_probe_mode_index_cap = {
+			'high-mag1': 1,
+			'low-mag1':46,
+		}
 
-	microhr_min_mag = 4000 # micro-hr mode has limited mag range
-
-	probe_mags = {}
-	probe_mags['low-mag'] = list(submode_mags[1])
-	probe_mags['micro-hc1'] = list(submode_mags[2])
-	probe_mags['micro-hc2'] = list(probe_mags['micro-hc1'])
-	probe_mags['micro-hc3'] = list(probe_mags['micro-hc1'])
-	probe_mags['micro-hr1'] = list(submode_mags[2][submode_mags[2].index(microhr_min_mag):])
-	probe_mags['micro-hr2'] = list(probe_mags['micro-hr1'])
-	probe_mags['micro-hr3'] = list(probe_mags['micro-hr1'])
-	# lens current range at HT 100 kV span 000000 - 3FFC00 
+	# lens current range span 000000 - 3FFC00 
 	lens_hex_range = {
-		'OBJ':(0,1.94007),
-		'C2':(0,1.70002),
+		'OBJ':(0,2.0),
+		'C2':(0,2.0),
 	}
+
 	def __init__(self):
 		
 		tem.TEM.__init__(self)
@@ -76,18 +62,10 @@ class Hitachi(tem.TEM):
 
 		self.magnifications = []
 		self.magnification_index = 0
+		self.probe_map = self.initiateProbeMap() # key is probe group such as micro-hc, item is observation_name of the prob selected by observation_probe_to_use such as micro-hc1
+		self.probe_modes = self.makeOrderedProbeModeList()
+		self.submode_mags = self.initiateSubModeMags()
 
-		self.probe_mode_index_cap = {
-			'micro-hc1': 5,
-			'micro-hc2': 10,
-			'micro-hc3': 15,
-			'micro-hr1': 20,
-			'micro-hr2': 25,
-			'micro-hr3': 30,
-			'fine-hc': 35,
-			'fine-hr': 40,
-			'low-mag':50,
-		}
 		self.probe_mode_index = 0
 
 		self.correctedstage = False
@@ -159,7 +137,7 @@ class Hitachi(tem.TEM):
 		self.aperture_mechanism_map = {'condenser2':'COND_APT','objective':'OBJ_APT','selected area':'SA_APT'}
 		self.aperture_selection = {'objective':'100','condenser_2':'unknown','selected_area':'open'}
 		self.beamstop_positions = ['out','in'] # index of this list is API value to set
-		self.coil_map = [('BT','beam_tilt'),('BH','beam_shift'),('ISF','image_shift'),('CS','condenser_stig'),('OS','objective_stig'),('IS','diffraction_stig')]
+		self.coil_map = [('BT','beam_tilt'),('BH','beam_shift'),('PA','image_shift'),('CS','condenser_stig'),('OS','objective_stig'),('IS','diffraction_stig')]
 		self.stig_coil_map = {'condenser':'CS','objective':'OS','diffraction':'IS'}
 	
 
@@ -176,6 +154,36 @@ class Hitachi(tem.TEM):
 			if itemname not in configs[optionname]:
 				return None
 			return configs[optionname][itemname]
+
+	def initiateProbeMap(self):
+		observation_probes_to_use = self.getHitachiConfig('optics','observation_probe_to_use')
+		if not observation_probes_to_use:
+			raise ValueError('Must define one of the preset illumination modes you want access as OBSERVATION_PROBE_TO_USE in hht.cfg')
+		return observation_probes_to_use
+
+	def makeOrderedProbeModeList(self):
+		'''
+		Return a list of probe name in the same order as self.obsv_probe_modes
+		'''
+		probe_modes = []
+		for obsv_probe in self.obsv_probe_modes:
+			if obsv_probe in self.probe_map.values():
+				probe = self._mapObservationProbeToProbe(obsv_probe)
+				probe_modes.append(probe)
+		return probe_modes
+
+	def initiateSubModeMags(self):
+		'''
+		Returns a dictionary of mags in each projection submode (i.e., imaging system mode)
+		'''
+		submode_mags = {}
+		for s_id in self.projection_submode_ids:
+			submode_mags[s_id] = []
+		submode_mags = self.getHitachiConfig('optics','mags')
+		for submode in submode_mags.keys():
+			if submode not in self.projection_submodes.values():
+				raise ValueError('%s assigned in hht.cfg MAGS is not a valid imaging mode' % submode)
+		return submode_mags
 
 	def getColumnValvePositions(self):
 		return ['open', 'closed']
@@ -367,27 +375,32 @@ class Hitachi(tem.TEM):
 
 	def _getCoilScale(self, coil, axis):
 		if coil in ('PA',):
-			# deflectors in projection system is probe and mag dependent
+			# deflectors in projection system is projection submode and mag dependent
 			mag = self.getMagnification()
 			coil_scale_name = 'coil_%s_%d_scale' % (coil.lower(), mag)
-			probe_mode_name = self.getProbeMode()
+			subset = self.getProjectionSubModeName().lower()
 			try:
-				m = self.getHitachiConfig('optics',coil_scale_name)[probe_mode_name.lower()][axis]
-			except TypeError:
+				m = self.getHitachiConfig('optics',coil_scale_name)[subset][axis]
+			except (KeyError,TypeError):
 				coil_scale_name = 'coil_%s_scale' % (coil.lower(),)
 				try:
-					m = self.getHitachiConfig('optics',coil_scale_name)[probe_mode_name.lower()][axis]
-					ref_mag = self.getHitachiConfig('optics','probe_ref_magnification')[probe_mode_name.lower()]
+					m = self.getHitachiConfig('optics',coil_scale_name)[subset][axis]
+					ref_mag = self.getHitachiConfig('optics','ref_magnification')[subset]
 					m = (m[0]*float(ref_mag)/mag,m[1]*float(ref_mag)/mag)
 				except TypeError:
-					raise ValueError('No calibration for %s in %s' % (coil, probe_mode_name))
+					raise ValueError('No calibration for %s in %s' % (coil, subset))
 		else:
 			coil_scale_name = 'coil_%s_scale' % (coil.lower())
-			if coil.lower() != 'bt':
-				submode_name = self.getProjectionSubModeName()
-				m = self.getHitachiConfig('optics',coil_scale_name)[submode_name.lower()][axis]
+			if coil.lower() in ('os','is','isf','ia'):
+				# Objective and Intermediate
+				subset = self.getProjectionSubModeName().lower()
+				m = self.getHitachiConfig('optics',coil_scale_name)[subset][axis]
+			elif coil.lower() != 'bt':
+				# Illumination
+				subset = self.getProbeMode()
+				m = self.getHitachiConfig('optics',coil_scale_name)[subset][axis]
 			else:
-				# coils before projection.
+				# BT not probe dependent ?
 				m = self.getHitachiConfig('optics',coil_scale_name)[axis]
 		return m
 
@@ -499,25 +512,30 @@ class Hitachi(tem.TEM):
 
 	def getSpotSize(self):
 		mode_d, submode_d = self._getColumnModes()
-		probe, spot = self._getProbeSpotFromColumnMode(mode_d)
+		obsv_probe, spot = self._getObsvProbeSpotFromColumnMode(mode_d)
 	
 		return spot
 	
 	def setSpotSize(self, value):
-		prev_spot = self.getSpotSize()
-		if value == prev_spot:
+		'''
+		Set spot size by index above the base of the observation probe.
+		This is done after probe/mag are set.
+		'''
+		old_spot = self.getSpotSize()
+		if value == old_spot:
 			return
-		probe = self.getProbeMode()
 		mode_d, submode_d = self._getColumnModes()
-		probe_index = self.probe_modes.index(probe)
+		obsv_probe, spot = self._getObsvProbeSpotFromColumnMode(mode_d)
+		obsv_probe_index = self.obsv_probe_modes.index(obsv_probe)
 		spot_index = value - 1
 		base = 0
-		if probe_index > 0:
-			prev_probe = self.probe_modes[probe_index-1]
-			base = self.probe_mode_index_cap[prev_probe]
+		if obsv_probe_index > 0:
+			# rebase at index_cap of the prev_obsv_probe_index
+			prev_obsv_probe = self.obsv_probe_modes[obsv_probe_index-1]
+			base = self.obsv_probe_mode_index_cap[prev_obsv_probe]
 		new_mode_d = base+spot_index
-		if new_mode_d >= self.probe_mode_index_cap[probe]:
-			raise ValueError('spot size assignment out of range for %s %s' %(probe, value))
+		if new_mode_d >= self.obsv_probe_mode_index_cap[obsv_probe]:
+			raise ValueError('spot size assignment out of range for %s %s' %(obsv_probe, value))
 		new_mode_h = hex(new_mode_d)
 		hex_length = 2 #mode code length
 		submode_h = hex(submode_d)
@@ -560,7 +578,7 @@ class Hitachi(tem.TEM):
 		if True:
 			# Use PA or IA
 			submode_name = self.getProjectionSubModeName()
-			if submode_name.lower() != 'lowmag':
+			if 'low' not in submode_name.lower():
 				return 'PA'
 			else:
 				return 'IA'
@@ -603,8 +621,8 @@ class Hitachi(tem.TEM):
 			new_value[key]=value[key]
 		self.setCoilVector(coil, new_value)
 
-	def makeDefocusLensName(self,probe_name):
-		if probe_name.lower() != 'low-mag':
+	def makeDefocusLensName(self,submode):
+		if submode.lower() != 'lowmag':
 			lens='obj'
 		else:
 			lens='i1'
@@ -615,23 +633,27 @@ class Hitachi(tem.TEM):
 		focus = self.getFocus()
 		mag = self.getMagnification()
 		probe = self.getProbeMode()
-		defocus_current = focus - self.zero_defocus_current[probe][mag]
-		lens_scale_name = self.makeDefocusLensName(probe)
-		m = self.getHitachiConfig('optics',lens_scale_name)[probe.lower()]
+		submode = self.getProjectionSubModeFromProbeMode(probe)
+		defocus_current = focus - self.zero_defocus_current[submode][mag]
+		lens_scale_name = self.makeDefocusLensName(submode)
+		m = self.getHitachiConfig('optics',lens_scale_name)[submode.lower()]
 		if not m :
-			raise RuntimeError('%s%%%s not set in hht.cfg' % (lens_scale_name.upper(), probe.upper()))
+			raise RuntimeError('%s%%%s not set in hht.cfg' % (lens_scale_name.upper(), submode.upper()))
 		defocus = defocus_current * m
 		return defocus
 
 	def setDefocus(self, value):
-		probe = self.getProbeMode()
-		lens_scale_name = self.makeDefocusLensName(probe)
-		m = self.getHitachiConfig('optics',lens_scale_name)[probe.lower()]
-		if not m :
-			raise RuntimeError('%s%%%s not set in hht.cfg' % (lens_scale_name.upper(), probe.upper()))
 		mag = self.getMagnification()
+		probe = self.getProbeMode()
+		submode = self.getProjectionSubModeFromProbeMode(probe)
+		print 'setting defocus', submode
+		lens_scale_name = self.makeDefocusLensName(submode)
+		m = self.getHitachiConfig('optics',lens_scale_name)[submode.lower()]
+		if not m :
+			raise RuntimeError('%s%%%s not set in hht.cfg' % (lens_scale_name.upper(), submode.upper()))
 		lens_current_value = value / m
-		focus = lens_current_value + self.zero_defocus_current[probe][mag]
+		print self.zero_defocus_current
+		focus = lens_current_value + self.zero_defocus_current[submode][mag]
 		self.setFocus(focus)
 		return 
 
@@ -639,12 +661,13 @@ class Hitachi(tem.TEM):
 		focus = self.getFocus()
 		mag = self.getMagnification()
 		probe = self.getProbeMode()
-		focus_diff = focus - self.zero_defocus_current[probe][mag]
+		submode = self.getProjectionSubModeFromProbeMode(probe)
+		focus_diff = focus - self.zero_defocus_current[submode][mag]
 		# Only reset within its own probe mode
-		for mag in self.probe_mags[probe]:
-			self.zero_defocus_current[probe][mag] += focus_diff
-		ref_mag = self.getHitachiConfig('defocus','ref_magnification')[probe.lower()]
-		self.saveEucentricFocusAtReference(probe, self.zero_defocus_current[probe][ref_mag])
+		for mag in self.submode_mags[submode]:
+			self.zero_defocus_current[submode][mag] += focus_diff
+		ref_mag = self.getHitachiConfig('optics','ref_magnification')[submode.lower()]
+		self.saveEucentricFocusAtReference(submode, self.zero_defocus_current[submode][ref_mag])
 
 	def getMagnification(self, index=None):
 		if index is None:
@@ -677,18 +700,28 @@ class Hitachi(tem.TEM):
 				mag = int(mag)
 			except:
 				raise TypeError
-		prev_mag = self.getMagnification()	
-		if prev_mag == mag:
-			return
 
 		# set  projection mode if changing.
+		if self.getProjectionMode() != self.projection_mode:
+			self.setProjectionMode(None)
+		old_mag = self.getMagnification()
+		# This is run after probe mode is set in leginon/instrument.py so it should be in range.
+		probe = self.getProbeMode()
+		# Submode after projection mode change might not match probe
+		old_submode = self._getProjectionSubMode()
+		submode = self.getProjectionSubModeFromProbeMode(probe)
+		if old_mag == mag and old_submode == submode:
+			return
 		try:
-			prev_probe_mode = self.getProbeMode()
-			index = self.probe_mags[prev_probe_mode].index(mag)
+			index = self.submode_mags[submode].index(mag)
+			self._setProjectionSubMode(submode)
 		except ValueError as e:
-			raise ValueError('invalid magnification for %s: %s' % (prev_probe_mode,e))
+			raise ValueError('invalid magnification for %s: %s' % (submode,e))
 		self._setMagnification(mag)
 		return
+
+	def getProjectionSubModeFromProbeMode(probe):
+		raise NotImplemented
 
 	def _setMagnification(self, value):
 		self.h.runSetIntAndWait('Column','Magnification', [value,])
@@ -696,13 +729,13 @@ class Hitachi(tem.TEM):
 	def findMagnifications(self):
 		# fake finding magnifications and set projection submod mappings
 		self.projection_submode_map = {}
-		submode_ids = self.projection_submodes.keys()
-		submode_ids.sort()
 		self.magnifications = []
-		for k in submode_ids:
-			for mag in self.submode_mags[k]:
-				self.addProjectionSubModeMap(mag,self.projection_submodes[k],k) #mag, mode_name, mode_id
+		for k in self.projection_submode_ids:
+			submode = self.projection_submodes[k]
+			for mag in self.submode_mags[submode]:
+				self.addProjectionSubModeMap(mag,submode,k) #mag, mode_name, mode_id
 		self.setProjectionSubModeMags()
+		print 'projection_submode_map', self.projection_submode_map
 		# set magnifications now that self.projection_submode_map is set
 		self.setMagnificationsFromProjectionSubModes()
 		self.initDefocusZero()
@@ -746,31 +779,22 @@ class Hitachi(tem.TEM):
 		'''
 		return self.projection_submode_ids
 
-	def getOrderedProjectionSubModeNames(self):
-		'''
-		get projection submode names ordered by mode ids.
-		'''
-		names = []
-		for d in self.projection_submode_ids:
-			names.append(self.projection_submodes[d])
-		return names
-
 	def initDefocusZero(self):
 		if not self.magnifications:
 			raise ValueError('Need Magnifications to correlate the table')
 		ref_ufocus = {}
-		probe_used = self.getProbeModes()
+		submode_used = self.getProjectionSubModes()
 		try:
-			for probe_mode in probe_used:
-				ref_ufocus[probe_mode] = self.getEucentricFocusAtReference(probe_mode)
+			for submode in submode_used:
+				ref_ufocus[submode] = self.getEucentricFocusAtReference(submode)
 		except IOError:
 			raise RuntimeError('Please run hht_defocus.py first to get initial values')
-		for probe_mode in probe_used:
-			focus_offset_file = self.getHitachiConfig('defocus','focus_offset_path')[probe_mode]
+		for submode in submode_used:
+			focus_offset_file = self.getHitachiConfig('defocus','focus_offset_path')[submode]
 			if focus_offset_file and os.path.isfile(focus_offset_file):
 				f = open(focus_offset_file,'r')
 				lines = f.readlines()
-				mags = self.getMagnificationsInProbeMode(probe_mode)
+				mags = self.submode_mags[submode]
 				if len(mags) != len(lines):
 					f.close()
 					raise ValueError('Focus offset file and Magnifications are not of the same length')
@@ -778,24 +802,24 @@ class Hitachi(tem.TEM):
 					bits = l.split('\n')[0].split('\t')
 					m = int(bits[0])
 					foc = float(bits[1])
-					for probe_mode in probe_used:
-						if m in self.probe_mags[probe_mode]:
-							if probe_mode not in self.zero_defocus_current.keys():
-								self.zero_defocus_current[probe_mode] = {}
-							self.zero_defocus_current[probe_mode][m] = foc + ref_ufocus[probe_mode]
+					for submode in submode_used:
+						if m in self.submode_mags[submode]:
+							if submode not in self.zero_defocus_current.keys():
+								self.zero_defocus_current[submode] = {}
+							self.zero_defocus_current[submode][m] = foc + ref_ufocus[submode]
 			else:
 				raise RuntimeError('Please run hht_defocus.py first to get initial values')
 
-	def getEucentricFocusAtReference(self, probe_mode):
-		ufocus_path = self.getHitachiConfig('defocus','ref_ufocus_path')[probe_mode.lower()]
+	def getEucentricFocusAtReference(self, submode):
+		ufocus_path = self.getHitachiConfig('defocus','ref_ufocus_path')[submode.lower()]
 		f = open(ufocus_path)
 		lines = f.readlines()
 		ufocus = float(lines[0].split('\n')[0])
 		f.close()
 		return ufocus
 
-	def saveEucentricFocusAtReference(self, probe_mode, value):
-		ufocus_path = self.getHitachiConfig('defocus','ref_ufocus_path')[probe_mode.lower()]
+	def saveEucentricFocusAtReference(self, submode, value):
+		ufocus_path = self.getHitachiConfig('defocus','ref_ufocus_path')[submode.lower()]
 		f = open(ufocus_path,'w')
 		f.write('%9.6f\n' % value)
 		f.close()
@@ -823,40 +847,48 @@ class Hitachi(tem.TEM):
 
 	def _setColumnMode(self, mode_d):
 		mode_h = hex(mode_d)
+		submode_h = 'ff'
 		hex_length = 2 #mode code length
-		# imaging system
-		# match zoom-1 values here, but don't know how it should be.
-		submodes = {
-			'micro-hc': hex(int('00',16)),
-			'micro-hr': hex(int('02',16)),
-			'fine-hc': hex(int('00',16)), # not sure how this maps, assume zoom-1 for now
-			'fine-hr': hex(int('02',16)),
-			'low-mag': hex(int('0e',16)),
-		}
-		probe, spot = self._getProbeSpotFromColumnMode(mode_d)
-		if 'micro' in probe:
-			observation_name = probe[:-1]
-		else:
-			observation_name = probe
-		submode_h = submodes[observation_name]
-		print mode_h, submode_h
 		self.h.runSetHexdecAndWait('Column','Mode',[mode_h, submode_h],['hexdec','hexdec'],hex_lengths=[hex_length,])
 
+	def _setColumnSubMode(self, submode_d):
+		mode_h = 'ff'
+		submode_h = hex(submode_d)
+		hex_length = 2 #mode code length
+		self.h.runSetHexdecAndWait('Column','Mode',[mode_h, submode_h],['hexdec','hexdec'],hex_lengths=[hex_length,])
+
+	def _mapObservationProbeToProbe(self, observation_name):
+		'''
+		ObservationProbe is the observation name of a specified Column ModeID.
+		For example: observation_name= micro-hc1
+		Probe is the illumination system the hht.cfg scale calibratioon is done with
+		For example: probe = micro-hc
+		For HT7800, micro-hc1, micro-hc2, micro-hc3 all have the same hht.cfg scale calibration.
+		'''
+		return re.split(r'\d+$', observation_name)[0]
+
+	def _mapProbeToObservationProbe(self, probe):
+		return self.probe_map[probe]
+
 	def getProbeMode(self):
+		'''
+		Return micro-hc, micro-hr, low-mag, not the preset observation name.
+		'''
 		mode_d, submode_d = self._getColumnModes()
-		probe, spot = self._getProbeSpotFromColumnMode(mode_d)
+		observation_probe, spot = self._getObsvProbeSpotFromColumnMode(mode_d)
+		probe = self._mapObservationProbeToProbe(observation_probe)
 		return probe
 
-	def _getProbeSpotFromColumnMode(self, mode_d):
-		prev_probe_index_cap = 0
-		for probe in self.probe_modes:
+	def _getObsvProbeSpotFromColumnMode(self, mode_d):
+		prev_obsv_probe_index_cap = 0
+		for obsv_probe in self.obsv_probe_modes:
 			# find the first probe that passes
-			if mode_d < self.probe_mode_index_cap[probe]:
-				print mode_d, prev_probe_index_cap, probe, self.probe_mode_index_cap[probe]
-				spot = mode_d - prev_probe_index_cap + 1
-				return probe, spot
-			prev_probe_index_cap = self.probe_mode_index_cap[probe]
-		raise ValueError('probe mode found not registered')
+			if mode_d < self.obsv_probe_mode_index_cap[obsv_probe]:
+				print mode_d, prev_obsv_probe_index_cap, obsv_probe, self.obsv_probe_mode_index_cap[obsv_probe]
+				spot = mode_d - prev_obsv_probe_index_cap + 1
+				return obsv_probe, spot
+			prev_obsv_probe_index_cap = self.obsv_probe_mode_index_cap[obsv_probe]
+		raise ValueError('observation probe mode not registered')
 
 	def setProbeMode(self, value):
 		new_probe = str(value)
@@ -866,40 +898,66 @@ class Hitachi(tem.TEM):
 			raise ValueError('invalid probe mode')
 		if new_probe not in self.getProbeModes():
 			raise ValueError('not a probe mode set to be used')
-		prev_probe = self.getProbeMode()
-		if prev_probe == new_probe:
+		old_probe = self.getProbeMode()
+		if old_probe == new_probe:
+			# Nothing to do
 			return
-		prev_probe_index = self.probe_modes.index(str(prev_probe))
+		# Need change
+		old_obsv_probe = self._mapProbeToObservationProbe(str(old_probe))
+		old_obsv_probe_index = self.obsv_probe_modes.index(old_obsv_probe)
 		base = 0
-		prev_mode_d, prev_submode_d = self._getColumnModes()
-		if prev_probe_index > 0:
-			base = self.probe_mode_index_cap[self.probe_modes[prev_probe_index-1]]
-		# set spot size to be the same as previous.
+		old_mode_d, submode_d = self._getColumnModes()
+		if old_obsv_probe_index > 0:
+			# rebase
+			base = self.obsv_probe_mode_index_cap[self.obsv_probe_modes[old_obsv_probe_index-1]]
 		# Set to the capped index per probe mode so that normalization is consistent.
-		spot_index= prev_mode_d - base
+		# spot assignment comes latter in instrument.py
+		spot_index= old_mode_d - base
 		new_base = 0
+		new_obsv_probe = self._mapProbeToObservationProbe(str(new_probe))
+		new_obsv_probe_index = self.obsv_probe_modes.index(new_obsv_probe)
 		if new_probe_index > 0:
-			new_base = self.probe_mode_index_cap[self.probe_modes[new_probe_index-1]]
-		new_probe_index_cap = self.probe_mode_index_cap[new_probe]
-		new_mode_d = new_probe_index_cap - 1
-		print "spot size assignment capped"
+			new_base = self.obsv_probe_mode_index_cap[self.obsv_probe_modes[new_obsv_probe_index-1]]
+		new_obsv_probe_index_cap = self.obsv_probe_mode_index_cap[new_obsv_probe]
+		new_mode_d = new_obsv_probe_index_cap - 1
+		print "spot size assignment capped as normalization for probe mode change"
 		self._setColumnMode(new_mode_d)
 
 	def getProbeModes(self):
-		probe_used = self.getHitachiConfig('optics','probes_to_use')
-		if probe_used:
-			for p in probe_used:
-				if not p in self.probe_modes:
-					raise ValueError('%s set in hht.cfg %s%%%s is not available' % (p,'OPTICS','PROBES_TO_USE'))
-			return probe_used
-		else:
-			return list(self.probe_modes)
+		# This include only those mapped to observation probe mode that we want to allow access to.
+		return list(self.probe_modes)
+
+	def getProjectionSubModes(self):
+			return self.projection_submodes.values()
+
+	def getProjectionSubModeName(self):
+		'''
+		Overwrite tem.py getProjectionSubModeName.
+		projection_submode_map does not work with hitachi scope since submode has different mag list.
+		Some are overlapped.
+		'''
+		mode_d, submode_d = self._getColumnModes()
+		for submode in self.submodes.keys():
+			if submode_d == int(self.submodes[submode],16):
+				return submode
+		raise ValueError('current submode not registered')
+
+	def _getProjectionSubMode(self):
+		return self.getProjectionSubModeName()
 
 	def setProjectionMode(self, value):
 		# This is a fake value set.  It forces the projection mode defined by
 		# the class.
 		#print 'fake setting to projection mode %s' % (self.projection_mode,)
 		pass
+
+	def _setProjectionSubMode(self, submode_name):
+		if self._getProjectionSubMode() == submode_name:
+			return
+		mode_h = 'ff'
+		submode_h = self.submodes[submode_name]
+		hex_length = 2 #mode code length
+		self.h.runSetHexdecAndWait('Column','Mode',[mode_h, submode_h],['hexdec','hexdec'],hex_lengths=[hex_length,])
 
 	def getMainScreenPositions(self):
 		return list(self.main_screen_positions)
@@ -911,6 +969,8 @@ class Hitachi(tem.TEM):
 		positions = self.getMainScreenPositions()
 		if value not in positions:
 			raise ValueError('invalid main screen position')
+		if self.getMainScreenPosition() == value:
+			return
 		apt_index = positions.index(value)
 		self.h.runSetIntAndWait('Screen','Position', [apt_index,])
 		#TODO: screen out returns much faster than gui indicates. May need sleep time
@@ -1035,18 +1095,55 @@ class Hitachi(tem.TEM):
 class HT7800(Hitachi):
 	name = 'HT7800'
 	projection_mode = 'imaging'
-	projection_submodes = {1:'LowMag',2:'Zoom1'}  # Do this in order.  There is no mode_id in hitachi script. The keys here are for ordering.
-	projection_submode_ids = [1,2]  # Give it a fixed order
-	submode_mags = {} # mag list by projection_submode id
-	submode_mags[1] = [50,100,200,300,400]# ignore 500 and above so that separation is easier.
-	submode_mags[2] = [
-			500,700,1000,1200,1500,2000,2500,3000,4000,
-			5000,6000,7000,8000,10000,12000,15000,20000,25000,30000,
-			40000,50000,60000,70000,80000,100000,120000,150000,200000
-			]
+	projection_submodes = {1:'lowmag',2:'zoom1-hc',3:'zoom1-hr'}  # There is no id in hitachi SDK. The keys here are for ordering.
+	projection_submode_ids = [1,2,3]  # Give it a fixed order
+	# imaging system
+	submodes = {
+			'zoom1-hc': hex(int('00',16)),
+			'zoom1-hr': hex(int('02',16)),
+			'diff1-hc': hex(int('0a',16)),
+			'diff1-hr': hex(int('0c',16)),
+			'lowmag': hex(int('0e',16)),
+		}
+	# illumination system
+	obsv_probe_modes = [
+			'micro-hc1',
+			'micro-hc2',
+			'micro-hc3',
+			'micro-hr1',
+			'micro-hr2',
+			'micro-hr3',
+			'fine-hc',
+			'fine-hr',
+			'low-mag',
+			] # in order of index cap
+	obsv_probe_mode_index_cap = {
+			'micro-hc1': 5,
+			'micro-hc2': 10,
+			'micro-hc3': 15,
+			'micro-hr1': 20,
+			'micro-hr2': 25,
+			'micro-hr3': 30,
+			'fine-hc': 35,
+			'fine-hr': 40,
+			'low-mag':50,
+		}
 	# lens current range at HT 100 kV span 000000 - 3FFC00 
 	lens_hex_range = {
 		'OBJ':(0,1.94007),
 		'C2':(0,1.70002),
 	}
+	probe_submode_match_map = [('hc','zoom1-hc'),('hr','zoom1-hr'),('low','lowmag')]
 
+	def getProjectionSubModeFromProbeMode(self, probe):
+		for m in self.probe_submode_match_map:
+			if m[0] in probe:
+				return m[1]
+		raise ValueError('Do not know how to guess projection submode from %s' % probe)
+
+	def getProbeModeFromProjectionSubMode(self, submode):
+		for probe in self.getProbeModes():
+			for m in self.probe_submode_match_map:
+				if submode == m[1] and m[0] in probe:
+					return probe
+		raise ValueError('Do not know how to guess probe mode from %s' % submode)

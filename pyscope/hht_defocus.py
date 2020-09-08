@@ -24,39 +24,50 @@ if h.zero_defocus_current:
 	if 'n' in answer.lower():
 		sys.exit(0)
 
-def saveFocusOffset(tem, probe_mode):
+def saveFocusOffset(tem, submode):
 	offsets = []
 	mag0 = tem.getMagnification()
-	mags = tem.probe_mags[probe_mode]
+	mags = tem.submode_mags[submode]
 	for m in mags:
 		tem.setMagnification(m)
 		foc = tem.getFocus()
 		offsets.append(foc)
 	tem.setMagnification(mag0)
-	item_name = 'probe_ref_magnification'
-	ref_mag = hitachi.configs['optics'][item_name][probe_mode.lower()]
+	item_name = 'ref_magnification'
+	ref_mag = hitachi.configs['optics'][item_name][submode.lower()]
 	if not ref_mag in mags:
 		raise ValueError('Reference magnification %s not a valid magnification' % (ref_mag,))
 	ref_mag_index = mags.index(ref_mag)
 	ref_zero = offsets[ref_mag_index]
-	tem.saveEucentricFocusAtReference(probe_mode,ref_zero)
+	tem.saveEucentricFocusAtReference(submode,ref_zero)
 	u_focus = ref_zero
-	df = open(focus_offset_files[probe_mode],'w')
+	df = open(focus_offset_files[submode],'w')
 	for i,m in enumerate(mags):
 		defocus = offsets[i] - u_focus
 		df.write('%d\t%9.6f\n' % (m, defocus))
 	df.close()
 
 p00 = h.getProbeMode()
+s00 = h.getProjectionSubModeFromProbeMode(p00)
 m00 = h.getMagnification()
-for p in h.getProbeModes():
-	h.setProbeMode(p)
+print 'probemodes', h.getProbeModes()
+for probe in h.getProbeModes():
+	submode = h.getProjectionSubModeFromProbeMode(probe)
+	h.setProbeMode(probe)
+	# projection submode is normally set through setMagnification
+	#h._setProjectionSubMode(submode)
+	mags = h.submode_mags[submode]
+	h.setMagnification(mags[0])
+	print 'Set to %d of projection submode %s' % (mags[0], submode)
 	try:
-		raw_input('Set a magnification in %s where defocus is zero as reference and hit return. Ctrl-c to exit' % (p,))
-		probe_mode = h.getProbeMode()
-		saveFocusOffset(h, probe_mode)
+		raw_input('Set a magnification in %s where defocus is zero as reference and hit return. Ctrl-c to exit' % (submode,))
+		new_submode = h.getProjectionSubModeName()
+		if new_submode != submode:
+			KeyboardInterrupt('submode changed to %s. Can not proceed' % new_submode)
+		saveFocusOffset(h, submode)
 	except KeyboardInterrupt:
 		break
 # reset
 h.setProbeMode(p00)
+#h._setProjectionSubMode(s00)
 h.setMagnification(m00)

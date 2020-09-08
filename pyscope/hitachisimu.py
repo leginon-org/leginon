@@ -46,15 +46,16 @@ class HitachiSimu(object):
 		}
 
 	def setDataValues(self):
+		half = int('3FFC00',16)/2
 		self.data_values = {
-			"Coil BH": [hex(0),hex(0)],
-			"Coil BT": [hex(0),hex(0)],
-			"Coil ISF": [hex(0),hex(0)],
-			"Coil IA": [hex(0),hex(0)],
-			"Coil PA": [hex(0),hex(0)],
-			"Coil CS": [hex(0),hex(0)],
-			"Coil OS": [hex(0),hex(0)],
-			"Coil IS": [hex(0),hex(0)],
+			"Coil BH": [hex(half),hex(half)],
+			"Coil BT": [hex(half),hex(half)],
+			"Coil ISF": [hex(half),hex(half)],
+			"Coil IA": [hex(half),hex(half)],
+			"Coil PA": [hex(half),hex(half)],
+			"Coil CS": [hex(half),hex(half)],
+			"Coil OS": [hex(half),hex(half)],
+			"Coil IS": [hex(half),hex(half)],
 			"Column": ['BrightnessFree',],
 			"Column Magnification": [5000,],
 			"Column Mode": [hex(0),hex(0)], #???
@@ -91,7 +92,7 @@ class HitachiSimu(object):
 					respond = self.makeResponse(text)
 					conn.send(respond)
 					text = ''
-					time.sleep(0.2)
+					time.sleep(0.02)
 				else:
 					text += d
 		except KeyboardInterrupt:
@@ -151,6 +152,9 @@ class HitachiSimu(object):
 			elif d_type == float:
 				self.data_values[key][i] = float(data_bits[i])
 			elif d_type == 'hexdec' or d_type == str:
+				if sub_code == 'Column' and expansion_code == 'Mode' and int(data_bits[i],16) == int('FF',16):
+					# Don't change if FF
+					continue
 				self.data_values[key][i] = data_bits[i]
 		data = ','.join(data_bits)
 		print data

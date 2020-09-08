@@ -268,7 +268,7 @@ class ScaleCalibrator(object):
 			half_scale = self.getPhysicalShift()*int('3FFC00',16)/2.0/shift
 			item_type = 'COIL'
 			coil_name = self.move_property.upper()
-			if coil_name in ('IA','PA'):
+			if coil_name in ('BH','BT','CS'):
 				item_name = '%s_%s_%d_SCALE%%%s%%%s' % (item_type,self.move_property.upper(),self.mag,self.getProbeModeString(),axis.upper())
 			else:
 				item_name = '%s_%s_SCALE%%%s%%%s' % (item_type,self.move_property.upper(),self.getSubModeString(),axis.upper())
@@ -282,25 +282,7 @@ class ScaleCalibrator(object):
 		return self.tem.getProbeMode().upper()
 
 	def getSubModeString(self):
-		return self.subDivideMode(self.submode,self.mag)
-
-	def subDivideMode(self,mode_name,mag):
-		name_lower = mode_name.lower()
-		is_lower = (name_lower == mode_name)
-		if name_lower == 'mag1':
-			if mag > self.max_ls4:
-				name_lower = 'ls5'
-			elif mag > self.max_ls3:
-				name_lower = 'ls4'
-			elif mag > self.max_ls2:
-				name_lower = 'ls3'
-			elif mag > self.max_ls1:
-				name_lower = 'ls2'
-			else:
-				name_lower = 'ls1'
-		if not is_lower:
-			name_lower = name_lower.upper()
-		return name_lower
+		return self.tem.getProjectionSubModeName().upper()
 
 	def measureShift(self, property_name, physical_shift):
 		try:
@@ -368,17 +350,25 @@ class ScaleCalibrator(object):
 			end_mag = self.logger.inputInt('Enter the highest mag to calibrate:')
 		return all_mags[all_mags.index(start_mag):all_mags.index(end_mag)+1]
 
+	def setProbeModeForMag(self,mag):
+		# default require user to do manually
+		raw_input('Set to the probe mode required by mag %d for calibration and then hit return ' % mag)
+
+	def logReferenceMag(self, mag):
+		self.logger.cfg('optics','REF_MAGNIFICATION%%%s' % (self.getSubModeString()),'%d' % (int(mag)))
+
 	def calibrateInImageMode(self):
 		mags_to_calibrate = self.selectMagList()
 		for i, mag in enumerate(mags_to_calibrate):
+			# need to set probe mode
+			self.setProbeModeForMag(mag)
 			self.tem.setMagnification(mag)
 			self.logger.info('Current magnification = %d' % (int(mag)))
 			if i == 0:
 				self.confirmMainScreenMagnification()
 			self.calibrations = self.getCalibrationRequired(first=(i==0))
+			self.logReferenceMag(mag)
 			print 'image mode calibrations', self.calibrations
-			if 'imageshift' in self.calibrations.keys():
-				self.logger.cfg('coil','IMAGESHIFT_CAL_MAG%%%s' % (self.getSubModeString()),'%d' % (int(mag)))
 			for effect_type in self.calibrations.keys():
 				# example effect_type: imageshift, beamshift
 				self.effect_type = effect_type
@@ -426,19 +416,20 @@ class ScaleCalibrator(object):
 
 class HitachiScaleCalibrator(ScaleCalibrator):
 	def initializeTEM(self):
-		self.use_pla = False
+		# initalize tem
+		self.tem = hitachi.HT7800()
+		self.tem.setProjectionMode('imaging')
+		self.tem.findMagnifications()
+		# set default config
+		self.is_cap_prefix = True
+		self.use_pla = True
 		self.focus_move_properties = ('OBJ','I1')
 		self.beam_tilt_move_properties = ('BT',)
 		# scope model independent
-		self.modes = ['ZOOM1','LOWMAG']
 		self.all_axes = {'Coil':['x','y'],'stage':['x','y','z','a','b']}
 		# move_property scale that does not depend on submode
 		self.projection_submode_independent = ['C2',]
-		self.is_cap_prefix = True
-		self.tem = hitachi.HT7800()
 		# set to MAG1 first
-		self.tem.setProjectionMode('imaging')
-		self.tem.findMagnifications()
 		self.last_mag = 0
 
 	def defineOptions(self):
@@ -528,6 +519,31 @@ class HitachiScaleCalibrator(ScaleCalibrator):
 
 	def isUsePLA(self):
 		return self.use_pla
+
+	def setProbeModeForMag(self,mag):
+		'''
+		Making a guess of the probe mode on Hitachi instrument and set it if correct.
+		This is required before setting magnification since not all magnifications are
+		accessible in a given probe mode.
+		'''
+		submodes = self.tem.getProjectionSubModes()
+		for submode in submodes:
+			if mag in self.tem.submode_mags[submode]:
+				answer = raw_input('Is %d mag in submode %s ? (Y/N/y/n)' % (mag, submode))
+				if answer.lower() == 'y':
+					try:
+						# Find the one to one mapping of probe mode and set it.
+						probe = self.tem.getProbeModeFromProjectionSubMode(submode)
+						self.tem.setProbeMode(probe)
+						return
+					except ValueError as e:
+						print('Error finding matching probe mode. Please set probe mode manually.')
+						break
+				else:
+					# wrong guess.
+					break
+		# default require user to do manually
+		raw_input('Set to the probe mode required by mag %d for calibration and then hit return ' % mag)
 
 	def isNewSubMode(self):
 		print '-------------------------'
