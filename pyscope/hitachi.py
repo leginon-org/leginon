@@ -973,7 +973,7 @@ class Hitachi(tem.TEM):
 			return
 		submode_h = self.submodes[submode_name]
 		submode_d = int(submode_h,16)
-		mode_h = hex(self._mapModeIdFromSubModeId(submode_d)
+		mode_h = hex(self._mapModeIdFromSubModeId(submode_d))
 		hex_length = 2 #mode code length
 		self.h.runSetHexdecAndWait('Column','Mode',[mode_h, submode_h],['hexdec','hexdec'],hex_lengths=[hex_length,])
 
