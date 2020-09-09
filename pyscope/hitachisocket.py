@@ -160,6 +160,10 @@ class HitachiSocket(object):
 				raise RuntimeError('get values not the same length as input')
 			is_done = True
 			for i in range(len(value_list)):
+				# FF keeps the same value.  Does not work, though
+				if sub_code == 'Column' and ext_code == 'Mode' and int(value_list[i],16) == int('FF',16):
+					is_done = True
+					continue
 				is_done =  is_done and value_list[i] == result_list[i]
 			if is_done is True:
 				break
