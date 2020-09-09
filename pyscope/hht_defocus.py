@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import sys
+import time
 from pyscope import hitachi
 
 from pyscope import instrumenttype
@@ -67,6 +68,8 @@ for probe in h.getProbeModes():
 		saveFocusOffset(h, submode)
 	except KeyboardInterrupt:
 		break
+	# wait a bit befor changing probe and submode again
+	time.sleep(2)
 # reset
 h.setProbeMode(p00)
 #h._setProjectionSubMode(s00)

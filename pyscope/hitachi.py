@@ -33,16 +33,24 @@ class Hitachi(tem.TEM):
 	######
 	projection_submodes = {1:'lowmag',2:'zoom'}  # Do this in order.  There is no mode_id in hitachi script. The keys here are for ordering.
 	projection_submode_ids = [1,2]  # Give it a fixed order
+
+	submodes = {
+			'lowmag': hex(1),
+			'zoom': hex(2),
+			}
 	obsv_probe_modes = [
 			'high-mag1',
 			'low-mag1',
 			] # in order of index cap
 	# See Appendix of SDK documentation for range for each scope model.
-	obsv_probe_mode_index_cap = {
-			'high-mag1': 1,
-			'low-mag1':46,
+	obsv_probe_mode_index_range = {
+			'high-mag1': (0,5),
+			'low-mag1':(40,45),
 		}
 
+	# (index_range of mode,submode index)
+	# [lowmag, zoom]
+	mode_id_map = [((0,5),(1,)),((5,10),(2,)),]
 	# lens current range span 000000 - 3FFC00 
 	lens_hex_range = {
 		'OBJ':(0,2.0),
@@ -220,8 +228,9 @@ class Hitachi(tem.TEM):
 		kv_value = int(value/1000.0) # takes only integer in kV
 		self.h.runSetCommand('HighVoltage','Value',[kv_value,],['int',])
 		while True:
-			if int(self.getHighTensions()) == value:
+			if int(self.getHighTension()) == value:
 				break
+			tim.sleep(0.1)
 
 	def getStagePosition(self):
 		xy_submicron = self.h.runGetCommand('StageXY','Position', ['int','int'])
@@ -395,13 +404,10 @@ class Hitachi(tem.TEM):
 				# Objective and Intermediate
 				subset = self.getProjectionSubModeName().lower()
 				m = self.getHitachiConfig('optics',coil_scale_name)[subset][axis]
-			elif coil.lower() != 'bt':
+			else:
 				# Illumination
 				subset = self.getProbeMode()
 				m = self.getHitachiConfig('optics',coil_scale_name)[subset][axis]
-			else:
-				# BT not probe dependent ?
-				m = self.getHitachiConfig('optics',coil_scale_name)[axis]
 		return m
 
 	def _scaleCoilVectorToRaw(self, coil, xydict):
@@ -528,13 +534,9 @@ class Hitachi(tem.TEM):
 		obsv_probe, spot = self._getObsvProbeSpotFromColumnMode(mode_d)
 		obsv_probe_index = self.obsv_probe_modes.index(obsv_probe)
 		spot_index = value - 1
-		base = 0
-		if obsv_probe_index > 0:
-			# rebase at index_cap of the prev_obsv_probe_index
-			prev_obsv_probe = self.obsv_probe_modes[obsv_probe_index-1]
-			base = self.obsv_probe_mode_index_cap[prev_obsv_probe]
+		base = self.obsv_probe_mode_index_range[obsv_probe][0]
 		new_mode_d = base+spot_index
-		if new_mode_d >= self.obsv_probe_mode_index_cap[obsv_probe]:
+		if new_mode_d >= self.obsv_probe_mode_index_range[obsv_probe][1]:
 			raise ValueError('spot size assignment out of range for %s %s' %(obsv_probe, value))
 		new_mode_h = hex(new_mode_d)
 		hex_length = 2 #mode code length
@@ -840,19 +842,48 @@ class Hitachi(tem.TEM):
 			return False
 
 	def _getColumnModes(self):
+		'''
+		return current column decimal values for mode and submode.
+		''' 
 		mode_h, submode_h = self.h.runGetCommand('Column','Mode',['hexdec','hexdec'])
 		mode_d = int(mode_h,16)
 		submode_d = int(submode_h,16)
 		return mode_d, submode_d
 
+	def _mapSubModeIdFromModeId(self, mode_d):
+		'''
+		return Column mode decimal value from given column mode decimal value.
+		'''
+		obsv_probe, spot = self._getObsvProbeSpotFromColumnMode(mode_d)
+		submode_name = self.getProjectionSubModeFromProbeMode(probe)
+		return int(self.submodes[submode_name],16)
+
+	def _mapModeIdFromSubModeId(self, submode_d):
+		'''
+		return Column submode decimal value to column mode decimal value at weakest spot size.
+		'''
+		for i,p in enumerate(self.mode_pairs):
+			if submode in p[1]:
+				probe_pattern, submode_name = self.probe_submode_match_map[i]
+				break
+		if not matched_submode:
+			raise ValueError('unknown column submode id %d' % submode_d)
+		matched_probe = None
+		for probe in self.getProbeModes():
+			if probe_pattern in probe:
+				matched_probe = probe
+		if not matched_probe:
+			raiseValueError('Unknow mapping from submode_id %d' % submode_d)
+		return self.probe_mode_index_range[matched_probe][0]
+
 	def _setColumnMode(self, mode_d):
 		mode_h = hex(mode_d)
-		submode_h = 'ff'
+		submode_h = self._mapSubModeIdFromModeId(mode_d)
 		hex_length = 2 #mode code length
 		self.h.runSetHexdecAndWait('Column','Mode',[mode_h, submode_h],['hexdec','hexdec'],hex_lengths=[hex_length,])
 
 	def _setColumnSubMode(self, submode_d):
-		mode_h = 'ff'
+		mode_h = self._mapModeIdFromSubModeId(submode_d)
 		submode_h = hex(submode_d)
 		hex_length = 2 #mode code length
 		self.h.runSetHexdecAndWait('Column','Mode',[mode_h, submode_h],['hexdec','hexdec'],hex_lengths=[hex_length,])
@@ -880,14 +911,12 @@ class Hitachi(tem.TEM):
 		return probe
 
 	def _getObsvProbeSpotFromColumnMode(self, mode_d):
-		prev_obsv_probe_index_cap = 0
-		for obsv_probe in self.obsv_probe_modes:
+		for obsv_probe in self.obsv_probe_mode_index_range.keys():
 			# find the first probe that passes
-			if mode_d < self.obsv_probe_mode_index_cap[obsv_probe]:
-				print mode_d, prev_obsv_probe_index_cap, obsv_probe, self.obsv_probe_mode_index_cap[obsv_probe]
-				spot = mode_d - prev_obsv_probe_index_cap + 1
+			mode_range = self.obsv_probe_mode_index_range[obsv_probe]
+			if mode_d >= mode_range[0] and mode_d < mode_range[1]:
+				spot = mode_d - mode_range[0] + 1
 				return obsv_probe, spot
-			prev_obsv_probe_index_cap = self.obsv_probe_mode_index_cap[obsv_probe]
 		raise ValueError('observation probe mode not registered')
 
 	def setProbeMode(self, value):
@@ -903,24 +932,12 @@ class Hitachi(tem.TEM):
 			# Nothing to do
 			return
 		# Need change
-		old_obsv_probe = self._mapProbeToObservationProbe(str(old_probe))
-		old_obsv_probe_index = self.obsv_probe_modes.index(old_obsv_probe)
-		base = 0
-		old_mode_d, submode_d = self._getColumnModes()
-		if old_obsv_probe_index > 0:
-			# rebase
-			base = self.obsv_probe_mode_index_cap[self.obsv_probe_modes[old_obsv_probe_index-1]]
-		# Set to the capped index per probe mode so that normalization is consistent.
+		# Set to the minimal index (weakest beam) per probe mode so that normalization is consistent.
 		# spot assignment comes latter in instrument.py
-		spot_index= old_mode_d - base
-		new_base = 0
 		new_obsv_probe = self._mapProbeToObservationProbe(str(new_probe))
-		new_obsv_probe_index = self.obsv_probe_modes.index(new_obsv_probe)
-		if new_probe_index > 0:
-			new_base = self.obsv_probe_mode_index_cap[self.obsv_probe_modes[new_obsv_probe_index-1]]
-		new_obsv_probe_index_cap = self.obsv_probe_mode_index_cap[new_obsv_probe]
-		new_mode_d = new_obsv_probe_index_cap - 1
-		print "spot size assignment capped as normalization for probe mode change"
+		new_obsv_probe_index_range = self.obsv_probe_mode_index_range[new_obsv_probe]
+		new_mode_d = new_obsv_probe_index_range[0]
+		print "use weakest spot size assignment as normalization for probe mode change"
 		self._setColumnMode(new_mode_d)
 
 	def getProbeModes(self):
@@ -954,8 +971,9 @@ class Hitachi(tem.TEM):
 	def _setProjectionSubMode(self, submode_name):
 		if self._getProjectionSubMode() == submode_name:
 			return
-		mode_h = 'ff'
 		submode_h = self.submodes[submode_name]
+		submode_d = int(submode_h,16)
+		mode_h = hex(self._mapModeIdFromSubModeId(submode_d)
 		hex_length = 2 #mode code length
 		self.h.runSetHexdecAndWait('Column','Mode',[mode_h, submode_h],['hexdec','hexdec'],hex_lengths=[hex_length,])
 
@@ -1116,18 +1134,23 @@ class HT7800(Hitachi):
 			'fine-hc',
 			'fine-hr',
 			'low-mag',
-			] # in order of index cap
-	obsv_probe_mode_index_cap = {
-			'micro-hc1': 5,
-			'micro-hc2': 10,
-			'micro-hc3': 15,
-			'micro-hr1': 20,
-			'micro-hr2': 25,
-			'micro-hr3': 30,
-			'fine-hc': 35,
-			'fine-hr': 40,
-			'low-mag':50,
+			] # in order of index range
+	# index_range, base 0, not including the last index
+	obsv_probe_mode_index_range = {
+			'micro-hc1': (0,5),
+			'micro-hc2': (5,10),
+			'micro-hc3': (10,15),
+			'micro-hr1': (15,20),
+			'micro-hr2': (20,25),
+			'micro-hr3': (25,30),
+			'fine-hc': (30,35),
+			'fine-hr': (35,40),
+			'low-mag':(40,50),
 		}
+
+	# pair combined probe_mode_index_range with column submode index
+	# The list is ordered the same as probe_submode_match_map
+	mode_id_map = [((0,14),(0,10)),((15,29),(2,12)),((40,49),(14,))]
 	# lens current range at HT 100 kV span 000000 - 3FFC00 
 	lens_hex_range = {
 		'OBJ':(0,1.94007),
