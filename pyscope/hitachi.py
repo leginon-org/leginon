@@ -612,17 +612,6 @@ class Hitachi(tem.TEM):
 			new_value[key]=value[key]
 		self.setCoilVector(coil, new_value)
 
-	def getProjectorAlignShift(self):
-		coil = 'PA'
-		return self.getCoilVector(coil)
-
-	def setProjectorAlignShift(self, value):
-		new_value = self.getProjectorAlignShift()
-		coil = 'PA'
-		for key in value.keys():
-			new_value[key]=value[key]
-		self.setCoilVector(coil, new_value)
-
 	def makeDefocusLensName(self,submode):
 		if submode.lower() != 'lowmag':
 			lens='obj'
