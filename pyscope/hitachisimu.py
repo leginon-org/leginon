@@ -33,8 +33,8 @@ class HitachiSimu(object):
 			"Lens C2": ['hexdec',],
 			"Lens C3": ['hexdec',],
 			"Lens OBJ": ['hexdec',],
-			"OBJ_APT Position": [int,int],
-			"SA_APT Position": [int,int],
+			"OBJ_APT Position": [int,],
+			"SA_APT Position": [int,],
 			"Screen Position": [int,],
 			"SpotMask Position": [int,],
 			"Stage SpecimenNo": [int,],
@@ -66,8 +66,8 @@ class HitachiSimu(object):
 			"Lens C2": [hex(0),],
 			"Lens C3": [hex(0),],
 			"Lens OBJ": [hex(0),],
-			"OBJ_APT Position": [0,0],
-			"SA_APT Position": [0,0],
+			"OBJ_APT Position": [0,],
+			"SA_APT Position": [0,],
 			"Screen Position": [0,],
 			"SpotMask Position": [0,],
 			"Stage SpecimenNo": [1,],
@@ -106,7 +106,9 @@ class HitachiSimu(object):
 			response_text = self._getData(text[4:])
 		if text.startswith('Set'):
 			response_text = self._setData(text[4:])
-		return response_text+eof_marker
+		if response_text:
+			return response_text+eof_marker
+		return ''
 
 	def _getData(self, subtext):
 		bits = subtext.split(' ')
@@ -158,6 +160,8 @@ class HitachiSimu(object):
 				self.data_values[key][i] = data_bits[i]
 		data = ','.join(data_bits)
 		print data
+		if sub_code == 'Stage' and expansion_code == 'SpecimenNo':
+			return ''
 		return 'Set '+cmd+' 8000,"OK."'
 
 if __name__== "__main__":

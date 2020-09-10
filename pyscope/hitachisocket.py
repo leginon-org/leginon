@@ -105,6 +105,10 @@ class HitachiSocket(object):
 		arg_string = ','.join(args)
 		print 'send', arg_string, recv_min_length
 		self.sendMessage(cmd+' '+arg_string)
+		# Special case without message coming back.
+		if sub_code == 'Stage' and ext_code == 'SpecimenNo':
+			data_string = '8000' # This does not have message coming back.
+			return
 		# expect any data to include '8001, "NG."'
 		data_string = self.recvMessage(recv_min_length)
 		data = data_string.split(',')

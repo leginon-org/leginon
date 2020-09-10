@@ -381,7 +381,7 @@ class TEMController(node.Node):
 		try:
 			self.instrument.tem.loadGridCartridge(slot_number)
 			state = self.instrument.tem.getGridLoaderSlotState(slot_number)
-			if state == 'empty':
+			if state == 'empty' or state == 'loaded':
 				is_success = True
 		except Exception, e:
 			self.logger.error(e)

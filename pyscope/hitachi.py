@@ -139,11 +139,11 @@ class Hitachi(tem.TEM):
 		self.energy_filter = False
 		self.energy_filter_width = 0.0
 
-		self.loaded_slot_number = None
+		self.loaded_slot_number = self._getLoadedSlotNumber()
 		self.is_init = True
 
-		self.aperture_mechanism_map = {'condenser2':'COND_APT','objective':'OBJ_APT','selected area':'SA_APT'}
-		self.aperture_selection = {'objective':'100','condenser_2':'unknown','selected_area':'open'}
+		self.aperture_mechanism_map = {'condenser':'COND_APT','objective':'OBJ_APT','selected area':'SA_APT'}
+		self.aperture_selection = {'objective':'open','condenser':'unknown','selected_area':'unknown'}
 		self.beamstop_positions = ['out','in'] # index of this list is API value to set
 		self.coil_map = [('BT','beam_tilt'),('BH','beam_shift'),('PA','image_shift'),('CS','condenser_stig'),('OS','objective_stig'),('IS','diffraction_stig')]
 		self.stig_coil_map = {'condenser':'CS','objective':'OS','diffraction':'IS'}
@@ -258,7 +258,7 @@ class Hitachi(tem.TEM):
 				set_xy[0] = int(value['x']*1e7)
 			if 'y' in keys:
 				set_xy[1] = int(value['y']*1e7)
-			print 'set to', set_xy
+			self.printStageDebug('set to %s' % (set_xy,))
 			self.h.runSetIntAndWait('StageXY','Move', set_xy)
 		if 'a' in keys:
 			a_degree = math.degrees(value['a'])
@@ -637,13 +637,11 @@ class Hitachi(tem.TEM):
 		mag = self.getMagnification()
 		probe = self.getProbeMode()
 		submode = self.getProjectionSubModeFromProbeMode(probe)
-		print 'setting defocus', submode
 		lens_scale_name = self.makeDefocusLensName(submode)
 		m = self.getHitachiConfig('optics',lens_scale_name)[submode.lower()]
 		if not m :
 			raise RuntimeError('%s%%%s not set in hht.cfg' % (lens_scale_name.upper(), submode.upper()))
 		lens_current_value = value / m
-		print self.zero_defocus_current
 		focus = lens_current_value + self.zero_defocus_current[submode][mag]
 		self.setFocus(focus)
 		return 
@@ -711,7 +709,7 @@ class Hitachi(tem.TEM):
 		self._setMagnification(mag)
 		return
 
-	def getProjectionSubModeFromProbeMode(probe):
+	def getProjectionSubModeFromProbeMode(self, probe):
 		raise NotImplemented
 
 	def _setMagnification(self, value):
@@ -726,7 +724,6 @@ class Hitachi(tem.TEM):
 			for mag in self.submode_mags[submode]:
 				self.addProjectionSubModeMap(mag,submode,k) #mag, mode_name, mode_id
 		self.setProjectionSubModeMags()
-		print 'projection_submode_map', self.projection_submode_map
 		# set magnifications now that self.projection_submode_map is set
 		self.setMagnificationsFromProjectionSubModes()
 		self.initDefocusZero()
@@ -844,7 +841,7 @@ class Hitachi(tem.TEM):
 		return Column mode decimal value from given column mode decimal value.
 		'''
 		obsv_probe, spot = self._getObsvProbeSpotFromColumnMode(mode_d)
-		submode_name = self.getProjectionSubModeFromProbeMode(probe)
+		submode_name = self.getProjectionSubModeFromProbeMode(obsv_probe)
 		return int(self.submodes[submode_name],16)
 
 	def _mapModeIdFromSubModeId(self, submode_d):
@@ -867,12 +864,12 @@ class Hitachi(tem.TEM):
 
 	def _setColumnMode(self, mode_d):
 		mode_h = hex(mode_d)
-		submode_h = self._mapSubModeIdFromModeId(mode_d)
+		submode_h = hex(self._mapSubModeIdFromModeId(mode_d))
 		hex_length = 2 #mode code length
 		self.h.runSetHexdecAndWait('Column','Mode',[mode_h, submode_h],['hexdec','hexdec'],hex_lengths=[hex_length,])
 
 	def _setColumnSubMode(self, submode_d):
-		mode_h = self._mapModeIdFromSubModeId(submode_d)
+		mode_h = hex(self._mapModeIdFromSubModeId(submode_d))
 		submode_h = hex(submode_d)
 		hex_length = 2 #mode code length
 		self.h.runSetHexdecAndWait('Column','Mode',[mode_h, submode_h],['hexdec','hexdec'],hex_lengths=[hex_length,])
@@ -1024,7 +1021,7 @@ class Hitachi(tem.TEM):
 	def hasGridLoader(self):
 		# 3 speciment holder is not a grid loader but similar.
 		# disabled for now.
-		return False
+		return True
 
 	def getGridLoaderNumberOfSlots(self):
 		if not self.hasGridLoader():
@@ -1032,8 +1029,8 @@ class Hitachi(tem.TEM):
 		return 3
 
 	def getGridLoaderSlotState(self, number):
-		if self.loaded_slot_number == number:
-			state = 'empty'
+		if self._getLoadedSlotNumber() == number:
+			state = 'loaded'
 		elif self.loaded_slot_number is None and number == 1 and self.is_init is True:
 			self.is_init = False
 			state = 'empty'
@@ -1041,41 +1038,56 @@ class Hitachi(tem.TEM):
 			state = 'occupied'
 		return state
 
+	def _getLoadedSlotNumber(self):
+		return int(self.h.runGetCommand('Stage','SpecimenNo'))
+
 	def _loadCartridge(self, number):
+		old_number = self._getLoadedSlotNumber()
+		if old_number == number:
+			return
+		# This set does not have received message as normal.
 		self.h.runSetIntAndWait('Stage','SpecimenNo',[number,])
 		self.loaded_slot_number = number
-		time.sleep(2)
+		# The stage is still moving within the target number when it is returned from wait.
+		# it will return to {'x':0,'y':0}
+		while 1:
+			p = self.getStagePosition()
+			if abs(p['x']) < 1e-6 and abs(p['y']) < 1e-6:
+				break
 
 	def _unloadCartridge(self):
 		# multi-specimen holder does not have unload
 		return
 
 	def getGridLoaderInventory(self):
-		self.getAllGridSlotStates()
+		return self.getAllGridSlotStates()
 
 	def getApertureMechanisms(self):
 		'''
 		Names of the available aperture mechanism
 		'''
-		return ['objective',]
+		mechanisms = self.getHitachiConfig('aperture').keys()
+		mechanisms.sort()
+		return mechanisms
 
 	def getApertureSelections(self, aperture_mechanism):
-		if aperture_mechanism == 'objective':
-			return ['open','100']
-		return ['open',]
+		selections = self.getHitachiConfig('aperture', aperture_mechanism)
+		if not selections:
+			return ['unknown',]
+		return selections
 
 	def getApertureSelection(self, aperture_mechanism):
 		if aperture_mechanism not in self.getApertureMechanisms():
 			return 'unknown'
 		apt_api_name = self.aperture_mechanism_map[aperture_mechanism]
 		sel_names = self.getApertureSelections(aperture_mechanism)
-		sel_index = self.h.runGetCommand(apt_api_name,'Position',['int',])[0]
-		print sel_index
+		sel_index = self.h.runGetCommand(apt_api_name,'Position',['int',])
 		return sel_names[sel_index]
 
 	def setApertureSelection(self, aperture_mechanism, name):
-		if aperture_mechanism == 'condenser':
-			aperture_mechanism = 'condenser_2'
+		if aperture_mechanism not in self.getApertureMechanisms():
+			# failed
+			return False
 		if name not in self.getApertureSelections(aperture_mechanism):
 			# failed
 			return False
@@ -1147,9 +1159,15 @@ class HT7800(Hitachi):
 	}
 	probe_submode_match_map = [('hc','zoom1-hc'),('hr','zoom1-hr'),('low','lowmag')]
 
+	def setColumnValvePosition(self, state):
+		# Do not allow user control of gun valve on HT7800
+		pass
+
 	def getProjectionSubModeFromProbeMode(self, probe):
+		# match pattern in the probe name to find the submode
 		for m in self.probe_submode_match_map:
 			if m[0] in probe:
+				# probe name that has the pattern
 				return m[1]
 		raise ValueError('Do not know how to guess projection submode from %s' % probe)
 
