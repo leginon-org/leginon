@@ -565,7 +565,7 @@ class Hitachi(tem.TEM):
 			new_value[key]=value[key]
 		self.setCoilVector(coil, new_value)
 
-	def getDiffractionShiftShiftCoil(self):
+	def getDiffractionShiftCoil(self):
 		# Use PA or IA
 		submode_name = self.getProjectionSubModeName()
 		if 'low' in submode_name.lower():
@@ -580,11 +580,11 @@ class Hitachi(tem.TEM):
 		return {'x':0,'y':0}
 
 	def setDiffractionShift(self, value):
-		new_value = self.getDiffractionShift()
 		coil = self.getDiffractionShiftCoil()
 		if not coil:
 			# do nothing if coil is unknown
 			return
+		new_value = self.getDiffractionShift()
 		for key in value.keys():
 			new_value[key]=value[key]
 		self.setCoilVector(coil, new_value)
