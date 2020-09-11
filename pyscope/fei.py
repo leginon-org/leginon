@@ -1888,7 +1888,7 @@ class Tecnai(tem.TEM):
 		'''
 		Insert an aperture selected for a mechanism.
 		'''
-		return self.setApertureSelection(mechanism_name, aperturn_name)
+		return self.setApertureSelection(mechanism_name, aperture_name)
 
 	def setBeamstopPosition(self, value):
 		"""
