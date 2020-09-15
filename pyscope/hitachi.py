@@ -237,8 +237,8 @@ class Hitachi(tem.TEM):
 		a_degrees = self.h.runGetCommand('StageTilt','Position', ['float',])
 		z_submicron = self.h.runGetCommand('StageZ','Position', ['int',])
 		position = {
-			'x': xy_submicron[0]*1e-7,
-			'y': xy_submicron[1]*1e-7, 
+			'x': xy_submicron[1]*1e-7, # swap xy to make x axis the tilt axis in Leginon
+			'y': xy_submicron[0]*1e-7, # swap xy to make x axis the tilt axis in Leginon
 			'z': z_submicron*1e-7,
 			'a': math.radians(a_degrees),
 			'b': 0.0,
@@ -255,9 +255,9 @@ class Hitachi(tem.TEM):
 		if 'x' in keys or 'y' in keys:
 			set_xy = self.h.runGetCommand('StageXY','Position', ['int','int'])
 			if 'x' in keys:
-				set_xy[0] = int(value['x']*1e7)
+				set_xy[1] = int(value['x']*1e7) # swap xy to make x axis the tilt axis in Leginon
 			if 'y' in keys:
-				set_xy[1] = int(value['y']*1e7)
+				set_xy[0] = int(value['y']*1e7) # swap xy to make x axis the tilt axis in Leginon
 			self.printStageDebug('set to %s' % (set_xy,))
 			# give enough time to move from one end to the other end
 			self.h.runSetIntAndWait('StageXY','Move', set_xy, timeout=20)
@@ -595,6 +595,7 @@ class Hitachi(tem.TEM):
 			# Use PA or IA
 			submode_name = self.getProjectionSubModeName()
 			if 'low' not in submode_name.lower():
+				# Use PA even though IA would give bigger range because SDK does not allow IA set in hr mode.
 				return 'PA'
 			else:
 				return 'IA'
