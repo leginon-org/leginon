@@ -259,7 +259,8 @@ class Hitachi(tem.TEM):
 			if 'y' in keys:
 				set_xy[1] = int(value['y']*1e7)
 			self.printStageDebug('set to %s' % (set_xy,))
-			self.h.runSetIntAndWait('StageXY','Move', set_xy)
+			# give enough time to move from one end to the other end
+			self.h.runSetIntAndWait('StageXY','Move', set_xy, timeout=20)
 		if 'a' in keys:
 			a_degree = math.degrees(value['a'])
 			self.h.runSetFloatAndWait('StageTilt','Move', [a_degree,])
