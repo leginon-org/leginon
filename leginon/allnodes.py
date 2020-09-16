@@ -147,6 +147,9 @@ noderegistry.registerNodeClass(SampleTargetFilter,classtype)
 from jahcfinder import JAHCFinder
 noderegistry.registerNodeClass(JAHCFinder,classtype)
 
+from extholefinder import ExtHoleFinder
+noderegistry.registerNodeClass(ExtHoleFinder,classtype)
+
 from dogfinder import DoGFinder
 noderegistry.registerNodeClass(DoGFinder,classtype)
 

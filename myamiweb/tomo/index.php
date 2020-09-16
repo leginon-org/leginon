@@ -110,8 +110,12 @@ function init() {
 <?php
 echo $tiltSeriesSelector.'<br>';
 if($tiltSeriesId != NULL) {
+	echo '<table><tr><td colspan=1>';
 	echo "<a href=stack.php?tiltSeriesId=$tiltSeriesId&tiltSeriesNumber=$tiltSeriesNumber&alignlabel=".$alabel.">Download MRC stack</a><br>";
 	echo "align label: <INPUT TYPE='text' NAME='alignlabel' SIZE='4' VALUE='".$alabel."'>\n";
+	echo '</td></tr><tr><td>';
+	echo "<a href=tilt.php?tiltSeriesId=$tiltSeriesId&tiltSeriesNumber=$tiltSeriesNumber>Download tilt angles</a><br>";
+	echo '</td></tr></table>';
 	echo '</td><td>';
 	echo '<table><tr><td colspan=2>';
 	thumbnails($tiltSeriesId, $tomography);

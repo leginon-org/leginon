@@ -366,6 +366,7 @@ class SimFrameCamera(SimCCDCamera):
 		self.alignfilter = 'None'
 		self.rawframesname = 'frames'
 		self.useframes = ()
+		self.save8x8 = False
 
 	def _simBias(self, shape):
 		bias = numpy.arange(100,115)
@@ -431,6 +432,9 @@ class SimFrameCamera(SimCCDCamera):
 		pass
 
 	def _getImage(self):
+		'''
+		Set up and get image and frames for frame camera
+		'''
 		self._midNightDelay(-(START_TIME),0,0)
 		self.custom_setup()
 		if not self.validateGeometry():
@@ -470,6 +474,7 @@ class SimFrameCamera(SimCCDCamera):
 			self.rawframesname += '_%02d' % (idcounter.next(),)
 		else:
 			return self.getSimImage(shape)
+		# won't be here if not saving frames
 		sum = numpy.zeros(shape, numpy.float32)
 
 		for i in range(nframes):
@@ -483,7 +488,6 @@ class SimFrameCamera(SimCCDCamera):
 				raise RuntimeError('unknown exposure type: %s' % (self.exposure_type,))
 			#Keep it small
 			frame = self.convertToInt8(frame)
-
 			mrcname = '.mrc'
 			fname = os.path.join(FRAME_DIR,self.rawframesname + mrcname)
 			if self.save_frames:
@@ -496,7 +500,19 @@ class SimFrameCamera(SimCCDCamera):
 				self.debug_print('PRINT %d' %i)
 				sum += frame
 
-		return self.getSimImage(shape)
+		if self.save8x8:
+			shape8 = (8,8)
+			return self.getSimImage(shape8)
+		sleeptime = time.time()-t0
+		return sum
+
+	def getFastSave(self):
+		# Fastsave saves a smaller image arrary for frame camera to reduce handling time.
+		return self.save8x8
+
+	def setFastSave(self, state):
+		# Fastsave saves a smaller image arrary for frame camera to reduce handling time.
+		self.save8x8 = bool(state)
 
 	
 	def getNumberOfFrames(self):
