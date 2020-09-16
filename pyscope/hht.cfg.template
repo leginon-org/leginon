@@ -88,3 +88,6 @@ FOCUS_OFFSET_PATH%ZOOM1-HR = /Users/my_name/hht_focus_offset_zoom1-hr.txt
 REF_UFOCUS_PATH%LOWMAG = /Users/my_name/hht_ufocus_lowmag.txt
 REF_UFOCUS_PATH%ZOOM1-HC = /Users/my_name/hht_ufocus_zoom1-hc.txt
 REF_UFOCUS_PATH%ZOOM1-HR = /Users/my_name/hht_ufocus_zoom1-hr.txt
+[aperture]
+# Individual aperture selections.  If retractable, add open at the beginning of the list
+OBJECTIVE = open, 100

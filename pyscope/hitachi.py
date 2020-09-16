@@ -1027,7 +1027,7 @@ class Hitachi(tem.TEM):
 		return self.h.runSetIntAndWait('Beam','Status',[status,])
 
 	def getEmission(self):
-		return self.h.runGetCommand('EmissionCurrent','Value',['float',])[0] #In unit of micro Amp
+		return self.h.runGetCommand('EmissionCurrent','Value',['float',]) #In unit of micro Amp
 
 	def getBeamBlank(self):
 		return self.BeamBlank
