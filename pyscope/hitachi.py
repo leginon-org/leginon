@@ -1000,8 +1000,11 @@ class Hitachi(tem.TEM):
 	def setFocus(self, value):
 		self.setLensCurrent('OBJ', value)
 
+	def getColumnPressure(self):
+		return self.h.runGetCommand('EvacGauge','FRG',['float','float','float'])[0] #In unit of Pa
+
 	def getBufferTankPressure(self):
-		return self.buffer_pressure
+		return self.h.runGetCommand('EvacGauge','PIG',['float','float','float'])[0] #In unit of Pa
 
 	def runBufferCycle(self):
 		time.sleep(5)
@@ -1016,10 +1019,15 @@ class Hitachi(tem.TEM):
 			self.turbo = value
 
 	def setEmission(self, value):
-		self.emission = value
+		# just set it on or off.
+		if value < self.getEmission():
+			status = 0
+		else:
+			status = 1
+		return self.h.runSetIntAndWait('Beam','Status',[status,])
 
 	def getEmission(self):
-		return self.emission
+		return self.h.runGetCommand('EmissionCurrent','Value',['float',])[0] #In unit of micro Amp
 
 	def getBeamBlank(self):
 		return self.BeamBlank
