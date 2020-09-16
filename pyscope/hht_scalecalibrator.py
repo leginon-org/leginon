@@ -437,7 +437,6 @@ class HitachiScaleCalibrator(ScaleCalibrator):
 		tem_options = self.tem.getHitachiConfig('tem option')
 		for key in tem_options.keys():
 			self.logger.cfg('tem option','%s' % key.upper(),tem_options[key])
-		self.use_pla = self.tem.getHitachiConfig('tem option','use_pa_imageshift') 
 
 	def getImageShiftCoil(self):
 		return self.tem.getImageShiftCoil()

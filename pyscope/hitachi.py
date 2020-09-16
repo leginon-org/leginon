@@ -990,9 +990,18 @@ class Hitachi(tem.TEM):
 			raise ValueError('invalid main screen position')
 		if self.getMainScreenPosition() == value:
 			return
-		apt_index = positions.index(value)
-		self.h.runSetIntAndWait('Screen','Position', [apt_index,])
-		#TODO: screen out returns much faster than gui indicates. May need sleep time
+		opt_index = positions.index(value)
+		self.h.runSetIntAndWait('Screen','Position', [opt_index,])
+		if valus == 'down':
+			return
+		#screen out returns much faster than gui indicates. Need sleep time
+		delay = self.getHitachiConfig('tem option','main_screen_up_delay')
+		if delay:
+			delay_time = float(delay)
+		else:
+			# minimal 1 second
+			delay_time = 1.0
+		time.sleep(delay_time)
 
 	def getFocus(self):
 		return self.getLensCurrent('OBJ')
@@ -1007,16 +1016,13 @@ class Hitachi(tem.TEM):
 		return self.h.runGetCommand('EvacGauge','PIG',['float','float','float'])[0] #In unit of Pa
 
 	def runBufferCycle(self):
-		time.sleep(5)
-		self.buffer_pressure -= 5
+		raise AttributeError('no control of buffer pump on this instrument')
 
 	def getTurboPump(self):
-			if not hasattr(self, 'turbo'):
-				self.turbo = 'off'
-			return self.turbo
+		return 'unknown'
 
 	def setTurboPump(self, value):
-			self.turbo = value
+		raise AttributeError('no control of buffer pump on this instrument')
 
 	def setEmission(self, value):
 		# just set it on or off.
@@ -1030,20 +1036,20 @@ class Hitachi(tem.TEM):
 		return self.h.runGetCommand('EmissionCurrent','Value',['float',]) #In unit of micro Amp
 
 	def getBeamBlank(self):
-		return self.BeamBlank
+		# not sure how to map this.  Consider off all the time.
+		return 'off'
 		
 	def setBeamBlank(self, bb):
-		self.BeamBlank = bb
+		return
 
 	def hasAutoFiller(self):
 		return False
 
 	def exposeSpecimenNotCamera(self,seconds):
-		time.sleep(seconds)
+		raise RuntimError('No post specimen shutter')
 
 	def hasGridLoader(self):
 		# 3 speciment holder is not a grid loader but similar.
-		# disabled for now.
 		return True
 
 	def getGridLoaderNumberOfSlots(self):

@@ -1,5 +1,6 @@
 [tem option]
-USE_PA_IMAGESHIFT = True
+# delay function call return when main screen goes up. In seconds
+MAIN_SCREEN_UP_DELAY = 5.0
 [optics]
 OBSERVATION_PROBE_TO_USE%LOW-MAG = low-mag
 OBSERVATION_PROBE_TO_USE%MICRO-HC = micro-hc1
