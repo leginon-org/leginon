@@ -514,12 +514,21 @@ class DE20(DD):
 		psize = 6.4e-6
 		return {'x': psize, 'y': psize}
 
+	def getSystemGainDarkCorrected(self):
+		## Allows for the DE server to do the gain corrections, otherwise leginon will do the corrections
+		return True
+
+	def getBinning(self):
+		return self.getHardwareBinning()
+
+	def setBinning(self, bindict):
+		self.setHardwareBinning(bindict['x'])
+
 	def custom_setup(self):
 		'''DE20 Integration specific camera setting'''
+		self.setSensorHardwareBinning('Enable')
 		self.setElectronCounting('Disable')
-		binvalue = self.getDEConfig(self.name, 'binning')
-		self.setHardwareBinning(binvalue)
-		self.setECApplyCountingGain('Disable')
+		self.setProperty('Correction Mode', 'Gain and Dark Corrected')
 		self.setProperty('Electron Counting - Dose Fractionation Number of Frames', 1)
 
 class DE20c(DD):
@@ -530,30 +539,56 @@ class DE20c(DD):
 		return {'x': psize, 'y': psize}
 
 	def getSystemGainDarkCorrected(self):
+		## Allows for the DE server to do the gain corrections, otherwise leginon will do the corrections
 		return True
 
 	def custom_setup(self):
 		'''DE20 Counting specific camera setting'''
+		self.setSensorHardwareBinning('Enable')
 		self.countingSetUp()
 		self.setCalculatedFractionNumber()
 
-	def getSaveRawFrames(self):
-		'''Save or Discard'''
-		value = self.getProperty('Autosave Movie')
-		if value == 'Save':
-			return True
-		elif value == 'Discard':
-			return False
-		else:
-			raise ValueError('unexpected value from Autosave Raw Frames: %s' % (value,))
+class DE16(DD):
+	name = 'DE16'
+	model_name = 'DE16'
+	def getPixelSize(self):
+		psize = 6.5e-6
+		return {'x': psize, 'y': psize}
 
-	def setSaveRawFrames(self, value):
-		'''DE20 True: save frames,  False: discard frames'''
-		if value:
-			value_string = 'Save'
-		else:
-			value_string = 'Discard'
-		self.setProperty('Autosave Movie', value_string)
+	def getSystemGainDarkCorrected(self):
+		## Allows for the DE server to do the gain corrections, otherwise leginon will do the corrections
+		return True
+
+	def getBinning(self):
+		return self.getHardwareBinning()
+
+	def setBinning(self, bindict):
+		self.setHardwareBinning(bindict['x'])
+
+	def custom_setup(self):
+		'''DE16 Integration specific camera setting'''
+		self.setSensorHardwareBinning('Enable')
+		self.setElectronCounting('Disable')
+		self.setProperty('Correction Mode', 'Gain and Dark Corrected')
+		self.setProperty('Electron Counting - Dose Fractionation Number of Frames', 1)
+
+class DE16c(DD):
+	name = 'DE16c'
+	model_name = 'DE16'
+
+	def getPixelSize(self):
+		psize = 6.5e-6
+		return {'x': psize, 'y': psize}
+
+	def getSystemGainDarkCorrected(self):
+		## Allows for the DE server to do the gain corrections, otherwise leginon will do the corrections
+		return True
+
+	def custom_setup(self):
+		'''DE16 Counting specific camera setting'''
+		self.setSensorHardwareBinning('Enable')
+		self.countingSetUp()
+		self.setCalculatedFractionNumber()
 
 class DE64(DD):
 	name = 'DE64'
