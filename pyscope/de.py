@@ -455,33 +455,26 @@ class DD(DECameraBase):
 	def getFramesPerSecond(self):
 		return self.getProperty('Frames Per Second')
 
-	#def setECDoseFractionationNumberFrames(self, name):
-	#	value = self.getDEConfig(name, 'dose_fractionation_number_of_frames')
-	#	self.setProperty('Electron Counting - Dose Fractionation Number of Frames', value)
+	def setECDoseFractionationNumberFrames(self, name):
+		value = self.getDEConfig(name, 'dose_fractionation_number_of_frames')
+		self.setProperty('Electron Counting - Dose Fractionation Number of Frames', value)
 
 	def getECDoseFractionationNumberFrames(self):
 		return self.getProperty('Electron Counting - Dose Fractionation Number of Frames')
 
-	#def setECThreshold(self, name):
-	#	value = self.getDEConfig(name, 'threshold')
-	#	self.setProperty('Electron Counting - Threshold', value)
-
 	def getECThreshold(self):
-		return self.getProperty('Electron Counting - Threshold')
+		if self.getHardwareBinning().get('y') > 1 :
+			return self.getProperty('Electron Counting - Threshold for Bin2x')
+		else :
+			return self.getProperty('Electron Counting - Threshold for Bin1x')
 
 	def countingSetUp(self):
 		binvalue = self.getDEConfig(self.name, 'binning')
 		frameratevalue = self.getDEConfig(self.name, 'frames_per_second')
-		self.setHardwareBinning(binvalue)
-		self.setFramesPerSecond(frameratevalue)
 		self.setElectronCounting('Enable')
-		self.setECApplyCountingGain('Enable')
-		self.setProperty('Correction Mode', 'Dark Corrected')
-		self.setProperty('Autosave Raw Frames', 'Discard')
-		self.setProperty('Electron Counting - Apply Post-Counting Gain', 'Enable')
-		self.setProperty('Electron Counting - Apply Post-Threshold Gain', 'Enable')
-		self.setProperty('Electron Counting - Fourier Filter Final', 'Enable')
-		self.setProperty('Electron Counting - Fourier Filter Movie', 'Enable')
+		self.setHardwareBinning(binvalue)
+		self.setProperty('Correction Mode', 'Gain and Dark Corrected')
+		self.setFramesPerSecond(frameratevalue)
 
 	def setRequestNFrames(self, value):
 		self.requestnframes = value
@@ -501,10 +494,14 @@ class DD(DECameraBase):
 		self.setProperty('Electron Counting - Dose Fractionation Number of Frames', nfractionation)
 
 	def postAcquisitionSetup(self):
-		# It resets the movie frame time to its original value
-		nfractionation = self.getECDoseFractionationNumberFrames()
-		frame_time_ms = self.getFrameTime() * nfractionation
-		self.setFrameTime(frame_time_ms)
+		if self.name == 'DE64c':
+			# It resets the movie frame time to its original value
+			nfractionation = self.getECDoseFractionationNumberFrames()
+			frame_time_ms = self.getFrameTime() * nfractionation
+			###Fix Exposure Length
+			#self.setProperty('Electron Counting - Dose Fractionation Number of Frames', 1)
+			###
+			self.setFrameTime(frame_time_ms)
 
 class DE12(DD):
 	name = 'DE12'
@@ -564,6 +561,7 @@ class DE64(DD):
 	def getPixelSize(self):
 		psize = 6.5e-6
 		return {'x': psize, 'y': psize}
+
 	def getFrameRotate(self):
 		'''
 		Frame Rotate direction is defined as x to -y rotation applied after up-down flip
@@ -571,16 +569,22 @@ class DE64(DD):
 		'''
 		return FRAME_ROTATE
 
+	def getSystemGainDarkCorrected(self):
+		## Allows for the DE server to do the gain corrections, otherwise leginon will do the corrections
+		return True
+
+	def getBinning(self):
+		return self.getHardwareBinning()
+
+	def setBinning(self, bindict):
+		self.setHardwareBinning(bindict['x'])
+
 	def custom_setup(self):
 		'''DE64 Integration specific camera setting'''
+		self.setSensorHardwareBinning('Enable')
 		self.setElectronCounting('Disable')
-		binvalue = self.getDEConfig(self.name, 'binning')
-		self.setHardwareBinning(binvalue)
-		self.setSensorHardwareBinning('Disable')
-		self.setECApplyCountingGain('Disable')
+		self.setProperty('Correction Mode', 'Gain and Dark Corrected')
 		self.setProperty('Electron Counting - Dose Fractionation Number of Frames', 1)
-
-
 
 class DE64c(DD):
 	name = 'DE64c'
@@ -591,6 +595,7 @@ class DE64c(DD):
 		return {'x': psize, 'y': psize}
 
 	def getSystemGainDarkCorrected(self):
+		## Allows for the DE server to do the gain corrections, otherwise leginon will do the corrections
 		return True
 
 	def custom_setup(self):
@@ -598,21 +603,3 @@ class DE64c(DD):
 		self.setSensorHardwareBinning('Enable')
 		self.countingSetUp()
 		self.setCalculatedFractionNumber()
-
-	def getSaveRawFrames(self):
-		'''Save or Discard'''
-		value = self.getProperty('Autosave Movie')
-		if value == 'Save':
-			return True
-		elif value == 'Discard':
-			return False
-		else:
-			raise ValueError('unexpected value from Autosave Raw Frames: %s' % (value,))
-
-	def setSaveRawFrames(self, value):
-		'''DE64 True: save frames,  False: discard frames'''
-		if value:
-			value_string = 'Save'
-		else:
-			value_string = 'Discard'
-		self.setProperty('Autosave Movie', value_string)
