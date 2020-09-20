@@ -260,19 +260,21 @@ class DECameraBase(ccdcamera.CCDCamera):
 		self.setProperty('Exposure Mode', value.capitalize()) 
 
 	def getNumberOfFrames(self):
-		result = self.getProperty('Total Number of Frames')
-		#print 'number of frames:', result
+		## Previous property name was 'Total Number of Frames', it was changed to the present
+		result = self.getProperty('Autosave Movie - Frames Written in Last Exposure')
 		return result
 
 	def getSaveRawFrames(self):
 		'''Save or Discard'''
-		value = self.getProperty('Autosave Raw Frames')
+		## Previous property name was 'Autosave Raw Frames', 'Autosave Movie' is used to accommodate counting and integrating modes
+		value = self.getProperty('Autosave Movie')
 		if value == 'Save':
 			return True
 		elif value == 'Discard':
 			return False
 		else:
-			raise ValueError('unexpected value from Autosave Raw Frames: %s' % (value,))
+			## Previous property name was 'Autosave Raw Frames', 'Autosave Movie' is used to accommodate counting and integrating modes
+			raise ValueError('unexpected value from Autosave Movie: %s' % (value,))
 
 	def setSaveRawFrames(self, value):
 		'''True: save frames,  False: discard frames'''
@@ -280,19 +282,25 @@ class DECameraBase(ccdcamera.CCDCamera):
 			value_string = 'Save'
 		else:
 			value_string = 'Discard'
-		self.setProperty('Autosave Raw Frames', value_string)
+		## Previous property name was 'Autosave Raw Frames', 'Autosave Movie' is used to accommodate counting and integrating modes
+		self.setProperty('Autosave Movie', value_string)
 
 	def getPreviousRawFramesName(self):
 		frames_name = self.getProperty('Autosave Frames - Previous Dataset Name')
 		return frames_name
 		
 	def getNumberOfFramesSaved(self):
-		nframes = self.getProperty('Autosave Raw Frames - Frames Written in Last Exposure')
+		## Previous property name was 'Autosave Raw Frames - Frames Written in Last Exposure', 'Autosave Movie ...' is used to accommodate counting and integrating modes
+		nframes = self.getProperty('Autosave Movie - Frames Written in Last Exposure')
 		return int(nframes)
 
 	def getUseFrames(self):
-		nsum = self.getProperty('Autosave Sum Frames - Sum Count')
-		first = self.getProperty('Autosave Sum Frames - Ignored Frames')
+		## In newer version (2.0+) 'Autosave Sum Frames - Ignored Frames' not longer available also, we are using '... Movie ...' now for both camera modes.
+		## Before new server:
+		## first = self.getProperty('Autosave Sum Frames - Ignored Frames')
+		## nsum = self.getProperty('Autosave Sum Frames - Sum Count')
+		nsum = self.getProperty('Autosave Movie - Sum Count')
+		first = self.getProperty('Autosave Movie - Ignored Frames')
 		last = first + nsum
 		ntotal = self.getNumberOfFrames()
 		if last > ntotal:
@@ -314,8 +322,12 @@ class DECameraBase(ccdcamera.CCDCamera):
 		if nsum > total_frames:
 			nsum = total_frames
 		nsum = int(nsum)
-		self.setProperty('Autosave Sum Frames - Sum Count', nsum)
-		self.setProperty('Autosave Sum Frames - Ignored Frames', nskip)
+		## In newer version (2.0+) 'Autosave Sum Frames - Ignored Frames' not longer available also, we are using '... Movie ...' now for both camera modes.
+		## Before new server:
+		## self.setProperty('Autosave Sum Frames - Sum Count', nsum)
+		## self.setProperty('Autosave Sum Frames - Ignored Frames', nskip)
+		self.setProperty('Autosave Movie - Sum Count', nsum)
+		self.setProperty('Autosave Movie - Ignored Frames', nskip)
 
 	def getFrameTime(self):
 		fps = self.getProperty('Frames Per Second')
