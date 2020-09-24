@@ -65,8 +65,8 @@ class CCDCamera(baseinstrument.BaseInstrument):
 		return self.name
 
 	def getIntensityAveraged(self):
-		# Returns True if canera array value is averaged and thus does not increase value
-		# for longer exposure time.
+		# Returns True if camera array value is normalized internally
+		# and thus does not increase value for longer exposure time.
 		return False
 
 	def calculateCenteredGeometry(self, dimension, binning):
@@ -321,7 +321,7 @@ This method returns that multiplier, M.  In the standard case, returns 1.0.
 	def getSystemGainDarkCorrected(self):
 		return False
 
-	def getCalulateNormOnDark(self):
+	def getCalculateNormOnDark(self):
 		return True
 
 	def requireRecentDarkOnBright(self):

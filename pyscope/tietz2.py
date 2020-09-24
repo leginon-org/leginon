@@ -409,3 +409,8 @@ class EmMenuF416(ccdcamera.CCDCamera):
 		self.series_length = tvips.readHeaderFromFile(new_path)
 		print 'movie name: %s' % filename
 
+class EmMenuXF416E_GPU(EmMenuF416):
+	name = 'TVIPS-XF416'
+	camera_name = 'TietzXF416E_GPU'
+	intensity_averaged = False
+	binning_limits = [1,2,4]
