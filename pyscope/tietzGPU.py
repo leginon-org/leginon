@@ -295,7 +295,27 @@ class GPUCameraBase(ccdcamera.CCDCamera):
         return self.camera_name
 
     def getIntensityAveraged(self):
-        return self.intensity_averaged #TODO: @Anchi: what is that?
+        '''
+        Returns True if camera array value is normalized internally
+        and thus does not increase value for longer exposure time.
+        '''
+        return False
+
+    def getBinnedMultiplier(self):
+        '''
+        Binned array values and not sum of the pixels but an average.
+        '''
+        binning = self.getBinning()
+        return binning['x']*binning['y']
+
+    def getCalculateNormOnDark(self):
+        '''
+        Reduce the norm image calculation since dark is taken frequently.
+        '''
+        return False
+
+    def requireRecentDarkOnBright(self):
+        return True
 
     def setDimension(self, value):
         self.dimension = value
@@ -462,17 +482,15 @@ class GPUCameraBase(ccdcamera.CCDCamera):
 
 
 class XF416(GPUCameraBase):
-    name = 'TVIPS XF416'
-    camera_name = 'TVIPS XF416'
-    intensity_averaged = False #TODO: what does that mean?
+    name = 'TVIPS-XF416'  #Used for database record and gui display. Short and without space.
+    camera_name = 'TVIPS XF416' # full name for camera internal interface. No limit on the name.
     binning_limits = [1, 2, 4, 8]
 
     cameratype = camclib.ctXF416e_GPU
 
 class XF416R(GPUCameraBase):
-    name = 'TVIPS XF416 retractable'
+    name = 'TVIPS-XF416r'
     camera_name = 'TVIPS XF416 retractable'
-    intensity_averaged = False #TODO: what does that mean?
     binning_limits = [1, 2, 4, 8]
 
     cameratype = camclib.ctXF416e_GPUr
