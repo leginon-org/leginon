@@ -616,7 +616,7 @@ class Falcon3(FeiCam):
 		self.frameconfig = falconframe.FalconFrameRangeListMaker(False)
 		falcon_image_storage = self.camera_settings.PathToImageStorage #read only
 		falcon_image_storage = 'z:\\TEMScripting\\BM-Falcon\\'
-		if 'falcon_image_storage_path' is in configs['camera'] and configs['camera']['falcon_image_storage_path']:
+		if 'falcon_image_storage_path' in configs['camera'].keys() and configs['camera']['falcon_image_storage_path']:
 			falcon_image_storage = configs['camera']['falcon_image_storage_path']
 		print 'Falcon Image Storage Server Path is ', falcon_image_storage
 		sub_frame_dir = self.getFeiConfig('camera','frame_subpath')
