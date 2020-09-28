@@ -58,7 +58,7 @@ def chooseTEMAdvancedScriptingName():
 		print 'Need software_type in version section in fei.cfg. Please update it'
 		raw_input('Hit return to exit')
 		sys.exit(0)
-	software_type = lower(configs['version']['software_type'])
+	software_type = configs['version']['software_type'].lower()
 	if software_type == 'titan':
 		# titan major version is one higher than talos
 		major_version += 1
