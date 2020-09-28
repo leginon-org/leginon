@@ -327,9 +327,9 @@ class FeiCam(ccdcamera.CCDCamera):
 		# use safearray_as_ndarray instead.
 		if USE_SAFEARRAY_AS_NDARRAY:
 			with safearray_as_ndarray:
-				return self.im.Data.Array
+				return self.im.AsSafeArray
 		else:
-			return self.im.Data.Array
+			return self.im.Data.AsSafeArray
 
 	def _modifyArray(self, arr):
 		# 64-bit pyscope/safearray does not work with newer 64-bit comtypes installation.
