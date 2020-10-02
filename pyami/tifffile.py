@@ -302,10 +302,11 @@ try:
     else:
         import _tifffile  # noqa
 except ImportError:
-    warnings.warn(
-        "ImportError: No module named '_tifffile'. "
-        "Loading of some compressed images will be very slow. "
-        "Tifffile.c can be obtained at http://www.lfd.uci.edu/~gohlke/")
+    pass
+#     warnings.warn(
+#         "ImportError: No module named '_tifffile'. "
+#         "Loading of some compressed images will be very slow. "
+#         "Tifffile.c can be obtained at http://www.lfd.uci.edu/~gohlke/")
 
 
 __version__ = '2017.03.17'
@@ -4423,7 +4424,7 @@ def _replace_by(module_function, package=__package__, warn=False):
     try:
         from importlib import import_module
     except ImportError:
-        warnings.warn('could not import module importlib')
+#        warnings.warn('could not import module importlib')
         return lambda func: func
 
     def decorate(func, module_function=module_function, warn=warn):
