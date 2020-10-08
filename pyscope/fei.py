@@ -133,7 +133,7 @@ class Tecnai(tem.TEM):
 	def findPresureProps(self):
 		self.pressure_prop = {}
 		gauge_map = {}
-		gauges_to_try = {'column':['IPGco','PPc1','P4','IGP1'],'buffer':['PIRbf','P1'],'projection':['CCGp','P3']}
+		gauges_to_try = {'column':['IPGco','IPGcl','PPc1','P4','IGP1'],'buffer':['PIRbf','P1'],'projection':['CCGp','P3']}
 		gauges_obj = self.tecnai.Vacuum.Gauges
 		for i in range(gauges_obj.Count):
 			g = gauges_obj.Item(i)
