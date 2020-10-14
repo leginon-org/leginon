@@ -54,8 +54,14 @@ class BasicLoopForm extends BasicLayoutForm
 		$nowait_default =  $particle->isSessionRunning( $this->expId );
 
 		// Add the Appion Loop Form
+		// wjr 10012020 -- make default such that frame alignment and ctffind both start with desired preset
+		$defp="en";
+		if (in_array("enn",$presetList)) {$defp="enn";}
+		if (in_array("enn-a",$presetList)) {$defp="enn-a";}
+		if (in_array("esn",$presetList)) {$defp="esn";}
+		if (in_array("esn-a",$presetList)) {$defp="esn-a";}
 		$appionLoopTable = new AppionLoopTable( $checkimage='unrejected', $nowait=$nowait_default, $imgorder='normal', $limit='',$tiltangle='', $maxtiltangle=$maxang, $apcontinue='1',
-		$commit='on', $presetList=$presetList, $preset="en", $testimage='', $testfilename='' );
+		$commit='on', $presetList=$presetList, $preset=$defp, $testimage='', $testfilename='' );
 		
 		// Only hide advanced parameters if there is not an advanced user logged in.
 		// Modify user profile to set to an advanced user. 

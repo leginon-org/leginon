@@ -3,6 +3,11 @@ import ccdcamera
 import numpy
 import time
 import falconframe
+try:
+	from comtypes.safearray import safearray_as_ndarray
+	USE_SAFEARRAY_AS_NDARRAY = True
+except ImportError:
+	USE_SAFEARRAY_AS_NDARRAY = False
 
 DEBUG = False
 
@@ -242,6 +247,24 @@ acquisition.
 		else:
 			return self._getImage()
 
+	def _getSafeArray(self):
+		# 64-bit pyscope/safearray does not work with newer 64-bit comtypes installation.
+		# use safearray_as_ndarray instead.
+		if USE_SAFEARRAY_AS_NDARRAY:
+			with safearray_as_ndarray:
+				return self.im.Data.Array
+		else:
+			return self.im.Data.Array
+
+	def _modifyArray(self, arr):
+		# 64-bit pyscope/safearray does not work with newer 64-bit comtypes installation.
+		# use safearray_as_ndarray instead.
+		if USE_SAFEARRAY_AS_NDARRAY:
+			arr = numpy.rot90(arr,1)
+		else:
+			arr = numpy.flipud(arr)
+		return arr
+
 	def _getImage(self):
 		'''
 		Acquire an image using the setup for this ESVision client.
@@ -259,14 +282,14 @@ acquisition.
 			self.acqman.Acquire()
 			t1 = time.time()
 			self.exposure_timestamp = (t1 + t0) / 2.0
-			arr = self.im.Data.Array
+			arr = self._getSafeArray()
 			self.debug_print('got array')
 		except:
 			raise RuntimeError('Camera Acquisition Error in getting array')
 
 		try:
 			arr.shape = (self.dimension['y'],self.dimension['x'])
-			arr = numpy.flipud(arr)
+			arr = self._modifyArray(arr)
 		except AttributeError, e:
 			self.debug_print('comtypes did not return an numpy 2D array, but %s' % (type(arr)))
 		except Exception, e:
@@ -532,13 +555,13 @@ class TIA_Falcon3(TIA_Falcon):
 			self.acqman.Acquire()
 			t1 = time.time()
 			self.exposure_timestamp = (t1 + t0) / 2.0
-			arr = self.im.Data.Array
+			arr = self._getSafeArray()
 		except:
 			raise RuntimeError('Camera Acquisition Error in getting array')
 
 		try:
 			arr.shape = (self.dimension['y'],self.dimension['x'])
-			arr = numpy.flipud(arr)
+			arr = self._modifyArray(arr)
 		except AttributeError, e:
 			self.debug_print('comtypes did not return an numpy 2D array, but %s' % (type(arr)))
 		except Exception, e:

@@ -150,6 +150,14 @@ class TEM(baseinstrument.BaseInstrument):
 		self.projection_submode_map[mag] = (mode_name,mode_id)
 		return overwritten
 
+	def getProjectionSubModeId(self):
+		mag = self.getMagnification()
+		try:
+			return self.projection_submode_map[mag][1]
+		except:
+			# get an error if setProjectionSubModeMapping is not called from leginon/EM.py
+			raise NotImplementedError()
+
 	def getProjectionSubModeName(self):
 		mag = self.getMagnification()
 		try:

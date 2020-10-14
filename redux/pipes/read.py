@@ -33,7 +33,7 @@ class Read(Pipe):
 		### determine input format
 		if not os.path.exists(filename):
 			sys.stderr.write(filename + ' does not exists.')
-			filename = filename.replace('/gpfs/leginon', '/gpfs/cache')
+			filename = filename.replace('/leginon/', '/cache/')
 			filename = filename.replace('.mrc', '.jpg')
 			sys.stderr.write('Trying cached version instead: '+filename)
 		if filename.endswith('mrc') or filename.endswith('MRC') or filename.endswith('mrcs'):

@@ -48,6 +48,8 @@ SELECTED_AREA = 200,100, 40, 10, open
 [camera]
 # Falcon protector causes certain delays
 HAS_FALCON_PROTECTOR = True
+# Falcon image storage path if default does not work
+FALCON_IMAGE_STORAGE_PATH = z:\TEMScripting\BM-Falcon\
 # Falcon III subpath. Must exists and writable
 FRAME_SUBPATH = leginonframes
 # Falcon protector may be too slow
