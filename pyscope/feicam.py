@@ -12,6 +12,12 @@ import falconframe
 from pyscope import tia_display
 from pyami import moduleconfig
 
+try:
+	from comtypes.safearray import safearray_as_ndarray
+	USE_SAFEARRAY_AS_NDARRAY = True
+except ImportError:
+	USE_SAFEARRAY_AS_NDARRAY = False
+
 SIMULATION = False
 class FEIAdvScriptingConnection(object):
 	instr = None
@@ -20,7 +26,6 @@ class FEIAdvScriptingConnection(object):
 
 if SIMULATION:
 	# There is problem starting numpy in FEI 2.9 software as FEI version of python2.7 becomes the default.
-	import numpy
 	import simscripting
 	connection = simscripting.Connection()
 else:
@@ -47,8 +52,17 @@ def chooseTEMAdvancedScriptingName():
 	if len(bits) != 3 or not bits[1].isdigit():
 		print 'Unrecognized Version number, not in the format of %d.%d.%d'
 		raw_input('Hit return to exit')
+	major_version = int(bits[0])
 	minor_version = int(bits[1])
-	if minor_version >= 15:
+	if 'software_type' not in  configs['version'].keys():
+		print 'Need software_type in version section in fei.cfg. Please update it'
+		raw_input('Hit return to exit')
+		sys.exit(0)
+	software_type = configs['version']['software_type'].lower()
+	if software_type == 'titan':
+		# titan major version is one higher than talos
+		major_version += 1
+	if major_version > 2 or minor_version >= 15:
 		return '2'
 	else:
 		return '1'
@@ -308,6 +322,24 @@ class FeiCam(ccdcamera.CCDCamera):
 			self.csa.Wait()
 			return result
 
+	def _getSafeArray(self):
+		# 64-bit pyscope/safearray does not work with newer 64-bit comtypes installation.
+		# use safearray_as_ndarray instead.
+		if USE_SAFEARRAY_AS_NDARRAY:
+			with safearray_as_ndarray:
+				return self.im.AsSafeArray
+		else:
+			return self.im.Data.AsSafeArray
+
+	def _modifyArray(self, arr):
+		rk = self.getConfig('readout')
+		# 64-bit pyscope/safearray does not work with newer 64-bit comtypes installation.
+		# use safearray_as_ndarray instead.
+		arr = arr.reshape((self.limit_dim[rk]['y']/self.binning['y'],self.limit_dim[rk]['x']/self.binning['x']))
+		if USE_SAFEARRAY_AS_NDARRAY:
+			arr = arr.T
+		return arr
+
 	def _getImage(self):
 		'''
 		Acquire an image using the setup for this client.
@@ -356,7 +388,7 @@ class FeiCam(ccdcamera.CCDCamera):
 			else:
 				raise RuntimeError('Error camera acquiring: %s' % (e,))
 		try:
-			arr = self.im.AsSafeArray
+			arr = self._getSafeArray()
 		except Exception, e:
 			if self.getDebugCamera():
 				print 'Camera array:',e
@@ -366,7 +398,7 @@ class FeiCam(ccdcamera.CCDCamera):
 				print 'No array in memory, yet. Try again.'
 			self.csa.Wait()
 			try:
-				arr = self.im.AsSafeArray
+				arr = self._getSafeArray()
 			except Exception, e:
 				if self.getDebugCamera():
 					print 'Camera array 2nd try:',e
@@ -384,7 +416,7 @@ class FeiCam(ccdcamera.CCDCamera):
 		rk = self.getConfig('readout')
 		# reshape to 2D
 		try:
-			arr = arr.reshape((self.limit_dim[rk]['y']/self.binning['y'],self.limit_dim[rk]['x']/self.binning['x']))
+			arr = self._modifyArray(arr)
 		except AttributeError, e:
 			if self.getDebugCamera():
 				print 'comtypes did not return an numpy 2D array, but %s' % (type(arr))
@@ -585,6 +617,8 @@ class Falcon3(FeiCam):
 		self.frameconfig = falconframe.FalconFrameRangeListMaker(False)
 		falcon_image_storage = self.camera_settings.PathToImageStorage #read only
 		falcon_image_storage = 'z:\\TEMScripting\\BM-Falcon\\'
+		if 'falcon_image_storage_path' in configs['camera'].keys() and configs['camera']['falcon_image_storage_path']:
+			falcon_image_storage = configs['camera']['falcon_image_storage_path']
 		print 'Falcon Image Storage Server Path is ', falcon_image_storage
 		sub_frame_dir = self.getFeiConfig('camera','frame_subpath')
 		try:
@@ -720,3 +754,13 @@ class Falcon3EC(Falcon3):
 	binning_limits = [1,2,4]
 	electron_counting = True
 	intensity_averaged = False
+
+class Falcon4EC(Falcon3EC):
+	name = 'Falcon4EC'
+	camera_name = 'BM-Falcon'
+	binning_limits = [1,2,4]
+	electron_counting = True
+	intensity_averaged = False
+
+	def setInserted(self, value):
+		super(Falcon4EC, self).setInserted(value)

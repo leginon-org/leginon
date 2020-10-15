@@ -23,8 +23,8 @@
 ; Script Start - Add your code below here
 #include <MsgBoxConstants.au3>
 #include <Array.au3>
-Global $error_log = @UserProfileDir & "myami_log/autoit_error.log"
-Global $result_log = @UserProfileDir & "myami_log/autoit_result.log"
+Global $error_log = @UserProfileDir & "\myami_log\autoit_error.log"
+Global $result_log = @UserProfileDir & "\myami_log\autoit_result.log"
 _ResetError()
 _ResetResult()
 
@@ -107,7 +107,7 @@ Func GetInstanceIndices($sTem, $hasAutoC3, $mechanism)
 EndFunc
 
 Func GetApertureSelection($aIndices)
-   ; set aperture selection
+   ; get aperture selection
    Local $iButtonInst = $aIndices[0]
    Local $iComboInst = $aIndices[1]
    Local $tText = ControlGetText($my_title,"","[CLASS:ComboBox;INSTANCE:" & $iComboInst & "]")
@@ -158,7 +158,7 @@ Func getFeiConfigModuleLines($configpath, $module)
       $configx86path = StringReplace($configpath, "Program Files", "Program Files (x86)", 1)
       $h2 = FileOpen($configx86path, 0)
       If $h2 == -1 Then
-         _WriteError("can not open " & $configpath & " nor " & $contigx86path)
+         _WriteError("can not open " & $configpath & " nor " & $configx86path)
          Exit
       EndIf
    EndIf
