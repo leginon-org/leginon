@@ -176,14 +176,16 @@ so be sure the clients are running before starting Leginon.
 		self.ret = ret
 
 	def GetPrev(self):
-		return self.GetParent().userpage
+		parent = self.GetParent()
+		return parent.userpage
 
 	def GetNext(self):
 		parent = self.GetParent()
 		n = self.sessiontyperadiobox.GetSelection()
 		if n == 0:
+			# create new session
 			parent.namepage.suggestName()
-			return parent.namepage
+			return parent.projectpage
 		else:
 			leginon.session.cancelReservation()
 			return parent.sessionselectpage
@@ -390,6 +392,7 @@ class SessionNamePage(WizardPage):
 		sizer.Add(wx.StaticText(self, -1, 'Choose holder from list or enter new one:'), (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sizer.Add(self.holderctrl, (2,1), (1,1))
 
+		# TODO link to grid management system to set session-grid link and then return link
 		sizer.Add(wx.StaticText(self, -1, 'Description:'), (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.descriptiontextctrl = wx.TextCtrl(self, -1, '', size=wx.Size(-1,50), style=wx.TE_MULTILINE)
 		sizer.Add(self.descriptiontextctrl, (4, 0), (1, 2), wx.EXPAND|wx.ALL)
@@ -435,17 +438,16 @@ class SessionNamePage(WizardPage):
 
 	def GetPrev(self):
 		parent = self.GetParent()
-		if parent.userpage.sessions:
-			return parent.sessiontypepage
+		if parent.projectpage:
+			return parent.projectpage
 		else:
+			if parent.userpage.sessions:
+				return parent.sessiontypepage
 			return parent.userpage
 
 	def GetNext(self):
 		parent = self.GetParent()
-		if parent.projectpage is None:
-			return parent.imagedirectorypage
-		else:
-			return parent.projectpage
+		return parent.imagedirectorypage
 
 class NoProjectDatabaseError(Exception):
 	pass
@@ -524,10 +526,14 @@ class SessionProjectPage(WizardPage):
 		return self.projects[project].dbid
 
 	def GetPrev(self):
-		return self.GetParent().namepage
+		parent = self.GetParent()
+		if parent.userpage.sessions:
+			return parent.sessiontypepage
+		else:
+			return parent.userpage
 
 	def GetNext(self):
-		return self.GetParent().imagedirectorypage
+		return self.GetParent().namepage
 
 # might want to check if directory exists and warn...
 class SessionImageDirectoryPage(WizardPage):
@@ -577,10 +583,7 @@ class SessionImageDirectoryPage(WizardPage):
 
 	def GetPrev(self):
 		parent = self.GetParent()
-		if parent.projectpage is None:
-			return parent.namepage
-		else:
-			return parent.projectpage
+		return parent.namepage
 
 	def GetNext(self):
 		return self.GetParent().sessioncreatepage
