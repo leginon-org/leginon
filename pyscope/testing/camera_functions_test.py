@@ -21,6 +21,7 @@ def test(cam_inst, attr_name, arg=None):
 def testMethods(cam_inst):
 	capabilities = cam_inst.getCapabilities()
 	attr_names = dir(cam_inst)
+	this_module = inspect.getmodule(cam_inst)
 	exclusions = []
 	error_count = 0
 	# test all get methods
@@ -42,7 +43,7 @@ def testMethods(cam_inst):
 					else:
 						name = cam_inst.buffer_ready.keys()[0]
 						test(cam_inst, attr_name, name)
-				elif 'Config' in attr_name and hasattr(cam_inst,'configs'):
+				elif 'Config' in attr_name and hasattr(this_module,'configs'):
 					k = configs.keys()[0]
 					test(cam_inst, attr_name, k)
 				else:
