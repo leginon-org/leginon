@@ -67,7 +67,7 @@ def testMethods(cam_inst):
 					t0 = time.time()
 					print attr_name
 					getattr(cam_inst, attr_name)(result)
-					print 'time (s): %.3f' % (time.time()-t0)
+					print 'time (s): %.6f' % (time.time()-t0)
 			except Exception as e:
 				print 'Error testing %s: %s' % (attr_name,e)
 				error_count += 1
