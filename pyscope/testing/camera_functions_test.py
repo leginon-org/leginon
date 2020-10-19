@@ -44,7 +44,7 @@ def testMethods(cam_inst):
 						name = cam_inst.buffer_ready.keys()[0]
 						test(cam_inst, attr_name, name)
 				elif 'Config' in attr_name and hasattr(this_module,'configs'):
-					k = configs.keys()[0]
+					k = getattr(this_module,'configs').keys()[0]
 					test(cam_inst, attr_name, k)
 				else:
 					test(cam_inst, attr_name)
