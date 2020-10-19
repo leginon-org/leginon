@@ -2,23 +2,25 @@
 import time
 from pyami import moduleconfig
 from pyscope import instrumenttype
+import inspect
 search_for = 'Camera'
 
-def test(tem_inst, attr_name, arg=None):
+def test(cam_inst, attr_name, arg=None):
 	if arg is None:
 		try:
-			result = getattr(tem_inst, attr_name)()
+			result = getattr(cam_inst, attr_name)()
 		except Exception as e:
 			raise RuntimeError('Error testing %s: %s' % (attr_name,e))
 	else:
 		try:
-			result = getattr(tem_inst, attr_name)(arg)
+			result = getattr(cam_inst, attr_name)(arg)
 		except Exception as e:
 			raise RuntimeError('Error testing %s with %s: %s' % (attr_name, attr_name, e))			
+	print 'testing %s successful' % attr_name
 
-def testMethods(tem_inst):
-	capabilities = tem_inst.getCapabilities()
-	attr_names = dir(tem_inst)
+def testMethods(cam_inst):
+	capabilities = cam_inst.getCapabilities()
+	attr_names = dir(cam_inst)
 	exclusions = []
 	error_count = 0
 	# test all get methods
@@ -26,15 +28,26 @@ def testMethods(tem_inst):
 		try:
 			if a.startswith('get'):
 				attr_name = a
-				if 'ApertureSelection' in a:
-					test(tem_inst, attr_name, 'objective')
-				elif a.endswith('SlotState'):
-					test(tem_inst, attr_name, 1)
+				args = inspect.getargspec(getattr(cam_inst,attr_name))[0]
+				if 'shape' in args:
+					shapedict = getattr(cam_inst, 'getDimension')()
+					shape = (shapedict['y'],shapedict['x'])
+					test(cam_inst, attr_name, shape)
+				elif a.endswith('Callback'):
+					pass
+				elif 'Buffer' in attr_name and 'name' in args:
+					if not cam_inst.buffer_ready.keys():
+						pass
+					else:
+						name = cam_inst.buffer_ready.keys()[0]
+						test(cam_inst, attr_name, name)
 				else:
-					test(tem_inst, attr_name)
+					test(cam_inst, attr_name)
 		except RuntimeError as e:
 			print(e)
 			error_count += 1
+		except Exception as e:
+			raise
 				
 	for c in capabilities:
 		if c['name'] in exclusions:
@@ -43,13 +56,13 @@ def testMethods(tem_inst):
 		if 'get' in impls:
 			attr_name = 'get'+c['name']
 			try:
-				result = getattr(tem_inst, attr_name)()
+				result = getattr(cam_inst, attr_name)()
 				if 'set' in impls:
 					attr_name = 'set'+c['name']
 					t0 = time.time()
 					print attr_name
-					getattr(tem_inst, attr_name)(result)
-					print time.time()-t0
+					getattr(cam_inst, attr_name)(result)
+					print 'time (s): %.3f' % (time.time()-t0)
 			except Exception as e:
 				print 'Error testing %s: %s' % (attr_name,e)
 				error_count += 1
