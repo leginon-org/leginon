@@ -29,6 +29,7 @@ def testMethods(cam_inst):
 			if a.startswith('get'):
 				attr_name = a
 				args = inspect.getargspec(getattr(cam_inst,attr_name))[0]
+				# handle get attributes that has specific argument to add.
 				if 'shape' in args:
 					shapedict = getattr(cam_inst, 'getDimension')()
 					shape = (shapedict['y'],shapedict['x'])
@@ -41,6 +42,9 @@ def testMethods(cam_inst):
 					else:
 						name = cam_inst.buffer_ready.keys()[0]
 						test(cam_inst, attr_name, name)
+				elif 'Config' in attr_name and hasattr(cam_inst,'configs'):
+					k = configs.keys()[0]
+					test(cam_inst, attr_name, k)
 				else:
 					test(cam_inst, attr_name)
 		except RuntimeError as e:
