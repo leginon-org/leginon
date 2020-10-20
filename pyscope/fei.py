@@ -29,7 +29,6 @@ try:
 	import comtypes
 	import comtypes.client
 	com_module =  comtypes
-	import winerror
 	log_path = os.path.join(os.environ['USERPROFILE'],'myami_log')
 	if not os.path.isdir(log_path):
 		os.mkdir(log_path)
