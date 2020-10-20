@@ -151,7 +151,7 @@ exposure is the exposure time in seconds
 		except:
 			self.debug_print('could not set %s' % (kwargs,))
 
-	def getConfig(self, param):
+	def _getConfig(self, param):
 		self.selectSetup()
 		if param == 'range':
 			return self.ccd.PixelReadoutRange
@@ -206,7 +206,7 @@ acquisition.
 		# final range
 		unbindim = {'x':self.dimension['x']*bin, 'y':self.dimension['y']*bin}
 		off = self.offset
-		range = self.getConfig('range')
+		range = self._getConfig('range')
 		range.StartX = off['x']
 		range.StartY = off['y']
 		range.EndX = off['x'] + unbindim['x']

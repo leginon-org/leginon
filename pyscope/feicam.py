@@ -245,7 +245,7 @@ class FeiCam(ccdcamera.CCDCamera):
 		except:
 			raise
 
-	def getConfig(self, param):
+	def _getConfig(self, param):
 		if param == 'readout':
 			return self.camera_settings.ReadoutArea
 		elif param == 'binning':
@@ -332,7 +332,7 @@ class FeiCam(ccdcamera.CCDCamera):
 			return self.im.Data.AsSafeArray
 
 	def _modifyArray(self, arr):
-		rk = self.getConfig('readout')
+		rk = self._getConfig('readout')
 		# 64-bit pyscope/safearray does not work with newer 64-bit comtypes installation.
 		# use safearray_as_ndarray instead.
 		arr = arr.reshape((self.limit_dim[rk]['y']/self.binning['y'],self.limit_dim[rk]['x']/self.binning['x']))
@@ -413,7 +413,7 @@ class FeiCam(ccdcamera.CCDCamera):
 		return arr
 
 	def modifyImage(self, arr):
-		rk = self.getConfig('readout')
+		rk = self._getConfig('readout')
 		# reshape to 2D
 		try:
 			arr = self._modifyArray(arr)
