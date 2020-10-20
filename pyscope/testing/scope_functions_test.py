@@ -10,14 +10,14 @@ def test(tem_inst, attr_name, arg=None):
 		try:
 			result = getattr(tem_inst, attr_name)()
 		except Exception as e:
-			if 'adaExp' in e:
+			if 'adaExp' in str(e):
 				return # let it pass
 			raise RuntimeError('Error testing %s: %s' % (attr_name,e))
 	else:
 		try:
 			result = getattr(tem_inst, attr_name)(arg)
 		except Exception as e:
-			if 'adaExp' in e:
+			if 'adaExp' in str(e):
 				return # let it pass
 			raise RuntimeError('Error testing %s with %s: %s' % (attr_name, attr_name, e))			
 
@@ -63,6 +63,8 @@ def testMethods(tem_inst):
 					result = getattr(tem_inst, attr_name)('objective')
 				elif a.endswith('SlotState'):
 					result = getattr(tem_inst, attr_name)(1)
+				if 'Stigmator' in a:
+					result = {'objective': getattr(tem_inst, attr_name)()['objective']}
 				else:
 					result = getattr(tem_inst, attr_name)()
 				if 'set' in impls:
