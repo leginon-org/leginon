@@ -192,7 +192,7 @@ class EmMenuF416(ccdcamera.CCDCamera):
 			raise
 		self.camera_settings.FlatMode=0
 
-	def getConfig(self, param):
+	def _getConfig(self, param):
 		if param == 'binning':
 			return {'x':self.camera_settings.BinningX,'y':self.camera_settings.BinningY}
 		elif param == 'exposure':
