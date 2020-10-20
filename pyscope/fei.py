@@ -1484,7 +1484,7 @@ class Tecnai(tem.TEM):
 		else:
 			return 'unknown'
 
-	def getGaugePressure(self,location):
+	def _getGaugePressure(self,location):
 		# value in pascal unit
 		if location not in self.pressure_prop.keys():
 			raise KeyError
@@ -1493,13 +1493,13 @@ class Tecnai(tem.TEM):
 		return float(self.tecnai.Vacuum.Gauges(self.pressure_prop[location]).Pressure)
 
 	def getColumnPressure(self):
-		return self.getGaugePressure('column')
+		return self._getGaugePressure('column')
 
 	def getProjectionChamberPressure(self):
-		return self.getGaugePressure('projection')
+		return self._getGaugePressure('projection')
 
 	def getBufferTankPressure(self):
-		return self.getGaugePressure('buffer')
+		return self._getGaugePressure('buffer')
 
 	def getObjectiveExcitation(self):
 		return float(self.tecnai.Projection.ObjectiveExcitation)
@@ -1878,11 +1878,7 @@ class Tecnai(tem.TEM):
 		'''
 		Get string name list of the aperture collection in a mechanism.
 		'''
-		aps = self._getApertureObjsOfMechanismName(mechanism_name)
-		names = []
-		for ap in aps:
-			names.append(ap.Name)
-		return names
+		return self.getApertureSelections(mechanism_name)
 
 	def insertSelectedApertureMechanism(self,mechanism_name, aperture_name):
 		'''
