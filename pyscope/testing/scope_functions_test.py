@@ -58,22 +58,27 @@ def testMethods(tem_inst):
 			attr_name = 'get'+c['name']
 			if attr_name not in good_get:
 				continue
+			# testing set method with input of get method.
 			try:
-				if 'ApertureSelection' in a or 'ApertureNames' in a:
+				# same logic as in get tests but need the result back.
+				if 'ApertureSelection' in attr_name or 'ApertureNames' in attr_name:
 					result = getattr(tem_inst, attr_name)('objective')
-				elif a.endswith('SlotState'):
+				elif attr_name.endswith('SlotState'):
 					result = getattr(tem_inst, attr_name)(1)
-				if 'Stigmator' in a:
+				elif 'Stigmator' in attr_name:
 					result = {'objective': getattr(tem_inst, attr_name)()['objective']}
 				else:
 					result = getattr(tem_inst, attr_name)()
+				# now test set
 				if 'set' in impls:
 					attr_name = 'set'+c['name']
 					t0 = time.time()
 					print attr_name
-					getattr(tem_inst, attr_name)(result)
+					test(tem_inst, attr_name,result)
 					print 'time (s): %.6f' % (time.time()-t0)
 			except Exception as e:
+				if 'adaExp' in str(e):
+					continue
 				print 'Error testing %s: %s' % (attr_name,e)
 				error_count += 1
 	print('----------------------')
