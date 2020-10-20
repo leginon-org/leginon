@@ -21,24 +21,6 @@ def test(tem_inst, attr_name, arg=None):
 				pass
 			raise RuntimeError('Error testing %s with %s: %s' % (attr_name, attr_name, e))			
 
-def _testGet(tem_inst, attr_name, count=False):
-	this_module = inspect.getmodule(tem_inst)
-	try:
-		if 'ApertureSelection' in attr_name or 'ApertureNames' in attr_name:
-			test(tem_inst, attr_name, 'objective')
-		elif attr_name.endswith('SlotState'):
-			test(tem_inst, attr_name, 1)
-		elif 'Film' in attr_name:
-			# don't test film functions
-			return None # skip
-		elif 'Config' in attr_name and hasattr(this_module,'configs'):
-			k = getattr(this_module,'configs').keys()[0]
-			test(tem_inst, attr_name, k)
-		else:
-			test(tem_inst, attr_name)
-		return True
-	except RuntimeError as e:
-		return False
 
 def testMethods(tem_inst):
 	capabilities = tem_inst.getCapabilities()
@@ -46,15 +28,27 @@ def testMethods(tem_inst):
 	exclusions = []
 	error_count = 0
 	good_get = []
+	this_module = inspect.getmodule(tem_inst)
 	# test all get methods
 	for a in attr_names:
 		if a.startswith('get'):
-			is_success = _testGet(tem_inst,a)
-			if is_success == False:
+			try:
+				if 'ApertureSelection' in a or 'ApertureNames' in a:
+					test(tem_inst, a, 'objective')
+				elif a.endswith('SlotState'):
+					test(tem_inst, a, 1)
+				elif 'Film' in a:
+					# don't test film functions
+					continue
+				elif 'Config' in a and hasattr(this_module,'configs'):
+					k = getattr(this_module,'configs').keys()[0]
+					test(tem_inst, a, k)
+				else:
+					test(tem_inst, a)
+				good_get.append(a)
+			except RuntimeError as e:
 				print(e)
 				error_count += 1
-			elif is_success == True:
-				good_get.append(a)
 				
 	for c in capabilities:
 		if c['name'] in exclusions:
