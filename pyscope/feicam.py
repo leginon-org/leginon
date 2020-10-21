@@ -329,7 +329,7 @@ class FeiCam(ccdcamera.CCDCamera):
 			with safearray_as_ndarray:
 				return self.im.AsSafeArray
 		else:
-			return self.im.Data.AsSafeArray
+			return self.im.AsSafeArray
 
 	def _modifyArray(self, arr):
 		rk = self._getConfig('readout')
