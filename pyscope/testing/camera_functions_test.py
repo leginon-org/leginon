@@ -46,6 +46,9 @@ def testMethods(cam_inst):
 				elif 'Config' in attr_name and hasattr(this_module,'configs'):
 					k = getattr(this_module,'configs').keys()[0]
 					test(cam_inst, attr_name, k)
+				elif 'MetaDataDict' in attr_name:
+					# need known object to test.  pass.
+					pass
 				else:
 					test(cam_inst, attr_name)
 		except RuntimeError as e:
