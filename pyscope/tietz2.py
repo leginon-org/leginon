@@ -337,11 +337,11 @@ class EmMenuF416(ccdcamera.CCDCamera):
 		return mdict
 
 	def getRetractable(self):
-		return True
+		return False
 
 	def getInserted(self):
 		if self.getRetractable():
-			return self.camera.IsInserted
+			raise NotImplementedError()
 		else:
 			return True
 
