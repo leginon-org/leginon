@@ -220,7 +220,7 @@ class FeiCam(ccdcamera.CCDCamera):
 		# set attributes
 		self.camera = this_camera
 		self.camera_settings = self.csa.CameraSettings
-		self.camara_capabilities = self.camera_settings.Capabilities
+		self.camera_capabilities = self.camera_settings.Capabilities
 
 	def setConfig(self, **kwargs):
 		'''
