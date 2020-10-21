@@ -166,7 +166,7 @@ class FeiCam(ccdcamera.CCDCamera):
 		Read from camera capabilities the supported binnings and
 		set self.binning_limits and the self.binning_limit_objs
 		'''
-		self.binning_limit_objs= self.capabilities.SupportedBinnings
+		self.binning_limit_objs= self.camera_capabilities.SupportedBinnings
 		count = self.binning_limit_objs.Count
 		binning_limits = []
 		for index in range(count):
@@ -220,7 +220,7 @@ class FeiCam(ccdcamera.CCDCamera):
 		# set attributes
 		self.camera = this_camera
 		self.camera_settings = self.csa.CameraSettings
-		self.capabilities = self.camera_settings.Capabilities
+		self.camara_capabilities = self.camera_settings.Capabilities
 
 	def setConfig(self, **kwargs):
 		'''
@@ -268,7 +268,7 @@ class FeiCam(ccdcamera.CCDCamera):
 		p = self.camera.PixelSize #in meters
 		return {'x': p.Width, 'y': p.Height}
 
-	def getReadoutAreaKey(self,unbindim, off):
+	def _getReadoutAreaKey(self,unbindim, off):
 		size = self.getCameraSize()
 		if unbindim['x']+off['x'] > size['x'] or unbindim['y']+off['y'] > size['y']:
 			raise ValueError('defined readout area outside the camera')
@@ -282,7 +282,7 @@ class FeiCam(ccdcamera.CCDCamera):
 				return k
 		raise ValueError('Does not fit any defined readout area')
 
-	def getReadoutOffset(self, key, binned_full_off):
+	def _getReadoutOffset(self, key, binned_full_off):
 		limit_off = self.limit_off[key]
 		return {'x':binned_full_off['x']-limit_off['x']/self.binning['x'],'y':binned_full_off['x']-limit_off['y']/self.binning['y']}
 
@@ -293,7 +293,7 @@ class FeiCam(ccdcamera.CCDCamera):
 		# final range
 		unbindim = {'x':self.dimension['x']*binning['x'], 'y':self.dimension['y']*binning['y']}
 		unbinoff = {'x':self.offset['x']*binning['x'], 'y':self.offset['y']*binning['y']}
-		readout_key = self.getReadoutAreaKey(unbindim, unbinoff)
+		readout_key = self._getReadoutAreaKey(unbindim, unbinoff)
 		exposure = self.exposure/1000.0
 
 		# send it to camera
@@ -426,7 +426,7 @@ class FeiCam(ccdcamera.CCDCamera):
 				print 'modify array error',e
 			raise
 		#Offset to apply to get back the requested area
-		readout_offset = self.getReadoutOffset(rk, self.offset)
+		readout_offset = self._getReadoutOffset(rk, self.offset)
 		try:
 			if self.dimension['x'] < arr.shape[1]:
 				arr=arr[:,readout_offset['x']:readout_offset['x']+self.dimension['x']]
