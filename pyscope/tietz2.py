@@ -211,8 +211,7 @@ class EmMenuF416(ccdcamera.CCDCamera):
 		self.exposuretype = value
 
 	def getPixelSize(self):
-		p = self.camera.PixelSize #in meters
-		return {'x': p.Width, 'y': p.Height}
+		return self.getTvipsConfig('sensor','pixelsize_um')
 
 	def finalizeSetup(self):
 		# final bin
