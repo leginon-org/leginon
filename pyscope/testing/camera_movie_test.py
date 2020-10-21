@@ -1,4 +1,16 @@
 #!/usr/bin/env python
+'''
+This script is used to characterize the rolling shutter movie
+saving of a camera in its on-set delay and variation of the
+real frame time at different requested frame time.
+It loops through a series of
+rolling shutter movie frame time so to find the delay of
+frame saving on-set and variation in the total time.
+
+Direct modification is required within the script below to
+set to your camera.  Example is provided for simulated camera
+and, in comment, Ceta or CetaD camera.
+'''
 #-----------------------
 # change these for your testing
 #-----------------------
