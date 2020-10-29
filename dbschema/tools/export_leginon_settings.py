@@ -195,6 +195,7 @@ class SettingsJsonMaker(DataJsonMaker):
 		launched_apps = self.research(q)
 		allalias = {}
 		for appdata in map((lambda x: x['application']), launched_apps):
+			print appdata['name']
 			if appname is not None and appname not in appdata['name']:
 				# only export specified application name
 				continue
