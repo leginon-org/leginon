@@ -1111,7 +1111,9 @@ class PresetsManager(node.Node):
 		except calibrationclient.NoSensitivityError:
 			self.logger.error('No sensitivity data for this magnification')
 			return
-			
+		except ZeroDivisionError:
+			self.logger.error('Camera sensitivity is exactly zero. Please recalibrate.')
+			dose = None
 		if dose is None:
 			self.logger.error('Invalid dose measurement result')
 		else:
@@ -1162,6 +1164,11 @@ class PresetsManager(node.Node):
 		self.acquireDoseImage(presetname)
 
 	def calcDoseFromCameraDoseRate(self, presetname, camera_dose_rate, image_mean):
+		try:
+			1.0/camera_dose_rate
+		except ZeroDivisionError:
+			self.logger.error('Dose Rate of exact zero is not accepted')
+			return
 		preset = self.presetByName(presetname)
 		# Falcon3 non-counting mode gives values per frame not sum. Use through Leginon as per second.
 		intensity_averaged = self.instrument.ccdcamera.IntensityAveraged
