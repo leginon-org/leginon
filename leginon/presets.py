@@ -258,6 +258,7 @@ class PresetsManager(node.Node):
 		'smallsize': 1024,
 		'idle minute': 30.0,
 		'import random': False,
+		'emission off': False,
 	}
 	eventinputs = node.Node.eventinputs + [event.ChangePresetEvent, event.MeasureDoseEvent, event.UpdatePresetEvent]
 	eventinputs.append(event.IdleNotificationEvent)
@@ -313,20 +314,6 @@ class PresetsManager(node.Node):
 		## this will fill in UI with current session presets
 		self.getPresetsFromDB()
 		self.start()
-
-	def instrumentIdleFinish(self):
-		'''
-		Things to do when idle timer is timeout.
-		'''
-		if not self.idleactive:
-			return
-		self.instrument.tem.ColumnValvePosition = 'closed'
-		self.logger.warning('column valves closed')
-		#if self.settings['emission off']:
-		if False:
-			self.instrument.tem.Emission = False
-			self.logger.warning('emission switched off')
-		self.idleactive = False
 
 	def toggleInstrumentTimeout(self):
 		if self.idleactive:
@@ -2102,6 +2089,9 @@ class PresetsManager(node.Node):
 		if temname:
 			self.instrument.getTEM(temname).ColumnValvePosition = 'closed'
 			self.logger.info('Column valve closed')
+			if self.settings['emission off']:
+				self.instrument.getTEM(temname).Emission = False
+				self.logger.warning('emission switched off')
 		else:
 			self.logger.error('No valid preset to set tem to close column valve')
 		# deactivate idle and error notification
