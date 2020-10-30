@@ -186,7 +186,8 @@ class SimTEM(tem.TEM):
 			beta = nidaq.getBeta()
 			self.stage_position.update({'b':beta})
 		except:
-			pass	
+			# give values so it is behaved like real tem implementation
+			self.stage_position.update({'b':0.0})
 		return copy.copy(self.stage_position)
 
 	def _setStagePosition(self,value):

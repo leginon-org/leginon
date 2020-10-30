@@ -192,7 +192,7 @@ class EmMenuF416(ccdcamera.CCDCamera):
 			raise
 		self.camera_settings.FlatMode=0
 
-	def getConfig(self, param):
+	def _getConfig(self, param):
 		if param == 'binning':
 			return {'x':self.camera_settings.BinningX,'y':self.camera_settings.BinningY}
 		elif param == 'exposure':
@@ -211,8 +211,7 @@ class EmMenuF416(ccdcamera.CCDCamera):
 		self.exposuretype = value
 
 	def getPixelSize(self):
-		p = self.camera.PixelSize #in meters
-		return {'x': p.Width, 'y': p.Height}
+		return self.getTvipsConfig('sensor','pixelsize_um')
 
 	def finalizeSetup(self):
 		# final bin
@@ -338,11 +337,11 @@ class EmMenuF416(ccdcamera.CCDCamera):
 		return mdict
 
 	def getRetractable(self):
-		return True
+		return False
 
 	def getInserted(self):
 		if self.getRetractable():
-			return self.camera.IsInserted
+			raise NotImplementedError()
 		else:
 			return True
 

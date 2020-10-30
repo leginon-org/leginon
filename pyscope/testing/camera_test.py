@@ -1,11 +1,12 @@
-from pyscope import feicam
 from pyami import mrc
+from pyscope import instrumenttype
 import time
 '''
 This script is used to test camera acquisition time
 '''
-# Change the class initiated here to your camera
-c = feicam.Falcon3()
+# This tests the first camera found in instruments.cfg
+search_for = 'Camera'
+c = instrumenttype.getInstrumentTypeInstance(search_for)
 # Define test condition here
 exposure_time_ms = 1000
 binning = 2

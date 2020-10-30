@@ -30,8 +30,9 @@ SLEEP_TIME = 2
 try:
 	configs = pyami.moduleconfig.getConfigured('remote.cfg')
 except:
-	# Don't want it to crash here.
-	print 'remote.cfg does not exist. Remote disabled'
+	if not NO_REQUESTS:
+		# Don't want it to crash here.
+		print 'remote.cfg does not exist. Remote disabled'
 
 class RemoteServerMaster(object):
 	'''

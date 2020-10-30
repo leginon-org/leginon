@@ -155,27 +155,10 @@ class TargetHandler(object):
 			return False
 
 	def queueIdleFinish(self):
-		if not self.queueidleactive:
-			return
-		try:
-			self.instrument.tem.ColumnValvePosition = 'closed'
-			self.logger.warning('column valves closed')
-		except:
-			# This fails when tem is not available, likely after Leginon is half closed.
-			pass
-		if self.settings['emission off']:
-			self.instrument.tem.Emission = False
-			self.logger.warning('emission switched off')
-		self.queueidleactive = False
+		self.logger.warning('this idle timer is not used any more')
 
 	def toggleQueueTimeout(self):
-		if self.queueidleactive:
-			self.queueidleactive = False
-			self.logger.info('Queue timeout deactivated')
-		else:
-			self.queueidleactive = True
-			self.queueupdate.set()
-			self.logger.info('Queue timeout activated')
+		self.logger.warning('this idle timer is not used any more')
 
 	def postQueueCount(self, count):
 		# implemented in TargetWatcher
