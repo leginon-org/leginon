@@ -247,9 +247,14 @@ class AlignZeroLossPeak(ReferenceTimer):
 		imagedata = self.acquireCorrectedCameraImageData(force_no_frames=True)
 		pq = leginondata.PresetData(name=preset_name,session=self.session)
 		r = leginondata.AcquisitionImageData(preset=pq).query(results=1)
+	
 		if r:
-			last_mean = leginondata.AcquisitionImageStatsData(image=r[0]).query()[0]
-			threshold = 0.1 * last_mean['mean']
+			stats_r = leginondata.AcquisitionImageStatsData(image=r[0]).query()
+			if stats_r:
+				self.logger.info('got stats of %d' % (stats_r[0]['image'].dbid))
+				threshold = 0.1 * stats_r[0]['mean']
+			else:
+				threshold = 0.1 * r[0]['image'].mean()
 			if not self.proceed_threshold or (self.proceed_threshold < threshold and threshold > threshold_min):
 				# save globally only if it falls this way.
 				self.logger.info('set future threshold with saved preset image.')
