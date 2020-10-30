@@ -73,6 +73,7 @@ class AlignZeroLossPeak(ReferenceTimer):
 		kwargs['watchfor'] = watch + [event.AlignZeroLossPeakPublishEvent]
 		ReferenceTimer.__init__(self, *args, **kwargs)
 		self.addEventInput(event.FixAlignmentEvent, self.handleFixAlignmentEvent)
+		self.proceed_threshold = None
 		self.start()
 
 	def handleFixAlignmentEvent(self, evt):
@@ -218,6 +219,15 @@ class AlignZeroLossPeak(ReferenceTimer):
 			s = 'EnergyFilter query failed: %s.'
 			self.logger.error(s % e)
 
+		try:
+			if request_data:
+				preset_name = request_data['preset']
+				self.checkIntensityRange(preset_name)
+		except Exception as e:
+			raise
+			self.logger.error('Reference position is probably blocked.  Aborting.')
+			return
+
 		before_shift = self.getShift(ccd_camera)
 		self.alignZLP(ccd_camera)
 		after_shift = self.getShift(ccd_camera)
@@ -226,7 +236,50 @@ class AlignZeroLossPeak(ReferenceTimer):
 		self.publish(shift_data, database=True, dbforce=True)
 		return 'ok'
 
+	def checkIntensityRange(self, preset_name):
+		'''
+		check image mean value at the reference target. Failure of this
+		function means the reference target is not suitable for ZLP
+		alignment.  An error is thrown and process aborted.
+		'''
+		threshold_min = 5.0
+		self.logger.info('Acquiring test image....')
+		imagedata = self.acquireCorrectedCameraImageData(force_no_frames=True)
+		pq = leginondata.PresetData(name=preset_name,session=self.session)
+		r = leginondata.AcquisitionImageData(preset=pq).query(results=1)
+		if r:
+			last_mean = leginondata.AcquisitionImageStatsData(image=r[0]).query()[0]
+			threshold = 0.1 * last_mean['mean']
+			if not self.proceed_threshold or (self.proceed_threshold < threshold and threshold > threshold_min):
+				# save globally only if it falls this way.
+				self.logger.info('set future threshold with saved preset image.')
+				self.proceed_threshold = threshold
+		else:
+			# don't have saved images
+			if imagedata['bright']:
+				# use bright image to estimate
+				b = imagedata['bright']
+				b_mean = b['image'].mean() - imagedata['dark']['image'].mean()
+				threshold = 0.1 * b_mean * imagedata['camera']['exposure time']/b['camera']['exposure time']
+				self.logger.info('using bright image to estimate threshold.')
+			else:
+				threshold = threshold_min
+		this_mean = imagedata['image'].mean()
+		if threshold < threshold_min:
+			self.logger.info('limit threshold to %.2f' % threshold_min)
+			theshold = threshold_min
+		if this_mean >= threshold:
+			self.logger.info('Mean %.2f larger or equal to threshold %.2f. Proceed' % (this_mean, threshold))
+			return		
+		else:
+			raise ValueError('Mean %.2f less than %.2f' % (this_mean, threshold))
+
 	def checkShift(self):
+		'''
+		Check if alignment is needed.  This is typically done at a
+		lower magnification where misaligned slit can be seen in the
+		image as dark area when it is still minimally misaligned.
+		'''
 		self.setCheckPreset()
 		ccd_camera = self.instrument.ccdcamera
 		if not ccd_camera.EnergyFiltered:

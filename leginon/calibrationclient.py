@@ -348,6 +348,11 @@ class DoseCalibrationClient(CalibrationClient):
 		self.psizecal = PixelSizeCalibrationClient(node)
 
 	def storeSensitivity(self, ht, sensitivity,tem=None,ccdcamera=None):
+		try:
+			1.0/sensitivity
+		except ZeroDivisionError:
+			self.logger.error('Dose Rate of exact zero is not accepted')
+			return
 		newdata = leginondata.CameraSensitivityCalibrationData()
 		newdata['session'] = self.node.session
 		newdata['high tension'] = ht

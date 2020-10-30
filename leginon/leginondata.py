@@ -1442,6 +1442,7 @@ class PresetsManagerSettingsData(SettingsData):
 			('blank', bool),
 			('smallsize', int),
 			('idle minute', float), # minutes
+			('emission off', bool),
 		)
 	typemap = classmethod(typemap)
 
@@ -1964,7 +1965,6 @@ class AcquisitionSettingsData(TargetWatcherSettingsData):
 			('recheck pause time', int),
 			('high mean', float),
 			('low mean', float),
-			('emission off', bool),
 			('target offset row', int),
 			('target offset col', int),
 			('correct image shift coma', bool),

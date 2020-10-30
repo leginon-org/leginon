@@ -258,6 +258,7 @@ class PresetsManager(node.Node):
 		'smallsize': 1024,
 		'idle minute': 30.0,
 		'import random': False,
+		'emission off': False,
 	}
 	eventinputs = node.Node.eventinputs + [event.ChangePresetEvent, event.MeasureDoseEvent, event.UpdatePresetEvent]
 	eventinputs.append(event.IdleNotificationEvent)
@@ -313,20 +314,6 @@ class PresetsManager(node.Node):
 		## this will fill in UI with current session presets
 		self.getPresetsFromDB()
 		self.start()
-
-	def instrumentIdleFinish(self):
-		'''
-		Things to do when idle timer is timeout.
-		'''
-		if not self.idleactive:
-			return
-		self.instrument.tem.ColumnValvePosition = 'closed'
-		self.logger.warning('column valves closed')
-		#if self.settings['emission off']:
-		if False:
-			self.instrument.tem.Emission = False
-			self.logger.warning('emission switched off')
-		self.idleactive = False
 
 	def toggleInstrumentTimeout(self):
 		if self.idleactive:
@@ -1111,7 +1098,9 @@ class PresetsManager(node.Node):
 		except calibrationclient.NoSensitivityError:
 			self.logger.error('No sensitivity data for this magnification')
 			return
-			
+		except ZeroDivisionError:
+			self.logger.error('Camera sensitivity is exactly zero. Please recalibrate.')
+			dose = None
 		if dose is None:
 			self.logger.error('Invalid dose measurement result')
 		else:
@@ -1162,6 +1151,11 @@ class PresetsManager(node.Node):
 		self.acquireDoseImage(presetname)
 
 	def calcDoseFromCameraDoseRate(self, presetname, camera_dose_rate, image_mean):
+		try:
+			1.0/camera_dose_rate
+		except ZeroDivisionError:
+			self.logger.error('Dose Rate of exact zero is not accepted')
+			return
 		preset = self.presetByName(presetname)
 		# Falcon3 non-counting mode gives values per frame not sum. Use through Leginon as per second.
 		intensity_averaged = self.instrument.ccdcamera.IntensityAveraged
@@ -2095,6 +2089,9 @@ class PresetsManager(node.Node):
 		if temname:
 			self.instrument.getTEM(temname).ColumnValvePosition = 'closed'
 			self.logger.info('Column valve closed')
+			if self.settings['emission off']:
+				self.instrument.getTEM(temname).Emission = False
+				self.logger.warning('emission switched off')
 		else:
 			self.logger.error('No valid preset to set tem to close column valve')
 		# deactivate idle and error notification

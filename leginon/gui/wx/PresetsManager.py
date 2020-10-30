@@ -1220,6 +1220,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		szsmallsize.Add(smallsizelab)
 		szsmallsize.Add(self.widgets['smallsize'])
 		self.widgets['idle minute'] = FloatEntry(self, -1, min=0.0, chars=4)
+		self.widgets['emission off'] = wx.CheckBox(self, -1, 'Turn off gun emission when timed out')
 		# complex sizers
 		szpausetime = self.createPauseTimeSizer()
 		szidleminute = self.createIdleMinuteSizer()
@@ -1263,6 +1264,8 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		label = wx.StaticText(self, -1, 'minutes before declaring idle timeout')
 		szidle.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szidle.Add(self.widgets['emission off'], (1, 0), (1, 3),
+										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		return szidle
 
 class NewDialog(wx.Dialog):

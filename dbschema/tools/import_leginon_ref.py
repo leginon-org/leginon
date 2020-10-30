@@ -57,9 +57,13 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 		q = self.makequery(classname,datadict)
 		if 'Plan' in classname:
 			# JsonLoader treats list of list as array. convert to lists here.
-			q['bad_pixels'] =  datadict['bad_pixels'].tolist()
-			q['bad_rows'] =  datadict['bad_rows'].tolist()
-			q['bad_cols'] =  datadict['bad_cols'].tolist()
+			for name in ('bad_pixels','bad_rows','bad_cols'):
+				if hasattr(datadict[name],'tolist'):
+					datalist = datadict[name].tolist()
+				else:
+					# behavior not consistent.  Cover the case we get list here.
+					datalist = datadict[name]
+				q[name] = datalist
 		info = 'inserting  %s ' % (classname,)
 		if 'filename' in datadict.keys():
 			info += 'saving %dx%d %s.mrc in %s' % (datadict['camera']['dimension']['x'],datadict['camera']['dimension']['y'],datadict['filename'], self.session['name'])
