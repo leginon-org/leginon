@@ -224,7 +224,6 @@ class AlignZeroLossPeak(ReferenceTimer):
 				preset_name = request_data['preset']
 				self.checkIntensityRange(preset_name)
 		except Exception as e:
-			raise
 			self.logger.error('Reference position is probably blocked.  Aborting.')
 			return
 
@@ -242,7 +241,8 @@ class AlignZeroLossPeak(ReferenceTimer):
 		function means the reference target is not suitable for ZLP
 		alignment.  An error is thrown and process aborted.
 		'''
-		threshold_min = 5.0
+		# corresponds to 10% of 1 electron count in counting camera.
+		threshold_min = 0.1
 		self.logger.info('Acquiring test image....')
 		imagedata = self.acquireCorrectedCameraImageData(force_no_frames=True)
 		pq = leginondata.PresetData(name=preset_name,session=self.session)
@@ -252,9 +252,11 @@ class AlignZeroLossPeak(ReferenceTimer):
 			stats_r = leginondata.AcquisitionImageStatsData(image=r[0]).query()
 			if stats_r:
 				self.logger.info('got stats of %d' % (stats_r[0]['image'].dbid))
-				threshold = 0.1 * stats_r[0]['mean']
+				threshold = 0.01 * stats_r[0]['mean']
 			else:
-				threshold = 0.1 * r[0]['image'].mean()
+				# not all image has StatsData stored.
+				# if this uses fc preset, BeamTiltImager tableau image does not have StatsData.
+				threshold = 0.01 * r[0]['image'].mean()
 			if not self.proceed_threshold or (self.proceed_threshold < threshold and threshold > threshold_min):
 				# save globally only if it falls this way.
 				self.logger.info('set future threshold with saved preset image.')
@@ -265,14 +267,14 @@ class AlignZeroLossPeak(ReferenceTimer):
 				# use bright image to estimate
 				b = imagedata['bright']
 				b_mean = b['image'].mean() - imagedata['dark']['image'].mean()
-				threshold = 0.1 * b_mean * imagedata['camera']['exposure time']/b['camera']['exposure time']
+				threshold = 0.01 * b_mean * imagedata['camera']['exposure time']/b['camera']['exposure time']
 				self.logger.info('using bright image to estimate threshold.')
 			else:
 				threshold = threshold_min
 		this_mean = imagedata['image'].mean()
 		if threshold < threshold_min:
 			self.logger.info('limit threshold to %.2f' % threshold_min)
-			theshold = threshold_min
+			threshold = threshold_min
 		if this_mean >= threshold:
 			self.logger.info('Mean %.2f larger or equal to threshold %.2f. Proceed' % (this_mean, threshold))
 			return		
