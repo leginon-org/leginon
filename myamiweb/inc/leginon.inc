@@ -2967,33 +2967,45 @@ class leginondata {
 	}
 
 	function getPresetTiming($sessionId) {
+		// This query gets time array of all images and the time difference
+		// between this and next item that uses the same preset.
+		$presets = $this->getDataTypes($sessionId);
+		$diffarray = array();
+		foreach ($presets as $pname) {
+			$diffarray[$pname] = $this->_getPresetTimes($sessionId, $pname, 1000);
+		}
+		return $this->_calculatePresetStats($diffarray);
+	}
+
+	function _getPresetTimes($sessionId, $preset_name, $limit=1000) {
+		// get timestamp of each version0 images of the preset.
+		// limit is imposed because it becomes too slow for large session.
 		$q= "SELECT "
 			."UNIX_TIMESTAMP(`a`.`DEF_timestamp`) AS `utime`, "
 			."`a`.`DEF_timestamp` AS `timestamp`, "
 			."`a`.`filename` AS `filename`, "
-			."`a`.`version` AS `version`, "
-			."`p`.`name`, "
-			."`p`.`magnification` "
+			."`a`.`version` AS `version` "
 			."FROM `AcquisitionImageData` AS `a` "
 			."LEFT JOIN `PresetData` AS `p` ON (`p`.`DEF_id` = `a`.`REF|PresetData|preset`) "
 			."WHERE `a`.`REF|SessionData|session` = $sessionId "
 			."AND `a`.`version`=0 "
-			."ORDER BY `utime` DESC";
-
-		$timearray = $this->mysql->getSQLResult($q);
-
-		foreach($timearray as $i=>$time1) {
-			$preset = $time1['name'];
-			foreach($timearray as $j=>$vald) {
-					$j++;
-					if($preset == $timearray[$i+$j]['name']) {
-						$tdiff = $time1['utime'] - $timearray[$i+$j]['utime'];
-						$diffarray[$preset][] = $tdiff;
-						break;
-					}
+			."AND `p`.`name` like '".$preset_name."' "
+			."ORDER BY `utime` DESC ";
+			if ($limit !== false) {
+				$q .=" LIMIT ".$limit." ";
 			}
+		$timearray = $this->mysql->getSQLResult($q);
+		$diffarray = array();
+		foreach($timearray as $i=>$time1) {
+			if ($i == count($timearray)-1) break;
+			$tdiff = $time1['utime'] - $timearray[$i+1]['utime'];
+			$diffarray[] = $tdiff;
 		}
+		return $diffarray;
+	}
 
+	function _calculatePresetStats($diffarray) {
+		$retarray = array();
 		foreach ((array)$diffarray as $key=>$presetarray) {
 			$res1 = array_stats($presetarray);
 			$retarray[$key]['name'] = $key;
@@ -3008,6 +3020,9 @@ class leginondata {
 	}
 
 	function getTiming($sessionId, $preset="", $getquery=false) {
+		// This timing calculation checks time difference between
+		// target start processing and image published, thus without
+		// overhead from processing rejected targets nor autofilling etc.
 		$datatype=($preset) ? array($preset):$this->getDataTypes($sessionId);
 		foreach ($datatype as $preset) {
 			$siblings=$this->getSiblingsfrompreset($sessionId, $preset);
