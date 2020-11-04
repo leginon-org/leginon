@@ -1599,18 +1599,31 @@ class Tecnai(tem.TEM):
 		try:
 			self.tecnai.Vacuum.RunBufferCycle()
 		except com_module.COMError, e:
-			# No extended error information, assuming low dose is disenabled
+			# No extended error information 
 			raise RuntimeError('runBufferCycle COMError: no extended error information')
 		except:
 			raise RuntimeError('runBufferCycle Unknown error')
 
 	def setEmission(self, value):
+		etext = 'gun emission state can not be set on this instrument'
 		if self.tom:
-			self.tom.Gun.Emission = value
+			try:
+				self.tom.Gun.Emission = value
+			except:
+				raise RuntimeError(etext)
+		else:
+			# only tommoniker has gun access.
+			raise RuntimeError(etext)
 
 	def getEmission(self):
 		if self.tom:
-			return self.tom.Gun.Emission
+			try:
+				return self.tom.Gun.Emission
+			except com_module.COMError as e:
+				# Emission is not defined for FEG
+				return True
+		# no other way to know this, but we do not want it to fail.
+		return True
 
 	def getExpWaitTime(self):
 		try:

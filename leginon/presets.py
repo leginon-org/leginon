@@ -2087,11 +2087,20 @@ class PresetsManager(node.Node):
 			first_preset = self.presets[self.presets.keys()[0]]
 			temname = first_preset['tem']['name']
 		if temname:
-			self.instrument.getTEM(temname).ColumnValvePosition = 'closed'
-			self.logger.info('Column valve closed')
+			try:
+				self.instrument.getTEM(temname).ColumnValvePosition = 'closed'
+				self.logger.info('Column valve closed')
+			except Exception as e:
+				self.logger.error('Failed to close column valve: %s' % (e,))
+
 			if self.settings['emission off']:
-				self.instrument.getTEM(temname).Emission = False
-				self.logger.warning('emission switched off')
+				try:
+					self.instrument.getTEM(temname).Emission = False
+					self.logger.warning('emission switched off')
+				except RuntimeError:
+					self.logger.error('Not possible to switch off emission on %s' % temname)
+				except Exception as e:
+					self.logger.error('Emission off other error: %s' % (e,))
 		else:
 			self.logger.error('No valid preset to set tem to close column valve')
 		# deactivate idle and error notification
