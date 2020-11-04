@@ -176,13 +176,13 @@ class TEM(baseinstrument.BaseInstrument):
 		print "next position"
 
 	def getColumnPressure(self):
-		return 1.0
+		return 1.0 #Pascal
 
 	def getProjectionChamberPressure(self):
-		return 1.0
+		return 1.0 #Pascal
 
 	def getBufferTankPressure(self):
-		return 1.0
+		return 1.0 #Pascal
 
 	def getBeamBlankedDuringCameraExchange(self):
 		return True

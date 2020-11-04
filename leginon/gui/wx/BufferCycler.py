@@ -59,7 +59,7 @@ class ScrolledSettings(leginon.gui.wx.Conditioner.ScrolledSettings):
 		szcolstart.Add(self.widgets['trip value'],
 								(0, 1), (1, 1),
 								wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		szcolstart.Add(wx.StaticText(self, -1, 'mbar'),
+		szcolstart.Add(wx.StaticText(self, -1, 'Pascal'),
 								(0, 2), (1, 1),
 								wx.ALIGN_CENTER_VERTICAL)
 		self.sz.Add(szcolstart, start_position, (1, 2), wx.ALIGN_LEFT|wx.ALL)

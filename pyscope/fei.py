@@ -1495,10 +1495,10 @@ class Tecnai(tem.TEM):
 		return self._getGaugePressure('column')
 
 	def getProjectionChamberPressure(self):
-		return self._getGaugePressure('projection')
+		return self._getGaugePressure('projection') # pascal
 
 	def getBufferTankPressure(self):
-		return self._getGaugePressure('buffer')
+		return self._getGaugePressure('buffer') # pascal
 
 	def getObjectiveExcitation(self):
 		return float(self.tecnai.Projection.ObjectiveExcitation)
