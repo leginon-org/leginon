@@ -1664,21 +1664,31 @@ class PresetsManager(node.Node):
 			raise PresetChangeError(msg)
 
 		## send data to instruments
+		# scope
 		try:
 			self.logger.info('setting scopedata')
 			self.instrument.setData(scopedata)
 			self.logger.info('scopedata set')
-			self.instrument.setData(cameradata)
-			self.logger.info('cameradata set')
-			newstage = self.instrument.tem.StagePosition
-			msg = '%s targetToScope %.6f' % (newpresetname,newstage['z'])
-			self.testprint('Presetmanager:' + msg)
-			self.logger.debug(msg)
 		except Exception, e:
+			if scopedata['stage position']:
+				self.logger.error('failed to go to %s' %(scopedata['stage position'],))
 			self.logger.error(e)
-			message = 'Move to target failed: unable to set instrument'
+			message = 'Move to target failed: unable to set scope'
 			self.logger.error(message)
 			raise PresetChangeError(message)
+		# camera
+		try:
+			self.instrument.setData(cameradata)
+			self.logger.info('cameradata set')
+		except Exception, e:
+			self.logger.error(e)
+			message = 'Move to target failed: unable to set camera'
+			self.logger.error(message)
+			raise PresetChangeError(message)
+		newstage = self.instrument.tem.StagePosition
+		msg = '%s targetToScope %.6f' % (newpresetname,newstage['z'])
+		self.testprint('Presetmanager:' + msg)
+		self.logger.debug(msg)
 
 		self.startTimer('preset pause')
 		self.logger.info('Pause for %.1f s' % (self.settings['pause time'],))
