@@ -11,7 +11,7 @@ TFS_SOFTWARE_VERSION = 2.15.2
 # Lens normalization is usually set in TUI but there are cases that
 # they are not desirable, for example on Talos column. This force
 # the normalization after setting mag, spotsize, or beamsize differently.
-FORCE_NORMALIZE_ALL_AFTER_SETTING = True
+FORCE_NORMALIZE_ALL_AFTER_SETTING = False
 
 # This scale convert beam tilt readout in radian to 
 # Tecnai or TEM Scripting Illumination.RotationCenter value
