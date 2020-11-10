@@ -1664,21 +1664,31 @@ class PresetsManager(node.Node):
 			raise PresetChangeError(msg)
 
 		## send data to instruments
+		# scope
 		try:
 			self.logger.info('setting scopedata')
 			self.instrument.setData(scopedata)
 			self.logger.info('scopedata set')
-			self.instrument.setData(cameradata)
-			self.logger.info('cameradata set')
-			newstage = self.instrument.tem.StagePosition
-			msg = '%s targetToScope %.6f' % (newpresetname,newstage['z'])
-			self.testprint('Presetmanager:' + msg)
-			self.logger.debug(msg)
 		except Exception, e:
+			if scopedata['stage position']:
+				self.logger.error('failed to go to %s' %(scopedata['stage position'],))
 			self.logger.error(e)
-			message = 'Move to target failed: unable to set instrument'
+			message = 'Move to target failed: unable to set scope'
 			self.logger.error(message)
 			raise PresetChangeError(message)
+		# camera
+		try:
+			self.instrument.setData(cameradata)
+			self.logger.info('cameradata set')
+		except Exception, e:
+			self.logger.error(e)
+			message = 'Move to target failed: unable to set camera'
+			self.logger.error(message)
+			raise PresetChangeError(message)
+		newstage = self.instrument.tem.StagePosition
+		msg = '%s targetToScope %.6f' % (newpresetname,newstage['z'])
+		self.testprint('Presetmanager:' + msg)
+		self.logger.debug(msg)
 
 		self.startTimer('preset pause')
 		self.logger.info('Pause for %.1f s' % (self.settings['pause time'],))
@@ -2087,11 +2097,20 @@ class PresetsManager(node.Node):
 			first_preset = self.presets[self.presets.keys()[0]]
 			temname = first_preset['tem']['name']
 		if temname:
-			self.instrument.getTEM(temname).ColumnValvePosition = 'closed'
-			self.logger.info('Column valve closed')
+			try:
+				self.instrument.getTEM(temname).ColumnValvePosition = 'closed'
+				self.logger.info('Column valve closed')
+			except Exception as e:
+				self.logger.error('Failed to close column valve: %s' % (e,))
+
 			if self.settings['emission off']:
-				self.instrument.getTEM(temname).Emission = False
-				self.logger.warning('emission switched off')
+				try:
+					self.instrument.getTEM(temname).Emission = False
+					self.logger.warning('emission switched off')
+				except RuntimeError:
+					self.logger.error('Not possible to switch off emission on %s' % temname)
+				except Exception as e:
+					self.logger.error('Emission off other error: %s' % (e,))
 		else:
 			self.logger.error('No valid preset to set tem to close column valve')
 		# deactivate idle and error notification
