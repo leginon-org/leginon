@@ -204,7 +204,9 @@ class SQLDict(object):
 		try:
 			self.db.ping(reconnect=True)
 		except (pymysql.err.ProgrammingError, pymysql.err.OperationalError), e:
-			# self.db.stat function gives error when connection is not available.
+			### FIX ME.  These reconnection may not be needed for pymysql. See directq.py
+			# and Issue #9527.  There are other ping call in this module of unknown effect.
+			# this function gives error when connection is not available.
 			errno = e.args[0]
 			## some version of mysqlpython parses the exception differently
 			if not isinstance(errno, int):
