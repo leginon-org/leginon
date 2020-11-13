@@ -83,7 +83,10 @@ class UpdateLib:
 		'''
 		has_appiondbs = self.checkProcessingDB()
 		### this seems so clunky, can we do this better
-		if branch_name == 'trunk' or branch_name == 'myami-beta':
+		if branch_name == 'trunk' or branch_name == 'myami-beta' or branch_name == 'myami-pymysql':
+			schema_revisions = [12857,13713,14077,14891,15069,15497,15526,15653,16182,16607,17035,17111,17224,17561,17562,17617,17812,17813,17916,18000,18034,19470, 20369, 20840]
+			appion_only_revisions = [15248,15251,15293,15961,16412,16446,17035,17311,17982]
+		elif branch_name == 'myami-3.5':
 			schema_revisions = [12857,13713,14077,14891,15069,15497,15526,15653,16182,16607,17035,17111,17224,17561,17562,17617,17812,17813,17916,18000,18034,19470, 20369, 20840]
 			appion_only_revisions = [15248,15251,15293,15961,16412,16446,17035,17311,17982]
 		elif branch_name == 'myami-3.4':
@@ -126,9 +129,14 @@ class UpdateLib:
 		of the older branch.  Please add the revision number for new branch
 		'''
 		branch_reset_revision = self.db_revision
+		current_reset_revision = 20840
 		if not self.getDatabaseReset():
 			if branch_name == 'trunk' or branch_name == 'myami-beta':
-				branch_reset_revision = 18034
+				branch_reset_revision = current_reset_revision
+			elif branch_name == 'myami-3.5':
+				branch_reset_revision = 20840
+			elif branch_name == 'myami-3.4':
+				branch_reset_revision = 20369
 			elif branch_name == 'myami-3.3':
 				branch_reset_revision = 18034
 			elif branch_name == 'myami-3.2':
@@ -146,7 +154,7 @@ class UpdateLib:
 				# schema-r14380 in myami-2.0 and schema-r14891 in later are equivalent
 				branch_reset_revision = 14891
 			else:
-				branch_reset_revision = 18034
+				branch_reset_revision = current_reset_revision
 		return branch_reset_revision
 
 	def getPackageVersion(self):
