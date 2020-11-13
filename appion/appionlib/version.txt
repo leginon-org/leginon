@@ -1,1 +1,1 @@
-myami-beta
+myami-pymysql
