@@ -32,7 +32,8 @@ class BufferCycler(conditioner.Conditioner):
 		only fix condition if above a defined monitored value
 		'''
 		pressure = self.instrument.tem.BufferTankPressure
-		self.logger.info("Buffer Tank Gauge value: %.4e" % pressure)
+		# should be in the range of 100 Pascal
+		self.logger.info("Buffer Tank Gauge value: %.1f Pascal" % pressure)
 		return pressure > self.settings['trip value'] and self.settings['trip value'] > 0
 
 	def _fixCondition(self, condition_type):
