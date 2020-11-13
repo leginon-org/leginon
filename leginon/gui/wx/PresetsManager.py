@@ -561,6 +561,8 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 					self.floats[key][axis].SetValue(parameters[key][axis])
 				except KeyError:
 					pass
+				except TypeError:
+					self.floats[key][axis].SetValue(0.0)
 
 		for key in ['skip', 'alt channel', 'tem energy filter', 'energy filter']:
 			try:
