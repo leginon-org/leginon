@@ -7,7 +7,7 @@
     </sqltable>
     <sqltable name="install" >
         <field name="key" >version</field>
-        <field name="value" >trunk</field>
+        <field name="value" >beta</field>
     </sqltable>
     <sqltable name="install" >
         <field name="key" >revision</field>
