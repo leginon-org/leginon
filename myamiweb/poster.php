@@ -91,7 +91,6 @@ echo '<tr valign="top">';
 $expId = $sessionId;
 $summary = $leginondata->getSummary($expId);
 if (!empty($summary)) {
-	$timingstats2 = $leginondata->getPresetTiming($expId);
 	$timingstats = $leginondata->getTimingStats($expId);
 	//print_r($timingstats);
 	$tot_time=0;

@@ -197,8 +197,17 @@ class TargetHandler(object):
 					self.logger.info('Queue aborted, skipping target list')
 				else:
 					# FIX ME: empty targetlist does not need to revert Z.
-					self.revertTargetListZ(targetlist)
-					self.processTargetList(targetlist)
+					try:
+						self.revertTargetListZ(targetlist)
+					except Exception as e:
+						self.logger.error('Failed to revert targetlist z: %s' % (e,))
+						break
+					try:
+						self.processTargetList(targetlist)
+					except Exception as e:
+						self.logger.error('Failed to process targetlist from queue: %s' % (e,))
+						self.logger.error('Fix and repeat submitting queue for processing')
+						break
 					state = self.player.wait()
 					if state != 'stopqueue':
 						self.player.play()
@@ -208,7 +217,12 @@ class TargetHandler(object):
 				self.publish(donetargetlist, database=True)
 			self.player.play()
 			if self.settings['reset tilt']:
-				self.resetTiltStage()
+				# FIX ME: reset tilt and xy at the end of queue.  This is different
+				# from non-queue case.
+				try:
+					self.resetTiltStage()
+				except Exception as e:
+					self.logger.error('Failed to x,y,a of the stage: %s' %(e,))
 
 	def resetTiltStage(self):
 		zerostage = {'a':0.0}
