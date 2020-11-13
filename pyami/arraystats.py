@@ -7,8 +7,10 @@ This assumes that the values in the array are constant.  If the
 array values have changed, and you want to recalculate the statistic,
 then you must specify force=True.
 '''
+from __future__ import print_function
+from __future__ import absolute_import
 
-import pyami.weakattr as weakattr
+from pyami import weakattr
 import numpy
 
 debug = False

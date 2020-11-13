@@ -1,6 +1,9 @@
+from __future__ import print_function
+from __future__ import absolute_import
+from builtins import object
 #!/usr/bin/env python
 
-import quietscipy
+from pyami import quietscipy
 import scipy.fftpack
 import scipy.__config__
 
@@ -27,11 +30,11 @@ class _fftEngine(object):
 
 	def timer(self, func, args=()):
 		t0 = time.time()
-		ret = apply(func, args)
+		ret = func(*args)
 		t1 = time.time()
 		total = t1 - t0
 		if self.showtime:
-			print '%s %.5f' % (func.__name__, total)
+			print('%s %.5f' % (func.__name__, total))
 
 		return ret
 
