@@ -126,9 +126,14 @@ class UpdateLib:
 		of the older branch.  Please add the revision number for new branch
 		'''
 		branch_reset_revision = self.db_revision
+		current_reset_revision = 20840
 		if not self.getDatabaseReset():
 			if branch_name == 'trunk' or branch_name == 'myami-beta':
-				branch_reset_revision = 18034
+				branch_reset_revision = current_reset_revision
+			elif branch_name == 'myami-3.5':
+				branch_reset_revision = 20840
+			elif branch_name == 'myami-3.4':
+				branch_reset_revision = 20369
 			elif branch_name == 'myami-3.3':
 				branch_reset_revision = 18034
 			elif branch_name == 'myami-3.2':
@@ -146,7 +151,7 @@ class UpdateLib:
 				# schema-r14380 in myami-2.0 and schema-r14891 in later are equivalent
 				branch_reset_revision = 14891
 			else:
-				branch_reset_revision = 18034
+				branch_reset_revision = current_reset_revision
 		return branch_reset_revision
 
 	def getPackageVersion(self):
