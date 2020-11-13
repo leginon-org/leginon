@@ -79,7 +79,9 @@ class UpdateLib:
 		'''
 		Update revision sequence according to branch input.
 		Please update the revision sequence in this function when
-		new schema update script is added.
+		new schema update script is added.  This is the old approach,
+		This is necessary when this is run from an installed copy
+		rather than git clone.
 		'''
 		has_appiondbs = self.checkProcessingDB()
 		### this seems so clunky, can we do this better
@@ -129,11 +131,10 @@ class UpdateLib:
 		of the older branch.  Please add the revision number for new branch
 		'''
 		branch_reset_revision = self.db_revision
+		# Use this for trunk, myami-beta, myami-pymysql and unidentified branches
 		current_reset_revision = 20840
 		if not self.getDatabaseReset():
-			if branch_name == 'trunk' or branch_name == 'myami-beta':
-				branch_reset_revision = current_reset_revision
-			elif branch_name == 'myami-3.5':
+			if branch_name == 'myami-3.5':
 				branch_reset_revision = 20840
 			elif branch_name == 'myami-3.4':
 				branch_reset_revision = 20369
