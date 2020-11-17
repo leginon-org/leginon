@@ -398,8 +398,8 @@ class ScaleCalibrator(object):
 			self.setMoveClassInstance(effect_type)
 			wavelength = fftfun.getElectronWavelength(self.tem.getHighTension())
 			cam_length = self.getCameraLength()
-			specimen_shift =  math.tan(wavelength/2.36e-10)*cam_length
-			self.logger.info('Move from origin to AgOs (111) reflection in this calibration')
+			specimen_shift =  math.tan(wavelength/2.31e-10)*cam_length
+			self.logger.info('Move from origin to AuPd (111) reflection in this calibration')
 			self.logger.info('Screeen shift = Beam tilt of %.2f mrad' % (specimen_shift*1e3))
 			self.measureShift(self.calibrations[effect_type][1],specimen_shift)
 		raw_input('hit any key to return to imaging mode')
@@ -624,6 +624,6 @@ class HitachiScaleCalibrator(ScaleCalibrator):
 		self.set_move_class_instance(item_name,value)
 			
 if __name__ == "__main__":
-	outputfilename = 'jeol_test.cfg'
+	outputfilename = 'hht_test.cfg'
 	app = HitachiScaleCalibrator(outputfilename)
 	app.calibrateAll()
