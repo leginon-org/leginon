@@ -255,7 +255,7 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 			self.logger.error('Measurement failed without calibration: %s' % e)
 			self.logger.info('Calibrate and then continue...')
 			self.beep()
-			measure_statue = 'repeat'
+			measure_status = 'repeat'
 		except calibrationclient.NoCalibrationError, e:
 			self.logger.error('Measurement failed without calibration: %s' % e)
 			measure_status = 'aborted'

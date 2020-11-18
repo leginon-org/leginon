@@ -34,6 +34,7 @@ import cameraclient
 import player
 import imagehandler
 import transformregistration
+import datatransport
 
 hide_incomplete = False
 
@@ -510,23 +511,24 @@ class TransformManager(node.Node, TargetTransformer):
 			self.pp_used = pp_used
 
 	def handleTransformTargetEvent(self, ev):
-		stagenow = self.instrument.tem.StagePosition
+		self.setStatus('processing')
+		oldtarget = ev['target']
+		level = ev['level']
+		use_parent_mover = ev['use parent mover']
+		requestingnode = ev['node']
+		self.target_to_transform = oldtarget
 		try:
+			stagenow = self.instrument.tem.StagePosition
 			msg = 'handleTransformTargetEvent starting z %.6f' % stagenow['z']
 			self.logger.debug(msg)
-			self.setStatus('processing')
-			oldtarget = ev['target']
-			level = ev['level']
-			use_parent_mover = ev['use parent mover']
-			requestingnode = ev['node']
-			self.target_to_transform = oldtarget
 			newtarget = self.transformTarget(oldtarget, level, use_parent_mover)
-		except (TypeError,TransportError) as e:
+		except:
 			# TypeError may occur if temserver crash and no info comes back from
 			# a call. Let it go and continue.
+			# TransportError may also occur for unknown reason but it seems to
+			# be temporary.  Let it go here.
 			self.logger.error(e)
 			newtarget = ev['target']
-			requestingnode = ev['node']
 		evt = event.TransformTargetDoneEvent()
 		evt['target'] = newtarget
 		evt['destination'] = requestingnode

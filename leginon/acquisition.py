@@ -164,7 +164,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 		'bad stats type': 'Mean',
 		'reacquire when failed': False,
 		'recheck pause time': 10,
-		'emission off': False,
 		'target offset row': 0,
 		'target offset col': 0,
 		'correct image shift coma': False,

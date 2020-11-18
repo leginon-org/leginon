@@ -26,7 +26,7 @@ class SchemaUpdate(baseSchemaClass.SchemaUpdate):
 		# minimum update required (set to previous schema update number)
 		self.minSchemaNumberRequired = 20369
 		# minimum myami version
-		self.minimumMyamiVersion = 3.4
+		self.minimumMyamiVersion = 3.5
 		#what is the git tag name
 		self.schemaTagName = 'schema20840'
 		#git tag <tag name> <commit id>
@@ -44,7 +44,14 @@ class SchemaUpdate(baseSchemaClass.SchemaUpdate):
 		results = directq.complexMysqlQuery('leginondata',query)
 		# add column
 		self.addFloatColumn('leginondata', 'ScopeEMData', 'intended defocus')
-		self.setIntendedDefocus()
+		# This update would take very long if it is a big database.
+		# It is not practical to do on past data.  Data size is so
+		# bit now that we can have 10000 record in less than a day.
+		if False:
+			self.setIntendedDefocus()
+		else:
+			print('Skipping setting values on old data because it would have taken too long')
+
 	#######################################################################
 	#
 	# Custom functions

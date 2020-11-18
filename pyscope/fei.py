@@ -29,7 +29,6 @@ try:
 	import comtypes
 	import comtypes.client
 	com_module =  comtypes
-	import winerror
 	log_path = os.path.join(os.environ['USERPROFILE'],'myami_log')
 	if not os.path.isdir(log_path):
 		os.mkdir(log_path)
@@ -1484,7 +1483,7 @@ class Tecnai(tem.TEM):
 		else:
 			return 'unknown'
 
-	def getGaugePressure(self,location):
+	def _getGaugePressure(self,location):
 		# value in pascal unit
 		if location not in self.pressure_prop.keys():
 			raise KeyError
@@ -1493,13 +1492,13 @@ class Tecnai(tem.TEM):
 		return float(self.tecnai.Vacuum.Gauges(self.pressure_prop[location]).Pressure)
 
 	def getColumnPressure(self):
-		return self.getGaugePressure('column')
+		return self._getGaugePressure('column')
 
 	def getProjectionChamberPressure(self):
-		return self.getGaugePressure('projection')
+		return self._getGaugePressure('projection') # pascal
 
 	def getBufferTankPressure(self):
-		return self.getGaugePressure('buffer')
+		return self._getGaugePressure('buffer') # pascal
 
 	def getObjectiveExcitation(self):
 		return float(self.tecnai.Projection.ObjectiveExcitation)
@@ -1600,18 +1599,31 @@ class Tecnai(tem.TEM):
 		try:
 			self.tecnai.Vacuum.RunBufferCycle()
 		except com_module.COMError, e:
-			# No extended error information, assuming low dose is disenabled
+			# No extended error information 
 			raise RuntimeError('runBufferCycle COMError: no extended error information')
 		except:
 			raise RuntimeError('runBufferCycle Unknown error')
 
 	def setEmission(self, value):
+		etext = 'gun emission state can not be set on this instrument'
 		if self.tom:
-			self.tom.Gun.Emission = value
+			try:
+				self.tom.Gun.Emission = value
+			except:
+				raise RuntimeError(etext)
+		else:
+			# only tommoniker has gun access.
+			raise RuntimeError(etext)
 
 	def getEmission(self):
 		if self.tom:
-			return self.tom.Gun.Emission
+			try:
+				return self.tom.Gun.Emission
+			except com_module.COMError as e:
+				# Emission is not defined for FEG
+				return True
+		# no other way to know this, but we do not want it to fail.
+		return True
 
 	def getExpWaitTime(self):
 		try:
@@ -1878,11 +1890,7 @@ class Tecnai(tem.TEM):
 		'''
 		Get string name list of the aperture collection in a mechanism.
 		'''
-		aps = self._getApertureObjsOfMechanismName(mechanism_name)
-		names = []
-		for ap in aps:
-			names.append(ap.Name)
-		return names
+		return self.getApertureSelections(mechanism_name)
 
 	def insertSelectedApertureMechanism(self,mechanism_name, aperture_name):
 		'''

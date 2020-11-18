@@ -364,16 +364,17 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		'''
 		Test Preset is normally the current preset
 		'''
-		self.logger.info('Use current preset for testing')
 		preset = self.presets_client.getCurrentPreset()
+		self.logger.info('Use current preset %s for testing' % preset['name'])
 		return preset
 
 	def _testRun(self):
 		preset_name = None
 		pause_time = self.settings['pause time']
 		# must have preset
-		preset = self._getTestPreset()
-		if not (preset and preset['name']):
+		try:
+			preset = self._getTestPreset()
+		except TypeError:
 			self.logger.error('No current preset. Send desired preset for testing first')
 			return
 		self.preset_name = preset['name']

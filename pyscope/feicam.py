@@ -166,7 +166,7 @@ class FeiCam(ccdcamera.CCDCamera):
 		Read from camera capabilities the supported binnings and
 		set self.binning_limits and the self.binning_limit_objs
 		'''
-		self.binning_limit_objs= self.capabilities.SupportedBinnings
+		self.binning_limit_objs= self.camera_capabilities.SupportedBinnings
 		count = self.binning_limit_objs.Count
 		binning_limits = []
 		for index in range(count):
@@ -220,7 +220,7 @@ class FeiCam(ccdcamera.CCDCamera):
 		# set attributes
 		self.camera = this_camera
 		self.camera_settings = self.csa.CameraSettings
-		self.capabilities = self.camera_settings.Capabilities
+		self.camera_capabilities = self.camera_settings.Capabilities
 
 	def setConfig(self, **kwargs):
 		'''
@@ -245,7 +245,7 @@ class FeiCam(ccdcamera.CCDCamera):
 		except:
 			raise
 
-	def getConfig(self, param):
+	def _getConfig(self, param):
 		if param == 'readout':
 			return self.camera_settings.ReadoutArea
 		elif param == 'binning':
@@ -268,7 +268,7 @@ class FeiCam(ccdcamera.CCDCamera):
 		p = self.camera.PixelSize #in meters
 		return {'x': p.Width, 'y': p.Height}
 
-	def getReadoutAreaKey(self,unbindim, off):
+	def _getReadoutAreaKey(self,unbindim, off):
 		size = self.getCameraSize()
 		if unbindim['x']+off['x'] > size['x'] or unbindim['y']+off['y'] > size['y']:
 			raise ValueError('defined readout area outside the camera')
@@ -282,7 +282,7 @@ class FeiCam(ccdcamera.CCDCamera):
 				return k
 		raise ValueError('Does not fit any defined readout area')
 
-	def getReadoutOffset(self, key, binned_full_off):
+	def _getReadoutOffset(self, key, binned_full_off):
 		limit_off = self.limit_off[key]
 		return {'x':binned_full_off['x']-limit_off['x']/self.binning['x'],'y':binned_full_off['x']-limit_off['y']/self.binning['y']}
 
@@ -293,7 +293,7 @@ class FeiCam(ccdcamera.CCDCamera):
 		# final range
 		unbindim = {'x':self.dimension['x']*binning['x'], 'y':self.dimension['y']*binning['y']}
 		unbinoff = {'x':self.offset['x']*binning['x'], 'y':self.offset['y']*binning['y']}
-		readout_key = self.getReadoutAreaKey(unbindim, unbinoff)
+		readout_key = self._getReadoutAreaKey(unbindim, unbinoff)
 		exposure = self.exposure/1000.0
 
 		# send it to camera
@@ -329,10 +329,10 @@ class FeiCam(ccdcamera.CCDCamera):
 			with safearray_as_ndarray:
 				return self.im.AsSafeArray
 		else:
-			return self.im.Data.AsSafeArray
+			return self.im.AsSafeArray
 
 	def _modifyArray(self, arr):
-		rk = self.getConfig('readout')
+		rk = self._getConfig('readout')
 		# 64-bit pyscope/safearray does not work with newer 64-bit comtypes installation.
 		# use safearray_as_ndarray instead.
 		arr = arr.reshape((self.limit_dim[rk]['y']/self.binning['y'],self.limit_dim[rk]['x']/self.binning['x']))
@@ -413,7 +413,7 @@ class FeiCam(ccdcamera.CCDCamera):
 		return arr
 
 	def modifyImage(self, arr):
-		rk = self.getConfig('readout')
+		rk = self._getConfig('readout')
 		# reshape to 2D
 		try:
 			arr = self._modifyArray(arr)
@@ -426,7 +426,7 @@ class FeiCam(ccdcamera.CCDCamera):
 				print 'modify array error',e
 			raise
 		#Offset to apply to get back the requested area
-		readout_offset = self.getReadoutOffset(rk, self.offset)
+		readout_offset = self._getReadoutOffset(rk, self.offset)
 		try:
 			if self.dimension['x'] < arr.shape[1]:
 				arr=arr[:,readout_offset['x']:readout_offset['x']+self.dimension['x']]

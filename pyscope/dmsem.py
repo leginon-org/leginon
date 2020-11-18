@@ -237,7 +237,7 @@ class DMSEM(ccdcamera.CCDCamera):
 
 		return False
 
-	def getAcqBinning(self):
+	def _getAcqBinning(self):
 		'''
 		Camera binning given for acquisition is based on physical pixel,
 		regardless of ed mode usually.
@@ -252,26 +252,26 @@ class DMSEM(ccdcamera.CCDCamera):
 				physical_binning /= binscale
 		return physical_binning, binscale
 
-	def getAcqDimension(self, acq_binning, binscale):
+	def _getAcqDimension(self, acq_binning, binscale):
 		acq_dimension = self.camsize.copy()
 		physical_binning = binscale * acq_binning
 		acq_dimension['x'] = acq_dimension['x']/physical_binning
 		acq_dimension['y'] = acq_dimension['y']/physical_binning
 		return acq_dimension
 
-	def getAcqOffset(self, acq_binning, binscale):
+	def _getAcqOffset(self, acq_binning, binscale):
 		# all software offset for now
 		acq_offset = self.acqoffset.copy()
 		return acq_offset
 
-	def getAcqBinningAndROI(self):
+	def _getAcqBinningAndROI(self):
 		'''
 		Calculating the acquisition boundary and binning to send
 		to Gatan socket.
 		'''
-		acq_binning, binscale = self.getAcqBinning()
-		acq_dimension = self.getAcqDimension(acq_binning,binscale)
-		acq_offset = self.getAcqOffset(acq_binning,binscale)
+		acq_binning, binscale = self._getAcqBinning()
+		acq_dimension = self._getAcqDimension(acq_binning,binscale)
+		acq_offset = self._getAcqOffset(acq_binning,binscale)
 		height = acq_offset['y']+acq_dimension['y']
 		width = acq_offset['x']+acq_dimension['x']
 		if self.needConfigDimensionFlip(height,width):
@@ -297,7 +297,7 @@ class DMSEM(ccdcamera.CCDCamera):
 		# I think it's negative...
 		shutter_delay = -self.readout_delay_ms / 1000.0
 
-		acq_binning, left, top, right, bottom, width, height = self.getAcqBinningAndROI()
+		acq_binning, left, top, right, bottom, width, height = self._getAcqBinningAndROI()
 		correction_flags = self.getCorrectionFlags()
 
 		acqparams = {
@@ -372,7 +372,7 @@ class DMSEM(ccdcamera.CCDCamera):
 
 	def _modifyImageShape(self, image):
 		image = self._fixBadShape(image)
-		acq_binning, binscale = self.getAcqBinning()
+		acq_binning, binscale = self._getAcqBinning()
 		added_binning = self.binning['x'] / acq_binning
 		if added_binning > 1:
 			# software binning
@@ -894,7 +894,7 @@ class GatanK2Super(GatanK2Base):
 		'''
 		acqparams = super(GatanK2Super,self).calculateAcquireParams()
 		# K2 SerialEMCCD native is in counting
-		acq_binning, binscale = self.getAcqBinning()
+		acq_binning, binscale = self._getAcqBinning()
 		acqparams['height'] *= binscale
 		acqparams['width'] *= binscale
 		return acqparams
@@ -980,7 +980,7 @@ class GatanK3(GatanK2Base):
 		'''
 		return 0
 
-	def getAcqBinning(self):
+	def _getAcqBinning(self):
 		# K3 SerialEMCCD native is in super resolution
 		acq_binning = self.binning['x']
 		if self.binning['x'] > 2:
