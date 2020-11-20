@@ -115,3 +115,13 @@ def linkSessionProject(sessionname, projectid):
 	projeq['project'] = projdata
 	return projeq
 
+def hasGridHook():
+	try:
+		server_configs = moduleconfig.getConfigured('gridhook.cfg', 'leginon')
+	except IOError as e:
+		return False
+	return True
+
+def createGridHook(session_dict, project_dict):
+	from leginon import gridserver
+	return gridserver.GridHookServer(session_dict,project_dict)

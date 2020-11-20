@@ -10,6 +10,7 @@ import time
 import wx
 import wx.wizard
 import wx.lib.intctrl
+import wx.lib.agw.hyperlink as hl
 from pyami import mysocket
 
 import leginon.leginondata
@@ -361,10 +362,10 @@ class SessionNamePage(WizardPage):
 	def __init__(self, parent):
 		WizardPage.__init__(self, parent)
 		pagesizer = wx.GridBagSizer()
-		sizer = wx.GridBagSizer()
+		sizer = wx.GridBagSizer(10,5)
 
 		sizer.Add(wx.StaticText(self, -1,
-				'Please confirm the session name and enter an optional description.\n'+
+				'Please confirm the session name and optionally select the holder.\n'+
 				'You may change the suggested session name if needed.'),
 												(0, 0), (1, 2))
 
@@ -392,14 +393,8 @@ class SessionNamePage(WizardPage):
 		sizer.Add(wx.StaticText(self, -1, 'Choose holder from list or enter new one:'), (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sizer.Add(self.holderctrl, (2,1), (1,1))
 
-		# TODO link to grid management system to set session-grid link and then return link
-		sizer.Add(wx.StaticText(self, -1, 'Description:'), (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.descriptiontextctrl = wx.TextCtrl(self, -1, '', size=wx.Size(-1,50), style=wx.TE_MULTILINE)
-		sizer.Add(self.descriptiontextctrl, (4, 0), (1, 2), wx.EXPAND|wx.ALL)
-
-
 		sizer.Add(wx.StaticText(self, -1,
-									'Then press the "Next" button to continue.'), (6, 0), (1, 2))
+									'Then press the "Next" button to continue.'), (3, 0), (1, 2))
 
 		pagesizer.Add(sizer, (0, 0), (1, 1), wx.ALIGN_CENTER)
 		pagesizer.AddGrowableRow(0)
@@ -447,6 +442,60 @@ class SessionNamePage(WizardPage):
 
 	def GetNext(self):
 		parent = self.GetParent()
+		return parent.descriptionpage
+
+class SessionDescriptionPage(WizardPage):
+	def __init__(self, parent):
+		WizardPage.__init__(self, parent)
+		pagesizer = wx.GridBagSizer()
+		sizer = wx.GridBagSizer(5,5)
+
+		sizer.Add(wx.StaticText(self, -1,
+				'Please enter an optional description.'),
+												(0, 0), (1, 2))
+
+		sizer.AddGrowableCol(0)
+		sizer.AddGrowableCol(1)
+
+		sizer.Add(wx.StaticText(self, -1, 'Description:'), (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.descriptiontextctrl = wx.TextCtrl(self, -1, '', size=wx.Size(-1,50), style=wx.TE_MULTILINE)
+		sizer.Add(self.descriptiontextctrl, (4, 0), (1, 2), wx.EXPAND|wx.ALL)
+
+
+		sizer.Add(wx.StaticText(self, -1,
+									'Then press the "Next" button to continue.'), (6, 0), (1, 2))
+
+		pagesizer.Add(sizer, (0, 0), (1, 1), wx.ALIGN_CENTER)
+		pagesizer.AddGrowableRow(0)
+		pagesizer.AddGrowableCol(0)
+
+		self.SetSizerAndFit(pagesizer)
+
+	def GridDescriptionDialog(self):
+		'''
+		Called before discription is shown if gridhook is present to set
+		Description control with.
+		'''
+		parent = self.GetParent()
+		grid_url = parent.gridhook.getWebLinkUrl()
+		dlg = ImportGridTextDialog(self, grid_url)
+		grid_description = ''
+		if dlg.ShowModal() == wx.ID_OK:
+			grid_description = parent.gridhook.getGridDisplay()
+		dlg.Destroy()
+		self.descriptiontextctrl.SetValue(grid_description)
+
+	def GetPrev(self):
+		#reset
+		parent = self.GetParent()
+		return parent.namepage
+
+	def GetNext(self):
+		parent = self.GetParent()
+		if parent.gridhook_failed == True:
+			# could not save session in grid management because of project not found.
+			# Blocks moving forward.
+			return parent.descriptionpage
 		return parent.imagedirectorypage
 
 class NoProjectDatabaseError(Exception):
@@ -456,7 +505,7 @@ class SessionProjectPage(WizardPage):
 	def __init__(self, parent):
 		WizardPage.__init__(self, parent)
 		self.pagesizer = wx.GridBagSizer()
-		self.sizer = wx.GridBagSizer()
+		self.sizer = wx.GridBagSizer(5,5)
 
 		self.sizer.Add(wx.StaticText(self, -1,
 				'Select the project this session will be associated with,'),
@@ -525,6 +574,10 @@ class SessionProjectPage(WizardPage):
 		project = self.projectchoice.GetStringSelection()
 		return self.projects[project].dbid
 
+	def getSelectedProjectName(self):
+		project = self.projectchoice.GetStringSelection()
+		return project
+
 	def GetPrev(self):
 		parent = self.GetParent()
 		if parent.userpage.sessions:
@@ -540,7 +593,7 @@ class SessionImageDirectoryPage(WizardPage):
 	def __init__(self, parent):
 		WizardPage.__init__(self, parent)
 		pagesizer = wx.GridBagSizer()
-		sizer = wx.GridBagSizer(0, 5)
+		sizer = wx.GridBagSizer(5, 5)
 
 		sizer.Add(wx.StaticText(self, -1,
 				'Select the directory where images from this session will be stored.\n(A subdirectory named after the session will be created for you)'),
@@ -583,7 +636,7 @@ class SessionImageDirectoryPage(WizardPage):
 
 	def GetPrev(self):
 		parent = self.GetParent()
-		return parent.namepage
+		return parent.descriptionpage
 
 	def GetNext(self):
 		return self.GetParent().sessioncreatepage
@@ -716,6 +769,8 @@ class SetupWizard(wx.wizard.Wizard):
 		self.setup = Setup(manager.research, manager.publish)
 		self.publish = manager.publish
 		self.session = None
+		self.gridhook = None
+		self.gridhook_failed = False
 		self.clients = []
 		image = wx.Image(leginon.icons.getPath('setup.png'))
 		bitmap = wx.BitmapFromImage(image)
@@ -725,11 +780,12 @@ class SetupWizard(wx.wizard.Wizard):
 		# create pages
 		self.userpage = UserPage(self)
 		self.sessiontypepage = SessionTypePage(self)
-		self.namepage = SessionNamePage(self)
 		try:
 			self.projectpage = SessionProjectPage(self)
 		except NoProjectDatabaseError:
 			self.projectpage.noProjectDialog()
+		self.namepage = SessionNamePage(self)
+		self.descriptionpage = SessionDescriptionPage(self)
 		self.imagedirectorypage = SessionImageDirectoryPage(self)
 		self.sessionselectpage = SessionSelectPage(self)
 		self.sessioncreatepage = SessionCreatePage(self)
@@ -798,6 +854,31 @@ class SetupWizard(wx.wizard.Wizard):
 			except leginon.session.ReservationFailed:
 				evt.Veto()
 				self.namepage.nameExistsDialog()
+			if not leginon.session.hasGridHook():
+				self.gridhook_failed = False
+				self.gridhook = None
+			else:
+				# hook to grid management system
+				session_dict = {'name':safename}
+				project_dict = {'name':self.projectpage.getSelectedProjectName()}
+				self.gridhook = leginon.session.createGridHook(session_dict,project_dict)
+				try:
+					if not self.gridhook.gridhook_server_active:
+						raise RuntimeError('Grid Management System is not up')
+					self.gridhook.setSession()
+					self.gridhook_failed = False
+					self.descriptionpage.GridDescriptionDialog()
+				except ValueError as e:
+					# invalid project name. leginon_session not set in grid management
+					# system even though it is connected.  Need to block session saving.
+					self.gridhook_failed = True
+					self.descriptionpage.descriptiontextctrl.SetValue(str(e))
+				except Exception as e:
+					# inform but not fatal
+					self.gridhook_failed = False
+					self.descriptionpage.descriptiontextctrl.SetValue(str(e))
+		elif page is self.descriptionpage:
+			pass
 		elif page is self.sessionselectpage:
 			self.session = self.sessionselectpage.getSelectedSession()
 			self.clients = self.sessionselectpage.clients
@@ -806,7 +887,7 @@ class SetupWizard(wx.wizard.Wizard):
 		elif page is self.sessioncreatepage:
 			user = self.userpage.getSelectedUser()
 			name = self.namepage.nametextctrl.GetValue()
-			description = self.namepage.descriptiontextctrl.GetValue()
+			description = self.descriptionpage.descriptiontextctrl.GetValue()
 			description = description.strip()
 			holder = self.namepage.holderctrl.GetValue()
 			holderdata = leginon.leginondata.GridHolderData(name=holder,hidden=False)
@@ -825,6 +906,13 @@ class SetupWizard(wx.wizard.Wizard):
 			projectid = self.projectpage.getSelectedProjectId()
 			project_experiment = self.setup.linkSessionProject(self.session['name'], projectid)
 			self.publish(project_experiment, database=True)
+			if self.gridhook and not self.gridhook_failed:
+				try:
+					# update grid management LeginonSession leginon_id
+					self.gridhook.setSession(self.session.dbid)
+				except RuntimeError as e:
+					# not connected. OK. to let go. 
+					pass
 			self.clients = self.sessioncreatepage.clients
 			self.history = self.sessioncreatepage.history
 			self.setup.saveClients(self.session, self.clients)
@@ -842,7 +930,7 @@ class SetupWizard(wx.wizard.Wizard):
 		page = evt.GetPage()
 		if page is self.sessioncreatepage:
 			name = self.namepage.nametextctrl.GetValue()
-			description = self.namepage.descriptiontextctrl.GetValue()
+			description = self.descriptionpage.descriptiontextctrl.GetValue()
 			project = self.projectpage.projectchoice.GetStringSelection()
 			directory = self.imagedirectorypage.directorytextctrl.GetValue()
 			self.sessioncreatepage.nametext.SetLabel(name)
@@ -1102,6 +1190,23 @@ class EditClientsDialog(leginon.gui.wx.Dialog.Dialog):
 		self.listbox = leginon.gui.wx.ListBox.EditListBox(self, -1, 'Clients', choices=self.history)
 		self.listbox.setValues(self.clients)
 		self.sz.Add(self.listbox, (0, 0), (1, 1), wx.EXPAND)
+		self.sz.AddGrowableRow(0)
+		self.sz.AddGrowableCol(0)
+		self.addButton('OK', id=wx.ID_OK)
+		self.addButton('Cancel', id=wx.ID_CANCEL)
+
+class ImportGridTextDialog(leginon.gui.wx.Dialog.Dialog):
+	def __init__(self, parent, url):
+		self.parent = parent
+		self.url = url
+		leginon.gui.wx.Dialog.Dialog.__init__(self, parent, 'Import Grid Description')
+	def onInitialize(self):
+		label1 = wx.StaticText(self, -1, 'Go to')
+		self.linksz = hl.HyperLinkCtrl(self, -1, self.url, pos=(100,100),URL=self.url)
+		label2 = wx.StaticText(self, -1, 'to link the session to a grid')
+		self.sz.Add(label1, (0,0),(1,1))
+		self.sz.Add(self.linksz, (0,1),(1,1))
+		self.sz.Add(label2, (0,2),(1,1))
 		self.sz.AddGrowableRow(0)
 		self.sz.AddGrowableCol(0)
 		self.addButton('OK', id=wx.ID_OK)
