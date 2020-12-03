@@ -300,8 +300,10 @@ class DBDataKeeper(object):
 		obj1.
 		'''
 		dataclass = obj1.__class__.__name__
-		#new_dbid = obj1.mappings[self]
-		new_dbid = obj2.dbid
+		# dbcopy wants the new id
+		new_dbid = obj1.mappings[self]
+		# archive change but it does not get used ??? see revision c4609d22
+		#new_dbid = obj2.dbid
 		for source_dbdk, source_dbid in obj1.mappings.items():
 			if source_dbdk is self:
 				continue
