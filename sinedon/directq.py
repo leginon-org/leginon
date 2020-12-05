@@ -23,7 +23,9 @@ def complexMysqlQuery(basedbmodule,query):
 		print("Long MySQL query of %d characters"%(len(query)))
 	cur = getConnection(basedbmodule)
 	results = cur.selectall(query)
-
+	# closing cursor and destroy connection to avoid InterfaceError (0,'')
+	cur.c.close()
+	del connections[basedbmodule]
 	return results
 
 def datakeyToSqlColumnName(sinedondata,key):
