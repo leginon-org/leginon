@@ -728,7 +728,7 @@ def update_file_header(filename, headerdict):
 
 def read_file_header(filename):
 	'''get MRC header from a file in the form of a dict'''
-	f = open(filename, 'r')
+	f = open(filename, 'rb')
 	headerbytes = f.read(1024)
 	header = parseHeader(headerbytes)
 	return header
@@ -834,7 +834,7 @@ def getHeaderBytesFromFile(filename):
 	return h['nsymbt'] + 1024
 
 def readHeaderFromFile(filename):
-	f = open(filename)
+	f = open(filename, 'rb')
 	h = f.read(1024)
 	f.close()
 	h = parseHeader(h)
