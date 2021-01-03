@@ -938,30 +938,34 @@ class Manager(node.Node):
 			orderedapps[appname] = apps[appname]
 		return orderedapps
 
-	def getApplicationPrefixList(self):
+	def getApplicationAffixList(self,affix_type='prefix'):
 		'''
 		Get application prefix list to filter for history. Defined in leginon/leginon_session.cfg
 		'''
 		try:
-			prefixlist = moduleconfig.getConfigured('leginon_session.cfg', 'leginon')['app']['prefix']
-			if type(prefixlist) == type(''):
+			affixlist = moduleconfig.getConfigured('leginon_session.cfg', 'leginon')['app'][affix_type]
+			if type(affixlist) == type(2):
+				# single entry integer is translated to integer, not list of string
+				affixlist = ['%d' % affixlist]
+			if type(affixlist) == type(''):
 				# single entry is translated to string, not list of string
-				prefixlist = [prefixlist]
+				affixlist = [affixlist]
 		except IOError:
-			prefixlist = []
+			affixlist = []
 		except KeyError:
 			# ok if not assigned
-			prefixlist = []
+			affixlist = []
 		except Exception as e:
-			raise ValueError('unknown application prefix error: %s' % e)
-		return prefixlist
+			raise ValueError('unknown application %s error: %s' % (affix_type,str(e)))
+		return affixlist
 
 	def getApplicationHistory(self):
 		initializer = {'session': leginondata.SessionData(user=self.session['user']),
 										'application': leginondata.ApplicationData()}
 		appdata = leginondata.LaunchedApplicationData(initializer=initializer)
 		appdatalist = self.research(appdata, timelimit='-90 0:0:0')
-		prefixlist = self.getApplicationPrefixList()
+		prefixlist = self.getApplicationAffixList('prefix')
+		postfixlist = self.getApplicationAffixList('postfix')
 		history = []
 		amap = {}
 		for a in appdatalist:
@@ -972,11 +976,21 @@ class Manager(node.Node):
 				# filter by prefix
 				found_prefix = False
 				for prefix in prefixlist:
-					if name.startswith(prefix):
+					if name.startswith(str(prefix)):
 						found_prefix = True
 						break
 				if not found_prefix:
 					continue
+			if postfixlist:
+				# filter by prefix
+				found_postfix = False
+				for postfix in postfixlist:
+					if name.endswith(str(postfix)):
+						found_postfix = True
+						break
+				if not found_postfix:
+					continue
+			# add to history
 			if name not in history:
 				history.append(name)
 				amap[name] = a['launchers']
