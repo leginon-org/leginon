@@ -1019,15 +1019,8 @@ class Setup(object):
 		self.publish(sd, database=True, dbforce=True)
 
 	def getSessions(self, userdata, n=None):
-		sessiondata = leginon.leginondata.SessionData(initializer={'user': userdata})
-		sessiondatalist = self.research(datainstance=sessiondata, results=n)
-		names = []
-		for sessiondata in sessiondatalist:
-			if sessiondata['hidden'] is True:
-				continue
-			name = sessiondata['name']
-			if name is not None:
-				names.append(name)
+		names, sessiondatalist = leginon.session.getSessions(userdata, n)
+		print names
 		return names, _indexBy('name', sessiondatalist)
 
 	def getProjects(self, userdata=None):
