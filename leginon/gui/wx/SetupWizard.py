@@ -1020,7 +1020,6 @@ class Setup(object):
 
 	def getSessions(self, userdata, n=None):
 		names, sessiondatalist = leginon.session.getSessions(userdata, n)
-		print names
 		return names, _indexBy('name', sessiondatalist)
 
 	def getProjects(self, userdata=None):
