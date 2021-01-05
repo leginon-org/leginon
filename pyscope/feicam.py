@@ -709,7 +709,8 @@ class Falcon3(FeiCam):
 			# Use all available frames
 			rangelist = self.frameconfig.makeRangeListFromNumberOfBaseFramesAndFrameTime(max_nframes,frame_time_second)
 			if self.getDebugCamera():
-				print 'rangelist', rangelist
+				print 'rangelist', rangelist, len(rangelist)
+				print '#base', map((lambda x:x[1]-x[0]),rangelist)
 			if rangelist:
 				# modify frame time in case of uneven bins
 				self.dosefrac_frame_time = movie_exposure_second / len(rangelist)
