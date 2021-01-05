@@ -596,6 +596,7 @@ class Falcon3(FeiCam):
 	camera_name = 'BM-Falcon'
 	binning_limits = [1,2,4]
 	electron_counting = False
+	base_frame_time = 0.025 # seconds
 	# non-counting Falcon3 is the only camera that returns array aleady averaged by frame
 	# to keep values in more reasonable range.
 	intensity_averaged = True
@@ -615,6 +616,7 @@ class Falcon3(FeiCam):
 
 	def initFrameConfig(self):
 		self.frameconfig = falconframe.FalconFrameRangeListMaker(False)
+		self.frameconfig.setBaseFrameTime(self.base_frame_time)
 		falcon_image_storage = self.camera_settings.PathToImageStorage #read only
 		falcon_image_storage = 'z:\\TEMScripting\\BM-Falcon\\'
 		if 'falcon_image_storage_path' in configs['camera'].keys() and configs['camera']['falcon_image_storage_path']:
@@ -754,6 +756,7 @@ class Falcon3EC(Falcon3):
 	binning_limits = [1,2,4]
 	electron_counting = True
 	intensity_averaged = False
+	base_frame_time = 0.025 # seconds
 
 class Falcon4EC(Falcon3EC):
 	name = 'Falcon4EC'
@@ -761,6 +764,7 @@ class Falcon4EC(Falcon3EC):
 	binning_limits = [1,2,4]
 	electron_counting = True
 	intensity_averaged = False
+	base_frame_time = 0.02907 # seconds
 
 	def setInserted(self, value):
 		super(Falcon4EC, self).setInserted(value)
