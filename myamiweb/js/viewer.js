@@ -1090,6 +1090,7 @@ function popUpAdjust(URL, view, param){
 	autoscale = eval("jsautoscale"+view)
 	displayfilename = eval("jsdisplayfilename"+view)
 	loadjpg= eval("jsloadjpg"+view)
+	useauto= eval("jsuseauto"+view)
 	cacheonly= eval("jscacheonly"+view)
 	min = (min) ? "&pmin="+min : ""
 	max = (max) ? "&pmax="+max : ""
@@ -1101,9 +1102,10 @@ function popUpAdjust(URL, view, param){
 	autoscale= (autoscale) ? "&autoscale="+autoscale : ""
 	displayfilename= (displayfilename) ? "&df="+displayfilename : ""
 	loadjpg= (loadjpg) ? "&lj="+loadjpg : ""
+	useauto= (useauto) ? "&useauto="+useauto : ""
 	cacheonly= (cacheonly) ? "&conly="+cacheonly : ""
 	param = (param) ? param : "left=0,top=0,height=370,width=370"
-	eval (view+"adjw"+" = window.open('"+URL+min+max+filter+fftbin+binning+quality+gradient+autoscale+displayfilename+loadjpg+cacheonly+"', '"+view+"adj', '"+param+"', 'toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=0,alwaysRaised=yes');")
+	eval (view+"adjw"+" = window.open('"+URL+min+max+filter+fftbin+binning+quality+gradient+autoscale+displayfilename+loadjpg+cacheonly+useauto+"', '"+view+"adj', '"+param+"', 'toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=0,alwaysRaised=yes');")
 }
 
 function popUpPtcl(URL, view, param) {

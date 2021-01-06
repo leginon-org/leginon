@@ -32,13 +32,16 @@ if ($min > $defaultmax)
 	$min = $defaultmax;
 if ($max > $defaultmax)
 	$max = $defaultmax;
-if (!$autoscale=$_GET['autoscale'])
+if (!$autoscale=$_GET['autoscale']) //this refers to scale type and values
 	$autoscale=0;
 
-if (!$loadfromjpg=$_GET['lj'])
-	$loadfromjpg=0;
+if (!$loadcache=$_GET['lj']) //using myamiweb imcache
+	$loadcache=0;
 
-$state = ($loadfromjpg) ? "disabled" : "";
+if ($useauto=$_GET['useauto']) //auto adjust
+	$useauto=1;
+
+$state = $useauto ? "disabled":"";
 $disabledcolor="#AABBCC";
 
 $arrayurl = explode("/", $_SERVER['PHP_SELF']);
@@ -52,13 +55,13 @@ $sel_mnmx="";
 $sel_std="checked";
 $sel_ctf="";
 
-$sel_auto = ($loadfromjpg==1) ? "checked" : "";
-$sel_man = ($loadfromjpg==1) ? "" : "checked";
+$sel_auto = ($useauto==1) ? "checked" : "";
+$sel_man = ($useauto==0) ? "checked" : "";
 
 
 list($scaletype, $arg1, $arg2)=explode(';', $autoscale);
 
-if ($GET['autoscale']==0) {
+if ($_GET['autoscale']==0) {
 	$sel_mnmx="checked";
 	$sel_std="";
 	$sel_cdf="";
@@ -107,8 +110,9 @@ var jsfftbin = '$currentfftbin'
 var jsbinning = '$currentbinning'
 var jsquality = '$currentquality'
 var jsautoscale = '$autoscale'
-var jsloadfromjpg = '$loadfromjpg'
+var jsloadcache = '$loadcache'
 var jsgradient = '$currentgradient'
+var jsuseauto = '$useauto'
 ";
 ?>
 var rminval=false
@@ -129,7 +133,7 @@ function displayimginfo(minval, maxval, meanval, stdevval) {
 function getImageInfo() {
 	jsimgId=parentwindow.jsimgId
 	selpreset = eval("parentwindow.jspreset"+jsviewname)
-	var url = 'getimagestat.php?id='+jsimgId+'&pr='+selpreset
+	var url = 'getimagestat.php?id='+jsimgId+'&pr='+selpreset+'&lj=1'
 	var xmlhttp = getXMLHttpRequest()
 	xmlhttp.open('GET', url, true)
 	xmlhttp.onreadystatechange = function() {
@@ -158,13 +162,14 @@ function getImageInfo() {
 }
 
 function selectimgtype(name) {
-	if (loadfromjpg = document.adjustform.loadfromjpg) {
-		for (i=0; i<loadfromjpg.length; i++){
-			imgtype=loadfromjpg[i].value
-			loadfromjpg[i].checked=(imgtype==name) ? true : false
+	if (useauto = document.adjustform.useauto) {
+		// useauto is a radio node list
+		for (i=0; i<useauto.length; i++){
+			imgtype=useauto[i].value
+			useauto[i].checked=(imgtype==name) ? true : false
 		}
 	}
-	setloadfromjpg()
+	setuseauto()
 }
 
 function selectradio(name) {
@@ -239,11 +244,12 @@ function setscale() {
 	return true
 }
 
-function setloadfromjpg() {
-	if (loadfromjpg = document.adjustform.loadauto) {
-		for (i=0; i<loadfromjpg.length; i++){
-			if(loadfromjpg[i].checked) {
-				jsloadfromjpg=loadfromjpg[i].value
+function setuseauto() {
+	// set the values to load
+	if (useauto = document.adjustform.loadauto) {
+		for (i=0; i<useauto.length; i++){
+			if(useauto[i].checked) {
+				jsuseauto=useauto[i].value
 			}
 		}
 	}
@@ -255,8 +261,8 @@ function update() {
 		return false
 	}
 
-	//auto load uses all default	
-	if (jsloadfromjpg == 1) {
+	//useauto uses all default
+	if (jsuseauto == 1) {
 		parentwindow.setbinning(jsviewname,'auto');
 		parentwindow.setfilter(jsviewname,'default');
 		parentwindow.setautoscale(jsviewname,'s;5');
@@ -289,7 +295,7 @@ function update() {
 		}
 	}
 	parentwindow.setminmax(jsviewname,jsminpix,jsmaxpix);
-	parentwindow.setloadfromjpg(jsviewname,jsloadfromjpg);
+	parentwindow.setloadfromjpg(jsviewname,jsloadcache);
 	parentwindow.newfile(jsviewname);
 }
 
@@ -297,7 +303,7 @@ function init(){
   parentwindow = window.opener
 	getImageInfo()
 	setgrad()
-	f(jsloadfromjpg)
+	f(jsuseauto)
   this.focus()
 } 
 
@@ -310,6 +316,7 @@ function f(state) {
 }
 
 function setGroup(groupRef, state) {
+	// set the state (disabled or not)
 	var inputs = groupRef.getElementsByTagName("input");
 	for (var i=0;i<inputs.length;i++) {
 		inputs[i].disabled = state;
@@ -427,8 +434,8 @@ display:block;
 <ul class="d">
 <li>
 <span style="font-weight: bold"><?php echo $title?></span>
-		<input name="loadauto" value="1" <?php echo $sel_auto?> onclick="f(true); setloadfromjpg(); update()" type="radio">auto
-	<input name="loadauto" value="0" <?php echo $sel_man?> onclick="f(false); setloadfromjpg(); update()" type="radio">
+		<input name="loadauto" value="1" <?php echo $sel_auto?> onclick="f(true); setuseauto(); update()" type="radio">auto
+	<input name="loadauto" value="0" <?php echo $sel_man?> onclick="f(false); setuseauto(); update()" type="radio">
 	manual
 </li>
 </ul>

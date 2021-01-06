@@ -1414,7 +1414,7 @@ class view {
 						<td valign="center">
 				';
 			$param = "left=0,top=".($this->viewnb*180).",height=400,width=330";
-			$url = "adjust.php?name=$name&displayname=$this->title";
+			$url = "adjust.php?name=$name&useauto=1&displayname=$this->title";
 			$htmlframe .= "<div id='".$this->name."imgstat'>";
 			$htmlframe .='
 			<a href="javascript:popUpAdjust(\''.$url.'\',\''.$name.'\',\''.$param.'\');">
