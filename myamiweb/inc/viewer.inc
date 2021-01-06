@@ -983,6 +983,7 @@ class view {
 			.'var jsgradient'.$this->name.'="'.$this->gradient.'";'.$this->crlf
 			.'var jsautoscale'.$this->name.'="'.$this->autoscale.'";'.$this->crlf
 			.'var jsdisplayfilename'.$this->name.'="'.$this->displayfilename.'";'.$this->crlf
+			.'var jsuseauto'.$this->name.'="'.$this->useauto.'";'.$this->crlf
 			.'var jsloadjpg'.$this->name.'="'.$this->loadjpg.'";'.$this->crlf
 			.'var jscacheonly'.$this->name.'="'.$this->cacheonly.'";'.$this->crlf
 			.'var jsptclsel'.$this->name.'="'.$this->ptclsel.'";'.$this->crlf

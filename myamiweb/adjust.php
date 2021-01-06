@@ -35,7 +35,7 @@ if ($max > $defaultmax)
 if (!$autoscale=$_GET['autoscale']) //this refers to scale type and values
 	$autoscale=0;
 
-if (!$loadcache=$_GET['lj']) //using myamiweb imcache
+if (!$loadcache=$_GET['lj']) //using myamiweb imcache. This is not manipulated in this module
 	$loadcache=0;
 
 if ($useauto=$_GET['useauto']) //auto adjust
