@@ -123,11 +123,12 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 
 	def createNStepsSizer(self):
 		# recheck
-		self.widgets['nsteps'] = IntEntry(self, -1, chars=4)
+		nsteps = self.node.getSettings()['nsteps']
+		sz_nsteps = wx.StaticText(self, -1,'%d' % (nsteps,))
 		sz = wx.GridBagSizer(0, 0)
 		label = wx.StaticText(self, -1, 'Divide the total tilt into')
 		sz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['nsteps'], (0, 1), (1, 1),
+		sz.Add(sz_nsteps, (0, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 		label = wx.StaticText(self, -1, 'steps')
 		sz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)

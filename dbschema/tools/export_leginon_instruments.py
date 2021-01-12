@@ -11,8 +11,10 @@ from pyami import jsonfun
 '''
 
 class InstrumentJsonMaker(jsonfun.DataJsonMaker):
-	def __init__(self,params):
+	def __init__(self,params, interactive=False):
 		super(InstrumentJsonMaker,self).__init__(leginondata)
+		self.hostnames = []
+		self.interactive = interactive
 		try:
 			self.validateInput(params)
 		except ValueError, e:
@@ -20,12 +22,15 @@ class InstrumentJsonMaker(jsonfun.DataJsonMaker):
 			self.close(1)
 
 	def validateInput(self, params):
-		if len(params) != 2:
-			print "Usage export_leginon_instruments.py source_database_hostname"
+		if len(params) < 2:
+			print "Usage export_leginon_instruments.py source_database_hostname <hostname1,hostname2>"
 			self.close(1)
 		database_hostname = leginondata.sinedon.getConfig('leginondata')['host']
 		if params[1] != database_hostname:
 			raise ValueError('leginondata in sinedon.cfg not set to %s' % params[1])
+		if len(params) > 2:
+			self.hostnames = params[2].split(',')
+
 		self.instruments = self.getSourceInstrumentData(exclude_sim=False)
 
 	def getSourceInstrumentData(self, exclude_sim=False):
@@ -34,8 +39,10 @@ class InstrumentJsonMaker(jsonfun.DataJsonMaker):
 		results = q.query()
 		real_instruments = []
 		for r in results:
-			if not exclude_sim or not r['name'].startswith('Sim'):
-				real_instruments.append(r)
+			if (not exclude_sim or not r['name'].startswith('Sim')) and not r['hostname'] in ('fake','appion'):
+				if not self.hostnames or r['hostname'] in self.hostnames:
+					# specific name if have specification
+					real_instruments.append(r)
 		if not real_instruments:
 			print "ERROR: ...."
 			raise ValueError("  No real instrument found")
@@ -43,7 +50,8 @@ class InstrumentJsonMaker(jsonfun.DataJsonMaker):
 		real_instruments.reverse()
 		return real_instruments
 
-	def getClients(self):
+	def getClients(self, interactive=False):
+		# simulated instrument is never a leginon client
 		real_instruments = self.getSourceInstrumentData(exclude_sim=True)
 		clients = []
 		possible_clients = map((lambda x: x['hostname']), real_instruments)
@@ -51,7 +59,13 @@ class InstrumentJsonMaker(jsonfun.DataJsonMaker):
 		possible_clients.sort()
 		print('Here are the possible client names.')
 		for c in possible_clients:
-			print(c)
+			print('\t'+c)
+		if self.interactive:
+			return interactiveDeleteClients(possible_clients)
+		print('You can modify the resulting instrument_clients.json to clean this up.')
+		return possible_clients
+
+	def interactiveDeleteClients(self, possible_clients):
 		answer = raw_input('Do you want to remove some of them ? (Y/y or N/n)')
 		if answer.lower() in 'y':
 			for c in possible_clients:
@@ -67,7 +81,7 @@ class InstrumentJsonMaker(jsonfun.DataJsonMaker):
 		self.publish(self.instruments)
 
 	def publishMagnifications(self, tem):
-		results = leginondata.MagnificationsData(instrument=tem).query()
+		results = leginondata.MagnificationsData(instrument=tem).query(results=1)
 		if results:
 			print 'Adding Magnifications'
 		self.publish(results)
@@ -105,10 +119,11 @@ class InstrumentJsonMaker(jsonfun.DataJsonMaker):
 		if status:
 			print "Exit with Error"
 			sys.exit(1)
-		raw_input('hit enter when ready to quit')
+		if self.interactive:
+			raw_input('hit enter when ready to quit')
 
 if __name__=='__main__':
-	app = InstrumentJsonMaker(sys.argv)
+	app = InstrumentJsonMaker(sys.argv, interactive=False)
 	app.run()
 	app.close()
 	 

@@ -35,7 +35,6 @@
 		<field name="bad stats response" type="text" />
 		<field name="high mean" type="double" />
 		<field name="low mean" type="double" />
-		<field name="emission off" type="tinyint(1)" default="0" />
 		<field name="target offset row" type="int(20)" />
 		<field name="target offset col" type="int(20)" />
 		<field name="correct image shift coma" type="tinyint(1)" default="0" />
@@ -196,7 +195,6 @@
 		<field name="bad stats response" type="text" />
 		<field name="high mean" type="double" />
 		<field name="low mean" type="double" />
-		<field name="emission off" type="tinyint(1)" default="0" />
 		<field name="target offset row" type="int(20)" />
 		<field name="target offset col" type="int(20)" />
 		<field name="correct image shift coma" type="tinyint(1)" default="0" />
@@ -495,7 +493,6 @@
 		<field name="bad stats response" type="text" />
 		<field name="high mean" type="double" />
 		<field name="low mean" type="double" />
-		<field name="emission off" type="tinyint(1)" default="0" />
 		<field name="target offset row" type="int(20)" />
 		<field name="target offset col" type="int(20)" />
 		<field name="correct image shift coma" type="tinyint(1)" default="0" />
@@ -946,7 +943,6 @@
 		<field name="bad stats response" type="text" />
 		<field name="high mean" type="double" />
 		<field name="low mean" type="double" />
-		<field name="emission off" type="tinyint(1)" default="0" />
 		<field name="target offset row" type="int(20)" />
 		<field name="target offset col" type="int(20)" />
 		<field name="correct image shift coma" type="tinyint(1)" default="0" />
@@ -1009,7 +1005,6 @@
 		<field name="bad stats response" type="text" />
 		<field name="high mean" type="double" />
 		<field name="low mean" type="double" />
-		<field name="emission off" type="tinyint(1)" default="0" />
 		<field name="target offset row" type="int(20)" />
 		<field name="target offset col" type="int(20)" />
 		<field name="correct image shift coma" type="tinyint(1)" default="0" />
@@ -1056,6 +1051,9 @@
 		<field name="apply offset" type="tinyint(1)" default="0" />
 		<field name="blank" type="tinyint(1)" default="0" />
 		<field name="smallsize" type="int(20)" />
+		<field name="import randon" type="tinyint(1)" default="0" />
+		<field name="idle minute" type="double" />
+		<field name="emission off" type="tinyint(1)" default="0" />
     <key>PRIMARY KEY (`DEF_id`)</key>
     <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
     <key>KEY `REF|SessionData|session` (`REF|SessionData|session`)</key>
@@ -1123,7 +1121,6 @@
 		<field name="bad stats response" type="text" />
 		<field name="high mean" type="double" />
 		<field name="low mean" type="double" />
-		<field name="emission off" type="tinyint(1)" default="0" />
 		<field name="target offset row" type="int(20)" />
 		<field name="target offset col" type="int(20)" />
 		<field name="correct image shift coma" type="tinyint(1)" default="0" />
@@ -1350,7 +1347,6 @@
 		<field name="bad stats response" type="text" />
 		<field name="high mean" type="double" />
 		<field name="low mean" type="double" />
-		<field name="emission off" type="tinyint(1)" default="0" />
 		<field name="target offset row" type="int(20)" />
 		<field name="target offset col" type="int(20)" />
 		<field name="correct image shift coma" type="tinyint(1)" default="0" />
@@ -1641,12 +1637,6 @@
 			type="DOUBLE" 
 			null="NULL" 
 			default="NULL" 
-		/> 
-		<field 
-			name="emission off" 
-			type="TINYINT(1)" 
-			null="NULL" 
-			default="0" 
 		/> 
 		<field 
 			name="target offset row" 

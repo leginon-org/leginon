@@ -31,13 +31,13 @@ class SimTEM(tem.TEM):
 		self.high_tension = 120000.0
 
 		self.magnifications = [
-			50.0,
-			100.0,
-			500.0,
-			1000.0,
-			5000.0,
-			25000.0,
-			50000.0,
+			50,
+			100,
+			500,
+			1000,
+			5000,
+			25000,
+			50000,
 		]
 		self.magnification_index = 0
 
@@ -69,6 +69,8 @@ class SimTEM(tem.TEM):
 		self.stage_position = {}
 		for axis in self.stage_axes:
 			self.stage_position[axis] = 0.0
+		self.stage_top_speed = 29.78
+		self.stage_speed_fraction = 1.0
 
 		self.screen_current = 0.000001
 		self.intensity_range = (0.0, 1.0)
@@ -109,6 +111,7 @@ class SimTEM(tem.TEM):
 		self.emission = 'on'
 		self.BeamBlank = 'off'
 		self.buffer_pressure = 30.0
+		self.beamstop_position = 'out'
 
 		self.energy_filter = False
 		self.energy_filter_width = 0.0
@@ -183,7 +186,8 @@ class SimTEM(tem.TEM):
 			beta = nidaq.getBeta()
 			self.stage_position.update({'b':beta})
 		except:
-			pass	
+			# give values so it is behaved like real tem implementation
+			self.stage_position.update({'b':0.0})
 		return copy.copy(self.stage_position)
 
 	def _setStagePosition(self,value):
@@ -210,6 +214,13 @@ class SimTEM(tem.TEM):
 				if delta > minimum_stage[axis]:
 					bigenough[axis] = position[axis]
 		return bigenough
+
+	def setStageSpeed(self, value):
+		self.speed_deg_per_second = value
+		self.stage_speed_fraction = min(value/self.stage_top_speed,1.0)
+
+	def getStageSpeed(self):
+			return self.stage_speed_fraction * self.stage_top_speed
 
 	def setStagePosition(self, value):
 		self.printStageDebug(value.keys())
@@ -264,6 +275,11 @@ class SimTEM(tem.TEM):
 		if abs(relax) > 1e-9 and prevalue2:
 			self._setStagePosition(prevalue2)
 			time.sleep(0.2)
+		if self.stage_speed_fraction < 1.0:
+			if 'a' in value.keys():
+				alpha_delta = math.degrees(abs(value['a']-stagenow['a']))
+				move_time = alpha_delta / (self.stage_speed_fraction*self.stage_top_speed)
+				time.sleep(max(move_time,0.2))
 		return self._setStagePosition(value)
 
 	def normalizeLens(self, lens='all'):
@@ -376,7 +392,7 @@ class SimTEM(tem.TEM):
 
 	def setMagnification(self, value):
 		try:
-			self.magnification_index = self.magnifications.index(float(value))
+			self.magnification_index = self.magnifications.index(value)
 			self.saveSimPar('magnification', value)
 		except ValueError:
 			raise ValueError('invalid magnification')
@@ -614,6 +630,13 @@ class SimTEM(tem.TEM):
 	def retractApertureMechanism(self, aperture_mechanism):
 		return setApertureSelection(aperture_mechanism, 'open')
 
+	def getBeamstopPosition(self):
+		return self.beamstop_position
+
+	def setBeamstopPosition(self, value):
+		print 'beamstop set to %s' % (value,)
+		self.beamstop_position = value
+
 class SimTEM300(SimTEM):
 	name = 'SimTEM300'
 	def __init__(self):
@@ -622,10 +645,11 @@ class SimTEM300(SimTEM):
 		self.high_tension = 300000.0
 
 		self.magnifications = [
-			1550.0,
-			2250.0,
-			3600.0,
-			130000.0
+			1550,
+			2250,
+			3600,
+			4800,
+			130000
 		]
 		self.magnification_index = 0
 
@@ -651,14 +675,22 @@ class SimDiffrTEM(SimTEM):
 
 		self.magnifications = [
 			70,
-			120.0,
-			520.0,
-			1200.0,
-			5200.0,
-			27000.0,
-			52000.0,
+			120,
+			520,
+			1200,
+			5200,
+			27000,
+			52000,
 		]
 		self.high_tension = 120000.0
 
 	def getProjectionMode(self):
 		return self.projection_mode
+
+class SimDiffrTEM300(SimDiffrTEM):
+	name = 'SimDiffrTEM300'
+	projection_mode = 'diffraction'
+	def __init__(self):
+		SimDiffrTEM.__init__(self)
+		# to use with SimTEM300
+		self.high_tension = 300000.0

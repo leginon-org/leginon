@@ -223,25 +223,28 @@ if (is_array($imageinfo)) {
 				echo formatHtmlRow($k, $v);
 		}
 	}
-	$semData = $ctf->getSEMDataFromId($imgId);
-	if (!empty($semData)){
-		echo formatHtmlRow('Date',$semData['date']);
-		echo formatHtmlRow('HV',$semData['hv'].' V');
-		echo formatHtmlRow('Beam',$semData['beam']);
-		echo formatHtmlRow('HFW',$semData['hfw'].' µm');
-		echo formatHtmlRow('ApertureDiameter',$semData['aperture_diameter'].' µm');
-		echo formatHtmlRow('BeamCurrent',$semData['beam_current'].' pA');
-		echo formatHtmlRow('DynamicFocusIsOn',$semData['dynamic_focus_is_on']);
-		echo formatHtmlRow('StageTa',number_format((float)$semData['stage_ta'], 1, '.', '').' °');
-		echo formatHtmlRow('TiltCorrectionAngle',$semData['tilt_correction_angle'].' °');
-		echo formatHtmlRow('Dwelltime',$semData['dwell_time'].' µs');
-		echo formatHtmlRow('PixelWidth',$semData['pixel_width'].' nm');
-		echo formatHtmlRow('FrameTime',$semData['frame_time'].' s');
-		echo formatHtmlRow('Integrate',$semData['integrate']);
-		echo formatHtmlRow('WorkingDistance',$semData['working_distance'].' m');
-		echo formatHtmlRow('ResolutionX',$semData['resolution_x']);
-		echo formatHtmlRow('ResolutionY',$semData['resolution_y']);
-		echo formatHtmlRow('Z Slice Width',$semData['z_slice']);
+	if ($ctf) {
+		//This is available only if processing plugin is activated
+		$semData = $ctf->getSEMDataFromId($imgId);
+		if (!empty($semData)){
+			echo formatHtmlRow('Date',$semData['date']);
+			echo formatHtmlRow('HV',$semData['hv'].' V');
+			echo formatHtmlRow('Beam',$semData['beam']);
+			echo formatHtmlRow('HFW',$semData['hfw'].' µm');
+			echo formatHtmlRow('ApertureDiameter',$semData['aperture_diameter'].' µm');
+			echo formatHtmlRow('BeamCurrent',$semData['beam_current'].' pA');
+			echo formatHtmlRow('DynamicFocusIsOn',$semData['dynamic_focus_is_on']);
+			echo formatHtmlRow('StageTa',number_format((float)$semData['stage_ta'], 1, '.', '').' °');
+			echo formatHtmlRow('TiltCorrectionAngle',$semData['tilt_correction_angle'].' °');
+			echo formatHtmlRow('Dwelltime',$semData['dwell_time'].' µs');
+			echo formatHtmlRow('PixelWidth',$semData['pixel_width'].' nm');
+			echo formatHtmlRow('FrameTime',$semData['frame_time'].' s');
+			echo formatHtmlRow('Integrate',$semData['integrate']);
+			echo formatHtmlRow('WorkingDistance',$semData['working_distance'].' m');
+			echo formatHtmlRow('ResolutionX',$semData['resolution_x']);
+			echo formatHtmlRow('ResolutionY',$semData['resolution_y']);
+			echo formatHtmlRow('Z Slice Width',$semData['z_slice']);
+		}
 	}
 	echo "</table>";
 }

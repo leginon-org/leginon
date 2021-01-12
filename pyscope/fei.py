@@ -29,8 +29,11 @@ try:
 	import comtypes
 	import comtypes.client
 	com_module =  comtypes
-	import winerror
+	log_path = os.path.join(os.environ['USERPROFILE'],'myami_log')
+	if not os.path.isdir(log_path):
+		os.mkdir(log_path)
 except ImportError:
+	log_path = None
 	pass
 
 configs = moduleconfig.getConfigured('fei.cfg')
@@ -48,7 +51,8 @@ class Tecnai(tem.TEM):
 	# either 'Magnification' or 'CameraLength'
 	mag_attr_name = 'Magnification'
 	mag_scale = 1
-	default_stage_speed = 1.0
+	stage_top_speed = 29.78
+	default_stage_speed_fraction = 1.0
 
 	def __init__(self):
 		tem.TEM.__init__(self)
@@ -101,7 +105,8 @@ class Tecnai(tem.TEM):
 			self.exposure = None
 
 		self.magnifications = []
-		self.stage_speed = self.default_stage_speed
+		self.speed_deg_per_second = self.stage_top_speed
+		self.stage_speed_fraction = self.default_stage_speed_fraction
 		self.mainscreenscale = 44000.0 / 50000.0
 		self.wait_for_stage_ready = True
 		self.mag_changed = False
@@ -127,7 +132,7 @@ class Tecnai(tem.TEM):
 	def findPresureProps(self):
 		self.pressure_prop = {}
 		gauge_map = {}
-		gauges_to_try = {'column':['IPGco','PPc1','P4','IGP1'],'buffer':['PIRbf','P1'],'projection':['CCGp','P3']}
+		gauges_to_try = {'column':['IGPco','PPc1','P4','IGP1'],'buffer':['PIRbf','P1'],'projection':['CCGp','P3']}
 		gauges_obj = self.tecnai.Vacuum.Gauges
 		for i in range(gauges_obj.Count):
 			g = gauges_obj.Item(i)
@@ -167,6 +172,15 @@ class Tecnai(tem.TEM):
 			# back compatibility pre 3.5
 			value=self.getFeiConfig('phase plate','autoit_exe_path')
 		return value
+
+	def getAutoitBeamstopInExePath(self):
+		return self.getFeiConfig('beamstop','autoit_in_exe_path')
+
+	def getAutoitBeamstopOutExePath(self):
+		return self.getFeiConfig('beamstop','autoit_out_exe_path')
+
+	def getAutoitBeamstopHalfwayExePath(self):
+		return self.getFeiConfig('beamstop','autoit_halfway_exe_path')
 
 	def getRotationCenterScale(self):
 		return self.getFeiConfig('optics','rotation_center_scale')
@@ -265,23 +279,22 @@ class Tecnai(tem.TEM):
 		return self._setStagePosition(value)
 
 	def resetStageSpeed(self):
-		self.stage_speed = self.default_stage_speed
+		self.stage_speed_fraction = self.default_stage_speed_fraction
 		if self.tom:
-			self.tom.Stage.Speed = self.default_stage_speed
+			self.tom.Stage.Speed = self.default_stage_speed_fraction
 
 	def setStageSpeed(self, value):
-		# 0.0 to 1.0 with 1.0 the highest speed
-		if value > 1.0 or value < 0.0:
-			raise ValueError('Stage speed must be between 0.0 and 1.0')
-		self.stage_speed = value
+		self.speed_deg_per_second = float(value)
+		self.stage_speed_fraction = min(value/self.stage_top_speed,1.0)
 		if self.tom:
-			self.tom.Stage.Speed = value
+			# tom-monikar needs to set speed first while temscripting set speed in gotowithspeed call.
+			self.tom.Stage.Speed = self.stage_speed_fraction
 
 	def getStageSpeed(self):
 		if self.tom:
-			return self.tom.Stage.Speed
+			return self.tom.Stage.Speed * self.stage_top_speed
 		else:
-			return self.stage_speed
+			return self.stage_speed_fraction * self.stage_top_speed
 
 	def normalizeLens(self, lens = 'all'):
 		if lens == 'all':
@@ -396,6 +409,11 @@ class Tecnai(tem.TEM):
 	def setHighTension(self, ht):
 		self.tecnai.Gun.HTValue = float(ht)
 	
+	def getMinimumIntensityMovement(self):
+		value = self.getFeiConfig('optics','minimum_intensity_movement')
+		if value is None:
+			return 1e-8
+
 	def getIntensity(self):
 		intensity = getattr(self.tecnai.Illumination, self.intensity_prop)
 		return float(intensity)
@@ -408,23 +426,27 @@ class Tecnai(tem.TEM):
 		else:
 			raise ValueError
 		prev_int = self.getIntensity()
-		if prev_int != intensity:
+		intensity_step = self.getMinimumIntensityMovement()
+		if abs(prev_int-intensity) > intensity_step:
 			self.int_changed = True
-		setattr(self.tecnai.Illumination, self.intensity_prop, intensity)
+			setattr(self.tecnai.Illumination, self.intensity_prop, intensity)
+		else:
+			self.int_changed = False
 		# Normalizations
 		if self.normalize_all_after_setting:
 			if self.mag_changed or self.spotsize_changed or self.int_changed:
 				if self.getDebugAll():
 					print 'normalize all'
 				self.normalizeLens('all')
+		# sleep for intensity change
+		extra_sleep = self.getFeiConfig('camera','extra_protector_sleep_time')
+		if self.int_changed and extra_sleep:
+			time.sleep(extra_sleep)
 		#reset changed flag
 		self.mag_changed = False
 		self.spotsize_changed = False
 		self.int_changed = False
 
-		# sleep for intensity change
-		if self.getFeiConfig('camera','extra_protector_sleep_time'):
-			time.sleep(1)
 
 	def getDarkFieldMode(self):
 		if self.tecnai.Illumination.DFMode == self.tem_constants.dfOff:
@@ -467,6 +489,9 @@ class Tecnai(tem.TEM):
 			raise SystemError
 		
 	def setBeamBlank(self, bb):
+		if self.getBeamBlank() == bb:
+			# do nothing if already there
+			return
 		self._setBeamBlank(bb)
 		# Falcon protector delays the response of the blanker and 
 		# cause it to be out of sync
@@ -606,6 +631,9 @@ class Tecnai(tem.TEM):
 			raise ValueError
 		
 		vec = self.tecnai.Illumination.RotationCenter
+		if abs(vec.X-vector['x'])+abs(vec.Y-vector['y']) < 1e-6:
+			# 1 urad move is ignored.
+			return
 		try:
 			vec.X = vector['x'] * self.getRotationCenterScale()
 		except KeyError:
@@ -619,8 +647,8 @@ class Tecnai(tem.TEM):
 	def getBeamShift(self):
 		value = {'x': None, 'y': None}
 		try:
-			value['x'] = float(self.tom.Illumination.BeamShiftPhysical.X)
-			value['y'] = float(self.tom.Illumination.BeamShiftPhysical.Y)
+			value['x'] = float(self.tecnai.Illumination.Shift.X)
+			value['y'] = float(self.tecnai.Illumination.Shift.Y)
 		except:
 			# return None if has exception
 			pass
@@ -629,11 +657,11 @@ class Tecnai(tem.TEM):
 	def setBeamShift(self, vector, relative = 'absolute'):
 		if relative == 'relative':
 			try:
-				vector['x'] += self.tom.Illumination.BeamShiftPhysical.X
+				vector['x'] += self.tecnai.Illumination.Shift.X
 			except KeyError:
 				pass
 			try:
-				vector['y'] += self.tom.Illumination.BeamShiftPhysical.Y
+				vector['y'] += self.tecnai.Illumination.Shift.Y
 			except KeyError:
 				pass
 		elif relative == 'absolute':
@@ -641,7 +669,7 @@ class Tecnai(tem.TEM):
 		else:
 			raise ValueError
 		
-		vec = self.tom.Illumination.BeamShiftPhysical
+		vec = self.tecnai.Illumination.Shift
 		try:
 			vec.X = vector['x']
 		except KeyError:
@@ -650,7 +678,7 @@ class Tecnai(tem.TEM):
 			vec.Y = vector['y']
 		except KeyError:
 			pass
-		self.tom.Illumination.BeamShiftPhysical = vec
+		self.tecnai.Illumination.Shift = vec
 	
 	def getImageShift(self):
 		value = {'x': None, 'y': None}
@@ -678,6 +706,13 @@ class Tecnai(tem.TEM):
 			raise ValueError
 		
 		vec = self.tecnai.Projection.ImageBeamShift
+		d = 0.0
+		for k in vector.keys():
+			temvalue = getattr(vec, k.upper())
+			d += abs(temvalue - vector[k])
+		if d < 1e-9:
+			# 1 nm move is ignored.
+			return
 		try:
 			vec.X = vector['x']
 		except KeyError:
@@ -910,10 +945,11 @@ class Tecnai(tem.TEM):
 		TEM Scripting orders magnificatiions by projection submode.
 		'''
 		mode_id = self.getProjectionSubModeIndex()
-		name = self.getProjectionSubModeName()
+		mode_name = self.getProjectionSubModeName()
 		if mode_id not in self.projection_submodes.keys():
 			raise ValueError('unknown projection submode')
-		self.projection_submode_map[mag] = (name,mode_id)
+		# FEI scopes don't have cases with the same mag in different mode, yet.
+		self.addProjectionSubModeMap(mag, mode_name, mode_id, overwrite=True)
 
 	def getStagePosition(self):
 		value = {'x':None,'y':None,'z':None,'a':None,'b':None}
@@ -967,7 +1003,7 @@ class Tecnai(tem.TEM):
 			print 'took extra %.1f seconds to get to ready status' % (donetime)
 
 	def _setStagePosition(self, position, relative = 'absolute'):
-		if False:
+		if self.tom is not None and self.column_type=='tecnai':
 			return self._setTomStagePosition(position, relative)
 		else:
 			return self._setTemStagePosition(position, relative)
@@ -1003,13 +1039,13 @@ class Tecnai(tem.TEM):
 		if axes == 0:
 			return
 		try:
-			if self.stage_speed == self.default_stage_speed:
+			if self.stage_speed_fraction == self.default_stage_speed_fraction:
 				self.tecnai.Stage.Goto(pos, axes)
 			else:
 				# Low speed move needs to be done on individual axis
 				for key, value in position.items():
 					single_axis = getattr(self.tem_constants, 'axis' + key.upper())
-					self.tecnai.Stage.GotoWithSpeed(pos, single_axis, self.stage_speed)
+					self.tecnai.Stage.GotoWithSpeed(pos, single_axis, self.stage_speed_fraction)
 		except com_module.COMError, e:
 			if self.getDebugStage():
 				print datetime.datetime.now()
@@ -1324,6 +1360,8 @@ class Tecnai(tem.TEM):
 			return 'up'
 
 	def setMainScreenPosition(self, mode):
+		if self.getMainScreenPosition() == mode:
+			return
 		if mode == 'up':
 			self.tecnai.Camera.MainScreen = self.tem_constants.spUp
 		elif mode == 'down':
@@ -1445,7 +1483,7 @@ class Tecnai(tem.TEM):
 		else:
 			return 'unknown'
 
-	def getGaugePressure(self,location):
+	def _getGaugePressure(self,location):
 		# value in pascal unit
 		if location not in self.pressure_prop.keys():
 			raise KeyError
@@ -1454,13 +1492,13 @@ class Tecnai(tem.TEM):
 		return float(self.tecnai.Vacuum.Gauges(self.pressure_prop[location]).Pressure)
 
 	def getColumnPressure(self):
-		return self.getGaugePressure('column')
+		return self._getGaugePressure('column')
 
 	def getProjectionChamberPressure(self):
-		return self.getGaugePressure('projection')
+		return self._getGaugePressure('projection') # pascal
 
 	def getBufferTankPressure(self):
-		return self.getGaugePressure('buffer')
+		return self._getGaugePressure('buffer') # pascal
 
 	def getObjectiveExcitation(self):
 		return float(self.tecnai.Projection.ObjectiveExcitation)
@@ -1561,16 +1599,31 @@ class Tecnai(tem.TEM):
 		try:
 			self.tecnai.Vacuum.RunBufferCycle()
 		except com_module.COMError, e:
-			# No extended error information, assuming low dose is disenabled
+			# No extended error information 
 			raise RuntimeError('runBufferCycle COMError: no extended error information')
 		except:
 			raise RuntimeError('runBufferCycle Unknown error')
 
 	def setEmission(self, value):
-		self.tom.Gun.Emission = value
+		etext = 'gun emission state can not be set on this instrument'
+		if self.tom:
+			try:
+				self.tom.Gun.Emission = value
+			except:
+				raise RuntimeError(etext)
+		else:
+			# only tommoniker has gun access.
+			raise RuntimeError(etext)
 
 	def getEmission(self):
-		return self.tom.Gun.Emission
+		if self.tom:
+			try:
+				return self.tom.Gun.Emission
+			except com_module.COMError as e:
+				# Emission is not defined for FEG
+				return True
+		# no other way to know this, but we do not want it to fail.
+		return True
 
 	def getExpWaitTime(self):
 		try:
@@ -1730,7 +1783,7 @@ class Tecnai(tem.TEM):
 	def hasAutoAperture(self):
 		return False
 
-	def retractApertureMechanism(self,name):
+	def retractApertureMechanism(self, mechanism_name):
 		'''
 		Retract aperture mechanism.
 		'''
@@ -1778,7 +1831,10 @@ class Tecnai(tem.TEM):
 		return 'unknown'
 
 	def _checkAutoItError(self, error_filename='autoit_error.log'):
-		errorpath = os.path.join(os.getcwd(),error_filename)
+		if not log_path:
+			print 'no log path for autoit error passing'
+			return
+		errorpath = os.path.join(log_path,error_filename)
 		if not os.path.isfile(errorpath):
 			return
 		f = open(errorpath)
@@ -1790,7 +1846,10 @@ class Tecnai(tem.TEM):
 			raise ValueError(msglist[0].split('\n')[0])
 
 	def _getAutoItResult(self, result_filename='autoit_result.log'):
-		resultpath = os.path.join(os.getcwd(),result_filename)
+		if not log_path:
+			print 'no log path for autoit result passing'
+			return
+		resultpath = os.path.join(log_path,result_filename)
 		if not os.path.isfile(resultpath):
 			# the result is None
 			return
@@ -1831,17 +1890,27 @@ class Tecnai(tem.TEM):
 		'''
 		Get string name list of the aperture collection in a mechanism.
 		'''
-		aps = self._getApertureObjsOfMechanismName(mechanism_name)
-		names = []
-		for ap in aps:
-			names.append(ap.Name)
-		return names
+		return self.getApertureSelections(mechanism_name)
 
 	def insertSelectedApertureMechanism(self,mechanism_name, aperture_name):
 		'''
 		Insert an aperture selected for a mechanism.
 		'''
-		return self.setApertureSelection(mechanism_name, aperturn_name)
+		return self.setApertureSelection(mechanism_name, aperture_name)
+
+	def setBeamstopPosition(self, value):
+		"""
+		Possible values: ('in','out','halfway')
+		Tecnically tecnai has no software control on this.
+		"""
+		valuecap = value[0].upper()+value[1:]
+		methodname = 'getAutoitBeamstop%sExePath' % (valuecap)
+		exepath = getattr(self,methodname)()
+		if exepath and os.path.isfile(exepath):
+			subprocess.call(exepath)
+			time.sleep(2.0)
+		else:
+			pass
 
 class Krios(Tecnai):
 	name = 'Krios'
@@ -1897,8 +1966,16 @@ class Glacios(Arctica):
 #### Diffraction Instrument
 class DiffrTecnai(Tecnai):
 	name = 'DiffrTecnai'
-	column_type = 'talos'
+	column_type = 'tecnai'
 	use_normalization = False
+	projection_mode = 'diffraction'
+	mag_attr_name = 'CameraLength'
+	mag_scale = 1000
+
+class DiffrArctica(Arctica):
+	name = 'DiffrArctica'
+	column_type = 'talos'
+	use_normalization = True
 	projection_mode = 'diffraction'
 	mag_attr_name = 'CameraLength'
 	mag_scale = 1000
@@ -1906,6 +1983,22 @@ class DiffrTecnai(Tecnai):
 class DiffrGlacios(Glacios):
 	name = 'DiffrGlacios'
 	column_type = 'talos'
+	use_normalization = True
+	projection_mode = 'diffraction'
+	mag_attr_name = 'CameraLength'
+	mag_scale = 1000
+
+class DiffrKrios(Krios):
+	name = 'DiffrKrios'
+	column_type = 'titan'
+	use_normalization = True
+	projection_mode = 'diffraction'
+	mag_attr_name = 'CameraLength'
+	mag_scale = 1000
+
+class DiffrHalo(Halo):
+	name = 'DiffrHalo'
+	column_type = 'titan'
 	use_normalization = True
 	projection_mode = 'diffraction'
 	mag_attr_name = 'CameraLength'

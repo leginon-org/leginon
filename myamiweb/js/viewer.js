@@ -627,6 +627,7 @@ function newfile(view){
 	if (cquality = eval("jsquality"+view)) quality="&t="+cquality; else quality=""
 	if (cgradient = eval("jsgradient"+view)) gradient="&gr="+cgradient; else gradient=""
 	if (cautoscale= eval("jsautoscale"+view)) autoscale="&autoscale="+cautoscale; else autoscale=""
+	if (cuseauto= eval("jsuseauto"+view)) useauto="&useauto="+cuseauto; else useauto=""
 	if (cloadjpg= eval("jsloadjpg"+view)) loadjpg="&lj="+cloadjpg; else loadjpg=""
 	if (ccacheonly= eval("jscacheonly"+view)) cacheonly="&conly="+ccacheonly; else cacheonly=""
 	// particle picking
@@ -1049,6 +1050,15 @@ function setautoscale(viewname, state) {
 	}
 }
 
+function setuseauto(viewname, state) {
+	//This is here for completeness.  It seems to cause adjustment not
+	// functional, so it is never used in adjust.php
+	eval("jsuseauto"+viewname+"='"+state+"'")
+	if (b = eval("document.viewerform."+viewname+"useauto")) {
+		b.value=state
+	}
+}
+
 function setloadfromjpg(viewname, state) {
 	eval("jsloadjpg"+viewname+"='"+state+"'")
 	if (b = eval("document.viewerform."+viewname+"loadjpg")) {
@@ -1089,6 +1099,7 @@ function popUpAdjust(URL, view, param){
 	gradient = eval("jsgradient"+view)
 	autoscale = eval("jsautoscale"+view)
 	displayfilename = eval("jsdisplayfilename"+view)
+	useauto= eval("jsuseauto"+view)
 	loadjpg= eval("jsloadjpg"+view)
 	cacheonly= eval("jscacheonly"+view)
 	min = (min) ? "&pmin="+min : ""
@@ -1100,10 +1111,11 @@ function popUpAdjust(URL, view, param){
 	gradient = (gradient) ? "&gr="+gradient : ""
 	autoscale= (autoscale) ? "&autoscale="+autoscale : ""
 	displayfilename= (displayfilename) ? "&df="+displayfilename : ""
+	useauto= (useauto) ? "&useauto="+useauto : ""
 	loadjpg= (loadjpg) ? "&lj="+loadjpg : ""
 	cacheonly= (cacheonly) ? "&conly="+cacheonly : ""
 	param = (param) ? param : "left=0,top=0,height=370,width=370"
-	eval (view+"adjw"+" = window.open('"+URL+min+max+filter+fftbin+binning+quality+gradient+autoscale+displayfilename+loadjpg+cacheonly+"', '"+view+"adj', '"+param+"', 'toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=0,alwaysRaised=yes');")
+	eval (view+"adjw"+" = window.open('"+URL+min+max+filter+fftbin+binning+quality+gradient+autoscale+displayfilename+useauto+loadjpg+cacheonly+"', '"+view+"adj', '"+param+"', 'toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=0,alwaysRaised=yes');")
 }
 
 function popUpPtcl(URL, view, param) {

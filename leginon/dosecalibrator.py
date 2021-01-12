@@ -108,6 +108,8 @@ class DoseCalibrator(calibrator.ScreenCalibrator):
 			self.calclient.storeSensitivity(ht,sens)
 			self.logger.info('Camera sensitivity saved as %.3f counts/e and %d kV' %(sens,ht/1000))
 		else:
+			if sens == 0:
+				self.logger.error('Exact Zero sensitivity is not allowed')
 			self.logger.warning('Enter a pre-measured value before saving')
 		return
 	def abortCalibration(self):

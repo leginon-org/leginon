@@ -35,6 +35,9 @@ class Abort(Exception):
 class NoPixelSizeError(Exception):
 	pass
 
+class NoCameraLengthError(Exception):
+	pass
+
 class NoCalibrationError(Exception):
 	def __init__(self, *args, **kwargs):
 		if 'state' in kwargs:
@@ -345,6 +348,11 @@ class DoseCalibrationClient(CalibrationClient):
 		self.psizecal = PixelSizeCalibrationClient(node)
 
 	def storeSensitivity(self, ht, sensitivity,tem=None,ccdcamera=None):
+		try:
+			1.0/sensitivity
+		except ZeroDivisionError:
+			self.logger.error('Dose Rate of exact zero is not accepted')
+			return
 		newdata = leginondata.CameraSensitivityCalibrationData()
 		newdata['session'] = self.node.session
 		newdata['high tension'] = ht
@@ -517,6 +525,53 @@ class PixelSizeCalibrationClient(CalibrationClient):
 				mag = caldata['magnification']
 			except:
 				raise RuntimeError('Failed retrieving last pixelsize')
+			if mag not in last:
+				last[mag] = caldata
+		return last.values()
+
+
+class CameraLengthCalibrationClient(CalibrationClient):
+	'''
+	basic CalibrationClient for accessing a type of calibration involving
+	a matrix at a certain magnification
+	'''
+	def __init__(self, node):
+		CalibrationClient.__init__(self, node)
+
+	def researchCameraLengthData(self, tem, ccdcamera, mag):
+		queryinstance = leginondata.CameraLengthCalibrationData()
+		queryinstance['magnification'] = mag
+		self.setDBInstruments(queryinstance,tem,ccdcamera)
+		caldatalist = self.node.research(datainstance=queryinstance)
+		return caldatalist
+
+	def retrieveCameraLength(self, tem, ccdcamera, mag):
+		'''
+		finds the requested pixel size using magnification
+		'''
+		caldatalist = self.researchCameraLengthData(tem, ccdcamera, mag)
+		if len(caldatalist) < 1:
+			raise NoCameraLengthError()
+		caldata = caldatalist[0]
+		pixelsize = caldata['camera length']
+		return pixelsize
+
+	def time(self, tem, ccdcamera, mag):
+		pdata = self.researchCameraLengthData(tem, ccdcamera, mag)
+		if len(pdata) < 1:
+			timeinfo = None
+		else:
+			timeinfo = pdata[0].timestamp
+		return timeinfo
+
+	def retrieveLastCameraLengths(self, tem, camera):
+		caldatalist = self.researchCameraLengthData(tem, camera, None)
+		last = {}
+		for caldata in caldatalist:
+			try:
+				mag = caldata['magnification']
+			except:
+				raise RuntimeError('Failed retrieving last camera length')
 			if mag not in last:
 				last[mag] = caldata
 		return last.values()
@@ -1663,6 +1718,41 @@ class StageCalibrationClient(SimpleMatrixCalibrationClient):
 		stagepos = numpy.dot(matrix1, p1)
 		p2 = numpy.dot(matrix2inv, stagepos)
 		return p2
+
+class StageSpeedClient(CalibrationClient):
+	def __init__(self, node):
+		CalibrationClient.__init__(self, node)
+
+	#TODO fit data of rate vs actual_time-expected_time and then save
+	# slope and intercept.
+
+	def researchStageSpeedCorrection(self, tem, axis):
+		caldata = leginondata.StageSpeedCalibrationData(axis=axis)
+		if tem is None:
+			caldata['tem'] = self.instrument.getTEMData()
+		else:
+			caldata['tem'] = tem
+		results = caldata.query(results=1)
+		if results:
+			return results[0]['slope'], results[0]['intercept']
+		else:
+			return None, None
+
+	def getCorrectedTiltSpeed(self, tem, speed, target_angle):
+		'''
+		speed in degrees per second.
+		target_angle in degrees.
+		'''
+		slope, intercept = self.researchStageSpeedCorrection(tem, 'a')
+		if slope is None:
+			return speed
+		a = slope
+		b = intercept - target_angle/speed
+		c = target_angle
+		if b*b -4*a*c < 0:
+			return speed
+		new_speed = (-b - math.sqrt(b*b -4*a*c))/ (2*a)
+		return new_speed
 
 class StageTiltCalibrationClient(StageCalibrationClient):
 	def __init__(self, node):

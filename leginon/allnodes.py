@@ -114,6 +114,9 @@ noderegistry.registerNodeClass(Focuser,classtype)
 from singlefocuser import SingleFocuser
 noderegistry.registerNodeClass(SingleFocuser,classtype)
 
+from diffrfocuser import DiffrFocuser
+noderegistry.registerNodeClass(DiffrFocuser,classtype)
+
 from rctacquisition import RCTAcquisition
 noderegistry.registerNodeClass(RCTAcquisition,classtype)
 
@@ -143,6 +146,9 @@ noderegistry.registerNodeClass(SampleTargetFilter,classtype)
 
 from jahcfinder import JAHCFinder
 noderegistry.registerNodeClass(JAHCFinder,classtype)
+
+from extholefinder import ExtHoleFinder
+noderegistry.registerNodeClass(ExtHoleFinder,classtype)
 
 from dogfinder import DoGFinder
 noderegistry.registerNodeClass(DoGFinder,classtype)
@@ -201,6 +207,9 @@ noderegistry.registerNodeClass(BeamTiltCalibrator,classtype)
 
 from pixelsizecalibrator import PixelSizeCalibrator
 noderegistry.registerNodeClass(PixelSizeCalibrator,classtype)
+
+from cameralengthcalibrator import CameraLengthCalibrator
+noderegistry.registerNodeClass(CameraLengthCalibrator,classtype)
 
 from scalerotationcalibrator import ScaleRotationCalibrator
 noderegistry.registerNodeClass(ScaleRotationCalibrator,classtype)

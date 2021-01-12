@@ -14,6 +14,8 @@ from pyami import correlator, peakfinder
 import calibrationclient
 import math
 import time
+import datetime
+import os
 import threading
 import presets
 import copy
@@ -31,6 +33,7 @@ class DriftManager(watcher.Watcher):
 		'threshold': 3e-10,
 		'pause time': 2.5,
 		'timeout': 30,
+		'measure drift interval': 0,
 		'camera settings': cameraclient.default_settings,
 	}
 	eventinputs = watcher.Watcher.eventinputs + [event.DriftMonitorRequestEvent, event.PresetChangedEvent]
@@ -226,6 +229,7 @@ class DriftManager(watcher.Watcher):
 				self.logger.error(e)
 				self.logger.warning('Failed correlation and/or peak finding, Set to zero shift')
 				rows,cols = (0,0)
+				peak = (0,0)
 			dist = math.hypot(rows,cols)
 
 			self.setImage(pc, 'Correlation')
@@ -298,6 +302,39 @@ class DriftManager(watcher.Watcher):
 		pixsize = self.pixsizeclient.retrievePixelSize(tem, cam, mag)
 		self.logger.info('Pixel size %s' % (pixsize,))
 
+		loop_interval = self.settings['measure drift interval']
+		if loop_interval:
+			self._loopMeasureDrift(pixsize)
+		else:
+			# do it once without logging
+			current_drift = self._measureDrift(pixsize)
+
+	def _loopMeasureDrift(self, pixsize):
+		loop_interval = self.settings['measure drift interval']
+		log_file = os.path.abspath('./drift_result.txt')
+		self.logger.info('Writing into %s in nm/s' % log_file)
+		## acquire images, measure drift
+		self.abortevent.clear()
+		while 1:
+			if self.abortevent.isSet():
+				self.logger.info('abort loop.')
+				break
+			t0 = time.time()
+			datetimestr = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(t0))
+			current_drift = self._measureDrift(pixsize)
+			if os.path.isfile(log_file):
+				append_write = 'a'
+			else:
+				append_write = 'w'
+			f = open('drift_result.txt', append_write)
+			line = '%s\t%.3f\t%.3f\n' % (datetimestr, t0, current_drift*1e9)
+			f.write(line)
+			f.close()
+			t1 = time.time()
+			if t1-t0 < loop_interval:
+				time.sleep(loop_interval - (t1-t0))
+
+	def _measureDrift(self, pixsize):
 		## acquire first image
 		imagedata = self.acquireImage(0)
 		if imagedata is None:
@@ -348,3 +385,4 @@ class DriftManager(watcher.Watcher):
 		self.logger.info('Seconds %s' % seconds)
 		current_drift = meters / seconds
 		self.logger.info('Drift rate: %.2e' % (current_drift,))
+		return current_drift

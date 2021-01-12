@@ -16,6 +16,7 @@ import node
 import player
 import time
 import math
+import remoteserver
 
 class PauseRepeatException(Exception):
 	'''Raised within processTargetData method if the target should be
@@ -31,6 +32,10 @@ class BypassException(Exception):
 	'''Raised within processTargetData method if the target should be
 	bypassed'''
 	pass
+
+class FakeQueueNode(object):
+	def __init__(self,name):
+		self.name = '_'.join(name.split())
 
 class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 	'''
@@ -212,6 +217,23 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 				print '************** Loading new settings:', id
 				self.loadSettingsByID(id)
 
+	def postQueueCount(self, count):
+		if not hasattr(self, 'remote_queue_count'):
+			if self.remote:
+				# when targetwatcher is first initiated, getQueue may fail if application
+				# is loaded out of order.  Safer to do it here.
+				queue = self.getQueue()
+				# queue_node_class only needs name and logger attribute.
+				queue_node_class = FakeQueueNode(queue['label'])
+				# routing logger to self
+				queue_node_class.logger = self.logger
+				self.remote_queue_count = remoteserver.RemoteQueueCount(self.logger, self.session, queue_node_class, self.remote.leginon_base)
+			else:
+				# remoteserver.NO_REQUESTS=True
+				self.remote_queue_count = None
+		if self.remote_queue_count:
+			self.remote_queue_count.setQueueCount(count)
+
 	def processTargetList(self, newdata):
 		self.setStatus('processing')
 		mytargettype = self.settings['process target type']
@@ -258,6 +280,8 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			# start conditioner
 			condition_status = 'repeat'					# don't need a target
 			while condition_status == 'repeat':
+				if self.remote_pmlock:
+					self.remote_pmlock.setLock()
 				try:
 					self.setStatus('waiting')
 					self.fixCondition()
@@ -271,17 +295,33 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 					self.logger.error('Conditioning failed. Continue without it')
 					condition_status = 'abort'
 				self.beep()
+				if self.remote_pmlock:
+					self.remote_pmlock.setUnlock()
+			# pause but not stop
+			state = self.pauseCheck('paused after fix condition')
 
 			# processReference.  FIX ME, when it comes back, need to move more
 			# accurately than just send the position.
 			if self.settings['wait for reference']:				#For example ZLP alignment
 				self.setStatus('waiting')
+				if self.remote_pmlock:
+					self.remote_pmlock.setLock()
 				self.processReferenceTarget()
+				if self.remote_pmlock:
+					self.remote_pmlock.setUnlock()
 				self.setStatus('processing')
+			# pause but not stop
+			state = self.pauseCheck('paused after reference processing')
 			# start alignment manager.  May replace reference in the future
 			self.setStatus('waiting')
+			if self.remote_pmlock:
+				self.remote_pmlock.setLock()
 			self.fixAlignment()
+			if self.remote_pmlock:
+				self.remote_pmlock.setUnlock()
 			self.setStatus('processing')
+			# pause but not stop
+			state = self.pauseCheck('paused after fix alignment')
 			# This will bright z to the value before reference targets and alignment
 			# fixing.
 			self.logger.info('Setting z to original z of %.2f um' % (original_position['z']*1e6))
@@ -295,7 +335,11 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			# FIX ME: If autofocus involves stage tilt and self.targetlist_reset_tilt
 			# is at high tilt, it is better not to tilt first but if autofocus does
 			# not involve that, it needs to be tilted now.
+			if self.remote_pmlock:
+				self.remote_pmlock.setLock()
 			rejectstatus = self.rejectTargets(newdata) # will stay until node gives back a done
+			if self.remote_pmlock:
+				self.remote_pmlock.setUnlock()
 			if rejectstatus != 'success':
 				## report my status as reject status may not be a good idea
 				## all the time. This means if rejects were aborted
@@ -310,6 +354,8 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 				if rejectstatus != 'aborted':	 
 					return
 			self.logger.info('Passed targets processed, processing current target list')
+			# pause but not stop
+			state = self.pauseCheck('paused after waiting for processing rejected targets')
 
 		# Experimental
 		if False:
@@ -459,8 +505,11 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 					self.logger.exception('Process target failed: %s' % e)
 					process_status = 'exception'
 				finally:
-					self.resetComaCorrection()
-	
+					is_failed = self.resetComaCorrection()
+					if is_failed is True:
+						self.logger.warning('Failure here will repeat process target. Might double expose')
+						self.player.pause()
+						process_status = 'repeat'
 				self.stopTimer('processTargetData')
 
 				if process_status == 'repeat':

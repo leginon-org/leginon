@@ -312,7 +312,7 @@ def writeTiltSeriesStack(stackdir,stackname,ordered_mrc_files,apix=1):
 			if stshape[1:] == imageshape and stshape[0] == len(ordered_mrc_files):
 				apDisplay.printMsg("No need to get new stack of the tilt series")
 			else:
-				apImage.writeMrcStack(stackdir,stackname,order3dmrc_files, 1)
+				apImage.writeMrcStack(stackdir,stackname,ordered_mrc_files, 1)
 				mrc.updateFilePixelSize(stackpath,apixdict)
 		else:
 			apImage.writeMrcStack(stackdir,stackname,ordered_mrc_files, 1)

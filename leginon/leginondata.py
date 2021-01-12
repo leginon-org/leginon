@@ -200,6 +200,7 @@ camera_params = (
 	('gain index', int),
 	('system corrected', bool),
 	('use cds', bool),
+	('fast save', bool),
 )
 
 class ScopeEMData(EMData):
@@ -452,6 +453,16 @@ class ImageScaleAdditionCalibrationData(BeamProbeDependentCalibrationData):
 		)
 	typemap = classmethod(typemap)
 
+class StageSpeedCalibrationData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('tem', InstrumentData),
+			('axis', str), # only a axis now
+			('slope', float),		# delta-time / speed-in-degrees-per-second
+			('intercept', float), # time in seconds
+		)
+	typemap = classmethod(typemap)
+
 class MoveTestData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
@@ -570,6 +581,7 @@ class PresetData(InSessionData):
 			('align filter', str),
 			('use frames', tuple),
 			('readout delay', int),
+			('fast save', bool),
 			('use cds', bool), # K3 only
 		)
 	typemap = classmethod(typemap)
@@ -1430,6 +1442,7 @@ class PresetsManagerSettingsData(SettingsData):
 			('blank', bool),
 			('smallsize', int),
 			('idle minute', float), # minutes
+			('emission off', bool),
 		)
 	typemap = classmethod(typemap)
 
@@ -1486,6 +1499,7 @@ class DriftManagerSettingsData(SettingsData):
 			('beam tilt', float),
 			('camera settings', CameraSettingsData),
 			('timeout', int),
+			('measure drift interval', int),
 		)
 	typemap = classmethod(typemap)
 
@@ -1690,6 +1704,14 @@ class JAHCFinderSettingsData(TemplateTargetFinderSettingsData):
 			('template multiple', int),
 			('multihole angle', float),
 			('multihole spacing', float),
+		)
+	typemap = classmethod(typemap)
+
+class ExtHoleFinderSettingsData(TemplateTargetFinderSettingsData):
+	def typemap(cls):
+		return TemplateTargetFinderSettingsData.typemap() + (
+			('hole diameter', int),
+			('command', str),
 		)
 	typemap = classmethod(typemap)
 
@@ -1939,10 +1961,10 @@ class AcquisitionSettingsData(TargetWatcherSettingsData):
 			('reset tilt', bool),
 			('bad stats response', str),
 			('bad stats type', str),
+			('reacquire when failed', bool),
 			('recheck pause time', int),
 			('high mean', float),
 			('low mean', float),
-			('emission off', bool),
 			('target offset row', int),
 			('target offset col', int),
 			('correct image shift coma', bool),
@@ -2061,6 +2083,15 @@ class SingleFocuserSettingsData(AcquisitionSettingsData):
 class FocuserSettingsData(SingleFocuserSettingsData):
 	def typemap(cls):
 		return SingleFocuserSettingsData.typemap()
+	typemap = classmethod(typemap)
+
+class DiffrFocuserSettingsData(FocuserSettingsData):
+	def typemap(cls):
+		return FocuserSettingsData.typemap() + (
+			('tilt start', float), # degrees
+			('tilt range', float), # degrees
+			('tilt speed', float), # degrees per second
+		)
 	typemap = classmethod(typemap)
 
 class AutoExposureSettingsData(AcquisitionSettingsData):
@@ -3021,3 +3052,69 @@ class BlackStripeSettingsData(SettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class DiffractionSeriesData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('tilt start', float),
+			('tilt range', float),
+			('tilt speed', float),
+			('parent', AcquisitionImageData),
+			('preset', PresetData),
+			('emtarget', EMTargetData),
+			('series length', int),
+		)
+	typemap = classmethod(typemap)
+
+class DeletedDiffractionSeriesData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('series', DiffractionSeriesData),
+			('comment', str),
+		)
+	typemap = classmethod(typemap)
+
+class CameraLengthCalibrationData(CalibrationData):
+	def typemap(cls):
+		return CalibrationData.typemap() + (
+			('magnification', int),
+			('camera length', float), #meters
+			('comment', str),
+		)
+	typemap = classmethod(typemap)
+
+class CameraLengthCalibratorSettingsData(CalibratorSettingsData):
+	def typemap(cls):
+		return CalibratorSettingsData.typemap() + (
+			('d spacing', float),
+			('distance', float),
+		)
+	typemap = classmethod(typemap)
+
+class BeamstopCenterData(CalibrationData):
+	def typemap(cls):
+		return CalibrationData.typemap() + (
+			('beam center', dict), # mm as defined in smv file header
+		)
+	typemap = classmethod(typemap)
+
+#------EPU upload---------
+class EpuData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('name', str),
+			('preset name', str),
+			('datetime_string', str),
+			('version', int),
+			('image', AcquisitionImageData),
+			('parent', EpuData),
+		)
+	typemap = classmethod(typemap)
+
+class EpuMatrixData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('matrix', sinedon.newdict.DatabaseArrayType),
+			('preset name', str),
+			('magnification', int),
+		)
+	typemap = classmethod(typemap)

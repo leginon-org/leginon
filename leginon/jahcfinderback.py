@@ -402,7 +402,11 @@ class HoleFinder(object):
 			# Not to use points to determine Lattice but continue with extension
 			best_lattice = True
 		else:
-			best_lattice = lattice.pointsToLattice(points, spacing, tolerance)
+			if spacing > 0:
+				best_lattice = lattice.pointsToLattice(points, spacing, tolerance)
+			else:
+				# accept all points
+				best_lattice = lattice.pointsToFakeLattice(points)
 
 		if best_lattice is None:
 			best_lattice_points = []

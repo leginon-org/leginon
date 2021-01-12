@@ -155,27 +155,14 @@ class TargetHandler(object):
 			return False
 
 	def queueIdleFinish(self):
-		if not self.queueidleactive:
-			return
-		try:
-			self.instrument.tem.ColumnValvePosition = 'closed'
-			self.logger.warning('column valves closed')
-		except:
-			# This fails when tem is not available, likely after Leginon is half closed.
-			pass
-		if self.settings['emission off']:
-			self.instrument.tem.Emission = False
-			self.logger.warning('emission switched off')
-		self.queueidleactive = False
+		self.logger.warning('this idle timer is not used any more')
 
 	def toggleQueueTimeout(self):
-		if self.queueidleactive:
-			self.queueidleactive = False
-			self.logger.info('Queue timeout deactivated')
-		else:
-			self.queueidleactive = True
-			self.queueupdate.set()
-			self.logger.info('Queue timeout activated')
+		self.logger.warning('this idle timer is not used any more')
+
+	def postQueueCount(self, count):
+		# implemented in TargetWatcher
+		raise NotImplementedError()
 
 	def queueProcessor(self):
 		'''
@@ -201,6 +188,7 @@ class TargetHandler(object):
 			self.logger.info('received queue update')
 
 			active = self.getListsInQueue(self.getQueue())
+			self.postQueueCount(len(active))
 			self.total_queue_left_in_loop = len(active)
 			# process all target lists in the queue
 			for targetlist in active:
@@ -209,17 +197,32 @@ class TargetHandler(object):
 					self.logger.info('Queue aborted, skipping target list')
 				else:
 					# FIX ME: empty targetlist does not need to revert Z.
-					self.revertTargetListZ(targetlist)
-					self.processTargetList(targetlist)
+					try:
+						self.revertTargetListZ(targetlist)
+					except Exception as e:
+						self.logger.error('Failed to revert targetlist z: %s' % (e,))
+						break
+					try:
+						self.processTargetList(targetlist)
+					except Exception as e:
+						self.logger.error('Failed to process targetlist from queue: %s' % (e,))
+						self.logger.error('Fix and repeat submitting queue for processing')
+						break
 					state = self.player.wait()
 					if state != 'stopqueue':
 						self.player.play()
 				self.total_queue_left_in_loop -= 1
+				self.postQueueCount(self.total_queue_left_in_loop)
 				donetargetlist = leginondata.DequeuedImageTargetListData(session=self.session, list=targetlist, queue=self.targetlistqueue)
 				self.publish(donetargetlist, database=True)
 			self.player.play()
 			if self.settings['reset tilt']:
-				self.resetTiltStage()
+				# FIX ME: reset tilt and xy at the end of queue.  This is different
+				# from non-queue case.
+				try:
+					self.resetTiltStage()
+				except Exception as e:
+					self.logger.error('Failed to x,y,a of the stage: %s' %(e,))
 
 	def resetTiltStage(self):
 		zerostage = {'a':0.0}
@@ -267,6 +270,7 @@ class TargetHandler(object):
 	def getQueue(self, label=None):
 		'''
 		This returns the QueueData for this session and label.
+		self.targetlistqueue is set during this call
 		'''
 		if hasattr(self,'targetlistqueue'):
 			# This is set to the Targeting node QueueData if the queue has been published there.

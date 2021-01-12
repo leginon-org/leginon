@@ -72,7 +72,7 @@ def createIndices2(a,b,angle,limiting_shape='ellipse',offset=False,odd=False,til
 		# keep center offset pattern consistent
 		maxab = maxab + 1
 	maxind = 2 + 2 * maxab
-	shape = maxind,maxind
+	shape = int(maxind),int(maxind)
 	ind = numpy.indices(shape, numpy.float32)
 	if offset:
 		adds = numpy.ma.where(ind[0] % 2 == 0, numpy.zeros(shape),numpy.ones(shape)*0.5)

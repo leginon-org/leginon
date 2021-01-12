@@ -234,6 +234,7 @@ class LensesSizer(wx.StaticBoxSizer):
 		self.addXY('Shift (raw)', 'Image')
 		self.addXY('Shift', 'Beam')
 		self.addXY('Tilt', 'Beam')
+		self.addXY('Shift', 'Diffraction')
 		self.addXY('Objective', 'Stigmator')
 		self.addXY('Diffraction', 'Stigmator')
 		self.addXY('Condenser', 'Stigmator')
@@ -681,6 +682,9 @@ class ParameterMixin(object):
 					self.setParameters(value, parametermap[key])
 				else:
 					setControl(parametermap[key], value)
+			except ValueError as e:
+				#print(key,value,e)
+				pass
 			except KeyError:
 				pass
 
@@ -789,6 +793,10 @@ class TEMPanel(wx.Panel, ParameterMixin):
 			'BeamShift': {
 				'x': self.szlenses.xy['Beam']['Shift']['x'],
 				'y': self.szlenses.xy['Beam']['Shift']['y'],
+			},
+			'DiffractionShift': {
+				'x': self.szlenses.xy['Diffraction']['Shift']['x'],
+				'y': self.szlenses.xy['Diffraction']['Shift']['y'],
 			},
 			'BeamTilt': {
 				'x': self.szlenses.xy['Beam']['Tilt']['x'],

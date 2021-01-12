@@ -1,0 +1,14 @@
+#####################################################################
+## This config file describes TVIPS F416 configuration that can not
+## be set through scripting.  These configurations must match
+## EMMENU configuration
+## 
+[debug]
+ALL = False
+CAMERA = False
+[sensor]
+PIXELSIZE_UM%X = 15.5
+PIXELSIZE_UM%Y = 15.5
+[recorder]
+DIRECTORY = C:\Temp\
+DEFAULT_FILENAME = Image

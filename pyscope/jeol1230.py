@@ -551,7 +551,7 @@ class Jeol1230(tem.TEM):
 		# place holder. Not implemented
 		return {'x':0.0,'y':0.0}
 
-	def setDiffractionShift(self):
+	def setDiffractionShift(self, value):
 		# get diffraction shift in meter. Not implemented
 		pass
 
@@ -990,3 +990,12 @@ class Jeol1230(tem.TEM):
 	def getBeamBlankedDuringCameraExchange(self):
 		# Keep it off because gun shutter is too slow.
 		return False
+
+	def getProjectionMode(self):
+		# valid values: imaging or diffraction
+		return 'imaging'
+
+	def setProjectionMode(self, value):
+		# valid values: imaging or diffraction
+		pass
+

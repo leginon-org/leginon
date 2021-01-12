@@ -9,6 +9,7 @@
 
 require_once "inc/leginon.inc";
 require_once "inc/graph.inc";
+require_once "inc/stats.inc";
 
 $defaultId= 1445;
 $defaultpreset='enn';
@@ -24,8 +25,13 @@ $height=$_GET['h'];
 
 $thicknessdata = $leginondata->getIceThickness($sessionId, $preset);
 $alsthicknessdata = $leginondata->getObjIceThickness($sessionId);
-
-
+# filter out the duplicates here
+foreach($alsthicknessdata as $t) {
+	if ( !preg_match('/-[a-z](\.mrc)?$/',$t['filename'] ) and ( !preg_match('/-(DW|td)(\.mrc)?$/',$t['filename']))) {
+		$data[] = $t['thickness'];
+		$filtered_thicknessdata[] = $t;
+	}
+}
 
 	$hlthick = array();
 	$hlcount = array();
@@ -57,7 +63,8 @@ $alsthicknessdata = $leginondata->getObjIceThickness($sessionId);
 #	echo "als_thickness ParentID <br>";
 # determine average calculated thickness for all images coming from the same hole
 #
-	foreach($alsthicknessdata as $t) {
+	#foreach($alsthicknessdata as $t) {
+	foreach($filtered_thicknessdata as $t) {
 		$thick['als'] = $t['thickness'];
 		$p = $leginondata->getParent($t['DEF_id']) ;
 		$thick['hl'] = $thdata[$p['parentId']];
@@ -106,13 +113,20 @@ if ($viewdata) {
 ####	#
 	$keys = array_keys($alscount);
 	echo "key     alsthickness hl thickness <br>";
+	$xdata = array();
+	$ydata=array();
 	foreach ($keys as $key) {
 		if (array_key_exists($key,$hlthick)) {
 			echo $key . " " . $alsthick[$key] . " " . $hlthick[$key] . "<br>";
 			$p = array('hl_thickness' => $hlthick[$key], 'als_thickness' => $alsthick[$key]) ;
 			$plt_thicknessdata2[]  = $p;
+			$xdata[] = $hlthick[$key];
+			$ydata[] = $alsthick[$key];
 		}
 	}
+	$trendarray = linear_regression($xdata,$ydata);
+	print "<br> LINEAR REGRESSION STATS";
+	printf( "<br> slope is %.2f, intercept is %.2f, correlation (r-squared) is %.3f",  $trendarray['slope'], $trendarray['intercept'], $trendarray['correlation'] ) ;
 
 ####
 	exit;

@@ -1,9 +1,22 @@
 #import comtypes.client
+import os
+import subprocess
+import glob
+import shutil
+import sys
+
 import ccdcamera
 import time
 import simscripting
 import falconframe
+from pyscope import tia_display
 from pyami import moduleconfig
+
+try:
+	from comtypes.safearray import safearray_as_ndarray
+	USE_SAFEARRAY_AS_NDARRAY = True
+except ImportError:
+	USE_SAFEARRAY_AS_NDARRAY = False
 
 SIMULATION = False
 class FEIAdvScriptingConnection(object):
@@ -13,7 +26,6 @@ class FEIAdvScriptingConnection(object):
 
 if SIMULATION:
 	# There is problem starting numpy in FEI 2.9 software as FEI version of python2.7 becomes the default.
-	import numpy
 	import simscripting
 	connection = simscripting.Connection()
 else:
@@ -30,6 +42,31 @@ configs = moduleconfig.getConfigured('fei.cfg')
 ## Muliple calls to get_feiadv will return the same connection.
 ## Store the handle in the com module, which is safer than in
 ## this module due to multiple imports.
+def chooseTEMAdvancedScriptingName():
+	if 'version' not in configs.keys() or 'tfs_software_version' not in configs['version'].keys():
+		print 'Need version section in fei.cfg. Please update it'
+		raw_input('Hit return to exit')
+		sys.exit(0)
+	version_text = configs['version']['tfs_software_version']
+	bits = version_text.split('.')
+	if len(bits) != 3 or not bits[1].isdigit():
+		print 'Unrecognized Version number, not in the format of %d.%d.%d'
+		raw_input('Hit return to exit')
+	major_version = int(bits[0])
+	minor_version = int(bits[1])
+	if 'software_type' not in  configs['version'].keys():
+		print 'Need software_type in version section in fei.cfg. Please update it'
+		raw_input('Hit return to exit')
+		sys.exit(0)
+	software_type = configs['version']['software_type'].lower()
+	if software_type == 'titan':
+		# titan major version is one higher than talos
+		major_version += 1
+	if major_version > 2 or minor_version >= 15:
+		return '2'
+	else:
+		return '1'
+
 def get_feiadv():
 	global connection
 	if connection.instr is None:
@@ -37,7 +74,8 @@ def get_feiadv():
 			comtypes.CoInitializeEx(comtypes.COINIT_MULTITHREADED)
 		except:
 			comtypes.CoInitialize()
-		connection.instr = comtypes.client.CreateObject('TEMAdvancedScripting.AdvancedInstrument.1')
+		type_name = 'TEMAdvancedScripting.AdvancedInstrument.' + chooseTEMAdvancedScriptingName()
+		connection.instr = comtypes.client.CreateObject(type_name)
 		connection.acq = connection.instr.Acquisitions
 		connection.csa = connection.acq.CameraSingleAcquisition
 		connection.cameras = connection.csa.SupportedCameras
@@ -64,6 +102,7 @@ class FeiCam(ccdcamera.CCDCamera):
 		self.setCameraBinnings()
 		self.setReadoutLimits()
 		self.initSettings()
+		self.tia_display = tia_display.TIA()
 
 	def __getattr__(self, name):
 		# When asked for self.camera, instead return self._camera, but only
@@ -96,6 +135,7 @@ class FeiCam(ccdcamera.CCDCamera):
 		self.exposuretype = 'normal'
 		self.start_frame_number = 1
 		self.end_frame_number = None
+		self.display_name = None
 
 	def setReadoutLimits(self):
 		readout_dicts = {READOUT_FULL:1,READOUT_HALF:2,READOUT_QUARTER:4}
@@ -126,7 +166,7 @@ class FeiCam(ccdcamera.CCDCamera):
 		Read from camera capabilities the supported binnings and
 		set self.binning_limits and the self.binning_limit_objs
 		'''
-		self.binning_limit_objs= self.capabilities.SupportedBinnings
+		self.binning_limit_objs= self.camera_capabilities.SupportedBinnings
 		count = self.binning_limit_objs.Count
 		binning_limits = []
 		for index in range(count):
@@ -180,7 +220,7 @@ class FeiCam(ccdcamera.CCDCamera):
 		# set attributes
 		self.camera = this_camera
 		self.camera_settings = self.csa.CameraSettings
-		self.capabilities = self.camera_settings.Capabilities
+		self.camera_capabilities = self.camera_settings.Capabilities
 
 	def setConfig(self, **kwargs):
 		'''
@@ -205,7 +245,7 @@ class FeiCam(ccdcamera.CCDCamera):
 		except:
 			raise
 
-	def getConfig(self, param):
+	def _getConfig(self, param):
 		if param == 'readout':
 			return self.camera_settings.ReadoutArea
 		elif param == 'binning':
@@ -228,7 +268,7 @@ class FeiCam(ccdcamera.CCDCamera):
 		p = self.camera.PixelSize #in meters
 		return {'x': p.Width, 'y': p.Height}
 
-	def getReadoutAreaKey(self,unbindim, off):
+	def _getReadoutAreaKey(self,unbindim, off):
 		size = self.getCameraSize()
 		if unbindim['x']+off['x'] > size['x'] or unbindim['y']+off['y'] > size['y']:
 			raise ValueError('defined readout area outside the camera')
@@ -242,7 +282,7 @@ class FeiCam(ccdcamera.CCDCamera):
 				return k
 		raise ValueError('Does not fit any defined readout area')
 
-	def getReadoutOffset(self, key, binned_full_off):
+	def _getReadoutOffset(self, key, binned_full_off):
 		limit_off = self.limit_off[key]
 		return {'x':binned_full_off['x']-limit_off['x']/self.binning['x'],'y':binned_full_off['x']-limit_off['y']/self.binning['y']}
 
@@ -253,7 +293,7 @@ class FeiCam(ccdcamera.CCDCamera):
 		# final range
 		unbindim = {'x':self.dimension['x']*binning['x'], 'y':self.dimension['y']*binning['y']}
 		unbinoff = {'x':self.offset['x']*binning['x'], 'y':self.offset['y']*binning['y']}
-		readout_key = self.getReadoutAreaKey(unbindim, unbinoff)
+		readout_key = self._getReadoutAreaKey(unbindim, unbinoff)
 		exposure = self.exposure/1000.0
 
 		# send it to camera
@@ -268,6 +308,11 @@ class FeiCam(ccdcamera.CCDCamera):
 	def getImage(self):
 		# The following is copied from ccdcamera.CCDCamera since
 		# super (or self.as_super as used in de.py) does not work in proxy call
+		t0 = time.time()
+		# BUG: IsActive only detect correctly with frame saving, not
+		# camera availability
+		while self.csa.IsActive:
+			time.sleep(0.1)
 		if self.readoutcallback:
 			name = str(time.time())
 			self.registerCallback(name, self.readoutcallback)
@@ -276,6 +321,24 @@ class FeiCam(ccdcamera.CCDCamera):
 			result=self._getImage()
 			self.csa.Wait()
 			return result
+
+	def _getSafeArray(self):
+		# 64-bit pyscope/safearray does not work with newer 64-bit comtypes installation.
+		# use safearray_as_ndarray instead.
+		if USE_SAFEARRAY_AS_NDARRAY:
+			with safearray_as_ndarray:
+				return self.im.AsSafeArray
+		else:
+			return self.im.AsSafeArray
+
+	def _modifyArray(self, arr):
+		rk = self._getConfig('readout')
+		# 64-bit pyscope/safearray does not work with newer 64-bit comtypes installation.
+		# use safearray_as_ndarray instead.
+		arr = arr.reshape((self.limit_dim[rk]['y']/self.binning['y'],self.limit_dim[rk]['x']/self.binning['x']))
+		if USE_SAFEARRAY_AS_NDARRAY:
+			arr = arr.T
+		return arr
 
 	def _getImage(self):
 		'''
@@ -325,7 +388,7 @@ class FeiCam(ccdcamera.CCDCamera):
 			else:
 				raise RuntimeError('Error camera acquiring: %s' % (e,))
 		try:
-			arr = self.im.AsSafeArray
+			arr = self._getSafeArray()
 		except Exception, e:
 			if self.getDebugCamera():
 				print 'Camera array:',e
@@ -335,7 +398,7 @@ class FeiCam(ccdcamera.CCDCamera):
 				print 'No array in memory, yet. Try again.'
 			self.csa.Wait()
 			try:
-				arr = self.im.AsSafeArray
+				arr = self._getSafeArray()
 			except Exception, e:
 				if self.getDebugCamera():
 					print 'Camera array 2nd try:',e
@@ -350,10 +413,10 @@ class FeiCam(ccdcamera.CCDCamera):
 		return arr
 
 	def modifyImage(self, arr):
-		rk = self.getConfig('readout')
+		rk = self._getConfig('readout')
 		# reshape to 2D
 		try:
-			arr = arr.reshape((self.limit_dim[rk]['y']/self.binning['y'],self.limit_dim[rk]['x']/self.binning['x']))
+			arr = self._modifyArray(arr)
 		except AttributeError, e:
 			if self.getDebugCamera():
 				print 'comtypes did not return an numpy 2D array, but %s' % (type(arr))
@@ -363,7 +426,7 @@ class FeiCam(ccdcamera.CCDCamera):
 				print 'modify array error',e
 			raise
 		#Offset to apply to get back the requested area
-		readout_offset = self.getReadoutOffset(rk, self.offset)
+		readout_offset = self._getReadoutOffset(rk, self.offset)
 		try:
 			if self.dimension['x'] < arr.shape[1]:
 				arr=arr[:,readout_offset['x']:readout_offset['x']+self.dimension['x']]
@@ -436,6 +499,89 @@ class FeiCam(ccdcamera.CCDCamera):
 	def getEnergyFiltered(self):
 		return False
 
+	def startMovie(self, filename, exposure_time_ms):
+		exposure_time_s = exposure_time_ms/1000.0
+		if self.display_name:
+			try:
+				self.tia_display.closeDisplayWindow(self.display_name)
+			except ValueError, e:
+				print 'TIA display %s can not be closed' % self.display_name
+		self._clickAcquire(exposure_time_s)
+
+	def stopMovie(self, filename, exposure_time_ms):
+		exposure_time_s = exposure_time_ms/1000.0
+		self._clickAcquire(exposure_time_s)
+		self.display_name = self.tia_display.getActiveDisplayWindowName()
+		print 'movie name: %s' % filename
+		time.sleep(exposure_time_s)
+		self._saveMovie(filename)
+		self._waitForSaveMoveDone()
+		self._moveMovie()
+
+	def _waitForSaveMoveDone(self):
+		timeout = 120
+		t0 = time.time()
+		current_length = 0
+		last_series_length = current_length
+		while current_length < 2 or last_series_length < current_length:
+			if time.time()-t0 > timeout:
+				raise ValueError('Movie saving failed. File saving not finished after %d seconds.' % timeout)
+			time.sleep(1.0)
+			last_series_length = current_length
+			current_length = self._findSeriesLength()
+		# final value
+		self.series_length = self._findSeriesLength()
+
+	def _saveMovie(self, filename=''):
+		exepath = self.getFeiConfig('camera','autoit_tia_export_series_exe_path')
+		if exepath and os.path.isfile(exepath):
+			if filename:
+				self.target_code = filename.split('.bin')[0]
+				# self.series_length should be 0 at this point
+				self.series_length = self._findSeriesLength()
+				subprocess.call("%s %s" % (exepath, self.target_code))
+			else:
+				raise ValueError('movie saving filename not provided')
+		else:
+			raise NotImplementedError()
+
+	def _moveMovie(self):
+		data_dir = self.getFeiConfig('camera','autoit_tia_exported_data_dir')
+		new_dir = self.getFeiConfig('camera','tia_exported_data_network_dir')
+		if not new_dir:
+			return
+		if not os.path.isdir(new_dir):
+			raise ValueError('TIA exported data network Directory %s is not a directory' % (new_dir,))
+		if data_dir == new_dir:
+			# nothing to do
+			return
+		else:
+			if not self.target_code:
+				raise ValueError('movie target code not yet set')
+			pattern = os.path.join(data_dir, '%s*.bin' % (self.target_code,))
+			files = glob.glob(pattern)
+			for f in files:
+				shutil.move(f, new_dir)
+
+	def _findSeriesLength(self):
+		if not self.target_code:
+			raise ValueError('movie target code not yet set')
+		data_dir = self.getFeiConfig('camera','autoit_tia_exported_data_dir')
+		pattern = os.path.join(data_dir, '%s*.bin' % (self.target_code,))
+		length = len(glob.glob(pattern))
+		return length
+
+	def _clickAcquire(self, exposure_time_s=None):
+		# default is not checking
+		exepath = self.getFeiConfig('camera','autoit_tui_acquire_exe_path')
+		if exepath and os.path.isfile(exepath):
+			if exposure_time_s is not None:
+				subprocess.call("%s %.3f" % (exepath, exposure_time_s))
+			else:
+				subprocess.call(exepath)
+		else:
+			raise NotImplementedError()
+
 class Ceta(FeiCam):
 	name = 'Ceta'
 	camera_name = 'BM-Ceta'
@@ -450,6 +596,7 @@ class Falcon3(FeiCam):
 	camera_name = 'BM-Falcon'
 	binning_limits = [1,2,4]
 	electron_counting = False
+	base_frame_time = 0.025 # seconds
 	# non-counting Falcon3 is the only camera that returns array aleady averaged by frame
 	# to keep values in more reasonable range.
 	intensity_averaged = True
@@ -469,7 +616,11 @@ class Falcon3(FeiCam):
 
 	def initFrameConfig(self):
 		self.frameconfig = falconframe.FalconFrameRangeListMaker(False)
+		self.frameconfig.setBaseFrameTime(self.base_frame_time)
 		falcon_image_storage = self.camera_settings.PathToImageStorage #read only
+		falcon_image_storage = 'z:\\TEMScripting\\BM-Falcon\\'
+		if 'falcon_image_storage_path' in configs['camera'].keys() and configs['camera']['falcon_image_storage_path']:
+			falcon_image_storage = configs['camera']['falcon_image_storage_path']
 		print 'Falcon Image Storage Server Path is ', falcon_image_storage
 		sub_frame_dir = self.getFeiConfig('camera','frame_subpath')
 		try:
@@ -560,7 +711,8 @@ class Falcon3(FeiCam):
 			# Use all available frames
 			rangelist = self.frameconfig.makeRangeListFromNumberOfBaseFramesAndFrameTime(max_nframes,frame_time_second)
 			if self.getDebugCamera():
-				print 'rangelist', rangelist
+				print 'rangelist', rangelist, len(rangelist)
+				print '#base', map((lambda x:x[1]-x[0]),rangelist)
 			if rangelist:
 				# modify frame time in case of uneven bins
 				self.dosefrac_frame_time = movie_exposure_second / len(rangelist)
@@ -605,3 +757,15 @@ class Falcon3EC(Falcon3):
 	binning_limits = [1,2,4]
 	electron_counting = True
 	intensity_averaged = False
+	base_frame_time = 0.025 # seconds
+
+class Falcon4EC(Falcon3EC):
+	name = 'Falcon4EC'
+	camera_name = 'BM-Falcon'
+	binning_limits = [1,2,4]
+	electron_counting = True
+	intensity_averaged = False
+	base_frame_time = 0.02907 # seconds
+
+	def setInserted(self, value):
+		super(Falcon4EC, self).setInserted(value)

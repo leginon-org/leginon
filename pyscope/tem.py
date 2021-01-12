@@ -6,6 +6,7 @@
 #
 
 import baseinstrument
+import math
 
 class TEM(baseinstrument.BaseInstrument):
 	name = None
@@ -44,6 +45,7 @@ class TEM(baseinstrument.BaseInstrument):
 		{'name': 'BeamBlank', 'type': 'property'},
 		{'name': 'BeamShift', 'type': 'property'},
 		{'name': 'BeamTilt', 'type': 'property'},
+		{'name': 'BeamstopPosition', 'type': 'property'},
 		{'name': 'ColumnValvePosition', 'type': 'property'},
 		{'name': 'CorrectedStagePosition', 'type': 'property'},
 		{'name': 'DarkFieldMode', 'type': 'property'},
@@ -90,6 +92,7 @@ class TEM(baseinstrument.BaseInstrument):
 		{'name': 'relaxBeam', 'type': 'method'},
 		{'name': 'runBufferCycle', 'type': 'method'},
 		{'name': 'nextPhasePlate', 'type': 'method'},
+		{'name': 'getStageLimits', 'type': 'method'},
 
 		## optional:
 		{'name': 'EnergyFilter', 'type': 'property'},
@@ -147,6 +150,14 @@ class TEM(baseinstrument.BaseInstrument):
 		self.projection_submode_map[mag] = (mode_name,mode_id)
 		return overwritten
 
+	def getProjectionSubModeId(self):
+		mag = self.getMagnification()
+		try:
+			return self.projection_submode_map[mag][1]
+		except:
+			# get an error if setProjectionSubModeMapping is not called from leginon/EM.py
+			raise NotImplementedError()
+
 	def getProjectionSubModeName(self):
 		mag = self.getMagnification()
 		try:
@@ -165,13 +176,13 @@ class TEM(baseinstrument.BaseInstrument):
 		print "next position"
 
 	def getColumnPressure(self):
-		return 1.0
+		return 1.0 #Pascal
 
 	def getProjectionChamberPressure(self):
-		return 1.0
+		return 1.0 #Pascal
 
 	def getBufferTankPressure(self):
-		return 1.0
+		return 1.0 #Pascal
 
 	def getBeamBlankedDuringCameraExchange(self):
 		return True
@@ -344,6 +355,15 @@ class TEM(baseinstrument.BaseInstrument):
 		# do nothing.
 		pass
 
-	def resetStageSpeed(self, value):
+	def resetStageSpeed(self):
 		# do nothing.
 		pass
+
+	def getStageLimits(self):
+		limits =  {
+								'x':(-0.001,0.001),
+								'y':(-0.001,0.001),
+								'z':(-0.0004,0.0004),
+								'a':(math.radians(-70),math.radians(70)),
+		}
+		return limits

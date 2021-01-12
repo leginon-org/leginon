@@ -21,8 +21,13 @@ simulation = False
 if simulation:
 	print 'USING SIMULATION SETTINGS'
 	import simgatan
+	logdir = os.getcwd()
 else:
 	import gatansocket
+	# on Windows
+	logdir = os.path.join(os.environ['USERPROFILE'],'Documents','myami_log')
+	if not os.path.isdir(logdir):
+		os.mkdir(logdir)
 
 def imagefun_bin(image, binning0, binning1=0):
 	'''
@@ -46,6 +51,12 @@ def simconnect():
 	return simgatan.SimGatan()
 
 configs = moduleconfig.getConfigured('dmsem.cfg')
+
+if 'save_log' in configs['logger'].keys() and configs['logger']['save_log'] is True:
+	logfile = os.path.join(logdir,time.strftime('%Y-%m-%d_%H_%M', time.localtime(time.time()))+'.log')
+	f=open(logfile,'w')
+	f.write('framename\ttime_delta\n')
+	f.close()
 
 class DMSEM(ccdcamera.CCDCamera):
 	ed_mode = None
@@ -118,6 +129,13 @@ class DMSEM(ccdcamera.CCDCamera):
 				return None
 			return configs[optionname][itemname]
 
+	def writeLog(self,line):
+		if not self.getDmsemConfig('logger', 'save_log'):
+			return
+		if logfile and os.path.isfile(logfile):
+			f = open(logfile,'a')
+			f.write(line)
+			f.close()
 	def info_print(self, msg):
 		v = self.getDmsemConfig('logger', 'verbosity')
 		if v is None or v > 0:
@@ -219,7 +237,7 @@ class DMSEM(ccdcamera.CCDCamera):
 
 		return False
 
-	def getAcqBinning(self):
+	def _getAcqBinning(self):
 		'''
 		Camera binning given for acquisition is based on physical pixel,
 		regardless of ed mode usually.
@@ -234,26 +252,26 @@ class DMSEM(ccdcamera.CCDCamera):
 				physical_binning /= binscale
 		return physical_binning, binscale
 
-	def getAcqDimension(self, acq_binning, binscale):
+	def _getAcqDimension(self, acq_binning, binscale):
 		acq_dimension = self.camsize.copy()
 		physical_binning = binscale * acq_binning
 		acq_dimension['x'] = acq_dimension['x']/physical_binning
 		acq_dimension['y'] = acq_dimension['y']/physical_binning
 		return acq_dimension
 
-	def getAcqOffset(self, acq_binning, binscale):
+	def _getAcqOffset(self, acq_binning, binscale):
 		# all software offset for now
 		acq_offset = self.acqoffset.copy()
 		return acq_offset
 
-	def getAcqBinningAndROI(self):
+	def _getAcqBinningAndROI(self):
 		'''
 		Calculating the acquisition boundary and binning to send
 		to Gatan socket.
 		'''
-		acq_binning, binscale = self.getAcqBinning()
-		acq_dimension = self.getAcqDimension(acq_binning,binscale)
-		acq_offset = self.getAcqOffset(acq_binning,binscale)
+		acq_binning, binscale = self._getAcqBinning()
+		acq_dimension = self._getAcqDimension(acq_binning,binscale)
+		acq_offset = self._getAcqOffset(acq_binning,binscale)
 		height = acq_offset['y']+acq_dimension['y']
 		width = acq_offset['x']+acq_dimension['x']
 		if self.needConfigDimensionFlip(height,width):
@@ -279,7 +297,7 @@ class DMSEM(ccdcamera.CCDCamera):
 		# I think it's negative...
 		shutter_delay = -self.readout_delay_ms / 1000.0
 
-		acq_binning, left, top, right, bottom, width, height = self.getAcqBinningAndROI()
+		acq_binning, left, top, right, bottom, width, height = self._getAcqBinningAndROI()
 		correction_flags = self.getCorrectionFlags()
 
 		acqparams = {
@@ -326,13 +344,18 @@ class DMSEM(ccdcamera.CCDCamera):
 		self.debug_print('received shape %s' %(image.shape,))
 
 		if self.save_frames or self.align_frames:
-			if self.getDoEarlyReturn():
-				if self.getEarlyReturnFormat() == '8x8':
+			if self.save8x8:
+				if not self.getDoEarlyReturn():
+					#fake 8x8 image with the same mean and standard deviation for fast transfer
+					fake_image = self.base_fake_image*image.std() + image.mean()*numpy.ones((8,8))
+					return fake_image
+				else:
 					if self.getEarlyReturnFrameCount() > 0:
 						#fake 8x8 image with the same mean and standard deviation for fast transfer
 						fake_image = self.base_fake_image*image.std() + image.mean()*numpy.ones((8,8))
 					else:
 						fake_image = numpy.zeros((8,8))
+					self.writeLog('%s\t%.3f\n' % (self.getPreviousRawFramesName(), time.time()-t0))
 					return fake_image
 			image = self._modifyImageOrientation(image)
 		image = self._modifyImageShape(image)
@@ -349,7 +372,7 @@ class DMSEM(ccdcamera.CCDCamera):
 
 	def _modifyImageShape(self, image):
 		image = self._fixBadShape(image)
-		acq_binning, binscale = self.getAcqBinning()
+		acq_binning, binscale = self._getAcqBinning()
 		added_binning = self.binning['x'] / acq_binning
 		if added_binning > 1:
 			# software binning
@@ -498,6 +521,10 @@ class DMSEM(ccdcamera.CCDCamera):
 		Enable/Disable post column energy filter
 		by retracting the slit
 		'''
+		# setEnergyFilter takes about 1.4 seconds even if in the same state.
+		# avoid it to save time.
+		if self.getEnergyFilter() == value:
+			return
 		if value:
 			i = 1
 		else:
@@ -614,6 +641,7 @@ class GatanK2Base(DMSEM):
 		super(GatanK2Base, self).__init__()
 		# set default return frame count.
 		self.setEarlyReturnFrameCount(None)
+		self.save8x8 = False
 
 	def custom_setup(self):
 		'''
@@ -666,6 +694,14 @@ class GatanK2Base(DMSEM):
 
 	def isDoseFracOn(self):
 		return self.save_frames or self.align_frames
+
+	def getFastSave(self):
+		# Fastsave saves a small image arrary for frame camera to reduce handling time.
+		return self.save8x8
+
+	def setFastSave(self, state):
+		# Fastsave saves a smaller image arrary for frame camera to reduce handling time.
+		self.save8x8 = state
 
 	def calculateK2Params(self):
 		frame_time = self.dosefrac_frame_time
@@ -748,10 +784,6 @@ class GatanK2Base(DMSEM):
 
 	def getDoEarlyReturn(self):
 		return bool(self.getDmsemConfig('k2','do_early_return'))
-
-	def getEarlyReturnFormat(self):
-		# valid values: 8x8, 256x256
-		return self.getDmsemConfig('k2','early_return_format')
 
 	def getSaveLzwTiffFrames(self):
 		return bool(self.getDmsemConfig('k2','save_lzw_tiff_frames'))
@@ -862,7 +894,7 @@ class GatanK2Super(GatanK2Base):
 		'''
 		acqparams = super(GatanK2Super,self).calculateAcquireParams()
 		# K2 SerialEMCCD native is in counting
-		acq_binning, binscale = self.getAcqBinning()
+		acq_binning, binscale = self._getAcqBinning()
 		acqparams['height'] *= binscale
 		acqparams['width'] *= binscale
 		return acqparams
@@ -948,7 +980,7 @@ class GatanK3(GatanK2Base):
 		'''
 		return 0
 
-	def getAcqBinning(self):
+	def _getAcqBinning(self):
 		# K3 SerialEMCCD native is in super resolution
 		acq_binning = self.binning['x']
 		if self.binning['x'] > 2:

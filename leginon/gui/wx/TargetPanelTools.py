@@ -263,6 +263,9 @@ class TargetType(object):
 		self.targets = []
 		for target in targets:
 			if isinstance(target, dict):
+				# targets from remote or manual selections do not have stats.
+				if 'stats' not in target.keys():
+					target['stats'] = None
 				self.targets.append(StatsTarget(target['x'], target['y'], self, target['stats']))
 			elif isinstance(target, Target):
 				self.targets.append(Target(target.x, target.y, self))
