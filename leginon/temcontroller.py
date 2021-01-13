@@ -372,16 +372,19 @@ class TEMController(node.Node):
 			if self.loaded_grid_slot is None:
 				self.logger.info('Unknown loaded grid. Set loaded grid to empty slot %s' % slot_name)
 				self.loaded_grid_slot = slot_number
+				is_success = True
 			elif self.loaded_grid_slot == slot_number:
-				self.logger.info('Grid from slot is loaded. Nothing to do')
+				self.logger.info('Grid from slot %s is loaded. Nothing to do' % slot_number)
+				is_success = True
 			else:
 				self.logger.warning('Detected empty slot. Can not load.')
+				is_success = False
 			self.panel.setTEMParamDone()
-			return
+			return is_success
 		if state != 'occupied':
 			self.logger.warning('Invalid grid slot state. Can not load.')
 			self.panel.setTEMParamDone()
-			return
+			return False
 		return self._loadGrid(slot_number)
 
 	def _loadGrid(self, slot_number):
