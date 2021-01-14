@@ -24,6 +24,9 @@ import copy
 from pyami import moduleconfig
 from pyami import ordereddict
 from pyami import mysocket
+# autotask
+from leginon import autotask
+
 import socket
 from wx import PyDeadObjectError
 import gui.wx.Manager
@@ -109,6 +112,7 @@ class Manager(node.Node):
 		self.autorun = False
 		self.autogridslot = None
 		self.autostagez = None
+		self.auto_task = None
 		# manager pause
 		self.pausable_nodes = []
 		self.paused_nodes = []
@@ -162,14 +166,15 @@ class Manager(node.Node):
 
 		hostnames = [p[1] for p in prevlaunchers]
 		self.waitForLaunchersReady(hostnames)
-
+		#TODO: simulator still need a bit longer. Maybe ready too fast
+		time.sleep(5)
 		app = application.Application(self, prevname)
 		app.load()
 		for alias,hostname in prevlaunchers:
 			app.setLauncherAlias(alias, hostname)
 		self.runApplication(app)
 
-	def run(self, session, clients, prevapp=False, gridslot=None, stagez=None):
+	def run(self, session, clients, prevapp=False, gridslot=None, stagez=None, auto_task=None):
 		self.session = session
 		self.frame.session = self.session
 
@@ -184,10 +189,13 @@ class Manager(node.Node):
 			except Exception, e:
 				self.logger.warning('Failed to add launcher: %s' % e)
 
-		if gridslot:
+		if gridslot and auto_task is not None:
 			self.autorun = True
 			self.autogridslot = gridslot
+			# None, 'atlas','full'
+			self.auto_task = auto_task
 		if stagez is not None:
+			# float
 			self.autostagez = stagez
 		if prevapp:
 			threading.Thread(target=self.launchPreviousApp).start()
@@ -207,6 +215,19 @@ class Manager(node.Node):
 		else:
 			session = None
 		return session
+
+	def setSessionByName(self, name):
+		new_session = self.getSessionByName(name)
+		if not new_session:
+			print 'Cannot find existing session %s to set' % (name,)
+		self.session = new_session
+		## do every node
+		do = list(self.initializednodes)
+		for to_node in do:
+			out = event.SetSessionEvent()
+			out['session'] = self.session
+			self.sendManagerNotificationEvent(to_node, out)
+		self.frame.SetTitle('Leginon:  %s' % (name,))
 
 	def onAddLauncherPanel(self, l):
 		evt = gui.wx.Manager.AddLauncherPanelEvent(l)
@@ -1044,9 +1065,17 @@ class Manager(node.Node):
 		self.publish(d, database=True, dbforce=True)
 		self.onApplicationStarted(name)
 		if self.autorun:
+			try:
+				self.tasker = autotask.AutoTaskOrganizer(self.session)
+			except ValueError:
+				self.autorun = False
+				print('Failed to start auto task organizer. Will not autorun')
+				return
+			except Exception:
+				raise
 			self.auto_class_names = ['PresetsManager', 'TEMController','MosaicTargetMaker']
 			self.auto_class_aliases = self.getAutoStartNodeNames(app)
-			self.autoStartApplication()
+			self.autoStartApplication(self.auto_task)
 
 	def getAutoStartNodeNames(self, app):
 		'''
@@ -1063,16 +1092,20 @@ class Manager(node.Node):
 					break
 		return auto_class_aliases
 
-	def autoStartApplication(self):
+	def autoStartApplication(self, task='atlas'):
 		'''
 		Experimental automatic start of application.
 		'''
+		if task is None:
+			return
 		node_name = self.auto_class_aliases['PresetsManager']
 		if node_name is None:
 			return
-		# Need wait for instrument ready with simulator
-		time.sleep(1)
+		# TODO How to know instruments are ready?
+		# simulator pause
+		time.sleep(2)
 		ievent = event.ChangePresetEvent()
+		# TODO determine which preset name to set.
 		ievent['name'] = 'en'
 		ievent['emtarget'] = None
 		ievent['keep image shift'] = False
@@ -1083,7 +1116,7 @@ class Manager(node.Node):
 			ievent = event.LoadAutoLoaderGridEvent()
 			ievent['slot name'] = self.autogridslot
 			self.outputEvent(ievent, node_name, wait=True, timeout=None)
-		# load grid
+		# acquire grid atlas
 		node_name = self.auto_class_aliases['MosaicTargetMaker']
 		if node_name is not None:
 			ievent = event.MakeTargetListEvent()
@@ -1092,6 +1125,23 @@ class Manager(node.Node):
 			ievent['grid'] = None
 			ievent['stagez'] = self.autostagez
 			self.outputEvent(ievent, node_name, wait=False, timeout=None)
+		# TODO: Listen to all tasks finished
+		print 'TODO: listen to Grid TargetListDoneEvent.  For now wait for 1.5 min'
+		time.sleep(90)
+		# next
+		print 'done waiting'
+		if task == 'full':
+			#TODO pick square targets and move on.
+			pass
+		next_auto_task = self.tasker.nextAutoTask()
+		if next_auto_task:
+			next_auto_session = next_auto_task['auto session']
+			# set global values
+			self.autogridslot = '%d' % next_auto_session['slot number']
+			self.auto_task = next_auto_task['task']
+			self.setSessionByName(next_auto_session['session']['name'])
+			# run it
+			self.autoStartApplication(self.auto_task)
 
 	def killApplication(self):
 		self.cancelTimeoutTimer()

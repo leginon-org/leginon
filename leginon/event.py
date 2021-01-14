@@ -346,6 +346,13 @@ class SetManagerEvent(ControlEvent):
 		)
 	typemap = classmethod(typemap)
 
+class SetSessionEvent(ControlEvent):
+	def typemap(cls):
+		return ControlEvent.typemap() + (
+			('session', leginondata.SessionData),
+		)
+	typemap = classmethod(typemap)
+
 class CreateNodeEvent(ControlEvent):
 	'ControlEvent sent to a NodeLauncher specifying a node to launch'
 	def typemap(cls):

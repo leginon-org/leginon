@@ -141,6 +141,7 @@ class App(wx.App):
 		prevapp = False
 		gridslot = None
 		stagez = None
+		task = None
 		if self.options is not None:
 			if hasattr(self.options, 'session'):
 				if self.options.session:
@@ -155,10 +156,13 @@ class App(wx.App):
 			if hasattr(self.options, 'gridslot'):
 				if self.options.gridslot:
 					gridslot = self.options.gridslot
+			if hasattr(self.options, 'task'):
+				if self.options.task:
+					task = self.options.task
 			if hasattr(self.options, 'stagez'):
 				if self.options.stagez:
 					try:
-						stagez = float(self.options.stagez)*1e-6
+						stagez = float(self.options.stagez)
 					except:
 						stagez = None
 
@@ -178,7 +182,7 @@ class App(wx.App):
 			self.abort = True
 		else:
 			self.manager.frame.SetTitle('Leginon:  %s' % (session['name'],))
-			self.manager.run(session, clients, prevapp, gridslot, stagez)
+			self.manager.run(session, clients, prevapp, gridslot, stagez, task)
 
 		return True
 
