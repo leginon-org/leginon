@@ -74,6 +74,7 @@ class AlignZeroLossPeak(ReferenceTimer):
 		ReferenceTimer.__init__(self, *args, **kwargs)
 		self.addEventInput(event.FixAlignmentEvent, self.handleFixAlignmentEvent)
 		self.proceed_threshold = None
+		self.ref_position = None
 		self.start()
 
 	def handleFixAlignmentEvent(self, evt):
@@ -92,14 +93,6 @@ class AlignZeroLossPeak(ReferenceTimer):
 		self.setStatus('idle')
 		self.panel.playerEvent('stop')
 
-	def _getTestPreset(self):
-		'''
-		Use Check Preset
-		'''
-		self.logger.info('Use check preset for testing instead of current preset')
-		check_preset_name = self.settings['check preset']
-		return self.presets_client.getPresetFromDB(check_preset_name)
-
 	def setCheckPreset(self):
 		# set check preset and send to scope
 		check_preset_name = self.settings['check preset']
@@ -111,14 +104,17 @@ class AlignZeroLossPeak(ReferenceTimer):
 
 	def moveAndExecute(self, request_data):
 		'''
-		This function in AlignZeroLossPeak only execute if a threshold is exceeded
-		in the image mean acquired from check preset.
+		Overwrite base class moveAndExecute from AlignZeroLossPeak.
+		It needs to check shift threshold, and take test image.
 		'''
-		preset_name = request_data['preset']
+		request_preset_name = request_data['preset']
+		self.logger.info('request preset: %s' % request_preset_name)
 		pause_time = self.settings['pause time']
 		position0 = self.instrument.tem.StagePosition
-		goto_preset = preset_name
+		goto_preset = request_preset_name
 		if self.needChecking():
+			if self.settings['check preset'] == request_preset_name:
+				self.logger.warning('check preset %s is normally different from request preset %s' % (self.settings['check preset'], request_preset_name))
 			goto_preset = self.settings['check preset']
 		try:
 			self.moveToTarget(goto_preset)
@@ -143,21 +139,32 @@ class AlignZeroLossPeak(ReferenceTimer):
 		if need_align:
 			# now ready to do it.
 			try:
+				self._setRequestPreset(request_preset_name)
+			except:
+				self.moveBack(position0)
+				return
+			try:
 				self.at_reference_target = True
 				self.execute(request_data)
 			except Exception, e:
 				self.logger.error('Error executing request, %s' % e)
+				self._setRequestPreset(request_preset_name)
 				self.moveBack(position0)
 				return
 			# got here if successful
 			if self.needChecking():
 				# need to record current zero loss intensity if checking shift, 
 				self.resetZeroLossCheck()
-		else:
-			# set preset back to avoid confusion
-			self.presets_client.toScope(preset_name)
+		# set preset back to avoid confusion
+		self._setRequestPreset(request_preset_name)
 		self.moveBack(position0)
-	
+
+	def _setRequestPreset(self, request_preset_name):
+		preset = self.presets_client.getCurrentPreset()
+		if preset['name'] != request_preset_name:
+			self.logger.info('Change preset to requested %s' % request_preset_name)
+			self.presets_client.toScope(request_preset_name)
+
 	def alignZLP(self, ccd_camera=None):
 		if not ccd_camera:
 			ccd_camera = self.instrument.ccdcamera
@@ -247,11 +254,16 @@ class AlignZeroLossPeak(ReferenceTimer):
 		self.logger.info('Acquiring test image....')
 		imagedata = self.acquireCorrectedCameraImageData(force_no_frames=True)
 		this_mean = imagedata['image'].mean()
-		if not self.proceed_threshold:
+		ref_position = self.instrument.tem.StagePosition
+		has_new_position = self.ref_position == None or abs(ref_position['x']-self.ref_position['x'])+abs(ref_position['y']-self.ref_position['y']) > 2e-6
+		if has_new_position:
+			self.logger.info('reference position has changed by at least 2 um')
+		if not self.proceed_threshold or has_new_position:
 			# use the first test image since start of the program as threshold.
 			threshold = 0.05 * this_mean
 			if threshold < threshold_min:
 				raise ValueError('Mean %.2f is too low to set future threshold' % (this_mean,))
+			self.ref_position = ref_position
 			self.proceed_threshold = threshold
 			self.logger.info('Set future threshold to %.2f' % self.proceed_threshold)
 		else:
@@ -315,7 +327,7 @@ class AlignZeroLossPeak(ReferenceTimer):
 		except Exception, e:
 			self.logger.error('Error moving to target, %s' % e)
 			return
-		self.logger.info('reset zero-loss check data')
+		self.logger.info('reset zero-loss check data with a new image')
 		imagedata = self.acquireCorrectedCameraImageData(force_no_frames=True)
 		if imagedata is None:
 			return

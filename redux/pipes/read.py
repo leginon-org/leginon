@@ -31,6 +31,9 @@ class Read(Pipe):
 	def run(self, input, filename, info, frame=None):
 		## input ignored
 		### determine input format
+		if os.path.isdir(filename):
+			sys.stderr.write('No file specified')
+			return
 		if not os.path.exists(filename):
 			sys.stderr.write(filename + ' does not exists.')
 			filename = filename.replace('/leginon/', '/cache/')
