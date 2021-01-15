@@ -217,9 +217,9 @@ Func GetFeiConfigSelections($configpath,$module,$key)
 
 	  If StringLower($sKey) == StringLower($key) Then
 		 Local $aList = StringSplit($aBits[1],",",2)
-		 For $i = 0 to UBound($aList)-1
-			$aListNames[$i] = StringStripWS($aList[$i],3); strip leading and trailing white spaces
-			;MsgBox(0,'config value',$sKey & ' ' & $i & ' ' & $aListNames[$i])
+		 For $j = 0 to UBound($aList)-1
+			$aListNames[$j] = StringStripWS($aList[$j],3); strip leading and trailing white spaces
+			;MsgBox(0,'config value',$sKey & ' ' & $j & ' ' & $aListNames[$j])
 		 Next
 	  EndIf
    Next

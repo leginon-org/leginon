@@ -992,7 +992,7 @@ class Hitachi(tem.TEM):
 			return
 		opt_index = positions.index(value)
 		self.h.runSetIntAndWait('Screen','Position', [opt_index,])
-		if valus == 'down':
+		if value == 'down':
 			return
 		#screen out returns much faster than gui indicates. Need sleep time
 		delay = self.getHitachiConfig('tem option','main_screen_up_delay')
