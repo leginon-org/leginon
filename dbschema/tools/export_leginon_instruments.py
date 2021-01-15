@@ -24,6 +24,7 @@ class InstrumentJsonMaker(jsonfun.DataJsonMaker):
 	def validateInput(self, params):
 		if len(params) < 2:
 			print "Usage export_leginon_instruments.py source_database_hostname <hostname1,hostname2>"
+			print "(hostname1, hostname2 etc are specific instrument hostname to export. default will export all)"
 			self.close(1)
 		database_hostname = leginondata.sinedon.getConfig('leginondata')['host']
 		if params[1] != database_hostname:

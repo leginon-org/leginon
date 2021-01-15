@@ -594,7 +594,7 @@ function getAppionWrapper($processhost=false)
 		if ($processhost === false) {
 			$processhost = getSelectedProcessingHost();
 		}
-		if (!empty($processhost) {
+		if (!empty($processhost)) {
 			$cluster = new Cluster( $processhost );
 			$wrapper = $cluster->getWrapperPath();
 		}
