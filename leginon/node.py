@@ -287,6 +287,9 @@ class Node(correctorclient.CorrectorClient):
 		record_data = leginondata.LoggerRecordData(session=self.session)
 		for atr in ('name','levelno','levelname','pathname','filename','module','lineno','created','thread','process','message','exc_info'):
 			record_data[atr] = getattr(record,atr)
+			if atr == 'thread':
+				# see Issue #9795 reduce the number to int(20)
+				record_data[atr] = record_data[atr] % 1000000
 		self.publish(record_data, database=True, dbforce=True)
 
 	# main, start/stop methods

@@ -1,11 +1,14 @@
 <?php
 require_once 'inc/leginon.inc';
 require_once "inc/imagerequest.inc";
+require_once "inc/image.inc";
 $id=$_GET['id'];
 $preset=$_GET['pr'];
 $newimage = $leginondata->findImage($id, $preset);
 $id=$newimage['id'];
+$lj=boolval($_GET['lj']);
 $filename=$leginondata->getFilenameFromId($id, true);
+$filename=getImageFile($leginondata,$id,$preset,$lj,$is_fft=false,$cacheonly=false);
 $imagerequest = new imageRequester();
 $imginfo = $imagerequest->requestInfo($filename);
 $min = $imginfo->amin;

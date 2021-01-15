@@ -984,7 +984,7 @@ class BinLoop(AppionLoop):
 		return
 	def checkConflicts(self):
 		return
-	def commitToDatabase(self):
+	def commitToDatabase(self,imgdata):
 		return
 	def processImage(self, imgdict):
 		from pyami import mrc

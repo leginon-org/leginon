@@ -594,8 +594,10 @@ function getAppionWrapper($processhost=false)
 		if ($processhost === false) {
 			$processhost = getSelectedProcessingHost();
 		}
-		$cluster = new Cluster( $processhost );
-		$wrapper = $cluster->getWrapperPath();
+		if (!empty($processhost) {
+			$cluster = new Cluster( $processhost );
+			$wrapper = $cluster->getWrapperPath();
+		}
 		$wrapper = $wrapper ? $wrapper : APPION_WRAPPER_PATH;
 	}
 	return $wrapper;
