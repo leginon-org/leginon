@@ -130,6 +130,18 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 			self.logger.debug('done create final')
 		# trigger activation of submit button in the gui.
 		self.panel.doneTargetList()
+		# TODO need to add auto square finder and submit target if go beyond
+		# getting atlas.
+		self.notifyAutoDone('atlas')
+
+	def notifyAutoDone(self,task='atlas'):
+			'''
+			Notify Manager that the node has finished automated task so that automated
+			task can move on.  Need this because it is a different thread.
+			'''
+			evt = event.AutoDoneNotificationEvent()
+			evt['task'] = task
+			self.outputEvent(evt)
 
 	def getTargetDataList(self, typename):
 		'''

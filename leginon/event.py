@@ -130,6 +130,14 @@ class NodeBusyNotificationEvent(NotificationEvent):
 	'Event sent by node such as Tomography to restart timeout timer'
 	pass
 
+class AutoDoneNotificationEvent(NotificationEvent):
+	'Event sent by node such as MosaicTargetFinder to signal end of autotask'
+	def typemap(cls):
+		return NotificationEvent.typemap() + (
+			('task', str),
+		)
+	typemap = classmethod(typemap)
+
 class IdleNotificationEvent(NotificationEvent):
 	'Event sent to presets manager from manager to notify that Idle is timed out'
 	pass

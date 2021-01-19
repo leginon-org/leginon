@@ -113,6 +113,7 @@ class Manager(node.Node):
 		self.autogridslot = None
 		self.autostagez = None
 		self.auto_task = None
+		self.auto_done = threading.Event()
 		# manager pause
 		self.pausable_nodes = []
 		self.paused_nodes = []
@@ -138,6 +139,7 @@ class Manager(node.Node):
 		self.addEventInput(event.ActivateNotificationEvent, self.handleNotificationStatus)
 		self.addEventInput(event.DeactivateNotificationEvent, self.handleNotificationStatus)
 		self.addEventInput(event.NodeBusyNotificationEvent, self.handleNodeBusyNotification)
+		self.addEventInput(event.AutoDoneNotificationEvent, self.handleAutoDoneNotification)
 		self.addEventInput(event.ManagerPauseAvailableEvent, self.handleManagerPauseAvailable)
 		self.addEventInput(event.ManagerPauseNotAvailableEvent, self.handleManagerPauseNotAvailable)
 		self.addEventInput(event.ManagerContinueAvailableEvent, self.handleManagerContinueAvailable)
@@ -889,6 +891,9 @@ class Manager(node.Node):
 			self.slackNotification(msg)
 
 	def handleNotificationStatus(self, ievent):
+		'''
+		Handle (De)ActivateNotificationEvent from PresetsManager.
+		'''
 		nodename = ievent['node']
 		if isinstance(ievent, event.ActivateNotificationEvent):
 			self.tem_host = ievent['tem_host']
@@ -915,6 +920,10 @@ class Manager(node.Node):
 			print msg
 
 	# application methods
+
+	def handleAutoDoneNotification(self, ievent):
+		if ievent['task'] == self.auto_task:
+			self.auto_done.set() 
 
 	def getBuiltinApplications(self):
 		apps = [appdict['application'] for appdict in applications.builtin.values()]
@@ -1126,8 +1135,9 @@ class Manager(node.Node):
 			ievent['stagez'] = self.autostagez
 			self.outputEvent(ievent, node_name, wait=False, timeout=None)
 		# TODO: Listen to all tasks finished
-		print 'TODO: listen to Grid TargetListDoneEvent.  For now wait for 1.5 min'
-		time.sleep(90)
+		self.auto_done.clear()
+		print 'listen to AutoDoneNotificationEvent.'
+		self.auto_done.wait()
 		# next
 		print 'done waiting'
 		if task == 'full':
