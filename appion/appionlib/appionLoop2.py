@@ -78,6 +78,8 @@ class AppionLoop(appionScript.AppionScript):
 
 				### CHECK IF IT IS OKAY TO START PROCESSING IMAGE
 				if not self._startLoop(imgdata):
+					# need to change imgnum back by one since nothing was done on this image
+					imgnum -= 1
 					continue
 
 				### set the pixel size

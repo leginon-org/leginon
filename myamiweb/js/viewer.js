@@ -511,6 +511,7 @@ function loadImage(view) {
 }
 
 function setimgId() {
+	jsimgId = '';
 	if (obj=document.viewerform.imageId) {
 	if (!obj.length)
 		return
