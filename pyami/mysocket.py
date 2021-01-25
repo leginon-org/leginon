@@ -55,7 +55,7 @@ def testMapping(addr, host):
 		else:
 			e = '%s is mapped to %s in the network, not %s' % (addr, socket_host, assigned_host)
 			raise ValueError(e)
-	except socket.herror, e:
+	except socket.herror as e:
 			e = '%s mapping error in socket module: %s of %s' % (addr, e, addr)
 			raise ValueError(e)
 	except Exception as e:
