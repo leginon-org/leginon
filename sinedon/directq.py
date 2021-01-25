@@ -13,8 +13,9 @@ from sinedon import sqldb
 connections = {}
 
 def getConnection(modulename='leginondata'):
+	global connections
+	param = dbconfig.getConfig(modulename)
 	if not modulename in connections.keys():
-		param = dbconfig.getConfig(modulename)
 		connections[modulename] = sqldb.sqlDB(**param)
 	ping(modulename,param)
 	return connections[modulename]
