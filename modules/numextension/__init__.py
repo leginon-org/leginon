@@ -18,6 +18,7 @@ try:
 	from _numextension import *
 
 except ImportError:
+	raise
 	# Maybe it was built, but not installed, then we look in build directory
 	build_dir = os.path.join(packagepath, 'build')
 	if os.path.exists(build_dir):

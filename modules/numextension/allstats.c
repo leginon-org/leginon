@@ -8,6 +8,7 @@
 
 #define PY_ARRAY_UNIQUE_SYMBOL numextension_ARRAY_API
 #define NO_IMPORT_ARRAY
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
 
 #include "allstats.h"
@@ -311,7 +312,7 @@ PyObject * allstats(PyObject *self, PyObject *args, PyObject *kw) {
 	/*
 	 * Delegate to type specific function.
 	 */
-	input_typenum = PyArray_TYPE(inputarray);
+	input_typenum = PyArray_TYPE((PyArrayObject*)inputarray);
 	switch (input_typenum) {
 		case NPY_BYTE:
 			allstats_byte(inputarray, &result);
