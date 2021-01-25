@@ -1,3 +1,5 @@
+from __future__ import print_function
+from builtins import object
 #!/usr/bin/env python
 
 import weakref
@@ -32,7 +34,7 @@ class ResultCache(object):
 		return self.strong_size, len(self.strong_list)
 
 	def getkeys(self):
-		return self.weakdict.keys()
+		return list(self.weakdict.keys())
 
 	def put(self, key, result):
 		if key in self.weakdict:
@@ -70,7 +72,7 @@ class ResultCache(object):
 def test():
 	import numpy
 	cache = ResultCache(100)
-	print('KEYS', cache.weakdict.keys())
+	print('KEYS', list(cache.weakdict.keys()))
 
 	for f in ('a', 'b', 'c', 'd', 'e', 'f', 'g', 'f', 'e', 'a'):
 		a = numpy.arange(20, dtype=numpy.uint8)
