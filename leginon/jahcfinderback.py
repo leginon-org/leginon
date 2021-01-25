@@ -130,7 +130,7 @@ class HoleFinder(object):
 		self.correlation_config = {'cortype': 'cross', 'corfilt': (1.0,),'cor_image_min':0.0}
 		self.threshold = 3.0
 		self.threshold_method = "Threshold = mean + A * stdev"
-		self.blobs_config = {'border': 20, 'maxblobsize': 50, 'maxblobs':100}
+		self.blobs_config = {'border': 20, 'maxblobsize': 50, 'maxblobs':100, 'minblobsize':0}
 		self.lattice_config = {'tolerance': 0.1, 'vector': 100.0, 'minspace': 20, 'extend': 'off'}
 		self.holestats_config = {'radius': 20}
 		self.ice_config = {'i0': None, 'min': 0.0, 'max': 0.1, 'std': 0.05}
@@ -402,7 +402,11 @@ class HoleFinder(object):
 			# Not to use points to determine Lattice but continue with extension
 			best_lattice = True
 		else:
-			best_lattice = lattice.pointsToLattice(points, spacing, tolerance)
+			if spacing > 0:
+				best_lattice = lattice.pointsToLattice(points, spacing, tolerance)
+			else:
+				# accept all points
+				best_lattice = lattice.pointsToFakeLattice(points)
 
 		if best_lattice is None:
 			best_lattice_points = []
@@ -423,6 +427,9 @@ class HoleFinder(object):
 			self.__update_result('holes', [])
 		else:
 			self.__update_result('holes', holes)
+
+	def updateHoles(self, holes):
+		self.__update_result('holes', holes)
 
 	def mark_holes(self):
 		if self.__results['holes'] is None or self.__results['original'] is None:

@@ -45,3 +45,20 @@ class MoveAlphaAcquisition(moveacquisition.MoveAcquisition):
 			move_values.append(p0['a']+(i+1)*tilt_increment)
 		step_time = self.settings['total move time'] / nsteps
 		return map((lambda x: (x,step_time)), move_values)
+
+	def moveToValue(self, move_times):
+		p0 =self.getStageValue()
+		self.logger.info('start moving')
+		for move,step_time in move_times:
+			# temporarily set with known conversion
+			degrees_per_second = math.degrees(move-p0)/step_time
+			self.instrument.tem.StageSpeed = abs(degrees_per_second)
+			self.instrument.tem.StagePosition = {'a':move}
+			self.logFinal(move) # log intermediate move
+		self.logger.info('done moving')
+		# as high speed as possible.  Will be set to top speed by tem
+		self.instrument.tem.StageSpeed = 50.0
+		self.logger.info('moving back to the original')
+		self.setStageValue(p0)
+		self.move_done_event.set()
+

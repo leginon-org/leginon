@@ -218,6 +218,36 @@ class form {
 		$this->jsformfields[$field]=$strjs;
 		return $field;
 	}
+
+	function addDataList($label, $data, $size=20, $required=false, $description=false) {
+	    $field=$this->_field_key_inc();
+	    $fieldsection="s_".$field;
+	    $value=$this->defaults[$field];
+	    
+	    $label.= ($required) ? $this->str_required : "&nbsp;&nbsp;";
+	    $required=($required)? "1" : "0";
+	    
+	    $str='<li class="'.$this->formclass.'" id="'.$fieldsection.'">'
+	        .'<label class="fieldlabel">'.$label;
+	        if ($description) {
+	            $str.='<a class="info" href="#"><img src="img/info.png" border="0">'
+	                .'<span class="infobox" >'.$description
+	                .'</span></a>';
+	        }
+	        $str.='</label><input type="text" class="'.$this->formclass.'" '
+	            .'name="'.$field.'" list="l'.$field.'" id="'.$field.'" value="'.$value.'"'
+	                .'size="'.$size.'" ><datalist id="l'.$field.'">';
+	                foreach ((array)$data as $k=>$v) {
+	                    $str.='<option>'.$v.'</option>'."\n";
+	                }
+	                $str.='</datalist>'
+	                    .'</li>';
+	                    
+	                    $this->formfields[$field]=$str;
+	                    $this->fieldkeys[]=$field;
+	                    $this->jsformfields[$field]=$strjs;
+	                    return $field;
+	}
 	
 	function addField($label, $size, $required=false, $description=false) {
 		$field=$this->_field_key_inc();

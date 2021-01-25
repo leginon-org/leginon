@@ -52,6 +52,7 @@ mrc2numpy = {
 	5: numpy.uint8,		# UCSF Image uint8
 
 	6: numpy.uint16,    # according to UCSF
+	101: numpy.uint8,		# SerialEM 4-bit int format for K2/K3 counting
 }
 
 # mapping of image/volume type
@@ -74,7 +75,7 @@ numpy2mrc = {
 
 	## convert these to int16
 	numpy.int16: 1,
-	numpy.uint8: 1, # Do not want to convert to mode 5
+	numpy.uint8: 1, # Do not want to convert to mode 5 nor 101
 
 	## convert these to float32
 	numpy.float32: 2,
@@ -529,8 +530,19 @@ def readDataFromFile(fobj, headerdict, zslice=None):
 		start = header_bytes + zslice * framesize
 		shape = headerdict['shape'][-2:]  # only a 2-D slice
 	datalen = numpy.prod(shape)
+	if headerdict['mode'] == 101:
+		# 4 bit uint format
+		# read half count of eventual datalen
+		datalen /= 2
 	fobj.seek(start)
 	a = numpy.fromfile(fobj, dtype=headerdict['dtype'], count=datalen)
+	if headerdict['mode'] == 101:
+		# 4 bit uint format
+		a=numpy.repeat(a,2)
+		# odd
+		a[1::2] //= 16
+		# even
+		a[::2] %= 16
 	a.shape = shape
 	return a
 

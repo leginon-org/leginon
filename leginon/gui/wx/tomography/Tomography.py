@@ -66,6 +66,10 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 												allownone=False,
 												chars=7,
 												value='0.0')
+		
+		#presets = self.node.presetsclient.getPresetNames()
+		#self.widgets['track preset'] = EditPresetOrder(self, -1)
+		#self.widgets['preset order'].setChoices(presets)
 
 		tiltsz = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Min.')
@@ -391,7 +395,7 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		self.widgets['z02'] = FloatEntry(self, -1, allownone=False,
 			chars=6, value='0.0')
 		self.widgets['z0 error'] = FloatEntry(self, -1, min=0.0,
-			allownone=False, chars=6, value='2e-6')
+			allownone=False, chars=6, value='2.0')
 		self.widgets['fixed model'] = wx.CheckBox(self, -1, 'Keep the tilt axis parameters fixed')
 		self.widgets['use z0'] = wx.CheckBox(self, -1, 'Initialize z0 with current model')
 		self.widgets['fit data points'] = IntEntry(self, -1, min=4, allownone=False, chars=5, value='4')
@@ -560,4 +564,598 @@ class Panel(leginon.gui.wx.Acquisition.Panel):
 
 	def onResetTiltSeriesList(self, evt):
 		self.node.resetTiltSeriesList()
+
+class SettingsDialog2(leginon.gui.wx.Acquisition.SettingsDialog):
+	def initialize(self):
+		scrolling = not self.show_basic
+		return ScrolledSettings2(self,self.scrsize,scrolling,self.show_basic)
+
+	
+class ScrolledSettings2(ScrolledSettings):
+
+	def addTomoBasicSettings(self):
+		tracksb = wx.StaticBox(self, -1, 'Track')
+		tracksbsz = wx.StaticBoxSizer(tracksb, wx.VERTICAL)
+		tiltsb = wx.StaticBox(self, -1, 'Tilt')
+		tiltsbsz = wx.StaticBoxSizer(tiltsb, wx.VERTICAL)
+		expsb = wx.StaticBox(self, -1, 'Exposure')
+		expsbsz = wx.StaticBoxSizer(expsb, wx.VERTICAL)
+		miscsb = wx.StaticBox(self, -1, 'Misc.')
+		miscsbsz = wx.StaticBoxSizer(miscsb, wx.VERTICAL)
+		
+		# tracksbsz
+		self.presetnames = self.node.presetsclient.getPresetNames()
+		self.widgets['track preset'] = leginon.gui.wx.Presets.PresetChoice(self, -1)
+		self.widgets['track preset'].setChoices(self.presetnames)
+		self.widgets['full track'] =  wx.CheckBox(self, -1, 'Full tracking')
+		
+		self.widgets['tolerance'] = FloatEntry(self, -1, 
+												allownone=False,
+												chars=7,
+												value='0.05',
+												min=0.0, 
+												max=1.0)
+		self.widgets['maxfitpoints'] = IntEntry(self, -1,
+												allownone=False,
+												chars=7,
+												value='10',
+												min=0,
+												max=None)
+
+		tracksz = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Track preset:')
+		tracksz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 10)
+		tracksz.Add(self.widgets['track preset'], (0, 1), (1, 1), 
+				wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		tracksz.Add(self.widgets['full track'], (0, 3), (1, 1),
+				wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		
+		tracksz_t = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Fraction of image dimension error allowed for precition')
+		tracksz_t.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 10)
+		tracksz_t.Add(self.widgets['tolerance'], (0, 1), (1, 1),
+				wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		
+		tracksz_m = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Maximum points to consider for prediction')
+		tracksz_m.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 10)
+		tracksz_m.Add(self.widgets['maxfitpoints'], (0, 1), (1, 1),
+				wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+				
+		tracksbsz.Add(tracksz, 0, wx.EXPAND|wx.ALL, 5)
+		tracksbsz.Add(tracksz_t, 0, wx.EXPAND|wx.ALL, 5)
+		tracksbsz.Add(tracksz_m, 0, wx.EXPAND|wx.ALL, 5)
+
+		# tiltsbsz
+		self.widgets['tilt min'] = FloatEntry(self, -1,
+											   allownone=False,
+											   chars=7,
+											   value='0.0')
+		self.widgets['tilt max'] = FloatEntry(self, -1,
+											   allownone=False,
+											   chars=7,
+											   value='0.0')
+		self.widgets['tilt start'] = FloatEntry(self, -1,
+												 allownone=False,
+												 chars=7,
+												 value='0.0')
+		self.widgets['tilt step'] = FloatEntry(self, -1,
+												allownone=False,
+												chars=7,
+												value='0.0')
+
+		tiltsz = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Min.')
+		tiltsz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 10)
+		tiltsz.Add(self.widgets['tilt min'], (0, 1), (1, 1),
+					wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'Max.')
+		tiltsz.Add(label, (0, 2), (1, 1), wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 10)
+		tiltsz.Add(self.widgets['tilt max'], (0, 3), (1, 1),
+					wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'Start')
+		tiltsz.Add(label, (0, 4), (1, 1), wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 10)
+		tiltsz.Add(self.widgets['tilt start'], (0, 5), (1, 1),
+					wx.ALIGN_LEFT|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'Step')
+		tiltsz.Add(label, (0, 6), (1, 1), wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 10)
+		tiltsz.Add(self.widgets['tilt step'], (0, 7), (1, 1),
+					wx.ALIGN_LEFT|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'degree(s)')
+		tiltsz.Add(label, (0, 8), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		tilt_ordersz = self.createTiltOrderSelector()
+
+		tiltsbsz.Add(tiltsz, 0, wx.EXPAND|wx.ALL, 5)
+		tiltsbsz.Add(tilt_ordersz, 0, wx.EXPAND|wx.ALL, 5)
+	
+		#expsz
+		self.expsz = wx.GridBagSizer(5, 10)
+		pos = self.createDoseCheckBox('expsz', (0,0))
+		label = wx.StaticText(self, -1, 'Total dose')
+		self.expsz.Add(label, (pos[0], 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		totaldose = self.getTotalDose()
+		dose = wx.StaticText(self, -1, str(totaldose))
+		self.expsz.Add(dose, (pos[0], 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'e-/A^2')
+		self.expsz.Add(label, (pos[0], 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+
+		self.expsz.AddGrowableCol(0)
+		self.expsz.AddGrowableRow(0)
+		self.expsz.AddGrowableRow(1)
+		expsbsz.Add(self.expsz, 1, wx.EXPAND|wx.ALL, 5)
+		#misc
+		self.widgets['integer'] = wx.CheckBox(self, -1, 'Scale by')
+		self.widgets['intscale'] = FloatEntry(self, -1, min=0.0,
+															allownone=False,
+															chars=5,
+															value='10.0')
+		self.widgets['mean threshold'] = FloatEntry(self, -1, min=0.0,
+															allownone=False,
+															chars=5,
+															value='100.0')
+		intsz = wx.GridBagSizer(5, 5)
+		intsz.Add(self.widgets['integer'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		intsz.Add(self.widgets['intscale'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'to convert to integer')
+		intsz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		mtsz = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Consider images with less than')
+		mtsz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		mtsz.Add(self.widgets['mean threshold'],
+				   (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'counts as obstructed')
+		mtsz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		miscsz = wx.GridBagSizer(5, 10)
+		miscsz.Add(intsz, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		miscsz.Add(mtsz, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		miscsbsz.Add(miscsz, 1, wx.ALL|wx.ALIGN_CENTER, 5)
+
+		# overall
+		sz = wx.GridBagSizer(5, 5)
+		sz.Add(tracksbsz, (0, 0), (1, 2), wx.EXPAND)
+		sz.Add(tiltsbsz, (1, 0), (1, 2), wx.EXPAND)
+		sz.Add(expsbsz, (2, 0), (1, 1), wx.EXPAND)
+		sz.Add(miscsbsz, (2, 1), (1, 1), wx.EXPAND)
+		sz.AddGrowableRow(0)
+		sz.AddGrowableRow(1)
+		sz.AddGrowableCol(0)
+		sz.AddGrowableCol(1)
+		return sz
+
+	def getTotalDose(self):
+		self.node.update()
+		exposures = self.node.exposure.getExposures()
+		dose_rate = self.node.exposure.getDoseRate()
+		total_dose = 0.0
+		for exposure in exposures:
+			total_dose += sum([dose_rate*exp for exp in exposure])
+		return total_dose
+
+	def createDoseCheckBox(self, sz_name, start_position):
+		self.widgets['cosine dose'] = \
+				wx.CheckBox(self, -1, 'Adjust exposure by cosine rule')
+		total_length = (1,2)
+		sz = getattr(self,sz_name)
+		sz.Add(self.widgets['cosine dose'], start_position, (1, 2),
+				  wx.ALIGN_LEFT)
+		return start_position[0]+total_length[0],start_position[1]+total_length[1]
+
+	def createTiltOrderSelector(self):
+		tilt_order_choices = self.getTiltOrderChoices()
+		self.widgets['tilt order'] = wx.Choice(self, -1, choices=tilt_order_choices)
+		sztilt_order = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Tilt order of the tilt direction groups:')
+		sztilt_order.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sztilt_order.Add(self.widgets['tilt order'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sztilt_order.AddGrowableCol(1)
+		return sztilt_order
+
+	def addTomoSettings(self):
+		tracksb = wx.StaticBox(self, -1, 'Track')
+		tracksbsz = wx.StaticBoxSizer(tracksb, wx.VERTICAL)
+		tiltsb = wx.StaticBox(self, -1, 'Tilt')
+		tiltsbsz = wx.StaticBoxSizer(tiltsb, wx.VERTICAL)
+		equalslopesb = wx.StaticBox(self, -1, 'Cosine Rule Tilting')
+		equalslopesbsz = wx.StaticBoxSizer(equalslopesb, wx.VERTICAL)
+		expsb = wx.StaticBox(self, -1, 'Exposure')
+		expsbsz = wx.StaticBoxSizer(expsb, wx.VERTICAL)
+		bcsb = wx.StaticBox(self, -1, 'Before Collection')
+		bcsbsz = wx.StaticBoxSizer(bcsb, wx.VERTICAL)
+		miscsb = wx.StaticBox(self, -1, 'Misc.')
+		miscsbsz = wx.StaticBoxSizer(miscsb, wx.VERTICAL)
+		modelb = wx.StaticBox(self, -1, 'Model')
+		modelbsz = wx.StaticBoxSizer(modelb, wx.VERTICAL)
+		optb = wx.StaticBox(self, -1, 'Custom Tilt Axis Model in +/- Directions(d)')
+		optbsz = wx.StaticBoxSizer(optb, wx.VERTICAL)
+
+		# tracksbsz
+		self.presetnames = self.node.presetsclient.getPresetNames()
+		self.widgets['track preset'] = leginon.gui.wx.Presets.PresetChoice(self, -1)
+		self.widgets['track preset'].setChoices(self.presetnames)
+		self.widgets['full track'] =  wx.CheckBox(self, -1, 'Full tracking')
+
+		tracksz = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Track preset:')
+		tracksz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 10)
+		tracksz.Add(self.widgets['track preset'], (0, 1), (1, 1), 
+				wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		tracksz.Add(self.widgets['full track'], (0, 3), (1, 1),
+				wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		tracksbsz.Add(tracksz, 0, wx.EXPAND|wx.ALL, 5)
+		
+		self.widgets['tilt min'] = FloatEntry(self, -1,
+											   allownone=False,
+											   chars=7,
+											   value='0.0')
+		self.widgets['tilt max'] = FloatEntry(self, -1,
+											   allownone=False,
+											   chars=7,
+											   value='0.0')
+		self.widgets['tilt start'] = FloatEntry(self, -1,
+												 allownone=False,
+												 chars=7,
+												 value='0.0')
+		self.widgets['tilt step'] = FloatEntry(self, -1,
+												allownone=False,
+												chars=7,
+												value='0.0')
+		self.widgets['equally sloped'] = wx.CheckBox(self, -1, 'Use cosine rule')
+		self.widgets['equally sloped n'] = IntEntry(self, -1, min=1, allownone=False, chars=5, value='30')
+
+		tiltoptsz = wx.GridBagSizer(5, 5)
+		tiltsz = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Min.')
+		tiltsz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 10)
+		tiltsz.Add(self.widgets['tilt min'], (0, 1), (1, 1),
+					wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'Max.')
+		tiltsz.Add(label, (0, 2), (1, 1), wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 10)
+		tiltsz.Add(self.widgets['tilt max'], (0, 3), (1, 1),
+					wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'Start')
+		tiltsz.Add(label, (0, 4), (1, 1), wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 10)
+		tiltsz.Add(self.widgets['tilt start'], (0, 5), (1, 1),
+					wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'Step')
+		tiltsz.Add(label, (0, 6), (1, 1), wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 10)
+		tiltsz.Add(self.widgets['tilt step'], (0, 7), (1, 1),
+					wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'degree(s)')
+		tiltsz.Add(label, (0, 8), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		# tilt order
+		tilt_ordersz = self.createTiltOrderSelector()
+		tiltsz.Add(tilt_ordersz, (1, 0), (1, 9), wx.EXPAND)
+
+		# addon tilts
+		addonsizer = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'List of Extra Tilts to Collect (in degrees)')
+		addonsizer.Add(label, (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+		self.widgets['addon tilts'] = Entry(self, -1, chars=45, style=wx.ALIGN_RIGHT|wx.EXPAND)
+		addonsizer.Add(self.widgets['addon tilts'], (0,2), (1,7), wx.EXPAND)
+		addonsizer.AddGrowableCol(2)
+		tiltsz.Add(addonsizer, (2, 0), (1, 9), wx.EXPAND)
+
+		tiltoptsz.Add(tiltsz, (1, 0), (2, 9), wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+		equalslopesz = wx.GridBagSizer(0, 5)
+		equalslopesz.Add(self.widgets['equally sloped'], (0, 0), (1, 2),
+					wx.ALIGN_LEFT|wx.FIXED_MINSIZE)
+		equalslopesz.Add(self.widgets['equally sloped n'], (1, 0), (1, 1),
+					wx.ALIGN_LEFT|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'Number of tilts in the maximal tilting direction')
+		equalslopesz.Add(label, (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		equalslopesbsz.Add(equalslopesz, 0, wx.EXPAND)
+		tiltoptsz.Add(equalslopesbsz, (0, 9), (3, 2), wx.EXPAND|wx.ALIGN_CENTER_VERTICAL)
+
+		tiltsbsz.Add(tiltoptsz, 0, wx.EXPAND|wx.ALL, 5)
+		"""
+		self.widgets['dose'] = FloatEntry(self, -1, min=0.0,
+													allownone=False,
+													chars=7,
+													value='200.0')
+		
+		self.widgets['min exposure'] = FloatEntry(self, -1, min=0.0,
+															allownone=False,
+															chars=5,
+															value='0.25')
+		self.widgets['max exposure'] = FloatEntry(self, -1, min=0.0,
+															allownone=False,
+															chars=5,
+															value='2.0')
+		"""
+		self.expsz = wx.GridBagSizer(5, 10)
+		pos = self.createDoseCheckBox('expsz', (0,0))
+		label = wx.StaticText(self, -1, 'Total dose')
+		self.expsz.Add(label, (pos[0], 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		totaldose = self.getTotalDose()
+		dose = wx.StaticText(self, -1, str(totaldose))
+		self.expsz.Add(dose, (pos[0], 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'e-/A^2')
+		self.expsz.Add(label, (pos[0], 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		
+		"""
+		pos = self.createUsePresetExposureCheckBox('expsz', (0,0))
+		label = wx.StaticText(self, -1, 'Total dose')
+		self.expsz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.expsz.Add(self.widgets['dose'], (pos[0], 1), (1, 1),
+					wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'e-/A^2')
+		self.expsz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'Exposure time')
+		self.expsz.Add(label, (pos[0]+1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		"""
+		"""
+		exptsz = wx.GridBagSizer(0,0)
+		label = wx.StaticText(self, -1, 'Min.')
+		exptsz.Add(label, (0, 0), (1, 1), wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL)
+		exptsz.Add(self.widgets['min exposure'], (0, 1), (1, 1),
+					wx.ALIGN_LEFT|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'Max.')
+		exptsz.Add(label, (0, 2), (1, 1), wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL)
+		exptsz.Add(self.widgets['max exposure'], (0, 3), (1, 1),
+					wx.ALIGN_LEFT|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'seconds')
+		exptsz.Add(label, (0, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		self.expsz.Add(exptsz, (pos[0]+1, 1), (1, 2), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+
+		self.expsz.AddGrowableCol(0)
+		self.expsz.AddGrowableRow(0)
+		self.expsz.AddGrowableRow(1)
+		"""
+		expsbsz.Add(self.expsz, 1, wx.EXPAND|wx.ALL, 5)
+		
+		self.widgets['run buffer cycle'] = wx.CheckBox(self, -1, 'Run buffer cycle')
+		self.widgets['align zero loss peak'] = wx.CheckBox(self, -1, 'Align zero loss peak')
+		self.widgets['measure dose'] = wx.CheckBox(self, -1, 'Measure dose')
+
+		bcsz = wx.GridBagSizer(5, 10)
+		bcsz.Add(self.widgets['run buffer cycle'],
+				   (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		bcsz.Add(self.widgets['align zero loss peak'],
+				   (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		bcsz.Add(self.widgets['measure dose'],
+				   (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		bcsbsz.Add(bcsz, 1, wx.ALL|wx.ALIGN_CENTER, 5)
+
+		self.widgets['integer'] = wx.CheckBox(self, -1, 'Scale by')
+		self.widgets['intscale'] = FloatEntry(self, -1, min=0.0,
+															allownone=False,
+															chars=5,
+															value='10.0')
+		self.widgets['mean threshold'] = FloatEntry(self, -1, min=0.0,
+															allownone=False,
+															chars=5,
+															value='100.0')
+		self.widgets['collection threshold'] = FloatEntry(self, -1, min=0.0,
+															allownone=False,
+															chars=5,
+															value='90.0')
+		self.widgets['tilt pause time'] = FloatEntry(self, -1, min=0.0,
+															allownone=False,
+															chars=5,
+															value='1.0')
+		self.widgets['measure defocus'] = wx.CheckBox(self, -1, 'Measure defocus')
+		self.widgets['use lpf'] = wx.CheckBox(self, -1, 'Use lpf in peak finding of tilt image correlation')
+		self.widgets['use tilt'] = wx.CheckBox(self, -1, 'Stretch images according to the tilt before correlation')
+
+#		tapersz = wx.GridBagSizer(5,5)
+#		lab = wx.StaticText(self, -1, 'edge tapered upto')
+#		tapersz.Add(lab, (0,0), (1,1))
+#		tapersz.Add(self.widgets['taper size'], (0,1), (1,1))
+#		lab = wx.StaticText(self, -1, '% image length')
+#		tapersz.Add(lab, (0,2), (1,1))
+
+		intsz = wx.GridBagSizer(5, 5)
+		intsz.Add(self.widgets['integer'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		intsz.Add(self.widgets['intscale'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'to convert to integer')
+		intsz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		mtsz = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Consider images with less than')
+		mtsz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		mtsz.Add(self.widgets['mean threshold'],
+				   (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'counts as obstructed')
+		mtsz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		ctsz = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Abort if first half collected less than')
+		ctsz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		ctsz.Add(self.widgets['collection threshold'],
+				   (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, '% of images')
+		ctsz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		tptsz = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Pause')
+		tptsz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		tptsz.Add(self.widgets['tilt pause time'],
+				   (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'seconds before each tilt image.')
+		tptsz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		miscsz = wx.GridBagSizer(5, 10)
+		miscsz.Add(intsz, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		miscsz.Add(mtsz, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		miscsz.Add(ctsz, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		miscsz.Add(tptsz, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		miscsz.Add(self.widgets['use lpf'], (4, 0), (1, 1), wx.ALIGN_CENTER)
+		miscsz.Add(self.widgets['use tilt'], (5, 0), (1, 1), wx.ALIGN_CENTER)
+		#miscsz.Add(tapersz, (7, 0), (1, 1), wx.ALIGN_CENTER)
+		miscsz.Add(self.widgets['measure defocus'], (6, 0), (1, 1), wx.ALIGN_CENTER)
+		miscsbsz.Add(miscsz, 1, wx.ALL|wx.ALIGN_CENTER, 5)
+		
+		modelmags = self.getMagChoices()
+		self.widgets['model mag'] = wx.Choice(self, -1, choices=modelmags)
+		self.widgets['phi'] = FloatEntry(self, -1, allownone=False,
+			chars=4, value='0.0')
+		self.widgets['phi2'] = FloatEntry(self, -1, allownone=False,
+			chars=4, value='0.0')
+		self.widgets['offset'] = FloatEntry(self, -1, allownone=False,
+			chars=6, value='0.0')
+		self.widgets['offset2'] = FloatEntry(self, -1, allownone=False,
+			chars=6, value='0.0')
+		self.widgets['z0'] = FloatEntry(self, -1, allownone=False,
+			chars=6, value='0.0')
+		self.widgets['z02'] = FloatEntry(self, -1, allownone=False,
+			chars=6, value='0.0')
+		self.widgets['z0 error'] = FloatEntry(self, -1, min=0.0,
+			allownone=False, chars=6, value='2e-6')
+		
+		self.widgets['fixed model'] = wx.CheckBox(self, -1, 'Keep the tilt axis parameters fixed')
+		self.widgets['use z0'] = wx.CheckBox(self, -1, 'Initialize z0 with current model')
+		
+		self.widgets['fit data points'] = IntEntry(self, -1, min=4, allownone=False, chars=5, value='4')
+		self.widgets['fit data points2'] = IntEntry(self, -1, min=4, allownone=False, chars=5, value='4')
+
+		magsz = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Initialize with the model of')
+		magsz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		magsz.Add(self.widgets['model mag'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		phisz = wx.GridBagSizer(2, 2)
+		phisz.AddGrowableCol(0)
+		label = wx.StaticText(self, -1, 'Tilt Axis from Y')
+		phisz.Add(label, (0, 0), (2, 1), wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, '+d')
+		phisz.Add(label, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		phisz.Add(self.widgets['phi'],
+				   (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, '-d')
+		phisz.Add(label, (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		phisz.Add(self.widgets['phi2'],
+				   (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'degs')
+		phisz.Add(label, (0, 3), (2, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		offsetsz = wx.GridBagSizer(2, 2)
+		label = wx.StaticText(self, -1, 'Offset:')
+		offsetsz.Add(label, (0, 0), (2, 1), wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, '+d')
+		offsetsz.Add(label, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		offsetsz.Add(self.widgets['offset'],
+				   (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'um')
+		offsetsz.Add(label, (0, 3), (2, 1), wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, '-d')
+		offsetsz.Add(label, (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		offsetsz.Add(self.widgets['offset2'],
+				   (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		z0sz = wx.GridBagSizer(2, 2)
+		label = wx.StaticText(self, -1, 'Z0:')
+		z0sz.Add(label, (0, 0), (2, 1), wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, '+d')
+		z0sz.Add(label, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		z0sz.Add(self.widgets['z0'],
+				   (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'um')
+		z0sz.Add(label, (0, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, '-d')
+		z0sz.Add(label, (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		z0sz.Add(self.widgets['z02'],
+				   (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'um')
+		z0sz.Add(label, (1, 3), (2, 1), wx.ALIGN_CENTER_VERTICAL)
+		
+		optsz = wx.GridBagSizer(5, 10)
+		optsz.Add(phisz, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		optsz.Add(offsetsz, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		optsz.Add(z0sz, (1, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+		optbsz.Add(optsz, 1, wx.ALL|wx.ALIGN_CENTER, 5)
+		optsz.AddGrowableCol(0)
+		
+		zsz = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Allow' )
+		zsz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		zsz.Add(self.widgets['z0 error'],
+				   (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'um of z0 jump between models' )
+		zsz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		fsz = self.createFitDataPointsSizer()
+		
+		modelsz = wx.GridBagSizer(5, 5)
+		
+		modelsz.Add(magsz, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		modelsz.Add(optbsz, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		modelsz.Add(zsz, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		
+		modelsz.Add(self.widgets['fixed model'], (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		modelsz.Add(self.widgets['use z0'], (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		
+		modelsz.Add(fsz, (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		
+		modelbsz.Add(modelsz, 1, wx.ALL|wx.ALIGN_CENTER, 5)
+		
+		modelsz.AddGrowableCol(0)
+		
+		sz = wx.GridBagSizer(5, 5)
+		sz.Add(tracksbsz, (0, 0), (1, 2), wx.EXPAND)
+		sz.Add(tiltsbsz, (1, 0), (1, 2), wx.EXPAND)
+		sz.Add(expsbsz, (2, 0), (1, 1), wx.EXPAND)
+		sz.Add(bcsbsz, (2, 1), (1, 1), wx.EXPAND)
+		sz.Add(miscsbsz, (3, 0), (1, 1), wx.EXPAND)
+		sz.Add(modelbsz, (3, 1), (1, 1), wx.EXPAND)
+		sz.AddGrowableRow(0)
+		sz.AddGrowableRow(1)
+		sz.AddGrowableRow(2)
+		sz.AddGrowableCol(0)
+		sz.AddGrowableCol(1)
+
+		self.Bind(wx.EVT_CHECKBOX, self.onFixedModel, self.widgets['fixed model'])
+
+		return sz
+
+	def createFitDataPointsSizer(self):
+		fb = wx.StaticBox(self, -1, 'xy smooth fit')
+		fbsz = wx.StaticBoxSizer(fb, wx.VERTICAL)
+		fsz = wx.GridBagSizer(2, 2)
+		label = wx.StaticText(self, -1, 'Number of data points used in fitting:' )
+		fsz.Add(label, (0, 0), (2, 1), wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, '+d')
+		fsz.Add(label, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		fsz.Add(self.widgets['fit data points'],
+				   (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, '-d')
+		fsz.Add(label, (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		fsz.Add(self.widgets['fit data points2'],
+				   (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		fbsz.Add(fsz, 1, wx.ALL|wx.ALIGN_CENTER, 5)
+		fsz.AddGrowableCol(0)
+		return fbsz
+
+	def onFixedModel(self, evt):
+		state = evt.IsChecked()
+		self.widgets['fit data points'].Enable(state)
+
+	def getMagChoices(self):
+			choices = ['this preset and lower mags', 'only this preset','custom values']
+			try:
+					mags = self.node.instrument.tem.Magnifications
+			except:
+				mags = []
+			choices.extend( [str(int(m)) for m in mags])
+			return choices
+
+	def getTiltOrderChoices(self):
+		choices = ['sequential','alternate','swing']
+		return choices
+
+class Panel2(Panel):
+	settingsdialogclass = SettingsDialog2
+	def __init__(self, *args, **kwargs):
+		Panel.__init__(self,*args, **kwargs)
+		self.toolbar.RemoveTool(leginon.gui.wx.ToolBar.ID_SIMULATE_TARGET)
+		self.toolbar.RemoveTool(leginon.gui.wx.ToolBar.ID_SIMULATE_TARGET_LOOP)
+		self.toolbar.RemoveTool(leginon.gui.wx.ToolBar.ID_SIMULATE_TARGET_LOOP_STOP)
+		self.toolbar.RemoveTool(leginon.gui.wx.ToolBar.ID_BROWSE_IMAGES)
+		
+	def addImagePanel(self):
+		self.viewer = TomoViewer.Viewer2(self, -1)
+		self.szmain.Add(self.viewer, (1, 0), (1, 1), wx.EXPAND)
+
 

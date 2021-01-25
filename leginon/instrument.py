@@ -16,9 +16,6 @@ import remotecall
 import gui.wx.Events
 import time
 
-# global variable to log last instrument setData or getData method call
-last_set_get = time.time()
-
 class InstrumentError(Exception):
 	pass
 
@@ -82,6 +79,16 @@ class Proxy(object):
 		except KeyError:
 			pass
 
+	def testNoneInHidden(self, datadict):
+		'''
+		Prevent insertion of instrument where hidden is null.
+		'''
+		q = leginondata.InstrumentData(initializer=datadict)
+		q['hidden'] = None
+		results = q.query(results=1)
+		if results and results[0]['hidden'] is None:
+			raise ValueError('Instrument %s on host %s has null hidden field. Database schema update required' % (datadict['name'],datadict['hostname']))
+
 	def getTEM(self, temname):
 		try:
 			return self.tems[temname]
@@ -117,6 +124,7 @@ class Proxy(object):
 		#print dbtype
 		try:
 			instrumentdata['hostname'] = self.tems[name].Hostname
+			instrumentdata['hidden'] = False
 		except:
 			raise RuntimeError('unable to get TEM hostname')
 		results = instrumentdata.query(results=1)
@@ -131,6 +139,8 @@ class Proxy(object):
 			if cs is None:
 				cs = 2.0e-3
 			instrumentdata['cs'] = cs
+			# prevent old instrument with none value in hidden field to be reinserted
+			self.testNoneInHidden(instrumentdata)
 			dbinstrumentdata = instrumentdata
 			dbinstrumentdata['hidden'] = False
 			dbinstrumentdata.insert()
@@ -180,6 +190,7 @@ class Proxy(object):
 		#print dbtype
 		try:
 			instrumentdata['hostname'] = self.ccdcameras[name].Hostname
+			instrumentdata['hidden'] = False
 		except:
 			raise RuntimeError('unable to get Camera hostname')
 		results = instrumentdata.query(results=1)
@@ -187,6 +198,8 @@ class Proxy(object):
 		if results:
 			dbinstrumentdata = results[0]
 		else:
+			# prevent old instrument with none value in hidden field to be reinserted
+			self.testNoneInHidden(instrumentdata)
 			dbinstrumentdata = instrumentdata
 			dbinstrumentdata['hidden'] = False
 			dbinstrumentdata.insert()
@@ -235,7 +248,6 @@ class Proxy(object):
 		raise ValueError
 
 	def getData(self, dataclass, temname=None, ccdcameraname=None):
-		self.updateLastSetGetTime()
 		if issubclass(dataclass, leginondata.ScopeEMData):
 			if temname is None:
 				proxy = self.tem
@@ -317,8 +329,12 @@ class Proxy(object):
 		types = []
 		args = []
 		for key, attribute in parametermapping:
-			if key not in instance or instance[key] is None:
-				continue
+			if key =='projection mode':
+				# force set of projection mode
+				pass
+			else:
+				if key not in instance or instance[key] is None:
+					continue
 			attributetypes = proxy.getAttributeTypes(attribute)
 			if not attributetypes:
 				continue
@@ -330,31 +346,17 @@ class Proxy(object):
 				continue
 			keys.append(key)
 			attributes.append(attribute)
-			args.append((instance[key],))
+			if key !='projection mode':
+				args.append((instance[key],))
+			else:
+				args.append(('fake',))
 		results = proxy.multiCall(attributes, types, args)
-		self.updateLastSetGetTime()
 		for result in results:
 			try:
 				if isinstance(result, Exception):
 					raise result
 			except AttributeError:
 				pass
-
-	def updateLastSetGetTime(self):
-		'''
-		update global last_set_get attribute time to indicate that
-		the instrument is active.
-		'''
-		t = time.time()
-		global last_set_get
-		last_set_get = t
-
-	def getLastSetGetTime(self):
-		'''
-		get the time a method on the instrument was last set or get
-		'''
-		global last_set_get
-		return last_set_get
 
 class TEM(remotecall.Locker):
 	def getDatabaseType(self):
@@ -368,12 +370,15 @@ parametermapping = (
 	# ScopeEM
 	# The order should base on dependency
 	('system time', 'SystemTime'),
+	('high tension', 'HighTension'),
 	('probe mode','ProbeMode'),
-	('magnification', 'Magnification'),
-	('spot size', 'SpotSize'),
-	('intensity', 'Intensity'),
-	('beam shift', 'BeamShift'),
+	('projection mode','ProjectionMode'),
+	('magnification', 'Magnification'), # this change may trigger normalization.
+	('spot size', 'SpotSize'), # this change may trigger normalization.
+	('intensity', 'Intensity'), # perform normalize all lens at this step if needed
+	('beam shift', 'BeamShift'), # allowed beam shift is limited by magnification
 	('image shift', 'ImageShift'),
+	('diffraction shift', 'DiffractionShift'),
 	('focus', 'Focus'),
 	('defocus', 'Defocus'),
 	('reset defocus', 'resetDefocus'),
@@ -384,7 +389,6 @@ parametermapping = (
 	('corrected stage position', 'CorrectedStagePosition'),
 	('stage position', 'StagePosition'),
 	('column pressure', 'ColumnPressure'),
-	('high tension', 'HighTension'),
 	('main screen position', 'MainScreenPosition'),
 	('main screen magnification', 'MainScreenMagnification'),
 	('small screen position', 'SmallScreenPosition'),
@@ -415,6 +419,7 @@ parametermapping = (
 	('exposure time', 'ExposureTime'),
 	('exposure type', 'ExposureType'),
 	('exposure timestamp', 'ExposureTimestamp'),
+	('intensity averaged', 'IntensityAveraged'),
 	('inserted', 'Inserted'),
 	('pixel size', 'PixelSize'),
 	('energy filtered', 'EnergyFiltered'),
@@ -436,5 +441,7 @@ parametermapping = (
 	('binned multiplier', 'BinnedMultiplier'),
 	('gain index', 'GainIndex'),
 	('system corrected', 'SystemGainDarkCorrected'),
+	('use cds', 'UseCds'),
+	('fast save', 'FastSave'),
 )
 

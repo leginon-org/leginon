@@ -14,7 +14,9 @@ class SupportedCamera(object):
 		self.Name = name
 		self.Height = camsize[0]
 		self.Width = camsize[1]
-		self.PixelSize = 1.4e-5
+		self.PixelSize = WidthHeight()
+		self.PixelSize.Width = 1.4e-5
+		self.PixelSize.Height = 1.4e-5
 		self.is_inserted = False
 		self.IsInserted = self.is_inserted
 

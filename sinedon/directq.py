@@ -16,7 +16,18 @@ def getConnection(modulename='leginondata'):
 	if not modulename in connections.keys():
 		param = dbconfig.getConfig(modulename)
 		connections[modulename] = sqldb.sqlDB(**param)
+	ping(modulename,param)
 	return connections[modulename]
+
+def ping(modulename,param):
+		'''
+		Check connection stat and reconnect if needed.
+		pymysql can reconnect when pinged.
+		'''
+		global connections
+		db_obj = connections[modulename]
+		# pymysql can reconnect when pinged
+		db_obj.dbConnection.ping(reconnect=True)
 
 def complexMysqlQuery(basedbmodule,query):
 	if len(query) > 10000:

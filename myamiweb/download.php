@@ -12,7 +12,8 @@ $imgId = $newimage['id'];
 $imageinfo = $leginondata->getImageInfo($imgId);
 $sessionId = $imageinfo['sessionId'];
 if (!$sessionId) {
-	$sessionId = $leginondata->getSessionInfoFromImage($imgId);
+	$sessionInfo = $leginondata->getSessionInfoFromImage($imgId);
+	$sessionId = $sessionInfo['sessionId'];
 }
 $path = $leginondata->getImagePath($sessionId);
 
@@ -41,7 +42,7 @@ if (file_exists($pic))  {
 		if ($sb && $format=="jpeg"){
 		    $img = imagecreatefromstring($imgstr);
 		    $display_pixelsize = getDisplayPixelSize($img,$imageinfo,$fft,'a',$imageinfo->dimx);
-		    $img = addScaleBarRingToImage($img,$display_pixelsize,$fft,'a');
+		    $img = addScaleBarRingToImage($img,$display_pixelsize,$fft,'a', $imageinfo['is_diffraction']);
 		    imagejpeg($img, $tmpfile);
 		    $pic=$tmpfile;
 		    $size=filesize($pic);

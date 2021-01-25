@@ -27,6 +27,7 @@ import math
 import leginonconfig
 import os
 import correctorclient
+import remoteserver
 
 # testprinting for development
 testing = False
@@ -64,13 +65,14 @@ class Node(correctorclient.CorrectorClient):
 
 	objectserviceclass = remotecall.NodeObjectService
 
-	def __init__(self, name, session, managerlocation=None, otherdatabinder=None, otherdbdatakeeper=None, tcpport=None, launcher=None, panel=None):
+	def __init__(self, name, session, managerlocation=None, otherdatabinder=None, otherdbdatakeeper=None, tcpport=None, launcher=None, panel=None, order=0):
 		self.name = name
 		self.this_node = None
 		self.panel = panel
 		self.node_status = 'idle'
 		self.before_pause_node_status = 'idle'
 		self.tem_hostname = ''
+		self.node_order = order
 		
 		self.initializeLogger()
 
@@ -115,6 +117,15 @@ class Node(correctorclient.CorrectorClient):
 		correctorclient.CorrectorClient.__init__(self)
 
 		self.initializeSettings()
+		# Manager is also a node subclass but does not need status report
+		if not remoteserver.NO_REQUESTS and self.__class__.__name__ not in ('Manager','Launcher','EM') and session is not None:
+			self.remote = remoteserver.RemoteServerMaster(self.logger, session, self)
+			self.remote_status = remoteserver.RemoteStatusbar(self.logger, session, self, self.remote.leginon_base)
+			self.remote_pmlock = remoteserver.PresetsManagerLock(self.logger, session, self)
+		else:
+			self.remote = None
+			self.remote_status = None
+			self.remote_pmlock = None
 
 	def setHasLogError(self, value, message):
 		if value:
@@ -173,10 +184,17 @@ class Node(correctorclient.CorrectorClient):
 			del self.settings['session']
 			del self.settings['name']
 
+		# get current admin settings
+		admin_settings = self.getDBAdminSettings(self.settingsclass, self.name)
+
 		# check if None in any fields
 		for key,value in self.settings.items():
 			if value is None:
-				if key in self.defaultsettings:
+				if key in admin_settings and admin_settings[key] is not None:
+					# use current admin settings if possible
+					self.settings[key] = copy.deepcopy(admin_settings[key])
+				elif key in self.defaultsettings:
+					# use default value of the node
 					self.settings[key] = copy.deepcopy(self.defaultsettings[key])
 
 	def reseachDBSettings(self, settingsclass, inst_alias, user=None):
@@ -186,12 +204,26 @@ class Node(correctorclient.CorrectorClient):
 		qsession = leginondata.SessionData(initializer={'user': user})
 		qdata = settingsclass(initializer={'session': qsession,
 																						'name': inst_alias})
-		settings = self.research(qdata, results=1)
+		settings_list = self.research(qdata, results=1)
 		# if that failed, try to load default settings from DB
-		if not settings:
-			qdata = settingsclass(initializer={'isdefault': True, 'name': self.name})
-			settings = self.research(qdata, results=1)
-		return settings
+		if not settings_list:
+			# try admin settings.
+			settings = self.getDBAdminSettings(settingsclass, inst_alias)
+			if settings:
+				settings_list = [settings,]
+		return settings_list
+
+	def getDBAdminSettings(self, settingsclass, inst_alias):
+		"""
+		Get one administrator settings for the node instance.
+		Returns empty dictionary if not found.
+		"""
+		admin_settings = {}
+		qdata = settingsclass(initializer={'isdefault': True, 'name': inst_alias})
+		results = self.research(qdata, results=1)
+		if results:
+			admin_settings = results[0]
+		return admin_settings
 
 	def loadSettingsByID(self, id):
 		if not hasattr(self, 'settingsclass'):
@@ -255,6 +287,9 @@ class Node(correctorclient.CorrectorClient):
 		record_data = leginondata.LoggerRecordData(session=self.session)
 		for atr in ('name','levelno','levelname','pathname','filename','module','lineno','created','thread','process','message','exc_info'):
 			record_data[atr] = getattr(record,atr)
+			if atr == 'thread':
+				# see Issue #9795 reduce the number to int(20)
+				record_data[atr] = record_data[atr] % 1000000
 		self.publish(record_data, database=True, dbforce=True)
 
 	# main, start/stop methods
@@ -526,6 +561,11 @@ class Node(correctorclient.CorrectorClient):
 		self.beep()
 
 	def setStatus(self, status):
+		'''
+		TO DO: Need a general remote master switch for local-remote switch.
+		'''
+		if self.remote_status:
+			self.remote_status.setStatus(status)
 		if status == 'user input':
 			self.before_pause_node_status = copy.copy(self.node_status)
 		self.node_status = status

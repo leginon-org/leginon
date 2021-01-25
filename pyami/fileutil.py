@@ -44,6 +44,24 @@ def mkdirs(newdir):
 			raise
 	os.umask(originalumask)
 
+def remove_all_files_in_dir(dirname):
+	'''
+	remove just files in the directory. Return counts of subdirectory.
+	If the input is not a directory, return -1
+	'''
+	subdir_count = 0
+	if os.path.isdir(dirname):
+		for f in os.listdir(dirname):
+			file_path = os.path.join(dirname,f)
+			if os.path.isfile(file_path):
+				os.unlink(file_path)
+			else:
+				subdir_count += 1
+				# directories are ignored.
+		return subdir_count
+	else:
+		return -1
+
 def get_config_dirs(module=None, package_name=None):
 	'''
 	Determine a list of directories where config files may be located.
@@ -88,10 +106,17 @@ def open_if_not_exists(filename):
 	return f
 
 def check_exist_one_file(filenames):
+	'''
+	This is used in configuration parsing. Since we don't combine configs but
+	use the last existing in the list, this function returns that one in a list.
+	'''
 	one_exists = False
-	for filename in filenames:
+	rev_filenames = list(filenames)
+	rev_filenames.reverse()
+	for filename in rev_filenames:
 		if os.path.exists(filename):
 			one_exists = True
+			return [filename,]
 	if not one_exists:
 		msg = 'please configure at least one of these:  %s' % (filenames,)
 		if sys.platform == 'win32':

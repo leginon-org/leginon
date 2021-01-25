@@ -10,7 +10,7 @@ import threading
 import leginon.gui.wx.Node
 import leginon.gui.wx.Settings
 from leginon.gui.wx.Choice import Choice
-from leginon.gui.wx.Entry import FloatEntry, EVT_ENTRY, IntEntry
+from leginon.gui.wx.Entry import Entry, FloatEntry, EVT_ENTRY, IntEntry
 from leginon.gui.wx.Presets import EditPresetOrder, EVT_PRESET_ORDER_CHANGED
 import leginon.gui.wx.Events
 import leginon.gui.wx.ImagePanel
@@ -169,6 +169,16 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz_range.Add(wx.StaticText(self, -1, 'is NOT'), (0,2),(1,1), wx.ALIGN_LEFT)
 		return sz_range
 
+	def createReacquireSizer(self):
+		sbsim = wx.StaticBox(self, -1, 'Reacquire rule for failed images')
+		sbszsim = wx.StaticBoxSizer(sbsim, wx.VERTICAL)
+		szsim = wx.GridBagSizer(5, 5)
+		self.widgets['reacquire when failed'] = wx.CheckBox(self, -1, 'Reacquire 3 times before pause')
+		szsim.Add(self.widgets['reacquire when failed'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szsim.Add(self.createBadRecheckSizer(), (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sbszsim.Add(szsim, 0, wx.ALIGN_CENTER)
+		return sbszsim
+
 	def createBadRecheckSizer(self):
 		# recheck
 		self.widgets['recheck pause time'] = IntEntry(self, -1, chars=8)
@@ -177,7 +187,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz_recheck.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz_recheck.Add(self.widgets['recheck pause time'], (0, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		label = wx.StaticText(self, -1, 'second if recheck')
+		label = wx.StaticText(self, -1, 'secs before reacquiring')
 		sz_recheck.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		return sz_recheck
 
@@ -188,7 +198,6 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz_response = self.createBadResponseSizer()
 		sz_range = self.createBadRangeSizer()
 		sz_evaluate = self.createBadEvaluateSizer()
-		sz_recheck = self.createBadRecheckSizer()
 		# bad stats email
 		passwordbut = wx.Button(self, -1, 'Enter Email Password')
 		self.Bind(wx.EVT_BUTTON, self.onEnterPassword, passwordbut)
@@ -197,7 +206,6 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sbsz_evaluate.Add(sz_range, 0, wx.ALIGN_CENTER|wx.ALL,0)
 		sbsz_evaluate.Add(sz_evaluate, 0, wx.ALIGN_CENTER|wx.ALL,0)
 		sbsz_evaluate.Add(passwordbut, 0, wx.ALIGN_CENTER|wx.ALL, 3)
-		sbsz_evaluate.Add(sz_recheck, 0, wx.ALIGN_CENTER|wx.ALL, 3)
 		return sbsz_evaluate
 
 	def createTransformSizer(self):
@@ -258,6 +266,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz_misc.Add(self.widgets['park after target'])
 		sz_misc.Add(self.widgets['park after list'])
 		sz_misc.Add(self.createBadStatsEvaluateResponseBoxSizer())
+		sz_misc.Add(self.createReacquireSizer())
 		return sz_misc
 
 	def createSimulatedTargetLoopBoxSizer(self):
@@ -347,15 +356,6 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 						wx.ALIGN_CENTER_VERTICAL)
 		return sz_save
  
-	def createEmissionSizer(self):
-		#set widget
-		self.widgets['emission off'] = wx.CheckBox(self, -1, 'Turn emission off upon timeout')
-		# mskr sizer
-		sz_emission = wx.GridBagSizer(0, 0)
-		sz_emission.Add(self.widgets['emission off'], (0, 0), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
-		return sz_emission
-
 	def createTiltSizer(self):
 		# set widgets
 		self.widgets['use parent tilt'] = wx.CheckBox(self, -1, 'Tilt the stage like its parent image')
@@ -385,13 +385,23 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 						wx.ALIGN_CENTER_VERTICAL)
 		return sz_beampath
 
-	def createRetractObjApertureSizer(self):
-		self.widgets['retract obj aperture'] = wx.CheckBox(self, -1, 'Retract objective aperture while imaging')
+	def createSetApertureSizer(self):
+		self.widgets['set aperture'] = wx.CheckBox(self, -1, 'set these apertures while imaging')
+		self.widgets['objective aperture'] = Entry(self, -1)
+		self.widgets['c2 aperture'] = Entry(self, -1)
 		# mskr sizer
-		sz_obj_ap = wx.GridBagSizer(0, 0)
-		sz_obj_ap.Add(self.widgets['retract obj aperture'], (0, 0), (1, 1),
+		sz_aps = wx.GridBagSizer(0, 0)
+		sz_aps.Add(self.widgets['set aperture'], (0, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		return sz_obj_ap
+		label1 = wx.StaticText(self, -1, 'condenser:')
+		sz_aps.Add(label1, (1, 0), (1, 1),wx.ALIGN_RIGHT)
+		sz_aps.Add(self.widgets['c2 aperture'], (1, 1), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		label2 = wx.StaticText(self, -1, 'objective:')
+		sz_aps.Add(label2, (2, 0), (1, 1),wx.ALIGN_RIGHT)
+		sz_aps.Add(self.widgets['objective aperture'], (2, 1), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		return sz_aps
 
 	def addSettings(self):
 		# move type
@@ -402,10 +412,9 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		szfirstpause = self.createFirstPauseTimeSizer()
 
 		sz_save = self.createImageOptionsSizer()
-		sz_emission = self.createEmissionSizer()
 		sz_tilt = self.createTiltSizer()
 		sz_beampath = self.createClearBeamPathSizer()
-		sz_obj_ap = self.createRetractObjApertureSizer()
+		sz_obj_ap = self.createSetApertureSizer()
 		sbszsim = self.createSimulatedTargetLoopBoxSizer()
 
 		# misc
@@ -435,11 +444,10 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz.Add(szfirstpause, (2, 0), (1, 2), wx.ALIGN_LEFT|wx.ALL)
 		# left with 1 column
 		sz.Add(sz_save, (3,0), (2,1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(sz_emission, (5,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(sz_tilt, (6,0), (2,1), wx.ALIGN_TOP)
-		sz.Add(sz_beampath, (8,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(sz_obj_ap, (9,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(sbszsim, (10,0), (2,1), wx.ALIGN_BOTTOM)
+		sz.Add(sz_tilt, (5,0), (2,1), wx.ALIGN_TOP)
+		sz.Add(sz_beampath, (7,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(sz_obj_ap, (8,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(sbszsim, (9,0), (2,1), wx.ALIGN_BOTTOM)
 		# middle with 1 column
 		sz.Add(sz_misc, (3,1), (8,1), wx.ALIGN_TOP)
 		# right
@@ -467,7 +475,8 @@ class Panel(leginon.gui.wx.Node.Panel):
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PAUSE, 'pause', shortHelpString='Pause')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ABORT, 'stop', shortHelpString='Abort')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ABORT_QUEUE, 'stop_queue', shortHelpString='Abort Queue')
-		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_EXTRACT, 'clock', shortHelpString='Toggle queue timeout')
+		# hide toggle queue timeout since it is old and confuses new user
+		#self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_EXTRACT, 'clock', shortHelpString='Toggle queue timeout')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SIMULATE_TARGET, 'simulatetarget', shortHelpString='Simulate Target')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SIMULATE_TARGET_LOOP, 'simulatetargetloop', shortHelpString='Simulate Target Loop')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SIMULATE_TARGET_LOOP_STOP, 'simulatetargetloopstop', shortHelpString='Stop Simulate Target Loop')
@@ -514,7 +523,7 @@ class Panel(leginon.gui.wx.Node.Panel):
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSimulateTargetLoopStopTool,
 											id=leginon.gui.wx.ToolBar.ID_SIMULATE_TARGET_LOOP_STOP)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onBrowseImagesTool, id=leginon.gui.wx.ToolBar.ID_BROWSE_IMAGES)
-		self.toolbar.Bind(wx.EVT_TOOL, self.onToggleQueueTimeout, id=leginon.gui.wx.ToolBar.ID_EXTRACT)
+		#self.toolbar.Bind(wx.EVT_TOOL, self.onToggleQueueTimeout, id=leginon.gui.wx.ToolBar.ID_EXTRACT)
 
 	def onToggleQueueTimeout(self, evt):
 		self.node.toggleQueueTimeout()
@@ -538,6 +547,7 @@ class Panel(leginon.gui.wx.Node.Panel):
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, False)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT_QUEUE, False)
+		self.node.paused_by_gui = False
 		self.node.player.play()
 
 	def onPauseTool(self, evt):
@@ -545,6 +555,7 @@ class Panel(leginon.gui.wx.Node.Panel):
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, False)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT_QUEUE, False)
+		self.node.paused_by_gui = True
 		self.node.player.pause()
 
 	def onStopTargetTool(self, evt):
@@ -552,6 +563,7 @@ class Panel(leginon.gui.wx.Node.Panel):
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, False)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT_QUEUE, False)
+		self.node.paused_by_gui = False
 		self.node.player.stoptarget()
 
 	def onStopTool(self, evt):
@@ -559,14 +571,27 @@ class Panel(leginon.gui.wx.Node.Panel):
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, False)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT_QUEUE, False)
+		self.node.paused_by_gui = False
 		self.node.player.stop()
 
 	def onStopQueueTool(self, evt):
-		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, False)
-		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, False)
-		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
-		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT_QUEUE, False)
-		self.node.player.stopqueue()
+		number_of_targets = self.node.getQueueTargetListToDo()
+		if number_of_targets:
+			msg = 'Are you sure you want to abort targets in %d parent images ?' % (number_of_targets)
+			title = 'Abort all targets in Queue'
+		else:
+			msg = 'No targetlist in queue now.\n Are you sure you want to abort future target list ?'
+			title = 'Abort future targets in Queue'
+		dialog = wx.MessageDialog(self, msg,title, wx.YES|wx.NO)
+		result = dialog.ShowModal()
+		dialog.Destroy()
+		if result == wx.ID_YES:
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, False)
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, False)
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT_QUEUE, False)
+			self.node.paused_by_gui = False
+			self.node.player.stopqueue()
 
 	def onPlayer(self, evt):
 		if evt.state == 'play':

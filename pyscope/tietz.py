@@ -659,7 +659,7 @@ class TietzF416(Tietz):
 		binning = self.getBinning()
 		return binning['x']*binning['y']
 
-	def getCalulateNormOnDark(self):
+	def getCalculateNormOnDark(self):
 		return False
 
 	def requireRecentDarkOnBright(self):

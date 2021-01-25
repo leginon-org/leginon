@@ -59,6 +59,8 @@ class NavigatorClient(object):
 		'''
 		Go through a thread of moveToTarget in Navigator
 		'''
+		if self.node.remote_pmlock:
+			self.node.remote_pmlock.setLock()
 		self.node.startTimer('moveToTarget')
 		ev = event.MoveToTargetEvent(target=target, movetype=movetype)
 		ev['move precision'] = precision
@@ -70,6 +72,8 @@ class NavigatorClient(object):
 		## wait for event
 		self.movedone.wait()
 		self.node.stopTimer('moveToTarget')
+		if self.node.remote_pmlock:
+			self.node.remote_pmlock.setUnlock()
 		return self.movedonestatus
 
 class Navigator(node.Node):

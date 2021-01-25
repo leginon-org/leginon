@@ -27,11 +27,18 @@ class CCDCamera(baseinstrument.BaseInstrument):
 		{'name': 'ExposureType', 'type': 'property'},
 		{'name': 'Offset', 'type': 'property'},
 		{'name': 'ExposureTimestamp', 'type': 'property'},
+		{'name': 'IntensityAveraged', 'type': 'property'},
+		{'name': 'SeriesLength', 'type': 'property'},
+		## methods:
+		{'name': 'startMovie', 'type': 'method'},
+		{'name': 'stopMovie', 'type': 'method'},
 		## optional:
 		{'name': 'EnergyFilter', 'type': 'property'},
 		{'name': 'EnergyFilterWidth', 'type': 'property'},
 		{'name': 'FrameFlip', 'type': 'property'},
 		{'name': 'FrameRotate', 'type': 'property'},
+		{'name': 'UseCds', 'type': 'property'},
+		{'name': 'FastSave', 'type': 'property'},
 	)
 
 	def __init__(self):
@@ -48,12 +55,19 @@ class CCDCamera(baseinstrument.BaseInstrument):
 		self.readoutcallback = None
 		self.callbacks = {}
 		self.exposure_timestamp = None
+		self.use_cds = False
+		self.series_length = 0
 
 	def getZplane(self):
 		return self.zplane
 
 	def getCameraModelName(self):
 		return self.name
+
+	def getIntensityAveraged(self):
+		# Returns True if camera array value is normalized internally
+		# and thus does not increase value for longer exposure time.
+		return False
 
 	def calculateCenteredGeometry(self, dimension, binning):
 		camerasize = self.getCameraSize()
@@ -307,7 +321,7 @@ This method returns that multiplier, M.  In the standard case, returns 1.0.
 	def getSystemGainDarkCorrected(self):
 		return False
 
-	def getCalulateNormOnDark(self):
+	def getCalculateNormOnDark(self):
 		return True
 
 	def requireRecentDarkOnBright(self):
@@ -336,6 +350,17 @@ This method returns that multiplier, M.  In the standard case, returns 1.0.
 
 	def getInserted(self):
 		raise NotImplementedError
+
+	def startMovie(self,filename, exposure_time_ms):
+		pass
+
+	def stopMovie(self,filename, exposure_time_ms):
+		# set series_length
+		self.series_length = 1
+		pass
+
+	def getSeriesLength(self):
+		return self.series_length
 
 	def _midNightDelay(self, delay_start, delay_length, force_insert=0):
 		'''
@@ -374,3 +399,12 @@ This method returns that multiplier, M.  In the standard case, returns 1.0.
 			return
 		# just sleep if not retractable
 		time.sleep(sleep_time)
+
+	def getFastSave(self):
+		# Fastsave saves a small image arrary for frame camera to reduce handling time.
+		return False
+
+	def setFastSave(self, state):
+		# Fastsave saves a small image arrary for frame camera to reduce handling time.
+		pass
+

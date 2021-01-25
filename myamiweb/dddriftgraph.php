@@ -17,6 +17,7 @@ define (PARTICLE_DB, $_SESSION['processingdb']);
 
 $aligned_imgid=$_GET['id'];
 $size = ($_GET['s']) ? $_GET['s'] : 255;
+$viewdata=($_GET['vdata']==1) ? true : false;
 
 $width=$size;
 $height=$size;
@@ -31,6 +32,9 @@ $data = $particle->getAlignLogShiftFromDDAlignedImageId($aligned_imgid,$pixelsiz
 
 if (is_array($data) && (count($data)> 1)) {
 	$dbemgraph= new dbemgraph($data, 'x', 'y');
+	if ($viewdata) {
+		$dbemgraph->dumpData(array('x', 'y'));
+	}
 	$dbemgraph->title="Frame Movement (Angstrom)";
 	$dbemgraph->xaxistitle="x drift (Angstrom)";
 	$dbemgraph->yaxistitle="y drift (Angstrom)";

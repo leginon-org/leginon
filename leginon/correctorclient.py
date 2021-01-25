@@ -87,10 +87,10 @@ class CorrectorClient(cameraclient.CameraClient):
 		if ref_path and ref_path not in ref['session']['image path']:
 			self.logger.warning('Searching only reference in %s' % ref_path)
 			ref = self.researchReferenceOnlyInPath(refimageq, ref_path)
-		if ref['image'] is None:
+		if not hasattr(ref,'imagereadable') or not ref.imagereadable():
 			return None
 
-		shape = ref['image'].shape
+		shape = ref.imageshape() # read shape without loading the array
 		dim = ref['camera']['dimension']
 		if dim['x'] != shape[1] or dim['y'] != shape[0]:
 			self.logger.error('%s: bad shape: %s' % (ref['filename'], shape,))
@@ -98,12 +98,18 @@ class CorrectorClient(cameraclient.CameraClient):
 		return ref
 
 	def researchReferenceOnlyInPath(self, refimageq, ref_path):
-		results = refimageq.query(timelimit='-90 0:0:0')
+		'''
+		Find reference only below the specified path
+		'''
+		# This does not have time limit because it is usually used
+		# in cases you really need it such as disk failure and restoring
+		# from backup.
+		results = refimageq.query()
 		for r in results:
 			if ref_path in r['session']['image path']:
 				self.logger.info('Use reference in %s' % (r['session']['image path']))
 				return r
-		self.logger.warning('Found none in the last 90 days')
+		self.logger.warning('Found none in %s' % ref_path)
 		return {'image':None}
 
 	def getBrightImageFromNorm(self,normdata):
@@ -359,11 +365,19 @@ class CorrectorClient(cameraclient.CameraClient):
 		if dark is None or norm is None:
 			self.logger.warning('Cannot find references, image will not be normalized')
 			return
-		rawarray = imagedata['image']
-		darkarray = self.prepareDark(dark, imagedata)
-		normarray = norm['image']
-		r = self.normalizeImageArray(rawarray,darkarray,normarray, 'GatanK2' in cameradata['ccdcamera']['name'])
-		imagedata['image'] = r	
+		rawarray = imagedata['image'] # This will read image if not in memory
+		if not self.isFakeImageObj(imagedata):
+			self.logger.info('reading reference array for normalization')
+			darkarray = self.prepareDark(dark, imagedata)
+			normarray = norm['image']
+			self.logger.info('done reading reference array')
+			r = self.normalizeImageArray(rawarray,darkarray,normarray, 'GatanK2' in cameradata['ccdcamera']['name'])
+		else:
+			# normalize the fake array, too, but faking it to speed up
+			fake_dark = numpy.zeros((8,8))
+			fake_norm = numpy.ones((8,8))
+			r = self.normalizeImageArray(rawarray,fake_dark,fake_norm, 'GatanK2' in cameradata['ccdcamera']['name'])
+		imagedata['image'] = r
 		imagedata['dark'] = dark
 		imagedata['bright'] = norm['bright']
 		imagedata['norm'] = norm
@@ -406,8 +420,6 @@ class CorrectorClient(cameraclient.CameraClient):
 		'''
 		this puts an image through a pipeline of corrections
 		'''
-		if imagedata['image'] is None:
-			return
 		if not 'system corrected' in imagedata['camera'].keys() or not imagedata['camera']['system corrected']:
 			try:
 				self.normalizeCameraImageData(imagedata, channel)
@@ -420,8 +432,13 @@ class CorrectorClient(cameraclient.CameraClient):
 		plan, plandata = self.retrieveCorrectorPlan(cameradata)
 		# save corrector plan for easy post-processing of raw frames
 		imagedata['corrector plan'] = plandata
+		# Escape if image is None
+		if imagedata.imageshape() is None or self.isFakeImageObj(imagedata):
+			# in-place change.  Nothing to return
+			return
+		# correct plan
 		if plan is not None:
-			self.fixBadPixels(imagedata['image'], plan)
+			self.fixBadPixels(imagedata['image'], plan) #This will read image
 
 		pixelmax = imagedata['camera']['ccdcamera']['pixelmax']
 		imagedata['image'] = numpy.asarray(imagedata['image'], numpy.float32)
@@ -438,7 +455,7 @@ class CorrectorClient(cameraclient.CameraClient):
 		final = numpy.asarray(clipped, numpy.float32)
 		return final
 		'''
-	def reseachCorrectorPlan(self, cameradata):
+	def researchCorrectorPlan(self, cameradata):
 		qcamera = leginondata.CameraEMData()
 		# Fix Me: Ignore gain index for now because camera setting does not have it when theplan is saved.
 		for key in ('ccdcamera','dimension','binning','offset'):
@@ -453,7 +470,7 @@ class CorrectorClient(cameraclient.CameraClient):
 			return None
 
 	def retrieveCorrectorPlan(self, cameradata):
-		plandata = self.reseachCorrectorPlan(cameradata)
+		plandata = self.researchCorrectorPlan(cameradata)
 		return self.formatCorrectorPlan(plandata), plandata
 
 	def formatCorrectorPlan(self, plandata=None):
@@ -471,6 +488,20 @@ class CorrectorClient(cameraclient.CameraClient):
 			return result
 		else:
 			return {'rows': [], 'columns': [], 'pixels': [], 'despike': False, 'despike size': 11, 'despike threshold': 3.5}
+
+	def getCameraDefectMap(self, cameradata):
+		plan, plandata = self.retrieveCorrectorPlan(cameradata)
+		dx = cameradata['dimension']['x']
+		dy = cameradata['dimension']['y']
+		map_array = numpy.zeros((dy,dx),dtype=numpy.int8)
+		for r in plan['rows']:
+			map_array[r,:] = 1
+		for c in plan['columns']:
+			map_array[c,:] = 1
+		for p in plan['pixels']:
+			px, py = p
+			map_array[py,px] = 1
+		return map_array
 
 	def fixBadPixels(self, image, plan):
 		badrows = plan['rows']

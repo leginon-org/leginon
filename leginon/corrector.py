@@ -19,6 +19,7 @@ import sys
 from pyami import arraystats, imagefun, mrc, ccd
 import polygon
 import time
+import datetime
 import os
 import cameraclient
 
@@ -54,6 +55,7 @@ class Corrector(imagewatcher.ImageWatcher):
 	def __init__(self, name, session, managerlocation, **kwargs):
 		imagewatcher.ImageWatcher.__init__(self, name, session, managerlocation, **kwargs)
 		self.instrument = instrument.Proxy(self.objectservice, self.session, self.panel)
+		self.clock_diff = datetime.timedelta()
 		self.start()
 
 	def retrieveCorrectorImageFromSettings(self, reftype, channel):
@@ -271,17 +273,23 @@ class Corrector(imagewatcher.ImageWatcher):
 					self.logger.warning('Camera host pyscope update recommended')
 					return True
 
-	def hasRecentDarkSaved(self, channel):
-		trip_value = 100 # seconds
+	def getRecentDarkTimeStamp(self, channel):
 		dark = self.retrieveCorrectorImageFromSettings('dark', channel)
-		import datetime
 		if dark:
 			if dark.timestamp is None:
 				# dark image collected just now are in cache and has no timestamp.
 				# Query it from database since retrieveCorrectorImage will use cached if there.
 				dark = leginondata.DarkImageData().direct_query(dark.dbid)
-			# compare timestamps
-			return datetime.datetime.now() - dark.timestamp <= datetime.timedelta(seconds=trip_value)
+			return dark.timestamp
+		return False
+
+	def hasRecentDarkSaved(self, channel):
+		trip_value = 600 # seconds
+		dark_timestamp = self.getRecentDarkTimeStamp(channel)
+		if dark_timestamp:
+		# compare timestamps
+			time_diff = datetime.datetime.now() - dark_timestamp - self.clock_diff
+			return time_diff <= datetime.timedelta(seconds=trip_value)
 		return False
 
 	def requireRecentDarkOnBright(self):
@@ -322,7 +330,13 @@ class Corrector(imagewatcher.ImageWatcher):
 			return None
 		if refimagedata is None:
 			return None
-
+		if typekey == 'dark':
+			dark_timestamp = self.getRecentDarkTimeStamp(channel)
+			try:
+				self.clock_diff = datetime.datetime.now() - dark_timestamp
+			except:
+				self.warning('Can not determine clock difference between database and this machine.  Assume zero')
+				pass
 		refarray = refimagedata['image']
 		if refimagedata is not None and self.needCalcNorm(type):
 			self.logger.info('Got reference image, calculating normalization')

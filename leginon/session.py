@@ -6,6 +6,8 @@ name while in the process of creating a session.
 import os.path
 import time
 
+from pyami import moduleconfig
+
 import leginon.leginondata
 import leginon.projectdata
 import leginon.leginonconfig
@@ -72,10 +74,20 @@ class Reservation(object):
 		sessionres.insert(force=True)
 		self.name = None
 
-def suggestName():
+def getSessionPrefix():
 	session_name = '<cannot suggest a name>'
+	try:
+		prefix = moduleconfig.getConfigured('leginon_session.cfg', 'leginon')['name']['prefix']
+	except IOError as e:
+		prefix = ''
+	except KeyError:
+		raise ValueError('session prefix needs to be in "name" section and item "prefix"')
+	return prefix
+
+def suggestName():
+	prefix = getSessionPrefix()
 	for suffix in 'abcdefghijklmnopqrstuvwxyz':
-		maybe_name = time.strftime('%y%b%d'+suffix).lower()
+		maybe_name = prefix + time.strftime('%y%b%d'+suffix).lower()
 		try:
 			makeReservation(maybe_name)
 		except ReservationFailed:
@@ -107,3 +119,30 @@ def linkSessionProject(sessionname, projectid):
 	projeq['project'] = projdata
 	return projeq
 
+def getSessions(userdata, n=None):
+	'''
+	SetupWizard getSessions. allow filtering by prefix and limit returned sessions to n
+	'''
+	prefix = getSessionPrefix()
+	names = []
+	sessiondatalist = []
+	multiple = 1
+	while n is None or (len(names) < n and multiple < 10):
+		sessionq = leginon.leginondata.SessionData(initializer={'user': userdata})
+		if n is None:
+			sessiondatalist = sessionq.query()
+		else:
+			sessiondatalist = sessionq.query(results=n*multiple)
+		for sessiondata in sessiondatalist:
+			# back compatible where there is no hidden field or as None, not False.
+			if sessiondata['hidden'] is True:
+				continue
+			name = sessiondata['name']
+			if prefix and not name.startswith(prefix):
+				continue
+			if name is not None and name not in names:
+				names.append(name)
+		multiple += 1
+		if n is None:
+			break
+	return names, sessiondatalist

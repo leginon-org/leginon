@@ -24,6 +24,7 @@ import leginon.ddinfo
 #pyami
 from pyami import mrc
 from pyami import fileutil
+from pyami import numpil
 
 class ImageLoader(appionLoop2.AppionLoop):
 	#=====================
@@ -329,13 +330,20 @@ class ImageLoader(appionLoop2.AppionLoop):
 		self.stats['waittime'] = 0
 		return True
 
-	def newImagePath(self, rootname):
+	def newImagePath(self, rootname, frames_extension):
 		'''
-		Returns full path for uploaded image and frames
+		Returns full path for uploaded image and frames.
+		rootname is determined by setNewFilename.
+		frames_extension may be mrc or tif and need to be retained.
 		'''
-		extension = '.mrc'
-		newname = rootname+extension
-		newframename = rootname+'.frames'+extension
+		# input may be an absolute path or local filename
+		# handle name containing .frames
+		if rootname.endswith('.frames'):
+			rootname = rootname[:-7]
+		# sum image file name is always mrc
+		newname = rootname+'.mrc'
+		# frame name includes .frames and the original extension
+		newframename = rootname+'.frames'+frames_extension
 		newimagepath = os.path.join(self.session['image path'], newname)
 		if self.session['frame path']:
 			newframepath = os.path.join(self.session['frame path'], newframename)
@@ -345,19 +353,39 @@ class ImageLoader(appionLoop2.AppionLoop):
 
 	def getImageDimensions(self, mrcfile):
 		'''
-		Returns dictionary of x,y dimension for an mrc image/image stack
+		Returns dictionary of x,y dimension for an mrc or tif image/image stack
 		'''
+		if self.getFileFormat(mrcfile) == 'mrc':
+			return self._getMrcImageDimensions(mrcfile)
+		else:
+			return self._getTifImageDimensions(mrcfile)
+
+	def _getMrcImageDimensions(self, mrcfile):
 		mrcheader = mrc.readHeaderFromFile(mrcfile)
 		x = int(mrcheader['nx'].astype(numpy.uint16))
 		y = int(mrcheader['ny'].astype(numpy.uint16))
 		return {'x': x, 'y': y}
 
+	def _getTifImageDimensions(self, tiffile):
+		info = numpil.readInfo(tiffile)
+		return {'x':info['nx'],'y':info['ny']}
+
 	def getNumberOfFrames(self, mrcfile):
 		'''
-		Returns number of frames of an mrc image/image stack
+		Returns number of frames of an mrc or tif image/image stack
 		'''
+		if self.getFileFormat(mrcfile) == 'mrc':
+			return self._getMrcNumberOfFrames(mrcfile)
+		else:
+			return self._getTifNumberOfFrames(mrcfile)
+
+	def _getMrcNumberOfFrames(self, mrcfile):
 		mrcheader = mrc.readHeaderFromFile(mrcfile)
 		return max(1,int(mrcheader['nz'].astype(numpy.uint16)))
+
+	def _getTifNumberOfFrames(self, tiffile):
+		info = numpil.readInfo(tiffile)
+		return max(1,info['nz'])
 
 	def makeFrameDir(self,newdir):
 		fileutil.mkdirs(newdir)
@@ -365,16 +393,34 @@ class ImageLoader(appionLoop2.AppionLoop):
 	def copyFrames(self,source,destination):
 		apFile.safeCopy(source, destination)
 
+	def getFileFormat(self, path):
+		# last bit of split with '.'. The result also prepend '.'
+		extension = os.path.splitext(path)[1]
+		if extension in ('.mrc', '.mrcs'):
+			return 'mrc'
+		if extension in ('.tiff', '.tif'):
+			return 'tif'
+		return extension[1:]
+
 	def prepareImageForUpload(self,origfilepath,newframepath=None,nframes=1):	
 		### In order to obey the rule of first save image then insert 
 		### database record, image need to be read as numpy array, not copied
 		### single image should not overload memory
 		apDisplay.printMsg("Reading original image: "+origfilepath)
+		input_format = self.getFileFormat(origfilepath)
 		if nframes <= 1:
-			imagearray = mrc.read(origfilepath)
+			if input_format == 'mrc':
+				imagearray = mrc.read(origfilepath)
+			elif input_format == 'tif':
+				imagearray = numpil.read(origfilepath)
 		else:
 			apDisplay.printMsg('Summing %d frames for image upload' % nframes)
-			imagearray = mrc.sumStack(origfilepath)
+			if input_format == 'mrc':
+				imagearray = mrc.sumStack(origfilepath)
+			elif input_format == 'tif':
+				imagearray = numpil.sumTiffStack(origfilepath)
+			else:
+				apDisplay.printError('Do not know how to handle %s' % (input_format,))
 			apDisplay.printMsg('Copying frame stack %s to %s' % (origfilepath,newframepath))
 			self.copyFrames(origfilepath,newframepath)
 		return imagearray
@@ -399,7 +445,9 @@ class ImageLoader(appionLoop2.AppionLoop):
 		"""	
 		self.updatePixelSizeCalibration(imginfo)
 		origimgfilepath = imginfo['original filepath']
-		newimgfilepath, newframepath = self.newImagePath(imginfo['filename'])
+		extension = '.'+self.getFileFormat(origimgfilepath)
+		newimgfilepath, newframepath = self.newImagePath(imginfo['filename'], extension)
+
 		nframes = self.getNumberOfFrames(origimgfilepath)
 		if nframes > 1:
 			if not self.session['frame path']:
@@ -410,6 +458,7 @@ class ImageLoader(appionLoop2.AppionLoop):
 
 		imagearray = self.correctImage(imagearray,nframes)
 		imgdata = self.makeImageData(imagearray,imginfo,nframes)
+		apDisplay.printMsg('Sum image is saved as %s.mrc' % imgdata['filename'])
 		if self.isTomoTilts():
 			self.makeTomographyPredictionData(imgdata)
 		pixeldata = None
@@ -491,7 +540,7 @@ class ImageLoader(appionLoop2.AppionLoop):
 		# instead of specifying a batch script file, the same values
 		# are applied to all images for upload
 		batchinfo = []
-		imgdir = os.path.join(self.params['imgdir'],"*."+self.params['filetype'])
+		imgdir = os.path.join(self.params['imgdir'],"*."+self.params['filetype']+"*")
 		upfiles = glob.glob(imgdir)
 		if not upfiles:
 			apDisplay.printError("No images for upload in '%s'"%self.params['imgdir'])
@@ -565,8 +614,8 @@ class ImageLoader(appionLoop2.AppionLoop):
 		uploadedInfo['filename'] = self.setNewFilename(uploadedInfo['original filepath'])
 		newimgfilepath = os.path.join(self.params['rundir'],uploadedInfo['filename']+".tmp.mrc")
 
-		### convert to mrc in new session directory if not mrc:
-		if self.params['filetype'] != "mrc":
+		### convert to mrc in new session directory if not mrc or tif:
+		if self.params['filetype'] not in ("mrc","tif"):
 			if not os.path.isfile(newimgfilepath):
 				emancmd = "proc2d %s %s edgenorm flip mrc"%(uploadedInfo['original filepath'], newimgfilepath)
 				apEMAN.executeEmanCmd(emancmd)
@@ -601,6 +650,8 @@ class ImageLoader(appionLoop2.AppionLoop):
 				name = fullname[:found]
 			else:
 				name = fullname
+			if name.endswith('.frames'):
+				name = name[:-7]
 		else:
 			imgq = leginon.leginondata.AcquisitionImageData(session=self.session)
 			results = imgq.query(readimages=False)
@@ -703,10 +754,13 @@ class ImageLoader(appionLoop2.AppionLoop):
 			scopedata['stage position'] = {'x':0.0,'y':0.0,'z':0.0,'a':info['stage a']}
 		else:
 			scopedata['stage position'] = {'x':0.0,'y':0.0,'z':0.0,'a':0.0}
+		# These are queried in myamiweb as imageinfo.  Need to be defined
+		# so that the first upload will populate the column
+		scopedata['image shift'] = { 'x': 0.0, 'y': 0.0 }
+		scopedata['beam tilt'] = { 'x': 0.0, 'y': 0.0 }
 		return scopedata
 
 	def makeCameraEMData(self,info,nframes):
-
 		# CameraEMData
 		cameradata = leginon.leginondata.CameraEMData(session=self.session,ccdcamera=self.camdata)
 		cameradata['dimension'] = info['dimension']
@@ -772,6 +826,9 @@ class ImageLoader(appionLoop2.AppionLoop):
 			apDisplay.printMsg("Sleeping 1 second")
 			time.sleep(1.0)
 
+	def close(self):
+		apDisplay.printWarning('Frame upload makes a copy of the original. You may want to clean up the original to save the space.')
+		super(ImageLoader, self).close()
 #=====================
 #=====================
 #=====================

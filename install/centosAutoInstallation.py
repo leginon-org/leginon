@@ -9,13 +9,13 @@ import webbrowser
 import stat
 import time
 import hashlib
-
+import getpass
 
 class CentosInstallation(object):
 
 	def setReleaseDependantValues(self):
 		# need to change to branch when release
-		self.gitCmd = "git clone -b trunk http://emg.nysbc.org/git/myami " + self.gitMyamiDir
+		self.gitCmd = "git clone -b myami-beta https://emg.nysbc.org/git/myami " + self.gitMyamiDir
 		# redhat release related values
 		self.redhatRelease = '6.8' # currently used to decide the name of the epel download.
 		self.torqueLibPath = '/var/lib/torque/'
@@ -118,7 +118,7 @@ class CentosInstallation(object):
 		
 		if not returnValue:
 			print("========================")
-			print("ERROR: Please disable SELinux before running this auto installation. Visit http://emg.nysbc.org/redmine/projects/appion/wiki/Install_Appion_and_Leginon_using_the_auto-installation_tool .")
+			print("ERROR: Please disable SELinux before running this auto installation. Visit https://emg.nysbc.org/redmine/projects/appion/wiki/Install_Appion_and_Leginon_using_the_auto-installation_tool .")
 			print("Exiting installation...")
 			print("========================")
 			return False
@@ -367,7 +367,8 @@ class CentosInstallation(object):
 		self.setupPyscopeCfg(pyscopeDir)
 
 		os.chdir(self.currentDir)		
-		self.enableTorqueComputeNode()
+		if self.doInstallJobServerPackages:
+			self.enableTorqueComputeNode()
 		return True
 
 	def setupJobServer(self):
@@ -419,10 +420,10 @@ class CentosInstallation(object):
 		
 		# select 32 or 64 bit file to download
 		if self.machine == "i686" or self.machine == "i386" :
-			fileLocation = "http://emg.nysbc.org/redmine/attachments/download/632/eman-linux-x86-cluster-1.9.tar.gz"
+			fileLocation = "https://emg.nysbc.org/redmine/attachments/download/632/eman-linux-x86-cluster-1.9.tar.gz"
 			fileName = "eman-linux-x86-cluster-1.9.tar.gz"
 		else :
-			fileLocation = "http://emg.nysbc.org/redmine/attachments/download/631/eman-linux-x86_64-cluster-1.9.tar.gz"
+			fileLocation = "https://emg.nysbc.org/redmine/attachments/download/631/eman-linux-x86_64-cluster-1.9.tar.gz"
 			fileName = "eman-linux-x86_64-cluster-1.9.tar.gz"
 
 		# download the tar file and unzip it
@@ -469,7 +470,7 @@ class CentosInstallation(object):
 	def installSpider(self):
 		self.writeToLog("--- Start install Spider")
 		
-		fileLocation = "http://emg.nysbc.org/redmine/attachments/download/638/spidersmall.18.10.tar.gz"
+		fileLocation = "https://emg.nysbc.org/redmine/attachments/download/638/spidersmall.18.10.tar.gz"
 		fileName = "spidersmall.18.10.tar.gz"
 
 		# download the tar file and unzip it
@@ -532,7 +533,7 @@ setenv SPBIN_DIR ${SPIDERDIR}/bin/''')
 		
 		dirName = "Xmipp-2.4-src"
 		tarFileName = dirName + ".tar.gz"
-		tarFileLocation = "http://emg.nysbc.org/redmine/attachments/download/636/" + tarFileName
+		tarFileLocation = "https://emg.nysbc.org/redmine/attachments/download/636/" + tarFileName
 
 		# download the source code tar file and unzip it
 		command = "wget -c " + tarFileLocation
@@ -625,7 +626,7 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 
                 ffmpegName = "ffmpeg-git-32bit-static"
                 ffmpegtarFileName = ffmpegName + ".tar.xz"
-                ffmpegtarFileLocation = "http://emg.nysbc.org/redmine/attachments/download/4674/ffmpeg-git-32bit-static.tar.xz"
+                ffmpegtarFileLocation = "https://emg.nysbc.org/redmine/attachments/download/4674/ffmpeg-git-32bit-static.tar.xz"
 
                 command = "wget -c " + ffmpegtarFileLocation
                 self.runCommand(command)
@@ -689,7 +690,7 @@ endif''')
 		cwd = os.getcwd()
 		protomoVer = "protomo-2.4.1"
 		zipFileName = protomoVer + ".zip"
-		zipFileLocation = "http://emg.nysbc.org/redmine/attachments/download/4147/" + zipFileName
+		zipFileLocation = "https://emg.nysbc.org/redmine/attachments/download/4147/" + zipFileName
 		
 		# download the source code tar file and unzip it
 		command = "wget -c " + zipFileLocation
@@ -766,7 +767,7 @@ endif
 	def installFrealign(self):
 		self.writeToLog("--- Start install Frealign")
 		
-		fileLocation = "http://emg.nysbc.org/redmine/attachments/download/740/frealign_v8.09_110505.tar.gz"
+		fileLocation = "https://emg.nysbc.org/redmine/attachments/download/740/frealign_v8.09_110505.tar.gz"
 		fileName = "frealign_v8.09_110505.tar.gz"
 
 		# download the tar file and unzip it
@@ -1163,7 +1164,7 @@ endif
 		print "===================================="
 		print ""
 		
-		value = raw_input("Please enter the registration key. You must be registered at http://emg.nysbc.org/redmine to recieve a registration key: ")
+		value = raw_input("Please enter the registration key. You must be registered at https://emg.nysbc.org/redmine to recieve a registration key: ")
 		value = value.strip()
 
 		self.regKey = value
@@ -1182,7 +1183,7 @@ endif
 		self.adminEmail   = value
 		
 		# Set the root password		
-		password              = raw_input("Please enter the system root password: ")
+		password              = getpass.getpass("Please enter the system root password: ")
 		password              = password.strip()
 		self.serverRootPass   = password
 		
@@ -1200,6 +1201,10 @@ endif
 		questionText = "Would you like to install EMAN, Xmipp, Spider, and Protomo at this time?"
 		self.doInstallExternalPackages = self.getBooleanInput(questionText)
 		
+		questionText = "Would you like to install Torque for Job server at this time?"
+		self.doInstallJobServerPackages = self.getBooleanInput(questionText)
+		self.failedInstallJobServer = False
+
 	def getBooleanInput(self, questionText = ''):
 		'''
 		Return boolean True/False depending on Y/N input from user.
@@ -1217,7 +1222,7 @@ endif
 	
 	def downloadSampleImages(self):
 	   
-		getImageCmd = "wget -P/tmp/images http://emg.nysbc.org/redmine/attachments/download/112/06jul12a_00015gr_00028sq_00004hl_00002en.mrc http://emg.nysbc.org/redmine/attachments/download/113/06jul12a_00015gr_00028sq_00023hl_00002en.mrc http://emg.nysbc.org/redmine/attachments/download/114/06jul12a_00015gr_00028sq_00023hl_00004en.mrc http://emg.nysbc.org/redmine/attachments/download/115/06jul12a_00022gr_00013sq_00002hl_00004en.mrc http://emg.nysbc.org/redmine/attachments/download/116/06jul12a_00022gr_00013sq_00003hl_00005en.mrc http://emg.nysbc.org/redmine/attachments/download/109/06jul12a_00022gr_00037sq_00025hl_00004en.mrc http://emg.nysbc.org/redmine/attachments/download/110/06jul12a_00022gr_00037sq_00025hl_00005en.mrc http://emg.nysbc.org/redmine/attachments/download/111/06jul12a_00035gr_00063sq_00012hl_00004en.mrc"
+		getImageCmd = "wget -P/tmp/images https://emg.nysbc.org/redmine/attachments/download/112/06jul12a_00015gr_00028sq_00004hl_00002en.mrc https://emg.nysbc.org/redmine/attachments/download/113/06jul12a_00015gr_00028sq_00023hl_00002en.mrc https://emg.nysbc.org/redmine/attachments/download/114/06jul12a_00015gr_00028sq_00023hl_00004en.mrc https://emg.nysbc.org/redmine/attachments/download/115/06jul12a_00022gr_00013sq_00002hl_00004en.mrc https://emg.nysbc.org/redmine/attachments/download/116/06jul12a_00022gr_00013sq_00003hl_00005en.mrc https://emg.nysbc.org/redmine/attachments/download/109/06jul12a_00022gr_00037sq_00025hl_00004en.mrc https://emg.nysbc.org/redmine/attachments/download/110/06jul12a_00022gr_00037sq_00025hl_00005en.mrc https://emg.nysbc.org/redmine/attachments/download/111/06jul12a_00035gr_00063sq_00012hl_00004en.mrc"
 
 		print getImageCmd
 		proc = subprocess.Popen(getImageCmd, shell=True)
@@ -1282,9 +1287,10 @@ endif
 		self.yumInstall(['git'])
 		self.getMyami()
 		
-		result = self.setupJobServer()
-		if result is False:
-			sys.exit(1)
+		if self.doInstallJobServerPackages:
+			result = self.setupJobServer()
+			if result is False:
+				self.failedInstallJobServer = True
 		
 		result = self.setupProcessServer()
 		if result is False:
@@ -1316,7 +1322,14 @@ endif
 		print("========================")
 
 		# Start the Torque server
-		self.runCommand("/etc/init.d/pbs_server start")
+		if self.doInstallJobServerPackages:	
+			if self.failedInstallJobServer == False:
+				# Start the Torque server
+				self.runCommand("systemctl start pbs_server")
+			else:
+				print("========================")
+				print("Torque job server installation failed. Use command copy and paste method to run")
+				print("========================")
 				
 		setupURL = "http://localhost/myamiweb/setup/autoInstallSetup.php?password=" + self.serverRootPass + "&myamidir=" + self.gitMyamiDir + "&uploadsample=" + "%d" % int(self.doDownloadSampleImages)
 		setupOpened = None

@@ -350,18 +350,20 @@ class LatticeScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.widgets['lattice extend'] = Choice(self, -1, choices=self.node.extendtypes)
 
 		szlattice = wx.GridBagSizer(5, 5)
+		note = wx.StaticText(self, -1, '(Set spacing to 0 to accept all blobs)')
+		szlattice.Add(note, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		label = wx.StaticText(self, -1, 'Spacing:')
-		szlattice.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szlattice.Add(self.widgets['lattice spacing'], (0, 1), (1, 1),
+		szlattice.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szlattice.Add(self.widgets['lattice spacing'], (1, 1), (1, 1),
 										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 
 		label = wx.StaticText(self, -1, 'Tolerance:')
-		szlattice.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szlattice.Add(self.widgets['lattice tolerance'], (1, 1), (1, 1),
+		szlattice.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szlattice.Add(self.widgets['lattice tolerance'], (2, 1), (1, 1),
 										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 
-		szlattice.Add(extendlabel, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szlattice.Add(self.widgets['lattice extend'], (2, 1), (1, 1),
+		szlattice.Add(extendlabel, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szlattice.Add(self.widgets['lattice extend'], (3, 1), (1, 1),
 										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 
 		szlattice.AddGrowableCol(1)
@@ -418,6 +420,8 @@ class FinalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.widgets['focus hole'] = Choice(self, -1, choices=self.node.focustypes)
 		self.widgets['target template'] = wx.CheckBox(self, -1,
 			'Use target template')
+		self.widgets['filter ice on convolved'] = wx.CheckBox(self, -1,
+			'Apply ice thickness threshold on template-convolved acquisiton targets')
 		self.widgets['focus template'] = leginon.gui.wx.TargetTemplate.Panel(self,
 			'Focus Target Template', autofill=True)
 		self.widgets['acquisition template'] = leginon.gui.wx.TargetTemplate.Panel(self,
@@ -427,6 +431,7 @@ class FinalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.widgets['focus stats radius'] = IntEntry(self, -1, chars=6)
 		self.widgets['focus min mean thickness'] = FloatEntry(self, -1, chars=6)
 		self.widgets['focus max mean thickness'] = FloatEntry(self, -1, chars=6)
+		self.widgets['focus min stdev thickness'] = FloatEntry(self, -1, chars=6)
 		self.widgets['focus max stdev thickness'] = FloatEntry(self, -1, chars=6)
 
 		szice = wx.GridBagSizer(5, 5)
@@ -471,9 +476,13 @@ class FinalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		szftt.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szftt.Add(self.widgets['focus max mean thickness'], (3, 1), (1, 1),
 										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
-		label = wx.StaticText(self, -1, 'Max. std. thickness:')
+		label = wx.StaticText(self, -1, 'Min. std. thickness:')
 		szftt.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szftt.Add(self.widgets['focus max stdev thickness'], (4, 1), (1, 1),
+		szftt.Add(self.widgets['focus min stdev thickness'], (4, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		label = wx.StaticText(self, -1, 'Max. std. thickness:')
+		szftt.Add(label, (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szftt.Add(self.widgets['focus max stdev thickness'], (5, 1), (1, 1),
 										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		szftt.AddGrowableCol(1)
 
@@ -481,12 +490,13 @@ class FinalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 
 		sztt = wx.GridBagSizer(5, 5)
 		sztt.Add(self.widgets['target template'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sztt.Add(sbszftt, (1, 0), (3, 1), wx.ALIGN_CENTER)
-		sztt.Add(self.widgets['focus template'], (0, 1), (2, 1), wx.ALIGN_CENTER|wx.EXPAND)
-		sztt.Add(self.widgets['acquisition template'], (2, 1), (2, 1), wx.ALIGN_CENTER|wx.EXPAND)
+		sztt.Add(self.widgets['filter ice on convolved'], (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sztt.Add(sbszftt, (2, 0), (4, 1), wx.ALIGN_CENTER)
+		sztt.Add(self.widgets['focus template'], (0, 1), (3, 1), wx.ALIGN_CENTER|wx.EXPAND)
+		sztt.Add(self.widgets['acquisition template'], (3, 1), (2, 1), wx.ALIGN_CENTER|wx.EXPAND)
 		sztt.AddGrowableCol(1)
 		sztt.AddGrowableRow(0)
-		sztt.AddGrowableRow(2)
+		sztt.AddGrowableRow(5)
 
 		sbsztt.Add(sztt, 1, wx.EXPAND|wx.ALL, 5)
 

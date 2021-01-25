@@ -9,6 +9,7 @@ from leginon import instrument
 from leginon import player
 import time
 import itertools
+import datetime
 
 PAUSE_ON_ERROR = True
 EARLY_WARNING_FOR_REFILL = False
@@ -27,7 +28,7 @@ class Conditioner(node.Node):
 		'repeat time': 0,
 	})
 	eventinputs = node.Node.eventinputs + [event.FixConditionEvent]
-	eventoutputs = [event.IdleTimerPauseEvent, event.IdleTimerRestartEvent]
+	eventoutputs = []
 
 	def __init__(self, *args, **kwargs):
 		node.Node.__init__(self, *args, **kwargs)
@@ -117,8 +118,6 @@ class Conditioner(node.Node):
 			return
 		self.player.play()
 		try:
-			evt1 = event.IdleTimerPauseEvent()
-			self.outputEvent(evt1, wait=False)
 			self._handleFixConditionEvent(evt)
 			status = 'ok'
 		except RuntimeError, e:
@@ -127,11 +126,6 @@ class Conditioner(node.Node):
 		except Exception, e:
 			self.logger.info('handling exception %s' %(e.args[0]))
 			status='exception'
-		try:
-			evt2 = event.IdleTimerRestartEvent()
-			self.outputEvent(evt2, wait=False)
-		except Exception, e:
-			self.logger.warning('handling exception for restarting idle timer %s' %(e.args[0]))
 		self.confirmEvent(evt, status=status)
 		self.setStatus('idle')
 		self.player.stop()
@@ -188,7 +182,7 @@ class Conditioner(node.Node):
 			self._fixCondition(condition_type)
 			self.logger.info('done %s' % (condition_type))
 		else:
-			self.logger.info('no need to do anything')
+			self._repeatCondition(condition_type)
 		self.setStatus('idle')
 		self.player.stop()
 
@@ -204,6 +198,13 @@ class Conditioner(node.Node):
 		'''
 		self.logger.info('Base Class not really doing anything')
 	
+	def _repeatCondition(self, condition_type):
+		'''
+		Define what to do in the subclass each time the node repeats the check
+		but not needing to go through _fixCondition
+		'''
+		self.logger.info('no need to do anything')
+
 	def onTest(self):
 		'''
 		Run fixCondition once as a test
@@ -211,8 +212,6 @@ class Conditioner(node.Node):
 		for ctype in self.ctypes:
 			self.testprint('ctype %s' % ctype)
 			self.fixCondition(ctype)
-		evt = event.IdleTimerRestartEvent()
-		self.outputEvent(evt, wait=False)
 		self.player.stop()
 		self.setStatus('idle')
 
@@ -227,7 +226,11 @@ class AutoNitrogenFiller(Conditioner):
 		'column fill end': 70,
 		'loader fill start': 17,
 		'loader fill end': 70,
-		'delay dark current ref': 90,
+		'delay dark current ref': 120,
+		'start dark current ref hr': 0,
+		'end dark current ref hr': 24,
+		'extra dark current ref': False,
+		'dark current ref repeat time': 180, # seconds
 	})
 	eventinputs = node.Node.eventinputs + [event.FixConditionEvent]
 
@@ -236,6 +239,7 @@ class AutoNitrogenFiller(Conditioner):
 		# initialize these to 0 so that it does not trigger early warning.
 		self.loader_level_before = 0
 		self.column_level_before = 0
+		self.last_dark_update = time.time()
 
 	def getFillerModes(self):
 		return ['both cold','column cold, loader RT','column RT, loader cold','both RT']
@@ -248,6 +252,15 @@ class AutoNitrogenFiller(Conditioner):
 		self.refillRefrigerant()
 		self.setStatus('idle')
 		self.player.stop()
+
+	def _repeatCondition(self, condition_type):
+		if not self.settings['extra dark current ref']:
+			return super(AutoNitrogenFiller, self)._repeatCondition(condition_type)
+		time_delta = int(time.time() - self.last_dark_update)
+		if time_delta >= self.settings['dark current ref repeat time']:
+			self.checkAndRunCameraDarkCurrentReferenceUpdate()
+		else:
+			self.logger.info('dark current ref not expired. %d seconds since last' % (time_delta))
 
 	def isAboveTripValue(self):
 		# calling monitorRefillWithIsBusy first to make sure it is not already refilling
@@ -281,7 +294,7 @@ class AutoNitrogenFiller(Conditioner):
 			if (check_column and column_level <= self.settings['column fill start']+column_delta) or (check_loader and loader_level <= self.settings['loader fill start']+loader_delta):
 				self.logger.error('DEBUG: Runing autofiller soon. Go and observe it')
 
-		self.logger.debug('force_fill_state is %s' % (force_fill,))
+		self.logger.info('force_fill_state is %s' % (force_fill,))
 		return force_fill
 
 	def hasAutoFiller(self):
@@ -301,13 +314,36 @@ class AutoNitrogenFiller(Conditioner):
 		time.sleep(0.1)
 		t1 = threading.Thread(target=self.runNitrogenFiller)
 		t1.start()
-		# Dark Current Reference Update if needed
-		self.logger.info('Waiting for %d seconds before running camera dark current reference update' % (self.settings['delay dark current ref']))
-		time.sleep(self.settings['delay dark current ref'])
-		self.runCameraDarkCurrentReferenceUpdate()
+		time_delta = int(time.time() - self.last_dark_update)
+		if self.settings['extra dark current ref'] and time_delta < self.settings['dark current ref repeat time']:
+			self.logger.info('dark current ref not expired. %d seconds since last' % (time_delta))
+		else:
+			self.checkAndRunCameraDarkCurrentReferenceUpdate()
 		t1.join()
 
 		filler_status = self.monitorRefillWithIsBusy()
+
+	def checkAndRunCameraDarkCurrentReferenceUpdate(self):
+		# Dark Current Reference Update if needed
+		if self.withinGoodHours():
+			self.runCameraDarkCurrentReferenceUpdate()
+		else:
+			self.logger.info('Outside the good hours to acquire camera dark current reference. Skipped')
+
+	def withinGoodHours(self):
+		'''
+		Acquire Dark Current Reference may cause camera to misbehave such as black stripe.
+		This makes it possible to limit the time it performs this to day time.
+		'''
+		within_good_hours = False
+		if self.settings['start dark current ref hr'] == self.settings['end dark current ref hr']:
+			return False
+		my_hour = datetime.datetime.today().hour
+		self.logger.info('Current hour of day: %d' % my_hour)
+		if self.settings['start dark current ref hr'] <= my_hour and my_hour < self.settings['end dark current ref hr']:
+			self.logger.info('Within the good hours to perform dark current reference acquisition')
+			within_good_hours = True
+		return within_good_hours
 
 	def runNitrogenFiller(self):
 		try:
@@ -350,7 +386,10 @@ class AutoNitrogenFiller(Conditioner):
 				# Super and Counting are the same physical camera.
 				break
 		if need_update:
+			self.logger.info('Waiting for %d seconds before running camera dark current reference update' % (self.settings['delay dark current ref']))
+			time.sleep(self.settings['delay dark current ref'])
 			self.updateCameraDarkCurrentReference()
+		self.last_dark_update = time.time()
 		
 	def monitorRefillWithIsBusy(self):
 		'''

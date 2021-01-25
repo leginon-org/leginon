@@ -547,7 +547,14 @@ class Jeol1230(tem.TEM):
 					self.jeol1230lib.setBeamShift(axis, target[axis])
 		return True
 
-	# get image shift in meter
+	def getDiffractionShift(self):
+		# place holder. Not implemented
+		return {'x':0.0,'y':0.0}
+
+	def setDiffractionShift(self, value):
+		# get diffraction shift in meter. Not implemented
+		pass
+
 	def getImageShift(self):
 		if Debug == True:
 			print 'from jeol1230.py getImageShift'
@@ -983,3 +990,12 @@ class Jeol1230(tem.TEM):
 	def getBeamBlankedDuringCameraExchange(self):
 		# Keep it off because gun shutter is too slow.
 		return False
+
+	def getProjectionMode(self):
+		# valid values: imaging or diffraction
+		return 'imaging'
+
+	def setProjectionMode(self, value):
+		# valid values: imaging or diffraction
+		pass
+

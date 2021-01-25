@@ -79,7 +79,9 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 			'image shift': calibrationclient.ImageShiftCalibrationClient(self),
 			'stage position': calibrationclient.StageCalibrationClient(self),
 			'modeled stage position':
-												calibrationclient.ModeledStageCalibrationClient(self)
+												calibrationclient.ModeledStageCalibrationClient(self),
+			'beam size':
+												calibrationclient.BeamSizeCalibrationClient(self),
 		}
 		self.images = {
 			'Original': None,
@@ -109,6 +111,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.clearTiles()
 
 		self.reference_target = None
+		self.setRefreshTool(self.settings['check method']=='remote')
 
 		if self.__class__ == MosaicClickTargetFinder:
 			self.start()
@@ -154,6 +157,16 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		for coord_tuple in displayedtargetdata:
 			self.existing_position_targets[coord_tuple] = displayedtargetdata[coord_tuple]
 
+	def _getTargetDisplayInfo(self,image_pixelsize):
+		vectors, beam_diameter_on_image = super(MosaicClickTargetFinder, self)._getTargetDisplayInfo(image_pixelsize)
+		if self.mosaic and self.mosaic.scale:
+			scale = self.mosaic.scale
+		else:
+			scale = 1
+		scaled_vectors = {'x':(scale*vectors['x'][0],scale*vectors['x'][1]),'y':(scale*vectors['y'][0],scale*vectors['y'][1])}
+		beam_diameter_on_image *= scale
+		return scaled_vectors, beam_diameter_on_image
+
 	def getDisplayedReferenceTarget(self):
 		try:
 			column, row = self.panel.getTargetPositions('reference')[-1]
@@ -163,6 +176,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		return self.newReferenceTarget(imagedata, delta_row, delta_column)
 
 	def submitTargets(self):
+		self.terminated_remote = False
 		self.userpause.set()
 		try:
 			if self.settings['autofinder']:
@@ -186,6 +200,21 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		# self.existing_position_targets becomes empty on the second
 		# submit if not refreshed. 
 		self.refreshDatabaseDisplayedTargets()
+		if self.remote and self.settings['check method'] == 'remote':
+			if not self.remote_targeting.userHasControl():
+				self.logger.warning('remote user has not given control. Use local check')
+			else:
+				success = self.sendTargetsToRemote()
+				if success:
+					self.waitForTargetsFromRemote()
+				if not success or self.terminated_remote:
+					self.logger.warning('targets not submitted. Try again.')
+					# don't finish submit, so that it can be redone
+					self.panel.targetsSubmitted()
+					return
+		self.finishSubmitTarget()
+
+	def finishSubmitTarget(self):
 		# create target list
 		self.logger.info('Submitting targets...')
 		self.getTargetDataList('acquisition')
@@ -272,6 +301,19 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 					self.targetlist = targets[0]['list']
 				self.targetmap[id][type] = targets
 		self.reference_target = self.getReferenceTarget()
+
+	def refreshRemoteTargets(self):
+		if self.remote and self.settings['check method'] == 'remote':
+			self.displayDatabaseTargets()
+			# Send targets to remote and wait for submission
+			# self.existing_position_targets becomes empty on the second
+			# submit if not refreshed. 
+			self.refreshDatabaseDisplayedTargets()
+			success = self.sendTargetsToRemote()
+			if success:
+				self.waitForTargetsFromRemote()
+				self.finishSubmitTarget()
+
 
 	def refreshCurrentPosition(self):
 		self.updateCurrentPosition()
@@ -404,6 +446,9 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 			n += len(targets[type])
 		ndone = len(donetargets)
 		self.logger.info('displayed %s targets (%s done)' % (n+ndone, ndone))
+		# trigger activation of submit button in the gui. Won't get here
+		# without mosaic.
+		self.panel.doneTargetDisplay()
 
 	def getMosaicImageList(self, targetlist):
 		self.logger.debug('in getMosaicImageList')
@@ -448,6 +493,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.publish(tiledata, database=True)
 		self.setMosaicNameFromImageList(imagelist)
 		self.logger.debug('published MosaicTileData')
+		self.currentimagedata = imagedata
 		self.addTile(imagedata)
 
 		if self.settings['create on tile change'] == 'all':
@@ -473,7 +519,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		mosaicimagedata['list'] = self.mosaicimagelist
 		mosaicimagedata['image'] = self.mosaicimage
 		mosaicimagedata['scale'] = self.mosaicimagescale
-		filename = 'mosaic'
+		filename = '%s_mosaic' % self.session['name'] # include name for remote to clear on session
 		lab = self.mosaicimagelist['targets']['label']
 		if lab:
 			filename = filename + '_' + lab
@@ -565,6 +611,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 			imagedata = tile['image']
 			recent_imagedata = self.researchImages(list=imagedata['list'],target=imagedata['target'])[-1]
 			self.addTile(recent_imagedata)
+			self.currentimagedata = recent_imagedata
 		self.reference_target = self.getReferenceTarget()
 		self.logger.info('Mosaic loaded (%i of %i images loaded successfully)' % (i+1, ntotal))
 		if self.settings['create on tile change'] in ('all', 'final'):
@@ -654,6 +701,9 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.setImage(None, 'Image')
 		self.mosaicimage = None
 		self.mosaicimagescale = None
+		#clear remote mosaic image
+		if self.remote_targeting and self.mosaicimagedata:
+			self.remote_targeting.unsetImage(self.mosaicimagedata)
 		self.mosaicimagedata = None
 
 	def uiPublishMosaicImage(self):
@@ -898,3 +948,60 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 	def checkSettings(self,settings):
 		# always queuing. No need to check "wait for process" conflict
 		return []
+
+	def sendTargetsToRemote(self):
+		'''
+		Remote service target without confirmation
+		'''
+		# 1. createMosaicImage
+		try:
+			self.publishMosaicImage()
+			mosaic_image_shape = self.mosaicimage.shape
+		except AttributeError:
+			self.logger.error('Need mosaic image to set targets')
+			return False
+		# 2. get displayed targets
+		xytargets = self.getPanelTargets(mosaic_image_shape)
+		# 3. send to remote server
+		# put stuff in OutBox
+		self.remote_targeting.setImage(self.mosaicimagedata)
+		self.remote_targeting.setOutTargets(xytargets)
+		return True
+
+	def waitForTargetsFromRemote(self):
+		self.logger.info('Waiting for remote targets')
+		self.setStatus('remote')
+		# targetxys are target coordinates in x, y grouped by targetnames
+		targetxys = self.remote_targeting.getInTargets()
+		# targetxys returns False if remote control is terminated by remote administrator
+		if targetxys is not False:
+			self.displayRemoteTargetXYs(targetxys)
+		else:
+			self.logger.error('remote targeting terminated by administrator. Use local targets.')
+			self.terminated_remote = True
+		preview_targets = self.panel.getTargetPositions('preview')
+		if preview_targets:
+			self.logger.error('can not handle preview with remote')
+		self.setStatus('idle')
+
+	def setRefreshTool(self, state):
+		if not self.remote_toolbar:
+			# requests not available or on the client so session is unknown
+			return
+		if state is True:
+			self.remote_toolbar.addClickTool('refresh','refreshRemoteTargets','refresh atlas to submit more','none')
+		else:
+			if 'refresh' in self.remote_toolbar.tools:
+				self.remote_toolbar.removeClickTool('refresh')
+		# finalize toolbar and send to leginon-remote
+		self.remote_toolbar.finalizeToolbar()
+
+	def uiChooseCheckMethod(self, method):
+		'''
+		handle gui check method choice.  Bypass using self.settings['check method']
+		because that is not yet set.
+		'''
+		if not self.remote_targeting or not self.remote_targeting.remote_server_active:
+			return
+		state = (method == 'remote')
+		self.setRefreshTool(state)

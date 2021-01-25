@@ -27,6 +27,7 @@ class Panel(leginon.gui.wx.ClickTargetFinder.Panel):
 	icon = 'atlastarget'
 	def initialize(self):
 		leginon.gui.wx.ClickTargetFinder.Panel.initialize(self)
+		self.SettingsDialog = SettingsDialog
 		self.imagepanel.selectiontool.setEnableSettings('acquisition', False)
 		self.imagepanel.selectiontool.setDisplayed('focus', False)
 		self.imagepanel.selectiontool.setEnableSettings('focus', False)
@@ -70,7 +71,7 @@ class Panel(leginon.gui.wx.ClickTargetFinder.Panel):
 		self.Bind(leginon.gui.wx.ImagePanelTools.EVT_SETTINGS, self.onImageSettings)
 		self.addOtherBindings()
 
-		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SETTINGS, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SETTINGS, True)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, False)
 
 	def addOtherBindings(self):
@@ -78,6 +79,11 @@ class Panel(leginon.gui.wx.ClickTargetFinder.Panel):
 											id=leginon.gui.wx.ToolBar.ID_ALIGN)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onFindSquaresButton,
 											id=leginon.gui.wx.ToolBar.ID_FIND_SQUARES)
+
+	def onSettingsTool(self, evt):
+		dialog = self.SettingsDialog(self)
+		dialog.ShowModal()
+		dialog.Destroy()
 
 	def onSubmitTool(self, evt):
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, False)
@@ -141,6 +147,9 @@ class Panel(leginon.gui.wx.ClickTargetFinder.Panel):
 		threading.Thread(target=self.node.findSquares).start()
 
 	def doneTargetList(self):
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, True)
+
+	def doneTargetDisplay(self):
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, True)
 
 class TilesDialog(wx.Dialog):
@@ -344,6 +353,45 @@ class BlobsScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sbsz.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
 
 		return [sbsz]
+
+class SettingsDialog(leginon.gui.wx.Settings.Dialog):
+	def initialize(self):
+		return ScrolledSettings(self,self.scrsize,False)
+
+class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
+	def initialize(self):
+		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
+		sb = wx.StaticBox(self, -1, 'General Mosaic Click Target Finder Settings ')
+		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		sz = self.addSettings()
+		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.EXPAND|wx.ALL, 5)
+		return [sbsz]
+
+	def createCheckMethodSizer(self):
+		checkmethods = self.node.getCheckMethods()
+		self.widgets['check method'] = Choice(self, -1, choices=checkmethods)
+		szcheckmethod = wx.GridBagSizer(5, 5)
+		szcheckmethod.Add(wx.StaticText(self, -1, '   Check from'),
+										(0, 0), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL)
+		szcheckmethod.Add(self.widgets['check method'],
+										(0, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL)
+		return szcheckmethod
+
+	def addSettings(self):
+		checkmethodsz = self.createCheckMethodSizer()
+		sz = wx.GridBagSizer(5, 5)
+		sz.Add(checkmethodsz, (1, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		self.Bind(wx.EVT_CHOICE, self.onChooseCheckMethod, self.widgets['check method'])
+
+		return sz
+
+	def onChooseCheckMethod(self, evt):
+		item_index = self.widgets['check method'].GetSelection()
+		if item_index != wx.NOT_FOUND:
+			self.node.uiChooseCheckMethod(self.widgets['check method'].GetString(item_index))
 
 if __name__ == '__main__':
 	class App(wx.App):

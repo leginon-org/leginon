@@ -150,7 +150,7 @@ class RawTransfer(object):
 			for f in files:
 				fullpath = os.path.join(path, f)
 				if os.path.isdir(fullpath):
-					removeEmptyFolders(fullpath)
+					self.removeEmptyFolders(fullpath)
 
 		# if folder empty, delete it
 		files = os.listdir(path)

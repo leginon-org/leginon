@@ -23,10 +23,13 @@ $summary = ($_GET['s']==1 ) ? true : false;
 $minimum = ($_GET['mres']) ? $_GET['mres']: false;
 $width=$_GET['w'];
 $height=$_GET['h'];
+$storedCTFinfo = $_GET['ctff'];
 
 $ctf = new particledata();
 
-$ctfinfo = $ctf->getBestCtfInfoByResolution($sessionId, $minimum);
+if ($storedCTFinfo) $ctfinfo = json_decode(file_get_contents($storedCTFinfo), true);
+else $ctfinfo = $ctf->getBestCtfInfoByResolution($sessionId, $minimum);
+
 foreach($ctfinfo as $t) {
 	$id = $t['REF|leginondata|AcquisitionImageData|image'];
 	$p = $leginondata->getPresetFromImageId($id);

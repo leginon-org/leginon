@@ -35,10 +35,10 @@
 		<field name="bad stats response" type="text" />
 		<field name="high mean" type="double" />
 		<field name="low mean" type="double" />
-		<field name="emission off" type="tinyint(1)" default="0" />
 		<field name="target offset row" type="int(20)" />
 		<field name="target offset col" type="int(20)" />
 		<field name="correct image shift coma" type="tinyint(1)" default="0" />
+		<field name="set aperture" type="tinyint(1)" default="0" />
 		<field 
 			name="pause between time" 
 			type="DOUBLE" 
@@ -195,10 +195,10 @@
 		<field name="bad stats response" type="text" />
 		<field name="high mean" type="double" />
 		<field name="low mean" type="double" />
-		<field name="emission off" type="tinyint(1)" default="0" />
 		<field name="target offset row" type="int(20)" />
 		<field name="target offset col" type="int(20)" />
 		<field name="correct image shift coma" type="tinyint(1)" default="0" />
+		<field name="set aperture" type="tinyint(1)" default="0" />
 		<field 
 			name="pause between time" 
 			type="DOUBLE" 
@@ -493,10 +493,10 @@
 		<field name="bad stats response" type="text" />
 		<field name="high mean" type="double" />
 		<field name="low mean" type="double" />
-		<field name="emission off" type="tinyint(1)" default="0" />
 		<field name="target offset row" type="int(20)" />
 		<field name="target offset col" type="int(20)" />
 		<field name="correct image shift coma" type="tinyint(1)" default="0" />
+		<field name="set aperture" type="tinyint(1)" default="0" />
 		<field 
 			name="pause between time" 
 			type="DOUBLE" 
@@ -943,11 +943,11 @@
 		<field name="bad stats response" type="text" />
 		<field name="high mean" type="double" />
 		<field name="low mean" type="double" />
-		<field name="emission off" type="tinyint(1)" default="0" />
 		<field name="target offset row" type="int(20)" />
 		<field name="target offset col" type="int(20)" />
 		<field name="correct image shift coma" type="tinyint(1)" default="0" />
 		<field name="phase plate number" type="int(20)" />
+		<field name="set aperture" type="tinyint(1)" default="0" />
 		<field 
 			name="pause between time" 
 			type="DOUBLE" 
@@ -1005,7 +1005,6 @@
 		<field name="bad stats response" type="text" />
 		<field name="high mean" type="double" />
 		<field name="low mean" type="double" />
-		<field name="emission off" type="tinyint(1)" default="0" />
 		<field name="target offset row" type="int(20)" />
 		<field name="target offset col" type="int(20)" />
 		<field name="correct image shift coma" type="tinyint(1)" default="0" />
@@ -1014,6 +1013,7 @@
 		<field name="total test positions" type="int(20)" />
 		<field name="current position" type="int(20)" />
 		<field name="start position" type="int(20)" />
+		<field name="set aperture" type="tinyint(1)" default="0" />
 		<field 
 			name="pause between time" 
 			type="DOUBLE" 
@@ -1051,6 +1051,9 @@
 		<field name="apply offset" type="tinyint(1)" default="0" />
 		<field name="blank" type="tinyint(1)" default="0" />
 		<field name="smallsize" type="int(20)" />
+		<field name="import randon" type="tinyint(1)" default="0" />
+		<field name="idle minute" type="double" />
+		<field name="emission off" type="tinyint(1)" default="0" />
     <key>PRIMARY KEY (`DEF_id`)</key>
     <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
     <key>KEY `REF|SessionData|session` (`REF|SessionData|session`)</key>
@@ -1118,10 +1121,10 @@
 		<field name="bad stats response" type="text" />
 		<field name="high mean" type="double" />
 		<field name="low mean" type="double" />
-		<field name="emission off" type="tinyint(1)" default="0" />
 		<field name="target offset row" type="int(20)" />
 		<field name="target offset col" type="int(20)" />
 		<field name="correct image shift coma" type="tinyint(1)" default="0" />
+		<field name="set aperture" type="tinyint(1)" default="0" />
 		<field 
 			name="pause between time" 
 			type="DOUBLE" 
@@ -1344,10 +1347,10 @@
 		<field name="bad stats response" type="text" />
 		<field name="high mean" type="double" />
 		<field name="low mean" type="double" />
-		<field name="emission off" type="tinyint(1)" default="0" />
 		<field name="target offset row" type="int(20)" />
 		<field name="target offset col" type="int(20)" />
 		<field name="correct image shift coma" type="tinyint(1)" default="0" />
+		<field name="set aperture" type="tinyint(1)" default="0" />
 		<field 
 			name="pause between time" 
 			type="DOUBLE" 
@@ -1636,12 +1639,6 @@
 			default="NULL" 
 		/> 
 		<field 
-			name="emission off" 
-			type="TINYINT(1)" 
-			null="NULL" 
-			default="0" 
-		/> 
-		<field 
 			name="target offset row" 
 			type="INT(20)" 
 			null="NULL" 
@@ -1659,6 +1656,7 @@
 			null="NULL" 
 			default="0" 
 		/> 
+		<field name="set aperture" type="tinyint(1)" default="0" />
 		<field 
 			name="park after target" 
 			type="TINYINT(1)" 

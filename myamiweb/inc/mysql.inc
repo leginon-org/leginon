@@ -87,7 +87,10 @@ class mysql {
 	function SQLTableExists($name) {
 		$table_exists=false;
 		$Rtables = $this->SQLQuery("SHOW TABLES");
-		#if ($Rtables === false) return false;
+		if ($Rtables === false){
+			error_log("Error in mysql.inc SQLTableExists ".$this->mysqlerror);
+			return false;
+		}
 	    	while($table = mysqli_fetch_array($Rtables))
 			if ($table[0] == $name) {
 				$table_exists=true;
@@ -219,6 +222,15 @@ class mysql {
 		return true;
 	}
 
+	function getServerInfo() {
+		if (!$this->db_link->server_info) {
+			$link = $this->connect_db($this->db_host);
+			return mysqli_get_server_info($link);
+		} else {
+			return $this->db_link->server_info;
+		}
+	}
+
 	function getSQLHost() {
 		return $this->db_host;
 	}
@@ -289,6 +301,26 @@ class mysql {
 		while ($row = mysqli_fetch_array($result, $fetch))
 			$data[] = $row;
 		return $data;
+	}
+
+	function getSQLResultNumList($query) {
+		// Get single select query result in the form of tuple-like
+		// list to be used in other query.
+		// This is used to get around the problem that
+		// some operation is not allowed in subquery in MYSQL
+		$result = $this->SQLQuery($query);
+		if (!is_object($result)) {
+			return $result;
+		}
+
+		$callback = function($value) {
+			return $value[0];
+		};
+
+		$r = @mysqli_fetch_all($result, MYSQLI_NUM);
+		$r = array_map($callback,$r);
+		$joined = implode("','",$r);
+		return "('".$joined."') ";
 	}
 
 	function SQLQueries($queries) {

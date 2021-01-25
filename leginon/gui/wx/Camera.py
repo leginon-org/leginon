@@ -43,9 +43,11 @@ class CameraPanel(wx.Panel):
 		self.defaultexptime = 1000.0
 		self.defaultsaveframes = False
 		self.defaultframetime = 200
+		self.defaultusecds = False
+		self.defaultfastsave = False
 		self.defaultalignframes = False
 		self.defaultalignfilter = 'None'
-		self.defaultuseframes = ''
+		#self.defaultuseframes = ''
 		self.defaultreadoutdelay= 0
 		self.common = {}
 		self.setfuncs = {
@@ -54,8 +56,10 @@ class CameraPanel(wx.Panel):
 			'frame time': self._setFrameTime,
 			'align frames': self._setAlignFrames,
 			'align filter': self._setAlignFilter,
-			'use frames': self._setUseFrames,
+			#'use frames': self._setUseFrames,
 			'readout delay': self._setReadoutDelay,
+			'fast save': self._setFastSave,
+			'use cds': self._setUseCds,
 		}
 		self.getfuncs = {
 			'exposure time': self._getExposureTime,
@@ -63,8 +67,10 @@ class CameraPanel(wx.Panel):
 			'frame time': self._getFrameTime,
 			'align frames': self._getAlignFrames,
 			'align filter': self._getAlignFilter,
-			'use frames': self._getUseFrames,
+			#'use frames': self._getUseFrames,
 			'readout delay': self._getReadoutDelay,
+			'fast save': self._getFastSave,
+			'use cds': self._getUseCds,
 		}
 
 		self.framewidges = []
@@ -137,7 +143,9 @@ class CameraPanel(wx.Panel):
 		self.saveframes.Disable()
 		self.alignframes.Disable()
 		self.alignfilter.Disable()
-		self.useframes.Disable()
+		#self.useframes.Disable()
+		self.usecds.Disable()
+		self.fastsave.Disable()
 
 	def createFrameCameraSizer(self):
 		sb = wx.StaticBox(self, -1, 'Camera with Movie Mode')
@@ -160,13 +168,14 @@ class CameraPanel(wx.Panel):
 						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		ftsz.Add(stms, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		ddsz.Add(ftsz, (1, 1), (1, 2), wx.ALIGN_CENTER|wx.EXPAND)
+		'''
 		# use raw frames
 		label = wx.StaticText(self, -1, 'Frames to use:')
 		self.useframes = Entry(self, -1)
 		self.framewidges.append(self.useframes)
 		ddsz.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		ddsz.Add(self.useframes, (2, 1), (1, 1), wx.ALIGN_CENTER|wx.EXPAND)
-
+		'''
 		# readout delay
 		strd = wx.StaticText(self, -1, 'Readout delay:')
 		self.readoutdelay = IntEntry(self, -1, chars=7)
@@ -176,7 +185,17 @@ class CameraPanel(wx.Panel):
 		sz.Add(strd)
 		sz.Add(self.readoutdelay)
 		sz.Add(stms)
-		ddsz.Add(sz, (3, 0), (1, 2), wx.ALIGN_CENTER|wx.EXPAND)
+		ddsz.Add(sz, (2, 0), (1, 2), wx.ALIGN_CENTER|wx.EXPAND)
+
+		# save 8x8 fake image so it is fast to save and transfer
+		self.fastsave = wx.CheckBox(self, -1, 'Save 8x8 stats image to speed up')
+		self.framewidges.append(self.fastsave)
+		ddsz.Add(self.fastsave, (3, 0), (1, 2), wx.ALIGN_CENTER|wx.EXPAND)
+
+		# use cds for K3
+		self.usecds = wx.CheckBox(self, -1, 'Use CDS (Gatan K3)')
+		self.framewidges.append(self.usecds)
+		ddsz.Add(self.usecds, (4, 0), (1, 2), wx.ALIGN_CENTER|wx.EXPAND)
 
 		# align frames box
 		sb = wx.StaticBox(self, -1, 'Frame-Aligning Camera Only')
@@ -196,7 +215,7 @@ class CameraPanel(wx.Panel):
 		afsz.Add(self.alignfilter, (1, 1), (1, 1), wx.ALIGN_CENTER|wx.EXPAND)
 		afsb.Add(afsz, 0, wx.EXPAND|wx.ALL, 2)
 
-		ddsz.Add(afsb, (4, 0), (3, 2), wx.ALIGN_CENTER|wx.EXPAND)
+		ddsz.Add(afsb, (5, 0), (3, 2), wx.ALIGN_CENTER|wx.EXPAND)
 
 		ddsb.Add(ddsz, 0, wx.EXPAND|wx.ALL, 2)
 		ddsz.AddGrowableCol(1)
@@ -205,7 +224,7 @@ class CameraPanel(wx.Panel):
 	def bindFrameCameraEvents(self):
 		self.Bind(wx.EVT_CHECKBOX, self.onSaveFrames, self.saveframes)
 		self.Bind(EVT_ENTRY, self.onFrameTime, self.frametime)
-		self.Bind(EVT_ENTRY, self.onUseFrames, self.useframes)
+		#self.Bind(EVT_ENTRY, self.onUseFrames, self.useframes)
 		self.Bind(EVT_ENTRY, self.onReadoutDelay, self.readoutdelay)
 
 	def setGeometryLimits(self,limitdict):
@@ -259,8 +278,10 @@ class CameraPanel(wx.Panel):
 		self.frametime.SetValue(self.defaultframetime)
 		self.alignframes.SetValue(self.defaultalignframes)
 		self.alignfilter.SetValue(self.defaultalignfilter)
-		self.useframes.SetValue(self.defaultuseframes)
+		#self.useframes.SetValue(self.defaultuseframes)
 		self.readoutdelay.SetValue(self.defaultreadoutdelay)
+		self.fastsave.SetValue(self.defaultfastsave)
+		self.usecds.SetValue(self.defaultusecds)
 		#self.Enable(False)
 		self.Thaw()
 
@@ -336,6 +357,20 @@ class CameraPanel(wx.Panel):
 
 	def _setFrameTime(self, value):
 		self.frametime.SetValue(value)
+
+	def _getUseCds(self):
+		return self.usecds.GetValue()
+
+	def _setUseCds(self, value):
+		value = bool(value)
+		self.usecds.SetValue(value)
+
+	def _getFastSave(self):
+		return self.fastsave.GetValue()
+
+	def _setFastSave(self, value):
+		value = bool(value)
+		self.fastsave.SetValue(value)
 
 	def _getAlignFrames(self):
 		return self.alignframes.GetValue()

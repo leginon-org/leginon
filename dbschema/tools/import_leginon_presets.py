@@ -20,10 +20,11 @@ def convertStringToSQL(value):
 
 class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 	def __init__(self,params):
-		tem_name, cam_hostname, camera_name = self.validateInput(params)
+		tem_hostname, tem_name, cam_hostname, camera_name = self.validateInput(params)
 		super(CalibrationJsonLoader,self).__init__(leginondata)
 		self.cameradata = self.getCameraInstrumentData(cam_hostname,camera_name)
-		self.temdata = self.getTemInstrumentData(tem_name)
+		self.temdata = self.getTemInstrumentData(tem_hostname, tem_name)
+		self.session_name='preset-import-tem%dcam%d' % (self.temdata.dbid, self.cameradata.dbid)
 		self.setSessionData()
 
 	def insertAllData(self):
@@ -31,6 +32,7 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 			classname = datadict.keys()[0]
 			kwargs = datadict[classname]
 			q = self.makequery(classname,kwargs)
+			print self.cameradata
 			if 'ccdcamera' in q.keys():
 				q['ccdcamera'] = self.cameradata
 			if 'tem' in q.keys():
@@ -53,8 +55,8 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 			raise ValueError('can not find %s to import' % params[2])
 		self.jsonfile = params[2]
 		digicam_key = self.jsonfile.split('preset_')[-1].split('.json')[0]
-		temname, cam_host, cameraname = digicam_key.split('+')
-		return temname, cam_host, cameraname
+		tem_host, temname, cam_host, cameraname = digicam_key.split('+')
+		return tem_host, temname, cam_host, cameraname
 
 	def getCameraInstrumentData(self, hostname,camname):
 		results = leginondata.InstrumentData(hostname=hostname,name=camname).query(results=1)
@@ -68,14 +70,17 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 			sys.exit()
 
 		cam = results[0]
+		print cam.dbid
 		return cam
 
-	def getTemInstrumentData(self, tem_name):
-		temq = leginondata.InstrumentData(name=tem_name)
+	def getTemInstrumentData(self, tem_host, tem_name):
+		temq = leginondata.InstrumentData(hostname=tem_host, name=tem_name)
 		r = leginondata.PixelSizeCalibrationData(tem=temq, ccdcamera=self.cameradata).query(results=1)
 		if r:
-			return r[0]['tem']
+			t = r[0]['tem']
+			return t
 		else:
+			print "No tem/camera pair with pixel size calibration found"
 			results = leginondata.InstrumentData().query()
 			tems = []
 			for r in results:
@@ -88,6 +93,18 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 			print "  No tem found"
 			sys.exit()
 
+	def isTemInSessionPreset(self, session):
+		'''
+		Check if the session uses the tem for this import.
+		Leginon PresetsManager does not allow preset to be imported
+		from a session with more than one tem.
+		'''
+		presets = leginondata.PresetData(session=session).query()
+		for p in presets:
+			if p['tem'] == self.temdata:
+				return True
+		return False
+
 	def setSessionData(self):
 		# find administrator user
 		ur = leginondata.UserData(username='administrator').query()
@@ -97,17 +114,19 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 			# do not process without administrator.
 			print " Need administrator user to import"
 			self.close(True)
-		q = leginondata.SessionData(user=admin_user)
-		r = q.query(results=1)
-		if r:
-			# use any existing session.
+		q = leginondata.SessionData(user=admin_user, name=self.session_name)
+		r = q.query(timelimit='-90 0:0:0') # twenty day limit
+		if r and self.isTemInSessionPreset(r[0]):
+			# use recent existing session.
 			self.session = r[0]
 		else:
-			q['name']='presetimport'
+			q = leginondata.SessionData(user=admin_user)
+			# make unique name so it won't stop the insert since this is not forced.
+			q['name']=self.session_name
 			q['comment'] = 'import presets from json'
 			q['hidden'] = True
-			r.insert()
-			self.session = r
+			q.insert(force=True)
+			self.session = q
 		print 'Using Session %s to import' % self.session['name']
 
 	def printQuery(self, q):

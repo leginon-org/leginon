@@ -90,14 +90,13 @@ if (!$g) {
 
 	if ($preset=='atlas') {
 		
-		$dtypes = $leginondata->getDataTypes($sessionId);
+		$dtypes = $leginondata->getDataTypesOrderedByImagingSize($sessionId);
 		foreach ($dtypes as $dtype) {
 			$d = $leginondata->findImage($id, $dtype);
 			$nId = $d['id'];
 			if ($gridIds = $leginondata->getImageList($nId))
 				break;
 		}
-
 		$imgparams = array (
 				 // 'displaytargets' => $displaytarget,
 				'displaytargets' => false,

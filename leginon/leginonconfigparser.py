@@ -15,5 +15,6 @@ import pyami.fileutil
 leginonconfigparser = configparser.SafeConfigParser()
 confdirs = pyami.fileutil.get_config_dirs()
 conf_files = [os.path.join(confdir, 'leginon.cfg') for confdir in confdirs]
-pyami.fileutil.check_exist_one_file(conf_files)
+# Use only the last existing file in conf_files
+conf_files = pyami.fileutil.check_exist_one_file(conf_files)
 configfiles = leginonconfigparser.read(conf_files)

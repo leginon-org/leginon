@@ -13,11 +13,11 @@ if (is_null($sessionId)){
 	$_SESSION['unlimited_images'] = false;
 	$limit = 100;
 }
-elseif ($sessionId=='-1' || !empty($_SESSION['unlimited_images'])){
+else{
 	$limit = 0;
 	$_SESSION['unlimited_images'] = true;
 }
-else  $limit = 100;
+
 // --- set 2nd view's preset
 $presetv1 = ($_POST) ? $_POST['v1pre'] : $_GET['v1pre'];
 

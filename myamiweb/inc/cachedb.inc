@@ -15,7 +15,6 @@
  *
  */
 require_once 'config.php';
-require_once 'inc/mysql.inc';
 
 function useCache($filepath,$sessionname,$is_fft=false,$cacheonly) {
 	//search for imcache jpg file.

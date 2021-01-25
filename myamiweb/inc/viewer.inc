@@ -983,6 +983,7 @@ class view {
 			.'var jsgradient'.$this->name.'="'.$this->gradient.'";'.$this->crlf
 			.'var jsautoscale'.$this->name.'="'.$this->autoscale.'";'.$this->crlf
 			.'var jsdisplayfilename'.$this->name.'="'.$this->displayfilename.'";'.$this->crlf
+			.'var jsuseauto'.$this->name.'="'.$this->useauto.'";'.$this->crlf
 			.'var jsloadjpg'.$this->name.'="'.$this->loadjpg.'";'.$this->crlf
 			.'var jscacheonly'.$this->name.'="'.$this->cacheonly.'";'.$this->crlf
 			.'var jsptclsel'.$this->name.'="'.$this->ptclsel.'";'.$this->crlf
@@ -1414,7 +1415,7 @@ class view {
 						<td valign="center">
 				';
 			$param = "left=0,top=".($this->viewnb*180).",height=400,width=330";
-			$url = "adjust.php?name=$name&displayname=$this->title";
+			$url = "adjust.php?name=$name&useauto=1&displayname=$this->title";
 			$htmlframe .= "<div id='".$this->name."imgstat'>";
 			$htmlframe .='
 			<a href="javascript:popUpAdjust(\''.$url.'\',\''.$name.'\',\''.$param.'\');">
@@ -1580,8 +1581,9 @@ function viewer_menu($sessionId) {
 	$str .= '<a class="header" target="summary" href="summary_user.php?expId='.$sessionId.'">[user results]</a> ';
 	if (defined('PROCESSING')) {
 		$str.='<a class="header" target="processing" href="processing/index.php?expId='.$sessionId.'">[processing]</a> ';
-		$str.='<a class="header" target="make jpgs" href="processing/runJpgMaker.php?expId='.$sessionId.'">[make jpgs]</a>';
+		$str.='<a class="header" target="make jpgs" href="processing/runJpgMaker.php?expId='.$sessionId.'">[make jpgs]</a> ';
 	}
+	$str .= '<a class="header" target="poster" href="poster.php?expId='.$sessionId.'">[report]</a> ';
 	echo $str;
 }
 

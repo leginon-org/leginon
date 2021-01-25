@@ -1,12 +1,14 @@
 #!/usr/bin/env python
 from PIL import Image
 from PIL import ImageDraw
+from PIL import ImageSequence
+from PIL import ImageStat
 import numpy
 import imagefun
 import arraystats
 import sys
 import scipy.ndimage
-
+import tifffile
 pilformats = [
 	'BMP',
 	'GIF',
@@ -63,11 +65,30 @@ def read(imfile):
 	return im
 
 def readInfo(imfile):
-	im = Image.open(imfile)
 	info = {}
+	try:
+		im = Image.open(imfile)
+	except:
+		tif = tifffile.TiffFile(imfile)
+		info['ny'], info['nx'] = tif.pages[0].shape
+		info['nz'] = len(tif.pages)
+		return info
 	info.update(im.info)
 	info['nx'], info['ny'] = im.size
-	info['nz'] = 1
+	info['nz'] = sum(1 for e in ImageSequence.Iterator(im))
+	stat = ImageStat.Stat(im)
+	extrema = im.getextrema()
+	number_of_bands = len(im.getbands())
+	if number_of_bands > 1:
+		# multibands, use the most extreme value. Don't know what to do.
+		info['amin'] = min(map((lambda x:x[0],extrema)))
+		info['amax'] = min(map((lambda x:x[1],extrema)))
+	else:
+		info['amin'] = extrema[0]
+		info['amax'] = extrema[1]
+	# always as list
+	info['amean'] = sum(stat.mean)/float(len(stat.mean))
+	info['rms'] = sum(stat.stddev)/float(len(stat.mean)) #this is actually defined as rmsd in mrc header
 	return info
 
 def write(a, imfile=None, format=None, limits=None, writefloat=False):
@@ -141,6 +162,32 @@ def pil_image_tostring(obj, encoder_name="raw", *args):
 
 def fromstring(data, decoder_name="raw", *args):
 	return getattr(Image, getPilFromStringFuncName())(data,decoder_name, *args)
+
+def sumTiffStack(filename):
+	try:
+		im = Image.open(filename)
+	except:
+		tif = tifffile.TiffFile(filename)		
+		a = tif.pages[0].asarray()
+		for item in tif.pages[1:-1]:
+			a += item.asarray()
+		return a 
+	imitr = ImageSequence.Iterator(im)
+	for i, frame in enumerate(imitr):
+		if i == 0:
+			a = numpy.array(frame.convert('L'))
+		else:
+			a += numpy.array(frame.convert('L'))
+	return a
+
+def tiff2numpy_array(filename, section):
+	try:
+		im = PIL.Image.open(filename)
+	except:
+		tif = tifffile.TiffFile(filename)
+		return tif.pages[selection].asarray()
+	im.seek(section)
+	return numpy.array(im.convert('L'))
 
 Image2 = Image
 ###temporary hack for FSU

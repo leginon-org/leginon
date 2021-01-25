@@ -43,14 +43,20 @@ def gethostbyname(hostname):
 			raise LookupError(e)
 	return ipaddress
 
-def testMapping(hostname):
+def testMapping(addr, host):
+	'''
+	Test that the address in pyami.cfg is mapped to the assigned hostname.
+	'''
 	try:
-		this_ip = gethostbyname(hostname)
-		assigned_ip = socket.gethostbyname(hostname)
-		if assigned_ip == this_ip:
+		socket_host = socket.gethostbyaddr(addr)[0]
+		assigned_host = host
+		if assigned_host == socket_host:
 			return True
 		else:
-			e = '%s is mapped to %s in the network, not %s' % (hostname, assigned_ip, this_ip)
+			e = '%s is mapped to %s in the network, not %s' % (addr, socket_host, assigned_host)
+			raise ValueError(e)
+	except socket.herror, e:
+			e = '%s mapping error in socket module: %s of %s' % (addr, e, addr)
 			raise ValueError(e)
 	except Exception as e:
 		raise LookupError(e)
@@ -60,8 +66,9 @@ def test():
 	allmaps = getHostMappings()
 	for host in allmaps.keys():
 		module = '%s ip mapping' % (host)
+		addr = allmaps[host]
 		try:
-			r = testMapping(host)
+			r = testMapping(addr, host)
 			testfun.printResult(module,r)
 		except Exception as e:
 			testfun.printResult(module,False, e)

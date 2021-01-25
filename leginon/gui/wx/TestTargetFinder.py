@@ -20,13 +20,9 @@ class Panel(leginon.gui.wx.TargetFinder.Panel):
 		leginon.gui.wx.TargetFinder.Panel.initialize(self)
 		self.SettingsDialog = SettingsDialog
 
-		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SIMULATE_TARGET,
-													'simulatetarget',
-													shortHelpString='Target Test Image')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_REFRESH,
 													'refresh',
-													shortHelpString='Refresh Targets')
-		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SIMULATE_TARGET, False)
+													shortHelpString='Target Test')
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_REFRESH, False)
 
 		self.imagepanel = leginon.gui.wx.TargetPanel.TargetImagePanel(self, -1)
@@ -67,15 +63,16 @@ class Panel(leginon.gui.wx.TargetFinder.Panel):
 
 	def onNodeInitialized(self):
 		leginon.gui.wx.TargetFinder.Panel.onNodeInitialized(self)
-		self.toolbar.Bind(wx.EVT_TOOL, self.onTargetTestImage,
-											id=leginon.gui.wx.ToolBar.ID_SIMULATE_TARGET)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onRefreshTool,
 											id=leginon.gui.wx.ToolBar.ID_REFRESH)
-		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SIMULATE_TARGET, True)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_REFRESH, False)
+
+	def onSetImage(self, evt):
+		super(Panel,self).onSetImage(evt)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_REFRESH, True)
 
 	def onFoundTargets(self, evt):
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_REFRESH, True)
-		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, True)
 
 	def foundTargets(self):
 		evt = leginon.gui.wx.Events.FoundTargetsEvent()
@@ -83,15 +80,12 @@ class Panel(leginon.gui.wx.TargetFinder.Panel):
 
 	def onRefreshTool(self, evt):
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_REFRESH, False)
-		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, False)
-		threading.Thread(target=self.node.testFindTargets).start()
+		threading.Thread(target=self.node.testFindTargets,args=(True,)).start()
 
 	def onSubmitTool(self, evt):
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_REFRESH, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, False)
 		leginon.gui.wx.TargetFinder.Panel.onSubmitTool(self, evt)
-
-	def onTargetTestImage(self, evt):
-		threading.Thread(target=self.node.targetTestImage).start()
 
 class OriginalSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
