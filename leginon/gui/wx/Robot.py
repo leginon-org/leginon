@@ -4,7 +4,7 @@
 # see http://leginon.org
 #
 
-import Queue
+import queue
 import threading
 import wx
 

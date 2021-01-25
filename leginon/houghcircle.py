@@ -64,7 +64,7 @@ def rasterCircle00(radius):
 		points[(-y,  x)] = None
 		points[( y, -x)] = None
 		points[(-y, -x)] = None
-	return points.keys()
+	return list(points.keys())
 
 def circleKernel(radius):
 	shape = 2*radius+1

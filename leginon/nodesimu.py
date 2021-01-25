@@ -6,11 +6,11 @@ from leginon import leginondata
 
 class Logger(object):
 	def info(self,msg):
-		print 'INFO: %s' % msg
+		print('INFO: %s' % msg)
 	def warning(self,msg):
-		print 'WARNING: %s' % msg
+		print('WARNING: %s' % msg)
 	def error(self,msg):
-		print 'ERROR: %s' % msg
+		print('ERROR: %s' % msg)
 
 class NodeSimulator(object):
 	def __init__(self, session):
@@ -37,4 +37,4 @@ if __name__ == '__main__':
 	# Presets Client need to know which node it is from.
 	pclient = presets.PresetsClient(test_node)
 	# The function in the class instance had now access to session info.
-	print pclient.getPresetsFromDB().keys()
+	print(list(pclient.getPresetsFromDB().keys()))

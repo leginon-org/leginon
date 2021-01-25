@@ -50,7 +50,7 @@ called.
 	def runDependencies(self, memo):
 		'''Run all of my dependencies.  Store the results in self.depresults.  Return only the subset of results that have actually changed since the last run'''
 		changed = False
-		for name,dep in self.dependencies.items():
+		for name,dep in list(self.dependencies.items()):
 			if self.runDependency(name, memo):
 				changed = True
 		return changed
@@ -62,7 +62,7 @@ called.
 	def checkParams(self):
 		'''Check the current set of parameters and return only the subset of them which have changed since the last time they were checked.'''
 		changed = False
-		for name,value in self.params.items():
+		for name,value in list(self.params.items()):
 			if name in self.params_old and self.params_old[name] == value:
 				# not changed
 				pass
@@ -132,7 +132,7 @@ def test():
 			return a * b
 
 	def debugCallback(step, result):
-		print 'Ran step %s, result = %s' % (step.name, result)
+		print('Ran step %s, result = %s' % (step.name, result))
 
 	# create instances
 	s1 = ParamPlusParamOrExt('S1', result_callback=debugCallback)
@@ -177,7 +177,7 @@ class WorkflowCLI(object):
 
 	def configureStep(self, stepname):
 		step = self.steps[stepname]
-		print 'Configure %s...' % (stepname,)
+		print('Configure %s...' % (stepname,))
 		for pdef in step.param_def:
 			pname = pdef['name']
 			ptype = pdef['type']
@@ -187,7 +187,7 @@ class WorkflowCLI(object):
 				choices = '[0,1]'
 			else:
 				choices = ''
-			entered = raw_input('    %s %s: ' % (pname, choices))
+			entered = input('    %s %s: ' % (pname, choices))
 			if not entered:
 				continue
 			if ptype is bool:
@@ -198,7 +198,7 @@ class WorkflowCLI(object):
 	def mainPrompt(self):
 		while True:
 			try:
-				entered = raw_input('Command (run or config): ')
+				entered = input('Command (run or config): ')
 			except EOFError:
 				return None
 			if entered not in ('run', 'config'):
@@ -207,17 +207,17 @@ class WorkflowCLI(object):
 				return entered
 
 	def stepPrompt(self):
-		choices = '[' + ','.join(self.steps.keys()) + ']'
+		choices = '[' + ','.join(list(self.steps.keys())) + ']'
 		while True:
-			entered = raw_input('  Step %s: ' % (choices,))
-			if entered in self.steps.keys() or entered == '':
+			entered = input('  Step %s: ' % (choices,))
+			if entered in list(self.steps.keys()) or entered == '':
 				return entered
 
 	def loop(self):
 		while True:
 			entered = self.mainPrompt()
 			if entered is None:
-				print ''
+				print('')
 				break
 			if entered == 'run':
 				stepname = self.stepPrompt()

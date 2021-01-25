@@ -264,24 +264,24 @@ class TargetType(object):
 		for target in targets:
 			if isinstance(target, dict):
 				# targets from remote or manual selections do not have stats.
-				if 'stats' not in target.keys():
+				if 'stats' not in list(target.keys()):
 					target['stats'] = None
 				self.targets.append(StatsTarget(target['x'], target['y'], self, target['stats']))
 			elif isinstance(target, Target):
 				self.targets.append(Target(target.x, target.y, self))
 			elif isinstance(target, list) or isinstance(target, numpy.ndarray) or isinstance(target, tuple):
 				if len(target) < 2:
-					print "bad target list: ",target
+					print("bad target list: ",target)
 				else:
 					self.targets.append(Target(target[0], target[1], self))
 			else:
-				print "unknown target type: ",target,"type:",type(target)
+				print("unknown target type: ",target,"type:",type(target))
 
 	#--------------------
 	def getTargetPositions(self):
 		if self.targets is None:
 			return []
-		return map(lambda t: t.position, self.targets)
+		return [t.position for t in self.targets]
 
 	#--------------------
 	def changeCursorSize(self, newsize):

@@ -9,19 +9,19 @@
 #
 
 from leginon import leginondata
-import event
-import imagewatcher
+from . import event
+from . import imagewatcher
 import numpy
 import scipy.ndimage
-import gui.wx.Corrector
-import instrument
+from . import gui.wx.Corrector
+from . import instrument
 import sys
 from pyami import arraystats, imagefun, mrc, ccd
-import polygon
+from . import polygon
 import time
 import datetime
 import os
-import cameraclient
+from . import cameraclient
 
 class Corrector(imagewatcher.ImageWatcher):
 	'''
@@ -106,7 +106,7 @@ class Corrector(imagewatcher.ImageWatcher):
 		for channel in channels:
 			try:
 				imagedata = self.acquireReference(type='dark', channel=channel)
-			except Exception, e:
+			except Exception as e:
 				raise
 				self.logger.exception('Cannot acquire dark reference: %s' % (e,))
 			else:
@@ -121,7 +121,7 @@ class Corrector(imagewatcher.ImageWatcher):
 		for channel in channels:
 			try:
 				imagedata = self.acquireReference(type='bright', channel=channel)
-			except Exception, e:
+			except Exception as e:
 				raise
 				self.logger.exception('Cannot acquire bright reference: %s' % (e,))
 			else:
@@ -139,7 +139,7 @@ class Corrector(imagewatcher.ImageWatcher):
 			self.startTimer('get image')
 			image = self.acquireRawCameraImageData(force_no_frames=True)['image']
 			self.stopTimer('get image')
-		except Exception, e:
+		except Exception as e:
 			self.logger.exception('Raw acquisition failed: %s' % (e,))
 		else:
 			self.maskimg = numpy.zeros(image.shape)
@@ -195,7 +195,7 @@ class Corrector(imagewatcher.ImageWatcher):
 			self.logger.info('Acquiring reference image (%s of %s)' % (i+1, n))
 			try:
 				image = self.acquireRawCameraImageData(force_no_frames=True)['image']
-			except Exception, e:
+			except Exception as e:
 				self.logger.error(e)
 				return
 			series.append(image)
@@ -210,7 +210,7 @@ class Corrector(imagewatcher.ImageWatcher):
 			self.logger.info('Acquiring reference image (%s of %s)' % (i+1, n))
 			try:
 				imagedata = self.acquireRawCameraImageData(type=exposuretype, force_no_frames=True)
-			except Exception, e:
+			except Exception as e:
 				self.logger.error('Error acquiring image: %s' % e)
 				return
 			if self.settings['store series']:
@@ -237,7 +237,7 @@ class Corrector(imagewatcher.ImageWatcher):
 			self.logger.info('Acquiring reference image (%s of %s)' % (i+1, n))
 			try:
 				imagedata = self.acquireRawCameraImageData(type=exposuretype, force_no_frames=True)
-			except Exception, e:
+			except Exception as e:
 				self.logger.error('Error acquiring image: %s' % e)
 				return
 			if self.settings['store series']:
@@ -314,7 +314,7 @@ class Corrector(imagewatcher.ImageWatcher):
 					if not self.hasRecentDarkCurrentReferenceSaved(3600):
 						self.updateCameraDarkCurrentReference(warning=True)
 				self.logger.info('Acquiring bright references...')
-		except Exception, e:
+		except Exception as e:
 			self.logger.error('Reference acquisition failed: %s' % (e,))
 			return None
 
@@ -325,7 +325,7 @@ class Corrector(imagewatcher.ImageWatcher):
 				refimagedata = self.acquireSeriesAverage(n, type, channel)
 			elif combine == 'median':
 				refimagedata = self.acquireSeriesMedian(n, type, channel)
-		except Exception, e:
+		except Exception as e:
 			self.logger.error(e)
 			return None
 		if refimagedata is None:
@@ -382,7 +382,7 @@ class Corrector(imagewatcher.ImageWatcher):
 
 		# division may result infinity or zero division
 		# so make sure there are no zeros in norm
-		normarray = numpy.clip(normarray, 0.001, sys.maxint)
+		normarray = numpy.clip(normarray, 0.001, sys.maxsize)
 		normarray = normavg / normarray
 		# Avoid over correcting dead pixels
 		normarray = numpy.ma.masked_greater(normarray,20).filled(1)
@@ -458,12 +458,12 @@ class Corrector(imagewatcher.ImageWatcher):
 		self.setTargets([], 'Bad_Region', block=False)
 
 	def processImageData(self, imagedata):
-		print 'IMAGEDATA******************************'
+		print('IMAGEDATA******************************')
 		import sinedon.data
-		print 'IMAGE', imagedata['image']
+		print('IMAGE', imagedata['image'])
 		imagecopy = imagedata.copy()
 		self.correctCameraImageData(imagecopy, 0)
-		print 'imagecopy corrected', imagecopy['image']
+		print('imagecopy corrected', imagecopy['image'])
 		pixeltype = str(imagedata['image'].dtype)
 		imagecopy['pixeltype'] = pixeltype
 		if True:

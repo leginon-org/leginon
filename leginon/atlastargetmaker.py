@@ -7,14 +7,14 @@
 #
 
 import math
-import calibrationclient
+from . import calibrationclient
 from leginon import leginondata
-import event
-import instrument
-import node
-import presets
-import targethandler
-import gui.wx.AtlasTargetMaker
+from . import event
+from . import instrument
+from . import node
+from . import presets
+from . import targethandler
+from . import gui.wx.AtlasTargetMaker
 
 class AtlasError(Exception):
 	pass
@@ -128,9 +128,9 @@ class AtlasTargetMaker(node.Node, targethandler.TargetHandler):
 			self.publishargs = self._calculateAtlas()
 			if self.publishargs:
 				self.logger.info('Press \'Publish Atlas\' to continue')
-		except AtlasError, e:
+		except AtlasError as e:
 			self.logger.exception('Atlas creation failed: %s' % e)
-		except Exception, e:
+		except Exception as e:
 			raise
 			self.logger.exception('Atlas creation failed: %s' % e)
 		self.panel.atlasCalculated()
@@ -140,9 +140,9 @@ class AtlasTargetMaker(node.Node, targethandler.TargetHandler):
 			if not self.publishargs:
 				raise AtlasError('no targets calculated')
 			self._publishAtlas(*self.publishargs)
-		except AtlasError, e:
+		except AtlasError as e:
 			self.logger.exception('Atlas creation failed: %s' % e)
-		except Exception, e:
+		except Exception as e:
 			self.logger.exception('Atlas creation failed: %s' % e)
 		self.panel.atlasPublished()
 
@@ -198,7 +198,7 @@ class AtlasTargetMaker(node.Node, targethandler.TargetHandler):
 		try:
 			self.instrument.setTEM(preset['tem']['name'])
 			self.instrument.setCCDCamera(preset['ccdcamera']['name'])
-		except ValueError, e:
+		except ValueError as e:
 			raise AtlasError(e)
 		scope, camera = self.getState()
 		center = dict(self.settings['center'])
@@ -238,7 +238,7 @@ class AtlasTargetMaker(node.Node, targethandler.TargetHandler):
 		calibrationclient = self.calibrationclients[movetype]
 		magnification = preset['magnification']
 		r = calibrationclient.getRotationAndPixelSize(magnification, hightension)
-		print r
+		print(r)
 		xangle, xpixsize, yangle, ypixsize = r
 		targets = cover(center, size, theta, imagesize)
 		targets = optimizeTargets(center, targets)

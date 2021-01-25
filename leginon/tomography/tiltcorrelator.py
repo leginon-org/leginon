@@ -146,7 +146,7 @@ if __name__ == '__main__':
 	import numpy as n
 	import pdb
 	import matplotlib.pyplot as plt
-	import cPickle as pickle
+	import pickle as pickle
 	from pyami import correlator, peakfinder, imagefun
 
 	import leginon.leginondata
@@ -192,7 +192,7 @@ if __name__ == '__main__':
 			True, channel=0, wiener=False, taper=0,corrtype='phase')												
 		raw_correlation = correlator_.getShift(True)						# get raw correlation
 		correlation = correlator_.getShift(False)
-		print "correlation x: %f, y: %f" %(correlation['x'],correlation['y'])
+		print("correlation x: %f, y: %f" %(correlation['x'],correlation['y']))
 	
 	im_0 = correlator_.correlation.buffer[0]['fft']
 	im_1 = correlator_.correlation.buffer[1]['fft']
@@ -207,5 +207,5 @@ if __name__ == '__main__':
 	#			True, channel=0, wiener=False, taper=0,corrtype='phase')
 	
 	correlation = correlator_.getShift(False)
-	print "correlation x: %f, y: %f" %(correlation['x'],correlation['y'])
+	print("correlation x: %f, y: %f" %(correlation['x'],correlation['y']))
 

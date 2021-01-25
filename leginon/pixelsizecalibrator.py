@@ -5,14 +5,14 @@
 #       For terms of the license agreement
 #       see  http://leginon.org
 #
-import calibrator
-import calibrationclient
-import event, leginondata
+from . import calibrator
+from . import calibrationclient
+from . import event, leginondata
 from pyami import imagefun
-import node
+from . import node
 import math
 import scipy
-import gui.wx.PixelSizeCalibrator
+from . import gui.wx.PixelSizeCalibrator
 
 class PixelSizeCalibrator(calibrator.Calibrator):
 	'''
@@ -109,7 +109,7 @@ class PixelSizeCalibrator(calibrator.Calibrator):
 					comment = ''
 				pixelsizes.append((mag, ps, comment))
 		if mags is not None:
-			pixelsizemags = map(lambda (mag, ps, c): mag, pixelsizes)
+			pixelsizemags = [mag_ps_c[0] for mag_ps_c in pixelsizes]
 			for m in mags:
 				if m not in pixelsizemags:
 					pixelsizes.append((m, None, ''))

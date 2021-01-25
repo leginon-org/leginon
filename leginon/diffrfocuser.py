@@ -9,11 +9,11 @@
 import math
 import time
 import threading
-import singlefocuser
-import acquisition
-import leginondata
-import gui.wx.DiffrFocuser
-import calibrationclient
+from . import singlefocuser
+from . import acquisition
+from . import leginondata
+from . import gui.wx.DiffrFocuser
+from . import calibrationclient
 
 class DiffrFocuser(singlefocuser.SingleFocuser):
 	panelclass = gui.wx.DiffrFocuser.Panel

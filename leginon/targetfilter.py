@@ -12,12 +12,12 @@ It would typically be placed between a TargetFinder and an Acquisition node.
 Subclasses need to implement the filterTargets method.
 '''
 import math
-import node
+from . import node
 from leginon import leginondata
-import event
+from . import event
 import threading
-import targethandler
-import gui.wx.TargetFilter
+from . import targethandler
+from . import gui.wx.TargetFilter
 
 class TargetFilter(node.Node, targethandler.TargetWaitHandler):
 	panelclass = gui.wx.TargetFilter.Panel

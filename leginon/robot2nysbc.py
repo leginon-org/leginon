@@ -7,17 +7,17 @@ import sys
 import threading
 import time
 from leginon import leginondata
-import emailnotification
-import event
-import instrument
-import node
-import project
-import gui.wx.Robot
-import Queue
+from . import emailnotification
+from . import event
+from . import instrument
+from . import node
+from . import project
+from . import gui.wx.Robot
+import queue
 import sinedon
 
 # inherit from robot2 class
-import robot2
+from . import robot2
 
 # need to copy these from robot2 class
 def seconds2str(seconds):
@@ -207,7 +207,7 @@ class Robot2nysbc(robot2.Robot2):
 					request = self.queue.get(block=False)
 					if isinstance(request, ExitRequest):
 						break
-				except Queue.Empty:
+				except queue.Empty:
 					request = self.getUserGridRequest()
 					if request is None:
 						self.startnowait = False
@@ -379,7 +379,7 @@ class Robot2nysbc(robot2.Robot2):
 		self.logger.info('Robot has completed extraction')
 		self.endTime = time.time()
 		gridTime = (float(self.endTime) - float(self.startTime))/60.0
-		print 'This sample takes %f minutes' % gridTime
+		print('This sample takes %f minutes' % gridTime)
 
 	# the final insertion process
 	def insert(self):
@@ -387,7 +387,7 @@ class Robot2nysbc(robot2.Robot2):
 		self.lockScope()
 		try:
 			self.scopeReadyForInsertion()
-		except Exception, e:
+		except Exception as e:
 			self.unlockScope()
 			self.logger.error('Failed to get scope ready for insertion: %s' % e)
 			raise
@@ -402,7 +402,7 @@ class Robot2nysbc(robot2.Robot2):
 			self.logger.info('Insertion of holder successfully completed')
 		try:
 			griddata = self.gridInserted(self.gridnumber)
-		except Exception, e:
+		except Exception as e:
 			self.logger.error('Failed to get griddata: %s' % e)
 			self.unlockScope()
 			return
@@ -415,7 +415,7 @@ class Robot2nysbc(robot2.Robot2):
 		self.lockScope()
 		try:
 			self.scopeReadyForExtraction()
-		except Exception, e:
+		except Exception as e:
 			self.unlockScope()
 			self.logger.error('Failed to get scope ready for extraction: %s' % e)
 			raise
@@ -451,7 +451,7 @@ class Robot2nysbc(robot2.Robot2):
 
 	# initialize the stage to a pre-defined position before insertion/extraction
 	def stageIsReadyforInsertionExtraction(self):
-		print "Moving stage to make it ready for insertion and extraction"
+		print("Moving stage to make it ready for insertion and extraction")
 		while (not (self.moveStagePositionXYZ('z',self.defZposition) and self.moveStagePositionXYZ('x',self.defXposition) and self.moveStagePositionXYZ('y',self.defYposition) and self.moveStagePositionA('a',self.defAposition))):
 			self.logger.info('Stage is not ready for insertion/extraction, Trying again...')
 		self.logger.info('stage is ready for insertion/extraction ...')

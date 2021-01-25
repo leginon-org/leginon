@@ -9,15 +9,15 @@
 #
 
 from leginon import leginondata
-import targetfinder
-import holefinderback
+from . import targetfinder
+from . import holefinderback
 from pyami import ordereddict
 import threading
-import ice
-import instrument
+from . import ice
+from . import instrument
 import os.path
 import math
-import gui.wx.HoleFinder
+from . import gui.wx.HoleFinder
 import itertools
 
 class HoleFinder(targetfinder.TargetFinder):
@@ -122,7 +122,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.hf.configure_edges(filter=filt, size=n, sigma=sig, absvalue=ab, lpsig=lowpasssig, thresh=edgethresh, edges=edges)
 		try:
 			self.hf.find_edges()
-		except Exception, e:
+		except Exception as e:
 			self.logger.error(e)
 			return
 		# convert to Float32 to prevent seg fault
@@ -139,7 +139,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.hf.configure_template(ring_list=radlist)
 		try:
 			self.hf.create_template()
-		except Exception, e:
+		except Exception as e:
 			self.logger.error(e)
 			return
 		cortype = self.settings['template type']
@@ -152,7 +152,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.hf.configure_correlation(cortype, corfilt)
 		try:
 			self.hf.correlate_template()
-		except Exception, e:
+		except Exception as e:
 			self.logger.error(e)
 			return
 		self.setImage(self.hf['correlation'], 'Template')
@@ -163,7 +163,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.hf.configure_threshold(tvalue)
 		try:
 			self.hf.threshold_correlation()
-		except Exception, e:
+		except Exception as e:
 			self.logger.error(e)
 			return
 		# convert to Float32 to prevent seg fault
@@ -184,7 +184,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.hf.configure_blobs(border=border, maxblobsize=blobsize, maxblobs=maxblobs)
 		try:
 			self.hf.find_blobs()
-		except Exception, e:
+		except Exception as e:
 			self.logger.error(e)
 			return
 		blobs = self.hf['blobs']
@@ -220,7 +220,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.hf.configure_lattice(spacing=latspace, tolerance=lattol)
 		try:
 			self.hf.blobs_to_lattice()
-		except Exception, e:
+		except Exception as e:
 			self.logger.error(e)
 			return
 		self.logger.info('Number of lattice blobs: %s' % (len(self.hf['holes']),))
@@ -233,7 +233,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.hf.configure_holestats(radius=r)
 		try:
 			self.hf.calc_holestats()
-		except Exception, e:
+		except Exception as e:
 			self.logger.error(e)
 			return
 		holes = self.hf['holes']
@@ -249,7 +249,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.hf.configure_ice(i0=i0,tmin=tmin,tmax=tmax,tstd=tstd)
 		try:
 			self.hf.calc_ice()
-		except Exception, e:
+		except Exception as e:
 			self.logger.error(e)
 			return
 		goodholes = self.hf['holes2']
@@ -260,7 +260,7 @@ class HoleFinder(targetfinder.TargetFinder):
 
 		# activate if counter is at a multiple of interval
 		interval = self.settings['focus interval']
-		if interval and not (self.foc_counter.next() % interval):
+		if interval and not (next(self.foc_counter) % interval):
 			self.foc_activated = True
 		else:
 			self.foc_activated = False
@@ -490,7 +490,7 @@ class HoleFinder(targetfinder.TargetFinder):
 			autofailed = False
 			try:
 				self.everything()
-			except Exception, e:
+			except Exception as e:
 				self.logger.error('auto target finder failed: %s' % (e,))
 				autofailed = True
 

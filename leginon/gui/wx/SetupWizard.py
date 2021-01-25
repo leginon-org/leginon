@@ -64,7 +64,7 @@ class UserPage(WizardPage):
 	def setUserSelection(self):
 		self.skip = False
 		if hasattr(leginon.leginonconfig, 'USERNAME') and leginon.leginonconfig.USERNAME:
-			usernames = _indexBy(('firstname','lastname'), self.users.values())
+			usernames = _indexBy(('firstname','lastname'), list(self.users.values()))
 			if leginon.leginonconfig.USERNAME in usernames:
 				self.userchoice.SetStringSelection(leginon.leginonconfig.USERNAME)
 				self.skip = True
@@ -81,7 +81,7 @@ class UserPage(WizardPage):
 
 	def setUsers(self, users):
 		self.users = users
-		choices = users.keys()
+		choices = list(users.keys())
 		choices.sort()
 		self.userchoice.AppendItems(choices)
 		self.setUserSelection()
@@ -105,7 +105,7 @@ class UserPage(WizardPage):
 		parent.sessionselectpage.setSessionNames(self.names)
 
 		#update projects
-		project_choices = self.projects.keys()
+		project_choices = list(self.projects.keys())
 		project_choices.sort()
 		parent.projectpage.setProjectNames(project_choices)
 
@@ -468,7 +468,7 @@ class SessionProjectPage(WizardPage):
 		if parent.setup.projectdata is None:
 			raise NoProjectDatabaseError
 		self.projects = parent.setup.getProjects()
-		choices = self.projects.keys()
+		choices = list(self.projects.keys())
 		choices.sort()
 		self.projectchoice = wx.Choice(self, -1, choices=choices)
 		# select default project
@@ -933,7 +933,7 @@ class Setup(object):
 	def getUsers(self):
 		userdata = leginon.leginondata.UserData()
 		userdatalist = userdata.query()
-		userdatalist = filter(self.isLeginonUser, userdatalist)	
+		userdatalist = list(filter(self.isLeginonUser, userdatalist))	
 		if not userdatalist:
 			raise RuntimeError('No users in the database.')
 		return _indexBy(('firstname','lastname'), userdatalist)
@@ -978,7 +978,7 @@ class Setup(object):
 		try:
 			q = leginon.leginondata.InstrumentData()
 			# Hide instruments from client list
-			if 'hidden' in q.keys():
+			if 'hidden' in list(q.keys()):
 				q['hidden']=False
 				instruments = q.query()
 				if len(instruments) == 0:
@@ -987,7 +987,7 @@ class Setup(object):
 					q = leginon.leginondata.InstrumentData(hostname='fake',name='fake',hidden=True).insert()
 					q2 = leginon.leginondata.InstrumentData(hidden=False)
 					instruments = q2.query()
-			hosts = map((lambda x: x['hostname']),instruments)
+			hosts = list(map((lambda x: x['hostname']),instruments))
 			hosts = set(hosts)
 		except IndexError:
 			hosts = []
@@ -1000,7 +1000,7 @@ class Setup(object):
 				if str(client) not in hosts:
 					continue
 				clients[str(client)] = None
-		clients = clients.keys()
+		clients = list(clients.keys())
 		clients.sort()
 		return clients
 
@@ -1101,7 +1101,7 @@ if __name__ == '__main__':
 		def OnInit(self):
 			frame = wx.Frame(None, -1, 'Test')
 			self.SetTopWindow(frame)
-			import node
+			from . import node
 			n = node.Node('Dummy', None)
 			wizard = SetupWizard(frame, n.research, None)
 			frame.Show(True)

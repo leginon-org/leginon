@@ -15,35 +15,35 @@ import pyami.fileutil
 def printError(str):
 	msg = "Failed: %s"%(str)
 	if sys.platform == 'win32':
-		print msg
+		print(msg)
 	else:
-		print "\033[1;31m"+msg+"\033[0m"
+		print("\033[1;31m"+msg+"\033[0m")
 
 def printSearch(filename):
 	msg = "Looking for %s in:" %(filename)
 	if sys.platform == 'win32':
-		print msg
+		print(msg)
 	else:
-		print "\033[35m"+msg+"\033[0m"
+		print("\033[35m"+msg+"\033[0m")
 
 def printResult(configname,allconfigfiles):
 	try:
-			print '%s.cfg loaded is from %s' % (configname,allconfigfiles[-1])
+			print('%s.cfg loaded is from %s' % (configname,allconfigfiles[-1]))
 			return allconfigfiles[-1]
-	except Exception, e:
+	except Exception as e:
 		if len(allconfigfiles) > 0:
 			printError(e)
 		else:
 			printError('No %s.cfg defined' % (configname))
 
 def checkSinedonConfig():
-	print '---------------------------'
+	print('---------------------------')
 	printSearch('sinedon.cfg')
 	confdirs = pyami.fileutil.get_config_dirs(package_name='sinedon')
-	print "\t",confdirs
+	print("\t",confdirs)
 	try:
 		from sinedon import dbconfig
-	except Exception, e:
+	except Exception as e:
 		printError(e)
 		return
 	allconfigfiles = dbconfig.configfiles
@@ -58,13 +58,13 @@ def checkSinedonConfig():
 				printError('%s required' % (module))
 
 def checkLeginonConfig():
-	print '---------------------------'
+	print('---------------------------')
 	confdirs = pyami.fileutil.get_config_dirs(package_name='leginon')
 	printSearch('leginon.cfg')
-	print "\t",confdirs
+	print("\t",confdirs)
 	try:
 		from leginon import leginonconfigparser
-	except Exception, e:
+	except Exception as e:
 		printError(e)
 		return
 	allconfigfiles = leginonconfigparser.configfiles
@@ -79,13 +79,13 @@ def checkLeginonConfig():
 			printError('Default image path required')
 
 def checkInstrumentConfig():
-	print '---------------------------'
+	print('---------------------------')
 	confdirs = pyami.fileutil.get_config_dirs(package_name='pyscope')
 	printSearch('instruments.cfg')
-	print "\t",confdirs
+	print("\t",confdirs)
 	try:
 		from pyscope import config
-	except Exception, e:
+	except Exception as e:
 		printError(e)
 		return
 	config.parse()
@@ -100,10 +100,10 @@ def testBeforeStart():
 		myami_test.test_configs.runTestCases()
 		import myami_test.test_db
 		myami_test.test_db.runTestCases()
-	except Exception, e:
-		print 'Error:', e
+	except Exception as e:
+		print('Error:', e)
 		if sys.platform == 'win32':
-			raw_input('Hit Enter key to quit')
+			input('Hit Enter key to quit')
 		sys.exit(1)
 
 if __name__ == '__main__':
@@ -112,6 +112,6 @@ if __name__ == '__main__':
 		checkLeginonConfig()
 		checkInstrumentConfig()
 	finally:
-		print
+		print()
 		if sys.platform == 'win32':
-			raw_input('hit ENTER after reviewing the result to exit ....')
+			input('hit ENTER after reviewing the result to exit ....')

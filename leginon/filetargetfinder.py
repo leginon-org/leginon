@@ -9,9 +9,9 @@
 #
 
 from leginon import leginondata
-import targetfinder
+from . import targetfinder
 import threading
-import gui.wx.ClickTargetFinder
+from . import gui.wx.ClickTargetFinder
 
 class FileTargetFinder(targetfinder.ClickTargetFinder):
 	'''
@@ -115,7 +115,7 @@ class FileTargetFinder(targetfinder.ClickTargetFinder):
 		camdata1 = leginondata.CameraEMData(initializer=camdata0)
 		binning = camdata0['binning']
 		axes = {'x':1,'y':0}
-		for axis in axes.keys():
+		for axis in list(axes.keys()):
 			camdata1['dimension'][axis] = mosaic_shape[axes[axis]]
 			change = camdata0['dimension'][axis]*camdata0['binning'][axis] - camdata1['dimension'][axis]*binning[axis]
 			camdata1['offset'][axis] = (camdata0['offset'][axis]*camdata0['binning'][axis]+(change / 2))/binning[axis]

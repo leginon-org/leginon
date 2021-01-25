@@ -8,33 +8,33 @@
 #       see  http://leginon.org
 #
 
-import node
-import event
+from . import node
+from . import event
 from leginon import leginondata
 from pyami import correlator, peakfinder, ordereddict
-import calibrationclient
+from . import calibrationclient
 import math
 import numpy
 import scipy.ndimage
 import time
 import threading
-import presets
-import navigator
+from . import presets
+from . import navigator
 import copy
-import EM
-import gui.wx.TransformManager
-import instrument
-import acquisition
-import rctacquisition
-import libCVwrapper
-import align
-import targethandler
-import tiltcorrector
-import cameraclient
-import player
-import imagehandler
-import transformregistration
-import datatransport
+from . import EM
+from . import gui.wx.TransformManager
+from . import instrument
+from . import acquisition
+from . import rctacquisition
+from . import libCVwrapper
+from . import align
+from . import targethandler
+from . import tiltcorrector
+from . import cameraclient
+from . import player
+from . import imagehandler
+from . import transformregistration
+from . import datatransport
 
 hide_incomplete = False
 
@@ -276,7 +276,7 @@ class TransformManager(node.Node, TargetTransformer):
 		self.start()
 
 	def getRegistrationTypes(self):
-		return self.registrations.keys()
+		return list(self.registrations.keys())
 
 	def validateStagePosition(self, stageposition):
 		## check for out of stage range target
@@ -284,7 +284,7 @@ class TransformManager(node.Node, TargetTransformer):
 			'x': (-9.9e-4, 9.9e-4),
 			'y': (-9.9e-4, 9.9e-4),
 		}
-		for axis, limits in stagelimits.items():
+		for axis, limits in list(stagelimits.items()):
 			if stageposition[axis] < limits[0] or stageposition[axis] > limits[1]:
 				pstr = '%s: %g' % (axis, stageposition[axis])
 				messagestr = 'Aborting target: stage position %s out of range' % pstr

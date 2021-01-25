@@ -68,7 +68,7 @@ class Frame(wx.Frame):
 		self.editor.set(appdata)
 
 	def onLoad(self, evt):
-		dialog = LoadDialog(self, self.apps.keys())
+		dialog = LoadDialog(self, list(self.apps.keys()))
 		if dialog.ShowModal() == wx.ID_OK:
 			app = self.apps[dialog.getApplicationName()]
 			self.load(app)
@@ -95,7 +95,7 @@ class Frame(wx.Frame):
 	def onSaveAs(self, evt):
 		#name = self.editor.application.getName()
 		name = self.editor.getApplicationName()
-		dialog = SaveAsDialog(self, name, self.apps.keys())
+		dialog = SaveAsDialog(self, name, list(self.apps.keys()))
 		if dialog.ShowModal() == wx.ID_OK:
 			#appdata = self.editor.application.getApplication()
 			appdata = self.editor.get()

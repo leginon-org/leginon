@@ -5,9 +5,9 @@
 #       For terms of the license agreement
 #       see  http://leginon.org
 #
-import applications
+from . import applications
 from leginon import leginondata
-import event
+from . import event
 
 class Application(object):
 	def __init__(self, node, name=None):
@@ -119,7 +119,7 @@ class Application(object):
 	def getNodeNames(self):
 		if self.nodespecs is None:
 			return []
-		return map(lambda nsd: nsd['alias'], self.nodespecs)
+		return [nsd['alias'] for nsd in self.nodespecs]
 
 	def launch(self):
 		if not hasattr(self.node, 'addEventDistmap'):
@@ -130,9 +130,8 @@ class Application(object):
 			if not args:
 				# ignored deplicated events
 				continue
-			apply(self.node.addEventDistmap, args)
-		nodeclasses = map(lambda ns: (ns['alias'], ns['class string']),
-											self.nodespecs)
+			self.node.addEventDistmap(*args)
+		nodeclasses = [(ns['alias'], ns['class string']) for ns in self.nodespecs]
 		self.node.updateNodeOrder(nodeclasses)
 		for nodespec in self.nodespecs:
 			args = self.nodeSpec2Args(nodespec)
@@ -143,7 +142,7 @@ class Application(object):
 	def validateTransformManagerNavigatorBindings(self):
 		if self.nodespecs is None:
 			return True
-		node_classnames = map(lambda x: x['class string'], self.nodespecs)
+		node_classnames = [x['class string'] for x in self.nodespecs]
 		if 'Navigator' not in node_classnames or 'TransformManager' not in node_classnames:
 			return True
 		navigator_alias = self.nodespecs[node_classnames.index('Navigator')]['alias']
@@ -163,7 +162,7 @@ class Application(object):
 		if not hasattr(self.node, 'launchNode'):
 			raise RuntimeError('Application node unable to launch node')
 		#print 'launching %s' % str(args)
-		newname = apply(self.node.launchNode, args)
+		newname = self.node.launchNode(*args)
 		return newname
 
 	def kill(self):
@@ -173,8 +172,8 @@ class Application(object):
 			nodename = self.launchednodes.pop()
 			try:
 				self.node.killNode(nodename)
-			except Exception, e:
-				print e
+			except Exception as e:
+				print(e)
 
 	def save(self):
 		self.data['version'] = self.getNewVersion(self.data['name'])

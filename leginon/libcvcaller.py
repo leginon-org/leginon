@@ -1,25 +1,25 @@
 #!/usr/bin/env python
 
-import libCVwrapper
+from . import libCVwrapper
 import threading
 import time
 import subprocess
 import os
 import signal
 import sys
-import cPickle
+import pickle
 ## This is a wrapper around PolygonACD
 ## It will run PolygonACD in a subprocess and kill it if it takes too long
 def PolygonACD(regionarray, x, timeout=5):
 	## the script to execute in the subprocess is this script
 	exe = 'libcvcaller.py'
 	## set up input to the subprocess
-	rstr = cPickle.dumps(regionarray, cPickle.HIGHEST_PROTOCOL)
+	rstr = pickle.dumps(regionarray, pickle.HIGHEST_PROTOCOL)
 	xarg = str(x)
 
 	## start subprocess, give it input
 	PIPE = subprocess.PIPE
-	print 'exe', exe
+	print('exe', exe)
 	sub = subprocess.Popen([exe, xarg], stdin=PIPE, stdout=PIPE, stderr=PIPE)
 	sub.stdin.write(rstr)
 	sub.stdin.close()
@@ -34,15 +34,15 @@ def PolygonACD(regionarray, x, timeout=5):
 	## cancel killer
 	killer.cancel()
 
-	print 'ret', ret
+	print('ret', ret)
 	if ret == 0:
 		newstr = sub.stdout.read()
-		result = cPickle.loads(newstr)
+		result = pickle.loads(newstr)
 	elif ret == -signal.SIGKILL:
-		print 'process ran too long and was killed'
+		print('process ran too long and was killed')
 		result = None
 	else:
-		print 'process exited with error'
+		print('process exited with error')
 		result = None
 	return result
 
@@ -56,10 +56,10 @@ if __name__ == '__main__':
 	value = float(sys.argv[1])
 
 	astr = sys.stdin.read()
-	a = cPickle.loads(astr)
+	a = pickle.loads(astr)
 
 	result = libCVwrapper.PolygonACD(a, value)
 	#result = Test(a, value)
 
-	rstr = cPickle.dumps(result, cPickle.HIGHEST_PROTOCOL)
+	rstr = pickle.dumps(result, pickle.HIGHEST_PROTOCOL)
 	sys.stdout.write(rstr)

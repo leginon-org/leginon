@@ -18,7 +18,7 @@ from leginon import leginondata
 from leginon import raster
 from pyami import mrc
 from leginon import targetfinder
-import gui.wx.StitchTargetFinder
+from . import gui.wx.StitchTargetFinder
 
 class StitchTargetFinder(targetfinder.TargetFinder):
 	panelclass = gui.wx.StitchTargetFinder.Panel
@@ -67,7 +67,7 @@ class StitchTargetFinder(targetfinder.TargetFinder):
 			goodindices = even_indices
 		rasterpoints = raster.createRaster3(spacing, anglerad, goodindices)
 		# raster points and targets to set are in x, y, not row, col
-		rasterpoints = map((lambda x: (x[0]+half[1],x[1]+half[0])),rasterpoints)
+		rasterpoints = list(map((lambda x: (x[0]+half[1],x[1]+half[0])),rasterpoints))
 		self.setTargets(rasterpoints, 'acquisition')
 		# This sleep gives database time to save the targets
 		import time

@@ -284,7 +284,7 @@ class ApplicationEditorLite(wx.TreeCtrl):
 				self.addLauncher(launchername)
 			try:
 				self.addNode(classname, nodename, launchername, dependencies)
-			except ValueError, e:
+			except ValueError as e:
 				message = 'Add node \'%s\' failed: %s.' % (nodename, e)
 				title = 'Application Warning'
 				dialog = wx.MessageDialog(self, message, title, wx.OK|wx.ICON_WARNING)
@@ -294,10 +294,10 @@ class ApplicationEditorLite(wx.TreeCtrl):
 			eventname, fromnode, tonode = binding
 			try:
 				self.addEventBinding(eventname, fromnode, tonode)
-			except ValueError, e:
+			except ValueError as e:
 				# ...
 				pass
-				print e
+				print(e)
 		self.expand()
 
 	def expand(self):

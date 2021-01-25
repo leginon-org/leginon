@@ -3,7 +3,7 @@
 This simulates a robot server that checks a database for signals/attributes.
 '''
 
-import robot2
+from . import robot2
 import time
 
 def getAttributesFromDB():
@@ -41,7 +41,7 @@ class RobotServer(object):
 			### check for changes from DB
 			newattrs = getAttributesFromDB()
 			oldattrs = self.attrs_from_db
-			for key,value in newattrs.items():
+			for key,value in list(newattrs.items()):
 				if newattrs[key] != oldattrs[key]:
 					## something changed, look for method to handle it
 					method_name = 'handle_' + key
@@ -61,7 +61,7 @@ class RobotServer(object):
 
 	def handle_Signal11(self, value):
 		'Handles a change in the value of Signal11'
-		print 'I got Signal11 = ', value
+		print('I got Signal11 = ', value)
 
 	def checkRobot(self):
 		return []

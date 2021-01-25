@@ -85,7 +85,7 @@ class DiffractionUpload(object):
 					if ds['emtarget']['target']['number'] == target_number:
 						return ds
 			trials += 1
-			print 'failed trial %d @ %s' % (trials, datetime.datetime.now().ctime())
+			print('failed trial %d @ %s' % (trials, datetime.datetime.now().ctime()))
 			time.sleep(2.0)
 		raise ValueError('can not find matching target %d on %s with image_id=%d' % (target_number, self.hldata['filename'], self.hldata.dbid))
 
@@ -112,16 +112,16 @@ class DiffractionUpload(object):
 			return results[0]
 		
 	def getTiltSettings(self):
-		tilt_start = float(raw_input('tilt_start (degs)? '))
-		tilt_range = float(raw_input('tilt_range (degs)? '))
-		tilt_speed = float(raw_input('tilt_speed (degs/s)? '))
+		tilt_start = float(input('tilt_start (degs)? '))
+		tilt_range = float(input('tilt_range (degs)? '))
+		tilt_speed = float(input('tilt_speed (degs/s)? '))
 		return tilt_start, tilt_range, tilt_speed
 
 	def makeScopeEMData(self):
 		scope = leginondata.ScopeEMData(initializer=self.diffr_series['parent']['scope'])
 		dpreset = self.preset
-		for k in dpreset.keys():
-			if k in scope.keys():
+		for k in list(dpreset.keys()):
+			if k in list(scope.keys()):
 				scope[k] = dpreset[k]
 		scope['system time'] = time.time()
 		return scope
@@ -129,16 +129,16 @@ class DiffractionUpload(object):
 	def makeCameraEMData(self):
 		camera = leginondata.CameraEMData(initializer=self.diffr_series['parent']['camera'])
 		dpreset = self.preset
-		for k in dpreset.keys():
-			if k in camera.keys():
+		for k in list(dpreset.keys()):
+			if k in list(camera.keys()):
 				camera[k] = dpreset[k]
 		return camera
 
 	def run(self):
-		print('Processing %s' % self.file_pattern)
+		print(('Processing %s' % self.file_pattern))
 		if DEBUG:
-			print(self.diffr_series.dbid, self.diffr_series['preset']['name'],self.diffr_series['preset']['exposure time'])
-			print(self.target.dbid, self.target['number'])
+			print((self.diffr_series.dbid, self.diffr_series['preset']['name'],self.diffr_series['preset']['exposure time']))
+			print((self.target.dbid, self.target['number']))
 		self.copyAndUploadBinFiles()
 		print('Successful')
 
@@ -164,7 +164,7 @@ class DiffractionUpload(object):
 		3. convert leginon imagedata to smv use self.imageDataToSmv
 		4. clean up origina with cleanUp(self.bin_files)
 		'''
-		print bin_dir, smv_dir
+		print(bin_dir, smv_dir)
 
 	def imageDataToSmv(self, imagedata, smv_dir, min_value, max_of_mins):
 			basename = imagedata['filename']
@@ -241,7 +241,7 @@ class DiffractionUpload(object):
 			tilt_degrees = end_tilt_degrees
 		imagedata['scope']['stage position']['a'] = math.radians(tilt_degrees)
 		if iter_number0 == 0 or iter_number0 == len(self.bin_files)-1:
-			print '%d tilt %.2f' % (iter_number0,tilt_degrees)
+			print('%d tilt %.2f' % (iter_number0,tilt_degrees))
 		imagedata.insert()
 		return imagedata
 
@@ -319,7 +319,7 @@ class DiffractionUpload(object):
 		file_basename = os.path.basename(smv_path)
 		a = imagedata['image']
 		numsmv.write(a, smv_path,offset,smv_dict)
-		print('saved to %s' % (smv_path,))
+		print(('saved to %s' % (smv_path,)))
 
 class TvipsMovieUpload(DiffractionUpload):
 	def getDataProtocolName(self, imagedata):
@@ -388,12 +388,12 @@ class TiaMovieUpload(DiffractionUpload):
 		min_value =  min(mins)
 		# Don't allow offset by more than 2000
 		if min_value < -2000:
-			print('Data minimum is %.1f. smv Offset is cut to 2000' % min_value)
+			print(('Data minimum is %.1f. smv Offset is cut to 2000' % min_value))
 			min_value = -2000
-		print('Offset for smv files=%s' % (-min_value,))
+		print(('Offset for smv files=%s' % (-min_value,)))
 		for i, bin_path in enumerate(self.new_bin_files):
 			basename = os.path.basename(bin_path)
-			print('converting %s' % (basename,))
+			print(('converting %s' % (basename,)))
 			# mrc upload
 			imagedata = self.uploadMrcFromBin(bin_path, i)
 			self.imageDataToSmv(imagedata, smv_dir, min_value, max_of_mins)
@@ -419,7 +419,7 @@ def slackNotification(msg):
 		channel = slack_inst.getDefaultChannel()
 		slack_inst.sendMessage(channel,'%s ' % (msg))
 	except:
-		print msg
+		print(msg)
 
 def handleBadFiles(datapath, code, file_pattern, error=''):
 	newpath = os.path.join(datapath,'bad_%s' % code)
@@ -428,7 +428,7 @@ def handleBadFiles(datapath, code, file_pattern, error=''):
 	files = glob.glob(file_pattern)
 	for f in files:
 		shutil.move(f, newpath)
-	print error
+	print(error)
 	msg = "microed invalid file pattern %s are moved to %s" % (os.path.basename(file_pattern), newpath)
 	print(msg)
 	#slackNotification(msg)
@@ -465,7 +465,7 @@ def checkAllImages(datapath):
 		valid_target_code = True
 		bits = os.path.splitext(os.path.basename(f))[0].split('_')
 		if not bits[1].isdigit():
-			print 'bad name %s', os.path.splitext(os.path.basename(f))[0]
+			print('bad name %s', os.path.splitext(os.path.basename(f))[0])
 			valid_target_code = False
 			code = '_'.join(bits[:2])
 		else:
@@ -482,20 +482,20 @@ def checkAllImages(datapath):
 			file_pattern = decodeTiaRaw(f)
 		# divide in groups
 		if not valid_target_code:
-			if code not in bad_groups.keys():
+			if code not in list(bad_groups.keys()):
 				bad_groups[code]=file_pattern
 			continue
-		if code not in groups.keys():
+		if code not in list(groups.keys()):
 			groups[code]=file_pattern
-		print code
+		print(code)
 	# handle bad images at the end to get all patterned file
-	for c in bad_groups.keys():
+	for c in list(bad_groups.keys()):
 		handleBadFiles(datapath, c, bad_groups[c])
 	return groups, movie_format
 
 def loop(check_path, check_interval,no_wait=False):
 	while True:
-		print 'Iterating...'
+		print('Iterating...')
 		groups, movie_format = checkAllImages(check_path)
 		sorted_keys = list(groups.keys())
 		sorted_keys.sort()
@@ -508,13 +508,13 @@ def loop(check_path, check_interval,no_wait=False):
 				image_count = len(glob.glob(groups[k]))
 				last_count = 0
 				while image_count != last_count:
-					print('Checking series %d_%d for completeness' % (hl_id, target_number))
+					print(('Checking series %d_%d for completeness' % (hl_id, target_number)))
 					last_count = image_count
 					# shutil.mv should be done quickly
-					print('Wait 5 second in case series writing is not finished - current count=%d' % image_count)
+					print(('Wait 5 second in case series writing is not finished - current count=%d' % image_count))
 					time.sleep(5)
 					image_count = len(glob.glob(groups[k]))
-			print('Processing series %d_%d' % (hl_id, target_number))
+			print(('Processing series %d_%d' % (hl_id, target_number)))
 			try:
 				if movie_format == 'Tia':
 					app = TiaMovieUpload(hl_id,target_number,groups[k])
@@ -529,7 +529,7 @@ def loop(check_path, check_interval,no_wait=False):
 				handleBadFiles(check_path, k, groups[k], e)
 		if no_wait:
 			break
-		print 'Sleeping...'
+		print('Sleeping...')
 		time.sleep(check_interval)
 
 def checkOptionConflicts(params):
@@ -549,7 +549,7 @@ def parseParams():
 	# parsing options
 	(options, optargs) = parser.parse_args(sys.argv[1:])
 	if len(optargs) > 0:
-		print "Unknown commandline options: "+str(optargs)
+		print("Unknown commandline options: "+str(optargs))
 		sys.exit()
 	if len(sys.argv) < 2:
 		parser.print_help()
@@ -568,6 +568,6 @@ def test(check_path, check_interval=10):
 
 if __name__=='__main__':
 	params = parseParams()
-	print "Look into directory %s" % params['source_path']
+	print("Look into directory %s" % params['source_path'])
 	#test(params['source_path'])
 	loop(params['source_path'], params['check_interval'], params['no_wait'])

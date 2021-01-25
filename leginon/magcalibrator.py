@@ -5,14 +5,14 @@
 #	   For terms of the license agreement
 #	   see  http://leginon.org
 #
-import calibrator
-import calibrationclient
-import event
+from . import calibrator
+from . import calibrationclient
+from . import event
 from leginon import leginondata
-import node
-import gui.wx.MagCalibrator
+from . import node
+from . import gui.wx.MagCalibrator
 import time
-import libCVwrapper
+from . import libCVwrapper
 import numpy
 from pyami import arraystats, mrc, affine, msc
 import pyami.quietscipy
@@ -43,21 +43,21 @@ class MagCalibrator(calibrator.Calibrator):
 
 	def OLDuiStart(self):
 		mag = self.instrument.tem.Magnification
-		print 'MAG', mag
+		print('MAG', mag)
 		mags = self.getMags()
-		print 'MAGS', mags
+		print('MAGS', mags)
 		magindex = mags.index(mag)
 		othermag = mags[magindex-1]
 		self.compareToOtherMag(othermag)
 		return
-		print 'MAGINDEX', magindex
+		print('MAGINDEX', magindex)
 		if magindex == 0:
-			print 'already at lowest mag'
+			print('already at lowest mag')
 			return
 		else:
 			previousmags = mags[magindex-5:magindex-1]
 			previousmags.reverse()
-			print 'PREVIOUSMAGS', previousmags
+			print('PREVIOUSMAGS', previousmags)
 	
 		self.matchMags(previousmags)
 
@@ -68,14 +68,14 @@ class MagCalibrator(calibrator.Calibrator):
 		return
 
 		mag = self.instrument.tem.Magnification
-		print 'MAG', mag
+		print('MAG', mag)
 		mags = self.getMags()
-		print 'MAGS', mags
+		print('MAGS', mags)
 		magindex = mags.index(mag)
-		print 'MAGINDEX', magindex
+		print('MAGINDEX', magindex)
 
 		if magindex == 0:
-			print 'already at lowest mag'
+			print('already at lowest mag')
 			return
 
 		steps = self.settings['magsteps']
@@ -101,7 +101,7 @@ class MagCalibrator(calibrator.Calibrator):
 	def acquireMags(self, maglist):
 		firstim = self.acquireAcquisitionImageData()
 		firstim.insert(force=True)
-		print 'FIRST', firstim['image']
+		print('FIRST', firstim['image'])
 		limitmin = self.settings['minbright']
 		limitmax = self.settings['maxbright']
 		for mag in maglist:
@@ -159,9 +159,9 @@ class MagCalibrator(calibrator.Calibrator):
 		angle = result[0]
 		scale = result[1]
 		shift = result[2]
-		print 'ANGLE', angle
-		print 'SCALE', scale
-		print 'SHIFT', shift
+		print('ANGLE', angle)
+		print('SCALE', scale)
+		print('SHIFT', shift)
 		magdata = leginondata.MagnificationComparisonData()
 		magdata['mag1'] = mag1
 		magdata['mag2'] = mag2
@@ -274,7 +274,7 @@ class MagCalibrator(calibrator.Calibrator):
 		crow = imdata1['camera']['dimension']['y'] / 2 - 0.5
 		center = numpy.array((ccol, crow, 1))
 		othercenter = numpy.dot(matrix, center)
-		print 'OTHER', othercenter
+		print('OTHER', othercenter)
 
 	def matchImages(self, im1, im2, minsize, maxsize):
 		result = libCVwrapper.MatchImages(im1, im2, minsize, maxsize, 0, 0, 1, 1)
@@ -284,7 +284,7 @@ class MagCalibrator(calibrator.Calibrator):
 		minsize = self.settings['minsize']
 		maxsize = self.settings['maxsize']
 		regions, image = libCVwrapper.FindRegions(im, minsize, maxsize, 0, 0, 1, 1)
-		coords = map(self.regionCenter, regions)
+		coords = list(map(self.regionCenter, regions))
 		self.setTargets(coords, 'Peak')
 		return regions
 

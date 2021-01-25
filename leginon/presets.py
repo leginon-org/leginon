@@ -11,24 +11,24 @@
 # $State: Exp $
 # $Locker:  $
 
-import node
-import calibrationclient
+from . import node
+from . import calibrationclient
 from leginon import leginondata
-import event
+from . import event
 import copy
 import threading
 import time
-import unique
+from . import unique
 from pyami import ordereddict, imagefun, arraystats, primefactor
-import gui.wx.PresetsManager
-import instrument
+from . import gui.wx.PresetsManager
+from . import instrument
 import random
 import math
 import numpy
 
 ## counter for dose images
 import itertools
-idcounter = itertools.cycle(range(100))
+idcounter = itertools.cycle(list(range(100)))
 
 ## submodetransform
 SPECIAL_TRANSFORM = False
@@ -121,7 +121,7 @@ class PresetsClient(object):
 				pdict[pnumber] = p
 
 		## sort by number (maybe name if old, non-numbered data)
-		keys = pdict.keys()
+		keys = list(pdict.keys())
 		keys.sort()
 		namedict = ordereddict.OrderedDict()
 		for key in keys:
@@ -212,7 +212,7 @@ class PresetsClient(object):
 
 	def getPresetNames(self):
 		presetlist = self.getPresetsFromDB()
-		return presetlist.keys()
+		return list(presetlist.keys())
 
 	def correctorImageExists(self, pname, type, channel):
 		preset = self.getPresetFromDB(pname)
@@ -225,7 +225,7 @@ class PresetsClient(object):
 	def getHighestMagPresetName(self):
 		session = self.node.session
 		presets = self.getPresetsFromDB(session)
-		names = presets.keys()
+		names = list(presets.keys())
 		highest_mag_preset_name = names[0]
 		for name in names:
 			if presets[highest_mag_preset_name]['magnification'] < presets[name]['magnification']:
@@ -282,7 +282,7 @@ class PresetsManager(node.Node):
 			'scale rotation':calibrationclient.ImageScaleRotationCalibrationClient(self),
 		}
 		self.dosecal = calibrationclient.DoseCalibrationClient(self)
-		import navigator
+		from . import navigator
 		self.navclient = navigator.NavigatorClient(self)
 
 		self.presetsclient = PresetsClient(self)
@@ -437,7 +437,7 @@ class PresetsManager(node.Node):
 		self.presets = self.presetsclient.getPresetsFromDB()
 		self.setOrder()
 		if self.presets:
-			firstname = self.presets.keys()[0]
+			firstname = list(self.presets.keys())[0]
 			self.selectPreset(firstname)
 
 	def importPresets(self, pdict):
@@ -447,7 +447,7 @@ class PresetsManager(node.Node):
 		'''
 		## make new presets with this session
 		#self.presets = ordereddict.OrderedDict()
-		for name, preset in pdict.items():
+		for name, preset in list(pdict.items()):
 			if not name:
 				continue
 			newp = leginondata.PresetData(initializer=preset, session=self.session)
@@ -466,7 +466,7 @@ class PresetsManager(node.Node):
 		self.publish(presetdata, database=True, dbforce=True, pubevent=True)
 
 	def presetByName(self, name):
-		if name in self.presets.keys():
+		if name in list(self.presets.keys()):
 			return self.presets[name]
 		else:
 			return None
@@ -478,7 +478,7 @@ class PresetsManager(node.Node):
 		otherwise, current order is ok, just update numbers
 		'''
 		if names is None:
-			names = self.presets.keys()
+			names = list(self.presets.keys())
 
 		d = ordereddict.OrderedDict()
 		number = 0
@@ -493,7 +493,7 @@ class PresetsManager(node.Node):
 			number += 1
 		self.presets = d
 
-		self.panel.setOrder(self.presets.keys(), setorder=setorder)
+		self.panel.setOrder(list(self.presets.keys()), setorder=setorder)
 
 	def setCycleOrder(self, namelist):
 		## make sure nothing is added or removed from the list
@@ -508,17 +508,17 @@ class PresetsManager(node.Node):
 		if test1 == test2:
 			self.setOrder(namelist, setorder=False)
 		else:
-			namelist = self.presets.keys()
+			namelist = list(self.presets.keys())
 		self.panel.presetsEvent()
 
 	def getOrder(self):
-		return self.presets.keys()
+		return list(self.presets.keys())
 
 	def removePreset(self, pname):
 		'''
 		remove a preset by name
 		'''
-		if pname not in self.presets.keys():
+		if pname not in list(self.presets.keys()):
 			self.panel.presetsEvent()
 			return 
 
@@ -631,7 +631,7 @@ class PresetsManager(node.Node):
 		if presetdata['tem']['name'] in self.instrument.getTEMNames():
 			try:
 				self.instrument.setTEM(presetdata['tem']['name'])
-			except Exception, e:
+			except Exception as e:
 				msg = 'Preset change failed: %s' % (e,)
 				self.logger.error(msg)
 				raise PresetChangeError(msg)
@@ -646,7 +646,7 @@ class PresetsManager(node.Node):
 		if presetdata['ccdcamera']['name'] in self.instrument.getCCDCameraNames():
 			try:
 				self.instrument.setCCDCamera(presetdata['ccdcamera']['name'])
-			except Exception, e:
+			except Exception as e:
 				self.logger.error(e)
 				msg = 'Preset change failed: %s' % (e,)
 				self.logger.error(msg)
@@ -664,7 +664,7 @@ class PresetsManager(node.Node):
 			self.instrument.setData(scopedata)
 			if cameradata is not None:
 				self.instrument.setData(cameradata)
-		except Exception, e:
+		except Exception as e:
 			self.logger.error(e)
 			message = 'Preset change failed: unable to set instrument'
 			self.logger.error(message)
@@ -731,13 +731,13 @@ class PresetsManager(node.Node):
 		self.logger.info('Preset from %s, %s' % (temname, camname))
 		try:
 			scopedata = self.instrument.getData(leginondata.PresetScopeEMData)
-		except Exception, e:
+		except Exception as e:
 			self.logger.error('Preset from instrument failed, unable to get TEM parameters: %s' % e)
 			return
 
 		try:
 			cameradata = self.instrument.getData(leginondata.PresetCameraEMData)
-		except Exception, e:
+		except Exception as e:
 			self.logger.error('Preset from instrument failed, unable to get CCD camera parameters: %s' % e)
 			return
 
@@ -746,12 +746,12 @@ class PresetsManager(node.Node):
 		newparams.update(cameradata)
 
 		if parameters is not None:
-			for parameter in newparams.keys():
+			for parameter in list(newparams.keys()):
 				if parameter not in parameters:
 					del newparams[parameter]
 
 		# update old preset or create new one
-		if name in self.presets.keys():
+		if name in list(self.presets.keys()):
 			if self.settings['apply offset']: 
 				self.logger.info('removing tilt axis offset from image shift before saving to preset')
 				oldpreset = self.presets[name]
@@ -776,7 +776,7 @@ class PresetsManager(node.Node):
 		return newpreset
 
 	def presetNames(self):
-		return self.presets.keys()
+		return list(self.presets.keys())
 
 	def getSessionPresets(self, sessiondata):
 		return self.presetsclient.getPresetsFromDB(sessiondata)
@@ -806,7 +806,7 @@ class PresetsManager(node.Node):
 			self.beep()
 			return
 
-		order = self.presets.keys()
+		order = list(self.presets.keys())
 		magonly = self.settings['mag only']
 		magshortcut = self.settings['optimize cycle']
 
@@ -871,7 +871,7 @@ class PresetsManager(node.Node):
 		self.beep()
 
 	def createCycleList(self, current, final, magshortcut, reverse=False):
-		order = self.presets.keys()
+		order = list(self.presets.keys())
 
 		# start with only final in the reduced list
 		reduced = [final]
@@ -923,7 +923,7 @@ class PresetsManager(node.Node):
 		# refs #3255 retry if image shift or beam shift parameters are not gotten 
 		trys = 0
 		# refs #7018 more layers of vailidation for diffraction shift for back compatibility.
-		while trys < 3 and (newpreset['image shift']['x'] is None or newpreset['beam shift']['x'] is None or ('diffraction shift' in newpreset.keys() and newpreset['diffraction shift'] is not None and newpreset['diffraction shift']['x'] is None)):
+		while trys < 3 and (newpreset['image shift']['x'] is None or newpreset['beam shift']['x'] is None or ('diffraction shift' in list(newpreset.keys()) and newpreset['diffraction shift'] is not None and newpreset['diffraction shift']['x'] is None)):
 			self.logger.info('scope parameters not complete, retry....')
 			newpreset = self._fromScope(newname, temname, camname, None, copybeam)
 			trys += 1
@@ -1018,7 +1018,7 @@ class PresetsManager(node.Node):
 			self.presetToDB(newpreset)
 			self.currentpreset = newpreset
 			self.currentselection = newpreset
-			self.panel.setOrder(self.presets.keys())
+			self.panel.setOrder(list(self.presets.keys()))
 			self.panel.setParameters(newpreset)
 			return newpreset
 
@@ -1031,13 +1031,13 @@ class PresetsManager(node.Node):
 			return
 		newpreset = self.renewPreset(oldpreset)
 		if 'tem' in newparams:
-			if isinstance(newparams['tem'], basestring):
+			if isinstance(newparams['tem'], str):
 				try:
 					newparams['tem'] = self.instrument.getTEMData(newparams['tem'])
 				except:
 					newparams['tem'] = oldpreset['tem']
 		if 'ccdcamera' in newparams:
-			if isinstance(newparams['ccdcamera'], basestring):
+			if isinstance(newparams['ccdcamera'], str):
 				try:
 					newparams['ccdcamera'] = self.instrument.getCCDCameraData(newparams['ccdcamera'])
 				except:
@@ -1115,7 +1115,7 @@ class PresetsManager(node.Node):
 		pname = imagedata['preset']['name']
 		smallsize = self.settings['smallsize']
 		timestamp = time.strftime('%d%H%M%S', time.localtime())
-		nextid = idcounter.next()
+		nextid = next(idcounter)
 		f = '%s_dose_%s_%s_%s_%s' % (sessionname, pname, smallsize, timestamp, nextid)
 		imagedata['filename'] = f
 
@@ -1214,7 +1214,7 @@ class PresetsManager(node.Node):
 
 		## create list of similar presets
 		similarpresets = []
-		for pname, p in self.presets.items():
+		for pname, p in list(self.presets.items()):
 			if pname == newpreset['name']:
 				continue
 			similar = True
@@ -1253,7 +1253,7 @@ class PresetsManager(node.Node):
 		if len(magdict) != 2:
 			self.logger.warning('Error calculating similar look camera binning')
 			return None, None
-		keys = magdict.keys()
+		keys = list(magdict.keys())
 		if magdict[keys[0]] >= magdict[keys[1]]:
 			highmag = magdict[keys[0]]
 			lowmag = magdict[keys[1]]
@@ -1507,7 +1507,7 @@ class PresetsManager(node.Node):
 		myimage = dict(emtargetdata['image shift'])
 		mybeam = dict(emtargetdata['beam shift'])
 		# TODO Find out when diffraction shift is or is not in emtargetdata
-		if 'diffraction shift' in emtargetdata.keys() and emtargetdata['diffraction shift']:
+		if 'diffraction shift' in list(emtargetdata.keys()) and emtargetdata['diffraction shift']:
 			mydiffraction = dict(emtargetdata['diffraction shift'])
 		else:
 			mydiffraction = None
@@ -1527,7 +1527,7 @@ class PresetsManager(node.Node):
 		# It means this always True
 		if mystage and self.settings['xy only']:
 			## only set stage x and y
-			for key in mystage.keys():
+			for key in list(mystage.keys()):
 				if key not in ('x','y'):
 					del mystage[key]
 		self.testprint('targetToScope used no z change')
@@ -1583,7 +1583,7 @@ class PresetsManager(node.Node):
 					beam_pixel_shift = {'row': -pixelshift2['row'], 'col': -pixelshift2['col']}
 					newscope = self.calclients['beam'].transform(beam_pixel_shift, fakescope2, fakecam2)
 					mybeam = newscope['beam shift']
-			except Exception, e:
+			except Exception as e:
 				self.logger.error('Image shift transform failed:  %s' % (e,))
 		else:
 			## movetype that is not image or image-beam shift
@@ -1658,7 +1658,7 @@ class PresetsManager(node.Node):
 		try:
 			self.instrument.setTEM(newpreset['tem']['name'])
 			self.instrument.setCCDCamera(newpreset['ccdcamera']['name'])
-		except Exception, e:
+		except Exception as e:
 			msg = 'Preset change/target move failed: %s' % (e,)
 			self.logger.error(msg)
 			raise PresetChangeError(msg)
@@ -1669,7 +1669,7 @@ class PresetsManager(node.Node):
 			self.logger.info('setting scopedata')
 			self.instrument.setData(scopedata)
 			self.logger.info('scopedata set')
-		except Exception, e:
+		except Exception as e:
 			if scopedata['stage position']:
 				self.logger.error('failed to go to %s' %(scopedata['stage position'],))
 			self.logger.error(e)
@@ -1680,7 +1680,7 @@ class PresetsManager(node.Node):
 		try:
 			self.instrument.setData(cameradata)
 			self.logger.info('cameradata set')
-		except Exception, e:
+		except Exception as e:
 			self.logger.error(e)
 			message = 'Move to target failed: unable to set camera'
 			self.logger.error(message)
@@ -1710,7 +1710,7 @@ class PresetsManager(node.Node):
 		try:
 			value = self._getValue(instrument_type, instrument_name, parameter)
 			self.last_value = value
-		except Exception, e:
+		except Exception as e:
 			pass
 		finally:
 			event.set()
@@ -1726,7 +1726,7 @@ class PresetsManager(node.Node):
 					return self.instrument.getCCDCameraParameter(instrument_name, parameter)
 			else:
 				raise ValueError('no instrument type \'%s\'' % instrument_type)
-		except Exception, e:
+		except Exception as e:
 			self.logger.error('Get value failed: %s' % (e,))
 			raise
 
@@ -1782,7 +1782,7 @@ class PresetsManager(node.Node):
 
 		self.logger.info('Aligning presets to reference: %s' % (refname,))
 		self.magpresets = {}
-		for p in self.presets.values():
+		for p in list(self.presets.values()):
 			if p['skip']:
 				continue
 			mag = p['magnification']
@@ -1792,10 +1792,10 @@ class PresetsManager(node.Node):
 				self.magpresets[mag] = [p['name']]
 
 		## sort presets by largest field of view first
-		for presetnames in self.magpresets.values():
+		for presetnames in list(self.magpresets.values()):
 			self.sortByUnbinnedArea(presetnames)
 
-		mags = self.magpresets.keys()
+		mags = list(self.magpresets.keys())
 		mags.sort()
 
 		if refname not in self.presets:
@@ -1893,7 +1893,7 @@ class PresetsManager(node.Node):
 	def updateSameMagPresets(self, presetname,paramkey='image shift'):
 				newshift = {paramkey: self.presets[presetname][paramkey]}
 				mag = self.presets[presetname]['magnification']
-				for otherpreset in self.presets.keys():
+				for otherpreset in list(self.presets.keys()):
 					if otherpreset == presetname:
 						continue
 					othermag = self.presets[otherpreset]['magnification']
@@ -2094,7 +2094,7 @@ class PresetsManager(node.Node):
 			presetname = self.currentpreset['name']
 			temname = self.currentpreset['tem']['name']
 		except:
-			first_preset = self.presets[self.presets.keys()[0]]
+			first_preset = self.presets[list(self.presets.keys())[0]]
 			temname = first_preset['tem']['name']
 		if temname:
 			try:

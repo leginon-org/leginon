@@ -205,7 +205,7 @@ class Selector(wx.lib.scrolledpanel.ScrolledPanel):
 		item.panel.Destroy()
 
 	def insert(self, index, item):
-		rows = range(index, len(self.order))
+		rows = list(range(index, len(self.order)))
 		rows.reverse()
 		for row in rows:
 			self.moveItem(row + 1, self.items[self.order[row]])

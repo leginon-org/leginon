@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import numpy
 from leginon import leginondata
-import gonmodel
+from . import gonmodel
 import sinedon
 
 dbdk = sinedon.getConnection('leginondata')
@@ -222,13 +222,13 @@ def test():
 	stage0 = hlscope['stage position']
 	pixvect = {'row': 0, 'col':0}
 	stage = hltrans.transform(pixvect, stage0, bin)
-	print 'STAGE', stage
+	print('STAGE', stage)
 
 	## get pixel position of stage position on square image
 	bin = sqcamera['binning']
 	stage0 = sqscope['stage position']
 	pix = sqtrans.itransform(stage, stage0, bin)
-	print 'PIX', pix
+	print('PIX', pix)
 
 
 

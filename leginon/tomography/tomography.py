@@ -115,7 +115,7 @@ class Tomography(leginon.acquisition.Acquisition):
 							  step=math.radians(self.settings['tilt step']),
 							  n=self.settings['equally sloped n'],
 							  add_on=self.convertDegreeTiltsToRadianList(self.settings['addon tilts'],True), tilt_order=self.settings['tilt order'])
-		except ValueError, e:
+		except ValueError as e:
 			self.logger.warning('Tilt parameters invalid: %s.' % e)
 		else:
 			n = sum([len(tilts) for tilts in self.tilts.getTilts()])
@@ -152,13 +152,13 @@ class Tomography(leginon.acquisition.Acquisition):
 								 exposure_min=exposure_min,
 								 exposure_max=exposure_max,
 								 fixed_exposure=self.settings['use preset exposure'],)
-		except leginon.tomography.exposure.LimitError, e:
+		except leginon.tomography.exposure.LimitError as e:
 			self.logger.warning('Exposure dose out of range: %s.' % e)
 			self.logger.warning('Adjust total exposure dose Or')
 			msg = self.exposure.getExposureTimeLimits()
 			self.logger.warning(msg)
 			raise LimitError('Exposure limit error')
-		except leginon.tomography.exposure.Default, e:
+		except leginon.tomography.exposure.Default as e:
 			self.logger.warning('Using preset exposure time: %s.' % e)
 		else:
 			try:
@@ -196,7 +196,7 @@ class Tomography(leginon.acquisition.Acquisition):
 			return
 		try:
 			calibrations = self.getCalibrations(presetdata)
-		except CalibrationError, e:
+		except CalibrationError as e:
 			self.logger.error('Calibration error: %s' % e) 
 			return 'failed'
 		high_tension, pixel_size = calibrations
@@ -270,7 +270,7 @@ class Tomography(leginon.acquisition.Acquisition):
 		client = self.calclients[move_type]
 		try:
 			pixel_position = client.itransform(position, scope_data, camera_data)
-		except leginon.calibrationclient.NoMatrixCalibrationError, e:
+		except leginon.calibrationclient.NoMatrixCalibrationError as e:
 			raise CalibrationError(e)
 		# invert y and position
 		return {'x': pixel_position['col'], 'y': -pixel_position['row']}
@@ -287,7 +287,7 @@ class Tomography(leginon.acquisition.Acquisition):
 		position = {'row': position['y'], 'col': -position['x']}
 		try:
 			scope_data = client.transform(position, scope_data, camera_data)
-		except leginon.calibrationclient.NoMatrixCalibrationError, e:
+		except leginon.calibrationclient.NoMatrixCalibrationError as e:
 			raise CalibrationError(e)
 		return scope_data[move_type]
 
@@ -494,7 +494,7 @@ class Tomography(leginon.acquisition.Acquisition):
 							model_error_limit = raw_correlation_binning
 						paramdict = predictinfo['predicted position']
 						# If only Tomography2 tracking was run previously, models are not in paramdict
-						if 'phi' not in paramdict.keys():
+						if 'phi' not in list(paramdict.keys()):
 							continue
 						# Tomography2 tracking leaves these as None.  They are not useful
 						if paramdict['phi'] is None and paramdict['optical axis'] is None and paramdict['z0'] is None:
@@ -669,7 +669,7 @@ class Tomography(leginon.acquisition.Acquisition):
 		try:
 
 			leginon.acquisition.Acquisition.processTargetData(self, *args, **kwargs)
-		except Exception, e:
+		except Exception as e:
 			raise
 			self.logger.error('Failed to process the tomo target: %s' % e)
 
@@ -686,7 +686,7 @@ class Tomography(leginon.acquisition.Acquisition):
 		try:
 				#This does not seem to work right
 			result = self.calclients['beam tilt'].measureDefocusStig(*args)
-		except leginon.calibrationclient.NoMatrixCalibrationError, e:
+		except leginon.calibrationclient.NoMatrixCalibrationError as e:
 			self.logger.error('Measurement failed without calibration: %s' % e)
 			return None
 		delta_defocus = result['defocus']
@@ -742,13 +742,13 @@ class Tomography2(Tomography):
 								 exposure_min=exposure_min,
 								 exposure_max=exposure_max,
 								 fixed_exposure= not self.settings['cosine dose'],)
-		except leginon.tomography.exposure.LimitError, e:
+		except leginon.tomography.exposure.LimitError as e:
 			self.logger.warning('Exposure dose out of range: %s.' % e)
 			self.logger.warning('Adjust total exposure dose Or')
 			msg = self.exposure.getExposureTimeLimits()
 			self.logger.warning(msg)
 			raise LimitError('Exposure limit error')
-		except leginon.tomography.exposure.Default, e:
+		except leginon.tomography.exposure.Default as e:
 			self.logger.warning('Using preset exposure time: %s.' % e)
 		else:
 			try:
@@ -964,25 +964,25 @@ class Tomography2(Tomography):
 				try:
 					self.logger.info('Processing target id %d' % adjustedtarget.dbid)
 					process_status = self.processTargetData(adjustedtarget, attempt=attempt)
-				except BypassException, e:
+				except BypassException as e:
 					self.logger.error(str(e) + '... Bypass this target and pretend it is done')
 					process_status = 'bypass'
-				except PauseRestartException, e:
+				except PauseRestartException as e:
 					self.player.pause()
 					self.logger.error(str(e) + '... Fix it, then resubmit targets from previous step to repeat')
 					self.beep()
 					process_status = 'repeat'
-				except PauseRepeatException, e:
+				except PauseRepeatException as e:
 					#TODO: NoMoveCalibration is a subclass of this. It is not handled now.
 					self.player.pause()
 					self.logger.error(str(e) + '... Fix it, then press play to repeat target')
 					self.beep()
 					process_status = 'repeat'
-				except PublishError, e:
+				except PublishError as e:
 					self.player.pause()
 					self.logger.exception('Saving image failed: %s' % e)
 					process_status = 'repeat'
-				except Exception, e:
+				except Exception as e:
 					self.logger.exception('Process target failed: %s' % e)
 					process_status = 'exception'
 				finally:
@@ -1017,7 +1017,7 @@ class Tomography2(Tomography):
 			self.is_firstimage = False
 	
 if __name__ == '__main__':
-	import cPickle as pickle
+	import pickle as pickle
 	tomoargs = pickle.load(open('tomoargs.p','rb'))
 	tomonode = Tomography('Tomography',tomoargs,None) 
 	pdb.set_trace()

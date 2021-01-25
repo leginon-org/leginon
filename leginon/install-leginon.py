@@ -10,8 +10,8 @@ try:
 except OSError:
 	try:
 		programsfolder = get_special_folder_path('CSIDL_PROGRAMS')
-	except OSError, e:
-		print 'Creation of shortcuts failed: %s' % e
+	except OSError as e:
+		print('Creation of shortcuts failed: %s' % e)
 		sys.exit()
 
 pythonfolder = get_python_lib(plat_specific=True)
@@ -45,5 +45,5 @@ if __name__ == '__main__':
 	elif sys.argv[1] == '-remove':
 		pass
 	else:
-		print 'Invalid argument for installation script'
+		print('Invalid argument for installation script')
 

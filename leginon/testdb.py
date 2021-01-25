@@ -29,8 +29,8 @@ r=db.query(data.SessionData())
 initializer = {'session': None, 'dimension': {'y': None, 'x': None}, 'binning': {'y': None, 'x': None}, 'offset': {'y': None, 'x': None}}
 r = db.query(data.CorrectorCamstateData(initializer))
 
-print '--------------------------------------'
-print r
+print('--------------------------------------')
+print(r)
 
 
 

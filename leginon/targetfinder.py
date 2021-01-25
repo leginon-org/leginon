@@ -6,33 +6,33 @@
 #       see  http://leginon.org
 #
 
-import calibrationclient
+from . import calibrationclient
 from leginon import leginondata
-import event
-import instrument
-import imagewatcher
-import mosaic
+from . import event
+from . import instrument
+from . import imagewatcher
+from . import mosaic
 import threading
-import node
-import targethandler
-import appclient
-import remoteserver
+from . import node
+from . import targethandler
+from . import appclient
+from . import remoteserver
 from pyami import convolver, imagefun, mrc, numpil
 from pyami import ordereddict
 import numpy
 import pyami.quietscipy
 import scipy.ndimage as nd
-import gui.wx.TargetFinder
-import gui.wx.ClickTargetFinder
-import gui.wx.MosaicClickTargetFinder
+from . import gui.wx.TargetFinder
+from . import gui.wx.ClickTargetFinder
+from . import gui.wx.MosaicClickTargetFinder
 import os
-import shortpath
+from . import shortpath
 import math
-import polygon
-import raster
-import presets
+from . import polygon
+from . import raster
+from . import presets
 import time
-import version
+from . import version
 
 try:
 	set = set
@@ -154,7 +154,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 					filename = os.path.join(version.getInstalledLocation(),'hl_example.jpg')
 			try:
 				orig = mrc.read(filename)
-			except Exception, e:
+			except Exception as e:
 				try:
 					orig = numpil.read(filename)
 				except:
@@ -297,7 +297,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		Display all xytargets from remote target server on ImagePanel.
 		'''
 		for name in self.targetnames:
-			if name in xys.keys():
+			if name in list(xys.keys()):
 				# This will reset named targets
 				self.setTargets(xys[name], name, block=True)
 
@@ -321,7 +321,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		try:
 			# clear targetis set from the server
 			self.remote_targeting.resetTargets()
-		except Exception, e:
+		except Exception as e:
 			# assumes no preview targets
 			self.logger.error(e)
 			status = False
@@ -459,7 +459,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			return imagetargets
 		else:
 			self.logger.warning('Publish only the focus target closest to the center')
-			deltas = map((lambda x: math.hypot(x[1]-imageshape[0]/2,x[0]-imageshape[1]/2)),imagetargets)
+			deltas = list(map((lambda x: math.hypot(x[1]-imageshape[0]/2,x[0]-imageshape[1]/2)),imagetargets))
 			return [imagetargets[deltas.index(min(deltas))],]
 
 	def displayPreviousTargets(self, targetlistdata):
@@ -613,7 +613,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			mag = imagedata['scope']['magnification']
 			thetax, thetay = self.calclients['stage position'].getAngles(tem, ccdcamera, 'stage position', ht, mag, None)
 			self.panel.onNewTiltAxis(thetax)
-		except calibrationclient.NoMatrixCalibrationError, e:
+		except calibrationclient.NoMatrixCalibrationError as e:
 			self.logger.warning('No stage position matrix. Can not show tilt axis')
 		except:
 			raise
@@ -675,7 +675,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		ht = self.currentimagedata['scope']['high tension']
 		try:
 			p2 = self.calclients['stage position'].pixelToPixel(preset1['tem'], preset1['ccdcamera'], preset2['tem'], preset2['ccdcamera'], ht, preset1['magnification'], preset2['magnification'], p1)
-		except calibrationclient.NoMatrixCalibrationError, e:
+		except calibrationclient.NoMatrixCalibrationError as e:
 			# If no stage position calibration, uses image shift
 			p2 = self.calclients['image shift'].pixelToPixel(preset1['tem'], preset1['ccdcamera'], preset2['tem'], preset2['ccdcamera'], ht, preset1['magnification'], preset2['magnification'], p1)
 		except:
@@ -806,7 +806,7 @@ class ClickTargetFinder(TargetFinder):
 		reference_target = self.newReferenceTarget(image_data, delta_row, delta_column)
 		try:
 			self.publish(reference_target, database=True, pubevent=True)
-		except node.PublishError, e:
+		except node.PublishError as e:
 			self.logger.error('Submitting reference target failed')
 		else:
 			self.logger.info('Reference target submitted')

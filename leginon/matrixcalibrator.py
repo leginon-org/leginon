@@ -5,15 +5,15 @@
 #       For terms of the license agreement
 #       see  http://leginon.org
 #
-import calibrator
-import event, leginondata
+from . import calibrator
+from . import event, leginondata
 from pyami import correlator, peakfinder
 import sys
 import time
-import calibrationclient
+from . import calibrationclient
 import threading
-import node
-import gui.wx.MatrixCalibrator
+from . import node
+from . import gui.wx.MatrixCalibrator
 
 class CalibrationError(Exception):
 	pass
@@ -194,7 +194,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 	def uiCalibrate(self):
 		try:
 			self.getParameter()
-		except Exception, e:
+		except Exception as e:
 			self.logger.exception('Unable to get parameter, aborting calibration: %s', e)
 			self.panel.calibrationDone()
 			return
@@ -204,16 +204,16 @@ class MatrixCalibrator(calibrator.Calibrator):
 		except calibrationclient.NoPixelSizeError:
 			self.logger.error(
 								'Unable to get pixel size, aborting calibration')
-		except CalibrationError, e:
+		except CalibrationError as e:
 			self.logger.error('Bad calibration measurement, aborting: %s', e)
-		except Exception, e:
+		except Exception as e:
 			self.logger.exception('Calibration failed: %s', e)
 		else:
 			self.logger.info('Calibration completed successfully')
 		# return to original state
 		try:
 			self.setParameter()
-		except Exception, e:
+		except Exception as e:
 			self.logger.exception('Could not return to original state: %s', e)
 		self.panel.calibrationDone()
 
@@ -259,13 +259,13 @@ class MatrixCalibrator(calibrator.Calibrator):
 	def editCurrentCalibration(self):
 		try:
 			calibrationdata = self.getCurrentCalibration()
-		except calibrationclient.NoMatrixCalibrationError, e:
+		except calibrationclient.NoMatrixCalibrationError as e:
 			if e.state is None:
 				raise e
 			else:
 				self.logger.warning('No calibration found for current state: %s' % e)
 				calibrationdata = e.state
-		except Exception, e:
+		except Exception as e:
 			self.logger.error('Calibration edit failed: %s' % e)
 			return
 		self.panel.editCalibration(calibrationdata)

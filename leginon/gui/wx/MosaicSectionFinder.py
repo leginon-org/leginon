@@ -171,7 +171,7 @@ class RasterScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		presets = self.node.presetsclient.getPresetNames()
 		self.widgets['raster preset'].setChoices(presets)
 		self.widgets['raster overlap'] = FloatEntry(self, -1, chars=8)
-		movetypes = self.node.calclients.keys()
+		movetypes = list(self.node.calclients.keys())
 		self.widgets['raster movetype'] = Choice(self, -1, choices=movetypes)
 		self.autobut = wx.Button(self, -1, 'Calculate spacing and angle using the following parameters:')
 

@@ -9,13 +9,13 @@
 #
 
 # testing before start
-import configcheck
+from . import configcheck
 configcheck.testBeforeStart()
 
 from leginon import leginondata
-import event
-import node
-import noderegistry
+from . import event
+from . import node
+from . import noderegistry
 from wx import PyDeadObjectError
 import leginon.gui.wx.Launcher
 
@@ -137,7 +137,7 @@ if __name__ == '__main__':
 		except:
 			args, kwargs = (launchername,), {}
 	l = leginon.gui.wx.Launcher.App(*args, **kwargs)
-	print kwargs
+	print(kwargs)
 	l.MainLoop()
 	leginondata.sinedon.data.datamanager.exit()
 

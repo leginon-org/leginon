@@ -80,7 +80,7 @@ if __name__ == '__main__':
 	def _player():
 		while True:
 			command = player.wait(0.0)
-			print command
+			print(command)
 			if command == 'stop':
 				break
 			time.sleep(1.0)
@@ -88,11 +88,11 @@ if __name__ == '__main__':
 	threading.Thread(target=_player).start()
 
 	while True:
-		command = raw_input()
+		command = input()
 		if hasattr(player, command):
 			attr = getattr(player, command)
 			if callable(attr):
 				attr()
 			else:
-				print attr
+				print(attr)
 

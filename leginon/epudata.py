@@ -1,10 +1,10 @@
 
-import leginonconfig
+from . import leginonconfig
 import sinedon.newdict
 import sinedon.data
 import os
 from pyami import weakattr
-import leginondata
+from . import leginondata
 
 Data = sinedon.data.Data
 

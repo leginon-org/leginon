@@ -33,9 +33,9 @@ class MrcImageFile(ImageFile.ImageFile):
         # header
         header = MrcHeader(self.fp)
 	if header == None:
-		raise SyntaxError, "Not MRC file"
+		raise SyntaxError("Not MRC file")
 	if header['depth'] > 1:
-		raise SyntaxError, "3D data unsupported in PIL"
+		raise SyntaxError("3D data unsupported in PIL")
 
 	self.size = (header['width'], header['height'])
 
@@ -65,7 +65,7 @@ def _save(im, fp, filename, check=0):
 
 	rawmode = mrcmode_rawmode[header['mode']]
 	tile = [("raw", (0,0)+im.size, header.headerlen, (rawmode, 0, 1))]
-	print 'savetile:', tile
+	print('savetile:', tile)
 	ImageFile._save(im, fp, tile)
 
 # Registry

@@ -13,7 +13,7 @@ import numpy
 import scipy.ndimage
 from pyami import arraystats, imagefun
 import time
-import cameraclient
+from . import cameraclient
 import itertools
 import leginon.session
 import leginon.leginonconfig
@@ -23,13 +23,13 @@ try:
 	import numextension
 except:
 	# Issue #5466
-	print "numextension not loaded."
-	print "You must have it installed if using Leginon"
-	print "Appion mostly use functions not involving this and hence o.k."
-	print "Recalculate Dark with Gram-Schmidt process will fail in frame gain/dark correction (seldon used)"
+	print("numextension not loaded.")
+	print("You must have it installed if using Leginon")
+	print("Appion mostly use functions not involving this and hence o.k.")
+	print("Recalculate Dark with Gram-Schmidt process will fail in frame gain/dark correction (seldon used)")
 
 ref_cache = {}
-idcounter = itertools.cycle(range(100))
+idcounter = itertools.cycle(list(range(100)))
 
 class CorrectorClient(cameraclient.CameraClient):
 	def __init__(self):
@@ -70,7 +70,7 @@ class CorrectorClient(cameraclient.CameraClient):
 		refimageq = imagetemp.copy()
 		try:
 			ref = imagetemp.query(results=1)
-		except Exception, e:
+		except Exception as e:
 			self.logger.warning('Reference image query failed: %s' % e)
 			ref = None
 
@@ -122,7 +122,7 @@ class CorrectorClient(cameraclient.CameraClient):
 		if normdata is None:
 			return None
 		# newer leginon data will have bright image associated with norm image
-		if 'bright' in normdata.keys() and normdata['bright'] is not None:
+		if 'bright' in list(normdata.keys()) and normdata['bright'] is not None:
 			return normdata['bright']
 		# bright image may have the same CameraEMData
 		q = leginondata.BrightImageData(camera=normdata['camera'])
@@ -342,7 +342,7 @@ class CorrectorClient(cameraclient.CameraClient):
 
 		# division may result infinity or zero division
 		# so make sure there are no zeros in norm
-		normarray = numpy.clip(normarray, 0.001, sys.maxint)
+		normarray = numpy.clip(normarray, 0.001, sys.maxsize)
 		stats = numextension.allstats(normarray, mean=True)
 		normavg = stats['mean']
 		normarray = normavg / normarray
@@ -420,11 +420,11 @@ class CorrectorClient(cameraclient.CameraClient):
 		'''
 		this puts an image through a pipeline of corrections
 		'''
-		if not 'system corrected' in imagedata['camera'].keys() or not imagedata['camera']['system corrected']:
+		if not 'system corrected' in list(imagedata['camera'].keys()) or not imagedata['camera']['system corrected']:
 			try:
 				self.normalizeCameraImageData(imagedata, channel)
 				imagedata['correction channel'] = channel
-			except Exception, e:
+			except Exception as e:
 				self.logger.error('Normalize failed: %s' % e)
 				self.logger.warning('Image will not be normalized')
 
@@ -692,7 +692,7 @@ class CorrectorClient(cameraclient.CameraClient):
 
 	def storeCorrectorPlan(self, plan):
 		# import instrument here so that wx is not required unless Leginon is running
-		import instrument
+		from . import instrument
 		camsettings = self.settings['camera settings']
 		ccdname = self.settings['instruments']['ccdcamera']
 		ccdcamera = self.instrument.getCCDCameraData(ccdname)
@@ -713,7 +713,7 @@ class CorrectorClient(cameraclient.CameraClient):
 	def makeCorrectorImageFilename(self, type, channel, shape):
 		sessionname = self.session['name']
 		timestamp = time.strftime('%d%H%M%S', time.localtime())
-		nextid = idcounter.next()
+		nextid = next(idcounter)
 		shapestr = '%sx%s' % shape
 		f = '%s_%s_%02d_%s_%s_%s' % (sessionname, timestamp, nextid, shapestr, type, channel)
 		return f
@@ -727,7 +727,7 @@ class CorrectorClient(cameraclient.CameraClient):
 		import datetime
 		if not ccdcamera:
 			ccdcamera = self.instrument.getCCDCameraData()
-		print ccdcamera
+		print(ccdcamera)
 		camera_host = ccdcamera['hostname']
 		# query by hostname since different modes of camera is count as different cameras
 		darks = leginondata.CameraDarkCurrentUpdatedData(hostname=camera_host).query(results=1)

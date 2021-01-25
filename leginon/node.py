@@ -10,24 +10,24 @@
 import sinedon
 from leginon import leginondata
 from leginon import appclient
-from databinder import DataBinder
-import datatransport
-import event
+from .databinder import DataBinder
+from . import datatransport
+from . import event
 import threading
-import gui.wx.Events
-import gui.wx.LeginonLogging as Logging
-import gui.wx.Node
+from . import gui.wx.Events
+from . import gui.wx.LeginonLogging as Logging
+from . import gui.wx.Node
 import copy
 import socket
 from pyami import mysocket
-import remotecall
+from . import remotecall
 import time
 import numpy
 import math
-import leginonconfig
+from . import leginonconfig
 import os
-import correctorclient
-import remoteserver
+from . import correctorclient
+from . import remoteserver
 
 # testprinting for development
 testing = False
@@ -154,7 +154,7 @@ class Node(correctorclient.CorrectorClient):
 							if instr['cs']:
 								# It is tem
 								temname = str(client)
-								if 'description' in instr.keys() and instr['description']:
+								if 'description' in list(instr.keys()) and instr['description']:
 									description = instr['description']
 						if description:
 							# set temname as description if it is ever set to not None.
@@ -164,7 +164,7 @@ class Node(correctorclient.CorrectorClient):
 
 	def testprint(self,msg):
 		if testing:
-			print msg
+			print(msg)
 
 	# settings
 
@@ -188,7 +188,7 @@ class Node(correctorclient.CorrectorClient):
 		admin_settings = self.getDBAdminSettings(self.settingsclass, self.name)
 
 		# check if None in any fields
-		for key,value in self.settings.items():
+		for key,value in list(self.settings.items()):
 			if value is None:
 				if key in admin_settings and admin_settings[key] is not None:
 					# use current admin settings if possible
@@ -242,7 +242,7 @@ class Node(correctorclient.CorrectorClient):
 		del self.settings['name']
 
 		# check if None in any fields
-		for key,value in self.settings.items():
+		for key,value in list(self.settings.items()):
 			if value is None:
 				if key in self.defaultsettings:
 					self.settings[key] = copy.deepcopy(self.defaultsettings[key])
@@ -384,7 +384,7 @@ class Node(correctorclient.CorrectorClient):
 			if wait:
 				eventwait.set()
 			raise
-		except Exception, e:
+		except Exception as e:
 			self.logger.exception('Error sending event to client: %s' % e)
 			raise
 
@@ -478,7 +478,7 @@ class Node(correctorclient.CorrectorClient):
 		if database:
 			try:
 				self.dbdatakeeper.insert(idata, force=dbforce)
-			except (IOError, OSError), e:
+			except (IOError, OSError) as e:
 				raise PublishError(e)
 			except KeyError:
 				raise PublishError('no DBDataKeeper to publish data to.')
@@ -511,7 +511,7 @@ class Node(correctorclient.CorrectorClient):
 		'''
 		try:
 			resultlist = self.dbdatakeeper.query(datainstance, results, readimages=readimages, timelimit=timelimit)
-		except (IOError, OSError), e:
+		except (IOError, OSError) as e:
 			raise ResearchError(e)
 		return resultlist
 
@@ -663,7 +663,7 @@ class Node(correctorclient.CorrectorClient):
 		## check for singular value
 		if isinstance(alphatilts, float) or isinstance(alphatilts, int):
 			alphatilts = (alphatilts,)
-		alphatilts = map(math.radians, alphatilts)
+		alphatilts = list(map(math.radians, alphatilts))
 		return alphatilts
 
 	def exposeSpecimenWithScreenDown(self, seconds):

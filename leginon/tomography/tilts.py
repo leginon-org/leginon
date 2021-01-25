@@ -28,7 +28,7 @@ def cosineSloped(max,n):
 		raise ValueError
 	bestscale = 1
 	for step in (0.1,0.01,0.001,0.0001,0.00001):
-		scales = map((lambda x: bestscale - 10*step + x*step), range(0,10))
+		scales = list(map((lambda x: bestscale - 10*step + x*step), list(range(0,10))))
 		for scale in scales:
 			tilts=[0.0]
 			for i in range(1,n):
@@ -37,10 +37,10 @@ def cosineSloped(max,n):
 			if tilts[-1] > max:
 				break
 		bestscale = scale
-	negatives = map((lambda x: -x),tilts)
+	negatives = list(map((lambda x: -x),tilts))
 	negatives.pop(0)
 	tilts.extend(negatives)
-	degrees = map((lambda x: math.degrees(x)),tilts)
+	degrees = list(map((lambda x: math.degrees(x)),tilts))
 	return tilts
 
 def angles2lines(thetas, n):
@@ -308,11 +308,11 @@ if __name__ == '__main__':
 	}
 	tilts = Tilts(**kwargs)
 	for ts in tilts.getTilts():
-		print 'getTilts', map((lambda x: math.degrees(x)), ts)
+		print('getTilts', list(map((lambda x: math.degrees(x)), ts)))
 
-	print tilts.index_sequence
-	print ' '
+	print(tilts.index_sequence)
+	print(' ')
 	for t in tilts.getTiltSequence():
-		print '%.1f' % math.degrees(t)
-	print tilts.getTargetAdjustIndices()
+		print('%.1f' % math.degrees(t))
+	print(tilts.getTargetAdjustIndices())
 

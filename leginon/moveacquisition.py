@@ -7,9 +7,9 @@
 #
 import math
 import time
-import acquisition
-import leginondata
-import gui.wx.MoveAcquisition
+from . import acquisition
+from . import leginondata
+from . import gui.wx.MoveAcquisition
 import threading
 
 debug = False
@@ -107,7 +107,7 @@ class MoveAcquisition(acquisition.Acquisition):
 			t0 = time.time()
 			self.timedebug[tkey] = t0
 			if 'consecutive' in self.timedebug:
-				print tnum, '************************************* CONSECUTIVE', t0 - self.timedebug['consecutive']
+				print(tnum, '************************************* CONSECUTIVE', t0 - self.timedebug['consecutive'])
 			self.timedebug['consecutive'] = t0
 
 		status = self.moveAndPreset(presetdata, emtarget)
@@ -137,7 +137,7 @@ class MoveAcquisition(acquisition.Acquisition):
 		self.is_firstimage = False
 
 		if debug:
-			print tnum, 'MOVEANDPRESETPAUSE DONE', time.time() - t0
+			print(tnum, 'MOVEANDPRESETPAUSE DONE', time.time() - t0)
 
 		## pre-exposure
 		pretime = presetdata['pre exposure']
@@ -193,11 +193,11 @@ class MoveAcquisition(acquisition.Acquisition):
 					step_time = self.settings['total move time'] / nsteps
 				step_times.append(step_time)
 				move_values.append(self.moveToSettingToValue(move))
-		except Exception, e:
+		except Exception as e:
 			raise ValueError('Move to values invalid:%s' % (e,))
 		if nsteps < 1:
 			raise ValueError('Need at least one move')
-		return map((lambda x: (move_values[x],step_times[x])), range(nsteps))
+		return list(map((lambda x: (move_values[x],step_times[x])), list(range(nsteps))))
 
 	def startMoveThread(self):
 		'''

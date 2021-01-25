@@ -38,10 +38,10 @@ class ImageHandler(object):
 			organized[imagelist][version] = image
 
 		final = []
-		tls = organized.keys()
+		tls = list(organized.keys())
 		tls.sort()
 		for imagelist in tls:
-			versions = organized[imagelist].keys()
+			versions = list(organized[imagelist].keys())
 			versions.sort()
 			for version in versions:
 				final.append(organized[imagelist][version])

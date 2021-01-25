@@ -5,19 +5,19 @@
 #       For terms of the license agreement
 #       see  http://leginon.org
 #
-import node
+from . import node
 from leginon import leginondata
 from pyami import correlator, peakfinder
-import event
+from . import event
 import time
-import timer
+from . import timer
 import threading
-import calibrationclient
-import gonmodel
+from . import calibrationclient
+from . import gonmodel
 import string
 import math
-import calibrator
-import gui.wx.GonModeler
+from . import calibrator
+from . import gui.wx.GonModeler
 
 class GonModeler(calibrator.Calibrator):
 	panelclass = gui.wx.GonModeler.Panel
@@ -58,7 +58,7 @@ class GonModeler(calibrator.Calibrator):
 				self.threadlock.release()
 				self.panel.measurementDone()
 				return
-		except Exception, e:
+		except Exception as e:
 			self.logger.error('Modeled stage measurement failed: %s' % e)
 			self.threadlock.release()
 			self.panel.measurementDone()
@@ -74,14 +74,14 @@ class GonModeler(calibrator.Calibrator):
 			return
 		try:
 			known_pixelsize = self.pcal.retrievePixelSize(None, None, mag)
-		except Exception, e:
+		except Exception as e:
 			self.logger.error('Retrive pixel size failed %s' % e)
 			self.panel.measurementDone()
 			return
 		self.oldimagedata = None
 		try:
 			self.acquireNextPosition(axis)
-		except Exception, e:
+		except Exception as e:
 			self.logger.error('Acquire next position failed  %s' % e)
 			self.threadlock.release()
 			self.panel.measurementDone()
@@ -98,7 +98,7 @@ class GonModeler(calibrator.Calibrator):
 			currentpos[axis] += interval
 			try:
 				datalist = self.acquireNextPosition(axis, currentpos)
-			except Exception, e:
+			except Exception as e:
 				self.logger.error('Acquire next position failed  %s' % e)
 				self.threadlock.release()
 				self.panel.measurementDone()
@@ -233,7 +233,7 @@ class GonModeler(calibrator.Calibrator):
 													self.settings['model magnification'],
 													self.settings['model axis'],
 													self.settings['model terms'])
-		except Exception, e:
+		except Exception as e:
 			self.logger.error('Modeled stage fit failed: %s' % e)
 		self.panel.calibrationDone()
 

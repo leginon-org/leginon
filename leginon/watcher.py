@@ -7,7 +7,7 @@
 #
 
 import threading
-import node
+from . import node
 
 class Watcher(node.Node):
 	'''

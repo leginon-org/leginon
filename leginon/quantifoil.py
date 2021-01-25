@@ -10,7 +10,7 @@
 
 from pyami import convolver, peakfinder, fftengine, correlator, imagefun, mrc, arraystats
 import Numeric
-import holefinderback
+from . import holefinderback
 import os
 
 ffteng = fftengine.fftEngine()
@@ -62,12 +62,12 @@ def sobel_col(shape):
 _save_mrc = True
 def save_mrc(image, filename):
 	if _save_mrc: 
-		print 'saving ', filename
+		print('saving ', filename)
 		p = 'qimages'
 		f = os.path.join(p, filename)
 		mrc.write(image, f)
 
-import timer
+from . import timer
 
 class QuantifoilSolver(object):
 	def __init__(self):
@@ -77,38 +77,38 @@ class QuantifoilSolver(object):
 	def solve(self, image, crop1, crop2, vectorguess, tolerance, radius, thickness):
 		## initial crop before vector search
 		if crop1 is not None:
-			print 'cropping image'
+			print('cropping image')
 			image2 = image[crop1[0]:crop1[2], crop1[1]:crop1[3]]
 		else:
 			image2 = image
-		print 'finding edges'
+		print('finding edges')
 		t = timer.Timer('edge')
 		edges2 = self.findEdges(image2)
 		t.stop()
 		save_mrc(edges2, 'edges.mrc')
 
 		## find the vectors based on guess and tolerance
-		print 'finding vectors'
+		print('finding vectors')
 		vectors = self.findLatticeVectors(edges2, vectorguess, tolerance)
-		print 'VECTOR0', vectors[0]
-		print 'VECTOR1', vectors[1]
+		print('VECTOR0', vectors[0])
+		print('VECTOR1', vectors[1])
 
 		## second crop before center search
 		if crop2 is not None:
-			print 'cropping image'
+			print('cropping image')
 			image3 = image2[crop2[0]:crop2[2], crop2[1]:crop2[3]]
 			edges3 = edges2[crop2[0]:crop2[2], crop2[1]:crop2[3]]
 		else:
 			image3 = image2
 			edges3 = edges2
 
-		print 'creating template from vectors'
+		print('creating template from vectors')
 		# should calculate size of template more carefully
 		temp = self.template(edges3.shape, vectors, radius, thickness)
 
-		print 'finding center'
+		print('finding center')
 		center = self.correlateTemplate(edges3, temp)
-		print 'CENTER', center
+		print('CENTER', center)
 
 		## find actual center based on prior cropping
 		true_center = list(center)
@@ -119,13 +119,13 @@ class QuantifoilSolver(object):
 			center[0] += crop2[0]
 			center[1] += crop2[1]
 
-		print 'clean up'
+		print('clean up')
 		# This is the brainless way to figure out the complete lattice.
 		# It makes sure to cover the entire image.
-		vectordist = apply(Numeric.hypot, vectors[0])
-		maxdist = apply(Numeric.hypot, image.shape)
+		vectordist = Numeric.hypot(*vectors[0])
+		maxdist = Numeric.hypot(*image.shape)
 		n = int(maxdist / vectordist)
-		points = range(-n,n)
+		points = list(range(-n,n))
 		good_lattice = self.latticePoints(vectors, points)
 		final_points = []
 		for point in good_lattice:
@@ -151,7 +151,7 @@ class QuantifoilSolver(object):
 		## create lattice points image
 		lat_im = Numeric.zeros(shape, Numeric.Float32)
 		temp_lattice = self.latticePoints(vectors, (-1,0,1))
-		print 'temp_lattice', temp_lattice
+		print('temp_lattice', temp_lattice)
 		for point in temp_lattice:
 			p = int(round(point[0])),int(round(point[1]))
 			lat_im[p] = 1.0
@@ -171,7 +171,7 @@ class QuantifoilSolver(object):
 		return temp
 
 	def findLatticeVectors(self, edges, guess1, tolerance):
-		print 'edges', edges.typecode()
+		print('edges', edges.typecode())
 		autocorr = correlator.auto_correlate(edges)
 		save_mrc(autocorr, 'autocorr.mrc')
 		shape = edges.shape
@@ -183,8 +183,8 @@ class QuantifoilSolver(object):
 		i = 0
 		for guess in (guess1, guess2):
 			## create a region of interest centered at guess
-			rows = range(guess[0]-tolerance, guess[0]+tolerance+1)
-			cols = range(guess[1]-tolerance, guess[1]+tolerance+1)
+			rows = list(range(guess[0]-tolerance, guess[0]+tolerance+1))
+			cols = list(range(guess[1]-tolerance, guess[1]+tolerance+1))
 			roi_rows = Numeric.take(autocorr, rows, 0)
 			roi = Numeric.take(roi_rows, cols, 1)
 			save_mrc(roi, 'autocorr%s.mrc' % (i))
@@ -224,7 +224,7 @@ class QuantifoilSolver(object):
 
 		## convolution leaves invalid borders
 		# copy rows
-		print 'clean up'
+		print('clean up')
 		edges[0] = edges[1]
 		edges[-1] = edges[-2]
 		# copy cols
@@ -232,14 +232,14 @@ class QuantifoilSolver(object):
 		edges[:,-1] = edges[:,-2]
 
 		# threshold
-		print 'threshold'
+		print('threshold')
 		edges = imagefun.zscore(edges)
-		print 'clip'
+		print('clip')
 		# works for everything except test_square7
 		#edges = Numeric.clip(edges, -0.5, 1.0)
 		edges = imagefun.threshold(edges, 0.8)
 
-		print 'done'
+		print('done')
 		return edges
 
 

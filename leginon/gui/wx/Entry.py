@@ -174,7 +174,7 @@ class TypeSequenceEntry(TypeEntry):
 			return None
 		strings = string.split(',')
 		stuff = TypeEntry.stringToValue
-		values = map(TypeEntry.stringToValue, strings)
+		values = list(map(TypeEntry.stringToValue, strings))
 		return tuple(values)
 
 	def _validateString(self, string):

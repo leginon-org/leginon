@@ -5,13 +5,13 @@
 #
 
 # leginon
-import node
-import event
+from . import node
+from . import event
 from leginon import leginondata
-import gui.wx.TEMController
-import instrument
-import presets
-import cameraclient
+from . import gui.wx.TEMController
+from . import instrument
+from . import presets
+from . import cameraclient
 
 # myami
 
@@ -23,7 +23,7 @@ import os.path
 import itertools
 import math
 import logging
-import remoteserver
+from . import remoteserver
 
 class TEMController(node.Node):
 	panelclass = gui.wx.TEMController.Panel
@@ -55,7 +55,7 @@ class TEMController(node.Node):
 			return
 		# This may not give results since instrument may not be loaded, yet
 		self.grid_slot_numbers = self.researchLoadableGridSlots()
-		self.grid_slot_names = map((lambda x:'%d' % (x,)),self.grid_slot_numbers)
+		self.grid_slot_names = list(map((lambda x:'%d' % (x,)),self.grid_slot_numbers))
 		if self.remote_toolbar:
 			self._activateClickTools()
 
@@ -84,7 +84,7 @@ class TEMController(node.Node):
 		try:
 			self.instrument.tem.StagePosition = stagedict
 		except KeyError:
-			self.logger.exception('instrument key %s not available' % (stagedict.keys(),))
+			self.logger.exception('instrument key %s not available' % (list(stagedict.keys()),))
 		except:
 			self.logger.exception('unable to set instrument')
 		else:
@@ -246,8 +246,8 @@ class TEMController(node.Node):
 		'''
 		try:
 			total_grids = self.instrument.tem.getGridLoaderNumberOfSlots()
-			return map((lambda x:x+1),range(total_grids))
-		except Exception, e:
+			return list(map((lambda x:x+1),list(range(total_grids))))
+		except Exception as e:
 			if hasattr(e,'args') and len(e.args) > 0:
 				self.logger.warning(e.args[0])
 			else:
@@ -271,7 +271,7 @@ class TEMController(node.Node):
 	def getGridSlotStatesToDisplay(self):
 		try:
 			self.grid_slot_numbers = self.researchLoadableGridSlots()
-			self.grid_slot_names = map((lambda x:'%d' % (x,)),self.grid_slot_numbers)
+			self.grid_slot_names = list(map((lambda x:'%d' % (x,)),self.grid_slot_numbers))
 			number_states = self.getAllSlotState()
 			name_states = {}
 			for key in number_states:
@@ -324,7 +324,7 @@ class TEMController(node.Node):
 			state = self.instrument.tem.getGridLoaderSlotState(empty_slot_number)
 			if state == 'occupied':
 				is_success = True
-		except Exception, e:
+		except Exception as e:
 			self.logger.error(e)
 		if is_success == True:
 			self.loaded_grid_slot = None
@@ -350,7 +350,7 @@ class TEMController(node.Node):
 		state = 'unknown'
 		try:
 			state = self.instrument.tem.getGridLoaderSlotState(slot_number)
-		except Exception, e:
+		except Exception as e:
 			self.logger.error(e)
 		# Just set this grid as loaded grid if it is an empty slot
 		# Grid can not be unloaded if we don't set it here.
@@ -386,7 +386,7 @@ class TEMController(node.Node):
 			state = self.instrument.tem.getGridLoaderSlotState(slot_number)
 			if state == 'empty' or state == 'loaded':
 				is_success = True
-		except Exception, e:
+		except Exception as e:
 			self.logger.error(e)
 		if is_success == True:
 			self.loaded_grid_slot = slot_number
@@ -418,7 +418,7 @@ class TEMController(node.Node):
 		try:
 			self.instrument.tem.setApertureSelection(mechanism,name)
 			is_success = True
-		except Exception, e:
+		except Exception as e:
 			self.logger.error(e)
 		if is_success == True:
 			self.logger.info('%s aperture changed to %s %s' % (mechanism,name,unit))
@@ -436,10 +436,10 @@ class TEMController(node.Node):
 		for name in names:
 			try:
 				state = self.instrument.tem.getApertureSelection(name)
-			except ValueError, e:
+			except ValueError as e:
 				self.logger.warning(e)
 				state = 'unknown'
-			except RuntimeError, e:
+			except RuntimeError as e:
 				self.logger.error(e)
 				state = 'unknown'
 			try:

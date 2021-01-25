@@ -16,17 +16,17 @@ import numpy
 import pyami.quietscipy
 import scipy.ndimage
 import threading
-import align
+from . import align
 from leginon import leginondata
-import event
-import instrument
-import node
-import presets
-import project
-import calibrationclient
-import targethandler
-import gui.wx.RobotAtlasTargetFinder
-import libCVwrapper
+from . import event
+from . import instrument
+from . import node
+from . import presets
+from . import project
+from . import calibrationclient
+from . import targethandler
+from . import gui.wx.RobotAtlasTargetFinder
+from . import libCVwrapper
 
 class TargetError(Exception):
 	pass
@@ -246,13 +246,13 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 			'image beam shift': calibrationclient.ImageBeamShiftCalibrationClient,
 		}
 		self.calibrationclients = {}
-		for i, clientclass in calibrationclients.items():
+		for i, clientclass in list(calibrationclients.items()):
 			self.calibrationclients[i] = clientclass(self)
 
 		self.projectdata = None
 		try:
 			self.projectdata = project.ProjectData()
-		except Exception, e:
+		except Exception as e:
 			self.logger.warning('Failed to connect to the project database: %s' % e)
 		self.addEventInput(event.GridLoadedEvent, self.onGridLoaded)
 
@@ -345,7 +345,7 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 			self.logger.warning('No grid information, ignoring image (DBID %d)'
 													% imagedata.dbid)
 			return False
-		elif imagedata['grid']['grid ID'] is None and (not 'emgrid' in imagedata['grid'].keys() or imagedata['grid']['emgrid'] is None):
+		elif imagedata['grid']['grid ID'] is None and (not 'emgrid' in list(imagedata['grid'].keys()) or imagedata['grid']['emgrid'] is None):
 			self.logger.warning('No grid ID, ignoring image (DBID %d)'
 													% imagedata.dbid)
 			return False
@@ -358,7 +358,7 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 
 	def updateGrids(self):
 		imagedatarefs = self.queryAtlases()
-		for dbid, refs in imagedatarefs.items():
+		for dbid, refs in list(imagedatarefs.items()):
 			gridid = None
 			number = None
 			imagedatalist = []
@@ -504,7 +504,7 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 	def submitTargets(self):
 		try:
 			grids = self.getGridsWithTargets()
-		except TargetError, e:
+		except TargetError as e:
 			self.logger.error('Aborting, error determining target: %s' % e)
 			self.panel.targetsSubmitted()
 			return
@@ -790,7 +790,7 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 		scope, camera = targetdata['scope'], targetdata['camera']
 		try:
 			scopedata = calclient.transform(target, scope, camera)
-		except calibrationclient.NoMatrixCalibrationError, e:
+		except calibrationclient.NoMatrixCalibrationError as e:
 			self.logger.error('No calibration for reacquisition: %s' % e)
 			if test:
 				return False
@@ -898,7 +898,7 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 		reference_target = self.newReferenceTarget(imagedata, delta_row, delta_column)
 		try:
 			self.publish(reference_target, database=True, pubevent=True)
-		except node.PublishError, e:
+		except node.PublishError as e:
 			self.logger.error('Submitting reference target failed')
 		else:
 			self.logger.info('Reference target submitted')

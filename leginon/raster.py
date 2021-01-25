@@ -57,7 +57,7 @@ def createIndices(shape):
 	center1 = shape[1] / 2.0 - 0.5
 	ind[0] = ind[0] - center0
 	ind[1] = ind[1] - center1
-	indices = zip(ind[0].flat, ind[1].flat)
+	indices = list(zip(ind[0].flat, ind[1].flat))
 	return indices
 
 def createIndices2(a,b,angle,limiting_shape='ellipse',offset=False,odd=False,tiltoffset=(0,0)):
@@ -86,7 +86,7 @@ def createIndices2(a,b,angle,limiting_shape='ellipse',offset=False,odd=False,til
 	center1 = shape[1] / 2.0
 	ind[0] = ind[0] - center0
 	ind[1] = ind[1] - center1
-	indices = zip(ind[0].flat, ind[1].flat)
+	indices = list(zip(ind[0].flat, ind[1].flat))
 	goodindices = []
 	for index in indices:
 		good = False

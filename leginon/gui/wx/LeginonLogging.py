@@ -43,7 +43,7 @@ def getLoggerNames():
 	# ideally you'd want two locks in logging
 	logging._acquireLock()
 	try:
-		names = logging.root.manager.loggerDict.keys()
+		names = list(logging.root.manager.loggerDict.keys())
 	finally:
 		logging._releaseLock()
 	names.sort()
@@ -55,7 +55,7 @@ def getLevelNames():
 		if type(i) is int:
 			levelnames.append(i)
 	levelnames.sort()
-	levelnames = map(lambda n: logging._levelNames[n], levelnames)
+	levelnames = [logging._levelNames[n] for n in levelnames]
 	return levelnames
 
 def getLevel(logger):
@@ -98,7 +98,7 @@ class EditHandlerDialog(wx.Dialog):
 			self.handlertypes = {}
 			for ht in handlertypes:
 				self.handlertypes[ht.__name__] = ht
-			self.ctype = wx.Choice(self, -1, choices=self.handlertypes.keys())
+			self.ctype = wx.Choice(self, -1, choices=list(self.handlertypes.keys()))
 			self.ctype.SetSelection(0)
 		else:
 			self.ctype = wx.StaticText(self, -1, handler.__class__.__name__)
@@ -214,7 +214,7 @@ class HandlersListCtrl(wx.ListCtrl, ColumnSorterMixin):
 		self.DeleteItem(index)
 
 	def getSelectedHandler(self):
-		for handler, data in self.handlers.items():
+		for handler, data in list(self.handlers.items()):
 			index = self.FindItemData(0, data)
 			if self.GetItemState(index, wx.LIST_STATE_SELECTED):
 				return handler

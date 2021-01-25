@@ -380,8 +380,8 @@ class AddNodeDialog(wxDialog):
 	def GetValue(self):
 		try:
 			dependencies = eval(self.dependenciesentry.GetValue())
-		except Exception, e:
-			print e
+		except Exception as e:
+			print(e)
 			dependencies = []
 		return self.aliasentry.GetValue(), self.classcombo.GetStringSelection(), dependencies
 		#return self.aliasentry.GetValue(), self.classentry.GetValue()
@@ -658,7 +658,7 @@ class Application(wxObjectCanvas.wxRectangleObject):
 					launcher = Launcher(nodespec[2])
 					self.addShapeObject(launcher)
 			
-				print nodespec
+				print(nodespec)
 				try:
 					launcher.addShapeObject(Node(nodespec[1], nodespec[0], nodespec[3]))
 				except RuntimeError:
@@ -698,7 +698,7 @@ class Application(wxObjectCanvas.wxRectangleObject):
 					binding = Binding(getattr(leginon.event, bindspec[0]), fromcp, tocp)
 					self.addShapeObject(binding)
 				else:
-					print 'Warning, cannot add binding', bindspec
+					print('Warning, cannot add binding', bindspec)
 		self.arrange()
 		self.setUpdateDrawing(True)
 		self.UpdateDrawing()

@@ -395,7 +395,7 @@ class TargetImagePanel(leginon.gui.wx.ImagePanel.ImagePanel):
 				strings.append('%s (%g, %g) %e' % (name, position[0], position[1],boxsum))
 			if isinstance(selectedtarget, leginon.gui.wx.TargetPanelTools.StatsTarget):
 				try:
-					for key, value in selectedtarget.stats.items():
+					for key, value in list(selectedtarget.stats.items()):
 						if type(value) is float:
 							strings.append('%s: %g' % (key, value))
 						else:
@@ -473,7 +473,7 @@ class TargetOutputPanel(TargetImagePanel):
 	def onQuit(self, evt):
 		targets = self.getTargets('Target Practice')
 		for target in targets:
-			print '%s\t%s' % (target.x, target.y)
+			print('%s\t%s' % (target.x, target.y))
 		wx.Exit()
 		
 		
@@ -547,18 +547,18 @@ class TomoTargetImagePanel(TargetImagePanel):
 		self.targetmap.pop(acquisition_t)
 	
 	def clearFocusTargetMap(self):		# remove focus targets
-		for key in self.targetmap.keys():
+		for key in list(self.targetmap.keys()):
 			self.targetmap[key]['focus'] = None
 			
 	def clearTrackTargetMap(self):		# remove track targets
-		for key in self.targetmap.keys():
+		for key in list(self.targetmap.keys()):
 			self.targetmap[key]['track'] = None
 			
 	def addFocusTargetMap(self, focus_t, acquisition_t):	# add focus target to a given acquisition target
 		self.targetmap[acquisition_t]['focus'] = focus_t
 		
 	def addFocusTargetMapAll(self, focus_t):							# add focus target to all acquisition targets
-		for key in self.targetmap.keys():
+		for key in list(self.targetmap.keys()):
 			self.targetmap[key]['focus'] = focus_t
 	
 	def addTrackTargetMap(self, track_t, acquisition_t):
@@ -572,7 +572,7 @@ class TomoTargetImagePanel(TargetImagePanel):
 			return self.tracktype
 		else:
 			# TODO: this is sketchy
-			tracktype = [key for key in self.targets.keys() if key.name =='track']
+			tracktype = [key for key in list(self.targets.keys()) if key.name =='track']
 			if tracktype:
 				self.tracktype = tracktype[0]
 				return self.tracktype
@@ -585,7 +585,7 @@ class TomoTargetImagePanel(TargetImagePanel):
 			return self.focustype
 		else:
 			# TODO: this is sketchy
-			focustype = [key for key in self.targets.keys() if key.name =='focus']
+			focustype = [key for key in list(self.targets.keys()) if key.name =='focus']
 			if focustype:	
 				self.focustype = focustype[0]
 				return self.focustype
@@ -596,7 +596,7 @@ class TomoTargetImagePanel(TargetImagePanel):
 		if hasattr(self,'acquisition'):
 			return self.acquisitiontype
 		else:
-			acquisitiontype = [key for key in self.targets.keys() if key.name =='acquisition']
+			acquisitiontype = [key for key in list(self.targets.keys()) if key.name =='acquisition']
 			self.acquisitiontype = acquisitiontype[0]
 			return self.acquisitiontype
 
@@ -790,13 +790,13 @@ if __name__ == '__main__':
 	pdb.set_trace()
 	array = None
 	if filename is None:
-		filename = raw_input('Enter file path: ')
+		filename = input('Enter file path: ')
 	if not filename:
 		array = None
 	elif filename[-4:] == '.mrc' or filename[-5:] == '.mrcs':
 		h = mrc.readHeaderFromFile(filename)
 		if h['mz'] == 0:
-			print 'invalid mz, assumes 1'
+			print('invalid mz, assumes 1')
 			h['mz'] = 1
 		nframes = h['nz']/h['mz']
 		frame = 0
@@ -804,13 +804,13 @@ if __name__ == '__main__':
 		if h['mz'] == 1:
 			if nframes > 1:
 				# mrc2014 image stack
-				frame_str = raw_input('This is an image stack of %d frames.\n Enter 0 to %d to select a frame to load: ' % (nframes,nframes-1))
+				frame_str = input('This is an image stack of %d frames.\n Enter 0 to %d to select a frame to load: ' % (nframes,nframes-1))
 				frame = int(frame_str)
 		else:
 			if nframes > 1:
-				slice_str = raw_input('This is a stack of %d volume.\n Enter 0 to %d to select a slice to load: ' % (nframes,h['nz']-1))
+				slice_str = input('This is a stack of %d volume.\n Enter 0 to %d to select a slice to load: ' % (nframes,h['nz']-1))
 			else:
-				slice_str = raw_input('This is a volume.\n Enter 0 to %d to select a slice to load: ' % (h['nz']-1))
+				slice_str = input('This is a volume.\n Enter 0 to %d to select a slice to load: ' % (h['nz']-1))
 			frame = int(slice_str)
 		image = mrc.read(filename,frame)
 		array = image.astype(numpy.float32)

@@ -3,7 +3,7 @@
 import sys
 
 if len(sys.argv) != 2:
-	print '%s %s' % (sys.argv[0], 'session_name')
+	print('%s %s' % (sys.argv[0], 'session_name'))
 	sys.exit(1)
 
 from leginon import leginondata
@@ -13,8 +13,8 @@ session_name = sys.argv[1]
 sessionq = leginondata.SessionData(name=session_name)
 sessions = sessionq.query()
 if not sessions:
-	print 'No session named %s' % (session_name,)
-	print 'asdf'
+	print('No session named %s' % (session_name,))
+	print('asdf')
 	sys.exit(0)
 sessiondata = sessions[0]
 
@@ -24,16 +24,16 @@ prompt = """Found the following session:
 	User:  %s %s
 	Comment:  %s
 Type "ok" if this is the correct session: """ % (sessiondata['name'], sessiondata['user']['firstname'], sessiondata['user']['lastname'], sessiondata['comment'])
-response = raw_input(prompt)
+response = input(prompt)
 if response != 'ok':
-	print 'no change to database'
+	print('no change to database')
 	sys.exit(1)
 
 # find targets in this session
 targetq = leginondata.AcquisitionImageTargetData(session=sessiondata)
 targets = targetq.query()
 
-print 'Found %d target records.  Searching for targets not done...' % (len(targets),)
+print('Found %d target records.  Searching for targets not done...' % (len(targets),))
 
 # for each target, insert new target with status = 'done'
 targetdict = {}
@@ -68,29 +68,29 @@ for imageid in targetdict:
 				notdone[imageid] = {}
 			notdone[imageid][number] = targetdict[imageid][number]
 			notdonecount += 1
-print ''
+print('')
 if notdonecount:
-	print 'The following %d targets are not done:' % (notdonecount,)
+	print('The following %d targets are not done:' % (notdonecount,))
 else:
-	print 'All targets are already marked done.'
+	print('All targets are already marked done.')
 	sys.exit(0)
 
-for imageid,numberdict in notdone.items():
-	print imageid
-	numbers = numberdict.keys()
+for imageid,numberdict in list(notdone.items()):
+	print(imageid)
+	numbers = list(numberdict.keys())
 	numbers.sort()
 	for number in numbers:
-		print '   %03d: %s' % (number, numberdict[number])
+		print('   %03d: %s' % (number, numberdict[number]))
 
-print ''
-response = raw_input('Type "done" to mark them all done: ')
+print('')
+response = input('Type "done" to mark them all done: ')
 if response != 'done':
-	print 'no change to database'
+	print('no change to database')
 	sys.exit(1)
 
-for target in notdonedata.values():
+for target in list(notdonedata.values()):
 	newtarget = leginondata.AcquisitionImageTargetData(initializer=target)
 	newtarget['status'] = 'done'
 	newtarget.insert()
 
-print 'marked all as done'
+print('marked all as done')

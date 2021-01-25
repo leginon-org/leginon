@@ -15,13 +15,13 @@ import threading
 import itertools
 from scipy import ndimage
 #leginon
-import ice
-import version
-import targetfinder
-import jahcfinderback
-import voronoiWrapper
+from . import ice
+from . import version
+from . import targetfinder
+from . import jahcfinderback
+from . import voronoiWrapper
 from leginon import leginondata
-import gui.wx.DoGFinder
+from . import gui.wx.DoGFinder
 from pyami import imagefun
 from pyami import ordereddict
 
@@ -297,7 +297,7 @@ class DoGFinder(targetfinder.TargetFinder):
 		tstd = self.settings['ice max std']
 		try:
 			self.calc_ice(i0=i0, tmin=tmin, tmax=tmax, tstd=tstd)
-		except Exception, e:
+		except Exception as e:
 			self.logger.error(e)
 			return
 		goodholes = self.holes
@@ -306,7 +306,7 @@ class DoGFinder(targetfinder.TargetFinder):
 
 		# activate if counter is at a multiple of interval
 		interval = self.settings['focus interval']
-		if interval and not (self.foc_counter.next() % interval):
+		if interval and not (next(self.foc_counter) % interval):
 			self.foc_activated = True
 		else:
 			self.foc_activated = False
@@ -429,11 +429,11 @@ class DoGFinder(targetfinder.TargetFinder):
 
 	def centralPoint(self, points):
 		numpypoints = numpy.array(points)
-		print numpypoints.shape
+		print(numpypoints.shape)
 		xavg = (numpypoints[:,0]).mean()
 		yavg = (numpypoints[:,1]).mean()
 		a = numpy.array((xavg, yavg))
-		print a
+		print(a)
 		mindist = 1e10
 		for p in points:
 			dist = numpy.power(a - p, 2).mean()
@@ -623,7 +623,7 @@ class DoGFinder(targetfinder.TargetFinder):
 			autofailed = False
 			try:
 				self.everything()
-			except Exception, e:
+			except Exception as e:
 				self.logger.error('auto target finder failed: %s' % (e,))
 				autofailed = True
 

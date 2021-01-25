@@ -5,18 +5,18 @@
 #	   For terms of the license agreement
 #	   see  http://leginon.org
 #
-import acquisition
-import node, leginondata
-import calibrationclient
+from . import acquisition
+from . import node, leginondata
+from . import calibrationclient
 import threading
-import event
+from . import event
 import time
 import math
 from pyami import imagefun, fftfun, ordereddict
 import numpy
 import copy
-import gui.wx.Focuser
-import player
+from . import gui.wx.Focuser
+from . import player
 
 class ManualFocusChecker(acquisition.Acquisition):
 	panelclass = gui.wx.Focuser.Panel
@@ -67,7 +67,7 @@ class ManualFocusChecker(acquisition.Acquisition):
 			return
 		try:
 			self.euclient.publishEucentricFocus(ht, mag, probe, foc)
-		except node.PublishError, e:
+		except node.PublishError as e:
 			self.logger.error(errstr % 'unable to save')
 			return
 		self.logger.info('Eucentric focus saved to database, HT: %s, Mag.: %s, Focus: %s' % (ht, mag, foc))
@@ -282,7 +282,7 @@ class ManualFocusChecker(acquisition.Acquisition):
 				self.instrument.tem.StagePosition = {'z': value}
 			elif parameter == 'Defocus':
 				self.instrument.tem.Defocus = value
-		except Exception, e:
+		except Exception as e:
 			self.logger.exception('Change focus failed: %s' % e)
 			self.manualchecklock.release()
 			return

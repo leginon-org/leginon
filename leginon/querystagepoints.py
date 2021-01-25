@@ -9,4 +9,4 @@ db = leginondata.db
 sm = leginondata.StageMeasurementData(label=label, axis='x')
 points = db.query(sm)
 for point in points:
-	print '%(label)s	%(magnification)s	%(axis)s	%(x)s	%(y)s	%(delta)s	%(imagex)s	%(imagey)s' % point
+	print('%(label)s	%(magnification)s	%(axis)s	%(x)s	%(y)s	%(delta)s	%(imagex)s	%(imagey)s' % point)

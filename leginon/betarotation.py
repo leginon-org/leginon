@@ -9,26 +9,26 @@ class BetaRotation(object):
 	def __init__(self):
 		self.filename = 'betacenter.txt'
 		self.center = None   # not calibrated
-		print ''
+		print('')
 		try:
 			self.load_center()
-			print 'Beta center loaded from file:', self.center
+			print('Beta center loaded from file:', self.center)
 		except:
-			print 'No beta center loaded...  you must calibrate.'
+			print('No beta center loaded...  you must calibrate.')
 
 	def main_loop(self):
 		while True:
-			print '''
+			print('''
 			Enter 1 to calibrate center of rotation.
 			Enter 2 to calculate rotated position.
-			'''
-			choice = raw_input('choice: ')
+			''')
+			choice = input('choice: ')
 			if choice == '1':
 				self.calibrate()
 			elif choice == '2':
 				self.calculate()
 			else:
-				print ''
+				print('')
 				continue
 
 	def load_center(self):
@@ -36,11 +36,11 @@ class BetaRotation(object):
 		line = f.read()
 		line = line.strip()
 		splitline = line.split()
-		self.center = map(float, splitline)
+		self.center = list(map(float, splitline))
 
 	def save_center(self):
 		if self.center is None:
-			print 'No center calibrated.  Cannot save'
+			print('No center calibrated.  Cannot save')
 			return
 		f = open(self.filename, 'w')
 		line = '%f %f' % self.center
@@ -49,20 +49,20 @@ class BetaRotation(object):
 
 	def calculate(self):
 		if self.center is None:
-			print 'Need to calibrate first.'
+			print('Need to calibrate first.')
 			return
 
-		print 'Enter position at original position.'
-		print ''
-		beta0 = raw_input('Object B position (degrees): ')
-		xpos0 = raw_input('Object X position (micron): ')
-		ypos0 = raw_input('Object Y position (micron): ')
+		print('Enter position at original position.')
+		print('')
+		beta0 = input('Object B position (degrees): ')
+		xpos0 = input('Object X position (micron): ')
+		ypos0 = input('Object Y position (micron): ')
 		beta0 = float(beta0)
 		xpos0 = float(xpos0)
 		ypos0 = float(ypos0)
-		print ''
-		beta1 = raw_input('Enter new beta rotation angle: ')
-		print ''
+		print('')
+		beta1 = input('Enter new beta rotation angle: ')
+		print('')
 		beta1 = float(beta1)
 
 		beta = beta1 - beta0
@@ -73,33 +73,33 @@ class BetaRotation(object):
 		vecty1 = vectx0 * numpy.sin(beta) + vecty0 * numpy.cos(beta)
 		x1 = vectx1 + self.center[0]
 		y1 = vecty1 + self.center[1]
-		print ''
-		print 'Rotated position: ', x1, y1
+		print('')
+		print('Rotated position: ', x1, y1)
 		return x1,y1
 
 	def calibrate(self):
-		print ''
-		print 'Calibrating Center of Beta Rotation'
+		print('')
+		print('Calibrating Center of Beta Rotation')
 		# center object
-		print ''
-		print 'Center object, then enter stage position Beta, X, Y.'
-		print ''
-		beta0 = raw_input('Object B position (degrees): ')
-		xpos0 = raw_input('Object X position (micron): ')
-		ypos0 = raw_input('Object Y position (micron): ')
-		print ''
+		print('')
+		print('Center object, then enter stage position Beta, X, Y.')
+		print('')
+		beta0 = input('Object B position (degrees): ')
+		xpos0 = input('Object X position (micron): ')
+		ypos0 = input('Object Y position (micron): ')
+		print('')
 		beta0 = float(beta0)
 		xpos0 = float(xpos0)
 		ypos0 = float(ypos0)
 
 		# rotate and center again
-		print 'Rotate beta by at least 90 degrees and recenter object.'
-		print 'Enter stage position Beta, X, Y.'
-		print ''
-		beta1 = raw_input('Object B position (degrees): ')
-		xpos1 = raw_input('Object X position (micron): ')
-		ypos1 = raw_input('Object Y position (micron): ')
-		print ''
+		print('Rotate beta by at least 90 degrees and recenter object.')
+		print('Enter stage position Beta, X, Y.')
+		print('')
+		beta1 = input('Object B position (degrees): ')
+		xpos1 = input('Object X position (micron): ')
+		ypos1 = input('Object Y position (micron): ')
+		print('')
 		beta1 = float(beta1)
 		xpos1 = float(xpos1)
 		ypos1 = float(ypos1)
@@ -121,7 +121,7 @@ class BetaRotation(object):
 
 		center = numpy.dot(minv, (c1,c2))
 		self.center = center[0], center[1]
-		print 'Calibrated center: ', self.center
+		print('Calibrated center: ', self.center)
 		self.save_center()
 
 

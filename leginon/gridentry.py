@@ -7,11 +7,11 @@
 #
 
 from leginon import leginondata
-import event
+from . import event
 import threading
-import node
-import project
-import gui.wx.GridEntry
+from . import node
+from . import project
+from . import gui.wx.GridEntry
 
 class GridEntry(node.Node):
 	eventinputs = node.Node.eventinputs + [event.TargetListDoneEvent,
@@ -36,7 +36,7 @@ class GridEntry(node.Node):
 	def publishNewEMGrid(self,newgrid):
 		try:
 			checkGridName(newgrid)
-		except ValueError, e:
+		except ValueError as e:
 			raise
 		emgridq = leginondata.EMGridData()
 		emgridq['name'] = newgrid
@@ -51,7 +51,7 @@ class GridEntry(node.Node):
 	def getProjectId(self,sessiondata):
 		try:
 			projectdata = project.ProjectData()
-		except project.NotConnectedError, e:
+		except project.NotConnectedError as e:
 			self.logger.warning('Failed to associate the grid to a project: %s' % e)
 			return None
 		return projectdata.getProjectId(sessiondata)
@@ -110,7 +110,7 @@ class GridEntry(node.Node):
 		gridname = self.settings['grid name']
 		try:
 			checkGridName(gridname)
-		except ValueError, e:
+		except ValueError as e:
 			self.logger.error(e)
 			self.logger.error('Data collection event not sent')
 			return

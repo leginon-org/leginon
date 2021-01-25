@@ -29,27 +29,27 @@ class BeamTiltRotationCalibrator(object):
 	def __init__(self):
 		self.tems = config.getTEMClasses()
 		if not self.tems:
-			raw_input('Must have tem classes to run this. Hit any key to quit.')
+			input('Must have tem classes to run this. Hit any key to quit.')
 			sys.exit()
 		self.tem1 = None
 		for t in self.tems:
-			answer = raw_input('Is %s the current TEM mode ? (Y/N)(y/n) ' % t.name)
+			answer = input('Is %s the current TEM mode ? (Y/N)(y/n) ' % t.name)
 			if answer.lower() == 'y':
 				self.tem1 = t()
-				print 'Set TEM to %s mode' % self.tem1.name
+				print('Set TEM to %s mode' % self.tem1.name)
 				break
 		if self.tem1 is None:
-			print 'TEM not set.', self.tem1
+			print('TEM not set.', self.tem1)
 			self.finish()
 
-		print self.tem1.getProbeMode()
+		print(self.tem1.getProbeMode())
 		# fake node to host calibrationclient
 		node = Node(self.tem1, None)
 		self.bt0 = self.tem1.getBeamTilt()
 		self.calclient = calibrationclient.BeamTiltCalibrationClient(node)
 
 	def printInstruction(self):
-		answer = raw_input('''
+		answer = input('''
 1. Use cross-grating or other specimen that scatter well.
 
 2. Change TEM to diffraction mode.
@@ -89,7 +89,7 @@ Hit "Enter" or "Return" key to stop it when the beam is on the edge again, point
 
 	def waitForDone(self):
 		self.done=False
-		raw_input('')
+		input('')
 		self.done=True
 
 	def run(self):
@@ -100,18 +100,18 @@ Hit "Enter" or "Return" key to stop it when the beam is on the edge again, point
 		while not self.done:
 			angle += math.pi/18
 			bt_delta = self.rotateXY0({'x':0.01,'y':0}, angle)
-			print math.degrees(angle)
+			print(math.degrees(angle))
 			bt1 = self.modifyBeamTilt(self.bt0, bt_delta)
 			self.tem1.setBeamTilt(bt1)
 			time.sleep(0.5)
-		print 'final angle', math.degrees(angle)
-		print 'pause 10 seconds before continue....'
+		print('final angle', math.degrees(angle))
+		print('pause 10 seconds before continue....')
 		time.sleep(10)
 		self.tem1.setBeamTilt(self.bt0)
 		return angle
 
 	def getYDirection(self, angle):
-		answer = raw_input('''
+		answer = input('''
 Next to decide the y direction tilt.  The beam will be tilted
 by y = 0.01 radians.  Examine the tilt direction relative to
 the patch advance direction.
@@ -125,14 +125,14 @@ Hit return when ready.
 			self.tem1.setBeamTilt(bt1)
 		finally:
 			self.tem1.setBeamTilt(self.bt0)
-		answer = raw_input('''
+		answer = input('''
 Type Y if this is pointing to the previous row of phase plate patch. 
 Type N if a direction reversal is needed : 
 		''')
 		return answer.lower() == 'y'
 
 	def confirm(self):
-		answer = raw_input('Type Y or y if ready to save, Else repeat : ')
+		answer = input('Type Y or y if ready to save, Else repeat : ')
 		return answer.lower() == 'y'
 
 	def storeToDatabase(self, anglei, y_is_positive):
@@ -146,10 +146,10 @@ Type N if a direction reversal is needed :
 			vectors = ((1,0),(0,-1))
 		self.calclient.storePhasePlateBeamTiltVectors(tem, cam, vectors, probe)
 		self.calclient.storePhasePlateBeamTiltRotation(tem, cam, angle, probe)
-		print 'calibration saved for %s at %.1f' % (tem['name'],math.degrees(angle))
+		print('calibration saved for %s at %.1f' % (tem['name'],math.degrees(angle)))
 
 	def finish(self):
-		raw_input('Hit Enter to quit')
+		input('Hit Enter to quit')
 
 if __name__ == '__main__':
 	app = BeamTiltRotationCalibrator()

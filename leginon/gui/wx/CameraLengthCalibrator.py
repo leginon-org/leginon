@@ -294,7 +294,7 @@ class CameraLengthListCtrl(wx.ListCtrl, ListCtrlAutoWidthMixin):
 
 	def getBestSize(self):
 		count = self.GetColumnCount()
-		width = sum(map(lambda i: self.GetColumnWidth(i), range(count)))
+		width = sum([self.GetColumnWidth(i) for i in range(count)])
 		height = self.GetSize().height * 3 
 		return width, height
 
@@ -437,7 +437,7 @@ class CameraLengthCalibrationDialog(wx.Dialog):
 		dialog = ExtrapolateDialog(self, selected, self.camera_lengths)
 		if dialog.ShowModal() == wx.ID_OK:
 			extrapolated = dialog.pslc.getCameraLengths()
-			mags = map(lambda (m, p, c): m, self.camera_lengths)
+			mags = [m_p_c[0] for m_p_c in self.camera_lengths]
 			for camera_length in dialog.pslc.getCameraLengths():
 				# refresh values in CameraLengthCalibrationDialog
 				self.lccamera_length.addCameraLength(*camera_length)
@@ -457,7 +457,7 @@ class MeasurementListCtrl(wx.ListCtrl, ListCtrlAutoWidthMixin):
 
 	def getBestSize(self):
 		count = self.GetColumnCount()
-		width = sum(map(lambda i: self.GetColumnWidth(i), range(count)))
+		width = sum([self.GetColumnWidth(i) for i in range(count)])
 		height = self.GetSize().height * 3
 		return width, height
 

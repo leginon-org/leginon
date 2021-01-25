@@ -1,10 +1,10 @@
-import targetfilter
+from . import targetfilter
 from leginon import leginondata
-import gui.wx.RasterTargetFilter
-import presets
-import calibrationclient
-import raster
-import instrument
+from . import gui.wx.RasterTargetFilter
+from . import presets
+from . import calibrationclient
+from . import raster
+from . import instrument
 import math
 import numpy
 

@@ -126,10 +126,10 @@ class ImageNewTiltAxisEvent(wx.PyCommandEvent):
 
 #--------------------
 def getColorMap():
-	b = [0] * 512 + range(256) + [255] * 512 + range(255, -1, -1)
+	b = [0] * 512 + list(range(256)) + [255] * 512 + list(range(255, -1, -1))
 	g = b[512:] + b[:512]
 	r = g[512:] + g[:512]
-	return zip(r, g, b)
+	return list(zip(r, g, b))
 
 colormap = getColorMap()
 
@@ -441,7 +441,7 @@ class TraceTool(ImageTool):
 		if self.xypath:
 			dc.SetPen(wx.Pen(wx.RED, 1))
 			dc.SetBrush(wx.TRANSPARENT_BRUSH)
-			scaledpoints = map(self.imagepanel.image2view, self.xypath)
+			scaledpoints = list(map(self.imagepanel.image2view, self.xypath))
 			if len(scaledpoints) > 1:
 				dc.DrawLines(scaledpoints)
 
@@ -611,12 +611,12 @@ class FitShapeTool(TraceTool):
 		if self.shiftxypath:
 			dc.SetPen(wx.Pen(wx.RED, 1))
 			dc.SetBrush(wx.TRANSPARENT_BRUSH)
-			scaledpoints = map(self.imagepanel.image2view, self.shiftxypath)
+			scaledpoints = list(map(self.imagepanel.image2view, self.shiftxypath))
 			dc.DrawPointList(scaledpoints)
 		if self.fitted_shape_points:
 			dc.SetPen(wx.Pen(wx.GREEN, 1))
 			dc.SetBrush(wx.TRANSPARENT_BRUSH)
-			polypoints = map(self.imagepanel.image2view, self.fitted_shape_points)
+			polypoints = list(map(self.imagepanel.image2view, self.fitted_shape_points))
 			dc.DrawPolygon(polypoints)
 
 class ValueTool(ImageTool):

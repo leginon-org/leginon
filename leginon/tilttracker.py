@@ -6,9 +6,9 @@
 #	   see  http://leginon.org
 #
 from leginon import leginondata
-import acquisition
-import gui.wx.TiltTracker
-import libCVwrapper
+from . import acquisition
+from . import gui.wx.TiltTracker
+from . import libCVwrapper
 import pyami.timedproc
 import numpy
 import time
@@ -72,7 +72,7 @@ def targetPoint(target):
 
 #====================
 def targetPoints(targets):
-	return map(targetPoint, targets)
+	return list(map(targetPoint, targets))
 
 #====================
 #====================
@@ -118,7 +118,7 @@ class TiltTracker(acquisition.Acquisition):
 
 		# activate if counter is at a multiple of interval
 		interval = self.settings['activation interval']
-		if interval and not (self.activation_counter.next() % interval):
+		if interval and not (next(self.activation_counter) % interval):
 			self.activated = True
 		else:
 			self.activated = False
@@ -316,7 +316,7 @@ class TiltTracker(acquisition.Acquisition):
 				arraynew = ndimage.gaussian_filter(arraynew, lowfilt)
 			self.setImage(arraynew, 'Image')
 
-			print '============ Craig stuff ============'
+			print('============ Craig stuff ============')
 
 			self.logger.info('Craig\'s libCV stuff')
 			minsize = self.settings['minsize']
@@ -326,8 +326,8 @@ class TiltTracker(acquisition.Acquisition):
 			import pyami.mrc
 			pyami.mrc.write(arrayold, 'arrayold.mrc')
 			pyami.mrc.write(arraynew, 'arraynew.mrc')
-			print 'minsize', minsize
-			print 'maxsize', maxsize
+			print('minsize', minsize)
+			print('maxsize', maxsize)
 
 			timeout = 300
 			#result = libCVwrapper.MatchImages(arrayold, arraynew, minsize, maxsize)
@@ -355,13 +355,13 @@ class TiltTracker(acquisition.Acquisition):
 					i -= 1
 				else:
 					retries = 0
-					print "Tilt libCV FAILED"
+					print("Tilt libCV FAILED")
 					self.logger.error("libCV failed: giving up")
 					return None, None
 				continue
 			else:
 				retries = 0			
-			print '============ Craig stuff done ============'
+			print('============ Craig stuff done ============')
 
 			self.logger.info("result matrix= "+str(numpy.asarray(result*100, dtype=numpy.int8).ravel()))
 			self.logger.info( "Inter Matrix: "+libCVwrapper.affineToText(result) )
@@ -466,7 +466,7 @@ class TiltTracker(acquisition.Acquisition):
 	#====================
 	def apTiltShiftMethod(self, arrayold, arraynew, difftilt):
 		### pre-filter images
-		print "difftilt=", difftilt
+		print("difftilt=", difftilt)
 		#print arrayold.shape, arraynew.shape, difftilt
 		bestsnr = 0
 		bestangle = None
@@ -476,24 +476,24 @@ class TiltTracker(acquisition.Acquisition):
 			if snr > bestsnr:
 				bestsnr = snr
 				bestangle = angle
-				print "best tilt axis angle=", bestsnr, bestangle, shift
+				print("best tilt axis angle=", bestsnr, bestangle, shift)
 				self.logger.info('best tilt axis angle = %.2f (snr = %.2f; shift = %s)'%(bestangle, bestsnr, shift))
 		for angle in [bestangle-5, bestangle-3, bestangle+3, bestangle+5]:
 			shift, xfactor, snr = apTiltShift.getTiltedRotateShift(arrayold, arraynew, difftilt, angle, msg=False)
 			if snr > bestsnr:
 				bestsnr = snr
 				bestangle = angle
-				print "best tilt axis angle=", bestsnr, bestangle, shift
+				print("best tilt axis angle=", bestsnr, bestangle, shift)
 				self.logger.info('best tilt axis angle = %.2f (snr = %.2f; shift = %s)'%(bestangle, bestsnr, shift))
 		for angle in [bestangle-2, bestangle-1, bestangle+1, bestangle+2]:
 			shift, xfactor, snr = apTiltShift.getTiltedRotateShift(arrayold, arraynew, difftilt, angle, msg=False)
 			if snr > bestsnr:
 				bestsnr = snr
 				bestangle = angle
-				print "best tilt axis angle=", bestsnr, bestangle, shift
+				print("best tilt axis angle=", bestsnr, bestangle, shift)
 				self.logger.info('best tilt axis angle = %.2f (snr = %.2f; shift = %s)'%(bestangle, bestsnr, shift))
 		shift, xfactor, snr = apTiltShift.getTiltedRotateShift(arrayold, arraynew, difftilt, bestangle, msg=True)
-		print "best tilt axis angle=", bestsnr, bestangle, shift
+		print("best tilt axis angle=", bestsnr, bestangle, shift)
 		self.logger.info('best tilt axis angle = %.2f (snr = %.2f; shift = %s)'%(bestangle, bestsnr, shift))
 
 		### construct the results matrix
@@ -524,7 +524,7 @@ class TiltTracker(acquisition.Acquisition):
 				], 
 				[shift[0], shift[1], 1.0]], 
 				dtype=numpy.float32)
-		print "result=\n", numpy.asarray(result*100, dtype=numpy.int8)
+		print("result=\n", numpy.asarray(result*100, dtype=numpy.int8))
 
 		return result
 

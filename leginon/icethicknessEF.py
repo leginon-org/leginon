@@ -23,26 +23,26 @@
 
 
 from leginon import leginondata
-import event
-import imagewatcher
+from . import event
+from . import imagewatcher
 import threading
-import node
-import calibrationclient
+from . import node
+from . import calibrationclient
 #import numpy  wjr
 #import math   wjr
 import pyami.quietscipy
 #import scipy.ndimage wjr
 from pyami import imagefun, arraystats  #wjr
-import gui.wx.IcethicknessEF  #wjr
+from . import gui.wx.IcethicknessEF  #wjr
 #from pyami import fftfun
-from acquisition import Acquisition   #wjr
-import presets # wjr
-import gui.wx.Presets #wjr`
+from .acquisition import Acquisition   #wjr
+from . import presets # wjr
+from . import gui.wx.Presets #wjr`
 from math import log # natural log
 import copy
-import instrument
+from . import instrument
 import time
-import appclient
+from . import appclient
 
 
 

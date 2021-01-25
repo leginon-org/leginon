@@ -126,7 +126,7 @@ class Calibrations(wx.StaticBoxSizer):
 		for name, label in self.order:
 			try:
 				self.sts[name].SetLabel(times[name])
-			except (TypeError, KeyError), e:
+			except (TypeError, KeyError) as e:
 				self.sts[name].SetLabel('None')
 		self.Layout()
 
@@ -160,12 +160,12 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 		return probes
 
 	def getTEMChoices(self):
-		choices = self.tems.keys()
+		choices = list(self.tems.keys())
 		choices.sort()
 		return [self.nonestring] + choices
 
 	def getCCDCameraChoices(self):
-		choices = self.ccd_cameras.keys()
+		choices = list(self.ccd_cameras.keys())
 		choices.sort()
 		return [self.nonestring] + choices
 
@@ -275,7 +275,7 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 				self.choices[key].SetStringSelection(self.nonestring)
 				enable_buttons = False
 
-			for value in self._buttons[key].values():
+			for value in list(self._buttons[key].values()):
 				value.Enable(enable_buttons)
 
 		labels = (
@@ -400,7 +400,7 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 	def onButton(self, evt):
 		event_button = evt.GetEventObject()
 		for instrument_type in self._buttons:
-			for name, button in self._buttons[instrument_type].items():
+			for name, button in list(self._buttons[instrument_type].items()):
 				if button is event_button:
 					instrument_name = self.choices[instrument_type].GetStringSelection()
 					try:
@@ -496,7 +496,7 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 		new_choices = self.setTEMItemChoices(tem,'probe modes','probe mode',str)
 		new_choices = self.setTEMItemChoices(tem,'magnifications','magnification',int)
 
-		for value in self._buttons['tem'].values():
+		for value in list(self._buttons['tem'].values()):
 			# empty new_choices means TEM is not valid
 			value.Enable(bool(new_choices))
     	#'energy filter',
@@ -511,11 +511,11 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 		except KeyError:
 			camera_geom_limits = None
 		self.dicts['camera parameters'].setGeometryLimits(camera_geom_limits)
-		for value in self._buttons['ccdcamera'].values():
+		for value in list(self._buttons['ccdcamera'].values()):
 			value.Enable(camera_geom_limits is not None)
 
 	def setChoice(self,parameters, itemname, func):
-			if itemname not in parameters.keys():
+			if itemname not in list(parameters.keys()):
 				return
 			if parameters[itemname] is not None:
 				value = str(func(parameters[itemname]))
@@ -528,7 +528,7 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 		self.setChoice(parameters,'probe mode',str)
 
 		if 'aperture size' in parameters and parameters['aperture size'] is not None:
-			for aperture, aperture_size in parameters['aperture size'].items():
+			for aperture, aperture_size in list(parameters['aperture size'].items()):
 				if aperture not in self.choices:
 					continue
 				if aperture_size == 0:
@@ -854,7 +854,7 @@ class DoseDialog(leginon.gui.wx.Dialog.Dialog):
 
 	def onSetCameraDoseRate(self,evt):
 		camera_dose_rate = self.cdr_value.GetValue() # electron pre pixel pre second
-		if 'mean' in self.image.stats.keys():
+		if 'mean' in list(self.image.stats.keys()):
 			mean = self.image.stats['mean']
 			self.parent.onSetCameraDoseRate(camera_dose_rate, mean)
 
@@ -1028,7 +1028,7 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 
 	def onAlign(self, evt):
 		self.aligndialog = AlignDialog(self, self.node)
-		preset_names = self.node.presets.keys()
+		preset_names = list(self.node.presets.keys())
 		self.aligndialog.choiceleft.setChoices(preset_names)
 		self.aligndialog.choiceright.setChoices(preset_names)
 		refpreset = self.presets.getSelectedPreset()
@@ -1386,7 +1386,7 @@ class AlignDialog(leginon.gui.wx.Dialog.Dialog):
 		self.choiceacquiremode = wx.Choice(self, -1, choices=(['Full Camera','Similar look across mags']))	
 		szmode.Add(self.choiceacquiremode, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.ALL, 5)
 
-		preset_names = self.node.presets.keys()
+		preset_names = list(self.node.presets.keys())
 		lableft = wx.StaticText(self, -1, 'Current Reference Preset ')
 		self.choiceleft = leginon.gui.wx.Presets.PresetChoice(self,-1)
 		self.choiceleft.setChoices(preset_names)
@@ -1688,12 +1688,12 @@ class ImportDialog(wx.Dialog):
 				continue
 			sname = p['session']['name']
 			# reduce sessions to check for multiple TEM used in most recent preset
-			if sname not in self.sessiondict.keys() and sname not in badsessions:
+			if sname not in list(self.sessiondict.keys()) and sname not in badsessions:
 				if self.onlyOneTEMinSessionPresets(p['session']):
 					self.sessiondict[sname] = p['session']
 				else:
 					badsessions.append(sname)
-		self.session.setSessions(self.sessiondict.values())
+		self.session.setSessions(list(self.sessiondict.values()))
 
 	def onlyOneTEMinSessionPresets(self,sessiondata):
 		'''
@@ -1705,7 +1705,7 @@ class ImportDialog(wx.Dialog):
 		'''
 		tems = []
 		presets = self.node.getSessionPresets(sessiondata)
-		for presetname in presets.keys():
+		for presetname in list(presets.keys()):
 			q = leginon.leginondata.PresetData(session=sessiondata,name=presetname)
 			newestpreset = q.query(results=1)[0]
 			if newestpreset['tem'].dbid not in tems:
@@ -1722,7 +1722,7 @@ class ImportDialog(wx.Dialog):
 		name = evt.GetText()
 		sessiondata = self.sessiondict[name]
 		self.presets = self.node.getSessionPresets(sessiondata)
-		presetnames = self.presets.keys()
+		presetnames = list(self.presets.keys())
 		self.bimport.Enable(False)
 		self.lbpresets.Clear()
 		if presetnames:
@@ -1858,7 +1858,7 @@ class Parameters(wx.StaticBoxSizer):
 
 	def set(self, parameters):
 		if parameters is None:
-			for value in self.values.values():
+			for value in list(self.values.values()):
 				try:
 					value.SetLabel('')
 				except AttributeError:
@@ -1928,12 +1928,12 @@ class Parameters(wx.StaticBoxSizer):
 				self.values[key].SetLabel(s)
 
 			if self.aperture_sizer is not None:
-				for aperture in self.labels['aperture size'].keys():
+				for aperture in list(self.labels['aperture size'].keys()):
 						self.aperture_sizer.Remove(self.labels['aperture size'][aperture])
 						self.labels['aperture size'][aperture].Destroy()
 						del self.labels['aperture size'][aperture]
 
-				for aperture in self.values['aperture size'].keys():
+				for aperture in list(self.values['aperture size'].keys()):
 						self.aperture_sizer.Remove(self.values['aperture size'][aperture])
 						self.values['aperture size'][aperture].Destroy()
 						del self.values['aperture size'][aperture]
@@ -1948,7 +1948,7 @@ class Parameters(wx.StaticBoxSizer):
 				if 'apertures' in parameters:
 					apertures = parameters['apertures']
 				else:
-					apertures = parameters['aperture size'].keys()
+					apertures = list(parameters['aperture size'].keys())
 					apertures.sort()
 
 				i = 0

@@ -126,7 +126,7 @@ class Exposure:
         # keep the exposure value
         if self.fixed_exposure:
           for scales in self.scales:
-              self.exposures.append(map((lambda x: exposure), scales))
+              self.exposures.append(list(map((lambda x: exposure), scales)))
           raise Default('%.2f s' % exposure)
 
         if self.total_dose <= 0:
@@ -213,7 +213,7 @@ class Exposure2(Exposure):
             raise Default(default)
 
 if __name__ == '__main__':
-    import tilts
+    from . import tilts
 
     args = [math.radians(arg) for arg in (-60, 60, 0, 1)]
     tilts = tilts.Tilts()

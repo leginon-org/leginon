@@ -12,8 +12,8 @@
 # $Locker:  $
 
 from leginon import leginondata
-import remotecall
-import gui.wx.Events
+from . import remotecall
+from . import gui.wx.Events
 import time
 
 class InstrumentError(Exception):
@@ -101,7 +101,7 @@ class Proxy(object):
 		return self.tem._name
 
 	def getTEMNames(self):
-		tems = self.tems.keys()
+		tems = list(self.tems.keys())
 		tems.sort()
 		return tems
 
@@ -170,7 +170,7 @@ class Proxy(object):
 		return self.ccdcamera._name
 
 	def getCCDCameraNames(self):
-		ccdcameras = self.ccdcameras.keys()
+		ccdcameras = list(self.ccdcameras.keys())
 		ccdcameras.sort()
 		return ccdcameras
 

@@ -7,8 +7,8 @@
 # $Locker:  $
 import math
 from leginon import leginondata, referencetimer, calibrationclient, cameraclient
-import event
-import gui.wx.BeamFixer
+from . import event
+from . import gui.wx.BeamFixer
 from pyami import arraystats
 
 class PresetAdjuster(referencetimer.ReferenceTimer):
@@ -53,12 +53,12 @@ class PresetAdjuster(referencetimer.ReferenceTimer):
 			try:
 				self.instrument.setTEM(instruments['tem'])
 				self.instrument.setCCDCamera(instruments['ccdcamera'])
-			except ValueError, e:
+			except ValueError as e:
 				self.logger.error('Cannot set instruments: %s' % (e,))
 				return
 			try:
 				self.instrument.ccdcamera.Settings = self.settings['camera settings']
-			except Exception, e:
+			except Exception as e:
 				errstr = 'Acquire image failed: %s'
 				self.logger.error(errstr % e)
 				return
@@ -111,8 +111,8 @@ class PresetAdjuster(referencetimer.ReferenceTimer):
 	
 	def _setScaleFactor(self):
 		# Scale factor should be set only once based on the key in self.params
-		if self.params and 'scale' in self.params.keys()[0]:
-			key = self.params.keys()[0]
+		if self.params and 'scale' in list(self.params.keys())[0]:
+			key = list(self.params.keys())[0]
 			self.scale_factor = self.params[key]
 			self.params[key] = None
 	

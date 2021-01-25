@@ -4,7 +4,7 @@ import sys
 import MySQLdb
 import getpass
 
-print '''
+print('''
 LEGINON 1.3 DATABASE UPDATE SCRIPT
 
 This script will update several tables in the Leginon database.
@@ -13,24 +13,24 @@ Older versions of Leginon will no longer work after this update.
 *****************************************************************
 * YOU SHOULD CREATE A BACKUP OF YOUR DATABASE BEFORE CONTINUING *
 *****************************************************************
-'''
+''')
 
 ## ask if a backup was made
-text = raw_input('If you have created a backup, please enter YES at the prompt: ')
+text = input('If you have created a backup, please enter YES at the prompt: ')
 if text != 'YES':
-	print 'aborted'
+	print('aborted')
 	sys.exit()
 
-print ''
-print 'Enter configuration information for the database you wish to update.'
-print 'You must have alter, insert, and create privileges to update the tables.'
-print ''
-dbhost = raw_input('Database Host: ')
-dbname = raw_input('Database Name: ')
-dbuser = raw_input('User: ')
+print('')
+print('Enter configuration information for the database you wish to update.')
+print('You must have alter, insert, and create privileges to update the tables.')
+print('')
+dbhost = input('Database Host: ')
+dbname = input('Database Name: ')
+dbuser = input('User: ')
 dbpass = getpass.getpass('Password: ')
-print ''
-print ''
+print('')
+print('')
 
 db = MySQLdb.connect(host=dbhost, db=dbname, user=dbuser, passwd=dbpass)
 db.autocommit(True)
@@ -41,7 +41,7 @@ cur.execute('show tables')
 tableresults = cur.fetchall()
 tables = [row[0] for row in tableresults]
 if not tables:
-	print 'No tables in this database, so no update is necessary'
+	print('No tables in this database, so no update is necessary')
 	sys.exit()
 
 def get_fields_info(db, table):
@@ -95,12 +95,12 @@ else:
 
 ## alter the tables to enable the NULL flag on fields
 if nullenabled:
-	print 'NULL already enabled on tables.  Skipping this modification'
+	print('NULL already enabled on tables.  Skipping this modification')
 else:
-	print 'Enabling NULL on tables...'
+	print('Enabling NULL on tables...')
 
 	for table in tables:
-		print '  %s' % table
+		print('  %s' % table)
 		fields = get_fields_info(db, table)
 		for field in fields:
 			if field[0] in ('DEF_id', 'DEF_timestamp',):
@@ -108,33 +108,33 @@ else:
 			cur = db.cursor()
 			alter = 'ALTER TABLE `%s` MODIFY `%s` %s NULL' % (table,field[0],field[1])
 			cur.execute(alter)
-print ''
+print('')
 
 ## update FocusSettingData 
 if 'FocusSettingData' in tables:
 	# tilt field
 	fields = get_field_names(db, 'FocusSettingData')
 	if 'tilt' in fields:
-		print 'FocusSettingData already contains tilt field.  Skipping this modification'
+		print('FocusSettingData already contains tilt field.  Skipping this modification')
 	else:
-		print 'Updating tilt field of FocusSettingData...'
+		print('Updating tilt field of FocusSettingData...')
 		cur = db.cursor()
 		cur.execute('ALTER TABLE `FocusSettingData` CHANGE `beam tilt` `tilt` DOUBLE')
-		print '   done.'
-	print ''
+		print('   done.')
+	print('')
 
 	# stig defocus min/max updated to be positive
-	print 'Updating stig defocus min/max fields of FocusSettingData'
+	print('Updating stig defocus min/max fields of FocusSettingData')
 	cur = db.cursor()
 	cur.execute("UPDATE `FocusSettingData` SET `stig defocus max`=ABS(`stig defocus max`), `stig defocus min`=ABS(`stig defocus min`) WHERE `stig defocus max` <0 OR `stig defocus min` <0")
-	print '   done.'
-	print ''
+	print('   done.')
+	print('')
 
 # rename CalibratorSettingsData to PixelSizeCalibratorSettingsData
 if 'PixelSizeCalibratorSettingsData' in tables:
-	print 'PixelSizeCalibratorSettingsData already exists.  Skipping this modification'
+	print('PixelSizeCalibratorSettingsData already exists.  Skipping this modification')
 elif 'CalibratorSettingsData' in tables:
-	print 'Renaming CalibratorSettingsData...'
+	print('Renaming CalibratorSettingsData...')
 	cur = db.cursor()
 	cur.execute('ALTER TABLE `CalibratorSettingsData` RENAME `PixelSizeCalibratorSettingsData`')
-	print '   done.'
+	print('   done.')

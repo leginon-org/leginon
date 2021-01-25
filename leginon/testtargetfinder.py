@@ -15,8 +15,8 @@ import os.path
 import threading
 from leginon import leginondata
 from pyami import mrc
-import targetfinder
-import gui.wx.TestTargetFinder
+from . import targetfinder
+from . import gui.wx.TestTargetFinder
 
 class TestTargetFinder(targetfinder.TargetFinder):
 	'''

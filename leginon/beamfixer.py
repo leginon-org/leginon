@@ -6,10 +6,10 @@
 # $State: Exp $
 # $Locker:  $
 import math
-import presetadjuster
+from . import presetadjuster
 from leginon import leginondata
-import event
-import gui.wx.BeamFixer
+from . import event
+from . import gui.wx.BeamFixer
 from pyami import arraystats
 
 class BeamFixer(presetadjuster.PresetAdjuster):
@@ -45,7 +45,7 @@ class BeamFixer(presetadjuster.PresetAdjuster):
 			shiftx = scope2['beam shift']['x'] - scope['beam shift']['x']
 			shifty = scope2['beam shift']['y'] - scope['beam shift']['y']
 			beamshift = {'x': shiftx, 'y': shifty}
-		except Exception, e:
+		except Exception as e:
 			self.logger.warning(e)
 			beamshift = {'x':1e-07, 'y':1e-07}
 		beamshiftlength = math.sqrt(beamshift['x']**2 + beamshift['y']**2)

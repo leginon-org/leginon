@@ -6,9 +6,9 @@
 #	   see  http://leginon.org
 #
 import math
-import acquisition
-import leginondata
-import gui.wx.TiltAlternater
+from . import acquisition
+from . import leginondata
+from . import gui.wx.TiltAlternater
 
 class TiltAlternater(acquisition.Acquisition):
 	'''

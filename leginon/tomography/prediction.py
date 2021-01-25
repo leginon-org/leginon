@@ -369,7 +369,7 @@ class Prediction(object):
 		# The current tilt series may need an extra index to make up the number
 		while len(goodindices) < datalimit and len(goodindices) > 0 and len(list) >= datalimit:
 			nextindex = goodindices[-1]+1
-			if nextindex not in range(0,len(list)):
+			if nextindex not in list(range(0,len(list))):
 				break
 			goodindices.append(goodindices[-1]+1)
 		return goodindices
@@ -627,11 +627,11 @@ class Prediction2(Prediction):
 		tilt_group = self.getCurrentTiltGroup()
 		error = self.getPreviousError()
 		
-		print "cutoff: %f" % self.cutoff
-		print "Std_error:"		
-		print np.sqrt(sum(np.array(fit_values['std_error'])**2))
-		print "Previous error: %f" % error
-		print
+		print("cutoff: %f" % self.cutoff)
+		print("Std_error:")		
+		print(np.sqrt(sum(np.array(fit_values['std_error'])**2)))
+		print("Previous error: %f" % error)
+		print()
 		
 		if np.sqrt(sum(np.array(fit_values['std_error'])**2)) < self.cutoff and error < self.cutoff:
 			return True
@@ -643,7 +643,7 @@ class Prediction2(Prediction):
 			tilt_series = self.getCurrentTiltSeries()
 			tilt_group = self.getCurrentTiltGroup()
 			n_tilts = len(tilt_group.tilts)
-			sequence = range(1,n_tilts+1)
+			sequence = list(range(1,n_tilts+1))
 			xs = tilt_group.xs
 			ys = tilt_group.ys
 			
@@ -717,9 +717,9 @@ class Prediction2(Prediction):
 		except Exception as e:
 			import traceback
 			traceback.print_exc()
-			print "OIHEOIHEOIHE"
+			print("OIHEOIHEOIHE")
 			rpdb.set_trace()
-			print 	
+			print() 	
 		
 		return {'slope':(xslope,yslope), 'intercept':(xintercept,yintercept), 'std_error':(xstd,ystd)}
 	
@@ -814,5 +814,5 @@ if __name__ == "__main__":
 		predicted_position = pred.predict(0,sequence[i])
 		pred.addPosition(0, measured_positions[i], predicted_position) 	# Add measured and predicted position.
 
-		print pred.ispredict()
+		print(pred.ispredict())
 

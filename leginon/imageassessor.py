@@ -7,10 +7,10 @@
 #
 
 from leginon import leginondata
-import targetfinder
-import event
-import node
-import gui.wx.ImageAssessor
+from . import targetfinder
+from . import event
+from . import node
+from . import gui.wx.ImageAssessor
 import os
 from PIL import Image
 import numpy
@@ -191,7 +191,7 @@ class ImageAssessor(targetfinder.ClickTargetFinder):
 		outputfile = self.settings['outputfile']
 		outputfile = os.path.join(dir,outputfile)
 		f = open(outputfile, 'w')
-		for key,value in self.results.items():
+		for key,value in list(self.results.items()):
 			line = '%s\t%s\n' % (key,value)
 			f.write(line)
 		f.close()
@@ -231,7 +231,7 @@ class ImageAssessor(targetfinder.ClickTargetFinder):
 			atmp.shape = (im.size[1], im.size[0], 4)
 			a = atmp[:,:,3]
 		else:
-			raise ValueError, im.mode+" mode not considered"
+			raise ValueError(im.mode+" mode not considered")
 
 		if convertType == 'Float32':
 			a = a.astype(numpy.float32)

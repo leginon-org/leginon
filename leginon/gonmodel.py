@@ -44,7 +44,7 @@ class GonData:
 			floatdata = string.split(dataline)
 			if len(floatdata) != 5:
 				continue
-			floatdata = map(float, floatdata)
+			floatdata = list(map(float, floatdata))
 			floats.append(floatdata)
 
 		return floats
@@ -55,7 +55,7 @@ class GonData:
 		datafile.close()
 
 		headlines = lines[:2]
-		headlines = map(string.split,headlines)
+		headlines = list(map(string.split,headlines))
 		self.mag = float(headlines[0][0])
 		self.axis = headlines[1][0]
 

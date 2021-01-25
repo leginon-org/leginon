@@ -141,7 +141,7 @@ class ScaleRotationListCtrl(wx.ListCtrl, ListCtrlAutoWidthMixin):
 
 	def getBestSize(self):
 		count = self.GetColumnCount()
-		width = sum(map(lambda i: self.GetColumnWidth(i), range(count)))
+		width = sum([self.GetColumnWidth(i) for i in range(count)])
 		height = self.GetSize().height * 3 
 		return width, height
 
@@ -214,7 +214,7 @@ class ScaleRotationCalibrationDialog(wx.Dialog):
 
 		self.lcimage = ScaleRotationListCtrl(self, -1)
 		scale_rotations = self.node.getCalibrations()
-		gui_scale_rotations = map((lambda x: (x[0],float(x[1])*100.0,math.degrees(float(x[2])),x[3])),scale_rotations)
+		gui_scale_rotations = list(map((lambda x: (x[0],float(x[1])*100.0,math.degrees(float(x[2])),x[3])),scale_rotations))
 		self.setLocalScaleRotations(gui_scale_rotations)
 		for info in self.scale_rotations:
 			mag, percent_scale_addition, angle, comment = info

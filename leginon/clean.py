@@ -14,11 +14,11 @@ files = os.listdir(os.curdir)
 
 for file in files:
 	if file[:5] == 'pipe.':
-		print 'removing %s' % file
+		print('removing %s' % file)
 		os.remove(file)
 	if file[:6] == 'shelf.':
-		print 'removing %s' % file
+		print('removing %s' % file)
 		os.remove(file)
 	if file[-4:] == '.pyc':
-		print 'removing %s' % file
+		print('removing %s' % file)
 		os.remove(file)

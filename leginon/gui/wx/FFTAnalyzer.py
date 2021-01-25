@@ -31,7 +31,7 @@ class Panel(leginon.gui.wx.FFTMaker.Panel):
 		# image
 		self.imagepanel = self.imagepanelclass(self, -1,imagesize=(320,320))
 		self.imagepanel.scale = (1/2.0,1/2.0)
-		print dir(self.imagepanel.toolsizer)
+		print(dir(self.imagepanel.toolsizer))
 		self.imagepanel.scaleImage()
 		self.imagepanel.addTypeTool('Power', display=True)
 		self.imagepanel.selectiontool.setDisplayed('Power', True)

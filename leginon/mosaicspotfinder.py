@@ -9,9 +9,9 @@
 from leginon import leginondata
 from leginon import rasterindexer
 from pyami import ordereddict
-import event
-import mosaictargetfinder
-import gui.wx.MosaicSpotFinder
+from . import event
+from . import mosaictargetfinder
+from . import gui.wx.MosaicSpotFinder
 import math
 import time
 try:
@@ -63,7 +63,7 @@ class MosaicSpotFinder(mosaictargetfinder.MosaicClickTargetFinder):
 		# reset emgriddata after new mosaic image is created
 		self.emgriddata = None
 		if self.imagemap:
-			imids = self.imagemap.keys()
+			imids = list(self.imagemap.keys())
 		if imids:
 			griddata = self.imagemap[imids[0]]['grid']
 			if griddata:
@@ -135,11 +135,11 @@ class MosaicSpotFinder(mosaictargetfinder.MosaicClickTargetFinder):
 		Make cell position and value pairs for wx.grid
 		'''
 		rasterspots = {}
-		keylist = self.spottargets.keys()
+		keylist = list(self.spottargets.keys())
 		for spot_number in keylist:
 			spotposition = self.spottargets[spot_number]['map']['spot position']
 			raster_rc = (spotposition['row']-1,spotposition['col']-1)
-			if raster_rc not in rasterspots.keys():
+			if raster_rc not in list(rasterspots.keys()):
 				rasterspots[raster_rc] = '%d' % (spot_number)
 			else:
 				rasterspots[raster_rc] += ',%d' % (spot_number)
@@ -162,7 +162,7 @@ class MosaicSpotFinder(mosaictargetfinder.MosaicClickTargetFinder):
 				continue
 			# key for spottargets are spot numbers (start from 1)
 			spot_number = int(bit)
-			if spot_number not in newspottargets.keys():
+			if spot_number not in list(newspottargets.keys()):
 				newspottargets[spot_number] = {
 							'map':spotmapdata,'coord':self.spottargets[spot_number]['coord']}
 		self.spottargets = newspottargets.copy()
@@ -193,7 +193,7 @@ class MosaicSpotFinder(mosaictargetfinder.MosaicClickTargetFinder):
 								'same spot %d is mapped to more than one well' % spot_number)
 					return False
 				else:
-					if spot_number not in self.spottargets.keys():
+					if spot_number not in list(self.spottargets.keys()):
 						self.logger.error(
 									'%d not in range of existing targets' % spot_number)
 						return False

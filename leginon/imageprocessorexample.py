@@ -1,4 +1,4 @@
-import imageprocessor
+from . import imageprocessor
 import os
 
 class FileNames(imageprocessor.ImageProcessor):
@@ -13,4 +13,4 @@ class FileNames(imageprocessor.ImageProcessor):
 			mrc_files.append(fullname)
 
 		for mrc_file in mrc_files:
-			print mrc_file
+			print(mrc_file)

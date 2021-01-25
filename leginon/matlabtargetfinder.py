@@ -16,9 +16,9 @@ import threading
 import numpy
 from leginon import leginondata
 from pyami import mrc
-import targetfinder
-import gui.wx.MatlabTargetFinder
-import calibrationclient
+from . import targetfinder
+from . import gui.wx.MatlabTargetFinder
+from . import calibrationclient
 
 try:
 	import mlabraw as pymat

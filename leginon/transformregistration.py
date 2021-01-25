@@ -12,9 +12,9 @@ from pyami import correlator, peakfinder, ordereddict
 import math
 import numpy
 import scipy.ndimage
-import libCVwrapper
-import align
-import tiltcorrector
+from . import libCVwrapper
+from . import align
+from . import tiltcorrector
 
 class Registration(object):
 	'''

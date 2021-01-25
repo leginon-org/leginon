@@ -280,7 +280,7 @@ class Window(wx.Window):
         copydc = wx.MemoryDC()
         copydc.SelectObject(self.buffer)
         copydc.SetDeviceOrigin(-self.offset.x, -self.offset.y)
-        for offset, region in regions.items():
+        for offset, region in list(regions.items()):
             regioniterator = wx.RegionIterator(region)
             while(regioniterator):
                 r = regioniterator.GetRect()

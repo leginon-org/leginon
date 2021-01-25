@@ -42,7 +42,7 @@ class RawTransfer(object):
 				from optparse_gui import OptionParser
 				use_gui = True
 			except:
-				raw_input('Need opparse_gui to enter options on Windows')
+				input('Need opparse_gui to enter options on Windows')
 				sys.exit()
 		else:
 			from optparse import OptionParser
@@ -68,7 +68,7 @@ class RawTransfer(object):
 		# parsing options
 		(options, optargs) = parser.parse_args(sys.argv[1:])
 		if len(optargs) > 0:
-			print "Unknown commandline options: "+str(optargs)
+			print("Unknown commandline options: "+str(optargs))
 		if not use_gui and len(sys.argv) < 2:
 			parser.print_help()
 			sys.exit()
@@ -136,14 +136,14 @@ class RawTransfer(object):
 		t0 = time.time()
 		is_recent =  t0 - ctime <= self.params['cleanup_delay_minutes']*60
 		if not is_recent:
-			print 'File was created %d minutes ago. Should be in database by now if ever.' % (int((t0-ctime)/60),)
+			print('File was created %d minutes ago. Should be in database by now if ever.' % (int((t0-ctime)/60),))
 		return is_recent
 
 	def removeEmptyFolders(self,path):
 		if not os.path.isdir(path):
 			return
 
-		print 'found', path
+		print('found', path)
 		# remove empty subfolders
 		files = os.listdir(path)
 		if len(files):
@@ -155,7 +155,7 @@ class RawTransfer(object):
 		# if folder empty, delete it
 		files = os.listdir(path)
 		if len(files) == 0:
-			print "Removing empty folder:", path
+			print("Removing empty folder:", path)
 			######filedir operation########
 			os.rmdir(path)
 
@@ -164,24 +164,24 @@ class RawTransfer(object):
 			# remove empty .frames dir from source
 			# does not work on Windows
 			abspath = os.path.abspath(src)
-			print 'clean up %s from linux' % (abspath)
+			print('clean up %s from linux' % (abspath))
 			dirpath,basename = os.path.split(abspath)
 			if os.path.isdir(src):
 				cmd = 'find %s -type d -empty -prune -exec rmdir --ignore-fail-on-non-empty -p \{\} \;' % (basename,)
-				print 'cd', dirpath
+				print('cd', dirpath)
 				os.chdir(dirpath)
-				print cmd
+				print(cmd)
 				p = subprocess.Popen(cmd, shell=True, cwd=dirpath)
 				p.wait()
 			if os.path.isfile(src):
 				cmd = 'rm -f %s' % abspath
-				print cmd
+				print(cmd)
 				p = subprocess.Popen(cmd, shell=True, cwd=dirpath)
 				p.wait()
 
 		else:
 			if os.path.isfile(src):
-				print 'os.remove(%s)' % src
+				print('os.remove(%s)' % src)
 				os.remove(src)
 			else:
 				self.removeEmptyFolders(os.path.abspath(src))
@@ -192,7 +192,7 @@ class RawTransfer(object):
 		after copying.
 		'''
 		cmd = 'rsync -av --remove-sent-files %s %s' % (src, dst)
-		print cmd
+		print(cmd)
 		p = subprocess.Popen(cmd, shell=True)
 		p.wait()
 
@@ -201,11 +201,11 @@ class RawTransfer(object):
 		Use shutil's move to rename frames
 		'''
 		######filedir operation########
-		print 'moving %s -> %s' % (src, dst)
+		print('moving %s -> %s' % (src, dst))
 		shutil.move(src, dst)
 
 	def makeDir(self,dirname):
-		print('mkdirs %s'%dirname)
+		print(('mkdirs %s'%dirname))
 		if not os.path.exists(dirname):
 			if not self.is_win32:
 				# this function preserves umask of the parent directory
@@ -214,7 +214,7 @@ class RawTransfer(object):
 				# use os.makedirs on 'win32' but it does not preserve umask
 				os.makedirs(dirname)
 		elif os.path.isfile(dirname):
-			print("Error %s is a file"%dirname)
+			print(("Error %s is a file"%dirname))
 
 	def _transfer(self,src,dst,method):
 		if method == 'rsync' and not self.is_win32:
@@ -229,7 +229,7 @@ class RawTransfer(object):
 		# change ownership of desintation directory and contents
 		if not self.is_win32:
 			cmd = 'chown -R %s:%s %s' % (uid, gid, dirname)
-			print cmd
+			print(cmd)
 			p = subprocess.Popen(cmd, shell=True)
 			p.wait()
 
@@ -237,7 +237,7 @@ class RawTransfer(object):
 		if not self.is_win32:
 			# only works on linux
 			cmd = 'chmod -R %s %s' % (mode_str, path)
-			print cmd
+			print(cmd)
 			p = subprocess.Popen(cmd, shell=True)
 			p.wait()
 
@@ -292,15 +292,15 @@ class RawTransfer(object):
 			# skip expired dirs, mrcs
 			if name in expired_names:
 				continue
-			print '**checking', src_path
+			print('**checking', src_path)
 			# check access instead of wait for files to write. Speeds up interval
 			try:
 				if not os.access(src_path, os.R_OK):
-					print 'not ready. Deferring to next iteration'
+					print('not ready. Deferring to next iteration')
 					continue
 			except Exception as e:
 					# There maybe other reason for it to fail.
-					print 'error checking access: %s' % e
+					print('error checking access: %s' % e)
 					continue
 			## skip empty directories
 			if os.path.isdir(src_path) and not os.listdir(src_path):
@@ -336,7 +336,7 @@ class RawTransfer(object):
 					src_path = src_path + os.sep
 			imdata = self.query_image_by_frames_name(frames_name,cam_host)
 			if imdata is None:
-				print '%s not from a saved image' % (frames_name)
+				print('%s not from a saved image' % (frames_name))
 				# TODO sometimes this query happens before the imagedata is queriable.
 				# Need to have a delay before remove.
 				if not self.isRecentCreation(src_path):
@@ -346,11 +346,11 @@ class RawTransfer(object):
 			frames_path = self.getSessionFramePath(imdata)
 			# only process destination frames_path starting with chosen head
 			if sys.platform != 'win32' and not frames_path.startswith(dest_head):
-				print "frames_path = %s"%frames_path
-				print '    Destination frame path does not starts with %s. Skipped' % (dest_head)
+				print("frames_path = %s"%frames_path)
+				print('    Destination frame path does not starts with %s. Skipped' % (dest_head))
 				continue
 
-			print '**running', src_path
+			print('**running', src_path)
 			if self.refcopy:
 				self.refcopy.setFrameDir(frames_path)
 
@@ -366,25 +366,25 @@ class RawTransfer(object):
 			imname = filename + dst_suffix
 			# full path of frames
 			dst_path = os.path.join(frames_path, imname)
-			print 'Destination path: %s' %  (dst_path)
+			print('Destination path: %s' %  (dst_path))
 
 			# copy reference if possible
 			if self.refcopy:
 				try:
 					self.refcopy.run(imdata, imname)
 				except:
-					print 'reference copying error. skip'
+					print('reference copying error. skip')
 			# skip  and clean up finished ones. Needed when the
 			# destination user lost write privilege temporarily.
 			if os.path.exists(dst_path):
 				if os.path.isfile(dst_path):
 					# check files to be identical.
 					if filecmp.cmp(src_path, dst_path):
-						print 'Destination path %s is good, cleaning up source' % dst_path
+						print('Destination path %s is good, cleaning up source' % dst_path)
 						os.remove(src_path)
 						return
 					else:
-						print 'Destination path %s not good, redo transfer' % dst_path
+						print('Destination path %s not good, redo transfer' % dst_path)
 						self.cleanUp(dst_path,method)
 				#TODO: directory ?
 			# do actual copy and delete
@@ -400,14 +400,14 @@ class RawTransfer(object):
 	def run(self):
 		self.params = self.parseParams()
 		src_path = self.get_source_path()
-		print 'Source path:  %s' % (src_path,)
+		print('Source path:  %s' % (src_path,))
 		dst_head = self.get_dst_head()
 		if dst_head:
-			print "Limit processing to destination frame path started with %s" % (dst_head)
+			print("Limit processing to destination frame path started with %s" % (dst_head))
 		while True:
-			print 'Iterating...'
+			print('Iterating...')
 			self.run_once(src_path,self.params['camera_host'],dst_head,method=self.params['method'], mode_str=self.params['mode_str'])
-			print 'Sleeping...'
+			print('Sleeping...')
 			time.sleep(check_interval)
 
 
@@ -470,14 +470,14 @@ class ReferenceCopier(object):
 				reffilepath = os.path.join(self.refdir,reffilename+'.mrc')
 				refdata_reffilepath = os.path.join(refdata['session']['image path'],refdata['filename']+'.mrc')
 				if not os.access(refdata_reffilepath, os.R_OK):
-					print('Error: %s reference for image %s not readable....' % (reftype,imagedata['filename']))
-					print('%s not readable' % (refdata_reffilepath+'.mrc'))
+					print(('Error: %s reference for image %s not readable....' % (reftype,imagedata['filename'])))
+					print(('%s not readable' % (refdata_reffilepath+'.mrc')))
 					self.writeUniqueLineToFile(self.badreflistpath, refdata_reffilepath,refdata_reffilepath)
 					if geometry_modified or scale_modified:
 						# record modified reference any way
 						reffilename = reffilename+'_mod'
 				elif not os.path.isfile(reffilepath):
-					print('Copying %s reference for image %s ....' % (reftype, imagedata['filename']))
+					print(('Copying %s reference for image %s ....' % (reftype, imagedata['filename'])))
 					refimage = refdata['image']
 					# write the original in its original name
 					pyami.mrc.write(refimage,reffilepath)
@@ -486,7 +486,7 @@ class ReferenceCopier(object):
 					if reftype == 'dark' and not (refimage.max() == refimage.min() and refimage.mean() == 0):
 						darkscale = refdata['camera']['nframes']
 						if darkscale != 1 and darkscale != 0:
-							print('  scaling dark image by %d' % (darkscale,))
+							print(('  scaling dark image by %d' % (darkscale,)))
 							refimage /= darkscale
 					if geometry_modified or scale_modified:
 						# record modified reference and save
@@ -494,7 +494,7 @@ class ReferenceCopier(object):
 						reffilepath = os.path.join(self.refdir,reffilename+'.mrc')
 						pyami.mrc.write(refimage,reffilepath)
 				else:
-					print('%s reference for image %s already copied, skipping....' % (reftype,imagedata['filename']))
+					print(('%s reference for image %s already copied, skipping....' % (reftype,imagedata['filename'])))
 					if geometry_modified or scale_modified:
 						# record modified reference any way
 						reffilename = reffilename+'_mod'
@@ -523,7 +523,7 @@ class ReferenceCopier(object):
 		# check if the match_string is already there
 		fileobj = open(filepath,'r')
 		if match_string in fileobj.read():
-			print('%s recorded already' % (match_string))
+			print(('%s recorded already' % (match_string)))
 			fileobj.close()
 			return
 		else:
@@ -537,7 +537,7 @@ class ReferenceCopier(object):
 
 	def writePlanFile(self, planfilepath, bad_cols, bad_rows, bad_pixels):
 		if not os.path.isfile(planfilepath):
-			print('Writing the correction plan %s....' % planfilepath)
+			print(('Writing the correction plan %s....' % planfilepath))
 			planfile = open(planfilepath,'w')
 			plantxt = '%s\n%s\n%s\n' % (bad_cols,bad_rows,bad_pixels)
 			planfile.write(plantxt)
@@ -582,28 +582,28 @@ class ReferenceCopier(object):
 			if frame_rotate and frame_rotate == 2:
 				# Faster to just flip left-right than up-down flip + rotate
 				print("  flipping the plan left-right")
-				bad_cols = map((lambda x: shape[1]-1-x),bad_cols)
+				bad_cols = list(map((lambda x: shape[1]-1-x),bad_cols))
 				frame_rotate = 0
 				a = numpy.fliplr(a)
 			else:
 				print("  flipping the plan up-down")
-				bad_rows = map((lambda x: shape[0]-1-x),bad_rows)
+				bad_rows = list(map((lambda x: shape[0]-1-x),bad_rows))
 				a = numpy.flipud(a)
 		if frame_rotate:
 			# We are rotating the plans here.  Therefore, do it in the other way.
 			frame_rotate = 4 - frame_rotate
-			print("  rotating the plan by %d degrees" % (frame_rotate*90,))
+			print(("  rotating the plan by %d degrees" % (frame_rotate*90,)))
 			a = numpy.rot90(a,frame_rotate)
 			for rotate in range(frame_rotate):
 				original_bad_rows = bad_rows
-				new_bad_rows = map((lambda x:shape[0]-x),bad_cols)
+				new_bad_rows = list(map((lambda x:shape[0]-x),bad_cols))
 				new_bad_cols = original_bad_rows
 				bad_rows = tuple(new_bad_rows)	
 				bad_cols = tuple(new_bad_cols)
 		# convert bad pixel arrays to list of coords
-		bad_coord_list = map((lambda x:x.tolist()),numpy.where(a))
+		bad_coord_list = list(map((lambda x:x.tolist()),numpy.where(a)))
 		# bad pixels are written in (x,y)
-		bad_pixels = zip(bad_coord_list[1],bad_coord_list[0])	
+		bad_pixels = list(zip(bad_coord_list[1],bad_coord_list[0]))	
 		return bad_cols, bad_rows, bad_pixels
 
 	def modifyRefImage(self,a):
@@ -621,7 +621,7 @@ class ReferenceCopier(object):
 		if frame_rotate:
 			# We are rotating the references here.  Therefore, do it in the other way.
 			frame_rotate = 4 - frame_rotate
-			print("  rotating the image by %d degrees" % (frame_rotate*90,))
+			print(("  rotating the image by %d degrees" % (frame_rotate*90,)))
 			a = numpy.rot90(a,frame_rotate)
 		return a
 
@@ -631,7 +631,7 @@ def testRefCopy():
 	app.setFrameDir('/home/acheng/tests/test_copyref/')
 	app.run(imagedata,imagedata['filename']+'.frames.mrc')
 	app.setImage(imagedata)
-	print app.modifyCorrectorPlan(imagedata['image'].shape,[0,],[0,],[(1000,54),])
+	print(app.modifyCorrectorPlan(imagedata['image'].shape,[0,],[0,],[(1000,54),]))
 
 if __name__ == '__main__':
 		a = RawTransfer()

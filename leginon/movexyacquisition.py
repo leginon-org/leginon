@@ -7,9 +7,9 @@
 #
 import math
 import time
-import moveacquisition
-import leginondata
-import gui.wx.MoveXYAcquisition
+from . import moveacquisition
+from . import leginondata
+from . import gui.wx.MoveXYAcquisition
 import threading
 
 debug = False

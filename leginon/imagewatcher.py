@@ -9,8 +9,8 @@
 #
 
 from leginon import leginondata
-import event
-import watcher
+from . import event
+from . import watcher
 
 class ImageWatcher(watcher.Watcher):
 	eventinputs = watcher.Watcher.eventinputs + [event.ImagePublishEvent,

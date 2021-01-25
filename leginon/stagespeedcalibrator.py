@@ -22,13 +22,13 @@ from leginon import calibrationclient
 
 class Logger(object):
 	def info(self,msg):
-		print "INFO:", msg
+		print("INFO:", msg)
 
 	def warning(self,msg):
-		print "WARNING:", msg
+		print("WARNING:", msg)
 
 	def error(self,msg):
-		print "ERROR:", msg
+		print("ERROR:", msg)
 
 class fakeNode(object):
 	def __init__(self, parent):
@@ -43,7 +43,7 @@ class fakeNode(object):
 			admin_user = ur[0]
 		else:
 			# do not process without administrator.
-			print " Need administrator user to import"
+			print(" Need administrator user to import")
 			self.parent.close(True)
 		q = leginondata.SessionData(user=admin_user)
 		r = q.query(results=1)
@@ -62,8 +62,8 @@ class StageTiltSpeedCalibrator(object):
 	def __init__(self, params):
 		try:
 			self.validateInput(params)
-		except ValueError, e:
-			print "Error: %s" % e
+		except ValueError as e:
+			print("Error: %s" % e)
 			self.close(1)
 		self.calclient = calibrationclient.StageSpeedClient(fakeNode(self))
 
@@ -79,7 +79,7 @@ class StageTiltSpeedCalibrator(object):
 		q = leginondata.InstrumentData(hostname=hostname, name=temname)
 		results = q.query(results=1)
 		if not results:
-			print "ERROR: incorrect hostname/scope class name...."
+			print("ERROR: incorrect hostname/scope class name....")
 			r = leginondata.InstrumentData(name=temname).query(results=1)
 			if r:
 				raise ValueError("Try %s instead" % r[0]['hostname'])
@@ -94,25 +94,25 @@ class StageTiltSpeedCalibrator(object):
 		speed = float(speed)
 		target_angle = float(target_angle)
 		corrected_speed = self.calclient.getCorrectedTiltSpeed(self.tem, speed, target_angle)
-		print "testing the calibration...."
-		print "when moved by %.2f degrees tilt:" % target_angle
-		print "  corrected speed of %.3f degrees/s is %.3f" % (speed, corrected_speed)
+		print("testing the calibration....")
+		print("when moved by %.2f degrees tilt:" % target_angle)
+		print("  corrected speed of %.3f degrees/s is %.3f" % (speed, corrected_speed))
 
 	def run(self):
-		print self.tem.dbid
-		slope = float(raw_input('Slope of time deviation at given tilt speed for the same tilt range= '))
-		intercept = float(raw_input('Y-intercept of time deviation at given tilt speed for the same tilt range= '))
+		print(self.tem.dbid)
+		slope = float(input('Slope of time deviation at given tilt speed for the same tilt range= '))
+		intercept = float(input('Y-intercept of time deviation at given tilt speed for the same tilt range= '))
 		self.calclient.storeSpeedCalibration(self.tem, None, 'a', slope, intercept)
 		self.testCalibration(2.0,60)
 
 	def close(self, status=0):
 		if status:
-			print "Exit with Error"
+			print("Exit with Error")
 			sys.exit(1)
 
 if __name__=='__main__':
-	tem_host = raw_input('TEM hostname = ')
-	tem_name = raw_input('TEM name = ')
+	tem_host = input('TEM hostname = ')
+	tem_name = input('TEM name = ')
 	app = StageTiltSpeedCalibrator((tem_host, tem_name))
 	app.run()
 	app.close()

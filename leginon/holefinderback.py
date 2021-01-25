@@ -12,8 +12,8 @@ import numpy
 import pyami.quietscipy
 import scipy.ndimage
 from pyami import imagefun, peakfinder, convolver, correlator, mrc, arraystats
-import ice
-import lattice
+from . import ice
+from . import lattice
 
 class CircleMaskCreator(object):
 	def __init__(self):
@@ -25,7 +25,7 @@ class CircleMaskCreator(object):
 		'''
 		## use existing circle mask
 		key = (shape, center, minradius, maxradius)
-		if self.masks.has_key(key):
+		if key in self.masks:
 			return self.masks[key]
 
 		## set up shift and wrapping of circle on image

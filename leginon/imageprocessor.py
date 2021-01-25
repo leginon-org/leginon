@@ -7,10 +7,10 @@
 #
 
 from leginon import leginondata
-import event
+from . import event
 import threading
-import node
-import gui.wx.ImageProcessor
+from . import node
+from . import gui.wx.ImageProcessor
 
 class ImageProcessor(node.Node):
 	eventinputs = node.Node.eventinputs + [event.TargetListDoneEvent]

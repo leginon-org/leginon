@@ -23,14 +23,14 @@ class SetScaleEvent(wx.PyCommandEvent):
 		self.max = max
 
 def getGrayscaleColorMap():
-	rgb = range(256)
-	return zip(rgb, rgb, rgb)
+	rgb = list(range(256))
+	return list(zip(rgb, rgb, rgb))
 
 def getRGBColorMap():
-	b = [0] * 512 + range(256) + [255] * 512 + range(255, -1, -1)
+	b = [0] * 512 + list(range(256)) + [255] * 512 + list(range(255, -1, -1))
 	g = b[512:] + b[:512]
 	r = g[512:] + g[:512]
-	colors = zip(r, g, b)
+	colors = list(zip(r, g, b))
 	return colors[:-256]
 
 colormaps = {}
@@ -236,7 +236,7 @@ class ScaleMixIn(object):
 		self.setValues(**kwargs)
 
 	def setTextCtrls(self, **kwargs):
-		for key, textctrl in self.textctrls.items():
+		for key, textctrl in list(self.textctrls.items()):
 			try:
 				value = kwargs[key]
 				if value is None:
@@ -248,7 +248,7 @@ class ScaleMixIn(object):
 				pass
 
 	def setSliders(self, **kwargs):
-		for key, slider in self.sliders.items():
+		for key, slider in list(self.sliders.items()):
 			try:
 				value = kwargs[key]
 				if value is None:
@@ -290,7 +290,7 @@ class ScalePopupWindow(wx.PopupTransientWindow, ScaleMixIn):
 		ScaleMixIn.__init__(self)
 
 	def OnDismiss(self):
-		print 'asdf'
+		print('asdf')
 
 if __name__ == '__main__':
 	import sys

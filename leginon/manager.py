@@ -8,16 +8,16 @@
 #	   see  http://leginon.org
 #
 
-import application
-import applications
+from . import application
+from . import applications
 from leginon import leginondata
-import databinder
-import datatransport
-import event
-import importexport
-import leginonconfig
-import launcher
-import node
+from . import databinder
+from . import datatransport
+from . import event
+from . import importexport
+from . import leginonconfig
+from . import launcher
+from . import node
 import threading
 import logging
 import copy
@@ -26,18 +26,18 @@ from pyami import ordereddict
 from pyami import mysocket
 import socket
 from wx import PyDeadObjectError
-import gui.wx.Manager
-import noderegistry
-import remotecall
+from . import gui.wx.Manager
+from . import noderegistry
+from . import remotecall
 import time
 import sys
-import remoteserver
+from . import remoteserver
 
 class DataBinder(databinder.DataBinder):
 	def handleData(self, newdata):
 		dataclass = newdata.__class__
 		args = newdata
-		for bindclass in self.bindings.keys():
+		for bindclass in list(self.bindings.keys()):
 			if issubclass(dataclass, bindclass):
 				try:
 					methods = self.bindings[bindclass]
@@ -177,7 +177,7 @@ class Manager(node.Node):
 			port = self.getPrimaryPort(client)
 			try:
 				self.addLauncher(client, port)
-			except Exception, e:
+			except Exception as e:
 				self.logger.warning('Failed to add launcher: %s' % e)
 
 		if prevapp:
@@ -358,7 +358,7 @@ class Manager(node.Node):
 		eventclass = ievent.__class__
 		from_node = ievent['node']
 		if not do:
-			for distclass,fromnodes in self.distmap.items():
+			for distclass,fromnodes in list(self.distmap.items()):
 				if issubclass(eventclass, distclass):
 					for fromnode in (from_node, None):
 						if fromnode in fromnodes:
@@ -408,7 +408,7 @@ class Manager(node.Node):
 					self.removeNode(to_node)
 					raise
 				self.logEvent(ievent, 'distributed to %s' % (to_node,))
-			except Exception, e:
+			except Exception as e:
 				self.logger.exception('Error distributing events: %s' % e)
 				# make sure we don't wait for confirmation
 				if eventid is not None:
@@ -420,7 +420,7 @@ class Manager(node.Node):
 		### come through this handler
 		if do and eventid is not None:
 			## need confirmation from all nodes
-			for e in ewaits[eventid].values():
+			for e in list(ewaits[eventid].values()):
 				e.wait()
 			del ewaits[eventid]
 			## now confirm back to original event sender
@@ -446,7 +446,7 @@ class Manager(node.Node):
 		return len(self.launcherdict)
 
 	def getLauncherNames(self, sorted=True):
-		names = self.launcherdict.keys()
+		names = list(self.launcherdict.keys())
 		if sorted:
 			names.sort()
 		return names
@@ -510,7 +510,7 @@ class Manager(node.Node):
 		return {'inputs': nodeclass.eventinputs, 'outputs': nodeclass.eventoutputs}
 
 	def getNodeNames(self, sorted=True):
-		names = self.nodelocations.keys()
+		names = list(self.nodelocations.keys())
 		if sorted:
 			names.sort()
 		return names
@@ -782,7 +782,7 @@ class Manager(node.Node):
 			if hasattr(self.timer,'is_alive') and self.timer.is_alive():
 				self.timer.cancel()
 				if self.timer_debug:
-					print 'timer canceled'
+					print('timer canceled')
 
 	def slackTimeoutNotification(self):
 		timeout = self.timeout_minutes*60.0
@@ -828,7 +828,7 @@ class Manager(node.Node):
 		self.timer = threading.Timer(timeout,self.slackTimeoutNotification)
 		self.timer.start()
 		if self.timer_debug:
-			print 'timer started with timout set to %.0f sec' % timeout
+			print('timer started with timout set to %.0f sec' % timeout)
 
 	def _addPausableNode(self, nodename):
 		if nodename not in self.pausable_nodes:
@@ -882,12 +882,12 @@ class Manager(node.Node):
 			channel = slack_inst.getDefaultChannel()
 			slack_inst.sendMessage(channel,'%s ' % (msg))
 		except:
-			print msg
+			print(msg)
 
 	# application methods
 
 	def getBuiltinApplications(self):
-		apps = [appdict['application'] for appdict in applications.builtin.values()]
+		apps = [appdict['application'] for appdict in list(applications.builtin.values())]
 		return apps
 
 	def getApplicationNames(self,show_hidden=False):
@@ -931,7 +931,7 @@ class Manager(node.Node):
 				if appname not in apps:
 					app = application.Application(self, name=appname)
 					apps[appname] = app
-		appnames = apps.keys()
+		appnames = list(apps.keys())
 		appnames.sort()
 		orderedapps = ordereddict.OrderedDict()
 		for appname in appnames:
@@ -1027,7 +1027,7 @@ class Manager(node.Node):
 		initializer = {}
 		initializer['session'] = self.session
 		initializer['application'] = app.applicationdata
-		initializer['launchers'] = app.launchernames.items()
+		initializer['launchers'] = list(app.launchernames.items())
 		self.appnodes = app.getNodeNames()
 		app.launch()
 		self.applicationevent.wait()
@@ -1045,7 +1045,7 @@ class Manager(node.Node):
 
 	def loadApp(self, name):
 		'''Calls application.Application.load.'''
-		launchers = self.launcherdict.keys()
+		launchers = list(self.launcherdict.keys())
 		if launchers:
 			launchers.sort()
 		else:
@@ -1057,12 +1057,12 @@ class Manager(node.Node):
 		'''Calls application.Application.launch.'''
 		if not self.have_selectors:
 			return
-		for alias in self.uilauncherselectors.values():
+		for alias in list(self.uilauncherselectors.values()):
 			aliasvalue = alias.getSelectedValue()
 			self.application.setLauncherAlias(alias.name, aliasvalue)
 		try:
 			nodenames = self.application.launch()
-		except RuntimeError,e:
+		except RuntimeError as e:
 			self.logger.error('Application launch failed: %s' % e)
 			return
 		self.waitNodes(nodenames)
@@ -1085,7 +1085,7 @@ class Manager(node.Node):
 			f = open(filename,'w')
 			f.write(dump)
 			f.close()
-		except IOError, e:
+		except IOError as e:
 			self.logger.exception('Unable to export application to "%s"' % filename)
 
 	def importApplication(self, filename):
@@ -1121,7 +1121,7 @@ class Manager(node.Node):
 			for node in sortclasses['Pipeline']:
 				froms[node] = []
 				tos[node] = []
-			for eventclass, fromnode in self.distmap.items():
+			for eventclass, fromnode in list(self.distmap.items()):
 				for node in sortclasses['Pipeline']:
 					if issubclass(eventclass,
 								(event.ImageTargetListPublishEvent, event.ImagePublishEvent, event.MakeTargetListEvent)):
@@ -1131,7 +1131,7 @@ class Manager(node.Node):
 									froms[node].append(tonode)
 									tos[tonode].append(fromnode)
 			starters = []
-			for key, value in tos.items():
+			for key, value in list(tos.items()):
 				if not value:
 					starters.append(key)
 
@@ -1154,7 +1154,7 @@ class Manager(node.Node):
 			except KeyError:
 				pass
 
-		for nodes in sortclasses.values():
+		for nodes in list(sortclasses.values()):
 			nodeorder += nodes
 
 		return nodeorder

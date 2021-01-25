@@ -12,14 +12,14 @@
 # $Locker:  $
 
 # leginon
-import node
-import event
+from . import node
+from . import event
 from leginon import leginondata
-import calibrationclient
-import gui.wx.Navigator
-import instrument
-import presets
-import cameraclient
+from . import calibrationclient
+from . import gui.wx.Navigator
+from . import instrument
+from . import presets
+from . import cameraclient
 
 # myami
 from pyami import correlator, peakfinder, imagefun, ordereddict
@@ -40,7 +40,7 @@ import numpy
 import scipy.ndimage
 
 # used to create debug filenames
-idcounter = itertools.cycle(range(100))
+idcounter = itertools.cycle(list(range(100)))
 
 class NavigatorClient(object):
 	eventoutputs = [event.MoveToTargetEvent]
@@ -229,13 +229,13 @@ class Navigator(node.Node):
 		calclient = self.calclients[movetype]
 		try:
 			newstate = calclient.transform(pixelshift, scope, camera)
-		except calibrationclient.NoMatrixCalibrationError, e:
+		except calibrationclient.NoMatrixCalibrationError as e:
 			errsubstr = 'unable to find calibration for %s' % e
 			self.logger.error(errstr % errsubstr)
 			self.beep()
 			self.panel.navigateDone()
 			return True
-		except Exception, e:
+		except Exception as e:
 			self.logger.exception(errstr % e)
 			self.beep()
 			self.panel.navigateDone()
@@ -426,7 +426,7 @@ class Navigator(node.Node):
 			subpixelpeak = self.peakfinder.subpixelPeak(newimage=pc, guess=(0.5,0.5), limit=limit)
 			res = self.peakfinder.getResults()
 			unsignedpixelpeak = res['unsigned pixel peak']
-		except Exception, e:
+		except Exception as e:
 			self.logger.warning(e)
 			self.logger.warning('Error in finding shift, assume no move error')
 			unsignedpixelpeak = (0,0)
@@ -470,7 +470,7 @@ class Navigator(node.Node):
 			orig_id = 0
 		sessionname = self.session['name']
 		timestamp = time.strftime('%d%H%M%S', time.localtime())
-		nextid = idcounter.next()
+		nextid = next(idcounter)
 		f = '%08d_%s_%02d.mrc' % (orig_id, timestamp, nextid)
 		return f
 
@@ -506,14 +506,14 @@ class Navigator(node.Node):
 			try:
 				self.instrument.setTEM(instruments['tem'])
 				self.instrument.setCCDCamera(instruments['ccdcamera'])
-			except ValueError, e:
+			except ValueError as e:
 				self.logger.error('Cannot set instruments: %s' % (e,))
 				return
-			except instrument.NotAvailableError, e:
+			except instrument.NotAvailableError as e:
 				self.logger.error('%s' % (e,))
 			try:
 				self.instrument.ccdcamera.Settings = self.settings['camera settings']
-			except Exception, e:
+			except Exception as e:
 				errstr = 'Acquire image failed: %s'
 				self.logger.error(errstr % e)
 				return
@@ -621,7 +621,7 @@ class Navigator(node.Node):
 		if type(loc) is int:
 			locremove = self.stagelocations[loc]
 			del self.stagelocations[loc]
-		elif type(loc) in types.StringTypes:
+		elif type(loc) in (str,):
 			loccopy = list(self.stagelocations)
 			for location in loccopy:
 				if location['name'] == loc:
@@ -649,7 +649,7 @@ class Navigator(node.Node):
 		return None
 
 	def getLocationNames(self):
-		return map(lambda l: l['name'], self.stagelocations)
+		return [l['name'] for l in self.stagelocations]
 
 	def getLocationsFromDB(self):
 		'''
@@ -687,7 +687,7 @@ class Navigator(node.Node):
 		locdata = None
 		if type(loc) is int:
 			locdata = self.stagelocations[p]
-		elif type(loc) in (str, unicode):
+		elif type(loc) in (str, str):
 			for location in self.stagelocations:
 				if loc == location['name']:
 					locdata = location
@@ -718,7 +718,7 @@ class Navigator(node.Node):
 		try:
 			self.instrument.tem.StagePosition = stagedict
 		except KeyError:
-			self.logger.exception('instrument key %s not available' % (stagedict.keys(),))
+			self.logger.exception('instrument key %s not available' % (list(stagedict.keys()),))
 		except:
 			self.logger.exception('unable to set instrument')
 		else:

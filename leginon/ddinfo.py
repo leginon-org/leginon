@@ -12,13 +12,13 @@ def parseInfoTxt(infopath):
 	params = {}
 	for line in infile:
 		bits = line.split('=', 1)  # split on first =
-		bits = map(str.strip, bits)  # strip off white space
+		bits = list(map(str.strip, bits))  # strip off white space
 		params[bits[0]]=bits[1]
 	return params
 
 def commitToDatabase(imagedata,params):
 	cameradata = imagedata['camera']
-	for key in params.keys():
+	for key in list(params.keys()):
 		qkey = leginondata.DDinfoKeyData(name=key)
 		qvalue = leginondata.DDinfoValueData(camera=cameradata, infokey=qkey,infovalue=params[key])
 		qvalue.insert()
@@ -43,7 +43,7 @@ def saveAllPreviousToDatabase():
 			# check for existing ddinfo in db
 			info = leginondata.DDinfoValueData(camera=camdata).query()
 			if not info:
-				print 'saving:', infoname
+				print('saving:', infoname)
 				saveImageDDinfoToDatabase(imagedata, infoname)
 
 def getUseBufferFromImage(imagedata):
@@ -210,7 +210,7 @@ def printDriftStats(filenamepattern, apix):
 	a = numpy.array(allshifts)
 	for d in range(a.shape[1]):
 		suba = a[:,d]
-		print "frame_%d %6.4f %6.4f" % (d,suba.mean()*apix*fps,suba.std()*apix*fps)
+		print("frame_%d %6.4f %6.4f" % (d,suba.mean()*apix*fps,suba.std()*apix*fps))
 
 if __name__ == '__main__':
 	infopath = sys.argv[1]

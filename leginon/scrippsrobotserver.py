@@ -1,10 +1,10 @@
 #!/usr/bin/env python
-import robotserver
+from . import robotserver
 try:
 	import pythoncom
 	import win32com.client
 except:
-	print 'no pythoncom or win32com.  robot will be simulated'
+	print('no pythoncom or win32com.  robot will be simulated')
 	pythoncom = None
 
 robotattrs = ['Signal' + str(i) for i in range(0,13)]
@@ -33,9 +33,9 @@ class ScrippsRobotServer(robotserver.RobotServer):
 	def checkRobot(self):
 		changed = []
 		newstatus = self.getStatus()
-		for attr,newvalue in newstatus.items():
+		for attr,newvalue in list(newstatus.items()):
 			if newvalue != self.status[attr]:
-				print '%s changed:  %s  ->  %s' % (attr, self.status[attr], newvalue)
+				print('%s changed:  %s  ->  %s' % (attr, self.status[attr], newvalue))
 				changed.append((attr,newvalue))
 		self.status = newstatus
 		return changed
@@ -45,12 +45,12 @@ for attr in robotattrs:
 	# not the value of attr later
 	# maybe try using new.instancemethod here
 	def newmethod(self, value, localattr=attr):
-		print 'handling %s set to %s' % (localattr, value)
+		print('handling %s set to %s' % (localattr, value))
 		setattr(self.communication, localattr, value)
 	methodname = 'handle_' + attr
 	setattr(ScrippsRobotServer, methodname, newmethod)
 
 if __name__ == '__main__':
 	s = ScrippsRobotServer()
-	print 'entering main loop'
+	print('entering main loop')
 	s.mainloop()

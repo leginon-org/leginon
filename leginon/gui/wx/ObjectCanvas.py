@@ -1016,9 +1016,9 @@ class wxConnectionObject(wxShapeObject):
 			ty = (y2 - y1)/2 + y1
 			angle = -90
 			self.DrawArrow(dc, (x2, y2), 'w')
-		apply(dc.DrawLine, l1)
-		apply(dc.DrawLine, l2)
-		apply(dc.DrawLine, l3)
+		dc.DrawLine(*l1)
+		dc.DrawLine(*l2)
+		dc.DrawLine(*l3)
 		return x1, y1, x2, y2
 
 	def _crookedLine(self, dc, so1, x2, y2):
@@ -1065,9 +1065,9 @@ class wxConnectionObject(wxShapeObject):
 			ty = (y2 - y1)/2 + y1
 			angle = -90
 			self.DrawArrow(dc, (x2, y2), 'w')
-		apply(dc.DrawLine, l1)
-		apply(dc.DrawLine, l2)
-		apply(dc.DrawLine, l3)
+		dc.DrawLine(*l1)
+		dc.DrawLine(*l2)
+		dc.DrawLine(*l3)
 		return x1, y1
 
 	def Draw(self, dc):
@@ -1139,7 +1139,7 @@ class wxRectangleObject(wxShapeObject):
 		# need to account for running out of room
 		nconnectionpoints = len(self.inputconnectionpoints)
 		#spacings = range(0, self.width, self.width/(nconnectionpoints + 1))
-		spacings = range(0, self.height, self.height/(nconnectionpoints + 1))
+		spacings = list(range(0, self.height, self.height/(nconnectionpoints + 1)))
 		for i in range(nconnectionpoints):
 			ci = self.inputconnectionpoints[i]
 			#self.setChildPosition(ci, spacings[i + 1] - ci.width/2, -ci.height/2)
@@ -1149,7 +1149,7 @@ class wxRectangleObject(wxShapeObject):
 		# need to account for running out of room
 		nconnectionpoints = len(self.outputconnectionpoints)
 		#spacings = range(0, self.width, self.width/(nconnectionpoints + 1))
-		spacings = range(0, self.height, self.height/(nconnectionpoints + 1))
+		spacings = list(range(0, self.height, self.height/(nconnectionpoints + 1)))
 		for i in range(nconnectionpoints):
 			co = self.outputconnectionpoints[i]
 			#self.setChildPosition(co, spacings[i + 1] - co.width/2,
@@ -1182,7 +1182,7 @@ class wxRectangleObject(wxShapeObject):
 			y += maxheight + buffer
 		size = (maxwidth, y)
 		if resize:
-			apply(self.setSize, size)
+			self.setSize(*size)
 		self.UpdateDrawing()
 		return size
 

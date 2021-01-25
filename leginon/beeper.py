@@ -9,10 +9,10 @@
 '''
 '''
 
-import node
+from . import node
 from leginon import leginondata
-import event
-import gui.wx.Beeper
+from . import event
+from . import gui.wx.Beeper
 import threading
 
 class Beeper(node.Node):

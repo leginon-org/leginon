@@ -1,15 +1,15 @@
-import node
-import event
+from . import node
+from . import event
 import time
 import math
-import gui.wx.Baker
-import instrument
-import presets
+from . import gui.wx.Baker
+from . import instrument
+from . import presets
 import types
 import numpy
 from leginon import leginondata
 import threading
-import player
+from . import player
 
 class Baker(node.Node):
 	panelclass = gui.wx.Baker.Panel

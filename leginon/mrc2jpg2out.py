@@ -27,9 +27,9 @@ def linearscale(input, boundfrom, boundto):
 	if len(input) < 1:
 		return input
 	if len(boundfrom) != 2:
-		raise ValueError, 'boundfrom must be length 2'
+		raise ValueError('boundfrom must be length 2')
 	if len(boundto) != 2:
-		raise ValueError, 'boundto must be length 2'
+		raise ValueError('boundto must be length 2')
 
 	minfrom,maxfrom = boundfrom
 	minto,maxto = boundto

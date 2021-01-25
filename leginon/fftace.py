@@ -7,10 +7,10 @@
 #
 
 from leginon import leginondata
-import event
-import fftmaker
+from . import event
+from . import fftmaker
 import threading
-import node
+from . import node
 import os
 import math
 import time
@@ -21,9 +21,9 @@ import numextension
 import pyami.quietscipy
 import scipy.ndimage
 from pyami import imagefun, mrc
-import gui.wx.FFTAce
-import calibrationclient
-import instrument
+from . import gui.wx.FFTAce
+from . import calibrationclient
+from . import instrument
 
 class CTFAnalyzer(fftmaker.FFTMaker):
 	eventinputs = fftmaker.FFTMaker.eventinputs

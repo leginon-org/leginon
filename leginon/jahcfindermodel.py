@@ -9,14 +9,14 @@
 #
 
 from leginon import leginondata
-import targetfinder
-import jahcfinderback
+from . import targetfinder
+from . import jahcfinderback
 from pyami import ordereddict
 import threading
-import ice
+from . import ice
 import os.path
 import math
-import version
+from . import version
 import itertools
 
 invsqrt2 = math.sqrt(2.0)/2.0
@@ -85,7 +85,7 @@ class JAHCFinderModel(object):
 		self.hf.logger = self.logger
 		self.settings = self.defaultsettings
 		if settings:
-			for k in settings.keys():
+			for k in list(settings.keys()):
 				self.settings[k] = settings[k]
 		self.icecalc = ice.IceCalculator()
 
@@ -175,7 +175,7 @@ class JAHCFinderModel(object):
 		self.hf.configure_template(diameter, filename, filediameter, invert, multiple, spacing, angle)
 		try:
 			self.hf.create_template()
-		except Exception, e:
+		except Exception as e:
 			self.logger.error(e)
 			return
 		cortype = self.settings['template type']
@@ -189,7 +189,7 @@ class JAHCFinderModel(object):
 		self.hf.configure_correlation(cortype, corfilt,cor_image_min)
 		try:
 			self.hf.correlate_template()
-		except Exception, e:
+		except Exception as e:
 			self.logger.error(e)
 			return
 		self.setImage(self.hf['correlation'], 'Template')
@@ -201,7 +201,7 @@ class JAHCFinderModel(object):
 		self.hf.configure_threshold(tvalue, tmeth)
 		try:
 			self.hf.threshold_correlation()
-		except Exception, e:
+		except Exception as e:
 			self.logger.error(e)
 			return
 		# convert to Float32 to prevent seg fault
@@ -223,7 +223,7 @@ class JAHCFinderModel(object):
 		self.hf.configure_blobs(border=border, maxblobsize=blobsize, maxblobs=maxblobs, minblobsize=minblobsize)
 		try:
 			self.hf.find_blobs()
-		except Exception, e:
+		except Exception as e:
 			self.logger.error(e)
 			return
 		blobs = self.hf['blobs']
@@ -279,14 +279,14 @@ class JAHCFinderModel(object):
 		self.hf.configure_lattice(spacing=latspace, tolerance=lattol, extend=extend)
 		try:
 			self.hf.blobs_to_lattice(auto_center=False)
-		except Exception, e:
+		except Exception as e:
 			self.logger.error(e)
 			return
 
 		self.hf.configure_holestats(radius=r)
 		try:
 			self.hf.calc_holestats()
-		except Exception, e:
+		except Exception as e:
 			self.logger.error(e)
 			return
 
@@ -305,7 +305,7 @@ class JAHCFinderModel(object):
 		self.hf.configure_ice(i0=i0,tmin=tmin,tmax=tmax,tstdmax=tstdmax, tstdmin=tstdmin)
 		try:
 			self.hf.calc_ice()
-		except Exception, e:
+		except Exception as e:
 			self.logger.error(e)
 			return
 		goodholes = self.hf['holes2']
@@ -314,7 +314,7 @@ class JAHCFinderModel(object):
 
 		# activate if counter is at a multiple of interval
 		interval = self.settings['focus interval']
-		if interval and not (self.foc_counter.next() % interval):
+		if interval and not (next(self.foc_counter) % interval):
 			self.foc_activated = True
 		else:
 			self.foc_activated = False
@@ -614,7 +614,7 @@ class JAHCFinderModel(object):
 			autofailed = False
 			try:
 				self.everything()
-			except Exception, e:
+			except Exception as e:
 				self.logger.error('auto target finder failed: %s' % (e,))
 				autofailed = True
 
@@ -622,12 +622,12 @@ class JAHCFinderModel(object):
 
 class FakeLogger():
 	def info(self,msg):
-		print 'INFO: %s' % msg
+		print('INFO: %s' % msg)
 
 	def warning(self,msg):
-		print 'WARNING: %s' % msg
+		print('WARNING: %s' % msg)
 	def error(self,msg):
-		print 'ERROR: %s' % msg
+		print('ERROR: %s' % msg)
 
 if __name__=='__main__':
 	logger = FakeLogger()

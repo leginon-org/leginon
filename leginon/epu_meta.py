@@ -79,14 +79,14 @@ class MetaMapping(object):
 
 	def dataMapping(self, datadict, data_map):
 		output_dict = {}
-		for k in data_map.keys():
+		for k in list(data_map.keys()):
 			keys, submaps, attr_name = data_map[k]
 			data = datadict.copy()
 			for dk in keys:
 				data = data[dk]
 			if submaps:
 				newdata = {}
-				for sk in submaps.keys():
+				for sk in list(submaps.keys()):
 					newdata[sk] = getattr(self,attr_name)(data[submaps[sk]])
 			else:
 				newdata = getattr(self,attr_name)(data)
@@ -103,7 +103,7 @@ class EpuFractionMapping(MetaMapping):
 		self.dataMapping(datadict,fraction_data_map)
 
 	def run(self):
-		print self.getFractionFrameTimeData(self.meta_data_dict)
+		print(self.getFractionFrameTimeData(self.meta_data_dict))
 
 class EpuMetaMapping(MetaMapping):
 	def convertDimension(self, data):
@@ -167,7 +167,7 @@ class EpuMetaMapping(MetaMapping):
 	def run(self):
 		#print self.getTemData(self.meta_data_dict['microscopeData'])
 		#print self.getCCDCameraData(self.meta_data_dict['microscopeData'])
-		print self.getScopeEMData(self.meta_data_dict['microscopeData'])
+		print(self.getScopeEMData(self.meta_data_dict['microscopeData']))
 		#print self.getCameraEMData(self.meta_data_dict['microscopeData'])
 		#print self.getMatrix(self.meta_data_dict)
 

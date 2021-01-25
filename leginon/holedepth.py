@@ -9,16 +9,16 @@
 #
 
 from leginon import leginondata
-import targetfinder
-import holefinder
-import holedepthback
+from . import targetfinder
+from . import holefinder
+from . import holedepthback
 from pyami import ordereddict, mrc
 import threading
-import ice
-import instrument
+from . import ice
+from . import instrument
 import os.path
-import calibrationclient as calclient
-import gui.wx.HoleDepth
+from . import calibrationclient as calclient
+from . import gui.wx.HoleDepth
 
 class HoleDepth(holefinder.HoleFinder):
 	panelclass = gui.wx.HoleDepth.Panel
@@ -70,7 +70,7 @@ class HoleDepth(holefinder.HoleFinder):
 			try:
 				orig = mrc.read(filename)
 				self.logger.exception('Read image not in session')
-			except Exception, e:
+			except Exception as e:
 				self.logger.exception('Read image failed: %s' % e[-1])
 				return
 		else:
@@ -103,7 +103,7 @@ class HoleDepth(holefinder.HoleFinder):
 		self.hf.configure_edges(filter=filt, size=n, sigma=sig, absvalue=ab, lpsig=lowpasssig, thresh=edgethresh, edges=edges)
 		try:
 			self.hf.find_edges()
-		except Exception, e:
+		except Exception as e:
 			self.logger.error(e)
 			return
 		# convert to Float32 to prevent seg fault
@@ -130,7 +130,7 @@ class HoleDepth(holefinder.HoleFinder):
 		self.hf.configure_correlation(cortype, corfilt)
 		try:
 			self.hf.correlate_template()
-		except Exception, e:
+		except Exception as e:
 			self.logger.error(e)
 			return
 		self.setImage(self.hf['correlation'], 'Template')
@@ -141,7 +141,7 @@ class HoleDepth(holefinder.HoleFinder):
 		self.hf.configure_threshold(tvalue)
 		try:
 			self.hf.threshold_correlation()
-		except Exception, e:
+		except Exception as e:
 			self.logger.error(e)
 			return
 		# convert to Float32 to prevent seg fault
@@ -175,7 +175,7 @@ class HoleDepth(holefinder.HoleFinder):
 		self.hf.configure_blobs(border=border, maxblobsize=blobsize, maxblobs=maxblobs)
 		try:
 			self.hf.find_blobs()
-		except Exception, e:
+		except Exception as e:
 			self.logger.error(e)
 			return
 		self.getHoleDepth
@@ -185,7 +185,7 @@ class HoleDepth(holefinder.HoleFinder):
 		self.hf.configure_makeblobs(centers)
 		try:
 			self.hf.make_blobs()
-		except Exception, e:
+		except Exception as e:
 			self.logger.error(e)
 			return
 		
@@ -193,7 +193,7 @@ class HoleDepth(holefinder.HoleFinder):
 		self.logger.info('calculating hole depth')
 		try:
 			holedepth=self.hf.find_distance()
-		except Exception, e:
+		except Exception as e:
 			self.logger.error(e)
 			return
 		self.holedepth=holedepth['depth']
@@ -280,7 +280,7 @@ class HoleDepth(holefinder.HoleFinder):
 		self.hf.configure_holestats(radius=r)
 		try:
 			self.hf.calc_holestats()
-		except Exception, e:
+		except Exception as e:
 			self.logger.error(e)
 			return
 

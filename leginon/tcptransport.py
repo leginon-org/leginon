@@ -5,9 +5,9 @@
 #       For terms of the license agreement
 #       see  http://leginon.org
 #
-import SocketServer
+import socketserver
 import socket
-import socketstreamtransport
+from . import socketstreamtransport
 import errno
 from pyami import mysocket
 
@@ -16,7 +16,7 @@ locationkey = 'TCP transport'
 class TransportError(socketstreamtransport.TransportError):
 	pass
 
-class Server(socketstreamtransport.Server, SocketServer.ThreadingTCPServer):
+class Server(socketstreamtransport.Server, socketserver.ThreadingTCPServer):
 	#allow_reuse_address = True
 	def __init__(self, dh, port=None):
 		socketstreamtransport.Server.__init__(self, dh)
@@ -24,9 +24,9 @@ class Server(socketstreamtransport.Server, SocketServer.ThreadingTCPServer):
 		# instantiater can choose a port or we'll choose one for them
 		if port is not None:
 			try:
-				SocketServer.ThreadingTCPServer.__init__(self, ('', port),
+				socketserver.ThreadingTCPServer.__init__(self, ('', port),
 																									socketstreamtransport.Handler)
-			except socket.error, e:
+			except socket.error as e:
 				en, string = e
 				raise TransportError(string)
 		else:
@@ -36,11 +36,11 @@ class Server(socketstreamtransport.Server, SocketServer.ThreadingTCPServer):
 			port = portrange[0]
 			while port <= portrange[1]:
 				try:
-					SocketServer.ThreadingTCPServer.__init__(self, ('', port),
+					socketserver.ThreadingTCPServer.__init__(self, ('', port),
 																									socketstreamtransport.Handler)
 					exception = False
 					break
-				except socket.error, e:
+				except socket.error as e:
 					en, string = e
 					if en == errno.EADDRINUSE:
 						port += 1
@@ -75,7 +75,7 @@ class Client(socketstreamtransport.Client):
 			raise TransportErrorr('invalid location')
 		try:
 			s.connect((hostname, port))
-		except socket.error, e:
+		except socket.error as e:
 			en, string = e
 			raise TransportError(string)
 		return s

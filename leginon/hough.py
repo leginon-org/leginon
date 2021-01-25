@@ -114,8 +114,8 @@ def houghLine(image, threshold):
 #
 #	r = i + j + offset
 
-	mrange = range(m)
-	nrange = range(n)
+	mrange = list(range(m))
+	nrange = list(range(n))
 	for i in mrange:
 		for j in nrange:
 			if image[i, j] > threshold: 
@@ -174,15 +174,15 @@ def houghCircle(image, threshold, radiusrange=None):
 	# and add the value to the accumulator
 	def set(shift):
 		houghimage[shift[0]:shift[0] + m, shift[1]:shift[1] + n] += thresholdimage
-	map(set, shifts)
+	list(map(set, shifts))
 
 	return houghimage[border - 1:border + m - 1, border - 1:border + n - 1]
 
 if __name__=='__main__':
 	from wxPython.wx import *
-	import gui.wx.ImagePanel
-	import timer
-	import holefinderback
+	from . import gui.wx.ImagePanel
+	from . import timer
+	from . import holefinderback
 	from pyami import imagefun, mrc
 
 	def edges(image):
@@ -235,7 +235,7 @@ if __name__=='__main__':
 				sum += houghlineimage[r, (i + 90) % 360]
 				sum += houghlineimage[r, (i + 180) % 360]
 				sum += houghlineimage[r, (i + 270) % 360]
-		print 'theta:', theta, '#'*(sum/100)
+		print('theta:', theta, '#'*(sum/100))
 			
 	t.reset()
 #	fftimage = period(houghlineimage)

@@ -211,7 +211,7 @@ if __name__ == '__main__':
 	points = [(0,0)]
 	#lat = profile.run('pointsToLattice(points, 2.0, 0.1)')
 	lat = pointsToLattice(points, 2.0, 0.1)
-	keys = lat.lattice_points.keys()
+	keys = list(lat.lattice_points.keys())
 	keys.sort()
 	for key in keys:
-		print key, lat.lattice_points[key]
+		print(key, lat.lattice_points[key])

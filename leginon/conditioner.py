@@ -120,10 +120,10 @@ class Conditioner(node.Node):
 		try:
 			self._handleFixConditionEvent(evt)
 			status = 'ok'
-		except RuntimeError, e:
+		except RuntimeError as e:
 			self.logger.error('Operation error: e')
 			self.pauseOnError()
-		except Exception, e:
+		except Exception as e:
 			self.logger.info('handling exception %s' %(e.args[0]))
 			status='exception'
 		self.confirmEvent(evt, status=status)

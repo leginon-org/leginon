@@ -65,7 +65,7 @@ def getShellResult(cmd):
 		p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 		svninfo,svnerror = p.communicate()
 	except Exception as e: 
-		print(str(e))
+		print((str(e)))
 	return svninfo,svnerror
 
 def changeToModulePath(module_path=''):
@@ -114,7 +114,7 @@ def getTextVersion():
 
 def getSVNVersion(module_path=''):
 	svninfo = getSVNInfo(module_path)
-	if 'Revision' in svninfo.keys():
+	if 'Revision' in list(svninfo.keys()):
 		version = svninfo['Revision']
 	else:
 		version = getTextVersion()
@@ -122,7 +122,7 @@ def getSVNVersion(module_path=''):
 
 def getSVNBranch(module_path=''):
 	svninfo = getSVNInfo(module_path)
-	if 'URL' in svninfo.keys():
+	if 'URL' in list(svninfo.keys()):
 		url = svninfo['URL']
 		root = svninfo['Repository Root']
 		parts = url.split(root)
@@ -146,6 +146,6 @@ def getInstalledLocation():
 	return dirname
 
 if __name__ == '__main__':
-	print(getVersion())
-	print(getGITBranch())
-	print(getInstalledLocation())
+	print((getVersion()))
+	print((getGITBranch()))
+	print((getInstalledLocation()))

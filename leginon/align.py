@@ -201,5 +201,5 @@ if __name__ == '__main__':
 			result = findRotationScale(image1, image2)
 			rotation, scale, value = result
 			string = 'rotation: %g, scale: %g, value: %g'
-			print string % (rotation, scale, value)
+			print(string % (rotation, scale, value))
 

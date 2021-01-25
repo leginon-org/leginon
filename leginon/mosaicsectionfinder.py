@@ -6,28 +6,28 @@
 #       see  http://leginon.org
 #
 
-import calibrationclient
+from . import calibrationclient
 from leginon import leginondata
-import event
-import instrument
-import imagewatcher
-import mosaic
+from . import event
+from . import instrument
+from . import imagewatcher
+from . import mosaic
 import threading
-import node
-import targethandler
+from . import node
+from . import targethandler
 from pyami import convolver, imagefun, mrc
 import numpy
 ma = numpy.ma
 import pyami.quietscipy
 import scipy.ndimage as nd
-import mosaictargetfinder
-import gui.wx.MosaicSectionFinder
+from . import mosaictargetfinder
+from . import gui.wx.MosaicSectionFinder
 import os
-import libCVwrapper
+from . import libCVwrapper
 import math
-import polygon
-import raster
-import presets
+from . import polygon
+from . import raster
+from . import presets
 import time
 try:
 	set = set
@@ -145,7 +145,7 @@ class MosaicSectionFinder(mosaictargetfinder.MosaicClickTargetFinder):
 
 		ones = numpy.ones(imshape)
 		if nlabels > 0:
-			regionareas = nd.sum(ones,regionlabel,range(1,nlabels+1))
+			regionareas = nd.sum(ones,regionlabel,list(range(1,nlabels+1)))
 		else:
 			regionareas = []
 		if nlabels == 1:
@@ -165,7 +165,7 @@ class MosaicSectionFinder(mosaictargetfinder.MosaicClickTargetFinder):
 		finalregionlabel,ngoodregion = nd.label(finalregionimage)
 
 		if ngoodregion > 0:
-			regioncenters = nd.center_of_mass(ones,finalregionlabel,range(1,ngoodregion+1))
+			regioncenters = nd.center_of_mass(ones,finalregionlabel,list(range(1,ngoodregion+1)))
 		else:
 			regioncenters = []
 		if ngoodregion == 1:
@@ -258,7 +258,7 @@ class MosaicSectionFinder(mosaictargetfinder.MosaicClickTargetFinder):
 		self.mosaicimage[:,:pad] = 0
 		self.mosaicimage[:,-pad:] = 0
 		t00=time.time()
-		print "-------------"
+		print("-------------")
 		
 		# get background stats
 		background = numpy.where(self.mosaicimage>maxt,1,0)
@@ -266,7 +266,7 @@ class MosaicSectionFinder(mosaictargetfinder.MosaicClickTargetFinder):
 		bkgrndmean = nd.mean(self.mosaicimage,labels=backgroundlabel)
 		bkgrndstddev = nd.standard_deviation(self.mosaicimage,labels=backgroundlabel)
 		t01=time.time()
-		print "---%5.1f-----background mean %f, stddev %f" % ((t01-t00),bkgrndmean, bkgrndstddev)
+		print("---%5.1f-----background mean %f, stddev %f" % ((t01-t00),bkgrndmean, bkgrndstddev))
 				
 		#refresh to setting if not auto adjust
 		if self.onesectionarea == None or newareasetting:
@@ -345,7 +345,7 @@ class MosaicSectionFinder(mosaictargetfinder.MosaicClickTargetFinder):
 			areapercenttile = 100 * self.onesectionarea /scale
 			self.logger.info('modify per-section area to %f for next round' %areapercenttile)
 		t02=time.time()
-		print "----%5.1f----section num %d mean %f" % ((t02-t01),sectionareaint, sectionmean)
+		print("----%5.1f----section num %d mean %f" % ((t02-t01),sectionareaint, sectionmean))
 		
 		if not (limitbysection or sectiononly):
 			sectionimage = None
@@ -396,7 +396,7 @@ class MosaicSectionFinder(mosaictargetfinder.MosaicClickTargetFinder):
 		
 			self.logger.info('found %i regions after %i iterations' % (len(regionarrays),count))
 			t03=time.time()
-			print "----%5.1f----tissue" % ((t03-t02),)
+			print("----%5.1f----tissue" % ((t03-t02),))
 			if displaysection:
 				displaypoints.extend(sectiondisplaypoints)
 
@@ -413,7 +413,7 @@ class MosaicSectionFinder(mosaictargetfinder.MosaicClickTargetFinder):
 
 	def autoSpacingAngle(self):
 		try:
-			imagedata = self.imagemap[self.imagemap.keys()[0]]
+			imagedata = self.imagemap[list(self.imagemap.keys())[0]]
 		except IndexError:
 			self.logger.warning('need displayed atlas to calculate the spacing and angle')
 			return self.settings['raster spacing'],self.settings['raster angle']
@@ -439,7 +439,7 @@ class MosaicSectionFinder(mosaictargetfinder.MosaicClickTargetFinder):
 
 		try:
 			p2 = self.calclients[self.settings['raster movetype']].pixelToPixel(tem1, cam1, tem2,cam2, ht, mag1, mag2, p1)
-		except Exception, e:
+		except Exception as e:
 			self.logger.warning('Failed to calculate raster: %s' % e)
 
 		# bin

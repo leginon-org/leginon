@@ -226,7 +226,7 @@ if __name__ == '__main__':
 	class Node(object):
 		atlases = {'old':{},'new':{}}
 		def getMosaicNames(self):
-			return self.atlases.keys()
+			return list(self.atlases.keys())
 
 		def getMosaicName(self):
 			return 'old'
@@ -242,7 +242,7 @@ if __name__ == '__main__':
 		def getAlignerOldTargets(self):
 			return [(100,100),(300,300),(100,300)]
 		def acceptResults(self,targets):
-			print 'transformed target c,r: ', map((lambda t: (t.x,t.y)),targets)
+			print('transformed target c,r: ', list(map((lambda t: (t.x,t.y)),targets)))
 		def readImage(self,filepath):
 			return numpil.read(filepath)
 		def getAlignerNewSessionKey(self):
@@ -250,19 +250,19 @@ if __name__ == '__main__':
 		def getAlignerOldSessionKeys(self):
 			return ['old session','new session'], 'new session'
 		def calculateTransform(self, targets1, targets2):
-			points1 = map((lambda t: (t.x,t.y)),targets1)
-			points2 = map((lambda t: (t.x,t.y)),targets2)
+			points1 = list(map((lambda t: (t.x,t.y)),targets1))
+			points2 = list(map((lambda t: (t.x,t.y)),targets2))
 			if len(points1) < 3:
 				return numpy.matrix([(1,0,0),(0,1,0),(0,0,1)]),0.0
-			print 'from',points1
-			print 'to',points2
+			print('from',points1)
+			print('to',points2)
 			A, residule = affine.solveAffineMatrixFromImageTargets(points1,points2)
 			self.Affine_matrix = A
-			print A
+			print(A)
 			return A, residule
 
 		def transformTargets(self, affine_matrix, targets1):
-			points1 = map((lambda t: (t.x,t.y)),targets1)
+			points1 = list(map((lambda t: (t.x,t.y)),targets1))
 			points2 = affine.transformImageTargets(affine_matrix, points1)
 			return points2
 

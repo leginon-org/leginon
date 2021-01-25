@@ -4,8 +4,8 @@ import time
 import numpy
 
 import leginon.leginondata
-import tiltcorrelator
-import tiltseries
+from . import tiltcorrelator
+from . import tiltseries
 
 class Abort(Exception):
 	pass
@@ -45,7 +45,7 @@ class Collection(object):
 			self.instrument.tem.runBufferCycle()
 		except AttributeError:
 			self.logger.warning('No buffer cycle for this instrument')
-		except Exception, e:
+		except Exception as e:
 			self.logger.error('Run buffer cycle failed: %s' % e)
 
 	def calcBinning(self, origsize, min_newsize, max_newsize):
@@ -191,7 +191,7 @@ class Collection(object):
 		abort_loop = False
 		abort_on_next = False
 		for i, tilt in enumerate(tilts):
-			print "---------------------tilt %d at %g --------------------" % (i,math.degrees(tilt))
+			print("---------------------tilt %d at %g --------------------" % (i,math.degrees(tilt)))
 			self.checkAbort()
 
 			self.logger.info('Current tilt angle: %g degrees.' % math.degrees(tilt))
@@ -298,7 +298,7 @@ class Collection(object):
 					try:
 						correlation_image = self.correlator.correlate(image_data, self.settings['use tilt'], channel=channel, wiener=False,taper=self.settings['taper size'])
 						break
-					except Exception, e:
+					except Exception as e:
 						self.logger.warning('Retrying correlate image: %s.' % (e,))
 					for tick in range(15):
 						self.checkAbort()
@@ -369,29 +369,29 @@ class Collection(object):
 		self.viewer.clearImages()
 
 	def showPredictionInfo(self,saved_predicted_position, predicted_position, predicted_shift, position, correlation, saved_correlation, image_pixel_size, imageid, image, measured_defocus=None, measured_fit=None):
-		print "-----------PREDICTION-------------"
-		keys = saved_predicted_position.keys()
+		print("-----------PREDICTION-------------")
+		keys = list(saved_predicted_position.keys())
 		keys.sort()
-		print "%14s  %8s %8s" % ('key','saved','current')
+		print("%14s  %8s %8s" % ('key','saved','current'))
 		for key in keys:
 			try:
-				print "%14s: %8.1f %8.1f" % (key, saved_predicted_position[key],predicted_position[key])
+				print("%14s: %8.1f %8.1f" % (key, saved_predicted_position[key],predicted_position[key]))
 			except:
 				pass
-		print "----------CORRELATION-------------"
-		keys = saved_correlation.keys()
+		print("----------CORRELATION-------------")
+		keys = list(saved_correlation.keys())
 		keys.sort()
-		print "%14s  %8s %8s" % ('key','saved','current')
+		print("%14s  %8s %8s" % ('key','saved','current'))
 		for key in keys:
-			print "%14s: %8.1f %8.1f" % (key, saved_correlation[key],correlation[key])
+			print("%14s: %8.1f %8.1f" % (key, saved_correlation[key],correlation[key]))
 		initializer = {
 			'predicted shift': predicted_shift,
 			'position': position,
 			'image': (imageid,image),
 		}
-		for key in initializer.keys():
-			print key,initializer[key]
-		print '============================'
+		for key in list(initializer.keys()):
+			print(key,initializer[key])
+		print('============================')
 
 
 	def checkAbort(self):

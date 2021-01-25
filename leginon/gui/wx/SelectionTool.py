@@ -103,7 +103,7 @@ class SelectionTool(wx.Panel):
 
 	#--------------------
 	def getTypeNames(self):
-		return self.tools.keys()
+		return list(self.tools.keys())
 
 	#--------------------
 	def _getTypeTool(self, name):
@@ -276,7 +276,7 @@ class SelectionTool(wx.Panel):
 	def getTargetPositions(self, name):
 		try:
 			return self._getTypeTool(name).targettype.getTargetPositions()
-		except ValueError, KeyError:
+		except ValueError as KeyError:
 			# no target type, Issue #5619
 			return []
 	#--------------------

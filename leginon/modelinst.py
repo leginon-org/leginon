@@ -13,5 +13,5 @@ labels = newdict.OrderedDict()
 for model in models:
 	label = model['label']
 	labels[label] = None
-for label in labels.keys():
-	print label
+for label in list(labels.keys()):
+	print(label)

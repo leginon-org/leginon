@@ -12,7 +12,7 @@
 # $Locker:  $
 
 import inspect
-import datatransport
+from . import datatransport
 import types
 import threading
 
@@ -66,7 +66,7 @@ class Object(object):
 		for key in dir(self):
 			try:
 				value = getattr(self, key)
-			except Exception, e:
+			except Exception as e:
 				continue
 			if isinstance(value, types.MethodType):
 				if key[:1] != '_':
@@ -100,7 +100,7 @@ class Object(object):
 		else:
 			try:
 				result = self._interface[name][type](*args, **kwargs)
-			except Exception, result:
+			except Exception as result:
 				#import sys
 				#excinfo = sys.exc_info()
 				#sys.excepthook(*excinfo)
@@ -109,7 +109,7 @@ class Object(object):
 
 	def _getDescription(self):
 		description = {}
-		for name, methods in self._interface.items():
+		for name, methods in list(self._interface.items()):
 			description[name] = {}
 			for method in methods:
 				description[name][method] = True
@@ -132,7 +132,7 @@ class Object(object):
 				### OLD WAY
 				try:
 					results.append(self._execute(request.origin, attributename, request.type[i], request.args[i], request.kwargs[i]))
-				except Exception, e:
+				except Exception as e:
 					results.append(e)
 		if usemulticall:
 			results = self._interface['multicall']['method'](calls)
@@ -245,7 +245,7 @@ class ObjectProxy(object):
 	def getAttributeTypes(self, name):
 		d, t = self._objectservice.descriptions[self._nodename][self._name]
 		try:
-			return d[name].keys()
+			return list(d[name].keys())
 		except KeyError:
 			return []
 

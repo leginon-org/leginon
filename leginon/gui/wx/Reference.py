@@ -43,7 +43,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		return position
 
 	def createMoveTypeChoice(self, start_position):
-		move_types = self.node.calibration_clients.keys()
+		move_types = list(self.node.calibration_clients.keys())
 		move_types.sort()
 		self.widgets['move type'] = Choice(self, -1, choices=move_types)
 		szmovetype = wx.GridBagSizer(5, 5)

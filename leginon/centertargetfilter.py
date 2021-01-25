@@ -1,6 +1,6 @@
-import targetfilter
+from . import targetfilter
 from leginon import leginondata
-import gui.wx.CenterTargetFilter
+from . import gui.wx.CenterTargetFilter
 
 class CenterTargetFilter(targetfilter.TargetFilter):
 	'''
@@ -25,7 +25,7 @@ class CenterTargetFilter(targetfilter.TargetFilter):
 		distlist = []
 		targetdistances = {}
 		for target in targetlist:
-			print target.dbid
+			print(target.dbid)
 			oldtarget = leginondata.AcquisitionImageTargetData(initializer=target)
 			dist = oldtarget['delta row']**2+oldtarget['delta column']**2
 			while dist in distlist:

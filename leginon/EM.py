@@ -7,11 +7,11 @@
 #
 
 from leginon import leginondata
-import instrument
-import node
+from . import instrument
+from . import node
 from pyami import mysocket
 import threading
-import gui.wx.Instrument
+from . import gui.wx.Instrument
 from pyscope import tem, ccdcamera, registry
 import sys
 
@@ -94,7 +94,7 @@ class EM(node.Node):
 					self.objectservice._addObject(name, instance)
 					self.logger.info('Added interface for %s' % name)
 					break
-				except Exception, e:
+				except Exception as e:
 					self.logger.debug('Initialization of %s failed: %s' % (name, e))
 					continue
 			if instance is None:
@@ -151,7 +151,7 @@ class EM(node.Node):
 			mapq['magnification list'] = maglistdata
 			map_results = mapq.query()
 			for mapping in map_results:
-				if mapping['magnification'] not in mode_map.keys():
+				if mapping['magnification'] not in list(mode_map.keys()):
 					mode_map[mapping['magnification']] = (mapping['name'], mapping['submode index'])
 			instance.setProjectionSubModeMap(mode_map)
 
@@ -231,7 +231,7 @@ class EM(node.Node):
 						self.logger.warning('Failed to refresh attribute \'%s\''
 																% attribute)
 			elif isinstance(attributes, dict):
-				for attribute, value in attributes.items():
+				for attribute, value in list(attributes.items()):
 					try:
 						value = instrument._execute(self.name, attribute, 'w', (value,))
 						if isinstance(value, Exception):

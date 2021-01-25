@@ -81,12 +81,12 @@ class CameraClient(object):
 		orig_blank_status = self.instrument.tem.BeamBlank
 		fakek2cam = None
 
-		hosts = map((lambda x: self.instrument.ccdcameras[x].Hostname),self.instrument.ccdcameras.keys())
+		hosts = list(map((lambda x: self.instrument.ccdcameras[x].Hostname),list(self.instrument.ccdcameras.keys())))
 		## Retract the cameras that are above this one (higher zplane)
 		## or on the same host but lower because the host often
 		## retract the others regardless of the position but not include
 		## that in the timing.  Often get blank image as a result
-		for name,cam in self.instrument.ccdcameras.items():
+		for name,cam in list(self.instrument.ccdcameras.items()):
 			if 'FakeK2' == name and camera_name is not None and 'GatanK2' in camera_name:
 				## With current camera control on TUI/TIA, K2 behind Falcon can not shutter
 				## unless an unused camera (TIA-Orius) is inserted.
@@ -249,7 +249,7 @@ class CameraClient(object):
 		try:
 			imagedata = self.acquireRawCameraImageData(scopeclass=scopeclass, allow_retracted=allow_retracted, type=type, force_no_frames=force_no_frames)
 			return imagedata
-		except Exception, e:
+		except Exception as e:
 			self.logger.error(e)
 			return None
 
@@ -310,12 +310,12 @@ class CameraClient(object):
 		t0 = time.time()
 		timage.start()
 		time.sleep(6)
-		print 'main start',t0
+		print('main start',t0)
 		self.instrument.setCCDCamera('Ceta')
 		array = self.instrument.ccdcamera.Image
-		print 'main end',time.time()-t0
+		print('main end',time.time()-t0)
 		timage.join()
-		print 'thread joined', time.time()-t0
+		print('thread joined', time.time()-t0)
 		return array
 
 	def liveImage(self):
@@ -323,13 +323,13 @@ class CameraClient(object):
 			t0 = time.time()
 			for i in range(2):
 				t0l = time.time()
-				print 'live%d start' %i,t0
+				print('live%d start' %i,t0)
 				self.instrument.setCCDCamera('Ceta2')
 				image = self.instrument.ccdcamera.Image
-				print i, image.mean()
-				print 'live%d end' %i,time.time()-t0
+				print(i, image.mean())
+				print('live%d end' %i,time.time()-t0)
 		except:
-			print 'Failed live Ceta2 test'
+			print('Failed live Ceta2 test')
 
 	def requireRecentDarkCurrentReferenceOnBright(self):
 		# select camera before calling this function

@@ -170,7 +170,7 @@ class ListCtrlPanel(wx.Panel):
 
 	def removePanel(self, panel):
 		p = None
-		for text, p in self.panelmap.items():
+		for text, p in list(self.panelmap.items()):
 			if p is panel:
 				break
 
@@ -270,7 +270,7 @@ class Panel(ListCtrlPanel):
 
 	def onStatusUpdated(self, evt):
 		evtobj = evt.GetEventObject()
-		for name, panel in self.panelmap.items():
+		for name, panel in list(self.panelmap.items()):
 			if panel is evtobj:
 				item = self.selector.getItem(name)
 				if evt.level == 'STATUS':
@@ -284,7 +284,7 @@ class Panel(ListCtrlPanel):
 
 	def onUserVerificationUpdated(self, evt):
 		evtobj = evt.GetEventObject()
-		for name, panel in self.panelmap.items():
+		for name, panel in list(self.panelmap.items()):
 			if panel is evtobj:
 				item = self.selector.getItem(name)
 				item.setUserVerificationStatus(evt.status)

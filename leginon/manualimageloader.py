@@ -7,23 +7,23 @@
 #
 
 from leginon import leginondata
-import event
-import node
-import project
+from . import event
+from . import node
+from . import project
 import threading
 import time
-import manualacquisition
-import gui.wx.ManualImageLoader
-import player
-import instrument
+from . import manualacquisition
+from . import gui.wx.ManualImageLoader
+from . import player
+from . import instrument
 import os
 import re
-import calibrationclient
+from . import calibrationclient
 import copy
 from pyami import arraystats, imagefun, mrc
 import numpy
-import version
-import cameraclient
+from . import version
+from . import cameraclient
 
 default_batch = os.path.join(version.getInstalledLocation(),'upload_example.txt')
 class AcquireError(Exception):
@@ -73,7 +73,7 @@ class ManualImageLoader(manualacquisition.ManualAcquisition):
 			camera = self.instrument.getData(leginondata.CameraEMData)
 			imagedata = leginondata.CameraImageData(image=image, scope=scope, camera=camera)
 			imagedata['session'] = self.session
-		except Exception, e:
+		except Exception as e:
 			self.logger.exception('Error loading image: %s' % e)
 			raise AcquireError
 		image = imagedata['image']
@@ -94,7 +94,7 @@ class ManualImageLoader(manualacquisition.ManualAcquisition):
 				self.published_images.append(self.getMostRecentImageData(self.session))
 				self.viewstatus = 'normal'
 				self.saveComment()
-			except Exception, e:
+			except Exception as e:
 				message = 'Error saving image to database'
 				if str(e):
 					message += ' (%s)' % str(e)
@@ -145,7 +145,7 @@ class ManualImageLoader(manualacquisition.ManualAcquisition):
 	def setImageFilename(self, imagedata):
 		try:
 			path = imagedata.mkpath()
-		except Exception, e:
+		except Exception as e:
 			raise node.PublishError(e)
 		try:
 			filedir, filename = os.path.split(self.uploadedInfo['original filepath'])
@@ -202,7 +202,7 @@ class ManualImageLoader(manualacquisition.ManualAcquisition):
 			raise
 		try:
 			self.uploadedInfo['image'] = mrc.read(self.uploadedInfo['original filepath'])
-		except IOError, e:
+		except IOError as e:
 			self.logger.exception('File %s not available for upload' % self.uploadedInfo['original filepath'])
 			raise
 
@@ -211,7 +211,7 @@ class ManualImageLoader(manualacquisition.ManualAcquisition):
 		try:
 			self.instrument.setTEM(self.settings['instruments']['tem'])
 			self.instrument.setCCDCamera(self.settings['instruments']['ccdcamera'])
-		except Exception, e:
+		except Exception as e:
 			msg = 'Instrument Set failed: %s' % (e,)
 			self.logger.error(msg)
 			raise AquireError(msg)

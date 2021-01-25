@@ -9,7 +9,7 @@
 #
 
 # testing before start
-import configcheck
+from . import configcheck
 configcheck.testBeforeStart()
 
 import pyami.quietscipy
@@ -26,7 +26,7 @@ try:
 except:
 	matchconfigs=False
 
-print 'Leginon version:  ', leginon.version.getVersion()
+print('Leginon version:  ', leginon.version.getVersion())
 
 def checkRequirements():
 

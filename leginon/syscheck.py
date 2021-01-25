@@ -12,17 +12,17 @@
 def leginonInstalled():
 	'''print info about if Leginon is already installed'''
 
-	print 'Looking for previously installed Leginon...'
+	print('Looking for previously installed Leginon...')
 	try:
 		import leginon
 	except:
-		print '    None found.'
+		print('    None found.')
 		return
 
-	print '    Leginon found here:  ', leginon.__path__[0]
-	print '''    *** It is best to uninstall your previous Leginon before installing
+	print('    Leginon found here:  ', leginon.__path__[0])
+	print('''    *** It is best to uninstall your previous Leginon before installing
     the new one.  The best way to uninstall is to move it to a backup
-    location, just in case you need to revert to the old version.'''
+    location, just in case you need to revert to the old version.''')
 
 def versionAtLeast(version, minimum):
 	'return True if version is at least minimum'
@@ -49,27 +49,27 @@ def versionAtLeast(version, minimum):
 ######################################################################
 ## Python
 ######################################################################
-print '--------------------------------------------------------------'
+print('--------------------------------------------------------------')
 leginonInstalled()
-print ''
+print('')
 
 ######################################################################
 ## Python
 ######################################################################
-print '--------------------------------------------------------------'
-print 'Python:'
+print('--------------------------------------------------------------')
+print('Python:')
 
 import sys
 import os
 
 ## location of executable and module path
-print '    Python executable (if wrong, check PATH in your environment):'
-print '        %s' % (sys.executable,)
-print '    Python module search path (if wrong, check PYTHONPATH):'
+print('    Python executable (if wrong, check PATH in your environment):')
+print('        %s' % (sys.executable,))
+print('    Python module search path (if wrong, check PYTHONPATH):')
 for dir in sys.path:
-	print '        %s' % (dir,)
+	print('        %s' % (dir,))
 if not sys.path:
-	print '        (Empty)'
+	print('        (Empty)')
 
 ## config files
 
@@ -78,113 +78,113 @@ minpyver = (2, 3, 4)
 mypyver = sys.version_info[:3]
 mystr = '.'.join(map(str,mypyver))
 minstr = '.'.join(map(str,minpyver))
-print '    Python version: %s' % (mystr,)
+print('    Python version: %s' % (mystr,))
 if versionAtLeast(mypyver, minpyver):
-	print '        OK (at least %s required)' % (minstr ,)
+	print('        OK (at least %s required)' % (minstr ,))
 else:
-	print '        *** FAILED (at least %s required)' % (minstr,)
-	print '        Upgrade before installing other packages.'
+	print('        *** FAILED (at least %s required)' % (minstr,))
+	print('        Upgrade before installing other packages.')
 
-print '    Python says home directory is:  %s' % (os.path.expanduser('~'),)
+print('    Python says home directory is:  %s' % (os.path.expanduser('~'),))
 
 ######################################################################
 ## Python Imaging Library
 ######################################################################
 minpilver = (1, 1, 4)
 minstr = '.'.join(map(str,minpilver))
-print '--------------------------------------------------------------'
-print 'Python Imaging Library (PIL):'
-print '    importing Image module...'
+print('--------------------------------------------------------------')
+print('Python Imaging Library (PIL):')
+print('    importing Image module...')
 try:
 	from PIL import Image
 except:
-	print '    *** Could not import PIL Image module.'
-	print '      You must install Python Imaging Library version %s or greater' % (minstr,)
+	print('    *** Could not import PIL Image module.')
+	print('      You must install Python Imaging Library version %s or greater' % (minstr,))
 else:
 	if hasattr(Image, 'VERSION'):
 		mystr = Image.VERSION
 	else:
 		mystr = Image.__version__
-	mypilver = map(int, mystr.split('.'))
-	print '    PIL version: %s' % (mystr,)
+	mypilver = list(map(int, mystr.split('.')))
+	print('    PIL version: %s' % (mystr,))
 	if versionAtLeast(mypilver, minpilver):
-		print '        OK (at least %s required)' % (minstr ,)
+		print('        OK (at least %s required)' % (minstr ,))
 	else:
-		print '        *** FAILED (at least %s required)' % (minstr,)
+		print('        *** FAILED (at least %s required)' % (minstr,))
 
 ######################################################################
 ## Python MySQL client module
 ######################################################################
 minmysqlver = (1, 2)
 minstr = '.'.join(map(str,minmysqlver))
-print '--------------------------------------------------------------'
-print 'MySQL Python client (MySQLdb):'
-print '    importing MySQLdb module...'
+print('--------------------------------------------------------------')
+print('MySQL Python client (MySQLdb):')
+print('    importing MySQLdb module...')
 try:
 	import MySQLdb
 except:
-	print '    *** Could not import MySQLdb module.'
-	print '      You must install Python MySQL version %s or greater' % (minstr,)
+	print('    *** Could not import MySQLdb module.')
+	print('      You must install Python MySQL version %s or greater' % (minstr,))
 else:
 	mystr = MySQLdb.__version__
 	mymysqlver = MySQLdb.version_info[:3]
-	print '    Python MySQL version: %s' % (mystr,)
+	print('    Python MySQL version: %s' % (mystr,))
 	if versionAtLeast(mymysqlver, minmysqlver):
-		print '        OK (at least %s required)' % (minstr ,)
+		print('        OK (at least %s required)' % (minstr ,))
 	else:
-		print '        *** FAILED (at least %s required)' % (minstr,)
+		print('        *** FAILED (at least %s required)' % (minstr,))
 
 ######################################################################
 ## numpy
 ######################################################################
 minnumpyver = (1, 0)
 minstr = '.'.join(map(str,minnumpyver))
-print '--------------------------------------------------------------'
-print 'numpy:'
-print '    importing numpy module...'
+print('--------------------------------------------------------------')
+print('numpy:')
+print('    importing numpy module...')
 try:
 	import numpy
 except ImportError:
-	print '    *** Failed to import numpy.  Install numpy first.'
+	print('    *** Failed to import numpy.  Install numpy first.')
 else:
 	mystr = numpy.__version__
-	mynumpyver = map((lambda x:int(x)),mystr.split('.')[:2])
-	print '    numpy version: %s' % (mystr,)
+	mynumpyver = list(map((lambda x:int(x)),mystr.split('.')[:2]))
+	print('    numpy version: %s' % (mystr,))
 	if versionAtLeast(mynumpyver, minnumpyver):
-		print '        OK (at least %s required)' % (minstr ,)
+		print('        OK (at least %s required)' % (minstr ,))
 	else:
-		print '        *** FAILED (at least %s required)' % (minstr,)
+		print('        *** FAILED (at least %s required)' % (minstr,))
 
 ######################################################################
 ## scipy
 ######################################################################
-print '--------------------------------------------------------------'
-print 'scipy:'
-print '    importing scipy.optimize module...'
+print('--------------------------------------------------------------')
+print('scipy:')
+print('    importing scipy.optimize module...')
 try:
 	import scipy.optimize
 except ImportError:
-	print '    *** Failed to import scipy.optimize.  Install scipy first'
+	print('    *** Failed to import scipy.optimize.  Install scipy first')
 else:
 	try:
-		print '      testing for leastsq function...'
+		print('      testing for leastsq function...')
 		scipy.optimize.leastsq
-		print '       OK'
+		print('       OK')
 	except:
-		print '        *** FAILED: need version of scipy.optimize with leastsq'
+		print('        *** FAILED: need version of scipy.optimize with leastsq')
 		
 ######################################################################
 ## wxPython
 ######################################################################
 minwxver = (2, 5, 2, 8)
 minstr = '.'.join(map(str, minwxver))
-print '--------------------------------------------------------------'
-print 'wxPython:'
-print '    importing wx module...'
+print('--------------------------------------------------------------')
+print('wxPython:')
+print('    importing wx module...')
 try:
 	import wx
 except ImportError:
-	print '    *** Failed to import wx.  Install wxPython version %s or greater' % (minstr,)
+	print('    *** Failed to import wx.  Install wxPython version %s or greater' % (minstr,))
 
 else:
 	## check version
@@ -193,18 +193,18 @@ else:
 		mystr = wx.__version__
 		if mystr[-1] == 'u':
 			mystr = mystr[:-1]
-		mywxver = map(int, mystr.split('.'))
+		mywxver = list(map(int, mystr.split('.')))
 	except:
 		## OLDER VERSIONS
 		mywxver = wx.VERSION[:4]
 		mystr = '.'.join(map(str, mywxver))
 
-	print '    wxPython version: %s' % (mystr,)
+	print('    wxPython version: %s' % (mystr,))
 	if not versionAtLeast(mywxver, minwxver):
-		print '        *** FAILED (at least %s required)' % (minstr,)
+		print('        *** FAILED (at least %s required)' % (minstr,))
 
 	else:
-		print '        OK (at least %s required)' % (minstr ,)
+		print('        OK (at least %s required)' % (minstr ,))
 
 	## test a wx app
 		class MyApp(wx.App):
@@ -234,14 +234,14 @@ else:
 				return True
 
 			def test(self, evt):
-				print 'TEST'
+				print('TEST')
 				
-		print '    Testing a wxPython application.  Close the window that pops up...'
+		print('    Testing a wxPython application.  Close the window that pops up...')
 		try:
 			app = MyApp(0)
 			app.MainLoop()
 		except:
-			print '        Failed to start wx application.  This is usually because you do not have display permission'
-		print '    wxPython test successful'
+			print('        Failed to start wx application.  This is usually because you do not have display permission')
+		print('    wxPython test successful')
 
 

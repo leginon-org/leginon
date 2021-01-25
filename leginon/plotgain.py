@@ -22,12 +22,12 @@ def getGainInfo(gaindata,totalimages):
 	timelst=[]
 	templst=[]
 	gaindict={}
-	print "collecting image information"
+	print("collecting image information")
 	count=0
 	for imgdata in gaindata[-1*totalimages:]:
 		count+=1
 		if count%10==0:
-			print "image %d of %d" % (count,totalimages)
+			print("image %d of %d" % (count,totalimages))
 		refpath=imgdata['session']['image path']
 		refname=imgdata['filename']+'.mrc'
 		ref=os.path.join(refpath,refname)
@@ -47,7 +47,7 @@ def getGainInfo(gaindata,totalimages):
 			templst.append(temp)
 
 		except:
-			print "no data found for %s" % ref
+			print("no data found for %s" % ref)
 	gaindict['meanlst']=meanlst
 	gaindict['stdlst']=stdlst
 	gaindict['timelst']=timelst
@@ -63,20 +63,20 @@ if __name__ == '__main__':
 
 	darkq=leginondata.DarkImageData()
 	camq=leginondata.CameraEMData()
-	camq['binning']={'y':long(args.b),'x':long(args.b)}
-	camq['dimension']={'y': long(args.y), 'x': long(args.x)}
+	camq['binning']={'y':int(args.b),'x':int(args.b)}
+	camq['dimension']={'y': int(args.y), 'x': int(args.x)}
 	darkq['camera']=camq
-	print "querying dark images"
+	print("querying dark images")
 	darkdata=darkq.query(results=totalimages)
-	print len(darkdata), "dark images found"
+	print(len(darkdata), "dark images found")
 	darkdata.reverse()
 	darkd=getGainInfo(darkdata,totalimages)
 	
 	brightq=leginondata.BrightImageData()
 	brightq['camera']=camq
-	print "querying bright images"
+	print("querying bright images")
 	brightdata=brightq.query(results=totalimages)
-	print len(brightdata), "bright images found"
+	print(len(brightdata), "bright images found")
 	brightdata.reverse()
 	brightd=getGainInfo(brightdata,totalimages)
 

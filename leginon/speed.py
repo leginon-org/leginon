@@ -2,7 +2,7 @@
 
 import time
 import sys
-import SocketServer
+import socketserver
 import socket
 from pyami import correlator
 
@@ -17,7 +17,7 @@ except:
 	pass
 '''
 
-import cPickle
+import pickle
 import numextension
 import simtime
 
@@ -50,12 +50,12 @@ def timefunc(n, func, args):
 		t00 = time.time()
 		result = func(*args)
 		t11 = time.time()
-		print '        %7.3f' % (t11-t00,)
+		print('        %7.3f' % (t11-t00,))
 	t1 = time.time()
 	total = t1 - t0
 	percall = total / n
-	print ''
-	print '%7.3f %7.3f' % (total, percall)
+	print('')
+	print('%7.3f %7.3f' % (total, percall))
 	return result
 
 def randomImage(dim):
@@ -92,7 +92,7 @@ def timeSaveData(n, mb, filename):
 def timeSaveRandomData(n, mb, filename):
 	timefunc(n, saveRandomData, (mb, filename))
 
-class Handler(SocketServer.StreamRequestHandler):
+class Handler(socketserver.StreamRequestHandler):
 	'''
 	Handles requests separated by newline.
 	Request can either:
@@ -100,56 +100,56 @@ class Handler(SocketServer.StreamRequestHandler):
 	  - two integers separated by whitespace specifying size and binning
 	'''
 	def handle(self):
-		print 'REQUEST RECEIVED', time.time()
+		print('REQUEST RECEIVED', time.time())
 		request = self.rfile.readline()
-		config = map(int, request.split())
+		config = list(map(int, request.split()))
 
 		t0 = time.time()
 
 		data = self.server.acquire(config)
 		if data is None:
-			print 'received bad request:', request
+			print('received bad request:', request)
 			return
-		print 'SIZE', data.size()
-		print 'ITEMSIZE', data.itemsize()
+		print('SIZE', data.size())
+		print('ITEMSIZE', data.itemsize())
 		mb = int(data.size() * data.itemsize() / 1024.0 / 1024.0)
 
 		t1 = time.time()
 		t = t1 - t0
-		print 'generated data in %.3f sec' % (t,)
+		print('generated data in %.3f sec' % (t,))
 
-		print 'writing %d MB to socket...' % (mb,)
-		print 'DATA', data
+		print('writing %d MB to socket...' % (mb,))
+		print('DATA', data)
 
 		t0 = time.time()
-		print 'TTTTTTTTTTT', time.time()
+		print('TTTTTTTTTTT', time.time())
 
 		#s = data.tostring()
 		#self.wfile.write(s)
-		cPickle.dump(data, self.wfile, cPickle.HIGHEST_PROTOCOL)
+		pickle.dump(data, self.wfile, pickle.HIGHEST_PROTOCOL)
 
 		t1 = time.time()
 		t = t1-t0
 		rate = mb/t
-		print 'sent %d MB in %.3f sec... %.3f MB/sec' % (mb, t, rate)
+		print('sent %d MB in %.3f sec... %.3f MB/sec' % (mb, t, rate))
 
-class Server(SocketServer.TCPServer):
+class Server(socketserver.TCPServer):
 	def __init__(self, port):
 		try:
 			self.ccd = gatan.Gatan()
-			print 'Gatan initialized'
+			print('Gatan initialized')
 		except:
-			print '** Gatan initialization failed'
+			print('** Gatan initialization failed')
 			try:
 				self.ccd = tietz.TietzSCX()
-				print 'TietzSCX initialized'
+				print('TietzSCX initialized')
 			except:
-				print '** TietzSCX initialization failed.'
+				print('** TietzSCX initialization failed.')
 				self.ccd = None
-		SocketServer.TCPServer.__init__(self, ('',port), Handler)
+		socketserver.TCPServer.__init__(self, ('',port), Handler)
 
 	def fake(self, config):
-		print 'CONFIG', config
+		print('CONFIG', config)
 		dim,bin = config
 		'''
 		tr = simtime.tietzReadout(dim, bin, 0)
@@ -173,11 +173,11 @@ class Server(SocketServer.TCPServer):
 			self.ccd.setDimension({'x':dim, 'y':dim})
 			self.ccd.setBinning({'x':bin, 'y':bin})
 		except:
-			print '** Exception during camera config'
+			print('** Exception during camera config')
 			return None
 		try:
 			data = self.ccd.getImage()
-			print 'IMAGE', data.shape, data.type()
+			print('IMAGE', data.shape, data.type())
 		except:
 			data = None
 		return data
@@ -185,11 +185,11 @@ class Server(SocketServer.TCPServer):
 def serveData(port):
 	serv = Server(port)
 	#serv.handle_request()
-	print 'server waiting for requests'
+	print('server waiting for requests')
 	serv.serve_forever()
 
 def getData(host, port, int1, int2=None):
-	print 'connecting to ', host, port
+	print('connecting to ', host, port)
 	sock = socket.socket()
 	sock.connect((host, port))
 	f = sock.makefile('rwb')
@@ -199,18 +199,18 @@ def getData(host, port, int1, int2=None):
 	else:
 		request = '%d %d\n' % (int1,int2)
 
-	print 'requesting', request
+	print('requesting', request)
 	f.write(request)
-	print 'flush'
+	print('flush')
 	f.flush()
-	print 'REQUEST SENT', time.time()
-	print 'receiving data'
+	print('REQUEST SENT', time.time())
+	print('receiving data')
 
 	t0 = time.time()
 
 	#data = f.read()
-	data = cPickle.load(f)
-	print 'DATA', data
+	data = pickle.load(f)
+	print('DATA', data)
 
 	t1 = time.time()
 
@@ -218,13 +218,13 @@ def getData(host, port, int1, int2=None):
 	#print 'fromstring 0', time.time()
 	#data = num.fromstring(data, uint16)
 	#print 'fromstring 1', time.time()
-	print 'TTTTTTTTTTT', time.time()
+	print('TTTTTTTTTTT', time.time())
 	#data = num.fromfile(f, int32)
 
 	m = len(data) / 1024.0 / 1024.0
 	t = t1-t0
 	rate = m/t
-	print 'received data %.3f sec after request' % (t,)
+	print('received data %.3f sec after request' % (t,))
 	f.close()
 	sock.close()
 	return data
@@ -239,7 +239,7 @@ def timeGetSaveData(n, host, port, int1, int2, prefix):
 		filename = '%s%05d' % (prefix, i)
 		saveData(data, filename)
 		t1 = time.time()
-		print 'GetSave', t1-t0
+		print('GetSave', t1-t0)
 
 def stats(a):
 	ndimage.mean(a)

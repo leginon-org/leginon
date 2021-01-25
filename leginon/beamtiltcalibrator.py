@@ -15,13 +15,13 @@
 import numpy
 import math
 import threading
-import calibrator
-import calibrationclient
+from . import calibrator
+from . import calibrationclient
 from leginon import leginondata
 from pyami import imagefun
 from leginon import tableau
 from leginon import player
-import gui.wx.BeamTiltCalibrator
+from . import gui.wx.BeamTiltCalibrator
 import time
 
 class Abort(Exception):
@@ -90,7 +90,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 			tilt_value = self.settings['comafree beam tilt']
 			m_value = self.settings['comafree misalign']
 			matrix = calibration_client.measureMatrixC(m_value, tilt_value, settle=self.settings['settling time'])
-		except Exception, e:
+		except Exception as e:
 			self.logger.error('Calibration failed: %s' % e)
 			matrix = None
 		else:
@@ -116,7 +116,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 			shift_n = self.settings['imageshift coma number']
 			repeat = self.settings['imageshift coma repeat']
 			matrices = self.measureImageShiftAberrationMatrices(shift_n,shift_step,repeat, tilt_value, settle=self.settings['settling time'])
-		except Exception, e:
+		except Exception as e:
 			self.logger.error('Calibration failed: %s' % e)
 			matrices = None
 		else:
@@ -127,7 +127,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 			mag = self.instrument.tem.Magnification
 			ht = self.instrument.tem.HighTension
 			probe = self.instrument.tem.ProbeMode
-			for key in matrices.keys():
+			for key in list(matrices.keys()):
 				matrix = matrices[key]
 				self.logger.info('Storing image-shift %s calibration' % (key,))
 				calibration_client.storeMatrix(ht, mag, 'image-shift %s' % (key,), matrix, probe=probe)
@@ -143,7 +143,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		fake['beam tilt'] = {'x':[(0.00355495,-0.0236784),(0.00590004,-0.0213854),(0.00808952,-0.0189389)],'y':[(0.00329904,-0.0192235),(0.00585431,-0.0213466),(0.00822038,-0.023757)]}
 		fake['stig'] = {'x':[(-0.0047448,-0.0031997),(-0.012963,-0.0113492),(-0.0225249,-0.0163792)],'y':[(-0.0111456, -0.0247119),(-0.0131071,-0.0115893),(-0.0147681, 0.00236871)]}
 		fake['defocus'] = {'x':[3.14407e-6*2.429,2.358393e-6*2.429,1.64571e-6*2.429],'y':[2.00239e-6*2.429,2.33574e-6*2.429,2.90392e-6*2.429]}
-		for ab_type in fake.keys():
+		for ab_type in list(fake.keys()):
 			if type(fake[ab_type][axis][index]) == type(()):
 				newstate[ab_type] = {'x':fake[ab_type][axis][index][0],'y':fake[ab_type][axis][index][1]}
 			else:
@@ -183,7 +183,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 					self.setPreMeasureState()
 					try:
 						last_calibration = self.getCurrentNoMagCalibration()
-					except calibrationclient.NoMatrixCalibrationError, e:
+					except calibrationclient.NoMatrixCalibrationError as e:
 						pass
 					try:
 						self.btcalclient.correctImageShiftComa()
@@ -222,7 +222,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 					self.resetState()
 					self.instrument.tem.ImageShift = shift0
 					# measured value is the correction needed to remove coma.
-					for ab_type in newstate.keys():
+					for ab_type in list(newstate.keys()):
 						value = newstate[ab_type]
 						if ab_type == 'defocus':
 							data[ab_type]['x'].append(-value)
@@ -234,7 +234,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 				tdict[axis] = tdata
 				xydict[axis] = data
 			matrices, ab0s = self.calculateImageShiftAberrationMatrix(tdict,xydict)
-		except ValueError, e:
+		except ValueError as e:
 			self.logger.warning('Aborting calibration....')
 			self.resetState()
 			self.instrument.tem.ImageShift = shift0
@@ -312,7 +312,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		if correctshift:
 			try:
 				calibration_client.correctImageShiftComa()
-			except Exception, e:
+			except Exception as e:
 				self.logger.error('Correction failed: %s' % e)
 				self.panel.comaMeasurementDone(self.comameasurement)
 				return
@@ -321,7 +321,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 			#comatilt = {'x':cftiltsx.mean(),'y':cftiltsy.mean()}
 			comatilt = self.readComaFree()
 			self.comameasurement = comatilt
-		except Exception, e:
+		except Exception as e:
 			self.logger.error('ComaFree Measurement failed: %s' % e)
 		self.instrument.tem.BeamTilt = tilt0
 		self.panel.comaMeasurementDone(self.comameasurement)
@@ -338,7 +338,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		self.logger.info('Correcting beam tilt...')
 		try:
 			self._correctComaTilt()
-		except Exception, e:
+		except Exception as e:
 			self.logger.exception('Correction failed: %s' % e)
 		else:
 			self.logger.info('Correction completed')
@@ -389,7 +389,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		self.logger.info('Calibrating defocus...')
 		try:
 			self._calibrateDefocus(beam_tilt, defocii)
-		except Exception, e:
+		except Exception as e:
 			self.logger.error('Calibration failed: %s' % e)
 		else:
 			self.logger.info('Calibration completed')
@@ -455,7 +455,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		self.logger.info('Calibrating objective stigmator...')
 		try:
 			self._calibrateStigmator(beam_tilt, delta)
-		except Exception, e:
+		except Exception as e:
 			self.logger.error('Calibration failed: %s' % e)
 		else:
 			self.logger.info('Calibration completed')
@@ -506,7 +506,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		self.logger.info('Measuring defocus and objective stigmator...')
 		try:
 			args = self._measure(beam_tilt, correct_tilt)
-		except Exception, e:
+		except Exception as e:
 			args = (None, {})
 			self.logger.exception('Measurement failed: %s' % e)
 		else:
@@ -525,7 +525,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		self.logger.info('Correcting defocus...')
 		try:
 			self._correctDefocus()
-		except Exception, e:
+		except Exception as e:
 			self.logger.exception('Correction failed: %s' % e)
 		else:
 			self.logger.info('Correction completed')
@@ -545,7 +545,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		self.logger.info('Correcting objective stigmator...')
 		try:
 			self._correctStigmator()
-		except Exception, e:
+		except Exception as e:
 			self.logger.exception('Correction failed: %s' % e)
 		else:
 			self.logger.info('Correction completed')
@@ -555,7 +555,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 	def resetDefocus(self):
 		try:
 			self.instrument.tem.resetDefocus()
-		except Exception, e:
+		except Exception as e:
 			self.logger.error('Reset defocus failed: %s' % e)
 		else:
 			self.logger.info('Defocus reset')
@@ -577,7 +577,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 	def eucentricFocusToScope(self):
 		try:
 			self._eucentricFocusToScope()
-		except Exception, e:
+		except Exception as e:
 			self.logger.error('Set eucentric focus failed: %s' % e)
 		else:
 			self.logger.info('Set eucentric focus')
@@ -596,7 +596,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 	def eucentricFocusFromScope(self):
 		try:
 			self._eucentricFocusFromScope()
-		except Exception, e:
+		except Exception as e:
 			self.logger.error('Unable to get eucentric focus: %s' % e)
 		else:
 			self.logger.info('Saved eucentric focus')
@@ -618,13 +618,13 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		'''
 		try:
 			calibrationdata = self.getCurrentNoMagCalibration()
-		except calibrationclient.NoMatrixCalibrationError, e:
+		except calibrationclient.NoMatrixCalibrationError as e:
 			if e.state is None:
 				raise e
 			else:
 				self.logger.warning('No calibration found for current state: %s' % e)
 				calibrationdata = e.state
-		except Exception, e:
+		except Exception as e:
 			self.logger.error('Calibration edit failed: %s' % e)
 			return
 		self.panel.editCalibration(calibrationdata)
@@ -633,7 +633,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		try:
 			kwargs = self.getCurrentFocusCalibration()
 			self.panel.editFocusCalibration(**kwargs)
-		except Exception, e:
+		except Exception as e:
 			self.logger.error('Calibration edit failed: %s' % e)
 			return
 
@@ -670,19 +670,19 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		try:
 			matrix_data = client.researchMatrix(tem, ccd_camera, parameter, high_tension, magnification, probe)
 			matrix = matrix_data['matrix']
-		except Exception, e:
+		except Exception as e:
 			self.logger.warning(m % ('focus', e))
 			matrix = None
 		try:
 			rotation_center = client.retrieveRotationCenter(tem, high_tension, magnification, probe)
-		except Exception, e:
+		except Exception as e:
 			self.logger.warning(m % ('rotation center', e))
 			rotation_center = None
 		client = self.calibration_clients['eucentric focus']
 		try:
 			eucentric_focus_data = client.researchEucentricFocus(high_tension, magnification, probe, tem=tem, ccdcamera=ccd_camera)
 			eucentric_focus = eucentric_focus_data['focus']
-		except Exception, e:
+		except Exception as e:
 			self.logger.warning(m % ('eucentric focus', e))
 			eucentric_focus = None
 		kwargs = {

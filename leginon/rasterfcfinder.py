@@ -6,8 +6,8 @@
 #  "An approach to automated acquisition of cryoEM images from lacey
 #  carbon grids."
 
-import leginondata
-import targetfinder
+from . import leginondata
+from . import targetfinder
 # WVN 19/1/08 - changes borrowed from v.1.4.1 rasterfinder.py
 # Apart from below changes in imports, other changes were in
 # readImage (removed from rasterfinder), transpose_points(removed),
@@ -18,17 +18,17 @@ import targetfinder
 # rewrites were required in overridden ice method.
 #
 import threading
-import ice
+from . import ice
 import numpy
 from pyami import arraystats
-import gui.wx.RasterFCFinder
-import polygon
+from . import gui.wx.RasterFCFinder
+from . import polygon
 import itertools
 
 import math
 
 # WVN 12/8/07
-import rasterfinder
+from . import rasterfinder
 
 # WVN 1/4/07 RasterFCFinder - based on RasterFinder
 
@@ -110,7 +110,7 @@ class RasterFCFinder(rasterfinder.RasterFinder):
 
 		# activate if counter is at a multiple of interval
 		interval = self.settings['focus interval']
-		if interval and not (self.foc_counter.next() % interval):
+		if interval and not (next(self.foc_counter) % interval):
 			self.foc_activated = True
 		else:
 			self.foc_activated = False
@@ -174,7 +174,7 @@ class RasterFCFinder(rasterfinder.RasterFinder):
 			bestFocusIndex = circFocusPointsMean.index(bestFocusMean)
 			bestFocusPoint = circFocusPoints[bestFocusIndex]
 			focus_points.append(bestFocusPoint)
-			print "Best focus point on circle: ", bestFocusPoint
+			print("Best focus point on circle: ", bestFocusPoint)
 		# WVN - end of my code
 
 		self.setTargets(acq_points, 'acquisition', block=True)

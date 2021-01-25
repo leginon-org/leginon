@@ -19,7 +19,7 @@ def eventClasses():
 	"""
 	eventclasses = {}
 	all_attrs = globals()
-	for name,value in all_attrs.items():
+	for name,value in list(all_attrs.items()):
 		if type(value) == type:
 			if issubclass(value, Event):
 				eventclasses[name] = value
@@ -560,7 +560,7 @@ class UpdatePresetEvent(Event):
 # generate the mapping of data class to publish event class
 publish_events = {}
 event_classes = eventClasses()
-for eventclass in event_classes.values():
+for eventclass in list(event_classes.values()):
 	if issubclass(eventclass, PublishEvent):
 		if hasattr(eventclass, 'dataclass'):
 			publish_events[eventclass.dataclass] = eventclass
@@ -574,7 +574,7 @@ class InvalidEventError(TypeError):
 # generate the mapping of data class to publish event class
 publish_events = {}
 event_classes = eventClasses()
-for eventclass in event_classes.values():
+for eventclass in list(event_classes.values()):
 	if issubclass(eventclass, PublishEvent):
 		if hasattr(eventclass, 'dataclass'):
 			if eventclass.dataclass in publish_events:

@@ -82,11 +82,11 @@ def centralPoints(points, count=3):
 if __name__ == '__main__':
 	import numpy
 	points = numpy.array([[0, 0], [0, 1], [0, 2], [1, 0], [1, 1], [2, 0], [2, 1], [2, 2]])
-	print len(points), points[0]
+	print(len(points), points[0])
 	vpoints = pointsToVoronoiPoints(points)
-	print vpoints
-	print len(vpoints), vpoints[0]
-	print centralPoints(vpoints)
+	print(vpoints)
+	print(len(vpoints), vpoints[0])
+	print(centralPoints(vpoints))
 	vor = Voronoi(points)
 	from matplotlib import pyplot
 	from scipy.spatial import voronoi_plot_2d

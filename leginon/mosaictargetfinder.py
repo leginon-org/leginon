@@ -6,29 +6,29 @@
 #       see  http://leginon.org
 #
 
-import calibrationclient
+from . import calibrationclient
 from leginon import leginondata
 from leginon import project
-import event
-import instrument
-import imagewatcher
-import mosaic
+from . import event
+from . import instrument
+from . import imagewatcher
+from . import mosaic
 import threading
-import node
-import targethandler
+from . import node
+from . import targethandler
 from pyami import convolver, imagefun, mrc, ordereddict, affine
 import numpy
 import pyami.quietscipy
 import scipy.ndimage as nd
-import gui.wx.MosaicClickTargetFinder
+from . import gui.wx.MosaicClickTargetFinder
 import os
 import math
-import polygon
-import raster
-import presets
+from . import polygon
+from . import raster
+from . import presets
 import time
-import targetfinder
-import imagehandler
+from . import targetfinder
+from . import imagehandler
 
 try:
 	set = set
@@ -222,7 +222,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.getTargetDataList('preview')
 		try:
 			self.publish(self.targetlist, pubevent=True)
-		except node.PublishError, e:
+		except node.PublishError as e:
 			self.logger.error('Submitting acquisition targets failed')
 		else:
 			self.logger.info('Acquisition targets submitted on %s' % self.getMosaicLabel())
@@ -231,7 +231,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		if reference_target is not None:
 			try:
 				self.publish(reference_target, database=True, pubevent=True)
-			except node.PublishError, e:
+			except node.PublishError as e:
 				self.logger.error('Submitting reference target failed')
 			else:
 				self.logger.info('Reference target submitted on %s' % self.getMosaicLabel())
@@ -281,7 +281,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		return targetlist, onetargetmap
 
 	def hasNewImageVersion(self):
-		for id, imagedata in self.imagemap.items():
+		for id, imagedata in list(self.imagemap.items()):
 			recent_imagedata = self.researchImages(list=imagedata['list'],target=imagedata['target'])[-1]
 			if recent_imagedata.dbid != imagedata.dbid:
 				return True
@@ -291,7 +291,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		'''
 		This function sets the most recent version of the targets in targetmap and reference target.
 		'''
-		for id, imagedata in self.imagemap.items():
+		for id, imagedata in list(self.imagemap.items()):
 			recent_imagedata = self.researchImages(list=imagedata['list'],target=imagedata['target'])[-1]
 			self.targetmap[id] = {}
 			for type in ('acquisition','focus'):
@@ -325,7 +325,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		Does not work if calibration parameter is image shift
 		'''
 		try:
-			image = self.imagemap.values()[0]
+			image = list(self.imagemap.values())[0]
 		except:
 			self.logger.exception('Need tiles and mosaic image')
 			return
@@ -373,8 +373,8 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		donedict = {}
 		for ttype in ('acquisition','focus'):
 			targets[ttype] = []
-			for id, targetlists in targetmap.items():
-				if ttype not in targetlists.keys():
+			for id, targetlists in list(targetmap.items()):
+				if ttype not in list(targetlists.keys()):
 					targetlist = []
 				else:
 					targetlist = targetlists[ttype]
@@ -396,7 +396,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 						# other status ignored (mainly NULL)
 						pass
 		# sort donetargets by target number
-		donekeys = donedict.keys()
+		donekeys = list(donedict.keys())
 		donekeys.sort()
 		for k in donekeys:
 			donetargets.append(donedict[k])
@@ -422,7 +422,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 
 		#
 		targets, donetargets = self.createExistingPositionTargets()
-		for ttype in targets.keys():
+		for ttype in list(targets.keys()):
 			self.setTargets(targets[ttype], ttype)
 		self.setTargets(donetargets, 'done')
 
@@ -552,7 +552,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 
 	def getMosaicNames(self):
 		self.researchMosaicTileData()
-		return self.mosaicselections.keys()
+		return list(self.mosaicselections.keys())
 
 	def setMosaicName(self, mosaicname):
 		self.mosaicname = mosaicname
@@ -594,7 +594,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		except KeyError:
 			# new inbound mosaic is not in selectionmapping. Refresh the list and try again
 			self.researchMosaicTileData()
-			if mosaicname not in self.mosaicselections.keys():
+			if mosaicname not in list(self.mosaicselections.keys()):
 				raise ValueError
 			else:
 				tile_imagelist = self.mosaicselections[mosaicname]
@@ -685,7 +685,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.mosaicimagescale = maxdim
 		try:
 			self.mosaicimage = self.mosaic.getMosaicImage(maxdim)
-		except Exception, e:
+		except Exception as e:
 			self.logger.error('Failed Creating mosaic image: %s' % e)
 		self.mosaicimagedata = None
 
@@ -730,7 +730,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		Get names of old mosaic for gui.
 		'''
 		self.researchAlignerOldMosaicTileData()
-		return self.oldmosaicselections.keys()
+		return list(self.oldmosaicselections.keys())
 
 	def setAlignerOldMosaic(self, mosaicname):
 		'''
@@ -773,8 +773,8 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		'''
 		Calculate Affine transformation matrix from list of matching points.
 		'''
-		points1 = map((lambda t: (t.x,t.y)),targets1)
-		points2 = map((lambda t: (t.x,t.y)),targets2)
+		points1 = list(map((lambda t: (t.x,t.y)),targets1))
+		points2 = list(map((lambda t: (t.x,t.y)),targets2))
 		if len(points1) < 3:
 			A = numpy.matrix([(1,0,0),(0,1,0),(0,0,1)])
 			residule = 0.0
@@ -789,7 +789,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		'''
 		if not targets1:
 			return []
-		points1 = map((lambda t: (t.x,t.y)),targets1)
+		points1 = list(map((lambda t: (t.x,t.y)),targets1))
 		points2 = affine.transformImageTargets(affine_matrix, points1)
 		return points2
 
@@ -923,7 +923,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		prefs = self.storeSquareFinderPrefs()
 		rows, columns = image.shape
 		if blobs:
-			blob_sizes = numpy.array(map((lambda x: x.stats['n']),blobs))
+			blob_sizes = numpy.array(list(map((lambda x: x.stats['n']),blobs)))
 			self.logger.info('Mean blob size is %.1f' % ( blob_sizes.mean(),))
 		for blob in blobs:
 			row = blob.stats['center'][0]

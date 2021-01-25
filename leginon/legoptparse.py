@@ -15,8 +15,8 @@ parser.add_option('-p', '--prevapp', action='store_true', dest='prevapp',
 (options, args) = parser.parse_args()
 
 if options.version:
-	import version
-	print 'Leginon version: %s' % (version.getVersion(),)
-	print '   Installed in: %s' % (version.getInstalledLocation(),)
+	from . import version
+	print('Leginon version: %s' % (version.getVersion(),))
+	print('   Installed in: %s' % (version.getInstalledLocation(),))
 	sys.exit()
 

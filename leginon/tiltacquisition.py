@@ -7,9 +7,9 @@
 #
 
 import math
-import acquisition
-import leginondata
-import gui.wx.TiltAcquisition
+from . import acquisition
+from . import leginondata
+from . import gui.wx.TiltAcquisition
 
 class TiltAcquisition(acquisition.Acquisition):
 	panelclass = gui.wx.TiltAcquisition.Panel

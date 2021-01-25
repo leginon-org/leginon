@@ -7,9 +7,9 @@
 #
 import math
 import time
-import moveacquisition
-import leginondata
-import gui.wx.MoveAlphaAcquisition
+from . import moveacquisition
+from . import leginondata
+from . import gui.wx.MoveAlphaAcquisition
 import threading
 
 debug = False
@@ -44,7 +44,7 @@ class MoveAlphaAcquisition(moveacquisition.MoveAcquisition):
 		for i in range(nsteps):
 			move_values.append(p0['a']+(i+1)*tilt_increment)
 		step_time = self.settings['total move time'] / nsteps
-		return map((lambda x: (x,step_time)), move_values)
+		return list(map((lambda x: (x,step_time)), move_values))
 
 	def moveToValue(self, move_times):
 		p0 =self.getStageValue()

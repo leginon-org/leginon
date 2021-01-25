@@ -6,7 +6,7 @@
 #       see  http://leginon.org
 #
 from wxPython.wx import *
-import gui.wx.ImagePanel
+from . import gui.wx.ImagePanel
 import Numeric
 import math
 
@@ -75,8 +75,8 @@ class CompositeImageMaker(object):
 		targets = []
 		sign = 1
 		for n, i in enumerate(images):
-			xs = range(-sign*self.imagesize*(i - 1)/2, sign*self.imagesize*(i + 1)/2,
-									sign*self.imagesize)
+			xs = list(range(-sign*self.imagesize*(i - 1)/2, sign*self.imagesize*(i + 1)/2,
+									sign*self.imagesize))
 			y = n*512
 			for x in xs:
 				targets.insert(0, (x, y))
@@ -98,7 +98,7 @@ class CompositeImageMaker(object):
 			try:
 				numericimage[i, j] = 256
 			except IndexError:
-				print i, j
+				print(i, j)
 			halfimagesize = int(round(self.imagesize/self.scale/2.0))
 			right = halfimagesize - j - 1
 			left = halfimagesize + j + 1

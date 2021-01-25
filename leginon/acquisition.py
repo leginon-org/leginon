@@ -10,28 +10,28 @@ Acquisition node is a TargetWatcher, so it receives either an ImageTargetData
 or an ImageTargetListData.  The method processTargetData is called on each
 ImageTargetData.
 '''
-import targetwatcher
+from . import targetwatcher
 import time
 from leginon import leginondata
-import event
-import calibrationclient
-import presets
+from . import event
+from . import calibrationclient
+from . import presets
 import copy
 import threading
-import node
-import instrument
-import gui.wx.Acquisition
-import gui.wx.Presets
-import navigator
-import appclient
+from . import node
+from . import instrument
+from . import gui.wx.Acquisition
+from . import gui.wx.Presets
+from . import navigator
+from . import appclient
 import numpy
 import numpy.linalg
 import math
 from pyami import arraystats, imagefun, ordereddict
 import smtplib
-import emailnotification
-import leginonconfig
-import gridlabeler
+from . import emailnotification
+from . import leginonconfig
+from . import gridlabeler
 import itertools
 
 debug = False
@@ -236,7 +236,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.requested_drift = None
 		self.grid = None
 		self.pp_used = None
-		self.acq_counter = itertools.cycle(range(0,5))
+		self.acq_counter = itertools.cycle(list(range(0,5)))
 		self.time0 = time.time()
 		self.times = []
 		self.intensities = []
@@ -344,7 +344,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			'x': (-9.9e-4, 9.9e-4),
 			'y': (-9.9e-4, 9.9e-4),
 		}
-		for axis, limits in stagelimits.items():
+		for axis, limits in list(stagelimits.items()):
 			if stageposition[axis] < limits[0] or stageposition[axis] > limits[1]:
 				pstr = '%s: %g' % (axis, stageposition[axis])
 				messagestr = 'Aborting target: stage position %s out of range' % pstr
@@ -915,11 +915,11 @@ class Acquisition(targetwatcher.TargetWatcher):
 			except:
 				tnum = None
 				tkey = None
-			print tnum, 'MOVEANDPRESETPAUSE START'
+			print(tnum, 'MOVEANDPRESETPAUSE START')
 			t0 = time.time()
 			self.timedebug[tkey] = t0
 			if 'consecutive' in self.timedebug:
-				print tnum, '************************************* CONSECUTIVE', t0 - self.timedebug['consecutive']
+				print(tnum, '************************************* CONSECUTIVE', t0 - self.timedebug['consecutive'])
 			self.timedebug['consecutive'] = t0
 
 		pausetime = self.settings['pause time']
@@ -945,7 +945,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.is_firstimage = False
 
 		if debug:
-			print tnum, 'MOVEANDPRESETPAUSE DONE', time.time() - t0
+			print(tnum, 'MOVEANDPRESETPAUSE DONE', time.time() - t0)
 
 		## pre-exposure
 		pretime = presetdata['pre exposure']
@@ -995,7 +995,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			except:
 				tnum = None
 				tkey = None
-			print tnum, 'APDW START'
+			print(tnum, 'APDW START')
 			t0 = time.time()
 
 		self.retry_count = 0
@@ -1019,10 +1019,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.publishDisplayWait(imagedata)
 
 		if debug:
-			print tnum, 'APDW DONE', time.time() - t0
+			print(tnum, 'APDW DONE', time.time() - t0)
 			ttt = time.time() - self.timedebug[tkey]
 			del self.timedebug[tkey]
-			print tnum, '************* TOTAL ***', ttt
+			print(tnum, '************* TOTAL ***', ttt)
 
 	def resetComaCorrection(self):
 		'''
@@ -1216,7 +1216,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		s.sendmail(leginonconfig.emailfrom, leginonconfig.emailto, mes.as_string())
 
 	def pauseAndRecheck(self,pausetime):
-		recheck_count = self.recheck_counter.next()
+		recheck_count = next(self.recheck_counter)
 		self.logger.info('Pausing for %d s before checking again at %d' % (pausetime,recheck_count))
 		time.sleep(pausetime)
 		## acquire image
@@ -1334,10 +1334,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.publish(imdata, pubevent=True)
 
 	def waitForImageProcessDone(self):
-		imageids = self.doneevents.keys()
-		imageidstrs = map(str, imageids)
+		imageids = list(self.doneevents.keys())
+		imageidstrs = list(map(str, imageids))
 		# wait for image processing nodes to complete
-		for id, eventinfo in self.doneevents.items():
+		for id, eventinfo in list(self.doneevents.items()):
 			self.reportStatus('processing', 'Waiting for %s to be processed' % (id,))
 			eventinfo['received'].wait()
 			idstr = str(id)
@@ -1529,7 +1529,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 	def getMoveTypes(self):
 		movetypes = []
-		for key, value in self.calclients.items():
+		for key, value in list(self.calclients.items()):
 			if value.mover:
 				movetypes.append(key)
 		return movetypes

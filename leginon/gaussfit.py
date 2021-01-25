@@ -40,10 +40,10 @@ if __name__ == '__main__':
 	import numpy.random
 	testim = numpy.random.normal(1,1,(5,5))
 	#testim = gaussian_image((5,5), 1.0, 2, 1.5, 3.5, 2.3)
-	print 'TESTIM', testim
+	print('TESTIM', testim)
 	'''
 	testim[4,4] += 1.1
 	print 'TESTIM', testim
 	'''
 	solution = gaussfit(testim)
-	print 'SOLUTION', solution
+	print('SOLUTION', solution)

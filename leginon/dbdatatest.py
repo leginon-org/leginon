@@ -58,7 +58,7 @@ dbdk = dbdatakeeper.DBDataKeeper(('dbdk',1), 'testsession')
 if 1:
 	dbdk.insert(mydata)
 	dbdk.insert(mydata2)
-	print 'INSERTED:'
+	print('INSERTED:')
 	printdata(mydata)
 	printdata(mydata2)
 
@@ -80,12 +80,12 @@ mydata3['camera'] = cameradict3
 result = dbdk.query(mydata3)
 
 if 0:
-	print 'RESULT'
+	print('RESULT')
 	for d in result:
 		printdata(d)
-		print 'compare mydata'
+		print('compare mydata')
 		printcompare(d, mydata)
-		print 'compare mydata2'
+		print('compare mydata2')
 		printcompare(d, mydata2)
 
 sys.exit()
@@ -115,9 +115,9 @@ import random
 ### this is the function is never called directly
 ### It is called inside the replaceData() call below
 def testfunc(mydata):
-	print 'TESTFUNC'
-	print mydata
-	print ''
+	print('TESTFUNC')
+	print(mydata)
+	print('')
 
 	mylist.append(mydata)
 
@@ -136,5 +136,5 @@ def testfunc(mydata):
 ## this should be called either in dbdatakeeper or at a lower level
 funcinfo = mydata.replaceData(testfunc)
 
-print 'MYLIST'
-print mylist
+print('MYLIST')
+print(mylist)

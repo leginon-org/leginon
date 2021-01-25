@@ -32,7 +32,7 @@ try:
 except:
 	if not NO_REQUESTS:
 		# Don't want it to crash here.
-		print 'remote.cfg does not exist. Remote disabled'
+		print('remote.cfg does not exist. Remote disabled')
 
 class RemoteServerMaster(object):
 	'''
@@ -96,7 +96,7 @@ class RemoteSessionServer(object):
 
 	def getMediaSessionPath(self):
 		media_session_rawdata_path = self.session['image path']
-		for k in self.media_maps.keys():
+		for k in list(self.media_maps.keys()):
 			# a bit complicated because module config key is all lower case
 			pattern_index = self.session['image path'].lower().find(k)
 			if pattern_index < 0:
@@ -173,20 +173,20 @@ class RemoteSessionServer(object):
 				self.logger.error('Error communicating with webserver for leginon-remote: code %s' % (answer.status_code))
 			except AttributeError:
 				# display in the terminal if logger is not ready
-				print('Error before logger is up in communication to leginon-remote: %s %s' % (answer.status_code, answer.reason))
+				print(('Error before logger is up in communication to leginon-remote: %s %s' % (answer.status_code, answer.reason)))
 			return False
 
 	def _processDataToSend(self, data):
 		'''
 		Process data before sending for POST. For example, add session_name.
 		'''
-		if not 'session_name' in data.keys():
+		if not 'session_name' in list(data.keys()):
 			data['session_name'] = self.session['name']
 		return data
 
 	def _processParamsToSend(self, data):
 		params = []
-		for k in data.keys():
+		for k in list(data.keys()):
 			v='%s=%s' % (k,data[k],)
 			params.append(v)
 		return '&'.join(params)
@@ -224,7 +224,7 @@ class RemoteSessionServer(object):
 		answer = requests.get(url=url, auth=self.leg_remote_auth)
 		#print 'got answer from ', url
 		queryset = self._processResponse(answer)
-		if hasattr(queryset,'keys') and 'results' in queryset.keys():
+		if hasattr(queryset,'keys') and 'results' in list(queryset.keys()):
 			# success results
 			return queryset['results']
 		# with error this will be False
@@ -388,7 +388,7 @@ class RemoteToolbar(RemoteNodeServer):
 		self.tool_configs = {}
 
 	def addClickTool(self,name, handling_attr_name, help_string='',block_rule='none'):
-		if not name in self.tools.keys():
+		if not name in list(self.tools.keys()):
 			self.tools[name] = ClickTool(self, name, handling_attr_name, help_string, block_rule)
 			self.tool_configs[name] = self.tools[name].tool_config
 		else:
@@ -419,7 +419,7 @@ class RemoteToolbar(RemoteNodeServer):
 		return self.post(self.router_name, data)
 
 	def exit(self):
-		for name in self.tools.keys():
+		for name in list(self.tools.keys()):
 			# deactivate first to stop tracking
 			self.tools[name].deActivate()
 			time.sleep(1)
@@ -664,7 +664,7 @@ class RemoteTargetingServer(RemoteNodeServer):
 		'''
 		target_data = {}
 		# dictionary { targetname:(x,y), }. x,y are floats to keep the precision
-		for name in xy_tuple_targets.keys():
+		for name in list(xy_tuple_targets.keys()):
 			target_data[name] = []
 			for xy in xy_tuple_targets[name]:
 				targetdict = {'x':xy[0],'y':xy[1]}
@@ -694,13 +694,13 @@ class RemoteTargetingServer(RemoteNodeServer):
 			# convert coordinates to tuple
 			target_data = results[0]['targets']
 			xy_tuple_targets = {}
-			for name in target_data.keys():
+			for name in list(target_data.keys()):
 				xy_tuple_targets[name] = []
 				for targetdict in target_data[name]:
 					xy_tuple = (targetdict['x'], targetdict['y'])
 					xy_tuple_targets[name].append(targetdict)
 			return xy_tuple_targets
-		except Exception,e:
+		except Exception as e:
 			self.logger.error(e)
 			# return False causes this function to be called again
 			return False
@@ -741,7 +741,7 @@ class RemoteTargetingServer(RemoteNodeServer):
 		'''
 		if xys is False:
 			return
-		for tname in xys.keys():
+		for tname in list(xys.keys()):
 			if 'w' not in self.getAccessType(tname):
 				del xys[tname]
 		return xys

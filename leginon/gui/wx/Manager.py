@@ -117,7 +117,7 @@ class App(wx.App):
 		try:
 			self.manager = manager.Manager(self.session, self.tcpport,
 											**self.kwargs)
-		except Exception, e:
+		except Exception as e:
 			dialog = wx.MessageDialog(None,
 									  'Unable to start Leginon: %s.' % e,
 									  'Error',
@@ -652,9 +652,9 @@ class BindEventDialog(wx.Dialog):
 																									wx.ALIGN_CENTER_VERTICAL)
 
 		self.fromlistbox = wx.ListBox(self, -1, choices=nodenames)
-		self.unboundeventlistbox = wx.ListBox(self, -1, choices=eventclasses.keys(),
+		self.unboundeventlistbox = wx.ListBox(self, -1, choices=list(eventclasses.keys()),
 																					style=wx.LB_SORT)
-		self.boundeventlistbox = wx.ListBox(self, -1, choices=eventclasses.keys(),
+		self.boundeventlistbox = wx.ListBox(self, -1, choices=list(eventclasses.keys()),
 																				style=wx.LB_SORT)
 		self.tolistbox = wx.ListBox(self, -1, choices=nodenames)
 		sizer.Add(self.fromlistbox, (2, 0), (4, 1), wx.EXPAND)
@@ -772,7 +772,7 @@ class RunApplicationDialog(wx.Dialog):
 		if recentapps:
 			self.appchoice = wx.Choice(self, -1, choices=recentapps)
 		else:
-			self.appchoice = wx.Choice(self, -1, choices=apps.keys())
+			self.appchoice = wx.Choice(self, -1, choices=list(apps.keys()))
 		self.sizer.Add(self.appchoice, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.launchersizer = None
 		self.launcherlabels = []
@@ -803,7 +803,7 @@ class RunApplicationDialog(wx.Dialog):
 	def onShowAll(self, evt):
 		tmp = list(self.recent)
 		tmp.reverse()
-		names = self.apps.keys()
+		names = list(self.apps.keys())
 		for n in tmp:
 			if n in names:
 				names.remove(n)
@@ -833,7 +833,7 @@ class RunApplicationDialog(wx.Dialog):
 			self.sizer.Remove(self.launchersizer)
 			for label in self.launcherlabels:
 				label.Destroy()
-			for choice in self.launcherchoices.values():
+			for choice in list(self.launcherchoices.values()):
 				choice.Destroy()
 			self.launchersizer = None
 			self.launcherlabels = []
@@ -862,7 +862,7 @@ class RunApplicationDialog(wx.Dialog):
 		self.Fit()
 
 	def getValues(self):
-		for alias, choice in self.launcherchoices.items():
+		for alias, choice in list(self.launcherchoices.items()):
 			self.app.setLauncherAlias(alias, choice.GetStringSelection())
 		return self.app
 

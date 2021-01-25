@@ -116,11 +116,11 @@ class XMLApplicationExport:
 				kname = sqldb.addbackquotes(kname)
 			if key['Non_unique']==0 and kname!='PRIMARY':
 				kname = "UNIQUE|%s" % (kname,)
-			if not keys_dict.has_key(kname):
+			if kname not in keys_dict:
 				keys_dict[kname]=[]
 			keys_dict[kname].append(sqldb.addbackquotes(key['Column_name']))
 
-		for key,value in keys_dict.items():
+		for key,value in list(keys_dict.items()):
 			schema_create += '    <key>'
 			value_str = ', '.join(value)
 			if key=='PRIMARY':
@@ -165,7 +165,7 @@ class XMLApplicationExport:
 		results = self.db.selectall(q)
 		for result in results:
 			data += '    <sqltable name="%s">%s' % (table,self.crlf)
-			for k,v in result.items():
+			for k,v in list(result.items()):
 				if k=='DEF_timestamp':
 					v = v.strftime('%Y%m%d%H%M%S')
 				data += '        <field name="%s" >%s</field>%s' % (k,v,self.crlf)
@@ -234,7 +234,7 @@ class XMLApplicationImport:
 			if n.nodeName == 'field':
 				d = n.attributes
 				fname = self.getAttribute(d, 'name')
-				if conditions.has_key(fname):
+				if fname in conditions:
 					fvalue = conditions[fname]
 				elif n.firstChild is not None:
 					fvalue = "'%s'" % (sqldb.escape(n.firstChild.data),)
@@ -243,7 +243,7 @@ class XMLApplicationImport:
 
 				fieldvalues[fname]=fvalue
 
-				if fname <> 'DEF_id':
+				if fname != 'DEF_id':
 					fields.append(sqldb.addbackquotes(fname))
 					values.append(fvalue)
 
@@ -274,7 +274,7 @@ class XMLApplicationImport:
 		self.cursqldef = sqldef
 
 	def getAttribute(self, attributes, key):
-		if attributes.has_key(key):
+		if key in attributes:
 			return attributes[key].value
 		else:
 			return ""
@@ -300,7 +300,7 @@ class ImportExport:
 	def importApplication(self, filename):
 		try:
 			xmlapp = XMLApplicationImport(filename)
-		except IOError,e:
+		except IOError as e:
 			raise ApplicationImportError(e)
 			return
 		# Create SQL tables
@@ -311,7 +311,7 @@ class ImportExport:
 		# Check if application exists
 		application = xmlapp.getFieldValues()['ApplicationData']
 		sqlwhere=[]
-		for k,v in application.items():
+		for k,v in list(application.items()):
 			if not re.findall('^DEF_',k):
 				sqlwhere.append('%s=%s' % (sqldb.addbackquotes(k),v))
 		where = ' 1 '
@@ -359,7 +359,7 @@ class ImportExport:
 			result = self.db.selectone(q)
 			if not result:
 				return
-		except sqldb.MySQLdb.ProgrammingError, e:
+		except sqldb.MySQLdb.ProgrammingError as e:
 			return e
 
 		applicationId = result['DEF_id']
@@ -370,7 +370,7 @@ class ImportExport:
 		ref_tables=['ApplicationData',]
 		tables = self.db.selectall("SHOW TABLES")
 		for table in tables:
-			tablename=table.values()[0]
+			tablename=list(table.values())[0]
 			### do not export table LaunchedApplicationData ###
 			if tablename=='LaunchedApplicationData':
 				continue
@@ -397,7 +397,7 @@ if __name__ == "__main__":
 	appname = "T1 Calibrations"
 	appfile= "./T1-Calibrations2.xml"
 	param = sinedon.getConfig('leginondata')
-	print param
+	print(param)
 	app = ImportExport(**param)
 	app.importApplication(appfile)
 #	print app.getMessageLog()
