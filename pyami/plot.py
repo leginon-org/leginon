@@ -5,7 +5,7 @@ import wxmpl
 class PlotPanel(wxmpl.PlotPanel):
 	def plot(self, *args):
 		if len(args) == 1:
-			x = range(len(args[0]))
+			x = list(range(len(args[0])))
 			y = args[0]
 		elif len(args) == 2:
 			x = args[0]

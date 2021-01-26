@@ -8,11 +8,11 @@
 # see  http://leginon.org
 #
 
-import convolver
-import imagefun
+from . import convolver
+from . import imagefun
 
 import numpy
-import quietscipy
+from . import quietscipy
 import scipy.ndimage as nd_image
 from scipy.linalg import lstsq as linear_least_squares
 import warnings
@@ -236,11 +236,11 @@ def test1():
 	p.pixelPeak()
 	p.subpixelPeak(npix=3)
 	res = p.getResults()
-	print 'results', res
+	print('results', res)
 
 def test2(mrc1, mrc2):
-	import Mrc
-	import correlator
+	from . import Mrc
+	from . import correlator
 	cor = correlator.Correlator()
 	im1 = Mrc.mrc_to_numeric(mrc1)
 	im2 = Mrc.mrc_to_numeric(mrc2)
@@ -254,7 +254,7 @@ def test2(mrc1, mrc2):
 	cor.insertImage(im2)
 	pc = cor.phaseCorrelate()
 	Mrc.numeric_to_mrc(pc, 'pc.mrc')
-	print findSubpixelPeak(pc, npix=7, lpf=1.0)
+	print(findSubpixelPeak(pc, npix=7, lpf=1.0))
 
 if __name__ == '__main__':
 	import sys

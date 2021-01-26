@@ -3,7 +3,7 @@
 import scipy.fftpack
 import numpy
 
-import calc_base
+from . import calc_base
 
 class FFTPACKCalculator(calc_base.Calculator):
 	def __init__(self):

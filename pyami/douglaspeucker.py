@@ -65,13 +65,13 @@ def douglas_peucker(points, epsilon):
 
 def test1():
 	for testargs in (((0,0),(1,0),(5,5)), ((0,0),(0,1),(5,5))):
-		print 'ARGS', testargs
-		print ' -> ', pointToLineDistance(*testargs)
+		print('ARGS', testargs)
+		print(' -> ', pointToLineDistance(*testargs))
 
 def test2():
 	points = ((0,0), (1,1), (2,2), (3,3), (3,2), (3,1), (3,0))
-	print 'ORIGINAL', points
-	print 'NEW', douglas_peucker(points, 1)
+	print('ORIGINAL', points)
+	print('NEW', douglas_peucker(points, 1))
 
 if __name__ == '__main__':
 	test2()

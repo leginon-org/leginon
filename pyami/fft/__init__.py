@@ -2,7 +2,7 @@
 usage:
 myfft = pyami.fft.calculator.forward(myimage)
 '''
-from main import calculator
+from .main import calculator
 
 # for convenience, make pyami.fft have methods of calculator
 this_dict = globals()

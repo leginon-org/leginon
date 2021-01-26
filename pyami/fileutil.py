@@ -95,7 +95,7 @@ def get_config_dirs(module=None, package_name=None):
 	# module config environment variable
 	installed_dir_basename = os.path.basename(installed_dir)
 	config_environ_name = '%s_CFG_PATH' % (installed_dir_basename.upper())
-	if config_environ_name in os.environ.keys():
+	if config_environ_name in list(os.environ.keys()):
 		confdirs.append(os.environ[config_environ_name])#added to have an option to have mutiple sinedon.cfg files
 	return confdirs
 
@@ -121,10 +121,10 @@ def check_exist_one_file(filenames):
 		msg = 'please configure at least one of these:  %s' % (filenames,)
 		if sys.platform == 'win32':
 			print(msg)
-			raw_input('hit return key to exit')
+			input('hit return key to exit')
 			sys.exit()
 		else:
 			raise IOError(msg)
 
 if __name__ == '__main__':
-	print(getMyFilename())
+	print((getMyFilename()))

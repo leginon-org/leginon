@@ -5,7 +5,7 @@ Call a function in an external process.  Kill it if time limit is exceeded.
 '''
 
 import sys
-import cPickle
+import pickle
 
 def call(module_name, func_name, args=(), kwargs={}, timeout=None):
 	import os
@@ -13,11 +13,11 @@ def call(module_name, func_name, args=(), kwargs={}, timeout=None):
 	import threading
 
 	## make pickle from args
-	pickledargs = cPickle.dumps((module_name, func_name, args, kwargs), cPickle.HIGHEST_PROTOCOL)
+	pickledargs = pickle.dumps((module_name, func_name, args, kwargs), pickle.HIGHEST_PROTOCOL)
 
 	## start subprocess, give it input
 	import subprocess
-	import fileutil
+	from . import fileutil
 	# launch this script in a subprocess
 	executable = fileutil.getMyFilename()
 	sub = subprocess.Popen([executable, 'call'], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
@@ -32,7 +32,7 @@ def call(module_name, func_name, args=(), kwargs={}, timeout=None):
 	
 
 	newstr = sub.stdout.read()
-	result = cPickle.loads(newstr)
+	result = pickle.loads(newstr)
 	if isinstance(result, Exception):
 		raise result
 
@@ -78,7 +78,7 @@ def import_module(module_name):
 	return m
 
 def wrapper():
-	module_name, func_name, args, kwargs = cPickle.loads(sys.stdin.read())
+	module_name, func_name, args, kwargs = pickle.loads(sys.stdin.read())
 
 	# import module, get function
 	mod = import_module(module_name)
@@ -87,9 +87,9 @@ def wrapper():
 	# call function, return result as pickle
 	try:
 		result = func(*args, **kwargs)
-	except Exception, e:
+	except Exception as e:
 		result = e
-	pickled_result = cPickle.dumps(result)
+	pickled_result = pickle.dumps(result)
 	sys.stdout.write(pickled_result)
 	sys.stdout.flush()
 	sys.stdout.close()
@@ -97,8 +97,8 @@ def wrapper():
 
 def test_caller():
 	result = call('os', 'listdir', args=())
-	print 'RESULT'
-	print result
+	print('RESULT')
+	print(result)
 
 def main():
 	if sys.argv[1] == 'call':

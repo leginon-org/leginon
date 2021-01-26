@@ -15,7 +15,7 @@ import os
 import sys
 import time
 import numpy
-import quietscipy
+from . import quietscipy
 from scipy import ndimage
 
 ### these are the weight for the different types of surface voxels
@@ -41,7 +41,7 @@ def findValues():
 		sys.stdout.write("%.4f, "%(weight))
 		#i2 = footprintToInt(footprint)
 		#print i, footprint, i2
-	print "\n"
+	print("\n")
 
 #======================
 def footprintToInt(footprint):
@@ -136,7 +136,7 @@ def surfaceWeightByIfs(footprint):
 	elif notneighbors == 6:
 		return Svalues[9]
 
-	raise Exception, "Failed to categorize"
+	raise Exception("Failed to categorize")
 
 #======================
 def surfaceWeightByInts(footprint):
@@ -171,7 +171,7 @@ def surfaceAreaByIfs(volume, test=False):
 		Sarray = numpy.array(Scounts)
 		#total = Sarray[1:].sum()
 		#print numpy.around(Sarray/total*100.0,3)
-		print numpy.array(Sarray, dtype=numpy.int16)
+		print(numpy.array(Sarray, dtype=numpy.int16))
 
 	return  surfarea
 
@@ -189,7 +189,7 @@ def surfaceAreaByInts(volume, test=False):
 		Sarray = numpy.array(Scounts)
 		#total = Sarray[1:].sum()
 		#print numpy.around(Sarray/total*100.0,3)
-		print numpy.array(Sarray, dtype=numpy.int16)
+		print(numpy.array(Sarray, dtype=numpy.int16))
 
 	return  surfarea
 
@@ -198,7 +198,7 @@ def surfaceAreaByInts(volume, test=False):
 #======================
 def randomSurface():
 	### create a random array
-	print "Creating a random array"
+	print("Creating a random array")
 	import random
 	shape = []
 	for i in range(3):
@@ -228,7 +228,7 @@ def readMrc():
 	mrcfile = sys.argv[1]
 	if not os.path.isfile(mrcfile):
 		return numpy.zeros((1,1,1))
-	import mrc
+	from . import mrc
 	voldata = mrc.read(mrcfile)
 	array = numpy.where(voldata > 0.5, 1.0, 0.0)
 	return array
@@ -238,29 +238,29 @@ def testSurface():
 	array = readMrc()
 	if array.shape[0] < 2:
 		array = randomSurface()
-	print "Shape of array: ", array.shape
+	print("Shape of array: ", array.shape)
 
 	tifs = time.time()
 	surfareabyifs = surfaceAreaByIfs(array, test=True)
-	print "Surface area by ifs = %.3f pixels"%(surfareabyifs)
+	print("Surface area by ifs = %.3f pixels"%(surfareabyifs))
 	fifs = time.time()
 
 	tints = time.time()
 	surfareabyints = surfaceAreaByInts(array, test=True)
-	print "Surface area by ints = %.3f pixels"%(surfareabyints)
+	print("Surface area by ints = %.3f pixels"%(surfareabyints))
 	fints = time.time()
 
 	import apDisplay
 	size = float(array.shape[0]*array.shape[1]*array.shape[2])
-	print ""
-	print "*** Surface area by ifs = %.3f pixels"%(surfareabyifs)
-	print apDisplay.timeString((fifs-tifs)), "total time"
-	print apDisplay.timeString((fifs-tifs)/size), "per voxel"
-	print ""
-	print "*** Surface area by ints = %.3f pixels"%(surfareabyints)
-	print apDisplay.timeString((fints-tints)), "total time"
-	print apDisplay.timeString((fints-tints)/size), "per voxel"	
-	print ""
+	print("")
+	print("*** Surface area by ifs = %.3f pixels"%(surfareabyifs))
+	print(apDisplay.timeString((fifs-tifs)), "total time")
+	print(apDisplay.timeString((fifs-tifs)/size), "per voxel")
+	print("")
+	print("*** Surface area by ints = %.3f pixels"%(surfareabyints))
+	print(apDisplay.timeString((fints-tints)), "total time")
+	print(apDisplay.timeString((fints-tints)/size), "per voxel")	
+	print("")
 
 #======================
 #======================

@@ -3,7 +3,7 @@
 from pyami import numpil
 Image = numpil.Image2
 import numpy
-import arraystats
+from . import arraystats
 
 def write(a, filename, min=None, max=None, quality=80, newsize=None, stdval=5):
 	'''

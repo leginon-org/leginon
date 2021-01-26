@@ -7,7 +7,7 @@ It exposes public methods of the Calculator as module functions.
 #force_calculator = 'fftpack'
 force_calculator = None
 
-import registry
+from . import registry
 if not registry.calculators:
 	raise ImportError('You need to install one of the fft calculators: %s' % (registry.attempted,))
 
@@ -32,7 +32,7 @@ def test1():
 	for i in range(5):
 		t0 = time.time()
 		calculator.forward(a)
-		print 'time', time.time()-t0
+		print('time', time.time()-t0)
 	return a
 
 def test2():
@@ -45,7 +45,7 @@ def test2():
 	for i in range(5):
 		t0 = time.time()
 		calculator.power(a)
-		print 'time', time.time()-t0
+		print('time', time.time()-t0)
 
 
 

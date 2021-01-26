@@ -2,6 +2,7 @@
 import numpy
 import sys
 import os
+from functools import reduce
 
 class NumRaw(object):
 	'''
@@ -78,5 +79,5 @@ def readHeaderFromFile(imfile):
 
 if __name__ == '__main__':
 	a = read('n0.raw')
-	print a
-	print readHeaderFromFile('n0.raw')
+	print(a)
+	print(readHeaderFromFile('n0.raw'))

@@ -73,7 +73,7 @@ class HdfFile(object):
 	#----------------------------
 	def addImageToHdf(self, imagedata, partnum):
 		if self.debug is True:
-			print "addImageToHdf %d"%(partnum)
+			print("addImageToHdf %d"%(partnum))
 		imagegroup = self.images.create_group(str(partnum))
 
 		image = imagegroup.create_dataset('image', data=imagedata, shape=imagedata.shape, dtype=numpy.float32)
@@ -133,7 +133,7 @@ class HdfFile(object):
 	#----------------------------
 	def write(self, a):
 		if self.debug is True:
-			print "write %s"%(str(a.shape))
+			print("write %s"%(str(a.shape)))
 		shape = a.shape
 		self.dset = h5py.File(self.filename, 'w')
 		mdf = self.dset.create_group('MDF')
@@ -155,13 +155,13 @@ class HdfFile(object):
 	#----------------------------
 	def append(self, a):
 		if self.debug is True:
-			print "append %s"%(str(a.shape))
+			print("append %s"%(str(a.shape)))
 		shape = a.shape
 		self.dset = h5py.File(self.filename, 'r+')
 		self.images = self.dset['MDF']['images']
 		self.numpart = int(self.images.attrs['imageid_max'])+1
 		if self.debug is True:
-			print "numpart", self.numpart
+			print("numpart", self.numpart)
 		if len(shape) == 2:
 			self.addImageToHdf(a, self.numpart)
 			self.numpart += 1
@@ -179,16 +179,16 @@ class HdfFile(object):
 	#----------------------------
 	def readAllParticleHeaders(self):
 		if not os.path.isfile(self.filename) or self.getFileSize() < 10:
-			print "file not found"
+			print("file not found")
 			return
 		if self.debug is True:
-			print "readAllParticleHeaders"
+			print("readAllParticleHeaders")
 		self.dset = h5py.File(self.filename, 'r')
 		images = self.dset['MDF']['images']
 		self.numpart = int(images.attrs['imageid_max'])+1
 		if self.debug is True:
-			print "numpart", self.numpart
-		headerTree = range(self.numpart) #will become list of dicts
+			print("numpart", self.numpart)
+		headerTree = list(range(self.numpart)) #will become list of dicts
 		for partnum in range(self.numpart):
 			if self.debug is True:
 				sys.stderr.write(".")
@@ -196,7 +196,7 @@ class HdfFile(object):
 			imagegroup = images[partnumstr]
 			attrDict = dict(imagegroup.attrs)
 			if self.imagic is False:
-				for key in attrDict.keys():
+				for key in list(attrDict.keys()):
 					if key.startswith('EMAN.IMAGIC'):
 						del attrDict[key]
 			headerTree[partnum] = attrDict
@@ -206,19 +206,19 @@ class HdfFile(object):
 	#----------------------------
 	def readFirstParticleHeader(self):
 		if not os.path.isfile(self.filename) or self.getFileSize() < 10:
-			print "file not found"
+			print("file not found")
 			return
 		if self.debug is True:
-			print "readFirstParticleHeader"
+			print("readFirstParticleHeader")
 		self.dset = h5py.File(self.filename, 'r')
 		images = self.dset['MDF']['images']
 		self.numpart = int(images.attrs['imageid_max'])+1
 		if self.debug is True:
-			print "numpart", self.numpart
+			print("numpart", self.numpart)
 		imagegroup = images['0']
 		attrDict = dict(imagegroup.attrs)
 		if self.imagic is False:
-			for key in attrDict.keys():
+			for key in list(attrDict.keys()):
 				if key.startswith('EMAN.IMAGIC'):
 					del attrDict[key]
 		self.dset.close()
@@ -232,17 +232,17 @@ class HdfFile(object):
 		particles numbers start at 0
 		"""
 		if not os.path.isfile(self.filename) or self.getFileSize() < 10:
-			print "file not found"
+			print("file not found")
 			return
 		self.dset = h5py.File(self.filename, 'r')
 		imageDict = self.dset['MDF']['images']
 		self.numpart = int(imageDict.attrs['imageid_max'])+1
 		if self.debug is True:
-			print "numpart", self.numpart
+			print("numpart", self.numpart)
 		if particleNumbers is None:
-			particleNumbers = imageDict.keys()
+			particleNumbers = list(imageDict.keys())
 		if self.debug is True:
-			print "read len %d"%(len(particleNumbers))
+			print("read len %d"%(len(particleNumbers)))
 		images = []
 		for partnum in particleNumbers:
 			#print "----------"
@@ -263,11 +263,11 @@ class HdfFile(object):
 	def getFileSize(self):
 		self.filesize = int(os.stat(self.filename)[6])
 		if self.debug is True:
-			print "getFileSize %d"%(self.filesize)
+			print("getFileSize %d"%(self.filesize))
 		return self.filesize
 	def getNumberOfParticles(self):
 		if self.debug is True:
-			print "getNumberOfParticles %d"%(self.numpart)
+			print("getNumberOfParticles %d"%(self.numpart))
 		self.dset = h5py.File(self.filename, 'r')
 		self.images = self.dset['MDF']['images']
 		return int(self.images.attrs.get('imageid_max', -1))+1
@@ -278,7 +278,7 @@ class HdfFile(object):
 				return
 			self.boxsize = int(self.hdfheader.get('EMAN.nx',0))
 		if self.debug is True:
-			print "getBoxSize %d"%(self.boxsize)
+			print("getBoxSize %d"%(self.boxsize))
 		return self.boxsize
 	def getPixelSize(self):
 		if self.apix is None:
@@ -287,7 +287,7 @@ class HdfFile(object):
 				return
 			self.apix = int(self.hdfheader.get('EMAN.apix_x',0))
 		if self.debug is True:
-			print "getPixelSize %.5f"%(self.apix)
+			print("getPixelSize %.5f"%(self.apix))
 		return self.apix
 
 #----------------------------
@@ -297,22 +297,22 @@ class HdfFile(object):
 if __name__ == '__main__':
 	a = numpy.array(numpy.random.random((3,128,128)), dtype=numpy.float32)
 	#print a
-	print a.shape
-	print "\nwriting random.hdf"
+	print(a.shape)
+	print("\nwriting random.hdf")
 	rhdf = HdfFile('random.hdf')
 	rhdf.write(a)
 
-	print "\nreading random.hdf"
+	print("\nreading random.hdf")
 	rhdf = HdfFile('random.hdf')
 	b = rhdf.readFirstParticleHeader()
 	b = rhdf.read()
 	rhdf.append(a)
 	#print b
-	print b.shape
+	print(b.shape)
 
-	print "\ndiff"
+	print("\ndiff")
 	c = a-b
-	print "%.8f +/- %.8f"%(c.mean(), c.std())
+	print("%.8f +/- %.8f"%(c.mean(), c.std()))
 
 	sys.exit(1)
 

@@ -9,8 +9,8 @@
 #
 
 import numpy
-import fftengine
-import imagefun
+from . import fftengine
+from . import imagefun
 import warnings
 
 class Correlator(object):
@@ -187,9 +187,9 @@ class MissingImageError(Exception):
 
 
 if __name__ == '__main__':
-	from Mrc import mrc_to_numeric
-	from Tkinter import *
-	import fftengine, peakfinder
+	from .Mrc import mrc_to_numeric
+	from tkinter import *
+	from . import fftengine, peakfinder
 
 	if 1:
 		im1 = mrc_to_numeric('test1.mrc')
@@ -207,8 +207,8 @@ if __name__ == '__main__':
 		try:
 			c.phaseCorrelate()
 		except:
-			print 'exception in phaseCorrelate'
-			raw_input('continue')
+			print('exception in phaseCorrelate')
+			input('continue')
 			continue
 
 		res = c.getResults()
@@ -221,7 +221,7 @@ if __name__ == '__main__':
 		shift = wrap_coord(peak, pcim.shape)
 		#print 'shift', shift
 
-		raw_input('continue')
+		input('continue')
 
 
 

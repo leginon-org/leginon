@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 
-import mrc
+from . import mrc
 import numpy
 import shutil
 
 # FIX:  only handling REAL for now
 code_to_dtype = {
-	numpy.frombuffer('REAL', numpy.int32)[0]:  numpy.dtype(numpy.float32),
+	numpy.frombuffer(b'REAL', numpy.int32)[0]:  numpy.dtype(numpy.float32),
 	# ...
 }
 

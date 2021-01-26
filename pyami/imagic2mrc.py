@@ -35,7 +35,7 @@ def imagic_to_mrc(imagic_name, mrc_name, yflip=False):
 	mrc_header = pyami.mrc.newHeader()
 	pyami.mrc.updateHeaderDefaults(mrc_header)
 	## copy some values from imagic header to mrc header
-	for key in imagic_header.keys():
+	for key in list(imagic_header.keys()):
 		mrc_header[key] = imagic_header[key]
 	mrc_header['mode'] = pyami.mrc.numpy2mrc[mrc_header['dtype'].type]
 	mrc_header_data = pyami.mrc.makeHeaderData(mrc_header)

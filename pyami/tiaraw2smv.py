@@ -3,14 +3,14 @@
 This is for converting Ceta TIA raw output to SMV format.
 '''
 print('''This converts a series of TIA raw output *.bin to smv format''')
-input_pattern= raw_input('Enter bin file prefix prior to _001.bin, for example: ')
-output_pattern=raw_input('Enter smv file prefix: ')
-offset_txt = raw_input('Data offset added to the input values. Default is based on the minimal of all input series unless the resulting offset is larger than 2000): ')
+input_pattern= input('Enter bin file prefix prior to _001.bin, for example: ')
+output_pattern=input('Enter smv file prefix: ')
+offset_txt = input('Data offset added to the input values. Default is based on the minimal of all input series unless the resulting offset is larger than 2000): ')
 if offset_txt == '':
 	offset = None
 else:
 	offset = int(offset_txt)
-gain_txt = raw_input('Camera Gain counts/electron (default 28 for CetaD): ')
+gain_txt = input('Camera Gain counts/electron (default 28 for CetaD): ')
 if gain_txt == '':
 	gain = 28.0
 else:
@@ -63,8 +63,8 @@ if offset is None:
 	median_of_mins = numpy.median(minarray)
 	offset = -min_of_mins
 	pedestal = -min_of_mins+median_of_mins
-	print "calculated offset = %.1f" % (offset+0.0)
-	print "estimated pedestal median of minimal values = %.1f" % (pedestal)
+	print("calculated offset = %.1f" % (offset+0.0))
+	print("estimated pedestal median of minimal values = %.1f" % (pedestal))
 	header_dict['IMAGE_PEDESTAL'] = pedestal
 
 for i in range(total):

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import simplempi
+from . import simplempi
 import leginon.leginondata
 import pyami.fileutil
 import pyami.mrc
@@ -32,11 +32,11 @@ class MRCJPG(simplempi.TaskHandler):
 		outfilenames = [infile.replace('.mrc','.jpg') for infile in infilenames]
 		full_outfilenames = [os.path.join(outpath, outfile) for outfile in outfilenames]
 
-		tasks = zip(full_infilenames, full_outfilenames)
+		tasks = list(zip(full_infilenames, full_outfilenames))
 		return tasks
 
 	def processTask(self, task):
-		print self, task[0]
+		print(self, task[0])
 		mrcfile = task[0]
 		jpgfile = task[1]
 		im = pyami.mrc.read(mrcfile)

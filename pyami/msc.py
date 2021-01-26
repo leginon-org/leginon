@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 
 import numpy
-import quietscipy
+from . import quietscipy
 from scipy import fftpack
 import scipy.ndimage
-import correlator
+from . import correlator
 import numextension
-import mrc
-import imagefun
-import peakfinder
+from . import mrc
+from . import imagefun
+from . import peakfinder
 
 debug = True
 
@@ -37,7 +37,7 @@ def findBestTransformValue(image, reference, start, end, increment, transfunc, *
 		shift = correlator.wrap_coord(results['subpixel peak'], cor.shape)
 		snr = results['snr']
 		if debug:
-			print i, value, snr, shift
+			print(i, value, snr, shift)
 		if snr > bestsnr:
 			bestsnr = snr
 			bestvalue = value
@@ -68,17 +68,17 @@ def findShift(image, reference, scale, angle):
 def findRotationScale(image, reference, anglestart, angleend, angleinc, scalestart, scaleend, scaleinc):
 	## scale image to initial guess
 	scaleguess = (float(scalestart) + scaleend) / 2
-	print 'SCALEGUESS', scaleguess
+	print('SCALEGUESS', scaleguess)
 	image2 = scipy.ndimage.zoom(image, scaleguess)
 
 	result = findBestRotation(image2, reference, anglestart, angleend, angleinc)
 	angle = result[0]
-	print 'BEST ANGLE', angle
+	print('BEST ANGLE', angle)
 	image2 = scipy.ndimage.rotate(image, angle)
 
 	result = findBestScale(image2, reference, scalestart, scaleend, scaleinc)
 	scale = result[0]
-	print 'BEST SCALE', scale
+	print('BEST SCALE', scale)
 
 	return angle, scale
 
@@ -94,7 +94,7 @@ def findRotationScaleShift(image, reference, anglestart, angleend, angleinc, sca
 	return angle, scale, shift
 
 def main():
-	import mrc
+	from . import mrc
 	im1 = mrc.read('/ami/data00/leginon/07sep26cal/rawdata/07sep26cal_00006m.mrc')
 	mag1 = 14500
 	im2 = mrc.read('/ami/data00/leginon/07sep26cal/rawdata/07sep26cal_00007m.mrc')
@@ -141,7 +141,7 @@ def main():
 	rotation, scale = findRotationScale(binim1, binim2, anglestart, angleend, angleinc, scalestart, scaleend, scaleinc)
 
 	shift = findShift(im1, im2, scale, rotation)
-	print 'BEST SHIFT', shift
+	print('BEST SHIFT', shift)
 
 if __name__ == '__main__':
 	main()

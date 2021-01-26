@@ -65,7 +65,7 @@ def find_ast_ellipse(grad,thr,dmean,drange):
 		else:
 			points.append(blob.stats['maximum_position'])
 	shape = grad.shape
-	center = map((lambda x: x / 2), shape)
+	center = list(map((lambda x: x / 2), shape))
 	for point in points:
 		d = math.hypot(point[0]-center[0],point[1]-center[1])
 		if d > dmean-drange and d < dmean+drange:
@@ -181,4 +181,4 @@ if __name__ == '__main__':
 	rpixelsize = {'x':1.0/(imagepixelsize['x']*dimension['x']),'y':1.0/(imagepixelsize['y']*dimension['y'])}
 	
 	ctfdata = fitFirstCTFNode(pow,rpixelsize['x'], None, ht, Cs)
-	print ctfdata
+	print(ctfdata)

@@ -69,9 +69,9 @@ def stats(meminfo=meminfo2dict()):
 	swapfree = meminfo['SwapFree']
 	swapused = swaptotal - swapfree
 
-	print '%10d%10d%10d%10d%10d' % (total, used, free, buffers, cached)
-	print '%20d%10d' % (used2, free2)
-	print '%10d%10d%10d' % (swaptotal, swapused, swapfree)
+	print('%10d%10d%10d%10d%10d' % (total, used, free, buffers, cached))
+	print('%20d%10d' % (used2, free2))
+	print('%10d%10d%10d' % (swaptotal, swapused, swapfree))
 	meminfo
 
 def used():
@@ -152,8 +152,8 @@ def mySize():
 
 def test():
 	mypid = os.getpid()
-	print 'mypid', mypid
-	print mySize()
+	print('mypid', mypid)
+	print(mySize())
 
 if __name__ == '__main__':
 	#print used()

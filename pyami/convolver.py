@@ -9,7 +9,7 @@
 #
 
 import numpy
-import fftengine
+from . import fftengine
 
 class Convolver(object):
 	'''
@@ -176,9 +176,9 @@ sobel_col_kernel.shape = (3,3)
 
 
 if __name__ == '__main__':
-	import Mrc
+	from . import Mrc
 	import sys
-	import imagefun
+	from . import imagefun
 
 	filename = sys.argv[1]
 

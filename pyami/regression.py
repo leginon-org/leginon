@@ -41,10 +41,10 @@ if __name__=='__main__':
 	import numpy.random
 	for i in range(10):
 		rs = numpy.random.random_sample(20) - 0.5
-		xs = numpy.array(range(10))*0.5 + i*rs[:10]*0.1
-		ys = numpy.array(range(10))*2.0 + 2 + i*rs[10:]*0.1
+		xs = numpy.array(list(range(10)))*0.5 + i*rs[:10]*0.1
+		ys = numpy.array(list(range(10)))*2.0 + 2 + i*rs[10:]*0.1
 		a, b, r, is_successful =  orthoganalDistanceRegression(xs, ys)
 		length = math.hypot(xs.min()-xs.max(), a*xs.min()-a*xs.max())
-		print a, b, r, is_successful
-		print r*100/length
-		print '............'
+		print(a, b, r, is_successful)
+		print(r*100/length)
+		print('............')

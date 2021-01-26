@@ -36,9 +36,9 @@ def polar_transform(image, output_shape, center):
 	n = min(image.shape)
 	dr = n / numpy.sqrt(2) / output_shape[0]
 	dt = numpy.pi / output_shape[1]
-	print 'AAA'
+	print('AAA')
 	mapping = makeMapping(output_shape, center, dr, dt)
-	print 'BBB'
+	print('BBB')
 	return scipy.ndimage.geometric_transform(image, dummy, output_shape=output_shape, mode='constant', cval=0, extra_arguments=(mapping,), order=1)
 	#return scipy.ndimage.geometric_transform(image, mapping.__getitem__, output_shape=output_shape, mode='constant', cval=0)
 
@@ -65,11 +65,11 @@ def register(image1, image2):
 
 	center = c,0
 	output_shape = c,c
-	print 'P1'
+	print('P1')
 	p1 = polar_transform(mag1, output_shape, center)
 	#scipy.misc.imsave('p1.jpg', p1)
 	mrc.write(p1, 'p1.mrc')
-	print 'P2'
+	print('P2')
 	p2 = polar_transform(mag2, output_shape, center)
 	#scipy.misc.imsave('p2.jpg', p2)
 	mrc.write(p2, 'p2.mrc')
@@ -91,21 +91,21 @@ def register2(image1, image2, angles):
 		mrc.write(pc, 'pc.mrc')
 		peak = peakfinder.findSubpixelPeak(pc)
 		result = (angle, peak['pixel peak value'], peak['subpixel peak value'], peak['snr'])
-		print result
+		print(result)
 		peaks.append(result)
 	return peaks
 
 def testMRCImages():
 	file1,file2 = sys.argv[1:3]
-	print 'reading MRCs'
+	print('reading MRCs')
 	image1 = mrc.read(file1)
 	image2 = mrc.read(file2)
 	image1 = imagefun.bin(image1, 4)
 	image2 = imagefun.bin(image2, 4)
-	print 'register...'
+	print('register...')
 	#result = register(image1, image2, range()
 	#result = register2(image1, image2, range(86,95))
-	result = register2(image1, image2, range(90,91))
+	result = register2(image1, image2, list(range(90,91)))
 	#print result
 
 def testPolarOnImage():
@@ -121,7 +121,7 @@ def testRandomImages(size):
 	image1 = numpy.random.normal(100, 10, (size,size))
 	image2 = numpy.random.normal(100, 10, (size,size))
 	result = register(image1, image2)
-	print result
+	print(result)
 
 if __name__ == '__main__':
 	#testRandomImages(8)

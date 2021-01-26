@@ -14,4 +14,4 @@ def count():
 	return ncpus
 
 if __name__ == '__main__':
-	print count()
+	print(count())

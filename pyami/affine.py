@@ -3,7 +3,7 @@ things that make affine_transform easier
 '''
 
 import numpy
-import quietscipy
+from . import quietscipy
 import scipy.ndimage
 
 def affine_transform_offset(inputshape, outputshape, affine_matrix, offset=(0,0)):
@@ -36,7 +36,7 @@ class ImageCache(object):
 			raise RuntimeError('key already in cache')
 		imsize = image.size() * image.itemsize()
 		if imsize > self.maxsize:
-			print 'image too big for cache'
+			print('image too big for cache')
 			return
 		newsize = self.size + imsize
 		while newsize > self.maxsize:
@@ -48,7 +48,7 @@ class ImageCache(object):
 
 	def removeOldest(self):
 		try:
-			firstkey = self.cache.keys()[0]
+			firstkey = list(self.cache.keys())[0]
 		except IndexError:
 			return
 		im = self.cache[firstkey]
@@ -67,10 +67,10 @@ class SplineFilterCache(ImageCache):
 		return self.get(key)
 
 def matrixAngle(mat):
-	print numpy.arccos(mat[0,0])
-	print numpy.arcsin(-mat[0,1])
-	print numpy.arcsin(mat[1,0])
-	print numpy.arccos(mat[1,1])
+	print(numpy.arccos(mat[0,0]))
+	print(numpy.arcsin(-mat[0,1]))
+	print(numpy.arcsin(mat[1,0]))
+	print(numpy.arccos(mat[1,1]))
 
 def transform(image2, libcvMatrix, image1shape):
 	'''
@@ -120,10 +120,10 @@ def transformImageTargets(A,from_xys):
 	pad = lambda x:numpy.hstack([x,numpy.ones((x.shape[0],1))])
 	from_matrix = pad(from_coords)
 	to_matrix = from_matrix*A
-	return map((lambda x: tuple(x)),to_matrix.tolist())
+	return list(map((lambda x: tuple(x)),to_matrix.tolist()))
 
 if __name__=='__main__':
 	from_xys = [(0,0),(1,0),(0,1),(1,1)]
 	to_xys = [(0,0),(0,1),(-1,0),(-1,1)]
-	print solveAffineMatrixFromImageTargets(from_xys,to_xys)
+	print(solveAffineMatrixFromImageTargets(from_xys,to_xys))
 

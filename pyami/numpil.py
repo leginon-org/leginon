@@ -4,11 +4,11 @@ from PIL import ImageDraw
 from PIL import ImageSequence
 from PIL import ImageStat
 import numpy
-import imagefun
-import arraystats
+from . import imagefun
+from . import arraystats
 import sys
 import scipy.ndimage
-import tifffile
+from . import tifffile
 pilformats = [
 	'BMP',
 	'GIF',
@@ -81,8 +81,8 @@ def readInfo(imfile):
 	number_of_bands = len(im.getbands())
 	if number_of_bands > 1:
 		# multibands, use the most extreme value. Don't know what to do.
-		info['amin'] = min(map((lambda x:x[0],extrema)))
-		info['amax'] = min(map((lambda x:x[1],extrema)))
+		info['amin'] = min(list(map((lambda x:x[0],extrema))))
+		info['amax'] = min(list(map((lambda x:x[1],extrema))))
 	else:
 		info['amin'] = extrema[0]
 		info['amax'] = extrema[1]

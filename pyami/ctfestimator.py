@@ -54,7 +54,7 @@ class GctfEstimator(object):
 	def runACE(self, pixelsize, defocus, ht, amp_contrast, cs,path_pattern='test*'):
 		defocusH = defocus*1.2
 		cmd = "%s --apix %.5f --defL %.0f --defH %.0f --kV %d --Cs %.1f --ac %.3f %s.mrc" % (self.gctfexe, pixelsize*1e10, defocus*1e10, defocusH*1e10, int(ht/1000), cs*1e3, amp_contrast, path_pattern)
-		print cmd
+		print(cmd)
 		proc = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE,)
 		proc.stdin.write(cmd)
 		proc.communicate()
@@ -89,7 +89,7 @@ class GctfEstimator(object):
 	def saveBatchImages(self):
 		avg_defocus = 0
 		for i,imagedata in enumerate(self.images):
-			print imagedata['filename']
+			print(imagedata['filename'])
 			avg_defocus += imagedata['scope']['defocus']
 			self.writeTestMrc(i, imagedata['image'])
 		self.nominal_defocus = avg_defocus / len(self.images)
@@ -98,7 +98,7 @@ class GctfEstimator(object):
 		self.saveBatchImages()
 		self.runACE(self.pixelsize, self.nominal_defocus, self.ht, self.amp_contrast, self.cs,self.ln_pattern+'*')
 		ctfvalues = self.getCTFResults()
-		print ctfvalues
+		print(ctfvalues)
 		return ctfvalues
 
 	def runOneImageData(self, imagedata):
@@ -111,7 +111,7 @@ class GctfEstimator(object):
 		results = self.runImages()
 		try:
 			return results[0]
-		except IndexError, e:
+		except IndexError as e:
 			raise RuntimeError('ctf estimation failed to produce result')
 
 	def fakeRunOneImageData(self, imagedata):

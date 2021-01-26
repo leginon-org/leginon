@@ -110,9 +110,9 @@ if __name__ == "__main__":
 	if len(sys.argv) > 1:
 		n = int(sys.argv[1])
 		factors = prime_factors(n)
-		print n, factors
+		print(n, factors)
 		prev, next = getPrimeLimits(n)
-		print "Use %d or %d instead"%(prev,next)
+		print("Use %d or %d instead"%(prev,next))
 	else:
-		print getAllPrimes()
+		print(getAllPrimes())
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import pyami.fft.calc_fftw3
-import fftw3
+from . import fftw3
 import numpy
 import time
 import os
@@ -51,16 +51,16 @@ def run_timing():
 		except:
 			rigor = 'measure'
 	except:
-		print '''
+		print('''
   usage:   %s N shape0 shape1
     N - number of iterations to test
     shape0,shape1 - the shape of the array to test
-		''' % (sys.argv[0],)
+		''' % (sys.argv[0],))
 		sys.exit()
 	pyami.fft.calc_fftw3.load_wisdom()
 
 	for i in range(n):
-		print i
+		print(i)
 		a = create(shape)
 		plan = make_plan(a, rigor)
 		init(a, plan)
@@ -69,7 +69,7 @@ def run_timing():
 	pyami.fft.calc_fftw3.store_wisdom()
 
 	for key in ['create','plan','init','run']:
-		print key, timing[key]
+		print(key, timing[key])
 
 def wisdom_test():
 	pyami.fft.calc_fftw3.load_wisdom()

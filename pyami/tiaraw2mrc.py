@@ -3,8 +3,8 @@
 This is for converting Ceta TIA raw output to 32-bit float mrc format.
 '''
 print('''This converts a series of TIA raw output *.bin to mrc format''')
-input_pattern= raw_input('Enter bin file prefix prior to _001.bin, for example: ')
-output_pattern=raw_input('Enter mrc file prefix: ')
+input_pattern= input('Enter bin file prefix prior to _001.bin, for example: ')
+output_pattern=input('Enter mrc file prefix: ')
 
 from pyami import tiaraw, mrc
 

@@ -60,7 +60,7 @@ def call(func, timeout=None, *args, **kwargs):
 		if not t.isAlive():
 			## either returned or raised exception
 			if t.exception is not None:
-				raise t.exception[0], t.exception[1], t.exception[2]
+				raise t.exception[0](t.exception[1]).with_traceback(t.exception[2])
 			else:
 				return t.returnvalue
 		else:
@@ -69,7 +69,7 @@ def call(func, timeout=None, *args, **kwargs):
 #### Tests ########
 if __name__ == '__main__':
 	def test_function(t=0):
-		print 'This function returns after %.2f seconds' % (t,)
+		print('This function returns after %.2f seconds' % (t,))
 		time.sleep(t)
 		return 'DONE'
 
@@ -78,4 +78,4 @@ if __name__ == '__main__':
 	if len(sys.argv) > 1:
 		ftime = float(sys.argv[1])
 	ret = call(test_function, timeout=2, t=ftime)
-	print 'RET', ret
+	print('RET', ret)

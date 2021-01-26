@@ -2,7 +2,7 @@
 class OrderedDict(dict):
 	def __init__(self, initializer={}):
 		try:
-			items = initializer.items()
+			items = list(initializer.items())
 		except AttributeError:
 			items = list(initializer)
 		self.__keys = [i[0] for i in items]
@@ -15,7 +15,7 @@ class OrderedDict(dict):
 		## duplicate information to what is given in the 	 
 		## state dict, but it is necessary to get the dict 	 
 		## base class to have its items set 	 
-		initializer = dict(self.items()) 	 
+		initializer = dict(list(self.items())) 	 
 		return (self.__class__, (initializer,), state)
 
 	def __setitem__(self, key, value):
@@ -28,25 +28,25 @@ class OrderedDict(dict):
 		self.__keys.remove(key)
 
 	def update(self, other):
-		for key in other.keys():
+		for key in list(other.keys()):
 			self[key] = other[key]
 
 	def keys(self):
 		return list(self.__keys)
 
 	def values(self):
-		return map(super(OrderedDict, self).__getitem__, self.__keys)
+		return list(map(super(OrderedDict, self).__getitem__, self.__keys))
 
 	def items(self):
 		values = OrderedDict.values(self)
-		return zip(self.__keys, values)
+		return list(zip(self.__keys, values))
 
 	def __str__(self):
 		'''
 		imitate dict.__str__ but with items in proper order
 		'''
 		itemlist = []
-		for key,value in self.items():
+		for key,value in list(self.items()):
 			valuestr = str(value)
 			itemstr = "%s: %s" % (str(key), valuestr)
 			itemlist.append(itemstr)

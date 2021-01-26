@@ -35,7 +35,7 @@ def nodeToDict(node, listing_names=[]):
 				# This is a problem for multiple entries that needs to be in a list
 				xmldict.update({str(n.nodeName): nodeToDict(n, listing_names)})
 			else:
-				if str(n.nodeName) in xmldict.keys():
+				if str(n.nodeName) in list(xmldict.keys()):
 					if type(xmldict[str(n.nodeName)]) == type({}):
 						xmldict[str(n.nodeName)] = [xmldict[str(n.nodeName)],]
 				else:
@@ -61,7 +61,7 @@ def dictToStr(xmldict, level=0):
 		pre = " "
 
 	mystr = ""
-	for k,v in xmldict.items():
+	for k,v in list(xmldict.items()):
 		#open dict key
 		mystr += pre+"<"+str(k)+">"
 

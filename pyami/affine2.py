@@ -4,9 +4,10 @@ things that make affine_transform easier
 '''
 
 import numpy
-import quietscipy
+from . import quietscipy
 import scipy.ndimage
 import scipy.linalg
+from functools import reduce
 
 def affine_transform_offset(inputshape, outputshape, affine_matrix, offset=(0,0)):
 	'''
@@ -38,7 +39,7 @@ class ImageCache(object):
 			raise RuntimeError('key already in cache')
 		imsize = image.size() * image.itemsize()
 		if imsize > self.maxsize:
-			print 'image too big for cache'
+			print('image too big for cache')
 			return
 		newsize = self.size + imsize
 		while newsize > self.maxsize:
@@ -50,7 +51,7 @@ class ImageCache(object):
 
 	def removeOldest(self):
 		try:
-			firstkey = self.cache.keys()[0]
+			firstkey = list(self.cache.keys())[0]
 		except IndexError:
 			return
 		im = self.cache[firstkey]
@@ -69,10 +70,10 @@ class SplineFilterCache(ImageCache):
 		return self.get(key)
 
 def matrixAngle(mat):
-	print numpy.arccos(mat[0,0])
-	print numpy.arcsin(-mat[0,1])
-	print numpy.arcsin(mat[1,0])
-	print numpy.arccos(mat[1,1])
+	print(numpy.arccos(mat[0,0]))
+	print(numpy.arcsin(-mat[0,1]))
+	print(numpy.arcsin(mat[1,0]))
+	print(numpy.arccos(mat[1,1]))
 
 class Transform3x3(object):
 	def __init__(self, matrix):
@@ -134,7 +135,7 @@ def trs_transform(input, translation, rotation, scale):
 	#matrix = trs_to_matrix(translation, rotation, scale)
 	matrix = trs_to_matrix((0,0), rotation, scale)
 
-	print 'FINAL MATRIX', matrix
+	print('FINAL MATRIX', matrix)
 	imatrix = scipy.linalg.inv(matrix[:2,:2])
 	inputshape = (512,512)
 	outputshape = (512,512)
@@ -181,9 +182,9 @@ def test1():
 
 def test2():
 	point = 0,1
-	print 'point', point
+	print('point', point)
 	newpoint = trs_point(point, (0,0), numpy.pi/2, 1.0)
-	print 'newpoint', newpoint
+	print('newpoint', newpoint)
 
 def test3():
 	import pyami.mrc

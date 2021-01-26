@@ -17,9 +17,9 @@ MRC I/O functions:
     Only the parts you actually access are read from the disk into memory.
 			filename - the MRC filename
 '''
-from __future__ import division
-from __future__ import print_function
-from __future__ import absolute_import
+
+
+
 from builtins import zip
 from builtins import map
 from builtins import str
@@ -572,7 +572,7 @@ Always saves in the native byte order.
 		h.update(header)
 
 	headerbytes = makeHeaderData(h)
-	if isinstance(f, (str,)):
+	if isinstance(f, str):
 		fobj = open(f, 'wb')
 		close = True
 	elif hasattr(f, 'write'):

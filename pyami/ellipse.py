@@ -62,7 +62,7 @@ def drawEllipse(shape, angleinc, center, a, b, alpha):
 	result = numpy.zeros(shape, numpy.int)
 	points = ellipsePoints(angleinc, center, a, b, alpha)
 	for point in points:
-		point = map(int, point)
+		point = list(map(int, point))
 		try:
 			result[int(point[0]), int(point[1])] = 1
 		except:
@@ -182,7 +182,7 @@ def solveEllipseByQRdecomp(points, center=(0,0)):
 	### solve it by QR decomposition
 	Q, R = numpy.linalg.qr(X)
 	if numpy.linalg.det(R) == 0:
-		print "Singular matrix in calculation"
+		print("Singular matrix in calculation")
 		return None
 	QT = numpy.transpose(Q)
 	Rinv = numpy.linalg.inv(R)
@@ -207,7 +207,7 @@ def weightedLeastSquares(X, Y, W):
 	XTW = numpy.transpose(X)*W
 	XTWX = numpy.dot(XTW, X)
 	if numpy.linalg.det(XTWX) == 0:
-		print "Singular matrix in calculation"
+		print("Singular matrix in calculation")
 		return None
 	XTWXinv = numpy.linalg.inv(XTWX)
 	beta = numpy.dot(numpy.dot(XTWXinv, XTW), Y)
@@ -399,7 +399,7 @@ def generate_ellipse(a, b, alpha, center=(0,0), numpoints=3, noise=None,
 	elif method == "random":
 		thetas = numpy.random.random(numpoints) * 2*math.pi
 	else:
-		print "unknown method", method
+		print("unknown method", method)
 		return None
 	rows = center[0] + a* numpy.cos(thetas) * cosa -  b* numpy.sin(thetas) * sina
 	cols = center[1] + a* numpy.cos(thetas) * sina +  b* numpy.sin(thetas) * cosa
@@ -427,8 +427,8 @@ def printParamsDict(params):
 
 #=================
 def printParams(center, a, b, alpha):
-	print ("%.3f %.3f < %.2f (%.1f, %.1f)"%
-		(a, b, alpha*180/math.pi, center[0], center[1]))
+	print(("%.3f %.3f < %.2f (%.1f, %.1f)"%
+		(a, b, alpha*180/math.pi, center[0], center[1])))
 	return
 
 """
@@ -456,12 +456,12 @@ if __name__ == '__main__':
 	center = numpy.array((numrow, numcol), dtype=numpy.float)/2.0
 	majormax = min( abs(numrow/math.cos(alpha)) , abs(numcol/math.sin(alpha)) )/3.0 - 1
 	minormax = min( abs(numrow/math.sin(alpha)) , abs(numcol/math.cos(alpha)) )/3.0 - 1
-	print alpha, majormax, minormax
+	print(alpha, majormax, minormax)
 	major = (majormax-2) * random.random() + 2
 	minor = (min(minormax,major)-1) * random.random() + 1
 	numpoints = 8 + int(100000*random.random()*random.random()*random.random())
 	noise = 0.2 #random.random()
-	print "NumPoints = %d ; Noise = %.1f"%(numpoints, noise)
+	print("NumPoints = %d ; Noise = %.1f"%(numpoints, noise))
 	printParams(center, major, minor, alpha)
 
 	### draw real ellipse
@@ -470,84 +470,84 @@ if __name__ == '__main__':
 	params = {'center':center, 'a':major, 'b':minor, 'alpha':alpha}
 	grid = numpy.zeros(shape, dtype=numpy.int)
 	intpoints = numpy.array(points, dtype=numpy.int)
-	print intpoints
+	print(intpoints)
 	grid[intpoints[:,0], intpoints[:,1]] = 1
 	#for point in points:
 	#	p = numpy.floor(point)
 	#	grid[p[0],p[1]] = 1
-	print grid
-	print ""
+	print(grid)
+	print("")
 
-	print drawEllipse(shape, 4*numpy.pi/180.0, **params)
+	print(drawEllipse(shape, 4*numpy.pi/180.0, **params))
 
 	### draw b2ac ellipse
 	t0 = time.time()
 	params1 = solveEllipseB2AC(points)
-	print '\nB2AC', params1
+	print('\nB2AC', params1)
 	if params1 is not None:
-		print drawEllipse(shape, 4*numpy.pi/180.0, **params1)
+		print(drawEllipse(shape, 4*numpy.pi/180.0, **params1))
 	b2actime = time.time() - t0
 
 	### draw gander ellipse
 	t0 = time.time()
 	if numpoints < 10000:
 		params2 = solveEllipseGander(points)
-		print '\nGANDER', params2
-		print drawEllipse(shape, 4*numpy.pi/180.0, **params2)
+		print('\nGANDER', params2)
+		print(drawEllipse(shape, 4*numpy.pi/180.0, **params2))
 	else:
-		print "skipping GANDER"
+		print("skipping GANDER")
 		params2 = None
 	gandertime = time.time() - t0
 
 	### draw ols ellipse
 	t0 = time.time()
 	params3 = solveEllipseOLS(points, center)
-	print '\nORDINARY LEAST SQUARES', params3
-	print drawEllipse(shape, 4*numpy.pi/180.0, **params3)
+	print('\nORDINARY LEAST SQUARES', params3)
+	print(drawEllipse(shape, 4*numpy.pi/180.0, **params3))
 	olstime = time.time() - t0
 
 	### draw QR ellipse
 	t0 = time.time()
 	params4 = solveEllipseByQRdecomp(points, center)
-	print '\nQR DECOMP', params4
+	print('\nQR DECOMP', params4)
 	if params4 is not None:
-		print drawEllipse(shape, 4*numpy.pi/180.0, **params4)
+		print(drawEllipse(shape, 4*numpy.pi/180.0, **params4))
 	qrdecomp = time.time() - t0
 
 	### draw Total Least Squares ellipse
 	t0 = time.time()
 	params5 = totalLeastSquareEllipse(points, center)
-	print '\nTotal Least Squares', params5
+	print('\nTotal Least Squares', params5)
 	if params5 is not None:
-		print drawEllipse(shape, 4*numpy.pi/180.0, **params5)
+		print(drawEllipse(shape, 4*numpy.pi/180.0, **params5))
 	totallsq = time.time() - t0
 
-	print majormax, minormax
-	print "NumPoints = %d ; Noise = %.1f"%(numpoints, noise)
-	print "Actual values"
+	print(majormax, minormax)
+	print("NumPoints = %d ; Noise = %.1f"%(numpoints, noise))
+	print("Actual values")
 	printParams(center, major, minor, alpha)
-	print "Fit values"
+	print("Fit values")
 	if params1 is not None:
 		printParams(**params1)
 	else:
-		print "b2ac failed"
+		print("b2ac failed")
 	if params2 is not None:
 		printParams(**params2)
 	else:
-		print "gander skipped"
+		print("gander skipped")
 	printParams(**params3)
 	if params4 is not None:
 		printParams(**params4)
 	else:
-		print "qr decomp failed"
+		print("qr decomp failed")
 	if params5 is not None:
 		printParams(**params5)
 	else:
-		print "total lsq failed"	
-	print "b2ac   complete in %.3f millisec"%(b2actime*1000)
-	print "gander complete in %.3f millisec"%(gandertime*1000)
-	print "ols    complete in %.3f millisec"%(olstime*1000)
-	print "qr     complete in %.3f millisec"%(qrdecomp*1000)
-	print "total  complete in %.3f millisec"%(totallsq*1000)
+		print("total lsq failed")	
+	print("b2ac   complete in %.3f millisec"%(b2actime*1000))
+	print("gander complete in %.3f millisec"%(gandertime*1000))
+	print("ols    complete in %.3f millisec"%(olstime*1000))
+	print("qr     complete in %.3f millisec"%(qrdecomp*1000))
+	print("total  complete in %.3f millisec"%(totallsq*1000))
 
 

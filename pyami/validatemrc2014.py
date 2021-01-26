@@ -7,7 +7,7 @@ import sys
 class MRC2014Check(object):
 	def __init__(self,filepath):
 		if not os.path.isfile(filepath):
-			print "ERROR: file does not exist"
+			print("ERROR: file does not exist")
 		self.file_bytes = os.path.getsize(filepath)
 		self.header = mrc.readHeaderFromFile(filepath)
 		self.valid_exttypes = ['CCP4','MRCO','SERI','AGAR','FEI1']
@@ -30,23 +30,23 @@ class MRC2014Check(object):
 		self.infos.append(message)
 
 	def printSuccess(self,message):
-		print ("Success: "+message)
+		print(("Success: "+message))
 
 	def summary(self):
-		print ''
+		print('')
 		if self.errors:
-			print "ERRORS that must be corrected-----------"
+			print("ERRORS that must be corrected-----------")
 			for e in self.errors:
-				print e
+				print(e)
 		if self.updates:
-			print "UPDATES recommended--------------"
+			print("UPDATES recommended--------------")
 			for u in self.updates:
-				print u
+				print(u)
 		if not self.errors:
-			print ''
-			print "Summary--------------"
+			print('')
+			print("Summary--------------")
 			for i in self.infos:
-				print i
+				print(i)
 
 	def checkEXTTYPE(self):
 		word27 = self.header['exttype'].strip(chr(0))
@@ -172,7 +172,7 @@ class MRC2014Check(object):
 
 	def getAxisOrder(self):
 		axis_map = {1:'X',2:'Y',3:'Z'}
-		axis_labels = map((lambda x:axis_map[self.header[x]]),('mapc','mapr','maps'))
+		axis_labels = list(map((lambda x:axis_map[self.header[x]]),('mapc','mapr','maps')))
 		axis_order_string = 'Axis Order: Fast-%s, Medium-%s, Slow-%s' % tuple(axis_labels)
 		self.printInfo(axis_order_string)
 
@@ -214,11 +214,11 @@ class MRC2014Check(object):
 		self.getPixelSize()
 
 	def printHeader(self):
-		print "-----------------------------------------------"
-		print "Basic file header (first 1024 bytes)"
-		print "-----------------------------------------------"
+		print("-----------------------------------------------")
+		print("Basic file header (first 1024 bytes)")
+		print("-----------------------------------------------")
 		mrc.printHeader(self.header)
-		print "-----------------------------------------------"
+		print("-----------------------------------------------")
 
 	def checkFormatChange(self):
 		self.printHeader()
@@ -232,7 +232,7 @@ class MRC2014Check(object):
 
 if __name__ == "__main__":
 	if len(sys.argv) != 2:
-		print "Usage: validatemrc2014.py filepath"
+		print("Usage: validatemrc2014.py filepath")
 	filepath = sys.argv[1]
 	m = MRC2014Check(filepath)
 	m.printHeader()

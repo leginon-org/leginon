@@ -62,9 +62,9 @@ def testMapping(addr, host):
 		raise LookupError(e)
 
 def test():
-	import testfun
+	from . import testfun
 	allmaps = getHostMappings()
-	for host in allmaps.keys():
+	for host in list(allmaps.keys()):
 		module = '%s ip mapping' % (host)
 		addr = allmaps[host]
 		try:
@@ -77,4 +77,4 @@ if __name__=='__main__':
 	test()
 	import sys
 	if sys.platform == 'win32':
-		raw_input('Hit any key to quit.')
+		input('Hit any key to quit.')

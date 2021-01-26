@@ -75,7 +75,7 @@ def validate_header(header_array):
 		if flt_val != int_val:
 			raise InvalidSpiderHeader('%s=%e is not an integer value.' % (key, flt_val))
 	if header_array['IFORM'] not in iform_codes:
-		raise InvalidSpiderHeader('IFORM=%e not in %s' % (header_array['IFORM'], iform_codes.keys()))
+		raise InvalidSpiderHeader('IFORM=%e not in %s' % (header_array['IFORM'], list(iform_codes.keys())))
 	if (4*header_array['NSAM']) != header_array['LENBYT']:
 		raise InvalidSpiderHeader('NSAM=%(NSAM)e, LENBYT=%(LENBYT)e ... Fails LENBYT == 4*NSAM' % header_array)
 	if (4*header_array['NSAM']*header_array['LABREC']) != header_array['LABBYT']:
@@ -182,12 +182,12 @@ def header_dict(header_array):
 	Normally you can use a header array like a dictionary, accessing fields
 	by name.  When you need a true dictionary, use this to do the conversion.
 	'''
-	header_dict = dict(zip(header_array.dtype.names,header_array.tolist()))
+	header_dict = dict(list(zip(header_array.dtype.names,header_array.tolist())))
 	return header_dict
 
 def read_info(filename, slice=None):
 	header = read_header(filename, slice)
-	header_dict = dict(zip(header.dtype.names,header.tolist()))
+	header_dict = dict(list(zip(header.dtype.names,header.tolist())))
 	return header_dict
 
 def read(filename, slice=None):
@@ -209,7 +209,7 @@ def test():
 	import sys
 	filename = sys.argv[1]
 	header = read_header(filename)
-	print header
+	print(header)
 
 def test2():
 	import sys
@@ -223,14 +223,14 @@ def test3():
 	import sys
 	filename = sys.argv[1]
 	d = read_info(filename)
-	print 'MAXIM', d['MAXIM']
-	print 'IMGNUM', d['IMGNUM']
-	print 'IMAMI', d['IMAMI']
-	print 'FMAX', d['FMAX']
-	print 'FMIN', d['FMIN']
-	print 'AV', d['AV']
-	print 'SIG', d['SIG']
-	print 'remainder', type(d['remainder'])
+	print('MAXIM', d['MAXIM'])
+	print('IMGNUM', d['IMGNUM'])
+	print('IMAMI', d['IMAMI'])
+	print('FMAX', d['FMAX'])
+	print('FMIN', d['FMIN'])
+	print('AV', d['AV'])
+	print('SIG', d['SIG'])
+	print('remainder', type(d['remainder']))
 
 if __name__ == '__main__':
 	test3()

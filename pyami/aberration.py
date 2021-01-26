@@ -71,7 +71,7 @@ class AberrationEstimator(object):
 		for k in self.Amap:
 			if self.Amap[k] == 0:
 				del newmap[k]
-		for k in newmap.keys():
+		for k in list(newmap.keys()):
 			newmap[k] -= 1
 		self.Amap = dict(newmap)
 
@@ -83,7 +83,7 @@ class AberrationEstimator(object):
 		for bdata in self.data:
 			alist = self.getFullTiltListFromData(bdata)
 			# use only defocus, astig x and astig y results for fitting.
-			sublist = map((lambda x: x[:8]),alist[2:5])
+			sublist = list(map((lambda x: x[:8]),alist[2:5]))
 			fulllist.extend(sublist)
 		m = numpy.matrix(fulllist)
 		return m
@@ -165,4 +165,4 @@ if __name__ == '__main__':
 		btxy = {'x':float(v[0]),'y':float(v[1])}
 		ctfresult = app1.fakeRunOneImageData(imagedata)
 		app.addData(btxy,ctfresult)
-	print app.run()
+	print(app.run())

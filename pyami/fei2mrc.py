@@ -10,7 +10,7 @@ def fei_to_mrc(fei_raw_names, mrc_name,int32to16=True):
 	float32 or int16 mrc image stack
 	'''
 	# allows single fei_raw_name input as string
-	if isinstance(fei_raw_names, basestring):
+	if isinstance(fei_raw_names, str):
 		fei_raw_names = [fei_raw_names,]
 	# get number of images to convert 
 	nzslices = len(fei_raw_names)

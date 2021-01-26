@@ -1,6 +1,6 @@
-from __future__ import division
-from __future__ import print_function
-from __future__ import absolute_import
+
+
+
 from past.builtins import cmp
 from builtins import map
 from builtins import range
@@ -827,7 +827,7 @@ def edgeStats(imagearray):
 ###############################################
 
 def normalizeImageArray(rawarray, darkarray, normarray, darkscale=1, badrowlist=None, badcolumnlist=None):
-	if darkscale is not 1:
+	if darkscale != 1:
 		darkarray=old_div(darkarray,darkscale)
 	diff = rawarray - darkarray
 	r = diff * normarray
@@ -838,7 +838,7 @@ def normalizeImageArray(rawarray, darkarray, normarray, darkscale=1, badrowlist=
 	return r
 
 def normalizeFromDarkAndBright(rawarray, darkarray, brightarray, scale=1, badrowlist=None, badcolumnlist=None, border=None):
-	if scale is not 1:
+	if scale != 1:
 		darkarray=old_div(darkarray,scale)
 		brightarray=old_div(brightarray,scale)
 	bminusd=(brightarray-darkarray)

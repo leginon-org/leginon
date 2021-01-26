@@ -4,6 +4,7 @@ import glob
 import sys
 import os
 import datetime
+from functools import reduce
 
 class Tvips(object):
 	'''
@@ -46,7 +47,7 @@ class Tvips(object):
 		'''
 		Get data type based on header
 		'''
-		if type_value not in self.data_types.keys():
+		if type_value not in list(self.data_types.keys()):
 			raise ValueError('Data type not decodable')
 		self.data_type = self.data_types[type_value]
 		return self.data_type
@@ -139,8 +140,8 @@ def readImageHeaderFromFile(imfolder, z=0):
 	return reader.parseImageHeader(z)
 
 if __name__ == '__main__':
-	filepath = raw_input('Enter the path to the tvips imageset folder: ') 
+	filepath = input('Enter the path to the tvips imageset folder: ') 
 	a = read(filepath, 0)
-	print('First image Max:',a.max(), 'Min:',a.min())
+	print(('First image Max:',a.max(), 'Min:',a.min()))
 	print('Series Header')
-	print readHeaderFromFile(filepath)
+	print(readHeaderFromFile(filepath))

@@ -3,7 +3,7 @@
 import os
 import re
 import subprocess
-import fileutil
+from . import fileutil
 
 def getSubversionRevision(filename=None):
 	if filename is None:
@@ -57,4 +57,4 @@ def getSubversionRevision(filename=None):
 
 if __name__ == "__main__":
 	rev = getSubversionRevision()
-	print "Revision: %s"%(rev)
+	print("Revision: %s"%(rev))

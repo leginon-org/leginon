@@ -7,5 +7,5 @@ def printResult(module_str,is_success, extra=None):
 		output = '%s [NOT OK]' % (module_str,)
 	if extra:
 		output +='\n\t%s' % (extra,)
-	print output
+	print(output)
 	return output

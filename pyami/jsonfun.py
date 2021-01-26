@@ -17,17 +17,17 @@ class DataJsonLoader(object):
 		Make SQL query of leginondata from class name and keyword arguments.
 		'''
 		q = getattr(self.db,classname)()
-		for key in kwargs.keys():
+		for key in list(kwargs.keys()):
 			# leginondata keys never contains '_'
 			realkey = key.replace('_',' ')
 			# settings key may have been removed. This is rare but possible between versions
-			if realkey not in q.keys():
+			if realkey not in list(q.keys()):
 				continue
 			if type(kwargs[key]) == type([]):
 				if len(kwargs[key]) > 0:
 					if type(kwargs[key][0]) == type([]):
 						# json export saves coordinate tuple as list.  Need to change back in import
-						kwargs[key] = map((lambda x: tuple(x)),kwargs[key])
+						kwargs[key] = list(map((lambda x: tuple(x)),kwargs[key]))
 			if key == 'image':
 				mrc_filename = kwargs['filename']+'.mrc'
 				try:
@@ -43,7 +43,7 @@ class DataJsonLoader(object):
 		# convert list of list to numpy 2D array
 		for i,datadict in enumerate(self.alldata):
 			# The first level is the class name
-			classname = datadict.keys()[0]
+			classname = list(datadict.keys())[0]
 			# field and value
 			for key in datadict[classname]:
 				value = datadict[classname][key]
@@ -53,7 +53,7 @@ class DataJsonLoader(object):
 class DataJsonMaker(object):
 	def __init__(self, sinedon_data_module):
 		self.db = sinedon_data_module
-		print 'jsonmaker __init__'
+		print('jsonmaker __init__')
 		self.alldata = []
 		self.ignorelist = ['session',]
 		pass
@@ -63,7 +63,7 @@ class DataJsonMaker(object):
 		Make SQL query of leginondata from class name and keyword arguments.
 		'''
 		q = getattr(self.db,classname)()
-		for key in kwargs.keys():
+		for key in list(kwargs.keys()):
 			# leginondata keys never contains '_'
 			realkey = key.replace('_',' ')
 			q[realkey] = kwargs[key]
@@ -103,14 +103,14 @@ class DataJsonMaker(object):
 			return None
 		classname = r.__class__.__name__
 		data = {}
-		for k in r.keys():
+		for k in list(r.keys()):
 			if k not in self.ignorelist:
 				# also ignore any reference ?
 				if hasattr(r[k],'dbid'):
 					pass
 				else:
 					if type(r[k]).__module__=='numpy':
-						if 'image' in k and 'filename' in r.keys():
+						if 'image' in k and 'filename' in list(r.keys()):
 							mrc_filename = r['filename']+'.mrc'
 							mrc.write(r[k], mrc_filename)
 							data[k] = 'MRC|%s' % mrc_filename
@@ -122,9 +122,9 @@ class DataJsonMaker(object):
 
 	def writeJsonFile(self,filename='test.json'):
 		if len(self.alldata) == 0:
-			print 'no data to save, Skipping %s....' % (filename,)
+			print('no data to save, Skipping %s....' % (filename,))
 			return
-		print 'writing %d records into %s' % (len(self.alldata),filename)
+		print('writing %d records into %s' % (len(self.alldata),filename))
 		jstr = json.dumps(self.alldata, indent=2, separators=(',',':'))
 		f = open(filename,'w')
 		f.write(jstr)
@@ -144,11 +144,11 @@ def testLoad():
 	app.readJsonFile('test.json')
 	for item in app.alldata:
 		# each item is a single key dictionary
-		classname = item.keys()[0]
+		classname = list(item.keys())[0]
 		key_value_pair = item[classname]
 		q = app.makequery(classname,key_value_pair)
-		print q
-		print q.query()
+		print(q)
+		print(q.query())
 
 if __name__ == '__main__':
 	testLoad()

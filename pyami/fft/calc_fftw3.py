@@ -9,7 +9,7 @@ sys.stderr.write('*** Using custom copy of fftw3 wrapper\n')
 from pyami.fft import fftw3
 import numpy
 
-import calc_base
+from . import calc_base
 
 import pyami.fileutil
 import pyami.cpu

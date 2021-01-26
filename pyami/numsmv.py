@@ -63,7 +63,7 @@ DEPRECATED_KEYS = ['DETECTOR_SN',]
 # (header_value, numpy_dtype, number_of_bytes)
 TYPE_MAP = [('unsigned_short', numpy.uint16, 2),]
 
-VALID_KEYS = map((lambda x: x[0]),HEADER_FIELDS)
+VALID_KEYS = list(map((lambda x: x[0]),HEADER_FIELDS))
 
 def newHeader(header_fields=HEADER_FIELDS):
 	'''
@@ -83,7 +83,7 @@ def formatHeader(headerdict, set_default=False):
 	Join the key and values to the required format.  The result is not yet
 	padded to header_bytes.
 	'''
-	names = map((lambda x: x[0]), HEADER_FIELDS)
+	names = list(map((lambda x: x[0]), HEADER_FIELDS))
 	header = ''
 	for i, name in enumerate(names):
 		try:
@@ -170,7 +170,7 @@ def parseHeader(headerbytes):
 				except Exception as e:
 					if key in DEPRECATED_KEYS:
 						continue
-					print('Invalid parsing: "%s" with error-\n  %s' % (l,e))
+					print(('Invalid parsing: "%s" with error-\n  %s' % (l,e)))
 					sys.exit(1)
 	return headerdict
 
@@ -192,20 +192,20 @@ def updateHeader(headerdict, key, value):
 	try:
 		value = validate_and_convert(key, value)
 	except Exception as e:
-		print('Updating %s failed with value %s' % (key, value,))
+		print(('Updating %s failed with value %s' % (key, value,)))
 	headerdict[key] = value
 	return headerdict
 
 #-----END of Header functions
 #-----START of Data functions
 def getDataBytesPerPixel(header_type_string):
-	print header_type_string
-	types = map((lambda x: x[0]),TYPE_MAP)
+	print(header_type_string)
+	types = list(map((lambda x: x[0]),TYPE_MAP))
 	i = types.index(header_type_string)
 	return TYPE_MAP[i][2]
 
 def getDataNumpyType(header_type_string):
-	types = map((lambda x: x[0]),TYPE_MAP)
+	types = list(map((lambda x: x[0]),TYPE_MAP))
 	i = types.index(header_type_string)
 	return TYPE_MAP[i][1]
 
@@ -257,10 +257,10 @@ def write(a, imfile=None, offset=0, header_updates={}):
 	if offset:
 		a = a+numpy.ones(a.shape)*offset
 	if a.min() < 0:
-		print '%s min of %d was truncated to 0' % (imfile, a.min())
+		print('%s min of %d was truncated to 0' % (imfile, a.min()))
 		a[a < 0] = 0
 	if a.max() >= 2**16:
-		print '%s max of %d was truncated to %d' % (imfile, a.max(), 2**16-1)
+		print('%s max of %d was truncated to %d' % (imfile, a.max(), 2**16-1))
 		a[a >= 2**16] = 2**16-1
 	# known smv format are all square.
 	shape = a.shape
@@ -279,7 +279,7 @@ def write(a, imfile=None, offset=0, header_updates={}):
 	header_updates['SIZE1']=a.shape[0]
 	header_updates['SIZE2']=a.shape[1]
 	header_updates['LEGINON_OFFSET']=offset
-	for k in header_updates.keys():
+	for k in list(header_updates.keys()):
 		v = header_updates[k]
 		headerdict = updateHeader(headerdict,k,v)
 	# new header has complete default values
@@ -300,7 +300,7 @@ def update_file_header(filename, headerdict, set_default=False):
 	open the SMV file header, update the fields given by headerdict.
 	'''
 	# Check input
-	for k in headerdict.keys():
+	for k in list(headerdict.keys()):
 		try:
 			v = headerdict[k]
 			v = validate_and_convert(k,headerdict[k])

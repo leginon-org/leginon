@@ -102,10 +102,10 @@ def spider2array(filename):
 	if iform == 1:
 		isVolume = False
 	elif iform == 3:
-		print "opening volume"
+		print("opening volume")
 		isVolume = True	# to do: support for Fourier iforms
 	else:
-		print "iform %d not supported" % iform
+		print("iform %d not supported" % iform)
 		return None
 
 	if hdrdict['istack'] > 0:
@@ -175,12 +175,12 @@ def array2spider(arr, filename):
 	# create and write the SPIDER header
 	hdr = makeSpiderHeader(arr.shape)
 	if len(hdr) < 256:
-		raise IOError, "Error creating Spider header" 
+		raise IOError("Error creating Spider header") 
 	try:
 		fp = open(filename, 'wb')
 		fp.writelines(hdr)
 	except:
-		raise IOError, "Unable to open %s for writing" % filename
+		raise IOError("Unable to open %s for writing" % filename)
 
 	# write image data
 	farr = numpy.array(arr, dtype=numpy.dtype('>f4'))
@@ -193,7 +193,7 @@ def getSpiderHeader(filename, n=27):
 	" returns first n numbers, with Spider indices (starting at 1)"
 	" if n = 'all', returns entire header "
 	if not os.path.exists(filename):
-		print "file does not exist"
+		print("file does not exist")
 		return 0
 	getall = 0
 	if not isInt(n):
@@ -202,14 +202,14 @@ def getSpiderHeader(filename, n=27):
 	nwords = n * 4  # no. floating point words 
 		
 	if os.path.getsize(filename) < nwords:
-		print "file is the wrong size"
+		print("file is the wrong size")
 		return 0
 	try:
 		fp = open(filename,'rb')
 		f = fp.read(nwords)	# read 27 * 4 bytes
 		fp.close()
 	except:
-		print "failed to open file"
+		print("failed to open file")
 		return 0
 	bigendian = 1
 	bigformat = '>%df' % n
@@ -223,7 +223,7 @@ def getSpiderHeader(filename, n=27):
 		hdr = isSpiderHeader(t)
 
 	if hdr == 0:
-		print "header is null"
+		print("header is null")
 		return 0
 	else:
 		# check if user requested the entire header
@@ -312,18 +312,18 @@ def isInt(f):
 
 # --------------------------------------------------------------------
 def randTest():
-	print "Running read/write test"
+	print("Running read/write test")
 
 	### create random array
 	array1 = numpy.random.random((160,160))
-	print "********", array1.mean(), array1.std(), array1.shape
+	print("********", array1.mean(), array1.std(), array1.shape)
 
 	### write to file
 	write(array1, "rand1.spi")
 
 	### read array back in
 	array2 = read("rand1.spi")
-	print "********", array2.mean(), array2.std(), array2.shape
+	print("********", array2.mean(), array2.std(), array2.shape)
 
 	### convert using eman
 	import subprocess
@@ -333,7 +333,7 @@ def randTest():
 
 	### read eman array
 	array3 = read("rand3.spi")
-	print "********", array3.mean(), array3.std(), array3.shape
+	print("********", array3.mean(), array3.std(), array3.shape)
 
 	### copy with spider
 	import spyder
@@ -344,9 +344,9 @@ def randTest():
 	
 	### read arrays
 	array4 = read("rand2.spi")
-	print "********", array4.mean(), array4.std(), array4.shape
+	print("********", array4.mean(), array4.std(), array4.shape)
 	array5 = read("rand4.spi")
-	print "********", array5.mean(), array5.std(), array5.shape
+	print("********", array5.mean(), array5.std(), array5.shape)
 
 	### direct convert using eman
 	from pyami import mrc
@@ -357,32 +357,32 @@ def randTest():
 
 	### read eman array
 	array6 = read("rand5.spi")
-	print "********", array6.mean(), array6.std(), array6.shape
+	print("********", array6.mean(), array6.std(), array6.shape)
 
 def test_read_equals_write():
 	'''write out an image and test that it is the same if we read it back in'''
 	r,c = 128,256
 	test_array1 = numpy.arange(r*c, dtype=numpy.float32)
 	test_array1.shape = r,c
-	print 'array to write:'
-	print test_array1
-	print 'writing...'
+	print('array to write:')
+	print(test_array1)
+	print('writing...')
 	write(test_array1, 'test.spi')
-	print 'reading...'
+	print('reading...')
 	test_array2 = read('test.spi')
-	print 'array read:'
-	print test_array2
+	print('array read:')
+	print(test_array2)
 	## test that shapes are the same
 	assert test_array1.shape == test_array2.shape
 	## test that values are the same
 	assert numpy.alltrue(test_array1 == test_array2)
-	print 'test completed successfully'
+	print('test completed successfully')
 
 # --------------------------------------------------------------------
 if __name__ == '__main__':
 	if len(sys.argv[1:]) < 2:
 		randTest()
-		print "Usage: spi2arr.py spiderfile outfile"
+		print("Usage: spi2arr.py spiderfile outfile")
 		sys.exit(1)
 	filename = sys.argv[1]
 	outfile = sys.argv[2]

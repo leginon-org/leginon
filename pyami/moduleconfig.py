@@ -17,7 +17,7 @@ class ModuleConfigParser(object):
 
 
 	def newHierarchyDict(self,keys,value):
-		d = list(map((lambda x:{}),range(len(keys)+1)))
+		d = list(map((lambda x:{}),list(range(len(keys)+1))))
 		d[0] = value
 		keys.reverse()
 		for i in range(len(keys)):
@@ -45,14 +45,14 @@ class ModuleConfigParser(object):
 						
 						try:
 							#list of floats for aparture sizes
-							value = map((lambda x: float(x)), items)
+							value = list(map((lambda x: float(x)), items))
 							#test last value since first might be 0
 							if int(value[-1]) == value[-1]:
 								#list of integers for lens or deflector neutrals
-								value = map((lambda x: int(x)), value)
+								value = list(map((lambda x: int(x)), value))
 						except:
 							#list of strings for mag mode 
-							value = map((lambda x: x.strip()), items)
+							value = list(map((lambda x: x.strip()), items))
 					else:
 						value = valuestring
 		return value
@@ -62,21 +62,21 @@ class ModuleConfigParser(object):
 		Add values to configured up to 3 levels.
 		'''
 		# This can be written perttier, but will do for now.
-		if len(self.configured[name].keys()) == 0:
+		if len(list(self.configured[name].keys())) == 0:
 			self.configured[name] = self.newHierarchyDict(levels,value)
 			return
 		if len(levels) == 1:
 			self.configured[name][levels[0]] = value
 		else:
 			if len(levels) == 2:
-				if levels[0] not in self.configured[name].keys():
+				if levels[0] not in list(self.configured[name].keys()):
 					self.configured[name][levels[0]]={}
 				self.configured[name][levels[0]][levels[1]]=value
 			if len(levels) == 3:
-				if levels[0] not in self.configured[name].keys():
+				if levels[0] not in list(self.configured[name].keys()):
 					self.configured[name].update(self.newHierarchyDict(levels,value))
 					return
-				elif levels[1] not in self.configured[name][levels[0]].keys():
+				elif levels[1] not in list(self.configured[name][levels[0]].keys()):
 					self.configured[name][levels[0]].update(self.newHierarchyDict(levels[1:],value))
 					return
 				else:
@@ -144,7 +144,7 @@ def testOneConfig(config_file,package_name):
 	module = 'moduleconfig loading %s in %s subpackage' % (config_file, package_name)
 	try:
 		configs = getConfigured(config_file, package=package_name)
-		if type(configs) == type({}) and configs.keys():
+		if type(configs) == type({}) and list(configs.keys()):
 			testfun.printResult(module,True)
 		else:
 			testfun.printResult(module,False,'config not read')
@@ -158,4 +158,4 @@ def test():
 if __name__ == '__main__':
 	test()
 	if sys.platform == 'win32':
-		raw_input('Hit any key to quit.')
+		input('Hit any key to quit.')

@@ -63,7 +63,7 @@ Available methods on you accumulator object:
 
 	def insertMedian(self, image):
 		if debug:
-			print 'inserting into median buffer'
+			print('inserting into median buffer')
 		if len(self.__medbuffer) == self.__medsize:
 			del self.__medbuffer[0]
 
@@ -71,7 +71,7 @@ Available methods on you accumulator object:
 
 		if len(self.__medbuffer) == self.__medsize:
 			if debug:
-				print 'calculating median'
+				print('calculating median')
 			return median(self.__medbuffer)
 		else:
 			return None
@@ -85,7 +85,7 @@ Available methods on you accumulator object:
 			return
 
 		if debug:
-			print 'doing calculations'
+			print('doing calculations')
 		self.__std = None
 		self.__n += 1
 		if self.__n == 1:
@@ -98,7 +98,7 @@ Available methods on you accumulator object:
 			if self.__calcstd:
 				self.__sum2 = self.__sum2 + delta * (x - self.__mean)
 		if debug:
-			print 'done calculations'
+			print('done calculations')
 
 	def mean(self):
 		return self.__mean
@@ -115,16 +115,16 @@ def testAccumulator():
 	b = []
 	for i in range(4):
 		im = i * numpy.ones((4,4), numfloat)
-		print i
-		print im
+		print(i)
+		print(im)
 		a.insert(im)
 		b.append(im)
-	print 'Traditional:'
-	print '  mean:', imagemean(b,0)
-	print '  std:', imagestd(b,0)
-	print 'Accumulator:'
-	print '  mean:', a.mean()
-	print '  std:', a.std()
+	print('Traditional:')
+	print('  mean:', imagemean(b,0))
+	print('  std:', imagestd(b,0))
+	print('Accumulator:')
+	print('  mean:', a.mean())
+	print('  std:', a.std())
 
 class CorrectorBase(object):
 	'''

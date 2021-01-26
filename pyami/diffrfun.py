@@ -200,7 +200,7 @@ def calibrate(a, ht, cam_psize, image_bin):
 
 def test(a, ht, cam_psize, image_bin):
 	cam_lengths, center, radial_values = calibrate(a, ht, cam_psize, image_bin)
-	print('center(pixels): x=%.1f, y=%.1f' % (center[1],center[0]))
+	print(('center(pixels): x=%.1f, y=%.1f' % (center[1],center[0])))
 	if cam_lengths:
 		avg_cam_length = numpy.array(cam_lengths).mean()
 		std_cam_length_str = ''
@@ -208,9 +208,9 @@ def test(a, ht, cam_psize, image_bin):
 			std_cam_length = numpy.array(cam_lengths).std()
 			std_cam_length_str = '+/-%.3f' % (std_cam_length)
 			if std_cam_length > 0.05:
-				print('suspecious', center, cam_lengths)
+				print(('suspecious', center, cam_lengths))
 		edge_res = getCompleteResolution(a, center, avg_cam_length, ht, cam_psize,image_bin)
-		print('cam_length(m) = %.3f%s (n=%d) edge_res(Angs) = %.2f' % (avg_cam_length, std_cam_length_str, len(cam_lengths), edge_res*1e10))
+		print(('cam_length(m) = %.3f%s (n=%d) edge_res(Angs) = %.2f' % (avg_cam_length, std_cam_length_str, len(cam_lengths), edge_res*1e10)))
 	try:
 		plot(radial_values)
 	except:
@@ -219,7 +219,7 @@ def test(a, ht, cam_psize, image_bin):
 def plot(values):
 	import matplotlib.pyplot as pyplot
 	fig = pyplot.figure(1)
-	pyplot.plot(range(len(values)), values,'-')
+	pyplot.plot(list(range(len(values))), values,'-')
 	pyplot.show()
 
 if __name__=='__main__':

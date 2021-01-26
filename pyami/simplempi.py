@@ -17,7 +17,7 @@ class TaskHandler(object):
 	def run_master(self):
 		## make sure there are slaves to run the tasks
 		if self.comm.Get_size() < 2:
-			print 'need np > 1 to process'
+			print('need np > 1 to process')
 			return
 
 		## create a list of tasks
@@ -39,12 +39,12 @@ class TaskHandler(object):
 
 	def kill_slaves(self):
 		## kill slaves on their next request for task
-		slave_ranks = range(1, self.comm.Get_size())
+		slave_ranks = list(range(1, self.comm.Get_size()))
 		while slave_ranks:
 			slave_rank = self.comm.recv(source=MPI.ANY_SOURCE, tag=TAG_AVAILABLE)
 			self.comm.send(None, dest=slave_rank, tag=TAG_DIE)
 			slave_ranks.remove(slave_rank)
-		print 'All slaves killed'
+		print('All slaves killed')
 
 	def run_slave(self):
 		## notify master of availability and wait for task
@@ -62,7 +62,7 @@ class TaskHandler(object):
 			## notify master of availability and wait for task
 			self.comm.send(self.rank, dest=0, tag=TAG_AVAILABLE)
 			task = self.comm.recv(source=0, tag=MPI.ANY_TAG)
-		print 'RANK %d done' % (self.rank,)
+		print('RANK %d done' % (self.rank,))
 
 	def run(self):
 		if self.rank == 0:
