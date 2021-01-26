@@ -506,9 +506,9 @@ class CheckPackages(object):
         ]
 
         # create a config parser to try to read the config file    
-        configparser = configparser.SafeConfigParser()
+        cparser = configparser.ConfigParser()
         try:
-            configfiles = configparser.read(config_locations)
+            configfiles = cparser.read(config_locations)
         except:
             raise Exception("!!!! WARNING !!!! Failed to read %(filename)s." % {'filename' : configfilename } )
         else:
@@ -562,11 +562,11 @@ class CheckPackages(object):
     def checkLeginonConfig(self, printPath = False):
         
         try:
-            import leginon.configparser
+            import leginon.leginonconfigparser
         except:
-            raise Exception("!!!! WARNING !!!! Failed to import leginon.configparser." )
+            raise Exception("!!!! WARNING !!!! Failed to import leginon.leginonconfigparser." )
         else:
-            configfiles = leginon.configparser.configfiles
+            configfiles = leginon.leginonconfigparser.configfiles
     
         if not configfiles:
             raise Exception("!!!! WARNING !!!! Failed to locate leginon.cfg." )

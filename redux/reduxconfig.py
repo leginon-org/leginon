@@ -9,7 +9,7 @@ confdirs = pyami.fileutil.get_config_dirs()
 config_locations = [os.path.join(confdir, configfilename) for confdir in confdirs]
 pyami.fileutil.check_exist_one_file(config_locations)
 
-configparser = configparser.SafeConfigParser()
+configparser = configparser.ConfigParser()
 configfiles = configparser.read(config_locations)
 
 # default config

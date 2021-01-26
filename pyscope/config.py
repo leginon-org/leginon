@@ -18,7 +18,7 @@ configfiles = None
 def parse():
 	global configured, temclasses, cameraclasses, configfiles
 
-	cparser = configparser.SafeConfigParser()
+	cparser = configparser.ConfigParser()
 
 	# use the path of this module
 	modpath = pyscope.__path__

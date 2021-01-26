@@ -7,7 +7,7 @@ import pyami.fileutil
 # Locate slack.cfg, which should be placed in any of the same locations as leginon.cfg (e.g. /etc/myami/, /home/username/)
 
 def getSlackConfig(printfiles=False):
-	slackconfigparser = configparser.SafeConfigParser()
+	slackconfigparser = configparser.ConfigParser()
 	confdirs = pyami.fileutil.get_config_dirs()
 	conf_files = [os.path.join(confdir, 'slack.cfg') for confdir in confdirs]
 	pyami.fileutil.check_exist_one_file(conf_files)

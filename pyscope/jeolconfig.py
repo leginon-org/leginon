@@ -10,7 +10,7 @@ import pyami.fileutil
 
 class JeolConfigParser(object):
 	def __init__(self):
-		self.configparser = configparser.SafeConfigParser()
+		self.configparser = configparser.ConfigParser()
 		self.configured = {}
 		self.configfiles = None
 
