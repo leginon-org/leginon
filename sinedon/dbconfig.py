@@ -14,8 +14,8 @@ confdirs = pyami.fileutil.get_config_dirs()
 config_locations = [os.path.join(confdir, configfilename) for confdir in confdirs]
 pyami.fileutil.check_exist_one_file(config_locations)
 
-configparser = configparser.ConfigParser()
-configfiles = configparser.read(config_locations)
+cparser = configparser.ConfigParser()
+configfiles = cparser.read(config_locations)
 
 def tail(modulename):
 	return modulename.split('.')[-1]
@@ -28,23 +28,23 @@ def printConfigFiles():
 	for configfile in configfiles:
 		print('\t%s' % (configfile,))
 
-allsections = configparser.sections()
+allsections = cparser.sections()
 configs = {}
 globals = {}
 windowsdrives = {}
 for section in allsections:
-	options = configparser.options(section)
+	options = cparser.options(section)
 	if section == 'global':
 		for key in options:
-			globals[key] = configparser.get(section, key)
+			globals[key] = cparser.get(section, key)
 	elif section == 'Windows Drives':
 		for key in options:
 			drivepath = key.upper() + ':'
-			windowsdrives[drivepath] = configparser.get(section, key)
+			windowsdrives[drivepath] = cparser.get(section, key)
 	else:
 		configs[section] = {}
 		for key in options:
-			configs[section][key] = configparser.get(section, key)
+			configs[section][key] = cparser.get(section, key)
 
 ## combine globals with specifics
 for section in configs:

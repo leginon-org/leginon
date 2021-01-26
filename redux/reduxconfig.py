@@ -9,8 +9,8 @@ confdirs = pyami.fileutil.get_config_dirs()
 config_locations = [os.path.join(confdir, configfilename) for confdir in confdirs]
 pyami.fileutil.check_exist_one_file(config_locations)
 
-configparser = configparser.ConfigParser()
-configfiles = configparser.read(config_locations)
+cparser = configparser.ConfigParser()
+configfiles = cparser.read(config_locations)
 
 # default config
 config = {
@@ -21,15 +21,15 @@ config = {
 }
 
 # from config file
-config['server host'] = configparser.get('server','host')
-config['server port'] = configparser.getint('server','port')
-cache_on = configparser.get('cache','enable')
+config['server host'] = cparser.get('server','host')
+config['server port'] = cparser.getint('server','port')
+cache_on = cparser.get('cache','enable')
 if cache_on.strip().lower() in ('yes','on','true'):
 	config['cache on'] = True
-	config['cache path'] = configparser.get('cache','path')
-	config['cache disk size'] = configparser.getint('cache','disksize')
-	config['cache mem size'] = configparser.getint('cache','memsize')
-config['log file'] = configparser.get('log', 'file')
+	config['cache path'] = cparser.get('cache','path')
+	config['cache disk size'] = cparser.getint('cache','disksize')
+	config['cache mem size'] = cparser.getint('cache','memsize')
+config['log file'] = cparser.get('log', 'file')
 
 def printConfig():
 	'''

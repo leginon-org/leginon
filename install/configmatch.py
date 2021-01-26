@@ -56,13 +56,13 @@ def checkSinedonConfig():
 	return returnvalue
 
 def checkLeginonConfig():
-	from leginon import configparser
-	confdirs = pyami.fileutil.get_config_dirs(configparser)
-	allconfigfiles = configparser.configfiles
+	from leginon import leginonconfigparser
+	confdirs = pyami.fileutil.get_config_dirs(leginonconfigparser)
+	allconfigfiles = leginonconfigparser.configfiles
 	configfile = printResult('leginon',allconfigfiles)
 	if configfile:
 		try:
-			image_path = configparser.configparser.get('Images','path')
+			image_path = leginonconfigparser.leginonconfigparser.get('Images','path')
 			return image_path
 		except:
 			printError('Default image path required')

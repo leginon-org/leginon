@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 import copy
 import sys
-import configparser as ConfigParser
+import configparser
 import os
 import imp
 import pyami.fileutil
 
 class ModuleConfigParser(object):
 	def __init__(self,filename,package='pyscope'):
-		self.configparser = ConfigParser.ConfigParser()
+		self.configparser = configParser.ConfigParser()
 		self.configured = {}
 		self.config_filename = filename
 		self.configfiles = None
