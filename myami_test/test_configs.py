@@ -18,7 +18,7 @@ class TestConfigs(unittest.TestCase):
 		try:
 			config = pyami.moduleconfig.getConfigured('instruments.cfg', package='pyscope')
 			return type(config) == type({})
-		except IOError, e:
+		except IOError as e:
 			self.instrument_error = e
 			return False
 
@@ -32,7 +32,7 @@ class TestConfigs(unittest.TestCase):
 		except IOError:
 			# optional config file
 			return True
-		except KeyError, e:
+		except KeyError as e:
 			self.session_error = 'Existing leginon_session.cfg does not have "prefix" item in "name" section'
 			return False
 		return True
@@ -53,10 +53,10 @@ class TestConfigs(unittest.TestCase):
 		except IOError:
 			# optional config file
 			return True
-		except ImportError, e:
+		except ImportError as e:
 			self.remote_error = 'Could not import required module. %s' %(e)
 			return False
-		except KeyError, e:
+		except KeyError as e:
 			self.remote_error = 'Existing remote.cfg does not have required key: %s' %(e)
 			return False
 		return True

@@ -25,7 +25,7 @@ class TestOpenCV(unittest.TestCase):
 
 			result = leginon.openCVcaller.MatchImages(arrayold, arraynew)
 			t1 = time.time()
-			print 'process time = %.1f seconds' % (t1 - t0)
+			print('process time = %.1f seconds' % (t1 - t0))
 			return True
 		except:
 			self.match_error = e

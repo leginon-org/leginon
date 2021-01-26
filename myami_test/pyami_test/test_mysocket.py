@@ -13,7 +13,7 @@ class TestIpMapping(unittest.TestCase):
 		self.host_maps = host_maps
 
 	def testHostname(self):
-		for name in self.host_maps.keys():
+		for name in list(self.host_maps.keys()):
 			msg = 'pyami.cfg hostname %s does not exist.' % name
 			self.assertEqual(type(self._getHostByName(name)),str,msg=msg)
 
@@ -31,7 +31,7 @@ class TestIpMapping(unittest.TestCase):
 		'''
 		Test that the address in pyami.cfg is mapped to the assigned hostname.
 		'''
-		for name in self.host_maps.keys():
+		for name in list(self.host_maps.keys()):
 			addr = self.host_maps[name]
 			msg = 'Incorrect pyami.cfg host mapping for %s' % (addr)
 			self.longMessage = True
