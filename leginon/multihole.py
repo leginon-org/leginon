@@ -108,7 +108,7 @@ class TemplateConvolver(object):
 		template_image = self.makeMultiTemplate()
 		outfile = './%dholetemplate.mrc' % (self.npoint)
 		outfile = os.path.abspath(outfile)
-		print 'output the template file as\n %s' % outfile 
+		print('output the template file as\n %s' % outfile) 
 		mrc.write(template_image,outfile)
 
 if __name__ == '__main__':
@@ -116,10 +116,10 @@ if __name__ == '__main__':
 
 	app = TemplateConvolver()
 	app.readSingleTemplate(input_file)
-	npoint = int(float(raw_input('Enter number of holes in template (for example, 4):')))
-	spacing = float(raw_input('Enter Lattice Spacing in pixels (for example 415):'))
-	template_diameter = float(raw_input('Enter template diameter as in hole finder in pixels (for example 260):'))
+	npoint = int(float(input('Enter number of holes in template (for example, 4):')))
+	spacing = float(input('Enter Lattice Spacing in pixels (for example 415):'))
+	template_diameter = float(input('Enter template diameter as in hole finder in pixels (for example 260):'))
 	single_scale = template_diameter/168.0
-	angle = float(raw_input('Enter lattice angle (0,0) to (1,0) in degrees (for example 13):'))
+	angle = float(input('Enter lattice angle (0,0) to (1,0) in degrees (for example 13):'))
 	app.setConfig(npoint, spacing, angle, single_scale)
 	app.run()

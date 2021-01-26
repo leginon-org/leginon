@@ -365,7 +365,7 @@ class Prediction(object):
 		# The current tilt series may need an extra index to make up the number
 		while len(goodindices) < datalimit and len(goodindices) > 0 and len(list) >= datalimit:
 			nextindex = goodindices[-1]+1
-			if nextindex not in range(0,len(list)):
+			if nextindex not in list(range(0,len(list))):
 				break
 			goodindices.append(goodindices[-1]+1)
 		return goodindices

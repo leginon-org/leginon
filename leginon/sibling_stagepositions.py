@@ -16,7 +16,7 @@ class Siblings(object):
 		self.filename = inputname.split('.mrc')[0]
 		r = leginondata.AcquisitionImageData(filename=self.filename).query(results=1)
 		if not r:
-			print 'File %s does not exist in Leginon database' % inputname
+			print('File %s does not exist in Leginon database' % inputname)
 			sys.exit(1)
 		self.imagedata = r[0]
 
@@ -38,10 +38,10 @@ class ImageSorter(object):
 	def _sortByKey(self,keyfunc):
 		sortdict = {}
 		for image in self.images:
-			sortdict[apply(keyfunc,(image,))]=image
-		keys = sortdict.keys()
+			sortdict[keyfunc(*(image,))]=image
+		keys = list(sortdict.keys())
 		keys.sort()
-		sorted_images = map((lambda x:sortdict[x]),keys)
+		sorted_images = list(map((lambda x:sortdict[x]),keys))
 		return sorted_images
 
 	def positionIndex(self,positiondict):
@@ -76,22 +76,22 @@ class ResultWriter(object):
 
 	def printResults(self):
 		for image in self.images:
-			print self.infoline(image)
+			print(self.infoline(image))
 
 
 if __name__=='__main__':
 	if len(sys.argv) < 3 or len(sys.argv) > 5:
-		print 'Usage: sibling_stageposition.py <sort-type> <one-filename> <optional:outputfile>'
-		print '       sort-type: position or number'
-		print 'Notes: one-filename in the raster does not need to include .mrc extension'
-		print 'Example: python sibling_stageposition.py position 13dec01_00001gr out.txt'
+		print('Usage: sibling_stageposition.py <sort-type> <one-filename> <optional:outputfile>')
+		print('       sort-type: position or number')
+		print('Notes: one-filename in the raster does not need to include .mrc extension')
+		print('Example: python sibling_stageposition.py position 13dec01_00001gr out.txt')
 		sys.exit(1)
 
 	# Check sort type
 	sorttype = sys.argv[1]
 	validtypes = ('position','number')
 	if sorttype not in validtypes:
-		print 'Error: sort type not valid'
+		print('Error: sort type not valid')
 		sys.exit(1)
 
 	# Find image data objects of the siblings include itself

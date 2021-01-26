@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 import sinedon
 from sinedon import sqldict
-import leginonconfig
-import projectdata
+from . import leginonconfig
+from . import projectdata
 
 class NotConnectedError(Exception):
 	pass
@@ -32,7 +32,7 @@ class ProjectData:
 			raise NotConnectedError('no hostname for project database')
 		try:
 			self.db = sqldict.SQLDict(**dbparams)
-		except Exception, e:
+		except Exception as e:
 			raise NotConnectedError(e)
 
 		self.gridboxes = GridBox().register(self.db)
@@ -45,7 +45,7 @@ class ProjectData:
 	def getProjects(self, userdata=None):
 		if userdata and self.isLowPrivilegeUser(userdata):
 			project_owned = projectdata.projectowners(user=userdata).query()
-			return map((lambda x: x['project']), project_owned)
+			return list(map((lambda x: x['project']), project_owned))
 		else:
 			projq = projectdata.projects()
 			return projq.query()
@@ -59,7 +59,7 @@ class ProjectData:
 		projq['session'] = sessiondata
 		projdatas = projq.query(results=1)
 		if not projdatas:
-			print "Project Id not found for session"
+			print("Project Id not found for session")
 			return None
 		return projdatas[0]['project'].dbid
 
@@ -69,7 +69,7 @@ class ProjectData:
 		procq['project'] = projdata
 		procdatas = procq.query(results=1)
 		if not procdatas:
-			print "Appion database not found for project id"
+			print("Appion database not found for project id")
 			return None
 		return procdatas[0]['appiondb']
 
@@ -129,7 +129,7 @@ class ProjectData:
 	def getSessionsFromProjectId(self, projectId):
 		projdata = projectdata.projects.direct_query(projectId)
 		r = projectdata.projectexperiments(project=projdata).query()
-		return map((lambda x: x['session']),r)
+		return list(map((lambda x: x['session']),r))
 
 ########################################
 ## Testing
@@ -140,9 +140,9 @@ if __name__ == "__main__":
 	# getall projects
 	projdata = ProjectData()
 	projects = projdata.getProjects()
-	print projects
+	print(projects)
 	allprojects = projects.getall()
-	print allprojects;
+	print(allprojects);
 	"""
 	projdata = ProjectData()
 

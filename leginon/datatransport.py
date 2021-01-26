@@ -13,8 +13,8 @@ class TransportError(IOError):
 class ExitException(Exception):
 	pass
 
-import localtransport
-import tcptransport
+from . import localtransport
+from . import tcptransport
 
 class Ping(object):
 	pass
@@ -58,13 +58,13 @@ class Client(Base):
 			try:
 				ret = client.send(request)
 				return ret
-			except TransportError, e:
+			except TransportError as e:
 				# Means this this not the right client. Just need to move on.
 				pass
 		# It gets here if none of the clients can handle the request.
 		if DEBUG:
-			print 'failed request sending to clients', self.getClientServerLocations(self.clients)
-			print 'request attr', self.getMultiRequestAttributeName(request)
+			print('failed request sending to clients', self.getClientServerLocations(self.clients))
+			print('request attr', self.getMultiRequestAttributeName(request))
 		msg = '%s' % (request.__class__.__name__,)
 		raise TransportError('Error sending request: %s' % msg)
 

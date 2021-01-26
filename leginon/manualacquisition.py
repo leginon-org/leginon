@@ -7,23 +7,23 @@
 #
 
 from leginon import leginondata
-import event
-import node
-import project
+from . import event
+from . import node
+from . import project
 import threading
 import time
-import gui.wx.ManualAcquisition
-import player
-import instrument
+from . import gui.wx.ManualAcquisition
+from . import player
+from . import instrument
 import os
 import re
-import calibrationclient
+from . import calibrationclient
 import copy
 from pyami import arraystats, imagefun, fftfun
 import math
 import numpy
-import gridlabeler
-import cameraclient
+from . import gridlabeler
+from . import cameraclient
 
 class AcquireError(Exception):
 	pass
@@ -134,7 +134,7 @@ class ManualAcquisition(node.Node):
 				imagedata = self.acquireCorrectedCameraImageData(scopeclass=scopeclass, type=exposuretype)
 			else:
 				imagedata = self.acquireCameraImageData(scopeclass=scopeclass, type=exposuretype)
-		except Exception, e:
+		except Exception as e:
 			self.logger.error('Error acquiring image: %s' % e)
 			raise AcquireError
 
@@ -151,7 +151,7 @@ class ManualAcquisition(node.Node):
 			try:
 				self.publishImageData(imagedata, save=True)
 				self.published_images.append(self.getMostRecentImageData(self.session))
-			except node.PublishError, e:
+			except node.PublishError as e:
 				raise
 				message = 'Error saving image to database'
 				self.logger.info(message)
@@ -201,7 +201,7 @@ class ManualAcquisition(node.Node):
 			defindex = '_%02d' % (self.defocus,)
 		try:
 			path = imagedata.mkpath()
-		except Exception, e:
+		except Exception as e:
 			raise
 			raise node.PublishError(e)
 		filenames = os.listdir(path)
@@ -408,14 +408,14 @@ class ManualAcquisition(node.Node):
 																'location': gridlocation['location'],
 																'label': grid['label'],
 																'projectId': grid['projectId']}
-		keys = self.gridmapping.keys()
+		keys = list(self.gridmapping.keys())
 		keys.sort(self.cmpGridLabel)
 		return keys
 
 	def getGridBoxes(self):
 		gridboxes = self.projectdata.getGridBoxes()
 		labelindex = gridboxes.Index(['label'])
-		gridboxlabels = map(lambda d: d['label'], gridboxes.getall())
+		gridboxlabels = [d['label'] for d in gridboxes.getall()]
 		gridboxlabels.reverse()
 		return gridboxlabels
 
@@ -462,7 +462,7 @@ class ManualAcquisition(node.Node):
 		# calculate dose
 		try:
 			dose = self.dosecal.dose_from_imagedata(imagedata)
-		except Exception, e:
+		except Exception as e:
 			self.logger.error('Failed calculating dose: %s' % (e,))
 			return
 		dosedata = leginondata.DoseMeasurementData()
@@ -664,7 +664,7 @@ class ManualAcquisition(node.Node):
 		self.panel.onSetRobotGrid()
 
 	def getOneSetting(self,keyname):
-		if keyname not in self.settings.keys():
+		if keyname not in list(self.settings.keys()):
 			return
 		else:
 			return self.settings[keyname]

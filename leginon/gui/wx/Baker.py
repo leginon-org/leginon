@@ -86,7 +86,7 @@ class Panel(leginon.gui.wx.Node.Panel):
 		threading.Thread(target=self.node.onPlay).start()
 
 	def onPlayer(self, evt):
-		print 'got evt',evt
+		print('got evt',evt)
 		if evt.state == 'play':
 			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, False)
 			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, True)

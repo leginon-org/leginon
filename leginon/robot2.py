@@ -10,13 +10,13 @@ import sys
 import threading
 import time
 from leginon import leginondata
-import emailnotification
-import event
-import instrument
-import node
-import project
-import gui.wx.Robot
-import Queue
+from . import emailnotification
+from . import event
+from . import instrument
+from . import node
+from . import project
+from . import gui.wx.Robot
+import queue
 import sinedon
 
 # ...
@@ -91,7 +91,7 @@ class RobotAttributes(sinedon.Data):
 	
 class DatabaseCommunication(object):
 	def __setattr__(self, name, value):
-		print 'SET', name, value
+		print('SET', name, value)
 		## get current robot attrs from DB
 		rattrs = RobotAttributes().query(results=1)
 		if rattrs:
@@ -199,7 +199,7 @@ class Robot2(node.Node):
 
 		self.traysFromDB()
 
-		self.queue = Queue.Queue()
+		self.queue = queue.Queue()
 		threading.Thread(name='robot control queue handler thread',
 											target=self._queueHandler).start()
 
@@ -222,7 +222,7 @@ class Robot2(node.Node):
 			for i in gridboxes.getall():
 				self.gridtrayids[i['label']] = i['gridboxId']
 				self.gridtraylabels[i['gridboxId']] = i['label']
-		except Exception, e:
+		except Exception as e:
 			self.logger.error('Failed to connect to the project database: %s' % e)
 
 	def userContinue(self):
@@ -308,7 +308,7 @@ class Robot2(node.Node):
 					request = self.queue.get(block=False)
 					if isinstance(request, ExitRequest):
 						break
-				except Queue.Empty:
+				except queue.Empty:
 					request = self.getUserGridRequest()
 					if request is None:
 						self.startnowait = False
@@ -674,7 +674,7 @@ class Robot2(node.Node):
 	def newGrid(self, gridboxid, gridnumber):
 		try:
 			projectdata = project.ProjectData()
-		except project.NotConnectedError, e:
+		except project.NotConnectedError as e:
 			self.logger.error('Failed to create grid information: %s' % e)
 			return None
 		return projectdata.newGrid('Robot Generated Grid #%d' % gridnumber,	
@@ -683,7 +683,7 @@ class Robot2(node.Node):
 	def getGridNumber(self, gridid):
 		try:
 			projectdata = project.ProjectData()
-		except project.NotConnectedError, e:
+		except project.NotConnectedError as e:
 			self.logger.error('Failed to find grid information: %s' % e)
 			return None
 
@@ -713,7 +713,7 @@ class Robot2(node.Node):
 	def getGridID(self, gridboxid, gridnumber):
 		try:
 			projectdata = project.ProjectData()
-		except project.NotConnectedError, e:
+		except project.NotConnectedError as e:
 			self.logger.error('Failed to find grid information: %s' % e)
 			return None
 
@@ -728,7 +728,7 @@ class Robot2(node.Node):
 	def publishEMGridData(self,gridid):
 		try:
 			projectdata = project.ProjectData()
-		except project.NotConnectedError, e:
+		except project.NotConnectedError as e:
 			self.logger.error('Failed to get grid labels: %s' % e)
 			return None
 		gridinfo = projectdata.getGridInfo(gridid)
@@ -795,7 +795,7 @@ class Robot2(node.Node):
 			self.logger.info('Simulated Insertion of holder successfully completed')
 			try:
 				griddata = self.gridInserted(self.gridnumber)
-			except Exception, e:
+			except Exception as e:
 				self.logger.error('Failed to get scope ready for imaging: %s' % e)
 				self.unlockScope()
 			self.unlockScope()
@@ -812,7 +812,7 @@ class Robot2(node.Node):
 
 		try:
 			self.scopeReadyForInsertion1()
-		except Exception, e:
+		except Exception as e:
 			self.unlockScope()
 			self.logger.error('Failed to get scope ready for insertion 1: %s' % e)
 			raise
@@ -821,7 +821,7 @@ class Robot2(node.Node):
 
 		try:
 			self.scopeReadyForInsertion2()
-		except Exception, e:
+		except Exception as e:
 			self.unlockScope()
 			self.logger.error('Failed to get scope ready for insertion 2: %s' % e)
 			raise
@@ -831,7 +831,7 @@ class Robot2(node.Node):
 		self.logger.info('Insertion of holder successfully completed')
 		try:
 			griddata = self.gridInserted(self.gridnumber)
-		except Exception, e:
+		except Exception as e:
 			self.logger.error('Failed to get scope ready for imaging: %s' % e)
 			self.unlockScope()
 			return
@@ -853,7 +853,7 @@ class Robot2(node.Node):
 		self.robotReadyForExtraction()
 		try:
 			self.scopeReadyForExtraction()
-		except Exception, e:
+		except Exception as e:
 			self.unlockScope()
 			self.logger.error('Failed to get scope ready for extraction: %s' % e)
 			raise
@@ -888,7 +888,7 @@ class Robot2(node.Node):
 
 	def getTrayLabels(self):
 		self.traysFromDB()
-		return self.gridtrayids.keys()
+		return list(self.gridtrayids.keys())
 
 	def setTray(self, traylabel):
 		try:
@@ -899,7 +899,7 @@ class Robot2(node.Node):
 	def getGridLabels(self, gridlist):
 		try:
 			projectdata = project.ProjectData()
-		except project.NotConnectedError, e:
+		except project.NotConnectedError as e:
 			self.logger.error('Failed to get grid labels: %s' % e)
 			return None
 		gridlabels = []
@@ -914,7 +914,7 @@ class Robot2(node.Node):
 			raise ValueError('unknown tray label')
 		try:
 			projectdata = project.ProjectData()
-		except project.NotConnectedError, e:
+		except project.NotConnectedError as e:
 			self.logger.error('Failed to get grid locations: %s' % e)
 			return None
 		gridlocations = projectdata.getGridLocations()

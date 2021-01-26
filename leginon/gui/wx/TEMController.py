@@ -543,7 +543,7 @@ class TEMParameters(wx.StaticBoxSizer):
 				this_unit = self.getUnitFromLabel(label)
 				unitkey = '%s unit' % name
 				self.sts[unitkey].SetLabel(this_unit)
-			except (TypeError, KeyError), e:
+			except (TypeError, KeyError) as e:
 				self.sts[name].SetLabel('None')
 		self.Layout()
 
@@ -555,7 +555,7 @@ class TEMParameters(wx.StaticBoxSizer):
 				this_unit = self.getUnitFromLabel(label)
 				unitkey = '%s unit' % name
 				self.sts[unitkey].SetLabel(this_unit)
-			except (TypeError, KeyError), e:
+			except (TypeError, KeyError) as e:
 				self.sts[name].SetLabel('None')
 			except:
 				raise

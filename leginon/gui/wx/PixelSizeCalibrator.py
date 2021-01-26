@@ -328,7 +328,7 @@ class PixelSizeListCtrl(wx.ListCtrl, ListCtrlAutoWidthMixin):
 
 	def getBestSize(self):
 		count = self.GetColumnCount()
-		width = sum(map(lambda i: self.GetColumnWidth(i), range(count)))
+		width = sum([self.GetColumnWidth(i) for i in range(count)])
 		height = self.GetSize().height * 3 
 		return width, height
 
@@ -471,7 +471,7 @@ class PixelSizeCalibrationDialog(wx.Dialog):
 		dialog = ExtrapolateDialog(self, selected, self.pixelsizes)
 		if dialog.ShowModal() == wx.ID_OK:
 			extrapolated = dialog.pslc.getPixelSizes()
-			mags = map(lambda (m, p, c): m, self.pixelsizes)
+			mags = [m_p_c[0] for m_p_c in self.pixelsizes]
 			for pixelsize in dialog.pslc.getPixelSizes():
 				# refresh values in PixelSizeCalibrationDialog
 				self.lcpixelsize.addPixelSize(*pixelsize)
@@ -491,7 +491,7 @@ class MeasurementListCtrl(wx.ListCtrl, ListCtrlAutoWidthMixin):
 
 	def getBestSize(self):
 		count = self.GetColumnCount()
-		width = sum(map(lambda i: self.GetColumnWidth(i), range(count)))
+		width = sum([self.GetColumnWidth(i) for i in range(count)])
 		height = self.GetSize().height * 3
 		return width, height
 

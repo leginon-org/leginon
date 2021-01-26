@@ -54,6 +54,6 @@ class BufferCycler(conditioner.Conditioner):
 			self.instrument.tem.runBufferCycle()
 		except AttributeError:
 			self.logger.warning('No buffer cycle for this instrument')
-		except Exception, e:
+		except Exception as e:
 			self.logger.error('Run buffer cycle failed: %s' % e)
 

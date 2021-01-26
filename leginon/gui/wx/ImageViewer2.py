@@ -4,10 +4,10 @@ import wx
 import time
 
 def getColorMap():
-	b = [0] * 512 + range(256) + [255] * 512 + range(255, -1, -1)
+	b = [0] * 512 + list(range(256)) + [255] * 512 + list(range(255, -1, -1))
 	g = b[512:] + b[:512]
 	r = g[512:] + g[:512]
-	return zip(r, g, b)
+	return list(zip(r, g, b))
 
 colormap = getColorMap()
 

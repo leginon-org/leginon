@@ -66,8 +66,8 @@ def hillclimb_and_restart(init_function, move_operator, objective_function, max_
 
 def all_pairs(size,shuffle=random.shuffle):
 	'''generates all i,j pairs for i,j from 0-size uses shuffle to randomise (if provided)'''
-	r1=range(size)
-	r2=range(size)
+	r1=list(range(size))
+	r2=list(range(size))
 	if shuffle:
 		shuffle(r1)
 		shuffle(r2)
@@ -134,9 +134,9 @@ def tour_length1(matrix,tour):
 	try:
 		num_cities=len(tour)
 	except:
-		print "Could not get len of tour"
-		print type(tour)
-		print "Tour=",tour
+		print("Could not get len of tour")
+		print(type(tour))
+		print("Tour=",tour)
 		return 1.0e10
 	for i in range(num_cities-1):
 		city_i=tour[i]
@@ -150,9 +150,9 @@ def tour_length2(matrix,tour):
 	try:
 		num_cities=len(tour)
 	except:
-		print "Could not get len of tour"
-		print type(tour)
-		print "Tour=",tour
+		print("Could not get len of tour")
+		print(type(tour))
+		print("Tour=",tour)
 		return 1.0e10
 	for i in range(num_cities):
 		j=(i+1)%num_cities
@@ -196,7 +196,7 @@ def write_tour_to_img(coords,tour,title,img_file):
 	img.save(img_file, "PNG")
 
 def init_random_tour(tour_length):
-	tour=range(tour_length)
+	tour=list(range(tour_length))
 	random.shuffle(tour)
 	return tour
 
@@ -270,11 +270,11 @@ def sortPoints(coords, numiter=3, maxeval=70000, writepng=False, msg=False):
 	"""
 
 	if not coords or len(coords) < 2:
-		return range(len(coords)), 0.0
+		return list(range(len(coords))), 0.0
 
 	#setup starting order
 	#startorder = lambda: init_random_tour(len(coords)) #random
-	startorderfunc = lambda: range(len(coords)) #ordered
+	startorderfunc = lambda: list(range(len(coords))) #ordered
 	bestorder = startorderfunc()
 	#print "startorder=",startorderfunc()
 
@@ -325,7 +325,7 @@ def sortPoints(coords, numiter=3, maxeval=70000, writepng=False, msg=False):
 	bestarray = numpy.asarray(bestorder, dtype=numpy.int32)
 	messages.append("best order="+str(bestarray+1))
 	if msg is True:
-		print message
+		print(message)
 	return bestorder, bestscore, messages
 
 

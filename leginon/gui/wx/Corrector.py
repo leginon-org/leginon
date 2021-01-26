@@ -69,11 +69,11 @@ def str2plan(string):
 		if not s:
 			continue
 		try:
-			toks = map(lambda s: int(s.strip()), s.split('-'))
+			toks = [int(s.strip()) for s in s.split('-')]
 			if len(toks) > 2:
 				continue
 			elif len(toks) == 2:
-				toks = range(toks[0], toks[1] + 1)
+				toks = list(range(toks[0], toks[1] + 1))
 			for t in toks:
 				if t not in plan:
 					plan.append(t)
@@ -236,7 +236,7 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		It causes mismatch of gui and the instrument in proxy
 		'''
 		dialogvalues = self.settingsdialog.widgets['instruments'].GetValue()
-		for instrument in dialogvalues.keys():
+		for instrument in list(dialogvalues.keys()):
 			if dialogvalues[instrument] == 'None':
 				dialogvalues[instrument] = None
 		self.node.instrument.setTEM(dialogvalues['tem'])

@@ -8,23 +8,23 @@
 #       see  http://leginon.org
 #
 
-import watcher
-import event, leginondata
+from . import watcher
+from . import event, leginondata
 from pyami import correlator, peakfinder
-import calibrationclient
+from . import calibrationclient
 import math
 import time
 import datetime
 import os
 import threading
-import presets
+from . import presets
 import copy
-import EM
-import gui.wx.DriftManager
-import instrument
-import acquisition
-import rctacquisition
-import cameraclient
+from . import EM
+from . import gui.wx.DriftManager
+from . import instrument
+from . import acquisition
+from . import rctacquisition
+from . import cameraclient
 
 class DriftManager(watcher.Watcher):
 	panelclass = gui.wx.DriftManager.Panel
@@ -225,7 +225,7 @@ class DriftManager(watcher.Watcher):
 				peak = self.peakfinder.subpixelPeak(newimage=pc)
 				self.stopTimer('drift peak')
 				rows,cols = self.peak2shift(peak, pc.shape)
-			except Exception, e:
+			except Exception as e:
 				self.logger.error(e)
 				self.logger.warning('Failed correlation and/or peak finding, Set to zero shift')
 				rows,cols = (0,0)
@@ -367,7 +367,7 @@ class DriftManager(watcher.Watcher):
 		try:
 			pc = self.correlator.phaseCorrelate()
 			peak = self.peakfinder.subpixelPeak(newimage=pc)
-		except Exception, e:
+		except Exception as e:
 			self.logger.error(e)
 			self.logger.warning('Correlation/PeakFinding error, assume no shift')
 			peak = (0,0)

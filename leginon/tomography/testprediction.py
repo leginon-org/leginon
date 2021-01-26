@@ -63,11 +63,11 @@ class Test(object):
 
 	def predict(self, tilt):
 		current_tilt_group = self.prediction.getCurrentTiltGroup()
-		print current_tilt_group.tilts
-		print current_tilt_group.xs
-		print current_tilt_group.ys
+		print(current_tilt_group.tilts)
+		print(current_tilt_group.xs)
+		print(current_tilt_group.ys)
 		predicted_position = self.prediction.predict(tilt)
-		print predicted_position
+		print(predicted_position)
 
 t = Test(settings)
 t.predict(math.radians(30))

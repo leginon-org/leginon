@@ -9,13 +9,13 @@
 #
 
 from leginon import leginondata
-import targetfinder
+from . import targetfinder
 from pyami import ordereddict
 import threading
 import os.path
 import math
-import gui.wx.NewTargetFinder
-import version
+from . import gui.wx.NewTargetFinder
+from . import version
 import targetingsteps
 
 invsqrt2 = math.sqrt(2.0)/2.0
@@ -74,7 +74,7 @@ class NewTargetFinder(targetfinder.TargetFinder):
 			autofailed = False
 			try:
 				self.everything()
-			except Exception, e:
+			except Exception as e:
 				self.logger.error('auto target finder failed: %s' % (e,))
 				autofailed = True
 
@@ -90,7 +90,7 @@ class NewTargetFinder(targetfinder.TargetFinder):
 						self.usePickedBlobs()
 						self.fitLattice()
 						self.ice()
-					except Exception, e:
+					except Exception as e:
 						raise
 						self.logger.error('Failed: %s' % (e,))
 						continue

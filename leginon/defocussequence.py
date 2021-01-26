@@ -5,11 +5,11 @@
 #	   For terms of the license agreement
 #	   see  http://leginon.org
 #
-import acquisition
-import leginondata
+from . import acquisition
+from . import leginondata
 import threading
 from pyami import imagefun, fftfun, ordereddict
-import gui.wx.DefocusSequence
+from . import gui.wx.DefocusSequence
 
 def setImageFilename(imagedata, sequence_number):
 	if imagedata['filename'] is not None:
@@ -63,7 +63,7 @@ class DefocusSequence(acquisition.Acquisition):
 		defocus0 = presetdata['defocus']
 		step_size = self.settings['step size']
 		total_number = self.settings['nsteps']
-		defocii = map((lambda x: defocus0+step_size*x), range(total_number))
+		defocii = list(map((lambda x: defocus0+step_size*x), list(range(total_number))))
 		return defocii
 
 	def acquire(self, presetdata, emtarget=None, attempt=None, target=None, channel=None):

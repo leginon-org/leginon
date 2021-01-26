@@ -18,7 +18,7 @@ class AtlasCopier(object):
 			self.old_session = leginondata.SessionData(name=old_sessionname).query()[0]
 			self.new_session = leginondata.SessionData(name=new_sessionname).query()[0]
 		except:
-			print 'Error: At least one session names Not found. Create new session first'
+			print('Error: At least one session names Not found. Create new session first')
 			return True
 
 	def setOldTargetList(self,gr_filename):
@@ -28,14 +28,14 @@ class AtlasCopier(object):
 			if not self.old_targetlist['mosaic']:
 				raise ValueError
 		except:
-			print 'Error: Filename not found in a grid atlas of the old session'
+			print('Error: Filename not found in a grid atlas of the old session')
 			return True
 
 	def hasNewGrImage(self,old_filename):
 		new_filename = self.getNewImageFileName(old_filename)
 		new_images = leginondata.AcquisitionImageData(session=self.new_session,filename=new_filename).query()
 		if new_images:
-			print 'Error: Image %s exists in new session %s, can not repeat' % (new_filename,self.new_session['name'])
+			print('Error: Image %s exists in new session %s, can not repeat' % (new_filename,self.new_session['name']))
 			return True
 		return False
 
@@ -64,9 +64,9 @@ class AtlasCopier(object):
 			imageq['image'] = imagedata['image']
 			imageq['filename'] = self.getNewImageFileName(imagedata['filename'])
 			imageq.insert()
-			print 'New image saved as %s in session %s' % (imageq['filename'],imageq['session']['name'])
+			print('New image saved as %s in session %s' % (imageq['filename'],imageq['session']['name']))
 			self.insertNewTarget(imagedata['target'],'done')
-		print ''
+		print('')
 		return
 
 	def getNewImageFileName(self,old_filename):
@@ -95,7 +95,7 @@ class AtlasCopier(object):
 			old_targets = leginondata.AcquisitionImageTargetData(image=old_images[i]).query()
 			if not old_targets:
 				continue
-			print 'Transfering targets from %s' % (old_images[i]['filename'])
+			print('Transfering targets from %s' % (old_images[i]['filename']))
 			# old first
 			old_targets.reverse()
 			# make new target list
@@ -108,15 +108,15 @@ class AtlasCopier(object):
 				q['list'] = qlist
 				q['image'] = new_images[i]
 				q.insert()
-			print 'Transfered targets to %s' % (new_images[i]['filename'])
-			print ''
+			print('Transfered targets to %s' % (new_images[i]['filename']))
+			print('')
 
 
 if __name__ == '__main__':
 	if len(sys.argv)!= 4:
-		print 'Usage: python copyatlas.py <old_session_name> <new_session_name> <image filename>'
-		print 'Sessions must exists'
-		print '<image filename> is of an image belong to the grid atlas to be copied'
+		print('Usage: python copyatlas.py <old_session_name> <new_session_name> <image filename>')
+		print('Sessions must exists')
+		print('<image filename> is of an image belong to the grid atlas to be copied')
 		sys.exit(1)
 
 	old_sessionname = sys.argv[1]

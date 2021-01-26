@@ -5,11 +5,11 @@
 #	   For terms of the license agreement
 #	   see  http://leginon.org
 #
-import calibrator
-import calibrationclient
-import event, leginondata
-import node
-import gui.wx.DoseCalibrator
+from . import calibrator
+from . import calibrationclient
+from . import event, leginondata
+from . import node
+from . import gui.wx.DoseCalibrator
 import time
 from wx import CallAfter
 

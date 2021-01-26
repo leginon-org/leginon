@@ -9,16 +9,16 @@
 #
 
 from leginon import leginondata
-import targetfinder
-import extholefinderback
+from . import targetfinder
+from . import extholefinderback
 from pyami import ordereddict
 import threading
-import ice
-import instrument
+from . import ice
+from . import instrument
 import os.path
 import math
-import gui.wx.ExtHoleFinder
-import version
+from . import gui.wx.ExtHoleFinder
+from . import version
 import itertools
 
 invsqrt2 = math.sqrt(2.0)/2.0
@@ -117,7 +117,7 @@ class ExtHoleFinder(targetfinder.TargetFinder):
 		self.hf.configure_extholes(diameter, cmd)
 		try:
 			self.hf.run_extholes()
-		except Exception, e:
+		except Exception as e:
 			self.logger.error(e)
 			return
 		targets = self.holeToTargets(self.hf['extholes'])
@@ -150,7 +150,7 @@ class ExtHoleFinder(targetfinder.TargetFinder):
 		# changes
 		try:
 			self.hf.extholes_to_holes()
-		except Exception, e:
+		except Exception as e:
 			self.logger.error(e)
 			return
 		targets = self. getTargetsWithStats(r)
@@ -165,7 +165,7 @@ class ExtHoleFinder(targetfinder.TargetFinder):
 		self.hf.configure_holestats(radius=stats_radius)
 		try:
 			self.hf.calc_holestats()
-		except Exception, e:
+		except Exception as e:
 			self.logger.error(e)
 			return
 		holes = self.hf['holes']
@@ -210,7 +210,7 @@ class ExtHoleFinder(targetfinder.TargetFinder):
 		self.hf.configure_ice(i0=i0,tmin=tmin,tmax=tmax,tstdmax=tstdmax, tstdmin=tstdmin)
 		try:
 			self.hf.calc_ice()
-		except Exception, e:
+		except Exception as e:
 			self.logger.error(e)
 			return
 
@@ -232,7 +232,7 @@ class ExtHoleFinder(targetfinder.TargetFinder):
 
 		# activate if counter is at a multiple of interval
 		interval = self.settings['focus interval']
-		if interval and not (self.foc_counter.next() % interval):
+		if interval and not (next(self.foc_counter) % interval):
 			self.foc_activated = True
 		else:
 			self.foc_activated = False
@@ -505,7 +505,7 @@ class ExtHoleFinder(targetfinder.TargetFinder):
 			autofailed = False
 			try:
 				self.everything()
-			except Exception, e:
+			except Exception as e:
 				raise
 				self.logger.error('auto target finder failed: %s' % (e,))
 				autofailed = True

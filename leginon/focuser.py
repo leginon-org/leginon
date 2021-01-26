@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 from leginon import acquisition, singlefocuser, manualfocuschecker
-import gui.wx.Focuser
+from . import gui.wx.Focuser
 from leginon import leginondata
 from leginon import node, targetwatcher
 import math
@@ -53,7 +53,7 @@ class Focuser(singlefocuser.SingleFocuser):
 		proctargetdata = self.reportTargetStatus(targetdata, 'processing')
 		try:
 			ret = self.processGoodTargets([proctargetdata,])
-		except Exception, e:
+		except Exception as e:
 			self.logger.error('processing simulated target failed: %s' %e)
 			ret = 'aborted'
 		self.reportTargetStatus(proctargetdata, 'done')
@@ -117,16 +117,16 @@ class Focuser(singlefocuser.SingleFocuser):
 					self.startTimer('processTargetData')
 					try:
 						process_status = self.processTargetData(adjustedtarget, attempt=attempt)
-					except targetwatcher.PauseRepeatException, e:
+					except targetwatcher.PauseRepeatException as e:
 						self.player.pause()
 						self.logger.error(str(e) + '... Fix it, then press play to repeat target')
 						self.beep()
 						process_status = 'repeat'
-					except node.PublishError, e:
+					except node.PublishError as e:
 						self.player.pause()
 						self.logger.exception('Saving image failed: %s' % e)
 						process_status = 'repeat'
-					except Exception, e:
+					except Exception as e:
 						self.logger.exception('Process target failed: %s' % e)
 						process_status = 'exception'
 						

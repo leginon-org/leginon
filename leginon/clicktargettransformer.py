@@ -6,15 +6,15 @@
 #       see  http://leginon.org
 #
 
-import targetfinder
-import presets
-import event
-import node
-import gui.wx.ClickTargetTransformer
+from . import targetfinder
+from . import presets
+from . import event
+from . import node
+from . import gui.wx.ClickTargetTransformer
 #import dbdatakeeper
 import threading
-import caltransformer
-import gui.wx.ClickTargetTransformer
+from . import caltransformer
+from . import gui.wx.ClickTargetTransformer
 from leginon import leginondata
 import time
 
@@ -48,7 +48,7 @@ class ClickTargetTransformer(targetfinder.ClickTargetFinder):
 #			'c_focus':'focus',
 			'transformed':'transformed',
 		}
-		self.childtargetnames = self.targetrelation2original.keys()
+		self.childtargetnames = list(self.targetrelation2original.keys())
 		self.displayedtargetnames = self.ancestortargetnames+self.childtargetnames
 		self.imageids = None
 
@@ -375,7 +375,7 @@ class ClickTargetTransformer(targetfinder.ClickTargetFinder):
 #		for type in ('acquisition','focus'):
 		for type in ('acquisition',):
 			n += len(targets[type])
-		if 'transformed' in targets.keys():
+		if 'transformed' in list(targets.keys()):
 			ntransformed = len(targets['transformed'])
 		else:
 			ntransformed = 0

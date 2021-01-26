@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-import workflow
-import commonsteps
+from . import workflow
+from . import commonsteps
 from pyami.ordereddict import OrderedDict
 
 input = commonsteps.ImageInput('input')

@@ -179,7 +179,7 @@ class Panel(leginon.gui.wx.Calibrator.Panel):
 		else:
 			label = '%g' % evt.defocus
 		self.measure_dialog.scrsettings.labels['defocus'].SetLabel(label)
-		for axis, value in evt.stig.items():
+		for axis, value in list(evt.stig.items()):
 			if value is None:
 				label = '(Not measured)'
 			else:
@@ -190,7 +190,7 @@ class Panel(leginon.gui.wx.Calibrator.Panel):
 
 	def onComaMeasurementDone(self, evt):
 		self._calibrationEnable(True)
-		for axis, value in evt.comatilt.items():
+		for axis, value in list(evt.comatilt.items()):
 			if value is None:
 				label = '(Not measured)'
 			else:
@@ -220,7 +220,7 @@ class Panel(leginon.gui.wx.Calibrator.Panel):
 			self.read_aberration_free_dialog.labels[key].SetLabel(label)
 		for key in self.read_aberration_free_dialog.aberrations2d:
 			ab = evt.state[key]
-			for axis, value in ab.items():
+			for axis, value in list(ab.items()):
 				if value is None:
 					label = '(Not measured)'
 				else:
@@ -865,7 +865,7 @@ class EditFocusCalibrationDialog(leginon.gui.wx.MatrixCalibrator.EditMatrixDialo
 	def getFocusCalibration(self):
 		matrix = leginon.gui.wx.MatrixCalibrator.EditMatrixDialog.getMatrix(self)
 		rotation_center = {}
-		for axis, entry in self.rotation_center_entries.items():
+		for axis, entry in list(self.rotation_center_entries.items()):
 			value = entry.GetValue()
 			if value is None:
 				raise ValueError

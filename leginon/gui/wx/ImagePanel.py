@@ -22,7 +22,7 @@
 #       see  http://leginon.org
 #
 
-import cStringIO
+import io
 from pyami import mrc, arraystats, numpil
 import numpy
 from pyami import numpil
@@ -32,8 +32,8 @@ import wx
 import sys
 import math
 import leginon.gui.wx.Stats
-import ImagePanelTools
-import SelectionTool
+from . import ImagePanelTools
+from . import SelectionTool
 import leginon.icons
 #import time
 
@@ -431,7 +431,7 @@ class ImagePanel(wx.Panel):
 
 	#--------------------
 	def setImageFromPILString(self, imagestring):
-		buffer = cStringIO.StringIO(pilimage)
+		buffer = io.StringIO(pilimage)
 		imagedata = Image.open(buffer)
 		self.setImage(imagedata)
 		# Memory leak?
@@ -485,7 +485,7 @@ class ImagePanel(wx.Panel):
 				return self.imagedata.getpixel((x, y))
 			else:
 				return None
-		except (IndexError, TypeError, AttributeError), e:
+		except (IndexError, TypeError, AttributeError) as e:
 			return None
 
 	#--------------------
@@ -823,7 +823,7 @@ class ImagePanel(wx.Panel):
 		Bring display to top in order of the names list
 		'''
 		for name in names:
-			if name in self.selectiontool.tools.keys():
+			if name in list(self.selectiontool.tools.keys()):
 				self.selectiontool.setDisplayed(name,False,'display')
 				self.selectiontool.setDisplayed(name,True,'display')
 
@@ -833,7 +833,7 @@ class ImagePanel(wx.Panel):
 		Remove display in order of the names list
 		'''
 		for name in names:
-			if name in self.selectiontool.tools.keys():
+			if name in list(self.selectiontool.tools.keys()):
 				self.selectiontool.setDisplayed(name,False,'display')
 
 ##################################

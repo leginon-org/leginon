@@ -94,7 +94,7 @@ def setControl(control, value):
 		if value is None:
 			control.setSize(None)
 		elif isinstance(value, dict):
-			keys = value.keys()
+			keys = list(value.keys())
 			if 'x' in keys and 'y' in keys:
 				control.setSize(value)
 			else:
@@ -449,7 +449,7 @@ class FocusSizer(wx.StaticBoxSizer):
 		self.sz.Add(resetdefoc, (i+1, 1), (1, 1),
 								wx.ALIGN_CENTER)
 
-		for p in self.parameters.values():
+		for p in list(self.parameters.values()):
 			p.Enable(False)
 
 		self.sz.AddGrowableCol(1)
@@ -577,7 +577,7 @@ class CamInfoSizer(wx.StaticBoxSizer):
 			'CameraAxis': 'Axis',
 		}
 
-		for k, v in self.parametermap.items():
+		for k, v in list(self.parametermap.items()):
 			self.parametermap[k] = self.parameters[v]
 
 		self.parametermap['camera size'] = {'x': self.parameters['Size']['x'],
@@ -655,7 +655,7 @@ class CamConfigSizer(wx.StaticBoxSizer):
 			'Configuration': 'Camera configuration',
 		}
 
-		for k, v in self.parametermap.items():
+		for k, v in list(self.parametermap.items()):
 			self.parametermap[k] = self.parameters[v]
 
 		self.sz.AddGrowableCol(1)
@@ -674,7 +674,7 @@ class ParameterMixin(object):
 				setControl(parametermap[key], parameters[key])
 			except KeyError:
 				pass
-		for key, value in parameters.items():
+		for key, value in list(parameters.items()):
 			if key in keys:
 				continue
 			try:
@@ -691,7 +691,7 @@ class ParameterMixin(object):
 	def clearParameters(self, parametermap=None):
 		if parametermap is None:
 			parametermap = self.parametermap
-		for key, value in parametermap.items():
+		for key, value in list(parametermap.items()):
 			try:
 				if isinstance(value, dict):
 					self.clearParameters(value)
@@ -712,7 +712,7 @@ class ParameterMixin(object):
 						'HolderTypes', 'ColumnValvePositions', 
 						'ExposureTypes', 'MirrorStates', 'Rotations',
 						'CameraSize']
-		for key, value in map.items():
+		for key, value in list(map.items()):
 			if key in keys:
 				continue
 			if isinstance(value, dict):
@@ -953,9 +953,9 @@ class Panel(leginon.gui.wx.Node.Panel):
 	def onRefreshTool(self, evt):
 		name = self.choice.GetStringSelection()
 		if name in self.tems:
-			attributes = self.tempanel.parametermap.keys()
+			attributes = list(self.tempanel.parametermap.keys())
 		elif name in self.ccdcameras:
-			attributes = self.ccdcamerapanel.parametermap.keys()
+			attributes = list(self.ccdcamerapanel.parametermap.keys())
 		else:
 			return
 		if name:

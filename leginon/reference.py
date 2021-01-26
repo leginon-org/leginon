@@ -10,16 +10,16 @@ import threading
 import time
 import numpy
 from leginon import leginondata
-import calibrationclient
-import event
-import appclient
-import instrument
-import presets
-import navigator
-import targethandler
-import watcher
-import player
-import gui.wx.Reference
+from . import calibrationclient
+from . import event
+from . import appclient
+from . import instrument
+from . import presets
+from . import navigator
+from . import targethandler
+from . import watcher
+from . import player
+from . import gui.wx.Reference
 
 class MoveError(Exception):
 	pass
@@ -75,7 +75,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 
 
 		if self.__class__ == Reference:
-			print 'isReference'
+			print('isReference')
 			self.start()
 
 	def handleApplicationEvent(self,evt):
@@ -140,7 +140,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		args = (pixel_shift, target_scope, target_camera)
 		try:
 			scope = calibration_client.transform(*args)
-		except calibrationclient.NoMatrixCalibrationError, e:
+		except calibrationclient.NoMatrixCalibrationError as e:
 			message = 'no %s calibration to move to reference target: %s'
 			raise MoveError(message % (move_type, e))
 
@@ -165,7 +165,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 
 	def makeFakeTarget(self):
 		targetdata = leginondata.AcquisitionImageTargetData()
-		for k in self.reference_target.keys():
+		for k in list(self.reference_target.keys()):
 			targetdata[k] = self.reference_target[k]
 		return targetdata
 
@@ -255,7 +255,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		self.panel.playerEvent('play')
 		self.setStatus('user input')
 		moves = []
-		keys = position.keys()
+		keys = list(position.keys())
 		keys.sort()
 		for k in keys:
 			if k not in ('a','b'):
@@ -280,7 +280,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		try:
 			self.moveToTarget(preset_name)
 			self.declareDrift('stage')
-		except Exception, e:
+		except Exception as e:
 			self.logger.error('Error moving to target, %s' % e)
 			self.moveBack(position0)
 			return
@@ -295,7 +295,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 			self.execute(request_data)
 			# default behavior: reset only if successful
 			self.resetProcess()
-		except Exception, e:
+		except Exception as e:
 			self.logger.error('Error executing request, %s' % e)
 		finally:
 			# Must move back
@@ -352,7 +352,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		self.player.play()
 		try:
 			self._testRun()
-		except Exception, e:
+		except Exception as e:
 			self.logger.error(e)
 			raise
 		finally:

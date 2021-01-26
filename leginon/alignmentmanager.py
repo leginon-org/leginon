@@ -70,7 +70,7 @@ class AlignmentManager(trepeater.TargetRepeater):
 			return
 		try:
 			self._handleFixAlignmentEvent(evt)
-		except Exception, e:
+		except Exception as e:
 			self.logger.error('handling exception %s' %(e,))
 			self.confirmEvent(evt, status='exception')
 		else:

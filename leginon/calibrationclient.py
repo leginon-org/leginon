@@ -11,7 +11,7 @@
 # $State: Exp $
 # $Locker:  $
 
-import node, leginondata, event
+from . import node, leginondata, event
 import numpy
 import numpy.linalg
 import scipy
@@ -22,9 +22,9 @@ from pyami import correlator, peakfinder, arraystats, imagefun, fftfun, numpil, 
 import time
 import sys
 import threading
-import gonmodel
-import tiltcorrector
-import tableau
+from . import gonmodel
+from . import tiltcorrector
+from . import tableau
 
 class Drifting(Exception):
 	pass
@@ -116,7 +116,7 @@ class CalibrationClient(object):
 	def correctTilt(self, imagedata):
 		try:
 			self.tiltcorrector.correct_tilt(imagedata)
-		except RuntimeError, e:
+		except RuntimeError as e:
 			self.node.logger.error('Failed tilt correction: %s' % (e))
 
 	def acquireImage(self, scope, settle=0.0, correct_tilt=False, corchannel=0, display=True):
@@ -527,7 +527,7 @@ class PixelSizeCalibrationClient(CalibrationClient):
 				raise RuntimeError('Failed retrieving last pixelsize')
 			if mag not in last:
 				last[mag] = caldata
-		return last.values()
+		return list(last.values())
 
 
 class CameraLengthCalibrationClient(CalibrationClient):
@@ -574,7 +574,7 @@ class CameraLengthCalibrationClient(CalibrationClient):
 				raise RuntimeError('Failed retrieving last camera length')
 			if mag not in last:
 				last[mag] = caldata
-		return last.values()
+		return list(last.values())
 
 
 class MatrixCalibrationClient(CalibrationClient):
@@ -668,7 +668,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 	def retrieveMatrix(self, tem, ccdcamera, caltype, ht, mag, probe=None):
 		try:
 			return super(BeamTiltCalibrationClient,self).retrieveMatrix(tem, ccdcamera, caltype, ht, mag, probe)
-		except NoMatrixCalibrationError, e:
+		except NoMatrixCalibrationError as e:
 			if probe is None:
 				raise
 			else:
@@ -718,7 +718,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		probe = self.instrument.tem.ProbeMode
 		try:
 			fmatrix = self.retrieveMatrix(tem, cam, 'defocus', ht, mag, probe)
-		except (NoMatrixCalibrationError,RuntimeError), e:
+		except (NoMatrixCalibrationError,RuntimeError) as e:
 			self.node.logger.error('Measurement failed: %s' % e)
 			return {'x':0.0, 'y': 0.0}
 		state1 = leginondata.ScopeEMData()
@@ -728,7 +728,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 
 		try:
 			im1 = self.acquireImage(state1, settle=settle)
-		except Exception, e:
+		except Exception as e:
 			self.node.logger.error('Measurement failed: %s' % e)
 			return {'x':0.0, 'y': 0.0}
 		shiftinfo = self.measureScopeChange(im1, state2, settle=settle, correlation_type=correlation_type)
@@ -819,7 +819,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		amatrix = bmatrix = None
 		if stig:
 			rotation_90deg = math.pi/2
-			orthogonal_tilt_deltas = map((lambda x: self.rotateXY0(x, rotation_90deg)),tilt_deltas)
+			orthogonal_tilt_deltas = list(map((lambda x: self.rotateXY0(x, rotation_90deg)),tilt_deltas))
 			try:
 				amatrix = self.retrieveMatrix(tem, cam, 'stigx', ht, mag, probe)
 				bmatrix = self.retrieveMatrix(tem, cam, 'stigy', ht, mag, probe)
@@ -1142,7 +1142,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		for i in range(0,repeat):
 			try:
 				cftilt = self.measureComaFree(tilt_value, settle, raise_error)
-			except Exception, e:
+			except Exception as e:
 				cftilt = None
 				raise
 			if cftilt is None:
@@ -1247,7 +1247,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 	def rotationCenterToScope(self):
 		try:
 			self._rotationCenterToScope()
-		except Exception, e:
+		except Exception as e:
 			self.node.logger.error('Unable to set rotation center: %s' % e)
 		else:
 			self.node.logger.info('Set instrument rotation center')
@@ -1263,7 +1263,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 	def rotationCenterFromScope(self):
 		try:
 			self._rotationCenterFromScope()
-		except Exception, e:
+		except Exception as e:
 			self.node.logger.error('Unable to get rotation center: %s' % e)
 		else:
 			self.node.logger.info('Saved instrument rotation center')
@@ -1373,7 +1373,7 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 		ccdcamera = camera['ccdcamera']
 		try:
 			matrix = self.retrieveMatrix(tem, ccdcamera, par, ht, mag)
-		except NoMatrixCalibrationError, e:
+		except NoMatrixCalibrationError as e:
 			self.node.logger.error(e)
 			return scope
 			
@@ -1418,7 +1418,7 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 
 		try:
 			matrix = self.retrieveMatrix(*args)
-		except NoMatrixCalibrationError, e:
+		except NoMatrixCalibrationError as e:
 			self.node.logger.error(e)
 			return {'row':0.0,'col':0.0}
 		inverse_matrix = numpy.linalg.inv(matrix)
@@ -1554,7 +1554,7 @@ class ImageScaleRotationCalibrationClient(ImageShiftCalibrationClient):
 				pass
 			except:
 				raise RuntimeError('Failed retrieving last values')
-		return last.values()
+		return list(last.values())
 
 	def retrieveLastImageRotations(self, tem, ccdcamera):
 		'''
@@ -1571,7 +1571,7 @@ class ImageScaleRotationCalibrationClient(ImageShiftCalibrationClient):
 				pass
 			except:
 				raise RuntimeError('Failed retrieving last values')
-		return last.values()
+		return list(last.values())
 
 	def researchImageScaleAddition(self, tem, ccdcamera, mag=None, ht=None):
 		queryinstance = leginondata.ImageScaleAdditionCalibrationData()
@@ -1805,7 +1805,7 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 
 		z = {}
 		for t in (1,2):
-			for axis in shiftinfo[1]['pixel shift'].keys():
+			for axis in list(shiftinfo[1]['pixel shift'].keys()):
 				pixelshift[axis] = shiftinfo[t]['pixel shift'][axis]
 			# fake the current state for the transform with alpha = 0
 			scope = leginondata.ScopeEMData(initializer=state[1])
@@ -2066,7 +2066,7 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 			self.displayImage(im0)
 		try:
 			defresult = self.node.btcalclient.measureDefocusStig(beam_tilt_value, False, False, correlation_type, 0.5, imagedata0)
-		except (NoMatrixCalibrationError,RuntimeError), e:
+		except (NoMatrixCalibrationError,RuntimeError) as e:
 			self.node.logger.error(e)
 			return imagedata0, None 
 		def0 = defresult['defocus']
@@ -2174,7 +2174,7 @@ class ModeledStageCalibrationClient(MatrixCalibrationClient):
 		try:
 			caldatax = self.retrieveMagCalibration(tem, cam, ht, mag, 'x')
 			caldatay = self.retrieveMagCalibration(tem, cam, ht, mag, 'y')
-		except Exception, e:
+		except Exception as e:
 			matrix = None
 			self.node.logger.warning('Cannot get matrix from stage model: %s' % e)
 			return matrix

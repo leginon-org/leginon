@@ -270,11 +270,11 @@ class VirtualStageTilter(object):
 	def getStageMatrix(self, tem, cam, ht, mag):
 		try:
 			matrix = self.getMatrix(tem, cam, ht, mag, 'stage position')
-		except RuntimeError, estr:
+		except RuntimeError as estr:
 			try:
 				self.node.logger.warning(estr)
 			except:
-				print estr
+				print(estr)
 			matrix = self.makeFakeStageMatrix(tem, cam, mag)
 		return matrix	
 
@@ -285,14 +285,14 @@ class VirtualStageTilter(object):
 			pixelsize=results[0]['pixelsize']
 		else:
 			pixelsize= 1.0/mag
-		matrixlist = map((lambda x:x*pixelsize), [1,0,0,1])
+		matrixlist = list(map((lambda x:x*pixelsize), [1,0,0,1]))
 		stagematrix = numpy.array(matrixlist)
 		stagematrix = stagematrix.reshape((2,2))
 		estr = 'Use fake stage position matrix to stretch the image'
 		try:
 			self.node.logger.warning(estr)
 		except:
-			print estr
+			print(estr)
 		return stagematrix
 	
 	def getImageShiftMatrix(self, tem, cam, ht, mag):
@@ -366,6 +366,6 @@ class VirtualStageTilter(object):
 			self.node.logger.info('image stretched to reverse alpha tilt')
 		except:
 			# print the same when GUI not exists
-			print 'image stretched to reverse alpha tilt'
+			print('image stretched to reverse alpha tilt')
 		return True
 

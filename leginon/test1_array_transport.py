@@ -21,18 +21,18 @@ ARRAY_DTYPE = numpy.uint32
 
 class Logger(object):
    def info(self, stuff):
-      print 'INFO', stuff
+      print('INFO', stuff)
    def exception(self, stuff):
-      print 'EXCEPTION', stuff
+      print('EXCEPTION', stuff)
    def warning(self, stuff):
-      print 'WARNING', stuff
+      print('WARNING', stuff)
 
 def printData(d):
    manlocation = d['location']
    managerhost = manlocation['TCP transport']['hostname']
    managerport = manlocation['TCP transport']['port']
-   print 'MANAGER:  %s:%s' % (managerhost, managerport)
-   print 'connecting to manager...'
+   print('MANAGER:  %s:%s' % (managerhost, managerport))
+   print('connecting to manager...')
    client = datatransport.Client(manlocation, Logger())
    myloc = db.location()
    del myloc['local transport']
@@ -43,7 +43,7 @@ def printData(d):
    t0 = time.time()
    client.send(e)
    t1 = time.time()
-   print 'Event Sent Time (sec)', t1 - t0
+   print('Event Sent Time (sec)', t1 - t0)
 
 
 myhostname = mysocket.gethostname().lower()
@@ -57,7 +57,7 @@ for myport in range(49152,65536):
 
 db.addBinding(myhostname, event.SetManagerEvent, printData)
 
-print 'ACCEPTING CONNECTIONS AT:  %s:%s' % (myhostname, myport)
+print('ACCEPTING CONNECTIONS AT:  %s:%s' % (myhostname, myport))
 
-raw_input('hit enter to kill')
+input('hit enter to kill')
 db.exit()

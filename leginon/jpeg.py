@@ -17,7 +17,7 @@ def save(a, min, max, filename, quality):
 	a = numpy.clip(a, min, max)
 	scale = 255.0 / (max - min)
 	a = scale * (a - min)
-	print a
+	print(a)
 	a = a.astype(numpy.uint8)
 	imsize = a.shape[1], a.shape[0]
 	nstr = a.tostring()

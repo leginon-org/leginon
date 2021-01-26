@@ -5,21 +5,21 @@
 #	   For terms of the license agreement
 #	   see  http://leginon.org
 #
-import manualfocuschecker
-import node
+from . import manualfocuschecker
+from . import node
 from leginon import leginondata
-import calibrationclient
+from . import calibrationclient
 import threading
-import event
+from . import event
 import time
 import math
 from pyami import correlator, peakfinder, imagefun, numpil,arraystats,fftfun
 import numpy
 from scipy import ndimage
 import copy
-import gui.wx.BeamTiltImager
-import player
-import tableau
+from . import gui.wx.BeamTiltImager
+from . import player
+from . import tableau
 import subprocess
 import re
 import os
@@ -76,7 +76,7 @@ class BeamTiltImager(manualfocuschecker.ManualFocusChecker):
 	def alignRotationCenter(self, defocus1, defocus2):
 		try:
 			bt = self.btcalclient.measureRotationCenter(defocus1, defocus2, correlation_type=None, settle=0.5)
-		except Exception, e:
+		except Exception as e:
 			estr = str(e)
 			self.logger.error(estr)
 			return
@@ -279,7 +279,7 @@ class BeamTiltImager(manualfocuschecker.ManualFocusChecker):
 			if self.settings['tableau type'] == 'beam tilt series-image':
 				try:
 					shiftinfo = self.correlateOriginal(i,imagedata)
-				except Exception, e:
+				except Exception as e:
 					self.logger.error('Failed correlation: %s' % e)
 					return 'error'
 				pixelshift = shiftinfo['pixel shift']
@@ -453,7 +453,7 @@ class BeamTiltImager(manualfocuschecker.ManualFocusChecker):
 		if self.ace:
 			try:
 				return self.ace.runOneImageData(imagedata)
-			except Exception, e:
+			except Exception as e:
 				self.logger.error('Error estimating ctf: %s' % e)
 
 	def getSimulatedImageCtfResult(self, imagedata):
@@ -587,7 +587,7 @@ class BeamTiltImager(manualfocuschecker.ManualFocusChecker):
 		try:
 			A = self.abe.run()
 			Adict = self.abe.mapAberration(A)
-		except ValueError, e:
+		except ValueError as e:
 			self.logger.error(e)
 			return None, None
 		c21 = Adict['coma']

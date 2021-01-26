@@ -2,9 +2,9 @@ import math
 import time
 import threading
 from leginon import leginondata, referencecounter, calibrationclient, cameraclient
-import event
-import node
-import gui.wx.PhasePlateAligner
+from . import event
+from . import node
+from . import gui.wx.PhasePlateAligner
 from pyami import arraystats
 
 class PhasePlateAligner(referencecounter.ReferenceCounter):
@@ -73,11 +73,11 @@ class PhasePlateAligner(referencecounter.ReferenceCounter):
 		try:
 			self.logger.info('Send Fix Alignment Event')
 			status = self.outputEvent(evt, wait=True)
-		except node.ConfirmationNoBinding, e:
+		except node.ConfirmationNoBinding as e:
 			# OK if not bound
 			self.logger.warning(e)
 			pass
-		except Exception, e:
+		except Exception as e:
 			self.logger.error(e)
 		finally:
 			self.logger.info('Done Fix Alignment Event')

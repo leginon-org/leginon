@@ -15,16 +15,16 @@ PointProducer - result is a list of points, each point is a dictionary
 
 import pyami.mrc
 import numpy
-import workflow
+from . import workflow
 
 def debugImage(step, image):
 		filename = step.name + '.mrc'
 		pyami.mrc.write(image.astype(numpy.float32), filename)
-		print 'saved', filename
+		print('saved', filename)
 
 def debugPoints(step, points):
-		print 'Result of', step.name
-		print [(point['row'],point['column']) for point in points]
+		print('Result of', step.name)
+		print([(point['row'],point['column']) for point in points])
 
 class ImageProducer(workflow.Step):
 	'''_run method must return image (numpy array)'''
@@ -50,7 +50,7 @@ def combinedParamName(step, param):
 from leginon import leginondata
 def makeSettingsClass(clsname, steps):
 	newtypemap = []
-	for step in steps.values():
+	for step in list(steps.values()):
 		for param in step.param_def:
 			fieldname = combinedParamName(step, param)
 			newtypemap.append((fieldname, param['type']))
@@ -66,7 +66,7 @@ def makeSettingsClass(clsname, steps):
 
 def makeDefaultSettings(steps):
 	defaults = {}
-	for step in steps.values():
+	for step in list(steps.values()):
 		for param in step.param_def:
 			fieldname = combinedParamName(step, param)
 			defaultvalue = param['default']

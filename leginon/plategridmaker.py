@@ -60,7 +60,7 @@ class PlateGridMaker(object):
 		q = leginondata.EMGridData(project = self.projectid,plate=self.plate)
 		r = q.query()
 		if r:
-			trials = map((lambda x: x['print trial']),r)
+			trials = list(map((lambda x: x['print trial']),r))
 			return max(trials) + 1
 		else:
 			return 1

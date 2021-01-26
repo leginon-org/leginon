@@ -5,14 +5,14 @@
 #       For terms of the license agreement
 #       see  http://leginon.org
 #
-import calibrator
-import calibrationclient
-import event, leginondata
+from . import calibrator
+from . import calibrationclient
+from . import event, leginondata
 from pyami import imagefun, fftfun, diffrfun
-import node
+from . import node
 import math
 import scipy
-import gui.wx.CameraLengthCalibrator
+from . import gui.wx.CameraLengthCalibrator
 
 class CameraLengthCalibrator(calibrator.Calibrator):
 	'''
@@ -113,7 +113,7 @@ class CameraLengthCalibrator(calibrator.Calibrator):
 					comment = ''
 				camera_lengths.append((mag, ps, comment))
 		if mags is not None:
-			camera_lengthmags = map(lambda (mag, ps, c): mag, camera_lengths)
+			camera_lengthmags = [mag_ps_c[0] for mag_ps_c in camera_lengths]
 			for m in mags:
 				if m not in camera_lengthmags:
 					camera_lengths.append((m, None, ''))

@@ -13,10 +13,10 @@
 
 import numpy
 import threading
-import calibrator
-import calibrationclient
+from . import calibrator
+from . import calibrationclient
 from leginon import leginondata
-import gui.wx.IntensityCalibrator
+from . import gui.wx.IntensityCalibrator
 from pyami import arraystats
 
 class Abort(Exception):
@@ -68,7 +68,7 @@ class IntensityCalibrator(calibrator.Calibrator):
 		imdata1 = self.acquire()
 		mean1 = arraystats.mean(imdata1['image'])
 
-		print 'mean0,mean1', mean0, mean1
+		print('mean0,mean1', mean0, mean1)
 
 	def acquire(self, intensity):
 		imagedata = self.acquireCorrectedCameraImageData(force_no_frames=True)

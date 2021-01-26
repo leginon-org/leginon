@@ -15,7 +15,7 @@ def run_image_viewer(filename):
 	if not targets:
 		return []
 	targets = targets.split('\n')
-	targets = [map(int,target.split()) for target in targets]
+	targets = [list(map(int,target.split())) for target in targets]
 	targets = [(target[1],target[0]) for target in targets]
 	return targets
 

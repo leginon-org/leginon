@@ -7,10 +7,10 @@
 #
 
 import sinedon.data
-import imageassessor
-import event
-import node
-import gui.wx.MaskAssessor
+from . import imageassessor
+from . import event
+from . import node
+from . import gui.wx.MaskAssessor
 import os
 import numpy
 from pyami import imagefun, mrc

@@ -2,12 +2,12 @@
 import threading
 import time
 from leginon import leginondata
-import calibrationclient
-import event
-import instrument
-import reference
-import gui.wx.ReferenceTimer
-import gui.wx.AlignZLP
+from . import calibrationclient
+from . import event
+from . import instrument
+from . import reference
+from . import gui.wx.ReferenceTimer
+from . import gui.wx.AlignZLP
 
 class ReferenceTimer(reference.Reference):
 	panelclass = gui.wx.ReferenceTimer.ReferenceTimerPanel
@@ -119,7 +119,7 @@ class AlignZeroLossPeak(ReferenceTimer):
 		try:
 			self.moveToTarget(goto_preset)
 			self.declareDrift('stage')
-		except Exception, e:
+		except Exception as e:
 			self.logger.error('Error moving to target, %s' % e)
 			self.moveBack(position0)
 			return
@@ -146,7 +146,7 @@ class AlignZeroLossPeak(ReferenceTimer):
 			try:
 				self.at_reference_target = True
 				self.execute(request_data)
-			except Exception, e:
+			except Exception as e:
 				self.logger.error('Error executing request, %s' % e)
 				self._setRequestPreset(request_preset_name)
 				self.moveBack(position0)
@@ -185,7 +185,7 @@ class AlignZeroLossPeak(ReferenceTimer):
 		except AttributeError:
 			m = 'Energy filter methods are not available on this instrument.'
 			self.logger.warning(m)
-		except Exception, e:
+		except Exception as e:
 			raise
 			s = 'Energy filter align zero loss peak failed: %s.'
 			self.logger.error(s % e)
@@ -198,10 +198,10 @@ class AlignZeroLossPeak(ReferenceTimer):
 			shift = ccd_camera.getInternalEnergyShift()
 			m = 'Energy filter internal shift: %g.' % shift
 			self.logger.info(m)
-		except AttributeError, e:
+		except AttributeError as e:
 			m = 'Energy filter method not available %s' % e
 			self.logger.warning(m)
-		except Exception, e:
+		except Exception as e:
 			s = 'Energy internal shift query failed: %s.'
 			self.logger.error(s % e)
 		return shift
@@ -222,7 +222,7 @@ class AlignZeroLossPeak(ReferenceTimer):
 		except AttributeError:
 			m = 'Energy filter methods are not available on this instrument.'
 			self.logger.warning(m)
-		except Exception, e:
+		except Exception as e:
 			s = 'EnergyFilter query failed: %s.'
 			self.logger.error(s % e)
 
@@ -324,7 +324,7 @@ class AlignZeroLossPeak(ReferenceTimer):
 			self.at_reference_target = True
 			self.moveToTarget(self.checkpreset['name'])
 			self.declareDrift('stage')
-		except Exception, e:
+		except Exception as e:
 			self.logger.error('Error moving to target, %s' % e)
 			return
 		self.logger.info('reset zero-loss check data with a new image')

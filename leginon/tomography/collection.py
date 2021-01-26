@@ -4,8 +4,8 @@ import numpy
 
 import leginon.leginondata
 import leginon.calibrationclient
-import tiltcorrelator
-import tiltseries
+from . import tiltcorrelator
+from . import tiltseries
 import traceback
 import pyscope.simccdcamera2 #.SimCCDCamera as simcam
 
@@ -22,7 +22,7 @@ class TrackingError(Exception):
 class TrackingImgError(Exception):
 	pass
 
-from prediction import PredictionError
+from .prediction import PredictionError
 
 class Collection(object):
 	def __init__(self):
@@ -70,7 +70,7 @@ class Collection(object):
 			self.instrument.tem.runBufferCycle()
 		except AttributeError:
 			self.logger.warning('No buffer cycle for this instrument')
-		except Exception, e:
+		except Exception as e:
 			self.logger.error('Run buffer cycle failed: %s' % e)
 
 	def calcBinning(self, origsize, min_newsize, max_newsize):
@@ -179,7 +179,7 @@ class Collection(object):
 			self.logger.info('Adjust target for the second tilt group...')
 			try:
 				self.emtarget, status = self.node.adjusttarget(self.preset['name'], self.target, self.emtarget)
-			except Exception, e:
+			except Exception as e:
 				self.logger.error('Aborting because of target adjusting exception: %s.' % e)
 				self.finalize()
 				raise
@@ -193,7 +193,7 @@ class Collection(object):
 		self.logger.info('Removing tilt backlash...')
 		try:
 			self.node.removeStageAlphaBacklash(tilts, sequence, self.preset['name'], self.target, self.emtarget)
-		except Exception, e:
+		except Exception as e:
 			self.logger.error('Failed to remove backlash: %s.' % e)
 			self.finalize()
 			raise
@@ -262,7 +262,7 @@ class Collection(object):
 
 			try:
 				self.node.setPosition('image shift', predicted_position)
-			except Exception, e:
+			except Exception as e:
 				self.logger.error('Calibration error: %s' % e) 
 				self.finalize()
 				raise Fail
@@ -330,7 +330,7 @@ class Collection(object):
 				try:
 					tilt_series_image_data = self.tilt_series.saveImage(image_data)
 					break
-				except Exception, e:
+				except Exception as e:
 					self.logger.warning('Retrying save image: %s.' % (e,))
 					raise
 				for tick in range(60):
@@ -365,7 +365,7 @@ class Collection(object):
 				try:
 					correlation_image = self.correlator[seq[0]].correlate(tilt_series_image_data, self.settings['use tilt'], channel=channel, wiener=False, taper=0)
 					break
-				except Exception, e:
+				except Exception as e:
 					self.logger.warning('Retrying correlate image: %s.' % (e,))
 				for tick in range(15):
 					self.checkAbort()
@@ -569,7 +569,7 @@ class Collection2(Collection):
 			self.logger.info('Adjust target for the other tilt group...')
 			try:
 				self.emtarget, status = self.node.adjusttarget(self.preset['name'], self.target, self.emtarget)
-			except Exception, e:
+			except Exception as e:
 				self.logger.error('Failed to adjust target: %s.' % e)
 				self.finalize()
 				raise
@@ -589,7 +589,7 @@ class Collection2(Collection):
 		self.logger.info('Removing tilt backlash...')
 		try:
 			self.node.removeStageAlphaBacklash(tilts, sequence, self.preset['name'], self.target, self.emtarget)
-		except Exception, e:
+		except Exception as e:
 			self.logger.error('Failed to remove backlash: %s.' % e)
 			self.finalize()
 			raise
@@ -670,7 +670,7 @@ class Collection2(Collection):
 						
 				elif self.fulltrack or not ispredict:	
 						
-					print "****TRACKING****"	
+					print("****TRACKING****")	
 					istot = self.get_istot(seq)		# history of previous shifts
 															 
 					# tilt to current tilt angle. 
@@ -686,13 +686,13 @@ class Collection2(Collection):
 					predicted_position['y'] = tracked_shift['y'] + sum(istot['y'])
 					# TODO: actually implement something for z heights
 					predicted_position['z'] = tracked_shift['z'] + self.preset['defocus']/image_pixel_size
-					print 'previous x: %f, y: %f' %(position['x'],position['y'])
-					print 'tracked x: %f, y: %f' %(predicted_position['x'],predicted_position['y'])
-					print 'tracked shift x: %f, y: %f' %(tracked_shift['x'],tracked_shift['y'])
-					print 
+					print('previous x: %f, y: %f' %(position['x'],position['y']))
+					print('tracked x: %f, y: %f' %(predicted_position['x'],predicted_position['y']))
+					print('tracked shift x: %f, y: %f' %(tracked_shift['x'],tracked_shift['y']))
+					print() 
 				else:
 					# tilt to current tilt angle. 
-					print "****PREDICTING****"
+					print("****PREDICTING****")
 					istot = self.get_istot(seq)									# history of previous shifts
 					
 					self.tilt(tilt)
@@ -713,10 +713,10 @@ class Collection2(Collection):
 							self.settings['use tilt'], channel=channel, wiener=False, taper=0)	
 						self.reset_ntrack(seq)
 						
-					print 'previous x: %f, y: %f' %(position['x'],position['y'])
-					print 'predicted x: %f, y: %f' %(predicted_position['x'],predicted_position['y'])
-					print 'predicted shift x: %f, y: %f' %(predicted_shift['x'], predicted_shift['y'])
-					print 
+					print('previous x: %f, y: %f' %(position['x'],position['y']))
+					print('predicted x: %f, y: %f' %(predicted_position['x'],predicted_position['y']))
+					print('predicted shift x: %f, y: %f' %(predicted_shift['x'], predicted_shift['y']))
+					print() 
 					
 			except TrackingError:
 				self.logger.error('Failed to track. Aborting tilt series')
@@ -748,7 +748,7 @@ class Collection2(Collection):
 			"""
 			try:
 				self.node.setPosition('image shift', predicted_position)
-			except Exception, e:
+			except Exception as e:
 				self.logger.error('Calibration error: %s' % e) 
 				self.finalize()
 				raise Fail
@@ -812,7 +812,7 @@ class Collection2(Collection):
 				try:
 					tilt_series_image_data = self.tilt_series.saveImage(image_data)
 					break
-				except Exception, e:
+				except Exception as e:
 					self.logger.warning('Retrying save image: %s.' % (e,))
 					raise
 				for tick in range(60):
@@ -831,7 +831,7 @@ class Collection2(Collection):
 				try:
 					correlation_image = self.correlator[seq[0]].correlate(tilt_series_image_data, self.settings['use tilt'], channel=channel, wiener=False, taper=0)
 					break
-				except Exception, e:
+				except Exception as e:
 					self.logger.warning('Retrying correlate image: %s.' % (e,))
 				for tick in range(15):
 					self.checkAbort()
@@ -862,14 +862,14 @@ class Collection2(Collection):
 				'y': predicted_position['y']
 			}
 			
-			print "****AFTER IMAGE CORRELATION****"
+			print("****AFTER IMAGE CORRELATION****")
 			if ispredict:
-				print 'predicted x: %f, y: %f' %(predicted_position['x'],predicted_position['y'])
+				print('predicted x: %f, y: %f' %(predicted_position['x'],predicted_position['y']))
 			else:
-				print 'tracked x: %f, y: %f' %(predicted_position['x'],predicted_position['y'])
-			print 'correlation x: %f, y: %f' %((correlation['x']),(correlation['y']))
-			print 'measured position x: %f, y: %f' %(measured_position['x'],measured_position['y'])
-			print 'measured shift x: %f, y: %f' %(measured_shift['x'],measured_shift['y'])
+				print('tracked x: %f, y: %f' %(predicted_position['x'],predicted_position['y']))
+			print('correlation x: %f, y: %f' %((correlation['x']),(correlation['y'])))
+			print('measured position x: %f, y: %f' %(measured_position['x'],measured_position['y']))
+			print('measured shift x: %f, y: %f' %(measured_shift['x'],measured_shift['y']))
 
 			if not ispredict:
 				predicted_shift = self.prediction.predict(tilt,seq)						# still predict position, just don't rely on it. 				
@@ -1201,7 +1201,7 @@ class Collection2(Collection):
 	def sendImageShift(position):
 		try:
 			self.node.setPosition('image shift', position)
-		except Exception, e:
+		except Exception as e:
 			self.logger.error('Calibration error: %s' % e) 
 			self.finalize()
 			raise Fail

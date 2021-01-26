@@ -9,11 +9,11 @@
 #
 
 from leginon import leginondata
-import targetfinder
+from . import targetfinder
 from pyami import correlator, imagefun, peakfinder
 
 import threading
-import gui.wx.DTFinder
+from . import gui.wx.DTFinder
 import numpy
 from pyami import quietscipy
 import scipy.ndimage
@@ -131,7 +131,7 @@ class DTFinder(targetfinder.TargetFinder):
 		for angle in numpy.arange(angleinc, 180, angleinc):
 			angles.extend([-angle, angle])
 		angles.append(180)
-		print 'ANGLES', angles
+		print('ANGLES', angles)
 		return angles
 
 	def autoCorrelate(self, point):
@@ -150,7 +150,7 @@ class DTFinder(targetfinder.TargetFinder):
 		bestpeakinfo = {'snr': 0}
 		goodcheck = False
 		for angle in angles:
-			print 'ANGLE', angle
+			print('ANGLE', angle)
 			self.makeTemplateB(angle)
 			peakinfo = self.correlateTemplate()
 			peakinfo['template angle'] = angle
@@ -185,12 +185,12 @@ class DTFinder(targetfinder.TargetFinder):
 		percentsnr = 100 * snrdiff / oldsnr
 		percentminsum = 100 * minsumdiff / oldminsum
 
-		print '  NEW'
-		print '    MINSUM', newminsum
-		print '    SNR', newsnr
-		print '  ERR'
-		print '    MINSUM', minsumdiff, percentminsum
-		print '    SNR', snrdiff, percentsnr
+		print('  NEW')
+		print('    MINSUM', newminsum)
+		print('    SNR', newsnr)
+		print('  ERR')
+		print('    MINSUM', minsumdiff, percentminsum)
+		print('    SNR', snrdiff, percentsnr)
 
 		if newsnr > self.settings['snr threshold']:
 			return True
@@ -224,9 +224,9 @@ class DTFinder(targetfinder.TargetFinder):
 		return peakinfo
 
 	def printPeakInfo(self, peakinfo):
-		print 'Peak Info:'
+		print('Peak Info:')
 		for key in peakinfo:
-			print '  %s:  %s' % (key, peakinfo[key])
+			print('  %s:  %s' % (key, peakinfo[key]))
 
 	def makeFinalTargets(self):
 		# one of each display type at the peak position
@@ -268,7 +268,7 @@ class DTFinder(targetfinder.TargetFinder):
 			autofailed = False
 			try:
 				self.everything()
-			except Exception, e:
+			except Exception as e:
 				self.logger.error('auto target finder failed: %s' % (e,))
 				autofailed = True
 

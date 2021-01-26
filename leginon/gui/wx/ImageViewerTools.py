@@ -1,7 +1,7 @@
 import numpy
 import wx
 
-import imageviewer.numarrayimage
+from . import imageviewer.numarrayimage
 
 import leginon.gui.wx.ImageViewerEvents as Events
 

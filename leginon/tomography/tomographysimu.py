@@ -8,10 +8,10 @@ import leginon.event
 import leginon.acquisition
 import leginon.gui.wx.tomography.TomographySimu
 
-import collectionsimu as collection
-import tilts
-import exposure
-import prediction
+from . import collectionsimu as collection
+from . import tilts
+from . import exposure
+from . import prediction
 
 from pyami import correlator, peakfinder
 
@@ -126,15 +126,15 @@ class TomographySimu(leginon.acquisition.Acquisition):
 			sessiondata = self.session
 		if seriesdata is None:
 			seriesdata = self.simuseriesdata
-		print "-----------------"
-		print sessiondata.dbid,seriesdata.dbid,seriesdata['number']
+		print("-----------------")
+		print(sessiondata.dbid,seriesdata.dbid,seriesdata['number'])
 		q = leginon.leginondata.AcquisitionImageData(session=sessiondata)
 		q['tilt series'] = seriesdata
 		results = q.query(readimages=False)
 		if results:
 			results.reverse()
-			tilts = map((lambda x: x['scope']['stage position']['a']),results)
-			files = map((lambda x: x['filename']+'.mrc'),results)
+			tilts = list(map((lambda x: x['scope']['stage position']['a']),results))
+			files = list(map((lambda x: x['filename']+'.mrc'),results))
 			firsttilt = tilts[0]
 			tilts_in_groups=[[]]
 			images_in_groups=[[]]
@@ -150,9 +150,9 @@ class TomographySimu(leginon.acquisition.Acquisition):
 				images_in_groups[n].append(results[i])
 			self.presetdata = images_in_groups[0][0]['preset']
 			self.tiltimagedata = images_in_groups
-			print "images in 1st group:",len(images_in_groups[0])
+			print("images in 1st group:",len(images_in_groups[0]))
 			if len(images_in_groups) > 1:
-				print "images in 2nd group:",len(images_in_groups[1])
+				print("images in 2nd group:",len(images_in_groups[1]))
 			tiltpresetname = images_in_groups[0][0]['preset']['name']
 			self.settings['preset order'] = [tiltpresetname]
 			self.setSettings(self.settings)
@@ -187,7 +187,7 @@ class TomographySimu(leginon.acquisition.Acquisition):
 							  start=math.radians(self.settings['tilt start']),
 							  step=math.radians(self.settings['tilt step']),
 							  n=self.settings['equally sloped n'])
-		except ValueError, e:
+		except ValueError as e:
 			self.logger.warning('Tilt parameters invalid: %s.' % e)
 		else:
 			n = sum([len(tilts) for tilts in self.tilts.getTilts()])
@@ -217,9 +217,9 @@ class TomographySimu(leginon.acquisition.Acquisition):
 								 exposure=exposure_time,
 								 exposure_min=exposure_min,
 								 exposure_max=exposure_max)
-		except exposure.LimitError, e:
+		except exposure.LimitError as e:
 			self.logger.warning('Exposure time out of range: %s.' % e)
-		except exposure.Default, e:
+		except exposure.Default as e:
 			self.logger.warning('Using preset exposure time: %s.' % e)
 		else:
 			try:
@@ -245,7 +245,7 @@ class TomographySimu(leginon.acquisition.Acquisition):
 			return
 		try:
 			calibrations = self.getCalibrations(presetdata)
-		except CalibrationError, e:
+		except CalibrationError as e:
 			self.logger.error('Calibration error: %s' % e) 
 			return 'failed'
 		high_tension, pixel_size = calibrations
@@ -305,7 +305,7 @@ class TomographySimu(leginon.acquisition.Acquisition):
 		client = self.calclients[move_type]
 		try:
 			pixel_position = client.itransform(position, scope_data, camera_data)
-		except leginon.calibrationclient.NoMatrixCalibrationError, e:
+		except leginon.calibrationclient.NoMatrixCalibrationError as e:
 			raise CalibrationError(e)
 		# invert y and position
 		return {'x': pixel_position['col'], 'y': -pixel_position['row']}
@@ -322,7 +322,7 @@ class TomographySimu(leginon.acquisition.Acquisition):
 		position = {'row': position['y'], 'col': -position['x']}
 		try:
 			scope_data = client.transform(position, scope_data, camera_data)
-		except leginon.calibrationclient.NoMatrixCalibrationError, e:
+		except leginon.calibrationclient.NoMatrixCalibrationError as e:
 			raise CalibrationError(e)
 		return scope_data[move_type]
 
@@ -607,7 +607,7 @@ class TomographySimu(leginon.acquisition.Acquisition):
 	def processTargetData(self, *args, **kwargs):
 		try:
 			leginon.acquisition.Acquisition.processTargetData(self, *args, **kwargs)
-		except Exception, e:
+		except Exception as e:
 			self.logger.error('Failed to process the tomo target: %s' % e)
 			raise
 

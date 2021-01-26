@@ -6,9 +6,9 @@ def run(inputfile, outfile, errfile):
 	fout = open(outfile, 'w')
 	ferr = open(errfile, 'w')
 	args = ['RAPTORsim', inputfile]
-	print 'starting subprocess'
+	print('starting subprocess')
 	p = subprocess.Popen(args, stdout=fout, stderr=ferr)
-	print 'waiting for subprocess'
+	print('waiting for subprocess')
 	ret = p.wait()
 	if ret:
 		fout.write('RAPTOR failed with code: %d\n' % (ret,))

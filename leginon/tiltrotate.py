@@ -1,6 +1,6 @@
-import gui.wx.TiltRotate
+from . import gui.wx.TiltRotate
 from leginon import leginondata
-import targetrepeater
+from . import targetrepeater
 
 class TiltRotateRepeater(targetrepeater.TargetRepeater):
 	transformtype = 'rotation'

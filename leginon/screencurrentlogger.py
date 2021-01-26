@@ -1,7 +1,7 @@
 import time
 from leginon import leginondata, referencetimer
-import event
-import gui.wx.ScreenCurrentLogger
+from . import event
+from . import gui.wx.ScreenCurrentLogger
 
 class ScreenCurrentLogger(referencetimer.ReferenceTimer):
 	# relay measure does events

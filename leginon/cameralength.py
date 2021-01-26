@@ -45,7 +45,7 @@ class DiffrCalibrator(object):
 		try:
 			cam_lengths, center, radial_values = diffrfun.calibrate(a, ht, cam_psize, image_bin)
 		except Exception as e:
-			print('Failed %s with %s' % (image['filename'], e))
+			print(('Failed %s with %s' % (image['filename'], e)))
 			return center, []
 		#print image['filename'], center, cam_lengths
 		return center, cam_lengths
@@ -63,7 +63,7 @@ class DiffrCalibrator(object):
 			if abs(cam_length*1000 -mag) < mag*0.05:
 				cam_lengths.append(cam_length)
 		if not cam_lengths:
-			print ('No successful calibration at %d mm' % (mag))
+			print(('No successful calibration at %d mm' % (mag)))
 			return mag*0.001, 0.0, 0
 		n = len(cam_lengths)
 		avg_cam_length = numpy.array(cam_lengths).mean()
@@ -74,7 +74,7 @@ class DiffrCalibrator(object):
 			std_cam_length_str = '+/-%.3f' % (std_cam_length)
 		if self.logger is not None:
 			self.logger.write('%d\t%.3f\t%.3f\t%d\n' % (mag, avg_cam_length, std_cam_length, n))
-		print('cam_length(m) = %.3f%s (n=%d)' % (avg_cam_length, std_cam_length_str, n))
+		print(('cam_length(m) = %.3f%s (n=%d)' % (avg_cam_length, std_cam_length_str, n)))
 		return avg_cam_length, std_cam_length, n
 
 	def calibrateCameraLengthAtPreset(self, presetname):
@@ -116,7 +116,7 @@ class DiffrCalibrator(object):
 		self.setLogger(self.session['name'])
 		presetnames = self.getDiffractionPresetNames()
 		for pname in presetnames:
-			print pname
+			print(pname)
 			self.calibrateCameraLengthAtPreset(pname)
 		if self.logger:
 			self.logger.close()

@@ -48,7 +48,7 @@ def yshift(k1, k2, sel_matches):
 					 ysd[ys+i-(len(filt)/2)]=filt[i]
 					 
 	if ysd:				
-		print "y-shift:", max(ysd, key=ysd.get),"pixels with",  max(ysd.values()), "votes"
+		print("y-shift:", max(ysd, key=ysd.get),"pixels with",  max(ysd.values()), "votes")
 		return max(ysd, key=ysd.get)
 	else:
 		return None
@@ -91,28 +91,28 @@ def MatchImages(image1, image2):
 	 kp2=detector.detect(image2)
 
 	 if kp1 is None or kp2 is None:
-		print "No features detected"
+		print("No features detected")
 		return np.zeros([3,3], dtype=np.float32)
 	 
 	 k1, d1 = descriptor.compute(image1, kp1)
 	 k2, d2 = descriptor.compute(image2, kp2)
 
 	 if d1 is None or d2 is None:
-		print "No features detected"
+		print("No features detected")
 		return np.zeros([3,3], dtype=np.float32)
 	 
-	 print '%d keypoints in image1, %d keypoints in image2' % (len(d1), len(d2))
+	 print('%d keypoints in image1, %d keypoints in image2' % (len(d1), len(d2)))
 
 	 matches = matcher.match(d1, d2)
 	 distances = [m.distance for m in matches]
-	 print "%d preliminary matches" % (len(distances))
+	 print("%d preliminary matches" % (len(distances)))
 
 	 mean_dist = (sum(distances)/len(distances))
 	 sel_matches = [m for m in matches if m.distance < mean_dist*0.6]
 	 ys = yshift(k1, k2, sel_matches)
 	 if ys is not None:
 		sel_matches = [m for m in sel_matches if math.fabs(int(k2[m.trainIdx].pt[1])-int(k1[m.queryIdx].pt[1])-ys)<10]
-	 print "%d matches" % (len(sel_matches))
+	 print("%d matches" % (len(sel_matches)))
 	 
 	 count=0
 	 while len(sel_matches)<40 and count<20:
@@ -121,10 +121,10 @@ def MatchImages(image1, image2):
 		ys=yshift(k1, k2, sel_matches)
 		if ys is not None:
 				sel_matches = [m for m in sel_matches if math.fabs(int(k2[m.trainIdx].pt[1])-int(k1[m.queryIdx].pt[1])-ys)<10]
-		print "Try:", count, "#selected matches:", len(sel_matches)
+		print("Try:", count, "#selected matches:", len(sel_matches))
 
 	 for m in sel_matches:
-		color = tuple([sp.random.randint(0, 255) for _ in xrange(3)])
+		color = tuple([sp.random.randint(0, 255) for _ in range(3)])
 		cv2.line(view, (int(k1[m.queryIdx].pt[0]), int(k1[m.queryIdx].pt[1])) , (int(k2[m.trainIdx].pt[0] + w1), int(k2[m.trainIdx].pt[1])), color)
 	 cv2.imwrite('sift_comparison.jpg', view)
 		
@@ -134,7 +134,7 @@ def MatchImages(image1, image2):
 
 	 affineM=cv2.estimateRigidTransform(src_pts, dst_pts, fullAffine=True)
 	 if affineM==None:
-		print "affine matrix could not be calculated"
+		print("affine matrix could not be calculated")
 		return np.zeros([3,3], dtype=np.float32)		  
 
 	 M=np.eye(3, dtype=float)
@@ -159,7 +159,7 @@ def MatchImages(image1, image2):
 	 M[2][1]=compat[0][2]
 	 M[0][2]=0.0
 	 M[1][2]=0.0
-	 print M
+	 print(M)
 
 	 return M
 
@@ -198,22 +198,22 @@ def checkOpenCVResult(logger, result, is_small_tilt_difference):
 	if result[0][0] < 0.5 or result[1][1] < 0.5:
 		#max tilt angle of 60 degrees
 		logger.warning("Bad openCV result: bad tilt in matrix: "+affineToText(result))
-		print ("Bad openCV result: bad tilt in matrix: "+affineToText(result))
+		print(("Bad openCV result: bad tilt in matrix: "+affineToText(result)))
 		return False
 	elif abs(result[0][0]) * abs(result[1][1]) > .9781 and not is_small_tilt_difference:
 		#min tilt angle of 12 degrees
 		logger.warning("Bad openCV result: bad tilt in matrix: "+affineToText(result))
-		print ("Bad openCV result: bad tilt in matrix: "+affineToText(result))
+		print(("Bad openCV result: bad tilt in matrix: "+affineToText(result)))
 		return False	 
 	elif abs(result[0][0]) > 1.1 or abs(result[1][1]) > 1.1:
 		#restrict maximum allowable expansion
 		logger.warning("Bad openCV result: image expansion: "+affineToText(result))
-		print ("Bad openCV result: image expansion: "+affineToText(result))
+		print(("Bad openCV result: image expansion: "+affineToText(result)))
 		return False
 	elif abs(result[0][1]) > 0.1 or abs(result[1][0]) > 0.1:
 		#max rotation angle of 5.7 degrees
 		logger.warning("Bad openCV result: too much rotation: "+affineToText(result))
-		print ("Bad openCV result: too much rotation: "+affineToText(result))
+		print(("Bad openCV result: too much rotation: "+affineToText(result)))
 		return False
 	return True
 
@@ -257,7 +257,7 @@ def FindFeatures(image):
 	kp1=detector.detect(image)
 	k1, d1 = descriptor.compute(image, kp1)
 
-	print '%d keypoints in image' % (len(d1))
+	print('%d keypoints in image' % (len(d1)))
 
 	feature_pts = [ feature.pt for feature in k1]
 	return feature_pts

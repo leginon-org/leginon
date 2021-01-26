@@ -1,6 +1,6 @@
-import targetfilter
+from . import targetfilter
 from leginon import leginondata
-import gui.wx.SampleTargetFilter
+from . import gui.wx.SampleTargetFilter
 
 class SampleTargetFilter(targetfilter.TargetFilter):
 	panelclass = gui.wx.SampleTargetFilter.Panel
@@ -39,7 +39,7 @@ class SampleTargetFilter(targetfilter.TargetFilter):
 			mean = imagearray[rowrange[0]:rowrange[1],colrange[0]:colrange[1]].mean()
 			stdv = imagearray[rowrange[0]:rowrange[1],colrange[0]:colrange[1]].std()
 			#make an unique key for the dictionary targetmeans
-			while mean in targetmeans.keys():
+			while mean in list(targetmeans.keys()):
 				mean = mean+0.0001
 			targetmeans[mean] = target
 			meanlist.append(mean)
@@ -47,10 +47,10 @@ class SampleTargetFilter(targetfilter.TargetFilter):
 
 		targetnumber = len(meanlist)
 		outputnumbers = []
-		outputnumbers.extend(range(0,self.settings['dark number']))
-		outputnumbers.extend(range(targetnumber-self.settings['bright number'],targetnumber))
+		outputnumbers.extend(list(range(0,self.settings['dark number'])))
+		outputnumbers.extend(list(range(targetnumber-self.settings['bright number'],targetnumber)))
 		median_start = targetnumber/2-self.settings['median number']/2
-		outputnumbers.extend(range(median_start,median_start+self.settings['median number']))
+		outputnumbers.extend(list(range(median_start,median_start+self.settings['median number'])))
 		# get unique and sorted list
 		outputnumbers = list(set(outputnumbers))
 		# create a new target list with these filtered targets

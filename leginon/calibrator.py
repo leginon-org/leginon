@@ -7,13 +7,13 @@
 #
 import time
 
-import node, event, leginondata
-import gui.wx.Calibrator
-import instrument
-import presets
+from . import node, event, leginondata
+from . import gui.wx.Calibrator
+from . import instrument
+from . import presets
 import os
 import re
-import cameraclient
+from . import cameraclient
 
 class Calibrator(node.Node):
 	'''
@@ -67,12 +67,12 @@ class Calibrator(node.Node):
 			try:
 				self.instrument.setTEM(instruments['tem'])
 				self.instrument.setCCDCamera(instruments['ccdcamera'])
-			except ValueError, e:
+			except ValueError as e:
 				self.logger.error('Cannot set instruments: %s' % (e,))
 				return 1
 			try:
 				self.instrument.ccdcamera.Settings = self.settings['camera settings']
-			except Exception, e:
+			except Exception as e:
 				self.logger.error(e)
 				return 1
 		else:
@@ -84,7 +84,7 @@ class Calibrator(node.Node):
 	def acquireImage(self):
 		try:
 			status = self.initInstruments()
-		except Exception, e:
+		except Exception as e:
 			self.logger.exception('Acquisition failed: %s' % e)
 			self.panel.acquisitionDone()
 			return
@@ -93,7 +93,7 @@ class Calibrator(node.Node):
 			return
 		try:
 			imagedata = self.acquireCorrectedCameraImageData(force_no_frames=True)
-		except Exception, e:
+		except Exception as e:
 			self.logger.exception('Acquisition failed: %s' % e)
 			self.panel.acquisitionDone()
 			return
@@ -114,7 +114,7 @@ class Calibrator(node.Node):
 		extension = 'mrc'
 		try:
 			path = imagedata.mkpath()
-		except Exception, e:
+		except Exception as e:
 			raise
 			raise node.PublishError(e)
 		filenames = os.listdir(path)

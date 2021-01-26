@@ -5,12 +5,12 @@ import email.MIMEMultipart
 import email.MIMEText
 import poplib
 from PIL import Image
-import cStringIO
-import NumericImage
+import io
+from . import NumericImage
 import time
-import node
+from . import node
 #import uidata
-import event
+from . import event
 import threading
 
 def makeMessage(fromaddress, toaddress, subject,
@@ -39,7 +39,7 @@ def send(message, hostname=None):
 	s.close()
 
 def PILImage2String(pilimage, encoder='JPEG'):
-	stream = cStringIO.StringIO()
+	stream = io.StringIO()
 	pilimage.save(stream, encoder)
 	imagestring = stream.getvalue()
 	stream.close()
@@ -67,8 +67,7 @@ def receive(hostname, username, password):
 def waitForReply(message, hostname, username, password, interval=10.0):
 	while True:
 		try:
-			replies = map(lambda m: m['In-Reply-To'],
-										receive(hostname, username, password))
+			replies = [m['In-Reply-To'] for m in receive(hostname, username, password)]
 		except:
 			pass
 		if message['Message-ID'] in replies:
@@ -135,8 +134,8 @@ class Email(node.Node):
 			interval = self.uiinboundinterval.get()
 			try:
 				messages = receive(hostname, username, password)
-				replies = map(lambda m: m['In-Reply-To'], messages)
-			except Exception, e:
+				replies = [m['In-Reply-To'] for m in messages]
+			except Exception as e:
 				self.statusmessage.set('Error in settings: %s' % e)
 			else:
 				self.statusmessage.set('Email sent, waiting for reply...')
@@ -151,7 +150,7 @@ class Email(node.Node):
 		password = self.uiinboundpassword.get()
 		try:
 			messages = receive(hostname, username, password)
-		except Exception, e:
+		except Exception as e:
 			self.statusmessage.set('Error in settings: %s' % e)
 		else:
 			self.statusmessage.set('Settings ok')
@@ -205,5 +204,5 @@ if __name__ == '__main__':
 	#username = getpass.getuser()
 	username = 'suloway'
 	password = getpass.getpass()
-	print waitForReply(message, 'mail.scripps.edu', username, password)
+	print(waitForReply(message, 'mail.scripps.edu', username, password))
 

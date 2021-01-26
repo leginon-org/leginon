@@ -17,7 +17,7 @@ def unique(s):
 	except TypeError:
 		del u	# move on to the next method
 	else:
-		return u.keys()
+		return list(u.keys())
 
 	try:
 		t = list(s)

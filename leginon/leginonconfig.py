@@ -46,7 +46,7 @@ if sys.platform == 'win32':
 			path = replaceEnvironmentVariables(path)
 			if not pathmapping or path is None:
 				return path
-			for key, value in pathmapping.items():
+			for key, value in list(pathmapping.items()):
 				if value.lower() == path[:len(value)].lower():
 					path = key + path[len(value):]
 					break
@@ -57,7 +57,7 @@ if sys.platform == 'win32':
 			path = replaceEnvironmentVariables(path)
 			if not pathmapping or path is None:
 				return path
-			for key, value in pathmapping.items():
+			for key, value in list(pathmapping.items()):
 				if key.lower() == path[:len(key)].lower():
 					path = value + path[len(key):]
 					break

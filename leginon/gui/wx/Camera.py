@@ -230,12 +230,12 @@ class CameraPanel(wx.Panel):
 	def setGeometryLimits(self,limitdict):
 		if limitdict is None:
 			self.setSize(None)
-		if 'binnings' in limitdict.keys():
+		if 'binnings' in list(limitdict.keys()):
 			self.binnings['x'] = limitdict['binnings']
 			self.binnings['y'] = limitdict['binnings']
-		if 'binmethod' in limitdict.keys():
+		if 'binmethod' in list(limitdict.keys()):
 			self.binmethod = limitdict['binmethod']
-		if 'size' in limitdict.keys():
+		if 'size' in list(limitdict.keys()):
 			self.setSize(limitdict['size'])
 		else:
 			self.setSize(None)
@@ -305,7 +305,7 @@ class CameraPanel(wx.Panel):
 		self.onConfigurationChanged()
 
 	def setCommonChoice(self):
-		for key, geometry in self.common.items():
+		for key, geometry in list(self.common.items()):
 			flag = True
 			for i in ['dimension', 'offset', 'binning']:
 				if self.geometry[i] != geometry[i]:
@@ -395,9 +395,9 @@ class CameraPanel(wx.Panel):
 	def _getUseFrames(self):
 		frames_str = self.useframes.GetValue()
 		numbers = re.split('\D+', frames_str)
-		numbers = filter(None, numbers)
+		numbers = [_f for _f in numbers if _f]
 		if numbers:
-			numbers = map(int, numbers)
+			numbers = list(map(int, numbers))
 			numbers = tuple(numbers)
 		else:
 			numbers = ()
@@ -488,8 +488,8 @@ class CameraPanel(wx.Panel):
 		dimensions = filtergood(dimensions, mask)
 		def minsize(size):
 			return size >= self.minsize / max(self.binnings['x'])
-		dimensions = filter(minsize, dimensions)
-		dimensions = map((lambda x: primefactor.getAllEvenPrimes(x)[-1]),dimensions)
+		dimensions = list(filter(minsize, dimensions))
+		dimensions = list(map((lambda x: primefactor.getAllEvenPrimes(x)[-1]),dimensions))
 		binnings = filtergood(self.binnings['x'], mask)
 		dimensions.reverse()
 		if show_sections:
@@ -552,7 +552,7 @@ class CameraPanel(wx.Panel):
 		if g is None:	
 			return None
 		c = copy.deepcopy(g)
-		for key,func in self.getfuncs.items():
+		for key,func in list(self.getfuncs.items()):
 			c[key] = func()
 		return c
 
@@ -581,14 +581,14 @@ class CameraPanel(wx.Panel):
 		return True
 
 	def _setConfiguration(self, value):
-		for key, func in self.setfuncs.items():
+		for key, func in list(self.setfuncs.items()):
 			if key in value:
 				func(value[key])
 		self._setGeometry(value)
 		self.setCommonChoice()
 
 	def setConfiguration(self, value):
-		for key, func in self.setfuncs.items():
+		for key, func in list(self.setfuncs.items()):
 			if key in value:
 				func(value[key])
 		self.setGeometry(value)
@@ -614,8 +614,8 @@ class CustomDialog(wx.Dialog):
 		self.ieydimension = IntEntry(self, -1, min=1, max=parent.size['y'],
 																	chars=len(str(parent.size['y'])))
 		stbinning = wx.StaticText(self, -1, 'Binning:')
-		self.cxbinning = wx.Choice(self, -1, choices=map(str,parent.binnings['x']))
-		self.cybinning = wx.Choice(self, -1, choices=map(str,parent.binnings['y']))
+		self.cxbinning = wx.Choice(self, -1, choices=list(map(str,parent.binnings['x'])))
+		self.cybinning = wx.Choice(self, -1, choices=list(map(str,parent.binnings['y'])))
 		stoffset = wx.StaticText(self, -1, 'Offset:')
 		self.iexoffset = IntEntry(self, -1, min=0, max=parent.size['x'],
 																	chars=len(str(parent.size['x'])))

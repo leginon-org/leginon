@@ -5,19 +5,19 @@
 #	   For terms of the license agreement
 #	   see  http://leginon.org
 #
-import manualfocuschecker
-import acquisition
-import node, leginondata
-import calibrationclient
+from . import manualfocuschecker
+from . import acquisition
+from . import node, leginondata
+from . import calibrationclient
 import threading
-import event
+from . import event
 import time
 import math
 from pyami import imagefun, ordereddict
 import numpy
 import copy
-import gui.wx.Focuser
-import player
+from . import gui.wx.Focuser
+from . import player
 
 
 class SingleFocuser(manualfocuschecker.ManualFocusChecker):
@@ -250,17 +250,17 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 		except calibrationclient.Abort:
 			self.logger.info('Measurement of defocus and stig. has been aborted')
 			measure_status = 'aborted'
-		except calibrationclient.NoMatrixCalibrationError, e:
+		except calibrationclient.NoMatrixCalibrationError as e:
 			self.player.pause()
 			self.logger.error('Measurement failed without calibration: %s' % e)
 			self.logger.info('Calibrate and then continue...')
 			self.beep()
 			measure_status = 'repeat'
-		except calibrationclient.NoCalibrationError, e:
+		except calibrationclient.NoCalibrationError as e:
 			self.logger.error('Measurement failed without calibration: %s' % e)
 			measure_status = 'aborted'
 			# any other exception
-		except Exception, e:
+		except Exception as e:
 			self.logger.error('Other error: %s' % e)
 			measure_status = 'aborted'
 		finally:
@@ -387,7 +387,7 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 			z = self.stagetiltcalclient.measureZ(atilt, correlation_type=setting['correlation type'])
 			self.logger.info('Measured Z: %.4e' % z)
 			resultdata['defocus'] = z
-		except Exception, e:
+		except Exception as e:
 			self.logger.error(e)
 			self.logger.error('Exception found during Stage tilt eucentric height measurement')
 			status = 'failed'
@@ -409,7 +409,7 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 			try:
 				self.instrument.tem.StagePosition = pos
 				e = None
-			except Exception, e:
+			except Exception as e:
 				time.sleep(5)
 				self.logger.warning('Failed to move to %s. Retry' % (pos,))
 				succeed = False
@@ -424,7 +424,7 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 	def alignRotationCenter(self, defocus1, defocus2):
 		try:
 			bt = self.btcalclient.measureRotationCenter(defocus1, defocus2, correlation_type=None, settle=0.5)
-		except Exception, e:
+		except Exception as e:
 			self.logger.error('Failed rotation center measurement: %s' % (e,))
 		self.logger.info('Misalignment correction: %.4f, %.4f' % (bt['x'],bt['y'],))
 		if bt['x'] == 0.0 and bt['y'] == 0.0:

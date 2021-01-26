@@ -11,16 +11,16 @@ import numpy
 import pyami.quietscipy
 import scipy.ndimage
 from leginon import leginondata
-import polygon
-import raster
+from . import polygon
+from . import raster
 import time
 import sys
 from pyami import ordereddict, mrc
-import cPickle
+import pickle
 import os.path
 import sinedon
 from pyami import affine
-import caltransformer
+from . import caltransformer
 import xml.dom.minidom
 
 def getMosaicXMLData(data):
@@ -170,7 +170,7 @@ class MontageImage(Image):
 		colsize = int(numpy.ceil(float(self.shape[1])/tilesize) * tilesize)
 
 		## make list of stage center for each tile
-		print 'calculating tile positions...'
+		print('calculating tile positions...')
 		centerpixel = rowsize/2.0-0.5, colsize/2.0-0.5
 		firstpixel = tilesize/2.0-0.5
 		rowi = 0
@@ -190,7 +190,7 @@ class MontageImage(Image):
 				coli += 1
 			rowi += 1
 
-		print 'Calculated %d tiles, %d rows, %d cols' % (len(tiles), rowi, coli)
+		print('Calculated %d tiles, %d rows, %d cols' % (len(tiles), rowi, coli))
 		return tiles
 
 	def needImage(self, image):
@@ -267,7 +267,7 @@ class MontageImage(Image):
 			self.targets.append(pix)
 
 def getImageData(filename_or_id):
-	if isinstance(filename_or_id, basestring):
+	if isinstance(filename_or_id, str):
 		q = leginondata.AcquisitionImageData(filename=filename_or_id)
 		images = q.query(readimages=False, results=1)
 		if images:
@@ -327,14 +327,14 @@ def createInputs(images, cachefile=None):
 		inputimages.append(input)
 	if cachefile is not None:
 		f = open(cachefile, 'w')
-		cPickle.dump(inputimages, f, cPickle.HIGHEST_PROTOCOL)
+		pickle.dump(inputimages, f, pickle.HIGHEST_PROTOCOL)
 		f.close()
 	return inputimages
 
 def readInputs(cachefile):
-	print 'reading inputs info'
+	print('reading inputs info')
 	f = open(cachefile, 'r')
-	inputimages = cPickle.load(f)
+	inputimages = pickle.load(f)
 	f.close()
 	return inputimages
 
@@ -349,16 +349,16 @@ def createGlobalOutput(imdata, angle=0.0, bin=1):
 	return globaloutput
 
 def readTileInfo():
-	print 'reading tile info'
+	print('reading tile info')
 	f = open('tiles', 'r')
-	tiles = cPickle.load(f)
+	tiles = pickle.load(f)
 	f.close()
-	print 'done'
+	print('done')
 	return tiles
 
 def storeTileInfo(tiledict):
 	f = open('tiles', 'w')
-	cPickle.dump(tiledict, f, cPickle.HIGHEST_PROTOCOL)
+	pickle.dump(tiledict, f, pickle.HIGHEST_PROTOCOL)
 	f.close()
 
 def markTarget(im, target):
@@ -373,7 +373,7 @@ def createSingleImage(inputimages, globaloutput, outfilename, outformat, outtext
 	n = len(inputimages)
 	tiles = []
 	for i,input in enumerate(inputimages):
-		print 'inserting %d of %d' % (i+1,n)
+		print('inserting %d of %d' % (i+1,n))
 		tile = globaloutput.insertImage(input, outtext=outtext)
 		tiles.append(tile)
 	'''
@@ -402,7 +402,7 @@ def createTiles(inputs, tiledict, tilesize, row1=None, row2=None, col1=None, col
 	blank = numpy.zeros((tilesize,tilesize), numpy.float32)
 
 	if None in (row1,row2,col1,col2):
-		tileindices = tiledict.keys()
+		tileindices = list(tiledict.keys())
 	else:
 		tileindices = []
 		for rowi in range(row1, row2+1):
@@ -416,12 +416,12 @@ def createTiles(inputs, tiledict, tilesize, row1=None, row2=None, col1=None, col
 	t0 = time.time()
 	for i,tileindex in enumerate(tileindices):
 			tileargs = tiledict[tileindex]
-			print 'Creating tile:', tileindex
+			print('Creating tile:', tileindex)
 			output = MontageImage(*tileargs['args'], **tileargs['kwargs'])
 		
 			for input in inputs:
 				output.insertImage(input)
-			print '   Inserted %d images' % (output.inserted,)
+			print('   Inserted %d images' % (output.inserted,))
 			if output.inserted:
 				outim = output.image
 			else:
@@ -452,7 +452,7 @@ def createTiles(inputs, tiledict, tilesize, row1=None, row2=None, col1=None, col
 			minleft = int(minleft)
 			secleft = secleft - minleft * 60.0
 			secleft = int(secleft)
-			print '   Done %d of %d, Avg: %.2f tiles/sec,  Estimated time left: %02d:%02d:%02d' % (tilesdone,tilestotal,tilespersec,hrleft,minleft,secleft)
+			print('   Done %d of %d, Avg: %.2f tiles/sec,  Estimated time left: %02d:%02d:%02d' % (tilesdone,tilestotal,tilespersec,hrleft,minleft,secleft))
 
 ########## End of classes and functions...
 ########## Now the script!
@@ -481,13 +481,13 @@ if __name__ == '__main__':
 
 	badargs = False
 	if options.infilename is None and options.incache is None and options.xmlfilename is None:
-		print 'You must specify either an input file list (-i) or an input cache (-I) or an XML file (-x).'
+		print('You must specify either an input file list (-i) or an input cache (-I) or an XML file (-x).')
 		badargs = True
 
 	if [options.outfilename, options.tilesize, options.output_text].count(None) != 2:
-		print 'You must specify either an output MRC filename (-o) for a single output file'
-		print '   or a tile size (-t) if you want to generate tiles'
-		print '   or -O if you want to save transform details only'
+		print('You must specify either an output MRC filename (-o) for a single output file')
+		print('   or a tile size (-t) if you want to generate tiles')
+		print('   or -O if you want to save transform details only')
 		badargs = True
 
 	if badargs:
@@ -498,7 +498,7 @@ if __name__ == '__main__':
 		if options.xmlfilename is not None:
 			info = stitchparser.parse(options.xmlfilename)
 			filenames = info['images']
-			print 'FILENAMES', filenames
+			print('FILENAMES', filenames)
 
 		if options.infilename is not None:
 			f = open(options.infilename, 'r')
@@ -507,7 +507,7 @@ if __name__ == '__main__':
 			filenames = [filename[:-1] for filename in filenames]
 
 			## database has filenames without the mrc extension
-			filenames = map(os.path.basename, filenames)
+			filenames = list(map(os.path.basename, filenames))
 			filenames = [filename[:-4] for filename in filenames]
 
 		sys.stderr.write('reading image metadata\n')
@@ -517,7 +517,7 @@ if __name__ == '__main__':
 			if image['filename'][-2:] == 'gr':
 				images.append(image)
 			else:
-				print 'rejecting', image['filename']
+				print('rejecting', image['filename'])
 		sys.stderr.write('creating input image objects\n')
 		inputimages = createInputs(images, options.incache)
 	elif options.incache is not None:
@@ -548,7 +548,7 @@ if __name__ == '__main__':
 	#### set output boundaries and center
 	globaloutput.containInputs(inputimages)
 
-	print 'Output shape:', globaloutput.shape
+	print('Output shape:', globaloutput.shape)
 
 	############## Set up targtets for rotat##############
 	'''
@@ -574,7 +574,7 @@ if __name__ == '__main__':
 
 	if options.tilesize is not None:
 		tilesize = options.tilesize
-		print 'calc tiles'
+		print('calc tiles')
 		tiledict = globaloutput.calculateTiles(tilesize)
 		#storeTileInfo(tiledict)
 		createTiles(inputimages, tiledict, tilesize)

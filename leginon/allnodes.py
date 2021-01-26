@@ -4,304 +4,304 @@ import your node class and then register it with the noderegistry module.
 The order in this module determines the sort order for how the nodes
 appear when applications start.
 '''
-import noderegistry
+from . import noderegistry
 
 ##############################
 # Priority
 ##############################
 classtype = 'Priority'
-from presets import PresetsManager
+from .presets import PresetsManager
 noderegistry.registerNodeClass(PresetsManager,classtype)
 
 ##############################
 # Pipeline
 ##############################
 classtype = 'Pipeline'
-from gridentry import GridEntry
+from .gridentry import GridEntry
 noderegistry.registerNodeClass(GridEntry,classtype)
 
-from plategridentry import PlateGridEntry
+from .plategridentry import PlateGridEntry
 noderegistry.registerNodeClass(PlateGridEntry,classtype)
 
-from targetmaker import MosaicTargetMaker
+from .targetmaker import MosaicTargetMaker
 noderegistry.registerNodeClass(MosaicTargetMaker,classtype)
 
-from rastertargetfilter import RasterTargetFilter
+from .rastertargetfilter import RasterTargetFilter
 noderegistry.registerNodeClass(RasterTargetFilter,classtype)
 
-from imageprocessorexample import FileNames
+from .imageprocessorexample import FileNames
 noderegistry.registerNodeClass(FileNames,classtype)
 
-from regionfinder import RegionFinder
+from .regionfinder import RegionFinder
 noderegistry.registerNodeClass(RegionFinder,classtype)
 
-from imageprocessor import ImageProcessor
+from .imageprocessor import ImageProcessor
 noderegistry.registerNodeClass(ImageProcessor,classtype)
 
-from holefinder import HoleFinder
+from .holefinder import HoleFinder
 noderegistry.registerNodeClass(HoleFinder,classtype)
 
-from rasterfinder import RasterFinder
+from .rasterfinder import RasterFinder
 noderegistry.registerNodeClass(RasterFinder,classtype)
 
-from rasterfcfinder import RasterFCFinder
+from .rasterfcfinder import RasterFCFinder
 noderegistry.registerNodeClass(RasterFCFinder,classtype)
 
-from stigacquisition import StigAcquisition
+from .stigacquisition import StigAcquisition
 noderegistry.registerNodeClass(StigAcquisition,classtype)
 
-from raptorprocessor import RaptorProcessor
+from .raptorprocessor import RaptorProcessor
 noderegistry.registerNodeClass(RaptorProcessor,classtype)
 
-from matlabtargetfinder import MatlabTargetFinder
+from .matlabtargetfinder import MatlabTargetFinder
 noderegistry.registerNodeClass(MatlabTargetFinder,classtype)
 
-from stitchtargetfinder import StitchTargetFinder
+from .stitchtargetfinder import StitchTargetFinder
 noderegistry.registerNodeClass(StitchTargetFinder,classtype)
 
-from testtargetfinder import TestTargetFinder
+from .testtargetfinder import TestTargetFinder
 noderegistry.registerNodeClass(TestTargetFinder,classtype)
 
-from dtfinder import DTFinder
+from .dtfinder import DTFinder
 noderegistry.registerNodeClass(DTFinder,classtype)
 
-from mosaictargetfinder import MosaicClickTargetFinder
+from .mosaictargetfinder import MosaicClickTargetFinder
 noderegistry.registerNodeClass(MosaicClickTargetFinder,classtype)
 
-from mosaicquiltfinder import MosaicQuiltFinder
+from .mosaicquiltfinder import MosaicQuiltFinder
 noderegistry.registerNodeClass(MosaicQuiltFinder,classtype)
 
-from mosaicsectionfinder import MosaicSectionFinder
+from .mosaicsectionfinder import MosaicSectionFinder
 noderegistry.registerNodeClass(MosaicSectionFinder,classtype)
 
-from mosaicspotfinder import MosaicSpotFinder
+from .mosaicspotfinder import MosaicSpotFinder
 noderegistry.registerNodeClass(MosaicSpotFinder,classtype)
 
-from robotatlastargetfinder import RobotAtlasTargetFinder
+from .robotatlastargetfinder import RobotAtlasTargetFinder
 noderegistry.registerNodeClass(RobotAtlasTargetFinder,classtype)
 
-from centertargetfilter import CenterTargetFilter
+from .centertargetfilter import CenterTargetFilter
 noderegistry.registerNodeClass(CenterTargetFilter,classtype)
 
-from tiltrotate import TiltRotateRepeater
+from .tiltrotate import TiltRotateRepeater
 noderegistry.registerNodeClass(TiltRotateRepeater,classtype)
 
-from robot import Robot
+from .robot import Robot
 noderegistry.registerNodeClass(Robot,classtype)
 
 # TargetFinder is registered for setting validataion only
-from targetfinder import TargetFinder
+from .targetfinder import TargetFinder
 noderegistry.registerNodeClass(TargetFinder,classtype)
 
-from targetfinder import ClickTargetFinder
+from .targetfinder import ClickTargetFinder
 noderegistry.registerNodeClass(ClickTargetFinder,classtype)
 
-from tomotargetfinder import TomoClickTargetFinder
+from .tomotargetfinder import TomoClickTargetFinder
 noderegistry.registerNodeClass(TomoClickTargetFinder,classtype)
 
-from tomography.tomography import Tomography
+from .tomography.tomography import Tomography
 noderegistry.registerNodeClass(Tomography,classtype)
 
-from tomography.tomography import Tomography2
+from .tomography.tomography import Tomography2
 noderegistry.registerNodeClass(Tomography2,classtype)
 
-from acquisition import Acquisition
+from .acquisition import Acquisition
 noderegistry.registerNodeClass(Acquisition,classtype)
 
-from focuser import Focuser
+from .focuser import Focuser
 noderegistry.registerNodeClass(Focuser,classtype)
 
-from singlefocuser import SingleFocuser
+from .singlefocuser import SingleFocuser
 noderegistry.registerNodeClass(SingleFocuser,classtype)
 
-from diffrfocuser import DiffrFocuser
+from .diffrfocuser import DiffrFocuser
 noderegistry.registerNodeClass(DiffrFocuser,classtype)
 
-from rctacquisition import RCTAcquisition
+from .rctacquisition import RCTAcquisition
 noderegistry.registerNodeClass(RCTAcquisition,classtype)
 
-from phaseplatetester import PhasePlateTestImager
+from .phaseplatetester import PhasePlateTestImager
 noderegistry.registerNodeClass(PhasePlateTestImager,classtype)
 
-from phaseplatetester import PhasePlateTester
+from .phaseplatetester import PhasePlateTester
 noderegistry.registerNodeClass(PhasePlateTester,classtype)
 
-from tilttracker import TiltTracker
+from .tilttracker import TiltTracker
 noderegistry.registerNodeClass(TiltTracker,classtype)
 
-from tomography.tomographysimu import TomographySimu
+from .tomography.tomographysimu import TomographySimu
 noderegistry.registerNodeClass(TomographySimu,classtype)
 
-from beamtiltimager import BeamTiltImager
+from .beamtiltimager import BeamTiltImager
 noderegistry.registerNodeClass(BeamTiltImager,classtype)
 
-from beamtiltfixer import BeamTiltFixer
+from .beamtiltfixer import BeamTiltFixer
 noderegistry.registerNodeClass(BeamTiltFixer,classtype)
 
-from robot2 import Robot2
+from .robot2 import Robot2
 noderegistry.registerNodeClass(Robot2,classtype)
 
-from sampletargetfilter import SampleTargetFilter
+from .sampletargetfilter import SampleTargetFilter
 noderegistry.registerNodeClass(SampleTargetFilter,classtype)
 
-from jahcfinder import JAHCFinder
+from .jahcfinder import JAHCFinder
 noderegistry.registerNodeClass(JAHCFinder,classtype)
 
-from extholefinder import ExtHoleFinder
+from .extholefinder import ExtHoleFinder
 noderegistry.registerNodeClass(ExtHoleFinder,classtype)
 
-from dogfinder import DoGFinder
+from .dogfinder import DoGFinder
 noderegistry.registerNodeClass(DoGFinder,classtype)
 
-from atlastargetmaker import AtlasTargetMaker
+from .atlastargetmaker import AtlasTargetMaker
 noderegistry.registerNodeClass(AtlasTargetMaker,classtype)
 
-from fftace import CTFAnalyzer
+from .fftace import CTFAnalyzer
 noderegistry.registerNodeClass(CTFAnalyzer,classtype)
 
-from holedepth import HoleDepth
+from .holedepth import HoleDepth
 noderegistry.registerNodeClass(HoleDepth,classtype)
 
-from fftmaker import FFTMaker
+from .fftmaker import FFTMaker
 noderegistry.registerNodeClass(FFTMaker,classtype)
 
-from autoexposure import AutoExposure
+from .autoexposure import AutoExposure
 noderegistry.registerNodeClass(AutoExposure,classtype)
 
-from baker import Baker
+from .baker import Baker
 noderegistry.registerNodeClass(Baker,classtype)
 
-from movealphaacquisition import MoveAlphaAcquisition
+from .movealphaacquisition import MoveAlphaAcquisition
 noderegistry.registerNodeClass(MoveAlphaAcquisition,classtype)
 
-from movexyacquisition import MoveXYAcquisition
+from .movexyacquisition import MoveXYAcquisition
 noderegistry.registerNodeClass(MoveXYAcquisition,classtype)
 
-from tiltlistalternater import TiltListAlternater
+from .tiltlistalternater import TiltListAlternater
 noderegistry.registerNodeClass(TiltListAlternater,classtype)
 
-from tiltalternater import TiltAlternater
+from .tiltalternater import TiltAlternater
 noderegistry.registerNodeClass(TiltAlternater,classtype)
 
-from defocussequence import DefocusSequence
+from .defocussequence import DefocusSequence
 noderegistry.registerNodeClass(DefocusSequence,classtype)
 
 ##############################
 # Calibrations
 ##############################
 classtype = 'Calibrations'
-from magcalibrator import MagCalibrator
+from .magcalibrator import MagCalibrator
 noderegistry.registerNodeClass(MagCalibrator,classtype)
 
-from gonmodeler import GonModeler
+from .gonmodeler import GonModeler
 noderegistry.registerNodeClass(GonModeler,classtype)
 
-from matrixcalibrator import MatrixCalibrator
+from .matrixcalibrator import MatrixCalibrator
 noderegistry.registerNodeClass(MatrixCalibrator,classtype)
 
-from imagebeamcalibrator import ImageBeamCalibrator
+from .imagebeamcalibrator import ImageBeamCalibrator
 noderegistry.registerNodeClass(ImageBeamCalibrator,classtype)
 
-from beamtiltcalibrator import BeamTiltCalibrator
+from .beamtiltcalibrator import BeamTiltCalibrator
 noderegistry.registerNodeClass(BeamTiltCalibrator,classtype)
 
-from pixelsizecalibrator import PixelSizeCalibrator
+from .pixelsizecalibrator import PixelSizeCalibrator
 noderegistry.registerNodeClass(PixelSizeCalibrator,classtype)
 
-from cameralengthcalibrator import CameraLengthCalibrator
+from .cameralengthcalibrator import CameraLengthCalibrator
 noderegistry.registerNodeClass(CameraLengthCalibrator,classtype)
 
-from scalerotationcalibrator import ScaleRotationCalibrator
+from .scalerotationcalibrator import ScaleRotationCalibrator
 noderegistry.registerNodeClass(ScaleRotationCalibrator,classtype)
 
-from dosecalibrator import DoseCalibrator
+from .dosecalibrator import DoseCalibrator
 noderegistry.registerNodeClass(DoseCalibrator,classtype)
 
-from beamsizecalibrator import BeamSizeCalibrator
+from .beamsizecalibrator import BeamSizeCalibrator
 noderegistry.registerNodeClass(BeamSizeCalibrator,classtype)
 
 ##############################
 # Utility
 ##############################
 classtype = 'Utility'
-from clicktargettransformer import ClickTargetTransformer
+from .clicktargettransformer import ClickTargetTransformer
 noderegistry.registerNodeClass(ClickTargetTransformer,classtype)
 
-from driftmanager import DriftManager
+from .driftmanager import DriftManager
 noderegistry.registerNodeClass(DriftManager,classtype)
 
-from referencetimer import ReferenceTimer
+from .referencetimer import ReferenceTimer
 noderegistry.registerNodeClass(ReferenceTimer,classtype)
 
-from referencetimer import AlignZeroLossPeak
+from .referencetimer import AlignZeroLossPeak
 noderegistry.registerNodeClass(AlignZeroLossPeak,classtype)
 
-from referencetimer import MeasureDose
+from .referencetimer import MeasureDose
 noderegistry.registerNodeClass(MeasureDose,classtype)
 
-from EM import EM
+from .EM import EM
 noderegistry.registerNodeClass(EM,classtype)
 
-from alignmentmanager import AlignmentManager
+from .alignmentmanager import AlignmentManager
 noderegistry.registerNodeClass(AlignmentManager,classtype)
 
-from conditioner import Conditioner
+from .conditioner import Conditioner
 noderegistry.registerNodeClass(Conditioner,classtype)
 
-from buffercycler import BufferCycler
+from .buffercycler import BufferCycler
 noderegistry.registerNodeClass(BufferCycler,classtype)
 
-from conditioner import AutoNitrogenFiller
+from .conditioner import AutoNitrogenFiller
 noderegistry.registerNodeClass(AutoNitrogenFiller,classtype)
 
-from phaseplatealigner import PhasePlateAligner
+from .phaseplatealigner import PhasePlateAligner
 noderegistry.registerNodeClass(PhasePlateAligner,classtype)
 
-from screencurrentlogger import ScreenCurrentLogger
+from .screencurrentlogger import ScreenCurrentLogger
 noderegistry.registerNodeClass(ScreenCurrentLogger,classtype)
 
-from maskassessor import MaskAssessor
+from .maskassessor import MaskAssessor
 noderegistry.registerNodeClass(MaskAssessor,classtype)
 
-from beamfixer import BeamFixer
+from .beamfixer import BeamFixer
 noderegistry.registerNodeClass(BeamFixer,classtype)
 
-from exposurefixer import ExposureFixer
+from .exposurefixer import ExposureFixer
 noderegistry.registerNodeClass(ExposureFixer,classtype)
 
-from intensitymonitor import IntensityMonitor
+from .intensitymonitor import IntensityMonitor
 noderegistry.registerNodeClass(IntensityMonitor,classtype)
 
-from manualacquisition import ManualAcquisition
+from .manualacquisition import ManualAcquisition
 noderegistry.registerNodeClass(ManualAcquisition,classtype)
 
-from corrector import Corrector
+from .corrector import Corrector
 noderegistry.registerNodeClass(Corrector,classtype)
 
-from transformmanager import TransformManager
+from .transformmanager import TransformManager
 noderegistry.registerNodeClass(TransformManager,classtype)
 
-from manualimageloader import ManualImageLoader
+from .manualimageloader import ManualImageLoader
 noderegistry.registerNodeClass(ManualImageLoader,classtype)
 
-from clickmaskmaker import ClickMaskMaker
+from .clickmaskmaker import ClickMaskMaker
 noderegistry.registerNodeClass(ClickMaskMaker,classtype)
 
-from imageassessor import ImageAssessor
+from .imageassessor import ImageAssessor
 noderegistry.registerNodeClass(ImageAssessor,classtype)
 
-from temcontroller import TEMController
+from .temcontroller import TEMController
 noderegistry.registerNodeClass(TEMController,classtype)
 
-from icethicknessEF import IcethicknessEF
+from .icethicknessEF import IcethicknessEF
 noderegistry.registerNodeClass(IcethicknessEF,classtype)
 
-from blackstripedetector import BlackStripeDetector
+from .blackstripedetector import BlackStripeDetector
 noderegistry.registerNodeClass(BlackStripeDetector,classtype)
 ##############################
 # Finale
 ##############################
 classtype = 'Finale'
-from navigator import Navigator
+from .navigator import Navigator
 noderegistry.registerNodeClass(Navigator,classtype)
 

@@ -11,11 +11,11 @@ def temp_add_drift(settingsclass):
 	settingsclass.typemap = classmethod(typemap)
 
 def drift2transform(settingsdata):
-	print 'CLASS', settingsdata.__class__
-	print 'USER', settingsdata['session']['user']
-	print 'NAME', settingsdata['name']
-	print 'AFD', settingsdata['adjust for drift']
-	print 'AFTbefore', settingsdata['adjust for transform']
+	print('CLASS', settingsdata.__class__)
+	print('USER', settingsdata['session']['user'])
+	print('NAME', settingsdata['name'])
+	print('AFD', settingsdata['adjust for drift'])
+	print('AFTbefore', settingsdata['adjust for transform'])
 	aft = settingsdata['adjust for transform']
 	if aft is not None:
 		return
@@ -25,30 +25,30 @@ def drift2transform(settingsdata):
 		newsettings['adjust for transform'] = 'one'
 	else:
 		newsettings['adjust for transform'] = 'no'
-	print 'AFTafter', newsettings['adjust for transform']
+	print('AFTafter', newsettings['adjust for transform'])
 	newsettings.insert()
 
 def updateAcquisitionSettings():
 	settingsclasses = []
-	for value in leginondata.__dict__.values():
+	for value in list(leginondata.__dict__.values()):
 		try:
 			if issubclass(value, leginondata.AcquisitionSettingsData):
 				settingsclasses.append(value)
 		except:
 			pass
 	
-	print 'Settings Classes:'
+	print('Settings Classes:')
 	for s in settingsclasses:
-		print '	%s' % (s,)
+		print('	%s' % (s,))
 
 	qusers = leginondata.UserData()
 	users = qusers.query()
 	for user in users:
-		print 'USER', user['name']
+		print('USER', user['name'])
 		qsession = leginondata.SessionData(user=user)
 		for cls in settingsclasses:
-			print '=========================='
-			print 'CLS', cls
+			print('==========================')
+			print('CLS', cls)
 			temp_add_drift(cls)
 			qset = cls(session=qsession)
 			settings = qset.query()

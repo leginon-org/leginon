@@ -7,17 +7,17 @@
 #
 
 from leginon import leginondata
-import event
-import imagewatcher
+from . import event
+from . import imagewatcher
 import threading
-import node
-import calibrationclient
+from . import node
+from . import calibrationclient
 import numpy
 import math
 import pyami.quietscipy
 import scipy.ndimage
 from pyami import imagefun
-import gui.wx.FFTMaker
+from . import gui.wx.FFTMaker
 from pyami import fftfun
 
 class FFTMaker(imagewatcher.ImageWatcher):

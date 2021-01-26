@@ -9,15 +9,15 @@
 import pyami.quietscipy
 import scipy.ndimage as nd
 import sinedon.data
-import imageassessor
-import event
-import node
-import gui.wx.ClickMaskMaker
+from . import imageassessor
+from . import event
+from . import node
+from . import gui.wx.ClickMaskMaker
 import os
 import numpy
 from pyami import imagefun, mrc
 from leginon import leginondata
-import polygon
+from . import polygon
 
 try:
 	import apMask
@@ -155,7 +155,7 @@ class ClickMaskMaker(imageassessor.ImageAssessor):
 		self.maskdir=os.path.join(self.maskrundata['path']['path'],"masks")	
 		
 		if images:
-			goodfiles = map((lambda x: x['filename']),images)
+			goodfiles = list(map((lambda x: x['filename']),images))
 			goodfiles.sort()
 			self.images = []
 			self.files = []
@@ -202,7 +202,7 @@ class ClickMaskMaker(imageassessor.ImageAssessor):
 		testlog = [False,0,""]
 		infos={}
 
-		infos,testlog=apCrud.getLabeledInfo(image,mask,labeled_regions,range(1,clabels+1),False,infos,testlog)
+		infos,testlog=apCrud.getLabeledInfo(image,mask,labeled_regions,list(range(1,clabels+1)),False,infos,testlog)
 		maskfilename = imgdata['filename']+'_mask.png'
 
 		self.insertResults(self.maskrundata,imgdata,infos)		
@@ -261,7 +261,7 @@ class ClickMaskMaker(imageassessor.ImageAssessor):
 			clist=list(coord)
 			clist.reverse()
 			return tuple(clist)
-		vertices = map(reversexy,vertices)
+		vertices = list(map(reversexy,vertices))
 		polygonimg = polygon.filledPolygon(self.maskshape,vertices)
 		type(polygonimg)
 		self.maskimg = self.maskimg + polygonimg

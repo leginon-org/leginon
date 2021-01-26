@@ -9,12 +9,12 @@
 #
 
 from leginon import leginondata
-import targetfinder
+from . import targetfinder
 import threading
-import gui.wx.RegionFinder
-import libCVwrapper
-import raster
-import polygon
+from . import gui.wx.RegionFinder
+from . import libCVwrapper
+from . import raster
+from . import polygon
 import math
 
 class RegionFinder(targetfinder.TargetFinder):
@@ -94,10 +94,10 @@ class RegionFinder(targetfinder.TargetFinder):
 		for regionarray in self.regionarrays:
 			pieces = libCVwrapper.PolygonACD(regionarray, 0.05)
 			if pieces is None:
-				print 'PolygonACD FAIL'
+				print('PolygonACD FAIL')
 				self.logger.warning('PolygonACD failed')
 			else:
-				print 'PolygonACD SUCCESS'
+				print('PolygonACD SUCCESS')
 				regionpieces.append(pieces)
 		
 		self.setTargets('acquisition', tt, block=False)

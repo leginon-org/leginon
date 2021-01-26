@@ -5,21 +5,21 @@
 #	   For terms of the license agreement
 #	   see  http://leginon.org
 #
-import acquisition
-import node
+from . import acquisition
+from . import node
 from leginon import leginondata
-import calibrationclient
+from . import calibrationclient
 import threading
-import event
+from . import event
 import time
 import math
 from pyami import correlator, peakfinder, imagefun, numpil,arraystats
 import numpy
 from scipy import ndimage
 import copy
-import gui.wx.BeamTiltFixer
-import player
-import tableau
+from . import gui.wx.BeamTiltFixer
+from . import player
+from . import tableau
 import subprocess
 import re
 import os
@@ -51,7 +51,7 @@ class BeamTiltFixer(acquisition.Acquisition):
 			self.presetsclient.toScope(presetnames[0], None, keep_shift=False)
 		try:
 			bt = self.btcalclient.measureRotationCenter(defocus1, defocus2, correlation_type=None, settle=0.5)
-		except Exception, e:
+		except Exception as e:
 			estr = str(e)
 			self.logger.error(estr)
 			return
@@ -121,7 +121,7 @@ class BeamTiltFixer(acquisition.Acquisition):
 			comatilt = {'x':cftilt[0].mean(),'y':cftilt[1].mean()}
 			self.comameasurement = comatilt
 			self.logger.info('Measured beam tilt x:%8.5f, y:%8.5f' % (comatilt['x'],comatilt['y']))
-		except Exception, e:
+		except Exception as e:
 			comatilt = None
 			if not self.settings['correct']:
 				self.logger.warning('No beam tilt estimated: %s' % e)
@@ -135,7 +135,7 @@ class BeamTiltFixer(acquisition.Acquisition):
 					calibration_client.setBeamTilt({'x':comatilt['x']+btilt0['x'],'y':comatilt['y']+btilt0['y']})
 					is_corrected = True
 					self.logger.info('Beam Tilt Corrected')
-				except Exception, e:
+				except Exception as e:
 					self.logger.error('Beam Tilt Correction failed: %s' % e)
 		return calibration_client.tabimage,is_corrected
 

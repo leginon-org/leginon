@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 from leginon import leginondata
-import event
+from . import event
 import threading
 from pyami import ordereddict
 import sys
@@ -102,13 +102,13 @@ class TargetHandler(object):
 				organized[targetlist][number]['targets'][status] = target
 
 		final = []
-		tls = organized.keys()
+		tls = list(organized.keys())
 		tls.sort()
 		for targetlist in tls:
-			numbers = organized[targetlist].keys()
+			numbers = list(organized[targetlist].keys())
 			numbers.sort()
 			for n in numbers:
-				statuses = organized[targetlist][n]['targets'].keys()
+				statuses = list(organized[targetlist][n]['targets'].keys())
 				## take only most recent status in this order:
 				for status in ('done', 'aborted', 'processing', 'new'):
 					if status in organized[targetlist][n]['targets']:
@@ -136,15 +136,15 @@ class TargetHandler(object):
 			dequeuedquery = leginondata.DequeuedImageTargetListData(queue=queuedata)
 			dequeuedlists = self.research(datainstance=dequeuedquery)
 			keys = [targetlist.dbid for targetlist in targetlists]
-			active = ordereddict.OrderedDict(zip(keys,targetlists))
+			active = ordereddict.OrderedDict(list(zip(keys,targetlists)))
 			keys = [dequeuedlist.special_getitem('list', dereference=False).dbid for dequeuedlist in dequeuedlists]
-			done = ordereddict.OrderedDict(zip(keys,keys))
+			done = ordereddict.OrderedDict(list(zip(keys,keys)))
 			for id in done:
 				try:
 					del active[id]
 				except:
 					self.logger.warning('done %s list not in target list' % (id,))
-			return active.values()
+			return list(active.values())
 	
 	def inDequeued(self,targetlist):
 		dequeuedquery = leginondata.DequeuedImageTargetListData(list=targetlist)
@@ -370,7 +370,7 @@ class TargetHandler(object):
 		## current state of TEM, but use preset
 		try:
 			scopedata = self.instrument.getData(leginondata.ScopeEMData)
-		except Exception, e:
+		except Exception as e:
 			self.logger.error('getting scopedata failed: %s' % (e))
 			raise
 		self.targetlist_reset_tilt = scopedata['stage position']['a']
@@ -469,14 +469,14 @@ class TargetWaitHandler(TargetHandler):
 		try:
 			if 'queue' in self.settings and self.settings['queue']:
 				return
-		except AttributeError, KeyError:
+		except AttributeError as KeyError:
 			pass
 		if tlistid is None:
 			eventdict = self.targetlistevents
 		else:
 			eventdict = {tlistid:self.targetlistevents[tlistid]}
 		status = None
-		for tid, teventinfo in eventdict.items():
+		for tid, teventinfo in list(eventdict.items()):
 			self.logger.info('Waiting for target list ID %s...' % (tid,))
 			teventinfo['received'].wait()
 			status = teventinfo['status']
@@ -488,7 +488,7 @@ class TargetWaitHandler(TargetHandler):
 
 
 if __name__ == '__main__':
-	import node
+	from . import node
 	import sinedon
 
 	class TestNode(node.Node, TargetHandler):
@@ -502,13 +502,13 @@ if __name__ == '__main__':
 	s = leginondata.SessionData(name='04may26a')
 	s = db.query(s, results=1)
 	s = s[0]
-	print 's', s
+	print('s', s)
 
 	im = db.direct_query(leginondata.AcquisitionImageData, 49780)
-	print 'DONE DIRECT', im.dbid
+	print('DONE DIRECT', im.dbid)
 	tar = t.researchTargets(session=s, image=im)
-	print 'LEN', len(tar)
-	print 'DBID', tar[0].dbid
+	print('LEN', len(tar))
+	print('DBID', tar[0].dbid)
 	#print 'TAR0', tar[0]
-	print 'IM REF', tar[0].special_getitem('image', dereference=False)
+	print('IM REF', tar[0].special_getitem('image', dereference=False))
 

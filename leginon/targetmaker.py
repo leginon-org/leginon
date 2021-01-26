@@ -6,15 +6,15 @@
 #       see  http://leginon.org
 #
 import threading
-import node, event, leginondata
-import presets
-import calibrationclient
+from . import node, event, leginondata
+from . import presets
+from . import calibrationclient
 import math
-import instrument
-import targethandler
-import gui.wx.MosaicTargetMaker
-import gui.wx.Node
-import gridlabeler
+from . import instrument
+from . import targethandler
+from . import gui.wx.MosaicTargetMaker
+from . import gui.wx.Node
+from . import gridlabeler
 
 class AtlasError(Exception):
 	pass
@@ -23,8 +23,8 @@ class AtlasSizeError(AtlasError):
 	pass
 
 def magnitude(coordinate, coordinates):
-	return map(lambda c: math.sqrt(sum(map(lambda m, n: (n - m)**2,
-																					coordinate, c))), coordinates)
+	return [math.sqrt(sum(map(lambda m, n: (n - m)**2,
+																					coordinate, c))) for c in coordinates]
 
 def closestTarget(start, targets):
 	values = magnitude(start, targets)
@@ -82,9 +82,9 @@ class MosaicTargetMaker(TargetMaker):
 			self.publishargs = self._calculateAtlas()
 			if self.publishargs:
 				self.logger.info('Press \'Publish Atlas\' to continue')
-		except AtlasError, e:
+		except AtlasError as e:
 			self.logger.exception('Atlas creation failed: %s' % e)
-		except Exception, e:
+		except Exception as e:
 			self.logger.exception('Atlas creation failed: %s' % e)
 		self.panel.atlasCalculated()
 
@@ -94,9 +94,9 @@ class MosaicTargetMaker(TargetMaker):
 				raise AtlasError('no targets calculated')
 			self._publishAtlas(*self.publishargs)
 			self.publishargs = None   # reset to prevent resubmitting
-		except AtlasError, e:
+		except AtlasError as e:
 			self.logger.exception('Atlas creation failed: %s' % e)
-		except Exception, e:
+		except Exception as e:
 			self.logger.exception('Atlas creation failed: %s' % e)
 		self.panel.atlasPublished()
 
@@ -240,7 +240,7 @@ class MosaicTargetMaker(TargetMaker):
 			# pass evt values to _publishAtlas
 			kwargs = {'evt': evt}
 			self._publishAtlas(*args, **kwargs)
-		except Exception, e:
+		except Exception as e:
 			self.logger.exception('Atlas creation failed: %s' % e)
 
 	def _calculateAtlas(self,evt=None):
@@ -254,7 +254,7 @@ class MosaicTargetMaker(TargetMaker):
 		scope, camera = self.getState()
 		if self.settings['alpha tilt'] is not None:
 			self.setAlpha(math.radians(self.settings['alpha tilt']))
-		if evt and 'stagez' in evt.keys() and evt['stagez'] is not None:
+		if evt and 'stagez' in list(evt.keys()) and evt['stagez'] is not None:
 			self.setStageZ(evt['stagez'])
 		alpha = self.getAlpha(scope)
 		preset = self.getPreset()
@@ -341,8 +341,8 @@ class MosaicTargetMaker(TargetMaker):
 		targets = []
 		sign = 1
 		for n, i in enumerate(images):
-			ys = range(-sign*imagetile['y']*(i - 1)/2, sign*imagetile['y']*(i + 1)/2,
-									sign*imagetile['y'])
+			ys = list(range(-sign*imagetile['y']*(i - 1)/2, sign*imagetile['y']*(i + 1)/2,
+									sign*imagetile['y']))
 			x = n*imagetile['x']
 			for y in ys:
 				# target should be in (drow,dcol)
@@ -351,7 +351,7 @@ class MosaicTargetMaker(TargetMaker):
 					targets.append((y, -x))
 			sign = -sign
 
-		tys, txs = zip(*targets)
+		tys, txs = list(zip(*targets))
 		ysize = max(tys) - min(tys) + imagetile['y']
 		xsize = max(txs) - min(txs) + imagetile['x']
 
@@ -456,10 +456,9 @@ if __name__ == '__main__':
 
 	def randomTargets(nc, nt, scale):
 		random.seed()
-		return map(lambda t: tuple(map(lambda c: (random.random() - 0.5)*2*scale,
-																		range(nc))), range(nt))
+		return [tuple([(random.random() - 0.5)*2*scale for c in range(nc)]) for t in range(nt)]
 
 	start = (0.0, 0.0)
 	targets = randomTargets(2, 16, 2.0e-3)
-	print sortTargets(targets, start)
+	print(sortTargets(targets, start))
 

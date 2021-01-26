@@ -51,7 +51,7 @@ def FindRegions(image, minsize=3, maxsize=0.8, blur=0, sharpen=0, WoB=True, BoW=
 		scaled = scaleAndPlane(image)
 		return libcv.FindRegions(scaled, minsize, maxsize, blur, sharpen, WoB, BoW)
 	except:
-		print "libcv.FindRegions failed"
+		print("libcv.FindRegions failed")
 		mydict = { 
 			'regionBorder': numpy.array([[0,0,0,0],[0,0,0,0]]),
 			'regionEllipse': (1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0),
@@ -90,10 +90,10 @@ def MatchImages(image1, image2, minsize=0.01, maxsize=0.9, blur=0, sharpen=0, Wo
 		scaled2 = scaleAndPlane(image2)
 		return libcv.MatchImages(scaled1, scaled2, minsize, maxsize, blur, sharpen, WoB, BoW)
 	except:
-		print "libcv.MatchImages failed"
+		print("libcv.MatchImages failed")
 		return numpy.zeros([3,3], dtype=numpy.float32)
 
-	print ""
+	print("")
 
 #-----------------------
 def PolygonVE(polygon, thresh):
@@ -108,7 +108,7 @@ def PolygonVE(polygon, thresh):
 		return libcv.PolygonVE(polygon, thresh)
 	except:
 		return None
-	print ""
+	print("")
 
 #-----------------------
 def PolygonACD(array, value):
@@ -124,7 +124,7 @@ def PolygonACD(array, value):
 	try:
 		return libcv.PolygonACD(array, value)
 	except:
-		print "libcv failed in PolygonACD"
+		print("libcv failed in PolygonACD")
 		return []
 
 
@@ -155,17 +155,17 @@ def checkLibCVResult(self, result):
 	if abs(result[0][0]) < 0.5 or abs(result[1][1]) < 0.5:
 		#max tilt angle of 60 degrees
 		self.logger.warning("Bad libcv result: bad tilt in matrix: "+affineToText(result))
-		print ("Bad libcv result: bad tilt in matrix: "+affineToText(result))
+		print(("Bad libcv result: bad tilt in matrix: "+affineToText(result)))
 		return False
 	elif abs(result[0][0]) > 1.5 or abs(result[1][1]) > 1.5:
 		#only allow 25 degrees of expansion
 		self.logger.warning("Bad libcv result: image expansion: "+affineToText(result))
-		print ("Bad libcv result: image expansion: "+affineToText(result))
+		print(("Bad libcv result: image expansion: "+affineToText(result)))
 		return False
 	elif abs(result[0][1]) > 0.7071 or abs(result[1][0]) > 0.7071:
 		#max rotation angle of 45 degrees
 		self.logger.warning("Bad libcv result: too much rotation: "+affineToText(result))
-		print ("Bad libcv result: too much rotation: "+affineToText(result))
+		print(("Bad libcv result: too much rotation: "+affineToText(result)))
 		return False
 	#elif abs(result[2][0]) > 200 or abs(result[2][1]) > 200:
 	#	#max rotation angle of 45 degrees
@@ -201,13 +201,13 @@ def scaleAndPlane(imgarray):
 	try:
 		planed = planeRegression(imgarray)
 	except:
-		print "regression failed"
+		print("regression failed")
 		planed = imgarray
 	### libcv assumes all types are float32
 	try:
 		floating = numpy.asarray(planed - planed.min(), dtype=numpy.float32)*1.0e2
 	except:
-		print "float-ing failed"
+		print("float-ing failed")
 		floating = planed
 	return floating
 

@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
 import numpy
-import workflow
-import targetworkflow
-import commonsteps
+from . import workflow
+from . import targetworkflow
+from . import commonsteps
 from pyami.ordereddict import OrderedDict
 
 ########################################################

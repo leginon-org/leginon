@@ -12,7 +12,7 @@
 
 import numpy
 from pyami import imagefun, correlator, peakfinder, convolver, mrc, arraystats
-import ice
+from . import ice
 
 class CircleMaskCreator(object):
 	def __init__(self):
@@ -24,7 +24,7 @@ class CircleMaskCreator(object):
 		'''
 		## use existing circle mask
 		key = (shape, center, minradius, maxradius)
-		if self.masks.has_key(key):
+		if key in self.masks:
 			return self.masks[key]
 
 		## set up shift and wrapping of circle on image
@@ -64,7 +64,7 @@ class OvalMaskCreator(object):
 		'''
 		## use existing oval mask
 		key = (shape, center, minradius, maxradius,angle,tltaxis)
-		if self.masks.has_key(key):
+		if key in self.masks:
 			return self.masks[key]
 
 		## set up shift and wrapping of circle on image
@@ -405,11 +405,11 @@ class HoleFinder(object):
 			blobnumber = blobnumber+1
 		if (blobnumber != 2):
 			if (blobnumber != 1):
-				print 'only 1 or 2 blobs allowed'
+				print('only 1 or 2 blobs allowed')
 				blobdist=0
 				blobtilt=0
 			else:
-				print 'unresolved'
+				print('unresolved')
 				blobdist=1.0
 				blobtilt=tiltaxis
 		else:

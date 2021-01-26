@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 import sys
 if len(sys.argv) < 3:
-	print 'usage:    %s inst x|y label1 label2 label3....' % (sys.argv[0],)
+	print('usage:    %s inst x|y label1 label2 label3....' % (sys.argv[0],))
 	sys.exit(0)
 
 import wx
 import wx.lib.plot
 from leginon import leginondata
 import math
-import gonmodel
+from . import gonmodel
 import numpy
 
 def querymodel(axis, hostname, label=None):
@@ -18,8 +18,8 @@ def querymodel(axis, hostname, label=None):
 	if not model:
 		return None
 	model = model[0]
-	print 'MODEL', model.timestamp
-	print model
+	print('MODEL', model.timestamp)
+	print(model)
 	model['a'].shape = (-1,)
 	model['b'].shape = (-1,)
 	mod = gonmodel.GonModel()
@@ -31,16 +31,16 @@ def querymodelmag(axis, label, hostname):
 	sm = leginondata.StageModelMagCalibrationData(axis=axis, label=label, tem=tem)
 	magcal = sm.query(results=1)
 	magcal = magcal[0]
-	print 'MAGCAL', magcal.timestamp
-	print magcal
+	print('MAGCAL', magcal.timestamp)
+	print(magcal)
 	mean = magcal['mean']
 	return 1.0 / mean
 
 def normalizepoints(points, a0):
-	return map(lambda x: (x[0],x[1]/a0/0.95), points)
+	return [(x[0],x[1]/a0/0.95) for x in points]
 
 def normalizemodel(points, a0):
-	return map(lambda x: (x[0],x[1]*a0*0.95), points)
+	return [(x[0],x[1]*a0*0.95) for x in points]
 
 def querypoints(axis, label, hostname):
 	tem = leginondata.InstrumentData(hostname=hostname)
@@ -66,9 +66,9 @@ def findrange(xy):
 def modelpoints(model, xrange, step):
 	x = numpy.arange(xrange[0], xrange[1], step)
 	#x = tuple(x)
-	y = map(model.eval, x)
+	y = list(map(model.eval, x))
 	#y = map(lambda x: model.a0 * x, y)
-	points = zip(x,y)
+	points = list(zip(x,y))
 	return points
 
 class MyFrame(wx.Frame):

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import cStringIO
+import io
 import math
 import numpy
 import wx
@@ -12,9 +12,9 @@ import threading
 from pyami import mrc, arraystats, arraystats, imagefun
 from leginon import icons
 import numextension
-from Entry import FloatEntry, EVT_ENTRY
-import Stats
-import ImageViewer2
+from .Entry import FloatEntry, EVT_ENTRY
+from . import Stats
+from . import ImageViewer2
 
 ImageClickedEventType = wx.NewEventType()
 ImageClickDoneEventType = wx.NewEventType()
@@ -337,13 +337,13 @@ class ContrastTool(object):
 		return (self.imagemax - self.imagemin)*scale + self.imagemin
 
 	def getSliderValue(self, value):
-		print 'VALUE', value, type(value)
-		print 'MINMAX', self.imagemin, self.imagemax, type(self.imagemin)
+		print('VALUE', value, type(value))
+		print('MINMAX', self.imagemin, self.imagemax, type(self.imagemin))
 		try:
 			scale = (value - self.imagemin)/(self.imagemax - self.imagemin)
 		except:
 			scale = 1.0
-		print 'SCALE', scale
+		print('SCALE', scale)
 		return int(round((self.slidermax - self.slidermin)*scale + self.slidermin))
 
 	def setRange(self, range, value=None):
@@ -600,10 +600,10 @@ class ZoomTool(ImageTool):
 		tooltip = 'Toggle Zoom Tool'
 		cursor = wx.StockCursor(wx.CURSOR_MAGNIFIER)
 		ImageTool.__init__(self, imagepanel, sizer, bitmap, tooltip, cursor, True)
-		self.zoomlevels = range(2, -6, -1)
+		self.zoomlevels = list(range(2, -6, -1))
 		#self.zoomlevels = [1,1.5,2,3,4,6,8,12,16,32,128,]
 		# wx.Choice seems a bit slow, at least on ms windows
-		self.zoomchoice = wx.Choice(self.imagepanel, -1, choices=map(self.log2str, self.zoomlevels))
+		self.zoomchoice = wx.Choice(self.imagepanel, -1, choices=list(map(self.log2str, self.zoomlevels)))
 		self.zoom(2, (0, 0))
 		self.zoomchoice.SetSelection(self.zoomlevel)
 		self.sizer.Add(self.zoomchoice, 0, wx.ALIGN_CENTER|wx.ALL, 3)
@@ -946,7 +946,7 @@ class ImagePanel(wx.Panel):
 		self.UpdateDrawing()
 
 	def setImageFromPILString(self, imagestring):
-		buffer = cStringIO.StringIO(pilimage)
+		buffer = io.StringIO(pilimage)
 		imagedata = Image.open(buffer)
 		self.setImage(imagedata)
 		# Memory leak?
@@ -996,7 +996,7 @@ class ImagePanel(wx.Panel):
 				return self.imagedata.getpixel((x, y))
 			else:
 				return None
-		except (IndexError, TypeError, AttributeError), e:
+		except (IndexError, TypeError, AttributeError) as e:
 			return None
 
 	def getClientCenter(self):
@@ -1630,7 +1630,7 @@ class TargetType(object):
 	def getTargetPositions(self):
 		if self.targets is None:
 			return []
-		return map(lambda t: t.position, self.targets)
+		return [t.position for t in self.targets]
 
 class TargetImagePanel(ImagePanel):
 	def __init__(self, parent, id, callback=None, tool=True, imagesize=(384, 384), mode="horizontal"):
@@ -1744,7 +1744,7 @@ class TargetImagePanel(ImagePanel):
 		if False:
 			xscale = self.scale[0]
 			yscale = self.scale[1]
-			print 'scaled', xscale, yscale
+			print('scaled', xscale, yscale)
 			scaledpoints = []
 			for target in targets:
 				point = target.x/xscale, target.y/yscale
@@ -1836,7 +1836,7 @@ class TargetImagePanel(ImagePanel):
 			position = selectedtarget.position
 			strings.append('%s (%g, %g)' % (name, position[0], position[1]))
 			if isinstance(selectedtarget, StatsTarget):
-				for key, value in selectedtarget.stats.items():
+				for key, value in list(selectedtarget.stats.items()):
 					if type(value) is float:
 						strings.append('%s: %g' % (key, value))
 					else:
@@ -1865,7 +1865,7 @@ class TargetOutputPanel(TargetImagePanel):
 	def onQuit(self, evt):
 		targets = self.getTargets('Target Practice')
 		for target in targets:
-			print '%s\t%s' % (target.x, target.y)
+			print('%s\t%s' % (target.x, target.y))
 		wx.Exit()
 
 def run(filename):

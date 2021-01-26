@@ -26,7 +26,7 @@ try:
 	from leginon import epu_meta
 except ImportError:
 	# find it locally
-	import epu_meta
+	from . import epu_meta
 session_timeout = 60 # seconds before timeout
 check_interval = 120  # seconds between checking for new frames
 # production usage on linux
@@ -99,7 +99,7 @@ class RawTransfer(object):
 			# TODO fast mode has unrelated name. handle later
 			parent = hl_name
 			en_name = hl_name # TODO: what if multiple exposures in a hole ?
-			if en_name not in self.en.keys():
+			if en_name not in list(self.en.keys()):
 				self.en[en_name]=[]
 			version = len(self.en[en_name])
 			data = parent, version, file_path, datetime_string, 'en'
@@ -110,7 +110,7 @@ class RawTransfer(object):
 			hl_name = basename.split('_')[1]
 			sq_name = bits[-3].split('_')[1]
 			parent = sq_name
-			if hl_name not in self.hl.keys():
+			if hl_name not in list(self.hl.keys()):
 				self.hl[hl_name]=[]
 			version = len(self.hl[hl_name])
 			data = parent, version, file_path, datetime_string, 'hl'
@@ -119,7 +119,7 @@ class RawTransfer(object):
 		if basename.startswith('GridSquare'):
 			sq_name = basedirname.split('_')[1]
 			parent = None
-			if sq_name not in self.sq.keys():
+			if sq_name not in list(self.sq.keys()):
 				self.sq[sq_name]=[]
 			version = len(self.sq[sq_name])
 			data = parent, version, file_path, datetime_string, 'sq'
@@ -129,14 +129,14 @@ class RawTransfer(object):
 		if basename.startswith('Tile'):
 			gr_name = basename.split('_')[1]
 			parent = None
-			if gr_name not in self.gr.keys():
+			if gr_name not in list(self.gr.keys()):
 				self.gr[gr_name]=[]
 			version = int(basename.split('_')[2])
 			# does not come with datetime_string. Use as early as possible.
 			datetime_string = '20200101_000%03d' % version
 			data = parent, version, file_path, datetime_string, 'gr'
 			self.gr[gr_name].append(tuple(data))
-			print("gr image %s:%s has been transferred" % (gr_name,data,))
+			print(("gr image %s:%s has been transferred" % (gr_name,data,)))
 			atlas_name = base2dirname
 			if atlas_name not in self.atlas_list:
 				self.atlas_list.append(atlas_name)
@@ -161,7 +161,7 @@ class RawTransfer(object):
 		if not basename:
 			basename = event.src_path.split('/')[-2]
 		if 'GridSquare' in basename:
-			print("A grid square directory %s has been added" % (event.src_path,))
+			print(("A grid square directory %s has been added" % (event.src_path,)))
 
 	def createEventHandler(self):
 		my_handler = PatternMatchingEventHandler("*","",False,True)
@@ -197,7 +197,7 @@ class RawTransfer(object):
 		# parsing options
 		(options, optargs) = parser.parse_args(sys.argv[1:])
 		if len(optargs) > 0:
-			print "Unknown commandline options: "+str(optargs)
+			print("Unknown commandline options: "+str(optargs))
 		if len(sys.argv) < 2:
 			parser.print_help()
 			sys.exit()
@@ -230,7 +230,7 @@ class RawTransfer(object):
 
 	def cleanUp(self,src):
 		abspath = os.path.abspath(src)
-		print 'clean up %s from linux' % (abspath)
+		print('clean up %s from linux' % (abspath))
 		if os.path.isdir(abspath) and not os.path.islink(abspath):
 			shutil.rmtree(abspath)
 			return
@@ -243,7 +243,7 @@ class RawTransfer(object):
 		after copying because epu might need it.
 		'''
 		cmd = 'rsync -av %s %s' % (src, dst)
-		print cmd
+		print(cmd)
 		p = subprocess.Popen(cmd, shell=True)
 		p.wait()
 
@@ -252,28 +252,28 @@ class RawTransfer(object):
 		Use shutil's move to rename frames
 		'''
 		######filedir operation########
-		print 'moving %s -> %s' % (src, dst)
+		print('moving %s -> %s' % (src, dst))
 		shutil.move(src, dst)
 
 	def makeDir(self,dirname):
-		print('mkdirs %s'%dirname)
+		print(('mkdirs %s'%dirname))
 		if not os.path.exists(dirname):
 			# this function preserves umask of the parent directory
 			pyami.fileutil.mkdirs(dirname)
 		elif os.path.isfile(dirname):
-			print("Error %s is a file"%dirname)
+			print(("Error %s is a file"%dirname))
 
 	def changeOwnership(self,uid,gid,dirname):
 		# change ownership of desintation directory and contents
 		cmd = 'chown -R %s:%s %s' % (uid, gid, dirname)
-		print cmd
+		print(cmd)
 		p = subprocess.Popen(cmd, shell=True)
 		p.wait()
 
 	def changeMode(self,path,mode_str='g-w,o-rw'):
 		# only works on linux
 		cmd = 'chmod -R %s %s' % (mode_str, path)
-		print cmd
+		print(cmd)
 		p = subprocess.Popen(cmd, shell=True)
 		p.wait()
 
@@ -391,19 +391,19 @@ class RawTransfer(object):
 		all_time_info_dict = {}
 		for attr_name in preset_order:
 			this_attr = getattr(self,attr_name)
-			for epukey in this_attr.keys():
+			for epukey in list(this_attr.keys()):
 				time_info_dict = {}
 				epuinfos = this_attr[epukey]
 				for epuinfo in epuinfos:
 					parent, version, file_path, datetime_string, preset_name = epuinfo
 					time_info_dict[datetime_string] = [epukey,list(epuinfo)]
-				time_list = time_info_dict.keys()
+				time_list = list(time_info_dict.keys())
 				time_list.sort()
 				for i, t in enumerate(time_list):
 					# version may be wrong from multi-threading on_moved.
 					time_info_dict[t][1][1] = i
 					all_time_info_dict[t] = time_info_dict[t]
-		all_time_list = all_time_info_dict.keys()
+		all_time_list = list(all_time_info_dict.keys())
 		all_time_list.sort()
 		for t in all_time_list:
 			all_info_list.append(all_time_info_dict[t])
@@ -511,8 +511,8 @@ class RawTransfer(object):
 		q['tem'] = tem
 		q['ccdcamera'] = ccdcamera
 		scopedict = self.meta.getScopeEMData(self.meta.meta_data_dict['microscopeData'])
-		for k in q.keys():
-			if k in scopedict.keys():
+		for k in list(q.keys()):
+			if k in list(scopedict.keys()):
 				q[k] = scopedict[k]
 		if not preset_name in preset_order:
 			preset_order.apend(preset_name)
@@ -528,12 +528,12 @@ class RawTransfer(object):
 		if ready_status == False:
 			# xml not found.
 			return
-		print epukey
-		print epuinfo
+		print(epukey)
+		print(epuinfo)
 		uploaded_imagedata = self.alreadyUploaded(epukey, epuinfo, presetdata['name'])
 		if uploaded_imagedata:
 			#already uploaded. nothing to do
-			print 'already uploaded'
+			print('already uploaded')
 			return
 		parent_imagedata = self.findParentImageData(epuinfo,presetdata['name'])
 		if parent_imagedata is False and presetdata['name'] != 'en':
@@ -546,20 +546,20 @@ class RawTransfer(object):
 				return
 			epuinfo[0] = recent_hl_epudata['name']
 			parent_imagedata = recent_hl_epudata['image']
-			print 'assign orphan en image to %s: v%d' %(epuinfo[0], recent_hl_epudata['version'])
-		print epukey,epuinfo
+			print('assign orphan en image to %s: v%d' %(epuinfo[0], recent_hl_epudata['version']))
+		print(epukey,epuinfo)
 		scopedata = self.makeScopeEMData(epuinfo)
 		cameradata = self.makeCameraEMData(epuinfo)
 		try:
 			targetdata = self.makeTargetData(epukey, epuinfo, scopedata, cameradata, parent_imagedata)
-		except ValueError, e:
+		except ValueError as e:
 			# give up and try later.
-			print e
+			print(e)
 			return
 		# ImageListData needed for myamiweb display of atlas
 		imagelistdata = self.getImageListData(targetdata)
 		new_filename = self.makeFilename(targetdata,presetdata['name'])
-		print new_filename
+		print(new_filename)
 		q=leginon.leginondata.AcquisitionImageData(session=self.session)
 		q['scope'] = scopedata
 		q['camera'] = cameradata
@@ -568,7 +568,7 @@ class RawTransfer(object):
 		q['list'] = imagelistdata
 		q['filename'] = new_filename
 		if targetdata:
-			print 'inserting %s with target %d' % (q['filename'],q['target'].dbid)
+			print('inserting %s with target %d' % (q['filename'],q['target'].dbid))
 		# reading image
 		q['image'] = self.getImageArray(epuinfo[2],q)
 		q.insert()
@@ -665,11 +665,11 @@ class RawTransfer(object):
 		'''
 		Make filename based on parent, target number, and target version
 		'''
-		if 'image' in targetdata.keys() and targetdata['image']:
+		if 'image' in list(targetdata.keys()) and targetdata['image']:
 			parentname = targetdata['image']['filename']
 		else:
 			parentname = self.session['name']
-		if 'list' in targetdata.keys() and targetdata['list'] and targetdata['list']['mosaic'] and targetdata['list']['label']:
+		if 'list' in list(targetdata.keys()) and targetdata['list'] and targetdata['list']['mosaic'] and targetdata['list']['label']:
 			parentname += "_%s" % (targetdata['list']['label'],)
 		target_name = '%05d%s' % (targetdata['number'], preset_name)
 		filename = '_'.join([parentname,target_name])
@@ -714,7 +714,7 @@ class RawTransfer(object):
 						# In walk method if xml file is not there, this one would be lost.
 						return False
 					# try again later.
-					print('Can not find acquisition meta file as %s or %s or %s' % (meta_xml_file, new_meta_xml_file, new_new_meta_xml_file))
+					print(('Can not find acquisition meta file as %s or %s or %s' % (meta_xml_file, new_meta_xml_file, new_new_meta_xml_file)))
 					return False
 		else:
 			wait_iter = 0
@@ -722,9 +722,9 @@ class RawTransfer(object):
 				if self.method == 'walk':
 					return False
 				if wait_iter >9:
-					print 'waiting for too long'
+					print('waiting for too long')
 					return False
-				print ('waiting for xml file %s....' % (xml_file_path))
+				print(('waiting for xml file %s....' % (xml_file_path)))
 				time.sleep(1)
 				wait_iter += 1
 			self.meta.setXmlFile(xml_file_path)
@@ -795,7 +795,7 @@ class RawTransfer(object):
 			q['preset name'] = parent_preset_name
 			r=q.query()
 			if not r:
-				print 'no parent epu data',self.session['name'],parent, index, parent_preset_name
+				print('no parent epu data',self.session['name'],parent, index, parent_preset_name)
 				return False
 			else:
 				return r[0]['image']
@@ -850,7 +850,7 @@ class RawTransfer(object):
 			bits = file_path.split('/')
 			if preset_name == 'gr' and bits[-2] == 'Atlas':
 				atlas_name = bits[-3]
-				print 'atals_name from path', atlas_name, file_path
+				print('atals_name from path', atlas_name, file_path)
 				if atlas_name in self.atlas_list:
 					# ImageTargetListData needed to display in myamiweb
 					qt['list'] = self.atlas_image_target_lists[atlas_name]
@@ -902,7 +902,7 @@ class RawTransfer(object):
 		relative to the center of the stage coordinates on the sample scale.
 		'''
 		session_atlas = None
-		print 'atlas_list before loading', self.atlas_list
+		print('atlas_list before loading', self.atlas_list)
 		for atlas_name in self.atlas_list:
 			if atlas_name.lower() == self.session['name']:
 				session_atlas = atlas_name
@@ -914,10 +914,10 @@ class RawTransfer(object):
 			# already uploaded in previous round.
 			self.loadTileShifts(atlas_name)
 			tile_shifts = self.tile_shifts[atlas_name]
-		print 'atlas_list after loadTileShifts', self.atlas_list
+		print('atlas_list after loadTileShifts', self.atlas_list)
 		tile_length = len(tile_shifts)
 		if not tile_length:
-			print 'No tiles found'
+			print('No tiles found')
 			raise RuntimeError('Can not find tiles')
 		# pixel_shift is numpy.matrix
 		pixel_shifts_array = numpy.array(tile_length*pixel_shift.tolist())
@@ -925,10 +925,10 @@ class RawTransfer(object):
 		sq=pixel_shifts_array.reshape((tile_length,2))
 		hypot = numpy.sum((tiles-sq)*(tiles-sq),axis=1)
 		on_tile_index = numpy.argmin(hypot)
-		print 'tile keys', self.tiles.keys()
-		print 'atlas_name', atlas_name
-		print self.tiles[atlas_name]
-		print 'index', on_tile_index
+		print('tile keys', list(self.tiles.keys()))
+		print('atlas_name', atlas_name)
+		print(self.tiles[atlas_name])
+		print('index', on_tile_index)
 		tile_epukey =  self.tiles[atlas_name][on_tile_index]
 		q = leginon.leginondata.EpuData(session=self.session, name=tile_epukey)
 		q['preset name'] = 'gr'
@@ -952,7 +952,7 @@ class RawTransfer(object):
 			for gr_image in tiles:
 				scopedata = gr_image['scope']
 				fake_parent_image = self.makeGridReferenceImageData()
-				print 'fake_parent', fake_parent_image
+				print('fake_parent', fake_parent_image)
 				pixel_shift = self.getTargetPixelShift(fake_parent_image, scopedata)
 				# Save shifts for finding square image relation
 				r = leginon.leginondata.EpuData(session=self.session, image=gr_image).query(results=1)
@@ -965,7 +965,7 @@ class RawTransfer(object):
 					self.atlas_list.append(epu_atlas_name)
 				self.tile_shifts[epu_atlas_name].append(pixel_shift)
 				self.tiles[epu_atlas_name].append(epudata['name'])
-		print 'loaded %d tiles for %s' % (len(self.tiles[epu_atlas_name]), epu_atlas_name)
+		print('loaded %d tiles for %s' % (len(self.tiles[epu_atlas_name]), epu_atlas_name))
 			
 	def getSimulatedTargetList(self, preset_name):
 		'''
@@ -1006,8 +1006,8 @@ class RawTransfer(object):
 		parent_position = parent_imagedata['scope']['stage position']
 		# Need 180 rotation. Why ?
 		physicalpos = (parent_position['x']-my_position['x'], parent_position['y']-my_position['y'])
-		if not parent_imagedata['preset']['name'] in self.preset_matrices.keys():
-			print 'Error finding pixel shift for parent preset. Assume zero'
+		if not parent_imagedata['preset']['name'] in list(self.preset_matrices.keys()):
+			print('Error finding pixel shift for parent preset. Assume zero')
 			return numpy.array((0,0))
 		matrix_inv = numpy.linalg.inv(self.preset_matrices[parent_imagedata['preset']['name']])
 		pixel_shift = numpy.dot(matrix_inv, physicalpos)
@@ -1039,25 +1039,25 @@ class RawTransfer(object):
 			if e['image']['target'] is None:
 				epus.remove(e)
 		if epus:
-			number = max(map((lambda x:x['image']['target']['number']),epus))
-			alt_number = min(map((lambda x:x['image']['target']['number']),epus))
+			number = max(list(map((lambda x:x['image']['target']['number']),epus)))
+			alt_number = min(list(map((lambda x:x['image']['target']['number']),epus)))
 			if number != alt_number:
-				print map((lambda x:x['image']['filename']),epus)
+				print(list(map((lambda x:x['image']['filename']),epus)))
 				raise ValueError('Bad previous insert')
-			latest_version = max(map((lambda x:x['image']['target']['version']),epus))
+			latest_version = max(list(map((lambda x:x['image']['target']['version']),epus)))
 			return number, latest_version+1
 		latest_number = 0
 		# find version 0 images of the same parent.
 		r = leginon.leginondata.AcquisitionImageTargetData(image=parent_imagedata,version=0).query()
 		if r:
-			latest_number = max(map((lambda x:x['number']),r))
+			latest_number = max(list(map((lambda x:x['number']),r)))
 			if version == 0:
 				# version was set to zero in the earlier part of code to force target number incrementation.
 				return latest_number+1, 0
 			else:
 				# have non-zero version value. Must be the same the recent target.
 				nr = leginon.leginondata.AcquisitionImageTargetData(image=parent_imagedata,number=latest_number).query()
-				latest_version = max(map((lambda x:x['version']),nr))
+				latest_version = max(list(map((lambda x:x['version']),nr)))
 				return latest_number, latest_version+1
 		return 1, 0
 
@@ -1114,8 +1114,8 @@ class RawTransfer(object):
 				self.upload()
 				# Stop oberver if timeout
 				if time.time() - self.t0 > session_timeout:
-					print 'number of unique holes',len(self.hl.keys())
-					print 'en in %d holes ' % len(set(map((lambda x: x[0]),self.en.values())))
+					print('number of unique holes',len(list(self.hl.keys())))
+					print('en in %d holes ' % len(set(map((lambda x: x[0]),list(self.en.values())))))
 					self.observer.stop()
 					self.observer.join()
 					break
@@ -1139,7 +1139,7 @@ class RawTransfer(object):
 					self.buildTree(file_path)
 		self.upload()
 		self.walked.append(self.session.dbid)
-		print 'Done walking through existing tmp epu folder %s' % (self.watch_path)
+		print('Done walking through existing tmp epu folder %s' % (self.watch_path))
 
 	def getValidEpuSessionsAndBestMethods(self, src_epu_path, limit_today):
 		'''
@@ -1174,16 +1174,16 @@ class RawTransfer(object):
 					break
 				else:
 					recent_timedelta = datetime.datetime.now() - images[0].timestamp
-				print this_session['name'], recent_timedelta
+				print(this_session['name'], recent_timedelta)
 				walked_timeout_hr = 12
 				if recent_timedelta > datetime.timedelta(days=1):
-					print 'Old EPU sessions will be removed at the source: %s' % (valid_epu_sessions[dbid])
+					print('Old EPU sessions will be removed at the source: %s' % (valid_epu_sessions[dbid]))
 					clean_path = os.path.join(src_epu_path, valid_epu_sessions[dbid])
 					self.cleanUp(clean_path)
 				elif recent_timedelta > datetime.timedelta(hours=walked_timeout_hr):
-					print 'walked', self.walked
+					print('walked', self.walked)
 					if dbid in self.walked and (self.most_recent_dbid is not None and self.most_recent_dbid != dbid):
-						print '%d hr-old Walked EPU sessions will be removed at the source: %s' % (walked_timeout_hr,valid_epu_sessions[dbid])
+						print('%d hr-old Walked EPU sessions will be removed at the source: %s' % (walked_timeout_hr,valid_epu_sessions[dbid]))
 						clean_path = os.path.join(src_epu_path, valid_epu_sessions[dbid])
 						self.cleanUp(clean_path)
 						if dbid in self.walked:
@@ -1194,7 +1194,7 @@ class RawTransfer(object):
 					valid_dbids[int((recent_timedelta.total_seconds())*100000)]=(dbid, 'copy')
 					if dbid in self.walked:
 						self.walked.remove(dbid)
-			keys = valid_dbids.keys()
+			keys = list(valid_dbids.keys())
 			# sort to have most_recent first
 			keys.sort()
 			valid_session_dbids = []
@@ -1212,18 +1212,18 @@ class RawTransfer(object):
 	def run(self):
 		self.params = self.parseParams()
 		src_epu_path = self.get_source_path()
-		print 'Source epu top path:  %s' % (src_epu_path,)
+		print('Source epu top path:  %s' % (src_epu_path,))
 		dst_head = self.get_dst_head()
 		if dst_head:
-			print "Limit processing to destination frame path started with %s" % (dst_head)
+			print("Limit processing to destination frame path started with %s" % (dst_head))
 		# Need to make a flag to turn it on.
 		limit_today = False
 		iter_count = 0
 		while True:
-			print 'Iterating...'
+			print('Iterating...')
 			valid_sessions = self.getValidEpuSessionsAndBestMethods(src_epu_path, limit_today)
 			if limit_today:
-				print 'Work only on the %d most recent Leginon session equivalent' % (len(valid_sessions))
+				print('Work only on the %d most recent Leginon session equivalent' % (len(valid_sessions)))
 			for valid_pair in valid_sessions:
 				epu_session_name, leginon_sessiondata, best_method = valid_pair
 
@@ -1236,20 +1236,20 @@ class RawTransfer(object):
 				src_epu_session_path = os.path.join(src_epu_path, epu_session_name)
 				dbid = self.session.dbid
 				if (iter_count == 0 and self.params['method'] == 'walk') or best_method=='walk':
-					print 'walking %s' % self.session['name']
+					print('walking %s' % self.session['name'])
 					if not self.is_testing:
 						self.walk(src_epu_session_path,dst_head)
 					else:
 						self.walked.append(dbid)
 				else:
-					print 'copying %s' % self.session['name']
+					print('copying %s' % self.session['name'])
 					if dbid in self.walked:
 						self.walked.remove(dbid)
 					if not self.is_testing:
 						self.run_once(src_epu_session_path,dst_head)
 				self.resetForSession()
 			iter_count += 1
-			print 'Sleeping after iteration %d...' % (iter_count)
+			print('Sleeping after iteration %d...' % (iter_count))
 			time.sleep(check_interval)
 			limit_today = True
 

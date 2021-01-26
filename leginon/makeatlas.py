@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
-import mosaic
-import node
+from . import mosaic
+from . import node
 from leginon import leginondata
 import sys
 from pyami import mrc
-import calibrationclient
+from . import calibrationclient
 import os.path
 import sinedon
 
@@ -22,12 +22,12 @@ c = calibrationclient.ModeledStageCalibrationClient(n)
 m = mosaic.EMMosaic(c)
 
 for filename in filenames:
-	print 'FILE', filename
+	print('FILE', filename)
 	qfilename = os.path.split(filename)[-1][:-4]
 	imquery = leginondata.AcquisitionImageData(filename=qfilename)
 	images = db.query(imquery, results=1)
 	if not images:
-		print '** file not in db **'
+		print('** file not in db **')
 		continue
 	imagedata = images[0]
 	m.addTile(imagedata)

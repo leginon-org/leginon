@@ -7,15 +7,15 @@
 #
 
 from leginon import leginondata
-import event
+from . import event
 import threading
-import node
-import targethandler
-import gui.wx.TargetRepeater
-import instrument
-import acquisition
-import rctacquisition
-import player
+from . import node
+from . import targethandler
+from . import gui.wx.TargetRepeater
+from . import instrument
+from . import acquisition
+from . import rctacquisition
+from . import player
 
 class TargetRepeater(node.Node, targethandler.TargetWaitHandler):
 	panelclass = gui.wx.TargetRepeater.Panel
@@ -109,7 +109,7 @@ class TargetRepeater(node.Node, targethandler.TargetWaitHandler):
 
 	def resetStage(self):
 		axes = {'a': {'a': 0}, 'z': {'z':0}, 'xy': {'x': 0, 'y': 0}}
-		for axis, position in axes.items():
+		for axis, position in list(axes.items()):
 			setting = 'reset ' + axis
 			if self.settings[setting]:
 				self.logger.info('resetting stage %s' % (axis,))
@@ -139,7 +139,7 @@ class TargetRepeater(node.Node, targethandler.TargetWaitHandler):
 				if target['status'] not in ('done', 'aborted'):
 					parentimage = target.special_getitem('image',readimages=False,dereference=True)
 					parentid = parentimage.dbid
-					if parentid not in newimages.keys():
+					if parentid not in list(newimages.keys()):
 						newimagedata = self.copyImage(parentimage)
 						newimages[parentid] = newimagedata
 					else:

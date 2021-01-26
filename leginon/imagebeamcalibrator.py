@@ -5,15 +5,15 @@
 #       For terms of the license agreement
 #       see  http://leginon.org
 #
-import calibrator
-import event, leginondata
+from . import calibrator
+from . import event, leginondata
 from pyami import correlator, peakfinder
 import sys
 import time
-import calibrationclient
+from . import calibrationclient
 import threading
-import node
-import gui.wx.ImageBeamCalibrator
+from . import node
+from . import gui.wx.ImageBeamCalibrator
 import numpy
 
 class CalibrationError(Exception):
@@ -143,7 +143,7 @@ class ImageBeamCalibrator(calibrator.Calibrator):
 			emdata['image shift'] = self.imagebase
 			emdata['beam shift'] = self.beambase
 			self.instrument.setData(emdata)
-		except Exception, e:
+		except Exception as e:
 			self.logger.exception('Could not return to original state: %s', e)
 			self.panel.calibrationDone()
 
@@ -200,11 +200,11 @@ class ImageBeamCalibrator(calibrator.Calibrator):
 		except calibrationclient.NoPixelSizeError:
 			self.logger.error(
 								'Unable to get pixel size, aborting calibration')
-		except CalibrationError, e:
+		except CalibrationError as e:
 			self.logger.error('Bad calibration measurement, aborting: %s', e)
-		except Exception, e:
+		except Exception as e:
 			self.logger.exception('Calibration failed: %s', e)
-		except AttributeError, e:
+		except AttributeError as e:
 			self.logger.exception('Calibration failed: %s', e)
 		# abort in all error
 		self.instrument_status = 'bad'
@@ -214,11 +214,11 @@ class ImageBeamCalibrator(calibrator.Calibrator):
 		try:
 			self.aborted.set()
 			self.returnToBase()
-		except AttributeError, e:
+		except AttributeError as e:
 			# attribute error comes from base not assigned in uiCalibrate.
 			# In other words, nothing has been done successfully.
 			pass
-		except Exception, e:
+		except Exception as e:
 			raise
 		self.logger.info('Calibration canceled')
 

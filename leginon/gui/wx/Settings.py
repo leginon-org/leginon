@@ -189,7 +189,7 @@ class Dialog(wx.Dialog):
 		pass
 
 	def bindSettings(self, widgets):
-		for widget in widgets.values():
+		for widget in list(widgets.values()):
 			if widget.__class__ is dict:
 				self.bindSettings(widget)
 			elif attributes[widget.__class__][2] is not None:
@@ -225,7 +225,7 @@ class Dialog(wx.Dialog):
 
 	def getSettings(self, widgets):
 		settings = {}
-		for key, widget in widgets.items():
+		for key, widget in list(widgets.items()):
 			if widget.__class__ is dict:
 				settings[key] = self.getSettings(widget)
 			else:
@@ -233,7 +233,7 @@ class Dialog(wx.Dialog):
 		return settings
 
 	def setSettings(self, widgets, sd):
-		for key, widget in widgets.items():
+		for key, widget in list(widgets.items()):
 			if widget.__class__ is dict:
 				self.setSettings(widget, sd[key])
 			else:

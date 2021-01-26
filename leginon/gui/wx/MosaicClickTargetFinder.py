@@ -202,7 +202,7 @@ class MosaicScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sb = wx.StaticBox(self, -1, 'Mosaics')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
-		choices = self.node.calclients.keys()
+		choices = list(self.node.calclients.keys())
 		self.widgets['calibration parameter'] = Choice(self, -1, choices=choices)
 		self.widgets['scale image'] = wx.CheckBox(self, -1, 'Scale image to')
 		self.widgets['scale size'] = IntEntry(self, -1, min=1, chars=4)

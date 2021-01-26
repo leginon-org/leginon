@@ -111,8 +111,8 @@ class Panel(leginon.gui.wx.Acquisition.Panel):
 		if not preset_names:
 			self.node.logger.error('No presets available for focus settings.')
 			return
-		focus_methods = self.node.focus_methods.keys()
-		correction_types = self.node.correction_types.keys()
+		focus_methods = list(self.node.focus_methods.keys())
+		correction_types = list(self.node.correction_types.keys())
 		correlation_types = self.node.correlation_types
 		default_setting = self.node.default_setting
 		sequence = self.node.getFocusSequence()

@@ -5,7 +5,7 @@
 #       For terms of the license agreement
 #       see  http://leginon.org
 #
-import node
+from . import node
 import uidata
 import VideoCapture
 from PIL import Image
@@ -63,13 +63,13 @@ if __name__ == '__main__':
 	import sys
 	sys.coinit_flags = 0
 	import pythoncom
-	import MrcImagePlugin
-	import cStringIO
+	from . import MrcImagePlugin
+	import io
 	webcam = VideoCapture.Device()
 	image = webcam.getImage()
-	stream = cStringIO.StringIO()
+	stream = io.StringIO()
 	image.save(stream, 'jpeg')
 	buffer = stream.getvalue()
 	stream.close()
-	bar = Image.open(cStringIO.StringIO(buffer))
+	bar = Image.open(io.StringIO(buffer))
 	bar.show()

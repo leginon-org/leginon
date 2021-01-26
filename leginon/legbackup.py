@@ -7,10 +7,10 @@ import glob
 from leginon import leginondata
 
 def mkdirs(newdir):
-	originalumask = os.umask(02)
+	originalumask = os.umask(0o2)
 	try:
 		os.makedirs(newdir)
-	except OSError, err:
+	except OSError as err:
 		os.umask(originalumask)
 		if err.errno != errno.EEXIST or not os.path.isdir(newdir) and os.path.splitdrive(newdir)[1]:
 			raise
@@ -41,7 +41,7 @@ def getDBImageInfo(session_data):
 		try:
 			size = os.path.getsize(fullpath)
 		except:
-			print 'skipping unaccessible file: ', fullpath
+			print('skipping unaccessible file: ', fullpath)
 			continue
 		info[image['filename']] = {'file': fullpath, 'size': size}
 	return info
@@ -57,8 +57,8 @@ def getDirImageInfo(path):
 	return info
 
 def printImageInfo(infolist):
-	for key,value in infolist.items():
-		print key, value['size']
+	for key,value in list(infolist.items()):
+		print(key, value['size'])
 
 def backupSession(session_name, backup_base):
 	try:
@@ -66,40 +66,40 @@ def backupSession(session_name, backup_base):
 	except:
 		session_data = None
 	if not session_data:
-		print 'could not find session %s in database' % (session_name,)
+		print('could not find session %s in database' % (session_name,))
 		return
 
 	previous = getBackupInfo(session_data)
 	if previous:
-		print 'Previous backups for this session:'
+		print('Previous backups for this session:')
 		for p in previous:
-			print '  ', p[0], p[1]
-		ans = raw_input('Do you with to continue this the current backup? (y/n): ')
+			print('  ', p[0], p[1])
+		ans = input('Do you with to continue this the current backup? (y/n): ')
 		if ans != 'y':
-			print 'aborting'
+			print('aborting')
 			return
 	else:
-		print 'No previous backup of this session'
+		print('No previous backup of this session')
 
 	dbinfo = getDBImageInfo(session_data)
-	print 'DB***************'
+	print('DB***************')
 	printImageInfo(dbinfo)
 	backupdir = os.path.join(backup_base, session_name)
 	mkdirs(backupdir)
 	backupinfo = getDirImageInfo(backupdir)
-	print 'DIR***************'
+	print('DIR***************')
 	printImageInfo(backupinfo)
 
-	for key,value in dbinfo.items():
+	for key,value in list(dbinfo.items()):
 		if key in backupinfo and backupinfo[key]['size'] == value['size']:
-			print 'file already backed up: ', key+'.mrc'
+			print('file already backed up: ', key+'.mrc')
 		else:
 			backupfile = os.path.join(backupdir, key+'.mrc')
 			try:
 				shutil.copyfile(value['file'], backupfile)
-				print 'copied:  ', backupfile
+				print('copied:  ', backupfile)
 			except:
-				print 'unable to make backup:  ', backupfile
+				print('unable to make backup:  ', backupfile)
 
 	storeBackupInfo(session_data, backupdir)
 

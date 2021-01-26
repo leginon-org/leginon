@@ -10,7 +10,7 @@ import sinedon
 try:
 	f = open('delapps')
 except:
-	print '''no 'delapps' file'''
+	print('''no 'delapps' file''')
 	sys.exit()
 
 delapps = f.readlines()
@@ -29,12 +29,12 @@ for delapp in delapps:
 	appids.extend([a.dbid for a in apps])
 
 if not appids:
-	print '''No apps listed in 'delapps' file exist in DB'''
+	print('''No apps listed in 'delapps' file exist in DB''')
 	sys.exit()
 
-host = raw_input('DB Host: ')
-dbname = raw_input('DB Name: ')
-user = raw_input('DB User: ')
+host = input('DB Host: ')
+dbname = input('DB Name: ')
+user = input('DB User: ')
 passwd = getpass.getpass()
 
 db = MySQLdb.connect(host=host, user=user, db=dbname, passwd=passwd)

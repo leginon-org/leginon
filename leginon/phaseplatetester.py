@@ -2,8 +2,8 @@
 import time
 from leginon import leginondata
 from leginon import acquisition
-import gui.wx.PhasePlateTester
-import gui.wx.PhasePlateTestImager
+from . import gui.wx.PhasePlateTester
+from . import gui.wx.PhasePlateTestImager
 
 def setImageFilename(imagedata, phase_plate_number, patch_position=None):
 	acquisition.setImageFilename(imagedata)

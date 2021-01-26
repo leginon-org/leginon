@@ -6,13 +6,13 @@
 #       see  http://leginon.org
 #
 from leginon import leginondata
-import node
-import gui.wx.IntensityMonitor
+from . import node
+from . import gui.wx.IntensityMonitor
 from pyami import arraystats
 import time
 import threading
-import instrument
-import cameraclient
+from . import instrument
+from . import cameraclient
 
 class IntensityMonitor(node.Node):
 	'''

@@ -13,9 +13,9 @@
 
 import numpy
 import numpy.linalg
-import calibrator
+from . import calibrator
 from leginon import leginondata
-import gui.wx.BeamSizeCalibrator
+from . import gui.wx.BeamSizeCalibrator
 from leginon import calibrationclient
 
 class BeamSizeCalibrator(calibrator.ScreenCalibrator):
@@ -78,15 +78,15 @@ class BeamSizeCalibrator(calibrator.ScreenCalibrator):
 		else:
 			intensity = scope['intensity']
 		spotsize = scope['spot size']
-		if spotsize not in self.beamvalues.keys():
+		if spotsize not in list(self.beamvalues.keys()):
 			self.beamvalues[spotsize] = [(beam_diameter_on_specimen,intensity)]
 		else:
 			self.beamvalues[spotsize].append((beam_diameter_on_specimen,intensity))
 			self.storeCalibration(scope)
 
 	def linearFitData(self, spotsize):
-		x = numpy.array(map((lambda x: x[0]),self.beamvalues[spotsize]))
-		y = numpy.array(map((lambda x: x[1]),self.beamvalues[spotsize]))
+		x = numpy.array(list(map((lambda x: x[0]),self.beamvalues[spotsize])))
+		y = numpy.array(list(map((lambda x: x[1]),self.beamvalues[spotsize])))
 		A = numpy.vstack([x,numpy.ones(len(x))]).T
 		return numpy.linalg.lstsq(A,y, rcond=-1)[0]
 

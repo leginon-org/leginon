@@ -42,7 +42,7 @@ class Panel(leginon.gui.wx.Calibrator.Panel):
 	def onNodeInitialized(self):
 		leginon.gui.wx.Calibrator.Panel.onNodeInitialized(self)
 		self.Bind(leginon.gui.wx.Events.EVT_EDIT_MATRIX, self.onEditMatrix)
-		self.cparameter.AppendItems(map(capitalize, self.node.parameters.keys()))
+		self.cparameter.AppendItems(list(map(capitalize, list(self.node.parameters.keys()))))
 		self.cparameter.SetStringSelection(capitalize(self.node.parameter))
 		self.cparameter.SetSize(self.cparameter.GetBestSizeTuple())
 		self.cparameter.Bind(wx.EVT_CHOICE, self.onParameterChoice, self.cparameter)

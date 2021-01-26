@@ -68,14 +68,14 @@ class NumericImage:
 		self.__use_numeric(orig_array)
 
 	def __setitem__(self, key, value):
-		if key not in self.transform.keys():
-			raise KeyError, 'key must be one of: ' + `self.transform.keys()`
+		if key not in list(self.transform.keys()):
+			raise KeyError('key must be one of: ' + repr(list(self.transform.keys())))
 		self.transform[key] = value
 
 	def __use_numeric(self, num_data):
 		shape = num_data.shape
 		if len(shape) != 2:
-			raise RuntimeError, 'orig_array must be 2-D numpy array'
+			raise RuntimeError('orig_array must be 2-D numpy array')
 		## experimenting with clipping to eliminate infinity
 		#self.orig_array = numpy.clip(num_data, -10000, 10000)
 		self.orig_array = num_data
@@ -200,15 +200,15 @@ class NumericImage:
 if __name__ == '__main__':
 
 	a = numpy.array([5,6,7,8,9], numpy.float)
-	print 'a', a
+	print('a', a)
 	b = imagefun.linearscale(a, (None,None), (0,1))
-	print 'b', b
+	print('b', b)
 	b = imagefun.linearscale(a, (6,8), (0,1))
-	print 'b', b
+	print('b', b)
 	b = imagefun.linearscale(a, (8,6), (0,1))
-	print 'b', b
+	print('b', b)
 	b = imagefun.linearscale(a, (6,8), (1.0,-1.0))
-	print 'b', b
+	print('b', b)
 
-	a1 = numpy.reshape(numpy.array(range(128**2)), (128,128))
+	a1 = numpy.reshape(numpy.array(list(range(128**2))), (128,128))
 	n1 = NumericImage(a1)

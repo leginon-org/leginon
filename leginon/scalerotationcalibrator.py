@@ -5,14 +5,14 @@
 #       For terms of the license agreement
 #       see  http://leginon.org
 #
-import calibrator
-import calibrationclient
-import event, leginondata
+from . import calibrator
+from . import calibrationclient
+from . import event, leginondata
 from pyami import imagefun
-import node
+from . import node
 import math
 import scipy
-import gui.wx.ScaleRotationCalibrator
+from . import gui.wx.ScaleRotationCalibrator
 
 class ScaleRotationCalibrator(calibrator.Calibrator):
 	'''
@@ -40,7 +40,7 @@ class ScaleRotationCalibrator(calibrator.Calibrator):
 		rotate_calibrations = self.calclient.retrieveLastImageRotations(None, None)
 		scale_calibrations = self.calclient.retrieveLastImageScaleAdditions(None, None)
 		mag, mags = self.getMagnification()
-		scale_mags = map((lambda x: x['magnification']),scale_calibrations)
+		scale_mags = list(map((lambda x: x['magnification']),scale_calibrations))
 		for calibration in rotate_calibrations:
 			if mags is None or calibration['magnification'] in mags:
 				mag = calibration['magnification']
@@ -58,7 +58,7 @@ class ScaleRotationCalibrator(calibrator.Calibrator):
 				scale_rotations.append([mag, v1, v2, comment])
 			 
 		if mags is not None:
-			has_cal_mags = map(lambda (mag, v1, v2, c): mag, scale_rotations)
+			has_cal_mags = [mag_v1_v2_c[0] for mag_v1_v2_c in scale_rotations]
 			for m in mags:
 				if m not in has_cal_mags:
 					if m in scale_mags:

@@ -61,9 +61,9 @@ class RasterIndexer(object):
 		ind = raster.createIndices(self.shape)
 		rasterpoints = raster.createRaster3(self.spacing, -self.angle,ind)
 		# offset the raster points to the center of all points
-		rasterpoints = map((lambda x: (x[0]+center[0],x[1]+center[1])),rasterpoints)
+		rasterpoints = list(map((lambda x: (x[0]+center[0],x[1]+center[1])),rasterpoints))
 		ind_offset = ind[0]
-		ind = map((lambda x: (int(x[0]-ind_offset[0]),int(x[1]-ind_offset[1]))),ind)
+		ind = list(map((lambda x: (int(x[0]-ind_offset[0]),int(x[1]-ind_offset[1]))),ind))
 		self.rasterindices = ind
 		self.rasterpoints = rasterpoints
 
@@ -146,8 +146,8 @@ class RasterIndexer(object):
 		# print the finale results
 		#for i, point in enumerate(self.points):
 		#	print i,point_2d_indices[best_offset][i],point
-		print 'spacing', self.spacing
-		print 'angle', self.angle
+		print('spacing', self.spacing)
+		print('angle', self.angle)
 		return point_2d_indices[best_offset]
 
 	def runRasterIndexer(self,raster_shape,point_positions):

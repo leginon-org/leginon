@@ -2,12 +2,12 @@
 import threading
 import time
 from leginon import leginondata
-import calibrationclient
-import event
-import instrument
-import reference
-import gui.wx.ReferenceCounter
-import gui.wx.AlignZLP
+from . import calibrationclient
+from . import event
+from . import instrument
+from . import reference
+from . import gui.wx.ReferenceCounter
+from . import gui.wx.AlignZLP
 
 class ReferenceCounter(reference.Reference):
 	panelclass = gui.wx.ReferenceCounter.ReferenceCounterPanel

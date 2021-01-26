@@ -7,8 +7,8 @@
 #
 
 from leginon import leginondata
-import acquisition
-import gui.wx.StigAcquisition
+from . import acquisition
+from . import gui.wx.StigAcquisition
 
 class StigAcquisition(acquisition.Acquisition):
 	panelclass = gui.wx.StigAcquisition.Panel

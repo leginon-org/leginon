@@ -8,15 +8,15 @@
 #       see  http://leginon.org
 #
 
-import event, leginondata
-import watcher
+from . import event, leginondata
+from . import watcher
 import threading
-import targethandler
-import node
-import player
+from . import targethandler
+from . import node
+from . import player
 import time
 import math
-import remoteserver
+from . import remoteserver
 
 class PauseRepeatException(Exception):
 	'''Raised within processTargetData method if the target should be
@@ -143,7 +143,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 					# parent image must have ScopeEMData reference.  True for all images.
 					stage = imagedata['scope']['stage position']
 					self.logger.info('Found most recent target parent image (id=%d)' % imagedata.dbid)
-				except Exception, e:
+				except Exception as e:
 					# This should never happen unless there is database error
 					self.logger.error(str(e))
 			else:
@@ -203,7 +203,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		try:
 			f = open(filename)
 		except:
-			print '****** No ~/settings_list.txt'
+			print('****** No ~/settings_list.txt')
 			pass
 		else:
 			lines = f.readlines()
@@ -211,10 +211,10 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			node_name = lines[0].strip()
 			if node_name == self.name:
 				idlines = lines[1:]
-				ids_strings = map(str.strip, idlines)
-				ids_ints = map(int, ids_strings)
+				ids_strings = list(map(str.strip, idlines))
+				ids_ints = list(map(int, ids_strings))
 				id = random.choice(ids_ints)
-				print '************** Loading new settings:', id
+				print('************** Loading new settings:', id)
 				self.loadSettingsByID(id)
 
 	def postQueueCount(self, count):
@@ -253,7 +253,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			try:
 				self.obj_aperture_reset_value = self.instrument.tem.getApertureSelection('objective')
 				self.c2_aperture_reset_value = self.instrument.tem.getApertureSelection('condenser')
-			except Exception, e:
+			except Exception as e:
 				self.logger.error(e)
 				self.logger.error('Please set aperture manually and continue')
 				self.player.pause()
@@ -287,11 +287,11 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 					self.fixCondition()
 					self.setStatus('processing')
 					condition_status = 'success'
-				except PauseRepeatException, e:
+				except PauseRepeatException as e:
 					self.player.pause()
 					self.logger.error(str(e) + '... Fix it, then press play to repeat target')
 					condition_status = 'repeat'
-				except Exception, e:
+				except Exception as e:
 					self.logger.error('Conditioning failed. Continue without it')
 					condition_status = 'abort'
 				self.beep()
@@ -402,7 +402,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			state2 = self.instrument.tem.setApertureSelection('condenser',new_c2_ap)
 			self.logger.info('Condenser aperture set to %s' % new_c2_ap)
 			set_ap_successful = state1 and state2
-		except Exception, e:
+		except Exception as e:
 			self.logger.error(e)
 		return set_ap_successful
 
@@ -415,7 +415,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			self.logger.info('objective aperture set to %s' % (new_obj_ap,))
 			state2 = self.instrument.tem.setApertureSelection('condenser',new_c2_ap)
 			self.logger.info('Condenser aperture set to %s' % new_c2_ap)
-		except Exception, e:
+		except Exception as e:
 			self.logger.error(e)
 
 	def getIsResetTiltInList(self):
@@ -483,25 +483,25 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 				try:
 					self.logger.info('Processing target id %d' % adjustedtarget.dbid)
 					process_status = self.processTargetData(adjustedtarget, attempt=attempt)
-				except BypassException, e:
+				except BypassException as e:
 					self.logger.error(str(e) + '... Bypass this target and pretend it is done')
 					process_status = 'bypass'
-				except PauseRestartException, e:
+				except PauseRestartException as e:
 					self.player.pause()
 					self.logger.error(str(e) + '... Fix it, then resubmit targets from previous step to repeat')
 					self.beep()
 					process_status = 'repeat'
-				except PauseRepeatException, e:
+				except PauseRepeatException as e:
 					#TODO: NoMoveCalibration is a subclass of this. It is not handled now.
 					self.player.pause()
 					self.logger.error(str(e) + '... Fix it, then press play to repeat target')
 					self.beep()
 					process_status = 'repeat'
-				except node.PublishError, e:
+				except node.PublishError as e:
 					self.player.pause()
 					self.logger.exception('Saving image failed: %s' % e)
 					process_status = 'repeat'
-				except Exception, e:
+				except Exception as e:
 					self.logger.exception('Process target failed: %s' % e)
 					process_status = 'exception'
 				finally:
@@ -546,13 +546,13 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 
 	def waitForRejects(self):
 		# wait for other targets to complete
-		for tid, teventinfo in self.targetlistevents.items():
+		for tid, teventinfo in list(self.targetlistevents.items()):
 			teventinfo['received'].wait()
 
 		## check status of all target lists
 		## all statuses must be success in order for complete success
 		status = 'success'
-		for tid, teventinfo in self.targetlistevents.items():
+		for tid, teventinfo in list(self.targetlistevents.items()):
 			if teventinfo['status'] in ('failed', 'aborted'):
 				status = teventinfo['status']
 				break

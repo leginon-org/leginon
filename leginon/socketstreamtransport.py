@@ -8,12 +8,12 @@
 
 DEBUG = False
 
-import cPickle as pickle
+import pickle as pickle
 import socket
-import SocketServer
+import socketserver
 import threading
 import math
-import datatransport
+from . import datatransport
 from pyami import mysocket
 
 CHUNK_SIZE = 8*1024*1024
@@ -81,19 +81,19 @@ class ExitException(Exception):
 class TransportError(datatransport.TransportError):
 	pass
 
-class Handler(SocketServer.StreamRequestHandler):
+class Handler(socketserver.StreamRequestHandler):
 	'''
 	Handler of request through socket as stream. Receives pickled request
 	handle it, and then pickle the result to send.
 	'''
 	def __init__(self, request, server_address, server):
-		SocketServer.StreamRequestHandler.__init__(self, request,
+		socketserver.StreamRequestHandler.__init__(self, request,
 																								server_address, server)
 
 	def handle(self):
 		try:
 			request = pickle.load(self.rfile)
-		except Exception, e:
+		except Exception as e:
 			estr = 'error reading request, %s' % e
 			try:
 				self.server.datahandler.logger.exception(estr)
@@ -106,7 +106,7 @@ class Handler(SocketServer.StreamRequestHandler):
 		else:
 			try:
 				result = self.server.datahandler.handle(request)
-			except Exception, e:
+			except Exception as e:
 				estr = 'error handling request, %s' % e
 				try:
 					self.server.datahandler.logger.exception(estr)
@@ -118,8 +118,8 @@ class Handler(SocketServer.StreamRequestHandler):
 				displayed_result = 'array of %s' % (result.shape,)
 			else:
 				displayed_result = result
-			print 'request', request.__class__.__name__
-			print 'result to send', displayed_result
+			print('request', request.__class__.__name__)
+			print('result to send', displayed_result)
 		try:
 			s = pickle.dumps(result, pickle.HIGHEST_PROTOCOL)
 			psize = len(s)
@@ -131,7 +131,7 @@ class Handler(SocketServer.StreamRequestHandler):
 				#Peng Hack
 				self.request.send(chunk)
 			self.wfile.flush()
-		except Exception, e:
+		except Exception as e:
 			estr = 'error responding to request, %s' % e
 			try:
 				self.server.datahandler.logger.exception(estr)
@@ -174,15 +174,15 @@ class Client(object):
 		s = self.connect()
 		try:
 			sfile = s.makefile('rwb')
-		except Exception, e:
+		except Exception as e:
 			raise TransportError('error creating socket file, %s' % e)
 
 		if DEBUG and request.__class__.__name__== 'MultiRequest':
 			# pickle can only handle standard exceptions.
 			# if an item in multirequest gives error, need to debug
 			# from the other side.
-			print 'sending multirequest attributes', request.attributename
-			print 'to %s' % (self.serverlocation,)
+			print('sending multirequest attributes', request.attributename)
+			print('to %s' % (self.serverlocation,))
 		try:
 			#Peng Hack
 			ss = pickle.dumps(request, pickle.HIGHEST_PROTOCOL)
@@ -194,23 +194,23 @@ class Client(object):
 				chunk = ss[start:end]
 				s.send(chunk)
 			sfile.flush()		
-		except Exception, e:
+		except Exception as e:
 			raise TransportError('error pickling request, %s' % e)
 
 		try:
 			sfile.flush()
-		except Exception, e:
+		except Exception as e:
 			raise TransportError('error flushing socket file buffer, %s' % e)
 
 		try:
 			result = pickle.load(sfile)
-		except Exception, e:
+		except Exception as e:
 			if DEBUG and request.__class__.__name__== 'MultiRequest':
 				# pickle can only handle standard exceptions.
 				# if an item in multirequest gives error, need to debug
 				# from the other side.
-				print 'multirequest attributes', request.attributename
-				print 'has %s during unpickling: %s' % (e.__class__.__name__, e)
+				print('multirequest attributes', request.attributename)
+				print('has %s during unpickling: %s' % (e.__class__.__name__, e))
 			raise TransportError('error unpickling response, %s' % e)
 
 		try:

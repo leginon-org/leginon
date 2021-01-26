@@ -69,7 +69,7 @@ def getWindowDataClass(window):
 											% window.__class__.__name__)
 
 def setWindowFromData(window, d):
-	for key, value in setmap.items():
+	for key, value in list(setmap.items()):
 		if key in d and d[key] is not None:
 			getattr(window, value)(d[key])
 
@@ -98,7 +98,7 @@ def bindWindowToDB(window):
 	window.Bind(eventmap[window.__class__], onEvent, window)
 
 def setDataFromWindow(window, d):
-	for key, value in getmap.items():
+	for key, value in list(getmap.items()):
 		if key in d:
 			d[key] = getattr(window, value)()
 

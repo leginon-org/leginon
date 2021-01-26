@@ -138,7 +138,7 @@ class QueryPanel(wx.Panel):
 
 		fieldselector = evt.GetEventObject()
 		index = self.fieldselectors.index(fieldselector) + 1
-		indices = range(index, len(self.fieldselectors)) 
+		indices = list(range(index, len(self.fieldselectors))) 
 		indices.reverse()
 		for i in indices:
 			fs = self.fieldselectors[i]
@@ -173,7 +173,7 @@ class QueryPanel(wx.Panel):
 			string = evt.GetString()
 		self.dataclass = getattr(data, string)
 		self.queryinstance = self.dataclass()
-		self.fields = map(lambda typemap: typemap[0], self.dataclass.typemap())
+		self.fields = [typemap[0] for typemap in self.dataclass.typemap()]
 		fieldselector = FieldSelector(self.fields,
 																	self.dbdatakeeper,
 																	self.queryinstance,

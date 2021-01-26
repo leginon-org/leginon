@@ -69,14 +69,14 @@ class ImageBrowserPanel(wx.Panel):
 		qsession = leginon.leginondata.SessionData(user=user)
 		sessionlist = self.node.research(qsession)
 		self.session_names = [s['name'] for s in sessionlist]
-		self.session_dict = dict(zip(self.session_names,sessionlist))
+		self.session_dict = dict(list(zip(self.session_names,sessionlist)))
 		return self.session_names
 
 	def getImages(self, sessiondata):
 		qimage = leginon.leginondata.AcquisitionImageData(session=sessiondata)
 		imdatalist = self.node.research(qimage, readimages=False)
 		imagenames = [imdata['filename'] for imdata in imdatalist]
-		self.image_dict = dict(zip(imagenames,imdatalist))
+		self.image_dict = dict(list(zip(imagenames,imdatalist)))
 		return imagenames
 
 	def onSessionSelect(self, evt):
@@ -103,8 +103,8 @@ class ImageBrowserPanel(wx.Panel):
 		self.node.publishImage(self.image)
 
 if __name__ == "__main__":
-	import node
-	import Icons
+	from . import node
+	from . import Icons
 	class App(wx.App):
 		def OnInit(self):
 			mysession = leginon.leginondata.SessionData()

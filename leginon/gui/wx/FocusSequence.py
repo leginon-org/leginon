@@ -56,7 +56,7 @@ class EditListBox(leginon.gui.wx.ListBox.EditListBox):
 	def onSelect(self, evt):
 		name = evt.GetString()
 		if not name:
-			print 'FIX ME:  FocusSequence.py   def onSelect:  name = None or "" or something like that'
+			print('FIX ME:  FocusSequence.py   def onSelect:  name = None or "" or something like that')
 		else:
 			self.dialog.select(name)
 		return leginon.gui.wx.ListBox.EditListBox.onSelect(self, evt)
@@ -163,7 +163,7 @@ class Dialog(leginon.gui.wx.Dialog.Dialog):
 
 	def setSetting(self, setting):
 		## FIX CRAP
-		for key,value in setting.items():
+		for key,value in list(setting.items()):
 			if value is None:
 				if key in self.settings.default_setting:
 					setting[key] = self.settings.default_setting[key]

@@ -1,11 +1,11 @@
-import imageprocessor
+from . import imageprocessor
 import os
-import gui.wx.RaptorProcessor
+from . import gui.wx.RaptorProcessor
 from leginon import leginondata
 #import runImod
 from pyami import mrc, imagefun, correlator, peakfinder
 import shutil
-from tomography import tiltcorrelator
+from .tomography import tiltcorrelator
 try:
 	import apImod
 	noappion = False
@@ -53,7 +53,7 @@ class ImodProcessor(imageprocessor.ImageProcessor):
 				correlationpeak[tilt] = self.getCorrelationPeak(tiltseries, tilt, imagedata)
 			except:
 				self.nopeaks = True
-		tiltkeys = tiltangledict.keys()
+		tiltkeys = list(tiltangledict.keys())
 		tiltkeys.sort()
 		for key in tiltkeys:
 			imagedata = tiltangledict[key]
@@ -161,7 +161,7 @@ class ImodProcessor(imageprocessor.ImageProcessor):
 		rawtltname = self.getFilename(tiltseries) + '.prexf'
 		rawtltname = os.path.join(self.settings['path'], rawtltname)
 		f = open(rawtltname, 'w')
-		tilts = xpeaks.keys()
+		tilts = list(xpeaks.keys())
 		tilts.sort()
 		f.write('%11.7f %11.7f %11.7f %11.7f %11.3f %11.3f\n' % (1.0,0.0,0.0,1.0,0.0,0.0))
 		for tilt in tilts:

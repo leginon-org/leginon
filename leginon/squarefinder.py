@@ -10,7 +10,7 @@
 
 from pyami import imagefun, convolver, mrc, arraystats
 import random
-import targetfinder
+from . import targetfinder
 import threading
 import uidata
 
@@ -217,9 +217,8 @@ class BlobFinderPlugin(Plugin):
 
 		blobs = thresholdedblobs
 
-		targets = map(lambda b: (scale*b.stats['center'][1],
-															scale*b.stats['center'][0]),
-									blobs)
+		targets = [(scale*b.stats['center'][1],
+															scale*b.stats['center'][0]) for b in blobs]
 		return self.outputclass(input.image, targets)
 
 	def defineUserInterface(self):
@@ -377,8 +376,8 @@ class SquareFinder(targetfinder.TargetFinder):
 
 	def findTargets(self, imagedata):
 		output = self.pluginpipeline.process(Image(imagedata['image']))
-		targets = map(lambda t: self.newTargetData(imagedata, 'acquisition',
-																								t[0], t[1]), output.targets)
+		targets = [self.newTargetData(imagedata, 'acquisition',
+																								t[0], t[1]) for t in output.targets]
 		self.targetlist += targets
 
 	def defineUserInterface(self):

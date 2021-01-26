@@ -121,7 +121,7 @@ class MessageLog(wx.ListCtrl, ColumnSorterMixin):
 
 	def updateStatus(self, level=None):
 		if level is None:
-			levels = map(lambda i: i[0], self.itemDataMap.values())
+			levels = [i[0] for i in list(self.itemDataMap.values())]
 			if levels:
 				index = min(levels)
 				level = self.levels[index]

@@ -7,9 +7,9 @@
 #	   see  http://leginon.org
 #
 
-import cPickle as pickle
+import pickle as pickle
 import socket
-import SocketServer
+import socketserver
 import numpy
 import sys
 import math
@@ -17,58 +17,58 @@ from pyami import mysocket
 
 PORT = 55555
 
-class Handler(SocketServer.StreamRequestHandler):
+class Handler(socketserver.StreamRequestHandler):
 	def handle(self):
-			print 'Handling request...'
+			print('Handling request...')
 			size = pickle.load(self.rfile)
-			print '  Size requested: ', size
+			print('  Size requested: ', size)
 			result = numpy.zeros((size,size), dtype=numpy.int32)
-			print '  Sending result...'
+			print('  Sending result...')
 			#pickle.dump(result, self.wfile, pickle.HIGHEST_PROTOCOL)
 			s = pickle.dumps(result, pickle.HIGHEST_PROTOCOL)
 			psize = len(s)
 			chunk_size = 8*1024*1024
 			nchunks = int(math.ceil(float(psize) / float(chunk_size)))
-			print 'NCHUNKS', nchunks
+			print('NCHUNKS', nchunks)
 			for i in range(nchunks):
-				print 'I', i
+				print('I', i)
 				start = i * chunk_size
 				end = start + chunk_size
 				chunk = s[start:end]
 				self.wfile.write(chunk)
 			self.wfile.flush()
-			print '  Done.'
+			print('  Done.')
 
 
-class Server(SocketServer.ThreadingTCPServer):
+class Server(socketserver.ThreadingTCPServer):
 	allow_reuse_address = True
 	def __init__(self):
-		SocketServer.ThreadingTCPServer.__init__(self, ('', PORT), Handler)
+		socketserver.ThreadingTCPServer.__init__(self, ('', PORT), Handler)
 
 class Client(object):
 	def __init__(self, host):
 		self.host = host
 
 	def getImage(self, size):
-		print 'Connecting to server...'
+		print('Connecting to server...')
 		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		s.connect((self.host, PORT))
 		sfile = s.makefile('rwb')
-		print 'Sending request...'
+		print('Sending request...')
 		pickle.dump(size, sfile, pickle.HIGHEST_PROTOCOL)
 		sfile.flush()
-		print 'Getting result...'
+		print('Getting result...')
 		result = pickle.load(sfile)
-		print 'Done.'
+		print('Done.')
 		sfile.close()
 		return result
 
 def run_server():
 	hostname = mysocket.gethostname()
 	port = PORT
-	print 'Running Server'
-	print '  host: %s' % (hostname,)
-	print '  port: %s' % (port,)
+	print('Running Server')
+	print('  host: %s' % (hostname,))
+	print('  port: %s' % (port,))
 	s = Server()
 	s.serve_forever()
 
@@ -77,10 +77,10 @@ def run_client():
 	size = int(sys.argv[2])
 	c = Client(server_host)
 	im = c.getImage(size)
-	print ''
-	print 'IMAGE %s:' % (im.shape,)
-	print im
-	print ''
+	print('')
+	print('IMAGE %s:' % (im.shape,))
+	print(im)
+	print('')
 
 if sys.argv[1:]:
 	run_client()

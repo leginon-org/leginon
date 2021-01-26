@@ -14,9 +14,9 @@ import pyami.quietscipy
 import scipy.ndimage
 import math
 from pyami import imagefun, peakfinder, convolver, correlator, mrc, arraystats
-import ice
-import lattice
-import multihole
+from . import ice
+from . import lattice
+from . import multihole
 
 hole_template_files = {}
 hole_templates = {}
@@ -31,7 +31,7 @@ class CircleMaskCreator(object):
 		'''
 		## use existing circle mask
 		key = (shape, center, minradius, maxradius)
-		if self.masks.has_key(key):
+		if key in self.masks:
 			return self.masks[key]
 
 		## set up shift and wrapping of circle on image
@@ -366,7 +366,7 @@ class HoleFinder(object):
 		vector = (points[1][0]-points[0][0],points[1][1]-points[0][1])
 		vector_length = math.hypot(vector[0],vector[1])
 		# scaling the 3x3 pattern to have the spacing of the lattice_config
-		scaled_vector = map((lambda x: x*spacing/vector_length),vector)
+		scaled_vector = list(map((lambda x: x*spacing/vector_length),vector))
 		def shiftpoint(point,vector):
 			return (point[0]+vector[0],point[1]+vector[1])
 		for point in points:

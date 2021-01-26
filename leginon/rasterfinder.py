@@ -9,16 +9,16 @@
 #
 
 from leginon import leginondata
-import targetfinder
+from . import targetfinder
 import threading
-import ice
+from . import ice
 import numpy
 import math
 import pyami.quietscipy
 from scipy import ndimage
 from pyami import arraystats
-import gui.wx.RasterFinder
-import polygon
+from . import gui.wx.RasterFinder
+from . import polygon
 import itertools
 
 class RasterFinder(targetfinder.TargetFinder):
@@ -109,7 +109,7 @@ class RasterFinder(targetfinder.TargetFinder):
 		movetype = self.settings['raster movetype']
 		try:
 			p2 = self.calclients[movetype].pixelToPixel(tem1, cam1, tem2, cam2, ht, mag1, mag2, p1)
-		except RuntimeError, e:
+		except RuntimeError as e:
 					self.logger.exception('Raster conversion failed: %s' % e)
 					return self.settings['raster spacing'], self.settings['raster angle']
 		# bin
@@ -154,9 +154,9 @@ class RasterFinder(targetfinder.TargetFinder):
 		points = []
 
 		#new stuff
-		xlist = numpy.asarray(range(xpoints), dtype=numpy.float32)
+		xlist = numpy.asarray(list(range(xpoints)), dtype=numpy.float32)
 		xlist -= ndimage.mean(xlist)
-		ylist = numpy.asarray(range(ypoints), dtype=numpy.float32)
+		ylist = numpy.asarray(list(range(ypoints)), dtype=numpy.float32)
 		ylist -= ndimage.mean(ylist)
 
 		for xt in xlist:
@@ -180,7 +180,7 @@ class RasterFinder(targetfinder.TargetFinder):
 		'''
 		from center of image, generate a raster of points
 		'''
-		print "normal raster"
+		print("normal raster")
 		imageshape = self.currentimagedata['image'].shape
 		spacing = self.settings['raster spacing']
 		limit = self.settings['raster limit']
@@ -276,7 +276,7 @@ class RasterFinder(targetfinder.TargetFinder):
 
 		# activate if counter is at a multiple of interval
 		interval = self.settings['focus interval']
-		if interval and not (self.foc_counter.next() % interval):
+		if interval and not (next(self.foc_counter) % interval):
 			self.foc_activated = True
 		else:
 			self.foc_activated = False

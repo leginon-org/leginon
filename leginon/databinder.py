@@ -6,16 +6,16 @@
 #       see  http://leginon.org
 #
 
-import Queue
+import queue
 from pyami import ordereddict
 import threading
-import datatransport
+from . import datatransport
 from leginon import leginondata
-import remotecall
+from . import remotecall
 
 class DataBinder(object):
 	'''Bind data to a function. Used for mapping Events to handlers.'''
-	def __init__(self, node, logger, threaded=True, queueclass=Queue.Queue, tcpport=None):
+	def __init__(self, node, logger, threaded=True, queueclass=queue.Queue, tcpport=None):
 		self.logger = logger
 		self.server = datatransport.Server(self, logger, tcpport=tcpport)
 		self.node = node
@@ -70,7 +70,7 @@ class DataBinder(object):
 					self.logger.info('handling unthreaded')
 					self.handleData(item)
 					self.logger.info('handled unthreaded')
-			except Exception, e:
+			except Exception as e:
 				self.logger.exception('handlerLoop exception')
 		self.exitedevent.set()
 
@@ -93,7 +93,7 @@ class DataBinder(object):
 			return ValueError(estr)
 		try:
 			return remotecallobject._handleRequest(request)
-		except Exception, e:
+		except Exception as e:
 			return e
 
 	def addRemoteCallObject(self, nodename, name, remotecallobject):
@@ -118,7 +118,7 @@ class DataBinder(object):
 		'''
 		dataclass = newdata.__class__
 		args = newdata
-		for bindclass in self.bindings.keys():
+		for bindclass in list(self.bindings.keys()):
 			if issubclass(dataclass, bindclass):
 				try:
 					methods = self.bindings[bindclass][newdata['destination']]
@@ -148,7 +148,7 @@ class DataBinder(object):
 
 	def delBinding(self, nodename, dataclass=None, method=None):
 		if dataclass is None:
-			dataclasses = self.bindings.keys()
+			dataclasses = list(self.bindings.keys())
 		else:
 			dataclasses = [dataclass]
 		for dataclass in dataclasses:

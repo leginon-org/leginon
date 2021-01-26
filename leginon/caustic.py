@@ -13,7 +13,7 @@ Main function is:
 import numpy
 import scipy
 import scipy.ndimage as ndimage
-import houghcircle
+from . import houghcircle
 from PIL import Image
 from PIL import ImageDraw
 from pyami import imagefun
@@ -86,7 +86,7 @@ def findCaustic(input, smallrange, bigrange, mask, binning=None):
 	Initial search for caustic figure in binned image, then in original.
 	'''
 	if binning is not None:
-		print '**First binned by %s:' % (binning,)
+		print('**First binned by %s:' % (binning,))
 		## first run it with initial binning
 		bin_input = imagefun.bin(input, binning)
 
@@ -124,7 +124,7 @@ def findCaustic(input, smallrange, bigrange, mask, binning=None):
 		big_col1 = binning * (big_circle['center'][1] + 1)
 		big_limit = big_row0, big_row1, big_col0, big_col1
 
-	print '**Full size:'
+	print('**Full size:')
 	radii_small = numpy.arange(smallrange[0], smallrange[1]+1, dtype=numpy.int)
 	radii_big = numpy.arange(bigrange[0], bigrange[1]+1, dtype=numpy.int)
 
@@ -139,11 +139,11 @@ def __findCaustic(input, radii_small, radii_big, mask, small_limit=None, big_lim
 	input = numpy.asarray(input, numpy.float32)
 
 	# gradient of input image
-	print 'calc gradient...'
+	print('calc gradient...')
 	grad = gradient(input)
 
 	# find small circle
-	print 'finding bright-field spot'
+	print('finding bright-field spot')
 	if small_limit is None:
 		small_limit = 0, input.shape[0], 0, input.shape[1]
 	circle_small = findBestCircle2(grad, radii_small, small_limit)
@@ -154,7 +154,7 @@ def __findCaustic(input, radii_small, radii_big, mask, small_limit=None, big_lim
 	newgrad = removeCircle(grad, circle_mask)
 
 	# find big circle
-	print 'finding caustic curve'
+	print('finding caustic curve')
 	if big_limit is None:
 		big_limit = 0, input.shape[0], 0, input.shape[1]
 	saveMRC(newgrad, 'newgrad.mrc')
@@ -196,10 +196,10 @@ if __name__ == '__main__':
 	mask = 2.0
 
 	small,big = findCaustic(input, radii_small, radii_big, mask, bin)
-	print 'Bright-field spot:', small
-	print 'Caustic curve:', big
+	print('Bright-field spot:', small)
+	print('Caustic curve:', big)
 
 	v0 = big['center'][0] - small['center'][0]
 	v1 = big['center'][1] - small['center'][1]
-	print 'Vector:', v0, v1
-	print 'Distance:', numpy.hypot(v0,v1)
+	print('Vector:', v0, v1)
+	print('Distance:', numpy.hypot(v0,v1))

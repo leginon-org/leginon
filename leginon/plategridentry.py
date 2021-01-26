@@ -84,10 +84,10 @@ class PlateGridEntry(gridentry.GridEntry):
 		for f in formats:
 			formatname = '%02d x %02d: %s' % (f['rows'],f['cols'],f['skips'])
 			self.gformats[formatname] = f
-		return self.gformats.keys()
+		return list(self.gformats.keys())
 
 	def getGridFormatData(self,formatname):
-		if formatname in self.gformats.keys():
+		if formatname in list(self.gformats.keys()):
 			return self.gformats[formatname]
 		else:
 			self.logger.error('Grid format %s not found' % formatname)
@@ -121,11 +121,11 @@ class PlateGridEntry(gridentry.GridEntry):
 		if results:
 			for result in results:
 				newname = result['name']
-				if newname not in self.plates.keys():
+				if newname not in list(self.plates.keys()):
 					self.plates[newname] = result
 				else:
 					self.logger.warning('Duplicated plate name "%s" not included' % newname)
-		return self.plates.keys()
+		return list(self.plates.keys())
 
 	def getPlateFormats(self):
 		'''
@@ -136,10 +136,10 @@ class PlateGridEntry(gridentry.GridEntry):
 		for f in formats:
 			formatname = '%02d x %02d' % (f['rows'],f['cols'])
 			self.pformats[formatname] = f
-		return self.pformats.keys()
+		return list(self.pformats.keys())
 
 	def getPlateFormatData(self,formatname):
-		if formatname in self.pformats.keys():
+		if formatname in list(self.pformats.keys()):
 			return self.pformats[formatname]
 		else:
 			self.logger.error('Plate format %s not found' % formatname)

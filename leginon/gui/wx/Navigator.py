@@ -81,7 +81,7 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		leginon.gui.wx.Instrument.SelectionMixin.onNodeInitialized(self)
 		self.locationsdialog = StageLocationsDialog(self, self.node)
 
-		movetypes = self.node.calclients.keys()
+		movetypes = list(self.node.calclients.keys())
 		self.cmovetype = Choice(self.toolbar, -1, choices=movetypes)
 		self.cmovetype.SetStringSelection(self.node.settings['move type'])
 		## make sure node setting is a value that is in the choice list

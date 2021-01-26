@@ -7,19 +7,19 @@
 #
 
 from leginon import leginondata
-import event
-import fftmaker
+from . import event
+from . import fftmaker
 import threading
-import node
+from . import node
 import numpy
 import numextension
 import pyami.quietscipy
 import scipy.ndimage
 from pyami import imagefun
 from pyami import plot
-import gui.wx.FFTAnalyzer
-import calibrationclient
-import instrument
+from . import gui.wx.FFTAnalyzer
+from . import calibrationclient
+from . import instrument
 
 class FFTAnalyzer(fftmaker.FFTMaker):
 	eventinputs = fftmaker.FFTMaker.eventinputs
@@ -73,8 +73,8 @@ class FFTAnalyzer(fftmaker.FFTMaker):
 		high = 0
 		b = numextension.radialPower(pow, low, high)
 		# plot
-		indices = range(0,len(b))
-		rec_pixels = map((lambda x: x*rec_pixelsize),indices)
+		indices = list(range(0,len(b)))
+		rec_pixels = list(map((lambda x: x*rec_pixelsize),indices))
 		self.panelclass.setPlot(self.panel,rec_pixels,b)
 
 	def processByLabel(self, label):

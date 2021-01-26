@@ -8,8 +8,8 @@
 import math
 from leginon import presetadjuster
 from leginon import leginondata
-import event
-import gui.wx.ExposureFixer
+from . import event
+from . import gui.wx.ExposureFixer
 
 class ExposureFixer(presetadjuster.PresetAdjuster):
 	# relay measure does events

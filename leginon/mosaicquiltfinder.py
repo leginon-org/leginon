@@ -7,12 +7,12 @@
 #
 
 from leginon import leginondata
-import event
-import mosaictargetfinder
-import targetfinder
-import gui.wx.MosaicQuiltFinder
-import jahcfindermodel
-import jahcfinder
+from . import event
+from . import mosaictargetfinder
+from . import targetfinder
+from . import gui.wx.MosaicQuiltFinder
+from . import jahcfindermodel
+from . import jahcfinder
 
 class MosaicQuiltFinder(mosaictargetfinder.MosaicClickTargetFinder):
 	'''
@@ -80,7 +80,7 @@ class MosaicQuiltFinder(mosaictargetfinder.MosaicClickTargetFinder):
 			count = self.getTileCount()
 		except:
 			count = 1
-		choices = map((lambda x: '%d' % x), range(count))
+		choices = list(map((lambda x: '%d' % x), list(range(count))))
 		return choices
 
 	def setOriginal(self, index):

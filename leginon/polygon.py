@@ -9,7 +9,7 @@ try:
 	def insidePolygon(points, polygon):
 		return numextension.pointsInPolygon(points, polygon)
 except:
-	print "using slow polygon tool"
+	print("using slow polygon tool")
 	def insidePolygon(points, polygon):
 		truthlist = []
 		for point in points:
@@ -113,8 +113,8 @@ if __name__ == '__main__':
 	if 1:
 		pointsInPolygon( ((1,1),(2,2),(2,3),(3,2),(3,3),(8,8),(12,12)), ((2,2),(2,10),(10,10),(10,2)))
 		points= ((1,1),(2,2),(2,3),(3,3),(3,0),)
-		print points
-		print getPolygonCenter(points)
+		print(points)
+		print(getPolygonCenter(points))
 
 def polygons_tuples2arrays(polygons_tuples):
 	polygons_arrays=[]

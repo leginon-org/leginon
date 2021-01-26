@@ -213,7 +213,7 @@ class ManualFocusDialog(wx.Frame):
 	def onSettingsTool(self, evt):
 		self.settingsdialog.maskradius.SetValue(self.node.maskradius)
 		self.settingsdialog.increment.SetValue(self.node.increment)
-		print 'set increment to ',self.node.increment
+		print('set increment to ',self.node.increment)
 		#self.MakeModal(False)
 		if self.settingsdialog.ShowModal() == wx.ID_OK:
 			self.node.maskradius = self.settingsdialog.maskradius.GetValue()

@@ -6,10 +6,10 @@
 #	   see  http://leginon.org
 #
 from leginon import leginondata
-import acquisition
-import gui.wx.RCTAcquisition
+from . import acquisition
+from . import gui.wx.RCTAcquisition
 try:
-	import openCVcaller
+	from . import openCVcaller
 	NO_CV = False
 except:
 	NO_CV = True
@@ -77,7 +77,7 @@ def targetPoint(target):
 
 #====================
 def targetPoints(targets):
-	return map(targetPoint, targets)
+	return list(map(targetPoint, targets))
 
 #====================
 #====================
@@ -395,7 +395,7 @@ class RCTAcquisition(acquisition.Acquisition):
 			arraynew = imagenew['image']
 
 			# modifyImage here so that thresh is set within while loop
-			print "THRESH = ", thresh						 
+			print("THRESH = ", thresh)						 
 			arrayold = self.modifyImage(arrayold, thresh, is_small_tilt_diff)
 			arraynew = self.modifyImage(arraynew,thresh,is_small_tilt_diff)
 
@@ -406,12 +406,12 @@ class RCTAcquisition(acquisition.Acquisition):
 				result = numpy.array(self.shiftmatrix_maker.register(arrayold, arraynew))
 			else:
 
-				print '============ CV stuff ============'
+				print('============ CV stuff ============')
 
 				self.logger.info('CV stuff')
 				self.checkArrayMinMax(arrayold, arraynew)
 
-				print 'tilt', tilts[i]*180/3.14159
+				print('tilt', tilts[i]*180/3.14159)
 
 				try:
 					result = self.runMatchImages(arrayold,arraynew)
@@ -431,17 +431,17 @@ class RCTAcquisition(acquisition.Acquisition):
 						if retries <= retriesmax/2:
 							# Use a different threshold to perturb the images
 							thresh = 1
-							print "THRESH = 1"						 
-						print "retries =", retries, "out of", retriesmax
+							print("THRESH = 1")						 
+						print("retries =", retries, "out of", retriesmax)
 					else:
-						print "Tilt openCV FAILED"
+						print("Tilt openCV FAILED")
 						self.logger.error("openCV failed: giving up")
 						self.instrument.tem.StagePosition = {'a': tilt0}
 						return None, None
 					continue
 				else:
 					retries = 0		 
-				print '============ CV match images done ============'
+				print('============ CV match images done ============')
 
 			self.logger.info("result matrix= "+str(numpy.asarray(result*100, dtype=numpy.int8).ravel()))
 			self.logger.info( "Inter Matrix: "+self.affineToText(result) )
@@ -552,7 +552,7 @@ class RCTAcquisition(acquisition.Acquisition):
 	#====================
 	def apTiltShiftMethod(self, arrayold, arraynew, difftilt):
 		### pre-filter images
-		print "difftilt=", difftilt
+		print("difftilt=", difftilt)
 		#print arrayold.shape, arraynew.shape, difftilt
 		bestsnr = 0
 		bestangle = None
@@ -562,24 +562,24 @@ class RCTAcquisition(acquisition.Acquisition):
 			if snr > bestsnr:
 				bestsnr = snr
 				bestangle = angle
-				print "best tilt axis angle=", bestsnr, bestangle, shift
+				print("best tilt axis angle=", bestsnr, bestangle, shift)
 				self.logger.info('best tilt axis angle = %.2f (snr = %.2f; shift = %s)'%(bestangle, bestsnr, shift))
 		for angle in [bestangle-5, bestangle-3, bestangle+3, bestangle+5]:
 			shift, xfactor, snr = apTiltShift.getTiltedRotateShift(arrayold, arraynew, difftilt, angle, msg=False)
 			if snr > bestsnr:
 				bestsnr = snr
 				bestangle = angle
-				print "best tilt axis angle=", bestsnr, bestangle, shift
+				print("best tilt axis angle=", bestsnr, bestangle, shift)
 				self.logger.info('best tilt axis angle = %.2f (snr = %.2f; shift = %s)'%(bestangle, bestsnr, shift))
 		for angle in [bestangle-2, bestangle-1, bestangle+1, bestangle+2]:
 			shift, xfactor, snr = apTiltShift.getTiltedRotateShift(arrayold, arraynew, difftilt, angle, msg=False)
 			if snr > bestsnr:
 				bestsnr = snr
 				bestangle = angle
-				print "best tilt axis angle=", bestsnr, bestangle, shift
+				print("best tilt axis angle=", bestsnr, bestangle, shift)
 				self.logger.info('best tilt axis angle = %.2f (snr = %.2f; shift = %s)'%(bestangle, bestsnr, shift))
 		shift, xfactor, snr = apTiltShift.getTiltedRotateShift(arrayold, arraynew, difftilt, bestangle, msg=True)
-		print "best tilt axis angle=", bestsnr, bestangle, shift
+		print("best tilt axis angle=", bestsnr, bestangle, shift)
 		self.logger.info('best tilt axis angle = %.2f (snr = %.2f; shift = %s)'%(bestangle, bestsnr, shift))
 
 		### construct the results matrix
@@ -610,7 +610,7 @@ class RCTAcquisition(acquisition.Acquisition):
 				], 
 				[shift[0], shift[1], 1.0]], 
 				dtype=numpy.float32)
-		print "result=\n", numpy.asarray(result*100, dtype=numpy.int8)
+		print("result=\n", numpy.asarray(result*100, dtype=numpy.int8))
 
 		return result
 

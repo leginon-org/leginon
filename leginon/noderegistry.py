@@ -28,6 +28,6 @@ def getNodeClass(classname):
 	return reg_dict[classname]
 
 def getNodeClassNames():
-	return reg_dict.keys()
+	return list(reg_dict.keys())
 
 import leginon.allnodes

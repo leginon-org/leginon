@@ -9,7 +9,7 @@
 #
 
 from pyami import mrc
-import NumericImage
+from . import NumericImage
 import re
 
 

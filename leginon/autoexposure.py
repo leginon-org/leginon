@@ -5,16 +5,16 @@
 #	   For terms of the license agreement
 #	   see  http://leginon.org
 #
-import acquisition
-import node, leginondata
-import calibrationclient
-import event
+from . import acquisition
+from . import node, leginondata
+from . import calibrationclient
+from . import event
 import time
 import math
 from pyami import arraystats
 import numpy
-import gui.wx.AutoExposure
-import player
+from . import gui.wx.AutoExposure
+from . import player
 
 class AutoExposure(acquisition.Acquisition):
 	panelclass = gui.wx.AutoExposure.Panel

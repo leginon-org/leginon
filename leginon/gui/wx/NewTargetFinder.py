@@ -33,7 +33,7 @@ other_colors = [
 class Panel(leginon.gui.wx.TargetFinder.Panel):
 	icon = 'holefinder'
 	def initialize(self):
-		print 'AAAAAAAA'
+		print('AAAAAAAA')
 		leginon.gui.wx.TargetFinder.Panel.initialize(self)
 		self.SettingsDialog = SettingsDialog
 
@@ -41,7 +41,7 @@ class Panel(leginon.gui.wx.TargetFinder.Panel):
 
 		colors = iter(other_colors)
 		firstimage = None
-		for step in self.nodeclass.workflow.values():
+		for step in list(self.nodeclass.workflow.values()):
 			name = step.name
 			if isinstance(step, leginon.targetingsteps.ImageProducer):
 				self.imagepanel.addTypeTool(name, display=True, settings=True)
@@ -51,8 +51,8 @@ class Panel(leginon.gui.wx.TargetFinder.Panel):
 				if name in constant_colors:
 					color = constant_colors[name]
 				else:
-					color = colors.next()
-				print 'COLOR', color
+					color = next(colors)
+				print('COLOR', color)
 				#shape = ???
 				self.imagepanel.addTargetTool(name, color, target=True, settings=True, numbers=True)
 				self.imagepanel.selectiontool.setDisplayed(name, True)
