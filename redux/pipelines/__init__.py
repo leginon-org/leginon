@@ -5,11 +5,11 @@ def register(name, pipes):
 	global registered
 	registered[name] = pipes
 
-import standard
+from . import standard
 register('standard', standard.pipes)
-import allpipes
+from . import allpipes
 register('all', allpipes.pipes)
-import histdata
+from . import histdata
 register('histdata', histdata.pipes)
-import leginon
+from . import leginon
 register('leginon', leginon.pipes)

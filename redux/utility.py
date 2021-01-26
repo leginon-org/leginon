@@ -21,7 +21,7 @@ if jsonmod is None:
 def request_to_kwargs(request):
 	'''convert request string into keyword args'''
 	args = request.split('&')
-	key_value = itertools.imap(str.split, args, itertools.repeat('='))
+	key_value = map(str.split, args, itertools.repeat('='))
 	kwargs = {}
 	for key,value in key_value:
 		kwargs[key.strip()] = value.strip()
@@ -29,7 +29,7 @@ def request_to_kwargs(request):
 
 def kwargs_to_request(**kwargs):
 	'''convert keyword args to a request string'''
-	args = ['%s=%s' % (key,value) for (key, value) in kwargs.items()]
+	args = ['%s=%s' % (key,value) for (key, value) in list(kwargs.items())]
 	request = '&'.join(args)
 	return request
 
@@ -39,7 +39,7 @@ def json_convert(obj):
 		if isinstance(obj, numpy.bool_):
 			return bool(obj)
 		elif isinstance(obj, numpy.integer):
-			return long(obj)
+			return int(obj)
 		elif isinstance(obj, numpy.floating):
 			return float(obj)
 		elif isinstance(obj, numpy.complexfloating):

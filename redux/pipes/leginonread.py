@@ -6,7 +6,7 @@ import leginon.leginondata
 import sinedon
 
 # local
-import read
+from . import read
 
 
 def look_up(filename):

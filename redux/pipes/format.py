@@ -1,5 +1,5 @@
 # standard lib
-import cStringIO
+import io
 
 # 3rd party
 import scipy.misc
@@ -38,7 +38,7 @@ class Format(redux.pipe.Pipe):
 		return s
 
 	def run_mrc(self, input):
-		file_object = cStringIO.StringIO()
+		file_object = io.StringIO()
 		pyami.mrc.write(input, file_object)
 		image_string = file_object.getvalue()
 		file_object.close()
@@ -67,7 +67,7 @@ class Format(redux.pipe.Pipe):
 			pil_image = pil_image.convert('RGBA')
 		if overlay:
 			pil_image = self.overlay_mask(pil_image, overlay, overlaycolor)
-		file_object = cStringIO.StringIO()
+		file_object = io.StringIO()
 		pil_image.save(file_object, oformat)
 		image_string = file_object.getvalue()
 		file_object.close()

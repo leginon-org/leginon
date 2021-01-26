@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import os
-import ConfigParser
+import configparser
 import pyami.fileutil
 
 configfilename = 'redux.cfg'
@@ -9,7 +9,7 @@ confdirs = pyami.fileutil.get_config_dirs()
 config_locations = [os.path.join(confdir, configfilename) for confdir in confdirs]
 pyami.fileutil.check_exist_one_file(config_locations)
 
-configparser = ConfigParser.SafeConfigParser()
+configparser = configparser.SafeConfigParser()
 configfiles = configparser.read(config_locations)
 
 # default config
@@ -35,9 +35,9 @@ def printConfig():
 	'''
 	print all configs for debugging purposes
 	'''
-	print 'Redux Config:'
-	for key,value in config.items():
-		print '\t%s: %s' % (key,value)
+	print('Redux Config:')
+	for key,value in list(config.items()):
+		print('\t%s: %s' % (key,value))
 
 if __name__ == '__main__':
 	printConfig()

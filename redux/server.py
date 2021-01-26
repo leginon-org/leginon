@@ -3,7 +3,7 @@
 import sys
 import time
 import traceback
-import SocketServer
+import socketserver
 import redux.reduxlog
 
 ### set up logging
@@ -16,7 +16,7 @@ import redux.exceptions
 import redux.pipeline
 import pyami.version
 
-class RequestHandler(SocketServer.StreamRequestHandler):
+class RequestHandler(socketserver.StreamRequestHandler):
 	
 	def handle(self):
 		#for request in self.rfile:
@@ -48,7 +48,7 @@ class RequestHandler(SocketServer.StreamRequestHandler):
 # been too many issues with managing concurrent access to cache and also
 # concurrent FFTW calculations.  For now this is using the standard server
 # which handles requests one at a time.
-class Server(SocketServer.TCPServer):
+class Server(socketserver.TCPServer):
 	allow_reuse_address = True
 
 def start_server(host, port):
@@ -68,7 +68,7 @@ def test_request():
 	result = pl.process(**kwargs)
 	t1 = time.time()
 	sys.stderr.write('TIME: %s\n' % (t1-t0))
-	print result
+	print(result)
 
 def main():
 	host = redux.reduxconfig.config['server host']

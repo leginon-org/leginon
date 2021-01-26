@@ -50,11 +50,11 @@ class Constrainer(object):
 			self.print_contents()
 
 	def print_contents(self):
-		print '=============================================================='
-		print 'ORDER', self.order
-		print 'SIZES', self.size_dict
-		print 'STATUS', '%s of %s' % (self.total_size, self.max_size)
-		print '=============================================================='
+		print('==============================================================')
+		print('ORDER', self.order)
+		print('SIZES', self.size_dict)
+		print('STATUS', '%s of %s' % (self.total_size, self.max_size))
+		print('==============================================================')
 
 	def insert(self, o, newsize):
 		self.lock.acquire()
@@ -142,7 +142,7 @@ class CacheFS(fs.osfs.OSFS):
 		except fs.errors.DirectoryNotEmptyError:
 			pass
 		except fs.errors.RemoveRootError:
-			print 'CACHEFS ERROR: removeRootError while removing parent directory of: ', name
+			print('CACHEFS ERROR: removeRootError while removing parent directory of: ', name)
 			pass
 
 test_cache_dir = 'cachedir'

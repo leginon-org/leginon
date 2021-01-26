@@ -4,7 +4,7 @@ import os
 import sys
 import pyami.resultcache
 import pyami.fileutil
-import cachefs
+from . import cachefs
 import threading
 
 debug = True
@@ -108,6 +108,6 @@ class Cache(pyami.resultcache.ResultCache):
 
 	def pipeline_path(self, pipeline):
 		parts = [pipe.dirname() for pipe in pipeline]
-		parts = filter(None, parts)
+		parts = [_f for _f in parts if _f]
 		path = os.path.join(*parts)
 		return path

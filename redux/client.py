@@ -2,7 +2,7 @@
 
 import sys
 import socket
-import utility
+from . import utility
 from optparse import OptionParser
 import redux.pipes
 import redux.pipeline
@@ -115,7 +115,7 @@ def parse_argv():
 	(options, args) = parser.parse_args()
 
 	kwargs = {}
-	for key,value in options.__dict__.items():
+	for key,value in list(options.__dict__.items()):
 		if value is not None:
 			kwargs[key] = value
 	if not kwargs:

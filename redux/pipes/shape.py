@@ -72,7 +72,7 @@ class Shape(Pipe):
 		return outputimg
 
 	def make_dirname(self):
-		dims = map(str, self.kwargs['shape'])
+		dims = list(map(str, self.kwargs['shape']))
 		dims = 'x'.join(dims)
 		self._dirname = dims
 
@@ -83,4 +83,4 @@ if __name__ == "__main__":
 	import numpy
 	a = numpy.ones(inputshape)
 	r = s.run(a,outputshape)
-	print r.shape
+	print(r.shape)

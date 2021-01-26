@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # standard library
-import cStringIO
+import io
 import sys
 
 # local
@@ -67,7 +67,7 @@ class Pipeline(object):
 	def filter_pipe_kwargs(self, pipename, kwargs):
 		result = {}
 		pipename_args = {}
-		for key,value in kwargs.items():
+		for key,value in list(kwargs.items()):
 			parts = key.split('.')
 			if len(parts) == 1:
 				result[key] = value
@@ -95,7 +95,7 @@ class Pipeline(object):
 
 	def help_string(self):
 		'''generate a help string to describe the available pipes'''
-		f = cStringIO.StringIO()
+		f = io.StringIO()
 		done = {}
 		for pipe_name, pipe_class in self.pipeorder:
 			if pipe_class in done:

@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
 # standard library
-import cPickle
-import cStringIO
+import pickle
+import io
 import types
 import re
 
@@ -22,7 +22,7 @@ def bool_converter(obj):
 	If the string seems to be a bool or int representation, then treat it
 	like one (default str to bool conversion only cares about empty/non-empty)
 	'''
-	if isinstance(obj, types.StringTypes):
+	if isinstance(obj, (str,)):
 		obj = obj.lower()
 		if obj in bool_strings:
 			# bool representation
@@ -44,13 +44,13 @@ def shape_converter(value):
 	if not value:
 		return None
 	# first convert value to sequence of numbers
-	if isinstance(value, types.StringTypes):
+	if isinstance(value, (str,)):
 		numbers = re.findall('[\d.]+', value)
 	else:
 		numbers = list(value)
 	# now convert numbers to integers
-	numbers = map(float, numbers)
-	numbers = map(int, numbers)
+	numbers = list(map(float, numbers))
+	numbers = list(map(int, numbers))
 	return tuple(numbers)
 
 class Pipe(object):
@@ -88,10 +88,10 @@ class Pipe(object):
 		self._resultname = '00result.pickle'
 
 	def put_result(self, f, result):
-		cPickle.dump(result, f, cPickle.HIGHEST_PROTOCOL)
+		pickle.dump(result, f, pickle.HIGHEST_PROTOCOL)
 
 	def get_result(self, f):
-		result = cPickle.load(f)
+		result = pickle.load(f)
 		return result
 
 	def __hash__(self):
@@ -133,13 +133,13 @@ class Pipe(object):
 				args_missing.append(self.switch_arg)
 
 		self.kwargs = {}
-		for name,converter in self.required_args.items():
+		for name,converter in list(self.required_args.items()):
 			if name in kwargs and kwargs[name] is not None:
 				args_present.append(name)
 				self.kwargs[name] = converter(kwargs[name])
 			else:
 				args_missing.append(name)
-		for name, converter in self.optional_args.items():
+		for name, converter in list(self.optional_args.items()):
 			if name in kwargs and kwargs[name] is not None:
 				args_present.append(name)
 				self.kwargs[name] = converter(kwargs[name])
@@ -155,7 +155,7 @@ class Pipe(object):
 		## now check for bad values
 		self.check_args()
 
-		items = self.kwargs.items()
+		items = list(self.kwargs.items())
 		items.sort()
 		self.args_tuple = tuple(items)
 
@@ -167,7 +167,7 @@ class Pipe(object):
 
 	@classmethod
 	def help_string(cls):
-		f = cStringIO.StringIO()
+		f = io.StringIO()
 		f.write('%s\n' % (cls.__name__,))
 		#pipe_class not defined
 		#if pipe_class.switch_arg:

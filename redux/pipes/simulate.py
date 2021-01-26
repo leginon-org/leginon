@@ -9,7 +9,7 @@ class Simulate(redux.pipe.Pipe):
 	required_args = {'simshape': redux.pipe.shape_converter}
 
 	def make_dirname(self):
-		shape_strs = map(str, self.kwargs['simshape'])
+		shape_strs = list(map(str, self.kwargs['simshape']))
 		self._dirname = 'sim_'+'x'.join(shape_strs)
 
 	def run(self, input, simshape):
