@@ -15,31 +15,31 @@ import pyami.fileutil
 def printError(str):
 	msg = "Failed: %s"%(str)
 	if sys.platform == 'win32':
-		print msg
+		print(msg)
 	else:
-		print "\033[1;31m"+msg+"\033[0m"
+		print("\033[1;31m"+msg+"\033[0m")
 
 def printSearch(filename):
 	msg = "Looking for %s in:" %(filename)
 	if sys.platform == 'win32':
-		print msg
+		print(msg)
 	else:
-		print "\033[35m"+msg+"\033[0m"
+		print("\033[35m"+msg+"\033[0m")
 
 def printResult(configname,allconfigfiles):
 	if len(allconfigfiles) > 0:
-		print '%s.cfg loaded is from %s' % (configname,allconfigfiles[-1])
-		print '---------------------------'
+		print('%s.cfg loaded is from %s' % (configname,allconfigfiles[-1]))
+		print('---------------------------')
 		return allconfigfiles[-1]
 	else:
 		printError('No %s.cfg defined' % (configname))
-		print '---------------------------'
+		print('---------------------------')
 
 def checkSinedonConfig():
 	from sinedon import dbconfig
 	confdirs = pyami.fileutil.get_config_dirs(dbconfig)
 	printSearch('sinedon.cfg')
-	print "\t",confdirs
+	print("\t",confdirs)
 	allconfigfiles = dbconfig.configfiles
 	configfile = printResult('sinedon',allconfigfiles)
 	returnvalue = None
@@ -89,5 +89,5 @@ if __name__ == '__main__':
 	try:
 		matchConfigs()
 	finally:
-		print
-		raw_input('hit ENTER after reviewing the result to exit ....')
+		print()
+		input('hit ENTER after reviewing the result to exit ....')

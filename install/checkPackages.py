@@ -6,7 +6,7 @@
 # Python
 import sys
 import os
-import ConfigParser
+import configparser
 import subprocess
 import webbrowser
 import datetime
@@ -134,7 +134,8 @@ class CheckPackages(object):
         for package in packages :
             try :
                 self.function_map[package]()
-            except Exception, (instance) :
+            except Exception as xxx_todo_changeme :
+                (instance) = xxx_todo_changeme
                 self.showMessage(' ')
                 self.showMessage(instance)
                 self.showMessage(' ')
@@ -148,13 +149,13 @@ class CheckPackages(object):
     #==========================================================================
     def showMessage(self,msg):
         if (self.displayResults):
-            print msg
+            print(msg)
         self.writeToLog(msg)
     
     def writeToLog(self, message):
         logfile = open(self.currentDir + "/" + self.logFilename, 'a')
         # using print instead of .write so that message is converted to a string if needed 
-        print >> logfile, message
+        print(message, file=logfile)
         logfile.close()
 
     def runCommand(self, cmd, input=None):
@@ -276,7 +277,7 @@ class CheckPackages(object):
             raise Exception("!!!! WARNING !!!! Could not import Python Imaging Library (PIL). You must install Python Imaging Library version %(minver)s or greater." % {'minver' : minstr }  )
         else:
             mystr = Image.VERSION
-            mypilver = map(int, mystr.split('.'))
+            mypilver = list(map(int, mystr.split('.')))
             versionOK = self.versionAtLeast(mypilver, minVersion)
             
             if (versionOK) : 
@@ -385,7 +386,7 @@ class CheckPackages(object):
             raise Exception("!!!! WARNING !!!! Could not import the Python XML module. You must install Python xml version %(minver)s or greater." % {'minver' : minstr }  )
         else:
             mystr = xml.__version__
-            myxmlver = map(int, mystr.split('.'))
+            myxmlver = list(map(int, mystr.split('.')))
             versionOK = self.versionAtLeast(myxmlver, minVersion)
             
             if (versionOK) : 
@@ -414,7 +415,7 @@ class CheckPackages(object):
                 mystr = wx.__version__
                 if mystr[-1] == 'u':
                     mystr = mystr[:-1]
-                mywxver = map(int, mystr.split('.'))
+                mywxver = list(map(int, mystr.split('.')))
             except:
                 ## OLDER VERSIONS
                 mywxver = wx.VERSION[:4]
@@ -468,7 +469,7 @@ class CheckPackages(object):
                         return True
         
                     def test(self, evt):
-                        print 'User closed wxPython test App.'
+                        print('User closed wxPython test App.')
                         self.frame.Close()
                        
                 self.showMessage(' ')  
@@ -505,7 +506,7 @@ class CheckPackages(object):
         ]
 
         # create a config parser to try to read the config file    
-        configparser = ConfigParser.SafeConfigParser()
+        configparser = configparser.SafeConfigParser()
         try:
             configfiles = configparser.read(config_locations)
         except:

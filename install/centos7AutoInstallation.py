@@ -28,7 +28,7 @@ class CentosInstallation(object):
 
 		flavfile = "/etc/redhat-release"
 		if not os.path.exists(flavfile):		
-			print "This is not CentOS. Exiting installation..."
+			print("This is not CentOS. Exiting installation...")
 			self.writeToLog("ERROR: not CentOS ---")
 			return False
 
@@ -37,11 +37,11 @@ class CentosInstallation(object):
 		f.close()
 
 		if not flavor.startswith("CentOS"):
-			print "This is not CentOS. Exiting installation..."
+			print("This is not CentOS. Exiting installation...")
 			self.writeToLog("ERROR: not CentOS ---")
 			return False
 
-		print "Current OS Information: " + flavor
+		print("Current OS Information: " + flavor)
 		self.writeToLog("CentOS info: " + flavor)
 
 		
@@ -68,11 +68,11 @@ class CentosInstallation(object):
 
 		uid = os.getuid()
 		if uid != 0:
-			print "You must run this program as root. Exiting installation..."
+			print("You must run this program as root. Exiting installation...")
 			self.writeToLog("ERROR: root access checked deny ---")
 			return False
 
-		print "\"root\" access checked success..."
+		print("\"root\" access checked success...")
 		self.writeToLog("root access checked success")
 
 	def removeLogFile(self):
@@ -86,7 +86,7 @@ class CentosInstallation(object):
 		seLinuxConfigBackup = "/etc/selinux/config.bck"
 
 		if not os.path.exists(seLinuxConfig):
-			print "SeLinux configure file does not exist..."
+			print("SeLinux configure file does not exist...")
 			self.writeToLog("ERROR: No SeLinux configure file ---")
 		return False 
 
@@ -131,25 +131,25 @@ class CentosInstallation(object):
 		
 		if not os.path.exists(self.imagesDir):
 			self.writeToLog("create images folder - %s" % (self.imagesDir))
-			os.makedirs(self.imagesDir, 0777)
+			os.makedirs(self.imagesDir, 0o777)
 		else:
-			os.chmod(self.imagesDir, 0777)
+			os.chmod(self.imagesDir, 0o777)
 
 		if not os.path.exists(os.path.join(self.imagesDir, "leginon")):
-			os.makedirs(os.path.join(self.imagesDir, "leginon"), 0777)
+			os.makedirs(os.path.join(self.imagesDir, "leginon"), 0o777)
 		else:
-			os.chmod(os.path.join(self.imagesDir, "leginon"), 0777)
+			os.chmod(os.path.join(self.imagesDir, "leginon"), 0o777)
 				
 		if not os.path.exists(os.path.join(self.imagesDir, "appion")):
-			os.makedirs(os.path.join(self.imagesDir, "appion"), 0777)
+			os.makedirs(os.path.join(self.imagesDir, "appion"), 0o777)
 		else:
-			os.chmod(os.path.join(self.imagesDir, "appion"), 0777)
+			os.chmod(os.path.join(self.imagesDir, "appion"), 0o777)
 			
 		umask = os.umask(originalUmask)
 
 
 	def yumUpdate(self):
-		print "Updating system files...."
+		print("Updating system files....")
 		self.runCommand("rpm -Uvh https://dl.fedoraproject.org/pub/epel/epel-release-latest-%s.noarch.rpm" % (self.redhatMajorRelease))
 
 		# epel-release include wxPython and other requirement
@@ -168,13 +168,13 @@ class CentosInstallation(object):
 		self.writeToLog("#===================================================")
 		self.writeToLog("Run the following Command:")
 		self.writeToLog("%s" % (cmd,))
-		print cmd + '\n'
-		print 'Please wait......(This may take a few minutes.)\n'
+		print(cmd + '\n')
+		print('Please wait......(This may take a few minutes.)\n')
 
 		proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 		stdoutResult = proc.stdout.read()
 		stderrResult = proc.stderr.read()
-		print stdoutResult
+		print(stdoutResult)
 		sys.stderr.write(stderrResult)
 		returncode = proc.wait()
 		if (stderrResult != ""):
@@ -192,7 +192,7 @@ class CentosInstallation(object):
 		proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 		stdoutResult = proc.stdout.read()
 		stderrResult = proc.stderr.read()
-		print stdoutResult, stderrResult
+		print(stdoutResult, stderrResult)
 		sys.stderr.write(stderrResult)
 		returncode = proc.wait()
 		found=False
@@ -366,11 +366,11 @@ class CentosInstallation(object):
 				os.system("mysqladmin -u root password %s" % self.dbPass)
 				os.system("mysqladmin -u root flush-privileges")
 			else:
-				print '===========Manual intervention needed================='
-				print 'mysql password is neither none nor serverRoorPass'
-				print "You need to run these command manually"
-				print "mysqladmin -u root -p password %s" % 'your_host_root_passwd'
-				print "mysqladmin -u root -p flush-privileges"
+				print('===========Manual intervention needed=================')
+				print('mysql password is neither none nor serverRoorPass')
+				print("You need to run these command manually")
+				print("mysqladmin -u root -p password %s" % 'your_host_root_passwd')
+				print("mysqladmin -u root -p flush-privileges")
 				return False
 		else:
 			self.writeToLog("mysql root password is %s" % self.dbPass)
@@ -384,8 +384,8 @@ class CentosInstallation(object):
 		self.writeToLog("#===================================================")
 		self.writeToLog("Run the following Command:")
 		self.writeToLog("%s" % (cmd,))
-		print print_cmd + '\n'
-		print 'Please wait......(This may take a few minutes.)\n'
+		print(print_cmd + '\n')
+		print('Please wait......(This may take a few minutes.)\n')
 		proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 		proc.communicate()
 
@@ -423,7 +423,7 @@ class CentosInstallation(object):
 			setcmd = '%s PATH%s${PATH}:%s' % (cmd, eq, apbin,)
 			f.write(setcmd)
 			f.close()
-			os.chmod(fname, 0755)
+			os.chmod(fname, 0o755)
 
 
 		# setup Leginon configuration file
@@ -457,7 +457,7 @@ class CentosInstallation(object):
 		nodes_file = self.torqueLibPath + 'server_priv/nodes'
 		if not os.path.exists(nodes_file):
 			message = "\nWarning: "+nodes_file+" not found.\n"
-			print message 
+			print(message) 
 			self.writeToLog(message)
 			return True
 
@@ -537,8 +537,8 @@ class CentosInstallation(object):
 		# add them to the global /etc/profile.d/ folder
 		shutil.copy("eman.sh", "/etc/profile.d/eman.sh")
 		shutil.copy("eman.csh", "/etc/profile.d/eman.csh")
-		os.chmod("/etc/profile.d/eman.sh", 0755)
-		os.chmod("/etc/profile.d/eman.csh", 0755)
+		os.chmod("/etc/profile.d/eman.sh", 0o755)
+		os.chmod("/etc/profile.d/eman.csh", 0o755)
 		
 		os.chdir(self.currentDir)
 				
@@ -553,7 +553,7 @@ class CentosInstallation(object):
 		# download the tar file and unzip it
 		command = "wget -c " + fileLocation
 		self.runCommand(command)
-		print "-------------done with wget.------------"
+		print("-------------done with wget.------------")
 		command = "tar -zxvf " + fileName
 		self.runCommand(command)
 		
@@ -599,8 +599,8 @@ setenv SPBIN_DIR ${SPIDERDIR}/bin/''')
 		# add them to the global /etc/profile.d/ folder
 		shutil.copy("spider.sh", "/etc/profile.d/spider.sh")
 		shutil.copy("spider.csh", "/etc/profile.d/spider.csh")
-		os.chmod("/etc/profile.d/spider.sh", 0755)
-		os.chmod("/etc/profile.d/spider.csh", 0755)
+		os.chmod("/etc/profile.d/spider.sh", 0o755)
+		os.chmod("/etc/profile.d/spider.csh", 0o755)
 
 
 	def installXmipp(self):
@@ -689,14 +689,14 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 		self.writeToLog("--- Adding xmipp.sh and xmipp.csh to /etc/profile.d/.")
 		shutil.copy(bashFile, profileDir + bashFile)
 		shutil.copy(cShellFile, profileDir + cShellFile)
-		os.chmod(profileDir + bashFile, 0755)
-		os.chmod(profileDir + cShellFile, 0755)
+		os.chmod(profileDir + bashFile, 0o755)
+		os.chmod(profileDir + cShellFile, 0o755)
 
 
 
 	def installFFmpeg(self):
 
-		print "Installing FFmpeg"
+		print("Installing FFmpeg")
 		self.writeToLog("--- Start install FFmpeg")
 		use_local = "/usr/local"
 		cwd = cwd = os.getcwd()
@@ -709,7 +709,7 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 		self.runCommand(command)
 		command = "tar -xvf " + ffmpegtarFileName
 		self.runCommand(command)
-		print "-------------Done downloading ffmpeg with wget.------------"
+		print("-------------Done downloading ffmpeg with wget.------------")
 
 
 		#ffmpeg tar is compilied daily at http://johnvansickle.com/ffmpeg/. The git static version compiled on 11/11/2015 was used for this ffmpeg installation. The extracted folder name contains the datestamp; make sure to change the datestamp in the extracted folder name if using a newer version of ffmpeg from the johnvansickle site.
@@ -729,7 +729,7 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 		cShellFile = "ffmpeg.csh"
 		profileDir = "/etc/profile.d/"
 
-		print "---------------Create bash and csh scripts---------"
+		print("---------------Create bash and csh scripts---------")
 		#For BASH, create an ffmpeg.sh
 		f = open(bashFile, 'w')
 		f.write('''export FFMPEGDIR="/usr/local/ffmpeg"
@@ -754,8 +754,8 @@ endif''')
 		self.writeToLog("--- Adding ffmpeg.sh and ffmpeg.csh to /etc/profile.d/.")
 		shutil.copy(bashFile, profileDir + bashFile)
 		shutil.copy(cShellFile, profileDir + cShellFile)
-		os.chmod(profileDir + bashFile, 0755)
-		os.chmod(profileDir + cShellFile,0755)
+		os.chmod(profileDir + bashFile, 0o755)
+		os.chmod(profileDir + cShellFile,0o755)
 
 	def installProtomo(self):
 		self.writeToLog("--- Start install Protomo")
@@ -831,8 +831,8 @@ endif
 		# add them to the global /etc/profile.d/ folder
 		shutil.copy("protomo.sh", "/etc/profile.d/protomo.sh")
 		shutil.copy("protomo.csh", "/etc/profile.d/protomo.csh")
-		os.chmod("/etc/profile.d/protomo.sh", 0755)
-		os.chmod("/etc/profile.d/protomo.csh", 0755)
+		os.chmod("/etc/profile.d/protomo.sh", 0o755)
+		os.chmod("/etc/profile.d/protomo.csh", 0o755)
 		self.yumInstall(['http://pkgs.repoforge.org/rpmforge-release/rpmforge-release-0.5.3-1.el6.rf.x86_64.rpm'])
 
 
@@ -846,7 +846,7 @@ endif
 		# download the tar file and unzip it
 		command = "wget -c " + fileLocation
 		self.runCommand(command)
-		print "-------------done with wget.------------"
+		print("-------------done with wget.------------")
 		command = "tar -zxvf " + fileName
 		self.runCommand(command)
 		
@@ -889,7 +889,7 @@ endif
 		torqueConfig_file = self.torqueLibPath + 'mom_priv/config'
 		if not os.path.exists(torqueConfig_file):
 			message = "\nWarning: "+torqueConfig_file+" not found.\n"
-			print message 
+			print(message) 
 			self.writeToLog(message)
 			return
 		
@@ -1205,15 +1205,15 @@ endif
 
 	def getDefaultValues(self):
 
-		print "===================================="
-		print "Installing job submission server"
-		print "Installing processing server"
-		print "Installing database server"
-		print "Installing web server"
-		print "===================================="
-		print ""
+		print("====================================")
+		print("Installing job submission server")
+		print("Installing processing server")
+		print("Installing database server")
+		print("Installing web server")
+		print("====================================")
+		print("")
 		
-		value = raw_input("Please enter the registration key. You must be registered at https://emg.nysbc.org/redmine to recieve a registration key: ")
+		value = input("Please enter the registration key. You must be registered at https://emg.nysbc.org/redmine to recieve a registration key: ")
 		value = value.strip()
 
 		self.regKey = value
@@ -1227,7 +1227,7 @@ endif
 			return False
 
 		# Set the admin email address
-		value             = raw_input("Please enter an email address: ")
+		value             = input("Please enter an email address: ")
 		value             = value.strip()
 		self.adminEmail   = value
 		
@@ -1237,7 +1237,7 @@ endif
 		self.serverRootPass   = password
 		
 		# Set the local timezone for use in the php.ini file
-		timezone      = raw_input("Please enter your timezone based on the available options listed at http://www.php.net/manual/en/timezones.php : ")
+		timezone      = input("Please enter your timezone based on the available options listed at http://www.php.net/manual/en/timezones.php : ")
 		timezone      = timezone.strip()
 		if ( timezone == "" ):
 			# provide a default timezone if it is empty
@@ -1266,7 +1266,7 @@ endif
 		'''
 		value = ""
 		while (value != "Y" and value != "y" and value != "N" and value != "n"): 
-			value = raw_input("%s(Y/N): " % questionText)
+			value = input("%s(Y/N): " % questionText)
 			value = value.strip()
 
 		if (value == "Y" or value == "y"):
@@ -1279,7 +1279,7 @@ endif
 	   
 		getImageCmd = "wget -P/tmp/images https://emg.nysbc.org/redmine/attachments/download/112/06jul12a_00015gr_00028sq_00004hl_00002en.mrc https://emg.nysbc.org/redmine/attachments/download/113/06jul12a_00015gr_00028sq_00023hl_00002en.mrc https://emg.nysbc.org/redmine/attachments/download/114/06jul12a_00015gr_00028sq_00023hl_00004en.mrc https://emg.nysbc.org/redmine/attachments/download/115/06jul12a_00022gr_00013sq_00002hl_00004en.mrc https://emg.nysbc.org/redmine/attachments/download/116/06jul12a_00022gr_00013sq_00003hl_00005en.mrc https://emg.nysbc.org/redmine/attachments/download/109/06jul12a_00022gr_00037sq_00025hl_00004en.mrc https://emg.nysbc.org/redmine/attachments/download/110/06jul12a_00022gr_00037sq_00025hl_00005en.mrc https://emg.nysbc.org/redmine/attachments/download/111/06jul12a_00035gr_00063sq_00012hl_00004en.mrc"
 
-		print getImageCmd
+		print(getImageCmd)
 		proc = subprocess.Popen(getImageCmd, shell=True)
 		proc.wait()
 
@@ -1287,11 +1287,11 @@ endif
 		# used sha-1. This has been deprecated as of python 2.5.
 		# we now use the hashlib instead: http://docs.python.org/library/hashlib.html#module-hashlib
 		if (hashlib.sha1(self.regKey).digest() != self.regKeyHash):
-			print "The registration key provided is incorrect. Exiting installation..."
+			print("The registration key provided is incorrect. Exiting installation...")
 			self.writeToLog("ERROR: registration key (%s) is incorrect ---" % (self.regKey,))
 			return False
 
-		print "Registration Key confirmed."
+		print("Registration Key confirmed.")
 		self.writeToLog("Registration Key confirmed.")
 		return True
 
@@ -1309,14 +1309,14 @@ endif
 			try:
 				shutil.rmtree(resultdir)
 			except Exception as e:
-				print "Removing  failed:" % resultdir
-				print e
+				print("Removing  failed:" % resultdir)
+				print(e)
 				return False
 		try:
 			shutil.copytree(fromdir, resultdir)
 		except Exception as e:
-			print "Copying Leginon applications file to web server failed:"
-			print e
+			print("Copying Leginon applications file to web server failed:")
+			print(e)
 			return False
 		self.leginon_app_rootdir = self.centosWebDir
 		return True
@@ -1334,7 +1334,7 @@ endif
 		websetupdir = os.path.join(self.centosWebDir, 'myamiweb','setup')
 		os.chdir(websetupdir)
 		print("========================")
-		print("Running %s" % cmd)
+		print(("Running %s" % cmd))
 		myamiwebUrl = 'http://localhost/myamiweb'
 		try:
 			if self.validateCommandOutput(cmd, pattern='Failed', happy=True):
@@ -1343,8 +1343,8 @@ endif
 			myamiwebOpened = webbrowser.open_new(myamiwebUrl)
 		except:
 			print("ERROR: Failed to run Myamiweb setup script.")
-			print("You may try running " + setupURL + " in your web browser. ")
-			print(sys.exc_info()[0])
+			print(("You may try running " + setupURL + " in your web browser. "))
+			print((sys.exc_info()[0]))
 			self.writeToLog("ERROR: Failed to run Myamiweb setup script (autoInstallSetup.php). ")
 			os.chdir(curdir)
 			return False
@@ -1353,7 +1353,7 @@ endif
 				self.writeToLog("Myamiweb Started.")
 			else:
 				print("ERROR: Failed to open myamiweb in browser.")
-				print("You may open with %s your web browser. " % (myamiwebUrl,))
+				print(("You may open with %s your web browser. " % (myamiwebUrl,)))
 				self.writeToLog("ERROR: Failed to open Myamiweb. ")
 				return False
 		os.chdir(curdir)
