@@ -8,7 +8,7 @@ import pyami.fileutil
 
 class ModuleConfigParser(object):
 	def __init__(self,filename,package='pyscope'):
-		self.configparser = configParser.ConfigParser()
+		self.configparser = configparser.ConfigParser()
 		self.configured = {}
 		self.config_filename = filename
 		self.configfiles = None
