@@ -1,5 +1,5 @@
 import os
-import ConfigParser
+import configparser
 import pyami.fileutil
 
 # Help functions to get Slack configuration data.
@@ -7,7 +7,7 @@ import pyami.fileutil
 # Locate slack.cfg, which should be placed in any of the same locations as leginon.cfg (e.g. /etc/myami/, /home/username/)
 
 def getSlackConfig(printfiles=False):
-	slackconfigparser = ConfigParser.SafeConfigParser()
+	slackconfigparser = configparser.SafeConfigParser()
 	confdirs = pyami.fileutil.get_config_dirs()
 	conf_files = [os.path.join(confdir, 'slack.cfg') for confdir in confdirs]
 	pyami.fileutil.check_exist_one_file(conf_files)
@@ -26,7 +26,7 @@ def getSlackConfig(printfiles=False):
 def getSlackData():
 
 	slackdict = {}
-	slackconfig = ConfigParser.ConfigParser()
+	slackconfig = configparser.ConfigParser()
 	slackconfig.read(getSlackConfig())
 	for option in slackconfig.options('config'):
 		slackdict[option] = slackconfig.get('config',option)

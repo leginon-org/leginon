@@ -1,7 +1,7 @@
 #!/usr/env/bin python
 
 import os
-import slackconfigparser
+from . import slackconfigparser
 import subprocess
 import sys
 
@@ -17,15 +17,15 @@ class SlackInterface(SlackClient):
 		slackconfig = slackconfigparser.getSlackData()
 		
 		self.slack_token = slackconfig['slack_token']
-		if 'virtualenv_path' in slackconfig.keys() and slackconfig['virtualenv_path']:
+		if 'virtualenv_path' in list(slackconfig.keys()) and slackconfig['virtualenv_path']:
 			self.virtualenv_path = slackconfig['virtualenv_path']+"activate.csh"
-			print("Virtualenv path: ",self.virtualenv_path)
+			print(("Virtualenv path: ",self.virtualenv_path))
 		#self.slack_token = os.environ["SLACK_TOKEN"]
 		#self.virtualenv_path = os.environ["SLACK_ENV"]+"activate.csh"
 
 		self.client = SlackClient(self.slack_token)
 		self.default_channel = 'general'
-		if 'default_channel' in slackconfig.keys():
+		if 'default_channel' in list(slackconfig.keys()):
 			self.setDefaultChannel(slackconfig['default_channel'])
 
 
@@ -52,7 +52,7 @@ class SlackInterface(SlackClient):
 						text=message)
 			else:
 				self.client.api_call('channels.create',name=slackchannel,validate=True)
-				print( 'Channel '+slackchannel+' does not exist; creating channel.')
+				print(( 'Channel '+slackchannel+' does not exist; creating channel.'))
 
 		return self.client.api_call(
 				"chat.postMessage",
