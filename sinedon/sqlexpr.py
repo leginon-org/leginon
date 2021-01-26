@@ -51,7 +51,6 @@ except ImportError:
 
 import datetime
 import re
-import string
 import six
 from sinedon import sqldict
 import pymysql as MySQLdb
@@ -326,7 +325,7 @@ class Select(SQLExpression):
 			sort = 'ASC'
 			if 'sort' in self.orderBy.keys():
 				sort = self.orderBy['sort']
-			fields = string.join(map(lambda id: sqlRepr(id), fields), ', ')
+			fields = ", ".join(map(lambda id: sqlRepr(id), fields))
 			select += " ORDER BY %s %s" % (fields, sort,)
 		if self.limit is not None:
 			select += " LIMIT %s" % sqlRepr(self.limit)
@@ -358,7 +357,7 @@ class SelectAll(SQLExpression):
 			sort = 'ASC'
 			if 'sort' in self.orderBy.keys():
 				sort = self.orderBy['sort']
-			fields = string.join(map(lambda id: sqlRepr(id), fields), ', ')
+			fields = ", ".join(map(lambda id: sqlRepr(id), fields))
 			select += " ORDER BY %s %s" % (fields, sort,)
 		if self.limit is not None:
 			select += " LIMIT %s" % sqlRepr(self.limit)
@@ -447,7 +446,7 @@ class ColumnSpec(dict):
 					sql_args.append(default)
 				if auto:
 					pieces.append('AUTO_INCREMENT')
-				sql_str = string.join(pieces)
+				sql_str = " ".join(pieces)
 				return sql_str
 			else:
 				keys = []
@@ -463,13 +462,13 @@ class ColumnSpec(dict):
 					indexes = []
 					for indexName in index:
 						indexes.append(indexName)
-					index_str = string.join(indexes, ',')
+					index_str = ",".join(indexes)
 					keys.append(key_str+' '+backquote(name) +' (' + backquote(index_str) + ')')
 
 				if primary:
 					keys.append('PRIMARY KEY '+'('+ backquote(name) +')' )
 
-				return string.join(keys)
+				return " ".join(keys)
 
 class AlterTable(SQLExpression):
 	''' ALTER TABLE `particle` ADD `fieldname` TEXT NOT NULL ;
@@ -553,7 +552,7 @@ class CreateTable(SQLExpression):
 				keys.append(ColumnSpec(column).create_key())
 
 		l = fields + keys
-		create += '(' + string.join(l, ', ') + ')' + type_str
+		create += '(' + ", ".join(l) + ')' + type_str
 		return create
 
 class Insert(SQLExpression):

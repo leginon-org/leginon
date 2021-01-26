@@ -10,7 +10,6 @@ import glob
 import math
 import numpy
 import shutil
-import string
 import tarfile
 import subprocess
 ### appion
@@ -353,7 +352,8 @@ def start():
 			cci = ccListSort[len(ccListSort)-i-1]
 			if cci>=params['corCutOff']:
 				bestclass_i=cclist.index(cci)
-				classname_i=clslist[clsNum].split('.')[0]+'.dir/subClassAvgs/subcls'+string.zfill(bestclass_i,2)+'.lst'
+				bstr = '%d' % bestclass_i
+				classname_i=clslist[clsNum].split('.')[0]+'.dir/subClassAvgs/subcls'+bstr.zfill(2)+'.lst'
 				f1=open(classname_i,'r')
 				Ptcls_i = f1.readlines()
 				f1.close()

@@ -8,7 +8,6 @@ import math
 import time
 import glob
 import shutil
-import string
 import subprocess
 from appionlib import apEMAN
 
@@ -117,7 +116,7 @@ def createDefaults():
 if __name__== '__main__':
 	# write command & time to emanlog if exists:
 	if os.path.exists('refine.log'):
-		cmd = string.join(sys.argv,' ')
+		cmd = ' '.(sys.argv)
 		apEMAN.writeEMANTime('refine.log',cmd)
 	#Parse inputs
 	args=sys.argv[1:]

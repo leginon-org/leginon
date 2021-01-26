@@ -7,7 +7,6 @@ import glob
 import math
 import time
 import shutil
-import string
 import operator
 import subprocess
 from appionlib import apEMAN
@@ -71,7 +70,7 @@ def createDefaults():
 if __name__== '__main__':
 	# write command & time to emanlog if exists:
 	if os.path.exists('refine.log'):
-		cmd = string.join(sys.argv,' ')
+		cmd = ' '.join(sys.argv)
 		apEMAN.writeEMANTime('refine.log',cmd)
 	#Parse inputs
 	args=sys.argv[1:]
@@ -229,7 +228,8 @@ if __name__== '__main__':
 		classnamepath = os.path.join(clsdir,'classes')
 		for n in sortccindex:
 			## get N imgs
-			clhcbasename = 'clhc_cls'+string.zfill(n+1,4)
+			nstr = '%d' % n+1
+			clhcbasename = 'clhc_cls'+nstr.zfill(4)
 			classname=os.path.join(classnamepath, clhcbasename+'.spi')
 			## save if has cc higher than cutoff
 			if cclist[n] > params['ccCutoff']:
@@ -242,7 +242,8 @@ if __name__== '__main__':
 			print "combining "+str(len(cutofflist))+" of "+str(len(cclist))+" classes"
 			spilist=[]
 			for n in cutofflist:
-				clhcbasename = 'clhc_cls'+string.zfill(n+1,4)
+				nstr = '%d' % n+1
+				clhcbasename = 'clhc_cls'+nstr.zfill(4)
 				classname=os.path.join(classnamepath, clhcbasename+'.spi')
 				spilist.append(classname)
 			classname=os.path.join(classnamepath,'combined.spi')
@@ -268,7 +269,8 @@ if __name__== '__main__':
 			print "Using average %d for class %d" % (bestclass, cls)
 
 			#get N imgs
-			clhcbasename = 'clhc_cls'+string.zfill(bestclass+1,4)
+			bstr = '%d' % (bestclass+1)
+			clhcbasename = 'clhc_cls'+bstr.zfill(4)
 			classname=os.path.join(classnamepath, clhcbasename+'.spi')
 		
 			nptcls=apEMAN.getNPtcls(classname,spider=True)

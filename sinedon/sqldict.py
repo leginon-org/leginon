@@ -151,7 +151,6 @@ import sys
 from sinedon import sqlexpr
 import copy
 from sinedon import sqldb
-import string
 import datetime
 import re
 import numpy
@@ -958,7 +957,7 @@ class ObjectBuilder:
 		l = []
 		for k in self.columns:
 			l.append("%s=%s" % (k, repr(getattr(self, k))))
-		return string.join([l0, join(l, ','), ')'],'')
+		return ''.join([l0, join(l, ','), ')'])
 
 	def __repr__(self):
 		r =  self.dumpdict()
