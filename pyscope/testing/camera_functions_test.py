@@ -16,7 +16,7 @@ def test(cam_inst, attr_name, arg=None):
 			result = getattr(cam_inst, attr_name)(arg)
 		except Exception as e:
 			raise RuntimeError('Error testing %s with %s: %s' % (attr_name, attr_name, e))			
-	print 'testing %s successful' % attr_name
+	print('testing %s successful' % attr_name)
 
 def testMethods(cam_inst):
 	capabilities = cam_inst.getCapabilities()
@@ -38,13 +38,13 @@ def testMethods(cam_inst):
 				elif a.endswith('Callback'):
 					pass
 				elif 'Buffer' in attr_name and 'name' in args:
-					if not cam_inst.buffer_ready.keys():
+					if not list(cam_inst.buffer_ready.keys()):
 						pass
 					else:
-						name = cam_inst.buffer_ready.keys()[0]
+						name = list(cam_inst.buffer_ready.keys())[0]
 						test(cam_inst, attr_name, name)
 				elif 'Config' in attr_name and hasattr(this_module,'configs'):
-					k = getattr(this_module,'configs').keys()[0]
+					k = list(getattr(this_module,'configs').keys())[0]
 					test(cam_inst, attr_name, k)
 				elif 'MetaDataDict' in attr_name:
 					# need known object to test.  pass.
@@ -68,15 +68,15 @@ def testMethods(cam_inst):
 				if 'set' in impls:
 					attr_name = 'set'+c['name']
 					t0 = time.time()
-					print attr_name
+					print(attr_name)
 					getattr(cam_inst, attr_name)(result)
-					print 'time (s): %.6f' % (time.time()-t0)
+					print('time (s): %.6f' % (time.time()-t0))
 			except Exception as e:
-				print 'Error testing %s: %s' % (attr_name,e)
+				print('Error testing %s: %s' % (attr_name,e))
 				error_count += 1
 	print('----------------------')
-	print('Number of error found: %d' % (error_count,))
+	print(('Number of error found: %d' % (error_count,)))
 
 t = instrumenttype.getInstrumentTypeInstance(search_for)
 testMethods(t)
-raw_input('Finished. Hit return to quit')
+input('Finished. Hit return to quit')

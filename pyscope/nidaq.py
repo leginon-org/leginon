@@ -119,7 +119,7 @@ def _rotate_counterclock_wise(v):
 				break
 			count += 1
 			if count > 1000:
-				print 'no response from %s, try a different nidevice' % (nidevice,)
+				print('no response from %s, try a different nidevice' % (nidevice,))
 				break
 	finally:
 		_set_digital_output(0)
@@ -138,7 +138,7 @@ def _rotate_clock_wise(v):
 				break
 			count += 1
 			if count > 1000:
-				print 'no response from %s, try a different nidevice' % (nidevice,)
+				print('no response from %s, try a different nidevice' % (nidevice,))
 				break
 	finally:
 		_set_digital_output(0)

@@ -1,4 +1,4 @@
-import ccdcamera
+from . import ccdcamera
 import numpy
 import comtypes.client
 import time
@@ -82,7 +82,7 @@ class TecnaiCamera(ccdcamera.CCDCamera):
 		unbinned['x'] = dimension['x'] * binning
 		unbinned['y'] = dimension['y'] * binning
 		imagesize = None
-		for size, scale in self.constantsize_scale.items():
+		for size, scale in list(self.constantsize_scale.items()):
 			allowed_width = scale * camerasize['x']
 			allowed_height = scale * camerasize['y']
 			if unbinned['x'] == allowed_width and unbinned['y'] == allowed_height:
@@ -148,21 +148,21 @@ class TecnaiCamera(ccdcamera.CCDCamera):
 
 	def _getImage(self):
 		self.geometryToAcqParams(self.geometry)
-		print 'ACQUIRE'
+		print('ACQUIRE')
 		t0 = time.time()
 		images = self.acquisition.AcquireImages()
 		t1 = time.time()
 		self.exposure_timestamp = (t1 + t0) / 2.0
-		print 'IMAGE'
+		print('IMAGE')
 		image = images[0]
-		print 'ASSAFEARRAY'
+		print('ASSAFEARRAY')
 		image_array = image.AsSafeArray
-		print 'ASARRAY'
+		print('ASARRAY')
 		image_array = numpy.array(image_array, dtype=numpy.uint16)
 		rows = self.geometry['dimension']['y']
 		cols = self.geometry['dimension']['x']
 		image_array.shape = (rows, cols)
-		print 'RETURN'
+		print('RETURN')
 		return image_array
 
 	def getPixelSize(self):

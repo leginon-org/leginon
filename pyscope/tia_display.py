@@ -72,5 +72,5 @@ if __name__=='__main__':
 	all_dispwins = t.getDisplayWindowNames()
 	for i, name in enumerate(all_dispwins):
 		this = t.getActiveDisplayWindow()
-		print this.Name
+		print(this.Name)
 		t.closeDisplayWindow(name)

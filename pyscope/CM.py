@@ -13,13 +13,13 @@
 
 
 
-import tem
+from . import tem
 try:
 	import pythoncom
 except:
 	pass
-import cmlib
-import CMCal
+from . import cmlib
+from . import CMCal
 import time
 import math
 
@@ -41,7 +41,7 @@ class CM(tem.TEM):
 	name = 'CM'
 	def __init__(self):
 		if Debug == True:
-			print 'from CM class'
+			print('from CM class')
 		
 		tem.TEM.__init__(self)
 		self.correctedstage = True
@@ -55,7 +55,7 @@ class CM(tem.TEM):
 	# return the actual Mag value to film camera, no mather mainscreen up or down
 	def getMagnification(self, index=None):
 		if Debug == True:
-			print "from getMagnification"
+			print("from getMagnification")
 		CMvar = self.CMLIB.GetCMVar()
 		
 		if index is None:
@@ -78,7 +78,7 @@ class CM(tem.TEM):
 	# return the actual Mag value to mainscreen,no mather mainscreen up or down
 	def getMainScreenMagnification(self):
 		if Debug == True:
-			print 'from getMainScreenMagnification'
+			print('from getMainScreenMagnification')
 		
 		CMvar = self.CMLIB.GetCMVar()
 		# find out if mainscreen is up or down */
@@ -91,17 +91,17 @@ class CM(tem.TEM):
 
 	def getMainScreenScale(self):
 		if Debug == True:
-			print 'from getMainScreenScale'
+			print('from getMainScreenScale')
 		return self.mainscreenscale
 
 	def setMainScreenScale(self, mainscreenscale):
 		if Debug == True:
-			print 'from setMainScreenScale'
+			print('from setMainScreenScale')
 		self.mainscreenscale = mainscreenscale
 
 	def getMagnificationsInitialized(self):
 		if Debug == True:
-			print "from getMagnificationsInitialized"
+			print("from getMagnificationsInitialized")
 		if self.magnifications:
 			return True
 		else:
@@ -110,7 +110,7 @@ class CM(tem.TEM):
 
 	def getMagnifications(self):
 		if Debug == True:
-			print "from getMagnifications"
+			print("from getMagnifications")
 		return self.magnifications
 
 
@@ -118,14 +118,14 @@ class CM(tem.TEM):
 	# Assume Mag index is pre-known and stored in CMCal.
 	def findMagnifications(self):
 		if Debug == True:
-			print 'from findMagnifications'
+			print('from findMagnifications')
 		self.setMagnifications(CMCal.screenup_mag)
 
 
 	#  get Mag index position
 	def _emcGetMagPosition(self,magnification,screenUp):
 		if Debug == True:
-			print 'from _emcGetMagPostion'
+			print('from _emcGetMagPostion')
 		if screenUp == 0:
 			mags = CMCal.screendown_mag
 		else:
@@ -140,7 +140,7 @@ class CM(tem.TEM):
 
 	def setMagnifications(self, magnifications):
 		if Debug == True:
-			print 'from setMagnifications'
+			print('from setMagnifications')
 		self.magnifications = magnifications
 
 
@@ -148,14 +148,14 @@ class CM(tem.TEM):
 	# setMagnificationIndex(), which maynot be directly called in Legion.
 	def setMagnificationIndex(self, value):
 		if Debug == True:
-			print " from setMagnificationIndex"
-			print 'since setMagnificationIndex() is called, it must be implemented. Please do it !!!'
+			print(" from setMagnificationIndex")
+			print('since setMagnificationIndex() is called, it must be implemented. Please do it !!!')
 		return NotImplementedError()
 
 		
 	def setMagnification(self, mag):
 		if Debug == True:
-			print "from setMagnification"
+			print("from setMagnification")
 		CMvar = self.CMLIB.GetCMVar()
 		
 		# assume to be setted mag is always to the film, not mainscreen position dependant/
@@ -170,7 +170,7 @@ class CM(tem.TEM):
 
 	def getStagePosition(self):
 		if Debug == True:
-			print "from getStagePosition"
+			print("from getStagePosition")
 		value = {'x': None, 'y': None, 'z': None, 'a': None}
 		pos = self.CMLIB.CSAskPos()
 		value['x'] = float(pos.x[0]/1e6)      # Leginon requires meter, however micron meter in CM.
@@ -182,7 +182,7 @@ class CM(tem.TEM):
 
 	def setStagePosition(self, value):
 		if Debug == True:
-			print 'from setStagePosition'
+			print('from setStagePosition')
 		value_raw = {'x': None, 'y': None, 'z': None, 'a': None}
 		# pre-position x and y (maybe others later)
 		axes = 0           # 1(X) AND 2(Y) AND 4(Z)	preset moving axes in X,Y,Z,a detections
@@ -229,13 +229,13 @@ class CM(tem.TEM):
 
 	def getCorrectedStagePosition(self):
 		if Debug == True:
-			print 'from getCorrectedStagePosition'
+			print('from getCorrectedStagePosition')
 		return self.correctedstage
 
 
 	def setCorrectedStagePosition(self, value):
 		if Debug == True:
-			print 'from setCorrectedStagePosition'
+			print('from setCorrectedStagePosition')
 		self.correctedstage = bool(value)
 		return self.correctedstage
 
@@ -244,14 +244,14 @@ class CM(tem.TEM):
 	# in micron meter(positive). Leginon requires meter unit(negative).
 	def getDefocus(self):
 		if Debug == True:
-			print 'from getDefocus'
+			print('from getDefocus')
 		defocus = self.CMLIB.GetCMVar().defocus*1e-9*CMCal.f_defocus_H_rate
 		return float(defocus)
 
 
 	def setDefocus(self, defocus, relative = 'absolute'):
 		if Debug == True:
-			print 'from setDefocus'
+			print('from setDefocus')
 		CMvar = self.CMLIB.GetCMVar()
 		if relative == 'absolute':
 			focus_now = float(CMvar.defocus*1e-9*CMCal.f_defocus_H_rate)
@@ -288,7 +288,7 @@ class CM(tem.TEM):
 	# combined for this implementation. 
 	def resetDefocus(self, value):
 		if Debug == True:
-			print 'from resetDefocus'
+			print('from resetDefocus')
 		if not value:
 			return
 		self.CMLIB.PushButton(CMCal.PB_Ready,CMCal.PB_PRESS)  # press Ready button to enter into console main page
@@ -299,14 +299,14 @@ class CM(tem.TEM):
 		
 	def getResetDefocus(self):
 		if Debug == True:
-			print 'from getResetDefocus'
+			print('from getResetDefocus')
 		return False
 
 
 	# No equivalent info from CM
 	def getObjectiveExcitation(self):
 		if Debug == True:
-			print 'from getObjectiveExcitation'
+			print('from getObjectiveExcitation')
 		return NotImplementedError()
 
 
@@ -314,33 +314,33 @@ class CM(tem.TEM):
 	# The native focus value from Tecnai is normalized to -1 to 1.
 	def getFocus(self):
 		if Debug == True:
-			print 'from getFocus'
+			print('from getFocus')
 		pos = self.CMLIB.CSAskPos()
 		return float(pos.z[0]/1e6)
 
 
 	def setFocus(self, value):
 		if Debug == True:
-			print 'from setFocus'
+			print('from setFocus')
 		self.CMLIB.CSGotoPos(0,0,value*1e6,9,0,4)   # move stage in Z direction only
 
 
 	def getHighTensionStates(self):
 		if Debug == True:
-			print 'from getHighTensionStates'
+			print('from getHighTensionStates')
 		return ['off', 'on', 'disabled','unknown']
 
 
 	# see setHighTension for explanition
 	def getHighTensionState(self):
 		if Debug == True:
-			print 'from getHighTensionState'
+			print('from getHighTensionState')
 		return 'unknown'
 
 
 	def getHighTension(self):
 		if Debug == True:
-			print 'from getHighTension'
+			print('from getHighTension')
 		HT = self.CMLIB.GetCMVar().HT
 		return float(HT)
 
@@ -352,9 +352,9 @@ class CM(tem.TEM):
 	# this function, which depends on the operation purpose.
 	def setHighTension(self, ht):
 		if Debug == True:
-			print 'from setHighTEnsion'
+			print('from setHighTEnsion')
 		if (ht > 200) or (ht < 0):
-			print "high tension setting out of range"
+			print("high tension setting out of range")
 			return
 ##		CMvar = self.CMLIB.GetCMVar()
 ##		deltaht = round(ht - CMvar.HT)
@@ -365,14 +365,14 @@ class CM(tem.TEM):
 		
 	def getIntensity(self):
 		if Debug == True:
-			print 'from getIntensity'
+			print('from getIntensity')
 		Intensity = self.CMLIB.GetCMVar().Intensity
 		return float(Intensity)
 
 
 	def setIntensity(self, intensity, relative = 'absolute'):
 		if Debug == True:
-			print 'from setIntensity'
+			print('from setIntensity')
 		CMvar = self.CMLIB.GetCMVar()
 		intensity_max = 100000.0
 		intensity_min = 1000.0
@@ -411,7 +411,7 @@ class CM(tem.TEM):
 	# refer to emscope->rcm.c to interprete RotAlgn[]
 	def getBeamTilt(self):
 		if Debug == True:
-			print 'from getBeamTilt'
+			print('from getBeamTilt')
 		value = {'x': None, 'y': None}
 		Rot = self.CMLIB.GetRotationAlignment()
 		value['x'] = Rot.RotAlgn[0].x
@@ -421,7 +421,7 @@ class CM(tem.TEM):
 
 	def setBeamTilt(self, vector, relative = 'absolute'):
 		if Debug == True:
-			print 'from setBeamTilt'
+			print('from setBeamTilt')
 		Rot = self.CMLIB.GetRotationAlignment()
 		if relative == 'relative':
 			if vector['x'] != None:
@@ -444,7 +444,7 @@ class CM(tem.TEM):
 
 	def getBeamShift(self):
 		if Debug == True:
-			print 'from getBeamShift'
+			print('from getBeamShift')
 		value = {'x': None, 'y': None}
 		CMvar = self.CMLIB.GetCMVar()
 		i = self._emcGetMagPosition(CMvar.Magn, CMvar.MainScrn)     # locate Mag index
@@ -456,7 +456,7 @@ class CM(tem.TEM):
 	# Not used in CM.
 	def setBeamShift(self, vector, relative = 'absolute'):
 		if Debug == True:
-			print 'from setBeamShift'
+			print('from setBeamShift')
 ##		vector_raw = {'x': None, 'y': None}
 ##		CMvar = self.CMLIB.GetCMVar()
 ##		i = self._emcGetMagPosition(CMvar.Magn, CMvar.MainScrn)     # locate Mag index
@@ -525,7 +525,7 @@ class CM(tem.TEM):
 	# Leginon requires meter unit, CM retrieve none unit value (-35,000 -- 35,000),
 	def getImageShift(self):
 		if Debug == True:
-			print 'from getImageShift'
+			print('from getImageShift')
 		value = {'x': None, 'y': None}
 		CMvar = self.CMLIB.GetCMVar()
 		i = self._emcGetMagPosition(CMvar.Magn, CMvar.MainScrn)     # locate Mag index
@@ -540,7 +540,7 @@ class CM(tem.TEM):
 	
 	def setImageShift(self, vector, relative = 'absolute'):
 		if Debug == True:
-			print 'from setImageShift'
+			print('from setImageShift')
 		vector_raw = {'x': None, 'y': None}
 		CMvar = self.CMLIB.GetCMVar()
 		i = self._emcGetMagPosition(CMvar.Magn, CMvar.MainScrn)     # locate Mag index
@@ -561,13 +561,13 @@ class CM(tem.TEM):
 					dox = 1
 				else:
 					dox = 0
-					print 'Image Shift setting X out of range'
+					print('Image Shift setting X out of range')
 			if vector_raw['y'] != None:
 				if abs(vector_raw['y']) < FLT_MAX:
 					doy = 1
 				else:
 					doy = 0
-					print 'Image Shift setting Y out of range'
+					print('Image Shift setting Y out of range')
 
 		if relative == 'reletive':
 			if vector_raw['x'] != None:
@@ -575,13 +575,13 @@ class CM(tem.TEM):
 					dox = 1
 				else:
 					dox = 0
-					print 'Image Shift setting X out of range'
+					print('Image Shift setting X out of range')
 			if vector_raw['y'] != None:
 				if abs(CMvar.ImageShiftY + vector_raw['y']) < FLT_MAX:
 					doy = 1
 				else:
 					doy = 0
-					print 'Image Shift setting Y out of range'
+					print('Image Shift setting Y out of range')
 
 		if (CMvar.ButtonState & 0x0004 == 1):
 			self.CMLIB.PushButton(CMCal.PB_Darkfield,CMCal.PB_OFF)        # push Darkfield button to off
@@ -625,33 +625,33 @@ class CM(tem.TEM):
 	# There is no equivalent info from CM for gunshift
 	def getGunShift(self):
 		if Debug == True:
-			print 'from getGunShift'
+			print('from getGunShift')
 		return NotImplementedError()
 
 
 	# There is no equivalent info from CM for gunshift
 	def setGunShift(self, vector, relative = 'absolute'):
 		if Debug == True:
-			print 'from setGunShift'
+			print('from setGunShift')
 		return NotImplementedError()
 
 	# There is no equivalent info from CM for guntilt
 	def getGunTilt(self):
 		if Debug == True:
-			print 'from getGunTilt'
+			print('from getGunTilt')
 		return NotImplementedError()
 
 
 	# There is no equivalent info from CM for guntilt
 	def setGunTilt(self, vector, relative = 'absolute'):
 		if Debug == True:
-			print 'from setGunTilt'
+			print('from setGunTilt')
 		return NotImplementedError()
 
 
 	def getStigmator(self):
 		if Debug == True:
-			print 'from getStigmator'
+			print('from getStigmator')
 		value = {'condenser': {'x': None, 'y': None},
 					'objective': {'x': None, 'y': None},
 					'diffraction': {'x': None, 'y': None}}
@@ -689,9 +689,9 @@ class CM(tem.TEM):
 	
 	def setStigmator(self, stigs, relative = 'absolute'):
 		if Debug == True:
-			print 'from setStigmator'
+			print('from setStigmator')
 		StigValue = self.CMLIB.GetStigmators()
-		for key in stigs.keys():
+		for key in list(stigs.keys()):
 			if key == 'condenser':
 				stigmatorX = StigValue['condenser']['x']
 				stigmatorY = StigValue['condenser']['y']
@@ -773,7 +773,7 @@ class CM(tem.TEM):
 	# only on/off info can be retrieved, which is different from tecnai.
 	def getDarkFieldMode(self):
 		if Debug == True:
-			print 'from getDarkFieldMode'
+			print('from getDarkFieldMode')
 		CMvar = self.CMLIB.GetCMVar()
 		bool = CMvar.ButtonState & 0x004    # Based upon CM help, it should be 0x0002,however 0x0004 in emscope.
 		                                    # It has been tested, 0x0004 is correct, CM help is wrong again.
@@ -785,7 +785,7 @@ class CM(tem.TEM):
 
 	def setDarkFieldMode(self, mode):
 		if Debug == True:
-			print 'from setDarkFieldMode'
+			print('from setDarkFieldMode')
 		if mode == 'off':
 			self.CMLIB.PushButton(CMCal.PB_Darkfield,CMCal.PB_OFF)
 		else:
@@ -796,7 +796,7 @@ class CM(tem.TEM):
 	# cmremote32 can only return the actual spotsize value
 	def getSpotSize(self):
 		if Debug == True:
-			print 'from getSpotSize'
+			print('from getSpotSize')
 		CMvar = self.CMLIB.GetCMVar()
 		for i in range(0,11):
 			if CMCal.LMSS[i] == CMvar.Spotsize:
@@ -807,7 +807,7 @@ class CM(tem.TEM):
 
 	def setSpotSize(self, ss, relative = 'absolute'):
 		if Debug == True:
-			print 'from setSpotSize'
+			print('from setSpotSize')
 		if relative == 'relative':
 			pass
 		elif relative == 'absolute':
@@ -824,7 +824,7 @@ class CM(tem.TEM):
 	# Note, this is none unit from CM, however meter in Tecnai
 	def getRawImageShift(self):
 		if Debug == True:
-			print 'from getRawImageShift'
+			print('from getRawImageShift')
 		value = {'x': None, 'y': None}
 		CMvar = self.CMLIB.GetCMVar()
 		value['x'] = CMvar.ImageShiftX
@@ -836,7 +836,7 @@ class CM(tem.TEM):
 	# is taken care of by setImagShit()
 	def setRawImageShift(self, vector, relative = 'absolute'):
 		if Debug == True:
-			print 'setRawImageShift'
+			print('setRawImageShift')
 		return NotImplementedError()
 
 
@@ -844,14 +844,14 @@ class CM(tem.TEM):
 	# implemented here.
 	def getVacuumStatus(self):
 		if Debug == True:
-			print "from getVacuumStatus"
+			print("from getVacuumStatus")
 		return 'N/A for CM'
 
 	
 	# columnpressure in Tecnai is the same as P4 in CM
 	def getColumnPressure(self):
 		if Debug == True:
-			print 'from getColumnPressure'
+			print('from getColumnPressure')
 		IGP = self.CMLIB.PressureReadout().IGP
 		return float(IGP)                      # IGP is P4
 
@@ -859,38 +859,38 @@ class CM(tem.TEM):
 	# No corresponding retrieving info can be found from CMREMOTE
 	def getColumnValvePositions(self):
 		if Debug == True:
-			print "from getColumnValvePositions"
+			print("from getColumnValvePositions")
 		return ['open', 'closed','unknown']
 
 	
 	def getColumnValvePosition(self):
 		if Debug == True:
-			print 'from getColumnValvePostion'
+			print('from getColumnValvePostion')
 		return 'unknown'
 
 
 	def setColumnValvePosition(self, state):
 		if Debug == True:
-			print 'from setColumnValvePosition'
+			print('from setColumnValvePosition')
 		return 'unknown'
 
 
 	# No corresponding retrieving info can be found from CM
 	def getTurboPump(self):
 		if Debug == True:
-			print "from getTurboPump"
+			print("from getTurboPump")
 		return 'N/A for CM'
 
 
 	def setTurboPump(self, mode):
 		if Debug == True:
-			print "from setTurboPump"
+			print("from setTurboPump")
 		return NotImplementedError()
 
 
 	def getFilmStock(self):
 		if Debug == True:
-			print 'from getFilmStock'
+			print('from getFilmStock')
 		stock = self.CMLIB.GetCmCamValues().stock
 		return stock
 
@@ -899,7 +899,7 @@ class CM(tem.TEM):
 	# this function was not implemented yet.
 	def getFilmExposureNumber(self):
 		if Debug == True:
-			print 'from getFilmExposureNumber'
+			print('from getFilmExposureNumber')
 		nr = self.cmremote32.CM_GetCmCamValues().exposure_nr
 		return nr
 		return NotImplementedError()
@@ -907,13 +907,13 @@ class CM(tem.TEM):
 
 	def setFilmExposureNumber(self, value):
 		if Debug == True:
-			print 'from setFilmExposureNumber'
+			print('from setFilmExposureNumber')
 		return NotImplementedError()
 
 
 	def getFilmExposureTime(self):
 		if Debug == True:
-			print 'from getFilmExposureTime'
+			print('from getFilmExposureTime')
 		exptimemanual = self.CMLIB.GetCmCamValues().exptimemanual
 		if exptimemanual:
 			return self.getFilmManualExposureTime()
@@ -923,13 +923,13 @@ class CM(tem.TEM):
 
 	def getFilmExposureTypes(self):
 		if Debug == True:
-			print 'from getFilmExposureTypes'
+			print('from getFilmExposureTypes')
 		return ['manual', 'automatic']
 
 
 	def getFilmExposureType(self):
 		if Debug == True:
-			print 'from getFilmExposureType'
+			print('from getFilmExposureType')
 		exptimemanual = self.CMLIB.GetCmCamValues().exptimemanual
 		if exptimemanual:
 			return 'manual'
@@ -940,27 +940,27 @@ class CM(tem.TEM):
 	# Manual setting is expected in CM.
 	def setFilmExposureType(self, value):
 		if Debug == True:
-			print 'from setFilmExposureType'
+			print('from setFilmExposureType')
 		return NotImplementedError()
 
 
 	def getFilmAutomaticExposureTime(self):
 		if Debug == True:
-			print 'from getFilmAutomaticExposureTime'
+			print('from getFilmAutomaticExposureTime')
 		measuredexptime = self.CMLIB.GetCmCamValues().measuredexptime
 		return measuredexptime
 
 
 	def getFilmManualExposureTime(self):
 		if Debug == True:
-			print 'from getFilmManualExposureTime'
+			print('from getFilmManualExposureTime')
 		manualsetexptime = self.CMLIB.GetCmCamValues().manualsetexptime
 		return manualsetexptime
 
 
 	def setFilmManualExposureTime(self, value):
 		if Debug == True:
-			print 'from setFilmManualExposureTime'
+			print('from setFilmManualExposureTime')
 		return NotImplementedError()
 
 
@@ -969,38 +969,38 @@ class CM(tem.TEM):
 	# in the dll, this feature should be able to implemented.
 	def getFilmUserCode(self):
 		if Debug == True:
-			print 'from getFilmUserCode'
+			print('from getFilmUserCode')
 		return str('Min')
 
 
 	def setFilmUserCode(self, value):
 		if Debug == True:
-			print 'from setFilmUserCode'
+			print('from setFilmUserCode')
 		return NotImplementedError()
 
 
 	def getFilmDateTypes(self):
 		if Debug == True:
-			print 'from getFilmDateTypes'
+			print('from getFilmDateTypes')
 		return ['no date', 'DD-MM-YY', 'MM/DD/YY', 'YY.MM.DD', 'unknown']
 
 
 	def getFilmDateType(self):
 		if Debug == True:
-			print 'from getFilmDateType'
+			print('from getFilmDateType')
 		return 'unknown'
 ##		return NotImplementedError()
 
 
 	def setFilmDateType(self, value):
 		if Debug == True:
-			print 'from setFilmDateType'
+			print('from setFilmDateType')
 		return NotImplementedError()
 
 	
 	def getFilmText(self):
 		if Debug == True:
-			print 'from getFilmText'
+			print('from getFilmText')
 		return str('Min Su implemented')
 
 
@@ -1008,74 +1008,74 @@ class CM(tem.TEM):
 	# refer to Tutor for detail, not critical at this moment
 	def setFilmText(self, value):
 		if Debug == True:
-			print 'from setFilmText'
+			print('from setFilmText')
 		return NotImplementedError()
 
 	
 	def getShutter(self):
 		if Debug == True:
-			print 'from getShutter'
+			print('from getShutter')
 		return 'unknown'
 
 
 	def setShutter(self, state):
 		if Debug == True:
-			print 'from setShutter'
+			print('from setShutter')
 		return NotImplementedError()
 
 
 	def getShutterPositions(self):
 		if Debug == True:
-			print 'from getShutterPositions'
+			print('from getShutterPositions')
 		return ['open', 'closed','unknown']
 
 
 	def getExternalShutterStates(self):
 		if Debug == True:
-			print 'from getExternalShutterStates'
+			print('from getExternalShutterStates')
 		return ['connected', 'disconnected','unknown']
 
 	def getExternalShutter(self):     # no external shutter available from CM
 		if Debug == True:
-			print 'from getExternalShutter'
+			print('from getExternalShutter')
 		return 'unknown'
 
 
 	def setExternalShutter(self, state):
 		if Debug == True:
-			print 'from setExternalShutter'
+			print('from setExternalShutter')
 		return NotImplementedError()
 
 
 	def normalizeLens(self, lens = 'all'):
 		if Debug == True:
-			print 'from normalizeLens'
+			print('from normalizeLens')
 		return NotImplementedError()
 
 
 	# small screen must be down, unit in Ampire
 	def getScreenCurrent(self):
 		if Debug == True:
-			print 'from getScreenCurrent'
+			print('from getScreenCurrent')
 		ScreenCurrent = self.CMLIB.ScreenCurrent()
 		return float(ScreenCurrent)
 
 
 	def getMainScreenPositions(self):
 		if Debug == True:
-			print 'from getMainScreenPositions'
+			print('from getMainScreenPositions')
 		return ['up', 'down', 'unknown']
 
 
 	def setMainScreenPosition(self, mode):
 		if Debug == True:
-			print 'from setMainScreenPositions'
+			print('from setMainScreenPositions')
 		return NotImplementedError()
 
 
 	def getMainScreenPosition(self):
 		if Debug == True:
-			print 'from getManinScreenPostion'
+			print('from getManinScreenPostion')
 		CMvar = self.CMLIB.GetCMVar()
 		if CMvar.MainScrn == 255:
 			return 'up'
@@ -1090,14 +1090,14 @@ class CM(tem.TEM):
 	# but it seems not worth to make this effort here.
 	def getSmallScreenPosition(self):
 		if Debug == True:
-			print 'from getSmallScreenPosition' 
+			print('from getSmallScreenPosition') 
 		return 'unknown'                
 			                            
 
 	# This is not critical for Leginon, it could be supported by CM.
 	def getHolderStatus(self):
 		if Debug == True:
-			print 'from getHolderStatus'
+			print('from getHolderStatus')
 		HolderInserted = self.CMLIB.GetCMInfo().HolderInserted
 		if HolderInserted == 1:
 			return 'Inserted'
@@ -1107,19 +1107,19 @@ class CM(tem.TEM):
 
 	def getHolderTypes(self):
 		if Debug == True:
-			print 'from getHolderTypes'
+			print('from getHolderTypes')
 		return ['no holder', 'single tilt', 'cryo', 'unknown','N/A']
 
 
 	def getHolderType(self):
 		if Debug == True:
-			print 'from getHolderType'
+			print('from getHolderType')
 		return 'cryo'
 
 	# not critical for Leginon runing
 	def setHolderType(self, holdertype):
 		if Debug == True:
-			print 'from setHolderType'
+			print('from setHolderType')
 		return NotImplementedError()
 
 
@@ -1127,43 +1127,43 @@ class CM(tem.TEM):
 	# Leginon PresetManager node will take care of it internally.
 	def getLowDoseModes(self):
 		if Debug == True:
-			print 'from getLowDoseModes'
+			print('from getLowDoseModes')
 		return ['exposure', 'focus1', 'focus2', 'search', 'unknown', 'disabled']
 
 
 	def getLowDoseMode(self):
 		if Debug == True:
-			print 'from getLowDoseMode'
+			print('from getLowDoseMode')
 		return 'unknown'
 
 
 	def setLowDoseMode(self, mode):
 		if Debug == True:
-			print 'setLowDoseMode'
+			print('setLowDoseMode')
 		return NotImplementedError()
 
 
 	def getLowDoseStates(self):
 		if Debug == True:
-			print 'from getLowDoseStates'
+			print('from getLowDoseStates')
 		return ['on', 'off', 'disabled','unknown']
 
 
 	def getLowDose(self):
 		if Debug == True:
-			print 'from getLowDose'
+			print('from getLowDose')
 		return 'unknown'
 
 
 	def setLowDose(self, ld):
 		if Debug == True:
-			print 'from setLowDose'
+			print('from setLowDose')
 		return NotImplementedError()
 
 
 	def getStageStatus(self):
 		if Debug == True:
-			print 'from getStageStatus'
+			print('from getStageStatus')
 		return 'unknown'		# This info is not availabe from CM	
 
 
@@ -1171,38 +1171,38 @@ class CM(tem.TEM):
 	# however they are not equivalent to tecnai in the function.
 	def getVacuumStatus(self):
 		if Debug == True:
-			print 'from getVacuumStatus'
+			print('from getVacuumStatus')
 		return 'unknown'
 
 
 	def preFilmExposure(self, value):
 		if Debug == True:
-			print 'from preFilmExposure'
+			print('from preFilmExposure')
 		return NotImplementedError()
 
 
 	def postFilmExposure(self, value):
 		if Debug == True:
-			print 'from postFilmExposure'
+			print('from postFilmExposure')
 		return NotImplementedError()
 
 
 	def filmExposure(self, value):
 		if Debug == True:
-			print 'from filmExposure'
+			print('from filmExposure')
 		return NotImplementedError()
 
 
 	# This is no retrieving info to show the status of beamblank
 	def getBeamBlank(self):
 		if Debug == True:
-			print 'from getBeamBlank'
+			print('from getBeamBlank')
 		return 'unknown'
 
 		
 	def setBeamBlank(self, bb):
 		if Debug == True:
-			print 'from setBeamBlank'
+			print('from setBeamBlank')
 		if bb == 'off' :
 			self.CMLIB.DirectOperation(CMCal.DO_BeamBlankOFF,0)   # the second arg is no function here
 		elif bb == 'on':
@@ -1215,17 +1215,17 @@ class CM(tem.TEM):
 	# though the meaning of get/setMode is not well documented
 	def getProjectionMode(self):
 		if Debug == True:
-			print 'from getProjectionMode'
+			print('from getProjectionMode')
 		return NotImplementedError()
 		
 		
 	def setProjectionMode(self, mode):
 		if Debug == True:
-			print 'from setProjectionMode'
+			print('from setProjectionMode')
 		return NotImplementedError()
 
 
 	def runBufferCycle(self):
 		if Debug == True:
-			print 'from runBufferCycle'
+			print('from runBufferCycle')
 		return NotImplementedError()

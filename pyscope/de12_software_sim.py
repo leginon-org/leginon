@@ -1,12 +1,12 @@
 import sys
-import DECameraClientLib
+from . import DECameraClientLib
 import struct
 import types
 import numpy
 import time
 import pyami.imagefun
 
-import ccdcamera
+from . import ccdcamera
 class de12_software_sim(ccdcamera.CCDCamera):
 	name = 'de12_software_sim'
 	def __init__(self):
@@ -43,7 +43,7 @@ class de12_software_sim(ccdcamera.CCDCamera):
 		#self.connect()
 		camera_properties = self.server.getActiveCameraProperties()
 		for one_property in camera_properties:
-			print one_property, self.server.getProperty(one_property)
+			print(one_property, self.server.getProperty(one_property))
 		#self.disconnect()
 
 	def getProperty(self, name):

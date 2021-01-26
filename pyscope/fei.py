@@ -4,7 +4,7 @@
 # For terms of the license agreement
 # see http://leginon.org
 
-import tem
+from . import tem
 import time
 import sys
 import subprocess
@@ -20,7 +20,7 @@ from pyami import moduleconfig
 # ApertureMechanism not avtivated in Scripting error uses details to contain the list which has the message we need on item index 1. text and message attributes are empty strings.
 
 try:
-	import nidaq
+	from . import nidaq
 except:
 	nidaq = None
 use_nidaq = False
@@ -87,14 +87,15 @@ class Tecnai(tem.TEM):
 		self.tem_constants = comtypes.client.Constants(self.tecnai)
 		try:
 			self.tom = comtypes.client.CreateObject('TEM.Instrument.1')
-		except com_module.COMError, (hr, msg, exc, arg):
-			print 'unable to initialize TOM Moniker interface, %s' % msg
+		except com_module.COMError as xxx_todo_changeme:
+			(hr, msg, exc, arg) = xxx_todo_changeme.args
+			print('unable to initialize TOM Moniker interface, %s' % msg)
 			self.tom = None
 
 		try:
 			self.lowdose = comtypes.client.CreateObject('LDServer.LdSrv')
 		except:
-			print 'unable to initialize low dose interface'
+			print('unable to initialize low dose interface')
 			self.lowdose = None
 
 		try:
@@ -137,15 +138,15 @@ class Tecnai(tem.TEM):
 		for i in range(gauges_obj.Count):
 			g = gauges_obj.Item(i)
 			gauge_map[g.Name] = i
-		for location in gauges_to_try.keys():
+		for location in list(gauges_to_try.keys()):
 			self.pressure_prop[location] = None
 			for name in gauges_to_try[location]:
-				if name in gauge_map.keys():
+				if name in list(gauge_map.keys()):
 					self.pressure_prop[location] = gauge_map[name]
 					break
 			
 	def getFeiConfig(self,optionname,itemname=None):
-		if optionname not in configs.keys():
+		if optionname not in list(configs.keys()):
 			return None
 		if itemname is None:
 			return configs[optionname]
@@ -254,13 +255,13 @@ class Tecnai(tem.TEM):
 		if self.corrected_alpha_stage:
 			# alpha tilt backlash only in one direction
 			alpha_delta_degrees = self.alpha_backlash_delta
-			if 'a' in value.keys():
+			if 'a' in list(value.keys()):
 					axis = 'a'
 					prevalue[axis] = value[axis] - alpha_delta_degrees*3.14159/180.0
 		if prevalue:
 			# set all axes in value
-			for axis in value.keys():
-				if axis not in prevalue.keys():
+			for axis in list(value.keys()):
+				if axis not in list(prevalue.keys()):
 					prevalue[axis] = value[axis]
 					# skip those requiring no further change
 					del value[axis]
@@ -268,8 +269,8 @@ class Tecnai(tem.TEM):
 			time.sleep(0.2)
 		# set all remaining axes in the remaining value
 		if abs(relax) > 1e-9 and prevalue2:
-			for axis in value.keys():
-				if axis not in prevalue2.keys():
+			for axis in list(value.keys()):
+				if axis not in list(prevalue2.keys()):
 					prevalue2[axis] = value[axis]
 					# skip those requiring no further change
 					del value[axis]
@@ -436,7 +437,7 @@ class Tecnai(tem.TEM):
 		if self.normalize_all_after_setting:
 			if self.mag_changed or self.spotsize_changed or self.int_changed:
 				if self.getDebugAll():
-					print 'normalize all'
+					print('normalize all')
 				self.normalizeLens('all')
 		# sleep for intensity change
 		extra_sleep = self.getFeiConfig('camera','extra_protector_sleep_time')
@@ -502,7 +503,7 @@ class Tecnai(tem.TEM):
 				if i < 10:
 					time.sleep(0.5)
 					if self.getDebugAll():
-						print 'retry BeamBlank operation'
+						print('retry BeamBlank operation')
 					self._setBeamBlank(bb)
 					i += 1
 				else:
@@ -550,7 +551,7 @@ class Tecnai(tem.TEM):
 		return value
 		
 	def setStigmator(self, stigs, relative = 'absolute'):
-		for key in stigs.keys():
+		for key in list(stigs.keys()):
 			if key == 'condenser':
 				stigmator = self.tecnai.Illumination.CondenserStigmator
 			elif key == 'objective':
@@ -707,7 +708,7 @@ class Tecnai(tem.TEM):
 		
 		vec = self.tecnai.Projection.ImageBeamShift
 		d = 0.0
-		for k in vector.keys():
+		for k in list(vector.keys()):
 			temvalue = getattr(vec, k.upper())
 			d += abs(temvalue - vector[k])
 		if d < 1e-9:
@@ -736,7 +737,7 @@ class Tecnai(tem.TEM):
 	def setDiffractionShift(self, vector, relative = 'absolute'):
 		if vector['x'] is None or vector['y'] is None:
 			if self.getDebugAll():
-				print 'diffraction shift not defined. No change.'
+				print('diffraction shift not defined. No change.')
 			return
 		if relative == 'relative':
 			try:
@@ -946,7 +947,7 @@ class Tecnai(tem.TEM):
 		'''
 		mode_id = self.getProjectionSubModeIndex()
 		mode_name = self.getProjectionSubModeName()
-		if mode_id not in self.projection_submodes.keys():
+		if mode_id not in list(self.projection_submodes.keys()):
 			raise ValueError('unknown projection submode')
 		# FEI scopes don't have cases with the same mag in different mode, yet.
 		self.addProjectionSubModeMap(mag, mode_name, mode_id, overwrite=True)
@@ -991,16 +992,16 @@ class Tecnai(tem.TEM):
 				stage_status = self.tecnai.Stage.Status
 				msg = 'stage is at status %d, not ready in %d seconds' % (int(stage_status),int(timeout))
 				if self.getDebugStage():
-					print msg
-					print position_log
+					print(msg)
+					print(position_log)
 					# allow it to go through for now.
 					break
 				else:
 					raise RuntimeError('stage is not going to ready status in %d seconds' % (int(timeout)))
 		if self.getDebugStage() and trials > 0:
-			print datetime.datetime.now()
+			print(datetime.datetime.now())
 			donetime = time.time() - t0
-			print 'took extra %.1f seconds to get to ready status' % (donetime)
+			print('took extra %.1f seconds to get to ready status' % (donetime))
 
 	def _setStagePosition(self, position, relative = 'absolute'):
 		if self.tom is not None and self.column_type=='tecnai':
@@ -1023,12 +1024,12 @@ class Tecnai(tem.TEM):
 
 		axes = 0
 		stage_limits = self.getStageLimits()
-		for key, value in position.items():
+		for key, value in list(position.items()):
 			if use_nidaq and key == 'b':
 				deg = value / 3.14159 * 180.0
 				nidaq.setBeta(deg)
 				continue
-			if key in stage_limits.keys() and (value < stage_limits[key][0] or value > stage_limits[key][1]):
+			if key in list(stage_limits.keys()) and (value < stage_limits[key][0] or value > stage_limits[key][1]):
 				raise ValueError('position %s beyond stage limit at %.2e' % (key, value))
 			setattr(pos, key.upper(), value)
 			axes |= getattr(self.tem_constants, 'axis' + key.upper())
@@ -1043,13 +1044,13 @@ class Tecnai(tem.TEM):
 				self.tecnai.Stage.Goto(pos, axes)
 			else:
 				# Low speed move needs to be done on individual axis
-				for key, value in position.items():
+				for key, value in list(position.items()):
 					single_axis = getattr(self.tem_constants, 'axis' + key.upper())
 					self.tecnai.Stage.GotoWithSpeed(pos, single_axis, self.stage_speed_fraction)
-		except com_module.COMError, e:
+		except com_module.COMError as e:
 			if self.getDebugStage():
-				print datetime.datetime.now()
-				print 'COMError in going to %s' % (position,)
+				print(datetime.datetime.now())
+				print('COMError in going to %s' % (position,))
 			try:
 				# used to parse e into (hr, msg, exc, arg)
 				# but Issue 4794 got 'need more than 3 values to unpack' error'.
@@ -1060,8 +1061,8 @@ class Tecnai(tem.TEM):
 				raise ValueError('COMError in _setStagePosition: %s' % (e,))
 		except:
 			if self.getDebugStage():
-				print datetime.datetime.now()
-				print 'Other error in going to %s' % (position,)
+				print(datetime.datetime.now())
+				print('Other error in going to %s' % (position,))
 			raise RuntimeError('_setStagePosition Unknown error')
 		self.waitForStageReady('after setting %s' % (position,))
 
@@ -1081,22 +1082,22 @@ class Tecnai(tem.TEM):
 		axes = 0
 		stage_limits = self.getStageLimits()
 		tom_axes = {'X':0,'Y':1,'Z':2,'A':3}
-		for key, value in position.items():
+		for key, value in list(position.items()):
 			if use_nidaq and key == 'b':
 				deg = value / 3.14159 * 180.0
 				nidaq.setBeta(deg)
 				continue
-			if key in stage_limits.keys() and (value < stage_limits[key][0] or value > stage_limits[key][1]):
+			if key in list(stage_limits.keys()) and (value < stage_limits[key][0] or value > stage_limits[key][1]):
 				raise ValueError('position %s beyond stage limit at %.2e' % (key, value))
 			setattr(pos, key.upper(), value)
 			axis_I = tom_axes[key.upper()]
 
 			try:
 				self.tom.Stage.GotoWithSpeed(axis_I, getattr(pos,key.upper()))
-			except com_module.COMError, e:
+			except com_module.COMError as e:
 				if self.getDebugStage():
-					print datetime.datetime.now()
-					print 'COMError in going to %s' % (position,)
+					print(datetime.datetime.now())
+					print('COMError in going to %s' % (position,))
 				try:
 					# used to parse e into (hr, msg, exc, arg)
 					# but Issue 4794 got 'need more than 3 values to unpack' error'.
@@ -1107,8 +1108,8 @@ class Tecnai(tem.TEM):
 					raise ValueError('COMError in _setStagePosition: %s' % (e,))
 			except:
 				if self.getDebugStage():
-					print datetime.datetime.now()
-					print 'Other error in going to %s' % (position,)
+					print(datetime.datetime.now())
+					print('Other error in going to %s' % (position,))
 				raise RuntimeError('_setStagePosition Unknown error')
 		self.waitForStageReady('after setting %s' % (position,))
 
@@ -1124,7 +1125,7 @@ class Tecnai(tem.TEM):
 				return 'on'
 			else:
 				return 'off'
-		except com_module.COMError, e:
+		except com_module.COMError as e:
 			# No extended error information, assuming low dose is disabled
 			return 'disabled'
 		except:
@@ -1141,7 +1142,7 @@ class Tecnai(tem.TEM):
 					self.lowdose.LowDoseActive = self.tem_constants.IsOn
 			else:
 				raise ValueError
-		except com_module.COMError, e:
+		except com_module.COMError as e:
 			# No extended error information, assuming low dose is disenabled
 			raise RuntimeError('Low dose is not enabled')
 		except:
@@ -1162,7 +1163,7 @@ class Tecnai(tem.TEM):
 				return 'search'
 			else:
 				return 'unknown'
-		except com_module.COMError, e:
+		except com_module.COMError as e:
 			# No extended error information, assuming low dose is disenabled
 			raise RuntimeError('Low dose is not enabled')
 		except:
@@ -1180,7 +1181,7 @@ class Tecnai(tem.TEM):
 				self.lowdose.LowDoseState = self.tem_constants.eSearch
 			else:
 				raise ValueError
-		except com_module.COMError, e:
+		except com_module.COMError as e:
 			# No extended error information, assuming low dose is disenabled
 			raise RuntimeError('Low dose is not enabled')
 		except:
@@ -1386,11 +1387,11 @@ class Tecnai(tem.TEM):
 	def getHolderType(self):
 		if self.exposure is None:
 			raise RuntimeError('getHolderType requires adaExp')
-		if self.exposure.CurrentSpecimenHolderName == u'No Specimen Holder':
+		if self.exposure.CurrentSpecimenHolderName == 'No Specimen Holder':
 			return 'no holder'
-		elif self.exposure.CurrentSpecimenHolderName == u'Single Tilt':
+		elif self.exposure.CurrentSpecimenHolderName == 'Single Tilt':
 			return 'single tilt'
-		elif self.exposure.CurrentSpecimenHolderName == u'ST Cryo Holder':
+		elif self.exposure.CurrentSpecimenHolderName == 'ST Cryo Holder':
 			return 'cryo'
 		else:
 			return 'unknown'
@@ -1399,11 +1400,11 @@ class Tecnai(tem.TEM):
 		if self.exposure is None:
 			raise RuntimeError('setHolderType requires adaExp')
 		if holdertype == 'no holder':
-			holderstr = u'No Specimen Holder'
+			holderstr = 'No Specimen Holder'
 		elif holdertype == 'single tilt':
-			holderstr = u'Single Tilt'
+			holderstr = 'Single Tilt'
 		elif holdertype == 'cryo':
-			holderstr = u'ST Cryo Holder'
+			holderstr = 'ST Cryo Holder'
 		else:
 			raise ValueError('invalid holder type specified')
 
@@ -1485,7 +1486,7 @@ class Tecnai(tem.TEM):
 
 	def _getGaugePressure(self,location):
 		# value in pascal unit
-		if location not in self.pressure_prop.keys():
+		if location not in list(self.pressure_prop.keys()):
 			raise KeyError
 		if self.pressure_prop[location] is None:
 			return 0.0
@@ -1598,7 +1599,7 @@ class Tecnai(tem.TEM):
 	def runBufferCycle(self):
 		try:
 			self.tecnai.Vacuum.RunBufferCycle()
-		except com_module.COMError, e:
+		except com_module.COMError as e:
 			# No extended error information 
 			raise RuntimeError('runBufferCycle COMError: no extended error information')
 		except:
@@ -1817,7 +1818,7 @@ class Tecnai(tem.TEM):
 		if mechanism_name == 'condenser':
 			# always look up condenser 2 value
 			mechanism_name = 'condenser_2'
-		if mechanism_name not in self.getFeiConfig('aperture').keys():
+		if mechanism_name not in list(self.getFeiConfig('aperture').keys()):
 			return 'unknown'
 		exepath = self.getFeiConfig('aperture','autoit_aperture_selection_exe_path')
 		if exepath and os.path.isfile(exepath):
@@ -1832,7 +1833,7 @@ class Tecnai(tem.TEM):
 
 	def _checkAutoItError(self, error_filename='autoit_error.log'):
 		if not log_path:
-			print 'no log path for autoit error passing'
+			print('no log path for autoit error passing')
 			return
 		errorpath = os.path.join(log_path,error_filename)
 		if not os.path.isfile(errorpath):
@@ -1847,7 +1848,7 @@ class Tecnai(tem.TEM):
 
 	def _getAutoItResult(self, result_filename='autoit_result.log'):
 		if not log_path:
-			print 'no log path for autoit result passing'
+			print('no log path for autoit result passing')
 			return
 		resultpath = os.path.join(log_path,result_filename)
 		if not os.path.isfile(resultpath):

@@ -26,6 +26,6 @@ for line in f:
 	kwargs = eval(kwargs)
 	# call method
 	f = getattr(inst, fname)
-	print fname, args, kwargs
+	print(fname, args, kwargs)
 	f(*args, **kwargs)
-raw_input('enter to quit')
+input('enter to quit')

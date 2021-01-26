@@ -74,7 +74,7 @@ def Kill_Process ( name ) :
 # ***********************************************************************
 if __name__ == "__main__":
   a = GetAllProcesses()
-  print a
+  print(a)
 
   process = 'UPD'
   Kill_Process ( process )

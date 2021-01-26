@@ -7,10 +7,10 @@ def getInstrumentTypeInstance(search_for):
 	instruments = moduleconfig.getConfigured('instruments.cfg')
 	for key in instruments:
 		if search_for.lower() == 'tem':
-			if 'cs' not in instruments[key].keys():
+			if 'cs' not in list(instruments[key].keys()):
 				continue
 		elif search_for.lower() == 'camera':
-			if 'zplane' not in instruments[key].keys():
+			if 'zplane' not in list(instruments[key].keys()):
 				continue
 		else:
 			raise ValueError('Invalid search type: %s' % (search_for,))
@@ -23,5 +23,5 @@ def getInstrumentTypeInstance(search_for):
 		pk = __import__(import_name)
 		mod = getattr(pk, module_name)
 		inst = getattr(mod, class_name)()
-		print 'Loading %s' % (class_name,)
+		print('Loading %s' % (class_name,))
 		return inst

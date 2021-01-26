@@ -11,12 +11,12 @@ if __name__ == '__main__':
 		import pyscope.updatecom
 		pyscope.updatecom.run()
 	except:
-		print 'Failed to update COM'
+		print('Failed to update COM')
 
 	try:
 		import pyscope.tietzping
 		pyscope.tietzping.register()
 	except:
-		print 'Failed to register pyscope.Ping'
+		print('Failed to register pyscope.Ping')
 
 

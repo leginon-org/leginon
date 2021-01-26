@@ -21,7 +21,7 @@ def logwrap(func):
 		log('%s\t%s\t%s' % (func,args,kwargs))
 		try:
 			result = func(*args, **kwargs)
-		except Exception, exc:
+		except Exception as exc:
 			log('EXCEPTION: %s' % (exc,))
 			#raise
 		return result
@@ -103,7 +103,7 @@ class HitachiSocket(object):
 				# string type
 				pass
 		arg_string = ','.join(args)
-		print 'send', arg_string, recv_min_length
+		print('send', arg_string, recv_min_length)
 		self.sendMessage(cmd+' '+arg_string)
 		# Special case without message coming back.
 		if sub_code == 'Stage' and ext_code == 'SpecimenNo':
@@ -154,7 +154,7 @@ class HitachiSocket(object):
 		self.runSetCommand(sub_code,ext_code,list(value_list),type_list, hex_lengths)
 		t0 = time.time()
 		get_ext_code = ext_code
-		if get_ext_code in SET_GET_REPLACEMENTS.keys():
+		if get_ext_code in list(SET_GET_REPLACEMENTS.keys()):
 			get_ext_code = SET_GET_REPLACEMENTS[get_ext_code]
 		while True:
 			result_list = self.runGetCommand(sub_code,get_ext_code,type_list)
@@ -185,7 +185,7 @@ class HitachiSocket(object):
 		self.runSetCommand(sub_code,ext_code,list(value_list),type_list)
 		t0 = time.time()
 		get_ext_code = ext_code
-		if get_ext_code in SET_GET_REPLACEMENTS.keys():
+		if get_ext_code in list(SET_GET_REPLACEMENTS.keys()):
 			get_ext_code = SET_GET_REPLACEMENTS[get_ext_code]
 		while True:
 			result_list = self.runGetCommand(sub_code,get_ext_code,type_list)
@@ -228,27 +228,27 @@ class HitachiSocket(object):
 
 def test1(h):
 		# Stage get in submicron
-		print h.runGetCommand('StageXY', 'Position',['int','int'])
+		print(h.runGetCommand('StageXY', 'Position',['int','int']))
 		# Stage set, non-blocking.  need to monitor for done
 		h.runSetCommand('StageXY', 'Move',[0,0],['int','int'])
 		# Example for getting hexdec numbers and convert to decimal
 		hexdecs = h.runGetCommand('Coil', 'IS',['hexdec','hexdec'])
-		print 'result item0 in decimal:%d' % (int(hexdecs[0],16),)
-		print 'result itme1 in hexdec %s' % (hexdecs[1],)
+		print('result item0 in decimal:%d' % (int(hexdecs[0],16),))
+		print('result itme1 in hexdec %s' % (hexdecs[1],))
 		# Example for sending a hexdec pair with FF as ID for expansion
 		h.runSetCommand('Coil','IS',['FF',hexdecs[1],hexdecs[0]],['str','hexdec','hexdec'])
 
 def test2(h):
-	print h.runSetIntAndWait('Column', 'Magnification', [100000,]) 
+	print(h.runSetIntAndWait('Column', 'Magnification', [100000,])) 
 	time.sleep(2)
-	print h.runSetIntAndWait('Column', 'Magnification', [2000,]) 
+	print(h.runSetIntAndWait('Column', 'Magnification', [2000,])) 
 	time.sleep(2)
 	h.runSetIntAndWait('StageXY', 'Move',[2000,2000])
-	print h.runGetCommand('StageXY', 'Position',['int','int'])
+	print(h.runGetCommand('StageXY', 'Position',['int','int']))
 	time.sleep(2)
 	h.runSetIntAndWait('StageXY', 'Move',[0,0])
-	print h.runGetCommand('StageXY', 'Position',['int','int'])
-	print h.runGetCommand('Column','Mode',['hexdec',])
+	print(h.runGetCommand('StageXY', 'Position',['int','int']))
+	print(h.runGetCommand('Column','Mode',['hexdec',]))
 
 if __name__=='__main__':
 	try:
@@ -256,8 +256,8 @@ if __name__=='__main__':
 		h = HitachiSocket('192.168.10.1',12068)
 		test2(h)
 	except Exception as e:
-		print e
+		print(e)
 		h = HitachiSocket('127.0.0.1',12068)
 		test2(h)
 	finally:
-		raw_input('wait to exit')
+		input('wait to exit')

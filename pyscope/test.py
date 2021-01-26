@@ -4,56 +4,62 @@ import pythoncom
 def testTecnai():
 	try:
 		tecnai = win32com.client.Dispatch('Tecnai.Instrument')
-	except pythoncom.com_error, (hr, msg, exc, arg):
-		print 'Failed to initialize Tecnai interface: %s' % msg
+	except pythoncom.com_error as xxx_todo_changeme1:
+		(hr, msg, exc, arg) = xxx_todo_changeme1.args
+		print('Failed to initialize Tecnai interface: %s' % msg)
 		return
 	else:
-		print 'Initialized Tecnai interface'
+		print('Initialized Tecnai interface')
 
 	try:
 		lowdose = win32com.client.Dispatch('LDServer.LdSrv')
-	except pythoncom.com_error, (hr, msg, exc, arg):
-		print 'Failed to initialize Low Dose interface: %s' % msg
+	except pythoncom.com_error as xxx_todo_changeme2:
+		(hr, msg, exc, arg) = xxx_todo_changeme2.args
+		print('Failed to initialize Low Dose interface: %s' % msg)
 		return
 	else:
-		print 'Initialized Low Dose interface'
+		print('Initialized Low Dose interface')
 
 	try:
 		exposure = win32com.client.Dispatch('adaExp.TAdaExp',
 																				clsctx=pythoncom.CLSCTX_LOCAL_SERVER)
-	except pythoncom.com_error, (hr, msg, exc, arg):
-		print 'Failed to initialize Exposure Adapter: %s' % msg
+	except pythoncom.com_error as xxx_todo_changeme3:
+		(hr, msg, exc, arg) = xxx_todo_changeme3.args
+		print('Failed to initialize Exposure Adapter: %s' % msg)
 		return
 	else:
-		print 'Initialized Exposure Adapter interface'
+		print('Initialized Exposure Adapter interface')
 
-	print 'Tecnai test successful'
+	print('Tecnai test successful')
 
 def testTietz():
 	try:
 		camera = win32com.client.Dispatch('CAMC4.Camera')		
-	except pythoncom.com_error, (hr, msg, exc, arg):
-		print 'Failed to initialize interface CAMC4.Camera: %s' % msg
+	except pythoncom.com_error as xxx_todo_changeme4:
+		(hr, msg, exc, arg) = xxx_todo_changeme4.args
+		print('Failed to initialize interface CAMC4.Camera: %s' % msg)
 		return
 
 	try:
 		ping = win32com.client.Dispatch('pyscope.CAMCCallBack')
-	except pythoncom.com_error, (hr, msg, exc, arg):
-		print 'Failed to initialize interface pyscope.Ping: %s' % msg
+	except pythoncom.com_error as xxx_todo_changeme5:
+		(hr, msg, exc, arg) = xxx_todo_changeme5.args
+		print('Failed to initialize interface pyscope.Ping: %s' % msg)
 		return
 
 	try:
 		hr = camera.RegisterCAMCCallBack(ping, 'EM')
-	except pythoncom.com_error, (hr, msg, exc, arg):
-		print 'Error registering callback COM object: %s' % msg
+	except pythoncom.com_error as xxx_todo_changeme6:
+		(hr, msg, exc, arg) = xxx_todo_changeme6.args
+		print('Error registering callback COM object: %s' % msg)
 		return
 
 	hr = camera.RequestLock()
 	if hr == win32com.client.constants.crDeny:
-		print 'Error locking camera, denied lock'
+		print('Error locking camera, denied lock')
 		return
 	elif hr == win32com.client.constants.crBusy:
-		print 'Error locking camera, camera busy'
+		print('Error locking camera, camera busy')
 		return
 	elif hr == win32com.client.constants.crSucceed:
 		pass
@@ -67,13 +73,14 @@ def testTietz():
 
 	for name, cameratype in cameratypes:
 		cameratype = getattr(win32com.client.constants, cameratype)
-		print name + ':',
+		print(name + ':', end=' ')
 		try:
 			hr = camera.Initialize(cameratype, 0)
-		except pythoncom.com_error, (hr, msg, exc, arg):
-			print 'error initializing camera, %s' % msg
+		except pythoncom.com_error as xxx_todo_changeme:
+			(hr, msg, exc, arg) = xxx_todo_changeme.args
+			print('error initializing camera, %s' % msg)
 		else:
-			print 'camera initialization succeeded'
+			print('camera initialization succeeded')
 
 	camera.UnlockCAMC()
 
@@ -82,31 +89,31 @@ def testGatan():
 	camera = None
 	try:
 		camera = win32com.client.dynamic.Dispatch('TecnaiCCD.GatanCamera')
-	except pythoncom.com_error, e:
+	except pythoncom.com_error as e:
 		pass
 	else:
-		print 'Initialized Gatan interface (.1)'
+		print('Initialized Gatan interface (.1)')
 
 	try:
 		camera = win32com.client.dynamic.Dispatch('TecnaiCCD.GatanCamera.2')
-	except pythoncom.com_error, e:
+	except pythoncom.com_error as e:
 		pass
 	else:
-		print 'Initialized Gatan interface (.2)'
+		print('Initialized Gatan interface (.2)')
 
 	if camera is None:
-		print 'Gatan test failed (unable to initialize interfaces)'
+		print('Gatan test failed (unable to initialize interfaces)')
 		return
 
-	print 'Gatan test successful'
+	print('Gatan test successful')
 
 if __name__ == '__main__':
-	print 'Testing Tecnai...'
+	print('Testing Tecnai...')
 	testTecnai()
-	print 
+	print() 
 	#print 'Testing Tietz...'
 	#testTietz()
 	#print 'Tietz test completed.'
 
-	print 'Testing Gatan...'
+	print('Testing Gatan...')
 	testGatan()

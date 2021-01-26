@@ -1,5 +1,5 @@
 import time
-import loggedmethods
+from . import loggedmethods
 
 class BaseInstrument(object):
 	logged_methods_on = False
@@ -13,7 +13,7 @@ class BaseInstrument(object):
 
 	def initConfig(self):
 		# This import can not be at the module level due to circulated argument
-		import config
+		from . import config
 		self.config_name = config.getNameByClass(self.__class__)
 		if self.config_name is None:
 			raise RuntimeError('%s was not found in your instruments.cfg' % (self.__class__.__name__,))
@@ -40,4 +40,4 @@ class BaseInstrument(object):
 
 	def debug_print(self,message):
 		if self.debug:
-			print 'DEBUG: %s' % (message,)
+			print('DEBUG: %s' % (message,))

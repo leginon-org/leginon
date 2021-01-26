@@ -27,7 +27,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ######################################################################################
 
-from __future__ import print_function
+
 
 import sys
 sys.coinit_flags = 0
@@ -53,7 +53,7 @@ import time
 import logging
 import numpy as np
 
-import ccdcamera
+from . import ccdcamera
 
 log = logging.getLogger(__name__)
 #logging.basicConfig(level=logging.DEBUG, format='%(asctime)s -%(levelname)s - %(message)s')

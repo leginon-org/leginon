@@ -1,12 +1,12 @@
 import sys
-import DECameraClientLib
+from . import DECameraClientLib
 import struct
 import types
 import numpy
 import time
 import pyami.imagefun
 
-import ccdcamera
+from . import ccdcamera
 class DE12(ccdcamera.CCDCamera):
 	name = 'DE12OLD'
 	def __init__(self):
@@ -42,7 +42,7 @@ class DE12(ccdcamera.CCDCamera):
 	def print_props(self):		
 		camera_properties = self.server.getActiveCameraProperties()
 		for one_property in camera_properties:
-			print one_property, self.server.getProperty(one_property)		
+			print(one_property, self.server.getProperty(one_property))		
 
 	def getProperty(self, name):		
 		value = self.server.getProperty(name)
@@ -59,7 +59,7 @@ class DE12(ccdcamera.CCDCamera):
 
 	def setExposureTime(self, ms):
 		seconds = ms / 1000.0
-		print 'SETTING EXPTIME', time.time(), seconds
+		print('SETTING EXPTIME', time.time(), seconds)
 		self.setProperty('Exposure Time (seconds)', seconds)
 
 	def getDictProp(self, name):		
@@ -97,7 +97,7 @@ class DE12(ccdcamera.CCDCamera):
 		if not isinstance(image, numpy.ndarray):
 			raise ValueError('DE12 GetImage did not return array')
 		image = self.finalizeGeometry(image)
-		print 'Pausing, otherwise, no frames name when this returns.'
+		print('Pausing, otherwise, no frames name when this returns.')
 		time.sleep(0.5)
 		return image
 
@@ -178,13 +178,13 @@ class DE12(ccdcamera.CCDCamera):
 	def getUseFrames(self):
 		nsum = self.getProperty('Autosave Sum Frames - Sum Count')
 		first = self.getProperty('Autosave Sum Frames - Ignored Frames')
-		print 'NSUM', nsum
-		print 'FIRST', first
+		print('NSUM', nsum)
+		print('FIRST', first)
 		last = first + nsum
 		ntotal = self.getNumberOfFrames()
 		if last > ntotal:
 			last = ntotal
-		sumframes = range(first,last)
+		sumframes = list(range(first,last))
 		return tuple(sumframes)
 
 	def setUseFrames(self, frames):
@@ -199,8 +199,8 @@ class DE12(ccdcamera.CCDCamera):
 		if nsum > total_frames:
 			nsum = total_frames
 		nsum = int(nsum)
-		print 'NSUM', nsum
-		print 'NSKIP', nskip
+		print('NSUM', nsum)
+		print('NSKIP', nskip)
 		self.setProperty('Autosave Sum Frames - Sum Count', nsum)
 		self.setProperty('Autosave Sum Frames - Ignored Frames', nskip)
 

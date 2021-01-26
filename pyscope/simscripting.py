@@ -35,7 +35,7 @@ class CameraSingleAcquisition(object):
 
 	def Acquire(self):
 		while self.IsActive:
-			print 'waiting for other acquisition to finish'
+			print('waiting for other acquisition to finish')
 			time.sleep(0.2)
 		self.IsActive = True
 		time.sleep(0.5)
@@ -52,7 +52,7 @@ class CameraSingleAcquisition(object):
 		image_obj.AsSafeArray = ar1
 		self.IsActive = False
 		nframes = len(self.CameraSettings.DoseFractionsDefinition.frame_range_list)
-		print 'movie nframes', nframes
+		print('movie nframes', nframes)
 		if nframes > 0:
 			if not os.path.isdir(self.CameraSettings.PathToImageStorage):
 				raise RuntimeError('Intermediate File Path Not exists.')
@@ -82,7 +82,7 @@ class CameraSingleAcquisition(object):
 			time.sleep(0.5)
 			t1 = time.time()
 			if t1-t0 > 10.0:
-				print 'waiting too long'
+				print('waiting too long')
 				break
 		return
 
@@ -130,7 +130,7 @@ class CameraSettings(object):
 		self.Capabilities = Capabilities()
 
 	def CalculateNumberOfFrames(self):
-		print 'calculate',self.ExposureTime, self.base_time
+		print('calculate',self.ExposureTime, self.base_time)
 		# rounding error. int(0.6/0.025) = 23. Multiply by 1000 resolves that.
 		return int(self.ExposureTime*1000 / (self.base_time*1000))
 

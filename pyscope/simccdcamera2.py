@@ -1,5 +1,5 @@
 import copy
-import ccdcamera
+from . import ccdcamera
 import numpy
 from scipy import ndimage
 import random
@@ -7,7 +7,7 @@ random.seed()
 import time
 import math
 import json
-import remote
+from . import remote
 import os
 import glob
 import threading
@@ -22,7 +22,7 @@ FRAME_DIR = '.'
 START_TIME = 11*60+16
 rawtype = numpy.uint32
 frametype = numpy.uint8
-idcounter = itertools.cycle(range(100))
+idcounter = itertools.cycle(list(range(100)))
 
 has_energy_filter = True
 
@@ -103,14 +103,14 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 		return copy.copy(self.binning)
 
 	def setBinning(self, value):
-		for axis in self.binning.keys():
+		for axis in list(self.binning.keys()):
 			try:
 				if value[axis] not in self.getCameraBinnings():
 					raise ValueError('invalid binning')
 			except KeyError:
 				pass
 
-		for axis in self.binning.keys():
+		for axis in list(self.binning.keys()):
 			try:
 				self.binning[axis] = value[axis]
 			except KeyError:
@@ -120,14 +120,14 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 		return copy.copy(self.offset)
 
 	def setOffset(self, value):
-		for axis in self.offset.keys():
+		for axis in list(self.offset.keys()):
 			try:
 				if value[axis] < 0 or value[axis] >= self.getCameraSize()[axis]:
 					raise ValueError('invalid offset')
 			except KeyError:
 				pass
 
-		for axis in self.offset.keys():
+		for axis in list(self.offset.keys()):
 			try:
 				self.offset[axis] = value[axis]
 			except KeyError:
@@ -137,14 +137,14 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 		return copy.copy(self.dimension)
 
 	def setDimension(self, value):
-		for axis in self.dimension.keys():
+		for axis in list(self.dimension.keys()):
 			try:
 				if value[axis] < 1 or value[axis] > self.getCameraSize()[axis]:
 					raise ValueError('invalid dimension')
 			except KeyError:
 				pass
 
-		for axis in self.dimension.keys():
+		for axis in list(self.dimension.keys()):
 			try:
 				self.dimension[axis] = value[axis]
 			except KeyError:
@@ -465,13 +465,13 @@ class SimFrameCamera(SimCCDCamera):
 					useframes.append(f)
 		else:
 			# use all frames in final image
-			useframes = range(nframes)
+			useframes = list(range(nframes))
 		self.useframes = useframes
 
 		self.debug_print( 'SAVERAWFRAMES %s' % (self.save_frames,))
 		if self.save_frames:
 			self.rawframesname = time.strftime('frames_%Y%m%d_%H%M%S')
-			self.rawframesname += '_%02d' % (idcounter.next(),)
+			self.rawframesname += '_%02d' % (next(idcounter),)
 		else:
 			return self.getSimImage(shape)
 		# won't be here if not saving frames
@@ -806,21 +806,21 @@ class SimK3Camera(SimFrameCamera):
 			endx = self.dimension['x'] + startx
 			endy = self.dimension['y'] + starty
 			image = image[starty:endy,startx:endx]
-			print 'cropped', image.shape
+			print('cropped', image.shape)
 		return image
 
 	def _modifyImageShape(self, image):
-		print 'recieved', image.shape
+		print('recieved', image.shape)
 		# TODO: Found image shape returned incorrectly in simulation.
 		# Leave this here for now.
 		if self.acqparams['width']*self.acqparams['height'] != image.shape[0]*image.shape[1]:
-			print 'ERROR: image not in the right shape'
+			print('ERROR: image not in the right shape')
 			return image
 		else:
 			# simulator binned image when saving frames has wrong shape
 			if self.acqparams['width'] != image.shape[1]:
 				image = image.reshape(self.acqparams['height'],self.acqparams['width'])
-				print 'WARNING: image reshaped', image.shape
+				print('WARNING: image reshaped', image.shape)
 		# K3 can not bin more than 2. Bin it here.
 		added_binning = self.binning['x'] / self.acq_binning
 		if added_binning > 1:

@@ -75,6 +75,6 @@ if __name__=='__main__':
 	app.scaleMap({'x':512,'y':512})
 	app.cropMap(offset={'x':0,'y':0},dimension={'x':512,'y':512})
 	app.getDefects()
-	print 'bad rows:',app.linerows
-	print 'bad cols:',app.linecols
-	print 'bad pixels:',app.points
+	print('bad rows:',app.linerows)
+	print('bad cols:',app.linecols)
+	print('bad pixels:',app.points)

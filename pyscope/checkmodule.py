@@ -13,7 +13,7 @@ def colorString(text, fg=None, bg=None):
 	}
 	if fg is None:
 		return text
-	if type(fg) in (types.TupleType, types.ListType):
+	if type(fg) in (tuple, list):
 		fg, bg = fg
 	if not fg:
 		return text
@@ -49,18 +49,18 @@ class TestInstrument(object):
 	def chooseInstrument(self, instrument_classes):
 		for instr_class in instrument_classes:
 			class_name = instr_class.__name__
-			answer = raw_input('Is %s the class to test ? (Y/N)' % class_name)
+			answer = input('Is %s the class to test ? (Y/N)' % class_name)
 			if answer.upper() == 'Y':
 				f = instr_class()
 				return f
-		print 'Nothing is chosen'
+		print('Nothing is chosen')
 		self.waitToClose()
 
 	def logNotOK(self, method_name, e):
 			message = '%s: %s' % (e.__class__.__name__, e)
 			self.not_ok_methods[method_name] = message
-			print colorString(' [NOT OK]','red')
-			print '    '+message
+			print(colorString(' [NOT OK]','red'))
+			print('    '+message)
 
 	def logOK(self, method_name, result):
 			if isinstance(result,type(numpy.ones((1,1)))):
@@ -70,22 +70,22 @@ class TestInstrument(object):
 			else:
 				message = ''
 			self.ok_methods[method_name]= message
-			print colorString(' [OK]')
+			print(colorString(' [OK]'))
 			if message:
-				print '    ',message
+				print('    ',message)
 
 	def test(self, method_name, *args):
 		try:
 			func = getattr(self.inst,method_name)
-			print 'Running method %s with args %s' % (method_name, args),
+			print('Running method %s with args %s' % (method_name, args), end=' ')
 			result = func(*args)
 			self.logOK(method_name, result)
-		except Exception, e:
+		except Exception as e:
 			self.logNotOK(method_name, e)
 
 	def waitToClose(self):
-		print '----Finished-----'
-		raw_input('Hit any key to end')
+		print('----Finished-----')
+		input('Hit any key to end')
 		sys.exit()
 
 if __name__=='__main__':

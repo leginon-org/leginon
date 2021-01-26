@@ -12,10 +12,10 @@ To start client:
 In these test cases, port number is fixed: 55555
 '''
 
-import SocketServer
+import socketserver
 import socket
-import config
-import cPickle
+from . import config
+import pickle
 import pyscope.tem
 import pyscope.ccdcamera
 import traceback
@@ -96,14 +96,14 @@ class CallResponse(InstrumentData):
 class PickleHandler(object):
 	'define self.rfile and self.wfile in subclass'
 	def readObject(self):
-		obj = cPickle.load(self.rfile)
+		obj = pickle.load(self.rfile)
 		return obj
 
 	def writeObject(self, obj):
-		cPickle.dump(obj, self.wfile)
+		pickle.dump(obj, self.wfile)
 		self.wfile.flush()
 
-class PickleRequestHandler(SocketServer.StreamRequestHandler, PickleHandler):
+class PickleRequestHandler(socketserver.StreamRequestHandler, PickleHandler):
 	def handle(self):
 		request_object = self.readObject()
 		response_object = self.handle_object(request_object)
@@ -170,11 +170,11 @@ class InstrumentRequestHandler(PickleRequestHandler):
 
 		## The following cases reject requested status
 		if newstatus not in ('controller', 'observer', 'logout'):
-			print 'REJECT', login, newstatus
+			print('REJECT', login, newstatus)
 			## unknown status
 			newstatus = oldstatus
 		elif newstatus == 'controller' and old_controller is not None:
-			print 'REJECT', login, newstatus
+			print('REJECT', login, newstatus)
 			## reject controller request if already have a controller
 			newstatus = oldstatus
 
@@ -182,22 +182,22 @@ class InstrumentRequestHandler(PickleRequestHandler):
 		if newstatus == 'controller':
 			## New controller
 			self.server.controller = login
-			print 'NEW CONTROLLER', login
+			print('NEW CONTROLLER', login)
 		elif oldstatus == 'controller':
 			## Was controller, but not anymore
 			self.server.controller = None
-			print 'QUIT CONTROLLER', login
+			print('QUIT CONTROLLER', login)
 
 		## update server.clients and generate response
 		if newstatus == 'logout':
 			if login in server_clients:
 				del server_clients[login]
-			print 'LOGOUT', login
+			print('LOGOUT', login)
 		else:
 			if login not in server_clients:
 				server_clients[login] = {}
 			server_clients[login]['status'] = newstatus
-			print 'STATUS', login, newstatus
+			print('STATUS', login, newstatus)
 		response = LoginResponse(status=newstatus)
 		return response
 
@@ -222,7 +222,7 @@ class InstrumentRequestHandler(PickleRequestHandler):
 	def handle_set(self, request):
 		instrument = self.instruments[request.instrument]
 		response = SetResponse(request.instrument)
-		for name, value in request.items():
+		for name, value in list(request.items()):
 			attr = 'set' + name
 			try:
 				func = getattr(instrument, attr)
@@ -243,10 +243,10 @@ class InstrumentRequestHandler(PickleRequestHandler):
 			result = HandlerError()
 		response = CallResponse(request.instrument, result)
 
-class Server(SocketServer.TCPServer):
+class Server(socketserver.TCPServer):
 	allow_reuse_address = True
 	def __init__(self, *args, **kwargs):
-		SocketServer.TCPServer.__init__(self, *args, **kwargs)
+		socketserver.TCPServer.__init__(self, *args, **kwargs)
 		self.instruments = Instruments()
 		self.clients = {}
 		self.controller = None
@@ -255,12 +255,12 @@ class Instruments(dict):
 	'''This instantiates all configured instruments'''
 	def __init__(self):
 		dict.__init__(self)
-		for name,cls in config.getConfigured().items():
+		for name,cls in list(config.getConfigured().items()):
 			self[name] = cls()
 
 	def getCapabilities(self):
 		caps = {}
-		for name, instrument in self.items():
+		for name, instrument in list(self.items()):
 			caps[name] = {}
 			if isinstance(instrument, pyscope.tem.TEM):
 				inst_type = 'TEM'
@@ -312,7 +312,7 @@ class Client(PickleHandler):
 		req = LoginRequest('logout')
 		response = self.doRequest(req)
 		if response.status != req.status:
-			print 'AAAAAAAAAAAAAAAAA'
+			print('AAAAAAAAAAAAAAAAA')
 			raise Exception('unable to log out')
 
 	def getCapabilities(self):
@@ -353,16 +353,16 @@ if __name__ == '__main__':
 		else:
 			host = ''
 		c = Client(login, status, host)
-		print ''
-		print c.getCapabilities()
-		print ''
-		print c.set('Sim TEM', {'StagePosition': {'x':0.0005}})
-		print ''
-		print c.get('Sim TEM', ['StagePosition'])
-		print ''
-		print c.get('Sim TEM', ['StagePosition','SpotSize','dummy'])
-		print ''
-		print c.call('Sim TEM', 'resetDefocus')
-		print ''
+		print('')
+		print(c.getCapabilities())
+		print('')
+		print(c.set('Sim TEM', {'StagePosition': {'x':0.0005}}))
+		print('')
+		print(c.get('Sim TEM', ['StagePosition']))
+		print('')
+		print(c.get('Sim TEM', ['StagePosition','SpotSize','dummy']))
+		print('')
+		print(c.call('Sim TEM', 'resetDefocus'))
+		print('')
 		import time
 		time.sleep(2)

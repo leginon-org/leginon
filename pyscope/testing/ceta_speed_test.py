@@ -14,6 +14,6 @@ for t in exposure_time_ms:
 	for j in range(5):
 		t1 = time.time()
 		c.acqman.Acquire()
-		print t,t1
-raw_input('press return key to quit')
+		print(t,t1)
+input('press return key to quit')
 

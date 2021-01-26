@@ -6,7 +6,7 @@
 #       see  http://leginon.org
 #
 
-import config
+from . import config
 
 temorder = []
 tems = {}

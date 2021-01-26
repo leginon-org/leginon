@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import ccdcamera
+from . import ccdcamera
 import time
 import os
 import shutil
@@ -17,7 +17,7 @@ class EMMENUScriptingConnection(object):
 import numpy
 
 if SIMULATION:
-	import simscripting
+	from . import simscripting
 	connection = simscripting.Connection()
 else:
 	import comtypes
@@ -74,7 +74,7 @@ class EmMenuF416(ccdcamera.CCDCamera):
 			return ccdcamera.CCDCamera.__getattribute__(self, name)
 
 	def getTvipsConfig(self,optionname,itemname=None):
-		if optionname not in configs.keys():
+		if optionname not in list(configs.keys()):
 			return None
 		if itemname is None:
 			return configs[optionname]
@@ -133,7 +133,7 @@ class EmMenuF416(ccdcamera.CCDCamera):
 		return self.vp1.SelectedCamera
 
 	def _getConfigObject(self, name):
-		print(self.instr)
+		print((self.instr))
 		for c in range(self.instr.CameraConfigurations.Count):
 			if self.instr.CameraConfigurations.Item(c+1).Name == name:
 				return self.instr.CameraConfigurations.Item(c+1)
@@ -268,15 +268,15 @@ class EmMenuF416(ccdcamera.CCDCamera):
 			# configurations must be updated with these settings.
 			self.instr.CameraConfigurations.Update()
 			print('configurations updated')
-		except Exception, e:
+		except Exception as e:
 			if self.getDebugCamera():
-				print 'Camera setup',e
+				print('Camera setup',e)
 			raise RuntimeError('Error setting camera parameters: %s' % (e,))
 
 		t0 = time.time()
 
 		if self.getDebugCamera():
-			print 'done waiting before acquire'
+			print('done waiting before acquire')
 		retry = False
 		reason = ''
 		try:
@@ -284,19 +284,19 @@ class EmMenuF416(ccdcamera.CCDCamera):
 			im = self.instr.EMImages.Item(1)
 			t1 = time.time()
 			self.exposure_timestamp = (t1 + t0) / 2.0
-		except Exception, e:
+		except Exception as e:
 			if self.getDebugCamera():
-				print 'Camera acquire:',e
-				print self.camera_settings.ExposureTime
+				print('Camera acquire:',e)
+				print(self.camera_settings.ExposureTime)
 			raise RuntimeError('Error camera acquiring: %s' % (e,))
 		try:
 			arr = numpy.array(im.GetDataConvertedAsLong())
-		except Exception, e:
+		except Exception as e:
 			if self.getDebugCamera():
-				print 'Camera array:',e
+				print('Camera array:',e)
 			raise RuntimeError('Camera Error in getting array: %s' % (e,))
 		if self.getDebugCamera():
-			print 'got arr and to modify'
+			print('got arr and to modify')
 		arr = self.modifyImage(arr)
 		return arr
 
@@ -329,7 +329,7 @@ class EmMenuF416(ccdcamera.CCDCamera):
 						value = v_string
 			if '.' in key:
 				bits = key.split('.')
-				if bits[0] not in mdict.keys():
+				if bits[0] not in list(mdict.keys()):
 					mdict[bits[0]]={}
 				mdict[bits[0]][bits[1]]=value
 			else:
@@ -379,10 +379,10 @@ class EmMenuF416(ccdcamera.CCDCamera):
 			self.custom_setup()
 			# configurations must be updated with these settings.
 			self.instr.CameraConfigurations.Update()
-		except Exception, e:
+		except Exception as e:
 			self.movie_aborted = True
 			if self.getDebugCamera():
-				print 'Camera setup',e
+				print('Camera setup',e)
 			raise RuntimeError('Error setting camera parameters: %s' % (e,))
 		recorder_path = os.path.join(self.getRecorderDir(),self.getRecorderFilename())
 		if os.path.isfile(recorder_path):
@@ -406,7 +406,7 @@ class EmMenuF416(ccdcamera.CCDCamera):
 		for f in files:
 			shutil.move(f,new_path)
 		self.series_length = tvips.readHeaderFromFile(new_path)
-		print 'movie name: %s' % filename
+		print('movie name: %s' % filename)
 
 class EmMenuXF416E_GPU(EmMenuF416):
 	name = 'TVIPS-XF416'

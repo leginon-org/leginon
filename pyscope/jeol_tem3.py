@@ -5,8 +5,8 @@ import sys
 import pywintypes
 import time
 import ToTEM
-import gatan
-import tem
+from . import gatan
+from . import tem
 
 """
 The file ToTEM.pyd is required, which is the exactly same ToTEM.dll but changed file extension to .pyd for python.  
@@ -168,7 +168,7 @@ class Jeol(tem.TEM):
 
 	def getCCDPixelCal(self):
 		for mag in self.magTable:
-			print mag['up'], ' : ',mag['down'], ' : ',  self.CCD_PIXEL_SIZE / mag['up'], ' : ', mag['up']
+			print(mag['up'], ' : ',mag['down'], ' : ',  self.CCD_PIXEL_SIZE / mag['up'], ' : ', mag['up'])
 			
 	def toJeol(self, val):
 		return self.ZERO + int(round(self.SCALE_FACTOR * val))
@@ -189,7 +189,7 @@ class Jeol(tem.TEM):
 	def initializeJeol(self):
 		# 1. checking the communication to microscope
 		if ToTEM.GetCheckMicroscope() != 0:
-			print 'Communication Error: Jeol 3100 is not ready to serve.' 
+			print('Communication Error: Jeol 3100 is not ready to serve.') 
 			return
 			
 		# 2.1 setting the mag mode LowMag and defining low mag focus for the future defocus
@@ -205,7 +205,7 @@ class Jeol(tem.TEM):
 		ToTEM.SetOLCoarse(self.theObjectLensCoarse)
 		self.theFocusMAG1 = self.theObjectLensFine + (self.theObjectLensCoarse * 32)
 		
-		print 'Jeol is MAG1 mode and focus is defined for the future defocus.'
+		print('Jeol is MAG1 mode and focus is defined for the future defocus.')
 		
 		# 4. initializing screen position as 'up'
 		ToTEM.SetScreen(1)
@@ -270,7 +270,7 @@ class Jeol(tem.TEM):
 		return 0
   
  	def getHighTensionStates(self):
- 		print 'high tension:', 'on'
+ 		print('high tension:', 'on')
   		return ['off', 'on', 'disabled']
 
 	def getHighTension(self):
@@ -328,7 +328,7 @@ class Jeol(tem.TEM):
 				} 
     
 	def setStigmator(self, stigs, relative = "absolute"):
-		for key in stigs.keys():
+		for key in list(stigs.keys()):
 			stigmators = self.getStigmator()
 			if key == "condenser":
 				stigmator = stigmators["condenser"]
@@ -401,7 +401,7 @@ class Jeol(tem.TEM):
 		tilt_x = int(round(vector['x'] / self.BEAMTILT_FACTOR_X)) + self.BEAMTILT_ORIGIN_X
 		tilt_y = int(round(vector['y'] / self.BEAMTILT_FACTOR_Y)) + self.BEAMTILT_ORIGIN_Y
 		
-		print ">>>>>>>>>>>>>>>>> Set Beam Tilt : (", tilt_x, tilt_y, ")"
+		print(">>>>>>>>>>>>>>>>> Set Beam Tilt : (", tilt_x, tilt_y, ")")
 		
 		try:
 			ToTEM.SetBeamTilt(tilt_x, tilt_y)
@@ -448,7 +448,7 @@ class Jeol(tem.TEM):
 			x_shift = int(round(shift["x"] / self.BEAMSHIFT_FACTOR_X))
 			y_shift = int(round(shift["y"] / self.BEAMSHIFT_FACTOR_Y))
 		
-		print "beam shift", x_shift, y_shift
+		print("beam shift", x_shift, y_shift)
 	
 		try:
 			ToTEM.SetBeamShift(x_shift + self.BEAMSHIFT_ORIGIN_X, y_shift + self.BEAMSHIFT_ORIGIN_Y)
@@ -507,8 +507,8 @@ class Jeol(tem.TEM):
 			y_shift = int(round(shift['y'] / self.IMAGESHIFT_FACTOR_Y))
 			ToTEM.SetImageShift1(x_shift + self.IMAGESHIFT_ORIGIN_X, y_shift + self.IMAGESHIFT_ORIGIN_Y)
 		
-		print "set image shift (leginon): ", shift['x'], shift['y']
-		print "set image shift (jeol): ", x_shift, y_shift
+		print("set image shift (leginon): ", shift['x'], shift['y'])
+		print("set image shift (jeol): ", x_shift, y_shift)
           
 	def getDefocus(self):
 		if self.theMagMode == self.LowMAG:
@@ -532,7 +532,7 @@ class Jeol(tem.TEM):
 				focus = self.theFocusMAG1
 				focus_coarse = int(focus / 32)
 				focus_fine = focus - (focus_coarse * 32)
-				print 'focus coarse:', focus_coarse, 'fine:', focus_fine
+				print('focus coarse:', focus_coarse, 'fine:', focus_fine)
 				ToTEM.SetOLCoarse(focus_coarse)
 				ToTEM.SetOLFine(focus_fine)
 			else:
@@ -544,7 +544,7 @@ class Jeol(tem.TEM):
 		elif relative == 'absolute':
 			pass
 
-		print self.theMagMode
+		print(self.theMagMode)
 		
 		if self.theMagMode == self.LowMAG:
 			defocus_steps = int(round(defocus / 0.00000001))
@@ -554,7 +554,7 @@ class Jeol(tem.TEM):
 			focus = self.theFocusMAG1 + defocus_steps
 			focus_coarse = int(focus / 32)
 			focus_fine = focus - (focus_coarse * 32)
-			print 'focus coarse:', focus_coarse, 'fine:', focus_fine
+			print('focus coarse:', focus_coarse, 'fine:', focus_fine)
 			ToTEM.SetOLCoarse(focus_coarse)
 			ToTEM.SetOLFine(focus_fine)
 		else:
@@ -581,7 +581,7 @@ class Jeol(tem.TEM):
 	
 		mag_value = ToTEM.GetMagnification()
 		
-		print mag_value 
+		print(mag_value) 
 		
 		for mag in self.magTable:
 			if mag['down'] == mag_value:
@@ -626,7 +626,7 @@ class Jeol(tem.TEM):
 				delta = abs(position[axis] - current[axis])
 				if delta > self.minimum_stage[axis]:
 					bigenough[axis] = position[axis]
-		print bigenough
+		print(bigenough)
 		return bigenough
 	
 	def getStagePosition(self):

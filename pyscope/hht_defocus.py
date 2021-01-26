@@ -9,8 +9,8 @@ try:
 	h = instrumenttype.getInstrumentTypeInstance(search_for)
 	if h.__class__.__name__ not in ('Hitachi','HT7800'):
 		raise ValueError("TEM %s is not of Hitachi subclass" % h.__class__.__name__)
-except Exception, e:
-	print "Error", e
+except Exception as e:
+	print("Error", e)
 	sys.exit(1)
 
 focus_offset_files = hitachi.configs['defocus']['focus_offset_path']
@@ -21,7 +21,7 @@ except (RuntimeError,IOError):
 	pass
 
 if h.zero_defocus_current:
-	answer = raw_input('Aready has focus_offset files. Do you really want to redo this ? Y/N/y/n ')
+	answer = input('Aready has focus_offset files. Do you really want to redo this ? Y/N/y/n ')
 	if 'n' in answer.lower():
 		sys.exit(0)
 
@@ -51,7 +51,7 @@ def saveFocusOffset(tem, submode):
 p00 = h.getProbeMode()
 s00 = h.getProjectionSubModeFromProbeMode(p00)
 m00 = h.getMagnification()
-print 'probemodes', h.getProbeModes()
+print('probemodes', h.getProbeModes())
 for probe in h.getProbeModes():
 	submode = h.getProjectionSubModeFromProbeMode(probe)
 	h.setProbeMode(probe)
@@ -59,9 +59,9 @@ for probe in h.getProbeModes():
 	#h._setProjectionSubMode(submode)
 	mags = h.submode_mags[submode]
 	h.setMagnification(mags[0])
-	print 'Set to %d of projection submode %s' % (mags[0], submode)
+	print('Set to %d of projection submode %s' % (mags[0], submode))
 	try:
-		raw_input('Set a magnification in %s where defocus is zero as reference and hit return. Ctrl-c to exit' % (submode,))
+		input('Set a magnification in %s where defocus is zero as reference and hit return. Ctrl-c to exit' % (submode,))
 		new_submode = h.getProjectionSubModeName()
 		if new_submode != submode:
 			KeyboardInterrupt('submode changed to %s. Can not proceed' % new_submode)

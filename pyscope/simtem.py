@@ -6,7 +6,7 @@
 
 import copy
 import math
-import tem
+from . import tem
 import threading
 import time
 import json
@@ -15,7 +15,7 @@ import os
 import itertools
 
 try:
-	import nidaq
+	from . import nidaq
 except:
 	nidaq = None
 
@@ -91,7 +91,7 @@ class SimTEM(tem.TEM):
 				},
 		}
 
-		self.spot_sizes = range(1, 11)
+		self.spot_sizes = list(range(1, 11))
 		self.spot_size = self.spot_sizes[0]
 
 		self.beam_tilt = {'x': 0.0, 'y': 0.0}
@@ -152,7 +152,7 @@ class SimTEM(tem.TEM):
 
 	def printStageDebug(self,msg):
 		if STAGE_DEBUG:
-			print msg
+			print(msg)
 
 	def resetRefrigerant(self):
 		self.autofiller_busy = False
@@ -191,7 +191,7 @@ class SimTEM(tem.TEM):
 		return copy.copy(self.stage_position)
 
 	def _setStagePosition(self,value):
-		keys = value.keys()
+		keys = list(value.keys())
 		keys.sort()
 		for axis in keys:
 				self.printStageDebug('%s: %s' % (axis, value[axis]))
@@ -223,7 +223,7 @@ class SimTEM(tem.TEM):
 			return self.stage_speed_fraction * self.stage_top_speed
 
 	def setStagePosition(self, value):
-		self.printStageDebug(value.keys())
+		self.printStageDebug(list(value.keys()))
 		value = self.checkStagePosition(value)
 		for axis in self.stage_axes:
 			if axis == 'b':
@@ -238,12 +238,12 @@ class SimTEM(tem.TEM):
 				except KeyError:
 					pass
 
-		for axis in value.keys():
+		for axis in list(value.keys()):
 			if axis == 'b' and value['b'] is not None:
 				try:
 					nidaq.setBeta(value['b'])
 				except:
-					print 'exception, beta not set'
+					print('exception, beta not set')
 		# calculate pre-position
 		prevalue = {}
 		prevalue2 = {}
@@ -261,13 +261,13 @@ class SimTEM(tem.TEM):
 		if self.corrected_alpha_stage: 
 			# alpha tilt backlash only in one direction
 			alpha_delta_degrees = self.alpha_backlash_delta
-			if 'a' in value.keys():
+			if 'a' in list(value.keys()):
 					axis = 'a'
 					prevalue[axis] = value[axis] - alpha_delta_degrees*3.14159/180.0
 		if prevalue:
 			# set all axes in prevalue
-			for axis in value.keys():
-				if axis not in prevalue.keys():
+			for axis in list(value.keys()):
+				if axis not in list(prevalue.keys()):
 					prevalue[axis] = value[axis]
 					del value[axis]
 			self._setStagePosition(prevalue)
@@ -276,7 +276,7 @@ class SimTEM(tem.TEM):
 			self._setStagePosition(prevalue2)
 			time.sleep(0.2)
 		if self.stage_speed_fraction < 1.0:
-			if 'a' in value.keys():
+			if 'a' in list(value.keys()):
 				alpha_delta = math.degrees(abs(value['a']-stagenow['a']))
 				move_time = alpha_delta / (self.stage_speed_fraction*self.stage_top_speed)
 				time.sleep(max(move_time,0.2))
@@ -299,8 +299,8 @@ class SimTEM(tem.TEM):
 		return copy.deepcopy(self.stigmators)
 		
 	def setStigmator(self, value):
-		for key in self.stigmators.keys():
-			for axis in self.stigmators[key].keys():
+		for key in list(self.stigmators.keys()):
+			for axis in list(self.stigmators[key].keys()):
 				try:
 					self.stigmators[key][axis] = value[key][axis]
 				except KeyError:
@@ -318,7 +318,7 @@ class SimTEM(tem.TEM):
 		return copy.copy(self.beam_tilt)
 	
 	def setBeamTilt(self, value):
-		for axis in self.beam_tilt.keys():
+		for axis in list(self.beam_tilt.keys()):
 			try:
 				self.beam_tilt[axis] = value[axis]
 			except KeyError:
@@ -328,7 +328,7 @@ class SimTEM(tem.TEM):
 		return copy.copy(self.beam_shift)
 
 	def setBeamShift(self, value):
-		for axis in self.beam_shift.keys():
+		for axis in list(self.beam_shift.keys()):
 			try:
 				self.beam_shift[axis] = value[axis]
 			except KeyError:
@@ -338,7 +338,7 @@ class SimTEM(tem.TEM):
 		return copy.copy(self.diffraction_shift)
 
 	def setDiffractionShift(self, value):
-		for axis in self.diffraction_shift.keys():
+		for axis in list(self.diffraction_shift.keys()):
 			try:
 				self.diffraction_shift[axis] = value[axis]
 			except KeyError:
@@ -348,7 +348,7 @@ class SimTEM(tem.TEM):
 		return copy.copy(self.image_shift)
 	
 	def setImageShift(self, value):
-		for axis in self.image_shift.keys():
+		for axis in list(self.image_shift.keys()):
 			try:
 				self.image_shift[axis] = value[axis]
 			except KeyError:
@@ -358,7 +358,7 @@ class SimTEM(tem.TEM):
 		return copy.copy(self.raw_image_shift)
 
 	def setRawImageShift(self, value):
-		for axis in self.raw_image_shift.keys():
+		for axis in list(self.raw_image_shift.keys()):
 			try:
 				self.raw_image_shift[axis] = value[axis]
 			except KeyError:
@@ -515,7 +515,7 @@ class SimTEM(tem.TEM):
 			level = self.level0
 		else:
 			level = self.level1
-		print id, level
+		print(id, level)
 		return level
 
 	def hasAutoFiller(self):
@@ -544,23 +544,23 @@ class SimTEM(tem.TEM):
 			self.level0 -= 11
 			self.level1 -= 11
 			if self.level1 <= 0:
-				print 'empty col'
+				print('empty col')
 			self.level0 = max(self.level0,0.0)
 			self.level1 = max(self.level1,0.0)
-			print 'using', self.level0, self.level1
+			print('using', self.level0, self.level1)
 			time.sleep(4)
 
 	def ventRefrigerant(self):
 		self.level0 -= 10
 		self.level1 -= 10
-		print 'venting', self.level0, self.level1
+		print('venting', self.level0, self.level1)
 		time.sleep(2)
 
 	def addRefrigerant(self,cycle):
 		for i in range(cycle):
 			self.level0 += 20
 			self.level1 += 20
-			print 'adding', self.level0, self.level1
+			print('adding', self.level0, self.level1)
 			time.sleep(2)
 
 	def getAutoFillerRemainingTime(self):
@@ -634,7 +634,7 @@ class SimTEM(tem.TEM):
 		return self.beamstop_position
 
 	def setBeamstopPosition(self, value):
-		print 'beamstop set to %s' % (value,)
+		print('beamstop set to %s' % (value,))
 		self.beamstop_position = value
 
 class SimTEM300(SimTEM):

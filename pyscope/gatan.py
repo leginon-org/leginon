@@ -6,7 +6,7 @@
 #	   see  http://leginon.org
 #
 
-import ccdcamera
+from . import ccdcamera
 import sys
 import numpy
 import time
@@ -19,7 +19,7 @@ try:
 	com_module = 'comtypes'
 	client_module = comtypes.client
 except ImportError:
-	print 'comarray no longer available. Please install comtypes'
+	print('comarray no longer available. Please install comtypes')
 	import pythoncom
 	import win32com.client
 	import comarray
@@ -109,7 +109,7 @@ class Gatan(ccdcamera.CCDCamera):
 
 	def dictToInt(self, d):
 		new_d = {}
-		for key, value in d.items():
+		for key, value in list(d.items()):
 			new_d[key] = int(value)
 		return new_d
 

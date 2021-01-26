@@ -38,7 +38,7 @@ COARSE_SCALE = 32
 
 def debug_print(message):
 	if DEBUG:
-		print message
+		print(message)
 
 def toJeol(val):
 	return ZERO + int(round(SCALE_FACTOR * val))
@@ -170,7 +170,7 @@ class Jeol(tem.TEM):
 						# PLA shift shown at specimen depends on magnification
 						scaledict = value[mode_subname].copy()
 						basemag = self.getJeolConfig(optionname,key+'_cal_mag')[mode_subname]
-						for axis in scale.keys():
+						for axis in list(scale.keys()):
 							# This is an approximation since defocus will change the ratio
 							scaledict[axis] = scaledict[axis] / (float(mag) / basemag)
 						scale = scaledict.copy()
@@ -240,10 +240,10 @@ class Jeol(tem.TEM):
 		if not self.submode_mags:
 			for m in self.projection_submode_map:
 				v = self.projection_submode_map[m]
-				if v[1] not in self.submode_mags.keys():
+				if v[1] not in list(self.submode_mags.keys()):
 					self.submode_mags[v[1]] = []
 				self.submode_mags[v[1]].append(m)
-			map((lambda x: self.submode_mags[x].sort()),self.submode_mags.keys())
+			list(map((lambda x: self.submode_mags[x].sort()),list(self.submode_mags.keys())))
 
 	def normalizeLens(self, lens = "all"):
 		pass
@@ -377,7 +377,7 @@ class Jeol(tem.TEM):
 			"diffraction": {"x": toLeginon(d_x), "y": toLeginon(d_y)}} 
  
 	def setStigmator(self, stigs, relative = "absolute"):
-		for key in stigs.keys():
+		for key in list(stigs.keys()):
 			stigmators = self.getStigmator()
 			if key == "condenser":
 				stigmator = stigmators["condenser"]
@@ -434,7 +434,7 @@ class Jeol(tem.TEM):
 		raw={}
 		out={}
 		raw['x'], raw['y'], result = self.def3.GetCLA2()
-		for axis in raw.keys():
+		for axis in list(raw.keys()):
 			out[axis] = (raw[axis] - neutral[axis])*scale[axis]
 		return out
 
@@ -444,17 +444,17 @@ class Jeol(tem.TEM):
 		current_tilt = self.getBeamTilt()
 		tilt = current_tilt.copy()
 		if relative == 'relative':
-			for axis in vector.keys():
+			for axis in list(vector.keys()):
 				tilt[axis] += vector[axis]
 		elif relative == 'absolute':
-			for axis in vector.keys():
+			for axis in list(vector.keys()):
 				tilt[axis] = vector[axis]
 		else:
 			raise ValueError
 
 		raw_output={}
 		raw_output['x'], raw_output['y'], result = self.def3.GetCLA2()
-		for axis in vector.keys():
+		for axis in list(vector.keys()):
 			raw_output[axis] = int(round(tilt[axis]/scale[axis]))+neutral[axis]
 
 		result = self.def3.SetCLA2(raw_output['x'], raw_output['y'])
@@ -488,16 +488,16 @@ class Jeol(tem.TEM):
 
 		shift = current.copy()
 		if relative == 'relative':
-			for axis in vector.keys():
+			for axis in list(vector.keys()):
 				shift[axis] += vector[axis]
 		elif relative == 'absolute':
-			for axis in vector.keys():
+			for axis in list(vector.keys()):
 				shift[axis] = vector[axis]
 		else:
 			raise ValueError
 		raw_output={}
 		raw_output['x'], raw_output['y'], result = self.def3.GetCLA1()
-		for axis in vector.keys():
+		for axis in list(vector.keys()):
 			raw_output[axis] = int(round(shift[axis]/scale[axis]))+neutral[axis]
 
 		result = self.def3.SetCLA1(raw_output['x'], raw_output['y'])
@@ -627,9 +627,9 @@ class Jeol(tem.TEM):
 	def getZeroDefocusOM(self):
 		mag = self.getMagnification()
 		zero_defocus_om = None
-		if mag in self.zero_defocus_om.keys():
+		if mag in list(self.zero_defocus_om.keys()):
 			zero_defocus_om = self.zero_defocus_om[mag]
-		elif self.zero_defocus_om.keys():
+		elif list(self.zero_defocus_om.keys()):
 			zero_defocus_om = self.zero_defocus_om[max(self.zero_defocus_om.keys())]
 		return zero_defocus_om
 
@@ -644,9 +644,9 @@ class Jeol(tem.TEM):
 	def getZeroDefocusOL(self):
 		mag = self.getMagnification()
 		zero_defocus_ol = None
-		if mag in self.zero_defocus_ol.keys():
+		if mag in list(self.zero_defocus_ol.keys()):
 			zero_defocus_ol = self.zero_defocus_ol[mag]
-		elif self.zero_defocus_ol.keys():
+		elif list(self.zero_defocus_ol.keys()):
 			zero_defocus_ol = self.zero_defocus_ol[max(self.zero_defocus_ol.keys())]
 		return zero_defocus_ol
 
@@ -657,8 +657,8 @@ class Jeol(tem.TEM):
 			debug_print('outside the mag range for zero defocus OL')
 			return
 		# set at the closest mag value but not higher
-		items = self.zero_defocus_ol.items()
-		ol_mags = self.zero_defocus_ol.keys()
+		items = list(self.zero_defocus_ol.items())
+		ol_mags = list(self.zero_defocus_ol.keys())
 		ol_mags.sort()
 		while ol_mags:
 			if mag >= int(ol_mags[-1]):
@@ -787,7 +787,7 @@ class Jeol(tem.TEM):
 		Make a sorted magnifications list
 		'''
 		mode_map = self.getProjectionSubModeMap()
-		mags = mode_map.keys()
+		mags = list(mode_map.keys())
 		mags.sort()
 		if self.magnifications and mags == self.magnifications:
 			# do not duplicate if exists already
@@ -852,7 +852,7 @@ class Jeol(tem.TEM):
 		for overwritten_mag_tuple in overwritten_mags:
 			mode_index, mag_cutoff = overwritten_mag_tuple
 			for lower_mode_index in range(mode_index):
-				for mag,submode_info in self.projection_submode_map.items():
+				for mag,submode_info in list(self.projection_submode_map.items()):
 					if mag >= mag_cutoff and submode_info[1] == lower_mode_index:
 						del self.projection_submode[mag]
 
@@ -884,7 +884,7 @@ class Jeol(tem.TEM):
 			except:
 				raise TypeError
 	
-		if value not in self.projection_submode_map.keys():
+		if value not in list(self.projection_submode_map.keys()):
 			raise ValueError
 
 		if not self.submode_mags:
@@ -954,7 +954,7 @@ class Jeol(tem.TEM):
 	def printPosition(self, tag, p):
 		pr = {}
 		for axis in ('x','y','a'):
-			if axis not in p.keys():
+			if axis not in list(p.keys()):
 				pr[axis] = '     '
 			else:
 				pr[axis] = '%5.1f' % (p[axis]*1e6)
@@ -967,7 +967,7 @@ class Jeol(tem.TEM):
 		'''
 		tmp_position = current_position.copy()
 		has_changed = False
-		for axis in position.keys():
+		for axis in list(position.keys()):
 			if axis not in ('x','y'):
 				continue
 			shift = current_position[axis]-position[axis]
@@ -988,7 +988,7 @@ class Jeol(tem.TEM):
 		Position Module
 		'''
 		tmp_position = {}
-		for axis in position.keys():
+		for axis in list(position.keys()):
 			if axis not in ('x','y'):
 				continue
 
@@ -1023,7 +1023,7 @@ class Jeol(tem.TEM):
 		self.setStageXY(position)
 
 	def setStageXY(self, position):
-		if not set(('x','y')).intersection(position.keys()):
+		if not set(('x','y')).intersection(list(position.keys())):
 			return
 		pos = position.copy()
 		for axis in ('x','y'):
@@ -1057,7 +1057,7 @@ class Jeol(tem.TEM):
 			trial = 0
 			while trial < max_trials:
 				trial += 1
-				if axis in position.keys() and abs(new_position[axis] - position[axis]) > accuracy[axis]:
+				if axis in list(position.keys()) and abs(new_position[axis] - position[axis]) > accuracy[axis]:
 					self.printPosition('new', new_position)
 					self.printPosition('target', position)
 					debug_print('stage %s not reached' % axis)
@@ -1068,7 +1068,7 @@ class Jeol(tem.TEM):
 					break
 
 	def setStagePositionByAxis(self, position, axis):
-		keys = position.keys()
+		keys = list(position.keys())
 		if axis not in keys:
 			return
 		if axis in ('a','b'):
@@ -1145,11 +1145,11 @@ class Jeol(tem.TEM):
 		'''
 		self.printPosition('_setXthenY', position)
 		scale = self.getScale('stage')
-		if 'x' in position.keys():
+		if 'x' in list(position.keys()):
 			raw_position=position['x']*scale['x']
 			result = self.stage3.SetX(raw_position)
 			self._waitForStage()
-		if 'y' in position.keys():
+		if 'y' in list(position.keys()):
 			raw_position=position['y']*scale['y']
 			result = self.stage3.SetY(raw_position)
 			self._waitForStage()
@@ -1446,10 +1446,10 @@ class Jeol(tem.TEM):
 		sizes = {}
 
 		positions = self.getAperturePosition()
-		for name in positions.keys():
+		for name in list(positions.keys()):
 			size_list = self._getApertureSizesOfKind(name)
 
-		for name in positions.keys():
+		for name in list(positions.keys()):
 			kindid = self._getApertureKind(name)
 			# Despite the name, this gives not the size
 			# but a number as the current aperture position

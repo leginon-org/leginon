@@ -56,7 +56,7 @@ class MultiCallHandler(object):
 				kwargs = {}
 			try:
 				value = method(*args, **kwargs)
-			except Exception, e:
+			except Exception as e:
 				## if exception, return the exception object
 				value = e
 			values.append(value)

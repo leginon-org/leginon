@@ -43,13 +43,12 @@ def logged_method(f, classname, fname):
 class meta_logged(type):
 	def __new__(self, classname, bases, classdict):
 		# replace all functions in classdict with logged ones
-		for fname, f in classdict.items():
+		for fname, f in list(classdict.items()):
 			if isinstance(f, types.FunctionType):
 				classdict[fname] = logged_method(f, classname, fname)
 		return type.__new__(self, classname, bases, classdict)
 
-class LoggedMethodsBase(object):
-	__metaclass__ = meta_logged
+class LoggedMethodsBase(object, metaclass=meta_logged):
 	logged_methods_on = False
 
 class TestClass(LoggedMethodsBase):
@@ -58,7 +57,7 @@ class TestClass(LoggedMethodsBase):
 		self.x = x
 
 	def util(self):
-		print 'util', self.x
+		print('util', self.x)
 
 	def get(self):
 		self.util()

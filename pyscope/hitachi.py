@@ -151,10 +151,10 @@ class Hitachi(tem.TEM):
 
 	def printStageDebug(self,msg):
 		if STAGE_DEBUG:
-			print msg
+			print(msg)
 
 	def getHitachiConfig(self,optionname,itemname=None):
-		if optionname not in configs.keys():
+		if optionname not in list(configs.keys()):
 			return None
 		if itemname is None:
 			return configs[optionname]
@@ -175,7 +175,7 @@ class Hitachi(tem.TEM):
 		'''
 		probe_modes = []
 		for obsv_probe in self.obsv_probe_modes:
-			if obsv_probe in self.probe_map.values():
+			if obsv_probe in list(self.probe_map.values()):
 				probe = self._mapObservationProbeToProbe(obsv_probe)
 				probe_modes.append(probe)
 		return probe_modes
@@ -188,8 +188,8 @@ class Hitachi(tem.TEM):
 		for s_id in self.projection_submode_ids:
 			submode_mags[s_id] = []
 		submode_mags = self.getHitachiConfig('optics','mags')
-		for submode in submode_mags.keys():
-			if submode not in self.projection_submodes.values():
+		for submode in list(submode_mags.keys()):
+			if submode not in list(self.projection_submodes.values()):
 				raise ValueError('%s assigned in hht.cfg MAGS is not a valid imaging mode' % submode)
 		return submode_mags
 
@@ -246,7 +246,7 @@ class Hitachi(tem.TEM):
 		return position
 
 	def _setStagePosition(self,value):
-		keys = value.keys()
+		keys = list(value.keys())
 		keys.sort()
 		keys.reverse()
 		if 'z' in keys:
@@ -298,7 +298,7 @@ class Hitachi(tem.TEM):
 			return self.stage_top_speed
 
 	def setStagePosition(self, value):
-		self.printStageDebug(value.keys())
+		self.printStageDebug(list(value.keys()))
 		value = self.checkStagePosition(value)
 		for axis in self.stage_axes:
 			if axis == 'b':
@@ -313,9 +313,9 @@ class Hitachi(tem.TEM):
 				except KeyError:
 					pass
 
-		for axis in value.keys():
+		for axis in list(value.keys()):
 			if axis == 'b' and value['b'] is not None:
-				print 'exception, beta can not be set'
+				print('exception, beta can not be set')
 		# calculate pre-position
 		prevalue = {}
 		prevalue2 = {}
@@ -333,13 +333,13 @@ class Hitachi(tem.TEM):
 		if self.corrected_alpha_stage: 
 			# alpha tilt backlash only in one direction
 			alpha_delta_degrees = self.alpha_backlash_delta
-			if 'a' in value.keys():
+			if 'a' in list(value.keys()):
 					axis = 'a'
 					prevalue[axis] = value[axis] - alpha_delta_degrees*3.14159/180.0
 		if prevalue:
 			# set all axes in prevalue
-			for axis in value.keys():
-				if axis not in prevalue.keys():
+			for axis in list(value.keys()):
+				if axis not in list(prevalue.keys()):
 					prevalue[axis] = value[axis]
 					del value[axis]
 			self._setStagePosition(prevalue)
@@ -376,7 +376,7 @@ class Hitachi(tem.TEM):
 
 	def _scaleCoilRawToVector(self, coil, xydict):
 		xy = {}
-		axes = xydict.keys()
+		axes = list(xydict.keys())
 		for k in axes:
 			v = xydict[k]
 			m = self._getCoilScale(coil,k)
@@ -412,7 +412,7 @@ class Hitachi(tem.TEM):
 		return m
 
 	def _scaleCoilVectorToRaw(self, coil, xydict):
-		axes = xydict.keys()
+		axes = list(xydict.keys())
 		d_xy = {}
 		for k in axes:
 			v = xydict[k]
@@ -502,18 +502,18 @@ class Hitachi(tem.TEM):
 
 	def getStigmator(self):
 		value = {}
-		for key in self.stig_coil_map.keys():
+		for key in list(self.stig_coil_map.keys()):
 			coil = self.stig_coil_map[key]
 			value[key] = self.getCoilVector(coil)
 		return value
 		
 	def setStigmator(self, value):
 		new_values = self.getStigmator()
-		for stig in value.keys():
+		for stig in list(value.keys()):
 			coil = self.stig_coil_map[stig]
 			v = value[stig]
 			# must set both axes
-			for key in v.keys():
+			for key in list(v.keys()):
 				new_values[stig][key]=v[key]
 			self.setCoilVector(coil, new_values[stig])
 
@@ -551,7 +551,7 @@ class Hitachi(tem.TEM):
 	def setBeamTilt(self, value):
 		new_value = self.getBeamTilt()
 		coil = 'BT'
-		for key in value.keys():
+		for key in list(value.keys()):
 			new_value[key]=value[key]
 		self.setCoilVector(coil, new_value)
 	
@@ -562,7 +562,7 @@ class Hitachi(tem.TEM):
 	def setBeamShift(self, value):
 		new_value = self.getBeamShift()
 		coil = 'BH'
-		for key in value.keys():
+		for key in list(value.keys()):
 			new_value[key]=value[key]
 		self.setCoilVector(coil, new_value)
 
@@ -586,7 +586,7 @@ class Hitachi(tem.TEM):
 			# do nothing if coil is unknown
 			return
 		new_value = self.getDiffractionShift()
-		for key in value.keys():
+		for key in list(value.keys()):
 			new_value[key]=value[key]
 		self.setCoilVector(coil, new_value)
 
@@ -610,7 +610,7 @@ class Hitachi(tem.TEM):
 	def setImageShift(self, value):
 		new_value = self.getImageShift()
 		coil = self.getImageShiftCoil()
-		for key in value.keys():
+		for key in list(value.keys()):
 			new_value[key]=value[key]
 		self.setCoilVector(coil, new_value)
 
@@ -623,7 +623,7 @@ class Hitachi(tem.TEM):
 		# TODO: Is this different from ImageShift ?
 		new_value = self.getRawImageShift()
 		coil = self.getImageShiftCoil()
-		for key in value.keys():
+		for key in list(value.keys()):
 			new_value[key]=value[key]
 		self.setCoilVector(coil, new_value)
 
@@ -760,7 +760,7 @@ class Hitachi(tem.TEM):
 		Make a sorted magnifications list
 		'''
 		mode_map = self.getProjectionSubModeMap()
-		mags = mode_map.keys()
+		mags = list(mode_map.keys())
 		mags.sort()
 		if self.magnifications and mags == self.magnifications:
 			# do not duplicate if exists already
@@ -807,7 +807,7 @@ class Hitachi(tem.TEM):
 					foc = float(bits[1])
 					for submode in submode_used:
 						if m in self.submode_mags[submode]:
-							if submode not in self.zero_defocus_current.keys():
+							if submode not in list(self.zero_defocus_current.keys()):
 								self.zero_defocus_current[submode] = {}
 							self.zero_defocus_current[submode][m] = foc + ref_ufocus[submode]
 			else:
@@ -912,7 +912,7 @@ class Hitachi(tem.TEM):
 		return probe
 
 	def _getObsvProbeSpotFromColumnMode(self, mode_d):
-		for obsv_probe in self.obsv_probe_mode_index_range.keys():
+		for obsv_probe in list(self.obsv_probe_mode_index_range.keys()):
 			# find the first probe that passes
 			mode_range = self.obsv_probe_mode_index_range[obsv_probe]
 			if mode_d >= mode_range[0] and mode_d < mode_range[1]:
@@ -938,7 +938,7 @@ class Hitachi(tem.TEM):
 		new_obsv_probe = self._mapProbeToObservationProbe(str(new_probe))
 		new_obsv_probe_index_range = self.obsv_probe_mode_index_range[new_obsv_probe]
 		new_mode_d = new_obsv_probe_index_range[0]
-		print "use weakest spot size assignment as normalization for probe mode change"
+		print("use weakest spot size assignment as normalization for probe mode change")
 		self._setColumnMode(new_mode_d)
 
 	def getProbeModes(self):
@@ -946,7 +946,7 @@ class Hitachi(tem.TEM):
 		return list(self.probe_modes)
 
 	def getProjectionSubModes(self):
-			return self.projection_submodes.values()
+			return list(self.projection_submodes.values())
 
 	def getProjectionSubModeName(self):
 		'''
@@ -955,7 +955,7 @@ class Hitachi(tem.TEM):
 		Some are overlapped.
 		'''
 		mode_d, submode_d = self._getColumnModes()
-		for submode in self.submodes.keys():
+		for submode in list(self.submodes.keys()):
 			if submode_d == int(self.submodes[submode],16):
 				return submode
 		raise ValueError('current submode not registered')
@@ -1095,7 +1095,7 @@ class Hitachi(tem.TEM):
 		'''
 		Names of the available aperture mechanism
 		'''
-		mechanisms = self.getHitachiConfig('aperture').keys()
+		mechanisms = list(self.getHitachiConfig('aperture').keys())
 		mechanisms.sort()
 		return mechanisms
 

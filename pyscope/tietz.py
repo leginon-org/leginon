@@ -7,24 +7,24 @@
 #
 
 #import array
-import ccdcamera
+from . import ccdcamera
 import numpy
 import sys
 import threading
-import enumproc
-import killproc
+from . import enumproc
+from . import killproc
 
 import mmapfile
 import pywintypes
 import win32com.client
 import time
 
-import tietzcontrol
+from . import tietzcontrol
 cameracontrol = tietzcontrol.cameracontrol
 
 def intDict(d):
 	new_d = {}
-	for key,value in d.items():
+	for key,value in list(d.items()):
 		new_d[key] = int(value)
 	return new_d
 
@@ -104,7 +104,7 @@ class Tietz(ccdcamera.CCDCamera):
 
 		cameracontrol.addCamera(self)
 
-		for methodname, dependencies in self.dependencymapping.items():
+		for methodname, dependencies in list(self.dependencymapping.items()):
 			supported = True
 			for dependency in dependencies:
 				parametername, permission = dependency

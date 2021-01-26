@@ -1,8 +1,8 @@
 import comtypes.client
-import ccdcamera
+from . import ccdcamera
 import numpy
 import time
-import falconframe
+from . import falconframe
 try:
 	from comtypes.safearray import safearray_as_ndarray
 	USE_SAFEARRAY_AS_NDARRAY = True
@@ -290,9 +290,9 @@ acquisition.
 		try:
 			arr.shape = (self.dimension['y'],self.dimension['x'])
 			arr = self._modifyArray(arr)
-		except AttributeError, e:
+		except AttributeError as e:
 			self.debug_print('comtypes did not return an numpy 2D array, but %s' % (type(arr)))
-		except Exception, e:
+		except Exception as e:
 			self.debug_print(e)
 			arr = None
 		return arr
@@ -562,9 +562,9 @@ class TIA_Falcon3(TIA_Falcon):
 		try:
 			arr.shape = (self.dimension['y'],self.dimension['x'])
 			arr = self._modifyArray(arr)
-		except AttributeError, e:
+		except AttributeError as e:
 			self.debug_print('comtypes did not return an numpy 2D array, but %s' % (type(arr)))
-		except Exception, e:
+		except Exception as e:
 			self.debug_print(e)
 			arr = None
 

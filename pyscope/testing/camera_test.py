@@ -25,11 +25,11 @@ for i in range(repeats):
 	t0 = time.time()
 	p = c.getImage()
 	t1 = time.time()
-	print 'image at binning %d took %.6f seconds' % (binning, t1 -t0)
+	print('image at binning %d took %.6f seconds' % (binning, t1 -t0))
 	mrc.write(p,'test%d.mrc' % (i,))
-	print 'image writing took %.6f seconds' % (t1 -t0)
+	print('image writing took %.6f seconds' % (t1 -t0))
 
 c.setBinning(bin0)
 c.setDimension(dim0)
-raw_input('press return key to quit')
+input('press return key to quit')
 

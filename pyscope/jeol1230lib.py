@@ -86,22 +86,22 @@ class jeol1230lib(object):
 	# check serial port communication to microscope
 	def equipmentAvailable(self):
 		if Debug == True:
-			print 'from jeol1230lib.py equipmentAvailable'
+			print('from jeol1230lib.py equipmentAvailable')
 		model   = "jeol"
 		version = "1230"
 		if self.ser.portstr == 'COM1' and self.ser.isOpen():
 			if Debug == True:
-				print "    Microscope Model: %s  Version: %s" % (model, version)
+				print("    Microscope Model: %s  Version: %s" % (model, version))
 			return True
 		else:
 			if Debug == True:
-				print "    Serial port can not be initialized by pyScope"
+				print("    Serial port can not be initialized by pyScope")
 			return False
 
 	# check if high tension is on or off
 	def getHighTensionState(self):
 		if Debug == True:
-			print 'from jeol1230lib.py getHighTensionStatus'
+			print('from jeol1230lib.py getHighTensionStatus')
 		highTensionStatus = 'unknown'
 		while True:
 			self.ser.flushInput()
@@ -127,7 +127,7 @@ class jeol1230lib(object):
 	# get the high tension voltage value
 	def getHighTension(self):
 		if Debug == True:
-			print 'from jeol1230lib.py getHighTension'
+			print('from jeol1230lib.py getHighTension')
 		while True:
 			self.ser.flushInput()
 			self.ser.flushOutput()
@@ -149,7 +149,7 @@ class jeol1230lib(object):
 	# set high tension on or off
 	def setHighTension(self, mode='off'):
 		if Debug == True:
-			print 'from jeol1230lib.py setHighTension'
+			print('from jeol1230lib.py setHighTension')
 		if mode == 'off':
 			value = '0'
 		elif mode == 'on':
@@ -169,7 +169,7 @@ class jeol1230lib(object):
 	# set beam on or off
 	def setBeamState(self, mode):
 		if Debug == True:
-			print 'from jeol1230lib.py setBeamState'
+			print('from jeol1230lib.py setBeamState')
 		if mode == 'on':
 			value = '1'
 		elif mode == 'off':
@@ -200,7 +200,7 @@ class jeol1230lib(object):
 	# check if beam is on or off
 	def getBeamState(self):
 		if Debug == True:
-			print 'from jeol1230lib.py getBeamState'
+			print('from jeol1230lib.py getBeamState')
 		beamState = 'unknown'
 		while True:
 			self.ser.flushInput()
@@ -226,7 +226,7 @@ class jeol1230lib(object):
 	# get current magnification
 	def getMagnification(self):
 		if Debug == True:
-			print 'from jeol1230lib.py getMagnification'
+			print('from jeol1230lib.py getMagnification')
 		Magn = 0
 		while True:
 			self.ser.flushInput()
@@ -260,14 +260,14 @@ class jeol1230lib(object):
 	# set magnification to EM, here mag is a string, not a number
 	def setMagnification(self, mag):
 		if Debug == True:
-			print 'from jeol1230lib.py setMagnification'
+			print('from jeol1230lib.py setMagnification')
 
 		magRange = 40
 		for i in range(0,magRange):
 			if int(mag) <= self.magnification[i]:
 				break
 		if i > magRange:
-			print '    Magnification out of range'
+			print('    Magnification out of range')
 			return False
 		while True:
 			self.ser.flushInput()
@@ -307,7 +307,7 @@ class jeol1230lib(object):
 	# get current spot size
 	def getSpotSize(self):
 		if Debug == True:
-			print 'from jeol1230lib.py getSpotSize'
+			print('from jeol1230lib.py getSpotSize')
 		while True:
 			self.ser.flushInput()
 			self.ser.flushOutput()
@@ -351,9 +351,9 @@ class jeol1230lib(object):
 	# set spot size to EM
 	def setSpotSize(self, size):
 		if Debug == True:
-			print 'from jeol1230lib.py setSpotSize'
+			print('from jeol1230lib.py setSpotSize')
 		if int(size) > 5 or int(size) < 0:
-			print '    Spotsize is out of range'
+			print('    Spotsize is out of range')
 			return False
 		ssize = int(size) - 1
 		ss = '109' + '\t' + str(ssize) + '\r'
@@ -376,7 +376,7 @@ class jeol1230lib(object):
 	# reads the current x,y,z in micrometer, a (tilt) in degree
 	def getStagePosition(self):
 		if Debug == True:
-			print 'from jeol1230lib.py getStagePosition'
+			print('from jeol1230lib.py getStagePosition')
 		position = {'x': None, 'y': None, 'z': None, 'a': None}
 		while True:
 			self.ser.flushInput()
@@ -415,7 +415,7 @@ class jeol1230lib(object):
 	# move/rotate the stage only in one direction by micrometer or deg
 	def setStagePosition(self,axis,coord,mode):
 		if Debug == True:
-			print 'from jeol1230lib.py setStagePosition'
+			print('from jeol1230lib.py setStagePosition')
 		if mode == 'fine':
 			dm = '1'		# driving mode: 0(fine), 1(medium), 2(coarse)
 			sc = '50'		# speed coefficient: 1-100
@@ -430,11 +430,11 @@ class jeol1230lib(object):
 		stagenow = self.getStagePosition()
 		if abs(coord - stagenow[axis]) < minimum_stage[axis]:
 			if Debug == True:
-				print '   %s Move is too small: %d' %(axis, abs(coord - stagenow[axis]))
+				print('   %s Move is too small: %d' %(axis, abs(coord - stagenow[axis])))
 			return	False
 		if abs(coord) > maximum_stage[axis]:
 			if Debug == True:
-				print '    %s Move is too large: %d' %(axis, abs(coord))
+				print('    %s Move is too large: %d' %(axis, abs(coord)))
 			return	False
 		if axis == 'x':
 			c_axis = '0'
@@ -487,14 +487,14 @@ class jeol1230lib(object):
 			db1 = (int(r) >> 1) & 1
 			db2 = (int(r) >> 2) & 1
 			if Debug == True:
-				print "    Stage is moving, please wait"
+				print("    Stage is moving, please wait")
 			if db2 == 0:
 				if Debug == True:
-					print "    Stage movement in %s mode was sucessfull" % mode
+					print("    Stage movement in %s mode was sucessfull" % mode)
 				break
 			if i > 15:
 				if Debug == True:
-					print "    Too long and terminate the movement"
+					print("    Too long and terminate the movement")
 				self.ser.flushInput()
 				self.ser.flushOutput()
 				self.ser.write('206\r')	# terminate stage movement
@@ -505,7 +505,7 @@ class jeol1230lib(object):
 	# read beam intensity from condenser lens
 	def getIntensity(self):
 		if Debug == True:
-			print 'from jeol1230lib.py getIntensity'
+			print('from jeol1230lib.py getIntensity')
 		while True:
 			self.ser.flushInput()
 			self.ser.flushOutput()
@@ -527,7 +527,7 @@ class jeol1230lib(object):
 	# set beam intensity by condenser lens using relative value
 	def setIntensity(self, intensity):
 		if Debug == True:
-			print 'from jeol1230lib.py setIntenstiy'
+			print('from jeol1230lib.py setIntenstiy')
 		cl3 = int(intensity) - self.getIntensity()
 		while True:
 			self.ser.flushInput()
@@ -560,7 +560,7 @@ class jeol1230lib(object):
 	# get objective lens input raw values
 	def getRawObjectiveInputs(self):
 		if Debug == True:
-			print 'from jeol1230lib.py getRawObjectiveInputs'
+			print('from jeol1230lib.py getRawObjectiveInputs')
 		while True:
 			self.ser.flushInput()
 			self.ser.flushOutput()
@@ -581,8 +581,8 @@ class jeol1230lib(object):
 		oml = int(words[10],16)
 		omh = int(words[11],16)
 		if Debug == True:
-			print 'oll %x, olh %x' % (oll, olh)
-			print 'oml %x, omh %x' % (oml, omh)
+			print('oll %x, olh %x' % (oll, olh))
+			print('oml %x, omh %x' % (oml, omh))
 		return oll,olh,oml,omh
 
 	# get objective lens currents
@@ -598,7 +598,7 @@ class jeol1230lib(object):
 	# set obj len currents using relative values; direct lens control is bad
 	def setObjectiveCurrent(self,current):
 		if Debug == True:
-			print 'from jeol1230lib.py setObjectiveCurrent'
+			print('from jeol1230lib.py setObjectiveCurrent')
 		# get current input values
 		oll,olh,oml,omh = self.getRawObjectiveInputs()
 		if self.getMagnification() >= 1000:
@@ -613,14 +613,14 @@ class jeol1230lib(object):
 		diff_current = current - c_current
 		h,l = self.toRelativeOLcOLf(int(diff_current))
 		if Debug == True:
-			print 'current relative OLcOLf',h,l
+			print('current relative OLcOLf',h,l)
 		expected_new_oll = h*COARSE_SCALE+oll+l
 		if abs(expected_new_oll) < MAX*3/4 and abs(expected_new_oll) > MAX/4:
 			# Only fine adjustment is needed. This gives more accurate result.
 			h = 0
 			l = diff_current
 		if Debug == True:
-			print 'set OLcOLf to',h,l
+			print('set OLcOLf to',h,l)
 		ss_l = '102' + '\t' + code_1 + '\t' + str(l) + '\r'
 		while True:
 			self.ser.flushInput()
@@ -658,7 +658,7 @@ class jeol1230lib(object):
 	def getDefocus(self):
 		# BUG? getDefocus is based on oll/oml only
 		if Debug == True:
-			print 'from jeol1230lib.py getDefocus'
+			print('from jeol1230lib.py getDefocus')
 		focus = self.getRawFocus()
 		if self.getMagnification() >= 1000:
 			defocus = ((focus-self.zero_oll)*0.0048)/1e6
@@ -685,7 +685,7 @@ class jeol1230lib(object):
 	# set defocus value in meter
 	def setDefocus(self,defocus):
 		if Debug == True:
-			print 'from jeol1230lib.py setDefocus'
+			print('from jeol1230lib.py setDefocus')
 		# getDefocus is based on oll/oml only
 		rel_focus = float(defocus) - self.getDefocus()
 		state = self.setRelativeFocus(rel_focus)
@@ -759,7 +759,7 @@ class jeol1230lib(object):
 	# set obj lens currents (defocus value) to eucentric focus
 	def resetDefocus(self, value = 0):
 		if Debug == True:
-			print 'from jeol1230lib.py resetDefocus'
+			print('from jeol1230lib.py resetDefocus')
 		oll,olh,oml,omh = self.getRawObjectiveInputs()
 		if self.getMagnification() > 1000:
 			self.zero_oll = oll
@@ -777,7 +777,7 @@ class jeol1230lib(object):
 	# get beam shift X and Y
 	def getBeamShift(self):
 		if Debug == True:
-			print 'from jeol1230lib.py getBeamShift'
+			print('from jeol1230lib.py getBeamShift')
 		while True:
 			self.ser.flushInput()
 			self.ser.flushOutput()
@@ -800,7 +800,7 @@ class jeol1230lib(object):
 	# set beam shift X and Y
 	def setBeamShift(self,axis,value):
 		if Debug == True:
-			print 'from jeol1230lib.py setBeamShift'
+			print('from jeol1230lib.py setBeamShift')
 		if axis == 'x':
 			code = '5'
 		else:
@@ -826,7 +826,7 @@ class jeol1230lib(object):
 	# get beam tilt X and Y
 	def getBeamTilt(self):
 		if Debug == True:
-			print 'from jeol1230lib.py getBeamTilt'
+			print('from jeol1230lib.py getBeamTilt')
 		while True:
 			self.ser.flushInput()
 			self.ser.flushOutput()
@@ -849,10 +849,10 @@ class jeol1230lib(object):
 	# set beam tilt X or Y
 	def setBeamTilt(self,axis,value):
 		if Debug == True:
-			print 'from jeol1230lib.py setBeamTilt'
+			print('from jeol1230lib.py setBeamTilt')
 		sh = "%x" % int((float(value) + 32858*1.25e-6)/1.25e-6)
 		if Debug == True:
-			print "    Image tilt will be %d in %s direction" % (sh, axis)
+			print("    Image tilt will be %d in %s direction" % (sh, axis))
 		if axis == 'x':
 			code = '7'
 		else:
@@ -877,7 +877,7 @@ class jeol1230lib(object):
 	# get image shift X and Y
 	def getImageShift(self):
 		if Debug == True:
-			print 'from jeol1230lib.py getImageShift'
+			print('from jeol1230lib.py getImageShift')
 		while True:
 			self.ser.flushInput()
 			self.ser.flushOutput()
@@ -908,7 +908,7 @@ class jeol1230lib(object):
 	# set Imageshift X and Y
 	def setImageShift(self,axis,value):
 		if Debug == True:
-			print 'from jeol1230lib.py setImageShift'
+			print('from jeol1230lib.py setImageShift')
 		if axis == 'x':
 			code = '9'
 		else:
@@ -935,14 +935,14 @@ class jeol1230lib(object):
 			itr += 1
 			time.sleep(self.wait_time)
 			if itr > 5:
-				print 'setImageShift failed', value
+				print('setImageShift failed', value)
 				break
 		return True
 
 	# retrieve all the stigmators setting as a single block
 	def getStigmator(self):
 		if Debug == True:
-			print 'from jeol1230lib.py getStigmator'
+			print('from jeol1230lib.py getStigmator')
 		while True:
 			self.ser.flushInput()
 			self.ser.flushOutput()
@@ -971,9 +971,9 @@ class jeol1230lib(object):
 	# set all the stigmators setting as a single block
 	def setStigmator(self, key, axis, value):
 		if Debug == True:
-			print 'from jeol1230lib.py setStigmator'
+			print('from jeol1230lib.py setStigmator')
 		if self.getMagnification() <= 1000:
-			print "stigmator doesn't work in low mag mode"
+			print("stigmator doesn't work in low mag mode")
 			return False
 		if key == 'condenser':
 			if axis == 'x':
@@ -1011,27 +1011,27 @@ class jeol1230lib(object):
 	# read presure, it requires such a data structure
 	def PressureReadout(self):
 		if Debug == True:
-			print 'from jeol1230lib.py PressureReadout'
+			print('from jeol1230lib.py PressureReadout')
 		pressures = {'P1': 1, 'P2': 1,'P3': 1,'IGP': 1}
 		return pressures
 
 	# read voltage center, it required such a data structure
 	def GetRotationAlignment(self):
 		if Debug == True:
-			print 'from jeol1230lib.py GetRotationAlignment'
+			print('from jeol1230lib.py GetRotationAlignment')
 		ra = {'x': 1, 'y': 1}
 		return ra
 
 	# doesn't work, but required
 	def ScreenCurrent(self):	
 		if Debug == True:
-			print 'from jeol1230lib.py ScreenCurrent'
+			print('from jeol1230lib.py ScreenCurrent')
 		return 1
 
 	# read the beam current in A (ampire)
 	def EmissionCurrent(self):
 		if Debug == True:
-			print 'from jeol1230lib.py EmissionCurrent'
+			print('from jeol1230lib.py EmissionCurrent')
 		self.ser.flushInput()
 		self.ser.flushOutput()
 		self.ser.write('005\r')
@@ -1073,10 +1073,10 @@ class jeol1230lib(object):
 		r0 = words[0]
 		r2 = words[2]
 		if r0 == '001' and r2 == '000':
-			print "    HT is Set Succesfully"
+			print("    HT is Set Succesfully")
 			return True
 		else:
-			print "    HT set is Failed"
+			print("    HT set is Failed")
 			return False
 
 	# doesn't work, but required for data structure
@@ -1089,5 +1089,5 @@ class jeol1230lib(object):
 
 	# close connection between computer and tem
 	def __del__(self):
-		print 'close connection to JEOL1230 through COM1 port'
+		print('close connection to JEOL1230 through COM1 port')
 		self.ser.close()

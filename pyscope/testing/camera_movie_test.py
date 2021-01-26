@@ -44,8 +44,8 @@ def testCameraSpeed(cam_obj, movie_time, exp_time_ms):
 	display_unit = 'ms'
 
 	calc_nframes = int(math.ceil(movie_time * 1000.0 / exp_time_ms))
-	print '-----'
-	print 'expected number of frames for %.1f ms frame_time is\t %d' % (exp_time_ms, calc_nframes)
+	print('-----')
+	print('expected number of frames for %.1f ms frame_time is\t %d' % (exp_time_ms, calc_nframes))
 	file_code = '%d_%d' % (int(movie_time), int(exp_time_ms))
 	filename = file_code +'.bin'
 	cam_obj.setExposureTime(exp_time_ms)
@@ -55,13 +55,13 @@ def testCameraSpeed(cam_obj, movie_time, exp_time_ms):
 	cam_obj.stopMovie(filename, exp_time_ms)
 	t1 = time.time()
 	real_time = t1 - t0
-	print 'save movie at %.1f %s took\t %8.3f seconds' % (exp_time_ms, display_unit, real_time)
+	print('save movie at %.1f %s took\t %8.3f seconds' % (exp_time_ms, display_unit, real_time))
 	movie_pattern = os.path.join(movie_dir, file_code + '*')
 	movies = glob.glob(movie_pattern)
 	#print movies
 	cleanUp(movies)
 	series_length = cam_obj.getSeriesLength()
-	print 'difference in series length is %d' % (series_length - calc_nframes)
+	print('difference in series length is %d' % (series_length - calc_nframes))
 
 def loop(cam_obj, center_time, step_time, half_loop_number):
 	'''
@@ -72,12 +72,12 @@ def loop(cam_obj, center_time, step_time, half_loop_number):
 	for i in range(loop_number):
 		target_time = (i-half_loop_number)*step_time + center_time
 		if target_time >=movie_time*1000 or target_time < 50:
-			print 'invalid target time: %.2f seconds, ignored' %(target_time)
+			print('invalid target time: %.2f seconds, ignored' %(target_time))
 			continue
 		testCameraSpeed(cam_obj, movie_time, target_time)
 
 if __name__ == '__main__':
-	print "Edit file to set instrument"
+	print("Edit file to set instrument")
 	# Check from 40 s to 140 ms target time
 	# milliseconds
 	loop(c, 800, 100, 2)

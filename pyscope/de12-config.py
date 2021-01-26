@@ -14,16 +14,16 @@ params = [
 de12 = pyscope.registry.getClass('DE12')()
 
 def print_params():
-	print ''
+	print('')
 	for i,param in enumerate(params):
 		name = param[0]
 		val = getattr(de12, 'get'+name)()
-		print '%d) %s:  %s' % (i, name, val)
-	print ''
+		print('%d) %s:  %s' % (i, name, val))
+	print('')
 
 def update_param(num):
 	name, help, validate = params[num]
-	value = raw_input('%s (%s): ' % (name, help,))
+	value = input('%s (%s): ' % (name, help,))
 	value = validate(value)
 	try:
 		getattr(de12, 'set'+name)(value)
@@ -33,7 +33,7 @@ def update_param(num):
 n = len(params)
 print_params()
 while True:
-	num = raw_input('Which value to change? (0-%d):  ' % (n-1,))
+	num = input('Which value to change? (0-%d):  ' % (n-1,))
 	if num:
 		num = int(num)
 		update_param(num)

@@ -5,10 +5,10 @@ import glob
 import shutil
 import sys
 
-import ccdcamera
+from . import ccdcamera
 import time
-import simscripting
-import falconframe
+from . import simscripting
+from . import falconframe
 from pyscope import tia_display
 from pyami import moduleconfig
 
@@ -26,7 +26,7 @@ class FEIAdvScriptingConnection(object):
 
 if SIMULATION:
 	# There is problem starting numpy in FEI 2.9 software as FEI version of python2.7 becomes the default.
-	import simscripting
+	from . import simscripting
 	connection = simscripting.Connection()
 else:
 	import comtypes
@@ -43,20 +43,20 @@ configs = moduleconfig.getConfigured('fei.cfg')
 ## Store the handle in the com module, which is safer than in
 ## this module due to multiple imports.
 def chooseTEMAdvancedScriptingName():
-	if 'version' not in configs.keys() or 'tfs_software_version' not in configs['version'].keys():
-		print 'Need version section in fei.cfg. Please update it'
-		raw_input('Hit return to exit')
+	if 'version' not in list(configs.keys()) or 'tfs_software_version' not in list(configs['version'].keys()):
+		print('Need version section in fei.cfg. Please update it')
+		input('Hit return to exit')
 		sys.exit(0)
 	version_text = configs['version']['tfs_software_version']
 	bits = version_text.split('.')
 	if len(bits) != 3 or not bits[1].isdigit():
-		print 'Unrecognized Version number, not in the format of %d.%d.%d'
-		raw_input('Hit return to exit')
+		print('Unrecognized Version number, not in the format of %d.%d.%d')
+		input('Hit return to exit')
 	major_version = int(bits[0])
 	minor_version = int(bits[1])
-	if 'software_type' not in  configs['version'].keys():
-		print 'Need software_type in version section in fei.cfg. Please update it'
-		raw_input('Hit return to exit')
+	if 'software_type' not in  list(configs['version'].keys()):
+		print('Need software_type in version section in fei.cfg. Please update it')
+		input('Hit return to exit')
 		sys.exit(0)
 	software_type = configs['version']['software_type'].lower()
 	if software_type == 'titan':
@@ -115,7 +115,7 @@ class FeiCam(ccdcamera.CCDCamera):
 			return ccdcamera.CCDCamera.__getattribute__(self, name)
 
 	def getFeiConfig(self,optionname,itemname=None):
-		if optionname not in configs.keys():
+		if optionname not in list(configs.keys()):
 			return None
 		if itemname is None:
 			return configs[optionname]
@@ -347,9 +347,9 @@ class FeiCam(ccdcamera.CCDCamera):
 		try:
 			self.finalizeSetup()
 			self.custom_setup()
-		except Exception, e:
+		except Exception as e:
 			if self.getDebugCamera():
-				print 'Camera setup',e
+				print('Camera setup',e)
 			raise RuntimeError('Error setting camera parameters: %s' % (e,))
 
 		t0 = time.time()
@@ -357,17 +357,17 @@ class FeiCam(ccdcamera.CCDCamera):
 		#TODO: Check if this is going to be an issue
 		self.csa.Wait()
 		if self.getDebugCamera():
-			print 'done waiting before acquire'
+			print('done waiting before acquire')
 		retry = False
 		reason = ''
 		try:
 			self.im = self.csa.Acquire()
 			t1 = time.time()
 			self.exposure_timestamp = (t1 + t0) / 2.0
-		except Exception, e:
+		except Exception as e:
 			if self.getDebugCamera():
-				print 'Camera acquire:',e
-				print self.camera_settings.ExposureTime
+				print('Camera acquire:',e)
+				print(self.camera_settings.ExposureTime)
 			if self.getSaveRawFrames() and 'Timeout' in e.text:
 				# dose fractionation queue may timeout on the server. The next acquisition
 				# is independent enough that we allow it to retry.
@@ -383,32 +383,32 @@ class FeiCam(ccdcamera.CCDCamera):
 			if retry == True:
 				try:
 					self.im = self.csa.Acquire()
-				except Exception, e:
+				except Exception as e:
 					raise RuntimeError('Error camera acquiring after retry: %s--%s' % (reason,e,))
 			else:
 				raise RuntimeError('Error camera acquiring: %s' % (e,))
 		try:
 			arr = self._getSafeArray()
-		except Exception, e:
+		except Exception as e:
 			if self.getDebugCamera():
-				print 'Camera array:',e
+				print('Camera array:',e)
 			raise RuntimeError('Camera Error in getting array: %s' % (e,))
 		if isinstance(arr,type(None)):
 			if self.getDebugCamera():
-				print 'No array in memory, yet. Try again.'
+				print('No array in memory, yet. Try again.')
 			self.csa.Wait()
 			try:
 				arr = self._getSafeArray()
-			except Exception, e:
+			except Exception as e:
 				if self.getDebugCamera():
-					print 'Camera array 2nd try:',e
+					print('Camera array 2nd try:',e)
 				raise RuntimeError('Camera Error in getting array: %s' % (e,))
 		if not SIMULATION:
 			self.image_metadata = self.getMetaDataDict(self.im.MetaData)
 		else:
 			self.image_metadata = {}
 		if self.getDebugCamera():
-			print 'got arr and to modify'
+			print('got arr and to modify')
 		arr = self.modifyImage(arr)
 		return arr
 
@@ -417,13 +417,13 @@ class FeiCam(ccdcamera.CCDCamera):
 		# reshape to 2D
 		try:
 			arr = self._modifyArray(arr)
-		except AttributeError, e:
+		except AttributeError as e:
 			if self.getDebugCamera():
-				print 'comtypes did not return an numpy 2D array, but %s' % (type(arr))
-		except Exception, e:
+				print('comtypes did not return an numpy 2D array, but %s' % (type(arr)))
+		except Exception as e:
 			arr = None
 			if self.getDebugCamera():
-				print 'modify array error',e
+				print('modify array error',e)
 			raise
 		#Offset to apply to get back the requested area
 		readout_offset = self._getReadoutOffset(rk, self.offset)
@@ -432,9 +432,9 @@ class FeiCam(ccdcamera.CCDCamera):
 				arr=arr[:,readout_offset['x']:readout_offset['x']+self.dimension['x']]
 			if self.dimension['y'] < arr.shape[0]:
 				arr=arr[readout_offset['y']:readout_offset['y']+self.dimension['y'],:]
-		except Exception, e:
+		except Exception as e:
 			if self.getDebugCamera():
-				print 'croping %s to offset %s and dim %s failed' %(self.limit_dim, self.readout_offset,self.dimension)
+				print('croping %s to offset %s and dim %s failed' %(self.limit_dim, self.readout_offset,self.dimension))
 			raise
 		# TO DO: Maybe need to scale ?
 		if SIMULATION and self.getIntensityAveraged():
@@ -466,7 +466,7 @@ class FeiCam(ccdcamera.CCDCamera):
 						value = v_string
 			if '.' in key:
 				bits = key.split('.')
-				if bits[0] not in mdict.keys():
+				if bits[0] not in list(mdict.keys()):
 					mdict[bits[0]]={}
 				mdict[bits[0]][bits[1]]=value
 			else:
@@ -504,15 +504,15 @@ class FeiCam(ccdcamera.CCDCamera):
 		if self.display_name:
 			try:
 				self.tia_display.closeDisplayWindow(self.display_name)
-			except ValueError, e:
-				print 'TIA display %s can not be closed' % self.display_name
+			except ValueError as e:
+				print('TIA display %s can not be closed' % self.display_name)
 		self._clickAcquire(exposure_time_s)
 
 	def stopMovie(self, filename, exposure_time_ms):
 		exposure_time_s = exposure_time_ms/1000.0
 		self._clickAcquire(exposure_time_s)
 		self.display_name = self.tia_display.getActiveDisplayWindowName()
-		print 'movie name: %s' % filename
+		print('movie name: %s' % filename)
 		time.sleep(exposure_time_s)
 		self._saveMovie(filename)
 		self._waitForSaveMoveDone()
@@ -619,9 +619,9 @@ class Falcon3(FeiCam):
 		self.frameconfig.setBaseFrameTime(self.base_frame_time)
 		falcon_image_storage = self.camera_settings.PathToImageStorage #read only
 		falcon_image_storage = 'z:\\TEMScripting\\BM-Falcon\\'
-		if 'falcon_image_storage_path' in configs['camera'].keys() and configs['camera']['falcon_image_storage_path']:
+		if 'falcon_image_storage_path' in list(configs['camera'].keys()) and configs['camera']['falcon_image_storage_path']:
 			falcon_image_storage = configs['camera']['falcon_image_storage_path']
-		print 'Falcon Image Storage Server Path is ', falcon_image_storage
+		print('Falcon Image Storage Server Path is ', falcon_image_storage)
 		sub_frame_dir = self.getFeiConfig('camera','frame_subpath')
 		try:
 			self.frameconfig.setFeiImageStoragePath(falcon_image_storage)
@@ -696,7 +696,7 @@ class Falcon3(FeiCam):
 		if self.extra_protector_sleep_time:
 			time.sleep(self.extra_protector_sleep_time)
 		if self.getDebugCamera():
-			print 'is counting: ', self.electron_counting
+			print('is counting: ', self.electron_counting)
 		self.setElectronCounting(self.electron_counting)
 		self.calculateMovieExposure()
 		movie_exposure_second = self.movie_exposure/1000.0
@@ -705,14 +705,14 @@ class Falcon3(FeiCam):
 			self.camera_settings.AlignImage = self.align_frames
 		max_nframes = self.camera_settings.CalculateNumberOfFrames()
 		if self.getDebugCamera():
-			print 'n base frames', max_nframes
+			print('n base frames', max_nframes)
 		frame_time_second = self.dosefrac_frame_time
 		if self.save_frames:
 			# Use all available frames
 			rangelist = self.frameconfig.makeRangeListFromNumberOfBaseFramesAndFrameTime(max_nframes,frame_time_second)
 			if self.getDebugCamera():
-				print 'rangelist', rangelist, len(rangelist)
-				print '#base', map((lambda x:x[1]-x[0]),rangelist)
+				print('rangelist', rangelist, len(rangelist))
+				print('#base', list(map((lambda x:x[1]-x[0]),rangelist)))
 			if rangelist:
 				# modify frame time in case of uneven bins
 				self.dosefrac_frame_time = movie_exposure_second / len(rangelist)

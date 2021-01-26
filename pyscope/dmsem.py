@@ -8,7 +8,7 @@
 
 # target intensity:  140410.1
 
-import ccdcamera
+from . import ccdcamera
 import sys
 import time
 import numpy
@@ -19,11 +19,11 @@ import numextension
 
 simulation = False
 if simulation:
-	print 'USING SIMULATION SETTINGS'
-	import simgatan
+	print('USING SIMULATION SETTINGS')
+	from . import simgatan
 	logdir = os.getcwd()
 else:
-	import gatansocket
+	from . import gatansocket
 	# on Windows
 	logdir = os.path.join(os.environ['USERPROFILE'],'Documents','myami_log')
 	if not os.path.isdir(logdir):
@@ -52,7 +52,7 @@ def simconnect():
 
 configs = moduleconfig.getConfigured('dmsem.cfg')
 
-if 'save_log' in configs['logger'].keys() and configs['logger']['save_log'] is True:
+if 'save_log' in list(configs['logger'].keys()) and configs['logger']['save_log'] is True:
 	logfile = os.path.join(logdir,time.strftime('%Y-%m-%d_%H_%M', time.localtime(time.time()))+'.log')
 	f=open(logfile,'w')
 	f.write('framename\ttime_delta\n')
@@ -76,7 +76,7 @@ class DMSEM(ccdcamera.CCDCamera):
 		else:
 			self.camera = simconnect()
 
-		self.idcounter = itertools.cycle(range(100))
+		self.idcounter = itertools.cycle(list(range(100)))
 
 		ccdcamera.CCDCamera.__init__(self)
 
@@ -120,7 +120,7 @@ class DMSEM(ccdcamera.CCDCamera):
 		return object.__getattribute__(self, attr_name)
 
 	def getDmsemConfig(self,optionname,itemname=None):
-		if optionname not in configs.keys():
+		if optionname not in list(configs.keys()):
 			return None
 		if itemname is None:
 			return configs[optionname]
@@ -139,12 +139,12 @@ class DMSEM(ccdcamera.CCDCamera):
 	def info_print(self, msg):
 		v = self.getDmsemConfig('logger', 'verbosity')
 		if v is None or v > 0:
-			print msg
+			print(msg)
 
 	def debug_print(self, msg):
 		v = self.getDmsemConfig('logger', 'verbosity')
 		if v is not None and v > 1:
-			print msg
+			print(msg)
 
 	def getOffset(self):
 		return dict(self.offset)
@@ -453,7 +453,7 @@ class DMSEM(ccdcamera.CCDCamera):
 		'''
 		dm_version = self.getDmsemConfig('dm','dm_version')
 		if dm_version:
-			bits = map((lambda x:int(x)),dm_version.split('.'))
+			bits = list(map((lambda x:int(x)),dm_version.split('.')))
 			version_long = (bits[0]+2)*10000 + (bits[1] //10)*100 + bits[1] % 10
 		else:
 			version_long = self.camera.GetDMVersion()
@@ -505,7 +505,7 @@ class DMSEM(ccdcamera.CCDCamera):
 		'''
 		for method_name in self.filter_method_names:
 			method_name = method_name[0].upper() + method_name[1:]
-			if method_name not in self.camera.filter_functions.keys():
+			if method_name not in list(self.camera.filter_functions.keys()):
 				return False
 		return True
 
@@ -728,7 +728,7 @@ class GatanK2Base(DMSEM):
 			# This makes it always take the value in dmsem.cfg
 			self.setEarlyReturnFrameCount(None)
 			frames_name = time.strftime('%Y%m%d_%H%M%S', time.localtime())
-			self.frames_name = frames_name + '%02d' % (self.idcounter.next(),)
+			self.frames_name = frames_name + '%02d' % (next(self.idcounter),)
 		else:
 			self.frames_name = 'dummy'
 		raw_frame_dir = self.getDmsemConfig('k2','raw_frame_dir')
@@ -996,13 +996,13 @@ class GatanK3(GatanK2Base):
 		# TODO: Found image shape returned incorrectly in simulation.
 		# Leave this here for now.
 		if self.acqparams['width']*self.acqparams['height'] != image.shape[0]*image.shape[1]:
-			print 'ERROR: image not in the right shape'
+			print('ERROR: image not in the right shape')
 			return image
 		else:
 			# simulator binned image when saving frames has wrong shape
 			if self.acqparams['width'] != image.shape[1]:
 				image = image.reshape(self.acqparams['height'],self.acqparams['width'])
-				print 'WARNING: image reshaped', image.shape
+				print('WARNING: image reshaped', image.shape)
 		return image
 
 	def getPixelSize(self):

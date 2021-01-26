@@ -41,7 +41,7 @@ def testMethods(tem_inst):
 					# don't test film or lowdose functions
 					continue
 				elif 'Config' in a and hasattr(this_module,'configs'):
-					k = getattr(this_module,'configs').keys()[0]
+					k = list(getattr(this_module,'configs').keys())[0]
 					test(tem_inst, a, k)
 				else:
 					test(tem_inst, a)
@@ -73,19 +73,19 @@ def testMethods(tem_inst):
 				if 'set' in impls:
 					attr_name = 'set'+c['name']
 					t0 = time.time()
-					print attr_name
+					print(attr_name)
 					test(tem_inst, attr_name,result)
-					print 'time (s): %.6f' % (time.time()-t0)
+					print('time (s): %.6f' % (time.time()-t0))
 			except Exception as e:
 				if 'adaExp' in str(e):
 					continue
-				print 'Error testing %s: %s' % (attr_name,e)
+				print('Error testing %s: %s' % (attr_name,e))
 				error_count += 1
 	print('----------------------')
-	print('Number of error found: %d' % (error_count,))
+	print(('Number of error found: %d' % (error_count,)))
 
 t = instrumenttype.getInstrumentTypeInstance(search_for)
 global this_module 
 t.findMagnifications()
 testMethods(t)
-raw_input('Finished. Hit return to quit')
+input('Finished. Hit return to quit')

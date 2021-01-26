@@ -27,7 +27,7 @@ class CameraControl(object):
 
 		try:
 			hr = cameracontrol.camera.Initialize(camera.cameratype, 0)
-		except pywintypes.com_error, e:
+		except pywintypes.com_error as e:
 			self.unlock()
 			raise RuntimeError('error initializing camera')
 		except:
@@ -66,17 +66,17 @@ class CameraControl(object):
 			pythoncom.CoInitialize()
 		try:
 			self.camera = win32com.client.Dispatch('CAMC4.Camera')		
-		except pywintypes.com_error, e:
+		except pywintypes.com_error as e:
 			raise RuntimeError('failed to initialize interface CAMC4.Camera')
 
 		try:
 			ping = win32com.client.Dispatch('pyscope.CAMCCallBack')
-		except pywintypes.com_error, e:
+		except pywintypes.com_error as e:
 			raise RuntimeError('failed to initialize interface pyscope.Ping')
 
 		try:
 			hr = self.camera.RegisterCAMCCallBack(ping, self.pingname)
-		except pywintypes.com_error, e:
+		except pywintypes.com_error as e:
 			raise RuntimeError('error registering callback COM object')
 
 		hr = self.camera.RequestLock()

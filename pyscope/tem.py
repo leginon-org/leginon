@@ -5,7 +5,7 @@
 # see http://leginon.org
 #
 
-import baseinstrument
+from . import baseinstrument
 import math
 
 class TEM(baseinstrument.BaseInstrument):
@@ -142,7 +142,7 @@ class TEM(baseinstrument.BaseInstrument):
 	def addProjectionSubModeMap(self, mag, mode_name, mode_id, overwrite=False):
 		# Only do it once
 		overwritten = False
-		if mag in self.projection_submode_map.keys():
+		if mag in list(self.projection_submode_map.keys()):
 			if not overwrite:
 				return overwritten
 			else:
@@ -173,7 +173,7 @@ class TEM(baseinstrument.BaseInstrument):
 		pass
 
 	def nextPhasePlate(self):
-		print "next position"
+		print("next position")
 
 	def getColumnPressure(self):
 		return 1.0 #Pascal
@@ -244,8 +244,8 @@ class TEM(baseinstrument.BaseInstrument):
 		fill_starts, fill_time, myclock_ahead = self.getTimedN2FillParams()
 		# handle filler computer clock is offset slightly
 		fill_starts = list(fill_starts)
-		fill_starts.extend(map((lambda x: x+24*60), fill_starts))
-		fill_starts.extend(map((lambda x: x-24*60), fill_starts))
+		fill_starts.extend(list(map((lambda x: x+24*60), fill_starts)))
+		fill_starts.extend(list(map((lambda x: x-24*60), fill_starts)))
 
 		filler_clock_now = my_clock_now - myclock_ahead
 		for t in fill_starts:
@@ -269,14 +269,14 @@ class TEM(baseinstrument.BaseInstrument):
 	def loadGridCartridge(self, number):
 		if not self.hasGridLoader():
 			return
-		if number not in range(1,self.getGridLoaderNumberOfSlots()+1):
+		if number not in list(range(1,self.getGridLoaderNumberOfSlots()+1)):
 			return
 		if self.getGridLoaderSlotState(number) != 'occupied':
 			raise ValueError('Grid %d is not occupied' % number)
 		# now load
 		try:
 			self._loadCartridge(number)
-		except RuntimeError, e:
+		except RuntimeError as e:
 			raise RuntimeError('Grid Loading failed')
 
 	def unloadGridCartridge(self):
@@ -293,7 +293,7 @@ class TEM(baseinstrument.BaseInstrument):
 		# now unload
 		try:
 			self._unloadCartridge()
-		except RuntimeError, e:
+		except RuntimeError as e:
 			raise RuntimeError('Grid unLoading failed')
 
 	def _loadCartridge(self, number):

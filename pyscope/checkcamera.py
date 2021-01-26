@@ -8,7 +8,7 @@ from pyscope import checkmodule
 app = checkmodule.TestInstrument(classes)
 app.test('getDimension')
 app.test('getImage')
-print 'Testing frame saving'
+print('Testing frame saving')
 app.test('setSaveRawFrames',True)
 app.test('getImage')
 app.waitToClose()

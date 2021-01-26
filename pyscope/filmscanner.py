@@ -1,5 +1,5 @@
 import copy
-import ccdcamera
+from . import ccdcamera
 import numpy
 import random
 random.seed()
@@ -25,14 +25,14 @@ class FilmScanner(ccdcamera.CCDCamera):
         return copy.copy(self.binning)
 
     def setBinning(self, value):
-        for axis in self.binning.keys():
+        for axis in list(self.binning.keys()):
             try:
                 if value[axis] not in self.binning_values[axis]:
                     raise ValueError('invalid binning')
             except KeyError:
                 pass
 
-        for axis in self.binning.keys():
+        for axis in list(self.binning.keys()):
             try:
                 self.binning[axis] = value[axis]
             except KeyError:
@@ -42,14 +42,14 @@ class FilmScanner(ccdcamera.CCDCamera):
         return copy.copy(self.offset)
 
     def setOffset(self, value):
-        for axis in self.offset.keys():
+        for axis in list(self.offset.keys()):
             try:
                 if value[axis] < 0 or value[axis] >= self.getCameraSize()[axis]:
                     raise ValueError('invalid offset')
             except KeyError:
                 pass
 
-        for axis in self.offset.keys():
+        for axis in list(self.offset.keys()):
             try:
                 self.offset[axis] = value[axis]
             except KeyError:
@@ -59,14 +59,14 @@ class FilmScanner(ccdcamera.CCDCamera):
         return copy.copy(self.dimension)
 
     def setDimension(self, value):
-        for axis in self.dimension.keys():
+        for axis in list(self.dimension.keys()):
             try:
                 if value[axis] < 1 or value[axis] > self.getCameraSize()[axis]:
                     raise ValueError('invalid dimension')
             except KeyError:
                 pass
 
-        for axis in self.dimension.keys():
+        for axis in list(self.dimension.keys()):
             try:
                 self.dimension[axis] = value[axis]
             except KeyError:

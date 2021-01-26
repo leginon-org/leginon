@@ -118,7 +118,7 @@ _DEPACKET = descriptor.Descriptor(
     descriptor.FieldDescriptor(
       name='camera_name', full_name='DEMessaging.DEPacket.camera_name', index=5,
       number=6, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=unicode("", "utf-8"),
+      has_default_value=False, default_value=str("", "utf-8"),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
@@ -154,7 +154,7 @@ _SINGLECOMMAND = descriptor.Descriptor(
     descriptor.FieldDescriptor(
       name='command_name', full_name='DEMessaging.SingleCommand.command_name', index=1,
       number=2, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=unicode("", "utf-8"),
+      has_default_value=False, default_value=str("", "utf-8"),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
@@ -196,7 +196,7 @@ _ANYPARAMETER = descriptor.Descriptor(
     descriptor.FieldDescriptor(
       name='name', full_name='DEMessaging.AnyParameter.name', index=1,
       number=2, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=unicode("", "utf-8"),
+      has_default_value=False, default_value=str("", "utf-8"),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
@@ -217,7 +217,7 @@ _ANYPARAMETER = descriptor.Descriptor(
     descriptor.FieldDescriptor(
       name='p_string', full_name='DEMessaging.AnyParameter.p_string', index=4,
       number=5, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=unicode("", "utf-8"),
+      has_default_value=False, default_value=str("", "utf-8"),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
@@ -309,14 +309,14 @@ _SINGLEACKNOWLEDGE = descriptor.Descriptor(
     descriptor.FieldDescriptor(
       name='command_name', full_name='DEMessaging.SingleAcknowledge.command_name', index=2,
       number=3, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=unicode("", "utf-8"),
+      has_default_value=False, default_value=str("", "utf-8"),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     descriptor.FieldDescriptor(
       name='error_message', full_name='DEMessaging.SingleAcknowledge.error_message', index=3,
       number=4, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=unicode("", "utf-8"),
+      has_default_value=False, default_value=str("", "utf-8"),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
@@ -358,7 +358,7 @@ _DATAHEADER = descriptor.Descriptor(
     descriptor.FieldDescriptor(
       name='identifier', full_name='DEMessaging.DataHeader.identifier', index=1,
       number=2, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=unicode("", "utf-8"),
+      has_default_value=False, default_value=str("", "utf-8"),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
@@ -387,38 +387,32 @@ _ANYPARAMETER_TYPE.containing_type = _ANYPARAMETER;
 _ACKNOWLEDGE.fields_by_name['acknowledge'].message_type = _SINGLEACKNOWLEDGE
 _SINGLEACKNOWLEDGE.fields_by_name['parameter'].message_type = _ANYPARAMETER
 
-class DEPacket(message.Message):
-  __metaclass__ = reflection.GeneratedProtocolMessageType
+class DEPacket(message.Message, metaclass=reflection.GeneratedProtocolMessageType):
   DESCRIPTOR = _DEPACKET
   
   # @@protoc_insertion_point(class_scope:DEMessaging.DEPacket)
 
-class SingleCommand(message.Message):
-  __metaclass__ = reflection.GeneratedProtocolMessageType
+class SingleCommand(message.Message, metaclass=reflection.GeneratedProtocolMessageType):
   DESCRIPTOR = _SINGLECOMMAND
   
   # @@protoc_insertion_point(class_scope:DEMessaging.SingleCommand)
 
-class AnyParameter(message.Message):
-  __metaclass__ = reflection.GeneratedProtocolMessageType
+class AnyParameter(message.Message, metaclass=reflection.GeneratedProtocolMessageType):
   DESCRIPTOR = _ANYPARAMETER
   
   # @@protoc_insertion_point(class_scope:DEMessaging.AnyParameter)
 
-class Acknowledge(message.Message):
-  __metaclass__ = reflection.GeneratedProtocolMessageType
+class Acknowledge(message.Message, metaclass=reflection.GeneratedProtocolMessageType):
   DESCRIPTOR = _ACKNOWLEDGE
   
   # @@protoc_insertion_point(class_scope:DEMessaging.Acknowledge)
 
-class SingleAcknowledge(message.Message):
-  __metaclass__ = reflection.GeneratedProtocolMessageType
+class SingleAcknowledge(message.Message, metaclass=reflection.GeneratedProtocolMessageType):
   DESCRIPTOR = _SINGLEACKNOWLEDGE
   
   # @@protoc_insertion_point(class_scope:DEMessaging.SingleAcknowledge)
 
-class DataHeader(message.Message):
-  __metaclass__ = reflection.GeneratedProtocolMessageType
+class DataHeader(message.Message, metaclass=reflection.GeneratedProtocolMessageType):
   DESCRIPTOR = _DATAHEADER
   
   # @@protoc_insertion_point(class_scope:DEMessaging.DataHeader)

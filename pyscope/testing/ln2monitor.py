@@ -53,7 +53,7 @@ def sendEmail(msg):
 	server.sendmail(configs['from'],configs['to'], text)
 
 def sendFakeEmail(msg):
-	print msg
+	print(msg)
 
 class N2Monitor(object):
 	def __init__(self):
@@ -69,7 +69,7 @@ class N2Monitor(object):
 		else:
 			self.check_interval = default_interval
 			while self.lock:
-				print 'while'
+				print('while')
 				try:
 					now_str = self.getNowStr()
 					if self.t.getAutoFillerRemainingTime() == -60:
@@ -81,7 +81,7 @@ class N2Monitor(object):
 					self.checkLevel()
 				except Exception as e:
 					self.lock = False
-					print e
+					print(e)
 					break
 		return
 
@@ -103,7 +103,7 @@ class N2Monitor(object):
 			# LN2 level drops during fill.  Check again after expected recovery
 			if self.t.isAutoFillerBusy():
 				if TESTING:
-					print 'wait for recheck'
+					print('wait for recheck')
 				time.sleep(RECOVER_TIME)
 			self.loader_level = self.t.getRefrigerantLevel(0)
 			self.column_level = self.t.getRefrigerantLevel(1)
@@ -120,7 +120,7 @@ class N2Monitor(object):
 			# reset check interval to default if recover
 			self.check_interval = default_interval
 			if self.alarm_tripped:
-				print 'reset'
+				print('reset')
 				self.alarm_tripped = 0
 		if self.isLowLevel():
 			self.alarm_tripped += 1
@@ -130,7 +130,7 @@ class N2Monitor(object):
 			if self.alarm_tripped >=silent_alarm:
 				# snooze longer
 				self.check_interval = snooze_interval
-				print 'start to snooze'
+				print('start to snooze')
 				if TESTING and not self.t.isAutoFillerBusy():
 					tt=threading.Thread(target=self.t.runAutoFiller)
 					tt.daemon = True

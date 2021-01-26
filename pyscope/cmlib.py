@@ -11,7 +11,7 @@
 
 
 from ctypes import *
-import CMData
+from . import CMData
 import time
 
 Debug = False
@@ -104,21 +104,21 @@ class CMLIB(object):
     # Print err message from SECS2_32.exe
     def _errmsg(self,err):      
         if err == 1:
-            print 'err message: NOTSENT'
+            print('err message: NOTSENT')
         elif err == 2:
-            print 'err message: TIMEOUT'
+            print('err message: TIMEOUT')
         elif err == 3:
-            print 'err message: NOMEM'
+            print('err message: NOMEM')
         elif err == 4:
-            print 'err message: TOOMANYREQUEST'
+            print('err message: TOOMANYREQUEST')
         elif err == 5:
-            print 'err message: SECSCLOSED'
+            print('err message: SECSCLOSED')
         elif err == 10:
-            print 'err message: OTHERFUNCTION'
+            print('err message: OTHERFUNCTION')
         elif err == 11:
-            print 'err message: ILLEGALPARAM'
+            print('err message: ILLEGALPARAM')
         else:
-            print 'undocumented err message'
+            print('undocumented err message')
 
 
     # Establish communication to microscope
@@ -127,20 +127,20 @@ class CMLIB(object):
         version = create_string_buffer('\000' * 32)
         i = 0
         while i < self.trials:
-            print 'model', model
-            print 'version', version
+            print('model', model)
+            print('version', version)
             err = self.cmremote32.EquipmentAvailable(0,model,version)
             if err != 0:
                 if err == 65535:
                     self._errmsg(err)
                     return                    
-                print 'Connet to CM %s time faild' %(i+1)
+                print('Connet to CM %s time faild' %(i+1))
                 self._errmsg(err)
                 time.sleep(self.waitmid)
                 i += 1
             else:
-                print "CM Model: %s  Version: %s" % (repr(model.value), \
-                                                  repr(version.value))
+                print("CM Model: %s  Version: %s" % (repr(model.value), \
+                                                  repr(version.value)))
                 i = self.trials + 1
                 time.sleep(self.waitend)
 
@@ -161,20 +161,20 @@ class CMLIB(object):
                     if err == 65535:
                         self._errmsg(err)
                         return
-                    print 'GetCMVar %s time faild' %(i+1)
+                    print('GetCMVar %s time faild' %(i+1))
                     self._errmsg(err)
                     time.sleep(self.waitmid)
                     i += 1
                 else:
                     if Debug == True:
-                        print 'retrived CMVar from microscope'
+                        print('retrived CMVar from microscope')
                     CacheTime['cmvar_pre'] = CacheTime['cmvar_now']
                     time.sleep(self.waitend)
                     return CacheInfo['cmvar']
                     i = self.trials + 1 
         else:
             if Debug == True:
-                print 'retrived CMVar from Cache'
+                print('retrived CMVar from Cache')
             return CacheInfo['cmvar']
 
 
@@ -194,20 +194,20 @@ class CMLIB(object):
                     if err == 65535:
                         self._errmsg(err)
                         return                   
-                    print 'GetCMInfo %s time faild' %(i+1)
+                    print('GetCMInfo %s time faild' %(i+1))
                     self._errmsg(err)
                     time.sleep(self.waitmid)
                     i += 1
                 else:
                     if Debug == True:
-                        print 'retrived CMInfo from microscope'
+                        print('retrived CMInfo from microscope')
                     CacheTime['cminfo_pre'] = CacheTime['cminfo_now']
                     time.sleep(self.waitend)
                     return CacheInfo['cminfo']
                     i = self.trials + 1
         else:
             if Debug == True:
-                print 'retrived CMInfo from Cache'
+                print('retrived CMInfo from Cache')
             return CacheInfo['cminfo']
 
 
@@ -228,20 +228,20 @@ class CMLIB(object):
                     if err == 65535:
                         self._errmsg(err)
                         return                    
-                    print 'CSAskPos %s time faild' %(i+1)
+                    print('CSAskPos %s time faild' %(i+1))
                     self._errmsg(err)
                     time.sleep(self.waitmid)
                     i += 1
                 else:
                     if Debug == True:
-                        print 'retrived CSAskPos from microscope'
+                        print('retrived CSAskPos from microscope')
                     CacheTime['pos_pre'] = CacheTime['pos_now']
                     time.sleep(self.waitend)
                     return CacheInfo['pos']
                     i = self.trials + 1
         else:
             if Debug == True:
-                print 'retrived CSAskPos from Cache'
+                print('retrived CSAskPos from Cache')
             return CacheInfo['pos']
 
 
@@ -260,20 +260,20 @@ class CMLIB(object):
                     if err == 65535:
                         self._errmsg(err)
                         return                    
-                    print 'GetCmCamValues %s time faild' %(i+1)
+                    print('GetCmCamValues %s time faild' %(i+1))
                     self._errmsg(err)
                     time.sleep(self.waitmid)
                     i += 1
                 else:
                     if Debug == True:
-                        print 'retrived GetCmCamValues from microscope'
+                        print('retrived GetCmCamValues from microscope')
                     CacheTime['camvalues_pre'] = CacheTime['camvalues_now']
                     time.sleep(self.waitend)
                     return CacheInfo['camvalues']
                     i = self.trials + 1
         else:
             if Debug == True:
-                print 'retrived GetCmCamValues from Cache'
+                print('retrived GetCmCamValues from Cache')
             return CacheInfo['camvalues']
 
 
@@ -292,20 +292,20 @@ class CMLIB(object):
                     if err == 65535:
                         self._errmsg(err)
                         return                    
-                    print 'PressureReadout %s time faild' %(i+1)
+                    print('PressureReadout %s time faild' %(i+1))
                     self._errmsg(err)
                     time.sleep(self.waitmid)
                     i += 1
                 else:
                     if Debug == True:
-                        print 'retrived PressureReadout from microscope'
+                        print('retrived PressureReadout from microscope')
                     CacheTime['pressures_pre'] = CacheTime['pressures_now']
                     time.sleep(self.waitend)
                     return CacheInfo['pressures']
                     i = self.trials + 1
         else:
             if Debug == True:
-                print 'retrived PressureReadout from Cache'
+                print('retrived PressureReadout from Cache')
             return CacheInfo['pressures']
 
 
@@ -324,20 +324,20 @@ class CMLIB(object):
                     if err == 65535:
                         self._errmsg(err)
                         return                    
-                    print 'GetRotationAlignment %s time faild' %(i+1)
+                    print('GetRotationAlignment %s time faild' %(i+1))
                     self._errmsg(err)
                     time.sleep(self.waitmid)
                     i += 1
                 else:
                     if Debug == True:
-                        print 'retrived RotationAlignment from microscope'
+                        print('retrived RotationAlignment from microscope')
                     CacheTime['rotalignment_pre'] = CacheTime['rotalignment_now']
                     time.sleep(self.waitend)
                     return CacheInfo['rotalignment']
                     i = self.trials + 1
         else:
             if Debug == True:
-                print 'retrived RotationAlignment from Cache'
+                print('retrived RotationAlignment from Cache')
             return CacheInfo['rotalignment']
 
 
@@ -359,20 +359,20 @@ class CMLIB(object):
                     if err == 65535:
                         self._errmsg(err)
                         return                    
-                    print 'ScreenCurrent %s time faild' %(i+1)
+                    print('ScreenCurrent %s time faild' %(i+1))
                     self._errmsg(err)
                     time.sleep(self.waitmid)
                     i += 1
                 else:
                     if Debug == True:
-                        print 'retrived ScreenCurrent from microscope'
+                        print('retrived ScreenCurrent from microscope')
                     CacheTime['scrncurrent_pre'] = CacheTime['scrncurrent_now']
                     time.sleep(self.waitend)
                     return CacheInfo['scrncurrent'].value * 2.5
                     i = self.trials + 1
         else:
             if Debug == True:
-                print 'retrived ScreenCurrent from Cache'
+                print('retrived ScreenCurrent from Cache')
             return CacheInfo['scrncurrent'].value * 2.5
 
 
@@ -391,20 +391,20 @@ class CMLIB(object):
                     if err == 65535:
                         self._errmsg(err)
                         return                    
-                    print 'EmissionCurrent %s time faild' %(i+1)
+                    print('EmissionCurrent %s time faild' %(i+1))
                     self._errmsg(err)
                     time.sleep(self.waitmid)
                     i += 1
                 else:
                     if Debug == True:
-                        print 'retrived EmissionCurrent from microscope'
+                        print('retrived EmissionCurrent from microscope')
                     CacheTime['emssncurrent_pre'] = CacheTime['emssncurrent_now']
                     time.sleep(self.waitend)
                     return CacheInfo['emssncurrent'].value
                     i = self.trials + 1              
         else:
             if Debug == True:
-                print 'retrived EmissionCurrent from Cache'
+                print('retrived EmissionCurrent from Cache')
             return CacheInfo['emssncurrent'].value
 
 
@@ -425,20 +425,20 @@ class CMLIB(object):
                     if err == 65535:
                         self._errmsg(err)
                         return                    
-                    print 'RetrHTCond %s time faild' %(i+1)
+                    print('RetrHTCond %s time faild' %(i+1))
                     self._errmsg(err)
                     time.sleep(self.waitmid)
                     i += 1
                 else:
                     if Debug == True:
-                        print 'retrived RetrHTCond from microscope'
+                        print('retrived RetrHTCond from microscope')
                     CacheTime['HTcond_pre'] = CacheTime['HTcond_now']
                     time.sleep(self.waitend)
                     return CacheInfo['HTcond'].value
                     i = self.trials + 1
         else:
             if Debug == True:
-                print 'retrived RetrHTCond from Cache'
+                print('retrived RetrHTCond from Cache')
             return CacheInfo['HTcond'].value
 
 
@@ -459,20 +459,20 @@ class CMLIB(object):
                     if err == 65535:
                         self._errmsg(err)
                         return                    
-                    print 'SRSReadPos %s time faild' %(i+1)
+                    print('SRSReadPos %s time faild' %(i+1))
                     self._errmsg(err)
                     time.sleep(self.waitmid)
                     i += 1
                 else:
                     if Debug == True:
-                        print 'retrived SRSReadPos from microscope'
+                        print('retrived SRSReadPos from microscope')
                     CacheTime['pos_pre'] = CacheTime['pos_now']
                     time.sleep(self.waitend)
                     return CacheInfo['pos']
                     i = self.trials + 1
         else:
             if Debug == True:
-                print 'retrived SRSReadPos from Cache'
+                print('retrived SRSReadPos from Cache')
             return CacheInfo['pos']
 
 
@@ -493,13 +493,13 @@ class CMLIB(object):
                 if err == 65535:
                     self._errmsg(err)
                     return                
-                print 'CSGotoPos %s time faild' %(i+1)
+                print('CSGotoPos %s time faild' %(i+1))
                 self._errmsg(err)
                 time.sleep(self.waitmid*2)
                 i += 1
             else:
                 if Debug == True:
-                    print "CSGotoPos -- succeed"
+                    print("CSGotoPos -- succeed")
                 time.sleep(self.waitend)
                 i = self.trials + 1
 
@@ -508,7 +508,7 @@ class CMLIB(object):
     # Equivalent to CSGotoPos with method identified as 'Xgoto or Ygoto'
     def SRSGotoPos(self,x,y):
         if (x > 900) or (x < -900) or (y > 900) or (y < -900):
-            print "WARINING, Compustage will be out of range, RESET your value"
+            print("WARINING, Compustage will be out of range, RESET your value")
             return
         # a pointer needs to be passed to the CSGotoPos function.
         # The orignial explanation is wrong in the cmremote32.h.
@@ -519,13 +519,13 @@ class CMLIB(object):
                 if err == 65535:
                     self._errmsg(err)
                     return                
-                print 'SRSGotoPos %s time faild' %(i+1)
+                print('SRSGotoPos %s time faild' %(i+1))
                 self._errmsg(err)
                 time.sleep(self.waitmid)
                 i += 1
             else:
                 if Debug == True:
-                    print "SRSGotoPos -- succeed"
+                    print("SRSGotoPos -- succeed")
                 time.sleep(self.waitend)
                 i = self.trials + 1
 
@@ -540,13 +540,13 @@ class CMLIB(object):
                 if err == 65535:
                     self._errmsg(err)
                     return                
-                print 'ChangeFreeHT %s time faild' %(i+1)
+                print('ChangeFreeHT %s time faild' %(i+1))
                 self._errmsg(err)
                 time.sleep(self.waitmid)
                 i += 1
             else:
                 if Debug == True:
-                    print "ChangeFreeHT -- succeed"
+                    print("ChangeFreeHT -- succeed")
                 time.sleep(self.waitend)
                 i = self.trials + 1
 
@@ -581,13 +581,13 @@ class CMLIB(object):
                 if err == 65535:
                     self._errmsg(err)
                     return                
-                print 'DirectOperation %s time faild' %(i+1)
+                print('DirectOperation %s time faild' %(i+1))
                 self._errmsg(err)
                 time.sleep(self.waitmid)
                 i += 1
             else:
                 if Debug == True:
-                    print "DirectOperation -- succeed"
+                    print("DirectOperation -- succeed")
                 time.sleep(self.waitend)
                 i = self.trials + 1
 
@@ -601,13 +601,13 @@ class CMLIB(object):
                 if err == 65535:
                     self._errmsg(err)
                     return                
-                print 'SetRotationAlignment %s time faild' %(i+1)
+                print('SetRotationAlignment %s time faild' %(i+1))
                 self._errmsg(err)
                 time.sleep(self.waitmid)
                 i += 1
             else:
                 if Debug == True:
-                    print "SetRotationAlignment -- succeed"
+                    print("SetRotationAlignment -- succeed")
                 time.sleep(self.waitend)
                 i = self.trials + 1
 
@@ -624,13 +624,13 @@ class CMLIB(object):
                 if err == 65535:
                     self._errmsg(err)
                     return                
-                print 'Softkeyt %s time faild' %(i+1)
+                print('Softkeyt %s time faild' %(i+1))
                 self._errmsg(err)
                 time.sleep(self.waitmid)
                 i += 1
             else:
                 if Debug == True:
-                    print "Softkey -- succeed"
+                    print("Softkey -- succeed")
                 time.sleep(self.waitend)
                 i = self.trials + 1
 
@@ -671,13 +671,13 @@ class CMLIB(object):
                 if err == 65535:
                     self._errmsg(err)
                     return                
-                print 'TurnKnob %s time faild' %(i+1)
+                print('TurnKnob %s time faild' %(i+1))
                 self._errmsg(err)
                 time.sleep(self.waitmid)
                 i += 1
             else:
                 if Debug == True:
-                    print "TurnKnob -- succeed"
+                    print("TurnKnob -- succeed")
                 time.sleep(self.waitend)
                 i = self.trials + 1
 
@@ -714,13 +714,13 @@ class CMLIB(object):
                 if err == 65535:
                     self._errmsg(err)
                     return                
-                print 'PushButton %s time faild' %(i+1)
+                print('PushButton %s time faild' %(i+1))
                 self._errmsg(err)
                 time.sleep(self.waitmid)
                 i += 1
             else:
                 if Debug == True:
-                    print "PushButton -- succeed"
+                    print("PushButton -- succeed")
                 time.sleep(self.waitend)
                 i = self.trials + 1
 
@@ -734,13 +734,13 @@ class CMLIB(object):
                 if err == 65535:
                     self._errmsg(err)
                     return                
-                print 'SwitchFreeHT %s time faild' %(i+1)
+                print('SwitchFreeHT %s time faild' %(i+1))
                 self._errmsg(err)
                 time.sleep(self.waitmid)
                 i += 1
             else:
                 if Debug == True:
-                    print "SwitchFreeHT -- succeed"
+                    print("SwitchFreeHT -- succeed")
                 time.sleep(self.waitend)
                 i = self.trials + 1
 
@@ -759,13 +759,13 @@ class CMLIB(object):
                 if err == 65535:
                     self._errmsg(err)
                     return                
-                print 'ResetDisplay %s time faild' %(i+1)
+                print('ResetDisplay %s time faild' %(i+1))
                 self._errmsg(err)
                 time.sleep(self.waitmid)
                 i += 1
             else:
                 if Debug == True:
-                    print "ResetDisplay -- succeed"
+                    print("ResetDisplay -- succeed")
                 time.sleep(self.waitend)
                 i = self.trials + 1
 
@@ -786,20 +786,20 @@ class CMLIB(object):
                     if err == 65535:
                         self._errmsg(err)
                         return
-                    print 'GetStigmators %s time faild' %(i+1)
+                    print('GetStigmators %s time faild' %(i+1))
                     self._errmsg(err)
                     time.sleep(self.waitmid)
                     i += 1
                 else:
                     if Debug == True:
-                        print 'retrived GetStigmators from microscope'
+                        print('retrived GetStigmators from microscope')
                     CacheTime['stigmators_pre'] = CacheTime['stigmators_now']
                     time.sleep(self.waitend)
                     return CacheInfo['stigmators']
                     i = self.trials + 1
         else:
             if Debug == True:
-                print 'retrived GetStigmators from Cache'
+                print('retrived GetStigmators from Cache')
             return CacheInfo['stigmators']
 
 
@@ -809,7 +809,7 @@ class CMLIB(object):
         leng  = c_int(0)    # refer to GetCMVar for detail
         
         if stigs == 'None':
-            print 'No stigmator setting sent to the microscope'
+            print('No stigmator setting sent to the microscope')
             return
         
         i = 0
@@ -825,13 +825,13 @@ class CMLIB(object):
                 if err == 65535:
                     self._errmsg(err)
                     return               
-                print 'SetStigmators %s time faild' %(i+1)
+                print('SetStigmators %s time faild' %(i+1))
                 self._errmsg(err)
                 time.sleep(self.waitmid)
                 i += 1
             else:
                 if Debug == True:
-                    print "SetStigmators -- succeed"
+                    print("SetStigmators -- succeed")
                 time.sleep(self.waitend)
                 i = self.trials + 1
 
@@ -849,6 +849,6 @@ class CMLIB(object):
 	return myarray
 
     def __del__(self):
-        print 'close connection to SECS2'
+        print('close connection to SECS2')
         self.cmremote32.CloseConnection()   # close connection between cmremote32.dll to SECS2
         

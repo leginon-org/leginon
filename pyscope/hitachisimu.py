@@ -82,13 +82,13 @@ class HitachiSimu(object):
 		self.setDataTypes()
 		self.setDataValues()
 		conn, address = self.server.accept()
-		print 'server 127.0.0.1:12068 is ready'
+		print('server 127.0.0.1:12068 is ready')
 		text = ''
 		try:
 			while True:
 				d = conn.recv(1) 
 				if d == eof_marker:
-					print text
+					print(text)
 					respond = self.makeResponse(text)
 					conn.send(respond)
 					text = ''
@@ -97,8 +97,8 @@ class HitachiSimu(object):
 					text += d
 		except KeyboardInterrupt:
 			conn.close()
-		except Exception, e:
-			print e
+		except Exception as e:
+			print(e)
 			conn.close()
 
 	def makeResponse(self, text):
@@ -117,7 +117,7 @@ class HitachiSimu(object):
 		if len(bits) > 1:
 			expansion_code = bits[1]
 			cmd += ' '+expansion_code
-		if cmd in self.data_types.keys():
+		if cmd in list(self.data_types.keys()):
 			key = cmd
 		else:
 			key = sub_code
@@ -139,7 +139,7 @@ class HitachiSimu(object):
 		if len(bits) > 2:
 			expansion_code = bits[1]
 			cmd += ' '+expansion_code
-		if cmd in self.data_types.keys():
+		if cmd in list(self.data_types.keys()):
 			key = cmd
 		else:
 			key = sub_code
@@ -159,7 +159,7 @@ class HitachiSimu(object):
 					continue
 				self.data_values[key][i] = data_bits[i]
 		data = ','.join(data_bits)
-		print data
+		print(data)
 		if sub_code == 'Stage' and expansion_code == 'SpecimenNo':
 			return ''
 		return 'Set '+cmd+' 8000,"OK."'

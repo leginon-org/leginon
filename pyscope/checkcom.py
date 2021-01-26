@@ -28,19 +28,19 @@ def makeFile(item):
 	for i, comname in enumerate(comnames):
 		typelibInfo = getTlbFromComname(comname)
 		if typelibInfo is not None:
-			print '\nFound COM typelib named: %s' % comname
+			print('\nFound COM typelib named: %s' % comname)
 			break
 	if typelibInfo is None:
-		print '\nError, cannot find typelib for "%s"\n' % (message,)
+		print('\nError, cannot find typelib for "%s"\n' % (message,))
 		return
 
 def run():
-	print 'Looking for COM module files from type libraries...\n'
+	print('Looking for COM module files from type libraries...\n')
 	for item in items:
-		print 'checking', item[0],
+		print('checking', item[0], end=' ')
 		makeFile(item)
-		print '\n'
-	raw_input('enter to quit.')
+		print('\n')
+	input('enter to quit.')
 
 if __name__ == '__main__':
 	run()

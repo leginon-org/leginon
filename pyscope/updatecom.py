@@ -24,10 +24,10 @@ def makeFile(descs):
 	for desc in descs:
 		typelibInfo = getTlbFromDesc(desc)
 		if typelibInfo is not None:
-			print '\nFound: ', desc
+			print('\nFound: ', desc)
 			break
 	if typelibInfo is None:
-		print '\nError, cannot find typelib for "%s"\n' % (descs,)
+		print('\nError, cannot find typelib for "%s"\n' % (descs,))
 		return
 
 	clsid = typelibInfo.clsid
@@ -38,18 +38,18 @@ def makeFile(descs):
 	try:
 		gencache.MakeModuleForTypelib(clsid, lcid, major, minor)
 	except:
-		print 'failed MakeModuleForTypelib'
+		print('failed MakeModuleForTypelib')
 		return
 	else:
-		print 'done.'
-		print ''
+		print('done.')
+		print('')
 
 def run():
-	print 'Generating .py files from type libraries...'
+	print('Generating .py files from type libraries...')
 	for desc, message in info:
-		print 'initializing', message,
+		print('initializing', message, end=' ')
 		makeFile(desc)
-	raw_input('enter to quit.')
+	input('enter to quit.')
 
 if __name__ == '__main__':
 	run()

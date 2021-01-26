@@ -1,5 +1,5 @@
-import CM
+from . import CM
 
 c = CM.CM()
 
-raw_input('enter to quit')
+input('enter to quit')

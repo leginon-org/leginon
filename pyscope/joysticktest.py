@@ -12,14 +12,14 @@ try:
 		f.close()
 
 	for i in range(500):
-		print 'iteration', i
+		print('iteration', i)
 		pos = t.getStagePosition()
 		t0 = time.time()
 		time.sleep(0.25)
 		write_log([t0, pos['x'], pos['y']])
-except Exception, e:
-	print e
-raw_input('enter to quit')
+except Exception as e:
+	print(e)
+input('enter to quit')
 
 '''
 spirit at scripps at full speed

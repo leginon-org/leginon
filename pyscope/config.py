@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import sys
-import ConfigParser
+import configparser
 import imp
 import os
 import inspect
@@ -18,7 +18,7 @@ configfiles = None
 def parse():
 	global configured, temclasses, cameraclasses, configfiles
 
-	configparser = ConfigParser.SafeConfigParser()
+	cparser = configparser.SafeConfigParser()
 
 	# use the path of this module
 	modpath = pyscope.__path__
@@ -30,20 +30,20 @@ def parse():
 	# in instruments.cfg is not used.
 	filenames = pyami.fileutil.check_exist_one_file(filenames)
 	try:
-		configfiles = configparser.read(filenames)
+		configfiles = cparser.read(filenames)
 	except:
-		print 'error reading %s' % (filenames,)
+		print('error reading %s' % (filenames,))
 		sys.exit()
 
 	# parse
-	names = configparser.sections()
+	names = cparser.sections()
 	temclasses = []
 	cameraclasses = []
 	mods = {}
 
 	for name in names:
 		configured[name] = {}
-		cls_str = configparser.get(name, 'class')
+		cls_str = cparser.get(name, 'class')
 		modname,clsname = cls_str.split('.')
 		if modname not in mods:
 			fullmodname = 'pyscope.' + modname
@@ -58,7 +58,7 @@ def parse():
 		cls = getattr(mod, clsname)
 		if issubclass(cls, pyscope.tem.TEM):
 			try:
-				cs_str = configparser.get(name, 'cs')
+				cs_str = cparser.get(name, 'cs')
 				cs_value = float(cs_str)
 			except:
 				cs_value = None
@@ -67,25 +67,25 @@ def parse():
 		if issubclass(cls, pyscope.ccdcamera.CCDCamera):
 			cameraclasses.append(cls)
 			try:
-				z_str = configparser.get(name, 'zplane')
+				z_str = cparser.get(name, 'zplane')
 				z_value = int(z_str)
 			except:
 				z_value = 0
 			configured[name]['zplane'] = z_value
 			for key in ('height', 'width'):
 				try:
-					configured[name][key] = int(configparser.get(name, key))
+					configured[name][key] = int(cparser.get(name, key))
 				except:
 					pass
 		try:
-			log = configparser.get(name, 'log')
+			log = cparser.get(name, 'log')
 		except:
 			log = None
 		configured[name]['log'] = log
 		configured[name]['class'] = cls
 		# A directory to pass simulated scope parameter to camera
 		try:
-			simpar_str = configparser.get(name, 'simpar')
+			simpar_str = cparser.get(name, 'simpar')
 			simpar_value = simpar_str
 		except:
 			simpar_value = None
@@ -114,6 +114,6 @@ def getCameraClasses():
 def getNameByClass(cls):
 	conf = getConfigured()
 	for bcls in inspect.getmro(cls):
-		for name,value in conf.items():
+		for name,value in list(conf.items()):
 			if bcls.__name__ == value['class'].__name__:
 				return name

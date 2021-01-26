@@ -1,6 +1,6 @@
 
 import time
-import gatansocket
+from . import gatansocket
 
 gs = gatansocket.GatanSocket()
 

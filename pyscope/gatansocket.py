@@ -127,7 +127,7 @@ def logwrap(func):
 		log('%s\t%s\t%s' % (func,args,kwargs))
 		try:
 			result = func(*args, **kwargs)
-		except Exception, exc:
+		except Exception as exc:
 			log('EXCEPTION: %s' % (exc,))
 			raise
 		return result
@@ -169,7 +169,7 @@ class GatanSocket(object):
 		for name, method_name in self.script_functions:
 			if self.hasScriptFunction(name):
 				self.filter_functions[method_name] = name
-		if 'SetEnergyFilter' in self.filter_functions.keys() and self.filter_functions['SetEnergyFilter'] == 'IFSetSlitIn':
+		if 'SetEnergyFilter' in list(self.filter_functions.keys()) and self.filter_functions['SetEnergyFilter'] == 'IFSetSlitIn':
 			self.wait_for_filter = 'IFWaitForFilter();'
 		else:
 			self.wait_for_filter = ''
@@ -384,13 +384,13 @@ class GatanSocket(object):
 		return self.ExecuteSendCameraObjectionFunction(function_name, cameraid)
 
 	def GetEnergyFilter(self):
-		if 'GetEnergyFilter' not in self.filter_functions.keys():
+		if 'GetEnergyFilter' not in list(self.filter_functions.keys()):
 			return -1.0
 		script = 'if ( %s() ) { Exit(1.0); } else { Exit(-1.0); }' % (self.filter_functions['GetEnergyFilter'],)
 		return self.ExecuteGetDoubleScript(script)
 
 	def SetEnergyFilter(self, value):
-		if 'SetEnergyFilter' not in self.filter_functions.keys():
+		if 'SetEnergyFilter' not in list(self.filter_functions.keys()):
 			return -1.0
 		if value:
 			i = 1
@@ -400,25 +400,25 @@ class GatanSocket(object):
 		return self.ExecuteSendScript(script)
 
 	def GetEnergyFilterWidth(self):
-		if 'GetEnergyFilterWidth' not in self.filter_functions.keys():
+		if 'GetEnergyFilterWidth' not in list(self.filter_functions.keys()):
 			return -1.0
 		script = 'Exit(%s())' % (self.filter_functions['GetEnergyFilterWidth'],)
 		return self.ExecuteGetDoubleScript(script)
 
 	def SetEnergyFilterWidth(self, value):
-		if 'SetEnergyFilterWidth' not in self.filter_functions.keys():
+		if 'SetEnergyFilterWidth' not in list(self.filter_functions.keys()):
 			return -1.0
 		script = 'if ( %s(%f) ) { Exit(1.0); } else { Exit(-1.0); }' % (self.filter_functions['SetEnergyFilterWidth'], value)
 		return self.ExecuteSendScript(script)
 
 	def GetEnergyFilterOffset(self):
-		if 'GetEnergyFilterOffset' not in self.filter_functions.keys():
+		if 'GetEnergyFilterOffset' not in list(self.filter_functions.keys()):
 			return 0.0
 		script = 'Exit(%s())' % (self.filter_functions['GetEnergyFilterOffset'],)
 		return self.ExecuteGetDoubleScript(script)
 
 	def SetEnergyFilterOffset(self, value):
-		if 'SetEnergyFilterOffset' not in self.filter_functions.keys():
+		if 'SetEnergyFilterOffset' not in list(self.filter_functions.keys()):
 			return -1.0
 		script = 'if ( %s(%f) ) { Exit(1.0); } else { Exit(-1.0); }' % (self.filter_functions['SetEnergyFilterOffset'], value)
 		return self.ExecuteSendScript(script)
@@ -580,10 +580,10 @@ class GatanSocket(object):
 
 def test1():
 	g = GatanSocket()
-	print g
+	print(g)
 	ver = g.GetDMVersion()
-	print 'Version', ver
-	raw_input('enter to quit.')
+	print('Version', ver)
+	input('enter to quit.')
 
 if __name__ == '__main__':
 	test1()

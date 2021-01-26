@@ -66,7 +66,7 @@ class TimerWidget(wx.Panel):
 		self.timervalues.Enable(False)
 		values = self.timervalues.getValues()
 		ms = 1000.0 * (values[2]+60*values[1]+3600*values[0])
-		print 'MS', ms
+		print('MS', ms)
 		self.later = wx.FutureCall(ms, self.call)
 
 	def onCancel(self, evt):
@@ -119,28 +119,28 @@ if __name__ == '__main__':
 
 		def myCallable(self):
 			pid = self.getPID()
-			print 'Killing process %s...' % (pid,)
+			print('Killing process %s...' % (pid,))
 			try:
 				kill_windows(pid)
 			except:
 				kill_linux(pid)
-			print 'Killed.'
-			print 'Setting Screen position down...'
+			print('Killed.')
+			print('Setting Screen position down...')
 			t.setMainScreenPosition('down')
-			print 'Screen down...'
-			print 'Closing column valves...'
+			print('Screen down...')
+			print('Closing column valves...')
 			t = tecnai.Tecnai()
 			t.setColumnValvePosition('closed')
 			t.setColumnValvePosition('closed')
-			print 'Closed.'
-			print 'Setting High Tension Off...'
+			print('Closed.')
+			print('Setting High Tension Off...')
 			import win32com.client
 			t.tecnai.Gun.HTState = win32com.client.constants.htOff 
-			print 'High Tension Off.'
+			print('High Tension Off.')
 
 		def getPID(self):
 			pid = self.pidvalue.GetValue()
-			print 'PID', type(pid)
+			print('PID', type(pid))
 			return pid
 
 		

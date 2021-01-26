@@ -1,6 +1,6 @@
 import socket
 import sys
-import DECameraClientLib_pb
+from . import DECameraClientLib_pb
 import struct
 import types
 import numpy
@@ -48,45 +48,45 @@ class DECameraClientLib:
 		self.writesock.connect((self.host, self.writeport)) # Connect to server for reading data		
 		self.writesock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, self.tcp_nodelay)
 		self.connected = True
-		if (self.debugPrint): print "Connected to server: ", self.host, " read port: ", self.readport, ", write port:", self.writeport
+		if (self.debugPrint): print("Connected to server: ", self.host, " read port: ", self.readport, ", write port:", self.writeport)
 		
 	def disconnect(self):
 		if self.connected:
 			self.readsock.close()
 			self.writesock.close()
 			self.connected = False
-			if (self.debugPrint): print "Disconnected from server: ", self.host, " read port: ", self.readport, ", write port:", self.writeport
+			if (self.debugPrint): print("Disconnected from server: ", self.host, " read port: ", self.readport, ", write port:", self.writeport)
 
 	def getAvailableCameras(self):
 		available_cameras = self.getStrings(self.kEnumerateCameras)
 		if(available_cameras != False):
 			self.available_cameras = available_cameras		
-		if (self.debugPrint): print "Available cameras: ", available_cameras
+		if (self.debugPrint): print("Available cameras: ", available_cameras)
 		return self.available_cameras
 		
 	def setActiveCamera(self, camera_name = None):
 		if camera_name is None:			
 			return False
 		self.active_camera_name = camera_name
-		if (self.debugPrint): print "Active camera: ", camera_name
+		if (self.debugPrint): print("Active camera: ", camera_name)
 		return True
 	
 	def getActiveCameraProperties(self):
 		available_properties = self.getStrings(self.kEnumerateProperties)
 		if(available_properties != False):
 			self.available_properties = available_properties	
-		if (self.debugPrint): print "Available camera properties: ", available_properties
+		if (self.debugPrint): print("Available camera properties: ", available_properties)
 		return self.available_properties
 	
 	def getProperty(self, label = None):
 		if label is None:			
 			return False
 		command = self.addSingleCommand(self.kGetProperty, label)
-		if (self.debugPrint): print "getProperty for: ", label
+		if (self.debugPrint): print("getProperty for: ", label)
 		response = self.sendcommand(command)		
 		if response != False:
 			values = self.getParameters(response.acknowledge[0])
-			if(type(values) is types.ListType):
+			if(type(values) is list):
 				if (len(values)>0):
 					return values[0] #always return the first value
 			return values
@@ -99,7 +99,7 @@ class DECameraClientLib:
 		if value is None:			
 			return False		
 		command = self.addSingleCommand(self.kSetProperty, label, value)
-		if (self.debugPrint): print "setProperty for: ", label, ", new value: ", value
+		if (self.debugPrint): print("setProperty for: ", label, ", new value: ", value)
 		response = self.sendcommand(command)				
 		if response != False:
 			return self.getParameters(response.acknowledge[0])
@@ -119,7 +119,7 @@ class DECameraClientLib:
 			t1 = time.clock()
 			response = self.sendcommand(command)		
 			t2 = time.clock()
-			if (self.debugPrint): print "GetImage() server response time: ", t2 - t1, "second"
+			if (self.debugPrint): print("GetImage() server response time: ", t2 - t1, "second")
 			if response != False :
 				#get the data header
 				recvbyteSizeString = self.getCountBytesOfDataFromSocket(self.writesock, 4) # get the first 4 bytes		
@@ -133,18 +133,18 @@ class DECameraClientLib:
 						t1 = time.clock()
 						data = self.getCountBytesOfDataFromSocket(self.writesock, bytesize)
 						t2 = time.clock()
-						if (self.debugPrint): print "Image transfer time: ", t2 - t1, "second"		
-						if (self.debugPrint): print "Effective throughput: ", bytesize/(t2-t1)/1024/1024, "MB/sec"
+						if (self.debugPrint): print("Image transfer time: ", t2 - t1, "second")		
+						if (self.debugPrint): print("Effective throughput: ", bytesize/(t2-t1)/1024/1024, "MB/sec")
 						if (len(data) == bytesize):
 							image = numpy.fromstring(data, numpy.uint16)								
 							bytesize == height/binning_y * width/binning_x * 2
 							image.shape = real_shape
 							return image
-		print "Image acquisition failed! An empty image will be returned."
+		print("Image acquisition failed! An empty image will be returned.")
 		return numpy.zeros([height, width], dtype=numpy.uint16)
 	
 	def getCountBytesOfDataFromSocket(self, sck, count):
-		from cStringIO import StringIO #use string io to speed up, refer to http://www.skymind.com/~ocrow/python_string/
+		from io import StringIO #use string io to speed up, refer to http://www.skymind.com/~ocrow/python_string/
 		orig_timeout = sck.gettimeout()		
 		normal_timeout = 2.0 #single command should take less than 2 seconds
 		max_timeout = 300 #5 minutes max timeout
@@ -168,12 +168,12 @@ class DECameraClientLib:
 				except socket.timeout:					
 					total_timeout = total_timeout + normal_timeout
 					if total_timeout > max_timeout :
-						if (self.debugPrint): print "Max Timeout Occurred!"
+						if (self.debugPrint): print("Max Timeout Occurred!")
 						break
 					else :
 						pass #continue further
 				except: 
-					if (self.debugPrint): print "Unknown exception occurred. Current Length", len(line)
+					if (self.debugPrint): print("Unknown exception occurred. Current Length", len(line))
 					break				
 				file_str.write(line)				
 				total_len = total_len + len(line)
@@ -223,19 +223,19 @@ class DECameraClientLib:
 			str_param.p_string = label
 			str_param.name = "label"
 		if not param is None:			
-			if type(param) is types.IntType or type(param) is types.LongType:
+			if type(param) is int or type(param) is int:
 				int_param = command.command[0].parameter.add()
 				int_param.type = DECameraClientLib_pb.AnyParameter.P_INT
 				int_param.p_int = int(param)
 				int_param.name = "val"			
 			else:			
-				if (type(param) is types.StringType) or (type(param) is types.UnicodeType):
+				if (type(param) is bytes) or (type(param) is str):
 					str_param = command.command[0].parameter.add()
 					str_param.type = DECameraClientLib_pb.AnyParameter.P_STRING
 					str_param.p_string = str(param)
 					str_param.name = "val"
 				else:				
-					if type(param) is types.FloatType:
+					if type(param) is float:
 						float_param = command.command[0].parameter.add()
 						float_param.type = DECameraClientLib_pb.AnyParameter.P_FLOAT
 						float_param.p_float = param
@@ -268,7 +268,7 @@ class DECameraClientLib:
 						error = error or one_ack.error
 					if (not error):
 						return Acknowledge_return
-		print "Error occurred in SendCommand"
+		print("Error occurred in SendCommand")
 		return False
 
 	#send single command and get a response, if error occurred, return False

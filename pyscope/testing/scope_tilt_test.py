@@ -31,8 +31,8 @@ def testTiltSpeed(tem_obj, delta_angle, speed):
 
 	move_times = []
 	calc_time = delta_angle / speed
-	print '-----'
-	print 'expected time for %.2f degrees/sec is\t %8.3f seconds' % (speed, calc_time)
+	print('-----')
+	print('expected time for %.2f degrees/sec is\t %8.3f seconds' % (speed, calc_time))
 	for i in range(repeats):
 		for d in (distance,):
 			tem_obj.setStageSpeed(speed) # degrees per second
@@ -42,7 +42,7 @@ def testTiltSpeed(tem_obj, delta_angle, speed):
 			setfunc(p1)
 			t1 = time.time()
 			move_time = t1 - t0
-			print '%s by %.2f %s took\t %8.3f seconds' % (functionname, d*display_scale, display_unit, move_time)
+			print('%s by %.2f %s took\t %8.3f seconds' % (functionname, d*display_scale, display_unit, move_time))
 			move_times.append(move_time)
 			time.sleep(3.0)
 			# reset back to the original
@@ -51,7 +51,7 @@ def testTiltSpeed(tem_obj, delta_angle, speed):
 			time.sleep(0.5)
 	avg_move_time = sum(move_times) / repeats
 	diff_time = avg_move_time - calc_time
-	print 'speed %.2f degrees/sec time_diff is\t %8.3f sec.' % (speed, diff_time)
+	print('speed %.2f degrees/sec time_diff is\t %8.3f sec.' % (speed, diff_time))
 
 def loop(tem_obj, center_time, step_time, half_loop_number):
 	'''
@@ -62,11 +62,11 @@ def loop(tem_obj, center_time, step_time, half_loop_number):
 		target_time = (i-half_loop_number)*step_time + center_time
 		speed = float(delta_angle) / target_time
 		if target_time >=180 or target_time < 1:
-			print 'invalid target time: %.2f seconds, ignored' %(target_time)
+			print('invalid target time: %.2f seconds, ignored' %(target_time))
 			continue
 		testTiltSpeed(tem_obj, delta_angle, speed)
 
 if __name__ == '__main__':
-	print "Edit file to set instrument"
+	print("Edit file to set instrument")
 	# Check from 40 s to 140 s target time
 	loop(c, 90, 10, 5)

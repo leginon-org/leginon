@@ -26,21 +26,21 @@ def fastAcquire(dc):
     dc.setExposureTime(1000)
     dc.setSaveRawFrames(False)
     image = dc.getImage()  #This calls GS_getAcquiredImage
-    print image.mean()
+    print(image.mean())
     t2 = time.time()
     return t2 - t1
 
 def frameSavingAcquire(d):
-    print 'ExposureTime set'
+    print('ExposureTime set')
     d.setSaveRawFrames(True)
-    print 'set to save frames'
+    print('set to save frames')
     t0 =time.time()
     image = d.getImage()  #This calls GS_getAcquiredImage
-    print image.mean()
-    print d.getEarlyReturnFrameCount()
-    print d.camera.getNumGrabSum()
+    print(image.mean())
+    print(d.getEarlyReturnFrameCount())
+    print(d.camera.getNumGrabSum())
     t1 =time.time()
-    print '________________________'
+    print('________________________')
     return t1 - t0
 
 for i in range(2):
@@ -54,9 +54,9 @@ for i in range(2):
         # sleep to make sure all frames are saved to disk
         time.sleep(clear_time-(t3-t0))
 
-print '____grab %d____sum %d________________' % (grabnum,sumnum)
-print 'numGrabSum', d.camera.getNumGrabSum()
-print '       frame saved return', map((lambda x: '%7.3f' % x),t_saved)
-print 'frame 1st not save return', map((lambda x: '%7.3f' % x),t_not_saved1)
-print 'frame 2nd not save return', map((lambda x: '%7.3f' % x),t_not_saved2)
-print '________________________'
+print('____grab %d____sum %d________________' % (grabnum,sumnum))
+print('numGrabSum', d.camera.getNumGrabSum())
+print('       frame saved return', list(map((lambda x: '%7.3f' % x),t_saved)))
+print('frame 1st not save return', list(map((lambda x: '%7.3f' % x),t_not_saved1)))
+print('frame 2nd not save return', list(map((lambda x: '%7.3f' % x),t_not_saved2)))
+print('________________________')

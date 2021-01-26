@@ -18,7 +18,7 @@ class FalconFrameMaker(object):
 		i/o time unit is second
 		'''
 		self.simulation = simu
-		self.idcounter = itertools.cycle(range(100))
+		self.idcounter = itertools.cycle(list(range(100)))
 		self.base_frame_time = 0.055771
 		self.format_version = 1.0
 		self.no_save_frame_path = 'not_a_real_path'
@@ -50,7 +50,7 @@ class FalconFrameMaker(object):
 	def makeFrameDirName(self,use_timestamp):
 		if use_timestamp:
 			frames_name = time.strftime('%Y%m%d_%H%M%S', time.localtime())
-			self.frames_name = frames_name + '%02d' % (self.idcounter.next(),)
+			self.frames_name = frames_name + '%02d' % (next(self.idcounter),)
 		else:
 			self.frames_name = 'dummy'
 		return self.frames_name
@@ -158,7 +158,7 @@ class FalconFrameMaker(object):
 		usable_nframes = available_nframes -self.frame_readout_delay
 
 		# initialize with single frames
-		frames_in_bins = map((lambda x:1),range(eframe))
+		frames_in_bins = list(map((lambda x:1),list(range(eframe))))
 		# equally distribute the rest
 		usable_equal_frames = usable_nframes - len(frames_in_bins)
 		equal_bins = self.output_bins - len(frames_in_bins)
@@ -191,14 +191,14 @@ class FalconFrameMaker(object):
 		'''
 		nframe_in_bins = self.distributeFramesInBins()
 		if self.simulation:
-			print 'number of base frames in bin', nframe_in_bins
+			print('number of base frames in bin', nframe_in_bins)
 		end_frames = []
 		offset = self.frame_readout_delay - self.internal_readout_delay
 		if False:
 			return [0],[0]
 		else:
-			end_frames = map((lambda x:offset+sum(nframe_in_bins[:x+1])),range(len(nframe_in_bins)))
-			start_frames = map((lambda x:end_frames[x]+1),range(len(end_frames)-1))
+			end_frames = list(map((lambda x:offset+sum(nframe_in_bins[:x+1])),list(range(len(nframe_in_bins)))))
+			start_frames = list(map((lambda x:end_frames[x]+1),list(range(len(end_frames)-1))))
 			start_frames.insert(0,self.frame_readout_delay)
 		self.output_bins = len(start_frames)
 		return start_frames, end_frames
@@ -209,7 +209,7 @@ class FalconFrameConfigXmlMaker(FalconFrameMaker):
 		i/o time unit is second
 		'''
 		self.simulation = simu
-		self.idcounter = itertools.cycle(range(100))
+		self.idcounter = itertools.cycle(list(range(100)))
 		self.base_frame_time = 0.055771
 		self.format_version = 1.0
 		self.no_save_frame_path = 'not_a_real_path'
@@ -243,7 +243,7 @@ class FalconFrameConfigXmlMaker(FalconFrameMaker):
 			f.write(xmlstr)
 			f.close()
 		else:
-			print xmlstr
+			print(xmlstr)
 
 	def makeConfigXML(self):
 		start_frames,end_frames = self.setFrameRange()
@@ -294,7 +294,7 @@ class FalconFrameRangeListMaker(FalconFrameMaker):
 		Based on the behavior of Advanced Scripting for Falcon III
 		'''
 		self.simulation = simu
-		self.idcounter = itertools.cycle(range(100))
+		self.idcounter = itertools.cycle(list(range(100)))
 		self.base_frame_time = 0.025
 		self.number_of_available_frames = 1
 		self.format_version = 1.0
@@ -320,7 +320,7 @@ class FalconFrameRangeListMaker(FalconFrameMaker):
 		'''
 		# no dummy
 		frames_name = time.strftime('%Y%m%d_%H%M%S', time.localtime())
-		self.frames_name = frames_name + '%02d' % (self.idcounter.next(),)
+		self.frames_name = frames_name + '%02d' % (next(self.idcounter),)
 		return self.frames_name
 
 	def getNumberOfAvailableFrames(self):
@@ -360,16 +360,16 @@ class FalconFrameRangeListMaker(FalconFrameMaker):
 	def test(self):
 		starts, ends = self.setFrameRange()
 		rangelist = self.makeRangeList(starts, ends)
-		print rangelist
+		print(rangelist)
 
 if __name__ == '__main__':
 		equal_distr_frame = 0
 		if len(sys.argv) < 2:
-			print 'usage: falconframe.py exposure_time_in_second equal_distr_frame delay_number_frames'
-			print 'default to 0.5 second'
-			print 'default equal_distr_frame is the first non-single frame'
-			print '  including which will be equally distributed'
-			print 'delay_number_frames default is 1'
+			print('usage: falconframe.py exposure_time_in_second equal_distr_frame delay_number_frames')
+			print('default to 0.5 second')
+			print('default equal_distr_frame is the first non-single frame')
+			print('  including which will be equally distributed')
+			print('delay_number_frames default is 1')
 			exposure_second = 0.5
 			delay = 1
 		else:
@@ -395,11 +395,11 @@ if __name__ == '__main__':
 			bins = int(exposure_second / frame_time_second)
 			app.setMaxNumberOfFrameBins(bins)
 			n_base_frames = int(math.floor(exposure_second*1000 / (app.base_frame_time*1000)))
-			print 'number of base frames: ',n_base_frames
+			print('number of base frames: ',n_base_frames)
 			rangelist2 = app.makeRangeListFromNumberOfBaseFramesAndFrameTime(n_base_frames, frame_time_second)
-			print 'range list: ',rangelist2
-			print 'SubPathPattern: ', app.getSubPathFramePattern()
-			print 'frame name: ',app.getFrameDirName()
+			print('range list: ',rangelist2)
+			print('SubPathPattern: ', app.getSubPathFramePattern())
+			print('frame name: ',app.getFrameDirName())
 
 		def testFalcon2():
 			'''
@@ -410,7 +410,7 @@ if __name__ == '__main__':
 			app.setBaseFramePath('framecam')
 			#is_success = app.makeDummyConfig(exposure_second)
 			is_success = app.makeRealConfigFromExposureTime(exposure_second, equal_distr_frame,delay)
-			print 'is successful: ',is_success
-			print 'frame name: ',app.getFrameDirName()
+			print('is successful: ',is_success)
+			print('frame name: ',app.getFrameDirName())
 
 		testFalcon3()

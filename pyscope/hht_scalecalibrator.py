@@ -8,10 +8,10 @@ class Logger(object):
 		self.cfgdict = {}
 
 	def input(self, msg):
-		return raw_input(msg)
+		return input(msg)
 
 	def output(self, prefix, msg):
-		print '%s: %s' % (prefix, msg)
+		print('%s: %s' % (prefix, msg))
 
 	def inputInt(self, msg):
 		answer = self.input(msg)
@@ -48,14 +48,14 @@ class Logger(object):
 		if value2 is not None:
 			option += ',%s' % (value2,)
 		option += '\n'
-		print('\n[%s]\n%s\n' % (module_name,option))
+		print(('\n[%s]\n%s\n' % (module_name,option)))
 		if module_name not in self.cfgdict:
 			self.cfgdict[module_name] = [option,]
 		else:
 			self.cfgdict[module_name].append(option)
 
 	def writeConfig(self):
-		filename = raw_input('output calibrated cfg file as: ')
+		filename = input('output calibrated cfg file as: ')
 		if not filename:
 			return
 		self.cfg_outfile = open(filename,'w')
@@ -66,7 +66,7 @@ class Logger(object):
 		self.cfg_outfile.write('\n')
 		self.cfgdict.pop('tem option',None)
 		
-		for module_name in self.cfgdict.keys():
+		for module_name in list(self.cfgdict.keys()):
 			self.cfg_outfile.write('[%s]\n' % module_name)
 			text = ''.join(self.cfgdict[module_name])
 			self.cfg_outfile.write(text)
@@ -108,9 +108,9 @@ class ScaleCalibrator(object):
 		Calibrations are done on main screen.
 		'''
 		mag = self.tem.getMagnification()
-		print mag
+		print(mag)
 		screen_mag = self.tem.getMainScreenMagnification()
-		print 'screen',screen_mag
+		print('screen',screen_mag)
 		answer = self.logger.inputBoolean('Is the magnification at the main screen %d ?' % int(screen_mag))
 		if not answer:
 			screen_mag = self.logger.inputInt('Enter the magnification on the main screen appoximately as integer: ')
@@ -189,23 +189,23 @@ class ScaleCalibrator(object):
 	def applyMovement(self,axis=None):
 		if axis:
 			if self.move_property != 'Pos':
-				raw_input('Move %s by %.2f um on Main Screen in %s direction based on specimen image' %
+				input('Move %s by %.2f um on Main Screen in %s direction based on specimen image' %
 						(self.move_property,self.physical_shift*1e6, axis))
 			else:
 				if axis in ('a','b'):
-					raw_input('Move %s %s axis by %d degrees ' %
+					input('Move %s %s axis by %d degrees ' %
 							(self.move_property,axis,math.degrees(self.physical_shift)))
 				else:
-					raw_input('Move %s %s axis by %d um ' %
+					input('Move %s %s axis by %d um ' %
 							(self.move_property,axis,self.physical_shift*1e6))
 		else:
-			raw_input('Move %s with %s by %d um ' %
+			input('Move %s with %s by %d um ' %
 					(self.move_property, self.effect_type,self.physical_shift*1e6))
   
 	def measureStageShift(self, property_name,xy_shift,z_shift,tiltangle_degrees):
 		try:
 			self.setMoveProperty(property_name)
-		except Exception, e:
+		except Exception as e:
 			self.logger.error(e.__str__())
 			return
 		physical_shifts = {
@@ -216,7 +216,7 @@ class ScaleCalibrator(object):
 				'b': math.radians(tiltangle_degrees),
 		}
 		pos0 = self.getCurrentValue()
-		self.setAxes(pos0.keys())
+		self.setAxes(list(pos0.keys()))
 		for axis in self.getAxes():
 			if axis in ('a','b'):
 				continue
@@ -288,15 +288,15 @@ class ScaleCalibrator(object):
 		try:
 			self.setPhysicalShift(physical_shift)
 			self.setMoveProperty(property_name)
-		except Exception, e:
+		except Exception as e:
 			raise
 			self.logger.error(e.__str__())
 			return
-		print 'Prepare to calibrate %s:' % (property_name)
-		raw_input('Waiting for you to setup the initial condition... (hit any key to continue. ')
+		print('Prepare to calibrate %s:' % (property_name))
+		input('Waiting for you to setup the initial condition... (hit any key to continue. ')
 		pos0 = self.getCurrentValue()
 		if type(pos0) == type({}):
-			self.setAxes(pos0.keys())
+			self.setAxes(list(pos0.keys()))
 		else:
 			self.setAxes([None,])
 		for axis in self.getAxes():
@@ -328,12 +328,12 @@ class ScaleCalibrator(object):
 			if selected_mags[0] is not None:
 				self.logger.warning('Contains invalid magnification')
 				self.logger.info('valid magnification:')
-				print all_mags
+				print(all_mags)
 			try:
-				selected_mags = map((lambda x:int(x)),raw_input('Enter mags to calibrate with "," as separator:').split(','))
+				selected_mags = list(map((lambda x:int(x)),input('Enter mags to calibrate with "," as separator:').split(',')))
 			except:
 				pass
-			print selected_mags
+			print(selected_mags)
 		return selected_mags
 
 	def selectMagRange(self):
@@ -352,7 +352,7 @@ class ScaleCalibrator(object):
 
 	def setProbeModeForMag(self,mag):
 		# default require user to do manually
-		raw_input('Set to the probe mode required by mag %d for calibration and then hit return ' % mag)
+		input('Set to the probe mode required by mag %d for calibration and then hit return ' % mag)
 
 	def logReferenceMag(self, mag):
 		self.logger.cfg('optics','REF_MAGNIFICATION%%%s' % (self.getSubModeString()),'%d' % (int(mag)))
@@ -368,8 +368,8 @@ class ScaleCalibrator(object):
 				self.confirmMainScreenMagnification()
 			self.calibrations = self.getCalibrationRequired(first=(i==0))
 			self.logReferenceMag(mag)
-			print 'image mode calibrations', self.calibrations
-			for effect_type in self.calibrations.keys():
+			print('image mode calibrations', self.calibrations)
+			for effect_type in list(self.calibrations.keys()):
 				# example effect_type: imageshift, beamshift
 				self.effect_type = effect_type
 				self.current_calibration = self.calibrations[effect_type]
@@ -390,9 +390,9 @@ class ScaleCalibrator(object):
 
 	def calibrateInDiffractionMode(self):
 		while self.tem.getMagnification() < 5000:
-			raw_input('Change mag to above 5000 for diffraction mode calibration.\nHit any key to continue')
+			input('Change mag to above 5000 for diffraction mode calibration.\nHit any key to continue')
 		self.calibrations = self.getDiffractionCalibrationRequired()
-		for effect_type in self.calibrations.keys():
+		for effect_type in list(self.calibrations.keys()):
 			self.effect_type = effect_type
 			self.current_calibration = self.calibrations[effect_type]
 			self.setMoveClassInstance(effect_type)
@@ -402,14 +402,14 @@ class ScaleCalibrator(object):
 			self.logger.info('Move from origin to AuPd (111) reflection in this calibration')
 			self.logger.info('Screeen shift = Beam tilt of %.2f mrad' % (specimen_shift*1e3))
 			self.measureShift(self.calibrations[effect_type][1],specimen_shift)
-		raw_input('hit any key to return to imaging mode')
+		input('hit any key to return to imaging mode')
 		self.tem.setProjectionMode('imaging')
 
 	def calibrateAll(self):
 		self.calibrateInImageMode()
 		self.calibrateInDiffractionMode()
 		self.writeConfig()
-		raw_input('hit any key to end')
+		input('hit any key to end')
 
 	def writeConfig(self):
 		self.logger.writeConfig()
@@ -435,7 +435,7 @@ class HitachiScaleCalibrator(ScaleCalibrator):
 	def defineOptions(self):
 		# set existing tem options
 		tem_options = self.tem.getHitachiConfig('tem option')
-		for key in tem_options.keys():
+		for key in list(tem_options.keys()):
 			self.logger.cfg('tem option','%s' % key.upper(),tem_options[key])
 
 	def getImageShiftCoil(self):
@@ -459,9 +459,9 @@ class HitachiScaleCalibrator(ScaleCalibrator):
 				},
 		}
 		self.configs = self.all_configs.copy()
-		if 'imageshift' in self.configs['coil'].keys():
+		if 'imageshift' in list(self.configs['coil'].keys()):
 			self.configs['coil']['imageshift'] = self.chooseImageShiftMoveProperty()
-		if 'focus' in self.configs['lens'].keys():
+		if 'focus' in list(self.configs['lens'].keys()):
 			self.configs['lens']['focus'] = self.chooseFocusMoveProperty()
 
 	def getDiffractionEffectPropertyDict(self):
@@ -476,21 +476,21 @@ class HitachiScaleCalibrator(ScaleCalibrator):
 		self.submode = self.tem.getProjectionSubModeName().upper()
 		self.getImagingEffectPropertyDict()
 		set_attrs = self.constructAttributeNames()
-		for effect_type in set_attrs.keys():
+		for effect_type in list(set_attrs.keys()):
 			attrname = set_attrs[effect_type][1]
 			# remove calibrated
 			if first:
 				continue
 			if not accept_all and self.isCalibrated(attrname):
 				del set_attrs[effect_type]
-		print 'required', set_attrs
+		print('required', set_attrs)
 		return set_attrs
 
 	def getDiffractionCalibrationRequired(self):
 		self.logger.info('Switching to Diffraction Mode')
 		self.tem.setProjectionMode('diffraction')
 		self.submode = self.tem.getProjectionSubModeName().upper()
-		raw_input('Adjust camera length to the desired value >=100 cm, Hit any key when done')
+		input('Adjust camera length to the desired value >=100 cm, Hit any key when done')
 		self.mag = self.tem.getMagnification()
 		self.getDiffractionEffectPropertyDict()
 		set_attrs = self.constructAttributeNames()
@@ -500,7 +500,7 @@ class HitachiScaleCalibrator(ScaleCalibrator):
 		# get cam_length only once in the whole run
 		while self.cam_length is None:
 				# we do not get camera length from the scope, yet.
-				cam_length_str = raw_input('Enter camera length in meters ')
+				cam_length_str = input('Enter camera length in meters ')
 				try:
 					self.cam_length = float(cam_length_str)
 				except:
@@ -528,7 +528,7 @@ class HitachiScaleCalibrator(ScaleCalibrator):
 		submodes = self.tem.getProjectionSubModes()
 		for submode in submodes:
 			if mag in self.tem.submode_mags[submode]:
-				answer = raw_input('Is %d mag in submode %s ? (Y/N/y/n)' % (mag, submode))
+				answer = input('Is %d mag in submode %s ? (Y/N/y/n)' % (mag, submode))
 				if answer.lower() == 'y':
 					try:
 						# Find the one to one mapping of probe mode and set it.
@@ -542,10 +542,10 @@ class HitachiScaleCalibrator(ScaleCalibrator):
 					# wrong guess.
 					break
 		# default require user to do manually
-		raw_input('Set to the probe mode required by mag %d for calibration and then hit return ' % mag)
+		input('Set to the probe mode required by mag %d for calibration and then hit return ' % mag)
 
 	def isNewSubMode(self):
-		print '-------------------------'
+		print('-------------------------')
 		divided_submode = self.getSubModeString()
 		if self.done_submodes and divided_submode in self.done_submodes:
 			return False
@@ -580,11 +580,11 @@ class HitachiScaleCalibrator(ScaleCalibrator):
 
 	def constructAttributeNames(self):
 		results = {}
-		for optic_module in self.configs.keys():
-			for effect_type in self.configs[optic_module].keys():
+		for optic_module in list(self.configs.keys()):
+			for effect_type in list(self.configs[optic_module].keys()):
 				effect_type_item = self.configs[optic_module][effect_type]
 				results[effect_type] = optic_module, effect_type_item
-		print 'attribute names', results
+		print('attribute names', results)
 		return results
 
 	def setMoveClassInstance(self,effect_type):
@@ -603,7 +603,7 @@ class HitachiScaleCalibrator(ScaleCalibrator):
 			self.logger.error('Move property not set')
 		item_name = self.calibrations[self.effect_type][1]
 		value = self.get_move_class_instance(item_name)
-		print value
+		print(value)
 		return value
 
 	def setValue(self,value):

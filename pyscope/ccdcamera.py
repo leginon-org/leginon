@@ -6,7 +6,7 @@
 
 import time
 import threading
-import baseinstrument
+from . import baseinstrument
 
 class GeometryError(Exception):
 	pass
@@ -233,7 +233,7 @@ This method returns that multiplier, M.  In the standard case, returns 1.0.
 		return self.exposure_timestamp
 
 	def registerCallback(self, name, callback):
-		print 'REGISTER', name, callback, time.time()
+		print('REGISTER', name, callback, time.time())
 		self.callbacks[name] = callback
 
 	def getImage(self):
@@ -257,15 +257,15 @@ This method returns that multiplier, M.  In the standard case, returns 1.0.
 		time.sleep(t)
 		## wait for t or getImage to be done, which ever is first
 		#self.buffer_ready[name].wait(t)
-		print 'EXPOSURE DONE (READOUT NOT DONE)', time.time()
+		print('EXPOSURE DONE (READOUT NOT DONE)', time.time())
 
 	def getImageToCallback(self, name):
-		print 'GETIMAGETOCALLBACK', name, time.time()
+		print('GETIMAGETOCALLBACK', name, time.time())
 		image = self._getImage()
 		try:
-			print 'CALLBACK', self.callbacks[name], time.time()
+			print('CALLBACK', self.callbacks[name], time.time())
 			self.callbacks[name](image)
-			print 'CALLBACKDONE', time.time()
+			print('CALLBACKDONE', time.time())
 		finally:
 			del self.callbacks[name]
 
@@ -373,7 +373,7 @@ This method returns that multiplier, M.  In the standard case, returns 1.0.
 			# timing not defined or length is zero
 			return
 		ctime = time.strftime("%H:%M:%S")
-		h,m,s = map((lambda x: int(x)),ctime.split(':'))
+		h,m,s = list(map((lambda x: int(x)),ctime.split(':')))
 		if h < 12:
 			h += 12
 		else:
@@ -384,7 +384,7 @@ This method returns that multiplier, M.  In the standard case, returns 1.0.
 		if second_since_noon > delay_end_time or second_since_noon < delay_start_time:
 			return
 		sleep_time = delay_end_time - second_since_noon
-		print 'Sleeping started at %s for %d seconds' % (ctime, int(sleep_time))
+		print('Sleeping started at %s for %d seconds' % (ctime, int(sleep_time)))
 		sleep_start = time.time()
 		remain_time = sleep_time - (time.time() - sleep_start)
 		if force_insert > 0 and self.getRetractable():
@@ -392,7 +392,7 @@ This method returns that multiplier, M.  In the standard case, returns 1.0.
 				time.sleep(force_insert*60)
 				self.setInserted(True)
 				remain_time = sleep_time - (time.time() - sleep_start)
-				print 'force inserted', remain_time
+				print('force inserted', remain_time)
 				continue
 			# finish with the remain_time
 			time.sleep(remain_time)

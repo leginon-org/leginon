@@ -138,7 +138,7 @@ if False:
 
 ## FSU CM300
 if True:
-    import cm300mags
+    from . import cm300mags
     screenup_mag = cm300mags.screenup
     screendown_mag = cm300mags.screendown
 

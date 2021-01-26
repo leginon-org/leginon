@@ -6,7 +6,7 @@ random.seed()
 
 class SimGatan(object):
 	def __init__(self):
-		print 'init'
+		print('init')
 		self.filter_functions = {}
 		self.inserted = False
 		self.readmode = 1
@@ -35,20 +35,20 @@ class SimGatan(object):
 
 	def SetK2Parameters(self, readMode, scaling, hardwareProc, doseFrac, frameTime, alignFrames, saveFrames, filt='', useCds=False):
 		self.save_frames = saveFrames
-		print '**K2 Parameters**'
-		print 'readMode', readMode
-		print 'scaling', scaling
-		print 'hardwareProc', hardwareProc
-		print 'doseFrac', doseFrac
-		print 'frameTime', frameTime
-		print 'alignFrames', alignFrames
-		print 'saveFrames', saveFrames
-		print 'filt', filt
+		print('**K2 Parameters**')
+		print('readMode', readMode)
+		print('scaling', scaling)
+		print('hardwareProc', hardwareProc)
+		print('doseFrac', doseFrac)
+		print('frameTime', frameTime)
+		print('alignFrames', alignFrames)
+		print('saveFrames', saveFrames)
+		print('filt', filt)
 
 	def setNumGrabSum(self, earlyReturnFrameCount, earlyReturnRamGrabs):
 		# pack RamGrabs and earlyReturnFrameCount in one double
 		self.num_grab_sum = (2**16) * earlyReturnRamGrabs + earlyReturnFrameCount
-		print 'set num_grab_sum', self.num_grab_sum
+		print('set num_grab_sum', self.num_grab_sum)
 
 	def getNumGrabSum(self):
 		return self.num_grab_sum
@@ -63,21 +63,21 @@ class SimGatan(object):
 			# set values to pass
 		else:
 			flag = None
-		print '**FileSaving**'
-		print 'rotationFlip', rotationFlip
-		print 'flag', flag
-		print 'filePerImage', filePerImage
-		print 'dirname', dirname
-		print 'rootname', rootname
+		print('**FileSaving**')
+		print('rotationFlip', rotationFlip)
+		print('flag', flag)
+		print('filePerImage', filePerImage)
+		print('dirname', dirname)
+		print('rootname', rootname)
 
 	def GetFileSaveResult(self):
 		pass
 
 	def SelectCamera(self, cameraid):
-		print 'SelectCamera on %d' % cameraid
+		print('SelectCamera on %d' % cameraid)
 
 	def UpdateK2HardwareDarkReference(self, cameraid):
-		print 'UpdateK2HardwareDarkReference on %d' % cameraid
+		print('UpdateK2HardwareDarkReference on %d' % cameraid)
 
 	def GetEnergyFilter(self):
 		return -1.0
@@ -98,7 +98,7 @@ class SimGatan(object):
 		return -1.0
 
 	def AlignEnergyFilterZeroLossPeak(self):
-		print 'AlignEnergeFileterZeroLossPeak'
+		print('AlignEnergeFileterZeroLossPeak')
 		time.sleep(2)
 
 	def PrepareDarkReference(self, cameraid):
@@ -107,14 +107,14 @@ class SimGatan(object):
 	def GetImage(self, processing, height, width, binning, top, left, bottom, right, exposure, corrections, shutter=0, shutterDelay=0.0):
 		self.exposure_type= processing
 		self.exposure_time = exposure/1000.0
-		print '**Acquire Parameters**'
-		print 'processing', processing
-		print 'image shape (%d, %d)' % (height, width)
-		print 'acquire binning', binning
-		print 'boundary rows: %d:%d, cols: %d:%d' % (top,bottom,left,right)
-		print 'exposure %s' % (exposure,)
-		print 'corrections %d' % (corrections,)
-		print 'shutter id %d' % (shutter,)
+		print('**Acquire Parameters**')
+		print('processing', processing)
+		print('image shape (%d, %d)' % (height, width))
+		print('acquire binning', binning)
+		print('boundary rows: %d:%d, cols: %d:%d' % (top,bottom,left,right))
+		print('exposure %s' % (exposure,))
+		print('corrections %d' % (corrections,))
+		print('shutter id %d' % (shutter,))
 		return self.getSyntheticImage((height, width))
 
 	def getSyntheticImage(self,shape):
@@ -137,10 +137,10 @@ class SimGatan(object):
 
 def test1():
 	g = SimGatan()
-	print g
+	print(g)
 	ver = g.GetDMVersion()
-	print 'Version', ver
-	raw_input('enter to quit.')
+	print('Version', ver)
+	input('enter to quit.')
 
 if __name__ == '__main__':
 	test1()

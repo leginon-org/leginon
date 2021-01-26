@@ -196,16 +196,16 @@ class MappedCOMAttribute(COMAttribute):
 		if type(args) is not tuple:
 			args = (args,)
 		try:
-			return COMAttribute._call(self, map(lambda v: self.setmap[v], args))
+			return COMAttribute._call(self, [self.setmap[v] for v in args])
 		except KeyError:
 			raise ValueError('Invalid args %s' % (args,))
 
 class ConstantMappedCOMAttribute(MappedCOMAttribute):
 	def __init__(self, name, comobject, attribute, mapping,
 								constants=win32com.client.constants, values=None):
-		mapping = map(lambda (k, v): (getattr(constants, k), v), mapping)
+		mapping = [(getattr(constants, k_v[0]), k_v[1]) for k_v in mapping]
 		if values is None:
-			values = map(lambda l: l[1], mapping)
+			values = [l[1] for l in mapping]
 		MappedCOMAttribute.__init__(self, name, comobject, attribute, mapping,
 																type=str, values=values)
 
@@ -243,13 +243,13 @@ class AttributeContainer(Attribute, dict):
 
 	def _get(self):
 		value = {}
-		for name, attribute in self.mapping.items():
+		for name, attribute in list(self.mapping.items()):
 			if hasattr(attribute, 'get'):
 				value[name] = attribute.get()
 		return value
 
 	def _set(self, value):
-		for k, v in value.items():
+		for k, v in list(value.items()):
 			try:
 				if hasattr(attribute, 'set'):
 					self.mapping[k].set(v)
@@ -275,13 +275,13 @@ class AttributeContainer(Attribute, dict):
 			raise AttributeError('Cannot set item %s' % key)
 
 	def keys(self):
-		return self.mapping.keys()
+		return list(self.mapping.keys())
 
 	def values(self):
-		return self.get().values()
+		return list(self.get().values())
 
 	def items(self):
-		return self.get().items()
+		return list(self.get().items())
 
 	def update(self, other):
 		for key in other:
@@ -300,7 +300,7 @@ class COMAttributeContainer(AttributeContainer):
 	def __init__(self, name, comobject, mapping, attributes=[], **kwargs):
 		self.comobject = comobject
 		self.commapping = mapping
-		for key, value in mapping.items():
+		for key, value in list(mapping.items()):
 			attributes.append(COMAttribute(key, comobject, value, **kwargs))
 		AttributeContainer.__init__(self, name, attributes)
 
@@ -313,8 +313,8 @@ class MagnificationAttribute(COMAttribute):
 	def __init__(self, comobject, mainscreenattribute):
 		self.mainscreenattribute = mainscreenattribute
 		self.indexvalues = []
-		self.indexvalues.append(map(lambda m: m[0], magnificationtable))
-		self.indexvalues.append(map(lambda m: m[1], magnificationtable))
+		self.indexvalues.append([m[0] for m in magnificationtable])
+		self.indexvalues.append([m[1] for m in magnificationtable])
 		values = self.indexvalues[0] + self.indexvalues[1]
 		COMAttribute.__init__(self, 'magnification', comobject,
 													'MagnificationIndex', type=float, values=values)
@@ -449,10 +449,10 @@ class TurboPumpAttribute(ConstantMappedCOMAttribute):
 class HolderTypeAttribute(MappedCOMAttribute):
 	def __init__(self, comobject):
 		name = 'type'
-		mapping = [(u'No Specimen Holder', 'no holder'),
-								(u'Single Tilt', 'single tilt'),
-								(u'ST Cryo Holder', 'cryo'),
-								(u'Error', 'error')]
+		mapping = [('No Specimen Holder', 'no holder'),
+								('Single Tilt', 'single tilt'),
+								('ST Cryo Holder', 'cryo'),
+								('Error', 'error')]
 		attribute = 'CurrentSpecimenHolderName'
 		MappedCOMAttribute.__init__(self, name, comobject, attribute, mapping)
 
@@ -534,7 +534,7 @@ class StagePositionAttributeContainer(AttributeContainer):
 		mapping = {'x': 'X', 'y': 'Y', 'z': 'Z', 'a': 'A', 'b': 'B'}
 		attributes = [self.correctionattribute, self.typeattribute]
 		self.axesmapping = {}
-		for key, value in mapping.items():
+		for key, value in list(mapping.items()):
 			self.axesmapping[key] = getattr(win32com.client.constants, 'axis' + value)
 			attributes.append(StagePositionAttribute(key, value, self,
 																							ranges=(self.stageranges[key],)))
@@ -551,13 +551,13 @@ class StagePositionAttributeContainer(AttributeContainer):
 		self.position(value)
 
 	def _position(self, position):
-		for key, value in position.items():
+		for key, value in list(position.items()):
 			if value < self.stageranges[key][0] or value > self.stageranges[key][1]:
 				raise ValueError('Stage position %s for %s out of range' % (value, key))
 
 		composition = getattr(self.comobject, 'Position')
 		axes = 0
-		for key, value in position.items():
+		for key, value in list(position.items()):
 			setattr(composition, self.mapping[key].attribute, value)
 			axes |= self.axesmapping[key]
 
@@ -571,7 +571,7 @@ class StagePositionAttributeContainer(AttributeContainer):
 
 		try:
 			method(composition, axes)
-		except pywintypes.com_error, e:
+		except pywintypes.com_error as e:
 			raise RuntimeError('Error positioning stage')
 
 	def position(self, value):
@@ -644,7 +644,7 @@ class Tecnai(AttributeContainer):
 						'low dose': ('LDServer.LdSrv',),
 						'exposure adaptor': ('adaExp.TAdaExp', None, None, None, False,
 																	pythoncom.CLSCTX_LOCAL_SERVER)}
-		for name, args in args.items():
+		for name, args in list(args.items()):
 			try:
 				self.comobjects[name] = win32com.client.Dispatch(*args)
 			except pywintypes.com_error:

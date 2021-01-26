@@ -36,7 +36,7 @@ class Jeol1230(tem.TEM):
 	name = 'Jeol1230'
 	def __init__(self):
 		if Debug == True:
-			print 'from jeol1230.py class_defination'
+			print('from jeol1230.py class_defination')
 		tem.TEM.__init__(self)
 		self.correctedstage = True
 		self.jeol1230lib = jeol1230lib.jeol1230lib()
@@ -47,21 +47,21 @@ class Jeol1230(tem.TEM):
 	# define three high tension states
 	def getHighTensionStates(self):
 		if Debug == True:
-			print 'from jeol1230.py getHighTensionStates'
+			print('from jeol1230.py getHighTensionStates')
 		hts = ['off', 'on', 'disabled']
 		return hts
 
 	# get high tenstion status as on or off
 	def getHighTensionState(self):
 		if Debug == True:
-			print 'from jeol1230.py getHighTensionState'
+			print('from jeol1230.py getHighTensionState')
 		highTensionState = self.jeol1230lib.getHighTensionState()
 		return highTensionState
 
 	# get high tenstion voltage
 	def getHighTension(self):
 		if Debug == True:
-			print 'from jeol1230.py getHighTension'
+			print('from jeol1230.py getHighTension')
 		if self.jeol1230lib.getHighTensionState() == 'on':
 			highTension = self.jeol1230lib.getHighTension()
 		else:
@@ -71,19 +71,19 @@ class Jeol1230(tem.TEM):
 	# turn on or off high tension
 	def setHighTension(self, mode = 'off'):
 		if Debug == True:
-			print 'from jeol1230.py setHighTension'
+			print('from jeol1230.py setHighTension')
 		return True
 
 	# get three colum valve positions, not work for 1230
 	def getColumnValvePositions(self):
 		if Debug == True:
-			print "from jeol1230.py getColumnValvePositions"
+			print("from jeol1230.py getColumnValvePositions")
 		return ['open', 'closed']
 
 	# attension: changed this to beam state
 	def getColumnValvePosition(self):
 		if Debug == True:
-			print 'from jeol1230.py getColumnValvePostion'
+			print('from jeol1230.py getColumnValvePostion')
 		state = self.getBeamState()
 		position_mapping = {'on':'open','off':'closed','unknown':'closed'}
 		return position_mapping[state]
@@ -91,7 +91,7 @@ class Jeol1230(tem.TEM):
 	# attension: change this to beam state
 	def setColumnValvePosition(self, position):
 		if Debug == True:
-			print 'from jeol1230.py setColumnValvePosition'
+			print('from jeol1230.py setColumnValvePosition')
 		state_mapping = {'open':'on','closed':'off'}
 		state = state_mapping[position]
 		if self.jeol1230lib.setBeamState(state) == True:
@@ -102,21 +102,21 @@ class Jeol1230(tem.TEM):
 	# get the beam satus as on or off
 	def getBeamState(self):
 		if Debug == True:
-			print "from jeol1230.py getBeamState"
+			print("from jeol1230.py getBeamState")
 		beamState = self.jeol1230lib.getBeamState()
 		return beamState
 
 	# attension: pump is changed to beam operation
 	def getTurboPump(self):
 		if Debug == True:
-			print "from jeol1230.py getTurboPump"
+			print("from jeol1230.py getTurboPump")
 		beamState = self.jeol1230lib.getBeamState()
 		return beamState
 
 	# attension: set the beam status
 	def setBeamState(self, mode = 'off'):
 		if Debug == True:
-			print "from jeol1230.py setBeamOnOff"
+			print("from jeol1230.py setBeamOnOff")
 		if self.jeol1230lib.setBeamState(mode) == True:
 			return True
 		else:
@@ -134,7 +134,7 @@ class Jeol1230(tem.TEM):
 	# attension: set the beam status, the same as the above
 	def setTurboPump(self, mode = 'off'):
 		if Debug == True:
-			print "from jeol1230.py setTurboPump"
+			print("from jeol1230.py setTurboPump")
 		if self.jeol1230lib.setBeamState(mode) == True:
 			return True
 		else:
@@ -143,14 +143,14 @@ class Jeol1230(tem.TEM):
 	# initialize all possible magnifications
 	def setMagnifications(self, magnifications):
 		if Debug == True:
-			print 'from jeol1230.py setMagnifications'
+			print('from jeol1230.py setMagnifications')
 		self.magnifications = magnifications
 		return True
 
 	# get all possible magnifications
 	def findMagnifications(self):
 		if Debug == True:
-			print 'from jeol1230.py findMagnifications'
+			print('from jeol1230.py findMagnifications')
 		magnifications = self.jeol1230lib.magnification
 		self.setMagnifications(magnifications)
 		return True
@@ -158,7 +158,7 @@ class Jeol1230(tem.TEM):
 	# check if self.magnifications is initialized sucessfully
 	def getMagnificationsInitialized(self):
 		if Debug == True:
-			print "from jeol1230.py getMagnificationsInitialized"
+			print("from jeol1230.py getMagnificationsInitialized")
 		if self.magnifications:
 			return True
 		else:
@@ -167,17 +167,17 @@ class Jeol1230(tem.TEM):
 	# return self.magnifications
 	def getMagnifications(self):
 		if Debug == True:
-			print "from jeol1230.py getMagnifications"
+			print("from jeol1230.py getMagnifications")
 		return self.magnifications
 
 	# return a magnification number using an index
 	def getMagnification(self, index = None):
 		if Debug == True:
-			print "from jeol1230.py getMagnification"
+			print("from jeol1230.py getMagnification")
 		if index is None:
 			return self.jeol1230lib.getMagnification()
 		elif int(index) > 40 or int(index) < 0:
-			print '    Valid magnification index should be 0-40'
+			print('    Valid magnification index should be 0-40')
 			return
 		else:
 			return self.magnifications[index]
@@ -185,40 +185,40 @@ class Jeol1230(tem.TEM):
 	# return the actual Mag value
 	def getMainScreenMagnification(self):
 		if Debug == True:
-			print 'from jeol1230.py getMainScreenMagnification'
+			print('from jeol1230.py getMainScreenMagnification')
 		return self.jeol1230lib.getMagnification()
 
 	#  get mag index position between 0 and 40
 	def _emcGetMagPosition(self,magnification):
 		if Debug == True:
-			print 'from jeol1230.py _emcGetMagPostion'
+			print('from jeol1230.py _emcGetMagPostion')
 		magRange = 40
 		mags = jeol1230lib.magnification
 		for magIndex in range(0,magRange):
 			if int(magnification) <= mags[magIndex]:
 				break
 		if magIndex > magRange:
-			print '    magnification out of range'
+			print('    magnification out of range')
 		return magIndex
 
 	# get mag index position between 0 and 40
 	def getMagnificationIndex(self, magnification):
 		if Debug == True:
-			print 'from jeol1230.py getMagnificationIndex'
+			print('from jeol1230.py getMagnificationIndex')
 		magIndex = self._emcGetMagPosition(magnification)
 		return int(magIndex)
 
 	# set magnification using magnification
 	def setMagnification(self, magnification):
 		if Debug == True:
-			print 'from jeol1230.py setMagnification'
+			print('from jeol1230.py setMagnification')
 		self.jeol1230lib.setMagnification(magnification)
 		return True
 
 	# set magnification using magnification index
 	def setMagnificationIndex(self, magIndex):
 		if Debug == True:
-			print 'from jeol1230.py setMagnificationIndex'
+			print('from jeol1230.py setMagnificationIndex')
 		magnification = self.getMagnification(magIndex)
 		if self.jeol1230lib.setMagnification(magnification) == True:
 			return True
@@ -228,27 +228,27 @@ class Jeol1230(tem.TEM):
 	# don't understand it well, but it works
 	def setMainScreenScale(self, mainscreenscale = 1.0):
 		if Debug == True:
-			print 'from jeol1230.py setMainScreenScale'
+			print('from jeol1230.py setMainScreenScale')
 		self.mainscreenscale = mainscreenscale
 		return True
 
 	# anyway, it works
 	def getMainScreenScale(self):
 		if Debug == True:
-			print 'from jeol1230.py getMainScreenScale'
+			print('from jeol1230.py getMainScreenScale')
 		return self.mainscreenscale
 
 	# get current spot size
 	def getSpotSize(self):
 		if Debug == True:
-			print 'from jeol1230.py getSpotSize'
+			print('from jeol1230.py getSpotSize')
 		spotsize = self.jeol1230lib.getSpotSize()
 		return spotsize
 
 	# set spot size between 1 and 5 as a string
 	def setSpotSize(self, spotSize, relative = 'absolute'):
 		if Debug == True:
-			print 'from jeol1230.py setSpotSize'
+			print('from jeol1230.py setSpotSize')
 		if relative == 'absolute':
 			s = int(spotSize)
 		else:
@@ -261,7 +261,7 @@ class Jeol1230(tem.TEM):
 	# return position in meter, angle in pi
 	def getStagePosition(self):
 		if Debug == True:
-			print "from jeol1230.py getStagePosition"
+			print("from jeol1230.py getStagePosition")
 		value = {'x': None, 'y': None, 'z': None, 'a': None}
 		pos = self.jeol1230lib.getStagePosition()
 		value['x'] = float(pos['x']/1e6)
@@ -297,11 +297,11 @@ class Jeol1230(tem.TEM):
 			self.trys = 0
 			while self.trys < 10:
 				current_position = self.getStagePosition()
-				if axis in requested_position.keys() and abs(current_position[axis] - requested_position[axis]) > accuracy[axis]:
+				if axis in list(requested_position.keys()) and abs(current_position[axis] - requested_position[axis]) > accuracy[axis]:
 					self.trys += 1
 					if Debug == True:
-						print 'stage %s not reached' % axis
-						print abs(current_position[axis]-requested_position[axis])
+						print('stage %s not reached' % axis)
+						print(abs(current_position[axis]-requested_position[axis]))
 					self.setStagePositionByAxis(requested_position,axis)
 				else:
 					break
@@ -312,7 +312,7 @@ class Jeol1230(tem.TEM):
 		Set requested position dict in only one axis and ignore the rest.
 		'''
 		movable_position = self.checkStagePosition(position)
-		keys = movable_position.keys()
+		keys = list(movable_position.keys())
 		if axis not in keys:
 			return
 		if axis == 'a':
@@ -342,7 +342,7 @@ class Jeol1230(tem.TEM):
 	def _setStageXThenY(self, position):
 		value_dict = position.copy()
 		for axis in ('x','y'):
-			if axis not in value_dict.keys():
+			if axis not in list(value_dict.keys()):
 				continue
 			# This gives 0.7 to 1.2 um reproducibility
 			# set to backlash position in coarse mode
@@ -367,7 +367,7 @@ class Jeol1230(tem.TEM):
 		self.confirmStagePosition(position,['a',])
 	
 	def forceTiltBack(self,position):
-		if 'a' in position.keys():
+		if 'a' in list(position.keys()):
 			if abs(position['a']) < math.radians(0.5):
 				position['a'] = 0.0
 			return position
@@ -386,12 +386,12 @@ class Jeol1230(tem.TEM):
 		if not value:
 			return
 		if Debug == True:
-			print 'from jeol1230.py setStagePosition'
+			print('from jeol1230.py setStagePosition')
 
 		for axis in ('x', 'y', 'z', 'a'):
 			if axis in value:
 				if axis == 'a':
-					print 'set alpha %.2f' % math.degrees(value['a'])
+					print('set alpha %.2f' % math.degrees(value['a']))
 					self._setStageA(value)
 					self.last_alpha = value['a']
 				elif axis == 'z':
@@ -405,27 +405,27 @@ class Jeol1230(tem.TEM):
 	# default is correct stage movement
 	def getCorrectedStagePosition(self):
 		if Debug == True:
-			print 'from jeol1230.py getCorrectedStagePosition'
+			print('from jeol1230.py getCorrectedStagePosition')
 		return self.correctedstage
 
 	# set the stage move to back or not
 	def setCorrectedStagePosition(self, value = 'True'):
 		if Debug == True:
-			print 'from setCorrectedStagePosition'
+			print('from setCorrectedStagePosition')
 		self.correctedstage = bool(value)
 		return self.correctedstage
 
 	# get defocus value, Leginon requires meter unit(negative)
 	def getDefocus(self):
 		if Debug == True:
-			print 'from jeol1230.py getDefocus'
+			print('from jeol1230.py getDefocus')
 		defocus = self.jeol1230lib.getDefocus()
 		return float(defocus)
 
 	# set defocus value
 	def setDefocus(self, defocus, relative = 'absolute'):
 		if Debug == True:
-			print 'from jeol1230.py setDefocus'
+			print('from jeol1230.py setDefocus')
 		if relative == 'absolute':
 			ss = float(defocus)
 		else:
@@ -443,7 +443,7 @@ class Jeol1230(tem.TEM):
 	# unit is click
 	def getFocus(self):											
 		if Debug == True:
-			print 'from getFocus'
+			print('from getFocus')
 		#pos = self.jeol1230lib.getStagePosition()
 		#focus  = float(pos['z'])/1e6
 		pos = self.jeol1230lib.getObjectiveCurrent()
@@ -453,7 +453,7 @@ class Jeol1230(tem.TEM):
 	# set focus, unit is click
 	def setFocus(self, value):
 		if Debug == True:
-			print 'from setFocus'
+			print('from setFocus')
 		if self.jeol1230lib.setObjectiveCurrent(int(value)) ==  True:   # move stage in Z direction only
 			return True
 		else:
@@ -462,34 +462,34 @@ class Jeol1230(tem.TEM):
 	# reset eucentric focus, it works when the reset button is clicked
 	def resetDefocus(self, value = 0):
 		if Debug == True:
-			print 'from jeol1230.py resetDefocus'
+			print('from jeol1230.py resetDefocus')
 		self.jeol1230lib.resetDefocus(value)
 		return True
 
 	# not sure about this
 	def getResetDefocus(self):
 		if Debug == True:
-			print 'from jeol1230.py getResetDefocus'
+			print('from jeol1230.py getResetDefocus')
 		self.jeol1230lib.resetDefocus(0)
 		return True
 
 	# required by leginon
 	def getObjectiveExcitation(self):
 		if Debug == True:
-			print 'from getObjectiveExcitation'
+			print('from getObjectiveExcitation')
 		return NotImplementedError()
 
 	# get beam intensity
 	def getIntensity(self):
 		if Debug == True:
-			print 'from jeol1230.py getIntensity'
+			print('from jeol1230.py getIntensity')
 		intensity = self.jeol1230lib.getIntensity()
 		return int(intensity)
 
 	# set beam intensity
 	def setIntensity(self, intensity, relative = 'absolute'):
 		if Debug == True:
-			print 'from from jeol1230.py setIntensity'
+			print('from from jeol1230.py setIntensity')
 		if relative == 'absolute':
 			ss = int(intensity)
 		else:
@@ -502,7 +502,7 @@ class Jeol1230(tem.TEM):
 	# get beam tilt
 	def getBeamTilt(self):
 		if Debug == True:
-			print 'from getBeamTilt'
+			print('from getBeamTilt')
 		beamtilt = {'x': None, 'y': None}
 		beamtilt = self.jeol1230lib.getBeamTilt()
 		return beamtilt
@@ -510,7 +510,7 @@ class Jeol1230(tem.TEM):
 	# set beam tilt
 	def setBeamTilt(self, vector, relative = 'absolute'):
 		if Debug == True:
-			print 'from jeol1230.py setBeamTilt'
+			print('from jeol1230.py setBeamTilt')
 		for axis in ('x', 'y'):
 			if axis in vector:
 				if relative == 'absolute':
@@ -526,7 +526,7 @@ class Jeol1230(tem.TEM):
 	# get beam shift
 	def getBeamShift(self):
 		if Debug == True:
-			print 'from jeol1230.py getBeamShift'
+			print('from jeol1230.py getBeamShift')
 		value = {'x': None, 'y': None}
 		value = self.jeol1230lib.getBeamShift()
 		return value
@@ -534,7 +534,7 @@ class Jeol1230(tem.TEM):
 	# set beam shift
 	def setBeamShift(self, vector, relative = 'absolute'):
 		if Debug == True:
-			print 'from jeol1230.py setBeamShift'
+			print('from jeol1230.py setBeamShift')
 		for axis in ('x', 'y'):
 			if axis in vector:
 				if relative == 'absolute':
@@ -557,7 +557,7 @@ class Jeol1230(tem.TEM):
 
 	def getImageShift(self):
 		if Debug == True:
-			print 'from jeol1230.py getImageShift'
+			print('from jeol1230.py getImageShift')
 		vector = {'x': None, 'y': None}
 		vector = self.jeol1230lib.getImageShift()
 		return vector
@@ -565,7 +565,7 @@ class Jeol1230(tem.TEM):
 	# set image shift in meter
 	def setImageShift(self, vector, relative = 'absolute'):
 		if Debug == True:
-			print 'from jeol1230.py setImageShift'
+			print('from jeol1230.py setImageShift')
 		for axis in ('x', 'y'):
 			if axis in vector:
 				if relative == 'absolute':
@@ -581,7 +581,7 @@ class Jeol1230(tem.TEM):
 	# get stigmator setting
 	def getStigmator(self):
 		if Debug == True:
-			print 'from jeol1230.py getStigmator'
+			print('from jeol1230.py getStigmator')
 		vector = {'condenser': {'x': None, 'y': None},'objective': {'x': None, 'y': None},'diffraction': {'x': None, 'y': None}}
 		vector = self.jeol1230lib.getStigmator()
 		return vector
@@ -589,8 +589,8 @@ class Jeol1230(tem.TEM):
 	# set stigmator setting
 	def setStigmator(self, vector, relative = 'absolute'):
 		if Debug == True:
-			print 'from jeol1230.py setStigmator'
-			print '    vector is', vector, relative
+			print('from jeol1230.py setStigmator')
+			print('    vector is', vector, relative)
 		for key in ('condenser', 'objective', 'diffraction'):
 			if key in vector:
 				for axis in ('x','y'):
@@ -612,43 +612,43 @@ class Jeol1230(tem.TEM):
 	# not implimented
 	def getGunShift(self):
 		if Debug == True:
-			print 'from getGunShift'
+			print('from getGunShift')
 		return NotImplementedError()
 
 	# not implimented
 	def setGunShift(self, vector, relative = 'absolute'):
 		if Debug == True:
-			print 'from setGunShift'
+			print('from setGunShift')
 		return NotImplementedError()
 
 	# not implimented
 	def getGunTilt(self):
 		if Debug == True:
-			print 'from getGunTilt'
+			print('from getGunTilt')
 		return NotImplementedError()
 
 	# not implimented
 	def setGunTilt(self, vector, relative = 'absolute'):
 		if Debug == True:
-			print 'from jeol1230.py setGunTilt'
+			print('from jeol1230.py setGunTilt')
 		return NotImplementedError()
 
 	# not implimented
 	def getDarkFieldMode(self):
 		if Debug == True:
-			print 'from jeol1230.py getDarkFieldMode'
+			print('from jeol1230.py getDarkFieldMode')
 		return 'on'
 
 	# not implimented
 	def setDarkFieldMode(self, mode):
 		if Debug == True:
-			print 'from jeol1230.py setDarkFieldMode'
+			print('from jeol1230.py setDarkFieldMode')
 		return True
 
 	# not sure, but return in meter
 	def getRawImageShift(self):
 		if Debug == True:
-			print 'from jeol1230.py getRawImageShift'
+			print('from jeol1230.py getRawImageShift')
 		vector = {'x': None, 'y': None}
 		vector = self.jeol1230lib.getImageShift()
 		return vector
@@ -656,7 +656,7 @@ class Jeol1230(tem.TEM):
 	# not implimented
 	def setRawImageShift(self, vector, relative = 'absolute'):
 		if Debug == True:
-			print 'from jeol1230.py setRawImageShift'
+			print('from jeol1230.py setRawImageShift')
 		now = {'x': None, 'y': None}
 		now = self.jeol1230lib.getImageShift()
 		for axis in ('x', 'y'):
@@ -672,319 +672,319 @@ class Jeol1230(tem.TEM):
 	# not implimented
 	def getVacuumStatus(self):
 		if Debug == True:
-			print "from jeol1230.py getVacuumStatus"
+			print("from jeol1230.py getVacuumStatus")
 		return 'unknown'
 
 	# not implimented
 	def getColumnPressure(self):
 		if Debug == True:
-			print 'from jeol1230.py getColumnPressure'
+			print('from jeol1230.py getColumnPressure')
 		return 1.0
 
 	# not implimented
 	def getFilmStock(self):
 		if Debug == True:
-			print 'from jeol1230.py getFilmStock'
+			print('from jeol1230.py getFilmStock')
 		return 1
 
 	# not implimented
 	def setFilmStock(self):
 		if Debug == True:
-			print 'from jeol1230.py setFilmStock'
+			print('from jeol1230.py setFilmStock')
 		return NotImplementedError()
 
 	# not implimented
 	def getFilmExposureNumber(self):
 		if Debug == True:
-			print 'from jeol1230.py getFilmExposureNumber'
+			print('from jeol1230.py getFilmExposureNumber')
 		return 1
 
 	# not implimented
 	def setFilmExposureNumber(self, value):
 		if Debug == True:
-			print 'from jeol1230.py setFilmExposureNumber'
+			print('from jeol1230.py setFilmExposureNumber')
 		return NotImplementedError()
 
 	# not implimented
 	def getFilmExposureTime(self):
 		if Debug == True:
-			print 'from jeol1230.py getFilmExposureTime'
+			print('from jeol1230.py getFilmExposureTime')
 		return 1.0
 
 	# not implimented
 	def getFilmExposureTypes(self):
 		if Debug == True:
-			print 'from jeol1230.py getFilmExposureTypes'
+			print('from jeol1230.py getFilmExposureTypes')
 		return ['manual', 'automatic','unknown']
 
 	# not implimented
 	def getFilmExposureType(self):
 		if Debug == True:
-			print 'from jeol1230.py getFilmExposureType'
+			print('from jeol1230.py getFilmExposureType')
 		return 'unknown'
 
 	# not implimented
 	def setFilmExposureType(self, value):
 		if Debug == True:
-			print 'from jeol1230.py setFilmExposureType'
+			print('from jeol1230.py setFilmExposureType')
 		return NotImplementedError()
 
 	# not implimented
 	def getFilmAutomaticExposureTime(self):
 		if Debug == True:
-			print 'from jeol1230.py getFilmAutomaticExposureTime'
+			print('from jeol1230.py getFilmAutomaticExposureTime')
 		return 1.0
 
 	# not implimented
 	def getFilmManualExposureTime(self):
 		if Debug == True:
-			print 'from jeol1230.py getFilmManualExposureTime'
+			print('from jeol1230.py getFilmManualExposureTime')
 		return 1
 
 	# not implimented
 	def setFilmManualExposureTime(self, value):
 		if Debug == True:
-			print 'from jeol1230.py setFilmManualExposureTime'
+			print('from jeol1230.py setFilmManualExposureTime')
 		return NotImplementedError()
 
 	# not implimented
 	def getFilmUserCode(self):
 		if Debug == True:
-			print 'from jeol1230.py getFilmUserCode'
+			print('from jeol1230.py getFilmUserCode')
 		return str('mhu')
 
 	# not implimented
 	def setFilmUserCode(self, value):
 		if Debug == True:
-			print 'from jeol1230.py setFilmUserCode'
+			print('from jeol1230.py setFilmUserCode')
 		return NotImplementedError()
 
 	# not implimented
 	def getFilmDateTypes(self):
 		if Debug == True:
-			print 'from jeol1230.py getFilmDateTypes'
+			print('from jeol1230.py getFilmDateTypes')
 		return ['no date', 'DD-MM-YY', 'MM/DD/YY', 'YY.MM.DD', 'unknown']
 
 	# not implimented
 	def getFilmDateType(self):
 		if Debug == True:
-			print 'from jeol1230.py getFilmDateType'
+			print('from jeol1230.py getFilmDateType')
 		return 'unknown'
 
 	# not implimented
 	def setFilmDateType(self, value):
 		if Debug == True:
-			print 'from jeol1230.py setFilmDateType'
+			print('from jeol1230.py setFilmDateType')
 		return NotImplementedError()
 
 	# not implimented
 	def getFilmText(self):
 		if Debug == True:
-			print 'from jeol1230.py getFilmText'
+			print('from jeol1230.py getFilmText')
 		return str('Minghui Hu')
 
 	# not implimented
 	def setFilmText(self, value):
 		if Debug == True:
-			print 'from jeol1230.py setFilmText'
+			print('from jeol1230.py setFilmText')
 		return NotImplementedError()
 
 	# not implimented
 	def getShutter(self):
 		if Debug == True:
-			print 'from jeol1230.py getShutter'
+			print('from jeol1230.py getShutter')
 		return 'unknown'
 
 	# not implimented
 	def setShutter(self, state):
 		if Debug == True:
-			print 'from jeol1230.py setShutter'
+			print('from jeol1230.py setShutter')
 		return NotImplementedError()
 
 	# not implimented
 	def getShutterPositions(self):
 		if Debug == True:
-			print 'from jeol1230.py getShutterPositions'
+			print('from jeol1230.py getShutterPositions')
 		return ['open', 'closed','unknown']
 
 	# not implimented
 	def getExternalShutterStates(self):
 		if Debug == True:
-			print 'from jeol1230.py getExternalShutterStates'
+			print('from jeol1230.py getExternalShutterStates')
 		return ['connected', 'disconnected','unknown']
 
 	# not implimented
 	def getExternalShutter(self):
 		if Debug == True:
-			print 'from jeol1230.py getExternalShutter'
+			print('from jeol1230.py getExternalShutter')
 		return 'unknown'
 
 	# not implimented
 	def setExternalShutter(self, state):
 		if Debug == True:
-			print 'from jeol1230.py setExternalShutter'
+			print('from jeol1230.py setExternalShutter')
 		return NotImplementedError()
 
 	# not implimented
 	def normalizeLens(self, lens = 'all'):
 		if Debug == True:
-			print 'from jeol1230.py normalizeLens'
+			print('from jeol1230.py normalizeLens')
 		return NotImplementedError()
 
 	# not implimented
 	def getScreenCurrent(self):
 		if Debug == True:
-			print 'from jeol1230.py getScreenCurrent'
+			print('from jeol1230.py getScreenCurrent')
 		return 1.0
 
 	# not implimented
 	def getMainScreenPositions(self):
 		if Debug == True:
-			print 'from jeol1230.py getMainScreenPositions'
+			print('from jeol1230.py getMainScreenPositions')
 		return ['up', 'down', 'unknown']
 
 	# not implimented
 	def setMainScreenPosition(self, mode):
 		if Debug == True:
-			print 'from jeol1230.py setMainScreenPosition'
+			print('from jeol1230.py setMainScreenPosition')
 		return True				# I changed it to true
 
 	# not implimented
 	def getMainScreenPosition(self):
 		if Debug == True:
-			print 'from jeol1230.py getManinScreenPostion'
+			print('from jeol1230.py getManinScreenPostion')
 		return 'up'
 
 	# not implimented
 	def getSmallScreenPositions(self):
 		if Debug == True:
-			print 'from jeol1230.py getSmallScreenPositions'
+			print('from jeol1230.py getSmallScreenPositions')
 		return ['up', 'down', 'unknown']
 
 	# not implimented
 	def getSmallScreenPosition(self):
 		if Debug == True:
-			print 'from jeol1230.py getSmallScreenPosition'
+			print('from jeol1230.py getSmallScreenPosition')
 		return 'unknown'
 
 	# not implimented
 	def getHolderStatus(self):
 		if Debug == True:
-			print 'from jeol1230.py getHolderStatus'
+			print('from jeol1230.py getHolderStatus')
 		return 'Inserted'
 
 	# not implimented
 	def getHolderTypes(self):
 		if Debug == True:
-			print 'from jeol1230.py getHolderTypes'
+			print('from jeol1230.py getHolderTypes')
 		return ['no holder', 'single tilt', 'cryo', 'unknown']
 
 	# not implimented
 	def getHolderType(self):
 		if Debug == True:
-			print 'from jeol1230.py getHolderType'
+			print('from jeol1230.py getHolderType')
 		return 'unknown'
 
 	# not implimented
 	def setHolderType(self, holdertype):
 		if Debug == True:
-			print 'from jeol1230.py setHolderType'
+			print('from jeol1230.py setHolderType')
 		return NotImplementedError()
 
 	# not implimented
 	def getLowDoseModes(self):
 		if Debug == True:
-			print 'from jeol1230.py getLowDoseModes'
+			print('from jeol1230.py getLowDoseModes')
 		return ['exposure', 'focus1', 'focus2', 'search', 'unknown', 'disabled']
 
 	# not implimented
 	def getLowDoseMode(self):
 		if Debug == True:
-			print 'from jeol1230.py getLowDoseMode'
+			print('from jeol1230.py getLowDoseMode')
 		return 'unknown'
 
 	# not implimented
 	def setLowDoseMode(self, mode):
 		if Debug == True:
-			print 'from jeol1230.py setLowDoseMode'
+			print('from jeol1230.py setLowDoseMode')
 		return NotImplementedError()
 
 	# not implimented
 	def getLowDoseStates(self):
 		if Debug == True:
-			print 'from jeol1230.py getLowDoseStates'
+			print('from jeol1230.py getLowDoseStates')
 		return ['on', 'off', 'disabled','unknown']
 
 	# not implimented
 	def getLowDose(self):
 		if Debug == True:
-			print 'from jeol1230.py getLowDose'
+			print('from jeol1230.py getLowDose')
 		return 'unknown'
 
 	# not implimented
 	def setLowDose(self, ld):
 		if Debug == True:
-			print 'from jeol1230.py setLowDose'
+			print('from jeol1230.py setLowDose')
 		return NotImplementedError()
 
 	# not implimented
 	def getStageStatus(self):
 		if Debug == True:
-			print 'from jeol1230.py getStageStatus'
+			print('from jeol1230.py getStageStatus')
 		return 'unknown'
 
 	# not implimented
 	def getVacuumStatus(self):
 		if Debug == True:
-			print 'from jeol1230.py getVacuumStatus'
+			print('from jeol1230.py getVacuumStatus')
 		return 'unknown'
 
 	# not implimented
 	def preFilmExposure(self, value):
 		if Debug == True:
-			print 'from jeol1230.py preFilmExposure'
+			print('from jeol1230.py preFilmExposure')
 		return NotImplementedError()
 
 	# not implimented
 	def postFilmExposure(self, value):
 		if Debug == True:
-			print 'from jeol1230.py postFilmExposure'
+			print('from jeol1230.py postFilmExposure')
 		return NotImplementedError()
 
 	# not implimented
 	def filmExposure(self, value):
 		if Debug == True:
-			print 'from jeol1230.py filmExposure'
+			print('from jeol1230.py filmExposure')
 		return NotImplementedError()
 
 	# not implimented
 	def getBeamBlank(self):
 		if Debug == True:
-			print 'from jeol1230.py getBeamBlank'
+			print('from jeol1230.py getBeamBlank')
 		return 'unknown'
 
 	# not implimented
 	def setBeamBlank(self, bb):
 		if Debug == True:
-			print 'from jeol1230.py setBeamBlank'
+			print('from jeol1230.py setBeamBlank')
 		return NotImplementedError()
 
 	# not implimented
 	def getProjectionMode(self):
 		if Debug == True:
-			print 'from jeol1230.py getProjectionMode'
+			print('from jeol1230.py getProjectionMode')
 		return NotImplementedError()
 
 	# not implimented
 	def setProjectionMode(self, mode):
 		if Debug == True:
-			print 'from jeol1230.py setProjectionMode'
+			print('from jeol1230.py setProjectionMode')
 		return NotImplementedError()
 
 	# not implimented
 	def runBufferCycle(self):
 		if Debug == True:
-			print 'from jeol1230.py runBufferCycle'
+			print('from jeol1230.py runBufferCycle')
 		return NotImplementedError()
 
 	def getBeamBlankedDuringCameraExchange(self):

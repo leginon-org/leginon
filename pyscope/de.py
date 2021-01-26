@@ -1,8 +1,8 @@
-import DECameraClientLib
+from . import DECameraClientLib
 import numpy
 import time
 import pyami.imagefun
-import ccdcamera
+from . import ccdcamera
 import threading
 
 # frame flipping configuration.
@@ -59,7 +59,7 @@ def de_print_props(de_name):
 	de_setActiveCamera(de_name)
 	camera_properties = __deserver.getActiveCameraProperties()
 	for one_property in camera_properties:
-		print one_property, __deserver.getProperty(one_property)		
+		print(one_property, __deserver.getProperty(one_property))		
 
 @locked
 def de_getProperty(de_name, name):		
@@ -287,7 +287,7 @@ class DECameraBase(ccdcamera.CCDCamera):
 		ntotal = self.getNumberOfFrames()
 		if last > ntotal:
 			last = ntotal
-		sumframes = range(first,last)
+		sumframes = list(range(first,last))
 		return tuple(sumframes)
 
 	def setUseFrames(self, frames):
@@ -310,7 +310,7 @@ class DECameraBase(ccdcamera.CCDCamera):
 	def getFrameTime(self):
 		fps = self.getProperty('Frames Per Second')
 		ms = (1.0 / fps) * 1000.0
-		print 'frametime', ms
+		print('frametime', ms)
 		return ms
 
 	def setFrameTime(self, ms):

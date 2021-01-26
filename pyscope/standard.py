@@ -14,26 +14,26 @@ class StandardValues(object):
 		self.configs = {}
 
 	def addConfig(self,option,item):
-		if option not in self.configs.keys():
+		if option not in list(self.configs.keys()):
 			self.configs[option] = []
 		self.configs[option].append(item)
 
 	def displayConfig(self):
-		for option in self.configs.keys():
-			print '[%s]' % option
+		for option in list(self.configs.keys()):
+			print('[%s]' % option)
 			for item in self.configs[option]:
-				print item
-			print ''
+				print(item)
+			print('')
 
 	def writeConfig(self):
-		filename = raw_input('append calibrated jeol.cfg to: ')
+		filename = input('append calibrated jeol.cfg to: ')
 		if not filename:
 			return
 		while not os.path.isfile(filename):
-			filename = raw_input('not an existing file. Try again: ')
+			filename = input('not an existing file. Try again: ')
 		self.cfg_outfile = open(filename,'a')
 		
-		for module_name in self.configs.keys():
+		for module_name in list(self.configs.keys()):
 			self.cfg_outfile.write('[%s]\n' % module_name)
 			text = ''.join(self.configs[module_name])
 			self.cfg_outfile.write(text)
@@ -56,19 +56,19 @@ class StandardValues(object):
 		self.addConfig(option,item)
 
 	def run(self):
-		print 'Change to a magnification manually so that standard focus and neutral values are set'
-		t = raw_input('hit return key to start')
+		print('Change to a magnification manually so that standard focus and neutral values are set')
+		t = input('hit return key to start')
 		while not t:
 			mag = self.tem.getMagnification()
 			self.getStandardFocus(mag)
 			self.getNeutralShift(mag,'imageshift',self.imageshift_class)
 			self.getNeutralShift(mag,'Beamshift',self.tem.def3.GetCLA1)
 			self.getNeutralShift(mag,'Beamtilt',self.tem.def3.GetCLA2)
-			t = raw_input('Change to a new mag and then hit return key to start\nOtherwise hit other keys to display and write the summary')
+			t = input('Change to a new mag and then hit return key to start\nOtherwise hit other keys to display and write the summary')
 		self.displayConfig()
 		self.writeConfig()
-		print ''
-		raw_input('hit any key to end')
+		print('')
+		input('hit any key to end')
 
 if __name__=='__main__':
 	app = StandardValues()

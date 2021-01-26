@@ -57,11 +57,11 @@ def write_log(fields):
 	f.close()
 
 for i in range(n):
-	print 'iteration', i
+	print('iteration', i)
 	for mag in mags:
-		print 'mag', mag
+		print('mag', mag)
 		for (x1,y1) in positions:
-			print 'position', x1,y1
+			print('position', x1,y1)
 			t.setMagnification(mag)
 			time.sleep(0.25)
 			pos0 = t.getStagePosition()

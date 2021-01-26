@@ -23,7 +23,7 @@ for i in range(repeats):
 		t0 = time.time()
 		setfunc(p1)
 		t1 = time.time()
-		print '%s by %.2f %s took %.6f seconds' % (functionname, d*display_scale, display_unit, t1 -t0)
+		print('%s by %.2f %s took %.6f seconds' % (functionname, d*display_scale, display_unit, t1 -t0))
 
 setfunc(p0)
-raw_input('Finished. Hit return to quit')
+input('Finished. Hit return to quit')
