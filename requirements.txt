@@ -1,8 +1,10 @@
 aiohttp==3.7.3
+appdirs==1.4.4
 async-timeout==3.0.1
 attrs==20.3.0
 certifi==2020.12.5
 chardet==3.0.4
+fs==2.4.12
 future==0.18.2
 idna==2.10
 multidict==5.1.0
@@ -10,6 +12,7 @@ numextension===git
 numpy==1.19.4
 Pillow==8.1.0
 PyMySQL==1.0.2
+pytz==2020.5
 requests==2.25.1
 scipy==1.5.4
 six==1.15.0
