@@ -9,7 +9,7 @@ future==0.18.2
 idna==2.10
 multidict==5.1.0
 numextension===git
-numpy==1.19.4
+numpy==1.19.3
 Pillow==8.1.0
 PyMySQL==1.0.2
 pytz==2020.5
