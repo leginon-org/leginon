@@ -119,6 +119,7 @@ def linkSessionProject(sessionname, projectid):
 	projeq['project'] = projdata
 	return projeq
 
+<<<<<<< HEAD
 def getSessions(userdata, n=None):
 	'''
 	SetupWizard getSessions. allow filtering by prefix and limit returned sessions to n
@@ -146,3 +147,14 @@ def getSessions(userdata, n=None):
 		if n is None:
 			break
 	return names, sessiondatalist
+
+def hasGridHook():
+	try:
+		server_configs = moduleconfig.getConfigured('gridhook.cfg', 'leginon')
+	except IOError as e:
+		return False
+	return True
+
+def createGridHook(session_dict, project_dict):
+	from leginon import gridserver
+	return gridserver.GridHookServer(session_dict,project_dict)
