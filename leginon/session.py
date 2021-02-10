@@ -119,7 +119,6 @@ def linkSessionProject(sessionname, projectid):
 	projeq['project'] = projdata
 	return projeq
 
-<<<<<<< HEAD
 def getSessions(userdata, n=None):
 	'''
 	SetupWizard getSessions. allow filtering by prefix and limit returned sessions to n
