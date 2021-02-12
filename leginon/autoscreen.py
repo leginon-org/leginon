@@ -1,4 +1,8 @@
 #!/usr/bin/env python
+"""
+Automatically load grids and acquire grid atlas using the same project,
+Leginon clients, presets, and application of an old session.
+"""
 import os
 import sys
 import time
@@ -106,8 +110,10 @@ class SessionCreator(object):
 
 	def getOldSessionStageZ(self):
 		old_session = self.old_session
-		scope = leginondata.ScopeEMData(session=old_session).query(results=1)[0]
-		stagez = scope['stage position']['z']
+		scopes = leginondata.ScopeEMData(session=old_session).query(results=1)
+		stagez = 0.0
+		if scopes:
+			stagez = scopes[0]['stage position']['z']
 		return stagez
 
 	def saveGridSessionMap(self, order, slot_number, stagez):
@@ -132,13 +138,14 @@ class SessionCreator(object):
 		q.insert(force=True)
 
 def readMapFile(filepath):
-	f = open(filepath)
+	f = open(filepath,'r')
 	lines = f.readlines()
 	comment_map = []
 	for l in lines:
 		bits = l.split('\t')
-		# list of slot number and comment so that it is ordered
-		comment_map.append((int(bits[0]),bits[1].split('\n')[0]))
+		if len(bits) == 2:
+			# list of slot number and comment so that it is ordered
+			comment_map.append((int(bits[0]),bits[1].split('\n')[0]))
 	return comment_map
 
 def start(sessionname, clientlist, gridslot,z, task='atlas'):
