@@ -442,6 +442,8 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		# advance to next target number
 		lastnumber = self.lastTargetNumber(image=imagedata, session=self.session)
 		number = lastnumber + 1
+		# get current order
+		target_order = self.getTargetOrder(targetlist)
 		for imagetarget in imagetargets:
 			column, row = imagetarget
 			drow = row - imageshape[0]/2
@@ -449,7 +451,23 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 
 			targetdata = self.newTargetForImage(imagedata, drow, dcol, type=typename, list=targetlist, number=number,last_focused=self.last_focused)
 			self.publish(targetdata, database=True)
+			target_order.append(number)
 			number += 1
+		self.publishTargetOrder(targetlist, target_order)
+
+	def getTargetOrder(self, targetlist):
+		q = leginondata.TargetOrderData(session=self.session, list=targetlist)
+		r=q.query(results=1)
+		if r:
+			return list(r[0]['order'])
+		else:
+			return []
+
+	def publishTargetOrder(self, targetlist, target_order):
+		if target_order:
+			q = leginondata.TargetOrderData(session=self.session, list=targetlist)
+			q['order'] = target_order
+			q.insert(force=True)
 
 	def getCenterTargets(self, imagetargets, imageshape):
 		'''

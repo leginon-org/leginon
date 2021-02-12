@@ -1050,6 +1050,15 @@ class ReferenceTargetData(ImageTargetData):
 		)
 	typemap = classmethod(typemap)
 
+class TargetOrderData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('list', ImageTargetListData),
+			('order', tuple), #tuple of target number, i,e, (1,2,5,4,3)
+		)
+	typemap = classmethod(typemap)
+
+
 class ReferenceRequestData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
