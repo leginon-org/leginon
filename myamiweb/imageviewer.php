@@ -12,9 +12,11 @@ list($projectId, $sessionId, $imageId, $preset, $runId, $scopeId) = getPredefine
 
 if (is_null($sessionId)){
 	$_SESSION['unlimited_images'] = false;
+	//default session selector limit
 	$limit = 100;
 }
 else{
+	//all sessions up to SESSION_LIMIT
 	$limit = 0;
 	$_SESSION['unlimited_images'] = true;
 }
@@ -44,6 +46,10 @@ if($projectdb) {
 	}
 }
 
+/* SESSION_LIMIT limits the total number of sessions show up when it is asked
+ to list all session. This is necessary because the selector display may take
+ too long to load.
+*/
 if ( is_numeric(SESSION_LIMIT) && count($sessions) > SESSION_LIMIT) $sessions=array_slice($sessions,0,SESSION_LIMIT);
 
 $jsdata='';
