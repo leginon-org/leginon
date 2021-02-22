@@ -221,6 +221,20 @@ INPUT.button {
  padding: 1px 0px ;
 }
 
+.gobutton {
+	 font-family: Arial, Helvetica, sans-serif;
+	 font-size: 10pt;
+   color: #000000;
+	 background-color: #ccffcc;
+}
+
+.stopbutton {
+	 font-family: Arial, Helvetica, sans-serif;
+	 font-size: 10pt;
+   color: #ffffff;
+	 background-color: #cc3300;
+}
+
 .bt1{
   border: 1px solid #bdcebb;
 }
