@@ -100,6 +100,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.mosaicimagedata = None
 		self.convolver = convolver.Convolver()
 		self.currentposition = []
+		self.target_order = []
 		self.mosaiccreated = threading.Event()
 		self.presetsclient = presets.PresetsClient(self)
 
@@ -164,6 +165,8 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 				targetdata = self.mosaicToTarget(typename, r, c)
 			if coord_tuple not in displayedtargetdata:
 				displayedtargetdata[coord_tuple] = []
+			if targetdata['number'] not in self.target_order:
+				self.target_order.append(targetdata['number'])
 			displayedtargetdata[coord_tuple].append(targetdata)
 		# update self.existing_position_targets,  This is still a bit strange.
 		for coord_tuple in displayedtargetdata:
@@ -229,9 +232,11 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 	def finishSubmitTarget(self):
 		# create target list
 		self.logger.info('Submitting targets...')
+		self.target_order = self.getTargetOrder(self.targetlist)
 		self.getTargetDataList('acquisition')
 		self.getTargetDataList('focus')
 		self.getTargetDataList('preview')
+		self.publishTargetOrder(self.targetlist,self.target_order)
 		try:
 			self.publish(self.targetlist, pubevent=True)
 		except node.PublishError, e:
