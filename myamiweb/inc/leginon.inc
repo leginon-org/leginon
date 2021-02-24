@@ -3369,6 +3369,7 @@ class leginondata {
 	function getTargetListFromImage($imgId) {
 		//targetlist this image is from
 		$q="SELECT t.`REF|ImageTargetListData|list` as tlist, tl.mosaic, tl.label, "
+			."tl.`REF|SessionData|session` as session, "
 			."a.`REF|ImageListData|list` as ilist from AcquisitionImageData a "
 			."LEFT JOIN AcquisitionImageTargetData t "
 			."ON a.`REF|AcquisitionImageTargetData|target`=t.DEF_id "

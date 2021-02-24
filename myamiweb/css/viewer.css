@@ -256,6 +256,12 @@ INPUT.button {
 {
 	background-color: #EEEEEE;
 }
+.fittable
+{
+	background-color: #EEEEEE;
+	white-space: nowrap;
+	width: auto;
+}
 
 .tableborder
 {
