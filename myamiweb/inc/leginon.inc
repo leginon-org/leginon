@@ -3392,6 +3392,16 @@ class leginondata {
 		return $r;
 	}
 
+	function getVersionZeroImage($imgId) {
+		$q="SELECT a.`DEF_id` from AcquisitionImageData a "
+			."LEFT JOIN AcquisitionImageData a1 "
+			."ON a.`REF|AcquisitionImageTargetData|target`=a1.`REF|AcquisitionImageTargetData|target` "
+			."where a1.DEF_id=".$imgId." AND a.`version`=0 "
+			."";
+		$r=$this->mysql->getSQLResult($q);
+		if ($r) return $r[0]['DEF_id'];
+	}
+
 	function saveTargetOrder($sessionId, $tlistId, $order_str) {
 			// save target order in a targetlist
 			$table = 'TargetOrderData';
@@ -3415,6 +3425,10 @@ class leginondata {
 	}
 
 	function getNewTargetsFromAtlasImageList($ilId) {
+		return $this->_getStatusTargetsFromAtlasImageList($ilId, 'new');
+	}
+
+	function _getStatusTargetsFromAtlasImageList($ilId, $status) {
 		//All images in the mosaic atlas belongs to the same image list.
 		//All targets from the atlas are from a targetlist without parent image.
 		$q="SELECT t.`DEF_id` as tid, t.status, t.`number`, a.filename, "
@@ -3423,7 +3437,7 @@ class leginondata {
 			."INNER JOIN AcquisitionImageTargetData t "
 			."ON t.`REF|AcquisitionImageData|image`=a.DEF_id "
 			."WHERE a.`REF|ImageListData|list`=".$ilId." "
-			."AND t.status like 'new' GROUP BY t.`number` ";
+			."AND t.status like '".$status."' GROUP BY t.`number` ";
 		$r=$this->mysql->getSQLResult($q);
 		return $r;
 	}
@@ -3449,6 +3463,33 @@ class leginondata {
 		return $result;
 	}
 
+	function getTargetStatus($targetlistId, $target_number) {
+		// get most recent target status of the target number
+		$q="SELECT status FROM `AcquisitionImageTargetData` WHERE "
+			."`REF|ImageTargetListData|list`=".$targetlistId." AND "
+			."`number`=".$target_number." "
+			." ORDER BY `DEF_id` DESC limit 1 "
+			."";
+		$result = $this->mysql->getSQLResult($q);
+		if ($result) return $result[0]['status'];
+	}
+
+	function updateTargetStatus($targetId, $status) {
+		// update target status by inserting new one since we always look
+		// for the most recent.
+		$q="SELECT * FROM `AcquisitionImageTargetData` WHERE `DEF_id`=".$targetId
+			."";
+		$results = $this->mysql->getSQLResult($q);
+		$data = $results[0];
+		//aborted is the most likely status to update to.
+		unset($data['DEF_id']);
+		unset($data['DEF_timestamp']);
+		$data['status']=$status;
+		foreach (array_keys($data) as $k) {
+			if (is_null($data[$k])) unset($data[$k]);
+		}
+		$this->mysql->SQLInsert('AcquisitionImageTargetData', $data);
+	}
 	function getDeQueuedTargetListIds($sessionId,$qtype,$limit=100) {
 		$q="SELECT distinct "
 			."dqlist.`REF|ImageTargetListData|list` as doneid "
