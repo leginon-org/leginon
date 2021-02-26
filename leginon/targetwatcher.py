@@ -369,7 +369,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			retract_successful = self.setApertures()
 
 		targetliststatus = 'success'
-		self.processGoodTargets(good_targets)
+		targetliststatus = self.processGoodTargets(good_targets)
 
 		self.reportTargetListDone(newdata, targetliststatus)
 		if retract_successful:
@@ -473,6 +473,10 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 				i = index_order[0]
 				target = remaining_targets[i]
 			else:
+				# abort the targets
+				targetliststatus = 'aborted'
+				for t in good_targets:
+					self.reportTargetStatus(t, 'aborted')
 				break
 			# target adjustment may have changed the tilt.
 			if self.getIsResetTiltInList() and self.is_firstimage:
@@ -571,6 +575,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			# next target is not a first-image
 			del remaining_targets[i]
 			self.is_firstimage = False
+		return targetliststatus
 
 	def park(self):
 		self.logger.info('parking...')

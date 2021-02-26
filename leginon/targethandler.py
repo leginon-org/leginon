@@ -57,11 +57,13 @@ class TargetHandler(object):
 		e = event.TargetListDoneEvent(targetlistid=listid, status=status, targetlist=targetlistdata)
 		self.outputEvent(e)
 		# mosaic quilt finder and mosaic target finder
-		# should not do this to count done targets after the first submit is done
-		self.insertDoneTargetList(targetlistdata)
+		# should not do this so more targets can be submitted
+		if not targetlistdata['node']['class string'].startswith('Mosaic'):
+			# TODO: using class string text to test is not a good idea. Need better solutions.
+			self.insertDoneTargetList(targetlistdata)
 
 	def insertDoneTargetList(self, targetlistdata):
-		if targetlistdata['node'] and self.name == targetlistdata['node']['alias']:
+		if targetlistdata and targetlistdata['node'] and self.targetfinder_from and self.targetfinder_from['alias'] == targetlistdata['node']['alias']:
 			q = leginondata.DoneImageTargetListData(session=self.session,list=targetlistdata)
 			q.insert()
 			self.logger.debug('targetlist %d is inserted as done' % (targetlistdata.dbid))
@@ -154,6 +156,14 @@ class TargetHandler(object):
 		else:
 			return False
 
+	def inDoneTargetList(self,targetlist):
+		dequeuedquery = leginondata.DoneImageTargetListData(list=targetlist)
+		dequeuedlists = self.research(datainstance=dequeuedquery)
+		if len(dequeuedlists) > 0:
+			return True
+		else:
+			return False
+
 	def queueIdleFinish(self):
 		self.logger.warning('this idle timer is not used any more')
 
@@ -193,7 +203,7 @@ class TargetHandler(object):
 			# process all target lists in the queue
 			for targetlist in active:
 				state = self.clearBeamPath()
-				if state == 'stopqueue' or self.inDequeued(targetlist):
+				if state == 'stopqueue' or self.inDequeued(targetlist) or self.inDoneTargetList(targetlist):
 					self.logger.info('Queue aborted, skipping target list')
 				else:
 					# FIX ME: empty targetlist does not need to revert Z.
