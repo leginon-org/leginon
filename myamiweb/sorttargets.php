@@ -56,7 +56,8 @@
 			//Targets with new status. This is a complete list of targets necessary to
 			//map order_array later
 			$targets = $leginondata->getNewTargetsOnImage($imgId); 
-			$filename = $leginondata->getFilename($imgId)[0]['filename'];
+			$filename_r = $leginondata->getFilename($imgId);
+			$filename = $filename_r[0]['filename'];
 			$title = "Targets on image <br> <ul><li>".$filename."</li></ul><hr>";
 		}
 		if (!is_null($order_list)) {
