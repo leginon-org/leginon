@@ -353,22 +353,22 @@ class LoggingConfigurationDialog(wx.Dialog):
 		self.SetSizerAndFit(self.dialogsizer)
 
 	def onTestButton(self, evt):
-		logger = self.tree.GetPyData(self.tree.GetSelection())
+		logger = self.tree.GetItemData(self.tree.GetSelection())
 		logger.info('This a test, it is only a test.')
 
 	def onPropagateCheckbox(self, evt):
-		logger = self.tree.GetPyData(self.tree.GetSelection())
+		logger = self.tree.GetItemData(self.tree.GetSelection())
 		logger.propagate = evt.IsChecked()
 
 	def onLevelChoice(self, evt):
-		logger = self.tree.GetPyData(self.tree.GetSelection())
+		logger = self.tree.GetItemData(self.tree.GetSelection())
 		logger.setLevel(logging._nameToLevel[evt.GetString()])
 
 	def onTreeSelectionChanged(self, evt=None):
 		if evt is None:
-			logger = self.tree.GetPyData(self.tree.GetSelection())
+			logger = self.tree.GetItemData(self.tree.GetSelection())
 		else:
-			logger = self.tree.GetPyData(evt.GetItem())
+			logger = self.tree.GetItemData(evt.GetItem())
 
 		self.cbpropagate.SetValue(logger.propagate)
 
@@ -388,7 +388,7 @@ class LoggingConfigurationDialog(wx.Dialog):
 
 	def setTree(self):
 		self.root = self.tree.AddRoot('Root')
-		self.tree.SetPyData(self.root, logging.root)
+		self.tree.SetItemData(self.root, logging.root)
 		for loggername in getLoggerNames():
 			names = loggername.split('.')
 			item = self.tree.GetRootItem()
@@ -397,7 +397,7 @@ class LoggingConfigurationDialog(wx.Dialog):
 				while self.tree.GetItemText(item) != name:
 					item = self.tree.GetNextSibling(item)
 			item = self.tree.AppendItem(item, names[-1])
-			self.tree.SetPyData(item, logging.getLogger(loggername))
+			self.tree.SetItemData(item, logging.getLogger(loggername))
 		self.expandAll(self.root)
 		self.tree.SelectItem(self.root)
 		self.tree.EnsureVisible(self.root)

@@ -8,14 +8,14 @@ import sys
 import os.path
 import time
 import wx
-import wx.wizard
+import wx.adv
 import wx.lib.intctrl
 from pyami import mysocket
 
 import leginon.leginondata
 import leginon.projectdata
 import leginon.icons
-import leginon.leginonconfig
+from leginon import leginonconfig
 import leginon.project
 import leginon.gui.wx.Dialog
 import leginon.gui.wx.ListBox
@@ -24,8 +24,9 @@ import leginon.session
 import leginon.ddinfo
 from leginon.gui.wx.Entry import IntEntry
 
-class WizardPage(wx.wizard.PyWizardPage):
-	pass
+class WizardPage(wx.adv.WizardPage):
+	def GetNext(self):
+		pass
 
 # if no session go directly to new session page
 class UserPage(WizardPage):
@@ -63,14 +64,14 @@ class UserPage(WizardPage):
 
 	def setUserSelection(self):
 		self.skip = False
-		if hasattr(leginon.leginonconfig, 'USERNAME') and leginon.leginonconfig.USERNAME:
+		if hasattr(leginonconfig, 'USERNAME') and leginon.leginonconfig.USERNAME:
 			usernames = _indexBy(('firstname','lastname'), list(self.users.values()))
-			if leginon.leginonconfig.USERNAME in usernames:
-				self.userchoice.SetStringSelection(leginon.leginonconfig.USERNAME)
+			if leginonconfig.USERNAME in usernames:
+				self.userchoice.SetStringSelection(leginonconfig.USERNAME)
 				self.skip = True
 			else:
 				dlg = wx.MessageDialog(self,
-									'Cannot find user "%s" in database' % leginon.leginonconfig.USERNAME,
+									'Cannot find user "%s" in database' % leginonconfig.USERNAME,
 									'Warning', wx.OK|wx.ICON_WARNING)
 				dlg.ShowModal()
 				dlg.Destroy()
@@ -311,7 +312,7 @@ class SessionSelectPage(WizardPage):
 			else:
 				self.descriptiontext.SetLabel('(No description)')
 			if session['image path']:
-				directory = leginon.leginonconfig.mapPath(session['image path'])
+				directory = leginonconfig.mapPath(session['image path'])
 				self.imagedirectorytext.SetLabel(directory)
 			else:
 				self.imagedirectorytext.SetLabel('(No image path)')
@@ -354,6 +355,9 @@ class SessionSelectPage(WizardPage):
 			return self.GetParent().userpage.sessions[name]
 		else:
 			return None
+
+	def GetNext(self):
+		return None
 
 class SessionNamePage(WizardPage):
 	def __init__(self, parent):
@@ -473,9 +477,9 @@ class SessionProjectPage(WizardPage):
 		self.projectchoice = wx.Choice(self, -1, choices=choices)
 		# select default project
 		default = 0
-		if leginon.leginonconfig.default_project is not None:
+		if leginonconfig.default_project is not None:
 			try:
-				default = choices.index(leginon.leginonconfig.default_project)
+				default = choices.index(leginonconfig.default_project)
 			except:
 				pass
 		self.projectchoice.SetSelection(default)
@@ -546,7 +550,7 @@ class SessionImageDirectoryPage(WizardPage):
 		sizer.Add(wx.StaticText(self, -1, 'Image Directory:'), (1, 0), (1, 1),
 														wx.ALIGN_CENTER_VERTICAL)
 		try:
-			defaultdirectory = leginon.leginonconfig.mapPath(leginon.leginonconfig.IMAGE_PATH)
+			defaultdirectory = leginonconfig.mapPath(leginon.leginonconfig.IMAGE_PATH)
 		except AttributeError:
 			defaultdirectory = ''
 		self.directorytextctrl = wx.TextCtrl(self, -1, defaultdirectory)
@@ -706,7 +710,10 @@ if you would like to see its imprint when targeting'''
 	def GetPrev(self):
 		return self.GetParent().sessioncreatepage
 
-class SetupWizard(wx.wizard.Wizard):
+	def GetNext(self):
+		return None
+
+class SetupWizard(wx.adv.Wizard):
 	def __init__(self, manager):
 		self.manager = manager
 		parent = manager.frame
@@ -715,8 +722,8 @@ class SetupWizard(wx.wizard.Wizard):
 		self.session = None
 		self.clients = []
 		image = wx.Image(leginon.icons.getPath('setup.png'))
-		bitmap = wx.BitmapFromImage(image)
-		wx.wizard.Wizard.__init__(self, parent, -1, 'Leginon Setup', bitmap=bitmap)
+		bitmap = wx.Bitmap(image)
+		wx.adv.Wizard.__init__(self, parent, -1, 'Leginon Setup', bitmap=bitmap)
 		self.SetName('wLeginonSetup')
 
 		# create pages
@@ -736,10 +743,10 @@ class SetupWizard(wx.wizard.Wizard):
 		users = self.getUsers()
 		self.userpage.setUsers(users)
 
-		self.Bind(wx.wizard.EVT_WIZARD_PAGE_CHANGING, self.onPageChanging, self)
-		self.Bind(wx.wizard.EVT_WIZARD_PAGE_CHANGED, self.onPageChanged, self)
-		self.Bind(wx.wizard.EVT_WIZARD_FINISHED, self.onFinished)
-		self.Bind(wx.wizard.EVT_WIZARD_CANCEL, self.onCancel)
+		self.Bind(wx.adv.EVT_WIZARD_PAGE_CHANGING, self.onPageChanging, self)
+		self.Bind(wx.adv.EVT_WIZARD_PAGE_CHANGED, self.onPageChanged, self)
+		self.Bind(wx.adv.EVT_WIZARD_FINISHED, self.onFinished)
+		self.Bind(wx.adv.EVT_WIZARD_CANCEL, self.onCancel)
 
 		self.FitToPage(self.userpage)
 
@@ -1029,7 +1036,7 @@ class Setup(object):
 		return _indexBy('name', projectdatalist)
 
 	def createSession(self, user, name, description, directory):
-		imagedirectory = os.path.join(leginon.leginonconfig.unmapPath(directory), name, 'rawdata').replace('\\', '/')
+		imagedirectory = os.path.join(leginonconfig.unmapPath(directory), name, 'rawdata').replace('\\', '/')
 		framepath = leginon.ddinfo.getRawFrameSessionPathFromSessionPath(imagedirectory)
 		initializer = {
 			'name': name,
@@ -1101,7 +1108,7 @@ if __name__ == '__main__':
 		def OnInit(self):
 			frame = wx.Frame(None, -1, 'Test')
 			self.SetTopWindow(frame)
-			from . import node
+			from leginon import node
 			n = node.Node('Dummy', None)
 			wizard = SetupWizard(frame, n.research, None)
 			frame.Show(True)

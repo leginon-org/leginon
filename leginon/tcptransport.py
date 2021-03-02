@@ -41,9 +41,11 @@ class Server(socketstreamtransport.Server, socketserver.ThreadingTCPServer):
 					exception = False
 					break
 				except socket.error as e:
-					en, string = e
-					if en == errno.EADDRINUSE:
-						port += 1
+					if hasattr(e, 'errno'):
+						en = e.errno
+						if en == errno.EADDRINUSE:
+							port += 1
+							continue
 					else:
 						raise TransportError(string)
 			if exception:

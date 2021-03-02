@@ -9,7 +9,7 @@
 #
 
 # testing before start
-from . import configcheck
+from leginon import configcheck
 configcheck.testBeforeStart()
 
 import pyami.quietscipy

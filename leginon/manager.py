@@ -8,16 +8,16 @@
 #	   see  http://leginon.org
 #
 
-from . import application
-from . import applications
+from leginon import application
+from leginon import applications
 from leginon import leginondata
-from . import databinder
-from . import datatransport
-from . import event
-from . import importexport
-from . import leginonconfig
-from . import launcher
-from . import node
+from leginon import databinder
+from leginon import datatransport
+from leginon import event
+from leginon import importexport
+from leginon import leginonconfig
+from leginon import launcher
+from leginon import node
 import threading
 import logging
 import copy
@@ -25,13 +25,12 @@ from pyami import moduleconfig
 from pyami import ordereddict
 from pyami import mysocket
 import socket
-from wx import PyDeadObjectError
-from . import gui.wx.Manager
-from . import noderegistry
-from . import remotecall
+import leginon.gui.wx.Manager
+from leginon import noderegistry
+from leginon import remotecall
 import time
 import sys
-from . import remoteserver
+from leginon import remoteserver
 
 class DataBinder(databinder.DataBinder):
 	def handleData(self, newdata):
@@ -81,7 +80,7 @@ class Manager(node.Node):
 
 		## need a special DataBinder
 		name = DataBinder.__name__
-		databinderlogger = gui.wx.LeginonLogging.getNodeChildLogger(name, self)
+		databinderlogger = leginon.gui.wx.LeginonLogging.getNodeChildLogger(name, self)
 		mydatabinder = DataBinder(self, databinderlogger, tcpport=tcpport)
 		node.Node.__init__(self, self.name, session, otherdatabinder=mydatabinder,
 												**kwargs)
@@ -200,7 +199,7 @@ class Manager(node.Node):
 		return session
 
 	def onAddLauncherPanel(self, l):
-		evt = gui.wx.Manager.AddLauncherPanelEvent(l)
+		evt = leginon.gui.wx.Manager.AddLauncherPanelEvent(l)
 		self.frame.GetEventHandler().AddPendingEvent(evt)
 
 	def createLauncher(self):
@@ -344,7 +343,7 @@ class Manager(node.Node):
 		## 1) all nodes  (if destination set to empty string)
 		## 2) use application event bindings (destination is None)
 		## 3) one node  (destination set to node name)
-		if ievent['destination'] is '':
+		if ievent['destination'] == '':
 			if ievent['confirm'] is not None:
 				raise RuntimeError('not allowed to wait for broadcast event')
 			## do every node
@@ -432,14 +431,14 @@ class Manager(node.Node):
 	# launcher related methods
 
 	def onAddLauncher(self, name):
-		evt = gui.wx.Manager.AddLauncherEvent(name)
+		evt = leginon.gui.wx.Manager.AddLauncherEvent(name)
 		self.frame.GetEventHandler().AddPendingEvent(evt)
 
 	def onRemoveLauncher(self, name):
-		evt = gui.wx.Manager.RemoveLauncherEvent(name)
+		evt = leginon.gui.wx.Manager.RemoveLauncherEvent(name)
 		try:
 			self.frame.GetEventHandler().AddPendingEvent(evt)
-		except PyDeadObjectError:
+		except RuntimeError:
 			pass
 
 	def getLauncherCount(self):
@@ -574,15 +573,13 @@ class Manager(node.Node):
 		self.onAddNode(name)
 
 	def onAddNode(self, name, status='ok'):
-		evt = gui.wx.Manager.AddNodeEvent(name, status)
+		evt = leginon.gui.wx.Manager.AddNodeEvent(name, status)
 		self.frame.GetEventHandler().AddPendingEvent(evt)
 
 	def onRemoveNode(self, name):
-		evt = gui.wx.Manager.RemoveNodeEvent(name)
+		evt = leginon.gui.wx.Manager.RemoveNodeEvent(name)
 		try:
 			self.frame.GetEventHandler().AddPendingEvent(evt)
-		except PyDeadObjectError:
-			pass
 		except RuntimeError:
 			pass
 
@@ -732,6 +729,8 @@ class Manager(node.Node):
 															+ str(tcp_port))
 			except AttributeError:
 				pass
+			except Exception:
+				raise
 
 	def killNode(self, nodename, **kwargs):
 		'''Attempt telling a node to die and unregister. Unregister if communication with the node fails.'''
@@ -997,21 +996,21 @@ class Manager(node.Node):
 		return history, amap
 
 	def onApplicationStarting(self, name, nnodes):
-		evt = gui.wx.Manager.ApplicationStartingEvent(name, nnodes)
+		evt = leginon.gui.wx.Manager.ApplicationStartingEvent(name, nnodes)
 		self.frame.GetEventHandler().AddPendingEvent(evt)
 
 	def onApplicationNodeStarted(self, name, status='ok'):
-		evt = gui.wx.Manager.ApplicationNodeStartedEvent(name, status)
+		evt = leginon.gui.wx.Manager.ApplicationNodeStartedEvent(name, status)
 		self.frame.GetEventHandler().AddPendingEvent(evt)
 
 	def onApplicationStarted(self, name):
 		evt = event.ApplicationLaunchedEvent(application=self.application.applicationdata,destination='')
 		self.distributeEvents(evt)
-		evt = gui.wx.Manager.ApplicationStartedEvent(name)
+		evt = leginon.gui.wx.Manager.ApplicationStartedEvent(name)
 		self.frame.GetEventHandler().AddPendingEvent(evt)
 
 	def onApplicationKilled(self):
-		evt = gui.wx.Manager.ApplicationKilledEvent()
+		evt = leginon.gui.wx.Manager.ApplicationKilledEvent()
 		self.frame.GetEventHandler().AddPendingEvent(evt)
 
 	def validateApplication(self, app):

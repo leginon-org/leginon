@@ -21,6 +21,7 @@ CHUNK_SIZE = 8*1024*1024
 # from Tao of Mac
 # Hideous fix to counteract http://python.org/sf/1092502
 # (which should have been fixed ages ago.)
+# TODO: Can probably done with io.StringIO.read(size)?
 def _fixed_socket_read(self, size=-1):
 	data = self._rbuf
 	if size < 0:
@@ -70,10 +71,9 @@ def _fixed_socket_read(self, size=-1):
 #		return "".join(buffers)
 
 # patch the method at runtime
-## Newer versions of python already have a fix using StringIO.
-## Only apply our fix here if StringIO is not in socket module.
+## Python3 uses StringIO but is not in socket module, but io.
 if not hasattr(socket, 'StringIO'):
-	socket._fileobject.read = _fixed_socket_read
+	socket.SocketIO.read = _fixed_socket_read
 
 class ExitException(Exception):
 	pass
