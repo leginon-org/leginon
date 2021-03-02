@@ -50,12 +50,9 @@ def getLoggerNames():
 	return names
 
 def getLevelNames():
-	levelnames = []
-	for i in logging._levelNames:
-		if type(i) is int:
-			levelnames.append(i)
+	levelnames = list(logging._levelToName.keys())
 	levelnames.sort()
-	levelnames = [logging._levelNames[n] for n in levelnames]
+	levelnames = [logging._levelToName[n] for n in levelnames]
 	return levelnames
 
 def getLevel(logger):
@@ -365,7 +362,7 @@ class LoggingConfigurationDialog(wx.Dialog):
 
 	def onLevelChoice(self, evt):
 		logger = self.tree.GetPyData(self.tree.GetSelection())
-		logger.setLevel(logging._levelNames[evt.GetString()])
+		logger.setLevel(logging._nameToLevel[evt.GetString()])
 
 	def onTreeSelectionChanged(self, evt=None):
 		if evt is None:

@@ -8,6 +8,7 @@ import threading
 import wx
 import wx.lib.scrolledpanel
 import sys
+import wx.adv
 
 import leginon.launcher
 import leginon.gui.wx.Events
@@ -85,14 +86,14 @@ class Frame(wx.Frame):
 		filemenu = wx.Menu()
 		exit = wx.MenuItem(filemenu, -1, 'E&xit')
 		self.Bind(wx.EVT_MENU, self.onExit, exit)
-		filemenu.AppendItem(exit)
+		filemenu.Append(exit)
 		self.menubar.Append(filemenu, '&File')
 
 		# settings menu
 		self.settingsmenu = wx.Menu()
 		self.loggingmenuitem = wx.MenuItem(self.settingsmenu, -1, '&Logging')
 		self.Bind(wx.EVT_MENU, self.onMenuLogging, self.loggingmenuitem)
-		self.settingsmenu.AppendItem(self.loggingmenuitem)
+		self.settingsmenu.Append(self.loggingmenuitem)
 		self.menubar.Append(self.settingsmenu, '&Settings')
 
 		self.SetMenuBar(self.menubar)
@@ -124,21 +125,21 @@ class ListCtrlPanel(wx.Panel):
 	def __init__(self, *args, **kwargs):
 		wx.Panel.__init__(self, *args, **kwargs)
 
-		self.swselect = wx.SashLayoutWindow(self, -1, style=wx.NO_BORDER)
+		self.swselect = wx.adv.SashLayoutWindow(self, -1, style=wx.NO_BORDER)
 		self.swselect.SetDefaultSize((100, -1))
-		self.swselect.SetOrientation(wx.LAYOUT_VERTICAL)
-		self.swselect.SetAlignment(wx.LAYOUT_LEFT)
-		self.swselect.SetSashVisible(wx.SASH_RIGHT, True)
+		self.swselect.SetOrientation(wx.adv.LAYOUT_VERTICAL)
+		self.swselect.SetAlignment(wx.adv.LAYOUT_LEFT)
+		self.swselect.SetSashVisible(wx.adv.SASH_RIGHT, True)
 		bordersize=5
 		if sys.platform == 'darwin':
 			bordersize=20
 		self.swselect.SetExtraBorderSize(bordersize)
 
-		self.swmessage = wx.SashLayoutWindow(self, -1, style=wx.NO_BORDER)
+		self.swmessage = wx.adv.SashLayoutWindow(self, -1, style=wx.NO_BORDER)
 		self.swmessage.SetDefaultSize((-1, 100))
-		self.swmessage.SetOrientation(wx.LAYOUT_HORIZONTAL)
-		self.swmessage.SetAlignment(wx.LAYOUT_TOP)
-		self.swmessage.SetSashVisible(wx.SASH_BOTTOM, True)
+		self.swmessage.SetOrientation(wx.adv.LAYOUT_HORIZONTAL)
+		self.swmessage.SetAlignment(wx.adv.LAYOUT_TOP)
+		self.swmessage.SetSashVisible(wx.adv.SASH_BOTTOM, True)
 		#self.swmessage.SetExtraBorderSize(5)
 
 		self.selector = leginon.gui.wx.Selector.Selector(self.swselect)	
@@ -148,7 +149,7 @@ class ListCtrlPanel(wx.Panel):
 		self.panelmap = {}
 
 		self.Bind(leginon.gui.wx.Selector.EVT_SELECT, self.onSelect, self.selector)
-		self.Bind(wx.EVT_SASH_DRAGGED, self.onSashDragged)
+		self.Bind(wx.adv.EVT_SASH_DRAGGED, self.onSashDragged)
 		self.Bind(wx.EVT_SIZE, self.onSize)
 
 	def onSize(self, evt):
@@ -213,7 +214,7 @@ class ListCtrlPanel(wx.Panel):
 			self._setPanel(self.defaultpanel)
 
 	def onSashDragged(self, evt):
-		if evt.GetDragStatus() == wx.SASH_STATUS_OUT_OF_RANGE:
+		if evt.GetDragStatus() == wx.adv.SASH_STATUS_OUT_OF_RANGE:
 			return
 		if evt.GetEventObject() is self.swselect:
 			self.swselect.SetDefaultSize((evt.GetDragRect().width, -1))
@@ -222,7 +223,7 @@ class ListCtrlPanel(wx.Panel):
 		self.Layout()
 
 	def Layout(self):
-		wx.LayoutAlgorithm().LayoutWindow(self, self.panel)
+		wx.adv.LayoutAlgorithm().LayoutWindow(self, self.panel)
 
 class Panel(ListCtrlPanel):
 	def __init__(self, parent, launcher=None):

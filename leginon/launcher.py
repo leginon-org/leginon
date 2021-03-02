@@ -9,14 +9,13 @@
 #
 
 # testing before start
-from . import configcheck
+from leginon import configcheck
 configcheck.testBeforeStart()
 
 from leginon import leginondata
-from . import event
-from . import node
-from . import noderegistry
-from wx import PyDeadObjectError
+from leginon import event
+from leginon import node
+from leginon import noderegistry
 import leginon.gui.wx.Launcher
 
 class Launcher(node.Node):
@@ -97,7 +96,7 @@ class Launcher(node.Node):
 		evt = leginon.gui.wx.Launcher.DestroyNodeEvent(n)
 		try:
 			self.panel.GetEventHandler().AddPendingEvent(evt)
-		except PyDeadObjectError:
+		except RuntimeError:
 			pass
 
 		try:
@@ -137,7 +136,6 @@ if __name__ == '__main__':
 		except:
 			args, kwargs = (launchername,), {}
 	l = leginon.gui.wx.Launcher.App(*args, **kwargs)
-	print(kwargs)
 	l.MainLoop()
 	leginondata.sinedon.data.datamanager.exit()
 

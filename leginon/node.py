@@ -10,24 +10,24 @@
 import sinedon
 from leginon import leginondata
 from leginon import appclient
-from .databinder import DataBinder
-from . import datatransport
-from . import event
+from leginon.databinder import DataBinder
+from leginon import datatransport
+from leginon import event
 import threading
-from . import gui.wx.Events
-from . import gui.wx.LeginonLogging as Logging
-from . import gui.wx.Node
+from leginon.gui.wx import Events
+from leginon.gui.wx import LeginonLogging as Logging
+from leginon.gui.wx import Node
 import copy
 import socket
 from pyami import mysocket
-from . import remotecall
+from leginon import remotecall
 import time
 import numpy
 import math
-from . import leginonconfig
+from leginon import leginonconfig
 import os
-from . import correctorclient
-from . import remoteserver
+from leginon import correctorclient
+from leginon import remoteserver
 
 # testprinting for development
 testing = False
