@@ -59,10 +59,15 @@ if ($login!=2) {
 			<tr>
 			<td align="center">
 				<label for="username">Username : </label>
-				<input class="field" type="text" value="" name="username" id="username" size="15" >
+				<input class="field" type="text" value="" name="usSHOW_LOI_VIEWSername" id="username" size="15" >
 				<label for="password">Password : </label>
 				<input class="field" type="password" name="password" size="15">
-<!-- 				<a class="header" href="lostpass.php" target="_blank">[Lost Password]</a> -->
+<?php
+if (defined('SHOW_LOST_PASSWORD') && SHOW_LOST_PASSWORD == true) {
+echo '<a class="header" href="lostpass.php" target="_blank">[Lost Password]</a>';
+}
+?>
+				
 			</td>
 			</tr>
 		<?php if(ENABLE_ANONYMOUS){ ?>
