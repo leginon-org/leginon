@@ -197,7 +197,7 @@ class HandlersListCtrl(wx.ListCtrl, ColumnSorterMixin):
 
 	def updateHandler(self, handler):
 		data = self.handlers[handler]
-		index = self.FindItemData(0, data)
+		index = self.FindItem(0, data)
 		format = handler.formatter._fmt
 		dateformat = str(handler.formatter.datefmt)
 		self.SetItem(index, 1, format)
@@ -207,12 +207,12 @@ class HandlersListCtrl(wx.ListCtrl, ColumnSorterMixin):
 		data = self.handlers[handler]
 		del self.handlers[handler]
 		del self.itemDataMap[data]
-		index = self.FindItemData(0, data)
+		index = self.FindItem(0, data)
 		self.DeleteItem(index)
 
 	def getSelectedHandler(self):
 		for handler, data in list(self.handlers.items()):
-			index = self.FindItemData(0, data)
+			index = self.FindItem(0, data)
 			if self.GetItemState(index, wx.LIST_STATE_SELECTED):
 				return handler
 
