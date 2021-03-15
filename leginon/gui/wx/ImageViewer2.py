@@ -27,7 +27,7 @@ class BufferedWindow(wx.Window):
 		wx.Window.__init__(self, parent, id)
 
 		self._clientwidth, self._clientheight = self.GetClientSizeTuple() 
-		self._buffer = wx.EmptyBitmap(self._clientwidth, self._clientheight)
+		self._buffer = wx.Bitmap(self._clientwidth, self._clientheight)
 
 		self.Bind(wx.EVT_ERASE_BACKGROUND, self.onEraseBackground)
 		self.Bind(wx.EVT_PAINT, self.onPaint)
@@ -65,7 +65,7 @@ class BufferedWindow(wx.Window):
 
 	def _onSize(self, evt):
 		self._clientwidth, self._clientheight = self.GetClientSizeTuple() 
-		self._buffer = wx.EmptyBitmap(self._clientwidth, self._clientheight)
+		self._buffer = wx.Bitmap(self._clientwidth, self._clientheight)
 
 	def onSize(self, evt):
 		self._onSize(evt)

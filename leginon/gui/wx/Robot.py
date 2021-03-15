@@ -251,7 +251,7 @@ class Tray(wx.Panel):
 		self.traybitmap = leginon.gui.wx.Icons.icon('robotgridtray')
 		self.gridbitmap = leginon.gui.wx.Icons.icon('realgrid')
 		self.SetSize((self.traybitmap.GetWidth(), self.traybitmap.GetHeight()))
-		self._buffer = wx.EmptyBitmap(*self.GetSize())
+		self._buffer = wx.Bitmap(*self.GetSize())
 		self.brush = wx.Brush(wx.Panel.GetBackgroundColour(self)) 
 
 		self.gridlist = []

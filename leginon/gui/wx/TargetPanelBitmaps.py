@@ -37,7 +37,7 @@ def getTargetIconBitmap(color, shape='+'):
 
 #--------------------
 def targetIcon(color, shape):
-		bitmap = wx.EmptyBitmap(16,16)
+		bitmap = wx.Bitmap(16,16)
 		dc = wx.MemoryDC()
 		dc.SelectObject(bitmap)
 		dc.BeginDrawing()
@@ -127,7 +127,7 @@ def getTargetBitmap(color, shape='+', size=global_width):
 #--------------------
 def targetBitmap_point(color, width=global_width):
 	actual_width = int(width/8)+1
-	bitmap = wx.EmptyBitmap(actual_width, actual_width)
+	bitmap = wx.Bitmap(actual_width, actual_width)
 	dc = wx.MemoryDC()
 	dc.SelectObject(bitmap)
 	dc.BeginDrawing()
@@ -144,7 +144,7 @@ def targetBitmap_point(color, width=global_width):
 
 #--------------------
 def targetBitmap_plus(color, width=global_width):
-	bitmap = wx.EmptyBitmap(width, width)
+	bitmap = wx.Bitmap(width, width)
 	dc = wx.MemoryDC()
 	dc.SelectObject(bitmap)
 	dc.BeginDrawing()
@@ -160,7 +160,7 @@ def targetBitmap_plus(color, width=global_width):
 
 #--------------------
 def targetBitmap_cross(color, width=global_width):
-	bitmap = wx.EmptyBitmap(width, width)
+	bitmap = wx.Bitmap(width, width)
 	dc = wx.MemoryDC()
 	dc.SelectObject(bitmap)
 	dc.BeginDrawing()
@@ -176,7 +176,7 @@ def targetBitmap_cross(color, width=global_width):
 
 #--------------------
 def targetBitmap_square(color, width=global_width):
-	bitmap = wx.EmptyBitmap(width, width)
+	bitmap = wx.Bitmap(width, width)
 	dc = wx.MemoryDC()
 	dc.SelectObject(bitmap)
 	dc.BeginDrawing()
@@ -195,7 +195,7 @@ def targetBitmap_square(color, width=global_width):
 
 #--------------------
 def targetBitmap_exp(color, width=global_width):
-	bitmap = wx.EmptyBitmap(width, width)
+	bitmap = wx.Bitmap(width, width)
 	dc = wx.MemoryDC()
 	dc.SelectObject(bitmap)
 	dc.BeginDrawing()
@@ -211,7 +211,7 @@ def targetBitmap_exp(color, width=global_width):
 
 #--------------------
 def targetBitmap_diamond(color, width=global_width):
-	bitmap = wx.EmptyBitmap(width, width)
+	bitmap = wx.Bitmap(width, width)
 	dc = wx.MemoryDC()
 	dc.SelectObject(bitmap)
 	dc.BeginDrawing()
@@ -232,7 +232,7 @@ def targetBitmap_diamond(color, width=global_width):
 
 #--------------------
 def targetBitmap_star(color, width=global_width):
-	bitmap = wx.EmptyBitmap(width, width)
+	bitmap = wx.Bitmap(width, width)
 	dc = wx.MemoryDC()
 	dc.SelectObject(bitmap)
 	dc.BeginDrawing()
@@ -252,7 +252,7 @@ def targetBitmap_star(color, width=global_width):
 
 #--------------------
 def targetBitmap_circle(color, width=global_width):
-	bitmap = wx.EmptyBitmap(width, width)
+	bitmap = wx.Bitmap(width, width)
 	dc = wx.MemoryDC()
 	dc.SelectObject(bitmap)
 	dc.BeginDrawing()

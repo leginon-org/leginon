@@ -226,7 +226,7 @@ class Window(wx.Window):
 
         self.offset = wx.Point(0, 0)
         self.size = self.GetClientSize()
-        self.buffer = wx.EmptyBitmap(self.size.width, self.size.height)
+        self.buffer = wx.Bitmap(self.size.width, self.size.height)
 
         self.Bind(wx.EVT_ERASE_BACKGROUND, self.onEraseBackground)
         self.Bind(wx.EVT_PAINT, self.onPaint)
@@ -441,7 +441,7 @@ class Window(wx.Window):
             else:
                 sourceregion.UnionRegion(plugin.buffered)
 
-        buffer = wx.EmptyBitmap(size.width, size.height)
+        buffer = wx.Bitmap(size.width, size.height)
 
         dc = wx.MemoryDC()
         dc.SelectObject(buffer)

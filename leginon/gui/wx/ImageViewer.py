@@ -95,7 +95,7 @@ def getTargetIconBitmap(color, shape='+'):
 		return bitmap
 
 def targetIcon(color, shape):
-		bitmap = wx.EmptyBitmap(16,16)
+		bitmap = wx.Bitmap(16,16)
 		dc = wx.MemoryDC()
 		dc.SelectObject(bitmap)
 		dc.BeginDrawing()
@@ -161,7 +161,7 @@ def getTargetBitmap(color, shape='+'):
 	return bitmap
 
 def targetBitmap_point(color):
-	bitmap = wx.EmptyBitmap(1, 1)
+	bitmap = wx.Bitmap(1, 1)
 	dc = wx.MemoryDC()
 	dc.SelectObject(bitmap)
 	dc.BeginDrawing()
@@ -175,7 +175,7 @@ def targetBitmap_point(color):
 	return bitmap
 
 def targetBitmap_plus(color):
-	bitmap = wx.EmptyBitmap(iconlength, iconlength)
+	bitmap = wx.Bitmap(iconlength, iconlength)
 	dc = wx.MemoryDC()
 	dc.SelectObject(bitmap)
 	dc.BeginDrawing()
@@ -190,7 +190,7 @@ def targetBitmap_plus(color):
 	return bitmap
 
 def targetBitmap_cross(color):
-	bitmap = wx.EmptyBitmap(iconlength, iconlength)
+	bitmap = wx.Bitmap(iconlength, iconlength)
 	dc = wx.MemoryDC()
 	dc.SelectObject(bitmap)
 	dc.BeginDrawing()
@@ -205,7 +205,7 @@ def targetBitmap_cross(color):
 	return bitmap
 
 def targetBitmap_square(color):
-	bitmap = wx.EmptyBitmap(iconlength, iconlength)
+	bitmap = wx.Bitmap(iconlength, iconlength)
 	dc = wx.MemoryDC()
 	dc.SelectObject(bitmap)
 	dc.BeginDrawing()
@@ -222,7 +222,7 @@ def targetBitmap_square(color):
 	return bitmap
 
 def targetBitmap_star(color):
-	bitmap = wx.EmptyBitmap(iconlength, iconlength)
+	bitmap = wx.Bitmap(iconlength, iconlength)
 	dc = wx.MemoryDC()
 	dc.SelectObject(bitmap)
 	dc.BeginDrawing()
@@ -241,7 +241,7 @@ def targetBitmap_star(color):
 	return bitmap
 
 def targetBitmap_circle(color):
-	bitmap = wx.EmptyBitmap(iconlength, iconlength)
+	bitmap = wx.Bitmap(iconlength, iconlength)
 	dc = wx.MemoryDC()
 	dc.SelectObject(bitmap)
 	dc.BeginDrawing()
@@ -812,7 +812,7 @@ class ImagePanel(wx.Panel):
 			#	height = clientheight
 
 			width, height = self.panel.GetClientSize()
-			self.buffer = wx.EmptyBitmap(width, height)
+			self.buffer = wx.Bitmap(width, height)
 
 	def setVirtualSize(self):
 		'''

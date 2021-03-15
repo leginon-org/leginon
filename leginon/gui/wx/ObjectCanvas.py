@@ -1298,7 +1298,7 @@ class wxObjectCanvas(wxScrolledWindow):
 	def OnSize(self, evt):
 		width, height = self.GetClientSizeTuple()
 		self.master.setSize(width, height)
-		self._buffer = wxEmptyBitmap(width, height)
+		self._buffer = wxBitmap(width, height)
 		self.UpdateDrawing()
 
 	def OnPaint(self, evt):

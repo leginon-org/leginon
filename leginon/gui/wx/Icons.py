@@ -9,7 +9,7 @@ import wx
 bitmaps = {}
 
 def empty():
-	bitmap = wx.EmptyBitmap(16, 16)
+	bitmap = wx.Bitmap(16, 16)
 	dc = wx.MemoryDC()
 	dc.SelectObject(bitmap)
 	dc.BeginDrawing()

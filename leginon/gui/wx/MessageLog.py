@@ -39,7 +39,7 @@ class MessageLog(wx.ListCtrl, ColumnSorterMixin):
 		self.status = None
 
 		self.imagelist = wx.ImageList(16, 16)
-		self.imagelist.Add(wx.EmptyBitmap(16, 16), wx.BLACK)
+		self.imagelist.Add(wx.Bitmap(16, 16), wx.BLACK)
 		self.icons = {}
 		for i in self.levels:
 			image = wx.Image(icons.getPath('%s.png' % i.lower()))

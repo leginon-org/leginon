@@ -267,7 +267,7 @@ class ImagePanel(wx.Panel):
 			#	height = clientheight
 
 			width, height = self.panel.GetClientSize()
-			self.buffer = wx.EmptyBitmap(width, height)
+			self.buffer = wx.Bitmap(width, height)
 
 	#--------------------
 	def setVirtualSize(self):
