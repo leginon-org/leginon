@@ -104,11 +104,11 @@ class MessageLog(wx.ListCtrl, ColumnSorterMixin):
 		strtime = time.strftime('%I:%M:%S %p', localtime)
 		strtime = strtime.lstrip('0')
 		if level in self.icons:
-			index = self.InsertImageStringItem(0, '', self.icons[level])
+			index = self.InsertItem(0, '', self.icons[level])
 		else:
-			index = self.InsertStringItem(0, level)
-		self.SetStringItem(index, 1, strtime)
-		self.SetStringItem(index, 2, message)
+			index = self.InsertItem(0, level)
+		self.SetItem(index, 1, strtime)
+		self.SetItem(index, 2, message)
 		self.SetItemData(index, self.data)
 		self.itemDataMap[self.data] = (self.levels.index(level), secs, message)
 		self.data += 1
@@ -150,8 +150,9 @@ if __name__ == '__main__':
 			frame = wx.Frame(None, -1, 'Message Log Test')
 
 			panel = wx.Panel(frame, -1)
+			evtsrc_panel = wx.Panel(frame, -1)
 
-			ml = MessageLog(panel)
+			ml = MessageLog(panel, evtsrc_panel)
 			ml.addMessage('DEBUG', 'Message 0')
 			ml.addMessage('INFO', 'Message 0')
 			ml.addMessage('WARNING', 'Message 1')

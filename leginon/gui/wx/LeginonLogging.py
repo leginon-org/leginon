@@ -187,9 +187,9 @@ class HandlersListCtrl(wx.ListCtrl, ColumnSorterMixin):
 		handlertype = handler.__class__.__name__
 		format = handler.formatter._fmt
 		dateformat = str(handler.formatter.datefmt)
-		index = self.InsertStringItem(0, handlertype)
-		self.SetStringItem(index, 1, format)
-		self.SetStringItem(index, 2, dateformat)
+		index = self.InsertItem(0, handlertype)
+		self.SetItem(index, 1, format)
+		self.SetItem(index, 2, dateformat)
 		self.SetItemData(index, self.data)
 		self.itemDataMap[self.data] = (handlertype, format, dateformat)
 		self.handlers[handler] = self.data
@@ -200,8 +200,8 @@ class HandlersListCtrl(wx.ListCtrl, ColumnSorterMixin):
 		index = self.FindItemData(0, data)
 		format = handler.formatter._fmt
 		dateformat = str(handler.formatter.datefmt)
-		self.SetStringItem(index, 1, format)
-		self.SetStringItem(index, 2, dateformat)
+		self.SetItem(index, 1, format)
+		self.SetItem(index, 2, dateformat)
 
 	def removeHandler(self, handler):
 		data = self.handlers[handler]

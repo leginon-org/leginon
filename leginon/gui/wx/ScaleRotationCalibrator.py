@@ -168,14 +168,14 @@ class ScaleRotationListCtrl(wx.ListCtrl, ListCtrlAutoWidthMixin):
 				index = i
 				break
 			elif mag == imag:
-				self.SetStringItem(i, 1, v1str)
-				self.SetStringItem(i, 2, v2str)
-				self.SetStringItem(i, 3, commentstr)
+				self.SetItem(i, 1, v1str)
+				self.SetItem(i, 2, v2str)
+				self.SetItem(i, 3, commentstr)
 				return
-		self.InsertStringItem(index, str(mag))
-		self.SetStringItem(index, 1, v1str)
-		self.SetStringItem(index, 2, v2str)
-		self.SetStringItem(index, 3, commentstr)
+		self.InsertItem(index, str(mag))
+		self.SetItem(index, 1, v1str)
+		self.SetItem(index, 2, v2str)
+		self.SetItem(index, 3, commentstr)
 		self.SetColumnWidth(0, wx.LIST_AUTOSIZE)
 		self.SetColumnWidth(1, wx.LIST_AUTOSIZE)
 		self.SetColumnWidth(2, wx.LIST_AUTOSIZE)

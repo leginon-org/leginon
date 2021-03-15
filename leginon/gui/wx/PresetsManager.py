@@ -1351,9 +1351,9 @@ class SessionListCtrl(wx.ListCtrl, ColumnSorterMixin):
 				user = ' '.join(usernamelist)
 			except:
 				continue
-			index = self.InsertStringItem(0, name)
-			self.SetStringItem(index, 1, session_hours)
-			self.SetStringItem(index, 2, user)
+			index = self.InsertItem(0, name)
+			self.SetItem(index, 1, session_hours)
+			self.SetItem(index, 2, user)
 			self.SetItemData(index, i)
 			self.itemDataMap[i] = (name, session_hours, user)
 		sessions.reverse()

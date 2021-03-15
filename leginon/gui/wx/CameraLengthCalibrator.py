@@ -317,12 +317,12 @@ class CameraLengthListCtrl(wx.ListCtrl, ListCtrlAutoWidthMixin):
 				index = i
 				break
 			elif mag == imag:
-				self.SetStringItem(i, 1, psstr)
-				self.SetStringItem(i, 2, commentstr)
+				self.SetItem(i, 1, psstr)
+				self.SetItem(i, 2, commentstr)
 				return
-		self.InsertStringItem(index, str(mag))
-		self.SetStringItem(index, 1, psstr)
-		self.SetStringItem(index, 2, commentstr)
+		self.InsertItem(index, str(mag))
+		self.SetItem(index, 1, psstr)
+		self.SetItem(index, 2, commentstr)
 		self.SetColumnWidth(0, wx.LIST_AUTOSIZE)
 		self.SetColumnWidth(1, wx.LIST_AUTOSIZE)
 
@@ -463,7 +463,7 @@ class MeasurementListCtrl(wx.ListCtrl, ListCtrlAutoWidthMixin):
 
 	def addMeasurement(self, camera_length):
 		index = self.GetItemCount()
-		self.InsertStringItem(index, '%e' % camera_length) 
+		self.InsertItem(index, '%e' % camera_length) 
 		self.SetColumnWidth(0, wx.LIST_AUTOSIZE)
 
 	def getMeasurements(self, state=None):
@@ -484,7 +484,7 @@ class MeasurementListCtrl(wx.ListCtrl, ListCtrlAutoWidthMixin):
 		measurements.reverse()
 		for i, measurement in enumerate(measurements):
 			camera_length = measurement['camera_length']
-			index = self.InsertStringItem(0, camera_length)
+			index = self.InsertItem(0, camera_length)
 			self.SetItemData(index, i)
 			self.itemDataMap[i] = (camera_length)
 		measurements.reverse()

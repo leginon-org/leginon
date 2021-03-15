@@ -351,12 +351,12 @@ class PixelSizeListCtrl(wx.ListCtrl, ListCtrlAutoWidthMixin):
 				index = i
 				break
 			elif mag == imag:
-				self.SetStringItem(i, 1, psstr)
-				self.SetStringItem(i, 2, commentstr)
+				self.SetItem(i, 1, psstr)
+				self.SetItem(i, 2, commentstr)
 				return
-		self.InsertStringItem(index, str(mag))
-		self.SetStringItem(index, 1, psstr)
-		self.SetStringItem(index, 2, commentstr)
+		self.InsertItem(index, str(mag))
+		self.SetItem(index, 1, psstr)
+		self.SetItem(index, 2, commentstr)
 		self.SetColumnWidth(0, wx.LIST_AUTOSIZE)
 		self.SetColumnWidth(1, wx.LIST_AUTOSIZE)
 
@@ -497,7 +497,7 @@ class MeasurementListCtrl(wx.ListCtrl, ListCtrlAutoWidthMixin):
 
 	def addMeasurement(self, pixelsize):
 		index = self.GetItemCount()
-		self.InsertStringItem(index, '%e' % pixelsize) 
+		self.InsertItem(index, '%e' % pixelsize) 
 		self.SetColumnWidth(0, wx.LIST_AUTOSIZE)
 
 	def getMeasurements(self, state=None):
@@ -518,7 +518,7 @@ class MeasurementListCtrl(wx.ListCtrl, ListCtrlAutoWidthMixin):
 		measurements.reverse()
 		for i, measurement in enumerate(measurements):
 			pixelsize = measurement['pixelsize']
-			index = self.InsertStringItem(0, pixelsize)
+			index = self.InsertItem(0, pixelsize)
 			self.SetItemData(index, i)
 			self.itemDataMap[i] = (pixelsize)
 		measurements.reverse()
