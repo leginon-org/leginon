@@ -103,24 +103,24 @@ class ToolBar(wx.ToolBar):
 		image = wx.Image(leginon.icons.getPath(bitmap))
 		image.ConvertAlphaToMask(64)
 		image.Rescale(self.tool_bitmap_size.width, self.tool_bitmap_size.height)
-		bitmap = wx.BitmapFromImage(image)
-		wx.ToolBar.AddTool(self, ID_NULL, bitmap)
+		bitmap = wx.Bitmap(image)
+		self.AddTool(ID_NULL, 'null', bitmap)
 		self.EnableTool(ID_NULL, False)
 
-	def AddTool(self, id, bitmap, **kwargs):
-		bitmap = '%s.png' % bitmap
-		image = wx.Image(leginon.icons.getPath(bitmap))
+	def AddTool(self, id, bitmap_name, **kwargs):
+		bitmap_file = '%s.png' % bitmap_name
+		image = wx.Image(leginon.icons.getPath(bitmap_file))
 		image.ConvertAlphaToMask(64)
 		image.Rescale(self.tool_bitmap_size.width, self.tool_bitmap_size.height)
-		bitmap = wx.BitmapFromImage(image)
-		wx.ToolBar.AddTool(self, id, bitmap, **kwargs)
+		bitmap = wx.Bitmap(image)
+		super(ToolBar,self).AddTool(id, bitmap_name, bitmap, **kwargs)
 
 	def InsertTool(self, pos, id, bitmap, **kwargs):
 		bitmap = '%s.png' % bitmap
 		image = wx.Image(leginon.icons.getPath(bitmap))
 		image.ConvertAlphaToMask(64)
 		image.Rescale(self.tool_bitmap_size.width, self.tool_bitmap_size.height)
-		bitmap = wx.BitmapFromImage(image)
+		bitmap = wx.Bitmap(image)
 		wx.ToolBar.InsertTool(self, pos, id, bitmap, **kwargs)
 
 	def RemoveTool(self, id):

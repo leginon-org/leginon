@@ -40,6 +40,6 @@ def _icon(name):
 		return None
 	#image.ConvertAlphaToMask(64)
 	image.Rescale(16, 16)
-	bitmap = wx.BitmapFromImage(image)
+	bitmap = wx.Bitmap(image)
 	return bitmap
 

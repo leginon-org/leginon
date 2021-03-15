@@ -208,9 +208,9 @@ class ImagePanel(wx.Panel):
 			xscale, yscale = self.getScale()
 			width = int(round(wximage.GetWidth()*xscale))
 			height = int((wximage.GetHeight()*yscale))
-			self.bitmap = wx.BitmapFromImage(wximage.Scale(width, height))
+			self.bitmap = wx.Bitmap(wximage.Scale(width, height))
 		else:
-			self.bitmap = wx.BitmapFromImage(wximage)
+			self.bitmap = wx.Bitmap(wximage)
 
 	#--------------------
 	def numpyToWxImage(self, array):

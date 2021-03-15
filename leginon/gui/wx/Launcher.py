@@ -379,7 +379,7 @@ class Panel(ListCtrlPanel):
 		return toolbar
 
 def getStatusIcon(image, color):
-	bitmap = wx.BitmapFromImage(image)
+	bitmap = wx.Bitmap(image)
 	dc = wx.MemoryDC()
 	dc.SelectObject(bitmap)
 	dc.BeginDrawing()

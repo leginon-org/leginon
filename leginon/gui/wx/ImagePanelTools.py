@@ -142,7 +142,7 @@ def getBitmap(filename):
 		iconpath = leginon.icons.getPath(filename)
 		wximage = wx.Image(iconpath)
 		wximage.ConvertAlphaToMask()
-		bitmap = wx.BitmapFromImage(wximage)
+		bitmap = wx.Bitmap(wximage)
 		bitmaps[filename] = bitmap
 		return bitmap
 

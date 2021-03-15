@@ -80,7 +80,7 @@ def getBitmap(filename):
 		iconpath = icons.getPath(filename)
 		wximage = wx.Image(iconpath)
 		wximage.ConvertAlphaToMask()
-		bitmap = wx.BitmapFromImage(wximage)
+		bitmap = wx.Bitmap(wximage)
 		bitmaps[filename] = bitmap
 		return bitmap
 
@@ -781,9 +781,9 @@ class ImagePanel(wx.Panel):
 			xscale, yscale = self.getScale()
 			width = int(round(wximage.GetWidth()*xscale))
 			height = int((wximage.GetHeight()*yscale))
-			self.bitmap = wx.BitmapFromImage(wximage.Scale(width, height))
+			self.bitmap = wx.Bitmap(wximage.Scale(width, height))
 		else:
-			self.bitmap = wx.BitmapFromImage(wximage)
+			self.bitmap = wx.Bitmap(wximage)
 
 	def setBuffer(self):
 		'''

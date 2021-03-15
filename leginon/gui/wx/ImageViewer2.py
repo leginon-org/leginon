@@ -20,7 +20,7 @@ def wxBitmapFromNumarray(n, min=None, max=None, color=False):
 		wximage.SetData(numextension.rgbstring(n, float(min), float(max), colormap))
 	else:
 		wximage.SetData(numextension.rgbstring(n, float(min), float(max)))
-	return wx.BitmapFromImage(wximage)
+	return wx.Bitmap(wximage)
 
 class BufferedWindow(wx.Window):
 	def __init__(self, parent, id):
