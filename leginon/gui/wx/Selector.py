@@ -6,6 +6,7 @@
 
 import wx
 import wx.lib.scrolledpanel
+import functools
 
 import leginon.gui.wx.Icons
 import leginon.gui.wx.Processing
@@ -237,7 +238,7 @@ class Selector(wx.lib.scrolledpanel.ScrolledPanel):
 
 	def sort(self, cmpfunc=None):
 		order = list(self.order)
-		order.sort(cmpfunc)
+		order.sort(key=functools.cmp_to_key(cmpfunc))
 		for name in order:
 			i = (self.order.index(name), order.index(name))
 			if i[0] == i[1]:

@@ -139,7 +139,7 @@ class TargetImagePanel(leginon.gui.wx.ImagePanel.ImagePanel):
 	#--------------------
 	def _drawTargets(self, dc, bitmap, targets, scale):
 		memorydc = wx.MemoryDC()
-		memorydc.BeginDrawing()
+		#memorydc.BeginDrawing()
 		memorydc.SelectObject(bitmap)
 
 		width = bitmap.GetWidth()
@@ -165,7 +165,7 @@ class TargetImagePanel(leginon.gui.wx.ImagePanel.ImagePanel):
 
 		dc.SetUserScale(1.0, 1.0)
 		memorydc.SelectObject(wx.NullBitmap)
-		memorydc.EndDrawing()
+		#memorydc.EndDrawing()
 
 	#--------------------
 	def drawTargets(self, dc):
@@ -203,7 +203,6 @@ class TargetImagePanel(leginon.gui.wx.ImagePanel.ImagePanel):
 		if False:
 			xscale = self.scale[0]
 			yscale = self.scale[1]
-			#print 'scaled', xscale, yscale
 			scaledpoints = []
 			for target in targets:
 				point = target.x/xscale, target.y/yscale
@@ -242,7 +241,6 @@ class TargetImagePanel(leginon.gui.wx.ImagePanel.ImagePanel):
 		dc.SetTextForeground(color) 
 		#dc.SetPen(wx.Pen(color, 20))
 		scaledpoints = [(target.x,target.y) for target in targets]
-		#print "drawing text of "+str(len(scaledpoints))+" targets"
 		for i,p1 in enumerate(scaledpoints):
 			p1 = self.image2view(p1)
 			dc.DrawText(str(i+1), p1[0], p1[1])
@@ -259,7 +257,6 @@ class TargetImagePanel(leginon.gui.wx.ImagePanel.ImagePanel):
 
 	def _drawArea(self, dc, imagevectors, scaledpoints):
 		scale = self.getScale()
-		#print 'imagevectors', imagevectors
 		# vector1 (+,+) corner
 		v1 = (scale[0]*(imagevectors['x'][0]/2+imagevectors['y'][0]/2), scale[1]*(imagevectors['x'][1]/2+imagevectors['y'][1]/2))
 		# vector2 (+,-) corner
@@ -313,10 +310,9 @@ class TargetImagePanel(leginon.gui.wx.ImagePanel.ImagePanel):
 	def Draw(self, dc):
 		#now = time.time()
 		leginon.gui.wx.ImagePanel.ImagePanel.Draw(self, dc)
-		dc.BeginDrawing()
+		#dc.BeginDrawing()
 		self.drawTargets(dc)
-		dc.EndDrawing()
-		#print 'Drawn', time.time() - now
+		#dc.EndDrawing()
 
 	#--------------------
 	def _onLeftClick(self, evt):
@@ -787,7 +783,6 @@ if __name__ == '__main__':
 			self.SetTopWindow(frame)
 			frame.Show(True)
 			return True
-	pdb.set_trace()
 	array = None
 	if filename is None:
 		filename = input('Enter file path: ')

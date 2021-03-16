@@ -131,7 +131,8 @@ class ImagePanel(wx.Panel):
 			self.sizer.Add(self.panel, (1, 1), (1, 1), wx.EXPAND)
 			self.sizer.AddGrowableRow(1)
 			self.sizer.AddGrowableCol(1)
-		width, height = self.panel.GetSizeTuple()
+		# TODO: WHY IS IT OVERWRITTEN?
+		width, height = self.panel.GetSize().Get()
 		width,height = imagesize
 		self.sizer.SetItemMinSize(self.panel, width, height)
 		
@@ -191,7 +192,7 @@ class ImagePanel(wx.Panel):
 		if isinstance(self.imagedata, numpy.ndarray):
 			wximage = self.numpyToWxImage(self.imagedata)
 		elif isinstance(self.imagedata, Image.Image):
-			wximage = wx.EmptyImage(self.imagedata.size[0], self.imagedata.size[1])
+			wximage = wx.Image(self.imagedata.size[0], self.imagedata.size[1])
 			wximage.SetData(self.imagedata.convert('RGB').tostring())
 		else:
 			self.bitmap = None
@@ -216,7 +217,7 @@ class ImagePanel(wx.Panel):
 	def numpyToWxImage(self, array):
 
 		clip = self.contrasttool.getRange()
-		wximage = wx.EmptyImage(array.shape[1], array.shape[0])
+		wximage = wx.Image(array.shape[1], array.shape[0])
 		normarray = array.astype(numpy.float32)
 		normarray = normarray.clip(min=clip[0], max=clip[1])
 		if clip[1] - clip[0] != 0:
@@ -579,7 +580,7 @@ class ImagePanel(wx.Panel):
 		#Allow drawing:
 		dc = wx.MemoryDC()
 		dc.SelectObject(self.buffer)
-		dc.BeginDrawing()
+		#dc.BeginDrawing()
 
 		self.movecount += 1
 
@@ -597,7 +598,7 @@ class ImagePanel(wx.Panel):
 			self.drawlast = True
 			self.drawToolTip(dc, x, y, strings)
 
-		dc.EndDrawing()
+		#dc.EndDrawing()
 
 		self.paint(dc, wx.ClientDC(self.panel))
 		dc.SelectObject(wx.NullBitmap)
@@ -728,7 +729,7 @@ class ImagePanel(wx.Panel):
 	def Draw(self, dc):
 		#print 'Draw'
 		#now = time.time()
-		dc.BeginDrawing()
+		#dc.BeginDrawing()
 		dc.Clear()
 		if self.bitmap is None:
 			dc.Clear()
@@ -760,7 +761,7 @@ class ImagePanel(wx.Panel):
 			for t in self.tools:
 				t.Draw(dc)
 			bitmapdc.SelectObject(wx.NullBitmap)
-		dc.EndDrawing()
+		#dc.EndDrawing()
 		#print 'Drawn', time.time() - now
 
 	#--------------------

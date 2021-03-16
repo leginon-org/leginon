@@ -98,7 +98,7 @@ def targetIcon(color, shape):
 		bitmap = wx.Bitmap(16,16)
 		dc = wx.MemoryDC()
 		dc.SelectObject(bitmap)
-		dc.BeginDrawing()
+		#dc.BeginDrawing()
 		dc.Clear()
 		dc.SetPen(wx.Pen(color, 2))
 		if shape == '.':
@@ -132,7 +132,7 @@ def targetIcon(color, shape):
 			dc.DrawLine(13, 1, 13, 13)
 			dc.DrawLine(13, 13, 7, 13)
 			dc.DrawLine(7, 13, 3, 1)
-		dc.EndDrawing()
+		#dc.EndDrawing()
 		dc.SelectObject(wx.NullBitmap)
 		bitmap.SetMask(wx.Mask(bitmap, wx.WHITE))
 		return bitmap
@@ -164,12 +164,12 @@ def targetBitmap_point(color):
 	bitmap = wx.Bitmap(1, 1)
 	dc = wx.MemoryDC()
 	dc.SelectObject(bitmap)
-	dc.BeginDrawing()
+	#dc.BeginDrawing()
 	dc.Clear()
 	dc.SetBrush(wx.Brush(color, wx.TRANSPARENT))
 	dc.SetPen(wx.Pen(color, 1))
 	dc.DrawPoint(0,0)
-	dc.EndDrawing()
+	#dc.EndDrawing()
 	dc.SelectObject(wx.NullBitmap)
 	bitmap.SetMask(wx.Mask(bitmap, wx.WHITE))
 	return bitmap
@@ -178,13 +178,13 @@ def targetBitmap_plus(color):
 	bitmap = wx.Bitmap(iconlength, iconlength)
 	dc = wx.MemoryDC()
 	dc.SelectObject(bitmap)
-	dc.BeginDrawing()
+	#dc.BeginDrawing()
 	dc.Clear()
 	dc.SetBrush(wx.Brush(color, wx.TRANSPARENT))
 	dc.SetPen(wx.Pen(color, penwidth))
 	dc.DrawLine(iconlength/2, 0, iconlength/2, iconlength)
 	dc.DrawLine(0, iconlength/2, iconlength, iconlength/2)
-	dc.EndDrawing()
+	#dc.EndDrawing()
 	dc.SelectObject(wx.NullBitmap)
 	bitmap.SetMask(wx.Mask(bitmap, wx.WHITE))
 	return bitmap
@@ -193,13 +193,13 @@ def targetBitmap_cross(color):
 	bitmap = wx.Bitmap(iconlength, iconlength)
 	dc = wx.MemoryDC()
 	dc.SelectObject(bitmap)
-	dc.BeginDrawing()
+	#dc.BeginDrawing()
 	dc.Clear()
 	dc.SetBrush(wx.Brush(color, wx.TRANSPARENT))
 	dc.SetPen(wx.Pen(color, penwidth))
 	dc.DrawLine(0, 0, iconlength, iconlength)
 	dc.DrawLine(0, iconlength, iconlength, 0)
-	dc.EndDrawing()
+	#dc.EndDrawing()
 	dc.SelectObject(wx.NullBitmap)
 	bitmap.SetMask(wx.Mask(bitmap, wx.WHITE))
 	return bitmap
@@ -208,7 +208,7 @@ def targetBitmap_square(color):
 	bitmap = wx.Bitmap(iconlength, iconlength)
 	dc = wx.MemoryDC()
 	dc.SelectObject(bitmap)
-	dc.BeginDrawing()
+	#dc.BeginDrawing()
 	dc.Clear()
 	dc.SetBrush(wx.Brush(color, wx.TRANSPARENT))
 	dc.SetPen(wx.Pen(color, penwidth))
@@ -216,7 +216,7 @@ def targetBitmap_square(color):
 	dc.DrawLine(1, 1, 1, iconlength-2)
 	dc.DrawLine(1, iconlength-2, iconlength-2, iconlength-1)
 	dc.DrawLine(iconlength-2, 1, iconlength-2, iconlength-1)
-	dc.EndDrawing()
+	#dc.EndDrawing()
 	dc.SelectObject(wx.NullBitmap)
 	bitmap.SetMask(wx.Mask(bitmap, wx.WHITE))
 	return bitmap
@@ -225,7 +225,7 @@ def targetBitmap_star(color):
 	bitmap = wx.Bitmap(iconlength, iconlength)
 	dc = wx.MemoryDC()
 	dc.SelectObject(bitmap)
-	dc.BeginDrawing()
+	#dc.BeginDrawing()
 	dc.Clear()
 	dc.SetBrush(wx.Brush(color, wx.TRANSPARENT))
 	dc.SetPen(wx.Pen(color, penwidth))
@@ -235,7 +235,7 @@ def targetBitmap_star(color):
 	#horiz/vert lines
 	dc.DrawLine(iconlength/2, 0, iconlength/2, iconlength)
 	dc.DrawLine(0, iconlength/2, iconlength, iconlength/2)
-	dc.EndDrawing()
+	#dc.EndDrawing()
 	dc.SelectObject(wx.NullBitmap)
 	bitmap.SetMask(wx.Mask(bitmap, wx.WHITE))
 	return bitmap
@@ -244,12 +244,12 @@ def targetBitmap_circle(color):
 	bitmap = wx.Bitmap(iconlength, iconlength)
 	dc = wx.MemoryDC()
 	dc.SelectObject(bitmap)
-	dc.BeginDrawing()
+	#dc.BeginDrawing()
 	dc.Clear()
 	dc.SetBrush(wx.Brush(color, wx.TRANSPARENT))
 	dc.SetPen(wx.Pen(color, penwidth))
 	dc.DrawCircle(iconlength/2, iconlength/2, iconlength/2-1)
-	dc.EndDrawing()
+	#dc.EndDrawing()
 	dc.SelectObject(wx.NullBitmap)
 	bitmap.SetMask(wx.Mask(bitmap, wx.WHITE))
 	return bitmap
@@ -598,7 +598,7 @@ class ZoomTool(ImageTool):
 	def __init__(self, imagepanel, sizer):
 		bitmap = getBitmap('zoom.png')
 		tooltip = 'Toggle Zoom Tool'
-		cursor = wx.StockCursor(wx.CURSOR_MAGNIFIER)
+		cursor = wx.Cursor(wx.CURSOR_MAGNIFIER)
 		ImageTool.__init__(self, imagepanel, sizer, bitmap, tooltip, cursor, True)
 		self.zoomlevels = list(range(2, -6, -1))
 		#self.zoomlevels = [1,1.5,2,3,4,6,8,12,16,32,128,]
@@ -711,7 +711,7 @@ class ImagePanel(wx.Panel):
 			self.sizer.Add(self.panel, (1, 1), (3, 1), wx.EXPAND)
 		self.sizer.AddGrowableRow(3)
 		self.sizer.AddGrowableCol(1)
-		width, height = self.panel.GetSizeTuple()
+		width, height = self.panel.GetSize().Get()
 		self.sizer.SetItemMinSize(self.panel, width, height)
 
 		self.statspanel = Stats.Stats(self, -1, style=wx.SIMPLE_BORDER)
@@ -762,7 +762,7 @@ class ImagePanel(wx.Panel):
 		'''
 		if isinstance(self.imagedata, numpy.ndarray):
 			clip = self.contrasttool.getRange()
-			wximage = wx.EmptyImage(self.imagedata.shape[1], self.imagedata.shape[0])
+			wximage = wx.Image(self.imagedata.shape[1], self.imagedata.shape[0])
 			if self.colormap is None:
 				wximage.SetData(self.rgbstring(self.imagedata,
 																								clip[0], clip[1]))
@@ -771,7 +771,7 @@ class ImagePanel(wx.Panel):
 																								clip[0], clip[1],
 																								self.colormap))
 		elif isinstance(self.imagedata, Image.Image):
-			wximage = wx.EmptyImage(self.imagedata.size[0], self.imagedata.size[1])
+			wximage = wx.Image(self.imagedata.size[0], self.imagedata.size[1])
 			wximage.SetData(self.imagedata.convert('RGB').tostring())
 		else:
 			self.bitmap = None
@@ -1074,7 +1074,7 @@ class ImagePanel(wx.Panel):
 
 		dc = wx.MemoryDC()
 		dc.SelectObject(self.buffer)
-		dc.BeginDrawing()
+		#dc.BeginDrawing()
 
 		for tool in self.tools:
 			tool.OnMotion(evt, dc)
@@ -1091,7 +1091,7 @@ class ImagePanel(wx.Panel):
 			self.Draw(dc)
 			self.drawToolTip(dc, x, y, strings)
 
-		dc.EndDrawing()
+		#dc.EndDrawing()
 
 		self.paint(dc, wx.ClientDC(self.panel))
 		dc.SelectObject(wx.NullBitmap)
@@ -1157,7 +1157,7 @@ class ImagePanel(wx.Panel):
 	def Draw(self, dc):
 		#print 'Draw'
 		#now = time.time()
-		dc.BeginDrawing()
+		#dc.BeginDrawing()
 		dc.Clear()
 		if self.bitmap is None:
 			dc.Clear()
@@ -1189,7 +1189,7 @@ class ImagePanel(wx.Panel):
 			for t in self.tools:
 				t.Draw(dc)
 			bitmapdc.SelectObject(wx.NullBitmap)
-		dc.EndDrawing()
+		#dc.EndDrawing()
 		#print 'Drawn', time.time() - now
 
 	def paint(self, fromdc, todc):
@@ -1246,7 +1246,7 @@ class ClickTool(ImageTool):
 		self._disabled = False
 		bitmap = getBitmap('arrow.png')
 		tooltip = 'Click Tool'
-		cursor = wx.StockCursor(wx.CURSOR_BULLSEYE)
+		cursor = wx.Cursor(wx.CURSOR_BULLSEYE)
 		ImageTool.__init__(self, imagepanel, sizer, bitmap, tooltip, cursor, True)
 
 	def OnLeftClick(self, evt):
@@ -1688,7 +1688,7 @@ class TargetImagePanel(ImagePanel):
 
 	def _drawTargets(self, dc, bitmap, targets, scale):
 		memorydc = wx.MemoryDC()
-		memorydc.BeginDrawing()
+		#memorydc.BeginDrawing()
 		memorydc.SelectObject(bitmap)
 
 		width = bitmap.GetWidth()
@@ -1714,7 +1714,7 @@ class TargetImagePanel(ImagePanel):
 
 		dc.SetUserScale(1.0, 1.0)
 		memorydc.SelectObject(wx.NullBitmap)
-		memorydc.EndDrawing()
+		#memorydc.EndDrawing()
 
 	def drawTargets(self, dc):
 		scale = self.getScale()
@@ -1775,9 +1775,9 @@ class TargetImagePanel(ImagePanel):
 
 	def Draw(self, dc):
 		ImagePanel.Draw(self, dc)
-		dc.BeginDrawing()
+		#dc.BeginDrawing()
 		self.drawTargets(dc)
-		dc.EndDrawing()
+		#dc.EndDrawing()
 
 	def _onLeftClick(self, evt):
 		if self.selectedtype is not None:
