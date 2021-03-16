@@ -23,14 +23,14 @@ class Panel(leginon.gui.wx.Node.Panel):
 
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SETTINGS,
 													'settings',
-													shortHelpString='Settings')
+													shortHelp='Settings')
 		self.toolbar.AddSeparator()
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_CALCULATE,
 													'calculate',
-													shortHelpString='Calculate Atlas')
+													shortHelp='Calculate Atlas')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PLAY,
 													'play',
-													shortHelpString='Publish Atlas')
+													shortHelp='Publish Atlas')
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, False)
 
 		self.szmain.AddGrowableCol(0)

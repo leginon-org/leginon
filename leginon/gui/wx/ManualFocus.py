@@ -106,16 +106,16 @@ class ManualFocusDialog(wx.Frame):
 		self.toolbar = wx.ToolBar(self, -1)
 
 		bitmap = leginon.gui.wx.Icons.icon('settings')
-		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SETTINGS, bitmap, shortHelpString='Settings')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SETTINGS, bitmap, shortHelp='Settings')
 
 		self.toolbar.AddSeparator()
 
 		bitmap = leginon.gui.wx.Icons.icon('play')
-		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PLAY, bitmap, shortHelpString='Play')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PLAY, bitmap, shortHelp='Play')
 		bitmap = leginon.gui.wx.Icons.icon('pause')
-		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PAUSE, bitmap, shortHelpString='Pause')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PAUSE, bitmap, shortHelp='Pause')
 		bitmap = leginon.gui.wx.Icons.icon('stop')
-		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_STOP, bitmap, shortHelpString='Stop')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_STOP, bitmap, shortHelp='Stop')
 
 		self.toolbar.AddSeparator()
 
@@ -123,10 +123,10 @@ class ManualFocusDialog(wx.Frame):
 		self.toolbar.AddControl(self.parameter_choice)
 		bitmap = leginon.gui.wx.Icons.icon('plus')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PLUS, bitmap,
-			shortHelpString='Increment up')
+			shortHelp='Increment up')
 		bitmap = leginon.gui.wx.Icons.icon('minus')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_MINUS, bitmap,
-			shortHelpString='Increment down')
+			shortHelp='Increment down')
 
 		self.toolbar.AddSeparator()
 
@@ -136,23 +136,23 @@ class ManualFocusDialog(wx.Frame):
 		self.toolbar.AddControl(wx.StaticText(self.toolbar, -1, ' m',size=(20,20)))
 		bitmap = leginon.gui.wx.Icons.icon('instrumentset')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_VALUE, bitmap,
-			shortHelpString='Set instrument')
+			shortHelp='Set instrument')
 
 		self.toolbar.AddSeparator()
 
 		bitmap = leginon.gui.wx.Icons.icon('instrumentsetnew')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_RESET, bitmap,
-			shortHelpString='Reset Defocus')
+			shortHelp='Reset Defocus')
 
 		self.toolbar.AddSeparator()
 
 		bitmap = leginon.gui.wx.Icons.icon('instrumentget')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_GET_INSTRUMENT, bitmap,
-			shortHelpString='Eucentric from instrument')
+			shortHelp='Eucentric from instrument')
 
 		bitmap = leginon.gui.wx.Icons.icon('instrumentset')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SET_INSTRUMENT, bitmap,
-			shortHelpString='Eucentric to instrument')
+			shortHelp='Eucentric to instrument')
 
 		self.moreToolbar()
 
@@ -325,9 +325,9 @@ class ManualBeamTiltWobbleDialog(ManualFocusDialog):
 
 	def moreToolbar(self):
 		bitmap = leginon.gui.wx.Icons.icon('beamtiltget')
-		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_GET_BEAMTILT, bitmap, shortHelpString='Rotation Center From Scope')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_GET_BEAMTILT, bitmap, shortHelp='Rotation Center From Scope')
 		bitmap = leginon.gui.wx.Icons.icon('beamtiltset')
-		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SET_BEAMTILT, bitmap, shortHelpString='Rotation Center To Scope')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SET_BEAMTILT, bitmap, shortHelp='Rotation Center To Scope')
 
 		self.toolbar.Bind(wx.EVT_TOOL, self.onRotationCenterFromScope, id=leginon.gui.wx.ToolBar.ID_GET_BEAMTILT)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onRotationCenterToScope, id=leginon.gui.wx.ToolBar.ID_SET_BEAMTILT)

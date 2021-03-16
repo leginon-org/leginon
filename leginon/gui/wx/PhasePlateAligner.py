@@ -113,7 +113,7 @@ class ScrolledSettings(leginon.gui.wx.ReferenceCounter.ScrolledSettings):
 class PhasePlateAlignerPanel(leginon.gui.wx.ReferenceCounter.ReferenceCounterPanel):
 	def __init__(self, *args, **kwargs):
 		super(PhasePlateAlignerPanel,self).__init__(*args, **kwargs)
-		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_MOSAIC, 'atlasmaker', shortHelpString='Patch State Mapping')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_MOSAIC, 'atlasmaker', shortHelp='Patch State Mapping')
 
 	def _SettingsDialog(self,parent):
 		# This "private call" ensures that the class in this module is loaded

@@ -23,17 +23,17 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		# settings
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SETTINGS,
 													'settings',
-													shortHelpString='Settings')
+													shortHelp='Settings')
 		self.toolbar.AddSeparator()
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_MEASURE_DRIFT,
 													'ruler',
-													shortHelpString='Measure Drift Once')
+													shortHelp='Measure Drift Once')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_CHECK_DRIFT,
 													'play',
-													shortHelpString='Test Drift Check')
+													shortHelp='Test Drift Check')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ABORT_DRIFT,
 													'stop',
-													shortHelpString='Abort Drift Check')
+													shortHelp='Abort Drift Check')
 
 		# image
 		self.imagepanel = self.imagepanelclass(self, -1)

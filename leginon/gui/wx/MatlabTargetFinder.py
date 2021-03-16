@@ -28,10 +28,10 @@ class Panel(leginon.gui.wx.TargetFinder.Panel):
 
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SIMULATE_TARGET,
 													'simulatetarget',
-													shortHelpString='Target Test Image')
+													shortHelp='Target Test Image')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_REFRESH,
 													'refresh',
-													shortHelpString='Refresh Targets')
+													shortHelp='Refresh Targets')
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SIMULATE_TARGET, False)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_REFRESH, False)
 

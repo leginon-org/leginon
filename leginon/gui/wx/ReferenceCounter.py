@@ -30,7 +30,7 @@ class ReferenceCounterPanel(leginon.gui.wx.Reference.ReferencePanel):
 	def __init__(self, *args, **kwargs):
 		leginon.gui.wx.Reference.ReferencePanel.__init__(self, *args, **kwargs)
 
-		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_EXTRACT, 'clock', shortHelpString='Reset Counter')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_EXTRACT, 'clock', shortHelp='Reset Counter')
 
 	def onNodeInitialized(self):
 		leginon.gui.wx.Reference.ReferencePanel.onNodeInitialized(self)

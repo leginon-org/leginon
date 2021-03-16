@@ -38,26 +38,26 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SETTINGS,
 													'settings',
-													shortHelpString='Settings')
+													shortHelp='Settings')
 		self.toolbar.AddSeparator()
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ACQUIRE,
 													'acquire',
-													shortHelpString='Acquire')
+													shortHelp='Acquire')
 		self.toolbar.AddSeparator()
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_STAGE_LOCATIONS,
 													'stagelocations',
-													shortHelpString='Stage Locations')
+													shortHelp='Stage Locations')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_MEASURE,
 													'ruler',
-													shortHelpString='Test stage reproducibility')
+													shortHelp='Test stage reproducibility')
 
 		self.toolbar.AddSeparator()
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_RESET_XY, 'xy',
-													shortHelpString='Reset stage X,Y to 0,0')
+													shortHelp='Reset stage X,Y to 0,0')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_RESET_Z, 'z',
-													shortHelpString='Reset stage Z to 0')
+													shortHelp='Reset stage Z to 0')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_RESET_ALPHA, 'alpha',
-													shortHelpString='Reset stage alpha tilt to 0')
+													shortHelp='Reset stage alpha tilt to 0')
 
 		# image
 		self.imagepanel = leginon.gui.wx.TargetPanel.ClickAndTargetImagePanel(self, -1)
@@ -124,10 +124,10 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		self.preset_choices = Choice(self.toolbar, -1, choices=self.presetnames)
 		#self.toolbar.InsertTool(position+3,leginon.gui.wx.ToolBar.ID_GET_PRESET,
 		#											'instrumentget',
-		#										shortHelpString='Get preset from scope')
+		#										shortHelp='Get preset from scope')
 		self.toolbar.InsertTool(position,leginon.gui.wx.ToolBar.ID_SEND_PRESET,
 													'instrumentset',
-													shortHelpString='Send preset to scope')
+													shortHelp='Send preset to scope')
 		self.toolbar.InsertControl(position,self.preset_choices)
 		return
 

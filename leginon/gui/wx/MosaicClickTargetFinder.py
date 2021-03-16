@@ -35,23 +35,23 @@ class Panel(leginon.gui.wx.ClickTargetFinder.Panel):
 		self.toolbar.InsertSeparator(4)
 
 		self.toolbar.InsertTool(5, leginon.gui.wx.ToolBar.ID_TILES,
-			'tiles',shortHelpString='Tiles')
+			'tiles',shortHelp='Tiles')
 		self.toolbar.InsertTool(6, leginon.gui.wx.ToolBar.ID_MOSAIC,
-			'atlasmaker',shortHelpString='Mosaic')
+			'atlasmaker',shortHelp='Mosaic')
 		self.toolbar.InsertSeparator(7)
 		self.toolbar.InsertTool(8, leginon.gui.wx.ToolBar.ID_REFRESH,
-			'refresh', shortHelpString='Refresh')
+			'refresh', shortHelp='Refresh')
 		self.toolbar.InsertTool(9, leginon.gui.wx.ToolBar.ID_CURRENT_POSITION,
-			'currentposition', shortHelpString='Show Position')
+			'currentposition', shortHelp='Show Position')
 		self.addOtherTools()
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, True)
 
 	def addOtherTools(self):
 		self.toolbar.InsertSeparator(10)
 		self.toolbar.InsertTool(11, leginon.gui.wx.ToolBar.ID_ALIGN,
-			'alignpresets', shortHelpString='Transfer targets')
+			'alignpresets', shortHelp='Transfer targets')
 		self.toolbar.InsertTool(12, leginon.gui.wx.ToolBar.ID_FIND_SQUARES,
-			'squarefinder',shortHelpString='Find Squares')
+			'squarefinder',shortHelp='Find Squares')
 		self.imagepanel.addTargetTool('Blobs', wx.Colour(0, 255, 255), shape='o')
 		self.imagepanel.selectiontool.setDisplayed('Blobs', True)
 		self.imagepanel.addTypeTool('Filtered', display=True, settings=True)

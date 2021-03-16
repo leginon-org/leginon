@@ -145,7 +145,7 @@ class Panel(leginon.gui.wx.Calibrator.Panel):
 		atb = self.toolbar.RemoveTool(leginon.gui.wx.ToolBar.ID_ABORT)
 		self.toolbar.InsertTool(5,leginon.gui.wx.ToolBar.ID_MEASURE,
 													'cam_ruler',
-													shortHelpString='Measure')
+													shortHelp='Measure')
 		# Add again only if remove is successful.
 		if atb is not None and ctb is not None:
 			self.toolbar.AddToolItem(atb)

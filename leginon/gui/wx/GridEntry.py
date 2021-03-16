@@ -20,14 +20,14 @@ class GridSelectionPanel(leginon.gui.wx.Node.Panel):
 		leginon.gui.wx.Node.Panel.__init__(self, *args, **kwargs)
 
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SETTINGS,
-													'settings', shortHelpString='Start')
+													'settings', shortHelp='Start')
 		self.toolbar.AddSeparator()
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PLAY,
-													'play', shortHelpString='Start')
+													'play', shortHelp='Start')
 		self.toolbar.AddSeparator()
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_REFRESH,
 													'refresh',
-													shortHelpString='Refresh Grid List')
+													shortHelp='Refresh Grid List')
 
 		self.setDefaultGridSelection()
 		self.createGridSelector((0,0))

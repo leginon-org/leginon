@@ -15,7 +15,7 @@ class Panel(leginon.gui.wx.Conditioner.Panel):
 	icon = 'targetfilter'
 	def addTools(self):
 		super(Panel,self).addTools()
-		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ABORT, 'stop', shortHelpString='Abort')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ABORT, 'stop', shortHelp='Abort')
 		
 	def onStopTool(self, evt):
 		self.node.player.stop()

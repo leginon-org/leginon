@@ -33,7 +33,7 @@ class Panel(leginon.gui.wx.Acquisition.Panel):
 
 		self.toolbar.AddSeparator()
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ALIGN, 'rotcenter',
-							 shortHelpString='Align rotation center')
+							 shortHelp='Align rotation center')
 		# correlation image
 		self.imagepanel.addTypeTool('Correlation', display=True)
 		self.imagepanel.addTypeTool('Tableau', display=True)

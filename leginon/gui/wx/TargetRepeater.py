@@ -14,9 +14,9 @@ class Panel(leginon.gui.wx.Node.Panel):
 	def __init__(self, *args, **kwargs):
 		leginon.gui.wx.Node.Panel.__init__(self, *args, **kwargs)
 
-		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SETTINGS, 'settings', shortHelpString='Settings')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SETTINGS, 'settings', shortHelp='Settings')
 		self.toolbar.AddSeparator()
-		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PLAY, 'play', shortHelpString='Submit')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PLAY, 'play', shortHelp='Submit')
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, True)
 
 		self.SetSizer(self.szmain)

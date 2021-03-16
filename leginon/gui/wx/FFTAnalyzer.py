@@ -22,7 +22,7 @@ class Panel(leginon.gui.wx.FFTMaker.Panel):
 		leginon.gui.wx.FFTMaker.Panel.__init__(self, *args, **kwargs)
 
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_REFRESH,
-			'refresh', shortHelpString='Refresh')
+			'refresh', shortHelp='Refresh')
 
 		#self.szmain.Layout()
 

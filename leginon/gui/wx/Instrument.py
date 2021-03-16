@@ -894,11 +894,11 @@ class Panel(leginon.gui.wx.Node.Panel):
 
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_REFRESH,
 													'refresh',
-													shortHelpString='Refresh')
+													shortHelp='Refresh')
 		self.toolbar.AddSeparator()
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_CALCULATE,
 													'calculate',
-													shortHelpString='Get Magnifications')
+													shortHelp='Get Magnifications')
 
 		self.tems = {}
 		self.ccdcameras = {}

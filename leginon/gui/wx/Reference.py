@@ -112,14 +112,14 @@ class ReferencePanel(leginon.gui.wx.Node.Panel):
 	def __init__(self, *args, **kwargs):
 		leginon.gui.wx.Node.Panel.__init__(self, *args, **kwargs)
 
-		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SETTINGS, 'settings', shortHelpString='Settings')
-		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PLAY, 'play', shortHelpString='Test')
-		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ABORT, 'stop', shortHelpString='Abort')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SETTINGS, 'settings', shortHelp='Settings')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PLAY, 'play', shortHelp='Test')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ABORT, 'stop', shortHelp='Abort')
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
 		self.toolbar.AddSeparator()
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ACQUIRE,
 													'acquire',
-													shortHelpString='Acquire and save current position as reference')
+													shortHelp='Acquire and save current position as reference')
 		self.addImagePanel()
 
 		self.szmain.AddGrowableRow(1)

@@ -56,11 +56,11 @@ class Panel(leginon.gui.wx.Node.Panel):
 	def __init__(self, *args, **kwargs):
 		leginon.gui.wx.Node.Panel.__init__(self, *args, **kwargs)
 
-		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SETTINGS, 'settings', shortHelpString='Settings')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SETTINGS, 'settings', shortHelp='Settings')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_RESET_XY, 'xy',
-													shortHelpString='Save stage X,Y as end point')
-		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PLAY, 'play', shortHelpString='Start')
-		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ABORT, 'stop', shortHelpString='Abort')
+													shortHelp='Save stage X,Y as end point')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PLAY, 'play', shortHelp='Start')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ABORT, 'stop', shortHelp='Abort')
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, False)
 

@@ -22,17 +22,17 @@ class Panel(leginon.gui.wx.TargetFilter.Panel):
 
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SETTINGS,
 													'settings',
-													shortHelpString='Settings')
+													shortHelp='Settings')
 		self.toolbar.AddSeparator()
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PLAY,
 													'play',
-													shortHelpString='Submit')
+													shortHelp='Submit')
 		self.Bind(leginon.gui.wx.Events.EVT_ENABLE_PLAY_BUTTON, self.onEnablePlayButton)
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_STOP,
 													'stop',
-													shortHelpString='Stop')
-		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_GRID, 'grid', shortHelpString='Default offset')
-		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_EXTRACT, 'extractgrid', shortHelpString='Alternative offset')
+													shortHelp='Stop')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_GRID, 'grid', shortHelp='Default offset')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_EXTRACT, 'extractgrid', shortHelp='Alternative offset')
 		self.toolbar.Bind(wx.EVT_TOOL, self.onToggleDefaultOffset, id=leginon.gui.wx.ToolBar.ID_GRID)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onToggleAlternateOffset, id=leginon.gui.wx.ToolBar.ID_EXTRACT)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, True)

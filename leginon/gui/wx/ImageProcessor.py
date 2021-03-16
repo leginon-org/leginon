@@ -20,7 +20,7 @@ class Panel(leginon.gui.wx.Node.Panel):
 
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SETTINGS,
 													'settings',
-													shortHelpString='Settings')
+													shortHelp='Settings')
 
 		self.szmain.AddGrowableCol(0)
 		self.SetSizer(self.szmain)

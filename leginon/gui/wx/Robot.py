@@ -21,20 +21,20 @@ class Panel(leginon.gui.wx.Node.Panel):
 		leginon.gui.wx.Node.Panel.__init__(self, *args, **kwargs)
 
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SETTINGS,
-													'settings', shortHelpString='Start')
+													'settings', shortHelp='Start')
 		self.toolbar.AddSeparator()
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PLAY,
-													'play', shortHelpString='Start')
+													'play', shortHelp='Start')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_EXTRACT,
-													'extractgrid', shortHelpString='Extract')
+													'extractgrid', shortHelp='Extract')
 		self.toolbar.AddSeparator()
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_GRID,
-													'cleargrid', shortHelpString='Grid Cleared')
+													'cleargrid', shortHelp='Grid Cleared')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PAUSE,
-													'pause', shortHelpString='Continue')
+													'pause', shortHelp='Continue')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_REFRESH,
 													'refresh',
-													shortHelpString='Refresh Trays')
+													shortHelp='Refresh Trays')
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_GRID, False)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_EXTRACT, False)
 

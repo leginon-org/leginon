@@ -26,9 +26,9 @@ class Panel(leginon.gui.wx.Acquisition.Panel):
 		leginon.gui.wx.Acquisition.Panel.__init__(self, *args, **kwargs)
 
 		self.toolbar.AddSeparator()
-		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ACQUIRE, 'acquire', shortHelpString='Acquire')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ACQUIRE, 'acquire', shortHelp='Acquire')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_RESET_ALPHA, 'alpha',
-													shortHelpString='Tilt stage alpha to next value')
+													shortHelp='Tilt stage alpha to next value')
 		self.toolbar.RemoveTool(leginon.gui.wx.ToolBar.ID_SIMULATE_TARGET)
 		self.toolbar.RemoveTool(leginon.gui.wx.ToolBar.ID_SIMULATE_TARGET_LOOP)
 		self.toolbar.RemoveTool(leginon.gui.wx.ToolBar.ID_SIMULATE_TARGET_LOOP_STOP)

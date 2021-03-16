@@ -19,7 +19,7 @@ class Panel(leginon.gui.wx.Calibrator.Panel):
 		leginon.gui.wx.Calibrator.Panel.initialize(self)
 		self.dialog = None
 		self.toolbar.DeleteTool(leginon.gui.wx.ToolBar.ID_ABORT)
-		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_MEASURE, 'ruler', shortHelpString='Measure current beam size')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_MEASURE, 'ruler', shortHelp='Measure current beam size')
 		self.toolbar.Bind(wx.EVT_TOOL, self.onMeasureTool, id=leginon.gui.wx.ToolBar.ID_MEASURE)
 
 	def onCalibrateTool(self, evt):

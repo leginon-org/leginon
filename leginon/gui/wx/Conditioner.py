@@ -22,9 +22,9 @@ class Panel(leginon.gui.wx.Node.Panel):
 		self.SetupScrolling()
 
 	def addTools(self):
-		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SETTINGS, 'settings', shortHelpString='Settings')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SETTINGS, 'settings', shortHelp='Settings')
 		self.toolbar.AddSeparator()
-		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PLAY, 'play', shortHelpString='Test')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PLAY, 'play', shortHelp='Test')
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, True)
 
 	def onPlayTool(self, evt):

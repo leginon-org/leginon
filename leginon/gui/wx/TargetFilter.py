@@ -17,15 +17,15 @@ class Panel(leginon.gui.wx.Node.Panel):
 
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SETTINGS,
 													'settings',
-													shortHelpString='Settings')
+													shortHelp='Settings')
 		self.toolbar.AddSeparator()
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PLAY,
 													'play',
-													shortHelpString='Submit')
+													shortHelp='Submit')
 		self.Bind(leginon.gui.wx.Events.EVT_ENABLE_PLAY_BUTTON, self.onEnablePlayButton)
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_STOP,
 													'stop',
-													shortHelpString='Stop')
+													shortHelp='Stop')
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, True)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_STOP, True)
 

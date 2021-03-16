@@ -24,22 +24,22 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		# settings
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SETTINGS,
 													'settings',
-													shortHelpString='Settings')
+													shortHelp='Settings')
 		self.toolbar.AddSeparator()
 #		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_MEASURE_DRIFT,
 #													'ruler',
-#													shortHelpString='Measure Drift')
+#													shortHelp='Measure Drift')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_DECLARE_DRIFT,
 													'declare',
-													shortHelpString='Declare Drift')
-		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PLAY, 'play', shortHelpString='Reacquire')
-		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ABORT, 'stop', shortHelpString='Abort')
+													shortHelp='Declare Drift')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PLAY, 'play', shortHelp='Reacquire')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ABORT, 'stop', shortHelp='Abort')
 #		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_CHECK_DRIFT,
 #													'play',
-#													shortHelpString='Check Drift')
+#													shortHelp='Check Drift')
 #		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ABORT_DRIFT,
 #													'stop',
-#													shortHelpString='Abort Drift Check')
+#													shortHelp='Abort Drift Check')
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, False)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
 

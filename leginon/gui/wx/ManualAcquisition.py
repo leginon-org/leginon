@@ -56,33 +56,33 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SETTINGS,
 													'settings',
-													shortHelpString='Settings')
+													shortHelp='Settings')
 		self.toolbar.AddSeparator()
 		#self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_GRID,
 		#											'grid',
-		#											shortHelpString='Grid')
+		#											shortHelp='Grid')
 		#self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_GRID, False)
 		self.toolbar.AddSeparator()
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_MANUAL_DOSE,
 													'dose',
-													shortHelpString='Measure Dose')
+													shortHelp='Measure Dose')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ACQUIRE,
 													'acquire',
-													shortHelpString='Acquire')
+													shortHelp='Acquire')
 		self.toolbar.AddSeparator()
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PLAY,
 													'loop_play',
-													shortHelpString='Continuous Acquire')
+													shortHelp='Continuous Acquire')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_STOP,
 													'stop',
-													shortHelpString='Stop')
+													shortHelp='Stop')
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_STOP, False)
 
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_MANUAL_FOCUS, 'manualfocus',
-							 shortHelpString='Manual Focus')
+							 shortHelp='Manual Focus')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_COMMENT,
 													'notes',
-													shortHelpString='Attach Notes')
+													shortHelp='Attach Notes')
 		self.initialize()
 
 		self.SetSizer(self.szmain)
@@ -545,19 +545,19 @@ class ManualFocusDialog(wx.MiniFrame):
 
 		bitmap = leginon.gui.wx.Icons.icon('settings')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SETTINGS, bitmap,
-													shortHelpString='Settings')
+													shortHelp='Settings')
 
 		self.toolbar.AddSeparator()
 
 		bitmap = leginon.gui.wx.Icons.icon('play')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PLAY, bitmap,
-													shortHelpString='Play')
+													shortHelp='Play')
 		bitmap = leginon.gui.wx.Icons.icon('pause')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PAUSE, bitmap,
-													shortHelpString='Pause')
+													shortHelp='Pause')
 		bitmap = leginon.gui.wx.Icons.icon('stop')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_STOP, bitmap,
-													shortHelpString='Stop')
+													shortHelp='Stop')
 
 		self.SetToolBar(self.toolbar)
 		self.toolbar.Realize()

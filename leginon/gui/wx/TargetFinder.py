@@ -26,15 +26,15 @@ class Panel(leginon.gui.wx.Node.Panel):
 		self.SettingsDialog = SettingsDialog
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SETTINGS,
 													'settings',
-													shortHelpString='Settings')
+													shortHelp='Settings')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SUBMIT,
 													'play',
-													shortHelpString='Submit Targets')
+													shortHelp='Submit Targets')
 		self.Bind(leginon.gui.wx.Events.EVT_SUBMIT_TARGETS, self.onSubmitTargets)
 		self.toolbar.AddNullSpacer()
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SUBMIT_QUEUE,
 													'send_queue_out',
-													shortHelpString='Submit Queued Targets')
+													shortHelp='Submit Queued Targets')
 		self.Bind(leginon.gui.wx.Events.EVT_TARGETS_SUBMITTED, self.onTargetsSubmitted)
 
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SETTINGS, False)

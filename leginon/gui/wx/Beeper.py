@@ -16,14 +16,14 @@ class Panel(leginon.gui.wx.Node.Panel):
 
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SETTINGS,
 													'settings',
-													shortHelpString='Settings')
+													shortHelp='Settings')
 		self.toolbar.AddSeparator()
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PLAY,
 													'play',
-													shortHelpString='Process')
+													shortHelp='Process')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_STOP,
 													'stop',
-													shortHelpString='Stop')
+													shortHelp='Stop')
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_STOP, False)
 
 		self.szmain.AddGrowableCol(0)

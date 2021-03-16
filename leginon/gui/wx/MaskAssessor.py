@@ -23,35 +23,35 @@ class Panel(leginon.gui.wx.ImageAssessor.Panel):
 
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SETTINGS,
 													'settings',
-													shortHelpString='Settings')
+													shortHelp='Settings')
 		self.toolbar.AddSeparator()
 
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_BEGIN,
 													'begin',
-													shortHelpString='To Beginning')
+													shortHelp='To Beginning')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PREVIOUS,
 													'up',
-													shortHelpString='Previous')
+													shortHelp='Previous')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_NEXT,
 													'down',
-													shortHelpString='Next')
+													shortHelp='Next')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_END,
 													'end',
-													shortHelpString='To End')
+													shortHelp='To End')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SIMULATE_TARGET,
 													'simulatetarget',
-													shortHelpString='Jump')
+													shortHelp='Jump')
 		self.toolbar.AddSeparator()
 
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PLAY,
 													'play',
-													shortHelpString='Save Current Assessment')
+													shortHelp='Save Current Assessment')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_STOP,
 													'stop',
-													shortHelpString='Reject All Regions')
+													shortHelp='Reject All Regions')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SUBMIT_QUEUE,
 													'send_queue_out',
-													shortHelpString='Keep All')
+													shortHelp='Keep All')
 
 
 		self.addImagePanel()

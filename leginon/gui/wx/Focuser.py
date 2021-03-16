@@ -67,14 +67,14 @@ class Panel(leginon.gui.wx.Acquisition.Panel):
 		leginon.gui.wx.Acquisition.Panel.__init__(self, *args, **kwargs)
 
 		self.toolbar.InsertTool(2, leginon.gui.wx.ToolBar.ID_FOCUS_SEQUENCE, 'focus_sequence',
-								shortHelpString='Focus Sequence')
+								shortHelp='Focus Sequence')
 		self.toolbar.AddSeparator()
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_MANUAL_FOCUS, 'manualfocus',
-							 shortHelpString='Manual Focus')
+							 shortHelp='Manual Focus')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ALIGN, 'rotcenter',
-							 shortHelpString='Align rotation center')
+							 shortHelp='Align rotation center')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_MEASURE_TILT_AXIS, 'tiltaxis',
-							 shortHelpString='Measure stage tilt axis')
+							 shortHelp='Measure stage tilt axis')
 		# correlation image
 		self.imagepanel.addTypeTool('Correlation', display=True)
 		self.imagepanel.addTargetTool('Peak', wx.Colour(255, 128, 0))

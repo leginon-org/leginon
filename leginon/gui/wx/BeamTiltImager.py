@@ -55,11 +55,11 @@ class Panel(leginon.gui.wx.Acquisition.Panel):
 		# Disable manual focus style coma-free alignment because it is not practical
 		# to use, yet.
 		#self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_MANUAL_FOCUS, 'manualfocus',
-		#					 shortHelpString='Align beam tilt with wobbler')
-		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_GET_BEAMTILT, 'beamtiltget', shortHelpString='Rotation Center From Scope')
-		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SET_BEAMTILT, 'beamtiltset', shortHelpString='Rotation Center To Scope')
+		#					 shortHelp='Align beam tilt with wobbler')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_GET_BEAMTILT, 'beamtiltget', shortHelp='Rotation Center From Scope')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SET_BEAMTILT, 'beamtiltset', shortHelp='Rotation Center To Scope')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ALIGN, 'rotcenter',
-							 shortHelpString='Align rotation center')
+							 shortHelp='Align rotation center')
 		# correlation image
 		self.imagepanel.addTypeTool('Correlation', display=True)
 		self.imagepanel.addTypeTool('Tableau', display=True)

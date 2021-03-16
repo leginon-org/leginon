@@ -22,7 +22,7 @@ class Panel(leginon.gui.wx.TargetFinder.Panel):
 
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_REFRESH,
 													'refresh',
-													shortHelpString='Target Test')
+													shortHelp='Target Test')
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_REFRESH, False)
 
 		self.imagepanel = leginon.gui.wx.TargetPanel.TargetImagePanel(self, -1)

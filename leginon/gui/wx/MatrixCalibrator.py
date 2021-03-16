@@ -33,11 +33,11 @@ class Panel(leginon.gui.wx.Calibrator.Panel):
 		self.toolbar.InsertControl(5, self.cparameter)
 		self.toolbar.InsertTool(6, leginon.gui.wx.ToolBar.ID_PARAMETER_SETTINGS,
 													'settings',
-													shortHelpString='Parameter Settings')
+													shortHelp='Parameter Settings')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_EDIT, 'edit',
-													shortHelpString='Edit current calibration')
+													shortHelp='Edit current calibration')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SCALE_MATRIX, 'calculate',
-													shortHelpString='Scale current matrix to all higher mags')
+													shortHelp='Scale current matrix to all higher mags')
 
 	def onNodeInitialized(self):
 		leginon.gui.wx.Calibrator.Panel.onNodeInitialized(self)

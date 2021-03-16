@@ -87,18 +87,18 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SETTINGS,
 													'settings',
-													shortHelpString='Settings')
+													shortHelp='Settings')
 		self.toolbar.AddSeparator()
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ACQUIRE,
 													'acquire',
-													shortHelpString='Acquire Image')
+													shortHelp='Acquire Image')
 		self.toolbar.AddSeparator()
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_CALIBRATE,
 													'play',
-													shortHelpString='Calibrate')
+													shortHelp='Calibrate')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ABORT,
 													'stop',
-													shortHelpString='Abort')
+													shortHelp='Abort')
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
 
 		self.initialize()

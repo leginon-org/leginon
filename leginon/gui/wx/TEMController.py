@@ -24,25 +24,25 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SETTINGS,
 													'settings',
-													shortHelpString='Settings')
+													shortHelp='Settings')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_REFRESH,
 													'refresh',
-													shortHelpString='Refresh')
+													shortHelp='Refresh')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_LIGHT_ON,
 													'light_on',
-													shortHelpString='Open Column Valves')
+													shortHelp='Open Column Valves')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_LIGHT_OFF,
 													'light_off',
-													shortHelpString='Close Column Valves')
-		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PLAY, 'play', shortHelpString='Continue Last')
-		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PAUSE, 'pause', shortHelpString='Pause All')
+													shortHelp='Close Column Valves')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PLAY, 'play', shortHelp='Continue Last')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PAUSE, 'pause', shortHelp='Pause All')
 		self.toolbar.AddSeparator()
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_RESET_XY, 'xy',
-													shortHelpString='Reset stage X,Y to 0,0')
+													shortHelp='Reset stage X,Y to 0,0')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_RESET_Z, 'z',
-													shortHelpString='Reset stage Z to 0')
+													shortHelp='Reset stage Z to 0')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_RESET_ALPHA, 'alpha',
-													shortHelpString='Reset stage alpha tilt to 0')
+													shortHelp='Reset stage alpha tilt to 0')
 
 		self.pressure_order = ['column','projection','buffer tank']
 		self.sz_pressure = TEMParameters(self,'Gauge Pressure', self.pressure_order)
@@ -146,11 +146,11 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		self.preset_choices = Choice(self.toolbar, -1, choices=self.presetnames)
 		#self.toolbar.InsertTool(position+3,leginon.gui.wx.ToolBar.ID_GET_PRESET,
 		#											'instrumentget',
-		#										shortHelpString='Get preset from scope')
+		#										shortHelp='Get preset from scope')
 		self.toolbar.InsertSeparator(position)
 		self.toolbar.InsertTool(position, leginon.gui.wx.ToolBar.ID_SEND_PRESET,
 													'instrumentset',
-													shortHelpString='Send preset to scope')
+													shortHelp='Send preset to scope')
 		self.toolbar.InsertControl(position, self.preset_choices)
 		return
 
@@ -227,10 +227,10 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		self.toolbar.InsertSeparator(position)
 		self.toolbar.InsertTool(position, leginon.gui.wx.ToolBar.ID_EXTRACT,
 													'cleargrid',
-												shortHelpString='Remove grid from column')
+												shortHelp='Remove grid from column')
 		self.toolbar.InsertTool(position, leginon.gui.wx.ToolBar.ID_INSERT,
 													'extractgrid',
-													shortHelpString='Insert grid from gridloader slot')
+													shortHelp='Insert grid from gridloader slot')
 		self.toolbar.InsertControl(position,self.grid_slot_choices)
 		return
 
@@ -374,7 +374,7 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		self.toolbar.InsertSeparator(position)
 		self.toolbar.InsertTool(position, leginon.gui.wx.ToolBar.ID_CALIBRATE,
 													'instrumentset',
-												shortHelpString='Send objective aperture selection to scope')
+												shortHelp='Send objective aperture selection to scope')
 		self.toolbar.InsertControl(position,self.aperture_choices)
 		if not self.aperture_selection_names:
 			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_CALIBRATE, False)

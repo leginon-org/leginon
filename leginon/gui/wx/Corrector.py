@@ -120,7 +120,7 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SETTINGS,
 													'settings',
-													shortHelpString='Settings')
+													shortHelp='Settings')
 		self.toolbar.AddSeparator()
 		choices = [
 			'Dark',
@@ -145,12 +145,12 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ACQUIRE,
 													'acquire',
-													shortHelpString='Acquire')
+													shortHelp='Acquire')
 		self.toolbar.AddSeparator()
 
-		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PLUS,'plus',shortHelpString='Add Region To Bad Pixel List')
-		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_STAGE_LOCATIONS,'stagelocations',shortHelpString='Add Extreme Points To Bad Pixel List')
-		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_REFRESH,'display',shortHelpString='Display Specified Image')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PLUS,'plus',shortHelp='Add Region To Bad Pixel List')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_STAGE_LOCATIONS,'stagelocations',shortHelp='Add Extreme Points To Bad Pixel List')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_REFRESH,'display',shortHelp='Display Specified Image')
 
 		# settings
 		self.szplan = self._getStaticBoxSizer('Plan', (0, 0), (1, 1), wx.ALIGN_TOP)

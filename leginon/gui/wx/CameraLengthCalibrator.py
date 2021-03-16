@@ -25,7 +25,7 @@ class Panel(leginon.gui.wx.Calibrator.Panel):
 
 	def onNodeInitialized(self):
 		leginon.gui.wx.Calibrator.Panel.onNodeInitialized(self)
-		self.toolbar.InsertTool(4, leginon.gui.wx.ToolBar.ID_MEASURE, 'ruler', shortHelpString='Measure')
+		self.toolbar.InsertTool(4, leginon.gui.wx.ToolBar.ID_MEASURE, 'ruler', shortHelp='Measure')
 		self.measurement = None
 		self.oldmag = None
 		self.measuredialog = MeasureSettingsDialog(self)

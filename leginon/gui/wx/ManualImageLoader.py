@@ -41,18 +41,18 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SETTINGS,
 													'settings',
-													shortHelpString='Settings')
+													shortHelp='Settings')
 		self.toolbar.AddSeparator()
 		#self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ACQUIRE,
 		#											'acquire',
-		#											shortHelpString='Acquire')
+		#											shortHelp='Acquire')
 		#self.toolbar.AddSeparator()
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PLAY,
 													'loop_play',
-													shortHelpString='Continuous Acquire')
+													shortHelp='Continuous Acquire')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_STOP,
 													'stop',
-													shortHelpString='Stop')
+													shortHelp='Stop')
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_STOP, False)
 
 		self.initialize()

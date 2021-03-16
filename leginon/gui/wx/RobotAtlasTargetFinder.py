@@ -18,11 +18,11 @@ class Panel(leginon.gui.wx.Node.Panel):
 
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_REFRESH,
 													'refresh',
-													shortHelpString='Refresh Atlases')
+													shortHelp='Refresh Atlases')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SUBMIT,
 													'play',
-													shortHelpString='Submit Targets')
-		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ABORT, 'stop', shortHelpString='Abort this grid insertion')
+													shortHelp='Submit Targets')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ABORT, 'stop', shortHelp='Abort this grid insertion')
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_REFRESH, False)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, False)
 

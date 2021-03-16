@@ -26,7 +26,7 @@ class Panel(leginon.gui.wx.Acquisition.Panel):
 		leginon.gui.wx.Acquisition.Panel.__init__(self, *args, **kwargs)
 
 		self.toolbar.AddSeparator()
-		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ACQUIRE, 'acquire', shortHelpString='Acquire')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ACQUIRE, 'acquire', shortHelp='Acquire')
 
 		# correlation image
 		self.imagepanel.addTypeTool('Correlation', display=True)
