@@ -99,12 +99,7 @@ class ToolBar(wx.ToolBar):
 		#self.setSize(size)
 
 	def AddNullSpacer(self):
-		bitmap = '%s.png' % 'null'
-		image = wx.Image(leginon.icons.getPath(bitmap))
-		image.ConvertAlphaToMask(64)
-		image.Rescale(self.tool_bitmap_size.width, self.tool_bitmap_size.height)
-		bitmap = wx.Bitmap(image)
-		self.AddTool(ID_NULL, 'null', bitmap)
+		self.AddTool(ID_NULL, 'null')
 		self.EnableTool(ID_NULL, False)
 
 	def AddTool(self, id, bitmap_name, **kwargs):
