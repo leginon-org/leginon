@@ -853,7 +853,7 @@ class ZoomTool(ImageTool):
 	def __init__(self, imagepanel, sizer):
 		bitmap = getBitmap('zoom.png')
 		tooltip = 'Toggle Zoom Tool'
-		cursor = wx.StockCursor(wx.CURSOR_MAGNIFIER)
+		cursor = wx.Cursor(wx.CURSOR_MAGNIFIER)
 		ImageTool.__init__(self, imagepanel, sizer, bitmap, tooltip, cursor, True)
 		self.zoomlevels = [0.25, 0.5, 1, 1.5, 2, 3, 4, 6, 8, 12, 16, 32, 128,]
 		self.zoomlabels = ['4x', '2x', '1x', '2/3x', '1/2x', '1/3x', '1/4x', '1/6x', '1/8x',
@@ -929,7 +929,7 @@ class ClickTool(ImageTool):
 		self._disabled = False
 		bitmap = getBitmap('arrow.png')
 		tooltip = 'Click Tool'
-		cursor = wx.StockCursor(wx.CURSOR_BULLSEYE)
+		cursor = wx.Cursor(wx.CURSOR_BULLSEYE)
 		ImageTool.__init__(self, imagepanel, sizer, bitmap, tooltip, cursor, True)
 
 	#--------------------
