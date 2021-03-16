@@ -36,7 +36,7 @@ def _icon(name):
 	filename = '%s.png' % name
 	path = leginon.icons.getPath(filename)
 	image = wx.Image(path)
-	if not image.Ok():
+	if not image.IsOk():
 		return None
 	#image.ConvertAlphaToMask(64)
 	image.Rescale(16, 16)
