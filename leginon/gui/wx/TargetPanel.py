@@ -750,7 +750,6 @@ if __name__ == '__main__':
 	import sys
 	import numpy
 	from pyami import mrc 
-	import pdb
 	
 	try:
 		filename = sys.argv[1]
