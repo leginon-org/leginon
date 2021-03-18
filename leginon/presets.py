@@ -25,6 +25,7 @@ from leginon import instrument
 import random
 import math
 import numpy
+import functools
 
 ## counter for dose images
 import itertools
@@ -1775,7 +1776,7 @@ class PresetsManager(node.Node):
 			return 0
 
 	def sortByUnbinnedArea(self, presetnames):
-		presetnames.sort(self.unbinnedAreaGreater)
+		presetnames.sort(key=functools.cmp_to_key(self.unbinnedAreaGreater))
 
 	def initAlignPresets(self, refname):
 		self.alignnext.clear()

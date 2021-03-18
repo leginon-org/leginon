@@ -1,11 +1,11 @@
 
 
 
-from past.builtins import cmp
 from builtins import map
 from builtins import range
 from builtins import object
 from past.utils import old_div
+import functools
 #
 # COPYRIGHT:
 #			 The Leginon software is Copyright under
@@ -250,7 +250,7 @@ def highest_peaks(blobs, n):
 		if float(x.stats['mean']) < float(y.stats['mean']): return 1
 		else: return -1
 	sortedblobs = list(blobs)
-	sortedblobs.sort(blob_compare)
+	sortedblobs.sort(key=functools.cmp_to_key(blob_compare))
 	sortedblobs = sortedblobs[:n]
 	## make new list of blobs that have the highest mean
 	newblobs = []
@@ -268,7 +268,7 @@ def biggest_peaks(blobs, n):
 		if float(x.stats['n']) < float(y.stats['n']): return 1
 		else: return -1
 	sortedblobs = list(blobs)
-	sortedblobs.sort(blob_compare)
+	sortedblobs.sort(key=functools.cmp_to_key(blob_compare))
 	sortedblobs = sortedblobs[:n]
 	## make new list of blobs that have the highest mean
 	newblobs = []
@@ -291,9 +291,14 @@ def near_center(shape, blobs, n):
 		distmap[blob] = distance
 	## sort blobs based on distance
 	def dist_cmp(x,y):
-		return cmp(distmap[x],distmap[y])
+		if (distmap[x] > distmap[y]):
+			return 1
+		elif distmap[x] < distmap[y]:
+			return -1
+		else:
+			return 0
 	sortedblobs = list(blobs)
-	sortedblobs.sort(dist_cmp)
+	sortedblobs.sort(key=functools.cmp_to_key(dist_cmp))
 	sortedblobs = sortedblobs[:n]
 	## make new list of blobs with n closest, same order as before
 	newblobs = []

@@ -24,6 +24,7 @@ import math
 import numpy
 from leginon import gridlabeler
 from leginon import cameraclient
+import functools
 
 class AcquireError(Exception):
 	pass
@@ -409,7 +410,7 @@ class ManualAcquisition(node.Node):
 																'label': grid['label'],
 																'projectId': grid['projectId']}
 		keys = list(self.gridmapping.keys())
-		keys.sort(self.cmpGridLabel)
+		keys.sort(key=functools.cmp_to_key(self.cmpGridLabel))
 		return keys
 
 	def getGridBoxes(self):
