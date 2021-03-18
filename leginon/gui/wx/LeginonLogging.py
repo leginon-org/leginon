@@ -425,7 +425,7 @@ class MessageLogHandler(logging.Handler):
 		try:
 			evt = MessageLog.AddMessageEvent(self.window, level, message, secs)
 			self.window.GetEventHandler().AddPendingEvent(evt)
-		except wx.PyDeadObjectError:
+		except wx.RuntimeError:
 			self.window = None
 
 class DatabaseLogHandler(logging.Handler):
