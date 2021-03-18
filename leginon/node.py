@@ -259,7 +259,6 @@ class Node(correctorclient.CorrectorClient):
 			sd['isdefault'] = True
 		else:
 			sd['isdefault'] = isdefault
-		print(self.name,sd)
 		self.publish(sd, database=True, dbforce=True)
 		self._checkSettings(sd)
 
