@@ -338,6 +338,7 @@ class Panel(ListCtrlPanel):
 			icon = 'node'
 
 		self.addPanel(panel, label, icon)
+		# TODO check if sorting in-place still work
 		self.selector.sort(self.sortOrder)
 
 	def removeNode(self, n):
@@ -358,6 +359,9 @@ class Panel(ListCtrlPanel):
 		evt.panel = panelclass(parent=self, nodeclass=evt.nodeclass)
 		evt.panel.Show(False)
 		self.Thaw()
+		# evt.panel does not get passed to the instance evt at where the event was
+		# created. Use a function call as callback in python 3.8
+		self.launcher.handleCreateNodePanelDone(evt.panel)
 		evt.event.set()
 
 	def Layout(self):
@@ -382,10 +386,10 @@ def getStatusIcon(image, color):
 	bitmap = wx.Bitmap(image)
 	dc = wx.MemoryDC()
 	dc.SelectObject(bitmap)
-	dc.BeginDrawing()
+	#dc.BeginDrawing()
 	dc.SetPen(wx.BLACK_PEN)
 	dc.SetBrush(wx.Brush(color))
 	dc.DrawRectangle(0, 0, 5, 5)
-	dc.EndDrawing()
+	#dc.EndDrawing()
 	return bitmap
 

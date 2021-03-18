@@ -82,15 +82,20 @@ class Launcher(node.Node):
 			evt = leginon.gui.wx.Launcher.CreateNodePanelEvent(nodeclass, nodename)
 			self.panel.GetEventHandler().AddPendingEvent(evt)
 			evt.event.wait()
-			kwargs['panel'] = evt.panel
-
+			kwargs['panel'] = self.donepanel
+		else:
+			print('failed CreateNodePanel', kwargs)
 		n = nodeclass(nodename, session, managerlocation, **kwargs)
 		self.nodes.append(n)
+		self.donepanel = None
 
 		evt = leginon.gui.wx.Launcher.CreateNodeEvent(n)
 		self.panel.GetEventHandler().AddPendingEvent(evt)
 
 		self.confirmEvent(ievent)
+
+	def handleCreateNodePanelDone(self, panel):
+		self.donepanel = panel
 
 	def onDestroyNode(self, n):
 		evt = leginon.gui.wx.Launcher.DestroyNodeEvent(n)
