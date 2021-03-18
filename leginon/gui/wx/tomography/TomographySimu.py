@@ -31,7 +31,7 @@ class ImagePanel(object):
 
 class SettingsDialog(leginon.gui.wx.Acquisition.SettingsDialog):
     def initialize(self):
-		return ScrolledSettings(self,self.scrsize,False)
+        return ScrolledSettings(self,self.scrsize,False)
 
 class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
     def initialize(self):
@@ -180,13 +180,13 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
         return choices
 
     def getMagChoices(self):
-    		choices = ['saved value for this series','this preset and lower mags', 'only this preset','custom values']
-    		try:
-					mags = self.node.instrument.tem.Magnifications
-    		except:
-    			mags = []
-    		choices.extend( [str(int(m)) for m in mags])
-    		return choices
+            choices = ['saved value for this series','this preset and lower mags', 'only this preset','custom values']
+            try:
+                    mags = self.node.instrument.tem.Magnifications
+            except:
+                mags = []
+            choices.extend( [str(int(m)) for m in mags])
+            return choices
 
 class Panel(leginon.gui.wx.Acquisition.Panel):
     settingsdialogclass = SettingsDialog
@@ -200,7 +200,7 @@ class Panel(leginon.gui.wx.Acquisition.Panel):
                              'refresh', shortHelpString='Reset Learning')
 
         self.toolbar.Bind(wx.EVT_TOOL, self.onResetTiltSeriesList,
-											id=leginon.gui.wx.ToolBar.ID_REFRESH)
+                            id=leginon.gui.wx.ToolBar.ID_REFRESH)
 
         self.imagepanel = ImagePanel(self.viewer)
 
