@@ -1,8 +1,8 @@
 import numpy
 import wx
-import events
-import icons
-import numpyimage
+from imageviewer import events
+from imageviewer import icons
+from imageviewer import numpyimage
 from pyami import arraystats
 
 class Display(wx.Panel):

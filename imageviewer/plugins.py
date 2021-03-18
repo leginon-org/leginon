@@ -1,7 +1,7 @@
 import wx
-import icons
-import numpyimage
 import math
+from imageviewer import icons
+from imageviewer import numpyimage
 
 class Plugin(wx.EvtHandler):
     def __init__(self, imagewindow):

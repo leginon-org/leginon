@@ -21,7 +21,7 @@ def numpy2Image(array):
     try:
         mode, rawmode = typemap[arraytype]
     except KeyError:
-        print 'TYPE', arraytype
+        print('TYPE', arraytype)
         raise TypeError
     height, width = array.shape
     size = width, height
@@ -184,6 +184,6 @@ if __name__ == '__main__':
     array = Mrc.mrc_to_numeric(sys.argv[1])
 
     #app = wx.App(0)
-    #print numpy2wxBitmap(array)
+    #print(numpy2wxBitmap(array))
 
     numpy2RGBImage(array).show()

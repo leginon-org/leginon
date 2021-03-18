@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 import wx
-import events
-import icons
-import plugins
-import tools
-import window
+from imageviewer import events
+from imageviewer import icons
+from imageviewer import plugins
+from imageviewer import tools
+from imageviewer import window
 from pyami import arraystats
 class Viewer(wx.Panel):
     def __init__(self, *args, **kwargs):
@@ -89,11 +89,11 @@ class Viewer(wx.Panel):
             imagemin = mean - 2 * std
             imagemax = mean + 2 * std
             if use_extrema:
-						    contrastlimit = extrema
+                 contrastlimit = extrema
             else:
-						    contrastlimit = (imagemin,imagemax)
+                 contrastlimit = (imagemin,imagemax)
         self.numarrayplugin.setNumpy(array)
-				# Issue #4251 value range must be set after numpy is set since setNumpy set it to exterma
+                # Issue #4251 value range must be set after numpy is set since setNumpy set it to exterma
         self.numarrayplugin.setValueRange(contrastlimit)
         self.tools.infotool.setStatistics(array)
         self.tools.valuescalebitmap.updateParameters(extrema=extrema,
