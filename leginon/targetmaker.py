@@ -312,7 +312,7 @@ class MosaicTargetMaker(TargetMaker):
 		maxsize = self.settings['max size']
 
 		pixelradius = radius/(pixelsize*binning)
-		if pixelradius > maxsize/2:
+		if pixelradius > maxsize/2.0:
 			raise AtlasSizeError('final image will be huge, try using more binning')
 
 		imagetile = self.calculateImageTile(dimension, overlap)
@@ -342,7 +342,7 @@ class MosaicTargetMaker(TargetMaker):
 		targets = []
 		sign = 1
 		for n, i in enumerate(images):
-			ys = list(range(-sign*imagetile['y']*(i - 1)/2, sign*imagetile['y']*(i + 1)/2,
+			ys = list(range(-sign*imagetile['y']*(i - 1)//2, sign*imagetile['y']*(i + 1)//2,
 									sign*imagetile['y']))
 			x = n*imagetile['x']
 			for y in ys:

@@ -437,7 +437,7 @@ class CameraPanel(wx.Panel):
 	def getCenteredGeometry(self, dimension, binning):
 		offset ={}
 		for axis in ['x','y']:
-			offset[axis] = int((self.size[axis]/binning - dimension)/2)
+			offset[axis] = int((self.size[axis]//binning - dimension)//2)
 
 		geometry = {'dimension': {'x': dimension, 'y': dimension},
 								'offset': {'x': offset['x'], 'y': offset['y']},
@@ -447,8 +447,8 @@ class CameraPanel(wx.Panel):
 	def getFullGeometry(self,binning):
 		if self.binmethod == 'exact' and ((self.size['x'] % binning) or (self.size['y'] % binning)):
 			return None
-		dimx = self.size['x'] / binning
-		dimy = self.size['y'] / binning
+		dimx = self.size['x'] // binning
+		dimy = self.size['y'] // binning
 		geometry = {'dimension': {'x': dimx, 'y': dimy},
 								'offset': {'x': 0, 'y': 0},
 								'binning': {'x': binning, 'y': binning}}
@@ -462,8 +462,8 @@ class CameraPanel(wx.Panel):
 			show_sections = True
 			keys.append('--- Full ---')
 			for binning in self.binnings['x']:
-				dimx = self.size['x'] / binning
-				dimy = self.size['y'] / binning
+				dimx = self.size['x'] // binning
+				dimy = self.size['y'] // binning
 				key = '%d x %d bin %d' % (dimx,dimy,binning)
 				geo = self.getFullGeometry(binning)
 				if geo is not None:
@@ -487,7 +487,7 @@ class CameraPanel(wx.Panel):
 			mask = [True for dim in dimensions]
 		dimensions = filtergood(dimensions, mask)
 		def minsize(size):
-			return size >= self.minsize / max(self.binnings['x'])
+			return size >= self.minsize // max(self.binnings['x'])
 		dimensions = list(filter(minsize, dimensions))
 		dimensions = list(map((lambda x: primefactor.getAllEvenPrimes(x)[-1]),dimensions))
 		binnings = filtergood(self.binnings['x'], mask)
@@ -692,7 +692,8 @@ if __name__ == '__main__':
 			panel.setGeometry({'dimension': {'x': 1024, 'y': 1024},
 													'offset': {'x': 0, 'y': 0},
 													'binning': {'x': 1, 'y': 1}})
-			panel.setSize({'x': 512, 'y': 512})
+			panel.binmethod = 'floor'
+			panel.setSize({'x':3838, 'y': 3710})
 			frame.Fit()
 			self.SetTopWindow(frame)
 			frame.Show()
