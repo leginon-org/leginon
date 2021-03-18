@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 import sinedon
 from sinedon import sqldict
-from . import leginonconfig
-from . import projectdata
+from leginon import leginonconfig
+from leginon import projectdata
 
 class NotConnectedError(Exception):
 	pass

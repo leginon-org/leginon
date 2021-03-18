@@ -12,8 +12,8 @@ import numpy
 import pyami.quietscipy
 import scipy.ndimage
 from pyami import imagefun, peakfinder, convolver, correlator, mrc, arraystats
-from . import ice
-from . import lattice
+from leginon import ice
+from leginon import lattice
 
 class CircleMaskCreator(object):
 	def __init__(self):

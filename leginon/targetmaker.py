@@ -6,15 +6,15 @@
 #       see  http://leginon.org
 #
 import threading
-from . import node, event, leginondata
-from . import presets
-from . import calibrationclient
+from leginon import node, event, leginondata
+from leginon import presets
+from leginon import calibrationclient
 import math
-from . import instrument
-from . import targethandler
-from . import gui.wx.MosaicTargetMaker
-from . import gui.wx.Node
-from . import gridlabeler
+from leginon import instrument
+from leginon import targethandler
+import leginon.gui.wx.MosaicTargetMaker
+import leginon.gui.wx.Node
+from leginon import gridlabeler
 
 class AtlasError(Exception):
 	pass
@@ -49,7 +49,7 @@ class TargetMaker(node.Node, targethandler.TargetHandler):
 		self.instrument = instrument.Proxy(self.objectservice, self.session)
 
 class MosaicTargetMaker(TargetMaker):
-	panelclass = gui.wx.MosaicTargetMaker.Panel
+	panelclass = leginon.gui.wx.MosaicTargetMaker.Panel
 	settingsclass = leginondata.MosaicTargetMakerSettingsData
 	defaultsettings = {
 		'preset': None,
@@ -65,6 +65,7 @@ class MosaicTargetMaker(TargetMaker):
 	}
 	eventinputs = TargetMaker.eventinputs + [event.MakeTargetListEvent]
 	def __init__(self, id, session, managerlocation, **kwargs):
+		print('subclass targetmaker.__init__ started')
 		TargetMaker.__init__(self, id, session, managerlocation, **kwargs)
 		self.pixelsizecalclient = calibrationclient.PixelSizeCalibrationClient(self)
 		self.addEventInput(event.MakeTargetListEvent, self.handleMakeTargetList)

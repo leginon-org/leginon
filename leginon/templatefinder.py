@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-from . import workflow
-from . import commonsteps
+from leginon import workflow
+from leginon import commonsteps
 from pyami.ordereddict import OrderedDict
 
 input = commonsteps.ImageInput('input')

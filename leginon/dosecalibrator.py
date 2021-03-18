@@ -5,11 +5,11 @@
 #	   For terms of the license agreement
 #	   see  http://leginon.org
 #
-from . import calibrator
-from . import calibrationclient
-from . import event, leginondata
-from . import node
-from . import gui.wx.DoseCalibrator
+from leginon import calibrator
+from leginon import calibrationclient
+from leginon import event, leginondata
+from leginon import node
+import leginon.gui.wx.DoseCalibrator
 import time
 from wx import CallAfter
 
@@ -17,7 +17,7 @@ class DoseCalibrator(calibrator.ScreenCalibrator):
 	'''
 	calibrate the camera sensitivity and other dose measurements
 	'''
-	panelclass = gui.wx.DoseCalibrator.Panel
+	panelclass = leginon.gui.wx.DoseCalibrator.Panel
 	settingsclass = leginondata.DoseCalibratorSettingsData
 	defaultsettings = dict(calibrator.ScreenCalibrator.defaultsettings)
 	defaultsettings.update({

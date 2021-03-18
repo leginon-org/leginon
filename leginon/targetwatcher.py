@@ -8,15 +8,15 @@
 #       see  http://leginon.org
 #
 
-from . import event, leginondata
-from . import watcher
+from leginon import event, leginondata
+from leginon import watcher
 import threading
-from . import targethandler
-from . import node
-from . import player
+from leginon import targethandler
+from leginon import node
+from leginon import player
 import time
 import math
-from . import remoteserver
+from leginon import remoteserver
 
 class PauseRepeatException(Exception):
 	'''Raised within processTargetData method if the target should be

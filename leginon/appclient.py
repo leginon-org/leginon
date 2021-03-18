@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from . import leginondata
+from leginon import leginondata
 '''
 Module for general functions that use Node and Binding Specs of an Application
 '''
@@ -20,7 +20,7 @@ def getLastNodeThruBinding(appdata,to_node_alias,binding_name,last_node_baseclas
 	Use the binding in the application to get the last/previous node of a defined base class.
 	'''
 	# Not to do  global import so that it does not import when the module is loaded
-	from . import noderegistry
+	from leginon import noderegistry
 	last_class = noderegistry.getNodeClass(last_node_baseclass_name)
 	# Try 10 iteration before giving up
 	for iter in range(10):
@@ -50,7 +50,7 @@ def getNextNodeThruBinding(appdata,from_node_alias,binding_name,next_node_basecl
 	Use the binding in the application to get the next node of a defined base class.
 	'''
 	# Not to do  global import so that it does not import when the module is loaded
-	from . import noderegistry
+	from leginon import noderegistry
 	next_class = noderegistry.getNodeClass(next_node_baseclass_name)
 	# Try 10 iteration before giving up
 	for iter in range(10):

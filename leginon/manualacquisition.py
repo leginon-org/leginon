@@ -7,29 +7,29 @@
 #
 
 from leginon import leginondata
-from . import event
-from . import node
-from . import project
+from leginon import event
+from leginon import node
+from leginon import project
 import threading
 import time
-from . import gui.wx.ManualAcquisition
-from . import player
-from . import instrument
+import leginon.gui.wx.ManualAcquisition
+from leginon import player
+from leginon import instrument
 import os
 import re
-from . import calibrationclient
+from leginon import calibrationclient
 import copy
 from pyami import arraystats, imagefun, fftfun
 import math
 import numpy
-from . import gridlabeler
-from . import cameraclient
+from leginon import gridlabeler
+from leginon import cameraclient
 
 class AcquireError(Exception):
 	pass
 
 class ManualAcquisition(node.Node):
-	panelclass = gui.wx.ManualAcquisition.Panel
+	panelclass = leginon.gui.wx.ManualAcquisition.Panel
 	settingsclass = leginondata.ManualAcquisitionSettingsData
 	eventoutputs = node.Node.eventoutputs + [event.AcquisitionImagePublishEvent]
 	eventinputs = (
@@ -485,7 +485,7 @@ class ManualAcquisition(node.Node):
 		t.start()
 
 	def onManualCheck(self):
-		evt = gui.wx.ManualAcquisition.ManualCheckEvent(self.panel)
+		evt = leginon.gui.wx.ManualAcquisition.ManualCheckEvent(self.panel)
 		self.panel.GetEventHandler().AddPendingEvent(evt)
 
 	def onManualCheckDone(self):
@@ -493,7 +493,7 @@ class ManualAcquisition(node.Node):
 			self.instrument.ccdcamera.Settings = self.settings['camera settings']
 		except:
 			self.logger.error('unable to set camera parameters')
-		evt = gui.wx.ManualAcquisition.ManualCheckDoneEvent(self.panel)
+		evt = leginon.gui.wx.ManualAcquisition.ManualCheckDoneEvent(self.panel)
 		self.panel.GetEventHandler().AddPendingEvent(evt)
 
 	def getTEMCsValue(self):

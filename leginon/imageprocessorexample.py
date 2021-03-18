@@ -1,4 +1,4 @@
-from . import imageprocessor
+from leginon import imageprocessor
 import os
 
 class FileNames(imageprocessor.ImageProcessor):

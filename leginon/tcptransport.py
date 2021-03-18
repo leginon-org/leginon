@@ -7,7 +7,7 @@
 #
 import socketserver
 import socket
-from . import socketstreamtransport
+from leginon import socketstreamtransport
 import errno
 from pyami import mysocket
 

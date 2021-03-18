@@ -15,7 +15,7 @@ PointProducer - result is a list of points, each point is a dictionary
 
 import pyami.mrc
 import numpy
-from . import workflow
+from leginon import workflow
 
 def debugImage(step, image):
 		filename = step.name + '.mrc'

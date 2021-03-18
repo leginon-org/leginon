@@ -5,7 +5,7 @@
 #       For terms of the license agreement
 #       see  http://leginon.org
 #
-from . import node
+from leginon import node
 import uidata
 import VideoCapture
 from PIL import Image
@@ -63,7 +63,7 @@ if __name__ == '__main__':
 	import sys
 	sys.coinit_flags = 0
 	import pythoncom
-	from . import MrcImagePlugin
+	from leginon import MrcImagePlugin
 	import io
 	webcam = VideoCapture.Device()
 	image = webcam.getImage()

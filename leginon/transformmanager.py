@@ -8,33 +8,33 @@
 #       see  http://leginon.org
 #
 
-from . import node
-from . import event
+from leginon import node
+from leginon import event
 from leginon import leginondata
 from pyami import correlator, peakfinder, ordereddict
-from . import calibrationclient
+from leginon import calibrationclient
 import math
 import numpy
 import scipy.ndimage
 import time
 import threading
-from . import presets
-from . import navigator
+from leginon import presets
+from leginon import navigator
 import copy
-from . import EM
-from . import gui.wx.TransformManager
-from . import instrument
-from . import acquisition
-from . import rctacquisition
-from . import libCVwrapper
-from . import align
-from . import targethandler
-from . import tiltcorrector
-from . import cameraclient
-from . import player
-from . import imagehandler
-from . import transformregistration
-from . import datatransport
+from leginon import EM
+import leginon.gui.wx.TransformManager
+from leginon import instrument
+from leginon import acquisition
+from leginon import rctacquisition
+from leginon import libCVwrapper
+from leginon import align
+from leginon import targethandler
+from leginon import tiltcorrector
+from leginon import cameraclient
+from leginon import player
+from leginon import imagehandler
+from leginon import transformregistration
+from leginon import datatransport
 
 hide_incomplete = False
 
@@ -220,7 +220,7 @@ class TargetTransformer(targethandler.TargetHandler, imagehandler.ImageHandler):
 
 
 class TransformManager(node.Node, TargetTransformer):
-	panelclass = gui.wx.TransformManager.Panel
+	panelclass = leginon.gui.wx.TransformManager.Panel
 	settingsclass = leginondata.TransformManagerSettingsData
 	defaultsettings = {
 		'registration': 'correlation',

@@ -9,9 +9,9 @@
 from leginon import leginondata
 from leginon import rasterindexer
 from pyami import ordereddict
-from . import event
-from . import mosaictargetfinder
-from . import gui.wx.MosaicSpotFinder
+from leginon import event
+from leginon import mosaictargetfinder
+import leginon.gui.wx.MosaicSpotFinder
 import math
 import time
 try:
@@ -26,7 +26,7 @@ class MosaicSpotFinder(mosaictargetfinder.MosaicClickTargetFinder):
 	of a multiple picoliter specimen grid atlas.
 	'''
 
-	panelclass = gui.wx.MosaicSpotFinder.Panel
+	panelclass = leginon.gui.wx.MosaicSpotFinder.Panel
 	settingsclass = leginondata.MosaicSpotFinderSettingsData
 	defaultsettings = dict(mosaictargetfinder.MosaicClickTargetFinder.defaultsettings)
 	defaultsettings.update({
@@ -248,7 +248,7 @@ class MosaicSpotFinder(mosaictargetfinder.MosaicClickTargetFinder):
 
 	def makeWellTargetsAndStats(self):
 		'''
-		Make targets to be set to gui.wx.TargetPanel.
+		Make targets to be set to leginon.gui.wx.TargetPanel.
 		The targets in the list have information
 		of the grid format raster and the plate well name coded in stats
 		'''

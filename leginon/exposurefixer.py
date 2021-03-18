@@ -8,14 +8,14 @@
 import math
 from leginon import presetadjuster
 from leginon import leginondata
-from . import event
-from . import gui.wx.ExposureFixer
+from leginon import event
+import leginon.gui.wx.ExposureFixer
 
 class ExposureFixer(presetadjuster.PresetAdjuster):
 	# relay measure does events
 	eventinputs = presetadjuster.PresetAdjuster.eventinputs + [event.FixBeamEvent]
 	eventoutputs = presetadjuster.PresetAdjuster.eventoutputs
-	panelclass = gui.wx.ExposureFixer.ExposureFixerPanel
+	panelclass = leginon.gui.wx.ExposureFixer.ExposureFixerPanel
 	settingsclass = leginondata.ExposureFixerSettingsData
 	defaultsettings = dict(presetadjuster.PresetAdjuster.defaultsettings)
 	defaultsettings.update({

@@ -10,7 +10,7 @@
 
 from pyami import convolver, peakfinder, fftengine, correlator, imagefun, mrc, arraystats
 import Numeric
-from . import holefinderback
+from leginon import holefinderback
 import os
 
 ffteng = fftengine.fftEngine()
@@ -67,7 +67,7 @@ def save_mrc(image, filename):
 		f = os.path.join(p, filename)
 		mrc.write(image, f)
 
-from . import timer
+from leginon import timer
 
 class QuantifoilSolver(object):
 	def __init__(self):

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from . import libCVwrapper
+from leginon import libCVwrapper
 import threading
 import time
 import subprocess

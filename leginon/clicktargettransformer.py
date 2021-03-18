@@ -6,20 +6,20 @@
 #       see  http://leginon.org
 #
 
-from . import targetfinder
-from . import presets
-from . import event
-from . import node
-from . import gui.wx.ClickTargetTransformer
+from leginon import targetfinder
+from leginon import presets
+from leginon import event
+from leginon import node
+import leginon.gui.wx.ClickTargetTransformer
 #import dbdatakeeper
 import threading
-from . import caltransformer
-from . import gui.wx.ClickTargetTransformer
+from leginon import caltransformer
+import leginon.gui.wx.ClickTargetTransformer
 from leginon import leginondata
 import time
 
 class ClickTargetTransformer(targetfinder.ClickTargetFinder):
-	panelclass = gui.wx.ClickTargetTransformer.Panel
+	panelclass = leginon.gui.wx.ClickTargetTransformer.Panel
 	eventoutputs = targetfinder.TargetFinder.eventoutputs
 	settingsclass = leginondata.ClickTargetTransformerSettingsData
 	defaultsettings = {
@@ -28,7 +28,7 @@ class ClickTargetTransformer(targetfinder.ClickTargetFinder):
 		'jump filename': '',
 	}
 	def __init__(self, id, session, managerlocation, **kwargs):
- 		targetfinder.ClickTargetFinder.__init__(self, id, session, managerlocation, **kwargs)
+		targetfinder.ClickTargetFinder.__init__(self, id, session, managerlocation, **kwargs)
 		self.userpause = threading.Event()
 
 		self.currentindex = None

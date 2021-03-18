@@ -7,14 +7,14 @@
 #
 
 from leginon import leginondata
-from . import event
+from leginon import event
 import threading
-from . import node
-from . import gui.wx.ImageProcessor
+from leginon import node
+import leginon.gui.wx.ImageProcessor
 
 class ImageProcessor(node.Node):
 	eventinputs = node.Node.eventinputs + [event.TargetListDoneEvent]
-	panelclass = gui.wx.ImageProcessor.Panel
+	panelclass = leginon.gui.wx.ImageProcessor.Panel
 	settingsclass = leginondata.ImageProcessorSettingsData
 	defaultsettings = {
 		'process': False,

@@ -9,16 +9,16 @@
 #
 
 from leginon import leginondata
-from . import targetfinder
-from . import extholefinderback
+from leginon import targetfinder
+from leginon import extholefinderback
 from pyami import ordereddict
 import threading
-from . import ice
-from . import instrument
+from leginon import ice
+from leginon import instrument
 import os.path
 import math
-from . import gui.wx.ExtHoleFinder
-from . import version
+import leginon.gui.wx.ExtHoleFinder
+from leginon import version
 import itertools
 
 invsqrt2 = math.sqrt(2.0)/2.0
@@ -28,7 +28,7 @@ class ExtHoleFinder(targetfinder.TargetFinder):
 	Hole Finder that uses external program to get holes but
 	calculate stats and filter by ice thickness like JAHCFinder.
 	'''
-	panelclass = gui.wx.ExtHoleFinder.Panel
+	panelclass = leginon.gui.wx.ExtHoleFinder.Panel
 	settingsclass = leginondata.ExtHoleFinderSettingsData
 	defaultsettings = dict(targetfinder.TargetFinder.defaultsettings)
 	defaultsettings.update({

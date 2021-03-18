@@ -9,20 +9,20 @@
 #
 
 from leginon import leginondata
-from . import targetfinder
+from leginon import targetfinder
 import threading
-from . import ice
+from leginon import ice
 import numpy
 import math
 import pyami.quietscipy
 from scipy import ndimage
 from pyami import arraystats
-from . import gui.wx.RasterFinder
-from . import polygon
+import leginon.gui.wx.RasterFinder
+from leginon import polygon
 import itertools
 
 class RasterFinder(targetfinder.TargetFinder):
-	panelclass = gui.wx.RasterFinder.Panel
+	panelclass = leginon.gui.wx.RasterFinder.Panel
 	settingsclass = leginondata.RasterFinderSettingsData
 	defaultsettings = dict(targetfinder.TargetFinder.defaultsettings)
 	defaultsettings.update({

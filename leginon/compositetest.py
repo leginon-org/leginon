@@ -6,7 +6,7 @@
 #       see  http://leginon.org
 #
 from wxPython.wx import *
-from . import gui.wx.ImagePanel
+import leginon.gui.wx.ImagePanel
 import Numeric
 import math
 
@@ -118,7 +118,7 @@ if __name__ == '__main__':
 		def OnInit(self):
 			frame = wxFrame(NULL, -1, 'Image Viewer')
 			self.SetTopWindow(frame)
-			self.panel = gui.wx.ImagePanel.ImagePanel(frame, -1)
+			self.panel = leginon.gui.wx.ImagePanel.ImagePanel(frame, -1)
 			frame.Fit()
 			frame.Show(true)
 			return true

@@ -1,6 +1,6 @@
 
 from leginon import leginondata
-from . import targetrepeater
+from leginon import targetrepeater
 
 class TestRepeater(targetrepeater.TargetRepeater):
 	def __init__(self, *args, **kwargs):

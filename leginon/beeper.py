@@ -9,14 +9,14 @@
 '''
 '''
 
-from . import node
+from leginon import node
 from leginon import leginondata
-from . import event
-from . import gui.wx.Beeper
+from leginon import event
+import leginon.gui.wx.Beeper
 import threading
 
 class Beeper(node.Node):
-	panelclass = gui.wx.Beeper.Panel
+	panelclass = leginon.gui.wx.Beeper.Panel
 	settingsclass = leginondata.BeeperSettingsData
 	eventinputs = node.Node.eventinputs + [event.TargetListDoneEvent]
 										

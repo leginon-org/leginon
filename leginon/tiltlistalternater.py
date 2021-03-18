@@ -6,15 +6,15 @@
 #	   see  http://leginon.org
 #
 import math
-from . import acquisition
-from . import leginondata
-from . import gui.wx.TiltListAlternater
+from leginon import acquisition
+from leginon import leginondata
+import leginon.gui.wx.TiltListAlternater
 
 class TiltListAlternater(acquisition.Acquisition):
 	'''
 	Node class that set stage tilt angle per target list it processes.
 	'''
-	panelclass = gui.wx.TiltListAlternater.Panel
+	panelclass = leginon.gui.wx.TiltListAlternater.Panel
 	settingsclass = leginondata.TiltListAlternaterSettingsData
 	defaultsettings = dict(acquisition.Acquisition.defaultsettings)
 	defaultsettings.update({

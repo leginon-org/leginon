@@ -7,18 +7,18 @@
 #
 
 from leginon import leginondata
-from . import event
+from leginon import event
 import threading
-from . import node
-from . import project
-from . import gui.wx.GridEntry
+from leginon import node
+from leginon import project
+import leginon.gui.wx.GridEntry
 
 class GridEntry(node.Node):
 	eventinputs = node.Node.eventinputs + [event.TargetListDoneEvent,
 																					event.MosaicDoneEvent]
 	eventoutputs = node.Node.eventoutputs + [event.MakeTargetListEvent
 										]
-	panelclass = gui.wx.GridEntry.Panel
+	panelclass = leginon.gui.wx.GridEntry.Panel
 	settingsclass = leginondata.GridEntrySettingsData
 	defaultsettings = {
 		'grid name': None,

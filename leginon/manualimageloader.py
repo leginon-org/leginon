@@ -7,30 +7,30 @@
 #
 
 from leginon import leginondata
-from . import event
-from . import node
-from . import project
+from leginon import event
+from leginon import node
+from leginon import project
 import threading
 import time
-from . import manualacquisition
-from . import gui.wx.ManualImageLoader
-from . import player
-from . import instrument
+from leginon import manualacquisition
+import leginon.gui.wx.ManualImageLoader
+from leginon import player
+from leginon import instrument
 import os
 import re
-from . import calibrationclient
+from leginon import calibrationclient
 import copy
 from pyami import arraystats, imagefun, mrc
 import numpy
-from . import version
-from . import cameraclient
+from leginon import version
+from leginon import cameraclient
 
 default_batch = os.path.join(version.getInstalledLocation(),'upload_example.txt')
 class AcquireError(Exception):
 	pass
 
 class ManualImageLoader(manualacquisition.ManualAcquisition):
-	panelclass = gui.wx.ManualImageLoader.Panel
+	panelclass = leginon.gui.wx.ManualImageLoader.Panel
 	settingsclass = leginondata.ManualImageLoaderSettingsData
 	eventoutputs = node.Node.eventoutputs + [event.AcquisitionImagePublishEvent]
 	defaultsettings = {

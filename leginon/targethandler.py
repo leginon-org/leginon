@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 from leginon import leginondata
-from . import event
+from leginon import event
 import threading
 from pyami import ordereddict
 import sys
@@ -488,7 +488,7 @@ class TargetWaitHandler(TargetHandler):
 
 
 if __name__ == '__main__':
-	from . import node
+	from leginon import node
 	import sinedon
 
 	class TestNode(node.Node, TargetHandler):

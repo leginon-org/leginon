@@ -9,7 +9,7 @@
 #
 
 from pyami import mrc
-from . import NumericImage
+from leginon import NumericImage
 import re
 
 

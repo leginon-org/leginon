@@ -7,23 +7,23 @@
 #
 
 from leginon import leginondata
-from . import event
-from . import fftmaker
+from leginon import event
+from leginon import fftmaker
 import threading
-from . import node
+from leginon import node
 import numpy
 import numextension
 import pyami.quietscipy
 import scipy.ndimage
 from pyami import imagefun
 from pyami import plot
-from . import gui.wx.FFTAnalyzer
-from . import calibrationclient
-from . import instrument
+import leginon.gui.wx.FFTAnalyzer
+from leginon import calibrationclient
+from leginon import instrument
 
 class FFTAnalyzer(fftmaker.FFTMaker):
 	eventinputs = fftmaker.FFTMaker.eventinputs
-	panelclass = gui.wx.FFTAnalyzer.Panel
+	panelclass = leginon.gui.wx.FFTAnalyzer.Panel
 	settingsclass = leginondata.FFTAnalyzerSettingsData
 	defaultsettings = {
 		'process': False,

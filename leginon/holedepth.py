@@ -9,19 +9,19 @@
 #
 
 from leginon import leginondata
-from . import targetfinder
-from . import holefinder
-from . import holedepthback
+from leginon import targetfinder
+from leginon import holefinder
+from leginon import holedepthback
 from pyami import ordereddict, mrc
 import threading
-from . import ice
-from . import instrument
+from leginon import ice
+from leginon import instrument
 import os.path
-from . import calibrationclient as calclient
-from . import gui.wx.HoleDepth
+from leginon import calibrationclient as calclient
+import leginon.gui.wx.HoleDepth
 
 class HoleDepth(holefinder.HoleFinder):
-	panelclass = gui.wx.HoleDepth.Panel
+	panelclass = leginon.gui.wx.HoleDepth.Panel
 	settingsclass = leginondata.HoleDepthFinderSettingsData
 	defaultsettings = dict(holefinder.HoleFinder.defaultsettings)
 	defaultsettings.update({

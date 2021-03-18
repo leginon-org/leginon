@@ -1,11 +1,11 @@
-from . import imageprocessor
+from leginon import imageprocessor
 import os
-from . import gui.wx.RaptorProcessor
+import leginon.gui.wx.RaptorProcessor
 from leginon import leginondata
 #import runImod
 from pyami import mrc, imagefun, correlator, peakfinder
 import shutil
-from .tomography import tiltcorrelator
+from leginontomography import tiltcorrelator
 try:
 	import apImod
 	noappion = False
@@ -13,7 +13,7 @@ except:
 	noappion = True
 
 class ImodProcessor(imageprocessor.ImageProcessor):
-	panelclass = gui.wx.RaptorProcessor.Panel
+	panelclass = leginon.gui.wx.RaptorProcessor.Panel
 	settingsclass = leginondata.RaptorProcessorSettingsData
 	defaultsettings = dict(imageprocessor.ImageProcessor.defaultsettings)
 	defaultsettings.update({

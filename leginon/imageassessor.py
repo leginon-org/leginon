@@ -7,17 +7,17 @@
 #
 
 from leginon import leginondata
-from . import targetfinder
-from . import event
-from . import node
-from . import gui.wx.ImageAssessor
+from leginon import targetfinder
+from leginon import event
+from leginon import node
+import leginon.gui.wx.ImageAssessor
 import os
 from PIL import Image
 import numpy
 from pyami import imagefun, mrc
 
 class ImageAssessor(targetfinder.ClickTargetFinder):
-	panelclass = gui.wx.ImageAssessor.Panel
+	panelclass = leginon.gui.wx.ImageAssessor.Panel
 	settingsclass = leginondata.ImageAssessorSettingsData
 	defaultsettings = {
 		'image directory': '',

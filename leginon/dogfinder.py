@@ -15,13 +15,13 @@ import threading
 import itertools
 from scipy import ndimage
 #leginon
-from . import ice
-from . import version
-from . import targetfinder
-from . import jahcfinderback
-from . import voronoiWrapper
+from leginon import ice
+from leginon import version
+from leginon import targetfinder
+from leginon import jahcfinderback
+from leginon import voronoiWrapper
 from leginon import leginondata
-from . import gui.wx.DoGFinder
+import leginon.gui.wx.DoGFinder
 from pyami import imagefun
 from pyami import ordereddict
 
@@ -29,7 +29,7 @@ invsqrt2 = math.sqrt(2.0)/2.0
 default_template = os.path.join(version.getInstalledLocation(),'holetemplate.mrc')
 
 class DoGFinder(targetfinder.TargetFinder):
-	panelclass = gui.wx.DoGFinder.Panel
+	panelclass = leginon.gui.wx.DoGFinder.Panel
 	settingsclass = leginondata.DoGFinderSettingsData
 	defaultsettings = dict(targetfinder.TargetFinder.defaultsettings)
 	defaultsettings.update({

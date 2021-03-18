@@ -2,9 +2,9 @@ import math
 import time
 import threading
 from leginon import leginondata, referencecounter, calibrationclient, cameraclient
-from . import event
-from . import node
-from . import gui.wx.PhasePlateAligner
+from leginon import event
+from leginon import node
+import leginon.gui.wx.PhasePlateAligner
 from pyami import arraystats
 
 class PhasePlateAligner(referencecounter.ReferenceCounter):
@@ -21,7 +21,7 @@ class PhasePlateAligner(referencecounter.ReferenceCounter):
 	})
 	eventinputs = referencecounter.ReferenceCounter.eventinputs + [event.PhasePlatePublishEvent]
 	eventoutputs = referencecounter.ReferenceCounter.eventoutputs + [event.PhasePlateUsagePublishEvent, event.FixAlignmentEvent]
-	panelclass = gui.wx.PhasePlateAligner.PhasePlateAlignerPanel
+	panelclass = leginon.gui.wx.PhasePlateAligner.PhasePlateAlignerPanel
 	requestdata = leginondata.PhasePlateData
 	def __init__(self, *args, **kwargs):
 		referencecounter.ReferenceCounter.__init__(self, *args, **kwargs)

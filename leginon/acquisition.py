@@ -10,28 +10,28 @@ Acquisition node is a TargetWatcher, so it receives either an ImageTargetData
 or an ImageTargetListData.  The method processTargetData is called on each
 ImageTargetData.
 '''
-from . import targetwatcher
+from leginon import targetwatcher
 import time
 from leginon import leginondata
-from . import event
-from . import calibrationclient
-from . import presets
+from leginon import event
+from leginon import calibrationclient
+from leginon import presets
 import copy
 import threading
-from . import node
-from . import instrument
-from . import gui.wx.Acquisition
-from . import gui.wx.Presets
-from . import navigator
-from . import appclient
+from leginon import node
+from leginon import instrument
+import leginon.gui.wx.Acquisition
+import leginon.gui.wx.Presets
+from leginon import navigator
+from leginon import appclient
 import numpy
 import numpy.linalg
 import math
 from pyami import arraystats, imagefun, ordereddict
 import smtplib
-from . import emailnotification
-from . import leginonconfig
-from . import gridlabeler
+from leginon import emailnotification
+from leginon import leginonconfig
+from leginon import gridlabeler
 import itertools
 
 debug = False
@@ -125,7 +125,7 @@ def newRootName(imagedata, usegridlabel):
 
 
 class Acquisition(targetwatcher.TargetWatcher):
-	panelclass = gui.wx.Acquisition.Panel
+	panelclass = leginon.gui.wx.Acquisition.Panel
 	settingsclass = leginondata.AcquisitionSettingsData
 	# maybe not a class attribute
 	defaultsettings = dict(targetwatcher.TargetWatcher.defaultsettings)
@@ -295,7 +295,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		return problems
 
 	def onPresetPublished(self, evt):
-		evt = gui.wx.Presets.NewPresetEvent()
+		evt = leginon.gui.wx.Presets.NewPresetEvent()
 		self.panel.GetEventHandler().AddPendingEvent(evt)
 
 	def handleDriftResult(self, ev):

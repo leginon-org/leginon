@@ -1,9 +1,9 @@
-from . import targetfilter
+from leginon import targetfilter
 from leginon import leginondata
-from . import gui.wx.SampleTargetFilter
+import leginon.gui.wx.SampleTargetFilter
 
 class SampleTargetFilter(targetfilter.TargetFilter):
-	panelclass = gui.wx.SampleTargetFilter.Panel
+	panelclass = leginon.gui.wx.SampleTargetFilter.Panel
 	settingsclass = leginondata.SampleTargetFilterSettingsData
 	defaultsettings = dict(targetfilter.TargetFilter.defaultsettings)
 	# add user settings here

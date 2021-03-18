@@ -5,11 +5,11 @@
 #	   For terms of the license agreement
 #	   see  http://leginon.org
 #
-from . import acquisition
-from . import leginondata
+from leginon import acquisition
+from leginon import leginondata
 import threading
 from pyami import imagefun, fftfun, ordereddict
-from . import gui.wx.DefocusSequence
+import leginon.gui.wx.DefocusSequence
 
 def setImageFilename(imagedata, sequence_number):
 	if imagedata['filename'] is not None:
@@ -44,7 +44,7 @@ class DefocusSequence(acquisition.Acquisition):
 	preset value for each target. It is a subclass of Acquisition
 	and use the same bindings. The resulting image names has postfix of d.
 	'''
-	panelclass = gui.wx.DefocusSequence.Panel
+	panelclass = leginon.gui.wx.DefocusSequence.Panel
 	settingsclass = leginondata.DefocusSequenceSettingsData
 	defaultsettings = dict(acquisition.Acquisition.defaultsettings)
 	defaultsettings.update({

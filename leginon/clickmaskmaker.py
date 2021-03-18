@@ -9,15 +9,15 @@
 import pyami.quietscipy
 import scipy.ndimage as nd
 import sinedon.data
-from . import imageassessor
-from . import event
-from . import node
-from . import gui.wx.ClickMaskMaker
+from leginon import imageassessor
+from leginon import event
+from leginon import node
+import leginon.gui.wx.ClickMaskMaker
 import os
 import numpy
 from pyami import imagefun, mrc
 from leginon import leginondata
-from . import polygon
+from leginon import polygon
 
 try:
 	import apMask
@@ -28,7 +28,7 @@ except:
 	pass
 
 class ClickMaskMaker(imageassessor.ImageAssessor):
-	panelclass = gui.wx.ClickMaskMaker.Panel
+	panelclass = leginon.gui.wx.ClickMaskMaker.Panel
 	settingsclass = leginondata.ClickMaskMakerSettingsData
 	defaultsettings = {
 		'run': 'test',

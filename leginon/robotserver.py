@@ -3,7 +3,7 @@
 This simulates a robot server that checks a database for signals/attributes.
 '''
 
-from . import robot2
+from leginon import robot2
 import time
 
 def getAttributesFromDB():

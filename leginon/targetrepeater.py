@@ -7,18 +7,18 @@
 #
 
 from leginon import leginondata
-from . import event
+from leginon import event
 import threading
-from . import node
-from . import targethandler
-from . import gui.wx.TargetRepeater
-from . import instrument
-from . import acquisition
-from . import rctacquisition
-from . import player
+from leginon import node
+from leginon import targethandler
+import leginon.gui.wx.TargetRepeater
+from leginon import instrument
+from leginon import acquisition
+from leginon import rctacquisition
+from leginon import player
 
 class TargetRepeater(node.Node, targethandler.TargetWaitHandler):
-	panelclass = gui.wx.TargetRepeater.Panel
+	panelclass = leginon.gui.wx.TargetRepeater.Panel
 	settingsclass = leginondata.TargetRepeaterSettingsData
 	defaultsettings = {
 		'bypass':True,

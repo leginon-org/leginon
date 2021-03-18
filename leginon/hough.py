@@ -180,9 +180,9 @@ def houghCircle(image, threshold, radiusrange=None):
 
 if __name__=='__main__':
 	from wxPython.wx import *
-	from . import gui.wx.ImagePanel
-	from . import timer
-	from . import holefinderback
+	import leginon.gui.wx.ImagePanel
+	from leginon import timer
+	from leginon import holefinderback
 	from pyami import imagefun, mrc
 
 	def edges(image):
@@ -250,10 +250,10 @@ if __name__=='__main__':
 			self.panel = wxScrolledWindow(frame, -1)
 			self.panel.SetScrollRate(5, 5)
 			self.sizer = wxFlexGridSizer(2, 2, 0, 0)
-			self.iv1 = gui.wx.ImagePanel.ImagePanel(self.panel, -1)
-			self.iv2 = gui.wx.ImagePanel.ImagePanel(self.panel, -1)
-			self.iv3 = gui.wx.ImagePanel.ImagePanel(self.panel, -1)
-			self.iv4 = gui.wx.ImagePanel.ImagePanel(self.panel, -1)
+			self.iv1 = leginon.gui.wx.ImagePanel.ImagePanel(self.panel, -1)
+			self.iv2 = leginon.gui.wx.ImagePanel.ImagePanel(self.panel, -1)
+			self.iv3 = leginon.gui.wx.ImagePanel.ImagePanel(self.panel, -1)
+			self.iv4 = leginon.gui.wx.ImagePanel.ImagePanel(self.panel, -1)
 			self.sizer.AddMany([(self.iv1,),
 													(self.iv2,),
 													(self.iv3,),

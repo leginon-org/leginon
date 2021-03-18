@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 from leginon import acquisition, singlefocuser, manualfocuschecker
-from . import gui.wx.Focuser
+import leginon.gui.wx.Focuser
 from leginon import leginondata
 from leginon import node, targetwatcher
 import math
 
 class Focuser(singlefocuser.SingleFocuser):
-	panelclass = gui.wx.Focuser.Panel
+	panelclass = leginon.gui.wx.Focuser.Panel
 	settingsclass = leginondata.FocuserSettingsData
 	defaultsettings = dict(singlefocuser.SingleFocuser.defaultsettings)
 	defaultsettings.update({

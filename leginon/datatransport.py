@@ -13,8 +13,8 @@ class TransportError(IOError):
 class ExitException(Exception):
 	pass
 
-from . import localtransport
-from . import tcptransport
+from leginon import localtransport
+from leginon import tcptransport
 
 class Ping(object):
 	pass

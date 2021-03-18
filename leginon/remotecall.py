@@ -12,7 +12,7 @@
 # $Locker:  $
 
 import inspect
-from . import datatransport
+from leginon import datatransport
 import types
 import threading
 
@@ -100,11 +100,11 @@ class Object(object):
 		else:
 			try:
 				result = self._interface[name][type](*args, **kwargs)
-			except Exception as result:
+			except Exception as e:
 				#import sys
 				#excinfo = sys.exc_info()
 				#sys.excepthook(*excinfo)
-				pass
+				result = e
 		return result
 
 	def _getDescription(self):

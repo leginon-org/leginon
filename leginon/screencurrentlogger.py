@@ -1,14 +1,14 @@
 import time
 from leginon import leginondata, referencetimer
-from . import event
-from . import gui.wx.ScreenCurrentLogger
+from leginon import event
+import leginon.gui.wx.ScreenCurrentLogger
 
 class ScreenCurrentLogger(referencetimer.ReferenceTimer):
 	# relay measure does events
 	settingsclass = leginondata.ScreenCurrentLoggerSettingsData
 	defaultsettings = dict(referencetimer.ReferenceTimer.defaultsettings)
 	eventinputs = referencetimer.ReferenceTimer.eventinputs + [event.ScreenCurrentLoggerPublishEvent]
-	panelclass = gui.wx.ScreenCurrentLogger.ScreenCurrentLoggerPanel
+	panelclass = leginon.gui.wx.ScreenCurrentLogger.ScreenCurrentLoggerPanel
 	requestdata = leginondata.ScreenCurrentLoggerData
 	def __init__(self, *args, **kwargs):
 		try:

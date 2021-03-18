@@ -7,11 +7,11 @@
 #
 
 from leginon import leginondata
-from . import acquisition
-from . import gui.wx.StigAcquisition
+from leginon import acquisition
+import leginon.gui.wx.StigAcquisition
 
 class StigAcquisition(acquisition.Acquisition):
-	panelclass = gui.wx.StigAcquisition.Panel
+	panelclass = leginon.gui.wx.StigAcquisition.Panel
 	settingsclass = leginondata.StigAcquisitionSettingsData
 	defaultsettings = dict(acquisition.Acquisition.defaultsettings)
 	defaultsettings.update({

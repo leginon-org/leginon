@@ -15,14 +15,14 @@ import os.path
 import threading
 from leginon import leginondata
 from pyami import mrc
-from . import targetfinder
-from . import gui.wx.TestTargetFinder
+from leginon import targetfinder
+import leginon.gui.wx.TestTargetFinder
 
 class TestTargetFinder(targetfinder.TargetFinder):
 	'''
 	Example TargetFinder subclass.
 	'''
-	panelclass = gui.wx.TestTargetFinder.Panel
+	panelclass = leginon.gui.wx.TestTargetFinder.Panel
 	settingsclass = leginondata.TestTargetFinderSettingsData
 	defaultsettings = dict(targetfinder.TargetFinder.defaultsettings)
 	defaultsettings.update({

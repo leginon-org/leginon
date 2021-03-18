@@ -16,17 +16,17 @@ import numpy
 import pyami.quietscipy
 import scipy.ndimage
 import threading
-from . import align
+from leginon import align
 from leginon import leginondata
-from . import event
-from . import instrument
-from . import node
-from . import presets
-from . import project
-from . import calibrationclient
-from . import targethandler
-from . import gui.wx.RobotAtlasTargetFinder
-from . import libCVwrapper
+from leginon import event
+from leginon import instrument
+from leginon import node
+from leginon import presets
+from leginon import project
+from leginon import calibrationclient
+from leginon import targethandler
+import leginon.gui.wx.RobotAtlasTargetFinder
+from leginon import libCVwrapper
 
 class TargetError(Exception):
 	pass
@@ -209,7 +209,7 @@ class Image(object):
 		return False
 
 class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
-	panelclass = gui.wx.RobotAtlasTargetFinder.Panel
+	panelclass = leginon.gui.wx.RobotAtlasTargetFinder.Panel
 	eventinputs = (
 		node.Node.eventinputs +
 		targethandler.TargetWaitHandler.eventinputs +

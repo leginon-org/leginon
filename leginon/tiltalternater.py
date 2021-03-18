@@ -6,9 +6,9 @@
 #	   see  http://leginon.org
 #
 import math
-from . import acquisition
-from . import leginondata
-from . import gui.wx.TiltAlternater
+from leginon import acquisition
+from leginon import leginondata
+import leginon.gui.wx.TiltAlternater
 
 class TiltAlternater(acquisition.Acquisition):
 	'''
@@ -16,7 +16,7 @@ class TiltAlternater(acquisition.Acquisition):
 	each target it received in the target list.  Optionally return
 	to the tilt of the parent image at the end of processing.
 	'''
-	panelclass = gui.wx.TiltAlternater.Panel
+	panelclass = leginon.gui.wx.TiltAlternater.Panel
 	settingsclass = leginondata.TiltAlternaterSettingsData
 	defaultsettings = dict(acquisition.Acquisition.defaultsettings)
 	defaultsettings.update({

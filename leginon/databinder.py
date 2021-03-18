@@ -9,9 +9,9 @@
 import queue
 from pyami import ordereddict
 import threading
-from . import datatransport
+from leginon import datatransport
 from leginon import leginondata
-from . import remotecall
+from leginon import remotecall
 
 class DataBinder(object):
 	'''Bind data to a function. Used for mapping Events to handlers.'''

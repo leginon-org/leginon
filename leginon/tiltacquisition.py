@@ -7,12 +7,12 @@
 #
 
 import math
-from . import acquisition
-from . import leginondata
-from . import gui.wx.TiltAcquisition
+from leginon import acquisition
+from leginon import leginondata
+import leginon.gui.wx.TiltAcquisition
 
 class TiltAcquisition(acquisition.Acquisition):
-	panelclass = gui.wx.TiltAcquisition.Panel
+	panelclass = leginon.gui.wx.TiltAcquisition.Panel
 	settingsclass = leginondata.TiltAcquisitionSettingsData
 	defaultsettings = acquisition.Acquisition.defaultsettings
 	defaultsettings.update({

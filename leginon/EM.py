@@ -7,16 +7,16 @@
 #
 
 from leginon import leginondata
-from . import instrument
-from . import node
+from leginon import instrument
+from leginon import node
 from pyami import mysocket
 import threading
-from . import gui.wx.Instrument
+import leginon.gui.wx.Instrument
 from pyscope import tem, ccdcamera, registry
 import sys
 
 class EM(node.Node):
-	panelclass = gui.wx.Instrument.Panel
+	panelclass = leginon.gui.wx.Instrument.Panel
 	def __init__(self, name, session, managerlocation, tcpport=None, **kwargs):
 
 		self.instruments = {}

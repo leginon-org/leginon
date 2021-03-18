@@ -6,9 +6,9 @@
 #	   see  http://leginon.org
 #
 from leginon import leginondata
-from . import acquisition
-from . import gui.wx.TiltTracker
-from . import libCVwrapper
+from leginon import acquisition
+import leginon.gui.wx.TiltTracker
+from leginon import libCVwrapper
 import pyami.timedproc
 import numpy
 import time
@@ -77,7 +77,7 @@ def targetPoints(targets):
 #====================
 #====================
 class TiltTracker(acquisition.Acquisition):
-	panelclass = gui.wx.TiltTracker.Panel
+	panelclass = leginon.gui.wx.TiltTracker.Panel
 	settingsclass = leginondata.TiltTrackerSettingsData
 	defaultsettings = dict(acquisition.Acquisition.defaultsettings)
 	defaultsettings.update({

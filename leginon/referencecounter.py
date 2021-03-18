@@ -2,15 +2,15 @@
 import threading
 import time
 from leginon import leginondata
-from . import calibrationclient
-from . import event
-from . import instrument
-from . import reference
-from . import gui.wx.ReferenceCounter
-from . import gui.wx.AlignZLP
+from leginon import calibrationclient
+from leginon import event
+from leginon import instrument
+from leginon import reference
+import leginon.gui.wx.ReferenceCounter
+import leginon.gui.wx.AlignZLP
 
 class ReferenceCounter(reference.Reference):
-	panelclass = gui.wx.ReferenceCounter.ReferenceCounterPanel
+	panelclass = leginon.gui.wx.ReferenceCounter.ReferenceCounterPanel
 	settingsclass = leginondata.ReferenceCounterSettingsData
 	eventinputs = reference.Reference.eventinputs + [event.AcquisitionImagePublishEvent]
 	eventoutputs = reference.Reference.eventoutputs

@@ -6,10 +6,10 @@
 #	   see  http://leginon.org
 #
 from leginon import leginondata
-from . import acquisition
-from . import gui.wx.RCTAcquisition
+from leginon import acquisition
+import leginon.gui.wx.RCTAcquisition
 try:
-	from . import openCVcaller
+	from leginon import openCVcaller
 	NO_CV = False
 except:
 	NO_CV = True
@@ -87,7 +87,7 @@ class RCTAcquisition(acquisition.Acquisition):
 	of images at different tilts.  It acquires all images at one tilt
 	before moving to the next tilt.
 	'''
-	panelclass = gui.wx.RCTAcquisition.Panel
+	panelclass = leginon.gui.wx.RCTAcquisition.Panel
 	settingsclass = leginondata.RCTAcquisitionSettingsData
 	defaultsettings = dict(acquisition.Acquisition.defaultsettings)
 	defaultsettings.update({

@@ -9,23 +9,23 @@
 #
 
 from leginon import leginondata
-from . import targetfinder
-from . import jahcfinderback
+from leginon import targetfinder
+from leginon import jahcfinderback
 from pyami import ordereddict
 import threading
-from . import ice
-from . import instrument
+from leginon import ice
+from leginon import instrument
 import os.path
 import math
-from . import gui.wx.JAHCFinder
-from . import version
+import leginon.gui.wx.JAHCFinder
+from leginon import version
 import itertools
 
 invsqrt2 = math.sqrt(2.0)/2.0
 default_template = os.path.join(version.getInstalledLocation(),'holetemplate.mrc')
 
 class JAHCFinder(targetfinder.TargetFinder):
-	panelclass = gui.wx.JAHCFinder.Panel
+	panelclass = leginon.gui.wx.JAHCFinder.Panel
 	settingsclass = leginondata.JAHCFinderSettingsData
 	defaultsettings = dict(targetfinder.TargetFinder.defaultsettings)
 	defaultsettings.update({
@@ -191,6 +191,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 		try:
 			self.hf.find_blobs()
 		except Exception as e:
+			raise
 			self.logger.error(e)
 			return
 		blobs = self.hf['blobs']

@@ -6,19 +6,19 @@
 #       see  http://leginon.org
 #
 from leginon import leginondata
-from . import node
-from . import gui.wx.IntensityMonitor
+from leginon import node
+import leginon.gui.wx.IntensityMonitor
 from pyami import arraystats
 import time
 import threading
-from . import instrument
-from . import cameraclient
+from leginon import instrument
+from leginon import cameraclient
 
 class IntensityMonitor(node.Node):
 	'''
 	track changes in beam intensity and/or camera sensitivity
 	'''
-	panelclass = gui.wx.IntensityMonitor.Panel
+	panelclass = leginon.gui.wx.IntensityMonitor.Panel
 	settingsclass = leginondata.IntensityMonitorSettingsData
 	defaultsettings = {
 		'iterations': 10,

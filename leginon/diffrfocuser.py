@@ -9,14 +9,14 @@
 import math
 import time
 import threading
-from . import singlefocuser
-from . import acquisition
-from . import leginondata
-from . import gui.wx.DiffrFocuser
-from . import calibrationclient
+from leginon import singlefocuser
+from leginon import acquisition
+from leginon import leginondata
+import leginon.gui.wx.DiffrFocuser
+from leginon import calibrationclient
 
 class DiffrFocuser(singlefocuser.SingleFocuser):
-	panelclass = gui.wx.DiffrFocuser.Panel
+	panelclass = leginon.gui.wx.DiffrFocuser.Panel
 	settingsclass = leginondata.DiffrFocuserSettingsData
 	defaultsettings = dict(singlefocuser.SingleFocuser.defaultsettings)
 	defaultsettings.update({

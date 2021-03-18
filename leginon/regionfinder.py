@@ -9,16 +9,16 @@
 #
 
 from leginon import leginondata
-from . import targetfinder
+from leginon import targetfinder
 import threading
-from . import gui.wx.RegionFinder
-from . import libCVwrapper
-from . import raster
-from . import polygon
+import leginon.gui.wx.RegionFinder
+from leginon import libCVwrapper
+from leginon import raster
+from leginon import polygon
 import math
 
 class RegionFinder(targetfinder.TargetFinder):
-	panelclass = gui.wx.RegionFinder.Panel
+	panelclass = leginon.gui.wx.RegionFinder.Panel
 	settingsclass = leginondata.RegionFinderSettingsData
 	defaultsettings = dict(targetfinder.TargetFinder.defaultsettings)
 	defaultsettings.update({

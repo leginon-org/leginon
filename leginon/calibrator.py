@@ -7,13 +7,13 @@
 #
 import time
 
-from . import node, event, leginondata
-from . import gui.wx.Calibrator
-from . import instrument
-from . import presets
+from leginon import node, event, leginondata
+import leginon.gui.wx.Calibrator
+from leginon import instrument
+from leginon import presets
 import os
 import re
-from . import cameraclient
+from leginon import cameraclient
 
 class Calibrator(node.Node):
 	'''
@@ -21,7 +21,7 @@ class Calibrator(node.Node):
 	Contains basic functions useful for doing calibrations
 	'''
 	eventinputs = node.Node.eventinputs + presets.PresetsClient.eventinputs
-	panelclass = gui.wx.Calibrator.Panel
+	panelclass = leginon.gui.wx.Calibrator.Panel
 	defaultsettings = {
 		'instruments': {'tem': None, 'ccdcamera': None},
 		'override preset': False,

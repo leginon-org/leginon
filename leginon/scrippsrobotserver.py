@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from . import robotserver
+from leginon import robotserver
 try:
 	import pythoncom
 	import win32com.client

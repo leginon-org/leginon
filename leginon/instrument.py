@@ -12,8 +12,8 @@
 # $Locker:  $
 
 from leginon import leginondata
-from . import remotecall
-from . import gui.wx.Events
+from leginon import remotecall
+import leginon.gui.wx.Events
 import time
 
 class InstrumentError(Exception):
@@ -46,7 +46,7 @@ class Proxy(object):
 			self.tems[name] = proxy
 			if self.wxeventhandler is not None:
 				names = self.getTEMNames()
-				evt = gui.wx.Events.SetTEMsEvent(self.wxeventhandler, names=names)
+				evt = leginon.gui.wx.Events.SetTEMsEvent(self.wxeventhandler, names=names)
 				self.wxeventhandler.GetEventHandler().AddPendingEvent(evt)
 			if self.tem is None:
 				self.setTEM(name)
@@ -59,7 +59,7 @@ class Proxy(object):
 			self.camerabinmethods[name] = proxy.CameraBinMethod
 			if self.wxeventhandler is not None:
 				names = self.getCCDCameraNames()
-				evt = gui.wx.Events.SetCCDCamerasEvent(self.wxeventhandler, names=names)
+				evt = leginon.gui.wx.Events.SetCCDCamerasEvent(self.wxeventhandler, names=names)
 				self.wxeventhandler.GetEventHandler().AddPendingEvent(evt)
 			if self.ccdcamera is None:
 				self.setCCDCamera(name)
@@ -214,7 +214,7 @@ class Proxy(object):
 			except KeyError:
 				raise NotAvailableError('TEM \'%s\' not available' % name)
 		if self.wxeventhandler is not None:
-			evt = gui.wx.Events.SetTEMEvent(self.wxeventhandler, name=name)
+			evt = leginon.gui.wx.Events.SetTEMEvent(self.wxeventhandler, name=name)
 			self.wxeventhandler.GetEventHandler().AddPendingEvent(evt)
 
 	def setCCDCamera(self, name):
@@ -232,7 +232,7 @@ class Proxy(object):
 			except KeyError:
 				raise NotAvailableError('CCD camera \'%s\' not available' % name)
 		if self.wxeventhandler is not None:
-			evt = gui.wx.Events.SetCCDCameraEvent(self.wxeventhandler, name=name)
+			evt = leginon.gui.wx.Events.SetCCDCameraEvent(self.wxeventhandler, name=name)
 			self.wxeventhandler.GetEventHandler().AddPendingEvent(evt)
 
 	def getTEMParameter(self, temname, name):

@@ -7,9 +7,9 @@ import pyami.imagefun
 import pyami.numpil
 import pyami.correlator
 import pyami.mrc
-from . import lattice
+from leginon import lattice
 from pyami.ordereddict import OrderedDict
-from . import targetworkflow
+from leginon import targetworkflow
 
 class ImageInput(targetworkflow.ImageProducer):
 	'''result is an image, either from a file or from external dependency'''

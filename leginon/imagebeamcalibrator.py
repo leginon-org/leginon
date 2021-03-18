@@ -5,15 +5,15 @@
 #       For terms of the license agreement
 #       see  http://leginon.org
 #
-from . import calibrator
-from . import event, leginondata
+from leginon import calibrator
+from leginon import event, leginondata
 from pyami import correlator, peakfinder
 import sys
 import time
-from . import calibrationclient
+from leginon import calibrationclient
 import threading
-from . import node
-from . import gui.wx.ImageBeamCalibrator
+from leginon import node
+import leginon.gui.wx.ImageBeamCalibrator
 import numpy
 
 class CalibrationError(Exception):
@@ -26,7 +26,7 @@ class ImageBeamCalibrator(calibrator.Calibrator):
 	'''
 	Calibrates beam shift required for compensate image shift.
 	'''
-	panelclass = gui.wx.ImageBeamCalibrator.Panel
+	panelclass = leginon.gui.wx.ImageBeamCalibrator.Panel
 	settingsclass = leginondata.ImageBeamCalibratorSettingsData
 	defaultsettings = dict(calibrator.Calibrator.defaultsettings)
 	defaultsettings.update({

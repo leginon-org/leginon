@@ -7,10 +7,10 @@
 #
 
 import sinedon.data
-from . import imageassessor
-from . import event
-from . import node
-from . import gui.wx.MaskAssessor
+from leginon import imageassessor
+from leginon import event
+from leginon import node
+import leginon.gui.wx.MaskAssessor
 import os
 import numpy
 from pyami import imagefun, mrc
@@ -22,7 +22,7 @@ except:
 	pass
 
 class MaskAssessor(imageassessor.ImageAssessor):
-	panelclass = gui.wx.MaskAssessor.Panel
+	panelclass = leginon.gui.wx.MaskAssessor.Panel
 	settingsclass = leginondata.MaskAssessorSettingsData
 	defaultsettings = {
 		'mask run': 'test',

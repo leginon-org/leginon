@@ -5,27 +5,27 @@
 #	   For terms of the license agreement
 #	   see  http://leginon.org
 #
-from . import acquisition
-from . import node
+from leginon import acquisition
+from leginon import node
 from leginon import leginondata
-from . import calibrationclient
+from leginon import calibrationclient
 import threading
-from . import event
+from leginon import event
 import time
 import math
 from pyami import correlator, peakfinder, imagefun, numpil,arraystats
 import numpy
 from scipy import ndimage
 import copy
-from . import gui.wx.BeamTiltFixer
-from . import player
-from . import tableau
+import leginon.gui.wx.BeamTiltFixer
+from leginon import player
+from leginon import tableau
 import subprocess
 import re
 import os
 
 class BeamTiltFixer(acquisition.Acquisition):
-	panelclass = gui.wx.BeamTiltFixer.Panel
+	panelclass = leginon.gui.wx.BeamTiltFixer.Panel
 	settingsclass = leginondata.BeamTiltFixerSettingsData
 	defaultsettings = dict(acquisition.Acquisition.defaultsettings)
 	defaultsettings.update({

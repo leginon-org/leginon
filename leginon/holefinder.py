@@ -9,19 +9,19 @@
 #
 
 from leginon import leginondata
-from . import targetfinder
-from . import holefinderback
+from leginon import targetfinder
+from leginon import holefinderback
 from pyami import ordereddict
 import threading
-from . import ice
-from . import instrument
+from leginon import ice
+from leginon import instrument
 import os.path
 import math
-from . import gui.wx.HoleFinder
+import leginon.gui.wx.HoleFinder
 import itertools
 
 class HoleFinder(targetfinder.TargetFinder):
-	panelclass = gui.wx.HoleFinder.Panel
+	panelclass = leginon.gui.wx.HoleFinder.Panel
 	settingsclass = leginondata.HoleFinderSettingsData
 	defaultsettings = dict(targetfinder.TargetFinder.defaultsettings)
 	defaultsettings.update({

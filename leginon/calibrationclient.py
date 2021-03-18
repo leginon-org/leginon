@@ -11,7 +11,7 @@
 # $State: Exp $
 # $Locker:  $
 
-from . import node, leginondata, event
+from leginon import node, leginondata, event
 import numpy
 import numpy.linalg
 import scipy
@@ -22,9 +22,9 @@ from pyami import correlator, peakfinder, arraystats, imagefun, fftfun, numpil, 
 import time
 import sys
 import threading
-from . import gonmodel
-from . import tiltcorrector
-from . import tableau
+from leginon import gonmodel
+from leginon import tiltcorrector
+from leginon import tableau
 
 class Drifting(Exception):
 	pass

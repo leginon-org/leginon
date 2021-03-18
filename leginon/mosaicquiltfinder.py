@@ -7,19 +7,19 @@
 #
 
 from leginon import leginondata
-from . import event
-from . import mosaictargetfinder
-from . import targetfinder
-from . import gui.wx.MosaicQuiltFinder
-from . import jahcfindermodel
-from . import jahcfinder
+from leginon import event
+from leginon import mosaictargetfinder
+from leginon import targetfinder
+import leginon.gui.wx.MosaicQuiltFinder
+from leginon import jahcfindermodel
+from leginon import jahcfinder
 
 class MosaicQuiltFinder(mosaictargetfinder.MosaicClickTargetFinder):
 	'''
 	Target selection specific for atlas made from square stitchingor atlas made from.  It retains z height in further imaging. 
 	'''
 
-	panelclass = gui.wx.MosaicQuiltFinder.Panel
+	panelclass = leginon.gui.wx.MosaicQuiltFinder.Panel
 	settingsclass = leginondata.MosaicQuiltFinderSettingsData
 	defaultsettings = dict(targetfinder.ClickTargetFinder.defaultsettings)
 	defaultsettings.update(jahcfinder.JAHCFinder.defaultsettings)

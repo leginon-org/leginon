@@ -10,7 +10,7 @@
 
 from pyami import imagefun, convolver, mrc, arraystats
 import random
-from . import targetfinder
+from leginon import targetfinder
 import threading
 import uidata
 

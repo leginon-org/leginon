@@ -5,15 +5,15 @@
 #       For terms of the license agreement
 #       see  http://leginon.org
 #
-from . import calibrator
-from . import event, leginondata
+from leginon import calibrator
+from leginon import event, leginondata
 from pyami import correlator, peakfinder
 import sys
 import time
-from . import calibrationclient
+from leginon import calibrationclient
 import threading
-from . import node
-from . import gui.wx.MatrixCalibrator
+from leginon import node
+import leginon.gui.wx.MatrixCalibrator
 
 class CalibrationError(Exception):
 	pass
@@ -35,7 +35,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 	Then 'Calibrate'
 	(Valid Shift is currently being ignored)
 	'''
-	panelclass = gui.wx.MatrixCalibrator.Panel
+	panelclass = leginon.gui.wx.MatrixCalibrator.Panel
 	settingsclass = leginondata.MatrixCalibratorSettingsData
 	defaultsettings = dict(calibrator.Calibrator.defaultsettings)
 	defaultsettings.update({

@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
 import numpy
-from . import workflow
-from . import targetworkflow
-from . import commonsteps
+from leginon import workflow
+from leginon import targetworkflow
+from leginon import commonsteps
 from pyami.ordereddict import OrderedDict
 
 ########################################################

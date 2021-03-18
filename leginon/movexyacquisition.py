@@ -7,15 +7,15 @@
 #
 import math
 import time
-from . import moveacquisition
-from . import leginondata
-from . import gui.wx.MoveXYAcquisition
+from leginon import moveacquisition
+from leginon import leginondata
+import leginon.gui.wx.MoveXYAcquisition
 import threading
 
 debug = False
 
 class MoveXYAcquisition(moveacquisition.MoveAcquisition):
-	panelclass = gui.wx.MoveXYAcquisition.Panel
+	panelclass = leginon.gui.wx.MoveXYAcquisition.Panel
 	settingsclass = leginondata.MoveXYAcquisitionSettingsData
 	defaultsettings = dict(moveacquisition.MoveAcquisition.defaultsettings)
 	defaultsettings.update({

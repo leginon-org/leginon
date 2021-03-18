@@ -9,19 +9,19 @@
 #
 
 from leginon import leginondata
-from . import event
-from . import imagewatcher
+from leginon import event
+from leginon import imagewatcher
 import numpy
 import scipy.ndimage
-from . import gui.wx.Corrector
-from . import instrument
+import leginon.gui.wx.Corrector
+from leginon import instrument
 import sys
 from pyami import arraystats, imagefun, mrc, ccd
-from . import polygon
+from leginon import polygon
 import time
 import datetime
 import os
-from . import cameraclient
+from leginon import cameraclient
 
 class Corrector(imagewatcher.ImageWatcher):
 	'''
@@ -36,7 +36,7 @@ class Corrector(imagewatcher.ImageWatcher):
 	  a dark and bright image for this plan.  These are stored as MRC
 	  in the corrections directory.
 	'''
-	panelclass = gui.wx.Corrector.Panel
+	panelclass = leginon.gui.wx.Corrector.Panel
 	settingsclass = leginondata.CorrectorSettingsData
 	defaultsettings = {
 		'instruments': {'tem':None, 'ccdcamera':None},

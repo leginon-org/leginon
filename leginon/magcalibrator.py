@@ -5,14 +5,14 @@
 #	   For terms of the license agreement
 #	   see  http://leginon.org
 #
-from . import calibrator
-from . import calibrationclient
-from . import event
+from leginon import calibrator
+from leginon import calibrationclient
+from leginon import event
 from leginon import leginondata
-from . import node
-from . import gui.wx.MagCalibrator
+from leginon import node
+import leginon.gui.wx.MagCalibrator
 import time
-from . import libCVwrapper
+from leginon import libCVwrapper
 import numpy
 from pyami import arraystats, mrc, affine, msc
 import pyami.quietscipy
@@ -21,7 +21,7 @@ from scipy import ndimage
 class MagCalibrator(calibrator.Calibrator):
 	'''
 	'''
-	panelclass = gui.wx.MagCalibrator.Panel
+	panelclass = leginon.gui.wx.MagCalibrator.Panel
 	settingsclass = leginondata.MagCalibratorSettingsData
 	defaultsettings = dict(calibrator.Calibrator.defaultsettings)
 	defaultsettings.update({

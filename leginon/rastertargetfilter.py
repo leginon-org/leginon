@@ -1,10 +1,10 @@
-from . import targetfilter
+from leginon import targetfilter
 from leginon import leginondata
-from . import gui.wx.RasterTargetFilter
-from . import presets
-from . import calibrationclient
-from . import raster
-from . import instrument
+import leginon.gui.wx.RasterTargetFilter
+from leginon import presets
+from leginon import calibrationclient
+from leginon import raster
+from leginon import instrument
 import math
 import numpy
 
@@ -12,7 +12,7 @@ class RasterTargetFilter(targetfilter.TargetFilter):
 	'''
 	Example of a TargetFilter subclass
 	'''
-	panelclass = gui.wx.RasterTargetFilter.Panel
+	panelclass = leginon.gui.wx.RasterTargetFilter.Panel
 	settingsclass = leginondata.RasterTargetFilterSettingsData
 	defaultsettings = dict(targetfilter.TargetFilter.defaultsettings)
 	defaultsettings.update({

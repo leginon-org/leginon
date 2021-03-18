@@ -5,22 +5,22 @@
 #       For terms of the license agreement
 #       see  http://leginon.org
 #
-from . import node
+from leginon import node
 from leginon import leginondata
 from pyami import correlator, peakfinder
-from . import event
+from leginon import event
 import time
-from . import timer
+from leginon import timer
 import threading
-from . import calibrationclient
-from . import gonmodel
+from leginon import calibrationclient
+from leginon import gonmodel
 import string
 import math
-from . import calibrator
-from . import gui.wx.GonModeler
+from leginon import calibrator
+import leginon.gui.wx.GonModeler
 
 class GonModeler(calibrator.Calibrator):
-	panelclass = gui.wx.GonModeler.Panel
+	panelclass = leginon.gui.wx.GonModeler.Panel
 	settingsclass = leginondata.GonModelerSettingsData
 	defaultsettings = dict(calibrator.Calibrator.defaultsettings)
 	defaultsettings.update({

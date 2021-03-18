@@ -11,8 +11,8 @@ import numpy
 import pyami.quietscipy
 import scipy.ndimage
 from leginon import leginondata
-from . import polygon
-from . import raster
+from leginon import polygon
+from leginon import raster
 import time
 import sys
 from pyami import ordereddict, mrc
@@ -20,7 +20,7 @@ import pickle
 import os.path
 import sinedon
 from pyami import affine
-from . import caltransformer
+from leginon import caltransformer
 import xml.dom.minidom
 
 def getMosaicXMLData(data):

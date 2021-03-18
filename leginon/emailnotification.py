@@ -1,32 +1,32 @@
 import smtplib
 import email
-import email.MIMEImage
-import email.MIMEMultipart
-import email.MIMEText
+import email.mime.image
+import email.mime.multipart
+import email.mime.text
 import poplib
 from PIL import Image
 import io
-from . import NumericImage
+from leginon import NumericImage
 import time
-from . import node
+from leginon import node
 #import uidata
-from . import event
+from leginon import event
 import threading
 
 def makeMessage(fromaddress, toaddress, subject,
 											text=None, imagestring=None):
-	msg = email.MIMEMultipart.MIMEMultipart()
+	msg = email.mime.multipart.MIMEMultipart()
 	msg['Subject'] = subject
 	msg['From'] = fromaddress
 	msg['To'] = toaddress
 	msg['Message-ID'] = email.Utils.make_msgid()
 
 	if text is not None:
-		mimetext = email.MIMEText.MIMEText(text)
+		mimetext = email.mime.text.MIMEText(text)
 		msg.attach(mimetext)
 
 	if imagestring is not None:
-		mimeimage = email.MIMEImage.MIMEImage(imagestring)
+		mimeimage = email.mime.image.MIMEImage(imagestring)
 		msg.attach(mimeimage)
 	return msg
 

@@ -8,7 +8,7 @@ import wx
 import wx.lib.plot
 from leginon import leginondata
 import math
-from . import gonmodel
+from leginon import gonmodel
 import numpy
 
 def querymodel(axis, hostname, label=None):

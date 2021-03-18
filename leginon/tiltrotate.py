@@ -1,10 +1,10 @@
-from . import gui.wx.TiltRotate
+import leginon.gui.wx.TiltRotate
 from leginon import leginondata
-from . import targetrepeater
+from leginon import targetrepeater
 
 class TiltRotateRepeater(targetrepeater.TargetRepeater):
 	transformtype = 'rotation'
-	panelclass = gui.wx.TiltRotate.Panel
+	panelclass = leginon.gui.wx.TiltRotate.Panel
 	settingsclass = leginondata.TiltRotateSettingsData
 	defaultsettings = dict(targetrepeater.TargetRepeater.defaultsettings)
 	defaultsettings.update({

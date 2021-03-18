@@ -5,9 +5,9 @@
 #       For terms of the license agreement
 #       see  http://leginon.org
 #
-from . import applications
+from leginon import applications
 from leginon import leginondata
-from . import event
+from leginon import event
 
 class Application(object):
 	def __init__(self, node, name=None):

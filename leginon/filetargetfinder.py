@@ -9,9 +9,9 @@
 #
 
 from leginon import leginondata
-from . import targetfinder
+from leginon import targetfinder
 import threading
-from . import gui.wx.ClickTargetFinder
+import leginon.gui.wx.ClickTargetFinder
 
 class FileTargetFinder(targetfinder.ClickTargetFinder):
 	'''
@@ -20,7 +20,7 @@ class FileTargetFinder(targetfinder.ClickTargetFinder):
 	list of targets with it so they can be submitted and processed.
 	'''
 	targetnames = ['preview', 'reference', 'focus', 'acquisition']
-	panelclass = gui.wx.ClickTargetFinder.Panel
+	panelclass = leginon.gui.wx.ClickTargetFinder.Panel
 	eventoutputs = targetfinder.ClickTargetFinder.eventoutputs
 	settingsclass = leginondata.ClickTargetFinderSettingsData
 	defaultsettings = dict(targetfinder.ClickTargetFinder.defaultsettings)

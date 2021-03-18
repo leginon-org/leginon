@@ -9,17 +9,17 @@
 #
 
 from leginon import leginondata
-from . import targetfinder
+from leginon import targetfinder
 from pyami import correlator, imagefun, peakfinder
 
 import threading
-from . import gui.wx.DTFinder
+import leginon.gui.wx.DTFinder
 import numpy
 from pyami import quietscipy
 import scipy.ndimage
 
 class DTFinder(targetfinder.TargetFinder):
-	panelclass = gui.wx.DTFinder.Panel
+	panelclass = leginon.gui.wx.DTFinder.Panel
 	settingsclass = leginondata.DTFinderSettingsData
 	defaultsettings = dict(targetfinder.TargetFinder.defaultsettings)
 	defaultsettings.update({

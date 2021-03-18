@@ -7,22 +7,22 @@
 #
 
 from leginon import leginondata
-from . import event
-from . import imagewatcher
+from leginon import event
+from leginon import imagewatcher
 import threading
-from . import node
-from . import calibrationclient
+from leginon import node
+from leginon import calibrationclient
 import numpy
 import math
 import pyami.quietscipy
 import scipy.ndimage
 from pyami import imagefun
-from . import gui.wx.FFTMaker
+import leginon.gui.wx.FFTMaker
 from pyami import fftfun
 
 class FFTMaker(imagewatcher.ImageWatcher):
 	eventinputs = imagewatcher.ImageWatcher.eventinputs + [event.AcquisitionImagePublishEvent]
-	panelclass = gui.wx.FFTMaker.Panel
+	panelclass = leginon.gui.wx.FFTMaker.Panel
 	settingsclass = leginondata.FFTMakerSettingsData
 	defaultsettings = {
 		'process': False,

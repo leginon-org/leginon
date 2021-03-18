@@ -13,7 +13,7 @@ import socket
 import socketserver
 import threading
 import math
-from . import datatransport
+from leginon import datatransport
 from pyami import mysocket
 
 CHUNK_SIZE = 8*1024*1024

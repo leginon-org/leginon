@@ -3,7 +3,7 @@ import os
 from distutils.command.install_data import install_data
 from distutils.core import setup, Extension
 from distutils.sysconfig import get_python_lib
-from . import version
+from leginon import version
 class InstallData(install_data):
 	def run(self):
 		installcommand = self.get_finalized_command('install')
@@ -17,7 +17,7 @@ setup(
 	description=
 		'Automated data acquisition for transmission electron microscopes',
 	cmdclass={'install_data': InstallData},
-	packages=['leginon', 'leginon.gui', 'leginon.gui.wx', 'leginon.icons', 'leginon.tomography', 'leginon.gui.wx.tomography', 'leginon.applications'],
+	packages=['leginon', 'leginon.gui', 'leginon.leginon.gui.wx', 'leginon.icons', 'leginon.tomography', 'leginon.leginon.gui.wx.tomography', 'leginon.applications'],
 	package_dir={'leginon': ''},
 	data_files=[
 		('leginon', ['holetemplate.mrc']),

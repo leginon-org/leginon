@@ -6,33 +6,33 @@
 #       see  http://leginon.org
 #
 
-from . import calibrationclient
+from leginon import calibrationclient
 from leginon import leginondata
-from . import event
-from . import instrument
-from . import imagewatcher
-from . import mosaic
+from leginon import event
+from leginon import instrument
+from leginon import imagewatcher
+from leginon import mosaic
 import threading
-from . import node
-from . import targethandler
-from . import appclient
-from . import remoteserver
+from leginon import node
+from leginon import targethandler
+from leginon import appclient
+from leginon import remoteserver
 from pyami import convolver, imagefun, mrc, numpil
 from pyami import ordereddict
 import numpy
 import pyami.quietscipy
 import scipy.ndimage as nd
-from . import gui.wx.TargetFinder
-from . import gui.wx.ClickTargetFinder
-from . import gui.wx.MosaicClickTargetFinder
+import leginon.gui.wx.TargetFinder
+import leginon.gui.wx.ClickTargetFinder
+import leginon.gui.wx.MosaicClickTargetFinder
 import os
-from . import shortpath
+from leginon import shortpath
 import math
-from . import polygon
-from . import raster
-from . import presets
+from leginon import polygon
+from leginon import raster
+from leginon import presets
 import time
-from . import version
+from leginon import version
 
 try:
 	set = set
@@ -41,7 +41,7 @@ except NameError:
 	set = sets.Set
 
 class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
-	panelclass = gui.wx.TargetFinder.Panel
+	panelclass = leginon.gui.wx.TargetFinder.Panel
 	settingsclass = leginondata.TargetFinderSettingsData
 	defaultsettings = {
 		'queue': False,
@@ -87,7 +87,8 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		self.targetimagevectors = {'x':(0,0),'y':(0,0)}
 		self.targetbeamradius = 0
 		self.resetLastFocusedTargetList(None)
-		if not remoteserver.NO_REQUESTS and session is not None:
+		if False:
+		#if not remoteserver.NO_REQUESTS and session is not None:
 			self.remote_targeting = remoteserver.RemoteTargetingServer(self.logger, session, self, self.remote.leginon_base)
 			self.remote_toolbar = remoteserver.RemoteToolbar(self.logger, session, self, self.remote.leginon_base)
 			self.remote_queue_count = remoteserver.RemoteQueueCount(self.logger, session, self, self.remote.leginon_base)
@@ -763,7 +764,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 
 class ClickTargetFinder(TargetFinder):
 	targetnames = ['preview', 'reference', 'focus', 'acquisition']
-	panelclass = gui.wx.ClickTargetFinder.Panel
+	panelclass = leginon.gui.wx.ClickTargetFinder.Panel
 	eventoutputs = TargetFinder.eventoutputs + [event.ReferenceTargetPublishEvent]
 	settingsclass = leginondata.ClickTargetFinderSettingsData
 	def __init__(self, id, session, managerlocation, **kwargs):

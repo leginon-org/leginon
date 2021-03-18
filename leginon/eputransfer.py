@@ -26,7 +26,7 @@ try:
 	from leginon import epu_meta
 except ImportError:
 	# find it locally
-	from . import epu_meta
+	from leginon import epu_meta
 session_timeout = 60 # seconds before timeout
 check_interval = 120  # seconds between checking for new frames
 # production usage on linux

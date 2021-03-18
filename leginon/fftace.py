@@ -7,10 +7,10 @@
 #
 
 from leginon import leginondata
-from . import event
-from . import fftmaker
+from leginon import event
+from leginon import fftmaker
 import threading
-from . import node
+from leginon import node
 import os
 import math
 import time
@@ -21,13 +21,13 @@ import numextension
 import pyami.quietscipy
 import scipy.ndimage
 from pyami import imagefun, mrc
-from . import gui.wx.FFTAce
-from . import calibrationclient
-from . import instrument
+import leginon.gui.wx.FFTAce
+from leginon import calibrationclient
+from leginon import instrument
 
 class CTFAnalyzer(fftmaker.FFTMaker):
 	eventinputs = fftmaker.FFTMaker.eventinputs
-	panelclass = gui.wx.FFTAce.Panel
+	panelclass = leginon.gui.wx.FFTAce.Panel
 	settingsclass = leginondata.FFTAceSettingsData
 	defaultsettings = {
 		'process': False,

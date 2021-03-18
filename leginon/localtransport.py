@@ -5,7 +5,7 @@
 #       For terms of the license agreement
 #       see  http://leginon.org
 #
-from . import datatransport
+from leginon import datatransport
 
 locationkey = 'local transport'
 

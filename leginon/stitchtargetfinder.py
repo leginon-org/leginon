@@ -18,10 +18,10 @@ from leginon import leginondata
 from leginon import raster
 from pyami import mrc
 from leginon import targetfinder
-from . import gui.wx.StitchTargetFinder
+import leginon.gui.wx.StitchTargetFinder
 
 class StitchTargetFinder(targetfinder.TargetFinder):
-	panelclass = gui.wx.StitchTargetFinder.Panel
+	panelclass = leginon.gui.wx.StitchTargetFinder.Panel
 	settingsclass = leginondata.StitchTargetFinderSettingsData
 	defaultsettings = dict(targetfinder.TargetFinder.defaultsettings)
 	defaultsettings.update({

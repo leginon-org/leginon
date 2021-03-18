@@ -15,20 +15,20 @@
 import numpy
 import math
 import threading
-from . import calibrator
-from . import calibrationclient
+from leginon import calibrator
+from leginon import calibrationclient
 from leginon import leginondata
 from pyami import imagefun
 from leginon import tableau
 from leginon import player
-from . import gui.wx.BeamTiltCalibrator
+import leginon.gui.wx.BeamTiltCalibrator
 import time
 
 class Abort(Exception):
 	pass
 
 class BeamTiltCalibrator(calibrator.Calibrator):
-	panelclass = gui.wx.BeamTiltCalibrator.Panel
+	panelclass = leginon.gui.wx.BeamTiltCalibrator.Panel
 	settingsclass = leginondata.BeamTiltCalibratorSettingsData
 	defaultsettings = dict(calibrator.Calibrator.defaultsettings)
 	defaultsettings.update({

@@ -7,17 +7,17 @@ import sys
 import threading
 import time
 from leginon import leginondata
-from . import emailnotification
-from . import event
-from . import instrument
-from . import node
-from . import project
-from . import gui.wx.Robot
+from leginon import emailnotification
+from leginon import event
+from leginon import instrument
+from leginon import node
+from leginon import project
+import leginon.gui.wx.Robot
 import queue
 import sinedon
 
 # inherit from robot2 class
-from . import robot2
+from leginon import robot2
 
 # need to copy these from robot2 class
 def seconds2str(seconds):
@@ -148,7 +148,7 @@ class Robot2nysbc(robot2.Robot2):
 	defYposition = -688.7e-6
 	defAposition = 0
 	
-	panelclass = gui.wx.Robot.Panel
+	panelclass = leginon.gui.wx.Robot.Panel
 	eventinputs = node.Node.eventinputs + [event.TargetListDoneEvent,event.UnloadGridEvent,event.QueueGridEvent,event.QueueGridsEvent,event.MosaicDoneEvent]
 	eventoutputs = node.Node.eventoutputs + [event.MakeTargetListEvent,event.GridLoadedEvent,event.EmailEvent]
 	settingsclass = leginondata.RobotSettingsData

@@ -6,17 +6,17 @@
 # $State: Exp $
 # $Locker:  $
 import math
-from . import presetadjuster
+from leginon import presetadjuster
 from leginon import leginondata
-from . import event
-from . import gui.wx.BeamFixer
+from leginon import event
+import leginon.gui.wx.BeamFixer
 from pyami import arraystats
 
 class BeamFixer(presetadjuster.PresetAdjuster):
 	# relay measure does events
 	eventinputs = presetadjuster.PresetAdjuster.eventinputs + [event.FixBeamEvent]
 	eventoutputs = presetadjuster.PresetAdjuster.eventoutputs
-	panelclass = gui.wx.BeamFixer.BeamFixerPanel
+	panelclass = leginon.gui.wx.BeamFixer.BeamFixerPanel
 	settingsclass = leginondata.BeamFixerSettingsData
 	defaultsettings = dict(presetadjuster.PresetAdjuster.defaultsettings)
 	defaultsettings.update({

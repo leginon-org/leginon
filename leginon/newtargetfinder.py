@@ -9,13 +9,13 @@
 #
 
 from leginon import leginondata
-from . import targetfinder
+from leginon import targetfinder
 from pyami import ordereddict
 import threading
 import os.path
 import math
-from . import gui.wx.NewTargetFinder
-from . import version
+import leginon.gui.wx.NewTargetFinder
+from leginon import version
 import targetingsteps
 
 invsqrt2 = math.sqrt(2.0)/2.0
@@ -26,7 +26,7 @@ newsettingsclass = targetingsteps.makeSettingsClass('NewTargetFinderSettingsData
 newdefaultsettings = targetingsteps.makeDefaultSettings(newworkflow)
 
 class NewTargetFinder(targetfinder.TargetFinder):
-	panelclass = gui.wx.NewTargetFinder.Panel
+	panelclass = leginon.gui.wx.NewTargetFinder.Panel
 	settingsclass = newsettingsclass
 	defaultsettings = dict(targetfinder.TargetFinder.defaultsettings)
 	defaultsettings.update(newdefaultsettings)

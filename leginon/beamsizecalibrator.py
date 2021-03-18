@@ -13,13 +13,13 @@
 
 import numpy
 import numpy.linalg
-from . import calibrator
+from leginon import calibrator
 from leginon import leginondata
-from . import gui.wx.BeamSizeCalibrator
+import leginon.gui.wx.BeamSizeCalibrator
 from leginon import calibrationclient
 
 class BeamSizeCalibrator(calibrator.ScreenCalibrator):
-	panelclass = gui.wx.BeamSizeCalibrator.Panel
+	panelclass = leginon.gui.wx.BeamSizeCalibrator.Panel
 	settingsclass = leginondata.BeamSizeCalibratorSettingsData
 	defaultsettings = dict(calibrator.ScreenCalibrator.defaultsettings)
 	defaultsettings.update({

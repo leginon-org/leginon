@@ -5,20 +5,20 @@
 #       For terms of the license agreement
 #       see  http://leginon.org
 #
-from . import calibrator
-from . import calibrationclient
-from . import event, leginondata
+from leginon import calibrator
+from leginon import calibrationclient
+from leginon import event, leginondata
 from pyami import imagefun
-from . import node
+from leginon import node
 import math
 import scipy
-from . import gui.wx.ScaleRotationCalibrator
+import leginon.gui.wx.ScaleRotationCalibrator
 
 class ScaleRotationCalibrator(calibrator.Calibrator):
 	'''
 	calibrate the image rotation for different mags
 	'''
-	panelclass = gui.wx.ScaleRotationCalibrator.Panel
+	panelclass = leginon.gui.wx.ScaleRotationCalibrator.Panel
 	settingsclass = leginondata.ScaleRotationCalibratorSettingsData
 	defaultsettings = dict(calibrator.Calibrator.defaultsettings)
 

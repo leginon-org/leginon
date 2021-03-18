@@ -14,9 +14,9 @@ from leginon.databinder import DataBinder
 from leginon import datatransport
 from leginon import event
 import threading
-from leginon.gui.wx import Events
-from leginon.gui.wx import LeginonLogging as Logging
-from leginon.gui.wx import Node
+import leginon.gui.wx.Events
+import leginon.gui.wx.LeginonLogging as Logging
+import leginon.gui.wx.Node
 import copy
 import socket
 from pyami import mysocket
@@ -118,7 +118,8 @@ class Node(correctorclient.CorrectorClient):
 
 		self.initializeSettings()
 		# Manager is also a node subclass but does not need status report
-		if not remoteserver.NO_REQUESTS and self.__class__.__name__ not in ('Manager','Launcher','EM') and session is not None:
+		if False:
+		#if not remoteserver.NO_REQUESTS and self.__class__.__name__ not in ('Manager','Launcher','EM') and session is not None:
 			self.remote = remoteserver.RemoteServerMaster(self.logger, session, self)
 			self.remote_status = remoteserver.RemoteStatusbar(self.logger, session, self, self.remote.leginon_base)
 			self.remote_pmlock = remoteserver.PresetsManagerLock(self.logger, session, self)
@@ -258,6 +259,7 @@ class Node(correctorclient.CorrectorClient):
 			sd['isdefault'] = True
 		else:
 			sd['isdefault'] = isdefault
+		print(self.name,sd)
 		self.publish(sd, database=True, dbforce=True)
 		self._checkSettings(sd)
 
@@ -302,18 +304,18 @@ class Node(correctorclient.CorrectorClient):
 		if self.panel is None:
 			# gui not loaded
 			return False
-		evt = gui.wx.Node.NodeInitializedEvent(self)
+		evt = leginon.gui.wx.Node.NodeInitializedEvent(self)
 		self.panel.GetEventHandler().AddPendingEvent(evt)
 		evt.event.wait()
 
 	def setImage(self, image, typename=None):
 		if image is not None:
 			image = numpy.asarray(image, numpy.float32)
-		evt = gui.wx.Events.SetImageEvent(image, typename)
+		evt = leginon.gui.wx.Events.SetImageEvent(image, typename)
 		self.panel.GetEventHandler().AddPendingEvent(evt)
 
 	def setTargets(self, targets, typename, block=False):
-		evt = gui.wx.Events.SetTargetsEvent(targets, typename)
+		evt = leginon.gui.wx.Events.SetTargetsEvent(targets, typename)
 		if block:
 			evt.event = threading.Event()
 		self.panel.GetEventHandler().AddPendingEvent(evt)
@@ -688,7 +690,7 @@ class Node(correctorclient.CorrectorClient):
 		self.logger.info('specimen-only exposure done')
 
 	def setUserVerificationStatus(self, state):
-		evt = gui.wx.Events.UserVerificationUpdatedEvent(self.panel, state)
+		evt = leginon.gui.wx.Events.UserVerificationUpdatedEvent(self.panel, state)
 		self.panel.GetEventHandler().AddPendingEvent(evt)
 
 ## module global for storing start times

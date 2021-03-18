@@ -1,12 +1,12 @@
-from . import targetfilter
+from leginon import targetfilter
 from leginon import leginondata
-from . import gui.wx.CenterTargetFilter
+import leginon.gui.wx.CenterTargetFilter
 
 class CenterTargetFilter(targetfilter.TargetFilter):
 	'''
 	Example of a TargetFilter subclass
 	'''
-	panelclass = gui.wx.CenterTargetFilter.Panel
+	panelclass = leginon.gui.wx.CenterTargetFilter.Panel
 	settingsclass = leginondata.CenterTargetFilterSettingsData
 	defaultsettings = dict(targetfilter.TargetFilter.defaultsettings)
 	defaultsettings.update({

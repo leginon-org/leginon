@@ -1,9 +1,9 @@
 #!/usr/bin/env python
-from . import databinder
+from leginon import databinder
 import time
-from . import event
+from leginon import event
 from pyami import mysocket
-from . import datatransport
+from leginon import datatransport
 
 class Logger(object):
    def info(self, stuff):

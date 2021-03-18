@@ -5,19 +5,19 @@
 #	   For terms of the license agreement
 #	   see  http://leginon.org
 #
-from . import acquisition
-from . import node, leginondata
-from . import calibrationclient
-from . import event
+from leginon import acquisition
+from leginon import node, leginondata
+from leginon import calibrationclient
+from leginon import event
 import time
 import math
 from pyami import arraystats
 import numpy
-from . import gui.wx.AutoExposure
-from . import player
+import leginon.gui.wx.AutoExposure
+from leginon import player
 
 class AutoExposure(acquisition.Acquisition):
-	panelclass = gui.wx.AutoExposure.Panel
+	panelclass = leginon.gui.wx.AutoExposure.Panel
 	settingsclass = leginondata.AutoExposureSettingsData
 	defaultsettings = dict(acquisition.Acquisition.defaultsettings)
 	defaultsettings.update({

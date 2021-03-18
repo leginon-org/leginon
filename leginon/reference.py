@@ -10,22 +10,22 @@ import threading
 import time
 import numpy
 from leginon import leginondata
-from . import calibrationclient
-from . import event
-from . import appclient
-from . import instrument
-from . import presets
-from . import navigator
-from . import targethandler
-from . import watcher
-from . import player
-from . import gui.wx.Reference
+from leginon import calibrationclient
+from leginon import event
+from leginon import appclient
+from leginon import instrument
+from leginon import presets
+from leginon import navigator
+from leginon import targethandler
+from leginon import watcher
+from leginon import player
+import leginon.gui.wx.Reference
 
 class MoveError(Exception):
 	pass
 
 class Reference(watcher.Watcher, targethandler.TargetHandler):
-	panelclass = gui.wx.Reference.ReferencePanel
+	panelclass = leginon.gui.wx.Reference.ReferencePanel
 	settingsclass = leginondata.ReferenceSettingsData
 	eventinputs = watcher.Watcher.eventinputs + \
 				  presets.PresetsClient.eventinputs + \

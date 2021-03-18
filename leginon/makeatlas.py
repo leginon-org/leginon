@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
-from . import mosaic
-from . import node
+from leginon import mosaic
+from leginon import node
 from leginon import leginondata
 import sys
 from pyami import mrc
-from . import calibrationclient
+from leginon import calibrationclient
 import os.path
 import sinedon
 

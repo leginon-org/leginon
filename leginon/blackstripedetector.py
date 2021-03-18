@@ -7,22 +7,22 @@
 #
 
 from leginon import leginondata
-from . import event
-from . import imagewatcher
+from leginon import event
+from leginon import imagewatcher
 import threading
-from . import node
-from . import calibrationclient
+from leginon import node
+from leginon import calibrationclient
 import numpy
 import math
 import pyami.quietscipy
 import scipy.ndimage
 from pyami import imagefun
-from . import gui.wx.BlackStripeDetector
+import leginon.gui.wx.BlackStripeDetector
 #from pyami import fftfun
 
 class BlackStripeDetector(imagewatcher.ImageWatcher):
 	eventinputs = imagewatcher.ImageWatcher.eventinputs + [event.AcquisitionImagePublishEvent]
-	panelclass = gui.wx.BlackStripeDetector.Panel
+	panelclass = leginon.gui.wx.BlackStripeDetector.Panel
 	settingsclass = leginondata.BlackStripeSettingsData
 	defaultsettings = {
 		'process': False,

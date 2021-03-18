@@ -5,20 +5,20 @@
 #       For terms of the license agreement
 #       see  http://leginon.org
 #
-from . import calibrator
-from . import calibrationclient
-from . import event, leginondata
+from leginon import calibrator
+from leginon import calibrationclient
+from leginon import event, leginondata
 from pyami import imagefun
-from . import node
+from leginon import node
 import math
 import scipy
-from . import gui.wx.PixelSizeCalibrator
+import leginon.gui.wx.PixelSizeCalibrator
 
 class PixelSizeCalibrator(calibrator.Calibrator):
 	'''
 	calibrate the pixel size for different mags
 	'''
-	panelclass = gui.wx.PixelSizeCalibrator.Panel
+	panelclass = leginon.gui.wx.PixelSizeCalibrator.Panel
 	settingsclass = leginondata.PixelSizeCalibratorSettingsData
 	defaultsettings = dict(calibrator.Calibrator.defaultsettings)
 	defaultsettings.update({

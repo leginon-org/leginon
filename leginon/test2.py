@@ -1,9 +1,9 @@
 #!/usr/bin/env python
-from . import databinder
+from leginon import databinder
 import socket
 from pyami import mysocket
-from . import event
-from . import datatransport
+from leginon import event
+from leginon import datatransport
 import sys
 import time
 

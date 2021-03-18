@@ -1,10 +1,10 @@
 import os
 import shutil
 
-from . import imageprocessor
+from leginon import imageprocessor
 import leginon.gui.wx.RaptorProcessor
 from leginon import leginondata
-from . import runRaptor
+from leginon import runRaptor
 from pyami import mrc
 
 class RaptorProcessor(imageprocessor.ImageProcessor):

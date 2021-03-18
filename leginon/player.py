@@ -3,9 +3,8 @@ import threading
 def Player(*args, **kwargs):
 	return _Player(*args, **kwargs)
 
-class _Player(threading._Verbose):
-	def __init__(self, callback=None, verbose=None):
-		threading._Verbose.__init__(self, verbose)
+class _Player(object):
+	def __init__(self, callback=None, lock=None):
 		self.__cond = threading.Condition(threading.RLock())
 		self.__flag = 'play'
 		self.__callback = callback

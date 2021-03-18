@@ -5,13 +5,13 @@
 #
 
 # leginon
-from . import node
-from . import event
+from leginon import node
+from leginon import event
 from leginon import leginondata
-from . import gui.wx.TEMController
-from . import instrument
-from . import presets
-from . import cameraclient
+import leginon.gui.wx.TEMController
+from leginon import instrument
+from leginon import presets
+from leginon import cameraclient
 
 # myami
 
@@ -23,10 +23,10 @@ import os.path
 import itertools
 import math
 import logging
-from . import remoteserver
+from leginon import remoteserver
 
 class TEMController(node.Node):
-	panelclass = gui.wx.TEMController.Panel
+	panelclass = leginon.gui.wx.TEMController.Panel
 	settingsclass = leginondata.TEMControllerSettingsData
 	defaultsettings = {
 	}
@@ -43,7 +43,8 @@ class TEMController(node.Node):
 		self.loaded_grid_slot = None
 		self.grid_slot_numbers = []
 		self.grid_slot_names = []
-		if not remoteserver.NO_REQUESTS and session is not None:
+		if False:
+		#if not remoteserver.NO_REQUESTS and session is not None:
 			self.remote_toolbar = remoteserver.RemoteToolbar(self.logger, session, self, self.remote.leginon_base)
 		else:
 			self.remote_toolbar = None

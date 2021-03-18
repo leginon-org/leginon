@@ -5,21 +5,21 @@
 #	   For terms of the license agreement
 #	   see  http://leginon.org
 #
-from . import acquisition
-from . import node, leginondata
-from . import calibrationclient
+from leginon import acquisition
+from leginon import node, leginondata
+from leginon import calibrationclient
 import threading
-from . import event
+from leginon import event
 import time
 import math
 from pyami import imagefun, fftfun, ordereddict
 import numpy
 import copy
-from . import gui.wx.Focuser
-from . import player
+import leginon.gui.wx.Focuser
+from leginon import player
 
 class ManualFocusChecker(acquisition.Acquisition):
-	panelclass = gui.wx.Focuser.Panel
+	panelclass = leginon.gui.wx.Focuser.Panel
 	settingsclass = leginondata.AcquisitionSettingsData
 	defaultsettings = dict(acquisition.Acquisition.defaultsettings)
 
@@ -89,11 +89,11 @@ class ManualFocusChecker(acquisition.Acquisition):
 		t.start()
 
 	def onManualCheck(self):
-		evt = gui.wx.Focuser.ManualCheckEvent(self.panel)
+		evt = leginon.gui.wx.Focuser.ManualCheckEvent(self.panel)
 		self.panel.GetEventHandler().AddPendingEvent(evt)
 
 	def onManualCheckDone(self):
-		evt = gui.wx.Focuser.ManualCheckDoneEvent(self.panel)
+		evt = leginon.gui.wx.Focuser.ManualCheckDoneEvent(self.panel)
 		self.panel.GetEventHandler().AddPendingEvent(evt)
 
 	def acquireManualFocusImage(self):

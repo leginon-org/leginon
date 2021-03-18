@@ -23,26 +23,25 @@
 
 
 from leginon import leginondata
-from . import event
-from . import imagewatcher
+from leginon import event
+from leginon import imagewatcher
 import threading
-from . import node
-from . import calibrationclient
+from leginon import node
+from leginon import calibrationclient
 #import numpy  wjr
 #import math   wjr
 import pyami.quietscipy
 #import scipy.ndimage wjr
 from pyami import imagefun, arraystats  #wjr
-from . import gui.wx.IcethicknessEF  #wjr
+import leginon.gui.wx.IcethicknessEF  #wjr
 #from pyami import fftfun
-from .acquisition import Acquisition   #wjr
-from . import presets # wjr
-from . import gui.wx.Presets #wjr`
+from leginon import presets # wjr
+import leginon.gui.wx.Presets #wjr`
 from math import log # natural log
 import copy
-from . import instrument
+from leginon import instrument
 import time
-from . import appclient
+from leginon import appclient
 
 
 
@@ -50,14 +49,14 @@ class IcethicknessEF(imagewatcher.ImageWatcher):
 	eventinputs = imagewatcher.ImageWatcher.eventinputs + [event.AcquisitionImagePublishEvent]
 	eventoutputs = imagewatcher.ImageWatcher.eventoutputs 
 
-	panelclass = gui.wx.IcethicknessEF.Panel   #wjr
+	panelclass = leginon.gui.wx.IcethicknessEF.Panel   #wjr
 	settingsclass = leginondata.ZeroLossIceThicknessSettingsData   #wjr
 	defaultsettings = {
 		'process': False,
-                'exposure time': 500.0,         #ms
-		'slit width': 15.0,         #eV
+		'exposure time': 500.0, #ms
+		'slit width': 15.0,  #eV
 		'mean free path': 395.0,   #nm
-		'decimate': 4,       #take measurement every N images
+		'decimate': 4,  #take measurement every N images
 		'process_obj_thickness': False,
 		'obj mean free path': 300.0, #nm
 		'vacuum intensity': -1.0, #counts 
@@ -71,12 +70,12 @@ class IcethicknessEF(imagewatcher.ImageWatcher):
 		self.calclient = calibrationclient.CalibrationClient(self)
 		self.postprocess = threading.Event()
 		self.presetsclient = presets.PresetsClient(self)
-		self.zlpcounter = 0           #keep count of how many times it has been called in order to di it every N images
+		self.zlpcounter = 0 #keep count of how many times it has been called in order to di it every N images
 		self.start()
 
 	def processImageData(self, imagedata, ):  #wjr
 		'''
-	        collect two images: one with slit in, one without, and compare intensitites to get thickness
+		collect two images: one with slit in, one without, and compare intensitites to get thickness
 		'''
 		self.zlpcounter += 1
 
@@ -99,14 +98,14 @@ class IcethicknessEF(imagewatcher.ImageWatcher):
 				self.logger.error('no thickness images collected')
 				return
 			zlossth = leginondata.ZeroLossIceThicknessData()
-		        zlossth['no slit mean'] = arraystats.mean(imagearray_tot)
-                        zlossth['no slit sd'] = arraystats.std(imagearray_tot)
+			zlossth['no slit mean'] = arraystats.mean(imagearray_tot)
+			zlossth['no slit sd'] = arraystats.std(imagearray_tot)
 
-		        zlossth['slit mean'] = arraystats.mean(imagearray_zlp)
-                        zlossth['slit sd'] = arraystats.std(imagearray_zlp)
+			zlossth['slit mean'] = arraystats.mean(imagearray_zlp)
+			zlossth['slit sd'] = arraystats.std(imagearray_zlp)
 			zlossth['image'] = imagedata
 
-   			zlossth['thickness'] = self.settings['mean free path'] * log (zlossth['no slit mean']/(zlossth['slit mean']))
+			zlossth['thickness'] = self.settings['mean free path'] * log (zlossth['no slit mean']/(zlossth['slit mean']))
 			
 			self.logger.info('no slit mean: %f counts' % (zlossth['no slit mean'],))
 			self.logger.info('slit mean: %f counts' % (zlossth['slit mean'],))

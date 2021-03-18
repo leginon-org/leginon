@@ -12,15 +12,15 @@ It would typically be placed between a TargetFinder and an Acquisition node.
 Subclasses need to implement the filterTargets method.
 '''
 import math
-from . import node
+from leginon import node
 from leginon import leginondata
-from . import event
+from leginon import event
 import threading
-from . import targethandler
-from . import gui.wx.TargetFilter
+from leginon import targethandler
+import leginon.gui.wx.TargetFilter
 
 class TargetFilter(node.Node, targethandler.TargetWaitHandler):
-	panelclass = gui.wx.TargetFilter.Panel
+	panelclass = leginon.gui.wx.TargetFilter.Panel
 	settingsclass = leginondata.TargetFilterSettingsData
 	defaultsettings = {
 		'bypass':True,

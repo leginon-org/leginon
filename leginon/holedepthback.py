@@ -12,7 +12,7 @@
 
 import numpy
 from pyami import imagefun, correlator, peakfinder, convolver, mrc, arraystats
-from . import ice
+from leginon import ice
 
 class CircleMaskCreator(object):
 	def __init__(self):
@@ -382,7 +382,7 @@ class HoleFinder(object):
 		realblobs = self.makeblobs_config['center_list']
 		for realblob in realblobs:
 			coord = [realblob[1],realblob[0]]
-		        blob = imagefun.Blob(im,None,None,coord,None,None)
+			blob = imagefun.Blob(im,None,None,coord,None,None)
 			blobs.append(blob)
 		self.__results['blobs']=blobs
 		
@@ -442,7 +442,7 @@ class HoleFinder(object):
 			'''
 			First create a dummy blob from the coordinate then fill in the stats
 			'''
-		        hole = imagefun.Blob(im,None,None,coord,None,None)
+			hole = imagefun.Blob(im,None,None,coord,None,None)
 			hole.stats['n'] = holestats['n']
 			hole.stats['hole_mean'] = holestats['mean']
 			hole.stats['hole_std'] = holestats['std']

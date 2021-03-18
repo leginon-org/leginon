@@ -7,15 +7,15 @@
 # $Locker:  $
 import math
 from leginon import leginondata, referencetimer, calibrationclient, cameraclient
-from . import event
-from . import gui.wx.BeamFixer
+from leginon import event
+import leginon.gui.wx.BeamFixer
 from pyami import arraystats
 
 class PresetAdjuster(referencetimer.ReferenceTimer):
 	# relay measure does events
 	eventinputs = referencetimer.ReferenceTimer.eventinputs + [event.FixBeamEvent]
 	eventoutputs = referencetimer.ReferenceTimer.eventoutputs + [event.UpdatePresetEvent]
-	panelclass = gui.wx.BeamFixer.BeamFixerPanel
+	panelclass = leginon.gui.wx.BeamFixer.BeamFixerPanel
 	settingsclass = leginondata.PresetAdjusterSettingsData
 	defaultsettings = dict(referencetimer.ReferenceTimer.defaultsettings)
 	defaultsettings.update({

@@ -13,7 +13,7 @@ Main function is:
 import numpy
 import scipy
 import scipy.ndimage as ndimage
-from . import houghcircle
+from leginon import houghcircle
 from PIL import Image
 from PIL import ImageDraw
 from pyami import imagefun

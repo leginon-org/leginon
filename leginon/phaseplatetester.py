@@ -2,8 +2,8 @@
 import time
 from leginon import leginondata
 from leginon import acquisition
-from . import gui.wx.PhasePlateTester
-from . import gui.wx.PhasePlateTestImager
+import leginon.gui.wx.PhasePlateTester
+import leginon.gui.wx.PhasePlateTestImager
 
 def setImageFilename(imagedata, phase_plate_number, patch_position=None):
 	acquisition.setImageFilename(imagedata)
@@ -12,7 +12,7 @@ def setImageFilename(imagedata, phase_plate_number, patch_position=None):
 		imagedata['filename'] += '_p%d' % (patch_position)
 	
 class PhasePlateTestImager(acquisition.Acquisition):
-	panelclass = gui.wx.PhasePlateTestImager.Panel
+	panelclass = leginon.gui.wx.PhasePlateTestImager.Panel
 	settingsclass = leginondata.PhasePlateTestImagerSettingsData
 	defaultsettings = dict(acquisition.Acquisition.defaultsettings)
 	defaultsettings.update({
@@ -57,7 +57,7 @@ class PhasePlateTestImager(acquisition.Acquisition):
 		status = super(PhasePlateTestImager, self).publishStats(imagedata)
 
 class PhasePlateTester(PhasePlateTestImager):
-	panelclass = gui.wx.PhasePlateTester.Panel
+	panelclass = leginon.gui.wx.PhasePlateTester.Panel
 	settingsclass = leginondata.PhasePlateTesterSettingsData
 	defaultsettings = dict(acquisition.Acquisition.defaultsettings)
 	defaultsettings.update({

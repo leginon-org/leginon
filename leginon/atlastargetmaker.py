@@ -7,14 +7,14 @@
 #
 
 import math
-from . import calibrationclient
+from leginon import calibrationclient
 from leginon import leginondata
-from . import event
-from . import instrument
-from . import node
-from . import presets
-from . import targethandler
-from . import gui.wx.AtlasTargetMaker
+from leginon import event
+from leginon import instrument
+from leginon import node
+from leginon import presets
+from leginon import targethandler
+import leginon.gui.wx.AtlasTargetMaker
 
 class AtlasError(Exception):
 	pass
@@ -85,7 +85,7 @@ def optimizeTargets(start, targets):
 	return ntargets
 
 class AtlasTargetMaker(node.Node, targethandler.TargetHandler):
-	panelclass = gui.wx.AtlasTargetMaker.Panel
+	panelclass = leginon.gui.wx.AtlasTargetMaker.Panel
 
 	settingsclass = leginondata.AtlasTargetMakerSettingsData
 	defaultsettings = {

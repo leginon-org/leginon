@@ -12,14 +12,14 @@
 # $Locker:  $
 
 # leginon
-from . import node
-from . import event
+from leginon import node
+from leginon import event
 from leginon import leginondata
-from . import calibrationclient
-from . import gui.wx.Navigator
-from . import instrument
-from . import presets
-from . import cameraclient
+from leginon import calibrationclient
+import leginon.gui.wx.Navigator
+from leginon import instrument
+from leginon import presets
+from leginon import cameraclient
 
 # myami
 from pyami import correlator, peakfinder, imagefun, ordereddict
@@ -77,7 +77,7 @@ class NavigatorClient(object):
 		return self.movedonestatus
 
 class Navigator(node.Node):
-	panelclass = gui.wx.Navigator.Panel
+	panelclass = leginon.gui.wx.Navigator.Panel
 	settingsclass = leginondata.NavigatorSettingsData
 	defaultsettings = {
 		'instruments': {'tem':None, 'ccdcamera':None},

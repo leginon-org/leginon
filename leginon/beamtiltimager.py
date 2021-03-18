@@ -5,21 +5,21 @@
 #	   For terms of the license agreement
 #	   see  http://leginon.org
 #
-from . import manualfocuschecker
-from . import node
+from leginon import manualfocuschecker
+from leginon import node
 from leginon import leginondata
-from . import calibrationclient
+from leginon import calibrationclient
 import threading
-from . import event
+from leginon import event
 import time
 import math
 from pyami import correlator, peakfinder, imagefun, numpil,arraystats,fftfun
 import numpy
 from scipy import ndimage
 import copy
-from . import gui.wx.BeamTiltImager
-from . import player
-from . import tableau
+import leginon.gui.wx.BeamTiltImager
+from leginon import player
+from leginon import tableau
 import subprocess
 import re
 import os
@@ -30,7 +30,7 @@ hide_incomplete = False
 TESTING = False
 
 class BeamTiltImager(manualfocuschecker.ManualFocusChecker):
-	panelclass = gui.wx.BeamTiltImager.Panel
+	panelclass = leginon.gui.wx.BeamTiltImager.Panel
 	settingsclass = leginondata.BeamTiltImagerSettingsData
 	defaultsettings = dict(manualfocuschecker.ManualFocusChecker.defaultsettings)
 	defaultsettings.update({

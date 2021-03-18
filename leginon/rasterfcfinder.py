@@ -6,8 +6,8 @@
 #  "An approach to automated acquisition of cryoEM images from lacey
 #  carbon grids."
 
-from . import leginondata
-from . import targetfinder
+from leginon import leginondata
+from leginon import targetfinder
 # WVN 19/1/08 - changes borrowed from v.1.4.1 rasterfinder.py
 # Apart from below changes in imports, other changes were in
 # readImage (removed from rasterfinder), transpose_points(removed),
@@ -18,22 +18,22 @@ from . import targetfinder
 # rewrites were required in overridden ice method.
 #
 import threading
-from . import ice
+from leginon import ice
 import numpy
 from pyami import arraystats
-from . import gui.wx.RasterFCFinder
-from . import polygon
+import leginon.gui.wx.RasterFCFinder
+from leginon import polygon
 import itertools
 
 import math
 
 # WVN 12/8/07
-from . import rasterfinder
+from leginon import rasterfinder
 
 # WVN 1/4/07 RasterFCFinder - based on RasterFinder
 
 class RasterFCFinder(rasterfinder.RasterFinder):
-	panelclass = gui.wx.RasterFCFinder.Panel
+	panelclass = leginon.gui.wx.RasterFCFinder.Panel
 	settingsclass = leginondata.RasterFCFinderSettingsData
 	defaultsettings = dict(rasterfinder.RasterFinder.defaultsettings)
 	defaultsettings.update({

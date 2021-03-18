@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import numpy
 from leginon import leginondata
-from . import gonmodel
+from leginon import gonmodel
 import sinedon
 
 dbdk = sinedon.getConnection('leginondata')

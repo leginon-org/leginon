@@ -15,7 +15,7 @@ parser.add_option('-p', '--prevapp', action='store_true', dest='prevapp',
 (options, args) = parser.parse_args()
 
 if options.version:
-	from . import version
+	from leginon import version
 	print('Leginon version: %s' % (version.getVersion(),))
 	print('   Installed in: %s' % (version.getInstalledLocation(),))
 	sys.exit()

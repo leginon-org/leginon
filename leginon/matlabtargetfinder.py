@@ -16,9 +16,9 @@ import threading
 import numpy
 from leginon import leginondata
 from pyami import mrc
-from . import targetfinder
-from . import gui.wx.MatlabTargetFinder
-from . import calibrationclient
+from leginon import targetfinder
+import leginon.gui.wx.MatlabTargetFinder
+from leginon import calibrationclient
 
 try:
 	import mlabraw as pymat
@@ -26,7 +26,7 @@ except:
 	pymat = None
 
 class MatlabTargetFinder(targetfinder.TargetFinder):
-	panelclass = gui.wx.MatlabTargetFinder.Panel
+	panelclass = leginon.gui.wx.MatlabTargetFinder.Panel
 	settingsclass = leginondata.MatlabTargetFinderSettingsData
 	defaultsettings = dict(targetfinder.TargetFinder.defaultsettings)
 	defaultsettings.update({

@@ -9,14 +9,14 @@
 #
 
 from leginon import leginondata
-from . import targetfinder
-from . import jahcfinderback
+from leginon import targetfinder
+from leginon import jahcfinderback
 from pyami import ordereddict
 import threading
-from . import ice
+from leginon import ice
 import os.path
 import math
-from . import version
+from leginon import version
 import itertools
 
 invsqrt2 = math.sqrt(2.0)/2.0

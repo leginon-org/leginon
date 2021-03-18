@@ -8,26 +8,26 @@
 #       see  http://leginon.org
 #
 
-from . import watcher
-from . import event, leginondata
+from leginon import watcher
+from leginon import event, leginondata
 from pyami import correlator, peakfinder
-from . import calibrationclient
+from leginon import calibrationclient
 import math
 import time
 import datetime
 import os
 import threading
-from . import presets
+from leginon import presets
 import copy
-from . import EM
-from . import gui.wx.DriftManager
-from . import instrument
-from . import acquisition
-from . import rctacquisition
-from . import cameraclient
+from leginon import EM
+import leginon.gui.wx.DriftManager
+from leginon import instrument
+from leginon import acquisition
+from leginon import rctacquisition
+from leginon import cameraclient
 
 class DriftManager(watcher.Watcher):
-	panelclass = gui.wx.DriftManager.Panel
+	panelclass = leginon.gui.wx.DriftManager.Panel
 	settingsclass = leginondata.DriftManagerSettingsData
 	defaultsettings = {
 		'threshold': 3e-10,

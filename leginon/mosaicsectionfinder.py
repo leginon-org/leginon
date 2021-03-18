@@ -6,28 +6,28 @@
 #       see  http://leginon.org
 #
 
-from . import calibrationclient
+from leginon import calibrationclient
 from leginon import leginondata
-from . import event
-from . import instrument
-from . import imagewatcher
-from . import mosaic
+from leginon import event
+from leginon import instrument
+from leginon import imagewatcher
+from leginon import mosaic
 import threading
-from . import node
-from . import targethandler
+from leginon import node
+from leginon import targethandler
 from pyami import convolver, imagefun, mrc
 import numpy
 ma = numpy.ma
 import pyami.quietscipy
 import scipy.ndimage as nd
-from . import mosaictargetfinder
-from . import gui.wx.MosaicSectionFinder
+from leginon import mosaictargetfinder
+import leginon.gui.wx.MosaicSectionFinder
 import os
-from . import libCVwrapper
+from leginon import libCVwrapper
 import math
-from . import polygon
-from . import raster
-from . import presets
+from leginon import polygon
+from leginon import raster
+from leginon import presets
 import time
 try:
 	set = set
@@ -36,7 +36,7 @@ except NameError:
 	set = sets.Set
 
 class MosaicSectionFinder(mosaictargetfinder.MosaicClickTargetFinder):
-	panelclass = gui.wx.MosaicSectionFinder.Panel
+	panelclass = leginon.gui.wx.MosaicSectionFinder.Panel
 	settingsclass = leginondata.MosaicSectionFinderSettingsData
 	defaultsettings = dict(mosaictargetfinder.MosaicClickTargetFinder.defaultsettings)
 	defaultsettings.update({

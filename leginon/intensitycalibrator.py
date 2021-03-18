@@ -13,17 +13,17 @@
 
 import numpy
 import threading
-from . import calibrator
-from . import calibrationclient
+from leginon import calibrator
+from leginon import calibrationclient
 from leginon import leginondata
-from . import gui.wx.IntensityCalibrator
+import leginon.gui.wx.IntensityCalibrator
 from pyami import arraystats
 
 class Abort(Exception):
 	pass
 
 class IntensityCalibrator(calibrator.Calibrator):
-	panelclass = gui.wx.IntensityCalibrator.Panel
+	panelclass = leginon.gui.wx.IntensityCalibrator.Panel
 	settingsclass = leginondata.IntensityCalibratorSettingsData
 	defaultsettings = dict(calibrator.Calibrator.defaultsettings)
 	defaultsettings.update({

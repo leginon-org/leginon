@@ -1,18 +1,18 @@
-from . import node
-from . import event
+from leginon import node
+from leginon import event
 import time
 import math
-from . import gui.wx.Baker
-from . import instrument
-from . import presets
+import leginon.gui.wx.Baker
+from leginon import instrument
+from leginon import presets
 import types
 import numpy
 from leginon import leginondata
 import threading
-from . import player
+from leginon import player
 
 class Baker(node.Node):
-	panelclass = gui.wx.Baker.Panel
+	panelclass = leginon.gui.wx.Baker.Panel
 	settingsclass = leginondata.BakerSettingsData
 	defaultsettings = {
 		'bypass': False,

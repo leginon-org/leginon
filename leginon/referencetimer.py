@@ -2,15 +2,15 @@
 import threading
 import time
 from leginon import leginondata
-from . import calibrationclient
-from . import event
-from . import instrument
-from . import reference
-from . import gui.wx.ReferenceTimer
-from . import gui.wx.AlignZLP
+from leginon import calibrationclient
+from leginon import event
+from leginon import instrument
+from leginon import reference
+import leginon.gui.wx.ReferenceTimer
+import leginon.gui.wx.AlignZLP
 
 class ReferenceTimer(reference.Reference):
-	panelclass = gui.wx.ReferenceTimer.ReferenceTimerPanel
+	panelclass = leginon.gui.wx.ReferenceTimer.ReferenceTimerPanel
 	settingsclass = leginondata.ReferenceTimerSettingsData
 	eventinputs = reference.Reference.eventinputs
 	eventoutputs = reference.Reference.eventoutputs
@@ -62,7 +62,7 @@ class AlignZeroLossPeak(ReferenceTimer):
 		}
 	)
 	eventinputs = ReferenceTimer.eventinputs + [event.AlignZeroLossPeakPublishEvent, event.FixAlignmentEvent]
-	panelclass = gui.wx.AlignZLP.AlignZeroLossPeakPanel
+	panelclass = leginon.gui.wx.AlignZLP.AlignZeroLossPeakPanel
 	requestdata = leginondata.AlignZeroLossPeakData
 
 	def __init__(self, *args, **kwargs):
@@ -344,7 +344,7 @@ class MeasureDose(ReferenceTimer):
 	# relay measure does events
 	eventinputs = ReferenceTimer.eventinputs + [event.MeasureDosePublishEvent]
 	eventoutputs = ReferenceTimer.eventoutputs
-	panelclass = gui.wx.ReferenceTimer.MeasureDosePanel
+	panelclass = leginon.gui.wx.ReferenceTimer.MeasureDosePanel
 	requestdata = leginondata.MeasureDoseData
 	def __init__(self, *args, **kwargs):
 		try:

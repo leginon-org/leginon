@@ -11,17 +11,17 @@
 # $State: Exp $
 # $Locker:  $
 
-from . import node
-from . import calibrationclient
+from leginon import node
+from leginon import calibrationclient
 from leginon import leginondata
-from . import event
+from leginon import event
 import copy
 import threading
 import time
-from . import unique
+from leginon import unique
 from pyami import ordereddict, imagefun, arraystats, primefactor
-from . import gui.wx.PresetsManager
-from . import instrument
+import leginon.gui.wx.PresetsManager
+from leginon import instrument
 import random
 import math
 import numpy
@@ -243,7 +243,7 @@ class PresetsClient(object):
 		return imagedim
 
 class PresetsManager(node.Node):
-	panelclass = gui.wx.PresetsManager.Panel
+	panelclass = leginon.gui.wx.PresetsManager.Panel
 	settingsclass = leginondata.PresetsManagerSettingsData
 	defaultsettings = {
 		'pause time': 1.0,
@@ -282,7 +282,7 @@ class PresetsManager(node.Node):
 			'scale rotation':calibrationclient.ImageScaleRotationCalibrationClient(self),
 		}
 		self.dosecal = calibrationclient.DoseCalibrationClient(self)
-		from . import navigator
+		from leginon import navigator
 		self.navclient = navigator.NavigatorClient(self)
 
 		self.presetsclient = PresetsClient(self)
@@ -1706,7 +1706,7 @@ class PresetsManager(node.Node):
 
 	def getValue(self, instrument_type, instrument_name, parameter, event):
 		# HACK: fix me
-		# called from gui/wx/PresetsManager
+		# called from leginon.gui.wx/PresetsManager
 		try:
 			value = self._getValue(instrument_type, instrument_name, parameter)
 			self.last_value = value
@@ -2183,7 +2183,7 @@ class PresetsManager(node.Node):
 		self.recover_beamtilt.wait()
 
 	def onNeedRecoverBeamTilt(self, beamtilt_diff):
-		evt = gui.wx.PresetsManager.NeedRecoverBeamTiltEvent(self.panel, beamtilt_diff)
+		evt = leginon.gui.wx.PresetsManager.NeedRecoverBeamTiltEvent(self.panel, beamtilt_diff)
 		self.panel.GetEventHandler().AddPendingEvent(evt)
 
 	def onNeedRecoverBeamTiltDone(self):

@@ -10,12 +10,12 @@ import sys
 import threading
 import time
 from leginon import leginondata
-from . import emailnotification
-from . import event
-from . import instrument
-from . import node
-from . import project
-from . import gui.wx.Robot
+from leginon import emailnotification
+from leginon import event
+from leginon import instrument
+from leginon import node
+from leginon import project
+import leginon.gui.wx.Robot
 import queue
 import sinedon
 
@@ -156,7 +156,7 @@ class GridRequest(Request):
 		self.griddata = griddata
 
 class Robot2(node.Node):
-	panelclass = gui.wx.Robot.Panel
+	panelclass = leginon.gui.wx.Robot.Panel
 	eventinputs = node.Node.eventinputs + [event.TargetListDoneEvent,
 																					event.UnloadGridEvent,
 																					event.QueueGridEvent,

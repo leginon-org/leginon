@@ -7,7 +7,7 @@
 #
 
 import threading
-from . import node
+from leginon import node
 
 class Watcher(node.Node):
 	'''

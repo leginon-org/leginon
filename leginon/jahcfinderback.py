@@ -14,9 +14,9 @@ import pyami.quietscipy
 import scipy.ndimage
 import math
 from pyami import imagefun, peakfinder, convolver, correlator, mrc, arraystats
-from . import ice
-from . import lattice
-from . import multihole
+from leginon import ice
+from leginon import lattice
+from leginon import multihole
 
 hole_template_files = {}
 hole_templates = {}
