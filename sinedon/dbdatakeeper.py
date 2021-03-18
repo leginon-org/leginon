@@ -296,7 +296,7 @@ class DBDataKeeper(object):
 		dbname = dbconfig.getConfig(newdata.__module__)['db']
 		tablename = newdata.__class__.__name__
 		table = (dbname, tablename)
-		definition, formatedData = sqldict.dataSQLColumns(newdata, fail)
+		definition, _formatedData = sqldict.dataSQLColumns(newdata, fail)
 		## check for any new columns that have not been created
 		# FIX ME: columns_created need to be initializaed. Otherwise the
 		# first time this is called will always want to create table
@@ -304,9 +304,9 @@ class DBDataKeeper(object):
 		if table not in columns_created:
 			columns_created[table] = {}
 		fields = [d['Field'] for d in definition]
-		for field in formatedData.keys():
-			if field not in fields:
-				del formatedData[field]
+		# ignore items not in fields.
+		formatedData = {k:v for k, v in _formatedData.items() if k in fields}
+
 		create_table = False
 		for field in fields:
 			if field not in columns_created[table]:

@@ -635,6 +635,9 @@ class _multipleQueries:
 		# Have to convert to list to access single item in dataview.
 		# Is there a better way ?
 		actualr_list = list(actualresults)
+		# may not have data object left.
+		if not actualr_list:
+			return []
 		numrow = len(actualr_list[0])
 		all = []
 
@@ -1638,7 +1641,10 @@ def type2columns(key, value, value_type, parentdata):
 	else:
 		return None
 	columns, row = subSQLColumns(column_dict, parentdata)
-	columns.sort()
+	# Not sure why we need to sort
+	# the items in columns are dictionary, so sort does nothing in python2
+	# and raise TypeError in python3
+	#columns.sort()
 	row.update(value_dict)
 	return columns, row
 
