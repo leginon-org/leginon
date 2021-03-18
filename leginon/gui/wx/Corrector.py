@@ -304,11 +304,11 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 	def onAcquisitionDone(self, evt):
 		self._acquisitionEnable(True)
 
-        def onAddTool(self, evt):
-                self.node.onAddRegion()
+	def onAddTool(self, evt):
+		self.node.onAddRegion()
 
-        def onPlayTool(self, evt):
-                self.node.onAddPoints()
+	def onPlayTool(self, evt):
+		self.node.onAddPoints()
 
 	def validatePlan(self, plan):
 		camsettings = self.node.getCameraSettings()
@@ -443,7 +443,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		szref.Add(self.widgets['store series'], (2,0), (1,2))
 		self.widgets['store series'].Disable()
 
-		sbszref.Add(szref, 1, wx.ALIGN_CENTER|wx.EXPAND|wx.ALL, 3)
+		sbszref.Add(szref, 1, wx.EXPAND|wx.ALL, 3)
 
 		sz = wx.GridBagSizer(5, 10)
 		sz.Add(self.widgets['instruments'], (0, 0), (1, 1), wx.ALIGN_CENTER)

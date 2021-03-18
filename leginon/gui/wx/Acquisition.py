@@ -35,7 +35,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 			sz = self.addBasicSettings()
 		else:
 			sz = self.addSettings()
-		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.EXPAND|wx.ALL, 5)
+		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 		return [sbsz]
 
 	def addBasicSettings(self):

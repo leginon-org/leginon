@@ -225,12 +225,9 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		return start_position[0]+total_length[0],start_position[1]+total_length[1]
 
 	def createMeltPresetSelector(self,start_position):
-		sizer = wx.GridBagSizer(5, 5)
 		self.widgets['melt preset'] = leginon.gui.wx.Presets.PresetChoice(self, -1)
 		self.widgets['melt preset'].setChoices(self.presetnames)
 		label = wx.StaticText(self, -1, 'Melt preset:')
-		sizer.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sizer.Add(self.widgets['melt preset'], (1, 1), (1, 1), wx.ALIGN_CENTER)
 		total_length = (1,2)
 		self.szmain.Add(label, start_position, (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.szmain.Add(self.widgets['melt preset'], (start_position[0],start_position[1]+1), (1, 1), wx.ALIGN_CENTER)
@@ -308,7 +305,7 @@ class MeasureTiltAxisDialog(wx.Dialog):
 		row += 1
 		self.medfilt = wx.CheckBox(self, -1, "Median filter phase correlation")
 		self.medfilt.SetValue(True)
-		sbsz.Add(self.medfilt, (row,0), (1,3), wx.EXPAND|wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		sbsz.Add(self.medfilt, (row,0), (1,3), wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 
 		self.measurecancel = wx.Button(self, wx.ID_CANCEL, 'Cancel')
 		self.measureinit = wx.Button(self,  -1, 'Initial\nOffset')
@@ -316,9 +313,9 @@ class MeasureTiltAxisDialog(wx.Dialog):
 		self.measureupdate = wx.Button(self,  -1, 'Update\nOffset')
 		self.Bind(wx.EVT_BUTTON, self.onMeasureButtonUpdate, self.measureupdate)
 
-		sbsz2.Add(sbsz, 0, wx.EXPAND|wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 1)
+		sbsz2.Add(sbsz, 0, wx.EXPAND|wx.ALL, 1)
 
-		buttonrow = wx.GridSizer(1,3)
+		buttonrow = wx.GridSizer(1,3, wx.Size(1,1))
 		self.measurecancel.SetMinSize((85, 46))
 		self.measureinit.SetMinSize((85, 46))
 		self.measureupdate.SetMinSize((85, 46))
@@ -326,11 +323,11 @@ class MeasureTiltAxisDialog(wx.Dialog):
 		buttonrow.Add(self.measureinit, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ADJUST_MINSIZE, 0)
 		buttonrow.Add(self.measureupdate, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ADJUST_MINSIZE, 0)
 
-		self.sizer = wx.FlexGridSizer(3,1)
+		self.sizer = wx.FlexGridSizer(3,1,0,0)
 		sbsz2.SetMinSize((270, 200))
-		self.sizer.Add(sbsz2, 0, wx.EXPAND|wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
+		self.sizer.Add(sbsz2, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
 		#self.sizer.Add((10, 10), 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ADJUST_MINSIZE|wx.ALL, 3)
-		self.sizer.Add(buttonrow, 0, wx.EXPAND|wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ADJUST_MINSIZE|wx.ALL, 3)
+		self.sizer.Add(buttonrow, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ADJUST_MINSIZE|wx.ALL, 3)
 
 		self.SetSizerAndFit(self.sizer)
 
@@ -384,7 +381,7 @@ class AlignRotationCenterDialog(wx.Dialog):
 
 		self.sizer = wx.GridBagSizer(5, 5)
 		self.sizer.Add(sbsz, (0, 0), (1, 1), wx.EXPAND|wx.ALL, 10)
-		self.sizer.Add(self.measure, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.ALL, 10)
+		self.sizer.Add(szbutton, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.ALL, 10)
 
 		self.SetSizerAndFit(self.sizer)
 

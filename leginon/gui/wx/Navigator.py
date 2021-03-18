@@ -560,7 +560,7 @@ class ReproTestDialog(wx.Dialog):
 
 		self.sizer = wx.GridBagSizer(5, 5)
 		self.sizer.Add(sbsz, (0, 0), (1, 1), wx.EXPAND|wx.ALL, 10)
-		self.sizer.Add(self.measure, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.ALL, 10)
+		self.sizer.Add(szbutton, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.ALL, 10)
 
 		self.SetSizerAndFit(self.sizer)
 

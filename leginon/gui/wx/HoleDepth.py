@@ -31,8 +31,8 @@ class Panel(leginon.gui.wx.TargetFinder.Panel):
 
 		self.imagepanel = leginon.gui.wx.TargetPanel.TargetImagePanel(self, -1)
 
-		parameter = self.cparameter.GetStringSelection()		
- 		self.imagepanel.addTypeTool('Original', display=True, settings=True)
+		parameter = self.cparameter.GetStringSelection()
+		self.imagepanel.addTypeTool('Original', display=True, settings=True)
 		self.imagepanel.selectiontool.setDisplayed('Original', True)
 		self.imagepanel.addTypeTool('Edge', display=True, settings=True)
 		self.imagepanel.addTypeTool('Template', display=True, settings=True)
@@ -351,7 +351,7 @@ class BlobsScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def onPickedBlobButton(self, evt):
 		self.dialog.setNodeSettings()
 		parent = self.panel
-                pixels=parent.imagepanel.getTargetPositions('Blobs')
+		pixels=parent.imagepanel.getTargetPositions('Blobs')
 		if (len(pixels)==2):
 			self.node.makeBlobs(pixels)
 			self.node.getHoleDepth()
@@ -402,7 +402,7 @@ class PickHoleScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def onShiftButton(self, evt):
 		self.dialog.setNodeSettings()
 		parent = self.panel
-                pixels=parent.imagepanel.getTargetPositions('PickHoles')
+		pixels=parent.imagepanel.getTargetPositions('PickHoles')
 		shift=self.node.correlate_I_I0()
 		newtargets=self.node.applyPickTargetShift(pixels,shift)
 		parent.imagepanel.setTargets('PickHoles', newtargets['PickHoles'])
@@ -410,7 +410,7 @@ class PickHoleScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def onTestButton(self, evt):
 		self.dialog.setNodeSettings()
 		parent = self.panel
-                pixels=parent.imagepanel.getTargetPositions('PickHoles')
+		pixels=parent.imagepanel.getTargetPositions('PickHoles')
 		self.node.getPickHoleStats(pixels)
 
 class SettingsDialog(leginon.gui.wx.TargetFinder.SettingsDialog):
