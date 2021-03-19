@@ -932,7 +932,10 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.setImage(image, 'Filtered')
 
 		example_targets = self.getExampleTargets()
-		if example_targets:
+		if False:
+			# This does not work in autoscreening because image mean is different
+			# per atlas and un acquired area on the atlas image changes the mean
+			# value.
 			guess_thresholds = [image.mean(),]
 			shape = image.shape
 			hs = (128,128) # half size of the stats square
@@ -958,6 +961,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 																self.settings['blobs']['max'],
 																self.settings['blobs']['max size'],
 																self.settings['blobs']['min size'],
+																method='biggest',
 																points_of_interest=points_of_interest,
 																)
 		self.example_blobs = []
