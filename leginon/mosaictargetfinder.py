@@ -21,6 +21,7 @@ import numpy
 import pyami.quietscipy
 import scipy.ndimage as nd
 import gui.wx.MosaicClickTargetFinder
+
 import os
 import math
 import polygon
@@ -35,6 +36,7 @@ try:
 except NameError:
 	import sets
 	set = sets.Set
+
 
 
 class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.ImageHandler):
@@ -125,15 +127,35 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 
 	# not complete
 	def handleTargetListDone(self, targetlistdoneevent):
+		self.logger.warning('Got targetlistdone event')
 		if self.settings['create on tile change'] == 'final':
 			self.logger.debug('create final')
 			self.createMosaicImage()
 			self.logger.debug('done create final')
+		if not self.hasNewImageVersion():
+			self.targetsFromDatabase()
+			# fresh atlas without acquisition targets (done or not) should run autofinder
+			count = sum(map((lambda x: len(self.targetmap[x]['acquisition'])), self.targetmap.keys()))
+			if count == 0:
+				self.runAutoFinderRanker()
 		# trigger activation of submit button in the gui.
 		self.panel.doneTargetList()
-		# TODO need to add auto square finder and submit target if go beyond
-		# getting atlas.
+		# TODO: auto submit targets if from auto run.
 		self.notifyAutoDone('atlas')
+
+	def runAutoFinderRanker(self):
+		self.publishMosaicImage()
+		# get blobs with stats
+		blobs = self.findSquareBlobs()
+		targets = self.blobStatsTargets(blobs)
+		self.logger.info('Number of blobs: %s' % (len(targets),))
+		self.setTargets(targets, 'Blobs')
+		# get ranked and filtered acquisition
+		xys = self.runBlobRankFilter(blobs)
+		## display them
+		self.setTargets(xys, 'acquisition')
+		message = 'found %s squares' % (len(xys),)
+		self.logger.info(message)
 
 	def notifyAutoDone(self,task='atlas'):
 			'''
@@ -633,6 +655,8 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.logger.info('Mosaic loaded (%i of %i images loaded successfully)' % (i+1, ntotal))
 		if self.settings['create on tile change'] in ('all', 'final'):
 			self.createMosaicImage()
+		# hacking
+		self.handleTargetListDone(None)
 
 	def targetToMosaic(self, tile, targetdata):
 		scalepos = self._targetToMosaic(tile, targetdata, self.mosaic)
@@ -897,70 +921,113 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.publish(prefs, database=True)
 		return prefs
 
+	def getExampleTargets(self):
+		mosaic_image_shape = self.mosaicimage.shape
+		xytargets = self.getPanelTargets(mosaic_image_shape)
+		return xytargets['preview']
 
-	def findSquares(self):
-		if self.mosaicimagedata is None:
-			message = 'You must save the current mosaic image before finding squares on it.'
-			self.logger.error(message)
-			return
-		original_image = self.mosaicimagedata['image']
-
+	def findSquareBlobs(self):
 		message = 'finding squares'
 		self.logger.info(message)
 
 		sigma = self.settings['lpf']['sigma']
 		kernel = convolver.gaussian_kernel(sigma)
 		self.convolver.setKernel(kernel)
-		image = self.convolver.convolve(image=original_image)
+		image = self.convolver.convolve(image=self.mosaicimage)
 		self.setImage(image, 'Filtered')
 
-		## threshold grid bars
-		squares_thresh = self.settings['threshold']
+		example_targets = self.getExampleTargets()
+		if example_targets:
+			guess_thresholds = [image.mean(),]
+			shape = image.shape
+			hs = (128,128) # half size of the stats square
+			for t in example_targets:
+				guess_thresholds.append(image[max(0,t[1]-hs[1]):min(shape[0],t[1]+hs[1]),
+																			max(0,t[0]-hs[0]):min(shape[1],t[0]+hs[0])].mean())
+			guesses = ','.join(map((lambda x: '%.2f' % x),guess_thresholds))
+			self.logger.info('guessed thresholds from examples: %s' % guesses)
+			squares_thresh = min(guess_thresholds)
+		else:
+			## threshold grid bars
+			squares_thresh = self.settings['threshold']
+		self.logger.info('squares threshhold is %.1f' % float(squares_thresh))
 		image = imagefun.threshold(image, squares_thresh)
 		self.setImage(image, 'Thresholded')
 
+		points_of_interest = []
+		if example_targets:
+			points_of_interest = map(lambda x: (x[1],x[0]), example_targets)
 		## find blobs
-		blobs = imagefun.find_blobs(original_image, image,
+		blobs = imagefun.find_blobs(self.mosaicimage, image,
 																self.settings['blobs']['border'],
 																self.settings['blobs']['max'],
 																self.settings['blobs']['max size'],
-																self.settings['blobs']['min size'])
+																self.settings['blobs']['min size'],
+																points_of_interest=points_of_interest,
+																)
+		self.example_blobs = []
+		self.example_blob_indices = []
+		# save examples for ranking and filtering
+		for i, b in enumerate(blobs):
+			if b.stats['has_poi']:
+				# blobs that contains example_targets
+				self.example_blobs.append(b)
+				self.example_blob_indices.append(i)
+		return blobs
 
-		# show blob target and stats
-		targets = self.blobStatsTargets(blobs)
-		self.logger.info('Number of blobs: %s' % (len(targets),))
-		self.setTargets(targets, 'Blobs')
-
+	def runBlobRankFilter(self, blobs):
+		'''
+		Filter the blobs to get final targets. When example_blobs are present,
+		they are placed at the top rank.
+		'''
 		## use stats to find good ones
-		mean_min = self.settings['blobs']['min mean']
-		mean_max = self.settings['blobs']['max mean']
-		std_min = self.settings['blobs']['min stdev']
-		std_max = self.settings['blobs']['max stdev']
+		if not self.example_blobs:
+			mean_min = self.settings['blobs']['min mean']
+			mean_max = self.settings['blobs']['max mean']
+			std_min = self.settings['blobs']['min stdev']
+			std_max = self.settings['blobs']['max stdev']
+			size_min = self.settings['blobs']['min size']
+			size_max = self.settings['blobs']['max size']
+		else:
+			# use the stats of the example blobs
+			means = map((lambda x: x.stats['mean']), self.example_blobs)
+			mean_min = min(means)
+			mean_max = max(means)
+			stddevs = map((lambda x: x.stats['stddev']), self.example_blobs)
+			std_min = min(stddevs)
+			std_max = max(stddevs)
+			sizes = map((lambda x: x.stats['n']), self.example_blobs)
+			size_min = min(sizes)
+			size_max = max(sizes)
+			self.settings['blobs']['min mean'] = mean_min
+			self.settings['blobs']['max mean'] = mean_max
+			self.settings['blobs']['min stdev'] = std_min
+			self.settings['blobs']['max stdev'] = std_max
+			self.setSettings(self.settings, False)
 		targets = []
 		prefs = self.storeSquareFinderPrefs()
-		rows, columns = image.shape
 		if blobs:
 			blob_sizes = numpy.array(map((lambda x: x.stats['n']),blobs))
 			self.logger.info('Mean blob size is %.1f' % ( blob_sizes.mean(),))
+			self.example_blob_indices.sort()
+			# move the examples to front of the targetlist
+			for i in self.example_blob_indices:
+				blobs.insert(0, blobs.pop(i))
 		for blob in blobs:
 			row = blob.stats['center'][0]
 			column = blob.stats['center'][1]
 			mean = blob.stats['mean']
 			std = blob.stats['stddev']
+			size = blob.stats['n']
 			stats = leginondata.SquareStatsData(prefs=prefs, row=row, column=column, mean=mean, stdev=std)
-			if (mean_min <= mean <= mean_max) and (std_min <= std <= std_max):
+			if (mean_min <= mean <= mean_max) and (std_min <= std <= std_max) and (size_min <= size <= size_max):
 				stats['good'] = True
 				## create a display target
 				targets.append((column,row))
 			else:
 				stats['good'] = False
 			self.publish(stats, database=True)
-
-		## display them
-		self.setTargets(targets, 'acquisition')
-
-		message = 'found %s squares' % (len(targets),)
-		self.logger.info(message)
+		return targets
 
 	def checkSettings(self,settings):
 		# always queuing. No need to check "wait for process" conflict

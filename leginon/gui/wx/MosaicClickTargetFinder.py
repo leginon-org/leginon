@@ -144,7 +144,7 @@ class Panel(leginon.gui.wx.ClickTargetFinder.Panel):
 		dialog.Destroy()
 
 	def onFindSquaresButton(self, evt):
-		threading.Thread(target=self.node.findSquares).start()
+		threading.Thread(target=self.node.runAutoFinderRanker).start()
 
 	def doneTargetList(self):
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, True)

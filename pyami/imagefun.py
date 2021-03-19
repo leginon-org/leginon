@@ -228,10 +228,10 @@ if reclim < 20000:
 	sys.setrecursionlimit(20000)
 
 class Blob(object):
-	def __init__(self, image, mask, n, center, mean, stddev, moment, maxpos):
+	def __init__(self, image, mask, n, center, mean, stddev, moment, maxpos, has_poi):
 		self.image = image
 		self.mask = mask
-		self.stats = {"center":center, "n":n, "mean":mean, "stddev":stddev, "size":0, "moment":moment, "maximum_position":maxpos}
+		self.stats = {"center":center, "n":n, "mean":mean, "stddev":stddev, "size":0, "moment":moment, "maximum_position":maxpos, "has_poi":has_poi}
 
 def highest_peaks(blobs, n):
 	"""
@@ -296,7 +296,7 @@ def near_center(shape, blobs, n):
 
 ## using scipy.ndimage to find blobs
 labelstruct = numpy.ones((3,3))
-def scipyblobs(im,mask):
+def scipyblobs(im,mask, points_of_interest=[]):
 	labels,n = scipy.ndimage.label(mask, labelstruct)
 	## too bad ndimage module is inconsistent with what is returned from
 	## the following functions.  Sometiems a list, sometimes a single value...
@@ -322,10 +322,15 @@ def scipyblobs(im,mask):
 			maxpos = [maxpos]
 		else:
 			centers = map(numpy.array, centers)
-
+	# mark points of interest
+	p_labels = []
+	# row, col
+	for p in points_of_interest:
+		p_labels.append(labels[p[0],p[1]])
 	blobs = []
 	for i in range(n):
-		blobs.append({'center':centers[i], 'n':sizes[i], 'mean':means[i],'stddev':stds[i],'moment':moments[i], 'maximum_position':maxpos[i]})
+		has_poi = i+1 in p_labels
+		blobs.append({'center':centers[i], 'n':sizes[i], 'mean':means[i],'stddev':stds[i],'moment':moments[i], 'maximum_position':maxpos[i],'has_poi': has_poi})
 	return blobs
 
 def moment_of_inertia(input, labels, index = None):
@@ -367,9 +372,10 @@ def _distsqmat(r0,shape):
 	dx, dy = indices[0]-r0[0],indices[1]-r0[1]
 	return (dx**2+dy**2)
 
-def find_blobs(image, mask, border=0, maxblobs=300, maxblobsize=100, minblobsize=0, maxmoment=None, method="central", summary=False):
+def find_blobs(image, mask, border=0, maxblobs=300, maxblobsize=100, minblobsize=0, maxmoment=None, method="central", points_of_interest=[], summary=False):
 	"""
-	find blobs with particular features in a map
+	find blobs with particular features in a map. also label the blobs
+	containing points_of_interest
 	"""
 
 	shape = image.shape
@@ -382,13 +388,13 @@ def find_blobs(image, mask, border=0, maxblobs=300, maxblobsize=100, minblobsize
 		tmpmask[:,:border] = 0
 		tmpmask[:,-border:] = 0
 
-	blobs = scipyblobs(image,tmpmask)
+	blobs = scipyblobs(image,tmpmask,points_of_interest)
 	fakeblobs = []
 	toobig = 0
 	toosmall = 0
 	toooblong = 0
 	for blob in blobs:
-		fakeblob = Blob(image, mask, blob['n'], blob['center'], blob['mean'], blob['stddev'], blob['moment'], blob['maximum_position'])
+		fakeblob = Blob(image, mask, blob['n'], blob['center'], blob['mean'], blob['stddev'], blob['moment'], blob['maximum_position'], blob['has_poi'])
 		if blob['n'] >= maxblobsize:
 			toobig += 1
 			continue
