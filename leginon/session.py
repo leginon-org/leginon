@@ -64,7 +64,6 @@ class Reservation(object):
 		## make new reservation
 		sessionres = leginon.leginondata.SessionReservationData(name=name, reserved=True)
 		sessionres.insert(force=True)
-	
 		return True
 
 	def cancel(self):
@@ -90,20 +89,24 @@ def suggestName():
 		maybe_name = prefix + time.strftime('%y%b%d'+suffix).lower()
 		try:
 			makeReservation(maybe_name)
-		except ReservationFailed:
+		except ReservationFailed, e:
 			continue
 		else:
 			session_name = maybe_name
 			break
 	return session_name
 
-def createSession(user, name, description, directory):
+def createSession(user, name, description, directory, holder=None):
 	imagedirectory = os.path.join(leginon.leginonconfig.unmapPath(directory), name, 'rawdata').replace('\\', '/')
+	framedirectory = leginon.ddinfo.getRawFrameSessionPathFromSessionPath(imagedirectory)
 	initializer = {
 		'name': name,
 		'comment': description,
 		'user': user,
 		'image path': imagedirectory,
+		'frame path': framedirectory,
+		'hidden': False,
+		'holder': holder,
 	}
 	return leginon.leginondata.SessionData(initializer=initializer)
 

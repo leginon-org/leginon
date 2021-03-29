@@ -54,6 +54,7 @@ class Node(correctorclient.CorrectorClient):
 	eventinputs = [event.Event,
 									event.KillEvent,
 									event.ApplicationLaunchedEvent,
+									event.SetSessionEvent,
 									event.ConfirmationEvent]
 
 	eventoutputs = [event.PublishEvent,
@@ -103,6 +104,7 @@ class Node(correctorclient.CorrectorClient):
 		#self.addEventInput(event.Event, self.logEventReceived)
 		self.addEventInput(event.KillEvent, self.die)
 		self.addEventInput(event.ConfirmationEvent, self.handleConfirmedEvent)
+		self.addEventInput(event.SetSessionEvent, self.handleSetSessionEvent)
 		self.addEventInput(event.SetManagerEvent, self.handleSetManager)
 		self.addEventInput(event.ApplicationLaunchedEvent, self.handleApplicationEvent)
 
@@ -426,6 +428,13 @@ class Node(correctorclient.CorrectorClient):
 		'''
 		app = ievent['application']
 		self.this_node = appclient.getNodeSpecData(app,self.name)
+
+	def handleSetSessionEvent(self, ievent):
+		'''
+		Use the session object passed through the event to change session.
+		'''
+		session = ievent['session']
+		self.session = session
 
 	def handleConfirmedEvent(self, ievent):
 		'''Handler for ConfirmationEvents. Unblocks the call waiting for confirmation of the event generated.'''

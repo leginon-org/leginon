@@ -116,6 +116,51 @@ class InSessionData(Data):
 		)
 	typemap = classmethod(typemap)
 
+class AutoSessionSetData(Data):
+	'''
+	Sets of auto grid loader sessions. Such as one cassette in FEI gridloader.
+	'''
+	def typemap(cls):
+		return Data.typemap() + (
+			('main launcher', str),
+			('base session', SessionData),
+		)
+	typemap = classmethod(typemap)
+
+class AutoSessionData(InSessionData):
+	'''
+	Auto grid loader sessions. Including data for startup.
+	'''
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('session set', AutoSessionSetData),
+			('slot number', int), # base 1
+			('stagez', float),
+		)
+	typemap = classmethod(typemap)
+
+class AutoTaskData(Data):
+	'''
+	Workflow to perform on the auto session.
+	'''
+	def typemap(cls):
+		return Data.typemap() + (
+			('auto session', AutoSessionData),
+			('task', str),
+		)
+	typemap = classmethod(typemap)
+
+class AutoTaskOrderData(Data):
+	'''
+	AutoTask running order. The done ones are popped from task order.
+	'''
+	def typemap(cls):
+		return Data.typemap() + (
+			('session set', AutoSessionSetData),
+			('task order', list),  # taskid sequence for processing
+		)
+	typemap = classmethod(typemap)
+
 class QueueData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
@@ -1004,6 +1049,15 @@ class ReferenceTargetData(ImageTargetData):
 			('image', AcquisitionImageData),
 		)
 	typemap = classmethod(typemap)
+
+class TargetOrderData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('list', ImageTargetListData),
+			('order', tuple), #tuple of target number, i,e, (1,2,5,4,3)
+		)
+	typemap = classmethod(typemap)
+
 
 class ReferenceRequestData(InSessionData):
 	def typemap(cls):
