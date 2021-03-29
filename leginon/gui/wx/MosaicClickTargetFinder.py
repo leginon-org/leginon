@@ -28,7 +28,7 @@ class Panel(leginon.gui.wx.ClickTargetFinder.Panel):
 	def initialize(self):
 		leginon.gui.wx.ClickTargetFinder.Panel.initialize(self)
 		self.SettingsDialog = SettingsDialog
-		self.imagepanel.selectiontool.setEnableSettings('acquisition', False)
+		self.imagepanel.selectiontool.setEnableSettings('acquisition', True)
 		self.imagepanel.selectiontool.setDisplayed('focus', False)
 		self.imagepanel.selectiontool.setEnableSettings('focus', False)
 
@@ -128,6 +128,10 @@ class Panel(leginon.gui.wx.ClickTargetFinder.Panel):
 	def onImageSettings(self, evt):
 		if evt.name == 'Filtered':
 			dialog = LPFSettingsDialog(self)
+			dialog.ShowModal()
+			dialog.Destroy()
+		elif evt.name == 'acquisition':
+			dialog = TargetSettingsDialog(self)
 			dialog.ShowModal()
 			dialog.Destroy()
 		elif evt.name == 'Thresholded':
@@ -297,8 +301,10 @@ class BlobSettingsDialog(leginon.gui.wx.Settings.Dialog):
 class BlobsScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
 		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
-		sb = wx.StaticBox(self, -1, 'Blob Finding')
-		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		sb1 = wx.StaticBox(self, -1, 'Rough Blob Finding')
+		sbsz1 = wx.StaticBoxSizer(sb1, wx.VERTICAL)
+		sb2 = wx.StaticBox(self, -1, 'Blob Filtering (Set by example targets)')
+		sbsz2 = wx.StaticBoxSizer(sb2, wx.VERTICAL)
 		self.widgets['threshold'] = FloatEntry(self, -1, min=0, chars=6)
 		self.widgets['blobs'] = {}
 		self.widgets['blobs']['border'] = IntEntry(self, -1, min=0, chars=6)
@@ -309,29 +315,39 @@ class BlobsScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.widgets['blobs']['max mean'] = FloatEntry(self, -1, chars=6)
 		self.widgets['blobs']['min stdev'] = FloatEntry(self, -1, chars=6)
 		self.widgets['blobs']['max stdev'] = FloatEntry(self, -1, chars=6)
+		self.widgets['blobs']['min filter size'] = IntEntry(self, -1, min=0, chars=6)
+		self.widgets['blobs']['max filter size'] = IntEntry(self, -1, min=0, chars=6)
 
-		szrange = wx.GridBagSizer(5, 5)
+		szrange1 = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Min.')
-		szrange.Add(label, (0, 1), (1, 1), wx.ALIGN_CENTER)
+		szrange1.Add(label, (0, 1), (1, 1), wx.ALIGN_CENTER)
 		label = wx.StaticText(self, -1, 'Max.')
-		szrange.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER)
-		label = wx.StaticText(self, -1, 'Blob size:')
-		szrange.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER)
-		szrange.Add(self.widgets['blobs']['min size'], (1, 1), (1, 1),
+		szrange1.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER)
+		label = wx.StaticText(self, -1, 'Finder Blob size:')
+		szrange1.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER)
+		szrange1.Add(self.widgets['blobs']['min size'], (1, 1), (1, 1),
 								wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
-		szrange.Add(self.widgets['blobs']['max size'], (1, 2), (1, 1),
+		szrange1.Add(self.widgets['blobs']['max size'], (1, 2), (1, 1),
+								wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+
+		szrange2 = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Filter Blob size:')
+		szrange2.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER)
+		szrange2.Add(self.widgets['blobs']['min filter size'], (0, 1), (1, 1),
+								wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+		szrange2.Add(self.widgets['blobs']['max filter size'], (0, 2), (1, 1),
 								wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 		label = wx.StaticText(self, -1, 'Blob mean:')
-		szrange.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER)
-		szrange.Add(self.widgets['blobs']['min mean'], (2, 1), (1, 1),
+		szrange2.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER)
+		szrange2.Add(self.widgets['blobs']['min mean'], (1, 1), (1, 1),
 								wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
-		szrange.Add(self.widgets['blobs']['max mean'], (2, 2), (1, 1),
+		szrange2.Add(self.widgets['blobs']['max mean'], (1, 2), (1, 1),
 								wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 		label = wx.StaticText(self, -1, 'Blob stdev.:')
-		szrange.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER)
-		szrange.Add(self.widgets['blobs']['min stdev'], (3, 1), (1, 1),
+		szrange2.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER)
+		szrange2.Add(self.widgets['blobs']['min stdev'], (2, 1), (1, 1),
 								wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
-		szrange.Add(self.widgets['blobs']['max stdev'], (3, 2), (1, 1),
+		szrange2.Add(self.widgets['blobs']['max stdev'], (2, 2), (1, 1),
 								wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 
 		sz = wx.GridBagSizer(5, 5)
@@ -347,12 +363,43 @@ class BlobsScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['blobs']['max'], (2, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
-		sz.Add(szrange, (3, 0), (1, 2), wx.ALIGN_CENTER)
+		sz.Add(szrange1, (3, 0), (1, 2), wx.ALIGN_CENTER)
 		sz.AddGrowableCol(1)
 
-		sbsz.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
+		sz2 = wx.GridBagSizer(5, 5)
+		sz2.Add(szrange2, (0, 0), (1, 2), wx.ALIGN_CENTER)
+		sz2.AddGrowableCol(1)
 
-		return [sbsz]
+		sbsz1.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
+		sbsz2.Add(sz2, 1, wx.EXPAND|wx.ALL, 5)
+
+		return [sbsz1, sbsz2]
+
+class TargetSettingsDialog(leginon.gui.wx.Settings.Dialog):
+	def initialize(self):
+		return TargetScrolledSettings(self,self.scrsize,False)
+
+class TargetScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
+	def initialize(self):
+		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
+		sb1 = wx.StaticBox(self, -1, 'Target Selection')
+		sbsz1 = wx.StaticBoxSizer(sb1, wx.VERTICAL)
+		self.widgets['target grouping'] = {}
+		self.widgets['target grouping']['total targets'] = IntEntry(self, -1, min=0, chars=6)
+		self.widgets['target grouping']['classes'] = IntEntry(self, -1, min=1, chars=6)
+		# row sizers
+		sz = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Max. number of targets:')
+		sz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['target grouping']['total targets'], (0, 1), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		label = wx.StaticText(self, -1, 'Number of target group to sample:')
+		sz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['target grouping']['classes'], (1, 1), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		sz.AddGrowableCol(1)
+		sbsz1.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
+		return [sbsz1, ]
 
 class SettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
