@@ -1830,12 +1830,22 @@ class BlobFinderSettingsData(Data):
 			('on', bool),
 			('border', int),
 			('max', int),
-			('min size', int),
-			('max size', int),
+			('min size', int), # rough cutoff in blob finding
+			('max size', int), # rough cutoff in blob finding
 			('min mean', float),
 			('max mean', float),
 			('min stdev', float),
 			('max stdev', float),
+			('min filter size', int), # filter for targets
+			('max filter size', int), # filter for targets
+		)
+	typemap = classmethod(typemap)
+
+class TargetGroupingSettingsData(Data):
+	def typemap(cls):
+		return SettingsData.typemap() + (
+			('total targets', int),
+			('classes', int),
 		)
 	typemap = classmethod(typemap)
 
@@ -1844,6 +1854,7 @@ class SquareFinderSettingsData(SettingsData):
 		return SettingsData.typemap() + (
 			('lpf', LowPassFilterSettingsData),
 			('blobs', BlobFinderSettingsData),
+			('target grouping', TargetGroupingSettingsData),
 			('threshold', float),
 		)
 	typemap = classmethod(typemap)
