@@ -460,7 +460,6 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		# of the good_targets.
 		valid_order = filter((lambda x: x in target_numbers), target_order)
 		index_order = map((lambda x:target_numbers.index(x)), valid_order)
-		print 'processing order',index_order
 		return index_order
 
 	def processGoodTargets(self, good_targets):

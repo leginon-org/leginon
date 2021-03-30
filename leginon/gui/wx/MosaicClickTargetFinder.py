@@ -46,6 +46,12 @@ class Panel(leginon.gui.wx.ClickTargetFinder.Panel):
 		self.addOtherTools()
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, True)
 
+	def addTargetTools(self):
+		# add example target at top
+		self.imagepanel.addTargetTool('example', wx.GREEN, shape='<>', target=True)
+		self.imagepanel.selectiontool.setDisplayed('example', True)
+		super(Panel, self).addTargetTools()
+
 	def addOtherTools(self):
 		self.toolbar.InsertSeparator(10)
 		self.toolbar.InsertTool(11, leginon.gui.wx.ToolBar.ID_ALIGN,

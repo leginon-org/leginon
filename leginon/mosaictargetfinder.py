@@ -80,7 +80,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 	})
 
 	eventoutputs = targetfinder.ClickTargetFinder.eventoutputs + [event.MosaicDoneEvent]
-	targetnames = ['acquisition','focus','preview','reference','done','Blobs']
+	targetnames = ['acquisition','focus','preview','reference','done','Blobs', 'example']
 	def __init__(self, id, session, managerlocation, **kwargs):
 		self.mosaicselections = {}
 		targetfinder.ClickTargetFinder.__init__(self, id, session, managerlocation, **kwargs)
@@ -170,6 +170,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		# because they will get duplicated.
 		#xys.extend(existing_targets)
 		self.setTargets(xys, 'acquisition')
+		self.setTargets([], 'example')
 		self.logger.info(message)
 
 	def notifyAutoDone(self,task='atlas'):
@@ -495,6 +496,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.updateCurrentPosition()
 		self.setTargets(self.currentposition, 'position')
 		self.setTargets([], 'preview')
+		self.setTargets([], 'example')
 		n = 0
 		for type in ('acquisition','focus'):
 			n += len(targets[type])
@@ -939,7 +941,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 	def getExampleAndPanelTargets(self, xytargets):
 		existing_targets = xytargets['done']
 		existing_targets.extend(xytargets['acquisition'])
-		return xytargets['preview'], existing_targets
+		return xytargets['example'], existing_targets
 
 	def findSquareBlobs(self):
 		message = 'finding squares'
