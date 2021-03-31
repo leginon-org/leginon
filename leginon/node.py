@@ -7,6 +7,7 @@
 #
 #
 
+import pdb
 import sinedon
 from leginon import leginondata
 from leginon import appclient
@@ -198,6 +199,16 @@ class Node(correctorclient.CorrectorClient):
 				elif key in self.defaultsettings:
 					# use default value of the node
 					self.settings[key] = copy.deepcopy(self.defaultsettings[key])
+			# The value is another Data class such as BlobFinderSettingsData
+			if issubclass(value.__class__, dict):
+				for skey, svalue in value.items():
+					if svalue is None:
+						if skey in admin_settings[key] and admin_settings[key][skey] is not None:
+							# use current admin settings if possible
+							self.settings[key][skey] = copy.deepcopy(admin_settings[key][skey])
+						elif skey in self.defaultsettings[key]:
+								# use default value of the node
+								self.settings[key][skey] = copy.deepcopy(self.defaultsettings[key][skey])
 
 	def reseachDBSettings(self, settingsclass, inst_alias, user=None):
 		# load the requested user settings
