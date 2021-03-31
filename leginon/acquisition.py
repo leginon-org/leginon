@@ -240,6 +240,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.time0 = time.time()
 		self.times = []
 		self.intensities = []
+		self.targetfinder_from = False
 		self.alignzlp_bound = False
 		self.phaseplate_bound = False
 		self.screencurrent_bound = False
@@ -272,6 +273,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		to this node upon application loading.
 		'''
 		app = evt['application']
+		self.targetfinder_from = appclient.getLastNodeThruBinding(app,self.name,'ImageTargetListPublishEvent','TargetFinder')
 		self.alignzlp_bound = appclient.getNextNodeThruBinding(app,self.name,'AlignZeroLossPeakPublishEvent','AlignZeroLossPeak')
 		self.phaseplate_bound = appclient.getNextNodeThruBinding(app,self.name,'PhasePlatePublishEvent','PhasePlateAligner')
 		self.screencurrent_bound = appclient.getNextNodeThruBinding(app,self.name,'ScreenCurrentLoggerPublishEvent','ScreenCurrentLogger')
@@ -334,6 +336,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.imagelistdata = leginondata.ImageListData(session=self.session,
 																						targets=newdata)
 		self.publish(self.imagelistdata, database=True)
+		if self.inDoneTargetList(newdata):
+			self.logger.info('Target list alread done')
+			return
 		targetwatcher.TargetWatcher.processData(self, newdata)
 		self.publish(self.imagelistdata, pubevent=True)
 		self.logger.info('Acquisition.processData done')
