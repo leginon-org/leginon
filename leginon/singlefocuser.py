@@ -199,6 +199,7 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 			# TODO: figure out how drift monitor behaves in RCT if doing this
 			self.conditionalMoveAndPreset(presetname, emtarget)
 			# apply pause time as if it is an image acquisition
+			presetdata = self.presetsclient.getPresetFromDB(presetname)
 			self.preAcquire(presetdata, emtarget, 0, reduce_pause=False)
 			self.is_firstimage = False
 			driftresult = self.checkDrift(presetname, emtarget, driftthresh, btilt1dict)
@@ -222,6 +223,7 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 		## drift check may have done this already
 		self.conditionalMoveAndPreset(presetname,emtarget)
 		# apply pause time as if it is an image acquisition
+		presetdata = self.presetsclient.getPresetFromDB(presetname)
 		self.preAcquire(presetdata, emtarget, 0, reduce_pause=False)
 		self.is_firstimage = False
 
@@ -387,6 +389,7 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 		## drift check or melting may have done this already
 		self.conditionalMoveAndPreset(presetname,emtarget)
 		# apply pause time as if it is an image acquisition
+		presetdata = self.presetsclient.getPresetFromDB(presetname)
 		self.preAcquire(presetdata, emtarget, 0, reduce_pause=False)
 		self.is_firstimage = False
 		target = emtarget['target']
