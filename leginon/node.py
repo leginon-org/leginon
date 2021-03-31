@@ -203,7 +203,7 @@ class Node(correctorclient.CorrectorClient):
 			if issubclass(value.__class__, dict):
 				for skey, svalue in value.items():
 					if svalue is None:
-						if skey in admin_settings[key] and admin_settings[key][skey] is not None:
+						if admin_settings is not None and key in admin_settings and admin_settings[key] is not None and skey in admin_settings[key] and admin_settings[key][skey] is not None:
 							# use current admin settings if possible
 							self.settings[key][skey] = copy.deepcopy(admin_settings[key][skey])
 						elif skey in self.defaultsettings[key]:
