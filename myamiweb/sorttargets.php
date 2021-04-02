@@ -89,6 +89,9 @@
 					}
 				}
 				$leginondata->saveTargetOrder($sessionId, $targets[0]['tlist'], '()');
+				//insert as DoneImageTargetListData will eliminate pre-processing stuff
+				// such as revertStageZ
+				$leginondata->saveDoneTargetList($sessionId, $targets[0]['tlist']);
 			}
 		}
 		$order_array = currentTargetOrder($leginondata, $sessionId, $targets);
