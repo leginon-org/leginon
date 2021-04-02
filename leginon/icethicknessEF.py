@@ -213,9 +213,9 @@ class IcethicknessEF(imagewatcher.ImageWatcher):
 		'''
 		Check that exposure will wait for this node to finish
 		'''
-		if self.last_acq_node:
-			settingsclassname = self.last_acq_node['class string']+'SettingsData'
-			results= self.reseachDBSettings(getattr(leginondata,settingsclassname),self.last_acq_node['alias'])
+		if type(self.last_acq_node) == type({}) and self.last_acq_node['is_direct_bound'] == True:
+			settingsclassname = self.last_acq_node['node']['class string']+'SettingsData'
+			results= self.reseachDBSettings(getattr(leginondata,settingsclassname),self.last_acq_node['node']['alias'])
 			if not results:
 				# default acquisition settings waiting is False. However, admin default
 				# should be o.k.
@@ -223,8 +223,8 @@ class IcethicknessEF(imagewatcher.ImageWatcher):
 			else:
 				last_acq_wait = results[0]['wait for process']
 			if settings['process'] and not last_acq_wait:
-				return [('error','"%s" node "wait for process" setting must be True when ice thickness measurements are taken' % (self.last_acq_node['alias'],))]
+				return [('error','"%s" node "wait for process" setting must be True when EF ice thickness measurements are taken' % (self.last_acq_node['node']['alias'],))]
 			if not (settings['process'] or settings['process_obj_thickness'])  and last_acq_wait:
-				return [('error','"%s" node "wait for process" setting must be False when ice thickness measurements are not taken' % (self.last_acq_node['alias'],))]
+				return [('error','"%s" node "wait for process" setting must be False when ice thickness measurements are not taken' % (self.last_acq_node['node']['alias'],))]
 		return []
 
