@@ -3402,6 +3402,15 @@ class leginondata {
 		if ($r) return $r[0]['DEF_id'];
 	}
 
+	function saveDoneTargetList($sessionId, $tlistId) {
+			// mark ImageTargetList as done
+			$table = 'DoneImageTargetListData';
+			$data = array();
+			$data['REF|ImageTargetListData|list'] = $tlistId;
+			$data['REF|SessionData|session'] = $sessionId;
+			$this->mysql->SQLInsert($table, $data);
+	}
+
 	function saveTargetOrder($sessionId, $tlistId, $order_str) {
 			// save target order in a targetlist
 			$table = 'TargetOrderData';

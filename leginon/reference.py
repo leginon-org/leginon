@@ -190,7 +190,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		if self.settings['mover'] == 'presets manager':
 			self.presets_client.toScope(preset_name, em_target_data)
 		else:
-			if not self.navigator_bound:
+			if not self.navigator_bound or self.navigator_bound['is_direct_bound']==False:
 				self.logger.warning('Navigator not bound with MoveToTargetEvent. Use presets manager instead')
 				self.presets_client.toScope(preset_name, em_target_data)
 			else:

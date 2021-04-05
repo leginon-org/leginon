@@ -22,8 +22,9 @@ def getLastNodeThruBinding(appdata,to_node_alias,binding_name,last_node_baseclas
 	# Not to do  global import so that it does not import when the module is loaded
 	import noderegistry
 	last_class = noderegistry.getNodeClass(last_node_baseclass_name)
+	is_direct_bound = False
 	# Try 10 iteration before giving up
-	for iter in range(10):
+	for iter_bound in range(10):
 		q = leginondata.BindingSpecData(application=appdata)
 		q['event class string'] = binding_name
 		q['to node alias'] = to_node_alias
@@ -40,7 +41,9 @@ def getLastNodeThruBinding(appdata,to_node_alias,binding_name,last_node_baseclas
 		if r:
 			for lastnodedata in r:
 				if issubclass(noderegistry.getNodeClass(lastnodedata['class string']),last_class):
-					return lastnodedata
+					if iter_bound == 0:
+						is_direct_bound = True
+					return {'node':lastnodedata, 'is_direct_bound':is_direct_bound}
 			# next bound node is a filter.  Try again from there.
 			to_node_alias = last_alias
 			continue
@@ -52,8 +55,9 @@ def getNextNodeThruBinding(appdata,from_node_alias,binding_name,next_node_basecl
 	# Not to do  global import so that it does not import when the module is loaded
 	import noderegistry
 	next_class = noderegistry.getNodeClass(next_node_baseclass_name)
+	is_direct_binding = False
 	# Try 10 iteration before giving up
-	for iter in range(10):
+	for iter_bound in range(10):
 		q = leginondata.BindingSpecData(application=appdata)
 		q['event class string'] = binding_name
 		q['from node alias'] = from_node_alias
@@ -70,7 +74,9 @@ def getNextNodeThruBinding(appdata,from_node_alias,binding_name,next_node_basecl
 		if r:
 			for nextnodedata in r:
 				if issubclass(noderegistry.getNodeClass(nextnodedata['class string']),next_class):
-					return nextnodedata
+					if iter_bound == 0:
+						is_direct_bound = True
+					return {'node':nextnodedata, 'is_direct_bound':is_direct_bound}
 			# next bound node is a filter.  Try again from there.
 			from_node_alias = next_alias
 			continue

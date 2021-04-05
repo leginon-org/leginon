@@ -63,7 +63,14 @@ class TargetHandler(object):
 			self.insertDoneTargetList(targetlistdata)
 
 	def insertDoneTargetList(self, targetlistdata):
-		if targetlistdata and targetlistdata['node'] and self.targetfinder_from and self.targetfinder_from['alias'] == targetlistdata['node']['alias']:
+		if targetlistdata:
+			if not (type(self.targetfinder_from)==type({}) and self.targetfinder_from['is_direct_bound']):
+				return
+		# only insert if the node is directly bound to the targetlistdata['node']
+		# otherwise the Focus or Preview may call targetlist done before Exposure.
+		# See Issue #10094
+		# TODO: what if we do have a TargetFilter between Finder and Acquisition ?
+		if targetlistdata and targetlistdata['node'] and self.targetfinder_from['node']['alias'] == targetlistdata['node']['alias']:
 			q = leginondata.DoneImageTargetListData(session=self.session,list=targetlistdata)
 			q.insert()
 			self.logger.debug('targetlist %d is inserted as done' % (targetlistdata.dbid))
@@ -157,11 +164,14 @@ class TargetHandler(object):
 			return False
 
 	def inDoneTargetList(self,targetlist):
+		listid = targetlist.dbid
 		dequeuedquery = leginondata.DoneImageTargetListData(list=targetlist)
 		dequeuedlists = self.research(datainstance=dequeuedquery)
 		if len(dequeuedlists) > 0:
+			self.logger.info('targetlist id %d in DoneTargetLIst' % listid)
 			return True
 		else:
+			self.logger.info('targetlist id %d not in DoneTargetLIst' % listid)
 			return False
 
 	def queueIdleFinish(self):
