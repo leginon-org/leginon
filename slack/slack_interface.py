@@ -61,7 +61,7 @@ class SlackInterface(SlackClient):
 
 	# get the normalized names of all the channels in the slack workspace.
 	def getChannelNames(self):
-		channels = self.client.api_call('channels.list')
+		channels = self.client.api_call('conversations.list')
 		names = []
 		for channel in channels['channels']:
 			        names.append(channel['name_normalized'])
