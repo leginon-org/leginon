@@ -166,7 +166,13 @@ class CameraClient(object):
 		Preparation before acquiring the image. Overwritable by subclasses
 		such as MoveAcquisition to skip the real prepartion.
 		'''
-		self._prepareToAcquire(allow_retracted, exposure_type)
+		try:
+			self._prepareToAcquire(allow_retracted, exposure_type)
+		except RuntimeError as e:
+			# instrument emit RuntimeError through proxy
+			self.logger.error(e)
+		except Exception:
+			raise
 
 	def _prepareToAcquire(self,allow_retracted=False,exposure_type='normal'):
 		'''
@@ -204,7 +210,11 @@ class CameraClient(object):
 		Things to do after acquiring the image. Overwritable by subclasses
 		such as MoveAcquisition to skip the real action.
 		'''
-		self._doAfterAcquire()
+		try:
+			self._doAfterAcquire()
+		except RuntimeError as e:
+			# instrument emit RuntimeError through proxy
+			self.logger.error(e)
 
 	def _doAfterAcquire(self):
 		'''

@@ -240,6 +240,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.time0 = time.time()
 		self.times = []
 		self.intensities = []
+		self.targetfinder_from = False
 		self.alignzlp_bound = False
 		self.phaseplate_bound = False
 		self.screencurrent_bound = False
@@ -272,6 +273,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		to this node upon application loading.
 		'''
 		app = evt['application']
+		self.targetfinder_from = appclient.getLastNodeThruBinding(app,self.name,'ImageTargetListPublishEvent','TargetFinder')
 		self.alignzlp_bound = appclient.getNextNodeThruBinding(app,self.name,'AlignZeroLossPeakPublishEvent','AlignZeroLossPeak')
 		self.phaseplate_bound = appclient.getNextNodeThruBinding(app,self.name,'PhasePlatePublishEvent','PhasePlateAligner')
 		self.screencurrent_bound = appclient.getNextNodeThruBinding(app,self.name,'ScreenCurrentLoggerPublishEvent','ScreenCurrentLogger')
@@ -334,6 +336,11 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.imagelistdata = leginondata.ImageListData(session=self.session,
 																						targets=newdata)
 		self.publish(self.imagelistdata, database=True)
+		listid = newdata.dbid
+		if self.inDoneTargetList(newdata):
+			# most likely aborted from myamiweb
+			self.logger.info('target list ID: %d found in DoneImageTargetList' % (listid,))
+			return
 		targetwatcher.TargetWatcher.processData(self, newdata)
 		self.publish(self.imagelistdata, pubevent=True)
 		self.logger.info('Acquisition.processData done')
@@ -425,7 +432,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 	def tunePhasePlate(self, presetname):
 		# TO DO: need some way to check if there is a phase plate
 		presetdata = self.presetsclient.getPresetByName(presetname)
-		if self.phaseplate_bound:
+		if type(self.phaseplate_bound)==type({}) and self.phaseplate_bound['is_direct_bound']:
 				self.nextPhasePlate(presetname)
 
 	def tuneEnergyFilter(self, presetname):
@@ -433,7 +440,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		if not presetdata:
 			return
 		if presetdata['energy filter'] or presetdata['tem energy filter']:
-			if self.alignzlp_bound:
+			if type(self.alignzlp_bound)==type({}) and self.alignzlp_bound['is_direct_bound']:
 				self.alignZeroLossPeak(presetname)
 			else:
 				if False:
@@ -444,7 +451,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		presetdata = self.presetsclient.getPresetByName(presetname)
 		if not presetdata:
 			return
-		if self.screencurrent_bound:
+		if type(self.screencurrent_bound) == dict({}) and self.screencurrent_bound['is_direct_bound']==True:
 			self.measureScreenCurrent(presetname)
 
 	def nextPhasePlate(self, preset_name):
@@ -1174,7 +1181,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.setImage(numpy.asarray(image_array, numpy.float32), 'Image')
 			self.stopTimer('display')
 			self.reportStatus('output', 'Image displayed')
+			self.finalizeImageProcess()
+		return 'ok'
 
+	def finalizeImageProcess(self):
 		if self.settings['wait for process']:
 			self.setStatus('waiting')
 			self.startTimer('waitForImageProcess')
@@ -1184,7 +1194,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 				self.setStatus('processing')
 			else:
 				self.setStatus('idle')
-		return 'ok'
 
 	def publishStats(self, imagedata):
 		im = imagedata['image']

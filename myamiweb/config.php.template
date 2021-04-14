@@ -57,6 +57,10 @@ define('SMTP_AUTH', false);
 define('SMTP_USERNAME', "");
 define('SMTP_PASSWORD', "");
 
+
+//this is used for[Lost Password] login page
+define('SHOW_LOST_PASSWORD', true);
+
 // --- Set your MySQL database server parameters -- //
 define('DB_HOST', "");		// DB Host name
 define('DB_USER', "");		// DB User name

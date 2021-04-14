@@ -198,6 +198,10 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 			# move first if needed
 			# TODO: figure out how drift monitor behaves in RCT if doing this
 			self.conditionalMoveAndPreset(presetname, emtarget)
+			# apply pause time as if it is an image acquisition
+			presetdata = self.presetsclient.getPresetFromDB(presetname)
+			self.preAcquire(presetdata, emtarget, 0, reduce_pause=False)
+			self.is_firstimage = False
 			driftresult = self.checkDrift(presetname, emtarget, driftthresh, btilt1dict)
 			if setting['recheck drift'] and driftresult['status'] == 'drifted':
 				# See Issue #3990
@@ -218,6 +222,10 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 		## send the autofocus preset to the scope
 		## drift check may have done this already
 		self.conditionalMoveAndPreset(presetname,emtarget)
+		# apply pause time as if it is an image acquisition
+		presetdata = self.presetsclient.getPresetFromDB(presetname)
+		self.preAcquire(presetdata, emtarget, 0, reduce_pause=False)
+		self.is_firstimage = False
 
 		## set to eucentric focus if doing Z correction
 		## WARNING:  this assumes that user will not change
@@ -380,6 +388,10 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 		## send the autofocus preset to the scope
 		## drift check or melting may have done this already
 		self.conditionalMoveAndPreset(presetname,emtarget)
+		# apply pause time as if it is an image acquisition
+		presetdata = self.presetsclient.getPresetFromDB(presetname)
+		self.preAcquire(presetdata, emtarget, 0, reduce_pause=False)
+		self.is_firstimage = False
 		target = emtarget['target']
 		orig_a = self.instrument.tem.StagePosition['a']
 		self.logger.info('Current stage alpha is %.1f degrees' % (math.degrees(orig_a),))

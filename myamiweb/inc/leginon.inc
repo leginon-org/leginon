@@ -3365,6 +3365,140 @@ class leginondata {
 		return $filearray;
 	}
 
+#--------------Target and TargetList------------------
+	function getTargetListFromImage($imgId) {
+		//targetlist this image is from
+		$q="SELECT t.`REF|ImageTargetListData|list` as tlist, tl.mosaic, tl.label, "
+			."tl.`REF|SessionData|session` as session, "
+			."a.`REF|ImageListData|list` as ilist from AcquisitionImageData a "
+			."LEFT JOIN AcquisitionImageTargetData t "
+			."ON a.`REF|AcquisitionImageTargetData|target`=t.DEF_id "
+			."LEFT JOIN ImageTargetListData tl "
+			."ON t.`REF|ImageTargetListData|list`=tl.DEF_id "
+			."where a.`DEF_id`=".$imgId." ";
+	list($r) = $this->mysql->getSQLResult($q);
+	return $r;
+	}
+
+	function getNewTargetsOnImage($imgId) {
+		//All targets from the parent image.
+		$q="SELECT t.`DEF_id` as tid, t.`number`, a.filename, "
+			."t.`REF|ImageTargetListData|list` as tlist from AcquisitionImageTargetData t "
+			."LEFT JOIN AcquisitionImageData a "
+			."ON t.`REF|AcquisitionImageData|image`=a.DEF_id "
+			."where a.`DEF_id`=".$imgId." "
+			."AND t.status like 'new' GROUP BY t.`number` ";
+		$r=$this->mysql->getSQLResult($q);
+		return $r;
+	}
+
+	function getVersionZeroImage($imgId) {
+		$q="SELECT a.`DEF_id` from AcquisitionImageData a "
+			."LEFT JOIN AcquisitionImageData a1 "
+			."ON a.`REF|AcquisitionImageTargetData|target`=a1.`REF|AcquisitionImageTargetData|target` "
+			."where a1.DEF_id=".$imgId." AND a.`version`=0 "
+			."";
+		$r=$this->mysql->getSQLResult($q);
+		if ($r) return $r[0]['DEF_id'];
+	}
+
+	function saveDoneTargetList($sessionId, $tlistId) {
+			// mark ImageTargetList as done
+			$table = 'DoneImageTargetListData';
+			$data = array();
+			$data['REF|ImageTargetListData|list'] = $tlistId;
+			$data['REF|SessionData|session'] = $sessionId;
+			$this->mysql->SQLInsert($table, $data);
+	}
+
+	function saveTargetOrder($sessionId, $tlistId, $order_str) {
+			// save target order in a targetlist
+			$table = 'TargetOrderData';
+			$data = array();
+			$data['REF|ImageTargetListData|list'] = $tlistId;
+			$data['REF|SessionData|session'] = $sessionId;
+			$data['SEQ|order'] = $order_str;
+			$this->mysql->SQLInsert($table, $data);
+	}
+
+	function getTargetOrder($sessionId, $tlistId) {
+		//Return target order in array
+		if ( !$this->mysql->isTable('TargetOrderData') ) return False;
+		$q = "SELECT * FROM TargetOrderData WHERE `REF|SessionData|session`=".$sessionId." "
+				."AND `REF|ImageTargetListData|list`=".$tlistId." "
+				."ORDER BY `DEF_id` DESC limit 1 ";
+		$results=$this->mysql->getSQLResult($q);
+		if (is_array($results)) return $results[0];
+		// no data.
+		return False;
+	}
+
+	function getNewTargetsFromAtlasImageList($ilId) {
+		return $this->_getStatusTargetsFromAtlasImageList($ilId, 'new');
+	}
+
+	function _getStatusTargetsFromAtlasImageList($ilId, $status) {
+		//All images in the mosaic atlas belongs to the same image list.
+		//All targets from the atlas are from a targetlist without parent image.
+		$q="SELECT t.`DEF_id` as tid, t.status, t.`number`, a.filename, "
+			."t.`REF|ImageTargetListData|list` as tlist from AcquisitionImageData a "
+			//Use inner join because target might not have parent image
+			."INNER JOIN AcquisitionImageTargetData t "
+			."ON t.`REF|AcquisitionImageData|image`=a.DEF_id "
+			."WHERE a.`REF|ImageListData|list`=".$ilId." "
+			."AND t.status like '".$status."' GROUP BY t.`number` ";
+		$r=$this->mysql->getSQLResult($q);
+		return $r;
+	}
+
+	function getTargetsFromTargetListId($targetlistId,$targettype='acquisition') {
+		$news = $this->getTargetsByStatusInTargetList($targetlistId,'new', $targettype);
+		if (empty($dones)) return $news;
+	}
+
+	function getTargetsByStatusInTargetList($targetlistId,$status, $targettype='acquisition') {
+		$q="SELECT "
+			."MAX(`t`.`DEF_id`) as tid, `t`.`number` "
+			."FROM "
+			."`AcquisitionImageTargetData` AS `t` "
+			."LEFT JOIN `ImageTargetListData` AS `itlist` ON" ."(`itlist`.`DEF_id`=`t`.`REF|ImageTargetListData|list`) "
+			."WHERE "
+			." t.`REF|ImageTargetListData|list` = ".$targetlistId." "
+			."AND t.`type` LIKE  '".$targettype."' "
+			."AND t.`status` LIKE '".$status."' "
+			."GROUP BY t.`number` ORDER BY t.`number` "
+			."";
+		$result = $this->mysql->getSQLResult($q);
+		return $result;
+	}
+
+	function getTargetStatus($targetlistId, $target_number) {
+		// get most recent target status of the target number
+		$q="SELECT status FROM `AcquisitionImageTargetData` WHERE "
+			."`REF|ImageTargetListData|list`=".$targetlistId." AND "
+			."`number`=".$target_number." "
+			." ORDER BY `DEF_id` DESC limit 1 "
+			."";
+		$result = $this->mysql->getSQLResult($q);
+		if ($result) return $result[0]['status'];
+	}
+
+	function updateTargetStatus($targetId, $status) {
+		// update target status by inserting new one since we always look
+		// for the most recent.
+		$q="SELECT * FROM `AcquisitionImageTargetData` WHERE `DEF_id`=".$targetId
+			."";
+		$results = $this->mysql->getSQLResult($q);
+		$data = $results[0];
+		//aborted is the most likely status to update to.
+		unset($data['DEF_id']);
+		unset($data['DEF_timestamp']);
+		$data['status']=$status;
+		foreach (array_keys($data) as $k) {
+			if (is_null($data[$k])) unset($data[$k]);
+		}
+		$this->mysql->SQLInsert('AcquisitionImageTargetData', $data);
+	}
 	function getDeQueuedTargetListIds($sessionId,$qtype,$limit=100) {
 		$q="SELECT distinct "
 			."dqlist.`REF|ImageTargetListData|list` as doneid "

@@ -7,6 +7,7 @@
 #
 #
 
+import pdb
 import sinedon
 from leginon import leginondata
 from leginon import appclient
@@ -54,6 +55,7 @@ class Node(correctorclient.CorrectorClient):
 	eventinputs = [event.Event,
 									event.KillEvent,
 									event.ApplicationLaunchedEvent,
+									event.SetSessionEvent,
 									event.ConfirmationEvent]
 
 	eventoutputs = [event.PublishEvent,
@@ -103,6 +105,7 @@ class Node(correctorclient.CorrectorClient):
 		#self.addEventInput(event.Event, self.logEventReceived)
 		self.addEventInput(event.KillEvent, self.die)
 		self.addEventInput(event.ConfirmationEvent, self.handleConfirmedEvent)
+		self.addEventInput(event.SetSessionEvent, self.handleSetSessionEvent)
 		self.addEventInput(event.SetManagerEvent, self.handleSetManager)
 		self.addEventInput(event.ApplicationLaunchedEvent, self.handleApplicationEvent)
 
@@ -196,6 +199,16 @@ class Node(correctorclient.CorrectorClient):
 				elif key in self.defaultsettings:
 					# use default value of the node
 					self.settings[key] = copy.deepcopy(self.defaultsettings[key])
+			# The value is another Data class such as BlobFinderSettingsData
+			if issubclass(value.__class__, dict):
+				for skey, svalue in value.items():
+					if svalue is None:
+						if admin_settings is not None and key in admin_settings and admin_settings[key] is not None and skey in admin_settings[key] and admin_settings[key][skey] is not None:
+							# use current admin settings if possible
+							self.settings[key][skey] = copy.deepcopy(admin_settings[key][skey])
+						elif skey in self.defaultsettings[key]:
+								# use default value of the node
+								self.settings[key][skey] = copy.deepcopy(self.defaultsettings[key][skey])
 
 	def reseachDBSettings(self, settingsclass, inst_alias, user=None):
 		# load the requested user settings
@@ -426,6 +439,13 @@ class Node(correctorclient.CorrectorClient):
 		'''
 		app = ievent['application']
 		self.this_node = appclient.getNodeSpecData(app,self.name)
+
+	def handleSetSessionEvent(self, ievent):
+		'''
+		Use the session object passed through the event to change session.
+		'''
+		session = ievent['session']
+		self.session = session
 
 	def handleConfirmedEvent(self, ievent):
 		'''Handler for ConfirmationEvents. Unblocks the call waiting for confirmation of the event generated.'''

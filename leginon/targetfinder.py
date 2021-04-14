@@ -127,9 +127,9 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		'''
 		Check that depth-first tree travelsal won't break
 		'''
-		if self.last_acq_node:
-			settingsclassname = self.last_acq_node['class string']+'SettingsData'
-			results= self.reseachDBSettings(getattr(leginondata,settingsclassname),self.last_acq_node['alias'])
+		if type(self.last_acq_node)==type({}):
+			settingsclassname = self.last_acq_node['node']['class string']+'SettingsData'
+			results= self.reseachDBSettings(getattr(leginondata,settingsclassname),self.last_acq_node['node']['alias'])
 			if not results:
 				# default acquisition settings waiting is False. However, admin default
 				# should be o.k.
@@ -137,7 +137,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			else:
 				last_acq_wait = results[0]['wait for process']
 			if not settings['queue'] and not last_acq_wait:
-				return [('error','"%s" node "wait for process" setting must be True when queue is not activated in this node' % (self.last_acq_node['alias'],))]
+				return [('error','"%s" node "wait for process" setting must be True when queue is not activated in this node' % (self.last_acq_node['node']['alias'],))]
 		return []
 
 	def readImage(self, filename):
@@ -442,6 +442,8 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		# advance to next target number
 		lastnumber = self.lastTargetNumber(image=imagedata, session=self.session)
 		number = lastnumber + 1
+		# get current order
+		target_order = self.getTargetOrder(targetlist)
 		for imagetarget in imagetargets:
 			column, row = imagetarget
 			drow = row - imageshape[0]/2
@@ -449,7 +451,23 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 
 			targetdata = self.newTargetForImage(imagedata, drow, dcol, type=typename, list=targetlist, number=number,last_focused=self.last_focused)
 			self.publish(targetdata, database=True)
+			target_order.append(number)
 			number += 1
+		self.publishTargetOrder(targetlist, target_order)
+
+	def getTargetOrder(self, targetlist):
+		q = leginondata.TargetOrderData(session=self.session, list=targetlist)
+		r=q.query(results=1)
+		if r:
+			return list(r[0]['order'])
+		else:
+			return []
+
+	def publishTargetOrder(self, targetlist, target_order):
+		if target_order:
+			q = leginondata.TargetOrderData(session=self.session, list=targetlist)
+			q['order'] = target_order
+			q.insert(force=True)
 
 	def getCenterTargets(self, imagetargets, imageshape):
 		'''
@@ -651,7 +669,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		'''
 		Get next acquisition target image size and beam diameter displayed on imagedata
 		'''
-		if not self.next_acq_node:
+		if type(self.next_acq_node) != type({}):
 			return {'x':(0,0),'y':(0,0)},0
 		try:
 			image_pixelsize = self.calclients['image shift'].getImagePixelSize(imagedata)
@@ -687,8 +705,8 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 	def _getTargetDisplayInfo(self,image_pixelsize):
 		try:
 			# get settings for the next Acquisition node
-			settingsclassname = self.next_acq_node['class string']+'SettingsData'
-			results= self.reseachDBSettings(getattr(leginondata,settingsclassname),self.next_acq_node['alias'])
+			settingsclassname = self.next_acq_node['node']['class string']+'SettingsData'
+			results= self.reseachDBSettings(getattr(leginondata,settingsclassname),self.next_acq_node['node']['alias'])
 			acqsettings = results[0]
 			# use first preset in preset order for display
 			presetlist = acqsettings['preset order']
