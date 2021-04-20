@@ -272,6 +272,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		Find Reference class or its subclass instance bound
 		to this node upon application loading.
 		'''
+		super(Acquisition, self).handleApplicationEvent(evt)
 		app = evt['application']
 		self.targetfinder_from = appclient.getLastNodeThruBinding(app,self.name,'ImageTargetListPublishEvent','TargetFinder')
 		self.alignzlp_bound = appclient.getNextNodeThruBinding(app,self.name,'AlignZeroLossPeakPublishEvent','AlignZeroLossPeak')

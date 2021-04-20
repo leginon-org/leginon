@@ -83,6 +83,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		Find a class or its subclass instance bound
 		to this node upon application loading.
 		'''
+		super(Reference, self).handleApplicationEvent(evt)
 		app = evt['application']
 		self.navigator_bound = appclient.getNextNodeThruBinding(app,self.name,'MoveToTargetEvent','Navigator')
 

@@ -7,7 +7,6 @@
 #
 #
 
-import pdb
 import sinedon
 from leginon import leginondata
 from leginon import appclient
@@ -434,10 +433,10 @@ class Node(correctorclient.CorrectorClient):
 	def handleApplicationEvent(self, ievent):
 		'''
 		Use the application object passed through the event to do something.
-		This is for future setting synchronization.  Not implemented yet.
-		It does nothing now.
+		This is for setting synchronization.
 		'''
 		app = ievent['application']
+		# used in saving ImageTargetListData
 		self.this_node = appclient.getNodeSpecData(app,self.name)
 
 	def handleSetSessionEvent(self, ievent):
