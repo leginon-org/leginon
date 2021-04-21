@@ -348,10 +348,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 	def validateStagePosition(self, stageposition):
 		## check for out of stage range target
-		stagelimits = {
-			'x': (-9.9e-4, 9.9e-4),
-			'y': (-9.9e-4, 9.9e-4),
-		}
+		stagelimits = self.instrument.tem.StageLimits
 		for axis, limits in stagelimits.items():
 			if stageposition[axis] < limits[0] or stageposition[axis] > limits[1]:
 				pstr = '%s: %g' % (axis, stageposition[axis])
