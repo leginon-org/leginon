@@ -177,8 +177,6 @@ class DiffractionUpload(object):
 			# pedestal is relative to the zero after offset is applied.
 			pedestal = -min_value + max_of_mins
 			self.saveSMV(imagedata, smv_path, -min_value, pedestal)
-			self.changeOwnership(mrc_path)
-			self.changeMode(mrc_path, self.path_mode)
 			self.changeOwnership(smv_path)
 			self.changeMode(smv_path, self.path_mode)
 
@@ -248,6 +246,9 @@ class DiffractionUpload(object):
 		if iter_number0 == 0 or iter_number0 == len(self.bin_files)-1:
 			print '%d tilt %.2f' % (iter_number0,tilt_degrees)
 		imagedata.insert()
+		uploaded_mrc_path = os.path.join(self.session['image path'],imagedata['filename']+'.mrc')
+		self.changeOwnership(uploaded_mrc_path)
+		self.changeMode(uploaded_mrc_path, self.path_mode)
 		return imagedata
 
 	def insertImageStats(self, numarray, imagedata):
