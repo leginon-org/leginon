@@ -23,5 +23,6 @@ getConnection(modulename)
 from data import Data
 from dbconfig import getConfig, setConfig
 from connections import getConnection
+# warning level
 import warnings
 warnings.filterwarnings('ignore', module='sinedon')
