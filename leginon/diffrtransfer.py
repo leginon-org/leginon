@@ -501,7 +501,6 @@ def checkAllImages(datapath):
 	return groups, movie_format
 
 def loop(check_path, check_interval,no_wait=False,mode_str=''):
-	self.path_mode = mode_str
 	while True:
 		print 'Iterating...'
 		groups, movie_format = checkAllImages(check_path)
@@ -530,6 +529,7 @@ def loop(check_path, check_interval,no_wait=False,mode_str=''):
 					app = TvipsMovieUpload(hl_id,target_number,groups[k])
 				else:
 					app = DiffractionUpload(hl_id,target_number,groups[k])
+				app.path_mode = mode_str
 				app.run()
 			except ValueError as e:
 				# no diffraction series saved.  For example, where there is a leginon side
