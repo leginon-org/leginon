@@ -272,6 +272,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		Find Reference class or its subclass instance bound
 		to this node upon application loading.
 		'''
+		super(Acquisition, self).handleApplicationEvent(evt)
 		app = evt['application']
 		self.targetfinder_from = appclient.getLastNodeThruBinding(app,self.name,'ImageTargetListPublishEvent','TargetFinder')
 		self.alignzlp_bound = appclient.getNextNodeThruBinding(app,self.name,'AlignZeroLossPeakPublishEvent','AlignZeroLossPeak')
@@ -347,10 +348,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 	def validateStagePosition(self, stageposition):
 		## check for out of stage range target
-		stagelimits = {
-			'x': (-9.9e-4, 9.9e-4),
-			'y': (-9.9e-4, 9.9e-4),
-		}
+		stagelimits = self.instrument.tem.StageLimits
 		for axis, limits in stagelimits.items():
 			if stageposition[axis] < limits[0] or stageposition[axis] > limits[1]:
 				pstr = '%s: %g' % (axis, stageposition[axis])

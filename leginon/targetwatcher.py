@@ -369,7 +369,8 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			retract_successful = self.setApertures()
 
 		targetliststatus = 'success'
-		targetliststatus = self.processGoodTargets(good_targets)
+		if good_targets:
+			targetliststatus = self.processGoodTargets(good_targets)
 
 		self.reportTargetListDone(newdata, targetliststatus)
 		if retract_successful:

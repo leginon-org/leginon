@@ -58,7 +58,7 @@ class TargetHandler(object):
 		self.outputEvent(e)
 		# mosaic quilt finder and mosaic target finder
 		# should not do this so more targets can be submitted
-		if not targetlistdata['node']['class string'].startswith('Mosaic'):
+		if hasattr(targetlistdata['node'],'class string') and not targetlistdata['class string'].startswith('Mosaic'):
 			# TODO: using class string text to test is not a good idea. Need better solutions.
 			self.insertDoneTargetList(targetlistdata)
 
@@ -284,6 +284,8 @@ class TargetHandler(object):
 			queuedata = self.getQueue()
 		else:
 			queuedata = None
+		if self.this_node is None:
+			self.logger.error('can not find node spec for targetlist from %s' % (image['filename']))
 		listdata = leginondata.ImageTargetListData(session=self.session, label=label, mosaic=mosaic, image=image, queue=queuedata, sublist=sublist, node=self.this_node)
 		return listdata
 
