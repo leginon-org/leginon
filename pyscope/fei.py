@@ -223,8 +223,16 @@ class Tecnai(tem.TEM):
 		current = self.getStagePosition()
 		bigenough = {}
 		minimum_stage = self.getMinimumStageMovement()
+		limit = self.getStageLimits()
 		for axis in ('x', 'y', 'z', 'a', 'b'):
 			if axis in position:
+				if not (limit[axis][0] < position[axis] and limit[axis][1] > position[axis]):
+					if axis in ('x','y','z'):
+						um_p = position[axis]*1e6
+						raise ValueError('Requested position %.1f um out of range.' % (axis,um_p))
+					else:
+						deg_p = math.degrees(position[axis])
+						raise ValueError('Requested position %.1f degrees out of range.' % (axis,deg_p))
 				delta = abs(position[axis] - current[axis])
 				if delta > minimum_stage[axis]:
 					bigenough[axis] = position[axis]
