@@ -228,7 +228,7 @@ if reclim < 20000:
 	sys.setrecursionlimit(20000)
 
 class Blob(object):
-	def __init__(self, image, mask, n, center, mean, stddev, moment, maxpos, label_index):
+	def __init__(self, image, mask, n, center, mean, stddev, moment, maxpos, label_index=1):
 		self.image = image
 		self.mask = mask
 		self.stats = {"center":center, "n":n, "mean":mean, "stddev":stddev, "size":0, "moment":moment, "maximum_position":maxpos, "label_index":label_index}
