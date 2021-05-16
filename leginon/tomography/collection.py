@@ -143,7 +143,10 @@ class Collection(object):
 			self.loop(self.tilts, self.exposures, self.tilt_index_sequence)
 
 	def sequentialLoop(self):
-		break1 = len(self.tilts[0])
+		# The group in the first loop is already determined for self.tilt_index_sequence
+		# we just get it from it.
+		first_group = self.tilt_index_sequence[0][0]
+		break1 = len(self.tilts[first_group])
 		self.loop(self.tilts, self.exposures, self.tilt_index_sequence[:break1])
 		if break1 < len(self.tilt_index_sequence):
 			self.initLoop2()
