@@ -16,6 +16,7 @@ import mosaic
 import threading
 import node
 import targethandler
+import multihole
 from pyami import convolver, imagefun, mrc, ordereddict, affine
 import numpy
 import pyami.quietscipy
@@ -76,7 +77,8 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		'target grouping': {
 			'total targets': 10,
 			'classes': 1,
-		}
+		},
+		'target multiple':1,
 	})
 
 	eventoutputs = targetfinder.ClickTargetFinder.eventoutputs + [event.MosaicDoneEvent]
@@ -109,6 +111,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.mosaicimagescale = None
 		self.mosaicimagedata = None
 		self.convolver = convolver.Convolver()
+		self.multihole = multihole.TemplateConvolver()
 		self.currentposition = []
 		self.target_order = []
 		self.mosaiccreated = threading.Event()
@@ -673,6 +676,8 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.logger.info('Mosaic loaded (%i of %i images loaded successfully)' % (i+1, ntotal))
 		if self.settings['create on tile change'] in ('all', 'final'):
 			self.createMosaicImage()
+		# use currentimagedata to set TargetImageVectors for target multiple
+		self.setTargetImageVectors(self.currentimagedata)
 		# hacking
 		self.handleTargetListDone(None)
 
@@ -1013,7 +1018,33 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		other_blobs = self.sampleBlobs(other_blobs, non_priority_total)
 		# turn combined blobs into targets
 		targets = list(map(self.blobToDisplayTarget, priority_blobs+other_blobs))
+		# flat list of multihole convolution
+		targets = self.multiHoleConvolution(targets)
 		# TODO save SquareStatsData
+		return targets
+
+	def multiHoleConvolution(self, targets):
+		'''
+		Convolute targets using a lattice based on next acquisition
+		targetimagevectors
+		'''
+		target_groups = map((lambda x: self._multihole_list(x)), targets)
+		# return a flat list of targets
+		return [t for tgroup in target_groups for t in tgroup] 
+
+	def _multihole_list(self, original_target):
+		'''
+		Returns a list of convoluted targets
+		'''
+		npoint = self.settings['target multiple']
+		self.multihole.setConfig(npoint, single_scale=1.0)
+		axis_vectors = numpy.array([self.targetimagevectors['y'],self.targetimagevectors['x']])
+		self.multihole.setUnitVector(axis_vectors)
+		lattice_vectors = self.multihole.makeLatticeVectors()
+		targets = numpy.ndarray.tolist(lattice_vectors)
+		# shift based on original_target
+		targets = map((lambda x: (x[0]+original_target[0],x[1]+original_target[1])), targets)
+		# [(row0,col0),(row1,col1),....]
 		return targets
 
 	def _runBlobRankFilter(self, blobs, example_points, panel_points):
