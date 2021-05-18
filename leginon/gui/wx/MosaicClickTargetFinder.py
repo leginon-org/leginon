@@ -393,6 +393,7 @@ class TargetScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.widgets['target grouping'] = {}
 		self.widgets['target grouping']['total targets'] = IntEntry(self, -1, min=0, chars=6)
 		self.widgets['target grouping']['classes'] = IntEntry(self, -1, min=1, chars=6)
+		self.widgets['target multiple'] = IntEntry(self, -1, min=1, max=9, chars=6)
 		# row sizers
 		sz = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Max. number of targets:')
@@ -403,6 +404,16 @@ class TargetScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['target grouping']['classes'], (1, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		
+		tm_sz = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Cover each square with:')
+		tm_sz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		tm_sz.Add(self.widgets['target multiple'], (0, 1), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		label = wx.StaticText(self, -1, 'targets')
+		tm_sz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(tm_sz, (2, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+		# finalize
 		sz.AddGrowableCol(1)
 		sbsz1.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
 		return [sbsz1, ]

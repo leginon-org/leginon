@@ -1909,6 +1909,7 @@ class SquareFinderSettingsData(SettingsData):
 			('lpf', LowPassFilterSettingsData),
 			('blobs', BlobFinderSettingsData),
 			('target grouping', TargetGroupingSettingsData),
+			('target multiple', int),
 			('threshold', float),
 		)
 	typemap = classmethod(typemap)
