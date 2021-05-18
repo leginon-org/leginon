@@ -54,7 +54,7 @@ class StatsBlob(object):
 		score = info_dict['score']
 		center = info_dict['center'][1],info_dict['center'][0]
 		vertices = info_dict['vertices']
-		self.stats = {"label_index": index, "center":center, "n":size, "mean":mean, "score":score, "stddev":score}
+		self.stats = {"label_index": index, "center":center, "n":size, "size":size, "mean":mean, "score":score, "stddev":score}
 		self.vertices = vertices
 
 class MosaicClickTargetFinder(mosaictargetfinder.MosaicClickTargetFinder):
