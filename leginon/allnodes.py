@@ -68,6 +68,9 @@ noderegistry.registerNodeClass(DTFinder,classtype)
 from mosaictargetfinder import MosaicClickTargetFinder
 noderegistry.registerNodeClass(MosaicClickTargetFinder,classtype)
 
+#from mosaicexternalfinder import MosaicClickTargetFinder
+#noderegistry.registerNodeClass(MosaicClickTargetFinder,classtype)
+
 from mosaicquiltfinder import MosaicQuiltFinder
 noderegistry.registerNodeClass(MosaicQuiltFinder,classtype)
 

@@ -136,10 +136,8 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 	# not complete
 	def handleTargetListDone(self, targetlistdoneevent):
 		self.logger.warning('Got targetlistdone event')
-		if self.settings['create on tile change'] == 'final':
-			self.logger.debug('create final')
+		if self.settings['create on tile change'] in ('all', 'final'):
 			self.createMosaicImage()
-			self.logger.debug('done create final')
 		if not self.hasNewImageVersion():
 			self.targetsFromDatabase()
 			# fresh atlas without acquisition targets (done or not) should run autofinder
