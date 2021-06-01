@@ -27,7 +27,7 @@ import appclient
 import numpy
 import numpy.linalg
 import math
-from pyami import arraystats, imagefun, ordereddict
+from pyami import arraystats, imagefun, ordereddict, moduleconfig
 import smtplib
 import emailnotification
 import leginonconfig
@@ -86,6 +86,16 @@ def setImageFilename(imagedata):
 	filename = '_'.join(parts)
 	imagedata['filename'] = filename
 
+def isSkipGrTileId():
+	is_skip = False
+	try:
+		is_skip = moduleconfig.getConfigured('leginon_session.cfg', 'leginon')['filename']['skip_gr_tile_id']
+	except IOError as e:
+		pass
+	except KeyError:
+		pass
+	return is_skip
+
 def getRootName(imagedata, listlabel=False):
 	'''
 	get the root name of an image from its parent
@@ -105,7 +115,8 @@ def getRootName(imagedata, listlabel=False):
 	## use root name from parent image
 	parent_root = parent_image['filename']
 	if parent_root:
-		parent_root = re.sub(r'_\d+gr','',parent_root)    # wjr eliminate grid number and grid label
+		if isSkipGrTileId():
+			parent_root = re.sub(r'_\d+gr','',parent_root)    # wjr eliminate grid number and grid label
 		if parent_target['spotmap'] and not parent_image['spotmap']:
 			# target only has spotmap if from MosaicSpotFinder
 			parent_root += '_%s' % (parent_target['spotmap']['name'])
