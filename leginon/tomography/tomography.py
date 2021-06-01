@@ -344,7 +344,9 @@ class Tomography(leginon.acquisition.Acquisition):
 		if self.settings['adjust for transform'] == 'no':
 			self.logger.warning('Force target adjustment for tomography')
 			self.settings['adjust for transform'] = 'one'
+		targetonimage = target['delta column'],target['delta row']
 		target = self.adjustTargetForTransform(target)
+		self.logger.info('target adjusted by (%.1f,%.1f) (column, row)' % (target['delta column']-targetonimage[0],target['delta row']-targetonimage[1]))
 		emtarget = self.targetToEMTargetData(target)
 		presetdata = self.presetsclient.getPresetFromDB(preset_name)
 		status = self.moveAndPreset(presetdata, emtarget)
@@ -360,6 +362,7 @@ class Tomography(leginon.acquisition.Acquisition):
 		try:
 			parentname = target['image']['preset']['name']
 		except:
+			self.logger.info('no parent preset name. skip alpha backlash correction')
 			adjust = False
 		else:
 			adjust = True
