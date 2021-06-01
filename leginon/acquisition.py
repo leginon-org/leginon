@@ -33,6 +33,7 @@ import emailnotification
 import leginonconfig
 import gridlabeler
 import itertools
+import re       # wjr for getting rid of gr in filename
 
 debug = False
 
@@ -104,6 +105,7 @@ def getRootName(imagedata, listlabel=False):
 	## use root name from parent image
 	parent_root = parent_image['filename']
 	if parent_root:
+		parent_root = re.sub(r'_\d+gr','',parent_root)    # wjr eliminate grid number and grid label
 		if parent_target['spotmap'] and not parent_image['spotmap']:
 			# target only has spotmap if from MosaicSpotFinder
 			parent_root += '_%s' % (parent_target['spotmap']['name'])
