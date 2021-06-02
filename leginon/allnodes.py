@@ -68,6 +68,9 @@ noderegistry.registerNodeClass(DTFinder,classtype)
 from mosaictargetfinder import MosaicClickTargetFinder
 noderegistry.registerNodeClass(MosaicClickTargetFinder,classtype)
 
+#from mosaicexternalfinder import MosaicClickTargetFinder
+#noderegistry.registerNodeClass(MosaicClickTargetFinder,classtype)
+
 from mosaicquiltfinder import MosaicQuiltFinder
 noderegistry.registerNodeClass(MosaicQuiltFinder,classtype)
 
@@ -102,7 +105,7 @@ noderegistry.registerNodeClass(TomoClickTargetFinder,classtype)
 from tomography.tomography import Tomography
 noderegistry.registerNodeClass(Tomography,classtype)
 
-from tomography.tomography import Tomography2
+from tomography.tomography2 import Tomography2
 noderegistry.registerNodeClass(Tomography2,classtype)
 
 from acquisition import Acquisition

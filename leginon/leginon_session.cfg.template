@@ -4,7 +4,11 @@
 # For example,
 # prefix: n
 # makes session name 20mar20a becomes n20mar20a
-prefix: 
+prefix:
+# filename format rule.
+# When skip_gr_tile_id flag is True, _%03dgr is removed on image filename that uses that as parent.
+[filename]
+skip_gr_tile_id: False
 [app]
 # a list of case-sensitive prefix/postfix,separated by ",", for applications
 # to be shown in application history.

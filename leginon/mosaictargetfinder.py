@@ -16,6 +16,7 @@ import mosaic
 import threading
 import node
 import targethandler
+import multihole
 from pyami import convolver, imagefun, mrc, ordereddict, affine
 import numpy
 import pyami.quietscipy
@@ -76,11 +77,13 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		'target grouping': {
 			'total targets': 10,
 			'classes': 1,
-		}
+		},
+		'target multiple':1,
 	})
 
 	eventoutputs = targetfinder.ClickTargetFinder.eventoutputs + [event.MosaicDoneEvent]
 	targetnames = ['acquisition','focus','preview','reference','done','Blobs', 'example']
+
 	def __init__(self, id, session, managerlocation, **kwargs):
 		self.mosaicselections = {}
 		targetfinder.ClickTargetFinder.__init__(self, id, session, managerlocation, **kwargs)
@@ -108,6 +111,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.mosaicimagescale = None
 		self.mosaicimagedata = None
 		self.convolver = convolver.Convolver()
+		self.multihole = multihole.TemplateConvolver()
 		self.currentposition = []
 		self.target_order = []
 		self.mosaiccreated = threading.Event()
@@ -135,10 +139,8 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 	# not complete
 	def handleTargetListDone(self, targetlistdoneevent):
 		self.logger.warning('Got targetlistdone event')
-		if self.settings['create on tile change'] == 'final':
-			self.logger.debug('create final')
+		if self.settings['create on tile change'] in ('all', 'final'):
 			self.createMosaicImage()
-			self.logger.debug('done create final')
 		if not self.hasNewImageVersion():
 			self.targetsFromDatabase()
 			# fresh atlas without acquisition targets (done or not) should run autofinder
@@ -151,6 +153,8 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.notifyAutoDone('atlas')
 
 	def runAutoFinderRanker(self):
+		if self.mosaicimage is None:
+			self.logger.error('Must have atlas display to find squares')
 		self.publishMosaicImage()
 		# get blobs with stats
 		blobs = self.findSquareBlobs()
@@ -672,6 +676,8 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.logger.info('Mosaic loaded (%i of %i images loaded successfully)' % (i+1, ntotal))
 		if self.settings['create on tile change'] in ('all', 'final'):
 			self.createMosaicImage()
+		# use currentimagedata to set TargetImageVectors for target multiple
+		self.setTargetImageVectors(self.currentimagedata)
 		# hacking
 		self.handleTargetListDone(None)
 
@@ -999,20 +1005,60 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		'''
 		if not blobs:
 			return []
-		example_blobs = []
-		example_blob_indices = []
-		labels, n = imagefun.scipylabels(self.mask)
-		self.setImage(labels, 'Thresholded')
 		example_targets, panel_targets = self.getExampleAndPanelTargets(xytargets)
 		example_points = map((lambda x: (x[1],x[0])), example_targets)
-		has_priority = imagefun.hasPointsInLabel(labels, n, example_points)
 		panel_points = map((lambda x: (x[1],x[0])), panel_targets)
-		to_avoid = imagefun.hasPointsInLabel(labels, n, panel_points)
+		priority_blobs, other_blobs, display_array = self._runBlobRankFilter(blobs, example_points, panel_points)
+		if display_array is not None:
+			self.setImage(display_array, 'Thresholded')
+		# filter out blobs with stats settings.
+		other_blobs = self.filterStats(other_blobs)
+		# sample some non-priority blobs
+		non_priority_total = self.settings['target grouping']['total targets']-len(priority_blobs)
+		other_blobs = self.sampleBlobs(other_blobs, non_priority_total)
+		# turn combined blobs into targets
+		targets = list(map(self.blobToDisplayTarget, priority_blobs+other_blobs))
+		# flat list of multihole convolution
+		targets = self.multiHoleConvolution(targets)
+		# TODO save SquareStatsData
+		return targets
+
+	def multiHoleConvolution(self, targets):
+		'''
+		Convolute targets using a lattice based on next acquisition
+		targetimagevectors
+		'''
+		target_groups = map((lambda x: self._multihole_list(x)), targets)
+		# return a flat list of targets
+		return [t for tgroup in target_groups for t in tgroup] 
+
+	def _multihole_list(self, original_target):
+		'''
+		Returns a list of convoluted targets
+		'''
+		npoint = self.settings['target multiple']
+		if not npoint:
+			npoint = 1
+		self.multihole.setConfig(npoint, single_scale=1.0)
+		axis_vectors = numpy.array([self.targetimagevectors['y'],self.targetimagevectors['x']])
+		self.multihole.setUnitVector(axis_vectors)
+		lattice_vectors = self.multihole.makeLatticeVectors()
+		targets = numpy.ndarray.tolist(lattice_vectors)
+		# shift based on original_target
+		targets = map((lambda x: (x[0]+original_target[0],x[1]+original_target[1])), targets)
+		# [(row0,col0),(row1,col1),....]
+		return targets
+
+	def _runBlobRankFilter(self, blobs, example_points, panel_points):
+		example_blobs = []
+		example_blob_indices = []
+
+		has_priority, to_avoid, display_array =  self.filterPoints(blobs, example_points, panel_points)
 		# save examples for ranking and filtering
 		for i, b in enumerate(blobs):
 			l = b.stats['label_index']
 			if has_priority[l]:
-				# blobs that contains example_xytargets
+				# blobs that contains example_points
 				example_blobs.append(b)
 				example_blob_indices.append(i)
 		## use example_blobs stats to find good ones
@@ -1032,14 +1078,23 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		priority_blobs = filter(is_false, example_blobs)
 		# remove any to_avoid blobs from the rest of the blobs
 		blobs = filter(is_false, blobs[len(priority_blobs):])
-		# filter out blobs with stats settings.
-		blobs = self.filterStats(blobs)
-		# sample some blobs
-		non_priority_total = self.settings['target grouping']['total targets']-len(priority_blobs)
-		blobs = self.sampleBlobs(blobs, non_priority_total)
-		targets = list(map(self.blobToDisplayTarget, priority_blobs+blobs))
-		# TODO save SquareStatsData
-		return targets
+		return priority_blobs, blobs, display_array
+
+	def filterPoints(self, blobs, example_points, panel_points):
+		'''
+		Return boolean for each blob.
+		has_priority: at least one example_point is in the blob
+		to_avoid: at least one panel_point is in the blob
+		display_array: some image array to display in the gui as Thresholded image.
+		'''
+		return self.filterPointsByLabel(blobs, example_points, panel_points)
+
+	def filterPointsByLabel(self, blobs, example_points, panel_points):
+		labels, n = imagefun.scipylabels(self.mask)
+		has_priority = imagefun.hasPointsInLabel(labels, n, example_points)
+		to_avoid = imagefun.hasPointsInLabel(labels, n, panel_points)
+		return has_priority, to_avoid, labels
+
 
 	def blobToDisplayTarget(self, blob):
 			row = blob.stats['center'][0]

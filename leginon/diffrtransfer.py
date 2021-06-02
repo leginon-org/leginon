@@ -54,8 +54,11 @@ class DiffractionUpload(object):
 		return upload_presetq
 
 	def getGunLength(self, file_pattern):
-		if 'gl' in file_pattern:
-			gl_str = file_pattern.split('gl')[1][:2]
+		# use basename pattern in case that mount point include the word gl
+		# as in glacios
+		base_pattern = os.path.basename(file_pattern)
+		if 'gl' in base_pattern:
+			gl_str = base_pattern.split('gl')[1][:2]
 			gl_value = float('%s.%s' % (gl_str[0],gl_str[1]))
 			return gl_value, 'gl'+gl_str
 		else:
