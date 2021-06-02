@@ -2463,6 +2463,7 @@ class TomographySettingsData(AcquisitionSettingsData):
 			('mean threshold', float),
 			('collection threshold', float),
 			('tilt pause time', float),
+			('backlash pause time', float),
 			('measure defocus', bool),
 			('integer', bool),
 			('intscale', float),

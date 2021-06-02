@@ -53,6 +53,7 @@ class Tomography(leginon.acquisition.Acquisition):
 		'mean threshold': 100.0,
 		'collection threshold': 90.0,
 		'tilt pause time': 1.0,
+		'backlash pause time': 2.5,
 		'measure defocus': False,
 		'integer': False,
 		'intscale': 10,
@@ -372,11 +373,15 @@ class Tomography(leginon.acquisition.Acquisition):
 			isoffset = self.getImageShiftOffset()
 			self.presetsclient.toScope(parentname)
 			self.setImageShiftOffset(isoffset)
+			sleep_time = max(self.settings['backlash pause time'])
+			self.logger.info('pausing %.2f s before acquiring image' % (sleep_time))
+			time.sleep(sleep_time)
 			imagedata0 = self.acquireCorrectedCameraImageData(0)
+			self.panel.viewer.addImage(imagedata0['image'])
 
 		## tilt then return in slow increments
-		delta = math.radians(5.0)
-		n = 5
+		delta = math.radians(6.0)
+		n = 2
 		increment = delta/n
 		if not sequence:
 			self.logger.warning('Abort stage alpha backlash correction for lack of tilt sequence')
@@ -400,6 +405,7 @@ class Tomography(leginon.acquisition.Acquisition):
 		if adjust:
 			## acquire parent preset image, final image
 			imagedata1 = self.acquireCorrectedCameraImageData(1)
+			self.panel.viewer.addImage(imagedata1['image'])
 
 			self.presetsclient.toScope(preset_name)
 			## return to tomography preset
@@ -416,6 +422,8 @@ class Tomography(leginon.acquisition.Acquisition):
 			subpixelpeak = peakinfo['subpixel peak']
 			shift = correlator.wrap_coord(subpixelpeak, imagedata0['image'].shape)
 			shift = {'row': shift[0], 'col': shift[1]}
+			s = (shift['col'], shift['row'])
+			self.panel.viewer.setXC(pc, s)
 			## transform pixel to image shift
 			oldscope = imagedata0['scope']
 			newscope = self.calclients['image shift'].transform(shift, oldscope, imagedata0['camera'])
@@ -426,6 +434,7 @@ class Tomography(leginon.acquisition.Acquisition):
 			newishift = {'x': oldishift['x'] + ishiftx, 'y': oldishift['y'] + ishifty}
 			self.logger.info('adjusting imageshift after backlash: dx,dy = %s,%s' % (ishiftx,ishifty))
 			self.instrument.tem.ImageShift = newishift			
+			self.panel.viewer.clearImages()
 
 	def initGoodPredictionInfo(self,presetdata=None, tiltgroup=0):
 		# FIX ME: This can be simplified now that we define tilt group in prediction
