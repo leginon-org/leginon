@@ -1037,6 +1037,8 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		Returns a list of convoluted targets
 		'''
 		npoint = self.settings['target multiple']
+		if not npoint:
+			npoint = 1
 		self.multihole.setConfig(npoint, single_scale=1.0)
 		axis_vectors = numpy.array([self.targetimagevectors['y'],self.targetimagevectors['x']])
 		self.multihole.setUnitVector(axis_vectors)
