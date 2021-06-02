@@ -88,7 +88,7 @@ class TemplateConvolver(object):
 		'''
 		if self.single is None:
 			raise ValueError('Single template image is required to make lattice image used in convolution')
-		lattice_vectors = self.makeLatticeVector()
+		lattice_vectors = self.makeLatticeVectors()
 		shape = self.calculateNewTemplateShape(lattice_vectors)
 		lattice_vectors = self._centerVectorsOnShape(lattice_vectors, shape)
 		image = numpy.zeros(shape)
@@ -98,7 +98,7 @@ class TemplateConvolver(object):
 
 	def convolve(self):
 			kernel = self.single
-			image = self.makeLatticeImage(self.npoint)
+			image = self.makeLatticeImage()
 			self.convolver.setKernel(kernel)
 			image = self.convolver.convolve(image=image)
 			return image

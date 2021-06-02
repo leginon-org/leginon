@@ -203,7 +203,7 @@ class HoleFinder(object):
 		# multiple hole template generation
 		self.multiconvolver.setSingleTemplate(tempim)
 		self.multiconvolver.setConfig(self.template_config['multiple'], scale)
-		slef.multiconvolver.setSquareUnitVector(self.template_config['spacing'], self.template_config['angle'])
+		self.multiconvolver.setSquareUnitVector(self.template_config['spacing'], self.template_config['angle'])
 
 		tempim = self.multiconvolver.makeMultiTemplate()
 		# create template of proper size
