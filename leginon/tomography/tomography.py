@@ -373,7 +373,7 @@ class Tomography(leginon.acquisition.Acquisition):
 			isoffset = self.getImageShiftOffset()
 			self.presetsclient.toScope(parentname)
 			self.setImageShiftOffset(isoffset)
-			sleep_time = max(self.settings['backlash pause time'])
+			sleep_time = max(self.settings['backlash pause time'], 1.0)
 			self.logger.info('pausing %.2f s before acquiring image' % (sleep_time))
 			time.sleep(sleep_time)
 			imagedata0 = self.acquireCorrectedCameraImageData(0)
