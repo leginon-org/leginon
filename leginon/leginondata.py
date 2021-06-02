@@ -1909,6 +1909,7 @@ class SquareFinderSettingsData(SettingsData):
 			('lpf', LowPassFilterSettingsData),
 			('blobs', BlobFinderSettingsData),
 			('target grouping', TargetGroupingSettingsData),
+			('target multiple', int),
 			('threshold', float),
 		)
 	typemap = classmethod(typemap)
@@ -2462,6 +2463,7 @@ class TomographySettingsData(AcquisitionSettingsData):
 			('mean threshold', float),
 			('collection threshold', float),
 			('tilt pause time', float),
+			('backlash pause time', float),
 			('measure defocus', bool),
 			('integer', bool),
 			('intscale', float),

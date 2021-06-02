@@ -284,7 +284,10 @@ class RawTransfer(object):
 		if mode_str:
 			self.changeMode(dst, mode_str, recursive=True)
 
-		self.cleanUp(src,method)
+		# comment out cleanUp here and rely on rsync to do its job
+		# and clean up on the next source search iteration.
+		# see Issue #10244
+		# self.cleanUp(src,method)
 
 	def getSessionFramePath(self, imdata):
 		image_path = imdata['session']['image path']
