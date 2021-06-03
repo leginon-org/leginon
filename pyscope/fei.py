@@ -1142,7 +1142,7 @@ class Tecnai(tem.TEM):
 		self.waitForStageReady('after setting %s' % (position,))
 
 	def setDirectStagePosition(self,value):
-		value = self.checkStageLimits(value)
+		self.checkStageLimits(value)
 		self._setStagePosition(value)
 
 	def getLowDoseStates(self):
