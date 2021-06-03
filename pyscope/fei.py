@@ -191,7 +191,7 @@ class Tecnai(tem.TEM):
 	def getStageLimits(self):
 		limits = self.getFeiConfig('stage','stage_limits')
 		if limits is None:
-			limits = {}
+			limits = super(Tecnai, self).getStageLimits()
 		return limits
 
 	def getXYZStageBacklashDelta(self):
@@ -219,20 +219,39 @@ class Tecnai(tem.TEM):
 	def getCorrectedStagePosition(self):
 		return self.correctedstage
 
+	def checkStageLimits(self, position):
+		self._checkStageXYZLimits(position)
+		self._checkStageABLimits(position)
+
+	def _checkStageXYZLimits(self, position):
+		limit = self.getStageLimits()
+		intersection = set(position.keys()).intersection(('x','y','z'))
+		for axis in intersection:
+			self._validateStageAxisLimit(position[axis], axis)
+
+	def _checkStageABLimits(self, position):
+		limit = self.getStageLimits()
+		intersection = set(position.keys()).intersection(('a','b'))
+		for axis in intersection:
+			self._validateStageAxisLimit(position[axis], axis)
+
+	def _validateStageAxisLimit(self, p, axis):
+		limit = self.getStageLimits()
+		if not (limit[axis][0] < p and limit[axis][1] > p):
+			if axis in ('x','y','z'):
+				um_p = p*1e6
+				raise ValueError('Requested %s axis position %.1f um out of range.' % (axis,um_p))
+			else:
+				deg_p = math.degrees(p)
+				raise ValueError('Requested %s axis position %.1f degrees out of range.' % (axis,deg_p))
+
 	def checkStagePosition(self, position):
+		self.checkStageLimits(position)
 		current = self.getStagePosition()
 		bigenough = {}
 		minimum_stage = self.getMinimumStageMovement()
-		limit = self.getStageLimits()
 		for axis in ('x', 'y', 'z', 'a', 'b'):
 			if axis in position:
-				if not (limit[axis][0] < position[axis] and limit[axis][1] > position[axis]):
-					if axis in ('x','y','z'):
-						um_p = position[axis]*1e6
-						raise ValueError('Requested %s axis position %.1f um out of range.' % (axis,um_p))
-					else:
-						deg_p = math.degrees(position[axis])
-						raise ValueError('Requested position %.1f degrees out of range.' % (axis,deg_p))
 				delta = abs(position[axis] - current[axis])
 				if delta > minimum_stage[axis]:
 					bigenough[axis] = position[axis]
@@ -252,12 +271,14 @@ class Tecnai(tem.TEM):
 			for axis in ('x','y','z'):
 				if axis in value:
 					prevalue[axis] = value[axis] - delta
+					self._validateStageAxisLimit(prevalue[axis],axis)
 		# relax xy
 		relax = self.getXYStageRelaxDistance()
 		if abs(relax) > 1e-9:
 			for axis in ('x','y'):
 				if axis in value:
 					prevalue2[axis] = value[axis] + relax
+					self._validateStageAxisLimit(prevalue2[axis],axis)
 		# preposition a
 		if self.corrected_alpha_stage:
 			# alpha tilt backlash only in one direction
@@ -265,6 +286,7 @@ class Tecnai(tem.TEM):
 			if 'a' in value.keys():
 					axis = 'a'
 					prevalue[axis] = value[axis] - alpha_delta_degrees*3.14159/180.0
+					self._validateStageAxisLimit(prevalue[axis],axis)
 		if prevalue:
 			# set all axes in value
 			for axis in value.keys():
@@ -1030,14 +1052,13 @@ class Tecnai(tem.TEM):
 		pos = self.tecnai.Stage.Position
 
 		axes = 0
-		stage_limits = self.getStageLimits()
 		for key, value in position.items():
 			if use_nidaq and key == 'b':
 				deg = value / 3.14159 * 180.0
 				nidaq.setBeta(deg)
 				continue
 			if key in stage_limits.keys() and (value < stage_limits[key][0] or value > stage_limits[key][1]):
-				raise ValueError('position %s beyond stage limit at %.2e' % (key, value))
+				raise ValueError('low-level position %s beyond stage limit at %.2e' % (key, value))
 			setattr(pos, key.upper(), value)
 			axes |= getattr(self.tem_constants, 'axis' + key.upper())
 
@@ -1121,6 +1142,7 @@ class Tecnai(tem.TEM):
 		self.waitForStageReady('after setting %s' % (position,))
 
 	def setDirectStagePosition(self,value):
+		value = self.checkStageLimits(value)
 		self._setStagePosition(value)
 
 	def getLowDoseStates(self):

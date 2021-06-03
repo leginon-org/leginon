@@ -190,6 +190,10 @@ class SimTEM(tem.TEM):
 			self.stage_position.update({'b':0.0})
 		return copy.copy(self.stage_position)
 
+	def getStageLimits(self):
+		limits = super(SimTEM, self).getStageLimits()
+		return limits
+
 	def _setStagePosition(self,value):
 		keys = value.keys()
 		keys.sort()
@@ -204,7 +208,34 @@ class SimTEM(tem.TEM):
 	def setDirectStagePosition(self,value):
 		self._setStagePosition(value)
 
+	def checkStageLimits(self, position):
+		self._checkStageXYZLimits(position)
+		self._checkStageABLimits(position)
+
+	def _checkStageXYZLimits(self, position):
+		limit = self.getStageLimits()
+		intersection = set(position.keys()).intersection(('x','y','z'))
+		for axis in intersection:
+			self._validateStageAxisLimit(position[axis], axis)
+
+	def _checkStageABLimits(self, position):
+		limit = self.getStageLimits()
+		intersection = set(position.keys()).intersection(('a','b'))
+		for axis in intersection:
+			self._validateStageAxisLimit(position[axis], axis)
+
+	def _validateStageAxisLimit(self, p, axis):
+		limit = self.getStageLimits()
+		if not (limit[axis][0] < p and limit[axis][1] > p):
+			if axis in ('x','y','z'):
+				um_p = p*1e6
+				raise ValueError('Requested %s axis position %.1f um out of range.' % (axis,um_p))
+			else:
+				deg_p = math.degrees(p)
+				raise ValueError('Requested %s axis position %.1f degrees out of range.' % (axis,deg_p))
+
 	def checkStagePosition(self, position):
+		self.checkStageLimits(position)
 		current = self.getStagePosition()
 		bigenough = {}
 		minimum_stage = self.minimum_stage
