@@ -81,7 +81,8 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		'target multiple':1,
 	})
 
-	eventoutputs = targetfinder.ClickTargetFinder.eventoutputs + [event.MosaicDoneEvent]
+	eventoutputs = targetfinder.ClickTargetFinder.eventoutputs + [
+			event.MosaicDoneEvent]
 	targetnames = ['acquisition','focus','preview','reference','done','Blobs', 'example']
 
 	def __init__(self, id, session, managerlocation, **kwargs):
@@ -122,10 +123,13 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.oldsession = self.session
 
 		self.existing_targets = {}
+		self.last_xys = [] # last acquisition targets found in autofinder
 		self.clearTiles()
 
 		self.reference_target = None
 		self.setRefreshTool(self.settings['check method']=='remote')
+
+		self.addEventInput(event.SubmitMosaicTargetsEvent, self.handleSubmitMosaicTargets)
 
 		if self.__class__ == MosaicClickTargetFinder:
 			self.start()
@@ -136,6 +140,18 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.logger.debug('%s did not insert done on %d' % (self.name,targetlistdata.dbid))
 		pass
 
+	def handleSubmitMosaicTargets(self, evt):
+		self.notifyTargetReceiver()
+		self.autoSubmitTargets()
+
+	def notifyTargetReceiver(self):
+			'''
+			Notify Manager where the targets are sent to.
+			'''
+			evt = event.MosaicTargetReceiverNotificationEvent()
+			evt['receiver'] = self.next_acq_node['node']['alias']
+			self.outputEvent(evt)
+
 	# not complete
 	def handleTargetListDone(self, targetlistdoneevent):
 		self.logger.warning('Got targetlistdone event')
@@ -145,14 +161,19 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 			self.targetsFromDatabase()
 			# fresh atlas without acquisition targets (done or not) should run autofinder
 			count = sum(map((lambda x: len(self.targetmap[x]['acquisition'])), self.targetmap.keys()))
-			if count == 0:
-				self.runAutoFinderRanker()
+			if count == 0 and self.settings['autofinder']:
+				self.logger.debug('auto target finder')
+				self.autoTargetFinder()
 		# trigger activation of submit button in the gui.
 		self.panel.doneTargetList()
 		# TODO: auto submit targets if from auto run.
 		self.notifyAutoDone('atlas')
 
-	def runAutoFinderRanker(self):
+	def autoTargetFinder(self):
+		"""
+		automated target finder.  This includes general finder and then ranker to filter
+		and sample the targets.
+		"""
 		if self.mosaicimage is None:
 			self.logger.error('Must have atlas display to find squares')
 		self.publishMosaicImage()
@@ -177,14 +198,21 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.setTargets([], 'example')
 		self.logger.info(message)
 
-	def notifyAutoDone(self,task='atlas'):
-			'''
-			Notify Manager that the node has finished automated task so that automated
-			task can move on.  Need this because it is a different thread.
-			'''
-			evt = event.AutoDoneNotificationEvent()
-			evt['task'] = task
-			self.outputEvent(evt)
+	def autoSubmitTargets(self):
+		"""
+		Submit autofinder targets.
+		"""
+		# Target display is in a separate thread and has slight lag.
+		while 1:
+			time.sleep(0.1)
+			try:
+				# Check the display to make sure the targets are displayed as found.
+				target_positions_from_image = self.panel.getTargetPositions('acquisition')
+			except ValueError:
+				pass
+			if len(target_positions_from_image) == len(self.last_xys):
+				break
+		self.submitTargets()
 
 	def getTargetDataList(self, typename):
 		'''

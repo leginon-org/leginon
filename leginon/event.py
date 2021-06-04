@@ -138,6 +138,15 @@ class AutoDoneNotificationEvent(NotificationEvent):
 		)
 	typemap = classmethod(typemap)
 
+class MosaicTargetReceiverNotificationEvent(NotificationEvent):
+	'''Event sent by mosaic target finder node to indicate the targetwatcher
+	node that receives the targets'''
+	def typemap(cls):
+		return NotificationEvent.typemap() + (
+			('receiver', str), # node alias
+		)
+	typemap = classmethod(typemap)
+
 class IdleNotificationEvent(NotificationEvent):
 	'Event sent to presets manager from manager to notify that Idle is timed out'
 	pass
@@ -444,6 +453,11 @@ class MakeTargetListEvent(ControlEvent):
 			('stagez', float),
 		)
 	typemap = classmethod(typemap)
+
+class SubmitMosaicTargetsEvent(ControlEvent):
+	'Event that signals mosaic target finder to submit target'
+	pass
+
 
 class EmailEvent(Event):
 	'Event to send email'

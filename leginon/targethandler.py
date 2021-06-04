@@ -58,9 +58,12 @@ class TargetHandler(object):
 		self.outputEvent(e)
 		# mosaic quilt finder and mosaic target finder
 		# should not do this so more targets can be submitted
-		if hasattr(targetlistdata['node'],'class string') and not targetlistdata['class string'].startswith('Mosaic'):
-			# TODO: using class string text to test is not a good idea. Need better solutions.
-			self.insertDoneTargetList(targetlistdata)
+		if targetlistdata['node']:
+			if not targetlistdata['node']['class string'].startswith('Mosaic'):
+				# TODO: using class string text to test is not a good idea. Need better solutions.
+				self.insertDoneTargetList(targetlistdata)
+			else:
+				self.notifyAutoDone('full')
 
 	def insertDoneTargetList(self, targetlistdata):
 		if targetlistdata:
