@@ -1052,6 +1052,7 @@ class Tecnai(tem.TEM):
 		pos = self.tecnai.Stage.Position
 
 		axes = 0
+		stage_limits = self.getStageLimits()
 		for key, value in position.items():
 			if use_nidaq and key == 'b':
 				deg = value / 3.14159 * 180.0
