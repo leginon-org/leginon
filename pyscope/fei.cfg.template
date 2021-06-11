@@ -7,6 +7,9 @@ CAMERA = False
 [version]
 SOFTWARE_TYPE = Titan
 TFS_SOFTWARE_VERSION = 2.15.2
+# This scripting version is not necessarily in sync with software version.
+# Falcon3 and 4 should use version 2
+TEM_ADVANCED_SCRIPTING_VERSION = 2
 [optics]
 # Lens normalization is usually set in TUI but there are cases that
 # they are not desirable, for example on Talos column. This force
