@@ -59,6 +59,9 @@ def chooseTEMAdvancedScriptingName():
 		raw_input('Hit return to exit')
 		sys.exit(0)
 	software_type = configs['version']['software_type'].lower()
+	adv_script_version = configs['version']['tem_advanced_scripting_version']
+	if adv_script_version:
+		return '%d' % adv_script_version
 	if software_type == 'titan':
 		# titan major version is one higher than talos
 		major_version += 1
