@@ -633,11 +633,28 @@ class Hitachi(tem.TEM):
 		return self.getCoilVector(coil)
 	
 	def setImageShift(self, value):
-		new_value = self.getImageShift()
 		coil = self.getImageShiftCoil()
-		for key in value.keys():
-			new_value[key]=value[key]
+		if coil == 'PA':
+			new_value = self.setCoarseImageShift(value)
+			fine_value = self.getCoilVector(coil, {'x':0,'y':0})
+		else:
+			new_value = self.getCoilVector(coil)
+			fine_value = dict(new_value)
+		for key in value.keys(): 
+			fine_value[key]=value[key] - new_value[key] 
 		self.setCoilVector(coil, new_value)
+
+	def setCoarseImageShift(self, value):
+		coarse_coil = 'IA'
+		#TODO conversion of xyvalue on fine_coil to coarse_coil
+		# the following makes sure all keys have value
+		new_value = self.getCoilVector(coil)
+		for key in value.keys(): 
+			new_value[key]=value[key] 
+		self.setCoilVector(coil, new_value)
+		new_value = self.getCoilVector(coil)
+		#TODO inverse conversion of xyvalue on fine_coil to coarse_coil
+		return new_value
 
 	def getRawImageShift(self):
 		# TODO: Is this different from ImageShift ?
