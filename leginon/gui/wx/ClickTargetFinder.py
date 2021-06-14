@@ -24,6 +24,16 @@ class Panel(leginon.gui.wx.TargetFinder.Panel):
 		self.SettingsDialog = leginon.gui.wx.TargetFinder.SettingsDialog
 
 		self.imagepanel = leginon.gui.wx.TargetPanel.TargetImagePanel(self, -1)
+		# standard tools
+		self.addTargetTools()
+		self.imagepanel.addTypeTool('Image', display=True)
+		self.imagepanel.selectiontool.setDisplayed('Image', True)
+
+		self.szmain.Add(self.imagepanel, (1, 0), (1, 1), wx.EXPAND)
+		self.szmain.AddGrowableRow(1)
+		self.szmain.AddGrowableCol(0)
+
+	def addTargetTools(self):
 		self.imagepanel.addTargetTool('preview', wx.Colour(255, 128, 255), target=True)
 		self.imagepanel.selectiontool.setDisplayed('preview', True)
 		self.imagepanel.addTargetTool('acquisition', wx.GREEN, target=True, settings=True, numbers=True,exp=True)
@@ -36,11 +46,7 @@ class Panel(leginon.gui.wx.TargetFinder.Panel):
 		self.imagepanel.selectiontool.setDisplayed('done', True)
 		self.imagepanel.addTargetTool('position', wx.Colour(218, 165, 32), shape='x')
 		self.imagepanel.selectiontool.setDisplayed('position', True)
-		self.imagepanel.addTypeTool('Image', display=True)
-		self.imagepanel.selectiontool.setDisplayed('Image', True)
-		self.szmain.Add(self.imagepanel, (1, 0), (1, 1), wx.EXPAND)
-		self.szmain.AddGrowableRow(1)
-		self.szmain.AddGrowableCol(0)
+
 
 if __name__ == '__main__':
 	class App(wx.App):

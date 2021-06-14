@@ -202,7 +202,8 @@ class HoleFinder(object):
 		scale = float(diameter) / filediameter
 		# multiple hole template generation
 		self.multiconvolver.setSingleTemplate(tempim)
-		self.multiconvolver.setConfig(self.template_config['multiple'],self.template_config['spacing'], self.template_config['angle'], scale)
+		self.multiconvolver.setConfig(self.template_config['multiple'], scale)
+		self.multiconvolver.setSquareUnitVector(self.template_config['spacing'], self.template_config['angle'])
 
 		tempim = self.multiconvolver.makeMultiTemplate()
 		# create template of proper size

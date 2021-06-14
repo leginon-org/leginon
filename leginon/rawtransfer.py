@@ -18,6 +18,29 @@ expired_names = ['.DS_Store',] # files that should not be transferred
 check_interval = 20  # seconds between checking for new frames
 max_image_query_delay = 1200 # seconds before an image query by CameraEMData.'frames name' should be queryable. Need to account for difference in the clocks of the camera computer and where this script is running.
 
+def unixChangeMode(path,mode_str='g-w,o-rw', recursive=False):
+	# only works on uniux
+	if recursive:
+		rec_str = '-R '
+	else:
+		rec_str = ''
+	cmd = 'chmod %s%s %s' % (rec_str, mode_str, path)
+	print cmd
+	p = subprocess.Popen(cmd, shell=True)
+	p.wait()
+
+def unixChangeOwnership(uid,gid,pathname, recursive=False):
+	# change ownership of desintation directory or file
+	# not recursive so it does not go through all every time.
+	if recursive:
+		rec_str = '-R '
+	else:
+		rec_str = ''
+	cmd = 'chown %s%s:%s %s' % (rec_str, uid, gid, pathname)
+	print cmd
+	p = subprocess.Popen(cmd, shell=True)
+	p.wait()
+
 class RawTransfer(object):
 	def __init__(self):
 		self.is_win32 = sys.platform == 'win32'
@@ -204,42 +227,34 @@ class RawTransfer(object):
 		print 'moving %s -> %s' % (src, dst)
 		shutil.move(src, dst)
 
-	def makeDir(self,dirname):
+	def makeDirWithOwnershipChange(self,dirname,uid,gid):
 		print('mkdirs %s'%dirname)
 		if not os.path.exists(dirname):
 			if not self.is_win32:
 				# this function preserves umask of the parent directory
 				pyami.fileutil.mkdirs(dirname)
+				self.changeDirOwnership(uid,gid,dirname)
 			else:
 				# use os.makedirs on 'win32' but it does not preserve umask
 				os.makedirs(dirname)
 		elif os.path.isfile(dirname):
 			print("Error %s is a file"%dirname)
 
-	def _transfer(self,src,dst,method):
-		if method == 'rsync' and not self.is_win32:
-			# safer method but slower
-			self.copy_and_delete(src, dst)
-		else:
-			# move does only rename and therefore will be faster if on the same device
-			# but could have problem if dropped during the process between devices.
-			self.move(src,dst)
+	def _rsyncWithOwnershipChange(self,src,dst,uid,gid,method):
+		cmd = 'rsync -av --owner=%s:%s --remove-sent-files %s %s' % (uid, gid, src, dst)
+		print cmd
+		p = subprocess.Popen(cmd, shell=True)
+		p.wait()
 
-	def changeOwnership(self,uid,gid,dirname):
+	def changeDirOwnership(self,uid,gid,dirname, recursive=False):
 		# change ownership of desintation directory and contents
 		if not self.is_win32:
-			cmd = 'chown -R %s:%s %s' % (uid, gid, dirname)
-			print cmd
-			p = subprocess.Popen(cmd, shell=True)
-			p.wait()
+			# default not recursive so it does not go through all every time.
+			unixChangeOwnership(uid,gid,dirname, recursive)
 
-	def changeMode(self,path,mode_str='g-w,o-rw'):
+	def changeMode(self,path,mode_str='g-w,o-rw', recursive=False):
 		if not self.is_win32:
-			# only works on linux
-			cmd = 'chmod -R %s %s' % (mode_str, path)
-			print cmd
-			p = subprocess.Popen(cmd, shell=True)
-			p.wait()
+			unixChangeMode(path, mode_str, recursive)
 
 	def transfer(self, src, dst, uid, gid, method, mode_str):
 		'''
@@ -255,15 +270,24 @@ class RawTransfer(object):
 		# get path of the session, e.g. /data/frames/joeuser/17nov06a
 		sessionpath = os.path.abspath(os.path.join(dirname,'..'))
 
-		self.makeDir(dirname)
+		self.makeDirWithOwnershipChange(sessionpath,uid,gid)
+		self.makeDirWithOwnershipChange(dirname,uid,gid)
 
-		self._transfer(src,dst,method)
+		if method == 'rsync' and not self.is_win32:
+			# safer method but slower
+			self._rsyncWithOwnershipChange(src,dst,uid,gid,method)
+		else:
+			# move does only rename and therefore will be faster if on the same device
+			# but could have problem if dropped during the process between devices.
+			self.move(src,dst)
 
-		self.changeOwnership(uid,gid,sessionpath)
 		if mode_str:
-			self.changeMode(sessionpath, mode_str)
+			self.changeMode(dst, mode_str, recursive=True)
 
-		self.cleanUp(src,method)
+		# comment out cleanUp here and rely on rsync to do its job
+		# and clean up on the next source search iteration.
+		# see Issue #10244
+		# self.cleanUp(src,method)
 
 	def getSessionFramePath(self, imdata):
 		image_path = imdata['session']['image path']
@@ -351,9 +375,6 @@ class RawTransfer(object):
 				continue
 
 			print '**running', src_path
-			if self.refcopy:
-				self.refcopy.setFrameDir(frames_path)
-
 			# determine user and group of leginon data
 			filename = imdata['filename']
 			if sys.platform == 'win32':
@@ -371,6 +392,7 @@ class RawTransfer(object):
 			# copy reference if possible
 			if self.refcopy:
 				try:
+					self.refcopy.setFrameDir(frames_path, gid, uid)
 					self.refcopy.run(imdata, imname)
 				except:
 					print 'reference copying error. skip'
@@ -417,12 +439,14 @@ class ReferenceCopier(object):
 	Copy references and modify orientation if needed for archiving
 	'''
 
-	def setFrameDir(self, framedir):
+	def setFrameDir(self, framedir, uid, gid):
 		self.framedir = framedir
 		self.refdir = os.path.join(framedir,'references')
 		self.reflistpath = os.path.join(self.refdir,'reference_list.txt')
 		self.badreflistpath = os.path.join(self.refdir,'failed_reference_read.txt')
 		self.badrefs = []
+		self.uid = uid
+		self.gid = gid
 		self.setupRefDir()
 		self.corrector_plans = {}
 
@@ -518,6 +542,7 @@ class ReferenceCopier(object):
 		linestr = '\t'.join(linelist)
 		linestr += '\n'
 		self.writeUniqueLineToFile(self.reflistpath, frame_dst_name,linestr)
+		unixChangeOwnership(self.uid,self.gid,self.refdir,recursive=True)
 
 	def writeUniqueLineToFile(self,filepath, match_string,line_string):
 		# check if the match_string is already there

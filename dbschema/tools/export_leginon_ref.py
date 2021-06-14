@@ -148,6 +148,9 @@ class ReferenceJsonMaker(jsonfun.DataJsonMaker):
 	def run(self):
 		self.shape = self.getCameraShape()
 		self.printReferenceQuery()
+		if not self.tem:
+			# no reference found should return here since self.tem is set when normdata is set.
+			return
 		json_filename = 'ref_%s+%s+%s+%s.json' % (self.tem['hostname'],self.tem['name'],self.cam['hostname'],self.cam['name'])
 		self.writeJsonFile(json_filename)
 

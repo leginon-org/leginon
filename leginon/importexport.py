@@ -284,8 +284,8 @@ class ImportExport:
 	database to another via a XML file
 	"""
 
-	def __init__(self):
-		self.db = sqldb.sqlDB()
+	def __init__(self, **dbparams):
+		self.db = sqldb.sqlDB(**dbparams)
 		self.warning = ""
 		self.information = ""
 
@@ -393,11 +393,13 @@ class ImportExport:
 ########################################
 
 if __name__ == "__main__":
-	appname = "MSI1_062"
-#	appfile= "/home/dfellman/MSI1_062_1.xml"
-	app = ImportExport()
-#	app.setDBparam(host="stratocaster")
-#	app.importApplication(appfile)
+	import sinedon
+	appname = "T1 Calibrations"
+	appfile= "./T1-Calibrations2.xml"
+	param = sinedon.getConfig('leginondata')
+	print param
+	app = ImportExport(**param)
+	app.importApplication(appfile)
 #	print app.getMessageLog()
-	dump = app.exportApplication(appname)
-	print dump
+	#dump = app.exportApplication(appname)
+	#print dump

@@ -191,7 +191,7 @@ class Tecnai(tem.TEM):
 	def getStageLimits(self):
 		limits = self.getFeiConfig('stage','stage_limits')
 		if limits is None:
-			limits = {}
+			limits = super(Tecnai, self).getStageLimits()
 		return limits
 
 	def getXYZStageBacklashDelta(self):
@@ -219,7 +219,34 @@ class Tecnai(tem.TEM):
 	def getCorrectedStagePosition(self):
 		return self.correctedstage
 
+	def checkStageLimits(self, position):
+		self._checkStageXYZLimits(position)
+		self._checkStageABLimits(position)
+
+	def _checkStageXYZLimits(self, position):
+		limit = self.getStageLimits()
+		intersection = set(position.keys()).intersection(('x','y','z'))
+		for axis in intersection:
+			self._validateStageAxisLimit(position[axis], axis)
+
+	def _checkStageABLimits(self, position):
+		limit = self.getStageLimits()
+		intersection = set(position.keys()).intersection(('a','b'))
+		for axis in intersection:
+			self._validateStageAxisLimit(position[axis], axis)
+
+	def _validateStageAxisLimit(self, p, axis):
+		limit = self.getStageLimits()
+		if not (limit[axis][0] < p and limit[axis][1] > p):
+			if axis in ('x','y','z'):
+				um_p = p*1e6
+				raise ValueError('Requested %s axis position %.1f um out of range.' % (axis,um_p))
+			else:
+				deg_p = math.degrees(p)
+				raise ValueError('Requested %s axis position %.1f degrees out of range.' % (axis,deg_p))
+
 	def checkStagePosition(self, position):
+		self.checkStageLimits(position)
 		current = self.getStagePosition()
 		bigenough = {}
 		minimum_stage = self.getMinimumStageMovement()
@@ -244,12 +271,14 @@ class Tecnai(tem.TEM):
 			for axis in ('x','y','z'):
 				if axis in value:
 					prevalue[axis] = value[axis] - delta
+					self._validateStageAxisLimit(prevalue[axis],axis)
 		# relax xy
 		relax = self.getXYStageRelaxDistance()
 		if abs(relax) > 1e-9:
 			for axis in ('x','y'):
 				if axis in value:
 					prevalue2[axis] = value[axis] + relax
+					self._validateStageAxisLimit(prevalue2[axis],axis)
 		# preposition a
 		if self.corrected_alpha_stage:
 			# alpha tilt backlash only in one direction
@@ -257,6 +286,7 @@ class Tecnai(tem.TEM):
 			if 'a' in value.keys():
 					axis = 'a'
 					prevalue[axis] = value[axis] - alpha_delta_degrees*3.14159/180.0
+					self._validateStageAxisLimit(prevalue[axis],axis)
 		if prevalue:
 			# set all axes in value
 			for axis in value.keys():
@@ -1029,7 +1059,7 @@ class Tecnai(tem.TEM):
 				nidaq.setBeta(deg)
 				continue
 			if key in stage_limits.keys() and (value < stage_limits[key][0] or value > stage_limits[key][1]):
-				raise ValueError('position %s beyond stage limit at %.2e' % (key, value))
+				raise ValueError('low-level position %s beyond stage limit at %.2e' % (key, value))
 			setattr(pos, key.upper(), value)
 			axes |= getattr(self.tem_constants, 'axis' + key.upper())
 
@@ -1113,6 +1143,7 @@ class Tecnai(tem.TEM):
 		self.waitForStageReady('after setting %s' % (position,))
 
 	def setDirectStagePosition(self,value):
+		self.checkStageLimits(value)
 		self._setStagePosition(value)
 
 	def getLowDoseStates(self):
@@ -1495,10 +1526,10 @@ class Tecnai(tem.TEM):
 		return self._getGaugePressure('column')
 
 	def getProjectionChamberPressure(self):
-		return self._getGaugePressure('projection')
+		return self._getGaugePressure('projection') # pascal
 
 	def getBufferTankPressure(self):
-		return self._getGaugePressure('buffer')
+		return self._getGaugePressure('buffer') # pascal
 
 	def getObjectiveExcitation(self):
 		return float(self.tecnai.Projection.ObjectiveExcitation)
@@ -1599,18 +1630,31 @@ class Tecnai(tem.TEM):
 		try:
 			self.tecnai.Vacuum.RunBufferCycle()
 		except com_module.COMError, e:
-			# No extended error information, assuming low dose is disenabled
+			# No extended error information 
 			raise RuntimeError('runBufferCycle COMError: no extended error information')
 		except:
 			raise RuntimeError('runBufferCycle Unknown error')
 
 	def setEmission(self, value):
+		etext = 'gun emission state can not be set on this instrument'
 		if self.tom:
-			self.tom.Gun.Emission = value
+			try:
+				self.tom.Gun.Emission = value
+			except:
+				raise RuntimeError(etext)
+		else:
+			# only tommoniker has gun access.
+			raise RuntimeError(etext)
 
 	def getEmission(self):
 		if self.tom:
-			return self.tom.Gun.Emission
+			try:
+				return self.tom.Gun.Emission
+			except com_module.COMError as e:
+				# Emission is not defined for FEG
+				return True
+		# no other way to know this, but we do not want it to fail.
+		return True
 
 	def getExpWaitTime(self):
 		try:

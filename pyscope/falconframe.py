@@ -41,6 +41,9 @@ class FalconFrameMaker(object):
 	def getBaseFrameTime(self):
 		return self.base_frame_time
 
+	def setBaseFrameTime(self,time_s):
+		self.base_frame_time = time_s
+
 	def getNumberOfBinLimit(self):
 		return self.output_bin_limit
 

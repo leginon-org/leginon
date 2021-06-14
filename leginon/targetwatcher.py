@@ -8,14 +8,14 @@
 #       see  http://leginon.org
 #
 
+import threading
+import time
+import math
 import event, leginondata
 import watcher
-import threading
 import targethandler
 import node
 import player
-import time
-import math
 import remoteserver
 
 class PauseRepeatException(Exception):
@@ -369,7 +369,8 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			retract_successful = self.setApertures()
 
 		targetliststatus = 'success'
-		self.processGoodTargets(good_targets)
+		if good_targets:
+			targetliststatus = self.processGoodTargets(good_targets)
 
 		self.reportTargetListDone(newdata, targetliststatus)
 		if retract_successful:
@@ -441,8 +442,42 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			self.instrument.tem.StagePosition={'z':self.z_now}
 		return state
 
+	def makeTargetIndexOrder(self, good_targets):
+		'''
+		Return the order of the good_targets within a targetlist
+		expressed in its target numbers. Use database values if present.
+		'''
+		if not good_targets:
+			return [] # nothing to reorder
+		targetlist = good_targets[0]['list']
+		# get target order from db. This may include done targets not
+		# in good_targets if leginon was restarted in the mid of processing.
+		try:
+			target_order = leginondata.TargetOrderData(session=self.session, list=targetlist).query(results=1)[0]['order']
+		except IndexError:
+			return range(len(good_targets))
+		target_numbers = map((lambda x: x['number']),good_targets)
+		# this filter makes sure that returned index_order only contains only those
+		# of the good_targets.
+		valid_order = filter((lambda x: x in target_numbers), target_order)
+		index_order = map((lambda x:target_numbers.index(x)), valid_order)
+		return index_order
+
 	def processGoodTargets(self, good_targets):
-		for i, target in enumerate(good_targets):
+		good_target_count = len(good_targets)
+		# Approach 1: order targets 
+		remaining_targets = good_targets
+		while True:
+			index_order = self.makeTargetIndexOrder(remaining_targets)
+			if index_order:
+				i = index_order[0]
+				target = remaining_targets[i]
+			else:
+				# abort the targets
+				targetliststatus = 'aborted'
+				for t in good_targets:
+					self.reportTargetStatus(t, 'aborted')
+				break
 			# target adjustment may have changed the tilt.
 			if self.getIsResetTiltInList() and self.is_firstimage:
 				# ? Do we need to reset on every target ?
@@ -462,12 +497,14 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 				self.logger.info('Aborting current target list')
 				targetliststatus = 'aborted'
 				self.reportTargetStatus(target, 'aborted')
+				del remaining_targets[i]
 				## continue so that remaining targets are marked as done also
 				continue
 
 			# if this target is done, skip it
 			if target['status'] in ('done', 'aborted'):
 				self.logger.info('Target has been done, processing next target')
+				del remaining_targets[i]
 				continue
 
 			adjustedtarget = self.reportTargetStatus(target, 'processing')
@@ -528,7 +565,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 				self.setStatus('processing')
 				if state in ('stop', 'stopqueue'):
 					self.logger.info('Aborted')
-					break
+					break # break repeat
 				if state in ('stoptarget',):
 					self.logger.info('Aborted this target. continue to next')
 					self.reportTargetStatus(adjustedtarget, 'aborted')
@@ -536,7 +573,9 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 
 				# end of target repeat loop
 			# next target is not a first-image
+			del remaining_targets[i]
 			self.is_firstimage = False
+		return targetliststatus
 
 	def park(self):
 		self.logger.info('parking...')

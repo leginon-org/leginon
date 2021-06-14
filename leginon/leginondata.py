@@ -116,6 +116,51 @@ class InSessionData(Data):
 		)
 	typemap = classmethod(typemap)
 
+class AutoSessionSetData(Data):
+	'''
+	Sets of auto grid loader sessions. Such as one cassette in FEI gridloader.
+	'''
+	def typemap(cls):
+		return Data.typemap() + (
+			('main launcher', str),
+			('base session', SessionData),
+		)
+	typemap = classmethod(typemap)
+
+class AutoSessionData(InSessionData):
+	'''
+	Auto grid loader sessions. Including data for startup.
+	'''
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('session set', AutoSessionSetData),
+			('slot number', int), # base 1
+			('stagez', float),
+		)
+	typemap = classmethod(typemap)
+
+class AutoTaskData(Data):
+	'''
+	Workflow to perform on the auto session.
+	'''
+	def typemap(cls):
+		return Data.typemap() + (
+			('auto session', AutoSessionData),
+			('task', str),
+		)
+	typemap = classmethod(typemap)
+
+class AutoTaskOrderData(Data):
+	'''
+	AutoTask running order. The done ones are popped from task order.
+	'''
+	def typemap(cls):
+		return Data.typemap() + (
+			('session set', AutoSessionSetData),
+			('task order', list),  # taskid sequence for processing
+		)
+	typemap = classmethod(typemap)
+
 class QueueData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
@@ -1005,6 +1050,15 @@ class ReferenceTargetData(ImageTargetData):
 		)
 	typemap = classmethod(typemap)
 
+class TargetOrderData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('list', ImageTargetListData),
+			('order', tuple), #tuple of target number, i,e, (1,2,5,4,3)
+		)
+	typemap = classmethod(typemap)
+
+
 class ReferenceRequestData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
@@ -1442,6 +1496,7 @@ class PresetsManagerSettingsData(SettingsData):
 			('blank', bool),
 			('smallsize', int),
 			('idle minute', float), # minutes
+			('emission off', bool),
 		)
 	typemap = classmethod(typemap)
 
@@ -1829,12 +1884,22 @@ class BlobFinderSettingsData(Data):
 			('on', bool),
 			('border', int),
 			('max', int),
-			('min size', int),
-			('max size', int),
+			('min size', int), # rough cutoff in blob finding
+			('max size', int), # rough cutoff in blob finding
 			('min mean', float),
 			('max mean', float),
 			('min stdev', float),
 			('max stdev', float),
+			('min filter size', int), # filter for targets
+			('max filter size', int), # filter for targets
+		)
+	typemap = classmethod(typemap)
+
+class TargetGroupingSettingsData(Data):
+	def typemap(cls):
+		return SettingsData.typemap() + (
+			('total targets', int),
+			('classes', int),
 		)
 	typemap = classmethod(typemap)
 
@@ -1843,6 +1908,8 @@ class SquareFinderSettingsData(SettingsData):
 		return SettingsData.typemap() + (
 			('lpf', LowPassFilterSettingsData),
 			('blobs', BlobFinderSettingsData),
+			('target grouping', TargetGroupingSettingsData),
+			('target multiple', int),
 			('threshold', float),
 		)
 	typemap = classmethod(typemap)
@@ -1964,7 +2031,6 @@ class AcquisitionSettingsData(TargetWatcherSettingsData):
 			('recheck pause time', int),
 			('high mean', float),
 			('low mean', float),
-			('emission off', bool),
 			('target offset row', int),
 			('target offset col', int),
 			('correct image shift coma', bool),
@@ -2397,6 +2463,7 @@ class TomographySettingsData(AcquisitionSettingsData):
 			('mean threshold', float),
 			('collection threshold', float),
 			('tilt pause time', float),
+			('backlash pause time', float),
 			('measure defocus', bool),
 			('integer', bool),
 			('intscale', float),

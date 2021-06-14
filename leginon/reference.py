@@ -83,6 +83,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		Find a class or its subclass instance bound
 		to this node upon application loading.
 		'''
+		super(Reference, self).handleApplicationEvent(evt)
 		app = evt['application']
 		self.navigator_bound = appclient.getNextNodeThruBinding(app,self.name,'MoveToTargetEvent','Navigator')
 
@@ -190,7 +191,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		if self.settings['mover'] == 'presets manager':
 			self.presets_client.toScope(preset_name, em_target_data)
 		else:
-			if not self.navigator_bound:
+			if not self.navigator_bound or self.navigator_bound['is_direct_bound']==False:
 				self.logger.warning('Navigator not bound with MoveToTargetEvent. Use presets manager instead')
 				self.presets_client.toScope(preset_name, em_target_data)
 			else:
@@ -364,16 +365,17 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		'''
 		Test Preset is normally the current preset
 		'''
-		self.logger.info('Use current preset for testing')
 		preset = self.presets_client.getCurrentPreset()
+		self.logger.info('Use current preset %s for testing' % preset['name'])
 		return preset
 
 	def _testRun(self):
 		preset_name = None
 		pause_time = self.settings['pause time']
 		# must have preset
-		preset = self._getTestPreset()
-		if not (preset and preset['name']):
+		try:
+			preset = self._getTestPreset()
+		except TypeError:
 			self.logger.error('No current preset. Send desired preset for testing first')
 			return
 		self.preset_name = preset['name']

@@ -2,6 +2,7 @@
 from PIL import Image
 from PIL import ImageDraw
 from PIL import ImageSequence
+from PIL import ImageStat
 import numpy
 import imagefun
 import arraystats
@@ -75,6 +76,20 @@ def readInfo(imfile):
 	info.update(im.info)
 	info['nx'], info['ny'] = im.size
 	info['nz'] = sum(1 for e in ImageSequence.Iterator(im))
+	stat = ImageStat.Stat(im)
+	extrema = im.getextrema()
+	number_of_bands = len(im.getbands())
+	if number_of_bands > 1:
+		print number_of_bands
+		# multibands, use the most extreme value. Don't know what to do.
+		info['amin'] = min(map((lambda x:x[0]),extrema))
+		info['amax'] = min(map((lambda x:x[1]),extrema))
+	else:
+		info['amin'] = extrema[0]
+		info['amax'] = extrema[1]
+	# always as list
+	info['amean'] = sum(stat.mean)/float(len(stat.mean))
+	info['rms'] = sum(stat.stddev)/float(len(stat.mean)) #this is actually defined as rmsd in mrc header
 	return info
 
 def write(a, imfile=None, format=None, limits=None, writefloat=False):
