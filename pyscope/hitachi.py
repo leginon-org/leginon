@@ -76,16 +76,18 @@ class Hitachi(tem.TEM):
 
 		self.probe_mode_index = 0
 
-		self.correctedstage = False
-		self.corrected_alpha_stage = False
-		self.alpha_backlash_delta = 3.0
+		self.correctedstage = True
+		self.corrected_alpha_stage = True
+		self.alpha_backlash_delta = 0.0
 		self.stage_axes = ['x', 'y', 'z', 'a']
+		a_limit_degree = self.getStageAlphaLimit()
 		self.stage_range = {
-			'x': (-1e-3, 1e-3),
-			'y': (-1e-3, 1e-3),
+			#keep backlash correction distance from edge
+			'x': (-0.995e-3, 0.995e-3),
+			'y': (-0.995e-3, 0.695e-3),
 			'z': (-5e-4, 5e-4),
-			'a': (-math.radians(70.0), math.radians(70.0)),
-			'b': (-math.radians(60.0), math.radians(60.0)),
+			'a': (-math.radians(a_limit_degree), math.radians(a_limit_degree)),
+			'b': (-math.radians(1.0), math.radians(1.0)),
 		}
 		self.minimum_stage = {
 			'x':5e-8,
@@ -232,9 +234,17 @@ class Hitachi(tem.TEM):
 				break
 			tim.sleep(0.1)
 
+	def getStageLimits(self):
+		return self.stage_range
+
 	def getStagePosition(self):
 		xy_submicron = self.h.runGetCommand('StageXY','Position', ['int','int'])
-		a_degrees = self.h.runGetCommand('StageTilt','Position', ['float',])
+		limit = self.getStageAlphaLimit()
+		if limit < 0.1:
+			# alpha disabled
+			a_degrees = 0.0
+		else:
+			a_degrees = self.h.runGetCommand('StageTilt','Position', ['float',])
 		z_submicron = self.h.runGetCommand('StageZ','Position', ['int',])
 		position = {
 			'x': xy_submicron[1]*1e-7, # swap xy to make x axis the tilt axis in Leginon
@@ -245,7 +255,9 @@ class Hitachi(tem.TEM):
 		}
 		return position
 
-	def _setStagePosition(self,value):
+	def getStageAlphaLimit(self):
+		return self.getHitachiConfig('stage','stage_alpha_limit_degrees')
+	def _setStagePosition(self,value, alpha_precision=0.11):
 		keys = value.keys()
 		keys.sort()
 		keys.reverse()
@@ -260,10 +272,17 @@ class Hitachi(tem.TEM):
 				set_xy[0] = int(value['y']*1e7) # swap xy to make x axis the tilt axis in Leginon
 			self.printStageDebug('set to %s' % (set_xy,))
 			# give enough time to move from one end to the other end
-			self.h.runSetIntAndWait('StageXY','Move', set_xy, timeout=20)
+			self.h.runSetIntAndWait('StageXY','Move', set_xy, timeout=30)
 		if 'a' in keys:
-			a_degree = math.degrees(value['a'])
-			self.h.runSetFloatAndWait('StageTilt','Move', [a_degree,])
+			a_degree = round(10*math.degrees(value['a']))*0.1
+			limit = self.getStageAlphaLimit()
+			if limit < 0.1:
+				# alpha is disabled.
+				return
+			if abs(a_degree) <= limit:
+				self.h.runSetFloatAndWait('StageTilt','Move', [a_degree,],precision=alpha_precision)
+			else:
+				raise ValueError('requested stage tilt %.1f degrees out of range' % (a_degree))
 		self.printStageDebug('----------')
 
 	def setDirectStagePosition(self,value):
@@ -321,7 +340,7 @@ class Hitachi(tem.TEM):
 		prevalue2 = {}
 		stagenow = self.getStagePosition()
 		if self.correctedstage:
-			delta = 2e-6
+			delta = -4e-6
 			for axis in ('x','y','z'):
 				if axis in value:
 					prevalue[axis] = value[axis] - delta
@@ -342,7 +361,13 @@ class Hitachi(tem.TEM):
 				if axis not in prevalue.keys():
 					prevalue[axis] = value[axis]
 					del value[axis]
-			self._setStagePosition(prevalue)
+			# The stage alpha overshoot vby up to 0.4 degrees
+			# positive direction, and may be off by 0.15 degree even
+			# on a second try on the same position.
+			# we use prevalue the same as value in this case
+			self._setStagePosition(prevalue,alpha_precision=0.3)
+			time.sleep(0.2)
+			self._setStagePosition(prevalue,alpha_precision=0.2)
 			time.sleep(0.2)
 		if abs(relax) > 1e-9 and prevalue2:
 			self._setStagePosition(prevalue2)
