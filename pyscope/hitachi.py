@@ -10,6 +10,8 @@ import time
 import os
 import sys
 import re
+import numpy
+import numpy.linalg
 
 import itertools
 
@@ -620,7 +622,7 @@ class Hitachi(tem.TEM):
 			# Use PA or IA
 			submode_name = self.getProjectionSubModeName()
 			if 'low' not in submode_name.lower():
-				# Use PA even though IA would give bigger range because SDK does not allow IA set in hr mode.
+				# Use PA. IA is used for diffraction shift
 				return 'PA'
 			else:
 				return 'IA'
@@ -638,7 +640,9 @@ class Hitachi(tem.TEM):
 		coil = self.getImageShiftCoil()
 		#if False:
 		if coil == 'PA':
-			fine_value = self.setCoarseImageShift(value)
+			# new_value is the residual of coarse ('IA') image shift
+			new_value = self.setCoarseImageShift(coil,value)
+			fine_value = self.getCoilVector(coil, {'x':0,'y':0})
 		else:
 			fine_value = self.getCoilVector(coil)
 			# the following makes sure all keys have value
@@ -648,17 +652,39 @@ class Hitachi(tem.TEM):
 		print 'set image shift %s=' % coil, fine_value
 		time.sleep(2)
 
-	def setCoarseImageShift(self, value):
+	def setCoarseImageShift(self, fine_coil, value):
 		coarse_coil = 'IA'
+		# The image shift value is based on fine_coil
 		#TODO conversion of xyvalue on fine_coil to coarse_coil
 		# the following makes sure all keys have value
-		new_value = self.getCoilVector(coil)
-		for key in value.keys(): 
-			new_value[key]=value[key] 
-		self.setCoilVector(coil, new_value)
-		new_value = self.getCoilVector(coil)
+		coarse_value = self.rotateValue(fine_coil, coarse_coil, value)
+		self.setCoilVector(coarse_coil, coarse_value)
+		# get value again. because it is not also identical to what is set.
+		new_coarse_value = self.getCoilVector(coarse_coil)
 		#TODO inverse conversion of xyvalue on fine_coil to coarse_coil
-		return new_value
+		new_fine_value = self.rotateValue(coarse_coil, fine_coil, new_coarse_value)
+		return new_fine_value
+
+	def rotateValue(self, from_coil, to_coil, from_value):
+		submode_name = self.getProjectionSubModeName()
+		mag = self.getMagnification()
+		key = 'coil_%s2%s_rotation' % (from_coil, to_coil)
+		r = self.getHitachiConfig('optics',key)[submode.lower()][mag]
+		if not r:
+			need_inv = True
+			key = 'coil_%s2%s_rotation' % (to_coil, from_coil)
+			r = self.getHitachiConfig('optics',key)[submode.lower()][mag]
+			if not r :
+				raise RuntimeError('%s%%%s%%%d not set in hht.cfg' % (key.upper(), submode.upper(),mag)
+		else:
+			need_inv = False
+		m = numpy.array(((numpy.cos(r),numpy.sin(r)),(-numpy.sin(r),numpy.cos(r))), numpy.float32)
+		if need_inv == True:
+			m = numpy.linalg.inv(m)
+		ix,iy = numpy.dot(m, (from_value['x'],from_value['y']))
+		to_value = {'x':ix,'y':iy}
+		print from_coil, to_coil, to_value
+		return to_value
 
 	def getRawImageShift(self):
 		# TODO: Is this different from ImageShift ?

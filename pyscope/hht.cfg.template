@@ -53,7 +53,8 @@ COIL_PA_SCALE%ZOOM1-HC%Y=-1.20e-05,1.20e-05
 # column submode zoom1-hr
 COIL_ISF_SCALE%ZOOM1-HR%X = -4.2e-5,4.2e-5
 COIL_ISF_SCALE%ZOOM1-HR%Y = -4.2e-5,4.2e-5
-COIL_PA2ISF_ROTATION%ZOOM1-HR =2.15
+COIL_PA2ISF_ROTATION%ZOOM1-HR%120000 =2.15
+COIL_PA2ISF_ROTATION%ZOOM1-HR%100000 =2.15
 COIL_PA_SCALE%ZOOM1-HR%X=-3.44e-06,3.44e-06
 COIL_PA_SCALE%ZOOM1-HR%Y=-3.44e-06,3.44e-06
 COIL_PA_80000_SCALE%ZOOM1-HR%X=-1.26e-06,1.26e-06
@@ -100,3 +101,27 @@ REF_UFOCUS_PATH%ZOOM1-HC = C:\Users\tvips\Desktop\hht_ufocus_zoom1-hc.txt
 REF_UFOCUS_PATH%ZOOM1-HR = C:\Users\tvips\Desktop\hht_ufocus_zoom1-hr.txt
 [aperture]
 OBJECTIVE = open, 100
+[stage]
+# Some stage needs backlash.
+DO_STAGE_XYZ_BACKLASH = True
+# XYZ backlash delta (positive means preposition to negative direction)
+XYZ_STAGE_BACKLASH_DELTA = 2e-6
+# Stage with autoloader may need a constant preposition to have stable value
+DO_STAGE_ALPHA_BACKLASH = False
+# Alpha backlash delta (positive means preposition to negative direction) in degrees.
+STAGE_ALPHA_BACKLASH_ANGLE_DELTA = 3.0 
+
+# if a stage position movement is less than the following, then ignore it
+MINIMUM_STAGE_MOVEMENT%X = 5.0e-8
+MINIMUM_STAGE_MOVEMENT%Y = 5.0e-8
+MINIMUM_STAGE_MOVEMENT%Z = 5.0e-8
+MINIMUM_STAGE_MOVEMENT%A = 6.0e-5
+MINIMUM_STAGE_MOVEMENT%B = 6.0e-5
+
+# Stage limit to return with value error
+# XYZ in meters, AB in radians.
+STAGE_LIMITS%X = -9.95e-4, 9.95e-4
+STAGE_LIMITS%Y = -9.95e-4, 9.95e-4
+STAGE_LIMITS%Z = -5.0e-4, 5.00e-4
+STAGE_LIMITS%A = -1.2217, 1.2217
+STAGE_LIMITS%B = -1.00, 1.00
