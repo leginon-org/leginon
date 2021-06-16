@@ -151,7 +151,7 @@ class Hitachi(tem.TEM):
 		self.beamstop_positions = ['out','in'] # index of this list is API value to set
 		self.coil_map = [('BT','beam_tilt'),('BH','beam_shift'),('PA','image_shift'),('CS','condenser_stig'),('OS','objective_stig'),('IS','diffraction_stig')]
 		self.stig_coil_map = {'condenser':'CS','objective':'OS','diffraction':'IS'}
-	
+		self.coil_pause = 0.3	
 
 	def printStageDebug(self,msg):
 		if STAGE_DEBUG:
@@ -517,6 +517,7 @@ class Hitachi(tem.TEM):
 		'''
 		hexdec_x, hexdec_y = hex(d_xy['x']), hex(d_xy['y'])
 		self.h.runSetCommand('Coil', coil, ['FF',hexdec_x,hexdec_y,], ['str','hexdec','hexdec',], [6,6])
+		time.sleep(self.coil_pause)
 
 	def getIntensity(self):
 		'''
@@ -623,7 +624,7 @@ class Hitachi(tem.TEM):
 			submode_name = self.getProjectionSubModeName()
 			if 'low' not in submode_name.lower():
 				# Use PA. IA is used for diffraction shift
-				return 'PA'
+				return 'ISF'
 			else:
 				return 'IA'
 		else:
@@ -631,9 +632,16 @@ class Hitachi(tem.TEM):
 			return 'ISF'
 
 	def getImageShift(self):
-		coil = self.getImageShiftCoil()
-		fine_value = self.getCoilVector(coil)
-		print 'get image shift %s=' % coil, fine_value
+		fine_value_from_coarse = {'x':0.0,'y':0.0}
+		fine_coil = self.getImageShiftCoil()
+		if fine_coil == 'PA':
+			coarse_coil = 'ISF'
+			coarse_value = self.getCoilVector('ISF')
+			fine_value_from_coarse = self.rotateValue(coarse_coil, fine_coil, coarse_value)
+		fine_value = self.getCoilVector(fine_coil)
+		for key in fine_value_from_coarse.keys():
+			fine_value[key] += fine_value_from_coarse[key]
+		print 'get image shift %s=' % fine_coil, fine_value
 		return fine_value
 	
 	def setImageShift(self, value):
@@ -641,8 +649,9 @@ class Hitachi(tem.TEM):
 		#if False:
 		if coil == 'PA':
 			# new_value is the residual of coarse ('IA') image shift
-			new_value = self.setCoarseImageShift(coil,value)
-			fine_value = self.getCoilVector(coil, {'x':0,'y':0})
+			fine_value = self.setCoarseImageShift(coil,value)
+			for key in value.keys():
+				fine_value[key]=value[key]-fine_value[key]
 		else:
 			fine_value = self.getCoilVector(coil)
 			# the following makes sure all keys have value
@@ -653,11 +662,18 @@ class Hitachi(tem.TEM):
 		time.sleep(2)
 
 	def setCoarseImageShift(self, fine_coil, value):
-		coarse_coil = 'IA'
+		mag = self.getMagnification()
+		if mag <10000:
+			# TODO: handle lower mag better
+			return value
+		coarse_coil = 'ISF'
 		# The image shift value is based on fine_coil
 		#TODO conversion of xyvalue on fine_coil to coarse_coil
 		# the following makes sure all keys have value
-		coarse_value = self.rotateValue(fine_coil, coarse_coil, value)
+		value_dict = self.getCoilVector(coarse_coil)
+		for key in value.keys():
+			value_dict[key] = value[key]
+		coarse_value = self.rotateValue(fine_coil, coarse_coil, value_dict)
 		self.setCoilVector(coarse_coil, coarse_value)
 		# get value again. because it is not also identical to what is set.
 		new_coarse_value = self.getCoilVector(coarse_coil)
@@ -669,13 +685,20 @@ class Hitachi(tem.TEM):
 		submode_name = self.getProjectionSubModeName()
 		mag = self.getMagnification()
 		key = 'coil_%s2%s_rotation' % (from_coil, to_coil)
-		r = self.getHitachiConfig('optics',key)[submode.lower()][mag]
+		print key.lower()
+		try:
+			r = self.getHitachiConfig('optics',key.lower())[submode_name.lower()][mag]
+		except:
+			r = None
 		if not r:
 			need_inv = True
 			key = 'coil_%s2%s_rotation' % (to_coil, from_coil)
-			r = self.getHitachiConfig('optics',key)[submode.lower()][mag]
+			try:
+				r = self.getHitachiConfig('optics',key.lower())[submode_name.lower()][mag]
+			except:
+				r=None
 			if not r :
-				raise RuntimeError('%s%%%s%%%d not set in hht.cfg' % (key.upper(), submode.upper(),mag)
+				raise RuntimeError('%s%%%s%%%d not set in hht.cfg' % (key.upper(), submode_name.upper(),mag))
 		else:
 			need_inv = False
 		m = numpy.array(((numpy.cos(r),numpy.sin(r)),(-numpy.sin(r),numpy.cos(r))), numpy.float32)
