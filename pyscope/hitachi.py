@@ -630,19 +630,23 @@ class Hitachi(tem.TEM):
 
 	def getImageShift(self):
 		coil = self.getImageShiftCoil()
-		return self.getCoilVector(coil)
+		fine_value = self.getCoilVector(coil)
+		print 'get image shift %s=' % coil, fine_value
+		return fine_value
 	
 	def setImageShift(self, value):
 		coil = self.getImageShiftCoil()
+		#if False:
 		if coil == 'PA':
-			new_value = self.setCoarseImageShift(value)
-			fine_value = self.getCoilVector(coil, {'x':0,'y':0})
+			fine_value = self.setCoarseImageShift(value)
 		else:
-			new_value = self.getCoilVector(coil)
-			fine_value = dict(new_value)
-		for key in value.keys(): 
-			fine_value[key]=value[key] - new_value[key] 
-		self.setCoilVector(coil, new_value)
+			fine_value = self.getCoilVector(coil)
+			# the following makes sure all keys have value
+			for key in value.keys(): 
+				fine_value[key]=value[key] 
+		self.setCoilVector(coil, fine_value)
+		print 'set image shift %s=' % coil, fine_value
+		time.sleep(2)
 
 	def setCoarseImageShift(self, value):
 		coarse_coil = 'IA'
