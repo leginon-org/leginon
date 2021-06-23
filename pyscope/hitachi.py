@@ -82,15 +82,8 @@ class Hitachi(tem.TEM):
 		self.corrected_alpha_stage = True
 		self.alpha_backlash_delta = 0.0
 		self.stage_axes = ['x', 'y', 'z', 'a']
-		a_limit_degree = self.getStageAlphaLimit()
-		self.stage_range = {
-			#keep backlash correction distance from edge
-			'x': (-0.995e-3, 0.995e-3),
-			'y': (-0.995e-3, 0.695e-3),
-			'z': (-5e-4, 5e-4),
-			'a': (-math.radians(a_limit_degree), math.radians(a_limit_degree)),
-			'b': (-math.radians(1.0), math.radians(1.0)),
-		}
+		#keep backlash correction distance from edge
+		self.stage_range = self.getStageLimits()
 		self.minimum_stage = {
 			'x':5e-8,
 			'y':5e-8,
@@ -98,7 +91,7 @@ class Hitachi(tem.TEM):
 			'a':math.radians(0.1),
 			'b':math.radians(0.1),
 		}
-		#TODO: we do no know the top speed for htt
+		#TODO: we do no know the top speed for hht
 		self.stage_top_speed = 29.78/127 # top speed is translated to 127
 		# 40 to 127
 		self.stage_speed_decimal = 100
@@ -237,11 +230,11 @@ class Hitachi(tem.TEM):
 			tim.sleep(0.1)
 
 	def getStageLimits(self):
-		return self.stage_range
+		return self.getHitachiConfig('stage','stage_limits')
 
 	def getStagePosition(self):
 		xy_submicron = self.h.runGetCommand('StageXY','Position', ['int','int'])
-		limit = self.getStageAlphaLimit()
+		limit = self.getStageAlphaDegreeLimit()
 		if limit < 0.1:
 			# alpha disabled
 			a_degrees = 0.0
@@ -257,8 +250,10 @@ class Hitachi(tem.TEM):
 		}
 		return position
 
-	def getStageAlphaLimit(self):
-		return self.getHitachiConfig('stage','stage_alpha_limit_degrees')
+	def getStageAlphaDegreeLimit(self):
+		limits = self.getStageLimits()
+		return (math.degrees(limits['a'][0]),math.degrees(limits['a'][1]))
+
 	def _setStagePosition(self,value, alpha_precision=0.11):
 		keys = value.keys()
 		keys.sort()
@@ -277,7 +272,7 @@ class Hitachi(tem.TEM):
 			self.h.runSetIntAndWait('StageXY','Move', set_xy, timeout=30)
 		if 'a' in keys:
 			a_degree = round(10*math.degrees(value['a']))*0.1
-			limit = self.getStageAlphaLimit()
+			limit = self.getStageAlphaDegreeLimit()
 			if limit < 0.1:
 				# alpha is disabled.
 				return
@@ -426,16 +421,25 @@ class Hitachi(tem.TEM):
 					m = (m[0]*float(ref_mag)/mag,m[1]*float(ref_mag)/mag)
 				except TypeError:
 					raise ValueError('No calibration for %s in %s' % (coil, subset))
+		elif coil.lower() in ('isf','os','is','ia'):
+			# Objective and Intermediate, mostly the same but did find exceptions.
+			mag = self.getMagnification()
+			coil_scale_name = 'coil_%s_%d_scale' % (coil.lower(), mag)
+			subset = self.getProjectionSubModeName().lower()
+			try:
+				m = self.getHitachiConfig('optics',coil_scale_name)[subset][axis]
+			except (KeyError,TypeError):
+				# non-mag specific
+				coil_scale_name = 'coil_%s_scale' % (coil.lower(),)
+				try:
+					m = self.getHitachiConfig('optics',coil_scale_name)[subset][axis]
+				except TypeError:
+					raise ValueError('No calibration for %s in %s' % (coil, subset))
 		else:
+			# Illumination, certainly not mag specific
 			coil_scale_name = 'coil_%s_scale' % (coil.lower())
-			if coil.lower() in ('os','is','isf','ia'):
-				# Objective and Intermediate
-				subset = self.getProjectionSubModeName().lower()
-				m = self.getHitachiConfig('optics',coil_scale_name)[subset][axis]
-			else:
-				# Illumination
-				subset = self.getProbeMode()
-				m = self.getHitachiConfig('optics',coil_scale_name)[subset][axis]
+			subset = self.getProbeMode()
+			m = self.getHitachiConfig('optics',coil_scale_name)[subset][axis]
 		return m
 
 	def _scaleCoilVectorToRaw(self, coil, xydict):
@@ -632,82 +636,21 @@ class Hitachi(tem.TEM):
 			return 'ISF'
 
 	def getImageShift(self):
-		fine_value_from_coarse = {'x':0.0,'y':0.0}
-		fine_coil = self.getImageShiftCoil()
-		if fine_coil == 'PA':
-			coarse_coil = 'ISF'
-			coarse_value = self.getCoilVector('ISF')
-			fine_value_from_coarse = self.rotateValue(coarse_coil, fine_coil, coarse_value)
-		fine_value = self.getCoilVector(fine_coil)
-		for key in fine_value_from_coarse.keys():
-			fine_value[key] += fine_value_from_coarse[key]
-		print 'get image shift %s=' % fine_coil, fine_value
-		return fine_value
+		coil = self.getImageShiftCoil()
+		value = self.getCoilVector(coil)
+		print 'get image shift %s=' % coil, value
+		return value
 	
 	def setImageShift(self, value):
 		coil = self.getImageShiftCoil()
 		#if False:
-		if coil == 'PA':
-			# new_value is the residual of coarse ('IA') image shift
-			fine_value = self.setCoarseImageShift(coil,value)
-			for key in value.keys():
-				fine_value[key]=value[key]-fine_value[key]
-		else:
-			fine_value = self.getCoilVector(coil)
-			# the following makes sure all keys have value
-			for key in value.keys(): 
+		fine_value = self.getCoilVector(coil)
+		# the following makes sure all keys have value
+		for key in value.keys(): 
 				fine_value[key]=value[key] 
 		self.setCoilVector(coil, fine_value)
 		print 'set image shift %s=' % coil, fine_value
 		time.sleep(2)
-
-	def setCoarseImageShift(self, fine_coil, value):
-		mag = self.getMagnification()
-		if mag <10000:
-			# TODO: handle lower mag better
-			return value
-		coarse_coil = 'ISF'
-		# The image shift value is based on fine_coil
-		#TODO conversion of xyvalue on fine_coil to coarse_coil
-		# the following makes sure all keys have value
-		value_dict = self.getCoilVector(coarse_coil)
-		for key in value.keys():
-			value_dict[key] = value[key]
-		coarse_value = self.rotateValue(fine_coil, coarse_coil, value_dict)
-		self.setCoilVector(coarse_coil, coarse_value)
-		# get value again. because it is not also identical to what is set.
-		new_coarse_value = self.getCoilVector(coarse_coil)
-		#TODO inverse conversion of xyvalue on fine_coil to coarse_coil
-		new_fine_value = self.rotateValue(coarse_coil, fine_coil, new_coarse_value)
-		return new_fine_value
-
-	def rotateValue(self, from_coil, to_coil, from_value):
-		submode_name = self.getProjectionSubModeName()
-		mag = self.getMagnification()
-		key = 'coil_%s2%s_rotation' % (from_coil, to_coil)
-		print key.lower()
-		try:
-			r = self.getHitachiConfig('optics',key.lower())[submode_name.lower()][mag]
-		except:
-			r = None
-		if not r:
-			need_inv = True
-			key = 'coil_%s2%s_rotation' % (to_coil, from_coil)
-			try:
-				r = self.getHitachiConfig('optics',key.lower())[submode_name.lower()][mag]
-			except:
-				r=None
-			if not r :
-				raise RuntimeError('%s%%%s%%%d not set in hht.cfg' % (key.upper(), submode_name.upper(),mag))
-		else:
-			need_inv = False
-		m = numpy.array(((numpy.cos(r),numpy.sin(r)),(-numpy.sin(r),numpy.cos(r))), numpy.float32)
-		if need_inv == True:
-			m = numpy.linalg.inv(m)
-		ix,iy = numpy.dot(m, (from_value['x'],from_value['y']))
-		to_value = {'x':ix,'y':iy}
-		print from_coil, to_coil, to_value
-		return to_value
 
 	def getRawImageShift(self):
 		# TODO: Is this different from ImageShift ?
