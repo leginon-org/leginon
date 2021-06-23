@@ -235,7 +235,7 @@ class Hitachi(tem.TEM):
 	def getStagePosition(self):
 		xy_submicron = self.h.runGetCommand('StageXY','Position', ['int','int'])
 		limit = self.getStageAlphaDegreeLimit()
-		if limit < 0.1:
+		if abs(limit[0]) < 0.1 and abs(limit[1]) < 0.1:
 			# alpha disabled
 			a_degrees = 0.0
 		else:
@@ -273,16 +273,19 @@ class Hitachi(tem.TEM):
 		if 'a' in keys:
 			a_degree = round(10*math.degrees(value['a']))*0.1
 			limit = self.getStageAlphaDegreeLimit()
-			if limit[0] < 0.1 and limit[1]< 0.1:
+			if abs(limit[0]) < 0.1 and abs(limit[1]) < 0.1:
 				# alpha is disabled.
 				return
-			if abs(a_degree) <= limit:
+			if a_degree >= limit[0] and a_degree <= limit[1]:
 				self.h.runSetFloatAndWait('StageTilt','Move', [a_degree,],precision=alpha_precision)
 			else:
 				raise ValueError('requested stage tilt %.1f degrees out of range' % (a_degree))
 		self.printStageDebug('----------')
 
 	def setDirectStagePosition(self,value):
+		'''
+		Direct set without backlash correction or range test. disabled alpha will return without setting.
+		'''
 		self._setStagePosition(value)
 
 	def checkStagePosition(self, position):
