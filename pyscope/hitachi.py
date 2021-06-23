@@ -273,7 +273,7 @@ class Hitachi(tem.TEM):
 		if 'a' in keys:
 			a_degree = round(10*math.degrees(value['a']))*0.1
 			limit = self.getStageAlphaDegreeLimit()
-			if limit < 0.1:
+			if limit[0] < 0.1 and limit[1]< 0.1:
 				# alpha is disabled.
 				return
 			if abs(a_degree) <= limit:
