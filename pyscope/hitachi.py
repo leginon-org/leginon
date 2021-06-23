@@ -627,8 +627,11 @@ class Hitachi(tem.TEM):
 			# Use PA or IA
 			submode_name = self.getProjectionSubModeName()
 			if 'low' not in submode_name.lower():
-				# Use PA. IA is used for diffraction shift
-				return 'ISF'
+				if 'hr' in submode_name.lower():
+					# Use ISF larger range in um at high mags 
+					return 'ISF'
+				# Use PA. better for low mag.
+				return 'PA'
 			else:
 				return 'IA'
 		else:
