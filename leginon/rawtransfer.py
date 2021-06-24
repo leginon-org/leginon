@@ -124,7 +124,7 @@ class RawTransfer(object):
 	def get_dst_head(self):
 		return self.getAndValidatePath('dest_path_head')
 
-	def query_image_by_frames_name(self,name,cam_host):
+	def query_image_by_frames_name(self,name,cam_host,dest_head):
 		# speed up query by adding time limit Issue #6127
 		time_limit = '-%d 0:0:0' % self.params['check_days']
 		qccd = leginon.leginondata.InstrumentData(hostname=cam_host)
@@ -135,11 +135,22 @@ class RawTransfer(object):
 			results = qim.query(timelimit=time_limit)
 			if results:
 				if len(results) > 1:
+					only_non_dest_head = False
 					# fix for issue #3967. Not to work on the aligned images
 					for r in results:
 						if r['camera']['align frames']:
 							continue
+						# Issue 10371
+						if dest_head:
+							frames_path = self.getSessionFramePath(r)
+							# only process destination frames_path starting with chosen head
+							if sys.platform != 'win32' and not frames_path.startswith(dest_head):
+								only_non_dest_head = True
+								continue
 						return r
+					if only_non_dest_head:
+						# prevent file from being cleanup
+						return True
 				else:
 					# If there is just one, transfer regardlessly.
 					return results[0]
@@ -333,9 +344,9 @@ class RawTransfer(object):
 
 			# ignore irrelevent source files or folders
 			# gatan k2 summit data ends with '.mrc' or 'tif'
-			# de folder starts with '20'
+			# de folder starts with '2' through timestamp
 			# falcon mrchack stacks ends with '.mrcs'
-			if not ext.startswith('.mrc') and ext != 'tif' and  ext != '.frames' and not name.startswith('20'):
+			if not ext.startswith('.mrc') and ext != 'tif' and  ext != '.frames' and not name.startswith('2'):
 				continue
 
 			# adjust next expiration timer to most recent time
@@ -358,13 +369,16 @@ class RawTransfer(object):
 				## ensure a trailing / on directory
 				if os.path.isdir(src_path) and src_path[-1] != os.sep:
 					src_path = src_path + os.sep
-			imdata = self.query_image_by_frames_name(frames_name,cam_host)
+			imdata = self.query_image_by_frames_name(frames_name,cam_host,dest_head)
 			if imdata is None:
 				print '%s not from a saved image' % (frames_name)
 				# TODO sometimes this query happens before the imagedata is queriable.
 				# Need to have a delay before remove.
 				if not self.isRecentCreation(src_path):
 					self.cleanUp(src_path,method)
+				continue
+			if imdata == True:
+				print ' None of the found imagedata has destination starts with %s. Skipped' % (dest_head)
 				continue
 			image_path = imdata['session']['image path']
 			frames_path = self.getSessionFramePath(imdata)
