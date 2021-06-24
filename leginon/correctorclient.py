@@ -695,7 +695,11 @@ class CorrectorClient(cameraclient.CameraClient):
 		import instrument
 		camsettings = self.settings['camera settings']
 		ccdname = self.settings['instruments']['ccdcamera']
-		ccdcamera = self.instrument.getCCDCameraData(ccdname)
+		try:
+			ccdcamera = self.instrument.getCCDCameraData(ccdname)
+		except Exception as e:
+			self.logger.error('failed to store corrector plan:%s' % e)
+			return
 		cameradata = leginondata.CameraEMData()
 		cameradata.update(self.settings['camera settings'])
 		cameradata['ccdcamera'] = ccdcamera
