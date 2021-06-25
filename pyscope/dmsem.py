@@ -17,7 +17,7 @@ import os
 from pyami import moduleconfig
 import numextension
 
-simulation = True
+simulation = False
 if simulation:
 	print 'USING SIMULATION SETTINGS'
 	import simgatan
