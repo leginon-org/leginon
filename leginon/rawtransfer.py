@@ -343,10 +343,10 @@ class RawTransfer(object):
 				continue
 
 			# ignore irrelevent source files or folders
-			# gatan k2 summit data ends with '.mrc' or 'tif'
-			# de folder starts with '2' through timestamp
+			# gatan k2 summit data ends with '.mrc' or '.tif'
+			# de folder starts with '20' through timestamp
 			# falcon mrchack stacks ends with '.mrcs'
-			if not ext.startswith('.mrc') and ext != 'tif' and  ext != '.frames' and not name.startswith('2'):
+			if not ext.startswith('.mrc') and ext != '.tif' and  ext != '.frames' and not name.startswith('20'):
 				continue
 
 			# adjust next expiration timer to most recent time
