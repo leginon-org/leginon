@@ -640,9 +640,16 @@ class GatanK2Base(DMSEM):
 
 	def __init__(self):
 		super(GatanK2Base, self).__init__()
+		self.frame_name_prefix = self.getFrameNamePrefix()
 		# set default return frame count.
 		self.setEarlyReturnFrameCount(None)
 		self.save8x8 = False
+
+	def getFrameNamePrefix(self):
+		prefix = self.getDmsemConfig('k2','frame_name_prefix')
+		if prefix is None:
+			prefix = ''
+		return prefix
 
 	def custom_setup(self):
 		'''
@@ -728,8 +735,9 @@ class GatanK2Base(DMSEM):
 		if self.isDoseFracOn():
 			# This makes it always take the value in dmsem.cfg
 			self.setEarlyReturnFrameCount(None)
+			prefix = self.frame_name_prefix
 			frames_name = time.strftime('%Y%m%d_%H%M%S', time.localtime())
-			self.frames_name = frames_name + '%02d' % (self.idcounter.next(),)
+			self.frames_name = prefix + frames_name + '%02d' % (self.idcounter.next(),)
 		else:
 			self.frames_name = 'dummy'
 		raw_frame_dir = self.getDmsemConfig('k2','raw_frame_dir')
