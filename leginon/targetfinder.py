@@ -766,12 +766,12 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		state = (method == 'remote' and self.settings['queue'])
 		self._setQueueTool(state)
 
-	def blobStatsTargets(self, blobs):
+	def blobStatsTargets(self, blobs, image_scale=1):
 		targets = []
 		for blob in blobs:
 			target = {}
-			target['x'] = blob.stats['center'][1]
-			target['y'] = blob.stats['center'][0]
+			target['x'] = blob.stats['center'][1]*image_scale
+			target['y'] = blob.stats['center'][0]*image_scale
 			target['stats'] = ordereddict.OrderedDict()
 			target['stats']['Size'] = blob.stats['n']
 			target['stats']['Mean'] = blob.stats['mean']

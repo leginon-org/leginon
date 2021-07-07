@@ -111,6 +111,8 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.mosaicname = None
 		self.mosaicimagescale = None
 		self.mosaicimagedata = None
+		self.finder_mosaicimage = None
+		self.finder_scale_factor = 1
 		self.convolver = convolver.Convolver()
 		self.multihole = multihole.TemplateConvolver()
 		self.currentposition = []
@@ -177,9 +179,12 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		if self.mosaicimage is None:
 			self.logger.error('Must have atlas display to find squares')
 		self.publishMosaicImage()
-		# get blobs with stats
-		blobs = self.findSquareBlobs()
-		targets = self.blobStatsTargets(blobs)
+		try:
+			# get blobs with stats
+			blobs = self.findSquareBlobs()
+		except ValueError as e:
+			self.logger.error(e)
+		targets = self.blobStatsTargets(blobs, self.finder_scale_factor)
 		self.logger.info('Number of blobs: %s' % (len(targets),))
 		self.setTargets(targets, 'Blobs')
 		# get ranked and filtered acquisition
@@ -977,26 +982,46 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		existing_targets.extend(xytargets['acquisition'])
 		return xytargets['example'], existing_targets
 
+	def scaleFinderMosaicImage(self):
+		'''
+		Downsize mosaicimage so that it does not use too much
+		resource in blob finding.
+		'''
+		old_maxdim = self.mosaicimagescale
+		if old_maxdim is None:
+			old_maxdim = max(self.mosaicimage.shape)
+		# no bigger than 2048
+		scale_factor = int(math.ceil(old_maxdim / 2048.0))
+		new_maxdim = old_maxdim // scale_factor
+		self.logger.info('Scale down mosaic to finder max dimension of %d' % new_maxdim)
+		self.finder_mosaicimage = self.mosaic.getMosaicImage(new_maxdim)
+		self.finder_scale_factor = scale_factor
+		for axis in range(2):
+			if self.mosaicimage.shape[axis] != self.finder_mosaicimage.shape[axis]* scale_factor:
+				raise ValueError('Bad scaling  Target mapping from shape (%s to %s may be off.  Please try better max dimension than %d' % (self.finder_mosaicimage.shape, self.mosaicimage.shape, self.settings['scale size']))
+
 	def findSquareBlobs(self):
 		message = 'finding squares'
 		self.logger.info(message)
 
+		# Scale to smaller finder size
+		self.scaleFinderMosaicImage()
 		sigma = self.settings['lpf']['sigma']
 		kernel = convolver.gaussian_kernel(sigma)
 		self.convolver.setKernel(kernel)
-		image = self.convolver.convolve(image=self.mosaicimage)
-		self.setImage(image, 'Filtered')
+		finder_image = self.convolver.convolve(image=self.finder_mosaicimage)
+		self.setImage(finder_image, 'Filtered')
 
 		## threshold grid bars
 		squares_thresh = self.settings['threshold']
 		self.logger.info('squares threshhold is %.1f' % float(squares_thresh))
-		image = imagefun.threshold(image, squares_thresh)
-		self.setImage(image, 'Thresholded')
+		finder_image = imagefun.threshold(finder_image, squares_thresh)
+		self.setImage(finder_image, 'Thresholded')
 		# mask for label
-		self.mask = image
+		self.finder_mask = finder_image
 
 		## find blobs
-		blobs = imagefun.find_blobs(self.mosaicimage, self.mask,
+		blobs = imagefun.find_blobs(self.finder_mosaicimage, self.finder_mask,
 																self.settings['blobs']['border'],
 																self.settings['blobs']['max'],
 																self.settings['blobs']['max size'],
@@ -1026,27 +1051,36 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 			self.setSettings(self.settings, False)
 			return
 
-	def runBlobRankFilter(self, blobs, xytargets):
+	def runBlobRankFilter(self, finder_blobs, xytargets):
 		'''
-		Filter the blobs to get final targets. When example_blobs are present,
-		they are placed at the top rank.  xytargets are dictionary of existing targets
+		Filter the blobs at finder image scale to get final targets.
+		xytargets are dictionary of existing targets on the mosaic image.
+		When examples are present in this dictionary, the blob contain
+		them are placed at the top rank.
 		'''
-		if not blobs:
+		if not finder_blobs:
 			return []
 		example_targets, panel_targets = self.getExampleAndPanelTargets(xytargets)
-		example_points = map((lambda x: (x[1],x[0])), example_targets)
-		panel_points = map((lambda x: (x[1],x[0])), panel_targets)
-		priority_blobs, other_blobs, display_array = self._runBlobRankFilter(blobs, example_points, panel_points)
-		if display_array is not None:
-			self.setImage(display_array, 'Thresholded')
+		##############
+		# blobs and filtering are done at smaller dimension to save memory usage.
+		##############
+		s = self.finder_scale_factor
+		finder_example_points = map((lambda x: (x[1]//s,x[0]//s)),example_targets)
+		finder_panel_points = map((lambda x: (x[1]//s,x[0]//s)),panel_targets)
+		priority_blobs, other_blobs, finder_display_array = self._runBlobRankFilter(finder_blobs, finder_example_points, finder_panel_points)
+		if finder_display_array is not None:
+			self.setImage(finder_display_array, 'Thresholded')
 		# filter out blobs with stats settings.
 		other_blobs = self.filterStats(other_blobs)
 		# sample some non-priority blobs
 		non_priority_total = self.settings['target grouping']['total targets']-len(priority_blobs)
 		other_blobs = self.sampleBlobs(other_blobs, non_priority_total)
-		# turn combined blobs into targets
-		targets = list(map(self.blobToDisplayTarget, priority_blobs+other_blobs))
-		# flat list of multihole convolution
+		combined_blobs = priority_blobs+other_blobs
+		################
+		# turn combined blobs into targets at the original mosaic dimension
+		################
+		targets = map((lambda x: self.blobToDisplayTarget(x,self.finder_scale_factor)), combined_blobs)
+		# flat list of multihole convolution at the original mosaic dimension
 		targets = self.multiHoleConvolution(targets)
 		# TODO save SquareStatsData
 		return targets
@@ -1078,9 +1112,14 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		return targets
 
 	def _runBlobRankFilter(self, blobs, example_points, panel_points):
+		'''
+		Rank blobs and filter them by some filter.  All
+		input and output are at finder image scale.
+		'''
 		example_blobs = []
 		example_blob_indices = []
 
+		# display_array is at finder shape
 		has_priority, to_avoid, display_array =  self.filterPoints(blobs, example_points, panel_points)
 		# save examples for ranking and filtering
 		for i, b in enumerate(blobs):
@@ -1110,23 +1149,28 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 
 	def filterPoints(self, blobs, example_points, panel_points):
 		'''
-		Return boolean for each blob.
+		Return boolean for each blob. All input and output are
+		at image scale of the smaller a.k.a. finder scale.
 		has_priority: at least one example_point is in the blob
 		to_avoid: at least one panel_point is in the blob
-		display_array: some image array to display in the gui as Thresholded image.
+		display_array: some image array to display in the gui as
+				Thresholded image.
 		'''
 		return self.filterPointsByLabel(blobs, example_points, panel_points)
 
 	def filterPointsByLabel(self, blobs, example_points, panel_points):
-		labels, n = imagefun.scipylabels(self.mask)
+		'''
+		filter points at finder image scale.
+		'''
+		labels, n = imagefun.scipylabels(self.finder_mask)
 		has_priority = imagefun.hasPointsInLabel(labels, n, example_points)
 		to_avoid = imagefun.hasPointsInLabel(labels, n, panel_points)
 		return has_priority, to_avoid, labels
 
 
-	def blobToDisplayTarget(self, blob):
-			row = blob.stats['center'][0]
-			column = blob.stats['center'][1]
+	def blobToDisplayTarget(self, blob, finder_scale):
+			row = blob.stats['center'][0]*finder_scale
+			column = blob.stats['center'][1]*finder_scale
 			return (column, row)
 
 	def filterStats(self, blobs):
