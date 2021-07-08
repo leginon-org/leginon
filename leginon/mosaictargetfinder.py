@@ -184,6 +184,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 			blobs = self.findSquareBlobs()
 		except ValueError as e:
 			self.logger.error(e)
+			return
 		targets = self.blobStatsTargets(blobs, self.finder_scale_factor)
 		self.logger.info('Number of blobs: %s' % (len(targets),))
 		self.setTargets(targets, 'Blobs')
@@ -998,7 +999,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.finder_scale_factor = scale_factor
 		for axis in range(2):
 			if self.mosaicimage.shape[axis] != self.finder_mosaicimage.shape[axis]* scale_factor:
-				raise ValueError('Bad scaling  Target mapping from shape (%s to %s may be off.  Please try better max dimension than %d' % (self.finder_mosaicimage.shape, self.mosaicimage.shape, self.settings['scale size']))
+				self.logger.warning('Bad scaling  Target mapping from shape (%s to %s may be off.  Please try better max dimension than %d' % (self.finder_mosaicimage.shape, self.mosaicimage.shape, self.settings['scale size']))
 
 	def findSquareBlobs(self):
 		message = 'finding squares'
