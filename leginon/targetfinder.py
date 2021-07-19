@@ -766,10 +766,15 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		state = (method == 'remote' and self.settings['queue'])
 		self._setQueueTool(state)
 
-	def blobStatsTargets(self, blobs, image_scale=1):
+	def blobStatsTargets(self, blobs, image_scale=1.0):
 		targets = []
 		for blob in blobs:
 			target = {}
+			c = blob.stats['center']
+			# scipy.ndimage.center_of_mass may return inf or nan.
+			if math.isinf(c[0]) or math.isinf(c[1]) or math.insnan(c[0]) or math.insnan(c[1]):
+				self.logger.error('skip invalid blob center %s, %s' % (c[0],c[1]))
+				continue
 			target['x'] = blob.stats['center'][1]*image_scale
 			target['y'] = blob.stats['center'][0]*image_scale
 			target['stats'] = ordereddict.OrderedDict()
