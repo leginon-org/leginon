@@ -118,6 +118,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.currentposition = []
 		self.target_order = []
 		self.mosaiccreated = threading.Event()
+		self.autofinderlock = threading.Lock()
 		self.presetsclient = presets.PresetsClient(self)
 
 		self.mosaic.setCalibrationClient(self.calclients[parameter])
@@ -157,7 +158,10 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 	# not complete
 	def handleTargetListDone(self, targetlistdoneevent):
 		self.logger.warning('Got targetlistdone event')
-		if self.settings['create on tile change'] in ('all', 'final'):
+		# wait until addTile thread is finished.
+		while self.autofinderlock.locked():
+			time.sleep(0.5)
+		if self.settings['create on tile change'] in ('final',):
 			self.createMosaicImage()
 		if not self.hasNewImageVersion():
 			self.targetsFromDatabase()
@@ -180,7 +184,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 			self.logger.error('Must have atlas display to find squares')
 		self.publishMosaicImage()
 		try:
-			# get blobs with stats
+			# get blobs at finder scale with stats
 			blobs = self.findSquareBlobs()
 		except ValueError as e:
 			self.logger.error(e)
@@ -338,17 +342,32 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.targetmap = {}
 		self.mosaic.clear()
 		self.targetlist = None
+		self.setTargets([], 'Blobs')
 		if self.settings['create on tile change'] in ('all', 'final'):
 			self.clearMosaicImage()
 
 	def addTile(self, imagedata):
+		'''
+		Add tile into mosaic and various mappings. Lock autofinder
+		in handleTargetListDone so that this is done before that event
+		is handled.
+		'''
+		self.autofinderlock.acquire()
 		self.logger.debug('addTile image: %s' % (imagedata.dbid,))
 		imid = imagedata.dbid
 		if imid in self.tilemap:
 			self.logger.info('Image already in mosaic')
+			self.autofinderlock.release()
 			return
+		self._addTile(imagedata)
+		self.autofinderlock.release()
 
+	def _addTile(self, imagedata):
+		'''
+		Add tile into mosaic and various mappings.
+		'''
 		self.logger.info('Adding image to mosaic')
+		imid = imagedata.dbid
 		newtile = self.mosaic.addTile(imagedata)
 		self.tilemap[imid] = newtile
 		self.imagemap[imid] = imagedata
@@ -724,6 +743,9 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		drow = targetdata['delta row']
 		dcol = targetdata['delta column']
 		tilepos = drow+shape[0]/2, dcol+shape[1]/2
+		return self._tile2MosaicPosition(tile, tilepos, mosaic_instance)
+
+	def _tile2MosaicPosition(self, tile, tilepos, mosaic_instance):
 		mospos = mosaic_instance.tile2mosaic(tile, tilepos)
 		scaledpos = mosaic_instance.scaled(mospos)
 		return scaledpos
@@ -783,15 +805,16 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.mosaicimagescale = maxdim
 		try:
 			self.mosaicimage = self.mosaic.getMosaicImage(maxdim)
+			# Note: createFinderMosaicImage will change self.mosaic.scale
+			self.createFinderMosaicImage()
 		except Exception, e:
 			self.logger.error('Failed Creating mosaic image: %s' % e)
+		# Scale to smaller finder size
 		self.mosaicimagedata = None
 
 		self.logger.info('Displaying mosaic image')
 		self.setImage(self.mosaicimage, 'Image')
 		self.logger.info('image displayed, displaying targets...')
-		## imagedata would be full mosaic image
-		#self.clickimage.imagedata = None
 		self.displayTargets()
 		self.beep()
 
@@ -983,7 +1006,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		existing_targets.extend(xytargets['acquisition'])
 		return xytargets['example'], existing_targets
 
-	def scaleFinderMosaicImage(self):
+	def createFinderMosaicImage(self):
 		'''
 		Downsize mosaicimage so that it does not use too much
 		resource in blob finding.
@@ -1005,8 +1028,6 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		message = 'finding squares'
 		self.logger.info(message)
 
-		# Scale to smaller finder size
-		self.scaleFinderMosaicImage()
 		sigma = self.settings['lpf']['sigma']
 		kernel = convolver.gaussian_kernel(sigma)
 		self.convolver.setKernel(kernel)
@@ -1125,6 +1146,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		# save examples for ranking and filtering
 		for i, b in enumerate(blobs):
 			l = b.stats['label_index']
+			# TODO: for this to work blobs, has_priority must ordered like blobs
 			if has_priority[l]:
 				# blobs that contains example_points
 				example_blobs.append(b)
