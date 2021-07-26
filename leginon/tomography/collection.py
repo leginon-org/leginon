@@ -247,6 +247,7 @@ class Collection(object):
 			predicted_shift['x'] = predicted_position['x'] - position['x']
 			predicted_shift['y'] = predicted_position['y'] - position['y']
 
+			#TODO use calibrated defocus delta
 			# undo defocus from last tilt
 			predicted_shift['z'] = -defocus
 
