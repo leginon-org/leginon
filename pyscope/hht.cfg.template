@@ -44,8 +44,8 @@ COIL_IA_200_SCALE%LOWMAG%Y = -7.4e-4,7.4e-4
 COIL_IA_SCALE%LOWMAG%X = -7.5e-4,7.5e-4
 COIL_IA_SCALE%LOWMAG%Y = -7.5e-4,7.5e-4
 # column submode zoom1-hc
-COIL_ISF_SCALE%ZOOM1-HC%X = -9.979e-5,9.979e-5
-COIL_ISF_SCALE%ZOOM1-HC%Y = -9.979e-5,9.979e-5
+COIL_ISF_SCALE%ZOOM1-HC%X = -4.4e-4,4.4e-4
+COIL_ISF_SCALE%ZOOM1-HC%Y = -4.4e-4,4.4e-4
 COIL_IA_SCALE%ZOOM1-HC%X=-8.66e-02,8.66e-02
 COIL_IA_SCALE%ZOOM1-HC%Y=-8.78e-02,8.78e-02
 COIL_PA_SCALE%ZOOM1-HC%X=-1.21e-05,1.21e-05
@@ -54,9 +54,8 @@ COIL_PA_SCALE%ZOOM1-HC%Y=-1.20e-05,1.20e-05
 COIL_ISF_SCALE%ZOOM1-HR%X = -4.2e-5,4.2e-5
 COIL_ISF_SCALE%ZOOM1-HR%Y = -4.2e-5,4.2e-5
 # mag specific exceptions
-COIL_ISF_15000_SCALE%ZOOM1-HR%X = -4.2e-5,4.2e-5
-COIL_ISF_15000_SCALE%ZOOM1-HR%Y = -4.2e-5,4.2e-5
-## PA
+COIL_ISF_15000_SCALE%ZOOM1-HR%X = -6.93e-5,6.93e-5
+COIL_ISF_15000_SCALE%ZOOM1-HR%Y = -6.93e-5,6.93e-5
 COIL_PA_SCALE%ZOOM1-HR%X=-3.44e-06,3.44e-06
 COIL_PA_SCALE%ZOOM1-HR%Y=-3.44e-06,3.44e-06
 COIL_PA_80000_SCALE%ZOOM1-HR%X=-1.26e-06,1.26e-06
@@ -104,26 +103,9 @@ REF_UFOCUS_PATH%ZOOM1-HR = C:\Users\tvips\Desktop\hht_ufocus_zoom1-hr.txt
 [aperture]
 OBJECTIVE = open, 100
 [stage]
-# Some stage needs backlash.
-DO_STAGE_XYZ_BACKLASH = True
-# XYZ backlash delta (positive means preposition to negative direction)
-XYZ_STAGE_BACKLASH_DELTA = 2e-6
-# Stage with autoloader may need a constant preposition to have stable value
-DO_STAGE_ALPHA_BACKLASH = False
-# Alpha backlash delta (positive means preposition to negative direction) in degrees.
-STAGE_ALPHA_BACKLASH_ANGLE_DELTA = 3.0 
-
-# if a stage position movement is less than the following, then ignore it
-MINIMUM_STAGE_MOVEMENT%X = 5.0e-8
-MINIMUM_STAGE_MOVEMENT%Y = 5.0e-8
-MINIMUM_STAGE_MOVEMENT%Z = 5.0e-8
-MINIMUM_STAGE_MOVEMENT%A = 6.0e-5
-MINIMUM_STAGE_MOVEMENT%B = 6.0e-5
-
-# Stage limit to return with value error
-# XYZ in meters, AB in radians.
 STAGE_LIMITS%X = -9.95e-4, 9.95e-4
 STAGE_LIMITS%Y = -9.95e-4, 9.95e-4
-STAGE_LIMITS%Z = -5.0e-4, 5.00e-4
+STAGE_LIMITS%Z = -5e-4, 5e-4
 STAGE_LIMITS%A = -1.2217, 1.2217
-STAGE_LIMITS%B = -1.00, 1.00
+STAGE_LIMITS%B = -1.0, 1.0
+
