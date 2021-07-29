@@ -1020,9 +1020,8 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.logger.info('Scale down mosaic to finder max dimension of %d' % new_maxdim)
 		self.finder_mosaicimage = self.mosaic.getMosaicImage(new_maxdim)
 		self.finder_scale_factor = scale_factor
-		for axis in range(2):
-			if self.mosaicimage.shape[axis] != self.finder_mosaicimage.shape[axis]* scale_factor:
-				self.logger.warning('Bad scaling  Target mapping from shape (%s to %s may be off.  Please try better max dimension than %d' % (self.finder_mosaicimage.shape, self.mosaicimage.shape, self.settings['scale size']))
+		# This is not exact but appears good enough.
+		self.logger.debug('Scaling  Target mapping from shape %s to %s with setting of max size of %d' % (self.finder_mosaicimage.shape, self.mosaicimage.shape, self.settings['scale size']))
 
 	def findSquareBlobs(self):
 		message = 'finding squares'
