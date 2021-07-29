@@ -413,3 +413,9 @@ class EmMenuXF416E_GPU(EmMenuF416):
 	camera_name = 'TietzXF416E_GPU'
 	intensity_averaged = False
 	binning_limits = [1,2,4]
+
+class EmMenuF216(EmMenuF416):
+	name = 'TVIPS-F216'
+	camera_name = 'TietzF216'
+	intensity_averaged = False
+	binning_limits = [1,2,4]
