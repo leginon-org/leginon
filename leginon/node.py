@@ -563,6 +563,15 @@ class Node(correctorclient.CorrectorClient):
 		else:
 			self.logger.warning('Attempt to set manager rejected')
 
+	def notifyAutoDone(self,task='atlas'):
+			'''
+			Notify Manager that the node has finished automated task so that automated
+			task can move on.  Need this because it is a different thread.
+			'''
+			evt = event.AutoDoneNotificationEvent()
+			evt['task'] = task
+			self.outputEvent(evt)
+
 	def beep(self):
 		try:
 			winsound.PlaySound('SystemExclamation', winsound.SND_ALIAS)

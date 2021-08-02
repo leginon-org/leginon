@@ -389,11 +389,20 @@ def find_blobs(image, mask, border=0, maxblobs=300, maxblobsize=100, minblobsize
 
 	blobs = scipyblobs(image,tmpmask)
 	fakeblobs = []
+	isinf = 0
+	isnan = 0
 	toobig = 0
 	toosmall = 0
 	toooblong = 0
 	for blob in blobs:
 		fakeblob = Blob(image, mask, blob['n'], blob['center'], blob['mean'], blob['stddev'], blob['moment'], blob['maximum_position'], blob['label_index'])
+		# scipy.ndimage.center_of_mass may return inf or nan which we don't want.
+		if math.isinf(blob['center'][0]) or math.isinf(blob['center'][1]):
+			isinf += 1
+			continue
+		if math.isnan(blob['center'][0]) or math.isnan(blob['center'][1]):
+			isnan += 1
+			continue
 		if blob['n'] >= maxblobsize:
 			toobig += 1
 			continue
@@ -406,8 +415,8 @@ def find_blobs(image, mask, border=0, maxblobs=300, maxblobsize=100, minblobsize
 		fakeblobs.append(fakeblob)
 
 	if summary is True:
-		sys.stderr.write("BLOB summary: %d total / %d too big / %d too small / %d too oblong\n"
-			%(len(fakeblobs),toobig,toosmall,toooblong,))
+		sys.stderr.write("BLOB summary: %d total / %d invalid number / %d too big / %d too small / %d too oblong\n"
+			%(len(fakeblobs),isinf+isnan, toobig,toosmall,toooblong,))
 
 	## limit to maxblobs
 	if (maxblobs is not None) and (len(blobs) > maxblobs):
