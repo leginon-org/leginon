@@ -113,6 +113,8 @@ class Manager(node.Node):
 		self.autogridslot = None
 		self.autostagez = None
 		self.auto_task = None
+		self.mosaic_target_receiver = None
+		self.auto_atlas_done = threading.Event()
 		self.auto_done = threading.Event()
 		# manager pause
 		self.pausable_nodes = []
@@ -140,6 +142,7 @@ class Manager(node.Node):
 		self.addEventInput(event.DeactivateNotificationEvent, self.handleNotificationStatus)
 		self.addEventInput(event.NodeBusyNotificationEvent, self.handleNodeBusyNotification)
 		self.addEventInput(event.AutoDoneNotificationEvent, self.handleAutoDoneNotification)
+		self.addEventInput(event.MosaicTargetReceiverNotificationEvent, self.handleMosaicTargetReceiverNotification)
 		self.addEventInput(event.ManagerPauseAvailableEvent, self.handleManagerPauseAvailable)
 		self.addEventInput(event.ManagerPauseNotAvailableEvent, self.handleManagerPauseNotAvailable)
 		self.addEventInput(event.ManagerContinueAvailableEvent, self.handleManagerContinueAvailable)
@@ -922,8 +925,17 @@ class Manager(node.Node):
 	# application methods
 
 	def handleAutoDoneNotification(self, ievent):
-		if ievent['task'] == self.auto_task:
-			self.auto_done.set() 
+		if ievent['task'] == 'atlas':
+			self.auto_atlas_done.set()
+		if self.auto_task == 'full':
+			# since all acquisition node send this event, make sure it is the right one.
+			if self.mosaic_target_receiver and ievent['node'] == self.mosaic_target_receiver:
+				self.auto_done.set()
+
+	def handleMosaicTargetReceiverNotification(self, ievent):
+		# set node alias that mosaic click target finder that sends targets to.  The targetlist done
+		# from there signals end of full auto task
+		self.mosaic_target_receiver = ievent['receiver']
 
 	def getBuiltinApplications(self):
 		apps = [appdict['application'] for appdict in applications.builtin.values()]
@@ -1091,7 +1103,7 @@ class Manager(node.Node):
 		Get node alias for the node classes that auto start will
 		send event to.
 		'''
-		self.auto_class_names = ['PresetsManager', 'TEMController','MosaicTargetMaker']
+		self.auto_class_names = ['PresetsManager', 'TEMController','MosaicTargetMaker','MosaicClickTargetFinder']
 		auto_class_aliases = {}
 		for key in self.auto_class_names:
 			auto_class_aliases[key] = None
@@ -1134,15 +1146,18 @@ class Manager(node.Node):
 			ievent['grid'] = None
 			ievent['stagez'] = self.autostagez
 			self.outputEvent(ievent, node_name, wait=False, timeout=None)
-		# TODO: Listen to all tasks finished
-		self.auto_done.clear()
-		print 'listen to AutoDoneNotificationEvent.'
-		self.auto_done.wait()
-		# next
-		print 'done waiting'
+		self.auto_atlas_done.clear()
+		# TODO: Listen to atlas finished
+		self.auto_atlas_done.wait()
 		if task == 'full':
-			#TODO pick square targets and move on.
-			pass
+			#submit auto square target and move on.
+			node_name = self.auto_class_aliases['MosaicClickTargetFinder']
+			if node_name is not None:
+				self.auto_done.clear()
+				ievent = event.SubmitMosaicTargetsEvent()
+				self.outputEvent(ievent, node_name, wait=False, timeout=None)
+				self.auto_done.wait()
+		# next grid session
 		next_auto_task = self.tasker.nextAutoTask()
 		if next_auto_task:
 			next_auto_session = next_auto_task['auto session']

@@ -754,8 +754,7 @@ if __name__ == '__main__':
 	import sys
 	import numpy
 	from pyami import mrc 
-	import pdb
-	
+
 	try:
 		filename = sys.argv[1]
 	except IndexError:
@@ -787,7 +786,6 @@ if __name__ == '__main__':
 			self.SetTopWindow(frame)
 			frame.Show(True)
 			return True
-	pdb.set_trace()
 	array = None
 	if filename is None:
 		filename = raw_input('Enter file path: ')

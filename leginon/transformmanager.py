@@ -522,7 +522,7 @@ class TransformManager(node.Node, TargetTransformer):
 			msg = 'handleTransformTargetEvent starting z %.6f' % stagenow['z']
 			self.logger.debug(msg)
 			newtarget = self.transformTarget(oldtarget, level, use_parent_mover)
-		except:
+		except Exception as e:
 			# TypeError may occur if temserver crash and no info comes back from
 			# a call. Let it go and continue.
 			# TransportError may also occur for unknown reason but it seems to
