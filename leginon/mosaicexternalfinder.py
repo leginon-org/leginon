@@ -73,6 +73,7 @@ class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 
 	def findSquareBlobs(self):
 		# Scale to smaller finder size
+		# TODO where did this call to ?
 		self.scaleFinderMosaicImage()
 		if self.mosaicimagedata and 'filename' in self.mosaicimagedata.keys():
 			mosaic_image_path = os.path.join(self.session['image path'],self.mosaicimagedata['filename']+'.mrc')
@@ -195,11 +196,10 @@ class MosaicClickTargetFinder(MosaicTargetFinderBase):
 					tile = self.tilemap[imid]
 					shape = tile.image.shape
 					for b in self.tileblobmap[imid]:
-						vertices = map((lambda x: self._tile2MosaicPosition(tile, (x[1],x[0]), self.mosaic)), b.vertices)
-						r,c = self._tile2MosaicPosition(tile, b.stats['center'], self.mosaic)
+						#statistics are calculated on finder_mosaic
+						vertices = map((lambda x: self._tile2MosaicPosition(tile, (x[1],x[0]*s), self.finder_mosaic)), b.vertices)
+						r,c = self._tile2MosaicPosition(tile, b.stats['center'], self.finder_mosaic)
 						new_info_dict = dict(b.info_dict)
-						# self.mosaic is at finder size because the parent class
-						# createMosaicImage has changed that.
 						new_info_dict['vertices'] = map((lambda x: (x[1],x[0])),vertices)
 						new_info_dict['center'] = c,r
 						self.finder_blobs.append(StatsBlob(new_info_dict, len(self.finder_blobs)))
