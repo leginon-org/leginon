@@ -1016,7 +1016,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		if old_maxdim is None:
 			old_maxdim = max(self.mosaicimage.shape)
 		# no bigger than 2048
-		scale_factor = int(math.ceil(old_maxdim / 512.0))
+		scale_factor = int(math.ceil(old_maxdim / 2048.0))
 		new_maxdim = old_maxdim // scale_factor
 		self.logger.info('Scale down mosaic to finder max dimension of %d' % new_maxdim)
 		self.finder_mosaicimage = self.finder_mosaic.getMosaicImage(new_maxdim)
