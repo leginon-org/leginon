@@ -105,6 +105,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		parameter = self.settings['calibration parameter']
 		self.mosaic = mosaic.EMMosaic(self.calclients[parameter])
 		self.oldmosaic = mosaic.EMMosaic(self.calclients[parameter])
+		self.finder_mosaic = mosaic.EMMosaic(self.calclients[parameter])
 		self.mosaicimagelist = None
 		self.oldmosaicimagelist = None
 		self.mosaicimage = None
@@ -122,6 +123,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.presetsclient = presets.PresetsClient(self)
 
 		self.mosaic.setCalibrationClient(self.calclients[parameter])
+		self.finder_mosaic.setCalibrationClient(self.calclients[parameter])
 		self.oldmosaic.setCalibrationClient(self.calclients[parameter])
 		self.oldsession = self.session
 
@@ -369,6 +371,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.logger.info('Adding image to mosaic')
 		imid = imagedata.dbid
 		newtile = self.mosaic.addTile(imagedata)
+		self.finder_mosaic.addTile(imagedata)
 		self.tilemap[imid] = newtile
 		self.imagemap[imid] = imagedata
 		self.targetlist, onetargetmap = self._makeTargetMap(imagedata, self.targetlist)
@@ -766,13 +769,13 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		return self._mosaicToTargetOnMosaic(row, col, self.mosaic)
 
 	def _mosaicToTargetOnMosaic(self, row, col, mosaic_instance):
-		self.logger.debug('mosaicToTarget r %s, c %s' % (row, col))
+		self.logger.info('mosaicToTarget r %s, c %s' % (row, col))
 		unscaled = mosaic_instance.unscaled((row,col))
 		tile, pos = mosaic_instance.mosaic2tile(unscaled)
 		shape = tile.image.shape
 		drow,dcol = pos[0]-shape[0]/2.0, pos[1]-shape[1]/2.0
 		imagedata = tile.imagedata
-		self.logger.debug('target tile image: %s, pos: %s' % (imagedata.dbid,pos))
+		self.logger.info('target tile image: %s, pos: %s' % (imagedata.dbid,pos))
 		return imagedata, drow, dcol
 
 	def mosaicToTarget(self, typename, row, col, **kwargs):
@@ -805,11 +808,9 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.mosaicimagescale = maxdim
 		try:
 			self.mosaicimage = self.mosaic.getMosaicImage(maxdim)
-			# Note: createFinderMosaicImage will change self.mosaic.scale
 			self.createFinderMosaicImage()
 		except Exception, e:
 			self.logger.error('Failed Creating mosaic image: %s' % e)
-		# Scale to smaller finder size
 		self.mosaicimagedata = None
 
 		self.logger.info('Displaying mosaic image')
@@ -1015,10 +1016,10 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		if old_maxdim is None:
 			old_maxdim = max(self.mosaicimage.shape)
 		# no bigger than 2048
-		scale_factor = int(math.ceil(old_maxdim / 2048.0))
+		scale_factor = int(math.ceil(old_maxdim / 512.0))
 		new_maxdim = old_maxdim // scale_factor
 		self.logger.info('Scale down mosaic to finder max dimension of %d' % new_maxdim)
-		self.finder_mosaicimage = self.mosaic.getMosaicImage(new_maxdim)
+		self.finder_mosaicimage = self.finder_mosaic.getMosaicImage(new_maxdim)
 		self.finder_scale_factor = scale_factor
 		# This is not exact but appears good enough.
 		self.logger.debug('Scaling  Target mapping from shape %s to %s with setting of max size of %d' % (self.finder_mosaicimage.shape, self.mosaicimage.shape, self.settings['scale size']))
