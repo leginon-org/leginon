@@ -57,7 +57,8 @@ class SimTEM(tem.TEM):
 			'x': (-1e-3, 1e-3),
 			'y': (-1e-3, 1e-3),
 			'z': (-5e-4, 5e-4),
-			'a': (-math.pi/2, math.pi/2),
+			'a':(math.radians(-70),math.radians(70)),
+			'b':(math.radians(-90),math.radians(90)), # no limit
 		}
 		self.minimum_stage = {
 			'x':5e-8,
@@ -191,10 +192,12 @@ class SimTEM(tem.TEM):
 		return copy.copy(self.stage_position)
 
 	def getStageLimits(self):
-		limits = super(SimTEM, self).getStageLimits()
+		limits = self.stage_range
 		return limits
 
 	def _setStagePosition(self,value):
+		# check limit here so that direct move will also be caught
+		self.checkStageLimits(value)
 		keys = value.keys()
 		keys.sort()
 		for axis in keys:
@@ -256,18 +259,6 @@ class SimTEM(tem.TEM):
 	def setStagePosition(self, value):
 		self.printStageDebug(value.keys())
 		value = self.checkStagePosition(value)
-		for axis in self.stage_axes:
-			if axis == 'b':
-				pass
-			else:
-				try:
-					if value[axis] < self.stage_range[axis][0]:
-						raise ValueError('Stage position %s out of range' % axis)
-					if value[axis] > self.stage_range[axis][1]:
-						m = 'invalid stage position for %s axis'
-						raise ValueError(m % axis)
-				except KeyError:
-					pass
 
 		for axis in value.keys():
 			if axis == 'b' and value['b'] is not None:

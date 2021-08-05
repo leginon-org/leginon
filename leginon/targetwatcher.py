@@ -325,7 +325,12 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			# This will bright z to the value before reference targets and alignment
 			# fixing.
 			self.logger.info('Setting z to original z of %.2f um' % (original_position['z']*1e6))
-			self.instrument.tem.setStagePosition({'z':original_position['z']})
+			try:
+				self.setStatus('processing')
+				self.instrument.tem.setStagePosition({'z':original_position['z']})
+			except Exception as e:
+				self.logger.error('Failed to return z position %s' % str(e))
+				self.logger.error('Please check tem')
 			self.logger.info('Processing %d %s targets...' % (len(good_targets), mytargettype))
 		# republish the rejects and wait for them to complete
 		

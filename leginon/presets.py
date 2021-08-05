@@ -36,6 +36,9 @@ SPECIAL_TRANSFORM = False
 class PresetChangeError(Exception):
 	pass
 
+class PresetChangeValueError(Exception):
+	pass
+
 class DataAccessError(Exception):
 	pass
 
@@ -64,6 +67,7 @@ class PresetsClient(object):
 		self.dose_measured = {}
 		self.currentpreset = None
 		self.calclient = calibrationclient.CalibrationClient(self.node)
+		self.stage_targeting_failed = False
 
 	def getPresetFromDB(self, name):
 		session = self.node.session
@@ -172,6 +176,7 @@ class PresetsClient(object):
 
 		# if waiting for this event, then set the threading event
 		if name in self.pchanged:
+			self.stage_targeting_failed = ievent['has_error']
 			self.pchanged[name].set()
 
 		self.node.confirmEvent(ievent)
@@ -405,8 +410,12 @@ class PresetsManager(node.Node):
 				else:
 					self.logger.info('Changing preset to "%s" and targeting' % pname)
 					self.targetToScope(pname, emtarget)
+			except PresetChangeValueError:
+				self.logger.error('preset request to "%s" value error' % (pname))
+				break
 			except PresetChangeError:
 				if i < failtries-1:
+					# retry since this is often communication error that can be recovered.
 					self.logger.warning('preset request to "%s" failed, waiting %d seconds to try again' % (pname,failwait))
 					time.sleep(failwait)
 				else:
@@ -683,7 +692,7 @@ class PresetsManager(node.Node):
 			if self.no_preset_set:
 				self.checkBeamTiltChange()
 			self.blankOff()
-			self.outputEvent(event.PresetChangedEvent(name=name, preset=presetdata))
+			self.outputEvent(event.PresetChangedEvent(name=name, preset=presetdata, has_error=False))
 			self.no_preset_set = False
 
 	def _fromScope(self, name, temname=None, camname=None, parameters=None, copybeam=False):
@@ -1665,13 +1674,23 @@ class PresetsManager(node.Node):
 
 		## send data to instruments
 		# scope
+		self.has_stage_value_error = False
 		try:
 			self.logger.info('setting scopedata')
 			self.instrument.setData(scopedata)
 			self.logger.info('scopedata set')
-		except Exception, e:
+		except ValueError, e:
 			if scopedata['stage position']:
+				# handle ValueError such as stage limit
+				# different from other exceptions so it can abort and move on.
 				self.logger.error('failed to go to %s' %(scopedata['stage position'],))
+				self.has_stage_value_error = True
+			else:
+				self.logger.error(e)
+				message = 'Move to target failed: unable to set scope'
+				self.logger.error(message)
+				raise PresetChangeValueError(message)
+		except Exception, e:
 			self.logger.error(e)
 			message = 'Move to target failed: unable to set scope'
 			self.logger.error(message)
@@ -1701,7 +1720,7 @@ class PresetsManager(node.Node):
 		if self.no_preset_set:
 			self.checkBeamTiltChange()
 		self.blankOff()
-		self.outputEvent(event.PresetChangedEvent(name=name, preset=newpreset))
+		self.outputEvent(event.PresetChangedEvent(name=name, preset=newpreset, has_error=self.has_stage_value_error))
 		self.no_preset_set = False
 
 	def getValue(self, instrument_type, instrument_name, parameter, event):
