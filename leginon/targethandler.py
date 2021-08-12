@@ -238,6 +238,10 @@ class TargetHandler(object):
 				self.postQueueCount(self.total_queue_left_in_loop)
 				donetargetlist = leginondata.DequeuedImageTargetListData(session=self.session, list=targetlist, queue=self.targetlistqueue)
 				self.publish(donetargetlist, database=True)
+				if targetlist['image']:
+					self.logger.info('dequeued targetlist from %s' % targetlist['image']['filename'])
+				else:
+					self.logger.info('dequeued targetlist id=%d without parent' % targetlist,dbid)
 			self.player.play()
 			if self.settings['reset tilt']:
 				# FIX ME: reset tilt and xy at the end of queue.  This is different
