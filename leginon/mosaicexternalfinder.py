@@ -1,6 +1,8 @@
 import subprocess
 import json
 import os
+import multiprocessing
+import time
 
 from leginon import leginondata
 from leginon import mosaictargetfinder
@@ -70,6 +72,7 @@ class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 	def __init__(self, id, session, managerlocation, **kwargs):
 		super(MosaicTargetFinderBase, self).__init__(id, session, managerlocation, **kwargs)
 		self.start()
+		self.ext_blobs ={}
 
 	def findSquareBlobs(self):
 		# Scale to smaller finder size
@@ -80,18 +83,33 @@ class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 			self.logger.info('running external square finding')
 			blobs = self._runExternalBlobFinder(self.mosaicimagedata['image'],mosaic_image_path)
 			# show blob target and stats
-			return blobs
+			return self.ext_blobs['all']
 		return []
 
-	def _runExternalBlobFinder(self, imagearray, mosaic_image_path):
-		outpath = os.path.join(self.session['image path'],'mosaic_sq.txt')
+	def getOutPath(self, label):
+		job_basename = self.getJobBasename(label)
+		outpath = os.path.join(self.session['image path'],'%s.json' % job_basename)
+		return outpath
+
+	def getJobBasename(self, label):
+		return '%s_%s' % (self.session['name'], label)
+
+	def _runExternalBlobFinder(self, imagearray, mosaic_image_path,label='all'):
+		outdir = os.path.dirname(mosaic_image_path)
+		job_basename = self.getJobBasename(label)
+		outpath = os.path.join(outdir, '%s.json' % job_basename)
 		if os.path.isfile(outpath):
 			os.remove(outpath)
-		cmd = 'source /Users/acheng/sq_finding.sh %s %s' % (mosaic_image_path, outpath)
+		# This process must create the output json at outpath
+		cmd = 'source /Users/acheng/sq_finding.sh %s %s %s' % (job_basename, mosaic_image_path, outdir)
 		proc = subprocess.Popen(cmd, shell=True)
 		proc.wait()
+
+	def loadBlobs(self, label, outpath):
 		if not os.path.isfile(outpath):
 			self.logger.warning("external square finding did not run")
+			self.ext_blobs[label] = []
+			return
 		f = open(outpath,'r')
 		# returns one line
 		line = f.readlines()[0]
@@ -99,7 +117,7 @@ class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 		blobs = []
 		for n, b in enumerate(blob_dicts):
 			blobs.append(StatsBlob(b, n)) # (row, col)
-		return blobs
+		self.ext_blobs[label] = blobs
 
 	def filterPoints(self, blobs, example_points, panel_points):
 		'''
@@ -177,15 +195,17 @@ class MosaicClickTargetFinder(MosaicTargetFinderBase):
 		self.tileblobmap = {}
 		self.finder_blobs = []
 		self.start()
+		self.p = {}
 
 	def _addTile(self, imagedata):
 		super(MosaicClickTargetFinder, self)._addTile(imagedata)
 		mrcpath = os.path.join(imagedata['session']['image path'], imagedata['filename']+'.mrc')
-		self.logger.info('running external square finding on imgid=%d' % imagedata.dbid)
-		blobs = self._runExternalBlobFinder(imagedata['image'], mrcpath)
 		imid = imagedata.dbid
-		if imid not in self.tileblobmap:
-			self.tileblobmap[imid] = blobs
+		label = '%d' % imid
+		self.logger.info('running external square finding on imgid=%d' % imid)
+		job_basename = self.getJobBasename(label)
+		self.p[imid] = multiprocessing.Process(target=self._runExternalBlobFinder, args=(imagedata['image'], mrcpath,label))
+		self.p[imid].start()
 
 	def createMosaicImage(self):
 		super(MosaicClickTargetFinder, self).createMosaicImage()
@@ -195,6 +215,13 @@ class MosaicClickTargetFinder(MosaicTargetFinderBase):
 			for imid, targetlists in self.targetmap.items():
 					tile = self.tilemap[imid]
 					shape = tile.image.shape
+					label = '%d' % imid
+					if label in self.ext_blobs.keys():
+						self.tileblobmap[imid] = self.ext_blobs[label]
+						self.addFinderBlobs(tile, imid)
+
+	def addFinderBlobs(self, tile, imid):
+					s = self.finder_scale_factor
 					for b in self.tileblobmap[imid]:
 						#statistics are calculated on finder_mosaic
 						vertices = map((lambda x: self._tile2MosaicPosition(tile, (x[1],x[0]*s), self.finder_mosaic)), b.vertices)
@@ -205,4 +232,18 @@ class MosaicClickTargetFinder(MosaicTargetFinderBase):
 						self.finder_blobs.append(StatsBlob(new_info_dict, len(self.finder_blobs)))
 
 	def findSquareBlobs(self):
+		imids = list(map((lambda x: int(x)),self.p.keys()))
+		for imid in imids:
+			self.p[imid].join()
+			self.p[imid].terminate()
+			self.p.pop(imid)
+		new_imids = set(imids).difference(self.tileblobmap.keys())
+		for imid in new_imids:
+			label = '%d' % imid
+			outpath = self.getOutPath(label)
+			self.loadBlobs(label, outpath)
+			self.tileblobmap[imid] = self.ext_blobs['%d' % imid]
+			s = self.finder_scale_factor
+			tile = self.tilemap[imid]
+			self.addFinderBlobs(tile,imid)
 		return list(self.finder_blobs)
