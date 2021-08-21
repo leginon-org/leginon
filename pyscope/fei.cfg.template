@@ -55,6 +55,8 @@ HAS_FALCON_PROTECTOR = True
 FALCON_IMAGE_STORAGE_PATH = z:\TEMScripting\BM-Falcon\
 # Falcon III subpath. Must exists and writable
 FRAME_SUBPATH = leginonframes
+# Falcon EC EER
+SAVE_EER = False
 # Falcon frame filename prefix. Default is empty string
 FRAME_NAME_PREFIX =
 # Falcon protector may be too slow
