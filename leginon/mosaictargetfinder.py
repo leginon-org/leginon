@@ -749,6 +749,8 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		return self._tile2MosaicPosition(tile, tilepos, mosaic_instance)
 
 	def _tile2MosaicPosition(self, tile, tilepos, mosaic_instance):
+		# tilepos is written as (r, c)
+		# scalepos is written as (r, c)
 		mospos = mosaic_instance.tile2mosaic(tile, tilepos)
 		scaledpos = mosaic_instance.scaled(mospos)
 		return scaledpos

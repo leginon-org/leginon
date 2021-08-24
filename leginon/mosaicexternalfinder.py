@@ -54,7 +54,7 @@ class StatsBlob(object):
 		stddev = 1.0
 		size = info_dict['area']
 		score = info_dict['score']
-		center = info_dict['center'][1],info_dict['center'][0]
+		center = info_dict['center'][0],info_dict['center'][1]
 		vertices = info_dict['vertices']
 		self.center_modified = False
 		self.stats = {"label_index": index, "center":center, "n":size, "size":size, "mean":mean, "score":score, "stddev":score}
@@ -101,7 +101,8 @@ class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 		if os.path.isfile(outpath):
 			os.remove(outpath)
 		# This process must create the output json at outpath
-		cmd = 'source /Users/acheng/sq_finding.sh %s %s %s' % (job_basename, mosaic_image_path, outdir)
+		home_dir = os.path.expanduser('~acheng')
+		cmd = 'source %s/sq_finding.sh %s %s %s' % (home_dir, job_basename, mosaic_image_path, outdir)
 		proc = subprocess.Popen(cmd, shell=True)
 		proc.wait()
 
@@ -172,8 +173,8 @@ class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 			mean = blob.stats['mean']
 			std = blob.stats['score']
 			size = blob.stats['n']
-			#if (mean_min <= mean <= mean_max) and (score_min <= std <= score_max) and (size_min <= size <= size_max):
-			if (mean_min <= mean <= mean_max) and (size_min <= size <= size_max):
+			if (mean_min <= mean <= mean_max) and (score_min <= std <= score_max) and (size_min <= size <= size_max):
+			#if (mean_min <= mean <= mean_max) and (size_min <= size <= size_max):
 				good_blobs.append(blob)
 			else:
 				stats = leginondata.SquareStatsData(prefs=prefs, row=row, column=column, mean=mean, stdev=std)
@@ -228,7 +229,8 @@ class MosaicClickTargetFinder(MosaicTargetFinderBase):
 						r,c = self._tile2MosaicPosition(tile, b.stats['center'], self.finder_mosaic)
 						new_info_dict = dict(b.info_dict)
 						new_info_dict['vertices'] = map((lambda x: (x[1],x[0])),vertices)
-						new_info_dict['center'] = c,r
+						# center of the blob on finder_mosaic coordinate
+						new_info_dict['center'] = r,c
 						self.finder_blobs.append(StatsBlob(new_info_dict, len(self.finder_blobs)))
 
 	def findSquareBlobs(self):
