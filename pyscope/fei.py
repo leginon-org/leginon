@@ -1085,9 +1085,9 @@ class Tecnai(tem.TEM):
 				# but Issue 4794 got 'need more than 3 values to unpack' error'.
 				# simplify the error handling so that it can be raised with messge.
 				msg = e.text
-				raise ValueError('Stage.Goto failed: %s' % (msg,))
+				raise RuntimeError('Stage.Goto failed: %s' % (msg,))
 			except:
-				raise ValueError('COMError in _setStagePosition: %s' % (e,))
+				raise RuntimeError('COMError in _setStagePosition: %s' % (e,))
 		except:
 			if self.getDebugStage():
 				print datetime.datetime.now()
@@ -1132,9 +1132,9 @@ class Tecnai(tem.TEM):
 					# but Issue 4794 got 'need more than 3 values to unpack' error'.
 					# simplify the error handling so that it can be raised with messge.
 					msg = e.text
-					raise ValueError('Stage.Goto failed: %s' % (msg,))
+					raise RuntimeError('Stage.Goto failed: %s' % (msg,))
 				except:
-					raise ValueError('COMError in _setStagePosition: %s' % (e,))
+					raise RuntimeError('COMError in _setStagePosition: %s' % (e,))
 			except:
 				if self.getDebugStage():
 					print datetime.datetime.now()

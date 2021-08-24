@@ -609,7 +609,7 @@ class Panel(leginon.gui.wx.Node.Panel):
 			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, True)
 			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, True) 
 			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
-			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT_QUEUE, True)
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT_QUEUE, False)
 		elif evt.state == 'stop':
 			# case for stop one target list
 			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, True)

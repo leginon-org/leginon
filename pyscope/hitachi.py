@@ -10,6 +10,8 @@ import time
 import os
 import sys
 import re
+import numpy
+import numpy.linalg
 
 import itertools
 
@@ -76,17 +78,12 @@ class Hitachi(tem.TEM):
 
 		self.probe_mode_index = 0
 
-		self.correctedstage = False
-		self.corrected_alpha_stage = False
-		self.alpha_backlash_delta = 3.0
+		self.correctedstage = True
+		self.corrected_alpha_stage = True
+		self.alpha_backlash_delta = 0.0
 		self.stage_axes = ['x', 'y', 'z', 'a']
-		self.stage_range = {
-			'x': (-1e-3, 1e-3),
-			'y': (-1e-3, 1e-3),
-			'z': (-5e-4, 5e-4),
-			'a': (-math.radians(70.0), math.radians(70.0)),
-			'b': (-math.radians(60.0), math.radians(60.0)),
-		}
+		#keep backlash correction distance from edge
+		self.stage_range = self.getStageLimits()
 		self.minimum_stage = {
 			'x':5e-8,
 			'y':5e-8,
@@ -94,7 +91,7 @@ class Hitachi(tem.TEM):
 			'a':math.radians(0.1),
 			'b':math.radians(0.1),
 		}
-		#TODO: we do no know the top speed for htt
+		#TODO: we do no know the top speed for hht
 		self.stage_top_speed = 29.78/127 # top speed is translated to 127
 		# 40 to 127
 		self.stage_speed_decimal = 100
@@ -147,7 +144,7 @@ class Hitachi(tem.TEM):
 		self.beamstop_positions = ['out','in'] # index of this list is API value to set
 		self.coil_map = [('BT','beam_tilt'),('BH','beam_shift'),('PA','image_shift'),('CS','condenser_stig'),('OS','objective_stig'),('IS','diffraction_stig')]
 		self.stig_coil_map = {'condenser':'CS','objective':'OS','diffraction':'IS'}
-	
+		self.coil_pause = 0.3	
 
 	def printStageDebug(self,msg):
 		if STAGE_DEBUG:
@@ -232,9 +229,17 @@ class Hitachi(tem.TEM):
 				break
 			tim.sleep(0.1)
 
+	def getStageLimits(self):
+		return self.getHitachiConfig('stage','stage_limits')
+
 	def getStagePosition(self):
 		xy_submicron = self.h.runGetCommand('StageXY','Position', ['int','int'])
-		a_degrees = self.h.runGetCommand('StageTilt','Position', ['float',])
+		limit = self.getStageAlphaDegreeLimit()
+		if abs(limit[0]) < 0.1 and abs(limit[1]) < 0.1:
+			# alpha disabled
+			a_degrees = 0.0
+		else:
+			a_degrees = self.h.runGetCommand('StageTilt','Position', ['float',])
 		z_submicron = self.h.runGetCommand('StageZ','Position', ['int',])
 		position = {
 			'x': xy_submicron[1]*1e-7, # swap xy to make x axis the tilt axis in Leginon
@@ -245,7 +250,11 @@ class Hitachi(tem.TEM):
 		}
 		return position
 
-	def _setStagePosition(self,value):
+	def getStageAlphaDegreeLimit(self):
+		limits = self.getStageLimits()
+		return (math.degrees(limits['a'][0]),math.degrees(limits['a'][1]))
+
+	def _setStagePosition(self,value, alpha_precision=0.11):
 		keys = value.keys()
 		keys.sort()
 		keys.reverse()
@@ -260,13 +269,23 @@ class Hitachi(tem.TEM):
 				set_xy[0] = int(value['y']*1e7) # swap xy to make x axis the tilt axis in Leginon
 			self.printStageDebug('set to %s' % (set_xy,))
 			# give enough time to move from one end to the other end
-			self.h.runSetIntAndWait('StageXY','Move', set_xy, timeout=20)
+			self.h.runSetIntAndWait('StageXY','Move', set_xy, timeout=30)
 		if 'a' in keys:
-			a_degree = math.degrees(value['a'])
-			self.h.runSetFloatAndWait('StageTilt','Move', [a_degree,])
+			a_degree = round(10*math.degrees(value['a']))*0.1
+			limit = self.getStageAlphaDegreeLimit()
+			if abs(limit[0]) < 0.1 and abs(limit[1]) < 0.1:
+				# alpha is disabled.
+				return
+			if a_degree >= limit[0] and a_degree <= limit[1]:
+				self.h.runSetFloatAndWait('StageTilt','Move', [a_degree,],precision=alpha_precision)
+			else:
+				raise ValueError('requested stage tilt %.1f degrees out of range' % (a_degree))
 		self.printStageDebug('----------')
 
 	def setDirectStagePosition(self,value):
+		'''
+		Direct set without backlash correction or range test. disabled alpha will return without setting.
+		'''
 		self._setStagePosition(value)
 
 	def checkStagePosition(self, position):
@@ -321,7 +340,7 @@ class Hitachi(tem.TEM):
 		prevalue2 = {}
 		stagenow = self.getStagePosition()
 		if self.correctedstage:
-			delta = 2e-6
+			delta = -4e-6
 			for axis in ('x','y','z'):
 				if axis in value:
 					prevalue[axis] = value[axis] - delta
@@ -342,7 +361,13 @@ class Hitachi(tem.TEM):
 				if axis not in prevalue.keys():
 					prevalue[axis] = value[axis]
 					del value[axis]
-			self._setStagePosition(prevalue)
+			# The stage alpha overshoot vby up to 0.4 degrees
+			# positive direction, and may be off by 0.15 degree even
+			# on a second try on the same position.
+			# we use prevalue the same as value in this case
+			self._setStagePosition(prevalue,alpha_precision=0.3)
+			time.sleep(0.2)
+			self._setStagePosition(prevalue,alpha_precision=0.2)
 			time.sleep(0.2)
 		if abs(relax) > 1e-9 and prevalue2:
 			self._setStagePosition(prevalue2)
@@ -399,16 +424,25 @@ class Hitachi(tem.TEM):
 					m = (m[0]*float(ref_mag)/mag,m[1]*float(ref_mag)/mag)
 				except TypeError:
 					raise ValueError('No calibration for %s in %s' % (coil, subset))
+		elif coil.lower() in ('isf','os','is','ia'):
+			# Objective and Intermediate, mostly the same but did find exceptions.
+			mag = self.getMagnification()
+			coil_scale_name = 'coil_%s_%d_scale' % (coil.lower(), mag)
+			subset = self.getProjectionSubModeName().lower()
+			try:
+				m = self.getHitachiConfig('optics',coil_scale_name)[subset][axis]
+			except (KeyError,TypeError):
+				# non-mag specific
+				coil_scale_name = 'coil_%s_scale' % (coil.lower(),)
+				try:
+					m = self.getHitachiConfig('optics',coil_scale_name)[subset][axis]
+				except TypeError:
+					raise ValueError('No calibration for %s in %s' % (coil, subset))
 		else:
+			# Illumination, certainly not mag specific
 			coil_scale_name = 'coil_%s_scale' % (coil.lower())
-			if coil.lower() in ('os','is','isf','ia'):
-				# Objective and Intermediate
-				subset = self.getProjectionSubModeName().lower()
-				m = self.getHitachiConfig('optics',coil_scale_name)[subset][axis]
-			else:
-				# Illumination
-				subset = self.getProbeMode()
-				m = self.getHitachiConfig('optics',coil_scale_name)[subset][axis]
+			subset = self.getProbeMode()
+			m = self.getHitachiConfig('optics',coil_scale_name)[subset][axis]
 		return m
 
 	def _scaleCoilVectorToRaw(self, coil, xydict):
@@ -490,6 +524,7 @@ class Hitachi(tem.TEM):
 		'''
 		hexdec_x, hexdec_y = hex(d_xy['x']), hex(d_xy['y'])
 		self.h.runSetCommand('Coil', coil, ['FF',hexdec_x,hexdec_y,], ['str','hexdec','hexdec',], [6,6])
+		time.sleep(self.coil_pause)
 
 	def getIntensity(self):
 		'''
@@ -595,7 +630,10 @@ class Hitachi(tem.TEM):
 			# Use PA or IA
 			submode_name = self.getProjectionSubModeName()
 			if 'low' not in submode_name.lower():
-				# Use PA even though IA would give bigger range because SDK does not allow IA set in hr mode.
+				if 'hr' in submode_name.lower():
+					# Use ISF larger range in um at high mags 
+					return 'ISF'
+				# Use PA. better for low mag.
 				return 'PA'
 			else:
 				return 'IA'
@@ -605,14 +643,20 @@ class Hitachi(tem.TEM):
 
 	def getImageShift(self):
 		coil = self.getImageShiftCoil()
-		return self.getCoilVector(coil)
+		value = self.getCoilVector(coil)
+		print 'get image shift %s=' % coil, value
+		return value
 	
 	def setImageShift(self, value):
-		new_value = self.getImageShift()
 		coil = self.getImageShiftCoil()
-		for key in value.keys():
-			new_value[key]=value[key]
-		self.setCoilVector(coil, new_value)
+		#if False:
+		fine_value = self.getCoilVector(coil)
+		# the following makes sure all keys have value
+		for key in value.keys(): 
+				fine_value[key]=value[key] 
+		self.setCoilVector(coil, fine_value)
+		print 'set image shift %s=' % coil, fine_value
+		time.sleep(2)
 
 	def getRawImageShift(self):
 		# TODO: Is this different from ImageShift ?

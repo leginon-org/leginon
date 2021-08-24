@@ -265,8 +265,8 @@ class Navigator(node.Node):
 		emdat.friendly_update(newstate)
 		try:
 			self.instrument.setData(emdat)
-		except:
-			self.logger.exception(errstr % 'unable to set instrument')
+		except Exception as e:
+			self.logger.exception(errstr % 'unable to set instrument: %s' % (e,))
 			return True
 
 		return False
@@ -373,7 +373,10 @@ class Navigator(node.Node):
 				self.logger.info('checking that move error is less than %.3e' % (precision,))
 				while dist > precision:
 					time.sleep(0.2)
-					self._move(r, c, movetype)
+					err = self._move(r, c, movetype)
+					if err:
+						self.setStatus('idle')
+						return 'error'
 					self.logger.info('settling...')
 					time.sleep(2.0)
 					if self.settings['cycle each']:
