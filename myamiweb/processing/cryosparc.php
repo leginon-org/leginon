@@ -238,16 +238,16 @@ function display($id) {
 	    </script>
 	    <div id="viewport" style="width:500px; height:300px;"></div>';
 	    echo "<p style='text-align:center'><a href='http://".$job[0][IP].":39000/download_result_file/".$job[0][projectId]."/".$job[0][jobId].".volume.map'>Download Map</a></p>";
-	    echo "</td><td><img src='http://".$job[0][IP].":39000/file/".$fcs->imgfiles[0]->fileid."'>";
+	    echo "</td><td><img src='../proxy.php?csurl=http://".$job[0][IP].":39000/file/".$fcs->imgfiles[0]->fileid."'>";
 	    echo "</td></tr></table>";
-	    $return_array = array("fsc.png"=>"http://".$job[0][IP].":39000/file/".$fcs->imgfiles[0]->fileid);
+	    $return_array = array("fsc.png"=>"../proxy.php?csurl=http://".$job[0][IP].":39000/file/".$fcs->imgfiles[0]->fileid);
     }
     else{
     	echo "<table border=1 CLASS=tableborder CELLPADDING=15>
 	        <tr><td>";
-    	echo "<img width='100%' src='http://".$job[0][IP].":39000/file/".$classes->imgfiles[0]->fileid."'>";
+    	echo "<img width='100%' src='../proxy.php?csurl=http://".$job[0][IP].":39000/file/".$classes->imgfiles[0]->fileid."'>";
     	echo "</td></tr></table>";
-    	$return_array = array("2dclasses.png"=>"http://".$job[0][IP].":39000/file/".$classes->imgfiles[0]->fileid);
+    	$return_array = array("2dclasses.png"=>"../proxy.php?csurl=http://".$job[0][IP].":39000/file/".$classes->imgfiles[0]->fileid);
     	global $class_info;
     	$class_info =  $box_size->text.$pixel_size->text.$nparticles->text;
     	$class_info =  str_replace("\n", "\t==", $class_info);
