@@ -251,6 +251,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		if self.settings['set aperture']:
 			# get aperture selection only if need to avoid error in accessing info.
 			try:
+				self.logger.info('Getting current aperture selection so we can restore....')
 				self.obj_aperture_reset_value = self.instrument.tem.getApertureSelection('objective')
 				self.c2_aperture_reset_value = self.instrument.tem.getApertureSelection('condenser')
 			except Exception, e:
