@@ -6,7 +6,8 @@ import time
 
 from leginon import leginondata
 from leginon import mosaictargetfinder
-import gui.wx.MosaicClickTargetFinder
+from leginon import targetfinder
+import gui.wx.MosaicScoreTargetFinder
 
 def pointInPolygon(x,y,poly):
 	'''
@@ -57,15 +58,35 @@ class StatsBlob(object):
 		center = info_dict['center'][0],info_dict['center'][1]
 		vertices = info_dict['vertices']
 		self.center_modified = False
-		self.stats = {"label_index": index, "center":center, "n":size, "size":size, "mean":mean, "score":score, "stddev":score}
+		self.stats = {"label_index": index, "center":center, "n":size, "size":size, "mean":mean, "score":score}
 		self.vertices = vertices
 		self.info_dict = info_dict
 
 class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
-	panelclass = gui.wx.MosaicClickTargetFinder.Panel
-	settingsclass = leginondata.MosaicClickTargetFinderSettingsData
-	defaultsettings = dict(mosaictargetfinder.MosaicClickTargetFinder.defaultsettings)
-
+	panelclass = gui.wx.MosaicScoreTargetFinder.Panel
+	settingsclass = leginondata.MosaicScoreTargetFinderSettingsData
+	defaultsettings = dict(targetfinder.ClickTargetFinder.defaultsettings)
+	mosaictarget_defaultsettings = {
+		# unlike other targetfinders, no wait is default
+		'wait for done': False,
+		#'no resubmit': True,
+		# maybe not
+		'calibration parameter': 'stage position',
+		'scale image': True,
+		'scale size': 512,
+		'create on tile change': 'all',
+		'target grouping': {
+			'total targets': 10,
+			'classes': 1,
+		},
+		'target multiple':1,
+	}
+	defaultsettings.update(mosaictarget_defaultsettings)
+	auto_square_finder_defaultsettings = {
+			'blob min score': 0.0,
+			'blob max score': 10000.0,
+	}
+	defaultsettings.update(auto_square_finder_defaultsettings)
 	eventoutputs = mosaictargetfinder.MosaicClickTargetFinder.eventoutputs
 	targetnames = mosaictargetfinder.MosaicClickTargetFinder.targetnames
 
@@ -79,11 +100,13 @@ class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 		# TODO where did this call to ?
 		self.scaleFinderMosaicImage()
 		if self.mosaicimagedata and 'filename' in self.mosaicimagedata.keys():
+			label='all'
 			mosaic_image_path = os.path.join(self.session['image path'],self.mosaicimagedata['filename']+'.mrc')
 			self.logger.info('running external square finding')
-			blobs = self._runExternalBlobFinder(self.mosaicimagedata['image'],mosaic_image_path)
+			blobs = self._runExternalBlobFinder(self.mosaicimagedata['image'],mosaic_image_path, label)
+			self.loadBlobs(label, self.getOutPath(label))
 			# show blob target and stats
-			return self.ext_blobs['all']
+			return self.ext_blobs[label]
 		return []
 
 	def getOutPath(self, label):
@@ -92,6 +115,10 @@ class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 		return outpath
 
 	def getJobBasename(self, label):
+		'''
+		JobBasename is used as cluster job name (extension job) in sq_finding.sh
+		and output file name (extension json)
+		'''
 		return '%s_%s' % (self.session['name'], label)
 
 	def _runExternalBlobFinder(self, imagearray, mosaic_image_path,label='all'):
@@ -100,13 +127,16 @@ class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 		outpath = os.path.join(outdir, '%s.json' % job_basename)
 		if os.path.isfile(outpath):
 			os.remove(outpath)
-		# This process must create the output json at outpath
+		# This process must create the output '%s.json' % job_basename at outpath
 		home_dir = os.path.expanduser('~acheng')
 		cmd = 'source %s/sq_finding.sh %s %s %s' % (home_dir, job_basename, mosaic_image_path, outdir)
 		proc = subprocess.Popen(cmd, shell=True)
 		proc.wait()
 
 	def loadBlobs(self, label, outpath):
+		'''
+		load target locations and score as StatsBlob
+		'''
 		if not os.path.isfile(outpath):
 			self.logger.warning("external square finding did not run")
 			self.ext_blobs[label] = []
@@ -137,69 +167,63 @@ class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 	def setFilterSettings(self, example_blobs):
 		if example_blobs:
 			# use the stats of the example blobs
-			means = map((lambda x: x.stats['mean']), example_blobs)
-			mean_min = min(means)
-			mean_max = max(means)
-			stddevs = map((lambda x: x.stats['score']), example_blobs)
-			score_min = min(stddevs)
-			score_max = max(stddevs)
-			sizes = map((lambda x: x.stats['n']), example_blobs)
-			size_min = min(sizes)
-			size_max = max(sizes)
-			self.settings['blobs']['min mean'] = mean_min
-			self.settings['blobs']['max mean'] = mean_max
-			self.settings['blobs']['min stdev'] = score_min # TODO name it correctly
-			self.settings['blobs']['max stdev'] = score_max
-			self.settings['blobs']['min filter size'] = size_min
-			self.settings['blobs']['max filter size'] = size_max
+			scores = map((lambda x: x.stats['score']), example_blobs)
+			score_min = min(scores)
+			score_max = max(scores)
+			self.settings['blob min score'] = score_min # TODO name it correctly
+			self.settings['blob max score'] = score_max
 			self.setSettings(self.settings, False)
 			return
+
+	def storeScoreSquareFinderPrefs(self):
+		prefs = leginondata.ScoreSquareFinderPrefsData()
+		prefs['image'] = self.mosaicimagedata
+		prefs['score-min'] = self.settings['blob min score']
+		prefs['score-max'] = self.settings['blob max score']
+		self.publish(prefs, database=True)
+		return prefs
 
 	def filterStats(self, blobs):	
 		'''
 		filter based on blob stats
 		'''
-		prefs = self.storeSquareFinderPrefs()
-		mean_min = self.settings['blobs']['min mean']-0.0005 # rounding precision
-		mean_max = self.settings['blobs']['max mean']+0.0005
-		score_min = self.settings['blobs']['min stdev']
-		score_max = self.settings['blobs']['max stdev']
-		size_min = self.settings['blobs']['min filter size']
-		size_max = self.settings['blobs']['max filter size']
+		self.sq_prefs = self.storeScoreSquareFinderPrefs()
+		score_min = self.settings['blob min score']
+		score_max = self.settings['blob max score']
 		good_blobs = []
 		for blob in blobs:
 			row = blob.stats['center'][0]
 			column = blob.stats['center'][1]
-			mean = blob.stats['mean']
-			std = blob.stats['score']
 			size = blob.stats['n']
-			if (mean_min <= mean <= mean_max) and (score_min <= std <= score_max) and (size_min <= size <= size_max):
-			#if (mean_min <= mean <= mean_max) and (size_min <= size <= size_max):
+			mean = blob.stats['mean']
+			score = blob.stats['score']
+			if (score_min <= score <= score_max):
+				#print 'good blob (%d,%d): %.2f' % (int(column), int(row), score)
 				good_blobs.append(blob)
 			else:
-				stats = leginondata.SquareStatsData(prefs=prefs, row=row, column=column, mean=mean, stdev=std)
+				stats = leginondata.SquareStatsData(score_prefs=self.sq_prefs, row=row, column=column, mean=mean, size=size, score=score)
 				stats['good'] = False
 				# only publish bad stats
 				self.publish(stats, database=True)
 		return good_blobs
 
-class MosaicClickTargetFinder(MosaicTargetFinderBase):
-	panelclass = gui.wx.MosaicClickTargetFinder.Panel
-	settingsclass = leginondata.MosaicClickTargetFinderSettingsData
+class MosaicScoreTargetFinder(MosaicTargetFinderBase):
+	panelclass = gui.wx.MosaicScoreTargetFinder.Panel
+	settingsclass = leginondata.MosaicScoreTargetFinderSettingsData
 	defaultsettings = dict(mosaictargetfinder.MosaicClickTargetFinder.defaultsettings)
 
 	eventoutputs = mosaictargetfinder.MosaicClickTargetFinder.eventoutputs
 	targetnames = mosaictargetfinder.MosaicClickTargetFinder.targetnames
 
 	def __init__(self, id, session, managerlocation, **kwargs):
-		super(MosaicClickTargetFinder, self).__init__(id, session, managerlocation, **kwargs)
+		super(MosaicScoreTargetFinder, self).__init__(id, session, managerlocation, **kwargs)
 		self.tileblobmap = {}
 		self.finder_blobs = []
 		self.start()
 		self.p = {}
 
 	def _addTile(self, imagedata):
-		super(MosaicClickTargetFinder, self)._addTile(imagedata)
+		super(MosaicScoreTargetFinder, self)._addTile(imagedata)
 		mrcpath = os.path.join(imagedata['session']['image path'], imagedata['filename']+'.mrc')
 		imid = imagedata.dbid
 		label = '%d' % imid
@@ -209,7 +233,7 @@ class MosaicClickTargetFinder(MosaicTargetFinderBase):
 		self.p[imid].start()
 
 	def createMosaicImage(self):
-		super(MosaicClickTargetFinder, self).createMosaicImage()
+		super(MosaicScoreTargetFinder, self).createMosaicImage()
 		if self.mosaic and self.tileblobmap and self.finder_scale_factor:
 			self.finder_blobs = []
 			s = self.finder_scale_factor

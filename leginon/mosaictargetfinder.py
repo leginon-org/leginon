@@ -45,8 +45,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 	panelclass = gui.wx.MosaicClickTargetFinder.Panel
 	settingsclass = leginondata.MosaicClickTargetFinderSettingsData
 	defaultsettings = dict(targetfinder.ClickTargetFinder.defaultsettings)
-	defaultsettings.update({
-
+	mosaictarget_defaultsettings = {
 		# unlike other targetfinders, no wait is default
 		'wait for done': False,
 		#'no resubmit': True,
@@ -55,6 +54,15 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		'scale image': True,
 		'scale size': 512,
 		'create on tile change': 'all',
+		'autofinder': False,
+		'target grouping': {
+			'total targets': 10,
+			'classes': 1,
+		},
+		'target multiple':1,
+	}
+	defaultsettings.update(mosaictarget_defaultsettings)
+	auto_square_finder_defaultsettings = {
 		'lpf': {
 			'on': True,
 			'size': 5,
@@ -74,12 +82,8 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 			'min filter size': 10,
 			'max filter size': 10000,
 		},
-		'target grouping': {
-			'total targets': 10,
-			'classes': 1,
-		},
-		'target multiple':1,
-	})
+	}
+	defaultsettings.update(auto_square_finder_defaultsettings)
 
 	eventoutputs = targetfinder.ClickTargetFinder.eventoutputs + [
 			event.MosaicDoneEvent]
@@ -118,6 +122,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.multihole = multihole.TemplateConvolver()
 		self.currentposition = []
 		self.target_order = []
+		self.sq_prefs = None
 		self.mosaiccreated = threading.Event()
 		self.autofinderlock = threading.Lock()
 		self.presetsclient = presets.PresetsClient(self)
@@ -159,7 +164,10 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 
 	# not complete
 	def handleTargetListDone(self, targetlistdoneevent):
-		self.logger.warning('Got targetlistdone event')
+		if targetlistdoneevent:
+			self.logger.warning('Got real targetlistdone event')
+		else:
+			self.logger.warning('Handle fake targetlistdone event')
 		# wait until addTile thread is finished.
 		while self.autofinderlock.locked():
 			time.sleep(0.5)
@@ -1202,7 +1210,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		'''
 		filter based on blob stats
 		'''
-		prefs = self.storeSquareFinderPrefs()
+		self.sq_prefs = self.storeSquareFinderPrefs()
 		mean_min = self.settings['blobs']['min mean']
 		mean_max = self.settings['blobs']['max mean']
 		std_min = self.settings['blobs']['min stdev']
@@ -1219,7 +1227,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 			if (mean_min <= mean <= mean_max) and (std_min <= std <= std_max) and (size_min <= size <= size_max):
 				good_blobs.append(blob)
 			else:
-				stats = leginondata.SquareStatsData(prefs=prefs, row=row, column=column, mean=mean, stdev=std)
+				stats = leginondata.SquareStatsData(prefs=self.sq_prefs, row=row, column=column, mean=mean, stdev=std, size=size)
 				stats['good'] = False
 				# only publish bad stats
 				self.publish(stats, database=True)
