@@ -202,11 +202,22 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		targets = self.blobStatsTargets(blobs, self.finder_scale_factor)
 		self.logger.info('Number of blobs: %s' % (len(targets),))
 		self.setTargets(targets, 'Blobs')
+		##################################
+		# TODO: This clear targets thread won't complete before
+		# getPanelTargets is called below
+		self.setTargets([], 'acquisition')
+		###################################
+		time.sleep(2)
 		# get ranked and filtered acquisition
 		mosaic_image_shape = self.mosaicimage.shape
-		self.last_xytargets = self.getPanelTargets(mosaic_image_shape)
 		self.refreshDatabaseDisplayedTargets()
 		xytargets = self.getPanelTargets(mosaic_image_shape)
+		##################################
+		# HACKING: disgard all acquisition targets because the
+		# above threading problem
+		xytargets['acquisition']=[]
+		###################################
+		#
 		xys = self.runBlobRankFilter(blobs, xytargets)
 		message = 'found %s squares' % (len(xys),)
 		self.last_xys = xys
@@ -281,15 +292,11 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		return self.newReferenceTarget(imagedata, delta_row, delta_column)
 
 	def submitTargets(self):
+		"""
+		Overwrite TargetFinder submitTargets.
+		"""
 		self.terminated_remote = False
 		self.userpause.set()
-		try:
-			if self.settings['autofinder']:
-				# trigger onTargetsSubmitted in the gui.
-				self.panel.targetsSubmitted()
-				return
-		except:
-			pass
 
 		if self.targetlist is None:
 			self.targetlist = self.newTargetList()
@@ -320,6 +327,9 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.finishSubmitTarget()
 
 	def finishSubmitTarget(self):
+		"""
+		The real submit target part. targetlist should be created by now.
+		"""
 		# create target list
 		self.logger.info('Submitting targets...')
 		self.target_order = self.getTargetOrder(self.targetlist)
@@ -347,12 +357,12 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.panel.targetsSubmitted()
 
 	def clearTiles(self):
+		self.clearAllTargets()
 		self.tilemap = {}
 		self.imagemap = {}
 		self.targetmap = {}
 		self.mosaic.clear()
 		self.targetlist = None
-		self.setTargets([], 'Blobs')
 		if self.settings['create on tile change'] in ('all', 'final'):
 			self.clearMosaicImage()
 
@@ -476,7 +486,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.currentposition = [vcoord]
 
 	def refreshDatabaseDisplayedTargets(self):
-		self.logger.info('Getting targets from database...')
+		self.logger.info('Refreshing targets from database and ignoring unsaved ones...')
 		if not self.hasNewImageVersion():
 			self.targetsFromDatabase()
 		else:

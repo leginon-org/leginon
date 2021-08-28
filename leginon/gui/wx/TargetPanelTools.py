@@ -259,6 +259,7 @@ class TargetType(object):
 		if self.unique and len(targets) > 1:
 			raise ValueError
 		if targets is None:
+			self.targets = []
 			return
 		self.targets = []
 		for target in targets:
