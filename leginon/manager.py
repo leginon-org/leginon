@@ -113,6 +113,7 @@ class Manager(node.Node):
 		self.autogridslot = None
 		self.autostagez = None
 		self.auto_task = None
+		self.square_finder_class_names = []
 		self.mosaic_target_receiver = None
 		self.auto_atlas_done = threading.Event()
 		self.auto_done = threading.Event()
@@ -1103,7 +1104,9 @@ class Manager(node.Node):
 		Get node alias for the node classes that auto start will
 		send event to.
 		'''
-		self.auto_class_names = ['PresetsManager', 'TEMController','MosaicTargetMaker','MosaicClickTargetFinder']
+		self.square_finder_class_names = ['MosaicClickTargetFinder','MosaicScoreTargetFinder']
+		self.auto_class_names = ['PresetsManager', 'TEMController','MosaicTargetMaker',]
+		self.auto_class_names.extend(self.square_finder_class_names)
 		auto_class_aliases = {}
 		for key in self.auto_class_names:
 			auto_class_aliases[key] = None
@@ -1151,8 +1154,9 @@ class Manager(node.Node):
 		self.auto_atlas_done.wait()
 		if task == 'full':
 			#submit auto square target and move on.
-			node_name = self.auto_class_aliases['MosaicClickTargetFinder']
-			if node_name is not None:
+			node_names = filter((lambda x: self.auto_class_aliases[x] is not None), self.square_finder_class_names)
+			if node_names:
+				node_name = node_names[0]
 				self.auto_done.clear()
 				ievent = event.SubmitMosaicTargetsEvent()
 				self.outputEvent(ievent, node_name, wait=False, timeout=None)
