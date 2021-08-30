@@ -194,7 +194,7 @@ EndFunc
 
 Func GetFeiConfigTem($configpath)
    ;Get software type from fei.cfg
-   Local $key = 'software_version'
+   Local $key = 'software_type'
    Local $aLines = getFeiConfigModuleLines($configpath, 'version')
    Local $sTem = 'Titan'
    ;Parse the line at key
