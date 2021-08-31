@@ -1130,7 +1130,7 @@ class Manager(node.Node):
 		time.sleep(2)
 		ievent = event.ChangePresetEvent()
 		# TODO determine which preset name to set.
-		ievent['name'] = 'en'
+		ievent['name'] = 'gr'
 		ievent['emtarget'] = None
 		ievent['keep image shift'] = False
 		self.outputEvent(ievent, node_name, wait=True, timeout=None)
@@ -1154,9 +1154,9 @@ class Manager(node.Node):
 		self.auto_atlas_done.wait()
 		if task == 'full':
 			#submit auto square target and move on.
-			node_names = filter((lambda x: self.auto_class_aliases[x] is not None), self.square_finder_class_names)
-			if node_names:
-				node_name = node_names[0]
+			class_names = filter((lambda x: self.auto_class_aliases[x] is not None), self.square_finder_class_names)
+			if class_names:
+				node_name = self.auto_class_aliases[class_names[0]]
 				self.auto_done.clear()
 				ievent = event.SubmitMosaicTargetsEvent()
 				self.outputEvent(ievent, node_name, wait=False, timeout=None)
