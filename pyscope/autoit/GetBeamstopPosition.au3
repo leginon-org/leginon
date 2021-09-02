@@ -23,31 +23,31 @@
 ; Script Start - Add your code below here
 #include <MsgBoxConstants.au3>
 #include <Array.au3>
-Global $error_log = @UserProfileDir & "myami_log/autoit_error.log"
-Global $result_log = @UserProfileDir & "myami_log/autoit_result.log"
+Global $error_log = @UserProfileDir & "\myami_log\autoit_error.log"
+Global $result_log = @UserProfileDir & "\myami_log\autoit_result.log"
 _ResetError()
 _ResetResult()
 ; TODO pass info from cfg files
 Global $sFeiConfigPath = "c:\Program Files\myami\fei.cfg"
 ; Set Default
 ; Xposition of the reference area relative to tool bar control to grab the background color
-Local $iRefX = 496
-; Defautl XPositions of In/Half/Out buttons relative to toolbar control.
-Local $aButPosXs[3] = [316, 335, 355]
-; Softwareversion with more buttons displacement 
+Local $iRefControlPosX = 496
+
+; Defautl XPositions of In/Halfway/Out buttons relative to toolbar control.
+Local $aButPosXs[3] = [312, 335, 355]
+; Softwareversion with more buttons displacement
 ; TODO get it from fei.cfg
-Local $iExtraButton = 1
+Local $iExtraButton = 0
 Local $iEButtonPosX = $iExtraButton * 27
 
 ; Take extra buttons into account.
-For $i = 0 To 3 Step 1
-   $aButPosXs[$i] = $aButPosXs[$i] + $EButtonPosX
+For $i = 0 To 2 Step 1
+   $aButPosXs[$i] = $aButPosXs[$i] + $iEButtonPosX
 Next
 
 ; Check and click at this XY position relative to tollbar control.
 ; Must be in the area with background color but clickable
 ; In position
-Local $aMyButPos[2] = [$iMyButPosX, 15]
 Local $after
 Local $iClickable = 0
 Local $tCurrentPosName = "unknown"
@@ -69,17 +69,18 @@ If $after = 0 Then
       MsgBox($MB_OK, "Manual Beamstop Test", "Please insert beamstop" & WinGetTitle(''))
       Exit(0)
    EndIf
-   $tCurrentPosName = GetBeamstopPosition($aMyButPosXs, $iRefControlPos0)
 EndIf
+$tCurrentPosName = GetBeamstopPosition($aButPosXs, $iRefControlPosX)
+
 
    _WriteResult($tCurrentPosName)
 
 Func GetBeamstopPosition($aButtonXs, $iRefControlPos0)
    ; Y position at 15 as default
    Local $aButPos[2] = [0,15]
-   Local $aPositionNames = ["in","half","out"]
+   Local $aPositionNames = ["in","halfway","out"]
    Local $tPosition = "unknown"
-   For $n = 0 To 3 Step 1
+   For $n = 0 To 2 Step 1
       $aButPos[0] = $aButtonXs[$n]
       $iResult = IsClickable($aButPos, $iRefControlPos0)
       If $iResult == 0 Then
@@ -87,8 +88,8 @@ Func GetBeamstopPosition($aButtonXs, $iRefControlPos0)
          ExitLoop
       EndIf
    Next
-	 MsgBox(0,'current beamstop position=',$tPosition)
-	 return $tPosition
+   ;MsgBox($MB_OK,'current beamstop position=',$tPosition)
+   return $tPosition
 EndFunc
 
 Func IsClickable($aButPos, $iRefControlPos0)
@@ -120,6 +121,7 @@ EndFunc
 
 Func getFeiConfigModuleLines($configpath, $module)
    ; Read lines under a module in fei.cfg
+   Local $configx86path
    Local $h2 = FileOpen($configpath, 0)
    If $h2 == -1 Then
       $configx86path = StringReplace($configpath, "Program Files", "Program Files (x86)", 1)
