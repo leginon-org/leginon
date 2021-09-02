@@ -31,7 +31,7 @@ Next
 ; Must be in the area with background color but clickable
 Local $aMyButPos[2] = [$aButPosXs[$iButIndex], 15]
 ; Xposition of the reference area relative to tool bar control to grab the background color
-Local $iRefX = 496
+Local $iRefControlPos0 = 496
 Local $after
 Local $iClickable = 0
 Global $my_window, $my_text
