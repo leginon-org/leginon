@@ -23,8 +23,8 @@
 ; Script Start - Add your code below here
 #include <MsgBoxConstants.au3>
 #include <Array.au3>
-Global $error_log = @UserProfileDir & "myami_log/autoit_error.log"
-Global $result_log = @UserProfileDir & "myami_log/autoit_result.log"
+Global $error_log = @UserProfileDir & "\myami_log\autoit_error.log"
+Global $result_log = @UserProfileDir & "\myami_log\autoit_result.log"
 _ResetError()
 _ResetResult()
 
@@ -38,9 +38,12 @@ $my_text = ""
 WinActivate($my_title)
 WinWaitActive($my_title, "", 5)
 $after = WinActive($my_title)
+
+;TODO check both possible paths
 Global $sFeiConfigPath = "c:\Program Files\myami\fei.cfg"
+
 ; Set Default
-Local $sTem = 'titan'
+Local $sTem = GetFeiConfigTem($sFeiConfigPath)
 Local $iSetSleepTime = 2000 ; ms
 Local $sMechanism = 'objective'
 Local $action = 'set'
@@ -107,7 +110,7 @@ Func GetInstanceIndices($sTem, $hasAutoC3, $mechanism)
 EndFunc
 
 Func GetApertureSelection($aIndices)
-   ; set aperture selection
+   ; get aperture selection
    Local $iButtonInst = $aIndices[0]
    Local $iComboInst = $aIndices[1]
    Local $tText = ControlGetText($my_title,"","[CLASS:ComboBox;INSTANCE:" & $iComboInst & "]")
@@ -141,7 +144,7 @@ Func SetApertureSelection($aIndices, $sSelection)
 	  EndIf
    Else
 	  ;Try multiple times since combobox selection does not always works when the selection is not adjacent
-	  While $sSelection <> $tText Or $iTry >=10
+	  While $sSelection <> $tText And $iTry <=10
 		 ControlSend($my_title,"","[CLASS:ComboBox;INSTANCE:" & $iComboInst & "]",$sSelection)
 		 Sleep(2000)
 		 $tText = ControlGetText($my_title,"","[CLASS:ComboBox;INSTANCE:" & $iComboInst & "]")
@@ -158,7 +161,7 @@ Func getFeiConfigModuleLines($configpath, $module)
       $configx86path = StringReplace($configpath, "Program Files", "Program Files (x86)", 1)
       $h2 = FileOpen($configx86path, 0)
       If $h2 == -1 Then
-         _WriteError("can not open " & $configpath & " nor " & $contigx86path)
+         _WriteError("can not open " & $configpath & " nor " & $configx86path)
          Exit
       EndIf
    EndIf
@@ -189,6 +192,26 @@ Func getFeiConfigModuleLines($configpath, $module)
    Return $Lines
 EndFunc
 
+Func GetFeiConfigTem($configpath)
+   ;Get software type from fei.cfg
+   Local $key = 'software_type'
+   Local $aLines = getFeiConfigModuleLines($configpath, 'version')
+   Local $sTem = 'Titan'
+   ;Parse the line at key
+   For $i = 0 to UBound($aLines)-1
+	  Local $sLine = $aLines[$i]
+		Local $aBits = StringSplit($sLine,"=",2)
+	  $sKey = StringStripWS($aBits[0],3); strip leading and trailing white spaces
+	  If StringLower($sKey) == StringLower($key) Then
+		 If StringLower(StringStripWS($aBits[1],3)) = 'talos' Then
+			$sTem = 'Talos'
+		 EndIf
+	  EndIf
+   Next
+   ;MsgBox(0,'Tem', $sTem)
+   return $sTem
+EndFunc
+
 Func GetFeiConfigHasAutoC3($configpath)
    ;Get boolean value of aperture:has_auto_c3 from fei.cfg
    Local $key = 'has_auto_c3'
@@ -217,9 +240,9 @@ Func GetFeiConfigSelections($configpath,$module,$key)
 
 	  If StringLower($sKey) == StringLower($key) Then
 		 Local $aList = StringSplit($aBits[1],",",2)
-		 For $i = 0 to UBound($aList)-1
-			$aListNames[$i] = StringStripWS($aList[$i],3); strip leading and trailing white spaces
-			;MsgBox(0,'config value',$sKey & ' ' & $i & ' ' & $aListNames[$i])
+		 For $j = 0 to UBound($aList)-1
+			$aListNames[$j] = StringStripWS($aList[$j],3); strip leading and trailing white spaces
+			;MsgBox(0,'config value',$sKey & ' ' & $j & ' ' & $aListNames[$j])
 		 Next
 	  EndIf
    Next

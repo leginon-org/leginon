@@ -22,7 +22,7 @@ class MotionCor2UCSFAlignStackLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop)
 		self.parser.add_option("--Iter", dest="Iter",type="int",default=7,
 			help="Maximum iterations for iterative alignment, default is 7.")
 
-                self.parser.add_option("--Tol", dest="Tol",type="float",default=0.5,
+		self.parser.add_option("--Tol", dest="Tol",type="float",default=0.5,
                         help="Tolerance for iterative alignment, in pixels", metavar="#")
 
 		self.parser.add_option("--Patchrows",dest="Patchrows",metavar="#",type=int,default="0",

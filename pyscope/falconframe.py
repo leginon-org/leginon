@@ -24,6 +24,7 @@ class FalconFrameMaker(object):
 		self.no_save_frame_path = 'not_a_real_path'
 		self.fei_image_storage_path = 'E:\\'
 		self.base_frame_path = 'frames'
+		self.frame_name_prefix = ''
 		# almost limitless
 		self.output_bin_limit = 1000
 		self.output_bins = self.output_bin_limit + 0
@@ -41,13 +42,24 @@ class FalconFrameMaker(object):
 	def getBaseFrameTime(self):
 		return self.base_frame_time
 
+	def setBaseFrameTime(self,time_s):
+		self.base_frame_time = time_s
+
 	def getNumberOfBinLimit(self):
 		return self.output_bin_limit
 
+	def setFrameNamePrefix(self,prefix):
+		if prefix is not None:
+			self.frame_name_prefix = str(prefix)
+
+	def getFrameNamePrefix(self):
+		return self.frame_name_prefix
+	
 	def makeFrameDirName(self,use_timestamp):
 		if use_timestamp:
+			prefix = self.frame_name_prefix
 			frames_name = time.strftime('%Y%m%d_%H%M%S', time.localtime())
-			self.frames_name = frames_name + '%02d' % (self.idcounter.next(),)
+			self.frames_name = prefix + frames_name + '%02d' % (self.idcounter.next(),)
 		else:
 			self.frames_name = 'dummy'
 		return self.frames_name
@@ -212,6 +224,7 @@ class FalconFrameConfigXmlMaker(FalconFrameMaker):
 		self.no_save_frame_path = 'not_a_real_path'
 		self.fei_image_storage_path = 'E:\\'
 		self.base_frame_path = 'frames'
+		self.frame_name_prefix = ''
 		self.configxml_path = 'C:\Titan\Data\Falcon'
 		# Falcon 2 software can save frames in at most 7 bins
 		self.output_bin_limit = 7
@@ -298,6 +311,7 @@ class FalconFrameRangeListMaker(FalconFrameMaker):
 		self.no_save_frame_path = ''
 		self.fei_image_storage_path = 'Z:\\'
 		self.base_frame_path = 'frames'
+		self.frame_name_prefix = ''
 		self.output_bin_limit = 1000
 		self.output_bins = self.output_bin_limit + 0
 		self.equal_distributed_frame = 0
@@ -316,8 +330,9 @@ class FalconFrameRangeListMaker(FalconFrameMaker):
 		For advanced tem scripting, this is the stack name not directory name.
 		'''
 		# no dummy
+		prefix = self.frame_name_prefix
 		frames_name = time.strftime('%Y%m%d_%H%M%S', time.localtime())
-		self.frames_name = frames_name + '%02d' % (self.idcounter.next(),)
+		self.frames_name = prefix + frames_name + '%02d' % (self.idcounter.next(),)
 		return self.frames_name
 
 	def getNumberOfAvailableFrames(self):
@@ -387,6 +402,7 @@ if __name__ == '__main__':
 			app = FalconFrameRangeListMaker(False)
 			app.setFeiImageStoragePath(fei_image_storage_path)
 			app.setBaseFramePath('framecam')
+			app.setFrameNamePrefix('f')
 			app.setExposureTime(exposure_second)
 			frame_time_second = 0.2
 			bins = int(exposure_second / frame_time_second)

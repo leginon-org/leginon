@@ -356,15 +356,6 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 						wx.ALIGN_CENTER_VERTICAL)
 		return sz_save
  
-	def createEmissionSizer(self):
-		#set widget
-		self.widgets['emission off'] = wx.CheckBox(self, -1, 'Turn emission off upon timeout')
-		# mskr sizer
-		sz_emission = wx.GridBagSizer(0, 0)
-		sz_emission.Add(self.widgets['emission off'], (0, 0), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
-		return sz_emission
-
 	def createTiltSizer(self):
 		# set widgets
 		self.widgets['use parent tilt'] = wx.CheckBox(self, -1, 'Tilt the stage like its parent image')
@@ -421,7 +412,6 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		szfirstpause = self.createFirstPauseTimeSizer()
 
 		sz_save = self.createImageOptionsSizer()
-		sz_emission = self.createEmissionSizer()
 		sz_tilt = self.createTiltSizer()
 		sz_beampath = self.createClearBeamPathSizer()
 		sz_obj_ap = self.createSetApertureSizer()
@@ -454,11 +444,10 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz.Add(szfirstpause, (2, 0), (1, 2), wx.ALIGN_LEFT|wx.ALL)
 		# left with 1 column
 		sz.Add(sz_save, (3,0), (2,1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(sz_emission, (5,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(sz_tilt, (6,0), (2,1), wx.ALIGN_TOP)
-		sz.Add(sz_beampath, (8,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(sz_obj_ap, (9,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(sbszsim, (10,0), (2,1), wx.ALIGN_BOTTOM)
+		sz.Add(sz_tilt, (5,0), (2,1), wx.ALIGN_TOP)
+		sz.Add(sz_beampath, (7,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(sz_obj_ap, (8,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(sbszsim, (9,0), (2,1), wx.ALIGN_BOTTOM)
 		# middle with 1 column
 		sz.Add(sz_misc, (3,1), (8,1), wx.ALIGN_TOP)
 		# right
@@ -620,7 +609,7 @@ class Panel(leginon.gui.wx.Node.Panel):
 			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, True)
 			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, True) 
 			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
-			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT_QUEUE, True)
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT_QUEUE, False)
 		elif evt.state == 'stop':
 			# case for stop one target list
 			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, True)

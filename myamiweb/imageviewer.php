@@ -12,9 +12,11 @@ list($projectId, $sessionId, $imageId, $preset, $runId, $scopeId) = getPredefine
 
 if (is_null($sessionId)){
 	$_SESSION['unlimited_images'] = false;
+	//default session selector limit
 	$limit = 100;
 }
 else{
+	//all sessions up to SESSION_LIMIT
 	$limit = 0;
 	$_SESSION['unlimited_images'] = true;
 }
@@ -44,6 +46,10 @@ if($projectdb) {
 	}
 }
 
+/* SESSION_LIMIT limits the total number of sessions show up when it is asked
+ to list all session. This is necessary because the selector display may take
+ too long to load.
+*/
 if ( is_numeric(SESSION_LIMIT) && count($sessions) > SESSION_LIMIT) $sessions=array_slice($sessions,0,SESSION_LIMIT);
 
 $jsdata='';
@@ -107,6 +113,7 @@ $view1->setParam('ptclparams',$particleruns);
 $view1->setParam('aceruns',$aceruns);
 $view1->displayDDIcon(true);
 $view1->displayDeqIcon(true);
+$view1->displaySortIcon(true);
 $view1->displayComment(true); 
 $view1->addMenuItems($playbackcontrol);
 $view1->setDataTypes($datatypes);

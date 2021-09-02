@@ -611,6 +611,7 @@ class view {
 		$this->btace = new toggleButton($this->name.'ace', 'ace');
 		$this->btace->onToggle($this->name.'btaceaction'); 
 		$this->btdeq = new button('deq'.$this->name, 'deq');
+		$this->btsort = new button('sort'.$this->name, 'sort');
 		$this->btdd = new toggleButton($this->name.'dd', 'drift');
 		$this->btdd->onToggle($this->name.'btddaction');
 	}
@@ -628,6 +629,7 @@ class view {
 		$this->displayparticleicon = false;
 		$this->displaydownloadicon = true;
 		$this->displaydeqicon = false;
+		$this->displaysorticon = false;
 		$this->displayddicon = false;
 		$this->displaycloseicon = true;
 		$this->displayadjustlink = true;
@@ -929,6 +931,10 @@ class view {
 		$this->displaydeqicon = $state;
 	}
 
+	function displaySortIcon($state) {
+		$this->displaysorticon = $state;
+	}
+
 	function displayScale($state) {
 		$state_str = ($state) ? "true" : "false";
 		$this->scale_st = $state_str;
@@ -983,6 +989,7 @@ class view {
 			.'var jsgradient'.$this->name.'="'.$this->gradient.'";'.$this->crlf
 			.'var jsautoscale'.$this->name.'="'.$this->autoscale.'";'.$this->crlf
 			.'var jsdisplayfilename'.$this->name.'="'.$this->displayfilename.'";'.$this->crlf
+			.'var jsuseauto'.$this->name.'="'.$this->useauto.'";'.$this->crlf
 			.'var jsloadjpg'.$this->name.'="'.$this->loadjpg.'";'.$this->crlf
 			.'var jscacheonly'.$this->name.'="'.$this->cacheonly.'";'.$this->crlf
 			.'var jsptclsel'.$this->name.'="'.$this->ptclsel.'";'.$this->crlf
@@ -1017,6 +1024,7 @@ class view {
 			.$this->btfft->getJavascript()
 			.$this->btace->getJavascript()
 			.$this->btdeq->getJavascript()
+			.$this->btsort->getJavascript()
 			.$this->btdd->getJavascript()
 			.$this->btclose->getJavascript()
 			.$this->crlf;
@@ -1083,6 +1091,8 @@ class view {
 			$javascript .= $this->btscale->getjstoggle();
 		if ($this->btddstate=='true') 
 			$javascript .= $this->btdd->getjstoggle();
+		if ($this->btsortstate=='true') 
+			$javascript .= $this->btsort->getjstoggle();
 		return $javascript;
 	}
 
@@ -1109,6 +1119,7 @@ class view {
 			$this->displayExemplarBt(false);
 			#$this->displayACEIcon(false);
 			$this->displayDeqIcon(false);
+			$this->displaySortIcon(false);
 		}
 	}
 
@@ -1234,6 +1245,12 @@ class view {
 		$htmlframe .= '
 			<td width="15">'
 			.$this->btdeq->display().$this->crlf
+			.'</td> ';
+		}
+		if ($this->displaysorticon) {
+		$htmlframe .= '
+			<td width="15">'
+			.$this->btsort->display().$this->crlf
 			.'</td> ';
 		}
 		if ($this->displaydownloadicon) {
@@ -1414,7 +1431,7 @@ class view {
 						<td valign="center">
 				';
 			$param = "left=0,top=".($this->viewnb*180).",height=400,width=330";
-			$url = "adjust.php?name=$name&displayname=$this->title";
+			$url = "adjust.php?name=$name&useauto=1&displayname=$this->title";
 			$htmlframe .= "<div id='".$this->name."imgstat'>";
 			$htmlframe .='
 			<a href="javascript:popUpAdjust(\''.$url.'\',\''.$name.'\',\''.$param.'\');">
@@ -1543,6 +1560,7 @@ class fileview extends view
 		$this->displayparticleicon = false;
 		$this->displaydownloadicon = false;
 		$this->displaydeqicon = false;
+		$this->displaysorticon = false;
 		$this->displayddicon = false;
 		$this->displaycloseicon = false;
 		$this->displayadjustlink = false;

@@ -105,6 +105,10 @@ class HitachiSocket(object):
 		arg_string = ','.join(args)
 		print 'send', arg_string, recv_min_length
 		self.sendMessage(cmd+' '+arg_string)
+		# Special case without message coming back.
+		if sub_code == 'Stage' and ext_code == 'SpecimenNo':
+			data_string = '8000' # This does not have message coming back.
+			return
 		# expect any data to include '8001, "NG."'
 		data_string = self.recvMessage(recv_min_length)
 		data = data_string.split(',')
@@ -160,6 +164,10 @@ class HitachiSocket(object):
 				raise RuntimeError('get values not the same length as input')
 			is_done = True
 			for i in range(len(value_list)):
+				# FF keeps the same value.  Does not work, though
+				if sub_code == 'Column' and ext_code == 'Mode' and int(value_list[i],16) == int('FF',16):
+					is_done = True
+					continue
 				is_done =  is_done and value_list[i] == result_list[i]
 			if is_done is True:
 				break
@@ -244,9 +252,12 @@ def test2(h):
 
 if __name__=='__main__':
 	try:
+		make_it_fail
 		h = HitachiSocket('192.168.10.1',12068)
 		test2(h)
 	except Exception as e:
 		print e
+		h = HitachiSocket('127.0.0.1',12068)
+		test2(h)
 	finally:
 		raw_input('wait to exit')

@@ -54,8 +54,11 @@ class DiffractionUpload(object):
 		return upload_presetq
 
 	def getGunLength(self, file_pattern):
-		if 'gl' in file_pattern:
-			gl_str = file_pattern.split('gl')[1][:2]
+		# use basename pattern in case that mount point include the word gl
+		# as in glacios
+		base_pattern = os.path.basename(file_pattern)
+		if 'gl' in base_pattern:
+			gl_str = base_pattern.split('gl')[1][:2]
 			gl_value = float('%s.%s' % (gl_str[0],gl_str[1]))
 			return gl_value, 'gl'+gl_str
 		else:
@@ -177,8 +180,8 @@ class DiffractionUpload(object):
 			# pedestal is relative to the zero after offset is applied.
 			pedestal = -min_value + max_of_mins
 			self.saveSMV(imagedata, smv_path, -min_value, pedestal)
-			self.changeOwnership(mrc_path)
 			self.changeOwnership(smv_path)
+			self.changeMode(smv_path, self.path_mode)
 
 	def makeNewDirForUser(self, new_dir):
 		uid = self.uid
@@ -186,6 +189,7 @@ class DiffractionUpload(object):
 		if not os.path.isdir(new_dir):
 			os.mkdir(new_dir)
 		self.changeOwnership(new_dir)
+		self.changeMode(new_dir, self.path_mode)
 
 	def getUserGroup(self):
 		image_path = self.session['image path']
@@ -203,6 +207,8 @@ class DiffractionUpload(object):
 
 	def changeMode(self,path,mode_str='g-w,o-rw'):
 		# only works on linux
+		if not mode_str:
+			return
 		cmd = 'chmod -R %s %s' % (mode_str, path)
 		print(cmd)
 		p = subprocess.Popen(cmd, shell=True)
@@ -243,6 +249,9 @@ class DiffractionUpload(object):
 		if iter_number0 == 0 or iter_number0 == len(self.bin_files)-1:
 			print '%d tilt %.2f' % (iter_number0,tilt_degrees)
 		imagedata.insert()
+		uploaded_mrc_path = os.path.join(self.session['image path'],imagedata['filename']+'.mrc')
+		self.changeOwnership(uploaded_mrc_path)
+		self.changeMode(uploaded_mrc_path, self.path_mode)
 		return imagedata
 
 	def insertImageStats(self, numarray, imagedata):
@@ -379,6 +388,7 @@ class TiaMovieUpload(DiffractionUpload):
 			#print('copying %s to %s' % (old_path, bin_path))
 			shutil.copy(f, bin_path)
 			self.changeOwnership(bin_path)
+			self.changeMode(bin_path, self.path_mode)
 			numarray = tiaraw.read(bin_path)
 			mins.append(numarray.min())
 		# get max of the minimums as pedestal
@@ -493,7 +503,7 @@ def checkAllImages(datapath):
 		handleBadFiles(datapath, c, bad_groups[c])
 	return groups, movie_format
 
-def loop(check_path, check_interval,no_wait=False):
+def loop(check_path, check_interval,no_wait=False,mode_str=''):
 	while True:
 		print 'Iterating...'
 		groups, movie_format = checkAllImages(check_path)
@@ -522,6 +532,7 @@ def loop(check_path, check_interval,no_wait=False):
 					app = TvipsMovieUpload(hl_id,target_number,groups[k])
 				else:
 					app = DiffractionUpload(hl_id,target_number,groups[k])
+				app.path_mode = mode_str
 				app.run()
 			except ValueError as e:
 				# no diffraction series saved.  For example, where there is a leginon side
@@ -546,6 +557,8 @@ def parseParams():
 		help="Mounted parent path to transfer, e.g. --source_path=/mnt/microed", metavar="PATH")
 	parser.add_option("--check_interval", dest="check_interval", help="Seconds between checking for new data", type="int", default=check_interval)
 	parser.add_option("--no_wait", dest="no_wait", help="Catch up upload without waiting for more images to come per series", action="store_true", default=False)
+	parser.add_option("--path_mode", dest="mode_str", 
+		help="recursive session permission modification by chmod if specified, default means not to modify e.g. --path_mode=g-w,o-rw")
 	# parsing options
 	(options, optargs) = parser.parse_args(sys.argv[1:])
 	if len(optargs) > 0:
@@ -570,4 +583,4 @@ if __name__=='__main__':
 	params = parseParams()
 	print "Look into directory %s" % params['source_path']
 	#test(params['source_path'])
-	loop(params['source_path'], params['check_interval'], params['no_wait'])
+	loop(params['source_path'], params['check_interval'], params['no_wait'], params['mode_str'])

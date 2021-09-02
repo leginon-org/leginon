@@ -12,6 +12,12 @@ import falconframe
 from pyscope import tia_display
 from pyami import moduleconfig
 
+try:
+	from comtypes.safearray import safearray_as_ndarray
+	USE_SAFEARRAY_AS_NDARRAY = True
+except ImportError:
+	USE_SAFEARRAY_AS_NDARRAY = False
+
 SIMULATION = False
 class FEIAdvScriptingConnection(object):
 	instr = None
@@ -20,7 +26,6 @@ class FEIAdvScriptingConnection(object):
 
 if SIMULATION:
 	# There is problem starting numpy in FEI 2.9 software as FEI version of python2.7 becomes the default.
-	import numpy
 	import simscripting
 	connection = simscripting.Connection()
 else:
@@ -47,8 +52,20 @@ def chooseTEMAdvancedScriptingName():
 	if len(bits) != 3 or not bits[1].isdigit():
 		print 'Unrecognized Version number, not in the format of %d.%d.%d'
 		raw_input('Hit return to exit')
+	major_version = int(bits[0])
 	minor_version = int(bits[1])
-	if minor_version >= 15:
+	if 'software_type' not in  configs['version'].keys():
+		print 'Need software_type in version section in fei.cfg. Please update it'
+		raw_input('Hit return to exit')
+		sys.exit(0)
+	software_type = configs['version']['software_type'].lower()
+	adv_script_version = configs['version']['tem_advanced_scripting_version']
+	if adv_script_version:
+		return '%d' % adv_script_version
+	if software_type == 'titan':
+		# titan major version is one higher than talos
+		major_version += 1
+	if major_version > 2 or minor_version >= 15:
 		return '2'
 	else:
 		return '1'
@@ -152,7 +169,7 @@ class FeiCam(ccdcamera.CCDCamera):
 		Read from camera capabilities the supported binnings and
 		set self.binning_limits and the self.binning_limit_objs
 		'''
-		self.binning_limit_objs= self.capabilities.SupportedBinnings
+		self.binning_limit_objs= self.camera_capabilities.SupportedBinnings
 		count = self.binning_limit_objs.Count
 		binning_limits = []
 		for index in range(count):
@@ -206,7 +223,7 @@ class FeiCam(ccdcamera.CCDCamera):
 		# set attributes
 		self.camera = this_camera
 		self.camera_settings = self.csa.CameraSettings
-		self.capabilities = self.camera_settings.Capabilities
+		self.camera_capabilities = self.camera_settings.Capabilities
 
 	def setConfig(self, **kwargs):
 		'''
@@ -231,7 +248,7 @@ class FeiCam(ccdcamera.CCDCamera):
 		except:
 			raise
 
-	def getConfig(self, param):
+	def _getConfig(self, param):
 		if param == 'readout':
 			return self.camera_settings.ReadoutArea
 		elif param == 'binning':
@@ -254,7 +271,7 @@ class FeiCam(ccdcamera.CCDCamera):
 		p = self.camera.PixelSize #in meters
 		return {'x': p.Width, 'y': p.Height}
 
-	def getReadoutAreaKey(self,unbindim, off):
+	def _getReadoutAreaKey(self,unbindim, off):
 		size = self.getCameraSize()
 		if unbindim['x']+off['x'] > size['x'] or unbindim['y']+off['y'] > size['y']:
 			raise ValueError('defined readout area outside the camera')
@@ -268,7 +285,7 @@ class FeiCam(ccdcamera.CCDCamera):
 				return k
 		raise ValueError('Does not fit any defined readout area')
 
-	def getReadoutOffset(self, key, binned_full_off):
+	def _getReadoutOffset(self, key, binned_full_off):
 		limit_off = self.limit_off[key]
 		return {'x':binned_full_off['x']-limit_off['x']/self.binning['x'],'y':binned_full_off['x']-limit_off['y']/self.binning['y']}
 
@@ -279,7 +296,7 @@ class FeiCam(ccdcamera.CCDCamera):
 		# final range
 		unbindim = {'x':self.dimension['x']*binning['x'], 'y':self.dimension['y']*binning['y']}
 		unbinoff = {'x':self.offset['x']*binning['x'], 'y':self.offset['y']*binning['y']}
-		readout_key = self.getReadoutAreaKey(unbindim, unbinoff)
+		readout_key = self._getReadoutAreaKey(unbindim, unbinoff)
 		exposure = self.exposure/1000.0
 
 		# send it to camera
@@ -307,6 +324,24 @@ class FeiCam(ccdcamera.CCDCamera):
 			result=self._getImage()
 			self.csa.Wait()
 			return result
+
+	def _getSafeArray(self):
+		# 64-bit pyscope/safearray does not work with newer 64-bit comtypes installation.
+		# use safearray_as_ndarray instead.
+		if USE_SAFEARRAY_AS_NDARRAY:
+			with safearray_as_ndarray:
+				return self.im.AsSafeArray
+		else:
+			return self.im.AsSafeArray
+
+	def _modifyArray(self, arr):
+		rk = self._getConfig('readout')
+		# 64-bit pyscope/safearray does not work with newer 64-bit comtypes installation.
+		# use safearray_as_ndarray instead.
+		arr = arr.reshape((self.limit_dim[rk]['y']/self.binning['y'],self.limit_dim[rk]['x']/self.binning['x']))
+		if USE_SAFEARRAY_AS_NDARRAY:
+			arr = arr.T
+		return arr
 
 	def _getImage(self):
 		'''
@@ -356,7 +391,7 @@ class FeiCam(ccdcamera.CCDCamera):
 			else:
 				raise RuntimeError('Error camera acquiring: %s' % (e,))
 		try:
-			arr = self.im.AsSafeArray
+			arr = self._getSafeArray()
 		except Exception, e:
 			if self.getDebugCamera():
 				print 'Camera array:',e
@@ -366,7 +401,7 @@ class FeiCam(ccdcamera.CCDCamera):
 				print 'No array in memory, yet. Try again.'
 			self.csa.Wait()
 			try:
-				arr = self.im.AsSafeArray
+				arr = self._getSafeArray()
 			except Exception, e:
 				if self.getDebugCamera():
 					print 'Camera array 2nd try:',e
@@ -381,10 +416,10 @@ class FeiCam(ccdcamera.CCDCamera):
 		return arr
 
 	def modifyImage(self, arr):
-		rk = self.getConfig('readout')
+		rk = self._getConfig('readout')
 		# reshape to 2D
 		try:
-			arr = arr.reshape((self.limit_dim[rk]['y']/self.binning['y'],self.limit_dim[rk]['x']/self.binning['x']))
+			arr = self._modifyArray(arr)
 		except AttributeError, e:
 			if self.getDebugCamera():
 				print 'comtypes did not return an numpy 2D array, but %s' % (type(arr))
@@ -394,7 +429,7 @@ class FeiCam(ccdcamera.CCDCamera):
 				print 'modify array error',e
 			raise
 		#Offset to apply to get back the requested area
-		readout_offset = self.getReadoutOffset(rk, self.offset)
+		readout_offset = self._getReadoutOffset(rk, self.offset)
 		try:
 			if self.dimension['x'] < arr.shape[1]:
 				arr=arr[:,readout_offset['x']:readout_offset['x']+self.dimension['x']]
@@ -564,6 +599,7 @@ class Falcon3(FeiCam):
 	camera_name = 'BM-Falcon'
 	binning_limits = [1,2,4]
 	electron_counting = False
+	base_frame_time = 0.025 # seconds
 	# non-counting Falcon3 is the only camera that returns array aleady averaged by frame
 	# to keep values in more reasonable range.
 	intensity_averaged = True
@@ -583,8 +619,11 @@ class Falcon3(FeiCam):
 
 	def initFrameConfig(self):
 		self.frameconfig = falconframe.FalconFrameRangeListMaker(False)
+		self.frameconfig.setBaseFrameTime(self.base_frame_time)
 		falcon_image_storage = self.camera_settings.PathToImageStorage #read only
 		falcon_image_storage = 'z:\\TEMScripting\\BM-Falcon\\'
+		if 'falcon_image_storage_path' in configs['camera'].keys() and configs['camera']['falcon_image_storage_path']:
+			falcon_image_storage = configs['camera']['falcon_image_storage_path']
 		print 'Falcon Image Storage Server Path is ', falcon_image_storage
 		sub_frame_dir = self.getFeiConfig('camera','frame_subpath')
 		try:
@@ -592,6 +631,9 @@ class Falcon3(FeiCam):
 			self.frameconfig.setBaseFramePath(sub_frame_dir)
 		except:
 			raise
+		if 'frame_name_prefix' in configs['camera'].keys():
+			prefix = configs['camera']['frame_name_prefix']
+			self.frameconfig.setFrameNamePrefix(prefix)
 		self.extra_protector_sleep_time = self.getFeiConfig('camera','extra_protector_sleep_time')
 
 	def setInserted(self, value):
@@ -675,7 +717,8 @@ class Falcon3(FeiCam):
 			# Use all available frames
 			rangelist = self.frameconfig.makeRangeListFromNumberOfBaseFramesAndFrameTime(max_nframes,frame_time_second)
 			if self.getDebugCamera():
-				print 'rangelist', rangelist
+				print 'rangelist', rangelist, len(rangelist)
+				print '#base', map((lambda x:x[1]-x[0]),rangelist)
 			if rangelist:
 				# modify frame time in case of uneven bins
 				self.dosefrac_frame_time = movie_exposure_second / len(rangelist)
@@ -720,3 +763,15 @@ class Falcon3EC(Falcon3):
 	binning_limits = [1,2,4]
 	electron_counting = True
 	intensity_averaged = False
+	base_frame_time = 0.025 # seconds
+
+class Falcon4EC(Falcon3EC):
+	name = 'Falcon4EC'
+	camera_name = 'BM-Falcon'
+	binning_limits = [1,2,4]
+	electron_counting = True
+	intensity_averaged = False
+	base_frame_time = 0.02907 # seconds
+
+	def setInserted(self, value):
+		super(Falcon4EC, self).setInserted(value)

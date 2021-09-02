@@ -57,11 +57,23 @@ class TargetHandler(object):
 		e = event.TargetListDoneEvent(targetlistid=listid, status=status, targetlist=targetlistdata)
 		self.outputEvent(e)
 		# mosaic quilt finder and mosaic target finder
-		# should not do this to count done targets after the first submit is done
-		self.insertDoneTargetList(targetlistdata)
+		# should not do this so more targets can be submitted
+		if targetlistdata['node']:
+			if not targetlistdata['node']['class string'].startswith('Mosaic'):
+				# TODO: using class string text to test is not a good idea. Need better solutions.
+				self.insertDoneTargetList(targetlistdata)
+			else:
+				self.notifyAutoDone('full')
 
 	def insertDoneTargetList(self, targetlistdata):
-		if targetlistdata['node'] and self.name == targetlistdata['node']['alias']:
+		if targetlistdata:
+			if not (type(self.targetfinder_from)==type({}) and self.targetfinder_from['is_direct_bound']):
+				return
+		# only insert if the node is directly bound to the targetlistdata['node']
+		# otherwise the Focus or Preview may call targetlist done before Exposure.
+		# See Issue #10094
+		# TODO: what if we do have a TargetFilter between Finder and Acquisition ?
+		if targetlistdata and targetlistdata['node'] and self.targetfinder_from['node']['alias'] == targetlistdata['node']['alias']:
 			q = leginondata.DoneImageTargetListData(session=self.session,list=targetlistdata)
 			q.insert()
 			self.logger.debug('targetlist %d is inserted as done' % (targetlistdata.dbid))
@@ -154,28 +166,22 @@ class TargetHandler(object):
 		else:
 			return False
 
+	def inDoneTargetList(self,targetlist):
+		listid = targetlist.dbid
+		dequeuedquery = leginondata.DoneImageTargetListData(list=targetlist)
+		dequeuedlists = self.research(datainstance=dequeuedquery)
+		if len(dequeuedlists) > 0:
+			self.logger.info('targetlist id %d in DoneTargetLIst' % listid)
+			return True
+		else:
+			self.logger.info('targetlist id %d not in DoneTargetLIst' % listid)
+			return False
+
 	def queueIdleFinish(self):
-		if not self.queueidleactive:
-			return
-		try:
-			self.instrument.tem.ColumnValvePosition = 'closed'
-			self.logger.warning('column valves closed')
-		except:
-			# This fails when tem is not available, likely after Leginon is half closed.
-			pass
-		if self.settings['emission off']:
-			self.instrument.tem.Emission = False
-			self.logger.warning('emission switched off')
-		self.queueidleactive = False
+		self.logger.warning('this idle timer is not used any more')
 
 	def toggleQueueTimeout(self):
-		if self.queueidleactive:
-			self.queueidleactive = False
-			self.logger.info('Queue timeout deactivated')
-		else:
-			self.queueidleactive = True
-			self.queueupdate.set()
-			self.logger.info('Queue timeout activated')
+		self.logger.warning('this idle timer is not used any more')
 
 	def postQueueCount(self, count):
 		# implemented in TargetWatcher
@@ -210,12 +216,21 @@ class TargetHandler(object):
 			# process all target lists in the queue
 			for targetlist in active:
 				state = self.clearBeamPath()
-				if state == 'stopqueue' or self.inDequeued(targetlist):
+				if state == 'stopqueue' or self.inDequeued(targetlist) or self.inDoneTargetList(targetlist):
 					self.logger.info('Queue aborted, skipping target list')
 				else:
 					# FIX ME: empty targetlist does not need to revert Z.
-					self.revertTargetListZ(targetlist)
-					self.processTargetList(targetlist)
+					try:
+						self.revertTargetListZ(targetlist)
+					except Exception as e:
+						self.logger.error('Failed to revert targetlist z: %s' % (e,))
+						break
+					try:
+						self.processTargetList(targetlist)
+					except Exception as e:
+						self.logger.error('Failed to process targetlist from queue: %s' % (e,))
+						self.logger.error('Fix and repeat submitting queue for processing')
+						break
 					state = self.player.wait()
 					if state != 'stopqueue':
 						self.player.play()
@@ -223,9 +238,18 @@ class TargetHandler(object):
 				self.postQueueCount(self.total_queue_left_in_loop)
 				donetargetlist = leginondata.DequeuedImageTargetListData(session=self.session, list=targetlist, queue=self.targetlistqueue)
 				self.publish(donetargetlist, database=True)
+				if targetlist['image']:
+					self.logger.info('dequeued targetlist from %s' % targetlist['image']['filename'])
+				else:
+					self.logger.info('dequeued targetlist id=%d without parent' % targetlist,dbid)
 			self.player.play()
 			if self.settings['reset tilt']:
-				self.resetTiltStage()
+				# FIX ME: reset tilt and xy at the end of queue.  This is different
+				# from non-queue case.
+				try:
+					self.resetTiltStage()
+				except Exception as e:
+					self.logger.error('Failed to x,y,a of the stage: %s' %(e,))
 
 	def resetTiltStage(self):
 		zerostage = {'a':0.0}
@@ -267,6 +291,8 @@ class TargetHandler(object):
 			queuedata = self.getQueue()
 		else:
 			queuedata = None
+		if self.this_node is None:
+			self.logger.error('can not find node spec for targetlist from %s' % (image['filename']))
 		listdata = leginondata.ImageTargetListData(session=self.session, label=label, mosaic=mosaic, image=image, queue=queuedata, sublist=sublist, node=self.this_node)
 		return listdata
 

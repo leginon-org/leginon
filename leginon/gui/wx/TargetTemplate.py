@@ -201,7 +201,7 @@ class AutoFillTargets(wx.Dialog):
 		wx.Dialog.__init__(self, parent, -1, title)
 
 		self.targetname = targetname
-		self.numtargets = IntEntry(self, -1, chars=4, value='1')
+		self.numtargets = IntEntry(self, -1, chars=4, value='4')
 		self.radius = IntEntry(self, -1, chars=4, value='100')
 		self.angleoffset = IntEntry(self, -1, chars=4, value='0')
 		self.targets = []

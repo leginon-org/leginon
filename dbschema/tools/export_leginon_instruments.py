@@ -13,6 +13,7 @@ from pyami import jsonfun
 class InstrumentJsonMaker(jsonfun.DataJsonMaker):
 	def __init__(self,params, interactive=False):
 		super(InstrumentJsonMaker,self).__init__(leginondata)
+		self.hostnames = []
 		self.interactive = interactive
 		try:
 			self.validateInput(params)
@@ -21,12 +22,16 @@ class InstrumentJsonMaker(jsonfun.DataJsonMaker):
 			self.close(1)
 
 	def validateInput(self, params):
-		if len(params) != 2:
-			print "Usage export_leginon_instruments.py source_database_hostname"
+		if len(params) < 2:
+			print "Usage export_leginon_instruments.py source_database_hostname <hostname1,hostname2>"
+			print "(hostname1, hostname2 etc are specific instrument hostname to export. default will export all)"
 			self.close(1)
 		database_hostname = leginondata.sinedon.getConfig('leginondata')['host']
 		if params[1] != database_hostname:
 			raise ValueError('leginondata in sinedon.cfg not set to %s' % params[1])
+		if len(params) > 2:
+			self.hostnames = params[2].split(',')
+
 		self.instruments = self.getSourceInstrumentData(exclude_sim=False)
 
 	def getSourceInstrumentData(self, exclude_sim=False):
@@ -36,7 +41,9 @@ class InstrumentJsonMaker(jsonfun.DataJsonMaker):
 		real_instruments = []
 		for r in results:
 			if (not exclude_sim or not r['name'].startswith('Sim')) and not r['hostname'] in ('fake','appion'):
-				real_instruments.append(r)
+				if not self.hostnames or r['hostname'] in self.hostnames:
+					# specific name if have specification
+					real_instruments.append(r)
 		if not real_instruments:
 			print "ERROR: ...."
 			raise ValueError("  No real instrument found")

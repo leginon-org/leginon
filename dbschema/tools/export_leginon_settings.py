@@ -163,6 +163,7 @@ class SettingsJsonMaker(DataJsonMaker):
 		}
 		aliaskeys = allalias.keys()
 		aliaskeys.sort()
+		focuser_alias ={}
 		for classname in aliaskeys:
 			settingsname = classname+'SettingsData'
 			if classname in unusual_settingsnames.keys():
@@ -171,6 +172,8 @@ class SettingsJsonMaker(DataJsonMaker):
 				continue
 			if classname in aliaskeys:
 				print 'checking %s Settings....' % (classname,)
+				if 'Focuser' in classname:
+					focuser_alias[classname] = allalias[classname]
 				# allalias[classname] may have duplicates
 				for node_name in (set(allalias[classname])):
 					if self.node_name_prefix and not node_name.startswith(self.node_name_prefix):
@@ -183,8 +186,8 @@ class SettingsJsonMaker(DataJsonMaker):
 							self.bad_settings_class.append(classname)
 					self.publish(results)
 		# FocusSequence and FocusSettings needs a different importing method
-		self.exportFocusSequenceSettings(allalias, 'Focuser')
-		self.exportFocusSequenceSettings(allalias, 'DiffrFocuser')
+		for classname in focuser_alias.keys():
+			self.exportFocusSequenceSettings(allalias, classname)
 
 	def exportSettings(self,appname=None):
 		'''
@@ -195,6 +198,7 @@ class SettingsJsonMaker(DataJsonMaker):
 		launched_apps = self.research(q)
 		allalias = {}
 		for appdata in map((lambda x: x['application']), launched_apps):
+			print appdata['name']
 			if appname is not None and appname not in appdata['name']:
 				# only export specified application name
 				continue

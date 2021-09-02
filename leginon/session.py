@@ -64,7 +64,6 @@ class Reservation(object):
 		## make new reservation
 		sessionres = leginon.leginondata.SessionReservationData(name=name, reserved=True)
 		sessionres.insert(force=True)
-	
 		return True
 
 	def cancel(self):
@@ -74,7 +73,7 @@ class Reservation(object):
 		sessionres.insert(force=True)
 		self.name = None
 
-def suggestName():
+def getSessionPrefix():
 	session_name = '<cannot suggest a name>'
 	try:
 		prefix = moduleconfig.getConfigured('leginon_session.cfg', 'leginon')['name']['prefix']
@@ -82,24 +81,32 @@ def suggestName():
 		prefix = ''
 	except KeyError:
 		raise ValueError('session prefix needs to be in "name" section and item "prefix"')
+	return prefix
+
+def suggestName():
+	prefix = getSessionPrefix()
 	for suffix in 'abcdefghijklmnopqrstuvwxyz':
 		maybe_name = prefix + time.strftime('%y%b%d'+suffix).lower()
 		try:
 			makeReservation(maybe_name)
-		except ReservationFailed:
+		except ReservationFailed, e:
 			continue
 		else:
 			session_name = maybe_name
 			break
 	return session_name
 
-def createSession(user, name, description, directory):
+def createSession(user, name, description, directory, holder=None):
 	imagedirectory = os.path.join(leginon.leginonconfig.unmapPath(directory), name, 'rawdata').replace('\\', '/')
+	framedirectory = leginon.ddinfo.getRawFrameSessionPathFromSessionPath(imagedirectory)
 	initializer = {
 		'name': name,
 		'comment': description,
 		'user': user,
 		'image path': imagedirectory,
+		'frame path': framedirectory,
+		'hidden': False,
+		'holder': holder,
 	}
 	return leginon.leginondata.SessionData(initializer=initializer)
 
@@ -115,3 +122,41 @@ def linkSessionProject(sessionname, projectid):
 	projeq['project'] = projdata
 	return projeq
 
+def getSessions(userdata, n=None):
+	'''
+	SetupWizard getSessions. allow filtering by prefix and limit returned sessions to n
+	'''
+	prefix = getSessionPrefix()
+	names = []
+	sessiondatalist = []
+	multiple = 1
+	while n is None or (len(names) < n and multiple < 10):
+		sessionq = leginon.leginondata.SessionData(initializer={'user': userdata})
+		if n is None:
+			sessiondatalist = sessionq.query()
+		else:
+			sessiondatalist = sessionq.query(results=n*multiple)
+		for sessiondata in sessiondatalist:
+			# back compatible where there is no hidden field or as None, not False.
+			if sessiondata['hidden'] is True:
+				continue
+			name = sessiondata['name']
+			if prefix and not name.startswith(prefix):
+				continue
+			if name is not None and name not in names:
+				names.append(name)
+		multiple += 1
+		if n is None:
+			break
+	return names, sessiondatalist
+
+def hasGridHook():
+	try:
+		server_configs = moduleconfig.getConfigured('gridhook.cfg', 'leginon')
+	except IOError as e:
+		return False
+	return True
+
+def createGridHook(session_dict, project_dict):
+	from leginon import gridserver
+	return gridserver.GridHookServer(session_dict,project_dict)

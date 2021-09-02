@@ -130,6 +130,23 @@ class NodeBusyNotificationEvent(NotificationEvent):
 	'Event sent by node such as Tomography to restart timeout timer'
 	pass
 
+class AutoDoneNotificationEvent(NotificationEvent):
+	'Event sent by node such as MosaicTargetFinder to signal end of autotask'
+	def typemap(cls):
+		return NotificationEvent.typemap() + (
+			('task', str),
+		)
+	typemap = classmethod(typemap)
+
+class MosaicTargetReceiverNotificationEvent(NotificationEvent):
+	'''Event sent by mosaic target finder node to indicate the targetwatcher
+	node that receives the targets'''
+	def typemap(cls):
+		return NotificationEvent.typemap() + (
+			('receiver', str), # node alias
+		)
+	typemap = classmethod(typemap)
+
 class IdleNotificationEvent(NotificationEvent):
 	'Event sent to presets manager from manager to notify that Idle is timed out'
 	pass
@@ -346,6 +363,13 @@ class SetManagerEvent(ControlEvent):
 		)
 	typemap = classmethod(typemap)
 
+class SetSessionEvent(ControlEvent):
+	def typemap(cls):
+		return ControlEvent.typemap() + (
+			('session', leginondata.SessionData),
+		)
+	typemap = classmethod(typemap)
+
 class CreateNodeEvent(ControlEvent):
 	'ControlEvent sent to a NodeLauncher specifying a node to launch'
 	def typemap(cls):
@@ -411,6 +435,14 @@ class ExtractGridEvent(ControlEvent):
 	'Event that signals a grid to be extracted'
 	pass
 
+class LoadAutoLoaderGridEvent(ControlEvent):
+	'Event that signals a grid to be loaded through TEMcontroller'
+	def typemap(cls):
+		return ControlEvent.typemap() + (
+			('slot name', str),
+		)
+	typemap = classmethod(typemap)
+	
 class MakeTargetListEvent(ControlEvent):
 	'Event telling target maker to make a target list'
 	def typemap(cls):
@@ -421,6 +453,11 @@ class MakeTargetListEvent(ControlEvent):
 			('stagez', float),
 		)
 	typemap = classmethod(typemap)
+
+class SubmitMosaicTargetsEvent(ControlEvent):
+	'Event that signals mosaic target finder to submit target'
+	pass
+
 
 class EmailEvent(Event):
 	'Event to send email'
@@ -455,6 +492,7 @@ class PresetChangedEvent(Event):
 		return Event.typemap() + (
 			('name', str),
 			('preset', leginondata.PresetData),
+			('has_error', bool),
 		)
 	typemap = classmethod(typemap)
 

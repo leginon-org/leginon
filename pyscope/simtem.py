@@ -57,7 +57,8 @@ class SimTEM(tem.TEM):
 			'x': (-1e-3, 1e-3),
 			'y': (-1e-3, 1e-3),
 			'z': (-5e-4, 5e-4),
-			'a': (-math.pi/2, math.pi/2),
+			'a':(math.radians(-70),math.radians(70)),
+			'b':(math.radians(-90),math.radians(90)), # no limit
 		}
 		self.minimum_stage = {
 			'x':5e-8,
@@ -186,10 +187,17 @@ class SimTEM(tem.TEM):
 			beta = nidaq.getBeta()
 			self.stage_position.update({'b':beta})
 		except:
-			pass	
+			# give values so it is behaved like real tem implementation
+			self.stage_position.update({'b':0.0})
 		return copy.copy(self.stage_position)
 
+	def getStageLimits(self):
+		limits = self.stage_range
+		return limits
+
 	def _setStagePosition(self,value):
+		# check limit here so that direct move will also be caught
+		self.checkStageLimits(value)
 		keys = value.keys()
 		keys.sort()
 		for axis in keys:
@@ -203,7 +211,34 @@ class SimTEM(tem.TEM):
 	def setDirectStagePosition(self,value):
 		self._setStagePosition(value)
 
+	def checkStageLimits(self, position):
+		self._checkStageXYZLimits(position)
+		self._checkStageABLimits(position)
+
+	def _checkStageXYZLimits(self, position):
+		limit = self.getStageLimits()
+		intersection = set(position.keys()).intersection(('x','y','z'))
+		for axis in intersection:
+			self._validateStageAxisLimit(position[axis], axis)
+
+	def _checkStageABLimits(self, position):
+		limit = self.getStageLimits()
+		intersection = set(position.keys()).intersection(('a','b'))
+		for axis in intersection:
+			self._validateStageAxisLimit(position[axis], axis)
+
+	def _validateStageAxisLimit(self, p, axis):
+		limit = self.getStageLimits()
+		if not (limit[axis][0] < p and limit[axis][1] > p):
+			if axis in ('x','y','z'):
+				um_p = p*1e6
+				raise ValueError('Requested %s axis position %.1f um out of range.' % (axis,um_p))
+			else:
+				deg_p = math.degrees(p)
+				raise ValueError('Requested %s axis position %.1f degrees out of range.' % (axis,deg_p))
+
 	def checkStagePosition(self, position):
+		self.checkStageLimits(position)
 		current = self.getStagePosition()
 		bigenough = {}
 		minimum_stage = self.minimum_stage
@@ -224,18 +259,6 @@ class SimTEM(tem.TEM):
 	def setStagePosition(self, value):
 		self.printStageDebug(value.keys())
 		value = self.checkStagePosition(value)
-		for axis in self.stage_axes:
-			if axis == 'b':
-				pass
-			else:
-				try:
-					if value[axis] < self.stage_range[axis][0]:
-						raise ValueError('Stage position %s out of range' % axis)
-					if value[axis] > self.stage_range[axis][1]:
-						m = 'invalid stage position for %s axis'
-						raise ValueError(m % axis)
-				except KeyError:
-					pass
 
 		for axis in value.keys():
 			if axis == 'b' and value['b'] is not None:

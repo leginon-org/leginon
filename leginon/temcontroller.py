@@ -31,6 +31,7 @@ class TEMController(node.Node):
 	defaultsettings = {
 	}
 	eventinputs = node.Node.eventinputs + presets.PresetsClient.eventinputs
+	eventinputs.append(event.LoadAutoLoaderGridEvent)
 	eventoutputs = node.Node.eventoutputs + presets.PresetsClient.eventoutputs \
 									+ [event.ManagerPauseEvent, event.ManagerContinueEvent,
 										]
@@ -39,6 +40,7 @@ class TEMController(node.Node):
 		node.Node.__init__(self, id, session, managerlocation, **kwargs)
 		self.instrument = instrument.Proxy(self.objectservice, self.session,
 																				self.panel)
+		self.addEventInput(event.LoadAutoLoaderGridEvent, self.handleLoadAutoLoaderGrid)
 		self.presetsclient = presets.PresetsClient(self)
 		self.loaded_grid_slot = None
 		self.grid_slot_numbers = []
@@ -79,6 +81,18 @@ class TEMController(node.Node):
 		if not self.remote or not self.remote_toolbar.remote_server_active:
 			return
 		self._activateClickTools()
+
+	def handleLoadAutoLoaderGrid(self,evt):
+		# Hope instrument is loaded by now.
+		self.grid_slot_numbers = self.researchLoadableGridSlots()
+		grid_slot_name = evt['slot name']
+		t0 = time.time()
+		is_successful = self.loadGrid(grid_slot_name)
+		if is_successful:
+			self.confirmEvent(evt)
+		else:
+			# Will need restart to clear confirm event.
+			self.logger.error('Failer auto loading.  Please restart.')
 
 	def _toScope(self,name, stagedict):
 		try:
@@ -358,16 +372,19 @@ class TEMController(node.Node):
 			if self.loaded_grid_slot is None:
 				self.logger.info('Unknown loaded grid. Set loaded grid to empty slot %s' % slot_name)
 				self.loaded_grid_slot = slot_number
+				is_success = True
 			elif self.loaded_grid_slot == slot_number:
-				self.logger.info('Grid from slot is loaded. Nothing to do')
+				self.logger.info('Grid from slot %s is loaded. Nothing to do' % slot_number)
+				is_success = True
 			else:
 				self.logger.warning('Detected empty slot. Can not load.')
+				is_success = False
 			self.panel.setTEMParamDone()
-			return
+			return is_success
 		if state != 'occupied':
 			self.logger.warning('Invalid grid slot state. Can not load.')
 			self.panel.setTEMParamDone()
-			return
+			return False
 		return self._loadGrid(slot_number)
 
 	def _loadGrid(self, slot_number):
@@ -381,7 +398,7 @@ class TEMController(node.Node):
 		try:
 			self.instrument.tem.loadGridCartridge(slot_number)
 			state = self.instrument.tem.getGridLoaderSlotState(slot_number)
-			if state == 'empty':
+			if state == 'empty' or state == 'loaded':
 				is_success = True
 		except Exception, e:
 			self.logger.error(e)

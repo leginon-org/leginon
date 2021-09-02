@@ -27,12 +27,13 @@ import appclient
 import numpy
 import numpy.linalg
 import math
-from pyami import arraystats, imagefun, ordereddict
+from pyami import arraystats, imagefun, ordereddict, moduleconfig
 import smtplib
 import emailnotification
 import leginonconfig
 import gridlabeler
 import itertools
+import re       # wjr for getting rid of gr in filename
 
 debug = False
 
@@ -85,6 +86,16 @@ def setImageFilename(imagedata):
 	filename = '_'.join(parts)
 	imagedata['filename'] = filename
 
+def isSkipGrTileId():
+	is_skip = False
+	try:
+		is_skip = moduleconfig.getConfigured('leginon_session.cfg', 'leginon')['filename']['skip_gr_tile_id']
+	except IOError as e:
+		pass
+	except KeyError:
+		pass
+	return is_skip
+
 def getRootName(imagedata, listlabel=False):
 	'''
 	get the root name of an image from its parent
@@ -104,6 +115,8 @@ def getRootName(imagedata, listlabel=False):
 	## use root name from parent image
 	parent_root = parent_image['filename']
 	if parent_root:
+		if isSkipGrTileId():
+			parent_root = re.sub(r'_\d+gr','',parent_root)    # wjr eliminate grid number and grid label
 		if parent_target['spotmap'] and not parent_image['spotmap']:
 			# target only has spotmap if from MosaicSpotFinder
 			parent_root += '_%s' % (parent_target['spotmap']['name'])
@@ -164,7 +177,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 		'bad stats type': 'Mean',
 		'reacquire when failed': False,
 		'recheck pause time': 10,
-		'emission off': False,
 		'target offset row': 0,
 		'target offset col': 0,
 		'correct image shift coma': False,
@@ -241,6 +253,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.time0 = time.time()
 		self.times = []
 		self.intensities = []
+		self.targetfinder_from = False
 		self.alignzlp_bound = False
 		self.phaseplate_bound = False
 		self.screencurrent_bound = False
@@ -272,7 +285,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 		Find Reference class or its subclass instance bound
 		to this node upon application loading.
 		'''
+		super(Acquisition, self).handleApplicationEvent(evt)
 		app = evt['application']
+		self.targetfinder_from = appclient.getLastNodeThruBinding(app,self.name,'ImageTargetListPublishEvent','TargetFinder')
 		self.alignzlp_bound = appclient.getNextNodeThruBinding(app,self.name,'AlignZeroLossPeakPublishEvent','AlignZeroLossPeak')
 		self.phaseplate_bound = appclient.getNextNodeThruBinding(app,self.name,'PhasePlatePublishEvent','PhasePlateAligner')
 		self.screencurrent_bound = appclient.getNextNodeThruBinding(app,self.name,'ScreenCurrentLoggerPublishEvent','ScreenCurrentLogger')
@@ -335,21 +350,23 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.imagelistdata = leginondata.ImageListData(session=self.session,
 																						targets=newdata)
 		self.publish(self.imagelistdata, database=True)
+		listid = newdata.dbid
+		if self.inDoneTargetList(newdata):
+			# most likely aborted from myamiweb
+			self.logger.info('target list ID: %d found in DoneImageTargetList' % (listid,))
+			return
 		targetwatcher.TargetWatcher.processData(self, newdata)
 		self.publish(self.imagelistdata, pubevent=True)
 		self.logger.info('Acquisition.processData done')
 
 	def validateStagePosition(self, stageposition):
 		## check for out of stage range target
-		stagelimits = {
-			'x': (-9.9e-4, 9.9e-4),
-			'y': (-9.9e-4, 9.9e-4),
-		}
+		stagelimits = self.instrument.tem.StageLimits
 		for axis, limits in stagelimits.items():
 			if stageposition[axis] < limits[0] or stageposition[axis] > limits[1]:
 				pstr = '%s: %g' % (axis, stageposition[axis])
 				messagestr = 'Aborting target: stage position %s out of range' % pstr
-				self.logger.info(messagestr)
+				self.logger.warning(messagestr)
 				raise InvalidStagePosition(messagestr)
 
 	def validatePresets(self):
@@ -426,7 +443,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 	def tunePhasePlate(self, presetname):
 		# TO DO: need some way to check if there is a phase plate
 		presetdata = self.presetsclient.getPresetByName(presetname)
-		if self.phaseplate_bound:
+		if type(self.phaseplate_bound)==type({}) and self.phaseplate_bound['is_direct_bound']:
 				self.nextPhasePlate(presetname)
 
 	def tuneEnergyFilter(self, presetname):
@@ -434,7 +451,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		if not presetdata:
 			return
 		if presetdata['energy filter'] or presetdata['tem energy filter']:
-			if self.alignzlp_bound:
+			if type(self.alignzlp_bound)==type({}) and self.alignzlp_bound['is_direct_bound']:
 				self.alignZeroLossPeak(presetname)
 			else:
 				if False:
@@ -445,7 +462,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		presetdata = self.presetsclient.getPresetByName(presetname)
 		if not presetdata:
 			return
-		if self.screencurrent_bound:
+		if type(self.screencurrent_bound) == dict({}) and self.screencurrent_bound['is_direct_bound']==True:
 			self.measureScreenCurrent(presetname)
 
 	def nextPhasePlate(self, preset_name):
@@ -780,6 +797,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 					# Give presetsclient time to unlock navigator changePreset request
 					time.sleep(0.5)
 			self.presetsclient.toScope(presetname, emtarget, keep_shift=keep_shift)
+			if self.presetsclient.stage_targeting_failed:
+				self.setStatus('idle')
+				return 'error'
 			try:
 				# Random defocus is set in presetsclient.  This is the easiestt
 				# way to get it.  Could be better.
@@ -1169,13 +1189,17 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.logger.error('image %s was acquired %d times.' % (imagedata['filename'], self.retry_count+1))
 
 		image_array = imagedata['image']
-		if self.settings['display image'] and isinstance(image_array, numpy.ndarray):
-			self.reportStatus('output', 'Displaying image...')
-			self.startTimer('display')
-			self.setImage(numpy.asarray(image_array, numpy.float32), 'Image')
-			self.stopTimer('display')
-			self.reportStatus('output', 'Image displayed')
+		if isinstance(image_array, numpy.ndarray):
+			if self.settings['display image']:
+				self.reportStatus('output', 'Displaying image...')
+				self.startTimer('display')
+				self.setImage(numpy.asarray(image_array, numpy.float32), 'Image')
+				self.stopTimer('display')
+				self.reportStatus('output', 'Image displayed')
+			self.finalizeImageProcess()
+		return 'ok'
 
+	def finalizeImageProcess(self):
 		if self.settings['wait for process']:
 			self.setStatus('waiting')
 			self.startTimer('waitForImageProcess')
@@ -1185,7 +1209,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 				self.setStatus('processing')
 			else:
 				self.setStatus('idle')
-		return 'ok'
 
 	def publishStats(self, imagedata):
 		im = imagedata['image']

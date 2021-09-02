@@ -192,7 +192,7 @@ class EmMenuF416(ccdcamera.CCDCamera):
 			raise
 		self.camera_settings.FlatMode=0
 
-	def getConfig(self, param):
+	def _getConfig(self, param):
 		if param == 'binning':
 			return {'x':self.camera_settings.BinningX,'y':self.camera_settings.BinningY}
 		elif param == 'exposure':
@@ -211,8 +211,7 @@ class EmMenuF416(ccdcamera.CCDCamera):
 		self.exposuretype = value
 
 	def getPixelSize(self):
-		p = self.camera.PixelSize #in meters
-		return {'x': p.Width, 'y': p.Height}
+		return self.getTvipsConfig('sensor','pixelsize_um')
 
 	def finalizeSetup(self):
 		# final bin
@@ -338,11 +337,11 @@ class EmMenuF416(ccdcamera.CCDCamera):
 		return mdict
 
 	def getRetractable(self):
-		return True
+		return False
 
 	def getInserted(self):
 		if self.getRetractable():
-			return self.camera.IsInserted
+			raise NotImplementedError()
 		else:
 			return True
 
@@ -409,3 +408,14 @@ class EmMenuF416(ccdcamera.CCDCamera):
 		self.series_length = tvips.readHeaderFromFile(new_path)
 		print 'movie name: %s' % filename
 
+class EmMenuXF416E_GPU(EmMenuF416):
+	name = 'TVIPS-XF416'
+	camera_name = 'TietzXF416E_GPU'
+	intensity_averaged = False
+	binning_limits = [1,2,4]
+
+class EmMenuF216(EmMenuF416):
+	name = 'TVIPS-F216'
+	camera_name = 'TietzF216'
+	intensity_averaged = False
+	binning_limits = [1,2,4]

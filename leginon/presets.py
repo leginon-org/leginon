@@ -36,6 +36,9 @@ SPECIAL_TRANSFORM = False
 class PresetChangeError(Exception):
 	pass
 
+class PresetChangeValueError(Exception):
+	pass
+
 class DataAccessError(Exception):
 	pass
 
@@ -64,6 +67,7 @@ class PresetsClient(object):
 		self.dose_measured = {}
 		self.currentpreset = None
 		self.calclient = calibrationclient.CalibrationClient(self.node)
+		self.stage_targeting_failed = False
 
 	def getPresetFromDB(self, name):
 		session = self.node.session
@@ -172,6 +176,7 @@ class PresetsClient(object):
 
 		# if waiting for this event, then set the threading event
 		if name in self.pchanged:
+			self.stage_targeting_failed = ievent['has_error']
 			self.pchanged[name].set()
 
 		self.node.confirmEvent(ievent)
@@ -258,6 +263,7 @@ class PresetsManager(node.Node):
 		'smallsize': 1024,
 		'idle minute': 30.0,
 		'import random': False,
+		'emission off': False,
 	}
 	eventinputs = node.Node.eventinputs + [event.ChangePresetEvent, event.MeasureDoseEvent, event.UpdatePresetEvent]
 	eventinputs.append(event.IdleNotificationEvent)
@@ -313,20 +319,6 @@ class PresetsManager(node.Node):
 		## this will fill in UI with current session presets
 		self.getPresetsFromDB()
 		self.start()
-
-	def instrumentIdleFinish(self):
-		'''
-		Things to do when idle timer is timeout.
-		'''
-		if not self.idleactive:
-			return
-		self.instrument.tem.ColumnValvePosition = 'closed'
-		self.logger.warning('column valves closed')
-		#if self.settings['emission off']:
-		if False:
-			self.instrument.tem.Emission = False
-			self.logger.warning('emission switched off')
-		self.idleactive = False
 
 	def toggleInstrumentTimeout(self):
 		if self.idleactive:
@@ -418,8 +410,12 @@ class PresetsManager(node.Node):
 				else:
 					self.logger.info('Changing preset to "%s" and targeting' % pname)
 					self.targetToScope(pname, emtarget)
+			except PresetChangeValueError:
+				self.logger.error('preset request to "%s" value error' % (pname))
+				break
 			except PresetChangeError:
 				if i < failtries-1:
+					# retry since this is often communication error that can be recovered.
 					self.logger.warning('preset request to "%s" failed, waiting %d seconds to try again' % (pname,failwait))
 					time.sleep(failwait)
 				else:
@@ -696,7 +692,7 @@ class PresetsManager(node.Node):
 			if self.no_preset_set:
 				self.checkBeamTiltChange()
 			self.blankOff()
-			self.outputEvent(event.PresetChangedEvent(name=name, preset=presetdata))
+			self.outputEvent(event.PresetChangedEvent(name=name, preset=presetdata, has_error=False))
 			self.no_preset_set = False
 
 	def _fromScope(self, name, temname=None, camname=None, parameters=None, copybeam=False):
@@ -1111,7 +1107,9 @@ class PresetsManager(node.Node):
 		except calibrationclient.NoSensitivityError:
 			self.logger.error('No sensitivity data for this magnification')
 			return
-			
+		except ZeroDivisionError:
+			self.logger.error('Camera sensitivity is exactly zero. Please recalibrate.')
+			dose = None
 		if dose is None:
 			self.logger.error('Invalid dose measurement result')
 		else:
@@ -1162,6 +1160,11 @@ class PresetsManager(node.Node):
 		self.acquireDoseImage(presetname)
 
 	def calcDoseFromCameraDoseRate(self, presetname, camera_dose_rate, image_mean):
+		try:
+			1.0/camera_dose_rate
+		except ZeroDivisionError:
+			self.logger.error('Dose Rate of exact zero is not accepted')
+			return
 		preset = self.presetByName(presetname)
 		# Falcon3 non-counting mode gives values per frame not sum. Use through Leginon as per second.
 		intensity_averaged = self.instrument.ccdcamera.IntensityAveraged
@@ -1670,21 +1673,41 @@ class PresetsManager(node.Node):
 			raise PresetChangeError(msg)
 
 		## send data to instruments
+		# scope
+		self.has_stage_value_error = False
 		try:
 			self.logger.info('setting scopedata')
 			self.instrument.setData(scopedata)
 			self.logger.info('scopedata set')
-			self.instrument.setData(cameradata)
-			self.logger.info('cameradata set')
-			newstage = self.instrument.tem.StagePosition
-			msg = '%s targetToScope %.6f' % (newpresetname,newstage['z'])
-			self.testprint('Presetmanager:' + msg)
-			self.logger.debug(msg)
+		except ValueError, e:
+			if scopedata['stage position']:
+				# handle ValueError such as stage limit
+				# different from other exceptions so it can abort and move on.
+				self.logger.error('failed to go to %s' %(scopedata['stage position'],))
+				self.has_stage_value_error = True
+			else:
+				self.logger.error(e)
+				message = 'Move to target failed: unable to set scope'
+				self.logger.error(message)
+				raise PresetChangeValueError(message)
 		except Exception, e:
 			self.logger.error(e)
-			message = 'Move to target failed: unable to set instrument'
+			message = 'Move to target failed: unable to set scope'
 			self.logger.error(message)
 			raise PresetChangeError(message)
+		# camera
+		try:
+			self.instrument.setData(cameradata)
+			self.logger.info('cameradata set')
+		except Exception, e:
+			self.logger.error(e)
+			message = 'Move to target failed: unable to set camera'
+			self.logger.error(message)
+			raise PresetChangeError(message)
+		newstage = self.instrument.tem.StagePosition
+		msg = '%s targetToScope %.6f' % (newpresetname,newstage['z'])
+		self.testprint('Presetmanager:' + msg)
+		self.logger.debug(msg)
 
 		self.startTimer('preset pause')
 		self.logger.info('Pause for %.1f s' % (self.settings['pause time'],))
@@ -1697,7 +1720,7 @@ class PresetsManager(node.Node):
 		if self.no_preset_set:
 			self.checkBeamTiltChange()
 		self.blankOff()
-		self.outputEvent(event.PresetChangedEvent(name=name, preset=newpreset))
+		self.outputEvent(event.PresetChangedEvent(name=name, preset=newpreset, has_error=self.has_stage_value_error))
 		self.no_preset_set = False
 
 	def getValue(self, instrument_type, instrument_name, parameter, event):
@@ -2093,8 +2116,20 @@ class PresetsManager(node.Node):
 			first_preset = self.presets[self.presets.keys()[0]]
 			temname = first_preset['tem']['name']
 		if temname:
-			self.instrument.getTEM(temname).ColumnValvePosition = 'closed'
-			self.logger.info('Column valve closed')
+			try:
+				self.instrument.getTEM(temname).ColumnValvePosition = 'closed'
+				self.logger.info('Column valve closed')
+			except Exception as e:
+				self.logger.error('Failed to close column valve: %s' % (e,))
+
+			if self.settings['emission off']:
+				try:
+					self.instrument.getTEM(temname).Emission = False
+					self.logger.warning('emission switched off')
+				except RuntimeError:
+					self.logger.error('Not possible to switch off emission on %s' % temname)
+				except Exception as e:
+					self.logger.error('Emission off other error: %s' % (e,))
 		else:
 			self.logger.error('No valid preset to set tem to close column valve')
 		# deactivate idle and error notification

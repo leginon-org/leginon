@@ -21,8 +21,12 @@ import node
 import threading
 import logging
 import copy
+from pyami import moduleconfig
 from pyami import ordereddict
 from pyami import mysocket
+# autotask
+from leginon import autotask
+
 import socket
 from wx import PyDeadObjectError
 import gui.wx.Manager
@@ -104,6 +108,14 @@ class Manager(node.Node):
 		self.timer = None
 		self.timer_thread_lock = False
 
+		# auto run testing
+		self.autorun = False
+		self.autogridslot = None
+		self.autostagez = None
+		self.auto_task = None
+		self.mosaic_target_receiver = None
+		self.auto_atlas_done = threading.Event()
+		self.auto_done = threading.Event()
 		# manager pause
 		self.pausable_nodes = []
 		self.paused_nodes = []
@@ -129,6 +141,8 @@ class Manager(node.Node):
 		self.addEventInput(event.ActivateNotificationEvent, self.handleNotificationStatus)
 		self.addEventInput(event.DeactivateNotificationEvent, self.handleNotificationStatus)
 		self.addEventInput(event.NodeBusyNotificationEvent, self.handleNodeBusyNotification)
+		self.addEventInput(event.AutoDoneNotificationEvent, self.handleAutoDoneNotification)
+		self.addEventInput(event.MosaicTargetReceiverNotificationEvent, self.handleMosaicTargetReceiverNotification)
 		self.addEventInput(event.ManagerPauseAvailableEvent, self.handleManagerPauseAvailable)
 		self.addEventInput(event.ManagerPauseNotAvailableEvent, self.handleManagerPauseNotAvailable)
 		self.addEventInput(event.ManagerContinueAvailableEvent, self.handleManagerContinueAvailable)
@@ -157,14 +171,15 @@ class Manager(node.Node):
 
 		hostnames = [p[1] for p in prevlaunchers]
 		self.waitForLaunchersReady(hostnames)
-
+		#TODO: simulator still need a bit longer. Maybe ready too fast
+		time.sleep(5)
 		app = application.Application(self, prevname)
 		app.load()
 		for alias,hostname in prevlaunchers:
 			app.setLauncherAlias(alias, hostname)
 		self.runApplication(app)
 
-	def run(self, session, clients, prevapp=False):
+	def run(self, session, clients, prevapp=False, gridslot=None, stagez=None, auto_task=None):
 		self.session = session
 		self.frame.session = self.session
 
@@ -179,6 +194,14 @@ class Manager(node.Node):
 			except Exception, e:
 				self.logger.warning('Failed to add launcher: %s' % e)
 
+		if gridslot and auto_task is not None:
+			self.autorun = True
+			self.autogridslot = gridslot
+			# None, 'atlas','full'
+			self.auto_task = auto_task
+		if stagez is not None:
+			# float
+			self.autostagez = stagez
 		if prevapp:
 			threading.Thread(target=self.launchPreviousApp).start()
 
@@ -197,6 +220,19 @@ class Manager(node.Node):
 		else:
 			session = None
 		return session
+
+	def setSessionByName(self, name):
+		new_session = self.getSessionByName(name)
+		if not new_session:
+			print 'Cannot find existing session %s to set' % (name,)
+		self.session = new_session
+		## do every node
+		do = list(self.initializednodes)
+		for to_node in do:
+			out = event.SetSessionEvent()
+			out['session'] = self.session
+			self.sendManagerNotificationEvent(to_node, out)
+		self.frame.SetTitle('Leginon:  %s' % (name,))
 
 	def onAddLauncherPanel(self, l):
 		evt = gui.wx.Manager.AddLauncherPanelEvent(l)
@@ -858,6 +894,9 @@ class Manager(node.Node):
 			self.slackNotification(msg)
 
 	def handleNotificationStatus(self, ievent):
+		'''
+		Handle (De)ActivateNotificationEvent from PresetsManager.
+		'''
 		nodename = ievent['node']
 		if isinstance(ievent, event.ActivateNotificationEvent):
 			self.tem_host = ievent['tem_host']
@@ -884,6 +923,19 @@ class Manager(node.Node):
 			print msg
 
 	# application methods
+
+	def handleAutoDoneNotification(self, ievent):
+		if ievent['task'] == 'atlas':
+			self.auto_atlas_done.set()
+		if self.auto_task == 'full':
+			# since all acquisition node send this event, make sure it is the right one.
+			if self.mosaic_target_receiver and ievent['node'] == self.mosaic_target_receiver:
+				self.auto_done.set()
+
+	def handleMosaicTargetReceiverNotification(self, ievent):
+		# set node alias that mosaic click target finder that sends targets to.  The targetlist done
+		# from there signals end of full auto task
+		self.mosaic_target_receiver = ievent['receiver']
 
 	def getBuiltinApplications(self):
 		apps = [appdict['application'] for appdict in applications.builtin.values()]
@@ -937,21 +989,63 @@ class Manager(node.Node):
 			orderedapps[appname] = apps[appname]
 		return orderedapps
 
+	def getApplicationAffixList(self,affix_type='prefix'):
+		'''
+		Get application prefix list to filter for history. Defined in leginon/leginon_session.cfg
+		'''
+		try:
+			affixlist = moduleconfig.getConfigured('leginon_session.cfg', 'leginon')['app'][affix_type]
+			if type(affixlist) == type(2):
+				# single entry integer is translated to integer, not list of string
+				affixlist = ['%d' % affixlist]
+			if type(affixlist) == type(''):
+				# single entry is translated to string, not list of string
+				affixlist = [affixlist]
+		except IOError:
+			affixlist = []
+		except KeyError:
+			# ok if not assigned
+			affixlist = []
+		except Exception as e:
+			raise ValueError('unknown application %s error: %s' % (affix_type,str(e)))
+		return affixlist
+
 	def getApplicationHistory(self):
 		initializer = {'session': leginondata.SessionData(user=self.session['user']),
 										'application': leginondata.ApplicationData()}
 		appdata = leginondata.LaunchedApplicationData(initializer=initializer)
 		appdatalist = self.research(appdata, timelimit='-90 0:0:0')
+		prefixlist = self.getApplicationAffixList('prefix')
+		postfixlist = self.getApplicationAffixList('postfix')
 		history = []
-		map = {}
+		amap = {}
 		for a in appdatalist:
 			name =  a['application']['name']
 			if a['application']['hide']:
 				continue
+			if prefixlist:
+				# filter by prefix
+				found_prefix = False
+				for prefix in prefixlist:
+					if name.startswith(str(prefix)):
+						found_prefix = True
+						break
+				if not found_prefix:
+					continue
+			if postfixlist:
+				# filter by prefix
+				found_postfix = False
+				for postfix in postfixlist:
+					if name.endswith(str(postfix)):
+						found_postfix = True
+						break
+				if not found_postfix:
+					continue
+			# add to history
 			if name not in history:
 				history.append(name)
-				map[name] = a['launchers']
-		return history, map
+				amap[name] = a['launchers']
+		return history, amap
 
 	def onApplicationStarting(self, name, nnodes):
 		evt = gui.wx.Manager.ApplicationStartingEvent(name, nnodes)
@@ -991,6 +1085,88 @@ class Manager(node.Node):
 		d = leginondata.LaunchedApplicationData(initializer=initializer)
 		self.publish(d, database=True, dbforce=True)
 		self.onApplicationStarted(name)
+		if self.autorun:
+			try:
+				self.tasker = autotask.AutoTaskOrganizer(self.session)
+			except ValueError:
+				self.autorun = False
+				print('Failed to start auto task organizer. Will not autorun')
+				return
+			except Exception:
+				raise
+			self.auto_class_names = ['PresetsManager', 'TEMController','MosaicTargetMaker']
+			self.auto_class_aliases = self.getAutoStartNodeNames(app)
+			self.autoStartApplication(self.auto_task)
+
+	def getAutoStartNodeNames(self, app):
+		'''
+		Get node alias for the node classes that auto start will
+		send event to.
+		'''
+		self.auto_class_names = ['PresetsManager', 'TEMController','MosaicTargetMaker','MosaicClickTargetFinder']
+		auto_class_aliases = {}
+		for key in self.auto_class_names:
+			auto_class_aliases[key] = None
+			for spec in app.nodespecs:
+				if spec['class string'] == key:
+					auto_class_aliases[key] = spec['alias']
+					break
+		return auto_class_aliases
+
+	def autoStartApplication(self, task='atlas'):
+		'''
+		Experimental automatic start of application.
+		'''
+		if task is None:
+			return
+		node_name = self.auto_class_aliases['PresetsManager']
+		if node_name is None:
+			return
+		# TODO How to know instruments are ready?
+		# simulator pause
+		time.sleep(2)
+		ievent = event.ChangePresetEvent()
+		# TODO determine which preset name to set.
+		ievent['name'] = 'en'
+		ievent['emtarget'] = None
+		ievent['keep image shift'] = False
+		self.outputEvent(ievent, node_name, wait=True, timeout=None)
+		# load grid
+		node_name = self.auto_class_aliases['TEMController']
+		if node_name is not None:
+			ievent = event.LoadAutoLoaderGridEvent()
+			ievent['slot name'] = self.autogridslot
+			self.outputEvent(ievent, node_name, wait=True, timeout=None)
+		# acquire grid atlas
+		node_name = self.auto_class_aliases['MosaicTargetMaker']
+		if node_name is not None:
+			ievent = event.MakeTargetListEvent()
+			# Set grid to None for now since we don't have a system for
+			# passing emgrid info, yet.
+			ievent['grid'] = None
+			ievent['stagez'] = self.autostagez
+			self.outputEvent(ievent, node_name, wait=False, timeout=None)
+		self.auto_atlas_done.clear()
+		# TODO: Listen to atlas finished
+		self.auto_atlas_done.wait()
+		if task == 'full':
+			#submit auto square target and move on.
+			node_name = self.auto_class_aliases['MosaicClickTargetFinder']
+			if node_name is not None:
+				self.auto_done.clear()
+				ievent = event.SubmitMosaicTargetsEvent()
+				self.outputEvent(ievent, node_name, wait=False, timeout=None)
+				self.auto_done.wait()
+		# next grid session
+		next_auto_task = self.tasker.nextAutoTask()
+		if next_auto_task:
+			next_auto_session = next_auto_task['auto session']
+			# set global values
+			self.autogridslot = '%d' % next_auto_session['slot number']
+			self.auto_task = next_auto_task['task']
+			self.setSessionByName(next_auto_session['session']['name'])
+			# run it
+			self.autoStartApplication(self.auto_task)
 
 	def killApplication(self):
 		self.cancelTimeoutTimer()
