@@ -173,6 +173,9 @@ class Tecnai(tem.TEM):
 			value=self.getFeiConfig('phase plate','autoit_exe_path')
 		return value
 
+	def getAutoitGetBeamstopExePath(self):
+		return self.getFeiConfig('beamstop','autoit_get_exe_path')
+
 	def getAutoitBeamstopInExePath(self):
 		return self.getFeiConfig('beamstop','autoit_in_exe_path')
 
@@ -1929,11 +1932,25 @@ class Tecnai(tem.TEM):
 		'''
 		return self.setApertureSelection(mechanism_name, aperture_name)
 
+	def getBeamstopPosition(self):
+		methodname = 'getAutoitGetBeamstopExePath'
+		exepath = getattr(self,methodname)()
+		if exepath and os.path.isfile(exepath):
+			subprocess.call(exepath)
+			error = self._checkAutoItError()
+			result = self._getAutoItResult()
+			if result:
+				return result
+		# all counted as invalid state
+		return 'unknown'
+
 	def setBeamstopPosition(self, value):
 		"""
 		Possible values: ('in','out','halfway')
 		Tecnically tecnai has no software control on this.
 		"""
+		if value == self.getBeamstopPosition():
+			return
 		valuecap = value[0].upper()+value[1:]
 		methodname = 'getAutoitBeamstop%sExePath' % (valuecap)
 		exepath = getattr(self,methodname)()
