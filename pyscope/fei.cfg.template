@@ -74,6 +74,7 @@ AUTOIT_PHASE_PLATE_EXE_PATH = C:\Program Files\AutoIt3\NextPhasePlate.exe
 
 [beamstop]
 # Location of beamstop AutoIt executable
+AUTOIT_GET_EXE_PATH =  to_be_added
 AUTOIT_IN_EXE_PATH =  to_be_added
 AUTOIT_OUT_EXE_PATH = to_be_added
 [stage]
