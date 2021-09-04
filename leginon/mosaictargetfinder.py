@@ -245,7 +245,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 				break
 		self.submitTargets()
 
-	def getTargetDataList(self, typename):
+	def publishNewTargetsOfType(self, typename):
 		'''
 		Get positions of the typename targets from atlas, publish the new ones,
 		and then update self.existing_position_targets with the published one added.
@@ -264,12 +264,13 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 				# This is a new position, publish it
 				c,r = coord_tuple
 				targetdata = self.mosaicToTarget(typename, r, c)
+			# Both new and old targetdata get put into displayedtargetdata
 			if coord_tuple not in displayedtargetdata:
 				displayedtargetdata[coord_tuple] = []
 			if targetdata['number'] not in self.target_order:
 				self.target_order.append(targetdata['number'])
 			displayedtargetdata[coord_tuple].append(targetdata)
-		# update self.existing_position_targets,  This is still a bit strange.
+		# update self.existing_position_targets.
 		for coord_tuple in displayedtargetdata:
 			self.existing_position_targets[coord_tuple] = displayedtargetdata[coord_tuple]
 
@@ -330,12 +331,12 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		"""
 		The real submit target part. targetlist should be created by now.
 		"""
-		# create target list
+		# create a list of targets of each type
 		self.logger.info('Submitting targets...')
 		self.target_order = self.getTargetOrder(self.targetlist)
-		self.getTargetDataList('acquisition')
-		self.getTargetDataList('focus')
-		self.getTargetDataList('preview')
+		self.publishNewTargetsOfType('acquisition')
+		self.publishNewTargetsOfType('focus')
+		self.publishNewTargetsOfType('preview')
 		self.publishTargetOrder(self.targetlist,self.target_order)
 		try:
 			self.publish(self.targetlist, pubevent=True)
@@ -1102,14 +1103,16 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		'''
 		if not finder_blobs:
 			return []
-		example_targets, panel_targets = self.getExampleAndPanelTargets(xytargets)
+		example_xys=xytargets['example']
+		# These xy tuples are those in the database on self.mosaic scale.
+		database_xys=self.existing_position_targets.keys()
 		##############
 		# blobs and filtering are done at smaller dimension to save memory usage.
 		##############
 		s = self.finder_scale_factor
-		finder_example_points = map((lambda x: (x[1]//s,x[0]//s)),example_targets)
-		finder_panel_points = map((lambda x: (x[1]//s,x[0]//s)),panel_targets)
-		priority_blobs, other_blobs, finder_display_array = self._runBlobRankFilter(finder_blobs, finder_example_points, finder_panel_points)
+		finder_example_points = map((lambda x: (x[1]//s,x[0]//s)),example_xys)
+		finder_database_points = map((lambda x: (x[1]//s,x[0]//s)),database_xys)
+		priority_blobs, other_blobs, finder_display_array = self._runBlobRankFilter(finder_blobs, finder_example_points, finder_database_points)
 		if finder_display_array is not None:
 			self.setImage(finder_display_array, 'Thresholded')
 		# filter out blobs with stats settings.
