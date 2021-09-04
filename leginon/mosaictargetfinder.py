@@ -224,7 +224,8 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		## display them
 		# IMPORTANT: Don't put back unprocessed but submitted targets
 		# because they will get duplicated.
-		#xys.extend(existing_targets)
+		# It will also cause autoSubmitTargets break its while loop
+		# to break too early
 		self.setTargets(xys, 'acquisition')
 		self.setTargets([], 'example')
 		self.logger.info(message)
