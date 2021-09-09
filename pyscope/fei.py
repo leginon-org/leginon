@@ -90,6 +90,8 @@ class Tecnai(tem.TEM):
 		except com_module.COMError, (hr, msg, exc, arg):
 			print 'unable to initialize TOM Moniker interface, %s' % msg
 			self.tom = None
+		except WindowsError:
+			self.tom = None
 
 		try:
 			self.lowdose = comtypes.client.CreateObject('LDServer.LdSrv')
