@@ -345,14 +345,18 @@ class DMSEM(ccdcamera.CCDCamera):
 
 		if self.save_frames or self.align_frames:
 			if self.save8x8:
+                                dec=4 # decimation value : decimate image to 1k x 1.4k for faster stat calculation
+                                if image.size > 23569920:  # counted size for k3
+                                    dec=8
+                                decimated_image = image[::dec,::dec]
 				if not self.getDoEarlyReturn():
 					#fake 8x8 image with the same mean and standard deviation for fast transfer
-					fake_image = self.base_fake_image*image.std() + image.mean()*numpy.ones((8,8))
+				        fake_image = self.base_fake_image*decimated_image.std() + decimated_image.mean()*numpy.ones((8,8))
 					return fake_image
 				else:
 					if self.getEarlyReturnFrameCount() > 0:
 						#fake 8x8 image with the same mean and standard deviation for fast transfer
-						fake_image = self.base_fake_image*image.std() + image.mean()*numpy.ones((8,8))
+				                fake_image = self.base_fake_image*decimated_image.std() + decimated_image.mean()*numpy.ones((8,8))
 					else:
 						fake_image = numpy.zeros((8,8))
 					self.writeLog('%s\t%.3f\n' % (self.getPreviousRawFramesName(), time.time()-t0))
