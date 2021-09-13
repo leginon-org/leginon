@@ -366,7 +366,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			if stageposition[axis] < limits[0] or stageposition[axis] > limits[1]:
 				pstr = '%s: %g' % (axis, stageposition[axis])
 				messagestr = 'Aborting target: stage position %s out of range' % pstr
-				self.logger.info(messagestr)
+				self.logger.warning(messagestr)
 				raise InvalidStagePosition(messagestr)
 
 	def validatePresets(self):
@@ -797,6 +797,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 					# Give presetsclient time to unlock navigator changePreset request
 					time.sleep(0.5)
 			self.presetsclient.toScope(presetname, emtarget, keep_shift=keep_shift)
+			if self.presetsclient.stage_targeting_failed:
+				self.setStatus('idle')
+				return 'error'
 			try:
 				# Random defocus is set in presetsclient.  This is the easiestt
 				# way to get it.  Could be better.

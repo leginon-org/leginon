@@ -837,6 +837,9 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 
 		self.setStatus('waiting')
 		self.presetsclient.toScope(presetname, emtargetdata)
+		if self.presetsclient.stage_targeting_failed:
+			self.setStatus('idle')
+			return None
 
 		errorstring = 'Image acqisition failed: %s'
 		try:

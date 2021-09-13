@@ -492,6 +492,7 @@ class PresetChangedEvent(Event):
 		return Event.typemap() + (
 			('name', str),
 			('preset', leginondata.PresetData),
+			('has_error', bool),
 		)
 	typemap = classmethod(typemap)
 

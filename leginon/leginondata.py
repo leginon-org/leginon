@@ -3102,6 +3102,7 @@ class ZeroLossIceThicknessSettingsData(SettingsData):
 			('slit width', float),
 			('mean free path', float),   #nm
 			('decimate', int),
+			('binning', int),
 			('process_obj_thickness', bool),
 			('obj mean free path', float),
 			('vacuum intensity', float),
