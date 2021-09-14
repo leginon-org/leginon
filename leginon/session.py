@@ -83,13 +83,42 @@ def getSessionPrefix():
 		raise ValueError('session prefix needs to be in "name" section and item "prefix"')
 	return prefix
 
+def makeSuffix(t):
+	'''
+	make alphabet suffix at base 26
+	'''
+	alphabet = 'abcdefghijklmnopqrstuvwxyz'
+	remainders = []
+	base = len(alphabet)
+	remainders.append(t%base)
+	while t // base > 0:
+		t = (t // base) - 1
+		remainders.append(t%base)
+	suffix = ''
+	remainders.reverse()
+	for r in remainders:
+		suffix += alphabet[r]
+	return suffix
+
 def suggestName():
+	'''
+	Suggest a session name.
+	'''
 	prefix = getSessionPrefix()
-	for suffix in 'abcdefghijklmnopqrstuvwxyz':
-		maybe_name = prefix + time.strftime('%y%b%d'+suffix).lower()
+	date_str = time.strftime('%y%b%d').lower()
+	prefix_date_str = prefix + date_str
+	#
+	alphabet = 'abcdefghijklmnopqrstuvwxyz'
+	trial = 0
+	session_name = None
+	# keep trying until a non-reserved or saved session name is found.
+	while not session_name:
+		suffix = makeSuffix(trial)
+		maybe_name = prefix + date_str + suffix
 		try:
 			makeReservation(maybe_name)
 		except ReservationFailed, e:
+			trial += 1
 			continue
 		else:
 			session_name = maybe_name
