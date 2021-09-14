@@ -864,7 +864,7 @@ class Manager(node.Node):
 		self.timer = threading.Timer(timeout,self.slackTimeoutNotification)
 		self.timer.start()
 		if self.timer_debug:
-			print 'timer started with timout set to %.0f sec' % timeout
+			print 'timer started with timeout set to %.0f sec' % timeout
 
 	def _addPausableNode(self, nodename):
 		if nodename not in self.pausable_nodes:
@@ -902,6 +902,8 @@ class Manager(node.Node):
 		if isinstance(ievent, event.ActivateNotificationEvent):
 			self.tem_host = ievent['tem_host']
 			self.timeout_minutes = ievent['timeout_minutes']
+			msg = '%.1f minutes timeout and error notification is activated' % (self.timeout_minutes)
+			self.slackNotification(msg)
 			# reset
 			self.notifyerror = True
 			# first allow timer to restart, if was set to false by completing a timeout

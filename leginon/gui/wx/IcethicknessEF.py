@@ -124,6 +124,13 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz_decimate.Add(self.widgets['decimate'], (0, 1), (1, 1),
 										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 
+		self.widgets['binning'] = FloatEntry(self, -1, min=0.0, chars=6)
+		sz_binning = wx.GridBagSizer(5,5)
+		label = wx.StaticText(self, -1, 'Binning for test images, use 4 or 8 to speed up')
+		sz_binning.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz_binning.Add(self.widgets['binning'], (0, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+
 		self.widgets['process_obj_thickness'] = wx.CheckBox(self, -1, 'Calculate ice thickness from aperture limited scattering')
 		self.widgets['obj mean free path'] = FloatEntry(self, -1, min=0.0, chars=6)
 		sz_objmeanfreepath = wx.GridBagSizer(5, 5)
@@ -143,6 +150,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz.Add(sz_slit_width, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(szmeanfreepath, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(sz_decimate, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(sz_binning, (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 		#sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
