@@ -260,7 +260,9 @@ class TEMController(node.Node):
 		'''
 		try:
 			total_grids = self.instrument.tem.getGridLoaderNumberOfSlots()
-			return map((lambda x:x+1),range(total_grids))
+			slot_number_list = map((lambda x:x+1),range(total_grids))
+			slot_number_list.reverse()
+			return slot_number_list
 		except Exception, e:
 			if hasattr(e,'args') and len(e.args) > 0:
 				self.logger.warning(e.args[0])
