@@ -782,6 +782,8 @@ class Manager(node.Node):
 			# group into another function
 			self.removeNode(nodename)
 
+##############################
+# Leginon Remote Requirement
 	def handleManagerPauseAvailable(self, ievent):
 		self._addPausableNode(ievent['node'])
 		self._removePausedNode(ievent['node'])
@@ -810,7 +812,30 @@ class Manager(node.Node):
 				out = event.ContinueEvent()
 				self.sendManagerNotificationEvent(to_node, out)
 
-	# Timeout Timer
+	def _addPausableNode(self, nodename):
+		if nodename not in self.pausable_nodes:
+			self.pausable_nodes.append(nodename)
+
+	def _removePausableNode(self, nodename):
+		try:
+			self.pausable_nodes.remove(nodename)
+		except ValueError:
+			# not in the list
+			pass
+
+	def _addPausedNode(self, nodename):
+		if nodename not in self.paused_nodes:
+			self.paused_nodes.append(nodename)
+
+	def _removePausedNode(self, nodename):
+		try:
+			self.paused_nodes.remove(nodename)
+		except ValueError:
+			# not in the list
+			pass
+
+##############################
+# Timeout Timer/Error SlackNotification
 	def handleNodeBusyNotification(self, ievent):
 		self.restartTimeoutTimer()
 
@@ -820,13 +845,22 @@ class Manager(node.Node):
 				if self.timer_debug:
 					print 'timer canceled'
 
-	def slackTimeoutNotification(self):
+	def slackTimeoutNotification(self, msg = ''):
 		timeout = self.timeout_minutes*60.0
-		msg = 'Leginon has been idle for %.1f minutes' % self.timeout_minutes
+		if not msg:
+			msg = 'Leginon has been idle for %.1f minutes' % self.timeout_minutes
 		self.slackNotification(msg)
 		evt = event.IdleNotificationEvent(destination='')
 		self.distributeEvents(evt)
 		self.timer = False
+
+	def setTimeoutTimerStatus(self, status):
+		'''
+		Set timeout timer/error notification active status to True or False.
+		'''
+		evt = event.SetNotificationStatusEvent(destination='')
+		evt['active'] = status
+		self.distributeEvents(evt)
 
 	def restartTimeoutTimer(self):
 		'''
@@ -865,28 +899,6 @@ class Manager(node.Node):
 		self.timer.start()
 		if self.timer_debug:
 			print 'timer started with timeout set to %.0f sec' % timeout
-
-	def _addPausableNode(self, nodename):
-		if nodename not in self.pausable_nodes:
-			self.pausable_nodes.append(nodename)
-
-	def _removePausableNode(self, nodename):
-		try:
-			self.pausable_nodes.remove(nodename)
-		except ValueError:
-			# not in the list
-			pass
-
-	def _addPausedNode(self, nodename):
-		if nodename not in self.paused_nodes:
-			self.paused_nodes.append(nodename)
-
-	def _removePausedNode(self, nodename):
-		try:
-			self.paused_nodes.remove(nodename)
-		except ValueError:
-			# not in the list
-			pass
 
 	# Node Error Notification
 	def handleNodeLogError(self, ievent):
@@ -1099,6 +1111,7 @@ class Manager(node.Node):
 				raise
 			self.auto_class_names = ['PresetsManager', 'TEMController','MosaicTargetMaker']
 			self.auto_class_aliases = self.getAutoStartNodeNames(app)
+			self.setTimeoutTimerStatus(True)
 			self.autoStartApplication(self.auto_task)
 
 	def getAutoStartNodeNames(self, app):
@@ -1173,6 +1186,10 @@ class Manager(node.Node):
 			self.setSessionByName(next_auto_session['session']['name'])
 			# run it
 			self.autoStartApplication(self.auto_task)
+		else:
+			# finishing
+			self.timeout_minutes = 0
+			self.slackTimeoutNotification('autotasks all finished')
 
 	def killApplication(self):
 		self.cancelTimeoutTimer()
