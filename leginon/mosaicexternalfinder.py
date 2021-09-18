@@ -83,8 +83,7 @@ class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 	}
 	defaultsettings.update(mosaictarget_defaultsettings)
 	auto_square_finder_defaultsettings = {
-			'blob min score': 0.0,
-			'blob max score': 10000.0,
+			'scorer number': 50,
 	}
 	defaultsettings.update(auto_square_finder_defaultsettings)
 	eventoutputs = mosaictargetfinder.MosaicClickTargetFinder.eventoutputs
@@ -165,21 +164,13 @@ class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 		return has_priority, to_avoid, None
 
 	def setFilterSettings(self, example_blobs):
-		if example_blobs:
-			# use the stats of the example blobs
-			scores = map((lambda x: x.stats['score']), example_blobs)
-			score_min = min(scores)
-			score_max = max(scores)
-			self.settings['blob min score'] = score_min # TODO name it correctly
-			self.settings['blob max score'] = score_max
-			self.setSettings(self.settings, False)
-			return
+		# example_blobs are not useful in selecting top scorers
+		pass
 
 	def storeScoreSquareFinderPrefs(self):
 		prefs = leginondata.ScoreSquareFinderPrefsData()
 		prefs['image'] = self.mosaicimagedata
-		prefs['score-min'] = self.settings['blob min score']
-		prefs['score-max'] = self.settings['blob max score']
+		prefs['scorer number'] = self.settings['scorer number']
 		self.publish(prefs, database=True)
 		return prefs
 
@@ -188,23 +179,30 @@ class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 		filter based on blob stats
 		'''
 		self.sq_prefs = self.storeScoreSquareFinderPrefs()
-		score_min = self.settings['blob min score']
-		score_max = self.settings['blob max score']
+		# number of top scorers to include
+		scorer_threshold = self.settings['scorer number']
+		if scorer_threshold >= len(blobs):
+			# not enough blobs to filter
+			self.logger.warning('fewer blobs than number of scorer cutoff')
+			return blobs
 		good_blobs = []
+		scores = map((lambda x: x.stats['score']), blobs)
+		scores.sort()
+		score_cutoff = scores[-scorer_threshold]
 		for blob in blobs:
 			row = blob.stats['center'][0]
 			column = blob.stats['center'][1]
 			size = blob.stats['n']
 			mean = blob.stats['mean']
 			score = blob.stats['score']
-			if (score_min <= score <= score_max):
-				#print 'good blob (%d,%d): %.2f' % (int(column), int(row), score)
+			if (score_cutoff <= score):
 				good_blobs.append(blob)
 			else:
 				stats = leginondata.SquareStatsData(score_prefs=self.sq_prefs, row=row, column=column, mean=mean, size=size, score=score)
 				stats['good'] = False
 				# only publish bad stats
 				self.publish(stats, database=True)
+		self.logger.info('fitering number of blobs down number to %d' % len(good_blobs))
 		return good_blobs
 
 class MosaicScoreTargetFinder(MosaicTargetFinderBase):

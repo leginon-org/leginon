@@ -1391,8 +1391,7 @@ class ScoreSquareFinderPrefsData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
 			('image', MosaicImageData),
-			('score-min', float),
-			('score-max', float),
+			('scorer number', int),
 		)
 	typemap = classmethod(typemap)
 
@@ -1926,11 +1925,10 @@ class SquareFinderSettingsData(SettingsData):
 		)
 	typemap = classmethod(typemap)
 
-class ScoreFinderSettingsData(SettingsData):
+class TopScoreFinderSettingsData(SettingsData):
 	def typemap(cls):
 		return SettingsData.typemap() + (
-			('blob min score', float),
-			('blob max score', float),
+			('scorer number', int),
 			('target grouping', TargetGroupingSettingsData),
 			('target multiple', int),
 		)
@@ -1952,10 +1950,10 @@ class MosaicClickTargetFinderSettingsData(ClickTargetFinderSettingsData,
 	typemap = classmethod(typemap)
 
 class MosaicScoreTargetFinderSettingsData(ClickTargetFinderSettingsData,
-																					ScoreFinderSettingsData):
+																					TopScoreFinderSettingsData):
 	def typemap(cls):
 		typemap = ClickTargetFinderSettingsData.typemap()
-		typemap += ScoreFinderSettingsData.typemap()
+		typemap += TopScoreFinderSettingsData.typemap()
 		typemap += (
 			('calibration parameter', str),
 			('scale image', bool),
