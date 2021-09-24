@@ -18,6 +18,7 @@ import node
 import targethandler
 import multihole
 from pyami import convolver, imagefun, mrc, ordereddict, affine
+from pyami import groupfun
 import numpy
 import pyami.quietscipy
 import scipy.ndimage as nd
@@ -192,6 +193,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		"""
 		if self.mosaicimage is None:
 			self.logger.error('Must have atlas display to find squares')
+			return
 		self.publishMosaicImage()
 		try:
 			# get blobs at finder scale with stats
@@ -1264,6 +1266,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		samples = []
 		sample_indices =[]
 		for s in sampling_order:
+			# random sample without replacement
 			pick = random.sample(range(len(index_groups[s])),1)[0]
 			index = index_groups[s].pop(pick)
 			samples.append(blobs[index])
@@ -1271,23 +1274,17 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		return samples
 
 	def groupBlobsBySize(self, blobs, n_class):
-		codes = list(map((lambda x: '%05d@%04d' % (blobs[x].stats['size'],x)), range(len(blobs))))
+		codes = list(map((lambda x: '%08d@%05d' % (blobs[x].stats['size'],x)), range(len(blobs))))
 		codes.sort()
 		sorted_indices = list(map((lambda x: int(x.split('@')[-1])), codes))
 		if n_class == 1:
 			return [sorted_indices,]
 		total_blobs = len(blobs)
-		part = total_blobs//n_class
+		range_list = groupfun.calculateIndexRangesInClassEvenDistribution(total_blobs, n_class)
 		blob_index_in_bins = []
-		count = 0
 		for c in range(n_class):
-			left_over = n_class - part*n_class
-			if c >= left_over:
-				b = part
-			else:
-				b = part + 1
-			blob_index_in_bins.append(sorted_indices[count:count+b])
-			count = count+b
+			start, end = range_list[c]
+			blob_index_in_bins.append(sorted_indices[start:end])
 		return blob_index_in_bins
 
 	def checkSettings(self,settings):

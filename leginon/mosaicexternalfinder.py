@@ -3,7 +3,9 @@ import json
 import os
 import multiprocessing
 import time
+import math
 
+from pyami import groupfun
 from leginon import leginondata
 from leginon import mosaictargetfinder
 from leginon import targetfinder
@@ -83,7 +85,8 @@ class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 	}
 	defaultsettings.update(mosaictarget_defaultsettings)
 	auto_square_finder_defaultsettings = {
-			'scorer number': 50,
+			'area-min': 100,
+			'area-max': 10000,
 	}
 	defaultsettings.update(auto_square_finder_defaultsettings)
 	eventoutputs = mosaictargetfinder.MosaicClickTargetFinder.eventoutputs
@@ -164,13 +167,22 @@ class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 		return has_priority, to_avoid, None
 
 	def setFilterSettings(self, example_blobs):
-		# example_blobs are not useful in selecting top scorers
+		if example_blobs:
+			# use the stats of the example blobs
+			sizes = map((lambda x: x.stats['n']), example_blobs)
+			size_min = min(sizes)
+			size_max = max(sizes)
+			self.settings['area-min'] = size_min
+			self.settings['area-max'] = size_max
+			self.setSettings(self.settings, False)
+			return
 		pass
 
 	def storeScoreSquareFinderPrefs(self):
 		prefs = leginondata.ScoreSquareFinderPrefsData()
 		prefs['image'] = self.mosaicimagedata
-		prefs['scorer number'] = self.settings['scorer number']
+		prefs['area-min'] = self.settings['area-min']
+		prefs['area-max'] = self.settings['area-max']
 		self.publish(prefs, database=True)
 		return prefs
 
@@ -179,23 +191,16 @@ class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 		filter based on blob stats
 		'''
 		self.sq_prefs = self.storeScoreSquareFinderPrefs()
-		# number of top scorers to include
-		scorer_threshold = self.settings['scorer number']
-		if scorer_threshold >= len(blobs):
-			# not enough blobs to filter
-			self.logger.warning('fewer blobs than number of scorer cutoff')
-			return blobs
+		size_min = self.settings['area-min']
+		size_max = self.settings['area-max']
 		good_blobs = []
-		scores = map((lambda x: x.stats['score']), blobs)
-		scores.sort()
-		score_cutoff = scores[-scorer_threshold]
 		for blob in blobs:
 			row = blob.stats['center'][0]
 			column = blob.stats['center'][1]
 			size = blob.stats['n']
 			mean = blob.stats['mean']
 			score = blob.stats['score']
-			if (score_cutoff <= score):
+			if (size_min <= size <= size_max):
 				good_blobs.append(blob)
 			else:
 				stats = leginondata.SquareStatsData(score_prefs=self.sq_prefs, row=row, column=column, mean=mean, size=size, score=score)
@@ -204,6 +209,67 @@ class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 				self.publish(stats, database=True)
 		self.logger.info('fitering number of blobs down number to %d' % len(good_blobs))
 		return good_blobs
+
+	def sampleBlobs(self, blobs, total_targets_need):
+		'''
+		first sort into three classes by size, and then take the top scorers
+		to return.
+		'''
+		total_blobs = len(blobs)
+		if total_blobs <= total_targets_need:
+			# Nothing to do. Take all.
+			return blobs
+		n_class = self.settings['target grouping']['classes']
+		index_groups = self.groupBlobsBySize(blobs, n_class)
+		range_list = groupfun.calculateIndexRangesInClassEvenDistribution(total_targets_need, n_class)
+		# number_of_samples_in_classes
+		nsample_in_classes = map((lambda x: x[1]-x[0]), range_list)
+		# final blobs sampled
+		samples = []
+		for c in range(n_class):
+			# n of blobs to sample in the class
+			nsample = nsample_in_classes[c]
+			# sampled blobs
+			sample_blobs_in_class = []
+			# sampled blob indices
+			sample_indices = []
+			nblobs = len(index_groups[c])
+			if nsample >= nblobs:
+				blobs_in_class = map((lambda x: blobs[x]), index_groups[c])
+				sample_indices = index_groups[c]
+				if nsample > nblobs:
+					self.logger.error('group should have more or equal nsample by area: (%d vs %d)' % (len(sample_blobs_in_class), nsample))
+					nsample_in_classes[c+1] += nsample - nblobs
+			else:
+				sample_blobs_in_class, sample_indices = self._sampleByTopScorer(blobs, nsample, index_groups[c], c)
+			samples.extend(sample_blobs_in_class)
+		return samples
+
+	def _sampleByTopScorer(self, blobs, nsample, indices, class_index):
+		# use dictionary key sorting to get top scored blobs
+		blob_indices_at_score_in_class = {}
+		for i in indices:
+			score = blobs[i].stats['score']
+			if score not in blob_indices_at_score_in_class.keys():
+				blob_indices_at_score_in_class[score] = []
+			blob_indices_at_score_in_class[score].append(i)
+		# sort the blobs by score in float
+		keys = blob_indices_at_score_in_class.keys()
+		keys.sort()
+		keys.reverse()
+		sample_blobs_in_class = []
+		sample_indices = []
+		for j, score in enumerate(keys):
+			if len(sample_indices) >= nsample:
+					break
+			# there may be multiple blobs at the same score
+			for i in blob_indices_at_score_in_class[score]:
+				sample_blobs_in_class.append(blobs[i])
+				sample_indices.append(i)
+				if len(sample_indices) == nsample:
+					break
+		self.logger.info('score range sampled for blob area group %d: %.3f to %.3f' % (class_index+1, keys[0], keys[j]))
+		return sample_blobs_in_class, sample_indices
 
 class MosaicScoreTargetFinder(MosaicTargetFinderBase):
 	panelclass = gui.wx.MosaicScoreTargetFinder.Panel

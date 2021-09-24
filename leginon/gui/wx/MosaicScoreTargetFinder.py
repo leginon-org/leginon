@@ -6,7 +6,7 @@
 
 import wx
 
-from leginon.gui.wx.Entry import FloatEntry, IntEntry
+from leginon.gui.wx.Entry import FloatEntry
 import leginon.gui.wx.Settings
 import leginon.gui.wx.MosaicClickTargetFinder
 import leginon.gui.wx.ToolBar
@@ -15,10 +15,6 @@ class Panel(leginon.gui.wx.MosaicClickTargetFinder.Panel):
 	icon = 'atlastarget'
 	def initialize(self):
 		leginon.gui.wx.MosaicClickTargetFinder.Panel.initialize(self)
-
-	def addExampleTargetTool(self):
-		#skip example target tool
-		pass
 
 	def addOtherTools(self):
 		self.toolbar.InsertSeparator(10)
@@ -53,17 +49,18 @@ class BlobSettingsDialog(leginon.gui.wx.Settings.Dialog):
 class BlobsScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
 		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
-		sb2 = wx.StaticBox(self, -1, 'Blob Filtering')
+		sb2 = wx.StaticBox(self, -1, 'Blob Filtering (Set by example targets)')
 		sbsz2 = wx.StaticBoxSizer(sb2, wx.VERTICAL)
-		self.widgets['scorer number'] = IntEntry(self, -1, chars=6)
+		self.widgets['area-min'] = FloatEntry(self, -1, chars=6)
+		self.widgets['area-max'] = FloatEntry(self, -1, chars=6)
 
 		szrange2 = wx.GridBagSizer(5, 5)
-		label = wx.StaticText(self, -1, 'Keep top')
+		label = wx.StaticText(self, -1, 'Filter Blob Area:')
 		szrange2.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER)
-		szrange2.Add(self.widgets['scorer number'], (0, 1), (1, 1),
+		szrange2.Add(self.widgets['area-min'], (0, 1), (1, 1),
 								wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
-		label = wx.StaticText(self, -1, 'of high scorers for sampling')
-		szrange2.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER)
+		szrange2.Add(self.widgets['area-max'], (0, 2), (1, 1),
+								wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 
 		sz2 = wx.GridBagSizer(5, 5)
 		sz2.Add(szrange2, (0, 0), (1, 2), wx.ALIGN_CENTER)
