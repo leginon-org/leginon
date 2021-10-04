@@ -150,6 +150,9 @@ noderegistry.registerNodeClass(SampleTargetFilter,classtype)
 from jahcfinder import JAHCFinder
 noderegistry.registerNodeClass(JAHCFinder,classtype)
 
+from scorefinder import ScoreTargetFinder
+noderegistry.registerNodeClass(ScoreTargetFinder,classtype)
+
 from extholefinder import ExtHoleFinder
 noderegistry.registerNodeClass(ExtHoleFinder,classtype)
 

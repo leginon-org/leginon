@@ -1679,20 +1679,9 @@ class LowPassFilterSettingsData(Data):
 		)
 	typemap = classmethod(typemap)
 
-class TemplateTargetFinderSettingsData(TargetFinderSettingsData):
+class IceTargetFinderSettingsData(TargetFinderSettingsData):
 	def typemap(cls):
 		return TargetFinderSettingsData.typemap() + (
-			('image filename', str),
-			('template type', str),
-			('template lpf', LowPassFilterSettingsData),
-			('threshold', float),
-			('threshold method', str),
-			('blobs border', int),
-			('blobs max', int),
-			('blobs max size', int),
-			('blobs min size', int),
-			('lattice spacing', float),
-			('lattice tolerance', float),
 			('lattice hole radius', float),
 			('lattice zero thickness', float),
 			('ice min mean', float),
@@ -1713,6 +1702,32 @@ class TemplateTargetFinderSettingsData(TargetFinderSettingsData):
 			('focus offset row', int),
 			('focus offset col', int),
 			('filter ice on convolved', bool),
+		)
+	typemap = classmethod(typemap)
+
+class ScoreTargetFinderSettingsData(IceTargetFinderSettingsData):
+	def typemap(cls):
+		return IceTargetFinderSettingsData.typemap() + (
+			('script', str),
+			('score key', str),
+			('score threshold', float),
+		)
+	typemap = classmethod(typemap)
+
+class TemplateTargetFinderSettingsData(IceTargetFinderSettingsData):
+	def typemap(cls):
+		return IceTargetFinderSettingsData.typemap() + (
+			('image filename', str),
+			('template type', str),
+			('template lpf', LowPassFilterSettingsData),
+			('threshold', float),
+			('threshold method', str),
+			('blobs border', int),
+			('blobs max', int),
+			('blobs max size', int),
+			('blobs min size', int),
+			('lattice spacing', float),
+			('lattice tolerance', float),
 		)
 	typemap = classmethod(typemap)
 
