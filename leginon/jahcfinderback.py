@@ -14,52 +14,13 @@ import pyami.quietscipy
 import scipy.ndimage
 import math
 from pyami import imagefun, peakfinder, convolver, correlator, mrc, arraystats
+import pyami.circle
 import ice
 import lattice
 import multihole
 
 hole_template_files = {}
 hole_templates = {}
-
-class CircleMaskCreator(object):
-	def __init__(self):
-		self.masks = {}
-
-	def get(self, shape, center, minradius, maxradius):
-		'''
-		create binary mask of a circle centered at 'center'
-		'''
-		## use existing circle mask
-		key = (shape, center, minradius, maxradius)
-		if self.masks.has_key(key):
-			return self.masks[key]
-
-		## set up shift and wrapping of circle on image
-		halfshape = shape[0] / 2.0, shape[1] / 2.0
-		cutoff = [0.0, 0.0]
-		lshift = [0.0, 0.0]
-		gshift = [0.0, 0.0]
-		for axis in (0,1):
-			if center[axis] < halfshape[axis]:
-				cutoff[axis] = center[axis] + halfshape[axis]
-				lshift[axis] = 0
-				gshift[axis] = -shape[axis]
-			else:
-				cutoff[axis] = center[axis] - halfshape[axis]
-				lshift[axis] = shape[axis]
-				gshift[axis] = 0
-		minradsq = minradius*minradius
-		maxradsq = maxradius*maxradius
-		def circle(indices0,indices1):
-			## this shifts and wraps the indices
-			i0 = numpy.where(indices0<cutoff[0], indices0-center[0]+lshift[0], indices0-center[0]+gshift[0])
-			i1 = numpy.where(indices1<cutoff[1], indices1-center[1]+lshift[1], indices1-center[0]+gshift[1])
-			rsq = i0*i0+i1*i1
-			c = numpy.where((rsq>=minradsq)&(rsq<=maxradsq), 1.0, 0.0)
-			return c.astype(numpy.int8)
-		temp = numpy.fromfunction(circle, shape)
-		self.masks[key] = temp
-		return temp
 
 
 ### Note:  we should create a base class ImageProcess
@@ -121,7 +82,7 @@ class HoleFinder(object):
 		self.multiconvolver = multihole.TemplateConvolver()
 		self.convolver = convolver.Convolver()
 		self.peakfinder = peakfinder.PeakFinder()
-		self.circle = CircleMaskCreator()
+		self.circle = pyami.circle.CircleMaskCreator()
 		self.icecalc = ice.IceCalculator()
 
 		## some default configuration parameters
@@ -445,31 +406,6 @@ class HoleFinder(object):
 		if self.save_mrc:
 			mrc.write(im, 'markedholes.mrc')
 
-	def get_hole_stats(self, image, coord, radius):
-		## select the region of interest
-		rmin = int(coord[0]-radius)
-		rmax = int(coord[0]+radius)
-		cmin = int(coord[1]-radius)
-		cmax = int(coord[1]+radius)
-		## beware of boundaries
-		if rmin < 0 or rmax >= image.shape[0] or cmin < 0 or cmax > image.shape[1]:
-			return None
-
-		subimage = image[rmin:rmax+1, cmin:cmax+1]
-		if self.save_mrc:
-			mrc.write(subimage, 'hole.mrc')
-		center = subimage.shape[0]/2.0, subimage.shape[1]/2.0
-		mask = self.circle.get(subimage.shape, center, 0, radius)
-		if self.save_mrc:
-			mrc.write(mask, 'holemask.mrc')
-		im = numpy.ravel(subimage)
-		mask = numpy.ravel(mask)
-		roi = numpy.compress(mask, im)
-		mean = arraystats.mean(roi)
-		std = arraystats.std(roi)
-		n = len(roi)
-		return {'mean':mean, 'std': std, 'n':n}
-
 	def configure_holestats(self, radius=None):
 		if radius is not None:
 			self.holestats_config['radius'] = radius
@@ -486,7 +422,7 @@ class HoleFinder(object):
 		holes = list(self.__results['holes'])
 		for hole in holes:
 			coord = hole.stats['center']
-			holestats = self.get_hole_stats(im, coord, r)
+			holestats = self.circle.get_circle_stats(im, coord, r)
 			if holestats is None:
 				self.__results['holes'].remove(hole)
 				continue
@@ -550,11 +486,13 @@ class HoleFinder(object):
 		#self.calc_ice()
 
 if __name__ == '__main__':
-	import mrc
+	from pyami import mrc
 	#hf = HoleFinder(9,1.4)
 	hf = HoleFinder()
-	hf['original'] = mrc.read('03sep16a/03sep16a.001.mrc')
+	mrc_path = '/Users/acheng/testdata/leginon/21aug27y/rawdata/21aug27y_i_00005gr_00023sq.mrc'
+	hf['original'] = mrc.read(mrc_path)
+	#hf['original'] = mrc.read('03sep16a/03sep16a.001.mrc')
 	hf.threshold = 1.6
-	hf.configure_template(min_radius=23, max_radius=29)
+	hf.configure_template(diameter=128, filename='/Users/acheng/myami/leginon/holetemplate.mrc', filediameter=128)
 	hf.configure_lattice(tolerance=0.08, spacing=122)
 	hf.find_holes()
