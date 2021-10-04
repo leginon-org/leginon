@@ -147,20 +147,26 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		if imagedata is None:
 			if filename == '':
 				if self.name in ['Hole Targeting','Subsquare Targeting']:
-					filename = os.path.join(version.getInstalledLocation(),'sq_example.jpg')
+					filepath = os.path.join(version.getInstalledLocation(),'sq_example.jpg')
 				elif self.name in ['Square Targeting']:
-					filename = os.path.join(version.getInstalledLocation(),'gr_example.jpg')
+					filepath = os.path.join(version.getInstalledLocation(),'gr_example.jpg')
 				else:
-					filename = os.path.join(version.getInstalledLocation(),'hl_example.jpg')
+					filepath = os.path.join(version.getInstalledLocation(),'hl_example.jpg')
+			else:
+				# a full path that is not part of leginon data was entered.
+				filepath = filename
 			try:
-				orig = mrc.read(filename)
+				orig = mrc.read(filepath)
 			except Exception, e:
 				try:
-					orig = numpil.read(filename)
+					orig = numpil.read(filepath)
 				except:
 					self.logger.exception('Read image failed: %s' % e[-1])
 					return
-			self.currentimagedata = {'image':orig} 
+			# include in the facke imagedata the filename 
+			# without .mrc extension to mimic database entry
+			filenamebase = '.'.join(filename.split('.')[:-1])
+			self.currentimagedata = {'image':orig,'filename':filenamebase}
 		else:
 			orig = imagedata['image']
 			self.currentimagedata = imagedata
