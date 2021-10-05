@@ -24,7 +24,8 @@ class StatsHole(object):
 		'''Simple blob object with image and stats as attribute
 			center = (row, col) on image
 		'''
-		center = info_dict['center'][0],info_dict['center'][1]
+		# why is this x,y now ?
+		center = info_dict['center'][1],info_dict['center'][0]
 		# stats will be displayed in target panel
 		self.stats = {"center":center}
 		for key in statskeys:
