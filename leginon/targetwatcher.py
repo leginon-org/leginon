@@ -33,6 +33,11 @@ class BypassException(Exception):
 	bypassed'''
 	pass
 
+class BypassWarningException(Exception):
+	'''Raised within processTargetData method if the target should be
+	bypassed but not log as error'''
+	pass
+
 class FakeQueueNode(object):
 	def __init__(self,name):
 		self.name = '_'.join(name.split())
@@ -527,7 +532,12 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 					self.logger.info('Processing target id %d' % adjustedtarget.dbid)
 					process_status = self.processTargetData(adjustedtarget, attempt=attempt)
 				except BypassException, e:
-					self.logger.error(str(e) + '... Bypass this target and pretend it is done')
+					# for example Image Acquisition error
+					self.logger.error(str(e) + '... Bypass this target and continue to the next')
+					process_status = 'bypass'
+				except BypassWarningException, e:
+					# for example invalid stage position error
+					self.logger.warning(str(e) + '... Bypass this target and continue to the next')
 					process_status = 'bypass'
 				except PauseRestartException, e:
 					self.player.pause()
@@ -559,7 +569,11 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 					# Do not report targetstatus so that it can repeat even if
 					# restart Leginon
 					pass
+				elif process_status == 'bypass':
+					# abort just the target
+					self.reportTargetStatus(adjustedtarget, 'aborted')
 				elif process_status != 'exception':
+					# normal status
 					self.reportTargetStatus(adjustedtarget, 'done')
 				else:
 					# set targetlist status to abort if exception not user fixable

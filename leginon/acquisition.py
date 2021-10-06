@@ -58,7 +58,7 @@ class BadImageAcquireBypass(targetwatcher.BypassException):
 class BadImageStatsAbort(Exception):
 	pass
 
-class InvalidStagePosition(Exception):
+class InvalidStagePosition(targetwatcher.BypassWarningException):
 	pass
 
 def setImageFilename(imagedata):
@@ -365,8 +365,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		for axis, limits in stagelimits.items():
 			if stageposition[axis] < limits[0] or stageposition[axis] > limits[1]:
 				pstr = '%s: %g' % (axis, stageposition[axis])
-				messagestr = 'Aborting target: stage position %s out of range' % pstr
-				self.logger.warning(messagestr)
+				messagestr = 'Stage position %s out of range' % pstr
 				raise InvalidStagePosition(messagestr)
 
 	def validatePresets(self):
@@ -562,8 +561,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 			### determine how to move to target
 			try:
 				emtarget = self.targetToEMTargetData(targetdata, z)
-			except InvalidStagePosition:
-				return 'invalid'
+			except InvalidStagePosition as e:
+				raise
 
 			presetdata = self.presetsclient.getPresetByName(newpresetname)
 
