@@ -285,7 +285,6 @@ class TransformManager(node.Node, TargetTransformer):
 			if stageposition[axis] < limits[0] or stageposition[axis] > limits[1]:
 				pstr = '%s: %g' % (axis, stageposition[axis])
 				messagestr = 'Stage position %s out of range' % pstr
-				self.logger.info(messagestr)
 				raise InvalidStagePosition(messagestr)
 
 	def targetToEMTargetData(self, targetdata,movetype):
