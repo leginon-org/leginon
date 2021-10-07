@@ -327,8 +327,9 @@ class TEMController(node.Node):
 			self.logger.error('TEM has no auto grid loader')
 			return
 		self.setStatus('processing')
-		self._unloadGrid()
+		is_success = self._unloadGrid()
 		self.setStatus('idle')
+		return is_success
 
 	def _unloadGrid(self):
 		'''
@@ -354,6 +355,7 @@ class TEMController(node.Node):
 			self.loaded_grid_slot = None
 		self.logger.info('Done unLoading grid from column')
 		self.panel.setTEMParamDone()
+		return is_success
 
 	def loadGrid(self, slot_name):
 		'''
@@ -363,8 +365,9 @@ class TEMController(node.Node):
 			self.logger.error('Selected slot is not valid for this project')
 			return
 		self.setStatus('processing')
-		self._loadGrid(slot_name)
+		is_success = self._loadGrid(slot_name)
 		self.setStatus('idle')
+		return is_success
 
 	def _loadGrid(self, slot_name):
 		'''
