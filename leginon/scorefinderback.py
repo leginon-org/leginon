@@ -18,28 +18,21 @@ import os
 
 from leginon import icefinderback
 
-
 class StatsHole(object):
 	def __init__(self, info_dict, index, statskeys={}):
 		'''Simple blob object with image and stats as attribute
 			center = (row, col) on image
 		'''
-		# why is this x,y now ?
-		center = info_dict['center'][1],info_dict['center'][0]
+		center = info_dict['center']
 		# stats will be displayed in target panel
-		self.stats = {"center":center}
+		self.stats = {"center":center,"hole_number":index+1} # (r,c)
 		for key in statskeys:
 			self.stats[key]=info_dict[key]
 		self.info_dict = info_dict
 
-### Note:  we should create a base class ImageProcess
-### which defines the basic idea of a series of operations on 
-### an image or a pipeline of operations.
-### In subclasses such as HoleFinder, we would just have to define
-### the steps and the dependencies.  The dependency checking and result
-### management would be taken care of by the base class.
 ###################
-### But because of the use of __result, the subclass don't get them as attribute. AC 2021
+### Because of the use of __result, the subclass don't get them as attribute. AC 2021
+###################
 class HoleFinder(icefinderback.IceFinder):
 	'''
 	Create an instance of HoleFinder:
@@ -55,9 +48,9 @@ class HoleFinder(icefinderback.IceFinder):
 		## These are the results that are maintained by this
 		## object for external use through the __getitem__ method.
 		self.__results = {
-			'original': None,
-			'holes': None,
-			'holes2': None, #good holes to use
+			'original': None, # original image
+			'holes': None,  # holes found by holefinder
+			'holes2': None, # good holes to use after convolution, ice filtering etc.
 		}
 
 		## This defines which dependent results should be cleared
@@ -83,6 +76,8 @@ class HoleFinder(icefinderback.IceFinder):
 		self.holefinder_config = {'script': '','job_name':'hole','in_path':None,'out_dir':None, 'score_key':'probability','threshold':0}
 		self.holestats_config = {'radius': 20}
 		self.filter_config = {'tmin': -10, 'tmax': 20}
+		self.convolve_config = {'acq_vect':None}
+
 	def __getitem__(self, key):
 		return self.__results[key]
 
@@ -146,7 +141,7 @@ class HoleFinder(icefinderback.IceFinder):
 
 	def run_holefinder(self):
 		'''
-		Threshold the correlation image.
+		Return external hole finder holes found
 		'''
 		if self.__results['original'] is None:
 			raise RuntimeError('need original image to run hole finding')
@@ -170,6 +165,13 @@ class HoleFinder(icefinderback.IceFinder):
 		proc = subprocess.Popen(cmd, shell=True)
 		proc.wait()
 
+	def jsonCenterToHoleCenter(self, json_center):
+		"""
+		Conversion of center tuple in json file to StatsHole definition of (r,c)
+		"""
+		# return center in (row, col)
+		return (json_center[1], json_center[0])
+
 	def loadHoles(self):
 		'''
 		load target locations and score as StatsHole
@@ -186,26 +188,32 @@ class HoleFinder(icefinderback.IceFinder):
 		holes = []
 		score_key = self.holefinder_config['score_key']
 		for n, h in enumerate(hole_dicts):
+			# convert to r,c
+			h['center'] = self.jsonCenterToHoleCenter(h['center'])
+			h['convolved'] = False
+			# apply score minimum threshold
 			if self.holefinder_config['threshold'] is None or h[score_key] >= self.holefinder_config['threshold']:
-				holes.append(StatsHole(h, n,[score_key])) # (row, col)
+				holes.append(StatsHole(h, n,[score_key,'convolved'])) # (row, col)
 		self.updateHoles(holes)
 
 	def getOutPath(self):
+		"""
+		Return full output json file path determined by holefinder_config.
+		"""
 		job_basename = self.holefinder_config['job_name']
 		outpath = os.path.join(self.holefinder_config['out_dir'],'%s.json' % job_basename)
 		return outpath
 
 	def swapxy(self, points):
+		"""
+		Swap (x,y) tuple to (y,x) on all items in the list.
+		"""
 		return [(point[1],point[0]) for point in points]
 
-	def points_to_blobs(self, points):
-			blobs = []
-			for point in points:
-				blob = imagefun.Blob(None, None, 1, point, 1.0, 1.0, 1.0, 1.0)
-				blobs.append(blob)
-			return blobs
-
 	def configure_filter(self, tmin=None, tmax=None):
+		"""
+		Set score filter min and max values if not None.
+		"""
 		if tmin is not None:
 			self.filter_config['tmin'] = tmin
 		if tmax is not None:
@@ -216,6 +224,7 @@ class HoleFinder(icefinderback.IceFinder):
 		Make holes2 that contains only good holes with score filter thresholds
 		in filter_config.  This is not currently used in ScoreTargetFinder because
 		we need ice thickness filter as hole2.
+		Instead, holefinder_config['threshold'] is used as tmin score filter.
 		'''
 		if self.__results['holes'] is None:
 			raise RuntimeError('need holes to filter by score')
@@ -236,41 +245,62 @@ class HoleFinder(icefinderback.IceFinder):
 			else:
 				hole.stats['good'] = False
 
-	def calc_holestats(self, radius=None):
+	def calc_holestats(self, radius=None, input_name='holes'):
 		'''
 		This adds hole stats to holes.
 		'''
-		if self.__results['holes'] is None:
+		if self.__results[input_name] is None:
 			raise RuntimeError('need holes to calculate hole stats')
 		self.configure_holestats(radius=radius)
 		im = self.__results['original']
 		r = self.holestats_config['radius']
-		holes = list(self.__results['holes'])
+		holes = list(self.__results[input_name])
 		for hole in holes:
-			holestats = self._calc_one_holestats(hole, im)
+			holestats = self._calc_one_holestats(hole, im, r)
 			if holestats is None:
-				self.__results['holes'].remove(hole)
+				self.__results[input_name].remove(hole)
 				continue
 			self._set_holestats(hole, holestats, r)
 
-	def calc_ice(self, i0=None, tmin=None, tmax=None, tstdmax=None, tstdmin=None):
-		if self.__results['holes'] is None:
+	def calc_ice(self, i0=None, tmin=None, tmax=None, tstdmax=None, tstdmin=None, input_name='holes'):
+		if self.__results[input_name] is None:
 			raise RuntimeError('need holes to calculate ice')
 		self.configure_ice(i0=i0,tmin=tmin,tmax=tmax, tstdmax=tstdmax, tstdmin=tstdmin)
-		holes = self.__results['holes']
+		holes = self.__results[input_name]
 		holes, holes2 = self._calc_ice(holes)
 		self.__update_result('holes2', holes2)
-		#for h in holes:
-		#	print h.stats
+
+	def make_convolved(self):
+		"""
+		Duplicates what is in icefinderback because __results must be in the same module.
+		"""
+		if self.__results['holes'] is None:
+			raise RuntimeError('need holes to generate convolved targets')
+			return
+		# reset before start
+		self.__update_result('holes2', [])
+		acq_vect = self.convolve_config['acq_vect'] # list of (del_r,del_c)s
+		goodholes = list(self.__results['holes'])
+		if not acq_vect:
+			return
+		#real part
+		r = self.holestats_config['radius']
+		im = self.__results['original']
+		convolved = self._make_convolved(goodholes, im, r, acq_vect)
+		self.__update_result('holes2', convolved)
 
 	def find_holes(self):
 		'''
 		For testing purpose. Configuration must be done already.
 		'''
 		self.run_holefinder()
-		self.calc_holestats()
-		self.calc_ice()
-		#self.filter_score()
+		# for focus anyhole filtering, good holes are in holes2 results
+		#self.calc_holestats()
+		#self.calc_ice()
+		# template convolution. This will replace holes2 results
+		self.make_convolved()
+		self.calc_holestats(input_name='holes2')
+		self.calc_ice(input_name='holes2')
 
 
 if __name__ == '__main__':
@@ -279,13 +309,10 @@ if __name__ == '__main__':
 	mrc_path = '/Users/acheng/testdata/leginon/21aug27y/rawdata/21aug27y_i_00005gr_00023sq.mrc'
 	score_key = 'probability'
 	hf['original'] = mrc.read(mrc_path)
-	hf.configure_holefinder('/Users/acheng/hl_finding.sh', 'test', mrc_path, out_dir='.', score_key=score_key)
-	hf.configure_filter(tmin=-1, tmax=10)
+	hf.configure_holefinder('/Users/acheng/hl_finding.sh', 'test', mrc_path, out_dir='.', score_key=score_key, threshold=0.0)
+	hf.configure_filter(tmin=-1, tmax=10) # score filter
 	hf.configure_ice(i0=133, tmin=0.0)
+	hf.configure_convolve(acq_vect=[(20,0),])
 	hf.find_holes()
-	print hf['holes'][-1].stats
-	#print 'holes scores',list(map((lambda x: x.stats[score_key]),hf['holes']))
-	#print 'good holes scores',list(map((lambda x: x.stats[score_key]),hf['holes2']))
-	hf.configure_ice(i0=130, tmin=0.05)
-	hf.find_holes()
-	print hf['holes'][-1].stats
+	print 'first holes of',len(hf['holes']),hf['holes'][0].stats
+	print 'first holes2 of',len(hf['holes2']),hf['holes2'][0].stats

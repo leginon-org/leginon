@@ -20,9 +20,9 @@ class StatsHole(object):
 		'''Simple blob object with image and stats as attribute
 			center = (row, col) on image
 		'''
-		center = info_dict['center'][0],info_dict['center'][1]
+		center = info_dict['center']
 		# stats will be displayed in target panel
-		self.stats = {"center":center}
+		self.stats = {"center":center,"hole_number":index+1} # (r,c)
 		for key in statskeys:
 			self.stats[key]=info_dict[key]
 		self.info_dict = info_dict
@@ -56,7 +56,7 @@ class IceFinder(object):
 		self.__results = {
 			'original': None,
 			'holes': None,
-			'holes2': None, #good holes to use
+			'holes2': None, #good holes to use, including convolved
 		}
 
 		## This defines which dependent results should be cleared
@@ -80,6 +80,7 @@ class IceFinder(object):
 		self.holefinder_config = {}
 		self.holestats_config = {'radius': 20}
 		self.ice_config = {'i0': None, 'tmin': 0.0, 'tmax': 0.1, 'tstdmin': 0.05,'tstdmax':0.5}
+		self.convolve_config = {'acq_vect':None}
 
 	def __getitem__(self, key):
 		return self.__results[key]
@@ -129,17 +130,26 @@ class IceFinder(object):
 		if tstdmin is not None:
 			self.ice_config['tstdmin'] = tstdmin
 
+	def configure_convolve(self, acq_vect=None):
+		# r,c
+		if acq_vect is not None:
+			self.convolve_config['acq_vect'] = acq_vect
+
 	def _set_holestats(self, hole, holestats, radius=None):
 		hole.stats['hole_stat_radius'] = radius
 		hole.stats['hole_n'] = holestats['n']
 		hole.stats['hole_mean'] = holestats['mean']
 		hole.stats['hole_std'] = holestats['std']
 
-	def calc_ice(self, i0=None, tmin=None, tmax=None):
-		if self.__results['holes'] is None:
+	def calc_ice(self, i0=None, tmin=None, tmax=None, input_name='holes'):
+		'''
+		Set result holes2 that contains only good holes from ice thickness thresholds
+		in ice_config.
+		'''
+		if self.__results[input_name] is None:
 			raise RuntimeError('need holes to calculate ice')
 		self.configure_ice(i0=i0,tmin=tmin,tmax=tmax)
-		holes = self.__results['holes']
+		holes = self.__results[input_name]
 		holes, holes2 = self._calc_ice(holes)
 		self.__update_result('holes2', holes2)
 
@@ -150,73 +160,146 @@ class IceFinder(object):
 		'''
 		holes2 = []
 		i0 = self.ice_config['i0']
-		tmin = self.ice_config['tmin']
-		tmax = self.ice_config['tmax']
-		tstdmax = self.ice_config['tstdmax']
-		tstdmin = self.ice_config['tstdmin']
 		self.icecalc.set_i0(i0)
 		for hole in holes:
 			if 'hole_mean' not in hole.stats:
 				## no mean was calculated
 				continue
-			mean = hole.stats['hole_mean']
-			std = hole.stats['hole_std']
-			tm = self.icecalc.get_thickness(mean)
-			hole.stats['thickness-mean'] = tm
-			ts = self.icecalc.get_stdev_thickness(std, mean)
-			hole.stats['thickness-stdev'] = ts
-			if (tmin <= tm <= tmax) and (tstdmin <= ts < tstdmax):
+			hole = self._calc_one_ice(hole)
+			if hole.stats['good'] == True:
 				holes2.append(hole)
-				hole.stats['good'] = True
-			else:
-				hole.stats['good'] = False
 		return holes, holes2
+
+	def _calc_one_ice(self, hole):
+		'''
+		Thresholding ice thickness on one hole
+		'''
+		tmin = self.ice_config['tmin']
+		tmax = self.ice_config['tmax']
+		tstdmax = self.ice_config['tstdmax']
+		tstdmin = self.ice_config['tstdmin']
+		mean = hole.stats['hole_mean']
+		std = hole.stats['hole_std']
+		tm = self.icecalc.get_thickness(mean)
+		hole.stats['thickness-mean'] = tm
+		ts = self.icecalc.get_stdev_thickness(std, mean)
+		hole.stats['thickness-stdev'] = ts
+		if (tmin <= tm <= tmax) and (tstdmin <= ts < tstdmax):
+			hole.stats['good'] = True
+		else:
+			hole.stats['good'] = False
+		return hole
 
 	def find_holes(self):
 		'''
 		For testing purpose. Configuration must be done already.
 		'''
 		self.run_holefinder()
+		# for focus anyhole filtering
 		self.calc_holestats()
 		self.calc_ice()
+		# template convolution
+		self.make_convolved()
+		self.calc_holestats(input_name='holes2')
+		self.calc_ice(input_name='holes2')
 
-	def calc_holestats(self, radius=None):
+	def calc_holestats(self, radius=None, input_name='holes'):
 		'''
 		This adds hole stats to holes.  Note: Need to copy this in
 		subclasses since self.__results are not accessible in the subclass.
 		'''
-		if self.__results['holes'] is None:
+		if self.__results[input_name] is None:
 			raise RuntimeError('need holes to calculate hole stats')
 		self.configure_holestats(radius=radius)
 		im = self.__results['original']
 		r = self.holestats_config['radius']
-		holes = list(self.__results['holes'])
+		holes = list(self.__results[input_name])
 		for hole in holes:
-			holestats = self._calc_one_holestats(hole, im)
+			center = hole.stats['center']
+			holestats = self.calc_center_holestats(center, im, r)
 			if holestats is None:
-				self.__results['holes'].remove(hole)
+				self.__results[input_name].remove(hole)
 				continue
-			self._set_holestats(hole, holestats, r)
+			self._set_holestats(hole, holestats)
 
-	def _calc_one_holestats(self, hole, im):
-		r = self.holestats_config['radius']
+	def _calc_one_holestats(self, hole, im, r):
 		coord = hole.stats['center']
+		return self.calc_center_holestats(coord, im, r)
+
+	def calc_center_holestats(self, coord, im, r):
+		'''
+		Returns stats centered at coord (r,c)
+		'''
 		holestats = self.circle.get_circle_stats(im, coord, r)
 		return holestats
+
+	def swapxy(self, points):
+		"""
+		Swap (x,y) tuple to (y,x) on all items in the list.
+		"""
+		return [(point[1],point[0]) for point in points]
+
+	def points_to_blobs(self, points):
+		'''
+		Nor used.
+		'''
+		blobs = []
+		#points are (x,y)
+		for point in points:
+			blob = imagefun.Blob(None, None, 1, point, 1.0, 1.0, 1.0, 1.0)
+			blobs.append(blob)
+		return blobs
+
+	def make_convolved(self):
+		if self.__results['holes'] is None:
+			raise RuntimeError('need holes to generate convolved targets')
+			return
+		# reset before start
+		self.__update_result('holes2', [])
+		acq_vect = self.convolve_config['acq_vect'] # list of (del_r,del_c)s
+		goodholes = list(self.__results['holes'])
+		if not acq_vect:
+			return
+		#real part
+		r = self.holestats_config['radius']
+		im = self.__results['original']
+		convolved = self._make_convolved(goodholes, im, r, acq_vect)
+		self.__update_result('holes2', convolved)
+
+	def _make_convolved(self, holes, im, r, acq_vect):
+		imshape = im.shape
+		convolved = []
+		for j, hole in enumerate(holes):
+			for i, vect in enumerate(acq_vect):
+				center = hole.stats['center'] #(r,c)
+				target = center[0]+vect[0], center[1]+vect[1]
+				tary = target[1]
+				tarx = target[0]
+				if tarx < 0 or tarx >= imshape[1] or tary < 0 or tary >= imshape[0]:
+					continue
+				h = hole.info_dict
+				h.update(hole.stats)
+				h['center'] = target #(r,c)
+				h['convolved'] = True
+				n = hole.stats['hole_number'] # (target number base 1)
+				# convolved newhole has all old stats items
+				newhole = StatsHole(h, n, h.keys())
+				convolved.append(newhole)
+		return convolved
 
 class TestIceFinder(IceFinder):
 	def setDefault(self):
 		super(TestIceFinder, self).setDefault()
-		self.holefinder_config = {'number':10}
+		self.holefinder_config = {'count':10}
 
-	def configure_holefinder(self, number=10):
-		self.holefinder_config['number'] = number
+	def configure_holefinder(self, count=10):
+		self.holefinder_config['count'] = count
 
 	def run_holefinder(self):
 		holes = []
-		for n in range(self.holefinder_config['number']):
-			h = {'center':[100*n,200*n]}
-			holes.append(StatsHole(h, n)) # (row, col)
+		for n in range(self.holefinder_config['count']):
+			h = {'center':[100*n+100,200*n+100],'convolved':False}
+			holes.append(StatsHole(h, n, h.keys())) # (row, col)
 		self.updateHoles(holes)
 
 if __name__ == '__main__':
@@ -224,9 +307,16 @@ if __name__ == '__main__':
 	hf = TestIceFinder()
 	mrc_path = '/Users/acheng/testdata/leginon/21aug27y/rawdata/21aug27y_i_00005gr_00023sq.mrc'
 	hf['original'] = mrc.read(mrc_path)
-	hf.configure_holefinder(number=2)
+	hf.configure_holefinder(count=2)
 	hf.configure_holestats(radius=20)
 	hf.configure_ice(i0=150, tmin=0, tmax=1, tstdmax=1, tstdmin=0)
+	hf.configure_convolve(acq_vect=[(0,0),(20,0)])
 	hf.find_holes()
+	print 'number of holes', len(hf['holes'])
+	for h in hf['holes']:
+		print 'holes',h.stats
+	print hf['holes'][0].stats
 	if hf['holes2']:
-		print hf['holes2'][0].stats
+		print len(hf['holes2'])
+		for h in hf['holes2']:
+			print 'holes after processing', h.stats

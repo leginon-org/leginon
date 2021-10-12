@@ -42,6 +42,9 @@ class ScoreTargetFinder(icetargetfinder.IceTargetFinder):
 
 		self.start()
 
+	def _getStatsKeys(self):
+		return [self.settings['score key'],]
+
 	def _findHoles(self):
 		'''
 		configure and run holefinder in the back module. Raise exception
@@ -68,11 +71,15 @@ class ScoreTargetFinder(icetargetfinder.IceTargetFinder):
 		self.hf.run_holefinder()
 		return
 
-	def storeHoleStatsData(self, prefs):
-		holes = self.hf['holes']
+	def storeHoleStatsData(self, score_prefs, input_name='holes'):
+		holes = self.hf[input_name]
 		for hole in holes:
 			stats = hole.stats
-			holestats = leginondata.HoleStatsData(session=self.session, prefs=prefs)
+			holestats = leginondata.HoleStatsData(session=self.session)
+			holestats['finder-type'] = 'score'
+			holestats['score'] = stats[self.settings['score key']]
+			holestats['score-prefs'] = score_prefs
+			# IceTargetFinder HoleStats
 			holestats['row'] = stats['center'][0]
 			holestats['column'] = stats['center'][1]
 			holestats['mean'] = stats['hole_mean']
@@ -80,10 +87,12 @@ class ScoreTargetFinder(icetargetfinder.IceTargetFinder):
 			holestats['thickness-mean'] = stats['thickness-mean']
 			holestats['thickness-stdev'] = stats['thickness-stdev']
 			holestats['good'] = stats['good']
+			holestats['hole-number'] = stats['hole_number']
+			holestats['convolved'] = stats['convolved']
 			self.publish(holestats, database=True)
 
 	def storeHoleFinderPrefsData(self, imagedata):
-		hfprefs = leginondata.HoleFinderPrefsData()
+		hfprefs = leginondata.ScoreTargetFinderPrefsData()
 		hfprefs.update({
 			'session': self.session,
 			'image': imagedata,
@@ -101,6 +110,10 @@ class ScoreTargetFinder(icetargetfinder.IceTargetFinder):
 			'template-on': self.settings['target template'],
 			'template-focus': self.settings['focus template'],
 			'template-acquisition': self.settings['acquisition template'],
+			'script': self.settings['script'],
+			'score-key': self.settings['score key'],
+			'score-threshold':self.settings['score threshold'],
+			'filter-ice-on-convolved-on': self.settings['filter ice on convolved'],
 		})
 
 		self.publish(hfprefs, database=True)
