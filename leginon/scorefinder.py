@@ -67,7 +67,7 @@ class ScoreTargetFinder(icetargetfinder.IceTargetFinder):
 			raise RuntimeError('Need image to find holes')
 		threshold = self.settings['score threshold']
 		# configure and run
-		self.hf.configure_holefinder(script, job_name, mrc_path, out_dir='.', score_key=self.settings['score key'], threshold=threshold)
+		self.hf.configure_holefinder(script, job_name, mrc_path, out_dir=self.session['image path'], score_key=self.settings['score key'], threshold=threshold)
 		self.hf.run_holefinder()
 		return
 
