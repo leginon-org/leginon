@@ -80,8 +80,8 @@ class ScoreTargetFinder(icetargetfinder.IceTargetFinder):
 			holestats['score'] = stats[self.settings['score key']]
 			holestats['score-prefs'] = score_prefs
 			# IceTargetFinder HoleStats
-			holestats['row'] = stats['center'][0]
-			holestats['column'] = stats['center'][1]
+			holestats['row'] = stats['center'][0] * self.shrink_factor + self.shrink_offset[0]
+			holestats['column'] = stats['center'][1] * self.shrink_factor + self.shrink_offset[1]
 			holestats['mean'] = stats['hole_mean']
 			holestats['stdev'] = stats['hole_std']
 			holestats['thickness-mean'] = stats['thickness-mean']
