@@ -11,7 +11,7 @@
 from leginon import leginondata
 import targetfinder
 import jahcfinderback
-from pyami import ordereddict
+from pyami import imagefun, ordereddict
 import threading
 import ice
 import instrument
@@ -538,8 +538,8 @@ class JAHCFinder(targetfinder.TargetFinder):
 		for hole in holes:
 			stats = hole.stats
 			holestats = leginondata.HoleStatsData(session=self.session, prefs=prefs)
-			holestats['row'] = stats['center'][0]
-			holestats['column'] = stats['center'][1]
+			holestats['row'] = stats['center'][0] * self.shrink_factor + self.shrink_offset[0]
+			holestats['column'] = stats['center'][1] * self.shrink_factor + self.shrink_offset[1]
 			holestats['mean'] = stats['hole_mean']
 			holestats['stdev'] = stats['hole_std']
 			holestats['thickness-mean'] = stats['thickness-mean']
@@ -609,9 +609,15 @@ class JAHCFinder(targetfinder.TargetFinder):
 		autofailed = None
 
 		## auto or not?
-		self.hf['original'] = imdata['image']
 		self.currentimagedata = imdata
-		self.setImage(imdata['image'], 'Original')
+		orig = imdata['image']
+		# shrink image in holefinding to save memory usage
+		shrunk = imagefun.shrink(orig)
+		self.shrink_factor = imagefun.shrink_factor(orig.shape)
+		self.shrink_offset = imagefun.shrink_offset(orig.shape)
+		self.hf['original'] = shrunk
+		self.setImage(shrunk, 'Original')
+		#
 		if not self.settings['skip']:
 			if self.isFromNewParentImage(imdata):
 				self.logger.debug('Reset focus counter')

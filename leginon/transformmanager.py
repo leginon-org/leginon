@@ -11,7 +11,7 @@
 import node
 import event
 from leginon import leginondata
-from pyami import correlator, peakfinder, ordereddict
+from pyami import ordereddict
 import calibrationclient
 import math
 import numpy
@@ -240,8 +240,6 @@ class TransformManager(node.Node, TargetTransformer):
 		node.Node.__init__(self, id, session, managerlocation, **kwargs)
 		TargetTransformer.__init__(self)
 
-		self.correlator = correlator.Correlator()
-		self.peakfinder = peakfinder.PeakFinder()
 		self.instrument = instrument.Proxy(self.objectservice, self.session,
 																				self.panel)
 		self.calclients = ordereddict.OrderedDict()
@@ -280,15 +278,11 @@ class TransformManager(node.Node, TargetTransformer):
 
 	def validateStagePosition(self, stageposition):
 		## check for out of stage range target
-		stagelimits = {
-			'x': (-9.9e-4, 9.9e-4),
-			'y': (-9.9e-4, 9.9e-4),
-		}
+		stagelimits = self.instrument.tem.StageLimits
 		for axis, limits in stagelimits.items():
 			if stageposition[axis] < limits[0] or stageposition[axis] > limits[1]:
 				pstr = '%s: %g' % (axis, stageposition[axis])
-				messagestr = 'Aborting target: stage position %s out of range' % pstr
-				self.logger.info(messagestr)
+				messagestr = 'Stage position %s out of range' % pstr
 				raise InvalidStagePosition(messagestr)
 
 	def targetToEMTargetData(self, targetdata,movetype):
@@ -434,8 +428,8 @@ class TransformManager(node.Node, TargetTransformer):
 		movetype = oldemtarget['movetype']
 		try:
 			emtarget = self.targetToEMTargetData(targetdata,movetype)
-		except InvalidStagePosition:
-			self.logger.error('Invalid new emtarget')
+		except InvalidStagePosition as e:
+			self.logger.error('Invalid new emtarget: %s' % (e))
 			return None
 		oldpresetdata = oldimage['preset']
 		presetname = oldpresetdata['name']

@@ -65,7 +65,7 @@ class CalibrationClient(object):
 		except AttributeError:
 			self.instrument = None
 
-		self.correlator = correlator.Correlator()
+		self.correlator = correlator.Correlator(shrink=True)
 		self.abortevent = threading.Event()
 		self.tiltcorrector = tiltcorrector.TiltCorrector(node)
 		self.stagetiltcorrector = tiltcorrector.VirtualStageTilter(node)
@@ -149,7 +149,7 @@ class CalibrationClient(object):
 		self.checkAbort()
 
 		# make sure previous image is in the correlator
-		if self.correlator.getImage(1) is not previousimage['image']:
+		if self.correlator.getImage(1) is not imagefun.shrink(previousimage['image']):
 			self.correlator.insertImage(previousimage['image'])
 
 		## use opposite correction channel
@@ -189,6 +189,7 @@ class CalibrationClient(object):
 			cor = scipy.ndimage.gaussian_filter(cor, lp)
 
 		self.displayCorrelation(cor)
+		shrink_factor = self.correlator.shrink_factor
 
 		## find peak
 		self.node.startTimer('shift peak')
@@ -207,8 +208,8 @@ class CalibrationClient(object):
 		self.node.logger.debug('pixel shift (row,col): %s' % (shift,))
 
 		## need unbinned result
-		binx = nextimage['camera']['binning']['x']
-		biny = nextimage['camera']['binning']['y']
+		binx = nextimage['camera']['binning']['x']*shrink_factor
+		biny = nextimage['camera']['binning']['y']*shrink_factor
 		unbinned = {'row':shift[0] * biny, 'col': shift[1] * binx}
 
 		shiftinfo = {'previous': previousimage, 'next': nextimage, 'pixel shift': unbinned}
