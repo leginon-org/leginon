@@ -10,7 +10,7 @@
 
 import watcher
 import event, leginondata
-from pyami import correlator, peakfinder
+from pyami import imagefun, correlator, peakfinder
 import calibrationclient
 import math
 import time
@@ -42,7 +42,7 @@ class DriftManager(watcher.Watcher):
 		watchfor = [event.DriftMonitorRequestEvent]
 		watcher.Watcher.__init__(self, id, session, managerlocation, watchfor, **kwargs)
 
-		self.correlator = correlator.Correlator()
+		self.correlator = correlator.Correlator(shrink=True)
 		self.peakfinder = peakfinder.PeakFinder()
 		self.instrument = instrument.Proxy(self.objectservice, self.session,
 																				self.panel)
@@ -236,10 +236,11 @@ class DriftManager(watcher.Watcher):
 			self.setTargets([(peak[1],peak[0])], 'Peak')
 
 			self.logger.info('Pixel size is %s after binning' % (pixsize*binning))
-			## calculate drift 
-			meters = dist * binning * pixsize
-			rowmeters = rows * binning * pixsize
-			colmeters = cols * binning * pixsize
+			## calculate drift
+			shrink_factor = imagefun.shrink_factor(numdata.shape)
+			meters = dist * binning * pixsize * shrink_factor
+			rowmeters = rows * binning * pixsize * shrink_factor
+			colmeters = cols * binning * pixsize * shrink_factor
 			# rely on system time of EM node
 			seconds = t1 - t0
 			self.logger.info('time %.2f' % seconds)
@@ -260,7 +261,7 @@ class DriftManager(watcher.Watcher):
 			camera = imagedata['camera']
 			self.publish(camera, database=True, dbforce=True)
 
-			d = leginondata.DriftData(session=self.session, rows=rows, cols=cols, interval=seconds, rowmeters=rowmeters, colmeters=colmeters, target=target, scope=scope, camera=camera)
+			d = leginondata.DriftData(session=self.session, rows=rows*shrink_factor, cols=cols*shrink_factor, interval=seconds, rowmeters=rowmeters, colmeters=colmeters, target=target, scope=scope, camera=camera)
 			self.publish(d, database=True, dbforce=True)
 
 			## t0 becomes t1 and t1 will be reset for next image
