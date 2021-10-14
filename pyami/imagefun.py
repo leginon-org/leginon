@@ -575,7 +575,9 @@ def shrink_offset(oldshape):
 	b = shrink_factor(oldshape)
 	if b > 1:
 		newshape = (b*(oldshape[0]//b), b*(oldshape[1]//b))
-	offset = ((oldshape[0] - newshape[0]) // 2, (oldshape[1] - newshape[1]) // 2)
+		offset = ((oldshape[0] - newshape[0]) // 2, (oldshape[1] - newshape[1]) // 2)
+	else:
+		offset = (0,0)
 	return offset
 
 def shrink(image):
