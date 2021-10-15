@@ -29,7 +29,7 @@ class TEMController(node.Node):
 	panelclass = gui.wx.TEMController.Panel
 	settingsclass = leginondata.TEMControllerSettingsData
 	defaultsettings = {
-		'retract obj ap on grid changing':True,
+		'retract obj ap on grid changing':False,
 	}
 	eventinputs = node.Node.eventinputs + presets.PresetsClient.eventinputs
 	eventinputs.append(event.LoadAutoLoaderGridEvent)
@@ -377,8 +377,11 @@ class TEMController(node.Node):
 		reinsertObjectiveAperture.
 		'''
 		old_state = self._getApertureStateDisplayByName('objective')
+		old_state='unknown'
 		if old_state != 'unknown':
 			self.selectAperture('objective', 'open')
+		else:
+			self.logger.error('Aperture not retracted during grid exchange due to unknown state')
 		return old_state
 
 	def _reinsertObjectiveAperture(self, old_state):
