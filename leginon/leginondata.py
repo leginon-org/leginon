@@ -2986,6 +2986,7 @@ class AutoFillerSettingsData(ConditionerSettingsData):
 class TEMControllerSettingsData(SettingsData):
 	def typemap(cls):
 		return SettingsData.typemap() + (
+			('retract obj ap on grid changing', bool),
 		)
 	typemap = classmethod(typemap)
 
