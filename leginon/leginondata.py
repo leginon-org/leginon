@@ -2459,6 +2459,7 @@ class TomographySettingsData(AcquisitionSettingsData):
 			('max exposure', float),
 			('mean threshold', float),
 			('collection threshold', float),
+			('disable backlash correction', bool),
 			('tilt pause time', float),
 			('backlash pause time', float),
 			('measure defocus', bool),
