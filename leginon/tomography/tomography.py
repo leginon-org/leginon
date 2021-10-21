@@ -385,8 +385,8 @@ class Tomography(leginon.acquisition.Acquisition):
 			self.panel.viewer.addImage(imagedata0['image'])
 
 		## tilt then return in slow increments
-		delta = math.radians(6.0)
-		n = 2
+		delta = math.radians(5.0)
+		n = 5
 		increment = delta/n
 		if not sequence:
 			self.logger.warning('Abort stage alpha backlash correction for lack of tilt sequence')
