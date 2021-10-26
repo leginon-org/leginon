@@ -190,10 +190,16 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		self.setStageZAlpha(self.reference_target)
 		if self.settings['mover'] == 'presets manager':
 			self.presets_client.toScope(preset_name, em_target_data)
+			if self.presets_client.stage_targeting_failed:
+				message = 'target toScope failed'
+				raise MoveError(message)
 		else:
 			if not self.navigator_bound or self.navigator_bound['is_direct_bound']==False:
 				self.logger.warning('Navigator not bound with MoveToTargetEvent. Use presets manager instead')
 				self.presets_client.toScope(preset_name, em_target_data)
+				if self.presets_client.stage_targeting_failed:
+					message = 'target toScope failed'
+					raise MoveError(message)
 			else:
 				# Move with navigator
 				precision = self.settings['move precision']

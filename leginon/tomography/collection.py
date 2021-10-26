@@ -185,7 +185,6 @@ class Collection(object):
 
 	def loop(self, tilts, exposures, sequence):
 		self.logger.info('Starting tilt collection (%d angles)...' % len(sequence))
-		self.logger.info('Removing tilt backlash...')
 		try:
 			self.node.removeStageAlphaBacklash(tilts, sequence, self.preset['name'], self.target, self.emtarget)
 		except Exception, e:

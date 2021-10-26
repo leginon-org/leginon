@@ -332,6 +332,7 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 															allownone=False,
 															chars=5,
 															value='2.5')
+		self.widgets['disable backlash correction'] = wx.CheckBox(self, -1, 'Disable backlash correction')
 #		self.widgets['measure defocus'] = wx.CheckBox(self, -1, 'Measure defocus')
 		self.widgets['use lpf'] = wx.CheckBox(self, -1, 'Use lpf in peak finding of tilt image correlation')
 		self.widgets['use tilt'] = wx.CheckBox(self, -1, 'Stretch images according to the tilt before correlation')
@@ -386,9 +387,10 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		miscsz.Add(mtsz, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		miscsz.Add(ctsz, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		miscsz.Add(tptsz, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		miscsz.Add(bptsz, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		miscsz.Add(self.widgets['use lpf'], (5, 0), (1, 1), wx.ALIGN_CENTER)
-		miscsz.Add(self.widgets['use tilt'], (6, 0), (1, 1), wx.ALIGN_CENTER)
+		miscsz.Add(self.widgets['disable backlash correction'], (4, 0), (1, 1), wx.ALIGN_LEFT)
+		miscsz.Add(bptsz, (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		miscsz.Add(self.widgets['use lpf'], (6, 0), (1, 1), wx.ALIGN_LEFT)
+		miscsz.Add(self.widgets['use tilt'], (7, 0), (1, 1), wx.ALIGN_LEFT)
 		#miscsz.Add(tapersz, (8, 0), (1, 1), wx.ALIGN_CENTER)
 		#miscsz.Add(self.widgets['measure defocus'], (6, 0), (1, 1), wx.ALIGN_CENTER)
 		miscsbsz.Add(miscsz, 1, wx.ALL|wx.ALIGN_CENTER, 5)

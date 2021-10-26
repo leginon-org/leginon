@@ -647,6 +647,24 @@ class TietzFC415(Tietz):
 	def __init__(self):
 		Tietz.__init__(self)
 
+class TietzF216(Tietz):
+	name = 'Tietz F216'
+	binning_limits = [1,2,4]
+	cameratypeattr = 'ctF216'
+	mmname = 'CAM_F216_DATA'
+	def __init__(self):
+		Tietz.__init__(self)
+
+	def getBinnedMultiplier(self):
+		binning = self.getBinning()
+		return binning['x']*binning['y']
+
+	def getCalculateNormOnDark(self):
+		return False
+
+	def requireRecentDarkOnBright(self):
+		return True
+
 class TietzF416(Tietz):
 	name = 'Tietz F416'
 	binning_limits = [1,2,4]

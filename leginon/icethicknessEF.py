@@ -61,6 +61,7 @@ class IcethicknessEF(imagewatcher.ImageWatcher):
 		'process_obj_thickness': False,
 		'obj mean free path': 300.0, #nm
 		'vacuum intensity': -1.0, #counts 
+		'binning': 1,  # binning for image, will throw uncorrected warning if not match exposure binning, but can significantly speed up with no effect on result
 	}
 	def __init__(self, id, session, managerlocation, **kwargs):
 		imagewatcher.ImageWatcher.__init__(self, id, session, managerlocation, **kwargs)
@@ -88,9 +89,9 @@ class IcethicknessEF(imagewatcher.ImageWatcher):
 		if self.settings['process'] and not modulus:
 			exp_preset = imagedata['preset']
 			acquirestr = 'Itot'
-			noslitimagedata=  self._acquireSpecialImage(exp_preset, acquirestr, self.settings['exposure time'], False, self.settings['slit width'])
+			noslitimagedata=  self._acquireSpecialImage(exp_preset, acquirestr, self.settings['exposure time'], False, self.settings['slit width'], self.settings['binning'])
 			acquirestr = 'Izlp'
-			zlpimagedata =  self._acquireSpecialImage(exp_preset, acquirestr, self.settings['exposure time'], True, self.settings['slit width'])
+			zlpimagedata =  self._acquireSpecialImage(exp_preset, acquirestr, self.settings['exposure time'], True, self.settings['slit width'], self.settings['binning'])
 
 			try: 
 				imagearray_tot = noslitimagedata['image']
@@ -137,7 +138,7 @@ class IcethicknessEF(imagewatcher.ImageWatcher):
 			
 			objth.insert()
 
-	def _acquireSpecialImage(self, preset, acquirestr, exp_time, filtered, slit_width):
+	def _acquireSpecialImage(self, preset, acquirestr, exp_time, filtered, slit_width, binning):
 		# acquire an image by only changing camera params, not microscope. 
 						#leginon/leginondata.py: ('energy filtered', bool),
 						#leginon/leginondata.py: ('energy filter', bool),
@@ -156,6 +157,8 @@ class IcethicknessEF(imagewatcher.ImageWatcher):
 		was_slit_width = float(camdata0['energy filter width']) 
 		was_filtered = bool(camdata0['energy filter']) 
 		was_time = float(camdata0['exposure time'])
+		was_binning = camdata0['binning']
+#		print (was_binning)
 		## deactivate frame saving and align frame flags
 		camdata0['save frames'] = False
 		camdata0['align frames'] = False
@@ -165,6 +168,9 @@ class IcethicknessEF(imagewatcher.ImageWatcher):
 		camdata1['energy filter'] = filtered
 		camdata1['energy filter width'] = slit_width
 		camdata1['exposure time'] = exp_time
+		for key in camdata1['binning']:
+			camdata1['binning'][key] = int(binning)
+#		print camdata1['binning']
 
 		try:
 			self.instrument.setCCDCamera(camdata1['ccdcamera']['name'])  #select the right camera!!!!
@@ -189,6 +195,7 @@ class IcethicknessEF(imagewatcher.ImageWatcher):
 			camdata0['energy filter'] = was_filtered
 			camdata0['energy filter width'] = was_slit_width
 			camdata0['exposure time'] = was_time
+			camdata0['binning'] = was_binning
 			self.instrument.setData(camdata0)
 		except:
 			estr = 'Return to orginial camera state failed: %s'

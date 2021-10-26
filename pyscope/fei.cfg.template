@@ -74,6 +74,7 @@ AUTOIT_PHASE_PLATE_EXE_PATH = C:\Program Files\AutoIt3\NextPhasePlate.exe
 
 [beamstop]
 # Location of beamstop AutoIt executable
+AUTOIT_GET_EXE_PATH =  to_be_added
 AUTOIT_IN_EXE_PATH =  to_be_added
 AUTOIT_OUT_EXE_PATH = to_be_added
 [stage]
@@ -95,8 +96,8 @@ MINIMUM_STAGE_MOVEMENT%B = 6.0e-5
 
 # Stage limit to return with value error
 # XYZ in meters, AB in radians.
-STAGE_LIMITS%X = -9.97e-4, 9.97e-4
-STAGE_LIMITS%Y = -9.97e-4, 9.97e-4
+STAGE_LIMITS%X = -9.999e-4, 9.999e-4
+STAGE_LIMITS%Y = -9.999e-4, 9.999e-4
 STAGE_LIMITS%Z = -4.0e-4, 4.00e-4
 STAGE_LIMITS%A = -1.2217, 1.2217
 STAGE_LIMITS%B = -1.58, 1.58

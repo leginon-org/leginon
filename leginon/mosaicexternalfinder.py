@@ -54,10 +54,12 @@ class StatsBlob(object):
 		score = info_dict['score']
 		center = info_dict['center'][1],info_dict['center'][0]
 		vertices = info_dict['vertices']
+		self.center_modified = False
 		self.stats = {"label_index": index, "center":center, "n":size, "size":size, "mean":mean, "score":score, "stddev":score}
 		self.vertices = vertices
+		self.info_dict = info_dict
 
-class MosaicClickTargetFinder(mosaictargetfinder.MosaicClickTargetFinder):
+class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 	panelclass = gui.wx.MosaicClickTargetFinder.Panel
 	settingsclass = leginondata.MosaicClickTargetFinderSettingsData
 	defaultsettings = dict(mosaictargetfinder.MosaicClickTargetFinder.defaultsettings)
@@ -66,10 +68,13 @@ class MosaicClickTargetFinder(mosaictargetfinder.MosaicClickTargetFinder):
 	targetnames = mosaictargetfinder.MosaicClickTargetFinder.targetnames
 
 	def __init__(self, id, session, managerlocation, **kwargs):
-		super(MosaicClickTargetFinder, self).__init__(id, session, managerlocation, **kwargs)
+		super(MosaicTargetFinderBase, self).__init__(id, session, managerlocation, **kwargs)
 		self.start()
 
 	def findSquareBlobs(self):
+		# Scale to smaller finder size
+		# TODO where did this call to ?
+		self.scaleFinderMosaicImage()
 		if self.mosaicimagedata and 'filename' in self.mosaicimagedata.keys():
 			mosaic_image_path = os.path.join(self.session['image path'],self.mosaicimagedata['filename']+'.mrc')
 			self.logger.info('running external square finding')
@@ -103,7 +108,7 @@ class MosaicClickTargetFinder(mosaictargetfinder.MosaicClickTargetFinder):
 		to_avoid: at least one panel_point is in the blob
 		display_array: some image array to display in the gui as Thresholded image.
 		'''
-		return self.filterPointsByVertices(blobs, example_points, panel_points)
+		return self.filterPointsByVertices(self.finder_blobs, example_points, panel_points)
 
 	def filterPointsByVertices(self, blobs, example_points, panel_points):
 		has_priority = pointsInBlobs(blobs, example_points)
@@ -136,8 +141,8 @@ class MosaicClickTargetFinder(mosaictargetfinder.MosaicClickTargetFinder):
 		filter based on blob stats
 		'''
 		prefs = self.storeSquareFinderPrefs()
-		mean_min = self.settings['blobs']['min mean']
-		mean_max = self.settings['blobs']['max mean']
+		mean_min = self.settings['blobs']['min mean']-0.0005 # rounding precision
+		mean_max = self.settings['blobs']['max mean']+0.0005
 		score_min = self.settings['blobs']['min stdev']
 		score_max = self.settings['blobs']['max stdev']
 		size_min = self.settings['blobs']['min filter size']
@@ -149,7 +154,8 @@ class MosaicClickTargetFinder(mosaictargetfinder.MosaicClickTargetFinder):
 			mean = blob.stats['mean']
 			std = blob.stats['score']
 			size = blob.stats['n']
-			if (mean_min <= mean <= mean_max) and (score_min <= std <= score_max) and (size_min <= size <= size_max):
+			#if (mean_min <= mean <= mean_max) and (score_min <= std <= score_max) and (size_min <= size <= size_max):
+			if (mean_min <= mean <= mean_max) and (size_min <= size <= size_max):
 				good_blobs.append(blob)
 			else:
 				stats = leginondata.SquareStatsData(prefs=prefs, row=row, column=column, mean=mean, stdev=std)
@@ -157,3 +163,46 @@ class MosaicClickTargetFinder(mosaictargetfinder.MosaicClickTargetFinder):
 				# only publish bad stats
 				self.publish(stats, database=True)
 		return good_blobs
+
+class MosaicClickTargetFinder(MosaicTargetFinderBase):
+	panelclass = gui.wx.MosaicClickTargetFinder.Panel
+	settingsclass = leginondata.MosaicClickTargetFinderSettingsData
+	defaultsettings = dict(mosaictargetfinder.MosaicClickTargetFinder.defaultsettings)
+
+	eventoutputs = mosaictargetfinder.MosaicClickTargetFinder.eventoutputs
+	targetnames = mosaictargetfinder.MosaicClickTargetFinder.targetnames
+
+	def __init__(self, id, session, managerlocation, **kwargs):
+		super(MosaicClickTargetFinder, self).__init__(id, session, managerlocation, **kwargs)
+		self.tileblobmap = {}
+		self.finder_blobs = []
+		self.start()
+
+	def _addTile(self, imagedata):
+		super(MosaicClickTargetFinder, self)._addTile(imagedata)
+		mrcpath = os.path.join(imagedata['session']['image path'], imagedata['filename']+'.mrc')
+		self.logger.info('running external square finding on imgid=%d' % imagedata.dbid)
+		blobs = self._runExternalBlobFinder(imagedata['image'], mrcpath)
+		imid = imagedata.dbid
+		if imid not in self.tileblobmap:
+			self.tileblobmap[imid] = blobs
+
+	def createMosaicImage(self):
+		super(MosaicClickTargetFinder, self).createMosaicImage()
+		if self.mosaic and self.tileblobmap and self.finder_scale_factor:
+			self.finder_blobs = []
+			s = self.finder_scale_factor
+			for imid, targetlists in self.targetmap.items():
+					tile = self.tilemap[imid]
+					shape = tile.image.shape
+					for b in self.tileblobmap[imid]:
+						#statistics are calculated on finder_mosaic
+						vertices = map((lambda x: self._tile2MosaicPosition(tile, (x[1],x[0]*s), self.finder_mosaic)), b.vertices)
+						r,c = self._tile2MosaicPosition(tile, b.stats['center'], self.finder_mosaic)
+						new_info_dict = dict(b.info_dict)
+						new_info_dict['vertices'] = map((lambda x: (x[1],x[0])),vertices)
+						new_info_dict['center'] = c,r
+						self.finder_blobs.append(StatsBlob(new_info_dict, len(self.finder_blobs)))
+
+	def findSquareBlobs(self):
+		return list(self.finder_blobs)

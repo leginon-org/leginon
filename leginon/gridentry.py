@@ -35,7 +35,7 @@ class GridEntry(node.Node):
 
 	def publishNewEMGrid(self,newgrid):
 		try:
-			checkGridName(newgrid)
+			self.checkGridName(newgrid)
 		except ValueError, e:
 			raise
 		emgridq = leginondata.EMGridData()
@@ -109,7 +109,7 @@ class GridEntry(node.Node):
 	def submitGrid(self):
 		gridname = self.settings['grid name']
 		try:
-			checkGridName(gridname)
+			self.checkGridName(gridname)
 		except ValueError, e:
 			self.logger.error(e)
 			self.logger.error('Data collection event not sent')

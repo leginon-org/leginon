@@ -1924,6 +1924,7 @@ class MosaicClickTargetFinderSettingsData(ClickTargetFinderSettingsData,
 			('scale image', bool),
 			('scale size', int),
 			('create on tile change', str),
+			('autofinder', bool),
 		)
 		return typemap
 	typemap = classmethod(typemap)
@@ -1932,9 +1933,6 @@ class MosaicSpotFinderSettingsData(ClickTargetFinderSettingsData,
 																					SquareFinderSettingsData):
 	def typemap(cls):
 		typemap = MosaicClickTargetFinderSettingsData.typemap()
-		typemap += (
-			('autofinder', bool),
-		)
 		return typemap
 	typemap = classmethod(typemap)
 
@@ -1943,7 +1941,6 @@ class MosaicSectionFinderSettingsData(ClickTargetFinderSettingsData,
 	def typemap(cls):
 		typemap = MosaicClickTargetFinderSettingsData.typemap()
 		typemap += (
-			('autofinder', bool),
 			('min region area', float),
 			('max region area', float),
 			('axis ratio', float),
@@ -2462,6 +2459,7 @@ class TomographySettingsData(AcquisitionSettingsData):
 			('max exposure', float),
 			('mean threshold', float),
 			('collection threshold', float),
+			('disable backlash correction', bool),
 			('tilt pause time', float),
 			('backlash pause time', float),
 			('measure defocus', bool),
@@ -2989,6 +2987,7 @@ class AutoFillerSettingsData(ConditionerSettingsData):
 class TEMControllerSettingsData(SettingsData):
 	def typemap(cls):
 		return SettingsData.typemap() + (
+			('retract obj ap on grid changing', bool),
 		)
 	typemap = classmethod(typemap)
 
@@ -3105,6 +3104,7 @@ class ZeroLossIceThicknessSettingsData(SettingsData):
 			('slit width', float),
 			('mean free path', float),   #nm
 			('decimate', int),
+			('binning', int),
 			('process_obj_thickness', bool),
 			('obj mean free path', float),
 			('vacuum intensity', float),

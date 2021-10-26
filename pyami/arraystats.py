@@ -46,10 +46,19 @@ def wrap_allstats(stat):
 		# which is unfortunate, because our simple mrc.py requires numextension
 		try:
 			import numextension
-			result = numextension.allstats(a, **kwargs)
+			if a.size < 16777216:  #4K * 4K
+				result = numextension.allstats(a, **kwargs)
+			else:
+				dec=4   # decimation factor
+				if a.size >= 67108864:  #ie >= 8k x 8k
+					dec=8
+				b = a[::dec,::dec]
+				#self.logger.info('Stats calculated on %d X decimated image' % (dec,))
+				print('Stats calculated on %d X decimated image' % (dec,))  # no access to logger
+				result = numextension.allstats(b, **kwargs)
 		except:
-			b = numpy.asanyarray(a, dtype=numpy.float64)
 			result = allstats(b, **kwargs)
+			print "except"
 		if stat != 'all':
 			result = result[stat]
 		return result
