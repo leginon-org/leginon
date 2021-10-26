@@ -303,6 +303,8 @@ class ValueScaler(wx.Panel):
 
             self.minlabel.SetLabel('%g' % extrema[0])
             self.maxlabel.SetLabel('%g' % extrema[1])
+            if extrema[0] == extrema[1]:
+                return
             self.minentry.SetValue('%g' % valuerange[0])
             self.maxentry.SetValue('%g' % valuerange[1])
             slidermin = self.minslider.GetMin()
