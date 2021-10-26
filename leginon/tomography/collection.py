@@ -250,10 +250,14 @@ class Collection(object):
 			# undo defocus from last tilt
 			predicted_shift['z'] = -defocus
 
-			defocus = defocus0 + predicted_position['z']*image_pixel_size
+			defocus =  defocus0 + self.prediction.getCalibratedDefocusDelta(tilt)
+			z_prediction = defocus0 + predicted_position['z']*image_pixel_size
+			# TESTING using the original
+			#defocus = z_prediction
 			self.logger.info('defocus0: %g meters,sintilt: %g' % (defocus0,math.sin(tilt)))
+			self.logger.info('prediction defocus %.2f um' % (defocus*1e6))
 			# apply new defocus
-			predicted_shift['z'] += defocus
+			predicted_shift['z'] += z_prediction
 
 			try:
 				self.node.setPosition('image shift', predicted_position)
