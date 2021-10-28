@@ -2534,6 +2534,16 @@ class TomographyPredictionData(InSessionData):
 		)
 	typemap = classmethod(typemap)
 
+class TiltDefocusDeltaData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('tem', InstrumentData),
+			('reference tilt', float), #radians
+			('tilts', tuple), #sorted, in radians
+			('defocus deltas', tuple), # matching defocus in meters
+		)
+	typemap = classmethod(typemap)
+
 class TiltSeriesData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
