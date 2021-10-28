@@ -4,7 +4,7 @@ import time
 import pyami.imagefun
 import ccdcamera
 import threading
-from pyscope import moduleconfig
+from pyami import moduleconfig
 
 # frame flipping configuration.
 # default here is for DE-20 orientation on JEM-3200FSC

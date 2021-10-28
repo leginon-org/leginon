@@ -195,17 +195,17 @@ class CameraPanel(wx.Panel):
 		sz.Add(strd)
 		sz.Add(self.readoutdelay)
 		sz.Add(stms)
-		ddsz.Add(sz, (2, 0), (1, 2), wx.ALIGN_CENTER|wx.EXPAND)
+		ddsz.Add(sz, (4, 0), (1, 2), wx.ALIGN_CENTER|wx.EXPAND)
 
 		# save 8x8 fake image so it is fast to save and transfer
 		self.fastsave = wx.CheckBox(self, -1, 'Save 8x8 stats image to speed up')
 		self.framewidges.append(self.fastsave)
-		ddsz.Add(self.fastsave, (3, 0), (1, 2), wx.ALIGN_CENTER|wx.EXPAND)
+		ddsz.Add(self.fastsave, (5, 0), (1, 2), wx.ALIGN_CENTER|wx.EXPAND)
 
 		# use cds for K3
 		self.usecds = wx.CheckBox(self, -1, 'Use CDS (Gatan K3)')
 		self.framewidges.append(self.usecds)
-		ddsz.Add(self.usecds, (4, 0), (1, 2), wx.ALIGN_CENTER|wx.EXPAND)
+		ddsz.Add(self.usecds, (6, 0), (1, 2), wx.ALIGN_CENTER|wx.EXPAND)
 
 		# align frames box
 		sb = wx.StaticBox(self, -1, 'Frame-Aligning Camera Only')
@@ -225,7 +225,7 @@ class CameraPanel(wx.Panel):
 		afsz.Add(self.alignfilter, (1, 1), (1, 1), wx.ALIGN_CENTER|wx.EXPAND)
 		afsb.Add(afsz, 0, wx.EXPAND|wx.ALL, 2)
 
-		ddsz.Add(afsb, (5, 0), (3, 2), wx.ALIGN_CENTER|wx.EXPAND)
+		ddsz.Add(afsb, (7, 0), (3, 2), wx.ALIGN_CENTER|wx.EXPAND)
 
 		ddsb.Add(ddsz, 0, wx.EXPAND|wx.ALL, 2)
 		ddsz.AddGrowableCol(1)
@@ -589,7 +589,6 @@ class CameraPanel(wx.Panel):
 				if g == 'offset':
 					label = '(%d, %d)'
 				else:
-					#label = '%d � %d'
 					label = '%d x %d'
 				label = label % (self.geometry[g]['x'], self.geometry[g]['y'])
 				getattr(self, 'st' + g).SetLabel(label)
