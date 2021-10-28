@@ -433,6 +433,7 @@ parametermapping = (
 	('frames name', 'PreviousRawFramesName'),
 	('use frames', 'UseFrames'),
 	('frame time', 'FrameTime'),
+	('request nframes', 'RequestNFrames'),
 	('frame flip', 'FrameFlip'),
 	('frame rotate', 'FrameRotate'),
 	('readout delay', 'ReadoutDelay'),
