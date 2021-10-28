@@ -4,6 +4,7 @@ import time
 import pyami.imagefun
 import ccdcamera
 import threading
+from pyscope import moduleconfig
 
 # frame flipping configuration.
 # default here is for DE-20 orientation on JEM-3200FSC
@@ -99,6 +100,7 @@ def de_getImage(de_name):
 
 ##### End thread safe functions to operate on DE Server #####
 
+deconfigs = moduleconfig.getConfigured('de.cfg')
 
 class DECameraBase(ccdcamera.CCDCamera):
 	'''
@@ -127,25 +129,34 @@ class DECameraBase(ccdcamera.CCDCamera):
 		self.setProperty('ROI Offset X', 0)
 		self.setProperty('ROI Offset Y', 0)
 
-	def getProperty(self, name):		
-		value = de_getProperty(self.name, name)
+	def getDEConfig(self, optionname, itemname=None):
+		if itemname is None:
+			return deconfigs[optionname]
+		else:
+			return deconfigs[optionname][itemname]
+
+	def getProperty(self, name):
+		value = de_getProperty(self.model_name, name)
 		return value
 
-	def setProperty(self, name, value):		
-		value = de_setProperty(self.name, name, value)
+	def setProperty(self, name, value):
+		value = de_setProperty(self.model_name, name, value)
 		return value
 
-	def getDictProp(self, name):		
-		return de_getDictProp(self.name, name)
+	def getDictProp(self, name):
+		return de_getDictProp(self.model_name, name)
 
-	def setDictProp(self, name, xydict):		
-		return de_setDictProp(self.name, name, xydict)
+	def setDictProp(self, name, xydict):
+		return de_setDictProp(self.model_name, name, xydict)
 
 	def _getImage(self):
 		old_frames_name = self.getPreviousRawFramesName()
+		self.custom_setup()
 		t0 = time.time()
-		image = de_getImage(self.name)
+		image = de_getImage(self.model_name)
 		t1 = time.time()
+		## Changes done in 2021
+		# self.postAcquisitionSetup()
 		self.exposure_timestamp = (t1 + t0) / 2.0
 		if not isinstance(image, numpy.ndarray):
 			raise ValueError('GetImage did not return array')
@@ -167,8 +178,16 @@ class DECameraBase(ccdcamera.CCDCamera):
 		return ms
 
 	def setExposureTime(self, ms):
-		seconds = ms / 1000.0
-		self.setProperty('Exposure Time (seconds)', seconds)
+		## 12/7/2020 Josh: Fix exposure length problem
+		# seconds = ms / 1000.0
+		# self.setProperty('Exposure Time (seconds)', seconds)
+		if self.name == 'DE64c':
+			frameratevalue = self.getDEConfig(self.name, 'frames_per_second')
+			seconds = ms / 1000.0
+			self.setProperty('Exposure Time (seconds)', seconds)
+		else:
+			seconds = ms / 1000.0
+			self.setProperty('Exposure Time (seconds)', seconds)
 
 	def getDimension(self):
 		return self.dimension
@@ -250,19 +269,21 @@ class DECameraBase(ccdcamera.CCDCamera):
 		self.setProperty('Exposure Mode', value.capitalize()) 
 
 	def getNumberOfFrames(self):
-		result = self.getProperty('Total Number of Frames')
-		#print 'number of frames:', result
+		## Previous property name was 'Total Number of Frames', it was changed to the present
+		result = self.getProperty('Autosave Movie - Frames Written in Last Exposure')
 		return result
 
 	def getSaveRawFrames(self):
 		'''Save or Discard'''
-		value = self.getProperty('Autosave Raw Frames')
+		## Previous property name was 'Autosave Raw Frames', 'Autosave Movie' is used to accommodate counting and integrating modes
+		value = self.getProperty('Autosave Movie')
 		if value == 'Save':
 			return True
 		elif value == 'Discard':
 			return False
 		else:
-			raise ValueError('unexpected value from Autosave Raw Frames: %s' % (value,))
+			## Previous property name was 'Autosave Raw Frames', 'Autosave Movie' is used to accommodate counting and integrating modes
+			raise ValueError('unexpected value from Autosave Movie: %s' % (value,))
 
 	def setSaveRawFrames(self, value):
 		'''True: save frames,  False: discard frames'''
@@ -270,19 +291,25 @@ class DECameraBase(ccdcamera.CCDCamera):
 			value_string = 'Save'
 		else:
 			value_string = 'Discard'
-		self.setProperty('Autosave Raw Frames', value_string)
+		## Previous property name was 'Autosave Raw Frames', 'Autosave Movie' is used to accommodate counting and integrating modes
+		self.setProperty('Autosave Movie', value_string)
 
 	def getPreviousRawFramesName(self):
 		frames_name = self.getProperty('Autosave Frames - Previous Dataset Name')
 		return frames_name
-        
+		
 	def getNumberOfFramesSaved(self):
-		nframes = self.getProperty('Autosave Raw Frames - Frames Written in Last Exposure')
+		## Previous property name was 'Autosave Raw Frames - Frames Written in Last Exposure', 'Autosave Movie ...' is used to accommodate counting and integrating modes
+		nframes = self.getProperty('Autosave Movie - Frames Written in Last Exposure')
 		return int(nframes)
 
 	def getUseFrames(self):
-		nsum = self.getProperty('Autosave Sum Frames - Sum Count')
-		first = self.getProperty('Autosave Sum Frames - Ignored Frames')
+		## In newer version (2.0+) 'Autosave Sum Frames - Ignored Frames' not longer available also, we are using '... Movie ...' now for both camera modes.
+		## Before new server:
+		## first = self.getProperty('Autosave Sum Frames - Ignored Frames')
+		## nsum = self.getProperty('Autosave Sum Frames - Sum Count')
+		nsum = self.getProperty('Autosave Movie - Sum Count')
+		first = self.getProperty('Autosave Movie - Ignored Frames')
 		last = first + nsum
 		ntotal = self.getNumberOfFrames()
 		if last > ntotal:
@@ -304,8 +331,12 @@ class DECameraBase(ccdcamera.CCDCamera):
 		if nsum > total_frames:
 			nsum = total_frames
 		nsum = int(nsum)
-		self.setProperty('Autosave Sum Frames - Sum Count', nsum)
-		self.setProperty('Autosave Sum Frames - Ignored Frames', nskip)
+		## In newer version (2.0+) 'Autosave Sum Frames - Ignored Frames' not longer available also, we are using '... Movie ...' now for both camera modes.
+		## Before new server:
+		## self.setProperty('Autosave Sum Frames - Sum Count', nsum)
+		## self.setProperty('Autosave Sum Frames - Ignored Frames', nskip)
+		self.setProperty('Autosave Movie - Sum Count', nsum)
+		self.setProperty('Autosave Movie - Ignored Frames', nskip)
 
 	def getFrameTime(self):
 		fps = self.getProperty('Frames Per Second')
@@ -341,18 +372,24 @@ class DECameraBase(ccdcamera.CCDCamera):
 
 class DE12Survey(DECameraBase):
 	name = 'DE12 Survey'
+	model_name = 'DE12 Survey'
 	def __init__(self):
 		DECameraBase.__init__(self)
 		self.dimension = {'x': 1024, 'y': 1024}
 
 class DE20Survey(DECameraBase):
 	name = 'DE20 Survey'
+	model_name = 'DE20 Survey'
 	def __init__(self):
 		DECameraBase.__init__(self)
 		self.dimension = {'x': 2048, 'y': 1920}
 
+	def custom_setup(self):
+		return 1
+
 class DD(DECameraBase):
 	name = 'DD'
+	model_name = 'DD'
 	def __init__(self):
 		'''
 		DD camera
@@ -365,9 +402,10 @@ class DD(DECameraBase):
 		self.as_super.__init__()
 		self.setProperty('Ignore Number of Frames', 0)
 		self.default_frametime = 40
+		self.requestnframes = 1
 		self.setFrameTime(self.default_frametime)
 		frame_time_ms = self.getFrameTime()
-		self.setProperty('Preexposure Time (seconds)', frame_time_ms/1000.0)		
+		self.setProperty('Preexposure Time (seconds)', frame_time_ms/1000.0)
 
 	def finalizeGeometry(self, image):
 		image = self.as_super.finalizeGeometry(image)
@@ -393,20 +431,181 @@ class DD(DECameraBase):
 		'''
 		return FRAME_ROTATE + 2
 
+	def setElectronCounting(self, state):
+		self.setProperty('Electron Counting', state)
+
+	def getElectronCounting(self):
+		return self.getProperty('Electron Counting')
+
+	def setSensorHardwareBinning(self, state):
+		self.setProperty('Sensor Hardware Binning', state)
+
+	def getSensorHardwareBinning(self):
+		return self.getProperty('Sensor Hardware Binning')
+
+	def setHardwareBinning(self, value):
+		self.setProperty('Binning X', value)
+		self.setProperty('Binning Y', value)
+
+	def getHardwareBinning(self):
+		x = self.getProperty('Binning X')
+		y = self.getProperty('Binning Y')
+		return {'x': x, 'y': y}
+
+	def setECApplyCountingGain(self, state):
+		self.setProperty('Electron Counting - Apply Post-Counting Gain', state)
+
+	def getECApplyCountingGain(self):
+		return self.getProperty('Electron Counting - Apply Post-Counting Gain')
+
+	def setFramesPerSecond(self, value):
+		self.setProperty('Frames Per Second', value)
+
+	def getFramesPerSecond(self):
+		return self.getProperty('Frames Per Second')
+
+	def setECDoseFractionationNumberFrames(self, name):
+		value = self.getDEConfig(name, 'dose_fractionation_number_of_frames')
+		self.setProperty('Electron Counting - Dose Fractionation Number of Frames', value)
+
+	def getECDoseFractionationNumberFrames(self):
+		return self.getProperty('Electron Counting - Dose Fractionation Number of Frames')
+
+	def getECThreshold(self):
+		if self.getHardwareBinning().get('y') > 1 :
+			return self.getProperty('Electron Counting - Threshold for Bin2x')
+		else :
+			return self.getProperty('Electron Counting - Threshold for Bin1x')
+
+	def countingSetUp(self):
+		binvalue = self.getDEConfig(self.name, 'binning')
+		frameratevalue = self.getDEConfig(self.name, 'frames_per_second')
+		self.setElectronCounting('Enable')
+		self.setHardwareBinning(binvalue)
+		self.setProperty('Correction Mode', 'Gain and Dark Corrected')
+		self.setFramesPerSecond(frameratevalue)
+
+	def setRequestNFrames(self, value):
+		self.requestnframes = value
+
+	def getRequestNFrames(self):
+		return self.requestnframes
+
+	def setCalculatedFractionNumber(self):
+		# Calculation for the Fractionation Number for movie creation
+		numframes = self.getRequestNFrames()
+		seconds = self.getProperty('Exposure Time (seconds)')
+		ms = int(seconds * 1000.0)
+		fps = self.getFramesPerSecond()
+		fpms = fps / 1000.0
+		baseframetime = 1 / fpms
+		nfractionation = int(round(ms / (baseframetime * numframes)))
+		self.setProperty('Electron Counting - Dose Fractionation Number of Frames', nfractionation)
+
+	def postAcquisitionSetup(self):
+		if self.name == 'DE64c':
+			# It resets the movie frame time to its original value
+			nfractionation = self.getECDoseFractionationNumberFrames()
+			frame_time_ms = self.getFrameTime() * nfractionation
+			###Fix Exposure Length
+			#self.setProperty('Electron Counting - Dose Fractionation Number of Frames', 1)
+			###
+			self.setFrameTime(frame_time_ms)
+
 class DE12(DD):
 	name = 'DE12'
+	model_name = 'DE12'
 
 class DE20(DD):
 	name = 'DE20'
+	model_name = 'DE20'
 	def getPixelSize(self):
 		psize = 6.4e-6
 		return {'x': psize, 'y': psize}
 
-class DE64(DD):
-	name = 'DE64'
+	def getSystemGainDarkCorrected(self):
+		## Allows for the DE server to do the gain corrections, otherwise leginon will do the corrections
+		return True
+
+	def getBinning(self):
+		return self.getHardwareBinning()
+
+	def setBinning(self, bindict):
+		self.setHardwareBinning(bindict['x'])
+
+	def custom_setup(self):
+		'''DE20 Integration specific camera setting'''
+		self.setSensorHardwareBinning('Enable')
+		self.setElectronCounting('Disable')
+		self.setProperty('Correction Mode', 'Gain and Dark Corrected')
+		self.setProperty('Electron Counting - Dose Fractionation Number of Frames', 1)
+
+class DE20c(DD):
+	name = 'DE20c'
+	model_name = 'DE20'
+	def getPixelSize(self):
+		psize = 6.4e-6
+		return {'x': psize, 'y': psize}
+
+	def getSystemGainDarkCorrected(self):
+		## Allows for the DE server to do the gain corrections, otherwise leginon will do the corrections
+		return True
+
+	def custom_setup(self):
+		'''DE20 Counting specific camera setting'''
+		self.setSensorHardwareBinning('Enable')
+		self.countingSetUp()
+		self.setCalculatedFractionNumber()
+
+class DE16(DD):
+	name = 'DE16'
+	model_name = 'DE16'
 	def getPixelSize(self):
 		psize = 6.5e-6
 		return {'x': psize, 'y': psize}
+
+	def getSystemGainDarkCorrected(self):
+		## Allows for the DE server to do the gain corrections, otherwise leginon will do the corrections
+		return True
+
+	def getBinning(self):
+		return self.getHardwareBinning()
+
+	def setBinning(self, bindict):
+		self.setHardwareBinning(bindict['x'])
+
+	def custom_setup(self):
+		'''DE16 Integration specific camera setting'''
+		self.setSensorHardwareBinning('Enable')
+		self.setElectronCounting('Disable')
+		self.setProperty('Correction Mode', 'Gain and Dark Corrected')
+		self.setProperty('Electron Counting - Dose Fractionation Number of Frames', 1)
+
+class DE16c(DD):
+	name = 'DE16c'
+	model_name = 'DE16'
+
+	def getPixelSize(self):
+		psize = 6.5e-6
+		return {'x': psize, 'y': psize}
+
+	def getSystemGainDarkCorrected(self):
+		## Allows for the DE server to do the gain corrections, otherwise leginon will do the corrections
+		return True
+
+	def custom_setup(self):
+		'''DE16 Counting specific camera setting'''
+		self.setSensorHardwareBinning('Enable')
+		self.countingSetUp()
+		self.setCalculatedFractionNumber()
+
+class DE64(DD):
+	name = 'DE64'
+	model_name = 'DE64'
+	def getPixelSize(self):
+		psize = 6.5e-6
+		return {'x': psize, 'y': psize}
+
 	def getFrameRotate(self):
 		'''
 		Frame Rotate direction is defined as x to -y rotation applied after up-down flip
@@ -414,3 +613,44 @@ class DE64(DD):
 		'''
 		return FRAME_ROTATE
 
+	def getSystemGainDarkCorrected(self):
+		## Allows for the DE server to do the gain corrections, otherwise leginon will do the corrections
+		return True
+
+	def getBinning(self):
+		return self.getHardwareBinning()
+
+	def setBinning(self, bindict):
+		self.setHardwareBinning(bindict['x'])
+
+	def custom_setup(self):
+		'''DE64 Integration specific camera setting'''
+		self.setSensorHardwareBinning('Enable')
+		self.setElectronCounting('Disable')
+		self.setProperty('Correction Mode', 'Gain and Dark Corrected')
+		self.setProperty('Electron Counting - Dose Fractionation Number of Frames', 1)
+
+class DE64c(DD):
+	name = 'DE64c'
+	model_name = 'DE64'
+
+	def getPixelSize(self):
+		psize = 6.5e-6
+		return {'x': psize, 'y': psize}
+
+	def getSystemGainDarkCorrected(self):
+		## Allows for the DE server to do the gain corrections, otherwise leginon will do the corrections
+		return True
+
+	def getFrameRotate(self):
+		'''
+		Frame Rotate direction is defined as x to -y rotation applied after up-down flip
+		Scott said this should be zero when FRAME_ROTATE is defined as zero in DE MicroManager.
+		'''
+		return FRAME_ROTATE
+
+	def custom_setup(self):
+		'''DE64 Counting specific camera setting'''
+		self.setSensorHardwareBinning('Enable')
+		self.countingSetUp()
+		self.setCalculatedFractionNumber()
