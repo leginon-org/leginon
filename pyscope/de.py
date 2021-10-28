@@ -155,7 +155,8 @@ class DECameraBase(ccdcamera.CCDCamera):
 		t0 = time.time()
 		image = de_getImage(self.model_name)
 		t1 = time.time()
-		self.postAcquisitionSetup()
+		## Changes done in 2021
+		# self.postAcquisitionSetup()
 		self.exposure_timestamp = (t1 + t0) / 2.0
 		if not isinstance(image, numpy.ndarray):
 			raise ValueError('GetImage did not return array')
@@ -177,8 +178,16 @@ class DECameraBase(ccdcamera.CCDCamera):
 		return ms
 
 	def setExposureTime(self, ms):
-		seconds = ms / 1000.0
-		self.setProperty('Exposure Time (seconds)', seconds)
+		## 12/7/2020 Josh: Fix exposure length problem
+		# seconds = ms / 1000.0
+		# self.setProperty('Exposure Time (seconds)', seconds)
+		if self.name == 'DE64c':
+			frameratevalue = self.getDEConfig(self.name, 'frames_per_second')
+			seconds = ms / 1000.0
+			self.setProperty('Exposure Time (seconds)', seconds)
+		else:
+			seconds = ms / 1000.0
+			self.setProperty('Exposure Time (seconds)', seconds)
 
 	def getDimension(self):
 		return self.dimension
@@ -632,6 +641,13 @@ class DE64c(DD):
 	def getSystemGainDarkCorrected(self):
 		## Allows for the DE server to do the gain corrections, otherwise leginon will do the corrections
 		return True
+
+	def getFrameRotate(self):
+		'''
+		Frame Rotate direction is defined as x to -y rotation applied after up-down flip
+		Scott said this should be zero when FRAME_ROTATE is defined as zero in DE MicroManager.
+		'''
+		return FRAME_ROTATE
 
 	def custom_setup(self):
 		'''DE64 Counting specific camera setting'''
