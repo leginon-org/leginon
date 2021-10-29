@@ -171,6 +171,13 @@ class Tomography(leginon.acquisition.Acquisition):
 				s = 'Exposure time range: %g to %g seconds.' % exposure_range
 				self.logger.info(s)
 
+	def getTiltDefocusDelta(self, temdata):
+		r = leginon.leginondata.TiltDefocusCalibrationData(tem=temdata).query(results=1)
+		if r:
+			return r[0]
+		else:
+			return None
+
 	def update(self):
 		'''
 		Update values for data collection from settings
@@ -205,6 +212,11 @@ class Tomography(leginon.acquisition.Acquisition):
 				
 		self.logger.info('Pixel size: %g meters.' % pixel_size)
 
+		cal = self.getTiltDefocusDelta(presetdata['tem'])
+		if cal:
+			self.prediction.setCalibratedDefocusDeltas(cal['tilts'],cal['defocus deltas'])
+		else:
+			self.prediction.setCalibratedDefocusDeltas([-math.pi/2,math.pi/2],[0.0,0.0])
 		try:
 			self.update()
 		except LimitError:

@@ -2534,7 +2534,7 @@ class TomographyPredictionData(InSessionData):
 		)
 	typemap = classmethod(typemap)
 
-class TiltDefocusDeltaData(InSessionData):
+class TiltDefocusCalibrationData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
 			('tem', InstrumentData),

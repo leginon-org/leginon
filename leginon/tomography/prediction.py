@@ -528,15 +528,18 @@ class Prediction(object):
 			position[i] = self._leastSquaresXY(tilts[-n:], positions[-n:], tilt)
 		return position
 
+	def setCalibratedDefocusDeltas(self, tilts, deltas):
+		'''
+		Sorted tilts and defecus deltas. Tilts are in radians. Underfocus is positive.
+		'''
+		if len(tilts) != len(deltas):
+			raise ValueError('Number of alibrated delta defocii and tilts not matched')
+		self.cal_tilts = tilts
+		self.cal_deltas = deltas
+
 	def getCalibratedDefocusDelta(self, tilt):
 		# underfocus is positive in deltas
-		deltas = {0.0: 0.0, 3.0: -1.2524000000000288e-08, 6.0: -1.2038100000000018e-07, 9.0: -1.3381800000000023e-07, 12.0: -2.5520200000000033e-07, 15.0: -3.0929200000000025e-07, 18.0: -4.0757500000000034e-07, 21.0: -5.547550000000002e-07, 24.0: -7.218140000000002e-07, 27.0: -8.660500000000003e-07, 30.0: -1.0006599999999998e-06, 33.0: -1.11226875e-06, 36.0: -1.2265937500000002e-06, 39.0: -1.47819875e-06, 42.0: -1.6672400000000002e-06, 45.0: -1.9189837500000003e-06, 48.0: -1.2960420000000003e-06, 51.0: -2.0832340000000003e-06, -51.0: 1.5788050000000002e-06, -48.0: 1.3313649999999997e-06, -45.0: 1.3783259999999999e-06, -42.0: 1.3432569999999998e-06, -39.0: 1.254796e-06, -36.0: 1.1277599999999998e-06, -33.0: 9.647730000000002e-07, -30.0: 8.111979999999998e-07, -27.0: 6.97479e-07, -24.0: 5.511239999999998e-07, -21.0: 4.4876999999999986e-07, -18.0: 3.8057299999999995e-07, -15.0: 2.5922199999999986e-07, -12.0: 1.4066399999999997e-07, -9.0: 1.417159999999997e-07, -6.0: 1.0302999999999959e-07, -3.0: 8.931999999999985e-08}
-		# round to first digit in degrees
-		round_tilt = round(math.degrees(tilt),2)
-		if round_tilt in deltas.keys():
-			return deltas[round_tilt]
 		# interpolate
-		xp = deltas.keys()
-		xp.sort()
-		fp = map((lambda x: deltas[x]),xp)
-		return numpy.interp(math.degrees(tilt), xp, fp)
+		xp = self.cal_tilts
+		fp = self.cal_deltas
+		return numpy.interp(tilt, xp, fp)

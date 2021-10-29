@@ -54,7 +54,7 @@ class TiltCtfUploader(object):
 		return alpha_keys, ctfs
 
 	def saveAlphaCtfs(self, alphas, ctfs):
-		q = leginondata.TiltDefocusDeltaData(session=self.image['session'],tem=self.image['scope']['tem'])
+		q = leginondata.TiltDefocusCalibrationData(session=self.image['session'],tem=self.image['scope']['tem'])
 		q['tilts'] = list(map((lambda x: math.radians(x)),alphas))
 		q['defocus deltas'] = ctfs
 		q['reference tilt'] = self.tilt0
