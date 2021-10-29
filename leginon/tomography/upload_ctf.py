@@ -14,6 +14,12 @@ class TiltCtfUploader(object):
 		alphas, ctfs = self.parseCtfData(lines)
 		self.saveAlphaCtfs(alphas, ctfs)
 
+	def readCtfData(self, filepath):
+		f = open(filepath,'r')
+		lines = f.readlines()
+		f.close()
+		return lines
+
 	def getFirstImageData(self, line):
 		bits = line.split('\t')
 		image_id = int(bits[0])
@@ -36,7 +42,7 @@ class TiltCtfUploader(object):
 	def parseCtfData(self, lines):
 		ctfdict = {}
 		for l in lines[1:]:
-			alpha_degress, avg_def = self._parse(l)
+			alpha_degrees, avg_def = self._parse(l)
 			if abs(float(alpha_degrees)-self.tilt_ref*180.0/math.pi) < 0.5:
 				def0 = avg_def
 				self.tilt0 = alpha_degrees*math.pi/180.0
