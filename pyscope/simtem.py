@@ -29,6 +29,7 @@ class SimTEM(tem.TEM):
 		tem.TEM.__init__(self)
 
 		self.high_tension = 120000.0
+		self.cfeg_flashing = 0
 
 		self.magnifications = [
 			50,
@@ -181,6 +182,32 @@ class SimTEM(tem.TEM):
 
 	def setHighTension(self, value):
 		self.high_tension = value
+
+	def getColdFegFlashing(self):
+		value = self.cfeg_flashing
+		value_map = [('error', -1), ('off',0),('on',1)]
+		if value == -1:
+			raise RuntimeError('CFEG Flashing in error state')
+		values = map((lambda x: x[1]), value_map)
+		state = value_map[values.index(value)][0]
+		return state
+
+	def setColdFegFlashing(self, state):
+		# On starts flashing, Off stops flashing
+		if state == self.getColdFegFlashing():
+			# do nothing
+			return
+		value_map = [('off',0), ('on',1)]
+		states = map((lambda x: x[0]), value_map)
+		value = value_map[states.index(state)][1]
+		self.cfeg_flashing = value
+		# TODO: how long before the the state change in get ?
+		time.sleep(5)
+		if state == 'on':
+			while self.getColdFegFlashing() == 'on':
+				time.sleep(5)
+				self.cfeg_flashing = 0
+		return
 
 	def getStagePosition(self):
 		try:
