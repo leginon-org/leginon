@@ -372,7 +372,7 @@ class Tomography(leginon.acquisition.Acquisition):
 		if self.settings['disable backlash correction']:
 			# TFS autoloader stage has even weight, and should not need backlash correction.
 			sleep_time = max(self.settings['backlash pause time'], 1.0)
-			self.logger.info('pausing %.2f s before acquiring image' % (sleep_time))
+			self.logger.info('pausing %.2f s before acquiring first image' % (sleep_time))
 			time.sleep(sleep_time)
 			return
 		self.logger.info('Removing tilt backlash...')
