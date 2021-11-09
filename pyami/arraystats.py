@@ -57,8 +57,7 @@ def wrap_allstats(stat):
 				print('Stats calculated on %d X decimated image' % (dec,))  # no access to logger
 				result = numextension.allstats(b, **kwargs)
 		except:
-			result = allstats(b, **kwargs)
-			print "except"
+			result = allstats(a, **kwargs)
 		if stat != 'all':
 			result = result[stat]
 		return result
