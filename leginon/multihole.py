@@ -115,9 +115,10 @@ class TemplateConvolver(object):
 		self.setNumberOfPoints(npoint)
 		self.setSingleTemplateScale(single_scale)
 
-	def setSquareUnitVector(self, spacing, angle):
+	def setSquareUnitVector(self, spacing, angle_degrees):
 		self.setLatticeSpacing(spacing)
-		self.setLatticeAngle(angle)
+		self.setLatticeAngle(angle_degrees)
+		angle = self.lattice_angle
 		unit_vector = numpy.array((spacing*math.sin(angle), -spacing*math.cos(angle),spacing*math.cos(angle),spacing*math.sin(angle)))
 		self.setUnitVector(unit_vector.reshape((2,2)))
 
