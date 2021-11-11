@@ -57,19 +57,7 @@ def wrap_allstats(stat):
 				print('Stats calculated on %d X decimated image' % (dec,))  # no access to logger
 				result = numextension.allstats(b, **kwargs)
 		except:
-			b = numpy.asanyarray(a, dtype=numpy.float64)
-			if b.size < 16777216:  #4K * 4K
-				result = numextension.allstats(b, **kwargs)
-			else:
-				dec=4   # decimation factor
-				if b.size >= 67108864:  # ie >=8k x 8k
-					dec=8
-				c = b[::dec,::dec]
-				#self.logger.info('Stats calculated on %d X decimated image' % (dec,))
-				print('Stats calculated on %d X decimated image' % (dec,))
-				result = numextension.allstats(c, **kwargs)
-			#result = allstats(b, **kwargs)
-			print "except"
+			result = allstats(a, **kwargs)
 		if stat != 'all':
 			result = result[stat]
 		return result

@@ -237,6 +237,7 @@ camera_params = (
 	('frames name', str),
 	('use frames', tuple),
 	('frame time', float),
+	('request nframes', int),
 	('frame flip', bool),
 	('frame rotate', int),
 	('temperature', float),
@@ -622,6 +623,7 @@ class PresetData(InSessionData):
 			('alt channel', bool),
 			('save frames', bool),
 			('frame time', float),
+			('request nframes', int),
 			('align frames', bool),
 			('align filter', str),
 			('use frames', tuple),
@@ -1471,6 +1473,7 @@ class CameraSettingsData(Data):
 			('exposure time', float),
 			('save frames', bool),
 			('frame time', float),
+			('request nframes', int),
 			('align frames', bool),
 			('align filter', str),
 			('use frames', tuple),
@@ -2530,6 +2533,7 @@ class TomographySettingsData(AcquisitionSettingsData):
 			('max exposure', float),
 			('mean threshold', float),
 			('collection threshold', float),
+			('disable backlash correction', bool),
 			('tilt pause time', float),
 			('backlash pause time', float),
 			('measure defocus', bool),
@@ -3057,6 +3061,7 @@ class AutoFillerSettingsData(ConditionerSettingsData):
 class TEMControllerSettingsData(SettingsData):
 	def typemap(cls):
 		return SettingsData.typemap() + (
+			('retract obj ap on grid changing', bool),
 		)
 	typemap = classmethod(typemap)
 

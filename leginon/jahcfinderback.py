@@ -43,7 +43,7 @@ class HoleFinder(object):
 	Do the processes step by step, or the whole thing:
 		hf.find_holes()
 	'''
-	def __init__(self):
+	def __init__(self, is_testing=False):
 		## These are the results that are maintained by this
 		## object for external use through the __getitem__ method.
 		self.__results = {
@@ -86,7 +86,7 @@ class HoleFinder(object):
 		self.icecalc = ice.IceCalculator()
 
 		## some default configuration parameters
-		self.save_mrc = False
+		self.save_mrc = is_testing
 		self.template_config = {'template filename':'', 'template diameter':168, 'file diameter':168, 'invert':False, 'min':0.0, 'multiple':1, 'spacing': 100.0, 'angle':0.0}
 		self.correlation_config = {'cortype': 'cross', 'corfilt': (1.0,),'cor_image_min':0.0}
 		self.threshold = 3.0
@@ -115,6 +115,11 @@ class HoleFinder(object):
 			self.__update_result(depkey, None)
 		## update this result
 		self.__results[key] = image
+
+	def saveTestMrc(self, img, mrc_name):
+		if self.save_mrc:
+			print('saving %s' % mrc_name)
+			mrc.write(img, mrc_name)
 
 	def configure_template(self, diameter=None, filename=None, filediameter=None, invert=False, multiple=1, spacing=100.0, angle=0.0):
 		if diameter is not None:
@@ -164,9 +169,11 @@ class HoleFinder(object):
 		# multiple hole template generation
 		self.multiconvolver.setSingleTemplate(tempim)
 		self.multiconvolver.setConfig(self.template_config['multiple'], scale)
-		self.multiconvolver.setSquareUnitVector(self.template_config['spacing'], self.template_config['angle'])
+		angle_degrees = self.template_config['angle']
+		self.multiconvolver.setSquareUnitVector(self.template_config['spacing'], angle_degrees)
 
 		tempim = self.multiconvolver.makeMultiTemplate()
+		self.saveTestMrc(tempim, 'multitemplate.mrc')
 		# create template of proper size
 		shape = self.__results[fromimage].shape
 
@@ -189,8 +196,7 @@ class HoleFinder(object):
 
 		template = template.astype(numpy.float32)
 		self.__update_result('template', template)
-		if self.save_mrc:
-			mrc.write(template, 'template.mrc')
+		self.saveTestMrc(template, 'template.mrc')
 
 	def configure_correlation(self, cortype=None, corfilt=None,cor_image_min=0):
 		if cortype is not None:
@@ -236,8 +242,7 @@ class HoleFinder(object):
 			self.convolver.setKernel(kernel)
 			cc = self.convolver.convolve(image=cc)
 		self.__update_result('correlation', cc)
-		if self.save_mrc:
-			mrc.write(cc, 'correlation.mrc')
+		self.saveTestMrc(cc, 'correlation.mrc')
 
 	def configure_threshold(self, threshold=None, threshold_method=None):
 		if threshold is not None:
@@ -264,8 +269,7 @@ class HoleFinder(object):
 
 		t = imagefun.threshold(cc, thresh)
 		self.__update_result('threshold', t)
-		if self.save_mrc:
-			mrc.write(t, 'threshold.mrc')
+		self.saveTestMrc(t, 'threshold.mrc')
 
 	def configure_blobs(self, border=None, maxblobs=None, maxblobsize=None, minblobsize=None):
 		if border is not None:
@@ -403,8 +407,30 @@ class HoleFinder(object):
 			coord = hole.stats['center']
 			imagefun.mark_image(im, coord, value)
 		self.__update_result('markedholes', im)
-		if self.save_mrc:
-			mrc.write(im, 'markedholes.mrc')
+		self.saveTestMrc(im, 'markedholes.mrc')
+
+	def get_hole_stats(self, image, coord, radius):
+		## select the region of interest
+		rmin = int(coord[0]-radius)
+		rmax = int(coord[0]+radius)
+		cmin = int(coord[1]-radius)
+		cmax = int(coord[1]+radius)
+		## beware of boundaries
+		if rmin < 0 or rmax >= image.shape[0] or cmin < 0 or cmax > image.shape[1]:
+			return None
+
+		subimage = image[rmin:rmax+1, cmin:cmax+1]
+		self.saveTestMrc(subimage, 'hole.mrc')
+		center = subimage.shape[0]/2.0, subimage.shape[1]/2.0
+		mask = self.circle.get(subimage.shape, center, 0, radius)
+		self.saveTestMrc(mask, 'holemask.mrc')
+		im = numpy.ravel(subimage)
+		mask = numpy.ravel(mask)
+		roi = numpy.compress(mask, im)
+		mean = arraystats.mean(roi)
+		std = arraystats.std(roi)
+		n = len(roi)
+		return {'mean':mean, 'std': std, 'n':n}
 
 	def configure_holestats(self, radius=None):
 		if radius is not None:
@@ -486,13 +512,15 @@ class HoleFinder(object):
 		#self.calc_ice()
 
 if __name__ == '__main__':
-	from pyami import mrc
+	import os, math
+	from pyami import numpil
 	#hf = HoleFinder(9,1.4)
-	hf = HoleFinder()
-	mrc_path = '/Users/acheng/testdata/leginon/21aug27y/rawdata/21aug27y_i_00005gr_00023sq.mrc'
-	hf['original'] = mrc.read(mrc_path)
-	#hf['original'] = mrc.read('03sep16a/03sep16a.001.mrc')
+	leginon_dir = os.path.dirname(os.path.abspath(__file__))
+	hf = HoleFinder(is_testing=True)
+	hf['original'] = numpil.read(os.path.join(leginon_dir,'sq_example.jpg'))
 	hf.threshold = 1.6
-	hf.configure_template(diameter=128, filename='/Users/acheng/myami/leginon/holetemplate.mrc', filediameter=128)
+	template_file= os.path.join(leginon_dir,'holetemplate.mrc')
+	hf.configure_template(diameter=29, filename=template_file, filediameter=168, multiple=9, spacing=200.0,angle=15.0)
 	hf.configure_lattice(tolerance=0.08, spacing=122)
+	print('saved test mrc imagings in current directory')
 	hf.find_holes()
