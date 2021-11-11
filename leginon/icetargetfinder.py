@@ -88,13 +88,26 @@ class IceTargetFinder(targetfinder.TargetFinder):
 		return centers
 
 	def findHoles(self):
+		'''
+		Find holes with subclass self._findHoles, calculate stats and display
+		as Holes in gui.
+		'''
 		self.logger.info('find blobs')
 		try:
+			# _findHoles is the subclass hole finder.
 			self._findHoles()
+			# now calculate holestats of 'holes' result using the back icecalculator
 			r = self.settings['lattice hole radius']
 			i0 = self.settings['lattice zero thickness']
 			self.icecalc.set_i0(i0)
-			targets = self. getTargetsWithStats(r)
+			self.hf.configure_holestats(radius=r)
+			try:
+				self.hf.calc_holestats(input_name='holes')
+				targets = self. getTargetsWithStats(input_name='holes')
+			except Exception as e:
+				self.logger.error(e)
+				targets = []
+			# set targets found in self._results['holes']
 			self.logger.info('Number of holes: %s' % (len(targets),))
 			self.setTargets(targets, 'Hole')
 		except Exception as e:
@@ -116,7 +129,6 @@ class IceTargetFinder(targetfinder.TargetFinder):
 		'''
 		targets = []
 		for hole in holes:
-
 			mean = float(hole.stats['hole_mean'])
 			tmean = self.icecalc.get_thickness(mean)
 			std = float(hole.stats['hole_std'])
@@ -135,16 +147,10 @@ class IceTargetFinder(targetfinder.TargetFinder):
 			targets.append(target)
 		return targets
 
-	def getTargetsWithStats(self, stats_radius, input_name='holes'):
+	def getTargetsWithStats(self, input_name='holes'):
 		'''
 		Return targets with some stats in a dictionary item for displaying in gui
 		'''
-		self.hf.configure_holestats(radius=stats_radius)
-		try:
-			self.hf.calc_holestats()
-		except Exception, e:
-			self.logger.error(e)
-			return
 		holes = self.hf[input_name]
 		targets = self.holeStatsTargets(holes)
 		return targets
@@ -158,16 +164,19 @@ class IceTargetFinder(targetfinder.TargetFinder):
 			return
 		# self.hf['holes'] has holestats such as hole_mean but not i0-related values
 		orig_holes = self.hf['holes']
+		self.filterIce(input_name='holes')
+		self.focus_hole_index = None
 		focus_points = self.filterIceForFocus()
 		if self.settings['target template']:
 			focus_points = self.handleTemplate(focus_points)
 		r = self.settings['lattice hole radius']
-		acq_points = self.getTargetsWithStats(r, 'holes2')
+		acq_points = self.getTargetsWithStats('holes2')
 		# display and save preferences and hole stats
 		self.setTargets(acq_points, 'acquisition', block=True)
 		self.setTargets(focus_points, 'focus', block=True)
 		self.logger.info('Acquisition Targets: %s' % (len(acq_points),))
 		self.logger.info('Focus Targets: %s' % (len(focus_points),))
+
 		# save to database
 		if type(self.currentimagedata) == type(leginondata.AcquisitionImageData()):
 			hfprefs = self.storeHoleFinderPrefsData(self.currentimagedata)
@@ -199,8 +208,8 @@ class IceTargetFinder(targetfinder.TargetFinder):
 		'''
 		return focus_points using hole2 statistics.
 		'''
+		self.focus_hole_index = None
 		# calculate ice thickness with good holes saved in holes2
-		self.filterIce()
 		goodholes = self.hf['holes2']
 		centers = self.blobCenters(goodholes)
 		allcenters = self.blobCenters(self.hf['holes'])
@@ -230,6 +239,7 @@ class IceTargetFinder(targetfinder.TargetFinder):
 					if index is not False:
 						# used one of the good hole since there was no bad ones
 						self.hf['holes2'].pop(index)
+						self.focus_hole_index = index
 				elif onehole == 'Good Hole':
 					if len(centers) < 2:
 						self.logger.info('need more than one good hole if you want to focus on one of them')
@@ -240,6 +250,7 @@ class IceTargetFinder(targetfinder.TargetFinder):
 						focus_points.append(fochole)
 						if index is not False:
 							self.hf['holes2'].pop(index)
+							self.focus_hole_index = index
 
 		if not self.settings['filter ice on convolved']:
 			self.logger.info('Holes with good ice: %s' % (len(centers),))
@@ -251,6 +262,7 @@ class IceTargetFinder(targetfinder.TargetFinder):
 		and ice filtering. Input focus_points are pre-existing ones.  The
 		returned focus_points includes both pre-existing and convolved ones.
 		'''
+		self.logger.info('handling target template convolution')
 		if not self.foc_activated:
 			focus_points = []
 		else:
@@ -267,7 +279,8 @@ class IceTargetFinder(targetfinder.TargetFinder):
 		and ice filtering. Input focus_points are pre-existing ones.  The
 		returned focus_points includes both pre-existing and convolved ones.
 		'''
-		focus_points = self._makeConvolvedPoints('focus', focus_points)
+		convolved_holes2 = self._makeConvolvedHoles2('focus')
+		focus_points = self._holesToCenters(convolved_holes2, focus_points)
 		if len(focus_points) > 1 and self.settings['focus template thickness']:
 			# need just one focus point
 			try:
@@ -284,9 +297,12 @@ class IceTargetFinder(targetfinder.TargetFinder):
 		Handle acquisition templates. Perform convolution
 		and ice filtering.  Results are saved in holes2
 		'''
-		acq_points = self._makeConvolvedPoints('acquisition', [])
 		if self.settings['filter ice on convolved']:
+			self._makeConvolvedHoles2('acquisition','holes')
 			self.iceOnConvolved() # results in holes2
+		else:
+			self.hf.filter_good('holes')
+			self._makeConvolvedHoles2('acquisition','holes2')
 		return
 
 	def _getStatsKeys(self):
@@ -295,7 +311,7 @@ class IceTargetFinder(targetfinder.TargetFinder):
 		'''
 		return []
 
-	def _makeConvolvedPoints(self,acq_type='acquisition', existing_points=[]):
+	def _makeConvolvedHoles2(self,acq_type='acquisition', input_name='holes'):
 		'''
 		Convolve template with holes to save as holes2. Return the centers as
 		(x,y) points
@@ -303,12 +319,15 @@ class IceTargetFinder(targetfinder.TargetFinder):
 		if self.settings['target template']:
 		# takes x,y instead of row,col
 			setting_name = '%s template' % acq_type
-			# conolve_config acq_vect needs (row, col)y
-			acq_vect = self.hf.swapxy(self.settings[setting_name])
-			self.hf.configure_convolve(acq_vect=acq_vect)
-			self.hf.make_convolved()
+			# conolve_config conv_vect needs (row, col)
+			vect = self.hf.swapxy(self.settings[setting_name])
+			self.hf.configure_convolve(conv_vect=vect)
+			self.hf.make_convolved(input_name)
 		goodholes = self.hf['holes2']
-		acq_points = self.blobCenters(goodholes)
+		return goodholes
+
+	def _holesToCenters(self, holes, existing_points):
+		acq_points = self.blobCenters(holes)
 		acq_points.extend(existing_points)
 		return acq_points
 
@@ -354,7 +373,7 @@ class IceTargetFinder(targetfinder.TargetFinder):
 
 	def focus_on_hole(self, good, all_xy, apply_offset=False):
 		'''
-		return focpoint through three criteria
+		return closest_point through three criteria
 		1. the bad hole closes to the centroid
 		2. a good hole closes to the centroid
 		'''
@@ -367,7 +386,7 @@ class IceTargetFinder(targetfinder.TargetFinder):
 			return closest_point
 		# Have at least two points to choose from.
 		centroid = self.centroid(all_xy)
-		focpoint = None
+		closest_point = None
 
 		## make a list of the bad holes
 		bad = []
@@ -381,7 +400,8 @@ class IceTargetFinder(targetfinder.TargetFinder):
 			return closest, False
 		else:
 			## now use a good hole for focus
-			return self.closestToPoint(good, centroid, apply_offset)
+			closest, focus_index =  self.closestToPoint(good, centroid, apply_offset)
+			return closest, focus_index
 
 	def closestToPoint(self, points, centroid, apply_offset):
 		'''
@@ -402,8 +422,8 @@ class IceTargetFinder(targetfinder.TargetFinder):
 				closest_point = point
 				closest_point_index = p
 		# This in-place pop changes the input points
-		points.pop(p)
-		return closest_point, p
+		points.pop(closest_point_index)
+		return closest_point, closest_point_index
 
 	def offsetFocus(self, point):
 		'''
@@ -436,20 +456,20 @@ class IceTargetFinder(targetfinder.TargetFinder):
 			tary = rc_center[0]
 			vect = (tarx, tary)
 			if tarx < 0 or tarx >= imshape[1] or tary < 0 or tary >= imshape[0]:
-				self.logger.info('skipping template point %s: out of image bounds' % (vect,))
+				self.logger.debug('skipping template point %s: out of image bounds' % (vect,))
 				continue
 			if self.settings['focus template thickness']:
 				if tstdmin is None:
 					tstdmin = 0.0
 				stats = self.hf.calc_center_holestats(rc_center, self.hf['original'], rad)
 				if stats is None:
-					self.logger.info('skipping template point %s:  stats region out of bounds' % (vect,))
+					self.logger.debug('skipping template point %s:  stats region out of bounds' % (vect,))
 					continue
 				tm = self.icecalc.get_thickness(stats['mean'])
 				ts = self.icecalc.get_stdev_thickness(stats['std'], stats['mean'])
 				self.logger.info('template point %s stats:  mean: %s, stdev: %s' % (vect, tm, ts))
 				if (tmin <= tm <= tmax) and (ts >= tstdmin) and (ts < tstdmax):
-					self.logger.info('template point %s passed thickness test' % (vect,))
+					self.logger.debug('template point %s passed thickness test' % (vect,))
 					good_focuscenters.append(rc_center)
 		return self.hf.swapxy(good_focuscenters)
 
