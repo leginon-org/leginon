@@ -50,6 +50,8 @@ class IceTargetFinder(targetfinder.TargetFinder):
 		'focus offset row': 0,
 		'focus offset col': 0,
 		'filter ice on convolved': False,
+		'sampling targets': False,
+		'max sampling': 100,
 	})
 	targetnames = targetfinder.TargetFinder.targetnames + ['Hole']
 	def __init__(self, id, session, managerlocation, **kwargs):
@@ -111,7 +113,6 @@ class IceTargetFinder(targetfinder.TargetFinder):
 			self.logger.info('Number of holes: %s' % (len(targets),))
 			self.setTargets(targets, 'Hole')
 		except Exception as e:
-			raise
 			self.logger.error(e)
 
 	def _findHoles(self):
@@ -155,6 +156,16 @@ class IceTargetFinder(targetfinder.TargetFinder):
 		targets = self.holeStatsTargets(holes)
 		return targets
 
+	def sampleTargets(self):
+		'''
+		Sample holes2
+		'''
+		holes = self.hf['holes2']
+		max_samples = self.settings['max sampling']
+		if max_samples < len(self.hf['holes2']):
+			self.hf.configure_sample(classes=max_samples, samples=max_samples, category='thickness-mean')
+		self.hf.sampling()
+
 	def ice(self):
 		'''
 		Ice thickness filtering and template convolution.
@@ -169,6 +180,8 @@ class IceTargetFinder(targetfinder.TargetFinder):
 		focus_points = self.filterIceForFocus()
 		if self.settings['target template']:
 			focus_points = self.handleTemplate(focus_points)
+		if self.settings['sampling targets']:
+			self.sampleTargets()
 		r = self.settings['lattice hole radius']
 		acq_points = self.getTargetsWithStats('holes2')
 		# display and save preferences and hole stats
@@ -199,8 +212,7 @@ class IceTargetFinder(targetfinder.TargetFinder):
 		self.hf.configure_ice(i0=i0,tmin=tmin,tmax=tmax,tstdmax=tstdmax, tstdmin=tstdmin)
 		try:
 			self.hf.calc_ice(input_name=input_name)
-		except Exception, e:
-			raise
+		except Exception as e:
 			self.logger.error(e)
 			return
 

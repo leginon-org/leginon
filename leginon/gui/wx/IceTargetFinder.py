@@ -128,6 +128,8 @@ class FinalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sbszftt = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sb = wx.StaticBox(self, -1, 'Target Template')
 		sbsztt = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		sb = wx.StaticBox(self, -1, 'Acquisition Target Sampling')
+		sbszsm = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		self.widgets['ice min mean'] = FloatEntry(self, -1, chars=6)
 		self.widgets['ice max mean'] = FloatEntry(self, -1, chars=6)
@@ -149,6 +151,9 @@ class FinalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.widgets['focus max mean thickness'] = FloatEntry(self, -1, chars=6)
 		self.widgets['focus min stdev thickness'] = FloatEntry(self, -1, chars=6)
 		self.widgets['focus max stdev thickness'] = FloatEntry(self, -1, chars=6)
+		self.widgets['sampling targets'] = wx.CheckBox(self, -1,
+			'Use subset of the acquisition targets')
+		self.widgets['max sampling'] = IntEntry(self, -1, chars=6)
 
 		szice = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Min. mean:')
@@ -216,6 +221,16 @@ class FinalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 
 		sbsztt.Add(sztt, 1, wx.EXPAND|wx.ALL, 5)
 
+		szsm = wx.GridBagSizer(5, 5)
+		szsm.Add(self.widgets['sampling targets'], (0, 0), (1, 2),
+										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_LEFT)
+		label = wx.StaticText(self, -1, 'Sample Maximal of ')
+		szsm.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szsm.Add(self.widgets['max sampling'], (1, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		szsm.AddGrowableCol(0)
+		sbszsm.Add(szsm, 1, wx.EXPAND|wx.ALL, 5)
+
 		self.bice = wx.Button(self, -1, '&Test targeting')
 		self.cice = wx.Button(self, -1, '&Clear targets')
 		szbutton = wx.GridBagSizer(5, 5)
@@ -226,9 +241,9 @@ class FinalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.Bind(wx.EVT_BUTTON, self.onTestButton, self.bice)
 		self.Bind(wx.EVT_BUTTON, self.onClearButton, self.cice)
 
-		self.growrows = [False, True, False,]
+		self.growrows = [False, True, False, False,]
 
-		return [sbszice, sbsztt, szbutton]
+		return [sbszice, sbsztt, sbszsm, szbutton]
 
 	def createFocusOffsetSizer(self):
 		# set widgets

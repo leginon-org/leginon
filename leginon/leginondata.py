@@ -1292,6 +1292,8 @@ class IceTargetFinderPrefsData(InSessionData):
 			('template-focus', tuple),
 			('template-acquisition', tuple),
 			('filter-ice-on-convolved-on', bool),
+			('sampling targets', bool),
+			('max sampling', int),
 		)
 	typemap = classmethod(typemap)
 
@@ -1716,6 +1718,8 @@ class IceTargetFinderSettingsData(TargetFinderSettingsData):
 			('focus offset row', int),
 			('focus offset col', int),
 			('filter ice on convolved', bool),
+			('sampling targets', bool),
+			('max sampling', int),
 		)
 	typemap = classmethod(typemap)
 
