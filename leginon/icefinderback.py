@@ -37,7 +37,8 @@ class IceFinder(object):
 	Do the processes step by step, or the whole thing:
 		hf.find_holes()
 	'''
-	def __init__(self):
+	def __init__(self, is_testing=False):
+		self.save_mrc = is_testing
 		self.setComponents()
 		self.setDefaults()
 
@@ -64,16 +65,19 @@ class IceFinder(object):
 		self.circle = pyami.circle.CircleMaskCreator()
 		self.holestats = statshole.HoleStatsCalculator()
 		self.ice = statshole.HoleIceCalculator()
-		self.sample = statshole.HoleSampler()
 		self.convolve = statshole.HoleConvolver()
 		self.good = statshole.GoodHoleFilter()
+		self.sample = statshole.HoleSampler()
 
 	def setDefaults(self):
 		## some default configuration parameters
 		self.save_mrc = False
 		self.im_shape = None
 		self.holefinder_config = {}
-		self.holestats_config = {'radius': 20}
+		self.holestats.configure({'radius':20, 'im':None})
+		self.ice.configure({'i0': 1, 'tmin': -5,'tmax':5, 'tstdmax':5, 'tstdmin':0})
+		self.convolve.configure({'conv_vect':[],'im_shape': self.im_shape})
+		self.sample.configure({'classes': 1, 'samples': 100,'category':'hole_number'})
 
 	def _set_image(self, value):
 		self.image = value
@@ -102,6 +106,11 @@ class IceFinder(object):
 			self.__update_result(depkey, None)
 		## update this result
 		self.__results[key] = image
+
+	def saveTestMrc(self, img, mrc_name):
+		if self.save_mrc:
+			print('saving %s' % mrc_name)
+			mrc.write(img, mrc_name)
 
 	def configure_holefinder(self):
 		'''

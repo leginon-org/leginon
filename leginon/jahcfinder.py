@@ -9,7 +9,7 @@
 #
 
 from leginon import leginondata
-import targetfinder
+import targetfinder, icetargetfinder
 import jahcfinderback
 from pyami import imagefun, ordereddict
 import threading
@@ -24,10 +24,10 @@ import itertools
 invsqrt2 = math.sqrt(2.0)/2.0
 default_template = os.path.join(version.getInstalledLocation(),'holetemplate.mrc')
 
-class JAHCFinder(targetfinder.TargetFinder):
+class JAHCFinder(icetargetfinder.IceTargetFinder):
 	panelclass = gui.wx.JAHCFinder.Panel
 	settingsclass = leginondata.JAHCFinderSettingsData
-	defaultsettings = dict(targetfinder.TargetFinder.defaultsettings)
+	defaultsettings = dict(icetargetfinder.IceTargetFinder.defaultsettings)
 	defaultsettings.update({
 		'skip': False,
 		'image filename': '',
@@ -54,36 +54,18 @@ class JAHCFinder(targetfinder.TargetFinder):
 		'lattice hole radius': 15.0,
 		'lattice zero thickness': 1000.0,
 		'lattice extend': 'off',
-		'ice min mean': 0.05,
-		'ice max mean': 0.2,
-		'ice max std': 0.2,
-		'ice min std': 0.0,
-		'focus hole': 'Off',
-		'target template': False,
-		'focus template': [(0, 0)],
-		'acquisition template': [(0, 0)],
-		'focus template thickness': False,
-		'focus stats radius': 10,
-		'focus min mean thickness': 0.05,
-		'focus max mean thickness': 0.5,
-		'focus min stdev thickness': 0.0,
-		'focus max stdev thickness': 0.5,
-		'focus interval': 1,
-		'focus offset row': 0,
-		'focus offset col': 0,
-		'filter ice on convolved': False,
 	})
 	extendtypes = ['off', 'full', '3x3']
-	targetnames = targetfinder.TargetFinder.targetnames + ['Blobs']
+	targetnames = icetargetfinder.IceTargetFinder.targetnames + ['Lattice','Blobs']
+	targetnames.remove('Hole')
 	def __init__(self, id, session, managerlocation, **kwargs):
-		targetfinder.TargetFinder.__init__(self, id, session, managerlocation, **kwargs)
+		icetargetfinder.IceTargetFinder.__init__(self, id, session, managerlocation, **kwargs)
 		self.hf = jahcfinderback.HoleFinder()
 		self.hf.logger = self.logger
 		self.icecalc = ice.IceCalculator()
 
 		self.images = {
 			'Original': None,
-			'Edge': None,
 			'Template': None,
 			'Threshold': None,
 			'Blobs': None,
@@ -92,7 +74,6 @@ class JAHCFinder(targetfinder.TargetFinder):
 		}
 		self.imagetargets = {
 			'Original': {},
-			'Edge': {},
 			'Template': {},
 			'Threshold': {},
 			'Blobs': {},
@@ -115,9 +96,6 @@ class JAHCFinder(targetfinder.TargetFinder):
 		self.foc_activated = False
 
 		self.start()
-
-	def readImage(self, filename):
-		self.hf['original'] = targetfinder.TargetFinder.readImage(self, filename)
 
 	def correlateTemplate(self):
 		'''
@@ -231,7 +209,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 			targets.append(target)
 		return targets
 
-	def fitLattice(self, auto_center=False):
+	def fitLattice(self):
 		self.logger.info('fit lattice')
 		latspace = self.settings['lattice spacing']
 		lattol = self.settings['lattice tolerance']
@@ -242,214 +220,16 @@ class JAHCFinder(targetfinder.TargetFinder):
 
 		self.hf.configure_lattice(spacing=latspace, tolerance=lattol, extend=extend)
 		try:
-			self.hf.blobs_to_lattice(auto_center=False)
+			self.hf.blobs_to_lattice()
 		except Exception, e:
 			self.logger.error(e)
+			self.setTargets([], 'Lattice')
 			return
-		targets = self. getTargetsWithStats(r)
+		self.calcHoleStats()
+		targets = self. getTargetsWithStats(input_name='holes')
 		if targets is not None:
 			self.logger.info('Number of lattice blobs: %s' % (len(targets),))
 			self.setTargets(targets, 'Lattice')
-
-	def getTargetsWithStats(self, stats_radius):
-		self.hf.configure_holestats(radius=stats_radius)
-		try:
-			self.hf.calc_holestats()
-		except Exception, e:
-			self.logger.error(e)
-			return
-		holes = self.hf['holes']
-		targets = self.holeStatsTargets(holes)
-		return targets
-
-	def ice(self):
-		orig_holes = self.hf['holes']
-		centers, focus_points = self.filterIceForFocus()
-		acq_points, focus_points = self.makeConvolvedPoints(centers, focus_points)
-		all_acq_numbers = len(acq_points)
-		if self.settings['filter ice on convolved']:
-			# self.hf['holes'] are changed to acq_points in iceOnConvolved.
-			acq_points = self.iceOnConvolved(acq_points)
-		# display and save preferences and hole stats
-		self.setTargets(acq_points, 'acquisition', block=True)
-		self.setTargets(focus_points, 'focus', block=True)
-		self.logger.info('Acquisition Targets: %s' % (len(acq_points),))
-		self.logger.info('Focus Targets: %s' % (len(focus_points),))
-		if type(self.currentimagedata) == type(leginondata.AcquisitionImageData()):
-			hfprefs = self.storeHoleFinderPrefsData(self.currentimagedata)
-			self.storeHoleStatsData(hfprefs)
-		if self.settings['filter ice on convolved']:
-			# return self.hf['holes'] to lattice result so that it can be reused for adjusting
-			# parameters
-			self.hf.updateHoles(orig_holes)
-
-	def filterIce(self):
-		'''
-		Filter hf['holes'] by ice thickness stats.  The results are in
-		hf['holes2']
-		'''
-		self.logger.info('limit thickness')
-		i0 = self.settings['lattice zero thickness']
-		tmin = self.settings['ice min mean']
-		tmax = self.settings['ice max mean']
-		tstdmax = self.settings['ice max std']
-		tstdmin = self.settings['ice min std']
-		self.hf.configure_ice(i0=i0,tmin=tmin,tmax=tmax,tstdmax=tstdmax, tstdmin=tstdmin)
-		try:
-			self.hf.calc_ice()
-		except Exception, e:
-			self.logger.error(e)
-			return
-
-	def filterIceForFocus(self):
-		self.filterIce()
-		goodholes = self.hf['holes2']
-		centers = self.blobCenters(goodholes)
-		allcenters = self.blobCenters(self.hf['holes'])
-
-		# activate if counter is at a multiple of interval
-		interval = self.settings['focus interval']
-		if interval and not (self.foc_counter.next() % interval):
-			self.foc_activated = True
-		else:
-			self.foc_activated = False
-
-		focus_points = []
-
-		if self.foc_activated:
-			## replace an acquisition target with a focus target
-			onehole = self.settings['focus hole']
-			if centers and onehole != 'Off':
-				## if only one hole, this is useless
-				if len(allcenters) < 2:
-					self.logger.info('need more than one hole if you want to focus on one of them')
-					centers = []
-				elif onehole == 'Center':
-					focus_points.append(self.centerCarbon(allcenters))
-				elif onehole == 'Any Hole':
-					fochole = self.focus_on_hole(centers, allcenters, True)
-					focus_points.append(fochole)
-				elif onehole == 'Good Hole':
-					if len(centers) < 2:
-						self.logger.info('need more than one good hole if you want to focus on one of them')
-						centers = []
-					else:
-						## use only good centers
-						fochole = self.focus_on_hole(centers, centers, True)
-						focus_points.append(fochole)
-
-		if not self.settings['filter ice on convolved']:
-			self.logger.info('Holes with good ice: %s' % (len(centers),))
-			return centers, focus_points
-		else:
-			return allcenters, focus_points
-
-	def makeConvolvedPoints(self, centers, focus_points):
-		# takes x,y instead of row,col
-		if self.settings['target template']:
-			newtargets = self.applyTargetTemplate(centers)
-			acq_points = newtargets['acquisition']
-			focus_points.extend(newtargets['focus'])
-		else:
-			acq_points = centers
-		# need just one focus point
-		if len(focus_points) > 1 and self.settings['focus template thickness']:
-			focpoint = self.focus_on_hole(focus_points,focus_points, False)
-			focus_points = [focpoint]
-		return acq_points, focus_points
-
-	def iceOnConvolved(self, centers):
-		'''
-		Filter target centers with ice thickness threshold.
-		'''
-		sw_centers = self.hf.swapxy(centers)
-		holes = self.hf.points_to_blobs(sw_centers)
-		self.hf.updateHoles(holes)
-		r = self.settings['lattice hole radius']
-		targets = self. getTargetsWithStats(r)
-		if targets is not None:
-			self.logger.info('Potential targets with stats: %s' % (len(targets),))
-			self.setTargets(targets, 'acquisition')
-		self.filterIce()
-		goodholes = self.hf['holes2']
-		targets = self.holeStatsTargets(goodholes)
-		self.logger.info('Convolved acquisition targets rejected: %d' % (len(centers)-len(targets),))
-		return targets
-
-	def centerCarbon(self, points):
-		temppoints = points
-		centerhole = self.focus_on_hole(temppoints, temppoints, False)
-		closexdist = 1.0e10
-		closeydist = 1.0e10
-		xdist = 0.0
-		ydist = 0.0
-		for point in points:
-			dist = math.hypot(point[0]-centerhole[0], point[1]-centerhole[1])
-			#find nearest lattice points and get the components
-			if dist > 1.8*self.settings['lattice spacing']:
-				continue
-			xdist = abs(point[0]-centerhole[0])
-			if xdist < closexdist:
-				closexdist = xdist
-			ydist = abs(point[1]-centerhole[1])
-			if ydist < closeydist:
-				closeydist = ydist
-		centercarbon = tuple(
-			(int(centerhole[0] + xdist/2.0),
-			int(centerhole[1] + ydist/2.0),)
-		)
-		return centercarbon
-
-	def centroid(self, points):
-		## find centroid
-		cx = cy = 0.0
-		for point in points:
-			cx += point[0]
-			cy += point[1]
-		cx /= len(points)
-		cy /= len(points)
-		return cx,cy
-
-	def focus_on_hole(self, good, all, apply_offset=False):
-		cx,cy = self.centroid(all)
-		focpoint = None
-
-		## make a list of the bad holes
-		bad = []
-		for point in all:
-			if point not in good:
-				bad.append(point)
-
-		## if there are bad holes, use one
-		if bad:
-			point = bad[0]
-			closest_dist = math.hypot(point[0]-cx, point[1]-cy)
-			closest_point = point
-			for point in bad:
-				dist = math.hypot(point[0]-cx, point[1]-cy)
-				if dist < closest_dist:
-					closest_dist = dist
-					closest_point = point
-			if apply_offset:
-				closest_point = self.offsetFocus(closest_point)
-			return closest_point
-
-		## now use a good hole for focus
-		point = good[0]
-		closest_dist = math.hypot(point[0]-cx,point[1]-cy)
-		closest_point = point
-		for point in good:
-			dist = math.hypot(point[0]-cx,point[1]-cy)
-			if dist < closest_dist:
-				closest_dist = dist
-				closest_point = point
-		good.remove(closest_point)
-		if apply_offset:
-			closest_point = self.offsetFocus(closest_point)
-		return closest_point
-
-	def offsetFocus(self, point):
-			return point[0]+self.settings['focus offset col'],point[1]+self.settings['focus offset row']
 
 	def bypass(self):
 		self.setTargets([], 'Blobs', block=True)
@@ -457,69 +237,6 @@ class JAHCFinder(targetfinder.TargetFinder):
 		self.setTargets([], 'acquisition', block=True)
 		self.setTargets([], 'focus', block=True)
 		self.setTargets([], 'preview', block=True)
-
-	def applyTargetTemplate(self, centers):
-		self.logger.info('apply template')
-		imshape = self.hf['original'].shape
-		acq_vect = self.settings['acquisition template']
-		foc_vect = self.settings['focus template']
-		newtargets = {'acquisition':[], 'focus':[]}
-
-		## if 3x3 used, make focus template relative to center hole of 3x3
-		extend = self.settings['lattice extend']
-		if extend == '3x3':
-			allcenters = self.blobCenters(self.hf['holes'])
-			if len(allcenters) > 0:
-				center = allcenters[0]
-				focuscenters = [center]
-			else:
-				return newtargets
-		else:
-			focuscenters = centers
-
-		for vect in acq_vect:
-			for center in centers:
-				target = center[0]+vect[0], center[1]+vect[1]
-				tarx = target[0]
-				tary = target[1]
-				if tarx < 0 or tarx >= imshape[1] or tary < 0 or tary >= imshape[0]:
-					self.logger.info('skipping template point %s: out of image bounds' % (vect,))
-					continue
-				newtargets['acquisition'].append(target)
-		if not self.foc_activated:
-			return newtargets
-		for vect in foc_vect:
-			for center in focuscenters:
-				target = center[0]+vect[0], center[1]+vect[1]
-				tarx = target[0]
-				tary = target[1]
-				if tarx < 0 or tarx >= imshape[1] or tary < 0 or tary >= imshape[0]:
-					self.logger.info('skipping template point %s: out of image bounds' % (vect,))
-					continue
-				## check if target has good thickness
-				if self.settings['focus template thickness']:
-					rad = self.settings['focus stats radius']
-					tmin = self.settings['focus min mean thickness']
-					tmax = self.settings['focus max mean thickness']
-					tstdmin = self.settings['focus min stdev thickness']
-					tstdmax = self.settings['focus max stdev thickness']
-					if tstdmin is None:
-						tstdmin = 0.0
-					coord = target[1], target[0]
-					stats = self.hf.get_hole_stats(self.hf['original'], coord, rad)
-					if stats is None:
-						self.logger.info('skipping template point %s:  stats region out of bounds' % (vect,))
-						continue
-					tm = self.icecalc.get_thickness(stats['mean'])
-					ts = self.icecalc.get_stdev_thickness(stats['std'], stats['mean'])
-					self.logger.info('template point %s stats:  mean: %s, stdev: %s' % (vect, tm, ts))
-					if (tmin <= tm <= tmax) and (ts >= tstdmin) and (ts < tstdmax):
-						self.logger.info('template point %s passed thickness test' % (vect,))
-						newtargets['focus'].append(target)
-						break
-				else:
-					newtargets['focus'].append(target)
-		return newtargets
 
 	def everything(self):
 		# correlate template
@@ -529,23 +246,9 @@ class JAHCFinder(targetfinder.TargetFinder):
 		# find blobs
 		self.findBlobs()
 		# lattice
-		self.fitLattice(auto_center=True)
+		self.fitLattice()
 		# ice
 		self.ice()
-
-	def storeHoleStatsData(self, prefs):
-		holes = self.hf['holes']
-		for hole in holes:
-			stats = hole.stats
-			holestats = leginondata.HoleStatsData(session=self.session, prefs=prefs)
-			holestats['row'] = stats['center'][0] * self.shrink_factor + self.shrink_offset[0]
-			holestats['column'] = stats['center'][1] * self.shrink_factor + self.shrink_offset[1]
-			holestats['mean'] = stats['hole_mean']
-			holestats['stdev'] = stats['hole_std']
-			holestats['thickness-mean'] = stats['thickness-mean']
-			holestats['thickness-stdev'] = stats['thickness-stdev']
-			holestats['good'] = stats['good']
-			self.publish(holestats, database=True)
 
 	def storeHoleFinderPrefsData(self, imagedata):
 		hfprefs = leginondata.HoleFinderPrefsData()
@@ -577,6 +280,8 @@ class JAHCFinder(targetfinder.TargetFinder):
 			'template-on': self.settings['target template'],
 			'template-focus': self.settings['focus template'],
 			'template-acquisition': self.settings['acquisition template'],
+			'sampling targets': self.settings['sampling targets'],
+			'max sampling': self.settings['max sampling'],
 
 			## these are in JAHCFinder only
 			'template-diameter': self.settings['template diameter'],
@@ -641,7 +346,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 					try:
 						self.logger.info('Autofinder rerun starting from Lattice fitting')
 						self.usePickedBlobs()
-						self.fitLattice(auto_center=False)
+						self.fitLattice()
 						self.ice()
 						self.logger.info('Autofinder rerun due to blob editing finished')
 					except Exception, e:

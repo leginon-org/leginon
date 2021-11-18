@@ -98,20 +98,24 @@ class IceTargetFinder(targetfinder.TargetFinder):
 		try:
 			# _findHoles is the subclass hole finder.
 			self._findHoles()
-			# now calculate holestats of 'holes' result using the back icecalculator
-			r = self.settings['lattice hole radius']
-			i0 = self.settings['lattice zero thickness']
-			self.icecalc.set_i0(i0)
-			self.hf.configure_holestats(radius=r)
-			try:
-				self.hf.calc_holestats(input_name='holes')
-				targets = self. getTargetsWithStats(input_name='holes')
-			except Exception as e:
-				self.logger.error(e)
-				targets = []
-			# set targets found in self._results['holes']
-			self.logger.info('Number of holes: %s' % (len(targets),))
-			self.setTargets(targets, 'Hole')
+			self.calcHoleStats()
+			targets = self. getTargetsWithStats(input_name='holes')
+		except Exception as e:
+			self.logger.error(e)
+			targets = []
+		# set targets found in self._results['holes']
+		self.logger.info('Number of holes: %s' % (len(targets),))
+		print 'findHoles', targets
+		self.setTargets(targets, 'Hole')
+
+	def calcHoleStats(self):
+		# now calculate holestats of 'holes' result using the back icecalculator
+		r = self.settings['lattice hole radius']
+		i0 = self.settings['lattice zero thickness']
+		self.icecalc.set_i0(i0)
+		self.hf.configure_holestats(radius=r)
+		try:
+			self.hf.calc_holestats(input_name='holes')
 		except Exception as e:
 			self.logger.error(e)
 
@@ -299,7 +303,7 @@ class IceTargetFinder(targetfinder.TargetFinder):
 				focus_points = self.filterFocusTemplateIce(focus_points)
 				focpoint, index = self.focus_on_hole(focus_points,focus_points, False)
 			except ValueError as e:
-				# no goot points
+				# no good points
 				return []
 			focus_points = [focpoint,]
 		return focus_points
@@ -395,7 +399,7 @@ class IceTargetFinder(targetfinder.TargetFinder):
 			closest_point = all_xy[0]
 			if apply_offset:
 				closest_point = self.offsetFocus(closest_point)
-			return closest_point
+			return closest_point, 0
 		# Have at least two points to choose from.
 		centroid = self.centroid(all_xy)
 		closest_point = None
@@ -479,7 +483,7 @@ class IceTargetFinder(targetfinder.TargetFinder):
 					continue
 				tm = self.icecalc.get_thickness(stats['mean'])
 				ts = self.icecalc.get_stdev_thickness(stats['std'], stats['mean'])
-				self.logger.info('template point %s stats:  mean: %s, stdev: %s' % (vect, tm, ts))
+				self.logger.debug('template point %s stats:  mean: %s, stdev: %s' % (vect, tm, ts))
 				if (tmin <= tm <= tmax) and (ts >= tstdmin) and (ts < tstdmax):
 					self.logger.debug('template point %s passed thickness test' % (vect,))
 					good_focuscenters.append(rc_center)
@@ -527,6 +531,8 @@ class IceTargetFinder(targetfinder.TargetFinder):
 			'template-on': self.settings['target template'],
 			'template-focus': self.settings['focus template'],
 			'template-acquisition': self.settings['acquisition template'],
+			'sampling targets': self.settings['sampling targets'],
+			'max sampling': self.settings['max sampling'],
 		})
 
 		self.publish(hfprefs, database=True)

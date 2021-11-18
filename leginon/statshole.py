@@ -3,7 +3,9 @@ import random
 import math
 from pyami import groupfun
 import pyami.circle
-from leginon import ice
+from leginon import ice, holeconfigurer
+
+Configurer = holeconfigurer.Configurer
 
 class StatsHole(object):
 	def __init__(self, info_dict, index, statskeys={}):
@@ -22,18 +24,6 @@ class StatsHole(object):
 		self.stats['hole_n'] = holestats['n']
 		self.stats['hole_mean'] = holestats['mean']
 		self.stats['hole_std'] = holestats['std']
-
-class Configurer(object):
-	def __init__(self):
-		self.configs = {}
-
-	def setDefaults(self, default_configs):
-		self.configs = default_configs
-
-	def configure(self, new_configs):
-		for k in new_configs.keys():
-			if new_configs[k] is not None:
-				self.configs[k] = new_configs[k]
 
 class HoleStatsCalculator(Configurer):
 	def __init__(self):
