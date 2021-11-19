@@ -115,6 +115,8 @@ if($tiltSeriesId != NULL) {
 	echo "align label: <INPUT TYPE='text' NAME='alignlabel' SIZE='4' VALUE='".$alabel."'>\n";
 	echo '</td></tr><tr><td>';
 	echo "<a href=tilt.php?tiltSeriesId=$tiltSeriesId&tiltSeriesNumber=$tiltSeriesNumber>Download tilt angles</a><br>";
+	echo '</td></tr><tr><td>';
+	echo "<a href=mdoc.php?tiltSeriesId=$tiltSeriesId&tiltSeriesNumber=$tiltSeriesNumber>Download mdoc</a><br>";
 	echo '</td></tr></table>';
 	echo '</td><td>';
 	echo '<table><tr><td colspan=2>';
