@@ -374,7 +374,7 @@ class Tomography {
 			.'ON a.`REF|PresetData|preset` = p.`DEF_id` '
 			.'WHERE a.`DEF_id` = '.$image_id.' ';
 		$results = $this->mysql->getSQLResult($query);
-		return $results[0];
+		return ($results ? $results[0]:array('dose'=>null));
 	}
 
 	function getTiltSeriesDose($tiltSeriesData) {

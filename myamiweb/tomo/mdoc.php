@@ -108,7 +108,8 @@ foreach ($results as $r) {
 	$a['StageZ']=$r['stage_z']*1e6;
 	$a['Magnification']=$r['magnification'];
 	$a['Intensity']=$r['mean'];
-	$a['ExposureDose']=$tomography->getImageDose($r['id'])['dose']; # e/A^2?
+	$dose_r=$tomography->getImageDose($r['id']); # e/A^2?
+	$a['ExposureDose']= ($dose_r) ? $dose_r['dose']: '';
 	$a['PixelSpacing']=$r['pixel_size']*1e10; # A
 	$a['SpotSize']=$r['spot_size'];
 	$a['Defocus']=$r['defocus']*1e6;
