@@ -87,7 +87,7 @@ $stackheader_array = array(
 	);
 $stackheader = formatMDoc($stackheader_array);
 
-$tiltaxis = $predictions[0]['SUBD|predicted position|phi'];
+$tiltaxis = $predictions[0]['SUBD|predicted position|phi']*(180.0/3.14159); #degrees
 $spot_size = $results[0]['spot_size'];
 
 $title = array(
@@ -114,17 +114,17 @@ foreach ($results as $r) {
 	$a['SpotSize']=$r['spot_size'];
 	$a['Defocus']=$r['defocus']*1e6;
 	$a['ImageShift']=$r['shift_x']*1e6." ".$r['shift_y']*1e6;
-	$a['RotationAngle']=0.0; # what is this ?
-	$a['ExposureTime']=$r['exposure_time']*1e-3;
-	$a['Binning']=1;
-	$a['CameraIndex']=1; # do we need this ?
-	$a['DividedBy2']=1;
-	$a['MagIndex']=1; # do we need this ?
+	$a['RotationAngle']=abs($tiltaxis); # Some tilt axis type of notation in serial em.
+	$a['ExposureTime']=$r['exposure_time']*1e-3; # seconds
+	$a['Binning']=1; #PixelSpacing already binned.
+	$a['CameraIndex']=1; # not meaningful for processing
+	$a['DividedBy2']=1; # no effect on processing.
+	$a['MagIndex']=1; # not meaningful for processing
 	$a['MinMaxMean']="-1 1 0"; # what is this ?
 	$a['TargetDefocus']=$r['intended_defocus']*1e6;
 	$a['SubFramePath']=$r['filename'].'.frames.'.$frame_format;
 	$a['NumSubFrames']=$r['nframes'];
-	$a['DateTime']=$r['timestamp'];
+	$a['DateTime']=date('d-M-Y H:i:s', $r['timestamp']); #datetime format read literally in Warp.
 	$one_data=array();
 	$one_data[]="[ZValue = $z]";
 	$one_data = array_merge($one_data, formatMDoc($a));
