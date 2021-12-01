@@ -3,6 +3,7 @@
 #pythonlib
 import os
 import numpy
+import time
 #appion
 from appionlib import appionLoop2
 from appionlib import apDisplay
@@ -20,6 +21,7 @@ class LoopTester(appionLoop2.AppionLoop):
 	#======================
 	def processImage(self, imgdata):
 		apDisplay.printMsg('processing %s' % (imgdata['filename']))
+		time.sleep(2)
 
 	#======================
 	def setupParserOptions(self):

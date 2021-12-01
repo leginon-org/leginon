@@ -476,27 +476,33 @@ class AppionLoop(appionScript.AppionScript):
 		#Lock DoneDict file
 		locallock = False
 		totaltime = 0
+		lockfile = '%s%s' % (self.lockname,"donedict")
+		#apDisplay.printWarning('locking %s' % lockfile)
 		while(not locallock):
 			try:
-				fileutil.open_if_not_exists('%s%s' % (self.lockname,"donedict")).close()
+				fileutil.open_if_not_exists(lockfile).close()
 				locallock = True
 			except OSError:
 				#file is locked
-				apDisplay.printMsg("waiting for donedict to become unlocked")
+				if int(totaltime) % 5 == 0 and totaltime - int(totaltime) < 0.1:
+					apDisplay.printMsg("waiting for donedict to become unlocked by another process")
 				totaltime += 0.1
 				time.sleep(0.1)
-				if totaltime > 10:
+				if totaltime > 60:
 					self._unlockDoneDict()
-					apDisplay.printError('Parallel lock failed')
+					apDisplay.printError('Donedict lock failed from 60 sec timeout')
 		return
 
 	#=====================
 	def _unlockDoneDict(self):
 		#Unlock DoneDict file
+		lockfile = '%s%s' % (self.lockname,"donedict")
+		#apDisplay.printWarning('unlocking %s' % lockfile)
 		try:
-			os.remove('%s%s' % (self.lockname,"donedict"))
-		except OSError:
-			apDisplay.printError('Parallel unlock failed')
+			os.remove(lockfile)
+		except OSError as e:
+			# Donedict unlock is used as an escape route. Let it pass.
+			apDisplay.printWarning('Donedict %s unlock failed. Allow to pass: %s' % (lockfile,e))
 		return
 
 	#=====================
