@@ -393,7 +393,8 @@ class EMMosaic(object):
 
 			## pixel shift from center of mosaic to corners of tile
 			shape = tile.image.shape
-			corner_vect = center2center[0]-shape[0]/2, center2center[1]-shape[1]/2
+			# integer math used here
+			corner_vect = center2center[0]-shape[0]//2, center2center[1]-shape[1]//2
 			corner1_vect = corner_vect[0]+shape[0], corner_vect[1]+shape[1]
 			tile.corner_vect = corner_vect
 			## check if this is a min or max in the mosaic
@@ -409,7 +410,7 @@ class EMMosaic(object):
 		self.mosaicshape = mosaic1[0]-mosaic0[0], mosaic1[1]-mosaic0[1]
 
 		## center of mosaic image
-		mosaic_center = self.mosaicshape[0]/2, self.mosaicshape[1]/2
+		mosaic_center = self.mosaicshape[0]//2, self.mosaicshape[1]//2
 
 		## position of corner and center
 		for tile in self.tiles:
@@ -420,6 +421,7 @@ class EMMosaic(object):
 
 	def scaled(self, coord):
 		scoord = self.scale*coord[0], self.scale*coord[1]
+		# rounding and convert to integer
 		intcoord = self.round(scoord)
 		return intcoord
 
@@ -450,7 +452,7 @@ class EMMosaic(object):
 			scaled_tile = imagefun.scale(tile.image, scale)
 			scaled_tile = numpy.asarray(scaled_tile, numtype)
 			scaled_shape = scaled_tile.shape
-			scaled_pos = self.scaled(tile.corner_pos)
+			scaled_pos = self.scaled(tile.corner_pos) #integer tuple to be used for slice
 			rowslice1 = scaled_pos[0],scaled_pos[0]+scaled_shape[0]
 			colslice1 = scaled_pos[1],scaled_pos[1]+scaled_shape[1]
 			rowslice = slice(scaled_pos[0],scaled_pos[0]+scaled_shape[0])
