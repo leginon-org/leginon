@@ -37,7 +37,7 @@ class Troubleshooter(object):
     #==========================================================================
     def runProcessingServerCheck(self):
     
-        value = input("Check Processing Server Python packages? (y/n): ")
+        value = eval(input("Check Processing Server Python packages? (y/n): "))
         if 'y' in value:
             # List the packages that are required for the processing server
             packages = ['MYSQLDB', 
@@ -54,56 +54,56 @@ class Troubleshooter(object):
             self.checkPkgs.showMessage(msg)
             self.checkPkgs.runValidation(packages)
         
-        value = input("Print Python Path? (y/n): ")
+        value = eval(input("Print Python Path? (y/n): "))
         if 'y' in value:
             msg = '*******************************************************************\n'
             msg += 'Printing the Python path.'
             self.checkPkgs.showMessage(msg)
             self.checkPkgs.runValidation(['PYTHONPATH'])
     
-        value = input("Check Sinedon.cfg? (y/n): ")
+        value = eval(input("Check Sinedon.cfg? (y/n): "))
         if 'y' in value:
             msg = '*******************************************************************\n'
             msg += 'Checking Sinedon Config.'
             self.checkPkgs.showMessage(msg)
             self.checkPkgs.runValidation(['SINEDONCFGPATH'])
         
-        value = input("Check Leginon.cfg? (y/n): ")
+        value = eval(input("Check Leginon.cfg? (y/n): "))
         if 'y' in value:
             msg = '*******************************************************************\n'
             msg += 'Checking Leginon Config.'
             self.checkPkgs.showMessage(msg)
             self.checkPkgs.runValidation(['LEGINONCFGPATH'])
         
-        value = input("Run Numpy test? (y/n): ")
+        value = eval(input("Run Numpy test? (y/n): "))
         if 'y' in value:
             msg = '*******************************************************************\n'
             msg += 'Running Numpy Test.'
             self.checkPkgs.showMessage(msg)
             self.checkPkgs.runValidation(['NUMPYTEST'])
         
-        value = input("Run Scipy test? (y/n): ")
+        value = eval(input("Run Scipy test? (y/n): "))
         if 'y' in value:
             msg = '*******************************************************************\n'
             msg += 'Running Scipy test.'
             self.checkPkgs.showMessage(msg)
             self.checkPkgs.runValidation(['SCIPYTEST'])
         
-        value = input("Run EMAN test? (y/n): ")
+        value = eval(input("Run EMAN test? (y/n): "))
         if 'y' in value:
             msg = '*******************************************************************\n'
             msg += 'Displaying EMAN help window.'
             self.checkPkgs.showMessage(msg)
             self.checkPkgs.runValidation(['EMANTEST'])
         
-        value = input("Run XMIPP test? (y/n): ")
+        value = eval(input("Run XMIPP test? (y/n): "))
         if 'y' in value:
             msg = '*******************************************************************\n'
             msg += 'Displaying Xmipp help.'
             self.checkPkgs.showMessage(msg)
             self.checkPkgs.runValidation(['XMIPPTEST'])
         
-        value = input("Check Appion libraries and binaries? (y/n): ")
+        value = eval(input("Check Appion libraries and binaries? (y/n): "))
         if 'y' in value:
             msg = '*******************************************************************\n'
             msg += 'Checking Appion lib and bin.\n'
@@ -115,11 +115,11 @@ class Troubleshooter(object):
 if __name__ == "__main__":
     troubleshooter = Troubleshooter()
     
-    value = input("Check Processing Server packages? (y/n): ")
+    value = eval(input("Check Processing Server packages? (y/n): "))
     if 'y' in value:
         troubleshooter.runProcessingServerCheck()
     
-    value = input("Check Web Server packages? (y/n): ")
+    value = eval(input("Check Web Server packages? (y/n): "))
     if 'y' in value:
         troubleshooter.runWebServerCheck()
         

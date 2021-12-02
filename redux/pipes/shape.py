@@ -83,4 +83,4 @@ if __name__ == "__main__":
 	import numpy
 	a = numpy.ones(inputshape)
 	r = s.run(a,outputshape)
-	print(r.shape)
+	print((r.shape))

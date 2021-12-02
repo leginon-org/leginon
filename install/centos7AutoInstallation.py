@@ -41,7 +41,7 @@ class CentosInstallation(object):
 			self.writeToLog("ERROR: not CentOS ---")
 			return False
 
-		print("Current OS Information: " + flavor)
+		print(("Current OS Information: " + flavor))
 		self.writeToLog("CentOS info: " + flavor)
 
 		
@@ -168,7 +168,7 @@ class CentosInstallation(object):
 		self.writeToLog("#===================================================")
 		self.writeToLog("Run the following Command:")
 		self.writeToLog("%s" % (cmd,))
-		print(cmd + '\n')
+		print((cmd + '\n'))
 		print('Please wait......(This may take a few minutes.)\n')
 
 		proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -192,7 +192,7 @@ class CentosInstallation(object):
 		proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 		stdoutResult = proc.stdout.read()
 		stderrResult = proc.stderr.read()
-		print(stdoutResult, stderrResult)
+		print((stdoutResult, stderrResult))
 		sys.stderr.write(stderrResult)
 		returncode = proc.wait()
 		found=False
@@ -369,7 +369,7 @@ class CentosInstallation(object):
 				print('===========Manual intervention needed=================')
 				print('mysql password is neither none nor serverRoorPass')
 				print("You need to run these command manually")
-				print("mysqladmin -u root -p password %s" % 'your_host_root_passwd')
+				print(("mysqladmin -u root -p password %s" % 'your_host_root_passwd'))
 				print("mysqladmin -u root -p flush-privileges")
 				return False
 		else:
@@ -384,7 +384,7 @@ class CentosInstallation(object):
 		self.writeToLog("#===================================================")
 		self.writeToLog("Run the following Command:")
 		self.writeToLog("%s" % (cmd,))
-		print(print_cmd + '\n')
+		print((print_cmd + '\n'))
 		print('Please wait......(This may take a few minutes.)\n')
 		proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 		proc.communicate()
@@ -1213,7 +1213,7 @@ endif
 		print("====================================")
 		print("")
 		
-		value = input("Please enter the registration key. You must be registered at https://emg.nysbc.org/redmine to recieve a registration key: ")
+		value = eval(input("Please enter the registration key. You must be registered at https://emg.nysbc.org/redmine to recieve a registration key: "))
 		value = value.strip()
 
 		self.regKey = value
@@ -1227,7 +1227,7 @@ endif
 			return False
 
 		# Set the admin email address
-		value             = input("Please enter an email address: ")
+		value             = eval(input("Please enter an email address: "))
 		value             = value.strip()
 		self.adminEmail   = value
 		
@@ -1237,7 +1237,7 @@ endif
 		self.serverRootPass   = password
 		
 		# Set the local timezone for use in the php.ini file
-		timezone      = input("Please enter your timezone based on the available options listed at http://www.php.net/manual/en/timezones.php : ")
+		timezone      = eval(input("Please enter your timezone based on the available options listed at http://www.php.net/manual/en/timezones.php : "))
 		timezone      = timezone.strip()
 		if ( timezone == "" ):
 			# provide a default timezone if it is empty
@@ -1266,7 +1266,7 @@ endif
 		'''
 		value = ""
 		while (value != "Y" and value != "y" and value != "N" and value != "n"): 
-			value = input("%s(Y/N): " % questionText)
+			value = eval(input("%s(Y/N): " % questionText))
 			value = value.strip()
 
 		if (value == "Y" or value == "y"):
@@ -1309,7 +1309,7 @@ endif
 			try:
 				shutil.rmtree(resultdir)
 			except Exception as e:
-				print("Removing  failed:" % resultdir)
+				print(("Removing  failed:" % resultdir))
 				print(e)
 				return False
 		try:
