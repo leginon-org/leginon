@@ -268,7 +268,7 @@ the header data.
 	### check for a valid machine stamp in header, with or without byteswap
 	stampswapped = None
 	machstamp = headerbytes[212:216]
-	machstamp = numpy.fromstring(machstamp, dtype='Int32', count=1)
+	machstamp = numpy.fromstring(machstamp, dtype='int32', count=1)
 	machstampint = machstamp[0]
 	if machstampint in intbyteorder:
 		stampswapped = False
@@ -280,7 +280,7 @@ the header data.
 
 	### check for valid mode, with or without byteswap
 	mode = headerbytes[12:16]
-	mode = numpy.fromstring(mode, dtype='Int32', count=1)
+	mode = numpy.fromstring(mode, dtype='int32', count=1)
 	modeint = mode[0]
 	modeswapped = None
 	if modeint in mrc2numpy:
@@ -306,9 +306,9 @@ def parseHeader(headerbytes):
 	'''
 	Parse the 1024 byte MRC header into a header dictionary.
 	'''
-	## header is comprised of Int32, Float32, and text labels.
-	itype = numpy.dtype('Int32')
-	ftype = numpy.dtype('Float32')
+	## header is comprised of int32, float32, and text labels.
+	itype = numpy.dtype('int32')
+	ftype = numpy.dtype('float32')
 
 	## check if data needs to be byte swapped
 	swapped = isSwapped(headerbytes)
@@ -447,10 +447,10 @@ def updateHeaderUsingArray(header, a, calc_stats=True, reset_origin=True, mz=Non
 		header['nystart'] = old_div(ny, -2)
 		header['nzstart'] = old_div(nz, -2)
 
-int32dtype = numpy.dtype('Int32')
-uint16dtype = numpy.dtype('UInt16')
-float32dtype = numpy.dtype('Float32')
-int8dtype = numpy.dtype('Int8')
+int32dtype = numpy.dtype('int32')
+uint16dtype = numpy.dtype('uint16')
+float32dtype = numpy.dtype('float32')
+int8dtype = numpy.dtype('int8')
 def valueToFloat(value):
 	'''
 return the string representation of a float value
