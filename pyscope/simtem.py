@@ -743,3 +743,45 @@ class SimDiffrTEM300(SimDiffrTEM):
 		SimDiffrTEM.__init__(self)
 		# to use with SimTEM300
 		self.high_tension = 300000.0
+
+class SimGlacios(SimTEM):
+	name = 'SimGlacios'
+	def __init__(self):
+		SimTEM.__init__(self)
+
+		self.high_tension = 200000.0
+
+		self.magnifications = [
+			155,
+			1250,
+			8500,
+			150000
+		]
+		self.magnification_index = 0
+
+		self.probe_modes = [
+			'micro',
+			'nano',
+		]
+
+	def findMagnifications(self):
+		# fake finding magnifications and set projection submod mappings
+		self.setProjectionSubModeMap({})
+		for mag in self.magnifications:
+			if mag < 1000:
+				self.addProjectionSubModeMap(mag,'LM',1)
+			elif mag < 2600:
+				self.addProjectionSubModeMap(mag,'Mi',2)
+			else:
+				self.addProjectionSubModeMap(mag,'SA',3)
+
+class SimDiffrGlacios(SimDiffrTEM):
+	name = 'SimDiffrGlacios'
+	projection_mode = 'diffraction'
+	def __init__(self):
+		SimDiffrTEM.__init__(self)
+		self.high_tension = 200000.0
+		self.magnifications = [
+			1100,
+			2750,
+		]
