@@ -1109,8 +1109,14 @@ class leginondata {
 	function getFilename($name,$sessionId=Null) {
 		$sqlwhere = (is_numeric($name)) ? "where `DEF_id`='$name' "
 				: "where `MRC|image` like '$name' ";
-		if ($sessionId)
+		if ($sessionId) {
 			$sqlwhere.="and `REF|SessionData|session`=".$sessionId;
+		} else {
+			// escape if neither is passed.
+			if (empty($name)) {
+				return array();
+			}
+		}
 		$q = "select `DEF_id` as id, `MRC|image` as filename, `REF|SessionData|session` as sessionId from `AcquisitionImageData` "
 			.$sqlwhere;
 		$filenames = $this->mysql->getSQLResult($q);
