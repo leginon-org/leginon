@@ -27,6 +27,7 @@ import gui.wx.MosaicClickTargetFinder
 import os
 import math
 import random
+import json
 
 import polygon
 import raster
@@ -366,6 +367,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.imagemap = {}
 		self.targetmap = {}
 		self.mosaic.clear()
+		self.finder_mosaic.clear()
 		self.targetlist = None
 		if self.settings['create on tile change'] in ('all', 'final'):
 			self.clearMosaicImage()
@@ -667,6 +669,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.publish(mosaicimagedata, database=True)
 		self.mosaicimagedata = mosaicimagedata
 		self.logger.info('Mosaic saved')
+		self.writeMosaicInfo(self.mosaic, self.mosaicimagedata)
 
 	def _researchMosaicTileData(self,imagelist=None, session=None):
 		if session is None:
@@ -1047,6 +1050,36 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.finder_scale_factor = scale_factor
 		# This is not exact but appears good enough.
 		self.logger.debug('Scaling  Target mapping from shape %s to %s with setting of max size of %d' % (self.finder_mosaicimage.shape, self.mosaicimage.shape, self.settings['scale size']))
+
+	def writeMosaicInfo(self, m_inst, mosaicimagedata):
+		scale = m_inst.scale
+		shape = mosaicimagedata.imageshape()
+		pos=m_inst.positionByCalibration({'x':0.0,'y':0.0})
+		pixel_pos = (pos[0]+shape[0]/(2*scale), pos[1]+shape[1]/(2*scale))
+		center_tile = m_inst.getNearestTile(pixel_pos[0], pixel_pos[1])
+		info = {}
+		label = mosaicimagedata['list']['targets']['label']
+		json_name = '%s_' % (self.session['name'])
+		if label:
+			json_name += label
+		json_path = os.path.join(self.session['image path'],json_name+'.json')
+		info['session image path'] = self.session['image path']
+		info['mosaic_label'] = mosaicimagedata['list']['targets']['label']
+		info['mosaic_image'] = {}
+		info['mosaic_image']['filename'] = mosaicimagedata['filename']+'.mrc'
+		info['mosaic_image']['scale'] = scale
+		info['center_tile_filename'] = center_tile.imagedata['filename']+'.mrc'
+		info['tiles'] = []
+		for t in m_inst.tiles:
+			tinfo = {}
+			tinfo['filename'] = t.imagedata['filename']+'.mrc'
+			tinfo['corner_pos'] = {'row': t.corner_pos[0],'col':t.corner_pos[1]}
+			info['tiles'].append(tinfo)
+		print info
+		info_str = json.dumps(info)
+		f = open(json_path,'w')
+		f.write(info_str)
+		f.close()
 
 	def findSquareBlobs(self):
 		message = 'finding squares'
