@@ -345,14 +345,18 @@ class DMSEM(ccdcamera.CCDCamera):
 
 		if self.save_frames or self.align_frames:
 			if self.save8x8:
+                                dec=4 # decimation value : decimate image to 1k x 1.4k for faster stat calculation
+                                if image.size > 23569920:  # counted size for k3
+                                    dec=8
+                                decimated_image = image[::dec,::dec]
 				if not self.getDoEarlyReturn():
 					#fake 8x8 image with the same mean and standard deviation for fast transfer
-					fake_image = self.base_fake_image*image.std() + image.mean()*numpy.ones((8,8))
+				        fake_image = self.base_fake_image*decimated_image.std() + decimated_image.mean()*numpy.ones((8,8))
 					return fake_image
 				else:
 					if self.getEarlyReturnFrameCount() > 0:
 						#fake 8x8 image with the same mean and standard deviation for fast transfer
-						fake_image = self.base_fake_image*image.std() + image.mean()*numpy.ones((8,8))
+				                fake_image = self.base_fake_image*decimated_image.std() + decimated_image.mean()*numpy.ones((8,8))
 					else:
 						fake_image = numpy.zeros((8,8))
 					self.writeLog('%s\t%.3f\n' % (self.getPreviousRawFramesName(), time.time()-t0))
@@ -640,9 +644,16 @@ class GatanK2Base(DMSEM):
 
 	def __init__(self):
 		super(GatanK2Base, self).__init__()
+		self.frame_name_prefix = self.getFrameNamePrefix()
 		# set default return frame count.
 		self.setEarlyReturnFrameCount(None)
 		self.save8x8 = False
+
+	def getFrameNamePrefix(self):
+		prefix = self.getDmsemConfig('k2','frame_name_prefix')
+		if prefix is None:
+			prefix = ''
+		return prefix
 
 	def custom_setup(self):
 		'''
@@ -728,8 +739,9 @@ class GatanK2Base(DMSEM):
 		if self.isDoseFracOn():
 			# This makes it always take the value in dmsem.cfg
 			self.setEarlyReturnFrameCount(None)
+			prefix = self.frame_name_prefix
 			frames_name = time.strftime('%Y%m%d_%H%M%S', time.localtime())
-			self.frames_name = frames_name + '%02d' % (self.idcounter.next(),)
+			self.frames_name = prefix + frames_name + '%02d' % (self.idcounter.next(),)
 		else:
 			self.frames_name = 'dummy'
 		raw_frame_dir = self.getDmsemConfig('k2','raw_frame_dir')

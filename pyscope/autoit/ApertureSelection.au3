@@ -38,9 +38,12 @@ $my_text = ""
 WinActivate($my_title)
 WinWaitActive($my_title, "", 5)
 $after = WinActive($my_title)
+
+;TODO check both possible paths
 Global $sFeiConfigPath = "c:\Program Files\myami\fei.cfg"
+
 ; Set Default
-Local $sTem = 'titan'
+Local $sTem = GetFeiConfigTem($sFeiConfigPath)
 Local $iSetSleepTime = 2000 ; ms
 Local $sMechanism = 'objective'
 Local $action = 'set'
@@ -141,7 +144,7 @@ Func SetApertureSelection($aIndices, $sSelection)
 	  EndIf
    Else
 	  ;Try multiple times since combobox selection does not always works when the selection is not adjacent
-	  While $sSelection <> $tText Or $iTry >=10
+	  While $sSelection <> $tText And $iTry <=10
 		 ControlSend($my_title,"","[CLASS:ComboBox;INSTANCE:" & $iComboInst & "]",$sSelection)
 		 Sleep(2000)
 		 $tText = ControlGetText($my_title,"","[CLASS:ComboBox;INSTANCE:" & $iComboInst & "]")
@@ -187,6 +190,26 @@ Func getFeiConfigModuleLines($configpath, $module)
    ;remove dummy
    _ArrayDelete($Lines, 0)
    Return $Lines
+EndFunc
+
+Func GetFeiConfigTem($configpath)
+   ;Get software type from fei.cfg
+   Local $key = 'software_type'
+   Local $aLines = getFeiConfigModuleLines($configpath, 'version')
+   Local $sTem = 'Titan'
+   ;Parse the line at key
+   For $i = 0 to UBound($aLines)-1
+	  Local $sLine = $aLines[$i]
+		Local $aBits = StringSplit($sLine,"=",2)
+	  $sKey = StringStripWS($aBits[0],3); strip leading and trailing white spaces
+	  If StringLower($sKey) == StringLower($key) Then
+		 If StringLower(StringStripWS($aBits[1],3)) = 'talos' Then
+			$sTem = 'Talos'
+		 EndIf
+	  EndIf
+   Next
+   ;MsgBox(0,'Tem', $sTem)
+   return $sTem
 EndFunc
 
 Func GetFeiConfigHasAutoC3($configpath)

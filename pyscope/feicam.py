@@ -631,6 +631,9 @@ class Falcon3(FeiCam):
 			self.frameconfig.setBaseFramePath(sub_frame_dir)
 		except:
 			raise
+		if 'frame_name_prefix' in configs['camera'].keys():
+			prefix = configs['camera']['frame_name_prefix']
+			self.frameconfig.setFrameNamePrefix(prefix)
 		self.extra_protector_sleep_time = self.getFeiConfig('camera','extra_protector_sleep_time')
 
 	def setInserted(self, value):

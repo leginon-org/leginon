@@ -154,7 +154,7 @@ class Panel(leginon.gui.wx.ClickTargetFinder.Panel):
 		dialog.Destroy()
 
 	def onFindSquaresButton(self, evt):
-		threading.Thread(target=self.node.runAutoFinderRanker).start()
+		threading.Thread(target=self.node.autoTargetFinder).start()
 
 	def doneTargetList(self):
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, True)
@@ -431,6 +431,12 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.EXPAND|wx.ALL, 5)
 		return [sbsz]
 
+	def createAutoFinderSizer(self):
+		sz = wx.GridBagSizer(5, 5)
+		self.widgets['autofinder'] = wx.CheckBox(self, -1, 'Enable auto targeting')
+		sz.Add(self.widgets['autofinder'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		return sz
+
 	def createCheckMethodSizer(self):
 		checkmethods = self.node.getCheckMethods()
 		self.widgets['check method'] = Choice(self, -1, choices=checkmethods)
@@ -444,12 +450,14 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		return szcheckmethod
 
 	def addSettings(self):
+		autosz = self.createAutoFinderSizer()
 		checkmethodsz = self.createCheckMethodSizer()
 		sz = wx.GridBagSizer(5, 5)
+		sz.Add(autosz, (0, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(checkmethodsz, (1, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 		self.Bind(wx.EVT_CHOICE, self.onChooseCheckMethod, self.widgets['check method'])
-
 		return sz
 
 	def onChooseCheckMethod(self, evt):

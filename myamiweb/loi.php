@@ -12,24 +12,25 @@ require_once "inc/project.inc";
 
 $refreshtime = ($_POST['refreshtime']) ? $_POST['refreshtime'] : 60;
 
+// --- get Predefined Variables form GET or POST method --- //
+list($projectId, $sessionId, $imageId, $preset, $runId, $scopeId) = getPredefinedVars();
+
 // --- Set sessionId
-$sessionId=$_POST[sessionId];
 $lastId = $leginondata->getLastSessionId();
 $sessionId = (empty($sessionId)) ? $lastId : $sessionId;
 // --- Get last imageId from the current session
 $imageId= $leginondata->getLastFilenameId($sessionId);
 
+$scopes = $leginondata->getScopesForSelection();
+$scopeId = (empty($scopeId)) ? false:$scopeId;
+
 // --- Get data type list
 $datatypes = $leginondata->getDataTypes($sessionId);
-
-$sessions = $leginondata->getSessions('description');
 
 $projectdata = new project();
 $projectdb = $projectdata->checkDBConnection();
 
-if(!$sessions) {
-	$sessions = $leginondata->getSessions('description', $projectId);
-}
+$sessions = $leginondata->getSessions('description', $projectId, '', $scopeId);
 
 if($projectdb) {
 	$projects = $projectdata->getProjects('all');
@@ -42,9 +43,23 @@ if($projectdb) {
 if ( is_numeric(SESSION_LIMIT) && count($sessions) > SESSION_LIMIT) $sessions=array_slice($sessions,0,SESSION_LIMIT);
 
 $viewer = new viewer();
+if($projectdb && !empty($sessions)) {
+	foreach($sessions as $k=>$s) {
+		if ($s['id']==$sessionId) {
+			$sessionname = $s['name_org'];
+			break;
+		}
+	}
+	$currentproject = $projectdata->getProjectFromSession($sessionname);
+	$viewer->setProjectId($projectId);
+	$viewer->addProjectSelector($projects, $currentproject);
+}
+
 $viewer->setSessionId($sessionId);
 $viewer->setImageId($imageId);
 $viewer->addSessionSelector($sessions);
+$viewer->setScopeId($scopeId);
+$viewer->addScopeSelector($scopes);
 $viewer->addLoiControl($refreshtime);
 $viewer->addCommentBox();
 $viewer->addQueueCountBox();

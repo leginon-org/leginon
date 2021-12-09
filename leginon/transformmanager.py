@@ -280,15 +280,11 @@ class TransformManager(node.Node, TargetTransformer):
 
 	def validateStagePosition(self, stageposition):
 		## check for out of stage range target
-		stagelimits = {
-			'x': (-9.9e-4, 9.9e-4),
-			'y': (-9.9e-4, 9.9e-4),
-		}
+		stagelimits = self.instrument.tem.StageLimits
 		for axis, limits in stagelimits.items():
 			if stageposition[axis] < limits[0] or stageposition[axis] > limits[1]:
 				pstr = '%s: %g' % (axis, stageposition[axis])
-				messagestr = 'Aborting target: stage position %s out of range' % pstr
-				self.logger.info(messagestr)
+				messagestr = 'Stage position %s out of range' % pstr
 				raise InvalidStagePosition(messagestr)
 
 	def targetToEMTargetData(self, targetdata,movetype):
@@ -404,6 +400,8 @@ class TransformManager(node.Node, TargetTransformer):
 					self.logger.warning('Reacquire with navigator failed. Use presets magner to complete')
 		# send preset with emtarget
 		self.presetsclient.toScope(presetname, emtarget, keep_shift=False)
+		if self.presetsclient.stage_targeting_failed:
+			status = 'error'
 		stagenow = self.instrument.tem.StagePosition
 		msg = 'reacquire imageMoveAndPreset end z %.6f' % stagenow['z']
 		self.testprint(msg)
@@ -432,8 +430,8 @@ class TransformManager(node.Node, TargetTransformer):
 		movetype = oldemtarget['movetype']
 		try:
 			emtarget = self.targetToEMTargetData(targetdata,movetype)
-		except InvalidStagePosition:
-			self.logger.error('Invalid new emtarget')
+		except InvalidStagePosition as e:
+			self.logger.error('Invalid new emtarget: %s' % (e))
 			return None
 		oldpresetdata = oldimage['preset']
 		presetname = oldpresetdata['name']
@@ -444,7 +442,9 @@ class TransformManager(node.Node, TargetTransformer):
 		self.logger.debug(msg)
 		# z is not changed within imageMoveAndPreset
 		status = self.imageMoveAndPreset(oldimage,emtarget,use_parent_mover)
-
+		if status != 'ok':
+			self.logger.error('failed to return to image instrument state with status=%s' % status)
+			return None
 		targetdata = emtarget['target']
 		# extra wait for falcon protector or normalization
 		self.logger.info('Wait for %.1f second before reacquire' % self.settings['pause time'])
@@ -522,7 +522,7 @@ class TransformManager(node.Node, TargetTransformer):
 			msg = 'handleTransformTargetEvent starting z %.6f' % stagenow['z']
 			self.logger.debug(msg)
 			newtarget = self.transformTarget(oldtarget, level, use_parent_mover)
-		except:
+		except Exception as e:
 			# TypeError may occur if temserver crash and no info comes back from
 			# a call. Let it go and continue.
 			# TransportError may also occur for unknown reason but it seems to

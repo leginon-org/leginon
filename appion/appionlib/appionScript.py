@@ -542,20 +542,23 @@ class AppionScript(basicScript.BasicScript):
 		for the first output in the function
 		'''
 		try:
-			fileutil.open_if_not_exists('%s%d' % (self.lockname,dbid)).close()
+			lock_file = '%s%d' % (self.lockname,dbid)
+			fileutil.open_if_not_exists(lock_file).close()
 		except OSError:
 			return True # exists before locking
 
 	def unlockParallel(self,dbid):
 		lockfile = '%s%d' % (self.lockname,dbid)
+		#apDisplay.printWarning('removing %s' % lockfile)
 		try:
 			os.remove(lockfile)
 		except:
 			# refs #4595 delay error exit a bit and checking if the file exists
 			time.sleep(0.2)
 			if os.path.isfile(lockfile):
-				apDisplay.printError('Parallel unlock failed')
-
+				apDisplay.printError('Parallel unlock failed on %s. Let it pass' % lockfile)
+			else:
+				apDisplay.printWarning('Missing %s to unlock. Moving on' % lockfile)
 	#=====================
 
 class TestScript(AppionScript):
