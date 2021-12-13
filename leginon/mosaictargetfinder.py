@@ -18,6 +18,7 @@ import node
 import targethandler
 import multihole
 from pyami import convolver, imagefun, mrc, ordereddict, affine
+from pyami import groupfun
 import numpy
 import pyami.quietscipy
 import scipy.ndimage as nd
@@ -26,6 +27,7 @@ import gui.wx.MosaicClickTargetFinder
 import os
 import math
 import random
+import json
 
 import polygon
 import raster
@@ -45,8 +47,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 	panelclass = gui.wx.MosaicClickTargetFinder.Panel
 	settingsclass = leginondata.MosaicClickTargetFinderSettingsData
 	defaultsettings = dict(targetfinder.ClickTargetFinder.defaultsettings)
-	defaultsettings.update({
-
+	mosaictarget_defaultsettings = {
 		# unlike other targetfinders, no wait is default
 		'wait for done': False,
 		#'no resubmit': True,
@@ -55,6 +56,15 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		'scale image': True,
 		'scale size': 512,
 		'create on tile change': 'all',
+		'autofinder': False,
+		'target grouping': {
+			'total targets': 10,
+			'classes': 1,
+		},
+		'target multiple':1,
+	}
+	defaultsettings.update(mosaictarget_defaultsettings)
+	auto_square_finder_defaultsettings = {
 		'lpf': {
 			'on': True,
 			'size': 5,
@@ -74,12 +84,8 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 			'min filter size': 10,
 			'max filter size': 10000,
 		},
-		'target grouping': {
-			'total targets': 10,
-			'classes': 1,
-		},
-		'target multiple':1,
-	})
+	}
+	defaultsettings.update(auto_square_finder_defaultsettings)
 
 	eventoutputs = targetfinder.ClickTargetFinder.eventoutputs + [
 			event.MosaicDoneEvent]
@@ -118,6 +124,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.multihole = multihole.TemplateConvolver()
 		self.currentposition = []
 		self.target_order = []
+		self.sq_prefs = None
 		self.mosaiccreated = threading.Event()
 		self.autofinderlock = threading.Lock()
 		self.presetsclient = presets.PresetsClient(self)
@@ -159,7 +166,10 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 
 	# not complete
 	def handleTargetListDone(self, targetlistdoneevent):
-		self.logger.warning('Got targetlistdone event')
+		if targetlistdoneevent:
+			self.logger.warning('Got real targetlistdone event')
+		else:
+			self.logger.warning('Handle fake targetlistdone event')
 		# wait until addTile thread is finished.
 		while self.autofinderlock.locked():
 			time.sleep(0.5)
@@ -184,6 +194,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		"""
 		if self.mosaicimage is None:
 			self.logger.error('Must have atlas display to find squares')
+			return
 		self.publishMosaicImage()
 		try:
 			# get blobs at finder scale with stats
@@ -194,18 +205,30 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		targets = self.blobStatsTargets(blobs, self.finder_scale_factor)
 		self.logger.info('Number of blobs: %s' % (len(targets),))
 		self.setTargets(targets, 'Blobs')
+		##################################
+		# TODO: This clear targets thread won't complete before
+		# getPanelTargets is called below
+		self.setTargets([], 'acquisition')
+		###################################
+		time.sleep(2)
 		# get ranked and filtered acquisition
 		mosaic_image_shape = self.mosaicimage.shape
-		self.last_xytargets = self.getPanelTargets(mosaic_image_shape)
 		self.refreshDatabaseDisplayedTargets()
 		xytargets = self.getPanelTargets(mosaic_image_shape)
+		##################################
+		# HACKING: disgard all acquisition targets because the
+		# above threading problem
+		xytargets['acquisition']=[]
+		###################################
+		#
 		xys = self.runBlobRankFilter(blobs, xytargets)
 		message = 'found %s squares' % (len(xys),)
 		self.last_xys = xys
 		## display them
 		# IMPORTANT: Don't put back unprocessed but submitted targets
 		# because they will get duplicated.
-		#xys.extend(existing_targets)
+		# It will also cause autoSubmitTargets break its while loop
+		# to break too early
 		self.setTargets(xys, 'acquisition')
 		self.setTargets([], 'example')
 		self.logger.info(message)
@@ -226,7 +249,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 				break
 		self.submitTargets()
 
-	def getTargetDataList(self, typename):
+	def publishNewTargetsOfType(self, typename):
 		'''
 		Get positions of the typename targets from atlas, publish the new ones,
 		and then update self.existing_position_targets with the published one added.
@@ -245,12 +268,13 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 				# This is a new position, publish it
 				c,r = coord_tuple
 				targetdata = self.mosaicToTarget(typename, r, c)
+			# Both new and old targetdata get put into displayedtargetdata
 			if coord_tuple not in displayedtargetdata:
 				displayedtargetdata[coord_tuple] = []
 			if targetdata['number'] not in self.target_order:
 				self.target_order.append(targetdata['number'])
 			displayedtargetdata[coord_tuple].append(targetdata)
-		# update self.existing_position_targets,  This is still a bit strange.
+		# update self.existing_position_targets.
 		for coord_tuple in displayedtargetdata:
 			self.existing_position_targets[coord_tuple] = displayedtargetdata[coord_tuple]
 
@@ -273,15 +297,11 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		return self.newReferenceTarget(imagedata, delta_row, delta_column)
 
 	def submitTargets(self):
+		"""
+		Overwrite TargetFinder submitTargets.
+		"""
 		self.terminated_remote = False
 		self.userpause.set()
-		try:
-			if self.settings['autofinder']:
-				# trigger onTargetsSubmitted in the gui.
-				self.panel.targetsSubmitted()
-				return
-		except:
-			pass
 
 		if self.targetlist is None:
 			self.targetlist = self.newTargetList()
@@ -312,12 +332,15 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.finishSubmitTarget()
 
 	def finishSubmitTarget(self):
-		# create target list
+		"""
+		The real submit target part. targetlist should be created by now.
+		"""
+		# create a list of targets of each type
 		self.logger.info('Submitting targets...')
 		self.target_order = self.getTargetOrder(self.targetlist)
-		self.getTargetDataList('acquisition')
-		self.getTargetDataList('focus')
-		self.getTargetDataList('preview')
+		self.publishNewTargetsOfType('acquisition')
+		self.publishNewTargetsOfType('focus')
+		self.publishNewTargetsOfType('preview')
 		self.publishTargetOrder(self.targetlist,self.target_order)
 		try:
 			self.publish(self.targetlist, pubevent=True)
@@ -339,12 +362,13 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.panel.targetsSubmitted()
 
 	def clearTiles(self):
+		self.clearAllTargets()
 		self.tilemap = {}
 		self.imagemap = {}
 		self.targetmap = {}
 		self.mosaic.clear()
+		self.finder_mosaic.clear()
 		self.targetlist = None
-		self.setTargets([], 'Blobs')
 		if self.settings['create on tile change'] in ('all', 'final'):
 			self.clearMosaicImage()
 
@@ -468,7 +492,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.currentposition = [vcoord]
 
 	def refreshDatabaseDisplayedTargets(self):
-		self.logger.info('Getting targets from database...')
+		self.logger.info('Refreshing targets from database and ignoring unsaved ones...')
 		if not self.hasNewImageVersion():
 			self.targetsFromDatabase()
 		else:
@@ -645,6 +669,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.publish(mosaicimagedata, database=True)
 		self.mosaicimagedata = mosaicimagedata
 		self.logger.info('Mosaic saved')
+		self.writeMosaicInfo(self.mosaic, self.mosaicimagedata)
 
 	def _researchMosaicTileData(self,imagelist=None, session=None):
 		if session is None:
@@ -749,6 +774,8 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		return self._tile2MosaicPosition(tile, tilepos, mosaic_instance)
 
 	def _tile2MosaicPosition(self, tile, tilepos, mosaic_instance):
+		# tilepos is written as (r, c)
+		# scalepos is written as (r, c)
 		mospos = mosaic_instance.tile2mosaic(tile, tilepos)
 		scaledpos = mosaic_instance.scaled(mospos)
 		return scaledpos
@@ -1024,6 +1051,36 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		# This is not exact but appears good enough.
 		self.logger.debug('Scaling  Target mapping from shape %s to %s with setting of max size of %d' % (self.finder_mosaicimage.shape, self.mosaicimage.shape, self.settings['scale size']))
 
+	def writeMosaicInfo(self, m_inst, mosaicimagedata):
+		scale = m_inst.scale
+		shape = mosaicimagedata.imageshape()
+		pos=m_inst.positionByCalibration({'x':0.0,'y':0.0})
+		pixel_pos = (pos[0]+shape[0]/(2*scale), pos[1]+shape[1]/(2*scale))
+		center_tile = m_inst.getNearestTile(pixel_pos[0], pixel_pos[1])
+		info = {}
+		label = mosaicimagedata['list']['targets']['label']
+		json_name = '%s_' % (self.session['name'])
+		if label:
+			json_name += label
+		json_path = os.path.join(self.session['image path'],json_name+'.json')
+		info['session image path'] = self.session['image path']
+		info['mosaic_label'] = mosaicimagedata['list']['targets']['label']
+		info['mosaic_image'] = {}
+		info['mosaic_image']['filename'] = mosaicimagedata['filename']+'.mrc'
+		info['mosaic_image']['scale'] = scale
+		info['center_tile_filename'] = center_tile.imagedata['filename']+'.mrc'
+		info['tiles'] = []
+		for t in m_inst.tiles:
+			tinfo = {}
+			tinfo['filename'] = t.imagedata['filename']+'.mrc'
+			tinfo['corner_pos'] = {'row': t.corner_pos[0],'col':t.corner_pos[1]}
+			info['tiles'].append(tinfo)
+		print info
+		info_str = json.dumps(info)
+		f = open(json_path,'w')
+		f.write(info_str)
+		f.close()
+
 	def findSquareBlobs(self):
 		message = 'finding squares'
 		self.logger.info(message)
@@ -1082,14 +1139,16 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		'''
 		if not finder_blobs:
 			return []
-		example_targets, panel_targets = self.getExampleAndPanelTargets(xytargets)
+		example_xys=xytargets['example']
+		# These xy tuples are those in the database on self.mosaic scale.
+		database_xys=self.existing_position_targets.keys()
 		##############
 		# blobs and filtering are done at smaller dimension to save memory usage.
 		##############
 		s = self.finder_scale_factor
-		finder_example_points = map((lambda x: (x[1]//s,x[0]//s)),example_targets)
-		finder_panel_points = map((lambda x: (x[1]//s,x[0]//s)),panel_targets)
-		priority_blobs, other_blobs, finder_display_array = self._runBlobRankFilter(finder_blobs, finder_example_points, finder_panel_points)
+		finder_example_points = map((lambda x: (x[1]//s,x[0]//s)),example_xys)
+		finder_database_points = map((lambda x: (x[1]//s,x[0]//s)),database_xys)
+		priority_blobs, other_blobs, finder_display_array = self._runBlobRankFilter(finder_blobs, finder_example_points, finder_database_points)
 		if finder_display_array is not None:
 			self.setImage(finder_display_array, 'Thresholded')
 		# filter out blobs with stats settings.
@@ -1200,7 +1259,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		'''
 		filter based on blob stats
 		'''
-		prefs = self.storeSquareFinderPrefs()
+		self.sq_prefs = self.storeSquareFinderPrefs()
 		mean_min = self.settings['blobs']['min mean']
 		mean_max = self.settings['blobs']['max mean']
 		std_min = self.settings['blobs']['min stdev']
@@ -1217,7 +1276,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 			if (mean_min <= mean <= mean_max) and (std_min <= std <= std_max) and (size_min <= size <= size_max):
 				good_blobs.append(blob)
 			else:
-				stats = leginondata.SquareStatsData(prefs=prefs, row=row, column=column, mean=mean, stdev=std)
+				stats = leginondata.SquareStatsData(prefs=self.sq_prefs, row=row, column=column, mean=mean, stdev=std, size=size)
 				stats['good'] = False
 				# only publish bad stats
 				self.publish(stats, database=True)
@@ -1240,6 +1299,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		samples = []
 		sample_indices =[]
 		for s in sampling_order:
+			# random sample without replacement
 			pick = random.sample(range(len(index_groups[s])),1)[0]
 			index = index_groups[s].pop(pick)
 			samples.append(blobs[index])
@@ -1247,23 +1307,17 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		return samples
 
 	def groupBlobsBySize(self, blobs, n_class):
-		codes = list(map((lambda x: '%05d@%04d' % (blobs[x].stats['size'],x)), range(len(blobs))))
+		codes = list(map((lambda x: '%08d@%05d' % (blobs[x].stats['size'],x)), range(len(blobs))))
 		codes.sort()
 		sorted_indices = list(map((lambda x: int(x.split('@')[-1])), codes))
 		if n_class == 1:
 			return [sorted_indices,]
 		total_blobs = len(blobs)
-		part = total_blobs//n_class
+		range_list = groupfun.calculateIndexRangesInClassEvenDistribution(total_blobs, n_class)
 		blob_index_in_bins = []
-		count = 0
 		for c in range(n_class):
-			left_over = n_class - part*n_class
-			if c >= left_over:
-				b = part
-			else:
-				b = part + 1
-			blob_index_in_bins.append(sorted_indices[count:count+b])
-			count = count+b
+			start, end = range_list[c]
+			blob_index_in_bins.append(sorted_indices[start:end])
 		return blob_index_in_bins
 
 	def checkSettings(self,settings):

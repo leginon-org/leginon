@@ -237,6 +237,7 @@ camera_params = (
 	('frames name', str),
 	('use frames', tuple),
 	('frame time', float),
+	('request nframes', int),
 	('frame flip', bool),
 	('frame rotate', int),
 	('temperature', float),
@@ -622,6 +623,7 @@ class PresetData(InSessionData):
 			('alt channel', bool),
 			('save frames', bool),
 			('frame time', float),
+			('request nframes', int),
 			('align frames', bool),
 			('align filter', str),
 			('use frames', tuple),
@@ -1273,14 +1275,31 @@ class DeviceGetData(Data):
 class DeviceData(Data):
 	pass
 
-
-class HoleFinderPrefsData(InSessionData):
+class IceTargetFinderPrefsData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
 			('image', AcquisitionImageData),
 			('user-check', bool),
 			('skip-auto', bool),
 			('queue', bool),
+			('stats-radius', float),
+			('ice-zero-thickness', float),
+			('ice-min-thickness', float),
+			('ice-max-thickness', float),
+			('ice-max-stdev', float),
+			('ice-min-stdev', float),
+			('template-on', bool),
+			('template-focus', tuple),
+			('template-acquisition', tuple),
+			('filter-ice-on-convolved-on', bool),
+			('sampling targets', bool),
+			('max sampling', int),
+		)
+	typemap = classmethod(typemap)
+
+class HoleFinderPrefsData(IceTargetFinderPrefsData):
+	def typemap(cls):
+		return IceTargetFinderPrefsData.typemap() + (
 			('edge-lpf-on', bool),
 			('edge-lpf-size', int),
 			('edge-lpf-sigma', float),
@@ -1297,15 +1316,6 @@ class HoleFinderPrefsData(InSessionData):
 			('blob-min-size', int),
 			('lattice-spacing', float),
 			('lattice-tolerance', float),
-			('stats-radius', float),
-			('ice-zero-thickness', float),
-			('ice-min-thickness', float),
-			('ice-max-thickness', float),
-			('ice-max-stdev', float),
-			('ice-min-stdev', float),
-			('template-on', bool),
-			('template-focus', tuple),
-			('template-acquisition', tuple),
 			('template-diameter', int),
 			('file-diameter', int),
 			('template-filename', str),
@@ -1345,7 +1355,9 @@ class HoleDepthFinderPrefsData(InSessionData):
 class HoleStatsData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
+			('finder-type', str),
 			('prefs', HoleFinderPrefsData),
+			('score-prefs', ScoreTargetFinderPrefsData),
 			('row', int),
 			('column', int),
 			('mean', float),
@@ -1353,6 +1365,9 @@ class HoleStatsData(InSessionData):
 			('thickness-mean', float),
 			('thickness-stdev', float),
 			('good', bool),
+			('score', float),
+			('hole-number', int),
+			('convolved', bool),
 		)
 	typemap = classmethod(typemap)
 
@@ -1387,14 +1402,26 @@ class SquareFinderPrefsData(InSessionData):
 		)
 	typemap = classmethod(typemap)
 
+class ScoreSquareFinderPrefsData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('image', MosaicImageData),
+			('area-min', float),
+			('area-max', float),
+		)
+	typemap = classmethod(typemap)
+
 class SquareStatsData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
 			('prefs', SquareFinderPrefsData),
+			('score_prefs', ScoreSquareFinderPrefsData),
 			('row', int),
 			('column', int),
+			('size', float),
 			('mean', float),
 			('stdev', float),
+			('score', float),
 			('good', bool),
 		)
 	typemap = classmethod(typemap)
@@ -1448,6 +1475,7 @@ class CameraSettingsData(Data):
 			('exposure time', float),
 			('save frames', bool),
 			('frame time', float),
+			('request nframes', int),
 			('align frames', bool),
 			('align filter', str),
 			('use frames', tuple),
@@ -1667,20 +1695,9 @@ class LowPassFilterSettingsData(Data):
 		)
 	typemap = classmethod(typemap)
 
-class TemplateTargetFinderSettingsData(TargetFinderSettingsData):
+class IceTargetFinderSettingsData(TargetFinderSettingsData):
 	def typemap(cls):
 		return TargetFinderSettingsData.typemap() + (
-			('image filename', str),
-			('template type', str),
-			('template lpf', LowPassFilterSettingsData),
-			('threshold', float),
-			('threshold method', str),
-			('blobs border', int),
-			('blobs max', int),
-			('blobs max size', int),
-			('blobs min size', int),
-			('lattice spacing', float),
-			('lattice tolerance', float),
 			('lattice hole radius', float),
 			('lattice zero thickness', float),
 			('ice min mean', float),
@@ -1701,6 +1718,43 @@ class TemplateTargetFinderSettingsData(TargetFinderSettingsData):
 			('focus offset row', int),
 			('focus offset col', int),
 			('filter ice on convolved', bool),
+			('sampling targets', bool),
+			('max sampling', int),
+		)
+	typemap = classmethod(typemap)
+
+class ScoreTargetFinderSettingsData(IceTargetFinderSettingsData):
+	def typemap(cls):
+		return IceTargetFinderSettingsData.typemap() + (
+			('script', str),
+			('score key', str),
+			('score threshold', float),
+		)
+	typemap = classmethod(typemap)
+
+class ScoreTargetFinderPrefsData(IceTargetFinderPrefsData):
+	def typemap(cls):
+		return IceTargetFinderPrefsData.typemap() + (
+			('script', str),
+			('score-key', str),
+			('score-threshold', float),
+		)
+	typemap = classmethod(typemap)
+
+class TemplateTargetFinderSettingsData(IceTargetFinderSettingsData):
+	def typemap(cls):
+		return IceTargetFinderSettingsData.typemap() + (
+			('image filename', str),
+			('template type', str),
+			('template lpf', LowPassFilterSettingsData),
+			('threshold', float),
+			('threshold method', str),
+			('blobs border', int),
+			('blobs max', int),
+			('blobs max size', int),
+			('blobs min size', int),
+			('lattice spacing', float),
+			('lattice tolerance', float),
 		)
 	typemap = classmethod(typemap)
 
@@ -1914,6 +1968,16 @@ class SquareFinderSettingsData(SettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class TopScoreFinderSettingsData(SettingsData):
+	def typemap(cls):
+		return SettingsData.typemap() + (
+			('target grouping', TargetGroupingSettingsData),
+			('target multiple', int),
+			('area-min', float),
+			('area-max', float),
+		)
+	typemap = classmethod(typemap)
+
 class MosaicClickTargetFinderSettingsData(ClickTargetFinderSettingsData,
 																					SquareFinderSettingsData):
 	def typemap(cls):
@@ -1929,6 +1993,20 @@ class MosaicClickTargetFinderSettingsData(ClickTargetFinderSettingsData,
 		return typemap
 	typemap = classmethod(typemap)
 
+class MosaicScoreTargetFinderSettingsData(ClickTargetFinderSettingsData,
+																					TopScoreFinderSettingsData):
+	def typemap(cls):
+		typemap = ClickTargetFinderSettingsData.typemap()
+		typemap += TopScoreFinderSettingsData.typemap()
+		typemap += (
+			('calibration parameter', str),
+			('scale image', bool),
+			('scale size', int),
+			('create on tile change', str),
+			('autofinder', bool),
+		)
+		return typemap
+	typemap = classmethod(typemap)
 class MosaicSpotFinderSettingsData(ClickTargetFinderSettingsData,
 																					SquareFinderSettingsData):
 	def typemap(cls):
@@ -2987,6 +3065,7 @@ class AutoFillerSettingsData(ConditionerSettingsData):
 class TEMControllerSettingsData(SettingsData):
 	def typemap(cls):
 		return SettingsData.typemap() + (
+			('retract obj ap on grid changing', bool),
 		)
 	typemap = classmethod(typemap)
 

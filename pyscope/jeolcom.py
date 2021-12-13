@@ -327,6 +327,37 @@ class Jeol(tem.TEM):
 		else:
 			raise ValueError
 
+	def getColdFegFlashing(self):
+		# on means running, off means idle
+		if not self.getJeolConfig('feg','has_cold_feg'):
+			return 'off'
+		value, result = self.feg3.GetAutoFlashingStatus()
+		value_map = [('error', -1), ('off',0),('on',1)]
+		if value == -1:
+			raise RuntimeError('CFEG Flashing in error state')
+		values = map((lambda x: x[1]), value_map)
+		state = value_map[values.index(value)][0]
+		return state
+ 
+	def setColdFegFlashing(self,state):
+		if not self.getJeolConfig('feg','has_cold_feg'):
+			return
+		# On starts flashing, Off stops flashing
+		if state == self.getColdFegFlashing():
+			# do nothing
+			return
+		value_map = [('off',0), ('on',1)]
+		states = map((lambda x: x[0]), value_map)
+		value = value_map[states.index(state)][1]
+		self.feg3.ExecAutoFlashing(int(state))
+		# TODO: how long before the state change in get ?
+		time.sleep(10)
+		# wait until flashing is idle again.
+		if state == 'on':
+			while self.getColdFegFlashing() == 'on':
+				time.sleep(5)
+		return
+
 	# intensity is controlled by condenser lens 3
 	def getIntensity(self):
 		intensity, result = self.lens3.GetCL3()
