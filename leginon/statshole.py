@@ -162,8 +162,8 @@ class HoleConvolver(Configurer):
 			for i, vect in enumerate(conv_vect):
 				center = hole.stats['center'] #(r,c)
 				target = center[0]+vect[0], center[1]+vect[1]
-				tary = target[1]
-				tarx = target[0]
+				tary = target[0]
+				tarx = target[1]
 				if tarx < 0 or tarx >= imshape[1] or tary < 0 or tary >= imshape[0]:
 					continue
 				h = hole.info_dict
