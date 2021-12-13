@@ -18,16 +18,22 @@ class Correlator(object):
 	Provides correlation handling functions.
 	A buffer of two images is maintained.
 	'''
-	def __init__(self, pad=False):
+	def __init__(self, pad=False, shrink=False):
 		self.fftengine = fftengine.fftEngine()
 		self.clearBuffer()
 		self.pad = pad
+		self.shrink = shrink
+		self.shrink_factor = 1
 
 	def setImage(self, index, newimage):
 		'''put a new image in the buffer'''
 		if self.pad:
 			newimage = imagefun.pad(newimage)
-		self.buffer[index]['image'] = newimage
+		if self.shrink:
+			self.shrink_factor = imagefun.shrink_factor(newimage.shape)
+			self.buffer[index]['image'] = imagefun.shrink(newimage)
+		else:
+			self.buffer[index]['image'] = newimage
 		self.setFFT(index, None)
 		self.initResults()
 
@@ -166,20 +172,20 @@ def wrap_coord(coord, shape):
 		wrapped1 = coord[1] - shape[1]
 	return (wrapped0, wrapped1)
 
-def cross_correlate(im1, im2, pad=False):
-	cor = Correlator(pad=pad)
+def cross_correlate(im1, im2, pad=False, shrink=False):
+	cor = Correlator(pad=pad, shrink=shrink)
 	cor.setImage(0, im2)
 	cor.setImage(1, im1)
 	return cor.crossCorrelate()
 
-def phase_correlate(im1, im2, zero=True, pad=False, wiener=False):
-	cor = Correlator(pad=pad)
+def phase_correlate(im1, im2, zero=True, pad=False, wiener=False, shrink=False):
+	cor = Correlator(pad=pad, shrink=shrink)
 	cor.setImage(0, im2)
 	cor.setImage(1, im1)
 	return cor.phaseCorrelate(zero=zero, wiener=wiener)
 
-def auto_correlate(im, pad=False):
-	return cross_correlate(im, im, pad=pad)
+def auto_correlate(im, pad=False, shrink=False):
+	return cross_correlate(im, im, pad=pad, shrink=shrink)
 
 class MissingImageError(Exception):
 	def __init__(self, info):
@@ -187,21 +193,19 @@ class MissingImageError(Exception):
 
 
 if __name__ == '__main__':
-	from Mrc import mrc_to_numeric
-	from Tkinter import *
-	import fftengine, peakfinder
+	import mrc, fftengine, peakfinder
 
 	if 1:
-		im1 = mrc_to_numeric('test1.mrc')
-		im2 = mrc_to_numeric('test2.mrc')
+		im1 = mrc.read('test1.mrc')
+		im2 = mrc.read('test2.mrc')
 	if 0:
-		im1 = mrc_to_numeric('02dec12a.001.mrc')
-		im2 = mrc_to_numeric('02dec12a.001.post.mrc')
+		im1 = mrc.read('02dec12a.001.mrc')
+		im2 = mrc.read('02dec12a.001.post.mrc')
 
-	f = fftengine.fftEngine()
-	c = Correlator(f)
+	c = Correlator()
 	p = peakfinder.PeakFinder()
 
+	c.setImage(0,im2)
 	for im in (im1, im2, im1, im2, im1, im2, im1):
 		c.insertImage(im)
 		try:
@@ -216,10 +220,8 @@ if __name__ == '__main__':
 		p.setImage(pcim)
 		p.subpixelPeak()
 		peak = p.getResults()['subpixel peak']
-		#print 'peak', peak
 		
 		shift = wrap_coord(peak, pcim.shape)
-		#print 'shift', shift
 
 		raw_input('continue')
 

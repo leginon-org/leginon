@@ -101,6 +101,10 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		# assumes needing focus. Overwritten by subclasses
 		self.foc_activated = True
 
+		# shrink image to save memory usage
+		self.shrink_factor = 1
+		self.shrink_offset = (0,0)
+
 	def onInitialized(self):
 		super(TargetFinder, self).onInitialized()
 		# self.panel is now made
@@ -147,25 +151,34 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		if imagedata is None:
 			if filename == '':
 				if self.name in ['Hole Targeting','Subsquare Targeting']:
-					filename = os.path.join(version.getInstalledLocation(),'sq_example.jpg')
+					filepath = os.path.join(version.getInstalledLocation(),'sq_example.jpg')
 				elif self.name in ['Square Targeting']:
-					filename = os.path.join(version.getInstalledLocation(),'gr_example.jpg')
+					filepath = os.path.join(version.getInstalledLocation(),'gr_example.jpg')
 				else:
-					filename = os.path.join(version.getInstalledLocation(),'hl_example.jpg')
+					filepath = os.path.join(version.getInstalledLocation(),'hl_example.jpg')
+			else:
+				# a full path that is not part of leginon data was entered.
+				filepath = filename
 			try:
-				orig = mrc.read(filename)
+				orig = mrc.read(filepath)
 			except Exception, e:
 				try:
-					orig = numpil.read(filename)
+					orig = numpil.read(filepath)
 				except:
 					self.logger.exception('Read image failed: %s' % e[-1])
 					return
-			self.currentimagedata = {'image':orig} 
+			# include in the facke imagedata the filename 
+			# without .mrc extension to mimic database entry
+			filenamebase = '.'.join(filename.split('.')[:-1])
+			self.currentimagedata = {'image':orig,'filename':filenamebase}
 		else:
 			orig = imagedata['image']
 			self.currentimagedata = imagedata
 
-		self.setImage(orig, 'Original')
+		shrunk = imagefun.shrink(orig)
+		self.shrink_factor = imagefun.shrink_factor(orig.shape)
+		self.shrink_offset = imagefun.shrink_offset(orig.shape)
+		self.setImage(shrunk, 'Original')
 		return orig
 
 	def getImageFromDB(self, filename):
@@ -446,8 +459,8 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		target_order = self.getTargetOrder(targetlist)
 		for imagetarget in imagetargets:
 			column, row = imagetarget
-			drow = row - imageshape[0]/2
-			dcol = column - imageshape[1]/2
+			drow = row*self.shrink_factor + self.shrink_offset[0] - imageshape[0]/2
+			dcol = column*self.shrink_factor + self.shrink_offset[1] - imageshape[1]/2
 
 			targetdata = self.newTargetForImage(imagedata, drow, dcol, type=typename, list=targetlist, number=number,last_focused=self.last_focused)
 			self.publish(targetdata, database=True)
@@ -488,11 +501,11 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		done = []
 		acq = []
 		foc = []
-		halfrows = targetlistdata['image']['camera']['dimension']['y'] / 2
-		halfcols = targetlistdata['image']['camera']['dimension']['x'] / 2
+		halfrows = (targetlistdata['image']['camera']['dimension']['y']//self.shrink_factor) / 2
+		halfcols = (targetlistdata['image']['camera']['dimension']['x']//self.shrink_factor) / 2
 		for target in targets:
-			drow = target['delta row']
-			dcol = target['delta column']
+			drow = target['delta row'] / self.shrink_factor
+			dcol = target['delta column'] / self.shrink_factor
 			x = dcol + halfcols
 			y = drow + halfrows
 			disptarget = x,y
@@ -716,10 +729,10 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			# get next acquisition pixel vectors on the image
 			vectors = {}
 			for axis in ('x','y'):
-				vectors[axis] = self.getPresetAxisVector(acq_presetdata, axis)
+				vectors[axis] = map((lambda x: x / self.shrink_factor), self.getPresetAxisVector(acq_presetdata, axis))
 			# get Beam diameter on image
 			beam_diameter = self.getBeamDiameter(acq_presetdata)
-			beam_diameter_on_image = int(beam_diameter/min(image_pixelsize.values()))
+			beam_diameter_on_image = int((beam_diameter/min(image_pixelsize.values()))//self.shrink_factor)
 			return vectors, beam_diameter_on_image
 		except:
 			# Set Length to 0 in case of any exception
@@ -780,7 +793,10 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			target['stats'] = ordereddict.OrderedDict()
 			target['stats']['Size'] = blob.stats['n']
 			target['stats']['Mean'] = blob.stats['mean']
-			target['stats']['Std. Dev.'] = blob.stats['stddev']
+			if 'stdev' in blob.stats.keys():
+				target['stats']['Std. Dev.'] = blob.stats['stddev']
+			if 'score' in blob.stats.keys():
+				target['stats']['Score'] = blob.stats['score']
 			targets.append(target)
 		return targets
 

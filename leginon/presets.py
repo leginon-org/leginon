@@ -315,6 +315,7 @@ class PresetsManager(node.Node):
 		self.addEventInput(event.MeasureDoseEvent, self.measureDose)
 		self.addEventInput(event.UpdatePresetEvent, self.handleUpdatePresetEvent)
 		self.addEventInput(event.IdleNotificationEvent, self.handleIdleTimedOutEvent)
+		self.addEventInput(event.SetNotificationStatusEvent, self.handleSetNotificationStatusEvent)
 
 		## this will fill in UI with current session presets
 		self.getPresetsFromDB()
@@ -2105,6 +2106,15 @@ class PresetsManager(node.Node):
 		newbeamshift = {'beam shift': self.new_beamshift}
 		newpreset = self.updatePreset(presetname, newbeamshift)
 		self.updateSameMagPresets(presetname,'beam shift')
+
+	def handleSetNotificationStatusEvent(self, evt):
+		'''
+		Set the active status of error notification/timeout timer from manager
+		'''
+		# set to the opposite of what we want
+		self.idleactive = not evt['active']
+		# then toggle on it to trigger downstream effects.
+		self.toggleInstrumentTimeout()
 
 	def handleIdleTimedOutEvent(self, evt):
 		temname = None
