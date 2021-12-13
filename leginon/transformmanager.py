@@ -11,7 +11,7 @@
 import node
 import event
 from leginon import leginondata
-from pyami import correlator, peakfinder, ordereddict
+from pyami import ordereddict
 import calibrationclient
 import math
 import numpy
@@ -240,8 +240,6 @@ class TransformManager(node.Node, TargetTransformer):
 		node.Node.__init__(self, id, session, managerlocation, **kwargs)
 		TargetTransformer.__init__(self)
 
-		self.correlator = correlator.Correlator()
-		self.peakfinder = peakfinder.PeakFinder()
 		self.instrument = instrument.Proxy(self.objectservice, self.session,
 																				self.panel)
 		self.calclients = ordereddict.OrderedDict()

@@ -29,6 +29,7 @@ class TEMController(node.Node):
 	panelclass = gui.wx.TEMController.Panel
 	settingsclass = leginondata.TEMControllerSettingsData
 	defaultsettings = {
+		'retract obj ap on grid changing':False,
 	}
 	eventinputs = node.Node.eventinputs + presets.PresetsClient.eventinputs
 	eventinputs.append(event.LoadAutoLoaderGridEvent)
@@ -369,6 +370,29 @@ class TEMController(node.Node):
 		self.setStatus('idle')
 		return is_success
 
+	def _retractObjectiveAperture(self):
+		'''
+		Retract objective aperture and return the old state.
+		This is used before grid exchange and in-pair with
+		reinsertObjectiveAperture.
+		'''
+		old_state = self._getApertureStateDisplayByName('objective')
+		old_state='unknown'
+		if old_state != 'unknown':
+			self.selectAperture('objective', 'open')
+		else:
+			self.logger.error('Aperture not retracted during grid exchange due to unknown state')
+		return old_state
+
+	def _reinsertObjectiveAperture(self, old_state):
+		'''
+		Insert the old objective aperture selection.
+		This is used after grid exchange and in-pair with
+		retractObjectiveAperture.
+		'''
+		if old_state != 'unknown':
+			self.selectAperture('objective', old_state)
+
 	def _loadGrid(self, slot_name):
 		'''
 		Internal function to load a grid by slot name string.
@@ -407,7 +431,12 @@ class TEMController(node.Node):
 			self.panel.setTEMParamDone()
 			return False
 		# Finished all validation. We are now sure that we need to load.
-		return self.__loadGrid(slot_number)
+		if self.settings['retract obj ap on grid changing']:
+			old_selection = self._retractObjectiveAperture()
+		is_success = self.__loadGrid(slot_number)
+		if self.settings['retract obj ap on grid changing'] and old_selection != 'unknown':
+			self._reinsertObjectiveAperture(old_selection)
+		return is_success
 
 	def __loadGrid(self, slot_number):
 		'''
@@ -470,21 +499,25 @@ class TEMController(node.Node):
 		names = self.getApertureMechanisms()
 		name_states = {}
 		for name in names:
-			try:
-				state = self.instrument.tem.getApertureSelection(name)
-			except ValueError, e:
-				self.logger.warning(e)
-				state = 'unknown'
-			except RuntimeError, e:
-				self.logger.error(e)
-				state = 'unknown'
-			try:
-				if state is None or state=='' or state not in self.instrument.tem.getApertureSelections(name):
-					state = 'unknown'
-			except:
-					state = 'unknown'
+			state = self._getApertureStateDisplayByName(name)
 			name_states[name] = state
 		return name_states
+
+	def _getApertureStateDisplayByName(self, name):
+		try:
+			state = self.instrument.tem.getApertureSelection(name)
+		except ValueError, e:
+			self.logger.warning(e)
+			state = 'unknown'
+		except RuntimeError, e:
+			self.logger.error(e)
+			state = 'unknown'
+		try:
+			if state is None or state=='' or state not in self.instrument.tem.getApertureSelections(name):
+				state = 'unknown'
+		except:
+			state = 'unknown'
+		return state
 
 	def uiPause(self):
 		'''

@@ -114,7 +114,7 @@ class Navigator(node.Node):
 		self.stagelocations = []
 		self.getLocationsFromDB()
 
-		self.correlator = correlator.Correlator()
+		self.correlator = correlator.Correlator(shrink=True)
 		self.peakfinder = peakfinder.PeakFinder()
 		self.oldimagedata = None
 		self.newimagedata = None
@@ -419,14 +419,14 @@ class Navigator(node.Node):
 		oldshape = self.oldimagedata['image'].shape
 		limit = oldshape
 		location = oldshape[0]/2.0-0.5+self.origmove[0], oldshape[1]/2.0-0.5+self.origmove[1]
-		
 		im1 = imagefun.crop_at(self.origimagedata['image'], location, limit, mode='constant', cval=0.0)
 		im2 = imagefun.crop_at(self.newimagedata['image'], 'center', limit)
-
+		shrink_factor = imagefun.shrink_factor(im1.shape)
 		try:
-			pc = correlator.phase_correlate(im2, im1, zero=False)
+			corr_limit = imagefun.shrink(im1).shape
+			pc = correlator.phase_correlate(im2, im1, zero=False, shrink=True)
 			pc = scipy.ndimage.gaussian_filter(pc,1)
-			subpixelpeak = self.peakfinder.subpixelPeak(newimage=pc, guess=(0.5,0.5), limit=limit)
+			subpixelpeak = self.peakfinder.subpixelPeak(newimage=pc, guess=(0.5,0.5), limit=corr_limit)
 			res = self.peakfinder.getResults()
 			unsignedpixelpeak = res['unsigned pixel peak']
 		except Exception, e:
@@ -453,8 +453,8 @@ class Navigator(node.Node):
 		except:
 			self.logger.error('Pixel size unknown, assume no error')
 			return 0, 0, 0.0
-		cbin = camera['binning']['x']
-		rbin = camera['binning']['y']
+		cbin = camera['binning']['x'] * shrink_factor
+		rbin = camera['binning']['y'] * shrink_factor
 		rpix = r_error * rbin
 		cpix = c_error * cbin
 		pixdist = math.hypot(rpix,cpix)
