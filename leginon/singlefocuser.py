@@ -294,6 +294,13 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 
 		#####################################################################
 
+	def _handleDefocusCorrectionFailure(self):
+		self.logger.info('Setting eucentric focus...')
+		self.eucentricFocusToScope()
+		self.logger.info('Eucentric focus set')
+		self.eucset = True
+		self.resetDefocus()
+
 	def validateMeasurementResult(self, setting, resultdata):
 		fitmin = resultdata['min']
 		focustype = setting['correction type']
@@ -314,11 +321,7 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 			logmessage = 'Focus measurement failed: fit = %s (fit limit = %s)' % (fitmin, fitlimit)
 			self.logger.warning(logmessage)
 			if focustype == 'Defocus':
-				self.logger.info('Setting eucentric focus...')
-				self.eucentricFocusToScope()
-				self.logger.info('Eucentric focus set')
-				self.eucset = True
-				self.resetDefocus()
+				self._handleDefocusCorrectionFailure()
 			else:
 				self.eucset = False
 		### check change limit
@@ -329,6 +332,10 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 			validdefocus = False
 			logmessage = 'Focus measurement failed: change = %s (change limit = %s to %s)' % (defoc, delta_min, delta_max)
 			self.logger.warning(logmessage)
+			if focustype == 'Defocus':
+				self._handleDefocusCorrectionFailure()
+			else:
+				self.eucset = False
 		else:
 			self.logger.info(logmessage)
 
@@ -356,6 +363,8 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 	def correctDefocusStig(self, setting, resultdata):
 		correction_type = setting['correction type']
 		fitmin = resultdata['min']
+		stigx = resultdata['stigx']
+		stigy = resultdata['stigy']
 		if resultdata['stig correction']:
 			self.correctStig(stiglens, stigx, stigy)
 			resultstring = resultstring + ', corrected stig by x,y=%.4f,%.4f' % (stigx, stigy)
