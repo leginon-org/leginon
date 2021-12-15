@@ -6,10 +6,10 @@
   This allows more complex query such those
 	require in, group by etc.
 """
-
+import time
 import sinedon
-import MySQLdb
 import sqldb
+import _mysql_exceptions
 
 connections = {}
 
@@ -24,34 +24,12 @@ def getConnection(modulename='leginondata'):
 def ping(modulename,param):
 		'''
 		Check connection stat and reconnect if needed.
+		pymysql can reconnect when pinged.
 		'''
 		global connections
 		db_obj = connections[modulename]
-		db=db_obj.dbConnection
-		try:
-			if db.stat() == 'MySQL server has gone away':
-				connections[modulename] = sqldb.sqlDB(**param)
-		except MySQLdb.InterfaceError as e:
-			errno = e.args[0]
-			if errno == 0:
-				# connection closed
-				# print  "reconnecting after connection is closed"
-				connections[modulename] = sqldb.sqlDB(**param)
-			else:
-				raise
-		except (MySQLdb.ProgrammingError, MySQLdb.OperationalError) as e:
-			# db.stat function gives error when connection is not available.
-			errno = e.args[0]
-			## some version of mysqlpython parses the exception differently
-			if not isinstance(errno, int):
-				errno = errno.args[0]
-			## 2006:  MySQL server has gone away
-			if errno in (2006,):
-				ctime = time.strftime("%H:%M:%S")
-				print "reconnecting at %s after MySQL server has gone away error" % (ctime,)
-				connections[modulename] = sqldb.sqlDB(**param)
-			else:
-				raise
+		# pymysql can reconnect when pinged
+		db_obj.dbConnection.ping(reconnect=True)
 
 def complexMysqlQuery(basedbmodule,query):
 	if len(query) > 10000:
