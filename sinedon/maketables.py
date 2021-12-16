@@ -5,7 +5,7 @@ import sys
 import sqldict
 import inspect
 import sinedon
-import MySQLdb
+import pymysql.err
 
 from optparse import OptionParser
 
@@ -116,7 +116,7 @@ def makeTables(sinedonname,modulename,dbname=None,xmlfile=None,check_exist=False
 		if check_exist:
 			try:
 				dbd.diffSQLTable(tablename,definition)
-			except (MySQLdb.ProgrammingError, MySQLdb.OperationalError), e:
+			except (pymysql.err.ProgrammingError, pymysql.err.OperationalError), e:
 				errno = e.args[0]
 				## some version of mysqlpython parses the exception differently
 				if not isinstance(errno, int):

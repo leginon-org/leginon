@@ -696,6 +696,9 @@ class SimOtherCCDCamera(SimCCDCamera):
 		im = 10 * im
 		return im
 
+class SimCeta(SimCCDCamera):
+	name = 'SimCeta'
+
 class SimK2CountingCamera(SimFrameCamera):
 	name = 'SimK2CountingCamera'
 	def __init__(self):

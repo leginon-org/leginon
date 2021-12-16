@@ -53,7 +53,6 @@ import datetime
 import re
 import string
 import sqldict
-import MySQLdb
 import newdict
 import cPickle
 import dbconfig
@@ -486,8 +485,11 @@ class AlterTable(SQLExpression):
 			str_null = "NULL"
 		default = ""
 		if self.column.has_key('Default') and self.column['Default'] is not None:
-			default = "DEFAULT '%s'" % (self.column['Default'])
-
+			# current_timestamp should not be quoted
+			if self.column['Default'] == 'current_timestamp()':
+				default = "DEFAULT %s" % (self.column['Default'])
+			else:
+				default = "DEFAULT '%s'" % (self.column['Default'])
 		if not self.column:
 			return ''
 		elif self.operation=='DROP':

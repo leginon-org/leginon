@@ -558,6 +558,38 @@ def bin3f(a, factor):
 	binned = ffteng.itransform(cutfft)/float(factor**3)
 	return binned
 
+def shrink_factor(shape):
+	'''
+	Return the binning to keep correlation efficient.
+	'''
+	max_dim = max(shape)
+	for b in (1,2,4,8):
+		if max_dim // b <= 1440: # based on k3 dimension
+			break
+	return b
+
+def shrink_offset(oldshape):
+	'''
+	Return the offset for shrinking to keep correlation efficient.
+	'''
+	b = shrink_factor(oldshape)
+	if b > 1:
+		newshape = (b*(oldshape[0]//b), b*(oldshape[1]//b))
+		offset = ((oldshape[0] - newshape[0]) // 2, (oldshape[1] - newshape[1]) // 2)
+	else:
+		offset = (0,0)
+	return offset
+
+def shrink(image):
+	oldshape = image.shape
+	offset = (0,0)
+	b = shrink_factor(oldshape)
+	if b > 1:
+		newshape = (b*(oldshape[0]//b), b*(oldshape[1]//b))
+		offset = shrink_offset(oldshape)
+		image = image[offset[0]:offset[0]+newshape[0], offset[0]:offset[1]+newshape[1]]
+	return bin(image, b)
+
 def crop_at(im, center, shape, mode='wrap', cval=None):
 	'''
 	Crops an image such that the resulting image has im[center] at the center

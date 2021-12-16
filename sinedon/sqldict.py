@@ -156,7 +156,8 @@ import datetime
 import re
 import numpy
 import math
-import MySQLdb.cursors
+import pymysql
+import pymysql.err
 from types import *
 import newdict
 import data
@@ -201,10 +202,11 @@ class SQLDict(object):
 
 	def ping(self):
 		try:
-			if self.db.stat() == 'MySQL server has gone away':
-				self.db = sqldb.connect(**self.db.kwargs)
-		except (MySQLdb.ProgrammingError, MySQLdb.OperationalError), e:
-			# self.db.stat function gives error when connection is not available.
+			self.db.ping(reconnect=True)
+		except (pymysql.err.ProgrammingError, pymysql.err.OperationalError), e:
+			### FIX ME.  These reconnection may not be needed for pymysql. See directq.py
+			# and Issue #9527.  There are other ping call in this module of unknown effect.
+			# this function gives error when connection is not available.
 			errno = e.args[0]
 			## some version of mysqlpython parses the exception differently
 			if not isinstance(errno, int):
@@ -278,7 +280,7 @@ class SQLDict(object):
 		query = str(sqlexpr.Delete(tablename, where))
 		print 'QUERY', query
 		self.db.ping()
-		cur = self.db.cursor(cursorclass=MySQLdb.cursors.DictCursor)
+		cur = self.db.cursor(cursorclass=pymysql.cursors.DictCursor)
 		cur.execute(query)
 		cur.close()
 
@@ -345,7 +347,6 @@ class _Table:
 
 			whereFormat = sqlexpr.AND_EQUAL(equalpairs)
 			whereFormatNULL = sqlexpr.AND_IS(nullfields)
-
 			if whereFormatNULL:
 				if whereFormat:
 					whereFormat = sqlexpr.AND(whereFormatNULL,whereFormat)
@@ -353,7 +354,6 @@ class _Table:
 					whereFormat = whereFormatNULL
 
 			qsel = sqlexpr.SelectAll(self.table, where=whereFormat).sqlRepr()
-			## print qsel
 			try:
 				c.execute(qsel)
 				result=c.fetchone()
@@ -363,7 +363,7 @@ class _Table:
 		if force or not result:
 			q = sqlexpr.Insert(self.table, v).sqlRepr()
 			if debug:
-				print q
+				print 'insert q',q
 			c.execute(q)
 			## try the new lastrowid attribute first,
 			## then try the old insert_id() method
@@ -452,7 +452,7 @@ class _Cursor:
 
 	def __init__(self, db, load, columns):
 		db.ping()
-		self.cursor = db.cursor(cursorclass=MySQLdb.cursors.DictCursor)
+		self.cursor = db.cursor(cursor=pymysql.cursors.DictCursor)
 		self.columns = columns
 		self.load = load
 		self.db = db
@@ -543,7 +543,7 @@ class _multipleQueries:
 
 	def _cursor(self):
 		self.db.ping()
-		return self.db.cursor(cursorclass=MySQLdb.cursors.DictCursor)
+		return self.db.cursor(cursor=pymysql.cursors.DictCursor)
 
 	def execute(self):
 		for key,query in self.queries.items():
@@ -557,13 +557,13 @@ class _multipleQueries:
 				## print '-----------------------------------------------'
 				## print 'query =', query
 				c.execute(query)
-			except (MySQLdb.ProgrammingError, MySQLdb.OperationalError), e:
+			except (pymysql.err.InternalError, pymysql.err.ProgrammingError, pymysql.err.OperationalError), e:
 				errno = e.args[0]
 				## some version of mysqlpython parses the exception differently
 				if not isinstance(errno, int):
 					errno = errno.args[0]
-				## 1146:  table does not exist
-				## 1054:  column does not exist
+				## ProgrammingError 1146:  table does not exist
+				## InternalError 1054:  column does not exist
 				if errno in (1146, 1054):
 					pass
 					#print 'non-fatal query error:', e
@@ -758,7 +758,7 @@ class _createSQLTable:
 
 		def _cursor(self):
 			self.db.ping()
-			return self.db.cursor(cursorclass=MySQLdb.cursors.DictCursor)
+			return self.db.cursor(cursor=pymysql.cursors.DictCursor)
 
 		def create(self):
 			table_exist = self.hasTable()
@@ -786,15 +786,6 @@ class _createSQLTable:
 
 		def formatDescription(self, description):
 			newdict = {}
-			newdict['Field'] = description['Field']
-			if description.has_key('Default'):
-				newdict['Default'] = description['Default']
-				if description['Default']=='CURRENT_TIMESTAMP':
-					newdict['Default'] = None
-				elif description['Default']=='NULL':
-					newdict['Default'] = None
-			else:
-				newdict['Default'] = None
 			typestr = description['Type'].upper()
 			try:
 				if re.findall('^TIMESTAMP', typestr):
@@ -803,6 +794,21 @@ class _createSQLTable:
 			except ValueError:
 				pass
 			newdict['Type'] = typestr
+			if newdict['Type'] == 'TIMESTAMP':
+				if not description.has_key('Default'):
+					# Fixing Issue #7798 by force timestamp default
+					# to current_timestamp().
+					# This way it matches with what is described
+					# in the database and prevent it from altering
+					# the table
+					description['Default']='current_timestamp()'
+			newdict['Field'] = description['Field']
+			if description.has_key('Default'):
+				newdict['Default'] = description['Default']
+				if description['Default']=='NULL':
+					newdict['Default'] = None
+			else:
+				newdict['Default'] = None
 			return newdict
 
 		def _checkTable(self):
@@ -818,22 +824,35 @@ class _createSQLTable:
 				definition.append(self.formatDescription(col))
 
 			addcolumns = [col for col in definition if col not in describe]
-
+			extracolumns = [col for col in describe if col not in definition]
 			for column in addcolumns:
+				not_to_add = False
 				queries = []
 				column['Null'] = 'YES'
-				q = sqlexpr.AlterTable(self.table, column, 'ADD').sqlRepr()
-				queries.append(q)
-				l = re.findall('^REF\%s' %(sep,),column['Field'])
-				if l:
-					q = sqlexpr.AlterTableIndex(self.table, column).sqlRepr()
+				if extracolumns and column['Field'] in map((lambda x: x['Field']),extracolumns):
+					# description is the existing db schema.
+					# #7752 handle the case when the sinedon definition has changed.
+					# pymysql would try to add and gives duplicated column error.
+					# Avoid doing add if The field is in both definition and describe
+					not_to_add = True
+				if not not_to_add:
+					q = sqlexpr.AlterTable(self.table, column, 'ADD').sqlRepr()
 					queries.append(q)
+					# only add index if column is added
+					l = re.findall('^REF\%s' %(sep,),column['Field'])
+					if l:
+						q = sqlexpr.AlterTableIndex(self.table, column).sqlRepr()
+						if debug:
+							print 'add index when adding a column', q
+						queries.append(q)
 				try:
 					for q in queries:
 						if debug:
 							print q
 						c.execute(q)
-				except MySQLdb.OperationalError, e:
+				except pymysql.err.OperationalError, e:
+					if debug:
+						print e
 					pass
 			c.close()
 
@@ -891,6 +910,8 @@ class _diffSQLTable(_createSQLTable):
 				column['Null']='YES'
 				altertype = 'ADD'
 				if [col for col in describe if col['Field']==column['Field']]:
+					if column['Type'] == 'timestamp':
+						print('TODO: time stamp default might cause problem with pymysql')
 					altertype = 'CHANGE'
 				q = sqlexpr.AlterTable(self.table, column, altertype).sqlRepr()
 				queries.append(q)
