@@ -2,6 +2,7 @@ import math
 import scipy
 import scipy.optimize
 from scipy.linalg import lstsq
+import numpy
 
 def debug_print(msg):
 	#print msg
@@ -527,3 +528,18 @@ class Prediction(object):
 			position[i] = self._leastSquaresXY(tilts[-n:], positions[-n:], tilt)
 		return position
 
+	def setCalibratedDefocusDeltas(self, tilts, deltas):
+		'''
+		Sorted tilts and defecus deltas. Tilts are in radians. Underfocus is positive.
+		'''
+		if len(tilts) != len(deltas):
+			raise ValueError('Number of alibrated delta defocii and tilts not matched')
+		self.cal_tilts = tilts
+		self.cal_deltas = deltas
+
+	def getCalibratedDefocusDelta(self, tilt):
+		# underfocus is positive in deltas
+		# interpolate
+		xp = self.cal_tilts
+		fp = self.cal_deltas
+		return numpy.interp(tilt, xp, fp)

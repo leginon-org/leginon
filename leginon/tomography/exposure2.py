@@ -1,9 +1,6 @@
 import math
 
-from leginon.tomography.exposure import Exposure
-
-class Default(Exception):
-    pass
+from leginon.tomography.exposure import Exposure, Default
 
 class Exposure2(Exposure):
     

@@ -227,6 +227,7 @@ class Collection(object):
 		
 		position = dict(position0)
 		defocus = defocus0
+		tem = self.instrument.getTEMData()
 
 		abort_loop = False
 		for seq_index in range(len(sequence)):
@@ -249,10 +250,15 @@ class Collection(object):
 			# undo defocus from last tilt
 			predicted_shift['z'] = -defocus
 
-			defocus = defocus0 + predicted_position['z']*image_pixel_size
+			#Use calibrated defocus delta
+			cal_delta = self.prediction.getCalibratedDefocusDelta(tilt)
+			self.logger.info('calibrated tilt defocus shift: %.2f um' % (cal_delta*1e6))
+			defocus =  defocus0 + cal_delta
+			z_prediction = defocus0 + predicted_position['z']*image_pixel_size
 			self.logger.info('defocus0: %g meters,sintilt: %g' % (defocus0,math.sin(tilt)))
-			# apply new defocus
-			predicted_shift['z'] += defocus
+			self.logger.info('prediction defocus %.2f um' % (defocus*1e6))
+			# record z prediction
+			predicted_shift['z'] += z_prediction
 
 			try:
 				self.node.setPosition('image shift', predicted_position)
@@ -267,6 +273,7 @@ class Collection(object):
 								  predicted_position['x']*image_pixel_size,
 								  predicted_position['y']*image_pixel_size))
 			self.logger.info('Predicted defocus: %g meters.' % defocus)
+			# set defocus based on the calibration
 			self.node.setDefocus(defocus)
 
 			if self.settings['measure defocus']:

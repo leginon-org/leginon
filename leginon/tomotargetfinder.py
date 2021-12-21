@@ -69,8 +69,8 @@ class TomoClickTargetFinder(targetfinder.ClickTargetFinder):
 		'''
 		if not self.next_acq_node:
 			return None
-		settingsclassname = self.next_acq_node['class string']+'SettingsData'
-		results= self.reseachDBSettings(getattr(leginondata,settingsclassname),self.next_acq_node['alias'])
+		settingsclassname = self.next_acq_node['node']['class string']+'SettingsData'
+		results= self.reseachDBSettings(getattr(leginondata,settingsclassname),self.next_acq_node['node']['alias'])
 		acqsettings = results[0]
 		try:
 			return (acqsettings['tilt min'],acqsettings['tilt max'])
@@ -91,7 +91,7 @@ class TomoClickTargetFinder(targetfinder.ClickTargetFinder):
 			return
 		app = evt['application']
 		# get focus node used for getting beam parameters
-		self.focus_node = self.getFocusNodeThruBinding(app,self.next_acq_node['alias'],'ImageTargetListPublishEvent','Focuser')
+		self.focus_node = self.getFocusNodeThruBinding(app,self.next_acq_node['node']['alias'],'ImageTargetListPublishEvent','Focuser')
 	
 	def getFocusNodeThruBinding(self,appdata,from_node_alias,binding_name,next_node_baseclass_name):
 		# Copied from appclient.
@@ -181,8 +181,8 @@ class TomoClickTargetFinder(targetfinder.ClickTargetFinder):
 	def _getTrackTargetDimensions(self,image_pixelsize):
 		try:
 			# get settings for the next Acquisition node
-			settingsclassname = self.next_acq_node['class string']+'SettingsData'
-			results= self.reseachDBSettings(getattr(leginondata,settingsclassname),self.next_acq_node['alias'])
+			settingsclassname = self.next_acq_node['node']['class string']+'SettingsData'
+			results= self.reseachDBSettings(getattr(leginondata,settingsclassname),self.next_acq_node['node']['alias'])
 			acqsettings = results[0]
 			# use first preset in preset order for display
 			presetname = acqsettings['track preset']
