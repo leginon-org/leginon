@@ -296,7 +296,7 @@ class TargetImagePanel(leginon.gui.wx.ImagePanel.ImagePanel):
 		'''
 		Draw a circle without filling.
 		'''
-		radius = int(radius)
+		radius = max([1,int(radius)])
 		p1 = (row,col-radius)
 		p2 = (row,col-radius)
 		for r in range(-radius,radius+1):
