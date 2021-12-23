@@ -8,6 +8,7 @@ import sys
 import time
 from leginon import leginondata
 from leginon import projectdata
+from leginon import gridserver
 import leginon.session
 import leginon.leginonconfig
 import leginon.ddinfo
@@ -88,6 +89,23 @@ class SessionCreator(object):
 		projeq.insert()
 		return projeq['project']
 
+	def linkGridServerSession(self):
+		'''
+		record session name and dbid to grid management system 
+		and associate that with a grid if gridhook.cfg
+		is defined.  The grid is identified in session comment.
+		'''
+		grid_id_string = self.session['comment']
+		gapp = gridserver.GridHookServer(self.session, self.project)
+		if not gapp.gridhook_server_active:
+			# Do nothing
+			return
+		# save session info to grid management system
+		gapp.setSession()
+		#
+		if gapp.setGridSession(grid_id_string) == False:
+			raise ValueError('%s is not found in grid server database' % grid_id_string)
+
 	def setDataFromOld(self,class_name,old_session):
 		r = getattr(leginondata,class_name)(session=old_session).query()
 		if r:
@@ -146,6 +164,8 @@ def readMapFile(filepath):
 		if len(bits) == 2:
 			# list of slot number and comment so that it is ordered
 			comment_map.append((int(bits[0]),bits[1].split('\n')[0]))
+		else:
+			raise ValueError('Incorrect file format.  Must use tab to separate slot_number and session_description')
 	return comment_map
 
 def start(sessionname, clientlist, gridslot,z, task='atlas'):
@@ -184,6 +204,11 @@ if __name__ == "__main__":
 		answer = raw_input('Session comment field entry: ')
 		# grid slot, comment
 		comment_map.append((int(ganswer),answer))
+	# workflow choice
+	wanswer = raw_input('Full workflow or atlas only (full/atlas): ')
+	while wanswer.lower() not in ('full','atlas'):
+		wanswer = raw_input('Invalid workflow name. Please try again: full or atlas')
+	workflow = wanswer.lower()
 	# old session
 	answer = raw_input('Enter an old session name to base new sessions on: ')
 	if not answer:
@@ -202,11 +227,16 @@ if __name__ == "__main__":
 	# create by the order of the comment_map
 	slot_order = map((lambda x:x[0]),comment_map)
 	task_order = []
+
+	# SessionData are created before starting.
 	for i, slot_number in enumerate(slot_order):
 		app.setComment(comment_map[i][1])
 		app.createSession()
+		# TODO: create gridhook link in grid server
+		app.linkGridServerSession()
+		# save grid session map in leginondb
 		auto_session = app.saveGridSessionMap(i, slot_number, stagez)
-		task = app.saveTask(auto_session,'full')
+		task = app.saveTask(auto_session,workflow)
 		task_order.append(task.dbid)
 		if i == 0:
 			first_session = app.session

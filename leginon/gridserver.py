@@ -17,6 +17,7 @@ except:
 import json
 
 from leginon import leginondata
+from leginon import projectdata
 import pyami.moduleconfig
 
 # get configuration from gridhook.cfg
@@ -32,15 +33,16 @@ class GridHookServer(object):
 	Similar request server as leginon remoteserver but simpler and generalized
 	on the route and field used with a config file.
 	'''
-	def __init__(self, sessiondata, projectdata):
+	def __init__(self, sessiondata, projdata):
 		self.sessiondata = sessiondata
-		self.projectdata = projectdata
+		self.project = projdata
 		try:
 			self.leg_gridhook_auth = (configs['rest auth']['user'],configs['rest auth']['password'])
 			self.gridhook_server_active = True
 		except:
 			self.leg_gridhook_auth = ('','')
 			self.gridhook_server_active = False
+			return
 		result = self.testQuery()
 		if result is False:
 			# connection or missing remote.cfg error.
@@ -163,9 +165,9 @@ class GridHookServer(object):
 			return False
 		this_api = configs['project api router']
 		router_name = this_api['path']
-		if not 'name' in self.projectdata.keys():
-			raise ValueError('projectdata must have "name" field')
-		project_name = self.projectdata['name']
+		if not 'name' in self.project.keys():
+			raise ValueError('project data must have "name" field')
+		project_name = self.project['name']
 		field_name = this_api['name_field']
 		# data
 		data = {
@@ -274,3 +276,60 @@ class GridHookServer(object):
 			return 'no grid mapping set'
 		field_name = this_api['grid_display_field']
 		return results[0][field_name]
+
+	def getGrid(self, grid_display_name):
+		'''
+		Get grid info from grid_display_name string that is found in grid management
+		system through the api.
+		'''
+		this_api = configs['grid api router']
+		router_name = this_api['path']
+		field_name = this_api['grid_display_field']
+		# data
+		data = {
+				field_name:grid_display_name,
+		}
+		results = self.get(router_name, data)
+		if not results:
+			raise ValueError('%s not found' % grid_display_name)
+		if len(results) > 1:
+			raise ValueError('More than one %s found' % grid_display_name)
+		project_field_name = this_api['project_field']
+		grid_proj_id = results[0][project_field_name]
+		session_proj_pk = self.getGridProject()
+		if session_proj_pk and grid_proj_id != session_proj_pk:
+			raise ValueError('Mismatched grid management project id: %d vs %d' % (session_proj_pk,grid_proj_id))
+		return results[0]
+	
+	def setGridSession(self,grid_display_name):
+		session_pk = self.getSession()
+		try:
+			grid_info = self.getGrid(grid_display_name)
+		except Exception as e:
+			print('Error: %s' % e)
+			return False
+		this_api = configs['gridmap api router']
+		router_name = this_api['path']
+		session_field_name = this_api['session_field']
+		grid_field_name = this_api['grid_field']
+		grid_pk = grid_info['id']
+		# data
+		data = {
+				session_field_name:session_pk,
+				grid_field_name:grid_pk
+		}
+		p_result = self.post(router_name, data)
+		if p_result is False:
+			return False
+		pk = p_result['id']
+		return pk
+
+if __name__=='__main__':
+	sessionname = raw_input('session name to test=')
+	s = leginondata.SessionData(name=sessionname).query(results=1)[0]
+	pe=projectdata.projectexperiments(session=s).query(results=1)[0]
+	app = GridHookServer(s,pe['project'])
+	if app.gridhook_server_active:
+		session_pk = app.setSession()
+		gridsession_pk = app.setGridSession(s['comment'])
+		print gridsession_pk
