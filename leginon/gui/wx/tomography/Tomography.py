@@ -952,6 +952,10 @@ class ScrolledSettings2(ScrolledSettings):
 															allownone=False,
 															chars=5,
 															value='1.0')
+		self.widgets['backlash pause time'] = FloatEntry(self, -1, min=0.0,
+															allownone=False,
+															chars=5,
+															value='2.5')
 		self.widgets['measure defocus'] = wx.CheckBox(self, -1, 'Measure defocus')
 		self.widgets['use lpf'] = wx.CheckBox(self, -1, 'Use lpf in peak finding of tilt image correlation')
 		self.widgets['use tilt'] = wx.CheckBox(self, -1, 'Stretch images according to the tilt before correlation')
