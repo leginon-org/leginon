@@ -54,7 +54,7 @@ def wrap_allstats(stat):
 					dec=8
 				b = a[::dec,::dec]
 				#self.logger.info('Stats calculated on %d X decimated image' % (dec,))
-				print('Stats calculated on %d X decimated image' % (dec,))  # no access to logger
+				dprint('Stats calculated on %d X decimated image' % (dec,))  # no access to logger
 				result = numextension.allstats(b, **kwargs)
 		except:
 			result = allstats(a, **kwargs)
