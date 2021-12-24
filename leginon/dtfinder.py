@@ -297,10 +297,9 @@ class DTFinder(targetfinder.TargetFinder):
 		else:
 			self.logger.info('No acquisition target, no new template info stored')
 
-		self.logger.info('Publishing targets...')
+	def _publishFoundTargets(self, imdata, targetlist):
 		for targettype in self.displaytypes:
 			self.publishTargets(imdata, targettype, targetlist)
-		self.setStatus('idle')
 
 	def autoShapeCenter(self,params):
 		centers = []

@@ -369,16 +369,10 @@ class RasterFinder(targetfinder.TargetFinder):
 				if not self.processPreviewTargets(imdata, targetlist):
 					break
 			self.panel.targetsSubmitted()
-			self.setStatus('processing')
+		self.setStatus('idle')
 
-		# set self.last_focused for target publishing	
-		self.setLastFocusedTargetList(targetlist)
-		### publish targets from goodholesimage
-		self.logger.info('Publishing targets...')
-		self.publishTargets(imdata, 'focus', targetlist)
-		self.publishTargets(imdata, 'acquisition', targetlist)
+	def _publishFoundTargets(self, imdata, targetlist):
+		super(RasterFinder, self)._publishFoundTargets(imdata, targetlist)
 		if self.settings['publish polygon']:
 			self.publishTargets(imdata, 'Polygon Vertices', targetlist)
-
-
 

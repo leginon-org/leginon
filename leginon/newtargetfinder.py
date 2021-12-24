@@ -98,9 +98,5 @@ class NewTargetFinder(targetfinder.TargetFinder):
 					break
 				self.panel.targetsSubmitted()
 
-		self.logger.info('Publishing targets...')
-		### publish targets from goodholesimage
-		self.publishTargets(imdata, 'focus', targetlist)
-		self.publishTargets(imdata, 'acquisition', targetlist)
 		self.setStatus('idle')
 
