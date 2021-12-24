@@ -40,6 +40,9 @@ class Proxy(object):
 		self.objectservice._addDescriptionHandler(add=self.onAddDescription,
 																							remove=self.onRemoveDescription)
 
+	def setSession(self, session):
+		self.session = session
+
 	def onAddDescription(self, nodename, name, description, types):
 		if 'TEM' in types:
 			proxy = self.objectservice.getObjectProxy(nodename, name)

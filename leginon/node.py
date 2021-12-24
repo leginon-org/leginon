@@ -445,6 +445,10 @@ class Node(correctorclient.CorrectorClient):
 		'''
 		session = ievent['session']
 		self.session = session
+		# Issue #11762 send the new session to instrument proxy so that
+		# ScopeEMData and CameraEMData are saved with the new session.
+		if hasattr(self,'instrument'):
+			self.instrument.setSession(session)
 
 	def handleConfirmedEvent(self, ievent):
 		'''Handler for ConfirmationEvents. Unblocks the call waiting for confirmation of the event generated.'''
