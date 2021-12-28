@@ -53,7 +53,6 @@ class DataJsonLoader(object):
 class DataJsonMaker(object):
 	def __init__(self, sinedon_data_module):
 		self.db = sinedon_data_module
-		print 'jsonmaker __init__'
 		self.alldata = []
 		self.ignorelist = ['session',]
 		pass
