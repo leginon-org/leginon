@@ -1065,6 +1065,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		json_path = os.path.join(self.session['image path'],json_name+'.json')
 		info['session image path'] = self.session['image path']
 		info['mosaic_label'] = mosaicimagedata['list']['targets']['label']
+		info['full_mosaic_shape'] = {'rows':m_inst.mosaicshape[0],'cols':m_inst.mosaicshape[1]}
 		info['mosaic_image'] = {}
 		info['mosaic_image']['filename'] = mosaicimagedata['filename']+'.mrc'
 		info['mosaic_image']['scale'] = scale
@@ -1075,7 +1076,6 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 			tinfo['filename'] = t.imagedata['filename']+'.mrc'
 			tinfo['corner_pos'] = {'row': t.corner_pos[0],'col':t.corner_pos[1]}
 			info['tiles'].append(tinfo)
-		print info
 		info_str = json.dumps(info)
 		f = open(json_path,'w')
 		f.write(info_str)

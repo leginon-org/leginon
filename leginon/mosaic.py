@@ -33,6 +33,7 @@ class Mosaic(object):
 		self.automaticpriority = ['correlation']
 		#self.positionmethod = self.positionmethods.keys()[0]
 		self.positionmethod = 'automatic'
+		self.boundaries = {'min':(0,0),'max':(1,1)}
 
 	def clear(self):
 		self.tiles = []
@@ -77,6 +78,7 @@ class Mosaic(object):
 		if not self.tiles:
 			return None
 		bbox = self.getMosaicImageBoundaries()
+		self.boundaries = bbox
 		imageshape = [bbox['max'][0] - bbox['min'][0], 
 									bbox['max'][1] - bbox['min'][1]]
 
