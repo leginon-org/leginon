@@ -12,6 +12,7 @@ import leginon.leginondata
 import leginon.projectdata
 import leginon.leginonconfig
 import leginon.project
+import leginon.ddinfo
 
 projectdata = leginon.project.ProjectData()
 
