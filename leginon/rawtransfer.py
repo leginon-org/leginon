@@ -346,7 +346,7 @@ class RawTransfer(object):
 			# gatan k2 summit data ends with '.mrc' or '.tif'
 			# de folder starts with '20' through timestamp
 			# falcon mrchack stacks ends with '.mrcs'
-			if not ext.startswith('.mrc') and ext != '.tif' and  ext != '.frames' and not name.startswith('20'):
+			if not ext.startswith('.mrc') and ext != '.tif' and  ext !='.eer' and ext != '.frames' and not name.startswith('20'):
 				continue
 
 			# adjust next expiration timer to most recent time
@@ -363,6 +363,10 @@ class RawTransfer(object):
 				ext_len = len(ext)
 				frames_name = name[:-ext_len]
 				dst_suffix = '.frames.tif'
+			elif ext.startswith('.eer'):
+				ext_len = len(ext)
+				frames_name = name[:-ext_len]
+				dst_suffix = '.frames.eer'
 			else:
 				frames_name = name
 				dst_suffix = '.frames'
