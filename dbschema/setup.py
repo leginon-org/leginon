@@ -5,6 +5,7 @@ import sys
 # script files to be installed in bin dir
 binfiles=glob.glob('tools/*leginon_path*.py')
 binfiles.extend(glob.glob('tools/*appion_path*.py'))
+binfiles.extend(glob.glob('info_tools/export_all_target_info.py'))
 binfiles.extend(['schema_update.py','show_schema_history.py'])
 print binfiles
 # determine if script destination has been properly specified
@@ -51,7 +52,7 @@ setup(
     author_email='nramm@nysbc.org',
     maintainer='NRAMM',
     maintainer_email='nramm@nysbc.org',
-    packages=['dbschema','dbschema.updates','dbschema.tools'],
+    packages=['dbschema','dbschema.updates','dbschema.tools','dbschema.info_tools'],
     package_dir={'dbschema': ''},
 		scripts=binfiles,
 		)
