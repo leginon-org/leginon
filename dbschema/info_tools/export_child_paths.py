@@ -1,27 +1,21 @@
 #!/usr/bin/env python
+import os
 from leginon import leginondata
 from dbschema.info_tools import export_targets
-from appionlib import apProject
-from appionlib import appiondata
-from appionlib.apCtf import ctfdb
 
-class CtfExporter(export_targets.Exporter):
+class ChildImagePathExporter(export_targets.Exporter):
 	'''
-	Export Ctf score on parent image of high magnification
+	Export ChildImagePath score on parent image of high magnification
 	images of a session.
 	'''
-	info = 'ctf'
-	def __init__(self, sessionname, output_basepath='./', excluded_project_ids=[]):
-		super(CtfExporter, self).__init__(sessionname, output_basepath, excluded_project_ids)
-		apProject.setDBfromProjectId(self.projectdata.dbid)
+	info = 'child_path'
 
-	def getCtfResult(self, imagedata):
+	def getChildImagePathResult(self, imagedata):
 		'''
-		Get ctf scores
+		Get child_path scores
 		'''
-		ctfresult, conf = ctfdb.getBestCtfValueForImage(imagedata, msg=False)		
-		if ctfresult:
-			return min(ctfresult['resolution_50_percent'], ctfresult['ctffind4_resolution']), (ctfresult['defocus1']+ctfresult['defocus2'])/2.0
+		img_format='mrc'
+		return os.path.join(imagedata['session']['image path'],'%s.%s' % (imagedata['filename'], img_format))
 
 	def writeTargetAndInfo(self, imagedata):
 		'''
@@ -37,25 +31,25 @@ class CtfExporter(export_targets.Exporter):
 			if parent_preset not in self.targetlist.keys():
 				self.targetlist[parent_preset] = []
 			if target0.dbid not in self.targetlist[parent_preset]:
-				ctf = self.getCtfResult(img)
+				child_path = self.getChildImagePathResult(img)
 				line = '%d\t%d_%d' % (img.dbid, target0['image'].dbid, target0['number'])
-				if ctf:
+				if child_path:
 					#ace resolution, mean defocus
-					line += '\t%.4f\t%.3f' % (ctf[0],ctf[1]*1e6)
+					line += '\t%s' % (child_path,)
 				else:
-					line +='\t\t'
+					line +='\t'
 				line +='\n'
 				self.logger.info(line)
 				self.writeResults(target0, line)
 				self.targetlist[parent_preset].append(target0.dbid)
 
 	def setTitle(self):
-		self.result_title ='ChildImageId\tTargetId_TargetNumber\tCtf_Resolution_Ang\tMean_Defocus_um'
+		self.result_title ='ChildImageId\tTargetId_TargetNumber\tChildImagePath'
 
 if __name__=='__main__':
 	session_name = raw_input('Which session ? ')
 	base_path = raw_input('Where to save under ? (default: ./%s) ' % session_name)
 	if not base_path:
 		base_path = './%s' % session_name
-	app = CtfExporter(session_name, base_path)
+	app = ChildImagePathExporter(session_name, base_path)
 	app.run()

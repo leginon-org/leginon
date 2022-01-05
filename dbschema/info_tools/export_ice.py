@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import os
 from leginon import leginondata
-import export_targets
+from dbschema.info_tools import export_targets
 
 class IceThicknessExporter(export_targets.Exporter):
 	'''
