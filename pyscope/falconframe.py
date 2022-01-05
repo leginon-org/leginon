@@ -85,6 +85,9 @@ class FalconFrameMaker(object):
 	def setBaseFramePath(self,base_path):
 		self.base_frame_path = base_path
 
+	def getBaseFramePath(self):
+		return self.base_frame_path
+
 	def createFramePath(self,base_path):
 		full_base_path = os.path.join(self.fei_image_storage_path, base_path)
 		if not os.path.isdir(full_base_path):

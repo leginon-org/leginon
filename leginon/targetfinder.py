@@ -54,6 +54,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		'allow append': False,
 		'multifocus': False,
 		'allow no focus': False,
+		'allow no acquisition': False,
 	}
 	eventinputs = imagewatcher.ImageWatcher.eventinputs \
 									+ [event.AcquisitionImagePublishEvent] \
@@ -87,6 +88,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		self.targetimagevectors = {'x':(0,0),'y':(0,0)}
 		self.targetbeamradius = 0
 		self.resetLastFocusedTargetList(None)
+		self.ignore_focus_targets = False
 		if not remoteserver.NO_REQUESTS and session is not None:
 			self.remote_targeting = remoteserver.RemoteTargetingServer(self.logger, session, self, self.remote.leginon_base)
 			self.remote_toolbar = remoteserver.RemoteToolbar(self.logger, session, self, self.remote.leginon_base)
@@ -195,8 +197,34 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 	def findTargets(self, imdata, targetlist):
 		'''
 		Virtual function, inheritting classes implement creating targets
+		on panel, but not publish them.
+		preview targets are handled in here, too.
 		'''
 		raise NotImplementedError()
+
+	def publishFoundTargets(self, imdata, targetlist):
+		'''
+		General handling of publish targets found on panel or
+		the image and targetlist.
+		'''
+		self.setStatus('processing')
+		self.logger.info('Publishing targets...')
+		# set self.last_focused for target publishing
+		self.setLastFocusedTargetList(targetlist)
+		# set whether to ignore focus in absence of acquisition targets
+		self.setIgnoreFocusTargets(imdata.imageshape())
+		self._publishFoundTargets(imdata, targetlist)
+		self.logger.info('all targets published')
+		self.setStatus('idle')
+
+	def _publishFoundTargets(self, imdata, targetlist):
+		'''
+		Publish targets found on panel or the image and targetlist.
+		'''
+		### publish just focus and acquisition targets from goodholesimage
+		# preview targets are handled in findTargets
+		self.publishTargets(imdata, 'focus', targetlist)
+		self.publishTargets(imdata, 'acquisition', targetlist)
 
 	def getCheckMethods(self):
 		return self.checkmethods
@@ -363,6 +391,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			self.logger.info("will append targets")
 			for imagedata in images:
 				self.findTargets(imagedata, targetlist)
+				self.publishFoundTargets(imagedata, targetlist)
 				if self.settings['queue']:
 					self.sendQueueCount()
 		self.makeTargetListEvent(targetlist)
@@ -438,17 +467,33 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			imagetargets = self.getCenterTargets(imagetargets, imageshape)
 		return imagetargets
 
+	def setIgnoreFocusTargets(self, imageshape):
+		'''
+		Set whether to ignore focus target when acquisition targets are empty.
+		Call this right before publish Targets.
+		'''
+		acqtargets = self.getTargetsFromPanel('acquisition', imageshape)
+		self.ignore_focus_targets = False
+		if len(acqtargets)==0:
+			if self.settings['allow no acquisition']:
+				self.ignore_focus_targets = False
+			else:
+				self.ignore_focus_targets = True
+		return
+
 	#--------------------
 	def publishTargets(self, imagedata, typename, targetlist):
 		'''
 		Publish specific type of targets on ImagePanel bound to an 
 		AcquisitionImageData and TargetListData
 		'''
-		imagearray = imagedata['image']
-		imageshape = imagearray.shape
+		imageshape = imagedata.imageshape()
 		imagetargets = self.getTargetsFromPanel(typename, imageshape)
 
 		if not imagetargets:
+			return
+		if typename == 'focus' and self.ignore_focus_targets:
+			self.logger.info('focus targets ignored without acquisition targets')
 			return
 		if self.settings['sort target']:
 			imagetargets = self.sortTargets(imagetargets)
@@ -558,6 +603,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 
 		if self.settings['allow append'] or len(previouslists)==0:
 			self.findTargets(imagedata, targetlist)
+			self.publishFoundTargets(imagedata, targetlist)
 			if self.settings['queue']:
 				self.sendQueueCount()
 		self.logger.debug('Publishing targetlist...')
@@ -823,15 +869,6 @@ class ClickTargetFinder(TargetFinder):
 			if not self.processPreviewTargets(imdata, targetlist):
 				break
 		self.panel.targetsSubmitted()
-		self.setStatus('processing')
-		self.logger.info('Publishing targets...')
-
-		for i in self.targetnames:
-			if i == 'reference':
-				self.publishReferenceTarget(imdata)
-			else:
-				self.publishTargets(imdata, i, targetlist)
-		self.logger.info('all targets published')
 		self.setStatus('idle')
 
 	def publishReferenceTarget(self, image_data):
@@ -849,4 +886,16 @@ class ClickTargetFinder(TargetFinder):
 			self.logger.error('Submitting reference target failed')
 		else:
 			self.logger.info('Reference target submitted')
+
+	def _publishFoundTargets(self, imdata, targetlist):
+		'''
+		Publish targets found on panel or the image and targetlist.
+		ClickTargetFinder and its derivatives handles reference publishing, too.
+		'''
+		### publish targets by targetnames
+		for i in self.targetnames:
+			if i == 'reference':
+				self.publishReferenceTarget(imdata)
+			else:
+				self.publishTargets(imdata, i, targetlist)
 

@@ -68,12 +68,12 @@ class DataJsonMaker(object):
 		f.write(jstr)
 		f.close()
 
-class SettingsJsonMaker(DataJsonMaker):
+class PresetJsonMaker(DataJsonMaker):
 	'''
 	Export Settings used in a Session as xml file
 	'''
 	def __init__(self,sessionname):
-		super(SettingsJsonMaker,self).__init__()
+		super(PresetJsonMaker,self).__init__()
 		self.setSession(sessionname)
 		self.bad_settings_class = []
 		self.setNodeNamePrefix(None)
@@ -143,6 +143,6 @@ if __name__ == '__main__':
 		nodename = sys.argv[3]
 	else:
 		nodename = None
-	app = SettingsJsonMaker(sessionname)
+	app = PresetJsonMaker(sessionname)
 	app.setNodeNamePrefix(nodename)
 	app.run(appname)

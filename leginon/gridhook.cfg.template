@@ -26,10 +26,18 @@ group_id_field: project
 [gridmap api router]
 path: api/grid_session
 session_field: leginon
+grid_field: grid
 grid_display_field: grid_str
+
 ######
 # Below is an example that project is used as weblink group model
 #####
 [project api router]
 path: api/project
 name_field: some_name
+
+# grid model rest api to get the project the grid belong to.
+[grid api router]
+path: api/grid
+grid_display_field: grid_str
+project_field: grid_project_pk

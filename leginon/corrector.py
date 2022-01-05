@@ -291,7 +291,7 @@ class Corrector(imagewatcher.ImageWatcher):
 				return True
 			else:
 				try:
-					calc_on_dark = self.instrument.ccdcamera.getCalulateNormOnDark()
+					calc_on_dark = self.instrument.ccdcamera.getCalculateNormOnDark()
 					return calc_on_dark
 				except:
 					self.logger.warning('Camera host pyscope update recommended')

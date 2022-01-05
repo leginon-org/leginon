@@ -575,12 +575,5 @@ class IceTargetFinder(targetfinder.TargetFinder):
 				if not ptargets:
 					break
 				self.panel.targetsSubmitted()
-
-		# set self.last_focused for target publishing	
-		self.setLastFocusedTargetList(targetlist)
-		### publish targets from goodholesimage
-		self.logger.info('Publishing targets...')
-		self.publishTargets(imdata, 'focus', targetlist)
-		self.publishTargets(imdata, 'acquisition', targetlist)
 		self.setStatus('idle')
 

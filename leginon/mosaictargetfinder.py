@@ -378,15 +378,12 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		in handleTargetListDone so that this is done before that event
 		is handled.
 		'''
-		self.autofinderlock.acquire()
 		self.logger.debug('addTile image: %s' % (imagedata.dbid,))
 		imid = imagedata.dbid
 		if imid in self.tilemap:
 			self.logger.info('Image already in mosaic')
-			self.autofinderlock.release()
 			return
 		self._addTile(imagedata)
-		self.autofinderlock.release()
 
 	def _addTile(self, imagedata):
 		'''
@@ -634,12 +631,14 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.setMosaicNameFromImageList(imagelist)
 		self.logger.debug('published MosaicTileData')
 		self.currentimagedata = imagedata
+		self.autofinderlock.acquire()
 		self.addTile(imagedata)
 
 		if self.settings['create on tile change'] == 'all':
 			self.logger.debug('create all')
 			self.createMosaicImage()
 			self.logger.debug('done create all')
+		self.autofinderlock.release()
 
 		self.logger.debug('Image data processed')
 
@@ -746,6 +745,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		if not ntotal:
 			self.logger.info('no tiles in selected list')
 			return
+		self.autofinderlock.acquire()
 		for i, tile in enumerate(tiles):
 			# create an instance model to query
 			self.logger.info('Finding image %i of %i' % (i + 1, ntotal))
@@ -759,6 +759,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 			self.createMosaicImage()
 		# use currentimagedata to set TargetImageVectors for target multiple
 		self.setTargetImageVectors(self.currentimagedata)
+		self.autofinderlock.release()
 		# hacking
 		self.handleTargetListDone(None)
 
@@ -1065,6 +1066,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		json_path = os.path.join(self.session['image path'],json_name+'.json')
 		info['session image path'] = self.session['image path']
 		info['mosaic_label'] = mosaicimagedata['list']['targets']['label']
+		info['full_mosaic_shape'] = {'rows':m_inst.mosaicshape[0],'cols':m_inst.mosaicshape[1]}
 		info['mosaic_image'] = {}
 		info['mosaic_image']['filename'] = mosaicimagedata['filename']+'.mrc'
 		info['mosaic_image']['scale'] = scale
@@ -1075,7 +1077,6 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 			tinfo['filename'] = t.imagedata['filename']+'.mrc'
 			tinfo['corner_pos'] = {'row': t.corner_pos[0],'col':t.corner_pos[1]}
 			info['tiles'].append(tinfo)
-		print info
 		info_str = json.dumps(info)
 		f = open(json_path,'w')
 		f.write(info_str)

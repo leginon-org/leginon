@@ -93,14 +93,11 @@ class StitchTargetFinder(targetfinder.TargetFinder):
 			self.setStatus('user input')
 			self.userpause.wait()
 
-		self.setStatus('processing')
+		self.setStatus('idle')
 
-		# set self.last_focused for target publishing	
-		self.setLastFocusedTargetList(targetlist)
+	def _publishFoundTargets(self, imdata, targetlist):
 		### publish targets from goodholesimage
 		self.publishTargets(imdata, 'acquisition', targetlist)
-
-		self.logger.info('Targets have been submitted')
 
 	def testTargeting(self):
 		self.stitchFindTargets()

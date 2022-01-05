@@ -67,6 +67,8 @@ class ReferenceJsonMaker(jsonfun.DataJsonMaker):
 			# get 10 results and see if it is enough to catch some with offset.
 			# if this does not work, will need to determine common camera configurations.
 			results = leginondata.NormImageData(camera=camq).query(results=20)
+			if not results:
+				continue
 			for r in results:
 				if self.storage_path and self.storage_path not in r['session']['image path']:
 					continue

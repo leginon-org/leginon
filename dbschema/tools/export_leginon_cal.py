@@ -15,11 +15,14 @@ class CalibrationJsonMaker(jsonfun.DataJsonMaker):
 	def __init__(self,params, interactive=False):
 		self.interactive = interactive
 		super(CalibrationJsonMaker,self).__init__(leginondata)
+		self.tem = None
+		self.cam = None
 		try:
 			self.validateInput(params)
 		except ValueError, e:
 			print "Error: %s" % e
-			self.close(1)
+			if interactive:
+				self.close(1)
 
 	def validateInput(self, params):
 		if len(params) < 4:
@@ -33,6 +36,7 @@ class CalibrationJsonMaker(jsonfun.DataJsonMaker):
 			tem_name = params[4]
 		else:
 			tem_name = None
+		print "TEM_NAME::::::", tem_name
 		self.tem = self.getSourceTemInstrumentData(self.cam, tem_name)
 
 	def getSourceCameraInstrumentData(self, from_hostname,from_camname):
@@ -53,19 +57,25 @@ class CalibrationJsonMaker(jsonfun.DataJsonMaker):
 
 	def getSourceTemInstrumentData(self, sourcecam, sourcetem_name=None):
 		'''
-		Get TEM connected to the camera that has PixelSizeCalibration
+		Get TEM connected to the camera that has PixelSizeCalibration or CameraLengthCalibration (diffraction tem)
 		'''
 		allcaldata = leginondata.PixelSizeCalibrationData(ccdcamera=sourcecam).query()
+		allcaldata.extend(leginondata.CameraLengthCalibrationData(ccdcamera=sourcecam).query())
 		if not allcaldata:
 			raise ValueError('no tem linked with the camera')
 		temids = []
+		print '******'
+		print sourcetem_name
+		# gather tems of the sourcetem_name that has such calibrations
 		for c in allcaldata:
 			if c['tem'] and c['tem'].dbid not in temids:
 				if sourcetem_name and c['tem']['name']!=sourcetem_name:
 					continue
 				temids.append(c['tem'].dbid)
-		for id in temids:
-			tem = leginondata.InstrumentData().direct_query(id)
+		# There should only be one entry
+		temdata = None
+		for tid in temids:
+			tem = leginondata.InstrumentData().direct_query(tid)
 			if len(temids) == 1:
 				temdata = tem
 			else:
@@ -77,8 +87,8 @@ class CalibrationJsonMaker(jsonfun.DataJsonMaker):
 		try:		
 			print "Using tem id=%d on %s named %s" % (temdata.dbid, temdata['hostname'], temdata['name'])
 			return temdata
-		except:
-			raise ValueError('no tem selected with the camera')
+		except AttributeError:
+			raise ValueError('no tem selected with the camera %s:%s' % (sourcecam['hostname'],sourcecam['name']))
 
 	def getMags(self):
 		magsdata = leginondata.MagnificationsData(instrument=self.tem).query(results=1)[0]
@@ -210,6 +220,8 @@ class CalibrationJsonMaker(jsonfun.DataJsonMaker):
 			self.publish(newest_type_results)
 
 	def run(self):
+		if not self.tem:
+			return
 		mags = self.getMags()
 		print self.cam.dbid
 		if not mags:

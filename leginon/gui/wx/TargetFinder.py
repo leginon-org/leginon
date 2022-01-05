@@ -174,6 +174,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		#self.widgets['allow append'] = wx.CheckBox(self, -1, 'Allow target finding on old images')
 		self.widgets['multifocus'] = wx.CheckBox(self, -1, 'Use all focus targets for averaging')
 		self.widgets['allow no focus'] = wx.CheckBox(self, -1, 'Do not require focus targets in user verification')
+		self.widgets['allow no acquisition'] = wx.CheckBox(self, -1, 'Submit focus targets even when no acquisition')
 		self.Bind(wx.EVT_CHECKBOX, self.onUserCheckbox, self.widgets['user check'])
 		self.Bind(wx.EVT_CHECKBOX, self.onQueueCheckbox, self.widgets['queue'])
 		self.Bind(wx.EVT_CHOICE, self.onChooseCheckMethod, self.widgets['check method'])
@@ -195,8 +196,10 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 						wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['allow no focus'], (6, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['allow no acquisition'], (7, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
 		#if not hide_incomplete:
-		#	sz.Add(self.widgets['allow append'], (7, 0), (1, 1),
+		#	sz.Add(self.widgets['allow append'], (8, 0), (1, 1),
 		#					wx.ALIGN_CENTER_VERTICAL)
 
 		return sz

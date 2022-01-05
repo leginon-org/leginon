@@ -7,9 +7,7 @@ import sys
 
 import ccdcamera
 import time
-import simscripting
 import falconframe
-from pyscope import tia_display
 from pyami import moduleconfig
 
 try:
@@ -25,10 +23,10 @@ class FEIAdvScriptingConnection(object):
 	cameras = []
 
 if SIMULATION:
-	# There is problem starting numpy in FEI 2.9 software as FEI version of python2.7 becomes the default.
 	import simscripting
 	connection = simscripting.Connection()
 else:
+	from pyscope import tia_display
 	import comtypes
 	import comtypes.client
 	connection = FEIAdvScriptingConnection()
@@ -105,7 +103,9 @@ class FeiCam(ccdcamera.CCDCamera):
 		self.setCameraBinnings()
 		self.setReadoutLimits()
 		self.initSettings()
-		self.tia_display = tia_display.TIA()
+		self.setFrameFormatFromConfig()
+		if not SIMULATION:
+			self.tia_display = tia_display.TIA()
 
 	def __getattr__(self, name):
 		# When asked for self.camera, instead return self._camera, but only
@@ -139,6 +139,7 @@ class FeiCam(ccdcamera.CCDCamera):
 		self.start_frame_number = 1
 		self.end_frame_number = None
 		self.display_name = None
+		self.frame_format = 'mrc'
 
 	def setReadoutLimits(self):
 		readout_dicts = {READOUT_FULL:1,READOUT_HALF:2,READOUT_QUARTER:4}
@@ -175,6 +176,24 @@ class FeiCam(ccdcamera.CCDCamera):
 		for index in range(count):
 			binning_limits.append(self.binning_limit_objs[index].Width)
 		self.binning_limits = binning_limits
+
+	def setFrameFormatFromConfig(self):
+		'''
+		Default format is mrc.  Electron counting camera can use EER.
+		Even if this is set to eer, camera without such capacity
+		will still saves mrc
+		'''
+		fformat = 'mrc'
+		try:
+			# older advanced tem scripting does not have this property
+			# nor the capacity.
+			if self.camera_capabilities.SupportsEER:
+				config_eer = self.getFeiConfig('camera','save_eer')
+				if config_eer is True:
+					fformat = 'eer'
+		except:
+			pass
+		self.frame_format = fformat
 
 	def getCameraBinnings(self):
 		return self.binning_limits
@@ -600,6 +619,7 @@ class Falcon3(FeiCam):
 	binning_limits = [1,2,4]
 	electron_counting = False
 	base_frame_time = 0.025 # seconds
+	physical_frame_rate = 40 # frames per second
 	# non-counting Falcon3 is the only camera that returns array aleady averaged by frame
 	# to keep values in more reasonable range.
 	intensity_averaged = True
@@ -656,7 +676,10 @@ class Falcon3(FeiCam):
 		This is number of the output frames. Only meaningful after getImage.
 		'''
 		if self.save_frames:
-			return self.frameconfig.getNumberOfFrameBins()
+			if self.frame_format == 'mrc':
+				return self.frameconfig.getNumberOfFrameBins()
+			else:
+				return int(self.getExposureTime()*0.001*self.physical_frame_rate)
 		else:
 			return 0 # TO DO: Findout what it gives.
 
@@ -709,23 +732,40 @@ class Falcon3(FeiCam):
 		self.camera_settings.ExposureTime = movie_exposure_second
 		if self.save_frames:
 			self.camera_settings.AlignImage = self.align_frames
-		max_nframes = self.camera_settings.CalculateNumberOfFrames()
 		if self.getDebugCamera():
 			print 'n base frames', max_nframes
 		frame_time_second = self.dosefrac_frame_time
 		if self.save_frames:
-			# Use all available frames
-			rangelist = self.frameconfig.makeRangeListFromNumberOfBaseFramesAndFrameTime(max_nframes,frame_time_second)
-			if self.getDebugCamera():
-				print 'rangelist', rangelist, len(rangelist)
-				print '#base', map((lambda x:x[1]-x[0]),rangelist)
-			if rangelist:
-				# modify frame time in case of uneven bins
-				self.dosefrac_frame_time = movie_exposure_second / len(rangelist)
+			# EER only works in counting mode
+			if self.frame_format == 'eer' and self.electron_counting:
+				self.camera_settings.EER = True
+				# EER only works with self.dfd is Clear
+				rangelist = []
+				# EER is handled as if sampled at physical_frame_rate
+				self.dosefrac_frame_time = 1.0 / self.physical_frame_rate
+				sub_frame_dir = self.frameconfig.getBaseFramePath()
+				self.frameconfig.createFramePath(sub_frame_dir)
+			else:
+				# non-electron_counting can not be saved as EER.
+				if self.frame_format == 'eer':
+					# make sure EER is not set at camera
+					self.camera_settings.EER = False
+				# Use all available frames
+				max_nframes = self.camera_settings.CalculateNumberOfFrames()
+				rangelist = self.frameconfig.makeRangeListFromNumberOfBaseFramesAndFrameTime(max_nframes,frame_time_second)
+				if self.getDebugCamera():
+					print 'rangelist', rangelist, len(rangelist)
+					print '#base', map((lambda x:x[1]-x[0]),rangelist)
+				if rangelist:
+					# modify frame time in case of uneven bins
+					self.dosefrac_frame_time = movie_exposure_second / len(rangelist)
 			self.frames_pattern = self.frameconfig.getSubPathFramePattern()
 			self.camera_settings.SubPathPattern = self.frames_pattern
 			self.frames_name = self.frameconfig.getFrameDirName()
 		else:
+			if self.frame_format == 'eer':
+				# make sure EER is not set at camera
+				self.camera_settings.EER = False
 			rangelist = []
 			self.frames_name = None
 		self.dfd.Clear()
@@ -764,6 +804,12 @@ class Falcon3EC(Falcon3):
 	electron_counting = True
 	intensity_averaged = False
 	base_frame_time = 0.025 # seconds
+	physical_frame_rate = 40 # frames per second
+
+	def getUseFrames(self):
+		# with the possibility of using EER, this is better left
+		# as None and use NumberOfFrames in frame processing
+		return None
 
 class Falcon4EC(Falcon3EC):
 	name = 'Falcon4EC'
@@ -772,6 +818,7 @@ class Falcon4EC(Falcon3EC):
 	electron_counting = True
 	intensity_averaged = False
 	base_frame_time = 0.02907 # seconds
+	physical_frame_rate = 250 # rolling shutter frames per second
 
 	def setInserted(self, value):
 		super(Falcon4EC, self).setInserted(value)
