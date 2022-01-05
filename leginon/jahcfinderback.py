@@ -407,10 +407,10 @@ class HoleFinder(icefinderback.IceFinder):
 		# convolve from these goodholes
 		goodholes = list(self.__results[input_name])
 		conv_vect = self.convolve.configs['conv_vect'] # list of (del_r,del_c)s
-		if not conv_vect:
-			return
 		# reset before start
 		self.__update_result('holes2', [])
+		if not conv_vect:
+			return
 		#real part
 		convolved = self.convolve.make_convolved(goodholes)
 		self.__update_result('holes2', convolved)

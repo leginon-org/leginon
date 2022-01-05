@@ -217,21 +217,29 @@ class IceFinder(object):
 		return blobs
 
 	def make_convolved(self, input_name='holes'):
+		"""
+		Make convolved results as holes2.
+		Note: Subclass needs to duplicate this because __results must be in the same module.
+		"""
 		if self.__results[input_name] is None:
 			raise RuntimeError('need %s to generate convolved targets' % input_name)
 			return
 		# convolve from these goodholes
 		goodholes = list(self.__results[input_name])
 		conv_vect = self.convolve.configs['conv_vect'] # list of (del_r,del_c)s
-		if not conv_vect:
-			return
 		# reset before start
 		self.__update_result('holes2', [])
+		if not conv_vect:
+			return
 		#real part
 		convolved = self.convolve.make_convolved(goodholes)
 		self.__update_result('holes2', convolved)
 
 	def sampling(self, input_name='holes2'):
+		"""
+		Sample results of the input_name.
+		Note: Subclass needs to duplicate this because __results must be in the same module.
+		"""
 		holes = self.__results[input_name]
 		sampled = self.sample.sampleHoles(holes)
 		self.__update_result(input_name, sampled)
