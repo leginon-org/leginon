@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-import export_targets
-import export_ice
-import export_ctf
+from dbschema.info_tools import export_targets
+from dbschema.info_tools import export_ice
+from dbschema.info_tools import export_ctf
 
 if __name__=='__main__':
 	session_name = raw_input('Which session ? ')
