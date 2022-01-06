@@ -3,6 +3,7 @@ from dbschema.info_tools import export_targets
 from dbschema.info_tools import export_ice
 from dbschema.info_tools import export_ctf
 from dbschema.info_tools import export_child_paths
+from dbschema.info_tools import export_frame_drift
 
 if __name__=='__main__':
 	session_name = raw_input('Which session ? ')
@@ -13,7 +14,9 @@ if __name__=='__main__':
 	app_ice = export_ice.IceThicknessExporter(session_name, base_path)
 	app_ctf = export_ctf.CtfExporter(session_name, base_path)
 	app_image = export_child_paths.ChildImagePathExporter(session_name, base_path)
+	app_drift = export_frame_drift.DDExporter(session_name, base_path)
 	app_target.run()
 	app_ice.run()
 	app_ctf.run()
+	app_drift.run()
 	print('All Done! Saved in %s' % (base_path,))

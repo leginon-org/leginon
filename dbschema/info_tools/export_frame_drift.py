@@ -21,7 +21,7 @@ class DDExporter(export_targets.Exporter):
 		'''
 		try:
 			dd_obj = apDDResult.DDResults(imagedata)
-			shifts = dd_obj.getAngstromShiftBetweenFrames()
+			shifts = dd_obj.getAngstromShiftsBetweenFrames()
 			return shifts
 		except ValueError as e:
 			return []
@@ -43,8 +43,10 @@ class DDExporter(export_targets.Exporter):
 				drift = self.getDDResult(img)
 				line = '%d\t%d_%d' % (img.dbid, target0['image'].dbid, target0['number'])
 				if drift:
-					#ace resolution, mean defocus
-					line += '\t%.4f\t%s' % (','.join(drift))
+					#values
+					drift_str = map((lambda x: '%.4f' % x), drift)
+					frame_time_s = img['camera']['frame time']/1000.0
+					line += '\t%.4f\t%s' % (frame_time_s, ','.join(drift_str))
 				else:
 					line +='\t\t'
 				line +='\n'
