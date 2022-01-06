@@ -606,7 +606,10 @@ class CorrectorClient(cameraclient.CameraClient):
 
 		ref_directory = leginon.leginonconfig.mapPath(leginon.leginonconfig.REF_PATH)
 		if ref_directory is None:
-			directory = leginon.leginonconfig.mapPath(leginon.leginonconfig.IMAGE_PATH)
+			# equivalent of leginonconfig.IMAGE_PATH but based on the possibly
+			# modified session image path.
+			this_session_directory = os.path.dirname(self.session['image path'].split(self.session['name'])[0])
+			directory = this_session_directory
 		else:
 			directory = leginon.leginonconfig.mapPath(leginon.leginonconfig.REF_PATH)
 
