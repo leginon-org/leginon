@@ -35,11 +35,8 @@ class TestIpMapping(unittest.TestCase):
 			addr = self.host_maps[name]
 			msg = 'Incorrect pyami.cfg host mapping for %s' % (addr)
 			self.longMessage = True
-			try:
-				socket_hostname = socket.gethostbyaddr(addr)[0]
-			except:
-				socket_hostname = 'unknonw hostname'
-			self.assertEqual(socket_hostname,name,msg=msg)
+			socket_address = self._getHostByName(name)
+			self.assertEqual(socket_address,addr,msg=msg)
 
 	def runTest(self):
 		'''
