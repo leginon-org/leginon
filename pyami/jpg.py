@@ -44,7 +44,7 @@ Optional argument 'newsize' is used for scaling the image.
 		else:
 			# avoid scaling
 			scale = 1
-		a = scale * (a - min)
+	a = scale * (a - min)
 	a = a.astype(numpy.uint8)
 
 	## use PIL to write JPEG
