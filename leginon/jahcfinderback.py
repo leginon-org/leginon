@@ -417,6 +417,7 @@ class HoleFinder(icefinderback.IceFinder):
 
 	def sampling(self, input_name='holes2'):
 		"""
+		Sample results of the input_name.
 		Duplicates what is in icefinderback because __results must be in the same module.
 		"""
 		holes = self.__results[input_name]

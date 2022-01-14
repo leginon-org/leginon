@@ -271,6 +271,7 @@ class HoleFinder(icefinderback.IceFinder):
 
 	def make_convolved(self, input_name='holes'):
 		"""
+		Sample results of the input_name.
 		Duplicates what is in icefinderback because __results must be in the same module.
 		"""
 		if self.__results[input_name] is None:
@@ -279,10 +280,10 @@ class HoleFinder(icefinderback.IceFinder):
 		# convolve from these goodholes
 		goodholes = list(self.__results[input_name])
 		conv_vect = self.convolve.configs['conv_vect'] # list of (del_r,del_c)s
-		if not conv_vect:
-			return
 		# reset before start
 		self.__update_result('holes2', [])
+		if not conv_vect:
+			return
 		#real part
 		convolved = self.convolve.make_convolved(goodholes)
 		self.__update_result('holes2', convolved)
