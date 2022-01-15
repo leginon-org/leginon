@@ -51,11 +51,22 @@ class TargetHandler(object):
 	def compareTargetNumber(self, first, second):
 		return cmp(first['number'], second['number'])
 
+	def isPreviewOnly(self, targetlistdata):
+		if not targetlistdata:
+			return False
+		all_new = leginondata.AcquisitionImageTargetData(status='new',list=targetlistdata).query()
+		preview_new = leginondata.AcquisitionImageTargetData(type='preview',status='new',list=targetlistdata).query()
+		return len(all_new) == len(preview_new)
+
 	def reportTargetListDone(self, targetlistdata, status):
 		listid = targetlistdata.dbid
 		self.logger.info('%s done with target list ID: %s, status: %s' % (self.name, listid, status))
+		# send event so waiting stops.
 		e = event.TargetListDoneEvent(targetlistid=listid, status=status, targetlist=targetlistdata)
 		self.outputEvent(e)
+		if self.isPreviewOnly(targetlistdata):
+			# targetlist containing only preview needs to avoid being marked as done.
+			return
 		# mosaic quilt finder and mosaic target finder
 		# should not do this so more targets can be submitted
 		if targetlistdata['node']:
@@ -63,6 +74,7 @@ class TargetHandler(object):
 				# TODO: using class string text to test is not a good idea. Need better solutions.
 				self.insertDoneTargetList(targetlistdata)
 			else:
+				# but need to notify autodone for auto session.
 				self.notifyAutoDone('full')
 
 	def insertDoneTargetList(self, targetlistdata):
