@@ -56,7 +56,7 @@ class ScriptRemaker(object):
 	def _makeCommand(self):
 		cmd = '%s.py %s' % (self.prog_name,' '.join(map((lambda x: apParam.ts(x,self.params[x],self.usage_keys[x])),self.params)))
 		if self.auto_params['appion_wrapper']:
-			cmd = '%s %s' % (self.auto_params['appion_warpper'],cmd)
+			cmd = '%s %s' % (self.auto_params['appion_wrapper'],cmd)
 		return cmd
 
 	def _replaceParam(self, key, value):
@@ -224,13 +224,17 @@ class OldSessionScripts(object):
 
 if __name__=='__main__':
 	old_session_name=raw_input('Use appion run from this session to make command = ')
-	#new_session_name=raw_input('new session to apply appion runs to = ')
-	new_session = leginondata.SessionData().query(results=1)[0]
-	new_session_name = new_session['name']
+	new_session_name=raw_input('new session to apply appion runs to = ')
+	#new_session = leginondata.SessionData().query(results=1)[0]
+	#new_session_name = new_session['name']
 	try:
 		old_session = leginondata.SessionData(name=old_session_name).query()[0]
 	except Exception:
 		apDisplay.printError('Session %s not found' % old_session_name)
+	try:
+		new_session = leginondata.SessionData(name=new_session_name).query()[0]
+	except Exception:
+		apDisplay.printError('Session %s not found' % new_session_name)
 
 	old = OldSessionScripts(old_session_name)
 	scripts = old.scripts
