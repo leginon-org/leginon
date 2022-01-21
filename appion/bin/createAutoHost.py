@@ -1,19 +1,23 @@
 #!/usr/bin/env python
 from leginon import projectdata
-
+from pyami import mysocket
+print('running autohost creation on %s' % mysocket.gethostname())
 q = projectdata.autohosts()
 for tmap in q.typemap():
 	key = tmap[0]
 	ttype = tmap[1]
 	while True:
 		answer = raw_input('%s (as %s) = ' % (tmap[0], tmap[1].__name__))
-		if ttype == type(''):
+		if ttype == type('') and answer:
 			q[key] = answer
 			break
 		try:
 			value = eval(answer)
 		except TypeError:
 			print('Type can not be evaluated. Please try again.')
+			continue
+		except SyntaxError:
+			print('Invalid entry. Please try again.')
 			continue
 		if type(value) == ttype:
 			q[key] = value
