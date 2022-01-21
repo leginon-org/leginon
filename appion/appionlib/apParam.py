@@ -693,12 +693,20 @@ def ts(key, value, usage_key):
 	key used in constructing the command
 	"""
 	if value == '' or value == None:
+		# None means not defined or default. No need to convert
 		return ''
+	if key == 'wait':
+		# wait usage_key is only used on False case
+		if  value == True:
+			# there is no --wait option, only --no-wait
+			return ''
+		else:
+			return '--no-wait'
 	if type(value) == type(True):
 		# usage_key is the flag for boolean type value
 		return '--%s' % usage_key
 	if key != usage_key:
-		print('using %s instead of %s' % (usage_key, key))
+		apDisplay.printDebug('using %s instead of %s' % (usage_key, key))
 	# value conversion
 	if type(value) == type(all):
 		output = '--%s=%s' % (usage_key, value.__name__)

@@ -5,7 +5,9 @@ from pyami import mysocket
 
 class ScriptRemaker(object):
 	"""
-	AppionScript command remake for another session.
+	AppionScript command remake for another session. This object holds info
+	created from one run.  The parameters and run configuration can then
+	modified minimally for another user and session and processing host.
 	"""
 	valid_dependencies = []
 	jobtypes = []
@@ -17,7 +19,8 @@ class ScriptRemaker(object):
 		self.removeIgnoredParams()
 		self.usage_keys = usages
 		self.auto_params = self.getAutoHostParams()
-		self.dependencies = []
+		self.dependencies = [] # ScriptRemaker instance that this one needs to wait for.
+		self.processes = [] #subprocess Popen
 
 	def removeIgnoredParams(self):
 		"""
@@ -25,8 +28,21 @@ class ScriptRemaker(object):
 		create error.
 		"""
 		for k in self.ignored_params:
-			# this avoids exception raise when k is not a key in self.params
-			self.params.pop(k, None)
+			self.removeParam(k)
+
+	def removeParam(self, k):
+		"""
+		remove a single processing parameter
+		"""
+		# this avoids exception raise when k is not a key in self.params
+		self.params.pop(k, None)
+
+	def addParam(self, k, value, usage_key):
+		"""
+		add or modify a single processing parameter
+		"""
+		self.params[k]=value
+		self.usage_keys[k]=usage_key
 
 	def getAutoHostParams(self):
 		"""
@@ -50,6 +66,9 @@ class ScriptRemaker(object):
 		if dep_obj.__class__.__name__.split('Remaker')[0] in self.valid_dependencies:
 			self.dependencies.append(dep_obj)
 
+	def appendProcess(self, proc):
+		self.processes.append(proc)
+
 	def makeCommands(self):
 		return [self._makeCommand()]
 
@@ -60,10 +79,16 @@ class ScriptRemaker(object):
 		return cmd
 
 	def _replaceParam(self, key, value):
+		# do nothing if value is None
 		if value == None:
 			return
 		if key in self.params.keys():
 			self.params[key] = value
+
+
+	def replaceParam(self, key, value):
+		apDisplay.printDebug('set param %s to %s' % (key, value))
+		self._replaceParam(key, value)
 
 	def _setNewSession(self, session):
 		self._replaceParam('expid',session.dbid)
@@ -75,11 +100,9 @@ class ScriptRemaker(object):
 		if r:
 			self._replaceParam('projectid',r[0]['project'].dbid)
 
-	def _setRunDir(self, sessionname, runname=None):
+	def _setRunDir(self, sessionname):
 		if 'rundir' in self.params.keys():
 			rundir = self.params['rundir']
-			if 'runname' in self.params.keys() and runname != None:
-				rundir = rundir.replace(self.params['runname'],runname)
 			if 'sessionname' in self.params.keys():
 				rundir = rundir.replace(self.params['sessionname'],sessionname)
 			# replace user part if present in rundir
@@ -92,10 +115,19 @@ class ScriptRemaker(object):
 			self.run_username = username
 			self.params['rundir'] = rundir
 
+	def _setRunName(self, runname):
+		if 'runname':
+			if 'runname' in self.params.keys() and runname != None:
+				if 'rundir' in self.params.keys():
+					rundir = self.params['rundir']
+					rundir = rundir.replace(self.params['runname'],runname)
+					self.params['rundir'] = rundir
+				self._replaceParam('runname',runname)
+
 	def setNewRun(self, session, runname=None):
 		sessionname = session['name']
-		self._setRunDir(sessionname, runname)
-		self._replaceParam('runname',runname)
+		self._setRunDir(sessionname)
+		self._setRunName(runname)
 		# do these after rundir is set
 		self._setNewSession(session)
 
@@ -103,11 +135,16 @@ class LoopScriptRemaker(ScriptRemaker):
 	"""
 	AppionLoop script command remake for another session.
 	"""
-	valid_dependencies = []
+	valid_dependencies = ['Denoiser']
 	jobtypes = ['looptest',]
 	ignored_params = []
 	def __init__(self, prog_name, username, params, usages):
 		super(LoopScriptRemaker, self).__init__(prog_name, username, params, usages)
+		# initialize wait as True
+		if 'wait' not in self.params:
+			self.params['wait'] = True
+		#	# this is a special case so it can handle False case. See apParam.py
+			self.usage_keys['wait'] = 'no-wait'
 		self.loop_preset = self.setPreset()
 		self.output_preset = self.setOutputPreset()
 
@@ -158,7 +195,7 @@ class DenoiserRemaker(LoopScriptRemaker):
 	topaz denoiser command remake for another session.
 	"""
 	valid_dependencies = []
-	jobtypes = ['topazdenoise',]
+	jobtypes = ['topazdenoise','bintest']
 
 class AceRemaker(LoopScriptRemaker):
 	"""
@@ -190,15 +227,15 @@ class OldSessionScripts(object):
 			apDisplay.printError('Old Session (%s) to base the appion script on not found' % session_name)
 		apProject.setAppiondbBySessionName(session_name)
 		self.dep_map = self.getRemakerMap() 
-		self.scripts = []
+		self.scripts = [None]*len(self.order)
 		self.run()
 
 	def getRemakerMap(self):
 		job_map = {}
-		for o in self.order:
+		for i,o in enumerate(self.order):
 			app = globals()[o+'Remaker']('','unknown',{},{})
 			for j in app.jobtypes:
-				job_map[j] = o
+				job_map[j] = (i,o)
 		return job_map
 
 	def run(self):
@@ -210,13 +247,22 @@ class OldSessionScripts(object):
 		for run in runs:
 			params = apScriptLog.getScriptParamValuesFromRun(run)
 			usages = apScriptLog.getScriptUsageKeysFromRun(run)
+			if params['jobtype'] not in self.dep_map:
+				apDisplay.printWarning('jobtype %s not known' % params['jobtype'])
+				continue
 			if params['jobtype'] not in prog_params.keys():
 				# only use the latest of a jobtype
 				prog_params[params['jobtype']] = {'run': run, 'params': params}
-				dep_class_name = self.dep_map[params['jobtype']]+'Remaker'
+				dep_class_name = self.dep_map[params['jobtype']][1]+'Remaker'
+				order_index = self.dep_map[params['jobtype']][0]
 				prog_name = run['progname']['name']
 				run_user = run['username']['name']
-				self.scripts.append(globals()[dep_class_name](prog_name, run_user, params, usages))
+				self.scripts[order_index]=globals()[dep_class_name](prog_name, run_user, params, usages)
+		# cleanup None
+		for i in range(len(self.scripts)-1,-1,-1):
+			if self.scripts[i] == None:
+				self.scripts.pop(i)
+		# add dependencies
 		for p1 in self.scripts:
 			for p2 in self.scripts:
 				# add dependency script if valid
