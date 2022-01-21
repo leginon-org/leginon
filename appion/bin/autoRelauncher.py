@@ -11,7 +11,7 @@ from leginon import leginondata
 ### appion
 from appionlib import basicScript
 from appionlib import apDisplay
-from appionlib import apScriptRemake
+from appionlib import apScriptRemake, apParam
 
 #=====================
 #=====================
