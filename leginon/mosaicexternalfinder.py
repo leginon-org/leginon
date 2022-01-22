@@ -68,6 +68,7 @@ class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 	panelclass = gui.wx.MosaicScoreTargetFinder.Panel
 	settingsclass = leginondata.MosaicScoreTargetFinderSettingsData
 	defaultsettings = dict(targetfinder.ClickTargetFinder.defaultsettings)
+	# same as MosaicClickTargetFinder
 	mosaictarget_defaultsettings = {
 		# unlike other targetfinders, no wait is default
 		'wait for done': False,
@@ -84,7 +85,9 @@ class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 		'target multiple':1,
 	}
 	defaultsettings.update(mosaictarget_defaultsettings)
+	# autofinder part is different
 	auto_square_finder_defaultsettings = {
+			'scoring script':'sq_finding.sh',
 			'area-min': 100,
 			'area-max': 10000,
 	}
@@ -97,9 +100,31 @@ class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 		self.start()
 		self.ext_blobs ={}
 
+	def hasValidScoringScript(self):
+		scoring_script = self.settings['scoring script']
+		if not os.path.isfile(scoring_script):
+			if self.script_exists == False:
+				#log error just once.
+				return
+			else:
+				self.script_exists = False
+				self.logger.error('Scoring script %s does not exist.' % scoring_script)
+				return
+		else:
+			self.script_exists = True
+		return self.script_exists
+
 	def findSquareBlobs(self):
+		"""
+		Get blobs at finder scale with stats. In this case, make finder-size mosaic
+		mrc image, run scoring script, and then load the resulting blobs.
+		"""
 		# Scale to smaller finder size
 		# TODO where did this call to ?
+		if not self.hasValidScoringScript():
+			self.logger.error('Failed square finding without scoring script')
+			self.script_exists = None #reset
+			return []
 		self.scaleFinderMosaicImage()
 		if self.mosaicimagedata and 'filename' in self.mosaicimagedata.keys():
 			label='all'
@@ -130,8 +155,8 @@ class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 		if os.path.isfile(outpath):
 			os.remove(outpath)
 		# This process must create the output '%s.json' % job_basename at outpath
-		home_dir = os.path.expanduser('~acheng')
-		cmd = 'source %s/sq_finding.sh %s %s %s' % (home_dir, job_basename, mosaic_image_path, outdir)
+		scoring_script = self.settings['scoring script']
+		cmd = 'source %s %s %s %s' % (scoring_script, job_basename, mosaic_image_path, outdir)
 		proc = subprocess.Popen(cmd, shell=True)
 		proc.wait()
 
@@ -274,7 +299,7 @@ class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 class MosaicScoreTargetFinder(MosaicTargetFinderBase):
 	panelclass = gui.wx.MosaicScoreTargetFinder.Panel
 	settingsclass = leginondata.MosaicScoreTargetFinderSettingsData
-	defaultsettings = dict(mosaictargetfinder.MosaicClickTargetFinder.defaultsettings)
+	defaultsettings = dict(MosaicTargetFinderBase.defaultsettings)
 
 	eventoutputs = mosaictargetfinder.MosaicClickTargetFinder.eventoutputs
 	targetnames = mosaictargetfinder.MosaicClickTargetFinder.targetnames
@@ -285,9 +310,13 @@ class MosaicScoreTargetFinder(MosaicTargetFinderBase):
 		self.finder_blobs = []
 		self.start()
 		self.p = {}
+		self.script_exists = None
+
 
 	def _addTile(self, imagedata):
 		super(MosaicScoreTargetFinder, self)._addTile(imagedata)
+		if not self.hasValidScoringScript():
+			return
 		mrcpath = os.path.join(imagedata['session']['image path'], imagedata['filename']+'.mrc')
 		imid = imagedata.dbid
 		label = '%d' % imid
@@ -298,6 +327,8 @@ class MosaicScoreTargetFinder(MosaicTargetFinderBase):
 
 	def createMosaicImage(self):
 		super(MosaicScoreTargetFinder, self).createMosaicImage()
+		if not self.hasValidScoringScript():
+			return
 		if self.mosaic and self.tileblobmap and self.finder_scale_factor:
 			self.finder_blobs = []
 			s = self.finder_scale_factor
@@ -322,6 +353,17 @@ class MosaicScoreTargetFinder(MosaicTargetFinderBase):
 						self.finder_blobs.append(StatsBlob(new_info_dict, len(self.finder_blobs)))
 
 	def findSquareBlobs(self):
+		"""
+		Get blobs at finder scale with stats. In this case load the
+		blobs found during _addTile
+		"""
+		if self.script_exists == False:
+			self.logger.error('You must reload the atlas if you have changed the script path')
+			return []
+		if not self.hasValidScoringScript():
+			self.logger.error('Failed square finding without scoring script')
+			self.script_exists = None #reset
+			return []
 		imids = list(map((lambda x: int(x)),self.p.keys()))
 		for imid in imids:
 			self.p[imid].join()

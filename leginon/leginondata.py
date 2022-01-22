@@ -1972,6 +1972,7 @@ class SquareFinderSettingsData(SettingsData):
 class TopScoreFinderSettingsData(SettingsData):
 	def typemap(cls):
 		return SettingsData.typemap() + (
+			('scoring script', str),
 			('target grouping', TargetGroupingSettingsData),
 			('target multiple', int),
 			('area-min', float),
@@ -2008,6 +2009,7 @@ class MosaicScoreTargetFinderSettingsData(ClickTargetFinderSettingsData,
 		)
 		return typemap
 	typemap = classmethod(typemap)
+
 class MosaicSpotFinderSettingsData(ClickTargetFinderSettingsData,
 																					SquareFinderSettingsData):
 	def typemap(cls):

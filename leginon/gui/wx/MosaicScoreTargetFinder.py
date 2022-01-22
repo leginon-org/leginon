@@ -5,6 +5,7 @@
 #
 
 import wx
+import wx.lib.filebrowsebutton as filebrowse
 
 from leginon.gui.wx.Entry import FloatEntry
 import leginon.gui.wx.Settings
@@ -22,7 +23,7 @@ class Panel(leginon.gui.wx.MosaicClickTargetFinder.Panel):
 			'alignpresets', shortHelpString='Transfer targets')
 		self.toolbar.InsertTool(12, leginon.gui.wx.ToolBar.ID_FIND_SQUARES,
 			'squarefinder',shortHelpString='Find Squares')
-		self.imagepanel.addTargetTool('Blobs', wx.Colour(0, 255, 255), shape='o')
+		self.imagepanel.addTargetTool('Blobs', wx.Colour(0, 255, 255), shape='o', settings=True)
 		self.imagepanel.selectiontool.setDisplayed('Blobs', True)
 		self.imagepanel.addTypeTool('Thresholded', display=True, settings=True)
 
@@ -37,8 +38,12 @@ class Panel(leginon.gui.wx.MosaicClickTargetFinder.Panel):
 			dialog = leginon.gui.wx.MosaicClickTargetFinder.TargetSettingsDialog(self)
 			dialog.ShowModal()
 			dialog.Destroy()
-		elif evt.name == 'Thresholded':
+		elif evt.name == 'Blobs':
 			dialog = BlobSettingsDialog(self)
+			dialog.ShowModal()
+			dialog.Destroy()
+		elif evt.name == 'Thresholded':
+			dialog = ThresholdSettingsDialog(self)
 			dialog.ShowModal()
 			dialog.Destroy()
 
@@ -47,6 +52,26 @@ class BlobSettingsDialog(leginon.gui.wx.Settings.Dialog):
 		return BlobsScrolledSettings(self,self.scrsize,False)
 
 class BlobsScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
+	def initialize(self):
+		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
+		sb = wx.StaticBox(self, -1, 'External Blob Finding and Scoring')
+		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
+
+		self.widgets['scoring script'] = filebrowse.FileBrowseButton(self, -1)
+		self.widgets['scoring script'].SetMinSize((500,50))
+
+		sz = wx.GridBagSizer(5, 5)
+		sz.Add(self.widgets['scoring script'], (0, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_CENTER_HORIZONTAL)
+
+		sbsz.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
+		return [sbsz]
+
+class ThresholdSettingsDialog(leginon.gui.wx.Settings.Dialog):
+	def initialize(self):
+		return ThresholdScrolledSettings(self,self.scrsize,False)
+
+class ThresholdScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
 		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb2 = wx.StaticBox(self, -1, 'Blob Filtering (Set by example targets)')
