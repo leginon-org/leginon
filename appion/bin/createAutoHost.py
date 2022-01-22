@@ -8,7 +8,7 @@ for tmap in q.typemap():
 	ttype = tmap[1]
 	while True:
 		answer = raw_input('%s (as %s) = ' % (tmap[0], tmap[1].__name__))
-		if ttype == type('') and answer:
+		if ttype == type(''):
 			q[key] = answer
 			break
 		try:
@@ -23,6 +23,11 @@ for tmap in q.typemap():
 			q[key] = value
 			break
 		print('Type evaluated (%s) not consistent. Please try again.' % type(value))
-q.insert()
+# required field: hostname
+if not q['hostname']:
+	print('Error: "hostname" can not be empty. creation aborted.')
+else:
+	# Force insert so that query of the most recent can contain reverted values.
+	q.insert(force=True)
 
 
