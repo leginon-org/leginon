@@ -93,3 +93,12 @@ class schemaupdates(Data):
 		)
 	typemap = classmethod(typemap)
 
+class autohosts(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+		('hostname', str),
+		('appion_wrapper', str),
+		('ddalign_gpus', list), # available gpuids for motion correction
+		('loop_max', int),# maximal parallel runs for appionLoop
+		)
+	typemap = classmethod(typemap)
