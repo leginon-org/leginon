@@ -1099,7 +1099,7 @@ class Tecnai(tem.TEM):
 			if self.getDebugStage():
 				print datetime.datetime.now()
 				print 'Other error in going to %s' % (position,)
-			raise RuntimeError('_set %s Unknown error' % (short_pos_str,)
+			raise RuntimeError('_set %s Unknown error' % (short_pos_str,))
 		self.waitForStageReady('after setting %s' % (position,))
 
 	def _setTomStagePosition(self, position, relative = 'absolute'):
