@@ -445,12 +445,23 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		if self.player.state() == 'pause':
 			self.logger.info(msg)
 			self.setStatus('user input')
-			self.z_now = self.instrument.tem.getStagePosition()['z']
+			try:
+				self.z_now = self.instrument.tem.getStagePosition()['z']
+			except Exception as e:
+				# catch for display but not stopping the workflow
+				# since this unlikely to be fatal.
+				self.logger.error(e)
 		else:
 			self.z_now = None
 		state = self.player.wait()
 		if self.z_now is not None:
-			self.instrument.tem.StagePosition={'z':self.z_now}
+			try:
+				self.instrument.tem.StagePosition={'z':self.z_now}
+			except Exception as e:
+				# catch for display but not stopping the workflow
+				# since this unlikely to be fatal.
+				# we will let other place to handle the cause of this error.
+				self.logger.error(e)
 		return state
 
 	def makeTargetIndexOrder(self, good_targets):
