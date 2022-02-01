@@ -179,9 +179,6 @@ function display($id) {
         elseif (strpos($result->text, "2D classes for iteration") !== false){
         	$classes = $result;
         }
-        elseif (strpos($result->text, "2D classes for iteration") !== false){
-        	$classes = $result;
-        }
         elseif (strpos($result->text, "Particle box size:") !== false){
         	$box_size = $result;
         }
@@ -241,19 +238,32 @@ function display($id) {
 	    echo "</td><td><img src='../proxy.php?csurl=http://".$job[0][IP].":39000/file/".$fcs->imgfiles[0]->fileid."'>";
 	    echo "</td></tr></table>";
 	    $return_array = array("fsc.png"=>"http://".$job[0][IP].":39000/file/".$fcs->imgfiles[0]->fileid);
+	    echo "<h1>CryoSPARC Output</h1>";
+	    echo $out_text;
+	    
     }
-    else{
+    elseif ($classes) {
     	echo "<table border=1 CLASS=tableborder CELLPADDING=15>
 	        <tr><td>";
-    	echo "<img width='100%' src='../proxy.php?csurl=http://".$job[0][IP].":39000/file/".$classes->imgfiles[0]->fileid."'>";
+    	echo "<img width='100%' src='../proxy.php?c$classessurl=http://".$job[0][IP].":39000/file/".$classes->imgfiles[0]->fileid."'>";
     	echo "</td></tr></table>";
     	$return_array = array("2dclasses.png"=>"http://".$job[0][IP].":39000/file/".$classes->imgfiles[0]->fileid);
     	global $class_info;
     	$class_info =  $box_size->text.$pixel_size->text.$nparticles->text;
     	$class_info =  str_replace("\n", "\t==", $class_info);
+    	echo "<h1>CryoSPARC Output</h1>";
+    	echo $out_text;
     }
-    echo "<h1>CryoSPARC Output</h1>"; 
-    echo $out_text;
+    else{
+        $return_array = array();
+        echo "<h1>CryoSPARC Output</h1>";
+        foreach ($results as $result){
+            if (property_exists($result, 'imgfiles')){
+                echo "<img width='100%' src='../proxy.php?csurl=http://".$job[0][IP].":39000/file/".$result->imgfiles[0]->fileid."'>".'<br>';
+            }
+            echo $result->text.'<br>';
+        }
+    }
     return $return_array;
 }
 
