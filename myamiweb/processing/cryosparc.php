@@ -245,7 +245,7 @@ function display($id) {
     elseif ($classes) {
     	echo "<table border=1 CLASS=tableborder CELLPADDING=15>
 	        <tr><td>";
-    	echo "<img width='100%' src='../proxy.php?c$classessurl=http://".$job[0][IP].":39000/file/".$classes->imgfiles[0]->fileid."'>";
+    	echo "<img width='100%' src='../proxy.php?csurl=http://".$job[0][IP].":39000/file/".$classes->imgfiles[0]->fileid."'>";
     	echo "</td></tr></table>";
     	$return_array = array("2dclasses.png"=>"http://".$job[0][IP].":39000/file/".$classes->imgfiles[0]->fileid);
     	global $class_info;
