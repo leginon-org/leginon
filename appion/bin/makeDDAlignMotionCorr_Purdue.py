@@ -9,6 +9,8 @@ class MotionCorrPurdueLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop):
 	#=======================
 	def setupParserOptions(self):
 		super(MotionCorrPurdueLoop,self).setupParserOptions()
+		self.parser.add_option("--alignbfactor", dest="bft", type="float", default=100.0,
+			help="alignment B-factor in pix^2 in dosefgpu_driftcorr")
 		self.parser.add_option("--nrw", dest="nrw", type="int", default=1,
 			help="Number (1, 3, 5, ...) of frames in running average window. 0 = disabled", metavar="INT")
 		self.parser.add_option("--flp", dest="flp", type="int", default=0,

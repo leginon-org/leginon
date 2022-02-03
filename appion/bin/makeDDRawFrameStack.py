@@ -30,6 +30,8 @@ class MakeFrameStackLoop(apDDLoop.DDStackLoop):
 			action="store_true", help="Use Gram-Schmidt process to scale dark image")
 		self.parser.add_option("--align", dest="align", default=False,
 			action="store_true", help="Make Aligned frame stack")
+		self.parser.add_option("--alignbfactor", dest="bft", type="float", default=100.0,
+			help="alignment B-factor in pix^2 in dosefgpu_driftcorr")
 		self.parser.add_option("--square", dest="square", default=False,
 			action="store_true", help="Output square images")
 		self.parser.add_option("--defergpu", dest="defergpu", default=False,
