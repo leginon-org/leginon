@@ -1441,26 +1441,27 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 		return pixel_shift
 
 	def calculateCalibrationAngleDifference(self, tem1, ccdcamera1, tem2, ccdcamera2, ht, mag1, mag2):
+		"""
+		Use the calibration matrix to get the axis angle difference between two
+		mags.
+		"""
 		par = self.parameter()
 		matrix1 = self.retrieveMatrix(tem1, ccdcamera1, par, ht, mag1)
 		matrix2 = self.retrieveMatrix(tem2, ccdcamera2, par, ht, mag2)
-		return self.angleFromMatrix(matrix2) - self.angleFromMatrix(matrix1)
-
-	def angleFromMatrix(self, matrix):
-		'''
-		calculate calibration 2D vectors (as an ndimage array)
-		average angle to the axis of (1,0),(0,1) vectors, respectively.
-		The result return is in radians
-		'''
-		angles = []
-		angles.append(math.atan2(matrix[0,1],matrix[0,0]))
-		# y axis is assumed to be 90 degrees from x
-		yangle = math.atan2(matrix[1,1],matrix[1,0]) - math.pi/2
-		if yangle < -math.pi:
-			yangle += 2*math.pi
-		angles.append(yangle)
-		angle_average = sum(angles) / 2
-		return angle_average
+		angle_diff = []
+		for i in (0,1):
+			angle1 = math.atan2(matrix1[i,1],matrix1[i,0])
+			angle2 = math.atan2(matrix2[i,1],matrix2[i,0])
+			diff = angle1-angle2
+			# bring it within -pi and p
+			while diff > math.pi:
+				diff -= math.pi*2
+			while diff <= -math.pi:
+				diff += math.pi*2
+			angle_diff.append(diff)
+		# average the difference calculated from the two axes.
+		avg_diff = sum(angle_diff)/2.0
+		return avg_diff
 
 	def matrixFromPixelAndPositionShifts(self,pixel_shift1,position_shift1, pixel_shift2, position_shift2, camera_binning):
 		'''

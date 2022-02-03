@@ -992,8 +992,8 @@ class Tecnai(tem.TEM):
 			value['x'] = float(self.tecnai.Stage.Position.X)
 			value['y'] = float(self.tecnai.Stage.Position.Y)
 			value['z'] = float(self.tecnai.Stage.Position.Z)
-		except:
-			pass
+		except Exception as e:
+			raise RuntimeError('get stage error: %s' % (e,))
 		try:
 			value['a'] = float(self.tecnai.Stage.Position.A)
 		except:
@@ -1056,6 +1056,7 @@ class Tecnai(tem.TEM):
 		
 		pos = self.tecnai.Stage.Position
 
+		short_pos_str = ''
 		axes = 0
 		stage_limits = self.getStageLimits()
 		for key, value in position.items():
@@ -1070,6 +1071,7 @@ class Tecnai(tem.TEM):
 
 			setattr(pos, key.upper(), value)
 			axes |= getattr(self.tem_constants, 'axis' + key.upper())
+			short_pos_str +='%s %d' % (key,int(value*1e6))
 
 		if axes == 0:
 			return
@@ -1090,14 +1092,14 @@ class Tecnai(tem.TEM):
 				# but Issue 4794 got 'need more than 3 values to unpack' error'.
 				# simplify the error handling so that it can be raised with messge.
 				msg = e.text
-				raise RuntimeError('Stage.Goto failed: %s' % (msg,))
+				raise RuntimeError('Stage.Goto %s failed: %s' % (short_pos_str,msg))
 			except:
-				raise RuntimeError('COMError in _setStagePosition: %s' % (e,))
+				raise RuntimeError('COMError in _set %s: %s' % (short_pos_str,e))
 		except:
 			if self.getDebugStage():
 				print datetime.datetime.now()
 				print 'Other error in going to %s' % (position,)
-			raise RuntimeError('_setStagePosition Unknown error')
+			raise RuntimeError('_set %s Unknown error' % (short_pos_str,))
 		self.waitForStageReady('after setting %s' % (position,))
 
 	def _setTomStagePosition(self, position, relative = 'absolute'):
