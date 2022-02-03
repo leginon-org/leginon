@@ -170,7 +170,7 @@ class DDAlignerRemaker(LoopScriptRemaker):
 	"""
 	valid_dependencies = []
 	jobtypes = ['makeddrawframestack',]
-	ignored_params = ['bft']
+	ignored_params = ['bft','Bft']
 
 	def makeCommands(self):
 		cmds = []
