@@ -258,10 +258,10 @@ function display($id) {
         $return_array = array();
         echo "<h1>CryoSPARC Output</h1>";
         foreach ($results as $result){
+            echo $result->text.'<br>';
             if (property_exists($result, 'imgfiles')){
                 echo "<img width='100%' src='../proxy.php?csurl=http://".$job[0][IP].":39000/file/".$result->imgfiles[0]->fileid."'>".'<br>';
             }
-            echo $result->text.'<br>';
         }
     }
     return $return_array;
