@@ -170,6 +170,9 @@ class DDAlignerRemaker(LoopScriptRemaker):
 	"""
 	valid_dependencies = []
 	jobtypes = ['makeddrawframestack',]
+	# Need to include both because both Bft and bft was used in the past
+	# and mysql query is not case-sensitive so it would having either
+	# Bft or bft as haskey.
 	ignored_params = ['bft','Bft']
 
 	def makeCommands(self):
@@ -247,6 +250,9 @@ class OldSessionScripts(object):
 		for run in runs:
 			params = apScriptLog.getScriptParamValuesFromRun(run)
 			usages = apScriptLog.getScriptUsageKeysFromRun(run)
+			if 'jobtype' not in params.keys():
+				apDisplay.printWarning('no jobtype. Ignore')
+				continue
 			if params['jobtype'] not in self.dep_map:
 				apDisplay.printWarning('jobtype %s not known' % params['jobtype'])
 				continue

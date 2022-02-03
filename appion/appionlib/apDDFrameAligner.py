@@ -279,11 +279,6 @@ class MotionCor2_UCSF(DDFrameAligner):
 		if self.alignparams['FtBin'] > 1:
 			cmd += ' -FtBin %s ' % (self.alignparams['FtBin'],)
 
-		# bfactor
-		#if (self.alignparams['bft'][0] > 0) and (self.alignparams['bft'][1] > 0):
-		#	cmd += ' -Bft %d %d' % (self.alignparams['bft'][0], self.alignparams['bft'])
-		
-			
 		if (self.alignparams['Bft_global'] > 0) and (self.alignparams['Bft_local'] > 0):
 			cmd += ' -Bft %d %d' % (self.alignparams['Bft_global'], self.alignparams['Bft_local'])		
 		
