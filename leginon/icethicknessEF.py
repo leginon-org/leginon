@@ -120,6 +120,7 @@ class IcethicknessEF(imagewatcher.ImageWatcher):
 			objth = leginondata.ObjIceThicknessData()
 			objth['vacuum intensity'] = self.settings['vacuum intensity']
 			objth['mfp'] = self.settings['obj mean free path']
+			print(imagedata['filename'])
 			bestmean = bestice.getBestHoleMeanIntensity(imagedata['image'])
 			objth['intensity'] = bestmean
 			try:
