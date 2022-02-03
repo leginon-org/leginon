@@ -247,6 +247,9 @@ class OldSessionScripts(object):
 		for run in runs:
 			params = apScriptLog.getScriptParamValuesFromRun(run)
 			usages = apScriptLog.getScriptUsageKeysFromRun(run)
+			if 'jobtype' not in params.keys():
+				apDisplay.printWarning('no jobtype. Ignore')
+				continue
 			if params['jobtype'] not in self.dep_map:
 				apDisplay.printWarning('jobtype %s not known' % params['jobtype'])
 				continue
