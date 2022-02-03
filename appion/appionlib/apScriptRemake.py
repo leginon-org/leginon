@@ -170,6 +170,9 @@ class DDAlignerRemaker(LoopScriptRemaker):
 	"""
 	valid_dependencies = []
 	jobtypes = ['makeddrawframestack',]
+	# Need to include both because both Bft and bft was used in the past
+	# and mysql query is not case-sensitive so it would having either
+	# Bft or bft as haskey.
 	ignored_params = ['bft','Bft']
 
 	def makeCommands(self):

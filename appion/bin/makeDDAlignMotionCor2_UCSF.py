@@ -42,6 +42,7 @@ class MotionCor2UCSFAlignStackLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop)
 		self.parser.add_option("--MaskSizerows",dest="MaskSizerows",metavar="#",type=float,default="1.0",
 			help="The Y size of subarea that will be used for alignment, default 1.0 corresponding full size.")
 
+		# instead of single align bfactor, bft, this has two entries
 		self.parser.add_option("--Bft_global",dest="Bft_global",metavar="#",type=float,default=500.0,
                         help=" Global B-Factor for alignment, default 500.0.")
 
