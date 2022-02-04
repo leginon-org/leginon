@@ -38,9 +38,6 @@ class DDStackLoop(appionLoop2.AppionLoop):
 		# Dosefgpu_driftcoor options
 		self.parser.add_option("--alignoffset", dest="fod", type="int", default=2,
 			help="number of frame offset in alignment in dosefgpu_driftcorr")
-		self.parser.add_option("--alignbfactor", dest="bft", type="float", default=(500.0,150.0),
-			help="alignment B-factor in pix^2 in dosefgpu_driftcorr", nargs=2)
-		
 		self.parser.add_option("--alignccbox", dest="pbx", type="int", default=128,
 			help="alignment CC search box size in dosefgpu_driftcorr")
 
