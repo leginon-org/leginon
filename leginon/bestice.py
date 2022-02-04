@@ -4,6 +4,9 @@ from pyami import arraystats
 
 def getBestHoleMeanIntensity(imarray):
 	imshape = imarray.shape
+	if max(imshape) < 256:
+		# handel dmsem fake 8x8
+		return arraystats.mean(imarray)
 	qshape = (imshape[0]//4, imshape[1]//4)
 	qstarts = []
 	start_fractions = (0.25, 0.375, 0.5)
