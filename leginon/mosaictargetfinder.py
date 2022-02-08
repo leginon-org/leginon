@@ -259,6 +259,8 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 			target_positions_from_image = self.panel.getTargetPositions(typename)
 		except ValueError:
 			return
+		if self.settings['sort target']:
+			target_positions_from_image = self.sortTargets(target_positions_from_image)
 		for coord_tuple in target_positions_from_image:
 			##  check if it is an existing position with database target.
 			if coord_tuple in self.existing_position_targets and self.existing_position_targets[coord_tuple]:

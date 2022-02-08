@@ -451,13 +451,22 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 										wx.ALIGN_CENTER_VERTICAL)
 		return szcheckmethod
 
+	def createSortTargetSizer(self):
+		sz = wx.GridBagSizer(5, 5)
+		self.widgets['sort target'] = wx.CheckBox(self, -1, 'Sort targets by shortest path')
+		sz.Add(self.widgets['sort target'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		return sz
+
 	def addSettings(self):
+		sortsz = self.createSortTargetSizer()
 		autosz = self.createAutoFinderSizer()
 		checkmethodsz = self.createCheckMethodSizer()
 		sz = wx.GridBagSizer(5, 5)
-		sz.Add(autosz, (0, 0), (1, 1),
+		sz.Add(sortsz, (0, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(checkmethodsz, (1, 0), (1, 1),
+		sz.Add(autosz, (1, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(checkmethodsz, (2, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 		self.Bind(wx.EVT_CHOICE, self.onChooseCheckMethod, self.widgets['check method'])
 		return sz
